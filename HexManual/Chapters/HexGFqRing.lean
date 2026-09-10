@@ -122,7 +122,8 @@ open Hex Hex.GFqRing
 
 namespace HexGFqRingChapterExample
 
-local instance boundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
+local instance boundsFive : ZMod64.Bounds 5 :=
+  ⟨by decide, by decide⟩
 
 private theorem prime_five : Hex.Nat.Prime 5 := by decide
 

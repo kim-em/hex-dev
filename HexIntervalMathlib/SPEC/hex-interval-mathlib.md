@@ -35,11 +35,11 @@ fact/equality/transport/instance/refutation steps, immutable typed proof state,
 and exact caller-target closure.
 
 `HexIntervalMathlib.Rule` is the first supported concrete registry. Its
-immutable configuration fixes endpoint limits, natural-power work and one
-exponent, precision resources, and one dyadic constant. It owns stable
+immutable configuration fixes endpoint limits, natural-power work, precision
+resources, and optional extra meanings. It owns stable
 operation and rule keys, exact real meanings, local registrations, and forward
-schemas for that constant, negation, addition, subtraction, multiplication,
-natural power, absolute value, minimum, maximum, reciprocal, division, and
+schemas for negation, addition, subtraction, multiplication, binary natural
+power, absolute value, minimum, maximum, reciprocal, division, and
 regularization. Source nodes obtain their version-zero facts from
 caller hypotheses rather than a rule. Every schema authenticates the exact
 node operation and argument order, source fact versions through the quoted
@@ -72,7 +72,9 @@ every caller-selected source interval exactly once, leaves computed rows at
 domain top, and proves those top seeds automatically. Both constructors share
 one common bounded reifier preflight, so the wrapper preserves its source-error
 precedence without repeating the structural scan. Constants and later
-improvements still enter through package-owned chronology. Successful replay
+improvements still enter through package-owned chronology. Exact dyadic and
+natural-literal singletons are seeded through the checked node-indexed initial
+context. Successful replay
 can be eliminated from either source containment or generalized initial-row
 containment to a target membership theorem, either endpoint inequality, their
 conjunction, or equality for a closed singleton.
@@ -104,7 +106,7 @@ runs bounded repeated policy selection over the sealed tree/session bundle.
 The explicit `Controller.Package` vertical still uses toy fact-event callbacks
 and application generators. Concrete built-in arithmetic has two explicit
 adapters: the fact-only `Controller.Executable` route and the typed-batch
-`RuntimeRule` route. `RuntimeRule` recomputes all twelve supported arithmetic
+`RuntimeRule` route. `RuntimeRule` recomputes all eleven supported arithmetic
 operations from exact executable requests, emits one typed fact batch with the
 matching one-cell format, and seals its assembly against the same-order
 `Rule` theorem registry through `RuntimeProof.Registry`. Paired caller packages
@@ -146,13 +148,15 @@ the same transaction succeeds; failure emits no misleading query result.
 `interval_bound e` elaborates and derives inside `withoutModifyingState`, then
 reports concrete selected lower/upper cuts and the recipe size. Those cuts are
 diagnostics, not tactic syntax: noninteger dyadic endpoints may be displayed,
-while the current goal parser accepts only integer targets, so reported cuts
-are not necessarily pasteable. Programmatic
+while inequality targets currently accept only integer endpoints and equality
+targets accept exact dyadics, so reported cuts are not necessarily pasteable.
+Programmatic
 `Tactic.deriveBound` exposes the exact authenticated forward bundle.
 
-This first vertical deliberately accepts only integer source and target cuts,
-zero, the configured natural exponent, and forward negation, addition,
-subtraction, multiplication, power, absolute value, minimum, maximum,
+This first vertical deliberately accepts only integer source and inequality
+target cuts, exact dyadic literal/equality targets, per-node natural-literal
+exponents, and forward negation, addition, subtraction, multiplication, binary
+power, absolute value, minimum, maximum,
 reciprocal, and division. It appends configured outward regularization after
 each computed arithmetic row, and fails transactionally on precision-resource
 refusal. Its fixed public-tactic precision is `16`, the dyadic grid `2⁻¹⁶`;
@@ -331,8 +335,50 @@ and final evidence separately cross it against their exact types. Both are
 independently charged against the expression cap in the same saved-state
 transaction before rollback; metavariables, synthetic placeholders, temporary
 declarations, or retained Meta-state leakage therefore cannot escape.
-`Checked.emitWithin` remains the evidence-only compatibility projection of that
-operation. There is no refutation or split expression emitter.
+
+`RuntimeEmit.Checked.emitInitialTargetWithin` is the narrower version-zero
+path. It admits only the sole root terminal with an empty chronology, no
+parent/side/seed edge, program version zero, fact version zero, and a target
+that is exactly the fact at the same index in the retained input. It quotes
+that input through the ordinary fact quoter, constructs the target-node and
+target-fact correlations as reflexivity terms, checks both exact equality
+types through `Proof.emitChecked`, and applies `Proof.initialTarget`. This
+theorem merely selects an existing `initialBase` assumption; neither the
+runtime token nor the fact representation supplies semantic authority.
+`Proof.initialTarget` is consequently a public tautological theorem with no
+resource limits: any caller that supplies its exact index, node, and fact
+equalities may use it directly. The emitter's limits bound only the checked
+reflection work needed to quote and correlate those terms. They do not grant,
+restrict, or otherwise contribute logical authority. The fast path revalidates
+the complete proof package/program registry under the caller's `Proof.Limits`,
+prepares and typechecks all quotation callbacks, and charges the input and
+final Evidence expressions independently. Its explicit program- and
+fact-version checks are defensive invariants currently implied by admission
+of a sole root with an empty chronology.
+
+For the built-in interval quoter, the same version-zero token also succeeds
+through `emitResultWithin`: its `getValue (ofRawWithin ...)` representation is
+reducible enough for the empty `Proof.replayWith` check. Conformance requires
+both emitters to quote definitionally equal inputs and Evidence claims. The
+initial-target path is therefore not a correctness workaround for the current
+built-in encoding. It is the smaller direct proof and does not require the
+fact domain's `DecidableEq` to reduce an opaque representation merely to
+rediscover that the exact target expression is the exact indexed initial fact.
+This distinction matters for checked quoters whose fact constructors expose
+semantic view theorems but deliberately keep their constructor bodies opaque.
+
+Retained result and proof-tree admission remains owned by
+`RuntimeEmit.Lineage.quoteWithin`, which constructs `Checked` only after
+`RuntimeProof.Limits.result` and `.tree` have accepted the entire tree and
+recipe. `RuntimeEmit.Limits` deliberately has no second tree-node, edge, or
+depth envelope. For the initial-target shape the admitted minimum is one tree
+node at depth zero; the recipe's one root edge is included in `proofWork`.
+Thus a caller cannot use the fast path to evade a smaller result-node,
+proof-node, depth, or edge-inclusive work limit: those limits must first
+produce the sealed `Checked` token.
+
+`Checked.emitWithin` remains the evidence-only compatibility projection of
+`emitResultWithin`. There is no refutation or split expression emitter.
 `Quoter` and `Handle` callbacks are trusted reflection code: the kernel checks
 the theorem in the world they quote, but a generic registry cannot prove that a
 caller callback faithfully reifies an arbitrary runtime `Fact`. Supported
@@ -353,7 +399,7 @@ Schema, chronology, body, dependency, and
 expression limits fail without returning a partial expression.
 
 `HexIntervalMathlib.RuntimeRuleEmit` supplies the paired handles and fact
-quoter for exactly the twelve built-in arithmetic schemas. Its convenience
+quoter for exactly the eleven built-in arithmetic schemas. Its convenience
 builder jointly constructs the executable batch assembly, theorem registry,
 and emitter registry. Configurations with caller-owned opaque meanings require
 their own paired emitter packages and are deliberately rejected by this
@@ -431,17 +477,19 @@ rejects that import outside an exact reviewed allowlist, currently empty.
 
 `HexIntervalMathlib.Rule` is the first supported package registry. Its stable
 arithmetic schemas recompute exact checked negation, addition, subtraction,
-multiplication, natural power, absolute value, minimum, maximum, constant,
+multiplication, binary natural power, absolute value, minimum, maximum,
 reciprocal, division, and regularization results before producing evidence.
-Source facts remain caller assumptions. Direct registry assembly bounds the
-retained packages and schemas but does not preempt construction or equality of
-caller program/meaning arrays; decoded callers must first cross `Search`.
+Source facts remain caller assumptions, while exact dyadic and natural literals
+are authenticated node-indexed initial facts and have no callbacks. Direct
+registry assembly bounds the retained packages and schemas but does not preempt
+construction or equality of caller program/meaning arrays; decoded callers
+must first cross `Search`.
 Its `quote` and `quoteSession` functions convert supported branch/session
-causes to proof events without making runtime state evidence. `Config` fixes
-exactly one natural exponent and one dyadic constant: every node at the
-built-in power operation index shares that exponent, and every node at the
-built-in constant index shares that value. Duplicate package registration and
-operation keys cannot add another parameterization. Arbitrary-function package
+causes to proof events without making runtime state evidence. Each power node
+has ordered `[base, natural-exponent]` edges, and literal operation meanings are
+value-agnostic; exact values come only from their separately authenticated
+initial singleton facts. Duplicate package registration and operation keys
+cannot add another parameterization. Arbitrary-function package
 discovery, Mathlib-free runtime packages, split-search tactic integration, and
 default package discovery remain experimental. The
 supported direct-forward reifier and tactic syntax are a narrow client of this
@@ -590,9 +638,17 @@ exact proposed/installed facts, one-cell bodies, semantic schema execution,
 sticky cache refusal and replayability, sealed rule mutation rejection, and a
 paired opaque-operation extension.
 `HexIntervalMathlib.RuntimeEmitConformance` installs target Evidence only from
-the sealed input/evidence pair for all twelve built-in rules, including repeated-input
+the sealed input/evidence pair for all eleven built-in rules, including repeated-input
 binary applications, and separately emits the mixed `sin (-x)` instance,
-equality, fact, and transport chronology. It rejects package-local/global
+equality, fact, and transport chronology. Its version-zero canary quotes a
+checked opaque interval directly from the initial base with no chronology; it
+also compares ordinary empty replay against the same token, requiring exact
+input/claim agreement and a strictly smaller direct Evidence expression. It
+pins computed-chronology refusal, the exact singleton tree/depth minimum,
+an exact mismatched-target-fact lineage refusal, result-node, proof-node,
+edge-inclusive work, proof-package, emitter-schema,
+input-expression, and evidence-expression limits, plus transactional rollback.
+It rejects package-local/global
 coverage errors, cross-package and input transplants, a wrong schema
 expression, ill-typed/open/placeholder/temporary emitters, Meta-state leakage,
 and exact one-under schema, chronology, body, dependency, input-expression, and
@@ -623,7 +679,7 @@ proof-frontend closure of the stronger two-sided theorem.
 wrong-source and false-endpoint rejection, the ordinary π-bound axiom surface,
 and generic proof-frontend closure.
 `HexIntervalMathlib.FrontendConformance` reconstructs that shared arithmetic
-DAG recursively, pins exact source and configured-constant node binding,
+DAG recursively, pins exact source and node-indexed literal binding,
 rejects malformed result entries, duplicate stable keys, and one-over
 source/operation/node/depth limits, replays a flat supported chronology, and
 closes fully discharged lower inequality, two-sided conjunction, and equality

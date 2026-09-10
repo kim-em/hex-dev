@@ -111,7 +111,7 @@ theorem swapStep_pivot_ne (ops : Accumulator α n) (s : Result α n m)
   · rename_i hne
     dsimp only
     rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_rowSwap]
-    simp only [if_neg hne, if_pos]
+    simp only [ite_eq_right hne, ite_eq_left]
     simpa only [Matrix.getElem_pair_eq_nested] using hfound
 
 /-- Swapping two zero entries leaves the whole selected column unchanged. -/
@@ -130,10 +130,10 @@ theorem swapStep_zero (ops : Accumulator α n) (s : Result α n m)
     rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_rowSwap]
     by_cases hrk : row = k
     · subst row
-      simpa only [if_pos, Matrix.getElem_pair_eq_nested] using hi'.trans hk'.symm
+      simpa only [ite_eq_left, Matrix.getElem_pair_eq_nested] using hi'.trans hk'.symm
     · by_cases hri : row = i
       · subst row
-        simp only [if_neg hrk, if_pos, Matrix.getElem_pair_eq_nested]
+        simp only [ite_eq_right hrk, ite_eq_left, Matrix.getElem_pair_eq_nested]
         exact hk'.trans hi'.symm
       · simp [hrk, hri, Matrix.getElem_pair_eq_nested]
 
@@ -148,7 +148,7 @@ theorem gcdStep_column (ops : Accumulator α n) (s : Result α n m)
   rcases hc : gcdCoeffs s.matrix[(i, col)] s.matrix[(k, col)] with ⟨x, y, z, w⟩
   rw [hc] at hspec
   dsimp only at hspec
-  rw [gcdStep, if_neg hb]
+  rw [gcdStep, ite_eq_right hb]
   dsimp only
   rw [hc]
   dsimp only [Prod.fst, Prod.snd]
@@ -165,7 +165,7 @@ theorem gcdStep_ne_zero (ops : Accumulator α n) (s : Result α n m)
     (gcdStep ops col i k s).matrix[(i, col)] ≠ 0 ∧
       (gcdStep ops col i k s).matrix[(k, col)] = 0 := by
   by_cases hb : s.matrix[(k, col)] = 0
-  · rw [gcdStep, if_pos hb]
+  · rw [gcdStep, ite_eq_left hb]
     exact ⟨hi, hb⟩
   · have h := gcdStep_column ops s col i k hik hb
     exact ⟨Int.ne_of_gt h.1, h.2⟩
@@ -207,7 +207,7 @@ theorem signStep_column (ops : Accumulator α n) (s : Result α n m)
   · rename_i hneg
     dsimp only
     rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_rowScale]
-    simp only [if_pos]
+    simp only [ite_eq_left]
     simp only [Matrix.getElem_pair_eq_nested] at hneg hne ⊢
     omega
   · rename_i hnneg
@@ -238,7 +238,7 @@ theorem signStep_zero (ops : Accumulator α n) (s : Result α n m)
     split
     · dsimp only
       rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_rowScale]
-      simp only [if_pos, Matrix.getElem_pair_eq_nested]
+      simp only [ite_eq_left, Matrix.getElem_pair_eq_nested]
       simp [hi']
     · rfl
   · exact signStep_other ops s col j i row hri
@@ -267,7 +267,7 @@ theorem reduceStep_column (ops : Accumulator α n) (s : Result α n m)
     exact hdiv.symm
   · dsimp only
     rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_rowAdd]
-    simp only [if_pos]
+    simp only [ite_eq_left]
     simp only [q, p, x, Matrix.getElem_pair_eq_nested] at hdiv ⊢
     calc
       s.matrix[row][col] +
@@ -306,7 +306,7 @@ theorem reduceStep_zero (ops : Accumulator α n) (s : Result α n m)
     · rfl
     · dsimp only
       rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_rowAdd]
-      simp only [if_pos, Matrix.getElem_pair_eq_nested]
+      simp only [ite_eq_left, Matrix.getElem_pair_eq_nested]
       simp [hp']
   · exact reduceStep_other ops s col j pivot target row hrt
 
@@ -653,14 +653,14 @@ theorem columnStep_rank_le (ops : Accumulator α n) (s : Result α n m)
     (col : Fin m) (h : s.pivots.length ≤ n) :
     (columnStep ops s col).pivots.length ≤ n := by
   by_cases hr : s.pivots.length < n
-  · rw [columnStep, dif_pos hr]
+  · rw [columnStep, dite_eq_left hr]
     cases hp : findPivot? s.matrix col s.pivots.length with
     | none => exact h
     | some found =>
         change ((clearColumn ops s col ⟨s.pivots.length, hr⟩ found).pivots ++ [col]).length ≤ n
         rw [clearColumn_pivots, List.length_append, List.length_singleton]
         omega
-  · rw [columnStep, dif_neg hr]
+  · rw [columnStep, dite_eq_right hr]
     exact h
 
 /-- The shared bounded Hermite sweep, parameterized by certificate state. -/
@@ -1019,7 +1019,7 @@ private theorem columnStep_prefix (ops : Accumulator α n) {s : Result α n m}
     {bound : Nat} (h : PrefixForm s bound) (col : Fin m) (hcol : col.val = bound) :
     PrefixForm (columnStep ops s col) (bound + 1) := by
   by_cases hr : s.pivots.length < n
-  · rw [columnStep, dif_pos hr]
+  · rw [columnStep, dite_eq_left hr]
     cases hp : findPivot? s.matrix col s.pivots.length with
     | none =>
         exact h.extend col hcol (fun row hrow => findPivot?_none hp row hrow)
@@ -1029,7 +1029,7 @@ private theorem columnStep_prefix (ops : Accumulator α n) {s : Result α n m}
         simp only
         have hpiv := clearColumn_pivots ops s col ⟨s.pivots.length, hr⟩ found
         simpa [hpiv] using ha
-  · rw [columnStep, dif_neg hr]
+  · rw [columnStep, dite_eq_right hr]
     exact h.extend col hcol (fun row hrow => by
       have hn := h.rank_le_n
       omega)
@@ -1082,12 +1082,12 @@ private theorem checkedRun_form (ops : Accumulator α n) (A : Matrix Int n m) :
       (principalRun ops A).pivots.length (principalRun ops A).pivotVector = true
   · have hc : checkedRun ops A = principalRun ops A := by
       rw [checkedRun]
-      exact if_pos h
+      exact ite_eq_left h
     rw [hc]
     exact (isHNFForm_iff _ _ _).mp h
   · have hc : checkedRun ops A = run ops A := by
       rw [checkedRun]
-      exact if_neg h
+      exact ite_eq_right h
     rw [hc]
     exact (run_form ops A).hnfForm
 
@@ -1237,7 +1237,7 @@ private theorem columnStep_same (ops : Accumulator α n) (ops' : Accumulator β 
   simp only [Result.Same] at h
   rcases h with ⟨rfl, rfl⟩
   by_cases hr : pivots.length < n
-  · rw [columnStep, columnStep, dif_pos hr, dif_pos hr]
+  · rw [columnStep, columnStep, dite_eq_left hr, dite_eq_left hr]
     cases hp : findPivot? matrix col pivots.length with
     | none => exact ⟨rfl, rfl⟩
     | some found =>
@@ -1247,7 +1247,7 @@ private theorem columnStep_same (ops : Accumulator α n) (ops' : Accumulator β 
           (t := { matrix := matrix, pivots := pivots, accumulator := acc' })
           ⟨rfl, rfl⟩ col ⟨pivots.length, hr⟩ found
         exact ⟨hclear.1, congrArg (fun ps => ps ++ [col]) hclear.2⟩
-  · rw [columnStep, columnStep, dif_neg hr, dif_neg hr]
+  · rw [columnStep, columnStep, dite_eq_right hr, dite_eq_right hr]
     exact ⟨rfl, rfl⟩
 
 /-- The shared schedule produces the same matrix for every accumulator. -/
@@ -1538,7 +1538,7 @@ private theorem run_accumulator_map (f : α → β)
     simp only [Result.Mapped] at h
     rcases h with ⟨rfl, rfl, rfl⟩
     by_cases hr : pivots.length < n
-    · rw [columnStep, columnStep, dif_pos hr, dif_pos hr]
+    · rw [columnStep, columnStep, dite_eq_left hr, dite_eq_left hr]
       cases hp : findPivot? matrix col pivots.length with
       | none => exact ⟨rfl, rfl, rfl⟩
       | some found =>
@@ -1548,7 +1548,7 @@ private theorem run_accumulator_map (f : α → β)
             (t := { matrix := matrix, pivots := pivots, accumulator := f acc })
             ⟨rfl, rfl, rfl⟩ col ⟨pivots.length, hr⟩ found
           exact ⟨hc.1, congrArg (fun ps => ps ++ [col]) hc.2.1, hc.2.2⟩
-    · rw [columnStep, columnStep, dif_neg hr, dif_neg hr]
+    · rw [columnStep, columnStep, dite_eq_right hr, dite_eq_right hr]
       exact ⟨rfl, rfl, rfl⟩
   have result := fold_mapped (columnStep ops) (columnStep ops')
     (List.finRange m) (s :=

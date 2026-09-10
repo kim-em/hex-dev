@@ -1,0 +1,184 @@
+{
+  "label": "modular",
+  "attempt": 2,
+  "cpu": 2,
+  "siblings": [
+    2,
+    50
+  ],
+  "runs": [
+    {
+      "arm": "left",
+      "source_commit": "b8602c76a08f7348391aafd50b9a8a13cf1a0b32",
+      "binary_sha256": "9cda578dbc8724ea9c10462c1c6e2ccbaf6d48e6a85ef291a2f1bf7e4c5df810",
+      "command": [
+        "taskset",
+        "-c",
+        "2",
+        "/tmp/issue-10074-baseline",
+        "run",
+        "Hex.NumberTowerBench.runTowerFactorPair2",
+        "Hex.NumberTowerBench.runTowerFactorPair3",
+        "Hex.NumberTowerBench.runTowerFactorPair4",
+        "Hex.NumberTowerBench.runTowerFactorPair6",
+        "Hex.NumberTowerBench.runTowerFactorPair8",
+        "Hex.NumberTowerBench.runTowerFactorPair12",
+        "Hex.NumberTowerBench.runTowerFactorLadder",
+        "Hex.NumberTowerBench.runTowerCheckFactorization",
+        "Hex.NumberTowerBench.runPariNfFactor2",
+        "Hex.NumberTowerBench.runPariNfFactor3",
+        "Hex.NumberTowerBench.runPariNfFactor4",
+        "Hex.NumberTowerBench.runPariNfFactor6",
+        "Hex.NumberTowerBench.runPariNfFactor8",
+        "Hex.NumberTowerBench.runPariNfFactor12",
+        "Hex.NumberTowerBench.runPariNfFactorOverhead",
+        "--repeats",
+        "5",
+        "--min-total-seconds",
+        "0.2",
+        "--export-file",
+        "/tmp/issue-10074-modular-2-left.json"
+      ],
+      "export": "/tmp/issue-10074-modular-2-left.json",
+      "preflight": {
+        "2": 1.0,
+        "50": 2.0100502512562812
+      },
+      "postflight": {
+        "2": 5.555555555555555,
+        "50": 16.915422885572138
+      },
+      "during": [
+        {
+          "2": 100.0,
+          "50": 3.0150753768844223
+        },
+        {
+          "2": 100.0,
+          "50": 2.5
+        },
+        {
+          "2": 100.0,
+          "50": 2.985074626865672
+        },
+        {
+          "2": 100.0,
+          "50": 1.5075376884422111
+        },
+        {
+          "2": 100.0,
+          "50": 2.0
+        },
+        {
+          "2": 100.0,
+          "50": 2.985074626865672
+        },
+        {
+          "2": 100.0,
+          "50": 2.487562189054726
+        },
+        {
+          "2": 100.0,
+          "50": 2.5
+        },
+        {
+          "2": 100.0,
+          "50": 0.5050505050505051
+        },
+        {
+          "2": 100.0,
+          "50": 2.487562189054726
+        },
+        {
+          "2": 100.0,
+          "50": 1.0050251256281406
+        },
+        {
+          "2": 100.0,
+          "50": 1.5075376884422111
+        },
+        {
+          "2": 100.0,
+          "50": 4.975124378109452
+        },
+        {
+          "2": 100.0,
+          "50": 2.487562189054726
+        },
+        {
+          "2": 100.0,
+          "50": 1.5
+        },
+        {
+          "2": 100.0,
+          "50": 2.487562189054726
+        },
+        {
+          "2": 99.50248756218906,
+          "50": 3.0150753768844223
+        },
+        {
+          "2": 98.0,
+          "50": 2.985074626865672
+        },
+        {
+          "2": 100.0,
+          "50": 3.5
+        },
+        {
+          "2": 100.0,
+          "50": 1.0050251256281406
+        },
+        {
+          "2": 100.0,
+          "50": 1.0
+        },
+        {
+          "2": 100.0,
+          "50": 4.477611940298507
+        },
+        {
+          "2": 100.0,
+          "50": 0.0
+        },
+        {
+          "2": 100.0,
+          "50": 0.5
+        },
+        {
+          "2": 99.5,
+          "50": 0.0
+        },
+        {
+          "2": 100.0,
+          "50": 0.0
+        },
+        {
+          "2": 99.49748743718592,
+          "50": 0.0
+        },
+        {
+          "2": 99.49748743718592,
+          "50": 1.5075376884422111
+        },
+        {
+          "2": 99.00990099009901,
+          "50": 2.4752475247524752
+        },
+        {
+          "2": 37.0,
+          "50": 0.5
+        }
+      ],
+      "sibling_mean": {
+        "50": 1.9300440351792871
+      },
+      "exit_code": 0,
+      "accepted": false
+    }
+  ],
+  "release_quality": false,
+  "protocol_commit": "ef2b819f0",
+  "script_sha256": "68322335292d3149d8b72c4f1e786814227d25107eb4c7bd26009a551d6d3169",
+  "accepted": false
+}

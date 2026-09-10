@@ -377,7 +377,7 @@ private def profileLattice
             if Array.polyProduct pieces = f then some pieces else none
         | none => none
     let candidateDegrees :=
-      candidate.map (fun pieces => pieces.map (·.degree?.getD 0)) |>.getD #[]
+      candidate.map (fun pieces => pieces.map (·.natDegree)) |>.getD #[]
     observeNat sink (candidateDegrees.foldl (· + ·) 0)
     let reconstructionStop ← IO.monoNanosNow
     return {
@@ -436,13 +436,13 @@ private def profileReplay (sink : IO.Ref Nat) (piece : ZPoly) :
   let start ← IO.monoNanosNow
   let run := runClassical piece
   let factorDegrees :=
-    run.factors.map (fun factors => factors.map (·.degree?.getD 0)) |>.getD #[]
+    run.factors.map (fun factors => factors.map (·.natDegree)) |>.getD #[]
   observeNat sink (run.trace.classical.candidatesTried +
     factorDegrees.foldl (· + ·) 0)
   let stop ← IO.monoNanosNow
   return (run.factors,
       Json.mkObj
-        [ ("pieceDegree", natJson (piece.degree?.getD 0)),
+        [ ("pieceDegree", natJson (piece.natDegree)),
           ("factorDegrees", natArrayJson factorDegrees),
           ("liftedFactorCount", natJson run.trace.classical.liftedFactorCount),
           ("candidatesTried", natJson run.trace.classical.candidatesTried),
@@ -470,7 +470,7 @@ private def proposalProfile (f : ZPoly) : IO Json := do
   let normalizationStart ← IO.monoNanosNow
   let normalized := normalizeForFactor f
   let core := SquareFreeInput.ofNormalized normalized
-  observeNat sink (core.poly.degree?.getD 0 + (core.poly.coeff 0).natAbs)
+  observeNat sink (core.poly.natDegree + (core.poly.coeff 0).natAbs)
   let normalizationStop ← IO.monoNanosNow
   let planningStart ← IO.monoNanosNow
   let modular := directPrimePlan? core
@@ -496,7 +496,7 @@ private def proposalProfile (f : ZPoly) : IO Json := do
       let liftedCount := lifted.liftedFactors.size
       observeNat sink (liftedCount + lifted.k +
         lifted.liftedFactors.foldl
-          (fun sum factor => sum + factor.degree?.getD 0) 0)
+          (fun sum factor => sum + factor.natDegree) 0)
       let henselStop ← IO.monoNanosNow
       let peelStart ← IO.monoNanosNow
       let initialStats : ClassicalStats :=
@@ -507,7 +507,7 @@ private def proposalProfile (f : ZPoly) : IO Json := do
       let peeled := peelDirect (DensePoly.leadingCoeff core.poly)
         core.poly lifted 3 2 proposalSubsetBudget initialStats
       observeNat sink (peeled.stats.candidatesTried + peeled.support.length +
-        peeled.residual.degree?.getD 0)
+        peeled.residual.natDegree)
       let peelStop ← IO.monoNanosNow
       let residualFactors :=
         (peeled.support.map (directLiftedFactor lifted)).toArray
@@ -540,7 +540,7 @@ private def proposalProfile (f : ZPoly) : IO Json := do
       let exactPieces := pieces.filter (Array.polyProduct · = core.poly)
       observeNat sink <| exactPieces.map
         (fun pieces => pieces.foldl
-          (fun sum piece => sum + piece.degree?.getD 0) 0) |>.getD 0
+          (fun sum piece => sum + piece.natDegree) 0) |>.getD 0
       let exactStop ← IO.monoNanosNow
       let replayStart ← IO.monoNanosNow
       let (factors, replayProfiles) ←
@@ -568,7 +568,7 @@ private def proposalProfile (f : ZPoly) : IO Json := do
           ("liftedFactorCount", natJson liftedCount),
           ("henselPrecision", natJson lifted.k),
           ("peel", proposalTraceToJson { classical := peeled.stats }),
-          ("residualDegree", natJson (peeled.residual.degree?.getD 0)),
+          ("residualDegree", natJson (peeled.residual.natDegree)),
           ("lattices", Json.arr latticeProfiles),
           ("partitionStable", Json.bool stable),
           ("externalReducer", externalReducer),
@@ -861,7 +861,7 @@ private def modularSubPhases (sink : IO.Ref Nat) (core : ZPoly)
     return Json.mkObj
       [ ("measurement", Json.str "repeat-at-selected-prime"),
         ("prime", natJson c.m),
-        ("modularDegree", natJson (fModP.degree?.getD 0)),
+        ("modularDegree", natJson (fModP.natDegree)),
         ("kernelDimension", natJson kernel.size),
         ("distinctDegree", Json.str "not-applicable"),
         ("rootExtraction", Json.bool rootExtraction),
@@ -900,10 +900,10 @@ private def emitPhaseProfile (f : ZPoly) (sink : IO.Ref Nat)
         pure (extras.push ("modular", ← modularSubPhases sink core candidate))
   return Json.mkObj <|
     [ ("method", Json.str method),
-      ("degree", natJson (f.degree?.getD 0)),
+      ("degree", natJson (f.natDegree)),
       ("reconstructs", Json.bool reconstructs),
       ("factorDegrees",
-        natArrayJson (φ.factors.map fun entry => entry.1.degree?.getD 0)),
+        natArrayJson (φ.factors.map fun entry => entry.1.natDegree)),
       ("multiplicities", natArrayJson (φ.factors.map fun entry => entry.2)),
       ("phases", Json.mkObj phases.toList) ] ++ extras.toList
 
@@ -981,7 +981,7 @@ private def precisionLocalPhaseProfile (f : ZPoly) (height precision count : Nat
   observeNat sink checksum.toNat
   let m4 ← mark
   return Json.mkObj
-    [ ("degree", natJson (f.degree?.getD 0)),
+    [ ("degree", natJson (f.natDegree)),
       ("height", natJson height),
       ("precision", natJson precision),
       ("localFactorCount", natJson count),
@@ -1005,10 +1005,10 @@ private def factorPhaseProfile (f : ZPoly) (probe : Bool := false) : IO Json := 
   let m0 ← mark
   let normalized := normalizeForFactor f
   let core := SquareFreeInput.ofNormalized normalized
-  observeNat sink (core.poly.degree?.getD 0 + (core.poly.coeff 0).natAbs)
+  observeNat sink (core.poly.natDegree + (core.poly.coeff 0).natAbs)
   let m1 ← mark
   let phases := #[phaseEntry "normalization" m0 m1]
-  if normalized.squareFreeCore.degree?.getD 0 = 0 then
+  if normalized.squareFreeCore.natDegree = 0 then
     return ← finishPhaseProfile f sink repeatAt core.poly m0 "constant" phases #[]
       (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])
   let quadratic := quadraticIntegerRootFactors? normalized.squareFreeCore
@@ -1085,7 +1085,7 @@ private def factorPhaseProfile (f : ZPoly) (probe : Bool := false) : IO Json := 
             ("modulusBits", natJson (bitLength (basis.p ^ basis.k))),
             ("liftedFactorCount", natJson basis.liftedFactors.size),
             ("liftedFactorDegrees",
-              natArrayJson (basis.liftedFactors.map (·.degree?.getD 0))),
+              natArrayJson (basis.liftedFactors.map (·.natDegree))),
             ("liftedMaxCoeffBits", natJson (maxCoeffBits basis.liftedFactors)),
             -- `balancedSplitIndex` halves by factor count, except when one
             -- modular factor carries more than half the total degree, where it
@@ -1312,7 +1312,7 @@ private def primeCounterfactual (f : ZPoly) : IO Json := do
             ("decline", search.decline.map (Json.str ·.name) |>.getD Json.null) ]
       return Json.mkObj
         [ ("goodPrimeFound", Json.bool true),
-          ("degree", natJson (f.degree?.getD 0)),
+          ("degree", natJson (f.natDegree)),
           ("selectedPrime", natJson modular.prime),
           ("coeffBound", natJson coreBound),
           ("candidates", Json.arr rows) ]
@@ -1621,7 +1621,7 @@ private def retainedPrimeProbe (f : ZPoly) : IO Json := do
       let others := modular.otherProbes
       let bits := others.map (fun probe => probe.reachableDegrees)
       let selectedBits := modular.selected.reachableDegrees
-      let rejectable := (List.range (core.poly.degree?.getD 0 + 1)).filter
+      let rejectable := (List.range (core.poly.natDegree + 1)).filter
         fun d =>
           selectedBits[d]?.getD false &&
             !(bits.all fun reachable => reachable[d]?.getD false)
@@ -1685,7 +1685,7 @@ private def retainedPrimeProbe (f : ZPoly) : IO Json := do
               natJson (directReachableProperCount probe)) ]
       return Json.mkObj
         [ ("goodPrimeFound", Json.bool true),
-          ("degree", natJson (core.poly.degree?.getD 0)),
+          ("degree", natJson (core.poly.natDegree)),
           ("selectedPrime", natJson modular.prime),
           ("retainedProbeCount", natJson others.size),
           ("probes", Json.arr probeJson),
@@ -1697,8 +1697,8 @@ private def retainedPrimeProbe (f : ZPoly) : IO Json := do
           ("actedTotals", retainedStatsJson acted.totals),
           ("decline", counted.decline.map (Json.str ·.name) |>.getD Json.null),
           ("peeledFactorDegrees",
-            natArrayJson (plain.peeled.map (fun q => q.degree?.getD 0))),
-          ("residualDegree", natJson (plain.residual.degree?.getD 0)),
+            natArrayJson (plain.peeled.map (fun q => q.natDegree))),
+          ("residualDegree", natJson (plain.residual.natDegree)),
           ("remainingSupport", natArrayJson plain.remaining),
           ("remainingBudget", natJson plain.budget),
           ("sameOutcome", Json.bool sameOutcome),
@@ -1724,7 +1724,7 @@ private def kernelProfileAt (core : ZPoly) (c : SmallPrimeCandidate) :
     let kernel ← HexBench.BerlekampKernel.kernelPhases monic hmonic
     return [ ("status", Json.str "ok"),
              ("prime", natJson c.m),
-             ("modularDegree", natJson (fModP.degree?.getD 0)),
+             ("modularDegree", natJson (fModP.natDegree)),
              ("kernel", kernel) ]
   else
     return [ ("status", Json.str "zeroModularImage"), ("prime", natJson c.m) ]
@@ -1778,7 +1778,7 @@ private def scoutRow (sink : IO.Ref Nat) (core : SquareFreeInput) (target : Nat)
     return none
   let fModP := ZPoly.modP c.m core.poly
   if hzero : fModP.isZero = false then
-    let n := fModP.degree?.getD 0
+    let n := fModP.natDegree
     let monic := monicModularImage fModP
     let hmonic := monicModularImage_monic c.prime fModP hzero
     let boundedStart ← mark
@@ -1800,7 +1800,7 @@ private def scoutRow (sink : IO.Ref Nat) (core : SquareFreeInput) (target : Nat)
     let factors := (Berlekamp.berlekampFactor monic hmonic).factors
     observeNat sink factors.length
     let splitStop ← mark
-    let splitDegrees := (factors.map fun g => g.degree?.getD 0).toArray
+    let splitDegrees := (factors.map fun g => g.natDegree).toArray
     let scoutDegrees := pattern.getD #[]
     return some <| Json.mkObj
       [ ("prime", natJson c.m),
@@ -1868,7 +1868,7 @@ private def primeScout (f : ZPoly) : IO Json := do
           seen := seen + 1
           rows := rows.push row
   return Json.mkObj
-    [ ("degree", natJson (core.poly.degree?.getD 0)),
+    [ ("degree", natJson (core.poly.natDegree)),
       ("scoutHorizon", natJson scoutHorizon),
       ("firstGoodPrimeWidth", natJson firstWidth),
       ("scoutTarget", natJson target),
@@ -1893,7 +1893,7 @@ call. -/
 
 private def polyShapeJson (name : String) (f : ZPoly) : String × Json :=
   (name, Json.mkObj
-    [ ("degree", natJson (f.degree?.getD 0)),
+    [ ("degree", natJson (f.natDegree)),
       ("size", natJson f.size),
       ("coeffBits", natJson (ZPoly.bitLen (ZPoly.maxAbs f))) ])
 
@@ -2057,7 +2057,7 @@ private partial def profileTreeNode (sink : IO.Ref Nat)
         [ ("depth", natJson depth),
           ("factorCount", natJson gs.length),
           ("splitIndex", natJson split),
-          ("targetDegree", natJson (f.degree?.getD 0)),
+          ("targetDegree", natJson (f.natDegree)),
           ("split", spanJson start splitStop),
           ("subProducts", spanJson splitStop productStop),
           ("xgcd", spanJson productStop xgcdStop),
@@ -2095,7 +2095,7 @@ private def henselTreeAt (p : Nat) [ZMod64.Bounds p] (k : Nat)
       ("prime", natJson p),
       ("precision", natJson k),
       ("modularFactorCount", natJson factors.size),
-      ("targetDegree", natJson (target.degree?.getD 0)),
+      ("targetDegree", natJson (target.natDegree)),
       ("reference", spanJson refStart refStop),
       ("mirror", spanJson walkStart walkStop),
       ("nodes", Json.arr rows) ]
@@ -2160,7 +2160,7 @@ private def quadraticNormProbe (paired : Bool) (f : ZPoly) : IO Json := do
   match recovered with
   | none =>
       return Json.mkObj <|
-        [ ("degree", natJson (f.degree?.getD 0)),
+        [ ("degree", natJson (f.natDegree)),
           ("certified", Json.bool false) ] ++ productionSpans ++
         [ ("recovery", spanJson recoveryStart recoveryStop),
           ("witness", natJson (← witness.get)) ]
@@ -2178,7 +2178,7 @@ private def quadraticNormProbe (paired : Bool) (f : ZPoly) : IO Json := do
       witness.modify (· + if equal then 1 else 0)
       let equalityStop ← mark
       return Json.mkObj <|
-        [ ("degree", natJson (f.degree?.getD 0)),
+        [ ("degree", natJson (f.natDegree)),
           ("certified", Json.bool (independent && equal)) ] ++ productionSpans ++
         [ ("recovery", spanJson recoveryStart recoveryStop),
           ("independence", spanJson independenceStart independenceStop),

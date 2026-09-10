@@ -48,16 +48,16 @@ private theorem pow_go_eq_mul_pow (acc base : Hex.FpPoly p) (k : Nat) :
       rw [Hex.FpPoly.pow.go.eq_def]
       by_cases hk : k = 0
       · simp [hk]
-      · rw [dif_neg hk]
+      · rw [dite_eq_right hk]
         have hlt : k / 2 < k := Nat.div_lt_self (Nat.pos_of_ne_zero hk) (by decide)
         show Hex.FpPoly.pow.go (if k % 2 = 1 then acc * base else acc)
           (base * base) (k / 2) = acc * base ^ k
         rcases Nat.mod_two_eq_zero_or_one k with hmod | hmod
         · have hnot : ¬ k % 2 = 1 := by omega
           have hk2 : 2 * (k / 2) = k := by omega
-          rw [if_neg hnot, ih _ hlt, ← sq, ← pow_mul, hk2]
+          rw [ite_eq_right hnot, ih _ hlt, ← sq, ← pow_mul, hk2]
         · have hk2 : 2 * (k / 2) + 1 = k := by omega
-          rw [if_pos hmod, ih _ hlt, ← sq, ← pow_mul, mul_assoc, ← pow_succ', hk2]
+          rw [ite_eq_left hmod, ih _ hlt, ← sq, ← pow_mul, mul_assoc, ← pow_succ', hk2]
 
 /-- The executable square-and-multiply power is Mathlib's monoid power, the
 sibling of `linearPow_eq_pow` for the exponentiation the compiled square-free
@@ -119,7 +119,7 @@ theorem isCoprime_toMathlibPolynomial_of_normalizeMonic_gcd_eq_one
     [Fact (Nat.Prime p)] {a b : Hex.FpPoly p}
     (h : (Hex.FpPoly.normalizeMonic (Hex.DensePoly.gcd a b)).2 = 1) :
     IsCoprime (toMathlibPolynomial a) (toMathlibPolynomial b) := by
-  haveI : Hex.ZMod64.PrimeModulus p := primeModulus_of_fact p
+  have : Hex.ZMod64.PrimeModulus p := primeModulus_of_fact p
   obtain ⟨u, hu⟩ := isUnit_toMathlibPolynomial_of_normalizeMonic_eq_one h
   have hbez : (Hex.DensePoly.xgcd a b).left * a + (Hex.DensePoly.xgcd a b).right * b
       = Hex.DensePoly.gcd a b :=

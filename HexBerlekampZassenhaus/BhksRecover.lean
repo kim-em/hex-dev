@@ -227,8 +227,8 @@ private theorem bhksRecoverClassifiedWithAllOnes_fst (f : ZPoly) (d : LiftData) 
   by_cases hrows :
       1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
         (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth
-  · simp only [dif_pos hrows]
-  · simp only [dif_neg hrows]
+  · simp only [dite_eq_left hrows]
+  · simp only [dite_eq_right hrows]
 
 /--
 If the executable BHKS recovery guards all pass, `bhksRecover?` returns the
@@ -259,8 +259,8 @@ theorem bhksRecover?_eq_some_of_checks
   rw [bhksRecoverClassified]
   have hproductCheck : (Array.polyProduct candidates == f) = true := by
     simpa [beq_iff_eq] using hprod
-  simp only [dif_pos hrows, hnondeg, Bool.false_eq_true, if_false, hcand,
-    hproductCheck, if_true, BhksRecoveryResult.toOption]
+  simp only [dite_eq_left hrows, hnondeg, Bool.false_eq_true, ite_false, hcand,
+    hproductCheck, ite_true, BhksRecoveryResult.toOption]
 
 private def bhksIndicatorGuardLift : LiftData :=
   { p := 5

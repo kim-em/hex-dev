@@ -39,7 +39,7 @@ private def report (label : String) (f : ZPoly) : IO Unit := do
     | none => "none"
   let primeOk := data?.isSome
   let coeffBound := ZPoly.defaultFactorCoeffBound f
-  IO.println s!"--- {label} (deg {f.degree?.getD 0}, choosePrime={prime}, dataPrime={dataPrime}, dataOk={primeOk}, B={coeffBound})"
+  IO.println s!"--- {label} (deg {f.natDegree}, choosePrime={prime}, dataPrime={dataPrime}, dataOk={primeOk}, B={coeffBound})"
 
   -- Time factorFastWithBound at the default bound used by factor combinator
   let mut chk : UInt64 := 0
@@ -51,7 +51,7 @@ private def report (label : String) (f : ZPoly) : IO Unit := do
   match mFastB with
   | none => IO.println s!"  factorFast (at fastCap): none  ({fastBms} ms, chk={chk})"
   | some φ =>
-      let degs := φ.factors.toList.map (fun e => e.1.degree?.getD 0)
+      let degs := φ.factors.toList.map (fun e => e.1.natDegree)
       IO.println s!"  factorFast (at fastCap): {φ.factors.size} factors degrees={degs}  ({fastBms} ms, chk={chk})"
 
   -- Time the public combinator
@@ -60,7 +60,7 @@ private def report (label : String) (f : ZPoly) : IO Unit := do
   chk := chk ^^^ (fingerprint φFull)
   let tD ← IO.monoNanosNow
   let fullMs := Float.ofInt (Int.ofNat (tD - tC)) / 1e6
-  let degs := φFull.factors.toList.map (fun e => e.1.degree?.getD 0)
+  let degs := φFull.factors.toList.map (fun e => e.1.natDegree)
   IO.println s!"  factor   (combinator): {φFull.factors.size} factors degrees={degs}  ({fullMs} ms, chk={chk})"
 
 @[expose]

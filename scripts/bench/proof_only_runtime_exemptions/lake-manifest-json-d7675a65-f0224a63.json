@@ -1,0 +1,6 @@
+{
+  "path": "lake-manifest.json",
+  "baseline_blob": "d7675a65d5bec03396cb8f75c81bff62479b64e9",
+  "current_blob": "f0224a637802b7d18f6de1dd38f239b9de853152",
+  "reason": "Adds the standalone NautyFFI package at an exact revision for the explicitly built in-process conformance executable. No factorization library imports it, and it does not change hexbz_factor_service or its runtime call graph."
+}

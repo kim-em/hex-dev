@@ -178,7 +178,7 @@ private theorem map_natDegree_factorsModP
     data.factorsModP.toList.map
         (fun g => (HexBerlekampMathlib.toMathlibPolynomial g).natDegree) =
       (Hex.directFactorDegrees data).toList := by
-  letI := data.bounds
+  let := data.bounds
   simp only [Hex.directFactorDegrees, Array.toList_map]
   refine List.map_congr_left ?_
   intro g _
@@ -198,10 +198,10 @@ theorem exists_subMultiset_directFactorDegrees_of_dvd
     (hval : ModPFactorization core data)
     {c : Hex.ZPoly} (hdvd : c ∣ core) :
     ∃ S ≤ ((Hex.directFactorDegrees data).toList : Multiset Nat),
-      S.sum = c.degree?.getD 0 := by
-  letI := data.bounds
-  haveI : Fact (_root_.Nat.Prime data.p) := ⟨natPrime_of_hexNatPrime hval.prime⟩
-  letI : Hex.ZMod64.PrimeModulus data.p :=
+      S.sum = c.natDegree := by
+  let := data.bounds
+  have : Fact (_root_.Nat.Prime data.p) := ⟨natPrime_of_hexNatPrime hval.prime⟩
+  let : Hex.ZMod64.PrimeModulus data.p :=
     Hex.ZMod64.primeModulusOfPrime hval.prime
   have hcore_modP_nz :
       (@Hex.ZPoly.modP data.p data.bounds core).isZero = false :=
@@ -284,18 +284,18 @@ theorem reachableDegrees_of_dvd
     (hrec : probe = Hex.DirectPrimeProbe.ofData core probe.candidate probe.data)
     (hval : ModPFactorization core.poly probe.data)
     {c : Hex.ZPoly} (hdvd : c ∣ core.poly) :
-    probe.reachableDegrees[c.degree?.getD 0]?.getD false = true := by
+    probe.reachableDegrees[c.natDegree]?.getD false = true := by
   have hcore_ne : core.poly ≠ 0 := core_ne_zero_of_modPFactorization core.poly probe.data hval
   have hFne : HexPolyZMathlib.toPolynomial core.poly ≠ 0 := by
     intro hzero
     exact hcore_ne (HexPolyZMathlib.equiv.injective (by simpa using hzero))
-  have hle : c.degree?.getD 0 ≤ core.poly.degree?.getD 0 := by
+  have hle : c.natDegree ≤ core.poly.natDegree := by
     have hdeg :=
       Polynomial.natDegree_le_of_dvd (HexPolyMathlib.toPolynomial_dvd hdvd) hFne
     rwa [HexPolyMathlib.natDegree_toPolynomial,
       HexPolyMathlib.natDegree_toPolynomial] at hdeg
   have hbits : probe.reachableDegrees =
-      Hex.directDegreeBits (core.poly.degree?.getD 0)
+      Hex.directDegreeBits (core.poly.natDegree)
         (Hex.directFactorDegrees probe.data) :=
     congrArg Hex.DirectPrimeProbe.reachableDegrees hrec
   rw [hbits, directDegreeBits_getElem?_iff _ _ _ hle]
@@ -322,7 +322,7 @@ theorem directPrimePlan_probes_modPFactorization
     (hplan : Hex.directPrimePlan? core = some plan)
     (hprim : Hex.ZPoly.Primitive core.poly)
     (hlc_pos : 0 < Hex.DensePoly.leadingCoeff core.poly)
-    (hpos : 0 < core.poly.degree?.getD 0) :
+    (hpos : 0 < core.poly.natDegree) :
     ∀ probe ∈ plan.probes, ModPFactorization core.poly probe.data := by
   intro probe hmem
   exact modPFactorization_of_probePrimeData
@@ -336,7 +336,7 @@ theorem directPrimePlan_probes_facts
     (hplan : Hex.directPrimePlan? core = some plan)
     (hprim : Hex.ZPoly.Primitive core.poly)
     (hlc_pos : 0 < Hex.DensePoly.leadingCoeff core.poly)
-    (hpos : 0 < core.poly.degree?.getD 0) :
+    (hpos : 0 < core.poly.natDegree) :
     ∀ probe ∈ plan.probes, DirectPrimeFacts core.poly probe.data := by
   intro probe hmem
   exact
@@ -357,10 +357,10 @@ theorem directPrimePlan_probes_reachableDegrees
     (hplan : Hex.directPrimePlan? core = some plan)
     (hprim : Hex.ZPoly.Primitive core.poly)
     (hlc_pos : 0 < Hex.DensePoly.leadingCoeff core.poly)
-    (hpos : 0 < core.poly.degree?.getD 0)
+    (hpos : 0 < core.poly.natDegree)
     {c : Hex.ZPoly} (hdvd : c ∣ core.poly) :
     ∀ probe ∈ plan.probes,
-      probe.reachableDegrees[c.degree?.getD 0]?.getD false = true := by
+      probe.reachableDegrees[c.natDegree]?.getD false = true := by
   intro probe hmem
   exact reachableDegrees_of_dvd
     (Hex.directPrimePlan?_probes_trial core plan hplan probe hmem).2
@@ -375,7 +375,7 @@ theorem directPrimePlan_modPFactorization
     (hplan : Hex.directPrimePlan? core = some plan)
     (hprim : Hex.ZPoly.Primitive core.poly)
     (hlc_pos : 0 < Hex.DensePoly.leadingCoeff core.poly)
-    (hpos : 0 < core.poly.degree?.getD 0) :
+    (hpos : 0 < core.poly.natDegree) :
     ModPFactorization core.poly plan.data :=
   directPrimePlan_probes_modPFactorization core plan hplan hprim hlc_pos hpos
     plan.selected plan.selected_mem_probes
@@ -387,7 +387,7 @@ theorem directPrimePlan_facts
     (hplan : Hex.directPrimePlan? core = some plan)
     (hprim : Hex.ZPoly.Primitive core.poly)
     (hlc_pos : 0 < Hex.DensePoly.leadingCoeff core.poly)
-    (hpos : 0 < core.poly.degree?.getD 0) :
+    (hpos : 0 < core.poly.natDegree) :
     DirectPrimeFacts core.poly plan.data :=
   directPrimePlan_probes_facts core plan hplan hprim hlc_pos hpos
     plan.selected plan.selected_mem_probes

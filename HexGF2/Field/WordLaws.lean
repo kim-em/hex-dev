@@ -51,7 +51,7 @@ private theorem ofUInt64_packedReduce_val
   apply GF2Poly.ofUInt64_packedReduceWord_eq_of_degree_lt hn64
   have hred :=
     GF2Poly.mod_degree_lt p (GF2Poly.ofUInt64Monic irr n) hirr.1
-  rw [GF2Poly.degree_ofUInt64Monic_of_lt_64 irr hn64] at hred
+  rw [GF2Poly.natDegree_ofUInt64Monic_of_lt_64 irr hn64] at hred
   exact hred
 
 /-- Reading back a reduced word gives its polynomial remainder modulo the
@@ -74,14 +74,14 @@ private theorem ofUInt64_reduceWide_val (hi lo : UInt64) :
 /-- A canonical single-word representative unpacks to a polynomial reduced
 below the extension degree. -/
 private theorem val_reduced (a : GF2n n irr hn hn64 hirr) :
-    (GF2Poly.ofUInt64 a.val).IsZero ∨ (GF2Poly.ofUInt64 a.val).degree < n := by
+    (GF2Poly.ofUInt64 a.val).IsZero ∨ (GF2Poly.ofUInt64 a.val).natDegree < n := by
   by_cases hzero : (GF2Poly.ofUInt64 a.val).isZero = true
   · exact Or.inl hzero
   · right
     have hzeroFalse : (GF2Poly.ofUInt64 a.val).isZero = false := by
       cases h : (GF2Poly.ofUInt64 a.val).isZero <;> simp [h] at hzero ⊢
     obtain ⟨d, hd⟩ := GF2Poly.degree?_isSome_of_isZero_false hzeroFalse
-    rw [GF2Poly.degree_eq_of_degree?_eq_some hd]
+    rw [GF2Poly.natDegree_eq_of_degree?_eq_some hd]
     by_cases hdn : d < n
     · exact hdn
     · have hnd : n ≤ d := Nat.le_of_not_gt hdn
@@ -101,7 +101,7 @@ private theorem val_mod_eq (a : GF2n n irr hn hn64 hirr) :
     GF2Poly.ofUInt64 a.val % GF2Poly.ofUInt64Monic irr n =
       GF2Poly.ofUInt64 a.val := by
   apply GF2Poly.mod_eq_self_of_reduced
-  rw [GF2Poly.degree_ofUInt64Monic_of_lt_64 irr hn64]
+  rw [GF2Poly.natDegree_ofUInt64Monic_of_lt_64 irr hn64]
   exact val_reduced a
 
 /-- The comparison with `GF2nPoly` is injective. -/
@@ -240,8 +240,8 @@ theorem one_ne_zero : (1 : GF2n n irr hn hn64 hirr) ≠ 0 := by
     (hirr := hirr)) h
   rw [toPoly_one, toPoly_zero] at hpoly
   exact GF2nPoly.one_ne_zero
-    (by simpa using (show 0 < (GF2Poly.ofUInt64Monic irr n).degree by
-      rw [GF2Poly.degree_ofUInt64Monic_of_lt_64 irr hn64]
+    (by simpa using (show 0 < (GF2Poly.ofUInt64Monic irr n).natDegree by
+      rw [GF2Poly.natDegree_ofUInt64Monic_of_lt_64 irr hn64]
       exact hn)) hpoly
 
 end GF2n

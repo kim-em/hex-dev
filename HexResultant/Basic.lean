@@ -322,10 +322,10 @@ private theorem pseudoQuotient_coeff {S : Type u} [Zero S] [DecidableEq S]
       else 0
   rw [coeff_ofCoeffs]
   by_cases hk : k < d
-  · rw [if_pos hk]
+  · rw [ite_eq_left hk]
     have hget := pushBuild_getD d k #[] step (Zero.zero : S) hk
     simpa only [Array.size_empty, Nat.zero_add] using hget
-  · rw [if_neg hk]
+  · rw [ite_eq_right hk]
     have hsize : (pushBuild d #[] step).size ≤ k := by
       rw [pushBuild_size]
       simp only [Array.size_empty]
@@ -372,12 +372,12 @@ private theorem pseudoRemainder_coeff {S : Type u}
       else 0
   rw [coeff_ofCoeffs]
   by_cases ht : t < m
-  · rw [if_pos ht]
+  · rw [ite_eq_left ht]
     dsimp only [step]
     have hget := pushBuild_getD m t #[] step (Zero.zero : S) ht
     dsimp only [step] at hget
     simpa only [Array.size_empty, Nat.zero_add, coeff_ofCoeffs] using hget
-  · rw [if_neg ht]
+  · rw [ite_eq_right ht]
     have hsize : (pushBuild m #[] step).size ≤ t := by
       rw [pushBuild_size]
       simp only [Array.size_empty]
@@ -509,7 +509,7 @@ private theorem coeff_mul_bounded {S : Type u} [Lean.Grind.CommRing S]
   apply foldl_range_congr
   intro acc i hi
   unfold diagonalMulCoeffTerm
-  rw [if_neg (by
+  rw [ite_eq_right (by
     have himin : i < min (t + 1) bound := hi
     omega)]
 
@@ -590,7 +590,7 @@ private theorem high_convolution {S : Type u} [Lean.Grind.CommRing S]
     have hgindex : n - i - k = m + j - i := by
       dsimp only [k, j]
       omega
-    rw [hq, if_pos hk, hjindex, hgindex]
+    rw [hq, ite_eq_left hk, hjindex, hgindex]
     by_cases hoff : offset < correctionLength
     · have hj : j < i := by
         dsimp only [j, correctionLength]
@@ -844,7 +844,7 @@ theorem pseudoDivMod_reconstruct {S : Type u}
   intro t
   rw [coeff_scale_semiring, coeff_add_semiring]
   by_cases ht : t < m
-  · rw [hrcoeff t, if_pos ht, coeff_mul_bounded q g t d hqsize,
+  · rw [hrcoeff t, ite_eq_left ht, coeff_mul_bounded q g t d hqsize,
       hpowersSpec.2 d (by omega)]
     grind
   · by_cases htf : t < f.size
@@ -855,7 +855,7 @@ theorem pseudoDivMod_reconstruct {S : Type u}
       have hi : i < d := by
         dsimp only [i]
         omega
-      rw [hrcoeff t, if_neg ht, coeff_mul_bounded q g t d hqsize]
+      rw [hrcoeff t, ite_eq_right ht, coeff_mul_bounded q g t d hqsize]
       have hhigh := high_convolution g q active powers b n m d i hnd
         hmsize.symm hlc hpowersSpec.2 hqcoeff hi
       rw [← hnti, hhigh, hactiveSpec.2 i hi]
@@ -873,7 +873,7 @@ theorem pseudoDivMod_reconstruct {S : Type u}
       have hprodzero : (q * g).coeff t = 0 :=
         coeff_eq_zero_of_size_le (q * g)
           (Nat.le_trans hprodsize (Nat.le_of_not_gt htf))
-      rw [hrcoeff t, if_neg ht, hfzero, hprodzero]
+      rw [hrcoeff t, ite_eq_right ht, hfzero, hprodzero]
       simp only [Lean.Grind.Semiring.mul_zero,
         Lean.Grind.Semiring.add_zero]
 

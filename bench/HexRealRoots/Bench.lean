@@ -11,7 +11,7 @@ import LeanBench
 Benchmark registrations for `hex-real-roots`.
 
 This Phase 4 slice measures the certified real-root isolation surface: the
-two isolation engines through the public `isolate?`/`isolateSturm?` drivers,
+two isolation engines through the public `ZPoly.isolateRealRoots?`/`ZPoly.isolateSturm?` drivers,
 the Sturm-chain and sign-variation primitives, the Möbius transform, the
 `rootBound`/`sepPrec` closed forms, and the `refineTo` refinement loop.
 
@@ -21,7 +21,7 @@ the scalar result, so the harness's hash column doubles as a
 cross-implementation conformance check.
 
 Input families (per `HexRealRoots/SPEC/hex-real-roots.md` §"Time budgets" and the
-conformance §"local" tier). `isolate?` is deliberately exercised on three
+conformance §"local" tier). `ZPoly.isolateRealRoots?` is deliberately exercised on three
 structurally different families, never a single happy-path shape:
 
 * `well-separated-products`: `∏_{k=1}^{n} (x − k)`, `n` unit-separated integer
@@ -38,7 +38,7 @@ structurally different families, never a single happy-path shape:
 
 `compare runIsolateDescartesFirst runIsolateSturm` (shared
 `well-separated-products` domain) is the intentional cross-engine equivalence
-check: `isolate?` runs Descartes-first, `isolateSturm?` is the certified
+check: `ZPoly.isolateRealRoots?` runs Descartes-first, `ZPoly.isolateSturm?` is the certified
 fallback, and both must hash-agree on the isolation endpoints at every common
 degree.
 
@@ -176,20 +176,20 @@ def refineP : ZPoly := DensePoly.ofCoeffs #[(-5 : Int), 1]
 
 /-! # Timed targets. -/
 
-/-- `isolate?` on the well-separated integer-root product. -/
-def runIsolateWellSep (p : ZPoly) : Int := isolationsChecksum (isolate? p)
+/-- `ZPoly.isolateRealRoots?` on the well-separated integer-root product. -/
+def runIsolateWellSep (p : ZPoly) : Int := isolationsChecksum (ZPoly.isolateRealRoots? p)
 
-/-- `isolate?` on the Chebyshev-clustered polynomial. -/
-def runIsolateChebyshev (p : ZPoly) : Int := isolationsChecksum (isolate? p)
+/-- `ZPoly.isolateRealRoots?` on the Chebyshev-clustered polynomial. -/
+def runIsolateChebyshev (p : ZPoly) : Int := isolationsChecksum (ZPoly.isolateRealRoots? p)
 
-/-- `isolate?` on the Mignotte worst-case polynomial. -/
-def runIsolateMignotte (p : ZPoly) : Int := isolationsChecksum (isolate? p)
+/-- `ZPoly.isolateRealRoots?` on the Mignotte worst-case polynomial. -/
+def runIsolateMignotte (p : ZPoly) : Int := isolationsChecksum (ZPoly.isolateRealRoots? p)
 
-/-- `isolate?` (Descartes-first) on the shared compare domain. -/
-def runIsolateDescartesFirst (p : ZPoly) : Int := isolationsChecksum (isolate? p)
+/-- `ZPoly.isolateRealRoots?` (Descartes-first) on the shared compare domain. -/
+def runIsolateDescartesFirst (p : ZPoly) : Int := isolationsChecksum (ZPoly.isolateRealRoots? p)
 
-/-- `isolateSturm?` (certified engine) on the shared compare domain. -/
-def runIsolateSturm (p : ZPoly) : Int := isolationsChecksum (isolateSturm? p)
+/-- `ZPoly.isolateSturm?` (certified engine) on the shared compare domain. -/
+def runIsolateSturm (p : ZPoly) : Int := isolationsChecksum (ZPoly.isolateSturm? p)
 
 /-- Build the Sturm chain of the dense fixture and checksum it. -/
 def runSturmChain (p : ZPoly) : Int := chainChecksum (ZPoly.sturmChain p)
@@ -216,7 +216,7 @@ def runSepPrec (p : ZPoly) : Int := Int.ofNat (sepPrec p)
 /-- Refine the first isolation of `x − 5` to precision `8·(n + 1)`; the
 escalating target drives a bisection depth linear in `n`. -/
 def runRefineTo (n : Nat) : Int :=
-  match isolate? refineP with
+  match ZPoly.isolateRealRoots? refineP with
   | none => -1
   | some rs =>
     match rs.isolations[0]? with
@@ -232,7 +232,7 @@ step and how the fixture parameter maps onto that step's input size, per
 `SPEC/benchmarking.md`.
 -/
 
-/- `isolate?` on `∏(x−k)`. SPEC §"Complexity contract": well-separated roots
+/- `ZPoly.isolateRealRoots?` on `∏(x−k)`. SPEC §"Complexity contract": well-separated roots
 resolve in `O(n + log(rootBound/gap))` bisection levels; with `O(n)` unresolved
 intervals per level that is `O(n²)` Möbius transforms, each an `O(n²)` integer
 Taylor shift, so `O(n⁴)` integer operations. Coefficient growth of `∏(x−k)`
@@ -249,7 +249,7 @@ setup_benchmark runIsolateWellSep n => n ^ 4
     signalFloorMultiplier := 1.0
   }
 
-/- `isolate?` on `T_n`. The clustered roots near `±1` (gaps `~1/n²`) force
+/- `ZPoly.isolateRealRoots?` on `T_n`. The clustered roots near `±1` (gaps `~1/n²`) force
 `O(log n)` extra bisection levels versus the well-separated family, but the
 dominant asymptotic is still `O(n²)` Möbius transforms of `O(n²)` cost each,
 i.e. `O(n⁴)`; coefficient magnitude `~2^n` (`h ~ n`) is the bignum factor. -/
@@ -265,7 +265,7 @@ setup_benchmark runIsolateChebyshev n => n ^ 4
     signalFloorMultiplier := 1.0
   }
 
-/- `isolate?` on the Mignotte worst case. SPEC §"Complexity contract": bisection
+/- `ZPoly.isolateRealRoots?` on the Mignotte worst case. SPEC §"Complexity contract": bisection
 depth is `O(n·(h + log n))` and each node is one `O(n²)` Möbius transform. The
 Mignotte polynomial has `O(1)` real roots (the close pair), so the bisection
 tree width is `O(1)` and the node count is `O(depth) = O(n)` at fixed `a`
@@ -285,7 +285,7 @@ setup_benchmark runIsolateMignotte n => n ^ 3
     signalFloorMultiplier := 1.0
   }
 
-/- Compare leg (Descartes-first `isolate?`). Shared `well-separated-products`
+/- Compare leg (Descartes-first `ZPoly.isolateRealRoots?`). Shared `well-separated-products`
 domain with `runIsolateSturm`; same `O(n⁴)` textbook model as
 `runIsolateWellSep` since it is the same driver on the same inputs. -/
 -- Declared cost-model: worst-case O(n^4) integer operations, textbook Descartes bisection.
@@ -306,7 +306,7 @@ total degree `O(n²)` — and the primitive chain's coefficients grow to `O(n·h
 bits (SPEC §"Complexity contract"), so each node's bignum evaluation carries an
 extra factor of `O(n)` over the Descartes engine's bounded-coefficient Möbius
 transform: `O(n²)` nodes × `O(n²)` Horner × `O(n)` bit-growth = `O(n⁵)`. This
-super-`O(n⁴)` cost is exactly why `isolate?` runs Descartes first; the compare's
+super-`O(n⁴)` cost is exactly why `ZPoly.isolateRealRoots?` runs Descartes first; the compare's
 relative-timing summary makes the gap concrete. -/
 -- Declared cost-model: O(n^5) bit-operations, full-chain-per-node Sturm bisection with O(n·h) coefficient growth.
 setup_benchmark runIsolateSturm n => n ^ 5

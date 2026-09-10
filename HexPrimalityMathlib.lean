@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPrimalityMathlib.NormNum
-import HexPrimalityMathlib.Prime
-import HexPrimalityMathlib.Segment
+module
+
+public import HexPrimalityMathlib.NormNum
+public import HexPrimalityMathlib.Prime
+public import HexPrimalityMathlib.Segment
+
+public section
 
 /-!
 The `HexPrimalityMathlib` library relates the Mathlib-free primality

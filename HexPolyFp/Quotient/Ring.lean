@@ -28,16 +28,16 @@ local instance : DensePoly.DivModLaws (ZMod64 p) :=
 /-- Canonical representatives for the quotient `F_p[X] / (g)`, reduced modulo
 a monic positive-degree modulus. -/
 structure Quotient (g : FpPoly p) (hmonic : DensePoly.Monic g)
-    (hg_pos : 0 < g.degree?.getD 0) where
+    (hg_pos : 0 < g.natDegree) where
   /-- The chosen representative polynomial, of degree below `g`. -/
   val : FpPoly p
   /-- The representative's degree is strictly below that of the modulus `g`. -/
-  reduced : val.degree?.getD 0 < g.degree?.getD 0
+  reduced : val.natDegree < g.natDegree
 
 namespace Quotient
 
 variable {g : FpPoly p} {hmonic : DensePoly.Monic g}
-variable {hg_pos : 0 < g.degree?.getD 0}
+variable {hg_pos : 0 < g.natDegree}
 
 omit [ZMod64.PrimeModulus p] in
 /-- Two quotient elements are equal when their underlying representatives
@@ -222,14 +222,14 @@ private theorem perm_of_nodup_mem_iff
 polynomials. -/
 @[expose]
 def elements : List (Quotient g hmonic hg_pos) :=
-  (Enumeration.polysBelowDegree p (g.degree?.getD 0)).map
+  (Enumeration.polysBelowDegree p (g.natDegree)).map
     (reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos))
 
 /-- {name}`elements` enumerates exactly `p ^ deg g` canonical representatives;
 the order of the quotient ring `FpPoly p / g`. -/
 @[simp, grind =] theorem elements_length :
     (elements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).length =
-      p ^ g.degree?.getD 0 := by
+      p ^ g.natDegree := by
   simp [elements]
 
 /-- Every quotient element appears in {name}`elements`. -/
@@ -247,14 +247,14 @@ theorem elements_nodup :
     (elements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).Nodup := by
   unfold elements
   apply nodup_map_of_injective
-  · exact Enumeration.polysBelowDegree_nodup (p := p) (g.degree?.getD 0)
+  · exact Enumeration.polysBelowDegree_nodup (p := p) (g.natDegree)
   · intro a ha b hb hab
     have hval := congrArg Quotient.val hab
     rw [reduce_val, reduce_val, FpPoly.modByMonic, FpPoly.modByMonic,
       DensePoly.modByMonic_eq_mod, DensePoly.modByMonic_eq_mod] at hval
-    have ha_deg : a.degree?.getD 0 < g.degree?.getD 0 :=
+    have ha_deg : a.natDegree < g.natDegree :=
       Enumeration.degree_getD_lt_of_mem_polysBelowDegree hg_pos ha
-    have hb_deg : b.degree?.getD 0 < g.degree?.getD 0 :=
+    have hb_deg : b.natDegree < g.natDegree :=
       Enumeration.degree_getD_lt_of_mem_polysBelowDegree hg_pos hb
     rw [DensePoly.mod_eq_self_of_degree_lt a g ha_deg,
       DensePoly.mod_eq_self_of_degree_lt b g hb_deg] at hval
@@ -264,7 +264,7 @@ theorem elements_nodup :
 list-cardinality sense. -/
 theorem elements_card :
     (elements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).length =
-      p ^ g.degree?.getD 0 :=
+      p ^ g.natDegree :=
   elements_length (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
 
 end Internal
@@ -307,7 +307,7 @@ theorem nonzeroElements_nodup :
 /-- There are `p ^ deg(g) - 1` nonzero quotient representatives. -/
 theorem nonzeroElements_card :
     (nonzeroElements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).length =
-      p ^ g.degree?.getD 0 - 1 := by
+      p ^ g.natDegree - 1 := by
   unfold nonzeroElements
   rw [length_filter_ne_eq_pred_of_mem_nodup
     (mem_elements (g := g) (hmonic := hmonic) (hg_pos := hg_pos) 0)
@@ -489,8 +489,8 @@ theorem reduce_val_self (a : Quotient g hmonic hg_pos) :
 theorem one_val_eq_one :
     (1 : Quotient g hmonic hg_pos).val = (1 : FpPoly p) := by
   rw [one_val, FpPoly.modByMonic, DensePoly.modByMonic_eq_mod]
-  have hone_deg : (1 : FpPoly p).degree?.getD 0 < g.degree?.getD 0 := by
-    change (DensePoly.C (1 : ZMod64 p)).degree?.getD 0 < g.degree?.getD 0
+  have hone_deg : (1 : FpPoly p).natDegree < g.natDegree := by
+    change (DensePoly.C (1 : ZMod64 p)).natDegree < g.natDegree
     simpa using hg_pos
   exact DensePoly.mod_eq_self_of_degree_lt (1 : FpPoly p) g hone_deg
 
@@ -872,7 +872,7 @@ modulo `g`.
 -/
 theorem mul_mod_inverseCandidate_eq_one_of_irreducible
     (hg_irr : FpPoly.Irreducible g) {a : FpPoly p}
-    (ha_ne : a ≠ 0) (ha_reduced : a.degree?.getD 0 < g.degree?.getD 0) :
+    (ha_ne : a ≠ 0) (ha_reduced : a.natDegree < g.natDegree) :
     (a * inverseCandidate (g := g) a) % g = (1 : FpPoly p) % g := by
   letI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
   -- Bezout identity from the executable extended gcd.
@@ -900,23 +900,25 @@ theorem mul_mod_inverseCandidate_eq_one_of_irreducible
     rcases hg_irr.2 _ _ hr.symm with hd_deg_zero | hr_deg_zero
     · exact hd_deg_zero
     · exfalso
-      have hsum : g.degree?.getD 0 = d.degree?.getD 0 + r.degree?.getD 0 := by
+      have hsum : g.natDegree = d.natDegree + r.natDegree := by
         rw [hr]
         exact FpPoly.degree?_mul_eq_add_degree? d r hd_ne hr_ne
-      have hr_deg_zero' : r.degree?.getD 0 = 0 := by simp [hr_deg_zero]
+      have hr_deg_zero' : r.natDegree = 0 := by
+        rw [Hex.DensePoly.natDegree_eq_degree?_getD, hr_deg_zero]
+        rfl
       obtain ⟨s, hs⟩ := hda
       have hs_ne : s ≠ 0 := by
         intro hzero
         apply ha_ne
         rw [hs, hzero, FpPoly.mul_zero]
-      have hsum_a : a.degree?.getD 0 = d.degree?.getD 0 + s.degree?.getD 0 := by
+      have hsum_a : a.natDegree = d.natDegree + s.natDegree := by
         rw [hs]
         exact FpPoly.degree?_mul_eq_add_degree? d s hd_ne hs_ne
       omega
   -- Extract the leading coefficient and verify it is invertible.
   let dlc : ZMod64 p := DensePoly.leadingCoeff d
   have hd_size : d.size = 1 := by
-    unfold DensePoly.degree? at hd_deg
+    unfold DensePoly.natDegree DensePoly.degree? at hd_deg
     by_cases hsize : d.size = 0
     · simp [hsize] at hd_deg
     · simp [hsize] at hd_deg
@@ -957,7 +959,7 @@ theorem mul_mod_inverseCandidate_eq_one_of_irreducible
           DensePoly.coeff_eq_zero_of_size_le d (by omega)
         rw [hd_coeff]
         have hkne : k + 1 ≠ 0 := Nat.succ_ne_zero k
-        rw [if_neg hkne]
+        rw [ite_eq_right hkne]
         exact hzero_mul
   have hkey : L * a + R * g = (1 : FpPoly p) := by
     show DensePoly.scale dlc⁻¹ xres.left * a +

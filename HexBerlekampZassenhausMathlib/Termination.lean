@@ -26,12 +26,12 @@ namespace BHKS
 /-- The complete-vector coordinate envelope used by the BHKS adjustment is
 strictly below the executable resultant cap. -/
 theorem adjustedCoordBound_lt_bhksBound
-    (f : Hex.ZPoly) (hfdeg : 0 < f.degree?.getD 0) :
-    let n := f.degree?.getD 0
+    (f : Hex.ZPoly) (hfdeg : 0 < f.natDegree) :
+    let n := f.natDegree
     let R := 4 * n + n * n * n
     let V := (2 * n) * 2 ^ (2 * n) * R
     V + V * R + 2 ^ n * R < Hex.bhksBound f := by
-  let n := f.degree?.getD 0
+  let n := f.natDegree
   let R := 4 * n + n * n * n
   let V := (2 * n) * 2 ^ (2 * n) * R
   let E := V + V * R + 2 ^ n * R
@@ -89,12 +89,12 @@ theorem cldFullAux_resultant_natAbs_lt_bhksBound
     (v : Vector ℤ
       ((Hex.bhksLatticeBasis f p a liftedFactors).factorCount +
         (Hex.bhksLatticeBasis f p a liftedFactors).coeffWidth))
-    (hf : f ≠ 0) (hfdeg : 0 < f.degree?.getD 0)
+    (hf : f ≠ 0) (hfdeg : 0 < f.natDegree)
     (hp2 : 2 ≤ p) (hp500 : p ≤ 500)
-    (hr : liftedFactors.size ≤ f.degree?.getD 0)
-    (hv : ∀ x : Fin (liftedFactors.size + f.degree?.getD 0),
+    (hr : liftedFactors.size ≤ f.natDegree)
+    (hv : ∀ x : Fin (liftedFactors.size + f.natDegree),
       v[x].natAbs ≤
-        let n := f.degree?.getD 0
+        let n := f.natDegree
         let R := 4 * n + n * n * n
         let V := (2 * n) * 2 ^ (2 * n) * R
         V + V * R + 2 ^ n * R) :
@@ -103,7 +103,7 @@ theorem cldFullAux_resultant_natAbs_lt_bhksBound
       (HexPolyZMathlib.toPolynomial
         (cldFullAux f p a liftedFactors v))).natAbs <
       Hex.bhksBound f := by
-  let n := f.degree?.getD 0
+  let n := f.natDegree
   let R := 4 * n + n * n * n
   let V := (2 * n) * 2 ^ (2 * n) * R
   let E := V + V * R + 2 ^ n * R
@@ -192,20 +192,20 @@ vector having one zero exponent while remaining nonzero on every true support.
 theorem no_badVector
     (f : Hex.ZPoly) (p a : Nat) (liftedFactors : Array Hex.ZPoly)
     (trueSupports : Set (Set (Fin liftedFactors.size)))
-    (hf : f ≠ 0) (hfdeg : 0 < f.degree?.getD 0)
+    (hf : f ≠ 0) (hfdeg : 0 < f.natDegree)
     (hf_lc_coprime :
       IsCoprime ((p ^ a : Nat) : Int)
         (HexPolyZMathlib.toPolynomial f).leadingCoeff)
     (hp2 : 2 ≤ p) (hp500 : p ≤ 500)
-    (hr : liftedFactors.size ≤ f.degree?.getD 0)
+    (hr : liftedFactors.size ≤ f.natDegree)
     (hk : 1 < p ^ a)
     (hprecision : 2 * Hex.bhksBound f < p ^ a)
-    (hcut : ∀ j : Fin (f.degree?.getD 0),
+    (hcut : ∀ j : Fin (f.natDegree),
       Hex.bhksCoeffCutThreshold p f j.val ≤ a)
     (hfac : ∀ i : Fin liftedFactors.size,
       ∃ h : Hex.ZPoly,
         Hex.DensePoly.Monic (liftedFactors.getD i.val 1) ∧
-        0 < (liftedFactors.getD i.val 1).degree?.getD 0 ∧
+        0 < (liftedFactors.getD i.val 1).natDegree ∧
         Hex.ZPoly.congr f (liftedFactors.getD i.val 1 * h) (p ^ a))
     (hdeg_le : ∀ i : Fin liftedFactors.size,
       (HexPolyZMathlib.toPolynomial
@@ -242,12 +242,12 @@ theorem no_badVector
     (hv : Hex.Matrix.memLattice
       (Hex.bhksLatticeBasis f p a liftedFactors).basis v)
     (hzero : ∃ i : Fin liftedFactors.size,
-      v[Fin.castAdd (f.degree?.getD 0) i] = 0)
+      v[Fin.castAdd (f.natDegree) i] = 0)
     (hnonzero : ∀ S ∈ trueSupports, ∃ i ∈ S,
-      v[Fin.castAdd (f.degree?.getD 0) i] ≠ 0)
-    (hvBound : ∀ x : Fin (liftedFactors.size + f.degree?.getD 0),
+      v[Fin.castAdd (f.natDegree) i] ≠ 0)
+    (hvBound : ∀ x : Fin (liftedFactors.size + f.natDegree),
       v[x].natAbs ≤
-        let n := f.degree?.getD 0
+        let n := f.natDegree
         let R := 4 * n + n * n * n
         let V := (2 * n) * 2 ^ (2 * n) * R
         V + V * R + 2 ^ n * R) :
@@ -262,17 +262,17 @@ theorem no_badVector
     apply HexPolyZMathlib.equiv.injective
     simpa using hzero
   have hcoord_lt (i : Fin liftedFactors.size) :
-      v[Fin.castAdd (f.degree?.getD 0) i].natAbs < p ^ a := by
-    let n := f.degree?.getD 0
+      v[Fin.castAdd (f.natDegree) i].natAbs < p ^ a := by
+    let n := f.natDegree
     let R := 4 * n + n * n * n
     let V := (2 * n) * 2 ^ (2 * n) * R
     let E := V + V * R + 2 ^ n * R
     have hE : E < Hex.bhksBound f := by
       simpa only [E, V, R, n] using adjustedCoordBound_lt_bhksBound f hfdeg
     have hvE :
-        v[Fin.castAdd (f.degree?.getD 0) i].natAbs ≤ E := by
+        v[Fin.castAdd (f.natDegree) i].natAbs ≤ E := by
       simpa only [E, V, R, n] using
-        hvBound (Fin.castAdd (f.degree?.getD 0) i)
+        hvBound (Fin.castAdd (f.natDegree) i)
     exact hvE.trans_lt (hE.trans (by omega))
   have hres_ne : res ≠ 0 := by
     apply int_resultant_ne_zero_of_no_irreducible_common_factor
@@ -299,12 +299,12 @@ theorem no_badVector
           (hcop i) (hown i) hv (by simpa only [H] using hiH)
     have hidvd :
         ((p ^ a : Nat) : ℤ) ∣
-          v[Fin.castAdd (f.degree?.getD 0) i] :=
+          v[Fin.castAdd (f.natDegree) i] :=
       (ZMod.intCast_zmod_eq_zero_iff_dvd _ (p ^ a)).mp hicast
     have hile :=
       Int.natAbs_le_of_dvd_ne_zero hidvd hi_ne
     have hle_mod :
-        p ^ a ≤ v[Fin.castAdd (f.degree?.getD 0) i].natAbs := by
+        p ^ a ≤ v[Fin.castAdd (f.natDegree) i].natAbs := by
       simpa using hile
     exact (not_lt_of_ge hle_mod) (hcoord_lt i)
   obtain ⟨i₀, hi₀zero⟩ := hzero
@@ -314,7 +314,7 @@ theorem no_badVector
     HexHenselMathlib.toPolynomial_monic_of_dense_monic _ hi₀monic
   have hqdeg :
       q.natDegree =
-        (liftedFactors.getD i₀.val 1).degree?.getD 0 := by
+        (liftedFactors.getD i₀.val 1).natDegree := by
     exact HexPolyMathlib.natDegree_toPolynomial _
   have hqf :
       q.map (Int.castRingHom (ZMod (p ^ a))) ∣

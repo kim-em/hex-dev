@@ -217,18 +217,18 @@ private theorem list_getD_map_range {α : Type} [Zero α] (d n : Nat) (f : Nat �
   · simp [hn, List.getD]
 
 private theorem size_le_of_degree_getD_lt {f : FpPoly p} {d : Nat}
-    (hdeg : f.degree?.getD 0 < d) :
+    (hdeg : f.natDegree < d) :
     f.size ≤ d := by
   by_cases hsize : f.size = 0
   · omega
-  · have hdeg_eq : f.degree?.getD 0 = f.size - 1 := by
-      simp [DensePoly.degree?, hsize]
+  · have hdeg_eq : f.natDegree = f.size - 1 := by
+      simp [DensePoly.natDegree, DensePoly.degree?, hsize]
     omega
 
 /-- The polynomial built from its first `d` coefficients is the original
 polynomial when the original degree is below `d`. -/
 theorem of_first_coeffs_eq_of_degree_getD_lt {f : FpPoly p} {d : Nat}
-    (hdeg : f.degree?.getD 0 < d) :
+    (hdeg : f.natDegree < d) :
     ofCoeffList ((List.range d).map fun i => f.coeff i) = f := by
   apply DensePoly.ext_coeff
   intro n
@@ -244,12 +244,12 @@ theorem of_first_coeffs_eq_of_degree_getD_lt {f : FpPoly p} {d : Nat}
   · simp [hn]
   · have hsize_le : f.size ≤ d := size_le_of_degree_getD_lt hdeg
     have hn_size : f.size ≤ n := Nat.le_trans hsize_le (Nat.le_of_not_gt hn)
-    rw [if_neg hn]
+    rw [ite_eq_right hn]
     exact (DensePoly.coeff_eq_zero_of_size_le f hn_size).symm
 
 /-- Every polynomial with degree below `d` appears in the bounded-degree list. -/
 theorem mem_polysBelowDegree_of_degree_getD_lt {f : FpPoly p} {d : Nat}
-    (hdeg : f.degree?.getD 0 < d) :
+    (hdeg : f.natDegree < d) :
     f ∈ polysBelowDegree p d := by
   unfold polysBelowDegree
   apply List.mem_map.mpr
@@ -266,7 +266,7 @@ theorem mem_polysBelowDegree_of_degree_getD_lt {f : FpPoly p} {d : Nat}
 private theorem ofCoeffList_degree_getD_lt_of_length_eq
     {coeffs : List (ZMod64 p)} {d : Nat}
     (hd : 0 < d) (hlen : coeffs.length = d) :
-    (ofCoeffList coeffs).degree?.getD 0 < d := by
+    (ofCoeffList coeffs).natDegree < d := by
   have hzero_ge : ∀ i, d ≤ i → (ofCoeffList coeffs).coeff i = 0 := by
     intro i hi
     unfold ofCoeffList
@@ -287,10 +287,10 @@ private theorem ofCoeffList_degree_getD_lt_of_length_eq
         DensePoly.coeff_last_ne_zero_of_pos_size (ofCoeffList coeffs) hi_pos
       exact hne hzero
   by_cases hsize : (ofCoeffList coeffs).size = 0
-  · simp [DensePoly.degree?, hsize, hd]
-  · have hdeg : (ofCoeffList coeffs).degree?.getD 0 =
+  · simp [DensePoly.natDegree, DensePoly.degree?, hsize, hd]
+  · have hdeg : (ofCoeffList coeffs).natDegree =
         (ofCoeffList coeffs).size - 1 := by
-      simp [DensePoly.degree?, hsize]
+      simp [DensePoly.natDegree, DensePoly.degree?, hsize]
     rw [hdeg]
     omega
 
@@ -298,7 +298,7 @@ private theorem ofCoeffList_degree_getD_lt_of_length_eq
 bound, provided the bound is positive. -/
 theorem degree_getD_lt_of_mem_polysBelowDegree {f : FpPoly p} {d : Nat}
     (hd : 0 < d) (hmem : f ∈ polysBelowDegree p d) :
-    f.degree?.getD 0 < d := by
+    f.natDegree < d := by
   unfold polysBelowDegree at hmem
   rcases List.mem_map.mp hmem with ⟨coeffs, hcoeffs, hf⟩
   rw [← hf]
@@ -309,7 +309,7 @@ theorem degree_getD_lt_of_mem_polysBelowDegree {f : FpPoly p} {d : Nat}
 positive bound. -/
 @[grind =] theorem mem_polysBelowDegree_iff_degree_getD_lt {f : FpPoly p} {d : Nat}
     (hd : 0 < d) :
-    f ∈ polysBelowDegree p d ↔ f.degree?.getD 0 < d := by
+    f ∈ polysBelowDegree p d ↔ f.natDegree < d := by
   constructor
   · exact degree_getD_lt_of_mem_polysBelowDegree hd
   · exact mem_polysBelowDegree_of_degree_getD_lt
@@ -317,7 +317,7 @@ positive bound. -/
 /-- Successor-bound membership in the bounded-degree enumeration. -/
 @[simp, grind =] theorem mem_polysBelowDegree_succ_iff_degree_getD_lt {f : FpPoly p}
     {d : Nat} :
-    f ∈ polysBelowDegree p (d + 1) ↔ f.degree?.getD 0 < d + 1 := by
+    f ∈ polysBelowDegree p (d + 1) ↔ f.natDegree < d + 1 := by
   grind
 
 private theorem list_eq_of_length_eq_of_getD_eq

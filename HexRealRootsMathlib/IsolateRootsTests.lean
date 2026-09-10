@@ -61,7 +61,7 @@ def x4m2 : ZPoly := DensePoly.ofCoeffs #[(-2 : Int), 0, 0, 0, 1]
 theorem sqfree_x4m2 : ZPoly.SquareFreeRat x4m2 :=
   squareFreeRat_of_hasSquarefreeSturmChain _ (by decide)
 
-/-- The complete run of `x⁴ − 2`: the two isolate? intervals `(-4, 0]`, `(0, 4]`. -/
+/-- The complete run of `x⁴ − 2`: the two ZPoly.isolateRealRoots? intervals `(-4, 0]`, `(0, 4]`. -/
 def runX4m2 : RealRootIsolations x4m2 where
   isolations :=
     #[⟨⟨Dyadic.ofInt (-4), Dyadic.ofInt 0, by decide⟩, by decide⟩,

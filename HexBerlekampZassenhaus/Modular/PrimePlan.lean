@@ -103,7 +103,7 @@ end DirectPrimePlan
 /-- Degree list retained beside a direct modular factorization. -/
 @[expose]
 def directFactorDegrees (data : PrimeChoiceData) : Array Nat :=
-  data.factorsModP.map (fun g => g.degree?.getD 0)
+  data.factorsModP.map (fun g => g.natDegree)
 
 /-- One subset-sum DP step.  The returned Boolean array records whether each
 degree at most `maxDegree` can be formed after admitting `degree`. -/
@@ -133,7 +133,7 @@ def DirectPrimeProbe.ofData
   { candidate
     data
     factorDegrees := degrees
-    reachableDegrees := directDegreeBits (core.poly.degree?.getD 0) degrees }
+    reachableDegrees := directDegreeBits (core.poly.natDegree) degrees }
 
 /-- Number of proper degrees a subset-degree bitset still admits. -/
 @[expose]
@@ -163,7 +163,7 @@ degree pattern scores exactly as the factorization it predicts would. -/
 def directDegreeScore (core : SquareFreeInput) (p : Nat) (degrees : Array Nat) :
     Nat × Nat × Nat × Nat :=
   (directSubsetCost degrees.size,
-    reachableProperCount (directDegreeBits (core.poly.degree?.getD 0) degrees),
+    reachableProperCount (directDegreeBits (core.poly.natDegree) degrees),
     precisionForCoeffBound (ZPoly.defaultFactorCoeffBound core.poly) p,
     p)
 
@@ -303,7 +303,7 @@ def scoutPays (core : SquareFreeInput) (inc : ScoutIncumbent) (q fuel : Nat) :
     Bool :=
   decide (ZPoly.bitLen q *
       (scoutRoundCost * fuel * inc.maxDegree +
-        splitColumnCost * core.poly.degree?.getD 0) <
+        splitColumnCost * core.poly.natDegree) <
     inc.candidatesLeft * liftWords core inc.prime)
 
 /-- A candidate prime together with the modular degree pattern a scout
@@ -565,7 +565,7 @@ private theorem scoutBetterPattern_mem
       | succ fuel =>
           simp only [scoutBetterPattern] at h
           by_cases hpays : scoutPays core inc candidate.m (fuel + 1) = true
-          · rw [if_pos hpays] at h
+          · rw [ite_eq_left hpays] at h
             cases hpat :
                 probeDegreePattern? core.poly candidate inc.degrees.size with
             | none =>
@@ -577,11 +577,11 @@ private theorem scoutBetterPattern_mem
                 rw [hpat] at h
                 simp only at h
                 by_cases hcomplete : pattern.complete = true
-                · rw [if_pos hcomplete] at h
+                · rw [ite_eq_left hcomplete] at h
                   by_cases hbetter :
                       scoreBetter inc.score
                         (directDegreeScore core candidate.m pattern.separated) = true
-                  · rw [if_pos hbetter] at h
+                  · rw [ite_eq_left hbetter] at h
                     rcases ih fuel
                         ⟨candidate.m, pattern.separated,
                           directDegreeScore core candidate.m pattern.separated⟩
@@ -592,15 +592,15 @@ private theorem scoutBetterPattern_mem
                         rw [hc]
                         exact List.mem_cons_self)
                     · exact Or.inr (List.mem_cons_of_mem candidate hm)
-                  · rw [if_neg hbetter] at h
+                  · rw [ite_eq_right hbetter] at h
                     rcases ih fuel inc best scouted h with hb | hm
                     · exact Or.inl hb
                     · exact Or.inr (List.mem_cons_of_mem candidate hm)
-                · rw [if_neg hcomplete] at h
+                · rw [ite_eq_right hcomplete] at h
                   rcases ih fuel inc best scouted h with hb | hm
                   · exact Or.inl hb
                   · exact Or.inr (List.mem_cons_of_mem candidate hm)
-          · rw [if_neg hpays] at h
+          · rw [ite_eq_right hpays] at h
             exact Or.inl ⟨scouted, h, rfl⟩
 
 private theorem planOfScout_probes_mem

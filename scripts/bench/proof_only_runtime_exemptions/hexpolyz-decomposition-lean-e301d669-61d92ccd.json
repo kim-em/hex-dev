@@ -1,0 +1,6 @@
+{
+ "path": "HexPolyZ/Decomposition.lean",
+ "baseline_blob": "e301d6696fd3898969ee97fed31a04a02eff2f17",
+ "current_blob": "61d92ccd0ddb5055eeb82a9f81d033249a1bda92",
+ "reason": "Replaces `Hex.DensePoly.degree?.getD 0` with the new abbreviation `Hex.DensePoly.natDegree`, whose body is exactly that term and which `abbrev` marks `@[reducible, inline]`, and repairs the proofs that rewrote through the `Option`; the compiled code and every measured branch are unchanged."
+}

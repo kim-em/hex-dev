@@ -156,7 +156,7 @@ theorem eval_toPolyℝ (p : Hex.ZPoly) (x : ℝ) :
   simp
 
 theorem natDegree_toPolyℝ (p : Hex.ZPoly) :
-    (toPolyℝ p).natDegree = p.degree?.getD 0 := by
+    (toPolyℝ p).natDegree = p.natDegree := by
   rw [toPolyℝ, Polynomial.natDegree_map_eq_of_injective
     (RingHom.injective_int (Int.castRingHom ℝ)),
     HexPolyMathlib.natDegree_toPolynomial]
@@ -169,7 +169,7 @@ coefficients. -/
 
 /-- The complex cast preserves the natural degree. -/
 theorem natDegree_toPolyℂ (p : Hex.ZPoly) :
-    (toPolyℂ p).natDegree = p.degree?.getD 0 := by
+    (toPolyℂ p).natDegree = p.natDegree := by
   rw [toPolyℂ, Polynomial.natDegree_map_eq_of_injective
     (RingHom.injective_int (Int.castRingHom ℂ)),
     HexPolyMathlib.natDegree_toPolynomial]
@@ -194,15 +194,16 @@ theorem cauchyBound_le_rootBound (p : Hex.ZPoly) :
   -- The zero-degree case: Cauchy's bound is `1`, and so is `rootBound`.
   rcases hd : p.degree? with _ | d
   · -- `degree? = none`: `natDegree q = 0`, `cauchyBound q = 1`.
-    have hnd : q.natDegree = 0 := by simp [hq, natDegree_toPolyℝ, hd]
+    have hnd : q.natDegree = 0 := by simp [hq, natDegree_toPolyℝ, Hex.DensePoly.natDegree, hd]
     have hcb : q.cauchyBound = 1 := by simp [Polynomial.cauchyBound, hnd]
     rw [hcb, Hex.rootBound_of_degree?_none hd, toReal_ofInt]; norm_num
   · rcases d with _ | d'
-    · have hnd : q.natDegree = 0 := by simp [hq, natDegree_toPolyℝ, hd]
+    · have hnd : q.natDegree = 0 := by simp [hq, natDegree_toPolyℝ, Hex.DensePoly.natDegree, hd]
       have hcb : q.cauchyBound = 1 := by simp [Polynomial.cauchyBound, hnd]
       rw [hcb, Hex.rootBound_of_degree?_zero hd, toReal_ofInt]; norm_num
     · -- The general branch of `rootBound`.
-      have hnd : q.natDegree = d' + 1 := by simp [hq, natDegree_toPolyℝ, hd]
+      have hnd : q.natDegree = d' + 1 := by
+        simp [hq, natDegree_toPolyℝ, Hex.DensePoly.natDegree, hd]
       -- The stored size is `d + 1 > 0`, so the leading coefficient is nonzero.
       have hsize : 0 < p.size := by
         by_contra h
@@ -451,6 +452,7 @@ theorem sepPrec_separates (p : Hex.ZPoly)
   have hdeg? : p.degree? = some ℓ.length := by
     have h := natDegree_toPolyℂ p
     rw [show (toPolyℂ p).natDegree = ℓ.length from hnatf] at h
+    unfold Hex.DensePoly.natDegree at h
     cases hd : p.degree? with
     | none => exfalso; rw [hd] at h; simp only [Option.getD_none] at h; omega
     | some k => rw [hd] at h; simp only [Option.getD_some] at h; rw [h]

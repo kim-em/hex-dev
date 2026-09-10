@@ -1188,14 +1188,14 @@ private theorem foldl_indicator_mul_unique_rat
       simp only [List.foldl_cons]
       rcases List.mem_cons.mp hi with hix | hitail
       · subst i
-        rw [if_pos rfl]
+        rw [ite_eq_left rfl]
         have hxs_zero :
             ∀ y ∈ xs, f y * (if y = x then (1 : Rat) else 0) = 0 := by
           intro y hy
           have hyx : y ≠ x := by
             intro heq
             exact (List.nodup_cons.mp hnodup).1 (heq ▸ hy)
-          rw [if_neg hyx]
+          rw [ite_eq_right hyx]
           grind
         have hfold :=
           foldl_add_eq_acc_rat xs
@@ -1211,7 +1211,7 @@ private theorem foldl_indicator_mul_unique_rat
           intro h
           subst i
           exact (List.nodup_cons.mp hnodup).1 hitail
-        rw [if_neg hxi]
+        rw [ite_eq_right hxi]
         have hzero : f x * (0 : Rat) = 0 := by grind
         rw [hzero]
         have hacc : acc + (0 : Rat) = acc := by grind

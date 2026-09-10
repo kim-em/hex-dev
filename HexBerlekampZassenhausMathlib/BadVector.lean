@@ -83,28 +83,26 @@ coefficient slots than the input.  Thus the production `coeffWidth = deg(f)`
 array stores the whole CLD quotient, not a truncation. -/
 theorem cldQuotientMod_size_le_degree
     (f g : Hex.ZPoly) (p a : Nat)
-    (hf : 0 < f.degree?.getD 0)
-    (hg : 0 < g.degree?.getD 0) :
-    (Hex.cldQuotientMod f g p a).size ≤ f.degree?.getD 0 := by
+    (hf : 0 < f.natDegree)
+    (hg : 0 < g.natDegree) :
+    (Hex.cldQuotientMod f g p a).size ≤ f.natDegree := by
   rw [HexBerlekampZassenhausMathlib.cldQuotientMod_eq_spec]
   unfold Hex.cldQuotientModBignum
   let num := Hex.ZPoly.reduceModPow
     (f * Hex.DensePoly.derivative g) p a
-  have hfsize : f.size = f.degree?.getD 0 + 1 := by
+  have hfsize : f.size = f.natDegree + 1 := by
     have hpos : 0 < f.size := by
       by_contra h
       have hs : f.size = 0 := by omega
-      simp [Hex.DensePoly.degree?, hs] at hf
-    rw [Hex.DensePoly.degree?_eq_some_of_pos_size f hpos]
-    simp
+      simp [Hex.DensePoly.natDegree, Hex.DensePoly.degree?, hs] at hf
+    rw [Hex.DensePoly.natDegree_eq_size_sub_one]
     omega
-  have hgsize : g.size - 1 = g.degree?.getD 0 := by
+  have hgsize : g.size - 1 = g.natDegree := by
     have hpos : 0 < g.size := by
       by_contra h
       have hs : g.size = 0 := by omega
-      simp [Hex.DensePoly.degree?, hs] at hg
-    rw [Hex.DensePoly.degree?_eq_some_of_pos_size g hpos]
-    simp
+      simp [Hex.DensePoly.natDegree, Hex.DensePoly.degree?, hs] at hg
+    rw [Hex.DensePoly.natDegree_eq_size_sub_one]
   have hderiv :
       (Hex.DensePoly.derivative g).size ≤ g.size - 1 :=
     Hex.DensePoly.size_derivative_le g
@@ -123,7 +121,7 @@ theorem cldQuotientMod_size_le_degree
         ≤ (Hex.DensePoly.divMod num g).1.size :=
       Hex.ZPoly.reduceModPow_size_le _ p a
     _ ≤ num.size - (g.size - 1) := divMod_fst_size_le num g
-    _ ≤ f.degree?.getD 0 := by omega
+    _ ≤ f.natDegree := by omega
 
 /-- The full centred CLD-residue combination attached to the first block of a
 BHKS vector. -/
@@ -368,15 +366,15 @@ theorem cldFullAux_coeff_natAbs_le
         (Hex.bhksLatticeBasis f p a liftedFactors).coeffWidth))
     (E : Nat)
     (hp2 : 2 ≤ p) (hp500 : p ≤ 500)
-    (hr : liftedFactors.size ≤ f.degree?.getD 0)
-    (hv : ∀ x : Fin (liftedFactors.size + f.degree?.getD 0),
+    (hr : liftedFactors.size ≤ f.natDegree)
+    (hv : ∀ x : Fin (liftedFactors.size + f.natDegree),
       v[x].natAbs ≤ E)
     (k : Nat) :
     ((cldFullAux f p a liftedFactors v).coeff k).natAbs ≤
-      (f.degree?.getD 0 + 1) * E *
+      (f.natDegree + 1) * E *
         (500 * (Hex.bhksColumnFloor f + 1)) := by
   classical
-  let n := f.degree?.getD 0
+  let n := f.natDegree
   let r := liftedFactors.size
   let C := 500 * (Hex.bhksColumnFloor f + 1)
   by_cases hk : k < n
@@ -467,7 +465,7 @@ theorem cldFullAux_coeff_natAbs_le
         exact Nat.add_le_add_left
           (Nat.mul_le_mul_right (E * C) (by simpa only [r, n] using hr)) _
       _ = (n + 1) * E * C := by ring
-  · have hk' : ¬ k < f.degree?.getD 0 := by simpa only [n] using hk
+  · have hk' : ¬ k < f.natDegree := by simpa only [n] using hk
     have hzero : (cldFullAux f p a liftedFactors v).coeff k = 0 := by
       unfold cldFullAux fullAux
       rw [Hex.DensePoly.coeff_ofCoeffs]
@@ -486,14 +484,14 @@ theorem cldFullAux_natDegree_le
         (Hex.bhksLatticeBasis f p a liftedFactors).coeffWidth)) :
     (HexPolyZMathlib.toPolynomial
       (cldFullAux f p a liftedFactors v)).natDegree ≤
-        f.degree?.getD 0 := by
+        f.natDegree := by
   rw [Polynomial.natDegree_le_iff_coeff_eq_zero]
   intro k hk
   rw [HexPolyZMathlib.coeff_toPolynomial]
   unfold cldFullAux fullAux
   rw [Hex.DensePoly.coeff_ofCoeffs]
   simp only [Hex.bhksLatticeBasis]
-  have hk' : ¬ k < f.degree?.getD 0 := by omega
+  have hk' : ¬ k < f.natDegree := by omega
   simp only [Array.size_ofFn, Array.getD, hk', ↓reduceDIte]
   change (0 : ℤ) = 0
   rfl
@@ -517,7 +515,7 @@ def cldCombination
       ((Hex.bhksLatticeBasis f p a liftedFactors).factorCount +
         (Hex.bhksLatticeBasis f p a liftedFactors).coeffWidth)) : Polynomial ℤ :=
   ∑ i : Fin liftedFactors.size,
-    Polynomial.C v[Fin.castAdd (f.degree?.getD 0) i] *
+    Polynomial.C v[Fin.castAdd (f.natDegree) i] *
       HexPolyZMathlib.toPolynomial
         (Hex.cldQuotientMod f (liftedFactors.getD i.val 1) p a)
 
@@ -530,16 +528,16 @@ theorem cldCombination_coeff
     (j : Nat) :
     (cldCombination f p a liftedFactors v).coeff j =
       ∑ i : Fin liftedFactors.size,
-        v[Fin.castAdd (f.degree?.getD 0) i] *
+        v[Fin.castAdd (f.natDegree) i] *
           (Hex.cldQuotientMod f
             (liftedFactors.getD i.val 1) p a).coeff j := by
   change
     (∑ i ∈ (Finset.univ : Finset (Fin liftedFactors.size)),
-      Polynomial.C v[Fin.castAdd (f.degree?.getD 0) i] *
+      Polynomial.C v[Fin.castAdd (f.natDegree) i] *
         HexPolyZMathlib.toPolynomial
           (Hex.cldQuotientMod f (liftedFactors.getD i.val 1) p a)).coeff j =
       ∑ i ∈ (Finset.univ : Finset (Fin liftedFactors.size)),
-        v[Fin.castAdd (f.degree?.getD 0) i] *
+        v[Fin.castAdd (f.natDegree) i] *
           (Hex.cldQuotientMod f
             (liftedFactors.getD i.val 1) p a).coeff j
   rw [Polynomial.finsetSum_coeff]
@@ -553,10 +551,10 @@ theorem cldPol_coeff_of_lt
     (v : Vector ℤ
       ((Hex.bhksLatticeBasis f p a liftedFactors).factorCount +
         (Hex.bhksLatticeBasis f p a liftedFactors).coeffWidth))
-    (k : Nat) (hk : k < f.degree?.getD 0) :
+    (k : Nat) (hk : k < f.natDegree) :
     (cldPol f p a liftedFactors v).coeff k =
       ∑ i : Fin liftedFactors.size,
-        v[Fin.castAdd (f.degree?.getD 0) i] *
+        v[Fin.castAdd (f.natDegree) i] *
           Hex.centeredResiduePow p a
             ((Hex.cldQuotientMod f
               (liftedFactors.getD i.val 1) p a).coeff k) := by
@@ -573,9 +571,9 @@ theorem cldPol_map_eq_cldCombination
     (v : Vector ℤ
       ((Hex.bhksLatticeBasis f p a liftedFactors).factorCount +
         (Hex.bhksLatticeBasis f p a liftedFactors).coeffWidth))
-    (hf : 0 < f.degree?.getD 0)
+    (hf : 0 < f.natDegree)
     (hdeg : ∀ i : Fin liftedFactors.size,
-      0 < (liftedFactors.getD i.val 1).degree?.getD 0) :
+      0 < (liftedFactors.getD i.val 1).natDegree) :
     (HexPolyZMathlib.toPolynomial (cldPol f p a liftedFactors v)).map
         (Int.castRingHom (ZMod (p ^ a))) =
       (cldCombination f p a liftedFactors v).map
@@ -584,7 +582,7 @@ theorem cldPol_map_eq_cldCombination
   intro k
   rw [Polynomial.coeff_map, Polynomial.coeff_map,
     HexPolyZMathlib.coeff_toPolynomial, cldCombination_coeff]
-  by_cases hk : k < f.degree?.getD 0
+  by_cases hk : k < f.natDegree
   · rw [cldPol_coeff_of_lt f p a liftedFactors v k hk]
     rw [map_sum, map_sum]
     refine Finset.sum_congr rfl ?_
@@ -604,7 +602,7 @@ theorem cldPol_map_eq_cldCombination
       (Hex.self_sub_centeredModNat_dvd
         ((Hex.cldQuotientMod f
           (liftedFactors.getD i.val 1) p a).coeff k) (p ^ a))
-  · have hk' : f.degree?.getD 0 ≤ k := Nat.le_of_not_gt hk
+  · have hk' : f.natDegree ≤ k := Nat.le_of_not_gt hk
     have hleft :
         (cldPol f p a liftedFactors v).coeff k = 0 := by
       rw [cldPol, pol, Hex.DensePoly.coeff_ofCoeffs]
@@ -637,7 +635,7 @@ theorem liftedFactor_dvd_cldCombination_of_coord_eq_zero
     (hfac : ∀ i : Fin liftedFactors.size,
       ∃ h : Hex.ZPoly,
         Hex.DensePoly.Monic (liftedFactors.getD i.val 1) ∧
-        0 < (liftedFactors.getD i.val 1).degree?.getD 0 ∧
+        0 < (liftedFactors.getD i.val 1).natDegree ∧
         Hex.ZPoly.congr f (liftedFactors.getD i.val 1 * h) (p ^ a))
     (hcop : ∀ j : Fin liftedFactors.size, j ≠ i₀ →
       IsCoprime
@@ -647,7 +645,7 @@ theorem liftedFactor_dvd_cldCombination_of_coord_eq_zero
         ((HexPolyZMathlib.toPolynomial
           (liftedFactors.getD j.val 1)).map
             (Int.castRingHom (ZMod (p ^ a)))))
-    (hzero : v[Fin.castAdd (f.degree?.getD 0) i₀] = 0) :
+    (hzero : v[Fin.castAdd (f.natDegree) i₀] = 0) :
     (HexPolyZMathlib.toPolynomial
         (liftedFactors.getD i₀.val 1)).map
           (Int.castRingHom (ZMod (p ^ a))) ∣
@@ -714,7 +712,7 @@ theorem coord_cast_eq_zero_of_liftedFactor_dvd_cldCombination
     (hfac : ∀ i : Fin liftedFactors.size,
       ∃ h : Hex.ZPoly,
         Hex.DensePoly.Monic (liftedFactors.getD i.val 1) ∧
-        0 < (liftedFactors.getD i.val 1).degree?.getD 0 ∧
+        0 < (liftedFactors.getD i.val 1).natDegree ∧
         Hex.ZPoly.congr f (liftedFactors.getD i.val 1 * h) (p ^ a))
     (hcop : ∀ j : Fin liftedFactors.size, j ≠ i₀ →
       IsCoprime
@@ -739,15 +737,15 @@ theorem coord_cast_eq_zero_of_liftedFactor_dvd_cldCombination
           (Int.castRingHom (ZMod (p ^ a))) ∣
         (cldCombination f p a liftedFactors v).map
           (Int.castRingHom (ZMod (p ^ a)))) :
-    ((v[Fin.castAdd (f.degree?.getD 0) i₀] : ℤ) : ZMod (p ^ a)) = 0 := by
+    ((v[Fin.castAdd (f.natDegree) i₀] : ℤ) : ZMod (p ^ a)) = 0 := by
   classical
-  letI : Fact (1 < p ^ a) := ⟨hk⟩
-  haveI : Nontrivial (ZMod (p ^ a)) := inferInstance
+  let : Fact (1 < p ^ a) := ⟨hk⟩
+  have : Nontrivial (ZMod (p ^ a)) := inferInstance
   let φ := Int.castRingHom (ZMod (p ^ a))
   let q₀ := (HexPolyZMathlib.toPolynomial
     (liftedFactors.getD i₀.val 1)).map φ
   let term : Fin liftedFactors.size → Polynomial (ZMod (p ^ a)) := fun j =>
-    (Polynomial.C v[Fin.castAdd (f.degree?.getD 0) j] *
+    (Polynomial.C v[Fin.castAdd (f.natDegree) j] *
       HexPolyZMathlib.toPolynomial
         (Hex.cldQuotientMod f (liftedFactors.getD j.val 1) p a)).map φ
   have hother : ∀ j : Fin liftedFactors.size, j ≠ i₀ → q₀ ∣ term j := by
@@ -814,10 +812,10 @@ theorem coord_cast_eq_zero_of_liftedFactor_dvd_cldCombination
       linear_combination hsplit⟩
   have hconst :
       q₀ ∣ Polynomial.C
-        ((v[Fin.castAdd (f.degree?.getD 0) i₀] : ℤ) : ZMod (p ^ a)) := by
+        ((v[Fin.castAdd (f.natDegree) i₀] : ℤ) : ZMod (p ^ a)) := by
     have hi' :
         q₀ ∣ Polynomial.C
-            ((v[Fin.castAdd (f.degree?.getD 0) i₀] : ℤ) : ZMod (p ^ a)) *
+            ((v[Fin.castAdd (f.natDegree) i₀] : ℤ) : ZMod (p ^ a)) *
           (HexPolyZMathlib.toPolynomial
             (Hex.cldQuotientMod f
               (liftedFactors.getD i₀.val 1) p a)).map φ := by
@@ -847,7 +845,7 @@ theorem coord_cast_eq_zero_of_liftedFactor_dvd_cldCombination
   by_contra hscalar
   have hCne :
       Polynomial.C
-        ((v[Fin.castAdd (f.degree?.getD 0) i₀] : ℤ) : ZMod (p ^ a)) ≠ 0 := by
+        ((v[Fin.castAdd (f.natDegree) i₀] : ℤ) : ZMod (p ^ a)) ≠ 0 := by
     exact Polynomial.C_ne_zero.mpr hscalar
   obtain ⟨s, hs⟩ := hconst
   have hsne : s ≠ 0 := by
@@ -872,7 +870,7 @@ theorem isCoprime_cldQuotientMod
     (f q h : Hex.ZPoly) (p a : Nat)
     (hk : 1 < p ^ a)
     (hqmonic : Hex.DensePoly.Monic q)
-    (hqdeg : 0 < q.degree?.getD 0)
+    (hqdeg : 0 < q.natDegree)
     (hfac : Hex.ZPoly.congr f (q * h) (p ^ a))
     (hcop_h :
       IsCoprime
@@ -893,7 +891,7 @@ theorem isCoprime_cldQuotientMod
         (Hex.cldQuotientMod f q p a)).map
           (Int.castRingHom (ZMod (p ^ a)))) := by
   classical
-  letI : Fact (1 < p ^ a) := ⟨hk⟩
+  let : Fact (1 < p ^ a) := ⟨hk⟩
   let φ := Int.castRingHom (ZMod (p ^ a))
   let Q := (HexPolyZMathlib.toPolynomial q).map φ
   let H := (HexPolyZMathlib.toPolynomial h).map φ
@@ -936,7 +934,7 @@ theorem cldFullAux_congr_cldPol
       ((Hex.bhksLatticeBasis f p a liftedFactors).factorCount +
         (Hex.bhksLatticeBasis f p a liftedFactors).coeffWidth))
     (hp : 0 < p)
-    (hcut : ∀ j : Fin (f.degree?.getD 0),
+    (hcut : ∀ j : Fin (f.natDegree),
       Hex.bhksCoeffCutThreshold p f j.val ≤ a) :
     Hex.ZPoly.congr
       (cldFullAux f p a liftedFactors
@@ -954,7 +952,7 @@ theorem cldFullAux_congr_cldPol
   · intro i j
     have hi : i.val < liftedFactors.size := by
       simpa only [Hex.bhksLatticeBasis] using i.isLt
-    have hj : j.val < f.degree?.getD 0 := by
+    have hj : j.val < f.natDegree := by
       simpa only [Hex.bhksLatticeBasis] using j.isLt
     simp only [Hex.bhksLatticeBasis, cldResidue]
     have hrow :
@@ -974,15 +972,15 @@ theorem liftedFactor_dvd_cldFullAux
       ((Hex.bhksLatticeBasis f p a liftedFactors).factorCount +
         (Hex.bhksLatticeBasis f p a liftedFactors).coeffWidth))
     (i₀ : Fin liftedFactors.size)
-    (hf : 0 < f.degree?.getD 0)
+    (hf : 0 < f.natDegree)
     (hk : 1 < p ^ a)
     (hp : 0 < p)
-    (hcut : ∀ j : Fin (f.degree?.getD 0),
+    (hcut : ∀ j : Fin (f.natDegree),
       Hex.bhksCoeffCutThreshold p f j.val ≤ a)
     (hfac : ∀ i : Fin liftedFactors.size,
       ∃ h : Hex.ZPoly,
         Hex.DensePoly.Monic (liftedFactors.getD i.val 1) ∧
-        0 < (liftedFactors.getD i.val 1).degree?.getD 0 ∧
+        0 < (liftedFactors.getD i.val 1).natDegree ∧
         Hex.ZPoly.congr f (liftedFactors.getD i.val 1 * h) (p ^ a))
     (hcop : ∀ j : Fin liftedFactors.size, j ≠ i₀ →
       IsCoprime
@@ -994,7 +992,7 @@ theorem liftedFactor_dvd_cldFullAux
             (Int.castRingHom (ZMod (p ^ a)))))
     (hv : Hex.Matrix.memLattice
       (Hex.bhksLatticeBasis f p a liftedFactors).basis v)
-    (hzero : v[Fin.castAdd (f.degree?.getD 0) i₀] = 0) :
+    (hzero : v[Fin.castAdd (f.natDegree) i₀] = 0) :
     (HexPolyZMathlib.toPolynomial
         (liftedFactors.getD i₀.val 1)).map
           (Int.castRingHom (ZMod (p ^ a))) ∣
@@ -1024,15 +1022,15 @@ theorem coord_cast_eq_zero_of_liftedFactor_dvd_cldFullAux
       ((Hex.bhksLatticeBasis f p a liftedFactors).factorCount +
         (Hex.bhksLatticeBasis f p a liftedFactors).coeffWidth))
     (i₀ : Fin liftedFactors.size)
-    (hf : 0 < f.degree?.getD 0)
+    (hf : 0 < f.natDegree)
     (hk : 1 < p ^ a)
     (hp : 0 < p)
-    (hcut : ∀ j : Fin (f.degree?.getD 0),
+    (hcut : ∀ j : Fin (f.natDegree),
       Hex.bhksCoeffCutThreshold p f j.val ≤ a)
     (hfac : ∀ i : Fin liftedFactors.size,
       ∃ h : Hex.ZPoly,
         Hex.DensePoly.Monic (liftedFactors.getD i.val 1) ∧
-        0 < (liftedFactors.getD i.val 1).degree?.getD 0 ∧
+        0 < (liftedFactors.getD i.val 1).natDegree ∧
         Hex.ZPoly.congr f (liftedFactors.getD i.val 1 * h) (p ^ a))
     (hcop : ∀ j : Fin liftedFactors.size, j ≠ i₀ →
       IsCoprime
@@ -1060,7 +1058,7 @@ theorem coord_cast_eq_zero_of_liftedFactor_dvd_cldFullAux
         (HexPolyZMathlib.toPolynomial
           (cldFullAux f p a liftedFactors v)).map
             (Int.castRingHom (ZMod (p ^ a)))) :
-    ((v[Fin.castAdd (f.degree?.getD 0) i₀] : ℤ) : ZMod (p ^ a)) = 0 := by
+    ((v[Fin.castAdd (f.natDegree) i₀] : ℤ) : ZMod (p ^ a)) = 0 := by
   obtain ⟨c, hc⟩ := hv
   have haux := HexHenselMathlib.zpoly_congr_toPolynomial_map_eq
     (cldFullAux f p a liftedFactors

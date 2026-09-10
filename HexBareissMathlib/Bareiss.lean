@@ -479,7 +479,7 @@ private theorem principalSubmatrix_rowSwap_eq_of_le {R : Type u}
     have hval : r.val = pivot.val := by simpa using congrArg Fin.val h
     omega
   rw [Hex.Matrix.getElem_principalSubmatrix, Hex.Matrix.getElem_principalSubmatrix]
-  simp only [Hex.Matrix.getElem_rowSwap, if_neg h_r_ne_pivot, if_neg h_r_ne_kFin]
+  simp only [Hex.Matrix.getElem_rowSwap, ite_eq_right h_r_ne_pivot, ite_eq_right h_r_ne_kFin]
 
 /-- Auxiliary: a row of `rowSwap M kFin pivot` with index `r` not equal to
 either swap target equals the corresponding row of `M`. -/
@@ -487,7 +487,7 @@ private theorem getElem_rowSwap_of_ne {R : Type u}
     (M : Hex.Matrix R n n) (kFin pivot r : Fin n) (c : Fin n)
     (hr_ne_kFin : r ≠ kFin) (hr_ne_pivot : r ≠ pivot) :
     (Hex.Matrix.rowSwap M kFin pivot)[r][c] = M[r][c] := by
-  rw [Hex.Matrix.getElem_rowSwap, if_neg hr_ne_pivot, if_neg hr_ne_kFin]
+  rw [Hex.Matrix.getElem_rowSwap, ite_eq_right hr_ne_pivot, ite_eq_right hr_ne_kFin]
 
 /-- Reading row `r` of `rowSwap M kFin pivot` returns row `swap_idx r` of `M`,
 where `swap_idx kFin pivot r = if r = pivot then kFin else if r = kFin then pivot else r`. -/
@@ -497,10 +497,10 @@ private theorem getElem_rowSwap_swap_eq {R : Type u}
       M[if r = pivot then kFin else if r = kFin then pivot else r][c] := by
   rw [Hex.Matrix.getElem_rowSwap]
   by_cases hrp : r = pivot
-  · simp only [if_pos hrp]
+  · simp only [ite_eq_left hrp]
   · by_cases hrk : r = kFin
-    · simp only [if_neg hrp, if_pos hrk]
-    · simp only [if_neg hrp, if_neg hrk]
+    · simp only [ite_eq_right hrp, ite_eq_left hrk]
+    · simp only [ite_eq_right hrp, ite_eq_right hrk]
 
 /-- Swapping source rows `kFin` and `pivot` (with `kFin.val = k` and
 `k + 1 ≤ pivot.val`) commutes with the bordered-minor construction at level
@@ -525,7 +525,7 @@ private theorem borderedMinor_rowSwap_source_row {R : Type u}
   rw [Hex.Matrix.getElem_ofFn, Hex.Matrix.getElem_ofFn]
   simp only [Hex.Matrix.getElem_pair_eq_nested]
   by_cases hrk : r.val < k
-  · simp only [dif_pos hrk]
+  · simp only [dite_eq_left hrk]
     have hr_lt : r.val < n := Nat.lt_trans hrk hk
     have h_r_ne_kFin : (⟨r.val, hr_lt⟩ : Fin n) ≠ kFin := by
       intro h
@@ -536,7 +536,7 @@ private theorem borderedMinor_rowSwap_source_row {R : Type u}
       have hval : r.val = pivot.val := by simpa using congrArg Fin.val h
       omega
     exact getElem_rowSwap_of_ne M kFin pivot ⟨r.val, hr_lt⟩ _ h_r_ne_kFin h_r_ne_pivot
-  · simp only [dif_neg hrk]
+  · simp only [dite_eq_right hrk]
     exact getElem_rowSwap_swap_eq M kFin pivot i _
 
 /-- Public regular swap-only step surface for the row-pivoted Bareiss proof.
@@ -593,16 +593,16 @@ theorem bareissPivotInvariant_regular_swap
     rw [borderedMinor_rowSwap_source_row source state.step hk kFin pivot hkF_val
       hp_ge i j]
     by_cases hip : i = pivot
-    · simp only [if_pos hip]
+    · simp only [ite_eq_left hip]
       -- Need: state.matrix[kFin][j] = det (borderedMinor source state.step _ kFin j).
       have hkFin_le : state.step ≤ kFin.val := Nat.le_of_eq hkF_val.symm
       exact hinv.trailing_eq hk kFin j hkFin_le hj
     · by_cases hik : i = kFin
-      · simp only [if_neg hip, if_pos hik]
+      · simp only [ite_eq_right hip, ite_eq_left hik]
         -- Need: state.matrix[pivot][j] = det (borderedMinor source state.step _ pivot j).
         have hp_step : state.step ≤ pivot.val := Nat.le_of_succ_le hp_ge
         exact hinv.trailing_eq hk pivot j hp_step hj
-      · simp only [if_neg hip, if_neg hik]
+      · simp only [ite_eq_right hip, ite_eq_right hik]
         exact hinv.trailing_eq hk i j hi hj
 
 private theorem bareissSign_succ {R : Type u} [CommRing R] (swaps : Nat) :
@@ -1157,7 +1157,7 @@ theorem failedBareissColumn_above_pivot
     (c : Fin n) (hc : k < c.val) :
     failedBareissColumn source k hk c = 0 := by
   show (if h : c.val ≤ k then _ else (0 : R)) = 0
-  rw [dif_neg (Nat.not_le_of_lt hc)]
+  rw [dite_eq_right (Nat.not_le_of_lt hc)]
 
 private theorem failedBareissTopBlock_apply_lt
     {R : Type u}
@@ -1167,7 +1167,7 @@ private theorem failedBareissTopBlock_apply_lt
       matrixEquiv source (⟨s.val, Nat.lt_trans s.isLt hk⟩ : Fin n)
         (⟨c.val, Nat.lt_trans hc hk⟩ : Fin n) := by
   show (if h : c.val < k then _ else _) = _
-  rw [dif_pos hc]
+  rw [dite_eq_left hc]
 
 private theorem failedBareissTopBlock_apply_last
     {R : Type u}
@@ -1177,7 +1177,7 @@ private theorem failedBareissTopBlock_apply_last
       matrixEquiv source (⟨s.val, Nat.lt_trans s.isLt hk⟩ : Fin n) ⟨k, hk⟩ := by
   show (if h : (Fin.last k : Fin (k + 1)).val < k then _ else _) = _
   simp only [Fin.val_last]
-  rw [dif_neg (Nat.lt_irrefl k)]
+  rw [dite_eq_right (Nat.lt_irrefl k)]
 
 private theorem failedBareissTopBlock_succAbove_last
     {R : Type u}
@@ -1204,7 +1204,7 @@ theorem failedBareissColumn_at_pivot
         Matrix.det ((failedBareissTopBlock source k hk).submatrix id
           (⟨(⟨k, hk⟩ : Fin n).val, Nat.lt_succ_of_le hc⟩ : Fin (k + 1)).succAbove)
       else 0) = _
-  rw [dif_pos (le_refl k)]
+  rw [dite_eq_left (le_refl k)]
   have hsign : (-1 : R) ^ (k + k) = 1 := by
     rw [← Nat.two_mul, pow_mul]; norm_num
   show (-1 : R) ^ (k + k) *
@@ -1233,12 +1233,12 @@ private theorem matrixEquiv_borderedMinor_apply_last
       (if hc : c'.val < k then (⟨c'.val, Nat.lt_trans hc hk⟩ : Fin n) else
         ⟨k, hk⟩) = _
   simp only [Fin.val_last]
-  rw [dif_neg (Nat.lt_irrefl k)]
+  rw [dite_eq_right (Nat.lt_irrefl k)]
   by_cases hcv : c'.val < k
-  · rw [dif_pos hcv]
+  · rw [dite_eq_left hcv]
   · have hc_eq : c'.val = k :=
       Nat.le_antisymm (Nat.le_of_lt_succ c'.isLt) (Nat.not_lt.mp hcv)
-    rw [dif_neg hcv]
+    rw [dite_eq_right hcv]
     show matrixEquiv source r (⟨k, hk⟩ : Fin n) =
       matrixEquiv source r (⟨c'.val, Nat.lt_of_le_of_lt
         (Nat.le_of_lt_succ c'.isLt) hk⟩ : Fin n)
@@ -1268,16 +1268,16 @@ private theorem submatrix_borderedMinor_succAbove_last_eq_topBlock
     failedBareissTopBlock source k hk s (c'.succAbove t)
   rw [Fin.succAbove_last]
   have hslt : (s.castSucc : Fin (k + 1)).val < k := s.isLt
-  rw [dif_pos hslt]
+  rw [dite_eq_left hslt]
   by_cases hctlt : (c'.succAbove t).val < k
-  · rw [dif_pos hctlt]
+  · rw [dite_eq_left hctlt]
     rw [failedBareissTopBlock_apply_lt source k hk s (c'.succAbove t) hctlt]
     rfl
   · have hctlt' : k ≤ (c'.succAbove t).val := Nat.not_lt.mp hctlt
     have hct_eq : (c'.succAbove t).val = k := by
       have := (c'.succAbove t).isLt
       omega
-    rw [dif_neg hctlt]
+    rw [dite_eq_right hctlt]
     have h_succAbove_eq : c'.succAbove t = Fin.last k := Fin.ext hct_eq
     rw [h_succAbove_eq, failedBareissTopBlock_apply_last source k hk s]
     rfl
@@ -1336,7 +1336,7 @@ private theorem failedBareissColumn_dot_row_eq_borderedMinor_det
           Matrix.det
             ((failedBareissTopBlock source k hk).submatrix id c'.succAbove) := by
     show (if hc : (φ c').val ≤ k then _ else (0 : R)) = _
-    rw [dif_pos hφc'_le, hφc'_eq_c', hφ_apply]
+    rw [dite_eq_left hφc'_le, hφc'_eq_c', hφ_apply]
   rw [hα_eq, matrixEquiv_borderedMinor_apply_last source k hk r c',
       submatrix_borderedMinor_succAbove_last_eq_topBlock source k hk r c']
   -- Now reduce both sides to a normal form.
@@ -1373,9 +1373,9 @@ private theorem matrixEquiv_borderedMinor_det_eq_zero_of_row_lt
       (if h : (⟨r.val, Nat.lt_succ_of_lt hr⟩ : Fin (k + 1)).val < k then _ else r) _ =
     matrixEquiv source
       (if h : (Fin.last k : Fin (k + 1)).val < k then _ else r) _
-  rw [dif_pos hr]
+  rw [dite_eq_left hr]
   simp only [Fin.val_last]
-  rw [dif_neg (Nat.lt_irrefl k)]
+  rw [dite_eq_right (Nat.lt_irrefl k)]
 
 /-- **Failed Bareiss column dependence.**
 

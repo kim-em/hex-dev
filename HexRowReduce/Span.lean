@@ -183,15 +183,15 @@ private theorem foldl_indicator_mul_unique {R : Type u} [Lean.Grind.Ring R]
             ∀ y ∈ xs, (if x = y then (1 : R) else 0) * f y = 0 := by
           intro y hy
           have hxy : x ≠ y := fun heq => (List.nodup_cons.mp hnodup).1 (heq ▸ hy)
-          rw [if_neg hxy]
+          rw [ite_eq_right hxy]
           grind
-        rw [if_pos rfl, List.foldl_add_eq_self xs _ _ hxs_zero]
+        rw [ite_eq_left rfl, List.foldl_add_eq_self xs _ _ hxs_zero]
         grind
       · have hxi : i ≠ x := by
           intro heq
           rw [← heq] at hnodup
           exact (List.nodup_cons.mp hnodup).1 hitail
-        rw [if_neg hxi]
+        rw [ite_eq_right hxi]
         have hzero : (0 : R) * f x = 0 := by grind
         rw [hzero]
         have hacc : acc + (0 : R) = acc := by grind
@@ -225,7 +225,7 @@ theorem vecMul_single {R : Type u} [Lean.Grind.CommRing R]
     rw [getElem_col, hind]
     by_cases hil : i = l
     · simp [hil, Lean.Grind.CommSemiring.mul_comm]
-    · rw [if_neg hil]
+    · rw [ite_eq_right hil]
       grind
   rw [hbody]
   have hpick := foldl_indicator_mul_unique (R := R) (List.finRange n) i
@@ -246,7 +246,7 @@ private theorem pivot_column_entry [Lean.Grind.Field R] (E : IsRowReduced M D)
       have hip : E.toIsEchelonForm.pivotRow p = i := by
         apply Fin.ext
         simpa [IsEchelonForm.pivotRow] using congrArg Fin.val hpq
-      rw [if_pos hip]
+      rw [ite_eq_left hip]
       subst p
       simpa [IsEchelonForm.pivotRow] using E.pivot_one ⟨i.val, hi⟩
     · have hrow_ne : E.toIsEchelonForm.pivotRow p ≠ i := by
@@ -254,7 +254,7 @@ private theorem pivot_column_entry [Lean.Grind.Field R] (E : IsRowReduced M D)
         apply hpq
         apply Fin.ext
         simpa [IsEchelonForm.pivotRow] using congrArg Fin.val hrow
-      rw [if_neg hrow_ne]
+      rw [ite_eq_right hrow_ne]
       have hne : i.val ≠ p.val := by
         intro hval
         apply hpq
@@ -270,7 +270,7 @@ private theorem pivot_column_entry [Lean.Grind.Field R] (E : IsRowReduced M D)
       apply hi
       rw [← Fin.ext_iff.mp hrow]
       exact p.isLt
-    rw [if_neg hrow_ne]
+    rw [ite_eq_right hrow_ne]
     have hzero := E.toIsEchelonForm.zero_row i (by omega)
     simpa using congrArg (fun row => row[D.pivotCols.get p]) hzero
 

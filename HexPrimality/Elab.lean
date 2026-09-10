@@ -47,7 +47,9 @@ meta def searchExtensionVersion : Nat := 1
 /-- One downstream partial-factor producer available to elaboration-time
 certificate search. The version is checked before the function is used. -/
 meta structure SearchExtension where
+  /-- Version of the extension ABI implemented by this registration. -/
   version : Nat
+  /-- Fully qualified name of the registered partial-factor producer. -/
   factorName : Name
 
 /-- Well-known search-extension constants, checked in deterministic order.

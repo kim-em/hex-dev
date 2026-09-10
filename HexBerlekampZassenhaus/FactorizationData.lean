@@ -187,8 +187,8 @@ theorem transformedCore_monic (core : ZPoly) (degree : Nat) :
 
 /-- The transformed polynomial's degree is the prescribed degree. -/
 @[simp, grind =] theorem transformedCore_degree_getD (core : ZPoly) (degree : Nat) :
-    (transformedCore core degree).degree?.getD 0 = degree := by
-  unfold DensePoly.degree? transformedCore DensePoly.size
+    (transformedCore core degree).natDegree = degree := by
+  unfold DensePoly.natDegree DensePoly.degree? transformedCore DensePoly.size
   simp [transformedCoeffs]
 
 end ToMonicData
@@ -196,7 +196,7 @@ end ToMonicData
 /-- Build the `ToMonicData` packet for a square-free part by the integer scaling transform. -/
 @[expose]
 def toMonic (core : ZPoly) : ToMonicData :=
-  let degree := core.degree?.getD 0
+  let degree := core.natDegree
   { core
     leadingCoeff := DensePoly.leadingCoeff core
     degree
@@ -216,7 +216,7 @@ def toMonic (core : ZPoly) : ToMonicData :=
 
 /-- The packet records the source's degree. -/
 @[simp, grind =] theorem toMonic_degree (core : ZPoly) :
-    (toMonic core).degree = core.degree?.getD 0 := rfl
+    (toMonic core).degree = core.natDegree := rfl
 
 /-- The polynomial stored by `toMonic` is monic, including the degenerate
 constant branches. -/
@@ -239,7 +239,7 @@ theorem toMonic_monic_isMonic_of_pos_degree
 theorem toMonic_monic_degree_eq_of_pos_degree
     (core : ZPoly) (_hpos_lc : 0 < DensePoly.leadingCoeff core)
     (_hdegree : 0 < (toMonic core).degree) :
-    (toMonic core).monic.degree?.getD 0 = (toMonic core).degree := by
+    (toMonic core).monic.natDegree = (toMonic core).degree := by
   unfold toMonic
   by_cases hmonic : DensePoly.leadingCoeff core = 1
   · simp [hmonic]

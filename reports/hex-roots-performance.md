@@ -614,7 +614,7 @@ bottleneck, inclusively terminating in registered `refineTo?`. Artefact:
 developer-local `/tmp/hexroots-9794-refineto.perf`.
 
 **Attribution rule.** Every dominant inclusive path terminates in a registered
-bench target (`isolateAll?`/`isolate`, `taylor`, `witnessCheck`/
+bench target (`isolateAll?`/`ZPoly.isolateComplexRoots?`, `taylor`, `witnessCheck`/
 `nkWitnessCheck`, `newtonSquare`, `refine1`/`certify`, `refineTo?`), so no
 unregistered helper dominates and no new target is required. (Lean's
 closure-call unwinding fragments some inclusive attribution into an unresolved

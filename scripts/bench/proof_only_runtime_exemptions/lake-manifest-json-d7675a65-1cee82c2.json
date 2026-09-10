@@ -1,0 +1,6 @@
+{
+  "path": "lake-manifest.json",
+  "baseline_blob": "d7675a65d5bec03396cb8f75c81bff62479b64e9",
+  "current_blob": "1cee82c2c75ac7384aeee9882ffd620a5b6a8f30",
+  "reason": "Combines the inherited standalone NautyFFI package with a lean-bench revision used only by independent benchmark executables. No factorization library or hexbz_factor_service imports LeanBench or NautyFFI, so neither dependency changes the service runtime call graph."
+}

@@ -1,0 +1,17 @@
+{
+  "matching_sources_commit": "6651c9fe1d450437c7a57ffaf9dfd77f76127696",
+  "explanation": "The raw run captured a dirty pre-rebase HEAD; these hashes match the measured sources in the named committed tree.",
+  "cpu_affinity": [
+    21
+  ],
+  "lean_num_threads": 1,
+  "source_sha256": {
+    "bench/HexConway/Bench.lean": "a9c72d6953463a0f91e7dbb5399654c4faa54f976534758c4460184d6969a57e",
+    "scripts/conway/scope.json": "cb2c475a6cf586aa5c51ca21e3932ffb4462d0cf0d45afa6fce41bc78f3c8d19",
+    "bench/HexConway/Replay.lean": "cf472613ee1f99a46fb4ddd4f57a8d36ca3efc1749947c8f5e25b1ce7805b3ce"
+  },
+  "conway_source_manifest": "reports/conway/quartic-300.json",
+  "binary_sha256": "ba7786b9f8632f32af788dd1bce51b496bf9584c72bf86810ef896577abd6697",
+  "artifact": "reports/bench-results/hex-conway-594-chungus2.json",
+  "artifact_sha256": "e19d59f5be4347583b4058895686251025c7dfb981edbf82df2a967d64172eb7"
+}

@@ -2,8 +2,8 @@
 
 `hex-dev` is the development monorepo where new Hex sublibraries are
 incubated before they are split out for release. `hex` is the released
-aggregate repo; it depends on released split libraries at exact Lake
-revisions.
+aggregate repo; it depends on one shared semantic version of the released
+split libraries.
 
 The authoritative list of split repos published from `hex-dev` is
 [`scripts/release/released.yml`](scripts/release/released.yml), which
@@ -17,7 +17,7 @@ Two structural things the manifest encodes:
 - `hex-test-kit` is the shared conformance/bench helper library
   (source: `Hex/`), not user-facing Hex API.
 - `leanprover/hex` is `pins_only`: it publishes no library source and is
-  re-pinned to the SHAs synced each run, so it is listed last. Its README
+  re-pinned to the shared version synced each run, so it is listed last. Its README
   is generated from `scripts/release/hex-README.md` plus the manifest's
   `component:` labels (see [SPEC/readme.md](SPEC/readme.md)).
 
@@ -32,7 +32,8 @@ development happens in this one tree; a single `lake build` (plus the
 `bench/` and `conformance/` sub-projects) builds everything together.
 The split repos are **published mirrors**: a dispatchable CI
 workflow regenerates each one from the matching content in `hex-dev`,
-rewriting their cross-repo Lake pins and committing to their `main`.
+rewriting their cross-repo Lake requirements, committing to their `main`, and
+tagging every mirror with the same release version.
 Never hand-edit a released repo; change it here and let the sync publish.
 
 Every library uses the same per-library layout (so the publish step is a
@@ -51,10 +52,11 @@ The publish mechanism is `scripts/release/released.yml` (the per-repo
 managed-path + pin manifest), `scripts/release/released-ci.yml` (the managed
 mirror CI workflows), `scripts/release/sync_released.py` (the
 driver; supports `--dry-run`), `scripts/release/synced.json` (the
-per-repo `main` baseline this monorepo corresponds to), and
+per-repo `main` baseline and shared release version), and
 `.github/workflows/sync-released.yml` (manual dispatch, dry by default).
-A real sync overwrites each released repo's managed paths and rewrites
-its Lake pins, so it must only run once this monorepo is at or ahead of
+A real sync overwrites each released repo's managed paths, rewrites its Hex
+requirements to the next shared minor version, and tags the resulting commit,
+so it must only run once this monorepo is at or ahead of
 every released repo's `main`. Run `--dry-run` first.
 
 **Uncoordinated-commit guard.** The sync refuses to overwrite a released
@@ -70,7 +72,9 @@ that), then re-run the sync.
 The baseline lives on a dedicated, unprotected `release-sync-baseline`
 branch that the workflow reads and advances on every real run, so a single
 `workflow_dispatch` (dry-run first, then `dry_run=false`) drives the whole
-publish through with no follow-up. `scripts/release/synced.json` is the
+publish through with no follow-up. A partial failure leaves a pending release
+bound to its source commit, and the retry completes that version rather than
+incrementing again. `scripts/release/synced.json` is the
 bootstrap seed used only before that branch exists.
 
 # hex — agent-specific conventions
@@ -181,15 +185,31 @@ wallclock cap; see
 and the "Time budget" subsection of
 [SPEC/benchmarking.md §CI integration](../SPEC/benchmarking.md).
 
+## Performance measurements use the shared host
+
+There is no dedicated performance machine. Treat host activity as recorded
+context, never as a reason to discard a completed sample or wait for a quiet
+core. Pin a measurement to one automatically selected CPU when the runner
+supports it, to avoid two Hex measurements choosing the same CPU; the selected
+CPU need not be idle. Ordinary complexity evidence uses lean-bench's fixed,
+trial-major schedule. Before/after comparisons run adjacent arms and alternate
+`AB`/`BA` order. Retain every completed run and allow at most one unchanged
+rerun after an inconclusive result. Do not add quiet-core preflights,
+contamination thresholds, retry-until-clean loops, mandatory null controls, or
+per-change profiles. Profile only to explain an unexpected result or to supply
+one required representative Phase-4 attribution. Absolute wall-clock values
+are host-specific observations; CI timeouts are operational safeguards, not
+scientific budgets.
+
 GitHub-hosted Actions on a personal account is concurrency-capped at
 ~20 parallel ubuntu runners across all repositories the account
 owns; a 10-entry matrix saturates the cap, a 40-entry matrix
 produces 24-hour queue waits. Per-target parallelism does not
 amortise the fixed Mathlib cache fetch and startup cost on this
 project, so the rule is "no parallelism in CI." Routine timing-
-sensitive runs live on a separate scheduled workflow on dedicated
-hardware (per [SPEC/benchmarking.md](../SPEC/benchmarking.md)),
-not on the merge-gating workflows.
+sensitive runs are collected manually on the shared host (per
+[SPEC/benchmarking.md](../SPEC/benchmarking.md)), not on the
+merge-gating workflows.
 
 
 # Pod Agent Session

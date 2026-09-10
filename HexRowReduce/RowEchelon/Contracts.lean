@@ -165,14 +165,14 @@ private theorem sortedComplement_eq_filter [DecidableEq α]
             intro h
             subst y
             exact hnot (by simp)
-          rw [sortedComplement, if_neg hxy]
+          rw [sortedComplement, ite_eq_right hxy]
           rw [ih (List.nodup_cons.mp hnodup).2]
           rw [List.filter_cons]
           have hp : (decide (x ∉ y :: ys) : Bool) = true := decide_eq_true hnot
           rw [hp]
           simp
   | @cons_cons pivots cols x hsub ih =>
-      rw [sortedComplement, if_pos rfl, List.filter_cons_of_neg (by simp)]
+      rw [sortedComplement, ite_eq_left rfl, List.filter_cons_of_neg (by simp)]
       rw [ih (List.nodup_cons.mp hnodup).2]
       apply List.filter_congr
       intro z hz

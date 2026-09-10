@@ -210,8 +210,8 @@ private theorem foldl_binom_iter_eq_choose (n m : Nat) :
 theorem binom_eq_choose (n k : Nat) : Hex.Nat.binom n k = Nat.choose n k := by
   unfold Hex.Nat.binom
   by_cases hnk : n < k
-  · rw [if_pos hnk, Nat.choose_eq_zero_of_lt hnk]
-  · rw [if_neg hnk]
+  · rw [ite_eq_left hnk, Nat.choose_eq_zero_of_lt hnk]
+  · rw [ite_eq_right hnk]
     have hkn : k ≤ n := Nat.le_of_not_lt hnk
     by_cases hkk : k ≤ n - k
     · have hmin : min k (n - k) = k := Nat.min_eq_left hkk

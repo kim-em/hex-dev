@@ -1,0 +1,2591 @@
+{
+  "benchmark_export": {
+    "env": {
+      "arch": "x86_64",
+      "cpu_cores": 96,
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "exe_name": "hexintfactor_bench",
+      "git_commit": "de6e13c5caf43cc4d092978d60dc933856c6ffc0",
+      "git_dirty": true,
+      "hostname": "chungus2",
+      "lean_bench_version": "0.1.0",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_version": "4.34.0-rc2",
+      "os": "linux",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "timestamp_iso": "2026-09-07T07:38:13Z",
+      "timestamp_unix_ms": 1788766693470
+    },
+    "export_schema_version": 1,
+    "lean_bench_version": "0.1.0",
+    "results": [
+      {
+        "advisories": [],
+        "budget_truncated": false,
+        "c_max": 11.927922,
+        "c_min": 11.049134,
+        "complexity_formula": "n * n.log2",
+        "config": {
+          "cache_mode": "warm",
+          "max_seconds_per_call": 10,
+          "narrow_range_noise_floor": 1.5,
+          "outer_trials": 7,
+          "param_ceiling": 32768,
+          "param_floor": 64,
+          "param_schedule": {
+            "kind": "custom",
+            "params": [
+              64,
+              256,
+              1024,
+              4096,
+              16384,
+              32768
+            ]
+          },
+          "signal_floor_multiplier": 1,
+          "slope_tolerance": 0.15,
+          "target_inner_nanos": 1000000000,
+          "verdict_warmup_fraction": 0.2
+        },
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexintfactor_bench",
+          "git_commit": "de6e13c5caf43cc4d092978d60dc933856c6ffc0",
+          "git_dirty": true,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_version": "4.34.0-rc2",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-09-07T07:38:13Z",
+          "timestamp_unix_ms": 1788766693470
+        },
+        "function": "Hex.IntFactorBench.runDivisors",
+        "hashable": true,
+        "kind": "parametric",
+        "points": [
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 131072,
+            "param": 64,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71048,
+            "per_call_nanos": 5109.25383,
+            "result_hash": "0x8d511522bd1e4ddc",
+            "status": "ok",
+            "total_nanos": 669680118,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 32768,
+            "param": 256,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71048,
+            "per_call_nanos": 24428.383606,
+            "result_hash": "0x8bdde4cfd86edce1",
+            "status": "ok",
+            "total_nanos": 800469274,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 8192,
+            "param": 1024,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71076,
+            "per_call_nanos": 116486.110352,
+            "result_hash": "0x54e469f52588a550",
+            "status": "ok",
+            "total_nanos": 954254216,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1024,
+            "param": 4096,
+            "part_of_verdict": true,
+            "peak_rss_kb": 72880,
+            "per_call_nanos": 553113.224609,
+            "result_hash": "0x72a923297ad4c390",
+            "status": "ok",
+            "total_nanos": 566387942,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 256,
+            "param": 16384,
+            "part_of_verdict": true,
+            "peak_rss_kb": 79448,
+            "per_call_nanos": 2488765.390625,
+            "result_hash": "0xc8446d29f738ee3a",
+            "status": "ok",
+            "total_nanos": 637123940,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 128,
+            "param": 32768,
+            "part_of_verdict": true,
+            "peak_rss_kb": 77400,
+            "per_call_nanos": 5578386.140625,
+            "result_hash": "0xf0e99be785668643",
+            "status": "ok",
+            "total_nanos": 714033426,
+            "trial_index": 0
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 131072,
+            "param": 64,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71428,
+            "per_call_nanos": 5244.360947,
+            "result_hash": "0x8d511522bd1e4ddc",
+            "status": "ok",
+            "total_nanos": 687388878,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 32768,
+            "param": 256,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70820,
+            "per_call_nanos": 24320.275543,
+            "result_hash": "0x8bdde4cfd86edce1",
+            "status": "ok",
+            "total_nanos": 796926789,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 8192,
+            "param": 1024,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70636,
+            "per_call_nanos": 116312.500732,
+            "result_hash": "0x54e469f52588a550",
+            "status": "ok",
+            "total_nanos": 952832006,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1024,
+            "param": 4096,
+            "part_of_verdict": true,
+            "peak_rss_kb": 73104,
+            "per_call_nanos": 550719.400391,
+            "result_hash": "0x72a923297ad4c390",
+            "status": "ok",
+            "total_nanos": 563936666,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 256,
+            "param": 16384,
+            "part_of_verdict": true,
+            "peak_rss_kb": 79600,
+            "per_call_nanos": 2531966.355469,
+            "result_hash": "0xc8446d29f738ee3a",
+            "status": "ok",
+            "total_nanos": 648183387,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 128,
+            "param": 32768,
+            "part_of_verdict": true,
+            "peak_rss_kb": 77304,
+            "per_call_nanos": 5447983.390625,
+            "result_hash": "0xf0e99be785668643",
+            "status": "ok",
+            "total_nanos": 697341874,
+            "trial_index": 1
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 131072,
+            "param": 64,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70868,
+            "per_call_nanos": 5131.637115,
+            "result_hash": "0x8d511522bd1e4ddc",
+            "status": "ok",
+            "total_nanos": 672613940,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 32768,
+            "param": 256,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71048,
+            "per_call_nanos": 24309.05069,
+            "result_hash": "0x8bdde4cfd86edce1",
+            "status": "ok",
+            "total_nanos": 796558973,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 8192,
+            "param": 1024,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71384,
+            "per_call_nanos": 116437.928589,
+            "result_hash": "0x54e469f52588a550",
+            "status": "ok",
+            "total_nanos": 953859511,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1024,
+            "param": 4096,
+            "part_of_verdict": true,
+            "peak_rss_kb": 73208,
+            "per_call_nanos": 548847.727539,
+            "result_hash": "0x72a923297ad4c390",
+            "status": "ok",
+            "total_nanos": 562020073,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 256,
+            "param": 16384,
+            "part_of_verdict": true,
+            "peak_rss_kb": 79348,
+            "per_call_nanos": 2556753.085938,
+            "result_hash": "0xc8446d29f738ee3a",
+            "status": "ok",
+            "total_nanos": 654528790,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 128,
+            "param": 32768,
+            "part_of_verdict": true,
+            "peak_rss_kb": 77308,
+            "per_call_nanos": 5602308.734375,
+            "result_hash": "0xf0e99be785668643",
+            "status": "ok",
+            "total_nanos": 717095518,
+            "trial_index": 2
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 131072,
+            "param": 64,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71168,
+            "per_call_nanos": 5192.214951,
+            "result_hash": "0x8d511522bd1e4ddc",
+            "status": "ok",
+            "total_nanos": 680553998,
+            "trial_index": 3
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 32768,
+            "param": 256,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71176,
+            "per_call_nanos": 24487.414062,
+            "result_hash": "0x8bdde4cfd86edce1",
+            "status": "ok",
+            "total_nanos": 802403584,
+            "trial_index": 3
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 8192,
+            "param": 1024,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71180,
+            "per_call_nanos": 116011.793335,
+            "result_hash": "0x54e469f52588a550",
+            "status": "ok",
+            "total_nanos": 950368611,
+            "trial_index": 3
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1024,
+            "param": 4096,
+            "part_of_verdict": true,
+            "peak_rss_kb": 72892,
+            "per_call_nanos": 552148.639648,
+            "result_hash": "0x72a923297ad4c390",
+            "status": "ok",
+            "total_nanos": 565400207,
+            "trial_index": 3
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 256,
+            "param": 16384,
+            "part_of_verdict": true,
+            "peak_rss_kb": 79424,
+            "per_call_nanos": 2549121.488281,
+            "result_hash": "0xc8446d29f738ee3a",
+            "status": "ok",
+            "total_nanos": 652575101,
+            "trial_index": 3
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 128,
+            "param": 32768,
+            "part_of_verdict": true,
+            "peak_rss_kb": 77320,
+            "per_call_nanos": 5551964.828125,
+            "result_hash": "0xf0e99be785668643",
+            "status": "ok",
+            "total_nanos": 710651498,
+            "trial_index": 3
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 131072,
+            "param": 64,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71424,
+            "per_call_nanos": 5118.572456,
+            "result_hash": "0x8d511522bd1e4ddc",
+            "status": "ok",
+            "total_nanos": 670901529,
+            "trial_index": 4
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 32768,
+            "param": 256,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71188,
+            "per_call_nanos": 24970.791382,
+            "result_hash": "0x8bdde4cfd86edce1",
+            "status": "ok",
+            "total_nanos": 818242892,
+            "trial_index": 4
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 8192,
+            "param": 1024,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71048,
+            "per_call_nanos": 116115.110718,
+            "result_hash": "0x54e469f52588a550",
+            "status": "ok",
+            "total_nanos": 951214987,
+            "trial_index": 4
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1024,
+            "param": 4096,
+            "part_of_verdict": true,
+            "peak_rss_kb": 73468,
+            "per_call_nanos": 549303.304688,
+            "result_hash": "0x72a923297ad4c390",
+            "status": "ok",
+            "total_nanos": 562486584,
+            "trial_index": 4
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 256,
+            "param": 16384,
+            "part_of_verdict": true,
+            "peak_rss_kb": 79324,
+            "per_call_nanos": 2534406.144531,
+            "result_hash": "0xc8446d29f738ee3a",
+            "status": "ok",
+            "total_nanos": 648807973,
+            "trial_index": 4
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 128,
+            "param": 32768,
+            "part_of_verdict": true,
+            "peak_rss_kb": 76964,
+            "per_call_nanos": 5419542.445312,
+            "result_hash": "0xf0e99be785668643",
+            "status": "ok",
+            "total_nanos": 693701433,
+            "trial_index": 4
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 131072,
+            "param": 64,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71168,
+            "per_call_nanos": 5106.968246,
+            "result_hash": "0x8d511522bd1e4ddc",
+            "status": "ok",
+            "total_nanos": 669380542,
+            "trial_index": 5
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 32768,
+            "param": 256,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71136,
+            "per_call_nanos": 24719.087982,
+            "result_hash": "0x8bdde4cfd86edce1",
+            "status": "ok",
+            "total_nanos": 809995075,
+            "trial_index": 5
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 8192,
+            "param": 1024,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71024,
+            "per_call_nanos": 116938.317993,
+            "result_hash": "0x54e469f52588a550",
+            "status": "ok",
+            "total_nanos": 957958701,
+            "trial_index": 5
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1024,
+            "param": 4096,
+            "part_of_verdict": true,
+            "peak_rss_kb": 73096,
+            "per_call_nanos": 547811.414062,
+            "result_hash": "0x72a923297ad4c390",
+            "status": "ok",
+            "total_nanos": 560958888,
+            "trial_index": 5
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 256,
+            "param": 16384,
+            "part_of_verdict": true,
+            "peak_rss_kb": 78824,
+            "per_call_nanos": 2518033.847656,
+            "result_hash": "0xc8446d29f738ee3a",
+            "status": "ok",
+            "total_nanos": 644616665,
+            "trial_index": 5
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 128,
+            "param": 32768,
+            "part_of_verdict": true,
+            "peak_rss_kb": 77012,
+            "per_call_nanos": 5523931.132812,
+            "result_hash": "0xf0e99be785668643",
+            "status": "ok",
+            "total_nanos": 707063185,
+            "trial_index": 5
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 131072,
+            "param": 64,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70632,
+            "per_call_nanos": 5121.080368,
+            "result_hash": "0x8d511522bd1e4ddc",
+            "status": "ok",
+            "total_nanos": 671230246,
+            "trial_index": 6
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 32768,
+            "param": 256,
+            "part_of_verdict": true,
+            "peak_rss_kb": 70868,
+            "per_call_nanos": 24392.95813,
+            "result_hash": "0x8bdde4cfd86edce1",
+            "status": "ok",
+            "total_nanos": 799308452,
+            "trial_index": 6
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 8192,
+            "param": 1024,
+            "part_of_verdict": true,
+            "peak_rss_kb": 71216,
+            "per_call_nanos": 116169.864746,
+            "result_hash": "0x54e469f52588a550",
+            "status": "ok",
+            "total_nanos": 951663532,
+            "trial_index": 6
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 1024,
+            "param": 4096,
+            "part_of_verdict": true,
+            "peak_rss_kb": 72648,
+            "per_call_nanos": 531593.085938,
+            "result_hash": "0x72a923297ad4c390",
+            "status": "ok",
+            "total_nanos": 544351320,
+            "trial_index": 6
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 256,
+            "param": 16384,
+            "part_of_verdict": true,
+            "peak_rss_kb": 79264,
+            "per_call_nanos": 2544029.597656,
+            "result_hash": "0xc8446d29f738ee3a",
+            "status": "ok",
+            "total_nanos": 651271577,
+            "trial_index": 6
+          },
+          {
+            "alloc_bytes": null,
+            "below_signal_floor": false,
+            "error": null,
+            "inner_repeats": 128,
+            "param": 32768,
+            "part_of_verdict": true,
+            "peak_rss_kb": 77216,
+            "per_call_nanos": 5539769.078125,
+            "result_hash": "0xf0e99be785668643",
+            "status": "ok",
+            "total_nanos": 709090442,
+            "trial_index": 6
+          }
+        ],
+        "ratios": [
+          [
+            64,
+            13.336147
+          ],
+          [
+            256,
+            11.927922
+          ],
+          [
+            1024,
+            11.358643
+          ],
+          [
+            4096,
+            11.175604
+          ],
+          [
+            16384,
+            11.049134
+          ],
+          [
+            32768,
+            11.270689
+          ]
+        ],
+        "slope": -0.012084,
+        "spawn_floor_nanos": 50787204,
+        "trial_summaries": [
+          {
+            "max_per_call_nanos": 5244.360947,
+            "median_per_call_nanos": 5121.080368,
+            "min_per_call_nanos": 5106.968246,
+            "ok_count": 7,
+            "param": 64,
+            "relative_spread": 0.026829
+          },
+          {
+            "max_per_call_nanos": 24970.791382,
+            "median_per_call_nanos": 24428.383606,
+            "min_per_call_nanos": 24309.05069,
+            "ok_count": 7,
+            "param": 256,
+            "relative_spread": 0.027089
+          },
+          {
+            "max_per_call_nanos": 116938.317993,
+            "median_per_call_nanos": 116312.500732,
+            "min_per_call_nanos": 116011.793335,
+            "ok_count": 7,
+            "param": 1024,
+            "relative_spread": 0.007966
+          },
+          {
+            "max_per_call_nanos": 553113.224609,
+            "median_per_call_nanos": 549303.304688,
+            "min_per_call_nanos": 531593.085938,
+            "ok_count": 7,
+            "param": 4096,
+            "relative_spread": 0.039177
+          },
+          {
+            "max_per_call_nanos": 2556753.085938,
+            "median_per_call_nanos": 2534406.144531,
+            "min_per_call_nanos": 2488765.390625,
+            "ok_count": 7,
+            "param": 16384,
+            "relative_spread": 0.026826
+          },
+          {
+            "max_per_call_nanos": 5602308.734375,
+            "median_per_call_nanos": 5539769.078125,
+            "min_per_call_nanos": 5419542.445312,
+            "ok_count": 7,
+            "param": 32768,
+            "relative_spread": 0.032992
+          }
+        ],
+        "verdict": "consistent_with_declared_complexity",
+        "verdict_dropped_leading": 1
+      }
+    ]
+  },
+  "command": [
+    "scripts/bench/intfactor_phase4.py",
+    "--audit-attempt",
+    "reports/bench-results/intfactor-divisors-attempt-1.json",
+    "--output",
+    "reports/bench-results/intfactor-divisors-recheck-1.json"
+  ],
+  "commands": [],
+  "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619",
+  "hostname": "chungus2",
+  "ingestion_errors": {},
+  "input_sha256": {
+    "reports/bench-results/intfactor-divisors-attempt-1.json": "9d51d41d63ce666e9735537830b1478165e374a133c578e1757c0d917df66e11",
+    "reports/bench-results/intfactor-divisors-attempt-1.json.attempt/bench.json": "8d6b9214d3ad9c902459cb01520a93c847828e075d0c46e5a8e184e64c50bb51",
+    "reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json": "371185848a609151739f8574a55d789a758ad9410ea2df352bf58d702544aa5b"
+  },
+  "original_attempt": "reports/bench-results/intfactor-divisors-attempt-1.json",
+  "original_status": "rejected",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "python": "3.14.6",
+  "schema": "hex-int-factor-attempt/1",
+  "scientific_validation": {
+    "status": "passed"
+  },
+  "scope": "divisor-recheck",
+  "started_ns": 1788768939778630456,
+  "status": "diagnostic",
+  "telemetry": {
+    "command": [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/.lake/build/bin/hexintfactor_bench",
+      "run",
+      "--filter",
+      "Hex.IntFactorBench.runDivisors",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/bench.json"
+    ],
+    "command_return_code": 0,
+    "cpu": 7,
+    "elapsed_seconds": 33.289,
+    "ended_utc": "2026-09-07T07:38:46.684781Z",
+    "interval_seconds": 0.25,
+    "samples": [
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.25
+        },
+        "elapsed_seconds": 0.252,
+        "foreign_runnable": [
+          {
+            "comm": "MainThread",
+            "cpu": 55,
+            "tgid": 2004722,
+            "tid": 2004722
+          }
+        ],
+        "interval_wall_seconds": 0.252223,
+        "load_average": [
+          6.957,
+          8.797,
+          21.375
+        ],
+        "mono_t0_ns": 3014493853222459,
+        "mono_t1_ns": 3014494105445785,
+        "timed_fraction": 0.307811,
+        "timed_overlap_seconds": 0.077637
+      },
+      {
+        "busy_percent": {
+          "55": 2.326,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.01,
+          "7": 0.43
+        },
+        "elapsed_seconds": 0.684,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.432055,
+        "load_average": [
+          6.957,
+          8.797,
+          21.375
+        ],
+        "mono_t0_ns": 3014494105445785,
+        "mono_t1_ns": 3014494537501003,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.432055
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.43
+        },
+        "elapsed_seconds": 1.11,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.426162,
+        "load_average": [
+          6.957,
+          8.797,
+          21.375
+        ],
+        "mono_t0_ns": 3014494537501003,
+        "mono_t1_ns": 3014494963663409,
+        "timed_fraction": 0.879444,
+        "timed_overlap_seconds": 0.374786
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.42
+        },
+        "elapsed_seconds": 1.538,
+        "foreign_runnable": [
+          {
+            "comm": "claude",
+            "cpu": 55,
+            "tgid": 445640,
+            "tid": 445640
+          }
+        ],
+        "interval_wall_seconds": 0.427121,
+        "load_average": [
+          6.957,
+          8.797,
+          21.375
+        ],
+        "mono_t0_ns": 3014494963663409,
+        "mono_t1_ns": 3014495390784228,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.427121
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.44
+        },
+        "elapsed_seconds": 1.968,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.430347,
+        "load_average": [
+          6.957,
+          8.797,
+          21.375
+        ],
+        "mono_t0_ns": 3014495390784228,
+        "mono_t1_ns": 3014495821130821,
+        "timed_fraction": 0.882244,
+        "timed_overlap_seconds": 0.379671
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.43
+        },
+        "elapsed_seconds": 2.395,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.426967,
+        "load_average": [
+          6.957,
+          8.797,
+          21.375
+        ],
+        "mono_t0_ns": 3014495821130821,
+        "mono_t1_ns": 3014496248097511,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.426967
+      },
+      {
+        "busy_percent": {
+          "55": 2.326,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.01,
+          "7": 0.42
+        },
+        "elapsed_seconds": 2.821,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.426111,
+        "load_average": [
+          6.957,
+          8.797,
+          21.375
+        ],
+        "mono_t0_ns": 3014496248097511,
+        "mono_t1_ns": 3014496674208481,
+        "timed_fraction": 0.880417,
+        "timed_overlap_seconds": 0.375155
+      },
+      {
+        "busy_percent": {
+          "55": 2.326,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.01,
+          "7": 0.42
+        },
+        "elapsed_seconds": 3.245,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.423586,
+        "load_average": [
+          6.957,
+          8.797,
+          21.375
+        ],
+        "mono_t0_ns": 3014496674208481,
+        "mono_t1_ns": 3014497097794936,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.423586
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.44
+        },
+        "elapsed_seconds": 3.677,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.43227,
+        "load_average": [
+          6.957,
+          8.797,
+          21.375
+        ],
+        "mono_t0_ns": 3014497097794936,
+        "mono_t1_ns": 3014497530064953,
+        "timed_fraction": 0.881669,
+        "timed_overlap_seconds": 0.381119
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.44
+        },
+        "elapsed_seconds": 4.125,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.447902,
+        "load_average": [
+          7.441,
+          8.867,
+          21.33
+        ],
+        "mono_t0_ns": 3014497530064953,
+        "mono_t1_ns": 3014497977966810,
+        "timed_fraction": 0.883035,
+        "timed_overlap_seconds": 0.395513
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.43
+        },
+        "elapsed_seconds": 4.56,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.434864,
+        "load_average": [
+          7.441,
+          8.867,
+          21.33
+        ],
+        "mono_t0_ns": 3014497977966810,
+        "mono_t1_ns": 3014498412830685,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.434864
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.44
+        },
+        "elapsed_seconds": 4.997,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.437463,
+        "load_average": [
+          7.441,
+          8.867,
+          21.33
+        ],
+        "mono_t0_ns": 3014498412830685,
+        "mono_t1_ns": 3014498850293285,
+        "timed_fraction": 0.874814,
+        "timed_overlap_seconds": 0.382698
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.43
+        },
+        "elapsed_seconds": 5.43,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.432701,
+        "load_average": [
+          7.441,
+          8.867,
+          21.33
+        ],
+        "mono_t0_ns": 3014498850293285,
+        "mono_t1_ns": 3014499282994742,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.432701
+      },
+      {
+        "busy_percent": {
+          "55": 2.273,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.01,
+          "7": 0.44
+        },
+        "elapsed_seconds": 5.865,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.435696,
+        "load_average": [
+          7.441,
+          8.867,
+          21.33
+        ],
+        "mono_t0_ns": 3014499282994742,
+        "mono_t1_ns": 3014499718690512,
+        "timed_fraction": 0.882146,
+        "timed_overlap_seconds": 0.384347
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.43
+        },
+        "elapsed_seconds": 6.296,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.430542,
+        "load_average": [
+          7.441,
+          8.867,
+          21.33
+        ],
+        "mono_t0_ns": 3014499718690512,
+        "mono_t1_ns": 3014500149232175,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.430542
+      },
+      {
+        "busy_percent": {
+          "55": 2.273,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.01,
+          "7": 0.44
+        },
+        "elapsed_seconds": 6.732,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.436363,
+        "load_average": [
+          7.441,
+          8.867,
+          21.33
+        ],
+        "mono_t0_ns": 3014500149232175,
+        "mono_t1_ns": 3014500585594693,
+        "timed_fraction": 0.88182,
+        "timed_overlap_seconds": 0.384793
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.43
+        },
+        "elapsed_seconds": 7.164,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.431288,
+        "load_average": [
+          7.441,
+          8.867,
+          21.33
+        ],
+        "mono_t0_ns": 3014500585594693,
+        "mono_t1_ns": 3014501016883064,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.431288
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.44
+        },
+        "elapsed_seconds": 7.599,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.435744,
+        "load_average": [
+          7.441,
+          8.867,
+          21.33
+        ],
+        "mono_t0_ns": 3014501016883064,
+        "mono_t1_ns": 3014501452626644,
+        "timed_fraction": 0.880984,
+        "timed_overlap_seconds": 0.383883
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.43
+        },
+        "elapsed_seconds": 8.034,
+        "foreign_runnable": [
+          {
+            "comm": "hexintfactor_be",
+            "cpu": 7,
+            "tgid": 2399275,
+            "tid": 2399278
+          }
+        ],
+        "interval_wall_seconds": 0.434702,
+        "load_average": [
+          7.441,
+          8.867,
+          21.33
+        ],
+        "mono_t0_ns": 3014501452626644,
+        "mono_t1_ns": 3014501887328869,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.434702
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.44
+        },
+        "elapsed_seconds": 8.473,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.438486,
+        "load_average": [
+          7.441,
+          8.867,
+          21.33
+        ],
+        "mono_t0_ns": 3014501887328869,
+        "mono_t1_ns": 3014502325814377,
+        "timed_fraction": 0.883994,
+        "timed_overlap_seconds": 0.387618
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.43
+        },
+        "elapsed_seconds": 8.908,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.435396,
+        "load_average": [
+          7.441,
+          8.867,
+          21.33
+        ],
+        "mono_t0_ns": 3014502325814377,
+        "mono_t1_ns": 3014502761209930,
+        "timed_fraction": 0.882096,
+        "timed_overlap_seconds": 0.384061
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.44
+        },
+        "elapsed_seconds": 9.348,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.439778,
+        "load_average": [
+          7.245,
+          8.803,
+          21.242
+        ],
+        "mono_t0_ns": 3014502761209930,
+        "mono_t1_ns": 3014503200988166,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.439778
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.44
+        },
+        "elapsed_seconds": 9.783,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.434745,
+        "load_average": [
+          7.245,
+          8.803,
+          21.242
+        ],
+        "mono_t0_ns": 3014503200988166,
+        "mono_t1_ns": 3014503635732874,
+        "timed_fraction": 0.882501,
+        "timed_overlap_seconds": 0.383662
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.43
+        },
+        "elapsed_seconds": 10.215,
+        "foreign_runnable": [
+          {
+            "comm": "hexintfactor_be",
+            "cpu": 7,
+            "tgid": 2399620,
+            "tid": 2399623
+          }
+        ],
+        "interval_wall_seconds": 0.432254,
+        "load_average": [
+          7.245,
+          8.803,
+          21.242
+        ],
+        "mono_t0_ns": 3014503635732874,
+        "mono_t1_ns": 3014504067986947,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.432254
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.44
+        },
+        "elapsed_seconds": 10.655,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.439804,
+        "load_average": [
+          7.245,
+          8.803,
+          21.242
+        ],
+        "mono_t0_ns": 3014504067986947,
+        "mono_t1_ns": 3014504507790711,
+        "timed_fraction": 0.882682,
+        "timed_overlap_seconds": 0.388207
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.44
+        },
+        "elapsed_seconds": 11.085,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.430109,
+        "load_average": [
+          7.245,
+          8.803,
+          21.242
+        ],
+        "mono_t0_ns": 3014504507790711,
+        "mono_t1_ns": 3014504937899702,
+        "timed_fraction": 0.981746,
+        "timed_overlap_seconds": 0.422258
+      },
+      {
+        "busy_percent": {
+          "55": 2.273,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.01,
+          "7": 0.42
+        },
+        "elapsed_seconds": 11.516,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.431512,
+        "load_average": [
+          7.245,
+          8.803,
+          21.242
+        ],
+        "mono_t0_ns": 3014504937899702,
+        "mono_t1_ns": 3014505369411544,
+        "timed_fraction": 0.891452,
+        "timed_overlap_seconds": 0.384672
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.44
+        },
+        "elapsed_seconds": 11.951,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.434586,
+        "load_average": [
+          7.245,
+          8.803,
+          21.242
+        ],
+        "mono_t0_ns": 3014505369411544,
+        "mono_t1_ns": 3014505803997066,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.434586
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.43
+        },
+        "elapsed_seconds": 12.386,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.43497,
+        "load_average": [
+          7.245,
+          8.803,
+          21.242
+        ],
+        "mono_t0_ns": 3014505803997066,
+        "mono_t1_ns": 3014506238967229,
+        "timed_fraction": 0.881264,
+        "timed_overlap_seconds": 0.383324
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.43
+        },
+        "elapsed_seconds": 12.818,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.432621,
+        "load_average": [
+          7.245,
+          8.803,
+          21.242
+        ],
+        "mono_t0_ns": 3014506238967229,
+        "mono_t1_ns": 3014506671587755,
+        "timed_fraction": 0.881143,
+        "timed_overlap_seconds": 0.381201
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.44
+        },
+        "elapsed_seconds": 13.254,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.435517,
+        "load_average": [
+          7.245,
+          8.803,
+          21.242
+        ],
+        "mono_t0_ns": 3014506671587755,
+        "mono_t1_ns": 3014507107104439,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.435517
+      },
+      {
+        "busy_percent": {
+          "55": 2.326,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.01,
+          "7": 0.43
+        },
+        "elapsed_seconds": 13.685,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.431507,
+        "load_average": [
+          7.245,
+          8.803,
+          21.242
+        ],
+        "mono_t0_ns": 3014507107104439,
+        "mono_t1_ns": 3014507538611113,
+        "timed_fraction": 0.880171,
+        "timed_overlap_seconds": 0.379799
+      },
+      {
+        "busy_percent": {
+          "55": 2.326,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.01,
+          "7": 0.43
+        },
+        "elapsed_seconds": 14.116,
+        "foreign_runnable": [
+          {
+            "comm": "code-a5b5009513",
+            "cpu": 55,
+            "tgid": 1589808,
+            "tid": 1589808
+          }
+        ],
+        "interval_wall_seconds": 0.430897,
+        "load_average": [
+          7.225,
+          8.772,
+          21.165
+        ],
+        "mono_t0_ns": 3014507538611113,
+        "mono_t1_ns": 3014507969508424,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.430897
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.44
+        },
+        "elapsed_seconds": 14.548,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.4315,
+        "load_average": [
+          7.225,
+          8.772,
+          21.165
+        ],
+        "mono_t0_ns": 3014507969508424,
+        "mono_t1_ns": 3014508401008598,
+        "timed_fraction": 0.877942,
+        "timed_overlap_seconds": 0.378832
+      },
+      {
+        "busy_percent": {
+          "55": 2.273,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.01,
+          "7": 0.43
+        },
+        "elapsed_seconds": 14.982,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.434381,
+        "load_average": [
+          7.225,
+          8.772,
+          21.165
+        ],
+        "mono_t0_ns": 3014508401008598,
+        "mono_t1_ns": 3014508835389527,
+        "timed_fraction": 0.88508,
+        "timed_overlap_seconds": 0.384462
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.43
+        },
+        "elapsed_seconds": 15.417,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.434674,
+        "load_average": [
+          7.225,
+          8.772,
+          21.165
+        ],
+        "mono_t0_ns": 3014508835389527,
+        "mono_t1_ns": 3014509270063570,
+        "timed_fraction": 0.989566,
+        "timed_overlap_seconds": 0.430139
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.44
+        },
+        "elapsed_seconds": 15.846,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.429209,
+        "load_average": [
+          7.225,
+          8.772,
+          21.165
+        ],
+        "mono_t0_ns": 3014509270063570,
+        "mono_t1_ns": 3014509699272976,
+        "timed_fraction": 0.881829,
+        "timed_overlap_seconds": 0.378489
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.43
+        },
+        "elapsed_seconds": 16.276,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.429687,
+        "load_average": [
+          7.225,
+          8.772,
+          21.165
+        ],
+        "mono_t0_ns": 3014509699272976,
+        "mono_t1_ns": 3014510128959591,
+        "timed_fraction": 0.998316,
+        "timed_overlap_seconds": 0.428963
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.43
+        },
+        "elapsed_seconds": 16.709,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.432831,
+        "load_average": [
+          7.225,
+          8.772,
+          21.165
+        ],
+        "mono_t0_ns": 3014510128959591,
+        "mono_t1_ns": 3014510561790640,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.432831
+      },
+      {
+        "busy_percent": {
+          "55": 4.444,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.02,
+          "7": 0.43
+        },
+        "elapsed_seconds": 17.145,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.436548,
+        "load_average": [
+          7.225,
+          8.772,
+          21.165
+        ],
+        "mono_t0_ns": 3014510561790640,
+        "mono_t1_ns": 3014510998339114,
+        "timed_fraction": 0.881604,
+        "timed_overlap_seconds": 0.384863
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.45
+        },
+        "elapsed_seconds": 17.577,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.431955,
+        "load_average": [
+          7.225,
+          8.772,
+          21.165
+        ],
+        "mono_t0_ns": 3014510998339114,
+        "mono_t1_ns": 3014511430294464,
+        "timed_fraction": 0.881424,
+        "timed_overlap_seconds": 0.380736
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.42
+        },
+        "elapsed_seconds": 18.008,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.430725,
+        "load_average": [
+          7.225,
+          8.772,
+          21.165
+        ],
+        "mono_t0_ns": 3014511430294464,
+        "mono_t1_ns": 3014511861018998,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.430725
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.43
+        },
+        "elapsed_seconds": 18.441,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.432942,
+        "load_average": [
+          7.225,
+          8.772,
+          21.165
+        ],
+        "mono_t0_ns": 3014511861018998,
+        "mono_t1_ns": 3014512293961082,
+        "timed_fraction": 0.881406,
+        "timed_overlap_seconds": 0.381598
+      },
+      {
+        "busy_percent": {
+          "55": 2.273,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.01,
+          "7": 0.43
+        },
+        "elapsed_seconds": 18.873,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.432012,
+        "load_average": [
+          7.225,
+          8.772,
+          21.165
+        ],
+        "mono_t0_ns": 3014512293961082,
+        "mono_t1_ns": 3014512725972966,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.432012
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.44
+        },
+        "elapsed_seconds": 19.302,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.429412,
+        "load_average": [
+          6.887,
+          8.676,
+          21.067
+        ],
+        "mono_t0_ns": 3014512725972966,
+        "mono_t1_ns": 3014513155385203,
+        "timed_fraction": 0.879753,
+        "timed_overlap_seconds": 0.377777
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.42
+        },
+        "elapsed_seconds": 19.732,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.430201,
+        "load_average": [
+          6.887,
+          8.676,
+          21.067
+        ],
+        "mono_t0_ns": 3014513155385203,
+        "mono_t1_ns": 3014513585586280,
+        "timed_fraction": 0.881287,
+        "timed_overlap_seconds": 0.379131
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.44
+        },
+        "elapsed_seconds": 20.166,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.43378,
+        "load_average": [
+          6.887,
+          8.676,
+          21.067
+        ],
+        "mono_t0_ns": 3014513585586280,
+        "mono_t1_ns": 3014514019365786,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.43378
+      },
+      {
+        "busy_percent": {
+          "55": 2.273,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.01,
+          "7": 0.43
+        },
+        "elapsed_seconds": 20.596,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.429882,
+        "load_average": [
+          6.887,
+          8.676,
+          21.067
+        ],
+        "mono_t0_ns": 3014514019365786,
+        "mono_t1_ns": 3014514449247560,
+        "timed_fraction": 0.880097,
+        "timed_overlap_seconds": 0.378338
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.43
+        },
+        "elapsed_seconds": 21.032,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.435966,
+        "load_average": [
+          6.887,
+          8.676,
+          21.067
+        ],
+        "mono_t0_ns": 3014514449247560,
+        "mono_t1_ns": 3014514885213390,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.435966
+      },
+      {
+        "busy_percent": {
+          "55": 2.273,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.01,
+          "7": 0.45
+        },
+        "elapsed_seconds": 21.469,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.437268,
+        "load_average": [
+          6.887,
+          8.676,
+          21.067
+        ],
+        "mono_t0_ns": 3014514885213390,
+        "mono_t1_ns": 3014515322481120,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.437268
+      },
+      {
+        "busy_percent": {
+          "55": 2.273,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.01,
+          "7": 0.42
+        },
+        "elapsed_seconds": 21.902,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.432659,
+        "load_average": [
+          6.887,
+          8.676,
+          21.067
+        ],
+        "mono_t0_ns": 3014515322481120,
+        "mono_t1_ns": 3014515755139954,
+        "timed_fraction": 0.880982,
+        "timed_overlap_seconds": 0.381165
+      },
+      {
+        "busy_percent": {
+          "55": 2.273,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.01,
+          "7": 0.44
+        },
+        "elapsed_seconds": 22.338,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.435695,
+        "load_average": [
+          6.887,
+          8.676,
+          21.067
+        ],
+        "mono_t0_ns": 3014515755139954,
+        "mono_t1_ns": 3014516190835372,
+        "timed_fraction": 0.880646,
+        "timed_overlap_seconds": 0.383693
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.43
+        },
+        "elapsed_seconds": 22.768,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.430319,
+        "load_average": [
+          6.887,
+          8.676,
+          21.067
+        ],
+        "mono_t0_ns": 3014516190835372,
+        "mono_t1_ns": 3014516621154735,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.430319
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.43
+        },
+        "elapsed_seconds": 23.2,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.43159,
+        "load_average": [
+          6.887,
+          8.676,
+          21.067
+        ],
+        "mono_t0_ns": 3014516621154735,
+        "mono_t1_ns": 3014517052745124,
+        "timed_fraction": 0.870577,
+        "timed_overlap_seconds": 0.375732
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.42
+        },
+        "elapsed_seconds": 23.628,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.428284,
+        "load_average": [
+          6.887,
+          8.676,
+          21.067
+        ],
+        "mono_t0_ns": 3014517052745124,
+        "mono_t1_ns": 3014517481029077,
+        "timed_fraction": 0.911496,
+        "timed_overlap_seconds": 0.390379
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.43
+        },
+        "elapsed_seconds": 24.053,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.424738,
+        "load_average": [
+          6.815,
+          8.632,
+          20.986
+        ],
+        "mono_t0_ns": 3014517481029077,
+        "mono_t1_ns": 3014517905766649,
+        "timed_fraction": 0.963657,
+        "timed_overlap_seconds": 0.409301
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.43
+        },
+        "elapsed_seconds": 24.481,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.428262,
+        "load_average": [
+          6.815,
+          8.632,
+          20.986
+        ],
+        "mono_t0_ns": 3014517905766649,
+        "mono_t1_ns": 3014518334028830,
+        "timed_fraction": 0.879667,
+        "timed_overlap_seconds": 0.376728
+      },
+      {
+        "busy_percent": {
+          "55": 2.273,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.01,
+          "7": 0.43
+        },
+        "elapsed_seconds": 24.913,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.43186,
+        "load_average": [
+          6.815,
+          8.632,
+          20.986
+        ],
+        "mono_t0_ns": 3014518334028830,
+        "mono_t1_ns": 3014518765888619,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.43186
+      },
+      {
+        "busy_percent": {
+          "55": 2.381,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.01,
+          "7": 0.44
+        },
+        "elapsed_seconds": 25.341,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.42841,
+        "load_average": [
+          6.815,
+          8.632,
+          20.986
+        ],
+        "mono_t0_ns": 3014518765888619,
+        "mono_t1_ns": 3014519194298889,
+        "timed_fraction": 0.879509,
+        "timed_overlap_seconds": 0.376791
+      },
+      {
+        "busy_percent": {
+          "55": 6.383,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.03,
+          "7": 0.45
+        },
+        "elapsed_seconds": 25.793,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.45166,
+        "load_average": [
+          6.815,
+          8.632,
+          20.986
+        ],
+        "mono_t0_ns": 3014519194298889,
+        "mono_t1_ns": 3014519645958520,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.45166
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.42
+        },
+        "elapsed_seconds": 26.224,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.431108,
+        "load_average": [
+          6.815,
+          8.632,
+          20.986
+        ],
+        "mono_t0_ns": 3014519645958520,
+        "mono_t1_ns": 3014520077066483,
+        "timed_fraction": 0.950682,
+        "timed_overlap_seconds": 0.409847
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.44
+        },
+        "elapsed_seconds": 26.656,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.432494,
+        "load_average": [
+          6.815,
+          8.632,
+          20.986
+        ],
+        "mono_t0_ns": 3014520077066483,
+        "mono_t1_ns": 3014520509560302,
+        "timed_fraction": 0.931049,
+        "timed_overlap_seconds": 0.402673
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.43
+        },
+        "elapsed_seconds": 27.084,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.428032,
+        "load_average": [
+          6.815,
+          8.632,
+          20.986
+        ],
+        "mono_t0_ns": 3014520509560302,
+        "mono_t1_ns": 3014520937592612,
+        "timed_fraction": 0.880682,
+        "timed_overlap_seconds": 0.37696
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.43
+        },
+        "elapsed_seconds": 27.515,
+        "foreign_runnable": [
+          {
+            "comm": "hexintfactor_be",
+            "cpu": 7,
+            "tgid": 2401472,
+            "tid": 2401483
+          }
+        ],
+        "interval_wall_seconds": 0.430869,
+        "load_average": [
+          6.815,
+          8.632,
+          20.986
+        ],
+        "mono_t0_ns": 3014520937592612,
+        "mono_t1_ns": 3014521368461870,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.430869
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.43
+        },
+        "elapsed_seconds": 27.951,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.43558,
+        "load_average": [
+          6.815,
+          8.632,
+          20.986
+        ],
+        "mono_t0_ns": 3014521368461870,
+        "mono_t1_ns": 3014521804041908,
+        "timed_fraction": 0.881462,
+        "timed_overlap_seconds": 0.383947
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.43
+        },
+        "elapsed_seconds": 28.377,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.426331,
+        "load_average": [
+          6.815,
+          8.632,
+          20.986
+        ],
+        "mono_t0_ns": 3014521804041908,
+        "mono_t1_ns": 3014522230372453,
+        "timed_fraction": 0.879195,
+        "timed_overlap_seconds": 0.374828
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.42
+        },
+        "elapsed_seconds": 28.805,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.427709,
+        "load_average": [
+          6.815,
+          8.632,
+          20.986
+        ],
+        "mono_t0_ns": 3014522230372453,
+        "mono_t1_ns": 3014522658081313,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.427709
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.44
+        },
+        "elapsed_seconds": 29.235,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.429698,
+        "load_average": [
+          6.51,
+          8.538,
+          20.89
+        ],
+        "mono_t0_ns": 3014522658081313,
+        "mono_t1_ns": 3014523087778873,
+        "timed_fraction": 0.879609,
+        "timed_overlap_seconds": 0.377966
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.42
+        },
+        "elapsed_seconds": 29.659,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.424817,
+        "load_average": [
+          6.51,
+          8.538,
+          20.89
+        ],
+        "mono_t0_ns": 3014523087778873,
+        "mono_t1_ns": 3014523512595883,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.424817
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.43
+        },
+        "elapsed_seconds": 30.091,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.431871,
+        "load_average": [
+          6.51,
+          8.538,
+          20.89
+        ],
+        "mono_t0_ns": 3014523512595883,
+        "mono_t1_ns": 3014523944466698,
+        "timed_fraction": 0.872251,
+        "timed_overlap_seconds": 0.3767
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.43
+        },
+        "elapsed_seconds": 30.521,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.430154,
+        "load_average": [
+          6.51,
+          8.538,
+          20.89
+        ],
+        "mono_t0_ns": 3014523944466698,
+        "mono_t1_ns": 3014524374620915,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.430154
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.44
+        },
+        "elapsed_seconds": 30.954,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.432532,
+        "load_average": [
+          6.51,
+          8.538,
+          20.89
+        ],
+        "mono_t0_ns": 3014524374620915,
+        "mono_t1_ns": 3014524807153241,
+        "timed_fraction": 0.88097,
+        "timed_overlap_seconds": 0.381048
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.43
+        },
+        "elapsed_seconds": 31.384,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.430293,
+        "load_average": [
+          6.51,
+          8.538,
+          20.89
+        ],
+        "mono_t0_ns": 3014524807153241,
+        "mono_t1_ns": 3014525237446335,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.430293
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.42
+        },
+        "elapsed_seconds": 31.812,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.428253,
+        "load_average": [
+          6.51,
+          8.538,
+          20.89
+        ],
+        "mono_t0_ns": 3014525237446335,
+        "mono_t1_ns": 3014525665699262,
+        "timed_fraction": 0.880627,
+        "timed_overlap_seconds": 0.377131
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.44
+        },
+        "elapsed_seconds": 32.246,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.43311,
+        "load_average": [
+          6.51,
+          8.538,
+          20.89
+        ],
+        "mono_t0_ns": 3014525665699262,
+        "mono_t1_ns": 3014526098809245,
+        "timed_fraction": 0.880503,
+        "timed_overlap_seconds": 0.381355
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 100.0
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.42
+        },
+        "elapsed_seconds": 32.674,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.4285,
+        "load_average": [
+          6.51,
+          8.538,
+          20.89
+        ],
+        "mono_t0_ns": 3014526098809245,
+        "mono_t1_ns": 3014526527309699,
+        "timed_fraction": 1.0,
+        "timed_overlap_seconds": 0.4285
+      },
+      {
+        "busy_percent": {
+          "55": 0.0,
+          "7": 65.909
+        },
+        "busy_seconds": {
+          "55": 0.0,
+          "7": 0.29
+        },
+        "elapsed_seconds": 33.104,
+        "foreign_runnable": [],
+        "interval_wall_seconds": 0.430352,
+        "load_average": [
+          6.51,
+          8.538,
+          20.89
+        ],
+        "mono_t0_ns": 3014526527309699,
+        "mono_t1_ns": 3014526957661460,
+        "timed_fraction": 0.645986,
+        "timed_overlap_seconds": 0.278001
+      }
+    ],
+    "schema": 2,
+    "smt_siblings": [
+      55
+    ],
+    "started_utc": "2026-09-07T07:38:13.395468Z",
+    "summary": {
+      "aggregate_core_interference_ratio": 0.048737,
+      "aggregate_core_interference_seconds": 1.49368,
+      "contaminated": true,
+      "foreign_runnable_samples": 6,
+      "measurement_cpu_foreign_seconds_estimate": 1.297825,
+      "sample_count": 77,
+      "smt_sibling_busy_seconds": 0.195855,
+      "timed_region_count_after_union": 245,
+      "timed_region_sidecar_count": 42,
+      "timed_regions_complete": true,
+      "timed_wall_seconds": 30.647598
+    },
+    "thresholds": {
+      "max_core_interference_ratio": 0.002
+    },
+    "timed_region_sidecars": [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2398253.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2398332.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2398403.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2398571.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2398595.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2398618.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2398865.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2398941.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2399072.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2399200.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2399275.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2399305.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2399525.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2399620.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2399722.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2399803.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2399895.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2399941.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2400005.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2400154.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2400253.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2400338.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2400405.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2400538.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2400577.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2400738.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2400756.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2400894.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2400947.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2401031.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2401063.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2401153.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2401259.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2401370.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2401393.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2401472.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2401553.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2401589.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2401757.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2401830.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2401875.jsonl",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-attempt-1.json.attempt/telemetry.json.timed-2398215-3014493853222459-2401920.jsonl"
+    ],
+    "timed_region_sidecars_retained": true,
+    "timed_regions_error": null
+  },
+  "validator_sha256": "a8e503d6629efab5cd7dfff909fb7c9b9f8e75f12130b152cc616b13bce2b1b2"
+}

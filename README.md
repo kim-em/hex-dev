@@ -3,9 +3,9 @@
 Verified computational algebra in Lean 4.
 
 **If you want to *use* Hex, you want https://github.com/leanprover/hex, not
-this repository.** That is the released aggregate: it depends on the split
-Hex libraries at exact Lake revisions and is what downstream projects should
-add as a dependency.
+this repository.** That is the released aggregate: it depends on one shared
+semantic version of the split Hex libraries and is what downstream projects
+should add as a dependency.
 
 **Documentation: https://kim-em.github.io/hex-dev/** is the Hex manual,
 rendered from `HexManual/` and published on every push to `main`.
@@ -19,7 +19,8 @@ a change that breaks a downstream library shows up immediately.
 
 The released repositories are **published mirrors**, not places to work: a
 dispatchable CI workflow regenerates each one from the matching content
-here, rewrites its cross-repo Lake pins, and commits to its `main`. Never
+here, rewrites its cross-repo Lake requirements, and publishes the same version
+tag in every repository. Never
 hand-edit a released repo; change it here and let the sync publish it.
 
 The authoritative list of published libraries, in topological order and with

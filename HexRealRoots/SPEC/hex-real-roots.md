@@ -84,7 +84,7 @@ every input explicitly:
 - `p = 0`: `none`. (`SquareFreeRat 0` holds vacuously through the
   gcd size test, so the drivers check `p ≠ 0` separately.)
 - `p` a nonzero constant: `some` with an empty isolation array,
-  matching `rootCount p = 0`.
+  matching `ZPoly.rootCount p = 0`.
 - `p` of positive degree, not `SquareFreeRat`: `none`. Callers use
   `Hex.ZPoly.squareFreeCore` first.
 - `p` of positive degree and squarefree: complete isolation.
@@ -109,11 +109,11 @@ def sturmVarPosInf (chain : Array ZPoly) : Nat
     certified by the Sturm chain. An `Int` by definition. The
     companion proves it equals the root count (in particular, that it
     is nonnegative) for squarefree `p`. -/
-def sturmCount (p : ZPoly) (I : DyadicInterval) : Int :=
+def ZPoly.sturmCount (p : ZPoly) (I : DyadicInterval) : Int :=
   sturmVarAt (sturmChain p) I.lower − sturmVarAt (sturmChain p) I.upper
 
 /-- The total number of real roots of `p`. -/
-def rootCount (p : ZPoly) : Nat :=
+def ZPoly.rootCount (p : ZPoly) : Nat :=
   sturmVarNegInf (sturmChain p) − sturmVarPosInf (sturmChain p)
 ```
 
@@ -140,7 +140,7 @@ structure DyadicInterval where
     interval.upper]`. -/
 structure RealRootIsolation (p : ZPoly) where
   interval  : DyadicInterval
-  count_one : sturmCount p interval = 1
+  count_one : ZPoly.sturmCount p interval = 1
 
 /-- A complete isolation run: pairwise-disjoint isolations, in
     increasing order, one per real root of `p`. Both invariants are
@@ -151,7 +151,7 @@ structure RealRootIsolations (p : ZPoly) where
   ordered    : ∀ i j : Fin isolations.size, i < j →
                  isolations[i].interval.upper ≤
                    isolations[j].interval.lower
-  complete   : isolations.size = rootCount p
+  complete   : isolations.size = ZPoly.rootCount p
 
 end Hex
 ```
@@ -160,7 +160,7 @@ end Hex
 that touch at an endpoint are still disjoint as sets. `complete` is
 the completeness certificate: `count_one` puts exactly one root in
 each interval, the intervals are disjoint, and there are exactly
-`rootCount p` of them, so every real root is captured. The companion
+`ZPoly.rootCount p` of them, so every real root is captured. The companion
 turns these three decidable facts, under `SquareFreeRat p`, into the
 semantic statement. No theorem about either search engine is
 involved.
@@ -201,7 +201,7 @@ subdividing an interval the moment its count resolves.
 ## The Sturm engine
 
 ```lean
-def isolateSturm? (p : ZPoly) : Option (RealRootIsolations p)
+def ZPoly.isolateSturm? (p : ZPoly) : Option (RealRootIsolations p)
 ```
 
 Worklist bisection from `(−rootBound p, rootBound p]`. For each
@@ -217,7 +217,7 @@ increasing order and check `complete` (via `if h : _`). A failed
 check also returns `none`. A `none` from this engine has one precise
 meaning: an interval at separation depth still reported two or more
 roots, or the totals disagreed. The companion proves both impossible
-for squarefree input, so `isolateSturm?` is total in the sense that
+for squarefree input, so `ZPoly.isolateSturm?` is total in the sense that
 matters. The `Option` is the same fuel discipline as hex-roots'
 drivers.
 
@@ -234,7 +234,7 @@ def mobiusTransform (p : ZPoly) (I : DyadicInterval) : ZPoly
 /-- Sign variations of the coefficient list. -/
 def descartesVar (p : ZPoly) : Nat
 
-def isolateDescartes? (p : ZPoly) : Option (RealRootIsolations p)
+def ZPoly.isolateDescartes? (p : ZPoly) : Option (RealRootIsolations p)
 ```
 
 The search runs the same worklist, dispatching on
@@ -267,13 +267,13 @@ evaluation, which is why this engine runs first.
 ## The driver
 
 ```lean
-def isolate? (p : ZPoly) : Option (RealRootIsolations p) :=
-  isolateDescartes? p <|> isolateSturm? p
+def ZPoly.isolateRealRoots? (p : ZPoly) : Option (RealRootIsolations p) :=
+  ZPoly.isolateDescartes? p <|> ZPoly.isolateSturm? p
 ```
 
-The companion proves `isolate? p ≠ none` for squarefree `p` (through
+The companion proves `ZPoly.isolateRealRoots? p ≠ none` for squarefree `p` (through
 the Sturm engine). Downstream libraries that need a total function
-(hex-rcf) obtain one by combining `isolate?` with that theorem.
+(hex-rcf) obtain one by combining `ZPoly.isolateRealRoots?` with that theorem.
 
 ## Termination
 
@@ -290,7 +290,7 @@ is required. What the depth budget *suffices for* differs:
   Obreshkoff two-circle theorem; Krandick-Mehlhorn 2006) shows that
   once an interval's width is below a constant multiple of `sep(p)`
   (the minimum distance between distinct complex roots), its
-  variation count is `0` or `1`, so `isolateDescartes? p ≠ none` for
+  variation count is `0` or `1`, so `ZPoly.isolateDescartes? p ≠ none` for
   squarefree `p` at this depth. The mechanism is the *λ-graded* sector
   bound (not a general count bound — the reading "variation count ≤
   number of roots in the two-circle region" is false): at most `λ`
@@ -351,7 +351,7 @@ The `isolate_roots` term elaborator (companion SPEC) replays Sturm
 certificates in the kernel. The replayed closure — thirteen
 definitions: `sturmChain`, `sturmChainAux`, `spem`, `spemAux`,
 `spemStep`, `signVar`, `sturmVarAt`, `sturmVarNegInf`,
-`sturmVarPosInf`, `sturmCount`, `rootCount`, `ZPoly.evalDyadic`,
+`sturmVarPosInf`, `ZPoly.sturmCount`, `ZPoly.rootCount`, `ZPoly.evalDyadic`,
 `dyadicSign` — carries `@[expose]` so downstream `module` consumers
 can `decide` against it without `import all`, and the three private
 helpers (`spemStep`, `spemAux`, `sturmChainAux`) become public (an
@@ -448,7 +448,7 @@ re-refine from a stored coarse representative. See
   evaluation, sign helper.
 - `HexRealRoots/Chain.lean`: `spem`, `sturmChain`.
 - `HexRealRoots/Var.lean`: `signVar`, `sturmVarAt`, the `±∞`
-  variants, `sturmCount`, `rootCount`, `RealRootIsolation`,
+  variants, `ZPoly.sturmCount`, `ZPoly.rootCount`, `RealRootIsolation`,
   `RealRootIsolations`.
 - `HexRealRoots/Prec.lean`: `sepPrec`, `isolationDepth`,
   `rootBound`.
@@ -456,7 +456,7 @@ re-refine from a stored coarse representative. See
   `descartesVar`.
 - `HexRealRoots/IsolateSturm.lean`: the Sturm engine.
 - `HexRealRoots/IsolateDescartes.lean`: the Descartes engine.
-- `HexRealRoots/Isolate.lean`: `isolate?`.
+- `HexRealRoots/Isolate.lean`: `ZPoly.isolateRealRoots?`.
 - `HexRealRoots/Refine.lean`: `refine1`, `refineTo`.
 - `HexRealRoots/SimpleRealRoot.lean`: `RefinedRealIsolation`,
   `Overlaps`, `SimpleRealRoot`, `sameRoot`; the threading-pattern
@@ -467,7 +467,7 @@ re-refine from a stored coarse representative. See
 
 ## Conformance fixtures
 
-Per [SPEC/testing.md](../testing.md), fixtures are tiered into
+Per [SPEC/testing.md](../../SPEC/testing.md), fixtures are tiered into
 `core` / `ci` / `local`.
 
 - *core* (Lean-only, runs on every push):
@@ -495,16 +495,16 @@ python-flint (`fmpz_poly` real root API), FLINT/Arb.
 
 **Descartes-engine checks (retired).** While
 `isolateDescartes?_isSome` was open, the conformance suite asserted on
-every fixture that `isolateDescartes?` returns `some` and agrees with
-`isolate?`, standing in for the theorem. Now that
+every fixture that `ZPoly.isolateDescartes?` returns `some` and agrees with
+`ZPoly.isolateRealRoots?`, standing in for the theorem. Now that
 `isolateDescartes?_isSome` is proven in the companion, those stand-ins
 are retired: the theorem carries the claim, and re-testing it per
 fixture is noise. The suite keeps only the ordinary input-contract
-checks — the `isolateDescartes? = none` rejection of the zero and
+checks — the `ZPoly.isolateDescartes? = none` rejection of the zero and
 non-squarefree inputs (which test the engine's classification of
 inadmissible input, not the termination theorem) — and the executable
 `mobiusTransform`/`descartesVar` transform tests. `EmitFixtures` emits
-from `isolate?` alone; the cross-engine agreement check it once carried
+from `ZPoly.isolateRealRoots?` alone; the cross-engine agreement check it once carried
 is removed with the same change.
 
 ## Complexity contract
@@ -518,7 +518,7 @@ Write `n = deg p` and `h = log ‖p‖∞`.
   `O(n²)` dyadic operations per queried point, memoised per endpoint.
 - `mobiusTransform`: `O(n²)` integer operations per node.
 - `sepPrec p`, `rootBound p`: `O(n · h)` integer operations.
-- `isolate?`: the bisection tree has `O(n)` unresolved intervals per
+- `ZPoly.isolateRealRoots?`: the bisection tree has `O(n)` unresolved intervals per
   level and depth at most `isolationDepth p = O(n·(h + log n))`, so
   `O(n² · (h + log n))` Möbius transforms in the worst case,
   dominated by Mignotte-style clustered inputs. Mignotte inputs

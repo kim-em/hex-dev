@@ -1,0 +1,18 @@
+warning: Nix search path entry '/nix/var/nix/profiles/per-user/root/channels' does not exist, ignoring
+==3382768== DHAT, a dynamic heap analysis tool
+==3382768== Copyright (C) 2010-2024, and GNU GPL'd, by Mozilla Foundation et al.
+==3382768== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==3382768== Command: .lake/build/bin/hexgraphiso_profile erun
+==3382768== 
+== erun
+  paley61 erun: 12174us/iter (2000 iters, 14000 node-visits)
+  kneser72 erun: 3968us/iter (2000 iters, 36000 node-visits)
+  circulant64 erun: 11371us/iter (2000 iters, 12000 node-visits)
+==3382768== 
+==3382768== Total:     67,518,459 units in 67,518,459 events
+==3382768== 
+==3382768== To view the resulting profile, open
+==3382768==   file:///nix/store/g1x8a2mgb9lnjhqpi3cszjham8a3p8zq-valgrind-3.27.1/libexec/valgrind/dh_view.html
+==3382768== in a web browser, click on "Load...", and then select the file
+==3382768==   /tmp/issue-10041-dhat-mi-erun.json
+==3382768== The text at the bottom explains the abbreviations used in the output.

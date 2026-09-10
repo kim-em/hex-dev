@@ -1,0 +1,21 @@
+{
+  "measurement_commit": "ce03eb89bea66de576d221a15094527e9e07252f",
+  "host": "chungus2",
+  "cpu_model": "AMD EPYC 9455 48-Core Processor",
+  "preregistered_cpu": 19,
+  "smt_sibling": 67,
+  "pinning": "taskset -c 19",
+  "mode1_export_started_utc": "2026-09-01T10:56:41Z",
+  "mode3_export_started_utc": "2026-09-01T11:12:07Z",
+  "postflight_sample_seconds": 3,
+  "postflight_timestamp_utc": "2026-09-01T11:14:23Z",
+  "postflight_busy_percent": {
+    "cpu19": 1.33,
+    "cpu67": 1.33
+  },
+  "postflight_load_average": [1.28, 2.53, 2.87],
+  "exports": [
+    "hex-number-field-tower-phase4-final-mode1-ce03eb89-chungus2-cpu19.json",
+    "hex-number-field-tower-phase4-final-mode3-ce03eb89-chungus2-cpu19.json"
+  ]
+}

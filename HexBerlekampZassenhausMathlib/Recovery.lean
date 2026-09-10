@@ -391,14 +391,14 @@ theorem bhksIndicatorSelectedFactorsArray_classIndicatorArray_toList
         · have hone : indicator.getD i 0 = 1 := by
             simpa [indicator] using
               classIndicatorArray_has_one_of_mem liftedFactors.size members hi himem
-          rw [if_pos (by simp [hone]), ih _ htail]
+          rw [ite_eq_left (by simp [hone]), ih _ htail]
           simp [himem, Array.toList_push, List.append_assoc]
         · have hzero : indicator.getD i 0 = 0 := by
             change
               (classIndicatorArray liftedFactors.size members).getD i 0 = 0
             rw [classIndicatorArray_getD]
             simp [hi, himem]
-          rw [if_neg (by simp [hzero]), ih _ htail]
+          rw [ite_eq_right (by simp [hzero]), ih _ htail]
           simp [himem]
   unfold Hex.bhksIndicatorSelectedFactorsArray
   simpa [indicator] using

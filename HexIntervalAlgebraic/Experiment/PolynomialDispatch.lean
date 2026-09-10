@@ -179,7 +179,7 @@ structure RealRegion where
 /-- The real backend is the actual Sturm isolator followed by cached exact
 bisection refinement of every emitted interval. -/
 def realBackend? (p : ZPoly) (target : Int) : Option (Array RealRegion) := do
-  let output ← isolateSturm? p
+  let output ← ZPoly.isolateSturm? p
   let chain := ZPoly.sturmChain p
   return output.isolations.map fun isolation =>
     let refined := isolation.refineToWithChain chain rfl target
@@ -188,7 +188,7 @@ def realBackend? (p : ZPoly) (target : Int) : Option (Array RealRegion) := do
 /-- Plain square projection of the proof-carrying complex backend. -/
 def complexBackend? (p : ZPoly) (target : Int) : Option (Array DyadicSquare) :=
   if simple : HasOnlySimpleRoots p then
-    (Hex.isolate p simple target .nk).map fun isolations =>
+    (Hex.ZPoly.isolateComplexRoots? p simple target .nk).map fun isolations =>
       isolations.map (fun isolation => isolation.square)
   else none
 

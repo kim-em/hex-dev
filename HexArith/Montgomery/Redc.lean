@@ -280,7 +280,7 @@ theorem montgomeryReduce_sub_spec (ctx : MontCtx p) (Thi Tlo : UInt64)
                       exact hle
                     omega
                   simp [hlow_pair, hhi_pair, hge, hltNat]
-              · simp only [hlow_pair, hhi_pair, if_true, Bool.toNat_true]
+              · simp only [hlow_pair, hhi_pair, ite_true, Bool.toNat_true]
                 have hp_lt_lit : p.toNat < 2 ^ 64 := by
                   simpa [UInt64.word] using hp_lt
                 have hu_lt_lit : addHi.toNat + 2 ^ 64 < 2 * p.toNat := by
@@ -294,7 +294,7 @@ theorem montgomeryReduce_sub_spec (ctx : MontCtx p) (Thi Tlo : UInt64)
                       2 ^ 64 - p.toNat + addHi.toNat :=
                   Nat.mod_eq_of_lt hsub_lt
                 simp only [UInt64.toNat_sub, hsub_mod]
-                simp only [hnotlt, if_false, Nat.one_mul]
+                simp only [hnotlt, ite_false, Nat.one_mul]
                 rw [Nat.add_comm addHi.toNat (2 ^ 64)]
                 exact (Nat.sub_add_comm (Nat.le_of_lt hp_lt_lit)).symm
 

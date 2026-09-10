@@ -26,7 +26,7 @@ structure GF2Poly where
 ```
 
 Two fields, not three. The degree is derived (`GF2Poly.degree?` reads the
-highest set bit, `GF2Poly.degree` is its `getD 0` form) rather than cached in
+highest set bit, `GF2Poly.natDegree` is its `getD 0` form) rather than cached in
 the structure, so the only invariant to maintain is that the top word is
 nonzero. Caching the degree would mean carrying a four-clause well-formedness
 condition through every operation and re-establishing it after each; deriving
@@ -271,7 +271,7 @@ structure GF2n (n : Nat) (irr : UInt64)
     multiply via CLMUL then reduce mod f. -/
 structure GF2nPoly (f : GF2Poly) (hirr : GF2Poly.Irreducible f) where
   val : GF2Poly
-  val_reduced : val.IsZero ∨ val.degree < f.degree
+  val_reduced : val.IsZero ∨ val.natDegree < f.natDegree
 ```
 
 For the small case, `GF2n` gets its executable `Field` operations from the
@@ -282,7 +282,7 @@ Mathlib companion.
 that `f` be nonzero and admit no factorization into two positive-degree parts.
 The constant `1` satisfies both, and `GF2nPoly 1 _` is then the trivial ring,
 where every residue is `0` and `0 = 1`. So `zero_ne_one`, the field laws, and
-characteristic two are *not* consequences of `hirr`; they need `0 < f.degree`
+characteristic two are *not* consequences of `hirr`; they need `0 < f.natDegree`
 as well.
 
 `hex-gfq-field` avoids this by carrying `hf : 0 < f.degree` as a type parameter

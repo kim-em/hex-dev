@@ -147,7 +147,7 @@ theorem modulus_irreducible : FpPoly.Irreducible modulus := by
   -- A factor of size one is a nonzero constant, i.e. has degree `some 0`.
   have hconst : ∀ c : FpPoly 3, c.size = 1 → c.degree? = some 0 := by
     intro c hc
-    simp [DensePoly.degree?, hc]
+    simp [DensePoly.natDegree, DensePoly.degree?, hc]
   by_cases ha1 : a.size = 1
   · exact Or.inl (hconst a ha1)
   by_cases hb1 : b.size = 1
@@ -155,12 +155,12 @@ theorem modulus_irreducible : FpPoly.Irreducible modulus := by
   -- Otherwise both factors are linear, so both lie in the nine-element
   -- enumeration of polynomials of degree below two.
   exfalso
-  have hdeg : ∀ c : FpPoly 3, 0 < c.size → c.degree?.getD 0 = c.size - 1 := by
+  have hdeg : ∀ c : FpPoly 3, 0 < c.size → c.natDegree = c.size - 1 := by
     intro c hc
     have hne : c.size ≠ 0 := by omega
-    simp [DensePoly.degree?, hne]
-  have ha_deg : a.degree?.getD 0 < 2 := by rw [hdeg a ha_pos]; omega
-  have hb_deg : b.degree?.getD 0 < 2 := by rw [hdeg b hb_pos]; omega
+    simp [DensePoly.natDegree, DensePoly.degree?, hne]
+  have ha_deg : a.natDegree < 2 := by rw [hdeg a ha_pos]; omega
+  have hb_deg : b.natDegree < 2 := by rw [hdeg b hb_pos]; omega
   have hnone : ∀ u ∈ FpPoly.Enumeration.polysBelowDegree 3 2,
       ∀ v ∈ FpPoly.Enumeration.polysBelowDegree 3 2, u * v ≠ modulus := by
     decide

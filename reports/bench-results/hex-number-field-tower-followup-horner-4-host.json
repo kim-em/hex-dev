@@ -1,0 +1,353 @@
+{
+  "label": "horner",
+  "attempt": 4,
+  "cpu": 1,
+  "siblings": [
+    1,
+    49
+  ],
+  "runs": [
+    {
+      "arm": "left",
+      "source_commit": "8dd0f8e155ebd9c49cb08728dde3051fb8fec4a5",
+      "binary_sha256": "ff0dc3dfce3582d45dc7fa7e8bb5cb5b92fa1cca37dc3282c929d0c568b8f0df",
+      "command": [
+        "taskset",
+        "-c",
+        "1",
+        "/tmp/issue-10074-modular",
+        "run",
+        "Hex.NumberTowerBench.runTowerFactorPair2",
+        "Hex.NumberTowerBench.runTowerFactorPair3",
+        "Hex.NumberTowerBench.runTowerFactorPair4",
+        "Hex.NumberTowerBench.runTowerFactorPair6",
+        "Hex.NumberTowerBench.runTowerFactorPair8",
+        "Hex.NumberTowerBench.runTowerFactorPair12",
+        "Hex.NumberTowerBench.runTowerFactorLadder",
+        "Hex.NumberTowerBench.runTowerCheckFactorization",
+        "Hex.NumberTowerBench.runPariNfFactor2",
+        "Hex.NumberTowerBench.runPariNfFactor3",
+        "Hex.NumberTowerBench.runPariNfFactor4",
+        "Hex.NumberTowerBench.runPariNfFactor6",
+        "Hex.NumberTowerBench.runPariNfFactor8",
+        "Hex.NumberTowerBench.runPariNfFactor12",
+        "Hex.NumberTowerBench.runPariNfFactorOverhead",
+        "--repeats",
+        "5",
+        "--min-total-seconds",
+        "0.2",
+        "--export-file",
+        "/tmp/issue-10074-horner-4-left.json"
+      ],
+      "export": "/tmp/issue-10074-horner-4-left.json",
+      "preflight": {
+        "1": 4.545454545454546,
+        "49": 3.0
+      },
+      "postflight": {
+        "1": 4.522613065326633,
+        "49": 4.975124378109452
+      },
+      "during": [
+        {
+          "1": 100.0,
+          "49": 2.0202020202020203
+        },
+        {
+          "1": 100.0,
+          "49": 1.0
+        },
+        {
+          "1": 100.0,
+          "49": 0.0
+        },
+        {
+          "1": 100.0,
+          "49": 2.512562814070352
+        },
+        {
+          "1": 100.0,
+          "49": 1.530612244897959
+        },
+        {
+          "1": 100.0,
+          "49": 3.9800995024875623
+        },
+        {
+          "1": 100.0,
+          "49": 2.030456852791878
+        },
+        {
+          "1": 100.0,
+          "49": 2.512562814070352
+        },
+        {
+          "1": 100.0,
+          "49": 2.0
+        },
+        {
+          "1": 100.0,
+          "49": 0.0
+        },
+        {
+          "1": 100.0,
+          "49": 1.0050251256281406
+        },
+        {
+          "1": 100.0,
+          "49": 0.4975124378109453
+        },
+        {
+          "1": 100.0,
+          "49": 25.5
+        },
+        {
+          "1": 100.0,
+          "49": 3.0303030303030303
+        },
+        {
+          "1": 100.0,
+          "49": 0.0
+        },
+        {
+          "1": 100.0,
+          "49": 2.0
+        },
+        {
+          "1": 100.0,
+          "49": 3.0
+        },
+        {
+          "1": 100.0,
+          "49": 0.5025125628140703
+        },
+        {
+          "1": 100.0,
+          "49": 1.9900497512437811
+        },
+        {
+          "1": 100.0,
+          "49": 1.0050251256281406
+        },
+        {
+          "1": 100.0,
+          "49": 2.0
+        },
+        {
+          "1": 100.0,
+          "49": 0.0
+        },
+        {
+          "1": 100.0,
+          "49": 0.0
+        },
+        {
+          "1": 100.0,
+          "49": 0.0
+        },
+        {
+          "1": 100.0,
+          "49": 1.0050251256281406
+        },
+        {
+          "1": 100.0,
+          "49": 4.0201005025125625
+        },
+        {
+          "1": 100.0,
+          "49": 2.985074626865672
+        },
+        {
+          "1": 100.0,
+          "49": 0.5025125628140703
+        },
+        {
+          "1": 99.50248756218906,
+          "49": 0.9950248756218906
+        },
+        {
+          "1": 18.0,
+          "49": 1.0050251256281406
+        }
+      ],
+      "sibling_mean": {
+        "49": 2.2876562367006232
+      },
+      "exit_code": 0,
+      "accepted": true
+    },
+    {
+      "arm": "right",
+      "source_commit": "b66d41b8a",
+      "binary_sha256": "4e963600ca0972411f51903b06c21d2de356743120bc30bdc3851949b3a5c90c",
+      "command": [
+        "taskset",
+        "-c",
+        "1",
+        "/tmp/issue-10074-horner",
+        "run",
+        "Hex.NumberTowerBench.runTowerFactorPair2",
+        "Hex.NumberTowerBench.runTowerFactorPair3",
+        "Hex.NumberTowerBench.runTowerFactorPair4",
+        "Hex.NumberTowerBench.runTowerFactorPair6",
+        "Hex.NumberTowerBench.runTowerFactorPair8",
+        "Hex.NumberTowerBench.runTowerFactorPair12",
+        "Hex.NumberTowerBench.runTowerFactorLadder",
+        "Hex.NumberTowerBench.runTowerCheckFactorization",
+        "Hex.NumberTowerBench.runPariNfFactor2",
+        "Hex.NumberTowerBench.runPariNfFactor3",
+        "Hex.NumberTowerBench.runPariNfFactor4",
+        "Hex.NumberTowerBench.runPariNfFactor6",
+        "Hex.NumberTowerBench.runPariNfFactor8",
+        "Hex.NumberTowerBench.runPariNfFactor12",
+        "Hex.NumberTowerBench.runPariNfFactorOverhead",
+        "--repeats",
+        "5",
+        "--min-total-seconds",
+        "0.2",
+        "--export-file",
+        "/tmp/issue-10074-horner-4-right.json"
+      ],
+      "export": "/tmp/issue-10074-horner-4-right.json",
+      "preflight": {
+        "1": 1.5075376884422111,
+        "49": 2.5
+      },
+      "postflight": {
+        "1": 2.0100502512562812,
+        "49": 0.9950248756218906
+      },
+      "during": [
+        {
+          "1": 99.0,
+          "49": 2.5
+        },
+        {
+          "1": 100.0,
+          "49": 1.0
+        },
+        {
+          "1": 100.0,
+          "49": 6.965174129353234
+        },
+        {
+          "1": 100.0,
+          "49": 9.090909090909092
+        },
+        {
+          "1": 100.0,
+          "49": 0.0
+        },
+        {
+          "1": 100.0,
+          "49": 1.5
+        },
+        {
+          "1": 100.0,
+          "49": 5.9405940594059405
+        },
+        {
+          "1": 100.0,
+          "49": 42.3469387755102
+        },
+        {
+          "1": 100.0,
+          "49": 21.890547263681594
+        },
+        {
+          "1": 100.0,
+          "49": 61.224489795918366
+        },
+        {
+          "1": 100.0,
+          "49": 38.888888888888886
+        },
+        {
+          "1": 100.0,
+          "49": 54.54545454545455
+        },
+        {
+          "1": 100.0,
+          "49": 61.111111111111114
+        },
+        {
+          "1": 99.49748743718592,
+          "49": 48.484848484848484
+        },
+        {
+          "1": 100.0,
+          "49": 69.0
+        },
+        {
+          "1": 98.5,
+          "49": 91.41414141414141
+        },
+        {
+          "1": 100.0,
+          "49": 47.20812182741117
+        },
+        {
+          "1": 100.0,
+          "49": 4.5
+        },
+        {
+          "1": 100.0,
+          "49": 7.575757575757576
+        },
+        {
+          "1": 100.0,
+          "49": 3.5175879396984926
+        },
+        {
+          "1": 100.0,
+          "49": 2.525252525252525
+        },
+        {
+          "1": 100.0,
+          "49": 1.0101010101010102
+        },
+        {
+          "1": 100.0,
+          "49": 2.5
+        },
+        {
+          "1": 100.0,
+          "49": 1.0050251256281406
+        },
+        {
+          "1": 100.0,
+          "49": 0.5
+        },
+        {
+          "1": 100.0,
+          "49": 0.5
+        },
+        {
+          "1": 100.0,
+          "49": 10.714285714285714
+        },
+        {
+          "1": 100.0,
+          "49": 1.9801980198019802
+        },
+        {
+          "1": 100.0,
+          "49": 1.0050251256281406
+        },
+        {
+          "1": 63.86138613861386,
+          "49": 0.0
+        }
+      ],
+      "sibling_mean": {
+        "49": 20.01481508075959
+      },
+      "exit_code": 0,
+      "accepted": false
+    }
+  ],
+  "release_quality": false,
+  "protocol_commit": "8d54c7158c907005a9578431c9f43bd743b9827f",
+  "script_sha256": "5686e67b534b1e3cf036a2f71cb3ca6a93ce97c8362cb96dfa0a304d2f74884c",
+  "accepted": false
+}

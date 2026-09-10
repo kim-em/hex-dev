@@ -1,0 +1,61 @@
+{
+  "cpu": 1,
+  "siblings": [
+    1,
+    49
+  ],
+  "release_quality": false,
+  "attempt": 3,
+  "runs": [
+    {
+      "run": "baseline",
+      "preflight_busy_percent": {
+        "1": 1.9900497512437811,
+        "49": 0.0
+      },
+      "postflight_busy_percent": {
+        "1": 13.06532663316583,
+        "49": 1.5
+      },
+      "exit_code": 0,
+      "binary_sha256": "9cda578dbc8724ea9c10462c1c6e2ccbaf6d48e6a85ef291a2f1bf7e4c5df810",
+      "source_commit": "b8602c76a08f7348391aafd50b9a8a13cf1a0b32",
+      "command": [
+        "taskset",
+        "-c",
+        "1",
+        "/tmp/hex-10074-baseline-tree/.lake/build/bin/hexnumberfieldtower_bench",
+        "run",
+        "Hex.NumberTowerBench.runTowerFactorPair2",
+        "Hex.NumberTowerBench.runTowerFactorPair3",
+        "Hex.NumberTowerBench.runTowerFactorPair4",
+        "Hex.NumberTowerBench.runTowerFactorPair6",
+        "Hex.NumberTowerBench.runTowerFactorPair8",
+        "Hex.NumberTowerBench.runTowerFactorPair12",
+        "Hex.NumberTowerBench.runTowerFactorLadder",
+        "Hex.NumberTowerBench.runTowerCheckFactorization",
+        "--repeats",
+        "5",
+        "--min-total-seconds",
+        "0.2",
+        "--export-file",
+        "/tmp/issue-10074-baseline-attempt3.json"
+      ]
+    }
+  ],
+  "baseline_source_commit": "b8602c76a08f7348391aafd50b9a8a13cf1a0b32",
+  "candidate_algorithm_commit": "b4a02beafab2a5995493769680651fe1b7994bed",
+  "preflight_samples": [
+    {
+      "run": "baseline",
+      "busy_percent": {
+        "1": 1.9900497512437811,
+        "49": 0.0
+      }
+    }
+  ],
+  "pari_version": "2.17.3",
+  "cypari2_version": "2.2.4",
+  "pari_python": "/nix/store/fgsvz1y8yyljvfpa2s2qv2jc803r2hhl-python3-3.14.6-env/bin/python",
+  "accepted": false
+}

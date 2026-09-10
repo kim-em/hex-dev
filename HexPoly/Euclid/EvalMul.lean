@@ -6,7 +6,6 @@ Authors: Kim Morrison
 
 module
 
-public import HexPoly.Conditional
 public import Init.Grind.Ring.Basic
 public import Init.Data.List.Lemmas
 public import HexPoly.Operations
@@ -95,9 +94,9 @@ theorem eval_shift_semiring [Lean.Grind.CommSemiring S] [DecidableEq S]
   unfold shift
   by_cases hz : p.isZero
   · have hp : p = 0 := (size_eq_zero_iff p).mp ((isZero_eq_true_iff p).mp hz)
-    rw [HexPoly.ite_eq_left hz, hp, eval_zero]
+    rw [ite_eq_left hz, hp, eval_zero]
     exact (Lean.Grind.Semiring.zero_mul _).symm
-  · rw [HexPoly.ite_eq_right hz, eval_ofList_eq_evalCoeffList _ x hzero_horner]
+  · rw [ite_eq_right hz, eval_ofList_eq_evalCoeffList _ x hzero_horner]
     show evalCoeffList (List.replicate n (0 : S) ++ p.toList) x = eval p x * x ^ n
     rw [evalCoeffList_replicate_zero_append, eval_eq_evalCoeffList]
     rfl
@@ -138,7 +137,7 @@ private theorem eval_mul_of_size_le [Lean.Grind.CommRing S] [DecidableEq S] :
       have hzq : (0 : DensePoly S) * q = 0 := by
         show mul 0 q = 0
         unfold mul
-        rw [HexPoly.ite_eq_left (by simp [(isZero_eq_true_iff (0 : DensePoly S)).mpr rfl])]
+        rw [ite_eq_left (by simp [(isZero_eq_true_iff (0 : DensePoly S)).mpr rfl])]
       rw [hzq, eval_zero]
       exact (Lean.Grind.Semiring.zero_mul _).symm
   | succ n ih =>

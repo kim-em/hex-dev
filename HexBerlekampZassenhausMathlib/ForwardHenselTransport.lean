@@ -124,8 +124,8 @@ theorem representsMonicTarget_of_represents
     (hrep : RepresentsIntegerFactorModP primeData factor S) :
     RepresentsIntegerFactorModP primeData
       (Hex.ZPoly.monicTarget factor primeData.p k) S := by
-  letI := primeData.bounds
-  letI : Hex.ZMod64.PrimeModulus primeData.p :=
+  let := primeData.bounds
+  let : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
   have hp : 1 < primeData.p := hprime.one_lt
   have htarget_monic :
@@ -193,9 +193,9 @@ theorem henselLiftData_represents_lifted_of_modP
     RepresentsIntegerFactorAtLift core (Hex.henselLiftData core B primeData) factor
       (liftedSubsetOfModPSubset primeData (Hex.henselLiftData core B primeData)
         (henselLiftData_liftedFactors_size_eq core B primeData) S) := by
-  letI := primeData.bounds
-  haveI hprime_fact : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime⟩
-  letI : Hex.ZMod64.PrimeModulus primeData.p :=
+  let := primeData.bounds
+  have hprime_fact : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime⟩
+  let : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime
       (by
         constructor
@@ -279,7 +279,7 @@ theorem henselLiftData_represents_lifted_of_modP
     rw [show liftedS = liftedSubsetOfModPSubset primeData d hsize S from rfl,
       h1, h2, h3, h4]
   -- Derive `hdeg` from `hg1` and monicness via `Monic.natDegree_map`.
-  haveI : Nontrivial (ZMod primeData.p) := inferInstance
+  have : Nontrivial (ZMod primeData.p) := inferInstance
   have hdeg : g.natDegree = g'.natDegree := by
     have hg_map_natDeg :
         (g.map (Int.castRingHom (ZMod primeData.p))).natDegree = g.natDegree :=
@@ -422,9 +422,9 @@ theorem henselLiftData_liftedSubset_congr_of_modP
         (liftedSubsetOfModPSubset primeData (Hex.henselLiftData target B primeData)
           (henselLiftData_liftedFactors_size_eq target B primeData) S))
       factor (primeData.p ^ B) := by
-  letI := primeData.bounds
-  haveI hprime_fact : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime⟩
-  letI : Hex.ZMod64.PrimeModulus primeData.p :=
+  let := primeData.bounds
+  have hprime_fact : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime⟩
+  let : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime
       (by
         constructor
@@ -506,7 +506,7 @@ theorem henselLiftData_liftedSubset_congr_of_modP
         (HexPolyZMathlib.toPolynomial factor).map (Int.castRingHom (ZMod primeData.p))
     rw [show liftedS = liftedSubsetOfModPSubset primeData d hsize S from rfl,
       h1, h2, h3, h4]
-  haveI : Nontrivial (ZMod primeData.p) := inferInstance
+  have : Nontrivial (ZMod primeData.p) := inferInstance
   have hdeg : g.natDegree = g'.natDegree := by
     have hg_map_natDeg :
         (g.map (Int.castRingHom (ZMod primeData.p))).natDegree = g.natDegree :=
@@ -626,7 +626,7 @@ theorem directLiftData_subset_congr_monicTarget
         (Hex.precisionForCoeffBound B primeData.p))
       ((Hex.ZPoly.directLiftData core B primeData).p ^
         (Hex.ZPoly.directLiftData core B primeData).k) := by
-  letI := primeData.bounds
+  let := primeData.bounds
   set precision := Hex.precisionForCoeffBound B primeData.p with hprecision_def
   set target := Hex.ZPoly.monicTarget core primeData.p precision with htarget_def
   set monicFactor := Hex.ZPoly.monicTarget factor primeData.p precision with hfactor_def
@@ -911,20 +911,20 @@ theorem bhksIndicatorCandidate?_reduceModPow_eq_of_monic
         (Hex.centeredModNat z m) % (Int.ofNat m) = z % (Int.ofNat m) := by
     intro z m hm
     unfold Hex.centeredModNat
-    rw [if_neg hm]
+    rw [ite_eq_right hm]
     set r := z % (Int.ofNat m) with hr_def
     have hrmod : r % (Int.ofNat m) = r := by
       rw [hr_def, Int.emod_emod_of_dvd _ (dvd_refl _)]
     by_cases hc1 : 2 * r.natAbs ≤ m
-    · rw [if_pos hc1]; exact hrmod
-    · rw [if_neg hc1]
+    · rw [ite_eq_left hc1]; exact hrmod
+    · rw [ite_eq_right hc1]
       by_cases hc2 : r < 0
-      · rw [if_pos hc2]
+      · rw [ite_eq_left hc2]
         have hrwadd : (r + Int.ofNat m) % Int.ofNat m = r % Int.ofNat m := by
           rw [show r + Int.ofNat m = r + 1 * Int.ofNat m by ring,
             Int.add_mul_emod_self_right]
         rw [hrwadd, hrmod]
-      · rw [if_neg hc2]
+      · rw [ite_eq_right hc2]
         have hrwsub : (r - Int.ofNat m) % Int.ofNat m = r % Int.ofNat m := by
           rw [show r - Int.ofNat m = r + (-1) * Int.ofNat m by ring,
             Int.add_mul_emod_self_right]
@@ -991,11 +991,11 @@ theorem natDegree_toPolynomial_recombinationCandidate_eq_sum
   have hcl_natDeg :
       (HexPolyZMathlib.toPolynomial cl).natDegree = cl.size - 1 := by
     rw [HexPolyMathlib.natDegree_toPolynomial]
-    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hcl_size_pos]
+    simp [Hex.DensePoly.natDegree, Hex.DensePoly.degree?, Nat.ne_of_gt hcl_size_pos]
   have hlp_natDeg :
       (HexPolyZMathlib.toPolynomial lp).natDegree = lp.size - 1 := by
     rw [HexPolyMathlib.natDegree_toPolynomial]
-    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hlp_size_pos]
+    simp [Hex.DensePoly.natDegree, Hex.DensePoly.degree?, Nat.ne_of_gt hlp_size_pos]
   rw [hcl_natDeg, hsize_eq, ← hlp_natDeg, hlp_def, toPolynomial_liftedFactorProduct]
   -- Mathlib `natDegree_prod_of_monic` over monic factors.
   apply Polynomial.natDegree_prod_of_monic
@@ -1264,9 +1264,9 @@ private theorem size_normalizeFactorSign_eq (f : Hex.ZPoly) :
     (Hex.normalizeFactorSign f).size = f.size := by
   unfold Hex.normalizeFactorSign
   by_cases hneg : Hex.DensePoly.leadingCoeff f < 0
-  · rw [if_pos hneg]
+  · rw [ite_eq_left hneg]
     exact Hex.ZPoly.scale_size_of_ne_zero (-1 : Int) f (by decide)
-  · rw [if_neg hneg]
+  · rw [ite_eq_right hneg]
 
 /-- `Hex.ZPoly.primitivePart` preserves stored size on nonzero inputs.
 
@@ -1398,11 +1398,11 @@ theorem natDegree_toPolynomial_scaledRecombinationCandidate_eq_sum_of_bound
           (scaledRecombinationCandidate core d T)).natDegree =
         (scaledRecombinationCandidate core d T).size - 1 := by
     rw [HexPolyMathlib.natDegree_toPolynomial]
-    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hsc_size_pos]
+    simp [Hex.DensePoly.natDegree, Hex.DensePoly.degree?, Nat.ne_of_gt hsc_size_pos]
   have hlp_natDeg :
       (HexPolyZMathlib.toPolynomial lp).natDegree = lp.size - 1 := by
     rw [HexPolyMathlib.natDegree_toPolynomial]
-    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hlp_size_pos]
+    simp [Hex.DensePoly.natDegree, Hex.DensePoly.degree?, Nat.ne_of_gt hlp_size_pos]
   rw [hsc_natDeg, hsc_size, ← hlp_natDeg, hlp_def, toPolynomial_liftedFactorProduct]
   apply Polynomial.natDegree_prod_of_monic
   intro i _
@@ -1514,11 +1514,11 @@ theorem natDegree_toPolynomial_liftedRecoveryCandidate_eq_sum
           (liftedRecoveryCandidate core d T)).natDegree =
         (liftedRecoveryCandidate core d T).size - 1 := by
     rw [HexPolyMathlib.natDegree_toPolynomial]
-    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hrec_size_pos]
+    simp [Hex.DensePoly.natDegree, Hex.DensePoly.degree?, Nat.ne_of_gt hrec_size_pos]
   have hlp_natDeg :
       (HexPolyZMathlib.toPolynomial lp).natDegree = lp.size - 1 := by
     rw [HexPolyMathlib.natDegree_toPolynomial]
-    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hlp_size_pos]
+    simp [Hex.DensePoly.natDegree, Hex.DensePoly.degree?, Nat.ne_of_gt hlp_size_pos]
   rw [hrec_natDeg, hrec_size, ← hlp_natDeg, hlp_def, toPolynomial_liftedFactorProduct]
   apply Polynomial.natDegree_prod_of_monic
   intro i _
@@ -1692,7 +1692,7 @@ theorem exactQuotient?_recombinationCandidate_eq_some_of_eq_factor
     {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
     (heq : recombinationCandidate d S = factor)
     (hmonic : Hex.DensePoly.Monic factor)
-    (hpos : 0 < factor.degree?.getD 0)
+    (hpos : 0 < factor.natDegree)
     (hdvd : factor ∣ core) :
     ∃ quotient,
       Hex.exactQuotient? core (recombinationCandidate d S) = some quotient ∧
@@ -1721,7 +1721,7 @@ theorem exactQuotient?_scaledRecombinationCandidate_eq_some_of_eq_factor
     {S : LiftedFactorSubset d}
     (heq : scaledRecombinationCandidate core d S = factor)
     (hmonic : Hex.DensePoly.Monic factor)
-    (hpos : 0 < factor.degree?.getD 0)
+    (hpos : 0 < factor.natDegree)
     (hdvd : factor ∣ target) :
     ∃ quotient,
       Hex.exactQuotient? target (scaledRecombinationCandidate core d S) =
@@ -1755,7 +1755,7 @@ theorem exactQuotient?_scaledRecombinationCandidate_eq_some_of_eq_factor_of_prim
     {S : LiftedFactorSubset d}
     (heq : scaledRecombinationCandidate core d S = factor)
     (hpos_lc : 0 < Hex.DensePoly.leadingCoeff factor)
-    (hpos : 0 < factor.degree?.getD 0)
+    (hpos : 0 < factor.natDegree)
     (hdvd : factor ∣ target) :
     ∃ quotient,
       Hex.exactQuotient? target (scaledRecombinationCandidate core d S) =

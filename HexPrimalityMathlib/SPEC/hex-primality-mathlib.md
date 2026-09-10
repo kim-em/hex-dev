@@ -261,8 +261,8 @@ performance evidence rather than changing elaborator semantics.
 ## Conformance and proof-performance ownership
 
 The bridge owns `conformance/HexPrimalityMathlib/Conformance.lean` and
-`OptInConformance.lean`. Together they cover correspondence-facing tactic
-use, default registration, module-local opt-in precedence, both sides of the
+`conformance/HexPrimalityMathlibConformance/OptIn.lean`. Together they cover
+correspondence-facing tactic use, default registration, module-local opt-in precedence, both sides of the
 `2^24` threshold, positive and negative certificate-tier results,
 deterministic seed/state replay, parity without a restart, exact negative
 exhaustion, the input ceiling, ordinary failure diagnostics, import-boundary
@@ -350,9 +350,9 @@ envelope. The baseline and elevated null controls had robust spread/build
 ratios of 12.51% and 2.69%, respectively. The record reproduces with:
 
 ```bash
-python3 scripts/bench/primality_negative_sweep.py --samples 6 \
-  --shared-host --expected-host chungus2 --cpu 22 --timeout 30 \
-  --warm-timeout 600 --max-pair-retries 32 \
+cpu=$(python3 scripts/bench/idle_core.py)
+taskset -c "$cpu" python3 scripts/bench/primality_negative_sweep.py --samples 6 \
+  --shared-host --cpu "$cpu" --timeout 30 --warm-timeout 600 \
   --output reports/bench-results/hex-primality-negative-policy-issue-9803-chungus2.json
 ```
 
@@ -378,6 +378,7 @@ failure, resource, or evidence semantics.
 HexPrimalityMathlib/
   Prime.lean       -- prime_iff and core-result transports
   Segment.lean     -- table and range statements in Mathlib vocabulary
+  Policy.lean      -- opt-in norm_num thresholds and factor-search bounds
   NormNum.lean     -- Nat.Prime tactic handler and opt-in norm_num policy
   SPEC/
     hex-primality-mathlib.md
@@ -385,6 +386,7 @@ HexPrimalityMathlib.lean
 
 conformance/HexPrimalityMathlib/
   Conformance.lean
-  OptInConformance.lean
+HexPrimalityMathlibConformance/
+  OptIn.lean
 bench/HexPrimalityMathlib/ProofProbe/
 ```

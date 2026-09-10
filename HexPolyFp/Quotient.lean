@@ -29,7 +29,7 @@ local instance : DensePoly.DivModLaws (ZMod64 p) :=
 namespace Quotient
 
 variable {g : FpPoly p} {hmonic : DensePoly.Monic g}
-variable {hg_pos : 0 < g.degree?.getD 0}
+variable {hg_pos : 0 < g.natDegree}
 /-! # Quotient-coefficient polynomial evaluation -/
 
 namespace Internal
@@ -797,8 +797,8 @@ private theorem reduce_C_val_eq (a : ZMod64 p) :
         (DensePoly.C a)).val =
       (DensePoly.C a : FpPoly p) := by
   rw [reduce_val, FpPoly.modByMonic, DensePoly.modByMonic_eq_mod]
-  have hdeg : (DensePoly.C a : FpPoly p).degree?.getD 0 < g.degree?.getD 0 := by
-    rw [DensePoly.degree?_C_getD]
+  have hdeg : (DensePoly.C a : FpPoly p).natDegree < g.natDegree := by
+    rw [DensePoly.natDegree_C]
     exact hg_pos
   exact DensePoly.mod_eq_self_of_degree_lt (DensePoly.C a : FpPoly p) g hdeg
 
@@ -1038,10 +1038,10 @@ theorem eval_monomial (n : Nat) (c : ZMod64 p)
           (DensePoly.C (0 : ZMod64 p)) *
         β ^ n
     unfold DensePoly.monomial
-    rw [dif_pos (show (0 : ZMod64 p) = Zero.zero from rfl), eval_zero, reduce_C_zero, zero_mul]
+    rw [dite_eq_left (show (0 : ZMod64 p) = Zero.zero from rfl), eval_zero, reduce_C_zero, zero_mul]
   · unfold eval DensePoly.toList DensePoly.toArray DensePoly.monomial
     have hc0 : ¬ c = (Zero.zero : ZMod64 p) := hc
-    rw [dif_neg hc0]
+    rw [dite_eq_right hc0]
     simp only [Array.toList_push, Array.toList_replicate, List.reverse_append,
       List.reverse_cons, List.reverse_nil, List.nil_append, List.singleton_append,
       List.foldl_cons]
@@ -1380,8 +1380,8 @@ private theorem reduce_C_ne_zero_of_ne_zero {c : ZMod64 p} (hc : c ≠ 0) :
       (0 : Quotient g hmonic hg_pos) := by
   intro hzero
   have hval := congrArg Quotient.val hzero
-  have hdeg : (DensePoly.C c : FpPoly p).degree?.getD 0 < g.degree?.getD 0 := by
-    rw [DensePoly.degree?_C_getD]
+  have hdeg : (DensePoly.C c : FpPoly p).natDegree < g.natDegree := by
+    rw [DensePoly.natDegree_C]
     exact hg_pos
   rw [reduce_val, FpPoly.modByMonic, DensePoly.modByMonic_eq_mod,
     DensePoly.mod_eq_self_of_degree_lt (DensePoly.C c : FpPoly p) g hdeg,
@@ -1528,7 +1528,7 @@ private theorem fpPoly_one_ne_zero :
   have hcoeff := congrArg (fun f : FpPoly p => f.coeff 0) hone
   change (DensePoly.C (1 : ZMod64 p)).coeff 0 = (0 : FpPoly p).coeff 0 at hcoeff
   rw [DensePoly.coeff_C, DensePoly.coeff_zero] at hcoeff
-  simp only [if_true] at hcoeff
+  simp only [ite_true] at hcoeff
   exact zmod64_one_ne_zero hcoeff
 
 /-- The quotient is nontrivial: `1` and `0` are distinct quotient elements
@@ -1633,11 +1633,11 @@ element raised to the cardinality of the nonzero group equals `1`. -/
 theorem pow_pred_card_eq_one_of_ne_zero
     (hg_irr : FpPoly.Irreducible g)
     {a : Quotient g hmonic hg_pos} (ha : a ≠ 0) :
-    a ^ (p ^ g.degree?.getD 0 - 1) = 1 := by
+    a ^ (p ^ g.natDegree - 1) = 1 := by
   let L : List (Quotient g hmonic hg_pos) :=
     nonzeroElements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
   let P : Quotient g hmonic hg_pos := listProd L
-  have hL_card : L.length = p ^ g.degree?.getD 0 - 1 :=
+  have hL_card : L.length = p ^ g.natDegree - 1 :=
     nonzeroElements_card (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
   have hP_ne : P ≠ 0 :=
     listProd_ne_zero hg_irr (fun x hx => (mem_nonzeroElements x).mp hx)
@@ -1659,11 +1659,11 @@ finite-field quotient `F_p[X] / (g)` is fixed by raising to the cardinality
 `p ^ deg(g)`. -/
 theorem pow_card_eq_self_of_irreducible
     (hg_irr : FpPoly.Irreducible g) (a : Quotient g hmonic hg_pos) :
-    a ^ (p ^ g.degree?.getD 0) = a := by
+    a ^ (p ^ g.natDegree) = a := by
   have hp_two : 2 ≤ p :=
     Hex.Nat.Prime.two_le (ZMod64.PrimeModulus.prime (p := p))
-  have hpos : 0 < p ^ g.degree?.getD 0 := Nat.pow_pos (by omega)
-  have hsplit : p ^ g.degree?.getD 0 = (p ^ g.degree?.getD 0 - 1) + 1 := by
+  have hpos : 0 < p ^ g.natDegree := Nat.pow_pos (by omega)
+  have hsplit : p ^ g.natDegree = (p ^ g.natDegree - 1) + 1 := by
     omega
   by_cases ha : a = 0
   · rw [ha, hsplit, pow_succ, mul_zero]
@@ -1673,24 +1673,24 @@ theorem pow_card_eq_self_of_irreducible
 change the quotient Frobenius iterate. -/
 theorem pow_pPow_add_mul_degree_eq
     (hg_irr : FpPoly.Irreducible g) (a : Quotient g hmonic hg_pos) (m q : Nat) :
-    a ^ (p ^ (m + g.degree?.getD 0 * q)) = a ^ (p ^ m) := by
+    a ^ (p ^ (m + g.natDegree * q)) = a ^ (p ^ m) := by
   induction q with
   | zero =>
       rw [Nat.mul_zero, Nat.add_zero]
   | succ q ih =>
       have hidx :
-          m + g.degree?.getD 0 * (q + 1) =
-            (m + g.degree?.getD 0 * q) + g.degree?.getD 0 := by
+          m + g.natDegree * (q + 1) =
+            (m + g.natDegree * q) + g.natDegree := by
         rw [Nat.mul_succ]
         omega
       calc
-        a ^ (p ^ (m + g.degree?.getD 0 * (q + 1)))
-            = a ^ (p ^ ((m + g.degree?.getD 0 * q) + g.degree?.getD 0)) := by
+        a ^ (p ^ (m + g.natDegree * (q + 1)))
+            = a ^ (p ^ ((m + g.natDegree * q) + g.natDegree)) := by
               rw [hidx]
-        _ = (a ^ (p ^ (m + g.degree?.getD 0 * q))) ^
-              (p ^ g.degree?.getD 0) := by
+        _ = (a ^ (p ^ (m + g.natDegree * q))) ^
+              (p ^ g.natDegree) := by
               rw [Nat.pow_add, pow_mul]
-        _ = (a ^ (p ^ m)) ^ (p ^ g.degree?.getD 0) := by rw [ih]
+        _ = (a ^ (p ^ m)) ^ (p ^ g.natDegree) := by rw [ih]
         _ = a ^ (p ^ m) := pow_card_eq_self_of_irreducible hg_irr _
 
 /-- If a quotient element is fixed by the `n`th Frobenius iterate, then it is
@@ -1698,16 +1698,16 @@ fixed by the remainder of `n` modulo the modulus degree. -/
 theorem pow_pPow_mod_degree_eq_of_fixed
     (hg_irr : FpPoly.Irreducible g) {a : Quotient g hmonic hg_pos} {n : Nat}
     (hfixed : a ^ (p ^ n) = a) :
-    a ^ (p ^ (n % g.degree?.getD 0)) = a := by
+    a ^ (p ^ (n % g.natDegree)) = a := by
   have hdecomp :
-      n % g.degree?.getD 0 + g.degree?.getD 0 * (n / g.degree?.getD 0) = n :=
-    Nat.mod_add_div n ((g.degree?).getD 0)
+      n % g.natDegree + g.natDegree * (n / g.natDegree) = n :=
+    Nat.mod_add_div n (g.natDegree)
   have hperiod :
-      a ^ (p ^ (n % g.degree?.getD 0 +
-          g.degree?.getD 0 * (n / g.degree?.getD 0))) =
-        a ^ (p ^ (n % g.degree?.getD 0)) :=
+      a ^ (p ^ (n % g.natDegree +
+          g.natDegree * (n / g.natDegree))) =
+        a ^ (p ^ (n % g.natDegree)) :=
     pow_pPow_add_mul_degree_eq (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
-      hg_irr a (n % g.degree?.getD 0) (n / g.degree?.getD 0)
+      hg_irr a (n % g.natDegree) (n / g.natDegree)
   rw [hdecomp] at hperiod
   rw [← hperiod]
   exact hfixed
@@ -1784,8 +1784,8 @@ remainder `r = n % deg(g)` would make every quotient element a root of
 theorem deg_dvd_of_pow_pPowN_eq_self_universal
     (hg_irr : FpPoly.Irreducible g) {n : Nat}
     (h : ∀ β : Quotient g hmonic hg_pos, β ^ (p ^ n) = β) :
-    g.degree?.getD 0 ∣ n := by
-  let d := g.degree?.getD 0
+    g.natDegree ∣ n := by
+  let d := g.natDegree
   let r := n % d
   by_cases hr_zero : r = 0
   · exact Nat.dvd_of_mod_eq_zero (by simpa [r, d] using hr_zero)

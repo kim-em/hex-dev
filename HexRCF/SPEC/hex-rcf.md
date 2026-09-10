@@ -17,7 +17,7 @@ the body is false. For a false existential there is no single
 counterexample witness; the diagnostic instead reports that every
 relevant cell was checked and found false. Operational totality of the
 compiled builder follows from the squarefree carrier and
-`isolate?_isSome`, together with the structurally fuel-bounded
+`isolateRealRoots?_isSome`, together with the structurally fuel-bounded
 separation pass, from
 [hex-real-roots-mathlib](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md).
 It is not exposed
@@ -192,7 +192,7 @@ proved equivalences.
    lemma for `Q = P*R` with `R ∣ Q'`. Since `Q` is the atom product,
    these are exactly the union of the atom root sets.
 
-   Run `Hex.isolate? P`; the compiled builder knows this succeeds from
+   Run `Hex.ZPoly.isolateRealRoots? P`; the compiled builder knows this succeeds from
    the squarefreeness theorem. If there are no nonconstant atoms, do
    not construct a carrier: the decomposition is the single cell `ℝ`
    and the sign matrix is the already-folded constant formula.
@@ -226,7 +226,7 @@ proved equivalences.
    which must be `0` or `1`. Count `0` means the root is greater than
    `e`. Count `1` means the root is at most `e`; exact evaluation of
    `P(e)` distinguishes equality from strict inequality.
-   `Sturm.sturm_half_open` has no endpoint-nonroot premise, so this is
+   `Sturm.IsSturmChain.sturm_Ioc` has no endpoint-nonroot premise, so this is
    valid even when the dyadic lower endpoint `l` is itself a root.
 
 6. **Build cells.** With `k` isolations `I₀ < … < Iₖ₋₁` (roots
@@ -414,9 +414,9 @@ constant, gives alternating flanks at every interior zero, and the
 positive derivative seed gives the root flank. Consequently the
 literal cast chain satisfies `Sturm.IsSturmChain`; in particular `f`
 is squarefree. Its interval count is the variation difference of
-this literal chain, not a call to `sturmCount f`, and its total count
+this literal chain, not a call to `ZPoly.sturmCount f`, and its total count
 is the corresponding `−∞/+∞` difference. The proof factors through
-`Sturm.sturm_half_open` and `Sturm.sturm_line`. Constants are handled
+`Sturm.IsSturmChain.sturm_Ioc` and `Sturm.IsSturmChain.sturm`. Constants are handled
 separately because the interval-count theorem requires positive
 degree.
 
@@ -488,7 +488,7 @@ The certificate contains:
 
 These are generalized isolation records: they must not be presented
 as the current `RealRootIsolation P` / `RealRootIsolations P` types,
-whose fields are definitionally tied to the executable `sturmCount P`
+whose fields are definitionally tied to the executable `ZPoly.sturmCount P`
 and `sturmChain P`. Their semantic theorems parallel
 `RealRootIsolation.exists_unique_root` and
 `RealRootIsolations.isolates`, but consume the literal replay counts,
@@ -672,8 +672,9 @@ free to change.
   in the shared sub-project.
 
 The public `HexRCF` umbrella imports only the supported implementation and
-proof API. The `*Tests.lean` regression modules above are compiled through the
-separate `HexRCFTests` Lake target and are not re-exported to consumers.
+proof API. The `*Tests.lean` regression modules above are compiled through a
+separate non-public test target (`HexRCFTests` in the published repository,
+`HexReleaseTests` in hex-dev) and are not re-exported to consumers.
 
 ## Phase-4 evidence tracks
 
@@ -743,15 +744,11 @@ phase-attribution evidence only; the matching LeanBench target supplies the
 scientific asymptotic verdict, and the report neither substitutes nor adds the
 two. The headline report records source hashes, commit/toolchain/host/load
 state, raw samples, artifact sizes, timeout cleanup, and the theorem's axiom
-set, and refuses release claims from a dirty or uncontrolled host. On the
-named shared release machine it uses the designated-shared-host protocol from
-`SPEC/benchmarking.md`: a preregistered hostname and logical CPU, runner-enforced
-affinity inherited by timed children, six balanced rounds, all null controls,
-and per-arm pinned-core/SMT scheduler accounting with bounded whole-pair
-retries after a bounded quiet-core preflight. The admitted foreign-plus-SMT
-aggregate shares one interference ceiling, and a rejected preflight window or
-pair attempt never enters timing summaries. Global load is recorded context;
-the scoped core-interference ceiling is the release gate.
+set, and refuses release claims from a dirty tree or incomplete provenance. It
+uses the shared-host protocol from `SPEC/benchmarking.md`: paired arms are
+adjacent with alternating orientation, every completed pair enters the summary,
+and affinity, load and scheduler observations are retained as context rather
+than admission gates.
 
 The committed implementation lives under `bench/HexRCF/ProofProbe/`.
 `Support.lean` owns the fixed source and reflected cases plus the precompiled
@@ -788,22 +785,16 @@ both build-only Lake libraries; there is no proof-probe executable or
 in-process clock. The complete external sweep is:
 
 ```bash
-python3 scripts/bench/hexrcf_proof_sweep.py --samples 6 \
+cpu=$(python3 scripts/bench/idle_core.py)
+taskset -c "$cpu" python3 scripts/bench/hexrcf_proof_sweep.py --samples 6 \
   --timeout 300 --warm-timeout 600 \
-  --shared-host --expected-host chungus2 --cpu 22 \
-  --max-pair-retries 32
+  --shared-host --cpu "$cpu"
 ```
 
-`DoubleDegree50` takes roughly 15 seconds per arm on the designated host, so
-this suite explicitly requests the 32-retry hard cap: at most 33 complete
-adjacent attempts for a pair. Every rejected attempt remains in the artifact,
-and the extra opportunities do not relax the per-arm interference gate. At
-the observed arm cost with immediate preflights, exhausting all 33 attempts is
-about 17 minutes for one required sample; the independent preflight and arm
-timeouts remain authoritative. Allowing every preflight and both arms to reach
-their configured limits gives a nominal per-sample envelope of 8 hours 15
-minutes, excluding bounded observation and process overhead, although an
-actual arm timeout aborts the run earlier.
+`DoubleDegree50` takes roughly 15 seconds per arm. The runner takes each
+reference/candidate pair once per round in alternating order and retains every
+completed pair. The per-arm timeout bounds failures; ordinary host activity is
+recorded as context and never starts a retry loop.
 
 Only `Replay`, `Tactic`, and `DoubleDegree50` print an axiom report, fixed to
 `[propext, Classical.choice, Quot.sound]`. `Search` also checks stable
@@ -862,16 +853,14 @@ therefore `no-comparable-surface-in-named-comparator` rather than assigned a
 fake ratio. The Phase-3 `local` emitter exercises related compiled workloads
 but is neither an elaboration benchmark nor Phase-4 asymptotic evidence.
 
-This contract and the pure-module extraction did not by themselves advance the
-phase marker. `HexRCF.done_through` could advance from `3` to `4` only after
-every dependency, including HexRealRootsMathlib, completed Phase 4 and both
-evidence tracks had their required structural wiring and scientific artifacts.
-The committed HexRCF Phase-4 headline report records satisfaction of those
-gates and licenses the current marker value `4`.
+`HexRCF.done_through` is `7`. Its Phase-4 record required every dependency,
+including HexRealRootsMathlib, to complete Phase 4 and both evidence tracks
+to have their structural wiring and scientific artifacts; the committed
+HexRCF Phase-4 headline report records that.
 
 ## Conformance fixtures
 
-Per [SPEC/testing.md](../testing.md):
+Per [SPEC/testing.md](../../SPEC/testing.md):
 
 - *core* (Lean-only):
   - The five example sentences above, as `example … := by rcf`.
@@ -894,7 +883,7 @@ Per [SPEC/testing.md](../testing.md):
   sentences over random small-coefficient
   polynomials from a deterministic seed, serialised with expected
   verdicts. `scripts/oracle/rcf_flint.py` uses python-flint as required
-  by [testing.md](../testing.md). It independently forms and
+  by [testing.md](../../SPEC/testing.md). It independently forms and
   squarefrees the atom product. Following
   `scripts/oracle/realroots_flint.py`, its exact tier extracts rational
   roots from `fmpz_poly.factor()` and compares them with `Fraction`;
@@ -915,12 +904,12 @@ Per [SPEC/testing.md](../testing.md):
   case. They cover every comparison and Boolean form, true and false
   quantifiers, constants, no-root cases, shared and endpoint roots,
   close roots, and equal/reversed intervals. CI cases stay around
-  degrees 8–12; the degree-50 stress case remains local. Phase-3
-  wiring adds the `hex-rcf` assignment to `SPEC/testing.md` and one
-  tuple to `scripts/ci/run_oracles.sh`, the repository's oracle registry;
-  it advances `HexRCF.done_through` in `libraries.yml` but adds no unsupported
-  manifest block, job, matrix, workflow, or dependency beyond the existing
-  python-flint install.
+  degrees 8–12; the degree-50 stress case remains local. The `hex-rcf`
+  oracle assignment is recorded in `SPEC/testing.md` and as one tuple in
+  `scripts/ci/run_oracles.sh`, the repository's oracle registry, in hex-dev;
+  the published repository carries neither the oracle nor the fixtures, and
+  nothing adds a manifest block, job, matrix, workflow, or dependency beyond
+  the existing python-flint install.
 - *local*: Mignotte-cluster atoms and degree-50 sentences exercise the
   pipeline where the isolation layer is under stress. Run
   `lake exe hexrcf_emit_fixtures local > /tmp/hexrcf-local.jsonl` and feed
@@ -961,8 +950,8 @@ carrier degree, distinct-atom count, and coefficient growth.
 ## Time budgets (Phase 4 validation)
 
 These are fixed whole-tactic acceptance cases, measured as the preregistered
-paired `Tactic − Baseline` fresh-module delta on a clean named host, using
-the designated-shared-host protocol from `SPEC/benchmarking.md`. Raw total wall
+paired `Tactic − Baseline` fresh-module delta on a clean tree, using
+the shared-host protocol from `SPEC/benchmarking.md`. Raw total wall
 times and every pair remain in the artifact. They are not
 one-parameter ladders, complexity verdicts, or substitutes for the compiled
 LeanBench cases above. Budgets are preregistered offline from a completed

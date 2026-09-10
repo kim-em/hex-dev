@@ -336,7 +336,7 @@ example : Berlekamp.rabinTest irreducibleQuad irreducibleQuad_monic = true :=
   [[4, 2, 1], [1, 2], [3, 3]]
 #guard
   let result := Berlekamp.berlekampFactor bigPoly bigPoly_monic
-  result.factors.map (fun factor => factor.degree?.getD 0) = [1, 5, 2]
+  result.factors.map (fun factor => factor.natDegree) = [1, 5, 2]
 #guard
   let result := Berlekamp.berlekampFactor bigPoly bigPoly_monic
   result.product == bigPoly

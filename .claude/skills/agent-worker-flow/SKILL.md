@@ -36,6 +36,14 @@ The `gh` CLI defaults to the current repo, so `--repo` is not needed.
 | `coordination critical-path-depth [L]` | Count unclaimed critical-path issues; optional label filter |
 | `coordination set-target N` | Planner sets recommended target agent count (wind-down use only) |
 
+**If `coordination` is not on PATH** (the session was launched outside
+`pod`, e.g. by `wt` or a direct `claude -p`), do not search for it. Fall
+back to `gh` for the same steps: `gh issue edit N --add-assignee @me` to
+claim, `gh pr create` with `Closes #N` in the body, then
+`gh pr merge --squash --auto` (never `--delete-branch`). Leave the
+`claimed`/`has-pr` labels alone; the label machinery belongs to
+`coordination`, and a hand-applied `has-pr` desynchronises it.
+
 **Issue lifecycle**: planner creates issue (label: `agent-plan`) →
 worker claims it (adds label: `claimed`) → worker creates PR closing it
 (label swaps to `has-pr`) → auto-merge squash-merges.

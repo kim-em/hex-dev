@@ -186,10 +186,24 @@ array. -/
 def ofCoeffs (T : NumberTower) (coefficients : Array Rat) : Elem T :=
   .mk (normalizeCoeffs T coefficients) (by simp [normalizeCoeffs])
 
+/-- Construct an element from coordinates whose exact tower width is already
+known. Arithmetic kernels use this internal boundary to avoid copying a fresh
+fixed-width result through `normalizeCoeffs` a second time. -/
+def Internal.ofCoeffs (T : NumberTower) (coefficients : Array Rat)
+    (hsize : coefficients.size = T.dim) : Elem T :=
+  .mk coefficients hsize
+
 /-- Canonical flattened rational coordinates. -/
 @[expose]
 def coeffs {T : NumberTower} (a : Elem T) : Array Rat :=
   a.data
+
+/-- Exact-width construction exposes its supplied coordinates unchanged. -/
+@[simp]
+theorem Internal.coeffs_ofCoeffs (T : NumberTower) (coefficients : Array Rat)
+    (hsize : coefficients.size = T.dim) :
+    coeffs (Internal.ofCoeffs T coefficients hsize) = coefficients := by
+  rfl
 
 /-- Every element exposes exactly the tower's mixed-radix width. -/
 @[simp]
@@ -261,13 +275,13 @@ theorem positiveAssociate_primitive (p : ZPoly)
     subst p
     have hpos := checked.pos_degree
     simp at hpos
-  have hdegree : p.degree?.getD 0 ≠ 0 := Nat.ne_of_gt checked.pos_degree
+  have hdegree : p.natDegree ≠ 0 := Nat.ne_of_gt checked.pos_degree
   have hirred := checked.is_true
-  rw [ZPoly.isIrreducible, if_neg hpne, if_neg hdegree] at hirred
+  rw [ZPoly.isIrreducible, ite_eq_right hpne, ite_eq_right hdegree] at hirred
   simp only [Bool.and_eq_true, decide_eq_true_eq] at hirred
   have hscalar : (ZPoly.factorize p).scalar.natAbs = 1 := by
     exact hirred.1.1
-  rw [factorize_scalar, if_neg hpne] at hscalar
+  rw [factorize_scalar, ite_eq_right hpne] at hscalar
   have hcontentAbs : (ZPoly.content p).natAbs = 1 := by
     by_cases hlead : p.leadingCoeff < 0
     · simpa [hlead] using hscalar
@@ -293,8 +307,8 @@ theorem positiveAssociate_lc_pos (p : ZPoly)
 /-- Sign association preserves positive degree. -/
 theorem positiveAssociate_degree_pos (p : ZPoly)
     (checked : ZPoly.CheckedIrreducible p) :
-    0 < (positiveAssociate p).degree?.getD 0 := by
-  simpa [positiveAssociate] using checked.pos_degree
+    0 < (positiveAssociate p).natDegree := by
+  simpa [positiveAssociate, DensePoly.natDegree] using checked.pos_degree
 
 /-- Sign association preserves the executable simple-root certificate. -/
 theorem positiveAssociate_simple (p : ZPoly) (hsf : HasOnlySimpleRoots p) :
@@ -304,7 +318,7 @@ theorem positiveAssociate_simple (p : ZPoly) (hsf : HasOnlySimpleRoots p) :
 /-- Global sign normalization preserves the Mahler refinement precision. -/
 theorem mahlerPrec_positiveAssociate (p : ZPoly) :
     mahlerPrec (positiveAssociate p) = mahlerPrec p := by
-  unfold mahlerPrec positiveAssociate
+  unfold mahlerPrec positiveAssociate DensePoly.natDegree
   rw [ZPoly.degree?_normalizePrimitiveSign,
     ZPoly.coeffAbsMax_normalizePrimitiveSign]
 
@@ -333,7 +347,7 @@ def ofQAdjoin {p : ZPoly} {x : SimpleRoot p}
       x := SimpleRoot.mk qrep
       rep := qrep
       rep_mk := rfl }
-  let d := q.degree?.getD 0
+  let d := q.natDegree
   let leading : Rat := q.leadingCoeff
   let defining := ((List.range d).map fun i =>
     #[(q.coeff i : Rat) / leading]).toArray
@@ -367,14 +381,14 @@ def ofQAdjoin {p : ZPoly} {x : SimpleRoot p}
             ZPoly.coeff_toRatPoly, q, root, d, leading, Array.getD,
             hi, hi', Rat.div_def, Rat.mul_comm]
         · have hqdegree := positiveAssociate_degree_pos p checked
-          change 0 < q.degree?.getD 0 at hqdegree
+          change 0 < q.natDegree at hqdegree
           have hqne : q ≠ 0 := by
             intro hq
-            rw [hq, DensePoly.degree?_zero_getD] at hqdegree
-            omega
+            rw [hq] at hqdegree
+            simp [DensePoly.natDegree] at hqdegree
           have hqsizePos : 0 < q.size := ZPoly.size_pos_of_ne_zero q hqne
           have hdEq : d = q.size - 1 := by
-            simp [d, DensePoly.degree?, hqne]
+            simp [d, DensePoly.natDegree, DensePoly.degree?, hqne]
           have hqsize : q.size = d + 1 := by omega
           by_cases hid : i = d
           · subst i

@@ -706,7 +706,7 @@ theorem descartesVar_eq_signVariations (q : Hex.ZPoly) :
   have hlist : q.toArray.toList.map (Int.cast : ℤ → ℝ)
       = (List.range ((toPolyℝ q).natDegree + 1)).map (toPolyℝ q).coeff := by
     have hsize : q.size = (toPolyℝ q).natDegree + 1 := by
-      rw [natDegree_toPolyℝ, Hex.DensePoly.degree?_eq_some_of_pos_size q hpos, Option.getD_some]
+      rw [natDegree_toPolyℝ, Hex.DensePoly.natDegree_eq_size_sub_one]
       omega
     rw [toArray_toList_eq_range_map q, List.map_map, hsize]
     apply List.map_congr_left
@@ -959,8 +959,7 @@ private theorem toPolyℝ_mobiusSteps (p : Hex.ZPoly) (α β : Int) (s : Nat)
     rw [toPolyℝ_scaled_stage]
     refine le_trans (natDegree_C_mul_le _ _)
       (le_trans (natDegree_mobiusInner_le _ _ _) ?_)
-    rw [natDegree_toPolyℝ, Hex.DensePoly.degree?_eq_some_of_pos_size p (by omega),
-      Option.getD_some]
+    rw [natDegree_toPolyℝ, Hex.DensePoly.natDegree_eq_size_sub_one]
   rw [hunf, toPolyℝ_compose, toPolyℝ_linear, Int.cast_one,
     toPolyℝ_reversed _ (p.size - 1) hdeg', toPolyℝ_scaled_stage, reflect_C_mul,
     mul_comp, C_comp, ← mobiusPoly_eq_reflect_comp]
@@ -970,21 +969,16 @@ private theorem toPolyℝ_mobiusSteps (p : Hex.ZPoly) (α β : Int) (s : Nat)
 real endpoint values, with `n` the degree of `p` and `s` the common
 denominator exponent of `I`'s endpoints. -/
 theorem toPolyℝ_mobiusTransform (p : Hex.ZPoly) (I : Hex.DyadicInterval)
-    (hdeg : 1 ≤ (p.degree?).getD 0) :
+    (hdeg : 1 ≤ p.natDegree) :
     toPolyℝ (Hex.mobiusTransform p I)
-      = C ((2 : ℝ) ^ ((endpoints I).2.2 * ((p.degree?).getD 0)))
-        * mobiusPoly ((p.degree?).getD 0)
+      = C ((2 : ℝ) ^ ((endpoints I).2.2 * (p.natDegree)))
+        * mobiusPoly (p.natDegree)
             (Dyadic.toReal I.lower) (Dyadic.toReal I.upper) (toPolyℝ p) := by
   have hsize : 2 ≤ p.size := by
-    by_contra h
-    have h1 : p.size ≤ 1 := by omega
-    rcases Nat.eq_zero_or_pos p.size with h0 | hpos
-    · rw [(Hex.DensePoly.degree?_eq_none_iff p).mpr h0] at hdeg
-      simp at hdeg
-    · rw [Hex.DensePoly.degree?_eq_some_of_pos_size p hpos, Option.getD_some] at hdeg
-      omega
-  have hn : (p.degree?).getD 0 = p.size - 1 := by
-    rw [Hex.DensePoly.degree?_eq_some_of_pos_size p (by omega), Option.getD_some]
+    rw [Hex.DensePoly.natDegree_eq_size_sub_one] at hdeg
+    omega
+  have hn : p.natDegree = p.size - 1 :=
+    Hex.DensePoly.natDegree_eq_size_sub_one p
   obtain ⟨hlo, hhi⟩ := endpoints_spec I
   rw [mobiusTransform_eq_steps, toPolyℝ_mobiusSteps p _ _ _ hsize, hn, hlo, hhi]
 
@@ -992,10 +986,10 @@ theorem toPolyℝ_mobiusTransform (p : Hex.ZPoly) (I : Hex.DyadicInterval)
 consumers that only need `toPolyℝ (mobiusTransform p I)` to be a positive
 constant multiple of the abstract transform. -/
 theorem toPolyℝ_mobiusTransform' (p : Hex.ZPoly) (I : Hex.DyadicInterval)
-    (hdeg : 1 ≤ (p.degree?).getD 0) :
+    (hdeg : 1 ≤ p.natDegree) :
     ∃ c : ℝ, 0 < c ∧
       toPolyℝ (Hex.mobiusTransform p I)
-        = C c * mobiusPoly ((p.degree?).getD 0)
+        = C c * mobiusPoly (p.natDegree)
             (Dyadic.toReal I.lower) (Dyadic.toReal I.upper) (toPolyℝ p) :=
   ⟨_, by positivity, toPolyℝ_mobiusTransform p I hdeg⟩
 
@@ -1005,10 +999,10 @@ theorem toPolyℝ_mobiusTransform' (p : Hex.ZPoly) (I : Hex.DyadicInterval)
 count.** The `2^{s·n}` clearing factor is absorbed by
 `Polynomial.signVariations_C_mul`; this is the form the engine proof cites. -/
 theorem descartesVar_mobiusTransform (p : Hex.ZPoly) (I : Hex.DyadicInterval)
-    (hdeg : 1 ≤ (p.degree?).getD 0) :
+    (hdeg : 1 ≤ p.natDegree) :
     Hex.descartesVar (Hex.mobiusTransform p I)
       = Polynomial.signVariations
-          (mobiusPoly ((p.degree?).getD 0)
+          (mobiusPoly (p.natDegree)
             (Dyadic.toReal I.lower) (Dyadic.toReal I.upper) (toPolyℝ p)) := by
   rw [descartesVar_eq_signVariations, toPolyℝ_mobiusTransform p I hdeg,
     Polynomial.signVariations_C_mul _ (by positivity)]
@@ -1029,7 +1023,7 @@ example :
     rw [toPolyℝ_linear]
     norm_num [sub_eq_add_neg]
   rw [toPolyℝ_mobiusTransform _ _ (by decide),
-    show ((Hex.DensePoly.ofCoeffs #[(-1 : Int), 1]).degree?).getD 0 = 1 from rfl,
+    show (Hex.DensePoly.ofCoeffs #[(-1 : Int), 1]).natDegree = 1 from rfl,
     show (endpoints (Hex.DyadicInterval.mk (Dyadic.ofInt 0) (Dyadic.ofInt 2)
       (by decide))).2.2 = 0 from rfl,
     h1, toReal_ofInt, toReal_ofInt,

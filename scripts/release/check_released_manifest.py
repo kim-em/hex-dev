@@ -18,15 +18,108 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 from libgraph import load_libraries, reachable_dependencies  # noqa: E402
 from release.sync_released import (  # noqa: E402
     MANIFEST,
+    SKELETON,
+    keep_paths,
+    lake_declaration,
     managed_paths,
     released_ci_workflows,
-    removal_paths,
+    source_build_settings,
 )
 from release import aggregate_readme  # noqa: E402
 
 
+# Fields an earlier shape used to publish benchmarks, conformance drivers,
+# fixtures and oracles into the mirrors. A released repo ships only its library,
+# so an entry carrying one of these is publishing development instruments.
+RETIRED_FIELDS = (
+    "bench",
+    "bench_dir",
+    "bench_files",
+    "bench_pins",
+    "conformance",
+    "conformance_files",
+    "conformance_pins",
+    "fixtures",
+    "oracles",
+)
+
+# Top-level names a mirror never carries: the development instruments, the
+# bench-result and performance-report ledgers, and mirror-local agent notes.
+# `keep_paths` exists for a file the mirror owns, not as a way back to
+# publishing what the sweep is there to remove. A published figure under
+# `reports/figures/` arrives as a managed destination from the entry's
+# `figures:` list, never through this hatch.
+UNPUBLISHED_TREES = (
+    ".claude",
+    ".github",
+    "bench",
+    "conformance",
+    "conformance-fixtures",
+    "reports",
+    "scripts",
+    "vendor",
+)
+
+
 def fail(message: str) -> NoReturn:
     raise ValueError(message)
+
+
+def check_library_only(entry: dict) -> None:
+    """Reject an entry that would publish more than its library to a mirror."""
+    retired = [field for field in RETIRED_FIELDS if field in entry]
+    if retired:
+        fail(
+            f"{entry['repo']}: {retired} would publish development instruments "
+            "to the mirror; benchmarks, conformance drivers, fixtures and "
+            "oracles stay in hex-dev"
+        )
+    if "remove_paths" in entry:
+        fail(
+            f"{entry['repo']}: remove_paths is retired; the sync now deletes "
+            "everything outside the entry's managed paths and the unmanaged "
+            "skeleton, so nothing needs enumerating per entry"
+        )
+
+
+def check_keep_paths(entry: dict) -> None:
+    """Reject an escape hatch that widens a mirror past its library."""
+    for path in keep_paths(entry):
+        if path.parts[0] in UNPUBLISHED_TREES:
+            fail(
+                f"{entry['repo']}: keep_paths entry {path} names a tree no "
+                "mirror publishes; benchmarks, conformance drivers, fixtures, "
+                "oracles, bench results and performance reports stay in hex-dev"
+            )
+        if path.parts[0] in SKELETON:
+            fail(
+                f"{entry['repo']}: keep_paths entry {path} is already kept as "
+                "part of every mirror's unmanaged skeleton"
+            )
+
+
+def check_build_settings(entry: dict) -> None:
+    """Keep the mirror's build settings derivable from hex-dev's lakefile.
+
+    The sync reads the `lean_lib <lib>` block here and carries its settings into
+    the mirror. Two things have to hold for that to be more than a no-op, and
+    neither is visible at sync time until a repository is already being
+    published: the manifest must not carry a competing hand-written copy of a
+    build decision, and the library must still be a `lean_lib` in this
+    monorepo's lakefile. A renamed or globbed-away target would otherwise leave
+    the sync deriving an empty settings map and publishing a mirror that quietly
+    stops precompiling.
+    """
+    repo = entry["repo"]
+    if "precompile_modules" in entry:
+        fail(
+            f"{repo}: precompile_modules is derived from lakefile.lean, not "
+            "declared here; drop the key"
+        )
+    try:
+        source_build_settings(entry["lib"])
+    except RuntimeError as error:
+        fail(f"{repo}: {error}")
 
 
 def parse_sync_baseline(text: str, source: str) -> set[str]:
@@ -39,7 +132,7 @@ def parse_sync_baseline(text: str, source: str) -> set[str]:
         fail(f"{source}: sync baseline must be a JSON object")
     published: set[str] = set()
     for repo, revision in document.items():
-        if repo == "_comment":
+        if isinstance(repo, str) and repo.startswith("_"):
             continue
         if (
             not isinstance(repo, str)
@@ -151,6 +244,76 @@ def release_executables() -> dict[str, str]:
     return out
 
 
+PUBLISHED_IMPORT_RE = re.compile(
+    r"^\s*(?:(?:public|private)\s+)?(?:meta\s+)?import\s+(?:all\s+)?([A-Za-z0-9_.]+)\s*$"
+)
+
+
+def published_import_closure_violations(
+    entries: list[dict], repo_root: Path = REPO_ROOT
+) -> list[str]:
+    """Imports that would leave a released mirror unbuildable.
+
+    A mirror ships its library and pins only published repositories, so every
+    module reachable from a released umbrella (or from its `test_modules`,
+    `build_modules` and `extra_paths` roots) may import only published
+    libraries, the roots its own entry carries through `extra_paths`, and the
+    shared `Hex` test kit. `libraries.yml` cannot see this drift: its `deps`
+    already name the unpublished library, and the pin rule keeps only the
+    published subset. Returns one message per offending import.
+    """
+    published = {entry["lib"] for entry in entries if entry.get("lib")}
+    extra_roots: dict[str, set[str]] = {}
+    for entry in entries:
+        roots: set[str] = set()
+        for extra in entry.get("extra_paths") or []:
+            source = extra.get("src", "") if isinstance(extra, dict) else ""
+            roots.add(Path(source).name.removesuffix(".lean"))
+        extra_roots[entry.get("repo", "")] = roots
+    short_by_repo = {entry.get("repo", ""): entry.get("repo", "").split("/", 1)[-1] for entry in entries}
+    extra_roots_by_short = {short_by_repo[repo]: roots for repo, roots in extra_roots.items()}
+    violations: list[str] = []
+    for entry in entries:
+        lib = entry.get("lib")
+        if not lib:
+            continue
+        # A pinned upstream's extra roots are published with that upstream.
+        pinned_roots: set[str] = set()
+        for pin in entry.get("pins") or []:
+            pinned_roots |= extra_roots_by_short.get(pin, set())
+        allowed = published | extra_roots.get(entry["repo"], set()) | pinned_roots | {"Hex"}
+        stack = [lib] + list(entry.get("test_modules") or []) + list(
+            entry.get("build_modules") or []
+        )
+        for root in extra_roots.get(entry["repo"], set()):
+            stack.append(root)
+        seen: set[str] = set()
+        while stack:
+            module = stack.pop()
+            if module in seen:
+                continue
+            seen.add(module)
+            path = repo_root / Path(*module.split(".")).with_suffix(".lean")
+            if not path.is_file():
+                continue
+            for line in path.read_text(encoding="utf-8").splitlines():
+                match = PUBLISHED_IMPORT_RE.match(line.split("--", 1)[0].rstrip())
+                if not match:
+                    continue
+                imported = match.group(1)
+                top = imported.split(".", 1)[0]
+                if not top.startswith("Hex"):
+                    continue
+                if top not in allowed:
+                    violations.append(
+                        f"{entry['repo']}: {module} imports {imported}, "
+                        f"whose library {top} is not in released.yml"
+                    )
+                    continue
+                stack.append(imported)
+    return sorted(set(violations))
+
+
 def check_ci_workflows(entries: list[dict]) -> None:
     """Require one complete, cache-safe managed workflow per released repo."""
     workflows = released_ci_workflows()
@@ -233,20 +396,7 @@ def check_ci_workflows(entries: list[dict]) -> None:
             required_paths = {
                 ".lake/build",
                 ".lake/packages/Hex*/.lake/build",
-                ".lake/packages/hex-test-kit/.lake/build",
             }
-            if job_name == "build" and entry.get("bench"):
-                required_paths |= {
-                    "bench/.lake/build",
-                    "bench/.lake/packages/Hex*/.lake/build",
-                    "bench/.lake/packages/hex-test-kit/.lake/build",
-                }
-            if job_name == "build" and entry.get("conformance"):
-                required_paths |= {
-                    "conformance/.lake/build",
-                    "conformance/.lake/packages/Hex*/.lake/build",
-                    "conformance/.lake/packages/hex-test-kit/.lake/build",
-                }
             cached_paths = {
                 path.strip()
                 for path in restore_inputs.get("path", "").splitlines()
@@ -318,6 +468,8 @@ def main() -> int:
         repo_names.add(repo)
         owner_by_repo[short] = owner
 
+        check_library_only(entry)
+
         pins = entry.get("pins")
         if not isinstance(pins, list) or not all(isinstance(pin, str) for pin in pins):
             fail(f"{repo}: pins must be a list of repository short names")
@@ -340,8 +492,18 @@ def main() -> int:
             if lib in library_names:
                 fail(f"duplicate released library {lib}")
             library_names.add(lib)
-            if not isinstance(entry.get("precompile_modules", False), bool):
-                fail(f"{repo}: precompile_modules must be a Boolean")
+            check_build_settings(entry)
+            helpers = entry.get("lake_declarations", [])
+            if (not isinstance(helpers, list)
+                    or not all(isinstance(name, str) for name in helpers)
+                    or len(helpers) != len(set(helpers))
+                    or (helpers and entry.get("lakefile") != "lean")):
+                fail(f"{repo}: lake_declarations requires unique names and a Lean Lake file")
+            for name in helpers:
+                try:
+                    lake_declaration((REPO_ROOT / "lakefile.lean").read_text(), name)
+                except RuntimeError as exc:
+                    fail(f"{repo}: {exc}")
             test_modules = entry.get("test_modules", [])
             if (
                 not isinstance(test_modules, list)
@@ -400,16 +562,16 @@ def main() -> int:
                 if destination in destinations:
                     fail(f"{repo}: duplicate managed destination {destination}")
                 destinations.add(destination)
-            removals = removal_paths(entry)
-            for removal in removals:
+            check_keep_paths(entry)
+            for kept in keep_paths(entry):
                 if any(
-                    removal == destination
-                    or removal in destination.parents
-                    or destination in removal.parents
+                    kept == destination
+                    or kept in destination.parents
+                    or destination in kept.parents
                     for destination in destinations
                 ):
                     fail(
-                        f"{repo}: remove_paths entry {removal} overlaps a managed destination"
+                        f"{repo}: keep_paths entry {kept} overlaps a managed destination"
                     )
             if entry.get("readme", True):
                 readme = REPO_ROOT / lib / "README.md"
@@ -567,26 +729,13 @@ def main() -> int:
         lib = entry.get("lib")
         if lib not in libraries:
             continue
+        # A released repo publishes only its library, so its pins are exactly
+        # that library's dependency closure.
         expected = {
             repo_by_library[dependency]
             for dependency in closure[lib]
             if dependency in repo_by_library
         }
-        # A repo's conformance or bench sidecar may import libraries its
-        # published library does not (declared per entry as
-        # `conformance_pins` / `bench_pins`); the SPEC of the owning library
-        # records why. These are sanctioned additions to the closure, never
-        # replacements.
-        for field in ("conformance_pins", "bench_pins"):
-            extra = set(entry.get(field, []))
-            undeclared = extra & expected
-            if undeclared:
-                fail(
-                    f"{entry['repo']}: {field} {sorted(undeclared)} are "
-                    "already in the library dependency closure; list only "
-                    "the sidecar-only additions"
-                )
-            expected |= extra
         actual = set(entry["pins"])
         if actual != expected:
             fail(
@@ -594,9 +743,17 @@ def main() -> int:
                 f"missing={sorted(expected - actual)}, extra={sorted(actual - expected)}"
             )
 
+    drift = published_import_closure_violations(entries)
+    if drift:
+        fail(
+            "released umbrellas import unpublished libraries, so the next sync "
+            "would publish unbuildable mirrors:\n  " + "\n  ".join(drift)
+        )
+
     print(
         f"release manifest: {len(entries) - 1} split repositories + "
-        f"1 aggregate; paths, CI, pins, test targets, and topological constraints valid"
+        f"1 aggregate; paths, CI, pins, import closure, test targets, and "
+        f"topological constraints valid"
     )
     return 0
 

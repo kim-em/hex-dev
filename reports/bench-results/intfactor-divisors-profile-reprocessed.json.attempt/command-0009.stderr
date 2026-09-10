@@ -1,0 +1,10 @@
+=== lean-bench-samply filter diagnostics ===
+bench thread:       name='hexintfactor_be' tid=2445424
+calibration:        mode=relative-to-meta-start-ms, residual = 0.967 ms (effective limit 5 ms)
+regions:            3, total timed = 2911.3 ms
+expected samples:   ~2908 on bench thread
+retained samples:   2908 on bench thread (2 rejected outside windows)
+other-thread noise: 0 samples on non-bench threads within timed windows (informational)
+sensitivity ±5 ms: passed (leaf functions; configured total-variation floor 0.10)
+confidence:         passed
+filtered profile:   /home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-profile-reprocessed.json.attempt/filtered.json.gz

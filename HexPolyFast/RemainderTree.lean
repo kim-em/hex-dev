@@ -376,7 +376,7 @@ private theorem runNode?_exists {node : RemainderNode R}
       refine ⟨[current.plan.mod p hcap], ?_⟩
       have hred : reduceNode? current p = some (current.plan.mod p hcap) := by
         unfold reduceNode?
-        rw [_root_.dite_eq_left hcap]
+        rw [dite_eq_left hcap]
       simp [current, runNode?, hred]
   | branch root plan hplan left right hleft hright leftDvd rightDvd
       rootDegree leftCapacity rightCapacity leftIH rightIH =>
@@ -415,7 +415,7 @@ private theorem runNode?_exists {node : RemainderNode R}
       refine ⟨ls ++ rs, ?_⟩
       have hred : reduceNode? current p = some r := by
         unfold reduceNode?
-        rw [_root_.dite_eq_left hcap]
+        rw [dite_eq_left hcap]
       simp [current, runNode?, hred, hls, hrs]
 
 private theorem runNode?_sound {node : RemainderNode R}

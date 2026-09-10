@@ -98,24 +98,24 @@ theorem getD_foldl_set {l : List (Nat × R)}
           rw [Array.size_setIfInBounds]
           exact hbound t (List.mem_cons_of_mem _ ht))]
       by_cases hmem : ∃ t ∈ as, t.1 = i
-      · rw [if_pos hmem]
+      · rw [ite_eq_left hmem]
         obtain ⟨t, ht, hti⟩ := hmem
-        rw [if_pos ⟨t, List.mem_cons_of_mem _ ht, hti⟩]
+        rw [ite_eq_left ⟨t, List.mem_cons_of_mem _ ht, hti⟩]
         have hai : ¬ a.1 = i := by
           have := hs.1 t ht
           omega
-        simp only [coeffList, if_neg hai]
-      · rw [if_neg hmem]
+        simp only [coeffList, ite_eq_right hai]
+      · rw [ite_eq_right hmem]
         by_cases hai : a.1 = i
-        · rw [if_pos ⟨a, List.mem_cons_self .., hai⟩]
+        · rw [ite_eq_left ⟨a, List.mem_cons_self .., hai⟩]
           subst hai
           rw [show coeffList (a :: as) a.1 = a.2 from by simp [coeffList]]
           have hlt : a.1 < (base.setIfInBounds a.1 a.2).size := by
             rw [Array.size_setIfInBounds]
             exact hbound a (List.mem_cons_self ..)
-          rw [Array.getD, dif_pos hlt]
+          rw [Array.getD, dite_eq_left hlt]
           exact Array.getElem_setIfInBounds_self hlt
-        · rw [if_neg (by
+        · rw [ite_eq_right (by
             intro hcon
             obtain ⟨t, ht, hti⟩ := hcon
             rcases List.mem_cons.mp ht with rfl | ht'
@@ -125,10 +125,10 @@ theorem getD_foldl_set {l : List (Nat × R)}
           · have hi' : i < (base.setIfInBounds a.1 a.2).size := by
               rw [Array.size_setIfInBounds]
               exact hi
-            rw [Array.getD, dif_pos hi', Array.getD, dif_pos hi]
+            rw [Array.getD, dite_eq_left hi', Array.getD, dite_eq_left hi]
             exact Array.getElem_setIfInBounds_ne hi hai
-          · rw [Array.getD, dif_neg (by rwa [Array.size_setIfInBounds]),
-              Array.getD, dif_neg hi]
+          · rw [Array.getD, dite_eq_right (by rwa [Array.size_setIfInBounds]),
+              Array.getD, dite_eq_right hi]
 
 /-- Write each term of an arbitrary term array into a coefficient array
 sized by the largest exponent. A conversion, not a canonicaliser: with
@@ -212,13 +212,13 @@ theorem coeffList_termsOfCoeffsList (l : List R) (i e : Nat) :
             have := exp_mem_termsOfCoeffsList ht
             omega
           · simp only [coeffList]
-            rw [if_pos (show i = i + 0 by omega)]
+            rw [ite_eq_left (show i = i + 0 by omega)]
       | succ e =>
           rw [List.getD_cons_succ]
           split
           · rw [show i + (e + 1) = (i + 1) + e from by omega, ih]
           · simp only [coeffList,
-              if_neg (show ¬ i = i + (e + 1) from by omega)]
+              ite_eq_right (show ¬ i = i + (e + 1) from by omega)]
             rw [show i + (e + 1) = (i + 1) + e from by omega, ih]
 
 /-- The walk stores nothing below its starting index. -/
@@ -252,18 +252,18 @@ def toDense (s : SparsePoly R) : DensePoly R :=
       exact exp_lt_foldl_max ht 0)
     e]
   by_cases hmem : ∃ t ∈ s.terms.toList, t.1 = e
-  · rw [if_pos hmem]
+  · rw [ite_eq_left hmem]
     rfl
-  · rw [if_neg hmem]
+  · rw [ite_eq_right hmem]
     have : s.coeff e = 0 := by
       refine coeffList_eq_zero ?_
       intro t ht hte
       exact hmem ⟨t, ht, hte⟩
     rw [this]
     by_cases he : e < (Array.replicate (termsBound s.terms) (0 : R)).size
-    · rw [Array.getD, dif_pos he]
+    · rw [Array.getD, dite_eq_left he]
       exact Array.getElem_replicate he
-    · rw [Array.getD, dif_neg he]
+    · rw [Array.getD, dite_eq_right he]
 
 /-- Convert from the dense representation, keeping the nonzero
 coefficients with their indices.
@@ -296,14 +296,14 @@ private theorem foldl_push_eq_termsOfCoeffsList (l : List R) :
       intro i acc
       simp only [List.foldl_cons]
       by_cases hc : c = 0
-      · rw [if_pos hc]
+      · rw [ite_eq_left hc]
         show (cs.foldl _ (acc, i + 1)).1 = _
         rw [ih (i + 1) acc]
-        simp only [termsOfCoeffsList, if_pos hc]
-      · rw [if_neg hc]
+        simp only [termsOfCoeffsList, ite_eq_left hc]
+      · rw [ite_eq_right hc]
         show (cs.foldl _ (acc.push (i, c), i + 1)).1 = _
         rw [ih (i + 1) (acc.push (i, c))]
-        simp only [termsOfCoeffsList, if_neg hc]
+        simp only [termsOfCoeffsList, ite_eq_right hc]
         apply Array.toList_inj.mp
         simp
 
@@ -370,13 +370,13 @@ theorem getD_coeffsOfTerms {ts : Array (Nat × R)}
       exact exp_lt_foldl_max ht 0)
     e]
   by_cases hmem : ∃ t ∈ ts.toList, t.1 = e
-  · rw [if_pos hmem]
-  · rw [if_neg hmem,
+  · rw [ite_eq_left hmem]
+  · rw [ite_eq_right hmem,
       coeffList_eq_zero fun t ht hte => hmem ⟨t, ht, hte⟩]
     by_cases he : e < (Array.replicate (termsBound ts) (0 : R)).size
-    · rw [Array.getD, dif_pos he]
+    · rw [Array.getD, dite_eq_left he]
       exact Array.getElem_replicate he
-    · rw [Array.getD, dif_neg he]
+    · rw [Array.getD, dite_eq_right he]
 
 /-- The sparse image of a coefficient array stores exactly its
 coefficients. -/
@@ -438,7 +438,7 @@ theorem coeffs_terms {cs : Array R} (h : DensePolyNormalized cs) :
           · omega
           · rw [Array.back?_eq_getElem?,
               Array.getElem?_eq_getElem (by omega)] at hback
-            rw [Array.getD, dif_pos (by omega)]
+            rw [Array.getD, dite_eq_left (by omega)]
             intro hval
             exact hback (congrArg some hval)
         have hcoeff : coeffList (termsOfCoeffs cs).toList
@@ -460,7 +460,7 @@ theorem coeffs_terms {cs : Array R} (h : DensePolyNormalized cs) :
   intro i hi₁ hi₂
   have hgetD := getD_coeffsOfTerms hsorted i
   rw [coeffList_termsOfCoeffs] at hgetD
-  rw [Array.getD, dif_pos hi₁, Array.getD, dif_pos hi₂] at hgetD
+  rw [Array.getD, dite_eq_left hi₁, Array.getD, dite_eq_left hi₂] at hgetD
   exact hgetD
 
 /-- Round trip on the bundled types, dense side out: unconditional,
@@ -593,10 +593,10 @@ theorem foldl_congr' {α β : Type _} {l : List α} {f g : β → α → β}
 assumed. -/
 theorem addCoeff_zero_left (c : S) : addCoeff 0 c = c := by
   unfold addCoeff
-  rw [if_pos rfl]
+  rw [ite_eq_left rfl]
   by_cases hc : c = 0
-  · rw [if_pos hc, hc]
-  · rw [if_neg hc]
+  · rw [ite_eq_left hc, hc]
+  · rw [ite_eq_right hc]
 
 /-- Coefficients of a fold of sums, sparse side. -/
 theorem coeff_foldl_add {α : Type _} (l : List α)
@@ -647,19 +647,19 @@ private theorem foldl_add_block (a : Nat × S) {l : List (Nat × S)}
           simp only [decide_eq_true_eq]
           omega
         rw [hempty, List.foldl_nil,
-          if_pos (show a.1 ≤ f from by omega)]
+          ite_eq_left (show a.1 ≤ f from by omega)]
         have : coeffList (b :: bs) (f - a.1) = b.2 := by
           simp only [coeffList]
-          rw [if_pos (show b.1 = f - a.1 from by omega)]
+          rw [ite_eq_left (show b.1 = f - a.1 from by omega)]
         rw [this]
       · rw [List.filter_cons_of_neg (by simpa using hbf), ih hs.2]
         by_cases haf : a.1 ≤ f
-        · rw [if_pos haf, if_pos haf]
+        · rw [ite_eq_left haf, ite_eq_left haf]
           have : coeffList (b :: bs) (f - a.1) = coeffList bs (f - a.1) := by
             simp only [coeffList]
-            rw [if_neg (show ¬ b.1 = f - a.1 from by omega)]
+            rw [ite_eq_right (show ¬ b.1 = f - a.1 from by omega)]
           rw [this]
-        · rw [if_neg haf, if_neg haf]
+        · rw [ite_eq_right haf, ite_eq_right haf]
 
 /-- The pairwise-product coefficient, reorganised as a fold of
 {name}`mulMonomial` coefficients over the left operand's terms. -/
@@ -728,12 +728,12 @@ theorem toDense_foldl_monomial (s : SparsePoly S) :
         rw [ih hl.2, DensePoly.coeff_monomial]
         simp only [coeffList, show (Zero.zero : S) = 0 from rfl]
         by_cases hf : f = a.1
-        · rw [if_pos hf, if_pos hf.symm,
+        · rw [ite_eq_left hf, ite_eq_left hf.symm,
             coeffList_eq_zero (fun t ht hte => by
               have := hl.1 t ht
               omega)]
           grind
-        · rw [if_neg hf, if_neg (fun h : a.1 = f => hf h.symm)]
+        · rw [ite_eq_right hf, ite_eq_right (fun h : a.1 = f => hf h.symm)]
           grind
   rw [hfold s.terms.toList s.pairwise_toList,
     show (0 : DensePoly S).coeff f = 0 from
@@ -863,12 +863,12 @@ theorem right_distrib (s t u : SparsePoly S) :
 /-- The zeroth power is one. -/
 @[simp, grind =] theorem pow_zero (s : SparsePoly S) : s ^ 0 = 1 := by
   show pow s 0 = 1
-  rw [pow, dif_pos rfl]
+  rw [pow, dite_eq_left rfl]
 
 private theorem pow_unfold (s : SparsePoly S) (n : Nat) (hn : ¬ n = 0) :
     s ^ n = if n % 2 = 1 then s * (s * s) ^ (n / 2) else (s * s) ^ (n / 2) := by
   show pow s n = _
-  rw [pow, dif_neg hn]
+  rw [pow, dite_eq_right hn]
   rfl
 
 /-- The conversion respects scalar multiplication. -/
@@ -925,16 +925,16 @@ theorem pow_succ (s : SparsePoly S) (n : Nat) : s ^ (n + 1) = s * s ^ n := by
   | _ n ih =>
       match n with
       | 0 =>
-          rw [pow_unfold s 1 (by omega), if_pos rfl, pow_zero, pow_zero]
+          rw [pow_unfold s 1 (by omega), ite_eq_left rfl, pow_zero, pow_zero]
       | m + 1 =>
           by_cases hodd : (m + 2) % 2 = 1
-          · rw [pow_unfold s (m + 2) (by omega), if_pos hodd,
+          · rw [pow_unfold s (m + 2) (by omega), ite_eq_left hodd,
               pow_unfold s (m + 1) (by omega),
-              if_neg (show ¬ (m + 1) % 2 = 1 from by omega),
+              ite_eq_right (show ¬ (m + 1) % 2 = 1 from by omega),
               show (m + 2) / 2 = (m + 1) / 2 from by omega]
-          · rw [pow_unfold s (m + 2) (by omega), if_neg hodd,
+          · rw [pow_unfold s (m + 2) (by omega), ite_eq_right hodd,
               pow_unfold s (m + 1) (by omega),
-              if_pos (show (m + 1) % 2 = 1 from by omega),
+              ite_eq_left (show (m + 1) % 2 = 1 from by omega),
               show (m + 2) / 2 = (m + 1) / 2 + 1 from by omega,
               ih ((m + 1) / 2) (by omega) (s * s), mul_assoc]
 
@@ -1044,7 +1044,7 @@ where the degree is. -/
       simp
   | some t =>
       have hsize := size_toDense_eq hback
-      rw [dif_neg (by omega)]
+      rw [dite_eq_right (by omega)]
       simp only [Option.map_some]
       congr 1
       omega

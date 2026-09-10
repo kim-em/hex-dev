@@ -130,9 +130,9 @@ private theorem arrayOfFn_getD {R : Type} [Zero R] {size : Nat}
     (Array.ofFn f).getD k 0 = if h : k < size then f ⟨k, h⟩ else 0 := by
   rw [Array.getD_eq_getD_getElem?, Array.getElem?_ofFn]
   by_cases h : k < size
-  · rw [Hex.dite_eq_left h, Hex.dite_eq_left h]
+  · rw [dite_eq_left h, dite_eq_left h]
     rfl
-  · rw [Hex.dite_eq_right h, Hex.dite_eq_right h]
+  · rw [dite_eq_right h, dite_eq_right h]
     rfl
 
 private theorem arrayMap_getD {R S : Type} [Zero R] [Zero S]
@@ -186,7 +186,7 @@ private theorem size_ofFn_last {R : Type} [Zero R] [DecidableEq R]
     unfold p
     rw [DensePoly.coeff_ofCoeffs]
     exact (arrayOfFn_getD f (size - 1)).trans (by
-      rw [Hex.dite_eq_left hindex])
+      rw [dite_eq_left hindex])
   have hupper : p.size ≤ size := by
     exact Nat.le_trans (DensePoly.size_ofCoeffs_le _) (by simp)
   have hlower : size ≤ p.size := by
@@ -213,7 +213,7 @@ private theorem leadingCoeff_ofFn_last {R : Type} [Zero R] [DecidableEq R]
     unfold p
     rw [DensePoly.coeff_ofCoeffs]
     exact (arrayOfFn_getD f (size - 1)).trans (by
-      rw [Hex.dite_eq_left hindex])
+      rw [dite_eq_left hindex])
   change p.leadingCoeff = f ⟨size - 1, by omega⟩
   rw [DensePoly.leadingCoeff_eq_coeff_last p (by omega), hpSize, hcoeff]
 
@@ -222,16 +222,15 @@ private theorem degreeOf_ofUnivariate (i : Fin (n + 1))
     (cmp' : Mono n → Mono n → Ordering) [IsMonomialOrder cmp']
     (q : DensePoly (MvPoly n Int cmp')) :
     MvPoly.degreeOf i (MvPoly.ofUnivariate (cmp := cmp) i cmp' q) =
-      q.degree?.getD 0 := by
+      q.natDegree := by
   let p := MvPoly.ofUnivariate (cmp := cmp) i cmp' q
   by_cases hqzero : q.size = 0
   · have hq : q = 0 := (DensePoly.size_eq_zero_iff q).mp hqzero
     subst q
     simp [MvPoly.ofUnivariate]
   · have hqpos : 0 < q.size := Nat.pos_of_ne_zero hqzero
-    have hdegree : q.degree?.getD 0 = q.size - 1 := by
-      rw [DensePoly.degree?_eq_some_of_pos_size q hqpos]
-      rfl
+    have hdegree : q.natDegree = q.size - 1 :=
+      DensePoly.natDegree_eq_size_sub_one q
     rw [hdegree]
     apply Nat.le_antisymm
     · rw [MvPoly.degreeOf_eq]
@@ -325,14 +324,8 @@ private theorem toUnivariate_size_le_degree (i : Fin (n + 1))
   change q.size ≤ MvPoly.degreeOf i p + 1
   have hdegree := degreeOf_ofUnivariate (cmp := cmp) i cmp' q
   rw [MvPoly.ofUnivariate_toUnivariate] at hdegree
-  by_cases hqzero : q.size = 0
-  · rw [(DensePoly.degree?_eq_none_iff q).mpr hqzero] at hdegree
-    simp only [Option.getD_none] at hdegree
-    omega
-  · have hqpos : 0 < q.size := Nat.pos_of_ne_zero hqzero
-    rw [DensePoly.degree?_eq_some_of_pos_size q hqpos] at hdegree
-    simp only [Option.getD_some] at hdegree
-    omega
+  rw [DensePoly.natDegree_eq_size_sub_one] at hdegree
+  omega
 
 /-- The recursive coefficient at the selected-variable degree is its
 leading coefficient, including for the zero polynomial. -/
@@ -353,8 +346,7 @@ private theorem toUnivariate_coeff_degree (i : Fin (n + 1))
     rw [show MvPoly.toUnivariate i cmp' p = 0 by exact hq]
     rfl
   · have hqpos : 0 < q.size := Nat.pos_of_ne_zero hqzero
-    rw [DensePoly.degree?_eq_some_of_pos_size q hqpos] at hdegree
-    simp only [Option.getD_some] at hdegree
+    rw [DensePoly.natDegree_eq_size_sub_one] at hdegree
     rw [hdegree, DensePoly.leadingCoeff_eq_coeff_last q hqpos]
 
 /-! # Leading-coefficient and prefix laws -/
@@ -386,11 +378,11 @@ theorem lcIn_setLc (i : Fin (n + 1))
         coefficients ⟨size - 1, by omega⟩ :=
       leadingCoeff_ofFn_last hsizepos coefficients (by
         unfold coefficients
-        rw [Hex.ite_eq_left htop]
+        rw [ite_eq_left htop]
         exact hL)
     _ = L := by
       unfold coefficients
-      rw [Hex.ite_eq_left htop]
+      rw [ite_eq_left htop]
 
 /-- Installing a nonzero top coefficient preserves the selected-variable
 degree, including the degree-zero case. -/
@@ -420,13 +412,9 @@ theorem degreeOf_setLc (i : Fin (n + 1))
       (DensePoly.ofCoeffs (Array.ofFn coefficients)).size = size :=
     size_ofFn_last hsizepos coefficients (by
       unfold coefficients
-      rw [Hex.ite_eq_left htop]
+      rw [ite_eq_left htop]
       exact hL)
-  rw [DensePoly.degree?_eq_some_of_pos_size _ (by
-    rw [hpolySize]
-    exact hsizepos)]
-  simp only [Option.getD_some]
-  rw [hpolySize]
+  rw [DensePoly.natDegree_eq_size_sub_one, hpolySize]
   omega
 
 /-- Replacing the top slice preserves an image whenever the replacement has
@@ -458,16 +446,16 @@ theorem imageAt_setLc (i : Fin (n + 1))
       congrArg (MvPoly.evalHorner a) (arrayOfFn_getD coefficients k)
     _ = MvPoly.evalHorner a (q.coeff k) := by
       by_cases hk : k < size
-      · rw [Hex.dite_eq_left hk]
+      · rw [dite_eq_left hk]
         by_cases hdegree : k = degree
         · subst k
           unfold coefficients
-          rw [Hex.ite_eq_left rfl, MvPoly.evalHorner_eq,
+          rw [ite_eq_left rfl, MvPoly.evalHorner_eq,
             MvPoly.evalHorner_eq, toUnivariate_coeff_degree]
           simpa [lcIn] using hL
         · unfold coefficients
-          rw [Hex.ite_eq_right hdegree]
-      · rw [Hex.dite_eq_right hk]
+          rw [ite_eq_right hdegree]
+      · rw [dite_eq_right hk]
         have hqsize : q.size ≤ size := by
           unfold size
           exact Nat.le_max_left ..
@@ -556,7 +544,7 @@ theorem imageAt_seed (i : Fin (n + 1))
   · have hzero : F = 0 := (DensePoly.size_eq_zero_iff F).mp hF
     subst F
     unfold seed
-    rw [Hex.ite_eq_left hF]
+    rw [ite_eq_left hF]
     have hview : MvPoly.toUnivariate i cmp'
         (0 : MvPoly (n + 1) Int cmp) = 0 := by
       apply DensePoly.ext_coeff
@@ -570,7 +558,7 @@ theorem imageAt_seed (i : Fin (n + 1))
     rfl
   · have hFpos : 0 < F.size := Nat.pos_of_ne_zero hF
     unfold seed
-    rw [Hex.ite_eq_right hF, MvPoly.toUnivariate_ofUnivariate]
+    rw [ite_eq_right hF, MvPoly.toUnivariate_ofUnivariate]
     let coefficients : Fin F.size → MvPoly n Int cmp' := fun j =>
       if j.val + 1 = F.size then L else MvPoly.C (F.coeff j.val)
     change MvPoly.evalHorner a
@@ -584,21 +572,21 @@ theorem imageAt_seed (i : Fin (n + 1))
         congrArg (MvPoly.evalHorner a) (arrayOfFn_getD coefficients k)
       _ = F.coeff k := by
         by_cases hk : k < F.size
-        · rw [Hex.dite_eq_left hk]
+        · rw [dite_eq_left hk]
           by_cases htop : k + 1 = F.size
           · have hkLast : k = F.size - 1 := by omega
             unfold coefficients
-            rw [Hex.ite_eq_left htop, MvPoly.evalHorner_eq, h,
+            rw [ite_eq_left htop, MvPoly.evalHorner_eq, h,
               DensePoly.leadingCoeff_eq_coeff_last F hFpos, hkLast]
           · unfold coefficients
-            rw [Hex.ite_eq_right htop, MvPoly.evalHorner_eq,
+            rw [ite_eq_right htop, MvPoly.evalHorner_eq,
               MvPoly.eval_eq, MvPoly.termsList_C]
             by_cases hcoeff : F.coeff k = 0
             · simp [hcoeff]
-            · simp only [Hex.ite_eq_right hcoeff, List.foldl_cons,
+            · simp only [ite_eq_right hcoeff, List.foldl_cons,
                 List.foldl_nil, Int.zero_add]
               rw [prod_zero, Int.mul_one]
-        · rw [Hex.dite_eq_right hk]
+        · rw [dite_eq_right hk]
           have hzero := DensePoly.coeff_eq_zero_of_size_le F
             (Nat.le_of_not_gt hk)
           rw [hzero]
@@ -611,7 +599,7 @@ theorem lcIn_seed (i : Fin (n + 1))
     lcIn i cmp' (seed (cmp := cmp) i cmp' L F) = L := by
   have hFpos : 0 < F.size := Nat.pos_of_ne_zero hF
   unfold lcIn seed
-  rw [Hex.ite_eq_right hF]
+  rw [ite_eq_right hF]
   rw [MvPoly.toUnivariate_ofUnivariate]
   let coefficients : Fin F.size → MvPoly n Int cmp' := fun k =>
     if k.val + 1 = F.size then L else MvPoly.C (F.coeff k.val)
@@ -625,30 +613,30 @@ theorem lcIn_seed (i : Fin (n + 1))
         coefficients ⟨F.size - 1, by omega⟩ :=
       leadingCoeff_ofFn_last hFpos coefficients (by
         unfold coefficients
-        rw [Hex.ite_eq_left htop]
+        rw [ite_eq_left htop]
         exact hL)
     _ = L := by
       unfold coefficients
-      rw [Hex.ite_eq_left htop]
+      rw [ite_eq_left htop]
 
 theorem degreeOf_seed (i : Fin (n + 1))
     (cmp' : Mono n → Mono n → Ordering) [IsMonomialOrder cmp']
     (L : MvPoly n Int cmp') (F : ZPoly) (hL : L ≠ 0) :
     MvPoly.degreeOf i (seed (cmp := cmp) i cmp' L F) =
-      F.degree?.getD 0 := by
+      F.natDegree := by
   by_cases hF : F.size = 0
   · have hzero : F = 0 := (DensePoly.size_eq_zero_iff F).mp hF
     subst F
     simp [seed]
   · have hFpos : 0 < F.size := Nat.pos_of_ne_zero hF
     unfold seed
-    rw [Hex.ite_eq_right hF]
+    rw [ite_eq_right hF]
     let coefficients : Fin F.size → MvPoly n Int cmp' := fun k =>
       if k.val + 1 = F.size then L else MvPoly.C (F.coeff k.val)
     change MvPoly.degreeOf i
         (MvPoly.ofUnivariate (cmp := cmp) i cmp'
           (DensePoly.ofCoeffs (Array.ofFn coefficients))) =
-      F.degree?.getD 0
+      F.natDegree
     rw [degreeOf_ofUnivariate]
     have htop :
         (⟨F.size - 1, by omega⟩ : Fin F.size).val + 1 = F.size := by
@@ -658,12 +646,9 @@ theorem degreeOf_seed (i : Fin (n + 1))
         (Array.ofFn coefficients)).size = F.size :=
       size_ofFn_last hFpos coefficients (by
         unfold coefficients
-        rw [Hex.ite_eq_left htop]
+        rw [ite_eq_left htop]
         exact hL)
-    rw [DensePoly.degree?_eq_some_of_pos_size F hFpos]
-    rw [DensePoly.degree?_eq_some_of_pos_size _ (by
-      rw [hsize]
-      exact hFpos)]
-    rw [hsize]
+    rw [DensePoly.natDegree_eq_size_sub_one,
+      DensePoly.natDegree_eq_size_sub_one, hsize]
 
 end Hex.MvHensel

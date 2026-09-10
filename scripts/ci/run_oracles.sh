@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sequential oracle runner used by `.github/workflows/ci.yml`.
+# Parallel oracle runner used by `.github/workflows/ci.yml`.
 #
 # Replaces the per-oracle matrix that previously fanned out into 11
 # ubuntu jobs. All oracle dependencies (FLINT, PARI, SymPy, Conway
@@ -13,8 +13,12 @@
 # one tuple to ORACLES — do not introduce a new top-level CI job
 # (see SPEC/CI.md § Job-count budget).
 #
-# Exits non-zero on first failing library, with a clear marker
-# identifying which library failed.
+# Oracles are independent, so they run through a worker pool
+# (HEX_ORACLE_JOBS, default nproc) after one combined `lake build` of
+# every emit executable; per-library output is captured and printed in
+# tuple order. Exits non-zero if any library failed, with a clear
+# marker per failing library. Same-runner process parallelism is the
+# form SPEC/CI.md permits: it raises no runner count.
 
 set -uo pipefail
 
@@ -23,6 +27,10 @@ set -uo pipefail
 # Preflight the required oracle dependency families before emitting any fixtures so a
 # broken installation fails early and unambiguously.
 if [ "${HEX_REQUIRE_ORACLES:-0}" = "1" ]; then
+  if ! command -v gap >/dev/null 2>&1; then
+    echo "FAIL: required GAP oracle is unavailable" >&2
+    exit 1
+  fi
   if ! python3 - <<'PY'
 import flint
 import cypari2
@@ -31,6 +39,10 @@ import sympy
 PY
   then
     echo "FAIL: required oracle dependencies are unavailable" >&2
+    exit 1
+  fi
+  if ! python3 scripts/oracle/real_algebraic_flint.py --preflight --require-oracles; then
+    echo "FAIL: required real-algebraic oracle capabilities are unavailable" >&2
     exit 1
   fi
 fi
@@ -59,7 +71,9 @@ ORACLES=(
   "HexRealRoots|hexrealroots_emit_fixtures|scripts/oracle/realroots_flint.py|conformance-fixtures/HexRealRoots/realroots.jsonl"
   "HexRCF|hexrcf_emit_fixtures|scripts/oracle/rcf_flint.py|conformance-fixtures/HexRCF/rcf.jsonl"
   "HexRoots|hexroots_emit_fixtures|scripts/oracle/roots_flint.py|conformance-fixtures/HexRoots/roots.jsonl"
+  "HexRealAlgebraic|hexrealalgebraic_emit_fixtures|scripts/oracle/real_algebraic_flint.py|conformance-fixtures/HexRealAlgebraic/real_algebraic.jsonl"
   # SymPy backed
+  "HexRationalFn|hexrationalfn_emit_fixtures|scripts/oracle/rationalfn_sympy.py|conformance-fixtures/HexRationalFn/rationalfn.jsonl"
   "HexMvPoly|hexmvpoly_emit_fixtures|scripts/oracle/mvpoly_sympy.py|conformance-fixtures/HexMvPoly/mvpoly.jsonl"
   "HexTruncatedSeries|hextruncatedseries_emit_fixtures|scripts/oracle/series_sympy.py|conformance-fixtures/HexTruncatedSeries/series.jsonl"
   "HexSparsePoly|hexsparsepoly_emit_fixtures|scripts/oracle/sparsepoly_sympy.py|conformance-fixtures/HexSparsePoly/sparsepoly.jsonl"
@@ -77,62 +91,133 @@ ORACLES=(
   "HexIntFactor|hexintfactor_emit_fixtures|scripts/oracle/intfactor_pari.py|conformance-fixtures/HexIntFactor/intfactor.jsonl"
   "HexNumberField|hexnumberfield_emit_fixtures|scripts/oracle/number_field_flint_pari.py|conformance-fixtures/HexNumberField/number_field.jsonl"
   "HexNumberFieldTower|hexnumberfieldtower_emit_fixtures|scripts/oracle/number_field_tower_pari.py|conformance-fixtures/HexNumberFieldTower/number_field_tower.jsonl"
+  # Exact Python integer/Fraction Cartesian enumeration
+  "HexLatticeEnum|hexlatticeenum_emit_fixtures|scripts/oracle/lattice_enum.py|conformance-fixtures/HexLatticeEnum/latticeenum.jsonl"
   # Conway tables backed
   "HexConway|hexconway_emit_fixtures|scripts/oracle/conway_luebeck.py|conformance-fixtures/HexConway/conway.jsonl"
+  # pinned external nauty 2.9.3 backed (vendored source, project shim)
+  "HexGraphIso|hexgraphiso_emit_fixtures|scripts/oracle/graphiso_nauty.py|conformance-fixtures/HexGraphIso/graphiso.jsonl"
+  # GAP 4.x, required for permutation-group conformance
+  "HexPermGroup|hexpermgroup_emit_fixtures|scripts/oracle/perm_group_gap.py|conformance-fixtures/HexPermGroup/permgroup.jsonl"
 )
 
 failed=0
+
+# One combined build of every emit executable: parallel `lake exe`
+# invocations would contend on the Lake build lock, and one build
+# parallelizes internally anyway.
+emits=()
 for entry in "${ORACLES[@]}"; do
+  IFS='|' read -r _ emit _ _ <<<"$entry"
+  emits+=("$emit")
+done
+if ! lake build "${emits[@]}"; then
+  echo "FAIL: building emit executables" >&2
+  exit 1
+fi
+
+run_one() {
+  local entry="$1"
+  local lib emit oracle fixture
   IFS='|' read -r lib emit oracle fixture <<<"$entry"
+  local fresh="/tmp/${lib}-fresh.jsonl"
+  local log="/tmp/oracle-${lib}.log"
+  {
+    echo
+    echo "=========================================================="
+    echo ">>> $lib :: emit=$emit oracle=$oracle"
+    echo "=========================================================="
 
-  echo
-  echo "=========================================================="
-  echo ">>> $lib :: emit=$emit oracle=$oracle"
-  echo "=========================================================="
+    if ! ".lake/build/bin/$emit" >"$fresh"; then
+      echo "FAIL: $lib :: $emit exited non-zero"
+      return 1
+    fi
 
-  fresh="/tmp/${lib}-fresh.jsonl"
-  if ! lake exe "$emit" >"$fresh"; then
-    echo "FAIL: $lib :: lake exe $emit exited non-zero" >&2
-    failed=1
-    break
-  fi
+    if ! diff -u "$fixture" "$fresh"; then
+      echo "FAIL: $lib :: fresh emission diverges from committed fixture"
+      return 1
+    fi
 
-  if ! diff -u "$fixture" "$fresh"; then
-    echo "FAIL: $lib :: fresh emission diverges from committed fixture" >&2
-    failed=1
-    break
-  fi
-
-  oracle_args=()
-  case "$oracle" in
-    *primality_pari.py)
-      if [ "${HEX_REQUIRE_ORACLES:-0}" = "1" ]; then
-        oracle_args=(--require-oracles)
+    if [ "$lib" = "HexRealAlgebraic" ]; then
+      local repr_fresh="/tmp/HexRealAlgebraic-ReprChecks.lean"
+      if ! ".lake/build/bin/$emit" --repr >"$repr_fresh" ||
+          ! diff -u conformance/HexRealAlgebraic/ReprChecks.lean "$repr_fresh"; then
+        echo "FAIL: $lib :: generated Lean Repr checks differ from the compiled fixture"
+        return 1
       fi
-      ;;
-    *conway_luebeck.py)
-      if [ "${HEX_REQUIRE_ORACLES:-0}" = "1" ]; then
-        oracle_args=(--require-conway-polynomials)
-      else
-        # The committed Lübeck cache is always checked. Locally, add the
-        # package-backed leg when available and report a clean SKIP otherwise.
-        oracle_args=(--check-conway-polynomials)
+      if ! python3 -m unittest scripts.oracle.test_real_algebraic_flint; then
+        echo "FAIL: $lib :: oracle rejection tests failed"
+        return 1
       fi
-      ;;
-  esac
+    fi
 
-  if ! python3 "$oracle" "${oracle_args[@]}" <"$fresh"; then
-    echo "FAIL: $lib :: oracle $oracle reported a divergence" >&2
-    failed=1
-    break
+    local oracle_args=()
+    case "$oracle" in
+      *primality_pari.py)
+        if [ "${HEX_REQUIRE_ORACLES:-0}" = "1" ]; then
+          oracle_args=(--require-oracles)
+        fi
+        ;;
+      *conway_luebeck.py)
+        if [ "${HEX_REQUIRE_ORACLES:-0}" = "1" ]; then
+          oracle_args=(--require-conway-polynomials)
+        else
+          # The committed Lübeck cache is always checked. Locally, add the
+          # package-backed leg when available and report a clean SKIP otherwise.
+          oracle_args=(--check-conway-polynomials)
+        fi
+        ;;
+    esac
+
+    if ! python3 "$oracle" "${oracle_args[@]}" <"$fresh"; then
+      echo "FAIL: $lib :: oracle $oracle reported a divergence"
+      return 1
+    fi
+
+    echo "OK: $lib"
+  } >"$log" 2>&1
+}
+
+jobs="${HEX_ORACLE_JOBS:-$(nproc)}"
+running=0
+declare -A lib_of_pid status_of
+reap() {
+  local done_pid st
+  if wait -n -p done_pid; then st=0; else st=$?; fi
+  status_of["${lib_of_pid[$done_pid]}"]=$st
+  running=$((running - 1))
+}
+for entry in "${ORACLES[@]}"; do
+  IFS='|' read -r lib _ _ _ <<<"$entry"
+  run_one "$entry" &
+  lib_of_pid[$!]="$lib"
+  running=$((running + 1))
+  if [ "$running" -ge "$jobs" ]; then
+    reap
   fi
-
-  echo "OK: $lib"
+done
+while [ "$running" -gt 0 ]; do
+  reap
+done
+for entry in "${ORACLES[@]}"; do
+  IFS='|' read -r lib _ _ _ <<<"$entry"
+  if [ "${status_of[$lib]:-1}" -ne 0 ]; then
+    failed=1
+  fi
+  cat "/tmp/oracle-${lib}.log"
 done
 
 if [ "$failed" -ne 0 ]; then
   echo
-  echo "Conformance: oracle run failed; see preceding marker for the library." >&2
+  echo "Conformance: oracle run failed; see preceding markers for the libraries." >&2
+  exit 1
+fi
+
+# Exercise the independent Lean/native binding in process against the same
+# committed corpus. The executable is built by the shared build phase above;
+# this adds only the FFI calls (about 0.1 s locally), not another elaboration.
+if ! .lake/packages/NautyFFI/.lake/build/bin/nautyffi_tests; then
+  echo "Conformance: in-process nauty-ffi fixture check failed." >&2
   exit 1
 fi
 

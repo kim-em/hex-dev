@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "e82c649322c5dc6574071e576e92d644683eb00a",
+ "current_blob": "bc7decf80ed8c057e95d8dbefe5a42d6b3e0e0f6",
+ "reason": "Registers the hex-graph-iso libraries, conformance and bench executables, and extends the shared conformance and oracle glob lists with graph-iso modules. The factorization service executable, its package options, and the library declarations it is built from are otherwise unchanged; new targets cannot alter how Lake builds that binary."
+}

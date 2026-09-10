@@ -249,12 +249,12 @@ private theorem congr_of_congr_mul_right
 
 private theorem constant_eq_zero_of_mod_eq_zero
     {a : FpPoly p} {c : ZMod64 p}
-    (ha_pos : 0 < a.degree?.getD 0)
+    (ha_pos : 0 < a.natDegree)
     (hmod : (DensePoly.C c : FpPoly p) % a = (0 : FpPoly p) % a) :
     c = 0 := by
   have hC : (DensePoly.C c : FpPoly p) % a = DensePoly.C c := by
     apply DensePoly.mod_eq_self_of_degree_lt
-    rw [DensePoly.degree?_C_getD]
+    rw [DensePoly.natDegree_C]
     exact ha_pos
   have hzero : (0 : FpPoly p) % a = 0 := by
     exact DensePoly.zero_mod_eq_zero (S := ZMod64 p) a
@@ -266,16 +266,16 @@ private theorem constant_eq_zero_of_mod_eq_zero
 
 private theorem constant_eq_one_of_mod_eq_one
     {b : FpPoly p} {c : ZMod64 p}
-    (hb_pos : 0 < b.degree?.getD 0)
+    (hb_pos : 0 < b.natDegree)
     (hmod : (DensePoly.C c : FpPoly p) % b = (1 : FpPoly p) % b) :
     c = 1 := by
   have hC : (DensePoly.C c : FpPoly p) % b = DensePoly.C c := by
     apply DensePoly.mod_eq_self_of_degree_lt
-    rw [DensePoly.degree?_C_getD]
+    rw [DensePoly.natDegree_C]
     exact hb_pos
-  have hone_deg : (1 : FpPoly p).degree?.getD 0 < b.degree?.getD 0 := by
-    change (DensePoly.C (1 : ZMod64 p)).degree?.getD 0 < b.degree?.getD 0
-    rw [DensePoly.degree?_C_getD]
+  have hone_deg : (1 : FpPoly p).natDegree < b.natDegree := by
+    change (DensePoly.C (1 : ZMod64 p)).natDegree < b.natDegree
+    rw [DensePoly.natDegree_C]
     exact hb_pos
   have hone : (1 : FpPoly p) % b = 1 := by
     exact DensePoly.mod_eq_self_of_degree_lt (1 : FpPoly p) b hone_deg
@@ -298,7 +298,7 @@ The zero-one CRT representative is not congruent to a constant modulo
 theorem crtZeroOneCandidate_not_congr_constant_mod_product
     [ZMod64.PrimeModulus p] (a b s t : FpPoly p)
     (ha : DensePoly.Monic a) (hb : DensePoly.Monic b)
-    (ha_pos : 0 < a.degree?.getD 0) (hb_pos : 0 < b.degree?.getD 0)
+    (ha_pos : 0 < a.natDegree) (hb_pos : 0 < b.natDegree)
     (hbez : s * a + t * b = 1) (c : ZMod64 p) :
     ¬ DensePoly.Congr (crtZeroOneCandidate a b s t) (DensePoly.C c) (a * b) := by
   intro hconst
@@ -325,7 +325,7 @@ theorem crtZeroOneCandidate_not_congr_constant_mod_product
 theorem crtZeroOneXGCDCandidate_not_congr_constant_mod_product
     [ZMod64.PrimeModulus p] (a b : FpPoly p)
     (ha : DensePoly.Monic a) (hb : DensePoly.Monic b)
-    (ha_pos : 0 < a.degree?.getD 0) (hb_pos : 0 < b.degree?.getD 0)
+    (ha_pos : 0 < a.natDegree) (hb_pos : 0 < b.natDegree)
     (hgcd : DensePoly.gcd a b = 1) (c : ZMod64 p) :
     ¬ DensePoly.Congr (crtZeroOneXGCDCandidate a b) (DensePoly.C c) (a * b) := by
   unfold crtZeroOneXGCDCandidate
@@ -536,7 +536,7 @@ modulo that product.
 theorem exists_reduced_crtZeroOne_kernelWitness_of_coprime_split
     (a b : FpPoly p)
     (ha : DensePoly.Monic a) (hb : DensePoly.Monic b)
-    (ha_pos : 0 < a.degree?.getD 0) (hb_pos : 0 < b.degree?.getD 0)
+    (ha_pos : 0 < a.natDegree) (hb_pos : 0 < b.natDegree)
     (hgcd : DensePoly.gcd a b = 1) :
     ∃ h : FpPoly p,
       h = crtZeroOneXGCDCandidate a b % (a * b) ∧
@@ -574,7 +574,7 @@ is no exception, so both sides reduce to `0`.
 -/
 theorem frobeniusDiffMod_mod_self_of_degree_zero
     (f : FpPoly p) (hmonic : DensePoly.Monic f) (k : Nat)
-    (hdeg : ¬ 0 < f.degree?.getD 0) :
+    (hdeg : ¬ 0 < f.natDegree) :
     (frobeniusDiffMod f hmonic k) % f = frobeniusDiffMod f hmonic k := by
   -- f.size ≥ 1 (Monic excludes f = 0).
   have hf_size_pos : 0 < f.size := by
@@ -602,7 +602,7 @@ theorem frobeniusDiffMod_mod_self_of_degree_zero
     omega
   -- f.size = 1.
   have hf_size : f.size = 1 := by
-    unfold DensePoly.degree? at hdeg
+    unfold DensePoly.natDegree DensePoly.degree? at hdeg
     have hne : f.size ≠ 0 := Nat.pos_iff_ne_zero.mp hf_size_pos
     simp [hne] at hdeg
     omega
@@ -719,17 +719,17 @@ theorem dvd_xPowSubX_iff_frobeniusDiffMod_isZero
   -- Step 3: frobeniusDiffMod % f = frobeniusDiffMod.
   -- Two cases: 0 < deg f or deg f = 0 (so f = 1, frobeniusDiffMod = 0).
   have hreduced : (frobeniusDiffMod f hmonic k) % f = frobeniusDiffMod f hmonic k := by
-    by_cases hdeg : 0 < f.degree?.getD 0
+    by_cases hdeg : 0 < f.natDegree
     · -- 0 < deg f: show frobeniusDiffMod is reduced via coefficient bound.
       apply DensePoly.mod_eq_self_of_degree_lt
-      -- Need: (frobeniusDiffMod).degree?.getD 0 < f.degree?.getD 0.
+      -- Need: (frobeniusDiffMod).natDegree < f.natDegree.
       -- Both frobeniusXPowMod and modByMonic f X hmonic have degree < f.degree.
-      have hfrob_deg : (FpPoly.frobeniusXPowMod f hmonic k).degree?.getD 0 <
-          f.degree?.getD 0 := by
+      have hfrob_deg : (FpPoly.frobeniusXPowMod f hmonic k).natDegree <
+          f.natDegree := by
         rw [← FpPoly.frobeniusXPowMod_mod_self f hmonic k]
         exact DensePoly.mod_degree_lt_of_pos_degree _ _ hdeg
-      have hX_deg : (FpPoly.modByMonic f FpPoly.X hmonic).degree?.getD 0 <
-          f.degree?.getD 0 := by
+      have hX_deg : (FpPoly.modByMonic f FpPoly.X hmonic).natDegree <
+          f.natDegree := by
         rw [show FpPoly.modByMonic f FpPoly.X hmonic = FpPoly.X % f from
               DensePoly.modByMonic_eq_mod _ _ hmonic]
         exact DensePoly.mod_degree_lt_of_pos_degree _ _ hdeg
@@ -737,20 +737,19 @@ theorem dvd_xPowSubX_iff_frobeniusDiffMod_isZero
       have hf_size_pos : 0 < f.size := by
         apply Nat.pos_of_ne_zero
         intro hfsize
-        unfold DensePoly.degree? at hdeg
+        unfold DensePoly.natDegree DensePoly.degree? at hdeg
         simp [hfsize] at hdeg
-      have hf_deg_eq : f.degree?.getD 0 = f.size - 1 := by
-        unfold DensePoly.degree?
-        simp [Nat.ne_of_gt hf_size_pos]
+      have hf_deg_eq : f.natDegree = f.size - 1 := by
+        rw [DensePoly.natDegree_eq_size_sub_one]
       -- Convert hfrob_deg to a size bound.
       have hfrob_size : (FpPoly.frobeniusXPowMod f hmonic k).size ≤ f.size - 1 := by
         rw [hf_deg_eq] at hfrob_deg
         by_cases hsize : (FpPoly.frobeniusXPowMod f hmonic k).size = 0
         · omega
         · have hdeg' :
-              (FpPoly.frobeniusXPowMod f hmonic k).degree?.getD 0 =
+              (FpPoly.frobeniusXPowMod f hmonic k).natDegree =
                 (FpPoly.frobeniusXPowMod f hmonic k).size - 1 := by
-            unfold DensePoly.degree?; simp [hsize]
+            unfold DensePoly.natDegree DensePoly.degree?; simp [hsize]
           rw [hdeg'] at hfrob_deg
           omega
       have hX_size : (FpPoly.modByMonic f FpPoly.X hmonic).size ≤ f.size - 1 := by
@@ -758,9 +757,9 @@ theorem dvd_xPowSubX_iff_frobeniusDiffMod_isZero
         by_cases hsize : (FpPoly.modByMonic f FpPoly.X hmonic).size = 0
         · omega
         · have hdeg' :
-              (FpPoly.modByMonic f FpPoly.X hmonic).degree?.getD 0 =
+              (FpPoly.modByMonic f FpPoly.X hmonic).natDegree =
                 (FpPoly.modByMonic f FpPoly.X hmonic).size - 1 := by
-            unfold DensePoly.degree?; simp [hsize]
+            unfold DensePoly.natDegree DensePoly.degree?; simp [hsize]
           rw [hdeg'] at hX_deg
           omega
       have hcoeff_zero :
@@ -784,16 +783,16 @@ theorem dvd_xPowSubX_iff_frobeniusDiffMod_isZero
       by_cases hsize : (frobeniusDiffMod f hmonic k).size = 0
       · -- frobeniusDiffMod = 0 case: degree = 0 < f.degree.
         have hdeg_zero :
-            (frobeniusDiffMod f hmonic k).degree?.getD 0 = 0 := by
-          unfold DensePoly.degree?
+            (frobeniusDiffMod f hmonic k).natDegree = 0 := by
+          unfold DensePoly.natDegree DensePoly.degree?
           simp [hsize]
         rw [hdeg_zero]
         exact hdeg
       · -- size > 0: degree = size - 1 ≤ f.size - 2 < f.size - 1 = f.degree.
         have hdeg_eq :
-            (frobeniusDiffMod f hmonic k).degree?.getD 0 =
+            (frobeniusDiffMod f hmonic k).natDegree =
               (frobeniusDiffMod f hmonic k).size - 1 := by
-          unfold DensePoly.degree?
+          unfold DensePoly.natDegree DensePoly.degree?
           simp [hsize]
         rw [hdeg_eq, hf_deg_eq]
         omega
@@ -848,16 +847,16 @@ Used to discharge the `f ≠ 0` leg of `FpPoly.Irreducible` and to show
 that the factors `a, b` of `f` are individually nonzero.
 -/
 theorem ne_zero_of_pos_degree
-    {f : FpPoly p} (hpos : 0 < f.degree?.getD 0) :
+    {f : FpPoly p} (hpos : 0 < f.natDegree) :
     f ≠ 0 := by
   intro hzero
   rw [hzero] at hpos
-  unfold DensePoly.degree? at hpos
+  unfold DensePoly.natDegree DensePoly.degree? at hpos
   simp at hpos
 
 omit [ZMod64.PrimeModulus p] in
 private theorem inv_leadingCoeff_ne_zero_of_pos_degree [ZMod64.PrimeModulus p]
-    (a : FpPoly p) (ha_pos : 0 < a.degree?.getD 0) :
+    (a : FpPoly p) (ha_pos : 0 < a.natDegree) :
     (DensePoly.leadingCoeff a)⁻¹ ≠ (0 : ZMod64 p) := by
   intro hinv
   have hlead_ne := FpPoly.leadingCoeff_ne_zero_of_pos_degree a ha_pos
@@ -881,7 +880,7 @@ omit [ZMod64.PrimeModulus p] in
 private theorem pos_degree_of_ne_zero_of_not_isUnit_local
     {a : FpPoly p} (ha_ne_zero : a ≠ 0)
     (ha_not_unit : a.degree? ≠ some 0) :
-    0 < a.degree?.getD 0 := by
+    0 < a.natDegree := by
   have ha_size_pos : 0 < a.size := by
     apply Nat.pos_of_ne_zero
     intro hsize
@@ -895,9 +894,8 @@ private theorem pos_degree_of_ne_zero_of_not_isUnit_local
     unfold DensePoly.degree?
     simp [ha_size_ne_zero]
   rw [hdeg] at ha_not_unit
-  rw [hdeg]
+  rw [DensePoly.natDegree_eq_size_sub_one]
   have : a.size - 1 ≠ 0 := fun h => ha_not_unit (by rw [h])
-  simp
   omega
 
 omit [ZMod64.PrimeModulus p] in
@@ -911,18 +909,18 @@ private theorem fp_dvd_trans_local {a b c : FpPoly p}
 private theorem factor_degree_lt
     {a x y : FpPoly p}
     (hxy : x * y = a) (hx_ne_zero : x ≠ 0)
-    (hy_pos : 0 < y.degree?.getD 0) :
-    x.degree?.getD 0 < a.degree?.getD 0 := by
+    (hy_pos : 0 < y.natDegree) :
+    x.natDegree < a.natDegree := by
   have hy_ne_zero : y ≠ 0 := ne_zero_of_pos_degree hy_pos
   rw [← hxy, FpPoly.degree?_mul_eq_add_degree? x y hx_ne_zero hy_ne_zero]
   omega
 
 private theorem exists_monic_irreducible_factor_of_pos_degree_aux :
-    ∀ (n : Nat) (a : FpPoly p), a.degree?.getD 0 = n →
-        0 < a.degree?.getD 0 →
+    ∀ (n : Nat) (a : FpPoly p), a.natDegree = n →
+        0 < a.natDegree →
         ∃ g : FpPoly p,
           FpPoly.Irreducible g ∧ DensePoly.Monic g ∧ g ∣ a ∧
-            0 < g.degree?.getD 0 ∧ g.degree?.getD 0 ≤ a.degree?.getD 0 := by
+            0 < g.natDegree ∧ g.natDegree ≤ a.natDegree := by
   intro n
   induction n using Nat.strongRecOn with
   | ind n ih =>
@@ -960,16 +958,16 @@ private theorem exists_monic_irreducible_factor_of_pos_degree_aux :
       have hy_ne_zero : y ≠ 0 := by
         have hyx : y * x = a := by rw [FpPoly.mul_comm]; exact hxy
         exact factor_ne_zero_of_ne_zero_local hyx ha_ne
-      have hx_pos : 0 < x.degree?.getD 0 :=
+      have hx_pos : 0 < x.natDegree :=
         pos_degree_of_ne_zero_of_not_isUnit_local hx_ne_zero hx_not_unit
-      have hy_pos : 0 < y.degree?.getD 0 :=
+      have hy_pos : 0 < y.natDegree :=
         pos_degree_of_ne_zero_of_not_isUnit_local hy_ne_zero hy_not_unit
       have hx_dvd_a : x ∣ a := ⟨y, hxy.symm⟩
-      have hx_lt : x.degree?.getD 0 < a.degree?.getD 0 :=
+      have hx_lt : x.natDegree < a.natDegree :=
         factor_degree_lt hxy hx_ne_zero hy_pos
-      have hx_lt_n : x.degree?.getD 0 < n := hn ▸ hx_lt
+      have hx_lt_n : x.natDegree < n := hn ▸ hx_lt
       obtain ⟨g, hg_irr, hg_monic, hg_dvd_x, hg_deg_pos, hg_deg_le_x⟩ :=
-        ih (x.degree?.getD 0) hx_lt_n x rfl hx_pos
+        ih (x.natDegree) hx_lt_n x rfl hx_pos
       exact ⟨g, hg_irr, hg_monic, fp_dvd_trans_local hg_dvd_x hx_dvd_a, hg_deg_pos,
         Nat.le_trans hg_deg_le_x (Nat.le_of_lt hx_lt)⟩
 
@@ -984,11 +982,11 @@ rescaling needed when `a` itself is not monic.
 theorem exists_monic_irreducible_factor_of_factor
     {f a b : FpPoly p}
     (_hmonic_f : DensePoly.Monic f) (_hab : a * b = f)
-    (ha_pos : 0 < a.degree?.getD 0) :
+    (ha_pos : 0 < a.natDegree) :
     ∃ g : FpPoly p,
       FpPoly.Irreducible g ∧ DensePoly.Monic g ∧ g ∣ a ∧
-        0 < g.degree?.getD 0 ∧ g.degree?.getD 0 ≤ a.degree?.getD 0 := by
-  exact exists_monic_irreducible_factor_of_pos_degree_aux (a.degree?.getD 0) a rfl ha_pos
+        0 < g.natDegree ∧ g.natDegree ≤ a.natDegree := by
+  exact exists_monic_irreducible_factor_of_pos_degree_aux (a.natDegree) a rfl ha_pos
 
 /--
 The quotient class of `X` raised to `p^k` is represented by the executable
@@ -996,7 +994,7 @@ Frobenius remainder `frobeniusXPowMod`.
 -/
 theorem quotient_X_pow_eq_reduce_frobeniusXPowMod
     {g : FpPoly p} (hg_monic : DensePoly.Monic g)
-    (hg_pos : 0 < g.degree?.getD 0) (k : Nat) :
+    (hg_pos : 0 < g.natDegree) (k : Nat) :
     (FpPoly.Quotient.X (g := g) (hmonic := hg_monic) (hg_pos := hg_pos)) ^ (p ^ k) =
       FpPoly.Quotient.reduce
         (g := g) (hmonic := hg_monic) (hg_pos := hg_pos)
@@ -1046,9 +1044,9 @@ This is the deepest finite-field ingredient of Rabin's test soundness.
 theorem degree_dvd_of_irreducible_dvd_xPowSubX
     {g : FpPoly p} (hg_irr : FpPoly.Irreducible g)
     (hg_monic : DensePoly.Monic g)
-    (hg_pos : 0 < g.degree?.getD 0) {n : Nat}
+    (hg_pos : 0 < g.natDegree) {n : Nat}
     (hg_dvd : g ∣ xPowSubX (p := p) n) :
-    g.degree?.getD 0 ∣ n := by
+    g.natDegree ∣ n := by
   letI inst_dvd : DensePoly.DivModLaws (ZMod64 p) := inferInstance
   have hX :
       (FpPoly.Quotient.X (g := g) (hmonic := hg_monic) (hg_pos := hg_pos)) ^
@@ -1095,18 +1093,18 @@ A monic irreducible polynomial `g` of degree `d > 0` over `F_p` divides
 theorem irreducible_dvd_xPowSubX_degree
     {g : FpPoly p} (hg_irr : FpPoly.Irreducible g)
     (hg_monic : DensePoly.Monic g)
-    (hg_pos : 0 < g.degree?.getD 0) :
-    g ∣ xPowSubX (p := p) (g.degree?.getD 0) := by
+    (hg_pos : 0 < g.natDegree) :
+    g ∣ xPowSubX (p := p) (g.natDegree) := by
   letI inst_dvd : DensePoly.DivModLaws (ZMod64 p) := inferInstance
   -- Step 1: the quotient class of `X` is fixed by raising to `p ^ d`.
   have hfix :
       (FpPoly.Quotient.X (g := g) (hmonic := hg_monic) (hg_pos := hg_pos)) ^
-          (p ^ g.degree?.getD 0) =
+          (p ^ g.natDegree) =
         FpPoly.Quotient.X (g := g) (hmonic := hg_monic) (hg_pos := hg_pos) :=
     FpPoly.Quotient.Internal.pow_card_eq_self_of_irreducible hg_irr _
   -- Step 2: rewrite the LHS to the executable representative.
   rw [quotient_X_pow_eq_reduce_frobeniusXPowMod hg_monic hg_pos
-      (g.degree?.getD 0)] at hfix
+      (g.natDegree)] at hfix
   -- `Quotient.X = reduce X` is definitional.
   have hX_def :
       (FpPoly.Quotient.X (g := g) (hmonic := hg_monic) (hg_pos := hg_pos)) =
@@ -1115,21 +1113,21 @@ theorem irreducible_dvd_xPowSubX_degree
   rw [hX_def] at hfix
   -- Step 3: extract the polynomial congruence `g ∣ frobeniusXPowMod - X`.
   have hcongr :
-      g ∣ (FpPoly.frobeniusXPowMod g hg_monic (g.degree?.getD 0) - FpPoly.X) :=
+      g ∣ (FpPoly.frobeniusXPowMod g hg_monic (g.natDegree) - FpPoly.X) :=
     FpPoly.Quotient.congr_of_reduce_eq_reduce hfix
   -- Step 4: the absolute Frobenius identity, `g ∣ X^(p^d) - frobeniusXPowMod`.
   have hp1 :
-      g ∣ ((DensePoly.monomial (p ^ g.degree?.getD 0) (1 : ZMod64 p)) -
-            FpPoly.frobeniusXPowMod g hg_monic (g.degree?.getD 0)) :=
+      g ∣ ((DensePoly.monomial (p ^ g.natDegree) (1 : ZMod64 p)) -
+            FpPoly.frobeniusXPowMod g hg_monic (g.natDegree)) :=
     @DensePoly.dvd_of_mod_eq_mod (ZMod64 p) _ _ _ inst_dvd _ _ _
       (FpPoly.frobeniusXPowMod_mod_eq_monomial_mod g hg_monic
-        (g.degree?.getD 0)).symm
+        (g.natDegree)).symm
   -- Step 5: rewrite `xPowSubX d` as the sum of the two divisible pieces.
   have heq :
-      (xPowSubX (p := p) (g.degree?.getD 0)) =
-        ((DensePoly.monomial (p ^ g.degree?.getD 0) (1 : ZMod64 p)) -
-            FpPoly.frobeniusXPowMod g hg_monic (g.degree?.getD 0)) +
-          (FpPoly.frobeniusXPowMod g hg_monic (g.degree?.getD 0) - FpPoly.X) := by
+      (xPowSubX (p := p) (g.natDegree)) =
+        ((DensePoly.monomial (p ^ g.natDegree) (1 : ZMod64 p)) -
+            FpPoly.frobeniusXPowMod g hg_monic (g.natDegree)) +
+          (FpPoly.frobeniusXPowMod g hg_monic (g.natDegree) - FpPoly.X) := by
     unfold xPowSubX
     apply DensePoly.ext_coeff
     intro n
@@ -1430,8 +1428,7 @@ theorem isUnitPolynomial_of_dvd_isUnitPolynomial
   have hh_ne_zero : h ≠ 0 := by
     intro heq
     rw [heq] at hh_deg
-    unfold DensePoly.degree? at hh_deg
-    simp at hh_deg
+    simp [DensePoly.natDegree, DensePoly.degree?] at hh_deg
   rcases hgh with ⟨r, hr⟩
   have hg_ne_zero : g ≠ 0 := by
     intro hg
@@ -1442,11 +1439,11 @@ theorem isUnitPolynomial_of_dvd_isUnitPolynomial
     apply hh_ne_zero
     rw [hr, hzero, FpPoly.mul_zero]
   -- `deg h = deg g + deg r` and `deg h = 0`, so `deg g = 0`.
-  have hsum : h.degree?.getD 0 = g.degree?.getD 0 + r.degree?.getD 0 := by
+  have hsum : h.natDegree = g.natDegree + r.natDegree := by
     rw [hr]
     exact FpPoly.degree?_mul_eq_add_degree? g r hg_ne_zero hr_ne_zero
-  have hh_deg_zero : h.degree?.getD 0 = 0 := by simp [hh_deg]
-  have hg_deg_zero : g.degree?.getD 0 = 0 := by omega
+  have hh_deg_zero : h.natDegree = 0 := by rw [DensePoly.natDegree, hh_deg]; rfl
+  have hg_deg_zero : g.natDegree = 0 := by omega
   -- Translate `g ≠ 0 ∧ deg g = 0` back to `isUnitPolynomial g = true`.
   have hg_size_pos : 0 < g.size := by
     apply Nat.pos_of_ne_zero
@@ -1460,8 +1457,7 @@ theorem isUnitPolynomial_of_dvd_isUnitPolynomial
   have hg_deg : g.degree? = some (g.size - 1) := by
     unfold DensePoly.degree?
     simp [hg_size_ne_zero]
-  rw [hg_deg] at hg_deg_zero
-  simp at hg_deg_zero
+  rw [DensePoly.natDegree_eq_size_sub_one] at hg_deg_zero
   have hg_deg_some : g.degree? = some 0 := by
     rw [hg_deg, hg_deg_zero]
   unfold isUnitPolynomial
@@ -1484,7 +1480,7 @@ A nonzero polynomial whose `degree?` is not `some 0` has positive degree.
 theorem pos_degree_of_ne_zero_of_not_isUnit
     {a : FpPoly p} (ha_ne_zero : a ≠ 0)
     (ha_not_unit : a.degree? ≠ some 0) :
-    0 < a.degree?.getD 0 := by
+    0 < a.natDegree := by
   -- Show `a.size > 0` from `a ≠ 0`.
   have ha_size_pos : 0 < a.size := by
     apply Nat.pos_of_ne_zero
@@ -1500,10 +1496,9 @@ theorem pos_degree_of_ne_zero_of_not_isUnit
     unfold DensePoly.degree?
     simp [ha_size_ne_zero]
   rw [hdeg] at ha_not_unit
-  rw [hdeg]
+  rw [DensePoly.natDegree_eq_size_sub_one]
   -- `some (a.size - 1) ≠ some 0 ⟹ a.size - 1 ≠ 0 ⟹ 0 < a.size - 1`.
   have : a.size - 1 ≠ 0 := fun h => ha_not_unit (by rw [h])
-  simp
   omega
 
 /--
@@ -1513,8 +1508,8 @@ the cofactor `b` has positive degree. The bound is phrased relative to
 -/
 theorem factor_degree_lt_basisSize
     {f a b : FpPoly p}
-    (hab : a * b = f) (ha_ne_zero : a ≠ 0) (hb_pos : 0 < b.degree?.getD 0) :
-    a.degree?.getD 0 < basisSize f := by
+    (hab : a * b = f) (ha_ne_zero : a ≠ 0) (hb_pos : 0 < b.natDegree) :
+    a.natDegree < basisSize f := by
   have hb_ne_zero : b ≠ 0 := ne_zero_of_pos_degree hb_pos
   unfold basisSize
   rw [← hab, FpPoly.degree?_mul_eq_add_degree? a b ha_ne_zero hb_ne_zero]

@@ -74,8 +74,7 @@ theorem checkPartial_prod {F : PartialFactorization}
     (F.factors.map (fun e => e.prime ^ e.exponent)).prod * F.residual =
       F.subject := by
   obtain ⟨acc, hacc, hfinal⟩ := (checkedPartial_parts h).2.2
-  have hprod := factorProduct_eq F.factors 1 acc hacc
-  have hmul := boundedPowMul_eq 1 acc F.subject hfinal
+  obtain ⟨hprod, hmul⟩ := Internal.factorProduct_parts hacc hfinal
   simpa [hprod] using hmul.symm
 
 /-- Every prime power exposed by accepted partial data is genuinely prime. -/
@@ -104,7 +103,7 @@ theorem checkFactorization_of_checkPartial {F : PartialFactorization}
   obtain ⟨hsubject, hentries, acc, hproduct, hresidual⟩ :=
     checkedPartial_parts h
   have hacc : acc = F.subject := by
-    have heq := boundedPowMul_eq 1 acc F.subject hresidual
+    obtain ⟨_, heq⟩ := Internal.factorProduct_parts hproduct hresidual
     simpa [hr] using heq.symm
   simp only [checkFactorization, Bool.and_eq_true, decide_eq_true_eq]
   exact ⟨⟨hsubject, hentries⟩, hacc ▸ hproduct⟩

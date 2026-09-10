@@ -1,0 +1,10 @@
+{
+ "fingerprint": "4a7c8747f686",
+ "host": "chungus2",
+ "date": "2026-09-08T13:52:14.143191+00:00",
+ "describe": "7a536cad3b41",
+ "label": "issue-10043-complete",
+ "cpu": 91,
+ "trials": 1,
+ "baseline": "hexgraphiso-engine-ddc22cf4b645-chungus2.jsonl"
+}

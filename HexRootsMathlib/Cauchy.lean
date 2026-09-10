@@ -70,15 +70,14 @@ private theorem coeff_le_cauchyMax (p : Hex.ZPoly) {i : Nat} (hi : i < p.size - 
 
 /-- The Mathlib Cauchy bound is no larger than the power of two selected by
 the executable integer calculation. -/
-theorem cauchyBound_le_two_pow (p : Hex.ZPoly) (h : 0 < p.degree?.getD 0) :
+theorem cauchyBound_le_two_pow (p : Hex.ZPoly) (h : 0 < p.natDegree) :
     (Polynomial.cauchyBound (toPolyℂ p) : ℝ) ≤ (2 : ℝ) ^ Hex.cauchyExp p := by
   have hsize : 0 < p.size := by
     by_contra hp
     have hp0 : p.size = 0 := Nat.eq_zero_of_not_pos hp
-    simp [Hex.DensePoly.degree?, hp0] at h
-  have hdegree : p.degree?.getD 0 = p.size - 1 := by
-    rw [Hex.DensePoly.degree?_eq_some_of_pos_size p hsize]
-    rfl
+    simp [Hex.DensePoly.natDegree, Hex.DensePoly.degree?, hp0] at h
+  have hdegree : p.natDegree = p.size - 1 :=
+    Hex.DensePoly.natDegree_eq_size_sub_one p
   let L := p.leadingCoeff.natAbs
   let M := (p.toArray.extract 0 (p.size - 1)).foldl
     (init := 0) fun acc a => max acc a.natAbs
@@ -124,17 +123,17 @@ theorem cauchyBound_le_two_pow (p : Hex.ZPoly) (h : 0 < p.degree?.getD 0) :
     _ ≤ (Q : ℝ) := hratio
     _ ≤ (2 : ℝ) ^ Hex.ceilLog2 Q := hQ
     _ = (2 : ℝ) ^ Hex.cauchyExp p := by
-      simp only [Hex.cauchyExp, L, M, Q, if_neg (Nat.ne_of_gt hL)]
+      simp only [Hex.cauchyExp, L, M, Q, ite_eq_right (Nat.ne_of_gt hL)]
 
 /-- Every root of the complex cast lies in the closed square stored in the
 executable initial component. -/
-theorem isRoot_mem_cauchySquare (p : Hex.ZPoly) (h : 0 < p.degree?.getD 0)
+theorem isRoot_mem_cauchySquare (p : Hex.ZPoly) (h : 0 < p.natDegree)
     {z : ℂ} (hz : (toPolyℂ p).IsRoot z) :
     z ∈ DyadicSquare.closedSquare
       ⟨0, 0, -(Hex.cauchyExp p : Int)⟩ := by
   have hp : toPolyℂ p ≠ 0 := by
     intro hp0
-    have hnat : (toPolyℂ p).natDegree = p.degree?.getD 0 := natDegree_toPolyℂ p
+    have hnat : (toPolyℂ p).natDegree = p.natDegree := natDegree_toPolyℂ p
     rw [hp0, Polynomial.natDegree_zero] at hnat
     omega
   have hroot : ‖z‖ < (Polynomial.cauchyBound (toPolyℂ p) : ℝ) := by
@@ -158,7 +157,7 @@ theorem isRoot_mem_cauchySquare (p : Hex.ZPoly) (h : 0 < p.degree?.getD 0)
 
 /-- Component-level form of Cauchy coverage: every root occurs in the union
 of the squares returned by `Component.cauchy`. -/
-theorem exists_mem_component_cauchy (p : Hex.ZPoly) (h : 0 < p.degree?.getD 0)
+theorem exists_mem_component_cauchy (p : Hex.ZPoly) (h : 0 < p.natDegree)
     {z : ℂ} (hz : (toPolyℂ p).IsRoot z) :
     ∃ s ∈ (Hex.Component.cauchy p h).squares.toList,
       z ∈ DyadicSquare.closedSquare s := by

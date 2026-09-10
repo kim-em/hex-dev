@@ -41,20 +41,20 @@ that has already reached a genuine stopping condition. -/
 private def buildSpemAux (g : ZPoly) : Nat → SpemWitness → Option SpemWitness
   | 0, state =>
       if state.remainder.isZero then some state
-      else if (DensePoly.degree? state.remainder).getD 0 <
-          (DensePoly.degree? g).getD 0 then some state
+      else if (state.remainder).natDegree <
+          (g).natDegree then some state
       else none
   | fuel + 1, state =>
       if state.remainder.isZero then some state
-      else if (DensePoly.degree? state.remainder).getD 0 <
-          (DensePoly.degree? g).getD 0 then some state
+      else if (state.remainder).natDegree <
+          (g).natDegree then some state
       else
         let cg := DensePoly.leadingCoeff g
         let lr := DensePoly.leadingCoeff state.remainder
         let a := if cg < 0 then -cg else cg
         let b := if cg < 0 then -lr else lr
-        let k := (DensePoly.degree? state.remainder).getD 0 -
-          (DensePoly.degree? g).getD 0
+        let k := (state.remainder).natDegree -
+          (g).natDegree
         buildSpemAux g fuel {
           leftScale := a * state.leftScale
           quotient := DensePoly.scale a state.quotient + DensePoly.monomial k b

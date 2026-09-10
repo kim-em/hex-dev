@@ -6,7 +6,6 @@ Authors: Kim Morrison
 
 module
 
-public import HexBasic.Conditional
 public import HexBasic.ListShim
 public import HexMvPoly.Mono
 
@@ -353,10 +352,10 @@ theorem coeff_monomial [Zero R] [BEq R] [LawfulBEq R] [DecidableEq R]
     coeff m (monomial m' c : MvPoly n R cmp) =
       if m = m' then c else 0 := by
   by_cases hc : c = 0
-  · rw [monomial, Hex.dite_eq_left hc]
+  · rw [monomial, dite_eq_left hc]
     change ((∅ : Std.ExtTreeMap (Mono n) R cmp)[m]?).getD 0 = _
     simp [hc]
-  · rw [monomial, Hex.dite_eq_right hc]
+  · rw [monomial, dite_eq_right hc]
     unfold coeff coeff?
     rw [Std.ExtTreeMap.getElem?_insert]
     by_cases hm : m = m'
@@ -386,9 +385,9 @@ theorem termsList_monomial [Zero R] [BEq R] [LawfulBEq R] [DecidableEq R]
     (monomial m c : MvPoly n R cmp).termsList =
       if c = 0 then [] else [(m, c)] := by
   by_cases hc : c = 0
-  · rw [Hex.ite_eq_left hc, monomial, Hex.dite_eq_left hc]
+  · rw [ite_eq_left hc, monomial, dite_eq_left hc]
     rfl
-  · rw [Hex.ite_eq_right hc, monomial, Hex.dite_eq_right hc]
+  · rw [ite_eq_right hc, monomial, dite_eq_right hc]
     change ((∅ : Std.ExtTreeMap (Mono n) R cmp).insert m c).toList = [(m, c)]
     apply List.Perm.eq_singleton
     have hnodup :

@@ -1,0 +1,184 @@
+{
+  "label": "modular",
+  "attempt": 4,
+  "cpu": 3,
+  "siblings": [
+    3,
+    51
+  ],
+  "runs": [
+    {
+      "arm": "left",
+      "source_commit": "b8602c76a08f7348391aafd50b9a8a13cf1a0b32",
+      "binary_sha256": "9cda578dbc8724ea9c10462c1c6e2ccbaf6d48e6a85ef291a2f1bf7e4c5df810",
+      "command": [
+        "taskset",
+        "-c",
+        "3",
+        "/tmp/issue-10074-baseline",
+        "run",
+        "Hex.NumberTowerBench.runTowerFactorPair2",
+        "Hex.NumberTowerBench.runTowerFactorPair3",
+        "Hex.NumberTowerBench.runTowerFactorPair4",
+        "Hex.NumberTowerBench.runTowerFactorPair6",
+        "Hex.NumberTowerBench.runTowerFactorPair8",
+        "Hex.NumberTowerBench.runTowerFactorPair12",
+        "Hex.NumberTowerBench.runTowerFactorLadder",
+        "Hex.NumberTowerBench.runTowerCheckFactorization",
+        "Hex.NumberTowerBench.runPariNfFactor2",
+        "Hex.NumberTowerBench.runPariNfFactor3",
+        "Hex.NumberTowerBench.runPariNfFactor4",
+        "Hex.NumberTowerBench.runPariNfFactor6",
+        "Hex.NumberTowerBench.runPariNfFactor8",
+        "Hex.NumberTowerBench.runPariNfFactor12",
+        "Hex.NumberTowerBench.runPariNfFactorOverhead",
+        "--repeats",
+        "5",
+        "--min-total-seconds",
+        "0.2",
+        "--export-file",
+        "/tmp/issue-10074-modular-4-left.json"
+      ],
+      "export": "/tmp/issue-10074-modular-4-left.json",
+      "preflight": {
+        "3": 1.5,
+        "51": 1.5
+      },
+      "postflight": {
+        "3": 3.5,
+        "51": 22.5
+      },
+      "during": [
+        {
+          "3": 100.0,
+          "51": 2.0
+        },
+        {
+          "3": 100.0,
+          "51": 2.5
+        },
+        {
+          "3": 100.0,
+          "51": 3.482587064676617
+        },
+        {
+          "3": 100.0,
+          "51": 2.512562814070352
+        },
+        {
+          "3": 100.0,
+          "51": 6.030150753768845
+        },
+        {
+          "3": 100.0,
+          "51": 0.5025125628140703
+        },
+        {
+          "3": 100.0,
+          "51": 0.5
+        },
+        {
+          "3": 100.0,
+          "51": 4.0
+        },
+        {
+          "3": 100.0,
+          "51": 1.0
+        },
+        {
+          "3": 100.0,
+          "51": 4.477611940298507
+        },
+        {
+          "3": 100.0,
+          "51": 1.0
+        },
+        {
+          "3": 100.0,
+          "51": 1.0
+        },
+        {
+          "3": 100.0,
+          "51": 4.522613065326633
+        },
+        {
+          "3": 100.0,
+          "51": 3.9800995024875623
+        },
+        {
+          "3": 100.0,
+          "51": 0.0
+        },
+        {
+          "3": 99.49748743718592,
+          "51": 3.0
+        },
+        {
+          "3": 99.5,
+          "51": 1.492537313432836
+        },
+        {
+          "3": 99.5,
+          "51": 1.5151515151515151
+        },
+        {
+          "3": 99.5,
+          "51": 0.9950248756218906
+        },
+        {
+          "3": 99.50248756218906,
+          "51": 0.0
+        },
+        {
+          "3": 99.5,
+          "51": 3.0
+        },
+        {
+          "3": 100.0,
+          "51": 1.5151515151515151
+        },
+        {
+          "3": 99.50248756218906,
+          "51": 2.0
+        },
+        {
+          "3": 100.0,
+          "51": 1.0050251256281406
+        },
+        {
+          "3": 100.0,
+          "51": 2.5
+        },
+        {
+          "3": 100.0,
+          "51": 4.0201005025125625
+        },
+        {
+          "3": 100.0,
+          "51": 0.4975124378109453
+        },
+        {
+          "3": 99.49748743718592,
+          "51": 2.0
+        },
+        {
+          "3": 100.0,
+          "51": 4.0
+        },
+        {
+          "3": 44.0,
+          "51": 0.5025125628140703
+        }
+      ],
+      "sibling_mean": {
+        "51": 2.1850384517188686
+      },
+      "exit_code": 0,
+      "accepted": false
+    }
+  ],
+  "release_quality": false,
+  "protocol_commit": "ef2b819f0",
+  "script_sha256": "68322335292d3149d8b72c4f1e786814227d25107eb4c7bd26009a551d6d3169",
+  "accepted": false
+}

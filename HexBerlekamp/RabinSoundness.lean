@@ -139,11 +139,11 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree
   have hb₀_ne_zero : b₀ ≠ 0 := by
     have hba : b₀ * a₀ = f := by rw [FpPoly.mul_comm]; exact hab
     exact factor_ne_zero_of_ne_zero hba hf_ne_zero
-  have ha₀_pos : 0 < a₀.degree?.getD 0 :=
+  have ha₀_pos : 0 < a₀.natDegree :=
     pos_degree_of_ne_zero_of_not_isUnit ha₀_ne_zero ha₀_unit
-  have hb₀_pos : 0 < b₀.degree?.getD 0 :=
+  have hb₀_pos : 0 < b₀.natDegree :=
     pos_degree_of_ne_zero_of_not_isUnit hb₀_ne_zero hb₀_unit
-  have ha₀_lt_f : a₀.degree?.getD 0 < basisSize f :=
+  have ha₀_lt_f : a₀.natDegree < basisSize f :=
     factor_degree_lt_basisSize hab ha₀_ne_zero hb₀_pos
   -- Extract a monic irreducible factor `g` of `a₀`.
   obtain ⟨g, _hg_irr, hg_monic, hg_dvd_a₀, hg_deg_pos, hg_deg_le_a₀⟩ :=
@@ -178,11 +178,11 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree
     rw [hone_mul] at hlead
     exact hlead.symm
   -- `b'` has positive degree.
-  have hg_lt_f : g.degree?.getD 0 < basisSize f :=
+  have hg_lt_f : g.natDegree < basisSize f :=
     Nat.lt_of_le_of_lt hg_deg_le_a₀ ha₀_lt_f
-  have hb'_pos : 0 < b'.degree?.getD 0 := by
-    have hdeg_eq : (g * b').degree?.getD 0 =
-        g.degree?.getD 0 + b'.degree?.getD 0 :=
+  have hb'_pos : 0 < b'.natDegree := by
+    have hdeg_eq : (g * b').natDegree =
+        g.natDegree + b'.natDegree :=
       FpPoly.degree?_mul_eq_add_degree? g b' hg_ne_zero hb'_ne_zero
     rw [hf_eq] at hdeg_eq
     unfold basisSize at hg_lt_f
@@ -256,7 +256,7 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree
                   ((Matrix.nullspaceBasisMatrix M)[i]'hi_fin)[k.val]'k.isLt *
                     c_coeff[k.val]'k.isLt) 0 := by
           unfold Matrix.mulVec Vector.dotProduct Matrix.row
-          rw [Vector.getElem_ofFn hi_fin]
+          rw [Hex.Vector.ofFn'_eq_ofFn, Vector.getElem_ofFn hi_fin]
           rfl
         rw [hlhs] at hget
         rw [hrhs] at hget
@@ -333,7 +333,7 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree
       dvd_primeFieldProduct_witness_of_dvd_linearPow_sub_self hw_dvd
     -- w is not congruent to any constant modulo f.
     have hbasis_pos : 0 < basisSize f := by
-      have hgpos : 0 < g.degree?.getD 0 := hg_deg_pos
+      have hgpos : 0 < g.natDegree := hg_deg_pos
       omega
     have hw_nonconst : ∀ c : ZMod64 p, ¬ (f ∣ (w - FpPoly.C c)) := by
       intro c hc
@@ -392,7 +392,7 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree
         change (0 : ZMod64 p) - (0 : ZMod64 p) = 0
         grind
       -- (w - C c).degree < basisSize f, so (w - C c) % f = (w - C c).
-      have hwc_deg_lt : (w - FpPoly.C c).degree?.getD 0 < basisSize f := by
+      have hwc_deg_lt : (w - FpPoly.C c).natDegree < basisSize f := by
         by_cases hsize : (w - FpPoly.C c).size = 0
         · -- (w - C c) = 0, contradicting hwc_ne_zero.
           exfalso
@@ -406,6 +406,7 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree
               some ((w - FpPoly.C c).size - 1) := by
             unfold DensePoly.degree?
             simp [hsize]
+          unfold Hex.DensePoly.natDegree
           rw [hdeg]
           simp
           omega
@@ -418,7 +419,7 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree
       rw [hwc_mod_self] at hwc_mod_zero
       exact hwc_ne_zero hwc_mod_zero
     -- Now apply the executable split.
-    have hf_pos : 0 < f.degree?.getD 0 := by
+    have hf_pos : 0 < f.natDegree := by
       have : 0 < basisSize f := hbasis_pos
       unfold basisSize at this
       exact this
@@ -638,7 +639,7 @@ comes from square-freeness.
 -/
 private theorem exists_fKernel_witness_nonconst_mod_g
     (f g cof : FpPoly p) (hf_eq : g * cof = f) (hf_ne : f ≠ 0)
-    (hg_pos : 0 < g.degree?.getD 0)
+    (hg_pos : 0 < g.natDegree)
     (hsquareFree : ∀ d, d ∣ f → d ∣ DensePoly.derivative f →
       isUnitPolynomial d = true)
     (hh : FpPoly p)
@@ -652,7 +653,7 @@ private theorem exists_fKernel_witness_nonconst_mod_g
   have hg_ne : g ≠ 0 := ne_zero_of_pos_degree hg_pos
   have hcof_ne : cof ≠ 0 := by
     intro h; rw [h, FpPoly.mul_zero] at hf_eq; exact hf_ne hf_eq.symm
-  have hf_pos : 0 < f.degree?.getD 0 := by
+  have hf_pos : 0 < f.natDegree := by
     rw [← hf_eq, FpPoly.degree?_mul_eq_add_degree? g cof hg_ne hcof_ne]; omega
   -- Bezout from square-freeness: `gcd g cof ∣ 1`.
   have hgcd_dvd_one : DensePoly.gcd g cof ∣ (1 : FpPoly p) :=
@@ -701,8 +702,8 @@ private theorem exists_fKernel_witness_nonconst_mod_g
     by_cases hsize : (H0 % f).size = 0
     · omega
     · have hpos : 0 < (H0 % f).size := Nat.pos_of_ne_zero hsize
-      have hdeg_eq : (H0 % f).degree?.getD 0 = (H0 % f).size - 1 := by
-        unfold DensePoly.degree?; simp [Nat.ne_of_gt hpos]
+      have hdeg_eq : (H0 % f).natDegree = (H0 % f).size - 1 := by
+        unfold DensePoly.natDegree DensePoly.degree?; simp [Nat.ne_of_gt hpos]
       omega
   · -- `H0 % f` is nonconstant modulo `g`.
     intro c hc
@@ -783,7 +784,7 @@ private theorem exists_basis_nonconst_mod_g
                   ((Matrix.nullspaceBasisMatrix (fixedSpaceMatrix f hmonic))[i]'hi)[k.val]'k.isLt *
                     c_coeff[k.val]'k.isLt) 0 := by
           unfold Matrix.mulVec Vector.dotProduct Matrix.row
-          rw [Vector.getElem_ofFn hi]; rfl
+          rw [Hex.Vector.ofFn'_eq_ofFn, Vector.getElem_ofFn hi]; rfl
         rw [hlhs, hrhs] at hget
         rw [← hget]
         apply foldl_add_congr_terms
@@ -865,18 +866,18 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree_of_dvd
   have hb₀_ne_zero : b₀ ≠ 0 := by
     have hba : b₀ * a₀ = g := by rw [FpPoly.mul_comm]; exact hab
     exact factor_ne_zero_of_ne_zero hba hg_ne_zero
-  have ha₀_pos : 0 < a₀.degree?.getD 0 :=
+  have ha₀_pos : 0 < a₀.natDegree :=
     pos_degree_of_ne_zero_of_not_isUnit ha₀_ne_zero ha₀_unit
-  have hb₀_pos : 0 < b₀.degree?.getD 0 :=
+  have hb₀_pos : 0 < b₀.natDegree :=
     pos_degree_of_ne_zero_of_not_isUnit hb₀_ne_zero hb₀_unit
-  have ha₀_lt_g : a₀.degree?.getD 0 < basisSize g :=
+  have ha₀_lt_g : a₀.natDegree < basisSize g :=
     factor_degree_lt_basisSize hab ha₀_ne_zero hb₀_pos
   -- `g` is square-free (descent from `f`).
   obtain ⟨cofg, hcofg⟩ := hg_dvd_f
   have hsf_g : ∀ d, d ∣ g → d ∣ DensePoly.derivative g → isUnitPolynomial d = true :=
     squareFree_predicate_of_mul f g cofg hcofg.symm hsquareFree
   -- `g` has positive degree.
-  have hg_pos : 0 < g.degree?.getD 0 := by
+  have hg_pos : 0 < g.natDegree := by
     have hdeg := FpPoly.degree?_mul_eq_add_degree? a₀ b₀ ha₀_ne_zero hb₀_ne_zero
     rw [hab] at hdeg
     omega
@@ -909,11 +910,11 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree_of_dvd
         DensePoly.leadingCoeff c₀ := by grind
     rw [hone_mul] at hlead
     exact hlead.symm
-  have hg₁_lt_g : g₁.degree?.getD 0 < basisSize g :=
+  have hg₁_lt_g : g₁.natDegree < basisSize g :=
     Nat.lt_of_le_of_lt hg₁_deg_le_a₀ ha₀_lt_g
-  have hc₀_pos : 0 < c₀.degree?.getD 0 := by
-    have hdeg_eq : (g₁ * c₀).degree?.getD 0 =
-        g₁.degree?.getD 0 + c₀.degree?.getD 0 :=
+  have hc₀_pos : 0 < c₀.natDegree := by
+    have hdeg_eq : (g₁ * c₀).natDegree =
+        g₁.natDegree + c₀.natDegree :=
       FpPoly.degree?_mul_eq_add_degree? g₁ c₀ hg₁_ne_zero hc₀_ne_zero
     rw [hc_eq] at hdeg_eq
     unfold basisSize at hg₁_lt_g
@@ -983,7 +984,7 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree_of_dvd_nonmonic
     (hno_split : ∀ w ∈ (fixedSpaceKernel f hmonic).toList,
       kernelWitnessSplit? g w = none) :
     FpPoly.Irreducible g := by
-  by_cases hpos : 0 < g.degree?.getD 0
+  by_cases hpos : 0 < g.natDegree
   · -- Positive degree: reduce to the monic associate.
     have hcinv_ne : (DensePoly.leadingCoeff g)⁻¹ ≠ (0 : ZMod64 p) :=
       inv_leadingCoeff_ne_zero_of_pos_degree g hpos
@@ -1003,14 +1004,14 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree_of_dvd_nonmonic
   · -- Degree 0: `g` is a nonzero constant, irreducible by definition.
     refine ⟨hg_ne_zero, ?_⟩
     intro a b hab
-    have hg_deg0 : g.degree?.getD 0 = 0 := by omega
+    have hg_deg0 : g.natDegree = 0 := by omega
     have ha_ne : a ≠ 0 := factor_ne_zero_of_ne_zero hab hg_ne_zero
     have hb_ne : b ≠ 0 := by
       have hba : b * a = g := by rw [FpPoly.mul_comm]; exact hab
       exact factor_ne_zero_of_ne_zero hba hg_ne_zero
     have hdeg := FpPoly.degree?_mul_eq_add_degree? a b ha_ne hb_ne
     rw [hab, hg_deg0] at hdeg
-    have ha0 : a.degree?.getD 0 = 0 := by omega
+    have ha0 : a.natDegree = 0 := by omega
     left
     have ha_size_ne : a.size ≠ 0 := by
       intro hs
@@ -1019,12 +1020,9 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree_of_dvd_nonmonic
       intro i
       rw [DensePoly.coeff_zero]
       exact DensePoly.coeff_eq_zero_of_size_le a (by omega)
-    have hdeg_some : a.degree? = some (a.size - 1) := by
-      unfold DensePoly.degree?
-      simp [ha_size_ne]
-    rw [hdeg_some] at ha0 ⊢
-    simp at ha0
-    rw [ha0]
+    rw [Hex.DensePoly.natDegree_eq_size_sub_one] at ha0
+    have ha_size_one : a.size = 1 := by omega
+    rw [DensePoly.degree?_eq_some_of_pos_size a (by omega), ha_size_one]
 
 /--
 **Executable Berlekamp factor irreducibility.** Every factor returned by
@@ -1090,7 +1088,7 @@ theorem berlekampFactor_factors_nodup
         cases k with
         | zero => rfl
         | succ _ => simp at hunit
-  rw [hdeg] at hpos
+  rw [DensePoly.natDegree, hdeg] at hpos
   simp at hpos
 
 

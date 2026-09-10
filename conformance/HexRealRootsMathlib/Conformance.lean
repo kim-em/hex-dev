@@ -13,7 +13,7 @@ Companion conformance checks for `HexRealRootsMathlib`.
 Oracle: none; checked against Mathlib root counts via the proven
 correspondence theorems. `rootCount_eq_card_roots` (and `squareFreeRat_iff` feeding its
 square-free hypothesis) is the bridge that ties the executable, computable
-`Hex.rootCount` to the noncomputable Mathlib `(toPolyℝ p).roots.card`. There is
+`Hex.ZPoly.rootCount` to the noncomputable Mathlib `(toPolyℝ p).roots.card`. There is
 no external oracle profile: the two sides are pinned independently — the
 executable side by `#guard` (native evaluation) and the Mathlib side by a
 hand-derived root-multiset computation proven as a theorem — and the correspond-
@@ -21,14 +21,14 @@ ence theorem certifies they agree.
 Mode: always for core.
 
 Covered operations:
-* `Hex.rootCount`, the executable real-root count, tied to the noncomputable
+* `Hex.ZPoly.rootCount`, the executable real-root count, tied to the noncomputable
   Mathlib count `(toPolyℝ p).roots.card` by `rootCount_eq_card_roots`.
 
 Covered properties:
-* `rootCount p = (toPolyℝ p).roots.card`, the root-count correspondence,
+* `ZPoly.rootCount p = (toPolyℝ p).roots.card`, the root-count correspondence,
   instantiated per fixture (executable side `#guard`ed, Mathlib side proven as a
   theorem from an independent factorisation).
-* the full formal tie on `x - 5`: `Hex.rootCount = 1` derived through
+* the full formal tie on `x - 5`: `Hex.ZPoly.rootCount = 1` derived through
   `rootCount_eq_card_roots` and `squareFreeRat_iff`, not read off evaluation.
 
 Covered edge cases:
@@ -45,14 +45,14 @@ Because Mathlib root counts are noncomputable, the checks are **theorems**, not
   an explicit `Polynomial ℝ` (mechanical `coeff` comparison).
 * `card_<fixture>` computes `(toPolyℝ <fixture>).roots.card` from that explicit
   polynomial by an independent Mathlib factorisation (the hand-derived count).
-* `#guard Hex.rootCount <fixture> = N` confirms the executable engine computes
+* `#guard Hex.ZPoly.rootCount <fixture> = N` confirms the executable engine computes
   the same `N` at runtime.
 
 This module certifies that the **theorem layer** connects — that the
 correspondence theorems instantiate and transport concrete counts — rather than
 re-running the executable oracle (which is `HexRealRoots.Conformance`'s job).
 The `x − 5` fixture carries the full formal tie: `rootCount_x_sub_5` derives
-`Hex.rootCount = 1` from `rootCount_eq_card_roots` and the independent
+`Hex.ZPoly.rootCount = 1` from `rootCount_eq_card_roots` and the independent
 `card_linear`, so the executable value (also `#guard`ed) is pinned by the
 theorem, not just by evaluation. The higher-degree fixtures certify each side
 independently against the same hand-derived count; their full ties would need a
@@ -181,18 +181,18 @@ private theorem card_const7 : (toPolyℝ const7).roots.card = 0 := by
 
 /-! # Executable root counts agree with the Mathlib counts (runtime). -/
 
-#guard Hex.rootCount linear = 1
-#guard Hex.rootCount quadPair = 2
-#guard Hex.rootCount quadNone = 0
-#guard Hex.rootCount cubicTriple = 3
-#guard Hex.rootCount const7 = 0
+#guard Hex.ZPoly.rootCount linear = 1
+#guard Hex.ZPoly.rootCount quadPair = 2
+#guard Hex.ZPoly.rootCount quadNone = 0
+#guard Hex.ZPoly.rootCount cubicTriple = 3
+#guard Hex.ZPoly.rootCount const7 = 0
 
 /-! # The full formal tie on the linear fixture.
 
 `rootCount_eq_card_roots` needs a `SquareFreeRat` witness; for `x − 5` it comes
 from `squareFreeRat_iff` and the irreducibility of the linear rational cast.
 Chained with `card_linear`, the correspondence theorem pins the executable
-`Hex.rootCount` to `1` as a theorem — the same value the `#guard` above
+`Hex.ZPoly.rootCount` to `1` as a theorem — the same value the `#guard` above
 evaluates. -/
 
 private theorem toPolyℚ_linear : toPolyℚ linear = X - C 5 := by
@@ -209,7 +209,7 @@ private theorem squareFreeRat_linear : Hex.ZPoly.SquareFreeRat linear := by
   rw [toPolyℚ_linear]
   exact (irreducible_X_sub_C (5 : ℚ)).squarefree
 
-private theorem rootCount_x_sub_5 : Hex.rootCount linear = 1 := by
+private theorem rootCount_x_sub_5 : Hex.ZPoly.rootCount linear = 1 := by
   rw [rootCount_eq_card_roots linear (by decide) squareFreeRat_linear, card_linear]
 
 /-! # End-to-end ergonomics regression on `x⁴ − 2`.

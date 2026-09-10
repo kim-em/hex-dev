@@ -1283,7 +1283,7 @@ Families:
   separately on the same inputs. Exhaustively approaching the
   `ZMod64.Bounds` ceiling near `2^31` would itself require billions of
   sweep gcds and is not a benchmark. The crossover sweep runs on the
-  scheduled dedicated-hardware workflow; merge-gating CI retains a
+  shared host under the repository measurement policy; merge-gating CI retains a
   small regression set around the committed threshold. The guard is
   selected from the measured window and conservatively extrapolated,
   then checked by those regression points.

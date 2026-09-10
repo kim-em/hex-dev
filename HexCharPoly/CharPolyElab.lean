@@ -154,7 +154,7 @@ theorem mulVecWith_eq (ring : Lean.Grind.CommRing Int) {k : Nat}
   apply _root_.Vector.ext
   intro i hi
   unfold mulVecWith Matrix.mulVec mulVecEntryWith dotProductWith
-  rw [Hex.Vector.getElem_ofFn', _root_.Vector.getElem_ofFn]
+  simp only [Hex.Vector.getElem_ofFn']
 
 /-- A pointwise certificate for one matrix-vector multiplication. -/
 inductive MulVecCertificate (ring : Lean.Grind.CommRing Int) {k : Nat}

@@ -133,7 +133,7 @@ private theorem invUpTo_correct [Lean.Grind.CommRing R]
   have hwrap : Agree p (invUpTo m a u) b := by
     intro i hi hip
     unfold invUpTo
-    rw [coeff_ofFn _ i hi, if_pos (by
+    rw [coeff_ofFn _ i hi, ite_eq_left (by
       change i < min m n at hip
       omega)]
   have herr : Agree p (invError a (invUpTo m a u)) (invError a b) :=
@@ -183,7 +183,7 @@ theorem coeff_invUpTo [Lean.Grind.CommRing R] (m : Nat)
     exact agreeInv_unique hbounded hfull i hi (by omega)
   · rename_i him
     unfold invUpTo
-    rw [coeff_ofFn _ i hi, if_neg him]
+    rw [coeff_ofFn _ i hi, ite_eq_right him]
 
 /-- Newton inversion satisfies the defining multiplicative equation. -/
 theorem invOfUnit_mul [Lean.Grind.CommRing R] (a : TSeries R n) (u : R)

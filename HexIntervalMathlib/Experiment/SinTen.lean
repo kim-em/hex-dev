@@ -230,7 +230,7 @@ noncomputable def replay? (certificate : Certificate) :
         have reconstructed := reduction.proof.reconstruct
         rw [reductionEqual] at positive reconstructed
         simp only [Reduction.candidate, LocalReplay.Claim] at positive
-        simp only [Reduction.candidate, ReductionReplay.signed, if_true] at reconstructed
+        simp only [Reduction.candidate, ReductionReplay.signed, ite_true] at reconstructed
         linarith }
 
 end CertificateReplay

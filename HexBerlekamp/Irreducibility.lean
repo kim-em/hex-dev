@@ -349,14 +349,14 @@ private theorem isUnitPolynomial_of_dvd_one
       rw [hg] at hr
       simpa using hr
     exact False.elim (fp_one_ne_zero hone_zero)
-  · have hnot_pos_degree : ¬ 0 < g.degree?.getD 0 := by
+  · have hnot_pos_degree : ¬ 0 < g.natDegree := by
       intro hpos
       have hmod_zero :
           (1 : FpPoly p) % g = 0 :=
         DensePoly.mod_eq_zero_of_dvd (1 : FpPoly p) g hdiv
-      have hone_degree : (1 : FpPoly p).degree?.getD 0 = 0 := by
-        change (DensePoly.C (1 : ZMod64 p)).degree?.getD 0 = 0
-        exact DensePoly.degree?_C_getD (1 : ZMod64 p)
+      have hone_degree : (1 : FpPoly p).natDegree = 0 := by
+        change (DensePoly.C (1 : ZMod64 p)).natDegree = 0
+        exact DensePoly.natDegree_C (1 : ZMod64 p)
       have hmod_one :
           (1 : FpPoly p) % g = 1 :=
         DensePoly.mod_eq_self_of_degree_lt (1 : FpPoly p) g (by
@@ -367,9 +367,9 @@ private theorem isUnitPolynomial_of_dvd_one
         exact hmod_zero
       exact fp_one_ne_zero hone_zero
     unfold isUnitPolynomial
-    have hdegree_getD : g.degree?.getD 0 = 0 := Nat.eq_zero_of_not_pos hnot_pos_degree
+    have hdegree_getD : g.natDegree = 0 := Nat.eq_zero_of_not_pos hnot_pos_degree
     have hdegree : g.degree? = some 0 := by
-      simp [DensePoly.degree?, hsize] at hdegree_getD ⊢
+      simp [DensePoly.natDegree, DensePoly.degree?, hsize] at hdegree_getD ⊢
       omega
     rw [hdegree]
     rfl
@@ -671,8 +671,8 @@ def checkPowChainLinearIncrementalQuotientWitnessStep
     (quotients : Array (FpPoly 2)) (k : Nat) : Bool :=
   match cert.powChain[k]?, cert.powChain[k + 1]?, quotients[k]? with
   | some prev, some curr, some quot =>
-      decide (prev.degree?.getD 0 < f.degree?.getD 0) &&
-        (decide (curr.degree?.getD 0 < f.degree?.getD 0) &&
+      decide (prev.natDegree < f.natDegree) &&
+        (decide (curr.natDegree < f.natDegree) &&
           ((prev * prev).coeffs == (curr + quot * f).coeffs))
   | _, _, _ => false
 
@@ -690,8 +690,8 @@ theorem checkPowChainLinearIncrementalQuotientWitnessStep_of_entries
     (hprev : cert.powChain[k]? = some prev)
     (hcurr : cert.powChain[k + 1]? = some curr)
     (hquot : quotients[k]? = some quot)
-    (hprevRed : prev.degree?.getD 0 < f.degree?.getD 0)
-    (hcurrRed : curr.degree?.getD 0 < f.degree?.getD 0)
+    (hprevRed : prev.natDegree < f.natDegree)
+    (hcurrRed : curr.natDegree < f.natDegree)
     (hmulCoeffs : (prev * prev).coeffs = (curr + quot * f).coeffs) :
     checkPowChainLinearIncrementalQuotientWitnessStep f cert quotients k = true := by
   unfold checkPowChainLinearIncrementalQuotientWitnessStep
@@ -710,8 +710,8 @@ theorem checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_bools
     (hprev : cert.powChain[k]? = some prev)
     (hcurr : cert.powChain[k + 1]? = some curr)
     (hquot : quotients[k]? = some quot)
-    (hprevRed : decide (prev.degree?.getD 0 < f.degree?.getD 0) = true)
-    (hcurrRed : decide (curr.degree?.getD 0 < f.degree?.getD 0) = true)
+    (hprevRed : decide (prev.natDegree < f.natDegree) = true)
+    (hcurrRed : decide (curr.natDegree < f.natDegree) = true)
     (hmulCoeffs : ((prev * prev).coeffs == (curr + quot * f).coeffs) = true) :
     checkPowChainLinearIncrementalQuotientWitnessStep f cert quotients k = true := by
   apply checkPowChainLinearIncrementalQuotientWitnessStep_of_entries
@@ -725,14 +725,14 @@ theorem checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_bools
 
 /--
 A `DensePoly` whose coefficient `size` is at most `n` (with `0 < n`) has
-`degree?.getD 0 < n`. Converts a coefficient-count bound into the degree
+`natDegree < n`. Converts a coefficient-count bound into the degree
 bound consumed by the quotient-witness step lemmas.
 -/
 theorem degree?_getD_lt_of_size_le
     {R : Type u} [Zero R] [DecidableEq R] (g : DensePoly R) {n : Nat}
     (hnpos : 0 < n) (hsize : g.size ≤ n) :
-    g.degree?.getD 0 < n := by
-  unfold DensePoly.degree?
+    g.natDegree < n := by
+  unfold DensePoly.natDegree DensePoly.degree?
   by_cases hzero : g.size = 0
   · simp [hzero, hnpos]
   · simp [hzero]
@@ -750,9 +750,9 @@ theorem checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
     (hprev : cert.powChain[k]? = some prev)
     (hcurr : cert.powChain[k + 1]? = some curr)
     (hquot : quotients[k]? = some quot)
-    (hfpos : 0 < f.degree?.getD 0)
-    (hprevSize : prev.size ≤ f.degree?.getD 0)
-    (hcurrSize : curr.size ≤ f.degree?.getD 0)
+    (hfpos : 0 < f.natDegree)
+    (hprevSize : prev.size ≤ f.natDegree)
+    (hcurrSize : curr.size ≤ f.natDegree)
     (hmulCoeffs : (prev * prev).coeffs = (curr + quot * f).coeffs) :
     checkPowChainLinearIncrementalQuotientWitnessStep f cert quotients k = true := by
   apply checkPowChainLinearIncrementalQuotientWitnessStep_of_entries
@@ -789,13 +789,13 @@ theorem gf2WordPoly_size_le (bits : UInt64) (width : Nat) :
 
 /--
 If `width ≤ bound` and `0 < bound`, then
-`(gf2WordPoly bits width).degree?.getD 0 < bound`; the degree bound used
+`(gf2WordPoly bits width).natDegree < bound`; the degree bound used
 when feeding a bit-word polynomial to the witness step.
 -/
 theorem gf2WordPoly_degree?_getD_lt
     (bits : UInt64) {width bound : Nat} (hwidth_pos : 0 < bound)
     (hwidth : width ≤ bound) :
-    (gf2WordPoly bits width).degree?.getD 0 < bound :=
+    (gf2WordPoly bits width).natDegree < bound :=
   degree?_getD_lt_of_size_le (gf2WordPoly bits width) hwidth_pos
     (Nat.le_trans (gf2WordPoly_size_le bits width) hwidth)
 
@@ -1101,8 +1101,8 @@ private theorem primeTwo : Hex.Nat.Prime 2 := by decide
 
 private theorem powModMonicLinear_two_eq_of_quotientWitness
     (f prev curr quot : FpPoly 2) (hmonic : DensePoly.Monic f)
-    (hprevRed : prev.degree?.getD 0 < f.degree?.getD 0)
-    (hcurrRed : curr.degree?.getD 0 < f.degree?.getD 0)
+    (hprevRed : prev.natDegree < f.natDegree)
+    (hcurrRed : curr.natDegree < f.natDegree)
     (hmul : prev * prev = curr + quot * f) :
     FpPoly.powModMonicLinear prev f hmonic 2 = curr := by
   letI : ZMod64.PrimeModulus 2 := ZMod64.primeModulusOfPrime primeTwo
@@ -1163,21 +1163,21 @@ theorem checkPowChainLinearIncremental_of_quotientWitnesses
           | some quot =>
               rw [hprev, hcurr, hquot] at hstep
               have hparts :
-                  decide (prev.degree?.getD 0 < f.degree?.getD 0) = true ∧
-                    (decide (curr.degree?.getD 0 < f.degree?.getD 0) &&
+                  decide (prev.natDegree < f.natDegree) = true ∧
+                    (decide (curr.natDegree < f.natDegree) &&
                       ((prev * prev).coeffs == (curr + quot * f).coeffs)) = true := by
                 simpa only [Bool.and_eq_true] using hstep
               have hprevRedBool := hparts.1
               have hrest := hparts.2
               have hrestParts :
-                  decide (curr.degree?.getD 0 < f.degree?.getD 0) = true ∧
+                  decide (curr.natDegree < f.natDegree) = true ∧
                     ((prev * prev).coeffs == (curr + quot * f).coeffs) = true := by
                 simpa only [Bool.and_eq_true] using hrest
               have hcurrRedBool := hrestParts.1
               have hmulCoeffsBool := hrestParts.2
-              have hprevRed : prev.degree?.getD 0 < f.degree?.getD 0 :=
+              have hprevRed : prev.natDegree < f.natDegree :=
                 of_decide_eq_true hprevRedBool
-              have hcurrRed : curr.degree?.getD 0 < f.degree?.getD 0 :=
+              have hcurrRed : curr.natDegree < f.natDegree :=
                 of_decide_eq_true hcurrRedBool
               have hmulCoeffs : (prev * prev).coeffs = (curr + quot * f).coeffs :=
                 eq_of_beq hmulCoeffsBool

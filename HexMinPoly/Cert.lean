@@ -204,11 +204,11 @@ private theorem field_cancel_lead (q : DensePoly F) (hq : 0 < q.size) (a : F) :
   grind
 
 private theorem size_le_of_degree_lt (p : DensePoly F) {d : Nat}
-    (h : p.degree?.getD 0 < d) : p.size ≤ d := by
+    (h : p.natDegree < d) : p.size ≤ d := by
   by_cases hp : p.size = 0
   · omega
-  have hdeg : p.degree?.getD 0 = p.size - 1 := by
-    simp [DensePoly.degree?, hp]
+  have hdeg : p.natDegree = p.size - 1 := by
+    simp [DensePoly.natDegree, DensePoly.degree?, hp]
   omega
 
 /-- Each checked order witness divides every polynomial annihilating its
@@ -241,7 +241,8 @@ theorem MinPolyCert.order_dvd (A : Matrix F n n) (c : MinPolyCert F n)
       rw [hrem, DensePoly.size_zero, hd]
       exact Nat.zero_le 0
     · apply size_le_of_degree_lt
-      have hodeg : o.poly.degree?.getD 0 = o.deg := by
+      have hodeg : o.poly.natDegree = o.deg := by
+        unfold Hex.DensePoly.natDegree
         rw [DensePoly.degree?_eq_some_of_pos_size o.poly hopos, hsize]
         simp
       rw [← hodeg]

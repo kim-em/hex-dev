@@ -149,7 +149,8 @@ private theorem sub_C_mod_eq
     (hf : 2 ≤ f.size) :
     (witness - FpPoly.C c) % f = witness % f - FpPoly.C c := by
   have hfpos : 0 < f.size := by omega
-  have hfdegree : 0 < f.degree?.getD 0 := by
+  have hfdegree : 0 < f.natDegree := by
+    unfold Hex.DensePoly.natDegree
     rw [DensePoly.degree?_eq_some_of_pos_size f hfpos]
     simp only [Option.getD_some]
     omega
@@ -158,19 +159,20 @@ private theorem sub_C_mod_eq
     by_cases hzero : (witness % f).size = 0
     · omega
     have hpos : 0 < (witness % f).size := Nat.pos_of_ne_zero hzero
-    rw [DensePoly.degree?_eq_some_of_pos_size (witness % f) hpos,
-      DensePoly.degree?_eq_some_of_pos_size f hfpos] at hdegree
-    simp only [Option.getD_some] at hdegree
+    rw [DensePoly.natDegree_eq_size_sub_one,
+      DensePoly.natDegree_eq_size_sub_one] at hdegree
     omega
   have hshiftSize : (witness % f - FpPoly.C c).size < f.size :=
     sub_C_size_lt f (witness % f) c hf hreduced
   have hshiftDegree :
-      (witness % f - FpPoly.C c).degree?.getD 0 < f.degree?.getD 0 := by
+      (witness % f - FpPoly.C c).natDegree < f.natDegree := by
     by_cases hzero : (witness % f - FpPoly.C c).size = 0
-    · rw [DensePoly.degree?]
+    · unfold Hex.DensePoly.natDegree
+      rw [DensePoly.degree?]
       simp [hzero, DensePoly.degree?_eq_some_of_pos_size f hfpos]
       omega
     have hpos : 0 < (witness % f - FpPoly.C c).size := Nat.pos_of_ne_zero hzero
+    unfold Hex.DensePoly.natDegree
     rw [DensePoly.degree?_eq_some_of_pos_size (witness % f - FpPoly.C c) hpos,
       DensePoly.degree?_eq_some_of_pos_size f hfpos]
     simp only [Option.getD_some]
@@ -537,7 +539,7 @@ degree. -/
 theorem mem_rootFactors_pos_degree
     [ZMod64.PrimeModulus p] {f : FpPoly p} {fs : List (FpPoly p)}
     (h : rootFactors? f = some fs) :
-    ∀ g ∈ fs, 0 < g.degree?.getD 0 := by
+    ∀ g ∈ fs, 0 < g.natDegree := by
   obtain ⟨_, _, hfs⟩ := rootFactors?_some_spec h
   subst hfs
   intro g hg
@@ -656,7 +658,7 @@ private theorem isNontrivialSplitFactor_ne_one
   · have honeDegree : (1 : FpPoly p).degree? = some 0 := by
       change (DensePoly.C (1 : ZMod64 p)).degree? = some 0
       have hcoeffs := DensePoly.coeffs_C_of_ne_zero (R := ZMod64 p) hone
-      simp [DensePoly.degree?, DensePoly.size, hcoeffs]
+      simp [DensePoly.natDegree, DensePoly.degree?, DensePoly.size, hcoeffs]
     exact hdegree honeDegree
 
 /-- `kernelWitnessSplitAux_nontrivial`: the factor of the `SplitResult` returned
@@ -888,14 +890,14 @@ private theorem isNontrivialSplitFactor_false_of_mod_size_le_one
       intro h; apply hs_ne; rw [he, h, FpPoly.zero_mul]
     have he_ne : e ≠ 0 := by
       intro h; apply hs_ne; rw [he, h, FpPoly.mul_zero]
-    have hs_deg0 : (witness % f - FpPoly.C c).degree?.getD 0 = 0 := by
+    have hs_deg0 : (witness % f - FpPoly.C c).natDegree = 0 := by
       have hs_pos : 0 < (witness % f - FpPoly.C c).size := FpPoly.size_pos_of_ne_zero hs_ne
       have hs_size1 : (witness % f - FpPoly.C c).size = 1 := by omega
-      unfold DensePoly.degree?; simp [hs_size1]
+      unfold DensePoly.natDegree DensePoly.degree?; simp [hs_size1]
     have hdeg := FpPoly.degree?_mul_eq_add_degree?
       (DensePoly.gcd f (witness - FpPoly.C c)) e hg_ne he_ne
     rw [← he] at hdeg
-    have hg_deg0 : (DensePoly.gcd f (witness - FpPoly.C c)).degree?.getD 0 = 0 := by
+    have hg_deg0 : (DensePoly.gcd f (witness - FpPoly.C c)).natDegree = 0 := by
       omega
     have hg_pos : 0 < (DensePoly.gcd f (witness - FpPoly.C c)).size :=
       FpPoly.size_pos_of_ne_zero hg_ne
@@ -903,7 +905,7 @@ private theorem isNontrivialSplitFactor_false_of_mod_size_le_one
       have hsome : (DensePoly.gcd f (witness - FpPoly.C c)).degree?
           = some ((DensePoly.gcd f (witness - FpPoly.C c)).size - 1) := by
         unfold DensePoly.degree?; simp [Nat.pos_iff_ne_zero.mp hg_pos]
-      rw [hsome] at hg_deg0; simp at hg_deg0; omega
+      rw [DensePoly.natDegree_eq_size_sub_one] at hg_deg0; omega
     have hg_deg_some : (DensePoly.gcd f (witness - FpPoly.C c)).degree? = some 0 := by
       unfold DensePoly.degree?; simp [hg_size1]
     unfold isNontrivialSplitFactor
@@ -1252,7 +1254,7 @@ discharges the abstract hypothesis from `gcd f f' = 1`. -/
 private theorem pos_degree_of_ne_zero_of_degree_ne_zero
     {a : FpPoly p} (ha_ne_zero : a ≠ 0)
     (ha_deg : a.degree? ≠ some 0) :
-    0 < a.degree?.getD 0 := by
+    0 < a.natDegree := by
   have ha_size_pos : 0 < a.size := by
     apply Nat.pos_of_ne_zero
     intro hsize
@@ -1266,6 +1268,7 @@ private theorem pos_degree_of_ne_zero_of_degree_ne_zero
     unfold DensePoly.degree?
     simp [ha_size_ne_zero]
   rw [hdeg] at ha_deg
+  unfold Hex.DensePoly.natDegree
   rw [hdeg]
   have hne : a.size - 1 ≠ 0 := fun h => ha_deg (by rw [h])
   simp
@@ -1273,7 +1276,7 @@ private theorem pos_degree_of_ne_zero_of_degree_ne_zero
 
 private theorem isNontrivialSplitFactor_factor_pos_degree
     (f g : FpPoly p) (h : isNontrivialSplitFactor f g = true) :
-    0 < g.degree?.getD 0 := by
+    0 < g.natDegree := by
   have hnotZero := isNontrivialSplitFactor_not_zero f g h
   have hdegree := isNontrivialSplitFactor_degree_ne_zero f g h
   have hne_zero : g ≠ 0 := by
@@ -1287,7 +1290,7 @@ private theorem isNontrivialSplitFactor_factor_pos_degree
 private theorem kernelWitnessSplitAux_factor_pos_degree
     (f witness : FpPoly p) (fuel c : Nat) (r : SplitResult p)
     (hsplit : kernelWitnessSplitAux f witness fuel c = some r) :
-    0 < r.factor.degree?.getD 0 := by
+    0 < r.factor.natDegree := by
   induction fuel generalizing c with
   | zero =>
       simp [kernelWitnessSplitAux] at hsplit
@@ -1308,7 +1311,7 @@ theorem kernelWitnessSplit_factor_pos_degree
     [ZMod64.PrimeModulus p]
     (f witness : FpPoly p) (r : SplitResult p)
     (hsplit : kernelWitnessSplit? f witness = some r) :
-    0 < r.factor.degree?.getD 0 :=
+    0 < r.factor.natDegree :=
   kernelWitnessSplitAux_factor_pos_degree f witness p 0 r (kernelWitnessSplitAux_of_some hsplit)
 
 private theorem splitWithWitnesses?_factor_pos_degree
@@ -1316,7 +1319,7 @@ private theorem splitWithWitnesses?_factor_pos_degree
     (f : FpPoly p) (witnesses : List (FpPoly p))
     {r : SplitResult p}
     (h : splitWithWitnesses? f witnesses = some r) :
-    0 < r.factor.degree?.getD 0 := by
+    0 < r.factor.natDegree := by
   induction witnesses with
   | nil => simp [splitWithWitnesses?] at h
   | cons w ws ih =>
@@ -1357,7 +1360,7 @@ private theorem splitWithWitnesses?_cofactor_pos_degree
     (hf_ne : f ≠ 0)
     {r : SplitResult p}
     (h : splitWithWitnesses? f witnesses = some r) :
-    0 < r.cofactor.degree?.getD 0 := by
+    0 < r.cofactor.natDegree := by
   have hfac_pos := splitWithWitnesses?_factor_pos_degree f witnesses h
   have hsize_lt := splitWithWitnesses?_size_lt f witnesses h
   have hprod := splitWithWitnesses?_product_spec f witnesses h
@@ -1365,9 +1368,7 @@ private theorem splitWithWitnesses?_cofactor_pos_degree
   have hfac_ne : r.factor ≠ 0 := by
     intro hr
     rw [hr] at hfac_pos
-    have : (0 : FpPoly p).degree? = none := rfl
-    rw [this] at hfac_pos
-    simp at hfac_pos
+    simp [DensePoly.natDegree] at hfac_pos
   have hcof_ne : r.cofactor ≠ 0 := by
     intro hr
     rw [hr] at hprod
@@ -1395,25 +1396,20 @@ private theorem splitWithWitnesses?_cofactor_pos_degree
 
 /-- A polynomial of positive degree is nonzero. -/
 private theorem ne_zero_of_pos_degree {g : FpPoly p}
-    (h : 0 < g.degree?.getD 0) : g ≠ 0 := by
+    (h : 0 < g.natDegree) : g ≠ 0 := by
   intro hz
   rw [hz] at h
-  have hnone : (0 : FpPoly p).degree? = none := rfl
-  rw [hnone] at h
-  simp at h
+  simp [DensePoly.natDegree] at h
 
 /-- A polynomial of positive degree has `size` at least two. -/
 private theorem size_ge_two_of_pos_degree {g : FpPoly p}
-    (h : 0 < g.degree?.getD 0) : 2 ≤ g.size := by
+    (h : 0 < g.natDegree) : 2 ≤ g.size := by
   rcases Nat.lt_or_ge g.size 2 with hlt | hge
   · exfalso
     have hsize_pos : 0 < g.size := FpPoly.size_pos_of_ne_zero (ne_zero_of_pos_degree h)
     have hsize1 : g.size = 1 := by omega
-    have hdeg : g.degree? = some 0 := by
-      unfold DensePoly.degree?
-      simp [hsize1]
-    rw [hdeg] at h
-    simp at h
+    rw [DensePoly.natDegree_eq_size_sub_one, hsize1] at h
+    omega
   · exact hge
 
 /-- A polynomial of size at most two cannot admit the split loop's proper
@@ -1605,11 +1601,11 @@ square-divide `f`. -/
 private theorem fullySplit_nodup_pos
     [ZMod64.PrimeModulus p]
     (witnesses : List (FpPoly p)) (fuel : Nat) (f : FpPoly p)
-    (h_pos : 0 < f.degree?.getD 0)
+    (h_pos : 0 < f.natDegree)
     (h_no_squared : ∀ g : FpPoly p,
-        g * g ∣ f → ¬ (0 < g.degree?.getD 0)) :
+        g * g ∣ f → ¬ (0 < g.natDegree)) :
     (fullySplit witnesses fuel f).Nodup ∧
-      (∀ g ∈ fullySplit witnesses fuel f, 0 < g.degree?.getD 0) := by
+      (∀ g ∈ fullySplit witnesses fuel f, 0 < g.natDegree) := by
   induction fuel generalizing f with
   | zero =>
       refine ⟨?_, ?_⟩
@@ -1648,10 +1644,10 @@ private theorem fullySplit_nodup_pos
           have h_cof_dvd : split.cofactor ∣ f :=
             ⟨split.factor, by rw [← h_prod]; exact FpPoly.mul_comm _ _⟩
           have h_no_sq_fac : ∀ g : FpPoly p,
-              g * g ∣ split.factor → ¬ (0 < g.degree?.getD 0) :=
+              g * g ∣ split.factor → ¬ (0 < g.natDegree) :=
             fun g hgg => h_no_squared g (dvd_trans_fp hgg h_fac_dvd)
           have h_no_sq_cof : ∀ g : FpPoly p,
-              g * g ∣ split.cofactor → ¬ (0 < g.degree?.getD 0) :=
+              g * g ∣ split.cofactor → ¬ (0 < g.natDegree) :=
             fun g hgg => h_no_squared g (dvd_trans_fp hgg h_cof_dvd)
           have hA := ih split.factor h_factor_pos h_no_sq_fac
           have hB := ih split.cofactor h_cofactor_pos h_no_sq_cof
@@ -1687,7 +1683,7 @@ theorem berlekampFactor_factors_nodup_of_no_squared
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [ZMod64.PrimeModulus p]
     (h_no_squared : ∀ g : FpPoly p,
-        g * g ∣ f → ¬ (0 < g.degree?.getD 0)) :
+        g * g ∣ f → ¬ (0 < g.natDegree)) :
     (berlekampFactor f hmonic).factors.Nodup := by
   cases hr : rootFactors? f with
   | some fs =>
@@ -1695,7 +1691,7 @@ theorem berlekampFactor_factors_nodup_of_no_squared
       exact rootFactors_nodup hr
   | none =>
   rw [berlekampFactor_factors_of_rootFactors_none f hmonic hr]
-  by_cases h_f_pos : 0 < f.degree?.getD 0
+  by_cases h_f_pos : 0 < f.natDegree
   · exact (fullySplit_nodup_pos ((fixedSpaceKernel f hmonic).toList) (f.size + 1) f
       h_f_pos h_no_squared).1
   · -- Degree 0: `f` admits no kernel split, so the factor list is `[f]`,
@@ -1709,6 +1705,7 @@ theorem berlekampFactor_factors_nodup_of_no_squared
         have hdeg_eq : f.degree? = some (f.size - 1) := by
           unfold DensePoly.degree?
           simp [hsize_ne]
+        unfold Hex.DensePoly.natDegree
         rw [hdeg_eq]
         simp
         omega
@@ -1734,9 +1731,9 @@ factor of `factorProduct`. -/
 private theorem factorProduct_pairwise_no_common_pos_divisor
     (factors : List (FpPoly p))
     (h_no_squared : ∀ g : FpPoly p,
-        g * g ∣ factorProduct factors → ¬ (0 < g.degree?.getD 0)) :
+        g * g ∣ factorProduct factors → ¬ (0 < g.natDegree)) :
     factors.Pairwise (fun a b =>
-      ∀ d : FpPoly p, d ∣ a → d ∣ b → ¬ (0 < d.degree?.getD 0)) := by
+      ∀ d : FpPoly p, d ∣ a → d ∣ b → ¬ (0 < d.natDegree)) := by
   induction factors with
   | nil => exact List.Pairwise.nil
   | cons fac rest ih =>
@@ -1778,14 +1775,14 @@ theorem berlekampFactor_factors_pairwise_coprime
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (h_no_squared : ∀ g : FpPoly p,
-        g * g ∣ f → ¬ (0 < g.degree?.getD 0)) :
+        g * g ∣ f → ¬ (0 < g.natDegree)) :
     (berlekampFactor f hmonic).factors.Pairwise (fun a b =>
-      ∀ d : FpPoly p, d ∣ a → d ∣ b → ¬ (0 < d.degree?.getD 0)) := by
+      ∀ d : FpPoly p, d ∣ a → d ∣ b → ¬ (0 < d.natDegree)) := by
   have h_prod_eq : factorProduct (berlekampFactor f hmonic).factors = f :=
     factorProduct_berlekampFactor f hmonic
   have h_no_squared' : ∀ g : FpPoly p,
       g * g ∣ factorProduct (berlekampFactor f hmonic).factors →
-        ¬ (0 < g.degree?.getD 0) := by
+        ¬ (0 < g.natDegree) := by
     intro g hgg
     rw [h_prod_eq] at hgg
     exact h_no_squared g hgg
@@ -1799,8 +1796,8 @@ positive-degree input itself. -/
 private theorem fullySplit_pos
     [ZMod64.PrimeModulus p]
     (witnesses : List (FpPoly p)) (fuel : Nat) (f : FpPoly p)
-    (h_pos : 0 < f.degree?.getD 0) :
-    ∀ g ∈ fullySplit witnesses fuel f, 0 < g.degree?.getD 0 := by
+    (h_pos : 0 < f.natDegree) :
+    ∀ g ∈ fullySplit witnesses fuel f, 0 < g.natDegree := by
   induction fuel generalizing f with
   | zero =>
       intro g hg
@@ -1839,8 +1836,8 @@ positivity is preserved by every split regardless of square-freeness. -/
 theorem berlekampFactor_factors_pos_degree
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
-    (hf_pos : 0 < f.degree?.getD 0) :
-    ∀ g ∈ (berlekampFactor f hmonic).factors, 0 < g.degree?.getD 0 := by
+    (hf_pos : 0 < f.natDegree) :
+    ∀ g ∈ (berlekampFactor f hmonic).factors, 0 < g.natDegree := by
   cases hr : rootFactors? f with
   | some fs =>
       rw [berlekampFactor_factors_of_rootFactors_some f hmonic hr]
@@ -1886,12 +1883,12 @@ theorem berlekampFactor_factors_ne_zero
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f) :
     ∀ g ∈ (berlekampFactor f hmonic).factors, g ≠ 0 := by
-  by_cases hf_pos : 0 < f.degree?.getD 0
+  by_cases hf_pos : 0 < f.natDegree
   · intro g hg
     have hg_pos := berlekampFactor_factors_pos_degree f hmonic hf_pos g hg
     intro h
     rw [h] at hg_pos
-    simp [DensePoly.degree?] at hg_pos
+    simp [DensePoly.natDegree, DensePoly.degree?] at hg_pos
   · -- f.size ≤ 1: factors = [f], which is monic hence nonzero.
     have hf_size_le : f.size ≤ 1 := by
       rcases Nat.lt_or_ge f.size 2 with hlt | hge
@@ -1902,6 +1899,7 @@ theorem berlekampFactor_factors_ne_zero
         have hdeg_eq : f.degree? = some (f.size - 1) := by
           unfold DensePoly.degree?
           simp [hsize_ne]
+        unfold Hex.DensePoly.natDegree
         rw [hdeg_eq]
         simp
         omega

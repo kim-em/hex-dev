@@ -274,8 +274,8 @@ private theorem detProduct_colAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
         rw [colAdd_get]
         by_cases hxp : x = pivot
         · subst x
-          rw [if_pos hpivot, if_pos rfl, colAddDuplicate_get, if_pos hpivot]
-        · rw [if_neg hxp]
+          rw [ite_eq_left hpivot, ite_eq_left rfl, colAddDuplicate_get, ite_eq_left hpivot]
+        · rw [ite_eq_right hxp]
           have hperm_ne : perm[x] ≠ dst := by
             intro hperm
             have hxidx : perm.toList.idxOf perm[x] = x.val := by
@@ -285,7 +285,7 @@ private theorem detProduct_colAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
             have hval : x.val = pivot.val := by
               rw [← hxidx, hperm, hpidx]
             exact hxp (Fin.ext hval)
-          rw [if_neg hperm_ne]
+          rw [ite_eq_right hperm_ne]
     _ =
       (List.finRange n).foldl (fun acc x => acc * M[x][perm[x]]) 1 +
         c * (List.finRange n).foldl
@@ -309,7 +309,7 @@ private theorem detProduct_colAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
               have hval : x.val = pivot.val := by
                 rw [← hxidx, hperm, hpidx]
               exact hxp (Fin.ext hval)
-            rw [if_neg hperm_ne])
+            rw [ite_eq_right hperm_ne])
 
 /-- For a nodup permutation, the signed term of `colAdd M src dst c` splits as
 `detTerm M perm + c · detTerm (colAddDuplicate M src dst) perm`. -/
@@ -533,11 +533,11 @@ private theorem rowSwap_rowAddDuplicate_eq {R : Type u} {n : Nat}
   intro fr fk
   rw [rowSwap_get]
   by_cases hrd : fr = dst
-  · rw [if_pos hrd]
+  · rw [ite_eq_left hrd]
     rw [rowAddDuplicate_get M src dst src fk, rowAddDuplicate_get M src dst fr fk]
     simp [hrd]
   · by_cases hrs : fr = src
-    · rw [if_neg hrd, if_pos hrs]
+    · rw [ite_eq_right hrd, ite_eq_left hrs]
       rw [rowAddDuplicate_get M src dst dst fk, rowAddDuplicate_get M src dst fr fk]
       simp [hrs]
     · simp [hrd, hrs]

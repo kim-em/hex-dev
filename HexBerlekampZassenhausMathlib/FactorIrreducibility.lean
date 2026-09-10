@@ -43,8 +43,8 @@ theorem factorClassicalFactors_factor_irreducible
   simp only [Hex.factorClassicalFactors, Hex.runClassical,
     Hex.classicalInput] at hcf
   by_cases hdeg :
-      (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
-  · rw [if_pos hdeg] at hcf
+      (Hex.normalizeForFactor f).squareFreeCore.natDegree = 0
+  · rw [ite_eq_left hdeg] at hcf
     obtain rfl := Option.some.inj hcf
     have hcomplete :=
       Hex.reassemblyExpansionComplete_constant_of_ne_zero f hf hdeg
@@ -62,7 +62,7 @@ theorem factorClassicalFactors_factor_irreducible
       rw [hraw_one, Hex.normalizeFactorSign_one,
         Hex.shouldRecordPolynomialFactor_one] at hrec
       exact absurd hrec (by decide)
-  · rw [if_neg hdeg] at hcf
+  · rw [ite_eq_right hdeg] at hcf
     cases hquad :
         Hex.quadraticIntegerRootFactors?
           (Hex.normalizeForFactor f).squareFreeCore with
@@ -125,7 +125,7 @@ theorem factorClassicalFactors_factor_irreducible
                 cases hcf
                 have hcore_degree :
                     0 <
-                      (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 :=
+                      (Hex.normalizeForFactor f).squareFreeCore.natDegree :=
                   Nat.pos_of_ne_zero hdeg
                 have hcore_squarefree :
                     Squarefree

@@ -136,6 +136,69 @@ private def far : Dyadic := .ofOdd 1 1000000000 (by decide)
 #guard Hex.Interval.whole.view == .bounds .unbounded .unbounded
 #guard decide (Hex.Interval.empty ≠ Hex.Interval.whole)
 
+-- A trusted representation decoder can construct independently preflighted
+-- exact closed bounds without a second comparison. The view theorem works
+-- from this importing module, so a kernel proof does not depend on reducing
+-- the sealed constructor body.
+example (lower upper : Dyadic) (ordered : lower ≤ upper) :
+    (Hex.Interval.ofOrderedBoundsUnchecked lower upper ordered).view =
+      .bounds (.finite lower false) (.finite upper false) :=
+  Hex.Interval.view_ofOrderedBoundsUnchecked lower upper ordered
+
+-- A decoder that already proved the corresponding rational inequality can
+-- transport that proof to dyadics without executing another comparison.
+example (lower upper : Dyadic) (orderedRat : lower.toRat ≤ upper.toRat) :
+    lower ≤ upper :=
+  Dyadic.toRat_le_toRat_iff.mp orderedRat
+
+-- Pin both general checked/unchecked agreement contracts at the importing
+-- boundary, independently of the concrete executable canaries below.
+example {limit : EndpointLimit} {lower upper : Dyadic} {interval : Hex.Interval}
+    (ordered : lower ≤ upper)
+    (checked : Hex.Interval.ofRawWithin limit
+      (.bounds (.finite lower false) (.finite upper false)) = .ready interval) :
+    interval = Hex.Interval.ofOrderedBoundsUnchecked lower upper ordered :=
+  Hex.Interval.eq_ordered_ofRawWithin ordered checked
+
+example {limit : EndpointLimit} {lower upper : Dyadic} {interval : Hex.Interval}
+    (ordered : lower ≤ upper)
+    (checked : Hex.Interval.betweenWithin limit lower false upper false = .ready interval) :
+    interval = Hex.Interval.ofOrderedBoundsUnchecked lower upper ordered :=
+  Hex.Interval.eq_ordered_of_betweenWithin ordered checked
+
+-- The following decisions are deliberately tiny literal canaries, not the
+-- trusted-decoder pattern for arbitrary endpoints.
+#guard
+  (Hex.Interval.ofOrderedBoundsUnchecked (d 0) (d 1)
+    (Hex.Interval.ordered_of_consistent (by decide))).view ==
+    finite 0 false 1 false
+
+-- On admitted inputs, the unchecked trusted-decoder constructor agrees exactly
+-- with both capped public construction routes.
+#guard
+  match Hex.Interval.ofRawWithin smallLimit (finite 0 false 1 false) with
+  | .ready interval =>
+      interval ==
+        Hex.Interval.ofOrderedBoundsUnchecked (d 0) (d 1)
+          (Hex.Interval.ordered_of_consistent (by decide))
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.betweenWithin smallLimit (d 0) false (d 1) false with
+  | .ready interval =>
+      interval ==
+        Hex.Interval.ofOrderedBoundsUnchecked (d 0) (d 1)
+          (Hex.Interval.ordered_of_consistent (by decide))
+  | .resourceLimit _ => false
+
+-- This pins only that the constructor itself accepts a compact endpoint beyond
+-- an ordinary planner's dynamic-range cap. The trusted caller's independent
+-- preflight is a separate obligation. Equal endpoints make no claim about
+-- avoiding nonzero alignment work.
+#guard
+  (Hex.Interval.ofOrderedBoundsUnchecked far far (Dyadic.le_refl far)).view ==
+    .bounds (.finite far false) (.finite far false)
+
 #guard
   match Hex.Interval.betweenWithin smallLimit (d 0) false (d 1) true with
   | .ready interval => interval.view == finite 0 false 1 true

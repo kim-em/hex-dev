@@ -124,7 +124,7 @@ theorem lcmStep_sound (running incoming : DensePoly F)
   have hgZero : raw.gcd.isZero = false :=
     (DensePoly.isZero_eq_false_iff raw.gcd).2 hgPos
   have hcommon : common = DensePoly.monicize raw.gcd := by
-    rw [DensePoly.monicize, HexPoly.ite_eq_right (by simp [hgZero])]
+    rw [DensePoly.monicize, ite_eq_right (by simp [hgZero])]
   have hcommonNe : common ≠ 0 := by
     rw [hcommon]
     exact DensePoly.monicize_ne_zero hgNe

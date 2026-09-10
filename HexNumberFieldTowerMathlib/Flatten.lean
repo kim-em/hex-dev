@@ -31,11 +31,11 @@ def Sound {T : NumberTower} (F : Flattening T) : Prop :=
   Function.LeftInverse F.fromPrimitive F.toPrimitive ∧
     Function.RightInverse F.fromPrimitive F.toPrimitive ∧
     (∀ a : Elem T,
-      QAdjoin.toComplex (F.toPrimitive a) F.root.rep F.root.rep_mk =
+      PolyQuot.toComplex (F.toPrimitive a) F.root.rep F.root.rep_mk =
         T.toComplex a) ∧
-    (∀ a : QAdjoin F.root.p F.root.x,
+    (∀ a : PolyQuot F.root.p F.root.x,
       T.toComplex (F.fromPrimitive a) =
-        QAdjoin.toComplex a F.root.rep F.root.rep_mk) ∧
+        PolyQuot.toComplex a F.root.rep F.root.rep_mk) ∧
     (∀ a b : Elem T,
       F.toPrimitive (a + b) = F.toPrimitive a + F.toPrimitive b) ∧
     (∀ a b : Elem T,
@@ -63,7 +63,7 @@ def Candidate.Represents {T : NumberTower} (candidate : Candidate T)
     (generators : List (Generator T)) : Prop :=
   List.Forall₂
     (fun generator coordinate =>
-      QAdjoin.toComplex coordinate candidate.root.rep candidate.root.rep_mk =
+      PolyQuot.toComplex coordinate candidate.root.rep candidate.root.rep_mk =
         generator.root.toComplex)
     generators candidate.coordinates.toList
 
@@ -119,7 +119,7 @@ private theorem replicatePush_getD (n i : Nat) :
       simp [heq]
 
 private theorem unitCoords_fixed (full short index : Nat)
-    (hshort : short ≤ full) (hindex : index < short) :
+    (_hshort : short ≤ full) (hindex : index < short) :
     unitCoords full index =
       Arithmetic.fixedCoeffs full (unitCoords short index) := by
   apply Array.ext
@@ -146,7 +146,7 @@ private theorem unit_generator (level : Level) (lower : List Level)
       Arithmetic.fixedCoeffs (levelsDim (level :: lower))
         ((Array.replicate (levelsDim lower) 0).push 1) := by
     apply Array.ext
-    · simp [unitCoords, Arithmetic.fixedCoeffs, hindex]
+    · simp [unitCoords, Arithmetic.fixedCoeffs]
     · intro i hiLeft hiRight
       have hif : i < levelsDim (level :: lower) := by simpa using hiLeft
       rw [unitCoords_getElem _ _ _ hif,
@@ -237,7 +237,7 @@ private theorem generatorsAux?_sound (T : NumberTower)
       obtain ⟨hdimension, hgenerators⟩ :=
         ih (newer ++ [level]) hlowerLevels hlowerState
       constructor
-      · simpa [levelsDim, hdimension, Nat.mul_comm]
+      · simp [levelsDim, hdimension, Nat.mul_comm]
       · intro generator hgenerator
         simp only [Array.toList_push, List.mem_append,
           List.mem_singleton] at hgenerator
@@ -433,31 +433,31 @@ private theorem zpoly_eval_horner (p : ZPoly) (z : ℂ) :
     rfl
 
 private theorem toQAdjoin_complex (a : AlgebraicNumber) :
-    QAdjoin.toComplex a.toQAdjoin a.rep a.rep_mk = a.toComplex := by
-  unfold AlgebraicNumber.toQAdjoin QAdjoin.toComplex QAdjoin.reduce
-  rw [QAdjoin.eval_reduceCoeffs]
+    PolyQuot.toComplex a.toQAdjoin a.rep a.rep_mk = a.toComplex := by
+  unfold AlgebraicNumber.toQAdjoin PolyQuot.toComplex PolyQuot.reduce
+  rw [PolyQuot.eval_reduceCoeffs]
   have hpoly : HexPolyMathlib.toPolynomial
       (DensePoly.ofList ([0, 1] : List Rat)) = Polynomial.X := by
     ext n
     rw [HexPolyMathlib.coeff_toPolynomial, DensePoly.coeff_ofList]
-    rcases n with _ | (_ | n) <;> simp [Polynomial.coeff_X] <;> rfl
+    rcases n with _ | (_ | n) <;> simp [Polynomial.coeff_X]; rfl
   rw [hpoly, Polynomial.eval₂_X]
   rfl
 
 private theorem evalRatPoly_transport
     (theta gamma : AlgebraicNumber)
-    (coordinate : QAdjoin theta.p theta.x)
-    (a : QAdjoin gamma.p gamma.x)
-    (ha : QAdjoin.toComplex a gamma.rep gamma.rep_mk = theta.toComplex) :
-    QAdjoin.toComplex (evalRatPoly coordinate.coeffs a)
+    (coordinate : PolyQuot theta.p theta.x)
+    (a : PolyQuot gamma.p gamma.x)
+    (ha : PolyQuot.toComplex a gamma.rep gamma.rep_mk = theta.toComplex) :
+    PolyQuot.toComplex (evalRatPoly coordinate.coeffs a)
         gamma.rep gamma.rep_mk =
-      QAdjoin.toComplex coordinate theta.rep theta.rep_mk := by
+      PolyQuot.toComplex coordinate theta.rep theta.rep_mk := by
   have hcoordinate :
-      QAdjoin.toComplex coordinate theta.rep theta.rep_mk =
+      PolyQuot.toComplex coordinate theta.rep theta.rep_mk =
         coordinate.coeffs.toArray.foldr
           (fun (coefficient : Rat) value =>
             value * theta.toComplex + (coefficient : ℂ)) 0 := by
-    unfold QAdjoin.toComplex
+    unfold PolyQuot.toComplex
     rw [eval₂_horner]
     rfl
   rw [hcoordinate]
@@ -466,20 +466,20 @@ private theorem evalRatPoly_transport
   generalize hcoefficients : coordinate.coeffs.toArray.toList = coefficients
   clear hcoefficients
   induction coefficients with
-  | nil => exact QAdjoin.map_zero gamma.rep gamma.rep_mk
+  | nil => exact PolyQuot.map_zero gamma.rep gamma.rep_mk
   | cons coefficient coefficients ih =>
-      rw [List.foldr_cons, List.foldr_cons, QAdjoin.map_add,
-        QAdjoin.map_mul, ih, ha, QAdjoin.map_smul, QAdjoin.map_one]
+      rw [List.foldr_cons, List.foldr_cons, PolyQuot.map_add,
+        PolyQuot.map_mul, ih, ha, PolyQuot.map_smul, PolyQuot.map_one]
       simp
 
 private theorem fromPrimitiveWith_complex {T : NumberTower}
     {p : ZPoly} {x : SimpleRoot p} (generator : Elem T)
     (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = x)
     (hgenerator : T.toComplex generator = rep.root)
-    (a : QAdjoin p x) :
+    (a : PolyQuot p x) :
     T.toComplex (fromPrimitiveWith generator a) =
-      QAdjoin.toComplex a rep hrep := by
-  unfold fromPrimitiveWith QAdjoin.toComplex
+      PolyQuot.toComplex a rep hrep := by
+  unfold fromPrimitiveWith PolyQuot.toComplex
   rw [eval₂_horner]
   rw [← Array.foldr_toList, ← Array.foldr_toList]
   generalize hcoefficients : a.coeffs.toArray.toList = coefficients
@@ -516,45 +516,65 @@ private theorem evalZPoly_candidate {T : NumberTower}
   rw [AlgebraicNumber.toRoot_toComplex, zpoly_eval_horner] at hroot
   exact hroot
 
+private theorem toPrimitiveFold_complex {T : NumberTower}
+    {p : ZPoly} {x : SimpleRoot p}
+    (images : Array (PolyQuot p x)) (a : Elem T)
+    (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = x)
+    (indices : List Nat) (initial : PolyQuot p x) :
+    PolyQuot.toComplex
+        (indices.foldl (fun value i =>
+          let coefficient := (coeffs a).getD i 0
+          if coefficient = 0 then value
+          else value + coefficient • images.getD i 0) initial) rep hrep =
+      PolyQuot.toComplex initial rep hrep +
+      (indices.map fun i =>
+        ((coeffs a).getD i 0 : ℂ) *
+          PolyQuot.toComplex (images.getD i 0) rep hrep).sum := by
+  induction indices generalizing initial with
+  | nil => simp
+  | cons i indices ih =>
+      simp only [List.foldl_cons, List.map_cons, List.sum_cons]
+      by_cases hzero : (coeffs a).getD i 0 = 0
+      · rw [ite_eq_left hzero]
+        simpa [hzero] using ih initial
+      · rw [ite_eq_right hzero, ih, PolyQuot.map_add, PolyQuot.map_smul]
+        ring
+
 private theorem toPrimitiveWith_complex {T : NumberTower}
     {p : ZPoly} {x : SimpleRoot p}
-    (images : Array (QAdjoin p x)) (a : Elem T)
+    (images : Array (PolyQuot p x)) (a : Elem T)
     (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = x) :
-    QAdjoin.toComplex (toPrimitiveWith images a) rep hrep =
+    PolyQuot.toComplex (toPrimitiveWith images a) rep hrep =
       ((List.range T.dim).map fun i =>
         ((coeffs a).getD i 0 : ℂ) *
-          QAdjoin.toComplex (images.getD i 0) rep hrep).sum := by
+          PolyQuot.toComplex (images.getD i 0) rep hrep).sum := by
   unfold toPrimitiveWith
-  generalize List.range T.dim = indices
-  induction indices with
-  | nil => exact QAdjoin.map_zero rep hrep
-  | cons i indices ih =>
-      simp only [List.map_cons, List.sum_cons]
-      rw [QAdjoin.map_add, QAdjoin.map_smul, ih]
+  simpa [PolyQuot.map_zero] using
+    toPrimitiveFold_complex images a rep hrep (List.range T.dim) 0
 
 private theorem toPrimitiveWith_add {T : NumberTower}
     {p : ZPoly} {x : SimpleRoot p}
     [ZPoly.CheckedIrreducible p]
-    (images : Array (QAdjoin p x)) (a b : Elem T) :
+    (images : Array (PolyQuot p x)) (a b : Elem T) :
     toPrimitiveWith images (a + b) =
       toPrimitiveWith images a + toPrimitiveWith images b := by
   let rep : RefinedIsolation p := Quot.out x
   have hrep : SimpleRoot.mk rep = x := Quot.out_eq x
-  apply QAdjoin.toComplex_injective rep hrep
-  change QAdjoin.toComplex (toPrimitiveWith images (a + b)) rep hrep =
-    QAdjoin.toComplex
+  apply PolyQuot.toComplex_injective rep hrep
+  change PolyQuot.toComplex (toPrimitiveWith images (a + b)) rep hrep =
+    PolyQuot.toComplex
       (toPrimitiveWith images a + toPrimitiveWith images b) rep hrep
-  rw [QAdjoin.map_add, toPrimitiveWith_complex,
+  rw [PolyQuot.map_add, toPrimitiveWith_complex,
     toPrimitiveWith_complex, toPrimitiveWith_complex]
   calc
     ((List.range T.dim).map fun i =>
         ((coeffs (a + b)).getD i 0 : ℂ) *
-          QAdjoin.toComplex (images.getD i 0) rep hrep).sum =
+          PolyQuot.toComplex (images.getD i 0) rep hrep).sum =
       ((List.range T.dim).map fun i =>
         (((coeffs a).getD i 0 : ℂ) *
-            QAdjoin.toComplex (images.getD i 0) rep hrep) +
+            PolyQuot.toComplex (images.getD i 0) rep hrep) +
           (((coeffs b).getD i 0 : ℂ) *
-            QAdjoin.toComplex (images.getD i 0) rep hrep)).sum := by
+            PolyQuot.toComplex (images.getD i 0) rep hrep)).sum := by
         congr 1
         apply List.map_congr_left
         intro i hi
@@ -563,29 +583,29 @@ private theorem toPrimitiveWith_add {T : NumberTower}
         simp [Arithmetic.addCoords, Array.getD, hiDim, add_mul]
     _ = _ := @List.sum_map_add Nat ℂ _ (List.range T.dim)
       (fun i => ((coeffs a).getD i 0 : ℂ) *
-        QAdjoin.toComplex (images.getD i 0) rep hrep)
+        PolyQuot.toComplex (images.getD i 0) rep hrep)
       (fun i => ((coeffs b).getD i 0 : ℂ) *
-        QAdjoin.toComplex (images.getD i 0) rep hrep)
+        PolyQuot.toComplex (images.getD i 0) rep hrep)
 
 private theorem toPrimitiveWith_smul {T : NumberTower}
     {p : ZPoly} {x : SimpleRoot p}
     [ZPoly.CheckedIrreducible p]
-    (images : Array (QAdjoin p x)) (q : Rat) (a : Elem T) :
+    (images : Array (PolyQuot p x)) (q : Rat) (a : Elem T) :
     toPrimitiveWith images (q • a) = q • toPrimitiveWith images a := by
   let rep : RefinedIsolation p := Quot.out x
   have hrep : SimpleRoot.mk rep = x := Quot.out_eq x
-  apply QAdjoin.toComplex_injective rep hrep
-  change QAdjoin.toComplex (toPrimitiveWith images (q • a)) rep hrep =
-    QAdjoin.toComplex (q • toPrimitiveWith images a) rep hrep
-  rw [QAdjoin.map_smul, toPrimitiveWith_complex,
+  apply PolyQuot.toComplex_injective rep hrep
+  change PolyQuot.toComplex (toPrimitiveWith images (q • a)) rep hrep =
+    PolyQuot.toComplex (q • toPrimitiveWith images a) rep hrep
+  rw [PolyQuot.map_smul, toPrimitiveWith_complex,
     toPrimitiveWith_complex]
   calc
     ((List.range T.dim).map fun i =>
         ((coeffs (q • a)).getD i 0 : ℂ) *
-          QAdjoin.toComplex (images.getD i 0) rep hrep).sum =
+          PolyQuot.toComplex (images.getD i 0) rep hrep).sum =
       ((List.range T.dim).map fun i =>
         (q : ℂ) * (((coeffs a).getD i 0 : ℂ) *
-          QAdjoin.toComplex (images.getD i 0) rep hrep)).sum := by
+          PolyQuot.toComplex (images.getD i 0) rep hrep)).sum := by
         congr 1
         apply List.map_congr_left
         intro i hi
@@ -594,7 +614,7 @@ private theorem toPrimitiveWith_smul {T : NumberTower}
         simp [Array.getD, hiDim, mul_assoc]
     _ = _ := List.sum_map_mul_left (List.range T.dim)
       (fun i => ((coeffs a).getD i 0 : ℂ) *
-        QAdjoin.toComplex (images.getD i 0) rep hrep) (q : ℂ)
+        PolyQuot.toComplex (images.getD i 0) rep hrep) (q : ℂ)
 
 private theorem candidateAt?_sound (theta alpha : AlgebraicNumber)
     (target index : Nat) {shift : Int} {candidate : AlgebraicNumber}
@@ -696,11 +716,11 @@ private theorem tracePair?_isSome (theta alpha gamma : AlgebraicNumber)
   simp [tracePair?, hpowers, hthetaCoordinate, halphaCoordinate]
 
 private theorem tracePair?_sound (theta alpha gamma : AlgebraicNumber)
-    {coordinates : QAdjoin gamma.p gamma.x × QAdjoin gamma.p gamma.x}
+    {coordinates : PolyQuot gamma.p gamma.x × PolyQuot gamma.p gamma.x}
     (h : tracePair? theta alpha gamma = some coordinates) :
-    QAdjoin.toComplex coordinates.1 gamma.rep gamma.rep_mk =
+    PolyQuot.toComplex coordinates.1 gamma.rep gamma.rep_mk =
         theta.toComplex ∧
-      QAdjoin.toComplex coordinates.2 gamma.rep gamma.rep_mk =
+      PolyQuot.toComplex coordinates.2 gamma.rep gamma.rep_mk =
         alpha.toComplex := by
   unfold tracePair? at h
   obtain ⟨powers, hpowers, h⟩ := Option.bind_eq_some_iff.mp h
@@ -716,10 +736,10 @@ private theorem tracePair?_sound (theta alpha gamma : AlgebraicNumber)
       halphaCoordinate⟩
 
 private theorem checkCoordinate?_sound (target gamma : AlgebraicNumber)
-    (coordinate out : QAdjoin gamma.p gamma.x)
+    (coordinate out : PolyQuot gamma.p gamma.x)
     (h : checkCoordinate? target gamma coordinate = some out) :
-    QAdjoin.toComplex out gamma.rep gamma.rep_mk = target.toComplex := by
-  letI : ZPoly.CheckedIrreducible gamma.p := gamma.checked
+    PolyQuot.toComplex out gamma.rep gamma.rep_mk = target.toComplex := by
+  let : ZPoly.CheckedIrreducible gamma.p := gamma.checked
   unfold checkCoordinate? at h
   obtain ⟨recovered, hrecovered, h⟩ := Option.bind_eq_some_iff.mp h
   by_cases heq : recovered == target
@@ -727,17 +747,17 @@ private theorem checkCoordinate?_sound (target gamma : AlgebraicNumber)
     subst out
     have hrecoveredEq : recovered = target := beq_iff_eq.mp heq
     rw [← hrecoveredEq]
-    exact (QAdjoin.toAlgebraicNumber?_sound coordinate gamma.rep
+    exact (PolyQuot.toAlgebraicNumber?_sound coordinate gamma.rep
       gamma.rep_mk hrecovered).symm
   · have hfalse : (recovered == target) = false := by
       cases hvalue : recovered == target <;> simp_all
     simp [hfalse] at h
 
 private theorem checkPair?_sound (theta alpha gamma : AlgebraicNumber)
-    (coordinates out : QAdjoin gamma.p gamma.x × QAdjoin gamma.p gamma.x)
+    (coordinates out : PolyQuot gamma.p gamma.x × PolyQuot gamma.p gamma.x)
     (h : checkPair? theta alpha gamma coordinates = some out) :
-    QAdjoin.toComplex out.1 gamma.rep gamma.rep_mk = theta.toComplex ∧
-      QAdjoin.toComplex out.2 gamma.rep gamma.rep_mk = alpha.toComplex := by
+    PolyQuot.toComplex out.1 gamma.rep gamma.rep_mk = theta.toComplex ∧
+      PolyQuot.toComplex out.2 gamma.rep gamma.rep_mk = alpha.toComplex := by
   unfold checkPair? at h
   obtain ⟨thetaCoordinate, htheta, h⟩ := Option.bind_eq_some_iff.mp h
   obtain ⟨alphaCoordinate, halpha, h⟩ := Option.bind_eq_some_iff.mp h
@@ -750,33 +770,33 @@ private theorem checkPair?_sound (theta alpha gamma : AlgebraicNumber)
 
 private theorem recoverPairFast?_sound (theta alpha gamma : AlgebraicNumber)
     (shift : Int)
-    {coordinates : QAdjoin gamma.p gamma.x × QAdjoin gamma.p gamma.x}
+    {coordinates : PolyQuot gamma.p gamma.x × PolyQuot gamma.p gamma.x}
     (h : recoverPairFast? theta alpha gamma shift = some coordinates) :
-    QAdjoin.toComplex coordinates.1 gamma.rep gamma.rep_mk =
+    PolyQuot.toComplex coordinates.1 gamma.rep gamma.rep_mk =
         theta.toComplex ∧
-      QAdjoin.toComplex coordinates.2 gamma.rep gamma.rep_mk =
+      PolyQuot.toComplex coordinates.2 gamma.rep gamma.rep_mk =
         alpha.toComplex := by
   unfold recoverPairFast? at h
   by_cases hshift : shift = 0
   · simp [hshift] at h
   · simp only [hshift, ↓reduceIte] at h
-    letI : ZPoly.CheckedIrreducible gamma.p := gamma.checked
+    let : ZPoly.CheckedIrreducible gamma.p := gamma.checked
     let gammaCoordinate := gamma.toQAdjoin
-    let affine : DensePoly (QAdjoin gamma.p gamma.x) :=
+    let affine : DensePoly (PolyQuot gamma.p gamma.x) :=
       DensePoly.ofList
-        [gammaCoordinate, (-(shift : Rat)) • (1 : QAdjoin gamma.p gamma.x)]
+        [gammaCoordinate, (-(shift : Rat)) • (1 : PolyQuot gamma.p gamma.x)]
     let thetaRelation := DensePoly.composeImpl (liftZPoly theta.p) affine
-    let alphaRelation : DensePoly (QAdjoin gamma.p gamma.x) :=
+    let alphaRelation : DensePoly (PolyQuot gamma.p gamma.x) :=
       liftZPoly alpha.p
     let common := DensePoly.gcd thetaRelation alphaRelation
     by_cases hlinear :
-        (common.degree?.getD 0 = 1 && common.leadingCoeff != 0) = true
+        (common.natDegree = 1 && common.leadingCoeff != 0) = true
     · dsimp [common, thetaRelation, alphaRelation, affine,
         gammaCoordinate] at hlinear
       simp only [hlinear, ↓reduceIte] at h
       exact checkPair?_sound theta alpha gamma _ coordinates h
     · have hfalse :
-          (common.degree?.getD 0 = 1 && common.leadingCoeff != 0) = false :=
+          (common.natDegree = 1 && common.leadingCoeff != 0) = false :=
         Bool.eq_false_of_not_eq_true hlinear
       dsimp [common, thetaRelation, alphaRelation, affine,
         gammaCoordinate] at hfalse
@@ -790,16 +810,16 @@ private theorem recoverPair?_isSome (theta alpha gamma : AlgebraicNumber)
   have htrace := tracePair?_isSome theta alpha gamma htheta halpha
   unfold recoverPair?
   cases hfast : recoverPairFast? theta alpha gamma shift with
-  | none => simp [hfast, htrace]
-  | some coordinates => simp [hfast]
+  | none => simp [htrace]
+  | some coordinates => simp
 
 private theorem recoverPair?_sound (theta alpha gamma : AlgebraicNumber)
     (shift : Int)
-    {coordinates : QAdjoin gamma.p gamma.x × QAdjoin gamma.p gamma.x}
+    {coordinates : PolyQuot gamma.p gamma.x × PolyQuot gamma.p gamma.x}
     (h : recoverPair? theta alpha gamma shift = some coordinates) :
-    QAdjoin.toComplex coordinates.1 gamma.rep gamma.rep_mk =
+    PolyQuot.toComplex coordinates.1 gamma.rep gamma.rep_mk =
         theta.toComplex ∧
-      QAdjoin.toComplex coordinates.2 gamma.rep gamma.rep_mk =
+      PolyQuot.toComplex coordinates.2 gamma.rep gamma.rep_mk =
         alpha.toComplex := by
   unfold recoverPair? at h
   cases hfast : recoverPairFast? theta alpha gamma shift with
@@ -816,9 +836,9 @@ private theorem searchRecoveredAux_coordinates
     (theta alpha : AlgebraicNumber) (target start fuel : Nat)
     {recovered : Recovered}
     (h : searchRecoveredAux theta alpha target start fuel = some recovered) :
-    QAdjoin.toComplex recovered.thetaCoordinate recovered.root.rep
+    PolyQuot.toComplex recovered.thetaCoordinate recovered.root.rep
           recovered.root.rep_mk = theta.toComplex ∧
-      QAdjoin.toComplex recovered.alphaCoordinate recovered.root.rep
+      PolyQuot.toComplex recovered.alphaCoordinate recovered.root.rep
           recovered.root.rep_mk = alpha.toComplex := by
   induction fuel generalizing start with
   | zero => simp [searchRecoveredAux] at h
@@ -846,9 +866,9 @@ private theorem searchRecoveredAux_coordinates
 private theorem searchRecovered?_coordinates
     (theta alpha : AlgebraicNumber) (target : Nat) {recovered : Recovered}
     (h : searchRecovered? theta alpha target = some recovered) :
-    QAdjoin.toComplex recovered.thetaCoordinate recovered.root.rep
+    PolyQuot.toComplex recovered.thetaCoordinate recovered.root.rep
           recovered.root.rep_mk = theta.toComplex ∧
-      QAdjoin.toComplex recovered.alphaCoordinate recovered.root.rep
+      PolyQuot.toComplex recovered.alphaCoordinate recovered.root.rep
           recovered.root.rep_mk = alpha.toComplex := by
   unfold searchRecovered? at h
   cases hfast : searchRecoveredAux theta alpha target 0
@@ -873,11 +893,11 @@ private theorem represents_map {T : NumberTower}
     (current : Candidate T) (generators : List (Generator T))
     (hcurrent : current.Represents generators)
     (recovered : Recovered)
-    (htheta : QAdjoin.toComplex recovered.thetaCoordinate recovered.root.rep
+    (htheta : PolyQuot.toComplex recovered.thetaCoordinate recovered.root.rep
       recovered.root.rep_mk = current.root.toComplex) :
     List.Forall₂
       (fun generator coordinate =>
-        QAdjoin.toComplex coordinate recovered.root.rep
+        PolyQuot.toComplex coordinate recovered.root.rep
           recovered.root.rep_mk = generator.root.toComplex)
       generators
       (current.coordinates.map fun coordinate =>
@@ -898,7 +918,7 @@ private theorem searchRecovered?_isSome (theta alpha : AlgebraicNumber)
   unfold searchRecovered?
   cases hfast : searchRecoveredAux theta alpha target 0
       (flattenShiftCount target) with
-  | some recovered => simp [hfast]
+  | some recovered => simp
   | none =>
       obtain ⟨shifted, hshifted⟩ := Option.isSome_iff_exists.mp
         (AlgebraicPoly.Common.extendShift?_isSome theta alpha)
@@ -915,7 +935,7 @@ private theorem searchRecovered?_isSome (theta alpha : AlgebraicNumber)
       obtain ⟨coordinates, hcoordinates⟩ := Option.isSome_iff_exists.mp
         (recoverPair?_isSome theta alpha shifted.value shifted.shift
           htheta halpha)
-      simp [hfast, hshifted, hcoordinates]
+      simp [hshifted, hcoordinates]
 
 private theorem candidateFold_matches (T : NumberTower)
     (generators : List (Generator T)) (current out : Candidate T)
@@ -928,7 +948,7 @@ private theorem candidateFold_matches (T : NumberTower)
         let value := current.value +
           (recovered.shift : Rat) • generator.value
         let coordinates := current.coordinates.map fun
-            (coordinate : QAdjoin current.root.p current.root.x) =>
+            (coordinate : PolyQuot current.root.p current.root.x) =>
           evalRatPoly coordinate.coeffs recovered.thetaCoordinate
         some ⟨target, recovered.root, value,
           coordinates.push recovered.alphaCoordinate⟩)
@@ -1023,7 +1043,7 @@ private theorem candidateFold_isSome (T : NumberTower)
         let value := current.value +
           (recovered.shift : Rat) • generator.value
         let coordinates := current.coordinates.map fun
-            (coordinate : QAdjoin current.root.p current.root.x) =>
+            (coordinate : PolyQuot current.root.p current.root.x) =>
           evalRatPoly coordinate.coeffs recovered.thetaCoordinate
         some ⟨target, recovered.root, value,
           coordinates.push recovered.alphaCoordinate⟩)
@@ -1084,10 +1104,10 @@ private theorem candidateFold_shape (T : NumberTower)
 
 private theorem candidate?_isSome (T : NumberTower)
     (generators : Array (Generator T)) :
-    (candidate? T generators).isSome := by
+    (candidate? generators).isSome := by
   unfold candidate?
   cases hfirst : generators[0]? with
-  | none => simp [hfirst]
+  | none => simp
   | some first =>
       simpa only using candidateFold_isSome T (generators.toList.drop 1)
         { dimension := first.degree
@@ -1097,7 +1117,7 @@ private theorem candidate?_isSome (T : NumberTower)
 
 private theorem candidate?_shape (T : NumberTower)
     (generators : Array (Generator T)) {candidate : Candidate T}
-    (h : candidate? T generators = some candidate) :
+    (h : candidate? generators = some candidate) :
     candidate.dimension =
         (generators.toList.map Generator.degree).prod ∧
       candidate.coordinates.size = generators.size := by
@@ -1150,7 +1170,7 @@ private theorem candidate?_shape (T : NumberTower)
 private theorem candidate?_matches (T : NumberTower)
     (generators : Array (Generator T))
     (hgenerators : ∀ generator ∈ generators.toList, generator.Matches)
-    {candidate : Candidate T} (h : candidate? T generators = some candidate) :
+    {candidate : Candidate T} (h : candidate? generators = some candidate) :
     candidate.Matches := by
   unfold candidate? at h
   cases hfirst : generators[0]? with
@@ -1181,7 +1201,7 @@ private theorem candidate?_matches (T : NumberTower)
 
 private theorem candidate?_represents (T : NumberTower)
     (generators : Array (Generator T)) {candidate : Candidate T}
-    (h : candidate? T generators = some candidate) :
+    (h : candidate? generators = some candidate) :
     candidate.Represents generators.toList := by
   unfold candidate? at h
   cases hfirst : generators[0]? with
@@ -1233,7 +1253,7 @@ private theorem candidate?_represents (T : NumberTower)
         candidate hinitial h
 
 private theorem extendBasis_size {p : ZPoly} {x : SimpleRoot p}
-    (basis : Array (QAdjoin p x)) (generator : QAdjoin p x)
+    (basis : Array (PolyQuot p x)) (generator : PolyQuot p x)
     (degree : Nat) :
     (extendBasis basis generator degree).size = basis.size * degree := by
   unfold extendBasis
@@ -1243,7 +1263,7 @@ private theorem extendBasis_size {p : ZPoly} {x : SimpleRoot p}
         (state.1 ++ basis.map fun b => b * state.2,
           state.2 * generator)) (#[], 1)).1).size = basis.size * degree
   have hfold : ∀ (entries : List Nat)
-      (state : Array (QAdjoin p x) × QAdjoin p x),
+      (state : Array (PolyQuot p x) × PolyQuot p x),
       ((entries.foldl
         (fun state _ =>
           (state.1 ++ basis.map fun b => b * state.2,
@@ -1273,14 +1293,14 @@ private theorem zip_degrees (generators : List (Generator T))
 
 private theorem basisImages_size {T : NumberTower} {p : ZPoly}
     {x : SimpleRoot p} (generators : Array (Generator T))
-    (coordinates : Array (QAdjoin p x))
+    (coordinates : Array (PolyQuot p x))
     (hsize : coordinates.size = generators.size) :
     (basisImages generators coordinates).size =
       (generators.toList.map Generator.degree).prod := by
   unfold basisImages
   rw [← Array.foldl_toList]
-  have hfold : ∀ (entries : List (Generator T × QAdjoin p x))
-      (basis : Array (QAdjoin p x)),
+  have hfold : ∀ (entries : List (Generator T × PolyQuot p x))
+      (basis : Array (PolyQuot p x)),
       (entries.foldl
         (fun basis entry => extendBasis basis entry.2 entry.1.degree)
         basis).size =
@@ -1384,7 +1404,7 @@ private theorem blockIndex_iff (index exponent width offset : Nat)
     simp [Nat.add_comm, Nat.mul_comm]
 
 private theorem block_unitCoords (degree width index exponent : Nat)
-    (hwidth : 0 < width) (hindex : index < degree * width)
+    (hwidth : 0 < width) (_hindex : index < degree * width)
     (hexponent : exponent < degree) :
     Arithmetic.block (unitCoords (degree * width) index) exponent width =
       if exponent = index / width then unitCoords width (index % width)
@@ -1407,21 +1427,21 @@ private theorem block_unitCoords (degree width index exponent : Nat)
       Vector.getElem_ofFn]
     rw [unitCoords_getD]
     by_cases heq : exponent = index / width
-    · simp only [if_pos heq] at hright ⊢
+    · simp only [ite_eq_left heq] at hright ⊢
       rw [unitCoords_getElem width (index % width) offset hoffset]
       by_cases hsame : index % width = offset
       · have hposition := (blockIndex_iff index exponent width offset
           hwidth hoffset).mpr ⟨heq.symm, hsame⟩
-        simp [hglobal, hposition, hsame, Nat.mod_eq_of_lt hoffset]
+        simp [hglobal, hposition, Nat.mod_eq_of_lt hoffset]
       · have hposition : index ≠ exponent * width + offset := by
           intro hposition
           exact hsame ((blockIndex_iff index exponent width offset
             hwidth hoffset).mp hposition).2
         simp [hglobal, hposition, hsame]
-    · simp only [if_neg heq] at hright ⊢
+    · simp only [ite_eq_right heq] at hright ⊢
       simp only [Arithmetic.fixedCoeffs, Vector.getElem_toArray,
         Vector.getElem_ofFn, Array.getD, Array.size_empty,
-        Nat.not_lt_zero, ↓reduceIte]
+        Nat.not_lt_zero]
       simp only [hglobal, true_and]
       have hne : index ≠ exponent * width + offset := by
         intro hsame
@@ -1493,7 +1513,7 @@ private theorem levelBasis_get (levels : List Level) (hvalid : LevelsValid level
             exponent width) * level.root.toComplex ^ exponent = 0
         rw [block_unitCoords level.degree width index exponent hwidth
           (by simpa [width, levelsDim] using hindex) hexponent']
-        rw [if_neg hne]
+        rw [ite_eq_right hne]
         change LevelSemantics.denote lower
           (Arithmetic.fixedCoeffs (levelsDim lower) #[]) *
             level.root.toComplex ^ exponent = 0
@@ -1503,30 +1523,30 @@ private theorem levelBasis_get (levels : List Level) (hvalid : LevelsValid level
         exact (hnot (Finset.mem_range.mpr hquot)).elim
 
 private theorem extendBasis_values {p : ZPoly} {x : SimpleRoot p}
-    (basis : Array (QAdjoin p x)) (generator : QAdjoin p x)
+    (basis : Array (PolyQuot p x)) (generator : PolyQuot p x)
     (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = x)
-    (z : ℂ) (hgenerator : QAdjoin.toComplex generator rep hrep = z)
+    (z : ℂ) (hgenerator : PolyQuot.toComplex generator rep hrep = z)
     (degree : Nat) :
     (extendBasis basis generator degree).map
-        (fun a => QAdjoin.toComplex a rep hrep) =
+        (fun a => PolyQuot.toComplex a rep hrep) =
       extendValues
-        (basis.map fun a => QAdjoin.toComplex a rep hrep) z degree := by
+        (basis.map fun a => PolyQuot.toComplex a rep hrep) z degree := by
   unfold extendBasis extendValues
   generalize List.range degree = entries
   have hfold : ∀ (entries : List Nat)
-      (qstate : Array (QAdjoin p x) × QAdjoin p x)
+      (qstate : Array (PolyQuot p x) × PolyQuot p x)
       (cstate : Array ℂ × ℂ),
-      qstate.1.map (fun a => QAdjoin.toComplex a rep hrep) = cstate.1 →
-      QAdjoin.toComplex qstate.2 rep hrep = cstate.2 →
+      qstate.1.map (fun a => PolyQuot.toComplex a rep hrep) = cstate.1 →
+      PolyQuot.toComplex qstate.2 rep hrep = cstate.2 →
       ((entries.foldl
         (fun state _ =>
           (state.1 ++ basis.map fun b => b * state.2,
             state.2 * generator)) qstate).1).map
-          (fun a => QAdjoin.toComplex a rep hrep) =
+          (fun a => PolyQuot.toComplex a rep hrep) =
         (entries.foldl
           (fun state _ =>
             (state.1 ++
-                (basis.map fun a => QAdjoin.toComplex a rep hrep).map
+                (basis.map fun a => PolyQuot.toComplex a rep hrep).map
                   fun b => b * state.2,
               state.2 * z)) cstate).1 := by
     intro entries
@@ -1542,26 +1562,26 @@ private theorem extendBasis_values {p : ZPoly} {x : SimpleRoot p}
           apply Array.ext
           · simp
           · intro i hleft hright
-            simp [Function.comp_def, QAdjoin.map_mul, hpower]
-        · simpa [QAdjoin.map_mul, hpower, hgenerator]
+            simp [Function.comp_def, PolyQuot.map_mul, hpower]
+        · simp [PolyQuot.map_mul, hpower, hgenerator]
   exact hfold entries (#[], 1) (#[], 1)
-    (by simp) (QAdjoin.map_one rep hrep)
+    (by simp) (PolyQuot.map_one rep hrep)
 
 private theorem basisFold_values {T : NumberTower} {p : ZPoly}
     {x : SimpleRoot p} (rep : RefinedIsolation p)
     (hrep : SimpleRoot.mk rep = x)
     {generators : List (Generator T)}
-    {coordinates : List (QAdjoin p x)} {levels : List Level}
+    {coordinates : List (PolyQuot p x)} {levels : List Level}
     (hcoordinates : List.Forall₂
       (fun generator coordinate =>
-        QAdjoin.toComplex coordinate rep hrep = generator.root.toComplex)
+        PolyQuot.toComplex coordinate rep hrep = generator.root.toComplex)
       generators coordinates)
     (hlevels : List.Forall₂ Generator.Describes generators levels)
-    (qbasis : Array (QAdjoin p x)) (cbasis : Array ℂ)
-    (hbasis : qbasis.map (fun a => QAdjoin.toComplex a rep hrep) = cbasis) :
+    (qbasis : Array (PolyQuot p x)) (cbasis : Array ℂ)
+    (hbasis : qbasis.map (fun a => PolyQuot.toComplex a rep hrep) = cbasis) :
     ((generators.zip coordinates).foldl
       (fun basis entry => extendBasis basis entry.2 entry.1.degree)
-      qbasis).map (fun a => QAdjoin.toComplex a rep hrep) =
+      qbasis).map (fun a => PolyQuot.toComplex a rep hrep) =
       levels.foldl
         (fun basis level =>
           extendValues basis level.root.toComplex level.degree) cbasis := by
@@ -1578,7 +1598,7 @@ private theorem basisFold_values {T : NumberTower} {p : ZPoly}
           rw [hdegree]
           calc
             _ = extendValues
-                (qbasis.map fun a => QAdjoin.toComplex a rep hrep)
+                (qbasis.map fun a => PolyQuot.toComplex a rep hrep)
                 _ _ := extendBasis_values qbasis _ rep hrep _
                   (hcoordinate.trans hroot) _
             _ = _ := by rw [hbasis]
@@ -1600,7 +1620,7 @@ private theorem basisImages_values {T : NumberTower}
     (hlevels : List.Forall₂ Generator.Describes generators.toList
       T.levels.toList.reverse) :
     (basisImages generators candidate.coordinates).map
-        (fun a => QAdjoin.toComplex a candidate.root.rep
+        (fun a => PolyQuot.toComplex a candidate.root.rep
           candidate.root.rep_mk) =
       (levelBasis T.levels.toList).toArray := by
   unfold basisImages
@@ -1618,55 +1638,57 @@ private theorem basisImages_values {T : NumberTower}
       · intro i hleft hright
         have hi : i = 0 := by simpa using hleft
         subst i
-        simpa using QAdjoin.map_one candidate.root.rep candidate.root.rep_mk
+        simpa using PolyQuot.map_one candidate.root.rep candidate.root.rep_mk
     _ = _ := levelBasis_fold T.levels.toList
 
 private theorem one_smul_qadjoin {p : ZPoly} {x : SimpleRoot p}
-    [ZPoly.CheckedIrreducible p] (a : QAdjoin p x) :
+    [ZPoly.CheckedIrreducible p] (a : PolyQuot p x) :
     (1 : Rat) • a = a := by
   let rep : RefinedIsolation p := Quot.out x
   have hrep : SimpleRoot.mk rep = x := Quot.out_eq x
-  apply QAdjoin.toComplex_injective rep hrep
-  change QAdjoin.toComplex ((1 : Rat) • a) rep hrep =
-    QAdjoin.toComplex a rep hrep
-  rw [QAdjoin.map_smul]
+  apply PolyQuot.toComplex_injective rep hrep
+  change PolyQuot.toComplex ((1 : Rat) • a) rep hrep =
+    PolyQuot.toComplex a rep hrep
+  rw [PolyQuot.map_smul]
   simp
 
-private theorem zero_smul_qadjoin {p : ZPoly} {x : SimpleRoot p}
-    [ZPoly.CheckedIrreducible p] (a : QAdjoin p x) :
-    (0 : Rat) • a = 0 := by
-  let rep : RefinedIsolation p := Quot.out x
-  have hrep : SimpleRoot.mk rep = x := Quot.out_eq x
-  apply QAdjoin.toComplex_injective rep hrep
-  change QAdjoin.toComplex ((0 : Rat) • a) rep hrep =
-    QAdjoin.toComplex (0 : QAdjoin p x) rep hrep
-  rw [QAdjoin.map_smul, QAdjoin.map_zero]
-  simp
+private theorem foldl_congr_mem {α β : Type} (xs : List α)
+    (f g : β → α → β) (initial : β)
+    (h : ∀ value a, a ∈ xs → f value a = g value a) :
+    xs.foldl f initial = xs.foldl g initial := by
+  induction xs generalizing initial with
+  | nil => rfl
+  | cons a xs ih =>
+      simp only [List.foldl_cons]
+      rw [h initial a (by simp)]
+      apply ih
+      intro value b hb
+      exact h value b (by simp [hb])
 
-private theorem sum_unit_range {p : ZPoly} {x : SimpleRoot p}
+private theorem fold_unit_range {p : ZPoly} {x : SimpleRoot p}
     [ZPoly.CheckedIrreducible p]
-    (values : Nat → QAdjoin p x) (index count : Nat) :
-    ((List.range count).map fun i =>
-      (if index = i then (1 : Rat) else 0) • values i).sum =
+    (values : Nat → PolyQuot p x) (index count : Nat) :
+    (List.range count).foldl (fun value i =>
+      if index = i then value + (1 : Rat) • values i else value) 0 =
         if index < count then values index else 0 := by
-  letI : Field (QAdjoin p x) := QAdjoin.field p x
+  let : Field (PolyQuot p x) := PolyQuot.field p x
   induction count with
   | zero => simp
   | succ count ih =>
-      rw [List.range_succ, List.map_append, List.sum_append, ih]
-      simp only [List.map_singleton, List.sum_singleton]
+      rw [List.range_succ, List.foldl_append, ih]
+      simp only [List.foldl_cons, List.foldl_nil]
       by_cases hlt : index < count
       · have hne : index ≠ count := by omega
         have hle : index ≤ count := Nat.le_of_lt hlt
-        simp [hlt, hne, hle, zero_smul_qadjoin]
+        simp [hlt, hne, hle]
       · by_cases heq : index = count
         · subst index
           simp [one_smul_qadjoin]
         · have hout : ¬ index < count + 1 := by omega
-          simp [hlt, heq, hout, zero_smul_qadjoin]
+          simp [hlt, heq, hout]
 
 private theorem toPrimitiveWith_unit {T : NumberTower} {p : ZPoly}
-    {x : SimpleRoot p} (images : Array (QAdjoin p x))
+    {x : SimpleRoot p} (images : Array (PolyQuot p x))
     [ZPoly.CheckedIrreducible p]
     (index : Nat) (hindex : index < T.dim) :
     toPrimitiveWith images (T.ofCoeffs (unitCoords T.dim index)) =
@@ -1674,30 +1696,28 @@ private theorem toPrimitiveWith_unit {T : NumberTower} {p : ZPoly}
   unfold toPrimitiveWith
   rw [coeffs_ofCoeffs,
     normalizeCoeffs_eq_self T _ (by simp [unitCoords])]
-  have hmap :
-      (List.range T.dim).map
-          (fun i => (unitCoords T.dim index).getD i 0 •
-            images.getD i 0) =
-        (List.range T.dim).map
-          (fun i => (if index = i then (1 : Rat) else 0) •
-            images.getD i 0) := by
-    apply List.map_congr_left
-    intro i hi
-    rw [unitCoords_getD]
-    simp [List.mem_range.mp hi]
-  rw [hmap, sum_unit_range]
+  rw [foldl_congr_mem (List.range T.dim) _
+    (fun value i =>
+      if index = i then value + (1 : Rat) • images.getD i 0 else value) 0
+    (by
+      intro value i hi
+      rw [unitCoords_getD]
+      by_cases heq : index = i
+      · simp [List.mem_range.mp hi, heq]
+      · simp [List.mem_range.mp hi, heq])]
+  rw [fold_unit_range]
   simp [hindex]
 
 private theorem basisImages_complex (T : NumberTower)
     (generators : Array (Generator T)) (candidate : Candidate T)
     (hgenerators : generators? T = some generators)
-    (hcandidate : candidate? T generators = some candidate)
+    (hcandidate : candidate? generators = some candidate)
     (index : Nat) (hindex : index < T.dim) :
-    QAdjoin.toComplex
+    PolyQuot.toComplex
         (basisImages generators candidate.coordinates |>.getD index 0)
         candidate.root.rep candidate.root.rep_mk =
       T.toComplex (T.ofCoeffs (unitCoords T.dim index)) := by
-  letI : ZPoly.CheckedIrreducible candidate.root.p := candidate.root.checked
+  let : ZPoly.CheckedIrreducible candidate.root.p := candidate.root.checked
   have hgeneratorShape := generators?_shape T hgenerators
   have hcandidateShape := candidate?_shape T generators hcandidate
   have hcoordinates := candidate?_represents T generators hcandidate
@@ -1705,7 +1725,7 @@ private theorem basisImages_complex (T : NumberTower)
   have hvalues := basisImages_values generators candidate hcoordinates hlevels
   let images := basisImages generators candidate.coordinates
   have hvalues' : images.map
-      (fun a => QAdjoin.toComplex a candidate.root.rep
+      (fun a => PolyQuot.toComplex a candidate.root.rep
         candidate.root.rep_mk) =
       (levelBasis T.levels.toList).toArray := hvalues
   have himages : images.size = T.dim := by
@@ -1716,14 +1736,14 @@ private theorem basisImages_complex (T : NumberTower)
   have hget := congrArg (fun values : Array ℂ => values.getD index 0) hvalues'
   have hlevelSize : (levelBasis T.levels.toList).toArray.size = T.dim := by
     simp [dim]
-  simp only [Array.getD_eq_getD_getElem?, Array.getElem?_map,
-    Array.getElem?_eq_getElem, Array.size_map, himages, hindex, ↓reduceIte,
+  simp only [Array.getD_eq_getD_getElem?,
+    Array.getElem?_eq_getElem, Array.size_map, himages, hindex,
     hlevelSize, Option.getD_some] at hget
-  change QAdjoin.toComplex (images.getD index 0) candidate.root.rep
+  change PolyQuot.toComplex (images.getD index 0) candidate.root.rep
     candidate.root.rep_mk = _
-  rw [← Array.getElem_eq_getD (0 : QAdjoin candidate.root.p
+  rw [← Array.getElem_eq_getD (0 : PolyQuot candidate.root.p
     candidate.root.x) (h := by rw [himages]; exact hindex)]
-  have hget' : QAdjoin.toComplex
+  have hget' : PolyQuot.toComplex
       (images[index]'(by rw [himages]; exact hindex))
       candidate.root.rep candidate.root.rep_mk =
       ((levelBasis T.levels.toList).toArray[index]'(by
@@ -1745,13 +1765,13 @@ private theorem basisImages_complex (T : NumberTower)
 private theorem constructed_basis_roundtrip (T : NumberTower)
     (generators : Array (Generator T)) (candidate : Candidate T)
     (hgenerators : generators? T = some generators)
-    (hcandidate : candidate? T generators = some candidate)
+    (hcandidate : candidate? generators = some candidate)
     (index : Nat) (hindex : index < T.dim) :
     fromPrimitiveWith candidate.value
         (toPrimitiveWith (basisImages generators candidate.coordinates)
           (T.ofCoeffs (unitCoords T.dim index))) =
       T.ofCoeffs (unitCoords T.dim index) := by
-  letI : ZPoly.CheckedIrreducible candidate.root.p := candidate.root.checked
+  let : ZPoly.CheckedIrreducible candidate.root.p := candidate.root.checked
   rw [toPrimitiveWith_unit _ index hindex]
   apply toComplex_injective T
   rw [fromPrimitiveWith_complex candidate.value candidate.root.rep
@@ -1762,7 +1782,7 @@ private theorem constructed_basis_roundtrip (T : NumberTower)
       (generators?_sound T hgenerators) hcandidate
 
 private theorem certifies_basis {T : NumberTower} (candidate : Candidate T)
-    (images : Array (QAdjoin candidate.root.p candidate.root.x))
+    (images : Array (PolyQuot candidate.root.p candidate.root.x))
     (hcert : certifies candidate images = true) (i : Nat) (hi : i < T.dim) :
     fromPrimitiveWith candidate.value
         (toPrimitiveWith images (T.ofCoeffs (unitCoords T.dim i))) =
@@ -1795,12 +1815,12 @@ theorem flatten?_sound (T : NumberTower) {F : Flattening T}
     have hgeneratorsSound := Flatten.generators?_sound T hgenerators
     have hcandidateSound := Flatten.candidate?_matches T generators
       hgeneratorsSound hcandidate
-    letI : ZPoly.CheckedIrreducible candidate.root.p :=
+    let : ZPoly.CheckedIrreducible candidate.root.p :=
       candidate.root.checked
     let rep := candidate.root.rep
     have hrep : SimpleRoot.mk rep = candidate.root.x :=
       candidate.root.rep_mk
-    letI : Field (Elem T) := elemField T
+    let : Field (Elem T) := elemField T
     let towerAdd : Elem T →+ ℂ :=
       { toFun := T.toComplex
         map_zero' := by
@@ -1810,7 +1830,7 @@ theorem flatten?_sound (T : NumberTower) {F : Flattening T}
           intro a b
           change T.toComplex (a + b) = T.toComplex a + T.toComplex b
           exact map_add T a b }
-    letI : Module Rat (Elem T) :=
+    let : Module Rat (Elem T) :=
       Function.Injective.module Rat towerAdd (toComplex_injective T)
         (fun q a => by
           change T.toComplex (q • a) = q • T.toComplex a
@@ -1861,10 +1881,10 @@ theorem flatten?_sound (T : NumberTower) {F : Flattening T}
       rw [Flatten.unitCoords_getD]
       by_cases hij : i = j
       · subst j
-        simp [Pi.single_apply]
+        simp
       · have hji : j ≠ i := Ne.symm hij
         have hval : i.val ≠ j.val := fun h => hij (Fin.ext h)
-        simp [Pi.single_apply, hij, hji, hval, j.isLt]
+        simp [hji, hval, j.isLt]
     let towerMap : Elem T →ₗ[Rat] ℂ :=
       { toFun := T.toComplex
         map_add' := map_add T
@@ -1872,20 +1892,20 @@ theorem flatten?_sound (T : NumberTower) {F : Flattening T}
           intro q a
           simpa only [RingHom.id_apply, Rat.smul_def] using map_smul T q a }
     let primitiveMap : Elem T →ₗ[Rat] ℂ :=
-      { toFun := fun a => QAdjoin.toComplex
+      { toFun := fun a => PolyQuot.toComplex
           (Flatten.toPrimitiveWith images a) rep hrep
         map_add' := by
           intro a b
-          rw [Flatten.toPrimitiveWith_add, QAdjoin.map_add]
+          rw [Flatten.toPrimitiveWith_add, PolyQuot.map_add]
         map_smul' := by
           intro q a
           rw [Flatten.toPrimitiveWith_smul]
-          simpa only [RingHom.id_apply, Rat.smul_def] using QAdjoin.map_smul q
+          simpa only [RingHom.id_apply, Rat.smul_def] using PolyQuot.map_smul q
             (Flatten.toPrimitiveWith images a) rep hrep }
     have hmaps : primitiveMap = towerMap := by
       apply basis.ext
       intro i
-      change QAdjoin.toComplex
+      change PolyQuot.toComplex
           (Flatten.toPrimitiveWith images (basis i)) rep hrep =
         T.toComplex (basis i)
       rw [hbasis]
@@ -1895,13 +1915,13 @@ theorem flatten?_sound (T : NumberTower) {F : Flattening T}
         hcandidateSound] at hcomplex
       exact hcomplex
     have hforward (a : Elem T) :
-        QAdjoin.toComplex (Flatten.toPrimitiveWith images a) rep hrep =
+        PolyQuot.toComplex (Flatten.toPrimitiveWith images a) rep hrep =
           T.toComplex a := by
       change primitiveMap a = towerMap a
       rw [hmaps]
-    have hback (a : QAdjoin candidate.root.p candidate.root.x) :
+    have hback (a : PolyQuot candidate.root.p candidate.root.x) :
         T.toComplex (Flatten.fromPrimitiveWith candidate.value a) =
-          QAdjoin.toComplex a rep hrep :=
+          PolyQuot.toComplex a rep hrep :=
       Flatten.fromPrimitiveWith_complex candidate.value rep hrep
         hcandidateSound a
     unfold Flattening.Sound
@@ -1911,28 +1931,28 @@ theorem flatten?_sound (T : NumberTower) {F : Flattening T}
       apply toComplex_injective T
       rw [hback, hforward]
     · intro a
-      apply QAdjoin.toComplex_injective rep hrep
-      change QAdjoin.toComplex
+      apply PolyQuot.toComplex_injective rep hrep
+      change PolyQuot.toComplex
           (Flatten.toPrimitiveWith images
             (Flatten.fromPrimitiveWith candidate.value a)) rep hrep =
-        QAdjoin.toComplex a rep hrep
+        PolyQuot.toComplex a rep hrep
       rw [hforward, hback]
     · exact Flatten.toPrimitiveWith_add images
     · intro a b
-      apply QAdjoin.toComplex_injective rep hrep
-      change QAdjoin.toComplex
+      apply PolyQuot.toComplex_injective rep hrep
+      change PolyQuot.toComplex
           (Flatten.toPrimitiveWith images (a * b)) rep hrep =
-        QAdjoin.toComplex
+        PolyQuot.toComplex
           (Flatten.toPrimitiveWith images a *
             Flatten.toPrimitiveWith images b) rep hrep
-      rw [hforward, map_mul, QAdjoin.map_mul, hforward, hforward]
+      rw [hforward, map_mul, PolyQuot.map_mul, hforward, hforward]
     · intro a
-      apply QAdjoin.toComplex_injective rep hrep
-      change QAdjoin.toComplex
+      apply PolyQuot.toComplex_injective rep hrep
+      change PolyQuot.toComplex
           (Flatten.toPrimitiveWith images a⁻¹) rep hrep =
-        QAdjoin.toComplex
+        PolyQuot.toComplex
           (Flatten.toPrimitiveWith images a)⁻¹ rep hrep
-      rw [hforward, map_inv, QAdjoin.map_inv, hforward]
+      rw [hforward, map_inv, PolyQuot.map_inv, hforward]
   · have hfalse : Flatten.certifies candidate images = false :=
       Bool.eq_false_of_not_eq_true hcert
     simp [hfalse] at h
@@ -1976,17 +1996,17 @@ theorem flatten?_isSome (T : NumberTower) :
 /-- The forward primitive coordinate map preserves the fixed complex value. -/
 theorem flatten_toComplex (T : NumberTower) {F : Flattening T}
     (h : T.flatten? = some F) (a : Elem T) :
-    QAdjoin.toComplex (F.toPrimitive a) F.root.rep F.root.rep_mk =
+    PolyQuot.toComplex (F.toPrimitive a) F.root.rep F.root.rep_mk =
       T.toComplex a := by
-  letI : ZPoly.CheckedIrreducible F.root.p := F.root.checked
+  let : ZPoly.CheckedIrreducible F.root.p := F.root.checked
   exact (flatten?_sound T h).2.2.1 a
 
 /-- The inverse primitive coordinate map preserves the fixed complex value. -/
 theorem flatten_fromComplex (T : NumberTower) {F : Flattening T}
-    (h : T.flatten? = some F) (a : QAdjoin F.root.p F.root.x) :
+    (h : T.flatten? = some F) (a : PolyQuot F.root.p F.root.x) :
     T.toComplex (F.fromPrimitive a) =
-      QAdjoin.toComplex a F.root.rep F.root.rep_mk := by
-  letI : ZPoly.CheckedIrreducible F.root.p := F.root.checked
+      PolyQuot.toComplex a F.root.rep F.root.rep_mk := by
+  let : ZPoly.CheckedIrreducible F.root.p := F.root.checked
   exact (flatten?_sound T h).2.2.2.1 a
 
 end Hex.NumberTower

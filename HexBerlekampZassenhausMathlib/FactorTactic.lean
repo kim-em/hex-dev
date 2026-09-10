@@ -178,13 +178,13 @@ meta partial def parsePolynomial (tactic : String) (fuel : Nat) (e : Expr) :
       let vE ← Hex.CertificateSyntax.reifyZPoly v
       return (v, vE, mkConst ``HexBerlekampZassenhausMathlib.toPolynomial_X)
   | (``Polynomial.C, #[_, _, c]) => do
-      let k ← HexPolyZMathlib.PolyParse.evalIntLit tactic c
+      let k ← HexPolyZMathlib.PolyParse.evalIntCoeff tactic c
       constLeaf tactic k c none
   | (``DFunLike.coe, args) =>
       -- `Polynomial.C c` elaborates to `⇑Polynomial.C c`.
       if args.size == 6 && args[4]!.getAppFn.isConstOf ``Polynomial.C then do
         let c := args[5]!
-        let k ← HexPolyZMathlib.PolyParse.evalIntLit tactic c
+        let k ← HexPolyZMathlib.PolyParse.evalIntCoeff tactic c
         constLeaf tactic k c none
       else
         throwError "{tactic}: unsupported polynomial syntax{indentExpr e}"

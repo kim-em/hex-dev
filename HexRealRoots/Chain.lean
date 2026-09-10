@@ -54,7 +54,7 @@ def spemStep (g r : ZPoly) : ZPoly :=
   let lr := DensePoly.leadingCoeff r
   let absCg := if cg < 0 then -cg else cg
   let sgnLr := if cg < 0 then -lr else lr
-  let k := (DensePoly.degree? r).getD 0 - (DensePoly.degree? g).getD 0
+  let k := (r).natDegree - (g).natDegree
   DensePoly.scale absCg r - DensePoly.scale sgnLr (DensePoly.shift k g)
 
 /-- The reduction loop for `spem`, driven by structural `fuel`.
@@ -74,7 +74,7 @@ def spemAux (g : ZPoly) : Nat → ZPoly → ZPoly
   | 0, r => r
   | fuel + 1, r =>
       if r.isZero then r
-      else if (DensePoly.degree? r).getD 0 < (DensePoly.degree? g).getD 0 then r
+      else if (r).natDegree < (g).natDegree then r
       else spemAux g fuel (spemStep g r)
 
 /-- The sign-managed pseudo-remainder of `f` by `g`.

@@ -77,36 +77,36 @@ theorem exp_mem_mergeWith {fl fr : R → R} {fb : R → R → R}
       · cases hut
         rfl
   | case3 a as b bs hab hz ih =>
-      rw [mergeWith, if_pos hab, if_pos hz] at ht
+      rw [mergeWith, ite_eq_left hab, ite_eq_left hz] at ht
       rcases ih ht with ⟨u, hu, hut⟩ | ⟨u, hu, hut⟩
       · exact Or.inl ⟨u, List.mem_cons_of_mem _ hu, hut⟩
       · exact Or.inr ⟨u, hu, hut⟩
   | case4 a as b bs hab hz ih =>
-      rw [mergeWith, if_pos hab, if_neg hz] at ht
+      rw [mergeWith, ite_eq_left hab, ite_eq_right hz] at ht
       rcases List.mem_cons.mp ht with rfl | ht'
       · exact Or.inl ⟨a, List.mem_cons_self .., rfl⟩
       · rcases ih ht' with ⟨u, hu, hut⟩ | ⟨u, hu, hut⟩
         · exact Or.inl ⟨u, List.mem_cons_of_mem _ hu, hut⟩
         · exact Or.inr ⟨u, hu, hut⟩
   | case5 a as b bs hab hba hz ih =>
-      rw [mergeWith, if_neg hab, if_pos hba, if_pos hz] at ht
+      rw [mergeWith, ite_eq_right hab, ite_eq_left hba, ite_eq_left hz] at ht
       rcases ih ht with ⟨u, hu, hut⟩ | ⟨u, hu, hut⟩
       · exact Or.inl ⟨u, hu, hut⟩
       · exact Or.inr ⟨u, List.mem_cons_of_mem _ hu, hut⟩
   | case6 a as b bs hab hba hz ih =>
-      rw [mergeWith, if_neg hab, if_pos hba, if_neg hz] at ht
+      rw [mergeWith, ite_eq_right hab, ite_eq_left hba, ite_eq_right hz] at ht
       rcases List.mem_cons.mp ht with rfl | ht'
       · exact Or.inr ⟨b, List.mem_cons_self .., rfl⟩
       · rcases ih ht' with ⟨u, hu, hut⟩ | ⟨u, hu, hut⟩
         · exact Or.inl ⟨u, hu, hut⟩
         · exact Or.inr ⟨u, List.mem_cons_of_mem _ hu, hut⟩
   | case7 a as b bs hab hba hz ih =>
-      rw [mergeWith, if_neg hab, if_neg hba, if_pos hz] at ht
+      rw [mergeWith, ite_eq_right hab, ite_eq_right hba, ite_eq_left hz] at ht
       rcases ih ht with ⟨u, hu, hut⟩ | ⟨u, hu, hut⟩
       · exact Or.inl ⟨u, List.mem_cons_of_mem _ hu, hut⟩
       · exact Or.inr ⟨u, List.mem_cons_of_mem _ hu, hut⟩
   | case8 a as b bs hab hba hz ih =>
-      rw [mergeWith, if_neg hab, if_neg hba, if_neg hz] at ht
+      rw [mergeWith, ite_eq_right hab, ite_eq_right hba, ite_eq_right hz] at ht
       rcases List.mem_cons.mp ht with rfl | ht'
       · exact Or.inl ⟨a, List.mem_cons_self .., rfl⟩
       · rcases ih ht' with ⟨u, hu, hut⟩ | ⟨u, hu, hut⟩
@@ -160,10 +160,10 @@ theorem mergeWith_canonical {fl fr : R → R} {fb : R → R → R}
           rename_i hz
           exact hz
   | case3 a as b bs hab hz ih =>
-      rw [mergeWith, if_pos hab, if_pos hz]
+      rw [mergeWith, ite_eq_left hab, ite_eq_left hz]
       exact ih (List.pairwise_cons.mp hs₁).2 hs₂
   | case4 a as b bs hab hz ih =>
-      rw [mergeWith, if_pos hab, if_neg hz]
+      rw [mergeWith, ite_eq_left hab, ite_eq_right hz]
       rw [List.pairwise_cons] at hs₁
       obtain ⟨hpw, hnz⟩ := ih hs₁.2 hs₂
       refine ⟨List.pairwise_cons.mpr ⟨?_, hpw⟩, ?_⟩
@@ -180,10 +180,10 @@ theorem mergeWith_canonical {fl fr : R → R} {fb : R → R → R}
         · exact hz
         · exact hnz t ht'
   | case5 a as b bs hab hba hz ih =>
-      rw [mergeWith, if_neg hab, if_pos hba, if_pos hz]
+      rw [mergeWith, ite_eq_right hab, ite_eq_left hba, ite_eq_left hz]
       exact ih hs₁ (List.pairwise_cons.mp hs₂).2
   | case6 a as b bs hab hba hz ih =>
-      rw [mergeWith, if_neg hab, if_pos hba, if_neg hz]
+      rw [mergeWith, ite_eq_right hab, ite_eq_left hba, ite_eq_right hz]
       rw [List.pairwise_cons] at hs₂
       obtain ⟨hpw, hnz⟩ := ih hs₁ hs₂.2
       refine ⟨List.pairwise_cons.mpr ⟨?_, hpw⟩, ?_⟩
@@ -200,10 +200,10 @@ theorem mergeWith_canonical {fl fr : R → R} {fb : R → R → R}
         · exact hz
         · exact hnz t ht'
   | case7 a as b bs hab hba hz ih =>
-      rw [mergeWith, if_neg hab, if_neg hba, if_pos hz]
+      rw [mergeWith, ite_eq_right hab, ite_eq_right hba, ite_eq_left hz]
       exact ih (List.pairwise_cons.mp hs₁).2 (List.pairwise_cons.mp hs₂).2
   | case8 a as b bs hab hba hz ih =>
-      rw [mergeWith, if_neg hab, if_neg hba, if_neg hz]
+      rw [mergeWith, ite_eq_right hab, ite_eq_right hba, ite_eq_right hz]
       rw [List.pairwise_cons] at hs₁ hs₂
       obtain ⟨hpw, hnz⟩ := ih hs₁.2 hs₂.2
       refine ⟨List.pairwise_cons.mpr ⟨?_, hpw⟩, ?_⟩
@@ -230,7 +230,7 @@ theorem coeffList_filterMap_map {f : R → R} {l : List (Nat × R)}
   | cons a as ih =>
       rw [List.pairwise_cons] at hs
       by_cases hz : f a.2 = 0
-      · simp only [List.filterMap_cons, if_pos hz]
+      · simp only [List.filterMap_cons, ite_eq_left hz]
         by_cases hae : a.1 = e
         · have hrest0 : coeffList
               (as.filterMap fun t =>
@@ -244,14 +244,14 @@ theorem coeffList_filterMap_map {f : R → R} {l : List (Nat × R)}
               have := hs.1 u hu
               omega
           rw [hrest0]
-          simp only [coeffList, if_pos hae]
+          simp only [coeffList, ite_eq_left hae]
           exact hz.symm
         · rw [ih hs.2]
-          simp only [coeffList, if_neg hae]
-      · simp only [List.filterMap_cons, if_neg hz]
+          simp only [coeffList, ite_eq_right hae]
+      · simp only [List.filterMap_cons, ite_eq_right hz]
         by_cases hae : a.1 = e
-        · simp only [coeffList, if_pos hae]
-        · simp only [coeffList, if_neg hae]
+        · simp only [coeffList, ite_eq_left hae]
+        · simp only [coeffList, ite_eq_right hae]
           exact ih hs.2
 
 /-- Coefficient description of the merge. The three compatibility
@@ -277,7 +277,7 @@ theorem coeffList_mergeWith {fl fr : R → R} {fb : R → R → R}
       rw [show coeffList ([] : List (Nat × R)) e = 0 from rfl, hbl]
   | case3 a as b bs hab hz ih =>
       rw [List.pairwise_cons] at hs₁
-      rw [mergeWith, if_pos hab, if_pos hz, ih hs₁.2 hs₂]
+      rw [mergeWith, ite_eq_left hab, ite_eq_left hz, ih hs₁.2 hs₂]
       by_cases hae : a.1 = e
       · have htail : coeffList as e = 0 := by
           refine coeffList_eq_zero ?_
@@ -287,23 +287,23 @@ theorem coeffList_mergeWith {fl fr : R → R} {fb : R → R → R}
         have hright : coeffList (b :: bs) e = 0 :=
           coeffList_eq_zero_of_lt_head hs₂ (by omega)
         rw [htail, hright, hb00]
-        simp only [coeffList, if_pos hae]
+        simp only [coeffList, ite_eq_left hae]
         rw [hbl, hz]
-      · simp only [coeffList, if_neg hae]
+      · simp only [coeffList, ite_eq_right hae]
   | case4 a as b bs hab hz ih =>
       rw [List.pairwise_cons] at hs₁
-      rw [mergeWith, if_pos hab, if_neg hz]
+      rw [mergeWith, ite_eq_left hab, ite_eq_right hz]
       by_cases hae : a.1 = e
       · have hright : coeffList (b :: bs) e = 0 :=
           coeffList_eq_zero_of_lt_head hs₂ (by omega)
         rw [hright]
-        simp only [coeffList, if_pos hae]
+        simp only [coeffList, ite_eq_left hae]
         rw [hbl]
-      · simp only [coeffList, if_neg hae]
+      · simp only [coeffList, ite_eq_right hae]
         exact ih hs₁.2 hs₂
   | case5 a as b bs hab hba hz ih =>
       rw [List.pairwise_cons] at hs₂
-      rw [mergeWith, if_neg hab, if_pos hba, if_pos hz, ih hs₁ hs₂.2]
+      rw [mergeWith, ite_eq_right hab, ite_eq_left hba, ite_eq_left hz, ih hs₁ hs₂.2]
       by_cases hbe : b.1 = e
       · have htail : coeffList bs e = 0 := by
           refine coeffList_eq_zero ?_
@@ -313,24 +313,24 @@ theorem coeffList_mergeWith {fl fr : R → R} {fb : R → R → R}
         have hleft : coeffList (a :: as) e = 0 :=
           coeffList_eq_zero_of_lt_head hs₁ (by omega)
         rw [htail, hleft, hb00]
-        simp only [coeffList, if_pos hbe]
+        simp only [coeffList, ite_eq_left hbe]
         rw [hbr, hz]
-      · simp only [coeffList, if_neg hbe]
+      · simp only [coeffList, ite_eq_right hbe]
   | case6 a as b bs hab hba hz ih =>
       rw [List.pairwise_cons] at hs₂
-      rw [mergeWith, if_neg hab, if_pos hba, if_neg hz]
+      rw [mergeWith, ite_eq_right hab, ite_eq_left hba, ite_eq_right hz]
       by_cases hbe : b.1 = e
       · have hleft : coeffList (a :: as) e = 0 :=
           coeffList_eq_zero_of_lt_head hs₁ (by omega)
         rw [hleft]
-        simp only [coeffList, if_pos hbe]
+        simp only [coeffList, ite_eq_left hbe]
         rw [hbr]
-      · simp only [coeffList, if_neg hbe]
+      · simp only [coeffList, ite_eq_right hbe]
         exact ih hs₁ hs₂.2
   | case7 a as b bs hab hba hz ih =>
       have habeq : a.1 = b.1 := by omega
       rw [List.pairwise_cons] at hs₁ hs₂
-      rw [mergeWith, if_neg hab, if_neg hba, if_pos hz, ih hs₁.2 hs₂.2]
+      rw [mergeWith, ite_eq_right hab, ite_eq_right hba, ite_eq_left hz, ih hs₁.2 hs₂.2]
       by_cases hae : a.1 = e
       · have htail₁ : coeffList as e = 0 := by
           refine coeffList_eq_zero ?_
@@ -343,16 +343,16 @@ theorem coeffList_mergeWith {fl fr : R → R} {fb : R → R → R}
           have := hs₂.1 t ht
           omega
         rw [htail₁, htail₂, hb00]
-        simp only [coeffList, if_pos hae, if_pos (habeq ▸ hae)]
+        simp only [coeffList, ite_eq_left hae, ite_eq_left (habeq ▸ hae)]
         exact hz.symm
-      · simp only [coeffList, if_neg hae, if_neg (habeq ▸ hae)]
+      · simp only [coeffList, ite_eq_right hae, ite_eq_right (habeq ▸ hae)]
   | case8 a as b bs hab hba hz ih =>
       have habeq : a.1 = b.1 := by omega
       rw [List.pairwise_cons] at hs₁ hs₂
-      rw [mergeWith, if_neg hab, if_neg hba, if_neg hz]
+      rw [mergeWith, ite_eq_right hab, ite_eq_right hba, ite_eq_right hz]
       by_cases hae : a.1 = e
-      · simp only [coeffList, if_pos hae, if_pos (habeq ▸ hae)]
-      · simp only [coeffList, if_neg hae, if_neg (habeq ▸ hae)]
+      · simp only [coeffList, ite_eq_left hae, ite_eq_left (habeq ▸ hae)]
+      · simp only [coeffList, ite_eq_right hae, ite_eq_right (habeq ▸ hae)]
         exact ih hs₁.2 hs₂.2
 
 /-- The canonical-form invariant, list-level: exponents strictly
@@ -436,11 +436,11 @@ theorem mapTerms_canonical {g : Nat → Nat} {f : Nat → R → R}
         hmono x (List.mem_cons_of_mem _ hx) y (List.mem_cons_of_mem _ hy)
       by_cases hz : f a.1 a.2 = 0
       · rw [show mapTerms g f (a :: as) = mapTerms g f as from by
-          simp only [mapTerms, List.filterMap_cons, if_pos hz]]
+          simp only [mapTerms, List.filterMap_cons, ite_eq_left hz]]
         exact ⟨hpw, hnz⟩
       · rw [show mapTerms g f (a :: as) =
             (g a.1, f a.1 a.2) :: mapTerms g f as from by
-          simp only [mapTerms, List.filterMap_cons, if_neg hz]]
+          simp only [mapTerms, List.filterMap_cons, ite_eq_right hz]]
         refine ⟨List.pairwise_cons.mpr ⟨?_, hpw⟩, ?_⟩
         · intro t ht
           obtain ⟨u, hu, hut⟩ := exp_mem_mapTerms ht
@@ -466,7 +466,7 @@ theorem coeffList_mapTerms_apply {g : Nat → Nat} {f : Nat → R → R}
       have ih' := ih hs.2 fun u hu => hinj u (List.mem_cons_of_mem _ hu)
       by_cases hz : f a.1 a.2 = 0
       · rw [show mapTerms g f (a :: as) = mapTerms g f as from by
-          simp only [mapTerms, List.filterMap_cons, if_pos hz]]
+          simp only [mapTerms, List.filterMap_cons, ite_eq_left hz]]
         by_cases hae : a.1 = e
         · have htail : coeffList (mapTerms g f as) (g e) = 0 := by
             refine coeffList_eq_zero ?_
@@ -478,21 +478,21 @@ theorem coeffList_mapTerms_apply {g : Nat → Nat} {f : Nat → R → R}
             have := hs.1 u hu
             omega
           rw [htail]
-          simp only [coeffList, if_pos hae]
+          simp only [coeffList, ite_eq_left hae]
           rw [← hae, hz]
         · rw [ih']
-          simp only [coeffList, if_neg hae]
+          simp only [coeffList, ite_eq_right hae]
       · rw [show mapTerms g f (a :: as) =
             (g a.1, f a.1 a.2) :: mapTerms g f as from by
-          simp only [mapTerms, List.filterMap_cons, if_neg hz]]
+          simp only [mapTerms, List.filterMap_cons, ite_eq_right hz]]
         by_cases hae : a.1 = e
-        · simp only [coeffList, if_pos (show g a.1 = g e from by rw [hae]),
-            if_pos hae]
+        · simp only [coeffList, ite_eq_left (show g a.1 = g e from by rw [hae]),
+            ite_eq_left hae]
           rw [hae]
         · simp only [coeffList,
-            if_neg (fun h : g a.1 = g e =>
+            ite_eq_right (fun h : g a.1 = g e =>
               hae (hinj a (List.mem_cons_self ..) h)),
-            if_neg hae]
+            ite_eq_right hae]
           exact ih'
 
 /-- The mapped list stores nothing outside the image of the exponent
@@ -639,14 +639,14 @@ theorem coeff_mulMonomial' [Mul R] (hc0 : ∀ c : R, c * 0 = 0)
   unfold mulMonomial
   rw [coeff_ofCanonicalList]
   by_cases hef : e ≤ f
-  · rw [if_pos hef]
+  · rw [ite_eq_left hef]
     have happly := coeffList_mapTerms_apply (g := fun e' => e + e')
       (f := fun _ x => c * x) (l := s.terms.toList) (e := f - e)
       s.pairwise_toList (fun u _ h => by omega) (hc0 c)
     rw [show e + (f - e) = f from by omega] at happly
     rw [happly]
     rfl
-  · rw [if_neg hef]
+  · rw [ite_eq_right hef]
     exact coeffList_mapTerms_of_ne fun u _ h => by omega
 
 /-- Grind-classes form of `coeff_mulMonomial'`: a monomial multiple shifts and scales the coefficients. -/
@@ -701,10 +701,10 @@ private theorem getD_foldl_insert [Add R] (ps : List (Nat × R))
       by_cases hpf : p.1 = f
       · rw [List.filter_cons_of_pos (by simpa using hpf), List.foldl_cons,
           Std.ExtTreeMap.getD_insert,
-          if_pos (Std.LawfulEqCmp.compare_eq_iff_eq.mpr hpf), hpf]
+          ite_eq_left (Std.LawfulEqCmp.compare_eq_iff_eq.mpr hpf), hpf]
       · rw [List.filter_cons_of_neg (by simpa using hpf),
           Std.ExtTreeMap.getD_insert,
-          if_neg (fun h => hpf (Std.LawfulEqCmp.compare_eq_iff_eq.mp h))]
+          ite_eq_right (fun h => hpf (Std.LawfulEqCmp.compare_eq_iff_eq.mp h))]
 
 /-- The tree reads back the whole pairwise-product fold. -/
 private theorem getD_mulTree [Add R] [Mul R] (s t : SparsePoly R)

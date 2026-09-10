@@ -105,7 +105,7 @@ theorem mMatrix_entry_lt {R : Type u} {n : Nat}
     (i : Fin (n + 1)) (j : Fin (n + 1)) (h : j.val < n) :
     (mMatrix B v p)[i][j] = B[skipIndex p i][(⟨j.val, h⟩ : Fin n)] := by
   unfold mMatrix
-  rw [getElem_ofFn, dif_pos h, getElem_pair_eq_nested]
+  rw [getElem_ofFn, dite_eq_left h, getElem_pair_eq_nested]
 
 /-- The last column of `mMatrix B v p` is the vector `v` with row `p`
 deleted. -/
@@ -117,7 +117,7 @@ theorem mMatrix_entry_last {R : Type u} {n : Nat}
     simp [Fin.last]
   unfold mMatrix
   rw [getElem_ofFn]
-  exact dif_neg h
+  exact dite_eq_right h
 
 /-- The determinant of `mMatrix B v p`: the `(n + 1)`-maximal minor of
 `[B | v]` with row `p` deleted. -/
@@ -215,7 +215,7 @@ private theorem rowMoveUp_row_of_lt {R : Type u} {n m : Nat}
         intro heq; have := congrArg Fin.val heq; simp at this; omega
       have h_ne_i : i ≠ ⟨src + k, by omega⟩ := by
         intro heq; have := congrArg Fin.val heq; simp at this; omega
-      rw [if_neg h_ne_j, if_neg h_ne_i]
+      rw [ite_eq_right h_ne_j, ite_eq_right h_ne_i]
 
 /-- Rows of `M` strictly above the move interval are unchanged by
 `rowMoveUp`. -/
@@ -237,7 +237,7 @@ private theorem rowMoveUp_row_of_gt {R : Type u} {n m : Nat}
         intro heq; have := congrArg Fin.val heq; simp at this; omega
       have h_ne_i : i ≠ ⟨src + k, by omega⟩ := by
         intro heq; have := congrArg Fin.val heq; simp at this; omega
-      rw [if_neg h_ne_j, if_neg h_ne_i]
+      rw [ite_eq_right h_ne_j, ite_eq_right h_ne_i]
 
 /-- The bottom of the move interval (`i.val = src`) receives the row
 originally at the top of the interval (`src + k`). -/
@@ -259,7 +259,7 @@ private theorem rowMoveUp_row_eq_src {R : Type u} {n m : Nat}
       rw [rowSwap_get]
       have h_ne_j : (⟨src + k, by omega⟩ : Fin n) ≠ ⟨src + k + 1, h⟩ := by
         intro heq; have := congrArg Fin.val heq; simp at this
-      rw [if_neg h_ne_j, if_pos rfl]
+      rw [ite_eq_right h_ne_j, ite_eq_left rfl]
       have hii : (⟨src + k + 1, h⟩ : Fin n) = ⟨src + (k + 1), h⟩ := by
         apply Fin.ext; simp; omega
       rw [hii]
@@ -297,7 +297,7 @@ private theorem rowMoveUp_row_between {R : Type u} {n m : Nat}
             (⟨i.val - 1, by have := i.isLt; omega⟩ : Fin n)
               ≠ ⟨src + k, by omega⟩ := by
           intro heq; have := congrArg Fin.val heq; simp at this; omega
-        rw [if_neg h_ne_j, if_neg h_ne_i]
+        rw [ite_eq_right h_ne_j, ite_eq_right h_ne_i]
       · -- Boundary case: i.val = src + k + 1
         have hi_eq : i.val = src + k + 1 := by omega
         have h_gt : src + k < i.val := by omega
@@ -311,7 +311,7 @@ private theorem rowMoveUp_row_between {R : Type u} {n m : Nat}
         rw [rowSwap_get]
         have h_eq_j : i = (⟨src + k + 1, h⟩ : Fin n) := by
           apply Fin.ext; simp [hi_eq]
-        rw [if_pos h_eq_j]
+        rw [ite_eq_left h_eq_j]
         have hii : (⟨src + k, by omega⟩ : Fin n) =
             ⟨i.val - 1, by have := i.isLt; omega⟩ := by
           apply Fin.ext; simp; omega
@@ -904,7 +904,7 @@ theorem twoColMatrix_entry_lt {R : Type u} {n : Nat}
     (i j : Fin (n + 2)) (h : j.val < n) :
     (twoColMatrix B u v)[i][j] = B[i][(⟨j.val, h⟩ : Fin n)] := by
   unfold twoColMatrix
-  rw [getElem_ofFn, dif_pos h, getElem_pair_eq_nested]
+  rw [getElem_ofFn, dite_eq_left h, getElem_pair_eq_nested]
 
 /-- The penultimate column of `twoColMatrix B u v` is `u`. -/
 theorem twoColMatrix_entry_penultimate {R : Type u} {n : Nat}
@@ -917,7 +917,7 @@ theorem twoColMatrix_entry_penultimate {R : Type u} {n : Nat}
     simp
   have hneq : (⟨n, by omega⟩ : Fin (n + 2)).val = n := by
     simp
-  rw [dif_neg hnlt, dif_pos hneq]
+  rw [dite_eq_right hnlt, dite_eq_left hneq]
 
 /-- The last column of `twoColMatrix B u v` is `v`. -/
 theorem twoColMatrix_entry_last {R : Type u} {n : Nat}
@@ -930,7 +930,7 @@ theorem twoColMatrix_entry_last {R : Type u} {n : Nat}
     simp [Fin.last]
   have hlast_ne : ¬ (Fin.last (n + 1) : Fin (n + 2)).val = n := by
     simp [Fin.last]
-  rw [dif_neg hlast_lt, dif_neg hlast_ne]
+  rw [dite_eq_right hlast_lt, dite_eq_right hlast_ne]
 
 /-- The determinant of `[B | u | v]`. -/
 @[expose]
@@ -1026,19 +1026,20 @@ theorem mMatrix_eq_setCol_last {R : Type u} {n : Nat}
       have hval := congrArg Fin.val h
       simp [Fin.last] at hval
       omega
-    rw [if_neg hjne, mMatrix_entry_lt B v p (⟨i, hi⟩ : Fin (n + 1)) (⟨j, hj⟩ : Fin (n + 1)) hjlt,
+    rw [ite_eq_right hjne,
+      mMatrix_entry_lt B v p (⟨i, hi⟩ : Fin (n + 1)) (⟨j, hj⟩ : Fin (n + 1)) hjlt,
       mMatrix_entry_lt B w p (⟨i, hi⟩ : Fin (n + 1)) (⟨j, hj⟩ : Fin (n + 1)) hjlt]
   · have hjeq : j = n := by omega
     have hjlast : (⟨j, hj⟩ : Fin (n + 1)) = Fin.last n := by
       apply Fin.ext
       simp [Fin.last, hjeq]
-    rw [if_pos hjlast]
+    rw [ite_eq_left hjlast]
     show (mMatrix B v p)[(⟨i, hi⟩ : Fin (n + 1))][(⟨j, hj⟩ : Fin (n + 1))] = v[skipIndex p (⟨i, hi⟩ : Fin (n + 1))]
     unfold mMatrix
     rw [getElem_ofFn]
     have hjnlt : ¬ (⟨j, hj⟩ : Fin (n + 1)).val < n := by
       show ¬ j < n; exact hjlt
-    exact dif_neg hjnlt
+    exact dite_eq_right hjnlt
 
 /-- `mDet` is additive in the augmented vector column. -/
 theorem mDet_add_v {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
@@ -1072,10 +1073,10 @@ private theorem getElem_unit_num {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (Vector.unit R q)[i] = if i = q then (1 : R) else (0 : R) := by
   rw [Vector.getElem_unit]
   by_cases h : i = q
-  · rw [if_pos h.symm, if_pos h]
+  · rw [ite_eq_left h.symm, ite_eq_left h]
     rfl
   · have hqi : q ≠ i := fun hqi => h hqi.symm
-    rw [if_neg hqi, if_neg h]
+    rw [ite_eq_right hqi, ite_eq_right h]
     rfl
 
 /-- For `p < q`, the unique row of `Fin (n + 1)` that maps to `q` under
@@ -1168,9 +1169,9 @@ private theorem foldl_unit_weighted_single
     apply List.foldl_congr
     intro acc p _hmem
     by_cases hp : p = q
-    · rw [if_pos hp]
-    · rw [if_neg hp]
-      rw [getElem_unit_num, if_neg hp]
+    · rw [ite_eq_left hp]
+    · rw [ite_eq_right hp]
+      rw [getElem_unit_num, ite_eq_right hp]
       grind
   calc
     (List.finRange (n + 2)).foldl
@@ -1180,7 +1181,7 @@ private theorem foldl_unit_weighted_single
           acc + if p = q then (Vector.unit R q)[p] * f p else 0) 0 := hcongr
     _ = 0 + (Vector.unit R q)[q] * f q := hfold
     _ = f q := by
-      rw [getElem_unit_num, if_pos rfl]
+      rw [getElem_unit_num, ite_eq_left rfl]
       grind
 
 /-- Expands the augmented vector column of `mDet` in the standard basis. -/
@@ -1214,9 +1215,9 @@ theorem mDet_eq_sum_unit
       apply List.foldl_congr
       intro acc q _hmem
       by_cases hq : q = skipIndex p i
-      · rw [if_pos hq]
-      · rw [if_neg hq]
-        rw [getElem_unit_num, if_neg (fun h => hq h.symm)]
+      · rw [ite_eq_left hq]
+      · rw [ite_eq_right hq]
+        rw [getElem_unit_num, ite_eq_right (fun h => hq h.symm)]
         grind
     symm
     calc
@@ -1228,7 +1229,7 @@ theorem mDet_eq_sum_unit
               v[q] * (Vector.unit R q)[skipIndex p i] else 0) 0 := hcongr
       _ = 0 + v[skipIndex p i] * (Vector.unit R (skipIndex p i))[skipIndex p i] := hfold
       _ = v[skipIndex p i] := by
-        rw [getElem_unit_num, if_pos rfl]
+        rw [getElem_unit_num, ite_eq_left rfl]
         grind
   rw [hcol, det_setCol_sum_finRange]
   apply List.foldl_congr
@@ -1252,9 +1253,9 @@ theorem det_eq_signed_minor_of_col_basis
     rw [hcol row]
     by_cases h : row = q
     · subst h
-      rw [if_pos rfl, if_pos rfl]
+      rw [ite_eq_left rfl, ite_eq_left rfl]
       grind
-    · rw [if_neg h, if_neg h]
+    · rw [ite_eq_right h, ite_eq_right h]
       grind
   have hfold :
       (List.finRange (n + 1)).foldl
@@ -1423,19 +1424,19 @@ theorem mDet_unit_eq_signed_nDet_of_gt
     rw [mMatrix_entry_last, getElem_unit_num]
     by_cases hreq : r = r_q
     · subst hreq
-      rw [if_pos rfl]
+      rw [ite_eq_left rfl]
       have : skipIndex p r_q = q :=
         skipIndex_at_q_eq_q_of_gt p q hqp
       rw [this]
-      exact if_pos rfl
-    · rw [if_neg hreq]
+      exact ite_eq_left rfl
+    · rw [ite_eq_right hreq]
       have hne : skipIndex p r ≠ q := by
         intro heq
         have hq_eq : skipIndex p r_q = q :=
           skipIndex_at_q_eq_q_of_gt p q hqp
         have : skipIndex p r = skipIndex p r_q := heq.trans hq_eq.symm
         exact hreq (skipIndex_injective p this)
-      exact if_neg hne
+      exact ite_eq_right hne
   rw [det_eq_signed_minor_of_col_basis (mMatrix B (Vector.unit R q) p) r_q
         (Fin.last n) hcol]
   congr 1
@@ -1467,12 +1468,12 @@ theorem mDet_unit_eq_signed_nDet_of_lt
     rw [mMatrix_entry_last, getElem_unit_num]
     by_cases hreq : r = r_q
     · subst hreq
-      rw [if_pos rfl]
+      rw [ite_eq_left rfl]
       have : skipIndex p r_q = q :=
         skipIndex_at_q_minus_one_eq_q_of_lt p q hpq
       rw [this]
-      exact if_pos rfl
-    · rw [if_neg hreq]
+      exact ite_eq_left rfl
+    · rw [ite_eq_right hreq]
       -- Need: (if skipIndex p r = q then 1 else 0) = 0, i.e., skipIndex p r ≠ q.
       have hne : skipIndex p r ≠ q := by
         intro heq
@@ -1481,7 +1482,7 @@ theorem mDet_unit_eq_signed_nDet_of_lt
           skipIndex_at_q_minus_one_eq_q_of_lt p q hpq
         have : skipIndex p r = skipIndex p r_q := heq.trans hq_eq.symm
         exact hreq (skipIndex_injective p this)
-      exact if_neg hne
+      exact ite_eq_right hne
   rw [det_eq_signed_minor_of_col_basis (mMatrix B (Vector.unit R q) p) r_q
         (Fin.last n) hcol]
   congr 1
@@ -1502,7 +1503,7 @@ theorem mDet_unit_eq_zero_of_eq {R : Type u} [Lean.Grind.CommRing R]
       (Vector.unit R p)[skipIndex p r]) = (fun _ => (0 : R)) := by
     funext r
     rw [getElem_unit_num]
-    exact if_neg (skipIndex_ne p r)
+    exact ite_eq_right (skipIndex_ne p r)
   -- Express mMatrix as setCol with that zero function on the last column.
   rw [mMatrix_eq_setCol_last B (Vector.unit R p)
         (Vector.unit R p) p]
@@ -1617,9 +1618,9 @@ private theorem cofactorSign_consecutive_last_neg
   simp only [Fin.val_mk, Fin.last]
   by_cases h : (a + n) % 2 = 0
   · have hnext : (a + 1 + n) % 2 ≠ 0 := by omega
-    rw [if_pos h, if_neg hnext]
+    rw [ite_eq_left h, ite_eq_right hnext]
   · have hnext : (a + 1 + n) % 2 = 0 := by omega
-    rw [if_neg h, if_pos hnext]
+    rw [ite_eq_right h, ite_eq_left hnext]
     grind
 
 private theorem det_plucker_three_term_unit_of_eq_p1

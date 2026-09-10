@@ -1,0 +1,415 @@
+⚠ [1655/1963] Replayed HexBerlekamp.Factor
+warning: HexBerlekamp/Factor.lean:661:12: This simp argument is unused:
+  DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [DensePoly.degree?, DensePoly.size, hcoeffs]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [1657/1963] Replayed HexBerlekamp.RabinSoundness.RabinCore
+warning: HexBerlekamp/RabinSoundness/RabinCore.lean:1431:10: This simp argument is unused:
+  DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [DensePoly.degree?] at hh_deg
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [1659/1963] Replayed HexBerlekamp.RabinSoundness.KernelWitness
+warning: HexBerlekamp/RabinSoundness/KernelWitness.lean:57:8: This simp argument is unused:
+  DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [DensePoly.degree?, DensePoly.size, hcoeffs]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [1661/1963] Replayed HexBerlekamp.DistinctDegree
+warning: HexBerlekamp/DistinctDegree.lean:344:8: This simp argument is unused:
+  DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [DensePoly.degree?, DensePoly.size, hcoeffs]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [1665/1963] Replayed HexPolyZ.IntegerPolynomial
+warning: HexPolyZ/IntegerPolynomial.lean:172:8: This simp argument is unused:
+  DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [DensePoly.degree?, size_dilate_neg_one]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [1668/1963] Replayed HexPolyZ.Rational
+warning: HexPolyZ/Rational.lean:190:8: This simp argument is unused:
+  DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [DensePoly.degree?, size_normalizePrimitiveSign]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+ℹ [1755/1963] Replayed HexBareiss.Bareiss
+info: HexBareiss/Bareiss.lean:240:2: Try these:
+  [apply] [grind
+    .] for pattern: [@getElem (Vector #9 #8) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ #5 #1 _) #4 _, @findPivot? _ #8 #7 #6 #5 #4 #3]
+  [apply] [grind →] for pattern: [@findPivot? #9 #8 #7 #6 #5 #4 #3, @LE.le `[Nat] `[instLENat] #3 (@Fin.val #8 #1)]
+  [apply] [grind
+    <=] for pattern: [@getElem (Vector #9 #8) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ #5 #1 _) #4 _, @LE.le `[Nat] `[instLENat] #3 (@Fin.val #8 #1)]
+  [apply] [grind! →] for pattern: [@findPivot? #9 #8 #7 #6 #5 #4 #3, @Fin.val #8 #1]
+info: HexBareiss/Bareiss.lean:982:2: Try this:
+  [apply] [grind =] for pattern: [@pivotLoopWith #7 #6 #5 #4 #3 #2 #1 `[0] #0]
+info: HexBareiss/Bareiss.lean:990:2: Try these:
+  [apply] [grind =] for pattern: [@pivotLoopWith #9 #8 #7 #6 #5 #4 #3 (#2 + 1) #1]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] #8 ((@BareissState.step #9 #8 #1) + 1), @pivotLoopWith _ #8 #7 #6 #5 #4 #3 (#2 + 1) #1]
+info: HexBareiss/Bareiss.lean:1000:2: Try these:
+  [apply] [grind =] for pattern: [@pivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+  [apply] [grind
+    =_] for pattern: [@pivotLoopWith #10 #9 #8 #7 #6 #5 #4 #3 (@BareissState.mk _ #9 ((@BareissState.step _ #9 #2) + 1) (@stepMatrixWith _ #9 _ _ _ #4 (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.prevPivot _ #9 #2)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.rowSwaps _ #9 #2) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @pivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1017:2: Try these:
+  [apply] [grind =] for pattern: [@pivotLoopWith #11 #10 #9 #8 #7 #6 #5 (#4 + 1) #3]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #11 #10 #3) + 2) #10, @findPivot? _ #10 #9 #6 (@BareissState.matrix _ #10 #3) (@Fin.mk #10 (@BareissState.step _ #10 #3) _) ((@BareissState.step _ #10 #3) + 1), @pivotLoopWith _ #10 _ #8 #7 _ #5 (#4 + 1) #3]
+info: HexBareiss/Bareiss.lean:1033:2: Try these:
+  [apply] [grind
+    =_] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 #6 (@BareissState.mk _ #12 ((@BareissState.step _ #12 #5) + 1) (@stepMatrixWith _ #12 _ _ _ #7 (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) (@BareissState.prevPivot _ #12 #5)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) ((@BareissState.rowSwaps _ #12 #5) + 1) `[none])]
+  [apply] [grind
+    .] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 (#6 + 1) #5, @pivotLoopWith _ #12 _ _ _ _ #7 #6 (@BareissState.mk _ #12 ((@BareissState.step _ #12 #5) + 1) (@stepMatrixWith _ #12 _ _ _ #7 (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) (@BareissState.prevPivot _ #12 #5)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) ((@BareissState.rowSwaps _ #12 #5) + 1) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #13 #12 #5) + 2) #12, @findPivot? _ #12 #11 #8 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) ((@BareissState.step _ #12 #5) + 1), @some (Fin _) #2, @pivotLoopWith _ #12 _ #10 #9 _ #7 (#6 + 1) #5]
+  [apply] [grind!
+    .] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 (#6 + 1) #5, @rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2]
+info: HexBareiss/Bareiss.lean:1141:2: Try this:
+  [apply] [grind =] for pattern: [@noPivotLoopWith #7 #6 #5 #4 #3 #2 #1 `[0] #0]
+info: HexBareiss/Bareiss.lean:1149:2: Try these:
+  [apply] [grind =] for pattern: [@noPivotLoopWith #9 #8 #7 #6 #5 #4 #3 (#2 + 1) #1]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] #8 ((@BareissState.step #9 #8 #1) + 1), @noPivotLoopWith _ #8 #7 #6 #5 #4 #3 (#2 + 1) #1]
+info: HexBareiss/Bareiss.lean:1158:2: Try these:
+  [apply] [grind =] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @noPivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1168:2: Try these:
+  [apply] [grind =] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+  [apply] [grind
+    =_] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 #3 (@BareissState.mk _ #9 ((@BareissState.step _ #9 #2) + 1) (@stepMatrixWith _ #9 _ _ _ #4 (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.prevPivot _ #9 #2)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.rowSwaps _ #9 #2) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @noPivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1185:2: Try these:
+  [apply] [grind
+    =] for pattern: [@getElem (Vector #11 #10) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ (@BareissState.matrix _ #10 (@noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3)) #2 _) #1 _]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #10 #2) (@BareissState.step #11 #10 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #10 #1) + 1) (@BareissState.step _ #10 #3), @getElem (Vector _ _) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ (@BareissState.matrix _ #10 (@noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3)) #2 _) #1 _]
+  [apply] [grind!
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #10 #2) (@BareissState.step #11 #10 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #10 #1) + 1) (@BareissState.step _ #10 #3), @noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3]
+info: HexBareiss/Bareiss.lean:1660:2: Try this:
+  [apply] [grind
+    =] for pattern: [@pivotLoopWith `[Int] #1 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] `[0] #0]
+info: HexBareiss/Bareiss.lean:1665:2: Try these:
+  [apply] [grind
+    =] for pattern: [@pivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] #3 ((@BareissState.step `[Int] #3 #1) + 1), @pivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]
+info: HexBareiss/Bareiss.lean:1671:2: Try these:
+  [apply] [grind
+    =] for pattern: [@pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+  [apply] [grind
+    =_] for pattern: [@pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #3 (@BareissState.mk `[Int] #4 ((@BareissState.step `[Int] #4 #2) + 1) (@stepMatrixWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.prevPivot `[Int] #4 #2)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.rowSwaps `[Int] #4 #2) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1685:2: Try these:
+  [apply] [grind
+    =] for pattern: [@pivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#4 + 1) #3]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #5 #3) + 2) #5, @pivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#4 + 1) #3]
+info: HexBareiss/Bareiss.lean:1697:2: Try these:
+  [apply] [grind
+    =_] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #6 (@BareissState.mk `[Int] #7 ((@BareissState.step `[Int] #7 #5) + 1) (@stepMatrixWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) (@BareissState.prevPivot `[Int] #7 #5)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) ((@BareissState.rowSwaps `[Int] #7 #5) + 1) `[none])]
+  [apply] [grind
+    .] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5, @pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #6 (@BareissState.mk `[Int] #7 ((@BareissState.step `[Int] #7 #5) + 1) (@stepMatrixWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) (@BareissState.prevPivot `[Int] #7 #5)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) ((@BareissState.rowSwaps `[Int] #7 #5) + 1) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #7 #5) + 2) #7, @some (Fin _) #2, @pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5]
+  [apply] [grind!
+    .] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5, @rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2]
+info: HexBareiss/Bareiss.lean:1729:2: Try this:
+  [apply] [grind
+    =] for pattern: [@noPivotLoopWith `[Int] #1 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] `[0] #0]
+info: HexBareiss/Bareiss.lean:1734:2: Try these:
+  [apply] [grind
+    =] for pattern: [@noPivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] #3 ((@BareissState.step `[Int] #3 #1) + 1), @noPivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]
+info: HexBareiss/Bareiss.lean:1740:2: Try these:
+  [apply] [grind
+    =] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1747:2: Try these:
+  [apply] [grind
+    =] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+  [apply] [grind
+    =_] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #3 (@BareissState.mk `[Int] #4 ((@BareissState.step `[Int] #4 #2) + 1) (@stepMatrixWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.prevPivot `[Int] #4 #2)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.rowSwaps `[Int] #4 #2) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1761:2: Try these:
+  [apply] [grind
+    =] for pattern: [@getElem (Vector `[Int] #5) (Fin _) `[Int] _ _ (@getElem (Matrix `[Int] _ _) (Fin _) (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #5 (@noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3)) #2 _) #1 _]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #5 #2) (@BareissState.step `[Int] #5 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #5 #1) + 1) (@BareissState.step `[Int] #5 #3), @getElem (Vector `[Int] _) (Fin _) `[Int] _ _ (@getElem (Matrix `[Int] _ _) (Fin _) (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #5 (@noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3)) #2 _) #1 _]
+  [apply] [grind!
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #5 #2) (@BareissState.step `[Int] #5 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #5 #1) + 1) (@BareissState.step `[Int] #5 #3), @noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3]
+⚠ [2126/2248] Replayed HexPolyFpMathlib.Basic
+warning: HexPolyFpMathlib/Basic.lean:303:12: This simp argument is unused:
+  Hex.DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Hex.DensePoly.degree?, hsize]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+ℹ [9390/9505] Replayed HexBerlekampZassenhaus.FactorTacticTests
+info: HexBerlekampZassenhaus/FactorTacticTests.lean:24:0: Hex.ZPoly.factorize (f : ZPoly) : Factorization
+info: HexBerlekampZassenhaus/FactorTacticTests.lean:25:0: Hex.ZPoly.factors (f : ZPoly) : Array (ZPoly × Nat)
+info: HexBerlekampZassenhaus/FactorTacticTests.lean:26:0: Hex.Factorization.product (φ : Factorization) : ZPoly
+info: HexBerlekampZassenhaus/FactorTacticTests.lean:27:0: Hex.factorClassical (f : ZPoly) : Option Factorization
+info: HexBerlekampZassenhaus/FactorTacticTests.lean:28:0: Hex.factorLattice (f : ZPoly) : Option Factorization
+info: HexBerlekampZassenhaus/FactorTacticTests.lean:29:0: Hex.factorTrial (f : ZPoly) : Factorization
+info: HexBerlekampZassenhaus/FactorTacticTests.lean:110:16: factor_poly: unsupported polynomial type
+  ZPoly
+Supported without further imports: Hex.FpPoly p (prime p). Importing HexBerlekampZassenhaus adds Hex.ZPoly; the Mathlib integration libraries add Polynomial (ZMod q) and Polynomial ℤ.
+
+factor_poly: the irreducible factor
+  DensePoly.ofCoeffs #[1, 0, -10, 0, 1]
+has no single-prime modular witness among the candidate primes (its modular factorizations are balanced, e.g. Swinnerton-Dyer polynomials) and is not Eisenstein at any small shift; the Mathlib integration's multi-prime degree-obstruction certificates may certify it; please import HexBerlekampZassenhausMathlib.
+⚠ [9899/10028] Replayed HexRootsMathlib.Taylor
+warning: HexRootsMathlib/Taylor.lean:73:10: This simp argument is unused:
+  Hex.DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Hex.DensePoly.degree?, Nat.ne_of_gt hp]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [9900/10028] Replayed HexRootsMathlib.NKWitness
+warning: HexRootsMathlib/NKWitness.lean:256:10: This simp argument is unused:
+  Hex.DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Hex.DensePoly.degree?, Nat.ne_of_gt hp]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [9907/10028] Replayed HexRootsMathlib.SoftPellet
+warning: HexRootsMathlib/SoftPellet.lean:504:12: This simp argument is unused:
+  Hex.DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Hex.DensePoly.degree?, Nat.ne_of_gt hp]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [9908/10028] Replayed HexRootsMathlib.RootFree
+warning: HexRootsMathlib/RootFree.lean:109:12: This simp argument is unused:
+  Hex.DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Hex.DensePoly.degree?, Nat.ne_of_gt hp]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [9917/10028] Replayed HexIntervalMathlib.Experiment.PntTable12Log
+warning: HexIntervalMathlib/Experiment/PntTable12Log.lean:377:65: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+warning: HexIntervalMathlib/Experiment/PntTable12Log.lean:378:39: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+warning: HexIntervalMathlib/Experiment/PntTable12Log.lean:382:70: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+warning: HexIntervalMathlib/Experiment/PntTable12Log.lean:383:44: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+warning: HexIntervalMathlib/Experiment/PntTable12Log.lean:387:74: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+warning: HexIntervalMathlib/Experiment/PntTable12Log.lean:388:48: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+warning: HexIntervalMathlib/Experiment/PntTable12Log.lean:392:71: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+warning: HexIntervalMathlib/Experiment/PntTable12Log.lean:393:45: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+warning: HexIntervalMathlib/Experiment/PntTable12Log.lean:412:65: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+warning: HexIntervalMathlib/Experiment/PntTable12Log.lean:413:44: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+warning: HexIntervalMathlib/Experiment/PntTable12Log.lean:417:70: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+warning: HexIntervalMathlib/Experiment/PntTable12Log.lean:418:49: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+warning: HexIntervalMathlib/Experiment/PntTable12Log.lean:422:74: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+warning: HexIntervalMathlib/Experiment/PntTable12Log.lean:423:53: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+warning: HexIntervalMathlib/Experiment/PntTable12Log.lean:427:71: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+warning: HexIntervalMathlib/Experiment/PntTable12Log.lean:428:50: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+info: HexIntervalMathlib/Experiment/PntTable12Log.lean:872:20: Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+info: HexIntervalMathlib/Experiment/PntTable12Log.lean:872:20: Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+ℹ [9974/10612] Replayed HexHermite.Conformance
+info: conformance/HexHermite/Conformance.lean:54:0: Hex.Matrix.isHNFForm {n m : Nat} (H : Matrix Int n m) (r : Nat) (piv : Vector (Fin m) r) : Bool
+info: conformance/HexHermite/Conformance.lean:55:0: Hex.Matrix.hnf {n m : Nat} (A : Matrix Int n m) : Matrix Int n m
+info: conformance/HexHermite/Conformance.lean:56:0: Hex.Matrix.hnfRank {n m : Nat} (A : Matrix Int n m) : Nat
+info: conformance/HexHermite/Conformance.lean:57:0: Hex.Matrix.hnfBasis {n m : Nat} (A : Matrix Int n m) : Matrix Int A.hnfRank m
+info: conformance/HexHermite/Conformance.lean:58:0: Hex.Matrix.hnfData {n m : Nat} (A : Matrix Int n m) : RowEchelonData Int n m
+info: conformance/HexHermite/Conformance.lean:59:0: Hex.Matrix.hnfWithInv {n m : Nat} (A : Matrix Int n m) : HermiteData n m
+info: conformance/HexHermite/Conformance.lean:60:0: Hex.Matrix.latticeCoeffs {n m : Nat} (A : Matrix Int n m) (v : Vector Int m) : Option (Vector Int n)
+info: conformance/HexHermite/Conformance.lean:61:0: Hex.Matrix.latticeContains {n m : Nat} (A : Matrix Int n m) (v : Vector Int m) : Bool
+info: conformance/HexHermite/Conformance.lean:62:0: Hex.Matrix.kernelBasis {n m : Nat} (A : Matrix Int n m) : Matrix Int (n - A.hnfRank) n
+info: conformance/HexHermite/Conformance.lean:63:0: Hex.Matrix.pivots {n m : Nat} (A : Matrix Int n m) : Vector Nat A.hnfRank
+info: conformance/HexHermite/Conformance.lean:64:0: Hex.Matrix.latticeIndex {n m : Nat} (A : Matrix Int n m) : Nat
+info: conformance/HexHermite/Conformance.lean:65:0: Hex.Matrix.hnfCert {n m : Nat} (A H : Matrix Int n m) (U W : Matrix Int n n) (r : Nat) (piv : Vector (Fin m) r) : Bool
+ℹ [10001/10612] Replayed HexBareiss.Conformance
+info: conformance/HexBareiss/Conformance.lean:85:0: instExactDivLawsField
+⚠ [10050/10612] Replayed HexMvGcd.Gauss
+warning: HexMvGcd/Gauss.lean:59:8: declaration uses `sorry`
+warning: HexMvGcd/Gauss.lean:293:8: declaration uses `sorry`
+warning: HexMvGcd/Gauss.lean:310:8: declaration uses `sorry`
+⚠ [10051/10612] Replayed HexMvGcd.Cert
+warning: HexMvGcd/Cert.lean:555:8: declaration uses `sorry`
+warning: HexMvGcd/Cert.lean:582:8: declaration uses `sorry`
+warning: HexMvGcd/Cert.lean:593:8: declaration uses `sorry`
+⚠ [10052/10612] Replayed HexMvGcd.Content
+warning: HexMvGcd/Content.lean:314:8: declaration uses `sorry`
+⚠ [10053/10612] Replayed HexMvGcd.Prs
+warning: HexMvGcd/Prs.lean:323:8: declaration uses `sorry`
+⚠ [10056/10612] Replayed HexMvGcd.Brown
+warning: HexMvGcd/Brown.lean:594:8: declaration uses `sorry`
+⚠ [10058/10612] Replayed HexMvGcd.Gcd
+warning: HexMvGcd/Gcd.lean:330:8: declaration uses `sorry`
+⚠ [10059/10612] Replayed HexMvGcd.Squarefree
+warning: HexMvGcd/Squarefree.lean:617:8: declaration uses `sorry`
+warning: HexMvGcd/Squarefree.lean:623:8: declaration uses `sorry`
+warning: HexMvGcd/Squarefree.lean:663:8: declaration uses `sorry`
+warning: HexMvGcd/Squarefree.lean:671:8: declaration uses `sorry`
+warning: HexMvGcd/Squarefree.lean:676:8: declaration uses `sorry`
+warning: HexMvGcd/Squarefree.lean:681:8: declaration uses `sorry`
+warning: HexMvGcd/Squarefree.lean:703:8: declaration uses `sorry`
+ℹ [10357/10612] Replayed HexSmith.Conformance
+info: conformance/HexSmith/Conformance.lean:82:0: Hex.Matrix.snf {n m : Nat} (A : Matrix Int n m) : Matrix Int n m
+info: conformance/HexSmith/Conformance.lean:83:0: Hex.Matrix.snfRank {n m : Nat} (A : Matrix Int n m) : Nat
+info: conformance/HexSmith/Conformance.lean:84:0: Hex.Matrix.snfData {n m : Nat} (A : Matrix Int n m) : SmithData n m
+info: conformance/HexSmith/Conformance.lean:85:0: Hex.Matrix.smithBasis {n m : Nat} (A : Matrix Int n m) : Matrix Int A.snfRank m
+info: conformance/HexSmith/Conformance.lean:86:0: Hex.Matrix.invariantFactors {n m : Nat} (A : Matrix Int n m) : Vector Int A.snfRank
+info: conformance/HexSmith/Conformance.lean:87:0: Hex.Matrix.snfDiagonal {r : Nat} (d : Vector Int r) : Matrix Int r r
+info: conformance/HexSmith/Conformance.lean:88:0: Hex.Matrix.snfDiagonalData {r : Nat} (d : Vector Int r) : SmithData r r
+info: conformance/HexSmith/Conformance.lean:89:0: Hex.Matrix.abelianStructure {n m : Nat} (A : Matrix Int n m) : AbelianStructure
+info: conformance/HexSmith/Conformance.lean:90:0: Hex.Matrix.detDivisor {n m : Nat} (A : Matrix Int n m) (k : Nat) : Nat
+info: conformance/HexSmith/Conformance.lean:91:0: Hex.Matrix.isSNFShape {n m : Nat} (S : SmithData n m) : Bool
+info: conformance/HexSmith/Conformance.lean:92:0: Hex.Matrix.snfCert {n m : Nat} (A : Matrix Int n m) (S : SmithData n m) (T : Matrix Int n m) : Bool
+⚠ [10380/10612] Replayed HexMvHensel.Shift
+warning: HexMvHensel/Shift.lean:165:16: declaration uses `sorry`
+warning: HexMvHensel/Shift.lean:175:8: declaration uses `sorry`
+warning: HexMvHensel/Shift.lean:180:8: declaration uses `sorry`
+warning: HexMvHensel/Shift.lean:185:8: declaration uses `sorry`
+warning: HexMvHensel/Shift.lean:190:8: declaration uses `sorry`
+warning: HexMvHensel/Shift.lean:196:8: declaration uses `sorry`
+⚠ [10382/10612] Replayed HexMvHensel.Uni
+warning: HexMvHensel/Uni.lean:395:8: declaration uses `sorry`
+warning: HexMvHensel/Uni.lean:404:8: declaration uses `sorry`
+warning: HexMvHensel/Uni.lean:420:8: declaration uses `sorry`
+⚠ [10383/10612] Replayed HexMvHensel.Diophantine
+warning: HexMvHensel/Diophantine.lean:189:8: declaration uses `sorry`
+⚠ [10386/10612] Replayed HexMvHensel.Lift
+warning: HexMvHensel/Lift.lean:77:8: declaration uses `sorry`
+warning: HexMvHensel/Lift.lean:170:8: declaration uses `sorry`
+warning: HexMvHensel/Lift.lean:179:8: declaration uses `sorry`
+⚠ [10387/10612] Replayed HexMvHensel.Complete
+warning: HexMvHensel/Complete.lean:44:8: declaration uses `sorry`
+warning: HexMvHensel/Complete.lean:54:8: declaration uses `sorry`
+warning: HexMvHensel/Complete.lean:284:8: declaration uses `sorry`
+warning: HexMvHensel/Complete.lean:326:8: declaration uses `sorry`
+⚠ [10393/10612] Replayed HexMvFactor.Irred
+warning: HexMvFactor/Irred.lean:79:8: declaration uses `sorry`
+ℹ [10401/10612] Replayed HexIntFactor.Conformance
+info: conformance/HexIntFactor/Conformance.lean:764:0: Hex.Nat.factorPowerWithRoute?_cyclotomic {b n : Nat} {sign : Sign} {r r' : Rand} {fuel : Nat}
+  {F : CheckedFactorization (powerTarget b n sign)}
+  (h : factorPowerWithRoute? b n sign r fuel = Except.ok (F, r', PowerRoute.cyclotomic)) :
+  ∃ parts, cyclotomicSplit? b n sign = some parts
+info: conformance/HexIntFactor/Conformance.lean:765:0: Hex.Nat.factorPower?_error_iff {b n : Nat} {sign : Sign} {r : Rand} {fuel : Nat} {failure : FactorFailure} :
+  factorPower? b n sign r fuel = Except.error failure ↔ factorPowerWithRoute? b n sign r fuel = Except.error failure
+info: conformance/HexIntFactor/Conformance.lean:766:0: Hex.Nat.factorPower?_ok_iff {b n : Nat} {sign : Sign} {r r' : Rand} {fuel : Nat}
+  {F : CheckedFactorization (powerTarget b n sign)} :
+  factorPower? b n sign r fuel = Except.ok (F, r') ↔
+    ∃ route, factorPowerWithRoute? b n sign r fuel = Except.ok (F, r', route)
+info: conformance/HexIntFactor/Conformance.lean:767:0: Hex.Nat.factorPowerWithRoute?_generic {b n : Nat} {sign : Sign} {r : Rand} {fuel : Nat}
+  (hparts : cyclotomicSplit? b n sign = none) :
+  factorPowerWithRoute? b n sign r fuel =
+    Except.map
+      (fun x =>
+        match x with
+        | (F, r') => (F, r', PowerRoute.generic))
+      (factor? (powerTarget b n sign) r fuel)
+ℹ [10606/10980] Replayed HexIntervalMathlib.RuleConformance
+info: conformance/HexIntervalMathlib/RuleConformance.lean:434:0: 'Hex.IntervalMathlib.RuleConformance.arithmeticDag' depends on axioms: [propext, Classical.choice, Quot.sound]
+ℹ [10608/10980] Replayed HexIntervalMathlib.TacticConformance
+info: conformance/HexIntervalMathlib/TacticConformance.lean:114:2: interval? using nodes=256, term-depth=32 (about 16 arithmetic levels after automatic regularization), chronology=256, precision=16
+info: conformance/HexIntervalMathlib/TacticConformance.lean:118:2: interval_bound: [2, 4]; selected cuts: 2 ≤ e and e ≤ 4, where e = x + x; proved by a 3-node recipe with 2 replay events
+⚠ [10995/11031] Replayed HexManual.Chapters.HexGraphIso
+warning: HexManual/Chapters/HexGraphIso.lean:199:0: Line 199 is too long (70 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+warning: HexManual/Chapters/HexGraphIso.lean:213:0: Line 213 is too long (61 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+warning: HexManual/Chapters/HexGraphIso.lean:451:0: Line 451 is too long (65 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+warning: HexManual/Chapters/HexGraphIso.lean:456:0: Line 456 is too long (67 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+warning: HexManual/Chapters/HexGraphIso.lean:459:0: Line 459 is too long (64 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+warning: HexManual/Chapters/HexGraphIso.lean:461:0: Line 461 is too long (65 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+warning: HexManual/Chapters/HexGraphIso.lean:462:0: Line 462 is too long (68 columns exceeds 60).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.
+ℹ [11008/11031] Replayed HexPrimality.Table:c.o
+info: stderr:
+/home/kim/worktrees/hex-dev/hex-dev-issue-9619/.lake/build/ir/HexPrimality/Table.c:30:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]
+1 warning generated.
+Build completed successfully (11031 jobs).

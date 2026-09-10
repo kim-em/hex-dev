@@ -133,9 +133,9 @@ private theorem leadingTerm_monomial_mul {g : MvPoly n R cmp}
               intro acc ab hab
               by_cases hab' : ab = (m, mg)
               · subst ab
-                rw [Hex.ite_eq_left rfl, coeff_monomial,
-                  Hex.ite_eq_left rfl, coeff_eq_of_leadingTerm hg]
-              · rw [Hex.ite_eq_right hab']
+                rw [ite_eq_left rfl, coeff_monomial,
+                  ite_eq_left rfl, coeff_eq_of_leadingTerm hg]
+              · rw [ite_eq_right hab']
                 by_cases ham : ab.1 = m
                 · have hmul := (Mono.splits_mem_iff ..).mp hab
                   have hbm : ab.2 = mg := by
@@ -144,7 +144,7 @@ private theorem leadingTerm_monomial_mul {g : MvPoly n R cmp}
                       Mono.mul m ab.2 = Mono.mul ab.1 ab.2 := by rw [ham]
                       _ = Mono.mul m mg := hmul
                   exact False.elim (hab' (Prod.ext ham hbm))
-                · rw [coeff_monomial, Hex.ite_eq_right ham,
+                · rw [coeff_monomial, ite_eq_right ham,
                     Lean.Grind.Semiring.zero_mul]
       _ = 0 + c * cg :=
         List.foldl_add_single _ _ _ _ hmem
@@ -177,16 +177,18 @@ private theorem leadingTerm_monomial_mul {g : MvPoly n R cmp}
       rw [coeff_monomial] at hacoeff
       by_cases heq : a = m
       · exact heq
-      · rw [Hex.ite_eq_right heq] at hacoeff
+      · rw [ite_eq_right heq] at hacoeff
         exact False.elim (hacoeff rfl)
     subst a
     rw [Mono.mul_comm m b, Mono.mul_comm m mg,
       ← IsMonomialOrder.mul_mono (cmp := cmp) b mg m]
     exact le_leadingTerm hg b hb
 
-/-- The leading term of a product is the product of the leading terms over a
-coefficient domain. -/
-theorem leadingTerm_mul [LawfulGcdOps R]
+omit [Dvd R] [GcdOps R] in
+/-- The leading term of a product is the product of the leading terms when
+the coefficient ring has no zero divisors. -/
+theorem leadingTerm_mul_of_no_zero_div
+    (noZeroDiv : ∀ a b : R, a * b = 0 → a = 0 ∨ b = 0)
     {p q : MvPoly n R cmp} {mp mq : Mono n} {cp cq : R}
     (hp : p.leadingTerm = some (mp, cp))
     (hq : q.leadingTerm = some (mq, cq)) :
@@ -201,7 +203,7 @@ theorem leadingTerm_mul [LawfulGcdOps R]
     exact q.coeff?_ne_zero mq (hqc.trans (congrArg some hzero))
   have hprod : cp * cq ≠ 0 := by
     intro hzero
-    rcases LawfulGcdOps.no_zero_div cp cq hzero with hzero | hzero
+    rcases noZeroDiv cp cq hzero with hzero | hzero
     · exact hcp hzero
     · exact hcq hzero
   have hcoeff : coeff (Mono.mul mp mq) (p * q) = cp * cq := by
@@ -217,9 +219,9 @@ theorem leadingTerm_mul [LawfulGcdOps R]
               intro acc ab hab
               by_cases hpq : ab = (mp, mq)
               · subst ab
-                rw [Hex.ite_eq_left rfl, coeff_eq_of_leadingTerm hp,
+                rw [ite_eq_left rfl, coeff_eq_of_leadingTerm hp,
                   coeff_eq_of_leadingTerm hq]
-              · rw [Hex.ite_eq_right hpq]
+              · rw [ite_eq_right hpq]
                 by_cases hpa : coeff ab.1 p = 0
                 · rw [hpa, Lean.Grind.Semiring.zero_mul]
                 · by_cases hqb : coeff ab.2 q = 0
@@ -263,6 +265,14 @@ theorem leadingTerm_mul [LawfulGcdOps R]
   · intro m hm
     rcases exists_mul_of_mem hm with ⟨a, ha, b, hb, rfl⟩
     exact mul_isLE (le_leadingTerm hp a ha) (le_leadingTerm hq b hb)
+
+/-- The leading-term product law specialized to executable gcd domains. -/
+theorem leadingTerm_mul [LawfulGcdOps R]
+    {p q : MvPoly n R cmp} {mp mq : Mono n} {cp cq : R}
+    (hp : p.leadingTerm = some (mp, cp))
+    (hq : q.leadingTerm = some (mq, cq)) :
+    (p * q).leadingTerm = some (Mono.mul mp mq, cp * cq) :=
+  leadingTerm_mul_of_no_zero_div LawfulGcdOps.no_zero_div hp hq
 
 omit [DecidableEq R] [Dvd R] [GcdOps R] in
 private theorem leadRel_sub_of_cancel {r s : MvPoly n R cmp}
@@ -323,7 +333,7 @@ private theorem leadRel_moveLeading {r : MvPoly n R cmp}
     have hkm : k = m := by
       by_cases heq : k = m
       · exact heq
-      · rw [Hex.ite_eq_right heq] at hkcoeff
+      · rw [ite_eq_right heq] at hkcoeff
         exact False.elim (hkcoeff rfl)
     subst k
     simp only [Std.ReflCmp.compare_self, Ordering.isLE]
@@ -473,7 +483,7 @@ private theorem reduced_add_monomial {g s : MvPoly n R cmp}
   · subst k
     have hcoeff : coeff m (s + monomial m c) = c := by
       rw [coeff_add, hsm, coeff_monomial]
-      rw [Hex.ite_eq_left rfl]
+      rw [ite_eq_left rfl]
       exact Lean.Grind.AddCommMonoid.zero_add c
     simpa only [hcoeff] using hterm
   · have hks : k ∈ s.monomials := by
@@ -481,10 +491,10 @@ private theorem reduced_add_monomial {g s : MvPoly n R cmp}
       · exact hks
       · have hkcoeff := (mem_monomials_iff k
           (monomial m c : MvPoly n R cmp)).mp hkmono
-        rw [coeff_monomial, Hex.ite_eq_right hkm] at hkcoeff
+        rw [coeff_monomial, ite_eq_right hkm] at hkcoeff
         exact False.elim (hkcoeff rfl)
     have hcoeff : coeff k (s + monomial m c) = coeff k s := by
-      rw [coeff_add, coeff_monomial, Hex.ite_eq_right hkm,
+      rw [coeff_add, coeff_monomial, ite_eq_right hkm,
         Lean.Grind.AddCommMonoid.add_zero]
     simpa only [hcoeff] using hs k hks
 
@@ -521,7 +531,7 @@ private theorem above_add_monomial {r r' s : MvPoly n R cmp}
     have hkm : k = m := by
       by_cases heq : k = m
       · exact heq
-      · rw [Hex.ite_eq_right heq] at hkcoeff
+      · rw [ite_eq_right heq] at hkcoeff
         exact False.elim (hkcoeff rfl)
     subst k
     unfold leadRel at hrel
@@ -660,7 +670,7 @@ term. -/
 theorem divMod_reduced {f g : MvPoly n R cmp} (hg : g ≠ 0) :
     ReducedBy (divMod f g).2 g := by
   unfold divMod
-  rw [Hex.ite_eq_right hg]
+  rw [ite_eq_right hg]
   apply divModAux_reduced g 0 f 0 hg
   · intro m hm
     have hmne := (mem_monomials_iff m (0 : MvPoly n R cmp)).mp hm
@@ -770,7 +780,7 @@ private theorem divExactAux_mul [LawfulGcdOps R]
             exact g.coeff?_ne_zero mg
               (hlookup.trans (congrArg some hzero))
           rw [LawfulGcdOps.exactDiv_cancel cq cg hcg,
-            Hex.ite_eq_left rfl]
+            ite_eq_left rfl]
           have hpoly :
               q * g - monomial mq cq * g =
                 (q - monomial mq cq) * g := by
@@ -810,7 +820,7 @@ theorem divExact?_eq [LawfulGcdOps R] {f g q : MvPoly n R cmp}
       simp [divExact?, hg]
     · have hprod : q * g ≠ 0 := mul_ne_zero hq hg
       unfold divExact?
-      rw [Hex.ite_eq_right hg, Hex.ite_eq_right hprod]
+      rw [ite_eq_right hg, ite_eq_right hprod]
       simpa only [Lean.Grind.AddCommMonoid.zero_add] using
         divExactAux_mul g q 0 hg
 

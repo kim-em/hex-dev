@@ -81,10 +81,10 @@ theorem addProduct_apply {R : Type u} [Lean.Grind.CommRing R] [DecidableEq R]
         omega
       by_cases hj : j = dst
       · subst j
-        simp only [addProduct, addCol_apply, if_true, productCol]
-        rw [ih, if_pos rfl, ih, if_neg hsrcDst]
-      · simp only [addProduct, addCol_apply, if_neg hj]
-        rw [ih, if_neg hj]
+        simp only [addProduct, addCol_apply, ite_true, productCol]
+        rw [ih, ite_eq_left rfl, ih, ite_eq_right hsrcDst]
+      · simp only [addProduct, addCol_apply, ite_eq_right hj]
+        rw [ih, ite_eq_right hj]
 
 /-- One multiplier-column update preserves the local determinant. -/
 theorem det_addProduct {R : Type u} [Lean.Grind.CommRing R] [DecidableEq R]
@@ -167,12 +167,12 @@ theorem productCols_apply {R : Type u} [Lean.Grind.CommRing R] [DecidableEq R]
       by_cases hold : split ≤ j.val ∧ j.val < split + right
       · have hnew : split ≤ j.val ∧ j.val < split + (right + 1) := by
           omega
-        rw [dif_pos hold, dif_pos hnew]
+        rw [dite_eq_left hold, dite_eq_left hnew]
         apply productCol_congr M' M j db (j.val - split) (by omega) b i
           (db + 1) (Nat.le_refl _)
         · dsimp only [M']
           rw [addProduct_apply]
-          rw [if_neg (by
+          rw [ite_eq_right (by
             intro heq
             have hval := congrArg Fin.val heq
             simp [dst] at hval
@@ -180,7 +180,7 @@ theorem productCols_apply {R : Type u} [Lean.Grind.CommRing R] [DecidableEq R]
         · intro k hk
           dsimp only [M']
           rw [addProduct_apply]
-          rw [if_neg (by
+          rw [ite_eq_right (by
             intro heq
             have hval := congrArg Fin.val heq
             simp [dst] at hval
@@ -188,17 +188,17 @@ theorem productCols_apply {R : Type u} [Lean.Grind.CommRing R] [DecidableEq R]
       · by_cases hlast : j.val = split + right
         · have hnew : split ≤ j.val ∧ j.val < split + (right + 1) := by
             omega
-          rw [dif_neg hold, dif_pos hnew]
+          rw [dite_eq_right hold, dite_eq_left hnew]
           have hjdst : j = dst := Fin.ext hlast
           subst j
-          rw [addProduct_apply, if_pos rfl]
+          rw [addProduct_apply, ite_eq_left rfl]
           congr 3
           simp [dst]
         · have hnew : ¬(split ≤ j.val ∧ j.val < split + (right + 1)) := by
             omega
-          rw [dif_neg hold, dif_neg hnew]
+          rw [dite_eq_right hold, dite_eq_right hnew]
           rw [addProduct_apply]
-          rw [if_neg (by
+          rw [ite_eq_right (by
             intro heq
             have hval := congrArg Fin.val heq
             simp at hval
@@ -288,23 +288,23 @@ private theorem coeffInt_sub_nat {R : Type u} [Zero R] [DecidableEq R]
       if k ≤ t.toNat then p.coeff (t.toNat - k) else 0 := by
   have htCast : (t.toNat : Int) = t := Int.toNat_of_nonneg ht
   by_cases hk : k ≤ t.toNat
-  · rw [if_pos hk]
+  · rw [ite_eq_left hk]
     have hkInt : (k : Int) ≤ t := by
       rw [← htCast]
       exact Int.ofNat_le.mpr hk
     unfold coeffInt
-    rw [if_neg (by
+    rw [ite_eq_right (by
       have hk0 := Int.natCast_nonneg k
       omega)]
     congr 1
     apply Int.natCast_inj.mp
     rw [Int.toNat_sub_of_le hkInt, Int.ofNat_sub hk, htCast]
-  · rw [if_neg hk]
+  · rw [ite_eq_right hk]
     have hkInt : t < (k : Int) := by
       rw [← htCast]
       exact Int.ofNat_lt.mpr (by omega)
     unfold coeffInt
-    rw [if_pos (by omega)]
+    rw [ite_eq_left (by omega)]
 
 /-- The full integer-indexed coefficient fold is the corresponding product
 coefficient. -/
@@ -315,7 +315,7 @@ theorem coeffFold_eq_mul {R : Type u} [Lean.Grind.CommRing R] [DecidableEq R]
   · have hterm (k : Nat) : coeffInt g (t - (k : Int)) = 0 := by
       have hk0 := Int.natCast_nonneg k
       unfold coeffInt
-      rw [if_pos (by omega)]
+      rw [ite_eq_left (by omega)]
     have hfold (xs : List Nat) (init : R) :
         xs.foldl
           (fun acc k => acc + b.coeff k * coeffInt g (t - (k : Int))) init =
@@ -330,7 +330,7 @@ theorem coeffFold_eq_mul {R : Type u} [Lean.Grind.CommRing R] [DecidableEq R]
     unfold coeffFold
     rw [hfold]
     unfold coeffInt
-    rw [if_pos ht]
+    rw [ite_eq_left ht]
   · have ht0 : 0 ≤ t := by omega
     have hstep (acc : R) (k : Nat) :
         acc + b.coeff k * coeffInt g (t - (k : Int)) =
@@ -339,14 +339,14 @@ theorem coeffFold_eq_mul {R : Type u} [Lean.Grind.CommRing R] [DecidableEq R]
           else acc := by
       rw [coeffInt_sub_nat g t ht0 k]
       by_cases hk : k ≤ t.toNat
-      · rw [if_pos hk]
+      · rw [ite_eq_left hk]
         by_cases hgk : t.toNat - k < g.size
-        · rw [if_pos ⟨hk, hgk⟩]
-        · rw [if_neg (by omega)]
+        · rw [ite_eq_left ⟨hk, hgk⟩]
+        · rw [ite_eq_right (by omega)]
           rw [coeff_eq_zero_of_size_le g (by omega)]
           rw [show (Zero.zero : R) = 0 from rfl,
             Lean.Grind.Semiring.mul_zero, Lean.Grind.Semiring.add_zero]
-      · rw [if_neg hk, if_neg (by omega)]
+      · rw [ite_eq_right hk, ite_eq_right (by omega)]
         rw [Lean.Grind.Semiring.mul_zero, Lean.Grind.Semiring.add_zero]
     have hfold (xs : List Nat) (init : R) :
         xs.foldl
@@ -364,7 +364,7 @@ theorem coeffFold_eq_mul {R : Type u} [Lean.Grind.CommRing R] [DecidableEq R]
     unfold coeffFold
     rw [hfold]
     unfold coeffInt
-    rw [if_neg ht]
+    rw [ite_eq_right ht]
     rw [coeff_mul, mulCoeffSum_eq_singleFold]
     rfl
 
@@ -404,7 +404,7 @@ private theorem productCol_addMul {R : Type u}
       intro k hk
       unfold coeffMatrixAt
       simp only
-      rw [if_pos (by omega), if_pos (by omega)]
+      rw [ite_eq_left (by omega), ite_eq_left (by omega)]
       congr 1
       simp only [t, Int.ofNat_eq_natCast]
       rw [Int.ofNat_sub (by omega : k ≤ db + d)]
@@ -429,7 +429,7 @@ private theorem productCol_addMul {R : Type u}
       intro k hk
       unfold coeffMatrixAt
       simp only
-      rw [if_pos (by omega), if_neg (by omega)]
+      rw [ite_eq_left (by omega), ite_eq_right (by omega)]
       congr 1
       simp only [t, Int.ofNat_eq_natCast]
       rw [Int.ofNat_sub (by omega : k ≤ db + d)]
@@ -458,14 +458,14 @@ theorem productCols_addMul {R : Type u}
   funext i j
   rw [SubresultantMinor.productCols_apply]
   by_cases hj : df - J ≤ j.val ∧ j.val < df - J + (dg - J)
-  · rw [dif_pos hj]
+  · rw [dite_eq_left hj]
     let d := j.val - (df - J)
     have hd : d < dg - J := by
       simp [d]
       omega
     exact productCol_addMul df dg db J l f g b h hJ hdeg hb hh
       d hd i j (by simp [d]; omega)
-  · rw [dif_neg hj]
+  · rw [dite_eq_right hj]
     have hjleft : j.val < df - J := by
       have := j.isLt
       omega
@@ -537,7 +537,7 @@ theorem coeffMinorAt_succRight {R : Type u}
         omega
       simp only [M, row, SubresultantMinor.castSquare, coeffMatrixAt,
         Fin.cast]
-      rw [if_pos hleft, if_neg hnotLast]
+      rw [ite_eq_left hleft, ite_eq_right hnotLast]
       rw [show Int.ofNat dg - Int.ofNat 0 + Int.ofNat j.val =
           ((dg + j.val : Nat) : Int) by
         simp [Int.ofNat_eq_natCast, Int.natCast_add]]
@@ -549,7 +549,7 @@ theorem coeffMinorAt_succRight {R : Type u}
         omega
       simp only [M, row, SubresultantMinor.castSquare, coeffMatrixAt,
         Fin.cast]
-      rw [if_neg hleft, if_neg hnotLast]
+      rw [ite_eq_right hleft, ite_eq_right hnotLast]
       rw [show Int.ofNat (dh + 1) - Int.ofNat 0 + Int.ofNat jj =
           ((dh + 1 + jj : Nat) : Int) by
         simp [Int.ofNat_eq_natCast, Int.natCast_add]]
@@ -563,21 +563,21 @@ theorem coeffMinorAt_succRight {R : Type u}
       coeffMatrixAt dg dh J l g h i j
     simp only [coeffMatrixAt]
     by_cases hleft : j.val < dh - J
-    · rw [if_pos (by omega), if_pos hleft]
+    · rw [ite_eq_left (by omega), ite_eq_left hleft]
       by_cases hlast : i.val = n - 1
-      · rw [if_pos (by omega), if_pos hlast]
+      · rw [ite_eq_left (by omega), ite_eq_left hlast]
         congr 1
         simp [n]
         omega
-      · rw [if_neg (by omega), if_neg hlast]
+      · rw [ite_eq_right (by omega), ite_eq_right hlast]
         congr 1
         simp [Int.ofNat_eq_natCast, Int.natCast_add] <;> omega
-    · rw [if_neg (by omega), if_neg hleft]
+    · rw [ite_eq_right (by omega), ite_eq_right hleft]
       by_cases hlast : i.val = n - 1
-      · rw [if_pos (by omega), if_pos hlast]
+      · rw [ite_eq_left (by omega), ite_eq_left hlast]
         congr 1
         simp [Int.ofNat_eq_natCast] <;> omega
-      · rw [if_neg (by omega), if_neg hlast]
+      · rw [ite_eq_right (by omega), ite_eq_right hlast]
         congr 1
         simp [Int.ofNat_eq_natCast, Int.natCast_add] <;> omega
   unfold coeffMinorAt
@@ -649,7 +649,7 @@ theorem coeffMinorAt_leftSucc {R : Type u}
     coeffMinorAt (dh + 1) dh dh l g h = h.coeff l := by
   rw [coeffMinorAt_swap]
   simp only [Nat.sub_self, Nat.mul_zero, SubresultantMinor.sign]
-  rw [if_pos (by decide), Lean.Grind.Semiring.one_mul,
+  rw [ite_eq_left (by decide), Lean.Grind.Semiring.one_mul,
     coeffMinorAt_rightDegree_ignore, coeffMinorAt_unitRight]
 
 /-- The subresultant immediately below the divisor degree is the signed
@@ -714,7 +714,7 @@ theorem poly_prem {R : Type u}
   rw [coeff_scale_semiring]
   simp only [coeff_poly]
   by_cases hl : l < J + 1
-  · rw [if_pos hl]
+  · rw [ite_eq_left hl]
     unfold coeffMinor
     rw [hff, hgg]
     have hscale := coeffMinorAt_scale_left df dg J l a f g
@@ -744,7 +744,7 @@ theorem poly_prem {R : Type u}
     rw [hpow, hunit, hsign] at hscale
     apply ExactDivLaws.mul_right_cancel ha
     grind
-  · rw [if_neg hl]
+  · rw [ite_eq_right hl]
     have hrzero : r.coeff l = 0 :=
       coeff_eq_zero_of_size_le r (by omega)
     rw [hrzero, Lean.Grind.Semiring.mul_zero]
@@ -760,7 +760,7 @@ theorem coeffMinorAt_rightDegree {R : Type u}
       h.leadingCoeff ^ (dg - dh - 1) * h.coeff l := by
   rw [coeffMinorAt_swap]
   simp only [Nat.sub_self, Nat.mul_zero, SubresultantMinor.sign]
-  rw [if_pos (by decide)]
+  rw [ite_eq_left (by decide)]
   rw [Lean.Grind.Semiring.one_mul,
     coeffMinorAt_rightDegree_ignore dg dh l h g]
   have hsum : dh + 1 + (dg - (dh + 1)) = dg := by omega
@@ -806,11 +806,11 @@ theorem poly_rightDegree {R : Type u}
   rw [coeff_scale_semiring]
   simp only [coeff_poly]
   by_cases hl : l < dh + 1
-  · rw [if_pos hl]
+  · rw [ite_eq_left hl]
     unfold coeffMinor
     rw [hfg, hfh]
     exact coeffMinorAt_rightDegree dg dh l g h hdh hh
-  · rw [if_neg hl, coeff_eq_zero_of_size_le h (by omega)]
+  · rw [ite_eq_right hl, coeff_eq_zero_of_size_le h (by omega)]
     change (0 : R) = h.leadingCoeff ^ (dg - dh - 1) * (0 : R)
     rw [Lean.Grind.Semiring.mul_zero]
 
@@ -836,13 +836,13 @@ theorem poly_brownTraub {R : Type u}
   rw [coeff_scale_semiring]
   simp only [coeff_poly]
   by_cases hl : l < J + 1
-  · rw [if_pos hl, if_pos hl]
+  · rw [ite_eq_left hl, ite_eq_left hl]
     unfold coeffMinor
     rw [hff, hfg, hfh]
     rw [coeffMinorAt_brownTraub df dg db dh J l f g b h hJh hdh hdeg
       hg hb (by omega) hh]
     grind
-  · rw [if_neg hl, if_neg hl]
+  · rw [ite_eq_right hl, ite_eq_right hl]
     change (0 : R) =
       (SubresultantMinor.sign (R := R) ((df - J) * (dg - J)) *
         g.leadingCoeff ^ (df - dh)) * (0 : R)

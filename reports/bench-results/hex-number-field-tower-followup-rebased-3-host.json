@@ -1,0 +1,314 @@
+{
+  "label": "rebased",
+  "attempt": 3,
+  "runs": [
+    {
+      "arm": "left",
+      "source_commit": "b8602c76a08f7348391aafd50b9a8a13cf1a0b32",
+      "binary_sha256": "9cda578dbc8724ea9c10462c1c6e2ccbaf6d48e6a85ef291a2f1bf7e4c5df810",
+      "command": [
+        "taskset",
+        "-c",
+        "44",
+        "/tmp/issue-10074-baseline",
+        "run",
+        "Hex.NumberTowerBench.runTowerFactorPair2",
+        "Hex.NumberTowerBench.runTowerFactorPair3",
+        "Hex.NumberTowerBench.runTowerFactorPair4",
+        "Hex.NumberTowerBench.runTowerFactorPair6",
+        "Hex.NumberTowerBench.runTowerFactorPair8",
+        "Hex.NumberTowerBench.runTowerFactorPair12",
+        "Hex.NumberTowerBench.runTowerFactorLadder",
+        "Hex.NumberTowerBench.runTowerCheckFactorization",
+        "Hex.NumberTowerBench.runPariNfFactor2",
+        "Hex.NumberTowerBench.runPariNfFactor3",
+        "Hex.NumberTowerBench.runPariNfFactor4",
+        "Hex.NumberTowerBench.runPariNfFactor6",
+        "Hex.NumberTowerBench.runPariNfFactor8",
+        "Hex.NumberTowerBench.runPariNfFactor12",
+        "Hex.NumberTowerBench.runPariNfFactorOverhead",
+        "--repeats",
+        "5",
+        "--min-total-seconds",
+        "0.2",
+        "--export-file",
+        "/tmp/issue-10074-rebased-3-left.json"
+      ],
+      "export": "/tmp/issue-10074-rebased-3-left.json",
+      "preflight": {
+        "44": 0.4975124378109453,
+        "92": 0.5
+      },
+      "postflight": {
+        "44": 7.462686567164179,
+        "92": 4.975124378109452
+      },
+      "during": [
+        {
+          "44": 100.0,
+          "92": 7.5
+        },
+        {
+          "44": 100.0,
+          "92": 3.0150753768844223
+        },
+        {
+          "44": 100.0,
+          "92": 0.0
+        },
+        {
+          "44": 100.0,
+          "92": 2.0
+        },
+        {
+          "44": 100.0,
+          "92": 0.9950248756218906
+        },
+        {
+          "44": 100.0,
+          "92": 0.0
+        },
+        {
+          "44": 100.0,
+          "92": 0.5
+        },
+        {
+          "44": 100.0,
+          "92": 0.5
+        },
+        {
+          "44": 100.0,
+          "92": 0.4975124378109453
+        },
+        {
+          "44": 100.0,
+          "92": 1.0050251256281406
+        },
+        {
+          "44": 100.0,
+          "92": 0.5
+        },
+        {
+          "44": 100.0,
+          "92": 0.5
+        },
+        {
+          "44": 100.0,
+          "92": 0.0
+        },
+        {
+          "44": 100.0,
+          "92": 1.5
+        },
+        {
+          "44": 100.0,
+          "92": 6.5
+        },
+        {
+          "44": 100.0,
+          "92": 0.5
+        },
+        {
+          "44": 100.0,
+          "92": 0.5
+        },
+        {
+          "44": 100.0,
+          "92": 1.0050251256281406
+        },
+        {
+          "44": 100.0,
+          "92": 0.0
+        },
+        {
+          "44": 100.0,
+          "92": 0.9950248756218906
+        },
+        {
+          "44": 100.0,
+          "92": 0.5025125628140703
+        },
+        {
+          "44": 100.0,
+          "92": 0.0
+        },
+        {
+          "44": 99.50248756218906,
+          "92": 0.4975124378109453
+        },
+        {
+          "44": 100.0,
+          "92": 0.0
+        },
+        {
+          "44": 100.0,
+          "92": 0.0
+        },
+        {
+          "44": 100.0,
+          "92": 0.0
+        },
+        {
+          "44": 100.0,
+          "92": 0.4975124378109453
+        },
+        {
+          "44": 100.0,
+          "92": 0.0
+        },
+        {
+          "44": 99.5,
+          "92": 0.0
+        },
+        {
+          "44": 99.50248756218906,
+          "92": 0.0
+        },
+        {
+          "44": 23.737373737373737,
+          "92": 6.896551724137931
+        }
+      ],
+      "sibling_mean": {
+        "92": 1.17441216063772
+      },
+      "exit_code": 0,
+      "accepted": false,
+      "export_error": null
+    }
+  ],
+  "preflight_windows": [
+    {
+      "0": 10.552763819095478,
+      "1": 6.467661691542289,
+      "2": 37.5,
+      "3": 5.0,
+      "4": 7.0,
+      "5": 2.525252525252525,
+      "6": 3.5,
+      "7": 2.5,
+      "8": 0.5,
+      "9": 2.0100502512562812,
+      "10": 5.555555555555555,
+      "11": 7.960199004975125,
+      "12": 95.47738693467336,
+      "13": 8.040201005025125,
+      "14": 1.0,
+      "15": 0.9950248756218906,
+      "16": 0.4975124378109453,
+      "17": 0.5,
+      "18": 5.5,
+      "19": 4.5,
+      "20": 2.5,
+      "21": 0.5,
+      "22": 0.5050505050505051,
+      "23": 0.9950248756218906,
+      "24": 27.63819095477387,
+      "25": 14.57286432160804,
+      "26": 2.0,
+      "27": 1.0050251256281406,
+      "28": 8.040201005025125,
+      "29": 7.070707070707071,
+      "30": 13.0,
+      "31": 5.472636815920398,
+      "32": 6.467661691542289,
+      "33": 0.0,
+      "34": 0.5,
+      "35": 1.0,
+      "36": 9.0,
+      "37": 0.9950248756218906,
+      "38": 100.0,
+      "39": 6.467661691542289,
+      "40": 0.0,
+      "41": 0.0,
+      "42": 1.492537313432836,
+      "43": 8.457711442786069,
+      "44": 0.4975124378109453,
+      "45": 9.045226130653266,
+      "46": 1.5,
+      "47": 3.9800995024875623,
+      "48": 2.985074626865672,
+      "49": 4.040404040404041,
+      "50": 4.0,
+      "51": 8.080808080808081,
+      "52": 4.477611940298507,
+      "53": 3.482587064676617,
+      "54": 4.0,
+      "55": 1.0050251256281406,
+      "56": 3.482587064676617,
+      "57": 4.5,
+      "58": 12.935323383084578,
+      "59": 6.030150753768845,
+      "60": 0.0,
+      "61": 0.0,
+      "62": 0.5,
+      "63": 0.4975124378109453,
+      "64": 7.0,
+      "65": 0.0,
+      "66": 0.5025125628140703,
+      "67": 2.487562189054726,
+      "68": 6.5,
+      "69": 7.960199004975125,
+      "70": 5.5,
+      "71": 3.0150753768844223,
+      "72": 4.0,
+      "73": 2.5,
+      "74": 2.0100502512562812,
+      "75": 16.582914572864322,
+      "76": 67.0,
+      "77": 3.9800995024875623,
+      "78": 0.0,
+      "79": 0.5,
+      "80": 94.0,
+      "81": 0.5025125628140703,
+      "82": 0.0,
+      "83": 0.0,
+      "84": 1.5,
+      "85": 0.0,
+      "86": 0.9950248756218906,
+      "87": 0.0,
+      "88": 1.5,
+      "89": 6.0,
+      "90": 1.5,
+      "91": 1.0,
+      "92": 0.5,
+      "93": 1.0,
+      "94": 1.0,
+      "95": 2.5
+    }
+  ],
+  "protocol_commit": "931b5866fdb72673b07ecdfcf6d38a69e92e66c7",
+  "script_sha256": "251b1a75f968330f30f8556851be267125bb0d866c9d8438c4597c0522e8f8b3",
+  "hostname": "chungus2",
+  "release_quality": false,
+  "pari_provider": {
+    "python": "3.14.6",
+    "pari": "(2, 17, 3)",
+    "cypari2": "2.2.4",
+    "path": "/nix/store/fgsvz1y8yyljvfpa2s2qv2jc803r2hhl-python3-3.14.6-env/bin/python"
+  },
+  "names": [
+    "Hex.NumberTowerBench.runTowerFactorPair2",
+    "Hex.NumberTowerBench.runTowerFactorPair3",
+    "Hex.NumberTowerBench.runTowerFactorPair4",
+    "Hex.NumberTowerBench.runTowerFactorPair6",
+    "Hex.NumberTowerBench.runTowerFactorPair8",
+    "Hex.NumberTowerBench.runTowerFactorPair12",
+    "Hex.NumberTowerBench.runTowerFactorLadder",
+    "Hex.NumberTowerBench.runTowerCheckFactorization",
+    "Hex.NumberTowerBench.runPariNfFactor2",
+    "Hex.NumberTowerBench.runPariNfFactor3",
+    "Hex.NumberTowerBench.runPariNfFactor4",
+    "Hex.NumberTowerBench.runPariNfFactor6",
+    "Hex.NumberTowerBench.runPariNfFactor8",
+    "Hex.NumberTowerBench.runPariNfFactor12",
+    "Hex.NumberTowerBench.runPariNfFactorOverhead"
+  ],
+  "git_status": "",
+  "cpu": 44,
+  "siblings": [
+    44,
+    92
+  ],
+  "accepted": false
+}

@@ -20,20 +20,20 @@ exact rational roots), never by re-running the Lean isolator.
 
 Operations covered:
 
-* `root_count`   — `Hex.rootCount p`, the total number of real roots,
+* `root_count`   — `Hex.ZPoly.rootCount p`, the total number of real roots,
   value an `Int`.
-* `isolations`   — the isolating intervals from `Hex.isolate? p`,
+* `isolations`   — the isolating intervals from `Hex.ZPoly.isolateRealRoots? p`,
   value a matrix of rows `[lo_num, lo_exp, hi_num, hi_exp]`.  Each
   dyadic endpoint is encoded as `[num, exp]` with value `num · 2^(−exp)`
   (`Dyadic.zero` as `[0, 0]`, `Dyadic.ofOdd n k _` as `[n, k]`).
 * `isolate_none` — value `true` for the rejection cases (the zero
   polynomial and non-square-free inputs), where the driver declines.
 
-Records are emitted from the single top-level driver `Hex.isolate? p`.
+Records are emitted from the single top-level driver `Hex.ZPoly.isolateRealRoots? p`.
 The Descartes/Sturm cross-engine agreement check this driver once
 carried (the executable stand-in for the termination theorem) is
 retired now that `HexRealRootsMathlib.isolateDescartes?_isSome` is
-proven; `isolate?` is Descartes-first, so on a square-free input its
+proven; `ZPoly.isolateRealRoots?` is Descartes-first, so on a square-free input its
 output is exactly the Descartes engine's, and the emitted stream is
 unchanged.
 
@@ -68,27 +68,29 @@ private def isoRows {p : ZPoly} (res : RealRootIsolations p) : List (List Int) :
   res.isolations.toList.map fun iso =>
     dyadicPair iso.interval.lower ++ dyadicPair iso.interval.upper
 
-/-- Emit one case from the top-level driver `isolate? p`.  When
-`squarefree`, `isolate?` must return `some` (guaranteed by
-`isolate?_isSome`); the run is emitted from its output.  Otherwise it
+/-- Emit one case from the top-level driver `ZPoly.isolateRealRoots? p`.  When
+`squarefree`, `ZPoly.isolateRealRoots?` must return `some` (guaranteed by
+`isolateRealRoots?_isSome`); the run is emitted from its output.  Otherwise it
 must return `none` and the case is a rejection.  Any deviation `throw`s,
 exiting non-zero. -/
 private def emitCase (id : String) (coeffs : List Int) (squarefree : Bool) : IO Unit := do
   emitPolyFixture lib id coeffs
   let p : ZPoly := DensePoly.ofCoeffs coeffs.toArray
   if squarefree then
-    match isolate? p with
+    match ZPoly.isolateRealRoots? p with
     | some r =>
-      emitResult lib id "root_count" (toString (rootCount p))
+      emitResult lib id "root_count" (toString (ZPoly.rootCount p))
       emitResult lib id "isolations" (intMatrixValue (isoRows r))
     | none =>
-      throw <| IO.userError s!"{lib}/{id}: isolate? fell back to none on a square-free input"
+      throw <| IO.userError
+        s!"{lib}/{id}: ZPoly.isolateRealRoots? fell back to none on a square-free input"
   else
-    match isolate? p with
+    match ZPoly.isolateRealRoots? p with
     | none =>
       emitResult lib id "isolate_none" "true"
     | some _ =>
-      throw <| IO.userError s!"{lib}/{id}: expected isolate? to reject a non-square-free input"
+      throw <| IO.userError
+        s!"{lib}/{id}: expected ZPoly.isolateRealRoots? to reject a non-square-free input"
 
 /-! # SPEC core fixtures. -/
 

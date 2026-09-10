@@ -1,0 +1,338 @@
+{
+  "label": "monic",
+  "attempt": 7,
+  "runs": [
+    {
+      "arm": "right",
+      "source_commit": "9c6234e8e84805d192867cbd5774cbf087296c5d",
+      "binary_sha256": "474fd355dade24eb862a0360c1757c5d95c78e320aceae470f184757913cca4d",
+      "command": [
+        "taskset",
+        "-c",
+        "33",
+        "/tmp/issue-10074-monic",
+        "run",
+        "Hex.NumberTowerBench.runTowerFactorPair2",
+        "Hex.NumberTowerBench.runTowerFactorPair3",
+        "Hex.NumberTowerBench.runTowerFactorPair4",
+        "Hex.NumberTowerBench.runTowerFactorPair6",
+        "Hex.NumberTowerBench.runTowerFactorPair8",
+        "Hex.NumberTowerBench.runTowerFactorPair12",
+        "Hex.NumberTowerBench.runTowerFactorLadder",
+        "Hex.NumberTowerBench.runTowerCheckFactorization",
+        "--repeats",
+        "5",
+        "--min-total-seconds",
+        "0.2",
+        "--export-file",
+        "/tmp/issue-10074-monic-7-right.json"
+      ],
+      "export": "/tmp/issue-10074-monic-7-right.json",
+      "preflight": {
+        "33": 0.5,
+        "81": 0.0
+      },
+      "postflight": {
+        "33": 0.4975124378109453,
+        "81": 0.4975124378109453
+      },
+      "during": [
+        {
+          "33": 99.5049504950495,
+          "81": 1.492537313432836
+        },
+        {
+          "33": 100.0,
+          "81": 1.0050251256281406
+        },
+        {
+          "33": 100.0,
+          "81": 1.4851485148514851
+        },
+        {
+          "33": 100.0,
+          "81": 0.5025125628140703
+        },
+        {
+          "33": 100.0,
+          "81": 0.9950248756218906
+        },
+        {
+          "33": 100.0,
+          "81": 0.5
+        },
+        {
+          "33": 100.0,
+          "81": 0.0
+        },
+        {
+          "33": 100.0,
+          "81": 0.5
+        },
+        {
+          "33": 100.0,
+          "81": 0.0
+        },
+        {
+          "33": 100.0,
+          "81": 0.5
+        },
+        {
+          "33": 100.0,
+          "81": 0.5
+        },
+        {
+          "33": 100.0,
+          "81": 0.0
+        },
+        {
+          "33": 100.0,
+          "81": 0.4975124378109453
+        },
+        {
+          "33": 100.0,
+          "81": 0.5
+        },
+        {
+          "33": 0.5025125628140703,
+          "81": 1.0
+        }
+      ],
+      "sibling_mean": {
+        "81": 0.6318507220106244
+      },
+      "exit_code": 0,
+      "accepted": true,
+      "export_error": null
+    },
+    {
+      "arm": "left",
+      "source_commit": "8d54c7158c907005a9578431c9f43bd743b9827f",
+      "binary_sha256": "d78f6616e823004c807ebcbd343656629e43857e8a3286827cf0293a8c905034",
+      "command": [
+        "taskset",
+        "-c",
+        "33",
+        "/tmp/issue-10074-combined",
+        "run",
+        "Hex.NumberTowerBench.runTowerFactorPair2",
+        "Hex.NumberTowerBench.runTowerFactorPair3",
+        "Hex.NumberTowerBench.runTowerFactorPair4",
+        "Hex.NumberTowerBench.runTowerFactorPair6",
+        "Hex.NumberTowerBench.runTowerFactorPair8",
+        "Hex.NumberTowerBench.runTowerFactorPair12",
+        "Hex.NumberTowerBench.runTowerFactorLadder",
+        "Hex.NumberTowerBench.runTowerCheckFactorization",
+        "--repeats",
+        "5",
+        "--min-total-seconds",
+        "0.2",
+        "--export-file",
+        "/tmp/issue-10074-monic-7-left.json"
+      ],
+      "export": "/tmp/issue-10074-monic-7-left.json",
+      "preflight": {
+        "33": 0.5,
+        "81": 0.0
+      },
+      "postflight": {
+        "33": 0.0,
+        "81": 19.0
+      },
+      "during": [
+        {
+          "33": 100.0,
+          "81": 0.0
+        },
+        {
+          "33": 100.0,
+          "81": 0.0
+        },
+        {
+          "33": 100.0,
+          "81": 0.9900990099009901
+        },
+        {
+          "33": 100.0,
+          "81": 0.0
+        },
+        {
+          "33": 100.0,
+          "81": 0.0
+        },
+        {
+          "33": 100.0,
+          "81": 0.5
+        },
+        {
+          "33": 100.0,
+          "81": 0.0
+        },
+        {
+          "33": 100.0,
+          "81": 0.0
+        },
+        {
+          "33": 100.0,
+          "81": 0.5
+        },
+        {
+          "33": 100.0,
+          "81": 0.4975124378109453
+        },
+        {
+          "33": 100.0,
+          "81": 0.5025125628140703
+        },
+        {
+          "33": 100.0,
+          "81": 0.4975124378109453
+        },
+        {
+          "33": 100.0,
+          "81": 0.0
+        },
+        {
+          "33": 100.0,
+          "81": 2.985074626865672
+        },
+        {
+          "33": 100.0,
+          "81": 0.0
+        },
+        {
+          "33": 44.776119402985074,
+          "81": 0.0
+        }
+      ],
+      "sibling_mean": {
+        "81": 0.40454444220016395
+      },
+      "exit_code": 0,
+      "accepted": false,
+      "export_error": null
+    }
+  ],
+  "preflight_windows": [
+    {
+      "0": 2.5,
+      "1": 2.985074626865672,
+      "2": 1.9900497512437811,
+      "3": 0.5025125628140703,
+      "4": 1.9900497512437811,
+      "5": 1.0,
+      "6": 0.5025125628140703,
+      "7": 2.5,
+      "8": 0.0,
+      "9": 0.0,
+      "10": 0.5,
+      "11": 0.5,
+      "12": 1.5075376884422111,
+      "13": 3.9800995024875623,
+      "14": 0.5,
+      "15": 2.0,
+      "16": 2.0,
+      "17": 0.0,
+      "18": 3.0150753768844223,
+      "19": 2.0202020202020203,
+      "20": 0.5025125628140703,
+      "21": 3.5,
+      "22": 1.0,
+      "23": 2.525252525252525,
+      "24": 0.0,
+      "25": 0.9950248756218906,
+      "26": 0.5,
+      "27": 94.5273631840796,
+      "28": 1.492537313432836,
+      "29": 2.525252525252525,
+      "30": 2.487562189054726,
+      "31": 3.9603960396039604,
+      "32": 2.5,
+      "33": 0.5,
+      "34": 1.4851485148514851,
+      "35": 0.5,
+      "36": 5.970149253731344,
+      "37": 1.0,
+      "38": 2.5,
+      "39": 1.492537313432836,
+      "40": 1.5,
+      "41": 0.5,
+      "42": 1.0,
+      "43": 0.5025125628140703,
+      "44": 1.5,
+      "45": 0.9950248756218906,
+      "46": 1.5075376884422111,
+      "47": 0.9950248756218906,
+      "48": 1.0,
+      "49": 1.492537313432836,
+      "50": 1.0101010101010102,
+      "51": 1.5,
+      "52": 3.5,
+      "53": 0.5025125628140703,
+      "54": 1.5075376884422111,
+      "55": 0.5,
+      "56": 0.5025125628140703,
+      "57": 1.0,
+      "58": 2.0100502512562812,
+      "59": 0.9950248756218906,
+      "60": 1.492537313432836,
+      "61": 2.0202020202020203,
+      "62": 1.5,
+      "63": 1.0,
+      "64": 1.0,
+      "65": 0.9950248756218906,
+      "66": 2.5,
+      "67": 1.0050251256281406,
+      "68": 0.5050505050505051,
+      "69": 0.5025125628140703,
+      "70": 1.5075376884422111,
+      "71": 1.0101010101010102,
+      "72": 0.5025125628140703,
+      "73": 0.5025125628140703,
+      "74": 0.5,
+      "75": 5.0,
+      "76": 0.5,
+      "77": 0.0,
+      "78": 2.0,
+      "79": 1.0,
+      "80": 1.5,
+      "81": 0.0,
+      "82": 0.9950248756218906,
+      "83": 0.0,
+      "84": 3.5175879396984926,
+      "85": 1.5075376884422111,
+      "86": 1.9900497512437811,
+      "87": 0.9950248756218906,
+      "88": 5.025125628140704,
+      "89": 0.5,
+      "90": 1.0,
+      "91": 1.0,
+      "92": 0.5025125628140703,
+      "93": 0.0,
+      "94": 1.0050251256281406,
+      "95": 2.0
+    }
+  ],
+  "protocol_commit": "9c6234e8e84805d192867cbd5774cbf087296c5d",
+  "script_sha256": "8429890abecd54323335d40da21fafc2b7883bd5e441cc52b8f30e69fae916f5",
+  "hostname": "chungus2",
+  "release_quality": false,
+  "pari_provider": null,
+  "names": [
+    "Hex.NumberTowerBench.runTowerFactorPair2",
+    "Hex.NumberTowerBench.runTowerFactorPair3",
+    "Hex.NumberTowerBench.runTowerFactorPair4",
+    "Hex.NumberTowerBench.runTowerFactorPair6",
+    "Hex.NumberTowerBench.runTowerFactorPair8",
+    "Hex.NumberTowerBench.runTowerFactorPair12",
+    "Hex.NumberTowerBench.runTowerFactorLadder",
+    "Hex.NumberTowerBench.runTowerCheckFactorization"
+  ],
+  "git_status": " M reports/bench-results/hex-number-field-tower-followup-manifest.json\n?? reports/bench-results/hex-number-field-tower-followup-combined2-1-host.json\n?? reports/bench-results/hex-number-field-tower-followup-combined2-1-left.json\n?? reports/bench-results/hex-number-field-tower-followup-combined2-2-host.json\n?? reports/bench-results/hex-number-field-tower-followup-combined2-2-left.json\n?? reports/bench-results/hex-number-field-tower-followup-combined2-3-host.json\n?? reports/bench-results/hex-number-field-tower-followup-combined2-3-left.json\n?? reports/bench-results/hex-number-field-tower-followup-combined2-4-host.json\n?? reports/bench-results/hex-number-field-tower-followup-combined2-4-left.json\n?? reports/bench-results/hex-number-field-tower-followup-combined2-4-right.json\n?? reports/bench-results/hex-number-field-tower-followup-combined2-5-host.json\n?? reports/bench-results/hex-number-field-tower-followup-combined2-5-right.json\n?? reports/bench-results/hex-number-field-tower-followup-combined2-6-host.json\n?? reports/bench-results/hex-number-field-tower-followup-combined2-6-right.json\n?? reports/bench-results/hex-number-field-tower-followup-combined2-7-host.json\n?? reports/bench-results/hex-number-field-tower-followup-combined2-7-left.json\n?? reports/bench-results/hex-number-field-tower-followup-combined2-7-right.json\n?? reports/bench-results/hex-number-field-tower-followup-horner2-1-host.json\n?? reports/bench-results/hex-number-field-tower-followup-horner2-1-left.json\n?? reports/bench-results/hex-number-field-tower-followup-horner2-2-host.json\n?? reports/bench-results/hex-number-field-tower-followup-horner2-2-left.json\n?? reports/bench-results/hex-number-field-tower-followup-horner2-3-host.json\n?? reports/bench-results/hex-number-field-tower-followup-horner2-3-left.json\n?? reports/bench-results/hex-number-field-tower-followup-horner2-4-host.json\n?? reports/bench-results/hex-number-field-tower-followup-horner2-4-left.json\n?? reports/bench-results/hex-number-field-tower-followup-horner2-5-host.json\n?? reports/bench-results/hex-number-field-tower-followup-horner2-5-left.json\n?? reports/bench-results/hex-number-field-tower-followup-horner2-5-right.json\n?? reports/bench-results/hex-number-field-tower-followup-horner2-6-host.json\n?? reports/bench-results/hex-number-field-tower-followup-horner2-6-left.json\n?? reports/bench-results/hex-number-field-tower-followup-horner2-6-right.json\n?? reports/bench-results/hex-number-field-tower-followup-quiet-driver.txt\n?? reports/bench-results/hex-number-field-tower-followup-quiet-runner.txt\n?? reports/bench-results/hex-number-field-tower-followup-recovery2-1-host.json\n?? reports/bench-results/hex-number-field-tower-followup-recovery2-1-left.json\n?? reports/bench-results/hex-number-field-tower-followup-recovery2-1-right.json\n?? reports/bench-results/hex-number-field-tower-followup-recovery2-2-host.json\n?? reports/bench-results/hex-number-field-tower-followup-recovery2-2-right.json\n?? reports/bench-results/hex-number-field-tower-followup-recovery2-3-host.json\n?? reports/bench-results/hex-number-field-tower-followup-recovery2-3-right.json\n?? reports/bench-results/hex-number-field-tower-followup-recovery2-4-host.json\n?? reports/bench-results/hex-number-field-tower-followup-recovery2-4-right.json\n?? reports/bench-results/hex-number-field-tower-followup-recovery2-5-host.json\n?? reports/bench-results/hex-number-field-tower-followup-recovery2-5-left.json\n?? reports/bench-results/hex-number-field-tower-followup-recovery2-5-right.json\n?? reports/bench-results/hex-number-field-tower-followup-total2-1-host.json\n?? reports/bench-results/hex-number-field-tower-followup-total2-1-left.json\n?? reports/bench-results/hex-number-field-tower-followup-total2-2-host.json\n?? reports/bench-results/hex-number-field-tower-followup-total2-2-left.json\n?? reports/bench-results/hex-number-field-tower-followup-total2-2-right.json\n?? reports/bench-results/hex-number-field-tower-followup-total2-3-host.json\n?? reports/bench-results/hex-number-field-tower-followup-total2-3-left.json\n?? reports/bench-results/hex-number-field-tower-followup-total2-3-right.json\n?? reports/bench-results/hex-number-field-tower-followup-variant-decisions.json\n",
+  "cpu": 33,
+  "siblings": [
+    33,
+    81
+  ],
+  "accepted": false
+}

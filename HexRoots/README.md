@@ -28,14 +28,14 @@ def p : ZPoly := DensePoly.ofCoeffs #[-1, -1, 0, 1]
 
 def roots : Option (Array (DyadicRootIsolation p)) :=
   if h : HasOnlySimpleRoots p then
-    isolate p h 32 .nkThenPellet
+    ZPoly.isolateComplexRoots? p h 32 .nkThenPellet
   else
     none
 ```
 
 # Functionality
 
-- `Hex.isolate p h precision strategy` returns pairwise-disjoint atoms for a
+- `Hex.ZPoly.isolateComplexRoots? p h precision strategy` returns pairwise-disjoint atoms for a
   polynomial whose roots are simple. A nonzero constant returns an empty
   array; the zero polynomial returns `none`.
 - `Hex.HasOnlySimpleRoots` is an executable, decidable precondition.
@@ -64,8 +64,8 @@ Reference material:
 - [SPEC](SPEC/hex-roots.md) — data model, algorithms, fuel, precision, and
   performance budgets.
 - The Hex manual chapter “HexRoots: certified complex-root isolation”.
-- `bench/HexRoots/` — deterministic degree and separation families.
-- `conformance/HexRoots/` — fixtures checked against python-flint.
+- The benchmark families and the python-flint conformance fixtures, in
+  [`hex-dev`](https://github.com/kim-em/hex-dev).
 
 # Contributing
 

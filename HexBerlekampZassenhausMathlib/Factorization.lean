@@ -107,7 +107,7 @@ private theorem polynomialIrreducible_toPolynomial_normalizeFactorSign_of_zpolyI
     (Hex.ZPoly.Irreducible_iff_polynomialIrreducible f).mp hirr
   unfold Hex.normalizeFactorSign
   by_cases hlc : Hex.DensePoly.leadingCoeff f < 0
-  · rw [if_pos hlc]
+  · rw [ite_eq_left hlc]
     have hzero_mul : (-1 : Int) * (0 : Int) = 0 := by simp
     have heq :
         HexPolyZMathlib.toPolynomial (Hex.DensePoly.scale (-1 : Int) f) =
@@ -121,7 +121,7 @@ private theorem polynomialIrreducible_toPolynomial_normalizeFactorSign_of_zpolyI
     exact
       (Associated.neg_right (Associated.refl (HexPolyZMathlib.toPolynomial f))).irreducible
         hirr_poly
-  · rw [if_neg hlc]
+  · rw [ite_eq_right hlc]
     exact hirr_poly
 
 /-- `Hex.ZPoly.Irreducible` is preserved by `Hex.normalizeFactorSign`.
@@ -247,7 +247,7 @@ theorem normalize_toPolynomial_of_normalizeFactorSign_id
     rw [not_le] at hneg
     apply hne
     unfold Hex.normalizeFactorSign at h
-    rw [if_pos hneg] at h
+    rw [ite_eq_left hneg] at h
     apply Hex.DensePoly.ext_coeff
     intro n
     have hzero_mul : (-1 : Int) * (Zero.zero : Int) = (Zero.zero : Int) :=
@@ -264,7 +264,7 @@ theorem normalize_toPolynomial_of_normalizeFactorSign_id
   have hlc_poly : 0 ≤ (HexPolyZMathlib.toPolynomial f).leadingCoeff := by
     rw [HexPolyMathlib.leadingCoeff_toPolynomial]
     exact hlc_nonneg
-  rw [normalize_apply, Polynomial.coe_normUnit, Int.normUnit_eq, if_pos hlc_poly,
+  rw [normalize_apply, Polynomial.coe_normUnit, Int.normUnit_eq, ite_eq_left hlc_poly,
     Units.val_one, Polynomial.C_1, mul_one]
 
 /--
@@ -286,11 +286,11 @@ theorem zpoly_eq_of_toPolynomial_associated_of_primitive_pos_leading
   have hq_ne : q ≠ 0 := Hex.ZPoly.ne_zero_of_primitive q hq_primitive
   have hp_norm_sign : Hex.normalizeFactorSign p = p := by
     unfold Hex.normalizeFactorSign
-    rw [if_neg]
+    rw [ite_eq_right]
     omega
   have hq_norm_sign : Hex.normalizeFactorSign q = q := by
     unfold Hex.normalizeFactorSign
-    rw [if_neg]
+    rw [ite_eq_right]
     omega
   have hp_norm :
       normalize (HexPolyZMathlib.toPolynomial p) =
@@ -479,8 +479,8 @@ theorem factorize_unique
     (φ ψ : Hex.Factorization)
     (hφ_norm : ∀ entry ∈ φ.factors, Hex.normalizeFactorSign entry.1 = entry.1)
     (hψ_norm : ∀ entry ∈ ψ.factors, Hex.normalizeFactorSign entry.1 = entry.1)
-    (hφ_nonconst : ∀ entry ∈ φ.factors, 0 < entry.1.degree?.getD 0)
-    (hψ_nonconst : ∀ entry ∈ ψ.factors, 0 < entry.1.degree?.getD 0)
+    (hφ_nonconst : ∀ entry ∈ φ.factors, 0 < entry.1.natDegree)
+    (hψ_nonconst : ∀ entry ∈ ψ.factors, 0 < entry.1.natDegree)
     (hφ_irr : ∀ entry ∈ φ.factors, Hex.ZPoly.Irreducible entry.1)
     (hψ_irr : ∀ entry ∈ ψ.factors, Hex.ZPoly.Irreducible entry.1)
     (hφ_prod_ne : Hex.Factorization.product φ ≠ 0)
@@ -600,10 +600,10 @@ theorem leadingCoeff_normalizeFactorSign_nonneg (f : Hex.ZPoly) :
     0 ≤ Hex.DensePoly.leadingCoeff (Hex.normalizeFactorSign f) := by
   unfold Hex.normalizeFactorSign
   by_cases h : Hex.DensePoly.leadingCoeff f < 0
-  · rw [if_pos h]
+  · rw [ite_eq_left h]
     rw [Hex.ZPoly.leadingCoeff_scale_of_nonzero (-1 : Int) f (by decide)]
     omega
-  · rw [if_neg h]
+  · rw [ite_eq_right h]
     omega
 
 end

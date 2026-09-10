@@ -1,0 +1,6 @@
+{
+  "path": "HexBerlekamp/PackedKernel.lean",
+  "baseline_blob": "da9e18f854f1dee1fca29299aaa321aa3ae0e1bc",
+  "current_blob": "291fbe1cbcb094c8abd1ca705ae6e44757f441d0",
+  "reason": "Only a theorem proof changes: its simp set unfolds the equality between Hex.Vector.ofFn' and Vector.ofFn after the matrix observation helper becomes kernel-reducible. The nullspace algorithm and compiled definitions are unchanged."
+}

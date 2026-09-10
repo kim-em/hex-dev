@@ -1055,7 +1055,7 @@ private theorem clmul_oneHot_source_high
   by_cases hbZero : b = 0
   · subst hbZero
     rw [clmul_oneHot_fst x hb]
-    simp only [if_true]
+    simp only [ite_true]
     have hzero : wordBitAt 0 bit = false := by
       simp [wordBitAt]
     rw [hzero]

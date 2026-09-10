@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekampZassenhaus/QuadraticFactors.lean",
+ "baseline_blob": "48cdf8d0e34b420fc4e8c4c45b0a1b97b037f6de",
+ "current_blob": "0dfe86b324bcf92ff4068faa88fe5a2bbcb35a97",
+ "reason": "Replaces `Hex.DensePoly.degree?.getD 0` with the new abbreviation `Hex.DensePoly.natDegree`, whose body is exactly that term and which `abbrev` marks `@[reducible, inline]`, and repairs the proofs that rewrote through the `Option`; the compiled code and every measured branch are unchanged."
+}

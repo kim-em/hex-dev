@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPrimality
-import Mathlib.Data.Nat.Prime.Basic
+module
+
+public import HexPrimality
+public import Mathlib.Data.Nat.Prime.Basic
+
+public section
 
 /-!
 The correspondence between the Mathlib-free `Hex.Nat.Prime` and Mathlib's

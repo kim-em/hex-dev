@@ -41,15 +41,15 @@ private theorem foldl_indicator_mul_unique {R : Type u} [Lean.Grind.Ring R]
             ∀ y ∈ xs, (if x = y then (1 : R) else 0) * f y = 0 := by
           intro y hy
           have hxy : x ≠ y := fun heq => (List.nodup_cons.mp hnodup).1 (heq ▸ hy)
-          rw [if_neg hxy]
+          rw [ite_eq_right hxy]
           grind
-        rw [if_pos rfl, List.foldl_add_eq_self xs _ _ hxs_zero]
+        rw [ite_eq_left rfl, List.foldl_add_eq_self xs _ _ hxs_zero]
         grind
       · have hxi : i ≠ x := by
           intro heq
           rw [← heq] at hnodup
           exact (List.nodup_cons.mp hnodup).1 hitail
-        rw [if_neg hxi]
+        rw [ite_eq_right hxi]
         have hzero : (0 : R) * f x = 0 := by grind
         rw [hzero]
         have hac : acc + (0 : R) = acc := by grind
@@ -215,9 +215,9 @@ theorem getElem_vecMul_diagMatrix [Lean.Grind.CommRing R]
       intro i _hi
       by_cases hji : jj = i
       · subst i
-        rw [if_pos rfl, getElem_diagMatrix_of_eq d jj j rfl hj]
+        rw [ite_eq_left rfl, getElem_diagMatrix_of_eq d jj j rfl hj]
         grind
-      · rw [if_neg hji, getElem_diagMatrix_of_ne d i j]
+      · rw [ite_eq_right hji, getElem_diagMatrix_of_ne d i j]
         · grind
         · intro hij
           apply hji

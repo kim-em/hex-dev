@@ -40,25 +40,26 @@ def endpoint : EndpointLimit :=
 def config : Rule.Config :=
   { endpoint
     powerWork := { maxExponent := 8 }
-    exponent := 2
     precisionLimits :=
       { endpoint, maxPrecisionMagnitude := 64, maxPrecisionBits := 64,
         maxTemporaryBits := 128 }
-    precision := 0
-    constant := d 0 }
+    precision := 0 }
 
 def node (op : Nat) (args : List Nat) : Node :=
   { domain := Rule.realDomain, op := { index := op },
     args := args.map fun index => { index } }
+
+def natNode (valueOp : Nat) : Node :=
+  { domain := Rule.natDomain, op := { index := valueOp }, args := [] }
 
 /-- One source followed by one node for every executable built-in rule. Binary
 rows deliberately repeat the source node, exercising valid repeated slots. -/
 def program : Program :=
   { operations := Rule.operations
     nodes :=
-      #[node 0 [], node 1 [0], node 2 [0, 0], node 3 [0, 0], node 4 [0, 0],
-        node 5 [0], node 6 [0], node 7 [0, 0], node 8 [0, 0], node 9 [],
-        node 10 [0], node 11 [0, 0], node 12 [0]] }
+      #[node 0 [], natNode 13, node 1 [0], node 2 [0, 0], node 3 [0, 0],
+        node 4 [0, 0], node 5 [0, 1], node 6 [0], node 7 [0, 0],
+        node 8 [0, 0], node 10 [0], node 11 [0, 0], node 12 [0]] }
 
 def point (value : Int) : Hex.Interval :=
   match singletonWithin endpoint (d value) with
@@ -66,17 +67,17 @@ def point (value : Int) : Hex.Interval :=
   | .resourceLimit _ => Hex.Interval.empty
 
 def facts : Array Hex.Interval :=
-  #[point 1, Hex.Interval.whole, Hex.Interval.whole, Hex.Interval.whole,
+  #[point 1, point 2, Hex.Interval.whole, Hex.Interval.whole,
     Hex.Interval.whole, Hex.Interval.whole, Hex.Interval.whole,
     Hex.Interval.whole, Hex.Interval.whole, Hex.Interval.whole,
     Hex.Interval.whole, Hex.Interval.whole, Hex.Interval.whole]
 
 def stateLimits : State.Limits :=
-  { maxOperations := 13, maxNodes := 13, maxRules := 12,
-    maxRegistryEntries := 64, maxReplayFormats := 12, maxArity := 2,
-    maxScopeNodes := 0, maxApplications := 12, maxQueueEntries := 16,
-    maxActions := 12, maxMatcherVisits := 0, matcherBatchSize := 0,
-    maxAcceptedFacts := 12, maxRetainedSuggestions := 0, maxEffort := 0,
+  { maxOperations := 14, maxNodes := 13, maxRules := 11,
+    maxRegistryEntries := 64, maxReplayFormats := 11, maxArity := 2,
+    maxScopeNodes := 0, maxApplications := 11, maxQueueEntries := 16,
+    maxActions := 11, maxMatcherVisits := 0, matcherBatchSize := 0,
+    maxAcceptedFacts := 11, maxRetainedSuggestions := 0, maxEffort := 0,
     maxObservationValue := 16, maxDiagnosticValue := 16,
     maxOutcomeCandidates := 1, maxOutcomeSuggestions := 0,
     maxProposalItems := 1, maxInstances := 0, maxGeneration := 0,
@@ -85,7 +86,7 @@ def stateLimits : State.Limits :=
 def executableLimits : Executable.Limits :=
   { state := stateLimits, maxPackages := 1,
     maxMetadataBytes := 64, maxMetadataWork := 64,
-    maxCacheBytes := 12, maxCacheWork := 12,
+    maxCacheBytes := 11, maxCacheWork := 11,
     maxResultBytes := 1, maxResultWork := 1,
     maxQuotes := 1, maxQuoteCells := 1, maxAtom := 12, maxSchema := 1 }
 
@@ -93,8 +94,8 @@ def runtimeLimits : Hex.Interval.Runtime.Limits :=
   { executable := executableLimits, maxEvents := 1 }
 
 def proofLimits : Proof.Limits :=
-  { maxPackages := 1, maxSchemas := 12, maxBodyCells := 1,
-    maxDependencies := 2, maxChronology := 12 }
+  { maxPackages := 1, maxSchemas := 11, maxBodyCells := 1,
+    maxDependencies := 2, maxChronology := 11 }
 
 def key : RuntimeProof.Key := { name := "arithmetic-runtime", version := 1 }
 
@@ -116,22 +117,23 @@ def seen (index version : Nat) : SeenVersion :=
 def action (serial application rule : Nat) (key : RuleKey)
     (inputs : List SeenVersion) : Action :=
   { serial, programVersion := 0, application := { index := application },
-    rule := { index := rule }, key, node := { index := application + 1 },
-    kind := .forward, effort := 0, inputs, writes := [{ index := application + 1 }] }
+    rule := { index := rule }, key, node := { index := application + 2 },
+    kind := .forward, effort := 0, inputs, writes := [{ index := application + 2 }] }
 
 def actions : List Action :=
   [action 0 0 0 Rule.negKey [seen 0 0],
    action 1 1 1 Rule.addKey [seen 0 0, seen 0 0],
    action 2 2 2 Rule.subKey [seen 0 0, seen 0 0],
    action 3 3 3 Rule.mulKey [seen 0 0, seen 0 0],
-   action 4 4 4 Rule.powKey [seen 0 0],
+   action 4 4 4 Rule.powKey [seen 0 0, seen 1 0],
    action 5 5 5 Rule.absKey [seen 0 0],
    action 6 6 6 Rule.minKey [seen 0 0, seen 0 0],
    action 7 7 7 Rule.maxKey [seen 0 0, seen 0 0],
-   action 8 8 8 Rule.constantKey [],
-   action 9 9 9 Rule.invKey [seen 0 0],
-   action 10 10 10 Rule.divKey [seen 0 0, seen 0 0],
-   action 11 11 11 Rule.regularizeKey [seen 0 0]]
+   action 8 8 8 Rule.invKey [seen 0 0],
+   action 9 9 9 Rule.divKey [seen 0 0, seen 0 0],
+   action 10 10 10 Rule.regularizeKey [seen 0 0]]
+
+def actionTags : Array Nat := #[1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12]
 
 private def run
     (state : Hex.Interval.Runtime.State Hex.Interval Rule.Runtime.Cause) :
@@ -146,14 +148,15 @@ private def run
 
 def run? := runtime?.bind fun state => run state actions
 
+
 private def exactFact (index : Nat)
     (transition : Hex.Interval.Runtime.Applied Hex.Interval Rule.Runtime.Cause) : Bool :=
   match transition.events[0]? with
   | some (Hex.Interval.Runtime.Event.fact step) =>
-      step.action == actions[index]? && step.update.node.index == index + 1 &&
-        step.update.previous == seen (index + 1) 0 && step.update.version == 1 &&
+      step.action == actions[index]? && step.update.node.index == index + 2 &&
+        step.update.previous == seen (index + 2) 0 && step.update.version == 1 &&
         step.proposed == step.update.fact && step.quote.role == .fact &&
-        step.quote.schema == 1 && step.quote.body == [index + 1] &&
+        step.quote.schema == 1 && step.quote.body == [actionTags[index]!] &&
         step.update.cause.rule == step.action.key &&
         step.update.cause.body == step.quote.body
   | _ => false
@@ -163,8 +166,8 @@ private def exactFact (index : Nat)
 #guard branch?.isSome
 #guard runtime?.isSome
 #guard run?.any fun (transitions, state) =>
-  transitions.size == 12 && state.serial == 12 &&
-    (List.range 12).all fun index =>
+  transitions.size == 11 && state.serial == 11 &&
+    (List.range 11).all fun index =>
       transitions[index]?.any (exactFact index)
 
 /-! ## Distinct operand order -/
@@ -199,7 +202,7 @@ def distinctAction (serial application rule node : Nat) (key : RuleKey) : Action
 
 def distinctActions : List Action :=
   [distinctAction 0 0 2 2 Rule.subKey,
-   distinctAction 1 1 10 3 Rule.divKey]
+   distinctAction 1 1 9 3 Rule.divKey]
 
 def distinctRun? := distinctRuntime?.bind fun state => run state distinctActions
 
@@ -222,12 +225,12 @@ private def proposedAt (index : Nat)
 /-! ## Retained quotation without a terminal -/
 
 def searchLimits : Search.Limits :=
-  { maxSteps := 13, maxSplits := 0, maxLeaves := 1, maxFrontier := 1,
-    maxDepth := 0, maxScopes := 1, leafFuel := 12 }
+  { maxSteps := 12, maxSplits := 0, maxLeaves := 1, maxFrontier := 1,
+    maxDepth := 0, maxScopes := 1, leafFuel := 11 }
 
 def resultLimits : Search.Result.Limits :=
   { search := searchLimits, runtime := runtimeLimits, maxNodes := 1,
-    maxBodyCells := 12, maxBytes := 65536, maxWork := 65536, maxCode := 16 }
+    maxBodyCells := 11, maxBytes := 65536, maxWork := 65536, maxCode := 16 }
 
 def unitCost : Search.Result.Cost := { bytes := 1, work := 1 }
 
@@ -245,8 +248,8 @@ def measure : Search.Result.Measure Hex.Interval Rule.Runtime.Cause (List Nat) P
 
 def adapterLimits : RuntimeProof.Limits :=
   { result := resultLimits, proof := proofLimits,
-    tree := { maxNodes := 1, maxDepth := 0, maxBodyCells := 12, maxWork := 32 },
-    maxTransitions := 12, maxEvents := 12, maxStructuralCells := 512 }
+    tree := { maxNodes := 1, maxDepth := 0, maxBodyCells := 11, maxWork := 32 },
+    maxTransitions := 11, maxEvents := 11, maxStructuralCells := 512 }
 
 private def runTree
     (tree : Search.Result.Tree Hex.Interval Rule.Runtime.Cause (List Nat) Proof.Key)
@@ -279,16 +282,16 @@ def bundle? : Option
   | _, _ => none
 
 #guard treeRun?.any fun (tree, _) =>
-  tree.transitions.size == 12 && tree.pending.length == 1
+  tree.transitions.size == 11 && tree.pending.length == 1
 #guard bundle?.any fun bundle =>
   bundle.recipe.events.size == 1 &&
     bundle.recipe.events[0]?.any fun events =>
-      events.length == 12 && (List.range 12).all fun index =>
+      events.length == 11 && (List.range 11).all fun index =>
         match events[index]? with
         | some (Proof.Event.fact step) =>
             actions[index]?.any fun action =>
               step.schema == Rule.schemaKey action.key &&
-                step.body == [index + 1] && step.proposed == step.installed
+                step.body == [actionTags[index]!] && step.proposed == step.installed
         | _ => false
 
 /-! ## Exact target settlement and semantic replay -/
@@ -298,7 +301,7 @@ def input : Proof.Input Hex.Interval :=
     target := { node := { index := 12 }, fact := point 1 } }
 
 def policyLimits : Policy.Limits :=
-  { maxOffers := 12, maxBytes := 4096, maxPairs := 64, maxWork := 64,
+  { maxOffers := 11, maxBytes := 4096, maxPairs := 64, maxWork := 64,
     maxScore := 0 }
 
 def traceLimits : Trace.Limit :=
@@ -360,6 +363,18 @@ def oneCacheRuntime? : Option
           | _ => false
       | _ => false
   | _, _ => false
+
+-- The same application, resubmitted at the current chronology serial, reaches
+-- the callback and is rejected transactionally when its version-zero update
+-- meets the evolved version-one output.
+#guard runtime?.any fun state =>
+  actions[0]?.any fun first =>
+    match state.stepWithin runtimeLimits first with
+    | .ok (_, next) =>
+        match next.stepWithin runtimeLimits { first with serial := 1 } with
+        | .error (.state (.staleVersion node)) => node == { index := 2 }
+        | _ => false
+    | _ => false
 
 #guard runtime?.any fun state =>
   actions[0]?.any fun first =>
@@ -451,18 +466,18 @@ def extendedConfig : Rule.Config :=
   { config with extraMeanings := #[opaqueMeaning] }
 
 def opaqueNode : Node :=
-  { domain := Rule.realDomain, op := { index := 13 }, args := [{ index := 0 }] }
+  { domain := Rule.realDomain, op := { index := 14 }, args := [{ index := 0 }] }
 
 def extendedProgram : Program :=
   { operations := Rule.operations.push opaqueOp,
     nodes := program.nodes.push opaqueNode }
 
 def extendedStateLimits : State.Limits :=
-  { maxOperations := 14, maxNodes := 14, maxRules := 13,
-    maxRegistryEntries := 72, maxReplayFormats := 13, maxArity := 2,
-    maxScopeNodes := 0, maxApplications := 13, maxQueueEntries := 16,
-    maxActions := 13, maxMatcherVisits := 0, matcherBatchSize := 0,
-    maxAcceptedFacts := 13, maxRetainedSuggestions := 0, maxEffort := 0,
+  { maxOperations := 15, maxNodes := 14, maxRules := 12,
+    maxRegistryEntries := 72, maxReplayFormats := 12, maxArity := 2,
+    maxScopeNodes := 0, maxApplications := 12, maxQueueEntries := 16,
+    maxActions := 12, maxMatcherVisits := 0, matcherBatchSize := 0,
+    maxAcceptedFacts := 12, maxRetainedSuggestions := 0, maxEffort := 0,
     maxObservationValue := 16, maxDiagnosticValue := 16,
     maxOutcomeCandidates := 1, maxOutcomeSuggestions := 0,
     maxProposalItems := 1, maxInstances := 0, maxGeneration := 0,
@@ -471,7 +486,7 @@ def extendedStateLimits : State.Limits :=
 def extendedExecutableLimits : Executable.Limits :=
   { state := extendedStateLimits, maxPackages := 2,
     maxMetadataBytes := 72, maxMetadataWork := 72,
-    maxCacheBytes := 13, maxCacheWork := 13,
+    maxCacheBytes := 12, maxCacheWork := 12,
     maxResultBytes := 1, maxResultWork := 1,
     maxQuotes := 1, maxQuoteCells := 1, maxAtom := 13, maxSchema := 1 }
 
@@ -479,8 +494,8 @@ def extendedRuntimeLimits : Hex.Interval.Runtime.Limits :=
   { executable := extendedExecutableLimits, maxEvents := 1 }
 
 def extendedProofLimits : Proof.Limits :=
-  { maxPackages := 2, maxSchemas := 13, maxBodyCells := 1,
-    maxDependencies := 2, maxChronology := 13 }
+  { maxPackages := 2, maxSchemas := 12, maxBodyCells := 1,
+    maxDependencies := 2, maxChronology := 12 }
 
 def extendedRegistry? : Option (Rule.Runtime.Registry extendedConfig) :=
   (Rule.Runtime.buildWithWithin extendedExecutableLimits extendedProofLimits
@@ -499,8 +514,8 @@ def extendedRuntime? : Option
   | _, _ => none
 
 def opaqueAction : Action :=
-  { serial := 0, programVersion := 0, application := { index := 12 },
-    rule := { index := 12 }, key := opaqueKey, node := { index := 13 },
+  { serial := 0, programVersion := 0, application := { index := 11 },
+    rule := { index := 11 }, key := opaqueKey, node := { index := 13 },
     kind := .forward, effort := 0, inputs := [seen 0 0], writes := [{ index := 13 }] }
 
 #guard extendedProgram.check

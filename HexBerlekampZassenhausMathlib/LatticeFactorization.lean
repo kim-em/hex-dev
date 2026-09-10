@@ -38,11 +38,11 @@ positive-degree input. -/
 theorem irreducible_of_directSingleton
     (core : Hex.ZPoly) (data : Hex.PrimeChoiceData)
     (prime : DirectPrimeFacts core data)
-    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_pos : 0 < core.natDegree)
     (hcore_prim : Hex.ZPoly.Primitive core)
     (hsmall : data.factorsModP.size ≤ 1) :
     Hex.ZPoly.Irreducible core := by
-  letI := data.bounds
+  let := data.bounds
   have hadm :
       Hex.leadingCoeffAdmissible core data.p :=
     Hex.isGoodPrime_leadingCoeffAdmissible core data.p
@@ -65,7 +65,7 @@ each normalized irreducible factor. -/
 theorem bhksRecoveryCoreWithBound_factorCount
     (core : Hex.ZPoly) (B : Nat) (data : Hex.PrimeChoiceData)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
-    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_pos : 0 < core.natDegree)
     (hcore_prim : Hex.ZPoly.Primitive core)
     (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
     (hval : ModPFactorization core data)
@@ -101,7 +101,7 @@ certificate implies that the primitive square-free part is irreducible. -/
 theorem irreducible_of_directSingleClass
     (core : Hex.ZPoly) (B : Nat) (data : Hex.PrimeChoiceData)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
-    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_pos : 0 < core.natDegree)
     (hcore_prim : Hex.ZPoly.Primitive core)
     (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
     (hval : ModPFactorization core data)
@@ -176,7 +176,7 @@ theorem latticeCoreFactorsWithBound_factor_irreducible
     (core : Hex.ZPoly) (B : Nat) (data : Hex.PrimeChoiceData)
     (prime : DirectPrimeFacts core data)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
-    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_pos : 0 < core.natDegree)
     (hcore_prim : Hex.ZPoly.Primitive core)
     (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
     (hB_floor : Hex.bhksRecoveryFloor core ≤ B)
@@ -241,7 +241,7 @@ theorem latticeCoreFactorsWithBound_ne_none
     (core : Hex.ZPoly) (B : Nat) (data : Hex.PrimeChoiceData)
     (prime : DirectPrimeFacts core data)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
-    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_pos : 0 < core.natDegree)
     (hcore_prim : Hex.ZPoly.Primitive core)
     (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
     (hB_floor : Hex.bhksRecoveryFloor core ≤ B)
@@ -263,7 +263,7 @@ theorem latticeCoreFactorsWithBound_ne_none
           d.p d.k d.liftedFactors).factorCount +
         (Hex.bhksLatticeBasis core
           d.p d.k d.liftedFactors).coeffWidth := by
-    change 1 ≤ d.liftedFactors.size + core.degree?.getD 0
+    change 1 ≤ d.liftedFactors.size + core.natDegree
     omega
   have hspan :
       BHKS.projectedRowSpanInt
@@ -304,9 +304,9 @@ theorem latticeCoreFactorsWithBound_ne_none
         hnonunit).ne'
   rw [Hex.latticeCoreFactorsWithBound]
   by_cases hsmall : data.factorsModP.size ≤ 1
-  · rw [if_pos hsmall]
+  · rw [ite_eq_left hsmall]
     simp
-  · rw [if_neg hsmall]
+  · rw [ite_eq_right hsmall]
     cases hlattice :
         Hex.latticeCoreWithBound core B data
           (Hex.initialHenselPrecision B)
@@ -320,9 +320,9 @@ theorem latticeCoreFactorsWithBound_ne_none
               hcover hdisjoint (by simpa only [d] using hrows)
               (by simpa only [d] using hspan)
               (by simpa only [classes] using hsingle)
-          rw [Hex.bhksRecoveryThreshold_eq, if_pos hB_floor]
+          rw [Hex.bhksRecoveryThreshold_eq, ite_eq_left hB_floor]
           rw [show Hex.ZPoly.directLiftData core B data = d by rfl,
-            if_pos hallones]
+            ite_eq_left hallones]
           simp
         · have hclasses_two : 2 ≤ classes.length := by omega
           have hrecover :
@@ -351,7 +351,7 @@ theorem reassemblyExpansionComplete_latticeCore
     (prime :
       DirectPrimeFacts (Hex.normalizeForFactor f).squareFreeCore data)
     (hcore_pos :
-      0 < (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0)
+      0 < (Hex.normalizeForFactor f).squareFreeCore.natDegree)
     (hB_floor :
       Hex.bhksRecoveryFloor
         (Hex.normalizeForFactor f).squareFreeCore ≤ B)
@@ -410,8 +410,8 @@ theorem factorLatticeFactorsWithPlan_factor_irreducible
     IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf
   unfold Hex.factorLatticeFactorsWithPlan at hresult
   by_cases hdegree :
-      (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
-  · rw [if_pos hdegree] at hresult
+      (Hex.normalizeForFactor f).squareFreeCore.natDegree = 0
+  · rw [ite_eq_left hdegree] at hresult
     obtain rfl := Option.some.inj hresult
     have hcomplete :=
       Hex.reassemblyExpansionComplete_constant_of_ne_zero f hf hdegree
@@ -428,11 +428,11 @@ theorem factorLatticeFactorsWithPlan_factor_irreducible
       rw [hraw_one, Hex.normalizeFactorSign_one,
         Hex.shouldRecordPolynomialFactor_one] at hrecord
       exact absurd hrecord (by decide)
-  · rw [if_neg hdegree] at hresult
+  · rw [ite_eq_right hdegree] at hresult
     by_cases hcap : Hex.latticePrecisionCap f = 0
-    · rw [if_pos hcap] at hresult
+    · rw [ite_eq_left hcap] at hresult
       exact absurd hresult.symm (Option.some_ne_none factors)
-    · rw [if_neg hcap] at hresult
+    · rw [ite_eq_right hcap] at hresult
       cases hquadratic :
           Hex.quadraticIntegerRootFactors?
             (Hex.normalizeForFactor f).squareFreeCore with
@@ -455,7 +455,7 @@ theorem factorLatticeFactorsWithPlan_factor_irreducible
           obtain ⟨coreFactors, hlattice, rfl⟩ := hresult
           have hcore_pos :
               0 <
-                (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 :=
+                (Hex.normalizeForFactor f).squareFreeCore.natDegree :=
             Nat.pos_of_ne_zero hdegree
           let prime :=
             directPrimePlan_facts
@@ -498,8 +498,8 @@ theorem factorLatticeFactorsWithBound_factor_irreducible
     IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf
   rw [Hex.factorLatticeFactorsWithBound] at hresult
   by_cases hdegree :
-      (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
-  · rw [if_pos hdegree] at hresult
+      (Hex.normalizeForFactor f).squareFreeCore.natDegree = 0
+  · rw [ite_eq_left hdegree] at hresult
     obtain rfl := Option.some.inj hresult
     have hcomplete :=
       Hex.reassemblyExpansionComplete_constant_of_ne_zero f hf hdegree
@@ -516,11 +516,11 @@ theorem factorLatticeFactorsWithBound_factor_irreducible
       rw [hraw_one, Hex.normalizeFactorSign_one,
         Hex.shouldRecordPolynomialFactor_one] at hrecord
       exact absurd hrecord (by decide)
-  · rw [if_neg hdegree] at hresult
+  · rw [ite_eq_right hdegree] at hresult
     by_cases hcap : Hex.latticePrecisionCap f = 0
-    · rw [if_pos hcap] at hresult
+    · rw [ite_eq_left hcap] at hresult
       exact absurd hresult.symm (Option.some_ne_none factors)
-    · rw [if_neg hcap] at hresult
+    · rw [ite_eq_right hcap] at hresult
       cases hquadratic :
           Hex.quadraticIntegerRootFactors?
             (Hex.normalizeForFactor f).squareFreeCore with

@@ -141,17 +141,14 @@ theorem isChain_of_replay {f s₁ : Polynomial ℝ} {rest : List (Polynomial ℝ
     (hderiv : Polynomial.derivative f = Polynomial.C δ * s₁) :
     IsSturmChain f (f :: s₁ :: rest) := by
   have hcop : IsCoprime f s₁ := hrep.first_coprime
-  refine { nonempty := by simp, head := rfl, root_flank := ?_, nonzero_mem := hnz,
-           consec_coprime := ?_, interior_alternates := ?_, last_no_root := ?_ }
+  refine { head := rfl, root_flank := ?_, nonzero_mem := hnz,
+           interior_alternates := ?_, last_no_root := ?_ }
   · intro r hr
     have hs₁r : s₁.eval r ≠ 0 :=
       HexRealRootsMathlib.eval_ne_zero_of_isCoprime hcop hr
     obtain ⟨hleft, hright⟩ :=
       HexRealRootsMathlib.flank_of_key hδ hderiv hr hs₁r
     exact ⟨s₁, rfl, hs₁r, hleft, hright⟩
-  · intro i x a b ha hb hax
-    exact HexRealRootsMathlib.eval_ne_zero_of_isCoprime
-      (hrep.pair_coprime i a b ha hb) hax
   · intro i x a b c ha hb hc hbx
     obtain ⟨left, quotient, right, hleft, hright, hrel⟩ :=
       hrep.triple i a b c ha hb hc
@@ -231,9 +228,7 @@ private theorem cast_unit {p : Hex.ZPoly} (hsize : p.size = 1) :
     simp at hsize
   have hcast0 : toPolyℝ p ≠ 0 := fun h => hp0 (toPolyℝ_eq_zero_iff.mp h)
   have hdegree : (toPolyℝ p).natDegree = 0 := by
-    rw [natDegree_toPolyℝ,
-      Hex.DensePoly.degree?_eq_some_of_pos_size p (by omega), hsize]
-    rfl
+    rw [natDegree_toPolyℝ, Hex.DensePoly.natDegree_eq_size_sub_one, hsize]
   rw [Polynomial.isUnit_iff_degree_eq_zero,
     Polynomial.degree_eq_natDegree hcast0, hdegree]
   rfl
@@ -308,7 +303,7 @@ end Literal
 half-open dyadic interval. This reads the supplied chain directly and never
 calls the executable chain builder. -/
 theorem literalCount_eq_card_roots (p : Hex.ZPoly) (chain : Array Hex.ZPoly)
-    (hp : toPolyℝ p ≠ 0) (hsf : Squarefree (toPolyℝ p))
+    (hsf : Squarefree (toPolyℝ p))
     (hchain : Sturm.IsSturmChain (toPolyℝ p) (chain.toList.map toPolyℝ))
     (I : Hex.DyadicInterval) :
     (Hex.sturmVarAt chain I.lower : Int) - Hex.sturmVarAt chain I.upper =
@@ -316,23 +311,28 @@ theorem literalCount_eq_card_roots (p : Hex.ZPoly) (chain : Array Hex.ZPoly)
   classical
   rw [sturmVarAt_eq, sturmVarAt_eq]
   rw [Literal.rootsIn]
-  have h := Sturm.sturm_half_open hp hsf hchain (toReal_lt_toReal I.lt)
-  rw [h]
-  norm_cast
-  apply congrArg Multiset.card
-  apply Multiset.filter_congr
-  intro x _hx
-  rfl
+  have h := hchain.sturm_Ioc (Polynomial.nodup_roots
+    (PerfectField.separable_iff_squarefree.mpr hsf)) (toReal_lt_toReal I.lt).le
+  have hf : (toPolyℝ p).roots.filter (Literal.InInterval I) =
+      (toPolyℝ p).roots.filter (fun r => r ∈ Set.Ioc
+        (Dyadic.toReal I.lower) (Dyadic.toReal I.upper)) := by
+    apply Multiset.filter_congr
+    intro x _
+    rfl
+  rw [hf]
+  omega
 
 /-- A literal chain's variation drop at infinity is the exact total number of
 real roots. -/
 theorem literalRootCount_eq_card_roots (p : Hex.ZPoly) (chain : Array Hex.ZPoly)
-    (hp : toPolyℝ p ≠ 0) (hsf : Squarefree (toPolyℝ p))
+    (hsf : Squarefree (toPolyℝ p))
     (hchain : Sturm.IsSturmChain (toPolyℝ p) (chain.toList.map toPolyℝ)) :
     (Hex.sturmVarNegInf chain : Int) - Hex.sturmVarPosInf chain =
       (toPolyℝ p).roots.card := by
   rw [sturmVarNegInf_eq, sturmVarPosInf_eq]
-  exact Sturm.sturm_line hp hsf hchain
+  have h := hchain.sturm (Polynomial.nodup_roots
+    (PerfectField.separable_iff_squarefree.mpr hsf))
+  omega
 
 /-- A checked integer replay gives the exact literal count on an interval.
 
@@ -348,8 +348,6 @@ theorem ZReplay.count_eq_card_roots {f s₁ : Hex.ZPoly} {rest : List Hex.ZPoly}
         Hex.sturmVarAt (f :: s₁ :: rest).toArray I.upper =
       (Literal.rootsIn (toPolyℝ f) I).card := by
   apply literalCount_eq_card_roots f (f :: s₁ :: rest).toArray
-  · intro hf
-    exact hnz f (by simp) (toPolyℝ_eq_zero_iff.mp hf)
   · exact hrep.squarefree δ hδ hderiv
   · simpa using hrep.isChain hnz δ hδ hderiv
 
@@ -363,8 +361,6 @@ theorem ZReplay.total_eq_card_roots {f s₁ : Hex.ZPoly} {rest : List Hex.ZPoly}
         Hex.sturmVarPosInf (f :: s₁ :: rest).toArray =
       (toPolyℝ f).roots.card := by
   apply literalRootCount_eq_card_roots f (f :: s₁ :: rest).toArray
-  · intro hf
-    exact hnz f (by simp) (toPolyℝ_eq_zero_iff.mp hf)
   · exact hrep.squarefree δ hδ hderiv
   · simpa using hrep.isChain hnz δ hδ hderiv
 

@@ -6,7 +6,6 @@ Authors: Kim Morrison
 
 module
 
-public import HexBasic.Conditional
 public import Std
 
 public section
@@ -396,13 +395,13 @@ theorem foldl_add_single [Lean.Grind.Semiring R] [DecidableEq α]
     simp only [List.foldl_cons]
     by_cases hxq : x = q
     · subst hxq
-      rw [Hex.ite_eq_left rfl]
+      rw [ite_eq_left rfl]
       have hxs_nomem : x ∉ xs := (List.nodup_cons.mp hnodup).1
       apply foldl_add_eq_self xs (fun y => if y = x then f y else 0) (z + f x)
       intro y hy
       have hyne : y ≠ x := fun heq => hxs_nomem (heq ▸ hy)
-      exact Hex.ite_eq_right hyne
-    · rw [Hex.ite_eq_right hxq]
+      exact ite_eq_right hyne
+    · rw [ite_eq_right hxq]
       have hzero_step : z + (0 : R) = z := by grind
       rw [hzero_step]
       have hmem' : q ∈ xs := by

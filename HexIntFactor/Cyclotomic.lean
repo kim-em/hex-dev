@@ -94,7 +94,7 @@ theorem cyclotomicSplit?_prod {b n : Nat} {sign : Sign}
   cases sign with
   | minus =>
       unfold cyclotomicSplit? at h
-      rw [if_neg hb, if_neg hn] at h
+      rw [ite_eq_right hb, ite_eq_right hn] at h
       dsimp only at h
       split at h
       · rename_i hp
@@ -104,7 +104,7 @@ theorem cyclotomicSplit?_prod {b n : Nat} {sign : Sign}
       · cases h
   | plus =>
       unfold cyclotomicSplit? at h
-      rw [if_neg hb, if_neg hn] at h
+      rw [ite_eq_right hb, ite_eq_right hn] at h
       dsimp only at h
       split at h
       · rename_i hp

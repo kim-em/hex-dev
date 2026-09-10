@@ -285,12 +285,13 @@ theorem scale_degree?_eq_of_ne_zero [ZMod64.PrimeModulus p]
   unfold DensePoly.degree?
   rw [hsize]
 
-/-- Nonzero scaling preserves the degree in the `degree?.getD 0` form callers
+/-- Nonzero scaling preserves the degree in the `natDegree` form callers
 commonly carry, sparing them an `Option` unfolding at each use site. -/
 theorem scale_degree?_getD_eq_of_ne_zero [ZMod64.PrimeModulus p]
     {c : ZMod64 p} (hc : c ≠ 0) (f : FpPoly p) :
-    (DensePoly.scale c f).degree?.getD 0 = f.degree?.getD 0 := by
-  rw [scale_degree?_eq_of_ne_zero (p := p) hc f]
+    (DensePoly.scale c f).natDegree = f.natDegree := by
+  rw [DensePoly.natDegree_eq_degree?_getD, DensePoly.natDegree_eq_degree?_getD,
+    scale_degree?_eq_of_ne_zero (p := p) hc f]
 
 /-- For a nonempty polynomial the leading coefficient is the coefficient at the
 top index `size - 1`. Gives callers a concrete index for the leading
@@ -304,14 +305,14 @@ theorem leadingCoeff_eq_coeff_pred
 nondegeneracy fact that justifies inverting the leading coefficient during
 monic normalization. -/
 theorem leadingCoeff_ne_zero_of_pos_degree
-    (f : FpPoly p) (hpos : 0 < f.degree?.getD 0) :
+    (f : FpPoly p) (hpos : 0 < f.natDegree) :
     DensePoly.leadingCoeff f ≠ 0 := by
   have hfsize : 0 < f.size := by
     by_cases h : 0 < f.size
     · exact h
     · exfalso
       have hsize : f.size = 0 := by omega
-      simp [DensePoly.degree?, hsize] at hpos
+      simp [DensePoly.natDegree, DensePoly.degree?, hsize] at hpos
   rw [leadingCoeff_eq_coeff_pred f hfsize]
   exact DensePoly.coeff_last_ne_zero_of_pos_size f hfsize
 
@@ -320,7 +321,7 @@ coefficient scales by `c`. Lets callers track how the leading coefficient moves
 under a unit scaling, the key step in computing a monic-normalizing scalar. -/
 theorem leadingCoeff_scale_of_ne_zero_of_pos_degree [ZMod64.PrimeModulus p]
     {c : ZMod64 p} (hc : c ≠ 0) (f : FpPoly p)
-    (hpos : 0 < f.degree?.getD 0) :
+    (hpos : 0 < f.natDegree) :
     DensePoly.leadingCoeff (DensePoly.scale c f) =
       c * DensePoly.leadingCoeff f := by
   have hfpos : 0 < f.size := by
@@ -328,7 +329,7 @@ theorem leadingCoeff_scale_of_ne_zero_of_pos_degree [ZMod64.PrimeModulus p]
     · exact h
     · exfalso
       have hsize : f.size = 0 := by omega
-      simp [DensePoly.degree?, hsize] at hpos
+      simp [DensePoly.natDegree, DensePoly.degree?, hsize] at hpos
   have hs : (DensePoly.scale c f).size = f.size :=
     scale_size_eq_of_ne_zero (p := p) hc f
   have hscale_pos : 0 < (DensePoly.scale c f).size := by omega
@@ -359,7 +360,7 @@ theorem leadingCoeff_scale_of_ne_zero_of_nonzero [ZMod64.PrimeModulus p]
 coefficient produces a monic polynomial. This is the monic-normalization step
 that puts a polynomial into the canonical leading-`1` form. -/
 theorem scale_inv_leadingCoeff_monic [ZMod64.PrimeModulus p]
-    (f : FpPoly p) (hpos : 0 < f.degree?.getD 0) :
+    (f : FpPoly p) (hpos : 0 < f.natDegree) :
     DensePoly.Monic (DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f) := by
   have hlead_ne := leadingCoeff_ne_zero_of_pos_degree f hpos
   have hinv_ne : (DensePoly.leadingCoeff f)⁻¹ ≠ (0 : ZMod64 p) := by
@@ -553,12 +554,12 @@ private theorem coeff_mul_eq_zero_above_top
 /--
 Over a prime modulus, the degree of a product of nonzero polynomials in
 `FpPoly p` equals the sum of the degrees. This is the no-zero-divisors
-identity expressed at the level of `degree?.getD 0`.
+identity expressed at the level of `natDegree`.
 -/
 theorem degree?_mul_eq_add_degree?
     [ZMod64.PrimeModulus p] (a b : FpPoly p)
     (ha : a ≠ 0) (hb : b ≠ 0) :
-    (a * b).degree?.getD 0 = a.degree?.getD 0 + b.degree?.getD 0 := by
+    (a * b).natDegree = a.natDegree + b.natDegree := by
   have ha_size_pos : 0 < a.size := by
     apply Nat.pos_of_ne_zero
     intro hsize
@@ -614,7 +615,8 @@ theorem degree?_mul_eq_add_degree?
   have hb_deg : b.degree? = some (b.size - 1) := by
     unfold DensePoly.degree?
     simp [hb_size_ne_zero]
-  rw [hab_deg, ha_deg, hb_deg]
+  rw [DensePoly.natDegree_eq_degree?_getD, DensePoly.natDegree_eq_degree?_getD,
+    DensePoly.natDegree_eq_degree?_getD, hab_deg, ha_deg, hb_deg]
   simp
   omega
 
@@ -817,12 +819,12 @@ theorem eq_one_of_monic_dvd_one
     apply hone_ne
     rw [hu, hu_zero, mul_zero]
   have hdeg_mul := degree?_mul_eq_add_degree? g u hg_ne hu_ne
-  have hdeg_one : (1 : FpPoly p).degree?.getD 0 = 0 := by
-    exact DensePoly.degree?_C_getD (1 : ZMod64 p)
+  have hdeg_one : (1 : FpPoly p).natDegree = 0 := by
+    exact DensePoly.natDegree_C (1 : ZMod64 p)
   have hdeg_eq :
-      (g * u).degree?.getD 0 = (1 : FpPoly p).degree?.getD 0 :=
-    congrArg (fun f : FpPoly p => f.degree?.getD 0) hu.symm
-  have hg_degree_zero : g.degree?.getD 0 = 0 := by
+      (g * u).natDegree = (1 : FpPoly p).natDegree :=
+    congrArg (fun f : FpPoly p => f.natDegree) hu.symm
+  have hg_degree_zero : g.natDegree = 0 := by
     rw [hdeg_mul, hdeg_one] at hdeg_eq
     omega
   have hg_size_pos : 0 < g.size := by
@@ -833,10 +835,8 @@ theorem eq_one_of_monic_dvd_one
     intro i
     rw [DensePoly.coeff_zero]
     exact DensePoly.coeff_eq_zero_of_size_le g (by omega)
-  have hg_degree_size : g.degree?.getD 0 = g.size - 1 := by
-    unfold DensePoly.degree?
-    have hsize_ne : g.size ≠ 0 := Nat.pos_iff_ne_zero.mp hg_size_pos
-    simp [hsize_ne]
+  have hg_degree_size : g.natDegree = g.size - 1 := by
+    rw [DensePoly.natDegree_eq_size_sub_one]
   have hg_size_one : g.size = 1 := by
     omega
   have hg_coeff_zero : g.coeff 0 = 1 := by

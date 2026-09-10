@@ -122,7 +122,7 @@ theorem toMathlibPolynomial_factorProduct (primeData : Hex.PrimeFactorData) :
     HexBerlekampMathlib.toMathlibPolynomial primeData.factorProduct =
       (primeData.factorPolys.toList.map
         HexBerlekampMathlib.toMathlibPolynomial).prod := by
-  letI := primeData.bounds
+  let := primeData.bounds
   show HexBerlekampMathlib.toMathlibPolynomial
       (primeData.factorPolys.foldl (· * ·) 1) = _
   rw [← Array.foldl_toList]
@@ -153,7 +153,7 @@ theorem toMathlibPolynomial_factorProduct_eq_map_intCast_zmod
     HexBerlekampMathlib.toMathlibPolynomial primeData.factorProduct =
       (HexPolyZMathlib.toPolynomial f).map
         (Int.castRingHom (ZMod primeData.p)) := by
-  letI := primeData.bounds
+  let := primeData.bounds
   have hprod : primeData.factorProduct = Hex.ZPoly.modP primeData.p f := by
     simp [Hex.PrimeFactorData.checkForPolynomial] at hcheck
     exact hcheck.1.2
@@ -179,7 +179,7 @@ theorem map_intCast_zmod_toPolynomial_eq_factorPolys_product
         (Int.castRingHom (ZMod primeData.p)) =
       (primeData.factorPolys.toList.map
         HexBerlekampMathlib.toMathlibPolynomial).prod := by
-  letI := primeData.bounds
+  let := primeData.bounds
   rw [← toMathlibPolynomial_factorProduct_eq_map_intCast_zmod f primeData hcheck]
   exact toMathlibPolynomial_factorProduct primeData
 

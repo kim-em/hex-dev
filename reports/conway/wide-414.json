@@ -1,0 +1,2357 @@
+{
+  "machine": "chungus2",
+  "cpu": "AMD EPYC 9455 48-Core Processor",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "toolchain": "leanprover/lean4:v4.34.0-rc2",
+  "threads": 8,
+  "targets": [
+    "HexConway"
+  ],
+  "commit": "cb9da4fa5c75013997998f2c84b46e808dac1d39",
+  "runs": [
+    {
+      "max_child_rss_kib": 3761688,
+      "wall_seconds": 119.67343484098092,
+      "peak_tree_rss_kib": 17319208,
+      "exit_code": 0,
+      "artifact_bytes": 141139085,
+      "modules": [
+        "HexConway.Power (769ms)",
+        "HexConway.Rebuild (1.1s)",
+        "HexConway.Bounds (3.8s)",
+        "HexConway.Coefficients (2.9s)",
+        "HexConway.Entries.S0_0 (2.4s)",
+        "HexConway.Entries.S1_0 (2.4s)",
+        "HexConway.Entries.S3_0 (2.4s)",
+        "HexConway.Entries.S2_0 (2.5s)",
+        "HexConway.Entries.S0_1 (2.4s)",
+        "HexConway.Entries.S1_1 (2.4s)",
+        "HexConway.Entries.S3_1 (2.6s)",
+        "HexConway.Entries.S2_1 (2.5s)",
+        "HexConway.Entries.S0_2 (2.3s)",
+        "HexConway.Entries.S3_2 (2.2s)",
+        "HexConway.Entries.S1_2 (2.4s)",
+        "HexConway.Entries.S2_2 (2.2s)",
+        "HexConway.FactorProofs.S2_0 (14s)",
+        "HexConway.FactorProofs.S3_0 (15s)",
+        "HexConway.Entries.S0_3 (2.4s)",
+        "HexConway.Entries.S3_3 (2.4s)",
+        "HexConway.FactorProofs.S0_0 (16s)",
+        "HexConway.Entries.S1_3 (2.5s)",
+        "HexConway.Entries.S2_3 (2.6s)",
+        "HexConway.Entries.S0_4 (764ms)",
+        "HexConway.FactorProofs.S1_0 (17s)",
+        "HexConway.Entries.S3_4 (1.1s)",
+        "HexConway.Entries.S1_4 (1.2s)",
+        "HexConway.PrimeFactors (298ms)",
+        "HexConway.Entries.S2_4 (1.2s)",
+        "HexConway.Table (347ms)",
+        "HexConway.EntrySource (1.0s)",
+        "HexConway.Rabin.S0_0 (12s)",
+        "HexConway.Rabin.S3_0 (14s)",
+        "HexConway.Rabin.S0_1 (2.5s)",
+        "HexConway.Rabin.S1_0 (15s)",
+        "HexConway.Rabin.S0_2 (1.2s)",
+        "HexConway.Rabin.S2_0 (16s)",
+        "HexConway.Rabin.S3_1 (2.7s)",
+        "HexConway.Rabin.S0_3 (723ms)",
+        "HexConway.Rabin.S0_4 (363ms)",
+        "HexConway.Rabin.S1_1 (2.5s)",
+        "HexConway.Rabin.S3_2 (1.5s)",
+        "HexConway.Rabin.S2_1 (2.5s)",
+        "HexConway.Rabin.S1_2 (1.4s)",
+        "HexConway.Rabin.S3_3 (758ms)",
+        "HexConway.Rabin.S3_4 (442ms)",
+        "HexConway.Rabin.S1_3 (732ms)",
+        "HexConway.Rabin.S1_4 (409ms)",
+        "HexConway.Rabin.S2_2 (1.5s)",
+        "HexConway.Rabin.S2_3 (746ms)",
+        "HexConway.Rabin.S2_4 (417ms)",
+        "HexConway.Certificates (268ms)",
+        "HexConway.Transport.S3_0 (338ms)",
+        "HexConway.Transport.S0_0 (351ms)",
+        "HexConway.Transport.S1_0 (368ms)",
+        "HexConway.Transport.S2_0 (358ms)",
+        "HexConway.Transport.S0_1 (339ms)",
+        "HexConway.Transport.S1_1 (340ms)",
+        "HexConway.Transport.S2_1 (340ms)",
+        "HexConway.Transport.S3_1 (336ms)",
+        "HexConway.Transport.S0_2 (331ms)",
+        "HexConway.Transport.S2_2 (339ms)",
+        "HexConway.Transport.S3_2 (355ms)",
+        "HexConway.Transport.S1_2 (361ms)",
+        "HexConway.Transport.S0_3 (338ms)",
+        "HexConway.Transport.S1_3 (356ms)",
+        "HexConway.Transport.S2_3 (344ms)",
+        "HexConway.Transport.S3_3 (344ms)",
+        "HexConway.Transport.S0_4 (343ms)",
+        "HexConway.Transport.S2_4 (362ms)",
+        "HexConway.Transport.S3_4 (356ms)",
+        "HexConway.Transport.S1_4 (356ms)",
+        "HexConway.Transport.S0_5 (345ms)",
+        "HexConway.Transport.S1_5 (350ms)",
+        "HexConway.Transport.S2_5 (340ms)",
+        "HexConway.Transport.S3_5 (361ms)",
+        "HexConway.Transport.S0_6 (367ms)",
+        "HexConway.Transport.S2_6 (354ms)",
+        "HexConway.Transport.S1_6 (348ms)",
+        "HexConway.Transport.S3_6 (357ms)",
+        "HexConway.Transport.S0_7 (370ms)",
+        "HexConway.Transport.S1_7 (357ms)",
+        "HexConway.Transport.S2_7 (360ms)",
+        "HexConway.Transport.S3_7 (361ms)",
+        "HexConway.Transport.S0_8 (338ms)",
+        "HexConway.Transport.S1_8 (341ms)",
+        "HexConway.Transport.S2_8 (354ms)",
+        "HexConway.Transport.S3_8 (341ms)",
+        "HexConway.Irreducible (6.8s)",
+        "HexConway.Monic (6.9s)",
+        "HexConway.ApiCore (17s)",
+        "HexConway.Supported.S0_0 (332ms)",
+        "HexConway.Supported.S1_0 (333ms)",
+        "HexConway.Supported.S3_0 (334ms)",
+        "HexConway.Supported.S2_0 (350ms)",
+        "HexConway.Supported.S0_1 (328ms)",
+        "HexConway.Supported.S1_1 (318ms)",
+        "HexConway.Supported.S2_1 (322ms)",
+        "HexConway.Supported.S3_1 (326ms)",
+        "HexConway.Supported.S0_2 (323ms)",
+        "HexConway.Supported.S1_2 (307ms)",
+        "HexConway.Supported.S2_2 (321ms)",
+        "HexConway.Supported.S3_2 (316ms)",
+        "HexConway.Supported.S0_3 (327ms)",
+        "HexConway.Supported.S1_3 (340ms)",
+        "HexConway.Supported.S2_3 (324ms)",
+        "HexConway.Supported.S3_3 (337ms)",
+        "HexConway.Supported.S0_4 (301ms)",
+        "HexConway.Supported.S1_4 (283ms)",
+        "HexConway.Supported.S2_4 (300ms)",
+        "HexConway.Supported.S3_4 (292ms)",
+        "HexConway.Api (267ms)",
+        "HexConway.PrimitivityCore (348ms)",
+        "HexConway.CompatibilityCore (642ms)",
+        "HexConway.CompatibilityProofs.S2_0 (23s)",
+        "HexConway.CompatibilityProofs.S2_1 (1.6s)",
+        "HexConway.CompatibilityProofs.S2_2 (1.3s)",
+        "HexConway.CompatibilityProofs.S2_3 (374ms)",
+        "HexConway.CompatibilityProofs.S3_0 (28s)",
+        "HexConway.CompatibilityProofs.S3_1 (2.2s)",
+        "HexConway.CompatibilityProofs.S1_0 (31s)",
+        "HexConway.CompatibilityProofs.S3_2 (1.4s)",
+        "HexConway.CompatibilityProofs.S3_3 (388ms)",
+        "HexConway.CompatibilityProofs.S1_1 (1.7s)",
+        "HexConway.PrimitiveProofs.S0_0 (33s)",
+        "HexConway.PrimitiveProofs.S3_0 (34s)",
+        "HexConway.CompatibilityProofs.S1_2 (1.4s)",
+        "HexConway.CompatibilityProofs.S1_3 (404ms)",
+        "HexConway.PrimitiveProofs.S1_0 (35s)",
+        "HexConway.PrimitiveProofs.S0_1 (4.4s)",
+        "HexConway.PrimitiveProofs.S3_1 (4.8s)",
+        "HexConway.PrimitiveProofs.S0_2 (1.6s)",
+        "HexConway.PrimitiveProofs.S0_3 (778ms)",
+        "HexConway.CompatibilityProofs.S0_0 (40s)",
+        "HexConway.PrimitiveProofs.S1_1 (4.7s)",
+        "HexConway.PrimitiveProofs.S2_0 (40s)",
+        "HexConway.PrimitiveProofs.S0_4 (389ms)",
+        "HexConway.PrimitiveProofs.S3_2 (1.9s)",
+        "HexConway.PrimitiveProofs.S3_3 (814ms)",
+        "HexConway.PrimitiveProofs.S3_4 (421ms)",
+        "HexConway.CompatibilityProofs.S0_1 (1.7s)",
+        "HexConway.PrimitiveProofs.S1_2 (1.0s)",
+        "HexConway.PrimitiveProofs.S1_3 (807ms)",
+        "HexConway.CompatibilityProofs.S0_2 (1.4s)",
+        "HexConway.PrimitiveProofs.S1_4 (394ms)",
+        "HexConway.CompatibilityProofs.S0_3 (408ms)",
+        "HexConway.Compatibility (309ms)",
+        "HexConway.PrimitiveProofs.S2_1 (4.7s)",
+        "HexConway.PrimitiveProofs.S2_2 (1.7s)",
+        "HexConway.PrimitiveProofs.S2_3 (800ms)",
+        "HexConway.PrimitiveProofs.S2_4 (435ms)",
+        "HexConway.Primitivity (274ms)",
+        "HexConway (506ms)"
+      ],
+      "log": "reports/conway/wide-414-1.log.gz",
+      "timing": "reports/conway/wide-414-1.time",
+      "artifact_bytes_by_suffix": {
+        ".hash": 17136,
+        ".json": 10182839,
+        ".c": 15795450,
+        ".olean": 42421280,
+        ".server": 2420504,
+        ".private": 56678888,
+        ".sig": 26928,
+        ".ilean": 4526696,
+        ".ir": 8403544,
+        ".trace": 665820
+      },
+      "artifact_count": 2448
+    },
+    {
+      "max_child_rss_kib": 3758608,
+      "wall_seconds": 107.78353428607807,
+      "peak_tree_rss_kib": 17175652,
+      "exit_code": 0,
+      "artifact_bytes": 141139085,
+      "modules": [
+        "HexConway.Power (463ms)",
+        "HexConway.Rebuild (618ms)",
+        "HexConway.Bounds (1.8s)",
+        "HexConway.Coefficients (1.4s)",
+        "HexConway.Entries.S0_0 (1.6s)",
+        "HexConway.Entries.S3_0 (1.6s)",
+        "HexConway.Entries.S1_0 (1.6s)",
+        "HexConway.Entries.S2_0 (1.7s)",
+        "HexConway.Entries.S0_1 (1.5s)",
+        "HexConway.Entries.S3_1 (1.5s)",
+        "HexConway.Entries.S1_1 (1.5s)",
+        "HexConway.Entries.S2_1 (1.5s)",
+        "HexConway.Entries.S0_2 (1.4s)",
+        "HexConway.Entries.S1_2 (1.3s)",
+        "HexConway.Entries.S3_2 (1.4s)",
+        "HexConway.Entries.S2_2 (1.5s)",
+        "HexConway.FactorProofs.S3_0 (8.3s)",
+        "HexConway.FactorProofs.S2_0 (8.3s)",
+        "HexConway.Entries.S0_3 (1.3s)",
+        "HexConway.Entries.S1_3 (1.4s)",
+        "HexConway.Entries.S3_3 (1.4s)",
+        "HexConway.Entries.S2_3 (1.3s)",
+        "HexConway.FactorProofs.S0_0 (9.4s)",
+        "HexConway.Entries.S0_4 (502ms)",
+        "HexConway.Entries.S1_4 (564ms)",
+        "HexConway.Entries.S3_4 (668ms)",
+        "HexConway.Entries.S2_4 (632ms)",
+        "HexConway.Table (272ms)",
+        "HexConway.FactorProofs.S1_0 (10s)",
+        "HexConway.PrimeFactors (246ms)",
+        "HexConway.EntrySource (799ms)",
+        "HexConway.Rabin.S0_0 (8.6s)",
+        "HexConway.Rabin.S0_1 (2.4s)",
+        "HexConway.Rabin.S3_0 (11s)",
+        "HexConway.Rabin.S1_0 (11s)",
+        "HexConway.Rabin.S0_2 (1.2s)",
+        "HexConway.Rabin.S0_3 (738ms)",
+        "HexConway.Rabin.S0_4 (349ms)",
+        "HexConway.Rabin.S3_1 (2.5s)",
+        "HexConway.Rabin.S2_0 (13s)",
+        "HexConway.Rabin.S1_1 (2.4s)",
+        "HexConway.Rabin.S3_2 (1.5s)",
+        "HexConway.Rabin.S1_2 (1.4s)",
+        "HexConway.Rabin.S3_3 (742ms)",
+        "HexConway.Rabin.S1_3 (751ms)",
+        "HexConway.Rabin.S2_1 (2.4s)",
+        "HexConway.Rabin.S3_4 (428ms)",
+        "HexConway.Rabin.S1_4 (402ms)",
+        "HexConway.Rabin.S2_2 (1.4s)",
+        "HexConway.Rabin.S2_3 (719ms)",
+        "HexConway.Rabin.S2_4 (419ms)",
+        "HexConway.Certificates (261ms)",
+        "HexConway.Transport.S0_0 (322ms)",
+        "HexConway.Transport.S1_0 (349ms)",
+        "HexConway.Transport.S2_0 (356ms)",
+        "HexConway.Transport.S3_0 (375ms)",
+        "HexConway.Transport.S0_1 (312ms)",
+        "HexConway.Transport.S1_1 (327ms)",
+        "HexConway.Transport.S2_1 (340ms)",
+        "HexConway.Transport.S3_1 (348ms)",
+        "HexConway.Transport.S0_2 (343ms)",
+        "HexConway.Transport.S1_2 (325ms)",
+        "HexConway.Transport.S2_2 (323ms)",
+        "HexConway.Transport.S3_2 (329ms)",
+        "HexConway.Transport.S0_3 (324ms)",
+        "HexConway.Transport.S1_3 (347ms)",
+        "HexConway.Transport.S2_3 (328ms)",
+        "HexConway.Transport.S3_3 (352ms)",
+        "HexConway.Transport.S0_4 (344ms)",
+        "HexConway.Transport.S1_4 (342ms)",
+        "HexConway.Transport.S2_4 (341ms)",
+        "HexConway.Transport.S3_4 (343ms)",
+        "HexConway.Transport.S0_5 (362ms)",
+        "HexConway.Transport.S1_5 (353ms)",
+        "HexConway.Transport.S2_5 (346ms)",
+        "HexConway.Transport.S3_5 (349ms)",
+        "HexConway.Transport.S0_6 (362ms)",
+        "HexConway.Transport.S1_6 (352ms)",
+        "HexConway.Transport.S2_6 (361ms)",
+        "HexConway.Transport.S3_6 (359ms)",
+        "HexConway.Transport.S0_7 (351ms)",
+        "HexConway.Transport.S1_7 (356ms)",
+        "HexConway.Transport.S2_7 (362ms)",
+        "HexConway.Transport.S3_7 (372ms)",
+        "HexConway.Transport.S0_8 (332ms)",
+        "HexConway.Transport.S1_8 (338ms)",
+        "HexConway.Transport.S2_8 (339ms)",
+        "HexConway.Transport.S3_8 (337ms)",
+        "HexConway.Irreducible (7.0s)",
+        "HexConway.Monic (7.3s)",
+        "HexConway.ApiCore (16s)",
+        "HexConway.Supported.S0_0 (314ms)",
+        "HexConway.Supported.S1_0 (338ms)",
+        "HexConway.Supported.S2_0 (324ms)",
+        "HexConway.Supported.S3_0 (324ms)",
+        "HexConway.Supported.S0_1 (322ms)",
+        "HexConway.Supported.S2_1 (318ms)",
+        "HexConway.Supported.S3_1 (347ms)",
+        "HexConway.Supported.S1_1 (341ms)",
+        "HexConway.Supported.S0_2 (326ms)",
+        "HexConway.Supported.S2_2 (326ms)",
+        "HexConway.Supported.S1_2 (308ms)",
+        "HexConway.Supported.S3_2 (324ms)",
+        "HexConway.Supported.S0_3 (323ms)",
+        "HexConway.Supported.S1_3 (320ms)",
+        "HexConway.Supported.S2_3 (322ms)",
+        "HexConway.Supported.S3_3 (320ms)",
+        "HexConway.Supported.S0_4 (298ms)",
+        "HexConway.Supported.S1_4 (285ms)",
+        "HexConway.Supported.S2_4 (295ms)",
+        "HexConway.Supported.S3_4 (300ms)",
+        "HexConway.Api (276ms)",
+        "HexConway.PrimitivityCore (346ms)",
+        "HexConway.CompatibilityCore (629ms)",
+        "HexConway.CompatibilityProofs.S2_0 (24s)",
+        "HexConway.CompatibilityProofs.S2_1 (1.7s)",
+        "HexConway.CompatibilityProofs.S2_2 (1.3s)",
+        "HexConway.CompatibilityProofs.S2_3 (400ms)",
+        "HexConway.CompatibilityProofs.S3_0 (28s)",
+        "HexConway.CompatibilityProofs.S1_0 (30s)",
+        "HexConway.CompatibilityProofs.S3_1 (1.9s)",
+        "HexConway.CompatibilityProofs.S1_1 (1.6s)",
+        "HexConway.CompatibilityProofs.S3_2 (1.3s)",
+        "HexConway.CompatibilityProofs.S3_3 (362ms)",
+        "HexConway.CompatibilityProofs.S1_2 (1.2s)",
+        "HexConway.CompatibilityProofs.S1_3 (397ms)",
+        "HexConway.PrimitiveProofs.S0_0 (34s)",
+        "HexConway.PrimitiveProofs.S3_0 (35s)",
+        "HexConway.PrimitiveProofs.S1_0 (36s)",
+        "HexConway.PrimitiveProofs.S0_1 (4.1s)",
+        "HexConway.PrimitiveProofs.S2_0 (39s)",
+        "HexConway.PrimitiveProofs.S3_1 (4.7s)",
+        "HexConway.CompatibilityProofs.S0_0 (39s)",
+        "HexConway.PrimitiveProofs.S0_2 (1.7s)",
+        "HexConway.PrimitiveProofs.S0_3 (793ms)",
+        "HexConway.PrimitiveProofs.S1_1 (4.8s)",
+        "HexConway.CompatibilityProofs.S0_1 (1.7s)",
+        "HexConway.PrimitiveProofs.S0_4 (374ms)",
+        "HexConway.PrimitiveProofs.S3_2 (1.0s)",
+        "HexConway.PrimitiveProofs.S3_3 (790ms)",
+        "HexConway.CompatibilityProofs.S0_2 (1.4s)",
+        "HexConway.PrimitiveProofs.S3_4 (432ms)",
+        "HexConway.PrimitiveProofs.S1_2 (1.9s)",
+        "HexConway.CompatibilityProofs.S0_3 (404ms)",
+        "HexConway.Compatibility (308ms)",
+        "HexConway.PrimitiveProofs.S1_3 (798ms)",
+        "HexConway.PrimitiveProofs.S1_4 (397ms)",
+        "HexConway.PrimitiveProofs.S2_1 (4.6s)",
+        "HexConway.PrimitiveProofs.S2_2 (1.7s)",
+        "HexConway.PrimitiveProofs.S2_3 (815ms)",
+        "HexConway.PrimitiveProofs.S2_4 (420ms)",
+        "HexConway.Primitivity (285ms)",
+        "HexConway (526ms)"
+      ],
+      "log": "reports/conway/wide-414-2.log.gz",
+      "timing": "reports/conway/wide-414-2.time",
+      "artifact_bytes_by_suffix": {
+        ".hash": 17136,
+        ".json": 10182839,
+        ".c": 15795450,
+        ".olean": 42421280,
+        ".server": 2420504,
+        ".private": 56678888,
+        ".sig": 26928,
+        ".ilean": 4526696,
+        ".ir": 8403544,
+        ".trace": 665820
+      },
+      "artifact_count": 2448
+    },
+    {
+      "max_child_rss_kib": 3758580,
+      "wall_seconds": 107.63288349797949,
+      "peak_tree_rss_kib": 17156412,
+      "exit_code": 0,
+      "artifact_bytes": 141139085,
+      "modules": [
+        "HexConway.Power (481ms)",
+        "HexConway.Rebuild (638ms)",
+        "HexConway.Bounds (1.8s)",
+        "HexConway.Coefficients (1.4s)",
+        "HexConway.Entries.S3_0 (1.5s)",
+        "HexConway.Entries.S0_0 (1.6s)",
+        "HexConway.Entries.S1_0 (1.5s)",
+        "HexConway.Entries.S2_0 (1.6s)",
+        "HexConway.Entries.S3_1 (1.4s)",
+        "HexConway.Entries.S0_1 (1.4s)",
+        "HexConway.Entries.S1_1 (1.4s)",
+        "HexConway.Entries.S2_1 (1.4s)",
+        "HexConway.Entries.S0_2 (1.3s)",
+        "HexConway.Entries.S1_2 (1.3s)",
+        "HexConway.Entries.S3_2 (1.3s)",
+        "HexConway.Entries.S2_2 (1.4s)",
+        "HexConway.FactorProofs.S3_0 (8.1s)",
+        "HexConway.FactorProofs.S2_0 (8.6s)",
+        "HexConway.Entries.S0_3 (1.2s)",
+        "HexConway.Entries.S3_3 (1.3s)",
+        "HexConway.Entries.S1_3 (1.3s)",
+        "HexConway.Entries.S2_3 (1.3s)",
+        "HexConway.Entries.S0_4 (483ms)",
+        "HexConway.Entries.S1_4 (533ms)",
+        "HexConway.Entries.S3_4 (617ms)",
+        "HexConway.FactorProofs.S0_0 (9.3s)",
+        "HexConway.Entries.S2_4 (619ms)",
+        "HexConway.Table (271ms)",
+        "HexConway.FactorProofs.S1_0 (10s)",
+        "HexConway.PrimeFactors (248ms)",
+        "HexConway.EntrySource (804ms)",
+        "HexConway.Rabin.S0_0 (8.7s)",
+        "HexConway.Rabin.S3_0 (10s)",
+        "HexConway.Rabin.S0_1 (2.4s)",
+        "HexConway.Rabin.S1_0 (11s)",
+        "HexConway.Rabin.S0_2 (1.2s)",
+        "HexConway.Rabin.S0_3 (727ms)",
+        "HexConway.Rabin.S2_0 (13s)",
+        "HexConway.Rabin.S0_4 (375ms)",
+        "HexConway.Rabin.S3_1 (2.6s)",
+        "HexConway.Rabin.S1_1 (2.5s)",
+        "HexConway.Rabin.S3_2 (1.4s)",
+        "HexConway.Rabin.S1_2 (1.4s)",
+        "HexConway.Rabin.S3_3 (753ms)",
+        "HexConway.Rabin.S2_1 (2.6s)",
+        "HexConway.Rabin.S1_3 (731ms)",
+        "HexConway.Rabin.S3_4 (420ms)",
+        "HexConway.Rabin.S1_4 (389ms)",
+        "HexConway.Rabin.S2_2 (1.4s)",
+        "HexConway.Rabin.S2_3 (699ms)",
+        "HexConway.Rabin.S2_4 (417ms)",
+        "HexConway.Certificates (265ms)",
+        "HexConway.Transport.S0_0 (330ms)",
+        "HexConway.Transport.S2_0 (337ms)",
+        "HexConway.Transport.S1_0 (354ms)",
+        "HexConway.Transport.S3_0 (363ms)",
+        "HexConway.Transport.S0_1 (324ms)",
+        "HexConway.Transport.S1_1 (330ms)",
+        "HexConway.Transport.S2_1 (340ms)",
+        "HexConway.Transport.S3_1 (333ms)",
+        "HexConway.Transport.S0_2 (330ms)",
+        "HexConway.Transport.S1_2 (342ms)",
+        "HexConway.Transport.S2_2 (324ms)",
+        "HexConway.Transport.S3_2 (339ms)",
+        "HexConway.Transport.S0_3 (326ms)",
+        "HexConway.Transport.S2_3 (325ms)",
+        "HexConway.Transport.S1_3 (336ms)",
+        "HexConway.Transport.S3_3 (343ms)",
+        "HexConway.Transport.S0_4 (354ms)",
+        "HexConway.Transport.S1_4 (341ms)",
+        "HexConway.Transport.S2_4 (335ms)",
+        "HexConway.Transport.S3_4 (339ms)",
+        "HexConway.Transport.S0_5 (359ms)",
+        "HexConway.Transport.S2_5 (340ms)",
+        "HexConway.Transport.S1_5 (347ms)",
+        "HexConway.Transport.S3_5 (358ms)",
+        "HexConway.Transport.S0_6 (368ms)",
+        "HexConway.Transport.S1_6 (357ms)",
+        "HexConway.Transport.S2_6 (355ms)",
+        "HexConway.Transport.S3_6 (354ms)",
+        "HexConway.Transport.S2_7 (367ms)",
+        "HexConway.Transport.S0_7 (357ms)",
+        "HexConway.Transport.S1_7 (362ms)",
+        "HexConway.Transport.S3_7 (349ms)",
+        "HexConway.Transport.S0_8 (335ms)",
+        "HexConway.Transport.S1_8 (342ms)",
+        "HexConway.Transport.S2_8 (337ms)",
+        "HexConway.Transport.S3_8 (334ms)",
+        "HexConway.Irreducible (6.8s)",
+        "HexConway.Monic (7.0s)",
+        "HexConway.ApiCore (17s)",
+        "HexConway.Supported.S0_0 (326ms)",
+        "HexConway.Supported.S1_0 (336ms)",
+        "HexConway.Supported.S2_0 (319ms)",
+        "HexConway.Supported.S3_0 (360ms)",
+        "HexConway.Supported.S0_1 (315ms)",
+        "HexConway.Supported.S1_1 (314ms)",
+        "HexConway.Supported.S2_1 (316ms)",
+        "HexConway.Supported.S3_1 (338ms)",
+        "HexConway.Supported.S0_2 (306ms)",
+        "HexConway.Supported.S1_2 (318ms)",
+        "HexConway.Supported.S2_2 (325ms)",
+        "HexConway.Supported.S3_2 (317ms)",
+        "HexConway.Supported.S0_3 (313ms)",
+        "HexConway.Supported.S1_3 (317ms)",
+        "HexConway.Supported.S2_3 (319ms)",
+        "HexConway.Supported.S3_3 (309ms)",
+        "HexConway.Supported.S0_4 (281ms)",
+        "HexConway.Supported.S1_4 (287ms)",
+        "HexConway.Supported.S2_4 (309ms)",
+        "HexConway.Supported.S3_4 (303ms)",
+        "HexConway.Api (274ms)",
+        "HexConway.PrimitivityCore (365ms)",
+        "HexConway.CompatibilityCore (626ms)",
+        "HexConway.CompatibilityProofs.S2_0 (23s)",
+        "HexConway.CompatibilityProofs.S2_1 (1.6s)",
+        "HexConway.CompatibilityProofs.S2_2 (1.3s)",
+        "HexConway.CompatibilityProofs.S2_3 (394ms)",
+        "HexConway.CompatibilityProofs.S3_0 (28s)",
+        "HexConway.CompatibilityProofs.S1_0 (29s)",
+        "HexConway.CompatibilityProofs.S3_1 (2.3s)",
+        "HexConway.CompatibilityProofs.S1_1 (1.6s)",
+        "HexConway.CompatibilityProofs.S3_2 (1.4s)",
+        "HexConway.CompatibilityProofs.S3_3 (371ms)",
+        "HexConway.CompatibilityProofs.S1_2 (1.2s)",
+        "HexConway.CompatibilityProofs.S1_3 (400ms)",
+        "HexConway.PrimitiveProofs.S0_0 (33s)",
+        "HexConway.PrimitiveProofs.S3_0 (34s)",
+        "HexConway.PrimitiveProofs.S1_0 (36s)",
+        "HexConway.PrimitiveProofs.S0_1 (4.2s)",
+        "HexConway.CompatibilityProofs.S0_0 (39s)",
+        "HexConway.PrimitiveProofs.S3_1 (4.9s)",
+        "HexConway.PrimitiveProofs.S0_2 (1.6s)",
+        "HexConway.PrimitiveProofs.S0_3 (817ms)",
+        "HexConway.PrimitiveProofs.S2_0 (40s)",
+        "HexConway.PrimitiveProofs.S0_4 (373ms)",
+        "HexConway.CompatibilityProofs.S0_1 (1.8s)",
+        "HexConway.PrimitiveProofs.S3_2 (1.0s)",
+        "HexConway.PrimitiveProofs.S1_1 (4.8s)",
+        "HexConway.PrimitiveProofs.S3_3 (814ms)",
+        "HexConway.CompatibilityProofs.S0_2 (1.4s)",
+        "HexConway.PrimitiveProofs.S3_4 (446ms)",
+        "HexConway.CompatibilityProofs.S0_3 (430ms)",
+        "HexConway.Compatibility (312ms)",
+        "HexConway.PrimitiveProofs.S1_2 (1.0s)",
+        "HexConway.PrimitiveProofs.S1_3 (795ms)",
+        "HexConway.PrimitiveProofs.S1_4 (391ms)",
+        "HexConway.PrimitiveProofs.S2_1 (4.7s)",
+        "HexConway.PrimitiveProofs.S2_2 (1.7s)",
+        "HexConway.PrimitiveProofs.S2_3 (793ms)",
+        "HexConway.PrimitiveProofs.S2_4 (412ms)",
+        "HexConway.Primitivity (273ms)",
+        "HexConway (511ms)"
+      ],
+      "log": "reports/conway/wide-414-3.log.gz",
+      "timing": "reports/conway/wide-414-3.time",
+      "artifact_bytes_by_suffix": {
+        ".hash": 17136,
+        ".json": 10182839,
+        ".c": 15795450,
+        ".olean": 42421280,
+        ".server": 2420504,
+        ".private": 56678888,
+        ".sig": 26928,
+        ".ilean": 4526696,
+        ".ir": 8403544,
+        ".trace": 665820
+      },
+      "artifact_count": 2448
+    }
+  ],
+  "source_sha256": {
+    "HexConway/Api.lean": "21f5a5a2df1c0965ff878febf26fb642150d980792a5015fcaa340ea113f8645",
+    "HexConway/ApiCore.lean": "662b050d5178358e80baf4e01f256bef87c0fff425038f3dcb0ed2bc522345c8",
+    "HexConway/Bounds.lean": "01d502c7b446d7bd80d5a6bcf85ee08667634b92c32def7cb05ea8dbaf560a9e",
+    "HexConway/Certificates.lean": "98c4e705e92e48720a6686ff7f37ddf15ae8eec50d70a1b8d2a9550710409b56",
+    "HexConway/Coefficients.lean": "70a345e71cc996880bd3d32d845093cd2da2d70c9d4fb5240d846fd8e6027d0c",
+    "HexConway/Compatibility.lean": "90d408eaa271f19f7f89b903b96aa20fb343cca7843dd370c94808dad3acb98c",
+    "HexConway/CompatibilityCore.lean": "22dd173ec02dff763e69d5d3e6ba86a408dea4099b29829a34d2a4d636da610a",
+    "HexConway/CompatibilityProofs/S0_0.lean": "20bbffe78f273e721e7d3788feeeb9c492d2a23ca8a60670aefd33b475b41231",
+    "HexConway/CompatibilityProofs/S0_1.lean": "eaa5f76a8ec523ce6371933a29448b3030f5ec10419ee494c54082e77e20a73d",
+    "HexConway/CompatibilityProofs/S0_2.lean": "74683400d99a0f3feccda1bdabaea9243b3ac5d2ceef1ddf6d7837fd732eb0f2",
+    "HexConway/CompatibilityProofs/S0_3.lean": "42e8fb2a8b0be041a26ecc505b8ef8e5bd78ed8725c7a0846c440421132968d7",
+    "HexConway/CompatibilityProofs/S1_0.lean": "fd85298c6894d7b2bfd5bb4459d07326e4989174ade826fc27e79f95d286bd56",
+    "HexConway/CompatibilityProofs/S1_1.lean": "951b8b784454716b2d5aed0a1194836d705cd1f045d61ac26b7ed899cc13f8d9",
+    "HexConway/CompatibilityProofs/S1_2.lean": "b9140899ab6ad5465e447de524de8b949a90f65ab5be7ad058d16a5ed1158db2",
+    "HexConway/CompatibilityProofs/S1_3.lean": "d2da117af413ba9d764c909d702b281deebb95900b1ead1a02aaa219dcfcc55a",
+    "HexConway/CompatibilityProofs/S2_0.lean": "518294df86f7209e2f55aab16127a41c09a1ef8a1ad3c50c3dde917f57d4ee15",
+    "HexConway/CompatibilityProofs/S2_1.lean": "b1683e96774799d178333e4f3ef2bd7fc91c9bfe59ff89d4dcd705cc22504c40",
+    "HexConway/CompatibilityProofs/S2_2.lean": "dec12f217afec73b40494a9f635c807c1d2db0cc69dd90e2f8426ab1f3885809",
+    "HexConway/CompatibilityProofs/S2_3.lean": "6a0d0d0aba32a6313950cd56660ec19567c07415bd58a6b2ecc9ace04fc5b668",
+    "HexConway/CompatibilityProofs/S3_0.lean": "cc60544698d9dc817480f62d53e245420f2463f15c30ca6154d1272143cab841",
+    "HexConway/CompatibilityProofs/S3_1.lean": "2cddd6915758a030424a463939448ee04a0ad73d7d62ac3d8722236b2330d97e",
+    "HexConway/CompatibilityProofs/S3_2.lean": "d9862413f7cd0e6034bedf7c4cf4941c4432aecc4caa28195cda42201e7f4aaf",
+    "HexConway/CompatibilityProofs/S3_3.lean": "a9d4ec2d55c6f279159c0026979de0a0c07228c4b5c78180acee2e7fcd6823c4",
+    "HexConway/Entries/S0_0.lean": "2620dd7732f7f9bdaa5932b23059d296d779dee3e4f95a1ac660522746a95c64",
+    "HexConway/Entries/S0_1.lean": "d3aab8bff0e2a63247f18e31808bc549ba2a3bc3214e7010a93b2cb64dd77e98",
+    "HexConway/Entries/S0_2.lean": "71b3180f96a5d5bf63f75a8422726491f19c2ea88a195dac73cad59f3173f6be",
+    "HexConway/Entries/S0_3.lean": "e22d06d502f51441568a03db5091720e302a5e735fae8dd2559c64e80da5046c",
+    "HexConway/Entries/S0_4.lean": "854099908479c192d3f896e6404cb4876c24045b78e24a2a732b735a2663c4b4",
+    "HexConway/Entries/S1_0.lean": "8239174136c17ea3ae1a6268cabed890d6c3c8940d290437dad4a64c920f3ef2",
+    "HexConway/Entries/S1_1.lean": "88d585053de4ccabf2799a34d7aca8ae3615f39cf63b7af3e305a48266863596",
+    "HexConway/Entries/S1_2.lean": "d453c47cdc4dff54765f76e90431f4c49af3db1ec6a71c7f83aad35d13f57036",
+    "HexConway/Entries/S1_3.lean": "25c9f53f358b6c12d0245638893ff6b721ad6b8dccd150c84f5ef6c857f285ab",
+    "HexConway/Entries/S1_4.lean": "dd7412105daa3425d0458af5d37a163c668c8bd672602cccf23a7c033c0861b3",
+    "HexConway/Entries/S2_0.lean": "29aec4273fe580fc08dbf816adea97a0d99ed77f2f7bd0b9d64a7a60fb52d4f6",
+    "HexConway/Entries/S2_1.lean": "6e7404f9dfd62055bee8d8c217c6ce7bdfaaea7627672bdc449289aaec6360c3",
+    "HexConway/Entries/S2_2.lean": "49874c3f69c814789d2f8d3efe71df629a8f2be05d0eb24398b6b1c6f935512f",
+    "HexConway/Entries/S2_3.lean": "82247c9ed084931792ba49cadbdac709982450d51a7f930e36ed688e0f0f9048",
+    "HexConway/Entries/S2_4.lean": "88ee07e67b98a2c382f5bf0b92c1ac9a61997ec320a34964fab870e9550847d7",
+    "HexConway/Entries/S3_0.lean": "e28bab6392c389f2a8d3456b96e43fa8b573cd34618731d110c04fd73806c403",
+    "HexConway/Entries/S3_1.lean": "637cb6285e12d8f99cb6c3e0e446f5f9606d8ad7f5c1c7aa768c45bf906d3593",
+    "HexConway/Entries/S3_2.lean": "e93be2dc3852fc53b7b5825cbcf7699ca4b8d891961c77f5e3640d83b02d8bd0",
+    "HexConway/Entries/S3_3.lean": "dc9bb0ed147d1a619c6f82ed7d7460ff63883378b82a996705c32f13ff7f682d",
+    "HexConway/Entries/S3_4.lean": "3a53f2b0df5fcc7948fc8af2de0876154ffbeb54a7e8251c56922dc83e91ed29",
+    "HexConway/EntrySource.lean": "ad9943f80a4eb66197e68100cb23ce7b3bee0685a08503552a2426884dfe7471",
+    "HexConway/FactorProofs/S0_0.lean": "55537193bf06f14a4ad4bfb98863b78b5d48da0de2aff645c055cc378d91bb18",
+    "HexConway/FactorProofs/S1_0.lean": "017616bf3a793105c4895ef36a426111a9686798514a9a9a2639c8403667baa3",
+    "HexConway/FactorProofs/S2_0.lean": "2c85780a0354637ac37f4b95d18c657978dfe4c863c5b38a4b989633c26f6606",
+    "HexConway/FactorProofs/S3_0.lean": "7c39fbaba8b63d1a855d4ebec8726b99ab815193b131b38409bea920b120b02e",
+    "HexConway/Irreducible.lean": "a68ebd9dcfdc123ade36f29aa6b74405219b1fb03d3a23df9ba7492716494a68",
+    "HexConway/Monic.lean": "9d708f93adf7f4e81739d70e37b30ddd3324ce0b501488e6537ff8bd7b7bded2",
+    "HexConway/Power.lean": "9cd0359f6a71987695ab0795ca05da24f404091d7eb99aab88c09a6e896cae58",
+    "HexConway/PrimeFactors.lean": "30ca303b90a2c615ab46dde81b4ddc6865ddf329144cfde30e9f596a6927dd2b",
+    "HexConway/PrimitiveProofs/S0_0.lean": "2e70473cf32643fe18e0657937bbab49581a862c7779ba98db39b4f03d48b764",
+    "HexConway/PrimitiveProofs/S0_1.lean": "d8c9d113a7e77bdf8de178388d9be3d5f4d7ff66b47e434035a70f9ad7bdbe19",
+    "HexConway/PrimitiveProofs/S0_2.lean": "b8e81c260275675df16b437d5bbcb189203b519cb525b70d47ef9035adeb8118",
+    "HexConway/PrimitiveProofs/S0_3.lean": "b8cd18026e2c9eff319e7ad6b04ecccc5531c6c5f05fc1db812085429cfc5e84",
+    "HexConway/PrimitiveProofs/S0_4.lean": "31d6799581ef7abd0675b747faba11d739ae41e0d84491b95cd94731336a0900",
+    "HexConway/PrimitiveProofs/S1_0.lean": "2fc9708082b5da08b73272742f46dc4d59439f22695689b9d47833a48abbe91c",
+    "HexConway/PrimitiveProofs/S1_1.lean": "70316c852e6c528b54a242944c2ba04bb856415aefd66524d94843c7ce5f01cd",
+    "HexConway/PrimitiveProofs/S1_2.lean": "b5a3748d38cd51063ea58fc7cceb44518485414b31199d263ca738eca7749fc0",
+    "HexConway/PrimitiveProofs/S1_3.lean": "03284e86866f6c41c800905c0823d36b3452565ae683f9466612ecb7b152994d",
+    "HexConway/PrimitiveProofs/S1_4.lean": "de320c12694f427f7aa98dedad4181260b38c427d11fa5c210f8b33f37584a06",
+    "HexConway/PrimitiveProofs/S2_0.lean": "f7a0551d7c74275382f35e369381bbeb3ee307bddbbf21dc0c76e03f156b1c54",
+    "HexConway/PrimitiveProofs/S2_1.lean": "0ce3f42dbe621d61fe4f013ea125ca91014d806875cd0cffbea69495131286b4",
+    "HexConway/PrimitiveProofs/S2_2.lean": "b6f5283997d0d0352007d57f6d917f537950bc313a08449f11fe27faca2d5e97",
+    "HexConway/PrimitiveProofs/S2_3.lean": "3ee3aff33fe3c2a62e0eaabb90b6263d17e0310383f1660f0f6366928ddd9028",
+    "HexConway/PrimitiveProofs/S2_4.lean": "506f54d3a665c44d5b95c33f3b4d62fd5a6f432f87ab21791cc9838b4a2d3d3e",
+    "HexConway/PrimitiveProofs/S3_0.lean": "a5a442ae450cc77100b36227a0a8100f4b0b11966b861c8b8ce4215ee5c5eb1e",
+    "HexConway/PrimitiveProofs/S3_1.lean": "5fa130fbf369cc0e7bca6ca589437baf7af2d7201f572ea1c9a65018cb4b6764",
+    "HexConway/PrimitiveProofs/S3_2.lean": "c079b952d109e51d956fc37a0a8aab2c636bc9e328ca8a3c5096a6efcd9c5e09",
+    "HexConway/PrimitiveProofs/S3_3.lean": "cb0f6581a411c648185a03757143d3d54d7e74b80b0f6b75c5615f1906007be2",
+    "HexConway/PrimitiveProofs/S3_4.lean": "77710aa021759a1ee2b02d9315b823a8ed54eab8cacfe68ad7393d43431da245",
+    "HexConway/Primitivity.lean": "9734b8c16ab32b0d532e5c08dcc935c48f669d552dc0dcf03a272b4ed3efc447",
+    "HexConway/PrimitivityCore.lean": "93226a7d37b1d4c4a7b47dd4f04e6c9f5446053ba3da923bd308cfc3dc257a9a",
+    "HexConway/Rabin/S0_0.lean": "fef89573defe8264ea20c870baa8e82753f8194c476cd8ac4ec359e2d276c010",
+    "HexConway/Rabin/S0_1.lean": "60bf951ae8e43d1fd440891a991ca79a6461dbcf606b80a9372b40950ad5c254",
+    "HexConway/Rabin/S0_2.lean": "e29c147d89250f6c710dc6a0dad98be1ccf86dafe7bfb561597fc137efbfb6b2",
+    "HexConway/Rabin/S0_3.lean": "e0e43fdd7999a3e67415860dc87ced0a10fff849dfb041bfd8112e09b762afd9",
+    "HexConway/Rabin/S0_4.lean": "7b944ce4a66ec6d430a0ac6eb1caaef5a639f596aa0870f92d18077ce9be19f1",
+    "HexConway/Rabin/S1_0.lean": "a6ecfe5fbe91200652b54e4d0c2a758fc6518ba51043663a14edf4883cdecbc4",
+    "HexConway/Rabin/S1_1.lean": "7d36c2c160ab78e0d26df36f812df3c3fe66eb803400c8726325ef1ab878e50b",
+    "HexConway/Rabin/S1_2.lean": "314553f5392026f92f524eca0f2e721e1bf842064c179152c142f9e6a524eba9",
+    "HexConway/Rabin/S1_3.lean": "18014ed865e7cda54a4cf97763ae33d983b33323f034e3e2eab5d7d37f397917",
+    "HexConway/Rabin/S1_4.lean": "b93f5285c35d8166a862496168a6ce8f8cb995d147a0a08b82a2c08e5e428535",
+    "HexConway/Rabin/S2_0.lean": "d22f44ab814153396d995eb00bdb680f3b53256d031899a2107dab78e8cd1be9",
+    "HexConway/Rabin/S2_1.lean": "fdaa55656797994e8a957f1392909567ac351ace256566ea2dbf2c607d2240af",
+    "HexConway/Rabin/S2_2.lean": "bd0859fa2eeb6a7445b82a415cd77b536a57aa91e070800b9818dec610779163",
+    "HexConway/Rabin/S2_3.lean": "f9e561f4febe5f3a7d7b154c65e7a6aab9f7b5c3bcace01730d3ea19f6ad7687",
+    "HexConway/Rabin/S2_4.lean": "b75ece51f79fb706f0c889fde3562b8b5ea18fe0f241d28444ff321cc0f5fcb4",
+    "HexConway/Rabin/S3_0.lean": "0495bcb73b16021abd88fa2dce51882bc69f67025bbd0146e0951bf9948b5d97",
+    "HexConway/Rabin/S3_1.lean": "648b94ee5775628655ceba4bc905650cce5b332cce9be27ddd808f0fa6d8c367",
+    "HexConway/Rabin/S3_2.lean": "bd20f5c9986e0a97da2b01bdc8357ced3c65d80960cd81ed4a25b7a8b3332e0f",
+    "HexConway/Rabin/S3_3.lean": "6f433db48288554e4c96bc849f1014236a0a3def8ce4fc865e92410683d883ac",
+    "HexConway/Rabin/S3_4.lean": "e0069278e2f4022773fcdbe5562fc0aacb8e98b657c30c37cd57b7dcb1ae406d",
+    "HexConway/Rebuild.lean": "c8d1bcbeebf3009fb945d6f0ba3e5cca9101a3b161209440bd5da50db171ae02",
+    "HexConway/Supported/S0_0.lean": "8405ed8e6d0377f6844fff1a83462bbb7037a0fc7076c8c33536f2a4e6cc3d60",
+    "HexConway/Supported/S0_1.lean": "4836f3f0a831ed9024c8553656e7729211898a17d8e59e2c01e3903325449ce5",
+    "HexConway/Supported/S0_2.lean": "4e0b0f26ce224a36037ff96480fafddd4456273e190335f1b5716c640147abdb",
+    "HexConway/Supported/S0_3.lean": "f54ecb44f3bb62772b9cbcc1bb60392238f46791cc77e615a7daadb6a33a652a",
+    "HexConway/Supported/S0_4.lean": "b8a6c6c320b37927ae33986cf54ea1cf2691c11144b3ac9248e3f1e0492316c8",
+    "HexConway/Supported/S1_0.lean": "c03e988b6677aebd3810a34ea23078ff4d7f064de7e85773d72b934fa76381a4",
+    "HexConway/Supported/S1_1.lean": "33b2da968904304e17255a9ecd352de90261f8ebba8193ef919741b8e81a0d8f",
+    "HexConway/Supported/S1_2.lean": "371a1ebac81cd5761b0adbb9bb846b995febf04005fa155104686ffa87450a87",
+    "HexConway/Supported/S1_3.lean": "6b4669e2fda82309c4a02f068c30a6b870de03d131cca06be84f71479af9501e",
+    "HexConway/Supported/S1_4.lean": "74b064e89a0b3c8f02bbcb0d05431397da683a0a7b97441d641e360a2e6cd158",
+    "HexConway/Supported/S2_0.lean": "40b44b9ca46fb7778f5089ff0d9ba85ff51834bd466beee4892df48ae60f97fe",
+    "HexConway/Supported/S2_1.lean": "f6d1ae5f4067f007fdad10bf6870d8dacb5b7fa3b8a917fdc3c23300d36257c3",
+    "HexConway/Supported/S2_2.lean": "1ca2c48a96b0171727f080e4deabe6c81a7c7cbcfacfdf549997a5c922930832",
+    "HexConway/Supported/S2_3.lean": "5467d875f523a6becdcbb9169e2f37befba75e69d7fd1392d71b118ffd670e6e",
+    "HexConway/Supported/S2_4.lean": "3e563409de7198eb4d97a3b52ac42a45d383f926fe813a43eaee0374ee2a038a",
+    "HexConway/Supported/S3_0.lean": "eea037d41f46d770c7f3707e098c5dedab70a13ba32fd98fb16b09a5862f2a6e",
+    "HexConway/Supported/S3_1.lean": "893d4923f47c0148e853075fd63f91aa6966aaab32a3b99b20aa5353e06c40eb",
+    "HexConway/Supported/S3_2.lean": "3d644c200496209df8c2eb3c06ab6fc724f30401765640b366d4d25e7a75e9b0",
+    "HexConway/Supported/S3_3.lean": "20e430a03968df7a797cd7f6f19a54b2b81e8ee29d1079a3a1015337a532ef6e",
+    "HexConway/Supported/S3_4.lean": "7fd8bd17be0025efde9c075dff13f1d5adfc44157ed66c6a87b1d471daaf30c9",
+    "HexConway/Table.lean": "df085f969821a140ba3c7e5b13fedaf266e63a294be1b8ccc1ba524fa99e88a1",
+    "HexConway/Transport/S0_0.lean": "f21c69e44baf827d1f04df51b5687a02d8492b2443df67033b0fe617d79eaf30",
+    "HexConway/Transport/S0_1.lean": "c958b885b4e07783ad7ada69ffa99822307e77efdf5d80026e39088315a34c1b",
+    "HexConway/Transport/S0_2.lean": "3670db4f62eb7e611d453ce73b0630e694b765a4089a8eaf8d96b62e02339d61",
+    "HexConway/Transport/S0_3.lean": "7914683abb88ef477897af77a9ce77901fb5f761a8c2b2c4091a563ed86008ad",
+    "HexConway/Transport/S0_4.lean": "408c0e73a78c91a3b4c6e60ef2aff372b9ae880098efcf4d79d4bfb1a7893800",
+    "HexConway/Transport/S0_5.lean": "6566d5ebb8cd298251a59cf989f7d49c18acf38dc117f4833ad90bd4e698d489",
+    "HexConway/Transport/S0_6.lean": "60f9b24c9ddcb1daf9e04ecaa122c2a377a150530cc2ed4f7af5553580725371",
+    "HexConway/Transport/S0_7.lean": "ace0fcad604ff4a06b8e8bd083439114f85134fbfaad50bd71b417062d077460",
+    "HexConway/Transport/S0_8.lean": "4b0033c2d4c1677ac4aac91aca1bff6ca9f9a08f670b7acc6f26a0d7ec38bb05",
+    "HexConway/Transport/S1_0.lean": "dabfdbda12629786f07668c6b81bc985f6a2bb116a301547460469ec150284f5",
+    "HexConway/Transport/S1_1.lean": "fd2c62dc0b0a2e32dea6240c471504e036dc12da163cca42b3fe49ff3bdddbbc",
+    "HexConway/Transport/S1_2.lean": "10c13408d67d8e520da96046618eb70a2505cdd27aa5a20f27dacdd1be513b2a",
+    "HexConway/Transport/S1_3.lean": "97691f9497e7238e5c17660b49600099af666d153234baa8659b89486da1ec57",
+    "HexConway/Transport/S1_4.lean": "a379408966a6efda1559596f7bb948faad1ca284cc30dd967153be84f2e91e51",
+    "HexConway/Transport/S1_5.lean": "a8e497812af4deeafc321c9e637d19eeb1bca83cf775651c0b3debde6737cb31",
+    "HexConway/Transport/S1_6.lean": "77c1724b5570ccf3b2c1a8298165f522274b6c081309101a8d5da21bfd0919cd",
+    "HexConway/Transport/S1_7.lean": "9619a36bd5f64d540d6a8b7d73b6a12abd55ff5385b1da5daa9860ebb06c8e4d",
+    "HexConway/Transport/S1_8.lean": "9b0d7c26f39025b351b09f57983732167850182b8523565606711aa718f304fd",
+    "HexConway/Transport/S2_0.lean": "4c9034232af841a42f4952ef477342ad4c8c242f5fe1f4ff34ecf4292057f9b1",
+    "HexConway/Transport/S2_1.lean": "73de7adf33ec9812e9f287d981bdfa6202997362c41cec16e2160c7b922eff36",
+    "HexConway/Transport/S2_2.lean": "fca158a87350e4865a91913240d3d6a1847a8dc2d13227323644ee24e90e7b99",
+    "HexConway/Transport/S2_3.lean": "851fea8b2f5ab01ebb9112e284e38b3bd2d86802fac329196349720df1b0567b",
+    "HexConway/Transport/S2_4.lean": "08964319f3fcfa85ce33036c72e537e5ecc7e095b5366a55910cc85850b6dbd8",
+    "HexConway/Transport/S2_5.lean": "95a082d22b4c2f4d1976a6444b4adb45fd23ab928be36fee8c8560964dbcd351",
+    "HexConway/Transport/S2_6.lean": "2d58bb49106521ca5a031b853cde3d1ceabbbccf0f1b93e2da08b33df6727462",
+    "HexConway/Transport/S2_7.lean": "e6e21df29abb9ee61c3d14d937291c62460bfec683fe40372ad7cbb54593a8a2",
+    "HexConway/Transport/S2_8.lean": "f146ab0ff3e59c47044b13a0999ed225cfc63074d9da757ec0857e4b7bb3e1c3",
+    "HexConway/Transport/S3_0.lean": "e254edd83c6dfdd861395fd1305631bfcc241306b72c93acc1f31d7ba2780243",
+    "HexConway/Transport/S3_1.lean": "67d9a737c1e13784462ad1bad21f1e500e3eb1805d90935a472ad9a199f8df9c",
+    "HexConway/Transport/S3_2.lean": "b88dcebabb3f3615a4ea72316be1a9b76e5fc4378428d28f0999eaa20a78c59f",
+    "HexConway/Transport/S3_3.lean": "3cd39c6367073a09d879b12bea7ff75c5e40557d1b41edd0aebbcb67222e1334",
+    "HexConway/Transport/S3_4.lean": "f8887d84cbf28f2c11d2fbceb3d8966d8bbcf4ff52fdf241bfafc7fc585f466d",
+    "HexConway/Transport/S3_5.lean": "718859ad3f6b73b4db3d7a803579d0833ae5eaf395aa890c0e8694adb71c4574",
+    "HexConway/Transport/S3_6.lean": "65f3b66b8c4adbab821aa2a49a669173413f1f18dd3e60e09870c5b233cccb96",
+    "HexConway/Transport/S3_7.lean": "5e8a4bc1ad0803686a0e0417afd026328aa9b9587cc11c8fda2622557bb56620",
+    "HexConway/Transport/S3_8.lean": "28589f928f006c07d5c95c44d0056a72720368e7049cc1c10dd22622d1bdc88d",
+    "HexConway.lean": "316997004af59ec6f7c8fc12ef8d2b52afbf2c7fb031c5bfd38a0bc1d0232355"
+  },
+  "scope": [
+    [
+      2,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      2,
+      4
+    ],
+    [
+      2,
+      5
+    ],
+    [
+      2,
+      6
+    ],
+    [
+      2,
+      7
+    ],
+    [
+      2,
+      8
+    ],
+    [
+      2,
+      9
+    ],
+    [
+      2,
+      10
+    ],
+    [
+      2,
+      11
+    ],
+    [
+      2,
+      12
+    ],
+    [
+      2,
+      13
+    ],
+    [
+      2,
+      14
+    ],
+    [
+      2,
+      15
+    ],
+    [
+      2,
+      16
+    ],
+    [
+      3,
+      1
+    ],
+    [
+      3,
+      2
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      3,
+      4
+    ],
+    [
+      3,
+      5
+    ],
+    [
+      3,
+      6
+    ],
+    [
+      3,
+      7
+    ],
+    [
+      3,
+      8
+    ],
+    [
+      5,
+      1
+    ],
+    [
+      5,
+      2
+    ],
+    [
+      5,
+      3
+    ],
+    [
+      5,
+      4
+    ],
+    [
+      5,
+      5
+    ],
+    [
+      5,
+      6
+    ],
+    [
+      5,
+      7
+    ],
+    [
+      5,
+      8
+    ],
+    [
+      7,
+      1
+    ],
+    [
+      7,
+      2
+    ],
+    [
+      7,
+      3
+    ],
+    [
+      7,
+      4
+    ],
+    [
+      7,
+      5
+    ],
+    [
+      7,
+      6
+    ],
+    [
+      7,
+      7
+    ],
+    [
+      7,
+      8
+    ],
+    [
+      11,
+      1
+    ],
+    [
+      11,
+      2
+    ],
+    [
+      11,
+      3
+    ],
+    [
+      11,
+      4
+    ],
+    [
+      11,
+      5
+    ],
+    [
+      11,
+      6
+    ],
+    [
+      13,
+      1
+    ],
+    [
+      13,
+      2
+    ],
+    [
+      13,
+      3
+    ],
+    [
+      13,
+      4
+    ],
+    [
+      13,
+      5
+    ],
+    [
+      13,
+      6
+    ],
+    [
+      17,
+      1
+    ],
+    [
+      17,
+      2
+    ],
+    [
+      17,
+      3
+    ],
+    [
+      17,
+      4
+    ],
+    [
+      19,
+      1
+    ],
+    [
+      19,
+      2
+    ],
+    [
+      19,
+      3
+    ],
+    [
+      19,
+      4
+    ],
+    [
+      23,
+      1
+    ],
+    [
+      23,
+      2
+    ],
+    [
+      23,
+      3
+    ],
+    [
+      23,
+      4
+    ],
+    [
+      29,
+      1
+    ],
+    [
+      29,
+      2
+    ],
+    [
+      29,
+      3
+    ],
+    [
+      29,
+      4
+    ],
+    [
+      31,
+      1
+    ],
+    [
+      31,
+      2
+    ],
+    [
+      31,
+      3
+    ],
+    [
+      31,
+      4
+    ],
+    [
+      37,
+      1
+    ],
+    [
+      37,
+      2
+    ],
+    [
+      37,
+      3
+    ],
+    [
+      37,
+      4
+    ],
+    [
+      41,
+      1
+    ],
+    [
+      41,
+      2
+    ],
+    [
+      41,
+      3
+    ],
+    [
+      41,
+      4
+    ],
+    [
+      43,
+      1
+    ],
+    [
+      43,
+      2
+    ],
+    [
+      43,
+      3
+    ],
+    [
+      43,
+      4
+    ],
+    [
+      47,
+      1
+    ],
+    [
+      47,
+      2
+    ],
+    [
+      47,
+      3
+    ],
+    [
+      47,
+      4
+    ],
+    [
+      53,
+      1
+    ],
+    [
+      53,
+      2
+    ],
+    [
+      53,
+      3
+    ],
+    [
+      53,
+      4
+    ],
+    [
+      59,
+      1
+    ],
+    [
+      59,
+      2
+    ],
+    [
+      59,
+      3
+    ],
+    [
+      59,
+      4
+    ],
+    [
+      61,
+      1
+    ],
+    [
+      61,
+      2
+    ],
+    [
+      61,
+      3
+    ],
+    [
+      61,
+      4
+    ],
+    [
+      67,
+      1
+    ],
+    [
+      67,
+      2
+    ],
+    [
+      67,
+      3
+    ],
+    [
+      67,
+      4
+    ],
+    [
+      71,
+      1
+    ],
+    [
+      71,
+      2
+    ],
+    [
+      71,
+      3
+    ],
+    [
+      71,
+      4
+    ],
+    [
+      73,
+      1
+    ],
+    [
+      73,
+      2
+    ],
+    [
+      73,
+      3
+    ],
+    [
+      73,
+      4
+    ],
+    [
+      79,
+      1
+    ],
+    [
+      79,
+      2
+    ],
+    [
+      79,
+      3
+    ],
+    [
+      79,
+      4
+    ],
+    [
+      83,
+      1
+    ],
+    [
+      83,
+      2
+    ],
+    [
+      83,
+      3
+    ],
+    [
+      83,
+      4
+    ],
+    [
+      89,
+      1
+    ],
+    [
+      89,
+      2
+    ],
+    [
+      89,
+      3
+    ],
+    [
+      89,
+      4
+    ],
+    [
+      97,
+      1
+    ],
+    [
+      97,
+      2
+    ],
+    [
+      97,
+      3
+    ],
+    [
+      97,
+      4
+    ],
+    [
+      101,
+      1
+    ],
+    [
+      101,
+      2
+    ],
+    [
+      103,
+      1
+    ],
+    [
+      103,
+      2
+    ],
+    [
+      107,
+      1
+    ],
+    [
+      107,
+      2
+    ],
+    [
+      109,
+      1
+    ],
+    [
+      109,
+      2
+    ],
+    [
+      113,
+      1
+    ],
+    [
+      113,
+      2
+    ],
+    [
+      127,
+      1
+    ],
+    [
+      127,
+      2
+    ],
+    [
+      131,
+      1
+    ],
+    [
+      131,
+      2
+    ],
+    [
+      137,
+      1
+    ],
+    [
+      137,
+      2
+    ],
+    [
+      139,
+      1
+    ],
+    [
+      139,
+      2
+    ],
+    [
+      149,
+      1
+    ],
+    [
+      149,
+      2
+    ],
+    [
+      151,
+      1
+    ],
+    [
+      151,
+      2
+    ],
+    [
+      157,
+      1
+    ],
+    [
+      157,
+      2
+    ],
+    [
+      163,
+      1
+    ],
+    [
+      163,
+      2
+    ],
+    [
+      167,
+      1
+    ],
+    [
+      167,
+      2
+    ],
+    [
+      173,
+      1
+    ],
+    [
+      173,
+      2
+    ],
+    [
+      179,
+      1
+    ],
+    [
+      179,
+      2
+    ],
+    [
+      181,
+      1
+    ],
+    [
+      181,
+      2
+    ],
+    [
+      191,
+      1
+    ],
+    [
+      191,
+      2
+    ],
+    [
+      193,
+      1
+    ],
+    [
+      193,
+      2
+    ],
+    [
+      197,
+      1
+    ],
+    [
+      197,
+      2
+    ],
+    [
+      199,
+      1
+    ],
+    [
+      199,
+      2
+    ],
+    [
+      211,
+      1
+    ],
+    [
+      211,
+      2
+    ],
+    [
+      223,
+      1
+    ],
+    [
+      223,
+      2
+    ],
+    [
+      227,
+      1
+    ],
+    [
+      227,
+      2
+    ],
+    [
+      229,
+      1
+    ],
+    [
+      229,
+      2
+    ],
+    [
+      233,
+      1
+    ],
+    [
+      233,
+      2
+    ],
+    [
+      239,
+      1
+    ],
+    [
+      239,
+      2
+    ],
+    [
+      241,
+      1
+    ],
+    [
+      241,
+      2
+    ],
+    [
+      251,
+      1
+    ],
+    [
+      251,
+      2
+    ],
+    [
+      257,
+      1
+    ],
+    [
+      257,
+      2
+    ],
+    [
+      263,
+      1
+    ],
+    [
+      263,
+      2
+    ],
+    [
+      269,
+      1
+    ],
+    [
+      269,
+      2
+    ],
+    [
+      271,
+      1
+    ],
+    [
+      271,
+      2
+    ],
+    [
+      277,
+      1
+    ],
+    [
+      277,
+      2
+    ],
+    [
+      281,
+      1
+    ],
+    [
+      281,
+      2
+    ],
+    [
+      283,
+      1
+    ],
+    [
+      283,
+      2
+    ],
+    [
+      293,
+      1
+    ],
+    [
+      293,
+      2
+    ],
+    [
+      307,
+      1
+    ],
+    [
+      307,
+      2
+    ],
+    [
+      311,
+      1
+    ],
+    [
+      311,
+      2
+    ],
+    [
+      313,
+      1
+    ],
+    [
+      313,
+      2
+    ],
+    [
+      317,
+      1
+    ],
+    [
+      317,
+      2
+    ],
+    [
+      331,
+      1
+    ],
+    [
+      331,
+      2
+    ],
+    [
+      337,
+      1
+    ],
+    [
+      337,
+      2
+    ],
+    [
+      347,
+      1
+    ],
+    [
+      347,
+      2
+    ],
+    [
+      349,
+      1
+    ],
+    [
+      349,
+      2
+    ],
+    [
+      353,
+      1
+    ],
+    [
+      353,
+      2
+    ],
+    [
+      359,
+      1
+    ],
+    [
+      359,
+      2
+    ],
+    [
+      367,
+      1
+    ],
+    [
+      367,
+      2
+    ],
+    [
+      373,
+      1
+    ],
+    [
+      373,
+      2
+    ],
+    [
+      379,
+      1
+    ],
+    [
+      379,
+      2
+    ],
+    [
+      383,
+      1
+    ],
+    [
+      383,
+      2
+    ],
+    [
+      389,
+      1
+    ],
+    [
+      389,
+      2
+    ],
+    [
+      397,
+      1
+    ],
+    [
+      397,
+      2
+    ],
+    [
+      401,
+      1
+    ],
+    [
+      401,
+      2
+    ],
+    [
+      409,
+      1
+    ],
+    [
+      409,
+      2
+    ],
+    [
+      419,
+      1
+    ],
+    [
+      419,
+      2
+    ],
+    [
+      421,
+      1
+    ],
+    [
+      421,
+      2
+    ],
+    [
+      431,
+      1
+    ],
+    [
+      431,
+      2
+    ],
+    [
+      433,
+      1
+    ],
+    [
+      433,
+      2
+    ],
+    [
+      439,
+      1
+    ],
+    [
+      439,
+      2
+    ],
+    [
+      443,
+      1
+    ],
+    [
+      443,
+      2
+    ],
+    [
+      449,
+      1
+    ],
+    [
+      449,
+      2
+    ],
+    [
+      457,
+      1
+    ],
+    [
+      457,
+      2
+    ],
+    [
+      461,
+      1
+    ],
+    [
+      461,
+      2
+    ],
+    [
+      463,
+      1
+    ],
+    [
+      463,
+      2
+    ],
+    [
+      467,
+      1
+    ],
+    [
+      467,
+      2
+    ],
+    [
+      479,
+      1
+    ],
+    [
+      479,
+      2
+    ],
+    [
+      487,
+      1
+    ],
+    [
+      487,
+      2
+    ],
+    [
+      491,
+      1
+    ],
+    [
+      491,
+      2
+    ],
+    [
+      499,
+      1
+    ],
+    [
+      499,
+      2
+    ],
+    [
+      503,
+      1
+    ],
+    [
+      503,
+      2
+    ],
+    [
+      509,
+      1
+    ],
+    [
+      509,
+      2
+    ],
+    [
+      521,
+      1
+    ],
+    [
+      521,
+      2
+    ],
+    [
+      523,
+      1
+    ],
+    [
+      523,
+      2
+    ],
+    [
+      541,
+      1
+    ],
+    [
+      541,
+      2
+    ],
+    [
+      547,
+      1
+    ],
+    [
+      547,
+      2
+    ],
+    [
+      557,
+      1
+    ],
+    [
+      557,
+      2
+    ],
+    [
+      563,
+      1
+    ],
+    [
+      563,
+      2
+    ],
+    [
+      569,
+      1
+    ],
+    [
+      569,
+      2
+    ],
+    [
+      571,
+      1
+    ],
+    [
+      571,
+      2
+    ],
+    [
+      577,
+      1
+    ],
+    [
+      577,
+      2
+    ],
+    [
+      587,
+      1
+    ],
+    [
+      587,
+      2
+    ],
+    [
+      593,
+      1
+    ],
+    [
+      593,
+      2
+    ],
+    [
+      599,
+      1
+    ],
+    [
+      599,
+      2
+    ],
+    [
+      601,
+      1
+    ],
+    [
+      601,
+      2
+    ],
+    [
+      607,
+      1
+    ],
+    [
+      607,
+      2
+    ],
+    [
+      613,
+      1
+    ],
+    [
+      613,
+      2
+    ],
+    [
+      617,
+      1
+    ],
+    [
+      617,
+      2
+    ],
+    [
+      619,
+      1
+    ],
+    [
+      619,
+      2
+    ],
+    [
+      631,
+      1
+    ],
+    [
+      631,
+      2
+    ],
+    [
+      641,
+      1
+    ],
+    [
+      641,
+      2
+    ],
+    [
+      643,
+      1
+    ],
+    [
+      643,
+      2
+    ],
+    [
+      647,
+      1
+    ],
+    [
+      647,
+      2
+    ],
+    [
+      653,
+      1
+    ],
+    [
+      653,
+      2
+    ],
+    [
+      659,
+      1
+    ],
+    [
+      659,
+      2
+    ],
+    [
+      661,
+      1
+    ],
+    [
+      661,
+      2
+    ],
+    [
+      673,
+      1
+    ],
+    [
+      673,
+      2
+    ],
+    [
+      677,
+      1
+    ],
+    [
+      677,
+      2
+    ],
+    [
+      683,
+      1
+    ],
+    [
+      683,
+      2
+    ],
+    [
+      691,
+      1
+    ],
+    [
+      691,
+      2
+    ],
+    [
+      701,
+      1
+    ],
+    [
+      701,
+      2
+    ],
+    [
+      709,
+      1
+    ],
+    [
+      709,
+      2
+    ],
+    [
+      719,
+      1
+    ],
+    [
+      719,
+      2
+    ],
+    [
+      727,
+      1
+    ],
+    [
+      727,
+      2
+    ],
+    [
+      733,
+      1
+    ],
+    [
+      733,
+      2
+    ],
+    [
+      739,
+      1
+    ],
+    [
+      739,
+      2
+    ],
+    [
+      743,
+      1
+    ],
+    [
+      743,
+      2
+    ],
+    [
+      751,
+      1
+    ],
+    [
+      751,
+      2
+    ],
+    [
+      757,
+      1
+    ],
+    [
+      757,
+      2
+    ],
+    [
+      761,
+      1
+    ],
+    [
+      761,
+      2
+    ],
+    [
+      769,
+      1
+    ],
+    [
+      769,
+      2
+    ],
+    [
+      773,
+      1
+    ],
+    [
+      773,
+      2
+    ],
+    [
+      787,
+      1
+    ],
+    [
+      787,
+      2
+    ],
+    [
+      797,
+      1
+    ],
+    [
+      797,
+      2
+    ],
+    [
+      809,
+      1
+    ],
+    [
+      809,
+      2
+    ],
+    [
+      811,
+      1
+    ],
+    [
+      811,
+      2
+    ],
+    [
+      821,
+      1
+    ],
+    [
+      821,
+      2
+    ],
+    [
+      823,
+      1
+    ],
+    [
+      823,
+      2
+    ],
+    [
+      827,
+      1
+    ],
+    [
+      827,
+      2
+    ],
+    [
+      829,
+      1
+    ],
+    [
+      829,
+      2
+    ],
+    [
+      839,
+      1
+    ],
+    [
+      839,
+      2
+    ],
+    [
+      853,
+      1
+    ],
+    [
+      853,
+      2
+    ],
+    [
+      857,
+      1
+    ],
+    [
+      857,
+      2
+    ],
+    [
+      859,
+      1
+    ],
+    [
+      859,
+      2
+    ],
+    [
+      863,
+      1
+    ],
+    [
+      863,
+      2
+    ],
+    [
+      877,
+      1
+    ],
+    [
+      877,
+      2
+    ],
+    [
+      881,
+      1
+    ],
+    [
+      881,
+      2
+    ],
+    [
+      883,
+      1
+    ],
+    [
+      883,
+      2
+    ],
+    [
+      887,
+      1
+    ],
+    [
+      887,
+      2
+    ],
+    [
+      907,
+      1
+    ],
+    [
+      907,
+      2
+    ],
+    [
+      911,
+      1
+    ],
+    [
+      911,
+      2
+    ],
+    [
+      919,
+      1
+    ],
+    [
+      919,
+      2
+    ],
+    [
+      929,
+      1
+    ],
+    [
+      929,
+      2
+    ],
+    [
+      937,
+      1
+    ],
+    [
+      937,
+      2
+    ],
+    [
+      941,
+      1
+    ],
+    [
+      941,
+      2
+    ],
+    [
+      947,
+      1
+    ],
+    [
+      947,
+      2
+    ],
+    [
+      953,
+      1
+    ],
+    [
+      953,
+      2
+    ],
+    [
+      967,
+      1
+    ],
+    [
+      967,
+      2
+    ],
+    [
+      971,
+      1
+    ],
+    [
+      971,
+      2
+    ],
+    [
+      977,
+      1
+    ],
+    [
+      977,
+      2
+    ],
+    [
+      983,
+      1
+    ],
+    [
+      983,
+      2
+    ],
+    [
+      991,
+      1
+    ],
+    [
+      991,
+      2
+    ],
+    [
+      997,
+      1
+    ],
+    [
+      997,
+      2
+    ]
+  ]
+}

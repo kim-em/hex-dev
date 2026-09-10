@@ -201,11 +201,11 @@ private def emitFixedRoots : IO Unit := do
     letI : ZPoly.CheckedIrreducible sqrtTwoPoly :=
       ⟨hirred, by decide⟩
     let root := SimpleRoot.mk sqrtTwoRep
-    let constant : QAdjoin sqrtTwoPoly root :=
-      QAdjoin.reduce sqrtTwoPoly root (DensePoly.C (-2))
-    let input : DensePoly (QAdjoin sqrtTwoPoly root) :=
+    let constant : PolyQuot sqrtTwoPoly root :=
+      PolyQuot.reduce sqrtTwoPoly root (DensePoly.C (-2))
+    let input : DensePoly (PolyQuot sqrtTwoPoly root) :=
       DensePoly.ofCoeffs #[constant, 0, 1]
-    match QAdjoin.roots? input sqrtTwoRep rfl >>= rootValue with
+    match PolyQuot.roots? input sqrtTwoRep rfl >>= rootValue with
     | some value => emitResult lib case "roots" value
     | none => throw <| IO.userError (case ++ ": roots? failed")
   else

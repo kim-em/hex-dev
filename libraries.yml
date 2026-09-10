@@ -154,6 +154,38 @@ libraries:
           description: Homogeneous and normalized Padé cases, including normalized failure.
         - name: coefficient-kernels
           description: Forced Kronecker and direct/CRT-NTT paths across degree, width, and modulus ladders.
+  HexRationalFn:
+    deps: [HexPoly, HexPolyFast]
+    mathlib: false
+    done_through: 4
+    status: active
+    proof_probes: [bench/HexRationalFn/ProofProbe]
+    phase4:
+      comparators:
+        - tool: FLINT fmpz_poly_q via a persistent C driver
+          class: informational
+          rationale: "FLINT uses integer polynomial pairs with scalar normalization, while Hex uses rational coefficients and a monic denominator; representation conversion is outside timed arithmetic."
+      input_families:
+        - name: normalization
+          description: Common-factor degree and nonmonic denominators, varying input degree and cancellation separately.
+        - name: addition
+          description: Coprime, equal and partially shared denominators, including partial and total cancellation.
+        - name: multiplication
+          description: Coprime and cross-cancelling pairs compared with multiply-then-normalize on identical canonical inputs.
+        - name: coefficient-height
+          description: Fixed rational polynomial shapes with increasing coefficient bit lengths and recorded intermediate sizes.
+        - name: queries
+          description: Full equality comparisons, regular and singular evaluation points, and inversion.
+        - name: calculus
+          description: Derivatives with cancellation, nonzero polynomial-division remainders, and powers measured by output size.
+        - name: certificate-replay
+          description: Separate normalization-certificate generation and replay, including rejection and witness-size variation.
+  HexRationalFnMathlib:
+    deps: [HexRationalFn, HexPolyMathlib]
+    mathlib: true
+    correspondence_only: true
+    done_through: 4
+    status: active
   HexMvPoly:
     deps: [HexPoly, HexBasic]
     mathlib: false
@@ -446,6 +478,83 @@ libraries:
           description: The same inputs over the rationals through ratGcd.
 
   # ---------- Depth 2 ----------
+  HexPermGroup:
+    deps: [HexBasic]
+    mathlib: false
+    done_through: 7
+    status: active
+    phase4:
+      comparators:
+        - tool: GAP permutation groups via a persistent process
+          class: informational
+          rationale: Different permutation storage, stabilizer-chain heuristics and specialized group methods; GAP does not emit Lean replay certificates. Compare fresh construction and prepared queries separately.
+      input_families:
+        - name: degree-generators
+          description: Action degree and redundant generator count varied separately.
+        - name: chain-shape
+          description: Cyclic, dihedral, symmetric, alternating and intransitive groups with varied stabilizer depths.
+        - name: membership
+          description: Positive words and negative queries failing at early and late chain levels.
+        - name: stabilizers
+          description: Point and pointwise stabilizers requiring nontrivial Schreier generators.
+        - name: containment
+          description: Equal presentations, strict inclusions and failed inclusions.
+        - name: enumeration
+          description: Element count and subgroup index with output limits enforced.
+        - name: element-access
+          description: Sign, cycle type, rank/unrank and supplied-index sampling, including orders above 64 bits.
+        - name: finite-actions
+          description: Tuple, subset and partition orbits, induced images and kernels with varied domain size.
+        - name: subgroup-search
+          description: Set transporters and stabilizers, intersections, centralizers and normalizers with varied pruning effectiveness.
+        - name: blocks
+          description: Minimal invariant equivalences and primitivity with varied degree, seed count and block sizes.
+        - name: normal-structure
+          description: Joins, normality, abelianness, normal closure, core and derived series of soluble and nonsoluble groups.
+        - name: products
+          description: Direct and imprimitive wreath products with varied factor degrees, generator counts and top-group orbits.
+        - name: certificate-replay
+          description: Construction, word generation and kernel replay separated by certificate size.
+  HexPermGroupMathlib:
+    deps: [HexPermGroup]
+    mathlib: true
+    correspondence_only: true
+    done_through: 7
+    status: active
+  HexGraphIso:
+    deps: [HexBasic, HexMatrix, HexPermGroup]
+    mathlib: false
+    done_through: 7
+    status: active
+    proof_probes: [bench/HexGraphIso/ProofProbe]
+    phase4:
+      comparators:
+        - tool: "nauty 2.9.3 (vendored source, in-process FFI through Hex.BenchOracle.Nauty)"
+          class: gating
+          goal: "Exact agreement of the canonical upper-triangle bits on every joined instance; conformance pins the visited-node counters, so both programs traverse the same search tree and every timing difference is a per-node constant factor rather than an algorithmic one. Per HexGraphIso/SPEC/hex-graph-iso.md §Benchmarks the first release sets no speed-ratio requirement, so the gating condition is result agreement and the measured ratio is reported without a threshold."
+      input_families:
+        - name: circulant-ladder
+          description: Deterministic coloured circulants on the {1, 2} and {1, 2, 4, 8} offset sets, carrying the four parametrised scientific registrations and the fixed public-operation and certificate sizes.
+        - name: random-gnp
+          description: G(n, 1/2) graphs of the recorded SplitMix64 corpus seeds, their Fisher-Yates relabellings, and the derived positive and negative decision pairs.
+        - name: strongly-regular
+          description: Paley, Latin-square, Johnson and Kneser graphs, refinement's hard cases, including the classic (25, 12, 5, 6) negative pair at shared parameters.
+        - name: grid-and-hypercube
+          description: Grids and hypercubes, the sparse families on which refinement discretizes quickly.
+        - name: decision-pairs
+          description: Positive and negative isomorphism pairs spanning cycle splittings, irregular cross-family negatives, and same-degree vertex-transitive negatives, carrying the two decision tiers and the kernel-checked tactic tier.
+  HexGraphIsoMathlib:
+    deps: [HexGraphIso, HexPermGroupMathlib]
+    mathlib: true
+    done_through: 7
+    status: active
+    proof_probes: [bench/HexGraphIsoMathlib/ProofProbe]
+    phase4:
+      input_families:
+        - name: cross-type-goals
+          description: Generalized Petersen against Kneser at (5, 2) on genuinely different vertex types, and the same-family negative against the pentagonal prism, at n = 10.
+        - name: random-pair-transport
+          description: The recorded random n = 12 positive and negative pairs carried across the bridge as SimpleGraphs over Fin 12.
   HexHermite:
     deps: [HexRowReduce, HexArith, HexDeterminant]
     mathlib: false
@@ -488,6 +597,37 @@ libraries:
           description: known divisibility chains conjugated by random unimodular matrices
         - name: presentation-smith
           description: sparse abelian-group relation matrices run through the dense implementation
+  HexLatticeEnum:
+    deps: [HexLLL, HexGramSchmidt, HexMatrix, HexBasic]
+    mathlib: false
+    done_through: 7
+    status: active
+    phase4:
+      comparators:
+        - tool: fplll shortest_vector and closest_vector
+          class: informational
+          rationale: "fplll uses floating-point Gram-Schmidt with error control and returns a candidate; Hex uses exact rationals and separately enumerates all ties and produces completeness certificates."
+      input_families:
+        - name: rank-radius
+          description: Rank and squared radius varied separately with visited-node and output counts.
+        - name: basis-quality
+          description: The same lattice under unimodular shears, with and without LLL preprocessing.
+        - name: coefficient-height
+          description: Fixed rank and shape with increasing basis and target bit lengths.
+        - name: rectangular-target
+          description: Fixed rank with increasing ambient dimension and nonzero orthogonal target residual.
+        - name: ties-boundary
+          description: Multiple minima and lattice vectors exactly on a closed-ball boundary.
+        - name: babai-gap
+          description: Rational targets where Babai nearest-plane rounding misses the optimum.
+        - name: certificate-replay
+          description: Separate preparation, search, tie enumeration, certificate generation and replay costs.
+  HexLatticeEnumMathlib:
+    deps: [HexLatticeEnum, HexLLLMathlib, HexGramSchmidtMathlib, HexMatrixMathlib]
+    mathlib: true
+    correspondence_only: true
+    done_through: 7
+    status: active
   HexLLL:
     deps: [HexGramSchmidt, HexMatrix, HexBasic]
     mathlib: false
@@ -612,7 +752,7 @@ libraries:
         - name: multifactor-lifting
           description: Ordered multifactor products on branch-isolated schedules, plus linear and quadratic ordered multifactor lifting on deterministic dense coprime fixtures at fixed high precision.
   HexConway:
-    deps: [HexBerlekamp]
+    deps: [HexBerlekamp, HexPrimality]
     mathlib: false
     done_through: 7
     status: active
@@ -636,11 +776,46 @@ libraries:
         - name: packed-generic-shared-bridge
           description: Shared binary representative family exercising both packed GF2q and generic GFq constructor/projection paths on the common p = 2 API surface.
         - name: deep-binary-constructor-projection
-          description: Generic GFq and packed GF2q constructor/projection paths at the deepest committed binary entry, GFq 2 8 and GF2q 8, on deterministic dense representatives.
+          description: Generic GFq and packed GF2q constructor/projection paths at the retained binary degree-8 anchor, GFq 2 8 and GF2q 8, on deterministic dense representatives.
         - name: odd-prime-constructor-projection
-          description: Explicit-entry GFq and instance-selected GFqC constructor/projection paths at the widest committed odd-prime entry, GFq 13 6, on deterministic dense representatives.
+          description: Explicit-entry GFq and instance-selected GFqC constructor/projection paths at the retained odd-prime anchor, GFq 13 6, on deterministic dense representatives.
+  HexDiscreteLog:
+    deps: [HexBasic, HexGFq, HexIntFactor, HexModular]
+    mathlib: false
+    done_through: 0
+    status: planned
+    phase4:
+      comparators:
+        - tool: PARI/GP fflog and znlog via a persistent process
+          class: informational
+          rationale: PARI selects a broader generic and index-calculus portfolio and does not emit Lean certificates; compare matched finite-field presentations and separate setup from repeated queries.
+      input_families:
+        - name: bsgs-order
+          description: Exact subgroup order with members, nonmembers and clipped final rectangles.
+        - name: bsgs-memory
+          description: Baby width at fixed order, separating preparation and giant-step queries.
+        - name: repeated-targets
+          description: Fresh setup versus prepared queries with varied target count.
+        - name: field-representation
+          description: Field degree and coefficient width, with packed versus generic binary arithmetic.
+        - name: prime-power-digits
+          description: Prime digit order and lifting exponent varied separately with table reuse.
+        - name: smooth-orders
+          description: Order factorization shape and largest prime factor, comparing PH and BSGS.
+        - name: rho-walks
+          description: Prime and composite orders, fixed seeds, collisions, retries and exhaustion.
+        - name: order-certification
+          description: Exact-order checks and reduction from multiples with stored factorizations.
+        - name: certificate-replay
+          description: Positive and complete negative certificates, encoding and kernel replay.
+  HexDiscreteLogMathlib:
+    deps: [HexDiscreteLog, HexGFqMathlib, HexIntFactorMathlib]
+    mathlib: true
+    correspondence_only: true
+    done_through: 0
+    status: planned
   HexBerlekampZassenhaus:
-    deps: [HexBerlekamp, HexHensel, HexLLL]
+    deps: [HexBerlekamp, HexHensel, HexLLL, HexPrimality]
     mathlib: false
     done_through: 7
     status: active
@@ -665,7 +840,7 @@ libraries:
   HexPrimality:
     deps: [HexArith, HexBasic]
     mathlib: false
-    done_through: 4
+    done_through: 7
     status: active
     proof_probes: [bench/HexPrimality/ProofProbe]
     phase4:
@@ -681,7 +856,7 @@ libraries:
   HexIntFactor:
     deps: [HexPrimality, HexArith, HexBasic]
     mathlib: false
-    done_through: 4
+    done_through: 7
     status: active
     proof_probes: [bench/HexIntFactor/ProofProbe]
     phase4:
@@ -698,6 +873,8 @@ libraries:
           description: Difference-of-powers inputs with the cyclotomic pre-split visible separately.
         - name: certificate-replay-and-order
           description: Kernel-facing factorization replay and multiplicative-order computation.
+        - name: squarefree-divisor-enumeration
+          description: Public divisors on prechecked products of the first 6, 8, 10, 12, 14 and 15 table primes, with exact divisor counts 64 through 32768; generation, merge sort and array materialization under the two-sided tau log2 tau model.
         - name: generalized-divisor-sums
           description: Certified prime-power inputs with a growing exponent and growing entry count, exercising the closed-form sigma route.
 
@@ -865,7 +1042,7 @@ libraries:
     deps: [HexPrimality]
     mathlib: true
     proof_probes: [bench/HexPrimalityMathlib/ProofProbe]
-    done_through: 4
+    done_through: 7
     status: active
     phase4:
       input_families:
@@ -881,7 +1058,7 @@ libraries:
     deps: [HexIntFactor, HexPrimalityMathlib]
     mathlib: true
     correspondence_only: true
-    done_through: 3
+    done_through: 7
     status: active
   HexBerlekampZassenhausMathlib:
     deps: [HexBerlekampZassenhaus, HexBerlekampMathlib, HexHenselMathlib, HexPolyZMathlib, HexMatrixMathlib, HexLLLMathlib]
@@ -1017,7 +1194,7 @@ libraries:
   HexNumberField:
     deps: [HexPolyZ, HexRoots, HexResultant, HexBerlekampZassenhaus, HexMatrix, HexRowReduce]
     mathlib: false
-    done_through: 4
+    done_through: 7
     status: active
     phase4:
       comparators:
@@ -1032,7 +1209,7 @@ libraries:
         - name: exactification-selection
           description: A fixed factorization-lazy root of (X^8 - 2)(X + 3), pinned to the nonlinear factor, so exactification selects among multiple candidates and performs canonical re-isolation.
         - name: exactification-certification
-          description: Fixed mode-3 certification checks at the top archived degree rung: X^8 - 2 inside (X^8 - 2)(X + 3), pinned to the nonlinear factor, separately exercising exactFactor? and public canonicalRep? under operation-specific absolute child budgets. The former degree sweep is retained only as diagnostic evidence because the executable isolation phase dominates and has no supported tight model.
+          description: "Fixed mode-3 certification checks at the top archived degree rung: X^8 - 2 inside (X^8 - 2)(X + 3), pinned to the nonlinear factor, separately exercising exactFactor? and public canonicalRep? under operation-specific absolute child budgets. The former degree sweep is retained only as diagnostic evidence because the executable isolation phase dominates and has no supported tight model."
         - name: exactification-factorization
           description: Fixed mode-3 end-to-end exactification of the first root of the six-factor product over X^2 - p for p in {2,3,5,7,11,13}, the top completed rung of the archived factor-count sweep, under a 200 ms absolute child budget. The former sweep remains diagnostic evidence; inclusive profiling shows isolation, not BHKS-covered factorization, controls this family.
         - name: fixed-field-roots
@@ -1045,10 +1222,21 @@ libraries:
     correspondence_only: true
     done_through: 7
     status: active
+  HexRealAlgebraic:
+    deps: [HexNumberField]
+    mathlib: false
+    done_through: 1
+    status: active
+  HexRealAlgebraicMathlib:
+    deps: [HexRealAlgebraic, HexNumberFieldMathlib]
+    mathlib: true
+    correspondence_only: true
+    done_through: 1
+    status: active
   HexNumberFieldTower:
     deps: [HexNumberField, HexResultant, HexBerlekampZassenhaus]
     mathlib: false
-    done_through: 3
+    done_through: 7
     status: active
     phase4:
       comparators:
@@ -1057,13 +1245,13 @@ libraries:
           rationale: "PARI is a mature optimized C library whose nffactor runs over nfinit's absolute integral-basis presentation with maximal-order machinery, a structurally different pipeline from Hex's relative one-level Trager norms, so the ratio is recorded for orientation and does not gate Phase 4. Wired via the persistent-subprocess driver scripts/oracle/pari_bench_driver.py per SPEC/benchmarking.md §External comparators §Process call, paired per rung with the factor? fixed registrations on shared Selmer trinomial inputs over Q(sqrt(2)), joined on the sorted factor degree/multiplicity multiset hash. Tower element arithmetic, adjoining, splitting, and flattening have no comparable PARI unit surface; the per-library SPEC declares those absences."
       input_families:
         - name: tower-coordinate-arithmetic
-          description: Dimension-2m height-two towers Q(sqrt(2), 3^(1/m)) with dense all-nonzero mixed-radix elements for addition, subtraction, negation, multiplication, recursive inversion, division, and rational scalar action.
+          description: Bounded-height dense coordinates with passing mode-1 addition, subtraction, negation, scalar action, multiplication, and recursive inversion on the normalized monic chain in the checked family Q(3^(1/m), sqrt(2)); division is a canonical mode-3 case at that family's top rung because the inverse's height crosses a limb boundary inside the measured range.
         - name: trager-factorization
-          description: Selmer trinomials X^n - X - 1 over Q(sqrt(2)) whose rational coefficients force a genuine shift retry, plus the fixed rational, one-level retry, recursive two-level, and checked-replay cases.
+          description: Canonical mode-3 factorization and checked replay of the degree-24 Selmer trinomial X^24 - X - 1 over Q(sqrt(2)), plus a mode-3 height-two recursive-relative factorization; the retry case is a branch/hash anchor, while smaller rungs and PARI pairs are diagnostic or comparator evidence.
         - name: adjoin-extend
-          description: Fixed adjoining of a fourth root of two to Q(sqrt(2)), the identity re-adjoining case, and the one-level presentation constructor.
+          description: Mode-1 linear checked-presentation construction plus canonical mode-3 fourth-root and identity adjoining after explicit degree-schedule diagnostics.
         - name: split-flatten
-          description: Fixed quartic splitting, two-level flattening, candidate, certification, and coordinate-map components, and the degree-six recovery adversary.
+          description: Canonical mode-3 quartic splitting and two-level flattening, passing mode-1 full-basis fromPrimitive, a canonical mode-3 dense single-call toPrimitive at the tallest-image rung whose fixture is affordable (its primitive-image heights are input-determined, so no wall model in the dimension exists), and correctness/attribution anchors for recovery and certification components.
   HexNumberFieldTowerMathlib:
     deps: [HexNumberFieldTower, HexNumberFieldMathlib, HexResultantMathlib, HexBerlekampZassenhausMathlib, HexRowReduceMathlib]
     mathlib: true

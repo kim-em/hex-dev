@@ -14,14 +14,16 @@ python-flint for the integer eliminants and factorization checks in the
 external JSONL profile. Mode: `if_available`.
 
 Covered operations:
-- fixed-presentation `QAdjoin.reduce`, arithmetic, inversion, division, and
+- fixed-presentation `PolyQuot.reduce`, arithmetic, inversion, division, and
   threaded approximation, plus checked and total canonical conversion;
 - lazy `AlgebraicRoot` negation, addition, subtraction, multiplication,
   inversion, division, and exactification in both checked and total forms;
 - canonical `AlgebraicNumber` arithmetic through its public instances;
 - canonical rational construction, casts, scalar action, and powers;
 - semantic equality of lazy values represented by different polynomials;
-- checked and total fixed-field and algebraic-coefficient root APIs.
+- checked and total fixed-field and algebraic-coefficient root APIs;
+- `ZPoly.algebraicRoots?`/`algebraicRoots`, the reality test `isReal`, the
+  output order `rootLe`, `approx`, and the `Repr` display.
 
 Covered properties and edge cases:
 - `sqrt(2)^2 = 2`, `sqrt(2) * sqrt(2)^-1 = 1`, and `0^-1 = 0`;
@@ -31,7 +33,11 @@ Covered properties and edge cases:
 - exactification through an enclosing polynomial with an irrelevant factor;
 - equal values with different nonminimal polynomials and a conjugate-embedding
   impostor that must compare unequal;
-- zero, constant, linear, and repeated-root polynomial conventions.
+- zero, constant, linear, and repeated-root polynomial conventions;
+- `algebraicRoots` on `X^2 - 2` (order `-sqrt(2), sqrt(2)`), on
+  `(X^2 - 2)^2 (X + 3)` (multiplicity dropped, `-3` first), on `X^3 - 2` (the
+  real root first, then the conjugate pair), and on the zero, constant, and
+  `X` polynomials; `isReal` on a real root, a nonreal root, and zero.
 -/
 
 namespace Hex.NumberFieldConformance
@@ -187,14 +193,14 @@ private def sqrtThreeExact? : Option AlgebraicNumber :=
     letI : ZPoly.CheckedIrreducible sqrtTwoPoly :=
       ⟨hirred, by decide⟩
     let xPoly := DensePoly.ofList ([0, 1] : List Rat)
-    let x : QAdjoin sqrtTwoPoly sqrtTwoRoot :=
-      QAdjoin.reduce sqrtTwoPoly sqrtTwoRoot xPoly
-    let two : QAdjoin sqrtTwoPoly sqrtTwoRoot :=
-      QAdjoin.reduce sqrtTwoPoly sqrtTwoRoot (DensePoly.C 2)
+    let x : PolyQuot sqrtTwoPoly sqrtTwoRoot :=
+      PolyQuot.reduce sqrtTwoPoly sqrtTwoRoot xPoly
+    let two : PolyQuot sqrtTwoPoly sqrtTwoRoot :=
+      PolyQuot.reduce sqrtTwoPoly sqrtTwoRoot (DensePoly.C 2)
     x + x = (2 : Rat) • x && x - x = 0 && -x + x = 0 &&
       (3 / 2 : Rat) • x = x + (1 / 2 : Rat) • x &&
       x * x = two && x * x⁻¹ = 1 && x / x = 1 &&
-      (0 : QAdjoin sqrtTwoPoly sqrtTwoRoot)⁻¹ = 0
+      (0 : PolyQuot sqrtTwoPoly sqrtTwoRoot)⁻¹ = 0
   else
     false
 
@@ -202,17 +208,17 @@ private def sqrtThreeExact? : Option AlgebraicNumber :=
 -- normalizes trailing zero coefficients.
 #guard
   let x := DensePoly.ofList ([0, 1] : List Rat)
-  QAdjoin.reduceCoeffs sqrtTwoPoly (x * x) = DensePoly.C 2 &&
-    QAdjoin.reduceCoeffs sqrtTwoPoly (x + 1) = x + 1 &&
-    QAdjoin.reduceCoeffs sqrtTwoPoly
+  PolyQuot.reduceCoeffs sqrtTwoPoly (x * x) = DensePoly.C 2 &&
+    PolyQuot.reduceCoeffs sqrtTwoPoly (x + 1) = x + 1 &&
+    PolyQuot.reduceCoeffs sqrtTwoPoly
       (DensePoly.ofList ([3, 0, 0] : List Rat)) = DensePoly.C 3
 
 #guard
   let xPoly := DensePoly.ofList ([0, 1] : List Rat)
-  let x : QAdjoin sqrtTwoPoly sqrtTwoRoot :=
-    QAdjoin.reduce sqrtTwoPoly sqrtTwoRoot xPoly
+  let x : PolyQuot sqrtTwoPoly sqrtTwoRoot :=
+    PolyQuot.reduce sqrtTwoPoly sqrtTwoRoot xPoly
   let first := x.approx sqrtTwoRep rfl 24
-  let second := x.approx first.1 (QAdjoin.approx_root x sqrtTwoRep rfl 24) 48
+  let second := x.approx first.1 (PolyQuot.approx_root x sqrtTwoRep rfl 24) 48
   first.2.radius ≤ Dyadic.ofIntWithPrec 1 24 &&
     second.2.radius ≤ Dyadic.ofIntWithPrec 1 48 &&
     first.1.1.square.discsMeet second.1.1.square
@@ -239,8 +245,8 @@ private def sqrtThreeExact? : Option AlgebraicNumber :=
   | some a, some b =>
       match a.add? b, a.mul? b, a.sub? b with
       | some sum, some product, some difference =>
-          sum.p.degree?.getD 0 = 4 && product.p.degree?.getD 0 = 2 &&
-            difference.p.degree?.getD 0 = 4 &&
+          sum.p.natDegree = 4 && product.p.natDegree = 2 &&
+            difference.p.natDegree = 4 &&
             decide (3 < sum.rep.1.square.re) &&
             decide (0 < product.rep.1.square.re) &&
             decide (-1 < difference.rep.1.square.re) &&
@@ -345,18 +351,18 @@ private def sqrtThreeExact? : Option AlgebraicNumber :=
 #guard
   match sqrtTwo?, negSqrtTwo?, enclosingRoot? with
   | some positive, some negative, some enclosing =>
-      QAdjoin.Roots.sameValue? positive enclosing = some true &&
-        QAdjoin.Roots.sameValue? positive negative = some false &&
-        QAdjoin.Roots.sameValue? positive positive = some true
+      PolyQuot.Roots.sameValue? positive enclosing = some true &&
+        PolyQuot.Roots.sameValue? positive negative = some false &&
+        PolyQuot.Roots.sameValue? positive positive = some true
   | _, _, _ => false
 
 /-! # Polynomial roots -/
 
-private def fixedSqrtTwo : QAdjoin sqrtTwoPoly sqrtTwoRoot :=
-  QAdjoin.reduce sqrtTwoPoly sqrtTwoRoot
+private def fixedSqrtTwo : PolyQuot sqrtTwoPoly sqrtTwoRoot :=
+  PolyQuot.reduce sqrtTwoPoly sqrtTwoRoot
     (DensePoly.ofList ([0, 1] : List Rat))
 
-private def fixedLinear : DensePoly (QAdjoin sqrtTwoPoly sqrtTwoRoot) :=
+private def fixedLinear : DensePoly (PolyQuot sqrtTwoPoly sqrtTwoRoot) :=
   DensePoly.ofList [-fixedSqrtTwo, 1]
 
 -- Both checked and total fixed-presentation conversions retain the selected
@@ -379,7 +385,7 @@ private def fixedLinear : DensePoly (QAdjoin sqrtTwoPoly sqrtTwoRoot) :=
   if hirred : ZPoly.isIrreducible sqrtTwoPoly = true then
     letI : ZPoly.CheckedIrreducible sqrtTwoPoly :=
       ⟨hirred, by decide⟩
-    match QAdjoin.roots? (fixedLinear * fixedLinear) sqrtTwoRep rfl with
+    match PolyQuot.roots? (fixedLinear * fixedLinear) sqrtTwoRep rfl with
     | some (.finite roots) =>
         roots.size = 1 &&
           (roots[0]?).map (fun root => root.multiplicity) = some 2 &&
@@ -394,7 +400,7 @@ private def fixedLinear : DensePoly (QAdjoin sqrtTwoPoly sqrtTwoRoot) :=
   if hirred : ZPoly.isIrreducible sqrtTwoPoly = true then
     letI : ZPoly.CheckedIrreducible sqrtTwoPoly :=
       ⟨hirred, by decide⟩
-    match QAdjoin.roots (fixedLinear * fixedLinear) sqrtTwoRep rfl with
+    match PolyQuot.roots (fixedLinear * fixedLinear) sqrtTwoRep rfl with
     | .finite roots =>
         roots.size = 1 &&
           (roots[0]?).map (fun root => root.multiplicity) = some 2
@@ -407,10 +413,10 @@ private def fixedLinear : DensePoly (QAdjoin sqrtTwoPoly sqrtTwoRoot) :=
     letI : ZPoly.CheckedIrreducible sqrtTwoPoly :=
       ⟨hirred, by decide⟩
     match
-        QAdjoin.roots?
-          (0 : DensePoly (QAdjoin sqrtTwoPoly sqrtTwoRoot))
+        PolyQuot.roots?
+          (0 : DensePoly (PolyQuot sqrtTwoPoly sqrtTwoRoot))
           sqrtTwoRep rfl,
-        QAdjoin.roots? 1 sqrtTwoRep rfl with
+        PolyQuot.roots? 1 sqrtTwoRep rfl with
     | some .all, some (.finite roots) => roots.isEmpty
     | _, _ => false
   else
@@ -473,5 +479,134 @@ private def algebraicRepeated? : Option AlgebraicPoly := do
             (total[0]?).map (fun root => root.multiplicity) = some 2
       | _, _ => false
   | none => false
+
+
+/-! # Roots of integer polynomials -/
+
+-- `X^2 - 2`: two real roots, `-sqrt(2)` before `sqrt(2)`, both canonical, and
+-- the total wrapper agrees with the checked form.
+#guard
+  let p : ZPoly := #p[-2, 0, 1]
+  match ZPoly.algebraicRoots? p with
+  | some roots =>
+      roots.size = 2 && ZPoly.algebraicRoots p == roots &&
+        roots.all (fun a => a.p = p && a.isReal) &&
+        (roots[0]?).map (fun a => decide ((a.approx 24).re < 0)) = some true &&
+        (roots[1]?).map (fun a => decide ((a.approx 24).re > 0)) = some true &&
+        (roots[0]?).map (fun a => a == -roots[1]!) = some true
+  | none => false
+
+-- `(X^2 - 2)^2 (X + 3)`: multiplicity is dropped, the rational root `-3`
+-- comes first because it is the smallest real root, and the two surds keep
+-- their canonical minimal polynomial.
+#guard
+  let p : ZPoly := #p[-2, 0, 1] * #p[-2, 0, 1] * #p[3, 1]
+  let roots := ZPoly.algebraicRoots p
+  roots.size = 3 &&
+    (roots[0]?).map (fun a => a == AlgebraicNumber.ofRat (-3)) = some true &&
+    (roots[1]?).map (fun a => a.p = #p[-2, 0, 1] && a.isReal) = some true &&
+    (roots[2]?).map (fun a => a.p = #p[-2, 0, 1] && a.isReal) = some true
+
+-- `X^3 - 2`: the real cube root first, then the conjugate pair, which is
+-- nonreal, and the three roots sum to zero.
+#guard
+  let p : ZPoly := #p[-2, 0, 0, 1]
+  let roots := ZPoly.algebraicRoots p
+  roots.size = 3 &&
+    (roots[0]?).map (fun a => a.isReal) = some true &&
+    (roots[1]?).map (fun a => !a.isReal) = some true &&
+    (roots[2]?).map (fun a => !a.isReal) = some true &&
+    roots.all (fun a => a.p = p) &&
+    (roots.foldl (· + ·) 0 == 0)
+
+-- The zero polynomial, a nonzero constant, and `X` take their stated
+-- branches: no roots, no roots, and the canonical zero (which is real).
+#guard
+  ZPoly.algebraicRoots? (0 : ZPoly) == some #[] &&
+    ZPoly.algebraicRoots? (#p[7] : ZPoly) == some #[] &&
+    (match ZPoly.algebraicRoots? (#p[0, 1] : ZPoly) with
+      | some roots => roots.size = 1 &&
+          (roots[0]?).map (fun a => a == 0 && a.isReal) = some true
+      | none => false)
+
+-- `sqrt(2) + sqrt(3)` through the public entry point has the expected
+-- minimal polynomial, its inverse is `sqrt(3) - sqrt(2)`, and the display
+-- is the expression that rebuilds the number.
+#guard
+  let s2 := (ZPoly.algebraicRoots #p[-2, 0, 1])[1]!
+  let s3 := (ZPoly.algebraicRoots #p[-3, 0, 1])[1]!
+  (s2 + s3).p = #p[1, 0, -10, 0, 1] && (s2 + s3)⁻¹ == s3 - s2 &&
+    (repr s2).pretty == "ZPoly.rootNear #p[-2, 0, 1] 1.414" &&
+    (repr (s2 + s3)).pretty == "ZPoly.rootNear #p[1, 0, -10, 0, 1] 3.146264369"
+
+-- The exact primitives: the imaginary unit squares to `-1`, conjugation
+-- fixes real numbers and negates the imaginary unit, and the real order is
+-- exact, including on values that only agree after canonicalization.
+#guard
+  let s2 := (ZPoly.algebraicRoots #p[-2, 0, 1])[1]!
+  let s3 := (ZPoly.algebraicRoots #p[-3, 0, 1])[1]!
+  AlgebraicNumber.I * AlgebraicNumber.I == -1 &&
+    AlgebraicNumber.conj (s2 + AlgebraicNumber.I) == s2 - AlgebraicNumber.I &&
+    AlgebraicNumber.conj s2 == s2 &&
+    AlgebraicNumber.realCompare s2 s3 == .lt &&
+    AlgebraicNumber.realCompare s3 s2 == .gt &&
+    AlgebraicNumber.realCompare (s3 - s2) ((s2 + s3)⁻¹) == .eq &&
+    AlgebraicNumber.realCompare (-s2) s2 == .lt
+
+-- The nearest root: from an approximation, from a point equidistant from two
+-- roots (the first in output order wins), and from the real axis for a
+-- conjugate pair; and the display rebuilds the number.
+#guard
+  let s2 := (ZPoly.algebraicRoots #p[-2, 0, 1])[1]!
+  let s3 := (ZPoly.algebraicRoots #p[-3, 0, 1])[1]!
+  ZPoly.rootNear #p[-2, 0, 1] 1.4 == s2 &&
+    ZPoly.rootNear #p[1, 0, -10, 0, 1] 3.15 == s2 + s3 &&
+    ZPoly.rootNear #p[1, 0, 1] 0 0.9 == AlgebraicNumber.I &&
+    ZPoly.rootNear #p[-2, 0, 1] 0 == -s2 &&
+    ZPoly.rootNear #p[1, 0, 1] 5 == -AlgebraicNumber.I &&
+    (repr s2).pretty == "ZPoly.rootNear #p[-2, 0, 1] 1.414" &&
+    (repr (s2 + s3)).pretty == "ZPoly.rootNear #p[1, 0, -10, 0, 1] 3.146264369"
+
+/-! # Round-tripping display of fixed-presentation elements
+
+`PolyQuot`'s `Repr` prints the expression that rebuilds the element:
+coordinates, plus the polynomial and isolating square that name the field and
+select the root. These pin the printed text, check that rebuilding from a
+square agrees with rebuilding from the stored root, and cover the branches of
+the dyadic and square printers.
+-/
+
+private def rtCoeffs : List (DensePoly Rat) :=
+  [DensePoly.ofList [0, 1], DensePoly.ofList [2, 0], DensePoly.ofList [-3, 7],
+   DensePoly.ofList [], DensePoly.ofList [1, -1]]
+
+-- Rebuilding from the square reproduces the coordinates that rebuilding from
+-- the stored root gives, on every fixture presentation.
+#guard
+  rtCoeffs.all fun c =>
+    (PolyQuot.ofSquare sqrtTwoPoly sqrtTwoSquare c).coeffs =
+      (PolyQuot.reduce sqrtTwoPoly sqrtTwoRoot c).coeffs
+#guard
+  rtCoeffs.all fun c =>
+    (PolyQuot.ofSquare sqrtThreePoly sqrtThreeSquare c).coeffs =
+      (PolyQuot.reduce sqrtThreePoly (SimpleRoot.mk sqrtThreeRep) c).coeffs
+#guard
+  rtCoeffs.all fun c =>
+    (PolyQuot.ofSquare tinyPoly tinySquare c).coeffs =
+      (PolyQuot.reduce tinyPoly (SimpleRoot.mk tinyRep) c).coeffs
+
+-- The negative-root presentation of the same polynomial is a distinct square,
+-- and rebuilding from it stays on that root's side.
+#guard
+  rtCoeffs.all fun c =>
+    (PolyQuot.ofSquare sqrtTwoPoly negSqrtTwoSquare c).coeffs =
+      (PolyQuot.reduce sqrtTwoPoly (SimpleRoot.mk negSqrtTwoRep) c).coeffs
+
+-- Reduction is idempotent through the square-based constructor: printing an
+-- element and rebuilding it lands on the same coordinates again.
+#guard
+  rtCoeffs.all fun c =>
+    let a := PolyQuot.ofSquare sqrtTwoPoly sqrtTwoSquare c
+    (PolyQuot.ofSquare sqrtTwoPoly sqrtTwoSquare a.coeffs).coeffs = a.coeffs
 
 end Hex.NumberFieldConformance

@@ -1,0 +1,367 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+import HexGraphIso
+import Hex.BenchOracle.Nauty
+import LeanBench
+
+/-!
+Benchmark registrations for `hex-graph-iso`.
+
+The scientific registrations measure the polynomially modelled building
+blocks and the exponentially modelled declarative canonical key on
+deterministic family inputs. Input construction happens in `prep`, so
+each declared model describes the timed operation alone.
+
+Scientific registrations:
+
+* `runDenseConvert`: dense bitset-row conversion of a coloured graph,
+  quadratic in the vertex count.
+* `runRefine`: one full equitable refinement of the colour partition by
+  the nauty-compatible `refine`, declared with the SPEC's conservative
+  cubic model.
+* `runRelabel`: relabelling a coloured graph along a rotation,
+  quadratic bit-matrix work.
+* `runSpecCanon`: the declarative canonical key `Nauty.canonSpecKey`,
+  whose unpruned walk visits every individualization branch and refines
+  at each node; capped at the small sizes where that enumeration is
+  practical.
+
+The nauty-compatible search declares no polynomial model in `n`
+(HexGraphIso/SPEC/hex-graph-iso.md § Benchmarks); the public operations
+backed by it, the certificate pipeline, and the pinned nauty
+comparator register as fixed benchmarks on committed circulant sizes:
+
+* `runHexCanon{8,12,16}` versus `runNautyCanon{8,12,16}`: the public
+  `canon` against the pinned nauty 2.9.3 comparator (in-process FFI
+  against the vendored source, via `Hex.BenchOracle.Nauty`), joined
+  on the canonical upper-triangle bits. Under these names `canon`
+  measured the certificate-checked pipeline before it became the
+  transcribed search, so the recorded series is not comparable across
+  that change.
+* `runIsIso12`, `runFindIso12`: the public isomorphism decisions.
+* `runCertify12`, `runCertReplay12`: unbounded certificate generation
+  and the generation-plus-replay pipeline (`Nauty.certifyKey?` and
+  `Nauty.certifyCanon?`), which is the certificate route the
+  `graph_iso` tactic replays. The public wrappers that enforce the
+  record limits are covered by conformance instead.
+* `runCanonAgree16`: the agreement check joining the two comparator
+  columns. `verify` fails if the public canonical bits ever diverge
+  from pinned nauty's.
+* `runAutGens{12,16}`, `runAutOrbits{12,16}`: the automorphism
+  generator list and the vertex orbits, one traversal each.
+* `runAutOrder{12,16}`: all of `autos`, including the orbit-stabilizer
+  chain for the group order, which runs one further traversal per base
+  point. The gap against `runAutGens` is what the order costs.
+* `runAutSound16`: the agreement check on `autos`.
+  `verify` fails if any returned generator is not accepted by
+  `checkIso` against the graph itself, or if the orbit array is not
+  constant on the orbits it records. The comparison against pinned
+  nauty's own generator list, orbits and `grpsize` lives in
+  conformance (`scripts/oracle/graphiso_nauty.py`), which has the
+  external nauty to compare with.
+-/
+
+namespace Hex.GraphIsoBench
+
+open Hex.GraphIso
+
+/-- Flattened benchmark input: a deterministic coloured circulant. -/
+structure GraphInput where
+  /-- The number of vertices. -/
+  n : Nat
+  deriving Repr, BEq, Hashable
+
+/-- The input of one benchmark point: the circulant on `{1, 2}` offsets
+at `n` vertices, with the one-cell colouring. -/
+def prepGraph (n : Nat) : GraphInput :=
+  { n := n }
+
+/-- Rebuild the typed coloured graph of an input. -/
+def graphOf (input : GraphInput) : Option ((n : Nat) × Colored n 1) :=
+  if h : 0 < input.n then
+    some ⟨input.n, Graph.singleColor (Families.circulant input.n [1, 2]) h⟩
+  else
+    none
+
+/-- Benchmark target: dense bitset-row conversion. -/
+def runDenseConvert (input : GraphInput) : Nat :=
+  match graphOf input with
+  | some ⟨_, G⟩ => (Nauty.rowsOf G).foldl (fun a r => a + r.card) 0
+  | none => 0
+
+/- Cost model: the conversion reads one adjacency bit for each of the
+n × n vertex pairs, so it is quadratic in n. -/
+setup_benchmark runDenseConvert n => n ^ 2
+  with prep := prepGraph
+  where {
+    paramFloor := 8
+    paramCeiling := 256
+    maxSecondsPerCall := 1.0
+  }
+
+/-- Benchmark target: one full equitable refinement of the colour
+partition. -/
+def runRefine (input : GraphInput) : Nat :=
+  match graphOf input with
+  | some ⟨n, G⟩ =>
+    let ctx : Nauty.Ctx n := { g := Nauty.rowsOf G }
+    let (lab0, ends) := Nauty.initialPartition G
+    let st := Nauty.refine ctx 1 lab0
+      ((Array.replicate n (n + 2)).set! (n - 1) 0)
+      (Nauty.VSet.empty.insert 0) ends.length
+    st.numcells + st.longcode
+  | none => 0
+
+/- Cost model: one equitable refinement performs at most n splitting
+passes (each split creates a cell, and there are at most n), and each
+pass counts neighbours of up to n vertices against n-bit rows, so the
+worst case is cubic in n. -/
+setup_benchmark runRefine n => n ^ 3
+  with prep := prepGraph
+  where {
+    paramFloor := 8
+    paramCeiling := 128
+    maxSecondsPerCall := 1.0
+  }
+
+/-- Benchmark target: relabel a coloured graph along the rotation
+labelling. -/
+def runRelabel (input : GraphInput) : Nat :=
+  match graphOf input with
+  | some ⟨n, G⟩ =>
+    let l := (Perm.ofNatArray? n
+      (.ofFn fun i : Fin n => (i.val + 1) % n)).getD (Perm.id n) |>.toLabel
+    (G.relabel l).graph.degree ⟨0, by
+      have := G.coloring.onto 0
+      rcases this with ⟨v, _⟩
+      exact v.pos⟩
+  | none => 0
+
+/- Cost model: relabelling rebuilds the n × n adjacency relation one
+entry at a time, so it is quadratic in n. -/
+setup_benchmark runRelabel n => n ^ 2
+  with prep := prepGraph
+  where {
+    paramFloor := 8
+    paramCeiling := 256
+    maxSecondsPerCall := 1.0
+  }
+
+/-- Benchmark target: the declarative canonical key, exponentially
+expensive by design. -/
+def runSpecCanon (input : GraphInput) : Nat :=
+  match graphOf input with
+  | some ⟨_, G⟩ => (Nauty.canonSpecKey G).codes.foldl (· + ·) 0
+  | none => 0
+
+/- Cost model: the specification walk prunes nothing, so it
+individualizes every vertex of the target cell at every level and
+visits at most n! ≤ n ^ n nodes; each node runs one equitable
+refinement, cubic in n by the `runRefine` derivation. The declared
+model is therefore n ^ n · n³. -/
+setup_benchmark runSpecCanon n => n ^ n * n ^ 3
+  with prep := prepGraph
+  where {
+    paramFloor := 2
+    paramCeiling := 6
+    paramSchedule := .custom #[2, 3, 4, 5, 6]
+    maxSecondsPerCall := 5.0
+  }
+
+/-! # Fixed benchmarks: public operations and the nauty comparator -/
+
+private def triBitsOf {n k : Nat} (K : Colored n k) : String :=
+  String.ofList <| (List.range n).flatMap fun i =>
+    ((List.range n).filter (fun j => i < j)).map fun j =>
+      if h : i < n ∧ j < n then
+        (if K.graph.adj ⟨i, h.1⟩ ⟨j, h.2⟩ then '1' else '0')
+      else '0'
+
+private def adjStrings {n k : Nat} (G : Colored n k) : List String :=
+  (List.range n).map fun i => String.ofList <| (List.range n).map fun j =>
+    if h : i < n ∧ j < n then
+      (if G.graph.adj ⟨i, h.1⟩ ⟨j, h.2⟩ then '1' else '0')
+    else '0'
+
+private def runHexCanonAt (m : Nat) (_ : Unit) : IO String :=
+  match graphOf { n := m } with
+  | some ⟨_, G⟩ => return triBitsOf (canon G)
+  | none => return ""
+
+/-- The comparator's input for the `m`-vertex circulant, marshalled once.
+Pushing an adjacency across the FFI boundary is `O(m²)` and is not part
+of what nauty does, so it must not sit inside a benchmark that reports
+nauty's time. -/
+private def preparedCirculant (m : Nat) : Option Hex.BenchOracle.Nauty.Prepared :=
+  match graphOf { n := m } with
+  | some ⟨m', G⟩ =>
+    (Hex.BenchOracle.Nauty.prepare? m' 1 (List.replicate m' 0)
+      (adjStrings G)).toOption
+  | none => none
+
+private def preparedCirculant8 : Option Hex.BenchOracle.Nauty.Prepared :=
+  preparedCirculant 8
+private def preparedCirculant12 : Option Hex.BenchOracle.Nauty.Prepared :=
+  preparedCirculant 12
+private def preparedCirculant16 : Option Hex.BenchOracle.Nauty.Prepared :=
+  preparedCirculant 16
+
+/-- Time the comparator on an already-marshalled graph. The result is the
+labelling and the node count, not the canonical form: rendering the form
+is another `O(m²)` that nauty does not do. -/
+private def runNautyCanonPrepared
+    (p : Option Hex.BenchOracle.Nauty.Prepared) (_ : Unit) : IO String := do
+  match p with
+  | some prep =>
+    let result ← Hex.BenchOracle.Nauty.canonPrepared prep
+    return s!"{result.lab.foldl (· + ·) 0}:{result.nodes}"
+  | none => return ""
+
+/-- The public `canon` on the 8-vertex circulant. -/
+def runHexCanon8 : Unit → IO String := runHexCanonAt 8
+/-- Pinned nauty on the 8-vertex circulant. -/
+def runNautyCanon8 : Unit → IO String :=
+  runNautyCanonPrepared preparedCirculant8
+/-- The public `canon` on the 12-vertex circulant. -/
+def runHexCanon12 : Unit → IO String := runHexCanonAt 12
+/-- Pinned nauty on the 12-vertex circulant. -/
+def runNautyCanon12 : Unit → IO String :=
+  runNautyCanonPrepared preparedCirculant12
+/-- The public `canon` on the 16-vertex circulant. -/
+def runHexCanon16 : Unit → IO String := runHexCanonAt 16
+/-- Pinned nauty on the 16-vertex circulant. -/
+def runNautyCanon16 : Unit → IO String :=
+  runNautyCanonPrepared preparedCirculant16
+
+/-- The unpruned specification key at the largest feasible size, as a
+fixed comparison point against the pinned baseline. -/
+def runSpecKey6 : Unit → IO Nat := fun _ =>
+  match graphOf { n := 6 } with
+  | some ⟨_, G⟩ =>
+    return (Nauty.canonSpecKey G).codes.foldl (· + ·) 0
+  | none => return 0
+
+/-- The `isIso` decision on the 12-vertex circulant against itself. -/
+def runIsIso12 : Unit → IO Bool := fun _ =>
+  match graphOf { n := 12 } with
+  | some ⟨_, G⟩ => return isIso G G
+  | none => return false
+
+/-- The `findIso` search on the 12-vertex circulant against itself. -/
+def runFindIso12 : Unit → IO Bool := fun _ =>
+  match graphOf { n := 12 } with
+  | some ⟨_, G⟩ => return (findIso G G).isSome
+  | none => return false
+
+/-- Unbounded certificate generation on the 12-vertex circulant. -/
+def runCertify12 : Unit → IO Bool := fun _ =>
+  match graphOf { n := 12 } with
+  | some ⟨_, G⟩ => return (Nauty.certifyKey? G).isSome
+  | none => return false
+
+/-- Certificate generation and replay on the 12-vertex circulant. -/
+def runCertReplay12 : Unit → IO String := fun _ =>
+  match graphOf { n := 12 } with
+  | some ⟨_, G⟩ =>
+    match Nauty.certifyCanon? G with
+    | some res => return triBitsOf res.form
+    | none => return "certify-failed"
+  | none => return ""
+
+private def runAutGensAt (m : Nat) (_ : Unit) : IO Nat :=
+  match graphOf { n := m } with
+  | some ⟨_, G⟩ => return (Aut.gens G).length
+  | none => return 0
+
+private def runAutOrbitsAt (m : Nat) (_ : Unit) : IO Nat :=
+  match graphOf { n := m } with
+  | some ⟨_, G⟩ => return Aut.numOrbits G
+  | none => return 0
+
+private def runAutOrderAt (m : Nat) (_ : Unit) : IO Nat :=
+  match graphOf { n := m } with
+  | some ⟨_, G⟩ => return (autos G).order
+  | none => return 0
+
+/-- The automorphism generators of the 12-vertex circulant. -/
+def runAutGens12 : Unit → IO Nat := runAutGensAt 12
+/-- The automorphism generators of the 16-vertex circulant. -/
+def runAutGens16 : Unit → IO Nat := runAutGensAt 16
+/-- The vertex orbits of the 12-vertex circulant. -/
+def runAutOrbits12 : Unit → IO Nat := runAutOrbitsAt 12
+/-- The vertex orbits of the 16-vertex circulant. -/
+def runAutOrbits16 : Unit → IO Nat := runAutOrbitsAt 16
+/-- The automorphism group order of the 12-vertex circulant. -/
+def runAutOrder12 : Unit → IO Nat := runAutOrderAt 12
+/-- The automorphism group order of the 16-vertex circulant. -/
+def runAutOrder16 : Unit → IO Nat := runAutOrderAt 16
+
+/-- The agreement check on `autos` at `n = 16`: `verify` fails if a
+returned generator is not an automorphism, or if the orbit array is
+not constant on the orbits it records. -/
+def runAutSound16 : Unit → IO Nat := fun _ => do
+  match graphOf { n := 16 } with
+  | some ⟨m, G⟩ =>
+    let a := autos G
+    for p in a.gens do
+      unless checkIso G G p do
+        throw (IO.userError "a reported generator is not an automorphism")
+    unless a.orbits.size == m do
+      throw (IO.userError "the orbit array has the wrong length")
+    for v in [0 : m] do
+      unless a.orbits[a.orbits[v]!]! == a.orbits[v]! do
+        throw (IO.userError "the orbit array is not a fixed point of itself")
+    return a.order
+  | none => return 0
+
+/-- The comparator agreement check: `verify` fails if the public
+canonical bits ever diverge from pinned nauty's. -/
+def runCanonAgree16 : Unit → IO String := fun _ => do
+  match graphOf { n := 16 } with
+  | some ⟨m, G⟩ =>
+    let hexTri := triBitsOf (canon G)
+    let result ← Hex.BenchOracle.Nauty.canon m 1
+      (List.replicate m 0) (adjStrings G)
+    unless hexTri == result.tri do
+      throw (IO.userError
+        s!"canonical bits diverge from nauty: {hexTri} vs {result.tri}")
+    return hexTri
+  | none => return ""
+
+private def hexComparisonConfig : LeanBench.FixedBenchmarkConfig where
+  repeats := 5
+  maxSecondsPerCall := 8.0
+
+private def externalComparisonConfig : LeanBench.FixedBenchmarkConfig where
+  repeats := 5
+  maxSecondsPerCall := 8.0
+  warmupFirstIter := true
+
+setup_fixed_benchmark runHexCanon8 where hexComparisonConfig
+setup_fixed_benchmark runNautyCanon8 where externalComparisonConfig
+setup_fixed_benchmark runHexCanon12 where hexComparisonConfig
+setup_fixed_benchmark runNautyCanon12 where externalComparisonConfig
+setup_fixed_benchmark runHexCanon16 where hexComparisonConfig
+setup_fixed_benchmark runNautyCanon16 where externalComparisonConfig
+setup_fixed_benchmark runSpecKey6 where hexComparisonConfig
+setup_fixed_benchmark runIsIso12 where hexComparisonConfig
+setup_fixed_benchmark runFindIso12 where hexComparisonConfig
+setup_fixed_benchmark runCertify12 where hexComparisonConfig
+setup_fixed_benchmark runCertReplay12 where hexComparisonConfig
+setup_fixed_benchmark runCanonAgree16 where externalComparisonConfig
+setup_fixed_benchmark runAutGens12 where hexComparisonConfig
+setup_fixed_benchmark runAutGens16 where hexComparisonConfig
+setup_fixed_benchmark runAutOrbits12 where hexComparisonConfig
+setup_fixed_benchmark runAutOrbits16 where hexComparisonConfig
+setup_fixed_benchmark runAutOrder12 where hexComparisonConfig
+setup_fixed_benchmark runAutOrder16 where hexComparisonConfig
+setup_fixed_benchmark runAutSound16 where hexComparisonConfig
+
+end Hex.GraphIsoBench
+
+def main (args : List String) : IO UInt32 :=
+  LeanBench.Cli.dispatch args

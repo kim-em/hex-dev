@@ -1,0 +1,39 @@
+import sys,json,subprocess,os,hashlib,time,threading
+from pathlib import Path
+root=Path.cwd()
+sys.path.insert(0,str(root/'scripts/bench')); import idle_core
+label,left,right,leftsha,rightsha=sys.argv[1:]
+base='Hex.NumberTowerBench.'
+names=[base+'runTowerFactorPair'+str(n) for n in (2,3,4,6,8,12)]+[base+'runTowerFactorLadder',base+'runTowerCheckFactorization']
+pari=[base+'runPariNfFactor'+str(n) for n in (2,3,4,6,8,12)]+[base+'runPariNfFactorOverhead']
+env=dict(os.environ,HEX_PARI_BENCH_PYTHON='/nix/store/fgsvz1y8yyljvfpa2s2qv2jc803r2hhl-python3-3.14.6-env/bin/python')
+avoid={0}; accepted=0
+for attempt in range(1,13):
+ cpu=idle_core.pick(avoid=frozenset(avoid)); siblings=sorted(idle_core.sibling_map()[cpu]); avoid.update(siblings)
+ meta={'label':label,'attempt':attempt,'cpu':cpu,'siblings':siblings,'runs':[],'release_quality':False,'protocol_commit':'8d54c7158c907005a9578431c9f43bd743b9827f','script_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
+ arms=[('left',left,leftsha),('right',right,rightsha)]
+ if accepted%2: arms.reverse()
+ for name,binary,source in arms:
+  pre={str(i):v for i,v in idle_core.busy_by_cpu(2).items() if i in siblings}
+  if max(pre.values())>=5:
+   meta['rejected_preflight']={'arm':name,'busy':pre};break
+  prefix=f'/tmp/issue-10074-{label}-{attempt}-{name}'
+  cmd=['taskset','-c',str(cpu),binary,'run',*names,*pari,'--repeats','5','--min-total-seconds','0.2','--export-file',prefix+'.json']
+  samples=[]
+  with open(prefix+'.log','w') as out:
+   p=subprocess.Popen(cmd,cwd=root,env=env,stdout=out,stderr=subprocess.STDOUT)
+   while p.poll() is None:
+    busy=idle_core.busy_by_cpu(2)
+    samples.append({str(i):busy[i] for i in siblings})
+  post={str(i):v for i,v in idle_core.busy_by_cpu(2).items() if i in siblings}
+  means={str(i):sum(s[str(i)] for s in samples)/len(samples) for i in siblings if i!=cpu}
+  run={'arm':name,'source_commit':source,'binary_sha256':hashlib.sha256(Path(binary).read_bytes()).hexdigest(),'command':cmd,'export':prefix+'.json','preflight':pre,'postflight':post,'during':samples,'sibling_mean':means,'exit_code':p.returncode}
+  run['accepted']=p.returncode==0 and max(post.values())<5 and max(means.values(),default=0)<5
+  meta['runs'].append(run);print(label,attempt,name,run['accepted'],'post',post,'sibling',means,flush=True)
+  if not run['accepted']:break
+ meta['accepted']=len(meta['runs'])==2 and all(r['accepted'] for r in meta['runs'])
+ Path(f'/tmp/issue-10074-{label}-{attempt}-host.json').write_text(json.dumps(meta,indent=2)+'\n')
+ if meta['accepted']: accepted+=1
+ print('accepted pairs',accepted,flush=True)
+ if accepted==2:break
+sys.exit(0 if accepted==2 else 1)

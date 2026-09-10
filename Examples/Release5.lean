@@ -69,13 +69,13 @@ theorem complexInput_simple : HasOnlySimpleRoots complexInput := by
 
 /-- A none-free array of certified, pairwise-disjoint complex-root atoms. -/
 noncomputable def complexRoots :=
-  HexRootsMathlib.isolate! complexInput complexInput_simple complexInput_ne 32
+  HexRootsMathlib.isolateComplexRoots complexInput complexInput_simple complexInput_ne 32
 
 example : complexRoots.size = 3 := by
   rw [show complexRoots.size =
       (HexRootsMathlib.toPolyℂ complexInput).natDegree by
     simpa [complexRoots] using
-    HexRootsMathlib.isolate!_count complexInput complexInput_simple
+    HexRootsMathlib.isolateComplexRoots_count complexInput complexInput_simple
       complexInput_ne 32]
   exact complexInput_degree
 

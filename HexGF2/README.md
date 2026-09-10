@@ -34,7 +34,7 @@ def b : AES := GF2n.reduce 0xCA
 def c : AES := a * b⁻¹
 
 #eval (a + b).val                             -- 153: addition is XOR
-#eval (GF2Poly.ofUInt64Monic 0x1B 8).degree   -- 8
+#eval (GF2Poly.ofUInt64Monic 0x1B 8).natDegree   -- 8
 
 example (h : a ≠ 0) : a * a⁻¹ = 1 := GF2n.mul_inv_cancel a h
 ```
@@ -42,7 +42,7 @@ example (h : a ≠ 0) : a * a⁻¹ = 1 := GF2n.mul_inv_cancel a h
 # Functionality
 
 - `GF2Poly` is a normalized `Array UInt64` of coefficient bits. Degree is
-  derived by `GF2Poly.degree?` and `GF2Poly.degree` rather than cached, so
+  derived by `GF2Poly.degree?` and `GF2Poly.natDegree` rather than cached, so
   equality of elements is equality of word arrays (`GF2Poly.ext_words`).
 - Arithmetic: XOR addition, `GF2Poly.mul` as a schoolbook convolution of
   carry-less word products, and `GF2Poly.shiftLeft` and `GF2Poly.shiftRight`

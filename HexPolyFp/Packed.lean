@@ -224,12 +224,12 @@ theorem arrayDegreeAuxPacked_eq (a : Array (ZMod64 p)) (ceil : Nat) :
       by_cases h : a.getD ceil (Zero.zero : ZMod64 p) = (Zero.zero : ZMod64 p)
       · have hp : (toWords a).getD ceil (0 : UInt64) = 0 := by
           rw [toWords_getD, h, ZMod64.val_zero]
-        rw [if_pos hp, if_pos h, ih]
+        rw [ite_eq_left hp, ite_eq_left h, ih]
       · have hp : ¬ (toWords a).getD ceil (0 : UInt64) = 0 := by
           rw [toWords_getD]
           intro hc
           exact h ((ZMod64.val_eq_zero_iff _).mp hc)
-        rw [if_neg hp, if_neg h]
+        rw [ite_eq_right hp, ite_eq_right h]
 
 /-- Packed degree agrees with the reference degree on packed input. -/
 theorem arrayDegreePacked?_eq (a : Array (ZMod64 p)) :
@@ -283,8 +283,8 @@ theorem divModArrayAuxPacked_eq (q : Array (ZMod64 p)) (qDegree : Nat) (fuel : N
       | none => rfl
       | some rd =>
           by_cases hlt : rd < qDegree
-          · simp only [dif_pos hlt]
-          · simp only [dif_neg hlt, toWords_getD, toWords_set!, subtractScaledShiftPacked_eq]
+          · simp only [dite_eq_left hlt]
+          · simp only [dite_eq_right hlt, toWords_getD, toWords_set!, subtractScaledShiftPacked_eq]
             exact ih (quot.set! (rd - qDegree) (rem.getD rd (Zero.zero : ZMod64 p)))
               (DensePoly.subtractScaledShift rem q (rd - qDegree)
                 (rem.getD rd (Zero.zero : ZMod64 p)))
@@ -297,7 +297,7 @@ theorem modByMonicPacked_eq (f g : FpPoly p) (hmonic : DensePoly.Monic f) :
   unfold modByMonicPacked
   by_cases hz : f.isZero
   · simp [hz]
-  · rw [if_neg hz, if_neg hz]
+  · rw [ite_eq_right hz, ite_eq_right hz]
     dsimp only
     rw [← toWords_replicate (p := p) (g.size - (f.size - 1))]
     simp only [divModArrayAuxPacked_eq, ofWords_toWords]

@@ -4,9 +4,10 @@ name: Sync released repos
 # (scripts/release/released.yml + scripts/release/sync_released.py).
 #
 # Manual dispatch, defaulting to a dry run. A real sync (dry_run=false) overwrites
-# each released repo's managed paths, rewrites their cross-repo Lake pins, pushes
-# to their `main`, and advances the baseline — one dispatch drives it all the way
-# through. The uncoordinated-commit guard skips any released repo whose `main` has
+# each released repo's managed paths, publishes one shared semantic-version tag,
+# and advances the baseline — one dispatch drives it all the way through. A
+# completed real sync increments the minor version. The uncoordinated-commit
+# guard skips any released repo whose `main` has
 # moved off the baseline, so out-of-band commits are never clobbered. Needs the
 # `RELEASED_SYNC_PAT` and `RELEASED_SYNC_PAT_2` secrets (Contents and Workflows:
 # read/write on the released repos; Workflows is required for managed CI files.
@@ -25,6 +26,10 @@ on:
         type: string
         required: false
         default: ""
+      force:
+        description: "Override a reconciled uncoordinated-commit guard"
+        type: boolean
+        default: false
 
 concurrency:
   group: sync-released
@@ -67,11 +72,12 @@ jobs:
           args=()
           [ "${{ inputs.dry_run }}" = "false" ] || args+=(--dry-run)
           [ -z "${{ inputs.only }}" ] || args+=(--only "${{ inputs.only }}")
+          [ "${{ inputs.force }}" = "true" ] && args+=(--force)
           python3 scripts/release/sync_released.py \
             --baseline /tmp/baseline.json "${args[@]}"
       - name: Publish advanced baseline
         # A later mirror can fail after earlier mirrors were pushed. Preserve
-        # those exact heads even when the sync step reports that failure.
+        # their heads and the pending shared version so a retry resumes it.
         if: ${{ always() && inputs.dry_run == false }}
         env:
           GH_TOKEN: ${{ github.token }}

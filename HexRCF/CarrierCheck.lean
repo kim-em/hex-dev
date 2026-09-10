@@ -49,8 +49,8 @@ def check (s : Sentence) (cert : CarrierCert) : Bool :=
   let q := s.product
   -- `Sentence.polys` filters by this predicate. Retaining this redundant
   -- re-check states the certificate condition where it is checked.
-  s.polys.all (fun p => decide (0 < p.degree?.getD 0)) &&
-  decide (0 < q.degree?.getD 0) &&
+  s.polys.all (fun p => decide (0 < p.natDegree)) &&
+  decide (0 < q.natDegree) &&
   !cert.repeated.isZero &&
   decide (cert.factorScale ≠ 0) &&
   decide (cert.derivScale ≠ 0) &&
@@ -64,8 +64,8 @@ def check (s : Sentence) (cert : CarrierCert) : Bool :=
 @[expose]
 def Valid (s : Sentence) (cert : CarrierCert) : Prop :=
   let q := s.product
-  (∀ p ∈ s.polys, 0 < p.degree?.getD 0) ∧
-  0 < q.degree?.getD 0 ∧
+  (∀ p ∈ s.polys, 0 < p.natDegree) ∧
+  0 < q.natDegree ∧
   cert.repeated ≠ 0 ∧
   cert.factorScale ≠ 0 ∧
   cert.derivScale ≠ 0 ∧
@@ -80,7 +80,7 @@ theorem check_sound {s : Sentence} {cert : CarrierCert}
   simp only [check, Bool.and_eq_true, decide_eq_true_eq] at h
   obtain ⟨⟨⟨⟨⟨⟨⟨hdegrees, hqdeg⟩, hr0⟩, hk0⟩, hd0⟩, hfactor⟩,
     hderiv⟩, hreplay⟩ := h
-  have hdegrees' : ∀ p ∈ s.polys, 0 < p.degree?.getD 0 := by
+  have hdegrees' : ∀ p ∈ s.polys, 0 < p.natDegree := by
     simpa only [List.all_eq_true, decide_eq_true_eq] using hdegrees
   refine ⟨hdegrees', hqdeg, ?_, hk0, hd0, ?_, ?_, hreplay⟩
   · simp only [Bool.not_eq_true'] at hr0
@@ -105,10 +105,10 @@ theorem carrier_ne_zero {s : Sentence} {cert : CarrierCert}
 
 /-- A positive literal degree implies a nonzero executable polynomial. -/
 private theorem ne_zero_of_degree_pos {p : ZPoly}
-    (h : 0 < p.degree?.getD 0) : p ≠ 0 := by
+    (h : 0 < p.natDegree) : p ≠ 0 := by
   intro hp
   subst p
-  simp [DensePoly.degree?] at h
+  simp [DensePoly.natDegree, DensePoly.degree?] at h
 
 /-- The recomputed atom product is nonzero for an accepted certificate. -/
 theorem product_ne_zero {s : Sentence} {cert : CarrierCert}

@@ -68,19 +68,19 @@ theorem intModNat_eq_impl_value (z : Int) (m : Nat) :
     intModNat z m = intModNatImpl z m := by
   unfold intModNat intModNatImpl
   by_cases hz : 0 ≤ z
-  · rw [if_pos hz]
+  · rw [ite_eq_left hz]
     by_cases hlt : z < Int.ofNat m
-    · rw [if_pos hlt, Int.emod_eq_of_lt hz hlt]
-    · rw [if_neg hlt]
-  · rw [if_neg hz]
+    · rw [ite_eq_left hlt, Int.emod_eq_of_lt hz hlt]
+    · rw [ite_eq_right hlt]
+  · rw [ite_eq_right hz]
     dsimp only
     by_cases hshift : 0 ≤ z + Int.ofNat m
-    · rw [if_pos hshift]
+    · rw [ite_eq_left hshift]
       have hlt : z + Int.ofNat m < Int.ofNat m := by omega
       have hshift_emod : (z + Int.ofNat m) % Int.ofNat m = z % Int.ofNat m := by
         simp
       rw [← hshift_emod, Int.emod_eq_of_lt hshift hlt]
-    · rw [if_neg hshift]
+    · rw [ite_eq_right hshift]
 
 /-- Proof-backed compiled implementation of the canonical representative. -/
 @[csimp] theorem intModNat_eq_impl : @intModNat = @intModNatImpl := by
@@ -128,31 +128,31 @@ theorem intEmod_eq_impl_value (z : Int) (m : Nat) :
     intEmod z m = intEmodImpl z m := by
   unfold intEmod intEmodImpl intModNat
   by_cases hm : m = 0
-  · rw [if_pos hm, hm]
+  · rw [ite_eq_left hm, hm]
     simp
-  · rw [if_neg hm]
+  · rw [ite_eq_right hm]
     have hmpos : 0 < m := Nat.pos_of_ne_zero hm
     have hnonneg : 0 ≤ z % Int.ofNat m :=
       Int.emod_nonneg _ (Int.ofNat_ne_zero.mpr hm)
     have hround : Int.ofNat (Int.toNat (z % Int.ofNat m)) = z % Int.ofNat m := by
       rw [Int.ofNat_eq_natCast, Int.toNat_of_nonneg hnonneg]
     by_cases hz : 0 ≤ z
-    · rw [if_pos hz]
+    · rw [ite_eq_left hz]
       by_cases hlt : z < Int.ofNat m
-      · rw [if_pos hlt, Int.emod_eq_of_lt hz hlt, Int.ofNat_eq_natCast,
+      · rw [ite_eq_left hlt, Int.emod_eq_of_lt hz hlt, Int.ofNat_eq_natCast,
           Int.toNat_of_nonneg hz]
-      · rw [if_neg hlt]
+      · rw [ite_eq_right hlt]
         exact hround
-    · rw [if_neg hz]
+    · rw [ite_eq_right hz]
       dsimp only
       by_cases hshift : 0 ≤ z + Int.ofNat m
-      · rw [if_pos hshift]
+      · rw [ite_eq_left hshift]
         have hlt : z + Int.ofNat m < Int.ofNat m := by omega
         have hshift_emod : (z + Int.ofNat m) % Int.ofNat m = z % Int.ofNat m := by
           simp
         rw [← hshift_emod, Int.emod_eq_of_lt hshift hlt, Int.ofNat_eq_natCast,
           Int.toNat_of_nonneg hshift]
-      · rw [if_neg hshift]
+      · rw [ite_eq_right hshift]
         exact hround
 
 /-- Proof-backed compiled implementation of the `Int`-valued canonical

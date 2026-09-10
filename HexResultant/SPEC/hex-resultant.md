@@ -165,7 +165,7 @@ theorem resultantOrdered_eq_coeffMinor
 
 /-- Standard discriminant. It is `1` for zero and constant polynomials. For
     positive degree `n`, let `d = f.derivative` and
-    `gap = n - 1 - d.degree?.getD 0`. It is
+    `gap = n - 1 - d.natDegree`. It is
     `(-1)^(n·(n-1)/2) ·
       exactDiv ((lc f)^gap · resultant f d) (lc f)`.
     The leading-coefficient power promotes the default-degree executable
@@ -439,15 +439,15 @@ resultant handles zero inputs before the run, using default formal degrees:
 resultant f 0 = if f.size ≤ 1 then 1 else 0
 resultant 0 g = if g.size ≤ 1 then 1 else 0
 resultant (C a) (C b) = 1
-resultant f (C c) = c ^ (f.degree?.getD 0)
-resultant (C c) g = c ^ (g.degree?.getD 0)
+resultant f (C c) = c ^ (f.natDegree)
+resultant (C c) g = c ^ (g.natDegree)
 ```
 
 Consequently `resultant 0 0 = 1`. These conventions agree with the pinned
 Mathlib determinant resultant and its `0^0 = 1` behavior.
 
 Finally, `disc f = 1` whenever `f.size ≤ 1`. For positive degree `n`, let
-`d = f.derivative` and `gap = n - 1 - d.degree?.getD 0`. The default-degree
+`d = f.derivative` and `gap = n - 1 - d.natDegree`. The default-degree
 resultant is promoted to derivative formal degree `n - 1` by
 `powNat f.leadingCoeff gap * resultant f d` before taking the signed exact
 quotient by `lc(f)`. This correction is essential in positive characteristic,

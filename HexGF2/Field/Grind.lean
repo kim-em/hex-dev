@@ -31,11 +31,11 @@ variable {f : GF2Poly} {hirr : GF2Poly.Irreducible f}
     (natCast (k + 1) : GF2nPoly f hirr) = natCast k + 1 := by
   unfold natCast
   by_cases hk : k % 2 = 0
-  · rw [if_pos hk, if_neg (by omega)]
+  · rw [ite_eq_left hk, ite_eq_right (by omega)]
     show (one : GF2nPoly f hirr) = zero + 1
     rw [show (zero : GF2nPoly f hirr) = 0 from rfl, zero_add]
     rfl
-  · rw [if_neg hk, if_pos (by omega)]
+  · rw [ite_eq_right hk, ite_eq_left (by omega)]
     show (zero : GF2nPoly f hirr) = one + 1
     rw [show (one : GF2nPoly f hirr) = 1 from rfl,
       show (zero : GF2nPoly f hirr) = 0 from rfl, add_self]
@@ -47,10 +47,10 @@ depend only on parity. -/
   show nsmul k a = natCast k * a
   unfold nsmul natCast
   by_cases hk : k % 2 = 0
-  · rw [if_pos hk, if_pos hk]
+  · rw [ite_eq_left hk, ite_eq_left hk]
     show (0 : GF2nPoly f hirr) = 0 * a
     rw [zero_mul]
-  · rw [if_neg hk, if_neg hk]
+  · rw [ite_eq_right hk, ite_eq_right hk]
     show a = one * a
     rw [show (one : GF2nPoly f hirr) = 1 from rfl, one_mul]
 
@@ -104,8 +104,8 @@ characteristic two is trivial on both sides. -/
   unfold zsmul
   rw [Int.natAbs_neg]
   by_cases hk : i.natAbs % 2 = 0
-  · rw [if_pos hk]; exact (neg_eq_self 0).symm
-  · rw [if_neg hk]; exact (neg_eq_self a).symm
+  · rw [ite_eq_left hk]; exact (neg_eq_self 0).symm
+  · rw [ite_eq_right hk]; exact (neg_eq_self a).symm
 
 /-- Integer casts negate trivially, since negation is the identity. -/
 @[grind =] theorem intCast_neg (i : Int) :
@@ -133,7 +133,7 @@ nonzero and admit no factorization into two positive-degree parts, which the
 constant `1` satisfies. `GF2nPoly 1 _` is then the trivial ring, where every
 residue is `0` and `0 = 1`, so both `zero_ne_one` and characteristic two fail.
 
-`hex-gfq-field` avoids this by carrying `hf : 0 < f.degree` as a separate type
+`hex-gfq-field` avoids this by carrying `hf : 0 < f.natDegree` as a separate type
 parameter beside the irreducibility proof. `GF2nPoly` does not, so the field
 laws are supplied as definitions taking that hypothesis rather than as
 instances. A caller with a genuine modulus has the hypothesis to hand: every
@@ -149,16 +149,16 @@ committed `PackedGF2Entry` carries `degree_pos`.
     a ^ ((n : Int) + 1) = a ^ (n : Int) * a := pow_succ a n
 
 /-- Zero and one are distinct when the modulus is nonconstant. -/
-theorem zero_ne_one_of_degree_pos (hdeg : 0 < f.degree) :
+theorem zero_ne_one_of_degree_pos (hdeg : 0 < f.natDegree) :
     (0 : GF2nPoly f hirr) ≠ 1 := by
   intro h
   have hval := congrArg GF2nPoly.val h
   rw [zero_val, one_val, GF2Poly.mod_eq_self_of_reduced 1 f
-    (Or.inr (by rw [GF2Poly.degree_one]; exact hdeg))] at hval
+    (Or.inr (by rw [GF2Poly.natDegree_one]; exact hdeg))] at hval
   exact absurd hval (by decide)
 
 /-- One is its own inverse. -/
-theorem inv_one_of_degree_pos (hdeg : 0 < f.degree) :
+theorem inv_one_of_degree_pos (hdeg : 0 < f.natDegree) :
     (1 : GF2nPoly f hirr)⁻¹ = 1 := by
   have h := mul_inv_cancel (1 : GF2nPoly f hirr)
     (fun hc => zero_ne_one_of_degree_pos (f := f) (hirr := hirr) hdeg hc.symm)
@@ -166,7 +166,7 @@ theorem inv_one_of_degree_pos (hdeg : 0 < f.degree) :
   exact h
 
 /-- A nonzero element has a nonzero inverse. -/
-theorem inv_ne_zero_of_degree_pos (hdeg : 0 < f.degree)
+theorem inv_ne_zero_of_degree_pos (hdeg : 0 < f.natDegree)
     {a : GF2nPoly f hirr} (ha : a ≠ 0) : a⁻¹ ≠ 0 := by
   intro hc
   have h := mul_inv_cancel a ha
@@ -174,7 +174,7 @@ theorem inv_ne_zero_of_degree_pos (hdeg : 0 < f.degree)
   exact zero_ne_one_of_degree_pos (f := f) (hirr := hirr) hdeg h
 
 /-- Inversion is an involution, by cancelling through the defining identity. -/
-theorem inv_inv_of_degree_pos (hdeg : 0 < f.degree) (a : GF2nPoly f hirr) :
+theorem inv_inv_of_degree_pos (hdeg : 0 < f.natDegree) (a : GF2nPoly f hirr) :
     (a⁻¹)⁻¹ = a := by
   by_cases ha : a = 0
   · subst ha; rw [inv_zero, inv_zero]
@@ -187,7 +187,7 @@ theorem inv_inv_of_degree_pos (hdeg : 0 < f.degree) (a : GF2nPoly f hirr) :
       _ = a := by rw [mul_one]
 
 /-- Negating an integer exponent inverts the power. -/
-theorem zpow_neg_of_degree_pos (hdeg : 0 < f.degree)
+theorem zpow_neg_of_degree_pos (hdeg : 0 < f.natDegree)
     (a : GF2nPoly f hirr) (n : Int) : a ^ (-n) = (a ^ n)⁻¹ := by
   cases n with
   | ofNat k =>
@@ -205,7 +205,7 @@ theorem zpow_neg_of_degree_pos (hdeg : 0 < f.degree)
 /-- Field laws for the packed quotient, given a nonconstant irreducible modulus.
 
 Not an instance: see the note above on why irreducibility alone is not enough. -/
-@[instance_reducible] def fieldOfDegreePos (hdeg : 0 < f.degree) : Lean.Grind.Field (GF2nPoly f hirr) where
+@[instance_reducible] def fieldOfDegreePos (hdeg : 0 < f.natDegree) : Lean.Grind.Field (GF2nPoly f hirr) where
   div_eq_mul_inv := div_eq_mul_inv
   zero_ne_one := zero_ne_one_of_degree_pos hdeg
   inv_zero := inv_zero
@@ -215,7 +215,7 @@ Not an instance: see the note above on why irreducibility alone is not enough. -
   zpow_neg := zpow_neg_of_degree_pos hdeg
 
 /-- Characteristic two, given a nonconstant irreducible modulus. -/
-theorem isCharPOfDegreePos (hdeg : 0 < f.degree) :
+theorem isCharPOfDegreePos (hdeg : 0 < f.natDegree) :
     Lean.Grind.IsCharP (GF2nPoly f hirr) 2 where
   ofNat_ext_iff {x y} := by
     show (natCast x : GF2nPoly f hirr) = natCast y ↔ x % 2 = y % 2
@@ -227,13 +227,13 @@ theorem isCharPOfDegreePos (hdeg : 0 < f.degree) :
     · intro h
       by_cases hx : x % 2 = 0 <;> by_cases hy : y % 2 = 0
       · omega
-      · rw [if_pos hx, if_neg hy] at h; exact absurd h hne
-      · rw [if_neg hx, if_pos hy] at h; exact absurd h.symm hne
+      · rw [ite_eq_left hx, ite_eq_right hy] at h; exact absurd h hne
+      · rw [ite_eq_right hx, ite_eq_left hy] at h; exact absurd h.symm hne
       · omega
     · intro h
       by_cases hx : x % 2 = 0
-      · rw [if_pos hx, if_pos (by omega)]
-      · rw [if_neg hx, if_neg (by omega)]
+      · rw [ite_eq_left hx, ite_eq_left (by omega)]
+      · rw [ite_eq_right hx, ite_eq_right (by omega)]
 
 end GF2nPoly
 

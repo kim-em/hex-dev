@@ -49,10 +49,10 @@ theorem steps_mono {m n : Nat} (h : m ≤ n) : steps m ≤ steps n := by
       exact Nat.le_trans (Nat.log2_self_le ha) hab
   unfold steps
   by_cases hm : m ≤ 1
-  · rw [if_pos hm]
+  · rw [ite_eq_left hm]
     omega
   · have hn : ¬n ≤ 1 := by omega
-    rw [if_neg hm, if_neg hn]
+    rw [ite_eq_right hm, ite_eq_right hn]
     exact Nat.add_le_add_right (log2_mono (Nat.sub_le_sub_right h 1)) 1
 
 /-- If every Newton stage preserves the prefix established by the preceding

@@ -70,7 +70,7 @@ theorem mem_trueSupportSpanInt_of_constant_on_partition
       ∀ S ∈ trueSupports, ∀ i ∈ S, ∀ j ∈ S, v i = v j) :
     v ∈ trueSupportSpanInt trueSupports := by
   classical
-  letI : Fintype trueSupports := (Set.toFinite trueSupports).fintype
+  let : Fintype trueSupports := (Set.toFinite trueSupports).fintype
   let rep : trueSupports → Fin r :=
     fun S => (hne S.1 S.2).choose
   have hrep (S : trueSupports) : rep S ∈ S.1 :=
@@ -159,7 +159,7 @@ theorem exists_adjustedVector
       ∀ x : Fin (L.factorCount + L.coeffWidth),
         w[x].natAbs ≤ V + V * U + trueSupports.ncard * U := by
   classical
-  letI : Fintype trueSupports := (Set.toFinite trueSupports).fintype
+  let : Fintype trueSupports := (Set.toFinite trueSupports).fintype
   let e : Fin L.factorCount → ℤ :=
     fun i => v[Fin.castAdd L.coeffWidth i]
   obtain ⟨S₀, hS₀, i₀, hi₀, k₀, hk₀, hik⟩ :=
@@ -232,17 +232,17 @@ theorem exists_adjustedVector
         if zeroOn T then 1 else 0 := by
     rw [Finset.sum_eq_single T]
     · by_cases hzero : zeroOn T
-      · rw [if_pos hzero, if_pos hzero,
+      · rw [ite_eq_left hzero, ite_eq_left hzero,
           indicatorVector_apply_mem T.1 hi]
-      · rw [if_neg hzero, if_neg hzero]
+      · rw [ite_eq_right hzero, ite_eq_right hzero]
     · intro S _ hST
       have hiS : i ∉ S.1 := by
         intro hiS
         apply hST
         exact Subtype.ext (hdisjoint S.1 S.2 T.1 T.2 i hiS hi)
       by_cases hzero : zeroOn S
-      · rw [if_pos hzero, indicatorVector_apply_not_mem S.1 hiS]
-      · rw [if_neg hzero]
+      · rw [ite_eq_left hzero, indicatorVector_apply_not_mem S.1 hiS]
+      · rw [ite_eq_right hzero]
     · intro h
       exact absurd (Finset.mem_univ T) h
   have hS₀_not_zero : ¬ zeroOn S₀' := by
@@ -251,7 +251,7 @@ theorem exists_adjustedVector
   have hzeroCoord :
       w[Fin.castAdd L.coeffWidth i₀] = 0 := by
     rw [hcoord i₀, indicatorVector_apply_mem S₀ hi₀,
-      hcorrection S₀' i₀ hi₀, if_neg hS₀_not_zero]
+      hcorrection S₀' i₀ hi₀, ite_eq_right hS₀_not_zero]
     ring
   refine ⟨w, hwL, ⟨i₀, hzeroCoord⟩, ?_, ?_⟩
   · intro T hT
@@ -260,7 +260,7 @@ theorem exists_adjustedVector
     · subst T
       refine ⟨k₀, hk₀, ?_⟩
       rw [hcoord k₀, indicatorVector_apply_mem S₀ hk₀,
-        hcorrection S₀' k₀ hk₀, if_neg hS₀_not_zero]
+        hcorrection S₀' k₀ hk₀, ite_eq_right hS₀_not_zero]
       intro h
       apply hik
       linarith
@@ -271,14 +271,14 @@ theorem exists_adjustedVector
       · obtain ⟨i, hi⟩ := hne T hT
         refine ⟨i, hi, ?_⟩
         rw [hcoord i, indicatorVector_apply_not_mem S₀ (hS₀T i hi),
-          hcorrection T' i hi, if_pos hzero, hzero i hi]
+          hcorrection T' i hi, ite_eq_left hzero, hzero i hi]
         norm_num
       · dsimp only [zeroOn] at hzero
         push Not at hzero
         obtain ⟨i, hi, hei⟩ := hzero
         refine ⟨i, hi, ?_⟩
         rw [hcoord i, indicatorVector_apply_not_mem S₀ (hS₀T i hi),
-          hcorrection T' i hi, if_neg]
+          hcorrection T' i hi, ite_eq_right]
         · simpa using hei
         · exact fun hz => hei (hz i hi)
   · intro x
@@ -323,7 +323,7 @@ theorem exists_adjustedVector
         apply Finset.sum_congr rfl
         intro S _
         by_cases hzero : zeroOn S
-        · simp only [if_pos hzero]
+        · simp only [ite_eq_left hzero]
           rw [← vecMul_getElem_eq_sum, hsupportCoeffs]
           simp only [Fin.getElem_fin]
         · simp [hzero]

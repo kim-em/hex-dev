@@ -411,7 +411,7 @@ def checkPowChainQuotientWitnesses (f : GF2Poly)
     (List.range cert.n).all fun k =>
       match cert.powChain[k]?, cert.powChain[k + 1]?, quotients[k]? with
       | some prev, some curr, some quot =>
-          (curr.isZero || decide (curr.degree < f.degree)) &&
+          (curr.isZero || decide (curr.natDegree < f.natDegree)) &&
             (prev * prev == curr + quot * f)
       | _, _, _ => false
 

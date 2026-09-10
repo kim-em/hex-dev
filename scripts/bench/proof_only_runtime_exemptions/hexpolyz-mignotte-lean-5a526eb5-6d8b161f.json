@@ -1,0 +1,6 @@
+{
+ "path": "HexPolyZ/Mignotte.lean",
+ "baseline_blob": "5a526eb542b053b229f2f1536b3a875988eb1d44",
+ "current_blob": "6d8b161f58d48d2e445913cd67bda7b52c1cf113",
+ "reason": "Replaces `Hex.DensePoly.degree?.getD 0` with the new abbreviation `Hex.DensePoly.natDegree`, whose body is exactly that term and which `abbrev` marks `@[reducible, inline]`, and repairs the proofs that rewrote through the `Option`; the compiled code and every measured branch are unchanged."
+}

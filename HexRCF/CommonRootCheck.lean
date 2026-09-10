@@ -53,7 +53,7 @@ def checkReplay (cert : CommonRootCert) : Bool :=
   | some replay =>
       -- The replay checker already implies this degree bound. Keeping the
       -- guard makes the constant/nonconstant trust boundary explicit.
-      decide (0 < cert.gcd.degree?.getD 0) && replay.check cert.gcd
+      decide (0 < cert.gcd.natDegree) && replay.check cert.gcd
 
 /-- Proposition-level replay facts recovered from `checkReplay`. -/
 @[expose]
@@ -61,7 +61,7 @@ def ReplayValid (cert : CommonRootCert) : Prop :=
   match cert.replay with
   | none => cert.gcd.size = 1
   | some replay =>
-      0 < cert.gcd.degree?.getD 0 ∧ replay.check cert.gcd = true
+      0 < cert.gcd.natDegree ∧ replay.check cert.gcd = true
 
 /-- Check the divisibility and scaled Bezout identities against the external
 atom and carrier polynomials. -/

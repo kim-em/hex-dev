@@ -1,0 +1,171 @@
+{"schema_version":1,"kind":"parametric","function":"Hex.LatticeEnumBench.runAmbientInput","param":2048,"inner_repeats":4096,"total_nanos":679632491,"per_call_nanos":165925.901123,"cache_mode":"warm","result_hash":"0xb","status":"ok","error":null,"alloc_bytes":null,"peak_rss_kb":77240,"env":{"arch":"x86_64","cpu_cores":96,"cpu_model":"AMD EPYC 9455 48-Core Processor","exe_name":"hexlatticeenum_bench","git_commit":"df2cbf92dbd8b810971632cb62efd6128ba0c03c","git_dirty":true,"hostname":"chungus2","lean_bench_version":"0.1.0","lean_toolchain":"leanprover/lean4:4.34.0-rc2","lean_version":"4.34.0-rc2","os":"linux","platform_target":"x86_64-unknown-linux-gnu","timestamp_iso":"2026-09-07T15:44:02Z","timestamp_unix_ms":1788795842841}}
+
+filtered profile: /tmp/hex-lattice-samply-current/runAmbientInput.json.gz
+symbols:          /tmp/hex-lattice-samply-current/runAmbientInput.json.syms.json
+diagnostics:      /tmp/hex-lattice-samply-current/runAmbientInput.json.gz.diagnostics.json
+{
+  "schema": 2,
+  "stage": "complete",
+  "confidence": "passed",
+  "low_confidence_reasons": [],
+  "bench_pid": 1938071,
+  "bench_thread_name": "hexlatticeenum_bench",
+  "bench_thread_tid": "1938101",
+  "regions_total": 6,
+  "total_timed_ms": 684.636441,
+  "expected_samples_bench_thread": 684.0,
+  "retained_samples_bench_thread": 673,
+  "rejected_samples_bench_thread": 9,
+  "off_bench_thread_samples_in_window": 0,
+  "samply_interval_ms": 1.001001,
+  "spawn_anchor_wall_ns": 1788795842654299332,
+  "spawn_anchor_mono_ns": 20269836588632,
+  "sidecar_mono_anchor_ns": 20270030859193,
+  "samply_meta_start_time_ms": 1788795842655.808,
+  "samply_timestamp_mode": "absolute-monotonic-ms",
+  "calibration_residual_ms": 0.5737010017037392,
+  "calibration_max_residual_ms": 5.0,
+  "calibration": {
+    "selected_mode": "absolute-monotonic-ms",
+    "residual_ms": 0.5737010017037392,
+    "raw_max_residual_ms": 1.7541220001876354,
+    "residual_statistic": "one-boundary-trimmed-maximum",
+    "configured_max_residual_ms": 5.0,
+    "sample_interval_ms": 1.001001,
+    "effective_max_residual_ms": 5.0,
+    "within_residual_limit": true,
+    "candidates": {
+      "absolute-monotonic-ms": {
+        "hit_count": 673,
+        "regions_without_samples": 3,
+        "boundary_residual_trimmed_max_ms": 0.5737010017037392,
+        "boundary_residual_raw_max_ms": 1.7541220001876354,
+        "within_residual_limit": true
+      },
+      "relative-to-meta-start-ms": {
+        "hit_count": 0,
+        "regions_without_samples": 6,
+        "boundary_residual_trimmed_max_ms": null,
+        "boundary_residual_raw_max_ms": null,
+        "within_residual_limit": false
+      }
+    }
+  },
+  "minimum_retained_samples": 100,
+  "sensitivity": {
+    "shift_ms": 5.0,
+    "reported_top_function_count": 3,
+    "configured_max_total_variation_distance": 0.1,
+    "sampling_noise_coefficient": 0.6,
+    "minimum_comparison_samples": 100,
+    "maximum_sampling_noise_allowance": 0.5,
+    "verdict": "passed",
+    "leaf_function_distributions_stable": true,
+    "comparisons": {
+      "minus": {
+        "total_variation_distance": 0.006336662690982768,
+        "leaf_function_support_size": 75,
+        "comparison_samples": 669,
+        "exchanged_samples": 6,
+        "exchanged_fraction": 0.008968609865470852,
+        "sampling_noise_allowance": 0.026905829596412554,
+        "maximum_sampling_noise_allowance": 0.5,
+        "sample_count_adequate": true,
+        "noise_allowance_discriminating": true,
+        "effective_max_total_variation_distance": 0.1,
+        "verdict": "passed",
+        "failure_reasons": []
+      },
+      "plus": {
+        "total_variation_distance": 0.004184870595018964,
+        "leaf_function_support_size": 74,
+        "comparison_samples": 670,
+        "exchanged_samples": 3,
+        "exchanged_fraction": 0.004477611940298508,
+        "sampling_noise_allowance": 0.018869827617049684,
+        "maximum_sampling_noise_allowance": 0.5,
+        "sample_count_adequate": true,
+        "noise_allowance_discriminating": true,
+        "effective_max_total_variation_distance": 0.1,
+        "verdict": "passed",
+        "failure_reasons": []
+      }
+    },
+    "cases": {
+      "minus": {
+        "shift_ms": -5.0,
+        "retained_samples": 669,
+        "top_leaf_functions": [
+          {
+            "function": 67,
+            "name": "0x4cf4ed5",
+            "samples": 84
+          },
+          {
+            "function": 63,
+            "name": "0x4cf4e9a",
+            "samples": 82
+          },
+          {
+            "function": 35,
+            "name": "0xbae170",
+            "samples": 23
+          }
+        ]
+      },
+      "nominal": {
+        "shift_ms": 0.0,
+        "retained_samples": 673,
+        "top_leaf_functions": [
+          {
+            "function": 63,
+            "name": "0x4cf4e9a",
+            "samples": 84
+          },
+          {
+            "function": 67,
+            "name": "0x4cf4ed5",
+            "samples": 84
+          },
+          {
+            "function": 35,
+            "name": "0xbae170",
+            "samples": 23
+          }
+        ]
+      },
+      "plus": {
+        "shift_ms": 5.0,
+        "retained_samples": 670,
+        "top_leaf_functions": [
+          {
+            "function": 63,
+            "name": "0x4cf4e9a",
+            "samples": 84
+          },
+          {
+            "function": 67,
+            "name": "0x4cf4ed5",
+            "samples": 84
+          },
+          {
+            "function": 35,
+            "name": "0xbae170",
+            "samples": 23
+          }
+        ]
+      }
+    }
+  }
+}
++ samply record --save-only --no-open -o /tmp/lean-bench-samply-38u38dhw/samply.json.gz --rate 999 --unstable-presymbolicate -- /home/kim/worktrees/hex-dev/hex-dev-pr-10089/.lake/build/bin/hexlatticeenum_bench _child --bench Hex.LatticeEnumBench.runAmbientInput --param 2048 --target-nanos 1000000000 --cache-mode warm
+=== lean-bench-samply filter diagnostics ===
+bench thread:       name='hexlatticeenum_bench' tid=1938101
+calibration:        mode=absolute-monotonic-ms, residual = 0.574 ms (effective limit 5 ms)
+regions:            6, total timed = 684.6 ms
+expected samples:   ~684 on bench thread
+retained samples:   673 on bench thread (9 rejected outside windows)
+other-thread noise: 0 samples on non-bench threads within timed windows (informational)
+sensitivity ±5 ms: passed (leaf functions; configured total-variation floor 0.10)
+confidence:         passed
+filtered profile:   /tmp/hex-lattice-samply-current/runAmbientInput.json.gz

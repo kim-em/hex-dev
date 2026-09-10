@@ -191,8 +191,8 @@ theorem foldl_monomials_eq (p : DensePoly R) :
   intro k
   rw [coeff_foldl_monomials]
   by_cases hk : k < p.size
-  · rw [HexPoly.ite_eq_left hk]
-  · rw [HexPoly.ite_eq_right hk, coeff_eq_zero_of_size_le p (Nat.le_of_not_gt hk)]
+  · rw [ite_eq_left hk]
+  · rw [ite_eq_right hk, coeff_eq_zero_of_size_le p (Nat.le_of_not_gt hk)]
     rfl
 
 private theorem cyclicModulus_dvd_fold_sub (n N : Nat) (hn : 0 < n)
@@ -262,19 +262,19 @@ theorem ofCoeffs_cyclicCoeffs_eq_modByMonic (n : Nat) (hn : 0 < n)
   let r : DensePoly R := ofCoeffs (cyclicCoeffs n p)
   have hgsize : g.size = n + 1 := by
     simpa [g] using size_cyclicModulus (R := R) n hn hone
-  have hgdeg : g.degree?.getD 0 = n := by
-    simp [degree?, hgsize]
-  have hgpos : 0 < g.degree?.getD 0 := by omega
+  have hgdeg : g.natDegree = n := by
+    simp [natDegree, degree?, hgsize]
+  have hgpos : 0 < g.natDegree := by omega
   have hrsize : r.size ≤ n := by
     dsimp [r]
     exact Nat.le_trans (size_ofCoeffs_le _)
       (by rw [size_cyclicCoeffs]; exact Nat.le_refl n)
-  have hrdeg : r.degree?.getD 0 < g.degree?.getD 0 := by
+  have hrdeg : r.natDegree < g.natDegree := by
     rw [hgdeg]
     by_cases hrzero : r.size = 0
-    · simp [degree?, hrzero, hn]
+    · simp [natDegree, degree?, hrzero, hn]
     · have hrpos : 0 < r.size := Nat.pos_of_ne_zero hrzero
-      rw [degree?_eq_some_of_pos_size r hrpos, Option.getD_some]
+      rw [natDegree_eq_size_sub_one]
       omega
   have hdvd : g ∣ p - r := by
     simpa [g, r] using cyclicModulus_dvd_sub_fold n hn p
@@ -311,7 +311,7 @@ theorem ofCoeffs_cyclicCoeffs_eq_modByMonic (n : Nat) (hn : 0 < n)
   have huniq : divMod p g = (q, r) :=
     divMod_eq_of_reconstruction p g q r hgpos hcancel hexact htop hrec hrdeg
   change r = modByMonic p g hgmonic
-  by_cases hlt : p.degree?.getD 0 < g.degree?.getD 0
+  by_cases hlt : p.natDegree < g.natDegree
   · have hshort : divMod p g = (0, p) :=
       divMod_eq_zero_self_of_degree_lt p g hlt
     have hpairs : ((0 : DensePoly R), p) = (q, r) := hshort.symm.trans huniq
@@ -375,7 +375,7 @@ private theorem negacyclicResidue_step (n i : Nat) (hn : 0 < n)
     have hpar' : ((i - n) / n) % 2 = 0 := by simpa [j] using hpar
     have hmod' : (i - n) % n = i % n := by simpa [j] using hmod
     unfold negacyclicResidue
-    rw [HexPoly.ite_eq_right (by omega), HexPoly.ite_eq_left hpar', hmod']
+    rw [ite_eq_right (by omega), ite_eq_left hpar', hmod']
     exact monomial_neg (i % n) c
   · have hipar : (i / n) % 2 = 0 := by
       rw [hdiv, Nat.add_mod]
@@ -383,7 +383,7 @@ private theorem negacyclicResidue_step (n i : Nat) (hn : 0 < n)
     have hpar' : ((i - n) / n) % 2 = 1 := by simpa [j] using hpar
     have hmod' : (i - n) % n = i % n := by simpa [j] using hmod
     unfold negacyclicResidue
-    rw [HexPoly.ite_eq_left hipar, HexPoly.ite_eq_right (by omega), hmod']
+    rw [ite_eq_left hipar, ite_eq_right (by omega), hmod']
     exact monomial_neg_neg (i % n) c
 
 /-- A monomial and its signed exponent reduction are congruent modulo
@@ -509,19 +509,19 @@ theorem ofCoeffs_negacyclicCoeffs_eq_modByMonic (n : Nat) (hn : 0 < n)
   let r : DensePoly R := ofCoeffs (negacyclicCoeffs n p)
   have hgsize : g.size = n + 1 := by
     simpa [g] using size_negacyclicModulus (R := R) n hn hone
-  have hgdeg : g.degree?.getD 0 = n := by
-    simp [degree?, hgsize]
-  have hgpos : 0 < g.degree?.getD 0 := by omega
+  have hgdeg : g.natDegree = n := by
+    simp [natDegree, degree?, hgsize]
+  have hgpos : 0 < g.natDegree := by omega
   have hrsize : r.size ≤ n := by
     dsimp [r]
     exact Nat.le_trans (size_ofCoeffs_le _)
       (by rw [size_negacyclicCoeffs]; exact Nat.le_refl n)
-  have hrdeg : r.degree?.getD 0 < g.degree?.getD 0 := by
+  have hrdeg : r.natDegree < g.natDegree := by
     rw [hgdeg]
     by_cases hrzero : r.size = 0
-    · simp [degree?, hrzero, hn]
+    · simp [natDegree, degree?, hrzero, hn]
     · have hrpos : 0 < r.size := Nat.pos_of_ne_zero hrzero
-      rw [degree?_eq_some_of_pos_size r hrpos, Option.getD_some]
+      rw [natDegree_eq_size_sub_one]
       omega
   have hdvd : g ∣ p - r := by
     simpa [g, r] using negacyclicModulus_dvd_sub_fold n hn p
@@ -558,7 +558,7 @@ theorem ofCoeffs_negacyclicCoeffs_eq_modByMonic (n : Nat) (hn : 0 < n)
   have huniq : divMod p g = (q, r) :=
     divMod_eq_of_reconstruction p g q r hgpos hcancel hexact htop hrec hrdeg
   change r = modByMonic p g hgmonic
-  by_cases hlt : p.degree?.getD 0 < g.degree?.getD 0
+  by_cases hlt : p.natDegree < g.natDegree
   · have hshort : divMod p g = (0, p) :=
       divMod_eq_zero_self_of_degree_lt p g hlt
     have hpairs : ((0 : DensePoly R), p) = (q, r) := hshort.symm.trans huniq

@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "a56a63e3b99c2af2c1b477347d0b3a5bec8d9b51",
+  "current_blob": "b90ea948027e0fe88f063ab0e758c30c36dd6896",
+  "reason": "The factorization-relevant build declarations are identical to the already exempted a56a63e3-to-209b9cb6 transition: the unchanged native arithmetic archives are scoped to their owning libraries. The additional differences are independent graph-isomorphism executable declarations, including the trace emitter replacing the twin. No factorization target, imported library, C source, compiler recipe or runtime dependency differs from that accepted transition."
+}

@@ -14,7 +14,7 @@ This module is the Phase 4 benchmark root for the certified complex-root
 isolation API. It covers the exact Gaussian-dyadic primitives (`taylor`, the
 two atom-witness checks, the speculative Newton step), the separation-precision
 helper (`mahlerPrec`), the refinement primitives (`Component.refine1`,
-`Component.certify?`), the end-to-end drivers (`isolateAll?`, `isolate`), the
+`Component.certify?`), the end-to-end drivers (`isolateAll?`, `ZPoly.isolateComplexRoots?`), the
 refined-threading operation (`DyadicRootIsolation.refineTo?`), and the
 root-identity test (`RefinedIsolation.sameRoot`). It also registers the
 dual-route atom-certificate experiment on one shared canonical input, joined
@@ -35,7 +35,7 @@ The deterministic inputs include:
   three strategies (the atoms' stored squares differ, but the integer-grid
   projection of their centres does not).
 * `separatedPoly d = ∏(2X−(2j+1))` — uniformly separated half-integer roots,
-  used by canonical fixed `isolate`/`isolateAll?`/`refine1` cases and the
+  used by canonical fixed `ZPoly.isolateComplexRoots?`/`isolateAll?`/`refine1` cases and the
   historical unregistered isolation diagnostic ladder.
 * `boundedRootPoly 128` — bounded-height with exact root `1`, used by the
   canonical witness, Newton, and pinned-NK certification cases.
@@ -75,7 +75,7 @@ canonical or parametric case):
   component; `runCertify` — one pinned-NK certification attempt on the
   bounded-root fixture. Both are fixed `O(n²)` operation shapes.
 * `runIsolateAll` — fixed `isolateAll?` at target `32` on separated degree 12.
-* `runIsolate` — fixed `isolate` to the `separationDepth` floor on separated
+* `runIsolate` — fixed `ZPoly.isolateComplexRoots?` to the `separationDepth` floor on separated
   degree 8.
 * `runRefineTo` — achieved-precision ladder, `O(t²)` in the quadratic GMP
   regime.
@@ -256,7 +256,7 @@ component (a subdivided region localised near a root). Falls back to the Cauchy
 square when the degree is degenerate or every child was `T₀`-discarded. -/
 def midComponent (degree : Nat) : ZPoly × Component :=
   let p := seededPoly degree
-  if h : 0 < p.degree?.getD 0 then
+  if h : 0 < p.natDegree then
     let start := Component.cauchy p h
     let round1 := start.refine1 p
     let round2 := round1.flatMap (·.refine1 p)
@@ -267,7 +267,7 @@ def midComponent (degree : Nat) : ZPoly × Component :=
 /-- A mid-refinement component on the smooth fixed-separation family. -/
 def separatedMidComponent (degree : Nat) : ZPoly × Component :=
   let p := separatedPoly degree
-  if h : 0 < p.degree?.getD 0 then
+  if h : 0 < p.natDegree then
     let start := Component.cauchy p h
     let round1 := start.refine1 p
     let round2 := round1.flatMap (·.refine1 p)
@@ -286,7 +286,7 @@ def refinePoly : ZPoly := DensePoly.ofCoeffs #[6, -7, 0, 1]
 refined form against itself. `none` never occurs for this squarefree fixture. -/
 def refineAtom? : Option (DyadicRootIsolation refinePoly) :=
   if h : HasOnlySimpleRoots refinePoly then
-    match isolate refinePoly h 0 with
+    match ZPoly.isolateComplexRoots? refinePoly h 0 with
     | some atoms => atoms[0]?
     | none => none
   else none
@@ -328,7 +328,7 @@ def certifyChecksum (pc : ZPoly × Component) : UInt64 :=
 
 /-- Benchmark target: `isolateAll?` at target precision `32`. -/
 def isolateAllChecksum (p : ZPoly) : UInt64 :=
-  if h : 0 < p.degree?.getD 0 then
+  if h : 0 < p.natDegree then
     match isolateAll? p 32 #[Component.cauchy p h] with
     | some rs => certifiedArrayChecksum rs
     | none => 0
@@ -338,24 +338,26 @@ def isolateAllChecksum (p : ZPoly) : UInt64 :=
 strategy-invariant projection; `0` for non-squarefree or degenerate inputs. -/
 def isolateDigest (strategy : AtomStrategy) (p : ZPoly) : UInt64 :=
   if h : HasOnlySimpleRoots p then
-    match isolate p h 0 strategy with
+    match ZPoly.isolateComplexRoots? p h 0 strategy with
     | some atoms => rootsDigest atoms
     | none => 0
   else 0
 
-/-- Benchmark target: `isolate` to the `separationDepth` floor (`atom_prec = 0`). -/
+/-- Benchmark target: `ZPoly.isolateComplexRoots?` to the `separationDepth`
+floor (`atom_prec = 0`). -/
 def runIsolateParam (p : ZPoly) : UInt64 :=
   isolateDigest .nkThenPellet p
 
-/-- Compare-group target: `isolate` under the Newton-Kantorovich-only strategy. -/
+/-- Compare-group target: `ZPoly.isolateComplexRoots?` under the
+Newton-Kantorovich-only strategy. -/
 def isolateNkChecksum (p : ZPoly) : UInt64 :=
   isolateDigest .nk p
 
-/-- Compare-group target: `isolate` under the Pellet-only strategy. -/
+/-- Compare-group target: `ZPoly.isolateComplexRoots?` under the Pellet-only strategy. -/
 def isolatePelletChecksum (p : ZPoly) : UInt64 :=
   isolateDigest .pellet p
 
-/-- Compare-group target: `isolate` under the default `nkThenPellet` strategy. -/
+/-- Compare-group target: `ZPoly.isolateComplexRoots?` under the default `nkThenPellet` strategy. -/
 def isolateNkThenPelletChecksum (p : ZPoly) : UInt64 :=
   isolateDigest .nkThenPellet p
 
@@ -577,7 +579,7 @@ setup_fixed_benchmark runIsolateAll where {
   repeats := 5, maxSecondsPerCall := 90.0, expectedHash := some 0x5e4b3fd1d798497a }
 
 /-
-Cost model. `isolate` runs `isolateAll?` from the Cauchy component to
+Cost model. `ZPoly.isolateComplexRoots?` runs `isolateAll?` from the Cauchy component to
 `max atom_prec (separationDepth p)` and requires every result to be an atom.
 With `atom_prec = 0` the target is the `separationDepth` floor, which grows
 with the degree, so this is the deeper of the two whole-polynomial drivers.
@@ -629,7 +631,7 @@ The independently derived wall model is `~n⁷`; its current attempted schedule
 is recorded at each registration below. -/
 
 /-
-Cost model: one `isolate` run over `linProdPoly n`; the SPEC supplies the `n³`
+Cost model: one `ZPoly.isolateComplexRoots?` run over `linProdPoly n`; the SPEC supplies the `n³`
 driver factor. Since `log ‖p‖∞ = Θ(n·log n)`, its working length
 `B = separationDepth + n·log ‖p‖∞` is `Θ(n²·log n)`. Thus
 `O(n³·B²)` gives the `~n⁷` wall model (polylogarithms suppressed); the NK-only

@@ -336,7 +336,50 @@ theorem contentIn_mul
     (i : Fin (n + 1)) (cmp' : Mono n → Mono n → Ordering)
     [IsMonomialOrder cmp'] (p q : MvPoly (n + 1) R cmp) :
     contentIn i cmp' (p * q) = contentIn i cmp' p * contentIn i cmp' q := by
-  sorry
+  let pv := toUnivariate i cmp' p
+  let qv := toUnivariate i cmp' q
+  let pqv := toUnivariate i cmp' (p * q)
+  let cp := contentIn i cmp' p
+  let cq := contentIn i cmp' q
+  let cpq := contentIn i cmp' (p * q)
+  let dp := denseContent pv
+  let dq := denseContent qv
+  let dpq := denseContent pqv
+  have hcpdp : cp ∣ dp := by
+    apply dvd_denseContent pv cp
+    intro k
+    exact contentIn_dvd_coeff i cmp' p k
+  have hdpcp : dp ∣ cp := by
+    apply dvd_contentIn i cmp' p dp
+    intro k
+    exact denseContent_dvd_coeff pv k
+  have hcqdq : cq ∣ dq := by
+    apply dvd_denseContent qv cq
+    intro k
+    exact contentIn_dvd_coeff i cmp' q k
+  have hdqcq : dq ∣ cq := by
+    apply dvd_contentIn i cmp' q dq
+    intro k
+    exact denseContent_dvd_coeff qv k
+  have hcpqdpq : cpq ∣ dpq := by
+    apply dvd_denseContent pqv cpq
+    intro k
+    exact contentIn_dvd_coeff i cmp' (p * q) k
+  have hdpqcpq : dpq ∣ cpq := by
+    apply dvd_contentIn i cmp' (p * q) dpq
+    intro k
+    exact denseContent_dvd_coeff pqv k
+  have hview : pqv = pv * qv := toUnivariate_mul i p q
+  have hdense := denseContent_mul_assoc pv qv
+  rw [← hview] at hdense
+  have hforward : cpq ∣ cp * cq :=
+    dvdTrans (dvdTrans hcpqdpq hdense.1) (Hex.dvdMul hdpcp hdqcq)
+  have hback : cp * cq ∣ cpq :=
+    dvdTrans (Hex.dvdMul hcpdp hcqdq) (dvdTrans hdense.2 hdpqcpq)
+  have hcanon := eq_polyNormalize_of_dvd cpq (cp * cq)
+    (contentIn_normalized i cmp' (p * q)) hforward hback
+  rw [polyNormalize_mul, contentIn_normalized, contentIn_normalized] at hcanon
+  exact hcanon
 
 theorem primPartIn_mul
     {cmp : Mono (n + 1) → Mono (n + 1) → Ordering}
@@ -916,19 +959,6 @@ theorem lcm_normalized [IsMonomialOrder cmp]
     (f h : MvPoly n R cmp) : polyNormalize (lcm f h) = lcm f h := by
   exact polyNormalize_idem _
 
-private theorem reorder_mul
-    {cmp' : Mono n → Mono n → Ordering}
-    [IsMonomialOrder cmp] [IsMonomialOrder cmp']
-    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    (p q : MvPoly n R cmp) :
-    reorder cmp' (p * q) = reorder cmp' p * reorder cmp' q := by
-  apply ext
-  intro m
-  rw [coeff_reorder, coeff_mul, coeff_mul]
-  apply List.foldl_add_congr (Mono.splits m)
-  intro ab _
-  rw [coeff_reorder, coeff_reorder]
-
 private theorem reorder_reorder
     {cmp' : Mono n → Mono n → Ordering}
     [IsMonomialOrder cmp] [IsMonomialOrder cmp']
@@ -949,37 +979,6 @@ private theorem reorder_dvd
   calc
     reorder cmp' q = reorder cmp' (a * p) := congrArg (reorder cmp') ha
     _ = reorder cmp' a * reorder cmp' p := reorder_mul a p
-
-private theorem eq_normalize_of_dvd [IsMonomialOrder cmp]
-    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [GcdOps R] [LawfulGcdOps R]
-    (a b : MvPoly n R cmp) (ha : polyNormalize a = a)
-    (hab : a ∣ b) (hba : b ∣ a) : a = polyNormalize b := by
-  rcases hab with ⟨q, hbq⟩
-  by_cases hazero : a = 0
-  · have hbzero : b = 0 := by
-      calc
-        b = q * a := hbq
-        _ = 0 := by rw [hazero, MvPoly.mul_zero]
-    rw [hazero, hbzero, polyNormalize_zero]
-  · rcases hba with ⟨r, har⟩
-    have hqr : q * r = 1 := by
-      have hzero : (q * r - 1) * a = 0 := by
-        rw [har, hbq]
-        grind
-      rcases GcdDomainLaws.no_zero_div (q * r - 1) a hzero with
-        hrest | haz
-      · grind
-      · exact False.elim (hazero haz)
-    have hqunit : polyIsUnit q = true :=
-      (polyIsUnit_iff q).mpr ⟨r, hqr⟩
-    symm
-    calc
-      polyNormalize b = polyNormalize (q * a) :=
-        congrArg polyNormalize hbq
-      _ = polyNormalize q * polyNormalize a := polyNormalize_mul q a
-      _ = 1 * a := by rw [polyNormalize_unit q hqunit, ha]
-      _ = a := MvPoly.one_mul a
 
 theorem gcd_reorder
     {cmp' : Mono n → Mono n → Ordering}
@@ -1011,7 +1010,7 @@ theorem gcd_reorder
     have := reorder_dvd (cmp := cmp) (cmp' := cmp') hback
     simpa [reorder_reorder] using this
   have hcanon : g' = polyNormalize r :=
-    eq_normalize_of_dvd g' r (gcd_normalized _ _) hg'dvd hrdvd
+    eq_polyNormalize_of_dvd g' r (gcd_normalized _ _) hg'dvd hrdvd
   cases hlead : r.leadingTerm with
   | none =>
       refine ⟨1, 1, Lean.Grind.Semiring.mul_one 1, ?_⟩
@@ -1070,10 +1069,10 @@ instance instLawfulGcdOpsMvPoly [IsMonomialOrder cmp]
       exact ⟨q, hq.trans (MvPoly.mul_comm a q)⟩
   · intro hone
     have hcoeff := congrArg (coeff (Mono.zero : Mono n)) hone
-    rw [coeff_one, coeff_zero, Hex.ite_eq_left rfl] at hcoeff
+    rw [coeff_one, coeff_zero, ite_eq_left rfl] at hcoeff
     exact LawfulGcdOps.one_ne_zero hcoeff
   · intro a b hab
-    exact GcdDomainLaws.no_zero_div a b hab
+    exact MvPoly.zero_product LawfulGcdOps.no_zero_div hab
   · intro a b hb
     change quotient (a * b) b = a
     unfold quotient

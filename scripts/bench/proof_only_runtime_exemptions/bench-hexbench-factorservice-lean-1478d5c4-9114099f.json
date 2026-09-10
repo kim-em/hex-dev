@@ -1,0 +1,6 @@
+{
+ "path": "bench/HexBench/FactorService.lean",
+ "baseline_blob": "1478d5c42bf18c3bc50d344d83a40de48465e2ef",
+ "current_blob": "9114099faf18a3ee9118b4a21378e2acbb952518",
+ "reason": "Replaces `Hex.DensePoly.degree?.getD 0` with the new abbreviation `Hex.DensePoly.natDegree`, whose body is exactly that term and which `abbrev` marks `@[reducible, inline]`, and repairs the proofs that rewrote through the `Option`; the compiled code and every measured branch are unchanged."
+}

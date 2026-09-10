@@ -129,7 +129,6 @@ structure BareissState (R : Type u) (n : Nat) where
 
 /-- Compatibility alias for the exact-division primitive now owned by
 `hex-arith`. New code should use `HexArith.Int.exactDiv`. -/
-@[expose]
 abbrev exactDiv (num denom : @& Int) : Int := HexArith.Int.exactDiv num denom
 
 /-- When divisibility is known, `exactDiv` is the GMP-backed exact quotient. -/
@@ -211,8 +210,8 @@ theorem findPivotAux_eq_zero_of_none [Zero R] [DecidableEq R]
             · exact hzero
             · have hzeroNat : ¬ M[start][col.val] = 0 := by
                 simpa using hzero
-              simp only [findPivotAux, hlt, dif_pos] at hfind
-              rw [if_neg (by simpa [getRow, Fin.getElem_fin] using hzero)] at hfind
+              simp only [findPivotAux, hlt, dite_eq_left] at hfind
+              rw [ite_eq_right (by simpa [getRow, Fin.getElem_fin] using hzero)] at hfind
               simp at hfind
           have hiFin : i = (⟨start, hlt⟩ : Fin n) := Fin.ext hi
           rw [hiFin]
@@ -222,14 +221,14 @@ theorem findPivotAux_eq_zero_of_none [Zero R] [DecidableEq R]
             · exact hzero
             · have hzeroNat : ¬ M[start][col.val] = 0 := by
                 simpa using hzero
-              simp only [findPivotAux, hlt, dif_pos] at hfind
-              rw [if_neg (by simpa [getRow, Fin.getElem_fin] using hzero)] at hfind
+              simp only [findPivotAux, hlt, dite_eq_left] at hfind
+              rw [ite_eq_right (by simpa [getRow, Fin.getElem_fin] using hzero)] at hfind
               simp at hfind
           have hnext : findPivotAux M col (start + 1) fuel = none := by
             have hentryNat : M[start][col.val] = 0 := by
               simpa using hentry
-            simp only [findPivotAux, hlt, dif_pos] at hfind
-            rw [if_pos (by simpa [getRow, Fin.getElem_fin] using hentry)] at hfind
+            simp only [findPivotAux, hlt, dite_eq_left] at hfind
+            rw [ite_eq_left (by simpa [getRow, Fin.getElem_fin] using hentry)] at hfind
             exact hfind
           have hstart' : start + 1 ≤ i.val := by omega
           have hfuel' : i.val < start + 1 + fuel := by omega
@@ -265,8 +264,8 @@ theorem findPivotAux_eq_none_of_zero [Zero R] [DecidableEq R]
           hzero ⟨start, hstart⟩ (Nat.le_refl _)
             (show (⟨start, hstart⟩ : Fin n).val < start + (fuel + 1) by
               simp)
-        simp only [findPivotAux, hstart, dif_pos]
-        rw [if_pos (by simpa [getRow, Fin.getElem_fin] using hentry)]
+        simp only [findPivotAux, hstart, dite_eq_left]
+        rw [ite_eq_left (by simpa [getRow, Fin.getElem_fin] using hentry)]
         apply ih
         intro i hle hlt
         exact hzero i (by omega) (by omega)
@@ -304,11 +303,11 @@ theorem findPivotAux_some_ne_zero [Zero R] [DecidableEq R]
   | succ fuel ih =>
       by_cases hlt : start < n
       · by_cases hzero : M[(⟨start, hlt⟩ : Fin n)][col] = 0
-        · simp only [findPivotAux, hlt, dif_pos] at hfind
-          rw [if_pos (by simpa [getRow, Fin.getElem_fin] using hzero)] at hfind
+        · simp only [findPivotAux, hlt, dite_eq_left] at hfind
+          rw [ite_eq_left (by simpa [getRow, Fin.getElem_fin] using hzero)] at hfind
           exact ih (start + 1) hfind
-        · simp only [findPivotAux, hlt, dif_pos] at hfind
-          rw [if_neg (by simpa [getRow, Fin.getElem_fin] using hzero)] at hfind
+        · simp only [findPivotAux, hlt, dite_eq_left] at hfind
+          rw [ite_eq_right (by simpa [getRow, Fin.getElem_fin] using hzero)] at hfind
           simp only [Option.some.injEq] at hfind
           subst hfind
           exact hzero
@@ -401,9 +400,9 @@ private theorem stepImplFold_ne [Zero R] [Sub R] [Mul R] (quot : R → R → R)
     intro A hne
     rw [List.foldl_cons, ih _ (fun t ht => hne t (List.mem_cons_of_mem _ ht))]
     by_cases hx : k < x.val
-    · rw [if_pos hx, Matrix.getElem_modifyEntries,
-        if_neg (fun hv => hne x List.mem_cons_self ((Fin.ext hv).symm))]
-    · rw [if_neg hx]
+    · rw [ite_eq_left hx, Matrix.getElem_modifyEntries,
+        ite_eq_right (fun hv => hne x List.mem_cons_self ((Fin.ext hv).symm))]
+    · rw [ite_eq_right hx]
 
 /-- The `stepMatrixWithImpl` fold updates every member row from its original
 entries. -/
@@ -435,8 +434,8 @@ private theorem stepImplFold_mem [Zero R] [Sub R] [Mul R] (quot : R → R → R)
     · rw [stepImplFold_ne quot k hk pivot prevPivot pivotRow r c xs _
         (fun t ht heq => (List.nodup_cons.mp hnd).1 (heq ▸ ht))]
       by_cases hx : k < r.val
-      · rw [if_pos hx, if_pos hx, Matrix.getElem_modifyEntries, if_pos rfl]
-      · rw [if_neg hx, if_neg hx]
+      · rw [ite_eq_left hx, ite_eq_left hx, Matrix.getElem_modifyEntries, ite_eq_left rfl]
+      · rw [ite_eq_right hx, ite_eq_right hx]
     · have hxr : x ≠ r := fun heq => (List.nodup_cons.mp hnd).1 (heq ▸ hr')
       have hrowr : ∀ cc : Fin n,
           (if k < x.val then
@@ -448,9 +447,9 @@ private theorem stepImplFold_mem [Zero R] [Sub R] [Mul R] (quot : R → R → R)
           else A)[r][cc] = A[r][cc] := by
         intro cc
         by_cases hx : k < x.val
-        · rw [if_pos hx, Matrix.getElem_modifyEntries,
-            if_neg (fun hv => hxr (Fin.ext hv.symm))]
-        · rw [if_neg hx]
+        · rw [ite_eq_left hx, Matrix.getElem_modifyEntries,
+            ite_eq_right (fun hv => hxr (Fin.ext hv.symm))]
+        · rw [ite_eq_right hx]
       rw [ih (List.nodup_cons.mp hnd).2 _ r hr']
       rw [show (if k < x.val then
             A.modifyEntries x.val fun j y =>
@@ -483,7 +482,7 @@ private theorem stepMatrixImpl_eq_ofFn [Zero R] [Sub R] [Mul R]
   rw [Matrix.getElem_ofFn]
   unfold stepMatrixWithImpl
   by_cases hk : k < n
-  · rw [dif_pos hk]
+  · rw [dite_eq_left hk]
     show (Fin.foldl n _ M)[i][j] = _
     rw [Fin.foldl_eq_finRange_foldl,
       stepImplFold_mem quot k hk pivot prevPivot (Matrix.getRow M ⟨k, hk⟩) j
@@ -491,7 +490,7 @@ private theorem stepMatrixImpl_eq_ofFn [Zero R] [Sub R] [Mul R]
     simp only [Matrix.getElem_pair_eq_nested, Matrix.getElem_eq_getRow]
     rw [show (Matrix.getRow M ⟨k, hk⟩)[j] = (Matrix.getRow M ⟨k, hk⟩)[j.val] from rfl]
     grind
-  · rw [dif_neg hk]
+  · rw [dite_eq_right hk]
     have hik : ¬ k < i.val := fun h => hk (Nat.lt_trans h i.isLt)
     simp only [Matrix.getElem_pair_eq_nested]
     grind
@@ -515,15 +514,15 @@ theorem stepMatrixWith_eq_ofFn [Zero R] [Sub R] [Mul R] (quot : R → R → R)
   rw [Matrix.getElem_ofFn]
   unfold stepMatrixWith
   by_cases hk : k < n
-  · rw [dif_pos hk, Matrix.getElem_mapRowsIdx]
+  · rw [dite_eq_left hk, Matrix.getElem_mapRowsIdx]
     by_cases hi : k < i.val
-    · simp only [hi, if_pos, Vector.getElem_finFoldl_modify, Matrix.getElem_pair_eq_nested,
+    · simp only [hi, ite_eq_left, Vector.getElem_finFoldl_modify, Matrix.getElem_pair_eq_nested,
         Matrix.getElem_eq_getRow, Matrix.getRow, Fin.getElem_fin]
       grind
     · simp only [hi, Matrix.getElem_pair_eq_nested, Matrix.getElem_eq_getRow,
         Matrix.getRow, Fin.getElem_fin]
       grind
-  · rw [dif_neg hk]
+  · rw [dite_eq_right hk]
     have hik : ¬ k < i.val := fun h => hk (Nat.lt_trans h i.isLt)
     simp only [Matrix.getElem_pair_eq_nested, Matrix.getElem_eq_getRow, Matrix.getRow,
       Fin.getElem_fin]
@@ -872,7 +871,7 @@ private theorem getEntry_swapRowsArray_matrixToRows [Zero R] (M : Matrix R n n)
       calc
         getEntry (swapRowsArray (matrixToRows M) rowA.val rowB.val) rowB.val j.val =
             getEntry (matrixToRows M) rowA.val j.val := by
-              simp only [swapRowsArray, hsame, if_false, getEntry,
+              simp only [swapRowsArray, hsame, ite_false, getEntry,
                 Array.set!_eq_setIfInBounds]
               exact congrArg (fun row : Array R => row.getD j.val 0)
                 (array_getD_setIfInBounds_same
@@ -891,7 +890,7 @@ private theorem getEntry_swapRowsArray_matrixToRows [Zero R] (M : Matrix R n n)
         calc
           getEntry (swapRowsArray (matrixToRows M) rowA.val rowB.val) rowA.val j.val =
               getEntry (matrixToRows M) rowB.val j.val := by
-                simp only [swapRowsArray, hsame, if_false, getEntry,
+                simp only [swapRowsArray, hsame, ite_false, getEntry,
                   Array.set!_eq_setIfInBounds]
                 exact congrArg (fun row : Array R => row.getD j.val 0)
                   ((array_getD_setIfInBounds_ne
@@ -914,7 +913,7 @@ private theorem getEntry_swapRowsArray_matrixToRows [Zero R] (M : Matrix R n n)
         calc
           getEntry (swapRowsArray (matrixToRows M) rowA.val rowB.val) i.val j.val =
               getEntry (matrixToRows M) i.val j.val := by
-                simp only [swapRowsArray, hsame, if_false, getEntry,
+                simp only [swapRowsArray, hsame, ite_false, getEntry,
                   Array.set!_eq_setIfInBounds]
                 exact congrArg (fun row : Array R => row.getD j.val 0)
                   ((array_getD_setIfInBounds_ne
@@ -978,12 +977,14 @@ def pivotLoopWith (quot : R → R → R) (fuel : Nat)
       else
         state
 
+omit [One R] [Neg R] in
 /-- With zero fuel, the row-pivoted Bareiss loop returns its input state. -/
 @[grind]
 theorem pivotLoopWith_zero_fuel (state : BareissState R n) :
     pivotLoopWith quot 0 state = state := by
   rfl
 
+omit [One R] [Neg R] in
 /-- If the current step is already past the last update step, the row-pivoted
 Bareiss loop returns its input state. -/
 @[grind]
@@ -992,6 +993,7 @@ theorem pivotLoopWith_done (fuel : Nat) (state : BareissState R n)
     pivotLoopWith quot (fuel + 1) state = state := by
   simp [pivotLoopWith, hDone]
 
+omit [One R] [Neg R] in
 /-- If the current row-pivoted Bareiss pivot is already nonzero, one loop
 iteration applies `stepMatrixWith quot`, advances the step, and recurses without
 changing the row-swap counter. -/
@@ -1009,6 +1011,7 @@ theorem pivotLoopWith_of_regular_no_swap (fuel : Nat) (state : BareissState R n)
           singularStep := none } := by
   simp_all [pivotLoopWith, getRow, Fin.getElem_fin]
 
+omit [One R] [Neg R] in
 /-- If the current pivot is zero and pivot search finds no replacement row,
 the row-pivoted Bareiss loop records a singular step. -/
 @[grind]
@@ -1023,6 +1026,7 @@ theorem pivotLoopWith_of_singular_no_pivot (fuel : Nat) (state : BareissState R 
       { state with singularStep := some state.step } := by
   simp_all [pivotLoopWith]
 
+omit [One R] [Neg R] in
 /-- If the current pivot is zero, pivot search finds a replacement row, and
 the swapped pivot is nonzero, one loop iteration swaps rows, applies
 `stepMatrixWith quot`, advances the step, increments the row-swap counter, and recurses. -/
@@ -1132,12 +1136,14 @@ def noPivotLoopWith (quot : R → R → R) (fuel : Nat)
       else
         state
 
+omit [One R] [Neg R] in
 /-- With zero fuel, the no-pivot Bareiss loop returns its input state. -/
 @[grind]
 theorem noPivotLoopWith_zero_fuel (state : BareissState R n) :
     noPivotLoopWith quot 0 state = state := by
   rfl
 
+omit [One R] [Neg R] in
 /-- If the current step is already past the last update step, the no-pivot loop
 returns its input state. -/
 @[grind]
@@ -1146,6 +1152,7 @@ theorem noPivotLoopWith_done (fuel : Nat) (state : BareissState R n)
     noPivotLoopWith quot (fuel + 1) state = state := by
   simp [noPivotLoopWith, hDone]
 
+omit [One R] [Neg R] in
 /-- If the no-pivot loop sees a zero pivot before completion, it records the
 current step as singular. -/
 @[grind]
@@ -1155,6 +1162,7 @@ theorem noPivotLoopWith_of_singular (fuel : Nat) (state : BareissState R n)
     noPivotLoopWith quot (fuel + 1) state = { state with singularStep := some state.step } := by
   simp_all [noPivotLoopWith]
 
+omit [One R] [Neg R] in
 /-- If the current no-pivot Bareiss pivot is nonzero, one loop iteration applies
 `stepMatrixWith quot`, advances the step, and recurses on the remaining fuel. -/
 @[grind]
@@ -1171,6 +1179,7 @@ theorem noPivotLoopWith_of_regular (fuel : Nat) (state : BareissState R n)
           singularStep := none } := by
   simp_all [noPivotLoopWith]
 
+omit [One R] [Neg R] in
 /-- Entries in rows already processed, or in columns strictly before the current
 step, are unchanged by subsequent no-pivot loop iterations. -/
 @[grind]
@@ -1220,6 +1229,7 @@ theorem noPivotLoopWith_matrix_entry_of_row_le_or_col_lt (fuel : Nat)
           · simpa [k] using hp
       · simp [noPivotLoopWith_done (quot := quot) fuel state hDone]
 
+omit [One R] [Neg R] in
 /-- Diagonal entries at or before the current step are unchanged by subsequent
 no-pivot loop iterations. -/
 @[grind =]
@@ -1228,6 +1238,7 @@ theorem noPivotLoopWith_diag_of_le_step (fuel : Nat) (state : BareissState R n)
     (noPivotLoopWith quot fuel state).matrix[i][i] = state.matrix[i][i] :=
   noPivotLoopWith_matrix_entry_of_row_le_or_col_lt (quot := quot) fuel state i i (Or.inl hi)
 
+omit [One R] [Neg R] in
 /-- The no-pivot loop never changes the row-swap counter. -/
 @[grind =]
 theorem noPivotLoopWith_rowSwaps (fuel : Nat) (state : BareissState R n) :
@@ -1254,6 +1265,7 @@ theorem noPivotLoopWith_rowSwaps (fuel : Nat) (state : BareissState R n) :
           · simpa [k] using hp
       · simp [noPivotLoopWith_done (quot := quot) fuel state hDone]
 
+omit [One R] [Neg R] in
 /-- Once a no-pivot Bareiss state is already at the terminal step boundary,
 additional fuel leaves it unchanged. -/
 -- @[grind]-excluded: structural fixed-point lemma overlapping `noPivotLoopWith_done (quot := quot)`;
@@ -1266,6 +1278,7 @@ theorem noPivotLoopWith_id_at_done
   | zero => rfl
   | succ f _ih => exact noPivotLoopWith_done (quot := quot) f state hDone
 
+omit [One R] [Neg R] in
 /-- Once a no-pivot Bareiss state has recorded a zero pivot at the current
 step, additional fuel leaves that singular fixed point unchanged. -/
 -- @[grind]-excluded: structural fixed-point lemma with bespoke singular-state
@@ -1285,6 +1298,7 @@ theorem noPivotLoopWith_id_at_singular_fixedpoint
       simp at hsing ⊢
       exact hsing.symm
 
+omit [One R] [Neg R] in
 /-- Fuel composition for the no-pivot Bareiss loop: running `a + b` units of
 fuel from `state` equals running `b` more units after `a` initial units. -/
 -- @[grind]-excluded: fuel-composition (associativity) lemma; as a rewrite it
@@ -1347,6 +1361,7 @@ theorem noPivotLoopWith_add
         rw [noPivotLoopWith_id_at_done (quot := quot) (a' + 1) state hDone]
         exact (noPivotLoopWith_id_at_done (quot := quot) b state hDone).symm
 
+omit [One R] [Neg R] in
 /-- When a no-pivot Bareiss run records no singular step and has enough room,
 the `step` field advances by exactly the amount of consumed fuel. -/
 -- @[grind]-excluded: step-count accounting lemma with arithmetic-room and
@@ -1381,6 +1396,7 @@ theorem noPivotLoopWith_step_eq_add_of_singularStep_none
         show state.step + 1 + f = state.step + (f + 1)
         omega
 
+omit [One R] [Neg R] in
 /-- When the no-pivot Bareiss loop completes `fuel` iterations without
 recording a singular step, the row-pivoted Bareiss loop produces an
 identical state: every diagonal pivot is nonzero, so the row search and
@@ -1433,6 +1449,7 @@ def noPivotInitialState (M : Matrix R n n) : BareissState R n :=
 def bareissNoPivotDataWith (quot : R → R → R) (M : Matrix R n n) : BareissData R n :=
   finish <| noPivotLoopWith quot n (noPivotInitialState M)
 
+omit [Neg R] in
 /-- Characterisation of the generic no-pivot result by its completed loop
 state. Consumers can use this theorem without unfolding the public wrapper. -/
 theorem bareissNoPivotDataWith_eq_finish (M : Matrix R n n) :
@@ -1454,6 +1471,7 @@ def bareissDataWith (quot : R → R → R) (M : Matrix R n n) : BareissData R n 
     rowSwaps := state.rowSwaps
     singularStep := state.singularStep }
 
+omit [Neg R] in
 /-- The packaged row-pivoted Bareiss data is exactly the structured pivot loop
 state finished into public determinant data. This is the equality consumed by the
 Mathlib determinant proof; array storage is erased by `rowsToMatrix`. -/

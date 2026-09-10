@@ -541,7 +541,7 @@ private theorem centeredLiftPoly_reduceModPow_eq
   rw [Hex.coeff_centeredLiftPoly, Hex.coeff_centeredLiftPoly,
     Hex.ZPoly.coeff_reduceModPow_eq_emod_of_pos _ _ _ _ hpkpos]
   unfold Hex.centeredModNat
-  rw [if_neg hpkne, if_neg hpkne, Int.emod_emod_of_dvd _ (dvd_refl _)]
+  rw [ite_eq_right hpkne, ite_eq_right hpkne, Int.emod_emod_of_dvd _ (dvd_refl _)]
 
 /-- Precision-conditional exact recovery for `liftedRecoveryCandidate` in the
 dilation-coordinate model. -/

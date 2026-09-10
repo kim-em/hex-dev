@@ -107,7 +107,7 @@ private theorem reduceUni_symCanonical (q : Nat) (hq : 0 < q)
     Int.ofNat_le.mpr hbound
   have hlower : -(q : Int) < 2 * x := by
     unfold x Modular.symMod
-    rw [Hex.ite_eq_right (Nat.ne_of_gt hq)]
+    rw [ite_eq_right (Nat.ne_of_gt hq)]
     simp only
     have hrem : 0 ≤ f.coeff k % (q : Int) :=
       Int.emod_nonneg _ (by omega)
@@ -380,7 +380,7 @@ structure UniValid (q : Nat) (images witness : List ZPoly) : Prop where
   /-- There is one witness component per image. -/
   lengths : witness.length = images.length
   /-- Constant images have already been removed as content. -/
-  positiveDegree : ∀ j, j < images.length → 0 < (images.getD j 0).degree?.getD 0
+  positiveDegree : ∀ j, j < images.length → 0 < (images.getD j 0).natDegree
   /-- Every image has unit leading coefficient modulo the prime power. -/
   unitLeading : ∀ j, j < images.length →
     Int.gcd (images.getD j 0).leadingCoeff (q : Int) = 1
@@ -388,14 +388,14 @@ structure UniValid (q : Nat) (images witness : List ZPoly) : Prop where
   identity : UniCongr q (uniCombination witness (complements images)) 1
   /-- Witness components use their degree-bounded representatives. -/
   witnessDegree : ∀ j, j < images.length →
-    (witness.getD j 0).degree?.getD 0 <
-      (images.getD j 0).degree?.getD 0
+    (witness.getD j 0).natDegree <
+      (images.getD j 0).natDegree
 
 /-- `solveUni` reconstructs every right-hand side below the product degree. -/
 theorem solveUni_spec {q : Nat} {images witness : List ZPoly} {c : ZPoly}
     (h : UniValid q images witness)
-    (hc : (reduceUni q c).degree?.getD 0 <
-      (uniProduct images).degree?.getD 0) :
+    (hc : (reduceUni q c).natDegree <
+      (uniProduct images).natDegree) :
     UniCongr q
       (uniCombination (solveUni q images witness c) (complements images)) c := by
   sorry
@@ -403,8 +403,8 @@ theorem solveUni_spec {q : Nat} {images witness : List ZPoly} {c : ZPoly}
 /-- Each component returned by `solveUni` has degree below its image. -/
 theorem solveUni_degree {q : Nat} {images witness : List ZPoly} {c : ZPoly}
     (h : UniValid q images witness) (j : Nat) (hj : j < images.length) :
-    ((solveUni q images witness c).getD j 0).degree?.getD 0 <
-      (images.getD j 0).degree?.getD 0 := by
+    ((solveUni q images witness c).getD j 0).natDegree <
+      (images.getD j 0).natDegree := by
   sorry
 
 /-- `solveUni` chooses the symmetric representative of each residue class. -/
@@ -421,8 +421,8 @@ theorem solveUni_unique {q : Nat} {images witness tau : List ZPoly}
     {c : ZPoly} (h : UniValid q images witness)
     (hlen : tau.length = images.length)
     (hdegree : ∀ j, j < images.length →
-      (tau.getD j 0).degree?.getD 0 <
-        (images.getD j 0).degree?.getD 0)
+      (tau.getD j 0).natDegree <
+        (images.getD j 0).natDegree)
     (hsum : UniCongr q (uniCombination tau (complements images)) c) :
     ∀ j, j < images.length →
       UniCongr q (tau.getD j 0)
@@ -459,8 +459,8 @@ theorem solveUni_eq {q : Nat} {images witness tau : List ZPoly}
     {c : ZPoly} (h : UniValid q images witness)
     (hlen : tau.length = images.length)
     (hdegree : ∀ j, j < images.length →
-      (tau.getD j 0).degree?.getD 0 <
-        (images.getD j 0).degree?.getD 0)
+      (tau.getD j 0).natDegree <
+        (images.getD j 0).natDegree)
     (hsum : UniCongr q (uniCombination tau (complements images)) c)
     (hcanonical : ∀ j, j < images.length →
       UniSymCanonical q (tau.getD j 0)) :

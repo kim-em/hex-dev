@@ -64,6 +64,20 @@ theorem toPolyℂ_normalizePrimitiveSign (p : Hex.ZPoly) :
   · refine ⟨1, by norm_num, ?_⟩
     simp
 
+/-- Evaluation of an integer polynomial commutes with complex conjugation. -/
+theorem eval_conj (p : Hex.ZPoly) (z : ℂ) :
+    (toPolyℂ p).eval (starRingEnd ℂ z) = starRingEnd ℂ ((toPolyℂ p).eval z) := by
+  simp only [toPolyℂ, Polynomial.eval_map]
+  have hcomp : (starRingEnd ℂ).comp (Int.castRingHom ℂ) = Int.castRingHom ℂ :=
+    RingHom.ext_int _ _
+  rw [← hcomp, ← Polynomial.hom_eval₂, hcomp]
+
+/-- Complex roots of an integer polynomial occur in conjugate pairs. -/
+theorem isRoot_conj {p : Hex.ZPoly} {z : ℂ} (hz : (toPolyℂ p).IsRoot z) :
+    (toPolyℂ p).IsRoot (starRingEnd ℂ z) := by
+  change (toPolyℂ p).eval (starRingEnd ℂ z) = 0
+  rw [eval_conj, hz, map_zero]
+
 end ZPoly
 
 namespace DyadicSquare
@@ -113,6 +127,48 @@ namespace DyadicSquare
   change dist (-z) (center s.neg) ≤ radius s.neg ↔
     dist z (center s) ≤ radius s
   rw [center_neg, radius_neg, dist_neg_neg]
+
+@[simp] theorem center_conj (s : Hex.DyadicSquare) :
+    center s.conj = starRingEnd ℂ (center s) := by
+  apply Complex.ext <;>
+    simp [Hex.DyadicSquare.conj, center, Hex.DyadicSquare.center,
+      GaussDyadic.toComplex]
+
+@[simp] theorem radius_conj (s : Hex.DyadicSquare) :
+    radius s.conj = radius s := by
+  simp [radius_eq, Hex.DyadicSquare.conj]
+
+@[simp] theorem openSquare_conj {s : Hex.DyadicSquare} {z : ℂ} :
+    starRingEnd ℂ z ∈ openSquare s.conj ↔ z ∈ openSquare s := by
+  change supDist (starRingEnd ℂ z) (center s.conj) < halfWidth s.conj ↔
+    supDist z (center s) < halfWidth s
+  rw [center_conj]
+  have hw : halfWidth s.conj = halfWidth s := by
+    simp [halfWidth_eq, Hex.DyadicSquare.conj]
+  rw [hw]
+  simp [supDist, supNorm, ← map_sub, abs_sub_comm]
+
+@[simp] theorem closedSquare_conj {s : Hex.DyadicSquare} {z : ℂ} :
+    starRingEnd ℂ z ∈ closedSquare s.conj ↔ z ∈ closedSquare s := by
+  change supDist (starRingEnd ℂ z) (center s.conj) ≤ halfWidth s.conj ↔
+    supDist z (center s) ≤ halfWidth s
+  rw [center_conj]
+  have hw : halfWidth s.conj = halfWidth s := by
+    simp [halfWidth_eq, Hex.DyadicSquare.conj]
+  rw [hw]
+  simp [supDist, supNorm, ← map_sub, abs_sub_comm]
+
+@[simp] theorem disc_conj {s : Hex.DyadicSquare} {z : ℂ} :
+    starRingEnd ℂ z ∈ disc s.conj ↔ z ∈ disc s := by
+  change dist (starRingEnd ℂ z) (center s.conj) < radius s.conj ↔
+    dist z (center s) < radius s
+  rw [center_conj, radius_conj, Complex.dist_conj_conj]
+
+@[simp] theorem closedDisc_conj {s : Hex.DyadicSquare} {z : ℂ} :
+    starRingEnd ℂ z ∈ closedDisc s.conj ↔ z ∈ closedDisc s := by
+  change dist (starRingEnd ℂ z) (center s.conj) ≤ radius s.conj ↔
+    dist z (center s) ≤ radius s
+  rw [center_conj, radius_conj, Complex.dist_conj_conj]
 
 end DyadicSquare
 
@@ -167,7 +223,7 @@ theorem sound {p : Hex.ZPoly} (iso : Hex.DyadicRootIsolation p) :
       · simp only [openRegion, Hex.AtomCertificate.isNK]
         rw [openRegion] at hzopen
         by_cases hkind : certificate.isNK = true
-        · simp only [hkind, if_true] at hzopen ⊢
+        · simp only [hkind, ite_true] at hzopen ⊢
           exact DyadicSquare.openSquare_neg.mpr hzopen
         · simp only [hkind] at hzopen ⊢
           exact DyadicSquare.disc_neg.mpr hzopen
@@ -181,7 +237,7 @@ theorem sound {p : Hex.ZPoly} (iso : Hex.DyadicRootIsolation p) :
             DyadicRootIsolation.region ⟨s, certificate⟩ := by
           simp only [region, Hex.AtomCertificate.isNK] at hwregion ⊢
           by_cases hkind : certificate.isNK = true
-          · simp only [hkind, if_true] at hwregion ⊢
+          · simp only [hkind, ite_true] at hwregion ⊢
             have hiff := DyadicSquare.closedSquare_neg (s := s) (z := -w)
             simp only [neg_neg] at hiff
             exact hiff.mp hwregion
@@ -219,6 +275,40 @@ theorem sound {p : Hex.ZPoly} (iso : Hex.DyadicRootIsolation p) :
         ext q
         by_cases hkind : certificate.isNK = true <;>
           simp [region, Hex.AtomCertificate.isNK, hkind]
+  | @conj p s certificate ih =>
+      obtain ⟨z, hzroot, hzopen, hzderiv, hzunique⟩ := ih
+      have hderiv (w : ℂ) :
+          (toPolyℂ p).derivative.eval (starRingEnd ℂ w) =
+            starRingEnd ℂ ((toPolyℂ p).derivative.eval w) := by
+        have h := ZPoly.eval_conj p.derivative w
+        simpa [toPolyℂ, HexPolyZMathlib.toPolynomial, HexPolyMathlib.toPolynomial_derivative,
+          Polynomial.derivative_map] using h
+      refine ⟨starRingEnd ℂ z, ?_, ?_, ?_, ?_⟩
+      · rw [ZPoly.eval_conj, hzroot, map_zero]
+      · simp only [openRegion, Hex.AtomCertificate.isNK] at hzopen ⊢
+        by_cases hk : certificate.isNK = true
+        · simp only [hk, ite_true] at hzopen ⊢
+          exact DyadicSquare.openSquare_conj.mpr hzopen
+        · simp only [hk] at hzopen ⊢
+          exact DyadicSquare.disc_conj.mpr hzopen
+      · rw [hderiv]
+        exact (map_ne_zero (starRingEnd ℂ)).mpr hzderiv
+      · intro w hwroot hwregion
+        have hr : (toPolyℂ p).eval (starRingEnd ℂ w) = 0 := by
+          rw [ZPoly.eval_conj, hwroot, map_zero]
+        have hm : starRingEnd ℂ w ∈ region ⟨s, certificate⟩ := by
+          simp only [region, Hex.AtomCertificate.isNK] at hwregion ⊢
+          by_cases hk : certificate.isNK = true
+          · simp only [hk, ite_true] at hwregion ⊢
+            have h := DyadicSquare.closedSquare_conj (s := s)
+              (z := starRingEnd ℂ w)
+            simpa using h.mp (by simpa using hwregion)
+          · simp only [hk] at hwregion ⊢
+            have h := DyadicSquare.closedDisc_conj (s := s)
+              (z := starRingEnd ℂ w)
+            simpa using h.mp (by simpa using hwregion)
+        have heq := congrArg (starRingEnd ℂ) (hzunique _ hr hm)
+        simpa using heq
 
 end DyadicRootIsolation
 
@@ -481,11 +571,11 @@ theorem certifyPelletAtShift_preserves {p : Hex.ZPoly} {c : Hex.Component}
           · have hr : r = .atom (cl'.atomize hk1) :=
               (Option.some.inj hcert).symm
             subst r
-            simpa only [dif_pos hk1] using
+            simpa only [dite_eq_left hk1] using
               candidatePellet_mem hk hw₀ hins hw₀' hzroot hzbase
           · have hr : r = .cluster cl' := (Option.some.inj hcert).symm
             subst r
-            simpa only [dif_neg hk1] using
+            simpa only [dite_eq_right hk1] using
               candidatePellet_mem hk hw₀ hins hw₀' hzroot hzbase
         · have hr : r = base := (Option.some.inj hcert).symm
           subst r
@@ -529,11 +619,11 @@ theorem certifyPelletExactAt_preserves {p : Hex.ZPoly} {c : Hex.Component}
           · have hr : r = .atom (cl'.atomize hk1) :=
               (Option.some.inj hcert).symm
             subst r
-            simpa only [dif_pos hk1] using
+            simpa only [dite_eq_left hk1] using
               candidatePellet_mem hk hw₀ hins hw₀' hzroot hzbase
           · have hr : r = .cluster cl' := (Option.some.inj hcert).symm
             subst r
-            simpa only [dif_neg hk1] using
+            simpa only [dite_eq_right hk1] using
               candidatePellet_mem hk hw₀ hins hw₀' hzroot hzbase
         · have hr : r = base := (Option.some.inj hcert).symm
           subst r
@@ -577,15 +667,15 @@ theorem certifyPelletSoft_preserves {p : Hex.ZPoly} {c : Hex.Component}
           simp [Hex.TaylorShift.combinedWitnessCheck, hprec, hsCached]
       let cl : Hex.DyadicRootCluster p := ⟨c.squares, k, hs.1, hw⟩
       by_cases hk1 : k = 1
-      · rw [dif_pos hk1] at hcert
+      · rw [dite_eq_left hk1] at hcert
         have hr : r = .atom (cl.atomize hk1) := (Option.some.inj hcert).symm
         subst r
-        simpa only [dif_pos hk1] using
+        simpa only [dite_eq_left hk1] using
           basePellet_mem hs.1 hw hzsquare
-      · rw [dif_neg hk1] at hcert
+      · rw [dite_eq_right hk1] at hcert
         have hr : r = .cluster cl := (Option.some.inj hcert).symm
         subst r
-        simpa only [dif_neg hk1] using
+        simpa only [dite_eq_right hk1] using
           basePellet_mem hs.1 hw hzsquare
   · simp at hcert
 

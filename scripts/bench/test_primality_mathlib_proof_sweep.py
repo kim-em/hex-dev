@@ -39,7 +39,6 @@ class PrimalityMathlibProofSweepTests(unittest.TestCase):
 
     def test_release_protocol_and_lake_wiring(self) -> None:
         self.assertEqual(proof.SPEC.required_samples, 6)
-        self.assertEqual(proof.SPEC.max_pair_retries, 32)
         self.assertTrue(proof.SPEC.absolute_only)
         fresh_module_sweep.validate_spec(proof.SPEC)
         lakefile = (proof.ROOT / "lakefile.lean").read_text(encoding="utf-8")

@@ -1,0 +1,19 @@
+{
+  "cpu": 1,
+  "load": [
+    2.74560546875,
+    6.66845703125,
+    5.3818359375
+  ],
+  "hostname": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "base": "e557b443ae0cda051b0e503e62881317f074ec66",
+  "toolchain": "leanprover/lean4:v4.34.0-rc2",
+  "schedule": "8 adjacent blocks per degree, alternating search/tag and tag/search; preconstructed identical inputs; all samples retained; search 2 iterations, tag 100000 iterations",
+  "sources": {
+    "bench/HexNumberField/Bench.lean": "41730e5104f6352083f566edfd1bc262e31db77ccf1915dbcda7c33f6c6985c6",
+    "HexNumberField/Basic.lean": "e0c3a8adf752723d321fcbbe94c45161808cbdc30c245b188860acb159a3cbc3",
+    "HexNumberField/IntegerRoots.lean": "2eac62676bd9be1076efb0fd2497c3f322b7e49352209cdb9b88d39c4a11efd2",
+    "HexNumberField/Nearest.lean": "ec674fac406c5bbbb195e238a41d063098e0e6bbda70534ff322e014d364ea31"
+  }
+}

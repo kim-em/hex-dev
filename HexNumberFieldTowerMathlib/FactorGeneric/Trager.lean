@@ -89,9 +89,9 @@ theorem ofData_lower_eq_lowerHom (level : Level) (lower : List Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     Norm.coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     Norm.coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
   rw [Norm.lowerHom_apply]
   apply hinjectiveTop
@@ -127,9 +127,9 @@ theorem rawPoly_embedLower_polyCoords (level : Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     Norm.coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     Norm.coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
   rw [rawPoly_embedLower]
   apply (HexPolyMathlib.equiv
@@ -203,9 +203,9 @@ theorem toPolynomial_shiftTop (level : Level) (lower : List Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     Norm.coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     Norm.coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
   let delta := Arithmetic.Coeff.ofData (level :: lower) #[(c : Rat)] *
     Factor.topGenerator level lower
@@ -248,9 +248,9 @@ theorem shiftDelta_neg (level : Level) (lower : List Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     Norm.coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     Norm.coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
   dsimp only
   apply hinjectiveTop
@@ -291,9 +291,9 @@ theorem irreducible_shiftTop_iff (level : Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     Norm.coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     Norm.coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
   let delta := Arithmetic.Coeff.ofData (level :: lower) #[(c : Rat)] *
     Factor.topGenerator level lower
@@ -341,9 +341,9 @@ theorem rawPoly_shiftTop_zero (level : Level) (lower : List Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     Norm.coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     Norm.coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
   apply (HexPolyMathlib.equiv
     (R := Arithmetic.Coeff (level :: lower))).injective
@@ -355,7 +355,7 @@ theorem rawPoly_shiftTop_zero (level : Level) (lower : List Level)
     rawPoly_polyCoords]
   have hzero : Arithmetic.Coeff.ofData (level :: lower) #[(0 : Rat)] = 0 :=
     ofData_zero_eq_zero (level :: lower) hvalid hinjectiveTop
-  simp [hzero, Polynomial.taylor_zero]
+  simp [hzero]
 
 /-- The zero shift leaves the represented polynomial unchanged. -/
 theorem toPolynomial_shiftTop_zero (level : Level) (lower : List Level)
@@ -380,9 +380,9 @@ theorem toPolynomial_shiftTop_zero (level : Level) (lower : List Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     Norm.coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     Norm.coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
   dsimp only
   rw [toPolynomial_shiftTop level lower hvalid hinjectiveTop]
@@ -390,7 +390,7 @@ theorem toPolynomial_shiftTop_zero (level : Level) (lower : List Level)
       #[((0 : Int) : Rat)] = 0 := by
     simpa using ofData_zero_eq_zero (level :: lower) hvalid hinjectiveTop
   rw [hzero]
-  simp [Polynomial.taylor_zero]
+  simp
 
 /-- The lower-field polynomial produced by one unshifted Trager elimination. -/
 def tragerNorm (level : Level) (lower : List Level)
@@ -424,9 +424,9 @@ theorem tragerNorm_shiftTop (level : Level) (lower : List Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     Norm.coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     Norm.coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
   rw [tragerNorm, polyCoords_rawPoly_shiftTop]
   exact Norm.oneLevel_shift_zero level lower hvalid hinjectiveTop f c
@@ -452,9 +452,9 @@ theorem tragerNorm_mul (level : Level) (lower : List Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     Norm.coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     Norm.coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
   exact Norm.oneLevel_mul level lower hvalid hinjectiveTop a b 0
 
@@ -504,9 +504,9 @@ theorem tragerNorm_dvd (level : Level) (lower : List Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     Norm.coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     Norm.coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
   change (HexPolyMathlib.toPolynomial a ∣
       HexPolyMathlib.toPolynomial b) → _
@@ -530,7 +530,7 @@ theorem tragerNorm_not_isUnit (level : Level) (lower : List Level)
     (hvalid : LevelsValid (level :: lower))
     (hinjectiveTop : LevelSemantics.DenoteInjective (level :: lower))
     (f : DensePoly (Arithmetic.Coeff (level :: lower)))
-    (hdegree : 0 < f.degree?.getD 0) :
+    (hdegree : 0 < f.natDegree) :
     let hinjectiveLower := hinjectiveTop.tail level lower hvalid.1.1
     let hinvLower := LevelSemantics.coeffDenote_inv lower hvalid.2.2
       hinjectiveLower
@@ -547,9 +547,9 @@ theorem tragerNorm_not_isUnit (level : Level) (lower : List Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     Norm.coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     Norm.coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
   change ¬ IsUnit (HexPolyMathlib.toPolynomial
     (tragerNorm level lower f))
@@ -582,19 +582,41 @@ theorem toPolynomial_monic_associated (levels : List Level)
       Norm.coeffFieldPoly levels hvalid hinjective hinv
     Associated (HexPolyMathlib.toPolynomial (Norm.monic f))
       (HexPolyMathlib.toPolynomial f) := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   have hzero : f.isZero = false := by
     rw [DensePoly.isZero_eq_false_iff]
     exact Nat.pos_of_ne_zero fun hsize =>
       hf ((DensePoly.size_eq_zero_iff f).mp hsize)
   rw [Norm.monic, hzero]
-  simp only [Bool.false_eq_true, if_false]
+  simp only [Bool.false_eq_true, ite_false]
   rw [HexPolyMathlib.toPolynomial_scale]
   exact associated_unit_mul_left _ _
     (Polynomial.isUnit_C.mpr
       (inv_ne_zero (DensePoly.leadingCoeff_ne_zero_of_pos_size f
         ((DensePoly.isZero_eq_false_iff f).mp hzero))).isUnit)
+
+/-- Monic normalisation preserves the degree, including at zero. -/
+theorem natDegree_monic (levels : List Level)
+    (hvalid : LevelsValid levels)
+    (hinjective : LevelSemantics.DenoteInjective levels)
+    (hinv : ∀ a : Arithmetic.Coeff levels,
+      LevelSemantics.coeffDenote levels a⁻¹ =
+        (LevelSemantics.coeffDenote levels a)⁻¹)
+    (f : DensePoly (Arithmetic.Coeff levels)) :
+    letI : Field (Arithmetic.Coeff levels) :=
+      Norm.coeffFieldPoly levels hvalid hinjective hinv
+    (Norm.monic f).natDegree = f.natDegree := by
+  let : Field (Arithmetic.Coeff levels) :=
+    Norm.coeffFieldPoly levels hvalid hinjective hinv
+  by_cases hf : f = 0
+  · subst f
+    simp [Norm.monic]
+  · rw [← HexPolyMathlib.natDegree_toPolynomial,
+      ← HexPolyMathlib.natDegree_toPolynomial f]
+    exact Polynomial.natDegree_eq_of_degree_eq
+      (Polynomial.degree_eq_degree_of_associated
+        (toPolynomial_monic_associated levels hvalid hinjective hinv f hf))
 
 /-- The monic normalisation of a nonzero executable polynomial interprets to
 a monic polynomial. -/
@@ -608,7 +630,7 @@ theorem toPolynomial_monic_monic (levels : List Level)
     letI : Field (Arithmetic.Coeff levels) :=
       Norm.coeffFieldPoly levels hvalid hinjective hinv
     (HexPolyMathlib.toPolynomial (Norm.monic f)).Monic := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   have hzero : f.isZero = false := by
     rw [DensePoly.isZero_eq_false_iff]
@@ -621,7 +643,7 @@ theorem toPolynomial_monic_monic (levels : List Level)
       (R := Arithmetic.Coeff levels)).injective
     simpa using h
   rw [Norm.monic, hzero]
-  simp only [Bool.false_eq_true, if_false]
+  simp only [Bool.false_eq_true, ite_false]
   rw [HexPolyMathlib.toPolynomial_scale, mul_comm]
   simpa only [HexPolyMathlib.leadingCoeff_toPolynomial] using
     Polynomial.monic_mul_leadingCoeff_inv hpolyNe
@@ -638,16 +660,16 @@ theorem monic_eq_self (levels : List Level)
     letI : Field (Arithmetic.Coeff levels) :=
       Norm.coeffFieldPoly levels hvalid hinjective hinv
     (HexPolyMathlib.toPolynomial f).Monic → Norm.monic f = f := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   intro hf
   apply (HexPolyMathlib.equiv
     (R := Arithmetic.Coeff levels)).injective
   exact Polynomial.eq_of_monic_of_associated
     (toPolynomial_monic_monic levels hvalid hinjective hinv f
-      (fun hzero => by simpa [hzero] using hf))
+      (fun hzero => by simp [hzero] at hf))
     hf (toPolynomial_monic_associated levels hvalid hinjective hinv f
-      (fun hzero => by simpa [hzero] using hf))
+      (fun hzero => by simp [hzero] at hf))
 
 /-- Core counting argument for gcd recovery: a product of two nonunits cannot
 simultaneously divide a squarefree polynomial and a power of one irreducible,
@@ -698,16 +720,16 @@ theorem recoveredCommon_irreducible (level : Level)
     let common := Norm.monic (DensePoly.gcd P lifted)
     Squarefree (HexPolyMathlib.toPolynomial (tragerNorm level lower P)) →
       Irreducible (HexPolyMathlib.toPolynomial q) →
-      0 < common.degree?.getD 0 →
+      0 < common.natDegree →
       Irreducible (HexPolyMathlib.toPolynomial common) := by
   let hinjectiveLower := hinjectiveTop.tail level lower hvalid.1.1
   let hinvLower := LevelSemantics.coeffDenote_inv lower hvalid.2.2
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     Norm.coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     Norm.coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
   let lifted := Factor.rawPoly (level :: lower)
     (Factor.embedLower level lower (Factor.polyCoords q))
@@ -716,13 +738,13 @@ theorem recoveredCommon_irreducible (level : Level)
   change Squarefree
       (HexPolyMathlib.toPolynomial (tragerNorm level lower P)) →
     Irreducible (HexPolyMathlib.toPolynomial q) →
-    0 < common.degree?.getD 0 →
+    0 < common.natDegree →
     Irreducible (HexPolyMathlib.toPolynomial common)
   intro hsquarefree hq hdegree
   have hcommonNe : common ≠ 0 := by
     intro hzero
     rw [hzero] at hdegree
-    simpa using hdegree
+    simp at hdegree
   have hgNe : g ≠ 0 := by
     intro hzero
     apply hcommonNe
@@ -788,14 +810,12 @@ theorem recoveredCommon_irreducible (level : Level)
     apply Polynomial.isUnit_iff_degree_eq_zero.mpr
     rw [Polynomial.degree_eq_natDegree hbNe, hzero]
     rfl
-  have hadDegree : 0 < ad.degree?.getD 0 := by
+  have hadDegree : 0 < ad.natDegree := by
     rw [← HexPolyMathlib.natDegree_toPolynomial]
-    change 0 < (HexPolyMathlib.toPolynomial ad).natDegree
     rw [show HexPolyMathlib.toPolynomial ad = a by simp [ad]]
     exact Nat.pos_of_ne_zero haNatDegree
-  have hbdDegree : 0 < bd.degree?.getD 0 := by
+  have hbdDegree : 0 < bd.natDegree := by
     rw [← HexPolyMathlib.natDegree_toPolynomial]
-    change 0 < (HexPolyMathlib.toPolynomial bd).natDegree
     rw [show HexPolyMathlib.toPolynomial bd = b by simp [bd]]
     exact Nat.pos_of_ne_zero hbNatDegree
   have hnormAUnit : ¬ IsUnit (HexPolyMathlib.toPolynomial
@@ -857,7 +877,7 @@ theorem recoveredFactor_irreducible (level : Level)
       (tragerNorm level lower shifted)) →
       Irreducible (HexPolyMathlib.toPolynomial q) →
       Factor.polyCoords q = lowerFactor →
-      0 < common.degree?.getD 0 →
+      0 < common.natDegree →
       Irreducible (HexPolyMathlib.toPolynomial
         (Factor.rawPoly (level :: lower) (Factor.polyCoords result))) := by
   let hinjectiveLower := hinjectiveTop.tail level lower hvalid.1.1
@@ -865,9 +885,9 @@ theorem recoveredFactor_irreducible (level : Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     Norm.coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     Norm.coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
   let shifted := Factor.rawPoly (level :: lower)
     (Factor.shiftTop level lower component shift)
@@ -882,14 +902,14 @@ theorem recoveredFactor_irreducible (level : Level)
       (tragerNorm level lower shifted)) →
     Irreducible (HexPolyMathlib.toPolynomial q) →
     Factor.polyCoords q = lowerFactor →
-    0 < common.degree?.getD 0 →
+    0 < common.natDegree →
     Irreducible (HexPolyMathlib.toPolynomial
       (Factor.rawPoly (level :: lower) (Factor.polyCoords result)))
   intro hsquarefree hq hlowerCoords hdegree
   have hcommon : Irreducible (HexPolyMathlib.toPolynomial common) := by
     have hdegree' : 0 < (Norm.monic (DensePoly.gcd shifted
         (Factor.rawPoly (level :: lower)
-          (Factor.embedLower level lower (Factor.polyCoords q))))).degree?.getD 0 := by
+          (Factor.embedLower level lower (Factor.polyCoords q))))).natDegree := by
       simpa [common, lifted, hlowerCoords] using hdegree
     have h := recoveredCommon_irreducible level lower hvalid
       hinjectiveTop shifted q
@@ -970,20 +990,14 @@ theorem findSquarefreeShift_norm (level : Level)
 least two entries. -/
 theorem array_degree_pos_of_raw_degree_pos (levels : List Level)
     (f : Array (Array Rat))
-    (hdegree : 0 < (Factor.rawPoly levels f).degree?.getD 0) :
+    (hdegree : 0 < (Factor.rawPoly levels f).natDegree) :
     0 < f.size - 1 := by
   let p := Factor.rawPoly levels f
-  change 0 < p.degree?.getD 0 at hdegree
-  have hpSize : p.size ≠ 0 := by
-    intro hzero
-    have hpDegree : p.degree?.getD 0 = 0 := by
-      rw [(DensePoly.degree?_eq_none_iff p).2 hzero, Option.getD_none]
-    omega
-  have hpDegree : p.degree?.getD 0 = p.size - 1 := by
-    rw [DensePoly.degree?_eq_some_of_pos_size p (Nat.pos_of_ne_zero hpSize),
-      Option.getD_some]
+  change 0 < p.natDegree at hdegree
+  have hpDegree : p.natDegree = p.size - 1 :=
+    DensePoly.natDegree_eq_size_sub_one p
   have hpSizeLe : p.size ≤ f.size := by
-    exact (DensePoly.size_ofCoeffs_le _).trans (by simp [p, Factor.rawPoly])
+    exact (DensePoly.size_ofCoeffs_le _).trans (by simp)
   rw [hpDegree] at hdegree
   omega
 
@@ -994,7 +1008,7 @@ theorem oneLevel_degree_pos (level : Level) (lower : List Level)
     (hvalid : LevelsValid (level :: lower))
     (hinjectiveTop : LevelSemantics.DenoteInjective (level :: lower))
     (f : Array (Array Rat)) (shift : Int)
-    (hdegree : 0 < (Factor.rawPoly (level :: lower) f).degree?.getD 0) :
+    (hdegree : 0 < (Factor.rawPoly (level :: lower) f).natDegree) :
     let hinjectiveLower := hinjectiveTop.tail level lower hvalid.1.1
     let hinvLower := LevelSemantics.coeffDenote_inv lower hvalid.2.2
       hinjectiveLower
@@ -1007,29 +1021,29 @@ theorem oneLevel_degree_pos (level : Level) (lower : List Level)
     Squarefree (HexPolyMathlib.toPolynomial
       (Factor.rawPoly lower (Norm.oneLevel level lower f shift))) →
     0 < (Factor.rawPoly lower
-      (Norm.oneLevel level lower f shift)).degree?.getD 0 := by
+      (Norm.oneLevel level lower f shift)).natDegree := by
   let hinjectiveLower := hinjectiveTop.tail level lower hvalid.1.1
   let hinvLower := LevelSemantics.coeffDenote_inv lower hvalid.2.2
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     Norm.coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     Norm.coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
   dsimp only
   intro hsquarefree
   let shifted := Factor.rawPoly (level :: lower)
     (Factor.shiftTop level lower f shift)
   let norm := Factor.rawPoly lower (Norm.oneLevel level lower f shift)
-  have hshiftedDegree : 0 < shifted.degree?.getD 0 := by
+  have hshiftedDegree : 0 < shifted.natDegree := by
     have hnatDegree := congrArg Polynomial.natDegree
       (toPolynomial_shiftTop level lower hvalid hinjectiveTop f shift)
     rw [Polynomial.natDegree_taylor,
       HexPolyMathlib.natDegree_toPolynomial,
       HexPolyMathlib.natDegree_toPolynomial] at hnatDegree
     change 0 < (Factor.rawPoly (level :: lower)
-      (Factor.shiftTop level lower f shift)).degree?.getD 0
+      (Factor.shiftTop level lower f shift)).natDegree
     rw [hnatDegree]
     exact hdegree
   have hnotUnit : ¬ IsUnit (HexPolyMathlib.toPolynomial norm) := by
@@ -1062,11 +1076,11 @@ theorem squarefree_toPolynomial_of_check (levels : List Level)
       Norm.coeffFieldPoly levels hvalid hinjective hinv
     Squarefree (HexPolyMathlib.toPolynomial
       (Factor.rawPoly levels f)) := by
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   let P := HexPolyMathlib.toPolynomial (Factor.rawPoly levels f)
   let φ := LevelSemantics.coeffHom levels hvalid hinjective hinv
-  letI : CharZero (Arithmetic.Coeff levels) :=
+  let : CharZero (Arithmetic.Coeff levels) :=
     { cast_injective := by
         intro m n hmn
         apply CharZero.cast_injective (R := ℂ)
@@ -1101,11 +1115,11 @@ theorem mem_foldl_push_if {α β : Type*}
       simp only [List.foldl_cons] at hx
       rcases ih _ x hx with hxinit | ⟨source, hsource, hpass, rfl⟩
       · by_cases hitem : p item
-        · rw [if_pos hitem] at hxinit
+        · rw [ite_eq_left hitem] at hxinit
           rcases Array.mem_push.mp hxinit with hxold | rfl
           · exact Or.inl hxold
           · exact Or.inr ⟨item, by simp, hitem, rfl⟩
-        · rw [if_neg hitem] at hxinit
+        · rw [ite_eq_right hitem] at hxinit
           exact Or.inl hxinit
       · exact Or.inr ⟨source, List.mem_cons_of_mem item hsource,
           hpass, rfl⟩
@@ -1127,9 +1141,9 @@ theorem foldl_push_if_toList {α β : Type*}
       intro init
       simp only [List.foldl_cons]
       by_cases hitem : p item
-      · rw [if_pos hitem, ih]
+      · rw [ite_eq_left hitem, ih]
         simp [hitem]
-      · rw [if_neg hitem, ih]
+      · rw [ite_eq_right hitem, ih]
         simp [hitem]
 
 /-- Dropping unit contributions preserves the product up to a unit: if
@@ -1174,10 +1188,31 @@ theorem polynomial_squarefree_map {K L : Type*}
   PerfectField.separable_iff_squarefree.mp
     ((PerfectField.separable_iff_squarefree.mpr hp).map (f := f))
 
+/-- Monic recovery division preserves the exact unnormalised gcd. -/
+theorem recoveryGcd_eq (levels : List Level) (hvalid : LevelsValid levels)
+    (hinjective : LevelSemantics.DenoteInjective levels)
+    (p q : DensePoly (Arithmetic.Coeff levels)) :
+    Factor.recoveryGcd p q = DensePoly.gcd p q := by
+  let hinv := LevelSemantics.coeffDenote_inv levels hvalid hinjective
+  let : Field (Arithmetic.Coeff levels) :=
+    Norm.coeffFieldPoly levels hvalid hinjective hinv
+  unfold Factor.recoveryGcd
+  split
+  · rename_i h
+    rw [DensePoly.gcd_eq_aux_mod p q h.1 h.2.1]
+    congr 1
+    rw [DensePoly.modArray_eq_divModArray_snd]
+    have hmonic : DensePoly.Monic p := h.2.2
+    change (DensePoly.divModMonic q p hmonic).2 = (DensePoly.divMod q p).2
+    exact congrArg Prod.snd (DensePoly.divModMonic_eq_divMod_of_monic q p hmonic)
+  · rfl
+
 /-- Membership inversion for `Factor.recover`: every recovered factor arises
 from some lower factor whose lifted gcd with the shifted component is
 nonconstant, by un-shifting and renormalising that gcd. -/
 theorem recover_mem (level : Level) (lower : List Level)
+    (hvalid : LevelsValid (level :: lower))
+    (hinjective : LevelSemantics.DenoteInjective (level :: lower))
     (shift : Int) (component : Array (Array Rat))
     (lowerFactors : Array (Array (Array Rat)))
     {factor : Array (Array Rat)}
@@ -1189,7 +1224,7 @@ theorem recover_mem (level : Level) (lower : List Level)
       let lifted := Factor.rawPoly (level :: lower)
         (Factor.embedLower level lower lowerFactor)
       let common := Norm.monic (DensePoly.gcd shifted lifted)
-      0 < common.degree?.getD 0 ∧
+      0 < common.natDegree ∧
         Factor.polyCoords
           (Norm.monic (Factor.rawPoly (level :: lower)
             (Factor.shiftTop level lower (Factor.polyCoords common)
@@ -1202,7 +1237,7 @@ theorem recover_mem (level : Level) (lower : List Level)
   let common (lowerFactor : Array (Array Rat)) :=
     Norm.monic (DensePoly.gcd shifted (lifted lowerFactor))
   let pass (lowerFactor : Array (Array Rat)) :=
-    0 < (common lowerFactor).degree?.getD 0
+    0 < (common lowerFactor).natDegree
   let recovered (lowerFactor : Array (Array Rat)) :=
     Factor.polyCoords
       (Norm.monic (Factor.rawPoly (level :: lower)
@@ -1212,7 +1247,7 @@ theorem recover_mem (level : Level) (lower : List Level)
       (fun out lowerFactor =>
         if pass lowerFactor then out.push (recovered lowerFactor) else out) #[] := by
     simpa only [Factor.recover, Array.foldl_toList, shifted, lifted,
-      common, pass, recovered] using hfactor
+      common, pass, recovered, recoveryGcd_eq (level :: lower) hvalid hinjective] using hfactor
   rcases mem_foldl_push_if pass recovered lowerFactors.toList #[] factor hfold with
       hnil | ⟨lowerFactor, hlower, hpass, hrecovered⟩
   · simp at hnil
@@ -1253,16 +1288,16 @@ theorem recover_mem_sound (level : Level) (lower : List Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     Norm.coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     Norm.coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
   let shifted := Factor.rawPoly (level :: lower)
     (Factor.shiftTop level lower component shift)
   dsimp only
   intro hsquarefree hlower factor hfactor
   obtain ⟨lowerFactor, hlowerFactor, hdegree, hrecovered⟩ :=
-    recover_mem level lower shift component lowerFactors hfactor
+    recover_mem level lower hvalid hinjectiveTop shift component lowerFactors hfactor
   have hlowerSound := hlower lowerFactor hlowerFactor
   constructor
   · rw [← hrecovered, rawPoly_polyCoords]
@@ -1291,7 +1326,7 @@ theorem polyCoords_rawPoly_ofRatPoly (f : DensePoly Rat)
     (hf : f ≠ 0) :
     Factor.polyCoords (Factor.rawPoly [] (Factor.ofRatPoly f)) =
       Factor.ofRatPoly f := by
-  letI : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
+  let : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
     LevelSemantics.DenoteInjective.nil
     LevelSemantics.coeffDenote_inv_nil
   let q := Factor.rawPoly [] (Factor.ofRatPoly f)
@@ -1308,7 +1343,7 @@ theorem polyCoords_rawPoly_ofRatPoly (f : DensePoly Rat)
       HexPolyMathlib.toPolynomial (0 : DensePoly Rat)
     rw [← hmap, hzero, HexPolyMathlib.toPolynomial_zero,
       Polynomial.map_zero, HexPolyMathlib.toPolynomial_zero]
-  have hdegree : q.degree?.getD 0 = f.degree?.getD 0 := by
+  have hdegree : q.natDegree = f.natDegree := by
     have hmapDegree := congrArg Polynomial.natDegree hmap
     rw [Polynomial.natDegree_map_eq_of_injective
       (f := LevelSemantics.coeffRatEquiv.toRingHom)
@@ -1319,9 +1354,8 @@ theorem polyCoords_rawPoly_ofRatPoly (f : DensePoly Rat)
       hq ((DensePoly.size_eq_zero_iff q).mp h)
     have hfpos : 0 < f.size := Nat.pos_of_ne_zero fun h =>
       hf ((DensePoly.size_eq_zero_iff f).mp h)
-    rw [DensePoly.degree?_eq_some_of_pos_size q hqpos,
-      DensePoly.degree?_eq_some_of_pos_size f hfpos] at hdegree
-    simp only [Option.getD_some] at hdegree
+    rw [DensePoly.natDegree_eq_size_sub_one,
+      DensePoly.natDegree_eq_size_sub_one] at hdegree
     omega
   change Factor.polyCoords q = Factor.ofRatPoly f
   rw [Factor.polyCoords, Factor.ofRatPoly]
@@ -1548,7 +1582,7 @@ theorem rawRatFactor_irreducible (integer : ZPoly)
       entry.1.toRatPoly
     Irreducible (HexPolyMathlib.toPolynomial
       (Factor.rawPoly [] (Factor.ofRatPoly q))) := by
-  letI : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
+  let : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
     LevelSemantics.DenoteInjective.nil
     LevelSemantics.coeffDenote_inv_nil
   let q := DensePoly.scale entry.1.toRatPoly.leadingCoeff⁻¹
@@ -1581,7 +1615,7 @@ theorem generatedRatFactors_sound (integer : ZPoly)
       Factor.polyCoords (Factor.rawPoly [] factor) = factor ∧
         Irreducible (HexPolyMathlib.toPolynomial
           (Factor.rawPoly [] factor)) := by
-  letI : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
+  let : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
     LevelSemantics.DenoteInjective.nil
     LevelSemantics.coeffDenote_inv_nil
   let rawFactors := (ZPoly.factorize integer).factors.flatMap fun entry =>
@@ -1633,11 +1667,11 @@ theorem factorRat_mem_sound (input : DensePoly Rat)
       Factor.polyCoords (Factor.rawPoly [] factor) = factor ∧
         Irreducible (HexPolyMathlib.toPolynomial
           (Factor.rawPoly [] factor)) := by
-  letI : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
+  let : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
     LevelSemantics.DenoteInjective.nil
     LevelSemantics.coeffDenote_inv_nil
   intro factor hfactor
-  simp only [Factor.factorRat?] at hresult
+  simp only [Factor.factorRat?, ZPoly.ratSquarefree] at hresult
   split at hresult
   · cases hresult
     simp at hfactor
@@ -1672,87 +1706,5 @@ theorem factorRat_mem_sound (input : DensePoly Rat)
           exact hsound (by simpa [p] using hfactor)
         · cases hresult
       · cases hresult
-
-/-- Soundness of the squarefree-component factorizer at every tower height:
-each returned factor is a canonical coordinate array interpreting to an
-irreducible polynomial, by induction through the recursive one-level Trager
-step with the Berlekamp-Zassenhaus base case. -/
-theorem factorSquarefree_mem_sound :
-    ∀ (levels : List Level) (hvalid : LevelsValid levels)
-      (hinjective : LevelSemantics.DenoteInjective levels)
-      (f : Array (Array Rat)) {factors : Array (Array (Array Rat))},
-      Factor.factorSquarefree? levels f = some factors →
-      let hinv := LevelSemantics.coeffDenote_inv levels hvalid hinjective
-      letI : Field (Arithmetic.Coeff levels) :=
-        Norm.coeffFieldPoly levels hvalid hinjective hinv
-      ∀ factor ∈ factors,
-        Factor.polyCoords (Factor.rawPoly levels factor) = factor ∧
-          Irreducible (HexPolyMathlib.toPolynomial
-            (Factor.rawPoly levels factor)) := by
-  intro levels
-  induction levels with
-  | nil =>
-      intro hvalid hinjective f factors hresult
-      let hinv := LevelSemantics.coeffDenote_inv [] hvalid hinjective
-      letI : Field (Arithmetic.Coeff []) :=
-        Norm.coeffFieldPoly [] hvalid hinjective hinv
-      have hvalidEq : hvalid = (trivial : LevelsValid []) :=
-        Subsingleton.elim _ _
-      have hinjectiveEq : hinjective = LevelSemantics.DenoteInjective.nil :=
-        Subsingleton.elim _ _
-      subst hvalid
-      subst hinjective
-      exact factorRat_mem_sound (Factor.toRatPoly f) hresult
-  | cons level lower ih =>
-      intro hvalid hinjectiveTop f factors hresult
-      let hinjectiveLower := hinjectiveTop.tail level lower hvalid.1.1
-      let hinvLower := LevelSemantics.coeffDenote_inv lower hvalid.2.2
-        hinjectiveLower
-      let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
-        hinjectiveTop
-      letI : Field (Arithmetic.Coeff lower) :=
-        Norm.coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-      letI : Field (Arithmetic.Coeff (level :: lower)) :=
-        Norm.coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
-      dsimp only
-      simp only [Factor.factorSquarefree?] at hresult
-      split at hresult
-      · rename_i hinputSquarefree
-        obtain ⟨pair, hfind, hresult⟩ := Option.bind_eq_some_iff.mp hresult
-        rcases pair with ⟨shift, norm⟩
-        obtain ⟨lowerFactors, hlower, hresult⟩ :=
-          Option.bind_eq_some_iff.mp hresult
-        split at hresult
-        · cases hresult
-          intro factor hfactor
-          have hlower' : Factor.factorSquarefree? lower norm =
-              some lowerFactors := by simpa using hlower
-          have hlowerSound : ∀ lowerFactor ∈ lowerFactors,
-              Factor.polyCoords (Factor.rawPoly lower lowerFactor) =
-                  lowerFactor ∧
-                Irreducible (HexPolyMathlib.toPolynomial
-                  (Factor.rawPoly lower lowerFactor)) := by
-            exact ih hvalid.2.2 hinjectiveLower norm hlower'
-          have hnormCheck : Norm.isSquarefree lower norm :=
-            findSquarefreeShift_squarefree level lower f (by simpa using hfind)
-          have hnormSquarefree : Squarefree
-              (HexPolyMathlib.toPolynomial
-                (Factor.rawPoly lower norm)) :=
-            squarefree_toPolynomial_of_check lower hvalid.2.2
-              hinjectiveLower hinvLower norm hnormCheck
-          have hnormEq : norm = Norm.oneLevel level lower f shift :=
-            findSquarefreeShift_norm level lower f (by simpa using hfind)
-          have htragerSquarefree : Squarefree
-              (HexPolyMathlib.toPolynomial
-                (tragerNorm level lower
-                  (Factor.rawPoly (level :: lower)
-                    (Factor.shiftTop level lower f shift)))) := by
-            rw [tragerNorm_shiftTop level lower hvalid hinjectiveTop,
-              ← hnormEq]
-            exact hnormSquarefree
-          exact recover_mem_sound level lower hvalid hinjectiveTop f shift
-            lowerFactors htragerSquarefree hlowerSound factor hfactor
-        · contradiction
-      · contradiction
 
 end Hex.NumberTower

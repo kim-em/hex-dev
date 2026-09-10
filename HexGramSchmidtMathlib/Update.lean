@@ -244,7 +244,7 @@ private theorem leadingGramMatrixInt_rowSwap_inside
       (Matrix.rowSwap b km1 k)[r] = (Matrix.rowSwap b km1 k)[r'] := by
     intros r r' h; exact congrArg (Matrix.rowSwap b km1 k).getRow h
   by_cases hqk : qq = k'
-  · simp only [if_pos hqk]
+  · simp only [ite_eq_left hqk]
     rw [entry_after_outer_swap km1']
     have hqn_k : qn = k := by
       apply Fin.ext
@@ -255,7 +255,7 @@ private theorem leadingGramMatrixInt_rowSwap_inside
       (heq_get_swap qn k hqn_k).trans (rowSwap_row_right_int b km1 k)
     rw [hqn_eq]
     by_cases hpk : pp = k'
-    · simp only [if_pos hpk]
+    · simp only [ite_eq_left hpk]
       have hpn_k : pn = k := by
         apply Fin.ext
         have hv : pp.val = k'.val := congrArg Fin.val hpk
@@ -265,7 +265,7 @@ private theorem leadingGramMatrixInt_rowSwap_inside
         (heq_get_swap pn k hpn_k).trans (rowSwap_row_right_int b km1 k)
       rw [hpn_eq, hM_entry]
     · by_cases hpkm1 : pp = km1'
-      · simp only [if_neg hpk, if_pos hpkm1]
+      · simp only [ite_eq_right hpk, ite_eq_left hpkm1]
         have hpn_km1 : pn = km1 := by
           apply Fin.ext
           have hv : pp.val = km1'.val := congrArg Fin.val hpkm1
@@ -274,7 +274,7 @@ private theorem leadingGramMatrixInt_rowSwap_inside
         have hpn_eq : (Matrix.rowSwap b km1 k)[pn] = b[k] :=
           (heq_get_swap pn km1 hpn_km1).trans (rowSwap_row_left_int b km1 k)
         rw [hpn_eq, hM_entry]
-      · simp only [if_neg hpk, if_neg hpkm1]
+      · simp only [ite_eq_right hpk, ite_eq_right hpkm1]
         have hpn_ne_km1 : pn ≠ km1 := by
           intro h
           apply hpkm1
@@ -293,7 +293,7 @@ private theorem leadingGramMatrixInt_rowSwap_inside
           rowSwap_row_eq_of_ne_int b km1 k pn hpn_ne_km1 hpn_ne_k
         rw [hp_swap, hM_entry]
   · by_cases hqkm1 : qq = km1'
-    · simp only [if_neg hqk, if_pos hqkm1]
+    · simp only [ite_eq_right hqk, ite_eq_left hqkm1]
       rw [entry_after_outer_swap k']
       have hqn_km1 : qn = km1 := by
         apply Fin.ext
@@ -304,7 +304,7 @@ private theorem leadingGramMatrixInt_rowSwap_inside
         (heq_get_swap qn km1 hqn_km1).trans (rowSwap_row_left_int b km1 k)
       rw [hqn_eq]
       by_cases hpk : pp = k'
-      · simp only [if_pos hpk]
+      · simp only [ite_eq_left hpk]
         have hpn_k : pn = k := by
           apply Fin.ext
           have hv : pp.val = k'.val := congrArg Fin.val hpk
@@ -314,7 +314,7 @@ private theorem leadingGramMatrixInt_rowSwap_inside
           (heq_get_swap pn k hpn_k).trans (rowSwap_row_right_int b km1 k)
         rw [hpn_eq, hM_entry]
       · by_cases hpkm1 : pp = km1'
-        · simp only [if_neg hpk, if_pos hpkm1]
+        · simp only [ite_eq_right hpk, ite_eq_left hpkm1]
           have hpn_km1 : pn = km1 := by
             apply Fin.ext
             have hv : pp.val = km1'.val := congrArg Fin.val hpkm1
@@ -323,7 +323,7 @@ private theorem leadingGramMatrixInt_rowSwap_inside
           have hpn_eq : (Matrix.rowSwap b km1 k)[pn] = b[k] :=
             (heq_get_swap pn km1 hpn_km1).trans (rowSwap_row_left_int b km1 k)
           rw [hpn_eq, hM_entry]
-        · simp only [if_neg hpk, if_neg hpkm1]
+        · simp only [ite_eq_right hpk, ite_eq_right hpkm1]
           have hpn_ne_km1 : pn ≠ km1 := by
             intro h
             apply hpkm1
@@ -341,7 +341,7 @@ private theorem leadingGramMatrixInt_rowSwap_inside
           have hp_swap : (Matrix.rowSwap b km1 k)[pn] = b[pn] :=
             rowSwap_row_eq_of_ne_int b km1 k pn hpn_ne_km1 hpn_ne_k
           rw [hp_swap, hM_entry]
-    · simp only [if_neg hqk, if_neg hqkm1]
+    · simp only [ite_eq_right hqk, ite_eq_right hqkm1]
       rw [entry_after_outer_swap qq]
       have hqn_ne_km1 : qn ≠ km1 := by
         intro h
@@ -361,7 +361,7 @@ private theorem leadingGramMatrixInt_rowSwap_inside
         rowSwap_row_eq_of_ne_int b km1 k qn hqn_ne_km1 hqn_ne_k
       rw [hq_swap]
       by_cases hpk : pp = k'
-      · simp only [if_pos hpk]
+      · simp only [ite_eq_left hpk]
         have hpn_k : pn = k := by
           apply Fin.ext
           have hv : pp.val = k'.val := congrArg Fin.val hpk
@@ -371,7 +371,7 @@ private theorem leadingGramMatrixInt_rowSwap_inside
           (heq_get_swap pn k hpn_k).trans (rowSwap_row_right_int b km1 k)
         rw [hpn_eq, hM_entry]
       · by_cases hpkm1 : pp = km1'
-        · simp only [if_neg hpk, if_pos hpkm1]
+        · simp only [ite_eq_right hpk, ite_eq_left hpkm1]
           have hpn_km1 : pn = km1 := by
             apply Fin.ext
             have hv : pp.val = km1'.val := congrArg Fin.val hpkm1
@@ -380,7 +380,7 @@ private theorem leadingGramMatrixInt_rowSwap_inside
           have hpn_eq : (Matrix.rowSwap b km1 k)[pn] = b[k] :=
             (heq_get_swap pn km1 hpn_km1).trans (rowSwap_row_left_int b km1 k)
           rw [hpn_eq, hM_entry]
-        · simp only [if_neg hpk, if_neg hpkm1]
+        · simp only [ite_eq_right hpk, ite_eq_right hpkm1]
           have hpn_ne_km1 : pn ≠ km1 := by
             intro h
             apply hpkm1

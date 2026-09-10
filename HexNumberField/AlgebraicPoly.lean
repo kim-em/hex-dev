@@ -66,6 +66,11 @@ def ofArray (coeffs : Array AlgebraicNumber) : AlgebraicPoly :=
 def coeffs (f : AlgebraicPoly) : Array AlgebraicNumber :=
   f.data
 
+/-- Normalization removes exactly the trailing semantic zero coefficients. -/
+@[simp] theorem coeffs_ofArray (coeffs : Array AlgebraicNumber) :
+    (ofArray coeffs).coeffs = coeffs.popWhile (fun a => a.isZero) := by
+  rfl
+
 /-- Number of stored coefficients. -/
 @[expose]
 def size (f : AlgebraicPoly) : Nat :=
@@ -85,6 +90,11 @@ def isZero (f : AlgebraicPoly) : Bool :=
 @[expose]
 def degree? (f : AlgebraicPoly) : Option Nat :=
   if f.isZero then none else some (f.size - 1)
+
+/-- The degree, with the zero polynomial given degree `0`, matching
+`DensePoly.natDegree`. -/
+abbrev natDegree (f : AlgebraicPoly) : Nat :=
+  f.degree?.getD 0
 
 /-- Canonical coefficientwise Boolean equality. -/
 @[expose]

@@ -45,13 +45,13 @@ that the repeats agree on all of it before replacing the durations.
   cardinalities, and the factor-degree multiset it returns, and the profile
   total must track the untimed end-to-end `factor` call.
 
-This is a diagnostic driver run manually on dedicated hardware, not a CI job
+This is a diagnostic driver run manually on the shared host, not a CI job
 and not a hex-internal benchmark harness, so the one-harness rule stays intact
 (see SPEC/benchmarking.md addendum).
 
 The driver pins itself to one core before spawning any service, so every
 measured descendant inherits that affinity. `--cpu auto` (the default) picks a
-core that is currently idle on itself and on its SMT siblings, because several
+core with low recent activity on itself and its SMT siblings, because several
 of these drivers may run at once on a shared host; pinning them all to a fixed
 core makes each measure the others. See `scripts/bench/idle_core.py`.
 
@@ -513,7 +513,7 @@ def main() -> int:
                         "per-candidate costs are their median")
     p.add_argument("--output", type=Path, default=None)
     p.add_argument("--cpu", default="auto",
-                   help="logical CPU to pin to, or `auto` to pick an idle one "
+                   help="logical CPU to pin to, or `auto` to pick a low-activity one "
                         "(default auto)")
     args = p.parse_args()
 

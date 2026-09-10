@@ -69,8 +69,8 @@ private theorem mem_foldl_push_if_of_mem_init {α β : Type*}
       intro init hx
       simp only [List.foldl_cons]
       by_cases hp : p a
-      · rw [if_pos hp]; exact ih _ (Array.mem_push.mpr (Or.inl hx))
-      · rw [if_neg hp]; exact ih _ hx
+      · rw [ite_eq_left hp]; exact ih _ (Array.mem_push.mpr (Or.inl hx))
+      · rw [ite_eq_right hp]; exact ih _ hx
 
 /-- A passing element `g i₀` of the conditional-push fold appears in the result. -/
 private theorem mem_foldl_push_if {α β : Type*}
@@ -84,12 +84,12 @@ private theorem mem_foldl_push_if {α β : Type*}
       intro init h
       simp only [List.foldl_cons]
       rcases List.mem_cons.mp h with rfl | hmem
-      · rw [if_pos hp₀]
+      · rw [ite_eq_left hp₀]
         exact mem_foldl_push_if_of_mem_init p g (g i₀) as _
           (Array.mem_push.mpr (Or.inr rfl))
       · by_cases hp : p a
-        · rw [if_pos hp]; exact ih _ hmem
-        · rw [if_neg hp]; exact ih _ hmem
+        · rw [ite_eq_left hp]; exact ih _ hmem
+        · rw [ite_eq_right hp]; exact ih _ hmem
 
 /-- Every element produced by a conditional-push fold either came from the
 initial accumulator or is the image of a passing source element. -/
@@ -108,11 +108,11 @@ private theorem mem_foldl_push_if_imp {α β : Type*}
       simp only [List.foldl_cons] at hx
       rcases ih _ x hx with hxinit | ⟨i, hi, hpi, hix⟩
       · by_cases hpa : p a
-        · rw [if_pos hpa] at hxinit
+        · rw [ite_eq_left hpa] at hxinit
           rcases Array.mem_push.mp hxinit with hxold | hax
           · exact Or.inl hxold
           · exact Or.inr ⟨a, by simp, hpa, hax.symm⟩
-        · rw [if_neg hpa] at hxinit
+        · rw [ite_eq_right hpa] at hxinit
           exact Or.inl hxinit
       · exact Or.inr ⟨i, List.mem_cons_of_mem a hi, hpi, hix⟩
 
@@ -127,7 +127,7 @@ private theorem bhksProjectIndicator_getD {r n : Nat}
   have hjrn : j.val < r + n := Nat.lt_of_lt_of_le j.isLt (Nat.le_add_right r n)
   rw [array_getD_of_lt _ _ hjlt]
   simp only [Hex.bhksProjectIndicator, List.getElem_toArray, List.getElem_map,
-    List.getElem_range, dif_pos hjrn]
+    List.getElem_range, dite_eq_left hjrn]
   rfl
 
 /-- A retained prefix row, projected to its first block, is a generator of the

@@ -40,7 +40,7 @@ fixed-mode choice. The contracts below are copied from the registration sites.
 | `runMergeRootListLadder` | parametric | duplicate-removal fold across the two Yun components of the fixed-field roots family, with component construction outside timing | `n ^ 2 * (Nat.log2 (n + 2) + 1)` |
 | `runQAdjoinRootsLadder` | fixed | `QAdjoin.roots?` on `g^2 * (X - 1)` over `ℚ(√2)` with `g` dense of degree 6 | 20 s ceiling |
 | `runAlgebraicRootsLadder` | fixed | `AlgebraicPoly.roots?` on the dense degree-6 polynomial with one `√2` coefficient | 15 s ceiling |
-| advertised fixed-degree API cases | fixed | lazy and canonical arithmetic, conversion, powers, casts, zero decisions, and `AlgebraicPoly.Common` primitives | 500 ms default; 750 ms for measured slower routes, zero grace |
+| advertised fixed-degree API cases | fixed | lazy and canonical arithmetic, conversion, powers, casts, zero decisions, `AlgebraicPoly.Common` primitives, the integer-polynomial root set `ZPoly.algebraicRoots` on `X⁴ - 10X² + 1`, and the reality test | 500 ms default; 750 ms for measured slower routes, zero grace |
 | `runNormEliminant`, `runEvalEliminant`, `runComponentRoots` | fixed | separable phases of the profiled repeated degree-6 component over `ℚ(√2)` | 1 s, 1.1 s, and 30 s whole-child ceilings, zero grace |
 
 The 76 fixed registrations comprise 51 internal API, phase, and fixed-problem
@@ -73,7 +73,7 @@ from `CIsolate` in its bounded-precision front end with exact-dyadic fallback,
 speculative Newton acceptance, dual certificate routes, and conservative
 global completeness depth. No proof transfers BSSY's amortised complexity
 analysis across those changes. Profiling does show that this unmatched phase
-dominates: `isolate` accounts for 91.87% of the profiled algebraic-roots
+dominates: `ZPoly.isolateComplexRoots?` accounts for 91.87% of the profiled algebraic-roots
 process, 92% of the lazy-addition process, and 85.01% of the repaired
 fixed-field-roots process; the latter spends 92.94% of the profiled process in
 the enclosing `componentRoots?` phase.
@@ -99,7 +99,7 @@ The per-library SPEC retains the HexRoots isolation ceiling as its worst-case
 contract; changing the benchmark mode does not weaken that contract.
 
 The compiled `isolation-stats` command reproduces the input characterisation.
-`isolation target` is the exact `separationDepth` passed to `isolate`, not the
+`isolation target` is the exact `separationDepth` passed to `ZPoly.isolateComplexRoots?`, not the
 adaptive working precision eventually reached by the isolator:
 
 | family | fixture parameter | degree after `squareFreeCore` | `coeffAbsMax` | `ceilLog2 coeffAbsMax` | isolation target |
@@ -302,6 +302,9 @@ and adds only a constant-time projection.
 | `OfNat.ofNat` | `runAlgebraicConstructors` | same linear constructor route |
 | `Pow.pow Nat` | `runAlgebraicNatPow` | fixed exponent 7 |
 | `Pow.pow Int` | `runAlgebraicIntPow` | fixed exponent -5, including inverse |
+| `ZPoly.algebraicRoots?` / `ZPoly.algebraicRoots` | `runAlgebraicRootsZ` | fixed quartic `X⁴ - 10X² + 1`: one isolation, four exactifications, and the reality-first sort; 750 ms zero-grace |
+| `AlgebraicNumber.isReal` / `AlgebraicRoot.isReal` / `DyadicSquare.meetsRealAxis` | `runIsReal` | grouped constant-time comparison anchor |
+| `AlgebraicNumber.rootLe`, `approx`, `Repr` | `runAlgebraicRootsZ` and `runQAdjoinApprox` | the sort runs inside the roots case; `approx` is the registered fixed-field approximation on the stored representative; display carries no contract |
 | rational `SMul.smul` on `AlgebraicNumber` | `runAlgebraicScalars` | grouped canonical scalar route |
 | natural `SMul.smul` on `AlgebraicNumber` | `runAlgebraicScalars` | grouped canonical scalar route |
 | integer `SMul.smul` on `AlgebraicNumber` | `runAlgebraicScalars` | grouped canonical scalar route |
@@ -1241,14 +1244,14 @@ fail mode 1 and reopen the finding. The raw local profile is
 | share | function |
 |---:|---|
 | 92.11% | `Hex.AlgebraicRoot.ofEliminant?` |
-| 92.11% | `Hex.isolate` / `isolateLoop` |
+| 92.11% | `Hex.ZPoly.isolateComplexRoots?` / `isolateLoop` |
 | 86.32% | `Hex.Component.refineAll` / `IsolationLoop.next` |
 | 84.83% | `Hex.taylor` |
 
 The former parametric `runLazyAddLadder` derivation correctly identified
 isolation at separation depth as dominant, although its scaling model was not
 supported. Eliminant construction is the 5.754 us `runAddEliminant` fixed case
-against a 46 s call, and 92% of the call is inside `isolate`. The replacement
+against a 46 s call, and 92% of the call is inside `ZPoly.isolateComplexRoots?`. The replacement
 fixed registration keeps this phase covered without making an asymptotic claim.
 
 ### `exactification-selection` — certification, not factorization evidence
@@ -1257,7 +1260,7 @@ fixed registration keeps this phase covered without making an asymptotic claim.
 |---:|---|
 | 95.63% | `Hex.AlgebraicRoot.exact?` |
 | 95.58% | `Hex.AlgebraicRoot.exactFactor?` |
-| 95.28% | `Hex.isolate` / `isolateLoop` |
+| 95.28% | `Hex.ZPoly.isolateComplexRoots?` / `isolateLoop` |
 | 47.39% | `Hex.AlgebraicNumber.canonicalRep?` / `ofNormalized?` |
 
 The former `runExactLadder` declared the classical BHKS factorization bound
@@ -1274,7 +1277,7 @@ the declared envelope over-predicts by `n^4.14`. This family is now the fixed
 | share | function |
 |---:|---|
 | 83.01% | `Hex.AlgebraicRoot.exactFactor?` |
-| 77.19% | `Hex.isolate` / `isolateLoop` |
+| 77.19% | `Hex.ZPoly.isolateComplexRoots?` / `isolateLoop` |
 | 38.53% | `Hex.AlgebraicNumber.canonicalRep?` |
 | **18.04%** | `Hex.ZPoly.factorize` |
 
@@ -1289,7 +1292,7 @@ BHKS factorization bound cannot support mode 2 for this end-to-end family.
 | share | `runExactFactorLadder` | `runCanonicalRepLadder` |
 |---:|---:|---:|
 | registered operation | 95.77% | 96.27% |
-| `Hex.isolate` / `isolateLoop` | 95.46% | 96.27% |
+| `Hex.ZPoly.isolateComplexRoots?` / `isolateLoop` | 95.46% | 96.27% |
 | `Hex.Component.refineAll` | 87.10% | 87.88% |
 | `Hex.exactRootFree` | 84.34% | 85.20% |
 | `Hex.taylor` | 77.35% | 78.18% |
@@ -1336,7 +1339,7 @@ this ladder's slower-than-declared verdict.
 
 | share | function |
 |---:|---|
-| 91.87% | `Hex.isolate` / `isolateLoop` |
+| 91.87% | `Hex.ZPoly.isolateComplexRoots?` / `isolateLoop` |
 | 91.45% | `Hex.QAdjoin.roots?` |
 | 91.45% | `Hex.QAdjoin.Roots.componentRoots?` |
 | 82.90% | `Hex.taylor` |
@@ -1359,7 +1362,7 @@ resultants even though neither entered the dominant inclusive ranking.
 |---:|---|
 | 92.96% | `Hex.QAdjoin.roots?` |
 | 92.94% | `Hex.QAdjoin.Roots.componentRoots?` |
-| 85.01% | `Hex.isolate` / `isolateLoop` |
+| 85.01% | `Hex.ZPoly.isolateComplexRoots?` / `isolateLoop` |
 | 78.37% | `Hex.taylor` |
 | 7.52% | `Hex.retainZero?` |
 | 7.43% | `Hex.QAdjoin.Roots.evalBall?` |
@@ -1463,3 +1466,5 @@ random seed, so a rung is identified by its parameter and the salt named in
 the bench source rather than by a seed.
 
 ## Concerns
+
+None.

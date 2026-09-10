@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "4182f460f5a07b6b5ad1a15b7f6c012b2e41efe4",
+  "current_blob": "71977a8b62fac157a12bb1feffe00edc6d02ee43",
+  "reason": "Registers the hex-graph-iso proof-probe libraries and the NautyFFI package required by the in-process conformance executable. Each is its own Lake target; no factorization library imports them, and the hexbz_factor_service declaration and the libraries it is built from are unchanged."
+}

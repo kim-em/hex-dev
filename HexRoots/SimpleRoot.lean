@@ -71,6 +71,11 @@ namespace Hex
 @[expose] def RefinedIsolation (p : ZPoly) :=
   {iso : DyadicRootIsolation p // (mahlerPrec p : Int) ≤ iso.square.prec}
 
+/-- Reflect an isolation, transporting its certificate without numerical checks. -/
+@[expose] def RefinedIsolation.conj {p : ZPoly} (r : RefinedIsolation p) :
+    RefinedIsolation p :=
+  ⟨⟨r.1.square.conj, .conj r.1.witness⟩, r.2⟩
+
 /-- The circumscribed discs intersect. A single exact dyadic comparison
     (squared centre distance against squared radius sum). -/
 @[expose] def Intersects {p : ZPoly} (i₁ i₂ : RefinedIsolation p) : Prop :=
@@ -87,6 +92,16 @@ instance {p : ZPoly} {i₁ i₂ : RefinedIsolation p} : Decidable (Intersects i�
 /-- The simple root witnessed by a refined isolation. -/
 @[expose] def SimpleRoot.mk {p : ZPoly} (iso : RefinedIsolation p) : SimpleRoot p :=
   Quot.mk _ iso
+
+/-- The simple root of `p` isolated by the square `s`. Both side conditions are
+    decidable checks on printable data, so a caller who has only a square --
+    a `Repr` output, a fixture, a literal -- rebuilds the certificate with
+    `decide` and recovers the root. The companion's `ofSquare_mk` identifies
+    the result with the root that any isolation on that square witnesses. -/
+@[expose] def SimpleRoot.ofSquare (p : ZPoly) (s : DyadicSquare)
+    (hw : atomWitness p s := by decide)
+    (hp : (mahlerPrec p : Int) ≤ s.prec := by decide) : SimpleRoot p :=
+  SimpleRoot.mk ⟨⟨s, .ofWitness hw⟩, hp⟩
 
 /-- Boolean form of `Intersects`, used for equality tests on data containing
     roots (see `hex-number-field`). -/
@@ -117,6 +132,7 @@ theorem AtomCertificate.size_gt_one {p : ZPoly} {s : DyadicSquare}
   | normalize certificate ih =>
       rw [ZPoly.size_normalizePrimitiveSign]
       exact ih
+  | conj certificate ih => exact ih
 
 /-- A certified atom needs at least two stored coefficients. -/
 theorem DyadicRootIsolation.size_gt_one {p : ZPoly} (i : DyadicRootIsolation p) :
@@ -125,22 +141,23 @@ theorem DyadicRootIsolation.size_gt_one {p : ZPoly} (i : DyadicRootIsolation p) 
 
 /-- A certified atom can only exist for a positive-degree polynomial. -/
 theorem DyadicRootIsolation.posDegree {p : ZPoly} (i : DyadicRootIsolation p) :
-    0 < p.degree?.getD 0 := by
+    0 < p.natDegree := by
   have hsize := i.size_gt_one
   have hpos : 0 < p.size := by omega
+  unfold Hex.DensePoly.natDegree
   rw [DensePoly.degree?_eq_some_of_pos_size p hpos]
   simp
   omega
 
 /-- Every represented simple root belongs to a positive-degree polynomial. -/
 theorem SimpleRoot.posDegree {p : ZPoly} (x : SimpleRoot p) :
-    0 < p.degree?.getD 0 := by
+    0 < p.natDegree := by
   refine Quot.inductionOn x ?_
   intro i
   exact i.1.posDegree
 
 /-- Wrap an isolation as a `RefinedIsolation` when it meets the separation
-    precision, deciding the subtype bound. `isolate`'s output always
+    precision, deciding the subtype bound. `ZPoly.isolateComplexRoots?`'s output always
     qualifies (its target has a `separationDepth ≥ mahlerPrec` floor); this
     is the constructor consumers use to record that fact. -/
 @[expose]

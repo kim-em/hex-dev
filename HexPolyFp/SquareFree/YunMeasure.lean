@@ -1248,7 +1248,7 @@ private theorem squareFreeAuxRevResidualSatisfied_of_size_le_one
   | succ fuel ih =>
       by_cases hzero : f.isZero = true
       · simp only [squareFreeAuxRevResidualSatisfied]
-        rw [if_pos hzero]; exact trivial
+        rw [ite_eq_left hzero]; exact trivial
       · have hzero_false : f.isZero = false := by
           cases h : f.isZero
           · rfl
@@ -1259,7 +1259,7 @@ private theorem squareFreeAuxRevResidualSatisfied_of_size_le_one
         have hdf : (DensePoly.derivative f).isZero = true :=
           derivative_isZero_true_of_size_one f hsize_one
         simp only [squareFreeAuxRevResidualSatisfied]
-        rw [if_neg (by simp [hzero_false]), if_pos hdf]
+        rw [ite_eq_right (by simp [hzero_false]), ite_eq_left hdf]
         have hroot_size : (pthRoot f).size ≤ 1 := by
           have h := pthRoot_size_of_derivative_zero hp f hzero_false hdf
           rw [hsize_one, Nat.sub_self, Nat.zero_div] at h
@@ -1283,7 +1283,7 @@ private theorem squareFreeAuxRevResidualSatisfied_of_size_lt
   | succ fuel ih =>
       by_cases hzero : f.isZero = true
       · simp only [squareFreeAuxRevResidualSatisfied]
-        rw [if_pos hzero]; exact trivial
+        rw [ite_eq_left hzero]; exact trivial
       · have hzero_false : f.isZero = false := by
           cases h : f.isZero
           · rfl
@@ -1293,7 +1293,7 @@ private theorem squareFreeAuxRevResidualSatisfied_of_size_lt
         · have hnonconst : 1 < f.size := by omega
           by_cases hdf : (DensePoly.derivative f).isZero = true
           · simp only [squareFreeAuxRevResidualSatisfied]
-            rw [if_neg (by simp [hzero_false]), if_pos hdf]
+            rw [ite_eq_right (by simp [hzero_false]), ite_eq_left hdf]
             have hroot_fuel : (pthRoot f).size < fuel :=
               pthRoot_fuel_decrease_of_derivative_zero_nonconstant hp f hbound hnonconst
             exact ih (pthRoot f) (m * p) hroot_fuel
@@ -1373,7 +1373,7 @@ private theorem squareFreeAuxRevResidualSatisfied_of_size_lt
               rw [hbridge]
               exact hderiv_impl (by rw [← hbridge]; exact hone_false)
             simp only [squareFreeAuxRevResidualSatisfied]
-            rw [if_neg (by simp [hzero_false]), if_neg (by simp [hdf_false])]
+            rw [ite_eq_right (by simp [hzero_false]), ite_eq_right (by simp [hdf_false])]
             refine ⟨?_, ?_⟩
             · by_cases hone :
                   isOne

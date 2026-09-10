@@ -207,10 +207,7 @@ theorem rootFree_one_root_of_margin {p : Hex.ZPoly} {sq : Hex.DyadicSquare}
   have hsizeEq : p.size = t.card + 2 := by
     calc
       p.size = (toPolyℂ p).natDegree + 1 := by
-        rw [natDegree_toPolyℂ]
-        have hpdeg : p.degree? = some (p.size - 1) := by
-          simp [Hex.DensePoly.degree?, Nat.ne_of_gt (by omega : 0 < p.size)]
-        rw [hpdeg, Option.getD_some]
+        rw [natDegree_toPolyℂ, Hex.DensePoly.natDegree_eq_size_sub_one]
         omega
       _ = roots.card + 2 := by
         rw [natDegree_eq_of_roots hroots]
@@ -283,10 +280,7 @@ theorem rootFree_of_roots {p : Hex.ZPoly} {s : Hex.DyadicSquare} {d : ℝ}
   have hdegree : p.size = roots.card + 1 := by
     calc
       p.size = (toPolyℂ p).natDegree + 1 := by
-        rw [natDegree_toPolyℂ]
-        have hpdeg : p.degree? = some (p.size - 1) := by
-          simp [Hex.DensePoly.degree?, Nat.ne_of_gt hsize]
-        rw [hpdeg, Option.getD_some]
+        rw [natDegree_toPolyℂ, Hex.DensePoly.natDegree_eq_size_sub_one]
         omega
       _ = (toPolyℂ p).roots.card + 1 := by
         rw [(IsAlgClosed.splits (toPolyℂ p)).natDegree_eq_card_roots]
@@ -327,9 +321,9 @@ theorem exists_root_ne_of_not_rootFree {p : Hex.ZPoly} {s : Hex.DyadicSquare}
     (hkeep : Hex.rootFree p s ≠ true) :
     ∃ z ∈ (toPolyℂ p).roots,
       ‖z - DyadicSquare.center s‖ <
-        8 * (Nat.max 2 (p.degree?.getD 0) : ℝ) * Dyadic.toReal s.radiusHi := by
+        8 * (Nat.max 2 (p.natDegree) : ℝ) * Dyadic.toReal s.radiusHi := by
   let roots := (toPolyℂ p).roots
-  let N := Nat.max 2 (p.degree?.getD 0)
+  let N := Nat.max 2 (p.natDegree)
   let R := Dyadic.toReal s.radiusHi
   let d := 8 * (N : ℝ) * R
   have hR : 0 < R := by
@@ -344,7 +338,7 @@ theorem exists_root_ne_of_not_rootFree {p : Hex.ZPoly} {s : Hex.DyadicSquare}
     exact_mod_cast hNnat
   have hd : 0 < d := by dsimp [d]; positivity
   have hcard : roots.card ≤ N := by
-    have hcardDegree : roots.card = p.degree?.getD 0 := by
+    have hcardDegree : roots.card = p.natDegree := by
       dsimp [roots]
       rw [← (IsAlgClosed.splits (toPolyℂ p)).natDegree_eq_card_roots,
         natDegree_toPolyℂ]
@@ -406,7 +400,7 @@ theorem root_near_of_simple {p : Hex.ZPoly}
   let f := toPolyℂ p
   let c := DyadicSquare.center s
   let R := Dyadic.toReal s.radiusHi
-  let N := Nat.max 2 (p.degree?.getD 0)
+  let N := Nat.max 2 (p.natDegree)
   let M := (2 : ℝ) ^ (-(Hex.mahlerPrec p : ℤ)) * (1449 / 1024 : ℝ)
   let d := 3 * M
   have hz : z ∈ f.roots := (mem_roots hp).2 (by simpa [f] using hzroot)
@@ -454,12 +448,12 @@ theorem root_near_of_simple {p : Hex.ZPoly}
     dsimp [d]
     nlinarith
   have hcard : roots.card ≤ N := by
-    have hdegree : roots.card + 1 = p.degree?.getD 0 := by
+    have hdegree : roots.card + 1 = p.natDegree := by
       calc
         roots.card + 1 = f.roots.card := by rw [hrootsEq]; simp
         _ = f.natDegree := (IsAlgClosed.splits f).natDegree_eq_card_roots.symm
-        _ = p.degree?.getD 0 := by simpa [f] using natDegree_toPolyℂ p
-    have : roots.card ≤ p.degree?.getD 0 := by omega
+        _ = p.natDegree := by simpa [f] using natDegree_toPolyℂ p
+    have : roots.card ≤ p.natDegree := by omega
     exact this.trans (Nat.le_max_right _ _)
   have hRN : R * (N : ℝ) ≤ M / 256 := by
     simpa [R, N, M] using NKData.radiusHi_mul_degree_le hprec
@@ -557,7 +551,7 @@ theorem adjacent_of_supDist_lt {s t : Hex.DyadicSquare}
     (hprec : s.prec = t.prec)
     (hdist : supDist (center s) (center t) < 4 * halfWidth s) :
     Hex.DyadicSquare.adjacent s t = true := by
-  rw [Hex.DyadicSquare.adjacent, if_pos hprec]
+  rw [Hex.DyadicSquare.adjacent, ite_eq_left hprec]
   let fourH : _root_.Dyadic := .ofIntWithPrec 1 (s.prec - 2)
   have hfour : Dyadic.toReal fourH = 4 * halfWidth s := by
     dsimp [fourH]
@@ -644,8 +638,8 @@ theorem exists_common_nearRoot_of_adjacent {p : Hex.ZPoly}
     nlinarith
   have hRsmall : 9 * Dyadic.toReal s.radiusHi ≤ M / 32 := by
     have hradius := NKData.radiusHi_mul_degree_le hprec
-    have htwo : (2 : ℝ) ≤ Nat.max 2 (p.degree?.getD 0) := by
-      exact_mod_cast Nat.le_max_left 2 (p.degree?.getD 0)
+    have htwo : (2 : ℝ) ≤ Nat.max 2 (p.natDegree) := by
+      exact_mod_cast Nat.le_max_left 2 (p.natDegree)
     have hRnonneg : 0 ≤ Dyadic.toReal s.radiusHi := by
       rw [DyadicSquare.radiusHi_eq]
       have : 0 ≤ Dyadic.toReal Hex.sqrt2Hi := by
@@ -655,7 +649,7 @@ theorem exists_common_nearRoot_of_adjacent {p : Hex.ZPoly}
       calc
         _ = Dyadic.toReal s.radiusHi * 2 := by ring
         _ ≤ Dyadic.toReal s.radiusHi *
-            (Nat.max 2 (p.degree?.getD 0) : ℝ) :=
+            (Nat.max 2 (p.natDegree) : ℝ) :=
           mul_le_mul_of_nonneg_left htwo hRnonneg
         _ ≤ M / 256 := by simpa [M] using hradius
     nlinarith
@@ -702,8 +696,8 @@ theorem nearRoot_unique {p : Hex.ZPoly} {s : Hex.DyadicSquare}
       nlinarith)
   have hRsmall : 6 * Dyadic.toReal s.radiusHi ≤ M / 64 := by
     have hradius := NKData.radiusHi_mul_degree_le hprec
-    have htwo : (2 : ℝ) ≤ Nat.max 2 (p.degree?.getD 0) := by
-      exact_mod_cast Nat.le_max_left 2 (p.degree?.getD 0)
+    have htwo : (2 : ℝ) ≤ Nat.max 2 (p.natDegree) := by
+      exact_mod_cast Nat.le_max_left 2 (p.natDegree)
     have hRnonneg : 0 ≤ Dyadic.toReal s.radiusHi := by
       rw [DyadicSquare.radiusHi_eq]
       have : 0 ≤ Dyadic.toReal Hex.sqrt2Hi := by
@@ -713,7 +707,7 @@ theorem nearRoot_unique {p : Hex.ZPoly} {s : Hex.DyadicSquare}
       calc
         _ = Dyadic.toReal s.radiusHi * 2 := by ring
         _ ≤ Dyadic.toReal s.radiusHi *
-            (Nat.max 2 (p.degree?.getD 0) : ℝ) :=
+            (Nat.max 2 (p.natDegree) : ℝ) :=
           mul_le_mul_of_nonneg_left htwo hRnonneg
         _ ≤ M / 256 := by simpa [M] using hradius
     nlinarith

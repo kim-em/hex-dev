@@ -118,7 +118,7 @@ private def firstCertificate?
 positive-degree integer polynomial.  Prime blocks are added only until every
 possible proper factor degree is obstructed. -/
 def certifyIrreducible? (f : ZPoly) : Option ZPolyIrreducibilityCertificate :=
-  if ZPoly.content f != 1 || f.degree?.getD 0 == 0 then none else
+  if ZPoly.content f != 1 || f.natDegree == 0 then none else
   match firstCertificate? f smallPrimeCandidates #[] with
   | none => none
   | some cert => if cert.certifies f then some cert else none
@@ -467,7 +467,7 @@ private def probeCoeffLog : Nat := 512
 peels the explicit difference-of-squares structure cheaply, so a large modular
 factor count is not evidence that prime look-ahead will pay for itself. -/
 private def isEvenPowerDifference (f : ZPoly) : Bool :=
-  decide (f.degree?.getD 0 % 2 = 0) &&
+  decide (f.natDegree % 2 = 0) &&
     match f.toArray.toList with
     | -1 :: coeffs =>
         match coeffs.reverse with
@@ -484,7 +484,7 @@ private def isEvenPowerDifference (f : ZPoly) : Bool :=
 justify bounded prime look-ahead. -/
 private def shouldProbePrime (f : ZPoly) (score : PrimeChoiceDataScore) : Bool :=
   let coeffs := f.toArray
-  let degree := f.degree?.getD 0
+  let degree := f.natDegree
   (decide (probeSwollenFactors ≤ score.factorCount) &&
       coeffs.any (fun coeff => probeCoeffLog ≤ coeff.natAbs.log2)) ||
     (decide (probeMinDegree ≤ degree) &&
@@ -556,14 +556,14 @@ private theorem improvePrimeData?_property
           | some score =>
               simp only
               by_cases hone : score.factorCount = 1
-              · simp only [hone, if_true]
+              · simp only [hone, ite_true]
                 exact hcandidate c score hscore
-              · simp only [hone, if_false]
+              · simp only [hone, ite_false]
                 by_cases hhalf : probeEarlyFactorFloor ≤ score.factorCount ∧
                     2 * score.factorCount ≤ first.factorCount
                 · simp only [hhalf]
                   exact hcandidate c score hscore
-                · simp only [hhalf, if_false]
+                · simp only [hhalf, ite_false]
                   apply ih (first := betterPrimeChoiceDataScore first score)
                     (extra := extra)
                   unfold betterPrimeChoiceDataScore
@@ -595,16 +595,16 @@ private theorem improvePrimeData?_p_le
           | some score =>
               simp only
               by_cases hone : score.factorCount = 1
-              · simp only [hone, if_true]
+              · simp only [hone, ite_true]
                 exact primeChoiceDataScore_p_le f c score
                   (hall c (by simp)) hscore
-              · simp only [hone, if_false]
+              · simp only [hone, ite_false]
                 by_cases hhalf : probeEarlyFactorFloor ≤ score.factorCount ∧
                     2 * score.factorCount ≤ first.factorCount
                 · simp only [hhalf]
                   exact primeChoiceDataScore_p_le f c score
                     (hall c (by simp)) hscore
-                · simp only [hhalf, if_false]
+                · simp only [hhalf, ite_false]
                   apply ih (first := betterPrimeChoiceDataScore first score)
                     (extra := extra)
                   · unfold betterPrimeChoiceDataScore
@@ -632,17 +632,17 @@ private theorem chooseAdaptiveFrom?_property
           simp only [hcurrent] at h
           have hproperty : P current := hcandidate c current hcurrent
           by_cases hone : current.factorCount = 1
-          · simp only [hone, if_true, Option.some.injEq] at h
+          · simp only [hone, ite_true, Option.some.injEq] at h
             rw [← h]
             exact hproperty
-          · simp only [hone, if_false] at h
+          · simp only [hone, ite_false] at h
             by_cases hprobe : shouldProbePrime f current = true
-            · simp only [hprobe, if_true, Option.some.injEq] at h
+            · simp only [hprobe, ite_true, Option.some.injEq] at h
               rw [← h]
               exact improvePrimeData?_property f P current hproperty hcandidate extra candidates
             · have hfalse : shouldProbePrime f current = false :=
                 Bool.eq_false_iff.mpr hprobe
-              simp only [hfalse, Bool.false_eq_true, if_false, Option.some.injEq] at h
+              simp only [hfalse, Bool.false_eq_true, ite_false, Option.some.injEq] at h
               rw [← h]
               exact hproperty
 
@@ -669,10 +669,10 @@ private theorem chooseAdaptiveFrom?_p_le
           have hcurrent_le : current.data.p ≤ 500 :=
             primeChoiceDataScore_p_le f c current (hall c (by simp)) hcurrent
           by_cases hone : current.factorCount = 1
-          · simp only [hone, if_true, Option.some.injEq] at h
+          · simp only [hone, ite_true, Option.some.injEq] at h
             rw [← h]
             exact hcurrent_le
-          · simp only [hone, if_false] at h
+          · simp only [hone, ite_false] at h
             split at h
             · simp only [Option.some.injEq] at h
               rw [← h]
@@ -969,7 +969,7 @@ private theorem chooseAdaptiveFrom?_ne_none_of_good
       | some score =>
           by_cases hone : score.factorCount = 1
           · simp [hone]
-          · simp only [hone, if_false]
+          · simp only [hone, ite_false]
             split <;> simp
       | none =>
           simp only
@@ -1167,6 +1167,9 @@ theorem choosePrimeDataAdaptive?_form
   obtain ⟨_, hzero, heq⟩ := hform
   exact ⟨hzero, heq⟩
 
+-- The candidate lists reduce through the committed prime table, whose 9,592
+-- entries exceed the default recursion-depth ceiling in this proof.
+set_option maxRecDepth 10000 in
 /--
 When `choosePrimeData? f` succeeds, the stored modular factor array is exactly
 the Berlekamp factor output for the monic modular image of the selected

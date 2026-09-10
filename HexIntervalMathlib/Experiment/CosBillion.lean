@@ -151,7 +151,7 @@ theorem constantEntailsOf (provider : Evidence DecimalPi.Claim) :
   have output : valuation (node 2) = Real.pi := by
     simpa [piModel, piInstruction] using related
   change Contains finePiFact (valuation (node 2))
-  simp only [Contains, finePiFact, openInterval, rat, ratValue, if_true]
+  simp only [Contains, finePiFact, openInterval, rat, ratValue, ite_true]
   rw [output]
   simpa [DecimalPi.Claim,
     Hex.IntervalMathlib.Experiment.SinTen.MachinReplay.Claim,
@@ -185,7 +185,7 @@ theorem reductionEntails :
   change Contains finePiFact (valuation (node 2)) at piBounds
   change Contains residualFact (valuation (node 3))
   simp only [Contains, finePiFact, residualFact, openInterval, rat, ratValue,
-    if_true] at piBounds ⊢
+    ite_true] at piBounds ⊢
   rw [residualValue, sourceValue]
   norm_num [quotient, finePiCandidate] at piBounds ⊢
   constructor <;> nlinarith
@@ -204,13 +204,13 @@ theorem localEntails :
   have residualBounds := holds { node := node 3, fact := residualFact } (by simp)
   change Contains residualFact (valuation (node 3)) at residualBounds
   simp only [Contains, residualFact, openInterval, rat, ratValue,
-    if_true] at residualBounds
+    ite_true] at residualBounds
   have localNegative : Real.cos (valuation (node 3)) < 0 := by
     apply Real.cos_neg_of_pi_div_two_lt_of_lt
     · nlinarith [Real.pi_lt_four]
     · nlinarith [Real.pi_gt_three]
   change Contains negativeFact (valuation (node 4))
-  simp only [Contains, negativeFact, rat, ratValue, if_true]
+  simp only [Contains, negativeFact, rat, ratValue, ite_true]
   rw [output]
   norm_num
   exact ⟨Real.neg_one_le_cos _, localNegative⟩
@@ -229,7 +229,7 @@ theorem negationEntails :
   have negative := holds { node := node 4, fact := negativeFact } (by simp)
   change Contains negativeFact (valuation (node 4)) at negative
   change Contains positiveFact (valuation (node 5))
-  simp only [Contains, negativeFact, positiveFact, rat, ratValue, if_true] at negative ⊢
+  simp only [Contains, negativeFact, positiveFact, rat, ratValue, ite_true] at negative ⊢
   rw [output]
   norm_num at negative ⊢
   constructor <;> linarith

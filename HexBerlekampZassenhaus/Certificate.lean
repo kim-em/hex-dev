@@ -187,7 +187,7 @@ def checkForPolynomial (f : ZPoly) (d : PrimeFactorData) : Bool :=
   letI := d.bounds
   isGoodPrime f d.p &&
     d.factorDegrees.all (fun degree => 0 < degree) &&
-    d.degreeSum == (ZPoly.modP d.p f).degree?.getD 0 &&
+    d.degreeSum == (ZPoly.modP d.p f).natDegree &&
     d.factorProduct == ZPoly.modP d.p f &&
     d.checkFactorCerts
 
@@ -198,7 +198,7 @@ namespace ZPolyIrreducibilityCertificate
 /-- Nontrivial integer factor degrees that must be ruled out for `f`. -/
 @[expose]
 def candidateFactorDegrees (f : ZPoly) : List Nat :=
-  (List.range ((f.degree?.getD 0) / 2)).map fun i => i + 1
+  (List.range ((f.natDegree) / 2)).map fun i => i + 1
 
 /-- Look up a per-prime block by the index stored in an obstruction. -/
 @[expose]
@@ -271,7 +271,7 @@ def ZPolyIrreducibilityCertificate.certifies
     (cert : ZPolyIrreducibilityCertificate) (f : ZPoly) : Bool :=
   cert.perPrime.all (fun primeData => Hex.Nat.isPrimeTrial primeData.p) &&
     decide (ZPoly.content f = 1) &&
-    decide (0 < f.degree?.getD 0) &&
+    decide (0 < f.natDegree) &&
     checkIrreducibleCert f cert
 
 namespace PrimeFactorData
@@ -315,7 +315,7 @@ def checkForPolynomialLinear (f : ZPoly) (d : PrimeFactorData) : Bool :=
   letI := d.bounds
   isGoodPrime f d.p &&
     d.factorDegrees.all (fun degree => 0 < degree) &&
-    d.degreeSum == (ZPoly.modP d.p f).degree?.getD 0 &&
+    d.degreeSum == (ZPoly.modP d.p f).natDegree &&
     d.factorProduct == ZPoly.modP d.p f &&
     d.checkFactorCertsLinear
 
@@ -339,10 +339,10 @@ theorem checkCertAtFactor_of_linear
   rcases hcheck with ⟨hmeta, htail⟩
   refine ⟨hmeta, ?_⟩
   by_cases hmonic : factor.leadingCoeff = 1
-  · rw [dif_pos hmonic] at htail ⊢
+  · rw [dite_eq_left hmonic] at htail ⊢
     exact Berlekamp.checkIrreducibilityCertificate_of_linearIncremental
       factor _ cert htail
-  · rw [dif_neg hmonic] at htail
+  · rw [dite_eq_right hmonic] at htail
     simp at htail
 
 /-- `checkFactorCertsLinear` implies `checkFactorCerts` once the block's prime
@@ -456,7 +456,7 @@ private def buildPrimeFactorData? (f : ZPoly) (c : SmallPrimeCandidate) :
     | some certs =>
       let data : PrimeFactorData :=
         { p := c.m
-          factorDegrees := factors.map fun g => g.degree?.getD 0
+          factorDegrees := factors.map fun g => g.natDegree
           factorPolys := factors
           factorCerts := certs }
       if data.checkForPolynomial f then some data else none

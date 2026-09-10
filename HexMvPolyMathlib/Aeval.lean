@@ -153,7 +153,7 @@ direct Mathlib-free evaluator. -/
     MvPoly n R cmp →ₐ[R] S where
   toRingHom := eval₂Hom (algebraMap R S) x
   commutes' r := by
-    letI : DecidableEq R := instDecidableEqOfLawfulBEq
+    let : DecidableEq R := instDecidableEqOfLawfulBEq
     rw [algebraMap_apply]
     change
       eval₂ (algebraMap R S) x
@@ -231,14 +231,14 @@ map. -/
 @[simp] theorem aeval_C [CommSemiring R]
     [CommSemiring S] [Algebra R S] (x : Fin n → S) (r : R) :
     aeval x (C r : MvPoly n R cmp) = algebraMap R S r := by
-  letI : DecidableEq R := instDecidableEqOfLawfulBEq
+  let : DecidableEq R := instDecidableEqOfLawfulBEq
   rw [aeval_apply, toMvPolynomial_C, MvPolynomial.aeval_C]
 
 /-- Algebra evaluation sends a variable polynomial to its assigned value. -/
 @[simp] theorem aeval_X [CommSemiring R]
     [CommSemiring S] [Algebra R S] (x : Fin n → S) (i : Fin n) :
     aeval x (X i : MvPoly n R cmp) = x i := by
-  letI : DecidableEq R := instDecidableEqOfLawfulBEq
+  let : DecidableEq R := instDecidableEqOfLawfulBEq
   rw [aeval_apply, toMvPolynomial_X, MvPolynomial.aeval_X]
 
 /-- Algebra evaluation preserves negation. -/

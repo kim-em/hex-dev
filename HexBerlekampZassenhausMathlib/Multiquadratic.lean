@@ -87,7 +87,7 @@ theorem rootSet_X_pow_two_sub_C (d : ℤ) :
     (X ^ 2 - C ((d : ℤ) : ℚ)).rootSet ℂ = {x : ℂ | x ^ 2 = (d : ℂ)} := by
   have hne : (X ^ 2 - C ((d : ℤ) : ℚ) : ℚ[X]) ≠ 0 := (monic_X_pow_sub_C _ two_ne_zero).ne_zero
   ext x
-  rw [Polynomial.mem_rootSet, Set.mem_setOf_eq]
+  rw [Polynomial.mem_rootSet, Set.mem_ofPred_eq]
   simp only [map_sub, map_pow, aeval_X, aeval_C, sub_eq_zero]
   constructor
   · rintro ⟨-, h⟩
@@ -368,7 +368,7 @@ theorem eq_one_of_gen_fixed (h : Independent ds) (hr : ∀ i, r i ^ 2 = ((ds[i] 
       intro i
       by_cases hei : signOf hr σ i = true
       · simp [ha, hei]
-      · simp only [ha, hei, Bool.false_eq_true, if_false]
+      · simp only [ha, hei, Bool.false_eq_true, ite_false]
         push_cast
         ring
     rw [Finset.sum_congr rfl fun i _ => hterm i, Finset.sum_sub_distrib, ← hsum, sub_self]
@@ -378,7 +378,7 @@ theorem eq_one_of_gen_fixed (h : Independent ds) (hr : ∀ i, r i ^ 2 = ((ds[i] 
     simpa using hval
   have hai := eq_zero_of_sum_eq_zero h hr hzero i
   have hei : signOf hr σ i = true := by by_contra hc; simp [ha, hc] at hai
-  rw [he i, hei, if_pos rfl]
+  rw [he i, hei, ite_eq_left rfl]
 
 end Roots
 

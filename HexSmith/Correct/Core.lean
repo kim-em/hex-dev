@@ -32,14 +32,14 @@ private theorem clearColumn_spec (ops : Accumulator α n m)
   · dsimp only [p, b] at hdiv ⊢
     have hdiv' : s.matrix[row][pivotCol] % s.matrix[pivotRow][pivotCol] = 0 := by
       simpa only [Matrix.getElem_pair_eq_nested] using hdiv
-    rw [clearColumn, if_pos hdiv]
+    rw [clearColumn, ite_eq_left hdiv]
     dsimp only
     constructor
     · simp only [Matrix.getElem_pair_eq_nested]
-      rw [Matrix.getElem_rowAdd, if_neg hne]
-      rw [if_pos hdiv']
+      rw [Matrix.getElem_rowAdd, ite_eq_right hne]
+      rw [ite_eq_left hdiv']
     · simp only [Matrix.getElem_pair_eq_nested]
-      rw [Matrix.getElem_rowAdd, if_pos rfl]
+      rw [Matrix.getElem_rowAdd, ite_eq_left rfl]
       have hdvd : p ∣ b := Int.dvd_of_emod_eq_zero hdiv
       have hquot : HexArith.Int.exactDiv b p * p = b := by
         simpa [HexArith.Int.exactDiv] using Int.ediv_mul_cancel hdvd
@@ -50,7 +50,7 @@ private theorem clearColumn_spec (ops : Accumulator α n m)
   · dsimp only [p, b] at hdiv ⊢
     have hdiv' : s.matrix[row][pivotCol] % s.matrix[pivotRow][pivotCol] ≠ 0 := by
       simpa only [Matrix.getElem_pair_eq_nested] using hdiv
-    rw [clearColumn, if_neg hdiv]
+    rw [clearColumn, ite_eq_right hdiv]
     rcases hc : Hermite.gcdCoeffs p b with ⟨x, y, z, w⟩
     have hpivot := Hermite.gcdCoeffs_pivot p b
     have happly := Hermite.gcdCoeffs_apply (a := p) (b := b) hb
@@ -59,11 +59,11 @@ private theorem clearColumn_spec (ops : Accumulator α n m)
     simp only [Matrix.getElem_pair_eq_nested] at hpivot happly
     constructor
     · simp only [Matrix.getElem_pair_eq_nested, Hermite.getElem_combineRows,
-        if_pos]
-      rw [if_neg hdiv']
+        ite_eq_left]
+      rw [ite_eq_right hdiv']
       exact hpivot
     · simp only [Matrix.getElem_pair_eq_nested, Hermite.getElem_combineRows,
-        if_neg (Ne.symm hne), if_pos]
+        ite_eq_right (Ne.symm hne), ite_eq_left]
       exact happly.2
 
 private theorem clearRow_spec (ops : Accumulator α n m)
@@ -81,13 +81,13 @@ private theorem clearRow_spec (ops : Accumulator α n m)
   · dsimp only [p, b] at hdiv ⊢
     have hdiv' : s.matrix[pivotRow][col] % s.matrix[pivotRow][pivotCol] = 0 := by
       simpa only [Matrix.getElem_pair_eq_nested] using hdiv
-    rw [clearRow, if_pos hdiv]
+    rw [clearRow, ite_eq_left hdiv]
     dsimp only
     constructor
     · simp only [Matrix.getElem_pair_eq_nested]
-      rw [Matrix.getElem_colAdd, if_neg hne, if_pos hdiv']
+      rw [Matrix.getElem_colAdd, ite_eq_right hne, ite_eq_left hdiv']
     · simp only [Matrix.getElem_pair_eq_nested]
-      rw [Matrix.getElem_colAdd, if_pos rfl]
+      rw [Matrix.getElem_colAdd, ite_eq_left rfl]
       have hdvd : p ∣ b := Int.dvd_of_emod_eq_zero hdiv
       have hquot : HexArith.Int.exactDiv b p * p = b := by
         simpa [HexArith.Int.exactDiv] using Int.ediv_mul_cancel hdvd
@@ -98,7 +98,7 @@ private theorem clearRow_spec (ops : Accumulator α n m)
   · dsimp only [p, b] at hdiv ⊢
     have hdiv' : s.matrix[pivotRow][col] % s.matrix[pivotRow][pivotCol] ≠ 0 := by
       simpa only [Matrix.getElem_pair_eq_nested] using hdiv
-    rw [clearRow, if_neg hdiv]
+    rw [clearRow, ite_eq_right hdiv]
     rcases hc : Hermite.gcdCoeffs p b with ⟨x, y, z, w⟩
     have hpivot := Hermite.gcdCoeffs_pivot p b
     have happly := Hermite.gcdCoeffs_apply (a := p) (b := b) hb
@@ -107,11 +107,11 @@ private theorem clearRow_spec (ops : Accumulator α n m)
     simp only [Matrix.getElem_pair_eq_nested] at hpivot happly
     constructor
     · simp only [Matrix.getElem_pair_eq_nested, Hermite.getElem_combineCols,
-        if_pos]
-      rw [if_neg hdiv']
+        ite_eq_left]
+      rw [ite_eq_right hdiv']
       exact hpivot
     · simp only [Matrix.getElem_pair_eq_nested, Hermite.getElem_combineCols,
-        if_neg (Ne.symm hne), if_pos]
+        ite_eq_right (Ne.symm hne), ite_eq_left]
       exact happly.2
 
 private theorem gcd_lt_natAbs {p b : Int} (hp : p ≠ 0) (hmod : b % p ≠ 0) :
@@ -135,7 +135,7 @@ private theorem clearColumn_pivot_lt (ops : Accumulator α n m)
       s.matrix[(pivotRow, pivotCol)].natAbs := by
   have hs := clearColumn_spec ops s pivotRow row pivotCol hne hb
   dsimp only at hs
-  rw [if_neg hmod] at hs
+  rw [ite_eq_right hmod] at hs
   rw [hs.1]
   exact gcd_lt_natAbs hp hmod
 
@@ -148,7 +148,7 @@ private theorem clearRow_pivot_lt (ops : Accumulator α n m)
       s.matrix[(pivotRow, pivotCol)].natAbs := by
   have hs := clearRow_spec ops s pivotRow pivotCol col hne hb
   dsimp only at hs
-  rw [if_neg hmod] at hs
+  rw [ite_eq_right hmod] at hs
   rw [hs.1]
   exact gcd_lt_natAbs hp hmod
 
@@ -220,7 +220,7 @@ private theorem crossCount_clearColumn (ops : Accumulator α n m)
     omega
   have hs := clearColumn_spec ops s pivotRow row pivotCol hne hb
   dsimp only at hs
-  rw [if_pos hdiv] at hs
+  rw [ite_eq_left hdiv] at hs
   have hb' : s.matrix[row][pivotCol] ≠ 0 := by
     simpa only [Matrix.getElem_pair_eq_nested] using hb
   have hsZero :
@@ -239,7 +239,7 @@ private theorem crossCount_clearColumn (ops : Accumulator α n m)
   have hold := foldl_remove_one (List.finRange n) row oldCol
     (List.mem_finRange row) (List.nodup_finRange n) (by
       unfold oldCol
-      rw [if_pos ⟨hr, hb⟩])
+      rw [ite_eq_left ⟨hr, hb⟩])
   have hcol : (List.finRange n).foldl (fun total r => total + newCol r) 0 =
       (List.finRange n).foldl
         (fun total r => total + if r = row then 0 else oldCol r) 0 := by
@@ -248,15 +248,15 @@ private theorem crossCount_clearColumn (ops : Accumulator α n m)
     by_cases hrr : r = row
     · subst r
       unfold newCol
-      rw [if_neg (by intro hbad; exact hbad.2 hs.2)]
+      rw [ite_eq_right (by intro hbad; exact hbad.2 hs.2)]
       simp
     · have hentry :
           (clearColumn ops s pivotRow row pivotCol).matrix[(r, pivotCol)] =
             s.matrix[(r, pivotCol)] := by
-        rw [clearColumn, if_pos hdiv]
+        rw [clearColumn, ite_eq_left hdiv]
         dsimp only
         simp only [Matrix.getElem_pair_eq_nested]
-        rw [Matrix.getElem_rowAdd, if_neg hrr]
+        rw [Matrix.getElem_rowAdd, ite_eq_right hrr]
       unfold newCol oldCol
       rw [hentry]
       simp [hrr]
@@ -267,10 +267,10 @@ private theorem crossCount_clearColumn (ops : Accumulator α n m)
     have hentry :
         (clearColumn ops s pivotRow row pivotCol).matrix[(pivotRow, c)] =
           s.matrix[(pivotRow, c)] := by
-      rw [clearColumn, if_pos hdiv]
+      rw [clearColumn, ite_eq_left hdiv]
       dsimp only
       simp only [Matrix.getElem_pair_eq_nested]
-      rw [Matrix.getElem_rowAdd, if_neg hne]
+      rw [Matrix.getElem_rowAdd, ite_eq_right hne]
     unfold newRow oldRow
     rw [hentry]
   unfold crossCount
@@ -294,7 +294,7 @@ private theorem crossCount_clearRow (ops : Accumulator α n m)
     omega
   have hs := clearRow_spec ops s pivotRow pivotCol col hne hb
   dsimp only at hs
-  rw [if_pos hdiv] at hs
+  rw [ite_eq_left hdiv] at hs
   let oldCol : Fin n → Nat := fun r =>
     if pivotRow.val < r.val ∧ s.matrix[(r, pivotCol)] ≠ 0 then 1 else 0
   let newCol : Fin n → Nat := fun r =>
@@ -308,7 +308,7 @@ private theorem crossCount_clearRow (ops : Accumulator α n m)
   have hold := foldl_remove_one (List.finRange m) col oldRow
     (List.mem_finRange col) (List.nodup_finRange m) (by
       unfold oldRow
-      rw [if_pos ⟨hc, hb⟩])
+      rw [ite_eq_left ⟨hc, hb⟩])
   have hcol : (List.finRange n).foldl (fun total r => total + newCol r) 0 =
       (List.finRange n).foldl (fun total r => total + oldCol r) 0 := by
     apply List.foldl_add_congr
@@ -316,10 +316,10 @@ private theorem crossCount_clearRow (ops : Accumulator α n m)
     have hentry :
         (clearRow ops s pivotRow pivotCol col).matrix[(r, pivotCol)] =
           s.matrix[(r, pivotCol)] := by
-      rw [clearRow, if_pos hdiv]
+      rw [clearRow, ite_eq_left hdiv]
       dsimp only
       simp only [Matrix.getElem_pair_eq_nested]
-      rw [Matrix.getElem_colAdd, if_neg hne]
+      rw [Matrix.getElem_colAdd, ite_eq_right hne]
     unfold newCol oldCol
     rw [hentry]
   have hrow : (List.finRange m).foldl (fun total c => total + newRow c) 0 =
@@ -330,15 +330,15 @@ private theorem crossCount_clearRow (ops : Accumulator α n m)
     by_cases hcc : c = col
     · subst c
       unfold newRow
-      rw [if_neg (by intro hbad; exact hbad.2 hs.2)]
+      rw [ite_eq_right (by intro hbad; exact hbad.2 hs.2)]
       simp
     · have hentry :
           (clearRow ops s pivotRow pivotCol col).matrix[(pivotRow, c)] =
             s.matrix[(pivotRow, c)] := by
-        rw [clearRow, if_pos hdiv]
+        rw [clearRow, ite_eq_left hdiv]
         dsimp only
         simp only [Matrix.getElem_pair_eq_nested]
-        rw [Matrix.getElem_colAdd, if_neg hcc]
+        rw [Matrix.getElem_colAdd, ite_eq_right hcc]
       unfold newRow oldRow
       rw [hentry]
       simp [hcc]
@@ -392,7 +392,7 @@ private theorem measure_clearColumn_lt (ops : Accumulator α n m)
   by_cases hdiv : s.matrix[(row, pivotCol)] % s.matrix[(pivotRow, pivotCol)] = 0
   · have hs := clearColumn_spec ops s pivotRow row pivotCol hne hb
     dsimp only at hs
-    rw [if_pos hdiv] at hs
+    rw [ite_eq_left hdiv] at hs
     have hcount := crossCount_clearColumn ops s pivotRow row pivotCol hr hb hdiv
     unfold reductionMeasure
     rw [hs.1]
@@ -413,7 +413,7 @@ private theorem measure_clearRow_lt (ops : Accumulator α n m)
   by_cases hdiv : s.matrix[(pivotRow, col)] % s.matrix[(pivotRow, pivotCol)] = 0
   · have hs := clearRow_spec ops s pivotRow pivotCol col hne hb
     dsimp only at hs
-    rw [if_pos hdiv] at hs
+    rw [ite_eq_left hdiv] at hs
     have hcount := crossCount_clearRow ops s pivotRow pivotCol col hc hb hdiv
     unfold reductionMeasure
     rw [hs.1]
@@ -431,7 +431,7 @@ private theorem repair_pivot (ops : Accumulator α n m)
   have hpivot : matrix[(pivotRow, pivotCol)] = s.matrix[(pivotRow, pivotCol)] := by
     dsimp only [matrix]
     simp only [Matrix.getElem_pair_eq_nested]
-    rw [Matrix.getElem_rowAdd, if_pos rfl]
+    rw [Matrix.getElem_rowAdd, ite_eq_left rfl]
     have hrow' : s.matrix[row][pivotCol] = 0 := by
       simpa only [Matrix.getElem_pair_eq_nested] using hrow
     rw [hrow']
@@ -439,7 +439,7 @@ private theorem repair_pivot (ops : Accumulator α n m)
   have hbad : matrix[(pivotRow, col)] = s.matrix[(row, col)] := by
     dsimp only [matrix]
     simp only [Matrix.getElem_pair_eq_nested]
-    rw [Matrix.getElem_rowAdd, if_pos rfl]
+    rw [Matrix.getElem_rowAdd, ite_eq_left rfl]
     have hcol' : s.matrix[pivotRow][col] = 0 := by
       simpa only [Matrix.getElem_pair_eq_nested] using hcol
     rw [hcol']
@@ -456,7 +456,7 @@ private theorem repair_pivot (ops : Accumulator α n m)
   rw [hc]
   dsimp only
   simp only [Matrix.getElem_pair_eq_nested, Hermite.getElem_combineCols,
-    if_pos]
+    ite_eq_left]
   have hpivot' : (Matrix.rowAdd s.matrix row pivotRow 1)[pivotRow][pivotCol] =
       s.matrix[pivotRow][pivotCol] := by
     simpa only [Matrix.getElem_pair_eq_nested, matrix] using hpivot
@@ -499,9 +499,9 @@ private theorem clearColumn_pivot_ne (ops : Accumulator α n m)
   have hs := clearColumn_spec ops s pivotRow row pivotCol hne hb
   dsimp only at hs
   by_cases hdiv : s.matrix[(row, pivotCol)] % s.matrix[(pivotRow, pivotCol)] = 0
-  · rw [if_pos hdiv] at hs
+  · rw [ite_eq_left hdiv] at hs
     simpa only [hs.1] using hp
-  · rw [if_neg hdiv] at hs
+  · rw [ite_eq_right hdiv] at hs
     rw [hs.1]
     exact Int.ofNat_ne_zero.mpr (Nat.ne_of_gt (Int.gcd_pos_of_ne_zero_left _ hp))
 
@@ -513,9 +513,9 @@ private theorem clearRow_pivot_ne (ops : Accumulator α n m)
   have hs := clearRow_spec ops s pivotRow pivotCol col hne hb
   dsimp only at hs
   by_cases hdiv : s.matrix[(pivotRow, col)] % s.matrix[(pivotRow, pivotCol)] = 0
-  · rw [if_pos hdiv] at hs
+  · rw [ite_eq_left hdiv] at hs
     simpa only [hs.1] using hp
-  · rw [if_neg hdiv] at hs
+  · rw [ite_eq_right hdiv] at hs
     rw [hs.1]
     exact Int.ofNat_ne_zero.mpr (Nat.ne_of_gt (Int.gcd_pos_of_ne_zero_left _ hp))
 
@@ -540,13 +540,13 @@ private theorem crossCount_negateRow (M : Matrix Int n m)
     · subst row
       simp
     · simp only [Matrix.getElem_pair_eq_nested]
-      rw [Matrix.getElem_rowScale, if_neg hne]
+      rw [Matrix.getElem_rowScale, ite_eq_right hne]
   · apply List.foldl_add_congr
     intro col _
     simp only [Matrix.getElem_pair_eq_nested]
-    rw [Matrix.getElem_rowScale, if_pos rfl, Int.neg_mul, Int.one_mul]
+    rw [Matrix.getElem_rowScale, ite_eq_left rfl, Int.neg_mul, Int.one_mul]
     by_cases hlt : pivotCol.val < col.val
-    · by_cases hz : M[pivotRow][col] = 0 <;> simp [hlt, hz]
+    · by_cases hz : M[pivotRow][col] = 0 <;> simp [hlt]
     · simp [hlt]
 
 private theorem measure_negateRow (M : Matrix Int n m)
@@ -556,7 +556,7 @@ private theorem measure_negateRow (M : Matrix Int n m)
   unfold reductionMeasure
   rw [crossCount_negateRow]
   simp only [Matrix.getElem_pair_eq_nested]
-  rw [Matrix.getElem_rowScale, if_pos rfl, Int.neg_mul, Int.one_mul, Int.natAbs_neg]
+  rw [Matrix.getElem_rowScale, ite_eq_left rfl, Int.neg_mul, Int.one_mul, Int.natAbs_neg]
 
 private theorem reduceFuel_reduced (ops : Accumulator α n m)
     (pivotRow : Fin n) (pivotCol : Fin m) (fuel : Nat) (s : Result α n m)
@@ -604,7 +604,7 @@ private theorem reduceFuel_reduced (ops : Accumulator α n m)
                   -s.matrix[(pivotRow, pivotCol)] := by
                 dsimp only [normalized]
                 simp only [Matrix.getElem_pair_eq_nested]
-                rw [Matrix.getElem_rowScale, if_pos rfl, Int.neg_mul, Int.one_mul]
+                rw [Matrix.getElem_rowScale, ite_eq_left rfl, Int.neg_mul, Int.one_mul]
               have hp' : normalized.matrix[(pivotRow, pivotCol)] ≠ 0 := by
                 rw [hpivot]
                 omega
@@ -617,7 +617,7 @@ private theorem reduceFuel_reduced (ops : Accumulator α n m)
                 · intro row hr
                   dsimp only [normalized]
                   simp only [Matrix.getElem_pair_eq_nested]
-                  rw [Matrix.getElem_rowScale, if_neg (by
+                  rw [Matrix.getElem_rowScale, ite_eq_right (by
                     intro heq
                     subst row
                     omega)]
@@ -626,7 +626,7 @@ private theorem reduceFuel_reduced (ops : Accumulator α n m)
                 · intro col hc
                   dsimp only [normalized]
                   simp only [Matrix.getElem_pair_eq_nested]
-                  rw [Matrix.getElem_rowScale, if_pos rfl]
+                  rw [Matrix.getElem_rowScale, ite_eq_left rfl]
                   have hz := findRow?_none hrow col hc
                   simp only [Matrix.getElem_pair_eq_nested] at hz
                   rw [hz]
@@ -637,7 +637,7 @@ private theorem reduceFuel_reduced (ops : Accumulator α n m)
                 have hcolumnZero : normalized.matrix[(q.1, pivotCol)] = 0 := by
                   dsimp only [normalized]
                   simp only [Matrix.getElem_pair_eq_nested]
-                  rw [Matrix.getElem_rowScale, if_neg (by
+                  rw [Matrix.getElem_rowScale, ite_eq_right (by
                     intro heq
                     have := congrArg Fin.val heq
                     omega)]
@@ -646,7 +646,7 @@ private theorem reduceFuel_reduced (ops : Accumulator α n m)
                 have hrowZero : normalized.matrix[(pivotRow, q.2)] = 0 := by
                   dsimp only [normalized]
                   simp only [Matrix.getElem_pair_eq_nested]
-                  rw [Matrix.getElem_rowScale, if_pos rfl]
+                  rw [Matrix.getElem_rowScale, ite_eq_left rfl]
                   have hz := findRow?_none hrow q.2 hs.2.1
                   simp only [Matrix.getElem_pair_eq_nested] at hz
                   rw [hz]
@@ -822,17 +822,17 @@ private theorem swapRows_prefix (ops : Accumulator α n m) {s : Result α n m}
     (h : Prefix s) (i j : Fin n) (hi : s.diag.length ≤ i.val)
     (hj : s.diag.length ≤ j.val) : Prefix (swapRows ops s i j) := by
   by_cases hij : i = j
-  · rw [swapRows, if_pos hij]
+  · rw [swapRows, ite_eq_left hij]
     exact h
-  · apply h.transport (by rw [swapRows, if_neg hij])
+  · apply h.transport (by rw [swapRows, ite_eq_right hij])
     · intro row col hsmall
-      rw [swapRows, if_neg hij]
+      rw [swapRows, ite_eq_right hij]
       dsimp only
       simp only [Matrix.getElem_pair_eq_nested, Matrix.getElem_rowSwap]
       by_cases hrj : row = j
       · subst row
         have hc : col.val < s.diag.length := by omega
-        rw [if_pos rfl]
+        rw [ite_eq_left rfl]
         have hji : j.val ≠ col.val := by omega
         have hii : i.val ≠ col.val := by omega
         have hzj : s.matrix[j][col] = 0 := by
@@ -842,11 +842,11 @@ private theorem swapRows_prefix (ops : Accumulator α n m) {s : Result α n m}
           simpa only [Matrix.getElem_pair_eq_nested] using
             h.offDiagonal i col (Or.inr hc) hii
         rw [hzi, hzj]
-      · rw [if_neg hrj]
+      · rw [ite_eq_right hrj]
         by_cases hri : row = i
         · subst row
           have hc : col.val < s.diag.length := by omega
-          rw [if_pos rfl]
+          rw [ite_eq_left rfl]
           have hijc : i.val ≠ col.val := by omega
           have hjc : j.val ≠ col.val := by omega
           have hzi : s.matrix[i][col] = 0 := by
@@ -856,36 +856,36 @@ private theorem swapRows_prefix (ops : Accumulator α n m) {s : Result α n m}
             simpa only [Matrix.getElem_pair_eq_nested] using
               h.offDiagonal j col (Or.inr hc) hjc
           rw [hzj, hzi]
-        · rw [if_neg hri]
+        · rw [ite_eq_right hri]
     · intro d hd row col hr hc
-      rw [swapRows, if_neg hij]
+      rw [swapRows, ite_eq_right hij]
       dsimp only
       simp only [Matrix.getElem_pair_eq_nested, Matrix.getElem_rowSwap]
       by_cases hrj : row = j
-      · rw [if_pos hrj]
+      · rw [ite_eq_left hrj]
         simpa only [Matrix.getElem_pair_eq_nested] using h.dividesTail d hd i col hi hc
-      · rw [if_neg hrj]
+      · rw [ite_eq_right hrj]
         by_cases hri : row = i
-        · rw [if_pos hri]
+        · rw [ite_eq_left hri]
           simpa only [Matrix.getElem_pair_eq_nested] using h.dividesTail d hd j col hj hc
-        · rw [if_neg hri]
+        · rw [ite_eq_right hri]
           simpa only [Matrix.getElem_pair_eq_nested] using h.dividesTail d hd row col hr hc
 
 private theorem swapCols_prefix (ops : Accumulator α n m) {s : Result α n m}
     (h : Prefix s) (i j : Fin m) (hi : s.diag.length ≤ i.val)
     (hj : s.diag.length ≤ j.val) : Prefix (swapCols ops s i j) := by
   by_cases hij : i = j
-  · rw [swapCols, if_pos hij]
+  · rw [swapCols, ite_eq_left hij]
     exact h
-  · apply h.transport (by rw [swapCols, if_neg hij])
+  · apply h.transport (by rw [swapCols, ite_eq_right hij])
     · intro row col hsmall
-      rw [swapCols, if_neg hij]
+      rw [swapCols, ite_eq_right hij]
       dsimp only
       simp only [Matrix.getElem_pair_eq_nested, Matrix.getElem_colSwap]
       by_cases hcj : col = j
       · subst col
         have hr : row.val < s.diag.length := by omega
-        rw [if_pos rfl]
+        rw [ite_eq_left rfl]
         have hji : row.val ≠ j.val := by omega
         have hii : row.val ≠ i.val := by omega
         have hzj : s.matrix[row][j] = 0 := by
@@ -895,11 +895,11 @@ private theorem swapCols_prefix (ops : Accumulator α n m) {s : Result α n m}
           simpa only [Matrix.getElem_pair_eq_nested] using
             h.offDiagonal row i (Or.inl hr) hii
         rw [hzi, hzj]
-      · rw [if_neg hcj]
+      · rw [ite_eq_right hcj]
         by_cases hci : col = i
         · subst col
           have hr : row.val < s.diag.length := by omega
-          rw [if_pos rfl]
+          rw [ite_eq_left rfl]
           have hijr : row.val ≠ i.val := by omega
           have hjr : row.val ≠ j.val := by omega
           have hzi : s.matrix[row][i] = 0 := by
@@ -909,19 +909,19 @@ private theorem swapCols_prefix (ops : Accumulator α n m) {s : Result α n m}
             simpa only [Matrix.getElem_pair_eq_nested] using
               h.offDiagonal row j (Or.inl hr) hjr
           rw [hzj, hzi]
-        · rw [if_neg hci]
+        · rw [ite_eq_right hci]
     · intro d hd row col hr hc
-      rw [swapCols, if_neg hij]
+      rw [swapCols, ite_eq_right hij]
       dsimp only
       simp only [Matrix.getElem_pair_eq_nested, Matrix.getElem_colSwap]
       by_cases hcj : col = j
-      · rw [if_pos hcj]
+      · rw [ite_eq_left hcj]
         simpa only [Matrix.getElem_pair_eq_nested] using h.dividesTail d hd row i hr hi
-      · rw [if_neg hcj]
+      · rw [ite_eq_right hcj]
         by_cases hci : col = i
-        · rw [if_pos hci]
+        · rw [ite_eq_left hci]
           simpa only [Matrix.getElem_pair_eq_nested] using h.dividesTail d hd row j hr hj
-        · rw [if_neg hci]
+        · rw [ite_eq_right hci]
           simpa only [Matrix.getElem_pair_eq_nested] using h.dividesTail d hd row col hr hc
 
 private theorem dvd_linear {d x y a b : Int} (hx : d ∣ x) (hy : d ∣ y) :
@@ -942,23 +942,23 @@ private theorem rowAdd_prefix {s : Result α n m} (h : Prefix s)
     simp only [Matrix.getElem_pair_eq_nested, Matrix.getElem_rowAdd]
     by_cases hrd : row = dst
     · subst row
-      rw [if_pos rfl]
+      rw [ite_eq_left rfl]
       have hc : col.val < s.diag.length := by omega
       have hz : s.matrix[src][col] = 0 := by
         simpa only [Matrix.getElem_pair_eq_nested] using
           h.offDiagonal src col (Or.inr hc) (by omega)
       rw [hz, Int.mul_zero, Int.add_zero]
-    · rw [if_neg hrd]
+    · rw [ite_eq_right hrd]
   · intro d hd row col hr hc
     simp only [Matrix.getElem_pair_eq_nested, Matrix.getElem_rowAdd]
     by_cases hrd : row = dst
-    · rw [if_pos hrd]
+    · rw [ite_eq_left hrd]
       simpa only [Int.one_mul] using dvd_linear (a := 1) (b := c)
         (by simpa only [Matrix.getElem_pair_eq_nested] using
           h.dividesTail d hd dst col hdst hc)
         (by simpa only [Matrix.getElem_pair_eq_nested] using
           h.dividesTail d hd src col hsrc hc)
-    · rw [if_neg hrd]
+    · rw [ite_eq_right hrd]
       simpa only [Matrix.getElem_pair_eq_nested] using h.dividesTail d hd row col hr hc
 
 private theorem colAdd_prefix {s : Result α n m} (h : Prefix s)
@@ -974,24 +974,24 @@ private theorem colAdd_prefix {s : Result α n m} (h : Prefix s)
     simp only [Matrix.getElem_pair_eq_nested, Matrix.getElem_colAdd]
     by_cases hcd : col = dst
     · subst col
-      rw [if_pos rfl]
+      rw [ite_eq_left rfl]
       have hr : row.val < s.diag.length := by omega
       have hz : s.matrix[row][src] = 0 := by
         simpa only [Matrix.getElem_pair_eq_nested] using
           h.offDiagonal row src (Or.inl hr) (by omega)
       rw [hz, Int.mul_zero, Int.add_zero]
-    · rw [if_neg hcd]
+    · rw [ite_eq_right hcd]
   · intro d hd row col hr hc
     simp only [Matrix.getElem_pair_eq_nested, Matrix.getElem_colAdd]
     by_cases hcd : col = dst
     · subst col
-      rw [if_pos rfl]
+      rw [ite_eq_left rfl]
       simpa only [Int.one_mul] using dvd_linear (a := 1) (b := c)
         (by simpa only [Matrix.getElem_pair_eq_nested] using
           h.dividesTail d hd row dst hr hdst)
         (by simpa only [Matrix.getElem_pair_eq_nested] using
           h.dividesTail d hd row src hr hsrc)
-    · rw [if_neg hcd]
+    · rw [ite_eq_right hcd]
       simpa only [Matrix.getElem_pair_eq_nested] using h.dividesTail d hd row col hr hc
 
 private theorem combineRows_prefix {s : Result α n m} (h : Prefix s)
@@ -1007,7 +1007,7 @@ private theorem combineRows_prefix {s : Result α n m} (h : Prefix s)
     simp only [Matrix.getElem_pair_eq_nested, Hermite.getElem_combineRows]
     by_cases hri : row = i
     · subst row
-      rw [if_pos rfl]
+      rw [ite_eq_left rfl]
       have hc : col.val < s.diag.length := by omega
       have hzi : s.matrix[i][col] = 0 := by
         simpa only [Matrix.getElem_pair_eq_nested] using
@@ -1016,10 +1016,10 @@ private theorem combineRows_prefix {s : Result α n m} (h : Prefix s)
         simpa only [Matrix.getElem_pair_eq_nested] using
           h.offDiagonal j col (Or.inr hc) (by omega)
       simp only [hzi, hzj, Int.mul_zero, Int.zero_add]
-    · rw [if_neg hri]
+    · rw [ite_eq_right hri]
       by_cases hrj : row = j
       · subst row
-        rw [if_pos rfl]
+        rw [ite_eq_left rfl]
         have hc : col.val < s.diag.length := by omega
         have hzi : s.matrix[i][col] = 0 := by
           simpa only [Matrix.getElem_pair_eq_nested] using
@@ -1028,25 +1028,25 @@ private theorem combineRows_prefix {s : Result α n m} (h : Prefix s)
           simpa only [Matrix.getElem_pair_eq_nested] using
             h.offDiagonal j col (Or.inr hc) (by omega)
         simp only [hzi, hzj, Int.mul_zero, Int.zero_add]
-      · rw [if_neg hrj]
+      · rw [ite_eq_right hrj]
   · intro q hq row col hr hc
     simp only [Matrix.getElem_pair_eq_nested, Hermite.getElem_combineRows]
     by_cases hri : row = i
-    · rw [if_pos hri]
+    · rw [ite_eq_left hri]
       exact dvd_linear
         (by simpa only [Matrix.getElem_pair_eq_nested] using
           h.dividesTail q hq i col hi hc)
         (by simpa only [Matrix.getElem_pair_eq_nested] using
           h.dividesTail q hq j col hj hc)
-    · rw [if_neg hri]
+    · rw [ite_eq_right hri]
       by_cases hrj : row = j
-      · rw [if_pos hrj]
+      · rw [ite_eq_left hrj]
         exact dvd_linear
           (by simpa only [Matrix.getElem_pair_eq_nested] using
             h.dividesTail q hq i col hi hc)
           (by simpa only [Matrix.getElem_pair_eq_nested] using
             h.dividesTail q hq j col hj hc)
-      · rw [if_neg hrj]
+      · rw [ite_eq_right hrj]
         simpa only [Matrix.getElem_pair_eq_nested] using
           h.dividesTail q hq row col hr hc
 
@@ -1063,7 +1063,7 @@ private theorem combineCols_prefix {s : Result α n m} (h : Prefix s)
     simp only [Matrix.getElem_pair_eq_nested, Hermite.getElem_combineCols]
     by_cases hci : col = i
     · subst col
-      rw [if_pos rfl]
+      rw [ite_eq_left rfl]
       have hr : row.val < s.diag.length := by omega
       have hzi : s.matrix[row][i] = 0 := by
         simpa only [Matrix.getElem_pair_eq_nested] using
@@ -1072,10 +1072,10 @@ private theorem combineCols_prefix {s : Result α n m} (h : Prefix s)
         simpa only [Matrix.getElem_pair_eq_nested] using
           h.offDiagonal row j (Or.inl hr) (by omega)
       simp only [hzi, hzj, Int.mul_zero, Int.zero_add]
-    · rw [if_neg hci]
+    · rw [ite_eq_right hci]
       by_cases hcj : col = j
       · subst col
-        rw [if_pos rfl]
+        rw [ite_eq_left rfl]
         have hr : row.val < s.diag.length := by omega
         have hzi : s.matrix[row][i] = 0 := by
           simpa only [Matrix.getElem_pair_eq_nested] using
@@ -1084,25 +1084,25 @@ private theorem combineCols_prefix {s : Result α n m} (h : Prefix s)
           simpa only [Matrix.getElem_pair_eq_nested] using
             h.offDiagonal row j (Or.inl hr) (by omega)
         simp only [hzi, hzj, Int.mul_zero, Int.zero_add]
-      · rw [if_neg hcj]
+      · rw [ite_eq_right hcj]
   · intro q hq row col hr hc
     simp only [Matrix.getElem_pair_eq_nested, Hermite.getElem_combineCols]
     by_cases hci : col = i
-    · rw [if_pos hci]
+    · rw [ite_eq_left hci]
       exact dvd_linear
         (by simpa only [Matrix.getElem_pair_eq_nested] using
           h.dividesTail q hq row i hr hi)
         (by simpa only [Matrix.getElem_pair_eq_nested] using
           h.dividesTail q hq row j hr hj)
-    · rw [if_neg hci]
+    · rw [ite_eq_right hci]
       by_cases hcj : col = j
-      · rw [if_pos hcj]
+      · rw [ite_eq_left hcj]
         exact dvd_linear
           (by simpa only [Matrix.getElem_pair_eq_nested] using
             h.dividesTail q hq row i hr hi)
           (by simpa only [Matrix.getElem_pair_eq_nested] using
             h.dividesTail q hq row j hr hj)
-      · rw [if_neg hcj]
+      · rw [ite_eq_right hcj]
         simpa only [Matrix.getElem_pair_eq_nested] using
           h.dividesTail q hq row col hr hc
 
@@ -1118,21 +1118,21 @@ private theorem rowScale_prefix {s : Result α n m} (h : Prefix s)
     simp only [Matrix.getElem_pair_eq_nested, Matrix.getElem_rowScale]
     by_cases hri : row = i
     · subst row
-      rw [if_pos rfl]
+      rw [ite_eq_left rfl]
       have hc : col.val < s.diag.length := by omega
       have hz : s.matrix[i][col] = 0 := by
         simpa only [Matrix.getElem_pair_eq_nested] using
           h.offDiagonal i col (Or.inr hc) (by omega)
       rw [hz, Int.mul_zero]
-    · rw [if_neg hri]
+    · rw [ite_eq_right hri]
   · intro q hq row col hr hc
     simp only [Matrix.getElem_pair_eq_nested, Matrix.getElem_rowScale]
     by_cases hri : row = i
-    · rw [if_pos hri]
+    · rw [ite_eq_left hri]
       exact Int.dvd_mul_of_dvd_right (b := c) (by
         simpa only [Matrix.getElem_pair_eq_nested] using
           h.dividesTail q hq i col hi hc)
-    · rw [if_neg hri]
+    · rw [ite_eq_right hri]
       simpa only [Matrix.getElem_pair_eq_nested] using
         h.dividesTail q hq row col hr hc
 
@@ -1267,11 +1267,11 @@ private theorem Prefix.appendPivot {s : Result α n m} (h : Prefix s)
     simp only [List.length_append, List.length_singleton] at hi
     by_cases hold : i < s.diag.length
     · have hd := h.diagonal i hold
-      rw [List.getElem_append, dif_pos hold]
+      rw [List.getElem_append, dite_eq_left hold]
       exact hd
     · have hieq : i = s.diag.length := by omega
       subst i
-      simp [List.getElem_append, pivotRow, pivotCol, p]
+      simp
   · intro row col hsmall hne
     simp only [List.length_append, List.length_singleton] at hsmall
     by_cases hrow : row.val < s.diag.length
@@ -1293,7 +1293,7 @@ private theorem Prefix.appendPivot {s : Result α n m} (h : Prefix s)
   · intro i hi
     simp only [List.length_append, List.length_singleton] at hi
     by_cases hold : i < s.diag.length
-    · rw [List.getElem_append, dif_pos hold]
+    · rw [List.getElem_append, dite_eq_left hold]
       exact h.positive i hold
     · have hieq : i = s.diag.length := by omega
       subst i
@@ -1301,19 +1301,19 @@ private theorem Prefix.appendPivot {s : Result α n m} (h : Prefix s)
   · intro i hi
     simp only [List.length_append, List.length_singleton] at hi
     by_cases hold : i + 1 < s.diag.length
-    · rw [List.getElem_append, dif_pos (by omega), List.getElem_append, dif_pos hold]
+    · rw [List.getElem_append, dite_eq_left (by omega), List.getElem_append, dite_eq_left hold]
       exact h.chain i hold
     · have heq : i + 1 = s.diag.length := by omega
       have hiold : i < s.diag.length := by omega
       have hd := h.dividesTail i hiold pivotRow pivotCol (by simp [pivotRow])
         (by simp [pivotCol])
-      rw [List.getElem_append, dif_pos hiold, List.getElem_append, dif_neg hold]
+      rw [List.getElem_append, dite_eq_left hiold, List.getElem_append, dite_eq_right hold]
       simpa [heq, pivotRow, pivotCol, p] using hd
   · intro i hi row col hr hc
     simp only [List.length_append, List.length_singleton] at hi hr hc
     by_cases hold : i < s.diag.length
     · have hd := h.dividesTail i hold row col (by omega) (by omega)
-      rw [List.getElem_append, dif_pos hold]
+      rw [List.getElem_append, dite_eq_left hold]
       exact hd
     · have hieq : i = s.diag.length := by omega
       subst i
@@ -1331,7 +1331,7 @@ private theorem Prefix.matrix_eq_diag {s : Result α n m} (h : Prefix s)
   · by_cases hr : row.val < s.diag.length
     · have hm := h.diagonal row.val hr
       simp only [Matrix.getElem_pair_eq_nested] at hm
-      rw [Matrix.getElem_diagMatrix, dif_pos ⟨hij, hr⟩]
+      rw [Matrix.getElem_diagMatrix, dite_eq_left ⟨hij, hr⟩]
       have hm' : s.matrix[row][col] = s.diag[row.val] := by
         have hrow : (⟨row.val, Nat.lt_of_lt_of_le hr h.length_le_n⟩ : Fin n) = row :=
           Fin.ext rfl
@@ -1372,10 +1372,10 @@ private theorem swapRows_pivot (ops : Accumulator α n m) (s : Result α n m)
     (swapRows ops s target source).matrix[(target, col)] = s.matrix[(source, col)] := by
   by_cases h : target = source
   · subst source
-    rw [swapRows, if_pos rfl]
-  · rw [swapRows, if_neg h]
+    rw [swapRows, ite_eq_left rfl]
+  · rw [swapRows, ite_eq_right h]
     dsimp only
-    simp only [Matrix.getElem_pair_eq_nested, Matrix.getElem_rowSwap, if_neg h]
+    simp only [Matrix.getElem_pair_eq_nested, Matrix.getElem_rowSwap, ite_eq_right h]
     simp
 
 private theorem swapCols_pivot (ops : Accumulator α n m) (s : Result α n m)
@@ -1383,10 +1383,10 @@ private theorem swapCols_pivot (ops : Accumulator α n m) (s : Result α n m)
     (swapCols ops s target source).matrix[(row, target)] = s.matrix[(row, source)] := by
   by_cases h : target = source
   · subst source
-    rw [swapCols, if_pos rfl]
-  · rw [swapCols, if_neg h]
+    rw [swapCols, ite_eq_left rfl]
+  · rw [swapCols, ite_eq_right h]
     dsimp only
-    simp only [Matrix.getElem_pair_eq_nested, Matrix.getElem_colSwap, if_neg h]
+    simp only [Matrix.getElem_pair_eq_nested, Matrix.getElem_colSwap, ite_eq_right h]
     simp
 
 private theorem moved_pivot (ops : Accumulator α n m) (s : Result α n m)
@@ -1438,8 +1438,8 @@ theorem runFuel_complete (ops : Accumulator α n m) (fuel : Nat)
               (by rw [swapRows_diag]; omega)
             let reduced := reduce ops moved pivotRow pivotCol
             have hprefix := reduce_prefix ops hmoved pivotRow pivotCol
-              (by simpa [reduce_diag, moved, swapCols_diag, swapRows_diag, pivotRow])
-              (by simpa [reduce_diag, moved, swapCols_diag, swapRows_diag, pivotCol])
+              (by simp [swapCols_diag, swapRows_diag, pivotRow])
+              (by simp [swapCols_diag, swapRows_diag, pivotCol])
             have hreduced := reduce_reduced ops moved pivotRow pivotCol hpivot
             simp only
             split
@@ -1467,7 +1467,7 @@ theorem runFuel_complete (ops : Accumulator α n m) (fuel : Nat)
                 omega
               have hcomplete := ih happend hnext
               rw [hrow, hcol] at hcomplete
-              rw [if_neg hpnonzero]
+              rw [ite_eq_right hpnonzero]
               simpa [reduced, hpnonzero] using hcomplete
         · exact ⟨h, h.matrix_eq_diag_of_col_full (by omega)⟩
       · exact ⟨h, h.matrix_eq_diag_of_row_full (by omega)⟩
@@ -1560,37 +1560,37 @@ private theorem reduceFuel_same (ops : Accumulator α n m)
       rcases h with ⟨rfl, rfl⟩
       rw [reduceFuel, reduceFuel]
       by_cases hp : matrix[(pivotRow, pivotCol)] = 0
-      · rw [if_pos hp, if_pos hp]
+      · rw [ite_eq_left hp, ite_eq_left hp]
         exact ⟨rfl, rfl⟩
-      · rw [if_neg hp, if_neg hp]
+      · rw [ite_eq_right hp, ite_eq_right hp]
         cases hc : findColumn? matrix pivotRow pivotCol with
         | some row =>
-            simp only [hc]
+            simp only []
             exact ih (clearColumn_same ops ops' ⟨rfl, rfl⟩ pivotRow row pivotCol)
         | none =>
-            simp only [hc]
+            simp only []
             cases hr : findRow? matrix pivotRow pivotCol with
             | some col =>
-                simp only [hr]
+                simp only []
                 exact ih (clearRow_same ops ops' ⟨rfl, rfl⟩ pivotRow pivotCol col)
             | none =>
-                simp only [hr]
+                simp only []
                 by_cases hn : matrix[(pivotRow, pivotCol)] < 0
-                · rw [if_pos hn, if_pos hn]
+                · rw [ite_eq_left hn, ite_eq_left hn]
                   cases hb : findBad? (Matrix.rowScale matrix pivotRow (-1))
                       pivotRow pivotCol
                       (Matrix.rowScale matrix pivotRow (-1))[(pivotRow, pivotCol)] with
-                  | none => simp only [hb]; exact ⟨rfl, rfl⟩
+                  | none => simp only []; exact ⟨rfl, rfl⟩
                   | some q =>
-                      simp only [hb]
+                      simp only []
                       exact ih (repair_same ops ops' ⟨rfl, rfl⟩
                         pivotRow q.1 pivotCol q.2)
-                · rw [if_neg hn, if_neg hn]
+                · rw [ite_eq_right hn, ite_eq_right hn]
                   cases hb : findBad? matrix pivotRow pivotCol
                       matrix[(pivotRow, pivotCol)] with
-                  | none => simp only [hb]; exact ⟨rfl, rfl⟩
+                  | none => simp only []; exact ⟨rfl, rfl⟩
                   | some q =>
-                      simp only [hb]
+                      simp only []
                       exact ih (repair_same ops ops' ⟨rfl, rfl⟩
                         pivotRow q.1 pivotCol q.2)
 
@@ -1614,13 +1614,13 @@ private theorem runFuel_same (ops : Accumulator α n m)
       rcases h with ⟨rfl, rfl⟩
       rw [runFuel, runFuel]
       by_cases hn : diag.length < n
-      · rw [dif_pos hn, dif_pos hn]
+      · rw [dite_eq_left hn, dite_eq_left hn]
         by_cases hm : diag.length < m
-        · rw [dif_pos hm, dif_pos hm]
+        · rw [dite_eq_left hm, dite_eq_left hm]
           cases hp : findPivot? matrix diag.length with
-          | none => simp only [hp]; exact ⟨rfl, rfl⟩
+          | none => simp only []; exact ⟨rfl, rfl⟩
           | some q =>
-              simp only [hp]
+              simp only []
               let pivotRow : Fin n := ⟨diag.length, hn⟩
               let pivotCol : Fin m := ⟨diag.length, hm⟩
               have hmoved := swapCols_same ops ops'
@@ -1633,18 +1633,18 @@ private theorem runFuel_same (ops : Accumulator α n m)
                   (swapCols ops (swapRows ops
                     ({ matrix := matrix, diag := diag, accumulator := acc } : Result α n m)
                     pivotRow q.1) pivotCol q.2) pivotRow pivotCol).matrix[(pivotRow, pivotCol)] = 0
-              · rw [if_pos hz]
+              · rw [ite_eq_left hz]
                 rw [hreduced.matrix] at hz
-                rw [if_pos hz]
+                rw [ite_eq_left hz]
                 exact hreduced
-              · rw [if_neg hz]
+              · rw [ite_eq_right hz]
                 have hz' : (reduce ops'
                     (swapCols ops' (swapRows ops'
                       ({ matrix := matrix, diag := diag, accumulator := acc' } : Result β n m)
                       pivotRow q.1) pivotCol q.2) pivotRow pivotCol).matrix[(pivotRow, pivotCol)] ≠ 0 := by
                   rw [← hreduced.matrix]
                   exact hz
-                rw [if_neg hz']
+                rw [ite_eq_right hz']
                 have hpivot := congrArg (fun M : Matrix Int n m => M[(pivotRow, pivotCol)])
                   hreduced.matrix
                 have hdiag :
@@ -1666,9 +1666,9 @@ private theorem runFuel_same (ops : Accumulator α n m)
                             pivotRow q.1) pivotCol q.2) pivotRow pivotCol).matrix[(pivotRow, pivotCol)]] := by
                   rw [hreduced.diag, hpivot]
                 exact ih ⟨hreduced.matrix, hdiag⟩
-        · rw [dif_neg hm, dif_neg hm]
+        · rw [dite_eq_right hm, dite_eq_right hm]
           exact ⟨rfl, rfl⟩
-      · rw [dif_neg hn, dif_neg hn]
+      · rw [dite_eq_right hn, dite_eq_right hn]
         exact ⟨rfl, rfl⟩
 
 /-- Every companion accumulator follows the same working-matrix and diagonal

@@ -6,7 +6,6 @@ Authors: Kim Morrison
 
 module
 
-public import HexPoly.Conditional
 public import Init.Grind.Ring.Basic
 public import Init.Data.List.Lemmas
 public import HexPoly.Operations
@@ -211,7 +210,7 @@ private theorem arrayDegree?_some_above_eq_zero {coeffs : Array R} {rd i : Nat}
   by_cases hi : i < coeffs.size
   · exact arrayDegreeAux_some_above_eq_zero h hrd hi
   · unfold Array.getD
-    exact HexPoly.dite_eq_right hi
+    exact dite_eq_right hi
 
 /-- When {name}`arrayDegree?` returns `none`, every coefficient is zero. -/
 private theorem arrayDegree?_none_getD_eq_zero {coeffs : Array R} {i : Nat}
@@ -220,14 +219,14 @@ private theorem arrayDegree?_none_getD_eq_zero {coeffs : Array R} {i : Nat}
   by_cases hi : i < coeffs.size
   · exact arrayDegreeAux_none_getD_eq_zero h hi
   · unfold Array.getD
-    exact HexPoly.dite_eq_right hi
+    exact dite_eq_right hi
 
 /-- If every coefficient at an index `≥ bound` is zero (with `bound` positive), the normalized
 degree of `ofCoeffs coeffs` is below `bound`. -/
 private theorem ofCoeffs_degree_getD_lt_of_forall_zero_ge {coeffs : Array R} {bound : Nat}
     (hpos : 0 < bound)
     (hzero : ∀ i, bound ≤ i → coeffs.getD i (Zero.zero : R) = (Zero.zero : R)) :
-    (ofCoeffs coeffs : DensePoly R).degree?.getD 0 < bound := by
+    (ofCoeffs coeffs : DensePoly R).natDegree < bound := by
   let p : DensePoly R := ofCoeffs coeffs
   have hsize_le : p.size ≤ bound := by
     by_cases hle : p.size ≤ bound
@@ -246,10 +245,10 @@ private theorem ofCoeffs_degree_getD_lt_of_forall_zero_ge {coeffs : Array R} {bo
         coeff_last_ne_zero_of_pos_size p hpos_size
       exact False.elim (hpcoeff_ne hpcoeff_zero)
   by_cases hsize_zero : p.size = 0
-  · simp [p, degree?, hsize_zero, hpos]
+  · simp [p, natDegree, degree?, hsize_zero, hpos]
   · have hpos_size : 0 < p.size := Nat.pos_of_ne_zero hsize_zero
-    have hdeg : p.degree?.getD 0 = p.size - 1 := by
-      simp [degree?, hsize_zero]
+    have hdeg : p.natDegree = p.size - 1 := by
+      simp [natDegree, degree?, hsize_zero]
     rw [hdeg]
     omega
 
@@ -629,7 +628,7 @@ private theorem arrayDegreeAux_drop {coeffs : Array R} {c : Nat}
       have hzero : coeffs.getD (c + n) (Zero.zero : R) = (Zero.zero : R) := h _ (by omega)
       show (if coeffs.getD (c + n) (Zero.zero : R) = (Zero.zero : R)
               then arrayDegreeAux coeffs (c + n) else some (c + n)) = arrayDegreeAux coeffs c
-      rw [HexPoly.ite_eq_left hzero]
+      rw [ite_eq_left hzero]
       exact ih
 
 /-- When every coefficient at or above the scan ceiling `ceil` is zero, the bounded scan
@@ -640,7 +639,7 @@ private theorem arrayDegreeAux_eq_arrayDegree? {coeffs : Array R} {ceil : Nat}
   have hsize : ∀ i, coeffs.size ≤ i → coeffs.getD i (Zero.zero : R) = (Zero.zero : R) := by
     intro i hi
     unfold Array.getD
-    exact HexPoly.dite_eq_right (by omega)
+    exact dite_eq_right (by omega)
   rw [arrayDegree?]
   rcases Nat.le_total ceil coeffs.size with hle | hle
   · have hdrop := arrayDegreeAux_drop h (coeffs.size - ceil)
@@ -695,8 +694,8 @@ private theorem divModArrayAuxImplGo_eq [Sub R] [Mul R]
       | some rd =>
           dsimp only
           by_cases hlt : rd < qDegree
-          · rw [HexPoly.ite_eq_left hlt, HexPoly.dite_eq_left hlt]
-          · rw [HexPoly.ite_eq_right hlt, HexPoly.dite_eq_right hlt]
+          · rw [ite_eq_left hlt, dite_eq_left hlt]
+          · rw [ite_eq_right hlt, dite_eq_right hlt]
             rw [subtractScaledShiftImpl_eq rem q (rd - qDegree)
               (scaleLead (rem.getD rd (Zero.zero : R)))]
             apply ih
@@ -721,7 +720,7 @@ private theorem divModArrayAuxImpl_eq [Sub R] [Mul R]
   apply divModArrayAuxImplGo_eq
   intro i hi
   unfold Array.getD
-  exact HexPoly.dite_eq_right (by omega)
+  exact dite_eq_right (by omega)
 
 /-- The remainder-only loop follows exactly the remainder component of the
 quotient-producing implementation, independently of the quotient accumulator. -/
@@ -917,18 +916,18 @@ the array-backed long-division loop returns a remainder strictly smaller in degr
 divisor. -/
 theorem divModArray_remainder_degree_lt_of_pos_degree [Sub R] [Mul R]
     (p q : DensePoly R) (scaleLead : R → R)
-    (hdegree : 0 < q.degree?.getD 0)
+    (hdegree : 0 < q.natDegree)
     (hcancel : ∀ a : R, a - scaleLead a * q.leadingCoeff = (Zero.zero : R)) :
-    (divModArray p q scaleLead).2.degree?.getD 0 < q.degree?.getD 0 := by
+    (divModArray p q scaleLead).2.natDegree < q.natDegree := by
   unfold divModArray
   by_cases hqzero : q.isZero
   · have hqsize : q.size = 0 := by
       simp [isZero] at hqzero
       simpa [size] using hqzero
-    have hdeg_zero : q.degree?.getD 0 = 0 := by
-      simp [degree?, hqsize]
+    have hdeg_zero : q.natDegree = 0 := by
+      simp [natDegree, degree?, hqsize]
     omega
-  · rw [HexPoly.ite_eq_right hqzero]
+  · rw [ite_eq_right hqzero]
     let qDegree := q.size - 1
     let quotientSize := p.size - qDegree
     let quot := Array.replicate quotientSize (Zero.zero : R)
@@ -941,8 +940,8 @@ theorem divModArray_remainder_degree_lt_of_pos_degree [Sub R] [Mul R]
       have hisempty : q.coeffs.isEmpty = true := by
         simpa [Array.isEmpty_iff_size_eq_zero] using hcoeffs
       simpa [isZero] using hisempty)
-    have hdeg_eq : q.degree?.getD 0 = qDegree := by
-      simp [degree?, Nat.ne_of_gt hqpos, qDegree]
+    have hdeg_eq : q.natDegree = qDegree := by
+      simp [natDegree, degree?, Nat.ne_of_gt hqpos, qDegree]
     have hsize : q.toArray.size = qDegree + 1 := by
       have hcoeffpos : 0 < q.coeffs.size := by
         simpa [size] using hqpos
@@ -958,7 +957,7 @@ theorem divModArray_remainder_degree_lt_of_pos_degree [Sub R] [Mul R]
       unfold toArray Array.getD
       have hle : p.coeffs.size ≤ i := by
         simpa [size] using (by omega : p.size ≤ i)
-      rw [HexPoly.dite_eq_right (Nat.not_lt.mpr hle)]
+      rw [dite_eq_right (Nat.not_lt.mpr hle)]
     have hzero_final :
         ∀ i, qDegree ≤ i → qr.2.getD i (Zero.zero : R) = (Zero.zero : R) := by
       dsimp [qr, quot]
@@ -1028,7 +1027,7 @@ private def divModAux [One R] [Add R] [Sub R] [Mul R] [Div R]
 @[expose]
 def divMod [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) : DensePoly R × DensePoly R :=
-  if p.degree?.getD 0 < q.degree?.getD 0 then
+  if p.natDegree < q.natDegree then
     (0, p)
   else
     divModArray p q (fun coeff => coeff / q.leadingCoeff)
@@ -1039,13 +1038,13 @@ libraries discharge `hcancel` once and re-export this as the unconditional
 `divMod_remainder_degree_lt_of_pos_degree` via the `DivModLaws` instance. -/
 theorem divMod_remainder_degree_lt_of_pos_degree_of_cancel [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R)
-    (hdegree : 0 < q.degree?.getD 0)
+    (hdegree : 0 < q.natDegree)
     (hcancel : ∀ a : R, a - (a / q.leadingCoeff) * q.leadingCoeff = (Zero.zero : R)) :
-    (divMod p q).2.degree?.getD 0 < q.degree?.getD 0 := by
+    (divMod p q).2.natDegree < q.natDegree := by
   unfold divMod
-  by_cases hlt : p.degree?.getD 0 < q.degree?.getD 0
+  by_cases hlt : p.natDegree < q.natDegree
   · simp [hlt]
-  · rw [HexPoly.ite_eq_right hlt]
+  · rw [ite_eq_right hlt]
     exact divModArray_remainder_degree_lt_of_pos_degree p q
       (fun coeff => coeff / q.leadingCoeff) hdegree hcancel
 
@@ -1058,12 +1057,12 @@ theorem divMod_remainder_eq_zero_of_degree_zero_of_cancel [One R] [Add R] [Sub R
     (hcancel : ∀ a : R, a - (a / q.leadingCoeff) * q.leadingCoeff = (Zero.zero : R)) :
     (divMod p q).2 = 0 := by
   unfold divMod
-  have hqdeg : q.degree?.getD 0 = 0 := by
-    simp [degree?, hqsize]
-  have hnot_lt : ¬ p.degree?.getD 0 < q.degree?.getD 0 := by
+  have hqdeg : q.natDegree = 0 := by
+    simp [natDegree, degree?, hqsize]
+  have hnot_lt : ¬ p.natDegree < q.natDegree := by
     rw [hqdeg]
     exact Nat.not_lt_zero _
-  rw [HexPoly.ite_eq_right hnot_lt]
+  rw [ite_eq_right hnot_lt]
   unfold divModArray
   have hqzero : q.isZero = false := by
     cases h : q.isZero
@@ -1072,7 +1071,7 @@ theorem divMod_remainder_eq_zero_of_degree_zero_of_cancel [One R] [Add R] [Sub R
         simp [isZero] at h
         simpa [size] using h
       omega
-  rw [HexPoly.ite_eq_right (by simpa [Bool.not_eq_true] using hqzero)]
+  rw [ite_eq_right (by simpa [Bool.not_eq_true] using hqzero)]
   let qDegree := q.size - 1
   let quotientSize := p.size - qDegree
   let quot := Array.replicate quotientSize (Zero.zero : R)
@@ -1096,7 +1095,7 @@ theorem divMod_remainder_eq_zero_of_degree_zero_of_cancel [One R] [Add R] [Sub R
     unfold toArray Array.getD
     have hle : p.coeffs.size ≤ i := by
       simpa [size] using (by omega : p.size ≤ i)
-    rw [HexPoly.dite_eq_right (Nat.not_lt.mpr hle)]
+    rw [dite_eq_right (Nat.not_lt.mpr hle)]
   have hzero_final :
       ∀ i, qDegree ≤ i → qr.2.getD i (Zero.zero : R) = (Zero.zero : R) := by
     dsimp [qr, quot]
@@ -1119,9 +1118,9 @@ theorem divMod_remainder_eq_self_of_size_zero [One R] [Add R] [Sub R] [Mul R] [D
     (p q : DensePoly R) (hqsize : q.size = 0) :
     (divMod p q).2 = p := by
   unfold divMod
-  have hnot_lt : ¬ p.degree?.getD 0 < q.degree?.getD 0 := by
-    simp [degree?, hqsize]
-  rw [HexPoly.ite_eq_right hnot_lt]
+  have hnot_lt : ¬ p.natDegree < q.natDegree := by
+    simp [natDegree, degree?, hqsize]
+  rw [ite_eq_right hnot_lt]
   unfold divModArray
   have hqzero : q.isZero = true := by
     simp [isZero, size] at hqsize ⊢
@@ -1134,9 +1133,9 @@ theorem divMod_eq_zero_self_of_size_zero [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) (hqsize : q.size = 0) :
     divMod p q = (0, p) := by
   unfold divMod
-  have hnot_lt : ¬ p.degree?.getD 0 < q.degree?.getD 0 := by
-    simp [degree?, hqsize]
-  rw [HexPoly.ite_eq_right hnot_lt]
+  have hnot_lt : ¬ p.natDegree < q.natDegree := by
+    simp [natDegree, degree?, hqsize]
+  rw [ite_eq_right hnot_lt]
   unfold divModArray
   have hqzero : q.isZero = true := by
     simp [isZero, size] at hqsize ⊢
@@ -1160,7 +1159,7 @@ quotient. The public specification remains `mod`; the plain GCD's `@[csimp]`
 implementation uses this value-equal worker. -/
 def modImpl [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) : DensePoly R :=
-  if p.degree?.getD 0 < q.degree?.getD 0 then
+  if p.natDegree < q.natDegree then
     p
   else
     let qLead := q.leadingCoeff
@@ -1170,7 +1169,7 @@ def modImpl [One R] [Add R] [Sub R] [Mul R] [Div R]
 private theorem modImpl_eq_mod [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) : modImpl p q = mod p q := by
   unfold modImpl mod divMod
-  by_cases hlt : p.degree?.getD 0 < q.degree?.getD 0
+  by_cases hlt : p.natDegree < q.natDegree
   · simp [hlt]
   · simp only [hlt, ↓reduceIte]
     exact modArray_eq_divModArray_snd p q
@@ -1425,7 +1424,7 @@ class DivModLaws (R : Type u) [Zero R] [DecidableEq R] [One R] [Add R] [Sub R] [
       qr.1 * q + qr.2 = p
   divMod_remainder_degree_lt_of_pos_degree :
     ∀ p q : DensePoly R,
-      0 < q.degree?.getD 0 → (divMod p q).2.degree?.getD 0 < q.degree?.getD 0
+      0 < q.natDegree → (divMod p q).2.natDegree < q.natDegree
   divModMonic_eq_divMod_of_monic :
     ∀ (p q : DensePoly R) (hq : Monic q), divModMonic p q hq = divMod p q
   mod_self_eq_zero :
@@ -1433,7 +1432,7 @@ class DivModLaws (R : Type u) [Zero R] [DecidableEq R] [One R] [Add R] [Sub R] [
   mod_eq_zero_of_dvd :
     ∀ p q : DensePoly R, q ∣ p → p % q = 0
   mod_mod_of_not_pos_degree :
-    ∀ p q : DensePoly R, ¬ 0 < q.degree?.getD 0 → (p % q) % q = p % q
+    ∀ p q : DensePoly R, ¬ 0 < q.natDegree → (p % q) % q = p % q
   mod_eq_mod_of_congr :
     ∀ p q m : DensePoly R, m ∣ (p - q) → p % m = q % m
   mod_add_mod :
@@ -1528,12 +1527,12 @@ theorem mod_eq_divMod [One R] [Add R] [Sub R] [Mul R] [Div R]
   change (divMod (0 : DensePoly S) m).2 = 0
   unfold divMod
   have hzero : (0 : DensePoly S).coeffs = #[] := rfl
-  have hdeg_zero : (0 : DensePoly S).degree?.getD 0 = 0 := by
-    simp [degree?, size, hzero]
+  have hdeg_zero : (0 : DensePoly S).natDegree = 0 := by
+    simp [natDegree, degree?, size, hzero]
   rw [hdeg_zero]
-  by_cases hpos : 0 < m.degree?.getD 0
+  by_cases hpos : 0 < m.natDegree
   · simp [hpos]
-  · rw [HexPoly.ite_eq_right hpos]
+  · rw [ite_eq_right hpos]
     unfold divModArray
     simp [hzero, isZero, size, toArray, divModArrayAux]
 
@@ -1541,7 +1540,7 @@ theorem mod_eq_divMod [One R] [Add R] [Sub R] [Mul R] [Div R]
 `(0, p)` without entering the long-division loop. -/
 theorem divMod_eq_zero_self_of_degree_lt [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) :
-    p.degree?.getD 0 < q.degree?.getD 0 → divMod p q = (0, p) := by
+    p.natDegree < q.natDegree → divMod p q = (0, p) := by
   intro hdeg
   simp [divMod, hdeg]
 
@@ -1555,9 +1554,8 @@ theorem gcd_eq_aux_mod [One R] [Add R] [Sub R] [Mul R] [Div R]
   have hfpos : 0 < f.size := (isZero_eq_false_iff f).mp hf
   have hgpos : 0 < g.size := by omega
   have hg : g.isZero = false := (isZero_eq_false_iff g).mpr hgpos
-  have hdegree : f.degree?.getD 0 < g.degree?.getD 0 := by
-    rw [degree?_eq_some_of_pos_size f hfpos, degree?_eq_some_of_pos_size g hgpos]
-    simp only [Option.getD_some]
+  have hdegree : f.natDegree < g.natDegree := by
+    rw [natDegree_eq_size_sub_one, natDegree_eq_size_sub_one]
     omega
   have hdiv : divMod f g = (0, f) :=
     divMod_eq_zero_self_of_degree_lt f g hdegree
@@ -1596,11 +1594,11 @@ private theorem ofCoeffs_set!_eq_add_monomial {S : Type _}
   · subst n
     rw [array_getD_set!_same]
     · rw [hzero]
-      rw [HexPoly.ite_eq_left rfl]
+      rw [ite_eq_left rfl]
       exact (hzero_add_left coeff).symm
     · exact hshift
   · rw [array_getD_set!_ne]
-    · rw [HexPoly.ite_eq_right hn]
+    · rw [ite_eq_right hn]
       exact (hadd_zero_right (coeffs.getD n (Zero.zero : S))).symm
     · intro h
       exact hn h.symm
@@ -1609,15 +1607,15 @@ private theorem ofCoeffs_set!_eq_add_monomial {S : Type _}
 already has degree below the divisor. -/
 theorem divModArray_eq_zero_self_of_degree_lt [Sub R] [Mul R]
     (p q : DensePoly R) (scaleLead : R → R)
-    (hdeg : p.degree?.getD 0 < q.degree?.getD 0) :
+    (hdeg : p.natDegree < q.natDegree) :
     divModArray p q scaleLead = (0, p) := by
   unfold divModArray
   by_cases hqzero : q.isZero
   · have hqsize : q.size = 0 := by
       simp [isZero] at hqzero
       simpa [size] using hqzero
-    simp [degree?, hqsize] at hdeg
-  · rw [HexPoly.ite_eq_right hqzero]
+    simp [natDegree, degree?, hqsize] at hdeg
+  · rw [ite_eq_right hqzero]
     let qDegree := q.size - 1
     let quotientSize := p.size - qDegree
     let quot := Array.replicate quotientSize (Zero.zero : R)
@@ -1625,12 +1623,12 @@ theorem divModArray_eq_zero_self_of_degree_lt [Sub R] [Mul R]
       have hcoeffs : q.coeffs.size ≠ 0 := by
         simpa [isZero, Array.isEmpty_iff_size_eq_zero] using hqzero
       simpa [size, Nat.pos_iff_ne_zero] using hcoeffs
-    have hqdeg : q.degree?.getD 0 = qDegree := by
-      simp [degree?, qDegree, Nat.ne_of_gt hqpos]
+    have hqdeg : q.natDegree = qDegree := by
+      simp [natDegree, degree?, qDegree, Nat.ne_of_gt hqpos]
     have hpsize_le : p.size ≤ qDegree := by
       by_cases hppos : 0 < p.size
-      · have hpdeg : p.degree?.getD 0 = p.size - 1 := by
-          simp [degree?, Nat.ne_of_gt hppos]
+      · have hpdeg : p.natDegree = p.size - 1 := by
+          simp [natDegree, degree?, Nat.ne_of_gt hppos]
         rw [hpdeg, hqdeg] at hdeg
         omega
       · have hpzero : p.size = 0 := by omega
@@ -1663,11 +1661,11 @@ the executable monic division path agrees with the general {name}`divMod` path a
 degree shortcut. -/
 theorem divModMonic_eq_divMod_of_monic_of_scale [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) (hq : Monic q)
-    (hnot_lt : ¬ p.degree?.getD 0 < q.degree?.getD 0)
+    (hnot_lt : ¬ p.natDegree < q.natDegree)
     (hscale : ∀ a : R, a / q.leadingCoeff = a) :
     divModMonic p q hq = divMod p q := by
   unfold divModMonic divMod
-  rw [HexPoly.ite_eq_right hnot_lt]
+  rw [ite_eq_right hnot_lt]
   exact (divModArray_scaleLead_congr p q (fun a => hscale a)).symm
 
 /-- Division invariant: for positive-degree divisors, {name}`divMod` returns a remainder whose
@@ -1676,7 +1674,7 @@ degree is strictly smaller than the divisor degree. -/
 theorem divMod_remainder_degree_lt_of_pos_degree [One R] [Add R] [Sub R] [Mul R] [Div R]
     [DivModLaws R]
     (p q : DensePoly R) :
-    0 < q.degree?.getD 0 → (divMod p q).2.degree?.getD 0 < q.degree?.getD 0 := by
+    0 < q.natDegree → (divMod p q).2.natDegree < q.natDegree := by
   exact DivModLaws.divMod_remainder_degree_lt_of_pos_degree p q
 
 /-- Monic division agrees with field-style division when the divisor is monic. This is the
@@ -1691,7 +1689,7 @@ theorem divModMonic_eq_divMod_of_monic [One R] [Add R] [Sub R] [Mul R] [Div R]
 /-- A polynomial whose degree is already below the divisor is its own remainder. -/
 theorem mod_eq_self_of_degree_lt [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) :
-    p.degree?.getD 0 < q.degree?.getD 0 → p % q = p := by
+    p.natDegree < q.natDegree → p % q = p := by
   intro hdeg
   have hdiv := divMod_eq_zero_self_of_degree_lt p q hdeg
   exact congrArg Prod.snd hdiv
@@ -1701,7 +1699,7 @@ theorem mod_eq_self_of_degree_lt [One R] [Add R] [Sub R] [Mul R] [Div R]
 theorem mod_mod_of_not_pos_degree [One R] [Add R] [Sub R] [Mul R] [Div R]
     [DivModLaws R]
     (p q : DensePoly R) :
-    ¬ 0 < q.degree?.getD 0 → (p % q) % q = p % q := by
+    ¬ 0 < q.natDegree → (p % q) % q = p % q := by
   exact DivModLaws.mod_mod_of_not_pos_degree p q
 
 /-- The computed remainder has degree below a positive-degree divisor. -/
@@ -1709,7 +1707,7 @@ theorem mod_mod_of_not_pos_degree [One R] [Add R] [Sub R] [Mul R] [Div R]
 theorem mod_degree_lt_of_pos_degree [One R] [Add R] [Sub R] [Mul R] [Div R]
     [DivModLaws R]
     (p q : DensePoly R) :
-    0 < q.degree?.getD 0 → (p % q).degree?.getD 0 < q.degree?.getD 0 := by
+    0 < q.natDegree → (p % q).natDegree < q.natDegree := by
   exact divMod_remainder_degree_lt_of_pos_degree p q
 
 /-- Euclidean division identity: `(p / q) * q + (p % q) = p`. -/
@@ -1738,7 +1736,7 @@ theorem modByMonic_eq_mod [One R] [Add R] [Sub R] [Mul R] [Div R]
     [DivModLaws R]
     (p q : DensePoly R) :
     (p % q) % q = p % q := by
-  by_cases hq : 0 < q.degree?.getD 0
+  by_cases hq : 0 < q.natDegree
   · exact mod_eq_self_of_degree_lt (p % q) q (mod_degree_lt_of_pos_degree p q hq)
   · exact mod_mod_of_not_pos_degree p q hq
 

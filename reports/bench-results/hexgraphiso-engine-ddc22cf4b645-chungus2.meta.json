@@ -1,0 +1,57 @@
+{
+  "fingerprint": "ddc22cf4b645",
+  "host": "chungus2",
+  "source_head": "9a739251d936cc81a38e0cee1e6f8edb13b06721",
+  "toolchain": "leanprover/lean4:v4.34.0-rc2",
+  "cpu": 91,
+  "trials": 3,
+  "aggregation": "per-instance median of each timing column over all three trials",
+  "instances": 98,
+  "dhat": {
+    "run": {
+      "blocks": 60809336,
+      "nodes": 62000,
+      "blocks_per_node": 980.7957419354839
+    },
+    "erun": {
+      "blocks": 60809336,
+      "nodes": 62000,
+      "blocks_per_node": 980.7957419354839
+    }
+  },
+  "mimalloc": {
+    "wrapper": "scripts/bench/graphiso_dhat.c",
+    "wrapper_sha256": "572cd5be17715f575f1ea3507a0fdc07475a90973cb4b6db83421251bd7034f9",
+    "mode": "ad-hoc",
+    "calibration_events": 3,
+    "counts": {
+      "run": {
+        "events": 68206460,
+        "nodes": 62000,
+        "events_per_node": 1100.104193548387
+      },
+      "erun": {
+        "events": 67518459,
+        "nodes": 62000,
+        "events_per_node": 1089.0074032258065
+      }
+    }
+  },
+  "admissions": {
+    "probe": "scripts/bench/graphiso_admissions.c",
+    "fixtures": {
+      "cases": 6233,
+      "classify": 4128,
+      "autoFirst": 3164,
+      "cheap": 3072,
+      "without_sentinel": 0
+    },
+    "campaign": {
+      "cases": 32798,
+      "classify": 56040,
+      "autoFirst": 40247,
+      "cheap": 39889,
+      "without_sentinel": 0
+    }
+  }
+}

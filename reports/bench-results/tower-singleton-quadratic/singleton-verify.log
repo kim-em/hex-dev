@@ -1,0 +1,51 @@
+verifying 49 benchmark(s)...
+  [ok ] Hex.NumberTowerBench.runFromPrimitiveLadder
+  [ok ] Hex.NumberTowerBench.runTowerSMulLadder
+  [ok ] Hex.NumberTowerBench.runTowerNegLadder
+  [ok ] Hex.NumberTowerBench.runTowerMulLadder
+  [ok ] Hex.NumberTowerBench.runOfQAdjoinLadder
+  [ok ] Hex.NumberTowerBench.runTowerSubLadder
+  [ok ] Hex.NumberTowerBench.runTowerInvLadder
+  [ok ] Hex.NumberTowerBench.runTowerAddLadder
+  [ok ] Hex.NumberTowerBench.runPariNfFactor8  [fixed]
+  [ok ] Hex.NumberTowerBench.runToPrimitive  [fixed]
+  [ok ] Hex.NumberTowerBench.runOfQAdjoin  [fixed]
+  [ok ] Hex.NumberTowerBench.runPariNfFactor4  [fixed]
+  [ok ] Hex.NumberTowerBench.runPariNfFactor12  [fixed]
+  [ok ] Hex.NumberTowerBench.runTowerFactorPair2  [fixed]
+  [ok ] Hex.NumberTowerBench.runCheckFactorization  [fixed]
+  [ok ] Hex.NumberTowerBench.runSMul  [fixed]
+  [ok ] Hex.NumberTowerBench.runAdjoin  [fixed]
+  [ok ] Hex.NumberTowerBench.runInv  [fixed]
+  [ok ] Hex.NumberTowerBench.runOneLevelNorm  [fixed]
+  [ok ] Hex.NumberTowerBench.runPariNfFactorOverhead  [fixed]
+  [ok ] Hex.NumberTowerBench.runCoordinateMaps  [fixed]
+  [ok ] Hex.NumberTowerBench.runSplit  [fixed]
+  [ok ] Hex.NumberTowerBench.runSub  [fixed]
+  [ok ] Hex.NumberTowerBench.runTowerFactorPair4  [fixed]
+  [ok ] Hex.NumberTowerBench.runDiv  [fixed]
+  [ok ] Hex.NumberTowerBench.runTowerFactorPair12  [fixed]
+  [ok ] Hex.NumberTowerBench.runRecoverSearch  [fixed]
+  [ok ] Hex.NumberTowerBench.runBasisImages  [fixed]
+  [ok ] Hex.NumberTowerBench.runFlatten  [fixed]
+  [ok ] Hex.NumberTowerBench.runTowerFactorPair8  [fixed]
+  [ok ] Hex.NumberTowerBench.runPariNfFactor6  [fixed]
+  [ok ] Hex.NumberTowerBench.runTowerFactorPair6  [fixed]
+  [ok ] Hex.NumberTowerBench.runFactorRat  [fixed]
+  [ok ] Hex.NumberTowerBench.runAdjoinIdentity  [fixed]
+  [ok ] Hex.NumberTowerBench.runTowerFactorPair3  [fixed]
+  [ok ] Hex.NumberTowerBench.runPariNfFactor2  [fixed]
+  [ok ] Hex.NumberTowerBench.runRecoverPair  [fixed]
+  [ok ] Hex.NumberTowerBench.runPariNfFactor3  [fixed]
+  [ok ] Hex.NumberTowerBench.runTowerDivRecursive  [fixed]
+  [ok ] Hex.NumberTowerBench.runFactorRecursive  [fixed]
+  [ok ] Hex.NumberTowerBench.runMul  [fixed]
+  [ok ] Hex.NumberTowerBench.runTowerCheckFactorization  [fixed]
+  [ok ] Hex.NumberTowerBench.runShiftSearch  [fixed]
+  [ok ] Hex.NumberTowerBench.runCertifies  [fixed]
+  [ok ] Hex.NumberTowerBench.runTowerFactorLadder  [fixed]
+  [ok ] Hex.NumberTowerBench.runFactorRetry  [fixed]
+  [ok ] Hex.NumberTowerBench.runToPrimitiveDense  [fixed]
+  [ok ] Hex.NumberTowerBench.runAdd  [fixed]
+  [ok ] Hex.NumberTowerBench.runNeg  [fixed]
+all 49 benchmark(s) passed

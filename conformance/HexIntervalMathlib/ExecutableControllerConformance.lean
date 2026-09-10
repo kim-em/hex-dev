@@ -62,11 +62,11 @@ def copyMeaning : Program.Meaning ℝ :=
   { operation := copyOp, relation := fun xs z => ∃ x, xs = [x] ∧ z = x }
 
 def config : Rule.Config :=
-  { endpoint, powerWork := { maxExponent := 8 }, exponent := 2,
+  { endpoint, powerWork := { maxExponent := 8 },
     precisionLimits :=
       { endpoint, maxPrecisionMagnitude := 64, maxPrecisionBits := 64,
         maxTemporaryBits := 128 },
-    precision := 0, constant := d 5, extraMeanings := #[copyMeaning] }
+    precision := 0, extraMeanings := #[copyMeaning] }
 
 def node (op : Nat) (args : List Nat) : Node :=
   { domain := Rule.realDomain, op := { index := op },
@@ -74,7 +74,7 @@ def node (op : Nat) (args : List Nat) : Node :=
 
 def program : Program :=
   { operations := Rule.operations.push copyOp,
-    nodes := #[node 0 [], node 0 [], node 2 [0, 1], node 13 [2], node 13 [3]] }
+    nodes := #[node 0 [], node 0 [], node 2 [0, 1], node 14 [2], node 14 [3]] }
 
 def x : NodeId := { index := 0 }
 def y : NodeId := { index := 1 }
@@ -99,7 +99,7 @@ def copySchemaKey : Proof.Key := { rule := copyKey, role := .fact, bodySchema :=
 
 theorem copyRelation {valuation : NodeId → ℝ} {out input : NodeId}
     (meaning : Program.MeaningAt (Rule.meanings config) valuation out
-      { domain := Rule.realDomain, op := { index := 13 }, args := [input] }) :
+      { domain := Rule.realDomain, op := { index := 14 }, args := [input] }) :
     valuation out = valuation input := by
   rcases meaning with ⟨meaning, found, related⟩
   simp [Rule.meanings, Rule.builtinMeanings, config, copyMeaning] at found
@@ -112,7 +112,7 @@ def copySchema : Proof.FactSchema (Rule.semantics config) :=
     prove := fun context _ => match context.assumptions with
       | [input] =>
         if found : context.program.node? context.proposed.node = some
-            { domain := Rule.realDomain, op := { index := 13 }, args := [input.node] } then
+            { domain := Rule.realDomain, op := { index := 14 }, args := [input.node] } then
           if equal : context.proposed.fact = input.fact then
             some ⟨by
               intro valuation model assumptions
@@ -131,7 +131,7 @@ def copyProofPackage : Proof.Package (Rule.semantics config) :=
   { registrations := #[copyRegistration], facts := #[copySchema] }
 
 def proofLimits : Proof.Limits :=
-  { maxPackages := 2, maxSchemas := 13, maxBodyCells := 1,
+  { maxPackages := 2, maxSchemas := 12, maxBodyCells := 1,
     maxDependencies := 2, maxChronology := 3 }
 
 def proofRegistry? : Option (Proof.Registry (Rule.semantics config)) :=
@@ -216,8 +216,8 @@ def copyPackage : Package Hex.Interval
   { Cache := Nat, cache := 0, operations := #[copyOp], handlers := #[copyHandler], measure }
 
 def stateLimits : State.Limits :=
-  { maxOperations := 14, maxNodes := 5, maxRules := 13,
-    maxRegistryEntries := 42, maxReplayFormats := 13, maxArity := 2,
+  { maxOperations := 15, maxNodes := 5, maxRules := 12,
+    maxRegistryEntries := 42, maxReplayFormats := 12, maxArity := 2,
     maxScopeNodes := 0, maxApplications := 3, maxQueueEntries := 4,
     maxActions := 8, maxMatcherVisits := 0, matcherBatchSize := 0,
     maxAcceptedFacts := 3, maxRetainedSuggestions := 0, maxEffort := 0,
@@ -582,7 +582,7 @@ def applicationsOneOver : Bool :=
   | _ => false
 
 def formatsOneOver : Bool :=
-  let small := { stateLimits with maxReplayFormats := 12 }
+  let small := { stateLimits with maxReplayFormats := 11 }
   match buildRegistry (limits := small) with
   | .error (.resource (.state .replayFormats)) => true
   | _ => false

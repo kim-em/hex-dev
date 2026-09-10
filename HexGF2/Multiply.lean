@@ -149,7 +149,7 @@ private theorem xorBoolList_map_decide_eq (M T : Nat) (g : Nat → Bool) :
     xorBoolList ((List.range M).map (fun t => g t && decide (t = T))) =
       if T < M then g T else false := by
   by_cases hT : T < M
-  · rw [if_pos hT]
+  · rw [ite_eq_left hT]
     have hmap : (List.range M).map (fun t => g t && decide (t = T)) =
         (List.range M).map (fun t => g T && decide (t = T)) := by
       apply List.map_congr_left
@@ -158,7 +158,7 @@ private theorem xorBoolList_map_decide_eq (M T : Nat) (g : Nat → Bool) :
       · subst htT; rfl
       · simp [htT]
     rw [hmap, xorBoolList_range_single_decide (g T) hT]
-  · rw [if_neg hT]
+  · rw [ite_eq_right hT]
     have hmap : (List.range M).map (fun t => g t && decide (t = T)) =
         (List.range M).map (fun _ => false) := by
       apply List.map_congr_left
@@ -203,7 +203,7 @@ private theorem xorBoolList_map_decide_add (M s n : Nat) (g : Nat → Bool) :
     xorBoolList ((List.range M).map (fun t => g t && decide (s + t = n))) =
       if s ≤ n then (if n - s < M then g (n - s) else false) else false := by
   by_cases hsn : s ≤ n
-  · rw [if_pos hsn]
+  · rw [ite_eq_left hsn]
     have hmap : (List.range M).map (fun t => g t && decide (s + t = n)) =
         (List.range M).map (fun t => g t && decide (t = n - s)) := by
       apply List.map_congr_left
@@ -214,7 +214,7 @@ private theorem xorBoolList_map_decide_add (M s n : Nat) (g : Nat → Bool) :
       · have hne : ¬ (s + t = n) := by omega
         simp [h, hne]
     rw [hmap, xorBoolList_map_decide_eq M (n - s) g]
-  · rw [if_neg hsn]
+  · rw [ite_eq_right hsn]
     have hmap : (List.range M).map (fun t => g t && decide (s + t = n)) =
         (List.range M).map (fun _ => false) := by
       apply List.map_congr_left
@@ -242,7 +242,7 @@ private theorem clmulCoeffAt_diag (c : Nat) (x y : UInt64) (n : Nat) :
       (fun a b => (wordBitAt x a && wordBitAt y b) && decide (64 * c + a + b = n))
   rw [hswap, clmulCoeffAt_sourcePairCoeff]
   by_cases hlow : n / 64 = c
-  · rw [if_pos hlow]
+  · rw [ite_eq_left hlow]
     unfold clmulSourcePairCoeff
     apply congrArg xorBoolList
     apply List.flatMap_congr_left
@@ -257,7 +257,7 @@ private theorem clmulCoeffAt_diag (c : Nat) (x y : UInt64) (n : Nat) :
     · have h2 : ¬ (a + b = n % 64) := by omega
       simp [h, h2]
   · by_cases hhigh : n / 64 = c + 1
-    · rw [if_neg hlow, if_pos hhigh]
+    · rw [ite_eq_right hlow, ite_eq_left hhigh]
       unfold clmulSourcePairCoeff
       apply congrArg xorBoolList
       apply List.flatMap_congr_left
@@ -271,7 +271,7 @@ private theorem clmulCoeffAt_diag (c : Nat) (x y : UInt64) (n : Nat) :
         simp [h, h2]
       · have h2 : ¬ (a + b = n % 64 + 64) := by omega
         simp [h, h2]
-    · rw [if_neg hlow, if_neg hhigh]
+    · rw [ite_eq_right hlow, ite_eq_right hhigh]
       have hguard :
           (List.range 64).flatMap (fun b =>
             (List.range 64).map (fun a =>
@@ -378,15 +378,15 @@ theorem coeff_mul_diagonal (p q : GF2Poly) (n : Nat) :
           xorBoolList_map_decide_add (64 * q.words.size) s n (fun t => q.coeff t)]
         congr 1
         by_cases hsn : s ≤ n
-        · rw [if_pos hsn, if_pos hsn]
+        · rw [ite_eq_left hsn, ite_eq_left hsn]
           by_cases hlt : n - s < 64 * q.words.size
-          · rw [if_pos hlt]
-          · rw [if_neg hlt]
+          · rw [ite_eq_left hlt]
+          · rw [ite_eq_right hlt]
             symm
             apply coeff_eq_false_of_wordCount_le
             simp only [wordCount]
             omega
-        · rw [if_neg hsn, if_neg hsn]
+        · rw [ite_eq_right hsn, ite_eq_right hsn]
     _ = xorBoolList ((List.range (n + 1)).map (fun s => p.coeff s && q.coeff (n - s))) := by
         have hzero : ∀ s, min (64 * p.words.size) (n + 1) ≤ s →
             (p.coeff s && (if s ≤ n then q.coeff (n - s) else false)) = false := by
@@ -571,7 +571,7 @@ private theorem clmulCoeffAt_degree_add_eq_false_of_not_leading_word
     clmulCoeffAt (i + j) p.words[i]! q.words[j]! (dp + dq) = false := by
   rw [clmulCoeffAt_sourcePairCoeff]
   by_cases hlow : (dp + dq) / 64 = i + j
-  · simp only [if_pos hlow]
+  · simp only [ite_eq_left hlow]
     apply clmulSourcePairCoeff_eq_false_of_forall
     intro a b ha hb hsum
     apply source_pair_and_eq_false_of_not_leading hp hq ha hb
@@ -581,7 +581,7 @@ private theorem clmulCoeffAt_degree_add_eq_false_of_not_leading_word
       | inl hi => exact Or.inl hi
       | inr hj => exact Or.inr (Or.inl hj)
   · by_cases hhigh : (dp + dq) / 64 = i + j + 1
-    · simp only [if_neg hlow, if_pos hhigh]
+    · simp only [ite_eq_right hlow, ite_eq_left hhigh]
       apply clmulSourcePairCoeff_eq_false_of_forall
       intro a b ha hb hsum
       apply source_pair_and_eq_false_of_not_leading hp hq ha hb
@@ -590,7 +590,7 @@ private theorem clmulCoeffAt_degree_add_eq_false_of_not_leading_word
       · cases hnot with
         | inl hi => exact Or.inl hi
         | inr hj => exact Or.inr (Or.inl hj)
-    · simp only [if_neg hlow, if_neg hhigh]
+    · simp only [ite_eq_right hlow, ite_eq_right hhigh]
 
 private theorem clmulCoeffAt_degree_add_leading_word
     {p q : GF2Poly} {dp dq : Nat}
@@ -607,7 +607,7 @@ private theorem clmulCoeffAt_degree_add_leading_word
       have hdp := Nat.div_add_mod dp 64
       have hdq := Nat.div_add_mod dq 64
       omega
-    simp only [if_pos hlow]
+    simp only [ite_eq_left hlow]
     rw [hmod]
     apply clmulSourcePairCoeff_single_active
       (a₀ := dp % 64) (b₀ := dq % 64)
@@ -636,7 +636,7 @@ private theorem clmulCoeffAt_degree_add_leading_word
       have hdpbit : dp % 64 < 64 := Nat.mod_lt dp (by decide : 0 < 64)
       have hdqbit : dq % 64 < 64 := Nat.mod_lt dq (by decide : 0 < 64)
       omega
-    simp only [if_neg hlow, if_pos hhigh]
+    simp only [ite_eq_right hlow, ite_eq_left hhigh]
     rw [hmod]
     apply clmulSourcePairCoeff_single_active
       (a₀ := dp % 64) (b₀ := dq % 64)
@@ -691,7 +691,7 @@ private theorem clmulCoeffAt_above_degree_add_eq_false
     clmulCoeffAt (i + j) p.words[i]! q.words[j]! n = false := by
   rw [clmulCoeffAt_sourcePairCoeff]
   by_cases hlow : n / 64 = i + j
-  · simp only [if_pos hlow]
+  · simp only [ite_eq_left hlow]
     apply clmulSourcePairCoeff_eq_false_of_forall
     intro a b ha hb hsum
     have htotal : 64 * i + a + (64 * j + b) = n := by
@@ -704,7 +704,7 @@ private theorem clmulCoeffAt_above_degree_add_eq_false
       have hqfalse := wordBitAt_getElem!_eq_false_of_degree?_lt hq hb hqgt
       simp [hqfalse]
   · by_cases hhigh : n / 64 = i + j + 1
-    · simp only [if_neg hlow, if_pos hhigh]
+    · simp only [ite_eq_right hlow, ite_eq_left hhigh]
       apply clmulSourcePairCoeff_eq_false_of_forall
       intro a b ha hb hsum
       have htotal : 64 * i + a + (64 * j + b) = n := by
@@ -716,7 +716,7 @@ private theorem clmulCoeffAt_above_degree_add_eq_false
       · have hqgt : dq < 64 * j + b := by omega
         have hqfalse := wordBitAt_getElem!_eq_false_of_degree?_lt hq hb hqgt
         simp [hqfalse]
-    · simp only [if_neg hlow, if_neg hhigh]
+    · simp only [ite_eq_right hlow, ite_eq_right hhigh]
 
 private theorem coeffWords_mulWords_above_degree_add_eq_false
     {p q : GF2Poly} {dp dq n : Nat}

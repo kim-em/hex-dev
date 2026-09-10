@@ -13,3 +13,23 @@ factorization correspondence are proofs rather than executable destinations
 for conformance cases. Precedent:
 status/hex-roots-mathlib.conformance-reviewed and
 status/hex-truncated-series-mathlib.conformance-reviewed.
+
+Phase 3/4 re-attested on 2026-09-05 against commit 155cbfc3b (branch
+tower-phase4), after HexNumberFieldTower completed Phase 4 (#9665, #9667).
+The audit walked every declaration in the library: 332 theorems, one
+structure, 63 definitions and four instances. The computable definitions
+(natPow, intPow, polyPow, evalPoly, reconstruct, coeffSmul, coeffPow,
+coeffZPow, denseBlocks, liftDense, and the Sound/Matches/Represents
+predicates) are fields of the transported Field instance, statement-level
+predicates, or proof support; none is advertised by the SPEC or README as an
+operation, none is registered in any bench, and the executable tower
+operations remain owned by HexNumberFieldTower. No tactic, reifier,
+certificate checker, IO, partial, unsafe, csimp or implemented_by
+redirection exists. The correspondence-only classification (libraries.yml
+correspondence_only: true; SPEC §Correspondence-only classification naming
+HexNumberFieldTower and HexNumberField as the conformance and performance
+owners) therefore stands, and no dedicated conformance, bench, report or
+proof-probe artefact is required. The transported inversion correspondence
+(denote_xgcd_inverse, coeffDenote_inv) was re-proved on the normalized monic
+extended-gcd chain in the same change and builds green; Phases 5 to 7 retain
+their artefacts.

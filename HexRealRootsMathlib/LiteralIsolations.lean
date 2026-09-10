@@ -14,7 +14,7 @@ public section
 # Isolation semantics for literal root counts
 
 This module separates real-root isolation semantics from the executable
-`Hex.sturmCount` and `Hex.rootCount` functions. A `LiteralIsolation` stores an
+`Hex.ZPoly.sturmCount` and `Hex.ZPoly.rootCount` functions. A `LiteralIsolation` stores an
 interval whose supplied count is one; a `LiteralIsolations` stores an ordered
 array of those intervals whose size is a supplied total count. Semantic
 exactness of the two supplied counts is an explicit hypothesis of the

@@ -54,7 +54,7 @@ def evalPoly? (levels : List Level) (f : Array (Array Rat))
 the stored level polynomials. -/
 @[expose]
 def coordsMajorant : (levels : List Level) → Array Rat → Nat
-  | [], data => QAdjoin.ratAbsCeil (data.getD 0 0)
+  | [], data => PolyQuot.ratAbsCeil (data.getD 0 0)
   | level :: lower, data =>
       let lowerDim := levelsDim lower
       let rootBound := 2 ^ cauchyExp level.root.p + 1

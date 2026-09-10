@@ -25,20 +25,20 @@ namespace Evaluation
 /-- Successful executable evaluation of tower coordinates preserves their
 fixed complex value. -/
 theorem evalElem?_sound (T : NumberTower) (a : Elem T)
-    {root : AlgebraicRoot} (h : evalElem? T a = some root) :
+    {root : AlgebraicRoot} (h : evalElem? a = some root) :
     root.toComplex = T.toComplex a := by
   exact (toComplex_eq T a h).symm
 
 /-- Coordinate evaluation succeeds for every validated tower element. -/
 theorem evalElem?_isSome (T : NumberTower) (a : Elem T) :
-    (evalElem? T a).isSome := by
+    (evalElem? a).isSome := by
   simpa [NumberTower.eval?, evalElem?] using eval?_isSome T a
 
 /-- Successful exact tower-polynomial evaluation agrees with semantic
 polynomial evaluation. -/
 theorem evalPoly?_sound (T : NumberTower) (f : Poly T)
     (candidate result : AlgebraicRoot)
-    (h : evalPoly? T f candidate = some result) :
+    (h : evalPoly? f candidate = some result) :
     result.toComplex =
       Polynomial.eval candidate.toComplex (T.toPolynomial f) := by
   rw [toPolynomial_eq_polynomial]
@@ -49,14 +49,14 @@ theorem evalPoly?_sound (T : NumberTower) (f : Poly T)
 polynomial. -/
 theorem vanishesAt?_isSome (T : NumberTower) (f : Poly T)
     (candidate : AlgebraicRoot) :
-    (vanishesAt? T f candidate).isSome := by
+    (vanishesAt? f candidate).isSome := by
   exact rawVanishesAt_isSome T.levels.toList (f.toArray.map coeffs)
     candidate (polyCoords_rawPoly T f)
 
 /-- The total public zero test returns `true` exactly at a semantic root. -/
 theorem vanishesAt?_eq_some_true_iff (T : NumberTower) (f : Poly T)
     (candidate : AlgebraicRoot) :
-    vanishesAt? T f candidate = some true ↔
+    vanishesAt? f candidate = some true ↔
       Polynomial.eval candidate.toComplex (T.toPolynomial f) = 0 := by
   constructor
   · intro h
@@ -229,7 +229,7 @@ private theorem ratListLess_self : ∀ values : List Rat,
     Factor.ratListLess values values = false
   | [] => by simp [Factor.ratListLess]
   | value :: values => by
-      simp [Factor.ratListLess, lt_irrefl value, ratListLess_self values]
+      simp [Factor.ratListLess, ratListLess_self values]
 
 private theorem factorLess_self (f : Array (Array Rat)) :
     Factor.factorLess f f = false := by
@@ -263,7 +263,7 @@ private theorem vanishing_factor_unique {T : NumberTower} {f : Poly T}
       (T.toPolynomial b.1) = 0) :
     a = b := by
   by_contra hab
-  letI : Std.Symm (fun x y : Poly T × Nat => x.1 ≠ y.1) :=
+  let : Std.Symm (fun x y : Poly T × Nat => x.1 ≠ y.1) :=
     ⟨fun _ _ h => h.symm⟩
   have hfactorNe : a.1 ≠ b.1 :=
     (factor_fsts_pairwise r hsound).forall ha hb hab
@@ -321,10 +321,10 @@ private theorem selectFold_no_match (T : NumberTower)
     ∀ (items : List (Poly T × Nat)) (state : Array (Poly T)),
       (∀ entry ∈ items, entry.2 = 1) →
       (∀ entry ∈ items,
-        Evaluation.vanishesAt? T entry.1 candidate = some false) →
+        Evaluation.vanishesAt? entry.1 candidate = some false) →
       items.foldlM (fun selected entry => do
         if entry.2 = 1 then
-          let keep ← Evaluation.vanishesAt? T entry.1 candidate
+          let keep ← Evaluation.vanishesAt? entry.1 candidate
           if keep then some (selected.push entry.1) else some selected
         else
           none) state = some state
@@ -333,8 +333,8 @@ private theorem selectFold_no_match (T : NumberTower)
       rw [List.foldlM_cons]
       have hmultHead := hmult entry (by simp)
       have hfalseHead := hfalse entry (by simp)
-      simp only [hmultHead, ↓reduceIte, hfalseHead, Option.bind_some,
-        Bool.false_eq_true, ↓reduceIte]
+      simp only [hmultHead, ↓reduceIte, hfalseHead,
+        ↓reduceIte]
       apply selectFold_no_match T candidate items state
       · intro other hother
         exact hmult other (by simp [hother])
@@ -346,12 +346,12 @@ private theorem selectFold_unique (T : NumberTower)
     ∀ (items : List (Poly T × Nat)) (state : Array (Poly T)),
       items.Nodup → chosen ∈ items →
       (∀ entry ∈ items, entry.2 = 1) →
-      Evaluation.vanishesAt? T chosen.1 candidate = some true →
+      Evaluation.vanishesAt? chosen.1 candidate = some true →
       (∀ entry ∈ items, entry ≠ chosen →
-        Evaluation.vanishesAt? T entry.1 candidate = some false) →
+        Evaluation.vanishesAt? entry.1 candidate = some false) →
       items.foldlM (fun selected entry => do
         if entry.2 = 1 then
-          let keep ← Evaluation.vanishesAt? T entry.1 candidate
+          let keep ← Evaluation.vanishesAt? entry.1 candidate
           if keep then some (selected.push entry.1) else some selected
         else
           none) state = some (state.push chosen.1)
@@ -361,7 +361,7 @@ private theorem selectFold_unique (T : NumberTower)
       have hmultHead := hmult entry (by simp)
       rcases List.nodup_cons.mp hnodup with ⟨hheadFresh, htailNodup⟩
       rcases List.mem_cons.mp hchosen with rfl | hchosenTail
-      · simp only [hmultHead, ↓reduceIte, htrue, Option.bind_some,
+      · simp only [hmultHead, ↓reduceIte, htrue,
           ↓reduceIte]
         apply selectFold_no_match T candidate items (state.push chosen.1)
         · intro other hother
@@ -376,8 +376,8 @@ private theorem selectFold_unique (T : NumberTower)
           subst entry
           exact hheadFresh hchosenTail
         have hfalseHead := hfalse entry (by simp) hentryNe
-        simp only [hmultHead, ↓reduceIte, hfalseHead, Option.bind_some,
-          Bool.false_eq_true, ↓reduceIte]
+        simp only [hmultHead, ↓reduceIte, hfalseHead,
+          ↓reduceIte]
         apply selectFold_unique T candidate chosen items state htailNodup
           hchosenTail
         · intro other hother
@@ -391,9 +391,9 @@ private theorem selectFactor?_complete (T : NumberTower)
     (chosen : Poly T × Nat)
     (hnodup : factors.toList.Nodup) (hchosen : chosen ∈ factors.toList)
     (hmult : ∀ entry ∈ factors.toList, entry.2 = 1)
-    (htrue : Evaluation.vanishesAt? T chosen.1 candidate = some true)
+    (htrue : Evaluation.vanishesAt? chosen.1 candidate = some true)
     (hfalse : ∀ entry ∈ factors.toList, entry ≠ chosen →
-      Evaluation.vanishesAt? T entry.1 candidate = some false) :
+      Evaluation.vanishesAt? entry.1 candidate = some false) :
     selectFactor? T candidate factors = some chosen.1 := by
   have hfold := selectFold_unique T candidate chosen factors.toList #[]
     hnodup hchosen hmult htrue hfalse
@@ -404,19 +404,17 @@ private theorem selectFactor?_complete (T : NumberTower)
 private theorem levelOfFactor_polynomial (T : NumberTower)
     (candidate : AlgebraicRoot) (selected : Poly T)
     (hmonic : selected.leadingCoeff = 1)
-    (hdegree : 0 < selected.degree?.getD 0) :
+    (hdegree : 0 < selected.natDegree) :
     (levelOfFactor candidate selected).polynomial T.levels.toList =
       selected.toArray.map coeffs := by
-  let d := selected.degree?.getD 0
+  let d := selected.natDegree
+  have hd : selected.size - 1 = d :=
+    (DensePoly.natDegree_eq_size_sub_one selected).symm
   have hsizePos : 0 < selected.size := by
     by_contra hnot
     have hsize : selected.size = 0 := Nat.eq_zero_of_not_pos hnot
-    rw [DensePoly.degree?_eq_none_iff selected |>.mpr hsize] at hdegree
+    rw [DensePoly.natDegree_eq_size_sub_one, hsize] at hdegree
     simp at hdegree
-  have hd : selected.size - 1 = d := by
-    change selected.size - 1 = selected.degree?.getD 0
-    rw [DensePoly.degree?_eq_some_of_pos_size selected hsizePos,
-      Option.getD_some]
   have hsize : selected.size = d + 1 := by omega
   apply Array.ext
   · simp [Level.polynomial, levelOfFactor, d, hsize]
@@ -453,7 +451,7 @@ private theorem levelOfFactor_polynomial (T : NumberTower)
 
 private theorem levelOfFactor_structuralCheck (T : NumberTower)
     (candidate : AlgebraicRoot) (selected : Poly T)
-    (hdegree : 1 < selected.degree?.getD 0) :
+    (hdegree : 1 < selected.natDegree) :
     (levelOfFactor candidate selected).structuralCheck T.dim = true := by
   simp only [Level.structuralCheck, Bool.and_eq_true, decide_eq_true_eq]
   refine ⟨⟨by simpa [levelOfFactor] using hdegree, by
@@ -468,9 +466,9 @@ private theorem extend_factor_isSome (T : NumberTower)
     (hirreducible : PolynomialIrreducible T selected)
     (hvanish : Polynomial.eval candidate.toComplex
       (T.toPolynomial selected) = 0)
-    (hdegree : 1 < selected.degree?.getD 0) :
+    (hdegree : 1 < selected.natDegree) :
     (Internal.extend? T (levelOfFactor candidate selected)).isSome := by
-  have hdegreePos : 0 < selected.degree?.getD 0 := by omega
+  have hdegreePos : 0 < selected.natDegree := by omega
   have hpolynomial := levelOfFactor_polynomial T candidate selected
     hmonic hdegreePos
   have hstruct := levelOfFactor_structuralCheck T candidate selected
@@ -494,14 +492,14 @@ private theorem selectFold_mem (T : NumberTower)
     (state out : Array (Poly T))
     (hrun : items.foldlM (fun selected entry => do
       if entry.2 = 1 then
-        let keep ← Evaluation.vanishesAt? T entry.1 candidate
+        let keep ← Evaluation.vanishesAt? entry.1 candidate
         if keep then some (selected.push entry.1) else some selected
       else
         none) state = some out) {p : Poly T} (hp : p ∈ out.toList) :
     p ∈ state.toList ∨
       ∃ entry ∈ items, entry.1 = p ∧
         entry.2 = 1 ∧
-        Evaluation.vanishesAt? T entry.1 candidate = some true := by
+        Evaluation.vanishesAt? entry.1 candidate = some true := by
   induction items generalizing state with
   | nil =>
       simp only [List.foldlM_nil, Option.pure_def, Option.some.injEq] at hrun
@@ -510,14 +508,14 @@ private theorem selectFold_mem (T : NumberTower)
   | cons entry items ih =>
       rw [List.foldlM_cons] at hrun
       by_cases hmult : entry.2 = 1
-      · cases hvanish : Evaluation.vanishesAt? T entry.1 candidate with
+      · cases hvanish : Evaluation.vanishesAt? entry.1 candidate with
         | none => simp [hmult, hvanish] at hrun
         | some keep =>
             cases keep with
             | false =>
                 have htail : items.foldlM (fun selected entry => do
                     if entry.2 = 1 then
-                      let keep ← Evaluation.vanishesAt? T entry.1 candidate
+                      let keep ← Evaluation.vanishesAt? entry.1 candidate
                       if keep then some (selected.push entry.1)
                       else some selected
                     else none) state = some out := by
@@ -528,7 +526,7 @@ private theorem selectFold_mem (T : NumberTower)
             | true =>
                 have htail : items.foldlM (fun selected entry => do
                     if entry.2 = 1 then
-                      let keep ← Evaluation.vanishesAt? T entry.1 candidate
+                      let keep ← Evaluation.vanishesAt? entry.1 candidate
                       if keep then some (selected.push entry.1)
                       else some selected
                     else none) (state.push entry.1) = some out := by
@@ -547,7 +545,7 @@ private theorem selectFactor?_source (T : NumberTower)
     (candidate : AlgebraicRoot) (factors : Array (Poly T × Nat))
     {selected : Poly T} (h : selectFactor? T candidate factors = some selected) :
     ∃ entry ∈ factors.toList, entry.1 = selected ∧ entry.2 = 1 ∧
-      Evaluation.vanishesAt? T entry.1 candidate = some true := by
+      Evaluation.vanishesAt? entry.1 candidate = some true := by
   unfold selectFactor? at h
   obtain ⟨retained, hfold, hmatch⟩ := Option.bind_eq_some_iff.mp h
   cases hretained : retained.toList with
@@ -648,13 +646,9 @@ private def blockPoly (T : NumberTower) (level : Level)
 
 private theorem degree?_lt_of_size_le {T : NumberTower} (f : Poly T)
     {bound : Nat} (hbound : 0 < bound) (hsize : f.size ≤ bound) :
-    f.degree?.getD 0 < bound := by
-  by_cases hzero : f.size = 0
-  · rw [DensePoly.degree?_eq_none_iff f |>.mpr hzero]
-    simpa using hbound
-  · rw [DensePoly.degree?_eq_some_of_pos_size f
-      (Nat.zero_lt_of_ne_zero hzero), Option.getD_some]
-    omega
+    f.natDegree < bound := by
+  rw [DensePoly.natDegree_eq_size_sub_one]
+  omega
 
 private theorem eval_blockPoly (T tower : NumberTower) (level : Level)
     (htower : Internal.extend? T level = some tower)
@@ -710,21 +704,14 @@ theorem adjoin?_sound (T : NumberTower) (candidate : AlgebraicRoot)
     rw [← hentrySelected, toPolynomial_eq_polynomial]
     exact (rawVanishesAt_sound T.levels.toList
       (entry.1.toArray.map coeffs) candidate hvanish).mp rfl
-  by_cases hdegreeZero : selected.degree?.getD 0 = 0
+  by_cases hdegreeZero : selected.natDegree = 0
   · simp [hdegreeZero] at h
-  by_cases hdegreeOne : selected.degree?.getD 0 = 1
+  by_cases hdegreeOne : selected.natDegree = 1
   · simp only [hdegreeOne, one_ne_zero, ↓reduceIte,
       Option.some.injEq] at h
     subst E
     have hselectedSize : selected.size = 2 := by
-      have hsizePos : 0 < selected.size := by
-        by_contra hnot
-        have hsizeZero : selected.size = 0 := Nat.eq_zero_of_not_pos hnot
-        have hnone := DensePoly.degree?_eq_none_iff selected |>.mpr hsizeZero
-        rw [hnone] at hdegreeOne
-        simp at hdegreeOne
-      rw [DensePoly.degree?_eq_some_of_pos_size selected hsizePos,
-        Option.getD_some] at hdegreeOne
+      rw [DensePoly.natDegree_eq_size_sub_one] at hdegreeOne
       omega
     have hcoeffOne : selected.coeff 1 = selected.leadingCoeff := by
       rw [DensePoly.leadingCoeff_eq_coeff_last selected (by omega),
@@ -766,7 +753,7 @@ theorem adjoin?_sound (T : NumberTower) (candidate : AlgebraicRoot)
     obtain ⟨tower, htower, h⟩ := Option.bind_eq_some_iff.mp h
     simp only [Option.some.injEq] at h
     subst E
-    have hdegree : 1 < selected.degree?.getD 0 := by omega
+    have hdegree : 1 < selected.natDegree := by omega
     have hlevelDegree : 1 < (levelOfFactor candidate selected).degree := by
       simpa [levelOfFactor] using hdegree
     have hpreserves := extend_preserves T tower
@@ -787,7 +774,7 @@ theorem adjoin?_sound (T : NumberTower) (candidate : AlgebraicRoot)
         htower (by omega) b
     · have hdimNe : tower.dim ≠ T.dim := by
         rw [Internal.extend?_dim T (levelOfFactor candidate selected) htower]
-        change selected.degree?.getD 0 * T.dim ≠ T.dim
+        change selected.natDegree * T.dim ≠ T.dim
         apply Nat.ne_of_gt
         simpa using Nat.mul_lt_mul_of_pos_right hdegree (dim_pos T)
       have hnotContains : ¬ Extension.AlreadyContains T candidate := by
@@ -833,13 +820,13 @@ theorem adjoin?_isSome (T : NumberTower) (candidate : AlgebraicRoot) :
     apply (factor_fsts_pairwise factorization hsound).imp
     intro a b hfst hab
     exact hfst (congrArg Prod.fst hab)
-  have htrue : Evaluation.vanishesAt? T chosen.1 candidate =
+  have htrue : Evaluation.vanishesAt? chosen.1 candidate =
       some true :=
     (Evaluation.vanishesAt?_eq_some_true_iff
       T chosen.1 candidate).mpr hzero
   have hfalse : ∀ entry ∈ factorization.factors.toList,
       entry ≠ chosen →
-      Evaluation.vanishesAt? T entry.1 candidate = some false := by
+      Evaluation.vanishesAt? entry.1 candidate = some false := by
     intro entry hentry hne
     obtain ⟨keep, hkeep⟩ := Option.isSome_iff_exists.mp
       (Evaluation.vanishesAt?_isSome T entry.1 candidate)
@@ -857,13 +844,13 @@ theorem adjoin?_isSome (T : NumberTower) (candidate : AlgebraicRoot) :
   have hchosenIrreducible :
       Irreducible (HexPolyMathlib.toPolynomial chosen.1) :=
     (polynomialIrreducible_iff T chosen.1).mp hchosenSound.2.2
-  have hdegree : 0 < chosen.1.degree?.getD 0 := by
+  have hdegree : 0 < chosen.1.natDegree := by
     rw [← HexPolyMathlib.natDegree_toPolynomial]
     exact hchosenIrreducible.natDegree_pos
-  by_cases hdegreeOne : chosen.1.degree?.getD 0 = 1
+  by_cases hdegreeOne : chosen.1.natDegree = 1
   · unfold adjoin?
-    simp [hfactorization, hselected, Nat.ne_of_gt hdegree, hdegreeOne]
-  · have hdegreeGt : 1 < chosen.1.degree?.getD 0 := by omega
+    simp [hfactorization, hselected, hdegreeOne]
+  · have hdegreeGt : 1 < chosen.1.natDegree := by omega
     obtain ⟨tower, htower⟩ := Option.isSome_iff_exists.mp
       (extend_factor_isSome T candidate chosen.1 hchosenSound.1
         hchosenSound.2.2 hzero hdegreeGt)

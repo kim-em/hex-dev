@@ -227,7 +227,7 @@ instance (priority := 800) natInversesOfAlgebra [CommRing R] [Algebra ℚ R]
   invNat k := if k = 0 then 0 else algebraMap ℚ R ((k : ℚ)⁻¹)
   invNat_eq := by
     intro k hk _
-    rw [if_neg (by omega)]
+    rw [ite_eq_right (by omega)]
     rw [show (k : R) = algebraMap ℚ R (k : ℚ) by simp, ← map_mul,
       Rat.mul_inv_cancel _ (by simp; omega), map_one]
 

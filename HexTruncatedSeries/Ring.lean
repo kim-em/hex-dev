@@ -113,7 +113,7 @@ theorem coeff_modify [Zero R] (a : TSeries R n) (k i : Nat)
     (⟨a.coeffs.modify k fun _ => c⟩ : TSeries R n).coeff i =
       if k = i then c else a.coeff i := by
   unfold coeff
-  rw [dif_pos hi, Vector.getElem_modify hi, dif_pos hi]
+  rw [dite_eq_left hi, Vector.getElem_modify hi, dite_eq_left hi]
 
 private theorem getFoldNotMem {α : Type u} {N : Nat}
     (g : Nat → α → α) {r : Nat} (hr : r < N) :
@@ -154,19 +154,19 @@ theorem mulUpTo_eq_impl : @mulUpTo = @mulUpToImpl := by
   rw [coeff_ofFn _ i hi]
   unfold mulUpToImpl
   unfold coeff
-  rw [dif_pos hi]
+  rw [dite_eq_left hi]
   change (if i < m then convCoeff a.coeff b.coeff i else 0) =
     ((List.range (min m n)).foldl
       (fun out j => out.modify j fun _ => convCoeff a.coeff b.coeff j)
       (zero (R := R) (n := n)).coeffs)[i]'hi
   by_cases him : i < m
   · have hmin : i < min m n := by omega
-    rw [if_pos him]
+    rw [ite_eq_left him]
     exact (getFoldMem
       (g := fun j (_ : R) => convCoeff a.coeff b.coeff j)
       (List.range (min m n)) List.nodup_range _ i hi
       (List.mem_range.mpr hmin)).symm
-  · rw [if_neg him]
+  · rw [ite_eq_right him]
     have hnot : i ∉ List.range (min m n) := by
       intro hmem
       have := List.mem_range.mp hmem
@@ -177,7 +177,7 @@ theorem mulUpTo_eq_impl : @mulUpTo = @mulUpToImpl := by
           change (ofFn (n := n) (fun _ => (0 : R))).coeff i = 0
           rw [coeff_ofFn _ i hi]
         unfold coeff at hz
-        rw [dif_pos hi] at hz
+        rw [dite_eq_left hi] at hz
         exact hz.symm
       _ = _ := (getFoldNotMem
         (g := fun j (_ : R) => convCoeff a.coeff b.coeff j)
@@ -266,7 +266,7 @@ theorem X_coeff_zero [Lean.Grind.CommRing R] :
   · rw [coeff_X 0 hn]
     simp
   · unfold coeff
-    rw [dif_neg hn]
+    rw [dite_eq_right hn]
 
 /-- Embedding one as a constant series agrees with the series one. -/
 @[simp] theorem C_one [Lean.Grind.CommRing R] :
@@ -300,12 +300,12 @@ theorem X_coeff_zero [Lean.Grind.CommRing R] :
   rw [coeff_C (a * b) i hi, coeff_mul (C a) (C b) i hi]
   by_cases hi0 : i = 0
   · subst i
-    rw [if_pos rfl]
+    rw [ite_eq_left rfl]
     unfold convCoeff
     change a * b = 0 + (C a : TSeries R n).coeff 0 * (C b).coeff 0
     rw [coeff_C a 0 hi, coeff_C b 0 hi]
     grind
-  · rw [if_neg hi0]
+  · rw [ite_eq_right hi0]
     unfold convCoeff
     apply (List.foldl_add_eq_self _ _ 0 ?_).symm
     intro j hj
@@ -810,7 +810,7 @@ private theorem powGo_eq [Lean.Grind.CommRing R]
       rw [powLoop.eq_def]
       by_cases hk : k = 0
       · simp [hk, linearPow, mul_one]
-      · rw [dif_neg hk]
+      · rw [dite_eq_right hk]
         have hlt : k / 2 < k :=
           Nat.div_lt_self (Nat.pos_of_ne_zero hk) (by decide)
         cases Nat.mod_two_eq_zero_or_one k with
@@ -821,7 +821,7 @@ private theorem powGo_eq [Lean.Grind.CommRing R]
             have hnot : ¬ k % 2 = 1 := by omega
             have hdiv : 2 * (k / 2) / 2 = k / 2 :=
               Nat.mul_div_right (k / 2) (by decide)
-            rw [if_neg hnot]
+            rw [ite_eq_right hnot]
             calc
               powLoop acc (base * base) (k / 2) =
                   acc * linearPow (base * base) (k / 2) := ih _ hlt _ _
@@ -830,7 +830,7 @@ private theorem powGo_eq [Lean.Grind.CommRing R]
             have hk_eq : k = 2 * (k / 2) + 1 := by
               have h := Nat.mod_add_div k 2
               omega
-            rw [if_pos hmod1]
+            rw [ite_eq_left hmod1]
             calc
               powLoop (acc * base) (base * base) (k / 2) =
                   (acc * base) * linearPow (base * base) (k / 2) := ih _ hlt _ _
@@ -1003,9 +1003,9 @@ theorem mul_comm [Lean.Grind.CommRing R] (a b : TSeries R n) : a * b = b * a := 
   · subst i
     change 0 + (X : TSeries R n).coeff 0 * a.coeff 0 = _
     rw [coeff_X 0 hi]
-    rw [if_neg (by decide), if_pos rfl]
+    rw [ite_eq_right (by decide), ite_eq_left rfl]
     grind
-  · rw [if_neg hi0]
+  · rw [ite_eq_right hi0]
     calc
       (List.range (i + 1)).foldl
           (fun acc j => acc + (X : TSeries R n).coeff j * a.coeff (i - j)) 0 =
@@ -1033,7 +1033,7 @@ theorem mul_comm [Lean.Grind.CommRing R] (a b : TSeries R n) : a * b = b * a := 
       by_cases hi0 : i = 0
       · subst i
         simp
-      · rw [if_neg hi0, ih (i - 1) (by omega)]
+      · rw [ite_eq_right hi0, ih (i - 1) (by omega)]
         by_cases hik : i = k + 1
         · simp [hik]
         · have : i - 1 ≠ k := by omega
@@ -1059,11 +1059,11 @@ coefficients below that degree equal to zero. -/
       by_cases hi0 : i = 0
       · subst i
         simp
-      · rw [if_neg hi0, ih (i - 1) (by omega)]
+      · rw [ite_eq_right hi0, ih (i - 1) (by omega)]
         by_cases hki : k + 1 ≤ i
-        · rw [if_pos hki, if_pos (by omega)]
+        · rw [ite_eq_left hki, ite_eq_left (by omega)]
           rw [show (i - 1) - k = i - (k + 1) by omega]
-        · rw [if_neg hki, if_neg (by omega)]
+        · rw [ite_eq_right hki, ite_eq_right (by omega)]
 
 /-- A scalar monomial has its scalar coefficient in exactly one degree. -/
 theorem coeff_C_mul_X_pow [Lean.Grind.CommRing R]

@@ -29,21 +29,32 @@ import HexNumberField
 
 open Hex
 
-def a : AlgebraicNumber := AlgebraicNumber.ofRat (3/2)
+-- The roots of an integer polynomial, real roots first in
+-- increasing order: index 1 of `X² - 2` is `+√2`.
+def sqrt2 : AlgebraicNumber :=
+  (ZPoly.algebraicRoots #p[-2, 0, 1])[1]!
+def sqrt3 : AlgebraicNumber :=
+  (ZPoly.algebraicRoots #p[-3, 0, 1])[1]!
 
-#guard a + a == AlgebraicNumber.ofRat 3
-#guard a * a⁻¹ == 1
-#guard (0 : AlgebraicNumber)⁻¹ == 0
+-- Arithmetic is exact; `p` is the minimal polynomial.
+#guard (sqrt2 + sqrt3).p = #p[1, 0, -10, 0, 1]
+-- Equality is decidable. Without the Mathlib companion,
+-- compare with `==`; with it, `=` works too.
+#guard (sqrt2 + sqrt3)⁻¹ == sqrt3 - sqrt2
+
+/-- info: ZPoly.rootNear #p[1, 0, -10, 0, 1] 3.146264369 -/
+#guard_msgs in
+#eval sqrt2 + sqrt3
 ```
 
 # Functionality
 
 Three complementary exact representations:
 
-- `Hex.QAdjoin p x`: rational power-basis coordinates in a fixed
-  irreducible presentation `ℚ(x)`, with `Hex.QAdjoin.reduce`, arithmetic,
+- `Hex.QAdjoin a`: rational power-basis coordinates in a fixed
+  irreducible presentation `ℚ(a)`, with `Hex.QAdjoin.ofCoeffs`, arithmetic,
   extended-gcd inversion, and threaded dyadic approximation
-  (`Hex.QAdjoin.approx`).
+  (inherited `PolyQuot.approx`).
 - `Hex.AlgebraicRoot`: a certified selected root of a squarefree integer
   polynomial that need not be minimal. Arithmetic (`add?`, `mul?`, `inv?`,
   `div?`) builds resultant eliminants and postpones factoring until
@@ -52,9 +63,24 @@ Three complementary exact representations:
   normalized irreducible minimal polynomial, with rational construction,
   casts, powers, and Boolean equality that compares represented values.
 
-`Hex.AlgebraicPoly` supplies polynomials with algebraic coefficients and
-semantic trailing-zero normalization, with root APIs (`roots?`) for both
-fixed-field and algebraic-coefficient polynomials.
+`Hex.ZPoly.algebraicRoots` turns an integer polynomial into its distinct
+complex roots as canonical algebraic numbers, real roots first in increasing
+centre order, followed by adjacent conjugate pairs (lower member first).
+`isReal` is exact, `approx` is dyadic, and `Repr` prints a `rootNear` expression
+with enough digits to reconstruct the value. `Hex.AlgebraicPoly` supplies polynomials with
+algebraic coefficients and semantic trailing-zero normalization, with root
+APIs (`roots?`) for both fixed-field and algebraic-coefficient polynomials.
+
+- `AlgebraicNumber.conj` shares a canonical upper isolation and flips an
+  orientation tag. It requires no root search. Global `<` and `≤` use
+  Mathlib's complex partial order (equal imaginary parts, ordered real parts).
+- `AlgebraicNumber.sqrt` and `nthRoot` use principal complex branches, with
+  verified correspondence to Mathlib. General radicals invoke the complete
+  algebraic-coefficient root solver.
+- `QAdjoin.ofAlgebraic?` and `ofAlgebraics?` recover coordinates in a chosen
+  field; `QAdjoin.common` returns one generator and coordinates for a collection.
+- The incubating `HexRealAlgebraic` extension supplies typed `.re` and `.im`
+  projections and exact total order on the real subtype.
 
 # Verification
 

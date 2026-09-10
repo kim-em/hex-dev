@@ -103,11 +103,13 @@ instance [DecidableEq R] (a b : Fraction.Rep R) : Decidable (Rel a b) :=
     infer_instance
 
 /-- Product of two representatives. -/
+@[expose]
 def mul (a b : Fraction.Rep R) : Fraction.Rep R :=
   ⟨a.num * b.num, a.den * b.den,
     ExactDivLaws.mul_ne_zero a.den_ne b.den_ne⟩
 
 /-- Sum of two representatives. -/
+@[expose]
 def add (a b : Fraction.Rep R) : Fraction.Rep R :=
   ⟨a.num * b.den + b.num * a.den, a.den * b.den,
     ExactDivLaws.mul_ne_zero a.den_ne b.den_ne⟩
@@ -534,7 +536,7 @@ private theorem invRep_rel {a b : Fraction.Rep R}
       intro hb
       exact ha ((num_eq_zero_iff hab).mpr hb)
     unfold invRep
-    rw [dif_neg ha, dif_neg hb]
+    rw [dite_eq_right ha, dite_eq_right hb]
     apply rep_eq
     unfold Fraction.Rep.Rel at hab ⊢
     grind
@@ -556,6 +558,18 @@ omit [NonzeroOne R] [DecidableEq R] in
 @[simp]
 theorem mul_ofRep (a b : Fraction.Rep R) :
     ofRep a * ofRep b = ofRep (Fraction.Rep.mul a b) := rfl
+
+omit [DecidableEq R] in
+/-- Multiplying a represented fraction by its embedded denominator recovers
+its embedded numerator. -/
+theorem ofRep_mul_den (a : Fraction.Rep R) :
+    ofRep a * ofCoeff a.den = ofCoeff a.num := by
+  change ofRep a * ofRep ⟨a.den, 1, one_ne_zero⟩ =
+    ofRep ⟨a.num, 1, one_ne_zero⟩
+  rw [mul_ofRep]
+  apply rep_eq
+  unfold Fraction.Rep.Rel Fraction.Rep.mul
+  grind
 
 /-- Inverting an embedded representative applies `invRep`. -/
 @[simp]
@@ -620,7 +634,7 @@ theorem inv_inv (a : Fraction R) : a⁻¹⁻¹ = a := by
       · rw [show invRep a = ofRep ⟨a.den, a.num, hnum⟩ by simp [invRep, hnum],
           inv_ofRep]
         unfold invRep
-        rw [dif_neg a.den_ne]
+        rw [dite_eq_right a.den_ne]
 
 /-- The inverse of one is one. -/
 theorem inv_one : (1 : Fraction R)⁻¹ = 1 := by

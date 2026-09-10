@@ -30,7 +30,7 @@ namespace HexBerlekampZassenhausMathlib
 
 namespace IntReductionMod
 
-open Polynomial
+open _root_.Polynomial
 
 variable {p : ℕ}
 /-! # Rational repeated-part transport
@@ -552,7 +552,7 @@ private theorem List.nodup_of_prod_squarefree
       · subst hx
         rw [Multiset.count_replicate_self]
         omega
-      · rw [Multiset.count_replicate, if_neg (Ne.symm hx)]
+      · rw [Multiset.count_replicate, ite_eq_right (Ne.symm hx)]
         exact Nat.zero_le _
     have hdvd_prod := Multiset.prod_dvd_prod_of_le hle
     rw [Multiset.prod_replicate, Multiset.prod_coe] at hdvd_prod
@@ -859,7 +859,7 @@ theorem reassemblyExpansionComplete_of_irreducible_squarefree_cover
       (Hex.normalizeForFactor f).squareFreeCore)
     (hnorm : ∀ q ∈ coreFactors.toList, Hex.normalizeFactorSign q = q)
     (hmonic : ∀ q ∈ coreFactors.toList, Hex.DensePoly.Monic q)
-    (hdegree : ∀ q ∈ coreFactors.toList, 0 < q.degree?.getD 0)
+    (hdegree : ∀ q ∈ coreFactors.toList, 0 < q.natDegree)
     (hfuel :
       ∀ exponents : List Nat,
         exponents.length = coreFactors.size →
@@ -909,7 +909,7 @@ theorem reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_pos_lc
       (Hex.normalizeForFactor f).squareFreeCore)
     (hnorm : ∀ q ∈ coreFactors.toList, Hex.normalizeFactorSign q = q)
     (hpos_lc : ∀ q ∈ coreFactors.toList, 0 < Hex.DensePoly.leadingCoeff q)
-    (hdegree : ∀ q ∈ coreFactors.toList, 0 < q.degree?.getD 0)
+    (hdegree : ∀ q ∈ coreFactors.toList, 0 < q.natDegree)
     (hfuel :
       ∀ exponents : List Nat,
         exponents.length = coreFactors.size →
@@ -958,7 +958,7 @@ theorem reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_norm
     (hprod : Array.polyProduct coreFactors =
       (Hex.normalizeForFactor f).squareFreeCore)
     (hnorm : ∀ q ∈ coreFactors.toList, Hex.normalizeFactorSign q = q)
-    (hdegree : ∀ q ∈ coreFactors.toList, 0 < q.degree?.getD 0) :
+    (hdegree : ∀ q ∈ coreFactors.toList, 0 < q.natDegree) :
     Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f) coreFactors := by
   classical
   -- Per-factor positive leading coefficient from `normalizeFactorSign q = q`
@@ -971,7 +971,7 @@ theorem reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_norm
       by_contra hlt
       have hlt' : Hex.DensePoly.leadingCoeff q < 0 := lt_of_not_ge hlt
       unfold Hex.normalizeFactorSign at hq_norm
-      rw [if_pos hlt'] at hq_norm
+      rw [ite_eq_left hlt'] at hq_norm
       apply hq_ne
       apply Hex.DensePoly.ext_coeff
       intro n
@@ -994,9 +994,8 @@ theorem reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_norm
     have hq_ne : q ≠ 0 := (hirr q hq).not_zero
     have hq_size_pos : 0 < q.size := Hex.ZPoly.size_pos_of_ne_zero q hq_ne
     have hq_deg := hdegree q hq
-    have hq_deg_eq : q.degree?.getD 0 = q.size - 1 := by
-      unfold Hex.DensePoly.degree?
-      simp [Nat.ne_of_gt hq_size_pos]
+    have hq_deg_eq : q.natDegree = q.size - 1 := by
+      rw [Hex.DensePoly.natDegree_eq_size_sub_one]
     omega
   have hrp_ne_zero : (Hex.normalizeForFactor f).repeatedPart ≠ 0 :=
     Hex.repeatedPart_ne_zero_of_ne_zero f hf
@@ -1138,7 +1137,7 @@ theorem reassemblyExpansionComplete_singleton_of_irreducible
     (hirr : Hex.ZPoly.Irreducible (Hex.normalizeForFactor f).squareFreeCore)
     (hmonic : Hex.DensePoly.Monic (Hex.normalizeForFactor f).squareFreeCore)
     (hdeg :
-      0 < (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0) :
+      0 < (Hex.normalizeForFactor f).squareFreeCore.natDegree) :
     Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
       #[(Hex.normalizeForFactor f).squareFreeCore] := by
   obtain ⟨k, hk⟩ :=
@@ -1147,9 +1146,9 @@ theorem reassemblyExpansionComplete_singleton_of_irreducible
   set core := (Hex.normalizeForFactor f).squareFreeCore with hcore_def
   -- Size of `core` is at least 2 from positive degree.
   have hcore_size_ge_two : 2 ≤ core.size := by
-    have hdeg_unfold : core.degree?.getD 0 =
+    have hdeg_unfold : core.natDegree =
         (if core.size = 0 then 0 else core.size - 1) := by
-      unfold Hex.DensePoly.degree?
+      unfold Hex.DensePoly.natDegree Hex.DensePoly.degree?
       by_cases h : core.size = 0 <;> simp [h]
     rw [hdeg_unfold] at hdeg
     by_cases h : core.size = 0
@@ -1279,7 +1278,7 @@ theorem reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero
       by_contra hlt
       have hlt' : Hex.DensePoly.leadingCoeff q < 0 := lt_of_not_ge hlt
       unfold Hex.normalizeFactorSign at hq_norm
-      rw [if_pos hlt'] at hq_norm
+      rw [ite_eq_left hlt'] at hq_norm
       apply hq_ne
       apply Hex.DensePoly.ext_coeff
       intro n
@@ -1295,11 +1294,11 @@ theorem reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero
     omega
   -- Per-factor degree positivity (from `q.size = 2`).
   have hdegree :
-      ∀ q ∈ coreFactors.toList, 0 < q.degree?.getD 0 := by
+      ∀ q ∈ coreFactors.toList, 0 < q.natDegree := by
     intro q hq
     have hsize := hsize_two q hq
-    show 0 < q.degree?.getD 0
-    unfold Hex.DensePoly.degree?
+    show 0 < q.natDegree
+    unfold Hex.DensePoly.natDegree Hex.DensePoly.degree?
     simp [hsize]
   -- Repeated part is nonzero (from primitivity of its toPolynomial image).
   have hrp_ne_zero : (Hex.normalizeForFactor f).repeatedPart ≠ 0 := by

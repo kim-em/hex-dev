@@ -85,7 +85,7 @@ theorem coeff_polyOfSeries_mul {n : Nat} (a b : TSeries R n)
     have := List.mem_range.mp hj
     omega
   unfold diagonalMulCoeffTerm
-  rw [_root_.ite_eq_right (by omega), coeff_polyOfSeries_of_lt,
+  rw [ite_eq_right (by omega), coeff_polyOfSeries_of_lt,
     coeff_polyOfSeries_of_lt]
   all_goals omega
 
@@ -144,7 +144,7 @@ theorem reciprocalWith_eq (plan : MulPlan R) {n : Nat}
   simp only [Nat.min_self, hstep]
   apply TSeries.ext
   intro i hi
-  rw [TSeries.coeff_ofFn _ i hi, _root_.ite_eq_left hi]
+  rw [TSeries.coeff_ofFn _ i hi, ite_eq_left hi]
 
 /-- A planned reciprocal satisfies the multiplicative inverse equation when
 the supplied constant coefficient really is an inverse. -/

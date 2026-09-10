@@ -1,0 +1,2 @@
+[ perf record: Woken up 97 times to write data ]
+[ perf record: Captured and wrote 24.004 MB /home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-divisors-profile.json.attempt/perf.data (2981 samples) ]

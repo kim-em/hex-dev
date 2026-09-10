@@ -32,8 +32,7 @@ one root. As with real-root isolation the certificates are exact: the Taylor
 coefficients at the centre are exact Gaussian dyadics, and every witness is a
 strict comparison between two dyadic rationals, with no floats and no error
 budget. The search may use approximate dyadic reciprocals to place candidate
-squares, but those are only hints; nothing counts until an exact witness
-rechecks it.
+squares, but those are only hints.
 
 The computational core is Mathlib-free. It expands a polynomial about a
 Gaussian-dyadic centre, tests candidate squares, subdivides, and glues the
@@ -50,14 +49,14 @@ region is the square's circumscribed disc. A component that a Pellet witness
 certifies to hold `k ≥ 2` roots with multiplicity, most naturally a repeated
 root, is reported instead as a {deftech}_cluster_. A nonzero polynomial with
 only simple roots isolates entirely into atoms; that is the case the
-user-facing {name}`Hex.isolate` entry point below handles.
+user-facing {name}`Hex.ZPoly.isolateComplexRoots?` entry point below handles.
 
-# The `isolate` entry point
+# The `ZPoly.isolateComplexRoots?` entry point
 %%%
 tag := "hex-roots-isolate"
 %%%
 
-For a nonzero polynomial with only simple roots, {name}`Hex.isolate` runs the
+For a nonzero polynomial with only simple roots, {name}`Hex.ZPoly.isolateComplexRoots?` runs the
 whole isolator and returns `some` array of atoms, one per distinct complex
 root. It is `Option`-valued for the degenerate inputs the precondition still
 admits: the zero polynomial, which has every point as a root, gives `none`,
@@ -66,7 +65,7 @@ and a nonzero constant gives `some #[]`. It takes the polynomial as a
 roots are simple, a target precision in bits, and a choice of which atom
 certificate to attempt:
 
-{docstring Hex.isolate}
+{docstring Hex.ZPoly.isolateComplexRoots?}
 
 The simple-root precondition is decidable, so discharging it is a matter of
 `by decide` in the common case, or a companion lemma for a named polynomial.
@@ -79,26 +78,33 @@ Proof-facing clients can avoid `Option` entirely. The companion's total
 wrapper requires the missing nonzero hypothesis and uses the driver
 completeness theorem to return the array directly:
 
-{docstring HexRootsMathlib.isolate!}
+{docstring HexRootsMathlib.isolateComplexRoots}
 
 Completeness selects the wrapper's value from a successful executable run, and
 its principal theorems expose that run equation, the exact root count, the
 complete root set, and the requested precision:
 
-{docstring HexRootsMathlib.isolate!_eq}
+{docstring HexRootsMathlib.isolateComplexRoots_eq}
 
-{docstring HexRootsMathlib.isolate!_count}
+{docstring HexRootsMathlib.isolateComplexRoots_count}
 
-{docstring HexRootsMathlib.isolate!_roots}
+{docstring HexRootsMathlib.isolateComplexRoots_roots}
 
-{docstring HexRootsMathlib.isolate!_prec}
+{docstring HexRootsMathlib.isolateComplexRoots_prec}
 
 The strategy argument, a {name}`Hex.AtomStrategy`, selects which certificate
 form the driver attempts, and in which order: `.nk` for the
 Newton-Kantorovich witness alone, `.pellet` for the Pellet witness alone, and
 `.nkThenPellet` (the general default) for the former with the latter as
-fallback. The explicit single-form strategies let either certificate be
-selected or benchmarked on its own; callers with no such need pick the default.
+fallback. The two tests differ in what they need: the Newton-Kantorovich
+witness certifies on the doubled square and gives the sharper enclosure, but
+it needs the derivative to dominate there, which fails near a cluster of
+roots; the Pellet witness certifies on the quadrupled square by a coefficient
+inequality, so it still succeeds in that case. Trying Newton first and
+falling back to Pellet therefore certifies more squares than either alone,
+and avoids subdividing further just to satisfy Newton. The explicit
+single-form strategies let either certificate be selected or benchmarked on
+its own; callers with no such need pick the default.
 
 The precision is an integer lower bound on each returned square's `prec`, so
 its half-width is at most `2⁻ᵖʳᵉᶜ`. The driver also floors this target at the
@@ -132,7 +138,8 @@ both other roots have norm below one, which is the Pisot condition for `β`.
 
 {docstring HexRootsMathlib.Examples.pisot}
 
-The polynomial has only simple roots, so it meets {name}`Hex.isolate`'s precondition. The
+The polynomial has only simple roots, so it meets
+{name}`Hex.ZPoly.isolateComplexRoots?`'s precondition. The
 companion proves this once, from a Bézout identity for `p` and `p'`, and
 reusing that lemma discharges the precondition:
 
@@ -167,11 +174,12 @@ statement of what it found.
 tag := "hex-roots-soundness"
 %%%
 
-A successful {name}`Hex.isolate` run is not just a list of squares; the companion reads a
+A successful {name}`Hex.ZPoly.isolateComplexRoots?` run is not just a list of
+squares; the companion reads a
 complete root enumeration out of it. Each atom names a genuine complex root,
 distinct atoms name distinct roots, and together they exhaust the root set:
 
-{docstring HexRootsMathlib.isolate_sound}
+{docstring HexRootsMathlib.isolateComplexRoots?_sound}
 
 The root an atom names is a semantic value, not part of the executable data.
 The companion selects it from the atom's certificate:
@@ -195,8 +203,10 @@ re-running the whole isolator, refine its atom directly:
 
 {docstring Hex.DyadicRootIsolation.refineTo?}
 
-Refinement combines a speculative Newton step, which gains quadratic precision
-when it certifies, with subdivision as the fallback. It preserves the root, so
+Refinement first tries a Newton step, which roughly doubles the number of
+correct bits each time it certifies. When the step does not certify, the
+square is bisected and the search continues on the halves, which is slower
+but always makes progress. Either way the root is preserved, so
 the refined atom can stand in for the original wherever a caller needs a
 tighter enclosure. This is the operation the demo uses to drive the real root
 of `x³ − x − 1` down to 80 bits.
@@ -238,24 +248,24 @@ Everything the driver computes is executable and Mathlib-free.
 input becomes a complex polynomial through {name}`HexRootsMathlib.toPolyℂ`,
 and the executable certificates become statements about its root set in
 `Polynomial ℂ`. The correspondence has two halves. Soundness is
-{name}`HexRootsMathlib.isolate_sound` from
+{name}`HexRootsMathlib.isolateComplexRoots?_sound` from
 {ref "hex-roots-soundness"}[the certificate section]: a successful run
 enumerates exactly the distinct complex roots, at the requested precision.
 Completeness is the converse guarantee, that on a nonzero polynomial with
 only simple roots the search cannot fail, for every strategy and every
 requested precision:
 
-{docstring HexRootsMathlib.isolate_isSome}
+{docstring HexRootsMathlib.isolateComplexRoots?_isSome}
 
-Completeness is what lets the total wrapper {name}`HexRootsMathlib.isolate!`
+Completeness is what lets the total wrapper {name}`HexRootsMathlib.isolateComplexRoots`
 from {ref "hex-roots-isolate"}[the entry-point section] drop the `Option`
 and return the atom array directly, with its run equation, root count,
-root set, and precision exposed by the `isolate!_*` theorems shown there.
+root set, and precision exposed by the `isolate_*` theorems shown there.
 One further guarantee is stated on the wrapper: distinct atoms have
 disjoint closed circumscribed discs, so the certified enclosures never
 overlap and each root is separated from every other by exact dyadic data.
 
-{docstring HexRootsMathlib.isolate!_disjoint}
+{docstring HexRootsMathlib.isolateComplexRoots_disjoint}
 
 Behind these statements the companion develops the analysis the
 certificates rely on: a ported Newton-Kantorovich contraction theorem, the
@@ -284,6 +294,7 @@ isolator, and is consumed through its Mathlib companion:
   Newton-Kantorovich theorem and develops the argument principle, Rouché's
   theorem, and the Mahler separation bound for polynomials on circles, then
   proves soundness and completeness of the isolator: every certificate names
-  the roots it claims, and {name}`Hex.isolate` never fails on a nonzero squarefree input.
+  the roots it claims, and {name}`Hex.ZPoly.isolateComplexRoots?` never fails
+  on a nonzero squarefree input.
   The Mathlib dependency lives entirely in this companion; a {name}`Hex.ZPoly` input
   keeps the executable core Mathlib-free.

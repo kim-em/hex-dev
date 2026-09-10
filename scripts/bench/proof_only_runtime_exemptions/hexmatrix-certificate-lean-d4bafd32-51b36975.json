@@ -1,0 +1,6 @@
+{
+  "path": "HexMatrix/Certificate.lean",
+  "baseline_blob": "d4bafd32cf66130696292b73a9386d481cc2d9e1",
+  "current_blob": "51b369757ef1e1fe74aee81ba0f9be3be1f8f0a9",
+  "reason": "mulEqCert replaces Vector.ofFn with Hex.Vector.ofFn' solely to expose literal certificate reduction in the kernel. The existing csimp theorem Hex.Vector.ofFn'_eq_ofFn' rewrites the helper back to exactly Vector.ofFn before compilation. The only other change is a simp rewrite in mulEqCert_iff. Compiled packing and multiplication checks are unchanged."
+}

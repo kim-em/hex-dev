@@ -34,7 +34,7 @@ def validDirectFactors (core : ZPoly) (factors : List ZPoly) : Bool :=
     decide (Array.polyProduct factors.toArray = core) &&
     factors.all (fun g => decide (ZPoly.content g = 1)) &&
     factors.all (fun g => decide (normalizeFactorSign g = g)) &&
-    factors.all (fun g => decide (0 < g.degree?.getD 0))
+    factors.all (fun g => decide (0 < g.natDegree))
 
 /-- One lift and one greedy direct recombination search from an existing prime
 plan.  Keeping planning outside this function lets the total selector reuse

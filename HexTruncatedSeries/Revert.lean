@@ -81,8 +81,8 @@ private theorem X_mul_shiftQuotient [Lean.Grind.CommRing R]
   rw [mul_comm X (shiftQuotient b), coeff_mul_X (shiftQuotient b) i hi]
   by_cases hi0 : i = 0
   · subst i
-    rw [if_pos rfl, h0]
-  · rw [if_neg hi0, coeff_shiftQuotient b (i - 1) (by omega)]
+    rw [ite_eq_left rfl, h0]
+  · rw [ite_eq_right hi0, coeff_shiftQuotient b (i - 1) (by omega)]
     congr 1
     omega
 
@@ -128,7 +128,7 @@ private theorem lagrangeState_power [Lean.Grind.CommRing R]
       by_cases hm : m = 0
       · subst m
         simpa [pow_zero] using ih
-      · rw [if_neg hm]
+      · rw [ite_eq_right hm]
         rw [show m + 1 - 1 = m by omega]
         change mulUpTo n (lagrangeState p m).1 p = p ^ m
         have hpow : p ^ (m - 1) * p = p ^ m := by
@@ -158,8 +158,8 @@ private theorem lagrangeState_coeff [Lean.Grind.CommRing R]
         change (lagrangeState p 0).2.coeff i = _
         rw [lagrangeState]
         change (0 : TSeries R n).coeff i = _
-        rw [coeff_zero, if_neg (by omega)]
-      · rw [if_neg hm0]
+        rw [coeff_zero, ite_eq_right (by omega)]
+      · rw [ite_eq_right hm0]
         change
           (⟨(lagrangeState p m).2.coeffs.modify m fun _ =>
             NatInverses.invNat (R := R) (m := n - 1) m *
@@ -168,18 +168,18 @@ private theorem lagrangeState_coeff [Lean.Grind.CommRing R]
         rw [coeff_modify (lagrangeState p m).2 m i _ hi]
         by_cases hmi : m = i
         · subst i
-          rw [if_pos rfl, if_pos (by omega), Agree.mulUpTo_full,
+          rw [ite_eq_left rfl, ite_eq_left (by omega), Agree.mulUpTo_full,
             lagrangeState_power]
           rw [← pow_succ, show m - 1 + 1 = m by omega]
-        · rw [if_neg hmi, ih hmn]
+        · rw [ite_eq_right hmi, ih hmn]
           by_cases hii : 0 < i ∧ i < m
-          · rw [if_pos hii, if_pos (by omega)]
-          · rw [if_neg hii]
+          · rw [ite_eq_left hii, ite_eq_left (by omega)]
+          · rw [ite_eq_right hii]
             have hnot : ¬(0 < i ∧ i < m + 1) := by
               intro h
               apply hmi
               omega
-            rw [if_neg hnot]
+            rw [ite_eq_right hnot]
 
 /-- Coefficients produced by direct Lagrange inversion have the advertised
 closed form. -/
@@ -195,7 +195,7 @@ private theorem coeff_revLagrange [Lean.Grind.CommRing R]
   by_cases hi0 : i = 0
   · subst i
     simp
-  · rw [if_neg hi0, if_pos (by omega)]
+  · rw [ite_eq_right hi0, ite_eq_left (by omega)]
 
 private theorem shiftQuotient_mul_inv [Lean.Grind.CommRing R]
     (b : TSeries R n) (v : R) (hv : b.coeff 1 * v = 1)
@@ -249,7 +249,7 @@ private theorem coeff_pow_mul_derivPad [Lean.Grind.CommRing R]
   change (p ^ r * b.derivPad).coeff (r - 1) = _
   by_cases hr1 : r = 1
   · subst r
-    rw [if_pos rfl]
+    rw [ite_eq_left rfl]
     have halg : p ^ 1 * (q + X * q.derivPad) =
         1 + X * (p * q.derivPad) := by
       rw [pow_one, Lean.Grind.Semiring.left_distrib, hpq]
@@ -258,7 +258,7 @@ private theorem coeff_pow_mul_derivPad [Lean.Grind.CommRing R]
       coeff_one 0 (by omega), coeff_mul_zero _ _ (by omega)]
     rw [X_coeff_zero]
     grind
-  · rw [if_neg hr1]
+  · rw [ite_eq_right hr1]
     have hr2 : 1 < r := by omega
     have hcancel : p ^ r * q = p ^ (r - 1) := by
       simpa only [pow_one] using pow_mul_pow_cancel p q hpq r 1 (by omega)
@@ -269,7 +269,7 @@ private theorem coeff_pow_mul_derivPad [Lean.Grind.CommRing R]
     rw [hmainCoeff, halg, coeff_add _ _ (r - 1) (by omega),
       mul_comm X (p ^ r * q.derivPad),
       coeff_mul_X (p ^ r * q.derivPad) (r - 1) (by omega),
-      if_neg (by omega)]
+      ite_eq_right (by omega)]
     have hinvDeriv : Agree (n - 1)
         (p ^ r * q.derivPad + p ^ (r - 2) * p.derivPad) 0 := by
       have hprod := derivPad_mul_agree q p
@@ -302,7 +302,7 @@ private theorem coeff_pow_mul_derivPad [Lean.Grind.CommRing R]
     have hpow := derivPad_pow_agree p (r - 1)
     have hpowCoeff := hpow (r - 2) (by omega) (by omega)
     rw [coeff_derivPad (p ^ (r - 1)) (r - 2) (by omega),
-      if_pos (by omega), show r - 2 + 1 = r - 1 by omega] at hpowCoeff
+      ite_eq_left (by omega), show r - 2 + 1 = r - 1 by omega] at hpowCoeff
     have hright :
         (C (((r - 1 : Nat) : R)) * p ^ (r - 1 - 1) * p.derivPad).coeff
             (r - 2) =
@@ -370,19 +370,19 @@ private theorem coeff_lagrange_term [Lean.Grind.CommRing R]
         _ = X ^ j * ((p ^ k * q ^ j) * b.derivPad) := by grind
         _ = X ^ j * (p ^ (k - j) * b.derivPad) := by rw [hcancel]
     rw [halg, coeff_X_pow_mul (p ^ (k - j) * b.derivPad) j (k - 1)
-      (by omega), if_pos (by omega)]
+      (by omega), ite_eq_left (by omega)]
     rw [show k - 1 - j = k - j - 1 by omega,
       coeff_pow_mul_derivPad b v h0 hv (k - j) (by omega) (by omega)]
     by_cases hj : j + 1 = k
-    · rw [if_pos hj, if_pos (by omega)]
-    · rw [if_neg hj, if_neg (by omega)]
+    · rw [ite_eq_left hj, ite_eq_left (by omega)]
+    · rw [ite_eq_right hj, ite_eq_right (by omega)]
   · have hz := pow_vanish b h0 j
     have hmul := Agree.mul
       (Agree.mul (Agree.refl j (p ^ k)) hz)
       (Agree.refl j b.derivPad)
     have hzero : Agree j (p ^ k * b ^ j * b.derivPad) 0 := by
       simpa only [mul_zero, zero_mul] using hmul
-    rw [if_neg (by omega)]
+    rw [ite_eq_right (by omega)]
     have hc := hzero (k - 1) (by omega) (by omega)
     rw [coeff_zero] at hc
     exact hc
@@ -409,7 +409,7 @@ private theorem pow_taylor [Lean.Grind.CommRing R]
   | zero =>
       rw [pow_zero, pow_zero]
       unfold tangent
-      rw [if_pos rfl, add_zero]
+      rw [ite_eq_left rfl, add_zero]
       exact Agree.refl (p + p) (1 : TSeries R n)
   | succ k ih =>
       rw [pow_succ]
@@ -469,9 +469,9 @@ private theorem tangent_sum [Lean.Grind.CommRing R]
           apply List.foldl_add_congr
           intro j hj
           have hjq : j < q := List.mem_range.mp hj
-          rw [coeff_derivPad b j (by omega), if_pos (by omega)]
+          rw [coeff_derivPad b j (by omega), ite_eq_left (by omega)]
         rw [hpref, coeff_derivPad b q (Nat.lt_succ_self q),
-          if_neg (Nat.lt_irrefl (q + 1)),
+          ite_eq_right (Nat.lt_irrefl (q + 1)),
           C_zero, zero_mul, add_zero]
       change
         (List.range (q + 1)).foldl
@@ -486,7 +486,7 @@ private theorem tangent_sum [Lean.Grind.CommRing R]
       apply List.foldl_add_congr
       intro j hj
       unfold tangent
-      rw [if_neg (by omega), Nat.succ_sub_one]
+      rw [ite_eq_right (by omega), Nat.succ_sub_one]
       have hc :
           C (b.coeff (j + 1)) *
               (C (((j + 1 : Nat) : R)) : TSeries R (q + 1)) =
@@ -514,9 +514,9 @@ private theorem derivPad_comp_agree [Lean.Grind.CommRing R]
     unfold tangent
     by_cases hk0 : k = 0
     · subst k
-      rw [if_pos rfl, pow_zero, derivPad_one, mul_zero]
+      rw [ite_eq_left rfl, pow_zero, derivPad_one, mul_zero]
       exact Agree.refl (n - 1) 0
-    · rw [if_neg hk0]
+    · rw [ite_eq_right hk0]
       exact hmul
   apply Agree.trans hfold
   rw [tangent_sum a b b.derivPad h0]
@@ -532,7 +532,7 @@ private theorem comp_taylor [Lean.Grind.CommRing R]
     · rw [coeff_add y d 0 hn, hy, hd0]
       grind
     · unfold coeff
-      rw [dif_neg hn]
+      rw [dite_eq_right hn]
   rw [comp_spec b (y + d) hyd, comp_spec b y hy]
   have hfold :
       Agree (p + p)
@@ -582,22 +582,22 @@ private theorem derivPad_coeff_zero_mul [Lean.Grind.CommRing R]
   · rw [coeff_derivPad b 0 hn]
     simp only [Nat.zero_add]
     by_cases h1 : 1 < n
-    · rw [if_pos h1, Lean.Grind.Semiring.natCast_one]
+    · rw [ite_eq_left h1, Lean.Grind.Semiring.natCast_one]
       calc
         1 * b.coeff 1 * v = b.coeff 1 * v := by grind
         _ = 1 := hv
-    · rw [if_neg h1]
+    · rw [ite_eq_right h1]
       have hb : b.coeff 1 = 0 := by
         unfold coeff
-        rw [dif_neg h1]
+        rw [dite_eq_right h1]
       rw [hb] at hv
       simpa only [zero_mul] using hv
   · have hd : b.derivPad.coeff 0 = 0 := by
       unfold coeff
-      rw [dif_neg hn]
+      rw [dite_eq_right hn]
     have hb : b.coeff 1 = 0 := by
       unfold coeff
-      rw [dif_neg (by omega)]
+      rw [dite_eq_right (by omega)]
     rw [hd]
     calc
       0 * v = b.coeff 1 * v := by rw [hb]
@@ -631,10 +631,10 @@ private theorem revStep_correct [Lean.Grind.CommRing R]
         _ = 1 := derivPad_coeff_zero_mul b v hv
     · have hd : denominator.coeff 0 = 0 := by
         unfold coeff
-        rw [dif_neg hn]
+        rw [dite_eq_right hn]
       have hb : b.coeff 1 = 0 := by
         unfold coeff
-        rw [dif_neg (by omega)]
+        rw [dite_eq_right (by omega)]
       rw [hd]
       calc
         0 * v = b.coeff 1 * v := by rw [hb]
@@ -642,7 +642,7 @@ private theorem revStep_correct [Lean.Grind.CommRing R]
   have hinv : Agree m inverse (invOfUnit denominator v) := by
     intro i hi him
     dsimp only [inverse]
-    rw [coeff_invUpTo m denominator v hden0 i hi, if_pos him]
+    rw [coeff_invUpTo m denominator v hden0 i hi, ite_eq_left him]
   have hdeninv : Agree m (denominator * inverse) 1 := by
     have hmul := Agree.mul (Agree.refl m denominator) hinv
     rw [invOfUnit_mul denominator v hden0] at hmul
@@ -676,14 +676,14 @@ private theorem revStep_correct [Lean.Grind.CommRing R]
         hcorrectionSmall 0 hn hp, coeff_zero]
       grind
     · unfold coeff
-      rw [dif_neg hn]
+      rw [dite_eq_right hn]
   have hyc0 : (y - correction).coeff 0 = 0 := by
     by_cases hn : 0 < n
     · rw [coeff_sub y correction 0 hn, hy,
         hcorrectionSmall 0 hn hp, coeff_zero]
       grind
     · unfold coeff
-      rw [dif_neg hn]
+      rw [dite_eq_right hn]
   have htaylor : Agree m (comp b (y - correction))
       (comp b y - derivative * correction) := by
     have ht := comp_taylor b y (-correction) p hy hneg0 hnegSmall
@@ -705,12 +705,12 @@ private theorem revStep_correct [Lean.Grind.CommRing R]
   have hstep : Agree m (revStep b v y m) (y - correction) := by
     intro i hi him
     unfold revStep
-    rw [coeff_ofFn _ i hi, if_pos him]
+    rw [coeff_ofFn _ i hi, ite_eq_left him]
   have hstep0 : (revStep b v y m).coeff 0 = 0 := by
     by_cases hn : 0 < n
     · exact (hstep 0 hn (by dsimp only [m]; omega)).trans hyc0
     · unfold coeff
-      rw [dif_neg hn]
+      rw [dite_eq_right hn]
   have hcomp := Agree.comp_inner b (revStep b v y m) (y - correction)
     hstep hstep0 hyc0
   have hresult := (Agree.sub hcomp (Agree.refl m X)).trans hideal
@@ -732,8 +732,8 @@ private theorem coeff_mul_right_lead [Lean.Grind.CommRing R]
           have hjp : j < p + 1 := List.mem_range.mp hj
           by_cases hj0 : j = 0
           · subst j
-            rw [if_pos rfl, Nat.sub_zero]
-          · rw [if_neg hj0, hd (p - j) (by omega) (by omega), coeff_zero]
+            rw [ite_eq_left rfl, Nat.sub_zero]
+          · rw [ite_eq_right hj0, hd (p - j) (by omega) (by omega), coeff_zero]
             grind
     _ = 0 + a.coeff 0 * d.coeff p :=
       List.foldl_add_single _ _ _ _ (List.mem_range.mpr (by omega)) List.nodup_range
@@ -805,12 +805,12 @@ private theorem revInit_zero [Lean.Grind.CommRing R] (m : Nat) (v : R) :
   by_cases hn : 0 < n
   · rw [coeff_mulUpTo m (C v) X 0 hn]
     by_cases hm : 0 < m
-    · rw [if_pos hm, coeff_mul_zero (C v) X hn,
+    · rw [ite_eq_left hm, coeff_mul_zero (C v) X hn,
         coeff_C v 0 hn, X_coeff_zero]
       grind
-    · rw [if_neg hm]
+    · rw [ite_eq_right hm]
   · unfold coeff
-    rw [dif_neg hn]
+    rw [dite_eq_right hn]
 
 private theorem revNewton_correctAt [Lean.Grind.CommRing R]
     (m : Nat) (b : TSeries R n) (v : R) (h0 : b.coeff 0 = 0)
@@ -853,7 +853,7 @@ private theorem revOfUnit_eq [Lean.Grind.CommRing R]
   apply ext
   intro i hi
   unfold revOfUnit revUpTo
-  rw [coeff_ofFn _ i hi, if_pos hi, Nat.min_self]
+  rw [coeff_ofFn _ i hi, ite_eq_left hi, Nat.min_self]
 
 /-- Bounded Newton reversion agrees with the full compositional inverse
 throughout the requested prefix. -/
@@ -877,7 +877,7 @@ theorem revUpTo_agree [Lean.Grind.CommRing R]
   intro i hi him
   have hiq : i < q := by dsimp only [q]; omega
   unfold revOfUnit revUpTo
-  rw [coeff_ofFn _ i hi, if_pos him, coeff_ofFn _ i hi, if_pos hi,
+  rw [coeff_ofFn _ i hi, ite_eq_left him, coeff_ofFn _ i hi, ite_eq_left hi,
     Nat.min_self]
   exact hiter i hi hiq
 
@@ -894,10 +894,10 @@ private theorem coeff_comp_one [Lean.Grind.CommRing R]
   rw [hzy] at ht
   have hc := ht 1 h (by omega)
   rw [coeff_add _ _ 1 h, comp_zero_right,
-    coeff_C (b.coeff 0) 1 h, if_neg (by omega),
+    coeff_C (b.coeff 0) 1 h, ite_eq_right (by omega),
     coeff_mul_right_lead (comp b.derivPad 0) y 1 h hyAgree,
     coeff_comp_zero b.derivPad 0 (coeff_zero 0),
-    coeff_derivPad b 0 (by omega), if_pos h,
+    coeff_derivPad b 0 (by omega), ite_eq_left h,
     Lean.Grind.Semiring.natCast_one] at hc
   grind
 
@@ -1015,11 +1015,11 @@ private theorem lagrange_coeff [Lean.Grind.CommRing R]
                 coeff_lagrange_term b v h0 hv k j hk hkn]
               by_cases hjk : j = k - 1
               · subst j
-                rw [if_pos rfl, if_pos (by omega),
+                rw [ite_eq_left rfl, ite_eq_left (by omega),
                   coeff_derivPad g (k - 1) (by omega),
-                  show k - 1 + 1 = k by omega, if_pos hkn]
+                  show k - 1 + 1 = k by omega, ite_eq_left hkn]
                 grind
-              · rw [if_neg hjk, if_neg (by omega)]
+              · rw [ite_eq_right hjk, ite_eq_right (by omega)]
                 grind
       _ = 0 + (((k : Nat) : R) * g.coeff k) :=
         List.foldl_add_single _ _ _ _ (List.mem_range.mpr (by omega))
@@ -1046,8 +1046,8 @@ theorem revLagrange_eq [Lean.Grind.CommRing R]
   rw [coeff_revLagrange b v i hi]
   by_cases hi0 : i = 0
   · subst i
-    rw [if_pos rfl, revOfUnit_coeff_zero b v h0 hv]
-  · rw [if_neg hi0]
+    rw [ite_eq_left rfl, revOfUnit_coeff_zero b v h0 hv]
+  · rw [ite_eq_right hi0]
     have hlag := lagrange_coeff b v h0 hv i (by omega) hi
     have hinv := NatInverses.invNat_eq (R := R) (m := n - 1)
       i (by omega) (by omega)
@@ -1072,7 +1072,7 @@ theorem revOfUnit_coeff_one [Lean.Grind.CommRing R]
     rw [revOfUnit_eq b v]
     exact (revNewton_correct b v h0 hv (steps n)).1
   have hc := coeff_comp_one b (revOfUnit b v) hrev0 h
-  rw [hleft, coeff_X 1 h, if_pos rfl] at hc
+  rw [hleft, coeff_X 1 h, ite_eq_left rfl] at hc
   calc
     (revOfUnit b v).coeff 1 = 1 * (revOfUnit b v).coeff 1 := by grind
     _ = (b.coeff 1 * v) * (revOfUnit b v).coeff 1 := by rw [hv]
@@ -1110,7 +1110,7 @@ theorem revOfUnit_le_one [Lean.Grind.CommRing R] (b : TSeries R n) (v : R)
   have hi0 : i = 0 := by omega
   subst i
   unfold revOfUnit revUpTo steps
-  simp only [Nat.min_self, if_pos (by omega : 1 ≤ 1), newton]
+  simp only [Nat.min_self, ite_eq_left (by omega : 1 ≤ 1), newton]
   grind
 
 /-- The Newton numerator vanishes throughout the precision already established

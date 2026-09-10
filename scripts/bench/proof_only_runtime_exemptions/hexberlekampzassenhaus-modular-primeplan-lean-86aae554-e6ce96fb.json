@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekampZassenhaus/Modular/PrimePlan.lean",
+ "baseline_blob": "86aae554c3798a8d2d425ddc4e319c64eb0bda17",
+ "current_blob": "e6ce96fbf345d9a0de384a4b893977ae9d0d1e7b",
+ "reason": "Replaces `Hex.DensePoly.degree?.getD 0` with the new abbreviation `Hex.DensePoly.natDegree`, whose body is exactly that term and which `abbrev` marks `@[reducible, inline]`, and repairs the proofs that rewrote through the `Option`; the compiled code and every measured branch are unchanged."
+}

@@ -132,7 +132,7 @@ theorem accVal_accAddWord (lo hi q : UInt64) (hhi : hi.toNat + 1 < UInt64.word) 
   dsimp [accAddWord]
   by_cases hc : (UInt64.addCarry lo q false).2 = true
   · have hc' : (UInt64.addCarry lo q false).2 = true := hc
-    simp only [hc', if_true]
+    simp only [hc', ite_true]
     have hhi1 : (hi + 1).toNat = hi.toNat + 1 := by
       rw [UInt64.toNat_add]
       simp only [UInt64.toNat_one]
@@ -184,13 +184,13 @@ theorem accAddWord_eq_inline (lo hi q : UInt64) :
   · have hover : UInt64.word ≤ lo.toNat + q.toNat := by
       have h := (UInt64.addCarry_snd_eq_true lo q false).mp hc
       simpa using h
-    rw [hc, if_pos rfl, if_pos (hlt.mpr hover)]
+    rw [hc, ite_eq_left rfl, ite_eq_left (hlt.mpr hover)]
   · have hc' : (UInt64.addCarry lo q false).2 = false := by
       simpa using hc
     have hnover : ¬ UInt64.word ≤ lo.toNat + q.toNat := by
       intro h
       exact hc ((UInt64.addCarry_snd_eq_true lo q false).mpr (by simpa using h))
-    rw [hc', if_neg Bool.false_ne_true, if_neg (fun h => hnover (hlt.mp h)),
+    rw [hc', ite_eq_right Bool.false_ne_true, ite_eq_right (fun h => hnover (hlt.mp h)),
       UInt64.add_zero]
 
 /-! # Two-word reduction -/
@@ -410,18 +410,18 @@ theorem accFold_spec (ctx : BarrettCtx p) (ws : List UInt64) :
     have hgrow : (accAddWord lo hi q).2.toNat ≤ hi.toNat + 1 := by
       dsimp [accAddWord]
       by_cases hc : (UInt64.addCarry lo q false).2 = true
-      · rw [if_pos hc]
+      · rw [ite_eq_left hc]
         have hh : (hi + 1).toNat = hi.toNat + 1 := by
           rw [UInt64.toNat_add]; simp only [UInt64.toNat_one]
           exact Nat.mod_eq_of_lt hnw
         omega
-      · rw [if_neg hc]; omega
+      · rw [ite_eq_right hc]; omega
     rw [List.foldl_cons]
     by_cases hcase : count + 1 = barrettWindow
     · have hstep : accStep ctx (lo, hi, count) q =
           (accReduce ctx (radixResidue ctx) (accAddWord lo hi q).1 (accAddWord lo hi q).2,
             0, 0) := by
-        simp only [accStep]; rw [if_pos hcase]
+        simp only [accStep]; rw [ite_eq_left hcase]
       rw [hstep]
       have hres := ih (accReduce ctx (radixResidue ctx) (accAddWord lo hi q).1
         (accAddWord lo hi q).2) 0 0 (Nat.le_of_eq UInt64.toNat_zero) barrettWindow_pos
@@ -435,7 +435,7 @@ theorem accFold_spec (ctx : BarrettCtx p) (ws : List UInt64) :
       rw [hR, wordsSum_cons, Nat.mod_add_mod, Nat.add_assoc]
     · have hstep : accStep ctx (lo, hi, count) q =
           ((accAddWord lo hi q).1, (accAddWord lo hi q).2, count + 1) := by
-        simp only [accStep]; rw [if_neg hcase]
+        simp only [accStep]; rw [ite_eq_right hcase]
       rw [hstep]
       have hcount : count + 1 < barrettWindow := by omega
       have hhi : (accAddWord lo hi q).2.toNat ≤ count + 1 := by omega

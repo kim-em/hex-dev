@@ -153,7 +153,7 @@ In the Leibniz determinant of `xI - A`, the identity permutation contributes a
 monic term of degree `n`. Every other permutation uses at least one
 off-diagonal entry and therefore has degree at most `n - 1`. Hence the
 determinant is monic of degree `n`, including at `n = 0`, where it is `1` of
-degree zero under the project's `degree?.getD 0` convention.
+degree zero under the project's `natDegree` convention.
 
 ```lean
 namespace Hex.Matrix
@@ -161,8 +161,8 @@ namespace Hex.Matrix
 theorem det_charMatrix_monic (A : Matrix F n n) :
     (Matrix.det (charMatrix A)).Monic
 
-theorem degree?_det_charMatrix (A : Matrix F n n) :
-    (Matrix.det (charMatrix A)).degree?.getD 0 = n
+theorem natDegree_det_charMatrix (A : Matrix F n n) :
+    (Matrix.det (charMatrix A)).natDegree = n
 
 theorem snfRank_charMatrix (A : Matrix F n n) :
     PolyMatrix.snfRank (charMatrix A) = n
@@ -268,7 +268,7 @@ theorem factorProduct_monic (A : Matrix F n n) :
 
 theorem degree_sum (A : Matrix F n n) :
     (invariantFactors A).foldl
-      (fun d p => d + p.degree?.getD 0) 0 = n
+      (fun d p => d + p.natDegree) 0 = n
 
 theorem largestFactor_empty (A : Matrix F 0 0) : largestFactor A = 1
 

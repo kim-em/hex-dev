@@ -1,0 +1,171 @@
+{"schema_version":1,"kind":"parametric","function":"Hex.LatticeEnumBench.runAmbientPreparation","param":2048,"inner_repeats":256,"total_nanos":1083099425,"per_call_nanos":4230857.128906,"cache_mode":"warm","result_hash":"0x2b7f1b5f3b43d15d","status":"ok","error":null,"alloc_bytes":null,"peak_rss_kb":76252,"env":{"arch":"x86_64","cpu_cores":96,"cpu_model":"AMD EPYC 9455 48-Core Processor","exe_name":"hexlatticeenum_bench","git_commit":"df2cbf92dbd8b810971632cb62efd6128ba0c03c","git_dirty":true,"hostname":"chungus2","lean_bench_version":"0.1.0","lean_toolchain":"leanprover/lean4:4.34.0-rc2","lean_version":"4.34.0-rc2","os":"linux","platform_target":"x86_64-unknown-linux-gnu","timestamp_iso":"2026-09-07T15:44:20Z","timestamp_unix_ms":1788795860784}}
+
+filtered profile: /tmp/hex-lattice-samply-current/runAmbientPreparation.json.gz
+symbols:          /tmp/hex-lattice-samply-current/runAmbientPreparation.json.syms.json
+diagnostics:      /tmp/hex-lattice-samply-current/runAmbientPreparation.json.gz.diagnostics.json
+{
+  "schema": 2,
+  "stage": "complete",
+  "confidence": "passed",
+  "low_confidence_reasons": [],
+  "bench_pid": 1942650,
+  "bench_thread_name": "hexlatticeenum_bench",
+  "bench_thread_tid": "1942724",
+  "regions_total": 2,
+  "total_timed_ms": 1087.305023,
+  "expected_samples_bench_thread": 1086.2,
+  "retained_samples_bench_thread": 1087,
+  "rejected_samples_bench_thread": 24,
+  "off_bench_thread_samples_in_window": 0,
+  "samply_interval_ms": 1.001001,
+  "spawn_anchor_wall_ns": 1788795860526997470,
+  "spawn_anchor_mono_ns": 20287709286960,
+  "sidecar_mono_anchor_ns": 20287977411639,
+  "samply_meta_start_time_ms": 1788795860529.0332,
+  "samply_timestamp_mode": "absolute-monotonic-ms",
+  "calibration_residual_ms": 0.21771300211548805,
+  "calibration_max_residual_ms": 5.0,
+  "calibration": {
+    "selected_mode": "absolute-monotonic-ms",
+    "residual_ms": 0.21771300211548805,
+    "raw_max_residual_ms": 0.9875249974429607,
+    "residual_statistic": "one-boundary-trimmed-maximum",
+    "configured_max_residual_ms": 5.0,
+    "sample_interval_ms": 1.001001,
+    "effective_max_residual_ms": 5.0,
+    "within_residual_limit": true,
+    "candidates": {
+      "absolute-monotonic-ms": {
+        "hit_count": 1087,
+        "regions_without_samples": 0,
+        "boundary_residual_trimmed_max_ms": 0.21771300211548805,
+        "boundary_residual_raw_max_ms": 0.9875249974429607,
+        "within_residual_limit": true
+      },
+      "relative-to-meta-start-ms": {
+        "hit_count": 0,
+        "regions_without_samples": 2,
+        "boundary_residual_trimmed_max_ms": null,
+        "boundary_residual_raw_max_ms": null,
+        "within_residual_limit": false
+      }
+    }
+  },
+  "minimum_retained_samples": 100,
+  "sensitivity": {
+    "shift_ms": 5.0,
+    "reported_top_function_count": 3,
+    "configured_max_total_variation_distance": 0.1,
+    "sampling_noise_coefficient": 0.6,
+    "minimum_comparison_samples": 100,
+    "maximum_sampling_noise_allowance": 0.5,
+    "verdict": "passed",
+    "leaf_function_distributions_stable": true,
+    "comparisons": {
+      "minus": {
+        "total_variation_distance": 0.0045998160073597045,
+        "leaf_function_support_size": 227,
+        "comparison_samples": 1087,
+        "exchanged_samples": 10,
+        "exchanged_fraction": 0.00919963201471941,
+        "sampling_noise_allowance": 0.03719200852531301,
+        "maximum_sampling_noise_allowance": 0.5,
+        "sample_count_adequate": true,
+        "noise_allowance_discriminating": true,
+        "effective_max_total_variation_distance": 0.1,
+        "verdict": "passed",
+        "failure_reasons": []
+      },
+      "plus": {
+        "total_variation_distance": 0.004200201677699993,
+        "leaf_function_support_size": 225,
+        "comparison_samples": 1082,
+        "exchanged_samples": 5,
+        "exchanged_fraction": 0.0046210720887245845,
+        "sampling_noise_allowance": 0.026303603457962493,
+        "maximum_sampling_noise_allowance": 0.5,
+        "sample_count_adequate": true,
+        "noise_allowance_discriminating": true,
+        "effective_max_total_variation_distance": 0.1,
+        "verdict": "passed",
+        "failure_reasons": []
+      }
+    },
+    "cases": {
+      "minus": {
+        "shift_ms": -5.0,
+        "retained_samples": 1087,
+        "top_leaf_functions": [
+          {
+            "function": 135,
+            "name": "0x4cc2cf1",
+            "samples": 46
+          },
+          {
+            "function": 198,
+            "name": "0x4cd9632",
+            "samples": 44
+          },
+          {
+            "function": 179,
+            "name": "0x4cd95b4",
+            "samples": 42
+          }
+        ]
+      },
+      "nominal": {
+        "shift_ms": 0.0,
+        "retained_samples": 1087,
+        "top_leaf_functions": [
+          {
+            "function": 135,
+            "name": "0x4cc2cf1",
+            "samples": 46
+          },
+          {
+            "function": 198,
+            "name": "0x4cd9632",
+            "samples": 44
+          },
+          {
+            "function": 179,
+            "name": "0x4cd95b4",
+            "samples": 42
+          }
+        ]
+      },
+      "plus": {
+        "shift_ms": 5.0,
+        "retained_samples": 1082,
+        "top_leaf_functions": [
+          {
+            "function": 135,
+            "name": "0x4cc2cf1",
+            "samples": 45
+          },
+          {
+            "function": 198,
+            "name": "0x4cd9632",
+            "samples": 44
+          },
+          {
+            "function": 179,
+            "name": "0x4cd95b4",
+            "samples": 42
+          }
+        ]
+      }
+    }
+  }
+}
++ samply record --save-only --no-open -o /tmp/lean-bench-samply-9ueahe8k/samply.json.gz --rate 999 --unstable-presymbolicate -- /home/kim/worktrees/hex-dev/hex-dev-pr-10089/.lake/build/bin/hexlatticeenum_bench _child --bench Hex.LatticeEnumBench.runAmbientPreparation --param 2048 --target-nanos 1000000000 --cache-mode warm
+=== lean-bench-samply filter diagnostics ===
+bench thread:       name='hexlatticeenum_bench' tid=1942724
+calibration:        mode=absolute-monotonic-ms, residual = 0.218 ms (effective limit 5 ms)
+regions:            2, total timed = 1087.3 ms
+expected samples:   ~1086 on bench thread
+retained samples:   1087 on bench thread (24 rejected outside windows)
+other-thread noise: 0 samples on non-bench threads within timed windows (informational)
+sensitivity ±5 ms: passed (leaf functions; configured total-variation floor 0.10)
+confidence:         passed
+filtered profile:   /tmp/hex-lattice-samply-current/runAmbientPreparation.json.gz

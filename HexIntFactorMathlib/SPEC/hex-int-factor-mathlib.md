@@ -14,6 +14,24 @@ a tactic, or install a decision procedure. All transported values are computed
 by `HexIntFactor`; this layer supplies proofs that identify those values with
 their Mathlib counterparts.
 
+## Headline correctness theorem
+
+The bridge's headline correctness theorem is
+`Hex.Nat.CheckedFactorization.factorization_eq`:
+
+```lean
+theorem Hex.Nat.CheckedFactorization.factorization_eq {n : Nat}
+    (F : CheckedFactorization n) (p : Nat) :
+    n.factorization p =
+      (F.raw.factors.find? fun e => e.prime == p).elim 0 (·.exponent)
+```
+
+It is the end-to-end correspondence for the checked factorization API: every
+multiplicity computed from the certificate's canonical prime-power list is
+exactly Mathlib's `Nat.factorization` value for the certified subject. The
+divisor, arithmetic-function, square-decomposition, and order transports
+below build on this checked correspondence and the core correctness theorems.
+
 ## Factorization correspondences
 
 `HexIntFactorMathlib.Factorization` transports the core checker facts and
@@ -67,3 +85,10 @@ owns no conformance source, compiled benchmark, proof-probe root, oracle
 wrapper, executable checker, reifier, tactic, or global instance. It therefore
 has no ordinary Phase-3 conformance target and no separate Phase-4 runtime
 surface.
+
+The public divisor-enumeration transports (`divisors_eq`, `divisors_list_eq`,
+`numDivisors_eq_card`) map to the core registration
+`Hex.IntFactorBench.runDivisors`. Its accepted shared-host evidence is recorded in
+`reports/hex-int-factor-divisor-protocol-4.md`, which retains the three exhausted
+predecessor protocols and all unsuccessful evidence. The core registration
+therefore discharges performance coverage for these transported APIs.

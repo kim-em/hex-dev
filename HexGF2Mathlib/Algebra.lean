@@ -52,13 +52,13 @@ namespace GF2Poly
 /-- The Euclidean rank of a packed polynomial. Zero has rank zero and a
 nonzero polynomial has rank one greater than its degree. -/
 def euclideanRank (p : Hex.GF2Poly) : Nat :=
-  if p = 0 then 0 else p.degree + 1
+  if p = 0 then 0 else p.natDegree + 1
 
 @[simp] theorem euclideanRank_zero : euclideanRank 0 = 0 := by
   simp [euclideanRank]
 
 @[simp] theorem euclideanRank_of_ne_zero {p : Hex.GF2Poly} (hp : p ≠ 0) :
-    euclideanRank p = p.degree + 1 := by
+    euclideanRank p = p.natDegree + 1 := by
   simp [euclideanRank, hp]
 
 /-- The packed `F₂[x]` representation is a Euclidean domain whose quotient and
@@ -80,7 +80,7 @@ instance euclideanDomain : EuclideanDomain Hex.GF2Poly where
     · change (Hex.GF2Poly.mod p q).isZero = true at hzero
       rw [(Hex.GF2Poly.isZero_iff_eq_zero _).mp hzero, euclideanRank_zero]
       omega
-    · change (Hex.GF2Poly.mod p q).degree < q.degree at hdegree
+    · change (Hex.GF2Poly.mod p q).natDegree < q.natDegree at hdegree
       by_cases hrem : Hex.GF2Poly.mod p q = 0
       · rw [hrem, euclideanRank_zero]
         omega
@@ -105,8 +105,8 @@ instance euclideanDomain : EuclideanDomain Hex.GF2Poly where
         rw [hpq] at hpqdeg
         simp [Hex.GF2Poly.degree?] at hpqdeg
       rw [euclideanRank_of_ne_zero hpq,
-        Hex.GF2Poly.degree_eq_of_degree?_eq_some hdp,
-        Hex.GF2Poly.degree_eq_of_degree?_eq_some hpqdeg]
+        Hex.GF2Poly.natDegree_eq_of_degree?_eq_some hdp,
+        Hex.GF2Poly.natDegree_eq_of_degree?_eq_some hpqdeg]
       omega
 
 /-- The gcd-domain interface uses the packed executable gcd, not Mathlib's
@@ -191,8 +191,8 @@ be nonzero with no factorization into two positive-degree parts, which the
 constant `1` satisfies, and `Hex.GF2nPoly 1 _` is the trivial ring where
 `0 = 1`. Carried as a `Fact` so that instance synthesis can find it: a caller
 with a genuine modulus supplies it once, and the committed packed entries in
-`hex-gfq` carry `degree_pos` to build it from. -/
-noncomputable instance field [hdeg : Fact (0 < f.degree)] :
+`hex-gfq` carry `natDegree_pos` to build it from. -/
+noncomputable instance field [hdeg : Fact (0 < f.natDegree)] :
     Field (Hex.GF2nPoly f hirr) :=
   Field.ofMinimalAxioms (Hex.GF2nPoly f hirr)
     Hex.GF2nPoly.add_assoc
@@ -253,7 +253,7 @@ example : IsBezout Hex.GF2Poly := inferInstance
 /-- The field instance is found by synthesis given the degree fact, and its
 inverse is still the executable one. -/
 example {f : Hex.GF2Poly} {hirr : Hex.GF2Poly.Irreducible f}
-    [Fact (0 < f.degree)] (a : Hex.GF2nPoly f hirr) (ha : a ≠ 0) :
+    [Fact (0 < f.natDegree)] (a : Hex.GF2nPoly f hirr) (ha : a ≠ 0) :
     a * a⁻¹ = 1 :=
   mul_inv_cancel₀ ha
 

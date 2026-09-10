@@ -442,19 +442,17 @@ private theorem sparseModulus_size {n k constant : Nat} (hn : 0 < n) :
   apply Nat.le_antisymm
   · exact Nat.le_trans (DensePoly.size_ofCoeffs_le _) (by simp)
   · apply Nat.succ_le_of_lt
-    by_contra hlt
+    refine Nat.lt_of_not_ge fun hle => ?_
     have hzero := DensePoly.coeff_eq_zero_of_size_le
-      (sparseModulus n k constant) (Nat.le_of_not_gt hlt)
+      (sparseModulus n k constant) hle
     rw [sparseModulus_coeff_top hn] at hzero
     exact (by decide : (1 : ZMod64 7) ≠ 0) hzero
 
 private theorem sparseModulus_degree {n k constant : Nat} (hn : 0 < n) :
     FpPoly.degree (sparseModulus n k constant) = n := by
-  change (sparseModulus n k constant).degree?.getD 0 = n
-  rw [DensePoly.degree?_eq_some_of_pos_size _ (by
-    rw [sparseModulus_size hn]
-    omega)]
-  simp [sparseModulus_size hn]
+  change (sparseModulus n k constant).natDegree = n
+  rw [DensePoly.natDegree_eq_size_sub_one, sparseModulus_size hn]
+  omega
 
 private theorem sparseModulus_monic {n k constant : Nat} (hn : 0 < n) :
     DensePoly.Monic (sparseModulus n k constant) := by

@@ -21,7 +21,7 @@ the selected root's certified magnitude bound before refining the root once.
 -/
 namespace Hex
 
-namespace QAdjoin
+namespace PolyQuot
 
 /-- Horner evaluation of a rational polynomial on the circumscribed disc of a
 dyadic square. -/
@@ -101,5 +101,5 @@ def approxGuardBits (s : DyadicSquare) (f : DensePoly Rat) : Nat :=
     let b := evalRatBall f s 16
     b.re = 3 && b.im = 0 && b.radius = s.radiusHi
 
-end QAdjoin
+end PolyQuot
 end Hex

@@ -8,6 +8,8 @@ module
 
 public import HexBasic
 public import HexArith
+public import HexPrimality
+public import HexPrimalityMathlib
 public import HexPoly
 public import HexMvPoly
 public import HexModArith
@@ -49,6 +51,17 @@ public import HexLLL
 public import HexBerlekampZassenhaus
 public import HexLLLMathlib
 public import HexBerlekampZassenhausMathlib
+public import HexPermGroup
+public import HexPermGroupMathlib
+public import HexGraphIso
+public import HexGraphIsoMathlib
+public import HexResultant
+public import HexResultantMathlib
+public import HexNumberField
+public import HexNumberFieldMathlib
+public import HexNumberFieldTower
+public import HexNumberFieldTowerMathlib
+public import HexRCF
 
 /-!
 Mirror of the released aggregate's umbrella.

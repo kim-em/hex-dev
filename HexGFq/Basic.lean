@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexConway
+public import HexGFq.Entries
 public import HexGF2
 public import HexGFqField
 
@@ -24,171 +25,7 @@ namespace Hex
 
 namespace GFq
 
--- Everything in this block is `hex-gfq`'s own material: the two
--- instance-synthesis classes that select a committed table entry, the packed
--- binary modulus they name, and their certificates. The Conway table itself
--- stays in `hex-conway`, and is opened here rather than qualified at each of
--- the forty-odd instances.
 open Conway
-
-/-- A committed Conway-table entry available through instance synthesis.
-
-This keeps the proof-oriented explicit `SupportedEntry` API available while
-supporting a short user-facing field spelling for committed entries. -/
-class CommittedEntry (p n : Nat) [ZMod64.Bounds p] where
-  entry : SupportedEntry p n
-
-/-- The committed table supports generic `GFq` construction for `C(2, 1)`. -/
-instance committedEntry_2_1 : CommittedEntry 2 1 where
-  entry := supportedEntry_2_1
-
-/-- The committed table supports generic `GFq` construction for `C(2, 2)`. -/
-instance committedEntry_2_2 : CommittedEntry 2 2 where
-  entry := supportedEntry_2_2
-
-/-- The committed table supports generic `GFq` construction for `C(2, 3)`. -/
-instance committedEntry_2_3 : CommittedEntry 2 3 where
-  entry := supportedEntry_2_3
-
-/-- The committed table supports generic `GFq` construction for `C(2, 4)`. -/
-instance committedEntry_2_4 : CommittedEntry 2 4 where
-  entry := supportedEntry_2_4
-
-/-- The committed table supports generic `GFq` construction for `C(2, 5)`. -/
-instance committedEntry_2_5 : CommittedEntry 2 5 where
-  entry := supportedEntry_2_5
-
-/-- The committed table supports generic `GFq` construction for `C(2, 6)`. -/
-instance committedEntry_2_6 : CommittedEntry 2 6 where
-  entry := supportedEntry_2_6
-
-/-- The committed table supports generic `GFq` construction for `C(2, 7)`. -/
-instance committedEntry_2_7 : CommittedEntry 2 7 where
-  entry := supportedEntry_2_7
-
-/-- The committed table supports generic `GFq` construction for `C(2, 8)`. -/
-instance committedEntry_2_8 : CommittedEntry 2 8 where
-  entry := supportedEntry_2_8
-
-/-- The committed table supports generic `GFq` construction for `C(3, 1)`. -/
-instance committedEntry_3_1 : CommittedEntry 3 1 where
-  entry := supportedEntry_3_1
-
-/-- The committed table supports generic `GFq` construction for `C(3, 2)`. -/
-instance committedEntry_3_2 : CommittedEntry 3 2 where
-  entry := supportedEntry_3_2
-
-/-- The committed table supports generic `GFq` construction for `C(3, 3)`. -/
-instance committedEntry_3_3 : CommittedEntry 3 3 where
-  entry := supportedEntry_3_3
-
-/-- The committed table supports generic `GFq` construction for `C(3, 4)`. -/
-instance committedEntry_3_4 : CommittedEntry 3 4 where
-  entry := supportedEntry_3_4
-
-/-- The committed table supports generic `GFq` construction for `C(3, 5)`. -/
-instance committedEntry_3_5 : CommittedEntry 3 5 where
-  entry := supportedEntry_3_5
-
-/-- The committed table supports generic `GFq` construction for `C(3, 6)`. -/
-instance committedEntry_3_6 : CommittedEntry 3 6 where
-  entry := supportedEntry_3_6
-
-/-- The committed table supports generic `GFq` construction for `C(5, 1)`. -/
-instance committedEntry_5_1 : CommittedEntry 5 1 where
-  entry := supportedEntry_5_1
-
-/-- The committed table supports generic `GFq` construction for `C(5, 2)`. -/
-instance committedEntry_5_2 : CommittedEntry 5 2 where
-  entry := supportedEntry_5_2
-
-/-- The committed table supports generic `GFq` construction for `C(5, 3)`. -/
-instance committedEntry_5_3 : CommittedEntry 5 3 where
-  entry := supportedEntry_5_3
-
-/-- The committed table supports generic `GFq` construction for `C(5, 4)`. -/
-instance committedEntry_5_4 : CommittedEntry 5 4 where
-  entry := supportedEntry_5_4
-
-/-- The committed table supports generic `GFq` construction for `C(5, 5)`. -/
-instance committedEntry_5_5 : CommittedEntry 5 5 where
-  entry := supportedEntry_5_5
-
-/-- The committed table supports generic `GFq` construction for `C(5, 6)`. -/
-instance committedEntry_5_6 : CommittedEntry 5 6 where
-  entry := supportedEntry_5_6
-
-/-- The committed table supports generic `GFq` construction for `C(7, 1)`. -/
-instance committedEntry_7_1 : CommittedEntry 7 1 where
-  entry := supportedEntry_7_1
-
-/-- The committed table supports generic `GFq` construction for `C(7, 2)`. -/
-instance committedEntry_7_2 : CommittedEntry 7 2 where
-  entry := supportedEntry_7_2
-
-/-- The committed table supports generic `GFq` construction for `C(7, 3)`. -/
-instance committedEntry_7_3 : CommittedEntry 7 3 where
-  entry := supportedEntry_7_3
-
-/-- The committed table supports generic `GFq` construction for `C(7, 4)`. -/
-instance committedEntry_7_4 : CommittedEntry 7 4 where
-  entry := supportedEntry_7_4
-
-/-- The committed table supports generic `GFq` construction for `C(7, 5)`. -/
-instance committedEntry_7_5 : CommittedEntry 7 5 where
-  entry := supportedEntry_7_5
-
-/-- The committed table supports generic `GFq` construction for `C(7, 6)`. -/
-instance committedEntry_7_6 : CommittedEntry 7 6 where
-  entry := supportedEntry_7_6
-
-/-- The committed table supports generic `GFq` construction for `C(11, 1)`. -/
-instance committedEntry_11_1 : CommittedEntry 11 1 where
-  entry := supportedEntry_11_1
-
-/-- The committed table supports generic `GFq` construction for `C(11, 2)`. -/
-instance committedEntry_11_2 : CommittedEntry 11 2 where
-  entry := supportedEntry_11_2
-
-/-- The committed table supports generic `GFq` construction for `C(11, 3)`. -/
-instance committedEntry_11_3 : CommittedEntry 11 3 where
-  entry := supportedEntry_11_3
-
-/-- The committed table supports generic `GFq` construction for `C(11, 4)`. -/
-instance committedEntry_11_4 : CommittedEntry 11 4 where
-  entry := supportedEntry_11_4
-
-/-- The committed table supports generic `GFq` construction for `C(11, 5)`. -/
-instance committedEntry_11_5 : CommittedEntry 11 5 where
-  entry := supportedEntry_11_5
-
-/-- The committed table supports generic `GFq` construction for `C(11, 6)`. -/
-instance committedEntry_11_6 : CommittedEntry 11 6 where
-  entry := supportedEntry_11_6
-
-/-- The committed table supports generic `GFq` construction for `C(13, 1)`. -/
-instance committedEntry_13_1 : CommittedEntry 13 1 where
-  entry := supportedEntry_13_1
-
-/-- The committed table supports generic `GFq` construction for `C(13, 2)`. -/
-instance committedEntry_13_2 : CommittedEntry 13 2 where
-  entry := supportedEntry_13_2
-
-/-- The committed table supports generic `GFq` construction for `C(13, 3)`. -/
-instance committedEntry_13_3 : CommittedEntry 13 3 where
-  entry := supportedEntry_13_3
-
-/-- The committed table supports generic `GFq` construction for `C(13, 4)`. -/
-instance committedEntry_13_4 : CommittedEntry 13 4 where
-  entry := supportedEntry_13_4
-
-/-- The committed table supports generic `GFq` construction for `C(13, 5)`. -/
-instance committedEntry_13_5 : CommittedEntry 13 5 where
-  entry := supportedEntry_13_5
-
-/-- The committed table supports generic `GFq` construction for `C(13, 6)`. -/
-instance committedEntry_13_6 : CommittedEntry 13 6 where
-  entry := supportedEntry_13_6
 
 /-- Interpret a packed single-word binary modulus as the corresponding generic
 `FpPoly 2` polynomial.  `lower` supplies the coefficients of degrees `< n`;
@@ -218,7 +55,7 @@ class PackedGF2Entry (n : Nat) where
 monic degree-one polynomials over `𝔽₂`. Used to enumerate the possible factors
 when proving a degree-two packed modulus irreducible. -/
 private theorem gf2poly_degree_one_eq_monomial_or_x_plus_one {p : GF2Poly}
-    (hp : p.degree = 1) :
+    (hp : p.natDegree = 1) :
     p = GF2Poly.monomial 1 ∨ p = GF2Poly.ofUInt64Monic 1 1 := by
   have hpNonzero : p ≠ 0 := by
     intro hzero
@@ -229,7 +66,7 @@ private theorem gf2poly_degree_one_eq_monomial_or_x_plus_one {p : GF2Poly}
     · exact False.elim (hpNonzero (GF2Poly.eq_zero_of_isZero hzero))
   obtain ⟨d, hd⟩ := GF2Poly.degree?_isSome_of_isZero_false hpzeroFalse
   have hd1 : d = 1 := by
-    simpa [GF2Poly.degree, hd] using hp
+    simpa [GF2Poly.natDegree, hd] using hp
   subst d
   by_cases h0 : p.coeff 0 = true
   · right
@@ -288,9 +125,9 @@ theorem packedGF2Entry_2_1_irreducible :
   constructor
   · exact gf2poly_x_plus_one_ne_zero
   · intro a b hab
-    by_cases ha0 : a.degree = 0
+    by_cases ha0 : a.natDegree = 0
     · exact Or.inl ha0
-    by_cases hb0 : b.degree = 0
+    by_cases hb0 : b.natDegree = 0
     · exact Or.inr hb0
     exfalso
     have habWords := congrArg GF2Poly.toWords hab
@@ -304,17 +141,17 @@ theorem packedGF2Entry_2_1_irreducible :
       simp [hzero]
     have hfNonzero : GF2Poly.ofUInt64Monic 1 1 ≠ 0 :=
       gf2poly_x_plus_one_ne_zero
-    have hfDegree : (GF2Poly.ofUInt64Monic 1 1).degree = 1 := by
+    have hfDegree : (GF2Poly.ofUInt64Monic 1 1).natDegree = 1 := by
       decide
-    have haDegree : a.degree = 1 := by
+    have haDegree : a.natDegree = 1 := by
       have haDvd : a ∣ GF2Poly.ofUInt64Monic 1 1 := ⟨b, by simp [hab]⟩
-      have hle := GF2Poly.degree_le_of_dvd_nonzero
+      have hle := GF2Poly.natDegree_le_of_dvd_nonzero
         haNonzero hfNonzero haDvd
       rw [hfDegree] at hle
       omega
-    have hbDegree : b.degree = 1 := by
+    have hbDegree : b.natDegree = 1 := by
       have hbDvd : b ∣ GF2Poly.ofUInt64Monic 1 1 := ⟨a, by simp [GF2Poly.mul_comm, hab]⟩
-      have hle := GF2Poly.degree_le_of_dvd_nonzero
+      have hle := GF2Poly.natDegree_le_of_dvd_nonzero
         hbNonzero hfNonzero hbDvd
       rw [hfDegree] at hle
       omega
@@ -1079,10 +916,10 @@ canonical packed `GF2q` representation. -/
   have hn1 : 1 < 2 ^ n :=
     calc 1 = 2 ^ 0 := by decide
       _ < 2 ^ n := Nat.pow_lt_pow_right (by decide) h.degree_pos
-  -- `ofUInt64 1 = (1 : GF2Poly)`, and `1 % modulus = 1` since `1.degree < modulus.degree = n`.
+  -- `ofUInt64 1 = (1 : GF2Poly)`, and `1 % modulus = 1` since `1.natDegree < modulus.natDegree = n`.
   have hmod : (1 : GF2Poly) % GF2Poly.ofUInt64Monic h.lower n = 1 :=
     GF2Poly.mod_eq_self_of_reduced 1 _ <| Or.inr <| by
-      rw [GF2Poly.degree_ofUInt64Monic_of_lt_64 h.lower h.degree_lt_word]
+      rw [GF2Poly.natDegree_ofUInt64Monic_of_lt_64 h.lower h.degree_lt_word]
       exact h.degree_pos
   -- Hence `ofUInt64 (packedReduceWord ... (ofUInt64 1)) = 1` as polynomials.
   have hpoly :
@@ -1092,7 +929,7 @@ canonical packed `GF2q` representation. -/
       h.degree_lt_word (GF2Poly.ofUInt64 1) (Or.inr ?_)]
     · show (1 : GF2Poly) % GF2Poly.ofUInt64Monic h.lower n = 1
       exact hmod
-    · show ((1 : GF2Poly) % GF2Poly.ofUInt64Monic h.lower n).degree < n
+    · show ((1 : GF2Poly) % GF2Poly.ofUInt64Monic h.lower n).natDegree < n
       rw [hmod]; exact h.degree_pos
   -- Compare the single stored words: both `ofUInt64 _` and `ofUInt64 1` equal `ofWords #[1]`.
   have hword :

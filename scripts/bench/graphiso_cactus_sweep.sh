@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# Regenerate the hex-graph-iso cactus sweep data and figures.
+#
+# Runs the compiled sweep and pairs drivers, stores the data under
+# reports/bench-results/ keyed by the source fingerprint and host, and
+# re-renders the figures (re-timing the tactic leg) and the per-node
+# cost fit (scripts/bench/graphiso_pernode_fit.py). Run from the repo
+# root after any change to hex-graph-iso implementation source, and
+# commit the data, the manifest and the figures together with that
+# change; scripts/bench/check_graphiso_sweep_freshness.py is the required
+# check that keeps the figures honest.
+set -euo pipefail
+
+label="${1:-}"
+root=$(git rev-parse --show-toplevel)
+cd "$root"
+# The fingerprint reads the index, but the sweep measures the working
+# tree; stage the relevant paths first so an uncommitted change cannot
+# record under its predecessor's key (they are about to be committed
+# together with the data in any case). The relevant set is declared once,
+# in scripts/bench/sweep_freshness.py, and both the staging pathspec and
+# the fingerprint come from there.
+freshness=scripts/bench/sweep_freshness.py
+python3 "$freshness" --stage hexgraphiso-cactus
+fp=$(python3 "$freshness" --record hexgraphiso-cactus)
+host=$(hostname -s)
+
+lake build hexgraphiso_cactus
+sweep="reports/bench-results/hexgraphiso-cactus-$fp-$host.jsonl"
+pairs="reports/bench-results/hexgraphiso-pairs-$fp-$host.jsonl"
+.lake/build/bin/hexgraphiso_cactus > "$sweep"
+.lake/build/bin/hexgraphiso_cactus pairs > "$pairs"
+python3 scripts/plots/hexgraphiso-cactus.py \
+  --sweep "$sweep" --pairs "$pairs" --retime
+cp reports/figures/hexgraphiso-tactic-times.json \
+  "reports/bench-results/hexgraphiso-tactic-$fp-$host.json"
+python3 scripts/bench/graphiso_pernode_fit.py --sweep "$sweep" \
+  --out "reports/bench-results/hexgraphiso-pernode-$fp-$host.md"
+cat > "reports/bench-results/hexgraphiso-cactus-$fp-$host.meta.json" <<META
+{
+ "fingerprint": "$fp",
+ "host": "$host",
+ "date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+ "describe": "$(git rev-parse --short=12 HEAD)",
+ "label": "$label"
+}
+META
+echo "recorded $sweep, $pairs, tactic times, per-node fit, meta,"
+echo "reports/bench-results/hexgraphiso-cactus-$fp.manifest"
+echo "and reports/figures/hexgraphiso-*.svg"

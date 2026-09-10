@@ -10,6 +10,14 @@ public import HexNumberFieldMathlib.Roots
 public import HexNumberFieldMathlib.ComponentRoots
 public import HexNumberFieldMathlib.AlgebraicRoots
 public import HexNumberFieldMathlib.Field
+public import HexNumberFieldMathlib.IntegerRoots
+public import HexNumberFieldMathlib.Nearest
+public import HexNumberFieldMathlib.CommonField
+public import HexNumberFieldMathlib.Order
+public import HexNumberFieldMathlib.Conjugate
+public import HexNumberFieldMathlib.AlgebraicallyClosed
+public import HexNumberFieldMathlib.Radical
+public import HexNumberFieldMathlib.RootOrder
 
 public section
 

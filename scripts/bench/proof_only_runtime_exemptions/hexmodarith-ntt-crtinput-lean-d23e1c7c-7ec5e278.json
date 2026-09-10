@@ -1,0 +1,6 @@
+{
+ "path": "HexModArith/Ntt/CrtInput.lean",
+ "baseline_blob": "d23e1c7c318c47cbc92370393fcb9881a45e3b6a",
+ "current_blob": "7ec5e278225bee41282981d8d24612e9856a76d4",
+ "reason": "Turns one `simpa ... using` into the `simp` the linter reports as sufficient. Inside a proof term for an array bound; no executable definition changes."
+}

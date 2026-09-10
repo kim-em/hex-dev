@@ -207,7 +207,7 @@ theorem substHom_reduceMod (b : Hex.FpPoly p) (fm : Hex.FpPoly p)
     (hzero : substHom f hf hp hirr b fm = 0) (g : Hex.FpPoly p) :
     substHom f hf hp hirr b (Hex.GFqRing.reduceMod fm g) =
       substHom f hf hp hirr b g := by
-  letI : Hex.DensePoly.DivModLaws (Hex.ZMod64 p) :=
+  let : Hex.DensePoly.DivModLaws (Hex.ZMod64 p) :=
     Hex.ZMod64.instDivModLawsZMod64Fp p
   have hspec := Hex.DensePoly.DivModLaws.divMod_spec (R := Hex.ZMod64 p) g fm
   have hg : (Hex.DensePoly.divMod g fm).1 * fm + Hex.GFqRing.reduceMod fm g = g := hspec
@@ -291,7 +291,10 @@ theorem substHom_conwayPoly_eq_zero (p : Nat) [Hex.ZMod64.Bounds p]
       (Hex.Conway.normX (Hex.Conway.conwayPoly p n hn)
         (Hex.Conway.conwayPoly_monic p n hn) m (n / m))
       (Hex.Conway.conwayPoly p n hn) (Hex.Conway.conwayPoly_monic p n hn) = 0 :=
-    beq_iff_eq.mp hcompat
+    beq_iff_eq.mp (by
+      change (Hex.Conway.compose _ _ _ _ == 0) = true at hcompat
+      rw [Hex.Conway.compose_eq] at hcompat
+      exact hcompat)
   have hcompose := Hex.FpPoly.composeModMonic_eq_composeModMonicImpl
     (Hex.Conway.conwayPoly p m hm)
     (Hex.Conway.normX (Hex.Conway.conwayPoly p n hn)
@@ -409,7 +412,7 @@ noncomputable example :
       Hex.GFq 2 6 Hex.Conway.supportedEntry_2_6 :=
   conwayEmbed 2 3 6 _ _ Hex.Conway.compat_2_3_6
 
-/-- `GF(13) →+* GF(13^6)`, the largest committed case. -/
+/-- `GF(13) →+* GF(13^6)`, a retained compatibility example. -/
 noncomputable example :
     Hex.GFq 13 1 Hex.Conway.supportedEntry_13_1 →+*
       Hex.GFq 13 6 Hex.Conway.supportedEntry_13_6 :=

@@ -100,7 +100,7 @@ Constant atoms remain in the reflected formula but, after their truth values
 are evaluated, do not contribute carrier boundaries. -/
 @[expose]
 def Sentence.polys (s : Sentence) : List ZPoly :=
-  s.formula.polys.filter fun p => decide (0 < p.degree?.getD 0)
+  s.formula.polys.filter fun p => decide (0 < p.natDegree)
 
 /-- The product of all nonconstant atom polynomials. -/
 @[expose]

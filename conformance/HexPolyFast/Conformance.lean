@@ -41,13 +41,17 @@ and KS1/KS2/KS3/KS4 entry points named by the library SPEC.
 Covered properties: agreement with the established operations, clipped-window
 semantics, quotient/remainder reconstruction, cyclic output bounds, reciprocal
 identity, product-tree roots, pointwise evaluation/interpolation round trips,
-Bézout identities, and Padé degree/congruence contracts.
+Bézout identities, and Padé degree/congruence contracts. Raw Karatsuba checks
+also pin padded-product array bounds and the block accumulator's exact size;
+these are structural regressions, not wallclock performance verdicts.
 
 Covered edge cases: empty and constant operands, normalized clipped outputs,
 cutoff and odd-split boundaries, balanced through 64:1 inputs, empty and
 out-of-range windows, zero cyclic length, zero and exact division, cached-plan
 capacity, empty/singleton/odd trees, empty and duplicate point sets, mismatched
 values, zero gcd inputs and reversed degrees, and unit/nonunit/empty Padé data.
+Raw block checks include exhausted fuel, zero block size, terminal overshoot,
+and odd short lengths in the ordinary unbalanced dispatch shape.
 -/
 
 namespace HexPolyFast.Conformance
@@ -84,6 +88,27 @@ private def ratioUnder2Right : DensePoly Int :=
 #guard mulKaratsuba 2 short long = short * long
 #guard mulKaratsuba 32 ratioUnder2Left ratioUnder2Right =
   ratioUnder2Left * ratioUnder2Right
+
+-- Raw block parameters are unrestricted: overshooting the input with the last
+-- block must not allocate an offset-sized zero suffix. Keep the test offset
+-- modest so the guard remains cheap to interpret even after a regression.
+#guard let r := Karatsuba.Raw.blocks 2 4096 1 a.toArray b.toArray
+  r.size ≤ 32 ∧ (ofCoeffs r : DensePoly Int) = a * b
+#guard (ofCoeffs (Karatsuba.Raw.blocks 2 8 0 long.toArray short.toArray) : DensePoly Int) =
+  long * short
+#guard (ofCoeffs (Karatsuba.Raw.blocks 2 0 3 a.toArray b.toArray) : DensePoly Int) = a * b
+#guard (ofCoeffs (Karatsuba.Raw.blocks 2 4096 1 #[] b.toArray) : DensePoly Int) = 0
+#guard (Karatsuba.Raw.blocks 1 short.size long.size long.toArray short.toArray).size = 70
+#guard (Karatsuba.Raw.blocks 32 33 129 (Array.replicate 129 (1 : Int))
+  (Array.replicate 33 1)).size = 196
+
+-- The accumulator capacity includes this raw-product padding bound, not only
+-- the canonical product degree. Include odd, skew, cutoff, and fuel boundaries.
+#guard [0, 1, 2, 3, 8, 9, 17, 33, 64].all fun m =>
+  [0, 1, 2, 3, 8, 9, 17, 33, 64].all fun n =>
+    [0, 1, 8].all fun cutoff => [0, 1, 8].all fun fuel =>
+      (Karatsuba.Raw.mulAux cutoff fuel (Array.replicate m (1 : Int))
+        (Array.replicate n (1 : Int))).size ≤ 2 * max m n - 1
 
 private def plan : MulPlan Int := karatsubaPlan 2
 

@@ -63,8 +63,8 @@ private theorem C_zero : DensePoly.C (0 : Int) = (0 : ZPoly) := by
   intro n
   rw [DensePoly.coeff_C, DensePoly.coeff_zero]
   by_cases hn : n = 0
-  · rw [if_pos hn]
-  · rw [if_neg hn]
+  · rw [ite_eq_left hn]
+  · rw [ite_eq_right hn]
     rfl
 
 /-- `C` is additive on `ZPoly`. -/
@@ -75,8 +75,8 @@ private theorem C_add (a b : Int) :
   rw [DensePoly.coeff_add _ _ n (by decide), DensePoly.coeff_C,
     DensePoly.coeff_C, DensePoly.coeff_C]
   by_cases hn : n = 0
-  · rw [if_pos hn, if_pos hn, if_pos hn]
-  · rw [if_neg hn, if_neg hn, if_neg hn]
+  · rw [ite_eq_left hn, ite_eq_left hn, ite_eq_left hn]
+  · rw [ite_eq_right hn, ite_eq_right hn, ite_eq_right hn]
     rfl
 
 /-- `C` is multiplicative on `ZPoly`. -/
@@ -89,7 +89,7 @@ private theorem C_mul (a b : Int) :
     DensePoly.coeff_C, DensePoly.coeff_C]
   by_cases hn : n = 0
   · simp [hn]
-  · rw [if_neg hn, if_neg hn]
+  · rw [ite_eq_right hn, ite_eq_right hn]
     exact (Int.mul_zero a).symm
 
 /-- A dense polynomial of size zero is the zero polynomial. -/
@@ -194,11 +194,11 @@ private theorem eq_C_add_X_mul_divX (f : ZPoly) :
     DensePoly.coeff_C]
   match n with
   | 0 =>
-      rw [if_pos rfl, if_pos (by omega)]
+      rw [ite_eq_left rfl, ite_eq_left (by omega)]
       show f.coeff 0 = f.coeff 0 + 0
       omega
   | n + 1 =>
-      rw [if_neg (by omega), if_neg (by omega), coeff_divX]
+      rw [ite_eq_right (by omega), ite_eq_right (by omega), coeff_divX]
       have harith : n + 1 - 1 = n := by omega
       rw [harith]
       show f.coeff (n + 1) = 0 + f.coeff (n + 1)
@@ -250,10 +250,10 @@ private theorem translate_divX_unfold (s : Int) (f : ZPoly) :
   have hdivX : divX (DensePoly.C c) = 0 := by
     apply DensePoly.ext_coeff
     intro n
-    rw [coeff_divX, DensePoly.coeff_C, if_neg (by omega), DensePoly.coeff_zero]
+    rw [coeff_divX, DensePoly.coeff_C, ite_eq_right (by omega), DensePoly.coeff_zero]
     rfl
   have hcoeff : (DensePoly.C c : ZPoly).coeff 0 = c := by
-    rw [DensePoly.coeff_C, if_pos rfl]
+    rw [DensePoly.coeff_C, ite_eq_left rfl]
   rw [hdivX, translate_zero, DensePoly.zero_mul, hcoeff,
     DensePoly.add_comm_poly, DensePoly.add_zero_poly]
 
@@ -273,10 +273,10 @@ theorem translate_X (s : Int) : translate s X = X + DensePoly.C s := by
     rw [DensePoly.coeff_monomial, DensePoly.coeff_C]
     by_cases hn : n = 0
     · simp [hn]
-    · rw [if_neg (by omega), if_neg hn]
+    · rw [ite_eq_right (by omega), ite_eq_right hn]
   have hcoeff : (X : ZPoly).coeff 0 = 0 := by
     show (DensePoly.monomial 1 1 : ZPoly).coeff 0 = 0
-    rw [DensePoly.coeff_monomial, if_neg (by omega)]
+    rw [DensePoly.coeff_monomial, ite_eq_right (by omega)]
     rfl
   rw [hdivX, translate_one, hcoeff, C_zero, DensePoly.add_zero_poly,
     DensePoly.mul_comm_poly, DensePoly.mul_one_right_poly]
@@ -385,14 +385,14 @@ private theorem divX_X_mul (p : ZPoly) : divX (X * p) = p := by
   rw [coeff_divX]
   show (DensePoly.monomial 1 1 * p).coeff (n + 1) = p.coeff n
   rw [DensePoly.monomial_one_mul_poly_eq_shift, DensePoly.coeff_shift,
-    if_neg (by omega)]
+    ite_eq_right (by omega)]
   have harith : n + 1 - 1 = n := by omega
   rw [harith]
 
 private theorem coeff0_X_mul (p : ZPoly) : (X * p).coeff 0 = 0 := by
   show (DensePoly.monomial 1 1 * p).coeff 0 = 0
   rw [DensePoly.monomial_one_mul_poly_eq_shift, DensePoly.coeff_shift,
-    if_pos (by omega)]
+    ite_eq_left (by omega)]
   rfl
 
 private theorem translate_X_mul (s : Int) (p : ZPoly) :
@@ -512,8 +512,8 @@ private theorem size_X_add_C (s : Int) : (X + DensePoly.C s : ZPoly).size = 2 :=
   have hcoeff : (X + DensePoly.C s : ZPoly).coeff 1 ≠ 0 := by
     rw [DensePoly.coeff_add _ _ 1 (by decide)]
     show (DensePoly.monomial 1 1 : ZPoly).coeff 1 + (DensePoly.C s).coeff 1 ≠ 0
-    rw [DensePoly.coeff_monomial, if_pos rfl, DensePoly.coeff_C,
-      if_neg (by omega)]
+    rw [DensePoly.coeff_monomial, ite_eq_left rfl, DensePoly.coeff_C,
+      ite_eq_right (by omega)]
     decide
   have hgt : 1 < (X + DensePoly.C s : ZPoly).size := by
     rcases Nat.lt_or_ge 1 (X + DensePoly.C s : ZPoly).size with h | h
@@ -730,10 +730,10 @@ private theorem coeff_mul_zero_int (p q : ZPoly) :
   · have hterm : ∀ i, 0 < i → DensePoly.diagonalMulCoeffTerm p q 0 i = 0 := by
       intro i hi
       unfold DensePoly.diagonalMulCoeffTerm
-      rw [if_pos hi]
+      rw [ite_eq_left hi]
     rw [foldl_add_int_eq_first _ p.size hpos hterm]
     unfold DensePoly.diagonalMulCoeffTerm
-    rw [if_neg (by omega)]
+    rw [ite_eq_right (by omega)]
 
 /-- Below the leading coefficient, the product coefficient at the first
 `d`-unbroken index of `p` is congruent to `p_k · q₀` mod `d`. -/
@@ -743,15 +743,15 @@ private theorem coeff_mul_congr_first (p q : ZPoly) (k : Nat) (d : Int)
   rw [DensePoly.coeff_mul, DensePoly.mulCoeffSum_eq_diagonal]
   have hgk : DensePoly.diagonalMulCoeffTerm p q k k = p.coeff k * q.coeff 0 := by
     unfold DensePoly.diagonalMulCoeffTerm
-    rw [if_neg (by omega), Nat.sub_self]
+    rw [ite_eq_right (by omega), Nat.sub_self]
   rw [← hgk]
   apply foldl_add_int_dvd_sub d _ p.size k hk
   intro i hi hne
   unfold DensePoly.diagonalMulCoeffTerm
   by_cases hik : k < i
-  · rw [if_pos hik]
+  · rw [ite_eq_left hik]
     exact ⟨0, by rw [Int.mul_zero]⟩
-  · rw [if_neg hik]
+  · rw [ite_eq_right hik]
     exact int_dvd_mul_right (hmin i (by omega)) _
 
 /-- A constant integer factor of a primitive polynomial is a unit: it divides

@@ -1,0 +1,6 @@
+{
+ "path": "HexPolyZ/NttMul.lean",
+ "baseline_blob": "4386d4584bbb4fbfed1fe06c47628e66d7738cf1",
+ "current_blob": "4f8b8a90f924a199c3e775dd0ac742e4710875bc",
+ "reason": "Turns two `simpa ... using` into the `simp` the linter reports as sufficient. Both are index-bound proof terms; no executable definition changes."
+}

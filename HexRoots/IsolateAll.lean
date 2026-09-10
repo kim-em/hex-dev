@@ -12,14 +12,14 @@ public import HexRoots.SimpleRoot
 public section
 
 /-!
-The end-to-end drivers `isolateAll?`, `isolate`, and `isolateOne?`, thin
+The end-to-end drivers `isolateAll?`, `ZPoly.isolateComplexRoots?`, and `isolateOne?`, thin
 wrappers over the shared refinement loops.
 
 `isolateAll?` globally refines and reglues an arbitrary worklist through
 `completenessDepth`, then continues until every component certifies at prec
 at least `target` with pairwise disjoint circumscribed discs. It sizes the
 fuel from the worklist's coarsest prec so the loop reaches
-`stopDepth p target` before giving up. `isolate` is the all-atoms driver for
+`stopDepth p target` before giving up. `ZPoly.isolateComplexRoots?` is the all-atoms driver for
 polynomials with only simple roots: it starts from `Component.cauchy`, uses
 `target := max atom_prec (separationDepth p)`, and requires every result to
 be an atom, pinning the degenerate inputs (nonzero constant to `some #[]`,
@@ -61,10 +61,10 @@ emission condition was not reached within that fuel bound. -/
     {name}`Hex.HasOnlySimpleRoots` does not force positive degree, so the degenerate
     inputs are pinned here: a nonzero constant returns `some #[]` (no roots to
     isolate), and the zero polynomial returns `none`. -/
-@[expose] def isolate (p : ZPoly) (_h : HasOnlySimpleRoots p) (atom_prec : Int)
+@[expose] def ZPoly.isolateComplexRoots? (p : ZPoly) (_h : HasOnlySimpleRoots p) (atom_prec : Int)
     (strategy : AtomStrategy := .nkThenPellet) :
     Option (Array (DyadicRootIsolation p)) :=
-  if hd : 0 < p.degree?.getD 0 then
+  if hd : 0 < p.natDegree then
     let target := max atom_prec (separationDepth p : Int)
     (isolateAll? p target #[Component.cauchy p hd] strategy).bind fun rs =>
       rs.mapM Certified.asAtom?
@@ -73,7 +73,7 @@ emission condition was not reached within that fuel bound. -/
 /-- Start a local search for one simple root from a caller-selected square and
     refine its atom to at
     least `max atomPrec (mahlerPrec p)`. This is a deliberately local search:
-    unlike {name}`Hex.isolate`, it neither certifies every root nor establishes
+    unlike {name}`Hex.ZPoly.isolateComplexRoots?`, it neither certifies every root nor establishes
     pairwise disjointness against roots outside the returned atom. The
     self-contained {name}`Hex.AtomCertificate` is exactly the weaker fact
     needed by {name}`Hex.SimpleRoot.mk`. The returned atom is not promised to

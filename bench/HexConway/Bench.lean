@@ -28,9 +28,9 @@ Scientific registrations:
   checksums the result, and that traversal is linear in the degree, so this
   measurement stands for `C(2, 1)` rather than for the committed table.
 * `runTier1Irreducibility_13_6Checksum`: mode-3 Rabin irreducibility
-  verification for the hardest committed Tier 1 entry, `C(13, 6)`.
+  verification at the retained `C(13, 6)` anchor and binary degree 16.
 * `runTier2Compat_13_1_6Checksum`: mode-3 divisor compatibility for the
-  deepest largest-prime committed pair, `C(13, 1)` inside `C(13, 6)`.
+  divisor pairs, including the binary degree-16 norm chain.
 
 The mode-3 ceilings are enabled only by `HEXCONWAY_ENFORCE_BUDGETS=1` during
 scientific runs, so the CI smoke gate never asserts hosted-runner timing. The
@@ -56,14 +56,8 @@ structure EntryKey where
   deriving Repr, BEq, Hashable
 
 /-- The committed Tier 1 Luebeck table keys, in source-table order. -/
-def committedEntryKeys : Array EntryKey := #[
-  ⟨2, 1⟩, ⟨2, 2⟩, ⟨2, 3⟩, ⟨2, 4⟩, ⟨2, 5⟩, ⟨2, 6⟩, ⟨2, 7⟩, ⟨2, 8⟩,
-  ⟨3, 1⟩, ⟨3, 2⟩, ⟨3, 3⟩, ⟨3, 4⟩, ⟨3, 5⟩, ⟨3, 6⟩,
-  ⟨5, 1⟩, ⟨5, 2⟩, ⟨5, 3⟩, ⟨5, 4⟩, ⟨5, 5⟩, ⟨5, 6⟩,
-  ⟨7, 1⟩, ⟨7, 2⟩, ⟨7, 3⟩, ⟨7, 4⟩, ⟨7, 5⟩, ⟨7, 6⟩,
-  ⟨11, 1⟩, ⟨11, 2⟩, ⟨11, 3⟩, ⟨11, 4⟩, ⟨11, 5⟩, ⟨11, 6⟩,
-  ⟨13, 1⟩, ⟨13, 2⟩, ⟨13, 3⟩, ⟨13, 4⟩, ⟨13, 5⟩, ⟨13, 6⟩
-]
+def committedEntryKeys : Array EntryKey :=
+  Conway.supportedPairs.toArray.map fun (p, n) => ⟨p, n⟩
 
 /-- One-based ordinal lookup for the committed table-key domain. -/
 def committedEntryKeyAt (ordinal : Nat) : EntryKey :=
@@ -81,14 +75,13 @@ def checksumLookup {p : Nat} [ZMod64.Bounds p] (result : Option (FpPoly p)) : UI
 
 /-- Benchmark target: committed Tier 1 Luebeck lookup by table ordinal. -/
 def runLuebeckConwayPolynomialLookupChecksum (ordinal : Nat) : UInt64 :=
-  match committedEntryKeyAt ordinal with
-  | ⟨2, n⟩ => checksumLookup (Conway.luebeckConwayPolynomial? 2 n)
-  | ⟨3, n⟩ => checksumLookup (Conway.luebeckConwayPolynomial? 3 n)
-  | ⟨5, n⟩ => checksumLookup (Conway.luebeckConwayPolynomial? 5 n)
-  | ⟨7, n⟩ => checksumLookup (Conway.luebeckConwayPolynomial? 7 n)
-  | ⟨11, n⟩ => checksumLookup (Conway.luebeckConwayPolynomial? 11 n)
-  | ⟨13, n⟩ => checksumLookup (Conway.luebeckConwayPolynomial? 13 n)
-  | _ => 0
+  let key := committedEntryKeyAt ordinal
+  if h0 : 0 < key.p then
+    if h1 : key.p < 2 ^ 31 then
+      letI : ZMod64.Bounds key.p := ⟨h0, h1⟩
+      checksumLookup (Conway.luebeckConwayPolynomial? key.p key.n)
+    else 0
+  else 0
 
 /-- `Nonempty` witness for the `IO.Ref` declaration below. The
 `SupportedEntry` field is a dependent record, so `Nonempty` does not
@@ -257,15 +250,13 @@ def runTier2Compat_2_3_6Checksum : Unit → IO Bool := fun () => do
   let cp ← compat_2_3_6Ref.get
   return Conway.compatCheck cp.small cp.large cp.largeMonic cp.m cp.k
 
-/-- Benchmark target: Tier 2 compatibility for the largest odd-prime pair,
-`C(13, 1)` inside `C(13, 6)`. This is the deepest Frobenius chain in the
-committed table: six factors. -/
+/-- Benchmark target: the retained odd-prime compatibility anchor. -/
 def runTier2Compat_13_1_6Checksum : Unit → IO Bool := fun () => do
   withBudget "Tier 2 C(13, 1) in C(13, 6) compatibility" 1_000_000 do
     let cp ← compat_13_1_6Ref.get
     return Conway.compatCheck cp.small cp.large cp.largeMonic cp.m cp.k
 
-/-- Benchmark target: Tier 2 compatibility for the deepest binary pair,
+/-- Benchmark target: Tier 2 compatibility for the binary pair,
 `C(2, 4)` inside `C(2, 8)`. -/
 def runTier2Compat_2_4_8Checksum : Unit → IO Bool := fun () => do
   let cp ← compat_2_4_8Ref.get
@@ -273,12 +264,7 @@ def runTier2Compat_2_4_8Checksum : Unit → IO Bool := fun () => do
 
 /-- Degree of the committed entry selected by a one-based table ordinal. -/
 def tier1LookupDegree (ordinal : Nat) : Nat :=
-  if ordinal ≤ 8 then ordinal
-  else if ordinal ≤ 14 then ordinal - 8
-  else if ordinal ≤ 20 then ordinal - 14
-  else if ordinal ≤ 26 then ordinal - 20
-  else if ordinal ≤ 32 then ordinal - 26
-  else ordinal - 32
+  (committedEntryKeyAt ordinal).n
 
 /-- Dispatch plus materialization and checksum cost for a committed lookup. -/
 def tier1LookupComplexity (ordinal : Nat) : Nat :=
@@ -290,15 +276,13 @@ key set. A lookup performs one finite-key dispatch, materializes `n + 1`
 coefficients, and `checksumPoly` walks all `n + 1` coefficients. The linear
 walk dominates and the dispatch contributes a fixed term, so the registration
 uses the two-sided affine model `n + 2`, with `n` recovered from the generated
-table's six degree columns. -/
+table's exact key list. -/
 setup_benchmark runLuebeckConwayPolynomialLookupChecksum ordinal =>
     tier1LookupComplexity ordinal
   where {
     paramFloor := 1
-    paramCeiling := 38
-    paramSchedule := .custom #[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
-      13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,
-      29, 30, 31, 32, 33, 34, 35, 36, 37, 38]
+    paramCeiling := Conway.supportedPairs.length
+    paramSchedule := .custom ((List.range Conway.supportedPairs.length).map Nat.succ).toArray
     maxSecondsPerCall := 2.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
@@ -360,9 +344,7 @@ setup_fixed_benchmark runTier1Irreducibility_11_6Checksum where {
   expectedHash := some (Hashable.hash true)
 }
 
-/- Mode 3: Rabin verification at `C(13, 6)`, the slowest committed Tier 1
-entry. The 2 ms operation-scoped ceiling and its measured-baseline margin are
-recorded in the headline report. Modes 1 and 2 are ruled out there as well. -/
+/- Retained Tier 1 operation-budget anchor. -/
 setup_fixed_benchmark runTier1Irreducibility_13_6Checksum where {
   repeats := 5
   maxSecondsPerCall := 2.0
@@ -375,10 +357,7 @@ setup_fixed_benchmark runTier2Compat_2_3_6Checksum where {
   expectedHash := some (Hashable.hash true)
 }
 
-/- Mode 3: compatibility of `C(13, 1)` inside `C(13, 6)`, the committed pair
-with both the largest prime and deepest six-factor Frobenius chain. The 1 ms
-operation-scoped ceiling and its measured-baseline margin are recorded in the
-headline report. Modes 1 and 2 are ruled out there as well. -/
+/- Retained Tier 2 operation-budget anchor. -/
 setup_fixed_benchmark runTier2Compat_13_1_6Checksum where {
   repeats := 5
   maxSecondsPerCall := 2.0
@@ -386,6 +365,34 @@ setup_fixed_benchmark runTier2Compat_13_1_6Checksum where {
 }
 
 setup_fixed_benchmark runTier2Compat_2_4_8Checksum where {
+  repeats := 5
+  maxSecondsPerCall := 2.0
+  expectedHash := some (Hashable.hash true)
+}
+
+private initialize binary16Ref : IO.Ref (MonicPoly 2) ←
+  IO.mkRef ⟨Conway.luebeckConwayPolynomial_2_16,
+            Conway.luebeckConwayPolynomial_2_16_monic⟩
+
+/-- Rabin verification at binary degree 16. -/
+def runIrreducibility_2_16 : Unit → IO Bool := fun () => do
+  withBudget "C(2, 16) irreducibility" 2_000_000 do
+    let mp ← binary16Ref.get
+    return Berlekamp.rabinTest mp.poly mp.monic
+
+/-- Full binary degree-16 norm chain, with a mutable larger modulus. -/
+def runCompat_2_1_16 : Unit → IO Bool := fun () => do
+  withBudget "C(2, 1) in C(2, 16) compatibility" 5_000_000 do
+    let mp ← binary16Ref.get
+    return Conway.compatCheck Conway.luebeckConwayPolynomial_2_1 mp.poly mp.monic 1 16
+
+setup_fixed_benchmark runIrreducibility_2_16 where {
+  repeats := 5
+  maxSecondsPerCall := 2.0
+  expectedHash := some (Hashable.hash true)
+}
+
+setup_fixed_benchmark runCompat_2_1_16 where {
   repeats := 5
   maxSecondsPerCall := 2.0
   expectedHash := some (Hashable.hash true)

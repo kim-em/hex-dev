@@ -1,0 +1,365 @@
+{
+  "label": "modular",
+  "attempt": 6,
+  "cpu": 5,
+  "siblings": [
+    5,
+    53
+  ],
+  "runs": [
+    {
+      "arm": "left",
+      "source_commit": "b8602c76a08f7348391aafd50b9a8a13cf1a0b32",
+      "binary_sha256": "9cda578dbc8724ea9c10462c1c6e2ccbaf6d48e6a85ef291a2f1bf7e4c5df810",
+      "command": [
+        "taskset",
+        "-c",
+        "5",
+        "/tmp/issue-10074-baseline",
+        "run",
+        "Hex.NumberTowerBench.runTowerFactorPair2",
+        "Hex.NumberTowerBench.runTowerFactorPair3",
+        "Hex.NumberTowerBench.runTowerFactorPair4",
+        "Hex.NumberTowerBench.runTowerFactorPair6",
+        "Hex.NumberTowerBench.runTowerFactorPair8",
+        "Hex.NumberTowerBench.runTowerFactorPair12",
+        "Hex.NumberTowerBench.runTowerFactorLadder",
+        "Hex.NumberTowerBench.runTowerCheckFactorization",
+        "Hex.NumberTowerBench.runPariNfFactor2",
+        "Hex.NumberTowerBench.runPariNfFactor3",
+        "Hex.NumberTowerBench.runPariNfFactor4",
+        "Hex.NumberTowerBench.runPariNfFactor6",
+        "Hex.NumberTowerBench.runPariNfFactor8",
+        "Hex.NumberTowerBench.runPariNfFactor12",
+        "Hex.NumberTowerBench.runPariNfFactorOverhead",
+        "--repeats",
+        "5",
+        "--min-total-seconds",
+        "0.2",
+        "--export-file",
+        "/tmp/issue-10074-modular-6-left.json"
+      ],
+      "export": "/tmp/issue-10074-modular-6-left.json",
+      "preflight": {
+        "5": 4.0,
+        "53": 3.9603960396039604
+      },
+      "postflight": {
+        "5": 0.5025125628140703,
+        "53": 0.0
+      },
+      "during": [
+        {
+          "5": 100.0,
+          "53": 2.0100502512562812
+        },
+        {
+          "5": 100.0,
+          "53": 0.5
+        },
+        {
+          "5": 100.0,
+          "53": 1.0
+        },
+        {
+          "5": 100.0,
+          "53": 3.0150753768844223
+        },
+        {
+          "5": 100.0,
+          "53": 0.5
+        },
+        {
+          "5": 100.0,
+          "53": 0.5
+        },
+        {
+          "5": 100.0,
+          "53": 0.0
+        },
+        {
+          "5": 100.0,
+          "53": 1.9900497512437811
+        },
+        {
+          "5": 100.0,
+          "53": 1.9900497512437811
+        },
+        {
+          "5": 100.0,
+          "53": 2.0
+        },
+        {
+          "5": 99.50248756218906,
+          "53": 2.5
+        },
+        {
+          "5": 100.0,
+          "53": 2.030456852791878
+        },
+        {
+          "5": 100.0,
+          "53": 0.9950248756218906
+        },
+        {
+          "5": 100.0,
+          "53": 0.5
+        },
+        {
+          "5": 100.0,
+          "53": 0.5
+        },
+        {
+          "5": 100.0,
+          "53": 0.5
+        },
+        {
+          "5": 99.50248756218906,
+          "53": 0.0
+        },
+        {
+          "5": 99.5,
+          "53": 0.5
+        },
+        {
+          "5": 100.0,
+          "53": 0.5
+        },
+        {
+          "5": 99.5,
+          "53": 0.4975124378109453
+        },
+        {
+          "5": 99.50248756218906,
+          "53": 0.0
+        },
+        {
+          "5": 99.5,
+          "53": 0.5
+        },
+        {
+          "5": 100.0,
+          "53": 0.5
+        },
+        {
+          "5": 99.50248756218906,
+          "53": 0.0
+        },
+        {
+          "5": 99.0,
+          "53": 1.9801980198019802
+        },
+        {
+          "5": 99.49748743718592,
+          "53": 0.0
+        },
+        {
+          "5": 99.49748743718592,
+          "53": 1.9801980198019802
+        },
+        {
+          "5": 100.0,
+          "53": 0.0
+        },
+        {
+          "5": 99.01477832512315,
+          "53": 2.0100502512562812
+        },
+        {
+          "5": 100.0,
+          "53": 4.0
+        },
+        {
+          "5": 46.5,
+          "53": 5.0
+        }
+      ],
+      "sibling_mean": {
+        "53": 1.2257634060552651
+      },
+      "exit_code": 0,
+      "accepted": true
+    },
+    {
+      "arm": "right",
+      "source_commit": "8dd0f8e155ebd9c49cb08728dde3051fb8fec4a5",
+      "binary_sha256": "ff0dc3dfce3582d45dc7fa7e8bb5cb5b92fa1cca37dc3282c929d0c568b8f0df",
+      "command": [
+        "taskset",
+        "-c",
+        "5",
+        "/tmp/issue-10074-modular",
+        "run",
+        "Hex.NumberTowerBench.runTowerFactorPair2",
+        "Hex.NumberTowerBench.runTowerFactorPair3",
+        "Hex.NumberTowerBench.runTowerFactorPair4",
+        "Hex.NumberTowerBench.runTowerFactorPair6",
+        "Hex.NumberTowerBench.runTowerFactorPair8",
+        "Hex.NumberTowerBench.runTowerFactorPair12",
+        "Hex.NumberTowerBench.runTowerFactorLadder",
+        "Hex.NumberTowerBench.runTowerCheckFactorization",
+        "Hex.NumberTowerBench.runPariNfFactor2",
+        "Hex.NumberTowerBench.runPariNfFactor3",
+        "Hex.NumberTowerBench.runPariNfFactor4",
+        "Hex.NumberTowerBench.runPariNfFactor6",
+        "Hex.NumberTowerBench.runPariNfFactor8",
+        "Hex.NumberTowerBench.runPariNfFactor12",
+        "Hex.NumberTowerBench.runPariNfFactorOverhead",
+        "--repeats",
+        "5",
+        "--min-total-seconds",
+        "0.2",
+        "--export-file",
+        "/tmp/issue-10074-modular-6-right.json"
+      ],
+      "export": "/tmp/issue-10074-modular-6-right.json",
+      "preflight": {
+        "5": 0.4975124378109453,
+        "53": 0.9950248756218906
+      },
+      "postflight": {
+        "5": 1.0050251256281406,
+        "53": 3.5
+      },
+      "during": [
+        {
+          "5": 99.0049751243781,
+          "53": 0.0
+        },
+        {
+          "5": 100.0,
+          "53": 0.0
+        },
+        {
+          "5": 100.0,
+          "53": 2.487562189054726
+        },
+        {
+          "5": 100.0,
+          "53": 1.5
+        },
+        {
+          "5": 99.5,
+          "53": 0.5
+        },
+        {
+          "5": 100.0,
+          "53": 0.0
+        },
+        {
+          "5": 100.0,
+          "53": 1.4851485148514851
+        },
+        {
+          "5": 100.0,
+          "53": 0.5
+        },
+        {
+          "5": 99.5,
+          "53": 0.5025125628140703
+        },
+        {
+          "5": 100.0,
+          "53": 0.5
+        },
+        {
+          "5": 100.0,
+          "53": 1.0050251256281406
+        },
+        {
+          "5": 100.0,
+          "53": 0.5
+        },
+        {
+          "5": 100.0,
+          "53": 0.4975124378109453
+        },
+        {
+          "5": 100.0,
+          "53": 1.0
+        },
+        {
+          "5": 100.0,
+          "53": 1.9801980198019802
+        },
+        {
+          "5": 99.49748743718592,
+          "53": 1.0050251256281406
+        },
+        {
+          "5": 100.0,
+          "53": 2.0
+        },
+        {
+          "5": 99.5049504950495,
+          "53": 0.5025125628140703
+        },
+        {
+          "5": 100.0,
+          "53": 1.0050251256281406
+        },
+        {
+          "5": 99.0,
+          "53": 0.5
+        },
+        {
+          "5": 99.5,
+          "53": 0.0
+        },
+        {
+          "5": 100.0,
+          "53": 2.0
+        },
+        {
+          "5": 99.0049751243781,
+          "53": 16.5
+        },
+        {
+          "5": 99.5,
+          "53": 3.482587064676617
+        },
+        {
+          "5": 100.0,
+          "53": 4.0201005025125625
+        },
+        {
+          "5": 100.0,
+          "53": 1.0
+        },
+        {
+          "5": 99.5,
+          "53": 0.5
+        },
+        {
+          "5": 98.51485148514851,
+          "53": 0.5050505050505051
+        },
+        {
+          "5": 99.4949494949495,
+          "53": 1.5
+        },
+        {
+          "5": 99.01477832512315,
+          "53": 4.975124378109452
+        },
+        {
+          "5": 100.0,
+          "53": 4.0
+        },
+        {
+          "5": 12.5,
+          "53": 3.9800995024875623
+        }
+      ],
+      "sibling_mean": {
+        "53": 1.8729213630271375
+      },
+      "exit_code": 0,
+      "accepted": true
+    }
+  ],
+  "release_quality": false,
+  "protocol_commit": "ef2b819f0",
+  "script_sha256": "68322335292d3149d8b72c4f1e786814227d25107eb4c7bd26009a551d6d3169",
+  "accepted": true
+}

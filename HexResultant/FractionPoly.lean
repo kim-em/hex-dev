@@ -131,7 +131,7 @@ theorem map_C (a : R) : map (C a) = C (Hex.Fraction.ofCoeff a) := by
   rw [coeff_map, coeff_C, coeff_C]
   by_cases hn : n = 0
   · simp [hn]
-  · simp only [hn, if_false]
+  · simp only [hn, ite_false]
     exact Hex.Fraction.ofCoeff_zero
 
 /-- Fraction embedding preserves addition. -/
@@ -168,9 +168,9 @@ private theorem step_map (p q : DensePoly R) (n i j : Nat) (acc : R) :
       mulCoeffStep (map p) (map q) n i (Hex.Fraction.ofCoeff acc) j := by
   unfold mulCoeffStep
   by_cases h : i + j = n
-  · simp only [h, if_true, coeff_map, Hex.Fraction.ofCoeff_add,
+  · simp only [h, ite_true, coeff_map, Hex.Fraction.ofCoeff_add,
       Hex.Fraction.ofCoeff_mul]
-  · simp only [h, if_false]
+  · simp only [h, ite_false]
 
 private theorem inner_map (p q : DensePoly R) (n i : Nat) (xs : List Nat)
     (acc : R) :

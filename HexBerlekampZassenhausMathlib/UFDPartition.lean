@@ -498,7 +498,7 @@ theorem normalizedFactors_le_map_normalize_of_dvd_prod_irreducibles
     have hunit : IsUnit g := isUnit_of_dvd_one hdvd
     rw [normalizedFactors_of_isUnit hunit]
     exact Multiset.zero_le _
-  · haveI : Nontrivial α := nontrivial_of_ne b 0 (hirr b hb).ne_zero
+  · have : Nontrivial α := nontrivial_of_ne b 0 (hirr b hb).ne_zero
     have hprod_ne : qs.prod ≠ 0 :=
       Multiset.prod_ne_zero fun hmem => (hirr 0 hmem).ne_zero rfl
     have hnorm_prod : normalizedFactors qs.prod = qs.map normalize :=
@@ -543,7 +543,7 @@ theorem existsUnique_subset_product_eq_of_dvd_of_squarefree_prod
     · rintro S ⟨hSle, _⟩
       exact Multiset.le_zero.mp hSle
   · -- factors ≠ ∅: pick `b ∈ factors` to derive `Nontrivial α`.
-    haveI : Nontrivial α := nontrivial_of_ne b 0 (hirr b hb).ne_zero
+    have : Nontrivial α := nontrivial_of_ne b 0 (hirr b hb).ne_zero
     have hprod_ne : factors.prod ≠ 0 :=
       Multiset.prod_ne_zero fun hmem => (hirr 0 hmem).ne_zero rfl
     have hd_ne : d ≠ 0 := by

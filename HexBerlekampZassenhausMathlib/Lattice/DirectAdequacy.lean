@@ -60,7 +60,7 @@ proven LLL short-vector bound `HexLLLMathlib.lllNative_first_row_norm_sq_le`.
 vanish.  Follows from the block structure `[I_r | Ã; 0 | diag]`. -/
 theorem bhksLatticeBasis_basis_lowerZero
     (f : Hex.ZPoly) (p a : Nat) (lifted : Array Hex.ZPoly)
-    (i j : Fin (lifted.size + (f.degree?.getD 0)))
+    (i j : Fin (lifted.size + (f.natDegree)))
     (hji : j.val < i.val) :
     (Hex.bhksLatticeBasis f p a lifted).basis[i][j] = 0 := by
   simp only [Hex.bhksLatticeBasis]
@@ -83,7 +83,7 @@ theorem bhksLatticeBasis_basis_lowerZero
 `0 < p`): `1` in the `I_r` block, `p^(a-l_j) > 0` in the `D` block. -/
 theorem bhksLatticeBasis_basis_diagPos
     (f : Hex.ZPoly) (p a : Nat) (hp : 0 < p) (lifted : Array Hex.ZPoly)
-    (i : Fin (lifted.size + (f.degree?.getD 0))) :
+    (i : Fin (lifted.size + (f.natDegree))) :
     0 < (Hex.bhksLatticeBasis f p a lifted).basis[i][i] := by
   simp only [Hex.bhksLatticeBasis]
   erw [Hex.Matrix.getElem_ofFn]
@@ -146,8 +146,8 @@ private theorem le_foldl_max {g : Nat → Nat} :
 theorem two_mul_bhksCoeffBound_le_cldCoeffFloor (core : Hex.ZPoly) (j : Nat) :
     2 * Hex.bhksCoeffBound core j ≤
       Hex.cldCoeffFloor core := by
-  by_cases hj : j ≤ core.degree?.getD 0
-  · have hmem : j ∈ List.range (core.degree?.getD 0 + 1) :=
+  by_cases hj : j ≤ core.natDegree
+  · have hmem : j ∈ List.range (core.natDegree + 1) :=
       List.mem_range.mpr (by omega)
     have hle := le_foldl_max
       (g := fun j => Hex.bhksCoeffBound core j) hmem 0
@@ -155,7 +155,7 @@ theorem two_mul_bhksCoeffBound_le_cldCoeffFloor (core : Hex.ZPoly) (j : Nat) :
     omega
   · have hz : Hex.bhksCoeffBound core j = 0 := by
       simp only [Hex.bhksCoeffBound, BHKS.hex_choose_eq,
-        Nat.choose_eq_zero_of_lt (show core.degree?.getD 0 - 1 < j by omega)]
+        Nat.choose_eq_zero_of_lt (show core.natDegree - 1 < j by omega)]
       simp
     omega
 
@@ -173,7 +173,7 @@ theorem directLiftedFactor_degree_pos
     (facts : DirectLiftFacts core B data)
     (hprecision : 1 ≤ Hex.precisionForCoeffBound B data.p)
     (i : LiftedFactorIndex (Hex.ZPoly.directLiftData core B data)) :
-    0 < (liftedFactor (Hex.ZPoly.directLiftData core B data) i).degree?.getD 0 := by
+    0 < (liftedFactor (Hex.ZPoly.directLiftData core B data) i).natDegree := by
   have h :=
     henselLiftData_liftedFactor_natDegree_pos
       (Hex.ZPoly.monicTarget core data.p
@@ -201,7 +201,7 @@ theorem directLiftedFactor_core_congr
               (Hex.ZPoly.directLiftData core B data)) \ {i})))
       ((Hex.ZPoly.directLiftData core B data).p ^
         (Hex.ZPoly.directLiftData core B data).k) := by
-  letI := data.bounds
+  let := data.bounds
   let d := Hex.ZPoly.directLiftData core B data
   have hp_eq : d.p = data.p := by
     simp [d, Hex.ZPoly.directLiftData]
@@ -276,7 +276,7 @@ theorem directLiftedFactors_isCoprime
             ((Hex.ZPoly.directLiftData core B data).p ^
               (Hex.ZPoly.directLiftData core B data).k)))) := by
   classical
-  letI := data.bounds
+  let := data.bounds
   let k := Hex.precisionForCoeffBound B data.p
   let target := Hex.ZPoly.monicTarget core data.p k
   let d := Hex.ZPoly.directLiftData core B data
@@ -330,7 +330,7 @@ theorem directLiftedFactors_isCoprime
         ((HexPolyZMathlib.toPolynomial (liftedFactor d j)).map
           (Int.castRingHom (ZMod data.p))) :=
     hcomp.of_isCoprime_of_dvd_right hjdvd
-  haveI : Fact (_root_.Nat.Prime data.p) :=
+  have : Fact (_root_.Nat.Prime data.p) :=
     ⟨natPrime_of_hexNatPrime hval.prime⟩
   have hpow := HexHenselMathlib.coprime_mod_p_lifts
     (HexPolyZMathlib.toPolynomial (liftedFactor d i))
@@ -359,7 +359,7 @@ theorem directLiftedFactor_map_irreducible
       ((HexPolyZMathlib.toPolynomial
         (liftedFactor (Hex.ZPoly.directLiftData core B data) i)).map
           (Int.castRingHom (ZMod data.p))) := by
-  letI := data.bounds
+  let := data.bounds
   let d := Hex.ZPoly.directLiftData core B data
   let hsize : d.liftedFactors.size = data.factorsModP.size :=
     henselLiftData_liftedFactors_size_eq
@@ -407,7 +407,7 @@ the selected prime preserves both degrees, and the direct factor congruence
 makes the local factor divide the reduced square-free part. -/
 theorem directLiftedFactor_natDegree_le_core
     (core : Hex.ZPoly) (B : Nat) (data : Hex.PrimeChoiceData)
-    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_pos : 0 < core.natDegree)
     (hval : ModPFactorization core data)
     (facts : DirectLiftFacts core B data)
     (hprecision : 1 ≤ Hex.precisionForCoeffBound B data.p)
@@ -418,7 +418,7 @@ theorem directLiftedFactor_natDegree_le_core
       ((Hex.ZPoly.directLiftData core B data).liftedFactors.getD i.val 1)).natDegree ≤
         (HexPolyZMathlib.toPolynomial core).natDegree := by
   classical
-  letI := data.bounds
+  let := data.bounds
   let d := Hex.ZPoly.directLiftData core B data
   let q := HexPolyZMathlib.toPolynomial (liftedFactor d i)
   let h := liftedFactorProduct d
@@ -470,7 +470,7 @@ theorem directLiftedFactor_natDegree_le_core
       rwa [HexPolyMathlib.natDegree_toPolynomial]
     rw [hzero, Polynomial.natDegree_zero] at hcore_degree_map
     omega
-  haveI : Fact (_root_.Nat.Prime data.p) :=
+  have : Fact (_root_.Nat.Prime data.p) :=
     ⟨natPrime_of_hexNatPrime hval.prime⟩
   have hq_monic : q.Monic :=
     HexHenselMathlib.toPolynomial_monic_of_dense_monic _
@@ -524,7 +524,7 @@ theorem directLiftedFactor_isCoprime_cldQuotient
               ((Hex.ZPoly.directLiftData core B data).p ^
                 (Hex.ZPoly.directLiftData core B data).k)))) := by
   classical
-  letI := data.bounds
+  let := data.bounds
   let d := Hex.ZPoly.directLiftData core B data
   let q := HexPolyZMathlib.toPolynomial (liftedFactor d i)
   let complement :=
@@ -574,7 +574,7 @@ theorem directLiftedFactor_isCoprime_cldQuotient
   have hp : _root_.Nat.Prime d.p := by
     rw [hp_eq]
     exact natPrime_of_hexNatPrime hval.prime
-  letI : Fact (_root_.Nat.Prime d.p) := ⟨hp⟩
+  let : Fact (_root_.Nat.Prime d.p) := ⟨hp⟩
   have hirr :=
     directLiftedFactor_map_irreducible_at_liftPrime
       core B data hval facts i
@@ -620,17 +620,17 @@ row coordinates, and the adjusted full vector.
 theorem bhksProjectedRowSpanInt_le_trueSupportSpanInt
     (f : Hex.ZPoly) (p a : Nat) (liftedFactors : Array Hex.ZPoly)
     (trueSupports : Set (Set (Fin liftedFactors.size)))
-    (hf : f ≠ 0) (hfdeg : 0 < f.degree?.getD 0)
+    (hf : f ≠ 0) (hfdeg : 0 < f.natDegree)
     (hf_lc_coprime :
       IsCoprime ((p ^ a : Nat) : Int)
         (HexPolyZMathlib.toPolynomial f).leadingCoeff)
     (hp2 : 2 ≤ p) (hp500 : p ≤ 500)
-    (hr : liftedFactors.size ≤ f.degree?.getD 0)
+    (hr : liftedFactors.size ≤ f.natDegree)
     (hk : 1 < p ^ a)
     (hprecision : 2 * Hex.bhksBound f < p ^ a)
-    (hcut : ∀ j : Fin (f.degree?.getD 0),
+    (hcut : ∀ j : Fin (f.natDegree),
       Hex.bhksCoeffCutThreshold p f j.val ≤ a)
-    (hrows : 1 ≤ liftedFactors.size + f.degree?.getD 0)
+    (hrows : 1 ≤ liftedFactors.size + f.natDegree)
     (hind : (Hex.bhksLatticeBasis f p a liftedFactors).basis.independent)
     (hcover : ∀ i : Fin liftedFactors.size,
       ∃ S ∈ trueSupports, i ∈ S)
@@ -644,7 +644,7 @@ theorem bhksProjectedRowSpanInt_le_trueSupportSpanInt
     (hfac : ∀ i : Fin liftedFactors.size,
       ∃ h : Hex.ZPoly,
         Hex.DensePoly.Monic (liftedFactors.getD i.val 1) ∧
-        0 < (liftedFactors.getD i.val 1).degree?.getD 0 ∧
+        0 < (liftedFactors.getD i.val 1).natDegree ∧
         Hex.ZPoly.congr f (liftedFactors.getD i.val 1 * h) (p ^ a))
     (hdeg_le : ∀ i : Fin liftedFactors.size,
       (HexPolyZMathlib.toPolynomial
@@ -680,7 +680,7 @@ theorem bhksProjectedRowSpanInt_le_trueSupportSpanInt
           (Hex.bhksLatticeBasis f p a liftedFactors) hrows) ≤
       BHKS.trueSupportSpanInt trueSupports := by
   let L := Hex.bhksLatticeBasis f p a liftedFactors
-  let n := f.degree?.getD 0
+  let n := f.natDegree
   let r := liftedFactors.size
   let R := 4 * n + n * n * n
   let V := (2 * n) * 2 ^ (2 * n) * R
@@ -735,19 +735,19 @@ theorem bhksProjectedRowSpanInt_le_trueSupportSpanInt
   dsimp only [V, R] at hx ⊢
   apply hx.trans
   have hncard' :
-      trueSupports.ncard ≤ 2 ^ f.degree?.getD 0 := by
+      trueSupports.ncard ≤ 2 ^ f.natDegree := by
     simpa only [n] using hncard
   exact Nat.add_le_add_left
-    (Nat.mul_le_mul_right (4 * f.degree?.getD 0 +
-      f.degree?.getD 0 * f.degree?.getD 0 * f.degree?.getD 0) hncard')
-    (2 * f.degree?.getD 0 * 2 ^ (2 * f.degree?.getD 0) *
-      (4 * f.degree?.getD 0 +
-        f.degree?.getD 0 * f.degree?.getD 0 * f.degree?.getD 0) +
-      2 * f.degree?.getD 0 * 2 ^ (2 * f.degree?.getD 0) *
-        (4 * f.degree?.getD 0 +
-          f.degree?.getD 0 * f.degree?.getD 0 * f.degree?.getD 0) *
-        (4 * f.degree?.getD 0 +
-          f.degree?.getD 0 * f.degree?.getD 0 * f.degree?.getD 0))
+    (Nat.mul_le_mul_right (4 * f.natDegree +
+      f.natDegree * f.natDegree * f.natDegree) hncard')
+    (2 * f.natDegree * 2 ^ (2 * f.natDegree) *
+      (4 * f.natDegree +
+        f.natDegree * f.natDegree * f.natDegree) +
+      2 * f.natDegree * 2 ^ (2 * f.natDegree) *
+        (4 * f.natDegree +
+          f.natDegree * f.natDegree * f.natDegree) *
+        (4 * f.natDegree +
+          f.natDegree * f.natDegree * f.natDegree))
 
 /-- The direct lift and its genuine-support partition at an ordinary
 recombination-adequate precision.  This is the shared algebraic context for
@@ -774,14 +774,14 @@ the executable recovery floor. -/
 theorem directAdequacy
     (core : Hex.ZPoly) (B : Nat) (data : Hex.PrimeChoiceData)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
-    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_pos : 0 < core.natDegree)
     (hcore_prim : Hex.ZPoly.Primitive core)
     (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
     (hval : ModPFactorization core data)
     (hB_floor : Hex.bhksRecoveryFloor core ≤ B)
     (_hB_ne : B ≠ 0) :
     DirectAdequacy core B data := by
-  letI := data.bounds
+  let := data.bounds
   have hcore_ne : core ≠ 0 :=
     zpoly_ne_zero_of_pos_lc hcore_lc_pos
   have hcore_size : 0 < core.size :=
@@ -881,7 +881,7 @@ theorem localFactor
           ((Hex.ZPoly.directLiftData core B data).liftedFactors.getD i.val 1) ∧
         0 <
           ((Hex.ZPoly.directLiftData core B data).liftedFactors.getD
-            i.val 1).degree?.getD 0 ∧
+            i.val 1).natDegree ∧
         Hex.ZPoly.congr core
           ((Hex.ZPoly.directLiftData core B data).liftedFactors.getD i.val 1 * h)
           ((Hex.ZPoly.directLiftData core B data).p ^
@@ -988,7 +988,7 @@ does not require the larger resultant bound. -/
 theorem directCutProjection
     (core : Hex.ZPoly) (B : Nat) (data : Hex.PrimeChoiceData)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
-    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_pos : 0 < core.natDegree)
     (hcore_prim : Hex.ZPoly.Primitive core)
     (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
     (hval : ModPFactorization core data)
@@ -1011,7 +1011,7 @@ theorem directCutProjection
           (Hex.ZPoly.directLiftData core B data).liftedFactors) hrows)
       (directTrueSupports core B data) := by
   classical
-  letI := data.bounds
+  let := data.bounds
   let d := Hex.ZPoly.directLiftData core B data
   let A := directAdequacy core B data hcore_lc_pos hcore_pos
     hcore_prim hcore_sqfree hval hB_floor hB_ne
@@ -1028,7 +1028,7 @@ one class for every irreducible integer factor. -/
 theorem directFactorCount_le_classCount
     (core : Hex.ZPoly) (B : Nat) (data : Hex.PrimeChoiceData)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
-    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_pos : 0 < core.natDegree)
     (hcore_prim : Hex.ZPoly.Primitive core)
     (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
     (hval : ModPFactorization core data)
@@ -1088,7 +1088,7 @@ in the statement or proof.
 theorem directProjectedSpan_eq
     (core : Hex.ZPoly) (B : Nat) (data : Hex.PrimeChoiceData)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
-    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_pos : 0 < core.natDegree)
     (hcore_prim : Hex.ZPoly.Primitive core)
     (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
     (hval : ModPFactorization core data)
@@ -1116,7 +1116,7 @@ theorem directProjectedSpan_eq
             (Hex.ZPoly.directLiftData core B data).liftedFactors) hrows) =
       BHKS.trueSupportSpanInt (directTrueSupports core B data) := by
   classical
-  letI := data.bounds
+  let := data.bounds
   let d := Hex.ZPoly.directLiftData core B data
   have hcore_ne : core ≠ 0 :=
     zpoly_ne_zero_of_pos_lc hcore_lc_pos
@@ -1154,7 +1154,7 @@ theorem directProjectedSpan_eq
       ∀ i : LiftedFactorIndex d,
         ∃ h : Hex.ZPoly,
           Hex.DensePoly.Monic (d.liftedFactors.getD i.val 1) ∧
-          0 < (d.liftedFactors.getD i.val 1).degree?.getD 0 ∧
+          0 < (d.liftedFactors.getD i.val 1).natDegree ∧
           Hex.ZPoly.congr core
             (d.liftedFactors.getD i.val 1 * h) (d.p ^ d.k) := by
     intro i
@@ -1197,14 +1197,11 @@ theorem directProjectedSpan_eq
         A.inputScale_coprime hcore_size
     have htargetDegree :
         (Hex.ZPoly.monicTarget core data.p
-          (Hex.precisionForCoeffBound B data.p)).degree?.getD 0 =
-            core.degree?.getD 0 := by
-      rw [Hex.DensePoly.degree?_eq_some_of_pos_size _ (by
-        rw [htargetSize]
-        exact hcore_size)]
-      rw [Hex.DensePoly.degree?_eq_some_of_pos_size core hcore_size]
-      simp only [Option.getD_some, htargetSize]
-    have hr : d.liftedFactors.size ≤ core.degree?.getD 0 := by
+          (Hex.precisionForCoeffBound B data.p)).natDegree =
+            core.natDegree := by
+      rw [Hex.DensePoly.natDegree_eq_size_sub_one,
+        Hex.DensePoly.natDegree_eq_size_sub_one, htargetSize]
+    have hr : d.liftedFactors.size ≤ core.natDegree := by
       rw [hsize, ← htargetDegree]
       exact hval.factorCount_le_degree_of_product
         facts.targetMonic facts.productModP

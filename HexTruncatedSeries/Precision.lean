@@ -226,7 +226,7 @@ theorem divXPow?_eq_some_iff [Lean.Grind.CommRing R] [DecidableEq R]
       coeff_divXPow?_eq_some a k h⟩
   · rintro ⟨hz, hc⟩
     unfold divXPow?
-    rw [if_pos ((allZeroBelow_eq_true a (min k n)).mpr hz)]
+    rw [ite_eq_left ((allZeroBelow_eq_true a (min k n)).mpr hz)]
     congr 1
     apply ext
     intro i hi
@@ -244,12 +244,12 @@ theorem divXPow?_mulXPow [Lean.Grind.CommRing R] [DecidableEq R]
   constructor
   · intro i hi
     by_cases hin : i < n
-    · rw [coeff_mulXPow a k i hin, if_neg (by omega)]
+    · rw [coeff_mulXPow a k i hin, ite_eq_right (by omega)]
     · rw [coeff]
       split <;> simp_all
   · intro i hi
     rw [coeff_truncate a (Nat.sub_le n k) i hi,
-      coeff_mulXPow a k (i + k) (by omega), if_pos (by omega)]
+      coeff_mulXPow a k (i + k) (by omega), ite_eq_left (by omega)]
     congr 1
     omega
 
@@ -263,11 +263,11 @@ theorem mulXPow_extend_divXPow?_eq [Lean.Grind.CommRing R] [DecidableEq R]
   intro i hi
   rw [coeff_mulXPow _ k i hi]
   by_cases hki : k ≤ i
-  · rw [if_pos hki, coeff_extend b (Nat.sub_le n k) (i - k) (by omega),
+  · rw [ite_eq_left hki, coeff_extend b (Nat.sub_le n k) (i - k) (by omega),
       coeff_divXPow?_eq_some a k h (i - k) (by omega)]
     congr 1
     omega
-  · rw [if_neg hki]
+  · rw [ite_eq_right hki]
     have hz := (divXPow?_eq_some_iff a k b).mp h |>.1 i (by omega)
     exact hz.symm
 
@@ -347,7 +347,7 @@ theorem integrate_congr [Lean.Grind.CommRing R] (a : TSeries R n)
     @coeff_integrate R n _ h₂ a i hi]
   by_cases hi0 : i = 0
   · simp [hi0]
-  · rw [if_neg hi0, if_neg hi0,
+  · rw [ite_eq_right hi0, ite_eq_right hi0,
       NatInverses.invNat_unique h₁ h₂ i (by omega) (by omega)]
 
 /-- Differentiation cancels zero-constant integration at every represented
@@ -359,7 +359,7 @@ theorem deriv_integrate [Lean.Grind.CommRing R] [NatInverses R n]
   intro i hi
   rw [coeff_deriv (integrate a) i (by omega),
     coeff_integrate a (i + 1) (by omega)]
-  simp only [show i + 1 ≠ 0 by omega, if_false, Nat.add_sub_cancel]
+  simp only [show i + 1 ≠ 0 by omega, ite_false, Nat.add_sub_cancel]
   have hinv := NatInverses.invNat_eq (R := R) (m := n) (i + 1)
     (by omega) (by omega)
   rw [Lean.Grind.Semiring.natCast_succ] at hinv
@@ -484,10 +484,10 @@ theorem derivPad_add [Lean.Grind.CommRing R] (a b : TSeries R n) :
   rw [coeff_derivPad (a + b) i hi, coeff_add _ _ i hi,
     coeff_derivPad a i hi, coeff_derivPad b i hi]
   by_cases hnext : i + 1 < n
-  · rw [if_pos hnext, if_pos hnext, if_pos hnext,
+  · rw [ite_eq_left hnext, ite_eq_left hnext, ite_eq_left hnext,
       coeff_add a b (i + 1) hnext]
     grind
-  · rw [if_neg hnext, if_neg hnext, if_neg hnext]
+  · rw [ite_eq_right hnext, ite_eq_right hnext, ite_eq_right hnext]
     grind
 
 /-- The precision-preserving derivative kills constant series. -/
@@ -498,9 +498,9 @@ theorem derivPad_C [Lean.Grind.CommRing R] (c : R) :
   intro i hi
   rw [coeff_derivPad (C c) i hi, coeff_zero]
   by_cases hnext : i + 1 < n
-  · rw [if_pos hnext, coeff_C c (i + 1) hnext, if_neg (by omega)]
+  · rw [ite_eq_left hnext, coeff_C c (i + 1) hnext, ite_eq_right (by omega)]
     grind
-  · rw [if_neg hnext]
+  · rw [ite_eq_right hnext]
 
 /-- The precision-preserving derivative kills zero. -/
 @[simp]
@@ -527,9 +527,9 @@ theorem derivPad_C_mul [Lean.Grind.CommRing R] (c : R) (a : TSeries R n) :
   rw [coeff_derivPad (C c * a) i hi, coeff_C_mul c a.derivPad i hi,
     coeff_derivPad a i hi]
   by_cases hnext : i + 1 < n
-  · rw [if_pos hnext, if_pos hnext, coeff_C_mul c a (i + 1) hnext]
+  · rw [ite_eq_left hnext, ite_eq_left hnext, coeff_C_mul c a (i + 1) hnext]
     grind
-  · rw [if_neg hnext, if_neg hnext]
+  · rw [ite_eq_right hnext, ite_eq_right hnext]
     grind
 
 /-- The precision-preserving derivative commutes with an additive fold. -/
@@ -601,7 +601,7 @@ theorem derivPad_mul_agree [Lean.Grind.CommRing R] (a b : TSeries R n) :
     Agree (n - 1) (a * b).derivPad
       (a.derivPad * b + a * b.derivPad) := by
   intro i hi hip
-  rw [coeff_derivPad (a * b) i hi, if_pos (by omega),
+  rw [coeff_derivPad (a * b) i hi, ite_eq_left (by omega),
     coeff_mul a b (i + 1) (by omega), coeff_add _ _ i hi,
     coeff_mul _ _ i hi, coeff_mul _ _ i hi]
   unfold convCoeff
@@ -610,14 +610,14 @@ theorem derivPad_mul_agree [Lean.Grind.CommRing R] (a b : TSeries R n) :
   · apply List.foldl_add_congr
     intro j hj
     have hj' : j < i + 1 := List.mem_range.mp hj
-    rw [coeff_derivPad a j (by omega), if_pos (by omega)]
+    rw [coeff_derivPad a j (by omega), ite_eq_left (by omega)]
     have hidx : i + 1 - (j + 1) = i - j := by omega
     rw [hidx]
     grind
   · apply List.foldl_add_congr
     intro j hj
     have hj' : j < i + 1 := List.mem_range.mp hj
-    rw [coeff_derivPad b (i - j) (by omega), if_pos (by omega)]
+    rw [coeff_derivPad b (i - j) (by omega), ite_eq_left (by omega)]
     have hidx : i - j + 1 = i + 1 - j := by omega
     rw [hidx]
     grind
@@ -627,7 +627,7 @@ prefix. -/
 theorem derivPad_X_agree [Lean.Grind.CommRing R] :
     Agree (n - 1) (derivPad (X : TSeries R n)) 1 := by
   intro i hi hip
-  rw [coeff_derivPad X i hi, if_pos (by omega), coeff_X (i + 1) (by omega),
+  rw [coeff_derivPad X i hi, ite_eq_left (by omega), coeff_X (i + 1) (by omega),
     coeff_one i hi]
   by_cases hi0 : i = 0
   · subst i
@@ -749,7 +749,7 @@ prefix. -/
 theorem mulUpTo [Lean.Grind.CommRing R] (p : Nat) (a b : TSeries R n) :
     Agree p (Hex.TSeries.mulUpTo p a b) (a * b) := by
   intro i hi hip
-  rw [coeff_mulUpTo p a b i hi, if_pos hip]
+  rw [coeff_mulUpTo p a b i hi, ite_eq_left hip]
 
 /-- Multiplication bounded at the represented precision is ordinary
 multiplication. -/

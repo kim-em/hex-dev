@@ -598,9 +598,14 @@ def imageAt (P : ZMod64.Prime)
   letI := P.bounds
   letI := ZMod64.primeModulusOfPrime P.prime
   let q := toUnivariate i cmp' f
-  DensePoly.ofList <| (List.range q.size).map fun k =>
-    MvPoly.eval a (MvPoly.mapCoeffs φ_R.toField (q.coeff k))
+  denseMapCoeffs
+    (fun c => evalAt n cmp' a (MvPoly.mapCoeffs φ_R.toField c)) q
 ```
+
+Here `evalAt` is recursive evaluation through univariate views.  Its zero,
+addition, and multiplication laws are proved from the corresponding view and
+dense-evaluation laws, so the checker replays the image homomorphism without
+assuming unproved laws for `MvPoly.eval`.
 
 If the degrees of `toUnivariate i cmp' f'` and
 `imageAt P φ_R a i cmp' f'` agree, and likewise for `h'`, and
@@ -627,46 +632,51 @@ certificate contains two content certificates. Every occurrence is
 strictly positive and every cycle drops the arity before returning to a
 coprimality certificate.
 
+The recursive core has fixed parameters `R`, `[Lean.Grind.CommRing R]`,
+and a family `E` of optional leaves. Only the arity, comparator, and its
+representation instances are indices. The same ring parameter is used by
+all recursive evidence and by the laws in a `split` coefficient homomorphism;
+constructors cannot substitute operation dictionaries.
+
+| Core constructor | Evidence replayed |
+| --- | --- |
+| `Cert.Coprime.unit` | One input is a unit. |
+| `Cert.Coprime.base u v` | A scalar Bézout identity, at arity zero. |
+| `Cert.Coprime.bezout u v` | A polynomial Bézout identity. |
+| `Cert.Coprime.split` | A bundled prime, coefficient homomorphism, evaluation point, image Bézout coefficients, two lower-arity content folds, and their coprimality certificate. |
+| `Cert.Coprime.splitBezout` | A variable, a nonzero polynomial constant in that variable, its Bézout expression, two lower-arity content folds, and their coprimality certificate. |
+| `Cert.Coprime.leaf` | Data in `E` at the current arity and order. |
+| `Cert.Gcd.mk` | A gcd, two exact cofactors, and their coprimality certificate. |
+| `Cert.Content.mk` | A content value and a strictly positive list of gcd certificates. |
+
+Every arity-dropping constructor carries `[IsMonomialOrder cmp']`, which
+supplies both comparator instances required by its lower-arity values.
+`ContentCert.ofSteps` exposes the usual `List` interface to content folds.
+
+The public `CoprimeCert`, `GcdCert`, and `ContentCert` specialize this core
+to rational-lift leaves. Such a leaf contains a `RatModel R`: a ring
+isomorphism to canonical `Rat`, with both inverse laws and the ring-map
+laws proved for the fixed ambient ring. It identifies rational coefficient
+representations without restricting the universe of the generic API.
+In particular, `RatModel.not_int` rules out such a leaf over canonical `Int`.
+The rational payload itself has only the following data:
+
 ```lean
-mutual
-  inductive CoprimeCert :
-      (n : Nat) → (R : Type u) → [Zero R] →
-      (cmp : Mono n → Mono n → Ordering) →
-      [Std.TransCmp cmp] → [Std.LawfulEqCmp cmp] → Type u
-    | unit : CoprimeCert n R cmp
-    | base (u v : R) : CoprimeCert 0 R cmp
-    | bezout (u v : MvPoly n R cmp) : CoprimeCert n R cmp
-    | split (i : Fin (n+1)) (cmp' : Mono n → Mono n → Ordering)
-        [IsMonomialOrder cmp'] [One R] [Add R] [Mul R]
-        (P : ZMod64.Prime)
-        (φ : @CoeffHom R P.m _ _ _ _ P.bounds)
-        (a : Fin n → @ZMod64 P.m P.bounds)
-        (α β : @FpPoly P.m P.bounds)
-        (left right : ContentCert n R cmp')
-        (rest : CoprimeCert n R cmp') : CoprimeCert (n+1) R cmp
-    | splitBezout (i : Fin (n+1))
-        (cmp' : Mono n → Mono n → Ordering) [IsMonomialOrder cmp']
-        (u v : MvPoly (n+1) R cmp) (r : MvPoly n R cmp')
-        (left right : ContentCert n R cmp')
-        (rest : CoprimeCert n R cmp') : CoprimeCert (n+1) R cmp
-    | ratLift (scaleL scaleR : Rat) (left right : MvPoly n Int cmp)
-        (cert : CoprimeCert n Int cmp) : CoprimeCert n Rat cmp
+abbrev IntCoprimeCert (n : Nat) (cmp : Mono n → Mono n → Ordering)
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] :=
+  Cert.Coprime Int Cert.NoLeaves n cmp
 
-  inductive GcdCert :
-      (n : Nat) → (R : Type u) → [Zero R] →
-      (cmp : Mono n → Mono n → Ordering) →
-      [Std.TransCmp cmp] → [Std.LawfulEqCmp cmp] → Type u
-    | mk (gcd cofL cofR : MvPoly n R cmp) (coprime : CoprimeCert n R cmp)
+structure RatLiftCert (n : Nat) (cmp : Mono n → Mono n → Ordering)
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] where
+  scaleL : Rat
+  scaleR : Rat
+  left : MvPoly n Int cmp
+  right : MvPoly n Int cmp
+  cert : IntCoprimeCert n cmp
 
-  /-- A checked left fold of gcd over a polynomial's coefficient list.
-  `steps[k]` certifies the gcd of the previous accumulator and coefficient
-  `k`; `value` is the final accumulator. -/
-  inductive ContentCert :
-      (n : Nat) → (R : Type u) → [Zero R] →
-      (cmp : Mono n → Mono n → Ordering) →
-      [Std.TransCmp cmp] → [Std.LawfulEqCmp cmp] → Type u
-    | mk (value : MvPoly n R cmp) (steps : List (GcdCert n R cmp))
-end
+def CoprimeCert.ratLift (scaleL scaleR : Rat)
+    (left right : MvPoly n Int cmp) (cert : IntCoprimeCert n cmp) :
+    CoprimeCert n Rat cmp
 
 def GcdCert.gcd : GcdCert n R cmp → MvPoly n R cmp
 def GcdCert.cofL : GcdCert n R cmp → MvPoly n R cmp
@@ -679,11 +689,16 @@ def checkCoprime (f h : MvPoly n R cmp) : CoprimeCert n R cmp → Bool
 def checkGcd (f h : MvPoly n R cmp) : GcdCert n R cmp → Bool
 ```
 
-All three declarations use the identical index telescope shown above;
-`n`, `R`, `cmp`, and the representation instances are indices rather than
-mixing parameters and indices across the mutual block. Every arity-dropping
-constructor carries `[IsMonomialOrder cmp']`, which supplies both comparator
-instances required to form its lower-arity `MvPoly` values.
+`Cert.NoLeaves` is empty at every arity. Thus the integer payload has no
+rational lifts, including in nested coefficient-content folds. Its integer
+ring, gcd operations, and equality decisions are the canonical instances
+fixed by `checkRatLift`; no source domain, embedding, or replacement
+operations are certificate data. Caller-assembled certificates remain
+supported: acceptance must imply coprimality without producer provenance.
+This is the soundness contract of `checkCoprime`, `checkGcd`, and
+`checkContent` at the public leaf family. The generic `Cert.checkOps`
+provides structural replay with a caller-supplied leaf checker; a soundness
+claim for another leaf family requires its own callback contract.
 
 `checkContent` starts at zero, requires exactly one `GcdCert` per
 coefficient, checks each certificate against the current accumulator and
@@ -708,6 +723,9 @@ are the stated scalar multiples of the coefficientwise `Int → Rat` images,
 that both integer models have `scalarContent = 1`, and that `cert` checks
 for those models. Gauss descent then transports integer coprimality to
 rational coprimality without a nonexistent `Rat → ZMod64` homomorphism.
+For a leaf over an arbitrary rational representation `R`, `checkRatLeaf`
+first maps both inputs coefficientwise through `model.toRat`, then runs
+this canonical `checkRatLift` replay.
 
 Indexing the certificate by the arity is what makes "each step removes a
 variable" true, and it is free: the constructor's result type says so.
@@ -974,7 +992,10 @@ having is under "Open questions"; it is not assumed anywhere above.
 `gcdCert` on `MvPoly n Rat cmp` scales both inputs to primitive integer
 polynomials, computes there, and scales back. Its cofactor certificate is
 `ratLift` with the two nonzero scales, the primitive integer models, and
-their checked integer coprimality certificate. This is a requirement
+their checked integer coprimality certificate. `Cert.stripCoprime?` extracts
+ordinary evidence from the producer result, traversing all content folds
+and rejecting any optional leaf before constructing the rational wrapper.
+This extraction performs no search and is outside kernel replay. This is a requirement
 rather than an option, and the benchmark family named below checks that
 the extended PRS is not taken merely because the input coefficients are
 rational.
@@ -1221,9 +1242,11 @@ deliberately so. -/
 def Squarefree (p : MvPoly n R cmp) : Prop :=
   p ≠ 0 ∧ ∀ d, d * d ∣ p → IsConst d
 
+attribute [local instance] Lean.Grind.Semiring.natCast
+
 /-- Mathlib-free characteristic zero: every positive natural remains
-nonzero after casting to `R`. -/
-class NatNoZero (R : Type u) [Zero R] [NatCast R] : Prop where
+nonzero under the coefficient ring's own cast. -/
+class NatNoZero (R : Type u) [Lean.Grind.CommRing R] : Prop where
   natCast_ne_zero : ∀ m : Nat, 0 < m → (m : R) ≠ 0
 
 /-- The fraction field used to interpret the relative squarefree predicate
@@ -1311,7 +1334,21 @@ theorem radical_zero [NatNoZero R] : radical (0 : MvPoly n R cmp) = 0
 ```
 
 `NatNoZero R` asserts `(m : R) ≠ 0` for `0 < m`, which is characteristic
-zero stated Mathlib-free, with instances for `Int` and `Rat`.
+zero stated Mathlib-free, with instances for `Int` and `Rat`. The cast in
+this assertion is `Lean.Grind.Semiring.natCast` from the same
+`Lean.Grind.CommRing R` used for coefficient arithmetic. `derivatives`,
+`yunLoop`, `sqfStep`, `sqfOps`, `isSquarefree`, `radical`, `sqfDecomp`, and
+their correctness theorems take no independent `[NatCast R]` argument.
+The public decomposition helpers `yunLoop`, `sqfStep`, and `sqfOps` also
+require `[NatNoZero R]`; calling them directly does not bypass the
+characteristic-zero requirement of `sqfDecomp`. The arity-zero helper
+`sqfBase` only extracts a scalar and works in any coefficient characteristic.
+Every differentiation in this pipeline uses that ring cast, including the
+recursive content and Yun steps. A local cast supplied by a caller cannot
+change the decision or multiplicities, or certify characteristic zero for
+a positive-characteristic ring. The general `MvPoly.derivative` retains
+its explicit cast argument; these ring-based consumers fix it internally.
+
 `PerfectFrac R` asserts that the fraction field of `R` is perfect, which
 holds in characteristic zero and for finite fields, and fails for
 `F_p(t)`.
@@ -1325,7 +1362,12 @@ Recursion on the arity.
 - Pick a variable `i` with `degreeOf i p > 0`.
 - Split `p = contentIn i p * primPartIn i p` and decompose the content
   recursively with `i` removed.
-- Run Yun's algorithm on `primPartIn i p` with the derivative in `xᵢ`.
+- Normalize `primPartIn i p`, move its normalization unit into the scalar
+  content, and run Yun's algorithm on that normalized polynomial with the
+  derivative in `xᵢ`. Yun's initial invariant requires this primitive part to
+  be normalized in the caller's monomial order. Factors lifted from recursive
+  content remain canonical only up to units and may retain the normalization
+  chosen by `Mono.lex`.
 - Merge by multiplying factors of equal multiplicity.
 
 ```
@@ -1454,9 +1496,15 @@ contain `contentIn`, `gcd`, any `GcdProducer`, or `divExact?`; nested
 replay. The closure also includes `polyIsUnit`, `polyNormUnit`,
 `polyNormalize`, base `GcdOps.isUnit` / `normUnit`, and the coefficient
 equality decision (`BEq` with `LawfulBEq`). `ratLift` additionally reaches
-the `scalarContent` fold and coefficientwise `Int → Rat` map, neither of
-which calls a multivariate producer. Each operation in the closure is
-`@[expose]`.
+the canonical integer `scalarContent` fold, coefficientwise `Int → Rat`
+map, and the rational-representation map, none of which calls a multivariate
+producer. Each operation in the closure is `@[expose]`.
+
+The shared public replay package retains the rational-leaf branch even
+when instantiated at `Int`. `RatModel.not_int` rules out data reaching that
+branch, but its canonical rational operations still belong to the full
+syntactic dependency closure. The ordinary integer replay inside a rational
+lift uses `Cert.NoLeaves` and has no such branch.
 
 Nothing in routes 1 through 4 is in that closure. Prime search,
 interpolation, CRT, and the extended subresultant chain are search; they
@@ -1725,7 +1773,8 @@ HexMvGcd/
   View.lean         -- constIn and the degree helpers on the univariate view
   Normalize.lean    -- polyIsUnit, polyNormUnit, polyNormalize, scalarContent
   Gauss.lean        -- proof-only GcdDomainLaws lift and primitive descent
-  Cert.lean         -- three certificate types, ratLift, checker soundness
+  CertData.lean     -- fixed-ring recursive evidence and canonical rational lift data
+  Cert.lean         -- certificate replay and checker soundness
   Content.lean      -- certificate-producing content/primitive parts and Gauss laws
   Prs.lean          -- the extended-subresultant fallback, route 4
   Fast.lean         -- routes 0 and 1, tryCoprimeCert?

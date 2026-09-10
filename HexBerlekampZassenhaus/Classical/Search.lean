@@ -278,7 +278,7 @@ def peelDirectAux
                   stats.unforcedCompletedLevels ++ completed
                 peeledFactorDegrees :=
                   stats.peeledFactorDegrees.push
-                    (split.candidate.degree?.getD 0)
+                    (split.candidate.natDegree)
                 peeledSupportSizes :=
                   stats.peeledSupportSizes.push split.selected.length
                 peeledComplementSizes :=

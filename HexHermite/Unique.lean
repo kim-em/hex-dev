@@ -69,9 +69,9 @@ private theorem vecMul_pivot {A : Matrix Int n m} {D : RowEchelonData Int n m}
         rw [getElem_col]
         by_cases hki : k = pivotRow
         · subst k
-          rw [if_pos rfl]
+          rw [ite_eq_left rfl]
           exact Int.mul_comm _ _
-        · rw [if_neg hki]
+        · rw [ite_eq_right hki]
           have hkval : k.val ≠ i.val := by
             intro heq
             exact hki (Fin.ext (by simpa [pivotRow, IsEchelonForm.pivotRow] using heq))
@@ -137,7 +137,7 @@ private theorem firstCoeff {A : Matrix Int n m} {D : RowEchelonData Int n m}
       have hall := List.find?_range_eq_none.mp hfind
       rcases hex with ⟨q, hq⟩
       have hfalse := hall q.val q.isLt
-      simp only [p, dif_pos q.isLt, decide_not, Bool.not_not] at hfalse
+      simp only [p, dite_eq_left q.isLt, decide_not, Bool.not_not] at hfalse
       have heq : c[h.toIsEchelonForm.pivotRow q] = 0 := by
         exact of_decide_eq_true hfalse
       exact absurd heq hq
@@ -147,12 +147,12 @@ private theorem firstCoeff {A : Matrix Int n m} {D : RowEchelonData Int n m}
       let q : Fin D.rank := ⟨qv, hqrank⟩
       have hqne : c[h.toIsEchelonForm.pivotRow q] ≠ 0 := by
         have hp := hspec.1
-        simpa only [p, dif_pos hqrank, decide_eq_true_eq] using hp
+        simpa only [p, dite_eq_left hqrank, decide_eq_true_eq] using hp
       refine ⟨q, hqne, ?_⟩
       intro k hk
       have hkrank : k.val < D.rank := Nat.lt_trans hk q.isLt
       have hfalse := hspec.2.2 k.val hk
-      simp only [p, dif_pos hkrank, decide_not, Bool.not_not] at hfalse
+      simp only [p, dite_eq_left hkrank, decide_not, Bool.not_not] at hfalse
       have heq : c[h.toIsEchelonForm.pivotRow
           (⟨k.val, hkrank⟩ : Fin D.rank)] = 0 := of_decide_eq_true hfalse
       simpa only [IsEchelonForm.pivotRow] using heq

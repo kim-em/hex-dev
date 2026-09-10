@@ -9,6 +9,7 @@ module
 public import Mathlib.Data.Rat.Cast.Order
 public import Mathlib.Data.Real.Basic
 public import Mathlib.Tactic.Linarith
+public import HexInterval.Canonical
 public import HexInterval.Interval
 
 @[expose] public section
@@ -77,6 +78,16 @@ def Raw.HullContains : Raw → Raw → ℝ → Prop
 
 /-- Mathematical membership in a canonical public interval. -/
 def Contains (interval : Hex.Interval) (x : ℝ) : Prop := interval.view.Contains x
+
+/-- Exact real membership in an independently preflighted closed-bounds
+construction. This theorem adds semantics but does not weaken the unchecked
+constructor's trusted-decoder preflight obligation. -/
+@[simp]
+theorem contains_ofOrderedBoundsUnchecked
+    (lower upper : Dyadic) (ordered : lower ≤ upper) (x : ℝ) :
+    (ofOrderedBoundsUnchecked lower upper ordered).Contains x ↔
+      toReal lower ≤ x ∧ x ≤ toReal upper := by
+  simp [Contains, Raw.Contains, Lower.Contains, Upper.Contains]
 
 theorem contains_normalize (raw : Raw) (x : ℝ) :
     raw.normalizeUnchecked.Contains x ↔ raw.Contains x := by

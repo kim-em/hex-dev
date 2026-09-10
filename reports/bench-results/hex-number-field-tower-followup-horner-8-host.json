@@ -1,0 +1,21 @@
+{
+  "label": "horner",
+  "attempt": 8,
+  "cpu": 22,
+  "siblings": [
+    22,
+    70
+  ],
+  "runs": [],
+  "release_quality": false,
+  "protocol_commit": "8d54c7158c907005a9578431c9f43bd743b9827f",
+  "script_sha256": "5686e67b534b1e3cf036a2f71cb3ca6a93ce97c8362cb96dfa0a304d2f74884c",
+  "rejected_preflight": {
+    "arm": "left",
+    "busy": {
+      "22": 19.597989949748744,
+      "70": 40.5
+    }
+  },
+  "accepted": false
+}

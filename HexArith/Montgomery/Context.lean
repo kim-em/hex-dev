@@ -809,7 +809,7 @@ theorem powModNat_modulus_zero (a n : Nat) :
 theorem powModNat_eq (a n p : Nat) (hp : 0 < p) :
     powModNat a n p = a ^ n % p := by
   unfold powModNat
-  rw [if_neg (by omega)]
+  rw [ite_eq_right (by omega)]
   apply powModNatGo_eq a n p (bitLength n) 0 (1 % p) (a % p) hp
   · simpa using lt_two_pow_bitLength n
   · exact Nat.mod_lt _ hp

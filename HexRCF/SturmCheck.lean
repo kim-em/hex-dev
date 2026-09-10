@@ -68,14 +68,14 @@ def checkNonzero : List ZPoly → Bool
 @[expose]
 def checkDegrees : List ZPoly → Bool
   | a :: b :: rest =>
-      decide (b.degree?.getD 0 < a.degree?.getD 0) && checkDegrees (b :: rest)
+      decide (b.natDegree < a.natDegree) && checkDegrees (b :: rest)
   | _ => true
 
 /-- Executable generalized Sturm replay checker.
 
 All polynomial comparisons use `DensePoly.beqCoeffs`, avoiding structural
 array equality during kernel reduction. Nonzero checking before strict degree
-descent makes `degree?.getD 0` unambiguous and implies that an accepted head
+descent makes `natDegree` unambiguous and implies that an accepted head
 has positive degree. Degree descent is retained as an explicit certificate
 invariant even though the abstract `IsSturmChain` consequence does not need
 it. -/
@@ -109,7 +109,7 @@ def total (cert : SturmReplay) : Int :=
 @[expose]
 def DegreesDescend : List ZPoly → Prop
   | a :: b :: rest =>
-      b.degree?.getD 0 < a.degree?.getD 0 ∧ DegreesDescend (b :: rest)
+      b.natDegree < a.natDegree ∧ DegreesDescend (b :: rest)
   | _ => True
 
 /-- A successful nonzero walk proves every chain entry nonzero. -/

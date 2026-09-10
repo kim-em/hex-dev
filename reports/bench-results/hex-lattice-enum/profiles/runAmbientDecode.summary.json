@@ -1,0 +1,477 @@
+{
+  "function": "Hex.LatticeEnumBench.runAmbientDecode",
+  "param": 2048,
+  "diagnostics": {
+    "schema": 2,
+    "stage": "complete",
+    "confidence": "passed",
+    "low_confidence_reasons": [],
+    "bench_pid": 1939409,
+    "bench_thread_name": "hexlatticeenum_bench",
+    "bench_thread_tid": "1939442",
+    "regions_total": 2,
+    "total_timed_ms": 1009.373949,
+    "expected_samples_bench_thread": 1008.4,
+    "retained_samples_bench_thread": 995,
+    "rejected_samples_bench_thread": 15,
+    "off_bench_thread_samples_in_window": 0,
+    "samply_interval_ms": 1.001001,
+    "spawn_anchor_wall_ns": 1788795849134027401,
+    "spawn_anchor_mono_ns": 20276316316762,
+    "sidecar_mono_anchor_ns": 20276512968533,
+    "samply_meta_start_time_ms": 1788795849135.5127,
+    "samply_timestamp_mode": "absolute-monotonic-ms",
+    "calibration_residual_ms": 1.8078810013830662,
+    "calibration_max_residual_ms": 5.0,
+    "calibration": {
+      "selected_mode": "absolute-monotonic-ms",
+      "residual_ms": 1.8078810013830662,
+      "raw_max_residual_ms": 2.1765480004251003,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "configured_max_residual_ms": 5.0,
+      "sample_interval_ms": 1.001001,
+      "effective_max_residual_ms": 5.0,
+      "within_residual_limit": true,
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "hit_count": 995,
+          "regions_without_samples": 0,
+          "boundary_residual_trimmed_max_ms": 1.8078810013830662,
+          "boundary_residual_raw_max_ms": 2.1765480004251003,
+          "within_residual_limit": true
+        },
+        "relative-to-meta-start-ms": {
+          "hit_count": 0,
+          "regions_without_samples": 2,
+          "boundary_residual_trimmed_max_ms": null,
+          "boundary_residual_raw_max_ms": null,
+          "within_residual_limit": false
+        }
+      }
+    },
+    "minimum_retained_samples": 100,
+    "sensitivity": {
+      "shift_ms": 5.0,
+      "reported_top_function_count": 3,
+      "configured_max_total_variation_distance": 0.1,
+      "sampling_noise_coefficient": 0.6,
+      "minimum_comparison_samples": 100,
+      "maximum_sampling_noise_allowance": 0.5,
+      "verdict": "passed",
+      "leaf_function_distributions_stable": true,
+      "comparisons": {
+        "minus": {
+          "total_variation_distance": 0.004984559528216239,
+          "leaf_function_support_size": 397,
+          "comparison_samples": 991,
+          "exchanged_samples": 6,
+          "exchanged_fraction": 0.006054490413723511,
+          "sampling_noise_allowance": 0.04178914371762841,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        },
+        "plus": {
+          "total_variation_distance": 0.0019938564929379878,
+          "leaf_function_support_size": 397,
+          "comparison_samples": 993,
+          "exchanged_samples": 2,
+          "exchanged_fraction": 0.002014098690835851,
+          "sampling_noise_allowance": 0.024078379269089154,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        }
+      },
+      "cases": {
+        "minus": {
+          "shift_ms": -5.0,
+          "retained_samples": 991,
+          "top_leaf_functions": [
+            {
+              "function": 96,
+              "name": "0x4d34388",
+              "samples": 37
+            },
+            {
+              "function": 59,
+              "name": "0x4d3419c",
+              "samples": 35
+            },
+            {
+              "function": 83,
+              "name": "0x4cf35db",
+              "samples": 30
+            }
+          ]
+        },
+        "nominal": {
+          "shift_ms": 0.0,
+          "retained_samples": 995,
+          "top_leaf_functions": [
+            {
+              "function": 96,
+              "name": "0x4d34388",
+              "samples": 37
+            },
+            {
+              "function": 59,
+              "name": "0x4d3419c",
+              "samples": 34
+            },
+            {
+              "function": 83,
+              "name": "0x4cf35db",
+              "samples": 30
+            }
+          ]
+        },
+        "plus": {
+          "shift_ms": 5.0,
+          "retained_samples": 993,
+          "top_leaf_functions": [
+            {
+              "function": 96,
+              "name": "0x4d34388",
+              "samples": 37
+            },
+            {
+              "function": 59,
+              "name": "0x4d3419c",
+              "samples": 34
+            },
+            {
+              "function": 83,
+              "name": "0x4cf35db",
+              "samples": 30
+            }
+          ]
+        }
+      }
+    }
+  },
+  "samples": 995,
+  "leaf_categories": {
+    "lean-runtime": 40.0,
+    "allocation": 32.96,
+    "lean-own-code": 12.66,
+    "other": 7.24,
+    "gmp": 7.14
+  },
+  "classified_percent": 92.76,
+  "top_self": [
+    {
+      "function": "mi_free",
+      "percent": 11.66
+    },
+    {
+      "function": "mi_malloc_small",
+      "percent": 7.84
+    },
+    {
+      "function": "WellFounded.opaqueFix\u2083",
+      "percent": 6.73
+    },
+    {
+      "function": "lean_string_utf8_get",
+      "percent": 5.53
+    },
+    {
+      "function": "lean_string_utf8_extract",
+      "percent": 5.23
+    },
+    {
+      "function": "Hex.LatticeEnum.Codec.token",
+      "percent": 4.62
+    },
+    {
+      "function": "_GI___libc_malloc",
+      "percent": 4.32
+    },
+    {
+      "function": "lean_dec_ref_cold",
+      "percent": 3.82
+    },
+    {
+      "function": "String.splitOnAux",
+      "percent": 3.72
+    },
+    {
+      "function": "_free",
+      "percent": 3.22
+    },
+    {
+      "function": "Hex.LatticeEnum.Codec.integer",
+      "percent": 2.71
+    },
+    {
+      "function": "_private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+      "percent": 2.61
+    },
+    {
+      "function": "lean_string_utf8_next",
+      "percent": 2.31
+    },
+    {
+      "function": "lean_apply_1",
+      "percent": 2.21
+    },
+    {
+      "function": "String.Slice.toInt?",
+      "percent": 2.11
+    },
+    {
+      "function": "mi_malloc",
+      "percent": 1.91
+    },
+    {
+      "function": "Hex.Matrix.ofRows",
+      "percent": 1.91
+    },
+    {
+      "function": "List.reverseAux",
+      "percent": 1.91
+    },
+    {
+      "function": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)",
+      "percent": 1.51
+    },
+    {
+      "function": "_gmpz_add",
+      "percent": 1.31
+    }
+  ],
+  "top_self_undecorated": [
+    {
+      "symbol": "mi_free",
+      "percent": 11.66
+    },
+    {
+      "symbol": "mi_malloc_small",
+      "percent": 7.84
+    },
+    {
+      "symbol": "lean_string_utf8_get",
+      "percent": 5.53
+    },
+    {
+      "symbol": "lean_string_utf8_extract",
+      "percent": 5.23
+    },
+    {
+      "symbol": "Hex.LatticeEnum.Codec.token",
+      "percent": 4.62
+    },
+    {
+      "symbol": "_GI___libc_malloc",
+      "percent": 4.32
+    },
+    {
+      "symbol": "lean_dec_ref_cold",
+      "percent": 3.82
+    },
+    {
+      "symbol": "String.splitOnAux",
+      "percent": 3.72
+    },
+    {
+      "symbol": "WellFounded.opaqueFix\u2083_.at_.00String.Slice.isNat.spec_0_.redArg",
+      "percent": 3.52
+    },
+    {
+      "symbol": "WellFounded.opaqueFix\u2083_.at_.00String.Slice.toNat?.spec_0_.redArg",
+      "percent": 3.22
+    },
+    {
+      "symbol": "_free",
+      "percent": 3.22
+    },
+    {
+      "symbol": "_private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop_.at_.00Hex.LatticeEnum.Codec.vector.spec_0_.redArg",
+      "percent": 2.61
+    },
+    {
+      "symbol": "Hex.LatticeEnum.Codec.integer",
+      "percent": 2.61
+    },
+    {
+      "symbol": "lean_string_utf8_next",
+      "percent": 2.31
+    },
+    {
+      "symbol": "lean_apply_1",
+      "percent": 2.21
+    },
+    {
+      "symbol": "String.Slice.toInt?",
+      "percent": 2.11
+    },
+    {
+      "symbol": "mi_malloc",
+      "percent": 1.91
+    },
+    {
+      "symbol": "List.reverseAux_.redArg",
+      "percent": 1.91
+    },
+    {
+      "symbol": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)",
+      "percent": 1.51
+    },
+    {
+      "symbol": "Hex.Matrix.ofRows_.redArg_.lam_0",
+      "percent": 1.51
+    }
+  ],
+  "top_inclusive": [
+    {
+      "function": "lean::lthread::imp::_main(void*)",
+      "percent": 100.0
+    },
+    {
+      "function": "_private.HexLatticeEnum.Bench.0_Hex.LatticeEnumBench.initFn_.lam_0.00_@.HexLatticeEnum.Bench.3091764806__hygCtx_.hyg.33.",
+      "percent": 100.0
+    },
+    {
+      "function": "start_thread",
+      "percent": 100.0
+    },
+    {
+      "function": "std::__1::__function::__func<lean_run_main::$_0, void ()>::operator()()",
+      "percent": 100.0
+    },
+    {
+      "function": "_private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+      "percent": 100.0
+    },
+    {
+      "function": "lean-bench.LeanBench.autoTune",
+      "percent": 100.0
+    },
+    {
+      "function": "lean-bench.LeanBench.runChildMode",
+      "percent": 100.0
+    },
+    {
+      "function": "lean_apply_2",
+      "percent": 100.0
+    },
+    {
+      "function": "lean-bench.LeanBench.wrapLoopForSidecar",
+      "percent": 100.0
+    },
+    {
+      "function": "fun_124075",
+      "percent": 100.0
+    },
+    {
+      "function": "lean-bench.LeanBench.Cli.runChildCmd",
+      "percent": 100.0
+    },
+    {
+      "function": "Hex.LatticeEnumBench.runAmbientDecode",
+      "percent": 87.34
+    },
+    {
+      "function": "Hex.LatticeEnum.decodeOptimumCertificate",
+      "percent": 87.34
+    },
+    {
+      "function": "lean_apply_1",
+      "percent": 64.12
+    },
+    {
+      "function": "Hex.LatticeEnum.Codec.vector",
+      "percent": 61.31
+    },
+    {
+      "function": "Hex.LatticeEnum.Codec.certificate",
+      "percent": 59.4
+    },
+    {
+      "function": "Hex.LatticeEnum.Codec.matrix",
+      "percent": 44.02
+    },
+    {
+      "function": "Hex.LatticeEnum.Codec.rational",
+      "percent": 41.91
+    },
+    {
+      "function": "Hex.LatticeEnum.Codec.integer",
+      "percent": 24.42
+    },
+    {
+      "function": "String.splitOnAux",
+      "percent": 22.01
+    }
+  ],
+  "inclusive_hex": [
+    {
+      "function": "_private.HexLatticeEnum.Bench.0_Hex.LatticeEnumBench.initFn_.lam_0.00_@.HexLatticeEnum.Bench.3091764806__hygCtx_.hyg.33.",
+      "percent": 100.0
+    },
+    {
+      "function": "Hex.LatticeEnumBench.runAmbientDecode",
+      "percent": 87.34
+    },
+    {
+      "function": "Hex.LatticeEnum.decodeOptimumCertificate",
+      "percent": 87.34
+    },
+    {
+      "function": "Hex.LatticeEnum.Codec.vector",
+      "percent": 61.31
+    },
+    {
+      "function": "Hex.LatticeEnum.Codec.certificate",
+      "percent": 59.4
+    },
+    {
+      "function": "Hex.LatticeEnum.Codec.matrix",
+      "percent": 44.02
+    },
+    {
+      "function": "Hex.LatticeEnum.Codec.rational",
+      "percent": 41.91
+    },
+    {
+      "function": "Hex.LatticeEnum.Codec.integer",
+      "percent": 24.42
+    },
+    {
+      "function": "_private.HexLatticeEnum.Bench.0_Hex.LatticeEnumBench.digestCertificate",
+      "percent": 12.56
+    },
+    {
+      "function": "Hex.LatticeEnum.Codec.point",
+      "percent": 9.75
+    },
+    {
+      "function": "Hex.LatticeEnum.Codec.natural",
+      "percent": 9.35
+    },
+    {
+      "function": "Hex.LatticeEnum.Codec.token",
+      "percent": 6.33
+    },
+    {
+      "function": "Hex.Matrix.ofRows",
+      "percent": 1.91
+    },
+    {
+      "function": "_private.HexLatticeEnum.Bench.0_Hex.LatticeEnumBench.digestPoints",
+      "percent": 1.51
+    },
+    {
+      "function": "Hex.Matrix.getRow",
+      "percent": 1.21
+    }
+  ],
+  "allocation_share_percent": 32.96
+}

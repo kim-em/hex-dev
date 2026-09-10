@@ -27,7 +27,7 @@ import HexRootsMathlib
 
 # Functionality
 
-`HexRootsMathlib.isolate!` removes the executable `Option` when the caller has
+`HexRootsMathlib.isolateComplexRoots` removes the executable `Option` when the caller has
 the hypotheses required by completeness:
 
 ```lean
@@ -39,21 +39,21 @@ def p : ZPoly := DensePoly.ofCoeffs #[-1, -1, 0, 1]
 variable (hsimple : HasOnlySimpleRoots p) (hnonzero : p ≠ 0)
 
 noncomputable def roots : Array (DyadicRootIsolation p) :=
-  isolate! p hsimple hnonzero 32
+  ZPoly.isolateComplexRoots? p hsimple hnonzero 32
 ```
 
 The associated theorems are the main consumption surface:
 
 ```lean
-isolate!_eq     -- the array is the successful Hex.isolate result
-isolate!_count  -- one atom per complex root
-isolate!_roots  -- selected semantic roots equal p.roots.toFinset
-isolate!_prec   -- every square meets the requested precision
-isolate!_disjoint -- distinct squares have disjoint circumscribed discs
+isolateComplexRoots_eq     -- the array is the successful Hex.ZPoly.isolateComplexRoots? result
+isolateComplexRoots?_count  -- one atom per complex root
+isolateComplexRoots_roots  -- selected semantic roots equal p.roots.toFinset
+isolateComplexRoots?_prec   -- every square meets the requested precision
+isolateComplexRoots?_disjoint -- distinct squares have disjoint circumscribed discs
 ```
 
-Clients that already have a successful `Hex.isolate` call can instead use
-`isolate_sound`, `isolate_count`, `isolate_disjoint`, and the atom-level
+Clients that already have a successful `Hex.ZPoly.isolateComplexRoots?` call can instead use
+`isolateComplexRoots?_sound`, `isolateComplexRoots?_count`, `isolateComplexRoots?_disjoint`, and the atom-level
 semantic root API.
 
 # Verification

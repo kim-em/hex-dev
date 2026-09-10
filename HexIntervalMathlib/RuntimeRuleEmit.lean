@@ -18,7 +18,7 @@ public meta import HexInterval.Canonical
 /-!
 # Built-in arithmetic runtime emitters
 
-This elaborator-only companion pairs the twelve built-in arithmetic theorem
+This elaborator-only companion pairs the eleven built-in arithmetic theorem
 schemas with exact `RuntimeEmit` handles. The joint builder constructs the
 executable assembly, theorem registry, and emitter registry in one call.
 Caller-owned meanings need their own emitter packages and are intentionally
@@ -95,8 +95,8 @@ meta def configExpr (config : Rule.Config) : MetaM Expr := do
     throwError "built-in runtime emitter cannot quote caller function meanings"
   mkAppM ``Rule.Config.mk
     #[← endpointExpr config.endpoint, ← powLimitsExpr config.powerWork,
-      mkNatLit config.exponent, ← precisionLimitsExpr config.precisionLimits,
-      mkIntLit config.precision, ← dyadicExpr config.constant, ← emptyMeaningsExpr]
+      ← precisionLimitsExpr config.precisionLimits,
+      mkIntLit config.precision, ← emptyMeaningsExpr]
 
 meta def intervalExpr (limit : EndpointLimit) (interval : Hex.Interval) : MetaM Expr := do
   let raw ← rawExpr interval.view
@@ -130,7 +130,6 @@ meta def emitPackage (config : Rule.Config) :
         Quote.schema config (Rule.schemaKey Rule.absKey) ``Rule.absSchema,
         Quote.schema config (Rule.schemaKey Rule.minKey) ``Rule.minSchema,
         Quote.schema config (Rule.schemaKey Rule.maxKey) ``Rule.maxSchema,
-        Quote.schema config (Rule.schemaKey Rule.constantKey) ``Rule.constantSchema,
         Quote.schema config (Rule.schemaKey Rule.invKey) ``Rule.invSchema,
         Quote.schema config (Rule.schemaKey Rule.divKey) ``Rule.divSchema,
         Quote.schema config (Rule.schemaKey Rule.regularizeKey) ``Rule.regularizeSchema] }

@@ -220,7 +220,7 @@ zero and nonconstant polynomials guarded against an impossible zero sample. -/
 @[expose]
 def openCellSign? (p : ZPoly) (isolations : IsolationCert)
     (cut : Fin (isolations.intervals.size + 1)) : Option Sign :=
-  if 0 < p.degree?.getD 0 then openSign? p isolations cut
+  if 0 < p.natDegree then openSign? p isolations cut
   else some (evalSign p 0)
 
 /-- One cached sign associated with its literal polynomial. -/
@@ -321,7 +321,7 @@ def signWith? (cert : SignMatrixCert) (commonPolys : List ZPoly)
   match cell with
   | .open cut => openCellSign? p isolations cut
   | .root i =>
-      if 0 < p.degree?.getD 0 then do
+      if 0 < p.natDegree then do
         let common ← Hex.RCF.findCommon? p commonPolys cert.commonRoots
         rootSign? p common isolations i
       else some (evalSign p 0)

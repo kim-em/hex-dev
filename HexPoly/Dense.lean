@@ -6,7 +6,6 @@ Authors: Kim Morrison
 
 module
 
-public import HexPoly.Conditional
 public import Std
 
 public section
@@ -256,8 +255,8 @@ private theorem trimTrailingZerosGo_eq (n : Nat) :
       intro coeffs hsize
       rw [trimTrailingZerosGo]
       by_cases hb : coeffs.back? = some (Zero.zero : R)
-      · rw [HexPoly.ite_eq_left hb, ih coeffs.pop (by rw [Array.size_pop]; omega), trimTrailingZeros_pop coeffs hb]
-      · rw [HexPoly.ite_eq_right hb, trimTrailingZeros_self coeffs hb]
+      · rw [ite_eq_left hb, ih coeffs.pop (by rw [Array.size_pop]; omega), trimTrailingZeros_pop coeffs hb]
+      · rw [ite_eq_right hb, trimTrailingZeros_self coeffs hb]
 
 /-- Runtime implementation of {name}`trimTrailingZeros`. -/
 @[expose]
@@ -289,6 +288,11 @@ syntax (name := densePolyLiteral) "#p[" term,* "]" : term
 macro_rules
   | `(#p[$coeffs,*]) =>
       `(Hex.DensePoly.ofCoeffs #[$coeffs,*])
+
+/-- A polynomial prints as the literal that rebuilds it, `#p[a₀, a₁, ...]`. -/
+instance [Repr R] : Repr (DensePoly R) where
+  reprPrec p _ :=
+    "#p[" ++ Std.Format.joinSep (p.coeffs.toList.map repr) ", " ++ "]"
 
 /-- The zero polynomial. -/
 @[expose]
@@ -382,11 +386,11 @@ elsewhere, even when `c = 0` (in which case the polynomial is zero and every coe
     (monomial n c).coeff i = if i = n then c else (Zero.zero : R) := by
   unfold monomial
   by_cases hc : c = (Zero.zero : R)
-  · rw [HexPoly.dite_eq_left hc]
+  · rw [dite_eq_left hc]
     change (0 : DensePoly R).coeff i = if i = n then c else (Zero.zero : R)
     by_cases hi : i = n
     · subst i
-      rw [HexPoly.ite_eq_left rfl, hc]
+      rw [ite_eq_left rfl, hc]
       change (#[] : Array R).getD n (Zero.zero : R) = Zero.zero
       simp [Array.getD]
     · change (#[] : Array R).getD i (Zero.zero : R) = if i = n then c else Zero.zero
@@ -394,7 +398,7 @@ elsewhere, even when `c = 0` (in which case the polynomial is zero and every coe
   · simp [hc, coeff, Array.getD]
     by_cases hi : i = n
     · subst i
-      rw [HexPoly.dite_eq_left (Nat.lt_succ_self n)]
+      rw [dite_eq_left (Nat.lt_succ_self n)]
       rw [show
           ((Array.replicate n (Zero.zero : R)).push c)[n] = c by
             simpa using
@@ -404,11 +408,11 @@ elsewhere, even when `c = 0` (in which case the polynomial is zero and every coe
       · have hrep : i < (Array.replicate n (Zero.zero : R)).size := by
           simpa using hlt
         have hpush : i < n + 1 := by omega
-        rw [HexPoly.dite_eq_left hpush, Array.getElem_push_lt hrep]
+        rw [dite_eq_left hpush, Array.getElem_push_lt hrep]
         simp [hi]
       · have hnle : n < i := by omega
         have hpush_not : ¬ i < n + 1 := by omega
-        rw [HexPoly.dite_eq_right hpush_not]
+        rw [dite_eq_right hpush_not]
         simp [hi]
 
 /-- Coefficient of `ofList coeffs` agrees with `coeffs.getD _ 0`: normalization does not change
@@ -446,7 +450,7 @@ theorem coeff_eq_zero_of_size_le (p : DensePoly R) {i : Nat} (h : p.size ≤ i) 
   unfold coeff Array.getD
   have hcoeffs : p.coeffs.size ≤ i := by
     simpa [size] using h
-  rw [HexPoly.dite_eq_right (Nat.not_lt.mpr hcoeffs)]
+  rw [dite_eq_right (Nat.not_lt.mpr hcoeffs)]
 
 /-- The last stored coefficient of a nonzero normalized dense polynomial is nonzero. -/
 theorem coeff_last_ne_zero_of_pos_size (p : DensePoly R) (hpos : 0 < p.size) :
@@ -561,6 +565,28 @@ theorem size_eq_zero_iff (p : DensePoly R) : p.size = 0 ↔ p = 0 := by
     subst p
     exact size_zero
 
+/-- The degree, with the zero polynomial given degree `0`. This is the form
+most callers want, matching Mathlib's `Polynomial.natDegree`; `degree?`
+remains for the ones that must distinguish the zero polynomial. -/
+abbrev natDegree (p : DensePoly R) : Nat :=
+  p.degree?.getD 0
+
+/-- {name}`natDegree` is {name}`degree?` with the zero case defaulted to `0`. -/
+theorem natDegree_eq_degree?_getD (p : DensePoly R) :
+    p.natDegree = p.degree?.getD 0 := rfl
+
+/-- The degree is one less than the number of stored coefficients. `Nat`
+subtraction truncates, which is what gives the zero polynomial degree `0`. -/
+theorem natDegree_eq_size_sub_one (p : DensePoly R) :
+    p.natDegree = p.size - 1 := by
+  unfold natDegree degree?
+  split
+  · rename_i h; rw [h]; rfl
+  · rfl
+
+/-- The zero polynomial has degree `0`. -/
+@[simp, grind =] theorem natDegree_zero : (0 : DensePoly R).natDegree = 0 := rfl
+
 /-- The zero polynomial has no degree. -/
 @[simp, grind =] theorem degree?_zero : (0 : DensePoly R).degree? = none := by
   unfold degree?
@@ -632,14 +658,14 @@ theorem isZero_C_eq_true_iff (c : R) : (C c).isZero = true ↔ c = (0 : R) := by
 /-- The monomial with zero coefficient is the zero polynomial. -/
 @[simp, grind =] theorem monomial_zero (n : Nat) : monomial n (0 : R) = 0 := by
   change monomial n (Zero.zero : R) = 0
-  rw [monomial, HexPoly.dite_eq_left rfl]
+  rw [monomial, dite_eq_left rfl]
 
 /-- A monomial with nonzero coefficient stores exactly the `n + 1` coefficients up to degree `n`.
 -/
 theorem size_monomial_of_ne_zero {n : Nat} {c : R} (hc : c ≠ (0 : R)) :
     (monomial n c).size = n + 1 := by
   change c ≠ Zero.zero at hc
-  rw [monomial, HexPoly.dite_eq_right hc]
+  rw [monomial, dite_eq_right hc]
   change ((Array.replicate n (Zero.zero : R)).push c).size = n + 1
   simp
 
@@ -666,15 +692,15 @@ theorem isZero_monomial_eq_false_of_ne_zero {n : Nat} {c : R} (hc : c ≠ (0 : R
   intro hzero
   exact hc ((isZero_monomial_eq_true_iff n c).1 hzero)
 
-/-- The {name}`degree?` of a constant polynomial, defaulted to `0`, is `0` regardless of the scalar:
-either `degree? = none` (when `c = 0`) and `getD 0 = 0`, or `degree? = some 0` (otherwise). -/
-@[simp, grind =] theorem degree?_C_getD (c : R) : (C c).degree?.getD 0 = 0 := by
+/-- A constant polynomial has degree `0`, whether or not the scalar is zero. -/
+@[simp, grind =] theorem natDegree_C (c : R) : (C c).natDegree = 0 := by
+  rw [natDegree_eq_size_sub_one]
   by_cases hc : c = (0 : R)
   · rw [hc]
-    change (C (Zero.zero : R)).degree?.getD 0 = 0
-    simp [C, ofCoeffs, trimTrailingZeros, trimTrailingZerosList, degree?, size]
+    change (C (Zero.zero : R)).size - 1 = 0
+    simp [C, ofCoeffs, trimTrailingZeros, trimTrailingZerosList, size]
   · change c ≠ Zero.zero at hc
-    simp [C, ofCoeffs, trimTrailingZeros, trimTrailingZerosList, hc, degree?, size]
+    simp [C, ofCoeffs, trimTrailingZeros, trimTrailingZerosList, hc, size]
 
 /-- The zero polynomial is the only dense polynomial with no degree. -/
 theorem degree?_eq_none_iff (p : DensePoly R) :
@@ -688,7 +714,7 @@ theorem degree?_eq_none_iff (p : DensePoly R) :
 theorem degree?_eq_some_of_pos_size (p : DensePoly R) (hpos : 0 < p.size) :
     p.degree? = some (p.size - 1) := by
   unfold degree?
-  rw [HexPoly.dite_eq_right (Nat.ne_of_gt hpos)]
+  rw [dite_eq_right (Nat.ne_of_gt hpos)]
 
 /-- A monomial with nonzero coefficient has degree exactly its exponent. -/
 theorem degree?_monomial_of_ne_zero {n : Nat} {c : R} (hc : c ≠ (0 : R)) :
@@ -696,10 +722,10 @@ theorem degree?_monomial_of_ne_zero {n : Nat} {c : R} (hc : c ≠ (0 : R)) :
   have hsize : (monomial n c).size = n + 1 := size_monomial_of_ne_zero hc
   rw [degree?_eq_some_of_pos_size _ (hsize ▸ Nat.succ_pos n), hsize, Nat.add_sub_cancel]
 
-/-- The default-0 degree of a monomial with nonzero coefficient is its exponent. -/
-theorem degree?_monomial_getD_of_ne_zero {n : Nat} {c : R} (hc : c ≠ (0 : R)) :
-    (monomial n c).degree?.getD 0 = n := by
-  rw [degree?_monomial_of_ne_zero hc, Option.getD_some]
+/-- A monomial with nonzero coefficient has degree its exponent. -/
+theorem natDegree_monomial_of_ne_zero {n : Nat} {c : R} (hc : c ≠ (0 : R)) :
+    (monomial n c).natDegree = n := by
+  rw [natDegree_eq_degree?_getD, degree?_monomial_of_ne_zero hc, Option.getD_some]
 
 /-- A monomial with nonzero coefficient is not the zero polynomial. -/
 theorem monomial_ne_zero_of_ne_zero {n : Nat} {c : R} (hc : c ≠ (0 : R)) :

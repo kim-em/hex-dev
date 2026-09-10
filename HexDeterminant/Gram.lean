@@ -684,9 +684,9 @@ private theorem countP_finRange_val_lt :
       simp only [List.countP_singleton, Fin.last]
       -- Goal: min n k + (if decide (n < k) then 1 else 0) = min (n+1) k.
       by_cases hnk : n < k
-      · rw [if_pos (by simpa using hnk)]
+      · rw [ite_eq_left (by simpa using hnk)]
         omega
-      · rw [if_neg (by simpa using hnk)]
+      · rw [ite_eq_right (by simpa using hnk)]
         omega
 
 /-- A permutation as a `Vector` acts as an injective function on `Fin n`. -/

@@ -9,6 +9,7 @@ module
 public import HexGFqMathlib.Basic
 public import HexGFqMathlib.GF2q
 public import HexGFqMathlib.Subfield
+public import HexGFqMathlib.Embeddings
 public import HexGFqMathlib.Primitivity
 
 public section

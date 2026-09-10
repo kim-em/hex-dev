@@ -259,6 +259,7 @@ inductive AtomCertificate : (p : ZPoly) → (s : DyadicSquare) → Type
       AtomCertificate p.negRoots s.neg
   | normalize (h : AtomCertificate p s) :
       AtomCertificate (ZPoly.normalizePrimitiveSign p) s
+  | conj (h : AtomCertificate p s) : AtomCertificate p s.conj
 
 def AtomCertificate.ofWitness : atomWitness p s → AtomCertificate p s
 def AtomCertificate.isNK : AtomCertificate p s → Bool
@@ -386,7 +387,7 @@ def certify? (p : ZPoly) (strategy : AtomStrategy := .nkThenPellet) :
 
 /-- The starting component: a single square centred at 0 covering the
     Cauchy root bound, with `candidateK = deg p`. -/
-def cauchy (p : ZPoly) (h : 0 < p.degree?.getD 0) : Component
+def cauchy (p : ZPoly) (h : 0 < p.natDegree) : Component
 end Component
 
 /-- Repackage a certified `k = 1` cluster as an atom (the Pellet
@@ -422,7 +423,7 @@ def isolateAll? (p : ZPoly) (target : Int) (worklist : Array Component)
     positive degree, so the degenerate inputs are pinned here: a
     nonzero constant returns `some #[]` (no roots to isolate), and
     the zero polynomial returns `none`. -/
-def isolate (p : ZPoly) (h : Hex.HasOnlySimpleRoots p) (atom_prec : Int)
+def ZPoly.isolateComplexRoots? (p : ZPoly) (h : Hex.HasOnlySimpleRoots p) (atom_prec : Int)
     (strategy : AtomStrategy := .nkThenPellet) :
     Option (Array (DyadicRootIsolation p))
 
@@ -544,7 +545,7 @@ already a target-ready atom with pairwise-disjoint discs. At the
 normalized depth, every component is
 root-bearing; the Mathlib companion proves that all three strategies
 certify it as an atom and that the atom discs are pairwise disjoint.
-Thus `isolate` returns `some` for every nonzero squarefree input.
+Thus `ZPoly.isolateComplexRoots?` returns `some` for every nonzero squarefree input.
 `stopSlack` leaves three further rounds for the general driver and
 non-squarefree inputs. A `none` from a driver means only that its full
 emission condition was not reached within the fixed fuel bound; it does
@@ -620,7 +621,7 @@ one-square witness certifies. Roots on a grid *line* keep a two-square
 or four-square component under pure subdivision. Newton recentring is
 what turns those into single-square atoms.
 
-For polynomials with multiple roots there is no `isolate` analogue.
+For polynomials with multiple roots there is no `ZPoly.isolateComplexRoots?` analogue.
 Use `isolateAll?` directly: a multiple root never atomizes (the `k = 1`
 witness requires `c₁` bounded away from 0, and `c₁ → 0` near a
 multiple root), so it appears in the output as a cluster with its
@@ -663,7 +664,7 @@ correctness; see
 
 ```lean
 def separationDepth (p : ZPoly) : Nat :=
-  mahlerPrec p + ceilLog2 (max 2 (p.degree?.getD 0)) + sepSlack
+  mahlerPrec p + ceilLog2 (max 2 (p.natDegree)) + sepSlack
 ```
 
 with `sepSlack := 8`. `separationDepth` is the depth at which the
@@ -713,10 +714,23 @@ def SimpleRoot (p : ZPoly) := Quot (Intersects (p := p))
 
 def SimpleRoot.mk (iso : RefinedIsolation p) : SimpleRoot p := Quot.mk _ iso
 
+/-- The simple root of `p` isolated by the square `s`. Both side conditions
+    are decidable checks on printable data, so a caller holding only a square
+    rebuilds the certificate with `decide`. -/
+def SimpleRoot.ofSquare (p : ZPoly) (s : DyadicSquare)
+    (hw : atomWitness p s := by decide)
+    (hp : (mahlerPrec p : Int) ≤ s.prec := by decide) : SimpleRoot p
+
+`ofSquare` is the entry point for callers who have a square and nothing else:
+a `Repr` output, a committed fixture, a literal in a test. `Intersects`
+compares stored squares, so the rebuilt certificate need not match the one the
+isolator produced; the companion's `ofSquare_mk` records that rebuilding from
+an isolation's own square names that isolation's root.
+
 /-- A represented simple root forces its defining polynomial to have positive
     degree. -/
 theorem SimpleRoot.posDegree (x : SimpleRoot p) :
-    0 < p.degree?.getD 0
+    0 < p.natDegree
 
 /-- Boolean form of `Intersects`, used for equality tests on data
     containing roots (see hex-number-field). -/
@@ -772,7 +786,7 @@ def RefinedIsolation.refineTo? (r : RefinedIsolation p) (target : Int)
 which floors the target at `mahlerPrec p` (so the subtype re-wrap
 always succeeds on a `some`) and derives the identity proof from the
 decidable `Intersects` re-check via `Quot.sound`; and
-`DyadicRootIsolation.toRefined?` records that an `isolate` output
+`DyadicRootIsolation.toRefined?` records that an `ZPoly.isolateComplexRoots?` output
 meets the separation precision. `refineTo?` preserves the root
 (`sameRoot r r' = true`, proved meaningful in the companion), so
 callers can substitute the refined representative wherever the
@@ -852,7 +866,7 @@ is made here for pure Pellet refinement of a non-squarefree ambient polynomial.
   worklist, including the local first-refinable-atom search, `stopDepth`, the
   Φ termination measure discussion, and `DyadicRootIsolation.refineTo?` as a
   thin wrapper.
-- `HexRoots/IsolateAll.lean`: `isolateAll?`, `isolate`, and the local
+- `HexRoots/IsolateAll.lean`: `isolateAll?`, `ZPoly.isolateComplexRoots?`, and the local
   `isolateOne?` entry point as thin wrappers over the shared driver loops, and
   the refined threading operation `RefinedIsolation.refineTo?` (below).
 - `HexRoots/SimpleRoot.lean`: `RefinedIsolation`, `Intersects`,
@@ -883,9 +897,13 @@ polynomials rarely have clustered roots.
   - 50 degree-20 polynomials with deterministic seed `0xC0FFEE` and
     coefficients in `[−10, 10]`, cross-checked against the python-flint
     oracle (below), plus the six curated atom/cluster cases retained for
-    explicit simple/multiple-root coverage. Fresh emission of the full stream
-    takes about 5.2 minutes on `chungus2`; at degree 20 the all-atoms local
-    finisher supplies the speedup, while the size-gated soft front end is idle.
+    explicit simple/multiple-root coverage. The emitter computes cases in
+    parallel tasks and writes records in case order, so the stream stays
+    byte-identical to sequential emission; fresh emission of the full
+    stream takes about 11 seconds on `chungus2` (about 4.8 CPU-minutes,
+    `HEX_EMIT_JOBS` caps the outstanding tasks). At degree 20 the
+    all-atoms local finisher supplies the per-case speedup, while the
+    size-gated soft front end is idle.
 - *local* (developer-driven):
   - Adversarial families cross-checked against MPSolve: Mignotte
     `(n, a)` for `n ∈ {10, 20}` and `a ∈ {1000, 10⁶}`, the Wilkinson
@@ -943,7 +961,7 @@ bit-length at precision `prec`.
   the two base squares are concentric. This does not change the
   asymptotic bound, but removes the repeated dominant `O(n²)` shift
   from those paths.
-- `isolate` for degree `n`, well-separated roots, target precision
+- `ZPoly.isolateComplexRoots?` for degree `n`, well-separated roots, target precision
   `prec`: heuristically `O(n³ · B²)` bit operations. Tight root
   clusters add subdivision depth up to `O(mahlerPrec p)`.
 
@@ -952,7 +970,7 @@ bit-length at precision `prec`.
 Regression ceilings anchored to measured reality (`chungus2`, AMD EPYC 9455,
 96 logical CPUs with substantial idle capacity, Lean 4.32.0-rc1). Every pinned row runs the compiled expression
 `isolateAll? (seededPoly degree) target #[Component.cauchy ...]`; this avoids
-`isolate`'s higher `separationDepth` target and makes the stated precision the
+`ZPoly.isolateComplexRoots?`'s higher `separationDepth` target and makes the stated precision the
 actual driver target. Degree 10 and 20 use three measured cold calls with no
 discarded warmup, degree 50 uses two, and degree 100 uses one. The direct
 driver prints and checks the returned atom count; unlike the canonical fixed
@@ -1003,3 +1021,19 @@ performance comparator is python-flint, whose measured ratios are recorded in
   (`CertifyingLmfdbData/Polynomial/NewtonKantorovich.lean`,
   Apache 2.0). The formalisation the Mathlib companion ports for
   the `nkWitness` soundness theorem.
+
+### Conjugated certificates
+
+```lean
+def DyadicSquare.meetsRealAxis (s : DyadicSquare) : Bool
+def DyadicSquare.conj (s : DyadicSquare) : DyadicSquare
+def RefinedIsolation.conj {p : ZPoly} (r : RefinedIsolation p) : RefinedIsolation p
+```
+
+`DyadicSquare.conj` reflects the imaginary centre. `AtomCertificate.conj`
+transports any accepted certificate for an integer polynomial to the reflected
+square; soundness follows from evaluation commuting with complex conjugation.
+`RefinedIsolation.conj` retains its separation depth and reflects the selected
+root. It does not rerun an NK or Pellet test. The companion's `root_conj` and
+exact `meetsRealAxis_iff` / `upper_iff` support canonical orientation in the
+number-field library.

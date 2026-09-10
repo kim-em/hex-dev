@@ -111,14 +111,14 @@ private theorem foldDiagonal_extend (p : Nat) [ZMod64.Bounds p]
       · have hterm : DensePoly.diagonalMulCoeffTerm
             (reduceModP p f) (reduceModP p g) n ((reduceModP p f).size + d) = 0 := by
           unfold DensePoly.diagonalMulCoeffTerm
-          rw [if_pos hn]
+          rw [ite_eq_left hn]
           rfl
         rw [hterm]
         exact Lean.Grind.Semiring.add_zero _
       · have hterm : DensePoly.diagonalMulCoeffTerm
             (reduceModP p f) (reduceModP p g) n ((reduceModP p f).size + d) = 0 := by
           unfold DensePoly.diagonalMulCoeffTerm
-          rw [if_neg hn, hcoeff]
+          rw [ite_eq_right hn, hcoeff]
           exact Lean.Grind.Semiring.zero_mul _
         rw [hterm]
         exact Lean.Grind.Semiring.add_zero _
@@ -221,7 +221,7 @@ theorem mulEqPacked_sound {p q target : ZPoly}
     p * q = target := by
   unfold mulEqPacked at hcheck
   by_cases hz : p.isZero || q.isZero
-  · rw [if_pos hz] at hcheck
+  · rw [ite_eq_left hz] at hcheck
     have htarget : target = 0 := by
       simpa [beq_iff_eq] using hcheck
     have hz' : p.isZero = true ∨ q.isZero = true := by
@@ -235,7 +235,7 @@ theorem mulEqPacked_sound {p q target : ZPoly}
         (DensePoly.size_eq_zero_iff q).mp ((DensePoly.isZero_eq_true_iff q).mp hq)
       rw [hq0, htarget, DensePoly.mul_comm_poly]
       exact DensePoly.zero_mul p
-  · rw [if_neg hz] at hcheck
+  · rw [ite_eq_right hz] at hcheck
     dsimp only at hcheck
     have hparts :
         target.size ≤ p.size + q.size - 1 ∧
@@ -336,7 +336,7 @@ theorem mulEqPacked_complete {p q target : ZPoly}
     mulEqPacked p q target = true := by
   unfold mulEqPacked
   by_cases hz : p.isZero || q.isZero
-  · rw [if_pos hz]
+  · rw [ite_eq_left hz]
     rw [beq_iff_eq]
     rw [← hproduct]
     have hz' : p.isZero = true ∨ q.isZero = true := by
@@ -352,7 +352,7 @@ theorem mulEqPacked_complete {p q target : ZPoly}
           ((DensePoly.isZero_eq_true_iff q).mp hq)
       rw [hq0, DensePoly.mul_comm_poly]
       exact DensePoly.zero_mul p
-  · rw [if_neg hz]
+  · rw [ite_eq_right hz]
     dsimp only
     rw [Bool.and_eq_true, decide_eq_true_eq, beq_iff_eq]
     let A := max (max (maxAbs p) (maxAbs q)) (maxAbs target)

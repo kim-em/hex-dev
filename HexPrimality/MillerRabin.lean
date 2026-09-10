@@ -60,7 +60,7 @@ private theorem oddSplitAux_spec :
       intro m hm hlt
       unfold oddSplitAux
       by_cases hcase : m % 2 = 0 ∧ m ≠ 0
-      · rw [if_pos hcase]
+      · rw [ite_eq_left hcase]
         have hm2 : m / 2 ≠ 0 := by omega
         have hp2 : (2 : Nat) ^ (fuel + 1) = 2 ^ fuel + 2 ^ fuel := by
           rw [Nat.pow_succ]; omega
@@ -73,7 +73,7 @@ private theorem oddSplitAux_spec :
               rw [Nat.mul_right_comm]
           _ = m / 2 * 2 := by rw [hprod]
           _ = m := by omega
-      · rw [if_neg hcase]
+      · rw [ite_eq_right hcase]
         refine ⟨by simp, ?_⟩
         simp only []
         omega
@@ -137,8 +137,8 @@ private theorem mrWitnessLoop_true_of_prime {n : Nat} (hp : Prime n)
       intro x hxn hx1 hpow
       unfold mrWitnessLoop
       by_cases hxe : x = n - 1
-      · rw [if_pos hxe]
-      · rw [if_neg hxe]
+      · rw [ite_eq_left hxe]
+      · rw [ite_eq_right hxe]
         have h1n : 1 % n = 1 := Nat.mod_eq_of_lt (by omega)
         have hy1 : x * x % n ≠ 1 := by
           intro hy
@@ -159,8 +159,8 @@ private theorem mrStrongTestCore_true_of_prime {n a s d : Nat} (hp : Prime n)
     mrStrongTestCore n s (HexArith.powMod a d n) = true := by
   unfold mrStrongTestCore
   by_cases hx : HexArith.powMod a d n = 1 ∨ HexArith.powMod a d n = n - 1
-  · rw [if_pos hx]
-  · rw [if_neg hx]
+  · rw [ite_eq_left hx]
+  · rw [ite_eq_right hx]
     have hnpos : 0 < n := by omega
     have hxeq : HexArith.powMod a d n = a ^ d % n :=
       HexArith.powMod_eq a d n hnpos
@@ -200,24 +200,24 @@ theorem millerRabin_eq_true_of_prime {n a : Nat} (hp : Prime n) :
     millerRabin n a = true := by
   have h2 := hp.two_le
   unfold millerRabin
-  rw [if_neg (by omega : ¬ n < 2)]
+  rw [ite_eq_right (by omega : ¬ n < 2)]
   by_cases hn2 : n = 2
-  · rw [if_pos hn2]
-  rw [if_neg hn2]
+  · rw [ite_eq_left hn2]
+  rw [ite_eq_right hn2]
   have hodd : n % 2 = 1 := by
     rcases Nat.mod_two_eq_zero_or_one n with he | ho
     · exfalso
       rcases hp.2 2 (Nat.dvd_of_mod_eq_zero he) with h | h <;> omega
     · exact ho
-  rw [if_neg (by omega : ¬ n % 2 = 0)]
+  rw [ite_eq_right (by omega : ¬ n % 2 = 0)]
   by_cases ha0 : a % n = 0
-  · rw [if_pos ha0]
-  rw [if_neg ha0]
+  · rw [ite_eq_left ha0]
+  rw [ite_eq_right ha0]
   have hgcd : Nat.gcd a n = 1 := by
     rcases hp.2 (Nat.gcd a n) (Nat.gcd_dvd_right a n) with h | h
     · exact h
     · exact absurd (Nat.mod_eq_zero_of_dvd (h ▸ Nat.gcd_dvd_left a n)) ha0
-  rw [if_neg (by omega : ¬ 1 < Nat.gcd a n)]
+  rw [ite_eq_right (by omega : ¬ 1 < Nat.gcd a n)]
   have h2n : 2 < n := by omega
   obtain ⟨hsplit, hd⟩ := oddSplit_spec (n - 1) (by omega)
   have hs : 0 < (oddSplit (n - 1)).1 := by

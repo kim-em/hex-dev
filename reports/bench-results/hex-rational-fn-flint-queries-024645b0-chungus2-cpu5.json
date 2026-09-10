@@ -1,0 +1,2267 @@
+{
+  "rows": [
+    {
+      "fixture": 1,
+      "operation": "equal",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.equal",
+      "parameter": 0,
+      "seconds": 2.918020381912356e-08,
+      "samples_seconds": [
+        2.9472297865140718e-08,
+        2.8943002689629795e-08,
+        2.918020381912356e-08
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 2,
+      "operation": "equal",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.different",
+      "parameter": 0,
+      "seconds": 2.5899397587636486e-08,
+      "samples_seconds": [
+        2.5853801162156742e-08,
+        2.7688598493114115e-08,
+        2.5899397587636486e-08
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          1
+        ]
+      ]
+    },
+    {
+      "fixture": 3,
+      "operation": "inv",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.inverse",
+      "parameter": 0,
+      "seconds": 3.2042999191617124e-08,
+      "samples_seconds": [
+        3.235849908378441e-08,
+        3.1839403527555986e-08,
+        3.2042999191617124e-08
+      ],
+      "sizes": {
+        "flint_lengths": [
+          2,
+          2
+        ],
+        "flint_bits": [
+          2,
+          1
+        ],
+        "hex_lengths": [
+          2,
+          2
+        ],
+        "hex_bits": [
+          2,
+          1
+        ]
+      },
+      "input_hex_lengths": [
+        [
+          2,
+          2
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          1,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          1,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 4,
+      "operation": "neg",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.negate",
+      "parameter": 0,
+      "seconds": 3.130209934170125e-08,
+      "samples_seconds": [
+        3.12414094878477e-08,
+        3.094910553045338e-08,
+        3.130209934170125e-08
+      ],
+      "sizes": {
+        "flint_lengths": [
+          2,
+          2
+        ],
+        "flint_bits": [
+          1,
+          2
+        ],
+        "hex_lengths": [
+          2,
+          2
+        ],
+        "hex_bits": [
+          1,
+          2
+        ]
+      },
+      "input_hex_lengths": [
+        [
+          2,
+          2
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          1,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          1,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 5,
+      "operation": "eval",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.evaluate",
+      "parameter": 0,
+      "seconds": 4.0850304685591256e-08,
+      "samples_seconds": [
+        4.106710184714757e-08,
+        4.0815104875946416e-08,
+        4.0850304685591256e-08
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          2,
+          2
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          1,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          1,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 6,
+      "operation": "eval",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.evaluatePole",
+      "parameter": 0,
+      "seconds": 3.2560004365222994e-08,
+      "samples_seconds": [
+        3.254899875173578e-08,
+        3.263030102971243e-08,
+        3.2560004365222994e-08
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          1,
+          2
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          1,
+          1
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          1,
+          1
+        ]
+      ]
+    },
+    {
+      "fixture": 7,
+      "operation": "equal",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.equal",
+      "parameter": 128,
+      "seconds": 4.10297088092193e-07,
+      "samples_seconds": [
+        4.032306902445271e-07,
+        4.0136789557436715e-07,
+        4.10297088092193e-07
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          129,
+          129
+        ],
+        [
+          129,
+          129
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 8,
+      "operation": "equal",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.different",
+      "parameter": 128,
+      "seconds": 2.6187002004007808e-08,
+      "samples_seconds": [
+        2.5944002300093415e-08,
+        2.5984395142586436e-08,
+        2.6187002004007808e-08
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          129,
+          129
+        ],
+        [
+          129,
+          1
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          1
+        ]
+      ]
+    },
+    {
+      "fixture": 9,
+      "operation": "inv",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.inverse",
+      "parameter": 128,
+      "seconds": 3.4160298437200254e-07,
+      "samples_seconds": [
+        3.3830760439741426e-07,
+        3.4284911016584373e-07,
+        3.4160298437200254e-07
+      ],
+      "sizes": {
+        "flint_lengths": [
+          129,
+          129
+        ],
+        "flint_bits": [
+          2,
+          2
+        ],
+        "hex_lengths": [
+          129,
+          129
+        ],
+        "hex_bits": [
+          2,
+          2
+        ]
+      },
+      "input_hex_lengths": [
+        [
+          129,
+          129
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 10,
+      "operation": "neg",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.negate",
+      "parameter": 128,
+      "seconds": 3.4380140714347363e-07,
+      "samples_seconds": [
+        3.435792941672844e-07,
+        3.44097498600604e-07,
+        3.4380140714347363e-07
+      ],
+      "sizes": {
+        "flint_lengths": [
+          129,
+          129
+        ],
+        "flint_bits": [
+          2,
+          2
+        ],
+        "hex_lengths": [
+          129,
+          129
+        ],
+        "hex_bits": [
+          2,
+          2
+        ]
+      },
+      "input_hex_lengths": [
+        [
+          129,
+          129
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 11,
+      "operation": "eval",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.evaluate",
+      "parameter": 128,
+      "seconds": 1.0569863188720773e-06,
+      "samples_seconds": [
+        1.067918899389042e-06,
+        1.0564758089458337e-06,
+        1.0569863188720773e-06
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          129,
+          129
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 12,
+      "operation": "eval",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.evaluatePole",
+      "parameter": 128,
+      "seconds": 5.351732117560459e-07,
+      "samples_seconds": [
+        5.468282943184022e-07,
+        5.412414921011077e-07,
+        5.351732117560459e-07
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          1,
+          130
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          1,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          1,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 13,
+      "operation": "equal",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.equal",
+      "parameter": 256,
+      "seconds": 7.899854062998202e-07,
+      "samples_seconds": [
+        7.640339077624958e-07,
+        7.616283004608704e-07,
+        7.899854062998202e-07
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          257,
+          257
+        ],
+        [
+          257,
+          257
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 14,
+      "operation": "equal",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.different",
+      "parameter": 256,
+      "seconds": 2.7217709612159525e-08,
+      "samples_seconds": [
+        2.6213300589006394e-08,
+        2.609170369396452e-08,
+        2.7217709612159525e-08
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          257,
+          257
+        ],
+        [
+          257,
+          1
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          1
+        ]
+      ]
+    },
+    {
+      "fixture": 15,
+      "operation": "inv",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.inverse",
+      "parameter": 256,
+      "seconds": 6.574581941094948e-07,
+      "samples_seconds": [
+        6.727785990733537e-07,
+        6.473060981079471e-07,
+        6.574581941094948e-07
+      ],
+      "sizes": {
+        "flint_lengths": [
+          257,
+          257
+        ],
+        "flint_bits": [
+          2,
+          2
+        ],
+        "hex_lengths": [
+          257,
+          257
+        ],
+        "hex_bits": [
+          2,
+          2
+        ]
+      },
+      "input_hex_lengths": [
+        [
+          257,
+          257
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 16,
+      "operation": "neg",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.negate",
+      "parameter": 256,
+      "seconds": 6.61405008759175e-07,
+      "samples_seconds": [
+        6.591123979887925e-07,
+        6.916235144672101e-07,
+        6.61405008759175e-07
+      ],
+      "sizes": {
+        "flint_lengths": [
+          257,
+          257
+        ],
+        "flint_bits": [
+          2,
+          2
+        ],
+        "hex_lengths": [
+          257,
+          257
+        ],
+        "hex_bits": [
+          2,
+          2
+        ]
+      },
+      "input_hex_lengths": [
+        [
+          257,
+          257
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 17,
+      "operation": "eval",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.evaluate",
+      "parameter": 256,
+      "seconds": 2.1028940043834155e-06,
+      "samples_seconds": [
+        2.3107041151888553e-06,
+        2.114913999685086e-06,
+        2.1028940043834155e-06
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          257,
+          257
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 18,
+      "operation": "eval",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.evaluatePole",
+      "parameter": 256,
+      "seconds": 1.03089559415821e-06,
+      "samples_seconds": [
+        1.0402110970971989e-06,
+        1.0452419091961928e-06,
+        1.03089559415821e-06
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          1,
+          258
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          1,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          1,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 19,
+      "operation": "equal",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.equal",
+      "parameter": 512,
+      "seconds": 1.529901902358688e-06,
+      "samples_seconds": [
+        1.480054903186101e-06,
+        1.472841600298125e-06,
+        1.529901902358688e-06
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          513,
+          513
+        ],
+        [
+          513,
+          513
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 20,
+      "operation": "equal",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.different",
+      "parameter": 512,
+      "seconds": 2.6060198979394045e-08,
+      "samples_seconds": [
+        2.7201195916859434e-08,
+        2.6044294827443083e-08,
+        2.6060198979394045e-08
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          513,
+          513
+        ],
+        [
+          513,
+          1
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          1
+        ]
+      ]
+    },
+    {
+      "fixture": 21,
+      "operation": "inv",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.inverse",
+      "parameter": 512,
+      "seconds": 1.2498260022766771e-06,
+      "samples_seconds": [
+        1.2505893953857595e-06,
+        1.2801720022252995e-06,
+        1.2498260022766771e-06
+      ],
+      "sizes": {
+        "flint_lengths": [
+          513,
+          513
+        ],
+        "flint_bits": [
+          2,
+          2
+        ],
+        "hex_lengths": [
+          513,
+          513
+        ],
+        "hex_bits": [
+          2,
+          2
+        ]
+      },
+      "input_hex_lengths": [
+        [
+          513,
+          513
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 22,
+      "operation": "neg",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.negate",
+      "parameter": 512,
+      "seconds": 1.2487074971431867e-06,
+      "samples_seconds": [
+        1.2631249073820073e-06,
+        1.2521956028649583e-06,
+        1.2487074971431867e-06
+      ],
+      "sizes": {
+        "flint_lengths": [
+          513,
+          513
+        ],
+        "flint_bits": [
+          2,
+          2
+        ],
+        "hex_lengths": [
+          513,
+          513
+        ],
+        "hex_bits": [
+          2,
+          2
+        ]
+      },
+      "input_hex_lengths": [
+        [
+          513,
+          513
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 23,
+      "operation": "eval",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.evaluate",
+      "parameter": 512,
+      "seconds": 3.998771407168533e-06,
+      "samples_seconds": [
+        4.029050701501547e-06,
+        3.971848786204646e-06,
+        3.998771407168533e-06
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          513,
+          513
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 24,
+      "operation": "eval",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.evaluatePole",
+      "parameter": 512,
+      "seconds": 1.972951599600492e-06,
+      "samples_seconds": [
+        2.0228375820806834e-06,
+        1.9942880991948187e-06,
+        1.972951599600492e-06
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          1,
+          514
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          1,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          1,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 25,
+      "operation": "equal",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.equal",
+      "parameter": 1024,
+      "seconds": 2.9174199080443943e-06,
+      "samples_seconds": [
+        2.9290606102222226e-06,
+        2.9350261929721456e-06,
+        2.9174199080443943e-06
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          1025,
+          1025
+        ],
+        [
+          1025,
+          1025
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 26,
+      "operation": "equal",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.different",
+      "parameter": 1024,
+      "seconds": 2.6328201420255937e-08,
+      "samples_seconds": [
+        2.6368700309831182e-08,
+        2.6214199169771746e-08,
+        2.6328201420255937e-08
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          1025,
+          1025
+        ],
+        [
+          1025,
+          1
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          1
+        ]
+      ]
+    },
+    {
+      "fixture": 27,
+      "operation": "inv",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.inverse",
+      "parameter": 1024,
+      "seconds": 2.491556801032857e-06,
+      "samples_seconds": [
+        2.4470849111821733e-06,
+        2.47047390203079e-06,
+        2.491556801032857e-06
+      ],
+      "sizes": {
+        "flint_lengths": [
+          1025,
+          1025
+        ],
+        "flint_bits": [
+          2,
+          2
+        ],
+        "hex_lengths": [
+          1025,
+          1025
+        ],
+        "hex_bits": [
+          2,
+          2
+        ]
+      },
+      "input_hex_lengths": [
+        [
+          1025,
+          1025
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 28,
+      "operation": "neg",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.negate",
+      "parameter": 1024,
+      "seconds": 2.449454315683397e-06,
+      "samples_seconds": [
+        2.464043799773208e-06,
+        2.4590683058704598e-06,
+        2.449454315683397e-06
+      ],
+      "sizes": {
+        "flint_lengths": [
+          1025,
+          1025
+        ],
+        "flint_bits": [
+          2,
+          2
+        ],
+        "hex_lengths": [
+          1025,
+          1025
+        ],
+        "hex_bits": [
+          2,
+          2
+        ]
+      },
+      "input_hex_lengths": [
+        [
+          1025,
+          1025
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 29,
+      "operation": "eval",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.evaluate",
+      "parameter": 1024,
+      "seconds": 7.978643196474877e-06,
+      "samples_seconds": [
+        7.987105297797825e-06,
+        7.92869159104157e-06,
+        7.978643196474877e-06
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          1025,
+          1025
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 30,
+      "operation": "eval",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.evaluatePole",
+      "parameter": 1024,
+      "seconds": 3.977301093800634e-06,
+      "samples_seconds": [
+        3.871176503889728e-06,
+        3.958425107884977e-06,
+        3.977301093800634e-06
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          1,
+          1026
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          1,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          1,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 31,
+      "operation": "equal",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.equal",
+      "parameter": 2048,
+      "seconds": 5.68140629438858e-06,
+      "samples_seconds": [
+        5.736332897322427e-06,
+        5.801000696010306e-06,
+        5.68140629438858e-06
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          2049,
+          2049
+        ],
+        [
+          2049,
+          2049
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 32,
+      "operation": "equal",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.different",
+      "parameter": 2048,
+      "seconds": 2.5644898596510757e-08,
+      "samples_seconds": [
+        2.6015302682935724e-08,
+        2.587979906820692e-08,
+        2.5644898596510757e-08
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          2049,
+          2049
+        ],
+        [
+          2049,
+          1
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          1
+        ]
+      ]
+    },
+    {
+      "fixture": 33,
+      "operation": "inv",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.inverse",
+      "parameter": 2048,
+      "seconds": 4.8041642137832245e-06,
+      "samples_seconds": [
+        5.07396570610581e-06,
+        4.812939294606622e-06,
+        4.8041642137832245e-06
+      ],
+      "sizes": {
+        "flint_lengths": [
+          2049,
+          2049
+        ],
+        "flint_bits": [
+          2,
+          2
+        ],
+        "hex_lengths": [
+          2049,
+          2049
+        ],
+        "hex_bits": [
+          2,
+          2
+        ]
+      },
+      "input_hex_lengths": [
+        [
+          2049,
+          2049
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 34,
+      "operation": "neg",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.negate",
+      "parameter": 2048,
+      "seconds": 5.3133727044041735e-06,
+      "samples_seconds": [
+        4.837350000889273e-06,
+        5.494958997587673e-06,
+        5.3133727044041735e-06
+      ],
+      "sizes": {
+        "flint_lengths": [
+          2049,
+          2049
+        ],
+        "flint_bits": [
+          2,
+          2
+        ],
+        "hex_lengths": [
+          2049,
+          2049
+        ],
+        "hex_bits": [
+          2,
+          2
+        ]
+      },
+      "input_hex_lengths": [
+        [
+          2049,
+          2049
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 35,
+      "operation": "eval",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.evaluate",
+      "parameter": 2048,
+      "seconds": 1.5676938002980024e-05,
+      "samples_seconds": [
+        1.6134466792391323e-05,
+        1.583722950053925e-05,
+        1.5676938002980024e-05
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          2049,
+          2049
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 36,
+      "operation": "eval",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.evaluatePole",
+      "parameter": 2048,
+      "seconds": 7.734116100982646e-06,
+      "samples_seconds": [
+        7.729929397282831e-06,
+        7.674856998710312e-06,
+        7.734116100982646e-06
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          1,
+          2050
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          1,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          1,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 37,
+      "operation": "equal",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.equal",
+      "parameter": 4096,
+      "seconds": 1.1277103807515232e-05,
+      "samples_seconds": [
+        1.1604954099675524e-05,
+        1.1279564795222542e-05,
+        1.1277103807515232e-05
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          4097,
+          4097
+        ],
+        [
+          4097,
+          4097
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 38,
+      "operation": "equal",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.different",
+      "parameter": 4096,
+      "seconds": 2.5421501595701557e-08,
+      "samples_seconds": [
+        2.548969569033943e-08,
+        2.54552991464152e-08,
+        2.5421501595701557e-08
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          4097,
+          4097
+        ],
+        [
+          4097,
+          1
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          1
+        ]
+      ]
+    },
+    {
+      "fixture": 39,
+      "operation": "inv",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.inverse",
+      "parameter": 4096,
+      "seconds": 9.438151495851344e-06,
+      "samples_seconds": [
+        9.464082103841064e-06,
+        9.441884804073198e-06,
+        9.438151495851344e-06
+      ],
+      "sizes": {
+        "flint_lengths": [
+          4097,
+          4097
+        ],
+        "flint_bits": [
+          2,
+          2
+        ],
+        "hex_lengths": [
+          4097,
+          4097
+        ],
+        "hex_bits": [
+          2,
+          2
+        ]
+      },
+      "input_hex_lengths": [
+        [
+          4097,
+          4097
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 40,
+      "operation": "neg",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.negate",
+      "parameter": 4096,
+      "seconds": 9.757176291714132e-06,
+      "samples_seconds": [
+        9.815504009384312e-06,
+        9.6383643010995e-06,
+        9.757176291714132e-06
+      ],
+      "sizes": {
+        "flint_lengths": [
+          4097,
+          4097
+        ],
+        "flint_bits": [
+          2,
+          2
+        ],
+        "hex_lengths": [
+          4097,
+          4097
+        ],
+        "hex_bits": [
+          2,
+          2
+        ]
+      },
+      "input_hex_lengths": [
+        [
+          4097,
+          4097
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 41,
+      "operation": "eval",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.evaluate",
+      "parameter": 4096,
+      "seconds": 3.2815615599065494e-05,
+      "samples_seconds": [
+        3.1950878801762884e-05,
+        3.1731565493282685e-05,
+        3.2815615599065494e-05
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          4097,
+          4097
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 42,
+      "operation": "eval",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.evaluatePole",
+      "parameter": 4096,
+      "seconds": 1.6813945898502425e-05,
+      "samples_seconds": [
+        1.570544501173572e-05,
+        1.5375757681795222e-05,
+        1.6813945898502425e-05
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          1,
+          4098
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          1,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          1,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 43,
+      "operation": "equal",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.equal",
+      "parameter": 8192,
+      "seconds": 2.253659519028588e-05,
+      "samples_seconds": [
+        2.297744190618687e-05,
+        2.2933887902217976e-05,
+        2.253659519028588e-05
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          8193,
+          8193
+        ],
+        [
+          8193,
+          8193
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 44,
+      "operation": "equal",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.different",
+      "parameter": 8192,
+      "seconds": 2.565860213508131e-08,
+      "samples_seconds": [
+        2.5707707027322613e-08,
+        2.5334702695545276e-08,
+        2.565860213508131e-08
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          8193,
+          8193
+        ],
+        [
+          8193,
+          1
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          1
+        ]
+      ]
+    },
+    {
+      "fixture": 45,
+      "operation": "inv",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.inverse",
+      "parameter": 8192,
+      "seconds": 1.885919570158876e-05,
+      "samples_seconds": [
+        1.8753986805313615e-05,
+        1.8643922195587947e-05,
+        1.885919570158876e-05
+      ],
+      "sizes": {
+        "flint_lengths": [
+          8193,
+          8193
+        ],
+        "flint_bits": [
+          2,
+          2
+        ],
+        "hex_lengths": [
+          8193,
+          8193
+        ],
+        "hex_bits": [
+          2,
+          2
+        ]
+      },
+      "input_hex_lengths": [
+        [
+          8193,
+          8193
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 46,
+      "operation": "neg",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.negate",
+      "parameter": 8192,
+      "seconds": 1.9014339079149068e-05,
+      "samples_seconds": [
+        1.897732579927833e-05,
+        1.936167699404905e-05,
+        1.9014339079149068e-05
+      ],
+      "sizes": {
+        "flint_lengths": [
+          8193,
+          8193
+        ],
+        "flint_bits": [
+          2,
+          2
+        ],
+        "hex_lengths": [
+          8193,
+          8193
+        ],
+        "hex_bits": [
+          2,
+          2
+        ]
+      },
+      "input_hex_lengths": [
+        [
+          8193,
+          8193
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 47,
+      "operation": "eval",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.evaluate",
+      "parameter": 8192,
+      "seconds": 6.320964300430205e-05,
+      "samples_seconds": [
+        6.298395840294688e-05,
+        6.222347179282223e-05,
+        6.320964300430205e-05
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          8193,
+          8193
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 48,
+      "operation": "eval",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.evaluatePole",
+      "parameter": 8192,
+      "seconds": 3.0787717308339776e-05,
+      "samples_seconds": [
+        3.079070900512306e-05,
+        3.078643120243214e-05,
+        3.0787717308339776e-05
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          1,
+          8194
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          1,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          1,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 49,
+      "operation": "equal",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.equal",
+      "parameter": 16384,
+      "seconds": 4.745525760918099e-05,
+      "samples_seconds": [
+        4.506125359821453e-05,
+        4.61336704034693e-05,
+        4.745525760918099e-05
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          16385,
+          16385
+        ],
+        [
+          16385,
+          16385
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 50,
+      "operation": "equal",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.different",
+      "parameter": 16384,
+      "seconds": 2.534529921831563e-08,
+      "samples_seconds": [
+        2.5333994017273654e-08,
+        2.5328992160211784e-08,
+        2.534529921831563e-08
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          16385,
+          16385
+        ],
+        [
+          16385,
+          1
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          1
+        ]
+      ]
+    },
+    {
+      "fixture": 51,
+      "operation": "inv",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.inverse",
+      "parameter": 16384,
+      "seconds": 3.827884419697512e-05,
+      "samples_seconds": [
+        3.728219170243392e-05,
+        3.855139770075766e-05,
+        3.827884419697512e-05
+      ],
+      "sizes": {
+        "flint_lengths": [
+          16385,
+          16385
+        ],
+        "flint_bits": [
+          2,
+          2
+        ],
+        "hex_lengths": [
+          16385,
+          16385
+        ],
+        "hex_bits": [
+          2,
+          2
+        ]
+      },
+      "input_hex_lengths": [
+        [
+          16385,
+          16385
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 52,
+      "operation": "neg",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.negate",
+      "parameter": 16384,
+      "seconds": 3.88180048110371e-05,
+      "samples_seconds": [
+        3.794718849931087e-05,
+        3.759008259767142e-05,
+        3.88180048110371e-05
+      ],
+      "sizes": {
+        "flint_lengths": [
+          16385,
+          16385
+        ],
+        "flint_bits": [
+          2,
+          2
+        ],
+        "hex_lengths": [
+          16385,
+          16385
+        ],
+        "hex_bits": [
+          2,
+          2
+        ]
+      },
+      "input_hex_lengths": [
+        [
+          16385,
+          16385
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 53,
+      "operation": "eval",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.evaluate",
+      "parameter": 16384,
+      "seconds": 0.00012630186910228075,
+      "samples_seconds": [
+        0.00012566310620350124,
+        0.0001254195259863991,
+        0.00012630186910228075
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          16385,
+          16385
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          2,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "fixture": 54,
+      "operation": "eval",
+      "intermediate_hex_sizes": null,
+      "benchmark": "Hex.RationalFnScaling.evaluatePole",
+      "parameter": 16384,
+      "seconds": 6.199132359870419e-05,
+      "samples_seconds": [
+        6.266401300690631e-05,
+        6.189392110591143e-05,
+        6.199132359870419e-05
+      ],
+      "sizes": null,
+      "input_hex_lengths": [
+        [
+          1,
+          16386
+        ]
+      ],
+      "input_flint_bits": [
+        [
+          1,
+          2
+        ]
+      ],
+      "input_hex_bits": [
+        [
+          1,
+          2
+        ]
+      ]
+    }
+  ],
+  "checked_cases": 54,
+  "repeats": 10000,
+  "trials": 3,
+  "host": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "cpu_affinity": [
+    5
+  ],
+  "commit": "024645b02a46c0e8125f70c16f4dea0b59a4b9a2",
+  "driver_sha256": "b32c33a1f8ec9d0d064f12f4830cde656f7512ed616c53528fa144e04c2f62cd",
+  "fixtures_sha256": "c228638e42598c89df2e35597512638e22260b83260463a69d57f304b4494f8d",
+  "coordinator_sha256": "ea551184a3b879b50ab307bb8f2973292b65e276dc382811b58e9328d70ec972",
+  "driver_source_sha256": "c96ad08b6914a52e5f10d33763b570d0a8d71deac57701e86bb16d520d7bbfa7"
+}

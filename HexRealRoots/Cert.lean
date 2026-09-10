@@ -80,7 +80,7 @@ theorem certTail_sound :
     intro acc h hfuel
     obtain ⟨f, rfl⟩ : ∃ f, fuel = f + 1 := ⟨fuel - 1, by omega⟩
     simp only [certTail] at h
-    simp only [sturmChainAux, h, _root_.ite_true, List.append_nil]
+    simp only [sturmChainAux, h, ite_true, List.append_nil]
   | cons next rest ih =>
     intro acc h hfuel
     rw [List.length_cons] at hfuel
@@ -91,7 +91,7 @@ theorem certTail_sound :
     have hnz2 : ¬ ((spem prev cur).isZero = true) := by rw [hnz]; exact Bool.false_ne_true
     have hstep := ih f cur next (acc.push next) htail (by omega)
     simp only [sturmChainAux]
-    rw [_root_.ite_eq_right hnz2, ← hnext, hstep]
+    rw [ite_eq_right hnz2, ← hnext, hstep]
     simp [Array.toList_push]
 
 /-- A decidable executable certificate that `chain` is the Sturm chain of `p`,
@@ -157,7 +157,7 @@ theorem cert_imp_eq {p : ZPoly} {chain : Array ZPoly}
   have hne : p.size ≠ 0 := by omega
   have hdeg : p.degree? = some (p.size - 1) := by
     unfold DensePoly.degree?
-    rw [_root_.dite_eq_right hne]
+    rw [dite_eq_right hne]
   obtain ⟨m, hm2⟩ : ∃ m, p.size - 1 = m + 1 := ⟨p.size - 2, by omega⟩
   have hchain_eq : sturmChain p =
       sturmChainAux p.size (primitivePart p) (primitivePart (DensePoly.derivative p))
@@ -179,8 +179,8 @@ any interval is the sign-variation gap of the *literal* certified chain at the
 two endpoints — the shape the elaborator `decide`s per emitted root. -/
 theorem sturmCount_eq_of_cert {p : ZPoly} {chain : Array ZPoly}
     (h : SturmChainCert p chain) (I : DyadicInterval) :
-    sturmCount p I = (sturmVarAt chain I.lower : Int) - sturmVarAt chain I.upper := by
-  unfold sturmCount
+    ZPoly.sturmCount p I = (sturmVarAt chain I.lower : Int) - sturmVarAt chain I.upper := by
+  unfold ZPoly.sturmCount
   rw [← cert_imp_eq h]
 
 /-- **Root-count transport.** Under a valid certificate, the total root count of
@@ -188,8 +188,8 @@ theorem sturmCount_eq_of_cert {p : ZPoly} {chain : Array ZPoly}
 the elaborator `decide`s for the `complete` field. -/
 theorem rootCount_eq_of_cert {p : ZPoly} {chain : Array ZPoly}
     (h : SturmChainCert p chain) :
-    rootCount p = sturmVarNegInf chain - sturmVarPosInf chain := by
-  unfold rootCount
+    ZPoly.rootCount p = sturmVarNegInf chain - sturmVarPosInf chain := by
+  unfold ZPoly.rootCount
   rw [← cert_imp_eq h]
 
 end ZPoly
@@ -217,7 +217,7 @@ theorem adjacent_step {p : ZPoly} {arr : Array (RealRootIsolation p)}
     (arr[i]'(by omega)).interval.upper ≤ (arr[i + 1]'hi).interval.lower := by
   have hmem : i ∈ List.range (arr.size - 1) := List.mem_range.mpr (by omega)
   have hstep := (List.all_eq_true.mp h) i hmem
-  simp only [hi, _root_.dite_eq_left] at hstep
+  simp only [hi, dite_eq_left] at hstep
   exact of_decide_eq_true hstep
 
 /-- The transitivity walk: `orderedAdjacent` (adjacent pairs) upgrades to the

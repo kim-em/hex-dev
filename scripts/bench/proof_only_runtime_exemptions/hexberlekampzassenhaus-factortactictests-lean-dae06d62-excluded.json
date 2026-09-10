@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekampZassenhaus/FactorTacticTests.lean",
+ "baseline_blob": "dae06d629062310f7f0d471b95c95b0341b019dd",
+ "current_blob": null,
+ "reason": "Leaves `HexBerlekampZassenhaus/FactorTacticTests.lean` out of the relevant set rather than deleting it: the file is still committed, but no measured artifact imports it. The factorization curves come from the `bench/HexBench/FactorService.lean` binary, and this module is outside that binary's import closure, so its tactic regressions cannot reach the measured code. Recorded once, when scripts/bench/sweep_freshness.py stopped counting unimported test modules; scripts/bench/test_sweep_freshness.py checks the reachability claim against the real import graph."
+}

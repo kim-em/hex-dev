@@ -72,7 +72,7 @@ example that exercises the advertised user story end-to-end.
   integer polynomial. Results carry checked coverage, uniqueness,
   disjointness, count, and precision guarantees.
 - **Integration example:** `Examples/Release5.lean` — use the none-free
-  `HexRootsMathlib.isolate!` wrapper for complex roots and the
+  `HexRootsMathlib.isolateComplexRoots` wrapper for complex roots and the
   `isolate_roots` elaborator for repeated real roots.
 
 ## Release readiness predicate
@@ -174,37 +174,148 @@ copy:
 - `conformance/HexX/{Conformance,EmitFixtures}.lean` — conformance drivers.
 - `conformance-fixtures/HexX/*.jsonl`, `scripts/oracle/<lib>_*.py`.
 
-In this monorepo, all bench and conformance drivers build in the shared root
-Lake graph. Published mirrors use the corresponding root and sidecar skeletons
-documented in `scripts/release/BOOTSTRAP.md`; the sync manages source and
-rewrites every lockfile but deliberately leaves those Lake skeletons intact.
-The mirrors' CI workflows are managed centrally in
+The first two lines are the product; a mirror receives them and nothing else,
+plus the library's README. The rest are development instruments: they build in
+this monorepo's shared root Lake graph, run in this monorepo's CI, and are
+never published. A mirror is therefore a single root Lake project, whose
+skeleton `scripts/release/BOOTSTRAP.md` documents; the sync manages source and
+rewrites the lockfile but deliberately leaves that skeleton intact. The
+mirrors' CI workflows are managed centrally in
 `scripts/release/released-ci.yml` and published by the same guarded sync.
+
+"Nothing else" is computed, not listed. `allowed_paths` in `sync_released.py`
+derives what each mirror may contain from its manifest entry — the managed
+paths, the workflows `released-ci.yml` declares for it, and the skeleton the
+sync does not author — and `prune_unmanaged` deletes the rest of the clone
+before anything is copied in, so a library admitted to the manifest inherits
+the policy without a cleanup list of its own. Nothing else under `.github/`
+survives, so a mirror cannot accumulate a workflow beside its build-only
+one, and a mirror carries neither a `reports/` tree nor `.claude/` notes beyond
+the figures its entry names. The `pins_only` aggregate is exempt, since its
+umbrella module, lakefile and documentation tree live only in the released
+repository. `keep_paths` is the
+escape hatch for a mirror-local file outside both sets; one entry uses it, for
+`hex-test-kit`'s fixed `HexTestKit.lean` umbrella. Because it can only
+preserve, a forgotten entry appears as a deletion in the dry run instead of as
+an over-published mirror, which is the failure mode a per-entry deletion list
+had backwards.
 
 ### The publish mechanism
 
 Five pieces, under `scripts/release/` and `.github/workflows/`:
 
-- `released.yml` — a per-repo manifest: which paths to copy, which
-  oracles to ship, and which upstream repos to pin, in dependency order.
-- `released-ci.yml` — the complete per-repository mirror workflows. Their
-  repository-specific build, conformance, oracle, and bench commands remain
-  explicit while cache setup and policy are uniform. The explicit cache covers
-  each root/sidecar build plus published Hex dependency builds, while excluding
-  the separately fetched Mathlib cache.
-- `sync_released.py` — the driver. For each repo it clones `main`,
-  overwrites the managed paths from this tree, rewrites the cross-repo
-  Lake revisions, and commits to `main`. `--dry-run` prints the planned
-  changes without pushing; run it first.
+- `released.yml` — a per-repo manifest: which paths to copy, which mirror-local
+  paths to keep, and which upstream repos to pin, in dependency order.
+- `released-ci.yml` — the complete per-repository mirror workflows. Each entry
+  under `workflows:` is one
+  ubuntu job that builds the published library and its regression target;
+  repository-specific build commands remain explicit while cache setup and
+  policy are uniform. The explicit cache covers the library build plus
+  published Hex dependency builds, while excluding the separately fetched
+  Mathlib cache.
+- `sync_released.py` — the driver. For each repo it clones `main`, deletes
+  everything outside the entry's allowance, overwrites the managed paths from
+  this tree, rewrites the cross-repo Lake revisions, and commits to `main`.
+  `--dry-run` prints the planned changes, one line per deletion, without
+  pushing; run it first.
 - `synced.json` — the baseline seed (see below).
 - `sync-released.yml` — a manual workflow (`workflow_dispatch`, dry by
   default). One dispatch drives the whole publish.
 
+Each mirror's own CI runs on the sync's push, so a mirror whose published tree
+does not build reports it directly, on the commit that caused it.
+
 Rewriting the cross-repo revisions touches **every** lakefile and
-`lake-manifest.json` in a repo — the root and the `bench/` and
-`conformance/` sub-projects — updating both `rev` and `inputRev`. Lake
+`lake-manifest.json` in a repo, updating both `rev` and `inputRev`. Lake
 trusts the manifest, so a stale lockfile would otherwise rebuild against
-the old revision.
+the old revision. A published dependency that the mirror's lockfile has
+never seen (a library split out upstream, or a companion that gained a
+requirement) is appended as a new lockfile entry at its synced revision,
+since Lake otherwise refuses to build with "dependency X of Y not in
+manifest". A published library that the sources import directly but the
+mirror's Lake file never required is added as a direct `require` at its
+synced revision, since otherwise the mirror builds only while some other
+dependency happens to pull that library in (hex-bareiss lost `HexArith`
+this way when it was split out). The sync also refuses, before pushing
+anything, to publish a library whose sources import `Batteries` or
+`Mathlib` when the mirror's Lake file requires no package providing them:
+inside the monorepo those imports always resolve, in a mirror they resolve
+only through its own `require`s.
+
+How a library is *built* is decided by this monorepo's `lakefile.lean` and
+carried across the same way. The sync reads the `lean_lib <lib>` block here and
+writes `precompileModules` into the mirror's own `lean_lib` when the mirror has
+lost it: without it Lake never builds the module dynlib that carries the
+library's `@[extern]` symbols, so the mirror compiles while any downstream
+package that evaluates the library during elaboration fails to find the native
+implementation. `extraDepTargets` and `moreLinkArgs` are validated rather than
+written, since they name `extern_lib` targets defined only in the mirror's own
+skeleton and, in `HexLLL`'s case, take the form of a platform conditional that
+no `lakefile.toml` can express; a mirror missing one stops the publication.
+Deriving all of this from the lakefile rather than restating it in
+`released.yml` is deliberate: a hand-maintained copy of a build decision is one
+that can disagree with the build.
+
+### The Lake cache
+
+hex-dev publishes its own compiled oleans to a Cloudflare R2 bucket from
+`.github/workflows/ci.yml`, and a consumer can fetch them with `lake cache get`.
+The released mirrors briefly did the same. They no longer do, because measuring
+it showed the fetch cost more than the reuse saved.
+
+The bucket is `hex-cache`. Uploads are signed against R2's S3 API; downloads are
+plain unauthenticated GETs, because Lake's fetcher sends no credentials, so they
+go through the bucket's public host instead. Hence two endpoint pairs, and hence
+the bucket must stay publicly readable.
+
+Each mirror still carries the credentials, so re-enabling publishing is a change
+to `released-ci.yml` alone rather than a re-provisioning exercise:
+
+| name | kind | purpose |
+| --- | --- | --- |
+| `HEX_LAKE_CACHE_KEY` | secret | R2 token, `<ACCESS_KEY_ID>:<SECRET_ACCESS_KEY>` |
+| `HEX_LAKE_CACHE_ARTIFACT_ENDPOINT` | variable | signed S3 host, uploads |
+| `HEX_LAKE_CACHE_REVISION_ENDPOINT` | variable | signed S3 host, uploads |
+| `HEX_LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC` | variable | public host, downloads |
+| `HEX_LAKE_CACHE_REVISION_ENDPOINT_PUBLIC` | variable | public host, downloads |
+
+The names are Hex-specific because a bare `LAKE_CACHE_KEY` would collide with
+any other Lean project in the organization.
+`scripts/release/provision_cache_secrets.sh` sets all five on every repository in
+`released-ci.yml`, plus hex-dev; it is idempotent, and `--check` takes no token
+and reports what is unprovisioned. The token lives at
+`~/.config/hex/lake-cache-key`, mode 600. R2 shows a secret key once, so a lost
+file means minting a replacement: run the script with no token and it prints
+that procedure, including how to verify the new token first.
+
+#### Why the mirrors stopped publishing
+
+Publishing worked. All 56 mirrors uploaded, the objects were publicly readable,
+and a consumer fetched every map and all 1128 artifacts they referenced. The
+problem was on the consuming side, and it was quantitative rather than a
+failure. Against a downloads-only cache with every Hex build directory wiped:
+
+| package | modules recompiled | time |
+| --- | ---: | ---: |
+| HexMatrix | 0 | 2s |
+| HexModArith | 2 of 96 | 43s |
+| HexGF2 | 10 | 171s |
+| HexGraphIso | 64 of 91 | 367s |
+
+Restoration is real, but the modules that fail to restore are consistently the
+expensive ones, so the wall clock barely moves while the fetch adds two to three
+minutes. End to end in the blog's CI, measured twice with identical results: 41
+minutes with the cache against about 31 without.
+
+What distinguishes the modules that never restore is still unknown. It is not
+`native_decide` (one module in the whole graph uses it), not a Mathlib revision
+difference (identical), not the upstream pins, and not `precompileModules`. Nor
+is it a root-versus-dependency effect: a minimal two-package reproducer, one
+published as root and consumed as a dependency, restores perfectly, with and
+without `precompileModules`, so cross-workspace reuse is supported.
+
+Anyone picking this up again should start by identifying what those expensive
+modules have in common, not by re-checking the transport, which is sound.
 
 ### Publishing a new library: widen a token first
 
@@ -264,6 +375,62 @@ that grant still has to be configured on every publishing token. Nor does the
 probe know whether branch protection or a ruleset on a mirror's `main` would
 reject the push. Those failures still surface only at push time; the invariant
 the mirrors rely on is that `main` takes direct pushes from the release actor.
+
+### Token inventory
+
+The authoritative source for each token's selected repositories is the
+GitHub UI (https://github.com/settings/personal-access-tokens); this
+inventory is the durable record of that state, kept current by rule:
+whoever widens a token records the change here in the same working
+session. A fine-grained token selects at most 50 repositories.
+Snapshot verified against the live tokens on 2026-09-03 (routing
+measured by a branch-only debug step on the sync workflow counting
+`route_tokens`' output; selections confirmed from the UI) and updated
+from the UI on 2026-09-05 for the number-field batch.
+
+`hex-publishing` carries every repository in `released.yml` except the
+eight listed as released under `hex-publishing-2` below: 48 of 50. The
+number-field batch (`hex-number-field`, `hex-number-field-mathlib`,
+`hex-number-field-tower`, `hex-number-field-tower-mathlib`, `hex-rcf`)
+is on this token.
+
+`hex-publishing-2` carries 44 of 50:
+
+- released: `hex-primality`, `hex-primality-mathlib`,
+  `hex-sparse-poly`, `hex-sparse-poly-mathlib`, `hex-resultant`,
+  `hex-resultant-mathlib`, `hex-graph-iso`, `hex-graph-iso-mathlib`;
+- created for publication, not yet in `released.yml`: `hex-modular`,
+  `hex-modular-mathlib`, `hex-mv-gcd`, `hex-mv-gcd-mathlib`,
+  `hex-mv-hensel`, `hex-mv-hensel-mathlib`, `hex-mv-factor`,
+  `hex-mv-factor-mathlib`, `hex-poly-z-gcd`,
+  `hex-poly-z-gcd-mathlib`, `hex-cyclotomic`,
+  `hex-cyclotomic-mathlib`, `hex-finite-field`,
+  `hex-finite-field-mathlib`, `hex-hermite`, `hex-hermite-mathlib`,
+  `hex-int-factor`, `hex-int-factor-mathlib`,
+  `hex-invariant-factors`, `hex-invariant-factors-mathlib`,
+  `hex-min-poly`, `hex-min-poly-mathlib`, `hex-modular-matrix`,
+  `hex-modular-matrix-mathlib`, `hex-padics`, `hex-padics-mathlib`,
+  `hex-poly-smith`, `hex-poly-smith-mathlib`, `hex-smith`,
+  `hex-smith-mathlib`, `hex-summation`, `hex-summation-mathlib`,
+  `hex-truncated-series`, `hex-truncated-series-mathlib`,
+  `hex-char-poly`, `hex-char-poly-mathlib`.
+
+Both tokens have a pending organization-owner approval
+(https://github.com/organizations/leanprover/settings/personal-access-token-requests)
+for adding the Workflows read-and-write permission, which the sync needs
+to write each mirror's managed `.github/workflows/ci.yml`. Until it is
+approved, a real sync cannot push a workflow file to any mirror.
+
+`hex-publishing-2` additionally holds organization-level permissions;
+`hex-publishing` holds none.
+
+With `hex-publishing` at 48 and `hex-publishing-2` at 44, the next
+batch larger than two repositories needs a third token
+(`hex-publishing-3`, a new `RELEASED_SYNC_PAT_3` secret, and one line in
+`.github/workflows/sync-released.yml` and `sync_released.py`'s token
+list). The sync's per-repository routing makes the split invisible to
+everything else.
+
 
 ### Baseline and the uncoordinated-commit guard
 

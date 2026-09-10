@@ -1,0 +1,6 @@
+{
+ "path": "HexHensel/QuadraticMultifactor.lean",
+ "baseline_blob": "e2d09488e36f9edec2a45ac7abbe097797b03a9e",
+ "current_blob": "5ec80407d198d9283d30f7541f37ff884aaec5ee",
+ "reason": "Replaces `Hex.DensePoly.degree?.getD 0` with the new abbreviation `Hex.DensePoly.natDegree`, whose body is exactly that term and which `abbrev` marks `@[reducible, inline]`, and repairs the proofs that rewrote through the `Option`; the compiled code and every measured branch are unchanged."
+}

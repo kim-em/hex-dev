@@ -188,7 +188,7 @@ private def emitFactorRat : IO Unit := do
   let inputPoly : ZPoly := DensePoly.ofList [4, 0, -4, 0, 1]
   emitGenerators case []
   emitInput case inputPoly
-  match factor? rat (rationalPoly [4, 0, -4, 0, 1]) with
+  match factor? (rationalPoly [4, 0, -4, 0, 1]) with
   | some result => emitResult lib case "factorization" (factorValue [] result)
   | none => throw <| IO.userError (case ++ ": factor? failed")
 
@@ -197,7 +197,7 @@ private def emitFactorContent : IO Unit := do
   let inputPoly : ZPoly := DensePoly.ofList [-12, 0, 6]
   emitGenerators case []
   emitInput case inputPoly
-  match factor? rat (rationalPoly [-12, 0, 6]) with
+  match factor? (rationalPoly [-12, 0, 6]) with
   | some result => emitResult lib case "factorization" (factorValue [] result)
   | none => throw <| IO.userError (case ++ ": factor? failed")
 
@@ -209,7 +209,7 @@ private def emitFactorSqrtTwo : IO Unit := do
   | some base =>
       let input : Poly base.tower := DensePoly.ofCoeffs
         #[ofRat base.tower (-2), 0, 1]
-      match factor? base.tower input with
+      match factor? input with
       | some result =>
           emitResult lib case "factorization" (factorValue [2] result)
       | none => throw <| IO.userError (case ++ ": factor? failed")
@@ -224,7 +224,7 @@ private def emitFactorTwoLevel : IO Unit := do
   | some tower =>
       let T := tower.extension.tower
       let input : Poly T := DensePoly.ofCoeffs #[ofRat T (-3), 0, 1]
-      match factor? T input with
+      match factor? input with
       | some result =>
           emitResult lib case "factorization" (factorValue [2, 2] result)
       | none => throw <| IO.userError (case ++ ": factor? failed")
@@ -235,7 +235,7 @@ private def emitSplit (case : String) (coefficients : List Int) : IO Unit := do
   emitGenerators case []
   emitInput case inputPoly
   let input := rationalPoly (coefficients.map Rat.ofInt)
-  match split? rat input with
+  match split? input with
   | some result =>
       match splitValue result with
       | some value => emitResult lib case "split" value

@@ -115,7 +115,7 @@ of cardinality greater than `D` satisfy it. -/
 def EvaluationSeparatesUpTo {F : Type u} [Lean.Grind.Field F]
     [DecidableEq F] {k : Nat} (pts : Vector F k) (D : Nat) : Prop :=
   ∀ p q : DensePoly F,
-    p.degree?.getD 0 ≤ D → q.degree?.getD 0 ≤ D →
+    p.natDegree ≤ D → q.natDegree ≤ D →
       (∀ x ∈ pts.toList, DensePoly.evalImpl p x = DensePoly.evalImpl q x) →
         p = q
 
@@ -135,9 +135,9 @@ theorem mulEqCertAt_sound {F : Type u} [Lean.Grind.Field F]
     {U : Matrix (DensePoly F) n n} {A C : Matrix (DensePoly F) n m}
     (hsep : EvaluationSeparatesUpTo pts D)
     (hprodDegree : ∀ i : Fin n, ∀ j : Fin m,
-      (U * A)[(i, j)].degree?.getD 0 ≤ D)
+      (U * A)[(i, j)].natDegree ≤ D)
     (hresultDegree : ∀ i : Fin n, ∀ j : Fin m,
-      C[(i, j)].degree?.getD 0 ≤ D)
+      C[(i, j)].natDegree ≤ D)
     (h : mulEqCertAt pts U A C = true) :
     U * A = C := by
   apply Matrix.ext_getElem

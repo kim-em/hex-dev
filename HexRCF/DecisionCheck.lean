@@ -32,7 +32,7 @@ private def rawIsolations {p : ZPoly} (roots : Hex.RealRootIsolations p) :
 /-- Run executable isolation, validate the raw intervals against the carrier's
 literal replay, and refine touching intervals to strict separation. -/
 def buildIsolations? (carrier : CarrierCert) : Option IsolationCert :=
-  match Hex.isolate? carrier.carrier with
+  match Hex.ZPoly.isolateRealRoots? carrier.carrier with
   | none => none
   | some roots =>
       let raw := rawIsolations roots

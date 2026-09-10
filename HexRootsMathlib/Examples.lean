@@ -293,13 +293,13 @@ theorem pisot_roots :
 the three explicitly bounded roots above. -/
 theorem isolate_pisot :
     ∃ atoms : Array (DyadicRootIsolation pisot),
-      isolate pisot pisot_simple 32 .nk = some atoms ∧
+      ZPoly.isolateComplexRoots? pisot pisot_simple 32 .nk = some atoms ∧
       atoms.size = 3 ∧
       (atoms.toList.map HexRootsMathlib.DyadicRootIsolation.root).toFinset =
         {pisotRealRoot, pisotLowerRoot, pisotUpperRoot} ∧
       ∀ iso ∈ atoms.toList, 32 ≤ iso.square.prec := by
   obtain ⟨atoms, hrun, hcount, hroots, hprec⟩ :=
-    isolate_spec pisot pisot_simple pisot_ne_zero 32 .nk
+    isolateComplexRoots?_spec pisot pisot_simple pisot_ne_zero 32 .nk
   exact ⟨atoms, hrun, hcount.trans natDegree_pisot,
     hroots.trans pisot_roots, hprec⟩
 

@@ -1,0 +1,6 @@
+{
+ "path": "Hex/BenchOracle/Nauty.lean",
+ "baseline_blob": "9171078ec4ea01cf5d4c4892970b4915dfa9b02c",
+ "current_blob": "b3933da429eee62caf86122fa2b91646e3b65764",
+ "reason": "The nauty FFI bench comparator is an oracle, not part of the factorization service call graph: no factorization benchmark links it or calls it, and the fingerprint reaches it only because Hex/*.lean spans the whole tree. This edit splits the comparator's marshalling out of its timed region and widens its wire format; it cannot move any factorization curve. The same note in FACTOR_LIBRARIES already records that Hex/BenchOracle belongs to the oracles and that splitting it out is worth doing."
+}

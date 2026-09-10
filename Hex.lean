@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import Hex.Conformance.Emit
 import Hex.BenchOracle.Flint
 import Hex.BenchOracle.Pari
+import Hex.BenchOracle.Nauty
 
 /-! Top-level helpers shared by the per-library `Hex<X>` packages.
 
@@ -14,4 +15,6 @@ import Hex.BenchOracle.Pari
   oracle-backed conformance drivers.
 * `Hex.BenchOracle.Flint` — shared persistent-subprocess driver
   used by FLINT comparator benchmarks.
-* `Hex.BenchOracle.Pari` — matching driver for PARI comparator benchmarks. -/
+* `Hex.BenchOracle.Pari` — matching driver for PARI comparator benchmarks.
+* `Hex.BenchOracle.Nauty` — FFI binding to the vendored nauty 2.9.3 for
+  graph-canonicalization comparator benchmarks. -/

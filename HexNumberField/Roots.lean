@@ -21,20 +21,20 @@ then takes one integer norm resultant for each square-free component. Candidate
 roots of that norm are retained only when bounded ball evaluation at the
 selected embedding cannot refute zero.
 -/
-namespace Hex.QAdjoin.Roots
+namespace Hex.PolyQuot.Roots
 
 variable {p : ZPoly} {x : SimpleRoot p}
 
 /-- Monic normalization over a checked fixed field. -/
 @[expose]
 def monic [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) : DensePoly (QAdjoin p x) :=
+    (f : DensePoly (PolyQuot p x)) : DensePoly (PolyQuot p x) :=
   if f.isZero then 0 else DensePoly.scale f.leadingCoeff⁻¹ f
 
 /-- Formal derivative using the existing rational scalar action, avoiding any
 law-bearing cast instance on the computational fixed-field carrier. -/
 @[expose]
-def derivative (f : DensePoly (QAdjoin p x)) : DensePoly (QAdjoin p x) :=
+def derivative (f : DensePoly (PolyQuot p x)) : DensePoly (PolyQuot p x) :=
   DensePoly.ofCoeffs <| ((List.range (f.size - 1)).map fun i =>
     ((i + 1 : Nat) : Rat) • f.coeff (i + 1)).toArray
 
@@ -42,9 +42,9 @@ def derivative (f : DensePoly (QAdjoin p x)) : DensePoly (QAdjoin p x) :=
 square-free component and its positive multiplicity index. -/
 @[expose]
 def yunAux [ZPoly.CheckedIrreducible p]
-    (w repeated : DensePoly (QAdjoin p x)) (multiplicity fuel : Nat)
-    (out : Array (DensePoly (QAdjoin p x) × Nat)) :
-    Array (DensePoly (QAdjoin p x) × Nat) :=
+    (w repeated : DensePoly (PolyQuot p x)) (multiplicity fuel : Nat)
+    (out : Array (DensePoly (PolyQuot p x) × Nat)) :
+    Array (DensePoly (PolyQuot p x) × Nat) :=
   match fuel with
   | 0 => out
   | fuel + 1 =>
@@ -53,7 +53,7 @@ def yunAux [ZPoly.CheckedIrreducible p]
       else
         let shared := monic (DensePoly.gcd w repeated)
         let component := monic (w / shared)
-        let out := if 0 < component.degree?.getD 0 then
+        let out := if 0 < component.natDegree then
           out.push (component, multiplicity)
         else
           out
@@ -65,9 +65,9 @@ constant polynomials have no finite components; the public root driver handles
 their distinct root-set conventions. -/
 @[expose]
 def yun [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) :
-    Array (DensePoly (QAdjoin p x) × Nat) :=
-  if f.degree?.getD 0 = 0 then
+    (f : DensePoly (PolyQuot p x)) :
+    Array (DensePoly (PolyQuot p x) × Nat) :=
+  if f.natDegree = 0 then
     #[]
   else
     let normalized := monic f
@@ -78,7 +78,7 @@ def yun [ZPoly.CheckedIrreducible p]
 /-- Common positive denominator of every rational coordinate occurring among
 the coefficients of `f`. -/
 @[expose]
-def commonDen (f : DensePoly (QAdjoin p x)) : Nat :=
+def commonDen (f : DensePoly (PolyQuot p x)) : Nat :=
   f.toArray.foldl
     (fun den a => a.coeffs.toArray.foldl
       (fun den q => Nat.lcm den q.den) den)
@@ -93,9 +93,9 @@ def clearRat (den : Nat) (q : Rat) : Int :=
 with coefficients in `Int[t]`, after clearing all rational denominators at
 once. -/
 @[expose]
-def clearedOuter (f : DensePoly (QAdjoin p x)) : DensePoly ZPoly :=
+def clearedOuter (f : DensePoly (PolyQuot p x)) : DensePoly ZPoly :=
   let den := commonDen f
-  let generatorDegree := p.degree?.getD 0
+  let generatorDegree := p.natDegree
   DensePoly.ofCoeffs <| ((List.range generatorDegree).map fun j =>
     DensePoly.ofCoeffs <| ((List.range f.size).map fun i =>
       clearRat den ((f.coeff i).coeffs.coeff j)).toArray).toArray
@@ -103,7 +103,7 @@ def clearedOuter (f : DensePoly (QAdjoin p x)) : DensePoly ZPoly :=
 /-- Integer norm eliminant `Res_y(p(y), F(y,t))` of a fixed-field
 polynomial. -/
 @[expose]
-def normEliminant (f : DensePoly (QAdjoin p x)) : ZPoly :=
+def normEliminant (f : DensePoly (PolyQuot p x)) : ZPoly :=
   DensePoly.resultant p.liftOuter (clearedOuter f)
 
 /-- Constant trivariate lift of a candidate eliminant: regard `e(z)` as a
@@ -118,9 +118,9 @@ regarded as a polynomial in the candidate variable `z` whose coefficients are
 polynomials in the generator `y` over `Int[S]`. The evaluation variable `S`
 enters only the constant coordinate of the constant `z`-coefficient. -/
 @[expose]
-def evalShifted (f : DensePoly (QAdjoin p x)) : DensePoly (DensePoly ZPoly) :=
+def evalShifted (f : DensePoly (PolyQuot p x)) : DensePoly (DensePoly ZPoly) :=
   let den := commonDen f
-  let generatorDegree := p.degree?.getD 0
+  let generatorDegree := p.natDegree
   DensePoly.ofCoeffs <| ((List.range (Nat.max f.size 1)).map fun i =>
     DensePoly.ofCoeffs <| ((List.range generatorDegree).map fun j =>
       let c := clearRat den ((f.coeff i).coeffs.coeff j)
@@ -134,7 +134,7 @@ the candidate evaluations themselves rather than their denominator-cleared
 multiples. Zero-root removal and primitive normalization happen inside the
 bounded disambiguation search, per the SPEC. -/
 @[expose]
-def evalEliminant (f : DensePoly (QAdjoin p x)) (e : ZPoly) : ZPoly :=
+def evalEliminant (f : DensePoly (PolyQuot p x)) (e : ZPoly) : ZPoly :=
   ZPoly.dilate (Int.ofNat (commonDen f))
     (DensePoly.resultant p.liftOuter
       (DensePoly.resultant (candidateLift e) (evalShifted f)))
@@ -145,7 +145,7 @@ fallback; candidate refinement is checked because the bounded selector must
 observe the requested shrinking radius. -/
 @[expose]
 def evalBall? [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
+    (f : DensePoly (PolyQuot p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) (candidate : AlgebraicRoot)
     (prec : Nat) : Option DyadicComplexBall := do
   -- A square at precision `prec + 1` has circumscribed-disc radius below
@@ -166,15 +166,16 @@ def evalBall? [ZPoly.CheckedIrreducible p]
 the selected embedding. -/
 @[expose]
 def componentRoots? [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (multiplicity : Nat)
+    (f : DensePoly (PolyQuot p x)) (multiplicity : Nat)
     (hMultiplicity : 0 < multiplicity) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) : Option (Array RootCount) := do
   let eliminant := ZPoly.squareFreeCore (normEliminant f)
   if hprim : ZPoly.content eliminant = 1 then
     if hpos : 0 < eliminant.leadingCoeff then
-      if hdegree : 0 < eliminant.degree?.getD 0 then
+      if hdegree : 0 < eliminant.natDegree then
         if hsimple : HasOnlySimpleRoots eliminant then do
-          let isolations ← isolate eliminant hsimple (separationDepth eliminant : Int)
+          let isolations ← ZPoly.isolateComplexRoots? eliminant hsimple
+            (separationDepth eliminant : Int)
           let refined ← isolations.mapM DyadicRootIsolation.toRefined?
           let evaluationEliminant := evalEliminant f eliminant
           refined.foldlM
@@ -218,7 +219,7 @@ def sameValue? (a b : AlgebraicRoot) : Option Bool :=
     some ((hp ▸ a.rep).sameRoot b.rep)
   else
     let common := DensePoly.gcd (ZPoly.toRatPoly a.p) (ZPoly.toRatPoly b.p)
-    if common.degree?.getD 0 = 0 then
+    if common.natDegree = 0 then
       some false
     else do
       let a' ← a.exact?
@@ -273,9 +274,9 @@ def rootLe (a b : RootCount) : Bool :=
   else
     decide (a.root.rep.1.square.prec ≤ b.root.rep.1.square.prec)
 
-end Hex.QAdjoin.Roots
+end Hex.PolyQuot.Roots
 
-namespace Hex.QAdjoin
+namespace Hex.PolyQuot
 
 variable {p : ZPoly} {x : SimpleRoot p}
 
@@ -283,11 +284,11 @@ variable {p : ZPoly} {x : SimpleRoot p}
 certificate that did not appear within its prescribed finite bound. -/
 @[expose]
 def roots? [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
+    (f : DensePoly (PolyQuot p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) : Option RootSet :=
   if f.isZero then
     some .all
-  else if f.degree?.getD 0 = 0 then
+  else if f.natDegree = 0 then
     some (.finite #[])
   else do
     let roots ← (Roots.yun f).foldlM
@@ -304,12 +305,12 @@ def roots? [ZPoly.CheckedIrreducible p]
 the companion discharges `roots?_isSome`. -/
 @[expose]
 def roots [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
+    (f : DensePoly (PolyQuot p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) : RootSet :=
   (roots? f rep h).getD
-    (Hex.panicWith .all "QAdjoin.roots: certification failed")
+    (Hex.panicWith .all "PolyQuot.roots: certification failed")
 
-end Hex.QAdjoin
+end Hex.PolyQuot
 
 namespace Hex.AlgebraicPoly.Common
 
@@ -318,7 +319,7 @@ structure Presentation where
   /-- The canonical primitive element of the common field. -/
   generator : AlgebraicNumber
   /-- The input coefficients rewritten in the generator's fixed field. -/
-  coefficients : Array (QAdjoin generator.p generator.x)
+  coefficients : Array (PolyQuot generator.p generator.x)
 
 /-- Deterministic signed shift order `0, 1, -1, 2, -2, ...`. -/
 @[expose]
@@ -369,7 +370,7 @@ def shift? (theta alpha : AlgebraicNumber) (c : Int) : Option AlgebraicNumber :=
 /-- Degree of a canonical algebraic number. -/
 @[expose]
 def degree (a : AlgebraicNumber) : Nat :=
-  a.p.degree?.getD 0
+  a.p.natDegree
 
 /-- A primitive-search candidate together with the signed shift that produced
 it. -/
@@ -448,7 +449,7 @@ canonical algebraic equality. -/
 @[expose]
 def coordinates? (gamma a : AlgebraicNumber)
     (powers : Array AlgebraicNumber) :
-    Option (QAdjoin gamma.p gamma.x) :=
+    Option (PolyQuot gamma.p gamma.x) :=
   if a.isZero then
     some 0
   else do
@@ -461,9 +462,9 @@ def coordinates? (gamma a : AlgebraicNumber)
     let products ← indices.mapM fun k => mul? a powers[k]!
     let rhs ← products.mapM (trace? d)
     let coeffs ← Matrix.spanCoeffs gram rhs
-    let coordinate := QAdjoin.reduce gamma.p gamma.x
+    let coordinate := PolyQuot.reduce gamma.p gamma.x
       (DensePoly.ofCoeffs coeffs.toArray)
-    let recovered ← @QAdjoin.toAlgebraicNumber? gamma.p gamma.x gamma.checked
+    let recovered ← @PolyQuot.toAlgebraicNumber? gamma.p gamma.x gamma.checked
       coordinate gamma.rep gamma.rep_mk
     if recovered == a then some coordinate else none
 
@@ -547,7 +548,7 @@ def roots? (f : AlgebraicPoly) : Option RootSet :=
     let common ← Common.presentation? f.coeffs
     letI : ZPoly.CheckedIrreducible common.generator.p := common.generator.checked
     let polynomial := DensePoly.ofCoeffs common.coefficients
-    QAdjoin.roots? polynomial common.generator.rep common.generator.rep_mk
+    PolyQuot.roots? polynomial common.generator.rep common.generator.rep_mk
 
 /-- Total roots of a polynomial with canonical algebraic coefficients. -/
 @[expose]
@@ -572,18 +573,18 @@ private def rootsSqrtTwoRep : RefinedIsolation rootsSqrtTwoPoly :=
 private def rootsSqrtTwoRoot : SimpleRoot rootsSqrtTwoPoly :=
   SimpleRoot.mk rootsSqrtTwoRep
 
-private def rootsSqrtTwo : QAdjoin rootsSqrtTwoPoly rootsSqrtTwoRoot :=
-  QAdjoin.reduce rootsSqrtTwoPoly rootsSqrtTwoRoot
+private def rootsSqrtTwo : PolyQuot rootsSqrtTwoPoly rootsSqrtTwoRoot :=
+  PolyQuot.reduce rootsSqrtTwoPoly rootsSqrtTwoRoot
     (DensePoly.ofList ([0, 1] : List Rat))
 
-private def rootsLinear : DensePoly (QAdjoin rootsSqrtTwoPoly rootsSqrtTwoRoot) :=
+private def rootsLinear : DensePoly (PolyQuot rootsSqrtTwoPoly rootsSqrtTwoRoot) :=
   DensePoly.ofList [-rootsSqrtTwo, 1]
 
-private def rootsHalfSqrtTwo : QAdjoin rootsSqrtTwoPoly rootsSqrtTwoRoot :=
-  QAdjoin.reduce rootsSqrtTwoPoly rootsSqrtTwoRoot
+private def rootsHalfSqrtTwo : PolyQuot rootsSqrtTwoPoly rootsSqrtTwoRoot :=
+  PolyQuot.reduce rootsSqrtTwoPoly rootsSqrtTwoRoot
     (DensePoly.ofList ([0, (1 : Rat) / 2] : List Rat))
 
-private def rootsHalfLinear : DensePoly (QAdjoin rootsSqrtTwoPoly rootsSqrtTwoRoot) :=
+private def rootsHalfLinear : DensePoly (PolyQuot rootsSqrtTwoPoly rootsSqrtTwoRoot) :=
   DensePoly.ofList [-rootsHalfSqrtTwo, 1]
 
 private def rootsSqrtTwoExact? : Option AlgebraicNumber :=
@@ -600,31 +601,31 @@ private def algebraicLinearRoots? : Option RootSet := do
   let one ← AlgebraicPoly.Common.rational? 1
   AlgebraicPoly.roots? (AlgebraicPoly.ofArray #[negSqrtTwo, one])
 
-#guard QAdjoin.Roots.normEliminant rootsLinear = rootsSqrtTwoPoly
+#guard PolyQuot.Roots.normEliminant rootsLinear = rootsSqrtTwoPoly
 
 -- The double-resultant evaluation eliminant for `X - √2` over `ℚ(√2)` with
 -- candidate eliminant `X² - 2`: its roots are the four differences
 -- `z - y` over conjugate pairs, i.e. `S²(S² - 8)`.
 #guard
-    QAdjoin.Roots.evalEliminant rootsLinear
-      (ZPoly.squareFreeCore (QAdjoin.Roots.normEliminant rootsLinear)) =
+    PolyQuot.Roots.evalEliminant rootsLinear
+      (ZPoly.squareFreeCore (PolyQuot.Roots.normEliminant rootsLinear)) =
     DensePoly.ofList [0, 0, -8, 0, 1]
 
 -- A non-unit common denominator exercises the dilation direction: before
 -- dilation the nonzero evaluation roots are `±2√2`; substituting `2S`
 -- moves them to the actual values `±√2`.
-#guard QAdjoin.Roots.commonDen rootsHalfLinear = 2
+#guard PolyQuot.Roots.commonDen rootsHalfLinear = 2
 
 #guard
-    QAdjoin.Roots.evalEliminant rootsHalfLinear
-      (ZPoly.squareFreeCore (QAdjoin.Roots.normEliminant rootsHalfLinear)) =
+    PolyQuot.Roots.evalEliminant rootsHalfLinear
+      (ZPoly.squareFreeCore (PolyQuot.Roots.normEliminant rootsHalfLinear)) =
     DensePoly.ofList [0, 0, -128, 0, 64]
 
 #guard
     if hirred : ZPoly.isIrreducible rootsSqrtTwoPoly = true then
       letI : ZPoly.CheckedIrreducible rootsSqrtTwoPoly :=
         ⟨hirred, by decide⟩
-      let factors := QAdjoin.Roots.yun (rootsLinear * rootsLinear)
+      let factors := PolyQuot.Roots.yun (rootsLinear * rootsLinear)
       factors.size = 1 &&
         (factors[0]?).map (fun factor => factor.2) = some 2
     else
@@ -634,7 +635,7 @@ private def algebraicLinearRoots? : Option RootSet := do
     if hirred : ZPoly.isIrreducible rootsSqrtTwoPoly = true then
       letI : ZPoly.CheckedIrreducible rootsSqrtTwoPoly :=
         ⟨hirred, by decide⟩
-      match QAdjoin.roots? (rootsLinear * rootsLinear) rootsSqrtTwoRep rfl with
+      match PolyQuot.roots? (rootsLinear * rootsLinear) rootsSqrtTwoRep rfl with
       | some (.finite roots) =>
           roots.size = 1 &&
             (roots[0]?).map (fun root => root.multiplicity) = some 2 &&
@@ -648,10 +649,10 @@ private def algebraicLinearRoots? : Option RootSet := do
       letI : ZPoly.CheckedIrreducible rootsSqrtTwoPoly :=
         ⟨hirred, by decide⟩
       match
-          QAdjoin.roots?
-            (0 : DensePoly (QAdjoin rootsSqrtTwoPoly rootsSqrtTwoRoot))
+          PolyQuot.roots?
+            (0 : DensePoly (PolyQuot rootsSqrtTwoPoly rootsSqrtTwoRoot))
             rootsSqrtTwoRep rfl,
-          QAdjoin.roots? 1 rootsSqrtTwoRep rfl with
+          PolyQuot.roots? 1 rootsSqrtTwoRep rfl with
       | some .all, some (.finite roots) => roots.isEmpty
       | _, _ => false
     else

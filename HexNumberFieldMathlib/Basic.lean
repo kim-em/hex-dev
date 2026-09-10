@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexNumberField
+public import HexNumberFieldMathlib.Orientation
 public import HexResultantMathlib
 public import HexBerlekampZassenhausMathlib
 public import HexRootsMathlib
@@ -77,7 +78,7 @@ rational minimal polynomial. -/
 theorem p_eq_minpoly (a : AlgebraicNumber) :
     (a.p.leadingCoeff : Rat)⁻¹ • HexPolyZMathlib.toPolyℚ a.p =
       minpoly Rat a.toComplex := by
-  letI : ZPoly.CheckedIrreducible a.p := a.checked
+  let : ZPoly.CheckedIrreducible a.p := a.checked
   have hroot :
       Polynomial.aeval a.toComplex (HexPolyZMathlib.toPolyℚ a.p) = 0 := by
     rw [Polynomial.aeval_def, Polynomial.eval₂_eq_eval_map]
@@ -106,7 +107,7 @@ theorem p_eq_minpoly (a : AlgebraicNumber) :
 
 end AlgebraicNumber
 
-namespace QAdjoin
+namespace PolyQuot
 
 variable {p : ZPoly} {x : SimpleRoot p}
 
@@ -114,7 +115,7 @@ variable {p : ZPoly} {x : SimpleRoot p}
 The representative and quotient equality are explicit inputs so this semantic
 map does not depend on an irreducibility proof. -/
 @[expose]
-noncomputable def toComplex (a : QAdjoin p x)
+noncomputable def toComplex (a : PolyQuot p x)
     (rep : RefinedIsolation p) (_h : SimpleRoot.mk rep = x) : ℂ :=
   (HexPolyMathlib.toPolynomial a.coeffs).eval₂ (algebraMap Rat ℂ)
     rep.root
@@ -152,7 +153,7 @@ theorem eval_reduceCoeffs (f : DensePoly Rat)
     Polynomial.eval₂_mul, hp, mul_zero, zero_add] using hdiv
 
 /-- Fixed-presentation addition agrees with complex addition. -/
-theorem map_add (a b : QAdjoin p x) (rep : RefinedIsolation p)
+theorem map_add (a b : PolyQuot p x) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) :
     toComplex (a + b) rep h = toComplex a rep h + toComplex b rep h := by
   change
@@ -167,7 +168,7 @@ theorem map_add (a b : QAdjoin p x) (rep : RefinedIsolation p)
     Polynomial.eval₂_add]
 
 /-- Fixed-presentation multiplication agrees with complex multiplication. -/
-theorem map_mul (a b : QAdjoin p x) (rep : RefinedIsolation p)
+theorem map_mul (a b : PolyQuot p x) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) :
     toComplex (a * b) rep h = toComplex a rep h * toComplex b rep h := by
   change
@@ -181,7 +182,7 @@ theorem map_mul (a b : QAdjoin p x) (rep : RefinedIsolation p)
   rw [eval_reduceCoeffs, HexPolyMathlib.toPolynomial_mul,
     Polynomial.eval₂_mul]
 
-end QAdjoin
+end PolyQuot
 
 private def RefinedIsolation.castPoly {p q : ZPoly} (h : p = q)
     (r : RefinedIsolation q) : RefinedIsolation p :=
@@ -267,7 +268,7 @@ private theorem RefinedIsolation.eq_of_canonical {p : ZPoly}
         · simp at htoJ
       have hij : i = j := by
         by_contra hij
-        apply HexRootsMathlib.isolate_roots_ne p squarefree₁
+        apply HexRootsMathlib.isolateComplexRoots?_roots_ne p squarefree₁
           (separationDepth p : Int) .nkThenPellet hisolate hi hj hij
         rw [← hrawI, ← hrawJ]
         change HexRootsMathlib.DyadicRootIsolation.root r.1 =
@@ -312,6 +313,21 @@ private theorem AlgebraicNumber.eq_polynomial {a b : AlgebraicNumber}
     HexBerlekampZassenhausMathlib.zpoly_eq_of_toPolynomial_associated_of_primitive_pos_leading
         a.prim b.prim a.pos_lc b.pos_lc hint
 
+private def AlgebraicNumber.OrientedIsolation.castPoly {p q : ZPoly} (h : p = q)
+    (r : AlgebraicNumber.OrientedIsolation q) : AlgebraicNumber.OrientedIsolation p :=
+  h.symm ▸ r
+
+private theorem AlgebraicNumber.OrientedIsolation.castPoly_base {p q : ZPoly} (h : p = q)
+    (r : AlgebraicNumber.OrientedIsolation q) :
+    (r.castPoly h).base = r.base.castPoly h := by cases h; rfl
+
+private theorem AlgebraicNumber.OrientedIsolation.castPoly_root {p q : ZPoly} (h : p = q)
+    (r : AlgebraicNumber.OrientedIsolation q) :
+    (r.castPoly h).rep.root = r.rep.root := by cases h; rfl
+
+private theorem AlgebraicNumber.OrientedIsolation.castPoly_heq {p q : ZPoly} (h : p = q)
+    (r : AlgebraicNumber.OrientedIsolation q) : HEq (r.castPoly h) r := by cases h; rfl
+
 /-- Canonical algebraic numbers are determined by their represented complex
 value. -/
 theorem AlgebraicNumber.toComplex_injective :
@@ -319,18 +335,19 @@ theorem AlgebraicNumber.toComplex_injective :
   intro a b hroot
   have hp := AlgebraicNumber.eq_polynomial hroot
   apply AlgebraicNumber.ext a b hp
-  let brep : RefinedIsolation a.p := b.rep.castPoly hp
-  have hbcanonical :
-      AlgebraicNumber.IsCanonical a.p a.squarefree brep :=
-    AlgebraicNumber.IsCanonical.castPoly hp b.canonical
-  have hbrepRoot : brep.root = b.rep.root :=
-    RefinedIsolation.castPoly_root hp b.rep
-  have hroot' : a.rep.root = brep.root := by
-    change a.rep.root = b.rep.root at hroot
-    exact hroot.trans hbrepRoot.symm
-  have hrep : a.rep = brep :=
-    RefinedIsolation.eq_of_canonical a.canonical hbcanonical hroot'
-  exact (heq_of_eq hrep).trans (RefinedIsolation.castPoly_heq hp b.rep)
+  let s := b.isolation.castPoly hp
+  have hs : AlgebraicNumber.IsCanonical a.p a.squarefree s.base := by
+    rw [AlgebraicNumber.OrientedIsolation.castPoly_base]
+    exact AlgebraicNumber.IsCanonical.castPoly hp b.canonical
+  have heq : a.isolation.rep.root = s.rep.root := by
+    rw [AlgebraicNumber.OrientedIsolation.castPoly_root]
+    exact hroot
+  have hb := RefinedIsolation.eq_of_canonical a.canonical hs
+    (AlgebraicNumber.OrientedIsolation.base_root_eq _ _ heq)
+  have hi : a.isolation = s := AlgebraicNumber.OrientedIsolation.ext _ _ hb
+    (AlgebraicNumber.OrientedIsolation.side_eq _ _ heq)
+  have hcast : HEq s b.isolation := b.isolation.castPoly_heq hp
+  exact (heq_of_eq hi).trans hcast
 
 /--
 info: 'Hex.AlgebraicNumber.toComplex_injective' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -352,7 +369,7 @@ info: 'Hex.AlgebraicNumber.toComplex_injective' depends on axioms: [propext, Cla
 supplied refined isolation, including the explicit canonical-zero path. -/
 theorem AlgebraicNumber.ofNormalized?_toComplex
     (p : ZPoly) (prim : ZPoly.Primitive p) (pos_lc : 0 < p.leadingCoeff)
-    (pos_degree : 0 < p.degree?.getD 0)
+    (pos_degree : 0 < p.natDegree)
     (checked : ZPoly.CheckedIrreducible p) (squarefree : HasOnlySimpleRoots p)
     (rep : RefinedIsolation p) {a : AlgebraicNumber}
     (h : AlgebraicNumber.ofNormalized? p prim pos_lc pos_degree checked
@@ -388,7 +405,7 @@ theorem AlgebraicNumber.beq_iff (a b : AlgebraicNumber) :
   constructor
   · rintro ⟨hp, hmeet⟩
     let brep : RefinedIsolation a.p := b.rep.castPoly hp
-    letI : ZPoly.CheckedIrreducible a.p := a.checked
+    let : ZPoly.CheckedIrreducible a.p := a.checked
     have hinter : Intersects a.rep brep := by
       change a.rep.1.square.discsMeet brep.1.square = true
       rw [show brep.1.square = b.rep.1.square by
@@ -404,7 +421,7 @@ theorem AlgebraicNumber.beq_iff (a b : AlgebraicNumber) :
     have hp := AlgebraicNumber.eq_polynomial hroot
     refine ⟨hp, ?_⟩
     let brep : RefinedIsolation a.p := b.rep.castPoly hp
-    letI : ZPoly.CheckedIrreducible a.p := a.checked
+    let : ZPoly.CheckedIrreducible a.p := a.checked
     have hroot' : a.rep.root = brep.root := by
       rw [show brep.root = b.rep.root by
         exact RefinedIsolation.castPoly_root hp b.rep]

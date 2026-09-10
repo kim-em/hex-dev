@@ -57,7 +57,7 @@ def yunAux (levels : List Level)
       else
         let shared := Norm.monic (DensePoly.gcd w repeated)
         let component := Norm.monic (w / shared)
-        let out := if 0 < component.degree?.getD 0 then
+        let out := if 0 < component.natDegree then
           out.push (polyCoords component, multiplicity)
         else
           out
@@ -70,7 +70,7 @@ constants have no positive-degree components. -/
 def yunRaw (levels : List Level) (f : Array (Array Rat)) :
     Array (Array (Array Rat) × Nat) :=
   let p := rawPoly levels f
-  if p.degree?.getD 0 = 0 then
+  if p.natDegree = 0 then
     #[]
   else
     let normalized := Norm.monic p
@@ -124,14 +124,14 @@ the unique empty decomposition. -/
 def checkYun (levels : List Level) (f : Array (Array Rat))
     (components : Array (Array (Array Rat) × Nat)) : Bool :=
   let p := rawPoly levels f
-  if p.degree?.getD 0 = 0 then
+  if p.natDegree = 0 then
     components.isEmpty
   else
     yunMultiplicitiesIncrease components &&
       components.all (fun component =>
         0 < component.2 &&
           let factor := rawPoly levels component.1
-          0 < factor.degree?.getD 0 && factor.leadingCoeff = 1) &&
+          0 < factor.natDegree && factor.leadingCoeff = 1) &&
       yunPairwiseCoprime levels components &&
       components.all (fun component =>
         Norm.isSquarefree levels component.1) &&
@@ -160,7 +160,7 @@ def factorRat? (input : DensePoly Rat) :
     DensePoly.scale input.leadingCoeff⁻¹ input
   if p.isZero then
     some #[]
-  else if (DensePoly.gcd p (DensePoly.derivative p)).size ≤ 1 then
+  else if ZPoly.ratSquarefree p then
     let integer := ZPoly.ratPolyPrimitivePart p
     let factorization := ZPoly.factorize integer
     let factors := (factorization.factors.flatMap fun entry =>
@@ -206,6 +206,16 @@ def embedLower (level : Level) (lower : List Level)
   polyCoords <| DensePoly.ofCoeffs <| f.map fun coefficient =>
     Coeff.ofData levels coefficient
 
+/-- Start recovery division with the monic shifted component when it has
+smaller degree than the lifted norm factor. The remaining Euclidean chain
+uses exactly the reference gcd's remaining fuel and remainder representative. -/
+@[expose]
+def recoveryGcd (p q : DensePoly (Coeff levels)) : DensePoly (Coeff levels) :=
+  if p.isZero = false ∧ p.size < q.size ∧ p.leadingCoeff = 1 then
+    DensePoly.gcdAux p (DensePoly.modArray q p id) (p.size + q.size - 1)
+  else
+    DensePoly.gcd p q
+
 /-- Recover current-level factors from irreducible lower factors of a
 squarefree Trager norm, then undo the selected generator shift. -/
 @[expose]
@@ -217,8 +227,8 @@ def recover (level : Level) (lower : List Level)
   let shifted := rawPoly levels (shiftTop level lower component shift)
   lowerFactors.foldl (fun out lowerFactor =>
     let lifted := rawPoly levels (embedLower level lower lowerFactor)
-    let common := Norm.monic (DensePoly.gcd shifted lifted)
-    if 0 < common.degree?.getD 0 then
+    let common := Norm.monic (recoveryGcd shifted lifted)
+    if 0 < common.natDegree then
       let unshifted := shiftTop level lower (polyCoords common) (-shift)
       out.push (polyCoords (Norm.monic (rawPoly levels unshifted)))
     else
@@ -235,13 +245,14 @@ def factorSquarefree? : (levels : List Level) → Array (Array Rat) →
       if Norm.isSquarefree (level :: lower) f then
         let (shift, norm) ← Norm.findSquarefreeShift level lower f
         let lowerFactors ← factorSquarefree? lower norm
-        let factors := recover level lower shift f lowerFactors
         let p := Norm.monic (rawPoly (level :: lower) f)
+        let factors := if lowerFactors.size = 1 then #[polyCoords p]
+          else recover level lower shift f lowerFactors
         let product := factors.foldl
           (fun product factor => product * rawPoly (level :: lower) factor)
           1
         if factors.all (fun factor =>
-            0 < (rawPoly (level :: lower) factor).degree?.getD 0) &&
+            0 < (rawPoly (level :: lower) factor).natDegree) &&
             product = p then
           some factors
         else
@@ -324,7 +335,7 @@ Trager reconstruction. -/
 @[expose]
 def isIrreducible (levels : List Level) (f : Array (Array Rat)) : Bool :=
   let p := rawPoly levels f
-  0 < p.degree?.getD 0 && p.leadingCoeff = 1 &&
+  0 < p.natDegree && p.leadingCoeff = 1 &&
     Norm.isSquarefree levels f &&
     match levels with
     | [] => ZPoly.isIrreducible (ZPoly.ratPolyPrimitivePart (toRatPoly f))
@@ -517,6 +528,20 @@ private def factorSqrtThreeLevel : Level where
     let padded : Array (Array Rat) := #[#[-1, 0, 0], #[1]]
     let f := polyCoords <| polyPow (rawPoly [] xSubOne) 3
     !check [] f #[1] #[(padded, 2), (xSubOne, 1)]
+
+-- Exercise the monic first remainder, a nonzero continuation, and the
+-- zero/nonmonic/degree-order fallback cases over three tower heights.
+#guard
+    [[], [yunSqrtTwoLevel], [factorSqrtThreeLevel, yunSqrtTwoLevel]].all fun levels =>
+      let x := rawPoly levels #[#[], #[1]]
+      let p := x * x + 1
+      let q := p * x
+      let twice := DensePoly.scale (Coeff.ofData levels #[2]) p
+      recoveryGcd p q = p &&
+        recoveryGcd p (q + 1) = 1 &&
+        recoveryGcd (0 : DensePoly (Coeff levels)) q = q &&
+        recoveryGcd twice (twice * x) = twice &&
+        recoveryGcd q p = p
 
 end Factor
 

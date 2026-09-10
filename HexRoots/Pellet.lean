@@ -79,6 +79,17 @@ theorem two_lt_sqrt2Hi_sq : 2 < sqrt2Hi * sqrt2Hi := by decide
     radius `2^{−prec}·√2`. -/
 @[expose] def DyadicSquare.radiusHi (s : DyadicSquare) : Dyadic := .ofIntWithPrec 1449 (s.prec + 10)
 
+namespace DyadicSquare
+
+/-- The closed circumscribed disc, with its radius rounded up to `radiusHi`,
+meets the real axis. -/
+@[expose]
+def meetsRealAxis (s : DyadicSquare) : Bool :=
+  -s.radiusHi ≤ s.im && s.im ≤ s.radiusHi
+
+end DyadicSquare
+
+
 /-- One Pellet inequality: `lo(cs[k])·rlo^k > Σ_{i ≠ k} hi(cs[i])·rhi^i`
     (strict), with `cs` the exact Taylor coefficients. The right side is a
     single fold over `cs` carrying the running power `rhi^i`, skipping the

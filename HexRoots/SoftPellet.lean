@@ -272,20 +272,20 @@ private theorem softGraeffeLoop_false {bits k rounds : Nat}
 /-- One working-precision attempt at the three-radius soft Graeffe witness. -/
 @[expose] def softWitnessAt (p : ZPoly) (s : DyadicSquare)
     (k bits : Nat) : Bool :=
-  softGraeffeLoop bits k (graeffeRounds (p.degree?.getD 0))
+  softGraeffeLoop bits k (graeffeRounds (p.natDegree))
     (taylorBalls p s bits) SoftRadii.initial
 
 /-- Three-radius Graeffe witness seeded from one exact Taylor shift.  This is
 the tighter and cheaper shallow-centre variant. -/
 @[expose] def softSeededWitness (p : ZPoly) (s : DyadicSquare)
     (k bits : Nat) : Bool :=
-  softGraeffeLoop bits k (graeffeRounds (p.degree?.getD 0))
+  softGraeffeLoop bits k (graeffeRounds (p.natDegree))
     (exactTaylorBalls p s bits) SoftRadii.initial
 
 /-- Three-radius exact-seeded witness reusing an existing Taylor shift. -/
 @[expose] def TaylorShift.softSeededWitness {p : ZPoly} (s : DyadicSquare)
     (shift : TaylorShift p s.center) (k bits : Nat) : Bool :=
-  softGraeffeLoop bits k (graeffeRounds (p.degree?.getD 0))
+  softGraeffeLoop bits k (graeffeRounds (p.natDegree))
     (seededTaylorBalls shift.coeffs s bits) SoftRadii.initial
 
 /-- A valid cached shift gives the standalone exact-seeded witness. -/
@@ -362,21 +362,21 @@ coefficient array once. -/
 /-- One working-precision all-count candidate search. -/
 @[expose] def softCandidateAt? (p : ZPoly) (s : DyadicSquare)
     (ks : List Nat) (bits : Nat) : Option Nat :=
-  softCandidateLoop bits ks (graeffeRounds (p.degree?.getD 0))
+  softCandidateLoop bits ks (graeffeRounds (p.natDegree))
     (taylorBalls p s bits) SoftRadii.initial
 
 /-- One-precision all-count candidate search seeded from an exact Taylor
 shift. -/
 @[expose] def softSeededCandidate? (p : ZPoly) (s : DyadicSquare)
     (ks : List Nat) (bits : Nat) : Option Nat :=
-  softCandidateLoop bits ks (graeffeRounds (p.degree?.getD 0))
+  softCandidateLoop bits ks (graeffeRounds (p.natDegree))
     (exactTaylorBalls p s bits) SoftRadii.initial
 
 /-- One-precision all-count candidate search reusing an existing exact Taylor
 shift for its coefficient balls. -/
 @[expose] def TaylorShift.softSeededCandidate? {p : ZPoly} (s : DyadicSquare)
     (shift : TaylorShift p s.center) (ks : List Nat) (bits : Nat) : Option Nat :=
-  softCandidateLoop bits ks (graeffeRounds (p.degree?.getD 0))
+  softCandidateLoop bits ks (graeffeRounds (p.natDegree))
     (seededTaylorBalls shift.coeffs s bits) SoftRadii.initial
 
 /-- Try an all-count candidate search at each working precision. -/
@@ -440,7 +440,7 @@ Graeffe transform for the whole list. -/
 /-- Base-radius all-count filter seeded by one exact Taylor shift. -/
 @[expose] def softSeededRootCount? (p : ZPoly) (s : DyadicSquare)
     (ks : List Nat) (bits : Nat) : Option Nat :=
-  softRootCountLoop bits ks (graeffeRounds (p.degree?.getD 0))
+  softRootCountLoop bits ks (graeffeRounds (p.natDegree))
     (exactTaylorBalls p s bits) softSqrt2Lo softSqrt2Hi
 
 /-- A returned first-level candidate is positive and passes its comparison. -/
@@ -533,7 +533,7 @@ theorem softRefinementCandidate?_sound {p : ZPoly} {s : DyadicSquare}
   unfold softRefinementCandidate? TaylorShift.softRefinementCandidate? at h
   by_cases hprec : s.prec < 32
   · have hs : softSeededCandidate? p s ks 64 = some k := by
-      rw [_root_.ite_eq_left hprec] at h
+      rw [ite_eq_left hprec] at h
       change softSeededCandidate? p s ks 64 = some k at h
       exact h
     have hsound := softSeededCandidate?_sound hs
@@ -560,7 +560,7 @@ circumscribed disc. -/
 
 /-- Soft single-radius Graeffe `T₀` filter for subdivision. -/
 @[expose] def softRootFreeAt (p : ZPoly) (s : DyadicSquare) (bits : Nat) : Bool :=
-  softRootFreeLoop bits (graeffeRounds (p.degree?.getD 0))
+  softRootFreeLoop bits (graeffeRounds (p.natDegree))
     (taylorBalls p s bits) softSqrt2Lo softSqrt2Hi
 
 /-- Adaptive soft `T₀` discard. -/

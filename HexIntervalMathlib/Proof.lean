@@ -631,6 +631,19 @@ def initialBase (input : Input Fact) : List (NodeFact Fact) :=
   List.ofFn fun index : Fin input.facts.size =>
     { node := { index := index.val }, fact := input.facts[index] }
 
+/-- An exactly correlated target already present in the initial base needs no
+program execution or runtime theorem authority. -/
+theorem initialTarget (semantics : Semantics Fact) (input : Input Fact)
+    (index : Nat) (within : index < input.facts.size)
+    (node : input.target.node = { index })
+    (fact : input.target.fact = input.facts[index]) :
+    semantics.Entails input.program (initialBase input) input.target := by
+  intro valuation model assumptions
+  apply assumptions input.target
+  rw [initialBase, List.mem_ofFn]
+  refine ⟨⟨index, within⟩, ?_⟩
+  exact (congrArg₂ NodeFact.mk node fact).symm
+
 /-- Exact logical assumptions visible at one replay node. Branch assumptions
 are appended one at a time and are never reconstructed from runtime facts. -/
 def replayBase (input : Input Fact) (assumptions : List (NodeFact Fact)) :

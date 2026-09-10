@@ -9,6 +9,7 @@ import VersoManual
 -- Released libraries (dependency order).
 import HexManual.Chapters.HexBasic
 import HexManual.Chapters.HexArith
+import HexManual.Chapters.HexPrimality
 import HexManual.Chapters.HexPoly
 import HexManual.Chapters.HexMvPoly
 import HexManual.Chapters.HexModArith
@@ -32,12 +33,18 @@ import HexManual.Chapters.HexGramSchmidt
 import HexManual.Chapters.HexLLL
 import HexManual.Chapters.HexBerlekampZassenhaus
 import HexManual.Chapters.FactorTactics
+import HexManual.Chapters.HexRCF
+import HexManual.Chapters.HexResultant
+import HexManual.Chapters.HexNumberField
+import HexManual.Chapters.HexNumberFieldTower
 -- Unreleased libraries (dependency order).
+import HexManual.Chapters.HexRealAlgebraic
 import HexManual.Chapters.HexTruncatedSeries
 import HexManual.Chapters.HexPolyFast
-import HexManual.Chapters.HexPrimality
+import HexManual.Chapters.HexRationalFn
+import HexManual.Chapters.HexLatticeEnum
+import HexManual.Chapters.HexIntFactor
 import HexManual.Chapters.HexModular
-import HexManual.Chapters.HexResultant
 import HexManual.Chapters.HexPolyZGcd
 import HexManual.Chapters.HexMvGcd
 import HexManual.Chapters.HexMvHensel
@@ -45,10 +52,10 @@ import HexManual.Chapters.HexMvFactor
 import HexManual.Chapters.HexPolySmith
 import HexManual.Chapters.HexSmith
 import HexManual.Chapters.HexSparsePoly
-import HexManual.Chapters.HexRCF
-import HexManual.Chapters.HexNumberField
-import HexManual.Chapters.HexNumberFieldTower
 import HexManual.Chapters.HexMinPoly
+import HexManual.Chapters.HexPermGroup
+import HexManual.Chapters.HexGraphIso
+import HexManual.Chapters.NautyAlgorithm
 -- Tutorials (application-first capstone pages, see SPEC/tutorials.md).
 import HexManual.Tutorials.AESField
 import HexManual.Tutorials.AESModulus
@@ -86,6 +93,8 @@ contracts and, for mature libraries, supply their proofs.
 
 {include 0 HexManual.Chapters.HexArith}
 
+{include 0 HexManual.Chapters.HexPrimality}
+
 {include 0 HexManual.Chapters.HexPoly}
 
 {include 0 HexManual.Chapters.HexMvPoly}
@@ -106,6 +115,8 @@ contracts and, for mature libraries, supply their proofs.
 
 {include 0 HexManual.Chapters.HexRealRoots}
 
+{include 0 HexManual.Chapters.HexRCF}
+
 {include 0 HexManual.Chapters.HexMatrix}
 
 {include 0 HexManual.Chapters.HexRowReduce}
@@ -124,6 +135,8 @@ contracts and, for mature libraries, supply their proofs.
 
 {include 0 HexManual.Chapters.HexBareiss}
 
+{include 0 HexManual.Chapters.HexResultant}
+
 {include 0 HexManual.Chapters.HexGramSchmidt}
 
 {include 0 HexManual.Chapters.HexLLL}
@@ -131,6 +144,16 @@ contracts and, for mature libraries, supply their proofs.
 {include 0 HexManual.Chapters.HexBerlekampZassenhaus}
 
 {include 0 HexManual.Chapters.FactorTactics}
+
+{include 0 HexManual.Chapters.HexNumberField}
+
+{include 0 HexManual.Chapters.HexNumberFieldTower}
+
+{include 0 HexManual.Chapters.HexPermGroup}
+
+{include 0 HexManual.Chapters.HexGraphIso}
+
+{include 0 HexManual.Chapters.NautyAlgorithm}
 
 # Tutorials
 %%%
@@ -161,17 +184,21 @@ These libraries are still incubating in the
 split out for release yet, so their APIs may still change. They are grouped
 here to keep the reference chapters above focused on the released libraries.
 
+{include 2 HexManual.Chapters.HexRealAlgebraic}
+
 {include 2 HexManual.Chapters.HexTruncatedSeries}
 
 {include 2 HexManual.Chapters.HexPolyFast}
 
-{include 2 HexManual.Chapters.HexPrimality}
+{include 2 HexManual.Chapters.HexRationalFn}
+
+{include 2 HexManual.Chapters.HexLatticeEnum}
+
+{include 2 HexManual.Chapters.HexIntFactor}
 
 {include 2 HexManual.Chapters.HexModular}
 
 {include 2 HexManual.Chapters.HexCharPoly}
-
-{include 2 HexManual.Chapters.HexResultant}
 
 {include 2 HexManual.Chapters.HexPolyZGcd}
 
@@ -184,11 +211,5 @@ here to keep the reference chapters above focused on the released libraries.
 {include 2 HexManual.Chapters.HexPolySmith}
 
 {include 2 HexManual.Chapters.HexSmith}
-
-{include 2 HexManual.Chapters.HexRCF}
-
-{include 2 HexManual.Chapters.HexNumberField}
-
-{include 2 HexManual.Chapters.HexNumberFieldTower}
 
 {include 2 HexManual.Chapters.HexMinPoly}

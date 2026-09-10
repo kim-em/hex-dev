@@ -270,7 +270,7 @@ theorem pelletAt_size {cs : Array Hex.GaussDyadic} {k : ℕ}
     k < cs.size := by
   unfold Hex.pelletAt at h
   by_contra hk
-  rw [if_neg (by omega)] at h
+  rw [ite_eq_right (by omega)] at h
   contradiction
 
 /-- A successful executable Pellet check exposes its strict real
@@ -284,7 +284,7 @@ theorem pelletAt_bound {cs : Array Hex.GaussDyadic} {k : ℕ}
         Dyadic.toReal rlo ^ k := by
   have hk := pelletAt_size h
   unfold Hex.pelletAt at h
-  rw [if_pos hk] at h
+  rw [ite_eq_left hk] at h
   let result := (List.range cs.size).foldl
       (fun acc i =>
         let acc' := if i = k then acc.1
@@ -453,7 +453,7 @@ theorem rootsInDisc_localPoly (p : Hex.ZPoly) (s : Hex.DyadicSquare) (r : ℝ) :
       by_cases hz : dist z c < h * r
       · simp [hz, hequiv.mpr hz]
       · have hz' : ¬h⁻¹ * dist z c < r := fun h' => hz (hequiv.mp h')
-        rw [if_neg hz', if_neg hz]
+        rw [ite_eq_right hz', ite_eq_right hz]
 
 /-- The executable check excludes roots from the corresponding circle about
 the original Taylor centre. -/
@@ -481,7 +481,7 @@ private theorem softWitnessAt_local {p : Hex.ZPoly} {s : Hex.DyadicSquare}
     (hhi : r ≤ Dyadic.toReal (choice.hi Hex.SoftRadii.initial)) :
     rootsInDisc (localPoly p s) 0 r = k := by
   have hloop : Hex.softGraeffeLoop bits k
-      (Hex.graeffeRounds (p.degree?.getD 0))
+      (Hex.graeffeRounds (p.natDegree))
       (Hex.taylorBalls p s bits) Hex.SoftRadii.initial = true := by
     simpa [Hex.softWitnessAt] using h
   have hk := softGraeffeLoop_size hloop
@@ -501,7 +501,7 @@ private theorem softSeededWitness_local {p : Hex.ZPoly}
     (hhi : r ≤ Dyadic.toReal (choice.hi Hex.SoftRadii.initial)) :
     rootsInDisc (localPoly p s) 0 r = k := by
   have hloop : Hex.softGraeffeLoop bits k
-      (Hex.graeffeRounds (p.degree?.getD 0))
+      (Hex.graeffeRounds (p.natDegree))
       (Hex.exactTaylorBalls p s bits) Hex.SoftRadii.initial = true := by
     simpa [Hex.softSeededWitness] using h
   have hk := softGraeffeLoop_size hloop
@@ -609,7 +609,7 @@ private theorem softWitnessAt_local_boundary {p : Hex.ZPoly}
     (hhi : r ≤ Dyadic.toReal (choice.hi Hex.SoftRadii.initial))
     {z : ℂ} (hz : z ∈ sphere 0 r) : (localPoly p s).eval z ≠ 0 := by
   have hloop : Hex.softGraeffeLoop bits k
-      (Hex.graeffeRounds (p.degree?.getD 0))
+      (Hex.graeffeRounds (p.natDegree))
       (Hex.taylorBalls p s bits) Hex.SoftRadii.initial = true := by
     simpa [Hex.softWitnessAt] using h
   have hk := softGraeffeLoop_size hloop
@@ -629,7 +629,7 @@ private theorem softSeededWitness_local_boundary {p : Hex.ZPoly}
     (hhi : r ≤ Dyadic.toReal (choice.hi Hex.SoftRadii.initial))
     {z : ℂ} (hz : z ∈ sphere 0 r) : (localPoly p s).eval z ≠ 0 := by
   have hloop : Hex.softGraeffeLoop bits k
-      (Hex.graeffeRounds (p.degree?.getD 0))
+      (Hex.graeffeRounds (p.natDegree))
       (Hex.exactTaylorBalls p s bits) Hex.SoftRadii.initial = true := by
     simpa [Hex.softSeededWitness] using h
   have hk := softGraeffeLoop_size hloop
@@ -774,7 +774,7 @@ theorem witness_cases {p : Hex.ZPoly} {s : Hex.DyadicSquare} {k : Nat}
         (Hex.TaylorShift.compute p s.center) k = true := by
   unfold Hex.witness Hex.witnessCheck Hex.TaylorShift.combinedWitnessCheck at h
   by_cases hprec : s.prec < 32
-  · rw [if_pos hprec] at h
+  · rw [ite_eq_left hprec] at h
     rw [Hex.TaylorShift.softWitnessCheck_eq] at h
     have hor : Hex.TaylorShift.witnessCheck s
         (Hex.TaylorShift.compute p s.center) k = true ∨
@@ -783,7 +783,7 @@ theorem witness_cases {p : Hex.ZPoly} {s : Hex.DyadicSquare} {k : Nat}
     rcases hor with hexact | hsoft
     · exact Or.inr hexact
     · exact Or.inl hsoft
-  · rw [if_neg hprec] at h
+  · rw [ite_eq_right hprec] at h
     rw [Hex.TaylorShift.softWitnessCheck_eq] at h
     simpa only [Bool.or_eq_true] using h
 

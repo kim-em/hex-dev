@@ -189,7 +189,7 @@ onto the literal chain, where the emitted `decide` confirms the gap is `1`. -/
 theorem RealRootIsolation.count_one_of_cert {p : Hex.ZPoly} {chain : Array Hex.ZPoly}
     (hcert : Hex.SturmChainCert p chain) (I : Hex.DyadicInterval)
     (h : (Hex.sturmVarAt chain I.lower : Int) - Hex.sturmVarAt chain I.upper = 1) :
-    Hex.sturmCount p I = 1 :=
+    Hex.ZPoly.sturmCount p I = 1 :=
   (Hex.ZPoly.sturmCount_eq_of_cert hcert I).trans h
 
 /-- **The replay constructor `IsolatedRealRoots.ofCert`.** The production

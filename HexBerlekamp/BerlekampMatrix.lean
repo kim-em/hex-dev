@@ -30,7 +30,7 @@ variable {p : Nat} [ZMod64.Bounds p]
 /-- The basis size used for the Berlekamp matrix of `f`. -/
 @[expose]
 def basisSize (f : FpPoly p) : Nat :=
-  f.degree?.getD 0
+  f.natDegree
 
 private theorem size_pos_of_basisSize_pos (f : FpPoly p)
     (h : 0 < basisSize f) : 0 < f.size := by
@@ -38,12 +38,12 @@ private theorem size_pos_of_basisSize_pos (f : FpPoly p)
   · exact hfz
   · exfalso
     have hfsize : f.size = 0 := Nat.eq_zero_of_not_pos hfz
-    unfold basisSize DensePoly.degree? at h
+    unfold basisSize DensePoly.natDegree DensePoly.degree? at h
     simp [hfsize] at h
 
 private theorem basisSize_eq_size_sub_one (f : FpPoly p)
     (h : 0 < f.size) : basisSize f = f.size - 1 := by
-  unfold basisSize DensePoly.degree?
+  unfold basisSize DensePoly.natDegree DensePoly.degree?
   simp [Nat.ne_of_gt h]
 
 /-- Read a polynomial's first `degree f` coefficients as a vector. -/
@@ -324,7 +324,7 @@ private theorem powModMonic_column_size_le
   have hf_size_pos : 0 < f.size := size_pos_of_basisSize_pos f hbasis_pos
   have hbasis_eq : basisSize f = f.size - 1 :=
     basisSize_eq_size_sub_one f hf_size_pos
-  have hf_deg_eq : f.degree?.getD 0 = f.size - 1 := hbasis_eq
+  have hf_deg_eq : f.natDegree = f.size - 1 := hbasis_eq
   -- Case split on whether the column is the constant-1 column (j.val = 0)
   -- or a positive power.
   by_cases hj_zero : j.val = 0
@@ -348,8 +348,8 @@ private theorem powModMonic_column_size_le
         j.val hj_pos
     -- Translate self-reduction to a size bound.
     have h_deg :
-        (FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val).degree?.getD 0 <
-          f.degree?.getD 0 := by
+        (FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val).natDegree <
+          f.natDegree := by
       rw [← h_self]
       exact DensePoly.mod_degree_lt_of_pos_degree _ _ (by rw [hf_deg_eq]; omega)
     -- Convert to a size bound.
@@ -361,9 +361,9 @@ private theorem powModMonic_column_size_le
           0 < (FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val).size :=
         Nat.pos_of_ne_zero hsize
       have hdeg_eq :
-          (FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val).degree?.getD 0 =
+          (FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val).natDegree =
             (FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val).size - 1 := by
-        unfold DensePoly.degree?
+        unfold DensePoly.natDegree DensePoly.degree?
         simp [Nat.ne_of_gt hsize_pos]
       rw [hdeg_eq, hf_deg_eq] at h_deg
       -- Note: avoid rewriting `basisSize f` here because it captures
@@ -594,20 +594,20 @@ private theorem matrixActionPolySum_eq_linearPow_mod
       have hf_size_pos : 0 < f.size := size_pos_of_basisSize_pos f hbasis_pos
       have hbasis_eq : basisSize f = f.size - 1 :=
         basisSize_eq_size_sub_one f hf_size_pos
-      have hf_deg_eq : f.degree?.getD 0 = f.size - 1 := hbasis_eq
+      have hf_deg_eq : f.natDegree = f.size - 1 := hbasis_eq
       by_cases h_poly_size : (matrixActionPolySum f hmonic w).size = 0
       · have h_poly_deg :
-            (matrixActionPolySum f hmonic w).degree?.getD 0 = 0 := by
-          unfold DensePoly.degree?
+            (matrixActionPolySum f hmonic w).natDegree = 0 := by
+          unfold DensePoly.natDegree DensePoly.degree?
           simp [h_poly_size]
         rw [h_poly_deg, hf_deg_eq]
         omega
       · have h_poly_pos : 0 < (matrixActionPolySum f hmonic w).size :=
           Nat.pos_of_ne_zero h_poly_size
         have h_poly_deg :
-            (matrixActionPolySum f hmonic w).degree?.getD 0 =
+            (matrixActionPolySum f hmonic w).natDegree =
               (matrixActionPolySum f hmonic w).size - 1 := by
-          unfold DensePoly.degree?
+          unfold DensePoly.natDegree DensePoly.degree?
           simp [Nat.ne_of_gt h_poly_pos]
         rw [h_poly_deg, hf_deg_eq]
         omega
@@ -789,18 +789,17 @@ private theorem mod_eq_self_of_size_le_basis (f w : FpPoly p)
     (hw : w.size ≤ basisSize f) (hbasis : 0 < basisSize f) :
     w % f = w := by
   apply DensePoly.mod_eq_self_of_degree_lt
-  show w.degree?.getD 0 < f.degree?.getD 0
+  show w.natDegree < f.natDegree
   change _ < basisSize f
   by_cases hwsize : w.size = 0
-  · have hdeg : w.degree?.getD 0 = 0 := by
-      unfold DensePoly.degree?
+  · have hdeg : w.natDegree = 0 := by
+      unfold DensePoly.natDegree DensePoly.degree?
       simp [hwsize]
     rw [hdeg]
     exact hbasis
   · have hw_pos : 0 < w.size := Nat.pos_of_ne_zero hwsize
-    have hw_deg : w.degree?.getD 0 = w.size - 1 := by
-      unfold DensePoly.degree?
-      simp [Nat.ne_of_gt hw_pos]
+    have hw_deg : w.natDegree = w.size - 1 := by
+      rw [DensePoly.natDegree_eq_size_sub_one]
     rw [hw_deg]
     omega
 
@@ -810,16 +809,16 @@ private theorem linearPow_mod_size_le_of_basis_pos
     (FpPoly.linearPow w p % f).size ≤ basisSize f := by
   haveI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
   have hmod_lt :
-      (FpPoly.linearPow w p % f).degree?.getD 0 < f.degree?.getD 0 :=
+      (FpPoly.linearPow w p % f).natDegree < f.natDegree :=
     DensePoly.mod_degree_lt_of_pos_degree _ _ hbasis
   change _ < basisSize f at hmod_lt
   by_cases hsize : (FpPoly.linearPow w p % f).size = 0
   · omega
   · have hpos : 0 < (FpPoly.linearPow w p % f).size := Nat.pos_of_ne_zero hsize
     have hdeg_eq :
-        (FpPoly.linearPow w p % f).degree?.getD 0 =
+        (FpPoly.linearPow w p % f).natDegree =
           (FpPoly.linearPow w p % f).size - 1 := by
-      unfold DensePoly.degree?
+      unfold DensePoly.natDegree DensePoly.degree?
       simp [Nat.ne_of_gt hpos]
     omega
 

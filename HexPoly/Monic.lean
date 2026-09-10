@@ -55,7 +55,7 @@ theorem scale_inv_eq_monicize {p : DensePoly F} (hp : p ≠ 0) :
     intro hsize
     exact hp ((size_eq_zero_iff p).mp hsize)
   have hisZero : p.isZero = false := (isZero_eq_false_iff p).2 hpPos
-  rw [monicize, HexPoly.ite_eq_right (by simp [hisZero])]
+  rw [monicize, ite_eq_right (by simp [hisZero])]
 
 /-- Every polynomial divides its monic associate. -/
 theorem dvd_monicize (p : DensePoly F) : p ∣ monicize p := by
@@ -68,7 +68,7 @@ theorem dvd_monicize (p : DensePoly F) : p ∣ monicize p := by
     intro h
     exact hp ((size_eq_zero_iff p).mp ((isZero_eq_true_iff p).mp h))
   refine ⟨scale p.leadingCoeff⁻¹ (1 : DensePoly F), ?_⟩
-  rw [monicize, HexPoly.ite_eq_right (by simp [hisZero]), ← mul_scale,
+  rw [monicize, ite_eq_right (by simp [hisZero]), ← mul_scale,
     mul_one_right_poly]
 
 /-- A size-one polynomial is the constant polynomial of its leading
@@ -81,12 +81,12 @@ theorem eq_C_leadingCoeff_of_size_one {p : DensePoly F} (hp : p.size = 1) :
   by_cases hn : n = 0
   · subst n
     rw [coeff_C]
-    simp only [HexPoly.ite_true]
+    simp only [ite_true]
     rw [leadingCoeff_eq_coeff_last p hpPos]
     have hidx : p.size - 1 = 0 := by omega
     rw [hidx]
   · rw [coeff_C]
-    simp only [hn, HexPoly.ite_false]
+    simp only [hn, ite_false]
     exact coeff_eq_zero_of_size_le p (by omega)
 
 end Hex.DensePoly

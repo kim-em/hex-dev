@@ -28,10 +28,12 @@ import HexNumberFieldTower
 
 open Hex NumberTower
 
-def a : Elem rat := rat.ofRat (3/2)
+-- `NumberTower.rat` is the tower with no extensions: its
+-- elements are the rational numbers.
+def a : Elem NumberTower.rat := ofRat NumberTower.rat (3/2)
 
-#guard a * rat.ofRat 3 = rat.ofRat (9/2)
-#guard a⁻¹ * a = rat.ofRat 1
+#guard a * ofRat NumberTower.rat 3 = ofRat NumberTower.rat (9/2)
+#guard a⁻¹ * a = ofRat NumberTower.rat 1
 ```
 
 # Functionality
@@ -42,7 +44,7 @@ full field arithmetic, totalized by `0⁻¹ = 0`. Only smart constructors can
 admit a level:
 
 - `Hex.NumberTower.rat`: the rational base tower.
-- `Hex.NumberTower.ofQAdjoin`: a one-level tower for an irreducible
+- `Hex.NumberTower.ofPolyQuot`: a one-level tower for an irreducible
   presentation `ℚ(x)`.
 - `Hex.NumberTower.adjoin?`: adjoin a selected absolute algebraic root.
 - `Hex.NumberTower.factor?`: complete irreducible Trager factorization of a

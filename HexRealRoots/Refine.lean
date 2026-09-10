@@ -44,7 +44,7 @@ precomputed Sturm chain and a proof that its endpoint sign-variation gap is
 `1`, reusing the caller's already-built `chain` so the Sturm count is not
 recomputed. The `hchain : chain = ZPoly.sturmChain p` equality (passed as
 `rfl` when `chain` is let-bound to `ZPoly.sturmChain p`) identifies the gap
-`h` with `sturmCount p (lower, upper]` without rebuilding the chain — the
+`h` with `ZPoly.sturmCount p (lower, upper]` without rebuilding the chain — the
 same memoisation discipline as `assemble?`. -/
 private def ofHalf (chain : Array ZPoly) (hchain : chain = ZPoly.sturmChain p)
     (lower upper : Dyadic) (hlt : lower < upper)
@@ -60,7 +60,7 @@ midpoint `m` is `(lower + upper) / 2` computed exactly, so a genuine interval
 always splits into two nonempty halves. The left half `(lower, m]` is tried
 first — its Sturm count is `sturmVarAt chain lower − sturmVarAt chain m`,
 phrased directly on the let-bound `chain` so the chain is built once, never
-per `sturmCount`. If the left count is `1` it certifies; otherwise the right
+per `ZPoly.sturmCount`. If the left count is `1` it certifies; otherwise the right
 half `(m, upper]` is tried the same way. The half-open convention means a root
 exactly at `m` lands in the left half `(lower, m]` and its count is `1` there,
 so no endpoint comparison against `m` is ever needed.

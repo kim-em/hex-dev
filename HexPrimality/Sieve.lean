@@ -601,7 +601,7 @@ private theorem mem_bitsToListGo {state : Nat} :
       intro t0 n
       unfold bitsToListGo
       by_cases hbit : state.testBit t0 = true
-      · rw [if_pos hbit]
+      · rw [ite_eq_left hbit]
         constructor
         · intro h
           rcases List.mem_cons.mp h with rfl | h'
@@ -614,7 +614,7 @@ private theorem mem_bitsToListGo {state : Nat} :
             exact List.mem_cons_self ..
           · exact List.mem_cons_of_mem _
               ((ih (t0 + 1) n).mpr ⟨t, by omega, by omega, h3, h4⟩)
-      · rw [if_neg hbit]
+      · rw [ite_eq_right hbit]
         rw [ih (t0 + 1) n]
         constructor
         · rintro ⟨t, h1, h2, h3, h4⟩
@@ -649,13 +649,13 @@ private theorem bitsToListGo_pairwise {state : Nat} :
       intro t0
       unfold bitsToListGo
       by_cases hbit : state.testBit t0 = true
-      · rw [if_pos hbit]
+      · rw [ite_eq_left hbit]
         rw [List.pairwise_cons]
         refine ⟨?_, ih (t0 + 1)⟩
         intro x hx
         obtain ⟨t, h1, _, _, rfl⟩ := (mem_bitsToListGo fuel (t0 + 1) x).mp hx
         exact numOfIndex_lt_numOfIndex.mpr (by omega)
-      · rw [if_neg hbit]
+      · rw [ite_eq_right hbit]
         exact ih (t0 + 1)
 
 /-- The read-back list is strictly ascending. -/

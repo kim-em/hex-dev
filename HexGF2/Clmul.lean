@@ -396,7 +396,7 @@ private theorem foldl_oneHot_left_snd_eq_lowStep (a : UInt64) {hot : Nat}
       rw [List.foldl_cons, List.foldl_cons]
       by_cases hset : (((a >>> bitIdx.toUInt64) &&& 1) != 0) = true
       · by_cases hsum : hot + bitIdx < 64
-        · rw [if_pos hset]
+        · rw [ite_eq_left hset]
           have hlowStep :
               clmulOneHotLeftLowStep hot a acc.2 bitIdx =
                 acc.2 ^^^ ((1 : UInt64) <<< (hot + bitIdx).toUInt64) := by
@@ -405,13 +405,13 @@ private theorem foldl_oneHot_left_snd_eq_lowStep (a : UInt64) {hot : Nat}
           simpa [hlowStep] using
             ih (acc.1, acc.2 ^^^ ((1 : UInt64) <<< (hot + bitIdx).toUInt64)) hltTail
         · have hsumGe : 64 ≤ hot + bitIdx := Nat.le_of_not_gt hsum
-          rw [if_pos hset]
+          rw [ite_eq_left hset]
           have hlowStep : clmulOneHotLeftLowStep hot a acc.2 bitIdx = acc.2 := by
             simp [clmulOneHotLeftLowStep, hset, hsum]
           rw [clmulAccumulateBit_oneHot_high acc hhot hbitIdx hsumGe]
           simpa [hlowStep] using
             ih (acc.1 ^^^ ((1 : UInt64) <<< (hot + bitIdx - 64).toUInt64), acc.2) hltTail
-      · rw [if_neg hset]
+      · rw [ite_eq_right hset]
         have hlowStep : clmulOneHotLeftLowStep hot a acc.2 bitIdx = acc.2 := by
           simp [clmulOneHotLeftLowStep, hset]
         simpa [hlowStep] using ih acc hltTail
@@ -489,14 +489,14 @@ private theorem foldl_oneHot_left_fst_eq_highStep (a : UInt64) {hot : Nat}
       rw [List.foldl_cons, List.foldl_cons]
       by_cases hset : (((a >>> bitIdx.toUInt64) &&& 1) != 0) = true
       · by_cases hsum : hot + bitIdx < 64
-        · rw [if_pos hset]
+        · rw [ite_eq_left hset]
           have hhighStep : clmulOneHotLeftHighStep hot a acc.1 bitIdx = acc.1 := by
             simp [clmulOneHotLeftHighStep, hset, hsum]
           rw [clmulAccumulateBit_oneHot_low acc hhot hbitIdx hsum]
           simpa [hhighStep] using
             ih (acc.1, acc.2 ^^^ ((1 : UInt64) <<< (hot + bitIdx).toUInt64)) hltTail
         · have hsumGe : 64 ≤ hot + bitIdx := Nat.le_of_not_gt hsum
-          rw [if_pos hset]
+          rw [ite_eq_left hset]
           have hhighStep :
               clmulOneHotLeftHighStep hot a acc.1 bitIdx =
                 acc.1 ^^^ ((1 : UInt64) <<< (hot + bitIdx - 64).toUInt64) := by
@@ -505,7 +505,7 @@ private theorem foldl_oneHot_left_fst_eq_highStep (a : UInt64) {hot : Nat}
           simpa [hhighStep] using
             ih (acc.1 ^^^ ((1 : UInt64) <<< (hot + bitIdx - 64).toUInt64), acc.2)
               hltTail
-      · rw [if_neg hset]
+      · rw [ite_eq_right hset]
         have hhighStep : clmulOneHotLeftHighStep hot a acc.1 bitIdx = acc.1 := by
           simp [clmulOneHotLeftHighStep, hset]
         simpa [hhighStep] using ih acc hltTail

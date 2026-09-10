@@ -25,8 +25,8 @@ private theorem getElem_setRow (M : Matrix R n m) (dst r : Fin n)
     (M.setRow dst v)[r][c] = if r = dst then v[c] else M[r][c] := by
   by_cases h : r = dst
   · subst r
-    rw [if_pos rfl, Matrix.setRow_get_self]
-  · rw [if_neg h, Matrix.setRow_row_ne M dst r v h]
+    rw [ite_eq_left rfl, Matrix.setRow_get_self]
+  · rw [ite_eq_right h, Matrix.setRow_row_ne M dst r v h]
 
 /-- Replace rows `i` and `k` by two simultaneous linear combinations. -/
 @[expose]
@@ -53,9 +53,9 @@ theorem getElem_combineRows (M : Matrix Int n m) (i k r : Fin n)
       else M[(r, j)] := by
   unfold combineRows
   by_cases hik : i = k
-  · rw [dif_pos hik, getElem_setRow]
+  · rw [dite_eq_left hik, getElem_setRow]
     by_cases hr : r = k <;> simp [hik, hr, Matrix.row]
-  · rw [dif_neg hik, getElem_setRow, getElem_setRow]
+  · rw [dite_eq_right hik, getElem_setRow, getElem_setRow]
     by_cases hrk : r = k <;> by_cases hri : r = i <;> simp_all [Matrix.row]
 
 /-- Replace columns `i` and `k` by two simultaneous linear combinations. -/
@@ -84,10 +84,10 @@ theorem getElem_combineCols (M : Matrix Int n m) (i k : Fin m)
       else M[(r, j)] := by
   unfold combineCols
   by_cases hik : i = k
-  · rw [dif_pos hik, Matrix.getElem_setCol]
+  · rw [dite_eq_left hik, Matrix.getElem_setCol]
     by_cases hj : j = k <;>
       simp [hik, hj]
-  · rw [dif_neg hik, Matrix.getElem_setCol, Matrix.getElem_setCol]
+  · rw [dite_eq_right hik, Matrix.getElem_setCol, Matrix.getElem_setCol]
     by_cases hjk : j = k <;> by_cases hji : j = i <;>
       simp_all
 /-- Simultaneous two-row replacement commutes with multiplication on the
@@ -107,7 +107,7 @@ theorem combineRows_mul (A : Matrix Int n p) (B : Matrix Int p m)
       change (combineRows A i k a b c d)[i][qq] =
         (a • Matrix.row A i + b • Matrix.row A k)[qq]
       rw [getElem_combineRows]
-      simp only [if_pos]
+      simp only [ite_eq_left]
       rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_pair_eq_nested]
       simp only [Fin.getElem_fin, Vector.getElem_add, Vector.getElem_smul]
       rfl
@@ -115,7 +115,7 @@ theorem combineRows_mul (A : Matrix Int n p) (B : Matrix Int p m)
     rw [Vector.dotProduct_add_left, Vector.dotProduct_smul_left,
       Vector.dotProduct_smul_left]
     rw [getElem_combineRows]
-    simp only [if_pos, Matrix.getElem_pair_eq_nested]
+    simp only [ite_eq_left, Matrix.getElem_pair_eq_nested]
     rw [Matrix.getElem_mul, Matrix.getElem_mul]
   · by_cases hrk : r = k
     · subst r
@@ -126,14 +126,14 @@ theorem combineRows_mul (A : Matrix Int n p) (B : Matrix Int p m)
         change (combineRows A i k a b c d)[k][qq] =
           (c • Matrix.row A i + d • Matrix.row A k)[qq]
         rw [getElem_combineRows]
-        simp only [if_neg hri, if_pos]
+        simp only [ite_eq_right hri, ite_eq_left]
         rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_pair_eq_nested]
         simp only [Fin.getElem_fin, Vector.getElem_add, Vector.getElem_smul]
         rfl]
       rw [Vector.dotProduct_add_left, Vector.dotProduct_smul_left,
         Vector.dotProduct_smul_left]
       rw [getElem_combineRows]
-      simp only [if_neg hri, if_pos, Matrix.getElem_pair_eq_nested]
+      simp only [ite_eq_right hri, ite_eq_left, Matrix.getElem_pair_eq_nested]
       rw [Matrix.getElem_mul, Matrix.getElem_mul]
     · rw [show Matrix.row (combineRows A i k a b c d) r = Matrix.row A r by
         ext q hq
@@ -142,7 +142,7 @@ theorem combineRows_mul (A : Matrix Int n p) (B : Matrix Int p m)
         rw [getElem_combineRows]
         simp [hri, hrk, Matrix.getElem_pair_eq_nested]]
       rw [getElem_combineRows]
-      simp only [if_neg hri, if_neg hrk, Matrix.getElem_pair_eq_nested]
+      simp only [ite_eq_right hri, ite_eq_right hrk, Matrix.getElem_pair_eq_nested]
       exact (Matrix.getElem_mul A B r j).symm
 
 /-- Transposition exchanges a simultaneous two-column replacement with the

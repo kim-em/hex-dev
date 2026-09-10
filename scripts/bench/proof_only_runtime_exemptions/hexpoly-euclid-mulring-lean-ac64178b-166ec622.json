@@ -1,0 +1,6 @@
+{
+ "path": "HexPoly/Euclid/MulRing.lean",
+ "baseline_blob": "ac64178be71e2a335ca904cef0b9510751c7562d",
+ "current_blob": "166ec622e2bf814420ff6c6b599f16dd1d41e292",
+ "reason": "Drops the now-unnecessary `HexPoly.Conditional` import and rewrites the qualified `Hex.ite_eq_*`/`HexPoly.ite_eq_*` shim references to Lean core's lemmas of the same names. Import list and proof terms only; no definition body changes."
+}

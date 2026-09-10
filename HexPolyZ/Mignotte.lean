@@ -413,7 +413,7 @@ Uniform executable coefficient bound used by the default integer
 factorization entry point.
 
 It takes the maximum of the executable Mignotte coefficient bounds over every
-candidate factor degree up to `f.degree?.getD 0` and every coefficient index up
+candidate factor degree up to `f.natDegree` and every coefficient index up
 to that degree.
 
 The compiled runtime uses the value-equal closed form below, registered through
@@ -423,7 +423,7 @@ coefficient norm inside every one of the `O(deg^2)` `mignotteCoeffBound` terms.
 -/
 @[expose]
 noncomputable def defaultFactorCoeffBound (f : ZPoly) : Nat :=
-  let degreeBound := f.degree?.getD 0
+  let degreeBound := f.natDegree
   (List.range (degreeBound + 1)).foldl
     (fun acc k =>
       (List.range (k + 1)).foldl
@@ -443,7 +443,7 @@ theorem floorSqrt_sq_le (n : Nat) : floorSqrt n * floorSqrt n ≤ n := by
     simp
   · have hn_pos : 0 < n := Nat.pos_of_ne_zero hn
     unfold floorSqrt
-    rw [if_neg hn]
+    rw [ite_eq_right hn]
     exact sqrtAux_full_fuel_sq_le n hn_pos
 
 /-- Base case of `ceilSqrt`: since `floorSqrt 0 = 0` is a perfect square,
@@ -464,7 +464,7 @@ theorem le_ceilSqrt_sq (n : Nat) : n ≤ (ceilSqrt n) ^ 2 := by
   · have hn_pos : 0 < n := Nat.pos_of_ne_zero hn
     have hfloor : floorSqrt n = sqrtAux n (2 * n.log2 + 1) n := by
       unfold floorSqrt
-      rw [if_neg hn]
+      rw [ite_eq_right hn]
     have hinit : n ≤ (n + 1) ^ 2 := by
       simp [Nat.pow_two]
       grind
@@ -473,9 +473,9 @@ theorem le_ceilSqrt_sq (n : Nat) : n ≤ (ceilSqrt n) ^ 2 := by
       exact sqrtAux_upper_succ n (2 * n.log2 + 1) n hn_pos hinit
     unfold ceilSqrt
     by_cases hsq : floorSqrt n * floorSqrt n = n
-    · rw [if_pos hsq, Nat.pow_two]
+    · rw [ite_eq_left hsq, Nat.pow_two]
       omega
-    · rw [if_neg hsq]
+    · rw [ite_eq_right hsq]
       exact hub
 
 /-- Restates `coeffNormSq f` as the explicit `foldl` summing `(f.coeff i).natAbs ^ 2`
@@ -499,13 +499,13 @@ theorem coeffL2NormBound_sq_le_two_mul_coeffNormSq (f : ZPoly) :
     dsimp [r]
     exact floorSqrt_sq_le (coeffNormSq f)
   by_cases hsq : r * r = coeffNormSq f
-  · rw [if_pos hsq]
+  · rw [ite_eq_left hsq]
     rw [Nat.pow_two]
     have hsq_floor :
         floorSqrt (coeffNormSq f) * floorSqrt (coeffNormSq f) = coeffNormSq f := by
       simpa [r] using hsq
     omega
-  · rw [if_neg hsq]
+  · rw [ite_eq_right hsq]
     rw [Nat.pow_two]
     have hr_lt : r * r < coeffNormSq f := Nat.lt_of_le_of_ne hr_sq hsq
     have hsucc_le : r * r + 1 ≤ coeffNormSq f := by omega
@@ -526,11 +526,11 @@ theorem mignotteCoeffBound_eq (f : ZPoly) (k j : Nat) :
     mignotteCoeffBound f k j = Nat.binom k j * coeffL2NormBound f := rfl
 
 /-- Restates `defaultFactorCoeffBound f` as the nested `foldl` taking the maximum of
-`mignotteCoeffBound f k j` over factor degrees `k` up to `f.degree?.getD 0` and
+`mignotteCoeffBound f k j` over factor degrees `k` up to `f.natDegree` and
 coefficient indices `j` up to `k`. -/
 theorem defaultFactorCoeffBound_eq (f : ZPoly) :
     defaultFactorCoeffBound f =
-      let degreeBound := f.degree?.getD 0
+      let degreeBound := f.natDegree
       (List.range (degreeBound + 1)).foldl
         (fun acc k =>
           (List.range (k + 1)).foldl
@@ -588,7 +588,7 @@ normalizes to `0`. -/
     | cons k ks ih =>
         intro init
         simp [mignotteCoeffBound_zero, hignore]
-  exact hfold (List.range (((0 : ZPoly).degree?).getD 0 + 1)) 0
+  exact hfold (List.range ((0 : ZPoly).natDegree + 1)) 0
 
 /-- The executable Mignotte coefficient bound `mignotteCoeffBound f k j` vanishes when
 the coefficient index `j` exceeds the factor degree `k`. -/
@@ -665,11 +665,11 @@ Every executable Mignotte coefficient bound within the ambient degree range is
 bounded by the default uniform factorization bound.
 -/
 theorem mignotteCoeffBound_le_defaultFactorCoeffBound
-    (f : ZPoly) {k j : Nat} (hk : k ≤ f.degree?.getD 0) (hj : j ≤ k) :
+    (f : ZPoly) {k j : Nat} (hk : k ≤ f.natDegree) (hj : j ≤ k) :
     mignotteCoeffBound f k j ≤ defaultFactorCoeffBound f := by
   unfold defaultFactorCoeffBound
   exact mignotteCoeffBound_le_defaultFactorCoeffBound_fold f
-    (List.range (f.degree?.getD 0 + 1))
+    (List.range (f.natDegree + 1))
     (List.mem_range.mpr (Nat.lt_succ_of_le hk)) hj
 
 /-- The conservative coefficient-norm bound `coeffL2NormBound f` is at most the default
@@ -699,7 +699,7 @@ private theorem foldl_max_le_of_forall {α : Type} (g : α → Nat) (B : Nat) :
 every executable Mignotte coefficient bound within the ambient degree range is at
 most `B`, then so is the default uniform factor coefficient bound. -/
 theorem defaultFactorCoeffBound_le (f : ZPoly) {B : Nat}
-    (h : ∀ k, k ≤ f.degree?.getD 0 → ∀ j, j ≤ k → mignotteCoeffBound f k j ≤ B) :
+    (h : ∀ k, k ≤ f.natDegree → ∀ j, j ≤ k → mignotteCoeffBound f k j ≤ B) :
     defaultFactorCoeffBound f ≤ B := by
   unfold defaultFactorCoeffBound
   have outer : ∀ (ks : List Nat) (init : Nat), init ≤ B →
@@ -720,7 +720,7 @@ theorem defaultFactorCoeffBound_le (f : ZPoly) {B : Nat}
           (List.range (k + 1)) init hinit
           (fun j hj => hall k (List.mem_cons.mpr (Or.inl rfl)) j
             (Nat.lt_succ_iff.mp (List.mem_range.mp hj)))
-  exact outer (List.range (f.degree?.getD 0 + 1)) 0 (Nat.zero_le _)
+  exact outer (List.range (f.natDegree + 1)) 0 (Nat.zero_le _)
     (fun k hk j hj => h k (Nat.lt_succ_iff.mp (List.mem_range.mp hk)) j hj)
 
 /-- The ceiling square root is positive on positive inputs. -/
@@ -809,7 +809,7 @@ theorem binom_le_central {n k j : Nat} (hjk : j ≤ k) (hkn : k ≤ n) :
 binomial times the single loop-invariant norm. -/
 @[expose]
 def defaultFactorCoeffBoundImpl (f : ZPoly) : Nat :=
-  let n := f.degree?.getD 0
+  let n := f.natDegree
   Nat.binom n (n / 2) * coeffL2NormBound f
 
 /-- Register the value-equal closed form `defaultFactorCoeffBoundImpl` as the
@@ -827,7 +827,7 @@ theorem defaultFactorCoeffBound_eq_impl :
     rw [mignotteCoeffBound_eq]
     exact Nat.mul_le_mul_right (coeffL2NormBound f) (binom_le_central hj hk)
   · have hcentral :
-        mignotteCoeffBound f (f.degree?.getD 0) (f.degree?.getD 0 / 2)
+        mignotteCoeffBound f (f.natDegree) (f.natDegree / 2)
           ≤ defaultFactorCoeffBound f :=
       mignotteCoeffBound_le_defaultFactorCoeffBound f (Nat.le_refl _)
         (Nat.div_le_self _ 2)

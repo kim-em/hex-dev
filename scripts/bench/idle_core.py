@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Choose a logical CPU that is idle, and idle on all of its SMT siblings.
+"""Choose a logical CPU for shared-host benchmark placement.
 
 The factorization measurement recipes pin the measured service to one core so
 its timings are not perturbed by the scheduler. Pinning to a *fixed* core --
@@ -13,11 +13,10 @@ inflating roughly a quarter of a sweep's rows by about 1.9x, with the affected
 rows differing from run to run because they depend on when the siblings
 happened to be busy. `ps -eo pid,psr` shows it immediately; nothing else does.
 
-This module picks a core that is currently free, so concurrent measurements on
-the same host do not collide. It is a heuristic about *scheduling*, not about
-correctness: a caller that needs a preregistered CPU for a release-quality
-verdict (see SPEC/benchmarking.md, designated-shared-host protocol) should
-still name one explicitly and record it.
+This module picks a core with low recent activity so concurrent measurements on
+the same host are less likely to collide. It is a placement heuristic, not an
+acceptance test. Callers record the selected CPU and retain whatever activity
+occurs during the run as context.
 
 Run::
 
@@ -34,10 +33,6 @@ import os
 from pathlib import Path
 import sys
 import time
-
-# A core busy for less than this fraction of the sampling window counts as
-# free. Timer ticks and kernel bookkeeping never leave a core at exactly zero.
-BUSY_PERCENT = 5.0
 
 # Core 0 additionally services interrupts and is the historical default of
 # every recipe here, so it is the one core most likely to be contended.
@@ -102,33 +97,26 @@ def busy_by_cpu(window: float = 0.3) -> dict[int, float]:
     return busy
 
 
-def pick(avoid: frozenset[int] = AVOID,
-         busy_percent: float = BUSY_PERCENT) -> int:
-    """Return a logical CPU that is free, and whose SMT siblings are free.
+def pick(avoid: frozenset[int] = AVOID) -> int:
+    """Return the least-active available logical CPU and SMT core.
 
-    Among the free candidates this returns the quietest, so a core sitting
-    just under the threshold is not preferred to an entirely empty one and a
-    transient blip cannot flip the choice to a worse core.
-
-    Raises `RuntimeError` when the host has no such CPU, which is the honest
-    outcome: on a saturated host there is no placement that avoids the
-    interference this function exists to avoid.
+    A busy host still gets a placement; callers record activity as context and
+    retain the run.
     """
     busy = busy_by_cpu()
     siblings = sibling_map()
-    candidates = sorted(siblings) or {cpu: {cpu} for cpu in sorted(busy)}
-    free = []
-    for cpu in candidates:
-        if cpu in avoid:
+    candidates = siblings or {cpu: {cpu} for cpu in sorted(busy)}
+    ranked = []
+    for cpu, group in candidates.items():
+        if cpu in avoid or not group or cpu not in busy:
             continue
         group = siblings.get(cpu, {cpu})
-        load = max(busy.get(other, 0.0) for other in group)
-        if load < busy_percent:
-            free.append((load, cpu))
-    if not free:
-        raise RuntimeError(
-            "no idle core: every logical CPU or one of its SMT siblings is busy")
-    return min(free)[1]
+        ranked.append((max(busy.get(other, 0.0) for other in group), cpu))
+    if not ranked and avoid:
+        return pick(avoid=frozenset())
+    if not ranked:
+        raise RuntimeError("no online logical CPU is available")
+    return min(ranked)[1]
 
 
 def pin_self(cpu: int) -> None:
@@ -147,16 +135,12 @@ def main() -> int:
     p = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--busy-percent", type=float, default=BUSY_PERCENT,
-                   help=f"treat a core below this %%CPU as free "
-                        f"(default {BUSY_PERCENT})")
     p.add_argument("--allow-cpu0", action="store_true",
                    help="consider core 0, which recipes historically default "
                         "to and which also services interrupts")
     args = p.parse_args()
     try:
-        print(pick(avoid=frozenset() if args.allow_cpu0 else AVOID,
-                   busy_percent=args.busy_percent))
+        print(pick(avoid=frozenset() if args.allow_cpu0 else AVOID))
     except RuntimeError as error:
         print(error, file=sys.stderr)
         return 1

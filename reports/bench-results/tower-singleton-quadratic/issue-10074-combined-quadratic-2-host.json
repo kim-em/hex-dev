@@ -1,0 +1,232 @@
+{
+  "label": "combined-quadratic",
+  "attempt": 2,
+  "runs": [
+    {
+      "arm": "left",
+      "source_commit": "af91cca87",
+      "binary_sha256": "28701e063ccb1667223fdd56eb899c84afc3571e3efd05a372a1f7822ce4c4d9",
+      "command": [
+        "taskset",
+        "-c",
+        "29",
+        "/tmp/tower-factor-experiments/quadratic",
+        "run",
+        "Hex.NumberTowerBench.runTowerFactorPair2",
+        "Hex.NumberTowerBench.runTowerFactorPair3",
+        "Hex.NumberTowerBench.runTowerFactorPair4",
+        "Hex.NumberTowerBench.runTowerFactorPair6",
+        "Hex.NumberTowerBench.runTowerFactorPair8",
+        "Hex.NumberTowerBench.runTowerFactorPair12",
+        "Hex.NumberTowerBench.runTowerFactorLadder",
+        "Hex.NumberTowerBench.runTowerCheckFactorization",
+        "--repeats",
+        "5",
+        "--min-total-seconds",
+        "0.2",
+        "--export-file",
+        "reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-2-left.json"
+      ],
+      "export": "reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-2-left.json",
+      "preflight": {
+        "29": 2.985074626865672,
+        "77": 1.5151515151515151
+      },
+      "postflight": {
+        "29": 98.00995024875621,
+        "77": 98.0
+      },
+      "during": [
+        {
+          "29": 100.0,
+          "77": 3.5
+        },
+        {
+          "29": 100.0,
+          "77": 3.5175879396984926
+        },
+        {
+          "29": 99.50248756218906,
+          "77": 2.5
+        },
+        {
+          "29": 100.0,
+          "77": 1.0
+        },
+        {
+          "29": 100.0,
+          "77": 1.492537313432836
+        },
+        {
+          "29": 100.0,
+          "77": 1.5075376884422111
+        },
+        {
+          "29": 100.0,
+          "77": 0.9950248756218906
+        },
+        {
+          "29": 100.0,
+          "77": 1.5075376884422111
+        },
+        {
+          "29": 100.0,
+          "77": 3.0303030303030303
+        },
+        {
+          "29": 100.0,
+          "77": 1.0
+        },
+        {
+          "29": 100.0,
+          "77": 29.64824120603015
+        },
+        {
+          "29": 100.0,
+          "77": 99.5
+        },
+        {
+          "29": 100.0,
+          "77": 98.99497487437186
+        },
+        {
+          "29": 100.0,
+          "77": 98.99497487437186
+        },
+        {
+          "29": 99.5,
+          "77": 99.0
+        }
+      ],
+      "sibling_mean": {
+        "77": 29.745914632714303
+      },
+      "exit_code": 0,
+      "accepted": false,
+      "export_error": null
+    }
+  ],
+  "preflight_windows": [
+    {
+      "0": 19.5,
+      "1": 8.542713567839195,
+      "2": 60.301507537688444,
+      "3": 16.666666666666668,
+      "4": 30.5,
+      "5": 14.07035175879397,
+      "6": 75.0,
+      "7": 17.08542713567839,
+      "8": 5.025125628140704,
+      "9": 14.646464646464647,
+      "10": 3.5,
+      "11": 12.182741116751268,
+      "12": 24.875621890547265,
+      "13": 4.5,
+      "14": 4.477611940298507,
+      "15": 4.0,
+      "16": 6.965174129353234,
+      "17": 11.5,
+      "18": 14.141414141414142,
+      "19": 4.0201005025125625,
+      "20": 16.0,
+      "21": 3.5,
+      "22": 22.388059701492537,
+      "23": 6.532663316582915,
+      "24": 98.50746268656717,
+      "25": 32.5,
+      "26": 13.5678391959799,
+      "27": 4.0,
+      "28": 1.0050251256281406,
+      "29": 2.985074626865672,
+      "30": 13.5678391959799,
+      "31": 2.0202020202020203,
+      "32": 6.030150753768845,
+      "33": 24.623115577889447,
+      "34": 21.890547263681594,
+      "35": 20.0,
+      "36": 34.5,
+      "37": 1.5,
+      "38": 1.5075376884422111,
+      "39": 2.512562814070352,
+      "40": 3.9800995024875623,
+      "41": 10.0,
+      "42": 34.65346534653465,
+      "43": 0.0,
+      "44": 22.885572139303484,
+      "45": 11.5,
+      "46": 0.5025125628140703,
+      "47": 5.0,
+      "48": 13.5678391959799,
+      "49": 16.417910447761194,
+      "50": 48.5,
+      "51": 15.92039800995025,
+      "52": 40.20100502512563,
+      "53": 17.171717171717173,
+      "54": 2.0100502512562812,
+      "55": 2.512562814070352,
+      "56": 63.81909547738694,
+      "57": 19.09547738693467,
+      "58": 3.0150753768844223,
+      "59": 3.0150753768844223,
+      "60": 7.0,
+      "61": 5.025125628140704,
+      "62": 8.457711442786069,
+      "63": 26.262626262626263,
+      "64": 6.5,
+      "65": 83.0,
+      "66": 14.07035175879397,
+      "67": 10.552763819095478,
+      "68": 5.025125628140704,
+      "69": 71.21212121212122,
+      "70": 1.5,
+      "71": 20.603015075376884,
+      "72": 1.5,
+      "73": 2.5,
+      "74": 25.252525252525253,
+      "75": 2.985074626865672,
+      "76": 3.9800995024875623,
+      "77": 1.5151515151515151,
+      "78": 4.0201005025125625,
+      "79": 100.0,
+      "80": 7.035175879396985,
+      "81": 20.5,
+      "82": 16.5,
+      "83": 4.040404040404041,
+      "84": 6.0,
+      "85": 16.336633663366335,
+      "86": 5.970149253731344,
+      "87": 28.35820895522388,
+      "88": 11.616161616161616,
+      "89": 18.5,
+      "90": 2.0202020202020203,
+      "91": 100.0,
+      "92": 16.582914572864322,
+      "93": 22.885572139303484,
+      "94": 14.427860696517413,
+      "95": 3.0150753768844223
+    }
+  ],
+  "protocol_commit": "4209945bcf0aab393a807d622b975c737a7e3349",
+  "script_sha256": "27a840170c5ba9851f4a7d98da1b916eb3065972c524ab79ef301b48ff6a0505",
+  "require_separated_canonical": true,
+  "hostname": "chungus2",
+  "release_quality": false,
+  "pari_provider": null,
+  "names": [
+    "Hex.NumberTowerBench.runTowerFactorPair2",
+    "Hex.NumberTowerBench.runTowerFactorPair3",
+    "Hex.NumberTowerBench.runTowerFactorPair4",
+    "Hex.NumberTowerBench.runTowerFactorPair6",
+    "Hex.NumberTowerBench.runTowerFactorPair8",
+    "Hex.NumberTowerBench.runTowerFactorPair12",
+    "Hex.NumberTowerBench.runTowerFactorLadder",
+    "Hex.NumberTowerBench.runTowerCheckFactorization"
+  ],
+  "git_status": " M reports/bench-results/tower-singleton-quadratic/validation.json\n M reports/hex-number-field-tower-performance.md\n?? reports/bench-results/tower-singleton-quadratic/combined-build.log\n?? reports/bench-results/tower-singleton-quadratic/combined-diff-build.log\n?? reports/bench-results/tower-singleton-quadratic/combined-diff.log\n?? reports/bench-results/tower-singleton-quadratic/combined-verify.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-1-host.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-1-left.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-1-left.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-1-right.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-1-right.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-2-host.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-2-right.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-2-right.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-3-host.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-3-left.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-3-left.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-3-right.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-3-right.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-4-host.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-4-right.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-4-right.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-5-host.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-5-right.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-5-right.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-6-host.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-6-right.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-6-right.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-7-host.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-7-left.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-7-left.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-7-right.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-7-right.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-8-host.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-8-right.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-8-right.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-9-host.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-9-left.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-9-left.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-9-right.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-9-right.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-af7-decision.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-1-host.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-1-left.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-1-left.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-quadratic-decision.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-singleton-1-host.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-singleton-1-left.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-singleton-1-left.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-singleton-2-host.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-singleton-2-left.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-singleton-2-left.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-singleton-3-host.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-singleton-3-left.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-singleton-3-left.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-singleton-4-host.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-singleton-4-left.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-singleton-4-left.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-singleton-4-right.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-singleton-4-right.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-singleton-5-host.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-singleton-5-left.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-singleton-5-left.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-singleton-5-right.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-singleton-5-right.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-singleton-6-host.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-singleton-6-left.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-singleton-6-left.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-singleton-6-right.json\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-singleton-6-right.log\n?? reports/bench-results/tower-singleton-quadratic/issue-10074-combined-singleton-decision.json\n",
+  "cpu": 29,
+  "siblings": [
+    29,
+    77
+  ],
+  "accepted": false
+}

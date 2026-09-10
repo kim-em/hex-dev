@@ -21,8 +21,10 @@ Covered properties:
 - gcds divide both inputs and their cofactors reconstruct both inputs
 - route-0 factors are restored after checked gcd on the reduced pair
 - squarefree factors reassemble the input with positive sorted multiplicities
+- radicals divide the input, restoring scalar content and repeated factors
 Covered edge cases:
-- arities zero and one, zero, units, constants, and scalar content
+- arities zero and one, zero, units, constants, and negative scalar content
+- rational normalization by a nonintegral coefficient
 - pure monomial and recursive-content gcds
 - heuristic false positives, bad Brown points, unlucky images, and restarts
 - high and gapped multiplicities, repeated content, and every-variable factors
@@ -235,6 +237,32 @@ private def sqfContract {n : Nat} (p : MvPoly n Int Mono.lex) : Bool :=
   let y : P2 := X 1
   let p := (x + y + 1) ^ 3 * (x + 2)
   radical p == (x + 2) * (x + y + 1) && isSquarefree (radical p)
+
+-- Zero and nonzero scalars use different branches of the radical.
+#guard radical (0 : P2) == 0
+#guard radical (C (-12) : P2) == 1
+#guard radical (C (-12) : P0) == 1
+
+-- Exact division restores both the negative scalar content and the repeated
+-- factors omitted by the normalized radical.
+#guard
+  let x : P2 := X 0
+  let y : P2 := X 1
+  let p := C (-6) * (x + 1) ^ 3 * (y + 2) ^ 2
+  radical p == (x + 1) * (y + 2) &&
+    divExact? p (radical p) == some (C (-6) * (x + 1) ^ 2 * (y + 2))
+
+#guard
+  let x : Q2 := X 0
+  let y : Q2 := X 1
+  let p := C (1 / 2 : Rat) * (x + 1) ^ 3 * (y + 2) ^ 2
+  radical p == (x + 1) * (y + 2) &&
+    divExact? p (radical p) == some (C (1 / 2 : Rat) * (x + 1) ^ 2 * (y + 2))
+
+-- Divisibility still inherits the unfinished GCD checker and producer proofs.
+/-- info: 'Hex.MvPoly.radical_dvd' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.MvPoly.radical_dvd
 
 /-! Positive-characteristic exact decisions. -/
 

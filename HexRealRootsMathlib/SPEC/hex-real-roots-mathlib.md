@@ -4,7 +4,7 @@ Mathlib companion for [hex-real-roots](https://github.com/leanprover/hex-real-ro
 **soundness** of the certified isolations (a `RealRootIsolation`
 witness implies a unique real root in its half-open interval, and a
 `RealRootIsolations` value captures every real root exactly once) and
-**completeness** of the driver (`isolate? p ≠ none` for squarefree
+**completeness** of the driver (`ZPoly.isolateRealRoots? p ≠ none` for squarefree
 `p`, through the Sturm engine). One theorem is deferred: that the
 Descartes engine alone never falls back. It is stated here, its
 prerequisite is named, and nothing else depends on it.
@@ -94,7 +94,7 @@ def sturmVar (chain : List (Polynomial ℝ)) (x : ℝ) : ℕ
 Steps 1-3 are the standard local lemmas; the theorem is a telescoping
 sum over the finitely many zeros of the chain elements in `(a, b]`.
 The half-open convention in step 3 is the one design-sensitive point,
-and it is what makes the executable `sturmCount` match hex-real-roots'
+and it is what makes the executable `ZPoly.sturmCount` match hex-real-roots'
 half-open intervals with no endpoint hypotheses.
 
 ## Chain correspondence
@@ -162,9 +162,9 @@ derivative flanks, and exclusion of a common zero.
 
 The finite-point bridge `sturmVarAt_eq` and the infinity bridges
 `sturmVarNegInf_eq` / `sturmVarPosInf_eq` are public for an arbitrary
-literal `Array ZPoly`. Together with `Sturm.sturm_half_open` and
-`Sturm.sturm_line`, they turn literal executable variation reads into
-root counts without calling `sturmCount` or `rootCount`. The
+literal `Array ZPoly`. Together with `Sturm.IsSturmChain.sturm_Ioc` and
+`Sturm.IsSturmChain.sturm`, they turn literal executable variation reads into
+root counts without calling `ZPoly.sturmCount` or `ZPoly.rootCount`. The
 `ZReplay.count_eq_card_roots` and `ZReplay.total_eq_card_roots` corollaries
 perform the list-to-array alignment and compose replay, squarefreeness, and
 counting in the form consumed by a checker.
@@ -175,7 +175,7 @@ upper]`, while an ordered complete array captures every root exactly
 once. These statements consume `Squarefree (toPolyℝ f)` and `f ≠ 0`,
 not the executable `SquareFreeRat f` predicate, and do not reuse the
 current `RealRootIsolation` fields that are definitionally tied to
-`sturmCount`. The existing executable isolation theorem remains separate for
+`ZPoly.sturmCount`. The existing executable isolation theorem remains separate for
 API compatibility: the generic statement intentionally mirrors its finite
 cardinality argument rather than coupling the literal layer back to the
 executable structures it is meant to abstract over.
@@ -185,11 +185,11 @@ executable structures it is meant to abstract over.
 ```lean
 theorem sturmCount_eq_card_roots (p : ZPoly) (hp : SquareFreeRat p)
     (I : DyadicInterval) :
-    Hex.sturmCount p I =
+    Hex.ZPoly.sturmCount p I =
       ((toPolyℝ p).roots.filter (fun r => I.lower < r ∧ r ≤ I.upper)).card
 
 theorem rootCount_eq_card_roots (p : ZPoly) (hp : SquareFreeRat p) :
-    Hex.rootCount p = (toPolyℝ p).roots.card
+    Hex.ZPoly.rootCount p = (toPolyℝ p).roots.card
 ```
 
 ## Isolation semantics
@@ -216,7 +216,7 @@ theorem RealRootIsolations.isolates
 ```
 
 The second follows from the first plus `ordered` (disjointness) and
-`complete` (counting): the isolations hold `rootCount p` distinct
+`complete` (counting): the isolations hold `ZPoly.rootCount p` distinct
 roots among them, and that is all the roots there are. Both are also
 exported in the `Hex` namespace, so dot notation resolves on the
 executable structures (`iso.exists_unique_root`).
@@ -360,7 +360,7 @@ constructor lands. The elaborator emits the replay shape. Two constraints shape 
 The executable closure the kernel replays — thirteen definitions:
 `sturmChain`, `sturmChainAux`, `spem`, `spemAux`, `spemStep`,
 `signVar`, `sturmVarAt`, `sturmVarNegInf`, `sturmVarPosInf`,
-`sturmCount`, `rootCount`, `ZPoly.evalDyadic`, `dyadicSign` — is
+`ZPoly.sturmCount`, `ZPoly.rootCount`, `ZPoly.evalDyadic`, `dyadicSign` — is
 `@[expose]`d in hex-real-roots for this purpose, with the three
 private helpers (`spemStep`, `spemAux`, `sturmChainAux`)
 de-privatized (an exposed public definition may not reference a
@@ -404,8 +404,9 @@ non-closed width, backend failure, and internal certificate mismatch
 elaboration): degree ≤ 10 at natural widths, and degree ≤ 6 refined
 to `2^(-20)`, cost seconds (deeper refined-width combinations are
 unmeasured); per-field certificates remain acceptable only below
-degree ~6. The
-elaborator caps refinement with a diagnostic for pathological widths.
+degree ~6. The bit target is read off the requested width's bit
+lengths, so a very fine width costs what isolating to it costs and
+nothing extra.
 
 **Phase-4 proof evidence.** `isolate_roots` is an elaboration/proof surface,
 not a LeanBench executable. Build-only modules below
@@ -421,23 +422,21 @@ validation, and complete source provenance.
 `HexRealRootsMathlibReplayProbeScientific` owns the larger release arms and
 remains outside routine CI.
 
-On the named shared release machine a canonical invocation is:
+A canonical shared-host invocation selects a CPU for placement and records it:
 
 ```bash
-python3 scripts/bench/real_roots_mathlib_sweep.py --samples 6 \
+cpu=$(python3 scripts/bench/idle_core.py)
+taskset -c "$cpu" python3 scripts/bench/real_roots_mathlib_sweep.py --samples 6 \
   --timeout 180 --warm-timeout 600 \
-  --shared-host --expected-host chungus2 --cpu 22
+  --shared-host --cpu "$cpu"
 ```
 
-The release run preregisters its selected logical CPU and aggregate
-interference ratio on the command line; the artifact and headline report record
-those exact values. They govern that run rather than the illustrative CPU
-number above.
+The six balanced rounds retain every adjacent pair. Scheduler and SMT activity
+remain in the artifact as context and never trigger retries or removal.
 
-The runner enforces the designated-shared-host contract in
-`SPEC/benchmarking.md`, including bounded retries of complete rejected pairs
-after a bounded quiet-core preflight and a single aggregate pinned-core/SMT
-interference ceiling; `--allow-busy` remains diagnostic-only. Executable
+The runner follows the shared-host contract in `SPEC/benchmarking.md`: matched
+arms remain adjacent with alternating orientation, every completed pair is
+retained, and host/core activity is descriptive context. Executable
 isolation arithmetic belongs to the existing Mathlib-free `HexRealRoots`
 benchmark. The bridge declarations have no separable compiled runtime kernel.
 For the proof-emitting elaborator there is
@@ -480,10 +479,10 @@ and cited from each. Neither companion should carry a private copy.
     hence narrower than any gap between real roots, hence has Sturm
     count 0 or 1, so the worklist drains and the totals match. -/
 theorem isolateSturm?_isSome (p : ZPoly) (hp : SquareFreeRat p) :
-    (Hex.isolateSturm? p).isSome
+    (Hex.ZPoly.isolateSturm? p).isSome
 
-theorem isolate?_isSome (p : ZPoly) (hp : SquareFreeRat p) :
-    (Hex.isolate? p).isSome
+theorem isolateRealRoots?_isSome (p : ZPoly) (hp : SquareFreeRat p) :
+    (Hex.ZPoly.isolateRealRoots? p).isSome
 ```
 
 Note this argument needs only the real-pair instances of
@@ -528,7 +527,7 @@ theorem sameRoot_iff (hp) (i₁ i₂) :
 
 ```lean
 theorem isolateDescartes?_isSome (p : ZPoly) (hp0 : p ≠ 0)
-    (hp : SquareFreeRat p) : (Hex.isolateDescartes? p).isSome
+    (hp : SquareFreeRat p) : (Hex.ZPoly.isolateDescartes? p).isSome
 ```
 
 Proven in `TwoCircle.lean`; with it the companion is fully
@@ -572,16 +571,38 @@ Status and boundaries:
   proof (Obreschkoff 1963; Krandick-Mehlhorn 2006, Eigenwillig 2008)
   runs by induction on multiplying in linear and conjugate-quadratic
   factors, with sector inequalities on coefficient sequences.
-- **Nothing else waited for it.** `isolate?_isSome`, all soundness
+- **Nothing else waited for it.** `isolateRealRoots?_isSome`, all soundness
   theorems, and hex-rcf's decision procedure were complete without it;
   its value is to retire the Sturm fallback path from the trusted
   runtime story. The executable conformance stand-ins for this
-  theorem (`isolateDescartes?` succeeds and agrees with `isolate?` per
+  theorem (`ZPoly.isolateDescartes?` succeeds and agrees with `ZPoly.isolateRealRoots?` per
   fixture) are retired in the same change now that the theorem carries
   the claim.
 - Like the Sturm slice, the sector/region/parity development is stated
   against `Polynomial ℝ`/`ℂ` with no `HexRealRoots` dependence, ready
   as a Mathlib contribution in its own right.
+
+## Root-count certificates over Mathlib polynomials
+
+`SturmCertificate` checks signed remainder identities over `Polynomial ℝ`.
+`Sturm.RemainderChain.pair` terminates a certificate at a nonzero constant;
+`Sturm.RemainderChain.cons` prepends a positive scaled remainder identity.
+The derivative relation gives `RemainderChain.isSturmChain` and
+`RemainderChain.separable` separately. `RemainderChain.card_rootSet` works for
+any coefficient ring equipped with an algebra map into `ℝ`.
+
+`RealRootCount` provides the tactic `by real_root_count` and the term elaborator
+`real_root_count p`. Both accept closed squarefree integer-coefficient
+polynomials over `ℚ` of positive degree. The generator and rational division
+run at elaboration time; the emitted proof checks polynomial identities,
+nonvanishing, positivity, and the natural-number variation count.
+
+The generic Sturm statements, certificate checker, polynomial parser, and
+root-count elaborator agree with their Mathlib counterparts after module-path,
+parser-namespace, and documentation-markup translation. Run
+`python3 scripts/check_sturm_sync.py /path/to/mathlib` to check that agreement.
+Once the pinned Mathlib release contains the development, these companion
+modules can re-export the corresponding Mathlib modules.
 
 ## File organisation
 
@@ -589,6 +610,10 @@ Status and boundaries:
 HexRealRootsMathlib/
   SturmChainDefs.lean  -- IsSturmChain, sturmVar over Polynomial ℝ
   SturmTheorem.lean    -- the counting theorem and the line form
+  SturmCertificate.lean -- certificates over Mathlib polynomials
+  RealRootCount.lean   -- checked root-count tactic and term elaborator
+  SturmTests.lean      -- endpoint conventions and constant chains
+  RealRootCountTests.lean -- root counts and elaborator diagnostics
   ChainCorrespond.lean -- executable-chain correspondence and the shared
                           recurrence/cast helpers; sturmCount_eq_card_roots;
                           compatibility aliases for HexPolyZMathlib.Squarefree
@@ -606,7 +631,7 @@ HexRealRootsMathlib/
   IsolateRoots.lean    -- IsolatedRealRoots, its constructors, the
                           bridge tactic, and the isolate_roots
                           term elaborator
-  Drivers.lean         -- isolateSturm?_isSome, isolate?_isSome,
+  Drivers.lean         -- isolateSturm?_isSome, isolateRealRoots?_isSome,
                           refine1_isolates_same
   SimpleRealRoot.lean  -- overlaps_iff_same_root, toReal, sameRoot_iff
   TwoCircle.lean       -- the deferred development

@@ -1,0 +1,7 @@
+{
+ "fingerprint": "1f7038f926e2",
+ "host": "chungus2",
+ "date": "2026-09-05T10:27:32Z",
+ "describe": "e07a45f51dc3",
+ "label": "re-key after excluding unimported test modules; canonicalization leg measured here on the packed-word code, tactic leg carried over from ac1dfad4a453"
+}

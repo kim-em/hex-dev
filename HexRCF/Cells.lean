@@ -574,7 +574,7 @@ theorem meetsIoc_iff {f : ZPoly} {cert : IsolationCert}
   | «open» cut =>
       by_cases hzero : cert.intervals.size = 0
       · simp only [meetsIoc]
-        rw [dif_pos hzero]
+        rw [dite_eq_left hzero]
         constructor
         · intro _
           exact ⟨B, by simp [Sem, hzero], hab, le_rfl⟩
@@ -590,7 +590,7 @@ theorem meetsIoc_iff {f : ZPoly} {cert : IsolationCert}
         have hbound : (cmps.lower[0] == .gt) = true ↔ A < M.root first := by
           simpa [first] using eq_gt_iff hl
         simp only [meetsIoc]
-        rw [dif_neg hzero, dif_pos hleft, hbound]
+        rw [dite_eq_right hzero, dite_eq_left hleft, hbound]
         constructor
         · intro har
           obtain ⟨x, hax, hx⟩ := exists_between (lt_min hab har)
@@ -610,7 +610,7 @@ theorem meetsIoc_iff {f : ZPoly} {cert : IsolationCert}
             M.root last < B := by
           simpa [last] using eq_lt_iff hu
         simp only [meetsIoc]
-        rw [dif_neg hzero, dif_neg hleft, dif_pos hright, hbound]
+        rw [dite_eq_right hzero, dite_eq_right hleft, dite_eq_left hright, hbound]
         constructor
         · intro hrb
           obtain ⟨x, hx, hxb⟩ := exists_between (max_lt hab hrb)
@@ -639,7 +639,7 @@ theorem meetsIoc_iff {f : ZPoly} {cert : IsolationCert}
             A < M.root next := by
           simpa [next] using eq_gt_iff hl
         simp only [meetsIoc]
-        rw [dif_neg hzero, dif_neg hleft, dif_neg hright, Bool.and_eq_true,
+        rw [dite_eq_right hzero, dite_eq_right hleft, dite_eq_right hright, Bool.and_eq_true,
           hubound, hlbound]
         constructor
         · rintro ⟨hrb, har⟩

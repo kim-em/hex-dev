@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexNumberFieldTowerMathlib.NormCore.Basic
+public import HexNumberFieldTowerMathlib.NormCore.Quadratic
 
 public section
 
@@ -33,11 +33,11 @@ private theorem relation_sum_of_mem_rootSet (level : Level)
     (∑ j ∈ Finset.range level.degree,
         LevelSemantics.denote lower (level.defining.getD j #[]) * x ^ j) +
       x ^ level.degree = 0 := by
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     coeffFieldPoly lower hvalid.2.2 hinjective hinv
   let ι : Arithmetic.Coeff lower →+* ℂ :=
     LevelSemantics.coeffHom lower hvalid.2.2 hinjective hinv
-  letI : Algebra (Arithmetic.Coeff lower) ℂ := ι.toAlgebra
+  let : Algebra (Arithmetic.Coeff lower) ℂ := ι.toAlgebra
   change x ∈ (HexPolyMathlib.toPolynomial
     (Arithmetic.Coeff.relation level lower)).rootSet ℂ → _
   intro hx
@@ -74,13 +74,19 @@ private theorem relation_sum_of_mem_rootSet (level : Level)
     one_mul] at hxzero
   exact hxzero
 
-/-- Re-decoding an executable one-level norm recovers the dense resultant
-before its coefficients were flattened for the recursive call. -/
-theorem rawPoly_oneLevel (level : Level) (lower : List Level)
+/-- The decoded executable norm agrees with the dense resultant over a
+validated lower field. The quadratic branch uses algebraic equivalence,
+followed by the same exact coordinate round trip as the general fallback. -/
+theorem rawPoly_resultant (level : Level) (lower : List Level)
+    (hlower : LevelsValid lower)
+    (hinjective : LevelSemantics.DenoteInjective lower)
+    (hinv : ∀ a : Arithmetic.Coeff lower,
+      LevelSemantics.coeffDenote lower a⁻¹ = (LevelSemantics.coeffDenote lower a)⁻¹)
     (f : Array (Array Rat)) (c : Int) :
     Factor.rawPoly lower (oneLevel level lower f c) =
       DensePoly.resultant (definingOuter level lower)
         (shiftedOuter level lower f c) := by
+  rw [oneLevel_eq level lower hlower hinjective hinv]
   let result := DensePoly.resultant (definingOuter level lower)
     (shiftedOuter level lower f c)
   change DensePoly.ofCoeffs
@@ -111,34 +117,23 @@ theorem oneLevel_resultant (level : Level) (lower : List Level)
       Polynomial.resultant
         (rawOuter lower (definingOuter level lower))
         (rawOuter lower (shiftedOuter level lower f c))
-        (m := (definingOuter level lower).degree?.getD 0)
-        (n := (shiftedOuter level lower f c).degree?.getD 0) := by
-  letI : Field (Arithmetic.Coeff lower) :=
+        (m := (definingOuter level lower).natDegree)
+        (n := (shiftedOuter level lower f c).natDegree) := by
+  let : Field (Arithmetic.Coeff lower) :=
     coeffFieldPoly lower hlower hinjective hinv
-  letI : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
-  letI : IsDomain (DensePoly (Arithmetic.Coeff lower)) :=
+  let : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
+  let : IsDomain (DensePoly (Arithmetic.Coeff lower)) :=
     (HexPolyMathlib.equiv
       (R := Arithmetic.Coeff lower)).toMulEquiv.isDomain
         (Polynomial (Arithmetic.Coeff lower))
   let outer := definingOuter level lower
   let shifted := shiftedOuter level lower f c
   let result := DensePoly.resultant outer shifted
-  have honeLevel : oneLevel level lower f c =
-      result.toArray.map Arithmetic.Coeff.data := by
-    rfl
   have hroundTrip :
       DensePoly.ofCoeffs
           ((oneLevel level lower f c).map
             (Arithmetic.Coeff.ofData lower)) = result := by
-    rw [honeLevel, Array.map_map]
-    have harray : result.toArray.map
-        (Arithmetic.Coeff.ofData lower ∘ Arithmetic.Coeff.data) =
-          result.toArray := by
-      apply Array.ext
-      · simp
-      · intro i hi₁ hi₂
-        simp [Function.comp_def]
-    rw [harray, DensePoly.ofCoeffs_toArray]
+    exact rawPoly_resultant level lower hlower hinjective hinv f c
   rw [hroundTrip, ← rawPolynomialHom_apply lower hlower hinjective hinv]
   dsimp only [result]
   rw [DensePoly.toPolynomial_resultant,
@@ -170,22 +165,22 @@ theorem oneLevel_shift_zero (level : Level) (lower : List Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
-  letI : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
+  let : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
   let ι : Arithmetic.Coeff lower →+* ℂ :=
     LevelSemantics.coeffHom lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Algebra (Arithmetic.Coeff lower) ℂ := ι.toAlgebra
+  let : Algebra (Arithmetic.Coeff lower) ℂ := ι.toAlgebra
   let relation := Arithmetic.Coeff.relation level lower
   let p := HexPolyMathlib.toPolynomial relation
   let shifted := Factor.shiftTop level lower f c
   let M := rawOuter lower (definingOuter level lower)
   let G := rawOuter lower (shiftedOuter level lower f c)
   let G₀ := rawOuter lower (shiftedOuter level lower shifted 0)
-  let n := (shiftedOuter level lower f c).degree?.getD 0
-  let n₀ := (shiftedOuter level lower shifted 0).degree?.getD 0
+  let n := (shiftedOuter level lower f c).natDegree
+  let n₀ := (shiftedOuter level lower shifted 0).natDegree
   let R := rawPolynomial lower
     (Factor.rawPoly lower (oneLevel level lower f c))
   let R₀ := rawPolynomial lower
@@ -200,7 +195,7 @@ theorem oneLevel_shift_zero (level : Level) (lower : List Level)
     exact hab
   have hrawOuterDegree
       (g : DensePoly (DensePoly (Arithmetic.Coeff lower))) :
-      (rawOuter lower g).natDegree = g.degree?.getD 0 := by
+      (rawOuter lower g).natDegree = g.natDegree := by
     rw [rawOuter_eq_map lower hvalid.2.2 hinjectiveLower hinvLower,
       Polynomial.natDegree_map_eq_of_injective hhomInjective,
       HexPolyMathlib.natDegree_toPolynomial]
@@ -231,12 +226,12 @@ theorem oneLevel_shift_zero (level : Level) (lower : List Level)
     rw [hM]
     exact (IsAlgClosed.splits (p.map ι)).roots_map Polynomial.C
   have hRResult : R = Polynomial.resultant M G
-      (m := (definingOuter level lower).degree?.getD 0) (n := n) := by
+      (m := (definingOuter level lower).natDegree) (n := n) := by
     simpa [R, M, G, n, Factor.rawPoly] using
       oneLevel_resultant level lower hvalid.2.2 hinjectiveLower
         hinvLower f c
   have hR₀Result : R₀ = Polynomial.resultant M G₀
-      (m := (definingOuter level lower).degree?.getD 0) (n := n₀) := by
+      (m := (definingOuter level lower).natDegree) (n := n₀) := by
     simpa [R₀, M, G₀, n₀, shifted, Factor.rawPoly] using
       oneLevel_resultant level lower hvalid.2.2 hinjectiveLower
         hinvLower shifted 0
@@ -309,19 +304,19 @@ theorem shifted_dvd_norm (level : Level) (lower : List Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
-  letI : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
-  letI : IsDomain (DensePoly (Arithmetic.Coeff lower)) :=
+  let : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
+  let : IsDomain (DensePoly (Arithmetic.Coeff lower)) :=
     (HexPolyMathlib.equiv
       (R := Arithmetic.Coeff lower)).toMulEquiv.isDomain
         (Polynomial (Arithmetic.Coeff lower))
   let M := HexPolyMathlib.toPolynomial (definingOuter level lower)
   let G := HexPolyMathlib.toPolynomial (shiftedOuter level lower f c)
-  let m := (definingOuter level lower).degree?.getD 0
-  let n := (shiftedOuter level lower f c).degree?.getD 0
+  let m := (definingOuter level lower).natDegree
+  let n := (shiftedOuter level lower f c).natDegree
   let Φ := outerEvalHom level lower hvalid hinjectiveTop
   have hMdegree : M.natDegree = m := by
     simp [M, m, HexPolyMathlib.natDegree_toPolynomial]
@@ -334,7 +329,7 @@ theorem shifted_dvd_norm (level : Level) (lower : List Level)
     intro hzero
     have hcoeff := congrArg
       (fun p : DensePoly (Arithmetic.Coeff lower) => p.coeff 0) hzero
-    simpa using hcoeff
+    simp at hcoeff
   have hmPos : 0 < m := by
     rw [← hMdegree]
     exact lt_of_lt_of_le (Nat.zero_lt_of_lt hvalid.1.1)
@@ -344,7 +339,8 @@ theorem shifted_dvd_norm (level : Level) (lower : List Level)
       (by rw [hMdegree]) (by rw [hGdegree]) (Or.inl hmPos.ne')
   have hresult : Factor.rawPoly lower (oneLevel level lower f c) =
       Polynomial.resultant M G (m := m) (n := n) := by
-    rw [rawPoly_oneLevel, DensePoly.toPolynomial_resultant]
+    rw [rawPoly_resultant level lower hvalid.2.2 hinjectiveLower hinvLower,
+      DensePoly.toPolynomial_resultant]
   have hMzero : Φ M = 0 := by
     rw [show M = HexPolyMathlib.toPolynomial
       (definingOuter level lower) from rfl,
@@ -385,14 +381,14 @@ theorem oneLevel_ne_zero (level : Level) (lower : List Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
-  letI : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
+  let : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
   let ι : Arithmetic.Coeff lower →+* ℂ :=
     LevelSemantics.coeffHom lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Algebra (Arithmetic.Coeff lower) ℂ := ι.toAlgebra
+  let : Algebra (Arithmetic.Coeff lower) ℂ := ι.toAlgebra
   let relation := Arithmetic.Coeff.relation level lower
   let p := HexPolyMathlib.toPolynomial relation
   have hpDegree : p.natDegree = level.degree := by
@@ -434,7 +430,7 @@ theorem oneLevel_ne_zero (level : Level) (lower : List Level)
         (hrelation x)).injective).mp hzero
   let M := rawOuter lower (definingOuter level lower)
   let G := rawOuter lower (shiftedOuter level lower f c)
-  let n := (shiftedOuter level lower f c).degree?.getD 0
+  let n := (shiftedOuter level lower f c).natDegree
   let R := rawPolynomial lower
     (Factor.rawPoly lower (oneLevel level lower f c))
   have hhomInjective : Function.Injective
@@ -447,7 +443,7 @@ theorem oneLevel_ne_zero (level : Level) (lower : List Level)
     exact hab
   have hrawOuterDegree
       (g : DensePoly (DensePoly (Arithmetic.Coeff lower))) :
-      (rawOuter lower g).natDegree = g.degree?.getD 0 := by
+      (rawOuter lower g).natDegree = g.natDegree := by
     rw [rawOuter_eq_map lower hvalid.2.2 hinjectiveLower hinvLower,
       Polynomial.natDegree_map_eq_of_injective hhomInjective,
       HexPolyMathlib.natDegree_toPolynomial]
@@ -470,7 +466,7 @@ theorem oneLevel_ne_zero (level : Level) (lower : List Level)
     rw [hM]
     exact (IsAlgClosed.splits (p.map ι)).roots_map Polynomial.C
   have hRResult : R = Polynomial.resultant M G
-      (m := (definingOuter level lower).degree?.getD 0) (n := n) := by
+      (m := (definingOuter level lower).natDegree) (n := n) := by
     simpa [R, M, G, n, Factor.rawPoly] using
       oneLevel_resultant level lower hvalid.2.2 hinjectiveLower
         hinvLower f c
@@ -498,7 +494,7 @@ theorem oneLevel_ne_zero (level : Level) (lower : List Level)
     · exact hconjugateNe xr hconj
     · have hcoeff := congrArg (fun q : Polynomial ℂ => q.coeff 1)
           hlinear.2
-      simpa using hcoeff
+      simp at hcoeff
   have hproductNe : (M.roots.map G.eval).prod ≠ 0 := by
     apply Multiset.prod_ne_zero
     intro hzero
@@ -545,14 +541,14 @@ theorem oneLevel_mul (level : Level) (lower : List Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
-  letI : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
+  let : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
   let ι : Arithmetic.Coeff lower →+* ℂ :=
     LevelSemantics.coeffHom lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Algebra (Arithmetic.Coeff lower) ℂ := ι.toAlgebra
+  let : Algebra (Arithmetic.Coeff lower) ℂ := ι.toAlgebra
   let relation := Arithmetic.Coeff.relation level lower
   let p := HexPolyMathlib.toPolynomial relation
   let M := rawOuter lower (definingOuter level lower)
@@ -589,7 +585,7 @@ theorem oneLevel_mul (level : Level) (lower : List Level)
     exact huv
   have hrawOuterDegree
       (g : DensePoly (DensePoly (Arithmetic.Coeff lower))) :
-      (rawOuter lower g).natDegree = g.degree?.getD 0 := by
+      (rawOuter lower g).natDegree = g.natDegree := by
     rw [rawOuter_eq_map lower hvalid.2.2 hinjectiveLower hinvLower,
       Polynomial.natDegree_map_eq_of_injective hhomInjective,
       HexPolyMathlib.natDegree_toPolynomial]
@@ -603,12 +599,12 @@ theorem oneLevel_mul (level : Level) (lower : List Level)
     let G := rawOuter lower
       (shiftedOuter level lower (Factor.polyCoords u) c)
     let n := (shiftedOuter level lower
-      (Factor.polyCoords u) c).degree?.getD 0
+      (Factor.polyCoords u) c).natDegree
     have hresult : rawPolynomial lower
         (Factor.rawPoly lower
           (oneLevel level lower (Factor.polyCoords u) c)) =
         Polynomial.resultant M G
-          (m := (definingOuter level lower).degree?.getD 0) (n := n) := by
+          (m := (definingOuter level lower).natDegree) (n := n) := by
       simpa [M, G, n, Factor.rawPoly] using
         oneLevel_resultant level lower hvalid.2.2 hinjectiveLower
           hinvLower (Factor.polyCoords u) c
@@ -698,24 +694,24 @@ theorem oneLevel_lift (level : Level) (lower : List Level)
     hinjectiveLower
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
-  letI : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
+  let : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
   let lifted := HexPolyMathlib.ofPolynomial
     ((HexPolyMathlib.toPolynomial q).map
       (lowerHom level lower hvalid hinjectiveTop))
   let ι : Arithmetic.Coeff lower →+* ℂ :=
     LevelSemantics.coeffHom lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : Algebra (Arithmetic.Coeff lower) ℂ := ι.toAlgebra
+  let : Algebra (Arithmetic.Coeff lower) ℂ := ι.toAlgebra
   let relation := Arithmetic.Coeff.relation level lower
   let p := HexPolyMathlib.toPolynomial relation
   let M := rawOuter lower (definingOuter level lower)
   let G := rawOuter lower
     (shiftedOuter level lower (Factor.polyCoords lifted) 0)
   let n := (shiftedOuter level lower
-    (Factor.polyCoords lifted) 0).degree?.getD 0
+    (Factor.polyCoords lifted) 0).natDegree
   have hpDegree : p.natDegree = level.degree := by
     simpa [p, relation] using
       LevelSemantics.relation_degree level lower hvalid
@@ -752,7 +748,7 @@ theorem oneLevel_lift (level : Level) (lower : List Level)
     exact huv
   have hrawOuterDegree
       (g : DensePoly (DensePoly (Arithmetic.Coeff lower))) :
-      (rawOuter lower g).natDegree = g.degree?.getD 0 := by
+      (rawOuter lower g).natDegree = g.natDegree := by
     rw [rawOuter_eq_map lower hvalid.2.2 hinjectiveLower hinvLower,
       Polynomial.natDegree_map_eq_of_injective hhomInjective,
       HexPolyMathlib.natDegree_toPolynomial]
@@ -760,7 +756,7 @@ theorem oneLevel_lift (level : Level) (lower : List Level)
       (Factor.rawPoly lower
         (oneLevel level lower (Factor.polyCoords lifted) 0)) =
       Polynomial.resultant M G
-        (m := (definingOuter level lower).degree?.getD 0) (n := n) := by
+        (m := (definingOuter level lower).natDegree) (n := n) := by
     simpa [M, G, n, Factor.rawPoly] using
       oneLevel_resultant level lower hvalid.2.2 hinjectiveLower
         hinvLower (Factor.polyCoords lifted) 0
@@ -980,16 +976,16 @@ theorem findSquarefreeShift_isSome_of_injective
     hinjectiveTop.tail level lower hvalid.1.1
   let hinvLower := LevelSemantics.coeffDenote_inv lower hvalid.2.2
     hinjectiveLower
-  letI : Field (Arithmetic.Coeff lower) :=
+  let : Field (Arithmetic.Coeff lower) :=
     coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
+  let : CommRing (DensePoly (Arithmetic.Coeff lower)) := denseCommRing
   let ι : Arithmetic.Coeff lower →+* ℂ :=
     LevelSemantics.coeffHom lower hvalid.2.2 hinjectiveLower hinvLower
-  letI : CharZero (Arithmetic.Coeff lower) :=
+  let : CharZero (Arithmetic.Coeff lower) :=
     { cast_injective := fun m n h => by
         apply CharZero.cast_injective (R := ℂ)
         simpa only [map_natCast] using congrArg ι h }
-  letI : Algebra (Arithmetic.Coeff lower) ℂ := ι.toAlgebra
+  let : Algebra (Arithmetic.Coeff lower) ℂ := ι.toAlgebra
   let relation := Arithmetic.Coeff.relation level lower
   let p := HexPolyMathlib.toPolynomial relation
   have hpIrreducible : Irreducible p := by
@@ -1013,7 +1009,7 @@ theorem findSquarefreeShift_isSome_of_injective
       (IsAlgClosed.splits _), hpDegree]
   let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
     hinjectiveTop
-  letI : Field (Arithmetic.Coeff (level :: lower)) :=
+  let : Field (Arithmetic.Coeff (level :: lower)) :=
     coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
   let P := HexPolyMathlib.toPolynomial
     (Factor.rawPoly (level :: lower) f)
@@ -1063,15 +1059,11 @@ theorem findSquarefreeShift_isSome_of_injective
     let q : DensePoly (Arithmetic.Coeff (level :: lower)) :=
       Factor.rawPoly (level :: lower) f
     have hqSize : q.size ≤ f.size := by
-      exact (DensePoly.size_ofCoeffs_le _).trans (by simp [q,
-        Factor.rawPoly])
+      exact (DensePoly.size_ofCoeffs_le _).trans (by simp)
     change (HexPolyMathlib.toPolynomial q).natDegree ≤ f.size - 1
-    rw [HexPolyMathlib.natDegree_toPolynomial]
-    by_cases hqZero : q.size = 0
-    · simp [q, DensePoly.degree?, hqZero]
-    · rw [DensePoly.degree?_eq_some_of_pos_size q
-        (Nat.pos_of_ne_zero hqZero), Option.getD_some]
-      omega
+    rw [HexPolyMathlib.natDegree_toPolynomial,
+      DensePoly.natDegree_eq_size_sub_one]
+    omega
   let RootPair := Σ x : p.rootSet ℂ,
     (conjugatePolynomial level lower x f).rootSet ℂ
   have hpairCard : Fintype.card RootPair =
@@ -1096,8 +1088,7 @@ theorem findSquarefreeShift_isSome_of_injective
     (fun z : RootPair => (z.2 : ℂ))
     (fun z : RootPair => (z.1 : ℂ))
     (level.degree * (f.size - 1)) hpairCardLe (by
-      intro a b hab hslope
-      intro hintercept
+      intro a b hab hslope hintercept
       apply hab
       rcases a with ⟨aRoot, aInner⟩
       rcases b with ⟨bRoot, bInner⟩
@@ -1110,7 +1101,7 @@ theorem findSquarefreeShift_isSome_of_injective
   let c := signedShift (k : Nat)
   let M := rawOuter lower (definingOuter level lower)
   let G := rawOuter lower (shiftedOuter level lower f c)
-  let n := (shiftedOuter level lower f c).degree?.getD 0
+  let n := (shiftedOuter level lower f c).natDegree
   let R := rawPolynomial lower
     (Factor.rawPoly lower (oneLevel level lower f c))
   have hhomInjective : Function.Injective
@@ -1123,7 +1114,7 @@ theorem findSquarefreeShift_isSome_of_injective
     exact hab
   have hrawOuterDegree
       (g : DensePoly (DensePoly (Arithmetic.Coeff lower))) :
-      (rawOuter lower g).natDegree = g.degree?.getD 0 := by
+      (rawOuter lower g).natDegree = g.natDegree := by
     rw [rawOuter_eq_map lower hvalid.2.2 hinjectiveLower hinvLower,
       Polynomial.natDegree_map_eq_of_injective hhomInjective,
       HexPolyMathlib.natDegree_toPolynomial]
@@ -1143,7 +1134,7 @@ theorem findSquarefreeShift_isSome_of_injective
     rw [hM]
     exact (IsAlgClosed.splits (p.map ι)).map Polynomial.C
   have hRResult : R = Polynomial.resultant M G
-      (m := (definingOuter level lower).degree?.getD 0) (n := n) := by
+      (m := (definingOuter level lower).natDegree) (n := n) := by
     simpa [R, M, G, n, c, Factor.rawPoly] using
       oneLevel_resultant level lower hvalid.2.2 hinjectiveLower
         hinvLower f c
@@ -1175,7 +1166,7 @@ theorem findSquarefreeShift_isSome_of_injective
     rcases Polynomial.comp_eq_zero_iff.mp hzero with hconj | hlinear
     · exact (hconjugateSeparable xr).ne_zero hconj
     · have hcoeff := congrArg (fun q : Polynomial ℂ => q.coeff 1) hlinear.2
-      simpa using hcoeff
+      simp at hcoeff
   have hproductNe : (M.roots.map G.eval).prod ≠ 0 := by
     apply Multiset.prod_ne_zero
     intro hzero

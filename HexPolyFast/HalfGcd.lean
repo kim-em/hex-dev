@@ -164,7 +164,7 @@ private theorem add_mulLow_eq (plan : MulPlan F) (len : Nat)
     coeff_mulLow, coeff_mulLow]
   by_cases hi : i < len
   · simp [hi]
-  · rw [_root_.ite_eq_right hi, _root_.ite_eq_right hi]
+  · rw [ite_eq_right hi, ite_eq_right hi]
     have hz : (a * b).coeff i + (c * d).coeff i = 0 := by
       rw [← coeff_add_semiring]
       exact coeff_eq_zero_of_size_le (a * b + c * d) (by omega)
@@ -529,7 +529,7 @@ private theorem size_shift (k : Nat) (p : DensePoly F) :
   · have hpzero : p = 0 := (size_eq_zero_iff p).mp hp
     subst p
     simp [size_zero]
-  · rw [_root_.ite_eq_right hp, size_shift_of_pos k p (Nat.pos_of_ne_zero hp)]
+  · rw [ite_eq_right hp, size_shift_of_pos k p (Nat.pos_of_ne_zero hp)]
 
 private theorem GcdStep.apply_split (matrix : GcdStep F) (k : Nat)
     (a b : DensePoly F) :
@@ -765,13 +765,13 @@ termination_by fuel _ _ => fuel
 decreasing_by all_goals omega
 
 private theorem fieldCandidate_eq (plan : MulPlan F) (a b q : DensePoly F)
-    (hsmall : (a - mulWith plan q b).degree?.getD 0 < b.degree?.getD 0) :
+    (hsmall : (a - mulWith plan q b).natDegree < b.natDegree) :
     _root_.Hex.DensePoly.divMod a b = (q, a - mulWith plan q b) := by
   let r := a - mulWith plan q b
-  have hbdeg : 0 < b.degree?.getD 0 := by omega
+  have hbdeg : 0 < b.natDegree := by omega
   have hbpos : 0 < b.size := by
     rcases Nat.eq_zero_or_pos b.size with hz | hz
-    · rw [(degree?_eq_none_iff b).mpr hz, Option.getD_none] at hbdeg
+    · rw [natDegree_eq_size_sub_one, hz] at hbdeg
       omega
     · exact hz
   have hlead : b.leadingCoeff ≠ 0 :=
@@ -804,13 +804,13 @@ private theorem fieldCandidate_eq (plan : MulPlan F) (a b q : DensePoly F)
 
 private theorem degree_getD_lt_of_size_lt {r b : DensePoly F}
     (hb : 1 < b.size) (hlt : r.size < b.size) :
-    r.degree?.getD 0 < b.degree?.getD 0 := by
-  rw [degree?_eq_some_of_pos_size b (by omega), Option.getD_some]
+    r.natDegree < b.natDegree := by
+  rw [natDegree_eq_size_sub_one b]
   by_cases hr : r.size = 0
-  · rw [(degree?_eq_none_iff r).mpr hr, Option.getD_none]
+  · rw [natDegree_eq_size_sub_one, hr]
     omega
   · have hrpos : 0 < r.size := Nat.pos_of_ne_zero hr
-    rw [degree?_eq_some_of_pos_size r hrpos, Option.getD_some]
+    rw [natDegree_eq_size_sub_one]
     omega
 
 private theorem fieldCandidate_eq_of_size (plan : MulPlan F)
@@ -832,8 +832,8 @@ private theorem fieldRemainder_size_lt {a b q r : DensePoly F}
     rw [Lean.Grind.Field.div_eq_mul_inv, Lean.Grind.Semiring.mul_assoc,
       Lean.Grind.Field.inv_mul_cancel hlead, Lean.Grind.Semiring.mul_one]
     exact Lean.Grind.AddCommGroup.sub_self x
-  have hbdeg : 0 < b.degree?.getD 0 := by
-    rw [degree?_eq_some_of_pos_size b hbpos, Option.getD_some]
+  have hbdeg : 0 < b.natDegree := by
+    rw [natDegree_eq_size_sub_one]
     omega
   have hdegree := divMod_remainder_degree_lt_of_pos_degree_of_cancel
     a b hbdeg hcancel
@@ -842,8 +842,7 @@ private theorem fieldRemainder_size_lt {a b q r : DensePoly F}
   by_cases hr : r.size = 0
   · omega
   · have hrpos : 0 < r.size := Nat.pos_of_ne_zero hr
-    rw [degree?_eq_some_of_pos_size r hrpos, Option.getD_some,
-      degree?_eq_some_of_pos_size b hbpos, Option.getD_some] at hdegree
+    rw [natDegree_eq_size_sub_one, natDegree_eq_size_sub_one] at hdegree
     omega
 
 private theorem fieldRemainder_eq_zero_of_size_one {a b q r : DensePoly F}

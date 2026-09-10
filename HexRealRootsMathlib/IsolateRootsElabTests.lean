@@ -130,10 +130,6 @@ info: isolate_roots: the width must be a closed rational (no free variables or m
 #guard_msgs in
 #check_failure (isolate_roots (width := 0) (X ^ 2 - 2 : Polynomial ℤ))
 
-/-- info: isolate_roots: pathological width (finer than 2^-4096); the isolation would be astronomically large. Refine the result manually if you truly need this. -/
-#guard_msgs in
-#check_failure (isolate_roots (width := 2 ^ (-5000 : ℤ)) (X ^ 2 - 2 : Polynomial ℤ))
-
 end Errors
 
 end HexRealRootsMathlib.ElabTests

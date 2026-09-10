@@ -101,10 +101,10 @@ private theorem Rand.natGo_lt {bound limit w : Nat} (hb : 0 < bound) :
       intro attempts r v r' h
       unfold Rand.natGo at h
       by_cases hc : (Rand.words r w).1 < limit
-      · simp only [hc, if_pos] at h
+      · simp only [hc, ite_eq_left] at h
         cases h
         exact Nat.mod_lt _ hb
-      · simp only [hc, if_neg, not_false_iff] at h
+      · simp only [hc, ite_eq_right, not_false_iff] at h
         exact ih (attempts + 1) (Rand.words r w).2 h
 
 /-- Range correctness: a successful bounded draw is below the bound. -/
@@ -112,9 +112,9 @@ theorem Rand.nat_lt {r : Rand} {bound fuel v : Nat} {r' : Rand}
     (h : Rand.nat r bound fuel = .ok (v, r')) : v < bound := by
   unfold Rand.nat at h
   by_cases hb : bound = 0
-  · rw [if_pos hb] at h
+  · rw [ite_eq_left hb] at h
     cases h
-  · rw [if_neg hb] at h
+  · rw [ite_eq_right hb] at h
     exact Rand.natGo_lt (Nat.pos_of_ne_zero hb) fuel 0 r h
 
 /-! Regression coverage: the canonical splitmix64 known-answer values (the

@@ -209,12 +209,9 @@ def sum2 (z : Int) (xs : List Int) : Int :=
 end HexBasicFolds
 ```
 
-The conditional lemmas are naming rather than mathematics:
-{name}`Hex.ite_eq_left` and its siblings give `if`-reduction stable Hex names
-across the Lean versions the project supports, so an upstream rename is
-absorbed here instead of rippling through the algebra libraries. `HexBasic`
-also carries the handful of duplicate-freeness and lexicographic-comparison
-list lemmas that the canonical-form libraries share.
+`HexBasic` carries the handful of duplicate-freeness and
+lexicographic-comparison list lemmas that the canonical-form libraries
+share.
 
 # Verification boundary
 %%%

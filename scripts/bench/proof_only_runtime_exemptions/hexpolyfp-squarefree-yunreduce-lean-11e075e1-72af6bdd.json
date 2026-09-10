@@ -1,0 +1,6 @@
+{
+ "path": "HexPolyFp/SquareFree/YunReduce.lean",
+ "baseline_blob": "11e075e19facd23dc843883e3030b6d80d8ef23e",
+ "current_blob": "72af6bdd61d1589ac62c35079dac3eeddbdd0cc9",
+ "reason": "Replaces `Hex.DensePoly.degree?.getD 0` with the new abbreviation `Hex.DensePoly.natDegree`, whose body is exactly that term and which `abbrev` marks `@[reducible, inline]`, and repairs the proofs that rewrote through the `Option`; the compiled code and every measured branch are unchanged."
+}

@@ -21,7 +21,7 @@ Disc containment and geometry are checked in exact `Rat` arithmetic via
 `Dyadic.toRat` of the stored centres and radii.
 
 Covered operations:
-- `isolate` — all-atoms driver for squarefree inputs.
+- `ZPoly.isolateComplexRoots?` — all-atoms driver for squarefree inputs.
 - `isolateAll?` — worklist driver returning atoms and clusters.
 - `isolateOne?` — local single-atom certification from a selected square.
 - `DyadicRootIsolation.refineTo?` — precision refinement of one atom.
@@ -61,15 +61,15 @@ Covered properties:
 - `mahlerPrec` and `cauchyExp` equal their closed forms.
 
 Covered edge cases:
-- the zero polynomial (`isolate` returns `none`);
-- a nonzero constant (`isolate` returns `some #[]`);
+- the zero polynomial (`ZPoly.isolateComplexRoots?` returns `none`);
+- a nonzero constant (`ZPoly.isolateComplexRoots?` returns `some #[]`);
 - the linear polynomial `x` (one atom at the origin);
 - the non-squarefree `(x²+1)(x−5)²` (a `k = 2` cluster survives);
 - components far from every root (`refine1` empties them, `certify?` returns
   `none`, `rootFree` is `true`).
 
 The degree-10 Chebyshev fixture `T₁₀` is exercised only on its cheap
-operations because full `isolate` runs far past this module's
+operations because full `ZPoly.isolateComplexRoots?` runs far past this module's
 elaboration-time budget. The small Mignotte polynomial
 `x⁵ − (100x − 1)²` now pins full five-root isolation under every strategy.
 -/
@@ -181,13 +181,13 @@ private def matchAcross {p : ZPoly} (a b : Array (DyadicRootIsolation p)) : Bool
 instance (an `if h : …`), not by kernel `decide`: the instance routes through a
 rational-gcd computation whose well-founded recursion the kernel cannot unfold. -/
 
-/-- `isolate` under a chosen strategy, obtaining the squarefreeness hypothesis
+/-- `ZPoly.isolateComplexRoots?` under a chosen strategy, obtaining the squarefreeness hypothesis
     from the runtime decision procedure. -/
 private def isoAtoms (p : ZPoly) (prec : Int) (strat : AtomStrategy) :
     Option (Array (DyadicRootIsolation p)) :=
-  if h : HasOnlySimpleRoots p then isolate p h prec strat else none
+  if h : HasOnlySimpleRoots p then ZPoly.isolateComplexRoots? p h prec strat else none
 
-/-! # `isolate`: atom count, root coverage, geometry, strategy agreement.
+/-! # `ZPoly.isolateComplexRoots?`: atom count, root coverage, geometry, strategy agreement.
 
 Each squarefree fixture is isolated under all three strategies once; the single
 check per fixture asserts the atom count (its degree), the cross-strategy
@@ -242,14 +242,15 @@ under `nkThenPellet` alone for the same budget reason. -/
     | some ax => ax.size == 6 && ax.all fun i => onUnitCircle i.square
     | none => false)
 
-/-! # `isolate`: degenerate inputs.
+/-! # `ZPoly.isolateComplexRoots?`: degenerate inputs.
 
 `HasOnlySimpleRoots 0` holds (the gcd of `0` and its derivative is `0`, whose
-stored size is `0 ≤ 1`), so the zero polynomial reaches `isolate`, which pins it
+stored size is `0 ≤ 1`), so the zero polynomial reaches `ZPoly.isolateComplexRoots?`, which pins it
 to `none`; a nonzero constant yields `some #[]`; the linear `x` yields a single
 atom whose disc covers the origin. -/
 
-#guard (if h : HasOnlySimpleRoots (0 : ZPoly) then (isolate (0 : ZPoly) h 8).isSome else true) == false
+#guard (if h : HasOnlySimpleRoots (0 : ZPoly) then
+    (ZPoly.isolateComplexRoots? (0 : ZPoly) h 8).isSome else true) == false
 #guard (isoAtoms constant 8 .nkThenPellet).map (·.size) == some 0
 #guard
   (match isoAtoms linear 8 .nkThenPellet with
@@ -265,7 +266,7 @@ squarefree fixtures return all atoms. -/
 -- `(x²+1)(x−5)²`: three certified results, exactly one `k = 2` cluster whose
 -- enclosing disc covers `(5, 0)`, and two atoms covering `±i`.
 #guard
-  (match (if h : 0 < multiple.degree?.getD 0 then
+  (match (if h : 0 < multiple.natDegree then
             isolateAll? multiple 4 #[Component.cauchy multiple h] else none) with
     | some rs =>
         rs.size == 3 &&
@@ -277,14 +278,14 @@ squarefree fixtures return all atoms. -/
 
 -- `rat1` from the Cauchy start: three results, all atoms.
 #guard
-  (match (if h : 0 < rat1.degree?.getD 0 then
+  (match (if h : 0 < rat1.natDegree then
             isolateAll? rat1 32 #[Component.cauchy rat1 h] else none) with
     | some rs => rs.size == 3 && rs.all fun c => match c with | .atom _ => true | .cluster _ => false
     | none => false)
 
 -- Linear `x` from the Cauchy start: a single atom.
 #guard
-  (match (if h : 0 < linear.degree?.getD 0 then
+  (match (if h : 0 < linear.natDegree then
             isolateAll? linear 8 #[Component.cauchy linear h] else none) with
     | some rs => rs.size == 1
     | none => false)
@@ -311,7 +312,7 @@ squarefree fixtures return all atoms. -/
 /-! # `refineTo?` and `sameRoot`.
 
 A coarse atom is built by hand at an exact integer root of `rat1` (its centre is
-the root, so both witnesses certify) — `isolate` itself always overshoots to a
+the root, so both witnesses certify) — `ZPoly.isolateComplexRoots?` itself always overshoots to a
 much finer precision via speculative Newton, so a hand-built coarse atom is the
 only way to exercise the refinement path. Its `atomWitness` is discharged by
 kernel `decide` (degree 3), and the `RefinedIsolation` precision side-condition
@@ -439,7 +440,7 @@ second round reaches two levels finer, with `candidateK` preserved throughout. -
 
 /-- The Cauchy start component of `rat1` (a single square at `prec = −3`). -/
 private def cauchyRat1 : Component :=
-  if h : 0 < rat1.degree?.getD 0 then Component.cauchy rat1 h else ⟨#[], 0⟩
+  if h : 0 < rat1.natDegree then Component.cauchy rat1 h else ⟨#[], 0⟩
 
 #guard (Component.refine1 rat1 ⟨#[⟨100, 100, 4⟩], 1⟩).isEmpty
 #guard
@@ -515,7 +516,7 @@ non-squarefree input certifies as a `k = 2` cluster. -/
 
 The runtime squarefreeness decision confirms `mignotte` has only simple
 roots, and its coefficient array is re-derived by `taylor` at `0` above.
-`isolate` must find all five roots: the close real pair straddling `1/100`
+`ZPoly.isolateComplexRoots?` must find all five roots: the close real pair straddling `1/100`
 (separation about `2^{−16.4}`), the real root near `21.5377`, and the
 complex pair near `−10.78 ± 18.66i`. It checks that worklist re-entry retains
 only squares covering the certified disc and that all three large-magnitude
@@ -524,7 +525,7 @@ roots are preserved under every atom strategy. -/
 #guard (if HasOnlySimpleRoots mignotte then true else false)
 
 #guard (if h : HasOnlySimpleRoots mignotte then
-    match isolate mignotte h 8 with
+    match ZPoly.isolateComplexRoots? mignotte h 8 with
     | some ax =>
         ax.size == 5 &&
           -- the close pair: exactly two atom centres within 10⁻³ of 1/100
@@ -539,7 +540,8 @@ roots are preserved under every atom strategy. -/
   else false)
 
 #guard (if h : HasOnlySimpleRoots mignotte then
-    match isolate mignotte h 8 .nk, isolate mignotte h 8 .pellet with
+    match ZPoly.isolateComplexRoots? mignotte h 8 .nk,
+        ZPoly.isolateComplexRoots? mignotte h 8 .pellet with
     | some a, some b => a.size == 5 && b.size == 5
     | _, _ => false
   else false)

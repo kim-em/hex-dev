@@ -12,6 +12,7 @@ from check_dag import (
     check_correspondence_only,
     check_sealed_import_all,
     import_roots,
+    import_closure_in_library,
     parse_imports,
 )
 from check_phase4 import check_headline_reports
@@ -43,6 +44,22 @@ class MetaImportTest(unittest.TestCase):
             self.assertEqual(
                 import_roots("meta public import HexDependency.Invalid"), []
             )
+
+
+class ImportAllClosureTest(unittest.TestCase):
+    def test_private_facets_are_build_dependencies(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "HexCore").mkdir()
+            (root / "HexCore.lean").write_text("public import HexCore.Entry\n")
+            (root / "HexCore/Entry.lean").write_text(
+                "import all HexCore.Proof\nprivate import all HexCore.Helper -- private facet\n")
+            (root / "HexCore/Proof.lean").write_text("meta import all HexCore.Meta\n")
+            (root / "HexCore/Helper.lean").write_text("")
+            (root / "HexCore/Meta.lean").write_text("")
+            self.assertEqual(import_closure_in_library(root, "HexCore", "HexCore"),
+                             {"HexCore", "HexCore.Entry", "HexCore.Proof",
+                              "HexCore.Helper", "HexCore.Meta"})
 
 
 class SealedImportAllTest(unittest.TestCase):
@@ -222,6 +239,37 @@ class CorrespondenceOnlyTest(unittest.TestCase):
                 correspondence_only=True,
             ),
         )
+
+    def test_planned_correspondence_uses_central_spec_without_runtime_files(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "lakefile.lean").write_text("", encoding="utf-8")
+            spec = root / "SPEC/Libraries/hex-bridge.md"
+            spec.parent.mkdir(parents=True)
+            spec.write_text(
+                "# Planned correspondence\n\n"
+                "correspondence-only-layer\n\n"
+                "Computational conformance owner: `HexCore`\n"
+                "Computational performance owner: `HexCore`\n",
+                encoding="utf-8",
+            )
+            libraries = OrderedDict(
+                HexCore=LibraryInfo("HexCore", (), False, 0, "planned"),
+                HexBridge=LibraryInfo(
+                    "HexBridge", ("HexCore",), True, 0, "planned",
+                    correspondence_only=True,
+                ),
+            )
+            self.assertEqual(
+                check_correspondence_only(root, libraries, root / "lakefile.lean"), []
+            )
+            spec.write_text("# Missing owner declarations\n", encoding="utf-8")
+            errors = check_correspondence_only(root, libraries, root / "lakefile.lean")
+            self.assertTrue(any("does not declare correspondence-only-layer" in e for e in errors))
+            self.assertTrue(any("does not identify computational conformance owners" in e for e in errors))
+            spec.unlink()
+            errors = check_correspondence_only(root, libraries, root / "lakefile.lean")
+            self.assertTrue(any("has 0 library SPECs" in e for e in errors))
 
     def test_phase3_accepts_performance_owner_without_report(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

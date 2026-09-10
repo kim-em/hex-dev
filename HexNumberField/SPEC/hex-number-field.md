@@ -4,8 +4,10 @@ Executable algebraic numbers in `ℂ`, fixed number fields, and roots of
 polynomials with algebraic coefficients. The library provides three related
 representations:
 
-- `QAdjoin p x` is the canonical coordinate representation in the fixed field
-  `ℚ(x)`, with `x : SimpleRoot p` and rational coefficients reduced modulo `p`.
+- `PolyQuot p x` is the canonical coordinate representation in the presentation
+  `ℚ[X]/(p)`, with `x : SimpleRoot p` fixing the embedding and rational
+  coefficients reduced modulo `p`. `QAdjoin a`, the fixed field `ℚ(a)` of a
+  canonical number, is `PolyQuot a.p a.x`.
 - `AlgebraicRoot` identifies a root of a primitive, positive-leading,
   squarefree integer polynomial. The polynomial need not be irreducible or
   minimal. This is the factorization-lazy representation used by arithmetic.
@@ -24,7 +26,7 @@ The shipped Mathlib-free API separates the semantic class
 ```lean
 class ZPoly.CheckedIrreducible (p : ZPoly) : Prop where
   is_true : ZPoly.isIrreducible p = true
-  pos_degree : 0 < p.degree?.getD 0
+  pos_degree : 0 < p.natDegree
 ```
 
 Checked constructors branch on the Boolean and can therefore return this
@@ -41,19 +43,22 @@ does not claim a law-bearing field instance from the Boolean alone.
 ```lean
 namespace Hex
 
-structure QAdjoin (p : ZPoly) (x : SimpleRoot p) where
+structure PolyQuot (p : ZPoly) (x : SimpleRoot p) where
   coeffs    : DensePoly Rat
-  degree_lt : coeffs.degree?.getD 0 < p.degree?.getD 0
+  degree_lt : coeffs.natDegree < p.natDegree
 
-@[ext] theorem QAdjoin.ext (h : a.coeffs = b.coeffs) : a = b
-instance : DecidableEq (QAdjoin p x)
+@[ext] theorem PolyQuot.ext (h : a.coeffs = b.coeffs) : a = b
+instance : DecidableEq (PolyQuot p x)
+
+/-- The fixed field `ℚ(a)` of a canonical number. -/
+def QAdjoin (a : AlgebraicNumber) : Type := PolyQuot a.p a.x  -- implicit_reducible
 
 /-- A factorization-lazy algebraic number. -/
 structure AlgebraicRoot where
   p          : ZPoly
   prim       : ZPoly.Primitive p
   pos_lc     : 0 < p.leadingCoeff
-  pos_degree : 0 < p.degree?.getD 0
+  pos_degree : 0 < p.natDegree
   squarefree : HasOnlySimpleRoots p
   x          : SimpleRoot p
   rep        : RefinedIsolation p
@@ -65,7 +70,7 @@ def AlgebraicNumber.p (a : AlgebraicNumber) : ZPoly
 def AlgebraicNumber.prim (a : AlgebraicNumber) : ZPoly.Primitive a.p
 def AlgebraicNumber.pos_lc (a : AlgebraicNumber) : 0 < a.p.leadingCoeff
 def AlgebraicNumber.pos_degree (a : AlgebraicNumber) :
-    0 < a.p.degree?.getD 0
+    0 < a.p.natDegree
 def AlgebraicNumber.checked (a : AlgebraicNumber) :
     ZPoly.CheckedIrreducible a.p
 def AlgebraicNumber.squarefree (a : AlgebraicNumber) :
@@ -74,7 +79,7 @@ def AlgebraicNumber.rep (a : AlgebraicNumber) : RefinedIsolation a.p
 def AlgebraicNumber.IsCanonical (p : ZPoly)
     (squarefree : HasOnlySimpleRoots p) (rep : RefinedIsolation p) : Prop
 def AlgebraicNumber.canonical (a : AlgebraicNumber) :
-    AlgebraicNumber.IsCanonical a.p a.squarefree a.rep
+    AlgebraicNumber.IsCanonical a.p a.squarefree a.isolation.base
 def AlgebraicNumber.x (a : AlgebraicNumber) : SimpleRoot a.p
 def AlgebraicNumber.rep_mk (a : AlgebraicNumber) :
     SimpleRoot.mk a.rep = a.x
@@ -82,10 +87,10 @@ def AlgebraicNumber.zeroRep : RefinedIsolation ZPoly.X
 def AlgebraicNumber.canonicalRep? (p : ZPoly)
     (squarefree : HasOnlySimpleRoots p) (rep : RefinedIsolation p)
     (hzero : p ≠ ZPoly.X) :
-    Option {r : RefinedIsolation p //
-      AlgebraicNumber.IsCanonical p squarefree r ∧ r.sameRoot rep = true}
+    Option {r : AlgebraicNumber.OrientedIsolation p //
+      AlgebraicNumber.IsCanonical p squarefree r.base ∧ r.rep.sameRoot rep = true}
 theorem AlgebraicNumber.ext (a b : AlgebraicNumber) (hp : a.p = b.p)
-    (hrep : HEq a.rep b.rep) : a = b
+    (hrep : HEq a.isolation b.isolation) : a = b
 def AlgebraicNumber.zero : AlgebraicNumber
 instance : Zero AlgebraicNumber
 instance : Inhabited AlgebraicNumber
@@ -112,6 +117,7 @@ def AlgebraicPoly.coeffs (f : AlgebraicPoly) : Array AlgebraicNumber
 def AlgebraicPoly.coeff (f : AlgebraicPoly) (n : Nat) : AlgebraicNumber
 def AlgebraicPoly.size (f : AlgebraicPoly) : Nat
 def AlgebraicPoly.degree? (f : AlgebraicPoly) : Option Nat
+abbrev AlgebraicPoly.natDegree (f : AlgebraicPoly) : Nat
 def AlgebraicPoly.isZero (f : AlgebraicPoly) : Bool
 def AlgebraicPoly.beq (f g : AlgebraicPoly) : Bool
 instance : BEq AlgebraicPoly
@@ -124,21 +130,29 @@ requirement that the implementation literally use an `opaque` Lean declaration.
 Implementations use representation-private structures where constructors or
 recursors are needed internally.
 
-Every `AlgebraicNumber` smart constructor normalizes the primitive polynomial.
-The normalized polynomial `X` uses one fixed explicit certified representative;
-this makes canonical zero total without depending on success of the bounded
-isolation driver. Every other polynomial is re-isolated with the fixed default
-strategy at `separationDepth`, storing the unique matching disc. Thus equal
-complex values have identical hidden data, not merely a semantic `BEq`; this
-representation can support field laws stated with Lean equality. User-supplied
-alternative refined discs cannot enter the private constructor. The sealed
-record retains provenance that its representative belongs to the deterministic
-isolation/refinement array (or is the fixed `X` representative); the companion
-uses pairwise root separation in that array to prove this invariant unique.
-The certificate stored inside `RefinedIsolation` is proof-relevant, so this
-canonical-provenance field is load-bearing: every constructor path must use the
-fixed `zeroRep` or `canonicalRep?`, never insert an independently transported
-certificate directly.
+Every smart constructor normalizes the primitive polynomial. Zero uses the
+fixed certified `zeroRep`. Other values use `rawRep?` to re-isolate the
+polynomial with the fixed strategy at `separationDepth`. The private record
+stores an `OrientedIsolation`: a canonical real or upper-half-plane `base`,
+and a `RootSide` tag (`real`, `upper`, or `lower`). The `valid` field proves
+that the base meets the real axis for `real`, or that its centre is above
+`radiusHi` for either nonreal tag. `rep` returns the base except for `lower`,
+where it returns `base.conj`.
+
+`canonicalRep?` reflects a lower input before selecting the unique raw base,
+checks its orientation, and checks that the selected oriented representative
+matches the original input. The companion proves these checks succeed.
+Canonical provenance belongs to the **base**, and together with the side
+makes equal complex values have identical hidden data. An arbitrary
+proof-relevant certificate cannot be inserted as a new canonical base.
+
+`conj` fixes real values and flips the two nonreal tags, sharing the base,
+polynomial and certificates. Repeated conjugation does not grow a certificate
+chain. Accessing a lower `rep` transports the base certificate through the
+`AtomCertificate.conj` constructor, whose soundness follows by reflection;
+it does not rerun an NK or Pellet checker. `PolyQuot` display must preserve
+such transported certificates with `ofIsolation`, rather than printing an
+`ofSquare` term whose fresh checker need not succeed.
 
 Do not instantiate `DensePoly AlgebraicNumber` in the Mathlib-free layer.
 `DensePoly` requires a kernel `DecidableEq` on coefficients so trailing-zero
@@ -171,7 +185,7 @@ compare refined isolations with `sameRoot`.
 The nonconstant-gcd fallback can factor twice and is not a fast arithmetic
 primitive. The gcd guard prevents repeated factorization for coprime
 enclosing polynomials during cross-component root merging without changing
-the v1 semantics. It is a discriminator, not a constant-time operation:
+the semantics. It is a discriminator, not a constant-time operation:
 computing a rational gcd between two high-degree enclosing polynomials can
 itself incur coefficient growth.
 
@@ -190,21 +204,80 @@ delegating to the generic exact `DyadicSquare.discContains` geometry primitive.
 
 ## Fixed-field operations
 
-`QAdjoin p x` retains canonical reduced rational coordinates. Addition,
+`PolyQuot p x` retains canonical reduced rational coordinates. Addition,
 subtraction, negation, multiplication modulo `p`, and rational scalar actions do
-not require irreducibility. Inversion requires
+not require irreducibility, and neither do the constants:
+
+```lean
+def PolyQuot.ofRat (q : Rat) : PolyQuot p x
+instance : NatCast (PolyQuot p x)
+instance : IntCast (PolyQuot p x)
+instance (n : Nat) : OfNat (PolyQuot p x) (n + 2)
+```
+
+so numerals such as `2 : PolyQuot p x` denote `(2 : Rat) • 1`, and the
+companion's field structure reuses these casts rather than defining its own.
+`instance : Coe (DensePoly Rat) (PolyQuot p x)` reduces a rational polynomial,
+so `#p[0, 0, 2]` denotes `2x²` at that type, and
+`instance : Repr (PolyQuot p x)` prints an element as the expression that
+rebuilds it, `PolyQuot.ofSquare p s f`: the reduced coordinates `f`, together
+with the polynomial and the isolating square that name the field and select
+the root.
+
+```lean
+def PolyQuot.ofSquare (p : ZPoly) (s : DyadicSquare) (f : DensePoly Rat)
+    (hw : atomWitness p s := by decide)
+    (hp : (mahlerPrec p : Int) ≤ s.prec := by decide) :
+    PolyQuot p (SimpleRoot.ofSquare p s hw hp)
+```
+
+Pasting the output back reproduces the element and prints identically; the two
+side conditions on the square are decidable and discharged by the auto-params.
+The instance is `unsafe` and takes the square from the `Quot` with `unquot`, as
+Mathlib's `Multiset` and `Finset` instances do. Which representative it finds
+is invisible in the result, because `Intersects` compares stored squares, so
+every representative of the root rebuilds the same element. The resulting type
+is propositionally, not definitionally, the original: a pasted value is an
+element of `PolyQuot p (SimpleRoot.ofSquare …)`, so comparing it with the
+original spelling needs a transport. Inversion requires
 `[ZPoly.CheckedIrreducible p]` and uses a monic-normalized polynomial extended
-gcd over `ℚ` to control rational coefficient growth.
+gcd over `ℚ` to control rational coefficient growth. For the presentation a
+canonical number induces, that evidence is an instance:
+
+```lean
+instance (a : AlgebraicNumber) : ZPoly.CheckedIrreducible a.p
+```
+
+`QAdjoin` is `implicit_reducible` rather than an abbreviation, so it keeps its
+own head symbol for instance search while still unfolding to `PolyQuot a.p a.x`
+everywhere else. That buys it one instance `PolyQuot` cannot have:
+
+```lean
+def QAdjoin.ofCoeffs (a : AlgebraicNumber) (f : DensePoly Rat) : QAdjoin a
+instance (a : AlgebraicNumber) : Repr (QAdjoin a)
+```
+
+An element of `ℚ(a)` prints as `QAdjoin.ofCoeffs (a) f`, naming the generating
+number -- which prints round-trippably itself -- instead of an isolating
+square, and so leaves no `decide` side conditions to discharge when it is
+pasted back. The presentation-ring instances are re-exported for the new head
+symbol, each `inferInstanceAs` of the `PolyQuot` one. The type of a pasted
+value is still only propositionally the original.
+
+so `a.toQAdjoin : QAdjoin a` inverts and divides without any evidence
+registered by hand. `QAdjoin a` abbreviates `PolyQuot a.p a.x` reducibly, so
+every operation, instance and theorem on `PolyQuot` applies to it unchanged;
+it exists so that the field of a canonical number is named by the number.
 The computational API supplies `Inv` and `Div`, with `0⁻¹ = 0`; the companion
 proves their field laws after converting the checked certificate to semantic
 irreducibility.
 
 ```lean
-def QAdjoin.approx (a : QAdjoin p x) (rep : RefinedIsolation p)
+def PolyQuot.approx (a : PolyQuot p x) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) (prec : Int) :
     RefinedIsolation p × DyadicComplexBall
 
-theorem QAdjoin.approx_root (a : QAdjoin p x)
+theorem PolyQuot.approx_root (a : PolyQuot p x)
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) (prec : Int) :
     SimpleRoot.mk (a.approx rep h prec).1 = x
 ```
@@ -231,15 +304,20 @@ overestimates. It is part of the soundness budget, not optional slack.
 ## Canonicalization and exactification
 
 ```lean
-def AlgebraicNumber.toQAdjoin (a : AlgebraicNumber) : QAdjoin a.p a.x
+def AlgebraicNumber.toQAdjoin (a : AlgebraicNumber) : QAdjoin a
 def AlgebraicNumber.toRoot (a : AlgebraicNumber) : AlgebraicRoot
 
-def QAdjoin.toAlgebraicNumber? [ZPoly.CheckedIrreducible p]
-    (a : QAdjoin p x) (rep : RefinedIsolation p)
+def PolyQuot.toAlgebraicNumber? [ZPoly.CheckedIrreducible p]
+    (a : PolyQuot p x) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) : Option AlgebraicNumber
-def QAdjoin.toAlgebraicNumber [ZPoly.CheckedIrreducible p]
-    (a : QAdjoin p x) (rep : RefinedIsolation p)
+def PolyQuot.toAlgebraicNumber [ZPoly.CheckedIrreducible p]
+    (a : PolyQuot p x) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) : AlgebraicNumber
+
+def QAdjoin.toAlgebraicNumber? {a : AlgebraicNumber} (c : QAdjoin a) :
+    Option AlgebraicNumber
+def QAdjoin.toAlgebraicNumber {a : AlgebraicNumber} (c : QAdjoin a) :
+    AlgebraicNumber
 
 /-- Checked implementation layer. -/
 def AlgebraicRoot.exact? (a : AlgebraicRoot) : Option AlgebraicNumber
@@ -254,7 +332,10 @@ def AlgebraicRoot.ofEliminant? (raw : ZPoly)
 `AlgebraicRoot.ofEliminant?` returns `none` unless normalization, root
 isolation, and the supplied operation ball identify one unique root.
 
-`QAdjoin.toAlgebraicNumber?` materializes `1, a, a², ...` once with one
+`a.toQAdjoin` is the generator of `QAdjoin a`, and the argument-free
+`QAdjoin.toAlgebraicNumber?` and `QAdjoin.toAlgebraicNumber` are the general
+forms applied with the number's own representative `a.rep`.
+`PolyQuot.toAlgebraicNumber?` materializes `1, a, a², ...` once with one
 fixed-field multiplication per new power, finds the first Krylov dependence by
 row reduction, clears denominators, normalizes the primitive part, and
 identifies the matching isolated root.
@@ -359,11 +440,11 @@ executable multiplication and inversion with repeated squaring.
 ## Polynomial roots
 
 ```lean
-def QAdjoin.roots? [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x))
+def PolyQuot.roots? [ZPoly.CheckedIrreducible p]
+    (f : DensePoly (PolyQuot p x))
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) :
     Option RootSet
-def QAdjoin.roots [ZPoly.CheckedIrreducible p] (...) : RootSet
+def PolyQuot.roots [ZPoly.CheckedIrreducible p] (...) : RootSet
 
 def AlgebraicPoly.roots? (f : AlgebraicPoly) : Option RootSet
 def AlgebraicPoly.roots  (f : AlgebraicPoly) : RootSet
@@ -373,7 +454,7 @@ The zero polynomial returns `some .all`; `none` is reserved for certification
 failure. Finite output is normalized, duplicate-free, sorted by polynomial then
 isolation coordinates, and carries positive multiplicities.
 
-For `QAdjoin.roots?`:
+For `PolyQuot.roots?`:
 
 1. Run Yun decomposition over the coefficient field. Process each squarefree
    component separately; a root from the component indexed by `e` receives
@@ -388,13 +469,13 @@ For `QAdjoin.roots?`:
    Dilate `q` by the common denominator so its roots are the original
    component evaluations. The eliminant is nonzero and contains the true
    evaluation at every candidate. Reject candidates belonging only to other
-   embeddings of `QAdjoin p x` by evaluating the original component at the
+   embeddings of `PolyQuot p x` by evaluating the original component at the
    candidate and the selected `x`; refute wrong candidates at
    `evalDisambiguationPrec`.
 5. Return the surviving `AlgebraicRoot` values with the Yun multiplicity.
 
 `AlgebraicPoly.roots?` first embeds all nonzero coefficients into one computed
-primitive `QAdjoin`, then invokes the fixed-field algorithm. This common-field
+primitive `PolyQuot`, then invokes the fixed-field algorithm. This common-field
 construction is deterministic and bounded, is not used for binary arithmetic,
 and is a public surface in its own right (the tower library builds on it); its
 contract is the next section.
@@ -425,6 +506,133 @@ The displayed endpoint proves that the bounded search succeeds. The same
 construction, with the eliminant for each generator/factor evaluation, is used
 by tower adjoining. No API performs unbounded refinement.
 
+## Roots of integer polynomials
+
+```lean
+def AlgebraicRoot.ofRefined (q : ZPoly) (prim : ZPoly.content q = 1)
+    (pos_lc : 0 < q.leadingCoeff) (pos_degree : 0 < q.natDegree)
+    (squarefree : HasOnlySimpleRoots q) (rep : RefinedIsolation q) :
+    AlgebraicRoot
+def ZPoly.algebraicRoots? (p : ZPoly) : Option (Array AlgebraicNumber)
+def ZPoly.algebraicRoots  (p : ZPoly) : Array AlgebraicNumber
+
+def AlgebraicRoot.isReal (a : AlgebraicRoot) : Bool
+def AlgebraicNumber.isReal (a : AlgebraicNumber) : Bool
+def AlgebraicNumber.rootLe (a b : AlgebraicNumber) : Bool
+def AlgebraicNumber.approx (a : AlgebraicNumber) (prec : Int := 64) :
+    DyadicComplexBall
+instance : Repr AlgebraicNumber
+```
+
+`algebraicRoots p` is every distinct complex root of `p` in canonical form.
+It takes the squarefree primitive part of `p`, isolates all of its roots with
+the fixed default strategy at `separationDepth`, builds one lazy
+`AlgebraicRoot` per isolation with `AlgebraicRoot.ofRefined`, and exactifies
+each. Multiplicities are not
+returned; `AlgebraicPoly.roots` on the cast polynomial supplies them. A
+constant, including zero, returns the empty array, and the correspondence
+theorem is stated for nonzero `p`, matching `Polynomial.roots 0 = 0`. `none`
+is reserved for certificate failure, and `algebraicRoots?_isSome` retires it.
+
+The array is sorted by `AlgebraicNumber.rootLe`: real roots first by their
+canonical dyadic centres, then nonreal conjugate pairs with the lower member
+first. Pair keys are the canonical upper base's `(im, re, precision)`, followed
+by the integer minimal-polynomial coefficient list to break ties between
+factors. This keeps a pair together without exact coordinate extraction.
+The companion proves the comparator is a total preorder, the output is
+sorted by it, and no other canonical value lies between conjugate endpoints.
+It is a deterministic centre order, not exact lexicographic `(abs im, re, im)`.
+Use `ZPoly.realAlgebraicRoots` in the real library when exact value ordering
+of real roots from different irreducible factors is required.
+
+`meetsRealAxis` tests whether the closed circumscribed disc meets the real
+axis, with the disc radius rounded up to the dyadic `radiusHi`: the centre's
+imaginary part is at most `radiusHi` in absolute value. At separation
+precision this is exact for a stored isolation: a real root lies in the
+closed disc, so its centre is within the true radius, which is below
+`radiusHi`, of the axis; a nonreal root and its conjugate are distinct roots
+of the same integer polynomial, so `radiusHi` itself is less than a quarter
+of their distance `2 |im z|` (the separation bound carries the `1449/1024`
+slack), and the centre is more than `radiusHi` from the axis. `isReal`
+reads the orientation tag established by this test; the companion proves `isReal_iff`.
+
+`approx a prec` is `PolyQuot.approx` applied to `a.toQAdjoin` with the stored
+representative; its ball contains `a.toComplex` and has radius at most
+`2^(-prec)`. The `Repr` instance is described under `## The nearest root`.
+
+## Exact primitives from stored isolations
+
+```lean
+def AlgebraicNumber.separationPrec (p : ZPoly) : Int
+def AlgebraicNumber.I : AlgebraicNumber
+def AlgebraicNumber.mirrorBall (b : DyadicComplexBall) : DyadicComplexBall
+def AlgebraicNumber.realCompare (a b : AlgebraicNumber) : Ordering
+```
+
+`separationPrec p` is `mahlerPrec p + 2`. At that precision the approximation
+balls of two distinct roots of `p` are disjoint: `mahlerPrec p` separates
+distinct roots by more than four ball radii, and the two extra bits absorb the
+centre errors. Every operation here works at a fixed such precision; none
+refines without bound.
+
+`I` selects the upper root of `X² + 1`. Conjugation is the tag operation
+specified with the canonical representation below; it uses no approximation
+balls. `mirrorBall` remains a public geometric helper for compatibility and
+for the retained search-strategy benchmark arm.
+
+`realCompare a b`, for real `a` and `b`, is `.eq` when `a == b` and otherwise
+orders the centres of the two approximation balls at
+`separationPrec (a.p * b.p)`, where the balls of distinct values are disjoint.
+The companion proves this is the order of their real parts.
+
+## The nearest root
+
+```lean
+def AlgebraicNumber.ofPoint (re im : Rat) : AlgebraicNumber
+def AlgebraicNumber.distSqTo (a : AlgebraicNumber) (re im : Rat) : AlgebraicNumber
+def AlgebraicNumber.ballDistSq (b : DyadicComplexBall) (re im : Rat) : Rat
+def AlgebraicNumber.ballDistBound (b : DyadicComplexBall) (re im : Rat) : Rat
+def AlgebraicNumber.ballUpper (b : DyadicComplexBall) (re im : Rat) : Rat
+def AlgebraicNumber.ballLower (b : DyadicComplexBall) (re im : Rat) : Rat
+def AlgebraicNumber.certifiedNearest (roots : Array AlgebraicNumber)
+    (a : AlgebraicNumber) (prec : Int) (re im : Rat) : Bool
+def AlgebraicNumber.exactNearest (roots : Array AlgebraicNumber) (re im : Rat) :
+    Option AlgebraicNumber
+def ZPoly.rootNear (p : ZPoly) (re : Rat) (im : Rat := 0) : AlgebraicNumber
+instance : Repr AlgebraicNumber
+```
+
+`rootNear p re im` is the root of `p` nearest to the point `re + im·i`; among
+roots at exactly the same distance it is the first in `algebraicRoots` order,
+so for instance `rootNear #p[-2, 0, 1] 0` is `-√2` and, from a real point,
+a conjugate pair resolves to the lower-imaginary member in enumeration order.
+Scientific literals are rationals, so `rootNear #p[-2, 0, 1] 1.4` and
+`rootNear #p[1, 0, 1] 0 0.9` read as written. A constant polynomial has no
+roots and yields `0`. Like `algebraicRoots` it is irreducible, so that a type
+mentioning it reduces cheaply when `#eval` looks for a printing instance.
+
+The fast path uses the approximation balls at `separationPrec p`.
+`ballUpper` bounds the squared distance from the point to every point of a
+ball from above by `d + 2rl + r²`, where `d` is the squared distance to the
+centre, `r` the radius and `l = |Δre| + |Δim|`, and `ballLower` bounds it
+from below by `d − 2rl + r²` when `r² ≤ d`, else by `0`; neither takes a
+square root. A root is `certifiedNearest` when its upper bound is below every
+other root's lower bound, and the first such root is returned. When no root is
+certified, because two are nearly or exactly equidistant, `exactNearest`
+compares the exact squared distances `distSqTo`, each the real algebraic
+number `(a − z)(ā − z̄)` built from `conj`, with `realCompare`, and keeps the
+first minimum. No path refines without bound.
+
+The `Repr` instance prints `ZPoly.rootNear p re` for a real number and
+`ZPoly.rootNear p re im` otherwise, with the stored isolation centre
+truncated toward zero to `digitsFor (mahlerPrec p)` decimals, chosen so that
+`10^-digits ≤ 2^-mahlerPrec`. The centre is within `√2 · 2^-mahlerPrec` of
+the root, so the printed point is within `(1 + √2) · 2^-mahlerPrec` of it,
+less than half the root separation `mahlerPrec` guarantees, and the
+companion's `rootNear_of_close` says the nearest root to it is the number
+printed. The print is for display and carries no contract beyond that
+theorem.
+
 ## Common-field construction
 
 The `Hex.AlgebraicPoly.Common` namespace is the public bounded
@@ -436,7 +644,7 @@ a failed certification, never a wrong value.
 ```lean
 structure Presentation where
   generator : AlgebraicNumber
-  coefficients : Array (QAdjoin generator.p generator.x)
+  coefficients : Array (QAdjoin generator)
 
 def signedShift : Nat → Int
 def rational? (q : Rat) : Option AlgebraicNumber
@@ -459,7 +667,7 @@ def powers? (gamma : AlgebraicNumber) (last : Nat) :
     Option (Array AlgebraicNumber)
 def trace? (ambient : Nat) (a : AlgebraicNumber) : Option Rat
 def coordinates? (gamma a : AlgebraicNumber)
-    (powers : Array AlgebraicNumber) : Option (QAdjoin gamma.p gamma.x)
+    (powers : Array AlgebraicNumber) : Option (QAdjoin gamma)
 def presentation? (coefficients : Array AlgebraicNumber) :
     Option Presentation
 ```
@@ -503,6 +711,8 @@ for diagnostics and staged proofs.
 `AlgebraicNumber` has canonical zero `p = X`, so it supplies the `Inhabited`
 fallback used by exactification. `RootSet.all` is the loud fallback for the two
 total root wrappers; their `_isSome` theorems make it unreachable.
+`ZPoly.algebraicRoots` falls back to the empty array, and
+`algebraicRoots?_isSome` makes that branch unreachable too.
 
 ## File organisation
 
@@ -510,12 +720,14 @@ total root wrappers; their `_isSome` theorems make it unreachable.
 HexNumberField/
   Basic.lean          : core types, equality, zero, panicWith
   Approx.lean         : dyadic-ball evaluation and precision budgets
-  QAdjoin.lean        : fixed-field operations and threaded approximation
-  Convert.lean        : canonicalization and exactification
+  PolyQuot.lean       : presentation-ring operations and threaded approximation
+  Convert.lean        : canonicalization and exactification (`QAdjoin` lives here)
   Lazy.lean           : eliminants and lazy arithmetic
   Disambiguate.lean   : candidate bounds and certified selection
   AlgebraicPoly.lean  : semantic coefficient-polynomial representation
   Roots.lean          : fixed-field and algebraic-coefficient root APIs
+  IntegerRoots.lean   : roots of integer polynomials, reality test, display
+  Nearest.lean        : imaginary unit, conjugation, exact real order, nearest root, display
 ```
 
 Conformance and benchmark drivers live in the shared `conformance/` and
@@ -526,7 +738,11 @@ Conformance and benchmark drivers live in the shared `conformance/` and
 - *core*: at least three cases per public operation, including `√2 + √2`,
   `√2 * √2`, `√2 + (-√2)`, inversion of zero, equal values represented by
   different nonminimal polynomials, an enclosing polynomial with irrelevant
-  factors, repeated input roots, and a conjugate-embedding impostor.
+  factors, repeated input roots, and a conjugate-embedding impostor; for
+  `algebraicRoots`, `X² - 2` (order `-√2, √2`), `(X² - 2)² (X + 3)`
+  (multiplicity dropped, `-3` first), `X³ - 2` (one real root first, then
+  the conjugate pair), and the zero, constant, and `X` polynomials; for
+  `isReal`, a real root, a nonreal root, and zero.
 - *ci*: deterministic small-degree fixtures checked by cypari2. Use
   python-flint independently for integer resultants, factorization, and certified
   complex-root balls.
@@ -542,7 +758,7 @@ computations and therefore use the compiled Phase-4 evidence track; the
 library owns no elaboration, tactic, emitted-proof, or kernel-checking surface.
 Grouped constant-time accessors and total wrappers remain on that same track.
 The performance report's
-[current inventory](../../reports/hex-number-field-performance.md#track-assignment-re-audit)
+[current inventory](https://github.com/kim-em/hex-dev/blob/main/reports/hex-number-field-performance.md#track-assignment-re-audit)
 records the measurements implementing this assignment.
 
 - Fixed-field arithmetic has the existing dense-polynomial costs; a compiled
@@ -575,14 +791,14 @@ records the measurements implementing this assignment.
   `√2` coefficient must complete under 15 seconds; its single square-free norm
   eliminant has degree 12,
   `coeffAbsMax = 366720`, coefficient bit height 19, and isolation target 274.
-  `QAdjoin.roots?` on `g² * (X - 1)` over `ℚ(√2)`, with `g` the controlled
+  `PolyQuot.roots?` on `g² * (X - 1)` over `ℚ(√2)`, with `g` the controlled
   dense degree-6 repeated component, must complete under 20 seconds; its
   square-free norm eliminant has degree 12, `coeffAbsMax = 45480960`,
   coefficient bit height 26, and isolation target 351.
   These project-internal canonical inputs come from the shared `n = 6` rung of
   the former schedules. Full timing runs check the ceilings; merge-gating
   smoke verification checks the result hashes. The measured reference timings
-  live in the [performance report](../../reports/hex-number-field-performance.md).
+  live in the [performance report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-number-field-performance.md).
   None of the registrations makes a one-parameter scaling claim.
 - Exactification adds one Berlekamp-Zassenhaus factorization and factor-root
   selection. Root APIs add Yun decomposition, one norm eliminant, and one
@@ -632,7 +848,7 @@ output polynomial and canonical isolating square.
 the cypari2 binding, the same binding the conformance oracles use) —
 **informational**, scoped to the fixed-field arithmetic bench targets.
 PARI's t_POLMOD arithmetic (`Mod(a, m) * Mod(b, m)` and `Mod(a, m)^(-1)`)
-is the callable unit surface computing exactly `QAdjoin` multiplication and
+is the callable unit surface computing exactly `PolyQuot` multiplication and
 extended-gcd inversion in `ℚ[x]/(m)`. It is wired as a persistent-subprocess
 process call (`scripts/oracle/pari_bench_driver.py`,
 `Hex/BenchOracle/Pari.lean`) with per-rung fixed Lean/PARI registration
@@ -653,7 +869,7 @@ Absence declarations, all with reason
   polynomial factorization (already the BZ dependency's comparator surface)
   but no unit function selecting and certifying the minimal polynomial of a
   root given an isolating region.
-- *Root APIs* (`QAdjoin.roots?`, `AlgebraicPoly.roots?`): PARI's
+- *Root APIs* (`PolyQuot.roots?`, `AlgebraicPoly.roots?`): PARI's
   `nfroots`/`nffactor` return only the roots lying inside the number field,
   and `polroots` returns uncertified floating approximations; no PARI unit
   surface produces the certified complete complex root multiset with
@@ -667,3 +883,108 @@ Absence declarations, all with reason
   des Nombres de Bordeaux 16 (2004), 19-63.
 - Bostan, A.; Flajolet, P.; Salvy, B.; Schost, É. *Fast computation of
   special resultants.* JSC 41 (2006), 1-29.
+
+## Complex operations and common fields
+
+```lean
+inductive AlgebraicNumber.RootSide where
+  | real | upper | lower
+  deriving DecidableEq, BEq
+
+structure AlgebraicNumber.OrientedIsolation (p : ZPoly) where
+  base : RefinedIsolation p
+  side : AlgebraicNumber.RootSide
+  valid : match side with
+    | .real => base.1.square.meetsRealAxis = true
+    | .upper | .lower => base.1.square.radiusHi < base.1.square.im
+
+def AlgebraicNumber.OrientedIsolation.rep {p : ZPoly}
+    (r : AlgebraicNumber.OrientedIsolation p) : RefinedIsolation p
+def AlgebraicNumber.OrientedIsolation.conj {p : ZPoly}
+    (r : AlgebraicNumber.OrientedIsolation p) : AlgebraicNumber.OrientedIsolation p
+def AlgebraicNumber.sideOf {p : ZPoly} (r : RefinedIsolation p) : AlgebraicNumber.RootSide
+def AlgebraicNumber.orient? {p : ZPoly} (base : RefinedIsolation p)
+    (side : AlgebraicNumber.RootSide) : Option (AlgebraicNumber.OrientedIsolation p)
+def AlgebraicNumber.rawRep? (p : ZPoly) (squarefree : HasOnlySimpleRoots p)
+    (rep : RefinedIsolation p) (hzero : p ≠ ZPoly.X) :
+    Option {r : RefinedIsolation p //
+      AlgebraicNumber.IsCanonical p squarefree r ∧ r.sameRoot rep = true}
+def AlgebraicNumber.isolation (a : AlgebraicNumber) : AlgebraicNumber.OrientedIsolation a.p
+def AlgebraicNumber.side (a : AlgebraicNumber) : AlgebraicNumber.RootSide
+def AlgebraicNumber.conj (a : AlgebraicNumber) : AlgebraicNumber
+
+def PolyQuot.ofIsolation {p : ZPoly} (r : RefinedIsolation p) (f : DensePoly Rat) :
+    PolyQuot p (SimpleRoot.mk r)
+
+def AlgebraicNumber.partialCompare (a b : AlgebraicNumber) : Option Ordering
+instance : LT AlgebraicNumber
+instance : LE AlgebraicNumber
+instance (a b : AlgebraicNumber) : Decidable (a < b)
+instance (a b : AlgebraicNumber) : Decidable (a ≤ b)
+def AlgebraicNumber.nthRoot (a : AlgebraicNumber) (n : Nat) : AlgebraicNumber
+def AlgebraicNumber.sqrt (a : AlgebraicNumber) : AlgebraicNumber
+
+namespace AlgebraicNumber.Radical
+structure Candidate where
+  value : AlgebraicNumber
+  twiceRe : AlgebraicNumber
+  correct : twiceRe = value + value.conj
+def rank (a : AlgebraicNumber) : Int
+def candidate (r : RootCount) : Candidate
+def choose (a b : Candidate) : Candidate
+def select (roots : Array RootCount) : Option Candidate
+def polynomial (a : AlgebraicNumber) (n : Nat) : AlgebraicPoly
+end AlgebraicNumber.Radical
+
+namespace QAdjoin
+def powerTable (a : AlgebraicNumber) : Array AlgebraicNumber
+def ofAlgebraic? (a b : AlgebraicNumber) : Option (QAdjoin a)
+def ofAlgebraics? (a : AlgebraicNumber) (bs : Array AlgebraicNumber) :
+    Array (Option (QAdjoin a))
+structure Presentation where
+  generator : AlgebraicNumber
+  entries : Array (QAdjoin generator)
+def common (bs : Array AlgebraicNumber) : Presentation
+end QAdjoin
+```
+
+
+`AlgebraicNumber.partialCompare : AlgebraicNumber → AlgebraicNumber → Option Ordering`
+returns `none` exactly for unequal imaginary parts. Global executable `LT`,
+`LE` and their decisions match Mathlib's complex partial order: equal imaginary
+parts and ordered real parts. Structural equality and real-real comparisons
+are direct paths; differing orientation tags reject immediately; remaining
+cases test whether the difference is real and use `realCompare`. This last
+path performs an exact subtraction, including resultant construction,
+factorization and root isolation; it can cost as much as field arithmetic. There is no
+`Ord` or `LinearOrder` instance on the complex type. The companion supplies
+`PartialOrder`, `IsStrictOrderedRing`, `StarRing`, `conjRingEquiv` and an order
+embedding into the scoped complex order.
+
+`AlgebraicNumber.nthRoot a n` agrees with `a.toComplex ^ ((n : ℂ)⁻¹)`;
+`sqrt a` is `nthRoot a 2`. Index zero returns one; positive indices at zero
+return zero. The general path solves `X^n - a`, caches each candidate's
+`a + a.conj`, then chooses maximal real part with nonnegative imaginary side
+preferred on a tie. Root completeness proves selection succeeds, and the
+companion proves the result lies in the principal argument sector
+`(-π/n, π/n]`. General radicals can be expensive. Conjugation commutes with
+this branch away from the negative real axis, not unconditionally.
+
+`QAdjoin.ofAlgebraic? a b` returns coordinates exactly when `b ∈ ℚ(a)`.
+`ofAlgebraics? a bs` shares the power table and preserves one option per input.
+`QAdjoin.common bs` returns a `Presentation` with one `generator` and an
+`entries : Array (QAdjoin generator)`, preserving input values, order and
+duplicates. Empty and all-zero inputs use generator zero. These wrappers
+reuse the existing certified primitive-element search and coordinate recovery;
+no independent field-search implementation is added.
+
+The real library owns `AlgebraicNumber.re`, `im`, and `ofReal`, with both
+projections returning `RealAlgebraicNumber`. It computes them through
+conjugation and exact arithmetic, with direct paths for real values. Keeping
+the projections there avoids a dependency from number fields to their real
+subtype. The companion proves projection arithmetic and reconstruction.
+
+The number-field companion provides `IsAlgClosed AlgebraicNumber` and
+`IsAlgClosure ℚ AlgebraicNumber`, using the complete algebraic-coefficient
+root solver and algebraicity of every represented value. Neither instance
+introduces new axioms or admits unfinished proofs.

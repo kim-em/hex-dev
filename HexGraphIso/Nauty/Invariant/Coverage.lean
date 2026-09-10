@@ -1,0 +1,134 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+module
+
+public import HexGraphIso.Nauty.Invariant.RelCover
+
+public section
+
+/-!
+Transitive coverage for a child loop whose target set changes as it
+runs.
+
+The nauty loops shrink their target set while they run.  A child removed
+by an orbit or stored-automorphism filter need not repeat an already
+visited child: it may repeat a survivor of the newly filtered set.  The
+invariant here records exactly that alternative and composes it across
+successive filters.  Once the live set is empty, every original child is
+covered.
+-/
+
+namespace Hex.GraphIso.Nauty
+
+universe u
+
+variable {α : Type u}
+
+/-- Every member of `all` is either covered already or has the same value as
+a no-larger member of `live`.  The decreasing rank lets successive
+automorphism filters compose even when a new carrier lands outside the
+set the previous filter left. -/
+@[expose] def ChildCover (key : Nat → α) (rank : Nat → Nat)
+    (all done live : Nat → Prop) : Prop :=
+  RelCover (fun x y => key x = key y) rank all done live
+
+/-- Initially every child can witness itself in the live set. -/
+theorem ChildCover.init (key : Nat → α) (rank : Nat → Nat)
+    (all : Nat → Prop) :
+    ChildCover key rank all (fun _ => False) all :=
+  RelCover.init (R := fun x y => key x = key y) (rank := rank) (fun _ => rfl) all
+
+/-- One filtering step composes coverage transitively. -/
+theorem ChildCover.step {key : Nat → α} {rank : Nat → Nat}
+    {all done live done' live' : Nat → Prop}
+    (h : ChildCover key rank all done live)
+    (hs : ∀ x, live x →
+      (∀ z, key z = key x → done' z) ∨
+        ∃ y, live' y ∧ key x = key y ∧ rank y ≤ rank x)
+    (hd : ∀ x, done x → done' x) :
+    ChildCover key rank all done' live' :=
+  RelCover.step (fun hxy hyz => hxy.trans hyz) h hs hd
+
+/-- Enlarging the covered set preserves coverage. -/
+theorem ChildCover.monoDone {key : Nat → α} {rank : Nat → Nat}
+    {all done live done' : Nat → Prop}
+    (h : ChildCover key rank all done live)
+    (hd : ∀ x, done x → done' x) :
+    ChildCover key rank all done' live :=
+  h.step (fun x hx => Or.inr ⟨x, hx, rfl, Nat.le_refl _⟩) hd
+
+/-- Filtering the live set preserves coverage when every removed survivor
+repeats a no-larger survivor of the new set. -/
+theorem ChildCover.filter {key : Nat → α} {rank : Nat → Nat}
+    {all done live live' : Nat → Prop}
+    (h : ChildCover key rank all done live)
+    (hs : ∀ x, live x →
+      ∃ y, live' y ∧ key x = key y ∧ rank y ≤ rank x) :
+    ChildCover key rank all done live' :=
+  h.step (fun x hx => Or.inr (hs x hx)) (fun _ hx => hx)
+
+/-- Resolving one filtered survivor may appeal to the coverage relation
+of the previous live set. Strict rank descent at every newly removed
+live vertex makes that recursion well founded. -/
+theorem ChildCover.resolve {key : Nat → α} {rank : Nat → Nat}
+    {all done live live' : Nat → Prop}
+    (h : ChildCover key rank all done live)
+    (hdone : ∀ x y, key x = key y → done y → done x)
+    (hstep : ∀ x, live x → live' x ∨
+      ∃ y, all y ∧ key x = key y ∧ rank y < rank x) :
+    ∀ x, live x → done x ∨
+      ∃ y, live' y ∧ key x = key y ∧ rank y ≤ rank x :=
+  RelCover.resolve (fun _ => rfl) (fun hxy hyz => hxy.trans hyz) h hdone hstep
+
+/-- A descending filter preserves ranked coverage even when a carrier
+lands outside the live set it started from. -/
+theorem ChildCover.filterDesc {key : Nat → α} {rank : Nat → Nat}
+    {all done live live' : Nat → Prop}
+    (h : ChildCover key rank all done live)
+    (hdone : ∀ x y, key x = key y → done y → done x)
+    (hstep : ∀ x, live x → live' x ∨
+      ∃ y, all y ∧ key x = key y ∧ rank y < rank x) :
+    ChildCover key rank all done live' :=
+  RelCover.filterDesc (fun _ => rfl) (fun hxy hyz => hxy.trans hyz) h hdone hstep
+
+/-- When no live survivor remains, every original child is covered. -/
+theorem ChildCover.finish {key : Nat → α} {rank : Nat → Nat}
+    {all done live : Nat → Prop}
+    (h : ChildCover key rank all done live)
+    (hempty : ∀ x, ¬ live x) :
+    ∀ x, all x → done x :=
+  RelCover.finish h hempty
+
+/-- Coverage transfers a common upper bound from covered children to all
+original children. -/
+theorem ChildCover.bound {key : Nat → Key n} {rank : Nat → Nat}
+    {all done live : Nat → Prop} {b : Key n}
+    (h : ChildCover key rank all done live)
+    (hempty : ∀ x, ¬ live x)
+    (hle : ∀ x, done x → keyLe (key x) b) :
+    ∀ x, all x → keyLe (key x) b := by
+  intro x hx
+  exact hle x (h.finish hempty x hx)
+
+/-- Coverage transfers a common upper bound when both the absorbed
+children and the surviving live representatives lie below it.  This is
+the form a frozen comparison unwind uses: the ledger already covers the
+visited prefix, and the frozen code verdict covers the siblings the
+unwind skips. -/
+theorem ChildCover.boundLive {key : Nat → Key n} {rank : Nat → Nat}
+    {all done live : Nat → Prop} {b : Key n}
+    (h : ChildCover key rank all done live)
+    (hdone : ∀ x, done x → keyLe (key x) b)
+    (hlive : ∀ x, live x → keyLe (key x) b) :
+    ∀ x, all x → keyLe (key x) b := by
+  intro x hx
+  rcases h x hx with hxd | ⟨y, hyl, hxy, -⟩
+  · exact hdone x hxd
+  · rw [hxy]
+    exact hlive y hyl
+
+end Hex.GraphIso.Nauty

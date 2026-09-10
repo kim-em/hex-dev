@@ -48,7 +48,7 @@ supports at the selected square-free prime. -/
 theorem modPFactorSubset_disjoint_of_modPFactorization
     {core : Hex.ZPoly} {data : Hex.PrimeChoiceData}
     (hval : ModPFactorization core data)
-    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_pos : 0 < core.natDegree)
     {f g : Hex.ZPoly} {S T : ModPFactorSubset data}
     (hf_irr : Irreducible (HexPolyZMathlib.toPolynomial f)) (hf_dvd : f ∣ core)
     (hg_irr : Irreducible (HexPolyZMathlib.toPolynomial g)) (hg_dvd : g ∣ core)
@@ -58,7 +58,7 @@ theorem modPFactorSubset_disjoint_of_modPFactorization
       ¬ Associated (HexPolyZMathlib.toPolynomial f)
         (HexPolyZMathlib.toPolynomial g)) :
     Disjoint S T := by
-  letI := data.bounds
+  let := data.bounds
   have hcore_modP_nz :
       (@Hex.ZPoly.modP data.p data.bounds core).isZero = false :=
     Hex.isGoodPrime_modP_isZero_false core data.p hval.good
@@ -137,8 +137,8 @@ theorem directSupportCandidate_map_associated
       ((HexPolyZMathlib.toPolynomial
         (liftedFactorProduct d T)).map
           (Int.castRingHom (ZMod data.p))) := by
-  letI := data.bounds
-  letI : Fact (_root_.Nat.Prime data.p) :=
+  let := data.bounds
+  let : Fact (_root_.Nat.Prime data.p) :=
     ⟨natPrime_of_hexNatPrime hprime⟩
   let d := Hex.ZPoly.directLiftData core B data
   let T := liftedSubsetOfModPSubset data d
@@ -245,8 +245,8 @@ theorem modPSubset_subset_of_product_dvd
           (modPFactorProduct data T)) :
     S ⊆ T := by
   classical
-  letI := data.bounds
-  letI : Fact (_root_.Nat.Prime data.p) :=
+  let := data.bounds
+  let : Fact (_root_.Nat.Prime data.p) :=
     ⟨natPrime_of_hexNatPrime hval.prime⟩
   have hinj :=
     toMathlibPolynomial_modPFactor_injective_of_modPFactorization
@@ -288,7 +288,7 @@ theorem directSupport_subset_of_dvd
     (hrecover : directSupportCandidate core B data S = factor)
     (hdvd : factor ∣ directSupportCandidate core B data T) :
     S ⊆ T := by
-  letI := data.bounds
+  let := data.bounds
   have hcand_dvd :
       (HexPolyZMathlib.toPolynomial
         (directSupportCandidate core B data S)).map
@@ -486,7 +486,7 @@ theorem directSupportPartition_initial
     (core : Hex.ZPoly) (B : Nat) (data : Hex.PrimeChoiceData)
     (hcore_primitive : Hex.ZPoly.Primitive core)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
-    (hcore_degree_pos : 0 < core.degree?.getD 0)
+    (hcore_degree_pos : 0 < core.natDegree)
     (hcore_squarefree : Squarefree (HexPolyZMathlib.toPolynomial core))
     (hrecovery :
       2 * Hex.ZPoly.defaultFactorCoeffBound core <
@@ -496,7 +496,7 @@ theorem directSupportPartition_initial
     (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core)
       (Int.ofNat (data.p ^ Hex.precisionForCoeffBound B data.p)) = 1) :
     DirectSupportPartition core B data Finset.univ core := by
-  letI := data.bounds
+  let := data.bounds
   have hpart :=
     modPSubsetPartitionHypotheses_of_modPFactorization
       core data hcore_degree_pos hval
@@ -587,7 +587,7 @@ theorem DirectSupportPartition.factorDvdCandidate
     (h : DirectSupportPartition core B data J target)
     (hval : ModPFactorization core data)
     (facts : DirectLiftFacts core B data)
-    (hcore_degree_pos : 0 < core.degree?.getD 0)
+    (hcore_degree_pos : 0 < core.natDegree)
     (hprecision : 1 ≤ Hex.precisionForCoeffBound B data.p)
     (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core)
       (Int.ofNat (data.p ^ Hex.precisionForCoeffBound B data.p)) = 1)
@@ -601,8 +601,8 @@ theorem DirectSupportPartition.factorDvdCandidate
       directSupportCandidate core B data T ∣ target) :
     factor ∣ directSupportCandidate core B data T := by
   classical
-  letI := data.bounds
-  letI : Fact (_root_.Nat.Prime data.p) :=
+  let := data.bounds
+  let : Fact (_root_.Nat.Prime data.p) :=
     ⟨natPrime_of_hexNatPrime hval.prime⟩
   let cast := Int.castRingHom (ZMod data.p)
   let candidate := directSupportCandidate core B data T
@@ -775,7 +775,7 @@ theorem DirectSupportPartition.supportSubsetCandidate
     (h : DirectSupportPartition core B data J target)
     (hval : ModPFactorization core data)
     (facts : DirectLiftFacts core B data)
-    (hcore_degree_pos : 0 < core.degree?.getD 0)
+    (hcore_degree_pos : 0 < core.natDegree)
     (hprecision : 1 ≤ Hex.precisionForCoeffBound B data.p)
     (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core)
       (Int.ofNat (data.p ^ Hex.precisionForCoeffBound B data.p)) = 1)

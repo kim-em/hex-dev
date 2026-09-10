@@ -384,9 +384,9 @@ private theorem pass_atStage (p : ZPoly) (z : GaussDyadic) (k : Nat)
             have hj1new : p.size - 1 - r ≤ j + 1 := by
               dsimp [j]
               omega
-            rw [_root_.ite_eq_right hjold, _root_.ite_eq_left hj1new,
+            rw [ite_eq_right hjold, ite_eq_left hj1new,
               ← coeffStage_step p z k j hj1lt]
-            rw [_root_.ite_eq_left]
+            rw [ite_eq_left]
             dsimp [j]
             omega
           · have hget : (step b r).getD i (0, 0) = b.getD i (0, 0) := by
@@ -399,15 +399,15 @@ private theorem pass_atStage (p : ZPoly) (z : GaussDyadic) (k : Nat)
               dsimp [j] at hij
               omega
             split <;> rename_i h
-            · rw [_root_.ite_eq_left (hiff.mpr h)]
-            · rw [_root_.ite_eq_right (fun h' => h (hiff.mp h'))]
+            · rw [ite_eq_left (hiff.mpr h)]
+            · rw [ite_eq_right (fun h' => h (hiff.mp h'))]
   unfold Taylor.pass
   have hm := hloop m (Nat.le_refl m)
   constructor
   · exact hm.1
   · intro i hki hi
     rw [hm.2 i hki hi]
-    rw [_root_.ite_eq_left]
+    rw [ite_eq_left]
     dsimp [m]
     omega
 
@@ -459,19 +459,19 @@ private theorem pass_fullStage (p : ZPoly) (z : GaussDyadic) (k : Nat)
     constructor
     · exact ha.1
     · intro i hki hi
-      rw [ha.2 i hi, _root_.ite_eq_right (by omega)]
+      rw [ha.2 i hi, ite_eq_right (by omega)]
   have hadv := pass_atStage p z k a hastage
   constructor
   · exact hadv.1
   · intro i hi
     by_cases hik : i < k
-    · rw [pass_getD_of_lt p.size z a hik, ha.2 i hi, _root_.ite_eq_left hik,
-        _root_.ite_eq_left (by omega)]
+    · rw [pass_getD_of_lt p.size z a hik, ha.2 i hi, ite_eq_left hik,
+        ite_eq_left (by omega)]
     · rw [hadv.2 i (by omega) hi]
       by_cases hEq : i = k
       · subst i
         simp
-      · rw [_root_.ite_eq_right (by omega)]
+      · rw [ite_eq_right (by omega)]
 
 private theorem fold_fullStage (p : ZPoly) (z : GaussDyadic) : ∀ r, r ≤ p.size →
     FullStage p z r
@@ -582,8 +582,8 @@ theorem taylor_getD (p : ZPoly) (z : GaussDyadic) (k : Nat) :
   have hfull : FullStage p z p.size (taylor p z) := by
     simpa [taylor] using fold_fullStage p z p.size (Nat.le_refl _)
   by_cases hk : k < p.size
-  · rw [hfull.2 k hk, _root_.ite_eq_left hk, _root_.ite_eq_left hk, coeffStage_final]
-  · rw [_root_.ite_eq_right hk, Array.getD_eq_getD_getElem?,
+  · rw [hfull.2 k hk, ite_eq_left hk, ite_eq_left hk, coeffStage_final]
+  · rw [ite_eq_right hk, Array.getD_eq_getD_getElem?,
       Array.getElem?_eq_none (by rw [taylor_size]; omega)]
     rfl
 

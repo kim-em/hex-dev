@@ -1,0 +1,6 @@
+{
+ "path": "HexBareiss/Bareiss.lean",
+ "baseline_blob": "67fc1e5c12ce1ea2388f209b52c20b5842001ffc",
+ "current_blob": "c230ced97dc4e6a54b6ba8fdbf929d68444903e3",
+ "reason": "Omits the unused `[One R]`/`[Neg R]` section variables from eighteen loop lemmas and drops a no-op `@[expose]` on the `exactDiv` compatibility alias, which is already exposed by default. Proof and attribute metadata only; the compiled Bareiss loop and the factorization service runtime are unchanged. Same edit as the 1ff1f240 -> c230ced9 exemption, restated from the baseline the fast-kernel demotion sweep recorded."
+}

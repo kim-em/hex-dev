@@ -84,34 +84,34 @@ theorem det_swapAt {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
         funext i j
         simp only [swapAt, swapAdjacent]
         by_cases hjl : j.val = left
-        · rw [if_pos hjl]
+        · rw [ite_eq_left hjl]
           have hj : j = left'.castSucc := by
             apply Fin.ext
             exact hjl
-          rw [if_pos hj]
+          rw [ite_eq_left hj]
           apply congrArg (M i)
           apply Fin.ext
           simp [left']
-        · rw [if_neg hjl]
+        · rw [ite_eq_right hjl]
           have hjl' : j ≠ left'.castSucc := by
             intro hj
             exact hjl (congrArg Fin.val hj)
-          rw [if_neg hjl']
+          rw [ite_eq_right hjl']
           by_cases hjr : j.val = left + 1
-          · rw [if_pos hjr]
+          · rw [ite_eq_left hjr]
             have hj : j = left'.succ := by
               apply Fin.ext
               simpa [left'] using hjr
-            rw [if_pos hj]
+            rw [ite_eq_left hj]
             apply congrArg (M i)
             apply Fin.ext
             simp [left']
-          · rw [if_neg hjr]
+          · rw [ite_eq_right hjr]
             have hjr' : j ≠ left'.succ := by
               intro hj
               apply hjr
               simpa [left'] using congrArg Fin.val hj
-            rw [if_neg hjr']
+            rw [ite_eq_right hjr']
       rw [hmatrix, det_swapAdjacent]
 
 /-- Move the column at `start + count` to `start`, shifting the intervening
@@ -237,7 +237,7 @@ theorem rotateBlocks_apply {R : Type u} {n : Nat} (M : Square R n)
           apply Fin.ext
           simp [rotateIndex, hstart, shifted]
         rw [hrecIndex, hfinalIndex, moveLeft_apply]
-        rw [if_pos hstart]
+        rw [ite_eq_left hstart]
       · by_cases hfirst : start ≤ j.val ∧ j.val < start + (right + 1)
         · have hrecFirst :
               start + 1 ≤ j.val ∧ j.val < start + 1 + right := by omega
@@ -258,7 +258,7 @@ theorem rotateBlocks_apply {R : Type u} {n : Nat} (M : Square R n)
             simp [shifted]
             omega
           rw [hrecIndex, hfinalIndex, moveLeft_apply]
-          rw [if_neg hshiftStart, if_neg hshiftMiddle]
+          rw [ite_eq_right hshiftStart, ite_eq_right hshiftMiddle]
         · by_cases hsecond :
             start + (right + 1) ≤ j.val ∧
               j.val < start + (right + 1) + left
@@ -289,7 +289,7 @@ theorem rotateBlocks_apply {R : Type u} {n : Nat} (M : Square R n)
               simp [middle]
               omega
             rw [hrecIndex, hfinalIndex, moveLeft_apply]
-            rw [if_neg hmiddleStart, if_pos hlookup]
+            rw [ite_eq_right hmiddleStart, ite_eq_left hlookup]
             apply congrArg (M i)
             apply Fin.ext
             simp [middle, shifted]
@@ -435,8 +435,8 @@ theorem poly_swap (J : Nat) (f g : DensePoly R) :
   rw [coeff_scale_semiring]
   simp only [coeff_poly]
   by_cases hl : l < J + 1
-  · rw [if_pos hl, if_pos hl, coeffMinor_swap]
-  · rw [if_neg hl, if_neg hl]
+  · rw [ite_eq_left hl, ite_eq_left hl, coeffMinor_swap]
+  · rw [ite_eq_right hl, ite_eq_right hl]
     exact (Lean.Grind.Semiring.mul_zero _).symm
 
 end Swap

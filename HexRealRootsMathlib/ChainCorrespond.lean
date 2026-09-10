@@ -27,7 +27,7 @@ public section
 # Correspondence between the executable Sturm machinery and the abstract theorem
 
 This module connects the executable real-root machinery in `HexRealRoots`
-(`Hex.ZPoly.sturmChain`, `Hex.sturmVarAt`, `Hex.sturmCount`, `Hex.rootCount`,
+(`Hex.ZPoly.sturmChain`, `Hex.sturmVarAt`, `Hex.ZPoly.sturmCount`, `Hex.ZPoly.rootCount`,
 `Hex.ZPoly.SquareFreeRat`) to the abstract `Polynomial ℝ` development in
 `HexRealRootsMathlib.SturmTheorem`.
 
@@ -46,7 +46,7 @@ Every downstream consumer supplies a nonzero (indeed positive-degree) input.
 
 namespace HexRealRootsMathlib
 
-open Polynomial HexPolyZMathlib
+open Polynomial HexPolyZMathlib Filter Topology
 
 noncomputable section
 
@@ -357,11 +357,11 @@ private theorem toPolyℝ_spemStep (g r : Hex.ZPoly) :
       Polynomial.C ((if g.leadingCoeff < 0 then -g.leadingCoeff else g.leadingCoeff : Int) : ℝ)
           * toPolyℝ r
         - Polynomial.C ((if g.leadingCoeff < 0 then -r.leadingCoeff else r.leadingCoeff : Int) : ℝ)
-          * (Polynomial.X ^ ((r.degree?).getD 0 - (g.degree?).getD 0) * toPolyℝ g) := by
+          * (Polynomial.X ^ (r.natDegree - g.natDegree) * toPolyℝ g) := by
   have hstep : Hex.ZPoly.spemStep g r =
       Hex.DensePoly.scale (if g.leadingCoeff < 0 then -g.leadingCoeff else g.leadingCoeff) r
         - Hex.DensePoly.scale (if g.leadingCoeff < 0 then -r.leadingCoeff else r.leadingCoeff)
-            (Hex.DensePoly.shift ((r.degree?).getD 0 - (g.degree?).getD 0) g) := rfl
+            (Hex.DensePoly.shift (r.natDegree - g.natDegree) g) := rfl
   rw [hstep, toPolyℝ_sub, toPolyℝ_scale, toPolyℝ_scale, toPolyℝ_shift]
 
 /-- **The `spemAux` division relation over `ℝ`.** For a divisor `g` with nonzero
@@ -389,18 +389,18 @@ private theorem spemAux_relate (g : Hex.ZPoly) (hg : g.leadingCoeff ≠ 0) :
       intro r
       have hunf : Hex.ZPoly.spemAux g (fuel + 1) r =
           (if r.isZero then r
-           else if (r.degree?).getD 0 < (g.degree?).getD 0 then r
+           else if r.natDegree < g.natDegree then r
            else Hex.ZPoly.spemAux g fuel (Hex.ZPoly.spemStep g r)) := rfl
       by_cases h0 : r.isZero
       · exact ⟨1, 0, one_pos, by rw [hunf, ite_eq_left h0]; simp⟩
-      · by_cases h1 : (r.degree?).getD 0 < (g.degree?).getD 0
+      · by_cases h1 : r.natDegree < g.natDegree
         · exact ⟨1, 0, one_pos, by rw [hunf, ite_eq_right h0, ite_eq_left h1]; simp⟩
         · obtain ⟨c', Q', hc', hrel'⟩ := ih (Hex.ZPoly.spemStep g r)
           refine ⟨c' * ((if g.leadingCoeff < 0 then -g.leadingCoeff
                     else g.leadingCoeff : Int) : ℝ),
               Polynomial.C c' * Polynomial.C ((if g.leadingCoeff < 0 then -r.leadingCoeff
                     else r.leadingCoeff : Int) : ℝ)
-                * Polynomial.X ^ ((r.degree?).getD 0 - (g.degree?).getD 0) + Q',
+                * Polynomial.X ^ (r.natDegree - g.natDegree) + Q',
               mul_pos hc' habs, ?_⟩
           rw [hunf, ite_eq_right h0, ite_eq_right h1, Polynomial.C_mul]
           have key : toPolyℝ (Hex.ZPoly.spemAux g fuel (Hex.ZPoly.spemStep g r))
@@ -417,9 +417,10 @@ of `f` by `g`: there is `c > 0` and a quotient `Q` with
 of `g` collapses this to `c · f(x) = (spem f g)(x)`, the sign-transfer identity
 the chain axioms consume. -/
 theorem toPolyℝ_spem (f g : Hex.ZPoly) (hg : g.leadingCoeff ≠ 0)
-    (hdeg : 1 ≤ (g.degree?).getD 0) :
+    (hdeg : 1 ≤ g.natDegree) :
     ∃ (c : ℝ) (Q : Polynomial ℝ), 0 < c ∧
       Polynomial.C c * toPolyℝ f = Q * toPolyℝ g + toPolyℝ (Hex.ZPoly.spem f g) := by
+  unfold Hex.DensePoly.natDegree at hdeg
   obtain ⟨m, hm⟩ : ∃ m, g.degree? = some m := by
     cases h : g.degree? with
     | none => rw [h] at hdeg; simp at hdeg
@@ -521,9 +522,10 @@ theorem toPolyℝ_derivative (p : Hex.ZPoly) :
 
 /-- `spem` by a nonzero constant is zero (the junk-value convention). -/
 private theorem spem_of_degree_zero (f : Hex.ZPoly) {g : Hex.ZPoly} (hg : g ≠ 0)
-    (hdeg : (g.degree?).getD 0 = 0) : Hex.ZPoly.spem f g = 0 := by
+    (hdeg : g.natDegree = 0) : Hex.ZPoly.spem f g = 0 := by
   have hsome := degree?_of_ne_zero hg
-  have hz : g.size - 1 = 0 := by rw [hsome] at hdeg; simpa using hdeg
+  have hz : g.size - 1 = 0 := by
+    rw [Hex.DensePoly.natDegree_eq_size_sub_one] at hdeg; exact hdeg
   have hg0 : g.degree? = some 0 := by rw [hsome, hz]
   unfold Hex.ZPoly.spem
   rw [hg0]
@@ -535,15 +537,15 @@ private theorem spem_of_degree_zero (f : Hex.ZPoly) {g : Hex.ZPoly} (hg : g ≠ 
 management makes the two leading terms cancel exactly. Proved over `ℝ` via
 `Polynomial.degree_sub_lt_left` and transferred back through `natDegree_toPolyℝ`. -/
 private theorem spemStep_degree_lt {g r : Hex.ZPoly} (hg : g ≠ 0) (hr : r ≠ 0)
-    (hge : (g.degree?).getD 0 ≤ (r.degree?).getD 0) :
+    (hge : g.natDegree ≤ r.natDegree) :
     Hex.ZPoly.spemStep g r = 0 ∨
-      ((Hex.ZPoly.spemStep g r).degree?).getD 0 < (r.degree?).getD 0 := by
+      (Hex.ZPoly.spemStep g r).natDegree < r.natDegree := by
   by_cases hz : Hex.ZPoly.spemStep g r = 0
   · exact Or.inl hz
   refine Or.inr ?_
   set a : Int := if g.leadingCoeff < 0 then -g.leadingCoeff else g.leadingCoeff with ha
   set b : Int := if g.leadingCoeff < 0 then -r.leadingCoeff else r.leadingCoeff with hb
-  set k : ℕ := (r.degree?).getD 0 - (g.degree?).getD 0 with hk
+  set k : ℕ := r.natDegree - g.natDegree with hk
   have hlcg : g.leadingCoeff ≠ 0 := leadingCoeff_ne_zero hg
   have hlcr : r.leadingCoeff ≠ 0 := leadingCoeff_ne_zero hr
   have ha0 : (a : ℝ) ≠ 0 := by
@@ -563,7 +565,7 @@ private theorem spemStep_degree_lt {g r : Hex.ZPoly} (hg : g ≠ 0) (hr : r ≠ 
     rw [hB, Polynomial.degree_mul, Polynomial.degree_C hb0, zero_add, Polynomial.degree_mul,
       Polynomial.degree_X_pow, Polynomial.degree_eq_natDegree hPg0,
       Polynomial.degree_eq_natDegree hPr0, natDegree_toPolyℝ, natDegree_toPolyℝ]
-    have hkg : k + (g.degree?).getD 0 = (r.degree?).getD 0 := by omega
+    have hkg : k + g.natDegree = r.natDegree := by omega
     exact_mod_cast congrArg (Nat.cast : ℕ → WithBot ℕ) hkg
   have hlcA : A.leadingCoeff = (a : ℝ) * (r.leadingCoeff : ℝ) := by
     rw [hA, Polynomial.leadingCoeff_mul, Polynomial.leadingCoeff_C, leadingCoeff_toPolyℝ]
@@ -587,10 +589,10 @@ private theorem spemStep_degree_lt {g r : Hex.ZPoly} (hg : g ≠ 0) (hr : r ≠ 
 (or at zero): the fuel bound `deg r < fuel + deg g` regenerates at each step
 because the degree strictly drops. -/
 private theorem spemAux_degree {g : Hex.ZPoly} (hg : g ≠ 0)
-    (hg1 : 1 ≤ (g.degree?).getD 0) :
-    ∀ (fuel : ℕ) (r : Hex.ZPoly), (r.degree?).getD 0 < fuel + (g.degree?).getD 0 →
+    (hg1 : 1 ≤ g.natDegree) :
+    ∀ (fuel : ℕ) (r : Hex.ZPoly), r.natDegree < fuel + g.natDegree →
       Hex.ZPoly.spemAux g fuel r = 0 ∨
-        ((Hex.ZPoly.spemAux g fuel r).degree?).getD 0 < (g.degree?).getD 0 := by
+        (Hex.ZPoly.spemAux g fuel r).natDegree < g.natDegree := by
   intro fuel
   induction fuel with
   | zero =>
@@ -602,15 +604,15 @@ private theorem spemAux_degree {g : Hex.ZPoly} (hg : g ≠ 0)
       intro r hbound
       have hunf : Hex.ZPoly.spemAux g (fuel + 1) r =
           (if r.isZero then r
-           else if (r.degree?).getD 0 < (g.degree?).getD 0 then r
+           else if r.natDegree < g.natDegree then r
            else Hex.ZPoly.spemAux g fuel (Hex.ZPoly.spemStep g r)) := rfl
       by_cases h0 : r.isZero
       · left; rw [hunf, ite_eq_left h0]; exact isZero_iff_eq_zero.mp h0
-      · by_cases h1 : (r.degree?).getD 0 < (g.degree?).getD 0
+      · by_cases h1 : r.natDegree < g.natDegree
         · right; rw [hunf, ite_eq_right h0, ite_eq_left h1]; exact h1
         · rw [hunf, ite_eq_right h0, ite_eq_right h1]
           have hr : r ≠ 0 := fun h => h0 (isZero_iff_eq_zero.mpr h)
-          have hge : (g.degree?).getD 0 ≤ (r.degree?).getD 0 := not_lt.mp h1
+          have hge : g.natDegree ≤ r.natDegree := not_lt.mp h1
           rcases spemStep_degree_lt hg hr hge with hz | hlt
           · apply ih
             rw [hz]
@@ -622,9 +624,10 @@ private theorem spemAux_degree {g : Hex.ZPoly} (hg : g ≠ 0)
 /-- The top-level `spem` lands strictly below the divisor's degree (or at zero)
 for a nonconstant divisor: the built-in fuel `f.size` always suffices. -/
 private theorem spem_degree {f g : Hex.ZPoly} (hg : g ≠ 0)
-    (hg1 : 1 ≤ (g.degree?).getD 0) :
+    (hg1 : 1 ≤ g.natDegree) :
     Hex.ZPoly.spem f g = 0 ∨
-      ((Hex.ZPoly.spem f g).degree?).getD 0 < (g.degree?).getD 0 := by
+      (Hex.ZPoly.spem f g).natDegree < g.natDegree := by
+  unfold Hex.DensePoly.natDegree at hg1
   obtain ⟨m, hm⟩ : ∃ m, g.degree? = some m := ⟨g.size - 1, degree?_of_ne_zero hg⟩
   have hm1 : m ≠ 0 := by rw [hm] at hg1; simp only [Option.getD_some] at hg1; omega
   obtain ⟨m', rfl⟩ := Nat.exists_eq_succ_of_ne_zero hm1
@@ -634,10 +637,9 @@ private theorem spem_degree {f g : Hex.ZPoly} (hg : g ≠ 0)
   apply spemAux_degree hg hg1
   by_cases hf : f = 0
   · subst hf
-    simp only [Hex.DensePoly.degree?_zero_getD]
+    simp only [Hex.DensePoly.natDegree, Hex.DensePoly.degree?_zero_getD]
     omega
-  · rw [degree?_of_ne_zero hf]
-    simp only [Option.getD_some]
+  · rw [Hex.DensePoly.natDegree_eq_size_sub_one]
     have hpos : 0 < f.size := by
       rcases Nat.eq_zero_or_pos f.size with h | h
       · exact absurd (eq_zero_of_size_eq_zero h) hf
@@ -703,12 +705,13 @@ private theorem sturmChainAux_toList (fuel : ℕ) (prev cur : Hex.ZPoly)
 
 /-- For a positive-degree `p`, the executable Sturm chain is
 `primitivePart p :: primitivePart p' :: chainList …`. -/
-private theorem sturmChain_toList (p : Hex.ZPoly) (hp : 1 ≤ (p.degree?).getD 0) :
+private theorem sturmChain_toList (p : Hex.ZPoly) (hp : 1 ≤ p.natDegree) :
     (Hex.ZPoly.sturmChain p).toList =
       Hex.ZPoly.primitivePart p
         :: Hex.ZPoly.primitivePart (Hex.DensePoly.derivative p)
         :: chainList p.size (Hex.ZPoly.primitivePart p)
              (Hex.ZPoly.primitivePart (Hex.DensePoly.derivative p)) := by
+  unfold Hex.DensePoly.natDegree at hp
   obtain ⟨m, hm⟩ : ∃ m, p.degree? = some m := by
     cases h : p.degree? with
     | none => rw [h] at hp; simp at hp
@@ -728,13 +731,13 @@ private theorem sturmChain_toList (p : Hex.ZPoly) (hp : 1 ≤ (p.degree?).getD 0
 chain has head `toPolyℝ (primitivePart p)`, matching the `IsSturmChain.head`
 field (stated at the primitive part, per the design note: the executable chain's
 first element is `primitivePart p`, not `p`, since the content is stripped). -/
-theorem sturmChain_map_head? (p : Hex.ZPoly) (hp : 1 ≤ (p.degree?).getD 0) :
+theorem sturmChain_map_head? (p : Hex.ZPoly) (hp : 1 ≤ p.natDegree) :
     ((Hex.ZPoly.sturmChain p).toList.map toPolyℝ).head?
       = some (toPolyℝ (Hex.ZPoly.primitivePart p)) := by
   rw [sturmChain_toList p hp]; rfl
 
 /-- **Nonemptiness of the mapped chain** for a positive-degree `p`. -/
-theorem sturmChain_map_ne_nil (p : Hex.ZPoly) (hp : 1 ≤ (p.degree?).getD 0) :
+theorem sturmChain_map_ne_nil (p : Hex.ZPoly) (hp : 1 ≤ p.natDegree) :
     (Hex.ZPoly.sturmChain p).toList.map toPolyℝ ≠ [] := by
   rw [sturmChain_toList p hp]; simp
 
@@ -752,7 +755,7 @@ private theorem chain_step {prev cur : Hex.ZPoly} (hcur : cur ≠ 0)
       Polynomial.C c * toPolyℝ prev
         = Q * toPolyℝ cur - Polynomial.C k
             * toPolyℝ (-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur))) := by
-  have hdeg1 : 1 ≤ (cur.degree?).getD 0 := by
+  have hdeg1 : 1 ≤ cur.natDegree := by
     by_contra h
     exact hr (spem_of_degree_zero prev hcur (by omega))
   obtain ⟨c, Q, hc, hrel⟩ := toPolyℝ_spem prev cur (leadingCoeff_ne_zero hcur) hdeg1
@@ -791,7 +794,7 @@ private theorem neg_primitivePart_ne_zero {r : Hex.ZPoly} (hr : r ≠ 0) :
 /-- A nonzero `spem prev cur` forces `cur` to be nonconstant (a constant
 divisor returns the junk value `0`). -/
 private theorem one_le_degree_of_spem_ne_zero {prev cur : Hex.ZPoly} (hcur : cur ≠ 0)
-    (hr : Hex.ZPoly.spem prev cur ≠ 0) : 1 ≤ (cur.degree?).getD 0 := by
+    (hr : Hex.ZPoly.spem prev cur ≠ 0) : 1 ≤ cur.natDegree := by
   by_contra hh
   exact hr (spem_of_degree_zero prev hcur (by omega))
 
@@ -922,7 +925,7 @@ pseudo-remainder, never by truncation), the last chain element is a unit of
 `ℝ[X]`: at the stop, it divides its predecessor, and it is coprime to it. -/
 private theorem chainList_last_unit :
     ∀ (fuel : ℕ) (prev cur : Hex.ZPoly), cur ≠ 0 →
-      (cur.degree?).getD 0 < fuel →
+      cur.natDegree < fuel →
       IsCoprime (toPolyℝ prev) (toPolyℝ cur) →
       ∀ z, (prev :: cur :: chainList fuel prev cur).getLast? = some z →
         IsUnit (toPolyℝ z) := by
@@ -937,13 +940,13 @@ private theorem chainList_last_unit :
         obtain rfl : cur = z := by simpa using hz
         have hr0 : Hex.ZPoly.spem prev cur = 0 := isZero_iff_eq_zero.mp h
         have hne : toPolyℝ cur ≠ 0 := fun hh => hcur (toPolyℝ_eq_zero_iff.mp hh)
-        by_cases hdeg : (cur.degree?).getD 0 = 0
+        by_cases hdeg : cur.natDegree = 0
         · -- A nonzero constant is a unit of `ℝ[X]`.
           rw [Polynomial.isUnit_iff_degree_eq_zero, Polynomial.degree_eq_natDegree hne,
             natDegree_toPolyℝ, hdeg]
           rfl
         · -- Nonconstant: the terminal division relation plus coprimality.
-          have hdeg1 : 1 ≤ (cur.degree?).getD 0 := by omega
+          have hdeg1 : 1 ≤ cur.natDegree := by omega
           obtain ⟨c, Q, hc, hrel⟩ :=
             toPolyℝ_spem prev cur (leadingCoeff_ne_zero hcur) hdeg1
           rw [hr0, toPolyℝ_zero, add_zero] at hrel
@@ -963,20 +966,20 @@ private theorem chainList_last_unit :
             (toPolyℝ (-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur)))) :=
           coprime_step (ne_of_gt hc₀) hrel hco
         -- Degree bookkeeping: the pushed element's degree strictly drops.
-        have hppdeg : ((Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur)).degree?).getD 0
-            = ((Hex.ZPoly.spem prev cur).degree?).getD 0 := by
+        have hppdeg : (Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur)).natDegree
+            = (Hex.ZPoly.spem prev cur).natDegree := by
           have h2 := congrArg Polynomial.natDegree
             (toPolyℝ_eq_C_content_mul_primitivePart (Hex.ZPoly.spem prev cur))
           rw [Polynomial.natDegree_C_mul (ne_of_gt (content_real_pos hr)),
             natDegree_toPolyℝ, natDegree_toPolyℝ] at h2
           omega
         have hnextdeg :
-            (((-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur))).degree?).getD 0)
-              = ((Hex.ZPoly.spem prev cur).degree?).getD 0 := by
+            ((-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur))).natDegree)
+              = (Hex.ZPoly.spem prev cur).natDegree := by
           rw [← natDegree_toPolyℝ, toPolyℝ_neg, Polynomial.natDegree_neg,
             natDegree_toPolyℝ, hppdeg]
-        have hdeg1 : 1 ≤ (cur.degree?).getD 0 := one_le_degree_of_spem_ne_zero hcur hr
-        have hdr : ((Hex.ZPoly.spem prev cur).degree?).getD 0 < (cur.degree?).getD 0 := by
+        have hdeg1 : 1 ≤ cur.natDegree := one_le_degree_of_spem_ne_zero hcur hr
+        have hdr : (Hex.ZPoly.spem prev cur).natDegree < cur.natDegree := by
           rcases spem_degree hcur hdeg1 with h0 | hlt
           · exact absurd h0 hr
           · exact hlt
@@ -989,23 +992,13 @@ private theorem chainList_last_unit :
 `C c₀ · a = Q · b − C k · c'` (with `k ≠ 0`) transports `IsCoprime b c'` *back* to
 `IsCoprime a b`: solving the relation for `c'` and substituting into a Bezout
 combination for `(b, c')` yields one for `(a, b)`. -/
-theorem coprime_step_rev {a b c' : Polynomial ℝ} {c₀ k : ℝ} {Q : Polynomial ℝ}
-    (hk : k ≠ 0)
-    (hrel : Polynomial.C c₀ * a = Q * b - Polynomial.C k * c')
-    (h : IsCoprime b c') : IsCoprime a b := by
-  obtain ⟨u, v, huv⟩ := h
-  have hCk : Polynomial.C k⁻¹ * Polynomial.C k = 1 := by
-    rw [← Polynomial.C_mul, inv_mul_cancel₀ hk, Polynomial.C_1]
-  have hc' : c' = Polynomial.C k⁻¹ * (Q * b - Polynomial.C c₀ * a) := by
-    have hkc' : Polynomial.C k * c' = Q * b - Polynomial.C c₀ * a := by rw [hrel]; ring
-    calc c' = Polynomial.C k⁻¹ * (Polynomial.C k * c') := by rw [← mul_assoc, hCk, one_mul]
-      _ = Polynomial.C k⁻¹ * (Q * b - Polynomial.C c₀ * a) := by rw [hkc']
-  refine ⟨-(v * Polynomial.C k⁻¹ * Polynomial.C c₀), u + v * Polynomial.C k⁻¹ * Q, ?_⟩
-  calc -(v * Polynomial.C k⁻¹ * Polynomial.C c₀) * a
-        + (u + v * Polynomial.C k⁻¹ * Q) * b
-      = u * b + v * (Polynomial.C k⁻¹ * (Q * b - Polynomial.C c₀ * a)) := by ring
-    _ = u * b + v * c' := by rw [← hc']
-    _ = 1 := huv
+theorem coprime_step_rev {p q r : ℝ[X]} {a b : ℝ} {d : ℝ[X]}
+    (hb : b ≠ 0) (hid : C a * p = d * q - C b * r) (h : IsCoprime q r) :
+    IsCoprime p q := by
+  apply IsCoprime.of_mul_left_right (x := C a)
+  rw [hid, IsCoprime.mul_sub_right_left_iff,
+    isCoprime_mul_unit_left_left (isUnit_C.mpr (isUnit_iff_ne_zero.mpr hb))]
+  exact h.symm
 
 /-- **A terminal-constant chain has coprime seeds.** If the last element of
 `prev :: cur :: chainList fuel prev cur` is a unit of `ℝ[X]` (its real cast), then
@@ -1014,7 +1007,7 @@ the seed pair `(prev, cur)` is coprime: a unit is coprime to its predecessor, an
 `chainList_last_unit`. -/
 private theorem chainList_seeds_coprime :
     ∀ (fuel : ℕ) (prev cur : Hex.ZPoly), cur ≠ 0 →
-      (cur.degree?).getD 0 < fuel →
+      cur.natDegree < fuel →
       (∀ z, (prev :: cur :: chainList fuel prev cur).getLast? = some z →
         IsUnit (toPolyℝ z)) →
       IsCoprime (toPolyℝ prev) (toPolyℝ cur) := by
@@ -1033,20 +1026,20 @@ private theorem chainList_seeds_coprime :
         obtain ⟨c₀, k, Q, hc₀, hk, hrel⟩ := chain_step hcur hr
         have hnext_ne : -(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur)) ≠ 0 :=
           neg_primitivePart_ne_zero hr
-        have hdeg1 : 1 ≤ (cur.degree?).getD 0 := one_le_degree_of_spem_ne_zero hcur hr
-        have hppdeg : ((Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur)).degree?).getD 0
-            = ((Hex.ZPoly.spem prev cur).degree?).getD 0 := by
+        have hdeg1 : 1 ≤ cur.natDegree := one_le_degree_of_spem_ne_zero hcur hr
+        have hppdeg : (Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur)).natDegree
+            = (Hex.ZPoly.spem prev cur).natDegree := by
           have h2 := congrArg Polynomial.natDegree
             (toPolyℝ_eq_C_content_mul_primitivePart (Hex.ZPoly.spem prev cur))
           rw [Polynomial.natDegree_C_mul (ne_of_gt (content_real_pos hr)),
             natDegree_toPolyℝ, natDegree_toPolyℝ] at h2
           omega
         have hnextdeg :
-            (((-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur))).degree?).getD 0)
-              = ((Hex.ZPoly.spem prev cur).degree?).getD 0 := by
+            ((-(Hex.ZPoly.primitivePart (Hex.ZPoly.spem prev cur))).natDegree)
+              = (Hex.ZPoly.spem prev cur).natDegree := by
           rw [← natDegree_toPolyℝ, toPolyℝ_neg, Polynomial.natDegree_neg,
             natDegree_toPolyℝ, hppdeg]
-        have hdr : ((Hex.ZPoly.spem prev cur).degree?).getD 0 < (cur.degree?).getD 0 := by
+        have hdr : (Hex.ZPoly.spem prev cur).natDegree < cur.natDegree := by
           rcases spem_degree hcur hdeg1 with h0 | hlt
           · exact absurd h0 hr
           · exact hlt
@@ -1070,41 +1063,19 @@ negative on a punctured left neighbourhood of `r` and positive on a punctured
 right neighbourhood: the difference quotient tends to the positive derivative,
 so it is eventually positive, and the sign of `f x = slope · (x − r)` follows
 the sign of `x − r`. -/
-private theorem eventually_flank_of_deriv_pos {f : Polynomial ℝ} {r : ℝ}
-    (h0 : f.eval r = 0) (hd : 0 < f.derivative.eval r) :
-    (∀ᶠ x in nhdsWithin r (Set.Iio r), f.eval x < 0) ∧
-      (∀ᶠ x in nhdsWithin r (Set.Ioi r), 0 < f.eval x) := by
-  have hder : HasDerivAt (fun y => f.eval y) (f.derivative.eval r) r :=
-    f.hasDerivAt r
-  have hslope : Filter.Tendsto (slope (fun y => f.eval y) r) (nhdsWithin r {r}ᶜ)
-      (nhds (f.derivative.eval r)) := hasDerivAt_iff_tendsto_slope.mp hder
-  have hpos : ∀ᶠ x in nhdsWithin r {r}ᶜ, slope (fun y => f.eval y) r x ∈ Set.Ioi 0 :=
-    hslope (Ioi_mem_nhds hd)
+private theorem sign_near_root {p : ℝ[X]} {r : ℝ}
+    (hr : p.eval r = 0) (hd : 0 < p.derivative.eval r) :
+    (∀ᶠ x in 𝓝[<] r, p.eval x < 0) ∧ (∀ᶠ x in 𝓝[>] r, 0 < p.eval x) := by
+  obtain ⟨hl, hu⟩ := hasDerivAt_iff_tendsto_slope_left_right.mp (p.hasDerivAt r)
   constructor
-  · have hmono : nhdsWithin r (Set.Iio r) ≤ nhdsWithin r {r}ᶜ :=
-      nhdsWithin_mono r (fun x hx => ne_of_lt hx)
-    filter_upwards [hpos.filter_mono hmono, self_mem_nhdsWithin] with x hx hxr
-    have hx' : 0 < (f.eval x - f.eval r) / (x - r) := by
-      have := Set.mem_Ioi.mp hx
-      rwa [slope_def_field] at this
-    rw [h0, sub_zero] at hx'
-    have hxr' : x - r < 0 := sub_neg.mpr (Set.mem_Iio.mp hxr)
-    have h2 : f.eval x = f.eval x / (x - r) * (x - r) :=
-      (div_mul_cancel₀ _ (ne_of_lt hxr')).symm
-    rw [h2]
-    exact mul_neg_of_pos_of_neg hx' hxr'
-  · have hmono : nhdsWithin r (Set.Ioi r) ≤ nhdsWithin r {r}ᶜ :=
-      nhdsWithin_mono r (fun x hx => (ne_of_lt (Set.mem_Ioi.mp hx)).symm)
-    filter_upwards [hpos.filter_mono hmono, self_mem_nhdsWithin] with x hx hxr
-    have hx' : 0 < (f.eval x - f.eval r) / (x - r) := by
-      have := Set.mem_Ioi.mp hx
-      rwa [slope_def_field] at this
-    rw [h0, sub_zero] at hx'
-    have hxr' : 0 < x - r := sub_pos.mpr (Set.mem_Ioi.mp hxr)
-    have h2 : f.eval x = f.eval x / (x - r) * (x - r) :=
-      (div_mul_cancel₀ _ (ne_of_gt hxr')).symm
-    rw [h2]
-    exact mul_pos hx' hxr'
+  · filter_upwards [hl.eventually_const_lt hd, self_mem_nhdsWithin] with x hx hxr
+    simp only [slope_def_field, hr, sub_zero] at hx
+    have hneg : x - r < 0 := sub_neg.mpr hxr
+    simpa only [div_pos_iff, hneg.not_gt, hneg,
+      and_false, and_true, false_or] using hx
+  · filter_upwards [hu.eventually_const_lt hd, self_mem_nhdsWithin] with x hx hxr
+    simp only [slope_def_field, hr, sub_zero] at hx
+    exact (div_pos_iff_of_pos_right (sub_pos.mpr hxr)).mp hx
 
 /-- **The head-pair flank.** If `s₀` vanishes at `r`, `s₁` does not, and
 `s₀' = C γ · s₁` with `γ > 0` (the executable seeds: the primitive parts of
@@ -1115,7 +1086,7 @@ theorem flank_of_key {s₀ s₁ : Polynomial ℝ} {γ : ℝ} (hγ : 0 < γ)
     {r : ℝ} (h0 : s₀.eval r = 0) (h1 : s₁.eval r ≠ 0) :
     (∀ᶠ x in nhdsWithin r (Set.Iio r), (s₀ * s₁).eval x < 0) ∧
       (∀ᶠ x in nhdsWithin r (Set.Ioi r), 0 < (s₀ * s₁).eval x) := by
-  apply eventually_flank_of_deriv_pos
+  apply sign_near_root
   · rw [Polynomial.eval_mul, h0, zero_mul]
   · rw [Polynomial.derivative_mul, Polynomial.eval_add, Polynomial.eval_mul,
       Polynomial.eval_mul, h0, zero_mul, add_zero, hkey, Polynomial.eval_mul,
@@ -1127,12 +1098,8 @@ theorem flank_of_key {s₀ s₁ : Polynomial ℝ} {γ : ℝ} (hγ : 0 < γ)
 /-- Coprime polynomials never vanish together. -/
 theorem eval_ne_zero_of_isCoprime {a b : Polynomial ℝ} (h : IsCoprime a b)
     {x : ℝ} (ha : a.eval x = 0) : b.eval x ≠ 0 := by
-  obtain ⟨u, v, huv⟩ := h
-  intro hb
-  have h2 := congrArg (Polynomial.eval x) huv
-  rw [Polynomial.eval_add, Polynomial.eval_mul, Polynomial.eval_mul, ha, hb,
-    mul_zero, mul_zero, add_zero, Polynomial.eval_one] at h2
-  exact zero_ne_one h2
+  have hc := h.map (evalRingHom x)
+  simpa [ha, isCoprime_zero_left, isUnit_iff_ne_zero] using hc
 
 /-- Unpack an indexed read of the mapped chain into a read of the executable
 chain. -/
@@ -1158,13 +1125,13 @@ private theorem getLast?_map_toPolyℝ {l : List Hex.ZPoly} {a : Polynomial ℝ}
 `s₀' = C γ · s₁` (`γ > 0`) and enough fuel generate a Sturm chain for `s₀`. -/
 private theorem isSturmChain_of_seeds (s₀ s₁ : Hex.ZPoly) (fuel : ℕ)
     (hs₀ : s₀ ≠ 0) (hs₁ : s₁ ≠ 0)
-    (hfuel : (s₁.degree?).getD 0 < fuel)
+    (hfuel : s₁.natDegree < fuel)
     (hcop : IsCoprime (toPolyℝ s₀) (toPolyℝ s₁))
     (γ : ℝ) (hγ : 0 < γ)
     (hkey : Polynomial.derivative (toPolyℝ s₀) = Polynomial.C γ * toPolyℝ s₁) :
     Sturm.IsSturmChain (toPolyℝ s₀) ((s₀ :: s₁ :: chainList fuel s₀ s₁).map toPolyℝ) := by
-  refine { nonempty := by simp, head := rfl, root_flank := ?_, nonzero_mem := ?_,
-           consec_coprime := ?_, interior_alternates := ?_, last_no_root := ?_ }
+  refine { head := rfl, root_flank := ?_, nonzero_mem := ?_,
+           interior_alternates := ?_, last_no_root := ?_ }
   · -- root_flank
     intro r hr
     have hs₁r : (toPolyℝ s₁).eval r ≠ 0 := eval_ne_zero_of_isCoprime hcop hr
@@ -1175,12 +1142,6 @@ private theorem isSturmChain_of_seeds (s₀ s₁ : Hex.ZPoly) (fuel : ℕ)
     rw [List.mem_map] at hq
     obtain ⟨z, hz, rfl⟩ := hq
     exact fun hh => chainList_nonzero fuel s₀ s₁ hs₀ hs₁ z hz (toPolyℝ_eq_zero_iff.mp hh)
-  · -- consec_coprime
-    intro i x a b ha hb hax
-    obtain ⟨za, hza, rfl⟩ := getElem?_map_toPolyℝ ha
-    obtain ⟨zb, hzb, rfl⟩ := getElem?_map_toPolyℝ hb
-    exact eval_ne_zero_of_isCoprime
-      (chainList_pairs_coprime fuel s₀ s₁ hs₁ hcop i za zb hza hzb) hax
   · -- interior_alternates
     intro i x a b c ha hb hc hbx
     obtain ⟨za, hza, rfl⟩ := getElem?_map_toPolyℝ ha
@@ -1222,7 +1183,7 @@ Stated at the primitive part: the executable chain's head is `primitivePart p`
 have the wrong head; `p` and its primitive part have the same real roots
 (`roots_toPolyℝ_eq_primitivePart`), so the counting consequences are
 unaffected. -/
-theorem sturmChain_isSturmChain (p : Hex.ZPoly) (hp : 1 ≤ (p.degree?).getD 0)
+theorem sturmChain_isSturmChain (p : Hex.ZPoly) (hp : 1 ≤ p.natDegree)
     (hsq : Hex.ZPoly.SquareFreeRat p) :
     Sturm.IsSturmChain (toPolyℝ (Hex.ZPoly.primitivePart p))
       ((Hex.ZPoly.sturmChain p).toList.map toPolyℝ) := by
@@ -1232,7 +1193,7 @@ theorem sturmChain_isSturmChain (p : Hex.ZPoly) (hp : 1 ≤ (p.degree?).getD 0)
     rw [hh] at hp
     simp only [Hex.DensePoly.degree?_zero_getD] at hp
     omega
-  have hnd : (toPolyℝ p).natDegree = (p.degree?).getD 0 := natDegree_toPolyℝ p
+  have hnd : (toPolyℝ p).natDegree = p.natDegree := natDegree_toPolyℝ p
   have hd0 : Hex.DensePoly.derivative p ≠ 0 := by
     intro hh
     have h2 : Polynomial.derivative (toPolyℝ p) = 0 := by
@@ -1278,20 +1239,18 @@ theorem sturmChain_isSturmChain (p : Hex.ZPoly) (hp : 1 ≤ (p.degree?).getD 0)
       * ((Hex.ZPoly.content (Hex.DensePoly.derivative p) : Int) : ℝ) :=
     mul_pos (inv_pos.mpr hc₀) hc₁
   -- Fuel: `deg s₁ < p.size`.
-  have hfuel : ((Hex.ZPoly.primitivePart (Hex.DensePoly.derivative p)).degree?).getD 0
+  have hfuel : (Hex.ZPoly.primitivePart (Hex.DensePoly.derivative p)).natDegree
       < p.size := by
-    have hdp : ((Hex.DensePoly.derivative p).degree?).getD 0 < (p.degree?).getD 0 := by
+    have hdp : (Hex.DensePoly.derivative p).natDegree < p.natDegree := by
       rw [← natDegree_toPolyℝ, ← natDegree_toPolyℝ, toPolyℝ_derivative]
       exact Polynomial.natDegree_derivative_lt (by omega)
-    have hpp : ((Hex.ZPoly.primitivePart (Hex.DensePoly.derivative p)).degree?).getD 0
-        = ((Hex.DensePoly.derivative p).degree?).getD 0 := by
+    have hpp : (Hex.ZPoly.primitivePart (Hex.DensePoly.derivative p)).natDegree
+        = (Hex.DensePoly.derivative p).natDegree := by
       have h3 := congrArg Polynomial.natDegree hdecomp₁
       rw [Polynomial.natDegree_C_mul (ne_of_gt hc₁), natDegree_toPolyℝ,
         natDegree_toPolyℝ] at h3
       omega
-    have h4 : p.degree? = some (p.size - 1) := degree?_of_ne_zero hp0
-    rw [h4] at hdp
-    simp only [Option.getD_some] at hdp
+    simp only [Hex.DensePoly.natDegree_eq_size_sub_one] at hdp hpp ⊢
     omega
   rw [sturmChain_toList p hp]
   exact isSturmChain_of_seeds _ _ _ hs₀0 hs₁0 hfuel hcop _ hγ hkey
@@ -1313,15 +1272,16 @@ theorem squareFreeRat_of_hasSquarefreeSturmChain (p : Hex.ZPoly)
     -- The chain is nonempty, so `p` has positive degree.
     have hne : Hex.ZPoly.sturmChain p ≠ #[] := by
       intro he; rw [he] at hlast; simp at hlast
-    have hp : 1 ≤ (p.degree?).getD 0 := by
+    have hp : 1 ≤ p.natDegree := by
       rcases hd : p.degree? with _ | m
       · exact absurd (by simp only [Hex.ZPoly.sturmChain, hd]) hne
       · rcases m with _ | m'
         · exact absurd (by simp only [Hex.ZPoly.sturmChain, hd]) hne
-        · simp
+        · simp [Hex.DensePoly.natDegree, hd]
     have hp0 : p ≠ 0 := by
-      intro hh; rw [hh] at hp; simp only [Hex.DensePoly.degree?_zero_getD] at hp; omega
-    have hnd : (toPolyℝ p).natDegree = (p.degree?).getD 0 := natDegree_toPolyℝ p
+      intro hh; rw [hh] at hp
+      simp only [Hex.DensePoly.natDegree, Hex.DensePoly.degree?_zero_getD] at hp; omega
+    have hnd : (toPolyℝ p).natDegree = p.natDegree := natDegree_toPolyℝ p
     have hd0 : Hex.DensePoly.derivative p ≠ 0 := by
       intro hh
       have h2 : Polynomial.derivative (toPolyℝ p) = 0 := by
@@ -1332,31 +1292,29 @@ theorem squareFreeRat_of_hasSquarefreeSturmChain (p : Hex.ZPoly)
       primitivePart_ne_zero hd0
     -- The terminal element is a nonzero constant, hence a unit of `ℝ[X]`.
     have hzne : z ≠ 0 := by rintro rfl; simp at hzsize
-    have hzdeg : (z.degree?).getD 0 = 0 := by
-      rw [degree?_of_ne_zero hzne]; simp [hzsize]
+    have hzdeg : z.natDegree = 0 := by
+      rw [Hex.DensePoly.natDegree_eq_size_sub_one, hzsize]
     have hzunit : IsUnit (toPolyℝ z) := by
       have hne' : toPolyℝ z ≠ 0 := fun hh => hzne (toPolyℝ_eq_zero_iff.mp hh)
       rw [Polynomial.isUnit_iff_degree_eq_zero, Polynomial.degree_eq_natDegree hne',
         natDegree_toPolyℝ, hzdeg]; rfl
     -- Seed coprimality by walking the terminal unit back to the front.
     rw [sturmChain_toList p hp] at hlast
-    have hfuel : ((Hex.ZPoly.primitivePart (Hex.DensePoly.derivative p)).degree?).getD 0
+    have hfuel : (Hex.ZPoly.primitivePart (Hex.DensePoly.derivative p)).natDegree
         < p.size := by
       have hc₁ : (0:ℝ) < ((Hex.ZPoly.content (Hex.DensePoly.derivative p) : Int) : ℝ) :=
         content_real_pos hd0
       have hdecomp₁ := toPolyℝ_eq_C_content_mul_primitivePart (Hex.DensePoly.derivative p)
-      have hdp : ((Hex.DensePoly.derivative p).degree?).getD 0 < (p.degree?).getD 0 := by
+      have hdp : (Hex.DensePoly.derivative p).natDegree < p.natDegree := by
         rw [← natDegree_toPolyℝ, ← natDegree_toPolyℝ, toPolyℝ_derivative]
         exact Polynomial.natDegree_derivative_lt (by omega)
-      have hpp : ((Hex.ZPoly.primitivePart (Hex.DensePoly.derivative p)).degree?).getD 0
-          = ((Hex.DensePoly.derivative p).degree?).getD 0 := by
+      have hpp : (Hex.ZPoly.primitivePart (Hex.DensePoly.derivative p)).natDegree
+          = (Hex.DensePoly.derivative p).natDegree := by
         have h3 := congrArg Polynomial.natDegree hdecomp₁
         rw [Polynomial.natDegree_C_mul (ne_of_gt hc₁), natDegree_toPolyℝ,
           natDegree_toPolyℝ] at h3
         omega
-      have h4 : p.degree? = some (p.size - 1) := degree?_of_ne_zero hp0
-      rw [h4] at hdp
-      simp only [Option.getD_some] at hdp
+      simp only [Hex.DensePoly.natDegree_eq_size_sub_one] at hdp hpp ⊢
       omega
     have hcop_seeds : IsCoprime (toPolyℝ (Hex.ZPoly.primitivePart p))
         (toPolyℝ (Hex.ZPoly.primitivePart (Hex.DensePoly.derivative p))) :=
@@ -1441,11 +1399,11 @@ theorem midpoint_lt_upper (I : Hex.DyadicInterval) : I.midpoint < I.upper := by
   linarith
 
 /-- **Sturm count correspondence.** For positive-degree, rationally squarefree
-`p`, the executable `Hex.sturmCount p I` equals the number of real roots of
+`p`, the executable `Hex.ZPoly.sturmCount p I` equals the number of real roots of
 `toPolyℝ p` in the half-open interval `(I.lower, I.upper]`. -/
-theorem sturmCount_eq_card_roots (p : Hex.ZPoly) (hp : 1 ≤ (p.degree?).getD 0)
+theorem sturmCount_eq_card_roots (p : Hex.ZPoly) (hp : 1 ≤ p.natDegree)
     (hsq : Hex.ZPoly.SquareFreeRat p) (I : Hex.DyadicInterval) :
-    Hex.sturmCount p I
+    Hex.ZPoly.sturmCount p I
       = ((toPolyℝ p).roots.filter
           (fun r => Dyadic.toReal I.lower < r ∧ r ≤ Dyadic.toReal I.upper)).card := by
   have hp0 : p ≠ 0 := by
@@ -1453,15 +1411,15 @@ theorem sturmCount_eq_card_roots (p : Hex.ZPoly) (hp : 1 ≤ (p.degree?).getD 0)
     simp only [Hex.DensePoly.degree?_zero_getD] at hp
     omega
   have hchain := sturmChain_isSturmChain p hp hsq
-  have hs₀0 : toPolyℝ (Hex.ZPoly.primitivePart p) ≠ 0 :=
-    fun hh => primitivePart_ne_zero hp0 (toPolyℝ_eq_zero_iff.mp hh)
   have hsf := squarefree_toPolyℝ_primitivePart p hp0 hsq
   have hab : Dyadic.toReal I.lower < Dyadic.toReal I.upper := toReal_lt_toReal I.lt
-  have hkey := Sturm.sturm_half_open hs₀0 hsf hchain hab
+  have hkey := hchain.sturm_Ioc (Polynomial.nodup_roots
+    (PerfectField.separable_iff_squarefree.mpr hsf)) hab.le
   show (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) I.lower : Int)
       - Hex.sturmVarAt (Hex.ZPoly.sturmChain p) I.upper = _
   rw [sturmVarAt_eq, sturmVarAt_eq, roots_toPolyℝ_eq_primitivePart p hp0]
-  exact hkey
+  simp only [Set.mem_Ioc] at hkey
+  omega
 
 /-- Casting an integer's sign to `ℝ` preserves `SignType.sign`. -/
 private theorem sign_intCast_sign (n : Int) :
@@ -1499,7 +1457,7 @@ theorem sturmVarNegInf_eq (chain : Array Hex.ZPoly) :
   intro q _
   simp only [Function.comp_apply]
   rw [leadingCoeff_toPolyℝ, natDegree_toPolyℝ]
-  by_cases hpar : (Hex.DensePoly.degree? q).getD 0 % 2 = 1
+  by_cases hpar : (q).natDegree % 2 = 1
   · rw [ite_eq_left hpar, (Nat.odd_iff.mpr hpar).neg_one_pow, mul_neg_one, mul_neg_one]
     have h2 : ((-(Hex.DensePoly.leadingCoeff q).sign : Int) : ℝ)
         = -(((Hex.DensePoly.leadingCoeff q).sign : Int) : ℝ) := by push_cast; ring
@@ -1508,20 +1466,19 @@ theorem sturmVarNegInf_eq (chain : Array Hex.ZPoly) :
     exact sign_intCast_sign _
 
 /-- **Root count correspondence.** For positive-degree, rationally squarefree
-`p`, the executable `Hex.rootCount p` equals the total number of real roots
+`p`, the executable `Hex.ZPoly.rootCount p` equals the total number of real roots
 of `toPolyℝ p`. -/
-theorem rootCount_eq_card_roots (p : Hex.ZPoly) (hp : 1 ≤ (p.degree?).getD 0)
+theorem rootCount_eq_card_roots (p : Hex.ZPoly) (hp : 1 ≤ p.natDegree)
     (hsq : Hex.ZPoly.SquareFreeRat p) :
-    Hex.rootCount p = ((toPolyℝ p).roots).card := by
+    Hex.ZPoly.rootCount p = ((toPolyℝ p).roots).card := by
   have hp0 : p ≠ 0 := by
     intro hh; rw [hh] at hp
     simp only [Hex.DensePoly.degree?_zero_getD] at hp
     omega
   have hchain := sturmChain_isSturmChain p hp hsq
-  have hs₀0 : toPolyℝ (Hex.ZPoly.primitivePart p) ≠ 0 :=
-    fun hh => primitivePart_ne_zero hp0 (toPolyℝ_eq_zero_iff.mp hh)
   have hsf := squarefree_toPolyℝ_primitivePart p hp0 hsq
-  have hkey := Sturm.sturm_line hs₀0 hsf hchain
+  have hkey := hchain.sturm (Polynomial.nodup_roots
+    (PerfectField.separable_iff_squarefree.mpr hsf))
   rw [← roots_toPolyℝ_eq_primitivePart p hp0] at hkey
   show Hex.sturmVarNegInf (Hex.ZPoly.sturmChain p)
       - Hex.sturmVarPosInf (Hex.ZPoly.sturmChain p) = _

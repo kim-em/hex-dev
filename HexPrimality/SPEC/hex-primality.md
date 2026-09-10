@@ -47,13 +47,11 @@ search infrastructure rather than a checker primitive: `HexArith.extGcd`
 `@[extern]`. The namespace is `HexArith`, not `Hex`.
 
 `hex-berlekamp-zassenhaus` carries 94 candidate primes in
-`hotPathCandidates` (`HexBerlekampZassenhaus/PrimeSelection.lean:293`),
-each built by `smallPrimeCandidateOfTrial p (by decide) (by decide)`,
-covering every prime in `[3, 500]`. It proves both directions:
+`hotPathCandidates`, as two proof-carrying windows of `primeTable`, covering
+every prime in `[3, 500]` in ascending order. It proves both directions:
 `mem_hotPathCandidates_prime` (every entry is prime and in range) and
 `exists_mem_hotPathCandidates_of_prime` (every prime in range is an
-entry), the second by `decide` over `Fin 501` at
-`maxRecDepth 4096`.
+entry), directly from the corresponding `primeTable` membership theorems.
 
 So the shape of what is wanted already exists in miniature: a stored
 segment, verified complete over its range, consulted by a caller that
@@ -366,6 +364,15 @@ arithmetic rejections before recursive certificate replay:
    `HexArith.powModNat a (n-1) n = 1 % n` and
    `Nat.gcd ((HexArith.powModNat a ((n-1)/q) n + n - 1) % n) n = 1`.
 6. Each child is accepted by `checkPrime`, recursively.
+
+For generated libraries that already hold the child-primality proofs,
+`prime_of_pocklington` accepts `checkPockArith n factors = true` and
+`∀ x ∈ factors, Prime x.2.2.subject`. It reuses the same Pocklington
+soundness argument while sharing child proofs across parents. This API uses
+the child subjects and their supplied primality proofs; it does not assert
+that the child certificate payloads pass `checkPrime`. A `.small q` payload
+may therefore name any separately proved prime in this API. The recursive
+`checkPrime` and `CheckedPrimeCert` interfaces retain their full child checks.
 
 Step 4 is `n < F * F` rather than `n.sqrt < F`. The two are equivalent
 and the multiplication is cheaper and easier to reason about than
@@ -806,23 +813,13 @@ environment provenance, and exact reproduction command are in
 regeneration check is `python3 scripts/bench/check_prime_table.py`; CI runs the
 same command after building the Hex libraries.
 
-`hotPathCandidates` in hex-berlekamp-zassenhaus is intended to become a view
-of `primeTable` restricted to `[3, 500]`, keeping its two existing theorems as
-corollaries of the table's. That migration is not implemented on current
-`main`: PR #9392 was parked because the released hex-berlekamp-zassenhaus
-cannot import HexPrimality until HexPrimality is published. Issue #9849 tracks
-the release-gated migration. Until it lands, neither this table nor core
-conformance claims that the downstream list consumes it.
-
-Two things that migration requires and an earlier draft of this SPEC
-left out. `hotPathCandidates` is a `List SmallPrimeCandidate`
-(`HexBerlekampZassenhaus/PrimeSelection.lean:170`), not a list of
-naturals: each entry bundles a `ZMod64.Bounds p` instance and a
-`Hex.Nat.Prime p` field, so the view is a proof-carrying map from table
-entries rather than a projection. And it makes `HexBerlekampZassenhaus`
-depend on `HexPrimality`, which its `libraries.yml` entry
-(`[HexBerlekamp, HexHensel, HexLLL]`) does not record; that amendment
-lands with the migration, not before.
+`hotPathCandidates` in hex-berlekamp-zassenhaus is a proof-carrying view of
+`primeTable` restricted to `[3, 500]`. Its entries are `ZMod64.Prime` values:
+each bundles the modulus, a `ZMod64.Bounds` instance, and a `Hex.Nat.Prime`
+proof. Its soundness and coverage theorems are corollaries of the table's two
+membership directions, while sortedness preserves the deterministic ascending
+order and tie-breaking policy. The dependency is recorded explicitly in both
+`libraries.yml` and the released repository pins.
 
 **Statements of the form "every prime in `[1, x]` satisfies `P`"** are
 what the sieve unlocks and what the table alone does not: the table
@@ -1114,9 +1111,9 @@ the refreshed record supersedes its timings for the current fuel policy.
 They reproduce with:
 
 ```bash
-python3 scripts/bench/primality_elab_sweep.py --samples 6 \
-  --shared-host --expected-host chungus2 --cpu 22 --timeout 30 \
-  --warm-timeout 600 --max-pair-retries 32 \
+cpu=$(python3 scripts/bench/idle_core.py)
+taskset -c "$cpu" python3 scripts/bench/primality_elab_sweep.py --samples 6 \
+  --shared-host --cpu "$cpu" --timeout 30 --warm-timeout 600 \
   --output reports/bench-results/hex-primality-fuel-elab-issue-9784-chungus2.json
 ```
 
@@ -1261,9 +1258,9 @@ Cases that must be present:
 - Segments `[1, 100]`, `[1, 10^4]`, and one segment straddling
   `primeTableBound`, checking the table and the fallback agree across
   the boundary.
-- After issue #9849 lands, the 94 `hotPathCandidates` entries, checking the
-  migrated view has the same contents in the same order. Current core
-  conformance does not import that unreleased downstream consumer.
+- The 94 `hotPathCandidates` entries in the downstream
+  `HexBerlekampZassenhaus` conformance target, checking that the table view has
+  the same contents in the same order.
 
 **Oracle choice.** PARI's `isprime`, `nextprime`, and `primes` through
 cypari2 independently cover verdicts, next-prime results, and segments.
@@ -1340,9 +1337,9 @@ Policy-selection evidence, retained as input to but not a claim about Phase 4:
   ```bash
   python3 scripts/bench/primality_fuel_sweep.py --rounds 6 --repeats 3 \
     --output reports/bench-results/hex-primality-fuel-issue-9784-chungus2.json
-  python3 scripts/bench/primality_elab_sweep.py --samples 6 \
-    --shared-host --expected-host chungus2 --cpu 22 --timeout 30 \
-    --warm-timeout 600 --max-pair-retries 32 \
+  cpu=$(python3 scripts/bench/idle_core.py)
+  taskset -c "$cpu" python3 scripts/bench/primality_elab_sweep.py --samples 6 \
+    --shared-host --cpu "$cpu" --timeout 30 --warm-timeout 600 \
     --output reports/bench-results/hex-primality-fuel-elab-issue-9784-chungus2.json
   ```
 
@@ -1438,10 +1435,10 @@ boundary because the core consumers live below the companion.
 1. **The table and the sieve.** `sieve`, `sieve_testBit_iff` with its
    four hypotheses, the batched replay elaborator, `primeTable` with
    sortedness and both directions,
-   `isTablePrime`, and `primesIn`. The release-gated `hotPathCandidates`
-   migration and the `libraries.yml` amendment it forces are tracked by
-   issue #9849. Independently useful, and the only part of this SPEC with no
-   dependency on the certificate machinery.
+   `isTablePrime`, and `primesIn`; plus the downstream proof-carrying
+   `hotPathCandidates` view and its dependency metadata. Independently useful,
+   and the only part of this SPEC with no dependency on the certificate
+   machinery.
 
 2. **Miller-Rabin and the order.** `orderOf` with `orderOf_pos`,
    `coprime_of_pow_mod_eq_one`, `orderOf_dvd_of_pow_eq_one`, and

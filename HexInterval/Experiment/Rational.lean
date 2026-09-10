@@ -131,9 +131,9 @@ theorem inv_sound {a c : Raw} (h : invOk a c = true) : a.value⁻¹ = c.value :=
   rw [Rat.inv_divInt]
   simp only [invOk, Bool.and_eq_true, valid, decide_eq_true_eq] at h
   by_cases hn : a.num = 0
-  · simp only [if_pos hn, decide_eq_true_eq] at h
+  · simp only [ite_eq_left hn, decide_eq_true_eq] at h
     rw [hn, Rat.divInt_zero, h.2, Rat.zero_divInt]
-  · simp only [if_neg hn, decide_eq_true_eq] at h
+  · simp only [ite_eq_right hn, decide_eq_true_eq] at h
     exact (Rat.divInt_eq_divInt_iff hn h.1.2).2 h.2
 
 end Raw

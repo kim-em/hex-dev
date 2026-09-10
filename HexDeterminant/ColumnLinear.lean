@@ -65,8 +65,8 @@ private theorem detProduct_setCol_add {R : Type u} [Lean.Grind.CommRing R]
         rw [getElem_setCol, getElem_setCol, getElem_setCol]
         by_cases hxp : x = pivot
         · subst x
-          rw [if_pos hpivot, if_pos hpivot, if_pos hpivot, if_pos rfl]
-        · rw [if_neg hxp]
+          rw [ite_eq_left hpivot, ite_eq_left hpivot, ite_eq_left hpivot, ite_eq_left rfl]
+        · rw [ite_eq_right hxp]
           have hperm_ne : perm[x] ≠ dst := by
             intro hperm
             have hxidx : perm.toList.idxOf perm[x] = x.val := by
@@ -78,7 +78,7 @@ private theorem detProduct_setCol_add {R : Type u} [Lean.Grind.CommRing R]
             exact hxp (Fin.ext hval)
           change (if perm[x] = dst then v x + w x else M[x][perm[x]]) =
             (if perm[x] = dst then v x else M[x][perm[x]])
-          rw [if_neg hperm_ne, if_neg hperm_ne]
+          rw [ite_eq_right hperm_ne, ite_eq_right hperm_ne]
     _ =
       (List.finRange n).foldl
         (fun acc x =>
@@ -89,7 +89,7 @@ private theorem detProduct_setCol_add {R : Type u} [Lean.Grind.CommRing R]
         apply List.foldl_mul_congr
         intro x _hx
         by_cases hxp : x = pivot
-        · rw [if_pos hxp]
+        · rw [ite_eq_left hxp]
           grind
         · simp [hxp]
     _ =
@@ -119,7 +119,7 @@ private theorem detProduct_setCol_add {R : Type u} [Lean.Grind.CommRing R]
               rw [getElem_setCol, getElem_setCol]
               change (if perm[x] = dst then w x else M[x][perm[x]]) =
                 (if perm[x] = dst then v x else M[x][perm[x]])
-              rw [if_neg hperm_ne, if_neg hperm_ne])
+              rw [ite_eq_right hperm_ne, ite_eq_right hperm_ne])
     _ =
       (List.finRange n).foldl
           (fun acc x => acc * (setCol M dst v)[x][perm[x]]) 1 +
@@ -161,8 +161,8 @@ private theorem detProduct_setCol_smul {R : Type u} [Lean.Grind.CommRing R]
         rw [getElem_setCol, getElem_setCol]
         by_cases hxp : x = pivot
         · subst x
-          rw [if_pos hpivot, if_pos hpivot, if_pos rfl]
-        · rw [if_neg hxp]
+          rw [ite_eq_left hpivot, ite_eq_left hpivot, ite_eq_left rfl]
+        · rw [ite_eq_right hxp]
           have hperm_ne : perm[x] ≠ dst := by
             intro hperm
             have hxidx : perm.toList.idxOf perm[x] = x.val := by
@@ -174,7 +174,7 @@ private theorem detProduct_setCol_smul {R : Type u} [Lean.Grind.CommRing R]
             exact hxp (Fin.ext hval)
           change (if perm[x] = dst then c * v x else M[x][perm[x]]) =
             (if perm[x] = dst then v x else M[x][perm[x]])
-          rw [if_neg hperm_ne, if_neg hperm_ne]
+          rw [ite_eq_right hperm_ne, ite_eq_right hperm_ne]
     _ =
       c * (List.finRange n).foldl
           (fun acc x => acc * (setCol M dst v)[x][perm[x]]) 1 := by
@@ -391,7 +391,7 @@ private theorem setCol_columnSumMatrix_self
   rw [getElem_setCol]
   by_cases hcol : c = dst
   · subst dst
-    rw [if_pos rfl, getElem_columnSumMatrix]
+    rw [ite_eq_left rfl, getElem_columnSumMatrix]
     simp only [getElem_pair_eq_nested]
   · simp [hcol]
 
@@ -466,7 +466,7 @@ theorem det_setCol_existing_col_eq_zero
     det (setCol M dst (fun r => M[r][src])) = 0 := by
   apply det_eq_zero_of_col_eq (setCol M dst (fun r => M[r][src])) src dst hsrcdst
   intro r
-  rw [getElem_setCol, getElem_setCol, if_neg hsrcdst, if_pos rfl]
+  rw [getElem_setCol, getElem_setCol, ite_eq_right hsrcdst, ite_eq_left rfl]
 
 /-- Adding a finite linear combination of other columns of `M` to column `dst`
 preserves the determinant. The sources are given as a list and each source is

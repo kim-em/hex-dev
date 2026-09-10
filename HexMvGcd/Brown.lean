@@ -578,23 +578,29 @@ def brownOfZPoly {cmp : Mono 1 → Mono 1 → Ordering}
     DensePoly.ofList <|
       (List.range f.size).map fun degree => C (f.coeff degree)
 
-/-- Default arity-one integer certificate delegated to `HexPolyZGcd`.  The
-dense kernel supplies the gcd and cofactors; the multivariate checker receives
-a freshly constructed arity-one coprimality witness over those exact
-cofactors. -/
+/-- Default arity-one integer certificate delegated to `HexPolyZGcd`. The
+dense kernel supplies the gcd candidate, which is replayed by the complete
+multivariate checker; a rejected candidate falls back to the proved PRS
+certificate. -/
 def intArityOneCert {cmp : Mono 1 → Mono 1 → Ordering}
     [IsMonomialOrder cmp] (f h : MvPoly 1 Int cmp) : GcdCert 1 Int cmp :=
   let z := ZPoly.gcdCert (brownToZPoly f) (brownToZPoly h)
-  let g := brownOfZPoly z.gcd
-  let cofL := brownOfZPoly z.cofL
-  let cofR := brownOfZPoly z.cofR
-  let lower := prsOps (R := Int) 0
-  .mk g cofL cofR (succCoprime lower cmp cofL cofR)
+  (brownCheckedCandidate? f h (brownOfZPoly z.gcd)).getD (prsCert f h)
 
 theorem intArityOneCert_checks {cmp : Mono 1 → Mono 1 → Ordering}
     [IsMonomialOrder cmp] (f h : MvPoly 1 Int cmp) :
     checkGcd f h (intArityOneCert f h) = true := by
-  sorry
+  let z := ZPoly.gcdCert (brownToZPoly f) (brownToZPoly h)
+  change checkGcd f h
+    ((brownCheckedCandidate? f h (brownOfZPoly z.gcd)).getD (prsCert f h)) = true
+  generalize hcandidate : brownCheckedCandidate? f h
+    (brownOfZPoly z.gcd) = candidate?
+  cases candidate? with
+  | none => exact prsCert_checks f h
+  | some cert =>
+      change checkGcd f h cert = true
+      apply checkedCandidate?_checks
+      simpa only [brownCheckedCandidate?] using hcandidate
 
 /-- Arity-indexed integer Brown producer.  The arity-one branch calls the
 actual `HexPolyZGcd` Brown route and then builds a fresh multivariate
@@ -703,9 +709,13 @@ def ratLiftCoprime? {n : Nat}
   if left.scale == 0 || right.scale == 0 then (none, cfg.rand)
   else
     let run := gcdCertWith cfg left.poly right.poly
-    let cert := CoprimeCert.ratLift left.scale right.scale
-      left.poly right.poly run.cert.coprime
-    (if checkCoprime f h cert then some cert else none, run.rand)
+    -- `RatModel.not_int` rules out a leaf in this integer evidence.
+    match Cert.stripCoprime? run.cert.coprime with
+    | none => (none, run.rand)
+    | some integerCert =>
+        let cert := CoprimeCert.ratLift left.scale right.scale
+          left.poly right.poly integerCert
+        (if checkCoprime f h cert then some cert else none, run.rand)
 
 /-- Offer a rational gcd candidate using exact divisions and a `ratLift`
 cofactor certificate, threading the integer dispatcher's random state. -/

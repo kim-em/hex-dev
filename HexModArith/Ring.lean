@@ -168,12 +168,12 @@ theorem natCast_op_eq_ofNat (n : Nat) :
   unfold neg
   have hpLt : p < UInt64.word := Bounds.pLtWord p
   by_cases hzero : a.val = 0
-  · rw [dif_pos hzero]
+  · rw [dite_eq_left hzero]
     change (0 : UInt64).toNat = (p - a.toNat) % p
     have htoNat : a.toNat = 0 := by simp [toNat_eq_val, hzero]
     have hval : a.val.toNat = 0 := by simpa [toNat_eq_val] using htoNat
     simp [toNat_eq_val, hval]
-  · rw [dif_neg hzero]
+  · rw [dite_eq_right hzero]
     change (-a.val - complementWord p hpLt).toNat = (p - a.toNat) % p
     rw [neg_nonzero_toNat a hzero]
     have hzeroNat : a.toNat ≠ 0 := by

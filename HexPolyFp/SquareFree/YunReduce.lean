@@ -540,7 +540,7 @@ private theorem coeff_derivative (f : FpPoly p) (n : Nat) :
 
 private theorem derivative_degree?_lt_self_of_ne_zero
     (f : FpPoly p) (hder_ne : DensePoly.derivative f ≠ 0) :
-    (DensePoly.derivative f).degree?.getD 0 < f.degree?.getD 0 := by
+    (DensePoly.derivative f).natDegree < f.natDegree := by
   have hder_pos : 0 < (DensePoly.derivative f).size := by
     apply Nat.pos_of_ne_zero
     intro hsize
@@ -573,6 +573,7 @@ private theorem derivative_degree?_lt_self_of_ne_zero
   have hf_degree : f.degree? = some (f.size - 1) := by
     unfold DensePoly.degree?
     simp [Nat.ne_of_gt hf_pos]
+  unfold DensePoly.natDegree
   rw [hder_degree, hf_degree]
   simp
   omega
@@ -599,7 +600,7 @@ private theorem derivative_isZero_true_of_dvd_self_derivative
       have hdeg_mul := degree?_mul_eq_add_degree? f q hf_ne hq_ne
       have hdeg_lt := derivative_degree?_lt_self_of_ne_zero f hder_ne
       have hdeg_eq :
-          (DensePoly.derivative f).degree?.getD 0 = (f * q).degree?.getD 0 := by
+          (DensePoly.derivative f).natDegree = (f * q).natDegree := by
         rw [hq]
       rw [hdeg_mul] at hdeg_eq
       omega
@@ -635,17 +636,17 @@ private theorem pow_ne_zero
 private theorem powLinear_degree?_getD
     [ZMod64.PrimeModulus p] {d : FpPoly p}
     (hd : d ≠ 0) :
-    ∀ n, (powLinear d n).degree?.getD 0 = n * d.degree?.getD 0 := by
+    ∀ n, (powLinear d n).natDegree = n * d.natDegree := by
   intro n
   induction n with
   | zero =>
-      change (1 : FpPoly p).degree?.getD 0 = 0 * d.degree?.getD 0
-      change (DensePoly.C (1 : ZMod64 p)).degree?.getD 0 = 0 * d.degree?.getD 0
-      rw [DensePoly.degree?_C_getD]
+      change (1 : FpPoly p).natDegree = 0 * d.natDegree
+      change (DensePoly.C (1 : ZMod64 p)).natDegree = 0 * d.natDegree
+      rw [DensePoly.natDegree_C]
       simp
   | succ n ih =>
-      change (powLinear d n * d).degree?.getD 0 =
-        (n + 1) * d.degree?.getD 0
+      change (powLinear d n * d).natDegree =
+        (n + 1) * d.natDegree
       rw [degree?_mul_eq_add_degree? (powLinear d n) d
         (powLinear_ne_zero hd n) hd, ih, Nat.succ_mul]
 
@@ -653,7 +654,7 @@ private theorem powLinear_degree?_getD
 private theorem pow_degree?_getD
     [ZMod64.PrimeModulus p] {d : FpPoly p}
     (hd : d ≠ 0) (n : Nat) :
-    (pow d n).degree?.getD 0 = n * d.degree?.getD 0 := by
+    (pow d n).natDegree = n * d.natDegree := by
   rw [pow_eq_powLinear]
   exact powLinear_degree?_getD hd n
 
@@ -670,11 +671,11 @@ private theorem dvd_one_of_all_powers_dvd_nonzero
     apply hg_ne
     rw [pow_one, hd, zero_mul] at hq
     exact hq
-  have hd_degree_zero : d.degree?.getD 0 = 0 := by
-    by_cases hdeg_zero : d.degree?.getD 0 = 0
+  have hd_degree_zero : d.natDegree = 0 := by
+    by_cases hdeg_zero : d.natDegree = 0
     · exact hdeg_zero
-    · have hdeg_pos : 0 < d.degree?.getD 0 := Nat.pos_of_ne_zero hdeg_zero
-      let n := g.degree?.getD 0 + 1
+    · have hdeg_pos : 0 < d.natDegree := Nat.pos_of_ne_zero hdeg_zero
+      let n := g.natDegree + 1
       rcases hall n with ⟨q, hq⟩
       have hq_ne : q ≠ 0 := by
         intro hq_zero
@@ -684,17 +685,17 @@ private theorem dvd_one_of_all_powers_dvd_nonzero
       have hdeg_mul := degree?_mul_eq_add_degree? (pow d n) q hpow_ne hq_ne
       have hdeg_pow := pow_degree?_getD hd_ne n
       have hdeg_eq :
-          g.degree?.getD 0 = (pow d n * q).degree?.getD 0 := by
+          g.natDegree = (pow d n * q).natDegree := by
         rw [hq]
       rw [hdeg_mul, hdeg_pow] at hdeg_eq
-      have hpow_large : g.degree?.getD 0 < n * d.degree?.getD 0 := by
+      have hpow_large : g.natDegree < n * d.natDegree := by
         have hmul_ge :
-            g.degree?.getD 0 + 1 ≤
-              (g.degree?.getD 0 + 1) * d.degree?.getD 0 := by
-          exact Nat.le_mul_of_pos_right (g.degree?.getD 0 + 1) hdeg_pos
+            g.natDegree + 1 ≤
+              (g.natDegree + 1) * d.natDegree := by
+          exact Nat.le_mul_of_pos_right (g.natDegree + 1) hdeg_pos
         dsimp [n]
         exact Nat.lt_of_lt_of_le (Nat.lt_succ_self _) hmul_ge
-      have hpow_le : n * d.degree?.getD 0 ≤ g.degree?.getD 0 := by
+      have hpow_le : n * d.natDegree ≤ g.natDegree := by
         omega
       exact False.elim ((Nat.not_lt_of_ge hpow_le) hpow_large)
   have hd_size_pos : 0 < d.size := by
@@ -710,6 +711,7 @@ private theorem dvd_one_of_all_powers_dvd_nonzero
     unfold DensePoly.degree?
     simp [hd_size_ne]
   have hd_size_one : d.size = 1 := by
+    unfold DensePoly.natDegree at hd_degree_zero
     rw [hd_degree] at hd_degree_zero
     simp at hd_degree_zero
     omega

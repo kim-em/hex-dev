@@ -149,7 +149,7 @@ private theorem pow_go_eq_mul_powLinear (acc base : FpPoly p) (k : Nat) :
       rw [pow.go.eq_def]
       by_cases hk : k = 0
       · simp [hk, powLinear]
-      · rw [dif_neg hk]
+      · rw [dite_eq_right hk]
         have hlt : k / 2 < k :=
           Nat.div_lt_self (Nat.pos_of_ne_zero hk) (by decide : 1 < 2)
         cases Nat.mod_two_eq_zero_or_one k with
@@ -160,7 +160,7 @@ private theorem pow_go_eq_mul_powLinear (acc base : FpPoly p) (k : Nat) :
             have hnot : ¬k % 2 = 1 := by omega
             have hdiv : 2 * (k / 2) / 2 = k / 2 :=
               Nat.mul_div_right (k / 2) (by decide : 0 < 2)
-            rw [if_neg hnot]
+            rw [ite_eq_right hnot]
             calc
               pow.go acc (base * base) (k / 2)
                   = acc * powLinear (base * base) (k / 2) := by
@@ -171,7 +171,7 @@ private theorem pow_go_eq_mul_powLinear (acc base : FpPoly p) (k : Nat) :
             have hk_eq : k = 2 * (k / 2) + 1 := by
               have h := Nat.mod_add_div k 2
               omega
-            rw [if_pos hmod1]
+            rw [ite_eq_left hmod1]
             calc
               pow.go (acc * base) (base * base) (k / 2)
                   = (acc * base) * powLinear (base * base) (k / 2) := by
@@ -700,11 +700,11 @@ private theorem coeffTerm_coeff (g : FpPoly p) (i n : Nat) :
   have hzero : g.coeff i * (0 : ZMod64 p) = 0 := by grind
   rw [DensePoly.coeff_shift_scale i (g.coeff i) (1 : FpPoly p) n hzero]
   by_cases hlt : n < i
-  · simp only [hlt, if_true]
+  · simp only [hlt, ite_true]
     have hne : n ≠ i := by omega
     simp [hne]
     rfl
-  · simp only [hlt, if_false]
+  · simp only [hlt, ite_false]
     change g.coeff i * (DensePoly.C (1 : ZMod64 p)).coeff (n - i) =
       if n = i then g.coeff i else 0
     rw [DensePoly.coeff_C]
@@ -736,14 +736,14 @@ private theorem powLinear_coeffTerm_coeff (g : FpPoly p) (i k n : Nat) :
         if n = (k + 1) * i then (g.coeff i) ^ (k + 1) else 0
       rw [coeff_mul_shift_scale_one]
       by_cases hin : i ≤ n
-      · rw [if_pos hin, ih]
+      · rw [ite_eq_left hin, ih]
         by_cases hprev : n - i = k * i
         · have hn : n = (k + 1) * i := by
             calc
               n = n - i + i := (Nat.sub_add_cancel hin).symm
               _ = k * i + i := by rw [hprev]
               _ = (k + 1) * i := by rw [Nat.succ_mul]
-          rw [if_pos hprev, if_pos hn]
+          rw [ite_eq_left hprev, ite_eq_left hn]
           exact (Lean.Grind.Semiring.pow_succ (g.coeff i) k).symm
         · have hn : n ≠ (k + 1) * i := by
             intro hn
@@ -751,7 +751,7 @@ private theorem powLinear_coeffTerm_coeff (g : FpPoly p) (i k n : Nat) :
             calc
               n - i = (k + 1) * i - i := by rw [hn]
               _ = k * i := by rw [Nat.succ_mul]; omega
-          rw [if_neg hprev, if_neg hn]
+          rw [ite_eq_right hprev, ite_eq_right hn]
           grind
       · have hn : n ≠ (k + 1) * i := by
           intro hn
@@ -759,7 +759,7 @@ private theorem powLinear_coeffTerm_coeff (g : FpPoly p) (i k n : Nat) :
             rw [Nat.succ_mul]
             omega
           omega
-        rw [if_neg hin, if_neg hn]
+        rw [ite_eq_right hin, ite_eq_right hn]
 
 /-- Coefficient projection for the bounded finite coefficient fold. -/
 private theorem coeffFold_coeff (g : FpPoly p) (m n : Nat) :
@@ -782,16 +782,16 @@ private theorem coeffFold_coeff (g : FpPoly p) (m n : Nat) :
         if n < m + 1 then g.coeff n else 0
       rw [ih, coeffTerm_coeff]
       by_cases hlt : n < m
-      · rw [if_pos hlt]
+      · rw [ite_eq_left hlt]
         have hne : n ≠ m := by omega
-        rw [if_neg hne, if_pos (by omega : n < m + 1)]
+        rw [ite_eq_right hne, ite_eq_left (by omega : n < m + 1)]
         exact zmod64_add_zero_coeff (g.coeff n)
       · by_cases heq : n = m
-        · rw [if_neg hlt]
-          rw [if_pos heq, if_pos (by omega : n < m + 1), heq]
+        · rw [ite_eq_right hlt]
+          rw [ite_eq_left heq, ite_eq_left (by omega : n < m + 1), heq]
           exact zmod64_zero_add_coeff (g.coeff m)
         · have hsucc : ¬n < m + 1 := by omega
-          rw [if_neg hlt, if_neg heq, if_neg hsucc]
+          rw [ite_eq_right hlt, ite_eq_right heq, ite_eq_right hsucc]
           exact zmod64_add_zero_zero_coeff
 
 /-- Any coefficient fold whose bound reaches `g.size` reconstructs `g`. -/
@@ -916,8 +916,8 @@ private theorem coeffFoldPowerCoeff_prime_coeff
       rw [hpow_zero_p_coeff]
       have hne : ¬ n / p < 0 := Nat.not_lt_zero _
       by_cases hmod : n % p = 0
-      · rw [if_pos hmod, if_neg hne]
-      · rw [if_neg hmod]
+      · rw [ite_eq_left hmod, ite_eq_right hne]
+      · rw [ite_eq_right hmod]
   | succ m ih =>
       have hsucc : coeffFold g (m + 1) = coeffFold g m + coeffTerm g m := by
         unfold coeffFold
@@ -927,45 +927,45 @@ private theorem coeffFoldPowerCoeff_prime_coeff
         DensePoly.coeff_add_semiring,
         ih, powLinear_coeffTerm_coeff]
       by_cases hmod : n % p = 0
-      · rw [if_pos hmod, if_pos hmod]
+      · rw [ite_eq_left hmod, ite_eq_left hmod]
         have hn_eq : n = p * (n / p) := by
           have hdiv := Nat.div_add_mod n p
           omega
         by_cases hlt : n / p < m
-        · rw [if_pos hlt]
+        · rw [ite_eq_left hlt]
           have hne : n ≠ p * m := by
             intro heq
             have hmul : p * (n / p) = p * m := by rw [← hn_eq]; exact heq
             have hdivm : n / p = m := Nat.eq_of_mul_eq_mul_left hp_pos hmul
             omega
-          rw [if_neg hne]
+          rw [ite_eq_right hne]
           have hltsucc : n / p < m + 1 := by omega
-          rw [if_pos hltsucc]
+          rw [ite_eq_left hltsucc]
           exact zmod64_add_zero_coeff (g.coeff (n / p) ^ p)
-        · rw [if_neg hlt]
+        · rw [ite_eq_right hlt]
           by_cases heq : n / p = m
           · have hnm : n = p * m := by rw [hn_eq, heq]
-            rw [if_pos hnm]
+            rw [ite_eq_left hnm]
             have hltsucc : n / p < m + 1 := by omega
-            rw [if_pos hltsucc, heq]
+            rw [ite_eq_left hltsucc, heq]
             exact zmod64_zero_add_coeff (g.coeff m ^ p)
           · have hne : n ≠ p * m := by
               intro habs
               have hmul : p * (n / p) = p * m := by rw [← hn_eq]; exact habs
               have hdivm : n / p = m := Nat.eq_of_mul_eq_mul_left hp_pos hmul
               exact heq hdivm
-            rw [if_neg hne]
+            rw [ite_eq_right hne]
             have hltsucc : ¬ n / p < m + 1 := by omega
-            rw [if_neg hltsucc]
+            rw [ite_eq_right hltsucc]
             exact zmod64_add_zero_zero_coeff
-      · rw [if_neg hmod, if_neg hmod]
+      · rw [ite_eq_right hmod, ite_eq_right hmod]
         have hne : n ≠ p * m := by
           intro heq
           have hmodzero : n % p = 0 := by
             rw [heq]
             exact Nat.mul_mod_right p m
           exact hmod hmodzero
-        rw [if_neg hne]
+        rw [ite_eq_right hne]
         exact zmod64_add_zero_zero_coeff
 
 /-- Freshman's-dream coefficient of `(coeffFold g m)^p`: nonzero only at `p`-divisible degrees, where it is `(g.coeff (n/p))^p`. -/
@@ -1001,17 +1001,17 @@ private theorem powLinear_prime_coeff
             exact powLinear_coeffFold_prime_coeff hp g g.size n
     _ = if n % p = 0 then g.coeff (n / p) ^ p else 0 := by
           by_cases hn : n % p = 0
-          · rw [if_pos hn]
+          · rw [ite_eq_left hn]
             by_cases hsize : n / p < g.size
-            · rw [if_pos hsize]
-              rw [if_pos hn]
-            · rw [if_neg hsize]
+            · rw [ite_eq_left hsize]
+              rw [ite_eq_left hn]
+            · rw [ite_eq_right hsize]
               have hcoeff : g.coeff (n / p) = 0 :=
                 DensePoly.coeff_eq_zero_of_size_le g (by omega)
-              rw [hcoeff, if_pos hn]
+              rw [hcoeff, ite_eq_left hn]
               exact (ZMod64.pow_prime hp (0 : ZMod64 p)).symm
-          · rw [if_neg hn]
-            rw [if_neg hn]
+          · rw [ite_eq_right hn]
+            rw [ite_eq_right hn]
 
 /--
 Coefficient form of the prime-field Frobenius law for the formal `p`-th root:

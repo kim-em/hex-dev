@@ -45,10 +45,10 @@ instance instBezoutOpsInt : BezoutOps Int where
 private theorem int_normalize_eq_natAbs (a : Int) :
     a * (if a < 0 then -1 else 1) = (a.natAbs : Int) := by
   by_cases h : a < 0
-  · rw [Hex.ite_eq_left h,
+  · rw [ite_eq_left h,
       Int.ofNat_natAbs_of_nonpos (Int.le_of_lt h)]
     omega
-  · rw [Hex.ite_eq_right h,
+  · rw [ite_eq_right h,
       Int.ofNat_natAbs_of_nonneg (Int.le_of_not_gt h)]
     omega
 
@@ -176,7 +176,7 @@ instance instLawfulGcdOpsRat : LawfulGcdOps Rat := by
         apply hab
         simp [hd] at ha hb
         exact ⟨ha, hb⟩
-      exact ⟨d⁻¹, by rw [Hex.ite_eq_right hab, Rat.mul_inv_cancel d hd]⟩
+      exact ⟨d⁻¹, by rw [ite_eq_right hab, Rat.mul_inv_cancel d hd]⟩
   · intro a b
     change
       (if a = 0 ∧ b = 0 then 0 else 1) *
@@ -187,7 +187,7 @@ instance instLawfulGcdOpsRat : LawfulGcdOps Rat := by
     · simp [h]
     · simp only [h, ite_false]
       change (1 : Rat) * (if (1 : Rat) = 0 then 1 else 1⁻¹) = 1
-      rw [Hex.ite_eq_right (by decide)]
+      rw [ite_eq_right (by decide)]
       exact Rat.mul_inv_cancel 1 (by decide)
   · intro a b hb
     exact Rat.mul_div_cancel hb
@@ -204,7 +204,7 @@ instance instLawfulGcdOpsRat : LawfulGcdOps Rat := by
     change ∃ b, (if a = 0 then 1 else a⁻¹) * b = 1
     by_cases ha : a = 0
     · exact ⟨1, by simp [ha]⟩
-    · exact ⟨a, by rw [Hex.ite_eq_right ha, Rat.inv_mul_cancel a ha]⟩
+    · exact ⟨a, by rw [ite_eq_right ha, Rat.inv_mul_cancel a ha]⟩
   · intro a b
     change
       a * b * (if a * b = 0 then 1 else (a * b)⁻¹) =
@@ -228,7 +228,7 @@ instance instLawfulGcdOpsRat : LawfulGcdOps Rat := by
     change a * (if a = 0 then 1 else a⁻¹) = 1
     change decide (a ≠ 0) = true at ha
     have hne : a ≠ 0 := by simpa only [decide_eq_true_eq] using ha
-    rw [Hex.ite_eq_right hne, Rat.mul_inv_cancel a hne]
+    rw [ite_eq_right hne, Rat.mul_inv_cancel a hne]
 
 instance instLawfulBezoutOpsRat : LawfulBezoutOps Rat := by
   constructor
@@ -318,7 +318,7 @@ instance instLawfulGcdOpsZMod64 {p : Nat} [hp : ZMod64.Bounds p]
         simp [hd] at ha hb
         exact ⟨ha, hb⟩
       exact ⟨d⁻¹, by
-        rw [Hex.ite_eq_right hab]
+        rw [ite_eq_right hab]
         have hdinv : d * d⁻¹ = 1 := by
           change d * ZMod64.inv d = 1
           exact ZMod64.mul_inv_eq_one_of_ne_zero hd
@@ -335,7 +335,7 @@ instance instLawfulGcdOpsZMod64 {p : Nat} [hp : ZMod64.Bounds p]
       change (1 : ZMod64 p) * (if (1 : ZMod64 p) = 0 then 1 else 1⁻¹) = 1
       have hone : (1 : ZMod64 p) ≠ 0 := fun h =>
         ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) h
-      rw [Hex.ite_eq_right hone]
+      rw [ite_eq_right hone]
       change (1 : ZMod64 p) * ZMod64.inv 1 = 1
       exact ZMod64.mul_inv_eq_one_of_ne_zero hone
   · intro a b hb
@@ -363,7 +363,7 @@ instance instLawfulGcdOpsZMod64 {p : Nat} [hp : ZMod64.Bounds p]
     by_cases ha : a = 0
     · exact ⟨1, by simp [ha]⟩
     · exact ⟨a, by
-        rw [Hex.ite_eq_right ha]
+        rw [ite_eq_right ha]
         change ZMod64.inv a * a = 1
         exact ZMod64.inv_mul_eq_one_of_ne_zero ha⟩
   · intro a b
@@ -390,8 +390,8 @@ instance instLawfulGcdOpsZMod64 {p : Nat} [hp : ZMod64.Bounds p]
         have hbInv : b * b⁻¹ = 1 := by
           change b * ZMod64.inv b = 1
           exact ZMod64.mul_inv_eq_one_of_ne_zero hb
-        rw [Hex.ite_eq_right ha, Hex.ite_eq_right hb,
-          Hex.ite_eq_right hab, habInv, haInv, hbInv]
+        rw [ite_eq_right ha, ite_eq_right hb,
+          ite_eq_right hab, habInv, haInv, hbInv]
         exact (Lean.Grind.Semiring.one_mul 1).symm
   · intro a
     change
@@ -404,18 +404,18 @@ instance instLawfulGcdOpsZMod64 {p : Nat} [hp : ZMod64.Bounds p]
     · have haInv : a * a⁻¹ = 1 := by
         change a * ZMod64.inv a = 1
         exact ZMod64.mul_inv_eq_one_of_ne_zero ha
-      rw [Hex.ite_eq_right ha, haInv]
+      rw [ite_eq_right ha, haInv]
       have hone : (1 : ZMod64 p) ≠ 0 := fun h =>
         ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) h
       have honeInv : (1 : ZMod64 p) * (1 : ZMod64 p)⁻¹ = 1 := by
         change (1 : ZMod64 p) * ZMod64.inv 1 = 1
         exact ZMod64.mul_inv_eq_one_of_ne_zero hone
-      rw [Hex.ite_eq_right hone, honeInv]
+      rw [ite_eq_right hone, honeInv]
   · intro a ha
     change decide (a ≠ 0) = true at ha
     have hne : a ≠ 0 := by simpa only [decide_eq_true_eq] using ha
     change a * (if a = 0 then 1 else a⁻¹) = 1
-    rw [Hex.ite_eq_right hne]
+    rw [ite_eq_right hne]
     change a * ZMod64.inv a = 1
     exact ZMod64.mul_inv_eq_one_of_ne_zero hne
 
@@ -548,7 +548,7 @@ private theorem coeff_zero_ne_zero_of_size_one {f : FpPoly p}
 omit [ZMod64.PrimeModulus p] in
 private theorem canonical_eq_scale {f : FpPoly p} (hf : f ≠ 0) :
     f * normUnit f = DensePoly.scale f.leadingCoeff⁻¹ f := by
-  rw [normUnit, Hex.ite_eq_right hf]
+  rw [normUnit, ite_eq_right hf]
   calc
     f * DensePoly.C f.leadingCoeff⁻¹ =
         DensePoly.C f.leadingCoeff⁻¹ * f :=
@@ -626,7 +626,7 @@ private theorem normUnit_is_unit (f : FpPoly p) :
       change ZMod64.inv f.leadingCoeff * f.leadingCoeff = 1
       exact ZMod64.inv_mul_eq_one_of_ne_zero hlead
     refine ⟨DensePoly.C f.leadingCoeff, ?_⟩
-    rw [normUnit, Hex.ite_eq_right hf, C_mul_C_eq, hcancel]
+    rw [normUnit, ite_eq_right hf, C_mul_C_eq, hcancel]
     rfl
 
 private theorem canonical_dvd_self (f : FpPoly p) :
@@ -645,7 +645,7 @@ private theorem canonical_dvd_self (f : FpPoly p) :
       (f * normUnit f) * DensePoly.C f.leadingCoeff =
           (f * DensePoly.C f.leadingCoeff⁻¹) *
             DensePoly.C f.leadingCoeff := by
-              rw [normUnit, Hex.ite_eq_right hf]
+              rw [normUnit, ite_eq_right hf]
       _ = f * (DensePoly.C f.leadingCoeff⁻¹ *
             DensePoly.C f.leadingCoeff) :=
           DensePoly.mul_assoc_poly _ _ _

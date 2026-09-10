@@ -27,7 +27,7 @@ LEAN_GLOB_MODULE_RE = re.compile(r"`([A-Z][A-Za-z0-9_.]+)")
 LEAN_LIB_RE = re.compile(r"^lean_lib\s+([A-Za-z0-9_]+)\b")
 LEAN_EXE_RE = re.compile(r"^lean_exe\s+([A-Za-z0-9_]+)\b")
 QUALIFIED_IMPORT_RE = re.compile(
-    r"^\s*(?:(?:public|private)\s+)?(?:meta\s+)?import\s+([A-Za-z0-9_.]+)\s*$"
+    r"^\s*(?:(?:public|private)\s+)?(?:meta\s+)?import\s+(?:all\s+)?([A-Za-z0-9_.]+)\s*$"
 )
 IMPORT_ALL_RE = re.compile(
     r"^\s*(?:(?:public|private|meta)\s+)*import\s+all\s+([A-Za-z0-9_.]+)\s*$"
@@ -56,6 +56,7 @@ SEALED_IMPORT_ALL_ALLOWLIST: dict[str, frozenset[Path]] = {
 }
 
 UMBRELLA_BUILD_TARGETS = {
+    "HexPolyFastKernels",
     "HexLLLBenchSupport",
     "HexGF2BenchSupport",
     "HexBerlekampKernelProbe",
@@ -66,6 +67,8 @@ UMBRELLA_BUILD_TARGETS = {
     "HexIntFactorKernelProbe",
     "HexMvGcdKernelProbe",
     "HexMvGcdBenchSupport",
+    "HexRationalFnBenchSupport",
+    "HexRationalFnKernelProbe",
     "HexMvPolyBenchSupport",
     "HexModularBenchSupport",
     "HexMvPolyMathlibProofProbe",
@@ -87,10 +90,12 @@ UMBRELLA_BUILD_TARGETS = {
     "HexFactorizationModules",
     "HexMvFactorizationTests",
     "HexReleaseTests",
-    "HexRCFTests",
     "HexSparsePolyTests",
     "HexTruncatedSeriesTests",
     "HexSmithTests",
+    "HexLatticeEnumTests",
+    "HexPermGroupTests",
+    "HexGraphIsoTests",
     "HexCharPolyTests",
     "HexReleaseExamples",
 }
@@ -320,6 +325,12 @@ def check_correspondence_only(root: Path, libraries, lakefile: Path) -> list[str
 
         spec_dir = root / name / "SPEC"
         specs = sorted(spec_dir.glob("*.md")) if spec_dir.is_dir() else []
+        # Source-less planned libraries keep their design in the central index.
+        if not info.is_active and not spec_dir.is_dir():
+            planned_spec = (
+                root / "SPEC" / "Libraries" / Path(pascal_to_spec_path(name)).name
+            )
+            specs = [planned_spec] if planned_spec.is_file() else []
         if len(specs) != 1:
             errors.append(
                 f"{name} declares correspondence_only but has {len(specs)} library SPECs; "
@@ -365,7 +376,7 @@ def check_correspondence_only(root: Path, libraries, lakefile: Path) -> list[str
                     owner_conformance = (
                         root / "conformance" / owner / "Conformance.lean"
                     )
-                    if not owner_conformance.is_file():
+                    if info.is_active and not owner_conformance.is_file():
                         errors.append(
                             f"{name} names computational conformance owner {owner} "
                             "without a core conformance module"

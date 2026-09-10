@@ -164,6 +164,7 @@ the `{1, r}` basis, obtained by reducing a polynomial expression modulo
 theorem exists_repr_of_mem_adjoin {a : F} {r : E} (hr : r ^ 2 = algebraMap F E a) {z : E}
     (hz : z ∈ IntermediateField.adjoin F ({r} : Set E)) :
     ∃ x y : F, z = algebraMap F E x + algebraMap F E y * r := by
+  classical
   have hmonic : (X ^ 2 - C a : F[X]).Monic := monic_X_pow_sub_C a two_ne_zero
   have hroot : (Polynomial.aeval r) (X ^ 2 - C a : F[X]) = 0 := by simp [hr]
   have halg : IsAlgebraic F r := ⟨X ^ 2 - C a, hmonic.ne_zero, hroot⟩
@@ -273,7 +274,7 @@ theorem sqrtSet_nil : sqrtSet [] = ∅ := by simp [sqrtSet]
 theorem sqrtSet_cons (d : ℤ) (ds : List ℤ) :
     sqrtSet (d :: ds) = {x : ℂ | x ^ 2 = (d : ℂ)} ∪ sqrtSet ds := by
   ext x
-  simp only [sqrtSet, Set.mem_setOf_eq, Set.mem_union, List.mem_cons]
+  simp only [sqrtSet, Set.mem_ofPred_eq, Set.mem_union, List.mem_cons]
   constructor
   · rintro ⟨e, he | he, hx⟩
     · exact Or.inl (by rw [hx, he])

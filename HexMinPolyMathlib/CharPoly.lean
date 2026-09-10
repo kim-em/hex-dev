@@ -35,7 +35,7 @@ theorem minPoly_dvd_charPoly (A : Hex.Matrix F n n) :
 /-- The degree of the executable minimal polynomial is at most the matrix
 dimension. -/
 theorem degree?_minPoly_le (A : Hex.Matrix F n n) :
-    (Hex.Matrix.minPoly A).degree?.getD 0 ≤ n := by
+    (Hex.Matrix.minPoly A).natDegree ≤ n := by
   rw [← natDegree_toPolynomial]
   change (equiv (Hex.Matrix.minPoly A)).natDegree ≤ n
   rw [equiv_minPoly]

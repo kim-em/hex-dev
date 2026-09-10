@@ -86,7 +86,7 @@ theorem coeff_reversePrefix_mul {n : Nat} (a : TSeries R n)
     have hib : i < base := List.mem_range.mp hi
     unfold diagonalMulCoeffTerm
     have hid : i ≤ k + q.size - 2 - t := by omega
-    rw [_root_.ite_eq_right (by omega)]
+    rw [ite_eq_right (by omega)]
     have hqi : q.size ≤ k + q.size - 2 - t - i := by
       dsimp [base] at hib
       omega
@@ -106,12 +106,12 @@ theorem coeff_reversePrefix_mul {n : Nat} (a : TSeries R n)
     intro j hj
     have hjs : j < q.size := List.mem_range.mp hj
     unfold diagonalMulCoeffTerm
-    rw [_root_.ite_eq_right (by
+    rw [ite_eq_right (by
       dsimp [base]
       omega), coeff_reversePrefix]
     by_cases hjt : j ≤ t
-    · rw [_root_.ite_eq_left (by
-        dsimp [base]; omega), _root_.ite_eq_left ⟨hjs, hjt⟩]
+    · rw [ite_eq_left (by
+        dsimp [base]; omega), ite_eq_left ⟨hjs, hjt⟩]
       have hidx₁ : k + q.size - 2 - t - (base + j) = q.size - 1 - j := by
         dsimp [base]
         omega
@@ -120,8 +120,8 @@ theorem coeff_reversePrefix_mul {n : Nat} (a : TSeries R n)
         omega
       rw [hidx₁, hidx₂]
       grind
-    · rw [_root_.ite_eq_right (by
-        dsimp [base]; omega), _root_.ite_eq_right (by omega)]
+    · rw [ite_eq_right (by
+        dsimp [base]; omega), ite_eq_right (by omega)]
       exact Lean.Grind.Semiring.zero_mul _
   rw [hleft]
   have hright :
@@ -139,8 +139,8 @@ theorem coeff_reversePrefix_mul {n : Nat} (a : TSeries R n)
       omega
     rw [coeff_reverseSeries q n j (by omega)]
     by_cases hjs : j < q.size
-    · rw [_root_.ite_eq_left hjs, _root_.ite_eq_left ⟨hjs, hjt⟩]
-    · rw [_root_.ite_eq_right hjs, _root_.ite_eq_right (by omega)]
+    · rw [ite_eq_left hjs, ite_eq_left ⟨hjs, hjt⟩]
+    · rw [ite_eq_right hjs, ite_eq_right (by omega)]
       exact Lean.Grind.Semiring.zero_mul _
   rw [hright]
   let f := fun j =>
@@ -151,12 +151,12 @@ theorem coeff_reversePrefix_mul {n : Nat} (a : TSeries R n)
     (by
       intro i hi _
       dsimp [f]
-      rw [_root_.ite_eq_right (by omega)])
+      rw [ite_eq_right (by omega)])
   have htext := foldRangeExtend f (t + 1) bound (Nat.le_max_right _ _)
     (by
       intro i hi _
       dsimp [f]
-      rw [_root_.ite_eq_right (by omega)])
+      rw [ite_eq_right (by omega)])
   dsimp [f] at hqext htext
   exact hqext.symm.trans htext
 
@@ -408,23 +408,21 @@ theorem DivPlan.remainder_size_le (plan : DivPlan R) (p : DensePoly R)
 positive-degree divisor. -/
 theorem DivPlan.remainder_degree_lt (plan : DivPlan R) (p : DensePoly R)
     (hcap : quotientLength p plan.divisor ≤ plan.capacity)
-    (hdeg : 0 < plan.divisor.degree?.getD 0) :
-    (p - mulWith plan.mul (plan.quotient p hcap) plan.divisor).degree?.getD 0 <
-      plan.divisor.degree?.getD 0 := by
+    (hdeg : 0 < plan.divisor.natDegree) :
+    (p - mulWith plan.mul (plan.quotient p hcap) plan.divisor).natDegree <
+      plan.divisor.natDegree := by
   have hdpos : 0 < plan.divisor.size := by
     rcases Nat.eq_zero_or_pos plan.divisor.size with hz | hz
-    · rw [(degree?_eq_none_iff plan.divisor).mpr hz, Option.getD_none] at hdeg
+    · rw [natDegree_eq_size_sub_one, hz] at hdeg
       omega
     · exact hz
-  have hddegree : plan.divisor.degree?.getD 0 = plan.divisor.size - 1 := by
-    rw [degree?_eq_some_of_pos_size plan.divisor hdpos, Option.getD_some]
+  have hddegree : plan.divisor.natDegree = plan.divisor.size - 1 := by
+    rw [natDegree_eq_size_sub_one]
   let r := p - mulWith plan.mul (plan.quotient p hcap) plan.divisor
   have hrsize : r.size ≤ plan.divisor.size - 1 := plan.remainder_size_le p hcap
-  rcases Nat.eq_zero_or_pos r.size with hz | hz
-  · rw [(degree?_eq_none_iff r).mpr hz, Option.getD_none, hddegree]
-    omega
-  · rw [degree?_eq_some_of_pos_size r hz, Option.getD_some, hddegree]
-    omega
+  show r.natDegree < plan.divisor.natDegree
+  rw [natDegree_eq_size_sub_one, hddegree]
+  omega
 
 /-- Divide using a cached reciprocal.  The proof ensures the cached precision
 covers the requested quotient; it is erased from executable code. -/
@@ -459,12 +457,12 @@ theorem DivPlan.divMod_eq_divMod [Div R] (plan : DivPlan R) (p : DensePoly R)
     intro hs
     exact plan.divisor_ne ((size_eq_zero_iff plan.divisor).mp hs)
   have heq : _root_.Hex.DensePoly.divMod p plan.divisor = (q, r) := by
-    by_cases hdeg : 0 < plan.divisor.degree?.getD 0
+    by_cases hdeg : 0 < plan.divisor.natDegree
     · exact divMod_eq_of_reconstruction p plan.divisor q r hdeg hcancel
         hexact h_top_ne hrec (plan.remainder_degree_lt p hcap hdeg)
-    · have hddegree : plan.divisor.degree?.getD 0 =
+    · have hddegree : plan.divisor.natDegree =
           plan.divisor.size - 1 := by
-        rw [degree?_eq_some_of_pos_size plan.divisor hdpos, Option.getD_some]
+        rw [natDegree_eq_size_sub_one]
       have hdsize : plan.divisor.size = 1 := by omega
       have hrsize : r.size ≤ plan.divisor.size - 1 :=
         plan.remainder_size_le p hcap
@@ -544,8 +542,8 @@ theorem divModMonicWith_eq (mul : MulPlan R) (p q : DensePoly R)
         _ = 0 := by grind
     subst p
     letI : Div R := ⟨fun a _ => a⟩
-    have hnot_lt : ¬(0 : DensePoly R).degree?.getD 0 <
-        (0 : DensePoly R).degree?.getD 0 := by omega
+    have hnot_lt : ¬(0 : DensePoly R).natDegree <
+        (0 : DensePoly R).natDegree := by omega
     rw [divModMonic_eq_divMod_of_monic_of_scale 0 0 hq hnot_lt
       (fun _ => rfl)]
     exact (divMod_eq_zero_self_of_size_zero 0 0 size_zero).symm
@@ -570,7 +568,7 @@ theorem divModMonicWith_eq (mul : MulPlan R) (p q : DensePoly R)
         change a * q.leadingCoeff ≠ 0
         rw [hlead]
         simpa only [Lean.Grind.Semiring.mul_one] using ha
-    by_cases hlt : p.degree?.getD 0 < q.degree?.getD 0
+    by_cases hlt : p.natDegree < q.natDegree
     · have hfast : _root_.Hex.DensePoly.divMod p q = (0, p) :=
         divMod_eq_zero_self_of_degree_lt p q hlt
       have hmonic : divModMonic p q hq = (0, p) := by
@@ -628,5 +626,45 @@ theorem divModWith_eq {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
       rw [Lean.Grind.Semiring.zero_mul, Lean.Grind.Semiring.mul_assoc,
         Lean.Grind.Field.mul_inv_cancel hlead, Lean.Grind.Semiring.mul_one] at hz'
       exact ha hz'
+
+/-- Fast field division leaves fewer stored coefficients than its nonzero divisor. -/
+theorem divModWith_size_lt {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
+    (plan : MulPlan F) (p q : DensePoly F) (hq : q ≠ 0) :
+    (divModWith plan p q).2.size < q.size := by
+  let d := DivPlan.ofNonzero plan q hq (quotientLength p q)
+  have hcap : quotientLength p d.divisor ≤ d.capacity := Nat.le_refl _
+  have h := d.remainder_size_le p hcap
+  have hpos : 0 < q.size := Nat.pos_of_ne_zero (fun h => hq ((size_eq_zero_iff q).mp h))
+  have he : divModWith plan p q = d.divMod p hcap := by
+    simp only [divModWith, hq, ↓reduceDIte]
+    rfl
+  rw [he]
+  change (p - mulWith d.mul (d.quotient p hcap) d.divisor).size < q.size
+  change (p - mulWith d.mul (d.quotient p hcap) d.divisor).size ≤ q.size - 1 at h
+  omega
+
+/-- Maximum short operand length for direct one-shot polynomial division. -/
+def divisionCutoff : Nat := 8
+
+/-- Short divisors and short quotients use array long division. Its work is
+linear in the long operand when either length is bounded; building a full
+Newton reciprocal in that regime would introduce unnecessary dense products. -/
+def divModWithImpl {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
+    (mul : MulPlan F) (p q : DensePoly F) : DensePoly F × DensePoly F :=
+  if q.size ≤ divisionCutoff || quotientLength p q ≤ divisionCutoff then
+    divMod p q
+  else
+    if hq : q = 0 then (0, p) else
+      let k := quotientLength p q
+      let plan := DivPlan.ofNonzero mul q hq k
+      plan.divMod p (Nat.le_refl k)
+
+/-- The short-operand division dispatch preserves both quotient and remainder. -/
+@[csimp] theorem divModWith_csimp : @divModWith = @divModWithImpl := by
+  funext F instEq instField mul p q
+  unfold divModWithImpl
+  split
+  · exact divModWith_eq mul p q
+  · rfl
 
 end Hex.DensePoly

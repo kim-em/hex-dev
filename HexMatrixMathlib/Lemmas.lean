@@ -41,9 +41,9 @@ Mathlib's `ᵀ`. -/
   rw [matrixEquiv_apply, Matrix.updateRow_apply]
   by_cases h : i = dst
   · subst h
-    rw [if_pos rfl, vectorEquiv_apply]
+    rw [ite_eq_left rfl, vectorEquiv_apply]
     exact congrArg (·[j.val]) (Hex.Matrix.setRow_get_self M i v)
-  · rw [if_neg h]
+  · rw [ite_eq_right h]
     rw [matrixEquiv_apply]
     exact congrArg (·[j.val]) (Hex.Matrix.setRow_row_ne M dst i v h)
 

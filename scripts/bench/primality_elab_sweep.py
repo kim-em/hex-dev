@@ -125,7 +125,6 @@ SPEC = SweepSpec(
         Path("bench/HexPrimality/Bench.lean"),
     ),
     required_samples=6,
-    max_pair_retries=32,
     absolute_only=True,
 )
 

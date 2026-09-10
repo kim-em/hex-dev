@@ -627,9 +627,10 @@ def degree? (p : GF2Poly) : Option Nat :=
       | none => none
       | some bitIdx => some (64 * (p.words.size - 1) + bitIdx)
 
-/-- The degree of a polynomial, defaulting to `0` for the zero polynomial. -/
+/-- The degree, with the zero polynomial given degree `0`, matching
+`DensePoly.natDegree`. -/
 @[expose]
-def degree (p : GF2Poly) : Nat :=
+def natDegree (p : GF2Poly) : Nat :=
   p.degree?.getD 0
 
 /-- A normalized packed polynomial is `isZero` iff its stored word array is empty.
@@ -734,13 +735,13 @@ theorem ne_zero_of_degree?_eq_some {p : GF2Poly} {d : Nat}
 
 /-- The default-`0` degree extracts the witness of a successful degree search.
 
-Not a `simp` lemma: its left-hand side `p.degree` does not determine `d`, so
+Not a `simp` lemma: its left-hand side `p.natDegree` does not determine `d`, so
 `simp` would have to guess the witness before it could discharge the
 hypothesis. Apply it to an explicit `degree?` equation instead. -/
-theorem degree_eq_of_degree?_eq_some {p : GF2Poly} {d : Nat}
+theorem natDegree_eq_of_degree?_eq_some {p : GF2Poly} {d : Nat}
     (h : p.degree? = some d) :
-    p.degree = d := by
-  simp [degree, h]
+    p.natDegree = d := by
+  simp [natDegree, h]
 
 /-- Unpack a successful `degree?` computation into the normalized high word and
 the selected bit inside that word. -/
@@ -1010,8 +1011,8 @@ theorem ext_coeff {p q : GF2Poly}
   simp [degree?, words_zero]
 
 /-- The default-`0` degree of the zero polynomial is `0`. -/
-@[simp, grind =] theorem degree_zero : (0 : GF2Poly).degree = 0 := by
-  simp [degree, degree?_zero]
+@[simp, grind =] theorem natDegree_zero : (0 : GF2Poly).natDegree = 0 := by
+  simp [natDegree, degree?_zero]
 
 /-- The in-place worker: fold over the shorter array's indices, XOR-ing each of
 its words into the accumulator (the longer array). Index `i` is read (`a[i]!`)
@@ -1086,8 +1087,8 @@ theorem xorWords_get?_getD (xs ys : Array UInt64) (i : Nat) :
       simp [hks]
   unfold xorWords
   by_cases h : xs.size ≤ ys.size
-  · rw [if_pos h, key xs ys h i, UInt64.xor_comm]
-  · rw [if_neg h, key ys xs (Nat.le_of_lt (Nat.lt_of_not_le h)) i, UInt64.xor_comm]
+  · rw [ite_eq_left h, key xs ys h i, UInt64.xor_comm]
+  · rw [ite_eq_right h, key ys xs (Nat.le_of_lt (Nat.lt_of_not_le h)) i, UInt64.xor_comm]
 
 /-- Raw XOR output has one word for every word position present in either
 input. -/
@@ -1952,8 +1953,8 @@ theorem coeff_monomial_ne {n m : Nat} (h : m ≠ n) :
   omega
 
 /-- The default-`0` degree of the monomial `x^n` is `n`. -/
-@[simp, grind =] theorem degree_monomial (n : Nat) : (monomial n).degree = n :=
-  degree_eq_of_degree?_eq_some (degree?_monomial n)
+@[simp, grind =] theorem natDegree_monomial (n : Nat) : (monomial n).natDegree = n :=
+  natDegree_eq_of_degree?_eq_some (degree?_monomial n)
 
 /-- The unit polynomial `1` has degree witness `0`. Proved through the
 single-word coefficient API rather than by kernel reduction, since the
@@ -1977,8 +1978,8 @@ module system. -/
     · exact coeff_ofUInt64_eq_false_of_ge_64 1 (by omega)
 
 /-- The unit polynomial `1` has degree `0`. -/
-@[simp, grind =] theorem degree_one : (1 : GF2Poly).degree = 0 :=
-  degree_eq_of_degree?_eq_some degree?_one
+@[simp, grind =] theorem natDegree_one : (1 : GF2Poly).natDegree = 0 :=
+  natDegree_eq_of_degree?_eq_some degree?_one
 
 /-- The monomial `x^n` is never the zero polynomial. -/
 @[simp, grind =] theorem isZero_monomial_eq_false (n : Nat) :
@@ -2101,7 +2102,7 @@ remainder degree. -/
 theorem division_step_degree_lt {rem q : GF2Poly} {rd qd : Nat}
     (hrem : rem.degree? = some rd) (hq : q.degree? = some qd) (hrd : ¬ rd < qd) :
     (rem + q.mulXk (rd - qd)).isZero = true ∨
-      (rem + q.mulXk (rd - qd)).degree < rd := by
+      (rem + q.mulXk (rd - qd)).natDegree < rd := by
   let next := rem + q.mulXk (rd - qd)
   by_cases hzero : next.isZero = true
   · exact Or.inl hzero
@@ -2109,7 +2110,7 @@ theorem division_step_degree_lt {rem q : GF2Poly} {rd qd : Nat}
     have hnonzero : next.isZero = false := by
       cases h : next.isZero <;> simp [h] at hzero ⊢
     obtain ⟨d, hd⟩ := degree?_isSome_of_isZero_false hnonzero
-    have hdegree : next.degree = d := degree_eq_of_degree?_eq_some hd
+    have hdegree : next.natDegree = d := natDegree_eq_of_degree?_eq_some hd
     rw [hdegree]
     by_cases hlt : d < rd
     · exact hlt

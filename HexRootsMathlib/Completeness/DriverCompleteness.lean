@@ -344,7 +344,7 @@ theorem witness_quadrupled_of_glueCovered {p : Hex.ZPoly}
   let enc := Hex.encSquare component
   let wide := enc.doubled.doubled
   let M := (2 : ℝ) ^ (-(Hex.mahlerPrec p : ℤ)) * (1449 / 1024 : ℝ)
-  let N := Nat.max 2 (p.degree?.getD 0)
+  let N := Nat.max 2 (p.natDegree)
   let d := 3 * M
   have hM : 0 < M := by dsimp [M]; positivity
   have hd : 0 < d := by dsimp [d]; positivity
@@ -428,12 +428,12 @@ theorem witness_quadrupled_of_glueCovered {p : Hex.ZPoly}
     change 3 * M ≤ ‖w - DyadicSquare.center wide‖
     nlinarith
   have hcard : roots.card ≤ N := by
-    have hdegree : roots.card + 1 = p.degree?.getD 0 := by
+    have hdegree : roots.card + 1 = p.natDegree := by
       calc
         roots.card + 1 = f.roots.card := by rw [hrootsEq]; simp
         _ = f.natDegree := (IsAlgClosed.splits f).natDegree_eq_card_roots.symm
-        _ = p.degree?.getD 0 := by simpa [f] using natDegree_toPolyℂ p
-    exact (by omega : roots.card ≤ p.degree?.getD 0).trans (Nat.le_max_right _ _)
+        _ = p.natDegree := by simpa [f] using natDegree_toPolyℂ p
+    exact (by omega : roots.card ≤ p.natDegree).trans (Nat.le_max_right _ _)
   apply exactWitness_one_of_roots hp hsize hrootsEq hd hremote
   intro j hj
   let L := (2 : ℝ) ^ (j : Int)
@@ -572,7 +572,7 @@ theorem certify_pellet_of_glueCovered {p : Hex.ZPoly}
   have hwitness' : Hex.witness p (Hex.encSquare wc.squares) 1 := by
     simpa [wc] using hwitness
   let rest :=
-    ((Array.range (p.degree?.getD 0 + 1)).filter (· != wc.candidateK)).toList
+    ((Array.range (p.natDegree + 1)).filter (· != wc.candidateK)).toList
   let ks := 1 :: rest
   have liftCert {iso : Hex.DyadicRootIsolation p}
       (hlist : Hex.Component.certifyPelletListShift? p wc
@@ -770,7 +770,7 @@ private theorem radius_lt_mahler_div {p : Hex.ZPoly} {s : Hex.DyadicSquare}
     DyadicSquare.radius s <
       ((2 : ℝ) ^ (-(Hex.mahlerPrec p : ℤ)) * (1449 / 1024 : ℝ)) / 512 := by
   let M := (2 : ℝ) ^ (-(Hex.mahlerPrec p : ℤ)) * (1449 / 1024 : ℝ)
-  let N := Nat.max 2 (p.degree?.getD 0)
+  let N := Nat.max 2 (p.natDegree)
   have hRN := NKData.radiusHi_mul_degree_le hprec
   have hRpos : 0 < Dyadic.toReal s.radiusHi := by
     rw [DyadicSquare.radiusHi_eq]
@@ -910,12 +910,8 @@ private theorem exists_covered_component {p : Hex.ZPoly}
     (hcover : Worklist.Covers p work) :
     ∃ z c, (toPolyℂ p).IsRoot z ∧ c ∈ work.toList ∧
       z ∈ Component.region c := by
-  have hdegree : p.degree? = some (p.size - 1) := by
-    have hpos : 0 < p.size := by omega
-    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hpos]
   have hnat : 0 < (toPolyℂ p).natDegree := by
-    rw [natDegree_toPolyℂ, hdegree]
-    simp
+    rw [natDegree_toPolyℂ, Hex.DensePoly.natDegree_eq_size_sub_one]
     omega
   obtain ⟨z, hzroot⟩ := Complex.exists_root
     (Polynomial.natDegree_pos_iff_degree_pos.mp hnat)
@@ -1223,7 +1219,7 @@ theorem isolateAll_cauchy_complete {p : Hex.ZPoly} {target : Int}
     (hp : toPolyℂ p ≠ 0) (hsize : 1 < p.size)
     (hsep : (HexPolyZMathlib.toPolyℚ p).Separable)
     (hsepTarget : (Hex.separationDepth p : Int) ≤ target)
-    (strategy : Hex.AtomStrategy) (hd : 0 < p.degree?.getD 0) :
+    (strategy : Hex.AtomStrategy) (hd : 0 < p.natDegree) :
     ∃ rs, Hex.isolateAll? p target
         #[Hex.Component.cauchy p hd] strategy = some rs ∧
       ∀ r ∈ rs.toList, ∃ iso : Hex.DyadicRootIsolation p, r = .atom iso := by
@@ -1286,9 +1282,9 @@ private theorem array_mapM_atoms {p : Hex.ZPoly}
 /-- Every nonzero squarefree executable polynomial is successfully isolated
 by each atom strategy. Nonzero constants take the explicit empty-output
 branch; positive-degree inputs use the complete Cauchy-started driver. -/
-theorem isolate_exists (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
+theorem isolateComplexRoots?_exists (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     (hp : p ≠ 0) (atomPrec : Int) (strategy : Hex.AtomStrategy) :
-    ∃ atoms, Hex.isolate p h atomPrec strategy = some atoms := by
+    ∃ atoms, Hex.ZPoly.isolateComplexRoots? p h atomPrec strategy = some atoms := by
   have hpSize : p.size ≠ 0 := by
     intro hsize0
     apply hp
@@ -1296,18 +1292,15 @@ theorem isolate_exists (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     intro i
     rw [Hex.DensePoly.coeff_eq_zero_of_size_le p (by omega)]
     rfl
-  by_cases hd : 0 < p.degree?.getD 0
-  · have hdegree : p.degree? = some (p.size - 1) := by
-      simp [Hex.DensePoly.degree?, hpSize]
-    have hsize : 1 < p.size := by
-      rw [hdegree] at hd
-      simp at hd
+  by_cases hd : 0 < p.natDegree
+  · have hsize : 1 < p.size := by
+      rw [Hex.DensePoly.natDegree_eq_size_sub_one] at hd
       omega
     have hpℂ : toPolyℂ p ≠ 0 := by
       intro hzero
       have hnat := natDegree_toPolyℂ p
-      rw [hzero, Polynomial.natDegree_zero, hdegree] at hnat
-      simp at hnat
+      rw [hzero, Polynomial.natDegree_zero,
+        Hex.DensePoly.natDegree_eq_size_sub_one] at hnat
       omega
     let target := max atomPrec (Hex.separationDepth p : Int)
     obtain ⟨rs, hall, hatoms⟩ := isolateAll_cauchy_complete hpℂ hsize
@@ -1315,38 +1308,38 @@ theorem isolate_exists (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
       (le_max_right _ _) strategy hd
     obtain ⟨atoms, hmap⟩ := array_mapM_atoms rs hatoms
     refine ⟨atoms, ?_⟩
-    rw [Hex.isolate, dif_pos hd]
+    rw [Hex.ZPoly.isolateComplexRoots?, dite_eq_left hd]
     change (Hex.isolateAll? p target #[Hex.Component.cauchy p hd] strategy).bind
       (fun rs => rs.mapM Hex.Certified.asAtom?) = some atoms
     rw [hall]
     exact hmap
   · refine ⟨#[], ?_⟩
-    rw [Hex.isolate, dif_neg hd]
+    rw [Hex.ZPoly.isolateComplexRoots?, dite_eq_right hd]
     simp [hpSize]
 
 /-- A nonzero squarefree polynomial has a successful isolation whose atoms
 enumerate its complex roots exactly, without duplicates, at the requested
 precision.  This bundles driver completeness with the principal soundness
 contracts for proof-facing clients. -/
-theorem isolate_spec (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
+theorem isolateComplexRoots?_spec (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     (hp : p ≠ 0) (atomPrec : Int)
     (strategy : Hex.AtomStrategy := .nkThenPellet) :
     ∃ atoms : Array (Hex.DyadicRootIsolation p),
-      Hex.isolate p h atomPrec strategy = some atoms ∧
+      Hex.ZPoly.isolateComplexRoots? p h atomPrec strategy = some atoms ∧
       atoms.size = (toPolyℂ p).natDegree ∧
       (atoms.toList.map HexRootsMathlib.DyadicRootIsolation.root).toFinset =
         (toPolyℂ p).roots.toFinset ∧
       ∀ iso ∈ atoms.toList, atomPrec ≤ iso.square.prec := by
-  obtain ⟨atoms, hrun⟩ := isolate_exists p h hp atomPrec strategy
-  obtain ⟨hroots, hprec⟩ := isolate_sound p h atomPrec strategy hrun
-  exact ⟨atoms, hrun, isolate_count p h atomPrec strategy hrun,
+  obtain ⟨atoms, hrun⟩ := isolateComplexRoots?_exists p h hp atomPrec strategy
+  obtain ⟨hroots, hprec⟩ := isolateComplexRoots?_sound p h atomPrec strategy hrun
+  exact ⟨atoms, hrun, isolateComplexRoots?_count p h atomPrec strategy hrun,
     hroots, hprec⟩
 
 /-- Boolean `isSome` form of full driver completeness. -/
-theorem isolate_isSome (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
+theorem isolateComplexRoots?_isSome (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     (hp : p ≠ 0) (atomPrec : Int) (strategy : Hex.AtomStrategy) :
-    (Hex.isolate p h atomPrec strategy).isSome = true := by
-  obtain ⟨atoms, hatoms⟩ := isolate_exists p h hp atomPrec strategy
+    (Hex.ZPoly.isolateComplexRoots? p h atomPrec strategy).isSome = true := by
+  obtain ⟨atoms, hatoms⟩ := isolateComplexRoots?_exists p h hp atomPrec strategy
   rw [hatoms]
   rfl
 

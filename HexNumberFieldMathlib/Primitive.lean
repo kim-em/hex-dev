@@ -134,7 +134,7 @@ private theorem shift_degree_le (theta alpha candidate : AlgebraicNumber)
   let alphaK : K := IntermediateField.AdjoinPair.gen₂
     Rat theta.toComplex alpha.toComplex
   let candidateK : K := thetaK + (c : Rat) • alphaK
-  letI : FiniteDimensional Rat K :=
+  let : FiniteDimensional Rat K :=
     IntermediateField.finiteDimensional_adjoin_pair
       (isIntegral_toComplex theta) (isIntegral_toComplex alpha)
   have hvalue : candidate.toComplex = (candidateK : ℂ) := by
@@ -159,7 +159,7 @@ private theorem exists_shift_degree_eq (theta alpha : AlgebraicNumber) :
     Rat theta.toComplex alpha.toComplex
   let alphaK : K := IntermediateField.AdjoinPair.gen₂
     Rat theta.toComplex alpha.toComplex
-  letI : FiniteDimensional Rat K :=
+  let : FiniteDimensional Rat K :=
     IntermediateField.finiteDimensional_adjoin_pair
       (isIntegral_toComplex theta) (isIntegral_toComplex alpha)
   have hgen : ∀ phi psi : K →ₐ[Rat] ℂ,
@@ -372,7 +372,7 @@ theorem extend?_field (theta alpha gamma : AlgebraicNumber)
           Rat theta.toComplex alpha.toComplex
   have hle : Rat⟮gamma.toComplex⟯ ≤ K :=
     IntermediateField.adjoin_simple_le_iff.mpr hmember
-  letI : FiniteDimensional Rat K :=
+  let : FiniteDimensional Rat K :=
     IntermediateField.finiteDimensional_adjoin_pair
       (isIntegral_toComplex theta) (isIntegral_toComplex alpha)
   apply IntermediateField.eq_of_le_of_finrank_eq hle

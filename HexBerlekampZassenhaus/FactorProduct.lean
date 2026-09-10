@@ -68,7 +68,7 @@ drop its explicit `hcomplete` hypothesis. The small-mod singleton,
 slow-quadratic, and fast-quadratic branches have analogous theorems. -/
 theorem reassemblyExpansionComplete_constant_of_ne_zero
     (f : ZPoly) (hf : f ≠ 0)
-    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0) :
+    (hdeg : (normalizeForFactor f).squareFreeCore.natDegree = 0) :
     reassemblyExpansionComplete (normalizeForFactor f)
       #[(normalizeForFactor f).squareFreeCore] := by
   have hcore_one := squareFreeCore_eq_one_of_constant_of_ne_zero f hf hdeg
@@ -93,7 +93,7 @@ theorem squareFreeCore_normalizeFactorSign_of_ne_zero
 
 private theorem squareFreeCore_shouldRecord_of_degree_pos
     (f : ZPoly) (hf : f ≠ 0)
-    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0) :
+    (hdeg : (normalizeForFactor f).squareFreeCore.natDegree ≠ 0) :
     shouldRecordPolynomialFactor (normalizeForFactor f).squareFreeCore = true := by
   have hne_zero : (normalizeForFactor f).squareFreeCore ≠ 0 :=
     squareFreeCore_ne_zero_of_ne_zero f hf
@@ -101,13 +101,13 @@ private theorem squareFreeCore_shouldRecord_of_degree_pos
     intro hone
     apply hdeg
     rw [hone]
-    change (DensePoly.C (1 : Int)).degree?.getD 0 = 0
-    exact DensePoly.degree?_C_getD 1
+    change (DensePoly.C (1 : Int)).natDegree = 0
+    exact DensePoly.natDegree_C 1
   have hne_neg_one : (normalizeForFactor f).squareFreeCore ≠ DensePoly.C (-1 : Int) := by
     intro hneg
     apply hdeg
     rw [hneg]
-    exact DensePoly.degree?_C_getD (-1)
+    exact DensePoly.natDegree_C (-1)
   unfold shouldRecordPolynomialFactor
   simp [hne_zero, hne_one, hne_neg_one]
 
@@ -162,11 +162,11 @@ theorem factorTrialFactorsWithBound_polyProduct
     DensePoly.C (signedContentScalar f) *
       Array.polyProduct (factorTrialFactorsWithBound f B) = f := by
   unfold factorTrialFactorsWithBound
-  by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
-  · simp only [hdeg, if_true]
+  by_cases hdeg : (normalizeForFactor f).squareFreeCore.natDegree = 0
+  · simp only [hdeg, ite_true]
     exact reassemblePolynomialFactors_product_eq_input f
       #[(normalizeForFactor f).squareFreeCore] (by simp [Array.polyProduct])
-  · simp only [hdeg, if_false]
+  · simp only [hdeg, ite_false]
     cases hquad : quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore with
     | some coreFactors =>
         exact reassemblePolynomialFactors_product_eq_input f coreFactors
@@ -215,10 +215,10 @@ private theorem primitive_of_signedContentScalar_mul_eq
     rw [h1]
     have hnat : (signedContentScalar f).natAbs = (ZPoly.content f).natAbs := by
       unfold signedContentScalar
-      rw [if_neg hf]
+      rw [ite_eq_right hf]
       by_cases hl : DensePoly.leadingCoeff f < 0
-      · rw [if_pos hl, Int.natAbs_neg]
-      · rw [if_neg hl]
+      · rw [ite_eq_left hl, Int.natAbs_neg]
+      · rw [ite_eq_right hl]
     rw [hnat]
     exact Int.natAbs_of_nonneg hnonneg
   have key : ZPoly.content f = ZPoly.content f * ZPoly.content P := by
@@ -252,10 +252,10 @@ private theorem factorTrialWithBound_product_of_all_recorded_normalized
 private theorem factorTrialWithBound_product_of_constant
     (f : ZPoly) (B : Nat)
     (hf : f ≠ 0)
-    (hbranch : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0) :
+    (hbranch : (normalizeForFactor f).squareFreeCore.natDegree = 0) :
     Factorization.product (factorTrialWithBound f B) = f := by
   unfold factorTrialWithBound factorTrialFactorsWithBound
-  rw [if_pos hbranch]
+  rw [ite_eq_left hbranch]
   have hcore_one := squareFreeCore_eq_one_of_constant_of_ne_zero f hf hbranch
   rw [hcore_one]
   apply factorizationOfFactors_product_of_filtered_product
@@ -276,14 +276,14 @@ private theorem factorTrialWithBound_product_of_constant
 private theorem factorTrialWithBound_product_of_quadratic
     (f : ZPoly) (B : Nat)
     (hf : f ≠ 0)
-    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    (hdeg : (normalizeForFactor f).squareFreeCore.natDegree ≠ 0)
     (coreFactors : Array ZPoly)
     (hquad : quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore =
       some coreFactors) :
     Factorization.product (factorTrialWithBound f B) = f := by
   apply factorTrialWithBound_product_of_all_recorded_normalized
   · unfold factorTrialFactorsWithBound
-    rw [if_neg hdeg, hquad]
+    rw [ite_eq_right hdeg, hquad]
     intro factor hmem
     refine reassemblePolynomialFactors_normalizeFactorSign_of_ne_zero f hf
       coreFactors ?_ factor hmem
@@ -291,7 +291,7 @@ private theorem factorTrialWithBound_product_of_quadratic
     exact quadraticIntegerRootFactors?_normalizeFactorSign
       (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad c hc
   · unfold factorTrialFactorsWithBound
-    rw [if_neg hdeg, hquad]
+    rw [ite_eq_right hdeg, hquad]
     intro factor hmem
     refine reassemblePolynomialFactors_shouldRecord_of_ne_zero f hf
       coreFactors ?_ factor hmem
@@ -302,12 +302,12 @@ private theorem factorTrialWithBound_product_of_quadratic
 private theorem factorTrialWithBound_product_of_trial
     (f : ZPoly) (B : Nat)
     (hf : f ≠ 0)
-    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    (hdeg : (normalizeForFactor f).squareFreeCore.natDegree ≠ 0)
     (hquad : quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none) :
     Factorization.product (factorTrialWithBound f B) = f := by
   apply factorTrialWithBound_product_of_all_recorded_normalized
   · unfold factorTrialFactorsWithBound
-    rw [if_neg hdeg, hquad]
+    rw [ite_eq_right hdeg, hquad]
     intro factor hmem
     refine reassemblePolynomialFactors_normalizeFactorSign_of_ne_zero f hf
       (exhaustiveIntegerTrialCoreFactorsWithBound
@@ -318,7 +318,7 @@ private theorem factorTrialWithBound_product_of_trial
       (normalizeForFactor f).squareFreeCore B
       (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) c hc
   · unfold factorTrialFactorsWithBound
-    rw [if_neg hdeg, hquad]
+    rw [ite_eq_right hdeg, hquad]
     intro factor hmem
     refine reassemblePolynomialFactors_shouldRecord_of_ne_zero f hf
       (exhaustiveIntegerTrialCoreFactorsWithBound
@@ -337,7 +337,7 @@ theorem factorTrialWithBound_product (f : ZPoly) (B : Nat) :
   · subst f
     unfold factorTrialWithBound
     exact factorizationOfFactors_product_of_zero (factorTrialFactorsWithBound 0 B)
-  · by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
+  · by_cases hdeg : (normalizeForFactor f).squareFreeCore.natDegree = 0
     · exact factorTrialWithBound_product_of_constant f B hf hdeg
     · cases hquad :
         quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore with
@@ -408,9 +408,9 @@ theorem factorize_product (f : ZPoly) :
             by_cases hlarge : proposalEligible
                 (normalizeForFactor f).squareFreeCore
                 modular.data.factorsModP.size
-            · simp only [if_pos hlarge]
+            · simp only [ite_eq_left hlarge]
               by_cases hcore : (normalizeForFactor f).squareFreeCore = f
-              · simp only [dif_pos hcore]
+              · simp only [dite_eq_left hcore]
                 generalize hproposal :
                     proposeFactorization f hcore modular = proposal
                 cases hresult : proposal.1 with
@@ -420,9 +420,9 @@ theorem factorize_product (f : ZPoly) :
                 | some result =>
                     simp only
                     exact result.product
-              · simp only [dif_neg hcore]
+              · simp only [dite_eq_right hcore]
                 exact hlattice run.trace modular
-            · simp only [if_neg hlarge]
+            · simp only [ite_eq_right hlarge]
               exact hlattice run.trace modular
   exact hproduct
 
@@ -464,7 +464,7 @@ theorem factorize_entries_primitive_of_ne_zero
     rw [List.toList_toArray, hentry_eq]
     unfold filteredNormalizedFactors
     rw [List.mem_filterMap]
-    exact ⟨raw, hraw_mem, by simp only [hrecord, if_true]⟩
+    exact ⟨raw, hraw_mem, by simp only [hrecord, ite_true]⟩
   exact hmem_filtered entry.1 hentry_in
 
 /-- Every recorded entry of a nonzero default factorization has positive
@@ -475,7 +475,7 @@ the essential extra fact: a primitive constant is a unit, while recorded
 factors are nonunits. -/
 theorem factorize_entries_degree_pos
     (f : ZPoly) (hf : f ≠ 0) :
-    ∀ entry ∈ (ZPoly.factorize f).factors, 0 < entry.1.degree?.getD 0 := by
+    ∀ entry ∈ (ZPoly.factorize f).factors, 0 < entry.1.natDegree := by
   intro entry hentry
   have hmem := Array.mem_toList_iff.mpr hentry
   exact degree_pos_of_primitive_norm_record entry.1
@@ -544,8 +544,8 @@ factors with positive multiplicities can contribute total degree one only as
 one factor of multiplicity one. -/
 theorem ZPoly.isIrreducible_X : ZPoly.isIrreducible ZPoly.X = true := by
   have hx0 : ZPoly.X ≠ (0 : ZPoly) := by decide
-  have hxdeg : ZPoly.X.degree?.getD 0 ≠ 0 := by decide
-  rw [ZPoly.isIrreducible, if_neg hx0, if_neg hxdeg]
+  have hxdeg : ZPoly.X.natDegree ≠ 0 := by decide
+  rw [ZPoly.isIrreducible, ite_eq_right hx0, ite_eq_right hxdeg]
   dsimp only
   let φ := ZPoly.factorize ZPoly.X
   have hscalar : φ.scalar = 1 := by
@@ -557,7 +557,7 @@ theorem ZPoly.isIrreducible_X : ZPoly.isIrreducible ZPoly.X = true := by
     have hdegree := factorize_entries_degree_pos ZPoly.X hx0 entry
       (Array.mem_toList_iff.mp hentry)
     by_cases hsize : entry.1.size = 0
-    · simp [DensePoly.degree?, hsize] at hdegree
+    · simp [DensePoly.natDegree, DensePoly.degree?, hsize] at hdegree
     · omega
   have hfold := foldl_factorPower_size φ.factors.toList (DensePoly.C φ.scalar)
     (by simp [hscalar, DensePoly.size_C_of_ne_zero]) hentry_size
@@ -582,7 +582,8 @@ theorem ZPoly.isIrreducible_X : ZPoly.isIrreducible ZPoly.X = true := by
     have hdegree := factorize_entries_degree_pos ZPoly.X hx0 entry
       (Array.mem_toList_iff.mp hentry)
     have hsize := hentry_size entry hentry
-    have hdegree_size : entry.1.degree?.getD 0 = entry.1.size - 1 := by
+    have hdegree_size : entry.1.natDegree = entry.1.size - 1 := by
+      unfold Hex.DensePoly.natDegree
       rw [DensePoly.degree?_eq_some_of_pos_size entry.1 hsize]
       rfl
     rw [hdegree_size] at hdegree
@@ -677,7 +678,7 @@ theorem checkIrreducibleCert_degreeSum_eq
     (hcert : checkIrreducibleCert f cert = true) :
     ∀ primeData ∈ cert.perPrime.toList,
       letI := primeData.bounds
-      primeData.degreeSum = (ZPoly.modP primeData.p f).degree?.getD 0 := by
+      primeData.degreeSum = (ZPoly.modP primeData.p f).natDegree := by
   intro primeData hmem
   have hcheck := checkIrreducibleCert_prime_data f cert hcert primeData hmem
   simp [PrimeFactorData.checkForPolynomial] at hcheck

@@ -105,7 +105,7 @@ theorem supportPartitionByMinColumn_length_eq_ncard_of_partition {r : Nat}
   have hF_mem : ∀ rep ∈ L, F rep ∈ trueSupports := by
     intro rep hrep
     have hlt : rep < r := supportRepresentativeColumns_lt trueSupports (hL ▸ hrep)
-    simp only [F, dif_pos hlt]
+    simp only [F, dite_eq_left hlt]
     exact partOf_mem trueSupports hcover _
   -- Bijection between the representative finset and the parts.
   have hbij : Set.BijOn F (↑L.toFinset) trueSupports := by
@@ -119,7 +119,7 @@ theorem supportPartitionByMinColumn_length_eq_ncard_of_partition {r : Nat}
       rw [Finset.mem_coe, List.mem_toFinset] at hrep1 hrep2
       have hlt1 : rep1 < r := supportRepresentativeColumns_lt trueSupports (hL ▸ hrep1)
       have hlt2 : rep2 < r := supportRepresentativeColumns_lt trueSupports (hL ▸ hrep2)
-      simp only [F, dif_pos hlt1, dif_pos hlt2] at hFeq
+      simp only [F, dite_eq_left hlt1, dite_eq_left hlt2] at hFeq
       have hequiv : supportEquivalent trueSupports ⟨rep1, hlt1⟩ ⟨rep2, hlt2⟩ :=
         hpart_equiv hFeq
       have hequivAt : supportEquivalentAt trueSupports rep1 rep2 :=
@@ -168,7 +168,7 @@ theorem supportPartitionByMinColumn_length_eq_ncard_of_partition {r : Nat}
         (supportEquivalentAt_iff trueSupports hm_lt i.isLt).mp
           (by simpa using hm_equiv_i)
       have hmS : (⟨m, hm_lt⟩ : Fin r) ∈ S := (hmi S hS).mpr hi
-      simp only [F, dif_pos hm_lt]
+      simp only [F, dite_eq_left hm_lt]
       exact partOf_eq_of_mem trueSupports hcover hdisj hS hmS
   -- Conclude via the bijection.
   have hncard : trueSupports.ncard = L.length := by

@@ -1,0 +1,17 @@
+#!/usr/bin/env python3
+"""Untimed independent check of singleton accepted norms on the Selmer rungs."""
+from cypari2 import Pari
+import json
+import platform
+import importlib.metadata
+P=Pari();rows=[]
+for n in [2,3,4,6,8,12,24]:
+    norm=P(f'polresultant(y^2-2,(x-y)^{n}-(x-y)-1,y)')
+    factors=P.factor(norm)
+    rows.append(dict(n=n,shift=1,norm_degree=int(norm.poldegree()),
+                     factor_degrees=[int(p.poldegree()) for p in factors[0]],
+                     multiplicities=[int(e) for e in factors[1]]))
+print(json.dumps(dict(scope='Untimed independent PARI factorization of the shift-one norm; no performance claim.',
+                     norm_expression='Res_y(y^2-2,(x-y)^n-(x-y)-1)',
+                     pari_version=str(P.version()),cypari2_version=importlib.metadata.version('cypari2'),
+                     python_version=platform.python_version(),rows=rows),indent=2))

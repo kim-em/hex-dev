@@ -1237,8 +1237,8 @@ private theorem vector_foldl_eq_finFoldl {α β : Type u} {r : Nat}
 
 private theorem degree_getD_eq_size_sub_one {F : Type u}
     [Lean.Grind.Field F] [DecidableEq F] (p : DensePoly F) :
-    p.degree?.getD 0 = p.size - 1 := by
-  unfold DensePoly.degree?
+    p.natDegree = p.size - 1 := by
+  unfold DensePoly.natDegree DensePoly.degree?
   split <;> simp_all
 
 private theorem poly_mul_ne_zero {F : Type u} [Lean.Grind.Field F]
@@ -1255,7 +1255,7 @@ private theorem poly_mul_ne_zero {F : Type u} [Lean.Grind.Field F]
 
 private theorem degree_getD_mul {F : Type u} [Lean.Grind.Field F]
     [DecidableEq F] {p q : DensePoly F} (hp : p ≠ 0) (hq : q ≠ 0) :
-    (p * q).degree?.getD 0 = p.degree?.getD 0 + q.degree?.getD 0 := by
+    (p * q).natDegree = p.natDegree + q.natDegree := by
   rw [degree_getD_eq_size_sub_one, degree_getD_eq_size_sub_one,
     degree_getD_eq_size_sub_one, DensePoly.size_mul_field p q hp hq]
   have hpSize : 0 < p.size :=
@@ -1267,9 +1267,9 @@ private theorem degree_getD_mul {F : Type u} [Lean.Grind.Field F]
 private theorem foldl_degree_eq {F : Type u} [Lean.Grind.Field F]
     [DecidableEq F] (xs : List (DensePoly F)) (acc : DensePoly F)
     (hacc : acc ≠ 0) (hxs : ∀ p ∈ xs, p ≠ 0) :
-    (xs.foldl (fun z p => z * p) acc).degree?.getD 0 =
-      acc.degree?.getD 0 +
-        xs.foldl (fun z p => z + p.degree?.getD 0) 0 := by
+    (xs.foldl (fun z p => z * p) acc).natDegree =
+      acc.natDegree +
+        xs.foldl (fun z p => z + p.natDegree) 0 := by
   induction xs generalizing acc with
   | nil => simp
   | cons p xs ih =>
@@ -1278,14 +1278,14 @@ private theorem foldl_degree_eq {F : Type u} [Lean.Grind.Field F]
         (fun q hq => hxs q (by simp [hq])), degree_getD_mul hacc (hxs p (by simp))]
       simp only [Nat.zero_add]
       rw [List.foldl_add_eq_add_foldl xs
-        (fun q : DensePoly F => q.degree?.getD 0) (p.degree?.getD 0)]
+        (fun q : DensePoly F => q.natDegree) (p.natDegree)]
       omega
 
 private theorem vector_degree_foldl {F : Type u} [Lean.Grind.Field F]
     [DecidableEq F] {r : Nat} (v : Vector (DensePoly F) r)
     (hmonic : ∀ i : Fin r, v[i].Monic) :
-    v.foldl (fun z p => z + p.degree?.getD 0) 0 =
-      (v.foldl (fun z p => z * p) 1).degree?.getD 0 := by
+    v.foldl (fun z p => z + p.natDegree) 0 =
+      (v.foldl (fun z p => z * p) 1).natDegree := by
   rw [← Vector.foldl_toList, ← Vector.foldl_toList]
   symm
   have hone : (1 : DensePoly F) ≠ 0 := by
@@ -1300,7 +1300,7 @@ private theorem vector_degree_foldl {F : Type u} [Lean.Grind.Field F]
     subst p
     exact monic_ne_zero (hmonic ⟨i, by simpa using hi⟩)
   have hdegree := foldl_degree_eq v.toList (1 : DensePoly F) hone hxs
-  have honeDegree : (1 : DensePoly F).degree?.getD 0 = 0 := by
+  have honeDegree : (1 : DensePoly F).natDegree = 0 := by
     rw [degree_getD_eq_size_sub_one,
       DensePoly.size_one (Ne.symm Lean.Grind.Field.zero_ne_one)]
   simpa [honeDegree] using hdegree
@@ -1352,17 +1352,17 @@ theorem degree_prod_invariantFactors {F : Type u} [Lean.Grind.Field F]
     [DecidableEq F] {n : Nat} (A : Matrix (DensePoly F) n n)
     (h : snfRank A = n) :
     (invariantFactors A).foldl
-        (fun acc p => acc + p.degree?.getD 0) 0 =
-      (Matrix.det A).degree?.getD 0 := by
+        (fun acc p => acc + p.natDegree) 0 =
+      (Matrix.det A).natDegree := by
   let S := snfData A
   have hS : IsSNF A S := snfData_isSNF A
   have hsum :
       (invariantFactors A).foldl
-          (fun acc p => acc + p.degree?.getD 0) 0 =
-        S.diag.foldl (fun acc p => acc + p.degree?.getD 0) 0 := by
+          (fun acc p => acc + p.natDegree) 0 =
+        S.diag.foldl (fun acc p => acc + p.natDegree) 0 := by
     change (diagonalVector (runSmith A false)).foldl
-        (fun acc p => acc + p.degree?.getD 0) 0 =
-      S.diag.foldl (fun acc p => acc + p.degree?.getD 0) 0
+        (fun acc p => acc + p.natDegree) 0 =
+      S.diag.foldl (fun acc p => acc + p.natDegree) 0
     rcases hasTransforms_runSmith_true A with ⟨t, ht⟩
     unfold S
     rw [snfData_eq_of_transforms A t ht]
@@ -1388,13 +1388,13 @@ theorem degree_prod_invariantFactors {F : Type u} [Lean.Grind.Field F]
     exact hfold.symm.trans hpublic
   calc
     (invariantFactors A).foldl
-        (fun acc p => acc + p.degree?.getD 0) 0 =
-        S.diag.foldl (fun acc p => acc + p.degree?.getD 0) 0 := hsum
-    _ = (S.diag.foldl (fun acc p => acc * p) 1).degree?.getD 0 :=
+        (fun acc p => acc + p.natDegree) 0 =
+        S.diag.foldl (fun acc p => acc + p.natDegree) 0 := hsum
+    _ = (S.diag.foldl (fun acc p => acc * p) 1).natDegree :=
       vector_degree_foldl S.diag hS.diag_monic
-    _ = (DensePoly.monicize (Matrix.det A)).degree?.getD 0 :=
-      congrArg (fun p : DensePoly F => p.degree?.getD 0) hprod
-    _ = (Matrix.det A).degree?.getD 0 := by
+    _ = (DensePoly.monicize (Matrix.det A)).natDegree :=
+      congrArg (fun p : DensePoly F => p.natDegree) hprod
+    _ = (Matrix.det A).natDegree := by
       rw [degree_getD_eq_size_sub_one, degree_getD_eq_size_sub_one,
         DensePoly.size_monicize]
 

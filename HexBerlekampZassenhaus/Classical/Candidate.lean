@@ -58,7 +58,7 @@ theorem intDivides_eq (multiple divisor : Int) :
 def directDegreePrefilter
     (coreLc : Int) (target : ZPoly) (degreeSum : Nat) : Bool :=
   coreLc == 0 || decide (target = 0) ||
-    decide (degreeSum ≤ target.degree?.getD 0)
+    decide (degreeSum ≤ target.natDegree)
 
 /-- Cached trailing-coefficient prefilter for a direct candidate.
 

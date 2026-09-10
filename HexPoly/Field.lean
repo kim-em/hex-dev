@@ -59,19 +59,19 @@ private theorem field_divMod_spec (p q : DensePoly F) :
         (leadingCoeff_ne_zero_of_pos_size q (Nat.pos_of_ne_zero hq))
 
 private theorem field_divMod_remainder_degree_lt (p q : DensePoly F)
-    (hdegree : 0 < q.degree?.getD 0) :
-    (divMod p q).2.degree?.getD 0 < q.degree?.getD 0 := by
+    (hdegree : 0 < q.natDegree) :
+    (divMod p q).2.natDegree < q.natDegree := by
   apply divMod_remainder_degree_lt_of_pos_degree_of_cancel p q hdegree
   intro a
   apply field_div_cancel
   apply leadingCoeff_ne_zero_of_pos_size
   by_cases hq : q.size = 0
-  · simp [degree?, hq] at hdegree
+  · simp [natDegree, degree?, hq] at hdegree
   · exact Nat.pos_of_ne_zero hq
 
 private theorem field_divMod_remainder_eq_zero_of_not_pos_degree
     (p q : DensePoly F) (hqfalse : q.isZero = false)
-    (hdegree : ¬ 0 < q.degree?.getD 0) :
+    (hdegree : ¬ 0 < q.natDegree) :
     (divMod p q).2 = 0 := by
   have hqsizeNe : q.size ≠ 0 := by
     intro hsize
@@ -80,8 +80,8 @@ private theorem field_divMod_remainder_eq_zero_of_not_pos_degree
     rw [hzero] at hqfalse
     contradiction
   have hqsize : q.size = 1 := by
-    have hdeg : q.degree?.getD 0 = q.size - 1 := by
-      simp [degree?, hqsizeNe]
+    have hdeg : q.natDegree = q.size - 1 := by
+      simp [natDegree, degree?, hqsizeNe]
     rw [hdeg] at hdegree
     omega
   exact divMod_remainder_eq_zero_of_degree_zero_of_cancel p q hqsize
@@ -118,7 +118,7 @@ private theorem field_congr_mod (p m : DensePoly F) :
   grind
 
 private theorem field_mod_eq_mod_of_congr_pos_degree
-    (p q m : DensePoly F) (hdegree : 0 < m.degree?.getD 0)
+    (p q m : DensePoly F) (hdegree : 0 < m.natDegree)
     (hcongr : m ∣ (p - q)) :
     p % m = q % m := by
   rcases hcongr with ⟨k, hk⟩
@@ -129,7 +129,7 @@ private theorem field_mod_eq_mod_of_congr_pos_degree
   have hlc : m.leadingCoeff ≠ 0 := by
     apply leadingCoeff_ne_zero_of_pos_size
     by_cases hm : m.size = 0
-    · simp [degree?, hm] at hdegree
+    · simp [natDegree, degree?, hm] at hdegree
     · exact Nat.pos_of_ne_zero hm
   have hpair := divMod_eq_of_reconstruction p m (q / m + k) (q % m)
     hdegree
@@ -141,7 +141,7 @@ private theorem field_mod_eq_mod_of_congr_pos_degree
   exact hsnd
 
 private theorem field_mod_eq_mod_of_congr_not_pos_degree
-    (p q m : DensePoly F) (hdegree : ¬ 0 < m.degree?.getD 0)
+    (p q m : DensePoly F) (hdegree : ¬ 0 < m.natDegree)
     (hcongr : m ∣ (p - q)) :
     p % m = q % m := by
   by_cases hm : m.size = 0
@@ -153,7 +153,7 @@ private theorem field_mod_eq_mod_of_congr_not_pos_degree
     have heq : p = q := by grind
     rw [heq]
   · have hmSize : m.size = 1 := by
-      have hdeg : m.degree?.getD 0 = m.size - 1 := by simp [degree?, hm]
+      have hdeg : m.natDegree = m.size - 1 := by simp [natDegree, degree?, hm]
       rw [hdeg] at hdegree
       omega
     have hmFalse : m.isZero = false := (isZero_eq_false_iff m).mpr (by omega)
@@ -164,7 +164,7 @@ private theorem field_mod_eq_mod_of_congr_not_pos_degree
 private theorem field_mod_eq_mod_of_congr (p q m : DensePoly F)
     (hcongr : m ∣ (p - q)) :
     p % m = q % m := by
-  by_cases hdegree : 0 < m.degree?.getD 0
+  by_cases hdegree : 0 < m.natDegree
   · exact field_mod_eq_mod_of_congr_pos_degree p q m hdegree hcongr
   · exact field_mod_eq_mod_of_congr_not_pos_degree p q m hdegree hcongr
 
@@ -174,7 +174,7 @@ instance (priority := 50) instDivModLawsField : DivModLaws F where
   divMod_remainder_degree_lt_of_pos_degree := field_divMod_remainder_degree_lt
   divModMonic_eq_divMod_of_monic := by
     intro p q hmonic
-    by_cases hlt : p.degree?.getD 0 < q.degree?.getD 0
+    by_cases hlt : p.natDegree < q.natDegree
     · rw [divMod_eq_zero_self_of_degree_lt p q hlt]
       unfold divModMonic
       exact divModArray_eq_zero_self_of_degree_lt p q id hlt
@@ -241,11 +241,11 @@ private theorem one_div_ne_zero (a : F) (ha : a ≠ 0) : 1 / a ≠ 0 := by
   exact Lean.Grind.Field.zero_ne_one hcancel
 
 private theorem degree_lt_fuel (p : DensePoly F) :
-    p.degree?.getD 0 < p.size + 1 := by
+    p.natDegree < p.size + 1 := by
   by_cases hsize : p.size = 0
-  · simp [degree?, hsize]
-  · have hdeg : p.degree?.getD 0 = p.size - 1 := by
-      simp [degree?, hsize]
+  · simp [natDegree, degree?, hsize]
+  · have hdeg : p.natDegree = p.size - 1 := by
+      simp [natDegree, degree?, hsize]
     omega
 
 private theorem scale_inv_cancel (p : DensePoly F) (hp : p ≠ 0) :
@@ -278,7 +278,7 @@ private theorem xgcdLeftMonicAux_stop
 
 private theorem xgcdLeftMonicAux_dvd
     (r₀ s₀ r₁ s₁ : DensePoly F) (fuel : Nat)
-    (hfuel : r₁.degree?.getD 0 < fuel) :
+    (hfuel : r₁.natDegree < fuel) :
     (xgcdLeftMonicAux r₀ s₀ r₁ s₁ fuel).gcd ∣ r₀ ∧
       (xgcdLeftMonicAux r₀ s₀ r₁ s₁ fuel).gcd ∣ r₁ := by
   induction fuel generalizing r₀ s₀ r₁ s₁ with
@@ -308,16 +308,16 @@ private theorem xgcdLeftMonicAux_dvd
           exact leadingCoeff_ne_zero_of_pos_size r₁ hr₁Pos
         have hr₁size : r₁'.size = r₁.size := by
           exact size_scale_field hc r₁
-        have hr₁degree : r₁'.degree?.getD 0 = r₁.degree?.getD 0 := by
-          simp [degree?, hr₁size]
+        have hr₁degree : r₁'.natDegree = r₁.natDegree := by
+          simp [natDegree, degree?, hr₁size]
         change (xgcdLeftMonicAux r₁' s₁' rem
             (s₀ - qr.1 * s₁') fuel).gcd ∣ r₀ ∧
           (xgcdLeftMonicAux r₁' s₁' rem
             (s₀ - qr.1 * s₁') fuel).gcd ∣ r₁
         have hr₁recover : scale r₁.leadingCoeff r₁' = r₁ := by
           exact scale_inv_cancel r₁ hr₁ne
-        by_cases hpos : 0 < r₁'.degree?.getD 0
-        · have hremDegree : rem.degree?.getD 0 < r₁'.degree?.getD 0 := by
+        by_cases hpos : 0 < r₁'.natDegree
+        · have hremDegree : rem.natDegree < r₁'.natDegree := by
             simpa [qr, rem] using field_divMod_remainder_degree_lt r₀ r₁' hpos
           have hrec := ih r₁' s₁' rem (s₀ - qr.1 * s₁') (by
             rw [hr₁degree] at hremDegree
@@ -461,11 +461,11 @@ theorem size_eq_one_of_mul_eq_one (p q : DensePoly F) (h : p * q = 1) :
   apply Nat.le_antisymm
   · apply Nat.le_of_not_gt
     intro hsize
-    have hdegOne : ((1 : DensePoly F).degree?).getD 0 = 0 := by
-      simp [degree?, hOneSize]
-    have hdegP : p.degree?.getD 0 = p.size - 1 := by
-      simp [degree?, Nat.ne_of_gt hpPos]
-    have hlt : ((1 : DensePoly F).degree?).getD 0 < p.degree?.getD 0 := by
+    have hdegOne : (1 : DensePoly F).natDegree = 0 := by
+      simp [natDegree, degree?, hOneSize]
+    have hdegP : p.natDegree = p.size - 1 := by
+      simp [natDegree, degree?, Nat.ne_of_gt hpPos]
+    have hlt : (1 : DensePoly F).natDegree < p.natDegree := by
       rw [hdegOne, hdegP]
       omega
     have hdvd : p ∣ (1 : DensePoly F) := ⟨q, h.symm⟩

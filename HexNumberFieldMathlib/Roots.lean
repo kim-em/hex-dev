@@ -96,11 +96,11 @@ def totalMultiplicity : RootSet → Nat
 @[expose] def Ordered : RootSet → Prop
   | .all => True
   | .finite entries =>
-      entries.toList.Pairwise fun a b => QAdjoin.Roots.rootLe a b
+      entries.toList.Pairwise fun a b => PolyQuot.Roots.rootLe a b
 
 end RootSet
 
-namespace QAdjoin.Roots
+namespace PolyQuot.Roots
 
 private theorem list_foldlM_isSome {A B : Type*} {step : B → A → Option B}
     {items : List A} (init : B)
@@ -130,7 +130,7 @@ private theorem transported_root {p q : ZPoly} (h : p = q)
 
 private theorem gcd_degree_zero_ne (a b : AlgebraicRoot)
     (hdegree : (DensePoly.gcd (ZPoly.toRatPoly a.p)
-      (ZPoly.toRatPoly b.p)).degree?.getD 0 = 0) :
+      (ZPoly.toRatPoly b.p)).natDegree = 0) :
     a.toComplex ≠ b.toComplex := by
   intro hab
   let f := HexPolyZMathlib.toPolyℚ a.p
@@ -236,7 +236,7 @@ variable {p : ZPoly} {x : SimpleRoot p}
 
 /-- Certified ball Horner evaluation always reaches its requested precision. -/
 theorem evalBall?_isSome [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
+    (f : DensePoly (PolyQuot p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) (candidate : AlgebraicRoot) (prec : Nat) :
     (evalBall? f rep h candidate prec).isSome := by
   obtain ⟨candidate', hrefine⟩ := Option.isSome_iff_exists.mp
@@ -248,7 +248,7 @@ theorem evalBall?_isSome [ZPoly.CheckedIrreducible p]
 /-- Once the norm eliminant passes its normalization checks, component root
 isolation, refinement, exact evaluation, and bounded disambiguation are total. -/
 theorem componentRoots?_isSome [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (multiplicity : Nat)
+    (f : DensePoly (PolyQuot p x)) (multiplicity : Nat)
     (hMultiplicity : 0 < multiplicity) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x)
     (hprim : ZPoly.content
@@ -256,14 +256,14 @@ theorem componentRoots?_isSome [ZPoly.CheckedIrreducible p]
     (hpos : 0 <
       (ZPoly.squareFreeCore (normEliminant f)).leadingCoeff)
     (hdegree : 0 <
-      (ZPoly.squareFreeCore (normEliminant f)).degree?.getD 0)
+      (ZPoly.squareFreeCore (normEliminant f)).natDegree)
     (hsimple : HasOnlySimpleRoots
       (ZPoly.squareFreeCore (normEliminant f))) :
     (componentRoots? f multiplicity hMultiplicity rep h).isSome := by
   let eliminant := ZPoly.squareFreeCore (normEliminant f)
   change ZPoly.content eliminant = 1 at hprim
   change 0 < eliminant.leadingCoeff at hpos
-  change 0 < eliminant.degree?.getD 0 at hdegree
+  change 0 < eliminant.natDegree at hdegree
   change HasOnlySimpleRoots eliminant at hsimple
   have heliminant : eliminant ≠ 0 := by
     intro hzero
@@ -271,10 +271,10 @@ theorem componentRoots?_isSome [ZPoly.CheckedIrreducible p]
     simp at hdegree
   unfold componentRoots?
   dsimp only
-  rw [dif_pos hprim, dif_pos hpos, dif_pos hdegree, dif_pos hsimple]
-  have hisolateSome := HexRootsMathlib.isolate_isSome eliminant hsimple
+  rw [dite_eq_left hprim, dite_eq_left hpos, dite_eq_left hdegree, dite_eq_left hsimple]
+  have hisolateSome := HexRootsMathlib.isolateComplexRoots?_isSome eliminant hsimple
     heliminant (separationDepth eliminant : Int) .nkThenPellet
-  cases hisolate : isolate eliminant hsimple
+  cases hisolate : ZPoly.isolateComplexRoots? eliminant hsimple
       (separationDepth eliminant : Int) with
   | none => simp [hisolate] at hisolateSome
   | some isolations =>
@@ -283,7 +283,7 @@ theorem componentRoots?_isSome [ZPoly.CheckedIrreducible p]
         (xs := isolations) (f := DyadicRootIsolation.toRefined?)
         (fun iso hiso => by
           unfold DyadicRootIsolation.toRefined?
-          rw [dif_pos (HexRootsMathlib.isolate_refined eliminant hsimple
+          rw [dite_eq_left (HexRootsMathlib.isolateComplexRoots?_refined eliminant hsimple
             (separationDepth eliminant : Int) .nkThenPellet
             hisolate iso hiso)]
           rfl)
@@ -320,11 +320,11 @@ theorem componentRoots?_isSome [ZPoly.CheckedIrreducible p]
 /-- A nonzero norm eliminant with positive-degree square-free core supplies all
 normalization witnesses required by the component driver. -/
 theorem componentRoots?_total [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (multiplicity : Nat)
+    (f : DensePoly (PolyQuot p x)) (multiplicity : Nat)
     (hMultiplicity : 0 < multiplicity) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) (hnorm : normEliminant f ≠ 0)
     (hdegree : 0 <
-      (ZPoly.squareFreeCore (normEliminant f)).degree?.getD 0) :
+      (ZPoly.squareFreeCore (normEliminant f)).natDegree) :
     (componentRoots? f multiplicity hMultiplicity rep h).isSome := by
   have hprim : ZPoly.content
       (ZPoly.squareFreeCore (normEliminant f)) = 1 := by
@@ -368,13 +368,13 @@ theorem mergeRoots_isSome (roots candidates : Array RootCount) :
     mergeRoot_isSome state candidate
 
 private theorem yunAux_positive [ZPoly.CheckedIrreducible p]
-    (w repeated : DensePoly (QAdjoin p x)) (multiplicity fuel : Nat)
-    (out : Array (DensePoly (QAdjoin p x) × Nat))
+    (w repeated : DensePoly (PolyQuot p x)) (multiplicity fuel : Nat)
+    (out : Array (DensePoly (PolyQuot p x) × Nat))
     (hMultiplicity : 0 < multiplicity)
     (hOut : ∀ component ∈ out.toList,
-      0 < component.1.degree?.getD 0 ∧ 0 < component.2) :
+      0 < component.1.natDegree ∧ 0 < component.2) :
     ∀ component ∈ (yunAux w repeated multiplicity fuel out).toList,
-      0 < component.1.degree?.getD 0 ∧ 0 < component.2 := by
+      0 < component.1.natDegree ∧ 0 < component.2 := by
   induction fuel generalizing w repeated multiplicity out with
   | zero => simpa [yunAux] using hOut
   | succ fuel ih =>
@@ -398,18 +398,18 @@ private theorem yunAux_positive [ZPoly.CheckedIrreducible p]
 /-- Every component emitted by the executable Yun loop has positive degree
 and positive multiplicity. -/
 theorem yun_positive [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (component)
+    (f : DensePoly (PolyQuot p x)) (component)
     (hcomponent : component ∈ (yun f).toList) :
-    0 < component.1.degree?.getD 0 ∧ 0 < component.2 := by
+    0 < component.1.natDegree ∧ 0 < component.2 := by
   unfold yun at hcomponent
   split at hcomponent
   · simp at hcomponent
   · exact yunAux_positive _ _ 1 (f.size + 1) #[] Nat.one_pos
       (by simp) component hcomponent
 
-end QAdjoin.Roots
+end PolyQuot.Roots
 
-namespace QAdjoin
+namespace PolyQuot
 
 variable {p : ZPoly} {x : SimpleRoot p}
 
@@ -449,7 +449,7 @@ private theorem lcmFold_pos (coefficients : List Rat) {acc : Nat}
       exact ih (Nat.lcm_pos hacc coefficient.den_pos)
 
 private theorem nestedLcmFold_preserves
-    (coefficients : List (QAdjoin p x)) {d acc : Nat}
+    (coefficients : List (PolyQuot p x)) {d acc : Nat}
     (hacc : d ∣ acc) :
     d ∣ coefficients.foldl
       (fun den a => a.coeffs.toList.foldl
@@ -461,7 +461,7 @@ private theorem nestedLcmFold_preserves
       exact ih (lcmFold_preserves coefficient.coeffs.toList hacc)
 
 private theorem nestedLcmFold_dvd
-    (coefficients : List (QAdjoin p x)) {a : QAdjoin p x} {q : Rat}
+    (coefficients : List (PolyQuot p x)) {a : PolyQuot p x} {q : Rat}
     {acc : Nat} (ha : a ∈ coefficients) (hq : q ∈ a.coeffs.toList) :
     q.den ∣ coefficients.foldl
       (fun den a => a.coeffs.toList.foldl
@@ -476,7 +476,7 @@ private theorem nestedLcmFold_dvd
       · exact ih ha
 
 private theorem nestedLcmFold_pos
-    (coefficients : List (QAdjoin p x)) {acc : Nat}
+    (coefficients : List (PolyQuot p x)) {acc : Nat}
     (hacc : 0 < acc) :
     0 < coefficients.foldl
       (fun den a => a.coeffs.toList.foldl
@@ -489,7 +489,7 @@ private theorem nestedLcmFold_pos
 
 /-- Every stored rational coordinate denominator divides the executable common
 denominator, including zero-extended coefficient reads. -/
-theorem coeffDen_dvd (f : DensePoly (QAdjoin p x)) (i j : Nat) :
+theorem coeffDen_dvd (f : DensePoly (PolyQuot p x)) (i j : Nat) :
     ((f.coeff i).coeffs.coeff j).den ∣ commonDen f := by
   by_cases hi : i < f.size
   · have ha : f.coeff i ∈ f.toList := by
@@ -511,7 +511,7 @@ theorem coeffDen_dvd (f : DensePoly (QAdjoin p x)) (i j : Nat) :
     exact one_dvd _
 
 /-- The executable common denominator is positive. -/
-theorem commonDen_pos (f : DensePoly (QAdjoin p x)) :
+theorem commonDen_pos (f : DensePoly (PolyQuot p x)) :
     0 < commonDen f := by
   unfold commonDen
   rw [← Array.foldl_toList]
@@ -548,15 +548,15 @@ theorem clearRat_cast (den : Nat) (q : Rat) (hden : q.den ∣ den) :
 
 /-- The rectangular coefficient array used for the bivariate lift stores the
 cleared coordinate at the corresponding outer and polynomial indices. -/
-theorem coeff_clearedOuter (f : DensePoly (QAdjoin p x))
-    {i j : Nat} (hi : i < f.size) (hj : j < p.degree?.getD 0) :
+theorem coeff_clearedOuter (f : DensePoly (PolyQuot p x))
+    {i j : Nat} (hi : i < f.size) (hj : j < p.natDegree) :
     ((clearedOuter f).coeff j).coeff i =
       clearRat (commonDen f) ((f.coeff i).coeffs.coeff j) := by
   unfold clearedOuter
   simp [DensePoly.coeff_ofCoeffs, hi, hj]
 
-private theorem coeff_clearedOuter_eq (f : DensePoly (QAdjoin p x))
-    {j : Nat} (hj : j < p.degree?.getD 0) :
+private theorem coeff_clearedOuter_eq (f : DensePoly (PolyQuot p x))
+    {j : Nat} (hj : j < p.natDegree) :
     (clearedOuter f).coeff j = DensePoly.ofCoeffs
       ((List.range f.size).map fun i =>
         clearRat (commonDen f) ((f.coeff i).coeffs.coeff j)).toArray := by
@@ -567,47 +567,42 @@ private theorem natDegree_toPolynomial_lt {R : Type*}
     [Semiring R] [DecidableEq R] (q : DensePoly R) {bound : Nat}
     (hbound : q.size ≤ bound) (hpos : 0 < bound) :
     (HexPolyMathlib.toPolynomial q).natDegree < bound := by
-  rw [HexPolyMathlib.natDegree_toPolynomial]
-  by_cases hzero : q.size = 0
-  · rw [(DensePoly.degree?_eq_none_iff q).2 hzero]
-    simp only [Option.getD_none]
-    exact hpos
-  · rw [DensePoly.degree?_eq_some_of_pos_size q (Nat.pos_of_ne_zero hzero),
-      Option.getD_some]
-    omega
+  rw [HexPolyMathlib.natDegree_toPolynomial,
+    DensePoly.natDegree_eq_size_sub_one]
+  omega
 
 end Roots
 
 /-- Interpret a fixed-field dense polynomial at the selected embedding. -/
 @[expose]
-noncomputable def toPolynomialAt (f : DensePoly (QAdjoin p x))
+noncomputable def toPolynomialAt (f : DensePoly (PolyQuot p x))
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) : Polynomial ℂ :=
   f.toArray.foldr
     (fun a value => Polynomial.C (toComplex a rep h) +
       Polynomial.X * value) 0
 
-private theorem coeff_hornerAt (coeffs : List (QAdjoin p x))
+private theorem coeff_hornerAt (coeffs : List (PolyQuot p x))
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) (n : Nat) :
     (coeffs.foldr
-        (fun (a : QAdjoin p x) (value : Polynomial ℂ) =>
+        (fun (a : PolyQuot p x) (value : Polynomial ℂ) =>
           Polynomial.C (toComplex a rep h) + Polynomial.X * value) 0).coeff n =
       toComplex (coeffs.getD n 0) rep h := by
   induction coeffs generalizing n with
-  | nil => simp [QAdjoin.map_zero]
+  | nil => simp [PolyQuot.map_zero]
   | cons a coeffs ih =>
       cases n with
       | zero => simp
       | succ n => simpa using ih n
 
-private theorem array_toList_getDAt (coeffs : Array (QAdjoin p x)) (n : Nat) :
+private theorem array_toList_getDAt (coeffs : Array (PolyQuot p x)) (n : Nat) :
     coeffs.toList.getD n 0 = coeffs.getD n 0 := by
   rw [List.getD_eq_getElem?_getD, Array.getD_eq_getD_getElem?,
     Array.getElem?_toList]
 
 /-- Semantic coefficients agree with fixed-coordinate evaluation. -/
-theorem coeff_toPolynomialAt (f : DensePoly (QAdjoin p x))
+theorem coeff_toPolynomialAt (f : DensePoly (PolyQuot p x))
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) (n : Nat) :
-    (QAdjoin.toPolynomialAt f rep h).coeff n =
+    (PolyQuot.toPolynomialAt f rep h).coeff n =
       toComplex (f.coeff n) rep h := by
   rw [toPolynomialAt, ← Array.foldr_toList,
     coeff_hornerAt, array_toList_getDAt]
@@ -616,10 +611,10 @@ theorem coeff_toPolynomialAt (f : DensePoly (QAdjoin p x))
 /-- Fixed-field Horner interpretation is polynomial coefficient mapping by
 the selected complex embedding. -/
 theorem toPolynomialAt_eq_map [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
+    (f : DensePoly (PolyQuot p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) :
-    QAdjoin.toPolynomialAt f rep h =
-      (HexPolyMathlib.toPolynomial f).map (QAdjoin.embedding rep h) := by
+    PolyQuot.toPolynomialAt f rep h =
+      (HexPolyMathlib.toPolynomial f).map (PolyQuot.embedding rep h) := by
   ext n
   rw [coeff_toPolynomialAt, Polynomial.coeff_map,
     HexPolyMathlib.coeff_toPolynomial]
@@ -628,9 +623,9 @@ theorem toPolynomialAt_eq_map [ZPoly.CheckedIrreducible p]
 /-- Fixed-field executable zero detection agrees with semantic polynomial
 zero. -/
 theorem poly_isZero_iff [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x))
+    (f : DensePoly (PolyQuot p x))
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) :
-    f.isZero ↔ QAdjoin.toPolynomialAt f rep h = 0 := by
+    f.isZero ↔ PolyQuot.toPolynomialAt f rep h = 0 := by
   constructor
   · intro hf
     have hsize : f.size = 0 := (DensePoly.isZero_eq_true_iff f).mp hf
@@ -644,25 +639,25 @@ theorem poly_isZero_iff [ZPoly.CheckedIrreducible p]
     have hfzero : f = 0 := by
       apply DensePoly.ext_coeff
       intro n
-      apply QAdjoin.toComplex_injective rep h
+      apply PolyQuot.toComplex_injective rep h
       change toComplex (f.coeff n) rep h =
-        toComplex ((0 : DensePoly (QAdjoin p x)).coeff n) rep h
-      rw [DensePoly.coeff_zero, QAdjoin.map_zero,
+        toComplex ((0 : DensePoly (PolyQuot p x)).coeff n) rep h
+      rw [DensePoly.coeff_zero, PolyQuot.map_zero,
         ← coeff_toPolynomialAt, hpoly]
       simp
     subst f
     exact (DensePoly.isZero_eq_true_iff
-      (0 : DensePoly (QAdjoin p x))).mpr DensePoly.size_zero
+      (0 : DensePoly (PolyQuot p x))).mpr DensePoly.size_zero
 
 /-- A nonzero fixed-field polynomial has the expected semantic degree. -/
 theorem natDegree_toPolynomialAt [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x))
+    (f : DensePoly (PolyQuot p x))
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x)
     (_hf : !f.isZero) :
-    (QAdjoin.toPolynomialAt f rep h).natDegree = f.degree?.getD 0 := by
+    (PolyQuot.toPolynomialAt f rep h).natDegree = f.natDegree := by
   rw [toPolynomialAt_eq_map,
     Polynomial.natDegree_map_eq_of_injective
-      (QAdjoin.embedding_injective rep h),
+      (PolyQuot.embedding_injective rep h),
     HexPolyMathlib.natDegree_toPolynomial]
 
 private theorem definingPolynomial_isRoot [ZPoly.CheckedIrreducible p]
@@ -683,12 +678,12 @@ private theorem definingPolynomial_isRoot [ZPoly.CheckedIrreducible p]
 
 private noncomputable def conjugateEmbedding [ZPoly.CheckedIrreducible p]
     (y : ℂ) (hy : (HexRootsMathlib.toPolyℂ p).eval y = 0) :
-    QAdjoin p x →+* ℂ :=
+    PolyQuot p x →+* ℂ :=
   (AdjoinRoot.lift (algebraMap Rat ℂ) y
     (definingPolynomial_isRoot hy)).comp toAdjoinRootHom
 
 private theorem conjugateEmbedding_apply [ZPoly.CheckedIrreducible p]
-    (a : QAdjoin p x) (y : ℂ)
+    (a : PolyQuot p x) (y : ℂ)
     (hy : (HexRootsMathlib.toPolyℂ p).eval y = 0) :
     conjugateEmbedding y hy a =
       (HexPolyMathlib.toPolynomial a.coeffs).eval₂
@@ -702,7 +697,7 @@ private theorem conjugateEmbedding_apply [ZPoly.CheckedIrreducible p]
 private theorem conjugateEmbedding_injective [ZPoly.CheckedIrreducible p]
     (y : ℂ) (hy : (HexRootsMathlib.toPolyℂ p).eval y = 0) :
     Function.Injective (conjugateEmbedding (x := x) y hy) := by
-  letI : Fact (_root_.Irreducible (definingPolynomial p)) :=
+  let : Fact (_root_.Irreducible (definingPolynomial p)) :=
     ⟨definingPolynomial_irreducible p⟩
   exact (AdjoinRoot.lift (algebraMap Rat ℂ) y
     (definingPolynomial_isRoot hy)).injective.comp
@@ -711,7 +706,7 @@ private theorem conjugateEmbedding_injective [ZPoly.CheckedIrreducible p]
 namespace Roots
 
 private theorem clearedOuter_evalAt [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (y t : ℂ)
+    (f : DensePoly (PolyQuot p x)) (y t : ℂ)
     (hy : (HexRootsMathlib.toPolyℂ p).eval y = 0)
     (hf : 0 < f.size) :
     ((HexPolyMathlib.toPolynomial (clearedOuter f)).map
@@ -720,7 +715,7 @@ private theorem clearedOuter_evalAt [ZPoly.CheckedIrreducible p]
       (commonDen f : ℂ) *
         Polynomial.eval t ((HexPolyMathlib.toPolynomial f).map
           (conjugateEmbedding y hy)) := by
-  let d := p.degree?.getD 0
+  let d := p.natDegree
   let den := commonDen f
   let ε : ZPoly →+* ℂ :=
     (Polynomial.eval₂RingHom (Int.castRingHom ℂ) t).comp
@@ -745,14 +740,13 @@ private theorem clearedOuter_evalAt [ZPoly.CheckedIrreducible p]
     rw [Polynomial.natDegree_map_eq_of_injective
         (conjugateEmbedding_injective y hy),
       HexPolyMathlib.natDegree_toPolynomial,
-      DensePoly.degree?_eq_some_of_pos_size f hf, Option.getD_some]
+      DensePoly.natDegree_eq_size_sub_one]
     omega
   have hcoordSize (i : Nat) : (f.coeff i).coeffs.size ≤ d := by
     by_cases hzero : (f.coeff i).coeffs.size = 0
     · simp [hzero]
     · have hdegree := (f.coeff i).degree_lt
-      rw [DensePoly.degree?_eq_some_of_pos_size _
-        (Nat.pos_of_ne_zero hzero), Option.getD_some] at hdegree
+      rw [DensePoly.natDegree_eq_size_sub_one] at hdegree
       omega
   have hcoordDeg (i : Nat) :
       (HexPolyMathlib.toPolynomial (f.coeff i).coeffs).natDegree < d :=
@@ -822,13 +816,13 @@ private theorem clearedOuter_evalAt [ZPoly.CheckedIrreducible p]
 /-- The integer bivariate lift specializes at the selected generator to the
 fixed-field polynomial, scaled by its positive common denominator. -/
 theorem clearedOuter_eval [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
+    (f : DensePoly (PolyQuot p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) (t : ℂ) (hf : 0 < f.size) :
     ((HexPolyMathlib.toPolynomial (clearedOuter f)).map
       ((Polynomial.eval₂RingHom (Int.castRingHom ℂ) t).comp
         (HexPolyMathlib.equiv (R := Int)).toRingHom)).eval rep.root =
       (commonDen f : ℂ) *
-        Polynomial.eval t (QAdjoin.toPolynomialAt f rep h) := by
+        Polynomial.eval t (PolyQuot.toPolynomialAt f rep h) := by
   have hy : (HexRootsMathlib.toPolyℂ p).eval rep.root = 0 :=
     HexRootsMathlib.RefinedIsolation.isRoot rep
   have hemb : conjugateEmbedding (x := x) rep.root hy = embedding rep h := by
@@ -841,9 +835,9 @@ theorem clearedOuter_eval [ZPoly.CheckedIrreducible p]
 /-- Every root at the selected fixed-field embedding is a root of the integer
 norm eliminant. -/
 theorem normEliminant_isRoot [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
+    (f : DensePoly (PolyQuot p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) (t : ℂ) (hf : !f.isZero)
-    (hroot : Polynomial.eval t (QAdjoin.toPolynomialAt f rep h) = 0) :
+    (hroot : Polynomial.eval t (PolyQuot.toPolynomialAt f rep h) = 0) :
     (HexRootsMathlib.toPolyℂ (normEliminant f)).eval t = 0 := by
   have hfFalse : f.isZero = false := by
     simpa using hf
@@ -856,8 +850,8 @@ theorem normEliminant_isRoot [ZPoly.CheckedIrreducible p]
       apply Nat.pos_of_ne_zero
       intro hpZero
       exact hpRaw ((DensePoly.size_eq_zero_iff p).mp hpZero)
-    have hpDegree : p.degree?.getD 0 = p.size - 1 := by
-      rw [DensePoly.degree?_eq_some_of_pos_size p hpPos, Option.getD_some]
+    have hpDegree : p.natDegree = p.size - 1 :=
+      DensePoly.natDegree_eq_size_sub_one p
     have hpDegreePos := ZPoly.CheckedIrreducible.pos_degree (p := p)
     have hcoeff : p.liftOuter.coeff (p.size - 1) ≠ 0 := by
       rw [ZPoly.coeff_liftOuter]
@@ -879,7 +873,7 @@ theorem normEliminant_isRoot [ZPoly.CheckedIrreducible p]
 /-- The integer norm eliminant of a nonzero fixed-field polynomial is
 nonzero. -/
 theorem normEliminant_ne_zero [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (hf : !f.isZero) :
+    (f : DensePoly (PolyQuot p x)) (hf : !f.isZero) :
     normEliminant f ≠ 0 := by
   let P := HexRootsMathlib.toPolyℂ p
   let Q := HexPolyMathlib.toPolynomial f
@@ -894,17 +888,17 @@ theorem normEliminant_ne_zero [ZPoly.CheckedIrreducible p]
   have hQne : Q ≠ 0 := by
     intro hzero
     apply hfne
-    apply (HexPolyMathlib.equiv (R := QAdjoin p x)).injective
+    apply (HexPolyMathlib.equiv (R := PolyQuot p x)).injective
     simpa only [HexPolyMathlib.equiv_apply,
       HexPolyMathlib.toPolynomial_zero] using hzero
   have hpSize : p.size ≠ 0 := by
     intro hzero
     have hdegree := ZPoly.CheckedIrreducible.pos_degree (p := p)
-    rw [(DensePoly.degree?_eq_none_iff p).2 hzero] at hdegree
+    rw [DensePoly.natDegree_eq_size_sub_one, hzero] at hdegree
     simp at hdegree
   have hPne : P ≠ 0 := by
     exact HexRootsMathlib.toPolyℂ_ne_zero p hpSize
-  letI : Fintype (P.rootSet ℂ) :=
+  let : Fintype (P.rootSet ℂ) :=
     (Polynomial.rootSet_finite P ℂ).fintype
   let H (y : P.rootSet ℂ) : Polynomial ℂ :=
     Q.map (conjugateEmbedding y.1 (by
@@ -954,13 +948,13 @@ theorem normEliminant_ne_zero [ZPoly.CheckedIrreducible p]
       simpa [Polynomial.aeval_def] using hboth.2)
   have hresultant : Polynomial.resultant P G ≠ 0 :=
     Polynomial.resultant_ne_zero P G hcoprime
-  let m := p.liftOuter.degree?.getD 0
-  let n := (clearedOuter f).degree?.getD 0
+  let m := p.liftOuter.natDegree
+  let n := (clearedOuter f).natDegree
   have hm : m = P.natDegree := by
     calc
       m = (HexPolyMathlib.toPolynomial p.liftOuter).natDegree := by
         simp [m, HexPolyMathlib.natDegree_toPolynomial]
-      _ = p.degree?.getD 0 := ZPoly.natDegree_liftOuter p
+      _ = p.natDegree := ZPoly.natDegree_liftOuter p
       _ = P.natDegree := by
         simp [P]
   have hn : G.natDegree ≤ n := by
@@ -1044,10 +1038,10 @@ private theorem size_candidateLift (e : ZPoly) :
     omega
 
 /-- The stored coefficients of the shifted trivariate polynomial. -/
-private theorem coeff_evalShifted (f : DensePoly (QAdjoin p x))
+private theorem coeff_evalShifted (f : DensePoly (PolyQuot p x))
     {i : Nat} (hi : i < Nat.max f.size 1) :
     (evalShifted f).coeff i =
-      DensePoly.ofCoeffs (((List.range (p.degree?.getD 0)).map fun j =>
+      DensePoly.ofCoeffs (((List.range (p.natDegree)).map fun j =>
         if i = 0 && j = 0 then
           DensePoly.ofCoeffs
             #[-clearRat (commonDen f) ((f.coeff i).coeffs.coeff j), 1]
@@ -1114,8 +1108,8 @@ private theorem resultant_hom_eq_zero {S : Type} [CommRing S] [IsDomain S]
     φ (DensePoly.resultant F G) = 0 := by
   let F' : Polynomial ℂ := (HexPolyMathlib.toPolynomial F).map φ
   let G' : Polynomial ℂ := (HexPolyMathlib.toPolynomial G).map φ
-  let m := F.degree?.getD 0
-  let n := G.degree?.getD 0
+  let m := F.natDegree
+  let n := G.natDegree
   have hm : F'.natDegree ≤ m := by
     calc
       F'.natDegree ≤ (HexPolyMathlib.toPolynomial F).natDegree :=
@@ -1132,11 +1126,11 @@ private theorem resultant_hom_eq_zero {S : Type} [CommRing S] [IsDomain S]
     rcases hpos with hFpos | hGpos
     · left
       dsimp only [m]
-      rw [DensePoly.degree?_eq_some_of_pos_size F (by omega), Option.getD_some]
+      rw [DensePoly.natDegree_eq_size_sub_one]
       omega
     · right
       dsimp only [n]
-      rw [DensePoly.degree?_eq_some_of_pos_size G (by omega), Option.getD_some]
+      rw [DensePoly.natDegree_eq_size_sub_one]
       omega
   have hresultant : Polynomial.resultant F' G' m n = 0 := by
     by_cases hboth : F' = 0 ∧ G' = 0
@@ -1192,12 +1186,12 @@ private theorem candidateLift_map (e : ZPoly) (s y : ℂ) :
 /-- The shifted trivariate polynomial specializes to the difference between
 the evaluation variable and the specialized bivariate lift. -/
 private theorem evalShifted_map_eval [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (s y z : ℂ) (hf : 0 < f.size) :
+    (f : DensePoly (PolyQuot p x)) (s y z : ℂ) (hf : 0 < f.size) :
     ((HexPolyMathlib.toPolynomial (evalShifted f)).map (evalOuter s y)).eval z =
       s - ((HexPolyMathlib.toPolynomial (clearedOuter f)).map
         ((Polynomial.eval₂RingHom (Int.castRingHom ℂ) z).comp
           (HexPolyMathlib.equiv (R := Int)).toRingHom)).eval y := by
-  let d := p.degree?.getD 0
+  let d := p.natDegree
   let den := commonDen f
   have hd : 0 < d := ZPoly.CheckedIrreducible.pos_degree
   have hN : Nat.max f.size 1 = f.size := Nat.max_eq_left hf
@@ -1241,7 +1235,7 @@ private theorem evalShifted_map_eval [ZPoly.CheckedIrreducible p]
         List.getElem?_map, List.getElem?_range hj]
       simp only [Option.map_some, Option.getD_some]
       by_cases hij : i = 0 && j = 0
-      · rw [if_pos hij, if_pos hij]
+      · rw [ite_eq_left hij, ite_eq_left hij]
         change Polynomial.eval₂ (Int.castRingHom ℂ) s
             (HexPolyMathlib.toPolynomial
               (DensePoly.ofCoeffs
@@ -1258,7 +1252,7 @@ private theorem evalShifted_map_eval [ZPoly.CheckedIrreducible p]
           | 0 => simp [Array.getD]
           | 1 => simp [Array.getD]
           | k + 2 =>
-              rw [if_neg (by omega), if_neg (by omega)]
+              rw [ite_eq_right (by omega), ite_eq_right (by omega)]
               rw [Array.getD_eq_getD_getElem?,
                 Array.getElem?_eq_none (by simp), Option.getD_none, add_zero]
               rfl
@@ -1266,7 +1260,7 @@ private theorem evalShifted_map_eval [ZPoly.CheckedIrreducible p]
         simp only [Int.coe_castRingHom]
         push_cast
         ring
-      · rw [if_neg hij, if_neg hij]
+      · rw [ite_eq_right hij, ite_eq_right hij]
         change Polynomial.eval₂ (Int.castRingHom ℂ) s
             (HexPolyMathlib.toPolynomial
               (DensePoly.C (-clearRat den ((f.coeff i).coeffs.coeff j)))) = _
@@ -1288,11 +1282,11 @@ private theorem evalShifted_map_eval [ZPoly.CheckedIrreducible p]
     simp only [sub_mul, Finset.sum_sub_distrib]
     congr 1
     rcases Nat.eq_zero_or_pos i with rfl | hipos
-    · rw [if_pos rfl]
+    · rw [ite_eq_left rfl]
       rw [Finset.sum_eq_single 0 (fun b _ hb => by simp [hb])
         (fun h0 => absurd (Finset.mem_range.mpr hd) h0)]
       simp
-    · rw [if_neg (by omega)]
+    · rw [ite_eq_right (by omega)]
       apply Finset.sum_eq_zero
       intro j _
       simp [hipos.ne']
@@ -1373,8 +1367,8 @@ private theorem one_lt_size_liftOuter [ZPoly.CheckedIrreducible p] :
   have hpDegreePos := ZPoly.CheckedIrreducible.pos_degree (p := p)
   have hpPos : 0 < p.size := by
     by_contra hzero
-    rw [(DensePoly.degree?_eq_none_iff p).2 (by omega)] at hpDegreePos
-    simp at hpDegreePos
+    rw [DensePoly.natDegree_eq_size_sub_one] at hpDegreePos
+    omega
   have hcoeff : p.liftOuter.coeff (p.size - 1) ≠ 0 := by
     rw [ZPoly.coeff_liftOuter]
     intro hzero
@@ -1385,8 +1379,7 @@ private theorem one_lt_size_liftOuter [ZPoly.CheckedIrreducible p] :
     by_contra hnot
     exact hcoeff (DensePoly.coeff_eq_zero_of_size_le _ (by omega))
   have hdeg2 : 1 < p.size := by
-    rw [DensePoly.degree?_eq_some_of_pos_size p hpPos,
-      Option.getD_some] at hpDegreePos
+    rw [DensePoly.natDegree_eq_size_sub_one] at hpDegreePos
     omega
   omega
 
@@ -1420,13 +1413,13 @@ private theorem toPolyℂ_dilate_isRoot {c : Int} {q : ZPoly} {v : ℂ}
 polynomial at any root of the candidate eliminant and the selected
 embedding. -/
 theorem evalEliminant_isRoot [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
+    (f : DensePoly (PolyQuot p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) (e : ZPoly) {z : ℂ}
     (hf : 0 < f.size) (he : 1 < e.size)
     (hz : (HexRootsMathlib.toPolyℂ e).IsRoot z) :
     (HexRootsMathlib.toPolyℂ (evalEliminant f e)).IsRoot
-      (Polynomial.eval z (QAdjoin.toPolynomialAt f rep h)) := by
-  set v := Polynomial.eval z (QAdjoin.toPolynomialAt f rep h) with hv
+      (Polynomial.eval z (PolyQuot.toPolynomialAt f rep h)) := by
+  set v := Polynomial.eval z (PolyQuot.toPolynomialAt f rep h) with hv
   have hinner : evalOuter ((commonDen f : ℂ) * v) rep.root
       (DensePoly.resultant (candidateLift e) (evalShifted f)) = 0 := by
     apply resultant_hom_eq_zero (candidateLift e) (evalShifted f)
@@ -1456,7 +1449,7 @@ theorem evalEliminant_isRoot [ZPoly.CheckedIrreducible p]
 /-- The evaluation eliminant of a nonzero fixed-field polynomial and a
 positive-degree candidate eliminant is nonzero. -/
 theorem evalEliminant_ne_zero [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (e : ZPoly)
+    (f : DensePoly (PolyQuot p x)) (e : ZPoly)
     (hf : !f.isZero) (he : 1 < e.size) :
     evalEliminant f e ≠ 0 := by
   have hfFalse : f.isZero = false := by simpa using hf
@@ -1466,7 +1459,7 @@ theorem evalEliminant_ne_zero [ZPoly.CheckedIrreducible p]
   have hpSize : p.size ≠ 0 := by
     intro hzero
     have hdeg := ZPoly.CheckedIrreducible.pos_degree (p := p)
-    rw [(DensePoly.degree?_eq_none_iff p).2 hzero] at hdeg
+    rw [DensePoly.natDegree_eq_size_sub_one, hzero] at hdeg
     simp at hdeg
   have hPne : P ≠ 0 := HexRootsMathlib.toPolyℂ_ne_zero p hpSize
   have hEne : E ≠ 0 := HexRootsMathlib.toPolyℂ_ne_zero e (by omega)
@@ -1499,14 +1492,13 @@ theorem evalEliminant_ne_zero [ZPoly.CheckedIrreducible p]
     set W : Polynomial ℂ :=
       (HexPolyMathlib.toPolynomial (evalShifted f)).map (evalOuter t y)
       with hWdef
-    have hm' : (candidateLift e).degree?.getD 0 = E.natDegree := by
+    have hm' : (candidateLift e).natDegree = E.natDegree := by
       have hsize := size_candidateLift e
-      rw [show E.natDegree = e.degree?.getD 0 from
+      rw [show E.natDegree = e.natDegree from
         HexRootsMathlib.natDegree_toPolyℂ e,
-        DensePoly.degree?_eq_some_of_pos_size _ (by omega),
-        DensePoly.degree?_eq_some_of_pos_size _ (by omega),
-        Option.getD_some, Option.getD_some, hsize]
-    have hn' : W.natDegree ≤ (evalShifted f).degree?.getD 0 := by
+        DensePoly.natDegree_eq_size_sub_one,
+        DensePoly.natDegree_eq_size_sub_one, hsize]
+    have hn' : W.natDegree ≤ (evalShifted f).natDegree := by
       rw [hWdef, ← HexPolyMathlib.natDegree_toPolynomial]
       exact Polynomial.natDegree_map_le
     have hcoprime : IsCoprime E W := by
@@ -1531,21 +1523,21 @@ theorem evalEliminant_ne_zero [ZPoly.CheckedIrreducible p]
     have hresultant : Polynomial.resultant E W ≠ 0 :=
       Polynomial.resultant_ne_zero E W hcoprime
     have hformal : Polynomial.resultant E W
-        ((candidateLift e).degree?.getD 0)
-        ((evalShifted f).degree?.getD 0) ≠ 0 := by
+        ((candidateLift e).natDegree)
+        ((evalShifted f).natDegree) ≠ 0 := by
       rw [hm']
-      have hnEq : (evalShifted f).degree?.getD 0 =
-          W.natDegree + ((evalShifted f).degree?.getD 0 - W.natDegree) := by
+      have hnEq : (evalShifted f).natDegree =
+          W.natDegree + ((evalShifted f).natDegree - W.natDegree) := by
         omega
       rw [hnEq, Polynomial.resultant_add_right_deg E W E.natDegree
-        W.natDegree ((evalShifted f).degree?.getD 0 - W.natDegree) le_rfl,
+        W.natDegree ((evalShifted f).natDegree - W.natDegree) le_rfl,
         Polynomial.coeff_natDegree]
       exact mul_ne_zero
         (_root_.pow_ne_zero _ (Polynomial.leadingCoeff_ne_zero.mpr hEne))
         hresultant
     rw [show evalOuter t y inner = Polynomial.resultant E W
-        ((candidateLift e).degree?.getD 0)
-        ((evalShifted f).degree?.getD 0) from hcorr]
+        ((candidateLift e).natDegree)
+        ((evalShifted f).natDegree) from hcorr]
     exact hformal
   -- Coprimality of the outer pair, hence a nonzero specialized value.
   have hcoprimeOuter : IsCoprime P Inner := by
@@ -1559,13 +1551,13 @@ theorem evalEliminant_ne_zero [ZPoly.CheckedIrreducible p]
       (by simpa [Polynomial.aeval_def] using hboth.2)
   have hresultantOuter : Polynomial.resultant P Inner ≠ 0 :=
     Polynomial.resultant_ne_zero P Inner hcoprimeOuter
-  let m := p.liftOuter.degree?.getD 0
-  let n := inner.degree?.getD 0
+  let m := p.liftOuter.natDegree
+  let n := inner.natDegree
   have hm : m = P.natDegree := by
     calc
       m = (HexPolyMathlib.toPolynomial p.liftOuter).natDegree := by
         simp [m, HexPolyMathlib.natDegree_toPolynomial]
-      _ = p.degree?.getD 0 := ZPoly.natDegree_liftOuter p
+      _ = p.natDegree := ZPoly.natDegree_liftOuter p
       _ = P.natDegree := by
         simp [P]
   have hn : Inner.natDegree ≤ n := by
@@ -1601,27 +1593,27 @@ end EvaluationEliminant
 /-- A positive-degree square-free norm-eliminant core forces the component
 itself to be nonzero. -/
 theorem size_pos_of_core_degree [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x))
+    (f : DensePoly (PolyQuot p x))
     (hdegree : 0 <
-      (ZPoly.squareFreeCore (normEliminant f)).degree?.getD 0) :
+      (ZPoly.squareFreeCore (normEliminant f)).natDegree) :
     0 < f.size := by
   by_contra hnot
   have hzero : f = 0 := (DensePoly.size_eq_zero_iff f).mp (by omega)
   subst hzero
-  have hcleared : clearedOuter (0 : DensePoly (QAdjoin p x)) = 0 := by
+  have hcleared : clearedOuter (0 : DensePoly (PolyQuot p x)) = 0 := by
     apply DensePoly.ext_coeff
     intro n
     rw [DensePoly.coeff_zero]
     unfold clearedOuter
     rw [DensePoly.coeff_ofCoeffs, Array.getD_eq_getD_getElem?,
       List.getElem?_toArray, List.getElem?_map]
-    cases hlt : (List.range (p.degree?.getD 0))[n]? with
+    cases hlt : (List.range (p.natDegree))[n]? with
     | none => rfl
     | some j =>
         simp only [Option.map_some, Option.getD_some, DensePoly.size_zero,
           List.range_zero, List.map_nil]
         rfl
-  have hnorm : normEliminant (0 : DensePoly (QAdjoin p x)) = 0 := by
+  have hnorm : normEliminant (0 : DensePoly (PolyQuot p x)) = 0 := by
     unfold normEliminant
     rw [hcleared]
     have hlift := one_lt_size_liftOuter (p := p)
@@ -1630,30 +1622,30 @@ theorem size_pos_of_core_degree [ZPoly.CheckedIrreducible p]
     unfold DensePoly.resultant
     rw [hliftZero]
     simp only [Bool.false_eq_true, ↓reduceIte]
-    rw [if_pos (show DensePoly.isZero (0 : DensePoly ZPoly) = true from rfl),
-      if_neg (by omega)]
+    rw [ite_eq_left (show DensePoly.isZero (0 : DensePoly ZPoly) = true from rfl),
+      ite_eq_right (by omega)]
   rw [hnorm] at hdegree
-  have hcore : (ZPoly.squareFreeCore 0).degree?.getD 0 = 0 := by decide
+  have hcore : (ZPoly.squareFreeCore 0).natDegree = 0 := by decide
   omega
 
 /-- Every positive-degree fixed-field component satisfies the normalization
 conditions needed by the component root driver. -/
 theorem componentRoots?_total_of_degree [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (multiplicity : Nat)
+    (f : DensePoly (PolyQuot p x)) (multiplicity : Nat)
     (hMultiplicity : 0 < multiplicity) (rep : RefinedIsolation p)
-    (h : SimpleRoot.mk rep = x) (hdegree : 0 < f.degree?.getD 0) :
+    (h : SimpleRoot.mk rep = x) (hdegree : 0 < f.natDegree) :
     (componentRoots? f multiplicity hMultiplicity rep h).isSome := by
   have hfpos : 0 < f.size := by
     by_contra hsize
     have hzero : f.size = 0 := by omega
-    rw [(DensePoly.degree?_eq_none_iff f).2 hzero] at hdegree
+    rw [DensePoly.natDegree_eq_size_sub_one, hzero] at hdegree
     simp at hdegree
   have hfFalse : f.isZero = false :=
     (DensePoly.isZero_eq_false_iff f).2 hfpos
   have hf : !f.isZero := by simp [hfFalse]
   have hnorm : normEliminant f ≠ 0 := normEliminant_ne_zero f hf
   have hsemanticDegree :
-      0 < (QAdjoin.toPolynomialAt f rep h).natDegree := by
+      0 < (PolyQuot.toPolynomialAt f rep h).natDegree := by
     rw [natDegree_toPolynomialAt f rep h hf]
     exact hdegree
   obtain ⟨z, hz⟩ := Complex.exists_root
@@ -1671,22 +1663,22 @@ theorem componentRoots?_total_of_degree [ZPoly.CheckedIrreducible p]
     intro hsize
     exact hcoreNe ((DensePoly.size_eq_zero_iff _).mp hsize)
   have hcoreDegree : 0 <
-      (ZPoly.squareFreeCore (normEliminant f)).degree?.getD 0 := by
+      (ZPoly.squareFreeCore (normEliminant f)).natDegree := by
     by_contra hnot
     exact HexRootsMathlib.not_isRoot_of_degree_not_pos
       (ZPoly.squareFreeCore (normEliminant f)) hcoreSize hnot z hcoreRoot
   exact componentRoots?_total f multiplicity hMultiplicity rep h
     hnorm hcoreDegree
 
-private theorem eval_hornerAt (coefficients : List (QAdjoin p x))
+private theorem eval_hornerAt (coefficients : List (PolyQuot p x))
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) (z : ℂ) :
     Polynomial.eval z
         (coefficients.foldr
           (fun coefficient value =>
-            Polynomial.C (QAdjoin.toComplex coefficient rep h) +
+            Polynomial.C (PolyQuot.toComplex coefficient rep h) +
               Polynomial.X * value)
           0) =
-      (coefficients.map fun coefficient => QAdjoin.toComplex coefficient rep h).foldr
+      (coefficients.map fun coefficient => PolyQuot.toComplex coefficient rep h).foldr
         (fun coefficient value => value * z + coefficient) 0 := by
   induction coefficients with
   | nil => simp
@@ -1697,12 +1689,12 @@ private theorem eval_hornerAt (coefficients : List (QAdjoin p x))
       ring
 
 private theorem hornerBall_mem [ZPoly.CheckedIrreducible p]
-    (coefficients : List (QAdjoin p x)) (rep : RefinedIsolation p)
+    (coefficients : List (PolyQuot p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) (z : ℂ) (zBall initBall : DyadicComplexBall)
     (prec : Int) (init : ℂ) (hz : z ∈ zBall.set)
     (hinit : init ∈ initBall.set) :
     coefficients.foldr
-        (fun coefficient value => value * z + QAdjoin.toComplex coefficient rep h)
+        (fun coefficient value => value * z + PolyQuot.toComplex coefficient rep h)
         init ∈
       (coefficients.foldr
         (fun coefficient value =>
@@ -1712,16 +1704,16 @@ private theorem hornerBall_mem [ZPoly.CheckedIrreducible p]
   | nil => exact hinit
   | cons coefficient coefficients ih =>
       simpa only [List.foldr_cons, add_comm, mul_comm] using
-        DyadicComplexBall.add_mem (QAdjoin.approx_sound coefficient rep h prec)
+        DyadicComplexBall.add_mem (PolyQuot.approx_sound coefficient rep h prec)
           (DyadicComplexBall.mul_mem hz ih)
 
-private theorem foldr_map_horner (coefficients : List (QAdjoin p x))
+private theorem foldr_map_horner (coefficients : List (PolyQuot p x))
     (rep : RefinedIsolation p) (h : SimpleRoot.mk rep = x) (z init : ℂ) :
-    (coefficients.map fun coefficient => QAdjoin.toComplex coefficient rep h).foldr
+    (coefficients.map fun coefficient => PolyQuot.toComplex coefficient rep h).foldr
         (fun coefficient value => value * z + coefficient) init =
       coefficients.foldr
         (fun coefficient value =>
-          value * z + QAdjoin.toComplex coefficient rep h) init := by
+          value * z + PolyQuot.toComplex coefficient rep h) init := by
   induction coefficients with
   | nil => rfl
   | cons coefficient coefficients ih =>
@@ -1731,10 +1723,10 @@ private theorem foldr_map_horner (coefficients : List (QAdjoin p x))
 /-- Certified ball Horner evaluation encloses exact evaluation at the selected
 embedding and candidate root. -/
 theorem evalBall?_sound [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
+    (f : DensePoly (PolyQuot p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) (candidate : AlgebraicRoot) (prec : Nat)
     {ball : DyadicComplexBall} (hrun : evalBall? f rep h candidate prec = some ball) :
-    Polynomial.eval candidate.toComplex (QAdjoin.toPolynomialAt f rep h) ∈
+    Polynomial.eval candidate.toComplex (PolyQuot.toPolynomialAt f rep h) ∈
       ball.set := by
   rw [evalBall?] at hrun
   obtain ⟨candidate', hrefine, hrun⟩ := Option.bind_eq_some_iff.mp hrun
@@ -1757,7 +1749,7 @@ theorem evalBall?_sound [ZPoly.CheckedIrreducible p]
         simpa [hback] using hrun
       subst ball
       have hempty : f.toArray = #[] := Array.back?_eq_none_iff.mp hback
-      rw [QAdjoin.toPolynomialAt, hempty]
+      rw [PolyQuot.toPolynomialAt, hempty]
       simp [DyadicComplexBall.zero, DyadicComplexBall.set,
         DyadicComplexBall.center, DyadicComplexBall.realRadius]
   | some top =>
@@ -1794,41 +1786,41 @@ theorem evalBall?_sound [ZPoly.CheckedIrreducible p]
       rw [hfold]
       have hvalue :
           Polynomial.eval candidate.toComplex
-              (QAdjoin.toPolynomialAt f rep h) =
+              (PolyQuot.toPolynomialAt f rep h) =
             pre.toList.foldr
               (fun coefficient value =>
-                value * candidate.toComplex + QAdjoin.toComplex coefficient rep h)
-              (QAdjoin.toComplex top rep h) := by
+                value * candidate.toComplex + PolyQuot.toComplex coefficient rep h)
+              (PolyQuot.toComplex top rep h) := by
         have hpoly :
             f.toArray.toList.foldr
                 (fun coefficient value =>
-                  Polynomial.C (QAdjoin.toComplex coefficient rep h) +
+                  Polynomial.C (PolyQuot.toComplex coefficient rep h) +
                     Polynomial.X * value)
-                0 = QAdjoin.toPolynomialAt f rep h := by
-          rw [QAdjoin.toPolynomialAt, ← Array.foldr_toList]
+                0 = PolyQuot.toPolynomialAt f rep h := by
+          rw [PolyQuot.toPolynomialAt, ← Array.foldr_toList]
         rw [← hpoly, eval_hornerAt, hlist, List.map_append,
           List.foldr_append]
         simp only [List.map_singleton, List.foldr_cons, List.foldr_nil]
         rw [zero_mul, zero_add]
         exact foldr_map_horner pre.toList rep h candidate.toComplex
-          (QAdjoin.toComplex top rep h)
+          (PolyQuot.toComplex top rep h)
       rw [hvalue]
       exact hornerBall_mem pre.toList rep h candidate.toComplex
         candidate'.1.1.square.toBall (top.approx rep h (prec : Int)).2
-        prec (QAdjoin.toComplex top rep h) hz
-        (QAdjoin.approx_sound top rep h prec)
+        prec (PolyQuot.toComplex top rep h) hz
+        (PolyQuot.approx_sound top rep h prec)
 
 /-- Bounded disambiguation against the shared double-resultant evaluation
 eliminant retains precisely the candidates at which the fixed-field
 polynomial vanishes. -/
 theorem retainZero?_correct [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
+    (f : DensePoly (PolyQuot p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) (candidate : AlgebraicRoot)
     (hf : 0 < f.size) {keep : Bool}
     (hkeep : retainZero? (evalEliminant f candidate.p)
       (evalMajorant f candidate.p) (evalBall? f rep h candidate) = some keep) :
     keep ↔ Polynomial.eval candidate.toComplex
-      (QAdjoin.toPolynomialAt f rep h) = 0 := by
+      (PolyQuot.toPolynomialAt f rep h) = 0 := by
   have hene : candidate.p ≠ 0 :=
     HexRootsMathlib.RefinedIsolation.poly_ne_zero candidate.rep
   have hepos : 0 < candidate.p.size := by
@@ -1837,8 +1829,7 @@ theorem retainZero?_correct [ZPoly.CheckedIrreducible p]
     exact hene ((DensePoly.size_eq_zero_iff candidate.p).mp hzero)
   have hesize : 1 < candidate.p.size := by
     have hdeg := candidate.pos_degree
-    rw [DensePoly.degree?_eq_some_of_pos_size _ hepos,
-      Option.getD_some] at hdeg
+    rw [DensePoly.natDegree_eq_size_sub_one] at hdeg
     omega
   have hfBool : !f.isZero := by
     simp [(DensePoly.isZero_eq_false_iff f).mpr hf]
@@ -1853,10 +1844,10 @@ end Roots
 
 /-- The fixed-field root driver always produces a checked root set. -/
 theorem roots?_isSome [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
+    (f : DensePoly (PolyQuot p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) :
-    (QAdjoin.roots? f rep h).isSome := by
-  rw [QAdjoin.roots?]
+    (PolyQuot.roots? f rep h).isSome := by
+  rw [PolyQuot.roots?]
   split
   · simp
   split
@@ -1873,7 +1864,7 @@ theorem roots?_isSome [ZPoly.CheckedIrreducible p]
       intro out component hcomponent
       obtain ⟨hdegree, hMultiplicity⟩ :=
         Roots.yun_positive f component hcomponent
-      rw [dif_pos hMultiplicity]
+      rw [dite_eq_left hMultiplicity]
       obtain ⟨found, hfound⟩ := Option.isSome_iff_exists.mp
         (Roots.componentRoots?_total_of_degree component.1 component.2
           hMultiplicity rep h hdegree)
@@ -1896,21 +1887,21 @@ theorem roots?_isSome [ZPoly.CheckedIrreducible p]
 /-- The total fixed-field root API is exactly the output of its now-proved
 total checked driver. -/
 theorem roots?_eq_roots [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
+    (f : DensePoly (PolyQuot p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) :
-    QAdjoin.roots? f rep h = some (QAdjoin.roots f rep h) := by
-  unfold QAdjoin.roots
-  cases hrun : QAdjoin.roots? f rep h with
+    PolyQuot.roots? f rep h = some (PolyQuot.roots f rep h) := by
+  unfold PolyQuot.roots
+  cases hrun : PolyQuot.roots? f rep h with
   | none =>
       have hsome := roots?_isSome f rep h
       simp [hrun] at hsome
   | some roots => simp
 
 private theorem roots?_all_iff_isZero [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
+    (f : DensePoly (PolyQuot p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) :
-    QAdjoin.roots? f rep h = some .all ↔ f.isZero := by
-  rw [QAdjoin.roots?]
+    PolyQuot.roots? f rep h = some .all ↔ f.isZero := by
+  rw [PolyQuot.roots?]
   split
   · simp_all
   split
@@ -1928,40 +1919,40 @@ private theorem roots?_all_iff_isZero [ZPoly.CheckedIrreducible p]
 
 /-- The fixed-field driver returns `.all` exactly for the zero polynomial. -/
 theorem roots_all_iff [ZPoly.CheckedIrreducible p]
-    (f : DensePoly (QAdjoin p x)) (rep : RefinedIsolation p)
+    (f : DensePoly (PolyQuot p x)) (rep : RefinedIsolation p)
     (h : SimpleRoot.mk rep = x) :
-    QAdjoin.roots f rep h = RootSet.all ↔
-      QAdjoin.toPolynomialAt f rep h = 0 := by
-  rw [← QAdjoin.poly_isZero_iff f rep h,
+    PolyQuot.roots f rep h = RootSet.all ↔
+      PolyQuot.toPolynomialAt f rep h = 0 := by
+  rw [← PolyQuot.poly_isZero_iff f rep h,
     ← roots?_all_iff_isZero f rep h, roots?_eq_roots]
   simp
 
-end QAdjoin
+end PolyQuot
 
 /-! The completed root-semantics foundations must not inherit unfinished proofs. -/
 
 /--
-info: 'Hex.QAdjoin.Roots.sameValue?_sound' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Hex.PolyQuot.Roots.sameValue?_sound' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
-#print axioms QAdjoin.Roots.sameValue?_sound
+#print axioms PolyQuot.Roots.sameValue?_sound
 
 /--
-info: 'Hex.QAdjoin.Roots.sameValue?_isSome' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Hex.PolyQuot.Roots.sameValue?_isSome' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
-#print axioms QAdjoin.Roots.sameValue?_isSome
+#print axioms PolyQuot.Roots.sameValue?_isSome
 
 /--
-info: 'Hex.QAdjoin.Roots.retainZero?_correct' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Hex.PolyQuot.Roots.retainZero?_correct' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
-#print axioms QAdjoin.Roots.retainZero?_correct
+#print axioms PolyQuot.Roots.retainZero?_correct
 
 /--
-info: 'Hex.QAdjoin.Roots.evalBall?_sound' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Hex.PolyQuot.Roots.evalBall?_sound' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
-#print axioms QAdjoin.Roots.evalBall?_sound
+#print axioms PolyQuot.Roots.evalBall?_sound
 
 end Hex

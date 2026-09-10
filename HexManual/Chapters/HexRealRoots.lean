@@ -49,10 +49,10 @@ squarefreeness is needed at the call site.
 tag := "hex-real-roots-core"
 %%%
 
-The computational package exposes {name}`Hex.isolate?`, which tries Descartes
+The computational package exposes {name}`Hex.ZPoly.isolateRealRoots?`, which tries Descartes
 search before falling back to Sturm bisection. The
-{name}`Hex.isolateDescartes?` and {name}`Hex.isolateSturm?` variants select one
-engine explicitly; {name}`Hex.rootCount` and {name}`Hex.sturmCount` expose the
+{name}`Hex.ZPoly.isolateDescartes?` and {name}`Hex.ZPoly.isolateSturm?` variants select one
+engine explicitly; {name}`Hex.ZPoly.rootCount` and {name}`Hex.ZPoly.sturmCount` expose the
 exact counting operations. These functions run in native Lean and need no
 external oracle at runtime.
 
@@ -182,9 +182,8 @@ refines to that binary target. Widths above one therefore request `k = 0`,
 which still refines any wider natural interval to width at most one;
 refinement only narrows, so a coarse request cannot undo the isolator's
 separation. A non-dyadic request can produce a strictly narrower interval than
-requested. Targets finer than `2⁻⁴⁰⁹⁶` are rejected as pathological. Refining
-`x⁴ − 2` to width `2⁻²⁰` places the positive root in an interval of width
-exactly `2⁻²⁰`:
+requested. Refining `x⁴ − 2` to width `2⁻²⁰` places the positive root in an
+interval of width exactly `2⁻²⁰`:
 
 ```lean
 open Hex Polynomial

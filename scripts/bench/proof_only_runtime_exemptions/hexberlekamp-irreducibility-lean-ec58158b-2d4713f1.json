@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekamp/Irreducibility.lean",
+ "baseline_blob": "ec58158b56e1bac08a219f7f054c74cce98501db",
+ "current_blob": "2d4713f173f5e85877f48e3a47dc5ed9e5c452ab",
+ "reason": "Replaces `Hex.DensePoly.degree?.getD 0` with the new abbreviation `Hex.DensePoly.natDegree`, whose body is exactly that term and which `abbrev` marks `@[reducible, inline]`, and repairs the proofs that rewrote through the `Option`; the compiled code and every measured branch are unchanged."
+}

@@ -1,0 +1,6 @@
+{
+ "path": "HexMatrix/Basic.lean",
+ "baseline_blob": "76cf5715027bfc7994f51e734b5bcb74a94ca047",
+ "current_blob": "630108e30a374946cd1d908c50133f1a0d444a41",
+ "reason": "Drops two no-op `@[expose]` attributes from `GetElem` instances that are already exposed by default. No definition body changes."
+}

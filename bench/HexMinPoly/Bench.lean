@@ -237,7 +237,7 @@ private def minPolyGrowth {n : Nat} (A : Matrix Rat n n) : Growth :=
     let running := DensePoly.lcm state.poly order
     { poly := running
       peakBits := max state.peakBits (max (polyBits order) (polyBits running))
-      orderDegreeSum := state.orderDegreeSum + order.degree?.getD 0 })
+      orderDegreeSum := state.orderDegreeSum + order.natDegree })
     { poly := 1, peakBits := 1, orderDegreeSum := 0 }
 
 private def natJson (value : Nat) : Lean.Json :=
@@ -260,7 +260,7 @@ private def emitMetrics {F : Type} [Lean.Grind.Field F] [DecidableEq F]
     ("family", Lean.Json.str family),
     ("dimension", natJson n),
     ("elapsed_nanos", natJson (stop - start)),
-    ("degree", natJson (answer.degree?.getD 0)),
+    ("degree", natJson (answer.natDegree)),
     ("sum_order_degrees", natJson degreeSum),
     ("checksum", natJson checksum.toNat)]
   let fields := match peakBits with

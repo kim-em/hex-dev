@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "source": "e1e94bf2f0b6fdb1bc513f437ce21abb17406bba",
+  "records": 39032,
+  "corpora": {
+    "autos": 205,
+    "campaign": 32798,
+    "fixtures": 6028,
+    "regression": 1
+  },
+  "corpus_sha256": "dd4382ed095285f6dcb0734ac36e72595cce9cfada9ebe09c4d55746755a0a69",
+  "trace_sha256": "136b2e52eb9a65e55a7324cad2bae9b116dbd0d9bd1d30f9ff6e87392ae983ba"
+}

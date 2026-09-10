@@ -214,6 +214,17 @@ namespace SimpleRoot
 @[simp] theorem rootOf_mk {p : Hex.ZPoly} (i : Hex.RefinedIsolation p) :
     rootOf (Hex.SimpleRoot.mk i) = RefinedIsolation.root i := rfl
 
+/-- Rebuilding from an isolation's own square names that isolation's root.
+`Hex.Intersects` compares stored squares, so the rebuilt certificate need not
+match the original: any two isolations on one square are related, and
+`Quot.sound` identifies them. This is what makes the `Repr` output of
+`hex-number-field` a faithful round trip. -/
+theorem ofSquare_mk {p : Hex.ZPoly} (i : Hex.RefinedIsolation p)
+    (hw : Hex.atomWitness p i.1.square)
+    (hp : (Hex.mahlerPrec p : Int) ≤ i.1.square.prec) :
+    Hex.SimpleRoot.ofSquare p i.1.square hw hp = Hex.SimpleRoot.mk i :=
+  Quot.sound (RefinedIsolation.intersects_equivalence.refl i)
+
 end SimpleRoot
 
 namespace RefinedIsolation

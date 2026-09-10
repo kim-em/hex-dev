@@ -6,7 +6,6 @@ Authors: Kim Morrison
 
 module
 
-public import HexBasic.Conditional
 import HexBasic.Fold
 import HexBasic.List
 public import HexMvPoly.Basic
@@ -191,8 +190,8 @@ theorem addMonomial_eq [Lean.Grind.Semiring R] [DecidableEq R]
   intro k
   rw [coeff_addMonomial, coeff_add, coeff_monomial]
   by_cases hkm : k = m
-  · rw [Hex.ite_eq_left hkm, Hex.ite_eq_left hkm]
-  · rw [Hex.ite_eq_right hkm, Hex.ite_eq_right hkm, Lean.Grind.Semiring.add_zero]
+  · rw [ite_eq_left hkm, ite_eq_left hkm]
+  · rw [ite_eq_right hkm, ite_eq_right hkm, Lean.Grind.Semiring.add_zero]
 
 /-- Coefficients commute with polynomial negation. -/
 theorem coeff_neg [Lean.Grind.Ring R] [DecidableEq R]
@@ -468,7 +467,7 @@ theorem monomial_mul_monomial [Lean.Grind.Semiring R] [DecidableEq R]
   simp only [coeff_monomial]
   by_cases hm : m = Mono.mul a b
   · subst m
-    rw [Hex.ite_eq_left rfl]
+    rw [ite_eq_left rfl]
     have hmem : (a, b) ∈ Mono.splits (Mono.mul a b) :=
       (Mono.splits_mem_iff ..).mpr rfl
     calc
@@ -494,7 +493,7 @@ theorem monomial_mul_monomial [Lean.Grind.Semiring R] [DecidableEq R]
       _ = 0 + ca * cb :=
         List.foldl_add_single _ _ _ _ hmem (Mono.splits_nodup _)
       _ = ca * cb := by grind
-  · rw [Hex.ite_eq_right hm]
+  · rw [ite_eq_right hm]
     apply List.foldl_add_eq_self
     intro ab hab
     have hmul : Mono.mul ab.1 ab.2 = m :=
@@ -504,8 +503,8 @@ theorem monomial_mul_monomial [Lean.Grind.Semiring R] [DecidableEq R]
       · have hmul' : Mono.mul a b = m := by
           simpa [ha, hb] using hmul
         exact (hm hmul'.symm).elim
-      · rw [Hex.ite_eq_left ha, Hex.ite_eq_right hb, Lean.Grind.Semiring.mul_zero]
-    · rw [Hex.ite_eq_right ha, Lean.Grind.Semiring.zero_mul]
+      · rw [ite_eq_left ha, ite_eq_right hb, Lean.Grind.Semiring.mul_zero]
+    · rw [ite_eq_right ha, Lean.Grind.Semiring.zero_mul]
 
 /-- Binary powering of a monomial polynomial scales its exponent vector. -/
 theorem powBySq_monomial [Lean.Grind.Semiring R] [DecidableEq R]
@@ -524,7 +523,7 @@ theorem powBySq_monomial [Lean.Grind.Semiring R] [DecidableEq R]
           rw [Mono.powBySq, Mono.powBySq, ih ((k + 1) / 2) hlt,
             monomial_mul_monomial]
           by_cases heven : (k + 1) % 2 = 0
-          · rw [Hex.ite_eq_left heven, Hex.ite_eq_left heven]
+          · rw [ite_eq_left heven, ite_eq_left heven]
             congr 1
             let r := (k + 1) / 2
             change Mono.mul (Mono.scale r m) (Mono.scale r m) =
@@ -536,7 +535,7 @@ theorem powBySq_monomial [Lean.Grind.Semiring R] [DecidableEq R]
             apply Vector.ext
             intro i hi
             simp [Mono.mul, Mono.scale, hcount, Nat.add_mul]
-          · rw [Hex.ite_eq_right heven, Hex.ite_eq_right heven, monomial_mul_monomial]
+          · rw [ite_eq_right heven, ite_eq_right heven, monomial_mul_monomial]
             congr 1
             let r := (k + 1) / 2
             change
@@ -579,12 +578,12 @@ theorem mul_one [Lean.Grind.Semiring R] [DecidableEq R]
                 rw [hb, Mono.mul_zero] at hmul
                 exact hmul
               have hab' : ab = (m, Mono.zero) := Prod.ext ha hb
-              rw [Hex.ite_eq_left hb, Lean.Grind.Semiring.mul_one,
-                Hex.ite_eq_left hab', ha]
+              rw [ite_eq_left hb, Lean.Grind.Semiring.mul_one,
+                ite_eq_left hab', ha]
             · have hab' : ab ≠ (m, Mono.zero) := by
                 intro h
                 exact hb (congrArg Prod.snd h)
-              rw [Hex.ite_eq_right hb, Lean.Grind.Semiring.mul_zero, Hex.ite_eq_right hab']
+              rw [ite_eq_right hb, Lean.Grind.Semiring.mul_zero, ite_eq_right hab']
     _ = 0 + coeff m p :=
       List.foldl_add_single _ _ _ _ hmem (Mono.splits_nodup _)
     _ = coeff m p := by grind
@@ -619,7 +618,7 @@ theorem one_mul [Lean.Grind.Semiring R] [DecidableEq R]
             · have hab' : ab ≠ (Mono.zero, m) := by
                 intro h
                 exact ha (congrArg Prod.fst h)
-              rw [Hex.ite_eq_right ha, Lean.Grind.Semiring.zero_mul, Hex.ite_eq_right hab']
+              rw [ite_eq_right ha, Lean.Grind.Semiring.zero_mul, ite_eq_right hab']
     _ = 0 + coeff m p :=
       List.foldl_add_single _ _ _ _ hmem (Mono.splits_nodup _)
     _ = coeff m p := by grind
@@ -649,12 +648,12 @@ theorem coeff_C_mul [Lean.Grind.Semiring R] [DecidableEq R]
                 rw [ha, Mono.zero_mul] at hmul
                 exact hmul
               have hab' : ab = (Mono.zero, m) := Prod.ext ha hb
-              rw [Hex.ite_eq_left ha, Hex.ite_eq_left hab', hb]
+              rw [ite_eq_left ha, ite_eq_left hab', hb]
             · have hab' : ab ≠ (Mono.zero, m) := by
                 intro h
                 exact ha (congrArg Prod.fst h)
-              rw [Hex.ite_eq_right ha, Lean.Grind.Semiring.zero_mul,
-                Hex.ite_eq_right hab']
+              rw [ite_eq_right ha, Lean.Grind.Semiring.zero_mul,
+                ite_eq_right hab']
     _ = 0 + c * coeff m p :=
       List.foldl_add_single _ _ _ _ hmem (Mono.splits_nodup _)
     _ = c * coeff m p := by grind
@@ -925,7 +924,7 @@ private theorem npowBySq_eq_linearPow
             exact Nat.div_lt_self (Nat.succ_pos k) (by decide : 1 < 2)
           rw [npowBySq, ih half hlt]
           by_cases heven : (k + 1) % 2 = 0
-          · rw [Hex.ite_eq_left heven]
+          · rw [ite_eq_left heven]
             have hdecomp := Nat.mod_add_div (k + 1) 2
             have hcount : k + 1 = half + half := by
               simp only [half]
@@ -935,7 +934,7 @@ private theorem npowBySq_eq_linearPow
                   linearPow p (half + half) :=
                 (linearPow_add p half half).symm
               _ = linearPow p (k + 1) := by rw [hcount]
-          · rw [Hex.ite_eq_right heven]
+          · rw [ite_eq_right heven]
             have hdecomp := Nat.mod_add_div (k + 1) 2
             have hmod := Nat.mod_two_eq_zero_or_one (k + 1)
             have hcount : k + 1 = (half + half) + 1 := by

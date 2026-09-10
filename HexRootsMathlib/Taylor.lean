@@ -70,7 +70,8 @@ private theorem natDegree_lt_size (p : Hex.ZPoly) (hp : 0 < p.size) :
     (toPolyℂ p).natDegree < p.size := by
   rw [natDegree_toPolyℂ]
   have hdegree : p.degree? = some (p.size - 1) := by
-    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hp]
+    simp [Hex.DensePoly.natDegree, Hex.DensePoly.degree?, Nat.ne_of_gt hp]
+  unfold Hex.DensePoly.natDegree
   rw [hdegree, Option.getD_some]
   omega
 
@@ -116,8 +117,8 @@ theorem taylor_coeff (p : Hex.ZPoly) (z : Hex.GaussDyadic) (k : Nat) :
       ((toPolyℂ p).comp (X + C (GaussDyadic.toComplex z))).coeff k := by
   rw [Hex.taylor_getD]
   by_cases hk : k < p.size
-  · rw [if_pos hk, toComplex_taylorCoeff, coeff_shift]
-  · rw [if_neg hk, coeff_shift,
+  · rw [ite_eq_left hk, toComplex_taylorCoeff, coeff_shift]
+  · rw [ite_eq_right hk, coeff_shift,
       Nat.sub_eq_zero_of_le (Nat.le_of_not_gt hk)]
     simp only [Finset.range_zero, Finset.sum_empty]
     apply Complex.ext <;> simp [GaussDyadic.toComplex]

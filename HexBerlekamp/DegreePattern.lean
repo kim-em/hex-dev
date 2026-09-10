@@ -95,7 +95,7 @@ def degreePatternStep (d : Nat) (diff residual : FpPoly p) :
   if isUnitPolynomial candidate then
     (#[], residual)
   else
-    (Array.replicate ((candidate.degree?.getD 0) / d) d, residual / candidate)
+    (Array.replicate ((candidate.natDegree) / d) d, residual / candidate)
 
 /-- Whether `k` separated factors and a nonempty residual already put the
 factor count above `target`.  The residual carries at least one more factor, so
@@ -118,9 +118,9 @@ with `target = none`, it runs until the pattern is complete.
 def degreePatternLoop (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (xMod : FpPoly p) (target : Option Nat) :
     Nat → Nat → FpPoly p → FpPoly p → Array Nat → DegreePattern
-  | 0, d, _, residual, found => ⟨found, residual.degree?.getD 0, max d 1⟩
+  | 0, d, _, residual, found => ⟨found, residual.natDegree, max d 1⟩
   | fuel + 1, d, prevFrob, residual, found =>
-      let m := residual.degree?.getD 0
+      let m := residual.natDegree
       if residual.isZero || m == 0 then
         ⟨found, 0, max d 1⟩
       else if m < 2 * d then

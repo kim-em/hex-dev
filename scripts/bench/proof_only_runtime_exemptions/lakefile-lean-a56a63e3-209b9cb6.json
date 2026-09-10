@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "a56a63e3b99c2af2c1b477347d0b3a5bec8d9b51",
+  "current_blob": "209b9cb68a18a0692c2a927c899475e468412e2b",
+  "reason": "The HexArith and HexModArith native recipes retain the same C sources, compiler flags, object paths, archive names, system libraries, and Lean fallbacks. This change scopes each existing archive to its owning lean_lib with moreLinkObjs instead of exporting it package-wide through extern_lib; the factorization service still imports those libraries and runs the same compiled native functions. The remaining Lake declarations are unchanged from the already exempted a56a63e3-to-c7621baf transition."
+}

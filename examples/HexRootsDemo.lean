@@ -62,7 +62,7 @@ def showAtoms {q : ZPoly}
 def main : IO Unit := do
   IO.println "Certified isolation for p(x) = x^3 - x - 1"
   if h : HasOnlySimpleRoots p then
-    match isolate p h 32 .nk with
+    match ZPoly.isolateComplexRoots? p h 32 .nk with
     | none =>
         IO.eprintln "isolation unexpectedly exhausted its certified fuel"
     | some atoms =>

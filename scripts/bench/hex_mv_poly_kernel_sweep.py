@@ -283,7 +283,6 @@ SPEC = SweepSpec(
         Path("HexMvPoly/SPEC/hex-mv-poly.md"),
     ),
     required_samples=6,
-    max_pair_retries=32,
     import_baseline_control="fresh-build-null",
 )
 

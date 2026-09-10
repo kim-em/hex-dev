@@ -34,7 +34,8 @@ clients can reuse a context rather than recomputing constants.
 # Verification
 
 See the [SPEC](SPEC/hex-arith.md) for contracts, edge cases, and performance
-policy. Bench and conformance targets live beside the released source.
+policy. Benchmarks and conformance targets run in
+[`hex-dev`](https://github.com/kim-em/hex-dev).
 
 # Contributing
 

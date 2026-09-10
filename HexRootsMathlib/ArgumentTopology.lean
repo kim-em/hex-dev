@@ -63,7 +63,7 @@ theorem continuousOn_circleIntegral_div {X : Type*} [TopologicalSpace X]
     (hg : ContinuousOn (fun q : X × ℝ => g q.1 (circleMap c R q.2)) (s ×ˢ univ))
     (hzero : ∀ x ∈ s, ∀ θ : ℝ, g x (circleMap c R θ) ≠ 0) :
     ContinuousOn (fun x => ∮ z in C(c, R), f x z / g x z) s := by
-  rw [continuousOn_iff_continuous_restrict]
+  rw [continuousOn_iff_continuous_domRestrict]
   apply continuous_circleIntegral_div c R
   · simpa only [Function.comp_def] using hf.comp_continuous
       (show Continuous (fun q : s × ℝ => ((q.1 : X), q.2)) by fun_prop)

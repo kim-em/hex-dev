@@ -805,7 +805,7 @@ theorem pow_go_eq_acc_mul_linearPow (acc base : GF2nPoly f hirr) (k : Nat) :
       by_cases hk : k = 0
       · subst hk
         simp [linearPow_zero, mul_one]
-      · rw [dif_neg hk]
+      · rw [dite_eq_right hk]
         have hlt : k / 2 < k :=
           Nat.div_lt_self (Nat.pos_of_ne_zero hk) (by decide : 1 < 2)
         cases Nat.mod_two_eq_zero_or_one k with
@@ -814,14 +814,14 @@ theorem pow_go_eq_acc_mul_linearPow (acc base : GF2nPoly f hirr) (k : Nat) :
               have h := Nat.mod_add_div k 2
               omega
             have hnot : ¬k % 2 = 1 := by omega
-            rw [if_neg hnot, ih (k / 2) hlt acc (base * base), linearPow_double]
+            rw [ite_eq_right hnot, ih (k / 2) hlt acc (base * base), linearPow_double]
             congr 2
             omega
         | inr hmod1 =>
             have hk_eq : k = 2 * (k / 2) + 1 := by
               have h := Nat.mod_add_div k 2
               omega
-            rw [if_pos hmod1, ih (k / 2) hlt (acc * base) (base * base)]
+            rw [ite_eq_left hmod1, ih (k / 2) hlt (acc * base) (base * base)]
             calc acc * base * linearPow (base * base) (k / 2)
                 = acc * (base * linearPow (base * base) (k / 2)) := by rw [mul_assoc]
               _ = acc * linearPow base (2 * (k / 2) + 1) := by
@@ -908,7 +908,7 @@ private theorem evalCoeffList_frobeniusFixedCoeffList_of_pos
         rw [Nat.pow_succ]
         have hpos : 0 < 2 ^ k := Nat.pow_pos (by decide : 0 < 2)
         omega
-  rw [frobeniusFixedCoeffList, if_neg hk_ne]
+  rw [frobeniusFixedCoeffList, ite_eq_right hk_ne]
   simp only [evalCoeffList_cons]
   rw [zero_add, evalCoeffList_replicate_zero_append_one,
     Internal.frobeniusIter_eq_linearPow_two_pow]
@@ -943,13 +943,13 @@ private theorem getLast?_append_singleton {α : Type} (xs : List α) (x : α) :
           simpa using ih
 
 private theorem coeffListTopNonzero_frobeniusFixedCoeffList_of_pos
-    (hf_pos : 0 < f.degree) {k : Nat} (hk : 0 < k) :
+    (hf_pos : 0 < f.natDegree) {k : Nat} (hk : 0 < k) :
     Internal.coeffListTopNonzero
       (f := f) (hirr := hirr)
       (frobeniusFixedCoeffList (f := f) (hirr := hirr) k) := by
   have hk_ne : k ≠ 0 := Nat.ne_of_gt hk
   refine ⟨1, ?_, one_ne_zero (f := f) (hirr := hirr) hf_pos⟩
-  rw [frobeniusFixedCoeffList, if_neg hk_ne]
+  rw [frobeniusFixedCoeffList, ite_eq_right hk_ne]
   change
     (((0 : GF2nPoly f hirr) :: 1 ::
         List.replicate (2 ^ k - 2) (0 : GF2nPoly f hirr)) ++ [1]).getLast? =
@@ -979,7 +979,7 @@ against the canonical duplicate-free `elements` enumeration so downstream
 Rabin arguments can combine it with `elements_card`.
 -/
 theorem frobeniusIter_fixed_elements_length_le_two_pow
-    (hf_pos : 0 < f.degree) {k : Nat} (hk : 0 < k) :
+    (hf_pos : 0 < f.natDegree) {k : Nat} (hk : 0 < k) :
     ((elements (f := f) (hirr := hirr)).filter
       (fun β => decide (frobeniusIter β k = β))).length ≤ 2 ^ k := by
   let cs := frobeniusFixedCoeffList (f := f) (hirr := hirr) k
@@ -1000,7 +1000,7 @@ theorem frobeniusIter_fixed_elements_length_le_two_pow
           have hpos : 0 < 2 ^ k := Nat.pow_pos (by decide : 0 < 2)
           omega
     dsimp [cs]
-    rw [frobeniusFixedCoeffList, if_neg hk_ne]
+    rw [frobeniusFixedCoeffList, ite_eq_right hk_ne]
     simp
     omega
   have hfilter :
@@ -1034,13 +1034,13 @@ If every packed quotient element is fixed by a positive Frobenius iterate,
 then the iterate is at least the modulus degree.
 
 This is the downstream cardinality form of the fixed-root bound: otherwise
-all `2^f.degree` quotient elements would be roots of `T^(2^k) + T`, whose
+all `2^f.natDegree` quotient elements would be roots of `T^(2^k) + T`, whose
 packed root-count bound is only `2^k`.
 -/
 theorem frobeniusIter_universal_fixed_degree_le
-    (hf_pos : 0 < f.degree) {k : Nat} (hk : 0 < k)
+    (hf_pos : 0 < f.natDegree) {k : Nat} (hk : 0 < k)
     (hfixed : ∀ β : GF2nPoly f hirr, frobeniusIter β k = β) :
-    f.degree ≤ k := by
+    f.natDegree ≤ k := by
   have hfilter_eq :
       (elements (f := f) (hirr := hirr)).filter
           (fun β => decide (frobeniusIter β k = β)) =
@@ -1052,10 +1052,10 @@ theorem frobeniusIter_universal_fixed_degree_le
     frobeniusIter_fixed_elements_length_le_two_pow
       (f := f) (hirr := hirr) hf_pos hk
   rw [hfilter_eq, elements_card] at hbound
-  by_cases hle : f.degree ≤ k
+  by_cases hle : f.natDegree ≤ k
   · exact hle
-  · have hlt : k < f.degree := Nat.lt_of_not_ge hle
-    have hpow_lt : 2 ^ k < 2 ^ f.degree :=
+  · have hlt : k < f.natDegree := Nat.lt_of_not_ge hle
+    have hpow_lt : 2 ^ k < 2 ^ f.natDegree :=
       Nat.pow_lt_pow_right (by decide : 1 < 2) hlt
     exact False.elim (Nat.not_lt_of_ge hbound hpow_lt)
 
@@ -1067,20 +1067,20 @@ This contrapositive is the form Rabin soundness uses after reducing an
 exponent modulo the irreducible factor degree.
 -/
 theorem not_forall_frobeniusIter_eq_self_of_pos_lt_degree
-    (hf_pos : 0 < f.degree) {r : Nat} (hr_pos : 0 < r)
-    (hr_lt : r < f.degree) :
+    (hf_pos : 0 < f.natDegree) {r : Nat} (hr_pos : 0 < r)
+    (hr_lt : r < f.natDegree) :
     ¬ ∀ β : GF2nPoly f hirr, frobeniusIter β r = β := by
   intro hfixed
   have hdeg_le :
-      f.degree ≤ r :=
+      f.natDegree ≤ r :=
     frobeniusIter_universal_fixed_degree_le
       (f := f) (hirr := hirr) hf_pos hr_pos hfixed
   exact Nat.not_lt_of_ge hdeg_le hr_lt
 
 /-- A positive iterate below the quotient degree has some non-fixed element. -/
 theorem exists_frobeniusIter_ne_self_of_pos_lt_degree
-    (hf_pos : 0 < f.degree) {r : Nat} (hr_pos : 0 < r)
-    (hr_lt : r < f.degree) :
+    (hf_pos : 0 < f.natDegree) {r : Nat} (hr_pos : 0 < r)
+    (hr_lt : r < f.natDegree) :
     ∃ β : GF2nPoly f hirr, frobeniusIter β r ≠ β := by
   classical
   by_cases h : ∃ β : GF2nPoly f hirr, frobeniusIter β r ≠ β
@@ -1101,8 +1101,8 @@ If `X` were fixed, the existing quotient-generation theorem would make every
 element fixed, contradicting the fixed-point cardinality bound.
 -/
 theorem frobeniusIter_X_ne_self_of_pos_lt_degree
-    (hf_pos : 0 < f.degree) {r : Nat} (hr_pos : 0 < r)
-    (hr_lt : r < f.degree) :
+    (hf_pos : 0 < f.natDegree) {r : Nat} (hr_pos : 0 < r)
+    (hr_lt : r < f.natDegree) :
     frobeniusIter (X (f := f) (hirr := hirr)) r ≠
       X (f := f) (hirr := hirr) := by
   intro hX
@@ -1173,7 +1173,7 @@ theorem listProd_map_mul_left (a : GF2nPoly f hirr)
               simp only [listProd_cons, List.length_cons]
 
 /-- The product of a list of nonzero packed quotient elements is nonzero. -/
-theorem listProd_ne_zero (hf_pos : 0 < f.degree)
+theorem listProd_ne_zero (hf_pos : 0 < f.natDegree)
     {xs : List (GF2nPoly f hirr)}
     (hxs : ∀ x ∈ xs, x ≠ 0) :
     listProd xs ≠ 0 := by
@@ -1190,11 +1190,11 @@ theorem listProd_ne_zero (hf_pos : 0 < f.degree)
 /-- Finite-field exponent theorem for the packed quotient: every nonzero
 quotient element raised to the number of nonzero representatives is `1`. -/
 theorem linearPow_pred_card_eq_one_of_ne_zero
-    (hf_pos : 0 < f.degree) {a : GF2nPoly f hirr} (ha : a ≠ 0) :
-    linearPow a (2 ^ f.degree - 1) = 1 := by
+    (hf_pos : 0 < f.natDegree) {a : GF2nPoly f hirr} (ha : a ≠ 0) :
+    linearPow a (2 ^ f.natDegree - 1) = 1 := by
   let L : List (GF2nPoly f hirr) := nonzeroElements (f := f) (hirr := hirr)
   let P : GF2nPoly f hirr := listProd L
-  have hL_card : L.length = 2 ^ f.degree - 1 :=
+  have hL_card : L.length = 2 ^ f.natDegree - 1 :=
     nonzeroElements_card (f := f) (hirr := hirr)
   have hP_ne : P ≠ 0 :=
     listProd_ne_zero (f := f) (hirr := hirr) hf_pos
@@ -1217,11 +1217,11 @@ end Internal
 /-- Every packed quotient element is fixed by the degree-cardinality
 Frobenius iterate. -/
 theorem frobeniusIter_degree_eq_self
-    (hf_pos : 0 < f.degree) (a : GF2nPoly f hirr) :
-    frobeniusIter a f.degree = a := by
+    (hf_pos : 0 < f.natDegree) (a : GF2nPoly f hirr) :
+    frobeniusIter a f.natDegree = a := by
   rw [Internal.frobeniusIter_eq_linearPow_two_pow]
-  have hpos : 0 < 2 ^ f.degree := Nat.pow_pos (by decide : 0 < 2)
-  have hsplit : 2 ^ f.degree = (2 ^ f.degree - 1) + 1 := by omega
+  have hpos : 0 < 2 ^ f.natDegree := Nat.pow_pos (by decide : 0 < 2)
+  have hsplit : 2 ^ f.natDegree = (2 ^ f.natDegree - 1) + 1 := by omega
   by_cases ha : a = 0
   · rw [ha, hsplit, Internal.linearPow_succ, mul_zero]
   · rw [hsplit, Internal.linearPow_succ,
@@ -1231,21 +1231,21 @@ theorem frobeniusIter_degree_eq_self
 /-- Adding any multiple of the modulus degree to a Frobenius iterate does not
 change the result. -/
 theorem frobeniusIter_add_mul_degree_eq
-    (hf_pos : 0 < f.degree) (a : GF2nPoly f hirr) (m q : Nat) :
-    frobeniusIter a (m + f.degree * q) = frobeniusIter a m := by
+    (hf_pos : 0 < f.natDegree) (a : GF2nPoly f hirr) (m q : Nat) :
+    frobeniusIter a (m + f.natDegree * q) = frobeniusIter a m := by
   induction q with
   | zero =>
       rw [Nat.mul_zero, Nat.add_zero]
   | succ q ih =>
-      have hidx : m + f.degree * (q + 1) = (m + f.degree * q) + f.degree := by
+      have hidx : m + f.natDegree * (q + 1) = (m + f.natDegree * q) + f.natDegree := by
         rw [Nat.mul_succ]
         omega
       calc
-        frobeniusIter a (m + f.degree * (q + 1))
-            = frobeniusIter a ((m + f.degree * q) + f.degree) := by rw [hidx]
-        _ = frobeniusIter (frobeniusIter a (m + f.degree * q)) f.degree := by
+        frobeniusIter a (m + f.natDegree * (q + 1))
+            = frobeniusIter a ((m + f.natDegree * q) + f.natDegree) := by rw [hidx]
+        _ = frobeniusIter (frobeniusIter a (m + f.natDegree * q)) f.natDegree := by
               rw [frobeniusIter_add]
-        _ = frobeniusIter (frobeniusIter a m) f.degree := by rw [ih]
+        _ = frobeniusIter (frobeniusIter a m) f.natDegree := by rw [ih]
         _ = frobeniusIter a m :=
               frobeniusIter_degree_eq_self (f := f) (hirr := hirr) hf_pos
                 (frobeniusIter a m)
@@ -1253,16 +1253,16 @@ theorem frobeniusIter_add_mul_degree_eq
 /-- If a quotient element is fixed by the `n`-fold Frobenius, it is also fixed
 by the remainder of `n` modulo the modulus degree. -/
 theorem frobeniusIter_mod_degree_eq_of_fixed
-    (hf_pos : 0 < f.degree) {a : GF2nPoly f hirr} {n : Nat}
+    (hf_pos : 0 < f.natDegree) {a : GF2nPoly f hirr} {n : Nat}
     (hfixed : frobeniusIter a n = a) :
-    frobeniusIter a (n % f.degree) = a := by
-  have hdecomp : n % f.degree + f.degree * (n / f.degree) = n :=
-    Nat.mod_add_div n f.degree
+    frobeniusIter a (n % f.natDegree) = a := by
+  have hdecomp : n % f.natDegree + f.natDegree * (n / f.natDegree) = n :=
+    Nat.mod_add_div n f.natDegree
   have hperiod :
-      frobeniusIter a (n % f.degree + f.degree * (n / f.degree)) =
-        frobeniusIter a (n % f.degree) :=
+      frobeniusIter a (n % f.natDegree + f.natDegree * (n / f.natDegree)) =
+        frobeniusIter a (n % f.natDegree) :=
     frobeniusIter_add_mul_degree_eq (f := f) (hirr := hirr) hf_pos a
-      (n % f.degree) (n / f.degree)
+      (n % f.natDegree) (n / f.natDegree)
   rw [hdecomp] at hperiod
   rw [← hperiod]
   exact hfixed

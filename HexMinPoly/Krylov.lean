@@ -297,11 +297,11 @@ theorem evalVec_shift (k : Nat) (p : DensePoly F)
       krylovVec A (evalVec p A v) k := by
   unfold DensePoly.shift
   by_cases hz : p.isZero
-  · rw [HexPoly.ite_eq_left hz]
+  · rw [ite_eq_left hz]
     have hp : p = 0 :=
       (DensePoly.size_eq_zero_iff p).mp ((DensePoly.isZero_eq_true_iff p).mp hz)
     rw [evalVec_zero_poly, hp, evalVec_zero_poly, krylovVec_zero]
-  · rw [HexPoly.ite_eq_right hz, evalVec_ofList,
+  · rw [ite_eq_right hz, evalVec_ofList,
       evalVecList_zero_prefix]
     have hlist : evalVecList p.toList A v = evalVec p A v := by
       rw [← evalVec_ofList, DensePoly.ofList_toList]
@@ -363,7 +363,7 @@ private theorem evalVec_mul_of_size_le :
       have hzq : (0 : DensePoly F) * q = 0 := by
         show DensePoly.mul 0 q = 0
         unfold DensePoly.mul
-        rw [HexPoly.ite_eq_left (by
+        rw [ite_eq_left (by
           simp [(DensePoly.isZero_eq_true_iff (0 : DensePoly F)).mpr rfl])]
       rw [hzq, evalVec_zero_poly, evalVec_zero_poly]
   | succ r ih =>

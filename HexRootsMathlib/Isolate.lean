@@ -15,7 +15,7 @@ public section
 /-!
 # Exact atom enumeration
 
-Successful `Hex.isolate` calls enumerate the complex roots exactly, for every
+Successful `Hex.ZPoly.isolateComplexRoots?` calls enumerate the complex roots exactly, for every
 atom strategy and including the executable zero and constant branches.
 -/
 
@@ -94,11 +94,11 @@ theorem array_mapM_isSome {α β : Type*} {f : α → Option β}
 /-- In the positive-degree branch, successful isolation is a successful
 Cauchy-started general driver run whose results correspond indexwise to the
 returned atoms. -/
-theorem isolate_run (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
+theorem isolateComplexRoots?_run (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     (atomPrec : Int) (strategy : Hex.AtomStrategy)
-    (hdegree : 0 < p.degree?.getD 0)
+    (hdegree : 0 < p.natDegree)
     {atoms : Array (Hex.DyadicRootIsolation p)}
-    (hrun : Hex.isolate p h atomPrec strategy = some atoms) :
+    (hrun : Hex.ZPoly.isolateComplexRoots? p h atomPrec strategy = some atoms) :
     ∃ rs : Array (Hex.Certified p),
       Hex.isolateAll? p (max atomPrec (Hex.separationDepth p : Int))
         #[Hex.Component.cauchy p hdegree] strategy = some rs ∧
@@ -106,7 +106,7 @@ theorem isolate_run (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
       ∀ (i : Nat) (hi : i < rs.size) (hj : i < atoms.size),
         rs[i] = .atom atoms[i] := by
   have hrun' := hrun
-  rw [Hex.isolate, dif_pos hdegree] at hrun'
+  rw [Hex.ZPoly.isolateComplexRoots?, dite_eq_left hdegree] at hrun'
   let target := max atomPrec (Hex.separationDepth p : Int)
   cases hall : Hex.isolateAll? p target
       #[Hex.Component.cauchy p hdegree] strategy with
@@ -130,15 +130,15 @@ theorem isolate_run (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
 
 /-- Every root belongs to one of the atoms returned by successful
 positive-degree isolation. -/
-theorem isolate_root_mem_of_pos (p : Hex.ZPoly)
+theorem isolateComplexRoots?_root_mem_of_pos (p : Hex.ZPoly)
     (h : Hex.HasOnlySimpleRoots p) (atomPrec : Int)
-    (strategy : Hex.AtomStrategy) (hdegree : 0 < p.degree?.getD 0)
+    (strategy : Hex.AtomStrategy) (hdegree : 0 < p.natDegree)
     {atoms : Array (Hex.DyadicRootIsolation p)}
-    (hrun : Hex.isolate p h atomPrec strategy = some atoms)
+    (hrun : Hex.ZPoly.isolateComplexRoots? p h atomPrec strategy = some atoms)
     {z : ℂ} (hzroot : (toPolyℂ p).IsRoot z) :
     ∃ iso ∈ atoms.toList, DyadicRootIsolation.root iso = z := by
   obtain ⟨rs, hall, hsize, hrel⟩ :=
-    isolate_run p h atomPrec strategy hdegree hrun
+    isolateComplexRoots?_run p h atomPrec strategy hdegree hrun
   obtain ⟨r, hr, hzr⟩ :=
     isolateAll_cauchy_covers p hdegree hall hzroot
   obtain ⟨i, hiList, hir⟩ := List.getElem_of_mem hr
@@ -156,14 +156,14 @@ theorem isolate_root_mem_of_pos (p : Hex.ZPoly)
 
 /-- A successful non-positive-degree call is the nonzero constant branch and
 returns no atoms, independently of strategy. -/
-theorem isolate_nonpositive (p : Hex.ZPoly)
+theorem isolateComplexRoots?_nonpositive (p : Hex.ZPoly)
     (h : Hex.HasOnlySimpleRoots p) (atomPrec : Int)
-    (strategy : Hex.AtomStrategy) (hdegree : ¬0 < p.degree?.getD 0)
+    (strategy : Hex.AtomStrategy) (hdegree : ¬0 < p.natDegree)
     {atoms : Array (Hex.DyadicRootIsolation p)}
-    (hrun : Hex.isolate p h atomPrec strategy = some atoms) :
+    (hrun : Hex.ZPoly.isolateComplexRoots? p h atomPrec strategy = some atoms) :
     p.size ≠ 0 ∧ atoms = #[] := by
   have hrun' := hrun
-  rw [Hex.isolate, dif_neg hdegree] at hrun'
+  rw [Hex.ZPoly.isolateComplexRoots?, dite_eq_right hdegree] at hrun'
   by_cases hp : p.size = 0
   · simp [hp] at hrun'
   · have hatoms : atoms = #[] := by
@@ -172,15 +172,15 @@ theorem isolate_nonpositive (p : Hex.ZPoly)
 
 /-- Every returned atom meets the full driver target, not only the requested
 atom precision. -/
-theorem isolate_prec (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
+theorem isolateComplexRoots?_prec (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     (atomPrec : Int) (strategy : Hex.AtomStrategy)
     {atoms : Array (Hex.DyadicRootIsolation p)}
-    (hrun : Hex.isolate p h atomPrec strategy = some atoms) :
+    (hrun : Hex.ZPoly.isolateComplexRoots? p h atomPrec strategy = some atoms) :
     ∀ iso ∈ atoms.toList,
       max atomPrec (Hex.separationDepth p : Int) ≤ iso.square.prec := by
-  by_cases hdegree : 0 < p.degree?.getD 0
+  by_cases hdegree : 0 < p.natDegree
   · obtain ⟨rs, hall, hsize, hrel⟩ :=
-      isolate_run p h atomPrec strategy hdegree hrun
+      isolateComplexRoots?_run p h atomPrec strategy hdegree hrun
     intro iso hiso
     obtain ⟨i, hiList, hir⟩ := List.getElem_of_mem hiso
     have hi : i < atoms.size := by simpa using hiList
@@ -192,16 +192,16 @@ theorem isolate_prec (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     rw [← hir]
     exact hready.1
   · obtain ⟨-, hatoms⟩ :=
-      isolate_nonpositive p h atomPrec strategy hdegree hrun
+      isolateComplexRoots?_nonpositive p h atomPrec strategy hdegree hrun
     subst atoms
     simp
 
 /-- Every successful isolation result can be wrapped as a
 `RefinedIsolation`: the driver's separation target dominates `mahlerPrec`. -/
-theorem isolate_refined (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
+theorem isolateComplexRoots?_refined (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     (atomPrec : Int) (strategy : Hex.AtomStrategy)
     {atoms : Array (Hex.DyadicRootIsolation p)}
-    (hrun : Hex.isolate p h atomPrec strategy = some atoms) :
+    (hrun : Hex.ZPoly.isolateComplexRoots? p h atomPrec strategy = some atoms) :
     ∀ iso ∈ atoms.toList, (Hex.mahlerPrec p : Int) ≤ iso.square.prec := by
   have hsepNat : Hex.mahlerPrec p ≤ Hex.separationDepth p := by
     rw [Hex.separationDepth]
@@ -210,20 +210,20 @@ theorem isolate_refined (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
       (Hex.separationDepth p : Int) := by exact_mod_cast hsepNat
   intro iso hiso
   exact hsep.trans <| (le_max_right atomPrec
-    (Hex.separationDepth p : Int)).trans <| isolate_prec p h atomPrec
+    (Hex.separationDepth p : Int)).trans <| isolateComplexRoots?_prec p h atomPrec
       strategy hrun iso hiso
 
 /-- Distinct output indices select distinct semantic roots. -/
-theorem isolate_roots_ne (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
+theorem isolateComplexRoots?_roots_ne (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     (atomPrec : Int) (strategy : Hex.AtomStrategy)
     {atoms : Array (Hex.DyadicRootIsolation p)}
-    (hrun : Hex.isolate p h atomPrec strategy = some atoms)
+    (hrun : Hex.ZPoly.isolateComplexRoots? p h atomPrec strategy = some atoms)
     {i j : Nat} (hi : i < atoms.size) (hj : j < atoms.size) (hij : i ≠ j) :
     DyadicRootIsolation.root atoms[i] ≠
       DyadicRootIsolation.root atoms[j] := by
-  by_cases hdegree : 0 < p.degree?.getD 0
+  by_cases hdegree : 0 < p.natDegree
   · obtain ⟨rs, hall, hsize, hrel⟩ :=
-      isolate_run p h atomPrec strategy hdegree hrun
+      isolateComplexRoots?_run p h atomPrec strategy hdegree hrun
     have hi' : i < rs.size := by simpa [hsize] using hi
     have hj' : j < rs.size := by simpa [hsize] using hj
     have hri := hrel i hi' hi
@@ -241,22 +241,22 @@ theorem isolate_roots_ne (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     rw [heq] at hmemi
     exact (Set.disjoint_left.mp hdisj) hmemi hmemj
   · obtain ⟨-, hatoms⟩ :=
-      isolate_nonpositive p h atomPrec strategy hdegree hrun
+      isolateComplexRoots?_nonpositive p h atomPrec strategy hdegree hrun
     subst atoms
     simp at hi
 
 /-- Distinct output atoms have disjoint closed circumscribed discs, for every
 strategy accepted by the general isolation driver. -/
-theorem isolate_disjoint (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
+theorem isolateComplexRoots?_disjoint (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     (atomPrec : Int) (strategy : Hex.AtomStrategy)
     {atoms : Array (Hex.DyadicRootIsolation p)}
-    (hrun : Hex.isolate p h atomPrec strategy = some atoms)
+    (hrun : Hex.ZPoly.isolateComplexRoots? p h atomPrec strategy = some atoms)
     {i j : Nat} (hi : i < atoms.size) (hj : j < atoms.size) (hij : i ≠ j) :
     Disjoint (DyadicSquare.closedDisc atoms[i].square)
       (DyadicSquare.closedDisc atoms[j].square) := by
-  by_cases hdegree : 0 < p.degree?.getD 0
+  by_cases hdegree : 0 < p.natDegree
   · obtain ⟨rs, hall, hsize, hrel⟩ :=
-      isolate_run p h atomPrec strategy hdegree hrun
+      isolateComplexRoots?_run p h atomPrec strategy hdegree hrun
     have hi' : i < rs.size := by simpa [hsize] using hi
     have hj' : j < rs.size := by simpa [hsize] using hj
     have hri := hrel i hi' hi
@@ -265,22 +265,22 @@ theorem isolate_disjoint (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     rw [hri, hrj] at hdisj
     exact hdisj
   · obtain ⟨-, hatoms⟩ :=
-      isolate_nonpositive p h atomPrec strategy hdegree hrun
+      isolateComplexRoots?_nonpositive p h atomPrec strategy hdegree hrun
     subst atoms
     simp at hi
 
 /-- The number of returned atoms is the polynomial's complex natural degree.
-Together with `isolate_roots_ne`, this records that the exact enumeration has
+Together with `isolateComplexRoots?_roots_ne`, this records that the exact enumeration has
 no duplicate representatives. -/
-theorem isolate_count (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
+theorem isolateComplexRoots?_count (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     (atomPrec : Int) (strategy : Hex.AtomStrategy)
     {atoms : Array (Hex.DyadicRootIsolation p)}
-    (hrun : Hex.isolate p h atomPrec strategy = some atoms) :
+    (hrun : Hex.ZPoly.isolateComplexRoots? p h atomPrec strategy = some atoms) :
     atoms.size = (toPolyℂ p).natDegree := by
   classical
-  by_cases hdegree : 0 < p.degree?.getD 0
+  by_cases hdegree : 0 < p.natDegree
   · obtain ⟨rs, hall, hsize, hrel⟩ :=
-      isolate_run p h atomPrec strategy hdegree hrun
+      isolateComplexRoots?_run p h atomPrec strategy hdegree hrun
     calc
       atoms.size = rs.size := hsize.symm
       _ = ∑ _i : Fin rs.size, 1 := by simp
@@ -292,7 +292,7 @@ theorem isolate_count (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
         rfl
       _ = (toPolyℂ p).natDegree := isolateAll_count p hdegree hall
   · obtain ⟨-, hatoms⟩ :=
-      isolate_nonpositive p h atomPrec strategy hdegree hrun
+      isolateComplexRoots?_nonpositive p h atomPrec strategy hdegree hrun
     subst atoms
     rw [Array.size_empty, natDegree_toPolyℂ]
     exact Nat.eq_zero_of_not_pos hdegree |>.symm
@@ -300,15 +300,15 @@ theorem isolate_count (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
 /-- Successful isolation enumerates exactly the distinct complex roots and
 meets the requested precision, for every strategy and every executable edge
 case. -/
-theorem isolate_sound (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
+theorem isolateComplexRoots?_sound (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     (atomPrec : Int) (strategy : Hex.AtomStrategy)
     {atoms : Array (Hex.DyadicRootIsolation p)}
-    (hrun : Hex.isolate p h atomPrec strategy = some atoms) :
+    (hrun : Hex.ZPoly.isolateComplexRoots? p h atomPrec strategy = some atoms) :
     (atoms.toList.map DyadicRootIsolation.root).toFinset =
         (toPolyℂ p).roots.toFinset ∧
       ∀ iso ∈ atoms.toList, atomPrec ≤ iso.square.prec := by
   classical
-  by_cases hdegree : 0 < p.degree?.getD 0
+  by_cases hdegree : 0 < p.natDegree
   · have hq : toPolyℂ p ≠ 0 := by
       intro hzero
       have hnat : (toPolyℂ p).natDegree = 0 := by rw [hzero]; simp
@@ -326,14 +326,14 @@ theorem isolate_sound (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
         have hzroot : (toPolyℂ p).IsRoot z :=
           (mem_roots hq).mp (Multiset.mem_toFinset.mp hz)
         obtain ⟨iso, hiso, hroot⟩ :=
-          isolate_root_mem_of_pos p h atomPrec strategy hdegree hrun hzroot
+          isolateComplexRoots?_root_mem_of_pos p h atomPrec strategy hdegree hrun hzroot
         rw [List.mem_toFinset]
         exact List.mem_map.mpr ⟨iso, hiso, hroot⟩
     · intro iso hiso
       exact (le_max_left atomPrec (Hex.separationDepth p : Int)).trans <|
-        isolate_prec p h atomPrec strategy hrun iso hiso
+        isolateComplexRoots?_prec p h atomPrec strategy hrun iso hiso
   · obtain ⟨hp, hatoms⟩ :=
-      isolate_nonpositive p h atomPrec strategy hdegree hrun
+      isolateComplexRoots?_nonpositive p h atomPrec strategy hdegree hrun
     have hroots : (toPolyℂ p).roots = 0 := by
       apply Multiset.eq_zero_of_forall_notMem
       intro z hz

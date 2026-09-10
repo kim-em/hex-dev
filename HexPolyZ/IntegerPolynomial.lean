@@ -666,7 +666,7 @@ theorem ratPolyPrimitivePart_rational_associate (f : DensePoly Rat) :
     change f =
       DensePoly.scale (-(((content scaled : Int) : Rat) / (den : Rat)))
         (toRatPoly (normalizePrimitiveSign (primitivePart scaled)))
-    rw [normalizePrimitiveSign, if_pos hlead]
+    rw [normalizePrimitiveSign, ite_eq_left hlead]
     rw [← rat_scale_toRatPoly_neg_int (((content scaled : Int) : Rat) / (den : Rat))
       (primitivePart scaled)]
     exact hbase
@@ -675,7 +675,7 @@ theorem ratPolyPrimitivePart_rational_associate (f : DensePoly Rat) :
     change f =
       DensePoly.scale (((content scaled : Int) : Rat) / (den : Rat))
         (toRatPoly (normalizePrimitiveSign (primitivePart scaled)))
-    rw [normalizePrimitiveSign, if_neg hlead]
+    rw [normalizePrimitiveSign, ite_eq_right hlead]
     exact hbase
 
 /--
@@ -1144,10 +1144,10 @@ theorem C_mul_eq_scale (c : Int) (p : ZPoly) :
     simp only [List.range_one, List.foldl_cons, List.foldl_nil]
     rw [fold_mulCoeffStep_C_left_range]
     by_cases hn : n < p.size
-    · rw [if_pos hn]
+    · rw [ite_eq_left hn]
       change (0 : Int) + c * p.coeff n = c * p.coeff n
       omega
-    · rw [if_neg hn, DensePoly.coeff_eq_zero_of_size_le p (Nat.le_of_not_gt hn)]
+    · rw [ite_eq_right hn, DensePoly.coeff_eq_zero_of_size_le p (Nat.le_of_not_gt hn)]
       change (0 : Int) = c * 0
       rw [Int.mul_zero]
 
@@ -1239,7 +1239,7 @@ private theorem shift_size_of_ne_zero (k : Nat) {p : ZPoly} (hp : p ≠ 0) :
       rw [DensePoly.coeff_shift]
       have hnot : ¬ k + p.size - 1 < k := by omega
       have hidx : k + p.size - 1 - k = p.size - 1 := by omega
-      rw [if_neg hnot, hidx]
+      rw [ite_eq_right hnot, hidx]
       exact DensePoly.coeff_last_ne_zero_of_pos_size p hpos
     by_cases hle : k + p.size ≤ (DensePoly.shift k p).size
     · exact hle
@@ -1264,7 +1264,7 @@ theorem leadingCoeff_shift_of_nonzero (k : Nat) (p : ZPoly) (hp : p ≠ 0) :
     rw [DensePoly.coeff_shift]
     have hnot : ¬ k + p.size - 1 < k := by omega
     have hidx : k + p.size - 1 - k = p.size - 1 := by omega
-    rw [if_neg hnot, hidx, DensePoly.leadingCoeff_eq_coeff_last p hpos]
+    rw [ite_eq_right hnot, hidx, DensePoly.leadingCoeff_eq_coeff_last p hpos]
   · rw [shift_size_of_ne_zero k hp]
     omega
 
@@ -1372,7 +1372,7 @@ the executable dense-polynomial division returns zero remainder. -/
 theorem divMod_remainder_eq_zero_of_monic_mul_eq
     (target candidate quotient : ZPoly)
     (hmonic : DensePoly.Monic candidate)
-    (hdegree : 0 < candidate.degree?.getD 0)
+    (hdegree : 0 < candidate.natDegree)
     (hmul : quotient * candidate = target) :
     (DensePoly.divMod target candidate).2 = 0 := by
   let qr := DensePoly.divMod target candidate
@@ -1386,12 +1386,12 @@ theorem divMod_remainder_eq_zero_of_monic_mul_eq
   rw [← hmul] at hrecon
   have hcandidate_ne : candidate ≠ 0 := by
     intro hzero
-    have hdeg : candidate.degree?.getD 0 = 0 := by
+    have hdeg : candidate.natDegree = 0 := by
       rw [hzero]
-      simp [DensePoly.degree?]
+      simp [DensePoly.natDegree, DensePoly.degree?]
     omega
   have hrem_degree :
-      qr.2.degree?.getD 0 < candidate.degree?.getD 0 := by
+      qr.2.natDegree < candidate.natDegree := by
     simpa [qr] using
       DensePoly.divMod_remainder_degree_lt_of_pos_degree_of_cancel target candidate hdegree hcancel
   by_cases hrem_zero : qr.2 = 0
@@ -1418,7 +1418,7 @@ theorem divMod_remainder_eq_zero_of_monic_mul_eq
       size_le_of_dvd_nonzero hcandidate_ne hrem_zero hrem_dvd
     have hcandidate_size_ne : candidate.size ≠ 0 := by
       intro hsize
-      simp [DensePoly.degree?, hsize] at hdegree
+      simp [DensePoly.natDegree, DensePoly.degree?, hsize] at hdegree
     have hrem_size_ne : qr.2.size ≠ 0 := by
       intro hsize
       apply hrem_zero
@@ -1426,10 +1426,10 @@ theorem divMod_remainder_eq_zero_of_monic_mul_eq
       intro n
       rw [DensePoly.coeff_zero]
       exact DensePoly.coeff_eq_zero_of_size_le qr.2 (by omega)
-    have hcandidate_deg : candidate.degree?.getD 0 = candidate.size - 1 := by
-      simp [DensePoly.degree?, hcandidate_size_ne]
-    have hrem_deg : qr.2.degree?.getD 0 = qr.2.size - 1 := by
-      simp [DensePoly.degree?, hrem_size_ne]
+    have hcandidate_deg : candidate.natDegree = candidate.size - 1 := by
+      simp [DensePoly.natDegree, DensePoly.degree?, hcandidate_size_ne]
+    have hrem_deg : qr.2.natDegree = qr.2.size - 1 := by
+      simp [DensePoly.natDegree, DensePoly.degree?, hrem_size_ne]
     rw [hrem_deg, hcandidate_deg] at hrem_degree
     omega
 
@@ -1439,7 +1439,7 @@ zero remainder. -/
 theorem divMod_eq_of_monic_mul_eq
     (target candidate quotient : ZPoly)
     (hmonic : DensePoly.Monic candidate)
-    (hdegree : 0 < candidate.degree?.getD 0)
+    (hdegree : 0 < candidate.natDegree)
     (hmul : quotient * candidate = target) :
     DensePoly.divMod target candidate = (quotient, 0) := by
   let qr := DensePoly.divMod target candidate
@@ -1451,9 +1451,9 @@ theorem divMod_eq_of_monic_mul_eq
   rw [hrem, DensePoly.add_zero_poly, ← hmul] at hrecon
   have hcandidate_ne : candidate ≠ 0 := by
     intro hzero
-    have hdeg : candidate.degree?.getD 0 = 0 := by
+    have hdeg : candidate.natDegree = 0 := by
       rw [hzero]
-      simp [DensePoly.degree?]
+      simp [DensePoly.natDegree, DensePoly.degree?]
     omega
   have hquot : qr.1 = quotient :=
     mul_right_cancel_of_ne_zero hcandidate_ne hrecon

@@ -60,9 +60,9 @@ theorem one_add_pow_sub_one_le {x : ℝ} {n : ℕ} (hx : 0 ≤ x)
 most one 256th of the Mahler-radius scale. -/
 theorem radiusHi_mul_degree_le {p : Hex.ZPoly} {s : Hex.DyadicSquare}
     (hprec : (Hex.separationDepth p : Int) ≤ s.prec) :
-    Dyadic.toReal s.radiusHi * (Nat.max 2 (p.degree?.getD 0) : ℝ) ≤
+    Dyadic.toReal s.radiusHi * (Nat.max 2 (p.natDegree) : ℝ) ≤
       ((2 : ℝ) ^ (-(Hex.mahlerPrec p : ℤ)) * (1449 / 1024 : ℝ)) / 256 := by
-  let n := Nat.max 2 (p.degree?.getD 0)
+  let n := Nat.max 2 (p.natDegree)
   let L := Hex.ceilLog2 n
   let m := Hex.mahlerPrec p
   have hn : (n : ℝ) ≤ (2 : ℝ) ^ L := by
@@ -110,7 +110,7 @@ theorem witness_of_simple {p : Hex.ZPoly} {s : Hex.DyadicSquare}
   let f := toPolyℂ p
   let c := DyadicSquare.center s
   let rho := Dyadic.toReal s.radiusHi
-  let N := Nat.max 2 (p.degree?.getD 0)
+  let N := Nat.max 2 (p.natDegree)
   let M := (2 : ℝ) ^ (-(Hex.mahlerPrec p : ℤ)) * (1449 / 1024 : ℝ)
   let d := 3 * M
   have hf : f ≠ 0 := by
@@ -178,13 +178,13 @@ theorem witness_of_simple {p : Hex.ZPoly} {s : Hex.DyadicSquare}
         _ ≤ ‖w - c‖ + ‖z - c‖ := norm_sub_le _ _
     dsimp [d]
     nlinarith
-  have hcard : roots.card + 1 = p.degree?.getD 0 := by
+  have hcard : roots.card + 1 = p.natDegree := by
     calc
       roots.card + 1 = f.roots.card := by rw [hrootsEq]; simp
       _ = f.natDegree := (IsAlgClosed.splits f).natDegree_eq_card_roots.symm
-      _ = p.degree?.getD 0 := by simpa [f] using natDegree_toPolyℂ p
+      _ = p.natDegree := by simpa [f] using natDegree_toPolyℂ p
   have hcardN : roots.card ≤ N := by
-    have hcdeg : roots.card ≤ p.degree?.getD 0 := by omega
+    have hcdeg : roots.card ≤ p.natDegree := by omega
     exact hcdeg.trans (Nat.le_max_right _ _)
   have hprod : (roots.card : ℝ) * rho ≤ M / 256 := by
     calc

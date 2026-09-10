@@ -131,7 +131,7 @@ leading coefficient, and is sign-normalized. The constant case is excluded by
 -/
 theorem factorize_entries_degree_pos
     (f : Hex.ZPoly) (hf : f ≠ 0) :
-    ∀ entry ∈ (Hex.ZPoly.factorize f).factors, 0 < entry.1.degree?.getD 0 :=
+    ∀ entry ∈ (Hex.ZPoly.factorize f).factors, 0 < entry.1.natDegree :=
   Hex.factorize_entries_degree_pos f hf
 
 /--
@@ -147,9 +147,9 @@ theorem factorize_unique_of_product
     (hφ_norm : ∀ entry ∈ φ.factors, Hex.normalizeFactorSign entry.1 = entry.1)
     (hψ_norm : ∀ entry ∈ (Hex.ZPoly.factorize f).factors,
       Hex.normalizeFactorSign entry.1 = entry.1)
-    (hφ_nonconst : ∀ entry ∈ φ.factors, 0 < entry.1.degree?.getD 0)
+    (hφ_nonconst : ∀ entry ∈ φ.factors, 0 < entry.1.natDegree)
     (hψ_nonconst : ∀ entry ∈ (Hex.ZPoly.factorize f).factors,
-      0 < entry.1.degree?.getD 0)
+      0 < entry.1.natDegree)
     (hirr : ∀ entry ∈ φ.factors, Hex.ZPoly.Irreducible entry.1) :
     φ.scalar = (Hex.ZPoly.factorize f).scalar ∧
       (φ.factors.toList.map (fun e => Multiset.replicate e.2 e.1)).sum =
@@ -171,7 +171,7 @@ theorem factorize_unique_of_product_default
     (f : Hex.ZPoly) (φ : Hex.Factorization) (hf_ne : f ≠ 0)
     (hproduct : Hex.Factorization.product φ = f)
     (hφ_norm : ∀ entry ∈ φ.factors, Hex.normalizeFactorSign entry.1 = entry.1)
-    (hφ_nonconst : ∀ entry ∈ φ.factors, 0 < entry.1.degree?.getD 0)
+    (hφ_nonconst : ∀ entry ∈ φ.factors, 0 < entry.1.natDegree)
     (hirr : ∀ entry ∈ φ.factors, Hex.ZPoly.Irreducible entry.1) :
     φ.scalar = (Hex.ZPoly.factorize f).scalar ∧
       (φ.factors.toList.map (fun e => Multiset.replicate e.2 e.1)).sum =
@@ -199,17 +199,16 @@ theorem _root_.Hex.ZPoly.isIrreducible_iff (f : Hex.ZPoly) :
   rw [Hex.ZPoly.isIrreducible]
   by_cases hf0 : f = 0
   · subst hf0
-    rw [if_pos rfl]
+    rw [ite_eq_left rfl]
     exact ⟨fun h => absurd h (by decide), fun h => absurd rfl h.not_zero⟩
-  · rw [if_neg hf0]
-    by_cases hdeg : f.degree?.getD 0 = 0
+  · rw [ite_eq_right hf0]
+    by_cases hdeg : f.natDegree = 0
     · -- constant arm
-      rw [if_pos hdeg]
+      rw [ite_eq_left hdeg]
       have hsize_pos : 0 < f.size := Hex.ZPoly.size_pos_of_ne_zero f hf0
       have hsize1 : f.size = 1 := by
-        have hdeg_eq : f.degree?.getD 0 = f.size - 1 := by
-          unfold Hex.DensePoly.degree?
-          simp [Nat.ne_of_gt hsize_pos]
+        have hdeg_eq : f.natDegree = f.size - 1 := by
+          rw [Hex.DensePoly.natDegree_eq_size_sub_one]
         omega
       have hfC : f = Hex.DensePoly.C (f.coeff 0) := Hex.ZPoly.eq_C_of_size_eq_one f hsize1
       have hk_ne : f.coeff 0 ≠ 0 := by
@@ -224,7 +223,7 @@ theorem _root_.Hex.ZPoly.isIrreducible_iff (f : Hex.ZPoly) :
         rw [hfC] at h
         exact Hex.ZPoly.isNatPrime_natAbs_of_irreducible_C hk_ne h
     · -- positive-degree arm
-      rw [if_neg hdeg]
+      rw [ite_eq_right hdeg]
       set φ := Hex.ZPoly.factorize f with hφ_def
       have hprod : Hex.Factorization.product φ = f := Hex.factorize_product f
       have hfp1 : ∀ q : Hex.ZPoly, Hex.Factorization.factorPower q 1 = q := fun q => by
@@ -273,19 +272,21 @@ theorem _root_.Hex.ZPoly.isIrreducible_iff (f : Hex.ZPoly) :
         have hCs_g : Hex.DensePoly.C s * g = f := by
           rw [hg_def, hs_def, Hex.normalizeFactorSign]
           by_cases hlc : Hex.DensePoly.leadingCoeff f < 0
-          · rw [if_pos hlc, if_pos hlc, Hex.ZPoly.C_mul_eq_scale, Hex.scale_neg_one_neg_one]
-          · rw [if_neg hlc, if_neg hlc, Hex.ZPoly.C_mul_eq_scale, Hex.densePoly_int_scale_one]
-        have hg_deg : 0 < g.degree?.getD 0 := by
+          · rw [ite_eq_left hlc, ite_eq_left hlc, Hex.ZPoly.C_mul_eq_scale,
+              Hex.scale_neg_one_neg_one]
+          · rw [ite_eq_right hlc, ite_eq_right hlc, Hex.ZPoly.C_mul_eq_scale,
+              Hex.densePoly_int_scale_one]
+        have hg_deg : 0 < g.natDegree := by
           have : g.size = f.size := by
             rw [hg_def, Hex.normalizeFactorSign]
             by_cases hlc : Hex.DensePoly.leadingCoeff f < 0
-            · rw [if_pos hlc]; exact Hex.ZPoly.scale_size_of_ne_zero (-1) f (by norm_num)
-            · rw [if_neg hlc]
+            · rw [ite_eq_left hlc]; exact Hex.ZPoly.scale_size_of_ne_zero (-1) f (by norm_num)
+            · rw [ite_eq_right hlc]
           have hfsz : 0 < f.size := Hex.ZPoly.size_pos_of_ne_zero f hf0
-          have hgeq : g.degree?.getD 0 = g.size - 1 := by
-            unfold Hex.DensePoly.degree?; simp [Nat.ne_of_gt (this ▸ hfsz)]
-          have hfeq : f.degree?.getD 0 = f.size - 1 := by
-            unfold Hex.DensePoly.degree?; simp [Nat.ne_of_gt hfsz]
+          have hgeq : g.natDegree = g.size - 1 := by
+            unfold Hex.DensePoly.natDegree Hex.DensePoly.degree?; simp [Nat.ne_of_gt (this ▸ hfsz)]
+          have hfeq : f.natDegree = f.size - 1 := by
+            unfold Hex.DensePoly.natDegree Hex.DensePoly.degree?; simp [Nat.ne_of_gt hfsz]
           omega
         set ψ : Hex.Factorization := { scalar := s, factors := #[(g, 1)] } with hψ_def
         have hψ_prod : Hex.Factorization.product ψ = f := by
@@ -297,7 +298,7 @@ theorem _root_.Hex.ZPoly.isIrreducible_iff (f : Hex.ZPoly) :
           intro entry hmem
           simp only [hψ_def, Array.mem_singleton] at hmem
           rw [hmem]; exact hg_norm
-        have hψ_nonconst : ∀ entry ∈ ψ.factors, 0 < entry.1.degree?.getD 0 := by
+        have hψ_nonconst : ∀ entry ∈ ψ.factors, 0 < entry.1.natDegree := by
           intro entry hmem
           simp only [hψ_def, Array.mem_singleton] at hmem
           rw [hmem]; exact hg_deg

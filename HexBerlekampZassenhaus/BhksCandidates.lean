@@ -48,7 +48,7 @@ private def cldGuardG : ZPoly :=
   DensePoly.ofCoeffs #[-2, 1]
 
 #guard cldQuotientMod cldGuardF cldGuardG 5 2 = DensePoly.ofCoeffs #[22, 1]
-#guard (cldCoeffs cldGuardF 5 2 cldGuardG).size = cldGuardF.degree?.getD 0
+#guard (cldCoeffs cldGuardF 5 2 cldGuardG).size = cldGuardF.natDegree
 
 /-
 Regression guard for #6217. The exact integer CLD coefficient of
@@ -99,14 +99,14 @@ theorem abs_cldCoeffs_le_bhksCoeffBound
     unfold bhksCoeffCutThreshold
     have := le_pow_ceilLogP hp (2 * bhksCoeffBound f j + 1)
     omega
-  by_cases hlt : j < f.degree?.getD 0
+  by_cases hlt : j < f.natDegree
   · rw [cldCoeffs_getD_of_lt f p a g j hlt]
     exact abs_psiCut_le_of_natAbs_le p a (bhksCoeffCutThreshold p f j)
       y ((cldQuotientMod f g p a).coeff j) (bhksCoeffBound f j)
       hbound hsep_a hsep_b hcongr
   · -- Out-of-range index: `cldCoeffs` returns 0 by `Array.getD` default.
     have hsize :
-        (cldCoeffs f p a g).size = f.degree?.getD 0 := by
+        (cldCoeffs f p a g).size = f.natDegree := by
       unfold cldCoeffs
       simp
     have hge : (cldCoeffs f p a g).size ≤ j := by
@@ -303,7 +303,7 @@ theorem normalizeCandidateFactor_eq_of_primitive_nonneg_leading
     ZPoly.primitivePart_eq_self_of_primitive g hprim
   rw [hpart]
   have hnot_neg : ¬ DensePoly.leadingCoeff g < 0 := Int.not_lt.mpr hsign
-  rw [if_neg hnot_neg]
+  rw [ite_eq_right hnot_neg]
 
 /-- Select the lifted factors marked by a nonempty zero-one indicator. -/
 def bhksIndicatorSelectedFactors
@@ -352,7 +352,7 @@ theorem bhksIndicatorSelectedFactors_eq_some_selectedArray_of_getD
   have hsizeBool : (indicator.size != liftedFactors.size) = false := by
     simp [hsize]
   rw [hsizeBool]
-  simp only [Bool.false_eq_true, if_false]
+  simp only [Bool.false_eq_true, ite_false]
   have hall :
       (List.range indicator.size).all
           (fun i => indicator.getD i 0 == 0 || indicator.getD i 0 == 1) = true := by
@@ -467,7 +467,7 @@ private theorem bhksIndicatorCandidate?_normalizeFactorSign
         else
           none) = some (candidate, quotient) at h
       by_cases hrecord : shouldRecordPolynomialFactor candidate'
-      · rw [if_pos hrecord] at h
+      · rw [ite_eq_left hrecord] at h
         cases hquot : exactQuotient? f candidate' with
         | none =>
             simp [hquot] at h
@@ -476,7 +476,7 @@ private theorem bhksIndicatorCandidate?_normalizeFactorSign
             rcases h with ⟨hcandidate, _hquotient⟩
             subst candidate
             exact normalizeFactorSign_idem candidate0
-      · rw [if_neg hrecord] at h
+      · rw [ite_eq_right hrecord] at h
         simp at h
 
 private theorem bhksIndicatorCandidate?_shouldRecord
@@ -505,7 +505,7 @@ private theorem bhksIndicatorCandidate?_shouldRecord
         else
           none) = some (candidate, quotient) at h
       by_cases hrecord : shouldRecordPolynomialFactor candidate'
-      · rw [if_pos hrecord] at h
+      · rw [ite_eq_left hrecord] at h
         cases hquot : exactQuotient? f candidate' with
         | none =>
             simp [hquot] at h
@@ -514,7 +514,7 @@ private theorem bhksIndicatorCandidate?_shouldRecord
             rcases h with ⟨hcandidate, _hquotient⟩
             subst candidate
             exact hrecord
-      · rw [if_neg hrecord] at h
+      · rw [ite_eq_right hrecord] at h
         simp at h
 
 /--
@@ -549,7 +549,7 @@ theorem bhksIndicatorCandidate?_dvd
         else
           none) = some (candidate, quotient) at h
       by_cases hrecord : shouldRecordPolynomialFactor candidate'
-      · rw [if_pos hrecord] at h
+      · rw [ite_eq_left hrecord] at h
         cases hquot : exactQuotient? f candidate' with
         | none =>
             simp [hquot] at h
@@ -562,7 +562,7 @@ theorem bhksIndicatorCandidate?_dvd
             refine ⟨quotient', ?_⟩
             rw [DensePoly.mul_comm_poly (S := Int)]
             exact hmul.symm
-      · rw [if_neg hrecord] at h
+      · rw [ite_eq_right hrecord] at h
         simp at h
 
 /-- If `normalizeCandidateFactor g` is nonzero, it is primitive: the inner
@@ -574,7 +574,7 @@ private theorem normalizeCandidateFactor_primitive
   unfold normalizeCandidateFactor at hne ⊢
   by_cases hlead :
       DensePoly.leadingCoeff (ZPoly.primitivePart g) < 0
-  · rw [if_pos hlead] at hne ⊢
+  · rw [ite_eq_left hlead] at hne ⊢
     have hprim_ne :
         (ZPoly.primitivePart g : ZPoly) ≠ 0 := by
       intro hzero
@@ -599,7 +599,7 @@ private theorem normalizeCandidateFactor_primitive
               (DensePoly.scale (-1 : Int) (ZPoly.primitivePart g)) from rfl,
         DensePoly.content_scale_neg_one (ZPoly.primitivePart g)]
     exact hprim_primitive
-  · rw [if_neg hlead] at hne ⊢
+  · rw [ite_eq_right hlead] at hne ⊢
     have hcontent_ne : ZPoly.content g ≠ 0 := by
       intro hzero
       apply hne
@@ -651,7 +651,7 @@ theorem bhksIndicatorCandidate?_primitive
         else
           none) = some (candidate, quotient) at h
       by_cases hrecord : shouldRecordPolynomialFactor candidate'
-      · rw [if_pos hrecord] at h
+      · rw [ite_eq_left hrecord] at h
         cases hquot : exactQuotient? f candidate' with
         | none =>
             simp [hquot] at h
@@ -673,11 +673,11 @@ theorem bhksIndicatorCandidate?_primitive
               have hlc :
                   ¬ DensePoly.leadingCoeff (0 : ZPoly) < 0 := by
                 simp
-              rw [if_neg hlc]
+              rw [ite_eq_right hlc]
             have hprim_cand0 : ZPoly.Primitive candidate0 :=
               normalizeCandidateFactor_primitive hcand0_ne
             exact normalizeFactorSign_primitive _ hprim_cand0
-      · rw [if_neg hrecord] at h
+      · rw [ite_eq_right hrecord] at h
         simp at h
 
 /-- A successful BHKS indicator candidate has positive degree: it is primitive
@@ -687,7 +687,7 @@ private theorem bhksIndicatorCandidate?_positive_degree
     {f : ZPoly} {d : LiftData} {indicator : Array Int}
     {candidate quotient : ZPoly}
     (h : bhksIndicatorCandidate? f d indicator = some (candidate, quotient)) :
-    0 < candidate.degree?.getD 0 := by
+    0 < candidate.natDegree := by
   have hrecord := bhksIndicatorCandidate?_shouldRecord h
   have hprim := bhksIndicatorCandidate?_primitive h
   have hsign := bhksIndicatorCandidate?_leadingCoeff_nonneg h
@@ -731,7 +731,7 @@ private theorem bhksIndicatorCandidate?_positive_degree
             rw [DensePoly.coeff_C]
             simp
         | succ n =>
-            rw [DensePoly.coeff_C, if_neg (Nat.succ_ne_zero n)]
+            rw [DensePoly.coeff_C, ite_eq_right (Nat.succ_ne_zero n)]
             exact DensePoly.coeff_eq_zero_of_size_le candidate (by omega)
       have hprim_C :
           DensePoly.content (DensePoly.C (candidate.coeff 0)) = 1 := by
@@ -767,11 +767,11 @@ private theorem bhksIndicatorCandidate?_positive_degree
   -- Now `candidate.size ≥ 2`, so degree = size - 1 ≥ 1 > 0.
   have hne_size : candidate.size ≠ 0 := by omega
   have hdeg_eq :
-      (DensePoly.degree? candidate).getD 0 = candidate.size - 1 := by
-    unfold DensePoly.degree?
-    rw [dif_neg hne_size]
+      (candidate).natDegree = candidate.size - 1 := by
+    unfold DensePoly.natDegree DensePoly.degree?
+    rw [dite_eq_right hne_size]
     rfl
-  show 0 < (DensePoly.degree? candidate).getD 0
+  show 0 < (candidate).natDegree
   rw [hdeg_eq]
   omega
 
@@ -807,7 +807,7 @@ theorem bhksIndicatorCandidate?_eq_normalized_directLift
     else
       none) = some (candidate, quotient) at h
   by_cases hrecord : shouldRecordPolynomialFactor candidate'
-  · rw [if_pos hrecord] at h
+  · rw [ite_eq_left hrecord] at h
     cases hquot : exactQuotient? f candidate' with
     | none => simp [hquot] at h
     | some quotient' =>
@@ -815,7 +815,7 @@ theorem bhksIndicatorCandidate?_eq_normalized_directLift
         rcases h with ⟨hcandidate, _hquotient⟩
         subst candidate
         simp [candidate', candidate0, modulus, liftModulus]
-  · rw [if_neg hrecord] at h
+  · rw [ite_eq_right hrecord] at h
     simp at h
 
 /--
@@ -830,7 +830,7 @@ theorem bhksIndicatorCandidate?_eq_some_of_directLift
     (hexpected_prim : ZPoly.Primitive expectedFactor)
     (hexpected_sign : 0 ≤ DensePoly.leadingCoeff expectedFactor)
     (hexpected_pos_lc : 0 < DensePoly.leadingCoeff expectedFactor)
-    (hexpected_degree : 0 < expectedFactor.degree?.getD 0)
+    (hexpected_degree : 0 < expectedFactor.natDegree)
     (hrecovered :
       centeredLiftPoly
           (DensePoly.scale (DensePoly.leadingCoeff f)
@@ -860,16 +860,16 @@ theorem bhksIndicatorCandidate?_eq_some_of_directLift
     apply shouldRecordPolynomialFactor_eq_true_of_ne
     · intro hzero
       rw [hzero] at hexpected_degree
-      simp [DensePoly.degree?] at hexpected_degree
+      simp [DensePoly.natDegree, DensePoly.degree?] at hexpected_degree
     · intro hone
       rw [hone] at hexpected_degree
-      have hdeg0 : (DensePoly.degree? (1 : ZPoly)).getD 0 = 0 := by
+      have hdeg0 : ((1 : ZPoly)).natDegree = 0 := by
         rfl
       rw [hdeg0] at hexpected_degree
       omega
     · intro hneg
       rw [hneg] at hexpected_degree
-      have hdeg0 : (DensePoly.degree? (DensePoly.C (-1 : Int))).getD 0 = 0 := by
+      have hdeg0 : (DensePoly.C (-1 : Int)).natDegree = 0 := by
         simp
       rw [hdeg0] at hexpected_degree
       omega
@@ -910,7 +910,7 @@ theorem bhksIndicatorCandidate?_eq_some_of_scaledCandidate
     (hproduct : Array.polyProduct selected = selectedProduct)
     (hdvd : expectedFactor ∣ f)
     (hexpected_pos_lc : 0 < DensePoly.leadingCoeff expectedFactor)
-    (hexpected_degree : 0 < expectedFactor.degree?.getD 0)
+    (hexpected_degree : 0 < expectedFactor.natDegree)
     (hrecovered :
       normalizeFactorSign
           (ZPoly.primitivePart
@@ -945,16 +945,16 @@ theorem bhksIndicatorCandidate?_eq_some_of_scaledCandidate
     apply shouldRecordPolynomialFactor_eq_true_of_ne
     · intro hzero
       rw [hzero] at hexpected_degree
-      simp [DensePoly.degree?] at hexpected_degree
+      simp [DensePoly.natDegree, DensePoly.degree?] at hexpected_degree
     · intro hone
       rw [hone] at hexpected_degree
-      have hdeg0 : (DensePoly.degree? (1 : ZPoly)).getD 0 = 0 := rfl
+      have hdeg0 : ((1 : ZPoly)).natDegree = 0 := rfl
       rw [hdeg0] at hexpected_degree
       omega
     · intro hneg
       rw [hneg] at hexpected_degree
       have hdeg0 :
-          (DensePoly.degree? (DensePoly.C (-1 : Int))).getD 0 = 0 := by
+          (DensePoly.C (-1 : Int)).natDegree = 0 := by
         simp
       rw [hdeg0] at hexpected_degree
       omega
@@ -981,7 +981,7 @@ theorem bhksIndicatorCandidate?_eq_some_of_directRecovery
     (hdvd : expectedFactor ∣ f)
     (hexpected_sign : 0 ≤ DensePoly.leadingCoeff expectedFactor)
     (hexpected_pos_lc : 0 < DensePoly.leadingCoeff expectedFactor)
-    (hexpected_degree : 0 < expectedFactor.degree?.getD 0)
+    (hexpected_degree : 0 < expectedFactor.natDegree)
     (hrecovered :
       ZPoly.primitivePart
           (centeredLiftPoly
@@ -1015,16 +1015,16 @@ theorem bhksIndicatorCandidate?_eq_some_of_directRecovery
     apply shouldRecordPolynomialFactor_eq_true_of_ne
     · intro hzero
       rw [hzero] at hexpected_degree
-      simp [DensePoly.degree?] at hexpected_degree
+      simp [DensePoly.natDegree, DensePoly.degree?] at hexpected_degree
     · intro hone
       rw [hone] at hexpected_degree
-      have hdeg0 : (DensePoly.degree? (1 : ZPoly)).getD 0 = 0 := by rfl
+      have hdeg0 : ((1 : ZPoly)).natDegree = 0 := by rfl
       rw [hdeg0] at hexpected_degree
       omega
     · intro hneg
       rw [hneg] at hexpected_degree
       have hdeg0 :
-          (DensePoly.degree? (DensePoly.C (-1 : Int))).getD 0 = 0 := by simp
+          (DensePoly.C (-1 : Int)).natDegree = 0 := by simp
       rw [hdeg0] at hexpected_degree
       omega
   rcases hdvd with ⟨quotient, hquotient_mul⟩
@@ -1088,7 +1088,7 @@ theorem bhksIndicatorAllOnes_eq_true_of_getD
         have hi : i < r := hlt i (List.mem_cons_self ..)
         have htail : ∀ j ∈ l, j < r :=
           fun j hj => hlt j (List.mem_cons_of_mem i hj)
-        rw [List.foldl_cons, if_pos (by simp [hones i hi]), ih _ htail]
+        rw [List.foldl_cons, ite_eq_left (by simp [hones i hi]), ih _ htail]
         simp [Nat.add_comm, Nat.add_left_comm]
   unfold bhksIndicatorAllOnes bhksIndicatorOneCount
   rw [hfold (List.range r) 0 (fun i hi => List.mem_range.mp hi)]
@@ -1262,9 +1262,9 @@ theorem bhksIndicatorCandidates?_positive_degree
     {f : ZPoly} {d : LiftData} {indicators : Array (Array Int)}
     {candidates : Array ZPoly}
     (h : bhksIndicatorCandidates? f d indicators = some candidates) :
-    ∀ factor ∈ candidates.toList, 0 < factor.degree?.getD 0 :=
+    ∀ factor ∈ candidates.toList, 0 < factor.natDegree :=
   bhksIndicatorCandidates?_all_of_candidate
-    (fun factor => 0 < factor.degree?.getD 0)
+    (fun factor => 0 < factor.natDegree)
     f d (fun hcandidate => bhksIndicatorCandidate?_positive_degree hcandidate) h
 
 private theorem array_toList_getD {α : Type}
@@ -1275,9 +1275,9 @@ private theorem array_toList_getD {α : Type}
       rw [List.getD_eq_getElem?_getD]
       unfold Array.getD Array.size Array.getInternal
       by_cases hlt : i < data.length
-      · rw [dif_pos hlt]
+      · rw [dite_eq_left hlt]
         simp [List.getElem?_eq_getElem hlt]
-      · rw [dif_neg hlt]
+      · rw [dite_eq_right hlt]
         simp [List.getElem?_eq_none_iff.mpr (Nat.le_of_not_gt hlt)]
 
 private theorem bhksIndicatorCandidatesStep_fold_eq_some
@@ -1545,7 +1545,7 @@ theorem transformedCore_coeff (core : ZPoly) (degree n : Nat) :
         core.coeff n * DensePoly.leadingCoeff core ^ (degree - 1 - n)
       else if n = degree then 1 else 0 := by
   rcases Nat.lt_trichotomy n degree with h | h | h
-  · rw [if_pos h]
+  · rw [ite_eq_left h]
     change (transformedCoeffs core degree).getD n (0 : Int) = _
     unfold transformedCoeffs
     rw [array_getD_push_lt ((List.range degree).map
@@ -1555,9 +1555,9 @@ theorem transformedCore_coeff (core : ZPoly) (degree n : Nat) :
       List.getElem?_map, List.getElem?_range h]
     simp
   · subst h
-    rw [if_neg (Nat.lt_irrefl _), if_pos rfl]
+    rw [ite_eq_right (Nat.lt_irrefl _), ite_eq_left rfl]
     exact transformedCore_coeff_top core n
-  · rw [if_neg (by omega), if_neg (by omega)]
+  · rw [ite_eq_right (by omega), ite_eq_right (by omega)]
     exact DensePoly.coeff_eq_zero_of_size_le _ (by rw [transformedCore_size]; omega)
 
 /-- **Keystone for `toMonic` inverse recovery.** Dilating the monic transform
@@ -1567,30 +1567,30 @@ for a constant `core` the identity fails unless the leading coefficient is `1`.
 Composed with `dilate_mul`, this is the inverse-factor correspondence the
 recombination recovery proof rests on. -/
 theorem dilate_transformedCore (core : ZPoly) (degree : Nat)
-    (hdeg : 1 ≤ degree) (hcore : core.degree?.getD 0 = degree) :
+    (hdeg : 1 ≤ degree) (hcore : core.natDegree = degree) :
     Hex.ZPoly.dilate (DensePoly.leadingCoeff core) (transformedCore core degree) =
       DensePoly.C (DensePoly.leadingCoeff core ^ (degree - 1)) * core := by
   have hsize_pos : 0 < core.size := by
     rcases Nat.eq_zero_or_pos core.size with hz | hpos
-    · rw [show core.degree?.getD 0 = 0 by simp [DensePoly.degree?, hz]] at hcore
+    · rw [show core.natDegree = 0 by simp [DensePoly.natDegree, DensePoly.degree?, hz]] at hcore
       omega
     · exact hpos
   have hsize : core.size = degree + 1 := by
     have hne : core.size ≠ 0 := by omega
-    have hdeg' : core.degree?.getD 0 = core.size - 1 := by
-      simp [DensePoly.degree?, hne]
+    have hdeg' : core.natDegree = core.size - 1 := by
+      simp [DensePoly.natDegree, DensePoly.degree?, hne]
     omega
   apply DensePoly.ext_coeff
   intro n
   rw [Hex.ZPoly.coeff_dilate, transformedCore_coeff, Hex.ZPoly.C_mul_eq_scale,
     DensePoly.coeff_scale_semiring]
   rcases Nat.lt_trichotomy n degree with h | h | h
-  · rw [if_pos h]
+  · rw [ite_eq_left h]
     have hexp : n + (degree - 1 - n) = degree - 1 := by omega
     rw [← Int.mul_assoc,
       Int.mul_comm (DensePoly.leadingCoeff core ^ n) (core.coeff n),
       Int.mul_assoc, ← int_pow_add, hexp, Int.mul_comm]
-  · rw [h, if_neg (Nat.lt_irrefl _), if_pos rfl, Int.mul_one]
+  · rw [h, ite_eq_right (Nat.lt_irrefl _), ite_eq_left rfl, Int.mul_one]
     have hcoeff : core.coeff degree = DensePoly.leadingCoeff core := by
       rw [DensePoly.leadingCoeff_eq_coeff_last core hsize_pos, hsize, Nat.add_sub_cancel]
     rw [hcoeff, ← Lean.Grind.Semiring.pow_succ]
@@ -1598,7 +1598,7 @@ theorem dilate_transformedCore (core : ZPoly) (degree : Nat)
     omega
   · have hz : core.coeff n = 0 :=
       DensePoly.coeff_eq_zero_of_size_le core (by omega)
-    rw [if_neg (by omega), if_neg (by omega), hz]
+    rw [ite_eq_right (by omega), ite_eq_right (by omega), hz]
     simp
 
 end ZPoly.ToMonicData
@@ -1624,12 +1624,12 @@ theorem dilate_monic_toMonic (core : ZPoly)
     intro n
     rw [DensePoly.coeff_scale_semiring, Int.one_mul]
   · have hmon : (toMonic core).monic =
-        ToMonicData.transformedCore core (core.degree?.getD 0) := by
+        ToMonicData.transformedCore core (core.natDegree) := by
       simp [toMonic, hmonic]
-    have hdeg' : 1 ≤ core.degree?.getD 0 := by
+    have hdeg' : 1 ≤ core.natDegree := by
       rw [toMonic_degree] at hdeg; exact hdeg
     rw [hmon, toMonic_degree]
-    exact ToMonicData.dilate_transformedCore core (core.degree?.getD 0) hdeg' rfl
+    exact ToMonicData.dilate_transformedCore core (core.natDegree) hdeg' rfl
 
 /-- Coefficient law for the monic transform `(toMonic core).monic` in the
 genuine-transform branch (leading coefficient `≠ 1`).  Public face of the
@@ -1639,47 +1639,47 @@ top coefficient is `1`, and higher coefficients vanish. -/
 theorem toMonic_monic_coeff_of_leadingCoeff_ne_one (core : ZPoly)
     (hmonic : DensePoly.leadingCoeff core ≠ 1) (i : Nat) :
     (toMonic core).monic.coeff i =
-      if i < core.degree?.getD 0 then
-        core.coeff i * DensePoly.leadingCoeff core ^ (core.degree?.getD 0 - 1 - i)
-      else if i = core.degree?.getD 0 then 1 else 0 := by
+      if i < core.natDegree then
+        core.coeff i * DensePoly.leadingCoeff core ^ (core.natDegree - 1 - i)
+      else if i = core.natDegree then 1 else 0 := by
   rw [show (toMonic core).monic
-        = ToMonicData.transformedCore core (core.degree?.getD 0) from by
+        = ToMonicData.transformedCore core (core.natDegree) from by
       simp [toMonic, hmonic]]
-  exact ToMonicData.transformedCore_coeff core (core.degree?.getD 0) i
+  exact ToMonicData.transformedCore_coeff core (core.natDegree) i
 
 /-- The monic transform preserves the recorded degree in all cases (sign-free,
 unconditional companion to `toMonic_monic_degree_eq_of_pos_degree`). -/
 theorem toMonic_monic_degree_getD (core : ZPoly) :
-    (toMonic core).monic.degree?.getD 0 = core.degree?.getD 0 := by
+    (toMonic core).monic.natDegree = core.natDegree := by
   by_cases hmonic : DensePoly.leadingCoeff core = 1
   · rw [toMonic_monic_eq_core_of_leadingCoeff_eq_one core hmonic]
   · rw [show (toMonic core).monic
-          = ToMonicData.transformedCore core (core.degree?.getD 0) from by
+          = ToMonicData.transformedCore core (core.natDegree) from by
         simp [toMonic, hmonic]]
-    exact ToMonicData.transformedCore_degree_getD core (core.degree?.getD 0)
+    exact ToMonicData.transformedCore_degree_getD core (core.natDegree)
 
 /-- Stored size of the monic transform of a positive-degree square-free part: one more than
 the square-free part degree, in both the already-monic and genuine-transform branches. -/
 theorem toMonic_monic_size_of_pos_degree (core : ZPoly)
-    (hdeg : 0 < core.degree?.getD 0) :
-    (toMonic core).monic.size = core.degree?.getD 0 + 1 := by
+    (hdeg : 0 < core.natDegree) :
+    (toMonic core).monic.size = core.natDegree + 1 := by
   by_cases hmonic : DensePoly.leadingCoeff core = 1
   · rw [toMonic_monic_eq_core_of_leadingCoeff_eq_one core hmonic]
     have hsize_pos : 0 < core.size := by
       rcases Nat.eq_zero_or_pos core.size with h0 | h
       · exfalso
-        rw [show core.degree?.getD 0 = 0 from by
-          simp [DensePoly.degree?, h0]] at hdeg
+        rw [show core.natDegree = 0 from by
+          simp [DensePoly.natDegree, DensePoly.degree?, h0]] at hdeg
         omega
       · exact h
     obtain ⟨m, hm⟩ := Nat.exists_eq_succ_of_ne_zero (Nat.pos_iff_ne_zero.mp hsize_pos)
-    rw [show core.degree?.getD 0 = core.size - 1 from by
-      simp [DensePoly.degree?, hm]]
+    rw [show core.natDegree = core.size - 1 from by
+      simp [DensePoly.natDegree, DensePoly.degree?, hm]]
     omega
   · rw [show (toMonic core).monic
-          = ToMonicData.transformedCore core (core.degree?.getD 0) from by
+          = ToMonicData.transformedCore core (core.natDegree) from by
         simp [toMonic, hmonic]]
-    exact ToMonicData.transformedCore_size core (core.degree?.getD 0)
+    exact ToMonicData.transformedCore_size core (core.natDegree)
 
 end ZPoly
 

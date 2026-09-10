@@ -102,7 +102,7 @@ theorem block_one (count width index : Nat) (hindex : index < count) :
       rcases i with _ | i
       · simp [block, fixedCoeffs, Array.getD, Nat.ne_of_gt htotal]
       · simp [block, fixedCoeffs, Array.getD]
-  · simp only [if_neg hindex0]
+  · simp only [ite_eq_right hindex0]
     apply Array.ext
     · simp [block, fixedCoeffs]
     · intro i hi₁ hi₂
@@ -433,7 +433,11 @@ def Coeff.relation (level : Level) (lower : List Level) :
 
 /-- Recursive inverse coordinates. The zero convention is inherited at every
 level; defensive nonconstant/zero gcd branches are unreachable for certified
-level lists. -/
+level lists. The extended gcd makes every remainder monic before dividing by
+it, so each lower-field inversion acts on a normalized operand and the
+quotient coefficients stay bounded in height; the unnormalized
+`DensePoly.xgcdLeft` chain amplified the heights of every later
+lower-field inversion. -/
 @[expose]
 def invCoords : (levels : List Level) → Array Rat → Array Rat
   | [], a => #[if a.getD 0 0 = 0 then 0 else (a.getD 0 0)⁻¹]
@@ -448,7 +452,7 @@ def invCoords : (levels : List Level) → Array Rat → Array Rat
         letI : Div (Coeff lower) := ⟨fun x y => x * y⁻¹⟩
         let value := Coeff.value level lower a
         let defining := Coeff.relation level lower
-        let result := DensePoly.xgcdLeft value defining
+        let result := DensePoly.xgcdLeftMonic value defining
         if result.gcd.size = 1 then
           let c := result.gcd.leadingCoeff
           if c = 0 then

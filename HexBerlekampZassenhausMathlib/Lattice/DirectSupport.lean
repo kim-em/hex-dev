@@ -202,7 +202,7 @@ theorem degree_pos
     {S : ModPFactorSubset data}
     (C : DirectFactorCertificate core B data S)
     (hcore_primitive : Hex.ZPoly.Primitive core) :
-    0 < C.factor.degree?.getD 0 := by
+    0 < C.factor.natDegree := by
   exact Hex.degree_pos_of_primitive_norm_record
     C.factor (C.primitive hcore_primitive) C.normalized
     (shouldRecordPolynomialFactor_of_irreducible_toPolynomial C.irreducible)
@@ -329,8 +329,8 @@ theorem directSupport_nonempty_of_represents
     (hnorm : Hex.normalizeFactorSign factor = factor)
     (hrep : RepresentsIntegerFactorModP data factor S) :
     S.Nonempty := by
-  letI := data.bounds
-  letI : Hex.ZMod64.PrimeModulus data.p :=
+  let := data.bounds
+  let : Hex.ZMod64.PrimeModulus data.p :=
     Hex.ZMod64.primeModulusOfPrime hval.prime
   by_contra hempty
   rw [Finset.not_nonempty_iff_eq_empty] at hempty
@@ -338,7 +338,7 @@ theorem directSupport_nonempty_of_represents
   have hfactor_ne : factor ≠ 0 := by
     intro hzero
     exact hirr.ne_zero (by rw [hzero]; exact HexPolyZMathlib.toPolynomial_zero)
-  have hfactor_degree : 0 < factor.degree?.getD 0 := by
+  have hfactor_degree : 0 < factor.natDegree := by
     have hfactor_primitive : Hex.ZPoly.Primitive factor :=
       zpoly_primitive_of_dvd_primitive_basic hcore_primitive hdvd
     have hrecord : Hex.shouldRecordPolynomialFactor factor = true :=
@@ -347,8 +347,7 @@ theorem directSupport_nonempty_of_represents
       factor hfactor_primitive hnorm hrecord
   have hfactor_size : 2 ≤ factor.size := by
     have hsize_pos := Hex.ZPoly.size_pos_of_ne_zero factor hfactor_ne
-    rw [Hex.DensePoly.degree?_eq_some_of_pos_size factor hsize_pos] at hfactor_degree
-    simp only [Option.getD_some] at hfactor_degree
+    rw [Hex.DensePoly.natDegree_eq_size_sub_one] at hfactor_degree
     omega
   obtain ⟨cofactor, hfactorization⟩ := hdvd
   have hcore_ne : core ≠ 0 :=

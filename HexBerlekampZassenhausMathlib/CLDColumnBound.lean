@@ -538,13 +538,13 @@ theorem cldQuotientMod_congr_mul_derivative
     (input g h : Hex.ZPoly) (p k : Nat)
     (hk : 1 < p ^ k)
     (hg_monic : Hex.DensePoly.Monic g)
-    (hg_deg : 0 < g.degree?.getD 0)
+    (hg_deg : 0 < g.natDegree)
     (hdvd : Hex.ZPoly.congr input (g * h) (p ^ k)) :
     Hex.ZPoly.congr
       (g * Hex.cldQuotientMod input g p k)
       (input * Hex.DensePoly.derivative g) (p ^ k) := by
   have hpk_pos : 0 < p ^ k := by omega
-  haveI : Fact (1 < p ^ k) := ⟨hk⟩
+  have : Fact (1 < p ^ k) := ⟨hk⟩
   -- Executable quotient / remainder of the monic division underlying `cldQuotientMod`.
   set num : Hex.ZPoly :=
     Hex.ZPoly.reduceModPow (input * Hex.DensePoly.derivative g) p k with hnum
@@ -557,7 +557,7 @@ theorem cldQuotientMod_congr_mul_derivative
   have hcancel :
       ∀ a : Int, a - (a / g.leadingCoeff) * g.leadingCoeff = 0 := by
     intro a; rw [hg_monic]; omega
-  have hrdeg : r.degree?.getD 0 < g.degree?.getD 0 :=
+  have hrdeg : r.natDegree < g.natDegree :=
     Hex.DensePoly.divMod_remainder_degree_lt_of_pos_degree_of_cancel num g hg_deg hcancel
   -- Move the goal to Mathlib polynomials reduced modulo `p ^ k`.
   refine HexHenselMathlib.zpoly_congr_of_toPolynomial_map_eq _ _ (p ^ k) ?_
@@ -601,7 +601,7 @@ theorem cldQuotientMod_congr_mul_derivative
       Polynomial.map_add, Polynomial.map_mul] using hcg
   -- The mapped remainder has degree below the mapped divisor.
   have hdeg_Mg : ((HexPolyMathlib.toPolynomial g).map φ).degree =
-      (g.degree?.getD 0 : WithBot ℕ) := by
+      (g.natDegree : WithBot ℕ) := by
     rw [(HexHenselMathlib.toPolynomial_monic_of_dense_monic g hg_monic).degree_map φ,
       Polynomial.degree_eq_natDegree
         (HexHenselMathlib.toPolynomial_monic_of_dense_monic g hg_monic).ne_zero,
@@ -612,10 +612,10 @@ theorem cldQuotientMod_congr_mul_derivative
     rw [hdeg_Mg]
     calc ((HexPolyMathlib.toPolynomial r).map φ).degree
         ≤ (HexPolyMathlib.toPolynomial r).degree := Polynomial.degree_map_le
-      _ ≤ (r.degree?.getD 0 : WithBot ℕ) := by
+      _ ≤ (r.natDegree : WithBot ℕ) := by
           rw [← HexPolyMathlib.natDegree_toPolynomial r]
           exact Polynomial.degree_le_natDegree
-      _ < (g.degree?.getD 0 : WithBot ℕ) := by exact_mod_cast hrdeg
+      _ < (g.natDegree : WithBot ℕ) := by exact_mod_cast hrdeg
   -- Uniqueness of monic division forces the mapped remainder to vanish.
   have hsum : (HexPolyMathlib.toPolynomial r).map φ +
       (HexPolyMathlib.toPolynomial g).map φ * (HexPolyMathlib.toPolynomial q).map φ =
@@ -724,13 +724,13 @@ private theorem C_dvd_toPolynomial_sub_of_congr
 theorem two_mul_natAbs_centeredModNat_le (z : Int) (m : Nat) (hm : 0 < m) :
     2 * (Hex.centeredModNat z m).natAbs ≤ m := by
   unfold Hex.centeredModNat
-  rw [if_neg hm.ne']
+  rw [ite_eq_right hm.ne']
   have h1 : 0 ≤ z % (m : Int) := Int.emod_nonneg z (by exact_mod_cast hm.ne')
   have h2 : z % (m : Int) < (m : Int) := Int.emod_lt_of_pos z (by exact_mod_cast hm)
   simp only [Int.ofNat_eq_natCast]
   by_cases hc : 2 * (z % (m : Int)).natAbs ≤ m
-  · rw [if_pos hc]; exact hc
-  · rw [if_neg hc, if_neg (by omega : ¬ z % (m : Int) < 0)]
+  · rw [ite_eq_left hc]; exact hc
+  · rw [ite_eq_right hc, ite_eq_right (by omega : ¬ z % (m : Int) < 0)]
     omega
 
 /-- The high-bit cut residue `Psi^a_b` lands in the centred range modulo `p^b`. -/
@@ -876,18 +876,18 @@ theorem abs_phi_coeff_le_bhksCoeffBound (f g : Hex.ZPoly) (j : Nat)
   obtain ⟨hpoly, hfac⟩ := hgf
   have hreal := abs_phi_coeff_le_of_monic_factor
     (HexPolyMathlib.toPolynomial f) (HexPolyMathlib.toPolynomial g) hpoly hg_monic hfac j
-  have hnd : (HexPolyMathlib.toPolynomial f).natDegree = f.degree?.getD 0 :=
+  have hnd : (HexPolyMathlib.toPolynomial f).natDegree = f.natDegree :=
     HexPolyMathlib.natDegree_toPolynomial f
   have hZeq : HexPolyZMathlib.toPolynomial f = HexPolyMathlib.toPolynomial f := rfl
   have hl2 : HexPolyZMathlib.l2norm (HexPolyMathlib.toPolynomial f)
       ≤ (Hex.ZPoly.coeffL2NormBound f : ℝ) := by
     rw [← hZeq]; exact l2norm_toPolynomial_le_coeffL2NormBound f
   have hbb_nat : Hex.bhksCoeffBound f j
-      = Nat.choose (f.degree?.getD 0 - 1) j * (f.degree?.getD 0)
+      = Nat.choose (f.natDegree - 1) j * (f.natDegree)
           * Hex.ZPoly.coeffL2NormBound f := by
     simp only [Hex.bhksCoeffBound, hex_choose_eq]
   have hbb : (Hex.bhksCoeffBound f j : ℝ)
-      = (Nat.choose (f.degree?.getD 0 - 1) j : ℝ) * (f.degree?.getD 0 : ℝ)
+      = (Nat.choose (f.natDegree - 1) j : ℝ) * (f.natDegree : ℝ)
           * (Hex.ZPoly.coeffL2NormBound f : ℝ) := by
     rw [hbb_nat]; push_cast; ring
   have hkey :
@@ -895,7 +895,7 @@ theorem abs_phi_coeff_le_bhksCoeffBound (f g : Hex.ZPoly) (j : Nat)
         ≤ (Hex.bhksCoeffBound f j : ℝ) := by
     refine hreal.trans ?_
     rw [hnd, hbb]
-    have hnn : (0 : ℝ) ≤ (Nat.choose (f.degree?.getD 0 - 1) j : ℝ) * (f.degree?.getD 0 : ℝ) := by
+    have hnn : (0 : ℝ) ≤ (Nat.choose (f.natDegree - 1) j : ℝ) * (f.natDegree : ℝ) := by
       positivity
     exact mul_le_mul_of_nonneg_left hl2 hnn
   exact_mod_cast hkey
@@ -925,7 +925,7 @@ theorem abs_factorColumn_coeff_le_bhksCoeffBound
       congrArg HexPolyMathlib.toPolynomial hfac)
     j
   have hnd :
-      (HexPolyMathlib.toPolynomial f).natDegree = f.degree?.getD 0 :=
+      (HexPolyMathlib.toPolynomial f).natDegree = f.natDegree :=
     HexPolyMathlib.natDegree_toPolynomial f
   have hZeq :
       HexPolyZMathlib.toPolynomial f = HexPolyMathlib.toPolynomial f := rfl
@@ -936,13 +936,13 @@ theorem abs_factorColumn_coeff_le_bhksCoeffBound
     exact l2norm_toPolynomial_le_coeffL2NormBound f
   have hbb_nat :
       Hex.bhksCoeffBound f j =
-        Nat.choose (f.degree?.getD 0 - 1) j * f.degree?.getD 0 *
+        Nat.choose (f.natDegree - 1) j * f.natDegree *
           Hex.ZPoly.coeffL2NormBound f := by
     simp only [Hex.bhksCoeffBound, hex_choose_eq]
   have hbb :
       (Hex.bhksCoeffBound f j : ℝ) =
-        (Nat.choose (f.degree?.getD 0 - 1) j : ℝ) *
-          (f.degree?.getD 0 : ℝ) *
+        (Nat.choose (f.natDegree - 1) j : ℝ) *
+          (f.natDegree : ℝ) *
             (Hex.ZPoly.coeffL2NormBound f : ℝ) := by
     rw [hbb_nat]
     push_cast
@@ -956,8 +956,8 @@ theorem abs_factorColumn_coeff_le_bhksCoeffBound
     rw [hnd, hbb]
     have hnonneg :
         (0 : ℝ) ≤
-          (Nat.choose (f.degree?.getD 0 - 1) j : ℝ) *
-            (f.degree?.getD 0 : ℝ) := by
+          (Nat.choose (f.natDegree - 1) j : ℝ) *
+            (f.natDegree : ℝ) := by
       positivity
     exact mul_le_mul_of_nonneg_left hl2 hnonneg
   exact_mod_cast hkey
@@ -1135,7 +1135,7 @@ theorem supportProduct_cldSum_congr_of_factors
     (hfac : ∀ i : Fin L.factorCount, i ∈ S →
         ∃ h : Hex.ZPoly,
           Hex.DensePoly.Monic (L.liftedFactors.getD i.val 1) ∧
-          0 < (L.liftedFactors.getD i.val 1).degree?.getD 0 ∧
+          0 < (L.liftedFactors.getD i.val 1).natDegree ∧
           Hex.ZPoly.congr f ((L.liftedFactors.getD i.val 1) * h) (p ^ a)) :
     Hex.ZPoly.congr
       (supportProduct L S * supportCldSum L S f p a)
@@ -1183,7 +1183,7 @@ theorem recoveredLift_aggregate_residue
     (hfac : ∀ i : Fin L.factorCount, i ∈ S →
         ∃ h : Hex.ZPoly,
           Hex.DensePoly.Monic (L.liftedFactors.getD i.val 1) ∧
-          0 < (L.liftedFactors.getD i.val 1).degree?.getD 0 ∧
+          0 < (L.liftedFactors.getD i.val 1).natDegree ∧
           Hex.ZPoly.congr D.f ((L.liftedFactors.getD i.val 1) * h) (D.p ^ D.a))
     (j : Nat) :
     Hex.centeredResiduePow D.p D.a
@@ -1388,13 +1388,13 @@ fast-disjunct consumer through `cutProjectionHypotheses_of_shortVectors`. -/
 
 /-- The executable cut-threshold array reads back the per-coordinate threshold. -/
 theorem bhksCutThresholds_getD_of_lt (f : Hex.ZPoly) (p j : Nat)
-    (h : j < f.degree?.getD 0) :
+    (h : j < f.natDegree) :
     (Hex.bhksCutThresholds f p).getD j 0 = Hex.bhksCoeffCutThreshold p f j := by
   unfold Hex.bhksCutThresholds
   rw [Array.getD_eq_getD_getElem?]
   have hsize :
-      (((List.range (f.degree?.getD 0)).map
-        (fun j => Hex.bhksCoeffCutThreshold p f j)).toArray).size = f.degree?.getD 0 := by
+      (((List.range (f.natDegree)).map
+        (fun j => Hex.bhksCoeffCutThreshold p f j)).toArray).size = f.natDegree := by
     simp
   rw [Array.getElem?_eq_getElem (by simpa [hsize] using h)]
   simp [List.getElem_toArray, List.getElem_map, List.getElem_range]
@@ -1415,7 +1415,7 @@ theorem periodAdjustedRowCoeffs_castAdd (L : Hex.BhksLatticeBasis)
   unfold periodAdjustedRowCoeffs
   simp only [Fin.getElem_fin, Vector.getElem_ofFn]
   rw [
-    dif_pos (show (Fin.castAdd L.coeffWidth i).val < L.factorCount from i.isLt)]
+    dite_eq_left (show (Fin.castAdd L.coeffWidth i).val < L.factorCount from i.isLt)]
   congr 1
 
 /-- The tail entries of the selection coefficients are the negated period
@@ -1426,7 +1426,7 @@ theorem periodAdjustedRowCoeffs_natAdd (L : Hex.BhksLatticeBasis)
   unfold periodAdjustedRowCoeffs
   simp only [Fin.getElem_fin, Vector.getElem_ofFn]
   rw [
-    dif_neg (by simp only [Fin.val_natAdd]; omega)]
+    dite_eq_right (by simp only [Fin.val_natAdd]; omega)]
   congr 2
   apply Fin.ext
   simp only [Fin.val_natAdd]
@@ -1474,8 +1474,8 @@ theorem periodAdjustedVector_project_of_blockForm
     intro j _
     rw [hentry]
     unfold Hex.bhksLatticeEntry
-    rw [dif_neg (by simp only [Fin.val_natAdd]; omega),
-      dif_pos (show (⟨i.val, Nat.lt_add_right L.coeffWidth i.isLt⟩ :
+    rw [dite_eq_right (by simp only [Fin.val_natAdd]; omega),
+      dite_eq_left (show (⟨i.val, Nat.lt_add_right L.coeffWidth i.isLt⟩ :
           Fin (L.factorCount + L.coeffWidth)).val < L.factorCount from i.isLt),
       zero_mul]
   rw [hsnd, add_zero]
@@ -1488,17 +1488,17 @@ theorem periodAdjustedVector_project_of_blockForm
     intro i'
     rw [hentry, periodAdjustedRowCoeffs_castAdd]
     unfold Hex.bhksLatticeEntry
-    rw [dif_pos (show (Fin.castAdd L.coeffWidth i').val < L.factorCount from i'.isLt),
-      dif_pos (show (⟨i.val, Nat.lt_add_right L.coeffWidth i.isLt⟩ :
+    rw [dite_eq_left (show (Fin.castAdd L.coeffWidth i').val < L.factorCount from i'.isLt),
+      dite_eq_left (show (⟨i.val, Nat.lt_add_right L.coeffWidth i.isLt⟩ :
           Fin (L.factorCount + L.coeffWidth)).val < L.factorCount from i.isLt)]
     by_cases h : i' = i
     · subst h; simp
-    · rw [if_neg h,
-        if_neg (by simp only [Fin.val_castAdd]; exact fun hv => h (Fin.ext hv))]
+    · rw [ite_eq_right h,
+        ite_eq_right (by simp only [Fin.val_castAdd]; exact fun hv => h (Fin.ext hv))]
   rw [Finset.sum_congr rfl (fun i' _ => hfst i'), Finset.sum_eq_single i]
-  · rw [if_pos rfl, one_mul]
+  · rw [ite_eq_left rfl, one_mul]
   · intro i' _ hne
-    rw [if_neg hne, zero_mul]
+    rw [ite_eq_right hne, zero_mul]
   · intro h
     exact absurd (Finset.mem_univ i) h
 
@@ -1540,8 +1540,8 @@ theorem periodAdjustedVector_coeff_of_blockForm
         ⟨L.factorCount + j.val, Nat.add_lt_add_left j.isLt L.factorCount⟩
         = (L.cldRows.getD i'.val #[]).getD j.val 0 := by
       unfold Hex.bhksLatticeEntry
-      rw [dif_pos (show (Fin.castAdd L.coeffWidth i').val < L.factorCount from i'.isLt),
-        dif_neg (by
+      rw [dite_eq_left (show (Fin.castAdd L.coeffWidth i').val < L.factorCount from i'.isLt),
+        dite_eq_right (by
           show ¬ (⟨L.factorCount + j.val,
             Nat.add_lt_add_left j.isLt L.factorCount⟩ :
             Fin (L.factorCount + L.coeffWidth)).val < L.factorCount
@@ -1562,8 +1562,8 @@ theorem periodAdjustedVector_coeff_of_blockForm
           ⟨L.factorCount + j.val, Nat.add_lt_add_left j.isLt L.factorCount⟩
           = Int.ofNat (L.p ^ (L.precision - L.cutThresholds.getD j.val 0)) := by
         unfold Hex.bhksLatticeEntry
-        rw [dif_neg (by simp only [Fin.val_natAdd]; omega),
-          dif_neg (by
+        rw [dite_eq_right (by simp only [Fin.val_natAdd]; omega),
+          dite_eq_right (by
             show ¬ (⟨L.factorCount + j.val,
               Nat.add_lt_add_left j.isLt L.factorCount⟩ :
               Fin (L.factorCount + L.coeffWidth)).val < L.factorCount
@@ -1576,14 +1576,14 @@ theorem periodAdjustedVector_coeff_of_blockForm
           L.cutThresholds L.cldRows (Fin.natAdd L.factorCount j')
           ⟨L.factorCount + j.val, Nat.add_lt_add_left j.isLt L.factorCount⟩ = 0 := by
         unfold Hex.bhksLatticeEntry
-        rw [dif_neg (by simp only [Fin.val_natAdd]; omega),
-          dif_neg (by
+        rw [dite_eq_right (by simp only [Fin.val_natAdd]; omega),
+          dite_eq_right (by
             show ¬ (⟨L.factorCount + j.val,
               Nat.add_lt_add_left j.isLt L.factorCount⟩ :
               Fin (L.factorCount + L.coeffWidth)).val < L.factorCount
             simp only []; omega)]
         simp only [Fin.val_natAdd, Nat.add_sub_cancel_left]
-        rw [if_neg (by
+        rw [ite_eq_right (by
           intro hcontra
           exact hne (Fin.ext hcontra.symm))]
       rw [hoff, zero_mul]
@@ -1671,7 +1671,7 @@ def recoveredShortVector
     (hfac : ∀ i : Fin L.factorCount, i ∈ S →
         ∃ h : Hex.ZPoly,
           Hex.DensePoly.Monic (L.liftedFactors.getD i.val 1) ∧
-          0 < (L.liftedFactors.getD i.val 1).degree?.getD 0 ∧
+          0 < (L.liftedFactors.getD i.val 1).natDegree ∧
           Hex.ZPoly.congr D.f ((L.liftedFactors.getD i.val 1) * h) (D.p ^ D.a)) :
     SupportShortVectorData L S := by
   classical
@@ -1721,7 +1721,7 @@ def recoveredShortVector
               ((Hex.cldQuotientMod D.f (L.liftedFactors.getD i.val 1) D.p D.a).coeff j.val))
           - t j * (D.p ^ (D.a - Hex.bhksCoeffCutThreshold D.p D.f j.val) : Int) := by
     intro j
-    have hjlt : j.val < D.f.degree?.getD 0 := j.isLt.trans_eq D.coeffWidth_eq
+    have hjlt : j.val < D.f.natDegree := j.isLt.trans_eq D.coeffWidth_eq
     have hcoord := periodAdjustedVector_coeff_of_blockForm S D.blockForm t j
     rw [show ((periodAdjustedVector L S t)[Fin.natAdd L.factorCount j] : ℤ)
         = (periodAdjustedVector L S t)[(⟨L.factorCount + j.val,
@@ -1736,7 +1736,7 @@ def recoveredShortVector
     · rw [Finset.sum_filter]
       refine Finset.sum_congr rfl (fun i _ => ?_)
       by_cases hi : i ∈ S
-      · rw [indicatorVector_apply_mem S hi, one_mul, if_pos hi]
+      · rw [indicatorVector_apply_mem S hi, one_mul, ite_eq_left hi]
         have hLcld : (L.cldRows.getD i.val #[]).getD j.val 0
             = (Hex.cldCoeffs D.f D.p D.a (L.liftedFactors.getD i.val 1)).getD j.val 0 := by
           congr 1
@@ -1745,7 +1745,7 @@ def recoveredShortVector
           simp [Array.getD, hsz]
         rw [hLcld,
           Hex.cldCoeffs_getD_of_lt D.f D.p D.a (L.liftedFactors.getD i.val 1) j.val hjlt]
-      · rw [indicatorVector_apply_not_mem S hi, zero_mul, if_neg hi]
+      · rw [indicatorVector_apply_not_mem S hi, zero_mul, ite_eq_right hi]
     · rw [Int.ofNat_eq_natCast, Nat.cast_pow]
       ring
   refine

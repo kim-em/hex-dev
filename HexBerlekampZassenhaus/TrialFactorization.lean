@@ -114,10 +114,10 @@ have positive degree by construction, and the singleton arms are `core`, whose
 positive degree is the sole hypothesis. -/
 theorem latticeCoreFactorsWithBound_degree_pos
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
-    (hcore_deg : 0 < core.degree?.getD 0)
+    (hcore_deg : 0 < core.natDegree)
     {cf : Array ZPoly}
     (h : latticeCoreFactorsWithBound core B primeData = some cf) :
-    ∀ factor ∈ cf.toList, 0 < factor.degree?.getD 0 := by
+    ∀ factor ∈ cf.toList, 0 < factor.natDegree := by
   rcases latticeCoreFactorsWithBound_spec core B primeData h with hsing | hfast
   · intro factor hmem
     rw [hsing] at hmem
@@ -455,25 +455,25 @@ theorem splitIntegerRootFactorsAux_factors_form
 exactly `d`, positive leading coefficient, and passes `shouldRecord`. -/
 private theorem mem_trialDivisionCandidatesOfDegree {B d : Nat} {p : ZPoly}
     (hmem : p ∈ trialDivisionCandidatesOfDegree B d) :
-    p.degree?.getD 0 = d ∧ 0 < DensePoly.leadingCoeff p ∧
+    p.natDegree = d ∧ 0 < DensePoly.leadingCoeff p ∧
       shouldRecordPolynomialFactor p = true := by
   unfold trialDivisionCandidatesOfDegree at hmem
   rcases List.mem_filterMap.mp hmem with ⟨coeffs, _hcoeffs, heq⟩
   by_cases hcheck :
-      (DensePoly.ofCoeffs coeffs.toArray).degree?.getD 0 = d ∧
+      (DensePoly.ofCoeffs coeffs.toArray).natDegree = d ∧
         0 < DensePoly.leadingCoeff (DensePoly.ofCoeffs coeffs.toArray) ∧
         shouldRecordPolynomialFactor (DensePoly.ofCoeffs coeffs.toArray) = true
-  · rw [if_pos hcheck] at heq
+  · rw [ite_eq_left hcheck] at heq
     cases heq
     exact hcheck
-  · rw [if_neg hcheck] at heq
+  · rw [ite_eq_right hcheck] at heq
     contradiction
 
 /-- Each candidate emitted by `trialDivisionCandidatesUpTo B maxDeg` has
 positive degree, positive leading coefficient, and passes `shouldRecord`. -/
 private theorem mem_trialDivisionCandidatesUpTo {B maxDeg : Nat} {p : ZPoly}
     (hmem : p ∈ trialDivisionCandidatesUpTo B maxDeg) :
-    0 < p.degree?.getD 0 ∧ 0 < DensePoly.leadingCoeff p ∧
+    0 < p.natDegree ∧ 0 < DensePoly.leadingCoeff p ∧
       shouldRecordPolynomialFactor p = true := by
   unfold trialDivisionCandidatesUpTo at hmem
   rcases List.mem_flatMap.mp hmem with ⟨d, _hd_range, hpd⟩
@@ -539,7 +539,7 @@ private theorem mem_boundedCoefficientVectors_of_forall_natAbs_le
 enumerated by `trialDivisionCandidatesOfDegree B d`. -/
 private theorem mem_trialDivisionCandidatesOfDegree_of_bounded
     {B d : Nat} {p : ZPoly}
-    (hdeg : p.degree?.getD 0 = d)
+    (hdeg : p.natDegree = d)
     (hlc : 0 < DensePoly.leadingCoeff p)
     (hrecord : shouldRecordPolynomialFactor p = true)
     (hbound : ∀ i, (p.coeff i).natAbs ≤ B) :
@@ -552,8 +552,8 @@ private theorem mem_trialDivisionCandidatesOfDegree_of_bounded
     rw [DensePoly.leadingCoeff_zero] at hlc
     omega
   have hp_size_pos : 0 < p.size := ZPoly.size_pos_of_ne_zero p hp_ne
-  have hdeg_size : p.degree?.getD 0 = p.size - 1 := by
-    simp [DensePoly.degree?, Nat.ne_of_gt hp_size_pos]
+  have hdeg_size : p.natDegree = p.size - 1 := by
+    simp [DensePoly.natDegree, DensePoly.degree?, Nat.ne_of_gt hp_size_pos]
   have hp_size_eq : p.size = d + 1 := by
     omega
   refine ⟨p.toArray.toList, ?_, ?_⟩
@@ -576,26 +576,26 @@ private theorem mem_trialDivisionCandidatesOfDegree_of_bounded
   · have hp : DensePoly.ofCoeffs p.toArray = p := by
       exact DensePoly.ofCoeffs_toArray p
     have hcheck :
-        (DensePoly.ofCoeffs p.toArray).degree?.getD 0 = d ∧
+        (DensePoly.ofCoeffs p.toArray).natDegree = d ∧
           0 < DensePoly.leadingCoeff (DensePoly.ofCoeffs p.toArray) ∧
           shouldRecordPolynomialFactor (DensePoly.ofCoeffs p.toArray) = true := by
       simpa [hp] using And.intro hdeg (And.intro hlc hrecord)
-    rw [if_pos hcheck]
+    rw [ite_eq_left hcheck]
     simp [hp]
 
 /-- Bounded positive-leading recorded polynomials with degree in
 `1..maxDeg` are enumerated by `trialDivisionCandidatesUpTo B maxDeg`. -/
 private theorem mem_trialDivisionCandidatesUpTo_of_bounded
     {B maxDeg : Nat} {p : ZPoly}
-    (hdegree_pos : 0 < p.degree?.getD 0)
-    (hdegree_le : p.degree?.getD 0 ≤ maxDeg)
+    (hdegree_pos : 0 < p.natDegree)
+    (hdegree_le : p.natDegree ≤ maxDeg)
     (hlc : 0 < DensePoly.leadingCoeff p)
     (hrecord : shouldRecordPolynomialFactor p = true)
     (hbound : ∀ i, (p.coeff i).natAbs ≤ B) :
     p ∈ trialDivisionCandidatesUpTo B maxDeg := by
   unfold trialDivisionCandidatesUpTo
   rw [List.mem_flatMap]
-  refine ⟨p.degree?.getD 0 - 1, ?_, ?_⟩
+  refine ⟨p.natDegree - 1, ?_, ?_⟩
   · rw [List.mem_range]
     omega
   · apply mem_trialDivisionCandidatesOfDegree_of_bounded
@@ -694,7 +694,7 @@ derivative, forcing the gcd in `SquareFreeRat core` to have size at least two. -
 private theorem square_not_dvd_of_squareFreeRat
     {core q : ZPoly} (hcore_ne : core ≠ 0)
     (hsq : Hex.ZPoly.SquareFreeRat core)
-    (hq_degree : 0 < q.degree?.getD 0) :
+    (hq_degree : 0 < q.natDegree) :
     ¬ (q * q) ∣ core := by
   intro hdvd
   rcases hdvd with ⟨g, hg⟩
@@ -717,7 +717,7 @@ private theorem square_not_dvd_of_squareFreeRat
       qRat ∣ DensePoly.gcd coreRat (DensePoly.derivative coreRat) :=
     DensePoly.dvd_gcd qRat _ _ hqRat_dvd_core hqRat_dvd_derivative
   have hq_size_ge_two : 2 ≤ q.size := by
-    unfold DensePoly.degree? at hq_degree
+    unfold DensePoly.natDegree DensePoly.degree? at hq_degree
     by_cases hsize : q.size = 0
     · simp [hsize] at hq_degree
     · simp [hsize] at hq_degree
@@ -777,7 +777,7 @@ private theorem trialDivisionPeelAux_no_missed_unemitted
     (target : ZPoly) (candidates : List ZPoly)
     (hcand :
       ∀ c ∈ candidates,
-        0 < c.degree?.getD 0 ∧ 0 < DensePoly.leadingCoeff c) :
+        0 < c.natDegree ∧ 0 < DensePoly.leadingCoeff c) :
     ∀ factors residual,
       trialDivisionPeelAux target candidates = (factors, residual) →
         ∀ c ∈ candidates, c ∉ factors.toList →
@@ -790,7 +790,7 @@ private theorem trialDivisionPeelAux_no_missed_unemitted
       intro factors residual hsplit cand hc hnot_mem
       have htail_cand :
           ∀ c ∈ tail,
-            0 < c.degree?.getD 0 ∧ 0 < DensePoly.leadingCoeff c := by
+            0 < c.natDegree ∧ 0 < DensePoly.leadingCoeff c := by
         intro c hc
         exact hcand c (List.mem_cons_of_mem head hc)
       unfold trialDivisionPeelAux at hsplit
@@ -865,7 +865,7 @@ contradicting `SquareFreeRat`. -/
 private theorem trialDivisionPeelAux_no_emitted_residual_divisor_of_squareFreeRat
     (target : ZPoly) (candidates : List ZPoly)
     (htarget_ne : target ≠ 0) (hsq : Hex.ZPoly.SquareFreeRat target)
-    (hcand_degree : ∀ c ∈ candidates, 0 < c.degree?.getD 0) :
+    (hcand_degree : ∀ c ∈ candidates, 0 < c.natDegree) :
     ∀ factors residual,
       trialDivisionPeelAux target candidates = (factors, residual) →
         ∀ c ∈ candidates, c ∈ factors.toList → ¬ c ∣ residual := by
@@ -914,7 +914,7 @@ private theorem trialDivisionPeelAux_no_residual_candidate_of_squareFreeRat
     (htarget_ne : target ≠ 0) (hsq : Hex.ZPoly.SquareFreeRat target)
     (hcand :
       ∀ c ∈ candidates,
-        0 < c.degree?.getD 0 ∧ 0 < DensePoly.leadingCoeff c) :
+        0 < c.natDegree ∧ 0 < DensePoly.leadingCoeff c) :
     ∀ factors residual,
       trialDivisionPeelAux target candidates = (factors, residual) →
         ∀ c ∈ candidates, exactQuotient? residual c = none := by
@@ -1025,24 +1025,24 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_polyProduct
   let split := splitIntegerRootFactorsAux core (integerRootCandidates core)
     (integerRootCandidates core).length
   let peel := trialDivisionPeelAux split.2
-    (trialDivisionCandidatesUpTo B (split.2.degree?.getD 0 / 2))
+    (trialDivisionCandidatesUpTo B (split.2.natDegree / 2))
   have hsplit_prod : split.2 * Array.polyProduct split.1 = core :=
     splitIntegerRootFactorsAux_product core (integerRootCandidates core)
       (integerRootCandidates core).length split.1 split.2 rfl
   have hpeel_prod : peel.2 * Array.polyProduct peel.1 = split.2 :=
     trialDivisionPeelAux_product split.2
-      (trialDivisionCandidatesUpTo B (split.2.degree?.getD 0 / 2))
+      (trialDivisionCandidatesUpTo B (split.2.natDegree / 2))
       peel.1 peel.2 rfl
   change Array.polyProduct
       (if peel.2 = 1 then split.1 ++ peel.1
         else (split.1 ++ peel.1).push peel.2) = core
   by_cases hres_one : peel.2 = 1
-  · rw [if_pos hres_one]
+  · rw [ite_eq_left hres_one]
     rw [hres_one, ZPoly.one_mul_zpoly] at hpeel_prod
     rw [ZPoly.polyProduct_append, hpeel_prod,
         DensePoly.mul_comm_poly (S := Int)]
     exact hsplit_prod
-  · rw [if_neg hres_one]
+  · rw [ite_eq_right hres_one]
     rw [polyProduct_push, ZPoly.polyProduct_append,
         DensePoly.mul_assoc_poly (S := Int),
         DensePoly.mul_comm_poly (S := Int) (Array.polyProduct peel.1) peel.2,
@@ -1060,7 +1060,7 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_normalizeFactorSign
   let split := splitIntegerRootFactorsAux core (integerRootCandidates core)
     (integerRootCandidates core).length
   let candidates :=
-    trialDivisionCandidatesUpTo B (split.2.degree?.getD 0 / 2)
+    trialDivisionCandidatesUpTo B (split.2.natDegree / 2)
   let peel := trialDivisionPeelAux split.2 candidates
   have hsplit_norm :
       ∀ factor ∈ split.1.toList, normalizeFactorSign factor = factor :=
@@ -1122,7 +1122,7 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_normalizeFactorSign
     obtain ⟨_, hlc, _⟩ := mem_trialDivisionCandidatesUpTo hc
     unfold normalizeFactorSign
     have hnot_neg : ¬ DensePoly.leadingCoeff c < 0 := by omega
-    rw [if_neg hnot_neg]
+    rw [ite_eq_right hnot_neg]
   have hcand_pos :
       ∀ c ∈ candidates, 0 < DensePoly.leadingCoeff c :=
     fun c hc => (mem_trialDivisionCandidatesUpTo hc).2.1
@@ -1139,12 +1139,12 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_normalizeFactorSign
     normalizeFactorSign factor = factor
   intro factor hmem
   by_cases hres_one : peel.2 = 1
-  · rw [if_pos hres_one] at hmem
+  · rw [ite_eq_left hres_one] at hmem
     rw [Array.toList_append] at hmem
     rcases List.mem_append.mp hmem with hlin | hpeel
     · exact hsplit_norm factor hlin
     · exact hpeel_norm factor hpeel
-  · rw [if_neg hres_one] at hmem
+  · rw [ite_eq_right hres_one] at hmem
     rw [Array.toList_push, Array.toList_append] at hmem
     rcases List.mem_append.mp hmem with hpref | hres
     · rcases List.mem_append.mp hpref with hlin | hpeel
@@ -1156,7 +1156,7 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_normalizeFactorSign
       rw [hfactor_eq]
       unfold normalizeFactorSign
       have hnot_neg : ¬ DensePoly.leadingCoeff peel.2 < 0 := by omega
-      rw [if_neg hnot_neg]
+      rw [ite_eq_right hnot_neg]
 
 /-- Each factor emitted by the standalone integer trial-division algorithm
 satisfies `shouldRecordPolynomialFactor`, provided `core` has positive
@@ -1169,7 +1169,7 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_shouldRecord
   let split := splitIntegerRootFactorsAux core (integerRootCandidates core)
     (integerRootCandidates core).length
   let candidates :=
-    trialDivisionCandidatesUpTo B (split.2.degree?.getD 0 / 2)
+    trialDivisionCandidatesUpTo B (split.2.natDegree / 2)
   let peel := trialDivisionPeelAux split.2 candidates
   have hsplit_record :
       ∀ factor ∈ split.1.toList, shouldRecordPolynomialFactor factor = true :=
@@ -1244,12 +1244,12 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_shouldRecord
     shouldRecordPolynomialFactor factor = true
   intro factor hmem
   by_cases hres_one : peel.2 = 1
-  · rw [if_pos hres_one] at hmem
+  · rw [ite_eq_left hres_one] at hmem
     rw [Array.toList_append] at hmem
     rcases List.mem_append.mp hmem with hlin | hpeel
     · exact hsplit_record factor hlin
     · exact hpeel_record factor hpeel
-  · rw [if_neg hres_one] at hmem
+  · rw [ite_eq_right hres_one] at hmem
     rw [Array.toList_push, Array.toList_append] at hmem
     rcases List.mem_append.mp hmem with hpref | hres
     · rcases List.mem_append.mp hpref with hlin | hpeel
@@ -1516,8 +1516,8 @@ degree divisor.
 Argument: a nontrivial decomposition `residual = a * b` would produce a
 positive-leading positive-degree divisor `q` of `residual` whose
 coefficients respect the universal divisor bound `B` and whose degree is
-at most `target.degree?.getD 0 / 2`. Hence `q` belongs to
-`trialDivisionCandidatesUpTo B (target.degree?.getD 0 / 2)`. Two cases:
+at most `target.natDegree / 2`. Hence `q` belongs to
+`trialDivisionCandidatesUpTo B (target.natDegree / 2)`. Two cases:
 either `q` was emitted (so `q ∣ polyProduct factors` and `q ∣ residual`,
 hence `q * q ∣ target ∣ core`, contradicting `SquareFreeRat core`); or `q`
 was not emitted (so by `trialDivisionPeelAux_no_missed_unemitted` we have
@@ -1533,22 +1533,22 @@ private theorem trialDivisionPeel_residual_irreducible
     (htarget_pos : 0 < DensePoly.leadingCoeff target)
     (hbound : ∀ g, g ∣ core → ∀ i, (g.coeff i).natAbs ≤ B)
     (hsplit : trialDivisionPeelAux target
-        (trialDivisionCandidatesUpTo B (target.degree?.getD 0 / 2)) =
+        (trialDivisionCandidatesUpTo B (target.natDegree / 2)) =
           (factors, residual))
     (hres_ne_one : residual ≠ 1) :
     ZPoly.Irreducible residual := by
-  let candidates := trialDivisionCandidatesUpTo B (target.degree?.getD 0 / 2)
+  let candidates := trialDivisionCandidatesUpTo B (target.natDegree / 2)
   change trialDivisionPeelAux target candidates = (factors, residual) at hsplit
   have htarget_ne : target ≠ 0 := by
     intro h; rw [h] at htarget_pos
     rw [DensePoly.leadingCoeff_zero] at htarget_pos; omega
   have hcand_pos_lc : ∀ c ∈ candidates, 0 < DensePoly.leadingCoeff c :=
     fun c hc => (mem_trialDivisionCandidatesUpTo hc).2.1
-  have hcand_pos_deg : ∀ c ∈ candidates, 0 < c.degree?.getD 0 :=
+  have hcand_pos_deg : ∀ c ∈ candidates, 0 < c.natDegree :=
     fun c hc => (mem_trialDivisionCandidatesUpTo hc).1
   have hcand_pos :
       ∀ c ∈ candidates,
-        0 < c.degree?.getD 0 ∧ 0 < DensePoly.leadingCoeff c :=
+        0 < c.natDegree ∧ 0 < DensePoly.leadingCoeff c :=
     fun c hc => ⟨hcand_pos_deg c hc, hcand_pos_lc c hc⟩
   have hres_lc_pos : 0 < DensePoly.leadingCoeff residual :=
     trialDivisionPeelAux_residual_leadingCoeff_pos target candidates
@@ -1667,31 +1667,29 @@ private theorem trialDivisionPeel_residual_irreducible
       intro i
       rw [hq_natAbs i]
       exact hbound small hsm_dvd_core i
-    have hq_deg_eq : q.degree?.getD 0 = q.size - 1 := by
-      unfold DensePoly.degree?
-      simp [Nat.ne_of_gt hq_size_pos]
-    have hq_deg_pos : 0 < q.degree?.getD 0 := by
+    have hq_deg_eq : q.natDegree = q.size - 1 := by
+      rw [DensePoly.natDegree_eq_size_sub_one]
+    have hq_deg_pos : 0 < q.natDegree := by
       rw [hq_deg_eq, hq_size_eq]; omega
-    have hq_deg_le : q.degree?.getD 0 ≤ target.degree?.getD 0 / 2 := by
+    have hq_deg_le : q.natDegree ≤ target.natDegree / 2 := by
       have htarget_size_pos : 0 < target.size :=
         ZPoly.size_pos_of_ne_zero target htarget_ne
-      have htarget_deg : target.degree?.getD 0 = target.size - 1 := by
-        unfold DensePoly.degree?
-        simp [Nat.ne_of_gt htarget_size_pos]
+      have htarget_deg : target.natDegree = target.size - 1 := by
+        rw [DensePoly.natDegree_eq_size_sub_one]
       have hres_le_target : residual.size ≤ target.size :=
         ZPoly.size_le_of_dvd_nonzero hres_ne_zero htarget_ne hres_dvd_target
       rw [hq_deg_eq, hq_size_eq, htarget_deg]
       omega
     have hq_ne_one : q ≠ 1 := by
       intro h1
-      have hdeg : q.degree?.getD 0 = 0 := by
-        rw [h1]; change (DensePoly.C (1 : Int)).degree?.getD 0 = 0
-        exact DensePoly.degree?_C_getD 1
+      have hdeg : q.natDegree = 0 := by
+        rw [h1]; change (DensePoly.C (1 : Int)).natDegree = 0
+        exact DensePoly.natDegree_C 1
       omega
     have hq_ne_neg_one : q ≠ DensePoly.C (-1 : Int) := by
       intro hneg
-      have hdeg : q.degree?.getD 0 = 0 := by
-        rw [hneg]; exact DensePoly.degree?_C_getD (-1)
+      have hdeg : q.natDegree = 0 := by
+        rw [hneg]; exact DensePoly.natDegree_C (-1)
       omega
     have hq_record : shouldRecordPolynomialFactor q = true := by
       unfold shouldRecordPolynomialFactor
@@ -1749,8 +1747,8 @@ private theorem trialDivisionCandidatesUpTo_split_at_degree
     (B maxDeg d_split : Nat) :
     ∃ pre suf : List ZPoly,
       trialDivisionCandidatesUpTo B maxDeg = pre ++ suf ∧
-      (∀ c ∈ pre, c.degree?.getD 0 ≤ d_split) ∧
-      (∀ c ∈ suf, d_split < c.degree?.getD 0) := by
+      (∀ c ∈ pre, c.natDegree ≤ d_split) ∧
+      (∀ c ∈ suf, d_split < c.natDegree) := by
   by_cases hle : d_split ≤ maxDeg
   · refine ⟨(List.range d_split).flatMap
               (fun d => trialDivisionCandidatesOfDegree B (d + 1)),
@@ -1794,8 +1792,8 @@ bounded positive-leading positive-degree divisor.
 
 Argument: a nontrivial decomposition `f_i = a * b` of an emitted factor
 yields a strictly smaller-degree positive-leading divisor `q` of `f_i`
-with bounded coefficients and degree at most `target.degree?.getD 0 / 2`.
-Split the candidate list at `d_split := q.degree?.getD 0`: the prefix
+with bounded coefficients and degree at most `target.natDegree / 2`.
+Split the candidate list at `d_split := q.natDegree`: the prefix
 contains every candidate of degree `≤ d_split` (including `q`); the
 suffix contains every candidate of degree `> d_split` (including `f_i`).
 By `trialDivisionPeelAux_split`, the peel decomposes accordingly. Since
@@ -1818,22 +1816,22 @@ private theorem trialDivisionPeel_factor_irreducible
     (htarget_pos : 0 < DensePoly.leadingCoeff target)
     (hbound : ∀ g, g ∣ core → ∀ i, (g.coeff i).natAbs ≤ B)
     (hsplit : trialDivisionPeelAux target
-        (trialDivisionCandidatesUpTo B (target.degree?.getD 0 / 2)) =
+        (trialDivisionCandidatesUpTo B (target.natDegree / 2)) =
           (factors, residual))
     (hmem : factor ∈ factors.toList) :
     ZPoly.Irreducible factor := by
-  let candidates := trialDivisionCandidatesUpTo B (target.degree?.getD 0 / 2)
+  let candidates := trialDivisionCandidatesUpTo B (target.natDegree / 2)
   change trialDivisionPeelAux target candidates = (factors, residual) at hsplit
   have htarget_ne : target ≠ 0 := by
     intro h; rw [h] at htarget_pos
     rw [DensePoly.leadingCoeff_zero] at htarget_pos; omega
   have hcand_pos_lc : ∀ c ∈ candidates, 0 < DensePoly.leadingCoeff c :=
     fun c hc => (mem_trialDivisionCandidatesUpTo hc).2.1
-  have hcand_pos_deg : ∀ c ∈ candidates, 0 < c.degree?.getD 0 :=
+  have hcand_pos_deg : ∀ c ∈ candidates, 0 < c.natDegree :=
     fun c hc => (mem_trialDivisionCandidatesUpTo hc).1
   have hcand_pos :
       ∀ c ∈ candidates,
-        0 < c.degree?.getD 0 ∧ 0 < DensePoly.leadingCoeff c :=
+        0 < c.natDegree ∧ 0 < DensePoly.leadingCoeff c :=
     fun c hc => ⟨hcand_pos_deg c hc, hcand_pos_lc c hc⟩
   have hres_lc_pos : 0 < DensePoly.leadingCoeff residual :=
     trialDivisionPeelAux_residual_leadingCoeff_pos target candidates
@@ -1851,27 +1849,27 @@ private theorem trialDivisionPeel_factor_irreducible
       hsplit factor hmem
   have hfactor_dvd_core : factor ∣ core :=
     ZPoly_dvd_trans hfactor_dvd_target htarget_dvd
-  have hfactor_pos_deg : 0 < factor.degree?.getD 0 := hcand_pos_deg factor hfactor_mem_cand
+  have hfactor_pos_deg : 0 < factor.natDegree := hcand_pos_deg factor hfactor_mem_cand
   have hfactor_pos_lc : 0 < DensePoly.leadingCoeff factor := hcand_pos_lc factor hfactor_mem_cand
   have hfactor_ne_zero : factor ≠ 0 := by
     intro h; rw [h] at hfactor_pos_lc
     rw [DensePoly.leadingCoeff_zero] at hfactor_pos_lc; omega
   have hfactor_size_pos : 0 < factor.size :=
     ZPoly.size_pos_of_ne_zero factor hfactor_ne_zero
-  have hfactor_size_eq : factor.size = factor.degree?.getD 0 + 1 := by
-    unfold DensePoly.degree?
+  have hfactor_size_eq : factor.size = factor.natDegree + 1 := by
+    unfold DensePoly.natDegree DensePoly.degree?
     simp [Nat.ne_of_gt hfactor_size_pos]
     omega
   -- Build the Irreducible instance for factor
   refine { not_zero := hfactor_ne_zero, not_unit := ?_, no_factors := ?_ }
   · intro hunit
     rcases hunit with h1 | hneg1
-    · have : factor.degree?.getD 0 = 0 := by
-        rw [h1]; change (DensePoly.C (1 : Int)).degree?.getD 0 = 0
-        exact DensePoly.degree?_C_getD 1
+    · have : factor.natDegree = 0 := by
+        rw [h1]; change (DensePoly.C (1 : Int)).natDegree = 0
+        exact DensePoly.natDegree_C 1
       omega
-    · have : factor.degree?.getD 0 = 0 := by
-        rw [hneg1]; exact DensePoly.degree?_C_getD (-1)
+    · have : factor.natDegree = 0 := by
+        rw [hneg1]; exact DensePoly.natDegree_C (-1)
       omega
   · intro a b hab
     by_cases hua : ZPoly.IsUnit a
@@ -1963,36 +1961,34 @@ private theorem trialDivisionPeel_factor_irreducible
     have hq_dvd_core : q ∣ core := ZPoly_dvd_trans hq_dvd_target htarget_dvd
     have hq_bound : ∀ i, (q.coeff i).natAbs ≤ B := by
       intro i; rw [hq_natAbs i]; exact hbound small hsm_dvd_core i
-    have hq_deg_eq : q.degree?.getD 0 = q.size - 1 := by
-      unfold DensePoly.degree?
-      simp [Nat.ne_of_gt hq_size_pos]
-    have hq_deg_pos : 0 < q.degree?.getD 0 := by
+    have hq_deg_eq : q.natDegree = q.size - 1 := by
+      rw [DensePoly.natDegree_eq_size_sub_one]
+    have hq_deg_pos : 0 < q.natDegree := by
       rw [hq_deg_eq, hq_size_eq]; omega
     -- degree(q) < degree(factor) since 2 * q.size ≤ factor.size + 1 and q.size ≥ 2
-    have hq_deg_lt_factor : q.degree?.getD 0 < factor.degree?.getD 0 := by
+    have hq_deg_lt_factor : q.natDegree < factor.natDegree := by
       rw [hq_deg_eq, hq_size_eq]
-      have hfactor_eq : factor.degree?.getD 0 + 1 = factor.size := hfactor_size_eq.symm
+      have hfactor_eq : factor.natDegree + 1 = factor.size := hfactor_size_eq.symm
       omega
-    have hq_deg_le : q.degree?.getD 0 ≤ target.degree?.getD 0 / 2 := by
+    have hq_deg_le : q.natDegree ≤ target.natDegree / 2 := by
       have htarget_size_pos : 0 < target.size :=
         ZPoly.size_pos_of_ne_zero target htarget_ne
-      have htarget_deg : target.degree?.getD 0 = target.size - 1 := by
-        unfold DensePoly.degree?
-        simp [Nat.ne_of_gt htarget_size_pos]
+      have htarget_deg : target.natDegree = target.size - 1 := by
+        rw [DensePoly.natDegree_eq_size_sub_one]
       have hfactor_le_target : factor.size ≤ target.size :=
         ZPoly.size_le_of_dvd_nonzero hfactor_ne_zero htarget_ne hfactor_dvd_target
       rw [hq_deg_eq, hq_size_eq, htarget_deg]
       omega
     have hq_ne_one : q ≠ 1 := by
       intro h1
-      have : q.degree?.getD 0 = 0 := by
-        rw [h1]; change (DensePoly.C (1 : Int)).degree?.getD 0 = 0
-        exact DensePoly.degree?_C_getD 1
+      have : q.natDegree = 0 := by
+        rw [h1]; change (DensePoly.C (1 : Int)).natDegree = 0
+        exact DensePoly.natDegree_C 1
       omega
     have hq_ne_neg_one : q ≠ DensePoly.C (-1 : Int) := by
       intro hneg
-      have : q.degree?.getD 0 = 0 := by
-        rw [hneg]; exact DensePoly.degree?_C_getD (-1)
+      have : q.natDegree = 0 := by
+        rw [hneg]; exact DensePoly.natDegree_C (-1)
       omega
     have hq_record : shouldRecordPolynomialFactor q = true := by
       unfold shouldRecordPolynomialFactor
@@ -2000,10 +1996,10 @@ private theorem trialDivisionPeel_factor_irreducible
     have hq_mem : q ∈ candidates :=
       mem_trialDivisionCandidatesUpTo_of_bounded
         hq_deg_pos hq_deg_le hq_lc_pos hq_record hq_bound
-    -- Split candidates at d_split := q.degree?.getD 0
+    -- Split candidates at d_split := q.natDegree
     obtain ⟨pre, suf, hcand_split, hpre_deg, hsuf_deg⟩ :=
       trialDivisionCandidatesUpTo_split_at_degree B
-        (target.degree?.getD 0 / 2) (q.degree?.getD 0)
+        (target.natDegree / 2) (q.natDegree)
     -- Apply peel split lemma
     cases hpre : trialDivisionPeelAux target pre with
     | mk preFactors mid =>
@@ -2062,10 +2058,10 @@ private theorem trialDivisionPeel_factor_irreducible
             -- q ∈ pre. Apply no_missed_unemitted on the pre-peel: q is not emitted
             -- only if q ∤ mid. But q ∣ mid. So q IS emitted.
             have hpre_cand_pos :
-                ∀ c ∈ pre, 0 < c.degree?.getD 0 ∧ 0 < DensePoly.leadingCoeff c := by
+                ∀ c ∈ pre, 0 < c.natDegree ∧ 0 < DensePoly.leadingCoeff c := by
               intro c hc
               have hc_cand : c ∈ candidates := by
-                show c ∈ trialDivisionCandidatesUpTo B (target.degree?.getD 0 / 2)
+                show c ∈ trialDivisionCandidatesUpTo B (target.natDegree / 2)
                 rw [hcand_split]; exact List.mem_append.mpr (Or.inl hc)
               exact hcand_pos c hc_cand
             have hq_in_preFactors : q ∈ preFactors.toList := by
@@ -2213,11 +2209,11 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_degree_pos
     (hcore_prim : ZPoly.Primitive core)
     (hcore_pos : 0 < DensePoly.leadingCoeff core) :
     ∀ factor ∈ (exhaustiveIntegerTrialCoreFactorsWithBound core B).toList,
-      0 < factor.degree?.getD 0 := by
+      0 < factor.natDegree := by
   intro factor hmem
   let roots := integerRootCandidates core
   let split := splitIntegerRootFactorsAux core roots roots.length
-  let candidates := trialDivisionCandidatesUpTo B (split.2.degree?.getD 0 / 2)
+  let candidates := trialDivisionCandidatesUpTo B (split.2.natDegree / 2)
   let peel := trialDivisionPeelAux split.2 candidates
   have hcore_ne : core ≠ 0 := by
     intro hz; rw [hz] at hcore_pos
@@ -2264,7 +2260,7 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_degree_pos
       rw [hneg_eq, ← hlc] at hprod_neg
       omega
   -- Positive degree for the integer-root split factors.
-  have hsplit_deg : ∀ b ∈ split.1.toList, 0 < b.degree?.getD 0 := by
+  have hsplit_deg : ∀ b ∈ split.1.toList, 0 < b.natDegree := by
     intro b hb
     obtain ⟨rs, _hsub, hshape⟩ :=
       splitIntegerRootFactorsAux_factors_form
@@ -2275,7 +2271,7 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_degree_pos
     rw [← hb_eq]
     exact linearFactorForRoot_degree_pos r
   -- Positive degree for the peeled candidates.
-  have hpeel_deg : ∀ b ∈ peel.1.toList, 0 < b.degree?.getD 0 := by
+  have hpeel_deg : ∀ b ∈ peel.1.toList, 0 < b.natDegree := by
     intro b hb
     have hb_cand : b ∈ candidates :=
       trialDivisionPeelAux_factor_mem split.2 candidates peel.1 peel.2 rfl b hb
@@ -2288,11 +2284,11 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_degree_pos
       (if peel.2 = 1 then split.1 ++ peel.1
         else (split.1 ++ peel.1).push peel.2).toList at hmem
   by_cases hres_one : peel.2 = 1
-  · rw [if_pos hres_one, Array.toList_append, List.mem_append] at hmem
+  · rw [ite_eq_left hres_one, Array.toList_append, List.mem_append] at hmem
     rcases hmem with h1 | h2
     · exact hsplit_deg factor h1
     · exact hpeel_deg factor h2
-  · rw [if_neg hres_one, Array.toList_push, Array.toList_append] at hmem
+  · rw [ite_eq_right hres_one, Array.toList_push, Array.toList_append] at hmem
     rcases List.mem_append.mp hmem with hpref | hres
     · rcases List.mem_append.mp hpref with h1 | h2
       · exact hsplit_deg factor h1
@@ -2318,9 +2314,8 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_degree_pos
           · exact hres_one h1
           · rw [hneg1] at hpeel_res_pos
             simp at hpeel_res_pos
-      have hdeg_eq : peel.2.degree?.getD 0 = peel.2.size - 1 := by
-        unfold DensePoly.degree?
-        simp [Nat.ne_of_gt hres_size_pos]
+      have hdeg_eq : peel.2.natDegree = peel.2.size - 1 := by
+        rw [DensePoly.natDegree_eq_size_sub_one]
       omega
 
 end Hex

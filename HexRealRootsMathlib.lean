@@ -8,9 +8,12 @@ module
 
 public import HexRealRootsMathlib.SturmChainDefs
 public import HexRealRootsMathlib.SturmTheorem
+public import HexRealRootsMathlib.SturmCertificate
+public import HexRealRootsMathlib.RealRootCount
 public import HexRealRootsMathlib.Hadamard
 public import HexRealRootsMathlib.Discr
 public import HexRealRootsMathlib.Separation
+public import HexRealRootsMathlib.Sign
 public import HexRealRootsMathlib.ChainCorrespond
 public import HexRealRootsMathlib.LiteralChain
 public import HexRealRootsMathlib.LiteralIsolations
@@ -38,10 +41,14 @@ The Sturm development includes the zero-skipping sign-variation count
 {name}`Sturm.IsSturmChain`, and the counting and line forms of Sturm's theorem
 over `Polynomial ℝ`, independently of the executable `HexRealRoots` types.
 
+`SturmCertificate` assembles root-count certificates from identities between
+Mathlib polynomials. `RealRootCount` uses them to provide `by real_root_count`
+and the term form `real_root_count p`, with Hex supplying the candidate chain.
+
 The executable correspondence builds on these results:
 `ChainCorrespond` connects {name}`Hex.ZPoly.sturmChain`,
-{name}`Hex.sturmCount`, and
-{name}`Hex.rootCount` to the abstract development; `LiteralChain` proves the
+{name}`Hex.ZPoly.sturmCount`, and
+{name}`Hex.ZPoly.rootCount` to the abstract development; `LiteralChain` proves the
 corresponding theorem
 for a supplied positive-scaled recurrence, and `LiteralIsolations` states
 isolation semantics for its supplied counts; `Separation` supplies the Mahler

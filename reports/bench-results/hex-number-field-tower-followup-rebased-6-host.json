@@ -1,0 +1,476 @@
+{
+  "label": "rebased",
+  "attempt": 6,
+  "runs": [
+    {
+      "arm": "right",
+      "source_commit": "2ae8157bc0476f99e5224103b5da167309abb96b",
+      "binary_sha256": "c3e2de0cb83c2ab3e7fb68997c06778ed8a2369f63c4f21878ec88d7ce3c10a6",
+      "command": [
+        "taskset",
+        "-c",
+        "32",
+        "/tmp/issue-10074-rebased",
+        "run",
+        "Hex.NumberTowerBench.runTowerFactorPair2",
+        "Hex.NumberTowerBench.runTowerFactorPair3",
+        "Hex.NumberTowerBench.runTowerFactorPair4",
+        "Hex.NumberTowerBench.runTowerFactorPair6",
+        "Hex.NumberTowerBench.runTowerFactorPair8",
+        "Hex.NumberTowerBench.runTowerFactorPair12",
+        "Hex.NumberTowerBench.runTowerFactorLadder",
+        "Hex.NumberTowerBench.runTowerCheckFactorization",
+        "Hex.NumberTowerBench.runPariNfFactor2",
+        "Hex.NumberTowerBench.runPariNfFactor3",
+        "Hex.NumberTowerBench.runPariNfFactor4",
+        "Hex.NumberTowerBench.runPariNfFactor6",
+        "Hex.NumberTowerBench.runPariNfFactor8",
+        "Hex.NumberTowerBench.runPariNfFactor12",
+        "Hex.NumberTowerBench.runPariNfFactorOverhead",
+        "--repeats",
+        "5",
+        "--min-total-seconds",
+        "0.2",
+        "--export-file",
+        "/tmp/issue-10074-rebased-6-right.json"
+      ],
+      "export": "/tmp/issue-10074-rebased-6-right.json",
+      "preflight": {
+        "32": 2.0100502512562812,
+        "80": 2.0
+      },
+      "postflight": {
+        "32": 0.4975124378109453,
+        "80": 0.5
+      },
+      "during": [
+        {
+          "32": 100.0,
+          "80": 1.492537313432836
+        },
+        {
+          "32": 100.0,
+          "80": 0.0
+        },
+        {
+          "32": 100.0,
+          "80": 0.9950248756218906
+        },
+        {
+          "32": 100.0,
+          "80": 0.0
+        },
+        {
+          "32": 100.0,
+          "80": 1.492537313432836
+        },
+        {
+          "32": 100.0,
+          "80": 0.0
+        },
+        {
+          "32": 100.0,
+          "80": 0.5
+        },
+        {
+          "32": 100.0,
+          "80": 0.0
+        },
+        {
+          "32": 100.0,
+          "80": 0.0
+        },
+        {
+          "32": 100.0,
+          "80": 1.0
+        },
+        {
+          "32": 100.0,
+          "80": 0.5
+        },
+        {
+          "32": 100.0,
+          "80": 0.0
+        },
+        {
+          "32": 100.0,
+          "80": 0.5
+        },
+        {
+          "32": 100.0,
+          "80": 0.0
+        },
+        {
+          "32": 100.0,
+          "80": 0.0
+        },
+        {
+          "32": 99.50248756218906,
+          "80": 0.5
+        },
+        {
+          "32": 100.0,
+          "80": 0.0
+        },
+        {
+          "32": 100.0,
+          "80": 0.0
+        },
+        {
+          "32": 100.0,
+          "80": 0.9900990099009901
+        },
+        {
+          "32": 100.0,
+          "80": 0.0
+        },
+        {
+          "32": 100.0,
+          "80": 1.0
+        },
+        {
+          "32": 100.0,
+          "80": 0.0
+        },
+        {
+          "32": 100.0,
+          "80": 0.5
+        },
+        {
+          "32": 100.0,
+          "80": 0.0
+        },
+        {
+          "32": 100.0,
+          "80": 0.4975124378109453
+        },
+        {
+          "32": 100.0,
+          "80": 0.5
+        },
+        {
+          "32": 100.0,
+          "80": 0.4975124378109453
+        },
+        {
+          "32": 100.0,
+          "80": 1.0
+        },
+        {
+          "32": 84.92462311557789,
+          "80": 0.0
+        }
+      ],
+      "sibling_mean": {
+        "80": 0.4125939099313946
+      },
+      "exit_code": 0,
+      "accepted": true,
+      "export_error": null
+    },
+    {
+      "arm": "left",
+      "source_commit": "b8602c76a08f7348391aafd50b9a8a13cf1a0b32",
+      "binary_sha256": "9cda578dbc8724ea9c10462c1c6e2ccbaf6d48e6a85ef291a2f1bf7e4c5df810",
+      "command": [
+        "taskset",
+        "-c",
+        "32",
+        "/tmp/issue-10074-baseline",
+        "run",
+        "Hex.NumberTowerBench.runTowerFactorPair2",
+        "Hex.NumberTowerBench.runTowerFactorPair3",
+        "Hex.NumberTowerBench.runTowerFactorPair4",
+        "Hex.NumberTowerBench.runTowerFactorPair6",
+        "Hex.NumberTowerBench.runTowerFactorPair8",
+        "Hex.NumberTowerBench.runTowerFactorPair12",
+        "Hex.NumberTowerBench.runTowerFactorLadder",
+        "Hex.NumberTowerBench.runTowerCheckFactorization",
+        "Hex.NumberTowerBench.runPariNfFactor2",
+        "Hex.NumberTowerBench.runPariNfFactor3",
+        "Hex.NumberTowerBench.runPariNfFactor4",
+        "Hex.NumberTowerBench.runPariNfFactor6",
+        "Hex.NumberTowerBench.runPariNfFactor8",
+        "Hex.NumberTowerBench.runPariNfFactor12",
+        "Hex.NumberTowerBench.runPariNfFactorOverhead",
+        "--repeats",
+        "5",
+        "--min-total-seconds",
+        "0.2",
+        "--export-file",
+        "/tmp/issue-10074-rebased-6-left.json"
+      ],
+      "export": "/tmp/issue-10074-rebased-6-left.json",
+      "preflight": {
+        "32": 3.9800995024875623,
+        "80": 0.5
+      },
+      "postflight": {
+        "32": 0.0,
+        "80": 3.0
+      },
+      "during": [
+        {
+          "32": 100.0,
+          "80": 0.0
+        },
+        {
+          "32": 100.0,
+          "80": 0.0
+        },
+        {
+          "32": 100.0,
+          "80": 0.4975124378109453
+        },
+        {
+          "32": 100.0,
+          "80": 0.5
+        },
+        {
+          "32": 100.0,
+          "80": 0.0
+        },
+        {
+          "32": 100.0,
+          "80": 0.0
+        },
+        {
+          "32": 100.0,
+          "80": 1.0
+        },
+        {
+          "32": 100.0,
+          "80": 0.0
+        },
+        {
+          "32": 100.0,
+          "80": 1.0
+        },
+        {
+          "32": 100.0,
+          "80": 0.4975124378109453
+        },
+        {
+          "32": 100.0,
+          "80": 0.0
+        },
+        {
+          "32": 100.0,
+          "80": 0.9950248756218906
+        },
+        {
+          "32": 100.0,
+          "80": 0.0
+        },
+        {
+          "32": 100.0,
+          "80": 0.0
+        },
+        {
+          "32": 100.0,
+          "80": 0.9900990099009901
+        },
+        {
+          "32": 100.0,
+          "80": 0.5025125628140703
+        },
+        {
+          "32": 100.0,
+          "80": 0.0
+        },
+        {
+          "32": 100.0,
+          "80": 0.9950248756218906
+        },
+        {
+          "32": 100.0,
+          "80": 0.5
+        },
+        {
+          "32": 100.0,
+          "80": 0.5
+        },
+        {
+          "32": 100.0,
+          "80": 0.5
+        },
+        {
+          "32": 100.0,
+          "80": 0.5
+        },
+        {
+          "32": 100.0,
+          "80": 0.4975124378109453
+        },
+        {
+          "32": 100.0,
+          "80": 0.0
+        },
+        {
+          "32": 100.0,
+          "80": 0.5
+        },
+        {
+          "32": 100.0,
+          "80": 0.5
+        },
+        {
+          "32": 99.5,
+          "80": 0.0
+        },
+        {
+          "32": 100.0,
+          "80": 0.0
+        },
+        {
+          "32": 100.0,
+          "80": 0.0
+        },
+        {
+          "32": 56.5,
+          "80": 0.0
+        }
+      ],
+      "sibling_mean": {
+        "80": 0.3491732879130559
+      },
+      "exit_code": 0,
+      "accepted": true,
+      "export_error": null
+    }
+  ],
+  "preflight_windows": [
+    {
+      "0": 6.532663316582915,
+      "1": 2.9702970297029703,
+      "2": 4.5,
+      "3": 7.5,
+      "4": 18.0,
+      "5": 15.5,
+      "6": 10.0,
+      "7": 13.5,
+      "8": 2.512562814070352,
+      "9": 27.0,
+      "10": 4.0,
+      "11": 2.5,
+      "12": 1.5,
+      "13": 24.0,
+      "14": 5.5,
+      "15": 1.0101010101010102,
+      "16": 4.0,
+      "17": 7.575757575757576,
+      "18": 12.56281407035176,
+      "19": 28.35820895522388,
+      "20": 1.0050251256281406,
+      "21": 9.5,
+      "22": 3.482587064676617,
+      "23": 0.5025125628140703,
+      "24": 15.5,
+      "25": 9.547738693467336,
+      "26": 7.5376884422110555,
+      "27": 7.035175879396985,
+      "28": 6.5,
+      "29": 18.407960199004975,
+      "30": 46.5,
+      "31": 8.0,
+      "32": 2.0100502512562812,
+      "33": 1.5,
+      "34": 2.0100502512562812,
+      "35": 6.0,
+      "36": 2.4752475247524752,
+      "37": 14.5,
+      "38": 17.0,
+      "39": 29.5,
+      "40": 7.462686567164179,
+      "41": 8.5,
+      "42": 30.5,
+      "43": 9.547738693467336,
+      "44": 13.06532663316583,
+      "45": 31.0,
+      "46": 8.457711442786069,
+      "47": 11.442786069651742,
+      "48": 20.398009950248756,
+      "49": 12.06030150753769,
+      "50": 16.0,
+      "51": 4.522613065326633,
+      "52": 4.5,
+      "53": 26.0,
+      "54": 1.5075376884422111,
+      "55": 2.0,
+      "56": 3.0,
+      "57": 1.0050251256281406,
+      "58": 1.5075376884422111,
+      "59": 1.5,
+      "60": 31.122448979591837,
+      "61": 0.5,
+      "62": 4.5,
+      "63": 20.5,
+      "64": 9.090909090909092,
+      "65": 3.9800995024875623,
+      "66": 5.0,
+      "67": 1.492537313432836,
+      "68": 14.5,
+      "69": 15.422885572139304,
+      "70": 33.5,
+      "71": 23.5,
+      "72": 16.0,
+      "73": 7.5376884422110555,
+      "74": 8.0,
+      "75": 2.985074626865672,
+      "76": 22.110552763819097,
+      "77": 6.467661691542289,
+      "78": 5.5,
+      "79": 3.5175879396984926,
+      "80": 2.0,
+      "81": 6.5,
+      "82": 10.606060606060606,
+      "83": 1.492537313432836,
+      "84": 9.5,
+      "85": 2.985074626865672,
+      "86": 17.0,
+      "87": 2.5,
+      "88": 5.0,
+      "89": 0.5025125628140703,
+      "90": 3.0,
+      "91": 16.336633663366335,
+      "92": 3.0303030303030303,
+      "93": 13.06532663316583,
+      "94": 22.5,
+      "95": 25.628140703517587
+    }
+  ],
+  "protocol_commit": "931b5866fdb72673b07ecdfcf6d38a69e92e66c7",
+  "script_sha256": "251b1a75f968330f30f8556851be267125bb0d866c9d8438c4597c0522e8f8b3",
+  "hostname": "chungus2",
+  "release_quality": false,
+  "pari_provider": {
+    "python": "3.14.6",
+    "pari": "(2, 17, 3)",
+    "cypari2": "2.2.4",
+    "path": "/nix/store/fgsvz1y8yyljvfpa2s2qv2jc803r2hhl-python3-3.14.6-env/bin/python"
+  },
+  "names": [
+    "Hex.NumberTowerBench.runTowerFactorPair2",
+    "Hex.NumberTowerBench.runTowerFactorPair3",
+    "Hex.NumberTowerBench.runTowerFactorPair4",
+    "Hex.NumberTowerBench.runTowerFactorPair6",
+    "Hex.NumberTowerBench.runTowerFactorPair8",
+    "Hex.NumberTowerBench.runTowerFactorPair12",
+    "Hex.NumberTowerBench.runTowerFactorLadder",
+    "Hex.NumberTowerBench.runTowerCheckFactorization",
+    "Hex.NumberTowerBench.runPariNfFactor2",
+    "Hex.NumberTowerBench.runPariNfFactor3",
+    "Hex.NumberTowerBench.runPariNfFactor4",
+    "Hex.NumberTowerBench.runPariNfFactor6",
+    "Hex.NumberTowerBench.runPariNfFactor8",
+    "Hex.NumberTowerBench.runPariNfFactor12",
+    "Hex.NumberTowerBench.runPariNfFactorOverhead"
+  ],
+  "git_status": "",
+  "cpu": 32,
+  "siblings": [
+    32,
+    80
+  ],
+  "accepted": true
+}

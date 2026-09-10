@@ -1,0 +1,7 @@
+n,lower_dim,divisor_inv_limb_work,inverse_num_max,inverse_den_max,product_limb_work,division_limb_work
+2,2,863,14,17,80,943
+3,3,1525,21,24,180,1705
+4,4,2517,40,44,320,2837
+6,6,6176,86,90,1152,7328
+8,8,11180,119,123,2048,13228
+12,12,39930,207,211,8064,47994

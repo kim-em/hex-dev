@@ -86,6 +86,66 @@ def empty : Hex.Interval := .mk .empty (by rfl)
 def whole : Hex.Interval :=
   .mk (.bounds .unbounded .unbounded) (by rfl)
 
+/-- Closed consistent finite cuts recover the endpoint order needed by trusted
+representation decoders. This consumes an existing kernel proof; it performs
+no executable dyadic comparison. The theorem does not make construction of
+`h` cost-free: untrusted decoders must obtain it from their independently
+bounded comparison proof, not from an unbounded decision procedure. -/
+theorem ordered_of_consistent {lower upper : Dyadic}
+    (h : (Raw.bounds (.finite lower false) (.finite upper false)).CutConsistent) :
+    lower ≤ upper := by
+  by_cases less : lower < upper
+  · rw [← Dyadic.toRat_le_toRat_iff]
+    exact Rat.le_of_lt (Dyadic.toRat_lt_toRat_iff.mpr less)
+  · by_cases equal : lower = upper
+    · exact equal ▸ Dyadic.le_refl lower
+    · simp [Raw.CutConsistent, Raw.consistent, less, equal] at h
+
+/-- Construct a closed interval from independently preflighted ordered bounds.
+
+This is an explicitly unchecked constructor for trusted representation decoders.
+It performs no endpoint-height or comparison-cost preflight. Callers must
+preflight both costs before producing `ordered`, and must not manufacture that
+proof with an unbounded `decide`: deciding dyadic order can itself perform the
+prohibited exponent-alignment work. Ordinary untrusted endpoints must enter
+through `betweenWithin` or `ofRawWithin`.
+
+The total result lets a semantic proof emitter quote an interval without
+embedding a module-boundary reduction proof that a `BuildResult` is ready. The
+caller, rather than the emitted term, continues to own the dynamic-range
+policy. The constructor remains opaque outside this module: its view theorem
+supports propositional rewriting, but it deliberately does not make
+`DecidableEq`-based replay reduce through the sealed representation. -/
+def ofOrderedBoundsUnchecked (lower upper : Dyadic) (ordered : lower ≤ upper) :
+    Hex.Interval :=
+  .mk (.bounds (.finite lower false) (.finite upper false)) (by
+    simp only [Raw.CutConsistent, Raw.consistent]
+    by_cases less : lower < upper
+    · simp [less]
+    · have equal : lower = upper :=
+        Dyadic.le_antisymm ordered (Dyadic.not_le.mp less)
+      simp [equal])
+
+/-- An unchecked ordered-bounds construction exposes its exact closed cuts. -/
+@[simp]
+theorem view_ofOrderedBoundsUnchecked
+    (lower upper : Dyadic) (ordered : lower ≤ upper) :
+    (ofOrderedBoundsUnchecked lower upper ordered).view =
+      .bounds (.finite lower false) (.finite upper false) := by
+  rfl
+
+/-- Whenever the checked raw constructor admits already-consistent closed
+bounds, it returns exactly the unchecked trusted-decoder construction. -/
+theorem eq_ordered_ofRawWithin {limit : EndpointLimit} {lower upper : Dyadic}
+    {interval : Hex.Interval} (ordered : lower ≤ upper)
+    (h : ofRawWithin limit
+      (.bounds (.finite lower false) (.finite upper false)) = .ready interval) :
+    interval = ofOrderedBoundsUnchecked lower upper ordered := by
+  apply ext
+  rw [view_ofRawWithin_ready h, view_ofOrderedBoundsUnchecked]
+  apply Raw.normalizeUnchecked_eq_self
+  exact view_consistent (ofOrderedBoundsUnchecked lower upper ordered)
+
 /-- Construct a singleton after endpoint-cost preflight. -/
 def singletonWithin (limit : EndpointLimit) (value : Dyadic) : BuildResult :=
   ofRawWithin limit (.bounds (.finite value false) (.finite value false))
@@ -112,6 +172,14 @@ def betweenWithin (limit : EndpointLimit)
     (upper : Dyadic) (upperStrict : Bool) : BuildResult :=
   ofRawWithin limit
     (.bounds (.finite lower lowerStrict) (.finite upper upperStrict))
+
+/-- A successful checked closed finite constructor agrees with the unchecked
+trusted-decoder construction on the same independently proved order. -/
+theorem eq_ordered_of_betweenWithin {limit : EndpointLimit} {lower upper : Dyadic}
+    {interval : Hex.Interval} (ordered : lower ≤ upper)
+    (h : betweenWithin limit lower false upper false = .ready interval) :
+    interval = ofOrderedBoundsUnchecked lower upper ordered :=
+  eq_ordered_ofRawWithin ordered h
 
 @[simp]
 theorem view_empty : empty.view = .empty := by rfl

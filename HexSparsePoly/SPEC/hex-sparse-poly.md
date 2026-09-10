@@ -260,6 +260,7 @@ noncomputable def coeff (s : SparsePoly R) (e : Nat) : R
 def support (s : SparsePoly R) : Array Nat
 def numTerms (s : SparsePoly R) : Nat
 def degree? (s : SparsePoly R) : Option Nat
+abbrev natDegree (s : SparsePoly R) : Nat
 def leadingCoeff (s : SparsePoly R) : R
 def isZero (s : SparsePoly R) : Bool
 
@@ -343,7 +344,8 @@ summed, zeros dropped" behaviour.
 
 `coeff` binary searches the term array, so it is `O(log t)` rather than
 `DensePoly`'s `O(1)`. `degree? 0 = none`, matching
-`DensePoly.degree?`. `leadingCoeff` of the zero polynomial is `0`.
+`DensePoly.degree?`, and `natDegree` defaults that to `0` as
+`DensePoly.natDegree` does. `leadingCoeff` of the zero polynomial is `0`.
 
 Canonicality is what makes the extensionality theorem true, and
 everything below is proved from it:
@@ -772,7 +774,7 @@ theorem divMod_spec [Lean.Grind.CommRing R] [Div R] [DensePoly.DivModLaws R]
     (divMod s t).1 * t + (divMod s t).2 = s
 theorem divMod_degree_lt [Lean.Grind.CommRing R] [Div R] [DensePoly.DivModLaws R]
     (s t : SparsePoly R) :
-    0 < t.degree?.getD 0 → (divMod s t).2.degree?.getD 0 < t.degree?.getD 0
+    0 < t.natDegree → (divMod s t).2.natDegree < t.natDegree
 
 theorem divModMonic_spec [Lean.Grind.CommRing R] [Div R] [DensePoly.DivModLaws R]
     (s t) (ht : t.Monic) :
@@ -801,7 +803,7 @@ without them would promise something the dense layer does not supply.
 If an unconditional dense `divModMonic_spec` is ever proved, the sparse
 statement follows and the hypotheses come off here at no cost.
 
-The remainder-degree statements use `degree?.getD 0` because that is the
+The remainder-degree statements use `natDegree` because that is the
 shape `DensePoly.DivModLaws` states them in, and `degree?_toDense` is
 what moves them across. `divExactMonic?_eq_some` needs no `t ≠ 0` side
 condition, unlike the `divExact?` of

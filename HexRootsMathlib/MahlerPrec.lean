@@ -215,6 +215,7 @@ theorem mahlerPrec_separates (p : Hex.ZPoly) (hp : p ≠ 0) :
   have hdeg? : p.degree? = some roots.length := by
     have h := natDegree_toPolyℂ p
     rw [show (toPolyℂ p).natDegree = roots.length from hnatf] at h
+    unfold Hex.DensePoly.natDegree at h
     cases hd : p.degree? with
     | none =>
         exfalso
@@ -241,7 +242,7 @@ theorem mahlerPrec_separates (p : Hex.ZPoly) (hp : p ≠ 0) :
       _ ≤ (2 : ℝ) ^ E * ‖z₁ - z₂‖ :=
         mul_le_mul_of_nonneg_right hfactor (le_of_lt hx0)
   have hmp : Hex.mahlerPrec p = 3 + E := by
-    simp only [Hex.mahlerPrec, hdeg?, Option.getD_some]
+    simp only [Hex.mahlerPrec, Hex.DensePoly.natDegree, hdeg?, Option.getD_some]
     rw [show (roots.length + 2) * Hex.ceilLog2 roots.length +
         (roots.length - 1) * Hex.ceilLog2 (roots.length + 1) +
         2 * (roots.length - 1) * Hex.ceilLog2 p.coeffAbsMax = T from hT.symm,

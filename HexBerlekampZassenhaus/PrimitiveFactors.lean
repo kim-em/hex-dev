@@ -62,32 +62,32 @@ theorem quadraticIntegerRootFactors?_degree_pos_of_primitive
     (hcore_primitive : ZPoly.Primitive core)
     {factors : Array ZPoly}
     (hquad : quadraticIntegerRootFactors? core = some factors) :
-    ∀ factor ∈ factors.toList, 0 < factor.degree?.getD 0 := by
+    ∀ factor ∈ factors.toList, 0 < factor.natDegree := by
   intro factor hmem
   unfold quadraticIntegerRootFactors? at hquad
-  by_cases hdeg : core.degree?.getD 0 = 2
-  · simp only [hdeg, if_true] at hquad
+  by_cases hdeg : core.natDegree = 2
+  · simp only [hdeg, ite_true] at hquad
     let roots := integerRootCandidates core
     let split := splitIntegerRootFactorsAux core roots roots.length
     obtain ⟨rs, _hsub, hshape⟩ :=
       splitIntegerRootFactorsAux_factors_form (target := core) (roots := roots)
         (fuel := roots.length) (factors := split.1) (residual := split.2) rfl
     have hlinear_degree :
-        ∀ factor ∈ split.1.toList, 0 < factor.degree?.getD 0 := by
+        ∀ factor ∈ split.1.toList, 0 < factor.natDegree := by
       intro g hg
       rw [hshape] at hg
       rcases List.mem_map.mp hg with ⟨r, _hr, rfl⟩
       exact linearFactorForRoot_degree_pos r
     by_cases hsize : split.1.size = 0
     · simp [roots, split, hsize] at hquad
-    · simp only [roots, split, hsize, if_false] at hquad
+    · simp only [roots, split, hsize, ite_false] at hquad
       by_cases hres_one : split.2 = 1
-      · rw [if_pos hres_one] at hquad
+      · rw [ite_eq_left hres_one] at hquad
         cases hquad
         exact hlinear_degree factor hmem
-      · rw [if_neg hres_one] at hquad
-        by_cases hres_deg : split.2.degree?.getD 0 ≤ 1
-        · rw [if_pos hres_deg] at hquad
+      · rw [ite_eq_right hres_one] at hquad
+        by_cases hres_deg : split.2.natDegree ≤ 1
+        · rw [ite_eq_left hres_deg] at hquad
           cases hquad
           rw [Array.toList_push] at hmem
           simp only [List.mem_append, List.mem_singleton] at hmem
@@ -133,12 +133,12 @@ theorem quadraticIntegerRootFactors?_degree_pos_of_primitive
                   exact Int.mul_neg_of_neg_of_pos hlt hpoly_lc_pos
                 omega
               · exact hgt
-            by_cases hposdeg : 0 < split.2.degree?.getD 0
+            by_cases hposdeg : 0 < split.2.natDegree
             · exact hposdeg
             exfalso
-            have hres_deg_zero : split.2.degree?.getD 0 = 0 := by omega
+            have hres_deg_zero : split.2.natDegree = 0 := by omega
             have hres_size_one : split.2.size = 1 := by
-              unfold DensePoly.degree? at hres_deg_zero
+              unfold DensePoly.natDegree DensePoly.degree? at hres_deg_zero
               have hsize_ne : split.2.size ≠ 0 := by
                 have hpos := ZPoly.size_pos_of_ne_zero split.2 hres_ne
                 omega
@@ -196,9 +196,9 @@ theorem quadraticIntegerRootFactors?_degree_pos_of_primitive
             apply hres_one
             rw [hres_eq, hc_eq_one]
             rfl
-        · rw [if_neg hres_deg] at hquad
+        · rw [ite_eq_right hres_deg] at hquad
           contradiction
-  · rw [if_neg hdeg] at hquad
+  · rw [ite_eq_right hdeg] at hquad
     contradiction
 
 /-- Removing the maximal power of `X` from a nonzero primitive part leaves a nonzero factor. -/
@@ -412,7 +412,7 @@ recurse one head factor at a time. -/
 private theorem consumeExactPower_pow_mul_of_not_dvd
     (q r : ZPoly) (k : Nat)
     (hq_monic : DensePoly.Monic q)
-    (hq_degree : 0 < q.degree?.getD 0)
+    (hq_degree : 0 < q.natDegree)
     (hnot_dvd : ¬ q ∣ r)
     (fuel : Nat) (hfuel : k + 1 ≤ fuel) :
     consumeExactPower (Factorization.polyPow q k * r) q fuel = (r, k) := by
@@ -455,7 +455,7 @@ non-monic (e.g. the `2X + 3` residual from
 private theorem consumeExactPower_pow_mul_of_not_dvd_of_pos_lc
     (q r : ZPoly) (k : Nat)
     (hq_pos_lc : 0 < DensePoly.leadingCoeff q)
-    (hq_degree : 0 < q.degree?.getD 0)
+    (hq_degree : 0 < q.natDegree)
     (hnot_dvd : ¬ q ∣ r)
     (fuel : Nat) (hfuel : k + 1 ≤ fuel) :
     consumeExactPower (Factorization.polyPow q k * r) q fuel = (r, k) := by
@@ -498,7 +498,7 @@ private theorem expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decompositio
     ∀ (coreFactors : List ZPoly) (exponents : List Nat) (rp : ZPoly) (fuel : Nat),
       exponents.length = coreFactors.length →
       (∀ q ∈ coreFactors, DensePoly.Monic q) →
-      (∀ q ∈ coreFactors, 0 < q.degree?.getD 0) →
+      (∀ q ∈ coreFactors, 0 < q.natDegree) →
       (∀ pre q e suf,
         coreFactors.zip exponents = pre ++ (q, e) :: suf →
         ¬ q ∣ (suf.map (fun (qe : ZPoly × Nat) =>
@@ -520,7 +520,7 @@ private theorem expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decompositio
       | nil => simp at hlen
       | cons e es =>
           have hq_monic : DensePoly.Monic q := hmonic q List.mem_cons_self
-          have hq_degree : 0 < q.degree?.getD 0 := hdegree q List.mem_cons_self
+          have hq_degree : 0 < q.natDegree := hdegree q List.mem_cons_self
           have hzip_eq : (q :: qs).zip (e :: es) = (q, e) :: qs.zip es := rfl
           let tailProduct : ZPoly :=
             ((qs.zip es).map
@@ -555,7 +555,7 @@ private theorem expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decompositio
             simpa using hlen
           have hmonic' : ∀ q' ∈ qs, DensePoly.Monic q' :=
             fun q' hq' => hmonic q' (List.mem_cons_of_mem _ hq')
-          have hdegree' : ∀ q' ∈ qs, 0 < q'.degree?.getD 0 :=
+          have hdegree' : ∀ q' ∈ qs, 0 < q'.natDegree :=
             fun q' hq' => hdegree q' (List.mem_cons_of_mem _ hq')
           have hnot_dvd_tail' :
               ∀ pre q' e' suf,
@@ -589,7 +589,7 @@ private theorem expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decompositio
     ∀ (coreFactors : List ZPoly) (exponents : List Nat) (rp : ZPoly) (fuel : Nat),
       exponents.length = coreFactors.length →
       (∀ q ∈ coreFactors, 0 < DensePoly.leadingCoeff q) →
-      (∀ q ∈ coreFactors, 0 < q.degree?.getD 0) →
+      (∀ q ∈ coreFactors, 0 < q.natDegree) →
       (∀ pre q e suf,
         coreFactors.zip exponents = pre ++ (q, e) :: suf →
         ¬ q ∣ (suf.map (fun (qe : ZPoly × Nat) =>
@@ -611,7 +611,7 @@ private theorem expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decompositio
       | nil => simp at hlen
       | cons e es =>
           have hq_pos_lc : 0 < DensePoly.leadingCoeff q := hpos_lc q List.mem_cons_self
-          have hq_degree : 0 < q.degree?.getD 0 := hdegree q List.mem_cons_self
+          have hq_degree : 0 < q.natDegree := hdegree q List.mem_cons_self
           have hzip_eq : (q :: qs).zip (e :: es) = (q, e) :: qs.zip es := rfl
           let tailProduct : ZPoly :=
             ((qs.zip es).map
@@ -646,7 +646,7 @@ private theorem expandRepeatedPartFactorsAux_residual_eq_one_of_pow_decompositio
             simpa using hlen
           have hpos_lc' : ∀ q' ∈ qs, 0 < DensePoly.leadingCoeff q' :=
             fun q' hq' => hpos_lc q' (List.mem_cons_of_mem _ hq')
-          have hdegree' : ∀ q' ∈ qs, 0 < q'.degree?.getD 0 :=
+          have hdegree' : ∀ q' ∈ qs, 0 < q'.natDegree :=
             fun q' hq' => hdegree q' (List.mem_cons_of_mem _ hq')
           have hnot_dvd_tail' :
               ∀ pre q' e' suf,
@@ -680,7 +680,7 @@ irreducible factor. -/
 theorem expandRepeatedPartFactorArray_residual_eq_one_of_pow_decomposition
     (rp : ZPoly) (coreFactors : Array ZPoly)
     (hmonic : ∀ q ∈ coreFactors.toList, DensePoly.Monic q)
-    (hdegree : ∀ q ∈ coreFactors.toList, 0 < q.degree?.getD 0)
+    (hdegree : ∀ q ∈ coreFactors.toList, 0 < q.natDegree)
     (exponents : List Nat)
     (hlen : exponents.length = coreFactors.size)
     (hnot_dvd_tail :
@@ -713,7 +713,7 @@ power operation and is part of the public API. -/
 theorem expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition
     (rp : ZPoly) (coreFactors : Array ZPoly)
     (hmonic : ∀ q ∈ coreFactors.toList, DensePoly.Monic q)
-    (hdegree : ∀ q ∈ coreFactors.toList, 0 < q.degree?.getD 0)
+    (hdegree : ∀ q ∈ coreFactors.toList, 0 < q.natDegree)
     (exponents : List Nat)
     (hlen : exponents.length = coreFactors.size)
     (hnot_dvd_tail :
@@ -748,7 +748,7 @@ wrapper below; used by
 theorem expandRepeatedPartFactorArray_residual_eq_one_of_pow_decomposition_of_pos_lc
     (rp : ZPoly) (coreFactors : Array ZPoly)
     (hpos_lc : ∀ q ∈ coreFactors.toList, 0 < DensePoly.leadingCoeff q)
-    (hdegree : ∀ q ∈ coreFactors.toList, 0 < q.degree?.getD 0)
+    (hdegree : ∀ q ∈ coreFactors.toList, 0 < q.natDegree)
     (exponents : List Nat)
     (hlen : exponents.length = coreFactors.size)
     (hnot_dvd_tail :
@@ -782,7 +782,7 @@ from `(X-1)(2X+3) = 2X^2 + X - 3`). -/
 theorem expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc
     (rp : ZPoly) (coreFactors : Array ZPoly)
     (hpos_lc : ∀ q ∈ coreFactors.toList, 0 < DensePoly.leadingCoeff q)
-    (hdegree : ∀ q ∈ coreFactors.toList, 0 < q.degree?.getD 0)
+    (hdegree : ∀ q ∈ coreFactors.toList, 0 < q.natDegree)
     (exponents : List Nat)
     (hlen : exponents.length = coreFactors.size)
     (hnot_dvd_tail :
@@ -872,7 +872,7 @@ constant-input theorem is `reassemblyExpansionComplete_constant_of_ne_zero`. -/
 theorem expandRepeatedPartFactorArray_pow_singleton
     (q : ZPoly) (k : Nat)
     (hq_monic : DensePoly.Monic q)
-    (hq_degree : 0 < q.degree?.getD 0)
+    (hq_degree : 0 < q.natDegree)
     (hq_irr : ZPoly.Irreducible q)
     (rp : ZPoly) (hrp : rp = Factorization.factorPower q k)
     (hfuel : k + 1 ≤ rp.size + 1) :
@@ -913,7 +913,7 @@ specialised to `coreFactors = #[q]`, `exponents = [k]`. -/
 theorem expandRepeatedPartFactorArray_pow_singleton_of_pos_lc
     (q : ZPoly) (k : Nat)
     (hq_pos_lc : 0 < DensePoly.leadingCoeff q)
-    (hq_degree : 0 < q.degree?.getD 0)
+    (hq_degree : 0 < q.natDegree)
     (hq_irr : ZPoly.Irreducible q)
     (rp : ZPoly) (hrp : rp = Factorization.factorPower q k)
     (hfuel : k + 1 ≤ rp.size + 1) :
@@ -972,11 +972,11 @@ private theorem reassemblePolynomialFactors_singleton_one_eq
   rw [expandRepeatedPartFactorArray_singleton_one]
   simp only
   by_cases hrp : d.repeatedPart = 1
-  · rw [if_pos hrp]
+  · rw [ite_eq_left hrp]
     unfold polynomialNormalizationPrefixFactors repeatedPartFactorArray
     rw [hrp]
     simp
-  · rw [if_neg hrp]
+  · rw [ite_eq_right hrp]
 
 private theorem squareFreeCore_ne_zero_of_ne_zero (f : ZPoly) (hf : f ≠ 0) :
     (normalizeForFactor f).squareFreeCore ≠ 0 := by
@@ -1024,7 +1024,7 @@ private theorem foldl_step_const_inner_pos (p q : ZPoly) (xs : List Nat) :
       have hj : 0 < j := hpos j List.mem_cons_self
       have hstep : DensePoly.mulCoeffStep p q 0 0 acc j = acc := by
         unfold DensePoly.mulCoeffStep
-        rw [if_neg (by omega)]
+        rw [ite_eq_right (by omega)]
       rw [hstep]
       exact ih (fun j' hj' => hpos j' (List.mem_cons_of_mem j hj')) acc
 
@@ -1040,7 +1040,7 @@ private theorem foldl_step_const_pos_i (p q : ZPoly) (i : Nat) (hi : 0 < i)
       rw [List.foldl_cons]
       have hstep : DensePoly.mulCoeffStep p q 0 i acc j = acc := by
         unfold DensePoly.mulCoeffStep
-        rw [if_neg (by omega)]
+        rw [ite_eq_right (by omega)]
       rw [hstep]; exact ih acc
 
 /-- The inner schoolbook fold for the constant coefficient at outer index `0`
@@ -1101,10 +1101,10 @@ private theorem mulCoeffSum_const (p q : ZPoly) :
       rw [List.range_succ_eq_map, List.foldl_cons, foldl_outer_const_pos p q _ hpos,
         foldl_step_const_inner p q q.size]
       by_cases hq : 0 < q.size
-      · rw [if_pos hq]
+      · rw [ite_eq_left hq]
         show (0 : Int) + p.coeff 0 * q.coeff 0 = p.coeff 0 * q.coeff 0
         rw [Int.zero_add]
-      · rw [if_neg hq]
+      · rw [ite_eq_right hq]
         have hq0 : q.coeff 0 = 0 := DensePoly.coeff_eq_zero_of_size_le q (by omega)
         show (0 : Int) = p.coeff 0 * q.coeff 0
         rw [hq0, Int.mul_zero]
@@ -1126,8 +1126,8 @@ private theorem splitInitialZeros_tail_getD_ne_zero (coeffs : List Int) :
   | cons c cs ih =>
       unfold ZPoly.splitInitialZeros
       by_cases hc : c = 0
-      · rw [if_pos hc]; simpa using ih
-      · rw [if_neg hc]; exact Or.inr (by simpa using hc)
+      · rw [ite_eq_left hc]; simpa using ih
+      · rw [ite_eq_right hc]; exact Or.inr (by simpa using hc)
 
 /-- The `X`-power-free square-free part extracted from a nonzero primitive part has a nonzero
 constant term: `extractXPower` strips the leading zero run, so the lowest stored
@@ -1246,7 +1246,7 @@ constant arm) can rule out the singleton-part entry from the recorded factor
 set. -/
 theorem squareFreeCore_eq_one_of_constant_of_ne_zero
     (f : ZPoly) (hf : f ≠ 0)
-    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0) :
+    (hdeg : (normalizeForFactor f).squareFreeCore.natDegree = 0) :
     (normalizeForFactor f).squareFreeCore = 1 := by
   unfold normalizeForFactor at hdeg ⊢
   simpa using
@@ -1260,7 +1260,7 @@ theorem squareFreeCore_eq_one_of_constant_of_ne_zero
 `repeatedPart` collapses to `1` in the constant branch. -/
 private theorem normalizeForFactor_repeatedPart_eq_one_of_constant
     (f : ZPoly) (hf : f ≠ 0)
-    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0) :
+    (hdeg : (normalizeForFactor f).squareFreeCore.natDegree = 0) :
     (normalizeForFactor f).repeatedPart = 1 := by
   unfold normalizeForFactor at hdeg ⊢
   simpa using

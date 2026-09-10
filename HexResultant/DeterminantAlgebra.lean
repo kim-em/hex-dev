@@ -659,8 +659,8 @@ theorem det_toMatrix {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
             Matrix.cofactorSign (R := R) row j := by
           unfold sign Matrix.cofactorSign
           by_cases h : j.val % 2 = 0
-          · rw [if_pos h, if_pos (by simpa [row] using h)]
-          · rw [if_neg h, if_neg (by simpa [row] using h)]
+          · rw [ite_eq_left h, ite_eq_left (by simpa [row] using h)]
+          · rw [ite_eq_right h, ite_eq_right (by simpa [row] using h)]
             grind
         unfold Matrix.cofactor
         rw [hminor, ← ih, ← hsign]
@@ -846,7 +846,7 @@ theorem det_scaleRange {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
       have hmatrix : scaleRange M start 0 c = M := by
         funext i j
         unfold scaleRange
-        rw [if_neg (by omega)]
+        rw [ite_eq_right (by omega)]
       rw [hmatrix]
       rw [Lean.Grind.Semiring.pow_zero]
       grind
@@ -865,9 +865,9 @@ theorem det_scaleRange {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
           have hnew : start ≤ dst.val ∧ dst.val < start + (count + 1) := by
             simp [dst]
           simp only [setCol]
-          simp only [if_true]
+          simp only [ite_true]
           unfold scaleRange
-          rw [if_pos hnew, if_neg hold]
+          rw [ite_eq_left hnew, ite_eq_right hold]
         · have hvalne : j.val ≠ start + count := by
             intro h
             exact hj (Fin.ext h)
@@ -891,12 +891,12 @@ theorem sign_succ {R : Type u} [Lean.Grind.CommRing R] (j : Nat) :
   by_cases hj : j % 2 = 0
   · have hnext : (j + 1) % 2 ≠ 0 := by
       omega
-    rw [if_pos hj, if_neg hnext]
+    rw [ite_eq_left hj, ite_eq_right hnext]
   · have hjone : j % 2 = 1 := by
       omega
     have hnext : (j + 1) % 2 = 0 := by
       omega
-    rw [if_neg hj, if_pos hnext]
+    rw [ite_eq_right hj, ite_eq_left hnext]
     grind
 
 /-- Alternating signs turn addition of exponents into multiplication. -/
@@ -1226,9 +1226,9 @@ theorem coeffInt_scale (c : R) (p : DensePoly R) (i : Int) :
     coeffInt (scale c p) i = c * coeffInt p i := by
   unfold coeffInt
   by_cases h : i < 0
-  · rw [if_pos h, if_pos h]
+  · rw [ite_eq_left h, ite_eq_left h]
     grind
-  · rw [if_neg h, if_neg h]
+  · rw [ite_eq_right h, ite_eq_right h]
     exact coeff_scale_semiring c p i.toNat
 
 /-- Scaling the left polynomial scales exactly the left Sylvester block. -/
@@ -1242,13 +1242,13 @@ theorem coeffMatrixAt_scale_left (df dg J l : Nat) (c : R)
   by_cases hj : j.val < dg - J
   · have hscaled : 0 ≤ j.val ∧ j.val < 0 + (dg - J) := by
       omega
-    simp only [if_pos hj, if_pos hscaled]
+    simp only [ite_eq_left hj, ite_eq_left hscaled]
     by_cases hi : i.val = (df - J) + (dg - J) - 1
-    · simp only [if_pos hi, coeffInt_scale]
-    · simp only [if_neg hi, coeffInt_scale]
+    · simp only [ite_eq_left hi, coeffInt_scale]
+    · simp only [ite_eq_right hi, coeffInt_scale]
   · have hscaled : ¬(0 ≤ j.val ∧ j.val < 0 + (dg - J)) := by
       omega
-    simp only [if_neg hj, if_neg hscaled]
+    simp only [ite_eq_right hj, ite_eq_right hscaled]
 
 /-- Scaling the right polynomial scales exactly the right Sylvester block. -/
 theorem coeffMatrixAt_scale_right (df dg J l : Nat) (c : R)
@@ -1261,17 +1261,17 @@ theorem coeffMatrixAt_scale_right (df dg J l : Nat) (c : R)
   by_cases hj : j.val < dg - J
   · have hscaled : ¬(dg - J ≤ j.val ∧ j.val < dg - J + (df - J)) := by
       omega
-    simp only [if_pos hj, if_neg hscaled]
+    simp only [ite_eq_left hj, ite_eq_right hscaled]
   · have hlower : dg - J ≤ j.val := by omega
     have hupper : j.val < dg - J + (df - J) := by
       have hjbound := j.isLt
       omega
     have hscaled : dg - J ≤ j.val ∧ j.val < dg - J + (df - J) :=
       ⟨hlower, hupper⟩
-    simp only [if_neg hj, if_pos hscaled]
+    simp only [ite_eq_right hj, ite_eq_left hscaled]
     by_cases hi : i.val = (df - J) + (dg - J) - 1
-    · simp only [if_pos hi, coeffInt_scale]
-    · simp only [if_neg hi, coeffInt_scale]
+    · simp only [ite_eq_left hi, coeffInt_scale]
+    · simp only [ite_eq_right hi, coeffInt_scale]
 
 /-- Fixed-degree coefficient minors are homogeneous in the left polynomial. -/
 theorem coeffMinorAt_scale_left (df dg J l : Nat) (c : R)
@@ -1328,8 +1328,8 @@ theorem poly_scale_left {c : R} (hc : c ≠ 0) (J : Nat)
   rw [coeff_scale_semiring]
   simp only [coeff_poly]
   by_cases hl : l < J + 1
-  · rw [if_pos hl, if_pos hl, coeffMinor_scale_left hc]
-  · rw [if_neg hl, if_neg hl]
+  · rw [ite_eq_left hl, ite_eq_left hl, coeffMinor_scale_left hc]
+  · rw [ite_eq_right hl, ite_eq_right hl]
     exact (Lean.Grind.Semiring.mul_zero _).symm
 
 /-- Generalized subresultants are homogeneous in the right polynomial. -/
@@ -1342,8 +1342,8 @@ theorem poly_scale_right {c : R} (hc : c ≠ 0) (J : Nat)
   rw [coeff_scale_semiring]
   simp only [coeff_poly]
   by_cases hl : l < J + 1
-  · rw [if_pos hl, if_pos hl, coeffMinor_scale_right hc]
-  · rw [if_neg hl, if_neg hl]
+  · rw [ite_eq_left hl, ite_eq_left hl, coeffMinor_scale_right hc]
+  · rw [ite_eq_right hl, ite_eq_right hl]
     exact (Lean.Grind.Semiring.mul_zero _).symm
 
 end Scale

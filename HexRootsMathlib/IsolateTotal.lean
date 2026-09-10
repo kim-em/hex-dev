@@ -24,63 +24,64 @@ noncomputable section
 
 /-- Isolate all complex roots of a nonzero squarefree integer polynomial.
 
-Unlike `Hex.isolate`, this proof-facing wrapper cannot return `none`: its
+Unlike `Hex.ZPoly.isolateComplexRoots?`, this proof-facing wrapper cannot return `none`: its
 required hypotheses discharge the driver's completeness conditions. The
-result is characterized by `isolate!_eq` as the successful executable output,
+result is characterized by `isolateComplexRoots_eq` as the successful executable output,
 with the same atom strategy and requested-precision parameters. -/
-def isolate! (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p) (hp : p ≠ 0)
+def isolateComplexRoots (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p) (hp : p ≠ 0)
     (atomPrec : Int) (strategy : Hex.AtomStrategy := .nkThenPellet) :
     Array (Hex.DyadicRootIsolation p) :=
-  (isolate_exists p h hp atomPrec strategy).choose
+  (isolateComplexRoots?_exists p h hp atomPrec strategy).choose
 
-/-- The total wrapper is exactly the successful result of `Hex.isolate`. -/
-theorem isolate!_eq (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
+/-- The total wrapper is exactly the successful result of `Hex.ZPoly.isolateComplexRoots?`. -/
+theorem isolateComplexRoots_eq (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     (hp : p ≠ 0) (atomPrec : Int)
     (strategy : Hex.AtomStrategy := .nkThenPellet) :
-    Hex.isolate p h atomPrec strategy = some (isolate! p h hp atomPrec strategy) :=
-  (isolate_exists p h hp atomPrec strategy).choose_spec
+    Hex.ZPoly.isolateComplexRoots? p h atomPrec strategy =
+      some (isolateComplexRoots p h hp atomPrec strategy) :=
+  (isolateComplexRoots?_exists p h hp atomPrec strategy).choose_spec
 
 /-- The total wrapper returns one atom for each complex root, counted with
 multiplicity. -/
-theorem isolate!_count (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
+theorem isolateComplexRoots_count (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     (hp : p ≠ 0) (atomPrec : Int)
     (strategy : Hex.AtomStrategy := .nkThenPellet) :
-    (isolate! p h hp atomPrec strategy).size =
+    (isolateComplexRoots p h hp atomPrec strategy).size =
       (HexRootsMathlib.toPolyℂ p).natDegree :=
-  isolate_count p h atomPrec strategy (isolate!_eq p h hp atomPrec strategy)
+  isolateComplexRoots?_count p h atomPrec strategy (isolateComplexRoots_eq p h hp atomPrec strategy)
 
 /-- The semantic roots selected by the returned atoms are exactly the roots of
 the input polynomial. -/
-theorem isolate!_roots (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
+theorem isolateComplexRoots_roots (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     (hp : p ≠ 0) (atomPrec : Int)
     (strategy : Hex.AtomStrategy := .nkThenPellet) :
-    ((isolate! p h hp atomPrec strategy).toList.map
+    ((isolateComplexRoots p h hp atomPrec strategy).toList.map
       HexRootsMathlib.DyadicRootIsolation.root).toFinset =
         (HexRootsMathlib.toPolyℂ p).roots.toFinset :=
-  (isolate_sound p h atomPrec strategy
-    (isolate!_eq p h hp atomPrec strategy)).1
+  (isolateComplexRoots?_sound p h atomPrec strategy
+    (isolateComplexRoots_eq p h hp atomPrec strategy)).1
 
 /-- Every returned atom meets the requested precision. -/
-theorem isolate!_prec (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
+theorem isolateComplexRoots_prec (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     (hp : p ≠ 0) (atomPrec : Int)
     (strategy : Hex.AtomStrategy := .nkThenPellet) :
-    ∀ iso ∈ (isolate! p h hp atomPrec strategy).toList,
+    ∀ iso ∈ (isolateComplexRoots p h hp atomPrec strategy).toList,
       atomPrec ≤ iso.square.prec :=
-  (isolate_sound p h atomPrec strategy
-    (isolate!_eq p h hp atomPrec strategy)).2
+  (isolateComplexRoots?_sound p h atomPrec strategy
+    (isolateComplexRoots_eq p h hp atomPrec strategy)).2
 
 /-- Distinct atoms returned by the total wrapper have disjoint closed
 circumscribed discs. -/
-theorem isolate!_disjoint (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
+theorem isolateComplexRoots_disjoint (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     (hp : p ≠ 0) (atomPrec : Int)
     (strategy : Hex.AtomStrategy := .nkThenPellet)
-    {i j : Nat} (hi : i < (isolate! p h hp atomPrec strategy).size)
-    (hj : j < (isolate! p h hp atomPrec strategy).size) (hij : i ≠ j) :
+    {i j : Nat} (hi : i < (isolateComplexRoots p h hp atomPrec strategy).size)
+    (hj : j < (isolateComplexRoots p h hp atomPrec strategy).size) (hij : i ≠ j) :
     Disjoint
-      (DyadicSquare.closedDisc (isolate! p h hp atomPrec strategy)[i].square)
-      (DyadicSquare.closedDisc (isolate! p h hp atomPrec strategy)[j].square) :=
-  isolate_disjoint p h atomPrec strategy
-    (isolate!_eq p h hp atomPrec strategy) hi hj hij
+      (DyadicSquare.closedDisc (isolateComplexRoots p h hp atomPrec strategy)[i].square)
+      (DyadicSquare.closedDisc (isolateComplexRoots p h hp atomPrec strategy)[j].square) :=
+  isolateComplexRoots?_disjoint p h atomPrec strategy
+    (isolateComplexRoots_eq p h hp atomPrec strategy) hi hj hij
 
 end
 

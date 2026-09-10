@@ -17,7 +17,7 @@ sites in `bench/HexRealRoots/Bench.lean`:
 - `Hex.RealRootsBench.runSepPrec`: `n`
 - `Hex.RealRootsBench.runRefineTo`: `n`
 
-The `isolate?` surface is exercised on three structurally different input
+The `ZPoly.isolateRealRoots?` surface is exercised on three structurally different input
 families, never a single happy-path shape:
 `well-separated-products` (∏(x−k)), `chebyshev-clustered` (integer `T_n`), and
 `mignotte-worst-case` (`xⁿ−(a·x−1)²`, `a = 1000`). The Sturm-chain,
@@ -97,13 +97,13 @@ lake exe hexrealroots_bench compare \
 
 reports `agreement: all functions agree on common params` over the shared
 `well-separated-products` domain (`4, 8, 12, 16, 20`): the Descartes-first
-`isolate?` and the certified `isolateSturm?` engines produce identical
+`ZPoly.isolateRealRoots?` and the certified `ZPoly.isolateSturm?` engines produce identical
 isolation-endpoint hashes (both `0x88e69732f982a9a0` at `n = 20`), the
 cross-implementation conformance check the compare group is for. The
 relative-timing summary quantifies the engine gap the declared models predict:
-`isolate?` (Descartes-first) is `O(n⁴)` while the Sturm-only engine is `O(n⁵)`
+`ZPoly.isolateRealRoots?` (Descartes-first) is `O(n⁴)` while the Sturm-only engine is `O(n⁵)`
 (full Sturm-chain evaluation per node with `O(n·h)` coefficient growth), which
-is why `isolate?` runs Descartes first.
+is why `ZPoly.isolateRealRoots?` runs Descartes first.
 
 ### SPEC time budgets
 
@@ -170,7 +170,7 @@ are developer-local under `/tmp` and are not committed.
 `lean_dec_ref`), Hex/Lean own code 9.9% (`Array.ofFn`, the Möbius
 `compose`/`mul` folds). The huge `∏(x−k)` coefficients (`~n!`, `O(n log n)`
 bits) make GMP arithmetic and its allocation traffic dominate; the inclusive
-cost flows through `isolate?` → `isolateDescartes?` → `mobiusTransform`, both
+cost flows through `ZPoly.isolateRealRoots?` → `ZPoly.isolateDescartes?` → `mobiusTransform`, both
 of which carry their own registrations.
 
 ### `chebyshev-clustered`
@@ -188,7 +188,7 @@ the deeper bisection the clustering forces.
 allocation 40.2%, GMP 32.5% (`realloc`/`__gmp_default_reallocate`-heavy), Lean
 runtime 13.2%, own code 11.1%. The large `a = 1000` coefficients and the
 close-pair bisection depth make reallocation of growing GMP limbs the dominant
-leaf cost; inclusive cost is the registered `isolate?` path.
+leaf cost; inclusive cost is the registered `ZPoly.isolateRealRoots?` path.
 
 ### `dense-primitive`
 
@@ -202,7 +202,7 @@ pseudo-division with `O(n·h)`-bit operands — and the inclusive cost is the
 registered `runSturmChain` (`ZPoly.sturmChain`) target itself.
 
 No unregistered dominant inclusive helper appears in any of the four profiles:
-every dominant path terminates in a registered bench target (`isolate?`,
+every dominant path terminates in a registered bench target (`ZPoly.isolateRealRoots?`,
 `mobiusTransform`, or `sturmChain`), so the Attribution rule is satisfied and
 no new target is required.
 

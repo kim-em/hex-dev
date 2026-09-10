@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "a56a63e3b99c2af2c1b477347d0b3a5bec8d9b51",
+  "current_blob": "6010b8baaea1ec8f4cd2ca8c50bb83e1c512dcfc",
+  "reason": "The factorization-relevant build declarations are identical to the previously exempted a56a63e3-to-c4319f88 transition: existing C compiler recipes set TMPDIR without changing inputs or flags. This change replaces the independent graph-isomorphism twin executable with its trace emitter; no factorization target, imported library, compiler recipe or runtime dependency changes."
+}

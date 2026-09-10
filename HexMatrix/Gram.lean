@@ -81,8 +81,8 @@ private theorem foldl_indicator_square_eq {R : Type u} [Lean.Grind.CommRing R]
           (if i = x then (1 : R) else 0) * (if i = x then (1 : R) else 0) =
             if i = x then (1 : R) else 0 := by
         by_cases h : i = x
-        · rw [if_pos h]; grind
-        · rw [if_neg h]; grind
+        · rw [ite_eq_left h]; grind
+        · rw [ite_eq_right h]; grind
       rw [hsq]
       exact ih _
 
@@ -113,15 +113,15 @@ private theorem foldl_dotProduct_unit_body {R : Type u} [Lean.Grind.CommRing R]
     rw [foldl_indicator_square_eq]
     rw [foldl_indicator_unique (List.finRange n) i (List.mem_finRange i)
       (List.nodup_finRange n) (0 : R)]
-    rw [if_pos rfl]; grind
+    rw [ite_eq_left rfl]; grind
   · have hzero : ∀ l ∈ List.finRange n,
         (if i = l then (1 : R) else 0) * (if j = l then (1 : R) else 0) = 0 := by
       intro l _
       by_cases hil : i = l
       · have hjl : j ≠ l := fun heq => hij (hil.trans heq.symm)
-        rw [if_pos hil, if_neg hjl]; grind
-      · rw [if_neg hil]; grind
-    rw [foldl_add_eq_acc (List.finRange n) _ _ hzero, if_neg hij]
+        rw [ite_eq_left hil, ite_eq_right hjl]; grind
+      · rw [ite_eq_right hil]; grind
+    rw [foldl_add_eq_acc (List.finRange n) _ _ hzero, ite_eq_right hij]
 
 end Vector
 

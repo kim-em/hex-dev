@@ -1,0 +1,28 @@
+{
+  "source": "886cf91a03c80fc166a648af84a5a3d8815f1c1b",
+  "cpu": 3,
+  "host": "chungus2",
+  "trial": 1,
+  "order": [
+    "baseline",
+    "candidate"
+  ],
+  "arm": "candidate",
+  "command": [
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10043/.lake/build/bin/hexgraphiso_cactus",
+    "search"
+  ],
+  "executable_sha256": "d7bfd4ebb6c6ce6f4d332641166173a5c7ba7dcebec2e07c037c82d8576c2a8c",
+  "started": "2026-09-09T00:34:14.391806+00:00",
+  "load_before": [
+    4.70263671875,
+    4.03076171875,
+    4.09814453125
+  ],
+  "finished": "2026-09-09T00:34:16.983172+00:00",
+  "load_after": [
+    4.806640625,
+    4.0634765625,
+    4.1083984375
+  ]
+}

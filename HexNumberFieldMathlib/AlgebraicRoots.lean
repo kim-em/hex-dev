@@ -61,9 +61,9 @@ theorem roots?_isSome (f : AlgebraicPoly) :
       cases h : f.isZero <;> simp_all
     obtain ⟨common, hcommon⟩ := exists_presentation f hf
     rw [hcommon]
-    letI : ZPoly.CheckedIrreducible common.generator.p :=
+    let : ZPoly.CheckedIrreducible common.generator.p :=
       common.generator.checked
-    exact QAdjoin.roots?_isSome
+    exact PolyQuot.roots?_isSome
       (DensePoly.ofCoeffs common.coefficients)
       common.generator.rep common.generator.rep_mk
 
@@ -81,20 +81,20 @@ theorem roots?_eq_roots (f : AlgebraicPoly) :
 private theorem presentation_polynomial (f : AlgebraicPoly)
     (common : Common.Presentation)
     (hcommon : Common.presentation? f.coeffs = some common) :
-    QAdjoin.toPolynomialAt
+    PolyQuot.toPolynomialAt
         (DensePoly.ofCoeffs common.coefficients)
         common.generator.rep common.generator.rep_mk =
       f.toPolynomial := by
-  letI : ZPoly.CheckedIrreducible common.generator.p :=
+  let : ZPoly.CheckedIrreducible common.generator.p :=
     common.generator.checked
   obtain ⟨hsize, hvalues⟩ :=
     Common.presentation?_sound f.coeffs hcommon
   ext n
-  rw [QAdjoin.coeff_toPolynomialAt, coeff_toPolynomial,
+  rw [PolyQuot.coeff_toPolynomialAt, coeff_toPolynomial,
     DensePoly.coeff_ofCoeffs]
-  change QAdjoin.toComplex
+  change PolyQuot.toComplex
       (common.coefficients.getD n
-        (0 : QAdjoin common.generator.p common.generator.x))
+        (0 : PolyQuot common.generator.p common.generator.x))
       common.generator.rep common.generator.rep_mk =
     (f.coeffs.getD n (0 : AlgebraicNumber)).toComplex
   by_cases hn : n < f.coeffs.size
@@ -102,7 +102,7 @@ private theorem presentation_polynomial (f : AlgebraicPoly)
       rw [hsize]
       exact hn
     rw [← Array.getElem_eq_getD
-        (0 : QAdjoin common.generator.p common.generator.x),
+        (0 : PolyQuot common.generator.p common.generator.x),
       ← Array.getElem_eq_getD (0 : AlgebraicNumber)]
     exact hvalues n hn hnCommon
   · have hnCommon : ¬n < common.coefficients.size := by
@@ -112,25 +112,25 @@ private theorem presentation_polynomial (f : AlgebraicPoly)
       Array.getElem?_eq_none (by omega : common.coefficients.size ≤ n),
       Array.getD_eq_getD_getElem?,
       Array.getElem?_eq_none (by omega : f.coeffs.size ≤ n)]
-    simp [QAdjoin.map_zero, AlgebraicNumber.zero_toComplex]
+    simp [PolyQuot.map_zero, AlgebraicNumber.zero_toComplex]
 
 private theorem roots_eq_fixed (f : AlgebraicPoly)
     (common : Common.Presentation)
     (hf : f.isZero = false)
     (hcommon : Common.presentation? f.coeffs = some common) :
-    f.roots = @QAdjoin.roots _ _ common.generator.checked
+    f.roots = @PolyQuot.roots _ _ common.generator.checked
       (DensePoly.ofCoeffs common.coefficients)
       common.generator.rep common.generator.rep_mk := by
-  letI : ZPoly.CheckedIrreducible common.generator.p :=
+  let : ZPoly.CheckedIrreducible common.generator.p :=
     common.generator.checked
   have halgebraic := roots?_eq_roots f
-  rw [AlgebraicPoly.roots?, if_neg (by simp [hf])] at halgebraic
+  rw [AlgebraicPoly.roots?, ite_eq_right (by simp [hf])] at halgebraic
   obtain ⟨common', hcommon', hrun⟩ :=
     Option.bind_eq_some_iff.mp halgebraic
   have hcommonEq : common' = common :=
     Option.some.inj (hcommon'.symm.trans hcommon)
   subst common'
-  have hfixed := QAdjoin.roots?_eq_roots
+  have hfixed := PolyQuot.roots?_eq_roots
     (DensePoly.ofCoeffs common.coefficients)
     common.generator.rep common.generator.rep_mk
   exact (Option.some.inj (hfixed.symm.trans hrun)).symm
@@ -138,7 +138,7 @@ private theorem roots_eq_fixed (f : AlgebraicPoly)
 private theorem roots_eq_all_of_isZero (f : AlgebraicPoly)
     (hf : f.isZero = true) : f.roots = .all := by
   have hrun := roots?_eq_roots f
-  rw [AlgebraicPoly.roots?, if_pos hf] at hrun
+  rw [AlgebraicPoly.roots?, ite_eq_left hf] at hrun
   exact (Option.some.inj hrun).symm
 
 /-- The algebraic-coefficient driver returns `.all` exactly for the zero
@@ -152,11 +152,11 @@ theorem roots_all_iff (f : AlgebraicPoly) :
   · have hf : f.isZero = false := by
       cases h : f.isZero <;> simp_all
     obtain ⟨common, hcommon⟩ := exists_presentation f hf
-    letI : ZPoly.CheckedIrreducible common.generator.p :=
+    let : ZPoly.CheckedIrreducible common.generator.p :=
       common.generator.checked
     rw [roots_eq_fixed f common hf hcommon,
       ← presentation_polynomial f common hcommon]
-    exact QAdjoin.roots_all_iff
+    exact PolyQuot.roots_all_iff
       (DensePoly.ofCoeffs common.coefficients)
       common.generator.rep common.generator.rep_mk
 
@@ -172,11 +172,11 @@ theorem contains_roots_iff (f : AlgebraicPoly) (z : ℂ) :
   · have hf : f.isZero = false := by
       cases h : f.isZero <;> simp_all
     obtain ⟨common, hcommon⟩ := exists_presentation f hf
-    letI : ZPoly.CheckedIrreducible common.generator.p :=
+    let : ZPoly.CheckedIrreducible common.generator.p :=
       common.generator.checked
     rw [roots_eq_fixed f common hf hcommon,
       ← presentation_polynomial f common hcommon]
-    exact QAdjoin.contains_roots_iff
+    exact PolyQuot.contains_roots_iff
       (DensePoly.ofCoeffs common.coefficients)
       common.generator.rep common.generator.rep_mk z
 
@@ -191,11 +191,11 @@ theorem multiplicity_roots (f : AlgebraicPoly) (z : ℂ) :
   · have hf : f.isZero = false := by
       cases h : f.isZero <;> simp_all
     obtain ⟨common, hcommon⟩ := exists_presentation f hf
-    letI : ZPoly.CheckedIrreducible common.generator.p :=
+    let : ZPoly.CheckedIrreducible common.generator.p :=
       common.generator.checked
     rw [roots_eq_fixed f common hf hcommon,
       ← presentation_polynomial f common hcommon]
-    exact QAdjoin.multiplicity_roots
+    exact PolyQuot.multiplicity_roots
       (DensePoly.ofCoeffs common.coefficients)
       common.generator.rep common.generator.rep_mk z
 
@@ -217,10 +217,10 @@ theorem roots_noDuplicates (f : AlgebraicPoly) :
   · have hf : f.isZero = false := by
       cases h : f.isZero <;> simp_all
     obtain ⟨common, hcommon⟩ := exists_presentation f hf
-    letI : ZPoly.CheckedIrreducible common.generator.p :=
+    let : ZPoly.CheckedIrreducible common.generator.p :=
       common.generator.checked
     rw [roots_eq_fixed f common hf hcommon]
-    exact QAdjoin.roots_noDuplicates
+    exact PolyQuot.roots_noDuplicates
       (DensePoly.ofCoeffs common.coefficients)
       common.generator.rep common.generator.rep_mk
 
@@ -233,10 +233,10 @@ theorem roots_ordered (f : AlgebraicPoly) :
   · have hf : f.isZero = false := by
       cases h : f.isZero <;> simp_all
     obtain ⟨common, hcommon⟩ := exists_presentation f hf
-    letI : ZPoly.CheckedIrreducible common.generator.p :=
+    let : ZPoly.CheckedIrreducible common.generator.p :=
       common.generator.checked
     rw [roots_eq_fixed f common hf hcommon]
-    exact QAdjoin.roots_ordered
+    exact PolyQuot.roots_ordered
       (DensePoly.ofCoeffs common.coefficients)
       common.generator.rep common.generator.rep_mk
 
@@ -251,11 +251,11 @@ theorem totalMultiplicity_roots (f : AlgebraicPoly)
     | true =>
         exact (hfPolynomial ((isZero_iff f).mp h)).elim
   obtain ⟨common, hcommon⟩ := exists_presentation f hf
-  letI : ZPoly.CheckedIrreducible common.generator.p :=
+  let : ZPoly.CheckedIrreducible common.generator.p :=
     common.generator.checked
   have hpolynomial := presentation_polynomial f common hcommon
   rw [roots_eq_fixed f common hf hcommon, ← hpolynomial]
-  exact QAdjoin.totalMultiplicity_roots
+  exact PolyQuot.totalMultiplicity_roots
     (DensePoly.ofCoeffs common.coefficients)
     common.generator.rep common.generator.rep_mk
     (by rwa [hpolynomial])

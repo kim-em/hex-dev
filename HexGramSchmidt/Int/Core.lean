@@ -220,7 +220,7 @@ remains the direct reference definition used by proofs. -/
       split <;> rename_i hij
       · rfl
       · have hji : j ≤ i := by omega
-        rw [if_pos hji]
+        rw [ite_eq_left hji]
         exact Vector.dotProduct_comm (R := Int) _ _
 
 /-- Reading entry `(i, j)` of `gramRows b` recovers the Gram matrix entry

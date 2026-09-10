@@ -1,0 +1,6 @@
+integrated-final-main-retry 1 left True post {43: 0.0, 91: 0.0} sibling {91: 0.06870818322182193}
+integrated-final-main-retry 1 right True post {43: 0.9950248756218906, 91: 0.0} sibling {91: 0.06650082918739635}
+accepted pairs 1
+integrated-final-main-retry 2 right True post {41: 0.0, 89: 0.0} sibling {89: 0.0}
+integrated-final-main-retry 2 left True post {41: 0.0, 89: 0.0} sibling {89: 0.0343112026076514}
+accepted pairs 2

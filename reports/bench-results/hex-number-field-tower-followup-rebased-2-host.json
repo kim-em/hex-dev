@@ -1,0 +1,314 @@
+{
+  "label": "rebased",
+  "attempt": 2,
+  "runs": [
+    {
+      "arm": "left",
+      "source_commit": "b8602c76a08f7348391aafd50b9a8a13cf1a0b32",
+      "binary_sha256": "9cda578dbc8724ea9c10462c1c6e2ccbaf6d48e6a85ef291a2f1bf7e4c5df810",
+      "command": [
+        "taskset",
+        "-c",
+        "31",
+        "/tmp/issue-10074-baseline",
+        "run",
+        "Hex.NumberTowerBench.runTowerFactorPair2",
+        "Hex.NumberTowerBench.runTowerFactorPair3",
+        "Hex.NumberTowerBench.runTowerFactorPair4",
+        "Hex.NumberTowerBench.runTowerFactorPair6",
+        "Hex.NumberTowerBench.runTowerFactorPair8",
+        "Hex.NumberTowerBench.runTowerFactorPair12",
+        "Hex.NumberTowerBench.runTowerFactorLadder",
+        "Hex.NumberTowerBench.runTowerCheckFactorization",
+        "Hex.NumberTowerBench.runPariNfFactor2",
+        "Hex.NumberTowerBench.runPariNfFactor3",
+        "Hex.NumberTowerBench.runPariNfFactor4",
+        "Hex.NumberTowerBench.runPariNfFactor6",
+        "Hex.NumberTowerBench.runPariNfFactor8",
+        "Hex.NumberTowerBench.runPariNfFactor12",
+        "Hex.NumberTowerBench.runPariNfFactorOverhead",
+        "--repeats",
+        "5",
+        "--min-total-seconds",
+        "0.2",
+        "--export-file",
+        "/tmp/issue-10074-rebased-2-left.json"
+      ],
+      "export": "/tmp/issue-10074-rebased-2-left.json",
+      "preflight": {
+        "31": 0.4975124378109453,
+        "79": 0.9950248756218906
+      },
+      "postflight": {
+        "31": 100.0,
+        "79": 0.5
+      },
+      "during": [
+        {
+          "31": 100.0,
+          "79": 1.5075376884422111
+        },
+        {
+          "31": 100.0,
+          "79": 2.985074626865672
+        },
+        {
+          "31": 100.0,
+          "79": 1.0050251256281406
+        },
+        {
+          "31": 100.0,
+          "79": 50.24875621890547
+        },
+        {
+          "31": 99.5,
+          "79": 13.131313131313131
+        },
+        {
+          "31": 100.0,
+          "79": 1.0
+        },
+        {
+          "31": 100.0,
+          "79": 1.0
+        },
+        {
+          "31": 100.0,
+          "79": 3.0
+        },
+        {
+          "31": 99.50248756218906,
+          "79": 1.0
+        },
+        {
+          "31": 100.0,
+          "79": 0.5
+        },
+        {
+          "31": 100.0,
+          "79": 0.5025125628140703
+        },
+        {
+          "31": 100.0,
+          "79": 0.0
+        },
+        {
+          "31": 100.0,
+          "79": 0.9900990099009901
+        },
+        {
+          "31": 99.5,
+          "79": 0.0
+        },
+        {
+          "31": 100.0,
+          "79": 0.0
+        },
+        {
+          "31": 100.0,
+          "79": 0.0
+        },
+        {
+          "31": 100.0,
+          "79": 0.0
+        },
+        {
+          "31": 99.0,
+          "79": 12.0
+        },
+        {
+          "31": 100.0,
+          "79": 6.5
+        },
+        {
+          "31": 100.0,
+          "79": 0.0
+        },
+        {
+          "31": 99.5049504950495,
+          "79": 0.0
+        },
+        {
+          "31": 100.0,
+          "79": 0.0
+        },
+        {
+          "31": 100.0,
+          "79": 1.4851485148514851
+        },
+        {
+          "31": 100.0,
+          "79": 1.5075376884422111
+        },
+        {
+          "31": 100.0,
+          "79": 0.5025125628140703
+        },
+        {
+          "31": 98.99497487437186,
+          "79": 0.4975124378109453
+        },
+        {
+          "31": 99.5,
+          "79": 0.0
+        },
+        {
+          "31": 99.50248756218906,
+          "79": 0.0
+        },
+        {
+          "31": 100.0,
+          "79": 0.5
+        },
+        {
+          "31": 99.50248756218906,
+          "79": 0.9950248756218906
+        },
+        {
+          "31": 76.5,
+          "79": 3.0150753768844223
+        }
+      ],
+      "sibling_mean": {
+        "79": 3.350746123235313
+      },
+      "exit_code": 0,
+      "accepted": false,
+      "export_error": null
+    }
+  ],
+  "preflight_windows": [
+    {
+      "0": 26.0,
+      "1": 23.5,
+      "2": 1.9900497512437811,
+      "3": 2.5,
+      "4": 3.5,
+      "5": 1.5,
+      "6": 77.0,
+      "7": 17.5,
+      "8": 4.5,
+      "9": 1.5,
+      "10": 69.65174129353234,
+      "11": 3.0303030303030303,
+      "12": 38.5,
+      "13": 4.5,
+      "14": 8.040201005025125,
+      "15": 3.482587064676617,
+      "16": 1.5151515151515151,
+      "17": 3.9800995024875623,
+      "18": 9.045226130653266,
+      "19": 0.0,
+      "20": 0.5,
+      "21": 9.547738693467336,
+      "22": 1.0050251256281406,
+      "23": 7.575757575757576,
+      "24": 3.5,
+      "25": 9.950248756218905,
+      "26": 7.5376884422110555,
+      "27": 10.050251256281408,
+      "28": 5.025125628140704,
+      "29": 8.457711442786069,
+      "30": 0.5,
+      "31": 0.4975124378109453,
+      "32": 0.0,
+      "33": 41.08910891089109,
+      "34": 90.45226130653266,
+      "35": 1.0050251256281406,
+      "36": 41.791044776119406,
+      "37": 6.030150753768845,
+      "38": 51.243781094527364,
+      "39": 2.0,
+      "40": 6.5,
+      "41": 13.5,
+      "42": 12.0,
+      "43": 0.0,
+      "44": 4.975124378109452,
+      "45": 10.447761194029852,
+      "46": 6.0606060606060606,
+      "47": 8.0,
+      "48": 0.5025125628140703,
+      "49": 2.0,
+      "50": 1.0,
+      "51": 6.5,
+      "52": 8.5,
+      "53": 92.03980099502488,
+      "54": 2.0,
+      "55": 5.472636815920398,
+      "56": 2.5,
+      "57": 5.025125628140704,
+      "58": 2.9702970297029703,
+      "59": 1.0,
+      "60": 5.445544554455446,
+      "61": 11.557788944723619,
+      "62": 7.0,
+      "63": 1.5075376884422111,
+      "64": 2.512562814070352,
+      "65": 2.4752475247524752,
+      "66": 0.5025125628140703,
+      "67": 99.50248756218906,
+      "68": 0.5025125628140703,
+      "69": 0.0,
+      "70": 1.5,
+      "71": 4.975124378109452,
+      "72": 2.985074626865672,
+      "73": 63.81909547738694,
+      "74": 4.0,
+      "75": 1.0,
+      "76": 1.0,
+      "77": 2.0100502512562812,
+      "78": 2.487562189054726,
+      "79": 0.9950248756218906,
+      "80": 28.5,
+      "81": 9.45273631840796,
+      "82": 0.4975124378109453,
+      "83": 0.5,
+      "84": 13.06532663316583,
+      "85": 2.5,
+      "86": 1.5075376884422111,
+      "87": 12.0,
+      "88": 9.950248756218905,
+      "89": 74.0,
+      "90": 2.0100502512562812,
+      "91": 35.32338308457712,
+      "92": 0.9950248756218906,
+      "93": 2.5,
+      "94": 76.11940298507463,
+      "95": 0.5025125628140703
+    }
+  ],
+  "protocol_commit": "931b5866fdb72673b07ecdfcf6d38a69e92e66c7",
+  "script_sha256": "251b1a75f968330f30f8556851be267125bb0d866c9d8438c4597c0522e8f8b3",
+  "hostname": "chungus2",
+  "release_quality": false,
+  "pari_provider": {
+    "python": "3.14.6",
+    "pari": "(2, 17, 3)",
+    "cypari2": "2.2.4",
+    "path": "/nix/store/fgsvz1y8yyljvfpa2s2qv2jc803r2hhl-python3-3.14.6-env/bin/python"
+  },
+  "names": [
+    "Hex.NumberTowerBench.runTowerFactorPair2",
+    "Hex.NumberTowerBench.runTowerFactorPair3",
+    "Hex.NumberTowerBench.runTowerFactorPair4",
+    "Hex.NumberTowerBench.runTowerFactorPair6",
+    "Hex.NumberTowerBench.runTowerFactorPair8",
+    "Hex.NumberTowerBench.runTowerFactorPair12",
+    "Hex.NumberTowerBench.runTowerFactorLadder",
+    "Hex.NumberTowerBench.runTowerCheckFactorization",
+    "Hex.NumberTowerBench.runPariNfFactor2",
+    "Hex.NumberTowerBench.runPariNfFactor3",
+    "Hex.NumberTowerBench.runPariNfFactor4",
+    "Hex.NumberTowerBench.runPariNfFactor6",
+    "Hex.NumberTowerBench.runPariNfFactor8",
+    "Hex.NumberTowerBench.runPariNfFactor12",
+    "Hex.NumberTowerBench.runPariNfFactorOverhead"
+  ],
+  "git_status": "",
+  "cpu": 31,
+  "siblings": [
+    31,
+    79
+  ],
+  "accepted": false
+}

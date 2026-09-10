@@ -13,7 +13,7 @@ public import HexRealRoots.Isolate
 public import HexRealRoots.Refine
 -- `import all` on the executable modules so the non-`@[expose]` bodies of the
 -- isolation engines (`sturmChain`, `sturmVarAt`, `sturmVisit`, `refine1`,
--- `isolateSturm?`, `isolate?`, and the dyadic evaluation helpers) unfold here.
+-- `ZPoly.isolateSturm?`, `ZPoly.isolateRealRoots?`, and the dyadic evaluation helpers) unfold here.
 import all HexRealRootsMathlib.Separation
 import all HexRealRoots.Basic
 import all HexRealRoots.Chain
@@ -31,16 +31,16 @@ public section
 * `refine1_isolates_same`: one bisection refinement preserves the isolated root
   and halves the interval width (the fallback branch is unreachable for
   squarefree `p`).
-* `isolateSturm?_isSome`, `isolate?_isSome`: the Sturm engine (and hence the
+* `isolateSturm?_isSome`, `isolateRealRoots?_isSome`: the Sturm engine (and hence the
   top-level driver) succeeds on nonzero squarefree input (positive degree is
   the real content; a nonzero constant certifies through the empty chain).
 
-## The `±rootBound` counts match `rootCount` with no chain-element gap
+## The `±rootBound` counts match `ZPoly.rootCount` with no chain-element gap
 
 The engine seeds `sturmVisit` with the memoised counts `sturmVarAt chain (−R)`
 and `sturmVarAt chain (+R)` at `R = rootBound p`, and `assemble?` later checks
 the emitted total against `sturmVarNegInf chain − sturmVarPosInf chain =
-rootCount p`. One might worry that a *chain element* (a remainder of `(p, p')`,
+ZPoly.rootCount p`. One might worry that a *chain element* (a remainder of `(p, p')`,
 not `p` itself) could have a real root beyond `rootBound p`, so that the
 endpoint variation counts at `±R` disagree with the `±∞` counts.
 
@@ -49,7 +49,7 @@ There is no such gap. `sturmCount_eq_card_roots` proves
 **`p`** in `(−R, R]` — a statement about `p`'s roots only, with the chain
 elements' own zeros already fully accounted for by Sturm's theorem. Since
 `rootBound_bounds_roots` places every real root of `p` inside `(−R, R]`, that
-count is `rootCount p` (via `rootCount_eq_card_roots`), regardless of where the
+count is `ZPoly.rootCount p` (via `rootCount_eq_card_roots`), regardless of where the
 chain elements vanish. So the telescoping total the engine checks always
 matches, and the check never spuriously fails.
 -/
@@ -79,10 +79,10 @@ private theorem toReal_sub (a b : Dyadic) :
 squarefree `p` and `lo < mid < hi`, the count over `(lo, hi]` is the sum of the
 counts over `(lo, mid]` and `(mid, hi]`: the half-open interval splits as a
 disjoint union, and the root-filter cardinalities add. -/
-private theorem sturmCount_split (hdeg : 1 ≤ (p.degree?).getD 0)
+private theorem sturmCount_split (hdeg : 1 ≤ p.natDegree)
     (hp : Hex.ZPoly.SquareFreeRat p) {lo mid hi : Dyadic} (h1 : lo < mid) (h2 : mid < hi) :
-    Hex.sturmCount p ⟨lo, hi, dlt_trans h1 h2⟩
-      = Hex.sturmCount p ⟨lo, mid, h1⟩ + Hex.sturmCount p ⟨mid, hi, h2⟩ := by
+    Hex.ZPoly.sturmCount p ⟨lo, hi, dlt_trans h1 h2⟩
+      = Hex.ZPoly.sturmCount p ⟨lo, mid, h1⟩ + Hex.ZPoly.sturmCount p ⟨mid, hi, h2⟩ := by
   rw [sturmCount_eq_card_roots p hdeg hp, sturmCount_eq_card_roots p hdeg hp,
     sturmCount_eq_card_roots p hdeg hp]
   dsimp only
@@ -118,8 +118,8 @@ private theorem sturmCount_split (hdeg : 1 ≤ (p.degree?).getD 0)
   exact_mod_cast hnat
 
 /-- A count-`0` interval contains no real root of `p`. -/
-private theorem no_root_of_count_zero (hdeg : 1 ≤ (p.degree?).getD 0)
-    (hp : Hex.ZPoly.SquareFreeRat p) {J : Hex.DyadicInterval} (h : Hex.sturmCount p J = 0)
+private theorem no_root_of_count_zero (hdeg : 1 ≤ p.natDegree)
+    (hp : Hex.ZPoly.SquareFreeRat p) {J : Hex.DyadicInterval} (h : Hex.ZPoly.sturmCount p J = 0)
     (hP0 : toPolyℝ p ≠ 0) {r : ℝ} (hr : (toPolyℝ p).IsRoot r)
     (hlo : Dyadic.toReal J.lower < r) (hhi : r ≤ Dyadic.toReal J.upper) : False := by
   rw [sturmCount_eq_card_roots p hdeg hp] at h
@@ -160,11 +160,11 @@ theorem refine1_isolates_same (hp : Hex.ZPoly.SquareFreeRat p)
   have htlm : Dyadic.toReal lo < Dyadic.toReal m := toReal_lt_toReal_iff.mpr hlm
   have htmh : Dyadic.toReal m < Dyadic.toReal hi := toReal_lt_toReal_iff.mpr hmh
   -- The two half-counts sum to 1.
-  have hcount1 : Hex.sturmCount p ⟨lo, m, hlm⟩ + Hex.sturmCount p ⟨m, hi, hmh⟩ = 1 := by
+  have hcount1 : Hex.ZPoly.sturmCount p ⟨lo, m, hlm⟩ + Hex.ZPoly.sturmCount p ⟨m, hi, hmh⟩ = 1 := by
     rw [← sturmCount_split hdeg hp hlm hmh]; exact iso.count_one
-  have hCL0 : 0 ≤ Hex.sturmCount p ⟨lo, m, hlm⟩ := by
+  have hCL0 : 0 ≤ Hex.ZPoly.sturmCount p ⟨lo, m, hlm⟩ := by
     rw [sturmCount_eq_card_roots p hdeg hp]; exact Int.natCast_nonneg _
-  have hCR0 : 0 ≤ Hex.sturmCount p ⟨m, hi, hmh⟩ := by
+  have hCR0 : 0 ≤ Hex.ZPoly.sturmCount p ⟨m, hi, hmh⟩ := by
     rw [sturmCount_eq_card_roots p hdeg hp]; exact Int.natCast_nonneg _
   -- The refined width is half, independent of the branch.
   have hwidth_left : Dyadic.toReal (Hex.DyadicInterval.width ⟨lo, m, hlm⟩)
@@ -179,7 +179,7 @@ theorem refine1_isolates_same (hp : Hex.ZPoly.SquareFreeRat p)
     rw [toReal_sub]
     show _ = Dyadic.toReal (hi - lo) / 2
     rw [toReal_sub, toReal_midpoint]; ring
-  by_cases hCL : Hex.sturmCount p ⟨lo, m, hlm⟩ = 1
+  by_cases hCL : Hex.ZPoly.sturmCount p ⟨lo, m, hlm⟩ = 1
   · -- Left half certifies: refined interval is `(lo, m]`.
     have hCLraw : ((Hex.sturmVarAt (Hex.ZPoly.sturmChain p) iso.interval.lower : Int)
         - Hex.sturmVarAt (Hex.ZPoly.sturmChain p) iso.interval.midpoint) = 1 := hCL
@@ -188,7 +188,7 @@ theorem refine1_isolates_same (hp : Hex.ZPoly.SquareFreeRat p)
       unfold Hex.RealRootIsolation.refine1 Hex.RealRootIsolation.refine1With
       rw [dite_eq_left hlm, dite_eq_left hCLraw]
       rfl
-    have hCR : Hex.sturmCount p ⟨m, hi, hmh⟩ = 0 := by omega
+    have hCR : Hex.ZPoly.sturmCount p ⟨m, hi, hmh⟩ = 0 := by omega
     refine ⟨fun r hr => ?_, ?_⟩
     · rw [href]
       constructor
@@ -200,8 +200,8 @@ theorem refine1_isolates_same (hp : Hex.ZPoly.SquareFreeRat p)
         exact ⟨hrlo, le_trans hrhi (le_of_lt htmh)⟩
     · rw [href]; exact hwidth_left
   · -- Right half certifies: refined interval is `(m, hi]`.
-    have hCR : Hex.sturmCount p ⟨m, hi, hmh⟩ = 1 := by omega
-    have hCLz : Hex.sturmCount p ⟨lo, m, hlm⟩ = 0 := by omega
+    have hCR : Hex.ZPoly.sturmCount p ⟨m, hi, hmh⟩ = 1 := by omega
+    have hCLz : Hex.ZPoly.sturmCount p ⟨lo, m, hlm⟩ = 0 := by omega
     have hCLraw_neg : ¬((Hex.sturmVarAt (Hex.ZPoly.sturmChain p) iso.interval.lower : Int)
         - Hex.sturmVarAt (Hex.ZPoly.sturmChain p) iso.interval.midpoint) = 1 := hCL
     have hCRraw : ((Hex.sturmVarAt (Hex.ZPoly.sturmChain p) iso.interval.midpoint : Int)
@@ -222,7 +222,7 @@ theorem refine1_isolates_same (hp : Hex.ZPoly.SquareFreeRat p)
         exact ⟨lt_trans htlm hrlo, hrhi⟩
     · rw [href]; exact hwidth_right
 
-/-! # The initial interval carries all roots: `±rootBound` counts `rootCount` -/
+/-! # The initial interval carries all roots: `±rootBound` counts `ZPoly.rootCount` -/
 
 /-- `Dyadic.toReal` is negation-compatible. -/
 private theorem toReal_neg (x : Dyadic) : Dyadic.toReal (-x) = -Dyadic.toReal x := by
@@ -242,16 +242,16 @@ theorem neg_rootBound_lt_rootBound (p : Hex.ZPoly) :
   rw [← toReal_lt_toReal_iff, toReal_neg]
   have := rootBound_pos p; linarith
 
-/-- **The `±rootBound` variation gap equals `rootCount`.** The Sturm variation
+/-- **The `±rootBound` variation gap equals `ZPoly.rootCount`.** The Sturm variation
 difference between `-rootBound p` and `rootBound p` counts the real roots of `p`
-in `(-R, R]`, which is *every* real root (Cauchy bound), i.e. `rootCount p`. This
+in `(-R, R]`, which is *every* real root (Cauchy bound), i.e. `ZPoly.rootCount p`. This
 is a statement about `p`'s roots only — the chain elements' own (possibly larger)
 zeros never enter, so there is no `±R`-versus-`±∞` gap. -/
-theorem sturmVar_neg_pos_sub (hdeg : 1 ≤ (p.degree?).getD 0)
+theorem sturmVar_neg_pos_sub (hdeg : 1 ≤ p.natDegree)
     (hp : Hex.ZPoly.SquareFreeRat p) :
     (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) (-(Hex.rootBound p)) : ℤ)
       - Hex.sturmVarAt (Hex.ZPoly.sturmChain p) (Hex.rootBound p)
-      = Hex.rootCount p := by
+      = Hex.ZPoly.rootCount p := by
   have hp0 : p ≠ 0 := by
     intro hh; rw [hh] at hdeg; simp only [Hex.DensePoly.degree?_zero_getD] at hdeg; omega
   have hP0 : toPolyℝ p ≠ 0 := fun h => hp0 (toPolyℝ_eq_zero_iff.mp h)
@@ -303,10 +303,11 @@ private theorem toReal_le_two_pow_ceilLog2Dyadic (x : Dyadic) (hx : 0 < Dyadic.t
 /-- **The initial interval's width fits the depth budget.** For positive-degree
 `p`, `2 · rootBound p ≤ 2 ^ (isolationDepth p − sepPrec p)`, which is the
 depth-sufficiency hypothesis the `sturmVisit` induction consumes at the top. -/
-theorem initial_width_le (p : Hex.ZPoly) (hdeg : 1 ≤ (p.degree?).getD 0) :
+theorem initial_width_le (p : Hex.ZPoly) (hdeg : 1 ≤ p.natDegree) :
     Dyadic.toReal (Hex.rootBound p) - Dyadic.toReal (-(Hex.rootBound p))
       ≤ (2 : ℝ) ^ ((Hex.isolationDepth p : ℤ) - (Hex.sepPrec p : ℤ)) := by
   obtain ⟨d, hd⟩ : ∃ d, p.degree? = some (d + 1) := by
+    rw [Hex.DensePoly.natDegree_eq_degree?_getD] at hdeg
     rcases hh : p.degree? with _ | n
     · rw [hh] at hdeg; simp at hdeg
     · rcases n with _ | m
@@ -347,12 +348,12 @@ theorem dle_trans {a b c : Dyadic} (h1 : a ≤ b) (h2 : b ≤ c) : a ≤ c :=
 
 /-- `sturmVarAt` is antitone in the point: the count over `(a, b]` is a
 nonnegative cardinality, so the variation at `b` is at most the one at `a`. -/
-theorem sturmVarAt_le (hdeg : 1 ≤ (p.degree?).getD 0)
+theorem sturmVarAt_le (hdeg : 1 ≤ p.natDegree)
     (hp : Hex.ZPoly.SquareFreeRat p) {a b : Dyadic} (hab : a < b) :
     Hex.sturmVarAt (Hex.ZPoly.sturmChain p) b
       ≤ Hex.sturmVarAt (Hex.ZPoly.sturmChain p) a := by
   have h := sturmCount_eq_card_roots p hdeg hp ⟨a, b, hab⟩
-  have hid : Hex.sturmCount p ⟨a, b, hab⟩
+  have hid : Hex.ZPoly.sturmCount p ⟨a, b, hab⟩
       = (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) a : ℤ)
         - Hex.sturmVarAt (Hex.ZPoly.sturmChain p) b := rfl
   rw [hid] at h
@@ -375,11 +376,11 @@ theorem isRoot_toPolyℂ {r : ℝ} (hr : (toPolyℝ p).IsRoot r) :
 holds at most one real root of a positive-degree squarefree `p` (two distinct
 real roots are more than `4·2^(−sepPrec p)` apart by `sepPrec_separates'`), so
 its exact Sturm count is at most `1`. -/
-theorem sturmCount_le_one (hdeg : 1 ≤ (p.degree?).getD 0)
+theorem sturmCount_le_one (hdeg : 1 ≤ p.natDegree)
     (hp : Hex.ZPoly.SquareFreeRat p) (J : Hex.DyadicInterval)
     (hw : Dyadic.toReal J.upper - Dyadic.toReal J.lower
       ≤ (2 : ℝ) ^ (-(Hex.sepPrec p : ℤ))) :
-    Hex.sturmCount p J ≤ 1 := by
+    Hex.ZPoly.sturmCount p J ≤ 1 := by
   have hp0 : p ≠ 0 := by
     intro hh; rw [hh] at hdeg; simp only [Hex.DensePoly.degree?_zero_getD] at hdeg; omega
   rw [sturmCount_eq_card_roots p hdeg hp J]
@@ -434,7 +435,7 @@ Structural induction on `depth`:
   bisection emits `left ++ right` with every left interval's upper `≤ mid` and
   every right interval's lower `≥ mid`, so the concatenation stays sorted and
   inside `(lo, hi]`. -/
-private theorem sturmVisit_spec (hdeg : 1 ≤ (p.degree?).getD 0)
+private theorem sturmVisit_spec (hdeg : 1 ≤ p.natDegree)
     (hp : Hex.ZPoly.SquareFreeRat p) :
     ∀ (depth : Nat) (lo hi : Dyadic) (vlo vhi : Nat),
       vlo = Hex.sturmVarAt (Hex.ZPoly.sturmChain p) lo →
@@ -495,7 +496,7 @@ private theorem sturmVisit_spec (hdeg : 1 ≤ (p.degree?).getD 0)
       · -- `count ≥ 2` at depth `0`: refuted by the separation bound.
         exfalso
         have hle := sturmVarAt_le hdeg hp hlt
-        have hcle : Hex.sturmCount p ⟨lo, hi, hlt⟩ ≤ 1 := sturmCount_le_one hdeg hp _ hw
+        have hcle : Hex.ZPoly.sturmCount p ⟨lo, hi, hlt⟩ ≤ 1 := sturmCount_le_one hdeg hp _ hw
         have hcle' : (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) lo : ℤ)
             - Hex.sturmVarAt (Hex.ZPoly.sturmChain p) hi ≤ 1 := hcle
         omega
@@ -626,18 +627,18 @@ theorem assemble?_isSome {chain : Array Hex.ZPoly}
   rw [dite_eq_left hord, dite_eq_left hsize]
   rfl
 
-/-- `isolateSturm?` on positive-degree squarefree input is the top `sturmVisit`
+/-- `ZPoly.isolateSturm?` on positive-degree squarefree input is the top `sturmVisit`
 run handed to `assemble?`. -/
 private theorem isolateSturm?_eq {d : Nat} (hd : p.degree? = some (d + 1))
     (hp : Hex.ZPoly.SquareFreeRat p) :
-    Hex.isolateSturm? p =
+    Hex.ZPoly.isolateSturm? p =
       (match Hex.sturmVisit p (Hex.ZPoly.sturmChain p) rfl (Hex.isolationDepth p)
           (-(Hex.rootBound p)) (Hex.rootBound p)
           (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) (-(Hex.rootBound p)))
           (Hex.sturmVarAt (Hex.ZPoly.sturmChain p) (Hex.rootBound p)) with
         | none => none
         | some arr => Hex.assemble? p (Hex.ZPoly.sturmChain p) rfl arr) := by
-  unfold Hex.isolateSturm?
+  unfold Hex.ZPoly.isolateSturm?
   simp only [hd]
   rw [ite_eq_left hp]
   rfl
@@ -646,11 +647,12 @@ private theorem isolateSturm?_eq {d : Nat} (hd : p.degree? = some (d + 1))
 
 /-- The positive-degree core of `isolateSturm?_isSome`: the worklist drains
 (`sturmVisit_spec`) and the emitted total matches
-`rootCount p = sturmVarNegInf − sturmVarPosInf` (the `±rootBound` gap counts
+`ZPoly.rootCount p = sturmVarNegInf − sturmVarPosInf` (the `±rootBound` gap counts
 every root, `sturmVar_neg_pos_sub`), so `assemble?` certifies. -/
-private theorem isolateSturm?_isSome_of_degree_pos (hdeg : 1 ≤ (p.degree?).getD 0)
-    (hp : Hex.ZPoly.SquareFreeRat p) : (Hex.isolateSturm? p).isSome := by
+private theorem isolateSturm?_isSome_of_degree_pos (hdeg : 1 ≤ p.natDegree)
+    (hp : Hex.ZPoly.SquareFreeRat p) : (Hex.ZPoly.isolateSturm? p).isSome := by
   obtain ⟨d, hd⟩ : ∃ d, p.degree? = some (d + 1) := by
+    rw [Hex.DensePoly.natDegree_eq_degree?_getD] at hdeg
     rcases hh : p.degree? with _ | n
     · rw [hh] at hdeg; simp at hdeg
     · rcases n with _ | m
@@ -665,7 +667,7 @@ private theorem isolateSturm?_isSome_of_degree_pos (hdeg : 1 ≤ (p.degree?).get
   have hInt := sturmVar_neg_pos_sub hdeg hp
   have hsize' : arr.size = Hex.sturmVarNegInf (Hex.ZPoly.sturmChain p)
       - Hex.sturmVarPosInf (Hex.ZPoly.sturmChain p) := by
-    have hrc : Hex.rootCount p = Hex.sturmVarNegInf (Hex.ZPoly.sturmChain p)
+    have hrc : Hex.ZPoly.rootCount p = Hex.sturmVarNegInf (Hex.ZPoly.sturmChain p)
         - Hex.sturmVarPosInf (Hex.ZPoly.sturmChain p) := rfl
     rw [hsize, ← hrc]; omega
   rw [isolateSturm?_eq hd hp, hvisit]
@@ -673,11 +675,11 @@ private theorem isolateSturm?_isSome_of_degree_pos (hdeg : 1 ≤ (p.degree?).get
 
 /-- The Sturm engine on a nonzero constant: the driver's `some 0` branch hands
 `assemble?` the empty emission array, and the empty chain certifies
-`rootCount p = 0` (`sturmVarNegInf #[] − sturmVarPosInf #[] = 0`). -/
+`ZPoly.rootCount p = 0` (`sturmVarNegInf #[] − sturmVarPosInf #[] = 0`). -/
 private theorem isolateSturm?_isSome_of_degree_zero (hd : p.degree? = some 0) :
-    (Hex.isolateSturm? p).isSome := by
-  have heq : Hex.isolateSturm? p = Hex.assemble? p (Hex.ZPoly.sturmChain p) rfl #[] := by
-    unfold Hex.isolateSturm?
+    (Hex.ZPoly.isolateSturm? p).isSome := by
+  have heq : Hex.ZPoly.isolateSturm? p = Hex.assemble? p (Hex.ZPoly.sturmChain p) rfl #[] := by
+    unfold Hex.ZPoly.isolateSturm?
     rw [hd]
   have hchain0 : Hex.ZPoly.sturmChain p = #[] := by
     unfold Hex.ZPoly.sturmChain
@@ -695,23 +697,24 @@ is the real content (`isolateSturm?_isSome_of_degree_pos`); a nonzero constant
 certifies through the empty chain.
 
 The `p ≠ 0` hypothesis is necessary because `SquareFreeRat 0` is vacuous while
-`isolateSturm? 0 = none`. -/
+`ZPoly.isolateSturm? 0 = none`. -/
 theorem isolateSturm?_isSome (p : Hex.ZPoly) (hp0 : p ≠ 0)
-    (hp : Hex.ZPoly.SquareFreeRat p) : (Hex.isolateSturm? p).isSome := by
+    (hp : Hex.ZPoly.SquareFreeRat p) : (Hex.ZPoly.isolateSturm? p).isSome := by
   rcases hd : p.degree? with _ | n
   · exact absurd hd (degree?_ne_none hp0)
   · rcases n with _ | n
     · exact isolateSturm?_isSome_of_degree_zero hd
-    · exact isolateSturm?_isSome_of_degree_pos (by simp [hd]) hp
+    · exact isolateSturm?_isSome_of_degree_pos
+        (by simp [Hex.DensePoly.natDegree_eq_degree?_getD, hd]) hp
 
 /-- **The top-level driver succeeds on nonzero squarefree input.** A one-liner
-over `isolateSturm?_isSome`: `isolate?` keeps whichever engine's certified
+over `isolateSturm?_isSome`: `ZPoly.isolateRealRoots?` keeps whichever engine's certified
 output arrives first, and the Sturm engine always has one. -/
-theorem isolate?_isSome (p : Hex.ZPoly) (hp0 : p ≠ 0)
-    (hp : Hex.ZPoly.SquareFreeRat p) : (Hex.isolate? p).isSome := by
+theorem isolateRealRoots?_isSome (p : Hex.ZPoly) (hp0 : p ≠ 0)
+    (hp : Hex.ZPoly.SquareFreeRat p) : (Hex.ZPoly.isolateRealRoots? p).isSome := by
   have hs := isolateSturm?_isSome p hp0 hp
-  unfold Hex.isolate?
-  cases hD : Hex.isolateDescartes? p with
+  unfold Hex.ZPoly.isolateRealRoots?
+  cases hD : Hex.ZPoly.isolateDescartes? p with
   | some a => rfl
   | none => rw [hD] at *; simpa using hs
 

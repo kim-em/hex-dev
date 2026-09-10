@@ -31,7 +31,7 @@ degree of the ambient nonzero polynomial.
 -/
 theorem natDegree_toPolynomial_le_degree_getD_of_dvd
     (f g : Hex.ZPoly) (hf : f ≠ 0) (hgf : g ∣ f) :
-    (HexPolyZMathlib.toPolynomial g).natDegree ≤ f.degree?.getD 0 := by
+    (HexPolyZMathlib.toPolynomial g).natDegree ≤ f.natDegree := by
   have hf_poly : HexPolyZMathlib.toPolynomial f ≠ 0 := by
     intro h
     apply hf
@@ -79,7 +79,7 @@ theorem defaultFactorCoeffBound_valid
   have hgf_poly : HexPolyZMathlib.toPolynomial g ∣ HexPolyZMathlib.toPolynomial f :=
     HexPolyMathlib.toPolynomial_dvd hgf
   have hdegree :
-      (HexPolyZMathlib.toPolynomial g).natDegree ≤ f.degree?.getD 0 :=
+      (HexPolyZMathlib.toPolynomial g).natDegree ≤ f.natDegree :=
     natDegree_toPolynomial_le_degree_getD_of_dvd f g hf hgf
   have hcoeff_eq : (HexPolyZMathlib.toPolynomial g).coeff i = g.coeff i :=
     HexPolyZMathlib.coeff_toPolynomial g i
@@ -153,7 +153,7 @@ theorem cofactorCoeff_le_defaultBound
   intro i
   have hfactor_dvd : factor ∣ core := ⟨cofactor, hproduct.symm⟩
   have hdegree :
-      (HexPolyZMathlib.toPolynomial factor).natDegree ≤ core.degree?.getD 0 :=
+      (HexPolyZMathlib.toPolynomial factor).natDegree ≤ core.natDegree :=
     natDegree_toPolynomial_le_degree_getD_of_dvd
       core factor hcore_ne hfactor_dvd
   have hpoly_product :

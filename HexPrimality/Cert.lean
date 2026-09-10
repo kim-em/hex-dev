@@ -197,22 +197,22 @@ theorem boundedPowMul_eq {bound q : Nat} :
       intro acc r h
       unfold boundedPowMul at h
       by_cases ha : acc = 0
-      · rw [if_pos ha] at h
+      · rw [ite_eq_left ha] at h
         injection h with h
         subst h
         simp [ha]
-      · rw [if_neg ha] at h
+      · rw [ite_eq_right ha] at h
         by_cases hq : q = 0
-        · rw [if_pos hq] at h
+        · rw [ite_eq_left hq] at h
           injection h with h
           subst h
           simp [hq]
-        · rw [if_neg hq] at h
+        · rw [ite_eq_right hq] at h
           by_cases hb : acc ≤ bound / q
-          · rw [if_pos hb] at h
+          · rw [ite_eq_left hb] at h
             rw [ih (acc * q) r h, Nat.pow_succ, Nat.mul_assoc,
               Nat.mul_comm q (q ^ e)]
-          · rw [if_neg hb] at h
+          · rw [ite_eq_right hb] at h
             cases h
 
 /-- A successful bounded multiplication preserves the accumulator bound. The
@@ -228,21 +228,21 @@ theorem boundedPowMul_le {bound q acc e r : Nat} (hacc : acc ≤ bound)
   | succ e ih =>
       unfold boundedPowMul at h
       by_cases ha : acc = 0
-      · rw [if_pos ha] at h
+      · rw [ite_eq_left ha] at h
         injection h with h
         subst h
         exact Nat.zero_le _
-      · rw [if_neg ha] at h
+      · rw [ite_eq_right ha] at h
         by_cases hq : q = 0
-        · rw [if_pos hq] at h
+        · rw [ite_eq_left hq] at h
           injection h with h
           subst h
           exact Nat.zero_le _
-        · rw [if_neg hq] at h
+        · rw [ite_eq_right hq] at h
           by_cases hb : acc ≤ bound / q
-          · rw [if_pos hb] at h
+          · rw [ite_eq_left hb] at h
             exact ih ((Nat.le_div_iff_mul_le (Nat.pos_of_ne_zero hq)).mp hb) h
-          · rw [if_neg hb] at h
+          · rw [ite_eq_right hb] at h
             cases h
 
 /-- A successful certificate product is bounded when its initial accumulator
@@ -380,21 +380,6 @@ private theorem checkChildren_forall :
       · exact ih h.2 x hx'
 
 /-! Prime-power combination -/
-
-private theorem prime_dvd_pow {p a : Nat} (hp : Prime p) :
-    ∀ {k : Nat}, p ∣ a ^ k → p ∣ a := by
-  intro k
-  induction k with
-  | zero =>
-      intro h
-      rw [Nat.pow_zero] at h
-      exact absurd (Nat.dvd_one.mp h) (by have := hp.two_le; omega)
-  | succ k ih =>
-      intro h
-      rw [Nat.pow_succ] at h
-      rcases (hp.dvd_mul).mp h with h' | h'
-      · exact ih h'
-      · exact h'
 
 private theorem prime_eq_of_dvd {p q : Nat} (hp : Prime p) (hq : Prime q)
     (h : p ∣ q) : p = q := by
@@ -635,6 +620,20 @@ private theorem checkPock3Arith_spec {n r s w : Nat}
     · exact Or.inl hs0
     · exact Or.inr (Or.inl hlt)
     · exact Or.inr (Or.inr (not_square_of_sqrt_witness hw1 hw2))
+
+/-- Pocklington replay with separately proved child primes. This permits a
+certificate generator to share child proofs across many parent certificates.
+Only each child's subject is used; `checkPockArith` validates the parent
+arithmetic, factor ordering and witnesses. The `PrimeCert` payload is ignored
+apart from its subject: a `.small q` here is not checked against the table.
+The separate `hprimes` hypothesis must prove that `q` is prime. -/
+theorem prime_of_pocklington {n : Nat}
+    {factors : List (Nat × Nat × PrimeCert)}
+    (hcheck : checkPockArith n factors = true)
+    (hprimes : ∀ x ∈ factors, Prime x.2.2.subject) : Prime n := by
+  obtain ⟨h2, hodd, hsub, F, hFprod, hFdvd, hFF, hwit⟩ :=
+    checkPockArith_spec hcheck
+  exact pocklington h2 hodd hFdvd hFF hprimes hsub hFprod hwit
 
 private theorem prime_of_checkPrime_aux :
     ∀ N c, PrimeCert.subject c = N → checkPrime c = true → Prime N := by

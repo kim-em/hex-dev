@@ -58,7 +58,7 @@ private theorem derivative_pointFactor (a : F) : derivative (pointFactor a) = 1 
   by_cases hi : i = 0
   · subst i
     simp only [Nat.zero_add, ↓reduceIte]
-    rw [HexPoly.ite_eq_right Nat.one_ne_zero]
+    rw [ite_eq_right Nat.one_ne_zero]
     rw [Lean.Grind.Semiring.natCast_one, Lean.Grind.Semiring.one_mul,
       Lean.Grind.Ring.sub_eq_add_neg]
     change (1 : F) + -(0 : F) = 1
@@ -66,7 +66,7 @@ private theorem derivative_pointFactor (a : F) : derivative (pointFactor a) = 1 
   · have hsucc : i + 1 ≠ 1 := by omega
     simp only [hsucc, hi, ↓reduceIte]
     have hpos : i + 1 ≠ 0 := by omega
-    rw [HexPoly.ite_eq_right hpos]
+    rw [ite_eq_right hpos]
     have hz : (0 : F) - 0 = 0 := SubZeroLaw.sub_zero_zero
     change ((i + 1 : Nat) : F) * ((0 : F) - 0) = 0
     rw [hz, Lean.Grind.Semiring.mul_zero]
@@ -301,9 +301,9 @@ private theorem eq_zero_of_roots (mul : MulPlan F) (points : List F)
         rw [DivPlan.divisor_ofMonic, DivPlan.capacity_ofMonic]
         rw [quotientLength_eq, hfactorSize]
         by_cases hp : p.size < 2
-        · rw [_root_.ite_eq_left (by simp [hp])]
+        · rw [ite_eq_left (by simp [hp])]
           omega
-        · rw [_root_.ite_eq_right (by simp [hp])]
+        · rw [ite_eq_right (by simp [hp])]
           omega
       have hrsize : (div.mod p hcap).size ≤ 1 := by
         have h := div.size_mod_le p hcap
@@ -339,9 +339,9 @@ private theorem eq_zero_of_roots (mul : MulPlan F) (points : List F)
         rw [hdivisor] at hq
         rw [quotientLength_eq, hfactorSize] at hq
         by_cases hp : p.size < 2
-        · rw [_root_.ite_eq_left (by simp [hp])] at hq
+        · rw [ite_eq_left (by simp [hp])] at hq
           omega
-        · rw [_root_.ite_eq_right (by simp [hp])] at hq
+        · rw [ite_eq_right (by simp [hp])] at hq
           omega
       have hqroots : ∀ b, b ∈ rest → (div.quotient p hcap).eval b = 0 := by
         intro b hb
@@ -489,7 +489,7 @@ theorem interpolate?_sound (plan : InterpPlan F) (values : Array F)
       rw [hsome] at this
       contradiction
   unfold interpolate? at hsome
-  rw [_root_.ite_eq_left hcount] at hsome
+  rw [ite_eq_left hcount] at hsome
   cases hnode : plan.nodeData with
   | none =>
       have hempty := plan.emptyData hnode

@@ -589,7 +589,7 @@ theorem ofPolynomial_mul [Semiring R] [DecidableEq R] (p q : Polynomial R) :
 with the zero polynomial mapping to `0`. -/
 @[simp, grind =]
 theorem natDegree_toPolynomial [Semiring R] [DecidableEq R] (p : Hex.DensePoly R) :
-    (toPolynomial p).natDegree = p.degree?.getD 0 := by
+    (toPolynomial p).natDegree = p.natDegree := by
   by_cases hsize : p.size = 0
   · have hp_zero : p = 0 := by
       apply Hex.DensePoly.ext_coeff
@@ -597,11 +597,9 @@ theorem natDegree_toPolynomial [Semiring R] [DecidableEq R] (p : Hex.DensePoly R
       rw [Hex.DensePoly.coeff_zero]
       exact Hex.DensePoly.coeff_eq_zero_of_size_le p (by omega)
     rw [hp_zero, toPolynomial_zero, Polynomial.natDegree_zero]
-    simp [Hex.DensePoly.degree?]
+    simp [Hex.DensePoly.natDegree, Hex.DensePoly.degree?]
   · have hpos : 0 < p.size := Nat.pos_of_ne_zero hsize
-    have hdegree_some : p.degree? = some (p.size - 1) := by
-      simp [Hex.DensePoly.degree?, hsize]
-    rw [hdegree_some, Option.getD_some]
+    rw [Hex.DensePoly.natDegree_eq_size_sub_one]
     apply le_antisymm
     · apply Polynomial.natDegree_le_iff_coeff_eq_zero.mpr
       intro N hN
@@ -627,9 +625,7 @@ theorem leadingCoeff_toPolynomial [Semiring R] [DecidableEq R]
     rw [hp_zero]
     simp [Hex.DensePoly.coeff_zero]
   · have hpos : 0 < p.size := Nat.pos_of_ne_zero hsize
-    have hdegree_some : p.degree? = some (p.size - 1) := by
-      simp [Hex.DensePoly.degree?, hsize]
-    rw [hdegree_some, Option.getD_some]
+    rw [Hex.DensePoly.natDegree_eq_size_sub_one]
     show p.coeff (p.size - 1) = p.leadingCoeff
     simp [Hex.DensePoly.leadingCoeff, Hex.DensePoly.coeff, Hex.DensePoly.size]
 
@@ -676,7 +672,7 @@ private theorem coeff_hornerList [Semiring R] : ∀ (l : List R) (n : ℕ),
       cases n with
       | zero => simp
       | succ m =>
-          rw [Polynomial.coeff_add, Polynomial.coeff_C, if_neg (Nat.succ_ne_zero m),
+          rw [Polynomial.coeff_add, Polynomial.coeff_C, ite_eq_right (Nat.succ_ne_zero m),
             Polynomial.coeff_X_mul, coeff_hornerList cs m, zero_add, List.getD_cons_succ]
 
 /-- Composition pushes through the Horner fold: substituting `M` for `X` turns

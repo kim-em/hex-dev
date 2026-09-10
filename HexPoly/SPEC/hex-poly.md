@@ -15,12 +15,37 @@ The normalization invariant (no trailing zeros) ensures structural equality
 The polynomial literal `#p[a₀, a₁, ...]` abbreviates
 `DensePoly.ofCoeffs #[a₀, a₁, ...]`. Coefficients are listed in ascending
 degree order, and the expected polynomial type determines the coefficient
-type. As with `ofCoeffs`, trailing zero coefficients are removed.
+type. As with `ofCoeffs`, trailing zero coefficients are removed. A polynomial prints, through its `Repr` instance, as that same literal,
+so a printed value can be pasted back.
 
 - Index = degree, `coeffs[i]` is coefficient of `x^i`
 - Normalization invariant: no trailing zeros
 - Structural equality = semantic equality
 - O(1) degree, O(1) coefficient access
+
+**Degree.** `degree?` returns `none` for the zero polynomial and otherwise the
+index of the leading coefficient. `natDegree` is `degree?` with the zero case
+defaulted to `0`, matching Mathlib's `Polynomial.natDegree`, and is the form
+every caller should use unless it must distinguish the zero polynomial:
+
+```lean
+namespace Hex.DensePoly
+
+abbrev natDegree (p : DensePoly R) : Nat := p.degree?.getD 0
+
+theorem natDegree_eq_degree?_getD (p : DensePoly R) :
+    p.natDegree = p.degree?.getD 0
+theorem natDegree_eq_size_sub_one (p : DensePoly R) :
+    p.natDegree = p.size - 1
+@[simp] theorem natDegree_zero : (0 : DensePoly R).natDegree = 0
+
+end Hex.DensePoly
+```
+
+It is a reducible abbreviation rather than a definition so that statements
+phrased either way stay definitionally equal, which keeps the `degree?` lemmas
+usable without a transport step. `hex-sparse-poly`, `hex-gf2` and
+`hex-number-field` carry the same `natDegree` over their own degree functions.
 
 **Operations:**
 - Addition, negation, subtraction, multiplication. `mul` is the schoolbook
@@ -77,6 +102,22 @@ exact-division instances remain in their owning downstream libraries.
 - `gcd f g` divides both `f` and `g`
 - Every common divisor of `f` and `g` divides `gcd f g`
 - Bezout: `∃ a b, a * f + b * g = gcd f g`
+
+**Coprimality over a lightweight field.** `HexPoly.Coprime` exports
+`DensePoly.Coprime p q := ∃ s t, s*p + t*q = 1` and `coprime_iff`, identifying
+this witness condition with `monicize (gcd p q) = 1`. The monic associate is
+essential: the Euclidean algorithm need not choose a monic gcd.
+The interface includes symmetry, descent along divisibility, the coprime
+divisibility lemma, stability under products and powers, and rescaling by a
+nonzero field element. `coprime_cofactors` proves coprimality after exact
+division by the monic gcd. These are proof-only APIs; they do not change
+polynomial arithmetic or install a new coefficient instance.
+
+Supporting field lemmas cover monicity of one and powers, monicity of exact
+cofactors, nonzero leading coefficients, polynomial cancellation and nonzero
+products, divisibility transitivity, and scaling as multiplication by a constant.
+Names such as `DensePoly.mul_ne_zero` refer to polynomial multiplication;
+Mathlib-facing proofs about scalar products can qualify `_root_.mul_ne_zero`.
 
 **Existential CRT for polynomials** (corollary of Bezout):
 

@@ -44,12 +44,12 @@ theorem foldl_add_toNat_mod {p : Nat} [ZMod64.Bounds p]
   | cons x xs ih =>
       simp only [List.foldl_cons]
       by_cases hP : P x
-      · rw [if_pos hP, if_pos hP]
+      · rw [ite_eq_left hP, ite_eq_left hP]
         refine ih (init + f x) (initN + g x) ?_
         have h1 : (init + f x).toNat = (init.toNat + (f x).toNat) % p :=
           ZMod64.toNat_add init (f x)
         rw [h1, hinit, hfg, ← Nat.add_mod]
-      · rw [if_neg hP, if_neg hP]
+      · rw [ite_eq_right hP, ite_eq_right hP]
         exact ih init initN hinit
 
 namespace FpPoly
@@ -145,7 +145,7 @@ private theorem foldl_if_false {α β : Type} (l : List α) (P : α → Prop) [D
   induction l generalizing init with
   | nil => rfl
   | cons x xs ih =>
-      rw [List.foldl_cons, if_neg (h x (List.mem_cons_self)), ih init
+      rw [List.foldl_cons, ite_eq_right (h x (List.mem_cons_self)), ih init
         (fun i hi => h i (List.mem_cons_of_mem x hi))]
 
 /-- The word-level per-coefficient `Nat` sum, over packed words. -/
@@ -165,7 +165,7 @@ private theorem convGetD_mod (a b : FpPoly p) (k : Nat) :
   have hpsize : p < UInt64.word := ZMod64.Bounds.pLtWord p
   by_cases hab : (toWords a.toArray).size = 0 ∨ (toWords b.toArray).size = 0
   · have hconv : fpConvolve (toWords a.toArray) (toWords b.toArray) (UInt64.ofNat p) = #[] := by
-      unfold fpConvolve; rw [if_pos hab]
+      unfold fpConvolve; rw [ite_eq_left hab]
     have hzero : natFoldW a b k = 0 := by
       unfold natFoldW
       rcases hab with hA | hB
@@ -179,11 +179,11 @@ private theorem convGetD_mod (a b : FpPoly p) (k : Nat) :
     · have hconv : (fpConvolve (toWords a.toArray) (toWords b.toArray) (UInt64.ofNat p)).getD k 0 =
           convolveCoeff (toWords a.toArray) (toWords b.toArray) (UInt64.ofNat p) k := by
         unfold fpConvolve
-        rw [if_neg (not_or.mpr ⟨hA, hB⟩)]
+        rw [ite_eq_right (not_or.mpr ⟨hA, hB⟩)]
         simp only [Array.getD_eq_getD_getElem?, Array.getElem?_map, Array.getElem?_range]
         have hk' : k < (toWords a.toArray).size + (toWords b.toArray).size - 1 := hk
         simp only [toWords_size, DensePoly.toArray_size] at hk' ⊢
-        rw [if_pos hk']
+        rw [ite_eq_left hk']
         rfl
       rw [hconv]
       unfold convolveCoeff natFoldW
@@ -191,9 +191,9 @@ private theorem convGetD_mod (a b : FpPoly p) (k : Nat) :
         Nat.mod_eq_of_lt (Nat.lt_of_lt_of_le (Nat.mod_lt _ hp0) (Nat.le_of_lt hpsize)), Nat.mod_mod]
     · have hget : (fpConvolve (toWords a.toArray) (toWords b.toArray) (UInt64.ofNat p)).getD k 0 = 0 := by
         unfold fpConvolve
-        rw [if_neg (not_or.mpr ⟨hA, hB⟩)]
+        rw [ite_eq_right (not_or.mpr ⟨hA, hB⟩)]
         simp only [Array.getD_eq_getD_getElem?, Array.getElem?_map, Array.getElem?_range]
-        rw [if_neg (by omega)]
+        rw [ite_eq_right (by omega)]
         rfl
       have hzero : natFoldW a b k = 0 :=
         foldl_if_false _ _ _ _ (fun i hi => by
@@ -209,6 +209,31 @@ theorem mulPacked_eq (a b : FpPoly p) : mulPacked a b = a * b := by
   rw [DensePoly.coeff_ofCoeffs, ofWords_getD, ZMod64.ofNat_eq_ofNat_iff_mod_eq,
     ← convolveFold_eq a b k]
   exact convGetD_mod a b k
+
+/-- Shorter-size threshold below which generic schoolbook multiplication beats
+the packed lazy-reduction setup.  The forced `F_257` and `F_65537` ladders both
+cross between 8 and 16 coefficients per operand. -/
+@[expose] def packedCutoff : Nat := 16
+
+/-- Total finite-field multiplication for the published consumers: generic
+schoolbook multiplication below `packedCutoff` coefficients in the shorter
+operand, the packed lazy-reduction kernel above it.  This is the `mulFast`
+dispatcher without its auxiliary-prime NTT and Karatsuba tail, which lives in
+`HexPolyFp.NttMul` and depends on libraries that are not yet published; every
+measured consumer size sits below that tail's 8192-coefficient crossover. -/
+def mulPackedFast (left right : FpPoly p) : FpPoly p :=
+  if min left.size right.size < packedCutoff then
+    left * right
+  else
+    mulPacked left right
+
+/-- The published dispatcher agrees with schoolbook multiplication. -/
+theorem mulPackedFast_eq (left right : FpPoly p) :
+    mulPackedFast left right = left * right := by
+  unfold mulPackedFast
+  split
+  · rfl
+  · exact mulPacked_eq left right
 
 end FpPoly
 end Hex

@@ -43,12 +43,20 @@ def y : P := X 1
 - Deterministic PRS fallback plus heuristic and Brown modular producers.
 - Named-variable content through `contentIn` and `primPartIn`.
 - Square-free decomposition, radical, and square-freeness tests.
+  Differentiation uses the coefficient ring's natural-number cast;
+  decomposition and radical require characteristic zero for that ring.
 
 # Verification
 
 Candidate producers never establish correctness by themselves. Every public
-gcd is extracted from a certificate accepted by `checkGcd`; replay proves the
-two exact cofactor identities and the greatest-common-divisor property.
+gcd is extracted from a certificate accepted by `checkGcd`. The checker
+soundness theorems specify the two exact cofactor identities and the
+greatest-common-divisor property; their remaining proof gaps are tracked in
+[#10082](https://github.com/kim-em/hex-dev/issues/10082).
+
+Rational lifts carry ordinary integer certificates and replay them with
+canonical integer arithmetic. Certificates cannot replace those operations
+or nest another rational lift inside the integer evidence.
 
 ```lean
 theorem gcd_dvd_left (f g : P) : gcd f g ∣ f

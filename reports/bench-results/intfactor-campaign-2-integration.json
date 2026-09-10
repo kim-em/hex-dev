@@ -1,0 +1,137 @@
+{
+  "command": [
+    "-"
+  ],
+  "commands": [
+    {
+      "command": [
+        "python3",
+        "scripts/check_phase4.py"
+      ],
+      "elapsed_nanos": 113824641,
+      "ended_ns": 1788785042397479301,
+      "executable": "/run/current-system/sw/bin/python3",
+      "executable_sha256": "f388dd7721f9cb054e312771bdda00af4c79222fed5591b9ee22c87c133fc25b",
+      "returncode": 0,
+      "started_ns": 1788785042283350118,
+      "status": "completed",
+      "stderr": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-campaign-2-integration.json.attempt/command-0000.stderr",
+      "stdin": null,
+      "stdout": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-campaign-2-integration.json.attempt/command-0000.stdout",
+      "timeout_seconds": 120
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/check_dag.py"
+      ],
+      "elapsed_nanos": 4419142649,
+      "ended_ns": 1788785046817541352,
+      "executable": "/run/current-system/sw/bin/python3",
+      "executable_sha256": "f388dd7721f9cb054e312771bdda00af4c79222fed5591b9ee22c87c133fc25b",
+      "returncode": 0,
+      "started_ns": 1788785042398116525,
+      "status": "completed",
+      "stderr": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-campaign-2-integration.json.attempt/command-0001.stderr",
+      "stdin": null,
+      "stdout": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-campaign-2-integration.json.attempt/command-0001.stdout",
+      "timeout_seconds": 120
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/check_phase7.py"
+      ],
+      "elapsed_nanos": 63709417,
+      "ended_ns": 1788785046882644564,
+      "executable": "/run/current-system/sw/bin/python3",
+      "executable_sha256": "f388dd7721f9cb054e312771bdda00af4c79222fed5591b9ee22c87c133fc25b",
+      "returncode": 0,
+      "started_ns": 1788785046818639238,
+      "status": "completed",
+      "stderr": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-campaign-2-integration.json.attempt/command-0002.stderr",
+      "stdin": null,
+      "stdout": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-campaign-2-integration.json.attempt/command-0002.stdout",
+      "timeout_seconds": 120
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/bench/check_factor_sweep_freshness.py"
+      ],
+      "elapsed_nanos": 213868104,
+      "ended_ns": 1788785047097171274,
+      "executable": "/run/current-system/sw/bin/python3",
+      "executable_sha256": "f388dd7721f9cb054e312771bdda00af4c79222fed5591b9ee22c87c133fc25b",
+      "returncode": 0,
+      "started_ns": 1788785046883054732,
+      "status": "completed",
+      "stderr": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-campaign-2-integration.json.attempt/command-0003.stderr",
+      "stdin": null,
+      "stdout": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-campaign-2-integration.json.attempt/command-0003.stdout",
+      "timeout_seconds": 120
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/bench/check_graphiso_sweep_freshness.py"
+      ],
+      "elapsed_nanos": 63729256,
+      "ended_ns": 1788785047161894864,
+      "executable": "/run/current-system/sw/bin/python3",
+      "executable_sha256": "f388dd7721f9cb054e312771bdda00af4c79222fed5591b9ee22c87c133fc25b",
+      "returncode": 0,
+      "started_ns": 1788785047097876579,
+      "status": "completed",
+      "stderr": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-campaign-2-integration.json.attempt/command-0004.stderr",
+      "stdin": null,
+      "stdout": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-campaign-2-integration.json.attempt/command-0004.stdout",
+      "timeout_seconds": 120
+    }
+  ],
+  "commit": "36e2a3d1fa8fe9e1f49067246c58f98aaba8d4a1",
+  "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619",
+  "fixture_emission_matches": true,
+  "fixture_sha256": "3db2cdb1676ce8b8a814dc31ed09ab26cc65de7fded4ab41b8a1ec12d0227814",
+  "hostname": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "profile_executable_matches": true,
+  "python": "3.14.6",
+  "retained_local_checks": [
+    {
+      "combined_log": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-campaign-2-integration.json.attempt/build.log",
+      "command": "lake build HexIntFactor HexIntFactorMathlib HexConformance HexManual hexintfactor_emit_fixtures hexintfactor_bench",
+      "sha256": "46f2322ef76c82d46787cd5cbbd6f800c02f1ed03ca2022aae7804a27c5b8a0c",
+      "status": "passed"
+    },
+    {
+      "combined_log": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-campaign-2-integration.json.attempt/verify.log",
+      "command": "lake exe hexintfactor_bench verify",
+      "sha256": "8e8d8a11c56d6f75a79ad3fe90958ab5d07d0f8ac31c0a15a7890ac97ebf0b8c",
+      "status": "passed"
+    },
+    {
+      "combined_log": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-campaign-2-integration.json.attempt/tests.log",
+      "command": "python3 -m unittest scripts.bench.test_core_telemetry scripts.bench.test_intfactor_phase4 scripts.profile.test_normalize_perf scripts.profile.test_elf_symbols",
+      "sha256": "8d68c093995a76436be972def57391aa4d78ca5b6709bbd051a02533fba30033",
+      "status": "passed"
+    },
+    {
+      "combined_log": "/home/kim/worktrees/hex-dev/hex-dev-issue-9619/reports/bench-results/intfactor-campaign-2-integration.json.attempt/oracle.log",
+      "command": "nix shell --impure --expr 'let pkgs = import <nixpkgs> {}; in pkgs.python3.withPackages (p: [p.cypari2 p.cysignals])' --command python3 scripts/oracle/intfactor_pari.py --check",
+      "sha256": "940fd0ea041b77733c7454a2df54dd8e448eb946a6eb57a81eb14b5648289b17",
+      "status": "passed"
+    },
+    {
+      "combined_log": "reports/bench-results/intfactor-campaign-2-integration.json.attempt/mathlib-free.log",
+      "command": "python3 scripts/ci/check_benches_mathlib_free.py",
+      "sha256": "23922944d70d9b641c6059b99d9657ccf25db51e8dea9bb522c96f92290b4fc7",
+      "status": "passed"
+    }
+  ],
+  "retention_note": "Combined logs of completed local checks, archived after execution; no execution durations asserted.",
+  "schema": "hex-int-factor-attempt/1",
+  "scope": "integration-validation",
+  "started_ns": 1788785042277783770,
+  "status": "verified"
+}

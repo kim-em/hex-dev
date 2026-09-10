@@ -97,10 +97,10 @@ private theorem castIntMatrix_rowAdd (b : Matrix Int n m) (src dst : Fin n) (c :
   rw [getElem_castIntMatrix, Matrix.getElem_rowAdd, Matrix.getElem_rowAdd,
     getElem_castIntMatrix, getElem_castIntMatrix]
   by_cases hdst : r = dst
-  · simp only [hdst, if_true]
+  · simp only [hdst, ite_true]
     push_cast
     rfl
-  · simp only [hdst, if_false, getElem_castIntMatrix]
+  · simp only [hdst, ite_false, getElem_castIntMatrix]
 
 private theorem castIntMatrix_rowSwap (b : Matrix Int n m) (i j : Fin n) :
     GramSchmidt.castIntMatrix (Matrix.rowSwap b i j) =
@@ -111,7 +111,7 @@ private theorem castIntMatrix_rowSwap (b : Matrix Int n m) (i j : Fin n) :
     getElem_castIntMatrix, getElem_castIntMatrix, getElem_castIntMatrix]
   by_cases hrj : r = j
   · simp [hrj]
-  · by_cases hri : r = i <;> simp [hrj, hri] <;> split <;> rfl
+  · by_cases hri : r = i <;> simp [hrj, hri]; split <;> rfl
 
 /-- The integer Gram-Schmidt basis is invariant under adding an integer
 multiple of an earlier row to a later row. -/

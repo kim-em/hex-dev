@@ -86,12 +86,12 @@ theorem pow1_eq (x : S) (g : Nat) (hg : 1 ≤ g) : pow1 x g = x ^ g := by
       rw [pow1]
       grind
   | case3 x g hodd ih =>
-      rw [pow1, if_pos hodd, ih (by omega), sq_pow]
+      rw [pow1, ite_eq_left hodd, ih (by omega), sq_pow]
       have hexp : g + 2 = 2 * ((g + 2) / 2) + 1 := by omega
       rw [hexp]
       grind
   | case4 x g hodd ih =>
-      rw [pow1, if_neg hodd, ih (by omega), sq_pow]
+      rw [pow1, ite_eq_right hodd, ih (by omega), sq_pow]
       have hexp : 2 * ((g + 2) / 2) = g + 2 := by omega
       rw [hexp]
 
@@ -232,12 +232,12 @@ theorem coeffList_filter_ne_zero {l : List (Nat × R)} {e : Nat}
       · rw [List.filter_cons_of_neg (by simpa using ha)]
         rw [ih]
         simp only [coeffList]
-        rw [if_neg (fun h : a.1 = e => he (by omega))]
+        rw [ite_eq_right (fun h : a.1 = e => he (by omega))]
       · rw [List.filter_cons_of_pos (by simpa using ha)]
         simp only [coeffList]
         by_cases hae : a.1 = e
-        · rw [if_pos hae, if_pos hae]
-        · rw [if_neg hae, if_neg hae, ih]
+        · rw [ite_eq_left hae, ite_eq_left hae]
+        · rw [ite_eq_right hae, ite_eq_right hae, ih]
 
 attribute [local instance 1100] Lean.Grind.Semiring.natCast
 
@@ -283,7 +283,7 @@ coefficient moves from `e` to `k · e` untouched. -/
 theorem coeff_substPow_mul [Add R] (s : SparsePoly R) {k : Nat}
     (hk : k ≠ 0) (e : Nat) : (s.substPow k).coeff (k * e) = s.coeff e := by
   unfold substPow
-  rw [dif_neg hk, coeff_ofCanonicalList]
+  rw [dite_eq_right hk, coeff_ofCanonicalList]
   exact coeffList_mapTerms_apply (g := fun e => k * e)
     s.pairwise_toList
     (fun u _ h => by
@@ -296,7 +296,7 @@ theorem coeff_substPow_of_ne [Add R] (s : SparsePoly R) {k : Nat}
     (hk : k ≠ 0) {f : Nat} (hf : ∀ e, f ≠ k * e) :
     (s.substPow k).coeff f = 0 := by
   unfold substPow
-  rw [dif_neg hk, coeff_ofCanonicalList]
+  rw [dite_eq_right hk, coeff_ofCanonicalList]
   exact coeffList_mapTerms_of_ne fun u _ h => hf u.1 h.symm
 
 /-- One step of the `substScale` walk: the power of `a` for the next
@@ -492,12 +492,12 @@ theorem polyPow1_eq (p : SparsePoly K) (g : Nat) (hg : 1 ≤ g) :
   | case2 p =>
       rw [polyPow1, pow_succ, pow_zero, mul_one]
   | case3 p g hodd ih =>
-      rw [polyPow1, if_pos hodd, ih (by omega), poly_sq_pow]
+      rw [polyPow1, ite_eq_left hodd, ih (by omega), poly_sq_pow]
       show p ^ (2 * ((g + 2) / 2)) * p = p ^ (g + 2)
       rw [mul_comm, ← pow_succ,
         show 2 * ((g + 2) / 2) + 1 = g + 2 from by omega]
   | case4 p g hodd ih =>
-      rw [polyPow1, if_neg hodd, ih (by omega), poly_sq_pow,
+      rw [polyPow1, ite_eq_right hodd, ih (by omega), poly_sq_pow,
         show 2 * ((g + 2) / 2) = g + 2 from by omega]
 
 /-- Evaluation is additive, by transport. -/
@@ -705,11 +705,11 @@ private theorem psf_eq_terms_sum (q : DensePoly K) (cs : List K) :
       by_cases hc : c = 0
       · rw [show termsOfCoeffsList base (c :: cs) =
             termsOfCoeffsList (base + 1) cs from by
-          rw [termsOfCoeffsList, if_pos hc]]
+          rw [termsOfCoeffsList, ite_eq_left hc]]
         rw [hc, dense_C_zero, DensePoly.zero_mul, DensePoly.zero_add]
       · rw [show termsOfCoeffsList base (c :: cs) =
             (base, c) :: termsOfCoeffsList (base + 1) cs from by
-          rw [termsOfCoeffsList, if_neg hc]]
+          rw [termsOfCoeffsList, ite_eq_right hc]]
         rw [List.foldl_cons]
         conv => rhs; rw [dense_foldl_add_init, DensePoly.zero_add]
 
@@ -812,19 +812,19 @@ private theorem foldl_single_match {l : List (Nat × K)}
       rw [List.pairwise_cons] at hs
       rw [List.foldl_cons]
       by_cases hue : u.1 = e
-      · rw [if_pos (by rw [hue]),
+      · rw [ite_eq_left (by rw [hue]),
           show (0 : K) + u.2 = u.2 from by grind,
           foldl_add_ifs_zero (fun v hv => by
-            rw [if_neg (fun h => by
+            rw [ite_eq_right (fun h => by
               have hev : e = v.1 := Nat.eq_of_mul_eq_mul_left
                 (by omega) h
               have := hs.1 v hv
               omega)])]
-        simp only [coeffList, if_pos hue]
-      · rw [if_neg (fun h => hue (Nat.eq_of_mul_eq_mul_left
+        simp only [coeffList, ite_eq_left hue]
+      · rw [ite_eq_right (fun h => hue (Nat.eq_of_mul_eq_mul_left
             (by omega) h).symm),
           show (0 : K) + 0 = 0 from by grind, ih hs.2]
-        simp only [coeffList, if_neg (fun h : u.1 = e => hue h)]
+        simp only [coeffList, ite_eq_right (fun h : u.1 = e => hue h)]
 
 /-- The fast path and the general path agree: what lets the cyclotomic
 adapter use {name}`substPow` and reason with {name}`compose`. -/
@@ -846,7 +846,7 @@ theorem substPow_eq_compose (s : SparsePoly K) (k : Nat) :
   · subst hk
     show (s.substPow 0).coeff f = _
     unfold substPow
-    rw [dif_pos rfl, coeff_ofTerms_addCoeff]
+    rw [dite_eq_left rfl, coeff_ofTerms_addCoeff]
     have hz : ∀ c : K, (0 : K) + c = c := by grind
     simp only [addCoeff_eq_add hz, Array.toList_map]
     by_cases hf : f = 0
@@ -858,21 +858,21 @@ theorem substPow_eq_compose (s : SparsePoly K) (k : Nat) :
           simp)]
       rw [List.foldl_map]
       refine foldl_congr' rfl fun b u _ => ?_
-      rw [if_pos (by omega)]
+      rw [ite_eq_left (by omega)]
     · rw [show ((s.terms.toList.map fun t => ((0 : Nat), t.2)).filter
           (fun t => t.1 = f)) = [] from List.filter_eq_nil_iff.mpr (fun a ha => by
           obtain ⟨u, hu, rfl⟩ := List.mem_map.mp ha
           simpa using fun h : (0 : Nat) = f => hf h.symm)]
       rw [List.foldl_nil]
       exact ((foldl_add_ifs_zero (fun u _ => by
-        rw [if_neg (by omega)])) 0).symm
+        rw [ite_eq_right (by omega)])) 0).symm
   · by_cases hmul : ∃ e, f = k * e
     · obtain ⟨e, rfl⟩ := hmul
       rw [coeff_substPow_mul s hk]
       exact (foldl_single_match s.pairwise_toList hk e).symm
     · rw [coeff_substPow_of_ne s hk (fun e h => hmul ⟨e, h⟩)]
       exact ((foldl_add_ifs_zero (fun u _ => by
-        rw [if_neg (fun h => hmul ⟨u.1, h⟩)])) 0).symm
+        rw [ite_eq_right (fun h => hmul ⟨u.1, h⟩)])) 0).symm
 
 private theorem eval_foldl_add {α : Type _} (l : List α)
     (g : α → SparsePoly K) (x : K) :
@@ -949,7 +949,7 @@ private theorem coeffList_substScaleGo (a : K) (l : List (Nat × K)) :
         rw [substScaleGo]
         unfold substScaleStep
         by_cases hgap : u.1 - prev = 0
-        · rw [if_pos hgap]
+        · rw [ite_eq_left hgap]
           have hpe : prev = u.1 := by omega
           refine ⟨pw, ?_, ?_, ?_⟩
           · cases pw with
@@ -957,8 +957,8 @@ private theorem coeffList_substScaleGo (a : K) (l : List (Nat × K)) :
                 show (if u.2 = 0 then _ else u :: _) = _
                 rw [show pwVal (none : Option K) = 1 from rfl]
                 by_cases hu2 : u.2 = 0
-                · rw [if_pos hu2, if_pos (by rw [hu2]; grind)]
-                · rw [if_neg hu2, if_neg (by
+                · rw [ite_eq_left hu2, ite_eq_left (by rw [hu2]; grind)]
+                · rw [ite_eq_right hu2, ite_eq_right (by
                     intro h
                     exact hu2 (by grind))]
                   rw [show (u.1, u.2 * (1 : K)) =
@@ -970,7 +970,7 @@ private theorem coeffList_substScaleGo (a : K) (l : List (Nat × K)) :
             have := hnone rfl
             omega
           · rw [hval, hpe]
-        · rw [if_neg hgap]
+        · rw [ite_eq_right hgap]
           cases pw with
           | none =>
               have h0 : prev = 0 := hnone rfl
@@ -997,18 +997,18 @@ private theorem coeffList_substScaleGo (a : K) (l : List (Nat × K)) :
           omega)]
         grind
       by_cases hzero : u.2 * pwVal pw' = 0
-      · rw [if_pos hzero]
+      · rw [ite_eq_left hzero]
         by_cases hf : u.1 = f
         · rw [← hf, htail_zero]
-          simp only [coeffList, if_true]
+          simp only [coeffList, ite_true]
           rw [← hv', ← hzero]
         · rw [hrest f]
-          simp only [coeffList, if_neg hf]
-      · rw [if_neg hzero]
+          simp only [coeffList, ite_eq_right hf]
+      · rw [ite_eq_right hzero]
         by_cases hf : u.1 = f
-        · simp only [coeffList, if_pos hf]
+        · simp only [coeffList, ite_eq_left hf]
           rw [← hf, hv']
-        · simp only [coeffList, if_neg hf]
+        · simp only [coeffList, ite_eq_right hf]
           exact hrest f
 
 /-- Coefficient law for {name}`substScale`: each coefficient is scaled
@@ -1034,16 +1034,16 @@ private theorem foldl_scale_match {l : List (Nat × K)}
       rw [List.pairwise_cons] at hs
       rw [List.foldl_cons]
       by_cases huf : f = u.1
-      · rw [if_pos huf,
+      · rw [ite_eq_left huf,
           show (0 : K) + u.2 * a ^ u.1 = u.2 * a ^ u.1 from by grind,
           foldl_add_ifs_zero (fun v hv => by
-            rw [if_neg (fun h => by
+            rw [ite_eq_right (fun h => by
               have := hs.1 v hv
               omega)])]
-        simp only [coeffList, if_pos huf.symm]
+        simp only [coeffList, ite_eq_left huf.symm]
         rw [huf]
-      · rw [if_neg huf, show (0 : K) + 0 = 0 from by grind, ih hs.2]
-        simp only [coeffList, if_neg (fun h : u.1 = f => huf h.symm)]
+      · rw [ite_eq_right huf, show (0 : K) + 0 = 0 from by grind, ih hs.2]
+        simp only [coeffList, ite_eq_right (fun h : u.1 = f => huf h.symm)]
 
 /-- Argument scaling is composition with the degree-one monomial
 `a · x`: the sparse fast path and the general path agree. -/

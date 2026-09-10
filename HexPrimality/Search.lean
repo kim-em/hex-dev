@@ -374,16 +374,16 @@ theorem Internal.rhoFactorCountedWith?_spec {n : Nat} {r : Rand}
     1 < success.factor ∧ success.factor < n ∧ success.factor ∣ n := by
   unfold Internal.rhoFactorCountedWith? at h
   by_cases h4 : n < 4
-  · rw [if_pos h4] at h
+  · rw [ite_eq_left h4] at h
     cases h
-  · rw [if_neg h4] at h
+  · rw [ite_eq_right h4] at h
     by_cases heven : n % 2 = 0
-    · rw [if_pos heven] at h
+    · rw [ite_eq_left heven] at h
       injection h with h
       cases h
       change 1 < 2 ∧ 2 < n ∧ 2 ∣ n
       exact ⟨by omega, by omega, Nat.dvd_of_mod_eq_zero heven⟩
-    · rw [if_neg heven] at h
+    · rw [ite_eq_right heven] at h
       exact rhoTry_spec restarts 0 r h
 
 /-- A counted rho success is a validated proper factor. -/
@@ -468,11 +468,11 @@ private theorem divOut_prod (p : Nat) :
       intro m
       unfold divOut
       by_cases hc : 1 < p ∧ m % p = 0
-      · rw [if_pos hc]
+      · rw [ite_eq_left hc]
         dsimp only
         rw [Nat.pow_succ, Nat.mul_right_comm, ih (m / p)]
         exact Nat.div_mul_cancel (Nat.dvd_of_mod_eq_zero hc.2)
-      · rw [if_neg hc]
+      · rw [ite_eq_right hc]
         simp
 
 /-- Trial division over the committed table entries. -/
@@ -498,10 +498,10 @@ private theorem trialGo_prod :
       intro acc m
       unfold trialGo
       by_cases hc : 1 < p ∧ m % p = 0
-      · rw [if_pos hc, ih]
+      · rw [ite_eq_left hc, ih]
         simp only [prodPows]
         rw [Nat.mul_right_comm, divOut_prod, Nat.mul_comm]
-      · rw [if_neg hc]
+      · rw [ite_eq_right hc]
         exact ih acc m
 
 /-- Merge one prime occurrence into a claimed factor list. -/
@@ -521,11 +521,11 @@ private theorem insertFactor_prod (p : Nat) :
       obtain ⟨q, e⟩ := a
       unfold insertFactor
       by_cases hq : q = p
-      · rw [if_pos hq]
+      · rw [ite_eq_left hq]
         subst hq
         simp only [prodPows, Nat.pow_succ]
         simp [Nat.mul_assoc, Nat.mul_comm]
-      · rw [if_neg hq]
+      · rw [ite_eq_right hq]
         simp only [prodPows, ih]
         simp [Nat.mul_left_comm]
 
@@ -571,13 +571,13 @@ private theorem pMinusOnePhase_prod (acc : List (Nat × Nat)) (m : Nat)
   | succ fuel =>
       simp only [pMinusOnePhase]
       by_cases hsmall : m < 4
-      · rw [if_pos hsmall]
+      · rw [ite_eq_left hsmall]
         simp [listProd]
-      · rw [if_neg hsmall]
+      · rw [ite_eq_right hsmall]
         by_cases hprime : isProbablePrime m
-        · rw [if_pos hprime, insertFactor_prod]
+        · rw [ite_eq_left hprime, insertFactor_prod]
           simp [listProd, Nat.mul_comm]
-        · rw [if_neg hprime]
+        · rw [ite_eq_right hprime]
           split
           · rename_i d hfactor
             have hproper : 1 < d ∧ d < m ∧ d ∣ m := by
@@ -605,8 +605,11 @@ deriving Repr, DecidableEq
 Nested primality checks receive `primeFuel` and `primeBudget`; the producer's
 own worklist receives `factorFuel`. -/
 structure FactorSearchBudget where
+  /-- Rho allocation available to each nested primality-certificate search. -/
   primeBudget : PrimeCertBudget
+  /-- Attempt budget available to each nested primality-certificate search. -/
   primeFuel : Nat
+  /-- Worklist-entry budget available to the partial-factor producer. -/
   factorFuel : Nat
 deriving Repr, DecidableEq
 
@@ -671,15 +674,15 @@ private theorem rhoPhase_prod :
       | m :: stack =>
           unfold rhoPhase
           by_cases h1 : m = 1
-          · rw [if_pos h1, ih]
+          · rw [ite_eq_left h1, ih]
             subst h1
             simp [listProd]
-          · rw [if_neg h1]
+          · rw [ite_eq_right h1]
             by_cases hp : isProbablePrime m
-            · rw [if_pos hp, ih, insertFactor_prod]
+            · rw [ite_eq_left hp, ih, insertFactor_prod]
               simp only [listProd]
               simp [Nat.mul_assoc, Nat.mul_comm, Nat.mul_left_comm]
-            · rw [if_neg hp]
+            · rw [ite_eq_right hp]
               split
               · rename_i success hok
                 rw [ih]
@@ -1093,20 +1096,20 @@ private theorem primeCertGo_composite {factor : FactorSearch}
     (hstop : f.stop = .composite) : ¬ Prime n := by
   unfold primeCertGo at h
   by_cases h2 : n < 2
-  · rw [if_pos h2] at h
+  · rw [ite_eq_left h2] at h
     intro hp
     have := hp.two_le
     omega
-  · rw [if_neg h2] at h
+  · rw [ite_eq_right h2] at h
     by_cases htab : n < primeTableBound
-    · rw [if_pos htab] at h
+    · rw [ite_eq_left htab] at h
       by_cases hhit : isTablePrime n = true
-      · rw [if_pos hhit] at h
+      · rw [ite_eq_left hhit] at h
         cases h
-      · rw [if_neg hhit] at h
+      · rw [ite_eq_right hhit] at h
         intro hp
         exact hhit (isTablePrime_iff.mpr (mem_primeTable_of_prime hp htab))
-    · rw [if_neg htab] at h
+    · rw [ite_eq_right htab] at h
       split at h
       · rename_i a hfind
         intro hp
@@ -1234,7 +1237,7 @@ theorem isPrime?_spec {n : Nat} {r : Rand} {fuel : Nat} {b : Bool}
     b = true ↔ Prime n := by
   unfold isPrime? at h
   by_cases ht : n < primeTableBound
-  · rw [if_pos ht] at h
+  · rw [ite_eq_left ht] at h
     injection h with h
     injection h with hb hr
     subst hb
@@ -1243,9 +1246,9 @@ theorem isPrime?_spec {n : Nat} {r : Rand} {fuel : Nat} {b : Bool}
       exact mem_primeTable_prime (isTablePrime_iff.mp hb')
     · intro hp
       exact isTablePrime_iff.mpr (mem_primeTable_of_prime hp ht)
-  · rw [if_neg ht] at h
+  · rw [ite_eq_right ht] at h
     by_cases htrial : n < isPrimeTrialThreshold
-    · rw [if_pos htrial] at h
+    · rw [ite_eq_left htrial] at h
       split at h
       · rename_i a hfind
         have ha : millerRabin n a = false := by
@@ -1262,7 +1265,7 @@ theorem isPrime?_spec {n : Nat} {r : Rand} {fuel : Nat} {b : Bool}
         injection h with hb hr
         subst hb
         exact ⟨isPrimeTrial_isPrime, isPrimeTrial_of_prime⟩
-    · rw [if_neg htrial] at h
+    · rw [ite_eq_right htrial] at h
       split at h
       · rename_i cert r2 hok
         injection h with h

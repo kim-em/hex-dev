@@ -7,27 +7,10 @@ Authors: Kim Morrison
 import HexConway
 
 /-!
-Core conformance checks for the Tier 1 committed Conway-polynomial lookup
-surface in `HexConway`.
-
-Oracle: committed Lübeck cache plus optional `conway-polynomials`
-Mode: always
-Covered operations:
-- `luebeckConwayPolynomial?`
-- `SupportedEntry`
-- `conwayPoly`
-Covered properties:
-- the committed `(2, 1)`, `(2, 4)`, and `(3, 1)` lookups agree exactly
-  with their packaged `SupportedEntry`
-- `conwayPoly` returns the polynomial packaged by its `SupportedEntry`
-- each supported Conway polynomial has positive degree
-Covered edge cases:
-- committed entries for `p ∈ {2, 3, 5, 7, 11, 13}` and `n ∈ {1..6}`
-- unsupported degree zero, unsupported larger binary degree, and an
-  unsupported prime outside the committed slice
-- a binary higher-degree `SupportedEntry` (`(2, 4)`) and an odd-prime
-  `SupportedEntry` slice (`(3, 1)` through `(3, 6)` and `(7, 1)`
-  through `(7, 6)`)
+Lookup and certificate conformance. The original literal anchors remain here;
+the fixture emitter and compiled replay driver cover every generated supported
+pair. Negative cases exercise factorization, exponent and compatibility checks.
+The source oracle compares coefficients with the pinned Lübeck input.
 -/
 
 namespace Hex
@@ -84,10 +67,12 @@ private def coeffs? (p n : Nat) [ZMod64.Bounds p] : Option (List Nat) :=
 #guard coeffs? 13 5 = some [11, 4, 0, 0, 0, 1]
 #guard coeffs? 13 6 = some [2, 11, 11, 10, 0, 0, 1]
 
+#guard luebeckConwayCoeffs? 1009 1 = none
+
 #guard luebeckConwayPolynomial? 2 0 = (none : Option (FpPoly 2))
-#guard luebeckConwayPolynomial? 2 9 = (none : Option (FpPoly 2))
-#guard luebeckConwayPolynomial? 3 7 = (none : Option (FpPoly 3))
-#guard luebeckConwayPolynomial? 17 1 = (none : Option (FpPoly 17))
+#guard luebeckConwayPolynomial? 2 129 = (none : Option (FpPoly 2))
+#guard luebeckConwayPolynomial? 3 129 = (none : Option (FpPoly 3))
+#guard luebeckConwayPolynomial? 17 129 = (none : Option (FpPoly 17))
 
 #guard coeffs? 2 7 = some [1, 1, 0, 0, 0, 0, 0, 1]
 #guard coeffs? 2 8 = some [1, 0, 1, 1, 1, 0, 0, 0, 1]
@@ -491,6 +476,20 @@ failure the next time the table is widened. -/
 -- A reducible polynomial has no certificate, so a mistranscribed entry is
 -- rejected by the generator rather than emitted and left for the kernel.
 #guard (EntrySource.entryCertData 2 [1, 0, 1]).isNone
+
+-- GF(2) explicitly has the trivial multiplicative group.
+#guard primitiveCheck luebeckConwayPolynomial_2_1 luebeckConwayPolynomial_2_1_monic
+  1 [] []
+-- Missing factors and incorrect multiplicities are rejected.
+#guard !primitiveCheck luebeckConwayPolynomial_3_2 luebeckConwayPolynomial_3_2_monic
+  2 [] []
+#guard !primitiveCheck luebeckConwayPolynomial_3_2 luebeckConwayPolynomial_3_2_monic
+  2 [2] [2]
+-- A nonprimitive generator fails the prime-divided power condition.
+#guard !primitiveCheck luebeckConwayPolynomial_3_1 luebeckConwayPolynomial_3_1_monic
+  2 [2] [3]
+#guard !compatCheck luebeckConwayPolynomial_11_4 luebeckConwayPolynomial_11_6
+  luebeckConwayPolynomial_11_6_monic 4 1
 
 end ConwayConformance
 end Conway

@@ -807,12 +807,12 @@ private theorem scaledCoeffRows_diag_toNat_eq_gramDetVecEntry
     · have hsi' : s ≤ i := by
         simpa [iFin] using hsi
       have hs_lt : s < i + 1 := by omega
-      rw [if_pos hs_lt]
+      rw [ite_eq_left hs_lt]
       exact congrArg Int.toNat h_zero
     · have his' : i < s := by
         simpa [iFin] using his
       have hs_not_lt : ¬ s < i + 1 := by omega
-      rw [if_neg hs_not_lt]
+      rw [ite_eq_right hs_not_lt]
       exact congrArg Int.toNat h_eq
 
 /-- The scaled-coefficient loop stores the next leading Gram determinant on

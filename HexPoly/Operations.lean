@@ -6,7 +6,6 @@ Authors: Kim Morrison
 
 module
 
-public import HexPoly.Conditional
 public import HexPoly.Dense
 public import Init.Data.Array.Lemmas
 
@@ -89,8 +88,8 @@ theorem shift_eq_shiftImpl (n : Nat) (p : DensePoly R) :
     shift n p = shiftImpl n p := by
   unfold shift shiftImpl ofList
   by_cases hz : p.isZero
-  · rw [HexPoly.ite_eq_left hz, HexPoly.ite_eq_left hz]
-  · rw [HexPoly.ite_eq_right hz, HexPoly.ite_eq_right hz]
+  · rw [ite_eq_left hz, ite_eq_left hz]
+  · rw [ite_eq_right hz, ite_eq_right hz]
     congr 1
     show ((List.replicate n (Zero.zero : R)) ++ p.toArray.toList).toArray = _
     apply Array.ext'
@@ -215,7 +214,7 @@ coefficients are read from the original polynomial with the index shifted down. 
       simp [hp, hk, hzero]
       change (0 : DensePoly R).coeff k = (Zero.zero : R)
       exact coeff_eq_zero_of_size_le (0 : DensePoly R) (by simp)
-  · rw [HexPoly.ite_eq_right hp]
+  · rw [ite_eq_right hp]
     rw [coeff_ofList]
     simpa [coeff, toList, toArray] using
       list_getD_replicate_append_zero (R := R) n k p.toList
@@ -323,9 +322,9 @@ private theorem array_ofFn_getD {n : Nat} (f : Fin n → R) (i : Nat) :
       if h : i < n then f ⟨i, h⟩ else (Zero.zero : R) := by
   rw [Array.getD_eq_getD_getElem?, Array.getElem?_ofFn]
   by_cases h : i < n
-  · rw [HexPoly.dite_eq_left h, HexPoly.dite_eq_left h]
+  · rw [dite_eq_left h, dite_eq_left h]
     rfl
-  · rw [HexPoly.dite_eq_right h, HexPoly.dite_eq_right h]
+  · rw [dite_eq_right h, dite_eq_right h]
     rfl
 
 omit [DecidableEq R] in
@@ -336,9 +335,9 @@ private theorem array_map_getD (g : R → R) (a : Array R) (i : Nat) :
       if h : i < a.size then g a[i] else (Zero.zero : R) := by
   rw [Array.getD_eq_getD_getElem?, Array.getElem?_map]
   by_cases h : i < a.size
-  · rw [Array.getElem?_eq_getElem h, HexPoly.dite_eq_left h]
+  · rw [Array.getElem?_eq_getElem h, dite_eq_left h]
     rfl
-  · rw [Array.getElem?_eq_none (Nat.le_of_not_gt h), HexPoly.dite_eq_right h]
+  · rw [Array.getElem?_eq_none (Nat.le_of_not_gt h), dite_eq_right h]
     rfl
 
 /-- Add two dense polynomials coefficientwise.
@@ -368,8 +367,8 @@ theorem add_eq_addImpl [Add R] (p q : DensePoly R) : add p q = addImpl p q := by
   rw [coeff_ofCoeffs, coeff_ofCoeffs, toArray_getD_eq_getD, zipPad_getD, array_ofFn_getD]
   simp only [length_toList, toList_getD_eq_coeff]
   by_cases hn : n < max p.size q.size
-  · rw [HexPoly.ite_eq_left hn, HexPoly.dite_eq_left hn]
-  · rw [HexPoly.ite_eq_right hn, HexPoly.dite_eq_right hn]
+  · rw [ite_eq_left hn, dite_eq_left hn]
+  · rw [ite_eq_right hn, dite_eq_right hn]
 
 /-- Register the `Array.ofFn` loop as the compiled implementation of {name}`add`. -/
 @[csimp]
@@ -405,8 +404,8 @@ theorem sub_eq_subImpl [Sub R] (p q : DensePoly R) : sub p q = subImpl p q := by
   rw [coeff_ofCoeffs, coeff_ofCoeffs, toArray_getD_eq_getD, zipPad_getD, array_ofFn_getD]
   simp only [length_toList, toList_getD_eq_coeff]
   by_cases hn : n < max p.size q.size
-  · rw [HexPoly.ite_eq_left hn, HexPoly.dite_eq_left hn]
-  · rw [HexPoly.ite_eq_right hn, HexPoly.dite_eq_right hn]
+  · rw [ite_eq_left hn, dite_eq_left hn]
+  · rw [ite_eq_right hn, dite_eq_right hn]
 
 /-- Register the `Array.ofFn` loop as the compiled implementation of {name}`sub`. -/
 @[csimp]
@@ -445,11 +444,11 @@ theorem neg_eq_negImpl [Sub R] (p : DensePoly R) : neg p = negImpl p := by
   simp only [size_zero, Nat.zero_max, toArray_size, coeff_zero]
   by_cases hn : n < p.size
   · have hn' : n < p.toArray.size := by simpa using hn
-    rw [HexPoly.dite_eq_left hn, HexPoly.dite_eq_left hn,
+    rw [dite_eq_left hn, dite_eq_left hn,
       show p.toArray[n]'hn' = p.coeff n by
         rw [Array.getElem_eq_getD (Zero.zero : R), toArray_getD]]
     rfl
-  · rw [HexPoly.dite_eq_right hn, HexPoly.dite_eq_right hn]
+  · rw [dite_eq_right hn, dite_eq_right hn]
 
 /-- Register the `Array.map` pass as the compiled implementation of {name}`neg`. -/
 @[csimp]
@@ -681,7 +680,7 @@ private theorem coeff_mulImpl [Add R] [Mul R] (p q : DensePoly R) (n : Nat) :
     (mulImpl p q).coeff n = mulCoeffSum p q n := by
   unfold mulImpl
   by_cases hzero : p.isZero || q.isZero
-  · rw [HexPoly.ite_eq_left hzero]
+  · rw [ite_eq_left hzero]
     by_cases hp : p.isZero
     · have hpsize : p.size = 0 := (DensePoly.isZero_eq_true_iff p).1 (by simpa using hp)
       rw [show (0 : DensePoly R).coeff n = (Zero.zero : R) by
@@ -693,7 +692,7 @@ private theorem coeff_mulImpl [Add R] [Mul R] (p q : DensePoly R) (n : Nat) :
       rw [show (0 : DensePoly R).coeff n = (Zero.zero : R) by
         exact coeff_eq_zero_of_size_le (0 : DensePoly R) (by simp)]
       simp [mulCoeffSum, hqsize, list_foldl_ignore]
-  · rw [HexPoly.ite_eq_right hzero]
+  · rw [ite_eq_right hzero]
     rw [coeff_ofCoeffs]
     have hp_not : p.isZero = false := by
       cases hp : p.isZero <;> cases hq : q.isZero <;> simp [hp, hq] at hzero ⊢
@@ -783,18 +782,18 @@ private theorem foldl_mulCoeffStep_range [Add R] [Mul R]
       if i ≤ n ∧ n - i < m then c + p.coeff i * q.coeff (n - i) else c := by
   induction m with
   | zero =>
-      rw [List.range_zero, List.foldl_nil, HexPoly.ite_eq_right (by omega)]
+      rw [List.range_zero, List.foldl_nil, ite_eq_right (by omega)]
   | succ m ih =>
       rw [List.range_succ, List.foldl_append, List.foldl_cons, List.foldl_nil, ih]
       unfold mulCoeffStep
       by_cases hlast : i + m = n
-      · rw [HexPoly.ite_eq_right (by omega : ¬(i ≤ n ∧ n - i < m)), HexPoly.ite_eq_left hlast,
-          HexPoly.ite_eq_left (by omega : i ≤ n ∧ n - i < m + 1),
+      · rw [ite_eq_right (by omega : ¬(i ≤ n ∧ n - i < m)), ite_eq_left hlast,
+          ite_eq_left (by omega : i ≤ n ∧ n - i < m + 1),
           show m = n - i by omega]
-      · rw [HexPoly.ite_eq_right hlast]
+      · rw [ite_eq_right hlast]
         by_cases h : i ≤ n ∧ n - i < m
-        · rw [HexPoly.ite_eq_left h, HexPoly.ite_eq_left (by omega : i ≤ n ∧ n - i < m + 1)]
-        · rw [HexPoly.ite_eq_right h, HexPoly.ite_eq_right (by omega : ¬(i ≤ n ∧ n - i < m + 1))]
+        · rw [ite_eq_left h, ite_eq_left (by omega : i ≤ n ∧ n - i < m + 1)]
+        · rw [ite_eq_right h, ite_eq_right (by omega : ¬(i ≤ n ∧ n - i < m + 1))]
 
 omit [Zero R] [DecidableEq R] in
 /-- Folds over the same list with pointwise-equal step functions agree. -/
@@ -860,7 +859,7 @@ private theorem mulRows_getD [Add R] [Mul R] (qs ps acc : List R) (n : Nat)
           | nil =>
               show (List.getD [] n (Zero.zero : R)) = _
               rw [list_foldl_congr _ (fun (c : R) (_ : Nat) => c) _ _
-                  (fun c i _ => HexPoly.ite_eq_right (by simp)),
+                  (fun c i _ => ite_eq_right (by simp)),
                 list_foldl_ignore]
           | cons q qs' =>
               exact absurd (hbound 0 (by simp) 0 (by simp)) (by simp)
@@ -869,7 +868,7 @@ private theorem mulRows_getD [Add R] [Mul R] (qs ps acc : List R) (n : Nat)
           | nil =>
               rw [mulRows_nil,
                 list_foldl_congr _ (fun (c : R) (_ : Nat) => c) _ _
-                  (fun c i _ => HexPoly.ite_eq_right (by simp)),
+                  (fun c i _ => ite_eq_right (by simp)),
                 list_foldl_ignore]
           | cons q qs' =>
               show ((a + x * q) :: mulRows (q :: qs') ps (mulRow x acc qs')).getD n
@@ -879,9 +878,9 @@ private theorem mulRows_getD [Add R] [Mul R] (qs ps acc : List R) (n : Nat)
               cases n with
               | zero =>
                   rw [List.getD_cons_zero,
-                    HexPoly.ite_eq_left ⟨Nat.le_refl 0, by simp⟩,
+                    ite_eq_left ⟨Nat.le_refl 0, by simp⟩,
                     list_foldl_congr _ (fun (c : R) (_ : Nat) => c) _ _
-                      (fun c i _ => HexPoly.ite_eq_right (by omega)),
+                      (fun c i _ => ite_eq_right (by omega)),
                     list_foldl_ignore,
                     List.getD_cons_zero, List.getD_cons_zero, List.getD_cons_zero]
               | succ m =>
@@ -906,11 +905,11 @@ private theorem mulRows_getD [Add R] [Mul R] (qs ps acc : List R) (n : Nat)
                       else (a :: acc).getD (m + 1) (Zero.zero : R) := by
                     rw [mulRow_getD]
                     by_cases hq : m < qs'.length
-                    · rw [HexPoly.ite_eq_left ⟨hlen hq, hq⟩, HexPoly.ite_eq_left ⟨Nat.zero_le _, by simpa using Nat.succ_lt_succ hq⟩]
+                    · rw [ite_eq_left ⟨hlen hq, hq⟩, ite_eq_left ⟨Nat.zero_le _, by simpa using Nat.succ_lt_succ hq⟩]
                       rw [List.getD_cons_succ, List.getD_cons_zero, Nat.sub_zero,
                         List.getD_cons_succ]
-                    · rw [HexPoly.ite_eq_right (fun h => hq h.2),
-                        HexPoly.ite_eq_right (by simpa [Nat.succ_lt_succ_iff] using hq),
+                    · rw [ite_eq_right (fun h => hq h.2),
+                        ite_eq_right (by simpa [Nat.succ_lt_succ_iff] using hq),
                         List.getD_cons_succ]
                   rw [hinit]
                   exact list_foldl_congr _ _ _ _ fun c i _ => by
@@ -925,7 +924,7 @@ private theorem coeff_mul_spec [Add R] [Mul R] (p q : DensePoly R) (n : Nat) :
     (mul p q).coeff n = mulCoeffSum p q n := by
   unfold mul
   by_cases hzero : p.isZero || q.isZero
-  · rw [HexPoly.ite_eq_left hzero]
+  · rw [ite_eq_left hzero]
     by_cases hp : p.isZero
     · have hpsize : p.size = 0 := (DensePoly.isZero_eq_true_iff p).1 (by simpa using hp)
       rw [show (0 : DensePoly R).coeff n = (Zero.zero : R) by
@@ -937,7 +936,7 @@ private theorem coeff_mul_spec [Add R] [Mul R] (p q : DensePoly R) (n : Nat) :
       rw [show (0 : DensePoly R).coeff n = (Zero.zero : R) by
         exact coeff_eq_zero_of_size_le (0 : DensePoly R) (by simp)]
       simp [mulCoeffSum, hqsize, list_foldl_ignore]
-  · rw [HexPoly.ite_eq_right hzero]
+  · rw [ite_eq_right hzero]
     have hp_not : p.isZero = false := by
       cases hp : p.isZero <;> cases hq : q.isZero <;> simp [hp, hq] at hzero ⊢
     have hq_not : q.isZero = false := by
@@ -985,9 +984,9 @@ theorem size_mul_le [Add R] [Mul R] (p q : DensePoly R) :
   change (mul p q).size ≤ p.size + q.size - 1
   unfold mul
   by_cases hzero : p.isZero || q.isZero
-  · rw [HexPoly.ite_eq_left hzero, size_zero]
+  · rw [ite_eq_left hzero, size_zero]
     exact Nat.zero_le _
-  · rw [HexPoly.ite_eq_right hzero]
+  · rw [ite_eq_right hzero]
     refine Nat.le_trans (size_ofCoeffs_le _) ?_
     simp [mulRows_length]
 
@@ -1222,14 +1221,14 @@ theorem compose_C [Add R] [Mul R] (c : R) (q : DensePoly R)
     rw [coeff_ofCoeffs, toArray_getD_eq_getD, zipPad_getD]
     simp only [length_toList, toList_getD_eq_coeff, size_zero, Nat.zero_max, coeff_zero]
     by_cases hn : n < (C c).size
-    · rw [HexPoly.ite_eq_left hn]
+    · rw [ite_eq_left hn]
       have hn0 : n = 0 := by
         have h1 := size_C_of_ne_zero (c := c) hc
         omega
       subst hn0
-      rw [coeff_C, HexPoly.ite_eq_left rfl]
+      rw [coeff_C, ite_eq_left rfl]
       exact hzero_add
-    · rw [HexPoly.ite_eq_right hn,
+    · rw [ite_eq_right hn,
         coeff_eq_zero_of_size_le (C c) (Nat.le_of_not_gt hn)]
 
 /-- Semiring-specialized composition law for constants. This packages the zero-addition
@@ -1393,12 +1392,12 @@ private theorem derivative_coeffs_getD [NatCast R] [Mul R] (p : DensePoly R) (n 
   rw [derivList_getD]
   simp only [List.length_drop, length_toList, Nat.zero_add]
   by_cases hn : n < p.size - 1
-  · rw [HexPoly.ite_eq_left hn, HexPoly.ite_eq_left hn]
+  · rw [ite_eq_left hn, ite_eq_left hn]
     have hdrop : (p.toList.drop 1).getD n (Zero.zero : R) =
         p.toList.getD (1 + n) (Zero.zero : R) := by
       rw [List.getD_eq_getElem?_getD, List.getElem?_drop, ← List.getD_eq_getElem?_getD]
     rw [hdrop, Nat.add_comm 1 n, toList_getD_eq_coeff]
-  · rw [HexPoly.ite_eq_right hn, HexPoly.ite_eq_right hn]
+  · rw [ite_eq_right hn, ite_eq_right hn]
 
 /-- The reference {name}`derivative` and the `Array.ofFn` runtime loop compute the same
 polynomial. -/
@@ -1410,8 +1409,8 @@ theorem derivative_eq_derivativeImpl [NatCast R] [Mul R] (p : DensePoly R) :
   rw [coeff_ofCoeffs, coeff_ofCoeffs, toArray_getD_eq_getD,
     derivative_coeffs_getD, array_ofFn_getD]
   by_cases hn : n < p.size - 1
-  · rw [HexPoly.ite_eq_left hn, HexPoly.dite_eq_left hn]
-  · rw [HexPoly.ite_eq_right hn, HexPoly.dite_eq_right hn]
+  · rw [ite_eq_left hn, dite_eq_left hn]
+  · rw [ite_eq_right hn, dite_eq_right hn]
 
 /-- Register the `Array.ofFn` loop as the compiled implementation of
 {name}`derivative`. -/
@@ -1445,11 +1444,11 @@ theorem coeff_add [Add R] (p q : DensePoly R) (n : Nat)
   rw [coeff_ofCoeffs, toArray_getD_eq_getD, zipPad_getD]
   simp only [length_toList, toList_getD_eq_coeff]
   by_cases hn : n < max p.size q.size
-  · rw [HexPoly.ite_eq_left hn]
+  · rw [ite_eq_left hn]
   · have hmax : max p.size q.size ≤ n := Nat.le_of_not_gt hn
     have hp : p.size ≤ n := Nat.le_trans (Nat.le_max_left p.size q.size) hmax
     have hq : q.size ≤ n := Nat.le_trans (Nat.le_max_right p.size q.size) hmax
-    rw [HexPoly.ite_eq_right hn, coeff_eq_zero_of_size_le p hp, coeff_eq_zero_of_size_le q hq, hzero]
+    rw [ite_eq_right hn, coeff_eq_zero_of_size_le p hp, coeff_eq_zero_of_size_le q hq, hzero]
 
 /-- Semiring-specialized coefficient law for addition. -/
 @[simp, grind =] theorem coeff_add_semiring {S : Type u}
@@ -1478,11 +1477,11 @@ theorem coeff_sub [Sub R] (p q : DensePoly R) (n : Nat)
   rw [coeff_ofCoeffs, toArray_getD_eq_getD, zipPad_getD]
   simp only [length_toList, toList_getD_eq_coeff]
   by_cases hn : n < max p.size q.size
-  · rw [HexPoly.ite_eq_left hn]
+  · rw [ite_eq_left hn]
   · have hmax : max p.size q.size ≤ n := Nat.le_of_not_gt hn
     have hp : p.size ≤ n := Nat.le_trans (Nat.le_max_left p.size q.size) hmax
     have hq : q.size ≤ n := Nat.le_trans (Nat.le_max_right p.size q.size) hmax
-    rw [HexPoly.ite_eq_right hn, coeff_eq_zero_of_size_le p hp, coeff_eq_zero_of_size_le q hq, hzero]
+    rw [ite_eq_right hn, coeff_eq_zero_of_size_le p hp, coeff_eq_zero_of_size_le q hq, hzero]
 
 /-- Ring-specialized coefficient law for subtraction. -/
 @[simp, grind =] theorem coeff_sub_ring {S : Type u}
@@ -1712,7 +1711,7 @@ private theorem evalCoeffList_replicate_zero_semiring {S : Type u}
     simp [Lean.Grind.Semiring.zero_mul]
   · unfold eval toList toArray monomial
     change c ≠ Zero.zero at hc
-    rw [HexPoly.dite_eq_right hc]
+    rw [dite_eq_right hc]
     simp only [Array.toList_push, Array.toList_replicate]
     exact evalCoeffList_replicate_zero_semiring n c x
 
@@ -1732,9 +1731,9 @@ theorem coeff_derivative [NatCast R] [Mul R] (p : DensePoly R) (n : Nat)
   unfold derivative
   rw [coeff_ofCoeffs, toArray_getD_eq_getD, derivative_coeffs_getD]
   by_cases hn : n < p.size - 1
-  · rw [HexPoly.ite_eq_left hn]
+  · rw [ite_eq_left hn]
   · have hp : p.size ≤ n + 1 := by omega
-    rw [HexPoly.ite_eq_right hn, coeff_eq_zero_of_size_le p hp, hzero]
+    rw [ite_eq_right hn, coeff_eq_zero_of_size_le p hp, hzero]
 
 attribute [local instance 1100] Lean.Grind.Semiring.natCast
 
@@ -1753,7 +1752,7 @@ law. -/
   apply ext_coeff
   intro n
   rw [coeff_derivative_semiring, coeff_zero, coeff_C]
-  simp only [Nat.succ_ne_zero, HexPoly.ite_false]
+  simp only [Nat.succ_ne_zero, ite_false]
   change ((n + 1 : Nat) : S) * (0 : S) = 0
   exact Lean.Grind.Semiring.mul_zero _
 
@@ -1764,7 +1763,7 @@ law. -/
   apply ext_coeff
   intro n
   rw [coeff_derivative_semiring, coeff_zero, coeff_monomial]
-  simp only [Nat.succ_ne_zero, HexPoly.ite_false]
+  simp only [Nat.succ_ne_zero, ite_false]
   change ((n + 1 : Nat) : S) * (0 : S) = 0
   exact Lean.Grind.Semiring.mul_zero _
 
@@ -1780,7 +1779,7 @@ theorem derivative_monomial_succ_semiring {S : Type u}
   · subst i
     simp
   · have hsucc : i + 1 ≠ n + 1 := by omega
-    simp only [hsucc, hi, HexPoly.ite_false]
+    simp only [hsucc, hi, ite_false]
     change ((i + 1 : Nat) : S) * (0 : S) = 0
     exact Lean.Grind.Semiring.mul_zero _
 

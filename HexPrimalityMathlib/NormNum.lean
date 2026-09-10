@@ -4,9 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPrimalityMathlib.Prime
-import HexPrimality.Elab
-import Mathlib.Tactic.NormNum.Prime
+module
+
+public import HexPrimalityMathlib.Prime
+public import HexPrimalityMathlib.Policy
+public meta import HexPrimalityMathlib.Policy
+public meta import HexPrimality.Elab
+public meta import Mathlib.Tactic.NormNum.Prime
+
+public section
 
 /-!
 The `Nat.Prime` reach of the `primality` tactic and an explicitly opted-in
@@ -51,27 +57,13 @@ namespace Hex.PrimalityTactic
 
 open Lean Meta Elab Qq Mathlib.Meta.NormNum
 
-/-- The measured opt-in `norm_num` crossover. Numerals below `2^24` use
-trial division; 25-bit and larger numerals use bounded certificate search. -/
-def natPrimeCertThreshold : Nat := 16777216
-
-/-- Restart budget for the opt-in negative `Nat.Prime` route. One seeded draw
-preserves useful small-factor coverage without multiplying the bounded
-exhaustion cost. -/
-def natPrimeRhoRestartBudget : Nat := 1
-
-/-- Per-restart Brent cycle-step budget for the opt-in negative `Nat.Prime`
-route. The fixed cap bounds work independently of input width while retaining
-odd small-factor coverage through the supported 512-bit ceiling. -/
-def natPrimeRhoStepBudget : Nat := 1 <<< 16
-
 theorem isNat_prime : {n n' : ℕ} → IsNat n n' →
     _root_.Nat.Prime n' → _root_.Nat.Prime n
   | _, _, ⟨rfl⟩, hp => by simpa using hp
 
 /-- The opt-in `norm_num` extension for certificate-backed `Nat.Prime`
 verdicts at and above `natPrimeCertThreshold`. -/
-@[norm_num _root_.Nat.Prime _] def evalNatPrimeCert : NormNumExt where
+@[norm_num _root_.Nat.Prime _] meta def evalNatPrimeCert : NormNumExt where
   eval {_ _} e := do
     let .app (.const `Nat.Prime _) (n : Q(ℕ)) ← whnfR e | failure
     let ⟨nn, pn⟩ ← deriveNat n _
@@ -107,7 +99,7 @@ verdicts at and above `natPrimeCertThreshold`. -/
 
 /-- The `Nat.Prime` goal handler for bare `primality`: same search, same
 reified certificate, emitted through the `Nat.Prime`-flavoured wrapper. -/
-@[tactic primalityTac] def evalPrimalityTacNat : Tactic.Tactic :=
+@[tactic primalityTac] meta def evalPrimalityTacNat : Tactic.Tactic :=
   fun stx => do
     match stx with
     | `(tactic| primality) => do
@@ -135,7 +127,7 @@ open Lean Meta Qq Mathlib.Meta.NormNum
 /-- A threshold-guarded alias of Mathlib's trial-division extension. It keeps
 small numerals working under `use_hex_primality_norm_num` but declines at the
 certificate tier, so exhaustion there cannot start a large trial search. -/
-@[norm_num _root_.Nat.Prime _] def Hex.PrimalityTactic.evalNatPrimeTrial :
+@[norm_num _root_.Nat.Prime _] meta def Hex.PrimalityTactic.evalNatPrimeTrial :
     Mathlib.Meta.NormNum.NormNumExt where
   eval {_ _} e := do
     let .app (.const `Nat.Prime _) (n : Q(ℕ)) ← whnfR e | failure

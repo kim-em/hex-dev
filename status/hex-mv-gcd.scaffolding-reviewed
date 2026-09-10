@@ -15,5 +15,5 @@ executable proof constraints and adjacent aliases, and finite-field
 squarefree support.  Verification modules live in the explicit
 development-test target rather than the public umbrella.
 
-The remaining `sorry` declarations are theorem-level proof obligations for
-Phase 5.
+The theorem-level proof obligations recorded here are complete; the library
+contains no remaining `sorry` declarations.

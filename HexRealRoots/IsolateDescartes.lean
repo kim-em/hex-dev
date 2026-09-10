@@ -23,7 +23,7 @@ public section
 /-!
 The Descartes isolation engine.
 
-`isolateDescartes?` runs the same bisection search as `isolateSturm?`, but
+`ZPoly.isolateDescartes?` runs the same bisection search as `ZPoly.isolateSturm?`, but
 dispatches each sub-interval on the Descartes variation count
 `V := descartesVar (mobiusTransform p (a, b])` together with the exact test
 `p(b) = 0`:
@@ -47,7 +47,7 @@ the correctness.
 
 The per-node cost is one Möbius transform (`O(n²)` integer operations via
 Taylor shift) versus the Sturm engine's full chain evaluation, which is why
-this engine runs first in `isolate?`. The deferred companion theorem
+this engine runs first in `ZPoly.isolateRealRoots?`. The deferred companion theorem
 `isolateDescartes?_isSome` (the Obreshkoff two-circle theorem;
 Krandick–Mehlhorn 2006) says none of the `none` outcomes happen for
 square-free input at this depth budget — in particular a non-real conjugate
@@ -75,7 +75,7 @@ Per node, with `V` the variation count and `bZero := (p(hi) = 0)`:
 - `V = 0`, `bZero`, or `V = 1`, `¬ bZero`: candidate — certify by the exact
   Sturm count `(sturmVarAt chain lo) − sturmVarAt chain hi`. If it is `1` emit
   the isolation (`subst hchain` turns the memoised-chain difference into
-  `sturmCount p (lo, hi] = 1` definitionally); otherwise return `none`, which
+  `ZPoly.sturmCount p (lo, hi] = 1` definitionally); otherwise return `none`, which
   aborts the engine;
 - `V = 1`, `bZero`, or `V ≥ 2`: bisect. Match `depth`: `0` returns `none` (the
   fuel discipline), `d + 1` recurses left then right at the dyadic midpoint.
@@ -122,11 +122,11 @@ private def descartesVisit (p : ZPoly) (chain : Array ZPoly)
 
 /-- The Descartes isolation engine.
 
-`isolateDescartes?` classifies its input exactly as `isolateSturm?` does:
+`ZPoly.isolateDescartes?` classifies its input exactly as `ZPoly.isolateSturm?` does:
 
 - `p = 0` (`degree? = none`): `none`.
 - `p` a nonzero constant (`degree? = some 0`): `some` with an empty isolation
-  array, matching `rootCount p = 0`. `assemble?` certifies completeness (the
+  array, matching `ZPoly.rootCount p = 0`. `assemble?` certifies completeness (the
   chain is empty, so `sturmVarNegInf − sturmVarPosInf = 0`).
 - `p` of positive degree that is not `SquareFreeRat`: `none`. Callers use
   `Hex.ZPoly.squareFreeCore` to obtain a square-free representative first.
@@ -138,13 +138,13 @@ The engine trusts Descartes' rule for nothing; it is a search heuristic
 wrapped in Sturm certificates. A `none` on square-free positive-degree input
 means a candidate's Sturm count was not `1`,
 an interval bisected past the depth budget, or the emitted total disagreed
-with `rootCount p`. The deferred companion theorem `isolateDescartes?_isSome`
+with `ZPoly.rootCount p`. The deferred companion theorem `isolateDescartes?_isSome`
 (the Obreshkoff two-circle theorem) says none of them happen for square-free
 input at this budget, so the driver's completeness — established through the
 Sturm engine — never waits on it. The per-node cost is one `O(n²)` Möbius
 transform against the Sturm engine's full chain evaluation, which is why this
-engine runs first in `isolate?`. -/
-def isolateDescartes? (p : ZPoly) : Option (RealRootIsolations p) :=
+engine runs first in `ZPoly.isolateRealRoots?`. -/
+def ZPoly.isolateDescartes? (p : ZPoly) : Option (RealRootIsolations p) :=
   match p.degree? with
   | none => none
   | some 0 => assemble? p (ZPoly.sturmChain p) rfl #[]
@@ -164,29 +164,29 @@ The zero and nonzero-constant cases `decide` in the kernel: neither reaches
 the `SquareFreeRat` test or a Möbius transform. The positive-degree
 square-free cases do reach the `SquareFreeRat` rational gcd (well-founded
 recursion the kernel cannot reduce), so they are verified by `#eval` and their
-results recorded below. Each is cross-checked against `isolateSturm?`: the two
+results recorded below. Each is cross-checked against `ZPoly.isolateSturm?`: the two
 engines must agree on the isolation count (the intervals need not coincide). -/
 
 -- The zero polynomial is rejected (no `SquareFreeRat` test on this branch).
-example : isolateDescartes? (DensePoly.ofCoeffs (#[] : Array Int)) = none := by decide
+example : ZPoly.isolateDescartes? (DensePoly.ofCoeffs (#[] : Array Int)) = none := by decide
 
--- A nonzero constant isolates with zero roots (empty chain, `rootCount = 0`;
+-- A nonzero constant isolates with zero roots (empty chain, `ZPoly.rootCount = 0`;
 -- no `SquareFreeRat` test on this branch).
-example : (isolateDescartes? (DensePoly.ofCoeffs #[(7 : Int)])).isSome = true := by decide
+example : (ZPoly.isolateDescartes? (DensePoly.ofCoeffs #[(7 : Int)])).isSome = true := by decide
 
 -- Positive-degree square-free cases (verified by `#eval`, not `decide`, since
 -- `SquareFreeRat`'s rational gcd is well-founded and does not reduce in the
 -- kernel). Each line records the observed isolation count and confirms it
--- matches `isolateSturm?` on the same input:
---   `isolateDescartes? (x − 5)`      ⇒ `some`, 1 isolation   (Sturm: 1)
---   `isolateDescartes? (x² − 1)`     ⇒ `some`, 2 isolations  (Sturm: 2)
---   `isolateDescartes? (x² + 1)`     ⇒ `some`, 0 isolations  (Sturm: 0)
---   `isolateDescartes? (x³ − x)`     ⇒ `some`, 3 isolations, increasing (Sturm: 3)
---   `isolateDescartes? ((x−1)²(x+1))` ⇒ `none` (not square-free)  (Sturm: none)
---   `isolateDescartes? (2x² − 5x + 2)` ⇒ `some`, 2 isolations  (Sturm: 2)
+-- matches `ZPoly.isolateSturm?` on the same input:
+--   `ZPoly.isolateDescartes? (x − 5)`      ⇒ `some`, 1 isolation   (Sturm: 1)
+--   `ZPoly.isolateDescartes? (x² − 1)`     ⇒ `some`, 2 isolations  (Sturm: 2)
+--   `ZPoly.isolateDescartes? (x² + 1)`     ⇒ `some`, 0 isolations  (Sturm: 0)
+--   `ZPoly.isolateDescartes? (x³ − x)`     ⇒ `some`, 3 isolations, increasing (Sturm: 3)
+--   `ZPoly.isolateDescartes? ((x−1)²(x+1))` ⇒ `none` (not square-free)  (Sturm: none)
+--   `ZPoly.isolateDescartes? (2x² − 5x + 2)` ⇒ `some`, 2 isolations  (Sturm: 2)
 --       — roots `1/2` and `2`; bisection midpoints hit the root `2` exactly,
 --         exercising the `V = 0`-with-`p(b) = 0` candidate row.
---   `isolateDescartes? (x² − x)`     ⇒ `some`, 2 isolations  (Sturm: 2)
+--   `ZPoly.isolateDescartes? (x² − x)`     ⇒ `some`, 2 isolations  (Sturm: 2)
 --       — roots `0` and `1`, both dyadic; adjacent isolations may share an
 --         endpoint (still disjoint, half-open on the left).
 

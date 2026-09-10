@@ -53,11 +53,11 @@ theorem pelletFold (cs : Array Hex.GaussDyadic) (k : Nat)
       simp only [List.range_succ, List.foldl_append, List.foldl_cons, List.foldl_nil]
       constructor
       · by_cases hnk : n = k
-        · rw [if_pos hnk, ih.1, Finset.sum_range_succ]
-          simp only [hnk, if_pos, add_zero]
-        · rw [if_neg hnk, Dyadic.toReal_add, Dyadic.toReal_mul, ih.1, ih.2,
+        · rw [ite_eq_left hnk, ih.1, Finset.sum_range_succ]
+          simp only [hnk, ite_eq_left, add_zero]
+        · rw [ite_eq_right hnk, Dyadic.toReal_add, Dyadic.toReal_mul, ih.1, ih.2,
             Finset.sum_range_succ]
-          simp only [hnk, if_false]
+          simp only [hnk, ite_false]
       · rw [Dyadic.toReal_mul, ih.2, pow_succ]
 
 /-- A polynomial cannot vanish where its constant coefficient strictly
@@ -74,7 +74,7 @@ private theorem eval_ne_zero_of_dominates {q : Polynomial ℂ} {z : ℂ} {n : Na
   rw [Polynomial.eval_eq_sum_range' hn, Finset.sum_range_succ'] at hz
   simp only [pow_zero, mul_one] at hz
   rw [Finset.sum_range_succ'] at hdom
-  simp only [if_pos, pow_zero, mul_one, Nat.succ_ne_zero, if_false, add_zero] at hdom
+  simp only [ite_eq_left, pow_zero, mul_one, Nat.succ_ne_zero, ite_false, add_zero] at hdom
   have hcoeff : ‖q.coeff 0‖ ≤
       ∑ i ∈ Finset.range m, ‖q.coeff (i + 1)‖ * ‖z‖ ^ (i + 1) := by
     calc
@@ -96,7 +96,7 @@ theorem exactRootFree_size_pos {p : Hex.ZPoly} {s : Hex.DyadicSquare}
   unfold Hex.exactRootFree Hex.pelletAt at h
   rw [Hex.taylor_size] at h
   by_contra hp
-  rw [if_neg (by omega)] at h
+  rw [ite_eq_right (by omega)] at h
   contradiction
 
 /-- A nonempty polynomial's shift has degree strictly below its executable
@@ -106,7 +106,8 @@ theorem shift_natDegree_lt_size (p : Hex.ZPoly) (hp : 0 < p.size) (c : ℂ) :
   have hpoly : (toPolyℂ p).natDegree < p.size := by
     rw [natDegree_toPolyℂ]
     have hdegree : p.degree? = some (p.size - 1) := by
-      simp [Hex.DensePoly.degree?, Nat.ne_of_gt hp]
+      simp [Hex.DensePoly.natDegree, Hex.DensePoly.degree?, Nat.ne_of_gt hp]
+    unfold Hex.DensePoly.natDegree
     rw [hdegree, Option.getD_some]
     omega
   exact (Polynomial.natDegree_comp_le.trans_lt (by simpa using hpoly))
@@ -123,7 +124,7 @@ theorem exactRootFree_bound {p : Hex.ZPoly} {s : Hex.DyadicSquare}
   have hsize : 0 < p.size := exactRootFree_size_pos h
   unfold Hex.exactRootFree Hex.pelletAt at h
   rw [Hex.taylor_size] at h
-  rw [if_pos hsize] at h
+  rw [ite_eq_left hsize] at h
   simp only [_root_.Dyadic.pow_zero, _root_.Dyadic.mul_one] at h
   let result := (List.range p.size).foldl
       (fun acc i =>
@@ -173,7 +174,7 @@ private theorem exactRootFree_ne_zero {p : Hex.ZPoly} {s : Hex.DyadicSquare}
         intro i hi
         by_cases hi0 : i = 0
         · simp [hi0]
-        · simp only [hi0, if_false]
+        · simp only [hi0, ite_false]
           have hcoeff : ‖q.coeff i‖ ≤ Dyadic.toReal
               (Hex.GaussDyadic.hi ((Hex.taylor p s.center).getD i (0, 0))) := by
             rw [show q.coeff i =
@@ -228,7 +229,7 @@ private theorem softPelletZero_eval {cs : Array Hex.CoeffBall} {q : ℂ[X]}
         intro i _
         by_cases hi : i = 0
         · simp [hi]
-        · simp only [hi, if_false]
+        · simp only [hi, ite_false]
           gcongr
       _ < ‖q.coeff 0‖ := hdomR'
   exact eval_ne_zero_of_dominates henclose.degree_lt hdomZ
@@ -307,7 +308,7 @@ private theorem softRootCountLoop_zero {bits rounds : Nat} {ks : List Nat}
 private theorem rootFreeLoop_ne_zero {p : Hex.ZPoly} {s : Hex.DyadicSquare}
     {bits : Nat} {cs : Array Hex.CoeffBall}
     (henclose : BallsEnclose cs (localPoly p s))
-    (hcheck : Hex.softRootFreeLoop bits (Hex.graeffeRounds (p.degree?.getD 0))
+    (hcheck : Hex.softRootFreeLoop bits (Hex.graeffeRounds (p.natDegree))
       cs Hex.softSqrt2Lo Hex.softSqrt2Hi = true)
     {z : ℂ}
     (hz : z ∈ Metric.ball (DyadicSquare.center s) (Dyadic.toReal s.radiusHi)) :

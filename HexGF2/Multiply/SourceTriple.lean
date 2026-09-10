@@ -145,18 +145,18 @@ private theorem clmulCoeffAt_sourcePairCoeff
         false := by
   unfold clmulCoeffAt
   by_cases hlow : n / 64 = idx
-  · simp only [if_pos hlow]
+  · simp only [ite_eq_left hlow]
     have hbit : n % 64 < 64 := Nat.mod_lt n (by decide : 0 < 64)
     change wordBitAt (clmul x y).2 (n % 64) =
       clmulSourcePairCoeff x y (n % 64)
     exact clmulSourcePairCoeff_low x y hbit
   · by_cases hhigh : n / 64 = idx + 1
-    · simp only [if_neg hlow, if_pos hhigh]
+    · simp only [ite_eq_right hlow, ite_eq_left hhigh]
       have hbit : n % 64 < 64 := Nat.mod_lt n (by decide : 0 < 64)
       change wordBitAt (clmul x y).1 (n % 64) =
         clmulSourcePairCoeff x y (n % 64 + 64)
       exact clmulSourcePairCoeff_high x y hbit
-    · simp only [if_neg hlow, if_neg hhigh]
+    · simp only [ite_eq_right hlow, ite_eq_right hhigh]
 
 /-- Source bit-triple contribution for the coefficient of total bit index
 `total` in a three-word carry-less product. -/

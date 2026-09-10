@@ -78,7 +78,7 @@ theorem findDirectHead_found_le
             obtain ⟨selected, remaining, hmem, hselected, hremaining, heval⟩ :=
               scanDirectCombinations_found coreLc target basis
                 (Hex.liftSupport basis) (Hex.targetImage target) head tail level [] []
-                ((Hex.directLiftedFactor basis head).degree?.getD 0)
+                ((Hex.directLiftedFactor basis head).natDegree)
                 ((Hex.directLiftedFactor basis head).coeff 0 %
                   (Hex.liftModulus basis : Int))
                 split tried
@@ -101,7 +101,7 @@ theorem findDirectHead_found_le
                 scanDirectCombinations_finds coreLc target basis
                   (Hex.liftSupport basis) (Hex.targetImage target) head tail trueLevel
                   [] []
-                  ((Hex.directLiftedFactor basis head).degree?.getD 0)
+                  ((Hex.directLiftedFactor basis head).natDegree)
                   ((Hex.directLiftedFactor basis head).coeff 0 %
                     (Hex.liftModulus basis : Int))
                   trueSelected trueRemaining trueCandidate trueQuotient
@@ -173,9 +173,9 @@ private theorem directSelectedDegree_eq_sum
   have haux : ∀ (xs : List (Hex.DirectLiftedIndex basis)) (a : Nat),
       xs.foldl
           (fun sum i =>
-            sum + (Hex.directLiftedFactor basis i).degree?.getD 0) a =
+            sum + (Hex.directLiftedFactor basis i).natDegree) a =
         a + (xs.map fun i =>
-          (Hex.directLiftedFactor basis i).degree?.getD 0).sum := by
+          (Hex.directLiftedFactor basis i).natDegree).sum := by
     intro xs
     induction xs with
     | nil => intro a; simp
@@ -264,7 +264,7 @@ theorem directCandidatePrefilter_trueSupport
         (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
       hnodup).symm
   have hdegree :
-      Hex.directSelectedDegree d selected ≤ target.degree?.getD 0 := by
+      Hex.directSelectedDegree d selected ≤ target.natDegree := by
     rw [hdegree_list, ← hdegree_candidate]
     exact natDegree_toPolynomial_le_degree_getD_of_dvd
       target factor htarget_ne hfactor_dvd
@@ -436,7 +436,7 @@ theorem tryDirectSplit_trueSupport
     (hfactor_irr : Irreducible (HexPolyZMathlib.toPolynomial factor))
     (hfactor_dvd : factor ∣ target)
     (hfactor_lc_pos : 0 < Hex.DensePoly.leadingCoeff factor)
-    (hfactor_degree_pos : 0 < factor.degree?.getD 0)
+    (hfactor_degree_pos : 0 < factor.natDegree)
     (hproduct : quotient * factor = target) :
     Hex.tryDirectSplit
         (Hex.DensePoly.leadingCoeff core) target
@@ -467,18 +467,18 @@ theorem tryDirectSplit_trueSupport
     have hne_zero : factor ≠ 0 := by
       intro hzero
       rw [hzero] at hfactor_degree_pos
-      simp [Hex.DensePoly.degree?] at hfactor_degree_pos
+      simp [Hex.DensePoly.natDegree, Hex.DensePoly.degree?] at hfactor_degree_pos
     have hne_one : factor ≠ 1 := by
       intro hone
       rw [hone] at hfactor_degree_pos
       change 0 <
-        (Hex.DensePoly.C (1 : Int)).degree?.getD 0 at hfactor_degree_pos
-      rw [Hex.DensePoly.degree?_C_getD] at hfactor_degree_pos
+        (Hex.DensePoly.C (1 : Int)).natDegree at hfactor_degree_pos
+      rw [Hex.DensePoly.natDegree_C] at hfactor_degree_pos
       omega
     have hne_neg_one : factor ≠ Hex.DensePoly.C (-1 : Int) := by
       intro hneg
       rw [hneg] at hfactor_degree_pos
-      rw [Hex.DensePoly.degree?_C_getD] at hfactor_degree_pos
+      rw [Hex.DensePoly.natDegree_C] at hfactor_degree_pos
       omega
     unfold Hex.shouldRecordPolynomialFactor
     simp [hne_zero, hne_one, hne_neg_one]
@@ -494,7 +494,7 @@ theorem tryDirectSplit_trueSupport
           (Hex.directSelectedFactors d selected) =
         factor := hcand
   rw [hpre]
-  simp only [if_true]
+  simp only [ite_true]
   rw [hcand_prepared, hrecord, hquot]
   rfl
 
@@ -507,7 +507,7 @@ theorem tryDirectSplit_containsSupport
     (hpartition : DirectSupportPartition core B data J target)
     (hval : ModPFactorization core data)
     (facts : DirectLiftFacts core B data)
-    (hcore_degree_pos : 0 < core.degree?.getD 0)
+    (hcore_degree_pos : 0 < core.natDegree)
     (hprecision : 1 ≤ Hex.precisionForCoeffBound B data.p)
     (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core)
       (Int.ofNat (data.p ^ Hex.precisionForCoeffBound B data.p)) = 1)
@@ -577,7 +577,7 @@ theorem tryDirectSplit_eqSupport_of_card_le
     (hpartition : DirectSupportPartition core B data J target)
     (hval : ModPFactorization core data)
     (facts : DirectLiftFacts core B data)
-    (hcore_degree_pos : 0 < core.degree?.getD 0)
+    (hcore_degree_pos : 0 < core.natDegree)
     (hprecision : 1 ≤ Hex.precisionForCoeffBound B data.p)
     (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core)
       (Int.ofNat (data.p ^ Hex.precisionForCoeffBound B data.p)) = 1)

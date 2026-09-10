@@ -1,0 +1,18 @@
+{
+  "machine": "chungus2",
+  "toolchain": "leanprover/lean4:v4.34.0-rc2",
+  "binary_sha256": "1e70598459086e73fbc130d4f26557525927b7ab5deff840f1d3f60196c0129b",
+  "driver_sha256": "cf472613ee1f99a46fb4ddd4f57a8d36ca3efc1749947c8f5e25b1ce7805b3ce",
+  "runs": [
+    "runtime-594-1.jsonl",
+    "runtime-594-2.jsonl",
+    "runtime-594-3.jsonl",
+    "runtime-594-4.jsonl",
+    "runtime-594-5.jsonl"
+  ],
+  "budgets_ns": {
+    "irreducibility": 2000000,
+    "primitivity": 5000000,
+    "compatibility": 5000000
+  }
+}

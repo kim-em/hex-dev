@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexPolyFp.NttMul
+public import HexPolyFp.PackedMul
 
 public section
 
@@ -76,7 +76,7 @@ def composeModMonicImpl (f g modulus : FpPoly p)
       0
   else
     f.toArray.foldr
-      (fun coeff acc => modByMonic modulus (mulFast acc g + C coeff) hmonic)
+      (fun coeff acc => modByMonic modulus (mulPackedFast acc g + C coeff) hmonic)
       0
 
 /-- {name}`composeModMonicList` is the `List.foldr` of the modular Horner step. -/
@@ -102,7 +102,7 @@ theorem composeModMonic_eq_composeModMonicImpl
   split
   · rw [← Array.foldr_toList, ← composeModMonicList_eq_foldr]
     rfl
-  · simp only [mulFast_eq]
+  · simp only [mulPackedFast_eq]
     rw [← Array.foldr_toList, ← composeModMonicList_eq_foldr]
     rfl
 

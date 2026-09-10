@@ -21,7 +21,7 @@ resultant, including its units, powers, and signs.
 `Hex.DensePoly.toPolynomial_resultant`: the executable subresultant
 resultant agrees with Mathlib's `Polynomial.resultant` under the
 dense-polynomial correspondence, with the executable default formal
-degrees (`f.degree?.getD 0`, `g.degree?.getD 0`) made explicit. This is
+degrees (`f.natDegree`, `g.natDegree`) made explicit. This is
 the end-to-end post-condition of the public API: exact agreement of
 values, units, powers, and signs included, not merely simultaneous
 vanishing. It needs no monicity, coprimality, or nonzero hypotheses on
@@ -179,7 +179,7 @@ theorem toPolynomial_resultant [CommRing R] [DecidableEq R]
     resultant f g =
       Polynomial.resultant (HexPolyMathlib.toPolynomial f)
         (HexPolyMathlib.toPolynomial g)
-        (m := f.degree?.getD 0) (n := g.degree?.getD 0)
+        (m := f.natDegree) (n := g.natDegree)
 
 /-- Vanishing criterion over an algebraically closed extension. -/
 theorem resultant_eq_zero_iff_common_root
@@ -196,7 +196,7 @@ theorem eval_resultant [CommRing R] [DecidableEq R]
     (f g : DensePoly (DensePoly R)) (a : R) :
     eval (resultant f g) a =
       Polynomial.resultant (specialize f a) (specialize g a)
-        (m := f.degree?.getD 0) (n := g.degree?.getD 0)
+        (m := f.natDegree) (n := g.natDegree)
 
 /-- Default-formal-degree specialization when neither leading coefficient
     vanishes at the specialization point. -/
@@ -232,14 +232,14 @@ theorem toPolynomial_disc [CommRing R] [DecidableEq R]
 /-- Positive-degree characteristic-zero product identity. -/
 theorem disc_mul [CommRing R] [IsDomain R] [IsAddTorsionFree R]
     [DecidableEq R] [Div R] [Hex.ExactDivLaws R]
-    (f g : DensePoly R) (hf : 0 < f.degree?.getD 0)
-    (hg : 0 < g.degree?.getD 0) :
+    (f g : DensePoly R) (hf : 0 < f.natDegree)
+    (hg : 0 < g.natDegree) :
     disc (f * g) = disc f * disc g * resultant f g ^ 2
 
 /-- Positive-degree squarefreeness criterion over characteristic-zero fields. -/
 theorem disc_ne_zero_iff_separable [Field R] [IsAddTorsionFree R]
     [DecidableEq R] [Hex.ExactDivLaws R]
-    (f : DensePoly R) (hf : 0 < f.degree?.getD 0) :
+    (f : DensePoly R) (hf : 0 < f.natDegree) :
     disc f ≠ 0 ↔ (HexPolyMathlib.toPolynomial f).Separable
 
 end Hex.DensePoly

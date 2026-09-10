@@ -42,7 +42,7 @@ theorem degree_pos_of_irreducible_dvd_primitive
     (hcore_prim : Hex.ZPoly.Primitive core)
     (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
     (hdvd : factor ∣ core) :
-    0 < factor.degree?.getD 0 := by
+    0 < factor.natDegree := by
   rw [← HexPolyMathlib.natDegree_toPolynomial]
   rcases Nat.eq_zero_or_pos
       (HexPolyZMathlib.toPolynomial factor).natDegree with hzero | hpos
@@ -98,7 +98,7 @@ theorem findDirectHead_correct
     (hcore_prim : Hex.ZPoly.Primitive core)
     (hcore_ne : core ≠ 0)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
-    (hcore_degree_pos : 0 < core.degree?.getD 0)
+    (hcore_degree_pos : 0 < core.natDegree)
     (hval : ModPFactorization core data)
     (facts : DirectLiftFacts core B data)
     (hprecision : 1 ≤ Hex.precisionForCoeffBound B data.p)
@@ -214,12 +214,12 @@ theorem findDirectHead_correct
   have hfactor_core : factor ∣ core :=
     zpoly_dvd_trans hfactor_dvd state.targetDvdCore
   have hfactor_degree :
-      0 < factor.degree?.getD 0 :=
+      0 < factor.natDegree :=
     degree_pos_of_irreducible_dvd_primitive hcore_prim hfactor_irr hfactor_core
   have hfactor_ne : factor ≠ 0 := by
     intro hz
     rw [hz] at hfactor_degree
-    simp [Hex.DensePoly.degree?] at hfactor_degree
+    simp [Hex.DensePoly.natDegree, Hex.DensePoly.degree?] at hfactor_degree
   have hfactor_lc_pos :
       0 < Hex.DensePoly.leadingCoeff factor :=
     leadingCoeff_pos_of_normalized hfactor_ne hfactor_norm
@@ -389,7 +389,7 @@ structure DirectFactorListSpec
     ∀ factor ∈ factors, Hex.normalizeFactorSign factor = factor
   /-- Every returned factor has positive degree. -/
   degreePos :
-    ∀ factor ∈ factors, 0 < factor.degree?.getD 0
+    ∀ factor ∈ factors, 0 < factor.natDegree
 
 /-- Every completed recursive direct search is an irreducible factorization of
 its current target.  A resource decline has no mathematical claim. -/
@@ -398,7 +398,7 @@ theorem searchDirectAux_factored
     (hcore_prim : Hex.ZPoly.Primitive core)
     (hcore_ne : core ≠ 0)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
-    (hcore_degree_pos : 0 < core.degree?.getD 0)
+    (hcore_degree_pos : 0 < core.natDegree)
     (hval : ModPFactorization core data)
     (facts : DirectLiftFacts core B data)
     (hprecision : 1 ≤ Hex.precisionForCoeffBound B data.p)
@@ -426,14 +426,14 @@ theorem searchDirectAux_factored
         state hrun
       simp only [Hex.searchDirectAux] at hrun
       by_cases hone : target = 1
-      · rw [if_pos hone] at hrun
+      · rw [ite_eq_left hone] at hrun
         cases hrun
         refine
           { product := by simpa using hone.symm
             irreducible := by simp
             normalized := by simp
             degreePos := by simp }
-      · rw [if_neg hone] at hrun
+      · rw [ite_eq_right hone] at hrun
         cases localFactors with
         | nil => simp at hrun
         | cons head tail =>
@@ -493,7 +493,7 @@ theorem searchDirectAux_factored
                       ih hnextState hnext
                     have hfactorCore : factor ∣ core :=
                       zpoly_dvd_trans hfactorDvd state.targetDvdCore
-                    have hfactorDegree : 0 < factor.degree?.getD 0 :=
+                    have hfactorDegree : 0 < factor.natDegree :=
                       degree_pos_of_irreducible_dvd_primitive
                         hcore_prim hfactorIrr hfactorCore
                     refine
@@ -527,7 +527,7 @@ theorem searchDirect_factored
     {core : Hex.ZPoly} {B : Nat} {data : Hex.PrimeChoiceData}
     (hcore_prim : Hex.ZPoly.Primitive core)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
-    (hcore_degree_pos : 0 < core.degree?.getD 0)
+    (hcore_degree_pos : 0 < core.natDegree)
     (hcore_squarefree : Squarefree (HexPolyZMathlib.toPolynomial core))
     (hB : B = Hex.ZPoly.defaultFactorCoeffBound core)
     (hval : ModPFactorization core data)
@@ -589,14 +589,14 @@ theorem searchDirect_factored
 contract. -/
 theorem validDirectFactors_of_spec
     {core : Hex.ZPoly} {factors : List Hex.ZPoly}
-    (hcore_degree_pos : 0 < core.degree?.getD 0)
+    (hcore_degree_pos : 0 < core.natDegree)
     (h : DirectFactorListSpec core factors) :
     Hex.validDirectFactors core factors = true := by
   have hcore_ne_one : core ≠ 1 := by
     intro hone
     rw [hone] at hcore_degree_pos
-    change 0 < (Hex.DensePoly.C (1 : Int)).degree?.getD 0 at hcore_degree_pos
-    rw [Hex.DensePoly.degree?_C_getD] at hcore_degree_pos
+    change 0 < (Hex.DensePoly.C (1 : Int)).natDegree at hcore_degree_pos
+    rw [Hex.DensePoly.natDegree_C] at hcore_degree_pos
     omega
   have hfactors_ne : factors ≠ [] := by
     intro hempty
@@ -634,7 +634,7 @@ theorem factorDirectCoreOfPlan_factored
     (hplan : Hex.directPrimePlan? core = some modular)
     (hcore_prim : Hex.ZPoly.Primitive core.poly)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core.poly)
-    (hcore_degree_pos : 0 < core.poly.degree?.getD 0)
+    (hcore_degree_pos : 0 < core.poly.natDegree)
     (hcore_squarefree :
       Squarefree (HexPolyZMathlib.toPolynomial core.poly))
     {budget : Nat} {factors : Array Hex.ZPoly}
@@ -660,7 +660,7 @@ theorem factorDirectCoreOfPlan_factored
       omega
     rw [hk, pow_zero] at hrecover
     omega
-  letI := modular.data.bounds
+  let := modular.data.bounds
   have hadm :
       Hex.leadingCoeffAdmissible core.poly modular.data.p :=
     Hex.isGoodPrime_leadingCoeffAdmissible core.poly modular.data.p
@@ -711,7 +711,7 @@ theorem factorDirectCore_factored
     (core : Hex.SquareFreeInput)
     (hcore_prim : Hex.ZPoly.Primitive core.poly)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core.poly)
-    (hcore_degree_pos : 0 < core.poly.degree?.getD 0)
+    (hcore_degree_pos : 0 < core.poly.natDegree)
     (hcore_squarefree :
       Squarefree (HexPolyZMathlib.toPolynomial core.poly))
     {budget : Nat} {factors : Array Hex.ZPoly}

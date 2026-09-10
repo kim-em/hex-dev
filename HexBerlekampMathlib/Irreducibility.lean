@@ -210,7 +210,7 @@ theorem irreducible_dvd_frobeniusPolynomial_of_natDegree_dvd
   have : Module.Finite (ZMod p) (AdjoinRoot g) :=
     (AdjoinRoot.powerBasis hg_ne_zero).finite
   have : Finite (AdjoinRoot g) := Module.finite_of_finite (ZMod p)
-  letI : Fintype (AdjoinRoot g) := Fintype.ofFinite _
+  let : Fintype (AdjoinRoot g) := Fintype.ofFinite _
   have hcard : Fintype.card (AdjoinRoot g) = p ^ g.natDegree := by
     rw [← Nat.card_eq_fintype_card,
         ← FiniteField.pow_finrank_eq_natCard p (AdjoinRoot g),
@@ -484,13 +484,13 @@ theorem toMathlibPolynomial_squareFree_coprime
 of positive `natDegree`: its leading coefficient is nonzero and the (injective)
 coefficient transport preserves that, so the top coefficient survives. -/
 theorem natDegree_toMathlibPolynomial_pos_of_degree?_pos
-    {g : Hex.FpPoly p} (hg : 0 < g.degree?.getD 0) :
+    {g : Hex.FpPoly p} (hg : 0 < g.natDegree) :
     0 < (toMathlibPolynomial g).natDegree := by
   have hsize_pos : 0 < g.size := by
     rcases Nat.eq_zero_or_pos g.size with hz | hpos
-    · rw [Hex.DensePoly.degree?] at hg; simp [hz] at hg
+    · rw [Hex.DensePoly.natDegree_eq_size_sub_one, hz] at hg; omega
     · exact hpos
-  rw [Hex.DensePoly.degree?_eq_some_of_pos_size g hsize_pos, Option.getD_some] at hg
+  rw [Hex.DensePoly.natDegree_eq_size_sub_one] at hg
   have hcoeff_ne : g.coeff (g.size - 1) ≠ 0 :=
     Hex.DensePoly.coeff_last_ne_zero_of_pos_size g hsize_pos
   have hcoeff_zmod_ne : (toMathlibPolynomial g).coeff (g.size - 1) ≠ 0 := by
@@ -515,7 +515,7 @@ than irreducibles.
 theorem irreducible_of_mem_berlekampFactor
     (f : Hex.FpPoly p) (hmonic : Hex.DensePoly.Monic f)
     [Hex.ZMod64.PrimeModulus p] [Fact (Nat.Prime p)]
-    (hf_pos : 0 < f.degree?.getD 0)
+    (hf_pos : 0 < f.natDegree)
     (hsquareFree : ∀ d, d ∣ f → d ∣ Hex.DensePoly.derivative f →
       Hex.Berlekamp.isUnitPolynomial d = true) :
     ∀ g ∈ (Hex.Berlekamp.berlekampFactor f hmonic).factors,
@@ -534,7 +534,7 @@ transport to Mathlib's polynomial model.
 theorem irreducible_of_mem_berlekampFactor_of_gcd_eq_one
     (f : Hex.FpPoly p) (hmonic : Hex.DensePoly.Monic f)
     [Hex.ZMod64.PrimeModulus p] [Fact (Nat.Prime p)]
-    (hf_pos : 0 < f.degree?.getD 0)
+    (hf_pos : 0 < f.natDegree)
     (hsquareFree : Hex.DensePoly.gcd f (Hex.DensePoly.derivative f) = 1) :
     ∀ g ∈ (Hex.Berlekamp.berlekampFactor f hmonic).factors,
       Irreducible (toMathlibPolynomial g) :=
@@ -552,7 +552,7 @@ irreducibility theorem applies directly.
 theorem irreducible_of_berlekampFactor_factors_length_le_one
     (f : Hex.FpPoly p) (hmonic : Hex.DensePoly.Monic f)
     [Hex.ZMod64.PrimeModulus p] [Fact (Nat.Prime p)]
-    (hf_pos : 0 < f.degree?.getD 0)
+    (hf_pos : 0 < f.natDegree)
     (hsquareFree :
       Hex.Berlekamp.isUnitPolynomial
         (Hex.DensePoly.gcd f (Hex.DensePoly.derivative f)) = true)

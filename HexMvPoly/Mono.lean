@@ -6,7 +6,6 @@ Authors: Kim Morrison
 
 module
 
-public import HexBasic.Conditional
 import HexBasic.Fold
 import HexBasic.List
 public import HexBasic.ArrayDecEq
@@ -134,11 +133,11 @@ theorem powBySq_eq_pow [Lean.Grind.Semiring R] (a : R) (k : Nat) :
             Nat.div_lt_self (Nat.succ_pos k) (by decide : 1 < 2)
           rw [powBySq, ih ((k + 1) / 2) hlt]
           by_cases heven : (k + 1) % 2 = 0
-          · rw [Hex.ite_eq_left heven, ← Lean.Grind.Semiring.pow_add]
+          · rw [ite_eq_left heven, ← Lean.Grind.Semiring.pow_add]
             have hdecomp := Nat.mod_add_div (k + 1) 2
             congr 1
             omega
-          · rw [Hex.ite_eq_right heven, ← Lean.Grind.Semiring.pow_add,
+          · rw [ite_eq_right heven, ← Lean.Grind.Semiring.pow_add,
               ← Lean.Grind.Semiring.pow_succ]
             have hdecomp := Nat.mod_add_div (k + 1) 2
             have hmod := Nat.mod_two_eq_zero_or_one (k + 1)
@@ -523,7 +522,7 @@ theorem div_eq_some_iff (a b q : Mono n) :
       have hi := congrArg (fun m : Mono n => m[i]) hmul
       rw [getElem_mul] at hi
       omega
-    rw [div, Hex.dite_eq_left hle]
+    rw [div, dite_eq_left hle]
     congr 1
     apply Vector.ext
     intro i hi

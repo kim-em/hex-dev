@@ -28,9 +28,9 @@ theorem toPolynomial_disc [CommRing R] [DecidableEq R]
   let F := HexPolyMathlib.toPolynomial f
   by_cases hsmall : f.size ≤ 1
   · unfold disc
-    rw [if_pos hsmall]
+    rw [ite_eq_left hsmall]
     have hdeg : F.natDegree = 0 := by
-      rw [show F.natDegree = f.degree?.getD 0 by
+      rw [show F.natDegree = f.natDegree by
         simpa only [F] using HexPolyMathlib.natDegree_toPolynomial f]
       by_cases hf : f = 0
       · subst f
@@ -39,7 +39,7 @@ theorem toPolynomial_disc [CommRing R] [DecidableEq R]
           by_contra h
           apply hf
           exact (size_eq_zero_iff f).mp (by omega)
-        rw [degree?_eq_some_of_pos_size f hfpos, Option.getD_some]
+        rw [natDegree_eq_size_sub_one]
         omega
     change 1 = Polynomial.discr F
     rw [Polynomial.eq_C_of_natDegree_eq_zero hdeg]
@@ -47,16 +47,16 @@ theorem toPolynomial_disc [CommRing R] [DecidableEq R]
   · let n := f.size - 1
     let d := f.derivative
     let D := HexPolyMathlib.toPolynomial d
-    let k := d.degree?.getD 0
+    let k := d.natDegree
     let gap := n - 1 - k
     have hfpos : 0 < f.size := by omega
     have hn : 0 < n := by
       dsimp only [n]
       omega
     have hFn : F.natDegree = n := by
-      rw [show F.natDegree = f.degree?.getD 0 by
+      rw [show F.natDegree = f.natDegree by
         simpa only [F] using HexPolyMathlib.natDegree_toPolynomial f]
-      rw [degree?_eq_some_of_pos_size f hfpos, Option.getD_some]
+      rw [natDegree_eq_size_sub_one]
     have hD : D = F.derivative := by
       simpa only [D, d, F] using HexPolyMathlib.toPolynomial_derivative f
     have hDk : D.natDegree = k := by
@@ -72,8 +72,8 @@ theorem toPolynomial_disc [CommRing R] [DecidableEq R]
     have hactual :
         resultant f d = Polynomial.resultant F D n k := by
       rw [toPolynomial_resultant]
-      rw [show f.degree?.getD 0 = n by
-        rw [degree?_eq_some_of_pos_size f hfpos, Option.getD_some]]
+      rw [show f.natDegree = n by
+        rw [natDegree_eq_size_sub_one]]
     have hpromote :
         powNat f.leadingCoeff gap * resultant f d =
           Polynomial.resultant F F.derivative n (n - 1) := by
@@ -92,7 +92,7 @@ theorem toPolynomial_disc [CommRing R] [DecidableEq R]
     rw [hFn] at hformal
     rw [hlc] at hformal
     unfold disc
-    rw [if_neg hsmall]
+    rw [ite_eq_right hsmall]
     change
       negOnePow (R := R) (n * (n - 1) / 2) *
           exactDiv (powNat f.leadingCoeff gap * resultant f d)
@@ -280,7 +280,7 @@ private theorem discr_mul [CommRing R] [IsDomain R]
     exact Hex.SubresultantMinor.sign_ne_zero one_ne_zero k
   have hs0 : s ≠ 0 := by
     dsimp only [s]
-    exact mul_ne_zero (mul_ne_zero (hpow _) (hpow _)) (hpow _)
+    exact _root_.mul_ne_zero (_root_.mul_ne_zero (hpow _) (hpow _)) (hpow _)
   have hcancelSign :
       f.leadingCoeff * g.leadingCoeff * Polynomial.discr (f * g) =
         f.leadingCoeff * g.leadingCoeff *
@@ -303,7 +303,7 @@ private theorem discr_mul [CommRing R] [IsDomain R]
             (Polynomial.discr f * Polynomial.discr g *
               Polynomial.resultant f g ^ 2)) := by
         ring
-  apply mul_left_cancel₀ (mul_ne_zero hlcf hlcg)
+  apply mul_left_cancel₀ (_root_.mul_ne_zero hlcf hlcg)
   exact hcancelSign
 
 /-- Discriminants multiply with the square of the cross-resultant.
@@ -313,8 +313,8 @@ assign discriminant one to constants, while multiplying by a nonunit constant
 scales the other discriminant. -/
 theorem disc_mul [CommRing R] [IsDomain R] [IsAddTorsionFree R]
     [DecidableEq R] [Div R] [Hex.ExactDivLaws R]
-    (f g : DensePoly R) (hf : 0 < f.degree?.getD 0)
-    (hg : 0 < g.degree?.getD 0) :
+    (f g : DensePoly R) (hf : 0 < f.natDegree)
+    (hg : 0 < g.natDegree) :
     disc (f * g) = disc f * disc g * resultant f g ^ 2 := by
   have hf' : 0 < (HexPolyMathlib.toPolynomial f).natDegree := by
     rw [HexPolyMathlib.natDegree_toPolynomial]
@@ -331,10 +331,10 @@ theorem disc_mul [CommRing R] [IsDomain R] [IsAddTorsionFree R]
 nonzero executable discriminant exactly when it is separable. -/
 theorem disc_ne_zero_iff_separable [Field R] [IsAddTorsionFree R]
     [DecidableEq R] [Hex.ExactDivLaws R]
-    (f : DensePoly R) (hf : 0 < f.degree?.getD 0) :
+    (f : DensePoly R) (hf : 0 < f.natDegree) :
     disc f ≠ 0 ↔ (HexPolyMathlib.toPolynomial f).Separable := by
   let F := HexPolyMathlib.toPolynomial f
-  have hFn : F.natDegree = f.degree?.getD 0 := by
+  have hFn : F.natDegree = f.natDegree := by
     simpa only [F] using HexPolyMathlib.natDegree_toPolynomial f
   have hFpos : 0 < F.natDegree := by rw [hFn]; exact hf
   have hF0 : F ≠ 0 := by

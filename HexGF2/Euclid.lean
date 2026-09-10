@@ -44,7 +44,7 @@ def divModAux (q : GF2Poly) (fuel : Nat) (quot rem : GF2Poly) :
 /-- Polynomial long division over `GF(2)`. Division by `0` returns `(0, p)`. -/
 @[expose]
 def divMod (p q : GF2Poly) : GF2Poly × GF2Poly :=
-  divModAux q (p.degree + 1) 0 p
+  divModAux q (p.natDegree + 1) 0 p
 
 /-- Quotient from polynomial long division over `GF(2)`. -/
 @[expose]
@@ -70,7 +70,7 @@ instance : Dvd GF2Poly where
 factorizations inside the packed {name}`Hex.GF2Poly` execution model. -/
 @[expose]
 def Irreducible (f : GF2Poly) : Prop :=
-  f ≠ 0 ∧ ∀ a b : GF2Poly, a * b = f → a.degree = 0 ∨ b.degree = 0
+  f ≠ 0 ∧ ∀ a b : GF2Poly, a * b = f → a.natDegree = 0 ∨ b.natDegree = 0
 
 /-- Bitmask for coefficients of degree `< n` inside one `UInt64` word. -/
 @[expose]
@@ -104,7 +104,7 @@ def canonicalWordLT (n : Nat) (hn64 : n < 64) (w : UInt64) : UInt64 :=
 /-- A packed polynomial whose degree is below one machine word is exactly the
 single-word polynomial obtained by reading its low stored word. -/
 private theorem ofUInt64_lowWord_eq_of_degree_lt_64 (p : GF2Poly)
-    (hred : p.isZero = true ∨ p.degree < 64) :
+    (hred : p.isZero = true ∨ p.natDegree < 64) :
     ofUInt64 (p.toWords.getD 0 0) = p := by
   by_cases hzero : p.isZero = true
   · rw [eq_zero_of_isZero hzero]
@@ -120,7 +120,7 @@ private theorem ofUInt64_lowWord_eq_of_degree_lt_64 (p : GF2Poly)
           rw [h] at hzeroFalse
           contradiction
       | inr hdegree =>
-          simpa [degree, hd] using hdegree
+          simpa [natDegree, hd] using hdegree
     apply ext_coeff
     intro i
     unfold ofUInt64
@@ -146,7 +146,7 @@ private theorem ofUInt64_mod_lowWord_eq_of_degree_lt {n : Nat} {irr : UInt64}
     (hn64 : n < 64) (p : GF2Poly)
     (hred :
       (p % ofUInt64Monic irr n).isZero = true ∨
-        (p % ofUInt64Monic irr n).degree < n) :
+        (p % ofUInt64Monic irr n).natDegree < n) :
     ofUInt64 (((p % ofUInt64Monic irr n).toWords).getD 0 0) =
       p % ofUInt64Monic irr n := by
   apply ofUInt64_lowWord_eq_of_degree_lt_64
@@ -229,9 +229,9 @@ private theorem isZero_eq_true_of_degree?_eq_none {p : GF2Poly}
 private theorem divModAux_remainder_degree_lt
     {q : GF2Poly} {qd : Nat} (hq : q.degree? = some qd)
     (fuel : Nat) (quot rem : GF2Poly)
-    (hremFuel : rem.isZero = true ∨ rem.degree < fuel) :
+    (hremFuel : rem.isZero = true ∨ rem.natDegree < fuel) :
     let qr := divModAux q fuel quot rem
-    qr.2.isZero = true ∨ qr.2.degree < q.degree := by
+    qr.2.isZero = true ∨ qr.2.natDegree < q.natDegree := by
   induction fuel generalizing quot rem with
   | zero =>
       simp only [divModAux]
@@ -252,7 +252,7 @@ private theorem divModAux_remainder_degree_lt
           by_cases hlt : rd < qd
           · simp [hlt]
             right
-            rw [degree_eq_of_degree?_eq_some hrem, degree_eq_of_degree?_eq_some hq]
+            rw [natDegree_eq_of_degree?_eq_some hrem, natDegree_eq_of_degree?_eq_some hq]
             exact hlt
           · simp [hlt]
             have hrdFuel : rd < fuel + 1 := by
@@ -262,13 +262,13 @@ private theorem divModAux_remainder_degree_lt
                   rw [hrem] at hnone
                   contradiction
               | inr hltFuel =>
-                  simpa [degree_eq_of_degree?_eq_some hrem] using hltFuel
+                  simpa [natDegree_eq_of_degree?_eq_some hrem] using hltFuel
             have hstep :=
               division_step_degree_lt (rem := rem) (q := q) (rd := rd) (qd := qd)
                 hrem hq hlt
             have hnextFuel :
                 (rem + q.mulXk (rd - qd)).isZero = true ∨
-                  (rem + q.mulXk (rd - qd)).degree < fuel := by
+                  (rem + q.mulXk (rd - qd)).natDegree < fuel := by
               cases hstep with
               | inl hzero =>
                   exact Or.inl hzero
@@ -307,7 +307,7 @@ def xgcdAux
 with Bezout coefficients. -/
 @[expose]
 def xgcd (p q : GF2Poly) : XGCDResult :=
-  xgcdAux p 1 0 q 0 1 (p.degree + q.degree + 2)
+  xgcdAux p 1 0 q 0 1 (p.natDegree + q.natDegree + 2)
 
 /-- The single-word xgcd inverse candidate reduced modulo the packed
 irreducible modulus. -/
@@ -325,7 +325,7 @@ theorem divMod_spec (p q : GF2Poly) :
     let qr := divMod p q
     qr.1 * q + qr.2 = p := by
   unfold divMod
-  simpa using divModAux_reconstruct q (p.degree + 1) 0 p
+  simpa using divModAux_reconstruct q (p.natDegree + 1) 0 p
 
 /-- The first component of `divMod` is the public quotient operation. -/
 @[simp, grind =] theorem divMod_fst (p q : GF2Poly) :
@@ -342,7 +342,7 @@ remainder. -/
 @[simp, grind =] theorem divMod_zero_right (p : GF2Poly) :
     divMod p 0 = (0, p) := by
   unfold divMod
-  cases hfuel : p.degree + 1 with
+  cases hfuel : p.natDegree + 1 with
   | zero => omega
   | succ fuel =>
       simp [divModAux]
@@ -474,7 +474,7 @@ private theorem xgcdAux_bezout
 
 /-- The computed remainder has smaller degree than a nonzero divisor. -/
 theorem mod_degree_lt (p q : GF2Poly) :
-    q ≠ 0 → (p % q).isZero = true ∨ (p % q).degree < q.degree := by
+    q ≠ 0 → (p % q).isZero = true ∨ (p % q).natDegree < q.natDegree := by
   intro hqne
   have hqzeroFalse : q.isZero = false := by
     cases hqzero : q.isZero
@@ -482,18 +482,18 @@ theorem mod_degree_lt (p q : GF2Poly) :
     · exfalso
       exact hqne (eq_zero_of_isZero hqzero)
   obtain ⟨qd, hqdeg⟩ := degree?_isSome_of_isZero_false hqzeroFalse
-  change ((divMod p q).2).isZero = true ∨ (divMod p q).2.degree < q.degree
+  change ((divMod p q).2).isZero = true ∨ (divMod p q).2.natDegree < q.natDegree
   unfold divMod
   apply divModAux_remainder_degree_lt (q := q) (qd := qd) hqdeg
   by_cases hpzero : p.isZero = true
   · exact Or.inl hpzero
-  · exact Or.inr (Nat.lt_succ_self p.degree)
+  · exact Or.inr (Nat.lt_succ_self p.natDegree)
 
 set_option maxHeartbeats 800000 in
 /-- Given enough fuel, the `xgcdAux` result divides both current remainders `r₀` and `r₁`. -/
 private theorem xgcdAux_dvd_current_of_fuel
     (r₀ s₀ t₀ r₁ s₁ t₁ : GF2Poly) (fuel : Nat)
-    (hfuel : r₁.isZero = true ∨ r₁.degree < fuel) :
+    (hfuel : r₁.isZero = true ∨ r₁.natDegree < fuel) :
     (xgcdAux r₀ s₀ t₀ r₁ s₁ t₁ fuel).gcd ∣ r₀ ∧
       (xgcdAux r₀ s₀ t₀ r₁ s₁ t₁ fuel).gcd ∣ r₁ := by
   induction fuel generalizing r₀ s₀ t₀ r₁ s₁ t₁ with
@@ -525,16 +525,16 @@ private theorem xgcdAux_dvd_current_of_fuel
           have : r₁.isZero = true := by simp [hr₁]
           exact hzero this
         have hremDegree :
-            (divMod r₀ r₁).2.isZero = true ∨ (divMod r₀ r₁).2.degree < r₁.degree := by
+            (divMod r₀ r₁).2.isZero = true ∨ (divMod r₀ r₁).2.natDegree < r₁.natDegree := by
           simpa [mod] using mod_degree_lt r₀ r₁ hr₁ne
-        have hr₁Degree : r₁.degree < fuel + 1 := by
+        have hr₁Degree : r₁.natDegree < fuel + 1 := by
           cases hfuel with
           | inl hzero' =>
               contradiction
           | inr hlt =>
               exact hlt
         have hnextFuel :
-            (divMod r₀ r₁).2.isZero = true ∨ (divMod r₀ r₁).2.degree < fuel := by
+            (divMod r₀ r₁).2.isZero = true ∨ (divMod r₀ r₁).2.natDegree < fuel := by
           cases hremDegree with
           | inl hremZero =>
               exact Or.inl hremZero
@@ -570,21 +570,21 @@ example (p q : GF2Poly) :
 theorem gcd_dvd_left (p q : GF2Poly) :
     gcd p q ∣ p := by
   unfold gcd xgcd
-  have hfuel : q.isZero = true ∨ q.degree < p.degree + q.degree + 2 := by
+  have hfuel : q.isZero = true ∨ q.natDegree < p.natDegree + q.natDegree + 2 := by
     by_cases hqzero : q.isZero = true
     · exact Or.inl hqzero
     · exact Or.inr (by omega)
-  exact (xgcdAux_dvd_current_of_fuel p 1 0 q 0 1 (p.degree + q.degree + 2) hfuel).1
+  exact (xgcdAux_dvd_current_of_fuel p 1 0 q 0 1 (p.natDegree + q.natDegree + 2) hfuel).1
 
 /-- The gcd divides the right input. -/
 theorem gcd_dvd_right (p q : GF2Poly) :
     gcd p q ∣ q := by
   unfold gcd xgcd
-  have hfuel : q.isZero = true ∨ q.degree < p.degree + q.degree + 2 := by
+  have hfuel : q.isZero = true ∨ q.natDegree < p.natDegree + q.natDegree + 2 := by
     by_cases hqzero : q.isZero = true
     · exact Or.inl hqzero
     · exact Or.inr (by omega)
-  exact (xgcdAux_dvd_current_of_fuel p 1 0 q 0 1 (p.degree + q.degree + 2) hfuel).2
+  exact (xgcdAux_dvd_current_of_fuel p 1 0 q 0 1 (p.natDegree + q.natDegree + 2) hfuel).2
 
 /-- Any common divisor divides the computed gcd. -/
 theorem dvd_gcd (d p q : GF2Poly) :
@@ -602,8 +602,8 @@ theorem dvd_gcd (d p q : GF2Poly) :
 @[simp, grind =] theorem gcd_zero_right (p : GF2Poly) :
     gcd p 0 = p := by
   unfold gcd xgcd
-  obtain ⟨n, hn⟩ : ∃ n, p.degree + (0 : GF2Poly).degree + 2 = n + 1 :=
-    ⟨p.degree + (0 : GF2Poly).degree + 1, rfl⟩
+  obtain ⟨n, hn⟩ : ∃ n, p.natDegree + (0 : GF2Poly).natDegree + 2 = n + 1 :=
+    ⟨p.natDegree + (0 : GF2Poly).natDegree + 1, rfl⟩
   rw [hn]
   simp [xgcdAux]
 
@@ -611,8 +611,8 @@ theorem dvd_gcd (d p q : GF2Poly) :
 @[simp, grind =] theorem gcd_zero_left (q : GF2Poly) :
     gcd 0 q = q := by
   unfold gcd xgcd
-  obtain ⟨n, hn⟩ : ∃ n, (0 : GF2Poly).degree + q.degree + 2 = n + 1 :=
-    ⟨(0 : GF2Poly).degree + q.degree + 1, rfl⟩
+  obtain ⟨n, hn⟩ : ∃ n, (0 : GF2Poly).natDegree + q.natDegree + 2 = n + 1 :=
+    ⟨(0 : GF2Poly).natDegree + q.natDegree + 1, rfl⟩
   rw [hn]
   by_cases hq : q.isZero = true
   · obtain rfl := (isZero_iff_eq_zero q).mp hq
@@ -624,7 +624,7 @@ theorem dvd_gcd (d p q : GF2Poly) :
 /-- A nonzero packed polynomial of degree `0` equals `1`, the only degree-`0`
 GF(2) polynomial. -/
 theorem eq_one_of_degree_zero {p : GF2Poly}
-    (hp : p ≠ 0) (hdegree : p.degree = 0) :
+    (hp : p ≠ 0) (hdegree : p.natDegree = 0) :
     p = 1 := by
   have hpzeroFalse : p.isZero = false := by
     cases hzero : p.isZero
@@ -633,7 +633,7 @@ theorem eq_one_of_degree_zero {p : GF2Poly}
       exact hp (eq_zero_of_isZero hzero)
   obtain ⟨d, hd⟩ := degree?_isSome_of_isZero_false hpzeroFalse
   have hd0 : d = 0 := by
-    simpa [degree, hd] using hdegree
+    simpa [natDegree, hd] using hdegree
   subst d
   rw [one_eq_monomial_zero]
   apply ext_coeff
@@ -646,9 +646,9 @@ theorem eq_one_of_degree_zero {p : GF2Poly}
 
 /-- A nonzero divisor of a nonzero packed polynomial has degree no larger than
 the dividend. -/
-theorem degree_le_of_dvd_nonzero {p q : GF2Poly}
+theorem natDegree_le_of_dvd_nonzero {p q : GF2Poly}
     (hp : p ≠ 0) (hq : q ≠ 0) :
-    p ∣ q → p.degree ≤ q.degree := by
+    p ∣ q → p.natDegree ≤ q.natDegree := by
   intro hdvd
   rcases hdvd with ⟨r, hr⟩
   have hpzeroFalse : p.isZero = false := by
@@ -670,8 +670,8 @@ theorem degree_le_of_dvd_nonzero {p q : GF2Poly}
   have hq_degree? : q.degree? = some (dp + dr) := by
     rw [hr]
     exact degree?_mul_of_degree?_eq_some hdp hdr
-  rw [degree_eq_of_degree?_eq_some hdp,
-    degree_eq_of_degree?_eq_some hq_degree?]
+  rw [natDegree_eq_of_degree?_eq_some hdp,
+    natDegree_eq_of_degree?_eq_some hq_degree?]
   omega
 
 /-- Divisibility is antisymmetric for packed `GF(2)` polynomials. There is no
@@ -702,11 +702,11 @@ theorem dvd_antisymm {p q : GF2Poly} (hpq : p ∣ q) (hqp : q ∣ p) :
     have hqdegree : q.degree? = some (dp + dr) := by
       rw [hr]
       exact degree?_mul_of_degree?_eq_some hdp hdr
-    have hdegree := degree_le_of_dvd_nonzero hq hp hqp
-    rw [degree_eq_of_degree?_eq_some hqdegree,
-      degree_eq_of_degree?_eq_some hdp] at hdegree
-    have hdrzero : r.degree = 0 := by
-      rw [degree_eq_of_degree?_eq_some hdr]
+    have hdegree := natDegree_le_of_dvd_nonzero hq hp hqp
+    rw [natDegree_eq_of_degree?_eq_some hqdegree,
+      natDegree_eq_of_degree?_eq_some hdp] at hdegree
+    have hdrzero : r.natDegree = 0 := by
+      rw [natDegree_eq_of_degree?_eq_some hdr]
       omega
     have hrone := eq_one_of_degree_zero hrne hdrzero
     simpa [hrone] using hr.symm
@@ -714,7 +714,7 @@ theorem dvd_antisymm {p q : GF2Poly} (hpq : p ∣ q) (hqp : q ∣ p) :
 /-- A polynomial reduced below `bound` (either zero, or of degree `< bound`)
 has `coeff n = false` at every index `n ≥ bound`. -/
 private theorem coeff_eq_false_of_reduced_le {p : GF2Poly} {bound n : Nat}
-    (hred : p.isZero = true ∨ p.degree < bound) (hbound : bound ≤ n) :
+    (hred : p.isZero = true ∨ p.natDegree < bound) (hbound : bound ≤ n) :
     p.coeff n = false := by
   cases hred with
   | inl hzero =>
@@ -727,7 +727,7 @@ private theorem coeff_eq_false_of_reduced_le {p : GF2Poly} {bound n : Nat}
         obtain ⟨d, hd⟩ := degree?_isSome_of_isZero_false hpzeroFalse
         have hdn : d < n := by
           have hdegree' : d < bound := by
-            simpa [degree, hd] using hdegree
+            simpa [natDegree, hd] using hdegree
           omega
         exact coeff_eq_false_of_degree?_lt hd hdn
 
@@ -744,7 +744,7 @@ private theorem lowerMask_toNat_of_lt_64 {n : Nat} (hn64 : n < 64) :
   have hle : (1 : UInt64) ≤ ((1 : UInt64) <<< n.toUInt64) := by
     rw [UInt64.le_iff_toNat_le, hshift]
     exact Nat.one_le_two_pow
-  rw [if_pos hn64, UInt64.toNat_sub_of_le _ _ hle, hshift]
+  rw [ite_eq_left hn64, UInt64.toNat_sub_of_le _ _ hle, hshift]
   simp
 
 /-- Masking a word whose value is already `< 2 ^ n` with `lowerMask n` returns
@@ -803,7 +803,7 @@ private theorem coeff_ofUInt64_and_lowerMask (w : UInt64) {n i : Nat} (hn64 : n 
     by_cases hin : i < n <;> simp [hin]
   · have hi64le : 64 ≤ i := Nat.le_of_not_gt hi64
     have hinFalse : ¬ i < n := by omega
-    rw [coeff_ofUInt64_eq_false_of_ge_64 _ hi64le, if_neg hinFalse]
+    rw [coeff_ofUInt64_eq_false_of_ge_64 _ hi64le, ite_eq_right hinFalse]
 
 /-- The packed single-word monic modulus has the advertised degree when
 `n < 64`. -/
@@ -822,10 +822,10 @@ private theorem coeff_ofUInt64_and_lowerMask (w : UInt64) {n i : Nat} (hn64 : n 
     simp [Nat.not_lt_of_ge (by omega : n ≤ m)]
 
 /-- The degree of `ofUInt64Monic lower n` is exactly `n` when `n < 64`. -/
-@[simp, grind =] theorem degree_ofUInt64Monic_of_lt_64 (lower : UInt64) {n : Nat}
+@[simp, grind =] theorem natDegree_ofUInt64Monic_of_lt_64 (lower : UInt64) {n : Nat}
     (hn64 : n < 64) :
-    (ofUInt64Monic lower n).degree = n := by
-  exact degree_eq_of_degree?_eq_some (degree?_ofUInt64Monic_of_lt_64 lower hn64)
+    (ofUInt64Monic lower n).natDegree = n := by
+  exact natDegree_eq_of_degree?_eq_some (degree?_ofUInt64Monic_of_lt_64 lower hn64)
 
 /-- The coefficients of the packed single-word monic modulus: the implicit
 leading `x^n` term sets degree `n`, and the lower degrees read the bits of
@@ -854,7 +854,7 @@ private theorem ofUInt64_ne_zero_of_ne_zero {w : UInt64} (hw : w ≠ 0) :
 of degree `< n`, i.e. reduced below `n`. -/
 private theorem ofUInt64_reduced_of_toNat_lt {n : Nat} {w : UInt64}
     (hwlt : w.toNat < 2 ^ n) :
-    (ofUInt64 w).IsZero ∨ (ofUInt64 w).degree < n := by
+    (ofUInt64 w).IsZero ∨ (ofUInt64 w).natDegree < n := by
   by_cases hzero : (ofUInt64 w).isZero = true
   · exact Or.inl hzero
   · right
@@ -875,7 +875,7 @@ private theorem ofUInt64_reduced_of_toNat_lt {n : Nat} {w : UInt64}
         · have hd64le : 64 ≤ d := Nat.le_of_not_gt hd64
           rw [coeff_ofUInt64_eq_false_of_ge_64 w hd64le] at hdtrue
           contradiction
-    simpa [degree, hd] using hdlt
+    simpa [natDegree, hd] using hdlt
 
 /-- `packedReduceWord` always returns a canonical word below `2^n` for
 single-word extension degrees. -/
@@ -891,13 +891,13 @@ theorem ofUInt64_packedReduceWord_eq_of_degree_lt
     {n : Nat} {irr : UInt64} (hn64 : n < 64) (p : GF2Poly)
     (hred :
       (p % ofUInt64Monic irr n).isZero = true ∨
-        (p % ofUInt64Monic irr n).degree < n) :
+        (p % ofUInt64Monic irr n).natDegree < n) :
     ofUInt64 (packedReduceWord n irr p) = p % ofUInt64Monic irr n := by
   unfold packedReduceWord
   let r := p % ofUInt64Monic irr n
   change ofUInt64 (r.toWords.getD 0 0 &&& lowerMask n) = r
   let low := r.toWords.getD 0 0
-  have hred' : r.isZero = true ∨ r.degree < n := by
+  have hred' : r.isZero = true ∨ r.natDegree < n := by
     simpa [r] using hred
   have hlow : ofUInt64 low = r := by
     simpa [r, low] using ofUInt64_mod_lowWord_eq_of_degree_lt (n := n) (irr := irr) hn64 p hred
@@ -905,17 +905,17 @@ theorem ofUInt64_packedReduceWord_eq_of_degree_lt
   intro i
   rw [coeff_ofUInt64_and_lowerMask low hn64]
   by_cases hin : i < n
-  · rw [if_pos hin]
+  · rw [ite_eq_left hin]
     exact congrArg (fun q : GF2Poly => q.coeff i) hlow
-  · rw [if_neg hin]
+  · rw [ite_eq_right hin]
     exact (coeff_eq_false_of_reduced_le (p := r) hred' (Nat.le_of_not_gt hin)).symm
 
 /-- Reducedness below `bound` (zero, or degree `< bound`) is preserved by
 addition of two reduced polynomials. -/
 private theorem add_reduced_of_reduced {p q : GF2Poly} {bound : Nat}
-    (hp : p.isZero = true ∨ p.degree < bound)
-    (hq : q.isZero = true ∨ q.degree < bound) :
-    (p + q).isZero = true ∨ (p + q).degree < bound := by
+    (hp : p.isZero = true ∨ p.natDegree < bound)
+    (hq : q.isZero = true ∨ q.natDegree < bound) :
+    (p + q).isZero = true ∨ (p + q).natDegree < bound := by
   by_cases hsumZero : (p + q).isZero = true
   · exact Or.inl hsumZero
   · right
@@ -930,13 +930,13 @@ private theorem add_reduced_of_reduced {p q : GF2Poly} {bound : Nat}
         rw [coeff_add_eq_bne, hpfalse, hqfalse] at htrue
         contradiction
       · omega
-    change (p + q).degree < bound
-    simpa [degree, hd] using hdbound
+    change (p + q).natDegree < bound
+    simpa [natDegree, hd] using hdbound
 
-/-- A residue reduced below `f.degree` that is divisible by nonzero `f` must
+/-- A residue reduced below `f.natDegree` that is divisible by nonzero `f` must
 be `0` (a proper-degree multiple of `f` cannot exist). -/
 private theorem reduced_dvd_eq_zero {f r : GF2Poly}
-    (hf : f ≠ 0) (hred : r.isZero = true ∨ r.degree < f.degree)
+    (hf : f ≠ 0) (hred : r.isZero = true ∨ r.natDegree < f.natDegree)
     (hdvd : f ∣ r) :
     r = 0 := by
   by_cases hr : r = 0
@@ -945,14 +945,14 @@ private theorem reduced_dvd_eq_zero {f r : GF2Poly}
     | inl hzero =>
         exact eq_zero_of_isZero hzero
     | inr hlt =>
-        have hle : f.degree ≤ r.degree := degree_le_of_dvd_nonzero hf hr hdvd
+        have hle : f.natDegree ≤ r.natDegree := natDegree_le_of_dvd_nonzero hf hr hdvd
         omega
 
 /-- Any common divisor of an irreducible `f` and a nonzero residue `a` reduced
-below `f.degree` is `1`; the backbone of the gcd-coprimality result. -/
+below `f.natDegree` is `1`; the backbone of the gcd-coprimality result. -/
 private theorem irreducible_common_divisor_eq_one_of_reduced
     {a f d : GF2Poly} (hf : Irreducible f) (ha : a ≠ 0)
-    (hred : a.IsZero ∨ a.degree < f.degree)
+    (hred : a.IsZero ∨ a.natDegree < f.natDegree)
     (hda : d ∣ a) (hdf : d ∣ f) :
     d = 1 := by
   rcases hdf with ⟨r, hr⟩
@@ -979,7 +979,7 @@ private theorem irreducible_common_divisor_eq_one_of_reduced
     | inl hzero =>
         exact False.elim (ha (eq_zero_of_isZero hzero))
     | inr hlt =>
-        have hle : f.degree ≤ a.degree := degree_le_of_dvd_nonzero hf.1 ha hf_dvd_a
+        have hle : f.natDegree ≤ a.natDegree := natDegree_le_of_dvd_nonzero hf.1 ha hf_dvd_a
         omega
 
 /-- Adding a right multiple `c * f` leaves the remainder modulo `f` unchanged;
@@ -1023,9 +1023,9 @@ private theorem mod_eq_of_add_right_multiple (a c f : GF2Poly) :
             _ = (q₁ + q₂ + c) * f := by
               exact (left_distrib (q₁ + q₂) c f).symm
         _ = f * (q₁ + q₂ + c) := by rw [mul_comm]
-    have hred₁ : r₁.isZero = true ∨ r₁.degree < f.degree := by
+    have hred₁ : r₁.isZero = true ∨ r₁.natDegree < f.natDegree := by
       simpa [mod, r₁] using mod_degree_lt (a + c * f) f hf
-    have hred₂ : r₂.isZero = true ∨ r₂.degree < f.degree := by
+    have hred₂ : r₂.isZero = true ∨ r₂.natDegree < f.natDegree := by
       simpa [mod, r₂] using mod_degree_lt a f hf
     have hsumZero : r₁ + r₂ = 0 :=
       reduced_dvd_eq_zero hf (add_reduced_of_reduced hred₁ hred₂) hdvd_sum
@@ -1040,7 +1040,7 @@ private theorem mod_eq_of_add_right_multiple (a c f : GF2Poly) :
 coprime to the modulus, as computed by the packed Euclidean algorithm. -/
 theorem gcd_eq_one_of_irreducible_of_nonzero_reduced {a f : GF2Poly}
     (hf : Irreducible f) (ha : a ≠ 0)
-    (hred : a.IsZero ∨ a.degree < f.degree) :
+    (hred : a.IsZero ∨ a.natDegree < f.natDegree) :
     gcd a f = 1 := by
   exact irreducible_common_divisor_eq_one_of_reduced hf ha hred
     (gcd_dvd_left a f) (gcd_dvd_right a f)
@@ -1058,15 +1058,15 @@ example (a c f : GF2Poly) : (a + c * f) % f = a % f := by
 /-- A reduced packed polynomial is its own remainder modulo `f`. -/
 @[simp, grind =]
 theorem mod_eq_self_of_reduced (p f : GF2Poly)
-    (hred : p.isZero = true ∨ p.degree < f.degree) :
+    (hred : p.isZero = true ∨ p.natDegree < f.natDegree) :
     p % f = p := by
   by_cases hf : f = 0
   · subst hf
-    change (divModAux 0 (p.degree + 1) 0 p).2 = p
-    have hsucc : p.degree + 1 = Nat.succ p.degree := by omega
+    change (divModAux 0 (p.natDegree + 1) 0 p).2 = p
+    have hsucc : p.natDegree + 1 = Nat.succ p.natDegree := by omega
     rw [hsucc]
     simp [divModAux]
-  · have hmod_red : (p % f).isZero = true ∨ (p % f).degree < f.degree :=
+  · have hmod_red : (p % f).isZero = true ∨ (p % f).natDegree < f.natDegree :=
       mod_degree_lt p f hf
     have hdvd : f ∣ p % f + p := by
       let q := (divMod p f).1
@@ -1088,14 +1088,14 @@ theorem mod_eq_self_of_reduced (p f : GF2Poly)
 /-- Validate a remainder using an explicit quotient witness. -/
 theorem mod_eq_of_eq_add_mul_right {a r c f : GF2Poly}
     (h : a = r + c * f)
-    (hred : r.isZero = true ∨ r.degree < f.degree) :
+    (hred : r.isZero = true ∨ r.natDegree < f.natDegree) :
     a % f = r := by
   rw [h, mod_add_mul_right_eq_mod]
   exact mod_eq_self_of_reduced r f hred
 
 /-- `1 % f = 1` whenever `f` has positive degree, since `1` is already reduced
 modulo `f`. -/
-private theorem one_mod_eq_one_of_degree_pos {f : GF2Poly} (hfdegree : 0 < f.degree) :
+private theorem one_mod_eq_one_of_degree_pos {f : GF2Poly} (hfdegree : 0 < f.natDegree) :
     (1 : GF2Poly) % f = 1 := by
   have hfzeroFalse : f.isZero = false := by
     by_cases hzero : f.isZero = true
@@ -1105,10 +1105,10 @@ private theorem one_mod_eq_one_of_degree_pos {f : GF2Poly} (hfdegree : 0 < f.deg
     · cases h : f.isZero <;> simp [h] at hzero ⊢
   obtain ⟨fd, hfd⟩ := degree?_isSome_of_isZero_false hfzeroFalse
   have hfdpos : 0 < fd := by
-    simpa [degree, hfd] using hfdegree
+    simpa [natDegree, hfd] using hfdegree
   change (divMod 1 f).2 = 1
   unfold divMod
-  rw [degree_one]
+  rw [natDegree_one]
   simp only [divModAux]
   rw [degree?_one, hfd]
   simp [hfzeroFalse, hfdpos]
@@ -1137,9 +1137,9 @@ left Bezout coefficient computed by `xgcd` is a multiplicative inverse modulo
 the modulus. -/
 theorem xgcd_left_mul_mod_eq_one_of_irreducible_of_nonzero_reduced {a f : GF2Poly}
     (hf : Irreducible f) (ha : a ≠ 0)
-    (hred : a.IsZero ∨ a.degree < f.degree) :
+    (hred : a.IsZero ∨ a.natDegree < f.natDegree) :
     (a * (xgcd a f).left) % f = 1 := by
-  have hfdegree : 0 < f.degree := by
+  have hfdegree : 0 < f.natDegree := by
     cases hred with
     | inl hzero =>
         exact False.elim (ha (eq_zero_of_isZero hzero))
@@ -1152,9 +1152,9 @@ theorem xgcd_left_mul_mod_eq_one_of_irreducible_of_nonzero_reduced {a f : GF2Pol
 left-inverse congruence for nonzero reduced residues modulo an irreducible. -/
 theorem mul_mod_xgcd_left_mod_eq_one_of_irreducible_of_nonzero_reduced {a f : GF2Poly}
     (hf : Irreducible f) (ha : a ≠ 0)
-    (hred : a.IsZero ∨ a.degree < f.degree) :
+    (hred : a.IsZero ∨ a.natDegree < f.natDegree) :
     (a * ((xgcd a f).left % f)) % f = 1 % f := by
-  have hfdegree : 0 < f.degree := by
+  have hfdegree : 0 < f.natDegree := by
     cases hred with
     | inl hzero =>
         exact False.elim (ha (eq_zero_of_isZero hzero))
@@ -1197,11 +1197,11 @@ theorem packedReduceWord_clmul_packedInvWord_eq_one {n : Nat} {irr w : UInt64}
   let invCanonical := canonicalWordLT n hn64 invWord
   let product :=
     ofWords #[(clmul w invCanonical).2, (clmul w invCanonical).1]
-  have hfdegree : f.degree = n := by
-    simpa [f] using degree_ofUInt64Monic_of_lt_64 irr hn64
+  have hfdegree : f.natDegree = n := by
+    simpa [f] using natDegree_ofUInt64Monic_of_lt_64 irr hn64
   have ha_ne : a ≠ 0 := by
     simpa [a] using ofUInt64_ne_zero_of_ne_zero hw
-  have ha_reduced : a.IsZero ∨ a.degree < f.degree := by
+  have ha_reduced : a.IsZero ∨ a.natDegree < f.natDegree := by
     rw [hfdegree]
     simpa [a] using ofUInt64_reduced_of_toNat_lt hwlt
   have hcanonical : invCanonical = invWord := by
@@ -1211,7 +1211,7 @@ theorem packedReduceWord_clmul_packedInvWord_eq_one {n : Nat} {irr w : UInt64}
       ofUInt64 invWord = (xgcd a f).left % f := by
     have hred :
         ((xgcd a f).left % f).isZero = true ∨
-          ((xgcd a f).left % f).degree < n := by
+          ((xgcd a f).left % f).natDegree < n := by
       have hmod := mod_degree_lt (xgcd a f).left f hf.1
       cases hmod with
       | inl hzero =>
@@ -1230,7 +1230,7 @@ theorem packedReduceWord_clmul_packedInvWord_eq_one {n : Nat} {irr w : UInt64}
           rw [ofUInt64_mul_ofUInt64 w invCanonical]
       _ = a * ((xgcd a f).left % f) := by rw [hinvCanonical]
   have hleftRed :
-      (product % f).isZero = true ∨ (product % f).degree < n := by
+      (product % f).isZero = true ∨ (product % f).natDegree < n := by
     have hmod := mod_degree_lt product f hf.1
     cases hmod with
     | inl hzero =>
@@ -1238,7 +1238,7 @@ theorem packedReduceWord_clmul_packedInvWord_eq_one {n : Nat} {irr w : UInt64}
     | inr hdegree =>
         exact Or.inr (by simpa [hfdegree] using hdegree)
   have honeRed :
-      ((1 : GF2Poly) % f).isZero = true ∨ ((1 : GF2Poly) % f).degree < n := by
+      ((1 : GF2Poly) % f).isZero = true ∨ ((1 : GF2Poly) % f).natDegree < n := by
     have hmod := mod_degree_lt (1 : GF2Poly) f hf.1
     cases hmod with
     | inl hzero =>

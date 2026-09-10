@@ -76,7 +76,11 @@ Concretely:
   libraries, the bench exes, the conformance `#guard` drivers, and the
   emit-fixture exes — including the `HexBerlekampZassenhausMathlib`
   bridge required by integer-factorization correctness — followed by a
-  separate memory-bounded `lake build HexManual`). It then runs the two
+  separate memory-bounded `lake build HexManual`). Conway and its companion
+  first warm external imports, then clean their restored outputs and measure
+  their initial builds; the remaining targets reuse those outputs. These
+  hosted observations use explicit resource limits and do not enforce the
+  designated-machine Conway ceiling. It then runs the two
   independent verification tails concurrently as `background:` steps: the
   per-library `bench verify` smoke gate per
   [SPEC/benchmarking.md §CI integration](benchmarking.md), and the
@@ -88,8 +92,7 @@ Concretely:
   **Bench verify runs on ubuntu**: per
   [SPEC/benchmarking.md §CI integration](benchmarking.md), `verify` is a
   smoke gate (does the bench module compile and run?), not a timing
-  measurement; timing-relevant runs live on a separate scheduled
-  workflow on dedicated hardware.
+  measurement; timing-relevant runs are collected manually on the shared host.
 - Conformance used to be a second workflow (`conformance.yml`). It was
   folded into this job because a separate workflow re-elaborated the
   entire hex graph on a second runner — pure duplicated compute. Sharing
@@ -107,8 +110,17 @@ polynomial factorization comparison:
 - `scripts/bench/check_factor_sweep_freshness.py` requires a complete,
   cross-checked current-corpus measurement for Hex, FLINT, NTL, PARI, Isabelle
   BZ, and Isabelle LLL. A relevant implementation, adapter, harness, corpus,
-  toolchain, or dependency change after a system's recorded clean commit makes
-  that system stale and the PR must refresh its measurement.
+  toolchain, or dependency change since a system's recorded source fingerprint
+  makes that system stale, and the PR must refresh its measurement; only Hex's
+  own curve can instead record a runtime-neutral exemption for the paths that
+  moved. `scripts/bench/
+  check_graphiso_sweep_freshness.py` applies the same mechanism to the
+  hex-graph-iso cactus figures, where mechanically checked comment-only edits
+  and independent literal Lake target additions can clear without a new
+  measurement, on evidence the check reads rather than a recorded claim; both are
+  built from `scripts/bench/sweep_freshness.py`, whose unit tests run in
+  the same step.
+  See [benchmarking.md](benchmarking.md) §Figure freshness.
 - `scripts/plots/hexbz-cactus.py --check` regenerates all current cactus and
   runtime-by-degree figures with the pinned Matplotlib version and compares the
   SVG bytes with the committed files.

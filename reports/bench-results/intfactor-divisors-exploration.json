@@ -1,0 +1,10 @@
+{
+  "status": "diagnostic_only",
+  "dirty": true,
+  "parent_commit": "6f52b33e56cea8ec210f5d2595c4bcea4da9c6a0",
+  "benchmark_source_sha256": "b0926418b0a0ad4c88c27fda88e2b71118c0492d287b596615c58f797e64200b",
+  "executable_sha256": "64991c51f642fd47bc6ab40f611ddad4a67ea409fb7bd2af219d7c3ecb7b2150",
+  "samply_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "archive_sha256": "1a01f11956a88305125414809bbb09c8777e5ddac5285072579295e3fa24f887",
+  "finding": "samply record captured zero samples; perf record captured 2912 whole-process samples. Sort merge, reverse and split account for about 47% leaf time; lean_apply_2 adds 16%. These unfiltered diagnostic samples are not inclusive-profile acceptance."
+}

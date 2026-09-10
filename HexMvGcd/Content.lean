@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexMvGcd.Cert
+public import HexMvGcd.Gauss
 
 @[expose] public section
 set_option backward.proofsInPublic true
@@ -49,7 +50,7 @@ def primPart (p : MvPoly n R cmp) : MvPoly n R cmp :=
 The returned certificate stores every step that the checker replays. Steps are
 consed into a reversed accumulator and reversed once after the fold. -/
 def contentCertWith {R : Type u} {cmp : Mono n → Mono n → Ordering}
-    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Zero R]
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Lean.Grind.CommRing R]
     (produce : MvPoly n R cmp → MvPoly n R cmp → GcdCert n R cmp)
     (coeffs : List (MvPoly n R cmp)) : ContentCert n R cmp :=
   let pair := coeffs.foldl
@@ -61,7 +62,7 @@ def contentCertWith {R : Type u} {cmp : Mono n → Mono n → Ordering}
 
 /-- Forward-order specification of the reverse-accumulator content fold. -/
 private def contentTrace {R : Type u} {cmp : Mono n → Mono n → Ordering}
-    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Zero R]
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Lean.Grind.CommRing R]
     (produce : MvPoly n R cmp → MvPoly n R cmp → GcdCert n R cmp) :
     MvPoly n R cmp → List (MvPoly n R cmp) →
       MvPoly n R cmp × List (GcdCert n R cmp)
@@ -73,7 +74,7 @@ private def contentTrace {R : Type u} {cmp : Mono n → Mono n → Ordering}
 
 private theorem contentFold_eq_trace {R : Type u}
     {cmp : Mono n → Mono n → Ordering}
-    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Zero R]
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Lean.Grind.CommRing R]
     (produce : MvPoly n R cmp → MvPoly n R cmp → GcdCert n R cmp)
     (coeffs : List (MvPoly n R cmp)) (acc : MvPoly n R cmp)
     (done : List (GcdCert n R cmp)) :
@@ -94,7 +95,7 @@ private theorem contentFold_eq_trace {R : Type u}
 
 private theorem contentCertWith_eq_trace {R : Type u}
     {cmp : Mono n → Mono n → Ordering}
-    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Zero R]
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Lean.Grind.CommRing R]
     (produce : MvPoly n R cmp → MvPoly n R cmp → GcdCert n R cmp)
     (coeffs : List (MvPoly n R cmp)) :
     contentCertWith produce coeffs =
@@ -126,7 +127,7 @@ private theorem contentTrace_checks {R : Type u}
 /-- A producer-built fold has exactly one step per coefficient. -/
 theorem contentCertWith_length {R : Type u}
     {cmp : Mono n → Mono n → Ordering}
-    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Zero R]
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Lean.Grind.CommRing R]
     (produce : MvPoly n R cmp → MvPoly n R cmp → GcdCert n R cmp)
     (coeffs : List (MvPoly n R cmp)) :
     (contentCertWith produce coeffs).steps.length = coeffs.length := by
@@ -177,7 +178,9 @@ theorem contentCertWith_checks {R : Type u}
             (produce f h) = true := by
         simpa [checkGcd, checkOps] using hproduce
       simp only [checkContent, checkContentUsing]
-      rw [ContentCert.value_ofSteps, ContentCert.steps_ofSteps]
+      simp only [ContentCert.ofSteps]
+      rw [Cert.Content.value_ofSteps (E := RatLeaf R),
+        Cert.Content.steps_ofSteps (E := RatLeaf R)]
       exact contentTrace_checks
         (checkGcdUsing (baseCheckCoprime (cmp := cmp))) produce hp coeffs
         (0 : MvPoly 0 R cmp)
@@ -187,7 +190,9 @@ theorem contentCertWith_checks {R : Type u}
             f h (produce f h) = true := by
         simpa [checkGcd, checkOps] using hproduce
       simp only [checkContent, checkContentUsing]
-      rw [ContentCert.value_ofSteps, ContentCert.steps_ofSteps]
+      simp only [ContentCert.ofSteps]
+      rw [Cert.Content.value_ofSteps (E := RatLeaf R),
+        Cert.Content.steps_ofSteps (E := RatLeaf R)]
       exact contentTrace_checks
         (checkGcdUsing
           (succCheckCoprime (checkOps (R := R) n) (cmp := cmp)))
@@ -240,7 +245,7 @@ theorem content_mul_primPart [LawfulGcdOps R] (p : MvPoly n R cmp) :
       rw [hq, Lean.Grind.Semiring.zero_mul, coeff_zero]
     subst p
     have hcontent : content (0 : MvPoly n R cmp) = 0 := rfl
-    rw [hcontent, primPart, hcontent, Hex.ite_eq_left rfl]
+    rw [hcontent, primPart, hcontent, ite_eq_left rfl]
     rw [C_zero]
     exact zero_mul _
   · apply ext
@@ -248,7 +253,7 @@ theorem content_mul_primPart [LawfulGcdOps R] (p : MvPoly n R cmp) :
     have hzero : GcdOps.exactDiv (0 : R) (content p) = 0 := by
       simpa only [Lean.Grind.Semiring.zero_mul] using
         LawfulGcdOps.exactDiv_cancel (0 : R) (content p) hc
-    rw [coeff_C_mul, primPart, Hex.ite_eq_right hc,
+    rw [coeff_C_mul, primPart, ite_eq_right hc,
       coeff_mapCoeffs hzero]
     have hdiv := scalarContent_dvd_coeff p m
     rw [← content] at hdiv
@@ -311,9 +316,213 @@ theorem content_primPart [LawfulGcdOps R] {p : MvPoly n R cmp} (hp : p ≠ 0) :
     _ = normalize d := hnorm.symm
     _ = 1 := LawfulGcdOps.normalize_unit d hisUnit
 
+omit [Dvd R] [GcdOps R] in
+private theorem C_mul (a b : R) :
+    (C (a * b) : MvPoly n R cmp) = C a * C b := by
+  unfold C
+  rw [monomial_mul_monomial, Mono.zero_mul]
+
+private theorem C_dvd_of_dvd_content [LawfulGcdOps R]
+    {p : MvPoly n R cmp} {d : R} (hd : d ∣ content p) : C d ∣ p := by
+  rcases (LawfulGcdOps.dvd_iff d (content p)).mp hd with ⟨x, hx⟩
+  refine ⟨C x * primPart p, ?_⟩
+  calc
+    p = C (content p) * primPart p := (content_mul_primPart p).symm
+    _ = C (d * x) * primPart p := by rw [hx]
+    _ = (C d * C x) * primPart p := by rw [C_mul]
+    _ = (C x * primPart p) * C d := by grind
+
+private theorem scalar_dvd_coeff_of_C_dvd [LawfulGcdOps R]
+    {p : MvPoly n R cmp} {d : R} (hd : C d ∣ p) (m : Mono n) :
+    d ∣ coeff m p := by
+  rcases hd with ⟨q, hq⟩
+  apply (LawfulGcdOps.dvd_iff d (coeff m p)).mpr
+  refine ⟨coeff m q, ?_⟩
+  calc
+    coeff m p = coeff m (q * C d) := congrArg (coeff m) hq
+    _ = coeff m (C d * q) := by rw [MvPoly.mul_comm]
+    _ = d * coeff m q := coeff_C_mul d q m
+
+private theorem dvd_polyNormalize [LawfulGcdOps R]
+    [IsMonomialOrder cmp] (p : MvPoly n R cmp) : p ∣ polyNormalize p := by
+  refine ⟨polyNormUnit p, ?_⟩
+  unfold polyNormalize
+  exact MvPoly.mul_comm p (polyNormUnit p)
+
+private theorem polyNormalize_dvd [LawfulGcdOps R]
+    [IsMonomialOrder cmp] (p : MvPoly n R cmp) : polyNormalize p ∣ p := by
+  rcases (polyIsUnit_iff (polyNormUnit p)).mp (polyNormUnit_isUnit p) with
+    ⟨v, hv⟩
+  refine ⟨v, ?_⟩
+  unfold polyNormalize
+  grind
+
+private theorem eq_normalize_of_dvd [LawfulGcdOps R]
+    (a b : R) (ha : normalize a = a) (hab : a ∣ b) (hba : b ∣ a) :
+    a = normalize b := by
+  rcases (LawfulGcdOps.dvd_iff a b).mp hab with ⟨q, hbq⟩
+  by_cases hazero : a = 0
+  · have hbzero : b = 0 := by rw [hbq, hazero, Lean.Grind.Semiring.zero_mul]
+    rw [hazero, hbzero]
+    unfold normalize
+    rw [Lean.Grind.Semiring.zero_mul]
+  · rcases (LawfulGcdOps.dvd_iff b a).mp hba with ⟨r, har⟩
+    have hqr : q * r = 1 := by
+      have hzero : a * (1 - q * r) = 0 := by
+        rw [har, hbq]
+        grind
+      rcases LawfulGcdOps.no_zero_div a (1 - q * r) hzero with
+        haz | hrest
+      · exact False.elim (hazero haz)
+      · grind
+    have hqunit : GcdOps.isUnit q = true :=
+      (LawfulGcdOps.isUnit_iff q).mpr ⟨r, hqr⟩
+    symm
+    calc
+      normalize b = normalize (a * q) := congrArg normalize hbq
+      _ = normalize a * normalize q := LawfulGcdOps.normalize_mul a q
+      _ = a * 1 := by rw [ha, LawfulGcdOps.normalize_unit q hqunit]
+      _ = a := Lean.Grind.Semiring.mul_one a
+
+private theorem scalarContent_view_assoc
+    {sourceCmp : Mono (n + 1) → Mono (n + 1) → Ordering}
+    [Std.TransCmp sourceCmp] [Std.LawfulEqCmp sourceCmp] [LawfulGcdOps R]
+    (i : Fin (n + 1)) (cmp' : Mono n → Mono n → Ordering)
+    [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
+    (p : MvPoly (n + 1) R sourceCmp)
+    (g : MvPoly n R cmp')
+    (hdiv : ∀ k, g ∣ (toUnivariate i cmp' p).coeff k)
+    (hgreat : ∀ d, (∀ k, d ∣ (toUnivariate i cmp' p).coeff k) → d ∣ g) :
+    content p ∣ content g ∧ content g ∣ content p := by
+  have hCleft : C (content p) ∣ g := by
+    apply hgreat
+    intro k
+    apply C_dvd_of_dvd_content
+    apply dvd_scalarContent
+    intro m
+    rw [toUnivariate_coeff]
+    exact scalarContent_dvd_coeff p (insertVar i k m)
+  have hleft : content p ∣ content g := by
+    apply dvd_scalarContent
+    intro m
+    exact scalar_dvd_coeff_of_C_dvd hCleft m
+  have hCright : C (content g) ∣ g := by
+    apply C_dvd_of_dvd_content
+    apply (LawfulGcdOps.dvd_iff (content g) (content g)).mpr
+    exact ⟨1, (Lean.Grind.Semiring.mul_one _).symm⟩
+  have hright : content g ∣ content p := by
+    apply dvd_scalarContent
+    intro m
+    have hslice : C (content g) ∣
+        (toUnivariate i cmp' p).coeff (Mono.degreeOf i m) :=
+      Hex.dvdTrans hCright (hdiv (Mono.degreeOf i m))
+    have hcoeff := scalar_dvd_coeff_of_C_dvd hslice (removeVar i m)
+    rw [toUnivariate_coeff, insertVar_removeVar] at hcoeff
+    exact hcoeff
+  exact ⟨hleft, hright⟩
+
+omit [DecidableEq R] [BEq R] [LawfulBEq R] [Dvd R] [GcdOps R] in
+private theorem vars_eq_nil
+    {cmp0 : Mono 0 → Mono 0 → Ordering}
+    [Std.TransCmp cmp0] [Std.LawfulEqCmp cmp0]
+    (p : MvPoly 0 R cmp0) : p.vars = [] := by
+  cases h : p.vars with
+  | nil => rfl
+  | cons i is => exact Fin.elim0 i
+
+/-- Content of a constant is its normalized coefficient. -/
+theorem content_C [LawfulGcdOps R] (a : R) :
+    content (C a : MvPoly n R cmp) = normalize a := by
+  unfold content scalarContent
+  rw [termsList_C]
+  by_cases ha : a = 0
+  · rw [ite_eq_left ha, ha, normalize]
+    exact (Lean.Grind.Semiring.zero_mul _).symm
+  · rw [ite_eq_right ha]
+    rfl
+
 theorem content_mul [LawfulGcdOps R] (p q : MvPoly n R cmp) :
     content (p * q) = content p * content q := by
-  sorry
+  induction n with
+  | zero =>
+      have hp : p = C (coeff Mono.zero p) :=
+        eq_C_of_vars_eq_nil p (vars_eq_nil p)
+      have hq : q = C (coeff Mono.zero q) :=
+        eq_C_of_vars_eq_nil q (vars_eq_nil q)
+      rw [hp, hq, ← C_mul, content_C, content_C, content_C,
+        LawfulGcdOps.normalize_mul]
+  | succ n ih =>
+      let pv := toUnivariate 0 Mono.lex p
+      let qv := toUnivariate 0 Mono.lex q
+      let pqv := toUnivariate 0 Mono.lex (p * q)
+      let rp := denseContent pv
+      let rq := denseContent qv
+      let rpq := denseContent pqv
+      let dp := polyNormalize rp
+      let dq := polyNormalize rq
+      let dpq := polyNormalize rpq
+      have hdpDiv : ∀ k, dp ∣ pv.coeff k := by
+        intro k
+        exact Hex.dvdTrans (polyNormalize_dvd rp)
+          (denseContent_dvd_coeff pv k)
+      have hdpGreat : ∀ d, (∀ k, d ∣ pv.coeff k) → d ∣ dp := by
+        intro d hd
+        exact Hex.dvdTrans (dvd_denseContent pv d hd)
+          (dvd_polyNormalize rp)
+      have hdqDiv : ∀ k, dq ∣ qv.coeff k := by
+        intro k
+        exact Hex.dvdTrans (polyNormalize_dvd rq)
+          (denseContent_dvd_coeff qv k)
+      have hdqGreat : ∀ d, (∀ k, d ∣ qv.coeff k) → d ∣ dq := by
+        intro d hd
+        exact Hex.dvdTrans (dvd_denseContent qv d hd)
+          (dvd_polyNormalize rq)
+      have hdpqDiv : ∀ k, dpq ∣ pqv.coeff k := by
+        intro k
+        exact Hex.dvdTrans (polyNormalize_dvd rpq)
+          (denseContent_dvd_coeff pqv k)
+      have hdpqGreat : ∀ d, (∀ k, d ∣ pqv.coeff k) → d ∣ dpq := by
+        intro d hd
+        exact Hex.dvdTrans (dvd_denseContent pqv d hd)
+          (dvd_polyNormalize rpq)
+      have hpAssoc := scalarContent_view_assoc 0 Mono.lex p dp hdpDiv hdpGreat
+      have hqAssoc := scalarContent_view_assoc 0 Mono.lex q dq hdqDiv hdqGreat
+      have hpqAssoc := scalarContent_view_assoc 0 Mono.lex (p * q) dpq
+        hdpqDiv hdpqGreat
+      have hview : pqv = pv * qv := toUnivariate_mul 0 p q
+      have hraw := denseContent_mul_assoc pv qv
+      rw [← hview] at hraw
+      have hnorm : dpq = dp * dq := by
+        have hforward : dpq ∣ rp * rq :=
+          Hex.dvdTrans (polyNormalize_dvd rpq) hraw.1
+        have hback : rp * rq ∣ dpq :=
+          Hex.dvdTrans hraw.2 (dvd_polyNormalize rpq)
+        have hcanon := eq_polyNormalize_of_dvd dpq (rp * rq)
+          (polyNormalize_idem rpq) hforward hback
+        calc
+          dpq = polyNormalize (rp * rq) := hcanon
+          _ = polyNormalize rp * polyNormalize rq := polyNormalize_mul rp rq
+          _ = dp * dq := rfl
+      have hlower : content dpq = content dp * content dq := by
+        rw [hnorm]
+        exact ih (cmp := Mono.lex) dp dq
+      have hforward : content (p * q) ∣ content p * content q :=
+        Hex.dvdTrans hpqAssoc.1 (by
+          rw [hlower]
+          exact Hex.dvdMul hpAssoc.2 hqAssoc.2)
+      have hback : content p * content q ∣ content (p * q) :=
+        Hex.dvdTrans (Hex.dvdMul hpAssoc.1 hqAssoc.1) (by
+          rw [← hlower]
+          exact hpqAssoc.2)
+      have hcanon := eq_normalize_of_dvd
+        (content (p * q)) (content p * content q)
+        (normalize_scalarContent (p * q)) hforward hback
+      have hpNorm : normalize (content p) = content p :=
+        normalize_scalarContent p
+      have hqNorm : normalize (content q) = content q :=
+        normalize_scalarContent q
+      rw [LawfulGcdOps.normalize_mul, hpNorm, hqNorm] at hcanon
+      exact hcanon
 
 theorem primPart_mul [LawfulGcdOps R] (p q : MvPoly n R cmp) :
     primPart (p * q) = primPart p * primPart q := by
@@ -343,9 +552,7 @@ theorem primPart_mul [LawfulGcdOps R] (p q : MvPoly n R cmp) :
     · exact hcp hzero
     · exact hcq hzero
   have hC :
-      (C (cp * cq) : MvPoly n R cmp) = C cp * C cq := by
-    unfold C
-    rw [monomial_mul_monomial, Mono.zero_mul]
+      (C (cp * cq) : MvPoly n R cmp) = C cp * C cq := C_mul cp cq
   have hleft :
       (C cp * C cq) * primPart (p * q) = p * q := by
     calc

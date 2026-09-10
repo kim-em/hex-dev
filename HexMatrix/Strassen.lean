@@ -62,8 +62,8 @@ theorem toMatrix_pad_view [OfNat R 0] (A : Submatrix R n m) (n' m' : Nat)
   intro i j
   rw [Submatrix.getElem_toMatrix, Submatrix.entry_pad, getElem_pad]
   by_cases h : i.val < n ∧ j.val < m
-  · rw [dif_pos h, dif_pos h, getElem_pair_eq_nested, Submatrix.getElem_toMatrix]
-  · rw [dif_neg h, dif_neg h]
+  · rw [dite_eq_left h, dite_eq_left h, getElem_pair_eq_nested, Submatrix.getElem_toMatrix]
+  · rw [dite_eq_right h, dite_eq_right h]
 
 /-- Materializing the top-left quadrant view is `Matrix.toBlocks₁₁` of the
 materialized parent. -/

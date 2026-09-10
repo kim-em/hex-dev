@@ -28,7 +28,7 @@ namespace GF2Poly
 
 /-- Coefficients above a reduced degree bound are zero. -/
 theorem coeff_eq_false_of_reduced_bound_le {p : GF2Poly} {bound n : Nat}
-    (hred : p.IsZero ∨ p.degree < bound) (hbound : bound ≤ n) :
+    (hred : p.IsZero ∨ p.natDegree < bound) (hbound : bound ≤ n) :
     p.coeff n = false := by
   cases hred with
   | inl hzero =>
@@ -41,7 +41,7 @@ theorem coeff_eq_false_of_reduced_bound_le {p : GF2Poly} {bound n : Nat}
         obtain ⟨d, hd⟩ := degree?_isSome_of_isZero_false hpzeroFalse
         have hdn : d < n := by
           have hdegree' : d < bound := by
-            simpa [degree, hd] using hdegree
+            simpa [natDegree, hd] using hdegree
           omega
         exact coeff_eq_false_of_degree?_lt hd hdn
 
@@ -54,8 +54,8 @@ def reducedCoeffVector (bound : Nat) (p : GF2Poly) : Fin bound → Bool :=
 /-- Two reduced packed polynomials below the same bound are equal when their
 bounded coefficient vectors agree. -/
 theorem eq_of_reducedCoeffVector_eq {bound : Nat} {p q : GF2Poly}
-    (hp : p.IsZero ∨ p.degree < bound)
-    (hq : q.IsZero ∨ q.degree < bound)
+    (hp : p.IsZero ∨ p.natDegree < bound)
+    (hq : q.IsZero ∨ q.natDegree < bound)
     (hcoeff : reducedCoeffVector bound p = reducedCoeffVector bound q) :
     p = q := by
   apply ext_coeff
@@ -354,14 +354,14 @@ theorem coeff_ofBoolList_length_le {bs : List Bool} {n : Nat}
 /-- The packed polynomial built from a length-`d` Boolean coefficient list is
 either zero or has degree strictly below `d`. -/
 theorem ofBoolList_isZero_or_degree_lt (bs : List Bool) :
-    (ofBoolList bs).IsZero ∨ (ofBoolList bs).degree < bs.length := by
+    (ofBoolList bs).IsZero ∨ (ofBoolList bs).natDegree < bs.length := by
   cases h : (ofBoolList bs).isZero with
   | true =>
       exact Or.inl h
   | false =>
       refine Or.inr ?_
       obtain ⟨d, hd⟩ := degree?_isSome_of_isZero_false h
-      have hdeg : (ofBoolList bs).degree = d := degree_eq_of_degree?_eq_some hd
+      have hdeg : (ofBoolList bs).natDegree = d := natDegree_eq_of_degree?_eq_some hd
       rw [hdeg]
       rcases Nat.lt_or_ge d bs.length with hlt | hge'
       · exact hlt
@@ -385,7 +385,7 @@ structure GF2nPoly (f : GF2Poly) (hirr : GF2Poly.Irreducible f) where
   below the modulus, so each field element has exactly one packed spelling.
   Zero is called out separately because the packed degree of the zero
   polynomial is `0`, not `-∞`. -/
-  val_reduced : val.IsZero ∨ val.degree < f.degree
+  val_reduced : val.IsZero ∨ val.natDegree < f.natDegree
 
 /-- `GF(2^n)` packed into one machine word. The modulus stores only the lower
 `n` coefficients; the leading `x^n` term is implicit in

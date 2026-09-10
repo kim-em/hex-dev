@@ -1,0 +1,47 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+import HexConway
+
+open Hex Hex.Conway Lean
+
+set_option maxRecDepth 100000
+set_option maxHeartbeats 80000000
+
+/-! Compiled verification timings for the complete supported scope.
+The mutable input prevents closed checks from being folded by the compiler.
+These timings measure runtime verification, not proof elaboration or replay. -/
+
+private def measureEntry (p n : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
+    (input : {f : FpPoly p // DensePoly.Monic f})
+    (qs es : List Nat)
+    (divisors : List (Nat × FpPoly p)) : IO Unit := do
+  let ref ← IO.mkRef input
+  let f ← ref.get
+  let start ← IO.monoNanosNow
+  unless Berlekamp.rabinTest f.val f.property do
+    throw <| IO.userError s!"irreducibility failed: ({p}, {n})"
+  let irreducible ← IO.monoNanosNow
+  unless primitiveCheck f.val f.property n qs es do
+    throw <| IO.userError s!"primitivity failed: ({p}, {n})"
+  let primitive ← IO.monoNanosNow
+  for (m, small) in divisors do
+    unless compatCheck small f.val f.property m (n / m) do
+      throw <| IO.userError s!"compatibility failed: ({p}, {m}, {n})"
+  let compatible ← IO.monoNanosNow
+  if (← IO.getEnv "HEXCONWAY_ENFORCE_BUDGETS") == some "1" then
+    for (label, elapsed, ceiling) in [
+        ("irreducibility", irreducible - start, 2_000_000),
+        ("primitivity", primitive - irreducible, 5_000_000),
+        ("compatibility", compatible - primitive, 5_000_000)] do
+      if elapsed > ceiling then
+        throw <| IO.userError s!"{label} ({p}, {n}): {elapsed} ns exceeds {ceiling} ns"
+  IO.println <| Json.compress <| Json.mkObj [
+    ("p", toJson p), ("n", toJson n),
+    ("irreducibility_ns", toJson (irreducible - start)),
+    ("primitivity_ns", toJson (primitive - irreducible)),
+    ("compatibility_ns", toJson (compatible - primitive)),
+    ("compatibility_obligations", toJson divisors.length)]

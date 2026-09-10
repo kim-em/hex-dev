@@ -14,6 +14,11 @@ package Hex where
 require verso from git
   "https://github.com/leanprover/verso.git" @ "v4.34.0-rc2"
 
+-- Test-only native oracle. Released Hex libraries do not depend on it.
+require NautyFFI from git
+  "https://github.com/leanprover/nauty-ffi.git" @
+    "ec8597014d0ae82490a616b855d59a35e6bfa21f"
+
 require «lean-bench» from git
   "https://github.com/kim-em/lean-bench.git" @ "master"
 
@@ -32,7 +37,14 @@ private def zmod64MulOTarget (pkg : Package) : FetchM (Job FilePath) := do
   let srcTarget ← inputTextFile <| pkg.dir / "HexModArith" / "ffi" / "zmod64_mul.c"
   buildFileAfterDep oFile srcTarget fun srcFile => do
     let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC", "-O3"]
-    compileO oFile srcFile flags
+    -- Mathlib's sandbox permits writes in the build directory, but not /tmp.
+    -- Set TMPDIR for this compiler process only, including compiler wrappers.
+    createParentDirs oFile
+    proc {
+      cmd := "cc"
+      args := #["-c", "-o", oFile.toString, srcFile.toString] ++ flags
+      env := #[("TMPDIR", some (← IO.FS.realPath (oFile.parent.getD ".")).toString)]
+    }
 
 extern_lib hexgf2ffi (pkg) := do
   let name := nameToStaticLib "hexgf2ffi"
@@ -45,14 +57,21 @@ private def hexArithOTarget (pkg : Package) (src : String) : FetchM (Job FilePat
   let srcTarget ← inputTextFile <| pkg.dir / "HexArith" / "ffi" / src
   buildFileAfterDep oFile srcTarget fun srcFile => do
     let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC", "-O3"]
-    compileO oFile srcFile flags
+    -- Mathlib's sandbox permits writes in the build directory, but not /tmp.
+    -- Set TMPDIR for this compiler process only, including compiler wrappers.
+    createParentDirs oFile
+    proc {
+      cmd := "cc"
+      args := #["-c", "-o", oFile.toString, srcFile.toString] ++ flags
+      env := #[("TMPDIR", some (← IO.FS.realPath (oFile.parent.getD ".")).toString)]
+    }
 
-extern_lib hexarithffi (pkg) := do
+target hexarithffi pkg : FilePath := do
   let name := nameToStaticLib "hexarithffi"
   let oTargets ← #[ "wide_arith.c", "mpz_gcdext.c" ].mapM (hexArithOTarget pkg)
   buildStaticLib (pkg.staticLibDir / name) oTargets
 
-extern_lib hexmodarithffi (pkg) := do
+target hexmodarithffi pkg : FilePath := do
   let name := nameToStaticLib "hexmodarithffi"
   let oTarget ← zmod64MulOTarget pkg
   buildStaticLib (pkg.staticLibDir / name) #[oTarget]
@@ -69,6 +88,33 @@ extern_lib hexlllffi (pkg) := do
   let oTarget ← hexlllProviderOTarget pkg
   buildStaticLib (pkg.staticLibDir / name) #[oTarget]
 
+private def nautyVendorOTarget (pkg : Package) (src : String) : FetchM (Job FilePath) := do
+  let stem := (src.dropEnd 2).toString
+  let oFile := pkg.dir / defaultBuildDir / "vendor" / "nauty-2.9.3" / s!"{stem}.o"
+  let srcTarget ← inputTextFile <| pkg.dir / "vendor" / "nauty-2.9.3" / src
+  buildFileAfterDep oFile srcTarget fun srcFile => do
+    let flags := #["-I", (pkg.dir / "vendor" / "nauty-2.9.3").toString,
+      "-fPIC", "-O2", "-std=c11", "-DUSE_TLS"]
+    compileO oFile srcFile flags
+
+private def nautyCanonOTarget (pkg : Package) : FetchM (Job FilePath) := do
+  let oFile := pkg.dir / defaultBuildDir / "Hex" / "BenchOracle" / "ffi" /
+    "nauty_canon.o"
+  let srcTarget ← inputTextFile <| pkg.dir / "Hex" / "BenchOracle" / "ffi" /
+    "nauty_canon.c"
+  buildFileAfterDep oFile srcTarget fun srcFile => do
+    let flags := #["-I", (← getLeanIncludeDir).toString,
+      "-I", (pkg.dir / "vendor" / "nauty-2.9.3").toString,
+      "-fPIC", "-O2", "-std=c11", "-DUSE_TLS"]
+    compileO oFile srcFile flags
+
+extern_lib hexnautyffi (pkg) := do
+  let name := nameToStaticLib "hexnautyffi"
+  let vendorTargets ← #["nauty.c", "nautil.c", "naugraph.c", "schreier.c",
+    "naurng.c"].mapM (nautyVendorOTarget pkg)
+  let shimTarget ← nautyCanonOTarget pkg
+  buildStaticLib (pkg.staticLibDir / name) (vendorTargets.push shimTarget)
+
 lean_lib Hex where
 
 lean_lib HexBasic where
@@ -80,12 +126,7 @@ lean_lib HexTruncatedSeriesMathlib where
 
 lean_lib HexArith where
   precompileModules := true
-  -- The `hexarithffi` extern_lib is linked into this precompiled library's
-  -- dynlib automatically (as with `hexgf2ffi` and `HexGF2`); we only need to
-  -- add the system GMP library. Passing the static lib by an explicit path
-  -- broke consumers: that path was relative to the *root* package's build dir,
-  -- so when hex is a dependency it resolved against the wrong project and the
-  -- dynlink failed.
+  moreLinkObjs := #[hexarithffi]
   moreLinkArgs := #["-lgmp"]
 
 lean_lib HexPoly where
@@ -100,8 +141,7 @@ lean_lib HexSparsePoly where
 
 lean_lib HexModArith where
   precompileModules := true
-  -- See `HexArith`: the `hexmodarithffi` extern_lib links in automatically, so
-  -- we pass only the system GMP library rather than an explicit static-lib path.
+  moreLinkObjs := #[hexmodarithffi]
   moreLinkArgs := #["-lgmp"]
 
 lean_lib HexModular where
@@ -113,16 +153,37 @@ lean_lib HexPolyZ where
 
 lean_lib HexPolyZGcd where
 
+@[default_target]
+lean_lib HexRationalFn where
+
+@[default_target]
+lean_lib HexRationalFnMathlib where
+
 lean_lib HexRoots where
 
 lean_lib HexResultant where
 
 lean_lib HexNumberField where
 
+lean_lib HexRealAlgebraic where
+
+@[default_target]
+lean_lib HexRealAlgebraicMathlib where
+
 lean_lib HexNumberFieldTower where
 
 lean_lib HexPolyFp where
   precompileModules := true
+
+-- Fast-multiplication kernels specified by HexPolyFast/SPEC/hex-poly-fast.md
+-- §"Coefficient-owner file layouts". They import HexPolyFast and HexModular,
+-- which are not published, so the released umbrellas HexPolyZ.lean and
+-- HexPolyFp.lean do not export them; they rejoin those umbrellas when
+-- hex-poly-fast and hex-modular are admitted to scripts/release/released.yml
+-- (https://github.com/kim-em/hex-dev/issues/10001).
+@[default_target]
+lean_lib HexPolyFastKernels where
+  globs := #[`HexPolyZ.KroneckerMulti, `HexPolyZ.NttMul, `HexPolyFp.NttMul]
 
 lean_lib HexGFqRing where
 
@@ -209,6 +270,24 @@ lean_lib HexIntFactorMathlib where
 lean_lib HexMatrix where
   precompileModules := true
 
+@[default_target]
+lean_lib HexPermGroup where
+
+@[default_target]
+lean_lib HexPermGroupMathlib where
+
+@[default_target]
+lean_lib HexPermGroupTests where
+  globs := #[`HexPermGroupMathlib.Tests]
+
+lean_lib HexGraph where
+
+lean_lib HexGraphIso where
+  precompileModules := true
+
+@[default_target]
+lean_lib HexGraphIsoMathlib where
+
 lean_lib HexCharPoly where
 
 lean_lib HexMinPoly where
@@ -238,6 +317,15 @@ lean_lib HexHermiteMathlib where
 lean_lib HexSmithMathlib where
 
 lean_lib HexGramSchmidt where
+
+lean_lib HexLatticeEnum where
+
+@[default_target]
+lean_lib HexLatticeEnumMathlib where
+
+@[default_target]
+lean_lib HexLatticeEnumTests where
+  globs := #[`HexLatticeEnumMathlib.Tests, `HexLatticeEnumMathlib.LintTests]
 
 lean_lib HexLLL where
   precompileModules := true
@@ -299,11 +387,11 @@ lean_lib HexBerlekampKernelProbe where
 
 lean_lib HexPrimalityKernelProbe where
   srcDir := "bench"
-  globs := #[`HexPrimality.Inputs, `HexBench.PrimalityKernel]
+  globs := #[`HexPrimalityBench.Inputs, `HexBench.PrimalityKernel]
 
 lean_lib HexPrimalityElabProbe where
   srcDir := "bench"
-  globs := #[`HexPrimality.Inputs, `HexPrimality.ProofProbe.Support,
+  globs := #[`HexPrimalityBench.Inputs, `HexPrimality.ProofProbe.Support,
     `HexPrimality.ProofProbe.CoreBaseline,
     `HexPrimality.ProofProbe.Core512,
     `HexPrimality.ProofProbe.CoreExhausted,
@@ -354,7 +442,7 @@ lean_lib HexPrimalityMathlibProofProbe where
 
 lean_lib HexPrimalityElabProbeScientific where
   srcDir := "bench"
-  globs := #[`HexPrimality.Inputs, `HexPrimality.ProofProbe.Support,
+  globs := #[`HexPrimalityBench.Inputs, `HexPrimality.ProofProbe.Support,
     `HexPrimality.ProofProbe.CoreBaseline,
     `HexPrimality.ProofProbe.Bit31.Input,
     `HexPrimality.ProofProbe.Bit31.Search,
@@ -716,7 +804,9 @@ lean_lib HexRCFProofProbeScientific where
 lean_lib HexConformance where
   srcDir := "conformance"
   globs := #[
-`HexArith.Conformance, `HexArith.CrossCheck, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexBerlekampZassenhaus.CrossCheck, `HexBerlekampZassenhausMathlib.Conformance, `HexConway.Conformance, `HexGF2.Conformance, `HexGF2.CrossCheck, `HexGF2.FastCheck, `HexGFq.Conformance, `HexGFq.CrossCheck, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexHensel.Conformance, `HexHensel.CrossCheck, `HexInterval.Conformance, `HexIntervalMathlib.IntervalConformance, `HexInterval.CenterConformance, `HexInterval.ScaleConformance, `HexInterval.PropagatorConformance, `HexInterval.ScopeConformance, `HexInterval.StructuralMatcherConformance, `HexInterval.MatcherSchedulerConformance, `HexInterval.NestedBranchConformance, `HexInterval.StructureViewConformance, `HexInterval.PolicyConformance, `HexInterval.PolicyFrontierConformance, `HexInterval.PolicyDriverConformance, `HexInterval.PackageRegistryConformance, `HexInterval.DyadicIntervalConformance, `HexInterval.DyadicRulesConformance, `HexInterval.PayloadArenaConformance, `HexInterval.PayloadSessionConformance, `HexInterval.PolicySessionConformance, `HexInterval.PolicyFunctionConformance, `HexInterval.SemanticReplayConformance, `HexInterval.ChronologicalReplayConformance, `HexInterval.GenericInstanceReconstructionConformance, `HexInterval.ProofEmitterConformance, `HexInterval.TraceReplayConformance, `HexInterval.SinTenIntervalConformance, `HexIntervalMathlib.DyadicIntervalConformance, `HexIntervalMathlib.CenteredConformance, `HexIntervalMathlib.SineSignConformance, `HexIntervalMathlib.SineProofConformance, `HexIntervalMathlib.SineTacticConformance, `HexIntervalMathlib.ProofRegistryConformance, `HexIntervalMathlib.ExpSignConformance, `HexIntervalMathlib.ReluConformance, `HexIntervalMathlib.RefuteConformance, `HexIntervalMathlib.PntLogTableConformance, `HexIntervalMathlib.PntNestedLogConformance, `HexIntervalMathlib.PntExpTailConformance, `HexIntervalMathlib.PntTable12Conformance, `HexIntervalMathlib.PntTable12OrdinaryConformance, `HexIntervalAlgebraic.PolynomialDispatchConformance, `HexIntervalMathlib.PntTable12LogConformance, `HexIntervalMathlib.PntFks2ShardConformance, `HexIntervalMathlib.LogTablePrecisionConformance, `HexIntervalMathlib.IntegralCanaryConformance, `HexIntervalMathlib.PntBKLNWExpConformance, `HexIntervalMathlib.PntBKLNWPowConformance, `HexIntervalMathlib.PntPrimeLogSmallConformance, `HexIntervalMathlib.PntDusartExpConformance, `HexIntervalMathlib.SinTenConformance, `HexIntervalMathlib.SinTenIntervalConformance, `HexIntervalMathlib.CosBillionConformance, `HexHermite.Conformance, `HexLLL.Conformance, `HexMatrix.Conformance, `HexMvPolyFixtures, `HexMvPoly.Conformance, `HexMvPolyMathlib.Conformance, `HexSparsePolyFixtures, `HexSparsePoly.Conformance, `HexRowReduce.Conformance, `HexDeterminant.Conformance, `HexBareiss.Conformance, `HexCharPoly.Fixtures, `HexCharPoly.Conformance, `HexModArith.Conformance, `HexModArith.FastCheck, `HexModular.Conformance, `HexPolyZGcd.Conformance, `HexMvGcd.Conformance, `HexNumberField.Conformance, `HexNumberFieldTower.Conformance, `HexPoly.Conformance, `HexPrimality.Conformance, `HexPrimalityMathlib.Conformance, `HexPrimalityMathlib.OptInConformance, `HexPolyFp.Conformance, `HexPolyZ.Conformance, `HexRCF.Conformance, `HexRealRoots.Conformance, `HexRealRootsMathlib.Conformance, `HexResultant.Conformance, `HexRoots.Conformance].map Glob.one
+`HexArith.Conformance, `HexArith.CrossCheck, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexBerlekampZassenhaus.CrossCheck, `HexBerlekampZassenhausMathlib.Conformance, `HexConway.Conformance, `HexGF2.Conformance, `HexGF2.CrossCheck, `HexGF2.FastCheck, `HexGFq.Conformance, `HexGFq.CrossCheck, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexGraphIso.Conformance, `HexHensel.Conformance, `HexHensel.CrossCheck, `HexInterval.Conformance, `HexIntervalMathlib.IntervalConformance, `HexInterval.CenterConformance, `HexInterval.ScaleConformance, `HexInterval.PropagatorConformance, `HexInterval.ScopeConformance, `HexInterval.StructuralMatcherConformance, `HexInterval.MatcherSchedulerConformance, `HexInterval.NestedBranchConformance, `HexInterval.StructureViewConformance, `HexInterval.PolicyConformance, `HexInterval.PolicyFrontierConformance, `HexInterval.PolicyDriverConformance, `HexInterval.PackageRegistryConformance, `HexInterval.DyadicIntervalConformance, `HexInterval.DyadicRulesConformance, `HexInterval.PayloadArenaConformance, `HexInterval.PayloadSessionConformance, `HexInterval.PolicySessionConformance, `HexInterval.PolicyFunctionConformance, `HexInterval.SemanticReplayConformance, `HexInterval.ChronologicalReplayConformance, `HexInterval.GenericInstanceReconstructionConformance, `HexInterval.ProofEmitterConformance, `HexInterval.TraceReplayConformance, `HexInterval.SinTenIntervalConformance, `HexIntervalMathlib.DyadicIntervalConformance, `HexIntervalMathlib.CenteredConformance, `HexIntervalMathlib.SineSignConformance, `HexIntervalMathlib.SineProofConformance, `HexIntervalMathlib.SineTacticConformance, `HexIntervalMathlib.ProofRegistryConformance, `HexIntervalMathlib.ExpSignConformance, `HexIntervalMathlib.ReluConformance, `HexIntervalMathlib.RefuteConformance, `HexIntervalMathlib.PntLogTableConformance, `HexIntervalMathlib.PntNestedLogConformance, `HexIntervalMathlib.PntExpTailConformance, `HexIntervalMathlib.PntTable12Conformance, `HexIntervalMathlib.PntTable12OrdinaryConformance, `HexIntervalAlgebraic.PolynomialDispatchConformance, `HexIntervalMathlib.PntTable12LogConformance, `HexIntervalMathlib.PntFks2ShardConformance, `HexIntervalMathlib.LogTablePrecisionConformance, `HexIntervalMathlib.IntegralCanaryConformance, `HexIntervalMathlib.PntBKLNWExpConformance, `HexIntervalMathlib.PntBKLNWPowConformance, `HexIntervalMathlib.PntPrimeLogSmallConformance, `HexIntervalMathlib.PntDusartExpConformance, `HexIntervalMathlib.SinTenConformance, `HexIntervalMathlib.SinTenIntervalConformance, `HexIntervalMathlib.CosBillionConformance, `HexHermite.Conformance, `HexLLL.Conformance, `HexMatrix.Conformance, `HexMvPolyFixtures, `HexMvPoly.Conformance, `HexMvPolyMathlib.Conformance, `HexSparsePolyFixtures, `HexSparsePoly.Conformance, `HexRowReduce.Conformance, `HexDeterminant.Conformance, `HexBareiss.Conformance, `HexCharPoly.Fixtures, `HexCharPoly.Conformance, `HexModArith.Conformance, `HexModArith.FastCheck, `HexModular.Conformance, `HexPolyZGcd.Conformance, `HexMvGcd.Conformance, `HexNumberField.Conformance, `HexNumberFieldTower.Conformance, `HexPoly.Conformance, `HexPrimality.Conformance, `HexPrimalityMathlib.Conformance, `HexPrimalityMathlibConformance.OptIn, `HexPolyFp.Conformance, `HexPolyZ.Conformance, `HexRCF.Conformance, `HexRealRoots.Conformance, `HexRealRootsMathlib.Conformance, `HexResultant.Conformance, `HexRoots.Conformance].map Glob.one
+
+    ++ #[`HexRealAlgebraic.Conformance, `HexRealAlgebraic.Checks, `HexNumberField.ComplexChecks, `HexRealAlgebraic.ReprChecks].map Glob.one
 
     ++ #[`HexSmith.Conformance].map Glob.one
 
@@ -725,6 +815,10 @@ lean_lib HexConformance where
     ++ #[`HexTruncatedSeries.Conformance].map Glob.one
 
     ++ #[`HexPolyFast.Conformance].map Glob.one
+
+    ++ #[`HexRationalFn.Conformance, `HexRationalFn.Domains].map Glob.one
+
+    ++ #[`HexLatticeEnum.Conformance].map Glob.one
 
     ++ #[`HexMvHensel.Conformance, `HexMvFactor.Conformance].map Glob.one
 
@@ -765,6 +859,8 @@ lean_lib HexConformance where
 
     ++ #[`HexInterval.MinMaxConformance,
       `HexIntervalMathlib.MinMaxConformance].map Glob.one
+
+    ++ #[`HexGraphIso.Cases, `HexPermGroup.Conformance, `HexPermGroup.Limits].map Glob.one
 
     ++ #[`HexInterval.PolicyFeatureConformance,
       `HexInterval.FeaturePolicyConformance,
@@ -833,9 +929,30 @@ lean_lib HexReleaseTests where
     `HexRealRoots.ReplayTest,
     `HexRealRootsMathlib.IsolateRootsTests,
     `HexRealRootsMathlib.IsolateRootsElabTests,
+    `HexRealRootsMathlib.SturmTests,
+    `HexRealRootsMathlib.RealRootCountTests,
     `HexRootsMathlib.Examples,
     `HexMvPoly.KernelTests,
-    `HexSparsePoly.KernelTests]
+    `HexSparsePoly.KernelTests,
+    `HexGraphIso.TestGraphs,
+    `HexGraphIso.TacticTests,
+    `HexGraphIso.ModuleBoundaryTests,
+    `HexGraphIsoMathlib.TacticTests,
+    `HexPermGroupMathlib.Tests,
+    `HexNumberFieldTower.Embed,
+    `HexRCF.LanguageTests,
+    `HexRCF.SturmBuilderTests,
+    `HexRCF.CarrierTests,
+    `HexRCF.IsolationsTests,
+    `HexRCF.SeparationTests,
+    `HexRCF.CellsTests,
+    `HexRCF.CommonRootTests,
+    `HexRCF.SignMatrixTests,
+    `HexRCF.BuilderTests,
+    `HexRCF.CertificateTests,
+    `HexRCF.DecisionTests,
+    `HexRCF.ReifyTests,
+    `HexRCF.LintTests]
 
 -- Verification-only modules for the incubating multivariate factorization
 -- stack. Keep this separate from the released-test target, whose module list
@@ -845,6 +962,7 @@ lean_lib HexMvFactorizationTests where
     `HexModular.LoopTests,
     `HexPolyZGcd.Kernel,
     `HexMvGcd.KernelTests,
+    `HexMvGcd.CertTests,
     `HexMvGcd.Eval,
     `HexMvGcd.SquarefreeTests,
     `HexMvHensel.KernelTests,
@@ -902,24 +1020,6 @@ lean_lib HexCharPolyTests where
   globs := #[`HexCharPoly.CharPolyElabTests,
     `HexCharPolyMathlib.CharPolyElabTests]
 
--- HexRCF is not yet a published split repository, so its verification-only
--- modules stay separate from the release-manifest-backed target above.
-@[default_target]
-lean_lib HexRCFTests where
-  globs := #[`HexRCF.LanguageTests,
-    `HexRCF.SturmBuilderTests,
-    `HexRCF.CarrierTests,
-    `HexRCF.IsolationsTests,
-    `HexRCF.SeparationTests,
-    `HexRCF.CellsTests,
-    `HexRCF.CommonRootTests,
-    `HexRCF.SignMatrixTests,
-    `HexRCF.BuilderTests,
-    `HexRCF.CertificateTests,
-    `HexRCF.DecisionTests,
-    `HexRCF.ReifyTests,
-    `HexRCF.LintTests]
-
 -- Mirrors the released aggregate's module-system umbrella, so a library that
 -- never adopted the module system fails here instead of after the publish-out
 -- sync. `check_released_manifest.py` keeps the import list equal to the
@@ -969,6 +1069,10 @@ lean_exe hexlll_emit_fixtures where
   srcDir := "conformance"
   root := `HexLLL.EmitFixtures
 
+lean_exe hexlatticeenum_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexLatticeEnum.EmitFixtures
+
 lean_exe hexrealroots_emit_fixtures where
   srcDir := "conformance"
   root := `HexRealRoots.EmitFixtures
@@ -980,6 +1084,14 @@ lean_exe hexrcf_emit_fixtures where
 lean_exe hexroots_emit_fixtures where
   srcDir := "conformance"
   root := `HexRoots.EmitFixtures
+
+lean_exe hexrealalgebraic_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexRealAlgebraic.EmitFixtures
+
+lean_exe hexrealalgebraic_conformance where
+  srcDir := "conformance"
+  root := `HexRealAlgebraic.RunChecks
 
 lean_exe hexnumberfield_emit_fixtures where
   srcDir := "conformance"
@@ -1013,6 +1125,18 @@ lean_exe hexmodular_emit_fixtures where
   srcDir := "conformance"
   root := `HexModular.EmitFixtures
 
+lean_exe hexgraphiso_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexGraphIso.EmitFixtures
+
+lean_exe hexpermgroup_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexPermGroup.EmitFixtures
+
+lean_exe hexgraphiso_emit_campaign where
+  srcDir := "conformance"
+  root := `HexGraphIso.EmitCampaign
+
 lean_exe hexpolyzgcd_emit_fixtures where
   srcDir := "conformance"
   root := `HexPolyZGcd.EmitFixtures
@@ -1020,6 +1144,10 @@ lean_exe hexpolyzgcd_emit_fixtures where
 lean_exe hexpolysmith_emit_fixtures where
   srcDir := "conformance"
   root := `HexPolySmith.EmitFixtures
+
+lean_exe hexrationalfn_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexRationalFn.EmitFixtures
 
 lean_exe hexmodular_bench where
   srcDir := "bench"
@@ -1061,6 +1189,52 @@ lean_exe hexroots_demo where
 lean_exe hexmatrix_bench where
   srcDir := "bench"
   root := `HexMatrix.Bench
+
+-- The graph_iso fresh-module probes (SPEC/hex-graph-iso § Benchmarks and
+-- SPEC/hex-graph-iso-mathlib § Tests): build-only structural checks of the
+-- four release probe cases on each tactic route. The scheduled-only CFI
+-- pair has its own target so the merge build stays inside its budget.
+lean_lib HexGraphIsoProofProbe where
+  srcDir := "bench"
+  globs := #[`HexGraphIso.ProofProbe.Support,
+    `HexGraphIso.ProofProbe.Baseline,
+    `HexGraphIso.ProofProbe.Positive12,
+    `HexGraphIso.ProofProbe.Negative12,
+    `HexGraphIso.ProofProbe.Coloured10Pos,
+    `HexGraphIso.ProofProbe.Coloured10Neg]
+
+lean_lib HexGraphIsoCfiProbe where
+  srcDir := "bench"
+  globs := #[`HexGraphIso.ProofProbe.Support, `HexGraphIso.ProofProbe.Cfi]
+
+lean_lib HexGraphIsoMathlibProofProbe where
+  srcDir := "bench"
+  globs := #[`HexGraphIsoMathlib.ProofProbe.Support,
+    `HexGraphIsoMathlib.ProofProbe.MathlibBaseline,
+    `HexGraphIsoMathlib.ProofProbe.MathlibPositive10,
+    `HexGraphIsoMathlib.ProofProbe.MathlibNegative10,
+    `HexGraphIsoMathlib.ProofProbe.MathlibPositive12,
+    `HexGraphIsoMathlib.ProofProbe.MathlibNegative12]
+
+lean_exe hexgraphiso_bench where
+  srcDir := "bench"
+  root := `HexGraphIso.Bench
+
+lean_exe hexpermgroup_bench where
+  srcDir := "bench"
+  root := `HexPermGroup.Bench
+
+-- Local/scheduled per-instance sweep for the cactus plots
+-- (scripts/plots/hexgraphiso-cactus.py); not part of merge CI.
+lean_exe hexgraphiso_cactus where
+  srcDir := "bench"
+  root := `HexGraphIso.Cactus
+
+-- Stage-decomposition profiler for the canonicalization pipeline
+-- (local tool; see bench/HexGraphIso/Profile.lean for methodology).
+lean_exe hexgraphiso_profile where
+  srcDir := "bench"
+  root := `HexGraphIso.Profile
 
 lean_exe hexrowreduce_bench where
   srcDir := "bench"
@@ -1174,6 +1348,21 @@ lean_exe hextruncatedseries_bench where
 lean_exe hexpolyfast_bench where
   srcDir := "bench"
   root := `HexPolyFast.Bench
+
+lean_exe hexrationalfn_bench where
+  srcDir := "bench"
+  root := `HexRationalFn.Bench
+
+lean_lib HexRationalFnBenchSupport where
+  srcDir := "bench"
+  roots := #[`HexRationalFn.Scaling, `HexRationalFn.Families,
+    `HexRationalFn.Workloads, `HexRationalFn.Fixtures]
+
+lean_lib HexRationalFnKernelProbe where
+  srcDir := "bench"
+  globs := #[`HexRationalFn.ProofProbe.Support, `HexRationalFn.ProofProbe.Baseline,
+    `HexRationalFn.ProofProbe.Replay4, `HexRationalFn.ProofProbe.Replay16,
+    `HexRationalFn.ProofProbe.Replay64, `HexRationalFn.ProofProbe.Reject64]
 
 lean_exe hexpolyfast_emit_fixtures where
   srcDir := "conformance"
@@ -1305,6 +1494,10 @@ lean_exe hexstrassen_compare where
   srcDir := "bench"
   root := `HexStrassen.Compare
 
+lean_exe hexconway_replay where
+  srcDir := "bench"
+  root := `HexConway.Replay
+
 lean_exe hexconway_bench where
   srcDir := "bench"
   root := `HexConway.Bench
@@ -1317,3 +1510,15 @@ lean_lib HexManual where
 -- (`.github/workflows/pages.yml`) and on demand via `lake exe hexmanual`.
 lean_exe hexmanual where
   root := `Main
+
+lean_exe hexlatticeenum_bench where
+  srcDir := "bench"
+  root := `HexLatticeEnum.Bench
+
+lean_exe tower_factor_diff where
+  srcDir := "bench"
+  root := `HexNumberFieldTower.FactorDiff
+
+lean_exe hexgraphiso_emit_trace where
+  srcDir := "conformance"
+  root := `HexGraphIso.EmitTrace

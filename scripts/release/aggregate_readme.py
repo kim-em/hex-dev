@@ -77,6 +77,11 @@ def render_table(manifest: dict) -> str:
                 f"{entry['repo']}: aggregated library needs a `component:` "
                 "label for the leanprover/hex README table"
             )
+        if entry.get("mathlib_only"):
+            # A Mathlib-facing library with no computational half, such as a
+            # tactic over ℝ: its one link belongs in the Mathlib column.
+            rows.append(f"| {component} | {NO_LAYER} | {_link(entry)} |")
+            continue
         layer = mathlib_layer(entry, manifest)
         rows.append(
             f"| {component} | {_link(entry)} | "

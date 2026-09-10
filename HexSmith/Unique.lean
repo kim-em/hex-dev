@@ -42,9 +42,9 @@ theorem IsSNF.rank_eq {A : Matrix Int n m} {S S' : SmithData n m}
     intro hlt
     let k := S'.rank + 1
     have heq := h.detDivisor_eq k
-    rw [if_pos (by simp [k]; omega)] at heq
+    rw [ite_eq_left (by simp [k]; omega)] at heq
     have heq' := h'.detDivisor_eq k
-    rw [if_neg (by simp [k])] at heq'
+    rw [ite_eq_right (by simp [k])] at heq'
     rw [heq] at heq'
     have hpos := h.prefix_pos k (by simp [k]; omega)
     exact (Int.natAbs_ne_zero.mpr (Int.ne_of_gt hpos)) heq'
@@ -52,9 +52,9 @@ theorem IsSNF.rank_eq {A : Matrix Int n m} {S S' : SmithData n m}
     intro hlt
     let k := S.rank + 1
     have heq := h.detDivisor_eq k
-    rw [if_neg (by simp [k])] at heq
+    rw [ite_eq_right (by simp [k])] at heq
     have heq' := h'.detDivisor_eq k
-    rw [if_pos (by simp [k]; omega)] at heq'
+    rw [ite_eq_left (by simp [k]; omega)] at heq'
     rw [heq'] at heq
     have hpos := h'.prefix_pos k (by simp [k]; omega)
     exact (Int.natAbs_ne_zero.mpr (Int.ne_of_gt hpos)) heq
@@ -65,9 +65,9 @@ private theorem IsSNF.prefix_eq {A : Matrix Int n m} {S S' : SmithData n m}
     (S.diag.take k).foldl (· * ·) 1 =
       (S'.diag.take k).foldl (· * ·) 1 := by
   have heq := h.detDivisor_eq k
-  rw [if_pos hk] at heq
+  rw [ite_eq_left hk] at heq
   have heq' := h'.detDivisor_eq k
-  rw [if_pos (by omega)] at heq'
+  rw [ite_eq_left (by omega)] at heq'
   have habs : ((S.diag.take k).foldl (· * ·) 1).natAbs =
       ((S'.diag.take k).foldl (· * ·) 1).natAbs := heq.symm.trans heq'
   have hnonneg : 0 ≤ (S.diag.take k).foldl (· * ·) 1 :=

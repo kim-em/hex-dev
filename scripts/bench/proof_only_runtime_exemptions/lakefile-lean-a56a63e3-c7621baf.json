@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "a56a63e3b99c2af2c1b477347d0b3a5bec8d9b51",
+  "current_blob": "c7621baf6ec5baa806263fbf2a0f8cdc0681d839",
+  "reason": "The inherited HexArith and HexModArith compiler-recipe transition only sets TMPDIR for existing compiler processes and is already covered by the a56a63e3-to-9ec028ae exemption. The additional changes register the independent HexPermGroup libraries, tests, conformance drivers, fixture emitter, and benchmark executable; none changes hexbz_factor_service, a library it imports, or its runtime dependency graph."
+}

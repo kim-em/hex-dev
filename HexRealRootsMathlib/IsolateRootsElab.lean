@@ -140,7 +140,7 @@ meta def evalRat (e : Expr) : MetaM Rat :=
 
 /-! # The integer-polynomial interpreter
 
-The interpreter itself (`getNat`/`evalIntLit`/`evalCoeff`/`parsePoly`) is
+The interpreter itself (`getNat`/`evalIntCoeff`/`evalCoeff`/`parsePoly`) is
 hoisted to `HexPolyZMathlib.PolyParse`, shared with the
 `factor_poly`/`irreducibility` `Polynomial ℤ` provider. -/
 
@@ -210,9 +210,10 @@ structure IsoData where
 constant Sturm tail), optionally refining every root to width `2 ^ (-widthK)`
 through the cached-chain `refineToWithChain`. -/
 meta def runBackend (f : Hex.ZPoly) (widthK : Option Int) : MetaM IsoData := do
-  let some out := Hex.isolate? f
-    | throwError "isolate_roots: internal error: the backend isolate? returned none on \
-        square-free input (please report this as a bug)"
+  let some out := Hex.ZPoly.isolateRealRoots? f
+    | throwError "isolate_roots: internal error: the backend \
+        ZPoly.isolateRealRoots? returned none on square-free input \
+        (please report this as a bug)"
   let chain := Hex.ZPoly.sturmChain f
   let isos := out.isolations
   let refined := match widthK with
@@ -307,19 +308,18 @@ meta def emitOfCert (d : IsoData) : MetaM (TSyntax `term) := do
 
 /-- Convert a positive rational width `q` to the bit target `k = max 0 ⌈log₂ q⁻¹⌉`
 in exact integer arithmetic: the least `k ≥ 0` with `2 ^ (-k) ≤ q`. Widths above
-`1` give `k = 0` (they never coarsen the natural intervals). Targets finer than
-`2 ^ (-4096)` are rejected as pathological. -/
+`1` give `k = 0` (they never coarsen the natural intervals). -/
 meta def widthTarget (q : Rat) : MetaM Int := do
   let inv := q⁻¹
-  let mut k : Nat := 0
-  let mut pw : Rat := 1
-  while pw < inv do
-    if k ≥ 4096 then
-      throwError "isolate_roots: pathological width (finer than 2^-4096); the isolation \
-        would be astronomically large. Refine the result manually if you truly need this."
-    k := k + 1
-    pw := pw * 2
-  return Int.ofNat k
+  let n := inv.num.toNat
+  let d := inv.den
+  if n ≤ d then return 0
+  -- Writing `a = ⌊log₂ n⌋` and `b = ⌊log₂ d⌋`, the quotient `n / d` lies
+  -- strictly between `2 ^ (a - b - 1)` and `2 ^ (a - b + 1)`, so the least `k`
+  -- with `2 ^ k * d ≥ n` is `a - b` or one more. Both are read off the bit
+  -- lengths; `n > d` makes the `Nat` subtraction the real difference.
+  let k := Nat.log2 n - Nat.log2 d
+  return Int.ofNat (if d <<< k < n then k + 1 else k)
 
 /-! # The square-free-radical divisibility certificate -/
 

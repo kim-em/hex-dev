@@ -95,15 +95,15 @@ theorem eval_resultant [CommRing R] [DecidableEq R]
     (f g : DensePoly (DensePoly R)) (a : R) :
     eval (resultant f g) a =
       Polynomial.resultant (specialize f a) (specialize g a)
-        (m := f.degree?.getD 0) (n := g.degree?.getD 0) := by
+        (m := f.natDegree) (n := g.natDegree) := by
   by_cases hf : f = 0
   · subst f
     have hz : (0 : DensePoly (DensePoly R)).isZero = true :=
       (isZero_eq_true_iff (0 : DensePoly (DensePoly R))).2 rfl
-    have hzdeg : (0 : DensePoly (DensePoly R)).degree?.getD 0 = 0 := by
+    have hzdeg : (0 : DensePoly (DensePoly R)).natDegree = 0 := by
       simp
     by_cases hgsmall : g.size ≤ 1
-    · have hgdeg : g.degree?.getD 0 = 0 := by
+    · have hgdeg : g.natDegree = 0 := by
         by_cases hg : g = 0
         · subst g
           simp
@@ -111,22 +111,22 @@ theorem eval_resultant [CommRing R] [DecidableEq R]
             by_contra h
             apply hg
             exact (size_eq_zero_iff g).mp (by omega)
-          rw [degree?_eq_some_of_pos_size g hgpos, Option.getD_some]
+          rw [natDegree_eq_size_sub_one]
           omega
       unfold resultant
       rw [hz]
       simp only [↓reduceIte]
-      rw [if_pos hgsmall, specialize_zero, hzdeg, hgdeg,
+      rw [ite_eq_left hgsmall, specialize_zero, hzdeg, hgdeg,
         eval_toPolynomial, HexPolyMathlib.toPolynomial_one]
       simp [Polynomial.resultant]
-    · have hgdeg : 0 < g.degree?.getD 0 := by
+    · have hgdeg : 0 < g.natDegree := by
         have hgpos : 0 < g.size := by omega
-        rw [degree?_eq_some_of_pos_size g hgpos, Option.getD_some]
+        rw [natDegree_eq_size_sub_one]
         omega
       unfold resultant
       rw [hz]
       simp only [↓reduceIte]
-      rw [if_neg hgsmall, specialize_zero, hzdeg,
+      rw [ite_eq_right hgsmall, specialize_zero, hzdeg,
         eval_toPolynomial, HexPolyMathlib.toPolynomial_zero,
         Polynomial.eval_zero, Polynomial.resultant_zero_left]
       simp [hgdeg.ne']
@@ -134,7 +134,7 @@ theorem eval_resultant [CommRing R] [DecidableEq R]
     · subst g
       have hz : (0 : DensePoly (DensePoly R)).isZero = true :=
         (isZero_eq_true_iff (0 : DensePoly (DensePoly R))).2 rfl
-      have hzdeg : (0 : DensePoly (DensePoly R)).degree?.getD 0 = 0 := by
+      have hzdeg : (0 : DensePoly (DensePoly R)).natDegree = 0 := by
         simp
       have hfpos : 0 < f.size := by
         by_contra h
@@ -142,22 +142,22 @@ theorem eval_resultant [CommRing R] [DecidableEq R]
         exact (size_eq_zero_iff f).mp (by omega)
       have hfz : f.isZero = false := (isZero_eq_false_iff f).2 hfpos
       by_cases hfsmall : f.size ≤ 1
-      · have hfdeg : f.degree?.getD 0 = 0 := by
-          rw [degree?_eq_some_of_pos_size f hfpos, Option.getD_some]
+      · have hfdeg : f.natDegree = 0 := by
+          rw [natDegree_eq_size_sub_one]
           omega
         unfold resultant
         rw [hfz, hz]
         simp only [Bool.false_eq_true, ↓reduceIte]
-        rw [if_pos hfsmall, specialize_zero, hzdeg, hfdeg,
+        rw [ite_eq_left hfsmall, specialize_zero, hzdeg, hfdeg,
           eval_toPolynomial, HexPolyMathlib.toPolynomial_one]
         simp [Polynomial.resultant]
-      · have hfdeg : 0 < f.degree?.getD 0 := by
-          rw [degree?_eq_some_of_pos_size f hfpos, Option.getD_some]
+      · have hfdeg : 0 < f.natDegree := by
+          rw [natDegree_eq_size_sub_one]
           omega
         unfold resultant
         rw [hfz, hz]
         simp only [Bool.false_eq_true, ↓reduceIte]
-        rw [if_neg hfsmall, specialize_zero, hzdeg,
+        rw [ite_eq_right hfsmall, specialize_zero, hzdeg,
           eval_toPolynomial, HexPolyMathlib.toPolynomial_zero,
           Polynomial.eval_zero, Polynomial.resultant_zero_right]
         simp [hfdeg.ne']
@@ -171,11 +171,11 @@ theorem eval_resultant [CommRing R] [DecidableEq R]
         exact (size_eq_zero_iff g).mp (by omega)
       have hfz : f.isZero = false := (isZero_eq_false_iff f).2 hfpos
       have hgz : g.isZero = false := (isZero_eq_false_iff g).2 hgpos
-      have hdf : f.degree?.getD 0 = Subresultant.formalDegree f := by
-        rw [degree?_eq_some_of_pos_size f hfpos, Option.getD_some]
+      have hdf : f.natDegree = Subresultant.formalDegree f := by
+        rw [natDegree_eq_size_sub_one]
         rfl
-      have hdg : g.degree?.getD 0 = Subresultant.formalDegree g := by
-        rw [degree?_eq_some_of_pos_size g hgpos, Option.getD_some]
+      have hdg : g.natDegree = Subresultant.formalDegree g := by
+        rw [natDegree_eq_size_sub_one]
         rfl
       have hfBound : f.size ≤ Subresultant.formalDegree f + 1 := by
         unfold Subresultant.formalDegree
@@ -187,7 +187,7 @@ theorem eval_resultant [CommRing R] [DecidableEq R]
       unfold resultant
       simp only [hfz, hgz, Bool.false_eq_true, ↓reduceIte]
       by_cases hfg : f.size < g.size
-      · rw [if_pos hfg]
+      · rw [ite_eq_left hfg]
         rw [resultantOrdered_eq_coeffMinor g f hg hf (by omega),
           negOnePow_eq_sign]
         have hswap := Subresultant.coeffMinor_swap 0 0 f g
@@ -195,7 +195,7 @@ theorem eval_resultant [CommRing R] [DecidableEq R]
         rw [← hswap]
         unfold Subresultant.coeffMinor
         exact eval_coeffMinorAt_zero _ _ f g a hfBound hgBound
-      · rw [if_neg hfg]
+      · rw [ite_eq_right hfg]
         rw [resultantOrdered_eq_coeffMinor f g hf hg (by omega)]
         unfold Subresultant.coeffMinor
         exact eval_coeffMinorAt_zero _ _ f g a hfBound hgBound
@@ -205,7 +205,7 @@ degree under specialization. -/
 private theorem natDegree_specialize [CommRing R] [DecidableEq R]
     (f : DensePoly (DensePoly R)) (a : R)
     (hf : eval f.leadingCoeff a ≠ 0) :
-    (specialize f a).natDegree = f.degree?.getD 0 := by
+    (specialize f a).natDegree = f.natDegree := by
   have hfpos : 0 < f.size := by
     by_contra h
     have hfzero : f = 0 := (size_eq_zero_iff f).mp (by omega)
@@ -213,7 +213,7 @@ private theorem natDegree_specialize [CommRing R] [DecidableEq R]
     rw [leadingCoeff_zero, eval_toPolynomial,
       HexPolyMathlib.toPolynomial_zero, Polynomial.eval_zero] at hf
     exact hf rfl
-  rw [degree?_eq_some_of_pos_size f hfpos, Option.getD_some]
+  rw [natDegree_eq_size_sub_one]
   apply le_antisymm
   · apply Polynomial.natDegree_le_iff_coeff_eq_zero.mpr
     intro n hn
@@ -234,13 +234,13 @@ private theorem natDegree_specialize [CommRing R] [DecidableEq R]
 /-- Specialization cannot increase the outer degree. -/
 private theorem natDegree_specialize_le [CommRing R] [DecidableEq R]
     (f : DensePoly (DensePoly R)) (a : R) :
-    (specialize f a).natDegree ≤ f.degree?.getD 0 := by
+    (specialize f a).natDegree ≤ f.natDegree := by
   by_cases hfsize : f.size = 0
   · have hf : f = 0 := (size_eq_zero_iff f).mp hfsize
     subst f
     simp
   · have hfpos : 0 < f.size := Nat.pos_of_ne_zero hfsize
-    rw [degree?_eq_some_of_pos_size f hfpos, Option.getD_some]
+    rw [natDegree_eq_size_sub_one]
     apply Polynomial.natDegree_le_iff_coeff_eq_zero.mpr
     intro n hn
     rw [coeff_specialize]
@@ -316,8 +316,8 @@ theorem eval_resultant_eq_zero_of_common_root
   rw [eval_resultant]
   let F := specialize f a
   let G := specialize g a
-  let m := f.degree?.getD 0
-  let n := g.degree?.getD 0
+  let m := f.natDegree
+  let n := g.natDegree
   change Polynomial.resultant F G m n = 0
   have hFroot : F.eval b = 0 := by
     simpa only [F, evalBivariate] using hfb
@@ -331,10 +331,12 @@ theorem eval_resultant_eq_zero_of_common_root
     rcases hpos with hfpos | hgpos
     · left
       dsimp only [m]
+      unfold Hex.DensePoly.natDegree
       rw [degree?_eq_some_of_pos_size f (by omega), Option.getD_some]
       omega
     · right
       dsimp only [n]
+      unfold Hex.DensePoly.natDegree
       rw [degree?_eq_some_of_pos_size g (by omega), Option.getD_some]
       omega
   by_cases hboth : F = 0 ∧ G = 0

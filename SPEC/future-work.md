@@ -86,18 +86,13 @@ maximum-flow algorithm. `hex-graph-matching` should provide Hopcroft-Karp
 bipartite matching. `hex-graph-assignment` should provide the Hungarian
 algorithm for weighted bipartite assignment. `hex-graph-spanning-tree` should
 contain Kruskal minimum spanning forests, `hex-graph-planarity` should contain
-Boyer-Myrvold planarity testing, and `hex-graph-iso` should contain
-individualization-refinement graph canonical labelling. Add Mathlib
+Boyer-Myrvold planarity testing. Add Mathlib
 companions where correspondence or abstract mathematical theorems require
 them, rather than automatically creating one for every algorithm library.
 
 The base representation should not depend on matrices or permutation groups.
 All the graph algorithms above depend on `hex-graph`. The Hungarian algorithm
 uses the base bipartite representation but does not depend on Hopcroft-Karp.
-`hex-graph-iso` initially depends only on `hex-graph`. An implementation using
-complete stabilizer or group operations may later add the permutation-group
-library. The first canonical-labelling release does not require that
-dependency.
 
 The initial representation uses sorted duplicate-free adjacency arrays. An
 edge-list builder checks bounds, removes duplicate edges, and freezes to that
@@ -184,22 +179,14 @@ biconditional: two finite graphs have equal canonical forms exactly when they
 are isomorphic. Checking a proposed relabelling proves only the forward
 isomorphism claim.
 
-The first `hex-graph-iso` release exposes a canonical form, its canonical
-label, a checked isomorphism when one exists, and positive and negative
-`graph_iso` tactic proofs. The canonical-form theorem is for ordered-coloured
-graphs. Two such graphs are isomorphic exactly when their canonical forms are
-equal. The detailed computational and Mathlib-facing contracts are in
-[hex-graph-iso](Libraries/hex-graph-iso.md) and
-[hex-graph-iso-mathlib](Libraries/hex-graph-iso-mathlib.md).
-
-Complete automorphism-group generators are a later extension. Rather than
-enumerate every isomorphism between two graphs, that extension returns one
-transporter and the source automorphism group. It proves that every
-isomorphism is uniquely the transporter composed with an automorphism. A
-request for an explicit list expands that coset only under a caller-supplied
-cardinality budget. Automorphism-group completeness uses the same canonical
-search tree, not merely verification that each reported permutation preserves
-edges.
+Canonical labelling and complete automorphism generators are covered by
+[hex-graph-iso](../HexGraphIso/SPEC/hex-graph-iso.md) and
+[hex-graph-iso-mathlib](../HexGraphIsoMathlib/SPEC/hex-graph-iso-mathlib.md).
+Explicit isomorphism cosets remain a further extension: return one
+transporter and the source automorphism group, and prove that every
+isomorphism is uniquely the transporter composed with an automorphism.
+A request for an explicit list expands that coset only under a
+caller-supplied cardinality budget.
 
 The first graph chapter should analyse a data pipeline containing one
 accidental dependency cycle, then return both its strongly connected
@@ -436,6 +423,11 @@ Denominator nonvanishing cannot be inferred for free indeterminates. Tactics
 should emit explicit side goals, following `field_simp`, and term-level APIs
 should return both the normalized expression and the hypotheses under which
 it equals the input.
+
+The univariate fraction representation and arithmetic are specified in
+[hex-rational-fn](../HexRationalFn/SPEC/hex-rational-fn.md). Its normalization removes
+removable singularities, so an expression tactic must retain the original
+denominator conditions separately.
 
 ### Holonomic functions
 
@@ -773,37 +765,15 @@ Lean code must be written independently.
 
 ### Discrete logarithms
 
-The first `hex-discrete-log` implementation should use the finite-field
-multiplicative group. Once elliptic-curve subgroups are also consumers, expose
-an explicit lawful finite cyclic-group interface carrying equality,
-multiplication, inversion, exponentiation, a generator, and a supplied exact
-order. The finite-field implementation depends on `hex-gfq`, `hex-int-factor`,
-and `hex-modular`. The elliptic-curve instance later adds only
-`hex-elliptic-curve`. `hex-index-calculus` additionally consumes the planned
-sparse and black-box linear algebra.
-
-Implement Shanks baby-step giant-step as the deterministic first algorithm.
-Its table covers one factor of a rectangular decomposition of the supplied
-order, and its giant-step loop covers the other. Correctness proves soundness
-of every returned exponent and completeness for every target in the generated
-subgroup. The canonical result is the least nonnegative exponent modulo the
-exact generator order. If only an upper bound on the order is supplied, the
-result type must retain that weaker input and must not assert canonicality.
-
-Pohlig-Hellman follows in the same library and depends on `hex-int-factor`.
-For every prime-power factor of the group order, it performs digit lifting by
-small discrete logarithms and combines the residues with `hex-modular`.
-Correctness proves each lifted congruence, the CRT reconstruction, and equality
-with the original target. Completeness requires a certified complete
-factorization of the exact order. Partial factorization may reduce the
-remaining problem but cannot justify a final uniqueness claim.
-
-Pollard rho supplies a lower-memory Las Vegas search. A collision is useful
-only when the resulting linear congruence is solvable and the candidate passes
-the final exponentiation check. Exhausting the walk budget returns `none`.
-There is no functional theorem promising success for a chosen budget. A
-separate probabilistic analysis may bound expected collision time for an
-explicit random-walk model.
+The finite-field library is specified in
+[hex-discrete-log](Libraries/hex-discrete-log.md) and
+[hex-discrete-log-mathlib](Libraries/hex-discrete-log-mathlib.md). It provides
+complete baby-step giant-step, Pohlig-Hellman with certified order
+factorization, and bounded Pollard rho. Exact base order, canonical
+exponents, prepared tables and the distinction between nonmembership and
+exhaustion are explicit contracts. The computational algorithms use a small
+lawful commutative-group interface, with canonical finite-field adapters;
+elliptic-curve adapters can follow without changing those proofs.
 
 `hex-index-calculus` should target prime fields. It implements factor-base
 selection, relation collection by smoothness testing, sparse
@@ -865,14 +835,9 @@ certification, and class-group completeness are distinct obligations.
 
 ### Algebraic function fields and curves
 
-`hex-rational-fn` should provide normalized fractions in `K[x]`: numerator
-and denominator are coprime, the denominator is monic, and zero has denominator
-one. Arithmetic uses polynomial gcd and exact division. Correctness proves
-that normalization preserves the fraction relation and gives a unique
-representative. This library can later share code with the univariate part of
-the planned rational-expression project, but neither should depend on the
-multivariate `Together` or `Apart` tactics merely to obtain a field of
-coefficients.
+The coefficient field `K(x)` is specified in
+[hex-rational-fn](../HexRationalFn/SPEC/hex-rational-fn.md), with its correspondence to
+Mathlib in [hex-rational-fn-mathlib](../HexRationalFnMathlib/SPEC/hex-rational-fn-mathlib.md).
 
 `hex-function-field` should represent a finite separable extension of `K(x)`
 by a monic irreducible polynomial in a second variable. Elements use the power
@@ -976,14 +941,21 @@ the two library families.
 
 ### Permutation groups
 
-Provide finite permutation groups with orbits, stabilizers, subgroup
-containment, cosets, and the transitive-group data required by resolvent
-methods. Executable certificates should cover membership and subgroup
-relations; classification tables and their trust boundary need an explicit
-data policy.
+The initial library is specified in
+[hex-perm-group](Libraries/hex-perm-group.md) and
+[hex-perm-group-mathlib](Libraries/hex-perm-group-mathlib.md). It provides
+checked deterministic stabilizer chains, constructive membership, exact
+order, sign and cycle type, rank/unrank and supplied-index sampling,
+finite actions with images and kernels, and complete set/subgroup search.
+It includes block systems and primitivity, normal closure, core and derived
+series, direct and imprimitive wreath products, and bounded element/coset
+enumeration. It extracts the shared permutation representation from graph
+isomorphism and proves completeness of checked chains and subgroup search.
 
-This library is independently useful and is a prerequisite for certified
-Galois-group computation.
+Transitive-group data required by resolvent methods remain a later extension.
+Classification tables need versioned provenance, checked embeddings and a
+separate completeness policy. The initial computational library is useful
+independently and supplies infrastructure for certified Galois-group work.
 
 ### Matrix groups and finite-dimensional modules
 
@@ -1110,6 +1082,36 @@ resolvent values, and certified non-containment at rejected branches.
 
 ## Lattices and real algebra
 
+### Ordered real algebraic numbers
+
+[hex-real-algebraic](Libraries/hex-real-algebraic.md) implements the real subtype
+of canonical `AlgebraicNumber`, with exact comparison, field arithmetic,
+square roots, ordered polynomial real roots, floor and ceil, rational
+recognition, and dyadic approximation. Its companion supplies the ordered-field
+structure, the order embedding into `ℝ`, and `IsRealClosed`. The design reuses
+`hex-number-field` and fixes `realCompare` as the comparison semantics. It also
+uses Mathlib-free core instances parameterized by a law package proved in the
+companion. Root completeness, multiplicities, strict ordering, and representation
+round trips are proved in the companion.
+Companion proofs do not become computational dependencies. The number-field
+layer also provides tag-based conjugation, the complex partial order, principal
+complex radicals, common-field coordinate recovery, and `IsAlgClosure ℚ`
+in the companion. Typed real and imaginary projections belong to the real
+library, keeping this dependency graph acyclic. These APIs are covered in the
+manual's number-field and real-algebraic chapters.
+
+Faster comparison by refinement on overlap, comparison of lazy roots, and
+Tarski queries remain separate extensions behind the same order contract.
+An unconditional Mathlib-free law witness additionally needs proof
+infrastructure for exactification, canonical equality, and root separation.
+Exact value ordering of the real prefix of `ZPoly.algebraicRoots` remains
+a separate improvement: exactification reselects stored
+representatives at each minimal polynomial's precision before sorting their
+centres, and no value-sortedness theorem establishes that cross-factor order.
+The new real-root API explicitly sorts with `realCompare`.
+This library provides exact real values for later sign determination and
+algebraic sample points without depending on a quantifier-elimination tactic.
+
 ### Lattice applications beyond factor recombination
 
 Build certified APIs on top of `hex-lll` for:
@@ -1127,32 +1129,13 @@ within the stated bounds.
 
 ### Exact lattice search and geometry
 
-`hex-lattice-enum` should depend on `hex-lll` and implement
-Fincke-Pohst enumeration with Schnorr-Euchner coefficient ordering. It uses an
-exact rational Gram-Schmidt decomposition for pruning, with interval or
-floating-point values allowed only to choose the next branch. Its operations
-enumerate every vector of squared norm at most a rational bound, find all
-shortest vectors, and solve closest-vector problems relative to a rational
-target and bound. A closest-vector search begins from a Babai nearest-plane
-candidate but proves optimality by complete enumeration.
-
-The enumeration invariant describes the affine interval for every remaining
-coefficient after fixing a suffix. Correctness proves that pruning removes
-only vectors whose exact lower bound exceeds the radius. The result list is
-duplicate-free and contains exactly the lattice vectors in the closed ball.
-The shortest-vector theorem supplies a nonzero vector of minimum norm and
-proves that no shorter nonzero vector exists. The closest-vector theorem proves
-membership of the reported lattice point and minimal distance to the target.
-If enumeration is stopped by a budget, the result retains the explored radius
-and incumbent but makes no optimality claim.
-
-`hex-lattice-enum-mathlib` identifies the row lattice with the corresponding
-`Submodule` of a rational inner-product space. It transports exact norms and
-proves that the executable minima agree with the mathematical minimum over
-the discrete lattice. This layer also proves packing-radius and kissing-number
-statements from complete shortest-vector enumeration. Successive minima need
-an additional independence certificate for each threshold and a proof that no
-smaller radius contains the required number of independent vectors.
+Exact ball enumeration and all shortest/closest vectors are specified in
+[hex-lattice-enum](../HexLatticeEnum/SPEC/hex-lattice-enum.md), with correctness proofs and
+integer-span and Euclidean-distance correspondence in
+[hex-lattice-enum-mathlib](../HexLatticeEnumMathlib/SPEC/hex-lattice-enum-mathlib.md).
+Successive minima remain an extension: they need an independence certificate
+at each threshold and a proof that no smaller radius contains the required
+number of independent vectors.
 
 `hex-lattice-voronoi` should be restricted initially to positive-definite
 integral lattices of modest rank. It enumerates Voronoi-relevant vectors,
@@ -1197,7 +1180,8 @@ variable, exact algebraic sample points, and sign determination for
 polynomials with algebraic coefficients.
 
 Dependencies include `hex-mv-poly`, `hex-mv-factor`, `hex-resultant`,
-`hex-real-roots`, `hex-number-field`, and `hex-number-field-tower`. Scope the
+`hex-real-roots`, `hex-real-algebraic`, `hex-number-field`, and
+`hex-number-field-tower`. Scope the
 first version to two or three variables. Before fixing a public API, prototype
 the projection phase and a certificate that carries a complete cell
 decomposition with the sign-invariance evidence needed for a negative as well

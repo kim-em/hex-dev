@@ -47,7 +47,7 @@ private theorem one_add_X_mul_geom [CommRing R] [Algebra ℚ R] :
               PowerSeries.mk (fun j => algebraMap ℚ R ((-1 : ℚ) ^ j))) =
             algebraMap ℚ R ((-1 : ℚ) ^ k) by
           simp,
-        PowerSeries.coeff_one, if_neg (by omega), ← map_add]
+        PowerSeries.coeff_one, ite_eq_right (by omega), ← map_add]
       rw [_root_.pow_succ]
       simp
 
@@ -84,7 +84,7 @@ theorem ofPowerSeries_subst [CommRing R] (f g : PowerSeries R)
     · rw [coeff_ofPowerSeries g 0 hn,
         PowerSeries.coeff_zero_eq_constantCoeff_apply, hg]
     · unfold Hex.TSeries.coeff
-      rw [dif_neg hn]
+      rw [dite_eq_right hn]
   rw [coeff_ofPowerSeries (f.subst g) i hi, comp_spec _ _ hg0,
     coeff_foldl_add (List.range n)
       (fun k => C ((ofPowerSeries (n := n) f).coeff k) *

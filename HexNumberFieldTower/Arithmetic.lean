@@ -128,7 +128,8 @@ theorem coeffs_sub {T : NumberTower} (a b : Elem T) :
 /-- Coordinatewise additive inverse. -/
 @[expose]
 def neg {T : NumberTower} (a : Elem T) : Elem T :=
-  ofCoeffs T (Arithmetic.negCoords T.dim (coeffs a))
+  Internal.ofCoeffs T (Arithmetic.negCoords T.dim (coeffs a)) (by
+    simp [Arithmetic.negCoords])
 
 instance {T : NumberTower} : Neg (Elem T) := ⟨neg⟩
 
@@ -137,10 +138,7 @@ instance {T : NumberTower} : Neg (Elem T) := ⟨neg⟩
 theorem coeffs_neg {T : NumberTower} (a : Elem T) :
     coeffs (-a) = Arithmetic.negCoords T.dim (coeffs a) := by
   change coeffs (neg a) = _
-  unfold neg
-  rw [coeffs_ofCoeffs]
-  apply normalizeCoeffs_eq_self
-  simp [Arithmetic.negCoords]
+  simp [neg]
 
 /-- Coordinate subtraction is addition of the coordinatewise negation. -/
 theorem sub_eq_add_neg {T : NumberTower} (a b : Elem T) :
@@ -152,7 +150,7 @@ theorem sub_eq_add_neg {T : NumberTower} (a b : Elem T) :
   congr 1
   funext i
   simpa only [Array.getD_eq_getD_getElem?, Array.getElem?_ofFn,
-    dif_pos i.isLt, Option.getD_some] using Rat.sub_eq_add_neg
+    dite_eq_left i.isLt, Option.getD_some] using Rat.sub_eq_add_neg
       ((coeffs a).getD i 0) ((coeffs b).getD i 0)
 
 /-- Coordinatewise negation is an additive inverse. -/
@@ -216,6 +214,31 @@ def smul {T : NumberTower} (q : Rat) (a : Elem T) : Elem T :=
   ofCoeffs T ((coeffs a).map fun c => q * c)
 
 instance {T : NumberTower} : SMul Rat (Elem T) := ⟨smul⟩
+
+/-- Natural powers by repeated tower multiplication. -/
+@[expose]
+def natPow {T : NumberTower} (a : Elem T) : Nat → Elem T
+  | 0 => 1
+  | n + 1 => natPow a n * a
+
+instance {T : NumberTower} : Pow (Elem T) Nat := ⟨natPow⟩
+
+/-- Integer powers from natural powers and inversion, with `0⁻¹ = 0`. -/
+@[expose]
+def intPow {T : NumberTower} (a : Elem T) : Int → Elem T
+  | .ofNat n => natPow a n
+  | .negSucc n => (natPow a (n + 1))⁻¹
+
+instance {T : NumberTower} : Pow (Elem T) Int := ⟨intPow⟩
+
+instance {T : NumberTower} : NatCast (Elem T) := ⟨fun n => ofRat T (n : Rat)⟩
+instance {T : NumberTower} : IntCast (Elem T) := ⟨fun n => ofRat T (n : Rat)⟩
+-- Mathlib's generic `OfNat` from `NatCast` has priority 100. Keep this
+-- Mathlib-free fallback below it so importing the companion yields one normal
+-- form for numerals while the executable library still supports literals.
+instance (priority := 90) {T : NumberTower} (n : Nat) :
+    OfNat (Elem T) (n + 2) :=
+  ⟨ofRat T (n + 2 : Nat)⟩
 
 /-- Rational scalar multiplication exposes coordinatewise multiplication. -/
 @[simp]

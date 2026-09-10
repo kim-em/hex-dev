@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexNumberFieldTowerMathlib.FactorGeneric.Yun
+public import HexNumberFieldTowerMathlib.FactorGeneric.Sound
 
 public section
 
@@ -26,11 +27,11 @@ namespace Hex.NumberTower
 squarefree nonconstant input the bounded shift search and every recursive
 call succeed, so `Factor.factorSquarefree?` returns a result. -/
 theorem factorSquarefree_isSome :
-    ∀ (levels : List Level) (hvalid : LevelsValid levels)
-      (hinjective : LevelSemantics.DenoteInjective levels)
+    ∀ (levels : List Level) (_hvalid : LevelsValid levels)
+      (_hinjective : LevelSemantics.DenoteInjective levels)
       (f : Array (Array Rat)),
       Norm.isSquarefree levels f →
-      0 < (Factor.rawPoly levels f).degree?.getD 0 →
+      0 < (Factor.rawPoly levels f).natDegree →
       (Factor.factorSquarefree? levels f).isSome := by
   intro levels
   induction levels with
@@ -42,13 +43,13 @@ theorem factorSquarefree_isSome :
         Subsingleton.elim _ _
       subst hvalid
       subst hinjective
-      letI : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
+      let : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
         LevelSemantics.DenoteInjective.nil
         LevelSemantics.coeffDenote_inv_nil
       let ι := LevelSemantics.coeffHom [] trivial
         LevelSemantics.DenoteInjective.nil
         LevelSemantics.coeffDenote_inv_nil
-      letI : CharZero (Arithmetic.Coeff []) :=
+      let : CharZero (Arithmetic.Coeff []) :=
         { cast_injective := by
             intro m n hmn
             apply Nat.cast_injective (R := ℂ)
@@ -69,9 +70,9 @@ theorem factorSquarefree_isSome :
         hinjectiveLower
       let hinvTop := LevelSemantics.coeffDenote_inv (level :: lower) hvalid
         hinjectiveTop
-      letI : Field (Arithmetic.Coeff lower) :=
+      let : Field (Arithmetic.Coeff lower) :=
         Norm.coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
-      letI : Field (Arithmetic.Coeff (level :: lower)) :=
+      let : Field (Arithmetic.Coeff (level :: lower)) :=
         Norm.coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
       have harrayDegree : 0 < f.size - 1 :=
         array_degree_pos_of_raw_degree_pos (level :: lower) f hdegree
@@ -89,7 +90,7 @@ theorem factorSquarefree_isSome :
           hinvLower norm hnormCheck
       have hnormEq : norm = Norm.oneLevel level lower f shift :=
         findSquarefreeShift_norm level lower f hfind
-      have hnormDegree : 0 < (Factor.rawPoly lower norm).degree?.getD 0 := by
+      have hnormDegree : 0 < (Factor.rawPoly lower norm).natDegree := by
         rw [hnormEq]
         exact oneLevel_degree_pos level lower hvalid hinjectiveTop f shift
           hdegree (by simpa [hnormEq] using hnormSquarefree)
@@ -139,7 +140,7 @@ theorem factorSquarefree_isSome :
             hlowerProduct
             (fun factor hfactor => (hfactorsSound factor hfactor).2)
       have hfactorsDegree : factors.all (fun factor =>
-          0 < (Factor.rawPoly (level :: lower) factor).degree?.getD 0) =
+          0 < (Factor.rawPoly (level :: lower) factor).natDegree) =
           true := by
         rw [Array.all_eq_true_iff_forall_mem]
         intro factor hfactor
@@ -169,26 +170,33 @@ theorem factorSquarefree_isSome :
           rawFactorFoldl (level :: lower) hvalid hinjectiveTop hinvTop,
           hfactorsProduct]
         simp
+      have hchoice : (if lowerFactors.size = 1 then
+          #[Factor.polyCoords (Norm.monic (Factor.rawPoly (level :: lower) f))]
+          else Factor.recover level lower shift f lowerFactors) = factors := by
+        by_cases hsingle : lowerFactors.size = 1
+        · simp only [hsingle, ite_true]
+          exact (recover_singleton level lower hvalid hinjectiveTop f shift
+            lowerFactors hsingle
+            (by rwa [natDegree_monic (level :: lower) hvalid hinjectiveTop hinvTop])
+            hfactorsProduct).symm
+        · simp only [hsingle, ite_false, factors]
       have hresult : Factor.factorSquarefree? (level :: lower) f =
           some factors := by
-        simp only [Factor.factorSquarefree?, hcheck, if_true]
+        simp only [Factor.factorSquarefree?, hcheck, ite_true]
         rw [hfind]
         change (do
           let lowerFactors ← Factor.factorSquarefree? lower norm
-          let factors' := Factor.recover level lower shift f lowerFactors
           let p := Norm.monic (Factor.rawPoly (level :: lower) f)
+          let factors' := if lowerFactors.size = 1 then #[Factor.polyCoords p]
+            else Factor.recover level lower shift f lowerFactors
           let product := factors'.foldl (fun product factor =>
             product * Factor.rawPoly (level :: lower) factor) 1
           if factors'.all (fun factor =>
-              0 < (Factor.rawPoly (level :: lower) factor).degree?.getD 0) &&
+              0 < (Factor.rawPoly (level :: lower) factor).natDegree) &&
               product = p then some factors' else none) = some factors
         rw [hlower]
-        change (if factors.all (fun factor =>
-            0 < (Factor.rawPoly (level :: lower) factor).degree?.getD 0) &&
-            factors.foldl (fun product factor =>
-              product * Factor.rawPoly (level :: lower) factor) 1 =
-              Norm.monic (Factor.rawPoly (level :: lower) f) then
-            some factors else none) = some factors
+        simp only [Option.bind_eq_bind, Option.bind_some]
+        rw [hchoice]
         rw [hfactorsDegree, hproduct]
         simp
       exact Option.isSome_iff_exists.mpr ⟨factors, hresult⟩
@@ -220,28 +228,28 @@ private theorem ratListLess_iff : ∀ a b : List Rat,
   induction a with
   | nil =>
       intro b
-      cases b <;> simp [Factor.ratListLess, List.lt_iff_lex_lt]
+      cases b <;> simp [Factor.ratListLess]
   | cons a as ih =>
       intro b
       cases b with
-      | nil => simp [Factor.ratListLess, List.lt_iff_lex_lt]
+      | nil => simp [Factor.ratListLess]
       | cons b bs =>
           by_cases hab : a < b
-          · rw [Factor.ratListLess, if_pos hab]
+          · rw [Factor.ratListLess, ite_eq_left hab]
             constructor
             · intro _
               exact List.Lex.rel hab
             · intro _
               rfl
-          · rw [Factor.ratListLess, if_neg hab]
+          · rw [Factor.ratListLess, ite_eq_right hab]
             by_cases hba : b < a
-            · rw [if_pos hba]
+            · rw [ite_eq_left hba]
               constructor
               · intro hfalse
                 contradiction
               · intro hlt
                 exact ((not_le_of_gt hba) (List.head_le_of_lt hlt)).elim
-            · rw [if_neg hba]
+            · rw [ite_eq_right hba]
               have heq : a = b :=
                 le_antisymm (le_of_not_gt hba) (le_of_not_gt hab)
               subst b
@@ -335,20 +343,20 @@ private theorem insertFactor_fst_mem
   | cons head tail ih =>
       intro hentry
       by_cases hfactor : Factor.factorLess factor.1 head.1 = true
-      · rw [Factor.insertFactor, if_pos hfactor] at hentry
+      · rw [Factor.insertFactor, ite_eq_left hfactor] at hentry
         rcases List.mem_cons.mp hentry with rfl | hentry
         · exact Or.inl rfl
         · exact Or.inr ⟨entry, hentry, rfl⟩
-      · rw [Factor.insertFactor, if_neg hfactor] at hentry
+      · rw [Factor.insertFactor, ite_eq_right hfactor] at hentry
         by_cases hhead : Factor.factorLess head.1 factor.1 = true
-        · rw [if_pos hhead] at hentry
+        · rw [ite_eq_left hhead] at hentry
           rcases List.mem_cons.mp hentry with hentryHead | hentry
           · subst entry
             exact Or.inr ⟨head, by simp, rfl⟩
           · rcases ih hentry with hfactorEq | ⟨original, horiginal, heq⟩
             · exact Or.inl hfactorEq
             · exact Or.inr ⟨original, by simp [horiginal], heq⟩
-        · rw [if_neg hhead] at hentry
+        · rw [ite_eq_right hhead] at hentry
           rcases List.mem_cons.mp hentry with hentry | hentry
           · subst entry
             exact Or.inr ⟨head, by simp, rfl⟩
@@ -367,16 +375,16 @@ private theorem insertFactor_pairwise
       have hhead := (List.pairwise_cons.mp hsorted).1
       have htail := (List.pairwise_cons.mp hsorted).2
       by_cases hfactor : Factor.factorLess factor.1 head.1 = true
-      · rw [Factor.insertFactor, if_pos hfactor,
+      · rw [Factor.insertFactor, ite_eq_left hfactor,
           List.pairwise_cons]
         refine ⟨?_, hsorted⟩
         intro other hother
         rcases List.mem_cons.mp hother with rfl | hother
         · exact hfactor
         · exact factorLess_trans hfactor (hhead other hother)
-      · rw [Factor.insertFactor, if_neg hfactor]
+      · rw [Factor.insertFactor, ite_eq_right hfactor]
         by_cases hheadFactor : Factor.factorLess head.1 factor.1 = true
-        · rw [if_pos hheadFactor, List.pairwise_cons]
+        · rw [ite_eq_left hheadFactor, List.pairwise_cons]
           refine ⟨?_, ih htail⟩
           intro other hother
           rcases insertFactor_fst_mem factor other tail hother with
@@ -387,7 +395,7 @@ private theorem insertFactor_pairwise
           · unfold FactorEntryLess
             rw [horiginalEq]
             exact hhead original horiginal
-        · rw [if_neg hheadFactor, List.pairwise_cons]
+        · rw [ite_eq_right hheadFactor, List.pairwise_cons]
           refine ⟨?_, htail⟩
           intro other hother
           exact hhead other hother
@@ -473,17 +481,17 @@ private theorem insertFactor_positive
         intro original horiginal
         exact hfactors original (by simp [horiginal])
       by_cases hfactorHead : Factor.factorLess factor.1 head.1 = true
-      · rw [Factor.insertFactor, if_pos hfactorHead] at hentry
+      · rw [Factor.insertFactor, ite_eq_left hfactorHead] at hentry
         rcases List.mem_cons.mp hentry with rfl | hentry
         · exact hfactor
         · exact hfactors entry hentry
-      · rw [Factor.insertFactor, if_neg hfactorHead] at hentry
+      · rw [Factor.insertFactor, ite_eq_right hfactorHead] at hentry
         by_cases hheadFactor : Factor.factorLess head.1 factor.1 = true
-        · rw [if_pos hheadFactor] at hentry
+        · rw [ite_eq_left hheadFactor] at hentry
           rcases List.mem_cons.mp hentry with rfl | hentry
           · exact hhead
           · exact ih htail entry hentry
-        · rw [if_neg hheadFactor] at hentry
+        · rw [ite_eq_right hheadFactor] at hentry
           rcases List.mem_cons.mp hentry with hentry | hentry
           · subst entry
             omega
@@ -530,11 +538,10 @@ private theorem insertFactor_prod {M : Type*} [CommMonoid M]
   | nil => simp [Factor.insertFactor]
   | cons head tail ih =>
       by_cases hfactorHead : Factor.factorLess factor.1 head.1 = true
-      · simp [Factor.insertFactor, hfactorHead, mul_assoc, mul_comm,
-          mul_left_comm]
+      · simp [Factor.insertFactor, hfactorHead, mul_comm]
       · by_cases hheadFactor : Factor.factorLess head.1 factor.1 = true
         · simp [Factor.insertFactor, hfactorHead, hheadFactor, ih,
-            mul_assoc, mul_comm, mul_left_comm]
+            mul_comm, mul_left_comm]
         · have heq : head.1 = factor.1 :=
             factor_eq_of_not_less hheadFactor hfactorHead
           have hirrefl :
@@ -543,7 +550,7 @@ private theorem insertFactor_prod {M : Type*} [CommMonoid M]
             exact (lt_irrefl _ ((factorLess_iff factor.1 factor.1).mp
               hless))
           simp [Factor.insertFactor, heq, hirrefl,
-            pow_add, mul_assoc, mul_comm, mul_left_comm]
+            pow_add, mul_assoc, mul_comm]
 
 private theorem foldl_insertFactor_prod {M : Type*} [CommMonoid M]
     (value : Array (Array Rat) → M)
@@ -577,11 +584,11 @@ private theorem factorRat_mem_monic (input : DensePoly Rat)
     ∀ factor ∈ factors,
       (HexPolyMathlib.toPolynomial
         (Factor.rawPoly [] factor)).Monic := by
-  letI : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
+  let : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
     LevelSemantics.DenoteInjective.nil
     LevelSemantics.coeffDenote_inv_nil
   intro factor hfactor
-  simp only [Factor.factorRat?] at hresult
+  simp only [Factor.factorRat?, ZPoly.ratSquarefree] at hresult
   split at hresult
   · cases hresult
     simp at hfactor
@@ -636,7 +643,7 @@ private theorem factorSquarefree_mem_monic
       (HexPolyMathlib.toPolynomial
         (Factor.rawPoly levels factor)).Monic := by
   let hinv := LevelSemantics.coeffDenote_inv levels hvalid hinjective
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   dsimp only
   intro factor hfactor
@@ -653,32 +660,56 @@ private theorem factorSquarefree_mem_monic
         rcases pair with ⟨shift, norm⟩
         obtain ⟨lowerFactors, hlower, hresult⟩ :=
           Option.bind_eq_some_iff.mp hresult
+        let chosen := if lowerFactors.size = 1 then
+          #[Factor.polyCoords (Norm.monic (Factor.rawPoly (level :: lower) f))]
+          else Factor.recover level lower shift f lowerFactors
+        change (if chosen.all (fun factor =>
+            0 < (Factor.rawPoly (level :: lower) factor).natDegree) &&
+            chosen.foldl (fun product factor =>
+              product * Factor.rawPoly (level :: lower) factor) 1 =
+              Norm.monic (Factor.rawPoly (level :: lower) f) then
+            some chosen else none) = some factors at hresult
         split at hresult
-        · cases hresult
-          obtain ⟨lowerFactor, hlowerFactor, hdegree, hrecovered⟩ :=
-            recover_mem level lower shift f lowerFactors hfactor
-          let common := Norm.monic
-            (DensePoly.gcd
-              (Factor.rawPoly (level :: lower)
-                (Factor.shiftTop level lower f shift))
-              (Factor.rawPoly (level :: lower)
-                (Factor.embedLower level lower lowerFactor)))
-          let unshifted := Factor.rawPoly (level :: lower)
-            (Factor.shiftTop level lower (Factor.polyCoords common) (-shift))
-          have hrawEq : Factor.rawPoly (level :: lower) factor =
-              Norm.monic unshifted := by
-            rw [← hrecovered, rawPoly_polyCoords]
-          have hirreducible :=
-            (factorSquarefree_mem_sound (level :: lower) hvalid hinjective f
-              hfull factor hfactor).2
-          have hunshifted : unshifted ≠ 0 := by
+        · have heq := Option.some.inj hresult
+          subst factors
+          by_cases hsingle : lowerFactors.size = 1
+          · have hfactorEq : factor = Factor.polyCoords
+                (Norm.monic (Factor.rawPoly (level :: lower) f)) := by
+              simpa [chosen, hsingle] using hfactor
+            have hirreducible :=
+              (factorSquarefree_mem_sound (level :: lower) hvalid hinjective f
+                hfull factor hfactor).2
+            rw [hfactorEq, rawPoly_polyCoords] at hirreducible ⊢
+            apply toPolynomial_monic_monic (level :: lower) hvalid hinjective hinv
             intro hzero
             apply hirreducible.ne_zero
-            rw [hrawEq, hzero]
-            simp [Norm.monic]
-          rw [hrawEq]
-          exact toPolynomial_monic_monic (level :: lower) hvalid
-            hinjective hinv unshifted hunshifted
+            simp [hzero, Norm.monic]
+          · have hfactor : factor ∈ Factor.recover level lower shift f lowerFactors := by
+              simpa only [chosen, hsingle, ite_false] using hfactor
+            obtain ⟨lowerFactor, hlowerFactor, hdegree, hrecovered⟩ :=
+              recover_mem level lower hvalid hinjective shift f lowerFactors hfactor
+            let common := Norm.monic
+              (DensePoly.gcd
+                (Factor.rawPoly (level :: lower)
+                  (Factor.shiftTop level lower f shift))
+                (Factor.rawPoly (level :: lower)
+                  (Factor.embedLower level lower lowerFactor)))
+            let unshifted := Factor.rawPoly (level :: lower)
+              (Factor.shiftTop level lower (Factor.polyCoords common) (-shift))
+            have hrawEq : Factor.rawPoly (level :: lower) factor =
+                Norm.monic unshifted := by
+              rw [← hrecovered, rawPoly_polyCoords]
+            have hirreducible :=
+              (factorSquarefree_mem_sound (level :: lower) hvalid hinjective f
+                hfull factor (by simpa only [chosen, hsingle, ite_false] using hfactor)).2
+            have hunshifted : unshifted ≠ 0 := by
+              intro hzero
+              apply hirreducible.ne_zero
+              rw [hrawEq, hzero]
+              simp [Norm.monic]
+            rw [hrawEq]
+            exact toPolynomial_monic_monic (level :: lower) hvalid
+              hinjective hinv unshifted hunshifted
         · contradiction
       · contradiction
 
@@ -697,7 +728,7 @@ private theorem labeled_prod_pow {A M : Type*} [CommMonoid M]
   induction items with
   | nil => simp
   | cons item items ih =>
-      simp only [List.map_cons, List.prod_cons, ih, Prod.fst, Prod.snd]
+      simp only [List.map_cons, List.prod_cons, ih]
       exact (_root_.mul_pow (value item) (List.map value items).prod n).symm
 
 private theorem factorFold_sound
@@ -737,7 +768,7 @@ private theorem factorFold_sound
             HexPolyMathlib.toPolynomial
               (Factor.rawPoly levels component.1) ^ component.2).prod := by
   let hinv := LevelSemantics.coeffDenote_inv levels hvalid hinjective
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   dsimp only
   intro hstate
@@ -760,7 +791,7 @@ private theorem factorFold_sound
       have hcomponentMem : component ∈
           (Factor.yunRaw levels f).toList :=
         hcomponents component (by simp)
-      have hpositive := yun_positive hvalid hinjective hinv f component
+      have hpositive := yun_positive f component
         hcomponentMem
       have hrawNe : Factor.rawPoly levels component.1 ≠ 0 := by
         intro hzero
@@ -842,7 +873,7 @@ theorem factorRaw_isSome (levels : List Level)
     (f : Array (Array Rat)) :
     (Factor.factorRaw? levels f).isSome := by
   let hinv := LevelSemantics.coeffDenote_inv levels hvalid hinjective
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   let components := Factor.yunRaw levels f
   have hcheck : Factor.checkYun levels f components :=
@@ -858,7 +889,7 @@ theorem factorRaw_isSome (levels : List Level)
     intro out component hcomponent
     have hsquarefree := yun_squarefree hvalid hinjective hinv f
       (by
-        by_cases hzero : (Factor.rawPoly levels f).degree?.getD 0 = 0
+        by_cases hzero : (Factor.rawPoly levels f).natDegree = 0
         · have hempty : components = #[] := by
             simp [components, Factor.yunRaw, hzero]
           rw [hempty] at hcomponent
@@ -866,7 +897,7 @@ theorem factorRaw_isSome (levels : List Level)
         · exact Nat.pos_of_ne_zero hzero)
       component hcomponent
     have hdegree :=
-      (yun_positive hvalid hinjective hinv f component hcomponent).1
+      (yun_positive f component hcomponent).1
     have hsome := factorSquarefree_isSome levels hvalid hinjective
       component.1 hsquarefree hdegree
     obtain ⟨irreducibles, hirreducibles⟩ :=
@@ -899,7 +930,7 @@ theorem isIrreducible_nil_iff (f : Array (Array Rat)) :
     Factor.isIrreducible [] f ↔
       (Factor.rawPoly [] f).leadingCoeff = 1 ∧
         Irreducible (HexPolyMathlib.toPolynomial (Factor.rawPoly [] f)) := by
-  letI : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
+  let : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
     LevelSemantics.DenoteInjective.nil
     LevelSemantics.coeffDenote_inv_nil
   constructor
@@ -909,7 +940,7 @@ theorem isIrreducible_nil_iff (f : Array (Array Rat)) :
     exact ⟨of_decide_eq_true hcheck.1.1.2,
       LevelSemantics.isIrreducible_nil_toMathlib f hcheckRaw⟩
   · rintro ⟨hmonic, hirreducible⟩
-    have hdegree : 0 < (Factor.rawPoly [] f).degree?.getD 0 := by
+    have hdegree : 0 < (Factor.rawPoly [] f).natDegree := by
       have hne := hirreducible.ne_zero
       have hnatDegree :
           (HexPolyMathlib.toPolynomial (Factor.rawPoly [] f)).natDegree ≠ 0 := by
@@ -924,7 +955,7 @@ theorem isIrreducible_nil_iff (f : Array (Array Rat)) :
       apply (Norm.isSquarefree_iff [] trivial
         LevelSemantics.DenoteInjective.nil
         LevelSemantics.coeffDenote_inv_nil f).mpr
-      letI : CharZero (Arithmetic.Coeff []) :=
+      let : CharZero (Arithmetic.Coeff []) :=
         { cast_injective := by
             intro m n hmn
             apply Nat.cast_injective (R := ℂ)
@@ -1030,7 +1061,7 @@ theorem isIrreducible_iff_of_injective (levels : List Level)
         Irreducible (HexPolyMathlib.toPolynomial
           (Factor.rawPoly levels f)) := by
   let hinv := LevelSemantics.coeffDenote_inv levels hvalid hinjective
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   cases levels with
   | nil =>
@@ -1063,7 +1094,7 @@ theorem isIrreducible_iff_of_injective (levels : List Level)
         · simp at hparts
       · rintro ⟨hmonic, hirreducible⟩
         have hdegree :
-            0 < (Factor.rawPoly (level :: lower) f).degree?.getD 0 := by
+            0 < (Factor.rawPoly (level :: lower) f).natDegree := by
           have hnatDegree : (HexPolyMathlib.toPolynomial
               (Factor.rawPoly (level :: lower) f)).natDegree ≠ 0 := by
             intro hzero
@@ -1075,7 +1106,7 @@ theorem isIrreducible_iff_of_injective (levels : List Level)
           exact Nat.pos_of_ne_zero hnatDegree
         let ι := LevelSemantics.coeffHom (level :: lower) hvalid
           hinjective hinv
-        letI : CharZero (Arithmetic.Coeff (level :: lower)) :=
+        let : CharZero (Arithmetic.Coeff (level :: lower)) :=
           { cast_injective := by
               intro m n hmn
               apply Nat.cast_injective (R := ℂ)
@@ -1166,24 +1197,24 @@ private theorem toPolynomial_polyPow (levels : List Level)
     HexPolyMathlib.toPolynomial (Factor.polyPow f n) =
       HexPolyMathlib.toPolynomial f ^ n := by
   let hinv := LevelSemantics.coeffDenote_inv levels hvalid hinjective
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   induction n using Nat.strong_induction_on with
   | h n ih =>
       by_cases hn : n = 0
       · subst n
         simp [Factor.polyPow]
-      · rw [Factor.polyPow, if_neg hn]
+      · rw [Factor.polyPow, ite_eq_right hn]
         have hhalf : n / 2 < n :=
           Nat.div_lt_self (Nat.pos_of_ne_zero hn) (by omega)
         dsimp only
         by_cases heven : n % 2 = 0
-        · rw [if_pos heven, HexPolyMathlib.toPolynomial_mul,
+        · rw [ite_eq_left heven, HexPolyMathlib.toPolynomial_mul,
             ih (n / 2) hhalf]
           rw [← pow_add]
           congr 1
           omega
-        · rw [if_neg heven, HexPolyMathlib.toPolynomial_mul,
+        · rw [ite_eq_right heven, HexPolyMathlib.toPolynomial_mul,
             HexPolyMathlib.toPolynomial_mul, ih (n / 2) hhalf]
           rw [← pow_add, ← pow_succ]
           congr 1
@@ -1206,7 +1237,7 @@ private theorem toPolynomial_factorFold (levels : List Level)
           HexPolyMathlib.toPolynomial
             (Factor.rawPoly levels entry.1) ^ entry.2).prod := by
   let hinv := LevelSemantics.coeffDenote_inv levels hvalid hinjective
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   dsimp only
   induction entries generalizing acc with
@@ -1228,7 +1259,7 @@ private theorem leadingCoeff_mul_monic (levels : List Level)
         HexPolyMathlib.toPolynomial (Norm.monic p) =
       HexPolyMathlib.toPolynomial p := by
   let hinv := LevelSemantics.coeffDenote_inv levels hvalid hinjective
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   dsimp only
   rw [Norm.monic]
@@ -1253,13 +1284,13 @@ private theorem C_leadingCoeff_eq_of_degreeZero (levels : List Level)
     (hvalid : LevelsValid levels)
     (hinjective : LevelSemantics.DenoteInjective levels)
     (p : DensePoly (Arithmetic.Coeff levels))
-    (hdegree : p.degree?.getD 0 = 0) :
+    (hdegree : p.natDegree = 0) :
     let hinv := LevelSemantics.coeffDenote_inv levels hvalid hinjective
     letI : Field (Arithmetic.Coeff levels) :=
       Norm.coeffFieldPoly levels hvalid hinjective hinv
     DensePoly.C p.leadingCoeff = p := by
   let hinv := LevelSemantics.coeffDenote_inv levels hvalid hinjective
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   dsimp only
   apply (HexPolyMathlib.equiv
@@ -1292,7 +1323,7 @@ theorem factorRaw_check (levels : List Level)
     (hresult : Factor.factorRaw? levels f = some raw) :
     Factor.check levels f raw.scalar raw.factors = true := by
   let hinv := LevelSemantics.coeffDenote_inv levels hvalid hinjective
-  letI : Field (Arithmetic.Coeff levels) :=
+  let : Field (Arithmetic.Coeff levels) :=
     Norm.coeffFieldPoly levels hvalid hinjective hinv
   let p := Factor.rawPoly levels f
   have hresult' := hresult
@@ -1371,7 +1402,7 @@ theorem factorRaw_check (levels : List Level)
           (Factor.rawPoly levels factor)) factors).trans hpreProduct
     have hreconstruct : Factor.factorProduct levels
         p.leadingCoeff.data (Factor.canonicalFactors factors) = f := by
-      by_cases hdegree : p.degree?.getD 0 = 0
+      by_cases hdegree : p.natDegree = 0
       · have hcomponents : Factor.yunRaw levels f = #[] := by
           simp [Factor.yunRaw, p, hdegree]
         have hfactors : factors = #[] := by
@@ -1385,7 +1416,7 @@ theorem factorRaw_check (levels : List Level)
           C_leadingCoeff_eq_of_degreeZero levels hvalid hinjective p
             hdegree,
           hcanonical]
-      · have hdegreePositive : 0 < p.degree?.getD 0 :=
+      · have hdegreePositive : 0 < p.natDegree :=
           Nat.pos_of_ne_zero hdegree
         have hyun := yun_product hvalid hinjective hinv f hdegreePositive
         have hyunDense := congrArg (Factor.rawPoly levels) hyun
@@ -1444,7 +1475,7 @@ private theorem relation_eq_rawPoly (level : Level) (lower : List Level)
       have hi : i < level.degree := by simpa [hvalid.1.2] using hi₂
       have hidefining : i < level.defining.size := by
         simpa [hvalid.1.2] using hi
-      simp [Array.getD, hi, hidefining]
+      simp [Array.getD, hidefining]
   rw [hbase]
   have hone : Arithmetic.Coeff.ofData lower
       (Arithmetic.fixedCoeffs (levelsDim lower) #[1]) =
@@ -1467,7 +1498,7 @@ theorem denoteInjective_of_valid : ∀ (levels : List Level),
       have hinjectiveLower := ih hvalid.2.2
       let hinvLower := LevelSemantics.coeffDenote_inv lower hvalid.2.2
         hinjectiveLower
-      letI : Field (Arithmetic.Coeff lower) :=
+      let : Field (Arithmetic.Coeff lower) :=
         Norm.coeffFieldPoly lower hvalid.2.2 hinjectiveLower hinvLower
       have hrelation : Irreducible (HexPolyMathlib.toPolynomial
           (Arithmetic.Coeff.relation level lower)) := by

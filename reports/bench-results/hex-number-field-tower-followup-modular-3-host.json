@@ -1,0 +1,188 @@
+{
+  "label": "modular",
+  "attempt": 3,
+  "cpu": 13,
+  "siblings": [
+    13,
+    61
+  ],
+  "runs": [
+    {
+      "arm": "left",
+      "source_commit": "b8602c76a08f7348391aafd50b9a8a13cf1a0b32",
+      "binary_sha256": "9cda578dbc8724ea9c10462c1c6e2ccbaf6d48e6a85ef291a2f1bf7e4c5df810",
+      "command": [
+        "taskset",
+        "-c",
+        "13",
+        "/tmp/issue-10074-baseline",
+        "run",
+        "Hex.NumberTowerBench.runTowerFactorPair2",
+        "Hex.NumberTowerBench.runTowerFactorPair3",
+        "Hex.NumberTowerBench.runTowerFactorPair4",
+        "Hex.NumberTowerBench.runTowerFactorPair6",
+        "Hex.NumberTowerBench.runTowerFactorPair8",
+        "Hex.NumberTowerBench.runTowerFactorPair12",
+        "Hex.NumberTowerBench.runTowerFactorLadder",
+        "Hex.NumberTowerBench.runTowerCheckFactorization",
+        "Hex.NumberTowerBench.runPariNfFactor2",
+        "Hex.NumberTowerBench.runPariNfFactor3",
+        "Hex.NumberTowerBench.runPariNfFactor4",
+        "Hex.NumberTowerBench.runPariNfFactor6",
+        "Hex.NumberTowerBench.runPariNfFactor8",
+        "Hex.NumberTowerBench.runPariNfFactor12",
+        "Hex.NumberTowerBench.runPariNfFactorOverhead",
+        "--repeats",
+        "5",
+        "--min-total-seconds",
+        "0.2",
+        "--export-file",
+        "/tmp/issue-10074-modular-3-left.json"
+      ],
+      "export": "/tmp/issue-10074-modular-3-left.json",
+      "preflight": {
+        "13": 3.0,
+        "61": 2.0
+      },
+      "postflight": {
+        "13": 47.73869346733668,
+        "61": 1.0
+      },
+      "during": [
+        {
+          "13": 99.0049751243781,
+          "61": 1.492537313432836
+        },
+        {
+          "13": 100.0,
+          "61": 0.0
+        },
+        {
+          "13": 100.0,
+          "61": 0.0
+        },
+        {
+          "13": 100.0,
+          "61": 0.5
+        },
+        {
+          "13": 99.5,
+          "61": 0.0
+        },
+        {
+          "13": 100.0,
+          "61": 0.0
+        },
+        {
+          "13": 100.0,
+          "61": 4.5
+        },
+        {
+          "13": 99.5,
+          "61": 0.0
+        },
+        {
+          "13": 100.0,
+          "61": 0.5
+        },
+        {
+          "13": 100.0,
+          "61": 0.5
+        },
+        {
+          "13": 100.0,
+          "61": 0.9950248756218906
+        },
+        {
+          "13": 100.0,
+          "61": 0.0
+        },
+        {
+          "13": 100.0,
+          "61": 0.5
+        },
+        {
+          "13": 100.0,
+          "61": 0.9950248756218906
+        },
+        {
+          "13": 100.0,
+          "61": 0.0
+        },
+        {
+          "13": 100.0,
+          "61": 0.9950248756218906
+        },
+        {
+          "13": 99.0049751243781,
+          "61": 0.5
+        },
+        {
+          "13": 100.0,
+          "61": 0.0
+        },
+        {
+          "13": 100.0,
+          "61": 0.9900990099009901
+        },
+        {
+          "13": 100.0,
+          "61": 0.5025125628140703
+        },
+        {
+          "13": 100.0,
+          "61": 9.5
+        },
+        {
+          "13": 100.0,
+          "61": 3.0150753768844223
+        },
+        {
+          "13": 100.0,
+          "61": 0.0
+        },
+        {
+          "13": 99.50248756218906,
+          "61": 0.0
+        },
+        {
+          "13": 100.0,
+          "61": 0.9950248756218906
+        },
+        {
+          "13": 100.0,
+          "61": 0.0
+        },
+        {
+          "13": 100.0,
+          "61": 0.5
+        },
+        {
+          "13": 100.0,
+          "61": 0.5
+        },
+        {
+          "13": 100.0,
+          "61": 0.5
+        },
+        {
+          "13": 100.0,
+          "61": 0.5
+        },
+        {
+          "13": 62.6865671641791,
+          "61": 0.5025125628140703
+        }
+      ],
+      "sibling_mean": {
+        "61": 0.9349302041398049
+      },
+      "exit_code": 0,
+      "accepted": false
+    }
+  ],
+  "release_quality": false,
+  "protocol_commit": "ef2b819f0",
+  "script_sha256": "68322335292d3149d8b72c4f1e786814227d25107eb4c7bd26009a551d6d3169",
+  "accepted": false
+}

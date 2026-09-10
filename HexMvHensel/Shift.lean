@@ -54,14 +54,14 @@ def remainingVar (i : Fin (n + 1)) (j : Fin n) : Fin (n + 1) :=
   split
   case isTrue hlt =>
     unfold remainingVar
-    rw [if_pos hlt]
+    rw [ite_eq_left hlt]
   case isFalse hnlt =>
     have hval : j.val ≠ i.val := by
       intro hv
       exact h (Fin.ext hv)
     have hinsert : ¬ (j.val - 1 < i.val) := by omega
     unfold remainingVar
-    rw [if_neg hinsert]
+    rw [ite_eq_right hinsert]
     apply Fin.ext
     simp
     omega

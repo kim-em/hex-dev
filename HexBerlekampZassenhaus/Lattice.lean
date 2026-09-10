@@ -51,31 +51,31 @@ leading coefficient.  Drops the `Monic` hypothesis from
 `ZPoly.divMod_eq_mul` and packaging the result with
 `exactQuotient?_eq_some_of_divMod_eq_of_shouldRecord`.  Positive degree alone
 discharges `shouldRecordPolynomialFactor`, since `0`, `C 1`, and `C (-1)` all
-have `degree?.getD 0 = 0`. -/
+have `natDegree = 0`. -/
 theorem exactQuotient?_eq_some_of_pos_lc_pos_degree_mul_eq
     {target candidate quotient : ZPoly}
     (hpos_lc : 0 < DensePoly.leadingCoeff candidate)
-    (hdegree : 0 < candidate.degree?.getD 0)
+    (hdegree : 0 < candidate.natDegree)
     (hmul : quotient * candidate = target) :
     exactQuotient? target candidate = some quotient := by
   have hrecord : shouldRecordPolynomialFactor candidate = true := by
     have hne_zero : candidate ≠ 0 := by
       intro hzero
-      have hdeg : candidate.degree?.getD 0 = 0 := by
-        rw [hzero]; simp [DensePoly.degree?]
+      have hdeg : candidate.natDegree = 0 := by
+        rw [hzero]; simp [DensePoly.natDegree, DensePoly.degree?]
       omega
     have hne_one : candidate ≠ 1 := by
       intro hone
-      have hdeg : candidate.degree?.getD 0 = 0 := by
+      have hdeg : candidate.natDegree = 0 := by
         rw [hone]
-        change (DensePoly.C (1 : Int)).degree?.getD 0 = 0
-        exact DensePoly.degree?_C_getD 1
+        change (DensePoly.C (1 : Int)).natDegree = 0
+        exact DensePoly.natDegree_C 1
       omega
     have hne_neg_one : candidate ≠ DensePoly.C (-1 : Int) := by
       intro hneg
-      have hdeg : candidate.degree?.getD 0 = 0 := by
+      have hdeg : candidate.natDegree = 0 := by
         rw [hneg]
-        exact DensePoly.degree?_C_getD (-1)
+        exact DensePoly.natDegree_C (-1)
       omega
     unfold shouldRecordPolynomialFactor
     simp [hne_zero, hne_one, hne_neg_one]
@@ -107,8 +107,8 @@ private theorem linearFactorForRoot_size_eq_two (r : Int) :
   rfl
 
 private theorem linearFactorForRoot_degree_pos (r : Int) :
-    0 < (linearFactorForRoot r).degree?.getD 0 := by
-  unfold DensePoly.degree?
+    0 < (linearFactorForRoot r).natDegree := by
+  unfold DensePoly.natDegree DensePoly.degree?
   rw [linearFactorForRoot_size_eq_two r]
   simp
 
@@ -164,14 +164,14 @@ def splitIntegerRootFactorsAux :
 
 /-- Factor a quadratic by its integer roots when it is reducible over the integers. -/
 def quadraticIntegerRootFactors? (core : ZPoly) : Option (Array ZPoly) :=
-  if core.degree?.getD 0 = 2 then
+  if core.natDegree = 2 then
     let roots := integerRootCandidates core
     let split := splitIntegerRootFactorsAux core roots roots.length
     if split.1.size = 0 then
       none
     else if split.2 = 1 then
       some split.1
-    else if split.2.degree?.getD 0 ≤ 1 then
+    else if split.2.natDegree ≤ 1 then
       some (split.1.push split.2)
     else
       none
@@ -196,7 +196,7 @@ emitted polynomial has positive leading coefficient (so
 private def trialDivisionCandidatesOfDegree (B d : Nat) : List ZPoly :=
   (boundedCoefficientVectors B (d + 1)).filterMap fun coeffs =>
     let p := DensePoly.ofCoeffs coeffs.toArray
-    if p.degree?.getD 0 = d ∧ 0 < DensePoly.leadingCoeff p ∧
+    if p.natDegree = d ∧ 0 < DensePoly.leadingCoeff p ∧
         shouldRecordPolynomialFactor p = true then
       some p
     else
@@ -244,7 +244,7 @@ def exhaustiveIntegerTrialCoreFactorsWithBound
       (integerRootCandidates core).length
   let peel :=
     trialDivisionPeelAux split.2
-      (trialDivisionCandidatesUpTo B (split.2.degree?.getD 0 / 2))
+      (trialDivisionCandidatesUpTo B (split.2.natDegree / 2))
   if peel.2 = 1 then
     split.1 ++ peel.1
   else
@@ -394,15 +394,15 @@ theorem LiftModulus.centered_eq (m : LiftModulus) (z : Int) :
   unfold LiftModulus.centered centeredModNat
   by_cases hm : m.nat = 0
   · simp [hm]
-  · simp only [hm, if_false, m.int_eq, m.half_eq, Int.ofNat_eq_natCast]
+  · simp only [hm, ite_false, m.int_eq, m.half_eq, Int.ofNat_eq_natCast]
     have hne : ((m.nat : Nat) : Int) ≠ 0 := by omega
     have hnonneg : 0 ≤ z % ((m.nat : Nat) : Int) := Int.emod_nonneg z hne
     by_cases hhalf : 2 * (z % ((m.nat : Nat) : Int)).natAbs ≤ m.nat
     · have hle : z % ((m.nat : Nat) : Int) ≤ ((m.nat / 2 : Nat) : Int) := by omega
-      rw [if_pos hle, if_pos hhalf]
+      rw [ite_eq_left hle, ite_eq_left hhalf]
     · have hnle : ¬ z % ((m.nat : Nat) : Int) ≤ ((m.nat / 2 : Nat) : Int) := by omega
       have hnotneg : ¬ z % ((m.nat : Nat) : Int) < 0 := by omega
-      rw [if_neg hnle, if_neg hhalf, if_neg hnotneg]
+      rw [ite_eq_right hnle, ite_eq_right hhalf, ite_eq_right hnotneg]
 
 /-- Centred residue modulo `p^b`, the `mod^±` operation in the BHKS cut. -/
 @[expose]
@@ -457,7 +457,7 @@ def cldQuotientMod (f g : ZPoly) (p a : Nat) : ZPoly :=
   match powLtWord? p a with
   | some m =>
       if (UInt64.ofNat m) % 2 = 1 ∧ 1 < m ∧
-          g.leadingCoeff = 1 ∧ 0 < g.degree?.getD 0 then
+          g.leadingCoeff = 1 ∧ 0 < g.natDegree then
         (cldQuotientModWord? f g p a).getD (cldQuotientModBignum f g p a)
       else cldQuotientModBignum f g p a
   | none => cldQuotientModBignum f g p a
@@ -471,7 +471,7 @@ The returned array has one entry for each coefficient index
 -/
 def cldCoeffs (f : ZPoly) (p a : Nat) (g : ZPoly) : Array Int :=
   let quotient := cldQuotientMod f g p a
-  let n := f.degree?.getD 0
+  let n := f.natDegree
   (List.range n).map
     (fun j => psiCut p a (bhksCoeffCutThreshold p f j) (quotient.coeff j))
     |>.toArray
@@ -480,7 +480,7 @@ def cldCoeffs (f : ZPoly) (p a : Nat) (g : ZPoly) : Array Int :=
 product polynomial. -/
 @[expose]
 def cldNumeratorCoeff (f g : ZPoly) (index : Nat) : Int :=
-  let degree := g.degree?.getD 0
+  let degree := g.natDegree
   (List.range degree).foldl
     (fun coefficient i =>
       if i ≤ index then
@@ -498,8 +498,8 @@ the unused low-degree tail. -/
 @[expose]
 def cldLeadingQuotientCoeffs
     (f g : ZPoly) (p a width : Nat) : Array Int :=
-  let n := f.degree?.getD 0
-  let degree := g.degree?.getD 0
+  let n := f.natDegree
+  let degree := g.natDegree
   let modulus : Int := Int.ofNat (p ^ a)
   (List.range (min n width)).foldl
     (fun quotient offset =>
@@ -519,7 +519,7 @@ coordinates, in descending degree order. -/
 @[expose]
 def cldLeadingCoeffs
     (f : ZPoly) (p a : Nat) (g : ZPoly) (width : Nat) : Array Int :=
-  let n := f.degree?.getD 0
+  let n := f.natDegree
   let quotient := cldLeadingQuotientCoeffs f g p a width
   (List.range quotient.size).map
     (fun offset =>
@@ -553,7 +553,7 @@ theorem centeredModNat_emod_self (z : Int) (m : Nat) :
       show z % Int.ofNat m % Int.ofNat m = z % Int.ofNat m
       exact Int.emod_emod _ _
     unfold centeredModNat
-    rw [if_neg hm, if_neg hm, hmod]
+    rw [ite_eq_right hm, ite_eq_right hm, hmod]
 
 /-- `centeredModNat` chooses a representative congruent to the input modulo `m`. -/
 theorem self_sub_centeredModNat_dvd (z : Int) (m : Nat) :
@@ -589,7 +589,7 @@ theorem centeredResiduePow_add_pow_mul_psiCut
       centeredResiduePow p b (centeredResiduePow p a z) +
         ((p ^ b : Nat) : Int) * psiCut p a b z := by
   unfold psiCut
-  rw [if_neg hmod]
+  rw [ite_eq_right hmod]
   let xCentered := centeredResiduePow p a z
   let lower := centeredResiduePow p b xCentered
   have hdvd : ((p ^ b : Nat) : Int) ∣ xCentered - lower := by
@@ -637,7 +637,7 @@ theorem psiCut_eq_zero_of_natAbs_le
   have hbne : (p ^ b : Nat) ≠ 0 := Nat.ne_of_gt hbpos
   have hcentered_amb : centeredResiduePow p a z = y :=
     centeredResiduePow_eq_of_natAbs_le p a y z B hbound hsep_a hcongr
-  rw [if_neg hbne]
+  rw [ite_eq_right hbne]
   show (centeredResiduePow p a z - centeredResiduePow p b (centeredResiduePow p a z))
       / Int.ofNat (p ^ b) = 0
   rw [hcentered_amb]
@@ -670,20 +670,20 @@ quotient coefficient.
 -/
 theorem cldCoeffs_getD_of_lt
     (f : ZPoly) (p a : Nat) (g : ZPoly) (j : Nat)
-    (h : j < f.degree?.getD 0) :
+    (h : j < f.natDegree) :
     (cldCoeffs f p a g).getD j 0 =
       psiCut p a (bhksCoeffCutThreshold p f j) ((cldQuotientMod f g p a).coeff j) := by
   unfold cldCoeffs
   rw [Array.getD_eq_getD_getElem?]
   have hlen :
-      ((List.range (f.degree?.getD 0)).map (fun j =>
+      ((List.range (f.natDegree)).map (fun j =>
         psiCut p a (bhksCoeffCutThreshold p f j)
-          ((cldQuotientMod f g p a).coeff j))).length = f.degree?.getD 0 := by
+          ((cldQuotientMod f g p a).coeff j))).length = f.natDegree := by
     simp
   have hsize :
-      ((List.range (f.degree?.getD 0)).map (fun j =>
+      ((List.range (f.natDegree)).map (fun j =>
         psiCut p a (bhksCoeffCutThreshold p f j)
-          ((cldQuotientMod f g p a).coeff j))).toArray.size = f.degree?.getD 0 := by
+          ((cldQuotientMod f g p a).coeff j))).toArray.size = f.natDegree := by
     simp [hlen]
   rw [Array.getElem?_eq_getElem (by simpa [hsize] using h)]
   simp [List.getElem_toArray, List.getElem_map, List.getElem_range]
@@ -691,7 +691,7 @@ theorem cldCoeffs_getD_of_lt
 /-- In-range CLD coefficients are the high-bit part of `cldQuotientMod`. -/
 theorem cldQuotientMod_coeff_decomp_of_lt
     (f g : ZPoly) (p a j : Nat)
-    (hj : j < f.degree?.getD 0)
+    (hj : j < f.natDegree)
     (hb : p ^ bhksCoeffCutThreshold p f j ≠ 0) :
     centeredResiduePow p a ((cldQuotientMod f g p a).coeff j) =
       centeredResiduePow p (bhksCoeffCutThreshold p f j)
@@ -717,18 +717,18 @@ theorem cldQuotientMod_divMod_reconstruction (f g : ZPoly) (p a : Nat)
 /-- Per-coordinate BHKS cut thresholds for the all-coefficients CLD lattice. -/
 @[expose]
 def bhksCutThresholds (f : ZPoly) (p : Nat) : Array Nat :=
-  let n := f.degree?.getD 0
+  let n := f.natDegree
   (List.range n).map (fun j => bhksCoeffCutThreshold p f j) |>.toArray
 
 /-- In-range BHKS cut thresholds are the per-coordinate `bhksCoeffCutThreshold`. -/
 theorem bhksCutThresholds_getD_of_lt (f : ZPoly) (p j : Nat)
-    (h : j < f.degree?.getD 0) :
+    (h : j < f.natDegree) :
     (bhksCutThresholds f p).getD j 0 = bhksCoeffCutThreshold p f j := by
   unfold bhksCutThresholds
   rw [Array.getD_eq_getD_getElem?]
   have hsize :
-      ((List.range (f.degree?.getD 0)).map
-        (fun j => bhksCoeffCutThreshold p f j)).toArray.size = f.degree?.getD 0 := by
+      ((List.range (f.natDegree)).map
+        (fun j => bhksCoeffCutThreshold p f j)).toArray.size = f.natDegree := by
     simp
   rw [Array.getElem?_eq_getElem (by simpa [hsize] using h)]
   simp [List.getElem_toArray, List.getElem_map, List.getElem_range]
@@ -806,7 +806,7 @@ BHKS hypotheses should lift to a precision `a` satisfying every `l_j ≤ a`.
 def bhksLatticeBasis (f : ZPoly) (p a : Nat) (liftedFactors : Array ZPoly) :
     BhksLatticeBasis :=
   let r := liftedFactors.size
-  let n := f.degree?.getD 0
+  let n := f.natDegree
   let thresholds := bhksCutThresholds f p
   let cldRows := liftedFactors.map (fun g => cldCoeffs f p a g)
   let basis : Matrix Int (r + n) (r + n) :=
@@ -843,7 +843,7 @@ in an incremental schedule. -/
 def bhksLeadingLogDerivativeData
     (f : ZPoly) (p a : Nat) (liftedFactors : Array ZPoly) (width : Nat) :
     BhksLeadingLogDerivativeData :=
-  let degree := f.degree?.getD 0
+  let degree := f.natDegree
   let coordinates :=
     ((List.range (min degree width)).map fun i => degree - 1 - i).toArray
   { degree
@@ -882,7 +882,7 @@ private theorem bhksLatticeBasis_factorCount_eq
 
 private theorem bhksLatticeBasis_coeffWidth_eq
     (f : ZPoly) (p a : Nat) (liftedFactors : Array ZPoly) :
-    (bhksLatticeBasis f p a liftedFactors).coeffWidth = f.degree?.getD 0 := by
+    (bhksLatticeBasis f p a liftedFactors).coeffWidth = f.natDegree := by
   rfl
 
 /-- The upper-left block of the recombination lattice basis is the identity matrix. -/

@@ -48,10 +48,10 @@ def d := GF2q.toGFq c
 # Functionality
 
 - `GFqC p n` is the spelling to reach for. It resolves through a
-  `GFq.CommittedEntry` instance, one per committed Conway pair: `p` in
-  `2, 3, 5, 7, 11, 13`, to degree `6` for the odd primes and to degree `8` for
-  `p = 2`. Outside that range there is no instance, so the constructor fails at
-  synthesis rather than inventing a field.
+  `GFq.CommittedEntry` instance for every verified Conway pair. These
+  instances are generated from the same exact scope as `hex-conway`; see
+  [its coverage table](https://github.com/leanprover/hex-conway#functionality).
+  Unsupported pairs fail instance synthesis.
 - `GFq p n h` takes the `Conway.SupportedEntry` explicitly, for proofs that
   need to name the witness. `GFqC` is defined as `GFq p n h.entry`.
 - `GFq.ofPoly` and `GFq.repr` move between polynomials and field elements, with

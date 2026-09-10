@@ -8,8 +8,8 @@ module
 
 -- PLAIN `public import` only: NO `import all`. This module is the regression
 -- lock for the `@[expose]` kernel-replay closure. Every `decide` below must
--- reduce in the kernel through the exposed bodies of `sturmChain`, `sturmCount`,
--- `rootCount`, `hasSquarefreeSturmChain`, `SturmChainCert`, and `orderedAdjacent`
+-- reduce in the kernel through the exposed bodies of `sturmChain`, `ZPoly.sturmCount`,
+-- `ZPoly.rootCount`, `hasSquarefreeSturmChain`, `SturmChainCert`, and `orderedAdjacent`
 -- alone. If a future edit drops an `@[expose]` (or reintroduces a `private` in
 -- the closure), one of these `decide`s stops reducing and this module fails —
 -- surfacing the regression that a downstream `module` consumer would hit.
@@ -30,14 +30,14 @@ namespace Hex.ReplayTest
 example : ZPoly.hasSquarefreeSturmChain (DensePoly.ofCoeffs #[(-1 : Int), 0, 1]) := by
   decide
 
-/-- A `sturmCount` value: `x² − 1` has one root in `(0, 2]` (the root at `1`).
+/-- A `ZPoly.sturmCount` value: `x² − 1` has one root in `(0, 2]` (the root at `1`).
 Reduces without `import all`, unlike the same check stated in `Var.lean`. -/
-example : sturmCount (DensePoly.ofCoeffs #[(-1 : Int), 0, 1])
+example : ZPoly.sturmCount (DensePoly.ofCoeffs #[(-1 : Int), 0, 1])
     (DyadicInterval.mk (Dyadic.ofInt 0) (Dyadic.ofInt 2) (by decide)) = 1 := by
   decide
 
-/-- A `rootCount` value: `x² − 1` has two real roots. -/
-example : rootCount (DensePoly.ofCoeffs #[(-1 : Int), 0, 1]) = 2 := by
+/-- A `ZPoly.rootCount` value: `x² − 1` has two real roots. -/
+example : ZPoly.rootCount (DensePoly.ofCoeffs #[(-1 : Int), 0, 1]) = 2 := by
   decide
 
 /-- A `SturmChainCert` instance: the literal chain `[x² − 1, x, 1]` is certified
@@ -51,7 +51,7 @@ example : SturmChainCert (DensePoly.ofCoeffs #[(-1 : Int), 0, 1])
 
 /-- An `orderedAdjacent` check on literal isolation data: the two isolations of
 `x² − 1`, `(−2, 0]` and `(0, 2]`, are adjacent-ordered (`0 ≤ 0`). The `count_one`
-witnesses also reduce through the exposed `sturmCount`. -/
+witnesses also reduce through the exposed `ZPoly.sturmCount`. -/
 example : orderedAdjacent (p := DensePoly.ofCoeffs #[(-1 : Int), 0, 1])
     #[⟨DyadicInterval.mk (Dyadic.ofInt (-2)) (Dyadic.ofInt 0) (by decide), by decide⟩,
       ⟨DyadicInterval.mk (Dyadic.ofInt 0) (Dyadic.ofInt 2) (by decide), by decide⟩] = true := by

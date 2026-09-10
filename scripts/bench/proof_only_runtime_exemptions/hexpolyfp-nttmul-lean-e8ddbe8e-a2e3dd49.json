@@ -1,0 +1,6 @@
+{
+ "path": "HexPolyFp/NttMul.lean",
+ "baseline_blob": "e8ddbe8e6d896b2a5a1a2730ab3ec556edc4e8bc",
+ "current_blob": "a2e3dd492addd5d0d9b0e10bc9640fcef1f73ed9",
+ "reason": "Turns two `simpa ... using` into the `simp` the linter reports as sufficient. Both are index-bound proof terms; no executable definition changes. Same edit as the 240e6784 -> 2b6995e6 exemption, restated from the baseline the fast-kernel demotion sweep recorded."
+}

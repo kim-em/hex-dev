@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPrimalityMathlib.Prime
-import Mathlib.Data.Finset.Basic
+module
+
+public import HexPrimalityMathlib.Prime
+public import Mathlib.Data.Finset.Basic
+
+public section
 
 /-!
 Segment statements over the committed prime table, in the form a Mathlib

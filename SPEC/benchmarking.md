@@ -31,6 +31,32 @@ not the primary goal. A correctly-declared and correctly-implemented
 operation should be regression-stable; if it isn't, the test is the
 benchmark itself.
 
+### Shared-host measurement policy
+
+Hex has no dedicated performance machine. Scientific runs therefore use the
+available shared host and make claims from schedules that tolerate ordinary
+scheduler noise:
+
+- lean-bench complexity registrations use their fixed trial-major schedule and
+  decide the declared model from the retained samples;
+- before/after measurements keep the two arms adjacent and alternate `AB`/`BA`
+  order over a fixed even number of blocks;
+- host, CPU, affinity and load observations are retained as context, but host
+  activity, SMT-sibling activity and process sightings never reject or remove a
+  completed sample;
+- an inconclusive run may be repeated once with the identical registered
+  protocol. Both runs remain evidence. There is no quiet-core wait,
+  contamination retry or retry-until-green campaign;
+- profiles are collected when needed to attribute an unexpected result, plus
+  one representative profile where Phase 4 requires attribution. A profile
+  remains reusable while the measured code path and input are unchanged.
+
+Pinning to an automatically selected CPU is useful placement: it prevents
+concurrent Hex measurements from deliberately sharing one logical CPU. It is
+not an isolation claim and the selected CPU need not pass an activity ceiling.
+Absolute wall-clock results describe the recorded host. CI timeouts remain
+operational safeguards rather than scientific budgets.
+
 ## The verdict-as-bug-trigger model
 
 Every parametric benchmark has a complexity claim declared *at the
@@ -358,111 +384,42 @@ in-process clock, or contain a timing loop. A probe also cannot root any
   source hashes, repository commit, dirty-state decision, toolchain, command,
   host/CPU/OS, load state, and timeout/cleanup policy;
 - record emitted artefact sizes and the axiom set of the accepted theorem;
-- refuse a release-quality verdict on a dirty tree, an uncontrolled or
-  saturated host, a timed-out build, or a provenance mismatch.
+- refuse a release-quality verdict on a dirty tree, a timed-out build, an
+  incomplete pair, or a provenance mismatch.
 
-The default release protocol uses a quiescent host and rejects concurrent
-Lake/Lean processes. A named shared machine is also admissible through the
-explicit designated-shared-host protocol: the command preregisters the expected
-hostname and logical CPU, pins itself before warmup, and verifies its own
-affinity after every arm; every timed descendant inherits that affinity, and
-the timed Lean processes use one worker thread. The
-manifest's `config.order` begins with at least two same-module null controls at
-distinct cheap and expensive build magnitudes, followed by substantive pairs.
-The preregistered sample count is even and at least six. Physical-core and SMT
-topology are recorded once; host load, CPU-pressure state, affinity, and
-concurrent Lake/Lean counts are retained around every measured arm. Cumulative
-CPU-frequency residency is differenced across the arm to retain its
-time-weighted mean frequency; idle snapshots before and after the build are
-context only.
-Scheduler counters on the pinned CPU and every SMT sibling are differenced
-across each arm and combined with child user/system time and the harness's own
-CPU time inside that counter window. The pinned CPU's separately reported
-IRQ/softirq ticks are retained but excluded from the residual attributed to a
-foreign process; otherwise ordinary interrupt handling is systematically
-misclassified as another workload. The raw residual, interrupt time, and
-signed non-interrupt residual are all retained; child CPU time materially above
-the pinned CPU's non-interrupt busy time is an affinity/accounting failure.
-The positive foreign residual on the pinned CPU plus busy time on every SMT
-sibling forms one aggregate interference quantity. Exceeding the
-preregistered ratio or three scheduler ticks rejects the complete pair
-attempt.
+Fresh-module evidence follows the shared-host policy above. Each reference and
+candidate pair is adjacent, pair orientation alternates, and the preregistered
+sample count is even. The runner may pin all descendants to an automatically
+selected CPU and may retain scheduler, frequency, SMT and process telemetry,
+but those observations are descriptive. Every completed pair enters the
+summary. The runner neither waits for quiet nor retries a pair because of host
+activity.
 
-A rejected pair attempt is retained with both arms, their fixed orientation,
-and all counters. The runner then rebuilds both arms in the same order; it
-never retry-warms one arm in isolation. The default is eight retries, while a
-suite with preregistered long arms may explicitly request at most 32. The
-requested value counts retries after the initial attempt. The chosen finite
-bound is recorded and changes only how many clean-pair opportunities are
-attempted, never the admission threshold. Before each
-attempt, the runner waits up to five minutes for a two-second physical-core
-observation with at most two non-interrupt busy ticks on the pinned CPU and two
-busy ticks on each sibling. This preflight avoids spending the finite
-build-retry budget inside a sustained burst; every rejected preflight window
-and its counters are retained, and the unchanged per-arm admission gate
-remains authoritative.
-Only a wholly clean, adjacent pair attempt enters the timing sample. Exhausting
-the build-retry bound or the preflight wait emits an explicit partial artifact,
-records every rejected attempt or window, and never places a contaminated arm
-in results, medians, or budget conclusions. The effective quantized ceiling,
-retry count, and preflight wait are recorded rather than represented as the
-nominal ratio. Missing frequency residency or a spread of admitted arm means
-above the preregistered band also invalidates release quality. Global load and
-unrelated Lake/Lean presence are context rather than automatic failures in this
-mode.
+A proof-track sweep may include same-module null controls when a small
+reference/candidate difference needs a direct noise measurement. They are not
+required for routine fresh-module evidence and do not reject otherwise complete
+samples. Reports distinguish a large, well-resolved paired effect from a small
+effect that the observed variation cannot resolve.
 
-A proof-track sweep may precede its substantive pairs with one or more marked
-same-module null controls at representative build magnitudes. Each control uses
-the exact same module and axiom policy in both roles, independently rebuilds it
-under the ordinary alternating orientation, and requires an even preregistered
-sample count so each role is built first equally often. Its raw signed deltas
-describe fresh-build noise under that run's host conditions. The control
-records its median, MAD, IQR, Tukey fences, range, maximum absolute signed
-delta, and outlier count. Its conservative zero-centred envelope is the larger
-of the Tukey-fence magnitude and the largest observed absolute signed delta,
-so an isolated outlier can widen but never shrink the admission envelope.
-A control whose IQR exceeds 10% of its build magnitude invalidates release
-quality.
-
-A suite may instead preregister `absolute_only` when every substantive pair
-declares an absolute fresh-module wall-clock budget and no pair declares a
+A suite may preregister `absolute_only` when every substantive pair declares an
+absolute fresh-module wall-clock budget and no pair declares a
 reference-subtracted tactic budget. In that mode the raw candidate maximum,
-not a paired delta, is the release contract. Null controls remain in the
-artifact to describe and classify paired noise, but their IQR and relative
-build-magnitude coverage do not gate release quality because neither quantity
-can change the absolute conclusion. Dirty-state, provenance, timeout,
-frequency, per-arm CPU/SMT interference, and absolute-budget failures retain
-their ordinary fail-closed behavior. The harness rejects `absolute_only`
-manifests that omit an absolute budget from any substantive pair or add a
-relative tactic budget.
-
-The artifact interpolates control IQRs and conservative envelopes between
-representative build magnitudes. Outside the measured range it may scale a
-cheaper control upward by the build-time magnitude ratio, but never scales an
-envelope down. A control farther away than the preregistered magnitude factor
-is not comparable. Every substantive pair records `resolved`, `unresolved`, or
-`no-comparable-control` from the resulting envelope. A cheap control does not
-resolve noise for a much more expensive build.
+not a paired delta, is the recorded contract. Null controls, when present,
+describe paired noise but do not gate release quality. Dirty-state, provenance,
+timeout and absolute-budget failures retain their ordinary fail-closed
+behavior. The harness rejects `absolute_only` manifests that omit an absolute
+budget from any substantive pair or add a relative tactic budget. The result is
+a host-specific observation, not a portable absolute performance claim.
 
 When a suite names an import-only baseline, its same-round wall time is
 subtracted from both arms before a workload ratio is formed. When the two arms
 also construct materially different inputs, a matched construction-only pair
-is subtracted round by round as well. If the attributed reference and
-candidate workloads are `r` and `c` and the comparable envelope is `e`, a
-threshold interval is `(r - e) / (c + e)` through
-`(r + e) / (c - e)`. A threshold passes only when the arm delta is resolved
-and the conservative lower bound exceeds the preregistered threshold.
-Baseline-limited or noise-limited point estimates do not pass.
+is subtracted round by round as well. Reports retain the raw arm timings and
+paired deltas; they do not correct timings using host telemetry.
 
-A fixed tactic budget is release-quality only when its median passes and
-remains below the budget after the comparable null envelope is applied as a
-conservative resolution check. The accepted worst-case core-interference
-allowance across both arms must also be smaller than the budget. The reported
-raw timing itself is never corrected. Artifact `release_quality` is derived
-from pristine provenance, complete scheduler accounting, magnitude-comparable
-controls, the scoped interference ceiling, and every required budget
-conclusion. A diagnostic `--allow-busy` run remains non-release evidence and
-is not this protocol.
+A fixed tactic budget is release-quality only when its retained median passes.
+Artifact `release_quality` is derived from pristine provenance, complete paired
+samples and every required budget conclusion.
 
 Phase attribution uses matched module variants, not clocks embedded in the
 probe. A tactic library may use a baseline; a reify-only module; an input module
@@ -596,7 +553,7 @@ A comparator sweep (the Berlekamp–Zassenhaus factorization comparison is
 the motivating case) MUST obey:
 
 - **Not CI.** No workflow under `.github/workflows/` runs it; the
-  single-job rule is untouched. Sweeps run manually on dedicated hardware,
+  single-job rule is untouched. Sweeps run manually on the shared host,
   and their durable records are committed under `reports/bench-results/`,
   named by git commit and host.
 - **Uniform warm-process protocol.** Every measured system — hex (running
@@ -631,9 +588,10 @@ processes sharing core 0 left the load average at 2 to 5 while inflating about
 a quarter of a sweep's rows by roughly 1.9x, with the affected rows differing
 run to run. `ps -eo pid,psr` reveals it at once; load average never does.
 
-So: **pin to a verified-idle core, not to a fixed one.** `python3
-scripts/bench/idle_core.py` prints a logical CPU that is idle on itself and on
-every SMT sibling, sampled from `/proc/stat`.
+So: **pin to an automatically selected core, not to a fixed one.** `python3
+scripts/bench/idle_core.py` selects a logical CPU with low recent activity on
+itself and its SMT sibling. This is placement only and never an acceptance
+gate.
 
 - `scripts/bench/factor_phase_profile.py` and
   `scripts/profile/factor_sampling_profile.py` take `--cpu auto` and do this
@@ -641,7 +599,8 @@ every SMT sibling, sampled from `/proc/stat`.
 - `scripts/bench/factor_sweep.py` is deliberately *not* changed, because
   `scripts/bench/check_factor_sweep_freshness.py` treats it as a shared source
   path: editing it marks every system's committed record stale, including the
-  external comparator records that cannot be cheaply re-measured. Invoke it
+  external comparator records that cannot be cheaply re-measured, so each such
+  edit costs a runtime-neutral exemption. Invoke it
   through the helper instead:
 
   ```sh
@@ -649,9 +608,7 @@ every SMT sibling, sampled from `/proc/stat`.
     python3 scripts/bench/factor_sweep.py --systems hex-factor
   ```
 
-A release-quality verdict under the designated-shared-host protocol above still
-preregisters and records an explicit CPU; this clause is about not colliding,
-not about relaxing that.
+The artifact records the selected CPU and observed activity as context.
 
 ### Comparator classification: `gating` vs `informational`
 
@@ -1015,8 +972,7 @@ total exceeds the hard cap.
 
 Full timing runs (`lake exe hexfoo_bench run NAME` with a real
 budget) are not part of merge-gating CI. They run on a scheduled
-workflow or release-candidate workflow, on dedicated hardware where
-timing comparisons are meaningful. Each release names the libraries
+workflow on the shared host under the policy above. Each release names the libraries
 whose timing runs must succeed; a release is blocked by a failing verdict in
 the registration's declared mode or a comparator divergence even when proofs
 are complete.
@@ -1208,12 +1164,132 @@ traceable artefacts does not satisfy this requirement.
 
 For the published integer polynomial factorization comparison, the current
 snapshot additionally covers the complete committed corpus for Hex, FLINT,
-NTL, PARI, Isabelle BZ, and Isabelle LLL. The sweep records the clean source
-commit and corpus hash, performs factor-degree cross-checking, and retains
-timeouts as explicit rows. Relevant source changes require fresh measurements
-for the affected systems. All cactus and runtime-by-degree figures are then
+NTL, PARI, Isabelle BZ, and Isabelle LLL. The sweep records the corpus hash
+and a fingerprint of each system's relevant source, performs factor-degree
+cross-checking, and retains timeouts as explicit rows. Relevant source changes
+require fresh measurements for the affected systems, or a runtime-neutral
+exemption per §Figure freshness. All cactus and runtime-by-degree figures are then
 regenerated from the newest current-corpus measurement of each system; CI
 checks both freshness and byte-for-byte figure regeneration on every PR.
+
+### Figure freshness
+
+A published figure is a claim about the current code, so the data it is
+rendered from must keep describing the source that was measured. Every
+enforced figure family uses one mechanism, declared in
+`scripts/bench/sweep_freshness.py`:
+
+- **Relevant set.** The paths whose content the curves depend on, as
+  tight as honesty allows. Everything listed forces a re-measurement or
+  an exemption when it changes; everything omitted is a claim that it
+  cannot move the curves.
+- **Fingerprint.** The first twelve hex digits of the sha256 of the
+  `git ls-files -s` listing of that set. Data is keyed by it:
+  `reports/bench-results/<family>-<fp12>-<host>.<ext>`.
+- **Manifest.** The listing itself, committed verbatim next to the data
+  as `reports/bench-results/<family>-<fp12>.manifest`.
+- **Check.** Fresh when some committed measurement carries the current
+  fingerprint. Otherwise the current listing is diffed against the newest
+  manifest, path by path, and every differing path must carry an
+  exemption; the failure names the paths and their blob transitions.
+- **Exemptions.** One JSON file per exemption, with `path`,
+  `baseline_blob`, `current_blob` and a reviewable `reason`. Naming both
+  blobs makes an exemption expire as soon as the file changes again, and
+  one file per exemption means concurrent pull requests never collide on
+  a shared list. A family opts in by declaring a directory; a family that
+  declares none has no way to pass except by re-measuring or by a checked
+  rule.
+- **Checked rules.** A family may also declare a rule that decides a
+  difference from the two blobs themselves, which is what separates one
+  from an exemption: an exemption is a claim a reviewer has to weigh,
+  a rule is a fact the check establishes. `lean_comment_only` accepts a
+  `.lean` path whose versions are equal once comments are removed; all
+  other whitespace is preserved because Lean indentation carries meaning.
+  The factorization checker separately compares the package, dependencies,
+  measured executable, and libraries that build the Hex factor service, so
+  additions of unrelated Lake targets do not invalidate its measurement.
+  The graph-isomorphism checker also recognizes only additions of plain,
+  non-default Lake targets whose literal `srcDir` is `bench` or `conformance`
+  and whose `root`/`roots`/`globs` fields contain only literal modules. Their
+  modules must be in tracked, existing Hex library namespaces outside the
+  compiled driver's and retimed tactic's import namespaces. The check excludes
+  an entire top-level namespace: a `roots` entry owns all its submodules, while
+  a `globs` entry can have narrower build scope. It derives the import closure
+  from every matching tracked Lean source in the Git index, independent of
+  source-directory layout, and reads those exact blobs. Additions
+  must follow an existing executable's final root field and precede another
+  target or EOF, preventing attributes, scoped options, or existing fields
+  from moving onto a new declaration. Names must be new, and all remaining
+  configuration must be unchanged. Unsupported syntax fails closed.
+
+Key on content, not on the measuring commit. A commit key has to stay
+resolvable forever, which holds for data recorded on `main` by a
+scheduled run but fails for data regenerated inside the pull request that
+changes the code: the squash merge rewrites the measuring commit, and so
+does any rebase. Content survives both.
+
+Exemptions exist because content keying alone cannot absorb a
+runtime-neutral edit -- a docstring moves the fingerprint exactly as a
+hot-loop rewrite does. Whether a family gets them follows from its
+relevant set. Hex's own factorization curve spans HexBasic through
+HexPolyZ and re-measuring needs an expensive manual shared-host session, so
+proof-only edits are absorbed. Every other family re-measures: the
+comparator curves see three to six adapter files plus the corpus and the
+sweep driver, where every edit is aimed at the measurement itself, and
+hex-graph-iso tracks the libraries and their umbrellas, driver, plotter,
+nauty comparator sources and headers, build configuration and Lean
+toolchain, and regenerates in minutes. Vendor prose is excluded.
+
+hex-graph-iso does take the `lean_comment_only` rule, because its
+relevant set is a Lean library whose docstrings are revised far more
+often than its code. Charging a sweep for prose would either suppress
+the prose or make regeneration routine enough to stop carrying meaning,
+and the rule gives up nothing, since it reads both blobs rather than
+trusting a claim about them. Its independent-target rule similarly avoids
+charging an unrelated benchmark or conformance executable a graph sweep:
+it compares both configurations and inspects the measured import namespaces,
+without admitting changes to existing targets or global build settings. Both
+the freshness verdict and the per-node sweep selector use this same rule.
+
+A relevant set also omits the test modules no measured artifact imports.
+A compiled sweep driver never links them and the retimed tactic file
+never elaborates against them, so adding a regression case cannot move a
+curve, and charging a re-measurement for one would price tests out of
+the libraries whose performance they guard. The criterion is import
+reachability, not the file name: each library's
+`ModuleBoundaryTests.lean` stays in the set, because its umbrella
+publicly imports it and it is therefore inside the closure the figures
+measure. `scripts/bench/test_sweep_freshness.py` derives both closures
+from the repository's own import graph and fails if an omitted module
+ever becomes reachable, so the omission is a checked fact rather than a
+standing claim.
+
+Changing a relevant set re-keys the family, which invalidates every
+committed fingerprint at once. That is the price of tightening or
+widening it, and it is paid deliberately: one re-measurement for a
+family that re-measures in minutes, or one exemption per removed path
+for a family that carries the channel.
+
+That is also why the sweep driver does not fingerprint its own run: it is
+a relevant path for all six factorization systems, so editing it would
+mark every comparator record stale. A sweep is stamped afterwards, by the
+guard that defines what a valid observation is:
+
+```sh
+python3 scripts/bench/check_factor_sweep_freshness.py \
+  --record reports/bench-results/<sweep>.json
+```
+
+which writes each measured system's manifest and records its fingerprint
+in the report. `scripts/bench/graphiso_cactus_sweep.sh` does the
+equivalent inline, staging the relevant paths and recording the manifest
+before it measures.
+
+The comparator figures outside these two families (LLL, Hermite, Smith
+and the rest) are refreshed by the scheduled performance workflow and
+carry no merge-CI freshness check. Adopting one is a per-family
+judgement: the mechanism is there, and the cost of adopting it is a
+manifest plus a regeneration script.
 
 The `reports/<lib>-performance.md` file is overwrite-on-rerun:
 when the report is regenerated against a newer build, the previous

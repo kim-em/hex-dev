@@ -233,7 +233,7 @@ def ofMatrix (Mx : Matrix R n m) : Submatrix R n m where
 @[simp, grind =] theorem entry_ofMatrix [OfNat R 0] (Mx : Matrix R n m) (i : Fin n) (j : Fin m) :
     (ofMatrix Mx).entry i j = Mx[i][j] := by
   rw [entry, ofMatrix]
-  rw [dif_pos (⟨by omega, by omega⟩ : (0 : Nat) + i.val < n ∧ (0 : Nat) + j.val < m)]
+  rw [dite_eq_left (⟨by omega, by omega⟩ : (0 : Nat) + i.val < n ∧ (0 : Nat) + j.val < m)]
   simp [Matrix.getElem_pair_nat]
 
 /-- Materializing the full-matrix view returns the matrix. -/
@@ -259,9 +259,9 @@ def pad (A : Submatrix R n m) (n' m' : Nat) (hn : n ≤ n') (hm : m ≤ m') : Su
     (A.pad n' m' hn hm).entry i j =
       if h : i.val < n ∧ j.val < m then A.entry ⟨i.val, h.1⟩ ⟨j.val, h.2⟩ else 0 := by
   by_cases hin : i.val < n ∧ j.val < m
-  · rw [dif_pos hin]; rfl
-  · rw [dif_neg hin, entry]
-    apply dif_neg
+  · rw [dite_eq_left hin]; rfl
+  · rw [dite_eq_right hin, entry]
+    apply dite_eq_right
     simp only [pad]
     intro hd
     have h1 := A.hrR

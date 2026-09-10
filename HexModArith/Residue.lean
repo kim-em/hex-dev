@@ -798,13 +798,13 @@ private theorem pow_go_toNat (base acc : ZMod64 p) (k : Nat) :
             Nat.div_lt_self (Nat.succ_pos m) (by decide : 1 < 2)
           simp [pow.go]
           by_cases heven : (m + 1) % 2 = 0
-          · rw [if_pos heven]
+          · rw [ite_eq_left heven]
             have hrec := ih ((m + 1) / 2) hlt (mul base base) acc
             change (pow.go (mul base base) acc ((m + 1) / 2)).toNat =
               acc.toNat * base.toNat ^ (m + 1) % p
             rw [hrec, toNat_mul]
             exact nat_mod_mul_pow_square_even acc.toNat base.toNat (m + 1) p heven
-          · rw [if_neg heven]
+          · rw [ite_eq_right heven]
             have hrec := ih ((m + 1) / 2) hlt (mul base base) (mul acc base)
             change (pow.go (mul base base) (mul acc base) ((m + 1) / 2)).toNat =
               acc.toNat * base.toNat ^ (m + 1) % p

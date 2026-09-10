@@ -1595,7 +1595,7 @@ theorem getArrayEntry_scaledCoeffRowsSchur_eq_noPivotLoop_of_nonsing
         show schurScaledCoeffEntry (scaledCoeffRowsSchur b) (gramRows b) (q' + 1)
             (q' + 1) = _
         unfold schurScaledCoeffEntry
-        rw [if_neg (Nat.succ_ne_zero q')]
+        rw [ite_eq_right (Nat.succ_ne_zero q')]
         simp only [Nat.add_sub_cancel]
         rw [ih_diag,
           show getArrayEntry (gramRows b) (q' + 1) (q' + 1) =
@@ -1610,7 +1610,7 @@ theorem getArrayEntry_scaledCoeffRowsSchur_eq_noPivotLoop_of_nonsing
           h_pa hcn]
         show schurScaledCoeffEntry (scaledCoeffRowsSchur b) (gramRows b) c (q' + 1) = _
         unfold schurScaledCoeffEntry
-        rw [if_neg (Nat.succ_ne_zero q')]
+        rw [ite_eq_right (Nat.succ_ne_zero q')]
         simp only [Nat.add_sub_cancel]
         rw [ih_diag,
           show getArrayEntry (gramRows b) c (q' + 1) =
@@ -1682,7 +1682,7 @@ theorem getArrayEntry_scaledCoeffRowsSchur_eq_zero_of_singularStep_lt
     rw [getArrayEntry_scaledCoeffRowsSchur_eq_schurScaledCoeffEntry b i' j' hj'i' hi'n]
     show schurScaledCoeffEntry (scaledCoeffRowsSchur b) (gramRows b) i' j' = 0
     unfold schurScaledCoeffEntry
-    rw [if_neg (Nat.ne_of_gt hj'_pos)]
+    rw [ite_eq_right (Nat.ne_of_gt hj'_pos)]
     -- Diagonal factor at `(j' - 1, j' - 1)` is zero.
     have h_diag_zero :
         getArrayEntry (scaledCoeffRowsSchur b) (j' - 1) (j' - 1) = 0 := by
@@ -1997,7 +1997,7 @@ private theorem rowSwap_row_eq_of_ne_int {n' m' : Nat}
   have hr_ne_j : r ≠ j := fun h => hrj (congrArg Fin.val h)
   have hr_ne_i : r ≠ i := fun h => hri (congrArg Fin.val h)
   have hget := Matrix.getElem_rowSwap M i j r ⟨c, hc⟩
-  rw [if_neg hr_ne_j, if_neg hr_ne_i] at hget
+  rw [ite_eq_right hr_ne_j, ite_eq_right hr_ne_i] at hget
   simpa [Matrix.row] using hget
 
 /-- For a `Matrix Int`, the `Fin`-indexed left swap row `i` becomes the old row
@@ -2011,10 +2011,10 @@ theorem rowSwap_row_left_int {n' m' : Nat}
   by_cases hij : i = j
   · subst j
     have hget := Matrix.getElem_rowSwap M i i i ⟨c, hc⟩
-    rw [if_pos rfl] at hget
+    rw [ite_eq_left rfl] at hget
     exact hget
   · have hget := Matrix.getElem_rowSwap M i j i ⟨c, hc⟩
-    rw [if_neg hij, if_pos rfl] at hget
+    rw [ite_eq_right hij, ite_eq_left rfl] at hget
     simpa [Matrix.row] using hget
 
 /-- For a `Matrix Int`, the `Fin`-indexed right swap row `j` becomes the old row
@@ -2026,7 +2026,7 @@ theorem rowSwap_row_right_int {n' m' : Nat}
   apply Vector.ext
   intro c hc
   have hget := Matrix.getElem_rowSwap M i j j ⟨c, hc⟩
-  rw [if_pos rfl] at hget
+  rw [ite_eq_left rfl] at hget
   simpa [Matrix.row] using hget
 
 /-- Raw-`Nat` row-access version of `rowSwap_row_eq_of_ne_int`: with a bound
@@ -2094,7 +2094,7 @@ theorem scaledCoeffMatrix_rowSwap_adjacent_pivot_transpose
         simpa [last, GramSchmidt.liftFinLE] using congrArg Fin.val hq_last
       rw [Matrix.getElem_transpose]
       simp only [GramSchmidt.scaledCoeffMatrix, Matrix.getElem_ofFn, Matrix.row]
-      rw [if_pos hq_val, if_pos (by simpa [last] using congrArg Fin.val hp_last),
+      rw [ite_eq_left hq_val, ite_eq_left (by simpa [last] using congrArg Fin.val hp_last),
         rowSwap_getRow_right_val_int]
       rw [hp_lift]
       rw [rowSwap_getRow_left_val_int]
@@ -2111,7 +2111,7 @@ theorem scaledCoeffMatrix_rowSwap_adjacent_pivot_transpose
         exact hp_last (Fin.ext (by simpa [last] using h))
       rw [Matrix.getElem_transpose]
       simp only [GramSchmidt.scaledCoeffMatrix, Matrix.getElem_ofFn, Matrix.row]
-      rw [if_pos hq_val, if_neg hp_val_ne, rowSwap_getRow_right_val_int,
+      rw [ite_eq_left hq_val, ite_eq_right hp_val_ne, rowSwap_getRow_right_val_int,
         rowSwap_getRow_eq_of_ne_val_int]
       · rw [hq_lift]
         exact dot_comm_int _ _
@@ -2133,7 +2133,7 @@ theorem scaledCoeffMatrix_rowSwap_adjacent_pivot_transpose
         exact hq_ne_val (by simpa [GramSchmidt.liftFinLE] using h)
       rw [Matrix.getElem_transpose]
       simp only [GramSchmidt.scaledCoeffMatrix, Matrix.getElem_ofFn, Matrix.row]
-      rw [if_neg hq_ne_val, if_pos hp_val]
+      rw [ite_eq_right hq_ne_val, ite_eq_left hp_val]
       rw [hp_lift]
       rw [rowSwap_getRow_left_val_int, rowSwap_getRow_eq_of_ne_val_int]
       · exact dot_comm_int _ _
@@ -2152,7 +2152,7 @@ theorem scaledCoeffMatrix_rowSwap_adjacent_pivot_transpose
         exact hq_ne_val (by simpa [GramSchmidt.liftFinLE] using h)
       rw [Matrix.getElem_transpose]
       simp only [GramSchmidt.scaledCoeffMatrix, Matrix.getElem_ofFn, Matrix.row]
-      rw [if_neg hq_ne_val, if_neg hp_ne_val, rowSwap_getRow_eq_of_ne_val_int]
+      rw [ite_eq_right hq_ne_val, ite_eq_right hp_ne_val, rowSwap_getRow_eq_of_ne_val_int]
       · rw [rowSwap_getRow_eq_of_ne_val_int]
         · exact dot_comm_int _ _
         · dsimp [GramSchmidt.liftFinLE]
