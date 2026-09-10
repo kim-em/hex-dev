@@ -1105,10 +1105,11 @@ product equality, multiplicities, and per-factor irreducibility evidence.
 Since `P` is squarefree the multiplicities are one. Use the existing bounded
 factorizer, including `factorTrial` with `defaultFactorCoeffBound` as its
 unconditional fallback. An independent conservative candidate bound is
-`B = 2^D*(D+1)*H`: enumerate coefficients in `[-B,B]` for degrees at most
-`D`, testing exact division, and recurse on strictly smaller degrees. At most
+`B = 2^D*(D+1)*H`: enumerating coefficients in `[-B,B]` for degrees at most
+`D`, testing exact division, and recursing on strictly smaller degrees. At most
 `D²*(2*B+1)^(D+1)` candidate tests bound such a fallback. This is a totality
-bound, not the intended fast factorization strategy; retain the production
+bound explaining finite search size, not a second executable fallback to
+implement alongside `factorTrial`; retain the production
 factorizer's bounded modular, lifting and recombination work as well. This factorization can be
 scheduled after approximation, but no losing factor's algebraic roots are
 constructed. Keep the substituted polynomial, separation bound, factor list,
@@ -1143,6 +1144,8 @@ To enclose `β` to radius `2^-k`, use rational outward arithmetic throughout:
 1. Refine the input to radius at most `2^-b`, where
    `b = k + ceilLog2(ceil C) + 16` and
    `C = 256*(1+R)^2*(1+1/ρ)^2`. Retain the exact real/upper/lower tag;
+   since `ρ ≤ 1`, this gives `2^-b ≤ ρ/2^24`, so every point in the
+   refined ball has modulus at least `ρ/2` and the chart coverage below applies.
    a ball crossing the cut never changes that tag. Input refinement uses
    `RefinedIsolation.refineTo?` with its existing input-computable depth/fuel.
 2. Enclose `r = |a|` by rational bisection of `x²+y²`, intersecting the
@@ -1205,7 +1208,7 @@ are still required.
 
 Take `m(P) = mahlerPrec P + ceilLog2(max 2 D) + 16`,
 `s = 2^(-m(P))`, and approximate `β` to error at most `s/256`. Round the centre
-to the grid of spacing `s/64`. Run the existing exact three-radius,
+to the grid of spacing `s/32`. Run the existing exact three-radius,
 linear-term Pellet checker on the square of half-width `s` at that centre.
 The new quantitative completeness lemma must show this succeeds: the centre
 is within `s/32` of a simple root and every other root is more than `δ(P)`
@@ -1245,24 +1248,31 @@ transport with `SimpleRoot`, not merely compare untyped overlapping balls.
 The current `IsCanonical` literally means membership in the output of
 `isolateComplexRoots?` at `separationDepth`. It cannot justify inserting the
 enclosure above. Replace that predicate and the constructor together with the
-following deterministic normal form for each normalized irreducible `f`.
+following deterministic normal form. Keep two disjoint arms: for `f = X`,
+the canonical base is exactly the existing `zeroRep`; for every other
+normalized irreducible `f`, use the local grid below. Thus zero's exceptional
+square does not also compete in the grid normal form.
 
 Set `m(f) = mahlerPrec f + ceilLog2(max 2 (degree f)) + 16`,
-`s = 2^(-m(f))`, and lattice spacing `g = s/64`. Consider all squares of
+`s = 2^(-m(f))`, and lattice spacing `g = s/32`. Consider all squares of
 half-width `s` centred at `(j*g,k*g)`, for integers `j,k`, whose **exact**
 three-radius linear Pellet checker passes and whose certified root is the
 chosen real or upper root. The canonical square is the lexicographically
 least pair `(j,k)` in this set. The set is finite: any such centre is within
 `radiusHi < 2s` of the root. It is nonempty: rounding the root to this fine
-grid gives the quantitative Pellet success above. Lexicographic minimum is
+grid has centre error at most `sqrt(2)*s/64 < s/32`, giving the
+quantitative Pellet success above. Lexicographic minimum is
 therefore well-defined even though the whole integer lattice has no minimum.
 
 The executable constructor finds it locally. Reflect a lower root to the
 upper half plane, refine that one root to error `≤ s/256`, and enumerate
-lattice centres in the rational bounding box of coordinate radius `3s` about
-its approximate centre. This has fewer than `400²` centres independent of
-degree, height, or root magnitude. For each centre run the fixed exact checker
-and retain successes. Every successful disc in this box contains the same
+lattice centres in the rational bounding box of coordinate radius
+`radiusHi + s/256` about its approximate centre, where
+`radiusHi = (1449/1024)*s`. There are at most 92 centres per coordinate,
+so fewer than `100²` candidates independent of degree, height, or root magnitude.
+Enumerate in lexicographic order, run the fixed exact checker, and return
+the first success; do not compute or retain later successes. Every successful
+disc in this box contains the same
 root: its root is within `6s` of the target, less than `δ(f)`. Every successful
 disc containing the target has its centre in this box. Hence the minimum is
 independent of the input enclosure, its precision, strategy, or enumeration
@@ -1305,6 +1315,15 @@ form; decoding old cached canonical records requires validation and migration.
 Tests must elaborate generated expressions and compare the resulting values
 structurally, including lower roots and double conjugation.
 
+Regenerate and commit the affected emitter outputs in the migration PR:
+`conformance/HexRealAlgebraic/ReprChecks.lean` and the snapshots
+`conformance-fixtures/HexNumberField/number_field.jsonl`,
+`conformance-fixtures/HexRealAlgebraic/real_algebraic.jsonl`, and
+`conformance-fixtures/HexNumberFieldTower/number_field_tower.jsonl`.
+Update their `EmitFixtures.lean` producers, including printed class evidence,
+and build the generated guards. The existing CI compares the real-algebraic
+Repr output with its committed file; regeneration is part of migration.
+
 #### Reusing irreducibility evidence
 
 `ZPoly.CheckedIrreducible` currently stores `isIrreducible p = true`, whose
@@ -1318,6 +1337,33 @@ Replace the class's Boolean field with this evidence, retaining the class name
 and an adapter for old Boolean callers. The Boolean equality becomes a
 companion consequence, not a field all executable producers must compute.
 Audit every projection and constructor use across the library graph.
+Retain positive degree and add a Mathlib-free `primitive : ZPoly.Primitive p`
+field, proved or checked from the retained polynomial without factoring it.
+The old Boolean adapter derives this property by the current content proof.
+In particular, migrate `HexNumberFieldTower/Basic.lean`'s
+`positiveAssociate_primitive`, which projects `checked.is_true`, to the new
+primitive field. Other computational consumers must use evidence or explicit
+algebraic properties; no companion-only Boolean consequence may be imported
+to repair them.
+
+The retained-factor producer has the following schematic shape:
+
+```
+structure FactorWork (P : ZPoly) where
+  result : ZPoly.Factorization
+  result_eq : result = ZPoly.factorize P
+
+def factorWork P := ⟨ZPoly.factorize P, rfl⟩
+```
+
+Bind `work := factorWork P` once. The evidence constructor takes this work,
+an entry `(q, multiplicity)` and the decidable proof
+`(q, multiplicity) ∈ work.result.factors`, plus `0 < q.natDegree`.
+Selection traverses that retained array and obtains membership from the
+array index (or a dependent membership check). `result_eq` transports the
+proof to the actual factorizer result; it is erased and is never tested by
+re-running `factorize`. A supplied work record must carry this equality, not
+merely pass a product check.
 Runtime work records hold the polynomial and factor data; the class stores
 only proof evidence, which is never eliminated into executable data.
 The companion proves each evidence constructor implies rational
@@ -1414,7 +1460,8 @@ If no checked index is supplied, attempt the existing integer-factor search
 with its input-computable `defaultFuel N` budget and a fixed deterministic
 random seed. It is a partial search: `Hex.Nat.factor?` has no totality theorem, and `PrimeCert.small`
 only accepts stored table entries. A successful search supplies the checked
-input to cyclotomic construction. On exhaustion, construct `X^N-1` directly,
+input to cyclotomic construction. On exhaustion, construct `X^N-1` using
+the cyclotomic library's specified bare-index `ZPoly.xPowSubOne N`,
 enclose the requested rational-angle embedding, and run the one-factor
 certification and local canonicalization pipeline above with degree `N` and
 height one. Its squarefreeness follows from `N > 0`. This is a complete
@@ -1425,6 +1472,18 @@ primitive order. A budgeted cyclotomic-only entry point instead reports index
 factorization exhaustion. Neither entry point invents prime certificates or
 interprets exhaustion as non-unity. Measure the potentially large degree-`N`
 fallback and index-factor search separately; checked-index callers bypass it.
+The total API has a mathematical termination guarantee, not a practical
+resource guarantee for arbitrary denominators. In particular, an unsuccessful
+small-fuel index search can leave a huge degree-`N` allocation and expensive
+modular recombination. Under this fallback's Mahler bound, certification
+precision grows as `Θ(N*log(N+1))`, despite the geometric separation of unity
+roots being of order `1/N`. Document the measured usable index range for each
+route, including unsuccessful index searches. Resource-constrained callers
+use the budgeted API, which checks degree and workspace limits before dense
+construction and reports `unknown` or index-search exhaustion. Do not
+reinterpret those outcomes as a total negative answer. A larger index-search
+budget is optional acceleration; it supplies neither a complete prime-certificate
+producer nor a practical resource guarantee for the large binomial fallback.
 
 #### Exact recognition
 
@@ -1501,6 +1560,11 @@ in bits, and `k` the requested approximation precision. Factor coefficient
 height can grow: a Landau–Mignotte bound gives `h_f = O(h+D+log D)`; do not
 substitute `h` for `h_f` without a proof. Root separation requires
 `O(D*(h+log D))` bits with the current Mahler bound.
+Since `D = n*d`, the certification precision is linear in the root index up
+to logarithmic factors and may dominate both approximation and exact Taylor
+arithmetic. Substitution removes eliminants but does not remove that cost.
+The evidence must sweep `n` and report actual precision independently of
+degree and height; requested output precision `k` alone understates the work.
 
 | Phase | Work and storage to report |
 | --- | --- |
@@ -1509,7 +1573,7 @@ substitute `h` for `h_f` without a proof. Root separation requires
 | Approximation | Bisection iterations linear in the computed precision plus magnitude bits; powers use `O(log n)` multiplications; series term budgets above; rational numerator/denominator growth and peak workspace must be measured |
 | Factorization | One `F(D,h)` invocation in the general route; all modular factors, Hensel lifts, LLL/recombination storage included; no polynomial-time claim for the current implementation |
 | Certification/selection | At most the number of factors in linear Pellet tests; exact Taylor shift is quadratic in each factor degree using the current kernel; separation precision and temporary coefficient bit lengths included |
-| Canonicalization | One-root refinement plus fewer than `400²` fixed local tests of the selected degree `e`; current exact Taylor kernel gives `O(e²)` arithmetic per centre, at `O(h_f+e*(m(f)+log(1+R_f)))` coefficient bits; stream centres using one workspace |
+| Canonicalization | One-root refinement plus fewer than `100²` fixed local tests of the selected degree `e`, stopping at the first success; current exact Taylor kernel gives `O(e²)` arithmetic per centre, at `O(h_f+e*(m(f)+log(1+R_f)))` coefficient bits; stream centres using one workspace |
 | Cyclotomic | Checked integer-index factorization, `Φ_N` generation at output degree `φ(N)` and actual coefficient height, one embedding certificate, one local canonicalization; coprime powers reuse generation and evidence |
 | Recognition/composite plans | Recognition uses at most `2*d²` degree-`d` monic remainder updates, `O(d)` coefficient operations per update and one retained remainder; bound its coefficient bits by `O(d²*(h+log(d+1)))`. Include optional index factorizations, rejected plans, and intermediate exactification costs |
 
@@ -1521,6 +1585,22 @@ analysis. Neither lower degree nor fast numerical approximation alone implies
 an end-to-end improvement. Fast soft checks may filter candidates, but the
 canonical success predicate and certificate must agree with the fixed exact
 checker; changing the normal form is a versioned migration.
+The exact success predicate excludes strategies whose successful squares differ,
+including the combined soft/Graeffe checker, unless they prove equivalence or
+only soundly reject candidates. Precomputed constants may carry the same fixed
+canonical evidence without repeating the search.
+
+Before landing the constructor migration, compare local canonicalization with
+the current `isolateComplexRoots?` run at `separationDepth` on the existing
+number-field constructor benchmarks. Include constants, rational numbers,
+`ZPoly.rootNear #p[-2,0,1] (1414/1000)`, easy low-height quadratics, and higher
+degrees/heights, measuring certificate counts and complete construction costs.
+Acceptance requires demonstrated end-to-end improvement on the targeted
+expensive constructions and no material reproducible regression on the common
+small constructors. An inconclusive result does not establish that bar; follow
+the shared-host rerun limit. If the bar fails, optimize enumeration or revise
+the normal form and its proofs before migration. Do not silently dispatch
+between two different canonical forms based on input or timing.
 
 Include the canonical integer-root construction
 `(#p[1099513724929, 0, 1099511627776] : ZPoly).algebraicRoots`, whose exact roots
@@ -1602,15 +1682,24 @@ factor construction, canonicalization, and unity witnesses; cyclotomic code
 knows nothing about algebraic numbers. Companions add the parallel
 `HexCyclotomicMathlib → HexNumberFieldMathlib` edge, with
 `HexRootsMathlib` and `HexBerlekampZassenhausMathlib` supplying transport proofs.
+The closed cyclotomic evidence constructor intentionally lives in the core
+`CheckedIrreducible` design: `HexNumberField.Basic` will import the cyclotomic
+API and all downstream libraries inherit its `HexIntFactor` dependency, even
+without unity calls. This is an explicit package/import-closure cost to check
+in build and release validation. An open constructor accepting an arbitrary
+provider's assertion is not a substitute for checked irreducibility evidence.
 There is no edge back from computational libraries to companions or from
 number fields to the real algebraic subtype. Real square-root wrappers reuse
 the complex implementation and keep their nonnegative real contracts.
 
-Implement in this order: shared substitution and certificate/evidence
-interfaces; quantitative enclosures and local canonicalization with migration
-proofs; direct factor selection and end-to-end radicals; cyclotomic library and
-companion then unity reuse/recognition; optional plans after comparative
-measurements. Update `libraries.yml`, Lake requirements, and the authoritative
+Implement in this order: shared substitution and generic near-root
+certificates; the cyclotomic library and companion; closed irreducibility
+evidence and local canonicalization with all migration proofs; direct factor
+selection and end-to-end radicals; unity reuse/recognition; optional plans
+after comparative measurements. Quantitative principal enclosures can proceed
+independently after the generic certificate interfaces. The cyclotomic library
+must precede the core class migration because its constructor appears in the
+closed evidence type. Update `libraries.yml`, Lake requirements, and the authoritative
 [release manifest](../../scripts/release/released.yml) only when these libraries
 and edges actually exist. Existing release pins are not changed by a design.
 Manual acceptance requirements live in
