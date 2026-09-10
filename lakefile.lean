@@ -137,6 +137,11 @@ lean_lib HexMvPoly where
 
 lean_lib HexMvGcd where
 
+lean_lib HexReflect where
+
+@[default_target]
+lean_lib HexReflectMathlib where
+
 lean_lib HexSparsePoly where
 
 lean_lib HexModArith where
@@ -808,6 +813,8 @@ lean_lib HexConformance where
 
     ++ #[`HexRealAlgebraic.Conformance, `HexRealAlgebraic.Checks, `HexNumberField.ComplexChecks, `HexRealAlgebraic.ReprChecks].map Glob.one
 
+    ++ #[`HexReflect.TestProviders, `HexReflect.Conformance, `HexReflect.ScopeConformance].map Glob.one
+
     ++ #[`HexSmith.Conformance].map Glob.one
 
     ++ #[`HexMinPoly.Fixtures, `HexMinPoly.Conformance].map Glob.one
@@ -1340,6 +1347,10 @@ lean_exe hexpolysmith_bench where
 lean_exe hexmvpoly_bench where
   srcDir := "bench"
   root := `HexMvPoly.Bench
+
+lean_exe hexreflect_bench where
+  srcDir := "bench"
+  root := `HexReflect.Bench
 
 lean_exe hexmvgcd_bench where
   srcDir := "bench"

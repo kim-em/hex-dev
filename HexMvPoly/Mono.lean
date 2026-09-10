@@ -324,6 +324,43 @@ theorem add_scale (a b : Nat) (m : Mono n) :
   intro i hi
   simp [scale, mul, Nat.add_mul]
 
+/-! # Monomial values -/
+
+/-- The zero monomial evaluates to one. -/
+theorem prod_zero [Lean.Grind.Semiring R] (x : Fin n → R) :
+    prod x (zero : Mono n) = 1 := by
+  unfold prod
+  apply List.foldl_mul_eq_self
+  intro i _
+  rw [powBySq_eq_pow, getElem_zero, Lean.Grind.Semiring.pow_zero]
+
+/-- A product of monomials evaluates to the product of the values. -/
+theorem prod_mul [Lean.Grind.CommSemiring R] (x : Fin n → R) (a b : Mono n) :
+    prod x (mul a b) = prod x a * prod x b := by
+  unfold prod
+  rw [← List.foldl_mul_mul]
+  apply List.foldl_mul_congr
+  intro i _
+  rw [powBySq_eq_pow, powBySq_eq_pow, powBySq_eq_pow, getElem_mul,
+    Lean.Grind.Semiring.pow_add]
+
+/-- A scaled unit monomial evaluates to the corresponding power of one
+variable. -/
+theorem prod_scale_unit [Lean.Grind.CommSemiring R] (x : Fin n → R) (k : Nat)
+    (i : Fin n) :
+    prod x (scale k (unit i)) = x i ^ k := by
+  unfold prod
+  rw [List.foldl_mul_congr (List.finRange n) _
+    (fun j => if j = i then x j ^ k else 1) 1]
+  · rw [List.foldl_mul_single (List.finRange n) 1 i (fun j => x j ^ k)
+      (List.mem_finRange i) (List.nodup_finRange n), Lean.Grind.Semiring.one_mul]
+  · intro j _
+    rw [powBySq_eq_pow, getElem_scale, getElem_unit]
+    by_cases hji : j = i
+    · subst hji
+      simp
+    · simp [hji, Lean.Grind.Semiring.pow_zero]
+
 /-- Every monomial is the product of its scaled unit monomials. -/
 theorem mul_units (m : Mono n) :
     (List.finRange n).foldl
