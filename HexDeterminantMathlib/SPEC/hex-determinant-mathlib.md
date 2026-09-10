@@ -22,6 +22,14 @@ theorem det_eq [CommRing R] (M : Hex.Matrix R n n) :
 Through `det_eq`, Mathlib determinant theorems (Cramer's rule, Cauchy-Binet,
 adjugate identities) transfer to our executable determinant.
 
+The correspondence theorem is coefficient-generic. `MvPoly` obtains the
+required Mathlib `CommRing` from `HexMvPolyMathlib`, and `RationalFn` obtains a
+Mathlib `Field` from `HexRationalFnMathlib`, so those carrier specializations
+need no new determinant lemma. There is currently no global Mathlib `CommRing`
+instance for executable `DensePoly`; the computational carrier coverage does
+not wait for that separate bridge. Carrier conformance adds no specialized
+`det_eq` lemmas here and keeps this library a correspondence-only layer.
+
 ## Required outstanding obligations
 
 | obligation | status | requirement |
