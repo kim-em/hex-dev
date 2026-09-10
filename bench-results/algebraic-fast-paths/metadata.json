@@ -1,0 +1,22 @@
+{
+  "cpu": 2,
+  "load": [
+    144.947265625,
+    63.830078125,
+    25.12646484375
+  ],
+  "hostname": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "base": "40585b8b9bcda740eb5815572e116eadaf5f7410",
+  "toolchain": "leanprover/lean4:v4.34.0-rc2",
+  "schedule": "Eight adjacent AB/BA blocks per case; all samples retained. 64 comparison calls or 2 selection/extraction calls per arm. Construction separate.",
+  "sources": {
+    "bench/HexNumberField/Bench.lean": "20e0c9b64cc84a57724f20e938fd965d0c060780de09b927b40e65f797f73550",
+    "HexNumberField/Interval.lean": "3d5195d640ff7ecfa6880e0ba2cfb761f9ba3f8ced0777f027361e9b2e0191be",
+    "HexNumberField/Nearest.lean": "d7598375f5555dcb5cb4a2ef70e36937ab29ad7b7b9a62421c10cbcad8a76e45",
+    "HexNumberField/Order.lean": "5a773f5bbf817955690ce99674244a419da70cf641988f7a0cea09755f6d1115",
+    "HexNumberField/RootSelection.lean": "438a361c636dc7e8677f69f596f25ee009ab70b1b5db35083f9e94fce1af4092",
+    "HexNumberField/Radical.lean": "f637f576d2eb0c749600406c4c16adb4f246bf2dbe9ae7a47d0d4ae7b1a27bcc",
+    "HexNumberField/Unity.lean": "8530fa6a55fc025964996299b1c93dab3f648983b636e197d43321f17f6412ba"
+  }
+}

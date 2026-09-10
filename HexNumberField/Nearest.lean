@@ -8,6 +8,7 @@ module
 
 public import HexNumberField.IntegerRoots
 public import HexNumberField.Roots
+public import HexNumberField.Interval
 
 public section
 
@@ -45,11 +46,25 @@ equal; distinct ones are distinct roots of the product of their minimal
 polynomials, whose approximation balls at `separationPrec` of that product are
 disjoint, so the order of the ball centres is the order of the numbers. -/
 @[expose]
-def realCompare (a b : AlgebraicNumber) : Ordering :=
+def realCompareExact (a b : AlgebraicNumber) : Ordering :=
   if a == b then .eq
   else
     let prec := separationPrec (a.p * b.p)
     if (a.approx prec).re < (b.approx prec).re then .lt else .gt
+
+/-- Exact real order with stored-interval rejection and bounded geometric refinement.
+The product polynomial is constructed only when stored intervals overlap. -/
+@[expose] def realCompare (a b : AlgebraicNumber) : Ordering :=
+  if a == b then .eq else
+  match Interval.realOrder? a.rep.1.square b.rep.1.square with
+  | some result => result
+  | none =>
+    let cap := separationPrec (a.p * b.p) + 1
+    let start := max 1 (min a.rep.1.square.prec b.rep.1.square.prec)
+    let schedule := Interval.targets cap ((cap - start).toNat + 1) start
+    match Interval.search Interval.realOrder? schedule a.rep b.rep with
+    | some result => result
+    | none => realCompareExact a b
 
 end Hex.AlgebraicNumber
 

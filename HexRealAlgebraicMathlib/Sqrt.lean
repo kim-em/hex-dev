@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealAlgebraicMathlib.Roots
+public import HexNumberFieldMathlib.Radical
 public import Mathlib.Analysis.SpecialFunctions.Sqrt
 
 public section
@@ -15,66 +16,39 @@ public section
 
 namespace Hex.RealAlgebraicNumber
 
-private theorem sqrtPolynomial (a : RealAlgebraicNumber) :
-    (RealAlgebraicPoly.ofArray #[-a, 0, 1]).toPolynomial =
-      Polynomial.X ^ 2 - Polynomial.C a.toReal := by
-  rw [RealAlgebraicPoly.toPolynomial_ofArray]
-  simp only [← Array.foldr_toList, List.foldr_cons, List.foldr_nil, neg_toReal, zero_toReal,
-    one_toReal, Polynomial.C_0, Polynomial.C_1, Polynomial.C_neg]
-  ring
-
-private theorem sqrtRoots_finite (a : RealAlgebraicNumber) :
-    (RealAlgebraicPoly.ofArray #[-a, 0, 1]).roots ≠ .all := by
-  intro hr
-  have h := (RealAlgebraicPoly.roots_all_iff _).mp hr
-  rw [sqrtPolynomial] at h
-  have hc := congrArg (fun p : Polynomial ℝ => p.coeff 2) h
-  simp at hc
-
-private theorem sqrtRoots_contains (a : RealAlgebraicNumber) (x : ℝ) :
-    (RealAlgebraicPoly.ofArray #[-a, 0, 1]).roots.Contains x ↔ x ^ 2 = a.toReal := by
-  rw [RealAlgebraicPoly.contains_roots_iff, sqrtPolynomial]
-  simp [sub_eq_zero]
-
-private theorem sqrtRoots_mem (a : RealAlgebraicNumber) (r : RealRootCount)
-    (hr : r ∈ (RealAlgebraicPoly.ofArray #[-a, 0, 1]).roots.toArray) :
-    r.root.toReal ^ 2 = a.toReal := by
-  apply (sqrtRoots_contains a _).mp
-  cases h : (RealAlgebraicPoly.ofArray #[-a, 0, 1]).roots with
-  | all => exact False.elim (sqrtRoots_finite a h)
-  | finite entries =>
-    rw [h] at hr
-    exact ⟨r, by simpa [RealRootSet.toArray, RealRootSet.finite?] using hr, rfl⟩
+private theorem complex_sqrt (a : RealAlgebraicNumber) (ha : 0 ≤ a) :
+    a.toAlgebraic.sqrt.toComplex = ((Real.sqrt a.toReal : ℝ) : ℂ) := by
+  rw [AlgebraicNumber.sqrt_toComplex, ← ofReal_toReal a]
+  apply Complex.sqrt_of_nonneg
+  change 0 ≤ a.toReal ∧ (0 : ℝ) = 0
+  exact ⟨by simpa only [le_iff, zero_toReal] using ha, rfl⟩
 
 /-- A selected square root is nonnegative and squares to its argument. -/
 theorem sqrtRoot?_sound (a b : RealAlgebraicNumber) (h : a.sqrtRoot? = some b) :
     0 ≤ b ∧ b ^ 2 = a := by
-  obtain ⟨r, hr, rfl⟩ := Option.map_eq_some_iff.mp h
-  have hn := Array.find?_some hr
-  refine ⟨by simpa only [decide_eq_true_eq] using hn, toReal_injective ?_⟩
-  change (natPow r.root 2).toReal = a.toReal
-  rw [natPow_toReal]
-  exact sqrtRoots_mem a r (Array.mem_of_find?_eq_some hr)
+  unfold sqrtRoot? at h
+  split at h
+  · contradiction
+  · rename_i hn
+    have ha : 0 ≤ a := le_of_not_gt hn
+    have he := (ofAlgebraic?_eq_some _ b).mp h
+    have hv : b.toReal = Real.sqrt a.toReal := by
+      have hc := congrArg (fun z : AlgebraicNumber => z.toComplex.re) he
+      rw [complex_sqrt a ha] at hc
+      exact hc.symm
+    refine ⟨?_, toReal_injective ?_⟩
+    · rw [le_iff, zero_toReal, hv]
+      exact Real.sqrt_nonneg _
+    · change (natPow b 2).toReal = a.toReal
+      rw [natPow_toReal, hv, Real.sq_sqrt]
+      simpa only [le_iff, zero_toReal] using ha
 
-/-- For a nonnegative argument, root completeness supplies a selectable real square root. -/
+/-- The optimized complex selector supplies a real root for every nonnegative input. -/
 theorem sqrtRoot?_isSome (a : RealAlgebraicNumber) (ha : 0 ≤ a) :
     a.sqrtRoot?.isSome = true := by
-  have har : 0 ≤ a.toReal := by simpa only [le_iff, zero_toReal] using ha
-  have hx := (sqrtRoots_contains a (Real.sqrt a.toReal)).mpr (Real.sq_sqrt har)
-  have hex : ∃ r ∈ (RealAlgebraicPoly.ofArray #[-a, 0, 1]).roots.toArray, 0 ≤ r.root := by
-    cases h : (RealAlgebraicPoly.ofArray #[-a, 0, 1]).roots with
-    | all => exact False.elim (sqrtRoots_finite a h)
-    | finite entries =>
-      rw [h] at hx
-      obtain ⟨r, hr, hxr⟩ := hx
-      refine ⟨r, by simpa [RealRootSet.toArray, RealRootSet.finite?] using hr, ?_⟩
-      rw [le_iff, zero_toReal, hxr]
-      exact Real.sqrt_nonneg _
-  unfold sqrtRoot?
-  rw [Option.isSome_map, Option.isSome_iff_ne_none, ne_eq, Array.find?_eq_none]
-  intro hn
-  obtain ⟨r, hr, hpos⟩ := hex
-  exact hn r hr (by simpa only [decide_eq_true_eq] using hpos)
+  rw [sqrtRoot?, ite_eq_right (not_lt_of_ge ha), ofAlgebraic?_isSome, AlgebraicNumber.isReal_iff,
+    complex_sqrt a ha]
+  rfl
 
 /-- The checked square-root API succeeds exactly for nonnegative arguments. -/
 theorem sqrt?_isSome (a : RealAlgebraicNumber) :

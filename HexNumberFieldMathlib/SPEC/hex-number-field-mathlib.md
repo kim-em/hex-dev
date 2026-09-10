@@ -474,3 +474,10 @@ The roots-of-unity constructor agrees with `Complex.exp (2 * π * I * q)` and
 `Complex.isPrimitiveRoot_exp_rat` gives its exact order. Its selector uses the
 least positive argument among integer roots of unity, equivalently the largest
 real part on the upper half circle.
+
+`Unity.generator?_value` proves the integer-binomial selector total.
+`rootOfUnity_toComplex` states its exponential value; `rootOfUnity_primitive`,
+`rootOfUnity_add`, and `rootOfUnity_neg` expose exact order and rational-angle
+laws. `RootSelection.integerRoots?_mem` derives completeness of the lazy
+integer isolations from the canonical solver, while `maximum?_spec` covers
+both interval selection and the exact fallback.

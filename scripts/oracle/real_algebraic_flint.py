@@ -180,6 +180,16 @@ class Checker:
     def check(self, operation: str, d: dict[str, Any]) -> None:
         q = self.q
         zero = q.number(0)
+        if operation == "unity":
+            self.complex_equal(d["root"], q.root_of_unity(Fraction(*d["angle"])), "rootOfUnity")
+            return
+        if operation == "norm":
+            a = self.complex_value(d["a"])
+            modulus = q.to_real(q.unary("abs", a, q.complex))
+            require(modulus is not None, "nonreal modulus")
+            self.complex_equal(d["abs"], q.unary("abs", a, q.complex), "abs")
+            self.equal(d["normSq"], q.binary("mul", modulus, modulus), "normSq")
+            return
         if operation == "complex":
             a, b = self.complex_value(d["a"]), self.complex_value(d["b"])
             self.complex_equal(d["conj"], q.unary("conj", a, q.complex), "conj")
@@ -350,12 +360,15 @@ def integer_roots(d: dict[str, Any]) -> None:
         ctx.prec = saved
 
 
-OPERATIONS = {"complex", "order", "scalar", "arithmetic", "approx", "integerRoots", "algebraicRoots",
+OPERATIONS = {"unity", "norm", "complex", "order", "scalar", "arithmetic", "approx", "integerRoots", "algebraicRoots",
               "reject", "rejectPolynomial", "repr"}
 REQUIRED_CASES = {
     **{op: names for op, names in [
+        ("unity", {"unity/0/1", "unity/1/2", "unity/1/4", "unity/-1/4", "unity/1/3",
+                   "unity/2/5", "unity/-1/6", "unity/7/6", "unity/1/8", "unity/1/16"}),
+        ("norm", {"zero", "negative", "unit", "gaussian", "irrational"}),
         ("complex", {"complex-zero", "complex-rational", "complex-cut", "complex-upper",
-                     "complex-lower", "complex-same-side", "complex-fourth", "complex-above-cut", "complex-below-cut"}),
+                     "complex-lower", "complex-same-side", "complex-fourth", "complex-above-cut", "complex-below-cut", "complex-sixteenth", "complex-close-imag"}),
         ("order", {"zero", "rational", "sqrt-signs", "sqrt-lower", "sqrt-upper", "negative-lower",
                    "negative-upper", "equal-sqrt", "equal-square", "equal-cancel", "cross-factor",
                    "mignotte-close", "mignotte-left-rational", "mignotte-right-rational"}),

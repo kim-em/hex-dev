@@ -1040,3 +1040,8 @@ forced fallback, branch-cut radicals, rational-angle periodicity and orders,
 and complex norm identities. FLINT qqbar supplies exact expected values.
 Benchmarks separate construction, selection, and complete extraction, retaining
 eight adjacent AB/BA blocks under the shared-host measurement policy.
+
+The [interval and radical measurements](../../bench-results/algebraic-fast-paths/README.md)
+separate preconstructed comparisons, lazy branch selection, and complete
+extraction. They include the same-imaginary fallback overhead as well as
+successful fast paths; every completed AB/BA block is retained.

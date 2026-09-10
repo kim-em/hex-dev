@@ -10,6 +10,8 @@ public import HexNumberFieldMathlib.IntegerRoots
 public import HexNumberFieldMathlib.Lazy
 public import HexNumberFieldMathlib.Field
 
+public import HexNumberFieldMathlib.Interval
+
 public section
 
 /-!
@@ -189,10 +191,10 @@ theorem abs_re_sub_center_le (a : AlgebraicNumber) (prec : Int) :
   exact h'.trans h
 
 /-- `realCompare` is the order of the real parts. -/
-theorem realCompare_eq (a b : AlgebraicNumber) (ha : a.isReal = true)
+theorem realCompareExact_eq (a b : AlgebraicNumber) (ha : a.isReal = true)
     (hb : b.isReal = true) :
-    a.realCompare b = compare a.toComplex.re b.toComplex.re := by
-  unfold realCompare
+    a.realCompareExact b = compare a.toComplex.re b.toComplex.re := by
+  unfold realCompareExact
   split
   · rename_i heq
     rw [(beq_iff a b).mp heq]
@@ -235,6 +237,26 @@ theorem realCompare_eq (a b : AlgebraicNumber) (ha : a.isReal = true)
       have hle' := not_lt.mp hle
       rw [abs_of_nonpos (by linarith)] at hsep
       linarith
+
+/-- Fast real comparisons retain the reference semantics. -/
+theorem realCompare_eq (a b : AlgebraicNumber) (ha : a.isReal = true)
+    (hb : b.isReal = true) :
+    a.realCompare b = compare a.toComplex.re b.toComplex.re := by
+  unfold realCompare
+  split
+  · rename_i heq
+    rw [(beq_iff a b).mp heq]
+    exact (compare_eq_iff_eq.mpr rfl).symm
+  · split
+    · rename_i o ho
+      exact (Interval.realOrder?_sound a.rep b.rep ho).symm
+    · dsimp only
+      split
+      · rename_i o ho
+        exact (Interval.search_sound Interval.realOrder?
+          (fun z w v => compare z.re w.re = v)
+          (fun a b _ h => Interval.realOrder?_sound a b h) _ a.rep b.rep ho).symm
+      · exact realCompareExact_eq a b ha hb
 
 /-- The complex interpretation of `X² + 1`. -/
 theorem toPolyℂ_xsq_add_one : toPolyℂ #p[1, 0, 1] = X ^ 2 + 1 := by
