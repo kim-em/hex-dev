@@ -52,8 +52,10 @@ import HexReflect.TestProviders
   `Sym.Arith` view.
 
 **Covered edge cases:** empty batches, constants, the zero polynomial modulo
-the characteristic, out-of-range reflected variables, ambiguous providers,
-and declines for unclassified carriers and mismatched views.
+the characteristic, out-of-range reflected variables, ambiguous, declining,
+and malformed providers, a numeral with a nonstandard `OfNat` instance, a
+symbolic semiring power, a batch mixing two carriers, a metavariable assigned
+between attempts, and declines for unclassified carriers and mismatched views.
 -/
 
 namespace Hex.ReflectConformance
@@ -361,56 +363,83 @@ run_meta do
       logInfo d.toMessageData
 
 -- Semiring batches reify and seal, retaining the reflected expression and
--- the atom array, and offer no ring conversion.
+-- the atom array, and offer no ring conversion. A symbolic top-level power,
+-- which the pinned semiring reifier does not accept, is one atom.
 /--
-info: semiring: sealed 2, reflected Lean.Grind.CommRing.Expr.add
+info: semiring: sealed 3, reflected Lean.Grind.CommRing.Expr.add
   (Lean.Grind.CommRing.Expr.mul (Lean.Grind.CommRing.Expr.var 0) (Lean.Grind.CommRing.Expr.var 1))
   (Lean.Grind.CommRing.Expr.num 3)
+---
+info: symbolic semiring power: Lean.Grind.CommRing.Expr.var 2
 -/
 #guard_msgs in
 run_meta do
   withLocalDeclD `n (mkConst ``Nat) fun n => do
   withLocalDeclD `k (mkConst ``Nat) fun k => do
     let e ← add (← mul n k) (natLit 3)
+    let p ← pow n k
     Hex.Reflect.run do
       let .success r _ ← reifyCommSemiring e | throwError "semiring input declined"
+      let .success rp _ ← reifyCommSemiring p | throwError "symbolic power declined"
       let s ← sealAtoms
       let .success sr _ ← sealSemiring r s | throwError "sealing failed"
       logInfo m!"semiring: sealed {sr.sealed.n}, reflected {repr sr.reflected.expr}"
-      expect (sr.sealed.atoms == #[n, k]) "atoms retained"
+      logInfo m!"symbolic semiring power: {repr rp.expr}"
+      expect (sr.sealed.atoms == #[n, k, p]) "atoms retained"
 
--- Cache identity: the same canonical source is one view, and each requested
--- comparator is one conversion.
-/-- info: cache: views 1, conversions 2, provider selections 1 -/
+-- Cache identity: the same canonical source is one view; each requested
+-- comparator is one conversion, keyed by the quoted comparator rather than
+-- by its name, so an order renamed to `lex` but comparing by `grevlex` hits
+-- the `grevlex` conversion; and a different carrier is a different provider
+-- selection.
+/-- info: cache: views 2, conversions 3, provider selections 2 -/
 #guard_msgs in
 run_meta do
   withLocalDeclD `x intExpr fun x => do
   withLocalDeclD `y intExpr fun y => do
+  withLocalDeclD `a (finExpr 7) fun a => do
     let e ← add x y
     Hex.Reflect.run do
       let .success r _ ← reifyCommRing e | throwError "declined"
       let .success r' _ ← reifyCommRing (← add x y) | throwError "declined"
+      let .success ra _ ← reifyCommRing (← add a a) | throwError "declined"
       expect (r.expr == r'.expr) "same view"
       let s ← sealAtoms
       let .success c1 _ ← convert r s .lex | throwError "conversion declined"
       let .success c2 _ ← convert r s .grevlex | throwError "conversion declined"
       let .success c3 _ ← convert r' s .lex | throwError "conversion declined"
-      expect (c1.key.order == ``Hex.Mono.lex && c2.key.order == ``Hex.Mono.grevlex) "orders"
+      let impostor : MonoOrder := { MonoOrder.grevlex with name := MonoOrder.lex.name }
+      let .success c4 _ ← convert r s impostor | throwError "conversion declined"
+      let .success ca _ ← convert ra s .lex | throwError "conversion declined"
+      expect (c1.key.cmp == MonoOrder.lex.quoteCmp 3 && c2.key.cmp == MonoOrder.grevlex.quoteCmp 3)
+        "comparator quotations"
+      expect (c4.key.cmp == c2.key.cmp && c4.key.cmp != c1.key.cmp)
+        "a renamed comparator is keyed by its quotation"
       expect (c1.terms.map (fun t => (t.1.toList, t.2)) ==
         c3.terms.map (fun t => (t.1.toList, t.2))) "cached conversion"
+      expect (c1.key.char? == some 0 && ca.key.char? == some 7) "characteristic in the key"
       let st ← getThe Hex.Reflect.State
       logInfo m!"cache: views {st.views.ring.size}, conversions {st.converted.size}, \
         provider selections {st.providers.size}"
 
--- Budget exhaustion is a decline carrying the dimension and exact usage. The
--- term bound saturates one above the remaining budget, so it reports the
--- smallest increment that already exceeds the limit.
+-- Budget exhaustion is a decline carrying the dimension and the usage of the
+-- whole batch so far. Bounds saturate one above the remaining budget, so a
+-- report shows the smallest increment that already exceeds the limit. Each
+-- expansion dimension is checked before the expanding operation runs.
 /--
 info: budget exhausted in dimension literal exponent: limit 8, consumed 0, requested 40
 ---
 info: budget exhausted in dimension polynomial terms: limit 5, consumed 0, requested 6
 ---
 info: budget exhausted in dimension atoms: limit 1, consumed 1, requested 1
+---
+info: budget exhausted in dimension source nodes: limit 3, consumed 0, requested 4
+---
+info: budget exhausted in dimension reflected nodes: limit 4, consumed 0, requested 7
+---
+info: budget exhausted in dimension coefficient bits: limit 16, consumed 0, requested 17
+---
+info: budget exhausted in dimension proof nodes: limit 32, consumed 0, requested 110
 -/
 #guard_msgs in
 run_meta do
@@ -424,41 +453,146 @@ run_meta do
     | .declined d u => logInfo d.toMessageData; expect (u.atoms == 2) "usage reports the atoms"
     | o => throwError (o.toMessageData fun _ => m!"?")
     match ← reflectRingBatch #[small] .lex cfg with
-    | .declined d _ => logInfo d.toMessageData
+    | .declined d u =>
+      logInfo d.toMessageData
+      expect (u.atoms == 2 && u.sourceNodes > 0 && u.reflectedNodes == 4)
+        "a conversion decline reports the reification usage of the batch"
     | o => throwError (o.toMessageData fun _ => m!"?")
     let cfg : Hex.Reflect.Config := { budget := { Budget.default with atoms := 1 } }
     match ← reflectRingBatch #[← add x y] .lex cfg with
     | .declined d _ => logInfo d.toMessageData
     | o => throwError (o.toMessageData fun _ => m!"?")
+    let cfg : Hex.Reflect.Config := { budget := { Budget.default with sourceNodes := 3 } }
+    match ← reflectRingBatch #[← add x y] .lex cfg with
+    | .declined d _ => logInfo d.toMessageData
+    | o => throwError (o.toMessageData fun _ => m!"?")
+    let cfg : Hex.Reflect.Config := { budget := { Budget.default with reflectedNodes := 4 } }
+    match ← reflectRingBatch #[← add (← add x y) (← mul x y)] .lex cfg with
+    | .declined d _ => logInfo d.toMessageData
+    | o => throwError (o.toMessageData fun _ => m!"?")
+    -- `(x + 3) ^ 12` has one monomial per degree but a coefficient of 3 ^ 12,
+    -- which exceeds 16 bits; the decline fires before normalization.
+    let cfg : Hex.Reflect.Config := { budget := { Budget.default with coefficientBits := 16 } }
+    let three ← intLit 3
+    match ← reflectRingBatch #[← pow (← add x three) (natLit 12)] .lex cfg with
+    | .declined d _ => logInfo d.toMessageData
+    | o => throwError (o.toMessageData fun _ => m!"?")
+    let cfg : Hex.Reflect.Config := { budget := { Budget.default with proofNodes := 32 } }
+    match ← reflectRingBatch #[← add x y] .lex cfg with
+    | .declined d _ => logInfo d.toMessageData
+    | o => throwError (o.toMessageData fun _ => m!"?")
+
+-- A batch mixing two carriers declines before sealing, and reports the
+-- reification usage.
+/--
+info: a batch must use one carrier, but found both
+  Int
+and
+  Fin 7
+-/
+#guard_msgs in
+run_meta do
+  withLocalDeclD `x intExpr fun x => do
+  withLocalDeclD `a (finExpr 7) fun a => do
+    match ← reflectRingBatch #[x, a] .lex with
+    | .declined d u => logInfo d.toMessageData; expect (u.atoms == 2) "usage reports both atoms"
+    | o => throwError (o.toMessageData fun _ => m!"?")
+
+-- A numeral with a nonstandard `OfNat` instance is accepted by the pinned
+-- reifier as the literal `2`, so the denoted syntax is not the source; the
+-- session reports an ill-typed proof rather than a success.
+/-- info: failure: generated proof is ill-typed: the denoted reflected syntax is not definitionally the source -/
+#guard_msgs in
+run_meta do
+  let inst37 := mkApp2 (mkConst ``OfNat.mk [.zero]) intExpr
+    (mkApp3 (mkConst ``OfNat.ofNat [.zero]) intExpr (mkRawNatLit 37)
+      (mkApp (mkConst ``instOfNat) (mkRawNatLit 37)))
+  let e := mkApp3 (mkConst ``OfNat.ofNat [.zero]) intExpr (mkRawNatLit 2) inst37
+  logInfo ((← reflectRingBatch #[e] .lex).toMessageData fun _ => m!"converted")
+
+-- A metavariable assigned between attempts no longer declines.
+/--
+info: unresolved metavariable in
+  x * ?m + ?m
+---
+info: after assignment: [([1, 1], 1), ([0, 1], 1)]
+-/
+#guard_msgs in
+run_meta do
+  withLocalDeclD `x intExpr fun x => do
+  withLocalDeclD `y intExpr fun y => do
+    let m ← mkFreshExprMVar intExpr (userName := `m)
+    let hole ← add (← mul x m) m
+    Hex.Reflect.run do
+      let .declined d _ ← reifyCommRing hole | throwError "expected a decline"
+      logInfo d.toMessageData
+      m.mvarId!.assign y
+      let .success r _ ← reifyCommRing hole | throwError "expected a success"
+      let s ← sealAtoms
+      let .success c _ ← convert r s .lex | throwError "conversion declined"
+      logInfo m!"after assignment: {repr (c.terms.map fun t => (t.1.toList, t.2))}"
 
 /-! # Providers -/
 
--- Importing providers changes selection only: the views still reify, the
--- malformed evidence is a failure, and equal priorities are an ambiguity
--- decline.
+-- Importing providers changes selection only: the views still reify,
+-- malformed evidence is a failure, equal priorities are an ambiguity decline,
+-- a recognized decline propagates, and an unclaimed carrier keeps the integer
+-- provider.
 /--
-info: failure: invalid evidence from provider Hex.ReflectConformance.bogusCoefficients: the laws do not prove CoeffLaws for the carrier
+info: failure: invalid evidence from provider Hex.ReflectConformance.bogusCoefficients: laws is not a well-typed value of the expected type
 ---
 info: declined: ambiguous providers for commutative-ring normalization: [Hex.ReflectConformance.rivalCoefficients,
  Hex.ReflectConformance.otherCoefficients]
 ---
-info: Fin 17 still converts: [([0, 0, 1], 1)]
+info: failure: invalid evidence from provider Hex.ReflectConformance.malformedInstanceCoefficients: LawfulBEq instance is not a well-typed value of the expected type
+---
+info: declined: unsupported source type
+  Fin 23
+---
+info: Fin 17 still converts: [([0, 0, 0, 0, 1], 1)]
 -/
 #guard_msgs in
 run_meta do
   withLocalDeclD `a (finExpr 11) fun a => do
   withLocalDeclD `b (finExpr 13) fun b => do
+  withLocalDeclD `d (finExpr 19) fun d => do
+  withLocalDeclD `e (finExpr 23) fun e => do
   withLocalDeclD `c (finExpr 17) fun c => do
     Hex.Reflect.run do
       let .success ra _ ← reifyCommRing (← add a a) | throwError "view declined"
       let .success rb _ ← reifyCommRing (← add b b) | throwError "view declined"
+      let .success rd _ ← reifyCommRing (← add d d) | throwError "view declined"
+      let .success re _ ← reifyCommRing (← add e e) | throwError "view declined"
       let .success rc _ ← reifyCommRing c | throwError "view declined"
       let s ← sealAtoms
       logInfo ((← convert ra s .lex).toMessageData fun _ => m!"converted")
       logInfo ((← convert rb s .lex).toMessageData fun _ => m!"converted")
+      logInfo ((← convert rd s .lex).toMessageData fun _ => m!"converted")
+      logInfo ((← convert re s .lex).toMessageData fun _ => m!"converted")
       let .success cc _ ← convert rc s .lex | throwError "Fin 17 conversion failed"
       expect (cc.provider.id == intCoefficientsId) "integer provider"
       logInfo m!"Fin 17 still converts: {repr (cc.terms.map fun t => (t.1.toList, t.2))}"
+
+-- A non-integer coefficient provider: rational coefficients over `Rat`. The
+-- quoted value maps the integer terms through the cast, and the proof is
+-- kernel-checked against the rational interpretation.
+/--
+info: rational provider Hex.ReflectConformance.ratCoefficients: [([2], 1), ([1], 6), ([0], 9)]
+---
+info: quoted value: ofIntTerms Int.cast [(#v[2], 1), (#v[1], 6), (#v[0], 9)]
+-/
+#guard_msgs in
+run_meta do
+  withLocalDeclD `q (mkConst ``Rat) fun q => do
+    let three ← mkAppOptM ``OfNat.ofNat #[mkConst ``Rat, mkRawNatLit 3, none]
+    let e ← pow (← add q three) (natLit 2)
+    match ← reflectRingBatch #[e] .lex checkProofs with
+    | .success bt _ =>
+      let en ← entry bt 0
+      logInfo m!"rational provider {en.conversion.provider.id.name}: {repr (terms en)}"
+      logInfo m!"quoted value: {en.result.value}"
+      kernelCheck #[q] en
+    | o => throwError (o.toMessageData fun _ => m!"?")
 
 /-! # Conditions in a session -/
 

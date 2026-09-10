@@ -32,38 +32,74 @@ universe u
 variable {R : Type u} [CommRing R] {n : Nat}
   {cmp : Mono n → Mono n → Ordering} [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
 
+section General
+
+variable {C : Type} [CommRing C] [DecidableEq C] [BEq C] [LawfulBEq C]
+  (f : C →+* R) (ofInt : Int → C)
+
+/-- Any coefficient ring homomorphism that agrees with the integer cast on
+the reflected coefficients evaluates a converted term list to the Grind
+denotation. -/
+theorem eval₂_ringHom_ofIntTerms (hf : ∀ k : Int, f (ofInt k) = (k : R)) (ctx : Lean.RArray R) {e : RingExpr}
+    {ts : List (Mono n × Int)} (h : convertTerms? n none e = some ts) :
+    MvPoly.eval₂ f (ctxValuation ctx n) (ofIntTerms (cmp := cmp) ofInt ts) = e.denote ctx :=
+  eval₂_convertTerms_ctx (coeffLaws_ofRingHom f ofInt hf) ctx h
+
+/-- The characteristic-aware form of `eval₂_ringHom_ofIntTerms`. -/
+theorem eval₂_ringHom_ofIntTermsC {c : Nat} [Lean.Grind.IsCharP R c] (hf : ∀ k : Int, f (ofInt k) = (k : R)) (ctx : Lean.RArray R)
+    {e : RingExpr} {ts : List (Mono n × Int)} (h : convertTerms? n (some c) e = some ts) :
+    MvPoly.eval₂ f (ctxValuation ctx n) (ofIntTerms (cmp := cmp) ofInt ts) = e.denote ctx :=
+  eval₂_convertTermsC_ctx (coeffLaws_ofRingHom f ofInt hf) ctx h
+
+/-- Conversion commutes with interpretation through Mathlib's multivariate
+polynomials: evaluating the transported converted polynomial at a coefficient
+homomorphism compatible with the reflected coefficients and at the atom
+valuation gives the denotation of the reflected source. -/
+theorem eval₂_equiv_ringHom_ofIntTerms (hf : ∀ k : Int, f (ofInt k) = (k : R)) (ctx : Lean.RArray R) {e : RingExpr}
+    {ts : List (Mono n × Int)} (h : convertTerms? n none e = some ts) :
+    MvPolynomial.eval₂ f (ctxValuation ctx n)
+        (HexMvPolyMathlib.equiv (ofIntTerms (cmp := cmp) ofInt ts)) =
+      e.denote ctx := by
+  rw [HexMvPolyMathlib.equiv_apply, HexMvPolyMathlib.eval₂_toMvPolynomial]
+  exact eval₂_ringHom_ofIntTerms f ofInt hf ctx h
+
+/-- The characteristic-aware form of `eval₂_equiv_ringHom_ofIntTerms`. -/
+theorem eval₂_equiv_ringHom_ofIntTermsC {c : Nat} [Lean.Grind.IsCharP R c]
+    (hf : ∀ k : Int, f (ofInt k) = (k : R)) (ctx : Lean.RArray R) {e : RingExpr} {ts : List (Mono n × Int)}
+    (h : convertTerms? n (some c) e = some ts) :
+    MvPolynomial.eval₂ f (ctxValuation ctx n)
+        (HexMvPolyMathlib.equiv (ofIntTerms (cmp := cmp) ofInt ts)) =
+      e.denote ctx := by
+  rw [HexMvPolyMathlib.equiv_apply, HexMvPolyMathlib.eval₂_toMvPolynomial]
+  exact eval₂_ringHom_ofIntTermsC f ofInt hf ctx h
+
+end General
+
+section Integer
+
 /-- The executable evaluation of a converted term list through the integer
 cast homomorphism is the Grind denotation. -/
 theorem eval₂_intCastRingHom_ofIntTerms (ctx : Lean.RArray R) {e : RingExpr}
     {ts : List (Mono n × Int)} (h : convertTerms? n none e = some ts) :
     MvPoly.eval₂ (Int.castRingHom R) (ctxValuation ctx n) (ofIntTerms (cmp := cmp) id ts) =
       e.denote ctx :=
-  eval₂_convertTerms_ctx coeffLaws_intCastRingHom ctx h
+  eval₂_ringHom_ofIntTerms (Int.castRingHom R) id (fun _ => rfl) ctx h
 
-/-- Conversion commutes with interpretation through Mathlib's multivariate
-polynomials: evaluating the transported converted polynomial at the integer
-cast and the atom valuation gives the denotation of the reflected source. -/
+/-- The integer specialization of `eval₂_equiv_ringHom_ofIntTerms`. -/
 theorem eval₂_equiv_ofIntTerms (ctx : Lean.RArray R) {e : RingExpr}
     {ts : List (Mono n × Int)} (h : convertTerms? n none e = some ts) :
     MvPolynomial.eval₂ (Int.castRingHom R) (ctxValuation ctx n)
         (HexMvPolyMathlib.equiv (ofIntTerms (cmp := cmp) id ts)) =
-      e.denote ctx := by
-  rw [HexMvPolyMathlib.equiv_apply, ← algebraMap_int_eq, ← MvPolynomial.aeval_def,
-    ← HexMvPolyMathlib.aevalMathlib_apply, HexMvPolyMathlib.aevalMathlib_eq_eval₂,
-    algebraMap_int_eq]
-  exact eval₂_intCastRingHom_ofIntTerms ctx h
+      e.denote ctx :=
+  eval₂_equiv_ringHom_ofIntTerms (Int.castRingHom R) id (fun _ => rfl) ctx h
 
-/-- The characteristic-aware arm through Mathlib's multivariate polynomials,
-under Grind characteristic evidence. -/
+/-- The integer specialization of `eval₂_equiv_ringHom_ofIntTermsC`. -/
 theorem eval₂_equiv_ofIntTermsC {c : Nat} [Lean.Grind.IsCharP R c] (ctx : Lean.RArray R)
     {e : RingExpr} {ts : List (Mono n × Int)} (h : convertTerms? n (some c) e = some ts) :
     MvPolynomial.eval₂ (Int.castRingHom R) (ctxValuation ctx n)
         (HexMvPolyMathlib.equiv (ofIntTerms (cmp := cmp) id ts)) =
-      e.denote ctx := by
-  rw [HexMvPolyMathlib.equiv_apply, ← algebraMap_int_eq, ← MvPolynomial.aeval_def,
-    ← HexMvPolyMathlib.aevalMathlib_apply, HexMvPolyMathlib.aevalMathlib_eq_eval₂,
-    algebraMap_int_eq]
-  exact eval₂_convertTermsC_ctx coeffLaws_intCastRingHom ctx h
+      e.denote ctx :=
+  eval₂_equiv_ringHom_ofIntTermsC (Int.castRingHom R) id (fun _ => rfl) ctx h
 
 /-- The algebra form: with `ℤ` acting through `algebraMap`, the transported
 converted polynomial evaluates by `MvPolynomial.aeval`. -/
@@ -76,5 +112,7 @@ theorem aeval_algEquiv_ofIntTerms (ctx : Lean.RArray R) {e : RingExpr}
   rw [HexMvPolyMathlib.algEquiv_apply, ← HexMvPolyMathlib.aevalMathlib_apply,
     HexMvPolyMathlib.aevalMathlib_eq_eval₂, algebraMap_int_eq]
   exact eval₂_intCastRingHom_ofIntTerms ctx h
+
+end Integer
 
 end HexReflectMathlib

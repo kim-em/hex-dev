@@ -88,8 +88,10 @@ ring with its exact instances. -/
 abbrev CarrierRequest := Lean.Meta.Sym.Arith.CommRing
 
 /-- A Meta registration. `recognize` inspects the canonical carrier and its
-exact instances and returns evidence, or `none` when the provider does not
-apply. -/
+exact instances and reports one of the four provider outcomes:
+`notApplicable` when the provider does not recognize the request, `declined`
+when it recognizes the request but cannot satisfy a stated condition,
+`success` with evidence, or `failure` when its own data is malformed. -/
 structure Registration where
   /-- Stable provider identity for diagnostics and condition provenance. -/
   id : ProviderId
@@ -98,7 +100,7 @@ structure Registration where
   /-- Higher priorities are consulted first. -/
   priority : Nat := 0
   /-- Recognize the classified carrier with its exact instances. -/
-  recognize : CarrierRequest → Lean.Meta.Sym.SymM (Option Evidence)
+  recognize : CarrierRequest → Lean.Meta.Sym.SymM (ProviderOutcome Evidence)
 
 /-! # The universal integer coefficient provider -/
 
@@ -131,7 +133,7 @@ registration attribute is attached where the attribute is available, in
 def intCoefficients : Registration where
   id := intCoefficientsId
   capability := .commRingNormalize
-  recognize ring := return some (.coefficients (← intCoeffProvider ring))
+  recognize ring := return .success (.coefficients (← intCoeffProvider ring)) Budget.zero
 
 /-! # Registry -/
 

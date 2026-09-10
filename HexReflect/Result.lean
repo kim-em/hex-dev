@@ -70,6 +70,8 @@ inductive Decline where
   | unsupportedSourceType (type : Expr)
   /-- A budget dimension would be exceeded. -/
   | budgetExhausted (info : BudgetExhausted)
+  /-- A proof-producing batch mixes two carriers. -/
+  | mixedCarriers (first second : Expr)
   deriving Inhabited
 
 /-- Malformed registration, evidence, or generated data. -/
@@ -289,6 +291,8 @@ def Decline.toMessageData : Decline → MessageData
   | .unsupportedSourceType type =>
     m!"unsupported source type{indentExpr type}"
   | .budgetExhausted info => info.toMessageData
+  | .mixedCarriers first second =>
+    m!"a batch must use one carrier, but found both{indentExpr first}\nand{indentExpr second}"
 
 /-- Diagnostic text for a failure. -/
 def Failure.toMessageData : Failure → MessageData

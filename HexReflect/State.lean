@@ -55,8 +55,10 @@ def isSealed : Vars → Bool
 end Vars
 
 /-- A sealed environment: the fixed size, the ordered atom array, and a
-session-unique identity used by conversion cache keys. -/
-structure Sealed where
+session-unique identity used by conversion cache keys. Values are produced
+only by sealing a session; a conversion checks that the value it receives is
+the session's own. -/
+structure Sealed where private mk ::
   n : Nat
   atoms : Array Expr
   size_eq : atoms.size = n
@@ -78,12 +80,13 @@ structure ViewKey where
 
 namespace ViewKey
 
-/-- Semantic fields are compared first, then canonical expression identity. -/
+/-- Semantic fields are compared first, then canonical expression identity of
+the carrier and instances, then of the source. -/
 def agrees (a b : ViewKey) : Bool :=
   a.view == b.view && a.structureId == b.structureId &&
-    a.instances.size == b.instances.size &&
-    isSameExpr a.source b.source && isSameExpr a.carrier b.carrier &&
-    (a.instances.zip b.instances).all fun (x, y) => isSameExpr x y
+    a.instances.size == b.instances.size && isSameExpr a.carrier b.carrier &&
+    (a.instances.zip b.instances).all (fun (x, y) => isSameExpr x y) &&
+    isSameExpr a.source b.source
 
 end ViewKey
 
@@ -166,8 +169,8 @@ end MonoOrder
 
 /-- The identity of a conversion: the reflected view, the sealed environment
 and its size, the characteristic and its exact evidence, the coefficient
-provider with its coefficient type and interpretation, and the target
-order. -/
+provider with its quoted coefficient type, instances, coefficient map, and
+interpretation, and the quoted target comparator at the sealed size. -/
 structure ConversionKey where
   reflected : ViewKey
   epoch : Nat
@@ -176,8 +179,12 @@ structure ConversionKey where
   charInst? : Option Expr
   provider : ProviderId
   coeffType : Expr
+  /-- The quoted `Zero`, `Add`, `BEq`, and `LawfulBEq` instances. -/
+  coeffInstances : Array Expr
+  ofInt : Expr
   interp : Expr
-  order : Name
+  /-- The quoted comparator at size `n`. -/
+  cmp : Expr
 
 namespace ConversionKey
 
@@ -186,12 +193,14 @@ private def sameOptExpr : Option Expr → Option Expr → Bool
   | some a, some b => isSameExpr a b
   | _, _ => false
 
-/-- Semantic fields are compared first, then canonical expression identity. -/
+/-- Semantic fields are compared first, then canonical expression identity for
+the classified fields, then structural equality for the quoted provider and
+comparator data, which is not canonicalized. -/
 def agrees (a b : ConversionKey) : Bool :=
   a.epoch == b.epoch && a.n == b.n && a.char? == b.char? && a.provider == b.provider &&
-    a.order == b.order && a.reflected.agrees b.reflected &&
-    sameOptExpr a.charInst? b.charInst? && isSameExpr a.coeffType b.coeffType &&
-    isSameExpr a.interp b.interp
+    a.reflected.agrees b.reflected && sameOptExpr a.charInst? b.charInst? &&
+    a.coeffType == b.coeffType && a.coeffInstances == b.coeffInstances &&
+    a.ofInt == b.ofInt && a.interp == b.interp && a.cmp == b.cmp
 
 end ConversionKey
 
@@ -260,5 +269,33 @@ structure State where
 /-- A fresh state against the given limits. -/
 def State.init (limits : Budget) : State :=
   { budget := BudgetState.ofBudget limits }
+
+namespace State
+
+/-- Seal the environment at its current size, or return the existing sealed
+identity. -/
+def sealVars (s : State) : State × Sealed :=
+  match s.vars with
+  | .growing atoms _ =>
+    let epoch := s.sealEpoch + 1
+    ({ s with vars := .sealed atoms.size atoms rfl, sealEpoch := epoch },
+      { n := atoms.size, atoms := atoms, size_eq := rfl, epoch := epoch })
+  | .sealed n atoms h => (s, { n := n, atoms := atoms, size_eq := h, epoch := s.sealEpoch })
+
+/-- The sealed environment, if sealing has happened. -/
+def sealed? (s : State) : Option Sealed :=
+  match s.vars with
+  | .growing .. => none
+  | .sealed n atoms h => some { n := n, atoms := atoms, size_eq := h, epoch := s.sealEpoch }
+
+/-- Whether a sealed value is this session's current sealed environment. -/
+def owns (s : State) (sealed : Sealed) : Bool :=
+  match s.vars with
+  | .growing .. => false
+  | .sealed n atoms _ =>
+    sealed.epoch == s.sealEpoch && sealed.n == n && sealed.atoms.size == atoms.size &&
+      (sealed.atoms.zip atoms).all fun (x, y) => isSameExpr x y
+
+end State
 
 end Hex.Reflect

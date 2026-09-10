@@ -55,15 +55,41 @@ def varBound : RingExpr → Nat
   | .pow a _ => varBound a
   | .add a b | .sub a b | .mul a b => Nat.max (varBound a) (varBound b)
 
+/-- `b ^ k` saturating at `cap`, without computing an intermediate value
+larger than `cap * b`. -/
+def satPow (cap b k : Nat) : Nat :=
+  if b ≤ 1 then Nat.min b cap else go k 1
+where
+  go : Nat → Nat → Nat
+    | 0, acc => acc
+    | k + 1, acc => if acc ≥ cap then cap else go k (Nat.min (acc * b) cap)
+
 /-- An upper bound on the number of monomials produced by expansion,
 saturating at `cap`. Sums add term counts, products multiply them, and a
 literal power raises the count to that power. -/
 def termBound (cap : Nat) : RingExpr → Nat
   | .num _ | .natCast _ | .intCast _ | .var _ => Nat.min 1 cap
   | .neg a => termBound cap a
-  | .pow a k => Nat.min (termBound cap a ^ k) cap
+  | .pow a k => satPow cap (termBound cap a) k
   | .add a b | .sub a b => Nat.min (termBound cap a + termBound cap b) cap
   | .mul a b => Nat.min (termBound cap a * termBound cap b) cap
+
+/-- An upper bound on the bit size of any coefficient produced by expansion,
+saturating at `cap`. A sum of `t` products can grow a coefficient by
+`log2 t + 1` bits per addition; this bound charges one bit per addition,
+sums bits across products, and multiplies bits by a literal exponent. -/
+def coeffBitBound (cap : Nat) : RingExpr → Nat
+  | .num k | .intCast k => Nat.min (Nat.log2 k.natAbs + 1) cap
+  | .natCast k => Nat.min (Nat.log2 k + 1) cap
+  | .var _ => 1
+  | .neg a => coeffBitBound cap a
+  | .pow a k => Nat.min ((coeffBitBound cap a + termBitGrowth cap a) * k) cap
+  | .add a b | .sub a b => Nat.min (Nat.max (coeffBitBound cap a) (coeffBitBound cap b) + 1) cap
+  | .mul a b => Nat.min (coeffBitBound cap a + coeffBitBound cap b + termBitGrowth cap a) cap
+where
+  /-- Extra bits from collecting up to `termBound` like monomials. -/
+  termBitGrowth (cap : Nat) (a : RingExpr) : Nat :=
+    Nat.log2 (termBound cap a) + 1
 
 end RingExpr
 

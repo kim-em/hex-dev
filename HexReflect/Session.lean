@@ -168,21 +168,13 @@ instance : MonadGetVar m where
 /-- Seal the environment at its current size. Sealing an already sealed
 environment returns the same sealed identity. -/
 def sealAtoms : m Sealed := do
-  let s ← getThe State
-  match s.vars with
-  | .growing atoms _ =>
-    let epoch := s.sealEpoch + 1
-    set { s with vars := .sealed atoms.size atoms rfl, sealEpoch := epoch }
-    return { n := atoms.size, atoms := atoms, size_eq := rfl, epoch := epoch }
-  | .sealed n atoms h =>
-    return { n := n, atoms := atoms, size_eq := h, epoch := s.sealEpoch }
+  let (s, sealed) := (← getThe State).sealVars
+  set s
+  return sealed
 
 /-- The sealed environment, if sealing has happened. -/
-def sealed? : m (Option Sealed) := do
-  let s ← getThe State
-  match s.vars with
-  | .growing .. => return none
-  | .sealed n atoms h => return some { n := n, atoms := atoms, size_eq := h, epoch := s.sealEpoch }
+def sealed? : m (Option Sealed) :=
+  return (← getThe State).sealed?
 
 /-! # Views over the `Sym.Arith` classification state -/
 
@@ -223,11 +215,15 @@ def ringOf (r : ReifiedRing) : m Arith.CommRing := do
 
 /-! # Entry points -/
 
-/-- Instantiate, check for metavariables, and canonicalize a source expression
-and its carrier. -/
+/-- Instantiate, check for metavariables, charge the source budget, and
+canonicalize a source expression and its carrier. The source budget is
+charged from a bounded traversal before canonicalization, so an oversized
+input declines before any canonicalization work. -/
 def prepare (input : Expr) : m (Expr × Expr) := do
   let e ← (instantiateMVarsS input : SymM Expr)
   if e.hasMVar then declineWith (.unresolvedMetavariable e)
+  let limit := (← getThe State).budget.remaining.sourceNodes
+  charge .sourceNodes (sourceNodeCount e (limit + 1))
   let carrier ← (inferType e : MetaM Expr)
   let carrier ← (instantiateMVarsS carrier : SymM Expr)
   if carrier.hasMVar then declineWith (.unresolvedMetavariable carrier)
@@ -235,9 +231,30 @@ def prepare (input : Expr) : m (Expr × Expr) := do
   let e ← (Sym.canon e : SymM Expr)
   let carrier ← (shareCommon carrier : SymM Expr)
   let carrier ← (Sym.canon carrier : SymM Expr)
-  let limit := (← getThe State).budget.remaining.sourceNodes
-  charge .sourceNodes (sourceNodeCount e (limit + 1))
   return (e, carrier)
+
+/-- Re-synthesize the requested structure on the canonical carrier and compare
+it with the instance recorded by Lean's cached classification. When the
+current instance context selects a different exact instance, the cached
+classification is invalidated and the carrier is classified again, so a
+scope change within one session yields a new classification identity rather
+than a stale one. -/
+def classifyFresh (carrier : Expr) : m ClassifyResult := do
+  let result ← (classify? carrier : SymM ClassifyResult)
+  let recorded? ← match result with
+    | .commRing id => pure ((← (getArithState : SymM Arith.State)).rings[id]?.map
+        fun r => (``Lean.Grind.CommRing, r.u, r.commRingInst))
+    | .commSemiring id => pure ((← (getArithState : SymM Arith.State)).semirings[id]?.map
+        fun r => (``Lean.Grind.CommSemiring, r.u, r.commSemiringInst))
+    | _ => pure none
+  let some (cls, u, recorded) := recorded? | return result
+  let some fresh ← (Sym.synthInstance? (mkApp (mkConst cls [u]) carrier) : SymM (Option Expr))
+    | return result
+  let same ← (withReducibleAndInstances (isDefEq fresh recorded) : MetaM Bool)
+  if same then return result
+  (modifyArithState fun st =>
+    { st with typeClassify := st.typeClassify.erase { expr := carrier } } : SymM Unit)
+  (classify? carrier : SymM ClassifyResult)
 
 private def describeClassification : ClassifyResult → String
   | .commRing _ => "commutative ring"
@@ -250,7 +267,7 @@ private def describeClassification : ClassifyResult → String
 environment. -/
 def reifyCommRing (input : Expr) : m (ProviderOutcome ReifiedRing) := withOutcome do
   let (e, carrier) ← prepare input
-  match ← (classify? carrier : SymM ClassifyResult) with
+  match ← classifyFresh carrier with
   | .commRing id =>
     let ring := (← (getArithState : SymM Arith.State)).rings[id]!
     let key : ViewKey := {
@@ -281,7 +298,7 @@ def reifyCommRing (input : Expr) : m (ProviderOutcome ReifiedRing) := withOutcom
 environment. -/
 def reifyCommSemiring (input : Expr) : m (ProviderOutcome ReifiedSemiring) := withOutcome do
   let (e, carrier) ← prepare input
-  match ← (classify? carrier : SymM ClassifyResult) with
+  match ← classifyFresh carrier with
   | .commSemiring id =>
     let sr := (← (getArithState : SymM Arith.State)).semirings[id]!
     let key : ViewKey := {
@@ -292,8 +309,11 @@ def reifyCommSemiring (input : Expr) : m (ProviderOutcome ReifiedSemiring) := wi
       instances := #[sr.commSemiringInst, sr.semiringInst] }
     if let some r := (← getThe State).views.semiring.find? (·.key.agrees key) then
       return r
-    let some re ← (reifySemiring? e : ReaderT Nat m (Option SemiringExpr)).run id
-      | failWith (.internal "semiring reifier returned nothing")
+    -- The pinned semiring reifier returns `none` for a top-level power with a
+    -- symbolic exponent; that whole application is one atom.
+    let re ← match ← (reifySemiring? e : ReaderT Nat m (Option SemiringExpr)).run id with
+      | some re => pure re
+      | none => pure (.var (← mkAtom e))
     charge .exponent (RingExpr.maxExponent re)
     charge .reflectedNodes (RingExpr.size re)
     let r : ReifiedSemiring := { key := key, source := e, carrier := carrier, semiringId := id, expr := re }
@@ -311,21 +331,53 @@ def sealSemiring (r : ReifiedSemiring) (s : Sealed) : m (ProviderOutcome SealedS
 
 /-! # Provider selection -/
 
-/-- Check that coefficient evidence proves `CoeffLaws` for the carrier's exact
-ring instance. -/
-def validateCoefficients (ring : Arith.CommRing) (p : CoeffProvider) : m Unit := do
-  let expected := mkAppN (mkConst ``CoeffLaws [ring.u])
-    #[p.coeffType, ring.type, p.zeroInst, p.addInst, ring.ringInst, p.ofInt, p.interp]
+/-- Type-check one quoted provider field against its expected type. -/
+private def checkField (id : ProviderId) (name : String) (value expected : Expr) : m Unit := do
+  let value ← (instantiateMVars value : MetaM Expr)
+  if value.hasMVar then
+    failWith (.invalidProviderEvidence id s!"{name} contains a metavariable")
   let ok ← (observing? (do
-      let ty ← inferType p.laws
+      Meta.check value
+      let ty ← inferType value
       isDefEq ty expected) : MetaM (Option Bool))
   unless ok == some true do
-    failWith (.invalidProviderEvidence p.id "the laws do not prove CoeffLaws for the carrier")
+    failWith (.invalidProviderEvidence id s!"{name} is not a well-typed value of the expected type")
+
+/-- Check that every quoted field of a coefficient provider is well typed
+against the carrier's exact ring instance, including the instances that
+`ofIntTerms` needs and the proof of `CoeffLaws`. -/
+def validateCoefficients (ring : Arith.CommRing) (p : CoeffProvider) : m Unit := do
+  let type0 := mkSort (.succ .zero)
+  checkField p.id "coefficient type" p.coeffType type0
+  checkField p.id "Zero instance" p.zeroInst (mkApp (mkConst ``Zero [.zero]) p.coeffType)
+  checkField p.id "Add instance" p.addInst (mkApp (mkConst ``Add [.zero]) p.coeffType)
+  checkField p.id "BEq instance" p.beqInst (mkApp (mkConst ``BEq [.zero]) p.coeffType)
+  checkField p.id "LawfulBEq instance" p.lawfulBEqInst
+    (mkApp2 (mkConst ``LawfulBEq [.zero]) p.coeffType p.beqInst)
+  checkField p.id "coefficient map" p.ofInt
+    (mkForall `k .default (mkConst ``Int) p.coeffType)
+  checkField p.id "interpretation" p.interp
+    (mkForall `c .default p.coeffType ring.type)
+  checkField p.id "laws" p.laws (mkAppN (mkConst ``CoeffLaws [ring.u])
+    #[p.coeffType, ring.type, p.zeroInst, p.addInst, ring.ringInst, p.ofInt, p.interp])
+
+/-- Validate the evidence returned by a registration. -/
+private def validateEvidence (ring : Arith.CommRing) (reg : Registration) : Evidence → m Unit
+  | .coefficients p => do
+    unless p.id == reg.id do
+      failWith (.invalidProviderEvidence reg.id "evidence names a different provider")
+    validateCoefficients ring p
+  | .record .. => pure ()
 
 /-- Select a provider for a capability on a classified commutative ring.
-Registrations are consulted in registration order; the highest priority
-among the recognizing providers wins, and two distinct providers at that
-priority are an ambiguity decline. -/
+
+Registrations are consulted from the highest priority down, in registration
+order within a priority. Within one priority level every recognizing
+registration's evidence is validated; a malformed registration is a failure
+reported immediately, one valid success wins, and two valid successes are an
+ambiguity decline. A level with no success but a decline stops with that
+decline; a level with only `notApplicable` outcomes falls through to the
+next. Exhausting every registration is a missing-capability decline. -/
 def selectProvider (cap : Capability) (ring : Arith.CommRing) :
     m (ProviderOutcome Evidence) := do
   let key : ProviderKey := {
@@ -335,31 +387,32 @@ def selectProvider (cap : Capability) (ring : Arith.CommRing) :
     instances := #[ring.commRingInst] }
   if let some (_, o) := (← getThe State).providers.find? (·.1.agrees key) then
     return o
-  let regs ← (registrations : MetaM (Array Registration))
-  let mut candidates : Array (Registration × Evidence) := #[]
-  for r in regs do
-    if r.capability == cap then
-      if let some ev ← (r.recognize ring : SymM (Option Evidence)) then
-        candidates := candidates.push (r, ev)
+  let regs := (← (registrations : MetaM (Array Registration))).filter (·.capability == cap)
+  let levels := (regs.map (·.priority)).qsort (· > ·) |>.toList.eraseDups
   let outcome ← withOutcome do
-    if candidates.isEmpty then
-      declineWith (.missingCapability cap ring.type)
-    let top := candidates.foldl (fun acc c => Nat.max acc c.1.priority) 0
-    let best := candidates.filter (·.1.priority == top)
-    if best.size > 1 then
-      declineWith (.ambiguousProvider cap (best.map (·.1.id)))
-    let some (reg, ev) := best[0]?
-      | failWith (.internal "no best provider after a non-empty candidate list")
-    match ev with
-    | .coefficients p =>
-      unless p.id == reg.id do
-        failWith (.invalidProviderEvidence reg.id "evidence names a different provider")
-      validateCoefficients ring p
-    | .record .. => pure ()
-    return ev
-  let outcome := match outcome with
-    | .declined (.missingCapability c t) u => .declined (.missingCapability c t) u
-    | o => o
+    for level in levels do
+      let mut successes : Array (Registration × Evidence) := #[]
+      let mut decline? : Option (Decline × BudgetUsage) := none
+      for reg in regs do
+        if reg.priority != level then continue
+        let result ← try (reg.recognize ring : SymM (ProviderOutcome Evidence))
+          catch ex => do
+            let msg ← (ex.toMessageData.toString : MetaM String)
+            pure (.failure (.invalidProviderEvidence reg.id s!"registration threw: {msg}"))
+        match result with
+        | .notApplicable => pure ()
+        | .declined d u => if decline?.isNone then decline? := some (d, u)
+        | .failure f => failWith f
+        | .success ev _ =>
+          validateEvidence ring reg ev
+          successes := successes.push (reg, ev)
+      if successes.size > 1 then
+        declineWith (.ambiguousProvider cap (successes.map (·.1.id)))
+      if let some (_, ev) := successes[0]? then
+        return ev
+      if let some (d, _) := decline? then
+        declineWith d
+    declineWith (.missingCapability cap ring.type)
   modifyThe State fun s => { s with providers := s.providers.push (key, outcome) }
   return outcome
 
@@ -377,6 +430,8 @@ def convert (r : ReifiedRing) (s : Sealed) (order : MonoOrder) :
     | .notApplicable => declineWith (.missingCapability .commRingNormalize ring.type)
     | .declined d _ => declineWith d
     | .failure f => failWith f
+  unless (← getThe State).owns s do
+    failWith (.internal "the sealed environment does not belong to this session")
   let key : ConversionKey := {
     reflected := r.key
     epoch := s.epoch
@@ -385,13 +440,20 @@ def convert (r : ReifiedRing) (s : Sealed) (order : MonoOrder) :
     charInst? := ring.charInst?.map (·.1)
     provider := provider.id
     coeffType := provider.coeffType
+    coeffInstances := #[provider.zeroInst, provider.addInst, provider.beqInst,
+      provider.lawfulBEqInst]
+    ofInt := provider.ofInt
     interp := provider.interp
-    order := order.name }
+    cmp := order.quoteCmp s.n }
   if let some c := (← getThe State).converted.find? (·.key.agrees key) then
     return c
+  -- Every expansion bound is checked before normalization runs.
   charge .exponent (RingExpr.maxExponent r.expr)
-  let remaining := (← getThe State).budget.remaining.terms
-  checkBudget .terms (RingExpr.termBound (remaining + 1) r.expr)
+  let remainingTerms := (← getThe State).budget.remaining.terms
+  let termBound := RingExpr.termBound (remainingTerms + 1) r.expr
+  checkBudget .terms termBound
+  let bitLimit := (← getThe State).budget.initial.coefficientBits
+  checkBudget .coefficientBits (RingExpr.coeffBitBound (bitLimit + 1) r.expr)
   if RingExpr.varBound r.expr > s.n then
     failWith (.variableOutOfRange (RingExpr.varBound r.expr - 1) s.n)
   let some ts := convertTerms? s.n key.char? r.expr
@@ -459,6 +521,16 @@ def Conversion.mkProof (c : Conversion) (input : Expr) (cfg : Config := {}) :
     m (ProviderOutcome EqualityResult) := withOutcome do
   let ring ← ringOf c.reflected
   let n := c.sealed.n
+  -- Reserve the quotation cost before constructing anything: each term quotes
+  -- to a bounded number of nodes, each atom to one leaf and one branch, and
+  -- the reflected syntax to one node per reflected node.
+  let estimate := 16 * c.terms.length + 4 * c.sealed.atoms.size +
+    2 * RingExpr.size c.reflected.expr + 64
+  checkBudget .proofNodes estimate
+  for atom in c.sealed.atoms do
+    let ty ← (inferType atom : MetaM Expr)
+    unless ← (isDefEq ty ring.type : MetaM Bool) do
+      failWith (.illTypedProof "an atom does not belong to the carrier of this conversion")
   let ctx ← contextExpr ring c.sealed
   let tsE := quoteTerms n c.terms
   let eE := toExpr c.reflected.expr
@@ -477,22 +549,38 @@ def Conversion.mkProof (c : Conversion) (input : Expr) (cfg : Config := {}) :
     | none =>
       mkAppN (mkConst ``eval₂_convertTerms_ctx [ring.u])
         (common ++ #[c.provider.laws, ctx, eE, tsE, hE])
-  let limit := (← getThe State).budget.remaining.proofNodes
-  charge .proofNodes (sourceNodeCount proofCanon (limit + 1))
   let ty ← (inferType proofCanon : MetaM Expr)
-  let some (_, lhs, _) := ty.eq?
+  let some (_, lhs, rhs) := ty.eq?
     | failWith (.internal "the soundness theorem did not produce an equality")
-  let denoted ← (denoteRingExpr c.sealed.atoms c.reflected.expr : ReaderT Nat m Expr).run c.reflected.ringId
+  -- Both definitional-equality steps are checked here, independently of
+  -- `checkProofs`: a type hint asserts nothing by itself, and the pinned
+  -- reifier accepts numerals without inspecting their `OfNat` instance, so a
+  -- nonstandard instance can make the denoted syntax differ from the source.
+  let denoted ← (denoteRingExpr c.sealed.atoms c.reflected.expr : ReaderT Nat m Expr).run
+    c.reflected.ringId
+  unless ← (isDefEq rhs denoted : MetaM Bool) do
+    failWith (.illTypedProof "the denoted reflected syntax is not definitionally the \
+      theorem's denotation")
+  let source ← (instantiateMVars input : MetaM Expr)
+  unless ← (isDefEq denoted source : MetaM Bool) do
+    failWith (.illTypedProof "the denoted reflected syntax is not definitionally the source")
   let proofDenoted ← (mkExpectedTypeHint proofCanon
     (mkApp3 (mkConst ``Eq [.succ ring.u]) ring.type lhs denoted) : MetaM Expr)
-  let source ← (instantiateMVars input : MetaM Expr)
   let target := mkApp3 (mkConst ``Eq [.succ ring.u]) ring.type lhs source
   let proof ← (mkExpectedTypeHint proofDenoted target : MetaM Expr)
+  let value := c.quotedValue
+  let limit := (← getThe State).budget.remaining.proofNodes
+  charge .proofNodes (sourceNodeCount proof (limit + 1) + sourceNodeCount value (limit + 1))
   if cfg.checkProofs then
     match ← (observing? (Meta.check proof) : MetaM (Option Unit)) with
     | some () => pure ()
     | none => failWith (.illTypedProof "the generated proof does not type-check")
-  return { source := source, value := c.quotedValue, interpretation := lhs, proof := proof, atoms := c.sealed.atoms }
+  return {
+    source := source
+    value := value
+    interpretation := lhs
+    proof := proof
+    atoms := c.sealed.atoms }
 
 /-! # Conditions -/
 
@@ -574,25 +662,37 @@ def ProviderOutcome.recast : ProviderOutcome α → Except (ProviderOutcome β) 
   | .declined d u => .error (.declined d u)
   | .failure f => .error (.failure f)
 
-/-- Reify every input as one batch, sealAtoms once, convert every entry against the
-same sealed environment, and reconstruct every proof. -/
+/-- Reify every input as one batch, seal once, convert every entry against the
+same sealed environment, and reconstruct every proof. A decline reports the
+budget consumed by the whole batch so far. Every entry of a proof-producing
+batch must have the same carrier. -/
 def ringBatch (inputs : Array Expr) (order : MonoOrder := MonoOrder.grevlex)
     (cfg : Config := {}) : ReflectM (ProviderOutcome RingBatch) := do
+  let before ← consumed
+  let usage : ReflectM BudgetUsage := return (← consumed).sub before
+  let withUsage : ProviderOutcome RingBatch → ReflectM (ProviderOutcome RingBatch)
+    | .declined d _ => return .declined d (← usage)
+    | o => return o
   let mut reified := #[]
   for input in inputs do
     match (← reifyCommRing input).recast with
     | .ok r => reified := reified.push (input, r)
-    | .error o => return o
+    | .error o => return ← withUsage o
+  if let some (_, first) := reified[0]? then
+    for (_, r) in reified do
+      unless isSameExpr r.carrier first.carrier do
+        return .declined (.mixedCarriers first.carrier r.carrier) (← usage)
   let s ← sealAtoms
   let mut entries := #[]
   for (input, r) in reified do
     match (← convert r s order).recast with
-    | .error o => return o
+    | .error o => return ← withUsage o
     | .ok c =>
       match (← c.mkProof input cfg).recast with
-      | .error o => return o
-      | .ok result => entries := entries.push { input := input, reflected := r, conversion := c, result := result }
-  return .success { sealed := s, entries := entries, usage := (← consumed) } (← consumed)
+      | .error o => return ← withUsage o
+      | .ok result =>
+        entries := entries.push { input := input, reflected := r, conversion := c, result := result }
+  return .success { sealed := s, entries := entries, usage := (← usage) } (← usage)
 
 /-- The standalone batch runner. -/
 def reflectRingBatch (inputs : Array Expr) (order : MonoOrder := MonoOrder.grevlex)
