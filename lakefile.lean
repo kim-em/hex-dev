@@ -1522,3 +1522,7 @@ lean_exe tower_factor_diff where
 lean_exe hexgraphiso_emit_trace where
   srcDir := "conformance"
   root := `HexGraphIso.EmitTrace
+
+lean_exe hexnumberfield_quadratic where
+  srcDir := "bench"
+  root := `HexNumberField.Quadratic

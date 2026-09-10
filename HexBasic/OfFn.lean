@@ -86,8 +86,9 @@ only so that the kernel can reduce it. -/
 /-- An {name}`Array.map` equivalent that reduces in the kernel under the
 module system: core {name}`Array.map`'s implementation loop is not exposed,
 so `(a.map f)` stalls downstream exactly like {name}`Array.ofFn`.
-Retire once <https://github.com/leanprover/lean4/pull/14996> reaches the
-pinned toolchain. -/
+Remove this shim and migrate its callers to core {name}`Array.map` when the
+pinned toolchain reaches Lean v4.35.0-rc1, which includes
+<https://github.com/leanprover/lean4/pull/14996>. -/
 @[expose] def Array.map' {α : Type u} {β : Type v} (f : α → β)
     (a : Array α) : Array β :=
   (a.toList.map f).toArray
@@ -116,7 +117,9 @@ so that the kernel can reduce it. -/
 /-- A {name}`Vector.map` equivalent that reduces in the kernel under the
 module system: core {name}`Vector.map` delegates to {name}`Array.map`, whose
 implementation loop is not exposed, so `(v.map f)` stalls downstream.
-Retire alongside {name}`Hex.Array.map'`. -/
+Remove this shim and migrate its callers to core {name}`Vector.map` when the
+pinned toolchain reaches Lean v4.35.0-rc1, alongside
+{name}`Hex.Array.map'`. -/
 @[expose] def Vector.map' {α : Type u} {β : Type v} {n : Nat} (f : α → β)
     (v : Vector α n) : Vector β n :=
   ⟨Array.map' f v.toArray, by simp⟩
@@ -143,8 +146,10 @@ exists only so that the kernel can reduce it. -/
 /-- An {name}`Array.zipWith` equivalent that reduces in the kernel under the
 module system: core {name}`Array.zipWith` runs its `zipWithMAux` loop by
 well-founded recursion, so `(Array.zipWith f a b)` stalls downstream
-exactly like {name}`Array.map`. Retire once core exposes a structurally
-recursive implementation. -/
+exactly like {name}`Array.map`. Remove this shim and migrate its callers to
+core {name}`Array.zipWith` when the pinned toolchain reaches Lean
+v4.35.0-rc1, which includes
+<https://github.com/leanprover/lean4/pull/15078>. -/
 @[expose] def Array.zipWith' {α : Type u} {β : Type v} {γ : Type w}
     (f : α → β → γ) (a : Array α) (b : Array β) : Array γ :=
   (List.zipWith f a.toList b.toList).toArray

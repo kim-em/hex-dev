@@ -87,12 +87,12 @@ retire on different upstream fixes rather than all at once. `ofFn` and the two
 equality instances wait on
 [leanprover/lean4#14270](https://github.com/leanprover/lean4/pull/14270); the
 map shims wait on
-[leanprover/lean4#14996](https://github.com/leanprover/lean4/pull/14996).
-Once the toolchain moves past the relevant one, core's own operation reduces
-in the kernel, that shim goes away, and callers move back to the standard
-name. Retire them one at a time, and re-check that the *downstream* reduction
-still works before removing each: the stall these work around is only visible
-across a module boundary. `HexBasic.ModuleBoundaryTests` is what makes that
+[leanprover/lean4#14996](https://github.com/leanprover/lean4/pull/14996),
+which ships in Lean v4.35.0-rc1. Once the toolchain moves past the relevant
+one, core's own operation reduces in the kernel, that shim goes away, and
+callers move back to the standard name. Retire them one at a time, and
+re-check that the *downstream* reduction still works before removing each: the
+stall these work around is only visible across a module boundary. `HexBasic.ModuleBoundaryTests` is what makes that
 checkable: it sits in a *separate* module from the definitions it exercises,
 because a same-module test passes whether or not the workaround is present and
 so proves nothing.

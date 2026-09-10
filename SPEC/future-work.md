@@ -1195,4 +1195,12 @@ should become a universal payload representation.
 
 Direct radical extraction, certified principal-root approximation, cyclotomic
 construction and recognition, and reduction of canonicalization's all-roots
-isolation cost are scoped by [issue #10147](https://github.com/kim-em/hex-dev/issues/10147).
+isolation cost have a complete
+[owning design](../HexNumberField/SPEC/hex-number-field.md#direct-certified-radicals-and-cyclotomic-embeddings), with
+[companion proof obligations](../HexNumberFieldMathlib/SPEC/hex-number-field-mathlib.md#direct-radical-proof-obligations)
+and [manual requirements](../HexManual/README.md#direct-radical-design-requirements).
+Implementation remains future work. The polynomial generator follows the
+[cyclotomic SPEC](Libraries/hex-cyclotomic.md); broader comparison work in
+[#10142](https://github.com/kim-em/hex-dev/issues/10142) and the independent
+integer-root memory bug [#10156](https://github.com/kim-em/hex-dev/issues/10156)
+remain separate.
