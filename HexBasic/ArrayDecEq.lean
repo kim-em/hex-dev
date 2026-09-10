@@ -34,6 +34,11 @@ conversion that allocates both lists in full
 before comparison begins and gives up early exit, so each carries a `@[csimp]`
 redirect back to the core instance. The `List` route is then paid only in the
 kernel, which is where it is needed.
+
+Remove these scoped instances and their compiler redirects when the pinned
+toolchain reaches Lean v4.35.0-rc1, which includes the upstream fixes for
+{name}`Array` equality (<https://github.com/leanprover/lean4/pull/14270>) and
+{name}`Vector` equality (<https://github.com/leanprover/lean4/pull/14988>).
 -/
 
 namespace Hex
