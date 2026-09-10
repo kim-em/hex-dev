@@ -8,6 +8,7 @@
 - **hex-rational-fn**: canonical univariate rational functions, field arithmetic, partial evaluation, formal differentiation and normalization certificates
 - **hex-sparse-poly**: canonical sparse univariate polynomials as a sorted exponent/coefficient term array, with explicit conversions to and from the dense representation
 - **hex-mv-poly**: canonical distributed multivariate polynomials at fixed arity with explicit monomial orders
+- **hex-reflect** (planned): shared `Lean.Meta.Sym.Arith` sessions, batch variable sealing, direct `Hex.MvPoly` conversion, provider results, conditions and budgets
 - **hex-mv-gcd**: multivariate gcd with cofactors, content and primitive part, exact division, squarefree decomposition
 - **hex-mv-hensel**: multivariate Hensel lifting against an evaluation ideal, with the coprimality witness, leading-coefficient contract, and reconstruction that Wang's EEZ factorization needs
 - **hex-mv-factor**: factorization of `Z[x_1, ..., x_n]` by Wang's EEZ algorithm, with a checked product decomposition and a separate irreducibility certificate
@@ -75,6 +76,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-rational-fn-mathlib**: equivalence with `RatFunc K`, canonical numerator/denominator agreement and partial-evaluation semantics
 - **hex-sparse-poly-mathlib**: `SparsePoly R ≃+* Polynomial R`, and the identification of the stored term array with `Polynomial.support`
 - **hex-mv-poly-mathlib**: `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence
+- **hex-reflect-mathlib** (planned): Mathlib carrier translations and the `MvPolynomial` correspondence for reflected batches
 - **hex-mv-gcd-mathlib**: gcd maximality transported to `MvPolynomial (Fin n) R`, and decidable divisibility and squarefreeness
 - **hex-mv-hensel-mathlib**: the evaluation ideal and its residue ring as Mathlib objects, the lifted identities transported to `MvPolynomial (Fin (n+1)) ℤ`, and the factor-coefficient bound
 - **hex-mv-factor-mathlib**: discharge of the univariate irreducibility obligations, factorization correctness and uniqueness in `MvPolynomial (Fin n) ℤ`, and `Decidable (Irreducible p)`
@@ -124,6 +126,7 @@ Each library with its immediate dependencies:
 - **hex-rational-fn**: hex-poly, hex-poly-fast
 - **hex-sparse-poly**: hex-poly, hex-basic
 - **hex-mv-poly**: hex-poly, hex-basic
+- **hex-reflect** (planned): hex-mv-poly, hex-basic
 - **hex-mv-gcd**: hex-mv-poly, hex-poly, hex-poly-fp, hex-resultant, hex-arith, hex-mod-arith
 - **hex-mv-hensel**: hex-mv-gcd, hex-mv-poly, hex-poly, hex-poly-z, hex-poly-fp, hex-mod-arith, hex-modular, hex-arith, hex-basic
 - **hex-mv-factor**: hex-mv-hensel, hex-mv-gcd, hex-mv-poly, hex-berlekamp-zassenhaus, hex-poly, hex-poly-z, hex-poly-z-gcd, hex-poly-fp, hex-mod-arith, hex-modular, hex-arith, hex-basic
@@ -187,9 +190,10 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-rational-fn-mathlib**: hex-rational-fn, hex-poly-mathlib
 - **hex-sparse-poly-mathlib**: hex-sparse-poly, hex-poly-mathlib, hex-poly
 - **hex-mv-poly-mathlib**: hex-mv-poly, hex-poly-mathlib
+- **hex-reflect-mathlib** (planned): hex-reflect, hex-mv-poly-mathlib
 - **hex-mv-gcd-mathlib**: hex-mv-gcd, hex-mv-poly-mathlib, hex-resultant-mathlib, hex-poly-mathlib
 - **hex-mv-hensel-mathlib**: hex-mv-hensel, hex-mv-poly-mathlib, hex-poly-mathlib, hex-poly-z-mathlib
-- **hex-mv-factor-mathlib**: hex-mv-factor, hex-mv-hensel-mathlib, hex-mv-gcd-mathlib, hex-mv-poly-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-poly-z-mathlib
+- **hex-mv-factor-mathlib**: hex-mv-factor, hex-mv-hensel-mathlib, hex-mv-gcd-mathlib, hex-mv-poly-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-poly-z-mathlib, hex-reflect-mathlib
 - **hex-truncated-series-mathlib**: hex-truncated-series
 - **hex-poly-z-mathlib**: hex-poly-z, hex-poly-mathlib
 - **hex-poly-z-gcd-mathlib**: hex-poly-z-gcd, hex-poly-z-mathlib, hex-poly-mathlib
@@ -700,6 +704,8 @@ for developments whose source-local move has not happened yet.
 - [hex-sparse-poly](../../HexSparsePoly/SPEC/hex-sparse-poly.md): canonical sparse univariate polynomials, the operations that keep sparsity, and the dense conversions (the Mathlib companion is specified in the same file)
 - [hex-mv-poly](../../HexMvPoly/SPEC/hex-mv-poly.md): canonical distributed multivariate polynomials with explicit monomial orders
 - [hex-mv-poly-mathlib](../../HexMvPolyMathlib/SPEC/hex-mv-poly-mathlib.md): `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence
+- [hex-reflect](hex-reflect.md) (planned): the `Lean.Meta.Sym.Arith` adapter, batch variable sealing, direct `Hex.MvPoly` conversion, provider protocol, conditions and budgets
+- [hex-reflect-mathlib](hex-reflect-mathlib.md) (planned): Mathlib carrier translations and the `MvPolynomial` correspondence for reflected batches
 - [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md): multivariate gcd with cofactors, content and primitive part, exact division, squarefree decomposition
 - [hex-mv-hensel.md](../../HexMvHensel/SPEC/hex-mv-hensel.md): multivariate Hensel lifting against an evaluation ideal, its coprimality witness and leading-coefficient contract, reconstruction, and the checked-decomposition certificate (the Mathlib companion is specified in the same file)
 - [hex-mv-factor.md](../../HexMvFactor/SPEC/hex-mv-factor.md): factorization of `Z[x_1, ..., x_n]` by Wang's EEZ algorithm, the evaluation-point and leading-coefficient search, the checked product decomposition, and the separate irreducibility certificate (the Mathlib companion is specified in the same file)

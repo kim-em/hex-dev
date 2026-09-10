@@ -167,9 +167,33 @@ law is `Int.mul_ediv_cancel`. `Hex.Matrix.bareiss` is by definition
 Nothing downstream (`HexGramSchmidtMathlib/Update.lean`,
 `HexGramSchmidtMathlib/Int/RowAdd.lean`) needs to change.
 
-**Other carriers.** A Mathlib `Field K` with `DecidableEq K` instantiates
-through `Hex.instExactDivLawsField` and `Hex.exactDiv_mul_right`; so does any
-`[CommRing R] [Div R] [Hex.ExactDivLaws R]`. Both were checked to elaborate.
+**Other carriers.** No carrier-specific determinant correspondence theorem is
+needed. At every supported carrier, the only extra proof supplied at the use
+site is the exact-quotient law
+
+```lean
+fun a b hb => Hex.exactDiv_mul_right a hb
+```
+
+with instances obtained as follows:
+
+| carrier | source of `[Div R] [Hex.ExactDivLaws R]` | additional assumptions |
+|---|---|---|
+| `Rat` | core division plus `Hex.instExactDivLawsField` | none |
+| `ZMod64 p` | `HexPolyFp.PrimeField` plus `Hex.instExactDivLawsField` | `[ZMod64.Bounds p] [ZMod64.PrimeModulus p]` |
+| `DensePoly F` | polynomial division and `Hex.instExactDivLawsDensePoly` from `HexResultant.ExactDiv` | `[Lean.Grind.Field F] [DecidableEq F]` |
+| `ZPoly` | the same dense-polynomial instance over `Hex.instExactDivLawsInt` | none |
+| `MvPoly n R cmp` | `Hex.MvPoly.instDiv` and `Hex.MvPoly.instExactDivLaws` from `HexMvGcd.Divide` | the lawful coefficient-GCD and monomial-order context listed in the `hex-bareiss` carrier table |
+
+These instance-law terms are compile-time guards in the carrier integration
+modules, not new correspondence APIs in this library. The already-generic
+`bareissWith_eq_mathlib_det` is the sole theorem needed once both a Mathlib
+`CommRing` and the `hquot` term are in scope; it must not be duplicated under
+carrier-specific theorem names. `Rat` and `MvPoly` already have the necessary
+Mathlib structures. Executable `DensePoly`/`ZPoly` and `ZMod64` do not currently
+have global Mathlib `CommRing` instances, so their computational conformance is
+independent of that separate bridge work; this SPEC does not invent local
+instances or weaken the theorem to claim otherwise.
 
 These are the theorems on the forbidden list in the Mathlib-free `hex-bareiss`
 SPEC: they must live here, never restated or reproven in the executable layer.

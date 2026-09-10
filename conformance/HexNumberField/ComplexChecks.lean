@@ -87,6 +87,13 @@ private def fastPaths (_ : Unit) : Bool :=
         decide (a < b) == AlgebraicNumber.ordered true (a.partialCompareExact b) &&
         decide (a ≤ b) == AlgebraicNumber.ordered false (a.partialCompareExact b)))
 
+private def quadratic (_ : Unit) : Bool :=
+  let p : ZPoly := #p[1099513724929, 0, 1099511627776]
+  let rs := p.algebraicRoots
+  let upper := (1 + AlgebraicNumber.ofRat (1/1048576)) * AlgebraicNumber.I
+  rs == #[-upper, upper] && rs.all (fun a => a.p == p) &&
+    rs[0]?.map (·.conj) == rs[1]?
+
 private def unityAndNorms (_ : Unit) : Bool :=
   let i := AlgebraicNumber.I
   let z := 3 + 4 * i
@@ -105,7 +112,7 @@ private def unityAndNorms (_ : Unit) : Bool :=
 def run : IO Unit := do
   for (name, check) in [("conjugation/order/projections", conjugation),
       ("conjugate pairs", pairs), ("principal radicals", radicals), ("common fields", fields),
-      ("interval paths and fallback", fastPaths), ("unity and norms", unityAndNorms)] do
+      ("interval paths and fallback", fastPaths), ("40-bit quadratic", quadratic), ("unity and norms", unityAndNorms)] do
     unless check () do throw (IO.userError s!"complex algebraic check failed: {name}")
     IO.eprintln s!"complex algebraic check passed: {name}"
 

@@ -105,6 +105,13 @@ private def emitCloseImag : IO Unit := do
     ("sqrt", algebraic i.sqrt), ("n", toJson (1 : Nat)), ("nthRoot", algebraic i),
     ("lt", toJson (decide (i < b))), ("le", toJson (decide (i ≤ b)))]
 
+private def emitQuadratic : IO Unit := do
+  let p : ZPoly := #p[1099513724929, 0, 1099511627776]
+  let rs := p.algebraicRoots
+  let upper := (1 + AlgebraicNumber.ofRat (1/1048576)) * AlgebraicNumber.I
+  emit "40-bit" "quadraticRoots" [("roots", toJson (rs.map algebraic)),
+    ("arithmetic", algebraic upper)]
+
 private def emitUnityAndNorms : IO Unit := do
   for q in (#[0, 1/2, 1/4, -1/4, 1/3, 2/5, -1/6, 7/6, 1/8, 1/16] : Array Rat) do
     IO.eprintln s!"emitting unity/{q.num}/{q.den}"
@@ -122,6 +129,7 @@ def run (localProfile : Bool := false) : IO Unit := do
   ComplexAlgebraicChecks.run
   emitComplex
   emitCloseImag
+  emitQuadratic
   emitUnityAndNorms
   let some s := ofAlgebraic? (ZPoly.rootNear #p[-2, 0, 1] (3 / 2))
     | throw (IO.userError "sqrt(2) construction failed")

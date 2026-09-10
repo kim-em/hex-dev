@@ -1095,6 +1095,17 @@ libraries:
     status: active
 
   # ---------- Planned (status: planned; SPEC ready, implementation deferred) ----------
+  HexReflect:
+    deps: [HexMvPoly, HexBasic]
+    mathlib: false
+    done_through: 0
+    status: planned
+  HexReflectMathlib:
+    deps: [HexReflect, HexMvPolyMathlib]
+    mathlib: true
+    correspondence_only: true
+    done_through: 0
+    status: planned
   HexRoots:
     deps: [HexPolyZ]
     mathlib: false

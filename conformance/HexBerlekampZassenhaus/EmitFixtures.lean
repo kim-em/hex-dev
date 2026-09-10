@@ -307,7 +307,14 @@ private def cases_edge : List Case :=
     -- 2(X - 1)(X + 1).
   , mk "edge/two_x_minus_one_x_plus_one" #[-2, 0, 2]
     -- -2(X - 1)^2.
-  , mk "edge/neg_two_x_minus_one_squared" #[-2, 4, -2] ]
+  , mk "edge/neg_two_x_minus_one_squared" #[-2, 4, -2]
+    -- Quadratic-formula branches: negative/nonsquare discriminant, two
+    -- integer roots, one integer root, and two nonintegral rational roots.
+  , mk "quadratic/imaginary_40bit" #[1099513724929, 0, 1099511627776]
+  , mk "quadratic/nonsquare" #[-1099511627777, 0, 1]
+  , mk "quadratic/integer_40bit" #[-1099511627776, 0, 1]
+  , mk "quadratic/mixed" #[2097153, -4194307, 2]
+  , mk "quadratic/nonintegral" #[6, -13, 6] ]
 
 private def cases_irr : List Case :=
   [ -- Φ_5(x), degree 4, irreducible.

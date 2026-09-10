@@ -67,7 +67,7 @@ theorem quadraticIntegerRootFactors?_degree_pos_of_primitive
   unfold quadraticIntegerRootFactors? at hquad
   by_cases hdeg : core.natDegree = 2
   · simp only [hdeg, ite_true] at hquad
-    let roots := integerRootCandidates core
+    let roots := quadraticRootCandidates core
     let split := splitIntegerRootFactorsAux core roots roots.length
     obtain ⟨rs, _hsub, hshape⟩ :=
       splitIntegerRootFactorsAux_factors_form (target := core) (roots := roots)
