@@ -257,8 +257,10 @@ implementation.
   certificate of positive rank does, since `Vector (Fin 0) rank` is empty
   for `rank > 0`.
 - **`rank > min n m`.** A passing check forces the entries of `rows` and
-  of `cols` to be distinct, so `rank ≤ n` and `rank ≤ m`. No certificate
-  of larger rank checks.
+  of `cols` to be distinct (a repeated index gives `det B = 0` by
+  `det_eq_zero_of_row_eq` in `HexDeterminant/ColumnLinear.lean` and its
+  column form), so `rank ≤ n` and `rank ≤ m`. No certificate of larger
+  rank checks.
 
 The general soundness and completeness proofs below cover all three
 without a case split. They are listed so that the conformance suite tests
@@ -380,11 +382,13 @@ Let `r` be the largest size of a nonzero minor of `A`, and let
   `d • A[i, :] = B[i-block] * adj * P = d • P[i-block]`, the adjugate
   identity again. For a row index `i ∉ rows`, the `(r + 1) × (r + 1)`
   minor on rows `rows ++ [i]` and columns `cols ++ [j]` vanishes for every
-  `j` (by maximality of `r`), and Laplace expansion of that bordered minor
-  along its last row (`det_eq_foldl_laplace_col` transposed, or
-  `HexDeterminant/LastRow.lean`) reads
-  `d · A[i, j] = Σ_k A[i, cols[k]] · (adj * P)[k, j]`, which is entry
-  `(i, j)` of identity 3.
+  `j` (by maximality of `r`), and the bordered-determinant identity
+  `det [[B, u], [vᵀ, x]] = x · det B − vᵀ * adjugate B * u` (Laplace
+  expansion along the last row, `HexDeterminant/LastRow.lean`, followed by
+  the cofactor expansion of each minor, which is the definition of
+  `adjugate`) reads `d · A[i, j] = Σ_k A[i, cols[k]] · (adj * P)[k, j]`,
+  which is entry `(i, j)` of identity 3. For `j ∈ cols` the minor has a
+  repeated column and the identity is `d · A[i, j] = d · A[i, j]`.
 
 At `r = 0` the maximal nonzero minor is the empty one (`det` of the
 `0 × 0` matrix is `1`), every entry of `A` is a vanishing `1 × 1` minor,
@@ -876,8 +880,9 @@ Fixtures follow [SPEC/testing.md](../testing.md). Lean drivers at
 "HexRank|hexrank_emit_fixtures|scripts/oracle/rank_carriers.py|conformance-fixtures/HexRank/rank.jsonl"
 ```
 
-The driver follows `scripts/oracle/matrix_carriers.py` in shape:
-python-flint for `Int` (`fmpz_mat`), `Rat` (`fmpq_mat`) and `ZMod64 p`
+The driver has the shape hex-bareiss's carrier SPEC gives its
+`scripts/oracle/matrix_carriers.py`, and shares code with it once that
+lands: python-flint for `Int` (`fmpz_mat`), `Rat` (`fmpq_mat`) and `ZMod64 p`
 (`nmod_mat`) records, SymPy for `DensePoly` and `MvPoly` records with the
 exact domain (`ZZ[x]`, `QQ[x]`, `GF(p)[x]`, `ZZ[x0, …]`, `QQ[x0, …]`)
 stated explicitly. Both are already installed and preflighted by the
