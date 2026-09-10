@@ -85,17 +85,44 @@ private def emitComplex : IO Unit := do
       ("complex-cut", -8, 0, 3), ("complex-upper", i, 1 + i, 3), ("complex-fourth", -1, 0, 4),
       ("complex-lower", -i, i, 2), ("complex-same-side", i, 2 * i, 2),
       ("complex-above-cut", -1 + i / 16, -1, 2),
-      ("complex-below-cut", -1 - i / 16, -1, 2)] do
+      ("complex-below-cut", -1 - i / 16, -1, 2),
+      ("complex-sixteenth", i, -i, 4), ("complex-reverse-line", 1 + i, i, 1)] do
+    IO.eprintln s!"emitting {case}"
     emit case "complex" [("a", algebraic a), ("b", algebraic b),
       ("conj", algebraic a.conj), ("re", real a.re), ("im", real a.im),
       ("sqrt", algebraic a.sqrt), ("n", toJson n), ("nthRoot", algebraic (a.nthRoot n)),
       ("lt", toJson (decide (a < b))), ("le", toJson (decide (a ≤ b)))]
+
+
+private def emitCloseImag : IO Unit := do
+  let i := AlgebraicNumber.I
+  -- Direct integer construction keeps the comparison fixture independent of arithmetic.
+  let b := ((ZPoly.algebraicRoots #p[1050625, 0, 1048576]).find?
+    (fun a => decide (a.side = .upper))).getD 0
+  IO.eprintln "emitting complex-close-imag"
+  emit "complex-close-imag" "complex" [("a", algebraic i), ("b", algebraic b),
+    ("conj", algebraic i.conj), ("re", real i.re), ("im", real i.im),
+    ("sqrt", algebraic i.sqrt), ("n", toJson (1 : Nat)), ("nthRoot", algebraic i),
+    ("lt", toJson (decide (i < b))), ("le", toJson (decide (i ≤ b)))]
+
+private def emitUnityAndNorms : IO Unit := do
+  for q in (#[0, 1/2, 1/4, -1/4, 1/3, 2/5, -1/6, 7/6, 1/8, 1/16] : Array Rat) do
+    IO.eprintln s!"emitting unity/{q.num}/{q.den}"
+    emit s!"unity/{q.num}/{q.den}" "unity" [("angle", rat q),
+      ("root", algebraic (AlgebraicNumber.rootOfUnity q))]
+  for (case, a) in #[("zero", 0), ("negative", -3), ("unit", AlgebraicNumber.I),
+      ("gaussian", 3 + 4 * AlgebraicNumber.I),
+      ("irrational", ZPoly.rootNear #p[-2, 0, 1] 1.4 + AlgebraicNumber.I)] do
+    IO.eprintln s!"emitting norm/{case}"
+    emit case "norm" [("a", algebraic a), ("normSq", real a.normSq), ("abs", real a.abs)]
 
 /-- Emit every deterministic fixture after running the compiled core checks. -/
 def run (localProfile : Bool := false) : IO Unit := do
   RealAlgebraicChecks.run true
   ComplexAlgebraicChecks.run
   emitComplex
+  emitCloseImag
+  emitUnityAndNorms
   let some s := ofAlgebraic? (ZPoly.rootNear #p[-2, 0, 1] (3 / 2))
     | throw (IO.userError "sqrt(2) construction failed")
   let some t := ofAlgebraic? (ZPoly.rootNear #p[-8, 0, 1] 3)

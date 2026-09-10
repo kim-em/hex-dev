@@ -99,6 +99,17 @@ class ExactOracle(unittest.TestCase):
             with self.subTest(key=key), self.assertRaises(oracle.OracleMismatch):
                 self.checker.check("complex", wrong)
 
+    def test_unity_and_norm_mismatches(self):
+        i = {"poly": [1, 0, 1], "re": [0, 1], "im": [1, 1], "prec": 8}
+        self.checker.check("unity", {"angle": [5, 4], "root": i})
+        with self.assertRaises(oracle.OracleMismatch):
+            self.checker.check("unity", {"angle": [-1, 4], "root": i})
+        self.checker.check("norm", {"a": rat(-3), "normSq": rat(9), "abs": rat(3)})
+        for key, value in (("normSq", rat(3)), ("abs", rat(-3))):
+            d = {"a": rat(-3), "normSq": rat(9), "abs": rat(3), key: value}
+            with self.subTest(key=key), self.assertRaises(oracle.OracleMismatch):
+                self.checker.check("norm", d)
+
     def test_general_algebraic_coefficients(self):
         sqrt2 = {"poly": [-2, 0, 1], "re": [3, 2], "im": [0, 1], "prec": 2}
         neg_sqrt2 = dict(sqrt2, re=[-3, 2])

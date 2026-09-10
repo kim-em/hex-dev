@@ -4,48 +4,28 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 module
-public import HexNumberField.Nearest
+public import HexNumberField.Unity
 public section
 
 /-! Principal complex radicals through the exact algebraic-coefficient root solver. -/
 namespace Hex.AlgebraicNumber
 namespace Radical
 
-/-- Rank the sign of the imaginary coordinate without computing the coordinate. -/
-@[expose] def rank (a : AlgebraicNumber) : Int :=
-  match a.side with
-  | .lower => -1
-  | .real => 0
-  | .upper => 1
-
-/-- A root candidate with its doubled real part computed once. -/
-structure Candidate where
-  value : AlgebraicNumber
-  twiceRe : AlgebraicNumber
-  correct : twiceRe = value + value.conj
-
-/-- Exactify a root and cache the real coordinate used in branch selection. -/
-@[expose] def candidate (r : RootCount) : Candidate :=
-  let a := r.root.exact
-  ⟨a, a + a.conj, rfl⟩
-
-/-- Prefer greater real part, then the upper imaginary side. -/
-@[expose] def choose (a b : Candidate) : Candidate :=
-  match realCompare a.twiceRe b.twiceRe with
-  | .lt => b
-  | .eq => if rank a.value < rank b.value then b else a
-  | .gt => a
-
-/-- Select one principal candidate, sharing cached coordinates throughout the fold. -/
-@[expose] def select (roots : Array RootCount) : Option Candidate :=
-  match roots.toList with
-  | [] => none
-  | r :: rs => some (rs.foldl (fun best root => choose best (candidate root)) (candidate r))
-
 /-- The polynomial `X^n - a`, for the positive indices used by the root solver. -/
 @[expose] def polynomial (a : AlgebraicNumber) (n : Nat) : AlgebraicPoly :=
   AlgebraicPoly.ofArray (Array.ofFn fun i : Fin (n + 1) =>
     if i.val = 0 then -a else if i.val = n then 1 else 0)
+
+/-- The imaginary side containing the principal root for indices greater than one. -/
+@[expose] def principalSide (a : AlgebraicNumber) : RootSide :=
+  match a.side with
+  | .real => if a.realCompare 0 == .lt then .upper else .real
+  | side => side
+
+/-- Retain the principal half circle and certify its maximal real coordinate. -/
+@[expose] def fast? (a : AlgebraicNumber) (roots : Array RootCount) : Option AlgebraicRoot :=
+  RootSelection.select? ((roots.toList.map RootCount.root).filter
+    (fun r => decide (r.side = principalSide a)))
 
 end Radical
 
@@ -57,9 +37,16 @@ number need not be real. General inputs use the full polynomial root solver. -/
   else if n = 1 then a
   else if a.isZero then 0
   else if a == 1 then 1
+  else if a == -1 then rootOfUnity ((1 / 2 : Rat) / n)
+  else if a == I then rootOfUnity ((1 / 4 : Rat) / n)
+  else if a == -I then rootOfUnity ((-1 / 4 : Rat) / n)
   else
-    ((Radical.select (Radical.polynomial a n).roots.toArray).map (·.value)).getD
-      (Hex.panicWith 0 "AlgebraicNumber.nthRoot: root selection failed")
+    let roots := (Radical.polynomial a n).roots.toArray
+    match Radical.fast? a roots with
+    | some root => root.exact
+    | none => match Radical.select roots with
+      | some result => result.value
+      | none => Hex.panicWith 0 "AlgebraicNumber.nthRoot: root selection failed"
 
 /-- The principal square root, with nonnegative real part and the positive
 imaginary branch on the negative real axis. -/

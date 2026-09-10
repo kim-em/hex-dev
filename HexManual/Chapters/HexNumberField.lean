@@ -369,8 +369,15 @@ The global `<` and `≤` operations instead match Mathlib's complex partial
 order: imaginary parts must be equal, and real parts are compared. Thus
 `I < 1 + I`, while neither `0 ≤ I` nor `I ≤ 0`. There is no total `Ord` or
 `LinearOrder` instance on algebraic numbers. Comparing unequal nonreal values
-on the same side of the real axis computes an exact subtraction, so it can
-cost as much as a field operation. Use the real algebraic type for
+on the same side of the real axis first tests stored coordinate intervals,
+then refines by 16 and 64 extra bits if needed. Disjoint imaginary intervals
+prove incomparability, and `<`/`≤` also reject impossible real inequalities.
+Real-real comparisons try stored intervals before computing a product
+separation bound and refining geometrically. Inconclusive complex comparisons
+compute an exact subtraction, so that fallback can
+cost as much as a field operation. Equal imaginary parts pay for inconclusive
+refinement before subtraction; the recorded same-imaginary benchmark was about
+9% slower than the former comparison on the measured host. Use the real algebraic type for
 sorting real values by exact comparison. The companion's
 {name}`Hex.AlgebraicNumber.toComplexOrder` preserves and reflects this order.
 
@@ -394,13 +401,14 @@ zero. A negative real number's principal odd root is generally complex:
 `nthRoot (-8) 3` is `1 + √3 I`, not the real cube root `-2`.
 
 The general implementation solves `X^n - a` with the existing algebraic
-coefficient solver and selects maximal real part, preferring the upper
-imaginary side on ties. It caches each candidate's doubled real part.
-This avoids numerical angle decisions, but it still performs exact root
-finding and arithmetic; high degree radicals can be expensive. Even the fourth
-root of `I` involves degree-eight candidates and potentially large resultants
-when their real parts are computed. Zero, one,
-and indices zero and one have direct paths.
+coefficient solver. It filters lazy roots by their exact imaginary side,
+then selects maximal real part using certified intervals. It first checks
+stored intervals and tries two modest refinement rounds before falling back
+to exact coordinate comparisons. A successful interval selection exactifies
+only the winner. Overlap alone never establishes an ordering or equality.
+The general root solver and final canonicalization can still be expensive.
+Zero, one, and indices zero and one have direct paths; radicals of `-1`,
+`I`, and `-I` use the roots-of-unity constructor below.
 
 ```lean
 #guard (-1 : AlgebraicNumber).sqrt == AlgebraicNumber.I
@@ -417,6 +425,31 @@ hypothesis. The corollary {name}`Hex.AlgebraicNumber.nthRoot_conj_of_not_lt`
 uses the executable condition `¬ a < 0`, which holds exactly away from the
 negative real axis in the complex partial order. On the cut, both `sqrt (-1)` and `sqrt (conj (-1))` are `I`,
 whereas `conj (sqrt (-1))` is `-I`.
+
+# Roots of unity
+
+{name}`Hex.AlgebraicNumber.rootOfUnity` takes a rational number of full turns:
+`rootOfUnity q` means `exp (2π I q)`. Negative angles and angles outside one
+turn are reduced modulo one. The reduced denominator is the exact order.
+
+```lean
+#guard AlgebraicNumber.rootOfUnity (1/4) == AlgebraicNumber.I
+#guard AlgebraicNumber.rootOfUnity (-1/4) == -AlgebraicNumber.I
+#guard AlgebraicNumber.rootOfUnity (7/6) == AlgebraicNumber.rootOfUnity (1/6)
+example (q : Rat) : IsPrimitiveRoot (AlgebraicNumber.rootOfUnity q) q.den :=
+  AlgebraicNumber.rootOfUnity_primitive q
+example (q r : Rat) : AlgebraicNumber.rootOfUnity (q + r) =
+    AlgebraicNumber.rootOfUnity q * AlgebraicNumber.rootOfUnity r :=
+  AlgebraicNumber.rootOfUnity_add q r
+```
+
+Orders 1, 2, and 4 use constants. Other orders isolate an integer binomial:
+`X^n - 1` for odd `n`, or `X^(n/2) + 1` for even `n`. The upper root with
+greatest real part is the standard primitive generator. Selection uses lazy
+intervals, and subsequent powers are computed in its `QAdjoin` before one
+conversion back. This avoids the generic algebraic-coefficient solver, but
+polynomial degree still grows linearly with the denominator; large orders
+need the future cyclotomic algorithms.
 
 # Choosing a field for several values
 %%%

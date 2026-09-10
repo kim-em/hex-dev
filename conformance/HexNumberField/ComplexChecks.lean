@@ -68,10 +68,44 @@ private def fields (_ : Unit) : Bool :=
     (QAdjoin.common #[]).entries.isEmpty &&
     (QAdjoin.ofAlgebraic? a s).map (·.coeffs) == some (#p[0, -9/2, 0, 1/2] : DensePoly Rat)
 
+private def fastPaths (_ : Unit) : Bool :=
+  let s := ZPoly.rootNear #p[-2, 0, 1] 1.4
+  let t := ZPoly.rootNear #p[-3, 0, 1] 1.7
+  let i := AlgebraicNumber.I
+  let a := s.rep.1.square
+  let touch := { a with re := a.re + 2 * a.radiusHi }
+  let pairs := #[(s, t), (t, s), (s, s), (0, s), (s, 0)]
+  let roots := [i.toRoot, (-i).toRoot]
+  (pairs.all fun (a, b) => a.realCompare b == a.realCompareExact b) &&
+    Interval.realOrder? a touch == none && Interval.notLt touch a &&
+    !Interval.notLe touch a &&
+    (Interval.search Interval.realOrder? [] s.rep s.rep).isNone &&
+    (RootSelection.select? roots).isNone && RootSelection.maximum? roots == some i &&
+    (#[i, s + i, 2 * i, t + i]).all (fun a =>
+      (#[i, s + i, 2 * i, t + i]).all (fun b =>
+        a.partialCompare b == a.partialCompareExact b &&
+        decide (a < b) == AlgebraicNumber.ordered true (a.partialCompareExact b) &&
+        decide (a ≤ b) == AlgebraicNumber.ordered false (a.partialCompareExact b)))
+
+private def unityAndNorms (_ : Unit) : Bool :=
+  let i := AlgebraicNumber.I
+  let z := 3 + 4 * i
+  let angles : Array Rat := #[0, 1/2, 1/4, -1/4, 1/3, 2/5, -1/6, 7/6, 1/8]
+  angles.all (fun q =>
+    let a := AlgebraicNumber.rootOfUnity q
+    a ^ q.den == 1 && a.conj == AlgebraicNumber.rootOfUnity (-q) &&
+      a == AlgebraicNumber.rootOfUnity (q + 1)) &&
+    i.nthRoot 4 == AlgebraicNumber.rootOfUnity (1/16) &&
+    (-i).nthRoot 4 == AlgebraicNumber.rootOfUnity (-1/16) &&
+    z.normSq == 25 && z.abs == 5 && z.conj.abs == z.abs &&
+    (z * z).normSq == z.normSq * z.normSq &&
+    (0 : AlgebraicNumber).abs == 0 && (-3 : AlgebraicNumber).abs == 3
+
 /-- Run the complex API regressions, naming each completed case. -/
 def run : IO Unit := do
   for (name, check) in [("conjugation/order/projections", conjugation),
-      ("conjugate pairs", pairs), ("principal radicals", radicals), ("common fields", fields)] do
+      ("conjugate pairs", pairs), ("principal radicals", radicals), ("common fields", fields),
+      ("interval paths and fallback", fastPaths), ("unity and norms", unityAndNorms)] do
     unless check () do throw (IO.userError s!"complex algebraic check failed: {name}")
     IO.eprintln s!"complex algebraic check passed: {name}"
 
