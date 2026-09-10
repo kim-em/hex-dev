@@ -49,6 +49,28 @@ The authoritative algorithm, correctness, uniqueness, conformance, and
 benchmark requirements shared with this layer are in
 [`SPEC/Libraries/hex-smith.md`](../../SPEC/Libraries/hex-smith.md).
 
+## Required outstanding obligations
+
+| obligation | status | requirement |
+|---|---|---|
+| `snfRank_eq_rank` | required; not yet implemented | one line from `Hex.Matrix.snfRank_eq_hnfRank` followed by `HexHermiteMathlib.hnfRank_eq_rank` |
+
+The required theorem and its intended proof are exactly the existing integer
+correspondence chain:
+
+```lean
+theorem snfRank_eq_rank (A : Hex.Matrix Int n m) :
+    Hex.Matrix.snfRank A = (matrixEquiv A).rank := by
+  rw [Hex.Matrix.snfRank_eq_hnfRank,
+    HexHermiteMathlib.hnfRank_eq_rank]
+```
+
+This theorem must live in `HexSmithMathlib`; it is a consumer-facing corollary
+of the Mathlib-free Smith/Hermite rank equality and the Hermite-to-Mathlib rank
+bridge, not a new computation in `HexSmith`. The implementing module must also
+import `HexHermiteMathlib.Rank`: the current `HexSmithMathlib` chain reaches
+`HexHermiteMathlib.Span`, which does not export `hnfRank_eq_rank`.
+
 ## Runtime boundary
 
 `hex-smith-mathlib` owns no independent executable algorithm, reifier,
