@@ -22,6 +22,13 @@ theorem det_eq [CommRing R] (M : Hex.Matrix R n n) :
 Through `det_eq`, Mathlib determinant theorems (Cramer's rule, Cauchy-Binet,
 adjugate identities) transfer to our executable determinant.
 
+The correspondence is coefficient-generic. In particular it already covers
+the `DensePoly`, `MvPoly`, and `RationalFn` carriers in the computational
+SPEC whenever their Mathlib `CommRing` bridge is in scope. Carrier conformance
+does not add specialized `det_eq` lemmas here; it exercises the executable
+operation in the Mathlib-free integration roots and keeps this library a
+correspondence-only layer.
+
 ## Required outstanding obligations
 
 | obligation | status | requirement |

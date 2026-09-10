@@ -391,6 +391,49 @@ Implementation split (the proofs live in the Mathlib bridge layer):
    step k, prove `det M = 0`; otherwise compose row swaps into a permutation,
    apply the no-pivot theorem, use `det_rowSwap` for sign.
 
+## Supported coefficient carriers
+
+The `Int` aliases are only one instantiation of `bareissWith`. Support is pinned
+for every exact-quotient carrier already provided by the graph:
+
+| carrier | quotient and exact-law provider | assumptions beyond the carrier's ring operations | required fixture family | exact oracle |
+|---|---|---|---|---|
+| `Rat` | `Hex.exactDiv`; `Hex.instExactDivLawsField` | none beyond the core `Lean.Grind.Field Rat`, `Div Rat`, and `DecidableEq Rat` instances | rational matrices covering ordinary elimination, row swap, singularity, `n = 0`, and `n = 1` | python-flint `fmpq_mat.det()` |
+| `ZMod64 p` | `Hex.exactDiv`; the field instance from `HexPolyFp.PrimeField`, then `Hex.instExactDivLawsField` | `[ZMod64.Bounds p] [ZMod64.PrimeModulus p]` | the rational shapes modulo one fixed word-sized prime, plus coefficient reduction and a pivot that is nonzero only after reduction | python-flint `nmod_mat.det()` |
+| `DensePoly F` | `Hex.exactDiv`; `Hex.instExactDivLawsDensePoly` in `HexResultant.ExactDiv` | `[Lean.Grind.Field F] [DecidableEq F]`; concretely exercise `F = Rat` and `F = ZMod64 p` | univariate polynomial matrices with a nonconstant previous pivot and nontrivial exact polynomial quotients | SymPy over `QQ[x]` and `GF(p)[x]` |
+| `ZPoly` (`DensePoly Int`) | `Hex.exactDiv`; the same recursive dense-polynomial instance over `Hex.instExactDivLawsInt` | no extra coefficient hypothesis | integer-polynomial matrices with nonconstant pivots, row swap, and a singular case | SymPy over `ZZ[x]` |
+| `MvPoly n R cmp` | `Hex.exactDiv`; `Hex.MvPoly.instDiv` and `Hex.MvPoly.instExactDivLaws` in `HexMvGcd.Divide` | `[Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R] [Dvd R] [GcdOps R] [IsMonomialOrder cmp] [LawfulGcdOps R]`; concretely exercise `R = Int` and `R = Rat` | sparse two- and three-variable matrices with mixed monomials, nonconstant previous pivots, row swap, and singularity | SymPy over `ZZ[x0, ...]` and `QQ[x0, ...]` |
+
+Every row uses the same law term:
+
+```lean
+fun a b hb => Hex.exactDiv_mul_right a hb
+```
+
+The table records the actual instance declarations, not inferred stronger
+hypotheses. In particular, the recursive `ExactDivLaws (DensePoly R)` instance
+requires `[Lean.Grind.CommRing R] [DecidableEq R] [Div R]
+[ExactDivLaws R]`; the `MvPoly` instance inherits the full section context
+listed above and requires `LawfulGcdOps R`, not merely `GcdOps R`.
+
+### Placement in the dependency graph
+
+The exact-division implementations remain where they are: dense-polynomial
+division in `HexResultant`, above `HexPoly`, and multivariate division in
+`HexMvGcd`, above `HexMvPoly` and `HexResultant`. Nothing in `HexBareiss/*`
+imports either provider, and no carrier-specific public alias is added there.
+
+Direct integration calls live in `conformance/HexBareiss/Carriers.lean` and
+`bench/HexBareiss/Carriers.lean`. These are build-only roots, so they may import
+`HexBareiss` together with `HexPolyFp.PrimeField`, `HexResultant.ExactDiv`, and
+`HexMvGcd.Divide`; they are neither part of the published `HexBareiss` umbrella
+nor owners in `libraries.yml`. This is the only placement that exercises the
+existing providers without creating an upward production dependency.
+`scripts/check_dag.py` checks all production imports and accepts these
+build-only integration roots. If a carrier specialization later becomes
+reusable API, it must move to a production library already above both
+dependencies, never into `hex-bareiss`.
+
 ## Changes required of a later implementation
 
 These are obligations on the implementation issue, not on this SPEC. Until it
@@ -400,26 +443,22 @@ the implementation, not ahead of it.
 
 ### Conformance changes
 
-The committed fixture file `conformance-fixtures/HexBareiss/bareiss.jsonl` and
-the `scripts/oracle/matrix_flint.py` `bareiss` oracle tuple in
-`scripts/ci/run_oracles.sh` stay **byte-identical**: `Int` values do not change,
-so a re-emit is a regression signal, not a step.
+The existing `Int` fixture records stay byte-identical: a re-emission change is
+a regression. `conformance/HexBareiss/Conformance.lean` also checks
+`bareissWith Hex.exactDiv M = bareiss M` on every existing matrix.
 
-`conformance/HexBareiss/Conformance.lean` gains two kinds of guard.
+The carrier families above append records to
+`conformance-fixtures/HexBareiss/bareiss.jsonl`. Scalar rational and modular
+records are checked by the existing python-flint installation. Polynomial
+records use canonical ascending coefficient arrays for `DensePoly`, ordered
+exponent-vector terms for `MvPoly`, and an exact SymPy domain. The oracle
+computes the determinant of the same matrix; it does not reproduce the Bareiss
+recurrence. Complete canonical results are compared coefficientwise, with no
+sampling or heuristic simplification.
 
-First, `bareissWith Hex.exactDiv M = bareiss M` on the existing fixture
-matrices: the executable witness for `exactDiv_int_eq`, and the regression guard
-for the claim that the `Int` specialization is value-preserving.
-
-Second, a genuinely different carrier. `Rat` qualifies and is available at this
-depth without new dependencies: `Lean.Grind.Field Rat` is a core instance, so
-`Hex.instExactDivLawsField` supplies `ExactDivLaws Rat`, and
-`Lean.Grind.Field Rat`, `ExactDivLaws Rat`, `DecidableEq Rat` and `Div Rat` all
-resolve with only `HexBareiss` and `HexBasic.ExactDiv` imported. Cover ordinary
-elimination, a row swap, a singular input, and `n = 0` and `n = 1`. The
-`DensePoly` carrier stays out of reach here, since its `ExactDivLaws` instance
-lives in `hex-resultant` above this library; conformance for it belongs to the
-library that first instantiates it.
+SymPy and python-flint are already installed and preflighted by the existing
+single oracle job. The `HexBareiss` tuple in `scripts/ci/run_oracles.sh` is
+extended in place; there is no new package, workflow, job, or matrix.
 
 ### Manual changes
 
@@ -443,8 +482,7 @@ half of the existing ladder (the entries are multi-limb there, which is where
 `lean_int_div_exact` can differ), and record the ratio against the matching
 `runBareissDet` rung in `reports/hex-bareiss-performance.md`. This is an
 internal comparison, not an external comparator, so
-`HexBareiss.phase4.comparators` in `libraries.yml` is unchanged and no new
-input family is declared.
+the existing `Int` entry in `HexBareiss.phase4.comparators` is unchanged.
 
 Both rungs stay Mathlib-free and extend the script of the existing single
 bench job; no new workflow, job, or `strategy.matrix` (see
@@ -453,11 +491,50 @@ two extra rungs push the `Bench verify` step past its wallclock cap, they belong
 on the scheduled timing workflow instead, per
 [SPEC/benchmarking.md](https://github.com/kim-em/hex-dev/blob/main/SPEC/benchmarking.md).
 
+Every added carrier also has a required lean-bench family. Scalar carriers
+sweep matrix dimension; dense-polynomial carriers sweep dimension and entry
+degree at fixed coefficient support; multivariate carriers sweep dimension and
+term count at fixed arity and total degree. Each family includes matrices whose
+second and later steps divide by a nonconstant previous pivot, so the benchmark
+measures exact division rather than only ring arithmetic.
+
+| target family | external comparator | class |
+|---|---|---|
+| `runBareissRat` | python-flint `fmpq_mat.det()` | informational |
+| `runBareissMod` | python-flint `nmod_mat.det()` at the identical prime | informational |
+| `runBareissDenseRat`, `runBareissDenseMod` | SymPy determinant over the identical exact polynomial domain | informational |
+| `runBareissZPoly` | SymPy determinant over `ZZ[x]` | informational |
+| `runBareissMvInt`, `runBareissMvRat` | SymPy determinant over the identical multivariate polynomial domain | informational |
+
+All external comparisons are informational, never Phase-4 gates. FLINT's
+determinant selection is structurally different from the prescribed Bareiss
+recurrence, while the SymPy calls additionally include Python process overhead
+and independent algorithm selection. Result hashes cover the full canonical
+answer.
+
+### Symbolic coefficient growth
+
+The bordered-minor invariant in [§Complexity](#complexity) is also the symbolic
+growth contract. After step `k`, every stored entry is a `(k+1) × (k+1)` minor
+of the input matrix. Thus fraction-free elimination introduces no rational
+denominators and does not store accumulated products unrelated to input minors.
+
+This does **not** claim compact expressions. Canonical dense or sparse
+polynomial arithmetic may expand a minor into many monomials, and the transient
+difference of products can be larger still before exact division. Controlling
+that expression swell is outside this work. Evaluation/interpolation,
+multimodular reconstruction, and other modular symbolic determinant techniques
+belong to a later SPEC; neither the conformance plan nor the benchmark plan here
+silently substitutes one of them for Bareiss.
+
 ## External comparators
 
 | Comparator | Class | Scope |
 |---|---|---|
-| FLINT `fmpz_mat_det` via python-flint | informational | the Bareiss determinant bench targets (`runBareissDet` and the paired FLINT rungs) |
+| FLINT `fmpz_mat_det` via python-flint | informational | the `Int` Bareiss determinant targets (`runBareissDet` and the paired FLINT rungs) |
+| FLINT `fmpq_mat.det` via python-flint | informational | `runBareissRat` |
+| FLINT `nmod_mat.det` via python-flint | informational | `runBareissMod` |
+| SymPy exact-domain determinant | informational | the dense- and multivariate-polynomial Bareiss targets |
 
 FLINT's `fmpz_mat_det` is a structurally distinct reference for integer matrix
 determinant: FLINT uses multimodular reduction (determinant modulo many small
@@ -467,10 +544,8 @@ is recorded for orientation but is not a Phase-4 gate. Wired via a
 persistent-subprocess Python driver per
 [the benchmarking spec's "External comparators" section](https://github.com/kim-em/hex-dev/blob/main/SPEC/benchmarking.md#external-comparators).
 
-It applies to the `Int` specialization only. A generic carrier has no external
-determinant comparator, and none is proposed.
-
 Structured metadata in the project
 [`libraries.yml`](https://github.com/kim-em/hex-dev/blob/main/libraries.yml)
-under `HexBareiss.phase4.comparators`. See
+under `HexBareiss.phase4.comparators` records the carrier-scoped additions when
+their implementation lands. See
 `reports/hex-bareiss-performance.md` for the comparator ratio ladder.

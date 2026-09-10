@@ -18,6 +18,12 @@ theorem equiv_charPoly (A : Hex.Matrix R n n) :
 end HexCharPolyMathlib
 ```
 
+This theorem is coefficient-generic and already covers the `DensePoly`,
+`MvPoly`, and `RationalFn` carrier matrix from the computational SPEC whenever
+the corresponding Mathlib ring bridge is imported. No carrier-specific
+`equiv_charPoly` theorem or executable conformance suite is added here; the
+carrier fixtures remain owned by `HexCharPoly`.
+
 Importing the umbrella extends `char_poly` to closed
 `Matrix (Fin n) (Fin n) Int` terms:
 
