@@ -46,8 +46,8 @@ used roughly 67 MiB RSS and 0.03 seconds at every height. RSS includes shared
 mapped pages; cgroup peak charges shared pages differently, so the two
 memory measurements should not be interchanged.
 
-The combined direct/arithmetic construction regression completed in 0.06 s
-at 68,200 KiB RSS under a **1 GiB process-tree cap**, no swap, one CPU, and a
+The combined direct/arithmetic construction regression completed in 0.05 s
+at 68,304 KiB RSS under a **1 GiB process-tree cap**, no swap, one CPU, and a
 30-second wall cap. The existing Ubuntu CI job applies those generous bounds
 to the compiled regression separately from elaboration. These are operational
 catastrophic-regression limits, not portable performance promises.

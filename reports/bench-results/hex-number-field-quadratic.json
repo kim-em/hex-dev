@@ -329,5 +329,31 @@
       "cgroup_peak": "14M (swap: 0B)",
       "host_context": "cpu=65 load=(2.77880859375, 5.41552734375, 21.83251953125)"
     }
+  ],
+  "resource_regressions": [
+    {
+      "source": "387d8a9faa938f9585aeee52007cb1b66a446dda",
+      "stage": "regression",
+      "height": 20,
+      "memory_bytes": 1073741824,
+      "swap_bytes": 0,
+      "cpu_quota": "100%",
+      "wall_cap_seconds": 30,
+      "elapsed_seconds": 0.06,
+      "max_rss_kib": 68200,
+      "exit_code": 0
+    },
+    {
+      "source": "d8db4b666",
+      "stage": "regression",
+      "height": 20,
+      "memory_bytes": 1073741824,
+      "swap_bytes": 0,
+      "cpu_quota": "100%",
+      "wall_cap_seconds": 30,
+      "elapsed_seconds": 0.05,
+      "max_rss_kib": 68304,
+      "exit_code": 0
+    }
   ]
 }
