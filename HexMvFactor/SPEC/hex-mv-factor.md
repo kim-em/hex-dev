@@ -1834,19 +1834,11 @@ that:
   `factors_mul`, and formal `factors_irred` hypotheses. Existing univariate
   result shapes and introduction names remain compatible.
 
-The hand-written expression reifier is temporary and isolated in
-`HexMvFactorMathlib/Reify.lean`. Its module documentation must contain this
-warning prominently and verbatim in substance:
-
-> **WARNING: TEMPORARY REIFIER — REPLACE, DO NOT GROW.** This entire parser
-> must be replaced by Lean 4's built-in `Lean.Meta.Sym.Arith` reification once
-> that API is ready for this proof-producing use. Do not add consumers of its
-> internal syntax tree or duplicate its recursion elsewhere.
-
-The reifier exposes only the atom table, the `MvPoly` literal, and the proof
-of its evaluation equation. Its regression tests specify the supported
-syntax and atom-order contract, so replacing the implementation wholesale
-does not change tactic behavior.
+The generic expression arm consumes the batch session, sealed atom table,
+`MvPoly` value, and interpretation proof supplied by `hex-reflect` and
+`hex-reflect-mathlib`. It does not add `HexMvFactorMathlib/Reify.lean` or any
+other local expression parser. Its regression tests specify the supported
+`Sym.Arith` view and atom-order contract through that shared dependency.
 
 Required tactic regressions cover:
 
@@ -1923,10 +1915,10 @@ semantic operation: `checkDecomp`, `checkIrred`, `factor?`,
    milestone 4; the instance needs milestone 5.
 
 8. **The tactic surface.** The direct `MvPoly` and `MvPolynomial` extensions,
-   `FactoredExpr`, the isolated atom reifier, the shared-front-end amendments,
+   `FactoredExpr`, the `hex-reflect` adapter, the shared-front-end amendments,
    registration, emitted-term audit, and tactic regressions. It needs
    milestone 7's obligation discharge and irreducibility transport; the
-   reifier and result type can be developed independently once the
+   result type can be developed independently once the
    `MvPoly.eval₂` API is available.
 
 ## File organisation
@@ -1948,7 +1940,6 @@ HexMvFactorMathlib/
   Irreducible.lean    -- obligation discharge, irreducibility, the Decidable instance
   Unique.lean         -- uniqueness against UniqueFactorizationMonoid
   FactoredExpr.lean   -- certified result for an atom-reified ring expression
-  Reify.lean          -- temporary parser-with-proof; replace by Lean.Meta.Sym.Arith
   FactorTactic.lean   -- MvPoly, MvPolynomial, and expression tactic extension
   FactorTacticTests.lean -- syntax, dispatch, soundness-boundary, and replay tests
 HexMvFactorMathlib.lean
@@ -1971,7 +1962,7 @@ HexMvFactorMathlib.lean
           class: informational
           rationale: "A second mature EEZ implementation with different route selection and its own crossovers, useful as orientation on every family and not as a yardstick for any single one."
   HexMvFactorMathlib:
-    deps: [HexMvFactor, HexMvHenselMathlib, HexMvGcdMathlib, HexMvPolyMathlib, HexBerlekampZassenhausMathlib, HexPolyZMathlib]
+    deps: [HexMvFactor, HexMvHenselMathlib, HexMvGcdMathlib, HexMvPolyMathlib, HexBerlekampZassenhausMathlib, HexPolyZMathlib, HexReflectMathlib]
     mathlib: true
     done_through: 0
     status: planned
