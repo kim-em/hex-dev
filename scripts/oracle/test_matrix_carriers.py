@@ -206,5 +206,98 @@ class MatrixCarriersTest(unittest.TestCase):
         self.assertEqual(replies[2], {'ok': True, 'result': self.records[0]['result']})
 
 
-if __name__ == '__main__':
+from unittest.mock import patch
+import matrix_carriers as oracle
+from common import FixtureError, _validate_fixture
+
+FIXTURE = ROOT / "conformance-fixtures/HexCharPoly/carriers.jsonl"
+
+
+class CarrierTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.records = [json.loads(line) for line in FIXTURE.read_text().splitlines()]
+
+    def test_mixed_stream(self):
+        determinant = json.loads(FIXTURES.read_text().splitlines()[0])
+        characteristic = self.records[0]
+        result = subprocess.run([sys.executable, str(Path(oracle.__file__))],
+                                input=json.dumps(determinant)+"\n"+json.dumps(characteristic)+"\n",
+                                text=True, capture_output=True, check=True)
+        self.assertIn("OK: 2 exact matrix carrier records", result.stdout)
+
+    def test_independent_oracle(self):
+        from sympy.polys.matrices import DomainMatrix
+        with patch.object(DomainMatrix, "charpoly", side_effect=AssertionError("Berkowitz is forbidden")):
+            for record in self.records:
+                with self.subTest(case=record["case"]):
+                    self.assertEqual(oracle.charpoly(record), record["value"])
+
+    def test_required_coverage(self):
+        families = {r["carrier"] for r in self.records}
+        self.assertEqual(families, {"dense_int", "dense_rat", "dense_mod", "mv_int", "mv_rat", "rat_fn"})
+        shapes = {"empty", "scalar", "diagonal", "triangular", "singular", "dense"}
+        for family in families:
+            arities = (2, 3) if family.startswith("mv_") else (1,)
+            for arity in arities:
+                records = [r for r in self.records if (r["carrier"], r["arity"]) == (family, arity)]
+                self.assertEqual({r["case"].split("/")[-1] for r in records}, shapes)
+                self.assertEqual({r["n"] for r in records}, {0, 1, 3})
+                dense = next(r for r in records if r["case"].endswith("/dense"))
+                for coefficient in dense["value"][:-1]:
+                    if family == "rat_fn":
+                        self.assertGreater(len(coefficient["den"]), 1)
+                    elif family.startswith("mv_"):
+                        self.assertTrue(any(any(exponents) for exponents, _ in coefficient))
+                    else:
+                        self.assertGreater(len(coefficient), 1)
+
+    def test_invalid_metadata(self):
+        for key, value in [("carrier", []), ("arity", True), ("modulus", 1)]:
+            record = copy.deepcopy(self.records[0])
+            record[key] = value
+            with self.subTest(key=key), self.assertRaises(FixtureError):
+                _validate_fixture(record)
+        with self.assertRaises(FixtureError):
+            oracle.evaluate({"kind": []})
+
+    def test_fresh_variable(self):
+        record = copy.deepcopy(self.records[0])
+        record.update(n=1, rows=[[[0, 1]]])
+        self.assertEqual(oracle.charpoly(record), [[0, -1], [1]])
+
+    def test_noncanonical_input(self):
+        record = copy.deepcopy(self.records[0])
+        record.update(n=1, rows=[[[1, 0]]])
+        with self.assertRaisesRegex(ValueError, "noncanonical"):
+            oracle.charpoly(record)
+
+    def test_modular_reduction(self):
+        record = next(copy.deepcopy(r) for r in self.records if r["carrier"] == "dense_mod")
+        record.update(n=2, rows=[[[100, 1], []], [[], [100, 1]]])
+        self.assertEqual(oracle.charpoly(record), [[1, 99, 1], [2, 99], [1]])
+
+    def test_coefficient_corruption(self):
+        import tempfile
+        record = copy.deepcopy(self.records[0])
+        record["value"] = [[2]]
+        with tempfile.TemporaryDirectory() as directory:
+            result = subprocess.run([sys.executable, str(Path(oracle.__file__)),
+                                     "--failure-dir", directory], input=json.dumps(record)+"\n",
+                                    text=True, capture_output=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(len(list(Path(directory).glob("*.json"))), 1)
+
+    def test_persistent_recovery(self):
+        requests = [{"op": "noop"}, {"kind": "bad"}, self.records[0]]
+        result = subprocess.run([sys.executable, str(Path(oracle.__file__)), "--serve"],
+                                input="".join(json.dumps(r)+"\n" for r in requests),
+                                text=True, capture_output=True, check=True)
+        replies = [json.loads(line) for line in result.stdout.splitlines()]
+        self.assertEqual(replies[0], {"ok": True, "result": []})
+        self.assertFalse(replies[1]["ok"])
+        self.assertEqual(replies[2], {"ok": True, "result": self.records[0]["value"]})
+
+
+if __name__ == "__main__":
     unittest.main()

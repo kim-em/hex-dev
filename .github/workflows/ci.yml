@@ -371,7 +371,7 @@ jobs:
             hexconway_emit_fixtures \
             hexrowreduce_emit_fixtures hexdeterminant_emit_fixtures \
             hexbareiss_emit_fixtures hexhermite_emit_fixtures \
-            hexsmith_emit_fixtures hexcharpoly_emit_fixtures \
+            hexsmith_emit_fixtures hexcharpoly_emit_fixtures hexcharpoly_emit_carrier_fixtures \
             hexminpoly_emit_fixtures \
             hexgramschmidt_emit_fixtures hexlatticeenum_emit_fixtures \
             hexlll_emit_fixtures hexrealroots_emit_fixtures \

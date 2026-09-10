@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexCharPoly
+import HexCharPoly.Carriers
 import Hex.BenchOracle.Flint
 import Hex.BenchOracle.Pari
 import LeanBench
@@ -281,7 +282,285 @@ setup_fixed_benchmark runPari14 where externalComparisonConfig
 
 end Hex.CharPolyBench
 
+/-! Carrier comparisons require SymPy in `HEX_CARRIER_BENCH_PYTHON` (default
+python3). External registrations are scheduled-only; `verify-ci` excludes them.
+Each fixed rung observes every canonical Toeplitz/coeff-vector entry and hashes
+the entire canonical polynomial. Timings include structural instrumentation. -/
+namespace Hex.CharPolyBench
+open Hex CharPolyCarriers Lean
+local instance [ZMod64.Bounds p] : Zero (ZMod64 p) := ⟨0⟩
+
+private def peak [Lean.Grind.CommRing R] (size : R → Nat)
+    (A : Matrix R n n) : (k : Nat) → k ≤ n → Vector R (k + 1) × Nat
+  | 0, _ => (#v[1], size 1)
+  | k + 1, hk =>
+    let (prior, oldPeak) := peak size A k (by omega)
+    let column := Matrix.berkowitzColumn A k hk
+    let coeffs := Matrix.toeplitzMulVec column prior
+    let columnPeak := column.toArray.foldl (fun a c => max a (size c)) oldPeak
+    (coeffs, coeffs.toArray.foldl (fun a c => max a (size c)) columnPeak)
+
+private def denseSize [Zero R] [DecidableEq R] (p : DensePoly R) : Nat := p.size
+private def mvSize [Zero R] (p : MV n R) : Nat := p.termsList.length
+private def fractionSize (f : RationalFn Rat) : Nat := f.num.size + f.den.size
+
+private def runCarrier [Lean.Grind.CommRing R] [DecidableEq R]
+    (encode : R → Json) (size : R → Nat) (n : Nat) (entry : Nat → Nat → R) : IO String := do
+  let (coeffs, maximum) := peak size (matrix entry "dense" n) n (Nat.le_refl n)
+  LeanBench.blackBox (hash maximum)
+  return (Json.arr (coeffs.reverse.toArray.map encode)).compress
+
+def runCharDenseInt (n degree : Nat) (_ : Unit) : IO String :=
+  runCarrier (denseJson intJson) denseSize n (denseEntry id degree)
+def runCharDenseRat (n degree : Nat) (_ : Unit) : IO String :=
+  runCarrier (denseJson ratJson) denseSize n (denseEntry ratScalar degree)
+def runCharDenseMod (n degree : Nat) (_ : Unit) : IO String :=
+  runCarrier (denseJson modJson) denseSize n (denseEntry (fun z => (z : Mod)) degree)
+def runCharMvInt (n terms : Nat) (_ : Unit) : IO String :=
+  runCarrier (mvJson intJson) mvSize n (mvEntry id 3 terms)
+def runCharMvRat (n terms : Nat) (_ : Unit) : IO String :=
+  runCarrier (mvJson ratJson) mvSize n (mvEntry ratScalar 3 terms)
+def runCharRatFn (n degree : Nat) (_ : Unit) : IO String :=
+  runCarrier fractionJson fractionSize n (ratFnEntry degree)
+
+initialize carrierDriver : IO.Ref (Option Hex.BenchOracle.Flint.PersistentComparator) ← IO.mkRef none
+
+private def sympyRequest (request : Json) : IO String := do
+  let child ← match ← carrierDriver.get with
+    | some child => pure child
+    | none => do
+      let python := (← IO.getEnv "HEX_CARRIER_BENCH_PYTHON").getD "python3"
+      let driver := (← IO.getEnv "HEX_CARRIER_BENCH_DRIVER").getD "scripts/oracle/matrix_carriers.py"
+      let child ← Hex.BenchOracle.Flint.PersistentComparator.spawn python #[driver, "--serve"]
+      carrierDriver.set (some child)
+      pure child
+  let line ← child.requestLine request.compress
+  let reply ← IO.ofExcept (Json.parse line)
+  if (reply.getObjValAs? Bool "ok").toOption != some true then
+    throw (IO.userError s!"carrier oracle failed: {line}")
+  return (← IO.ofExcept (reply.getObjVal? "result")).compress
+
+private def runSympy [Lean.Grind.CommRing R] [DecidableEq R]
+    (encode : R → Json) (carrier : String) (arity n : Nat) (entry : Nat → Nat → R) : IO String :=
+  sympyRequest (request encode carrier "dense" arity (matrix entry "dense" n))
+
+def sympyDenseInt (n degree : Nat) (_ : Unit) : IO String :=
+  runSympy (denseJson intJson) "dense_int" 1 n (denseEntry id degree)
+def sympyDenseRat (n degree : Nat) (_ : Unit) : IO String :=
+  runSympy (denseJson ratJson) "dense_rat" 1 n (denseEntry ratScalar degree)
+def sympyDenseMod (n degree : Nat) (_ : Unit) : IO String :=
+  runSympy (denseJson modJson) "dense_mod" 1 n (denseEntry (fun z => (z : Mod)) degree)
+def sympyMvInt (n terms : Nat) (_ : Unit) : IO String :=
+  runSympy (mvJson intJson) "mv_int" 3 n (mvEntry id 3 terms)
+def sympyMvRat (n terms : Nat) (_ : Unit) : IO String :=
+  runSympy (mvJson ratJson) "mv_rat" 3 n (mvEntry ratScalar 3 terms)
+def sympyRatFn (n degree : Nat) (_ : Unit) : IO String :=
+  runSympy fractionJson "rat_fn" 1 n (ratFnEntry degree)
+
+def carrierNoop (_ : Unit) : IO String :=
+  sympyRequest (Json.mkObj [("op", toJson "noop")])
+
+private def carrierConfig : LeanBench.FixedBenchmarkConfig where
+  repeats := 5
+  maxSecondsPerCall := 30
+  warmupFirstIter := true
+  tags := #["carrier", "hex"]
+private def sympyConfig : LeanBench.FixedBenchmarkConfig :=
+  { carrierConfig with tags := #["carrier", "scheduled-only"] }
+
+setup_fixed_benchmark carrierNoop where sympyConfig
+
+-- Fixed latency sweeps make no fitted complexity claim: entry degree/term
+-- growth changes coefficient cost independently of Berkowitz's O(n^4) count.
+-- Multivariate rungs keep arity three and total degree five fixed.
+
+def DenseInt.n2k1 : Unit → IO String := runCharDenseInt 2 1
+def SympyDenseInt.n2k1 : Unit → IO String := sympyDenseInt 2 1
+setup_fixed_benchmark DenseInt.n2k1 where carrierConfig
+setup_fixed_benchmark SympyDenseInt.n2k1 where sympyConfig
+
+def DenseInt.n3k1 : Unit → IO String := runCharDenseInt 3 1
+def SympyDenseInt.n3k1 : Unit → IO String := sympyDenseInt 3 1
+setup_fixed_benchmark DenseInt.n3k1 where carrierConfig
+setup_fixed_benchmark SympyDenseInt.n3k1 where sympyConfig
+
+def DenseInt.n4k1 : Unit → IO String := runCharDenseInt 4 1
+def SympyDenseInt.n4k1 : Unit → IO String := sympyDenseInt 4 1
+setup_fixed_benchmark DenseInt.n4k1 where carrierConfig
+setup_fixed_benchmark SympyDenseInt.n4k1 where sympyConfig
+
+def DenseInt.n3k2 : Unit → IO String := runCharDenseInt 3 2
+def SympyDenseInt.n3k2 : Unit → IO String := sympyDenseInt 3 2
+setup_fixed_benchmark DenseInt.n3k2 where carrierConfig
+setup_fixed_benchmark SympyDenseInt.n3k2 where sympyConfig
+
+def DenseInt.n3k3 : Unit → IO String := runCharDenseInt 3 3
+def SympyDenseInt.n3k3 : Unit → IO String := sympyDenseInt 3 3
+setup_fixed_benchmark DenseInt.n3k3 where carrierConfig
+setup_fixed_benchmark SympyDenseInt.n3k3 where sympyConfig
+
+def DenseRat.n2k1 : Unit → IO String := runCharDenseRat 2 1
+def SympyDenseRat.n2k1 : Unit → IO String := sympyDenseRat 2 1
+setup_fixed_benchmark DenseRat.n2k1 where carrierConfig
+setup_fixed_benchmark SympyDenseRat.n2k1 where sympyConfig
+
+def DenseRat.n3k1 : Unit → IO String := runCharDenseRat 3 1
+def SympyDenseRat.n3k1 : Unit → IO String := sympyDenseRat 3 1
+setup_fixed_benchmark DenseRat.n3k1 where carrierConfig
+setup_fixed_benchmark SympyDenseRat.n3k1 where sympyConfig
+
+def DenseRat.n4k1 : Unit → IO String := runCharDenseRat 4 1
+def SympyDenseRat.n4k1 : Unit → IO String := sympyDenseRat 4 1
+setup_fixed_benchmark DenseRat.n4k1 where carrierConfig
+setup_fixed_benchmark SympyDenseRat.n4k1 where sympyConfig
+
+def DenseRat.n3k2 : Unit → IO String := runCharDenseRat 3 2
+def SympyDenseRat.n3k2 : Unit → IO String := sympyDenseRat 3 2
+setup_fixed_benchmark DenseRat.n3k2 where carrierConfig
+setup_fixed_benchmark SympyDenseRat.n3k2 where sympyConfig
+
+def DenseRat.n3k3 : Unit → IO String := runCharDenseRat 3 3
+def SympyDenseRat.n3k3 : Unit → IO String := sympyDenseRat 3 3
+setup_fixed_benchmark DenseRat.n3k3 where carrierConfig
+setup_fixed_benchmark SympyDenseRat.n3k3 where sympyConfig
+
+def DenseMod.n2k1 : Unit → IO String := runCharDenseMod 2 1
+def SympyDenseMod.n2k1 : Unit → IO String := sympyDenseMod 2 1
+setup_fixed_benchmark DenseMod.n2k1 where carrierConfig
+setup_fixed_benchmark SympyDenseMod.n2k1 where sympyConfig
+
+def DenseMod.n3k1 : Unit → IO String := runCharDenseMod 3 1
+def SympyDenseMod.n3k1 : Unit → IO String := sympyDenseMod 3 1
+setup_fixed_benchmark DenseMod.n3k1 where carrierConfig
+setup_fixed_benchmark SympyDenseMod.n3k1 where sympyConfig
+
+def DenseMod.n4k1 : Unit → IO String := runCharDenseMod 4 1
+def SympyDenseMod.n4k1 : Unit → IO String := sympyDenseMod 4 1
+setup_fixed_benchmark DenseMod.n4k1 where carrierConfig
+setup_fixed_benchmark SympyDenseMod.n4k1 where sympyConfig
+
+def DenseMod.n3k2 : Unit → IO String := runCharDenseMod 3 2
+def SympyDenseMod.n3k2 : Unit → IO String := sympyDenseMod 3 2
+setup_fixed_benchmark DenseMod.n3k2 where carrierConfig
+setup_fixed_benchmark SympyDenseMod.n3k2 where sympyConfig
+
+def DenseMod.n3k3 : Unit → IO String := runCharDenseMod 3 3
+def SympyDenseMod.n3k3 : Unit → IO String := sympyDenseMod 3 3
+setup_fixed_benchmark DenseMod.n3k3 where carrierConfig
+setup_fixed_benchmark SympyDenseMod.n3k3 where sympyConfig
+
+def MvInt.n2k2 : Unit → IO String := runCharMvInt 2 2
+def SympyMvInt.n2k2 : Unit → IO String := sympyMvInt 2 2
+setup_fixed_benchmark MvInt.n2k2 where carrierConfig
+setup_fixed_benchmark SympyMvInt.n2k2 where sympyConfig
+
+def MvInt.n3k2 : Unit → IO String := runCharMvInt 3 2
+def SympyMvInt.n3k2 : Unit → IO String := sympyMvInt 3 2
+setup_fixed_benchmark MvInt.n3k2 where carrierConfig
+setup_fixed_benchmark SympyMvInt.n3k2 where sympyConfig
+
+def MvInt.n4k2 : Unit → IO String := runCharMvInt 4 2
+def SympyMvInt.n4k2 : Unit → IO String := sympyMvInt 4 2
+setup_fixed_benchmark MvInt.n4k2 where carrierConfig
+setup_fixed_benchmark SympyMvInt.n4k2 where sympyConfig
+
+def MvInt.n3k4 : Unit → IO String := runCharMvInt 3 4
+def SympyMvInt.n3k4 : Unit → IO String := sympyMvInt 3 4
+setup_fixed_benchmark MvInt.n3k4 where carrierConfig
+setup_fixed_benchmark SympyMvInt.n3k4 where sympyConfig
+
+def MvInt.n3k6 : Unit → IO String := runCharMvInt 3 6
+def SympyMvInt.n3k6 : Unit → IO String := sympyMvInt 3 6
+setup_fixed_benchmark MvInt.n3k6 where carrierConfig
+setup_fixed_benchmark SympyMvInt.n3k6 where sympyConfig
+
+def MvRat.n2k2 : Unit → IO String := runCharMvRat 2 2
+def SympyMvRat.n2k2 : Unit → IO String := sympyMvRat 2 2
+setup_fixed_benchmark MvRat.n2k2 where carrierConfig
+setup_fixed_benchmark SympyMvRat.n2k2 where sympyConfig
+
+def MvRat.n3k2 : Unit → IO String := runCharMvRat 3 2
+def SympyMvRat.n3k2 : Unit → IO String := sympyMvRat 3 2
+setup_fixed_benchmark MvRat.n3k2 where carrierConfig
+setup_fixed_benchmark SympyMvRat.n3k2 where sympyConfig
+
+def MvRat.n4k2 : Unit → IO String := runCharMvRat 4 2
+def SympyMvRat.n4k2 : Unit → IO String := sympyMvRat 4 2
+setup_fixed_benchmark MvRat.n4k2 where carrierConfig
+setup_fixed_benchmark SympyMvRat.n4k2 where sympyConfig
+
+def MvRat.n3k4 : Unit → IO String := runCharMvRat 3 4
+def SympyMvRat.n3k4 : Unit → IO String := sympyMvRat 3 4
+setup_fixed_benchmark MvRat.n3k4 where carrierConfig
+setup_fixed_benchmark SympyMvRat.n3k4 where sympyConfig
+
+def MvRat.n3k6 : Unit → IO String := runCharMvRat 3 6
+def SympyMvRat.n3k6 : Unit → IO String := sympyMvRat 3 6
+setup_fixed_benchmark MvRat.n3k6 where carrierConfig
+setup_fixed_benchmark SympyMvRat.n3k6 where sympyConfig
+
+def RatFn.n2k1 : Unit → IO String := runCharRatFn 2 1
+def SympyRatFn.n2k1 : Unit → IO String := sympyRatFn 2 1
+setup_fixed_benchmark RatFn.n2k1 where carrierConfig
+setup_fixed_benchmark SympyRatFn.n2k1 where sympyConfig
+
+def RatFn.n3k1 : Unit → IO String := runCharRatFn 3 1
+def SympyRatFn.n3k1 : Unit → IO String := sympyRatFn 3 1
+setup_fixed_benchmark RatFn.n3k1 where carrierConfig
+setup_fixed_benchmark SympyRatFn.n3k1 where sympyConfig
+
+def RatFn.n4k1 : Unit → IO String := runCharRatFn 4 1
+def SympyRatFn.n4k1 : Unit → IO String := sympyRatFn 4 1
+setup_fixed_benchmark RatFn.n4k1 where carrierConfig
+setup_fixed_benchmark SympyRatFn.n4k1 where sympyConfig
+
+def RatFn.n3k2 : Unit → IO String := runCharRatFn 3 2
+def SympyRatFn.n3k2 : Unit → IO String := sympyRatFn 3 2
+setup_fixed_benchmark RatFn.n3k2 where carrierConfig
+setup_fixed_benchmark SympyRatFn.n3k2 where sympyConfig
+
+def RatFn.n3k3 : Unit → IO String := runCharRatFn 3 3
+def SympyRatFn.n3k3 : Unit → IO String := sympyRatFn 3 3
+setup_fixed_benchmark RatFn.n3k3 where carrierConfig
+setup_fixed_benchmark SympyRatFn.n3k3 where sympyConfig
+
+private def emitPeak [Lean.Grind.CommRing R] [DecidableEq R]
+    (encode : R → Json) (size : R → Nat) (family : String) (n k : Nat)
+    (entry : Nat → Nat → R) : IO Unit := do
+  let A := matrix entry "dense" n
+  let (coeffs, maximum) := peak size A n (Nat.le_refl n)
+  let actual := Json.arr (coeffs.reverse.toArray.map encode)
+  if actual != Json.arr (A.charPoly.toArray.map encode) then
+    throw (IO.userError "instrumented recurrence disagrees with charPoly")
+  IO.println (Json.mkObj [("family", toJson family), ("n", toJson n),
+    ("parameter", toJson k), ("peak", toJson maximum),
+    ("checksum", toJson (hash actual.compress).toNat)]).compress
+
+def carrierGrowth : IO UInt32 := do
+  for (n, k) in [(2, 1), (3, 1), (4, 1), (3, 2), (3, 3)] do
+    emitPeak (denseJson intJson) denseSize "DenseInt" n k (denseEntry id k)
+    emitPeak (denseJson ratJson) denseSize "DenseRat" n k (denseEntry ratScalar k)
+    emitPeak (denseJson modJson) denseSize "DenseMod" n k (denseEntry (fun z => (z : Mod)) k)
+    emitPeak fractionJson fractionSize "RatFn" n k (ratFnEntry k)
+  for (n, k) in [(2, 2), (3, 2), (4, 2), (3, 4), (3, 6)] do
+    emitPeak (mvJson intJson) mvSize "MvInt" n k (mvEntry id 3 k)
+    emitPeak (mvJson ratJson) mvSize "MvRat" n k (mvEntry ratScalar 3 k)
+  return 0
+
+/-- CI exercises Hex carrier registrations; external comparisons are explicit. -/
+def verifyCI : IO UInt32 := do
+  let parametric ← LeanBench.allRuntimeEntries
+  let fixed ← LeanBench.allFixedRuntimeEntries
+  let names := parametric.toList.map (fun e => e.spec.name.toString) ++
+    (fixed.toList.filter (fun e => !e.spec.config.tags.contains "scheduled-only")).map
+      (fun e => e.spec.name.toString)
+  LeanBench.Cli.dispatch ("verify" :: names)
+
+end Hex.CharPolyBench
+
 def main (args : List String) : IO UInt32 :=
   match args with
+  | ["carrier-growth"] => Hex.CharPolyBench.carrierGrowth
+  | ["verify-ci"] => Hex.CharPolyBench.verifyCI
   | ["growth"] => Hex.CharPolyBench.growthReport
   | _ => LeanBench.Cli.dispatch args

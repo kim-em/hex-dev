@@ -57,6 +57,7 @@ ORACLES=(
   # SymPy backed
   "HexBareiss|hexbareiss_emit_carrier_fixtures|scripts/oracle/matrix_carriers.py|conformance-fixtures/HexBareiss/carriers.jsonl"
   "HexDeterminant|hexdeterminant_emit_carrier_fixtures|scripts/oracle/matrix_carriers.py|conformance-fixtures/HexDeterminant/carriers.jsonl"
+  "HexCharPoly|hexcharpoly_emit_carrier_fixtures|scripts/oracle/matrix_carriers.py|conformance-fixtures/HexCharPoly/carriers.jsonl"
   "HexRationalFn|hexrationalfn_emit_fixtures|scripts/oracle/rationalfn_sympy.py|conformance-fixtures/HexRationalFn/rationalfn.jsonl"
   "HexMvPoly|hexmvpoly_emit_fixtures|scripts/oracle/mvpoly_sympy.py|conformance-fixtures/HexMvPoly/mvpoly.jsonl"
   "HexTruncatedSeries|hextruncatedseries_emit_fixtures|scripts/oracle/series_sympy.py|conformance-fixtures/HexTruncatedSeries/series.jsonl"

@@ -92,12 +92,17 @@ for bench in "${filtered_benches[@]}"; do
   # can spend the smoke budget on Lake replay checks rather than bench
   # verification. Local runs keep `lake exe` so stale binaries are rebuilt.
   bench_exe=".lake/build/bin/$bench"
+  verify_command=verify
+  if [ "$bench" = "hexcharpoly_bench" ]; then
+    # Carrier SymPy comparisons run only during explicit scheduled measurements.
+    verify_command=verify-ci
+  fi
   if [ "${GITHUB_ACTIONS:-}" = "true" ] && [ -x "$bench_exe" ]; then
     "$bench_exe" list
-    "$bench_exe" verify
+    "$bench_exe" "$verify_command"
   else
     lake exe "$bench" list
-    lake exe "$bench" verify
+    lake exe "$bench" "$verify_command"
   fi
   end=$(date +%s)
   elapsed=$((end - start))

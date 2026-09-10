@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexCharPoly.Fixtures
+import HexCharPoly.Carriers
 
 /-!
 Executable characteristic-polynomial conformance checks.
@@ -46,3 +47,42 @@ private def falseCertificate : Hex.DensePoly Int :=
 #guard Hex.Matrix.charPoly zero2.matrix != falseCertificate
 
 end Hex.CharPolyConformance
+
+namespace Hex.CharPolyCarriers
+open Hex
+
+local instance [ZMod64.Bounds p] : Zero (ZMod64 p) := ⟨0⟩
+
+-- Pin direct instantiation, including the additional MvPoly equality classes.
+example (A : Matrix (DensePoly Int) n n) : DensePoly (DensePoly Int) := A.charPoly
+example (A : Matrix (DensePoly Rat) n n) : DensePoly (DensePoly Rat) := A.charPoly
+example [ZMod64.Bounds p] (A : Matrix (DensePoly (ZMod64 p)) n n) :
+    DensePoly (DensePoly (ZMod64 p)) := A.charPoly
+example [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+    (A : Matrix (MV arity R) n n) : DensePoly (MV arity R) := A.charPoly
+example (A : Matrix (RationalFn Rat) n n) : DensePoly (RationalFn Rat) := A.charPoly
+
+private def checkCarrier [Lean.Grind.CommRing R] [DecidableEq R]
+    (entry : Nat → Nat → R) : Bool := Id.run do
+  for (shape, n) in shapes do
+    let A := matrix entry shape n
+    let p := A.charPoly
+    if p.coeff n != 1 then return false
+    if n > 0 && p.coeff (n - 1) != -A.trace then return false
+    if shape == "singular" && p.coeff 0 != 0 then return false
+    if shape == "diagonal" || shape == "triangular" then
+      let expected := (List.finRange n).foldl (fun q i =>
+        q * DensePoly.ofCoeffs #[-A.rows[i][i], 1]) (1 : DensePoly R)
+      if p != expected then return false
+  return true
+
+#guard checkCarrier (denseEntry id 2)
+#guard checkCarrier (denseEntry ratScalar 2)
+#guard checkCarrier (denseEntry (fun z => (z : Mod)) 2)
+#guard checkCarrier (mvEntry id 2 4)
+#guard checkCarrier (mvEntry id 3 6)
+#guard checkCarrier (mvEntry ratScalar 2 4)
+#guard checkCarrier (mvEntry ratScalar 3 6)
+#guard checkCarrier (ratFnEntry 1)
+
+end Hex.CharPolyCarriers
