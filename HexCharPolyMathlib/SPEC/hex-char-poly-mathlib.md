@@ -18,9 +18,12 @@ theorem equiv_charPoly (A : Hex.Matrix R n n) :
 end HexCharPolyMathlib
 ```
 
-This theorem is coefficient-generic and already covers the `DensePoly`,
-`MvPoly`, and `RationalFn` carrier matrix from the computational SPEC whenever
-the corresponding Mathlib ring bridge is imported. No carrier-specific
+This theorem is coefficient-generic. `MvPoly` obtains the required Mathlib
+`CommRing` from `HexMvPolyMathlib`, and `RationalFn` obtains a Mathlib `Field`
+from `HexRationalFnMathlib`, so those carrier specializations need no new
+characteristic-polynomial lemma. There is currently no global Mathlib
+`CommRing` instance for executable `DensePoly`; the computational carrier
+coverage does not wait for that separate bridge. No carrier-specific
 `equiv_charPoly` theorem or executable conformance suite is added here; the
 carrier fixtures remain owned by `HexCharPoly`.
 

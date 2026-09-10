@@ -187,8 +187,13 @@ with instances obtained as follows:
 
 These instance-law terms are compile-time guards in the carrier integration
 modules, not new correspondence APIs in this library. The already-generic
-`bareissWith_eq_mathlib_det` covers every row verbatim once that `hquot` term is
-passed; it must not be duplicated under carrier-specific theorem names.
+`bareissWith_eq_mathlib_det` is the sole theorem needed once both a Mathlib
+`CommRing` and the `hquot` term are in scope; it must not be duplicated under
+carrier-specific theorem names. `Rat` and `MvPoly` already have the necessary
+Mathlib structures. Executable `DensePoly`/`ZPoly` and `ZMod64` do not currently
+have global Mathlib `CommRing` instances, so their computational conformance is
+independent of that separate bridge work; this SPEC does not invent local
+instances or weaken the theorem to claim otherwise.
 
 These are the theorems on the forbidden list in the Mathlib-free `hex-bareiss`
 SPEC: they must live here, never restated or reproven in the executable layer.

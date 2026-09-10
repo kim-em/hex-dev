@@ -92,24 +92,27 @@ benchmark matrix rather than by carrier-specific aliases:
 |---|---|---|---|
 | `DensePoly Int` | `HexPoly.Instances` | univariate integer-polynomial matrices with nonconstant trace, determinant and intermediate coefficients | SymPy over `ZZ[x,t]` |
 | `DensePoly Rat` | `HexPoly.Instances` | the same shapes with nonintegral coefficients | SymPy over `QQ[x,t]` |
-| `DensePoly (ZMod64 p)` | `HexPoly.Instances` and `HexModArith`, with `[ZMod64.Bounds p]` | the same shapes at a fixed word-sized prime, including characteristic reduction | SymPy over `GF(p)[x,t]` |
+| `DensePoly (ZMod64 p)` | `HexPoly.Instances` and `HexModArith`, with `[ZMod64.Bounds p]` | the same shapes at a fixed prime below `2^31`, including characteristic reduction | SymPy over `GF(p, symmetric=False)[x,t]` |
 | `MvPoly n Int cmp` | `HexMvPoly.Ring` | sparse two- and three-variable integer-polynomial matrices with mixed monomials | SymPy over `ZZ[x0, ..., t]` |
 | `MvPoly n Rat cmp` | `HexMvPoly.Ring` | the same shapes with rational coefficients | SymPy over `QQ[x0, ..., t]` |
 | `RationalFn Rat` | `HexRationalFn.Field` | matrices whose entries and output coefficients require nonconstant reduced denominators | SymPy over `QQ(x)[t]` |
 
 Here `t` is a fresh characteristic-polynomial indeterminate, distinct from all
-entry variables. For `MvPoly`, conformance fixes the standard graded reverse
-lexicographic comparator and supplies its `Std.TransCmp` and
-`Std.LawfulEqCmp` instances.
+entry variables. For `MvPoly`, the ring instance additionally requires
+`[BEq R]` and `[LawfulBEq R]`. Conformance fixes `Hex.Mono.grevlex`; its
+existing `Std.TransCmp` and `Std.LawfulEqCmp` instances determine the term
+order.
 
-The direct calls live in `conformance/HexCharPoly/Carriers.lean` and
-`bench/HexCharPoly/Carriers.lean`. Those are build-only integration roots and
-may import `HexMvPoly`, `HexModArith`, and `HexRationalFn` alongside
-`HexCharPoly`; they do not change the published library's
+Direct typechecking and guards live in the existing build-only
+`conformance/HexCharPoly/Conformance.lean`; a separate
+`EmitCarrierFixtures.lean` is an explicit emitter root; and carrier benchmarks
+are registered by the existing `bench/HexCharPoly/Bench.lean` executable root.
+Those modules may import `HexMvPoly`, `HexModArith`, and `HexRationalFn`
+alongside `HexCharPoly`; they do not change the published library's
 `deps: [HexMatrix, HexPoly]`. A reusable source declaration involving one of
-these carriers must instead live above both libraries. This placement is the
-one accepted by `scripts/check_dag.py`: no carrier package is imported upward
-from a production `HexCharPoly/*` module.
+these carriers must instead live above both libraries. `scripts/check_dag.py`
+enforces the production graph from `libraries.yml`; the integration paths have
+no production owner, though its sealed-import check still scans them.
 
 ## Conformance
 
@@ -122,21 +125,25 @@ reversing either list.  Lean guards check Cayley--Hamilton on every fixture and
 retain the explicit counterexample showing that a monic degree-`n` annihilator
 need not be the characteristic polynomial.
 
-The six carrier families above append canonically encoded records to
-`conformance-fixtures/HexCharPoly/charpoly.jsonl`: ascending arrays for nested
-`DensePoly`, ordered exponent-vector terms for `MvPoly`, and reduced
-numerator/monic-denominator pairs for `RationalFn`. Each family includes `n = 0`
-and `n = 1`, diagonal and triangular cases, a singular dense case, and a dense
-case with genuinely nonconstant output coefficients.
+`hexcharpoly_emit_carrier_fixtures` writes the six added families to the
+separate `conformance-fixtures/HexCharPoly/carriers.jsonl`: ascending arrays for
+nested `DensePoly`, ordered exponent-vector terms for `MvPoly`, and reduced
+numerator/monic-denominator pairs for `RationalFn`. Finite-field residues are
+normalized to `[0, p)`. Each family includes `n = 0` and `n = 1`, diagonal and
+triangular cases, a singular dense case, and a dense case with genuinely
+nonconstant output coefficients. The existing integer emitter and
+`matrix_flint.py` stream stay unchanged.
 
-The symbolic oracle does **not** call SymPy's characteristic-polynomial
-routine. It constructs `tI - A` over the exact polynomial or fraction-field
-domain and computes `det(tI - A)`, then compares every coefficient in canonical
-ascending order. This is an independent route from Hex's Berkowitz recursion;
-no point sampling or expression simplifier decides equality. SymPy is already
-installed and preflighted by the existing single oracle job, so the
-`HexCharPoly` tuple in `scripts/ci/run_oracles.sh` is extended without a new
-dependency or job.
+The new `scripts/oracle/matrix_carriers.py` tuple does **not** call SymPy's
+characteristic-polynomial routine. It constructs a `DomainMatrix` for `tI - A`
+over the exact polynomial or fraction-field domain and calls
+`DomainMatrix.det()` (Bareiss), then compares every coefficient in canonical
+ascending order. Finite fields use `GF(p, symmetric=False)`. This is an
+independent route from Hex's Berkowitz recursion; no point sampling or
+expression simplifier decides equality. SymPy is already installed and
+preflighted by the existing single oracle job, so the extra
+emitter/fixture/oracle tuple introduces no dependency, workflow, job, or
+matrix.
 
 This is an independent division-free arm: its emit target and oracle records do
 not import or wait for the `bareissWith` carrier integration. Exact-division
@@ -163,12 +170,17 @@ measure rather than an evaluation.
 
 | target family | external comparator | class |
 |---|---|---|
-| `runCharDenseInt`, `runCharDenseRat`, `runCharDenseMod` | SymPy exact `det(tI-A)` on the identical matrix | informational |
-| `runCharMvInt`, `runCharMvRat` | SymPy exact `det(tI-A)` on the identical matrix | informational |
-| `runCharRatFn` | SymPy fraction-field `det(tI-A)` on the identical matrix | informational |
+| `runCharDenseInt`, `runCharDenseRat`, `runCharDenseMod` | SymPy `DomainMatrix.det()` (Bareiss) on the identical exact-domain `tI-A` | informational |
+| `runCharMvInt`, `runCharMvRat` | SymPy `DomainMatrix.det()` (Bareiss) on the identical exact-domain `tI-A` | informational |
+| `runCharRatFn` | SymPy `DomainMatrix.det()` (Bareiss) on the identical fraction-field `tI-A` | informational |
 
-These external comparisons are scheduled-capable process-call targets and are
-informational, never Phase-4 gates: SymPy uses a different implementation
-language and may select different determinant algorithms. They extend the
-existing single bench script, and all result hashes cover the full canonical
+These external comparisons are informational, never Phase-4 gates. They use the
+carrier driver's persistent-subprocess mode and are scheduled-only. Because the
+body is `IO`, each point of a dimension/degree or dimension/term-count sweep is
+a separate `setup_fixed_benchmark`; the SymPy `DomainMatrix.det()` method is
+pinned to Bareiss. The implementation PR records trivial-request overhead and
+overhead-adjusted ratios in
+`reports/hex-char-poly-performance.md §Comparator ratios`, updates
+`libraries.yml phase4.comparators` and `input_families`, and extends the
+existing single bench script. All result hashes cover the full canonical
 polynomial.

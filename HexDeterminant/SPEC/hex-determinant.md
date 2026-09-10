@@ -200,45 +200,52 @@ in conformance and benchmark code:
 |---|---|---|---|
 | `DensePoly Int` | `HexPoly.Instances` | dense univariate integer-polynomial matrices, including nonconstant determinant, cancellation, singular, triangular and row-swap cases | SymPy over `ZZ[x]` |
 | `DensePoly Rat` | `HexPoly.Instances` | the same shapes with nonintegral rational coefficients | SymPy over `QQ[x]` |
-| `DensePoly (ZMod64 p)` | `HexPoly.Instances` and `HexModArith`, with `[ZMod64.Bounds p]` | the same shapes at a fixed word-sized prime, including reduction of negative and oversized coefficients | SymPy over `GF(p)[x]` |
+| `DensePoly (ZMod64 p)` | `HexPoly.Instances` and `HexModArith`, with `[ZMod64.Bounds p]` | the same shapes at a fixed prime below `2^31`, including reduction of negative and oversized coefficients | SymPy over `GF(p, symmetric=False)[x]` |
 | `MvPoly n Int cmp` | `HexMvPoly.Ring` | sparse two- and three-variable integer-polynomial matrices, with mixed monomials and cancellation | SymPy over `ZZ[x0, ...]` |
 | `MvPoly n Rat cmp` | `HexMvPoly.Ring` | the same shapes with rational coefficients | SymPy over `QQ[x0, ...]` |
 | `RationalFn Rat` | `HexRationalFn.Field` | matrices with nonconstant, nonunit denominators and cancellations in the determinant | SymPy over `QQ(x)` |
 
-For `MvPoly`, the executable ring instance requires `[Std.TransCmp cmp]` and
-`[Std.LawfulEqCmp cmp]` in addition to the coefficient commutative ring and
-decidable equality. Conformance fixes the standard graded reverse
-lexicographic comparator, so the fixture encoding and output order are
-deterministic.
+For `MvPoly`, the executable ring instance requires `[Std.TransCmp cmp]`,
+`[Std.LawfulEqCmp cmp]`, `[BEq R]`, and `[LawfulBEq R]` in addition to the
+coefficient commutative ring and decidable equality. Conformance fixes
+`Hex.Mono.grevlex`; its existing lawful-comparator instances make fixture
+encoding and output order deterministic.
 
-These are integration instantiations, not new production definitions. They
-live in `conformance/HexDeterminant/Carriers.lean` and
-`bench/HexDeterminant/Carriers.lean`, whose build-only roots may import the
-carrier providers together with `HexDeterminant`. They do not add an edge to
-the published `HexDeterminant` library. `scripts/check_dag.py` deliberately
-checks production modules against `libraries.yml` while treating `conformance/`
-and `bench/` as build-only roots. If code from either module becomes reusable
-library API, it must move to a library already above both dependencies; the
-generic determinant library must not acquire upward imports merely to name test
+These are integration instantiations, not new production definitions. Direct
+typechecking and guards live in the existing build-only
+`conformance/HexDeterminant/Conformance.lean`; a separate
+`EmitCarrierFixtures.lean` is an explicit emitter root; and carrier benchmarks
+are registered by the existing `bench/HexDeterminant/Bench.lean` executable
+root. Those modules may import the carrier providers together with
+`HexDeterminant`. They do not add an edge to the published `HexDeterminant`
+library. `scripts/check_dag.py` enforces production imports from
+`libraries.yml`; these integration paths have no production owner, though its
+sealed-import check still scans them. If their code becomes reusable library
+API, it must move to a library already above both dependencies; the generic
+determinant library must not acquire upward imports merely to name test
 carriers.
 
 ### Conformance encoding
 
-The carrier families are appended to
-`conformance-fixtures/HexDeterminant/determinant.jsonl`. A matrix record names
-its coefficient domain and encodes every coefficient canonically: ascending
+`hexdeterminant_emit_carrier_fixtures` writes the added families to the separate
+`conformance-fixtures/HexDeterminant/carriers.jsonl`. A matrix record names its
+coefficient domain and encodes every coefficient canonically: ascending
 coefficient arrays for `DensePoly`, ordered exponent-vector/coefficient pairs
 for `MvPoly`, and reduced numerator/monic-denominator pairs for `RationalFn`.
-Lean emits the complete canonical determinant, not evaluations or hashes.
+Finite-field residues are normalized to `[0, p)`. Lean emits the complete
+canonical determinant, not evaluations or hashes. The existing integer emitter
+and `matrix_flint.py` fixture stream stay unchanged.
 
-The corresponding oracle path uses SymPy's exact polynomial and fraction-field
-domains. It constructs the matrix over the declared domain and computes its
-determinant there; equality is coefficientwise after canonical serialization.
-No sampling, simplification heuristic, or floating-point evaluation decides a
-fixture. SymPy is already installed and preflighted by
-`.github/workflows/ci.yml` and `scripts/ci/run_oracles.sh`, so adding these
-record kinds extends the existing `HexDeterminant` oracle tuple and introduces
-no package or CI-job change.
+A new `scripts/oracle/matrix_carriers.py` tuple uses SymPy's exact polynomial
+and fraction-field domains. It constructs a `DomainMatrix` over the declared
+domain and calls `DomainMatrix.det()`, whose pinned SymPy implementation is
+Bareiss and is independent of Hex's Leibniz enumeration; equality is
+coefficientwise after canonical serialization. Finite fields use
+`GF(p, symmetric=False)`. No sampling,
+simplification heuristic, or floating-point evaluation decides a fixture.
+SymPy is already installed and preflighted by `.github/workflows/ci.yml` and
+`scripts/ci/run_oracles.sh`, so the extra emitter/fixture/oracle tuple extends
+the existing single job without a new package, workflow, job, or matrix.
 
 This division-free fixture arm emits, builds, and runs independently of every
 `bareissWith` fixture. A missing exact-division instance or failed Bareiss build
@@ -257,14 +264,22 @@ timing out.
 
 | target family | external comparator | class |
 |---|---|---|
-| `runDetDenseInt`, `runDetDenseRat`, `runDetDenseMod` | SymPy exact-domain determinant on the identical matrix | informational |
-| `runDetMvInt`, `runDetMvRat` | SymPy exact-domain determinant on the identical matrix | informational |
-| `runDetRatFn` | SymPy fraction-field determinant on the identical matrix | informational |
+| `runDetDenseInt`, `runDetDenseRat`, `runDetDenseMod` | SymPy `DomainMatrix.det()` (Bareiss) on the identical exact-domain matrix | informational |
+| `runDetMvInt`, `runDetMvRat` | SymPy `DomainMatrix.det()` (Bareiss) on the identical exact-domain matrix | informational |
+| `runDetRatFn` | SymPy `DomainMatrix.det()` (Bareiss) on the identical fraction-field matrix | informational |
 
 The registrations and external calls extend the existing single bench script.
 The comparisons are informational because Python process cost and SymPy's
 algorithm selection are structurally unlike the executable Leibniz sum; none
 is a Phase-4 gate. Result hashes cover the full canonical output.
+
+The SymPy registrations use the carrier driver's persistent-subprocess mode.
+Each point of a dimension/degree or dimension/term-count sweep is a separate
+`setup_fixed_benchmark`, as required for an `IO` process-call body. The
+implementation PR records trivial-request overhead and overhead-adjusted ratios
+in `reports/hex-determinant-performance.md §Comparator ratios`; these external
+rungs are informational and scheduled-only. That same PR updates the
+carrier-scoped `libraries.yml phase4.comparators` and `input_families` entries.
 
 ## External comparators
 
