@@ -27,11 +27,28 @@ computed nullspace basis, whose completeness and independence require
 row-reduction, span, and nullspace APIs in `HexRowReduce` use
 `Lean.Grind.Field` (and `DecidableEq` where computation requires it).
 
-**Nullspace:** Our computed nullspace basis spans the same submodule as
-`LinearMap.ker (Matrix.mulVecLin (matrixEquiv M))`.
+**Nullspace:** Our computed nullspace basis spans exactly the kernel of the
+Mathlib matrix:
+```lean
+theorem nullspace_span_eq_ker [Field R]
+    {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
+    (E : Hex.Matrix.IsRowReduced M D) :
+    Submodule.span R
+        (Set.range fun k : Fin (m - D.rank) => vectorEquiv (E.nullspace.get k)) =
+      LinearMap.ker (_root_.Matrix.mulVecLin (matrixEquiv M))
+```
 
-**Span:** Our `IsEchelonForm.spanContains` agrees with membership in
-`Submodule.span R (Set.range M.row)`.
+**Span:** The executable `IsEchelonForm.spanContains` test, called through a
+reduced row-echelon witness, agrees with membership in the span of the Mathlib
+matrix's rows:
+```lean
+theorem spanContains_iff_mem_span [Field R] [DecidableEq R]
+    {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
+    (E : Hex.Matrix.IsRowReduced M D) (v : Vector R m) :
+    E.toIsEchelonForm.spanContains v = true ↔
+      vectorEquiv v ∈
+        Submodule.span R (Set.range (_root_.Matrix.row (matrixEquiv M)))
+```
 
 This makes our row-reduction computations computable witnesses for Mathlib's
 noncomputable rank/kernel/span definitions.

@@ -22,7 +22,7 @@ theorem det_eq [CommRing R] (M : Hex.Matrix R n n) :
 Through `det_eq`, Mathlib determinant theorems (Cramer's rule, Cauchy-Binet,
 adjugate identities) transfer to our executable determinant.
 
-## Outstanding obligations
+## Required outstanding obligations
 
 | obligation | status | requirement |
 |---|---|---|
@@ -96,7 +96,7 @@ update and re-check the three Hex theorems that directly invoke it:
 `desnanot_jacobi_matrixEquiv_reindex`, and
 `desnanot_jacobi_borderedMinor_reindex`. Rebuild their downstream
 `desnanot_jacobi_borderedMinor` bridge and its Bareiss and integer
-Gram--Schmidt consumers before removing the vendored module or changing the
+Gram–Schmidt consumers before removing the vendored module or changing the
 `public import` export chain.
 
 ## Desnanot-Jacobi: the four public forms

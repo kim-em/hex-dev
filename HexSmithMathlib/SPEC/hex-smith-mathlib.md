@@ -45,7 +45,11 @@ be exactly `rowSpan A`, and explicit coordinate representatives prove
 surjectivity. This avoids Mathlib's helper for full-rank submodules, which
 cannot represent the free complement.
 
-## Outstanding obligations
+The authoritative algorithm, correctness, uniqueness, conformance, and
+benchmark requirements shared with this layer are in
+[`SPEC/Libraries/hex-smith.md`](../../SPEC/Libraries/hex-smith.md).
+
+## Required outstanding obligations
 
 | obligation | status | requirement |
 |---|---|---|
@@ -66,10 +70,6 @@ of the Mathlib-free Smith/Hermite rank equality and the Hermite-to-Mathlib rank
 bridge, not a new computation in `HexSmith`. The implementing module must also
 import `HexHermiteMathlib.Rank`: the current `HexSmithMathlib` chain reaches
 `HexHermiteMathlib.Span`, which does not export `hnfRank_eq_rank`.
-
-The authoritative algorithm, correctness, uniqueness, conformance, and
-benchmark requirements shared with this layer are in
-[`SPEC/Libraries/hex-smith.md`](../../SPEC/Libraries/hex-smith.md).
 
 ## Runtime boundary
 
