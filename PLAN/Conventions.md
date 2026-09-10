@@ -180,7 +180,7 @@ three letters or fewer.
 
 ### Process vocabulary stops at the issue boundary
 
-Issue and PR titles may use scheduling shorthand ("HO-1 Gap 1
+Issue and PR titles may use scheduling shorthand ("integration step 1
 consumer"); the Lean identifiers a worker creates name the
 **mathematics**, never the issue's process words — `ZPoly.toMonic`,
 not `monicisedCoreTransportPackage`. See
@@ -246,8 +246,9 @@ opens with a module docstring, placed immediately after `public section`.
 
 Work is assigned by hand, one GitHub issue per SPEC. The issue body
 records the scope, deliverables, dependencies, and verification for that
-SPEC. Keep implementation steps in the issue rather than creating an
-automatically dispatched queue of smaller work items.
+SPEC. Keep implementation steps and audit findings in that issue. Link
+prerequisites tracked by another SPEC's issue when work crosses library
+boundaries.
 
 GitHub issues are the canonical task tracker. Do not introduce a separate
 committed task graph that has to be kept in sync with issues.
@@ -265,8 +266,8 @@ shape:
   the SPEC § that governs that path (quote 1–3 lines), and a one-line
   answer to each of the four placement questions in
   [Library placement is a hard precondition](#library-placement-is-a-hard-precondition).
-  If any answer is "unknown" or "blocked", file the prerequisite issue
-  first and add `depends-on:` here; do not file the dependent issue.
+  If any answer is "unknown" or "blocked", document the missing premise
+  before implementation and link any prerequisite SPEC issue.
 - **Context** — links to every SPEC file the worker should re-read,
   including adjacent ones likely to be relevant (the library being
   touched, sibling library SPECs whose contracts cross the boundary,
@@ -295,9 +296,8 @@ against the import DAG (see
 ### Library placement is a hard precondition
 
 Every issue that adds or modifies a Lean declaration names its target
-file *and justifies it*. Decomposition inherits the parent's
-placement only if the parent's placement was justified; otherwise
-re-justify in the child. A worker who picks up an issue whose Library
+file *and justifies it*. Each implementation step must satisfy the same
+placement rule. A worker who picks up an issue whose Library
 placement is missing or wrong documents the problem on the issue before
 starting implementation.
 
@@ -328,9 +328,10 @@ Answer all four. One line each is enough.
 4. **Does the deliverable presuppose missing infrastructure?**
    Type-class instances the statement quantifies over (`HPow`,
    `Module`, `Algebra`), helper definitions, kernel-reducible
-   evaluators. If yes, file the infrastructure issue first and
-   `depends-on:` it here. An issue for a theorem that cannot be stated
-   needs its premise corrected.
+   evaluators. If yes, record the gap in the assigned issue and link the
+   prerequisite SPEC issue with `depends-on:` when it belongs to another
+   library. Correct the premise before implementing a theorem that cannot
+   be stated.
 
 A `depends-on:` answer to any of (1)–(4) is healthy. An unanswered
 question is the failure shape.
@@ -354,17 +355,18 @@ upstream proof cannot consume a downstream artefact, so it is never a
 real blocker, only a mis-scoped issue or a "needed downstream too"
 note mis-filed as one.
 
-Before recording a `depends-on:` edge, check `may_import`
-(`scripts/libgraph.py`) and reject an inverted dependency. If an existing
+Review dependencies by hand before recording a `depends-on:` edge:
+check the library dependency closure in `libraries.yml` and reject an
+inverted dependency. The `may_import` predicate in `scripts/libgraph.py`
+implements this check for callers using Python. If an existing
 edge is inverted, correct the issue body and explain the library-placement
 problem in a comment.
 
 ### Bench-found, conformance-found, and audit-found issues
 
-Issues filed in response to a benchmark verdict mismatch, a
-conformance failure, or an **audit finding** use the [canonical
-issue body shape](#canonical-issue-body-shape) plus a **Symptom**
-section recording the evidence:
+Record a benchmark verdict mismatch, conformance failure, or **audit
+finding** in the affected SPEC's issue using the [canonical issue body
+shape](#canonical-issue-body-shape) plus a **Symptom** section:
 
 - **Declared expectation.** For a bench finding: the complexity model
   declared in `setup_benchmark` (e.g. `n => n * Nat.log2 (n + 1)`).
@@ -419,7 +421,7 @@ Examples (illustrative, not exhaustive):
 
 When an audit finding occurs while writing a headline report:
 
-1. File the canonical issue using the body shape above.
+1. Record the finding in the affected SPEC's issue using the body shape above.
 2. Link the issue from the report's §Concerns subsection.
 3. Complete the rest of the report.
 
@@ -509,10 +511,10 @@ redoing it." Both directions are first-class.
 Operationally, rolling library `L` back from `K` to `K-1` (or
 further) means:
 
-1. File a GitHub issue describing the bug; use the issue body shape
+1. Record the bug in the affected SPEC's GitHub issue; use the body shape
    in [Issue creation](#issue-creation), with the extra **Symptom**
-   section described under [Bench-found and conformance-found
-   issues](#bench-found-and-conformance-found-issues).
+   section described under [Bench-found, conformance-found, and audit-found
+   issues](#bench-found-conformance-found-and-audit-found-issues).
 2. Close any open phase-K PRs whose work depends on the broken code
    (or convert them to draft and add `depends-on: <issue>`).
 3. Edit `libraries.yml` to set the affected library's `done_through`

@@ -635,8 +635,8 @@ first success `k'=floor ≪ cap`, so a non-cap scheduled precision recovers,
 contradicting `hno` (which fixes target=cap). There is also no function
 producing a genuine `trueSupports` from `core`/success; inverting the indicator
 array gives junk that the downstream #7917 `hpartition`/`hfac`/`lift` (all over
-the *same* `trueSupports`) cannot consume. So **diagnose and skip** any such
-producer issue: the genuine prerequisite is either a floor-keyed bad-vector
+the *same* `trueSupports`) cannot consume. So **document the unsound premise** on any such
+producer issue and leave it open for correction: the genuine prerequisite is either a floor-keyed bad-vector
 exclusion (push the `TerminationBound.lean` cap argument down to the CLD floor)
 or a `BadVectorBridgeData` producer from core facts — soundness substrate, not a
 thin producer. (#7985 skipped on exactly this.)
@@ -947,7 +947,7 @@ matches this exactly — it only covers factors carrying
 "produce the coverage hypothesis from core facts" issue, sanity-check the factor
 quantifier: if it ranges over all irreducible factors with no sign guard, it is
 unsatisfiable — diagnose (counterexample + the `normalizeFactorSign_eq_of_*`
-cite) and skip.** The sound fix is a structural narrowing of the `exists_subset`
+cite) on the issue and leave it open for correction.** The sound fix is a structural narrowing of the `exists_subset`
 quantifier to `normalizeFactorSign factor = factor` across the
 `HenselSubsetCorrespondence*` / `LiftedFactorSubsetPartition` structures, which
 is a shared-`Prop` refactor, not a core-facts assembly. (#7550 was skipped on
@@ -1300,6 +1300,68 @@ path entirely; (2) if you genuinely need the ZMod64 path, put the `#eval`/`#guar
 in a module the package builds (`precompileModules := true` is set, so build-time
 `#eval` resolves the native symbols) rather than running a standalone file.
 
+## Build configuration and phase audits
+
+If Lake reports `compiled configuration is invalid; run with '-R' to
+reconfigure`, reconfigure once with `lake build -R <target>` and require a
+successful build before accepting the check. Do not infer success merely
+from the absence of Lean diagnostics. If reconfiguration starts rebuilding
+Mathlib, stop that build, restore its oleans with `lake exe cache get`, then
+resume the Hex build. A fresh worktree should fetch the Mathlib cache before
+its first full build.
+
+For a Phase 6 audit, inspect build diagnostics from the target modules. A
+cache hit alone is not evidence of a fresh warning-free compile. When fresh
+compilation is required, remove only those modules' generated build outputs
+and rebuild with `lake build`; retain the exit status and full diagnostics.
+Rebuild the direct downstream consumer after removing declarations.
+
+For environment linting, run `lake exe runLinter <Module.Name>` on each
+relevant module. The executable resolves from the Batteries dependency used
+by Mathlib; no project-local target is required. Keep computational modules
+Mathlib-free. A scratch file that merely imports the target and runs `#lint`
+does not lint the target's declarations: the command checks its own file.
+For a focused check, temporarily add `#lint only docBlame docBlameThm` to the
+target bridge module, build it, then remove the command and rebuild.
+
+Investigate `simpNF` or `unusedArguments` findings against the intended API
+and a comparable library already at Phase 6. Intentional simplification
+lemmas and arguments retained for API symmetry can explain such findings;
+do not start a cross-library API refactor just to silence an optional linter.
+Explain any intentional findings when assessing the Phase 6 exit criteria.
+Build-time warnings and missing documentation still need attention.
+
+`docBlame` checks definition documentation and exempts instances and certain
+generated declarations. The separate `docBlameThm` linter checks theorems
+and is disabled by default, so a default linter pass alone does not establish
+the project's public-theorem documentation requirement. Document structure
+fields as well as the structure. A `/-- ... -/` docstring attaches to a
+declaration; a `/-! ... -/` module or section comment does not. Coverage
+checks must distinguish the openers, not just match the closing `-/`.
+For a named recursion helper such as `Foo.go`, use a docstring followed by
+`add_decl_doc Foo.go` after the enclosing definition; a docstring before a
+term-mode `let rec` is not valid syntax.
+
+## Auditing declaration and import usage
+
+Treat public API declarations, instances, and `@[simp]`/`@[grind]` lemmas as
+roots when checking for dead code. Typeclass resolution and tactic automation
+consume declarations without mentioning their names. Follow references from
+those roots before removing an apparently unused private helper.
+
+Count namespace-qualified references to public declarations, and distinguish
+whole names from similarly named helpers. For a private declaration, check
+its actual file-local uses; a qualified reference to an unrelated declaration
+with the same final name does not establish that the private helper is used.
+Text searches provide candidates, not proof that a removal is safe.
+
+For an imported module, enumerate its declared symbols and inspect their
+uses, including instances and registered lemmas. Searching only for theory
+or module keywords misses dependencies: `CLDColumnBound` uses the
+`rootDeletionDerivativeSummand` family from `RobinsonForm`, even where the
+consumer does not mention the module's name. Rebuild after each coherent
+removal and check downstream consumers before accepting the audit.
+
 ## The BHKS tight CLD column bound is an *aggregation* phenomenon, not per-factor
 
 The tight `2·|col j| ≤ factorCount` estimate (BHKS Lemma 5.7, packaged as
@@ -1367,8 +1429,8 @@ raw equality (and `factor_mul`) is false; the `RecoveredLift` docstring
 (`Lattice.lean`, "deliberately does not assert the raw integer equality") says
 this outright. So: recovery → `RecoveredLift` is landable; recovery →
 `TrueFactorLift` is the #7479-class exact-product / unscaled-support migration,
-a separate structural remodel. Diagnose and skip the latter rather than
-attempting it as a thin composition. (#7854 was skipped on exactly this, with
+a separate structural remodel. Document that gap on the issue and leave it
+open for correction before attempting a thin composition. (#7854 was skipped on exactly this, with
 the added wrinkle that its executable extractor lived in an unmerged PR — for
 any "residual after PR #N" issue, `grep` the named substrate symbols on `main`
 first; if absent, the residual depends on the unmerged PR and cannot build

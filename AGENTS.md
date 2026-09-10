@@ -111,6 +111,9 @@ proof — fix the proof or fix the API. For unfinished proofs use
 
 ## Directives are hypotheses, not specs
 
+A directive is an issue that requests a SPEC- or PLAN-mandated outcome;
+it does not require a particular GitHub label.
+
 When you work on a directive issue, the body is the author's *current
 best understanding* of what the work looks like. It is not gospel.
 Before opening a PR, sanity-check the premise:
@@ -215,7 +218,11 @@ merge-gating workflows.
 
 Work is assigned by hand through GitHub issues, one issue per SPEC.
 Use the assigned issue and its linked SPEC to determine the scope.
+Use `PLAN.md` and `PLAN/` as phase reference material; the assignment
+workflow here governs issue selection and progress reporting.
 
 ## Off-limits files
 
-Agents must not modify `.claude/CLAUDE.md` or the roadmap file `PLAN.md`.
+Agents must not modify `AGENTS.md` (also read through the
+`.claude/CLAUDE.md` symlink) or the roadmap file `PLAN.md` unless
+explicitly instructed to edit them.
