@@ -14,10 +14,18 @@ the base `matrixEquiv` from `hex-matrix-mathlib`.
 **Rank:** Our `RowEchelonData.rank` (computed via RREF) agrees with Mathlib's
 `Matrix.rank` (noncomputable, `finrank R (LinearMap.range M.mulVecLin)`):
 ```lean
-theorem rank_eq (M : Hex.Matrix R n m)
-    (D : RowEchelonData R n m) (E : IsEchelonForm M D) :
-    D.rank = Matrix.rank (matrixEquiv M)
+theorem rank_eq [Field R]
+    {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
+    (E : Hex.Matrix.IsRowReduced M D) :
+    D.rank = _root_.Matrix.rank (matrixEquiv M)
 ```
+
+This is deliberately a theorem about a reduced row-echelon witness, not an
+arbitrary `IsEchelonForm`: the proof obtains the kernel dimension from the
+computed nullspace basis, whose completeness and independence require
+`IsRowReduced`. The bridge theorem uses Mathlib's `Field`; the executable
+row-reduction, span, and nullspace APIs in `HexRowReduce` use
+`Lean.Grind.Field` (and `DecidableEq` where computation requires it).
 
 **Nullspace:** Our computed nullspace basis spans the same submodule as
 `LinearMap.ker (Matrix.mulVecLin (matrixEquiv M))`.
