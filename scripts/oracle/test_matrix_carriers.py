@@ -7,6 +7,8 @@ import subprocess
 import sys
 import unittest
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 from matrix_carriers import evaluate, prepare
 from matrix_carriers_bench_driver import run
 
