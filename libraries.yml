@@ -312,6 +312,31 @@ libraries:
       input_families:
         - name: structured-bareiss-determinant
           description: Deterministic tridiagonal integer matrices for row-pivoted Bareiss determinant scaling without arbitrary coefficient blow-up.
+  HexRank:
+    deps: [HexBareiss, HexDeterminant, HexMatrix, HexArith, HexBasic]
+    mathlib: false
+    done_through: 0
+    status: planned
+    phase4:
+      comparators:
+        - tool: FLINT fmpz_mat.rank via python-flint
+          class: informational
+          rationale: FLINT selects fraction-free or multi-modular rank by size, so the ratio compares algorithms; no shared fixture history anchors a required ratio.
+        - tool: FLINT fmpq_mat.rank via python-flint
+          class: informational
+          rationale: The same comparison over the rationals.
+        - tool: SymPy Matrix.rank over the exact polynomial domain
+          class: informational
+          rationale: SymPy chooses its own elimination and includes interpreter overhead; it orients the polynomial carriers only.
+      input_families:
+        - name: dense-full-rank
+          description: Square matrices of small random entries at full rank, n = 16 to 256.
+        - name: low-rank-large-coefficients
+          description: Products of n by r and r by n matrices at r = 2 and 8 with 64- and 1024-bit entries, n = 16 to 256.
+        - name: rank-deficient-by-construction
+          description: Square products of rank n - 1 and n / 2 with small entries, including pivot columns that are not the leading columns.
+        - name: polynomial
+          description: DensePoly Rat and MvPoly 2 Int matrices of dimension 4 to 12 at fixed support, full rank and rank deficient.
   HexDeterminantalIdeal:
     deps: [HexBasic, HexMatrix, HexDeterminant, HexRowReduce, HexMvPoly]
     mathlib: false
@@ -980,6 +1005,12 @@ libraries:
     correspondence_only: true
     done_through: 3
     status: active
+  HexRankMathlib:
+    deps: [HexRank, HexBareissMathlib, HexDeterminantMathlib, HexMatrixMathlib]
+    mathlib: true
+    correspondence_only: true
+    done_through: 0
+    status: planned
   HexModArithMathlib:
     deps: [HexModArith]
     mathlib: true
