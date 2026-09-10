@@ -13,7 +13,7 @@ public section
 /-!
 # Closing a `Matrix.det` goal by running the executable determinant
 
-`Matrix.det` is noncomputable, so `decide` cannot see it. `HexDeterminantMathlib.det_eq`
+`Matrix.det` is noncomputable, so `decide` cannot see it. `HexMatrixMathlib.det_eq`
 identifies it with the executable Leibniz determinant `Hex.Matrix.det`, which the
 kernel evaluates directly. Rewriting a Mathlib determinant goal backwards through
 `det_eq` therefore turns it into a closed computation that `decide +kernel`

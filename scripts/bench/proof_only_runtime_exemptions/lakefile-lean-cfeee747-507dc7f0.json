@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "a56a63e3b99c2af2c1b477347d0b3a5bec8d9b51",
+  "current_blob": "507dc7f0c704fa84546d0ddde017c0e073fa32c4",
+  "reason": "Adds `Examples.DeterminantKernelProof` to the HexReleaseExamples glob, so a new compile-checked example cannot go stale. HexReleaseExamples is not in the factorization service call graph, and the edit changes no target, compilation option, link argument or precompileModules setting belonging to a measured library."
+}

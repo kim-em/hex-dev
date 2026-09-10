@@ -82,14 +82,20 @@ nowhere else, and never leak into a consumer that has not asked for them. A
 module that forgets to open the scope gets a stuck `decide`, which is a loud
 failure rather than a silent change of meaning.
 
-These definitions are shims, not API this library wants to own. When
-[leanprover/lean4#14270](https://github.com/leanprover/lean4/pull/14270)
-lands and the toolchain moves past it, core's own `ofFn` and equality reduce
-in the kernel, the primed constructors and the priority instances go away, and
-callers move back to the standard names. `HexBasic.ModuleBoundaryTests` is
-what makes that removal checkable: it sits in a *separate* module from the
-definitions it exercises, because a same-module test passes whether or not the
-workaround is present and so proves nothing.
+These definitions are shims, not API this library wants to own, and they
+retire on different upstream fixes rather than all at once. `ofFn` and the two
+equality instances wait on
+[leanprover/lean4#14270](https://github.com/leanprover/lean4/pull/14270); the
+map shims wait on
+[leanprover/lean4#14996](https://github.com/leanprover/lean4/pull/14996).
+Once the toolchain moves past the relevant one, core's own operation reduces
+in the kernel, that shim goes away, and callers move back to the standard
+name. Retire them one at a time, and re-check that the *downstream* reduction
+still works before removing each: the stall these work around is only visible
+across a module boundary. `HexBasic.ModuleBoundaryTests` is what makes that
+checkable: it sits in a *separate* module from the definitions it exercises,
+because a same-module test passes whether or not the workaround is present and
+so proves nothing.
 
 `HexBasic` also supplies an entrywise vector update with the pointwise read
 law its callers reason with.

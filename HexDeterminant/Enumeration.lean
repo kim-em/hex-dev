@@ -55,9 +55,15 @@ def permutationVectors : (n : Nat) → List (Vector (Fin n) n)
 
 /-- The size-`n+1` enumeration, restated with core's {name}`Vector.map`.
 
-Proofs about the enumeration want this form; only kernel reduction wants
-{name}`Hex.Vector.map'`, and the two are definitionally interchangeable through
-{name}`Hex.Vector.map'_eq_map`. -/
+Symbolic proofs about the enumeration want this form. It is not the defining
+equation: {name}`Hex.Vector.map'` and {name}`Vector.map` are propositionally
+equal by {name}`Hex.Vector.map'_eq_map`, not definitionally, which is why
+unfolding {name}`Hex.Matrix.permutationVectors` no longer closes these goals by
+`rfl`.
+
+Rewriting with this leaves a term core's {name}`Vector.map` blocks in the
+kernel, so a proof that finishes with `decide +kernel` must leave
+{name}`Hex.Matrix.permutationVectors` folded rather than reach for it. -/
 theorem permutationVectors_succ {n : Nat} :
     permutationVectors (n + 1) =
       List.flatMap

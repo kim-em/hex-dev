@@ -1,0 +1,6 @@
+{
+  "path": "HexBasic/OfFn.lean",
+  "baseline_blob": "525b585adac4213b07b34b2b5b6f08ef12e09f6c",
+  "current_blob": "f3aa8ca573f117760cac0a4a9eacd1f650dd10f4",
+  "reason": "Adds Hex.Vector.map' with its simp lemmas and a csimp rule, alongside the existing Array.ofFn'/map'/zipWith' shims. Every declaration is new; no existing definition, lemma or csimp rule is modified. The new csimp rewrites only the newly introduced Vector.map' constant, so no preexisting compiled path changes. Vector.map' has exactly one caller in the tree, HexDeterminant/Enumeration.lean, and HexDeterminant is not in the factorization service call graph. This exemption covers the integer-factorization sweep only."
+}
