@@ -189,10 +189,10 @@ class Checker:
                 require(record["poly"] == [1099513724929, 0, 1099511627776],
                         "unexpected quadratic minimal polynomial")
                 value = self.complex_value(record)
-                re = q.to_real(q.unary("re", value, q.complex))
+                real_part = q.to_real(q.unary("re", value, q.complex))
                 im = q.to_real(q.unary("im", value, q.complex))
-                require(re is not None and im is not None, "nonreal coordinate")
-                require(q.compare(re, zero) == 0 and
+                require(real_part is not None and im is not None, "nonreal coordinate")
+                require(q.compare(real_part, zero) == 0 and
                         q.compare(im, q.number(Fraction(sign * 1048577, 1048576))) == 0,
                         "incorrect exact quadratic root")
             return

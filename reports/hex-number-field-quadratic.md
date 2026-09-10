@@ -76,3 +76,23 @@ The factorization fixtures also exercise a negative discriminant, a positive
 nonsquare discriminant, large integer roots, mixed integer/rational roots,
 and two nonintegral rational roots; existing cases cover repeated roots,
 zero constant coefficients, content, and signs.
+
+## Nearby allocation and repeated-work audit
+
+The exhaustive trial fallback still uses the generic `positiveDivisors`
+range in `Lattice.lean`. More seriously, `boundedCoefficientVectors` constructs
+all `(2B+1)^(d+1)` coefficient vectors for candidate degree `d` before
+`trialDivisionPeelAux` can test its first polynomial. Exhaustiveness requires
+the search space, but does not require retaining that whole space in memory.
+Streaming these searches is separate work with corresponding trial-division
+proof changes. These allocations are behind the general modular routes;
+the repaired quadratic shortcut ran before those routes.
+
+`ZPoly.algebraicRoots?` also exactifies roots individually. Each `exact?`
+factors the same enclosing polynomial again, and `exactFactor?` isolates a
+factor before `ofNormalized?` invokes canonical isolation for that factor
+again. This is repeated work, rather than another coefficient-sized allocation;
+sharing factorization and canonical isolation across a root family merits a
+separate optimization. The nearby modular linear-split diagnostic also scans
+a list of residues, but its supported prime list is capped below 501, so it
+does not have the unbounded coefficient-height problem.
