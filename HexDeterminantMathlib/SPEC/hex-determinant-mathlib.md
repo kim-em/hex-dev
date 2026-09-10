@@ -22,19 +22,13 @@ theorem det_eq [CommRing R] (M : Hex.Matrix R n n) :
 Through `det_eq`, Mathlib determinant theorems (Cramer's rule, Cauchy-Binet,
 adjugate identities) transfer to our executable determinant.
 
-## Required outstanding obligations
+## Closing a `Matrix.det` goal in the kernel
 
-| obligation | status | requirement |
-|---|---|---|
-| closed `Matrix.det` kernel proof | required; not yet implemented | add the worked theorem below to the manual recipe and a compile-checked `examples/` entry |
-
-The worked example must start with a closed Mathlib matrix literal and prove
-its Mathlib determinant by rewriting through `det_eq` before kernel evaluation:
+A closed Mathlib determinant goal is discharged by rewriting through `det_eq`
+and running the executable Leibniz determinant in the kernel:
 
 ```lean
 open Hex Hex.Matrix HexMatrixMathlib
-
-namespace HexDeterminantKernelProof
 
 def A : _root_.Matrix (Fin 3) (Fin 3) ℤ :=
   !![2, 0, 1; 1, 3, 2; 0, 1, 1]
@@ -42,16 +36,25 @@ def A : _root_.Matrix (Fin 3) (Fin 3) ℤ :=
 theorem det_eq_three : A.det = 3 := by
   rw [← matrixEquiv.apply_symm_apply A, ← det_eq]
   decide +kernel
-
-end HexDeterminantKernelProof
 ```
 
-The corresponding section in `HexManual/Chapters/HexDeterminant.lean` must be
-a recipe for discharging a closed `Matrix.det` goal, following the shape of
-the rank recipe in `HexManual/Chapters/HexRowReduce.lean`. The same theorem
-must also appear in a dedicated file under `examples/`, wired into the Lake
-build so that it cannot silently go stale. `native_decide` is not an acceptable
-substitute for `decide +kernel`.
+`matrixEquiv.apply_symm_apply` puts the literal in the image of `matrixEquiv`
+so that `det_eq` applies. `decide +kernel`, never `native_decide`: the proof
+depends only on `propext`, `Classical.choice`, and `Quot.sound`.
+
+This recipe is the `hex-determinant-recipe-kernel-proof` section of
+`HexManual/Chapters/HexDeterminant.lean`, following the shape of the rank
+recipe in `HexManual/Chapters/HexRowReduce.lean`. The same theorems are
+compile-checked in `Examples/DeterminantKernelProof.lean`, built by the
+`HexReleaseExamples` Lake target, so they cannot silently go stale. That is
+the release-examples library rather than `examples/`, which holds `lean_exe`
+demos with an `IO` entry point.
+
+The kernel run requires `Hex.Matrix.permutationVectors` to reduce downstream
+of its defining module, so the enumeration recursion uses
+`Hex.Vector.map'` from `HexBasic.OfFn` rather than core's `Vector.map`, whose
+delegation to the unexposed `Array.map` loop stalls across a module boundary.
+`HexBasic/ModuleBoundaryTests.lean` guards that.
 
 ## Module layout and export chain
 

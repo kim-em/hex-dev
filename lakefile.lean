@@ -1031,7 +1031,7 @@ lean_lib HexAggregateCheck where
 -- Keep their target separate for the same reason as the regression tests.
 lean_lib HexReleaseExamples where
   globs := #[`Examples.Release1, `Examples.Release3, `Examples.Release4, `Examples.Release5,
-    `Examples.FiniteFields]
+    `Examples.FiniteFields, `Examples.DeterminantKernelProof]
 
 lean_exe hexrowreduce_emit_fixtures where
   srcDir := "conformance"
