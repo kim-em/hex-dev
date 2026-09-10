@@ -312,6 +312,27 @@ libraries:
       input_families:
         - name: structured-bareiss-determinant
           description: Deterministic tridiagonal integer matrices for row-pivoted Bareiss determinant scaling without arbitrary coefficient blow-up.
+  HexDeterminantalIdeal:
+    deps: [HexBasic, HexMatrix, HexDeterminant, HexRowReduce, HexMvPoly]
+    mathlib: false
+    done_through: 0
+    status: planned
+    phase4:
+      comparators:
+        - tool: SymPy combinations-and-det loop over the same minors
+          class: informational
+          rationale: SymPy chooses Bareiss or Berkowitz per minor while the Hex enumeration uses the Leibniz specification determinant, so the ratio compares algorithms; the evidence is the growth curve in r against the binomial-times-factorial operation count.
+      input_families:
+        - name: dense-int-minors
+          description: Square integer matrices of size 4 to 6 with every minor size r, showing the curve in r against n.choose r squared times r factorial.
+        - name: symbolic-2var
+          description: 4 x 4 matrices of random linear forms in two indeterminates over Int at r in 2, 3, 4, isolating polynomial arithmetic inside the same enumeration.
+  HexDeterminantalIdealMathlib:
+    deps: [HexDeterminantalIdeal, HexDeterminantMathlib, HexRowReduceMathlib, HexMvPolyMathlib]
+    mathlib: true
+    correspondence_only: true
+    done_through: 0
+    status: planned
   HexCharPoly:
     deps: [HexMatrix, HexPoly]
     mathlib: false
