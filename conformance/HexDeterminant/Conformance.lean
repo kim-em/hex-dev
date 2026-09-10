@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexDeterminant
+import HexDeterminant.Carriers
 
 /-!
 Core conformance checks for `hex-determinant`.
@@ -77,3 +78,30 @@ example (M : Matrix Int 3 3) (src dst : Fin 3) (c : Int) (h : src ≠ dst) :
   grind
 
 end Matrix
+
+
+namespace DeterminantCarriers
+open scoped Hex.DeterminantCarriers
+
+-- Direct instantiations also check the coefficient-ring and comparator inputs.
+example (M : Matrix (DensePoly Int) n n) : DensePoly Int := Matrix.det M
+example (M : Matrix (DensePoly Rat) n n) : DensePoly Rat := Matrix.det M
+example (M : Matrix (DensePoly Mod) n n) : DensePoly Mod := Matrix.det M
+example (M : Matrix (Sparse k Int) n n) : Sparse k Int := Matrix.det M
+example (M : Matrix (Sparse k Rat) n n) : Sparse k Rat := Matrix.det M
+example (M : Matrix (RationalFn Rat) n n) : RationalFn Rat := Matrix.det M
+
+-- The diagonal products differ by one even though their high-degree terms cancel.
+#guard Matrix.det (cancellation (intPoly 0 0 2)) = 1
+#guard Matrix.det (cancellation (ratPoly 0 0 2)) = 1
+#guard Matrix.det (cancellation (modPoly 0 0 2)) = 1
+#guard (Matrix.det (cancellation (mixed 2 (2 : Int)))).termsList =
+  (1 : Sparse 2 Int).termsList
+#guard (Matrix.det (cancellation (mixed 3 (2/3 : Rat)))).termsList =
+  (1 : Sparse 3 Rat).termsList
+#guard Matrix.det (cancellation (fraction 0 0 2)) = 1
+#guard (intMv 0 0 2).termsList.all (fun (m, _) => m.toList.all (· > 0))
+#guard (ratMv 0 0 2).termsList.all (fun (m, _) => m.toList.all (· > 0))
+#guard ((-102 : Mod).toNat, (204 : Mod).toNat) = (100, 2)
+
+end DeterminantCarriers

@@ -296,9 +296,19 @@ libraries:
     done_through: 7
     status: active
     phase4:
+      comparators:
+        - tool: "SymPy DomainMatrix.det()"
+          class: informational
+          rationale: "Scoped to runDetDenseInt, runDetDenseRat, runDetDenseMod, runDetMvInt, runDetMvRat and runDetRatFn. Persistent-subprocess comparisons are scheduled-only on identical exact-domain matrices. SymPy uses Bareiss while Hex enumerates Leibniz terms; protocol overhead and algorithm differences make these ratios informational. runLeibnizDet retains its structural-layer comparator absence."
       input_families:
         - name: leibniz-small-determinant
           description: Small structured integer matrices where the generic Leibniz determinant remains practical, cross-checked against the row-pivoted Bareiss determinant.
+        - name: determinant-dense-carriers
+          description: Dense ZZ[x], QQ[x] and GF(101)[x] matrices; dimension 2, 3, 4 at degree 2 and degree 1, 2, 4 at dimension 3, with every entry coefficient nonzero.
+        - name: determinant-multivariate-carriers
+          description: Sparse integer and rational three-variable matrices; dimension 2, 3, 4 at four terms and term count 2, 4, 8 at dimension 3, with fixed total degree four and grevlex encoding.
+        - name: determinant-rational-functions
+          description: QQ(x) matrices with nonconstant denominators; dimension 2, 3, 4 at numerator/denominator degree 2 and degree 1, 2, 4 at dimension 3, including normalization and cancellation.
   HexBareiss:
     deps: [HexArith, HexDeterminant, HexMatrix]
     mathlib: false

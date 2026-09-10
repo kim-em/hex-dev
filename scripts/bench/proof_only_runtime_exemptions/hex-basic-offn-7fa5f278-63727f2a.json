@@ -1,0 +1,6 @@
+{
+  "path": "HexBasic/OfFn.lean",
+  "baseline_blob": "7fa5f2789534fe0333160fa3005a7d003840cc4d",
+  "current_blob": "63727f2a00e049cae7890ca4406ca1e39d57c176",
+  "reason": "Only the Array.map' and Array.zipWith' docstrings change, naming Lean v4.35.0-rc1 as the release for removal of the shims. Definitions, proofs, attributes, imports and compiled operations are unchanged."
+}
