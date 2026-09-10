@@ -22,7 +22,7 @@ The term encoding, generator naming and monomial orders are shared with
 
 The oracle is ``if_available`` for local development. Release CI installs
 SymPy and preflights its import before invoking this script, so it remains a
-hard gate there.
+a required check there.
 """
 from __future__ import annotations
 

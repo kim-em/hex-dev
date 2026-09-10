@@ -11,8 +11,8 @@ import HexDeterminantalIdealFixtures
 JSONL emit driver for the `hex-determinantal-ideal` SymPy oracle.
 
 One `mvpolymatrix` record per committed matrix and minor size, followed by
-the enumerated minors, the determinantal-ideal generators, and — for the
-cases that carry points — the rank of the specialisation and the decision of
+the enumerated minors, the determinantal-ideal generators, and, for the
+cases that carry points, the rank of the specialisation and the decision of
 the rank-drop locus at each point.
 -/
 

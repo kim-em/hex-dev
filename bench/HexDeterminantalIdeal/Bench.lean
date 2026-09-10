@@ -40,9 +40,9 @@ Entries come from a fixed linear congruential generator seeded by the
 coordinate, so the inputs are identical on every host and no randomness is
 drawn at run time.
 
-The SPEC classifies SymPy — the same `combinations` and `det` loop the
-conformance oracle runs — as an `informational` comparator, so it does not gate
-Phase 4. It is not registered here: the comparator would run through
+The SPEC classifies SymPy, the same `combinations` and `det` loop the
+conformance oracle runs, as an `informational` comparator, so it is not a
+required Phase 4 check. It is not registered here: the comparator would run through
 `scripts/oracle/pari_bench_driver.py`, and its `phase4.comparators` entry lands
 with this library's `libraries.yml` record.
 
