@@ -31,6 +31,16 @@ JSONL fixture record shape (one record per line):
 * ``mvpoly``     — ``{"kind": "mvpoly",     "lib": str, "case": str,
                       "arity": int, "order": "lex"|"grlex"|"grevlex",
                       "terms": [[[exponent...], coefficient]...]}``
+* ``mvpolymatrix`` — ``{"kind": "mvpolymatrix", "lib": str, "case": str,
+                      "arity": int, "order": "lex"|"grlex"|"grevlex",
+                      "rows": int, "cols": int,
+                      "entries": [[<mvpoly terms>...]...], "r": int}``
+                     (a matrix of multivariate polynomials in the ``mvpoly``
+                      term encoding together with the minor size ``r``;
+                      ``entries`` holds exactly ``rows`` lists of exactly
+                      ``cols`` polynomials.  Matrices over ``Int`` are
+                      arity-0 polynomial matrices, so one stream covers
+                      integer and symbolic matrices.)
 * ``mvgcd``      — two multivariate term lists plus coefficient-domain data
 * ``mvsqf``      — one characteristic-zero multivariate term list
 * ``mvsquarefree`` — one modular multivariate term list and its modulus
@@ -117,6 +127,7 @@ VALID_FIXTURE_KINDS = frozenset(
         "matrix",
         "polymatrix",
         "mvpoly",
+        "mvpolymatrix",
         "mvgcd",
         "mvsqf",
         "mvsquarefree",
@@ -558,6 +569,33 @@ def _validate_fixture(record: dict[str, Any]) -> None:
     elif kind == "mvpoly":
         arity = _validate_mv_header(record, kind)
         _validate_mv_terms(record.get("terms"), arity, "mvpoly.terms")
+    elif kind == "mvpolymatrix":
+        arity = _validate_mv_header(record, kind)
+        rows = record.get("rows")
+        cols = record.get("cols")
+        if not _is_nat(rows) or not _is_nat(cols):
+            raise FixtureError(
+                f"mvpolymatrix rows/cols must be nonnegative ints: {record!r}"
+            )
+        if not _is_nat(record.get("r")):
+            raise FixtureError(
+                f"mvpolymatrix.r must be a nonnegative int: {record!r}"
+            )
+        entries = record.get("entries")
+        if not isinstance(entries, list) or len(entries) != rows:
+            raise FixtureError(
+                f"mvpolymatrix.entries must hold exactly rows rows: {record!r}"
+            )
+        for index, row in enumerate(entries):
+            if not isinstance(row, list) or len(row) != cols:
+                raise FixtureError(
+                    f"mvpolymatrix.entries[{index}] must hold exactly cols "
+                    f"polynomials: {record!r}"
+                )
+            for column, terms in enumerate(row):
+                _validate_mv_terms(
+                    terms, arity, f"mvpolymatrix.entries[{index}][{column}]"
+                )
     elif kind == "mvgcd":
         _exact_keys(
             record,

@@ -45,25 +45,28 @@ instantiate it.
 
 `HexDeterminantalIdeal` is Mathlib-free. Its modules import, in this order:
 
-- `Minors.lean`: `HexDeterminant` (and through it `HexMatrix`, `HexBasic`).
+- `Minors.lean`: `HexDeterminant` (and through it `HexMatrix`, `HexBasic`),
+  and `HexArith` for `Hex.Nat.choose`, which `length_minors` needs
+  (`Nat.choose` is not in core Lean).
 - `Rank.lean`: additionally `HexRowReduce`, for `rowReduce_rank` and the
   row-reduced echelon certificate the nonzero-minor direction is built from.
 - `MvPoly.lean`: additionally `HexMvPoly`, for the specialisation of a
   polynomial matrix at a point.
 
-The library's dependency list is therefore `HexBasic`, `HexMatrix`,
-`HexDeterminant`, `HexRowReduce`, `HexMvPoly`. It does not depend on
-`hex-bareiss`, `hex-rank`, `hex-poly-smith`, `hex-mv-gcd` or anything that
-computes a generic rank. Those libraries only choose a default `r`; the
-theorem here is stated for every `r`. `hex-rank` and this library are
-independent siblings: neither imports the other, and `hex-rank`'s
-certificate (a nonzero `r × r` minor plus a column expression) is an
-instance of the nonzero-minor direction proved here, not a dependency of it.
+The library's dependency list is therefore `HexBasic`, `HexArith`,
+`HexMatrix`, `HexDeterminant`, `HexRowReduce`, `HexMvPoly`. It does not
+depend on `hex-bareiss`, `hex-rank`, `hex-poly-smith`, `hex-mv-gcd` or
+anything that computes a generic rank. Those libraries only choose a
+default `r`; the theorem here is stated for every `r`. `hex-rank` and
+this library are independent siblings: neither imports the other, and
+`hex-rank`'s certificate (a nonzero `r × r` minor plus a column
+expression) is an instance of the nonzero-minor direction proved here,
+not a dependency of it.
 
 The companion `HexDeterminantalIdealMathlib` depends on this library,
 `HexDeterminantMathlib`, `HexRowReduceMathlib` and `HexMvPolyMathlib`, plus
 Mathlib. It is specified in
-[hex-determinantal-ideal-mathlib](hex-determinantal-ideal-mathlib.md).
+[hex-determinantal-ideal-mathlib](../../HexDeterminantalIdealMathlib/SPEC/hex-determinantal-ideal-mathlib.md).
 
 Gröbner bases, ideal membership, radicals, primary decomposition and
 Fitting ideals are outside this library. The ideal `I_r(A)` is presented by
@@ -352,7 +355,7 @@ there is nothing to transport to.
 **Not a Gröbner computation.** `I_r(A)` is presented by a generating list.
 Membership, equality of ideals, radicals, minimal generators and dimension
 of the zero set are out of scope; the planned `hex-groebner`
-([SPEC/future-work.md §Gröbner bases](../future-work.md#gröbner-bases))
+([SPEC/future-work.md §Gröbner bases](../../SPEC/future-work.md#gröbner-bases))
 is the consumer that would decide them. In particular `detIdealGens` is
 *a* generating list, not a reduced one.
 
@@ -436,7 +439,7 @@ change the library's dependency list and is not part of this SPEC.
 
 ## Conformance
 
-Per [SPEC/testing.md](../testing.md). The Lean drivers are
+Per [SPEC/testing.md](../../SPEC/testing.md). The Lean drivers are
 `conformance/HexDeterminantalIdeal/Conformance.lean` and
 `conformance/HexDeterminantalIdeal/EmitFixtures.lean`, the latter exposed as
 `lean_exe hexdeterminantalideal_emit_fixtures`. The committed snapshot is
@@ -512,7 +515,7 @@ diagonal. These are not an independent oracle. The SymPy stream is.
 
 ## Benchmarking
 
-Per [SPEC/benchmarking.md](../benchmarking.md), a driver at
+Per [SPEC/benchmarking.md](../../SPEC/benchmarking.md), a driver at
 `bench/HexDeterminantalIdeal/Bench.lean` with no Mathlib import.
 
 **Input families.**
@@ -539,7 +542,7 @@ count. A `dense-int-minors` curve that departs from the model by more than
 the noise between adjacent arms is a result to explain by profiling
 (per-minor allocation beyond the `r × r` submatrix, permutation-sign
 computation, host activity recorded as context), per
-[SPEC/benchmarking.md](../benchmarking.md); it is not by itself a bug
+[SPEC/benchmarking.md](../../SPEC/benchmarking.md); it is not by itself a bug
 verdict.
 
 ## File organisation
@@ -547,6 +550,7 @@ verdict.
 ```text
 HexDeterminantalIdeal.lean              umbrella
 HexDeterminantalIdeal/
+  Choose.lean        length_selectedColumnTuples, the count of strictly increasing tuples
   Minors.lean        minors, detIdealGens, enumeration theorems, invariance expansions
   Rank.lean          rank_lt_iff_minors_eq_zero and its three corollaries
   MvPoly.lean        Matrix.map (if not yet in HexMatrix), specialize, rankAt, InLocus

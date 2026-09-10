@@ -1,7 +1,7 @@
 # hex-determinantal-ideal-mathlib
 
 Correspondence between the executable minors of
-[hex-determinantal-ideal](hex-determinantal-ideal.md) and Mathlib's
+[hex-determinantal-ideal](../../HexDeterminantalIdeal/SPEC/hex-determinantal-ideal.md) and Mathlib's
 `Matrix.det` of a `submatrix`, and the rank-versus-minors theorem stated for
 `Matrix.rank` under an arbitrary ring homomorphism into a field.
 Dependencies are `HexDeterminantalIdeal`, `HexDeterminantMathlib`,
@@ -166,9 +166,11 @@ Mathlib does not contain.
 
 - `rank_lt_iff_minors_map_eq_zero` on a closed `Hex.Matrix ℤ 2 3` through
   `Int.castRingHom ℚ`, both at `r = 2` (nonzero minor, rank `2`) and at
-  `r = 3` (empty list, rank below `3`), with the minors evaluated by
-  `decide +kernel` on the Hex side and the rank rewritten through the
-  theorem;
+  `r = 3` (empty list, rank below `3`), with the minors read off through
+  `det_two_by_two` once the tuple enumeration is evaluated by `rfl` (the
+  Leibniz sum is not kernel-evaluated from a `module` file, since
+  `permutationVectors` goes through core `Vector.map`, which the kernel
+  cannot unfold there) and the rank rewritten through the theorem;
 - `rankAt_lt_iff_inLocus` on the `2 × 2` Vandermonde matrix in two
   indeterminates over `ℚ`, at `(1, 1)` (in the locus at `r = 2`) and at
   `(1, 2)` (not in the locus);

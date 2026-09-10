@@ -41,13 +41,13 @@ trusted layer's point of view.
 
 ### Determinantal ideals and rank loci
 
-[hex-determinantal-ideal](Libraries/hex-determinantal-ideal.md) specifies
+[hex-determinantal-ideal](../HexDeterminantalIdeal/SPEC/hex-determinantal-ideal.md) specifies
 executable minors of every size over any commutative ring, the generating
 list of the determinantal ideal `I_r(A)`, and the theorem that a matrix over
 a field has rank below `r` exactly when every `r × r` minor vanishes, with a
 Mathlib-free proof through the row-reduced echelon certificate, Cauchy-Binet
 and the Laplace expansion. Its companion
-[hex-determinantal-ideal-mathlib](Libraries/hex-determinantal-ideal-mathlib.md)
+[hex-determinantal-ideal-mathlib](../HexDeterminantalIdealMathlib/SPEC/hex-determinantal-ideal-mathlib.md)
 states the theorem for `Matrix.rank` under any ring homomorphism into a
 field, so the locus where a polynomial matrix's rank drops below `r` is the
 zero set of `I_r(A)`, and proves that `I_r(A)` is unchanged by invertible
