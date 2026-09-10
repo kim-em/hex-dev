@@ -38,15 +38,16 @@ theorem matrixEquiv_selectCols (A : Hex.Matrix R n m) (cols : Vector (Fin m) k) 
 theorem matrixEquiv_selectedSubmatrix (A : Hex.Matrix R n m)
     (rows : Vector (Fin n) k) (cols : Vector (Fin m) k) :
     e (Hex.Matrix.selectedSubmatrix A rows cols) = (e A).submatrix rows.get cols.get
-theorem matrixEquiv_smul (c : R) (A : Hex.Matrix R n m) : e (c • A) = c • e A
-theorem matrixEquiv_identity : e (Hex.Matrix.identity (R := R) n) = 1
 ```
 
-`matrixEquiv_selectedSubmatrix` is also specified by
-[hex-determinantal-ideal-mathlib](hex-determinantal-ideal-mathlib.md).
-These belong in `HexMatrixMathlib` (released, regenerated from this
-monorepo) beside `matrixEquiv_mul`, and whichever of the two planned
-companions lands first adds them there.
+together with the existing `matrixEquiv_smul` and `matrixEquiv_one` in
+`HexMatrixMathlib/Algebra.lean`. The two selection lemmas belong in
+`HexMatrixMathlib` (released, regenerated from this monorepo) beside
+`matrixEquiv_mul`. `matrixEquiv_selectedSubmatrix` cannot, because
+`selectedSubmatrix` is defined in `HexDeterminant/Minor.lean`, above
+`HexMatrix`; it belongs in `HexDeterminantMathlib`, is also specified by
+[hex-determinantal-ideal-mathlib](hex-determinantal-ideal-mathlib.md),
+and whichever of the two planned companions lands first adds it there.
 
 With these, `checkRank A c = true` transports to three facts about
 `M := e A : Matrix (Fin n) (Fin m) R`:
@@ -80,8 +81,9 @@ Proof, from the pinned Mathlib's `Mathlib/LinearAlgebra/Matrix/Rank.lean`:
   `(d • M).rank ≤ (M.submatrix id c.cols.get).rank`, and
   `Matrix.rank_le_card_width` bounds that by `Fintype.card (Fin r) = r`.
   The strong rank condition these lemmas assume is
-  `commRing_strongRankCondition` (`Mathlib/LinearAlgebra/InvariantBasisNumber.lean`)
-  from `IsDomain.toNontrivial`.
+  `commRing_strongRankCondition`
+  (`Mathlib/LinearAlgebra/FreeModule/StrongRankCondition.lean`) from
+  `IsDomain.toNontrivial`.
 
 The boundary cases need no separate treatment. At `r = 0` the lower bound
 is `0 ≤ rank` and the upper bound is `Matrix.rank_le_card_width` at width
@@ -175,18 +177,30 @@ theorem rankWith_eq (A : Hex.Matrix R n m) :
     Hex.Matrix.rankWith quot A = (e A).rank
 theorem rank_eq (A : Hex.Matrix Int n m) :
     Hex.Matrix.rank A = (e A).rank
+theorem exists_rankCert [CommRing R] [IsDomain R] [DecidableEq R] (A : Hex.Matrix R n m) :
+    ∃ c : Hex.Matrix.RankCert R n m, Hex.Matrix.checkRank A c = true
 ```
+
+`exists_rankCert` is completeness with no quotient hypothesis: the
+classical exact quotient of [Scalar extension](#scalar-extension) and
+`rankCertWith_check` supply the witness. The adjugate argument of
+[hex-rank §Completeness](hex-rank.md#completeness) is an alternative proof
+that does not go through the producer.
 
 `rowReduceWith_spec` is proved by induction along the column loop with the
 invariant of
 [hex-rank §Exactness and producer correctness](hex-rank.md#exactness-and-producer-correctness):
 after `k` pivots with block `B_k` and `p = B_k.det`, the pivot rows of the
 state are `B_k.adjugate * P_k` and each non-pivot row `i` is
-`p • A[i, :] − A[i, cols] * (B_k.adjugate * P_k)`. The pivot step
+`p • A[i, :] − A[i, cols] * (B_k.adjugate * P_k)`. The pivot step first
+identifies the new pivot with `B_{k+1}.det` by the bordered-determinant
+identity `det [[B_k, u], [vᵀ, x]] = x · det B_k − vᵀ * B_k.adjugate * u`
+(Laplace expansion along the last row, `Matrix.det_succ_row` and
+`Matrix.adjugate_apply`), so that `B_{k+1}` is nonsingular, and then
 verifies the update against the invariant by left-multiplying by
 `B_{k+1}` and cancelling the nonzero scalar `B_{k+1}.det` in a domain,
-using `Matrix.mul_adjugate` (`Mathlib/LinearAlgebra/Matrix/Adjugate.lean`)
-and nothing else about determinants. That equality is what turns each
+using `Matrix.mul_adjugate` (`Mathlib/LinearAlgebra/Matrix/Adjugate.lean`).
+Those are the only determinant facts used. That equality is what turns each
 `quot (…) prev` into the primed invariant value through `hquot`, so
 exactness of every division is a consequence of the invariant and not a
 separate hypothesis. The skip step changes nothing. `denom = B.det` is the
@@ -269,12 +283,29 @@ transform and no minor; the Hex certificate carries an `r × r` adjugate
 and no transform. Neither is a projection of the other, and the two
 conversions below each compute one `r × r` object.
 
-**From a Hex certificate.** Given `checkRank A c = true` and a lower
-triangular `T : Matrix (Fin r) (Fin r) R` with nonzero diagonal such that
-`T * B` is upper triangular with nonzero diagonal (a fraction-free
-Gaussian transform of `B`, which exists because every leading principal
-minor of `B` in elimination row order is a pivot of the run, hence
-nonzero), set
+**From a Hex certificate.** A checked certificate alone does not
+determine a `Decomposition`, because `checkRank` accepts index sets that
+no echelon form has: on `A = [[1, 1]]` the certificate
+`rows = [0], cols = [1], denom = 1, adj = [[1]]` checks, but no echelon
+form of `A` has its pivot in column `1`; and on `B = [[0, 1], [1, 0]]`
+(the canonical certificate of that matrix) no lower triangular `T` with
+nonzero diagonal makes `T * B` upper triangular with nonzero diagonal,
+since the `(1, 0)` entry of `T * B` is the `(1, 1)` entry of `T`. The
+adapter therefore takes, besides the certificate, a lower triangular
+transform `T` of the pivot block together with the echelon condition it
+has to produce:
+
+```lean
+def RankCert.toDecomposition (h : Hex.Matrix.checkRank A c = true)
+    (T : Matrix (Fin c.rank) (Fin c.rank) R) (hT : T.IsLowerTriangular)
+    (hTd : ∀ i, T.diag i ≠ 0)
+    (hTP : (T * (e A).submatrix c.rows.get id).IsPivotedBy (fun k => ↑(c.cols.get k))) :
+    Echelon.Decomposition (e A)
+theorem RankCert.toDecomposition_pivot_card (h T hT hTd hTP) :
+    #{i | (RankCert.toDecomposition h T hT hTd hTP).pivot i ≠ ⊤} = c.rank
+```
+
+with
 
 ```text
 σ     := the permutation moving c.rows to positions 0 … r - 1 in order
@@ -284,32 +315,34 @@ pivot := fun i => if i < r then ↑(c.cols.get i) else ⊤
 
 `L` is block lower triangular with triangular diagonal blocks and diagonal
 entries the diagonal of `T` and `d`, all nonzero. The first `r` rows of
-`L * M.submatrix σ id` are `T * (M.submatrix c.rows.get id)`, in echelon
-form with pivots at `c.cols` because the columns between pivot columns
-are zero in every non-pivot row at the moment they were skipped. The
+`L * M.submatrix σ id` are `T * (M.submatrix c.rows.get id)`, pivoted at
+`c.cols` by `hTP` (which forces `c.cols` strictly increasing). The
 remaining rows are `d • M[i, :] − M[i, cols] * (e c.adj * P)`, which is
-`0` by identity 3. So:
+`0` by identity 3. Existence is then a statement about the producer's
+certificates, not about arbitrary checked ones:
 
 ```lean
-def RankCert.toDecomposition (h : Hex.Matrix.checkRank A c = true)
-    (T : Matrix (Fin c.rank) (Fin c.rank) R) (hT : T.IsLowerTriangular)
-    (hTd : ∀ i, T.diag i ≠ 0) (hTB : (T * (e A).submatrix c.rows.get c.cols.get).IsUpperTriangular)
-    (hTBd : ∀ i, (T * (e A).submatrix c.rows.get c.cols.get).diag i ≠ 0) :
-    Echelon.Decomposition (e A)
-theorem RankCert.toDecomposition_pivot_card … :
-    #{i | (RankCert.toDecomposition h T …).pivot i ≠ ⊤} = c.rank
+theorem nonempty_decomposition [CommRing R] [IsDomain R] (A : Hex.Matrix R n m) :
+    Nonempty (Echelon.Decomposition (e A))
 theorem exists_decomposition_of_checkRank (h : Hex.Matrix.checkRank A c = true) :
     ∃ D : Echelon.Decomposition (e A), #{i | D.pivot i ≠ ⊤} = c.rank
 ```
 
-The transform `T` is an input because this library does not compute it:
-it is the transform of a below-only fraction-free pass over `B`, which
-`bareissNoPivotWith` performs without reporting. The existence theorem
-supplies `T` by the fraction-free LU factorisation of a matrix whose
-leading principal minors are nonzero (Bareiss 1968; the explicit
-entries are minors of `B`, so `T` is over `R`). The executable adapter
-that produces `T`, and the `bareiss_ext` model that lets Hex's producer
-feed `norm_rank` directly, are hex-matrix-tactic's
+The first is proved on `rankCertWith quot A` for the classical quotient:
+its `rows` are in elimination order and its `cols` strictly increasing,
+every leading principal minor of its `B` is a pivot of the run and so
+nonzero, and the below-only fraction-free elimination of `B` in that
+order (Bareiss 1968) supplies `T` over `R` with `T * P` in echelon form
+at `cols`, the columns between pivot columns being zero in every
+non-pivot row at the moment they were skipped. The second is the first
+together with `Decomposition.rank_eq` and `checkRank_sound`, and does
+not go through the given certificate's index sets.
+
+`T` is an input because this library does not compute it: it is the
+transform of a below-only fraction-free pass over `B`, which
+`Hex.Matrix.bareissNoPivotWith` performs without reporting. The
+executable adapter that produces `T`, and the `bareiss_ext` model that
+lets Hex's producer feed `norm_rank` directly, are hex-matrix-tactic's
 (https://github.com/kim-em/hex-dev/issues/10151), which names both.
 
 **From a Decomposition.** Given `D : Echelon.Decomposition (e A)` with

@@ -325,7 +325,7 @@ libraries:
         - tool: FLINT fmpq_mat.rank via python-flint
           class: informational
           rationale: The same comparison over the rationals.
-        - tool: SymPy Matrix.rank over the exact polynomial domain
+        - tool: SymPy DomainMatrix.rank over the exact polynomial domain
           class: informational
           rationale: SymPy chooses its own elimination and includes interpreter overhead; it orients the polynomial carriers only.
       input_families:

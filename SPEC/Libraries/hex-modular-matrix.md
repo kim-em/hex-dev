@@ -375,7 +375,8 @@ theorem checkRank_sound (h : checkRank A c = true) : ratRank A = c.r
 [hex-rank](hex-rank.md) specifies the same two-sided certificate over
 every integral domain, and this library's certificate is its `Int`
 instance: `RankCert n m` is `Hex.Matrix.RankCert Int n m` (`rows`, `cols`,
-`denom = det B`, and `adj = adjugate B` in place of `coeffs`), `checkRank`
+and `denom`, `adj` with `B * adj = denom • identity r`, which the producer
+fills with `det B` and `adjugate B`, in place of `coeffs`), `checkRank`
 is `Hex.Matrix.checkRank`, and `checkRank_sound` is hex-rank's soundness
 at `R = Int`. The `modulus` field, the modular minor test and the
 strictly-increasing check on `rows` and `cols` are dropped: the adjugate

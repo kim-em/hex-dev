@@ -38,7 +38,7 @@ Nothing computes the rank of a matrix over `MvPoly`, over `ZPoly`, or over
 an arbitrary domain, and none of the three above returns a witness a
 consumer can re-check.
 
-`HexBareiss.bareissWith` is generic (any `quot : R → R → R` satisfying
+`Hex.Matrix.bareissWith` (library hex-bareiss) is generic (any `quot : R → R → R` satisfying
 `quot (a * b) b = a` for `b ≠ 0`, with laws over
 `[Lean.Grind.CommRing R] [DecidableEq R]`), but it is square in its types
 and it records an early singular stop: on `[[0, 1], [0, 0]]` the pivot search
@@ -178,8 +178,10 @@ For `A : Matrix R n m` (`n` rows, `m` columns, the `Hex.Matrix` convention):
 ```lean
 namespace Hex.Matrix
 
-/-- A two-sided rank certificate: an `rank × rank` submatrix of `A` at
-`rows × cols`, its adjugate `adj`, and its determinant `denom`. -/
+/-- A two-sided rank certificate: a `rank × rank` submatrix `B` of `A` at
+`rows × cols`, and a matrix `adj` and scalar `denom ≠ 0` with
+`B * adj = denom • 1`. The producer fills them with `adjugate B` and
+`det B`; the checker requires only the identity. -/
 structure RankCert (R : Type u) (n m : Nat) where
   rank : Nat
   rows : Vector (Fin n) rank
@@ -202,6 +204,16 @@ all-column identity `d • A = C * U` that the certificate establishes. It
 is derived by the checker rather than stored, see
 [Why the certificate stores the adjugate](#why-the-certificate-stores-the-adjugate-and-not-the-coefficients).
 
+The three identities are the whole contract. A passing check does not
+establish that `denom` is `det B` or that `adj` is `adjugate B`: for
+`A = B = 2 • identity 2`, the fields `denom = 2`, `adj = identity 2` pass
+all three tests, while `det B = 4` and `adjugate B = 2 • identity 2`. What
+a checked certificate carries is a denominator and numerator for `B⁻¹`,
+and that is all soundness needs. The producer's fields are `det B` and
+`adjugate B`, which is the companion's normalisation theorem
+`rowReduceWith_spec`, not a checker property, and the field names are
+chosen for the producer's values.
+
 The vectors `rows` and `cols` are index selections, not sets: they may be
 in any order, and the checker imposes no ordering or distinctness
 condition on them. None is needed. A repeated row or column index makes
@@ -213,9 +225,13 @@ indexing forced a strictly-increasing check.
 
 The producer returns `rows` in elimination order and `cols` strictly
 increasing, and `denom` is the determinant of `B` with its rows in that
-order. A consumer that sorts `rows` must negate `denom` and `adj` by the
-sign of the sorting permutation, or simply not sort: nothing in the
-checker cares.
+order. A consumer that reorders `rows` by a permutation `S` (so `B`
+becomes `S * B`) must replace `adj` by `adj * S⁻¹`, since
+`(S * B) * (adj * S⁻¹) = denom • 1`; `denom` may stay as it is, and
+becomes the determinant of the reordered block only after both fields
+are also multiplied by `sign S`. Negating `denom` alone is wrong, because
+`adjugate (S * B) = sign S • adjugate B * S⁻¹`. Or simply do not sort:
+nothing in the checker cares.
 
 ### The checker
 
@@ -308,12 +324,12 @@ Both statements are Mathlib-free and live in `HexRank/Check.lean`, over
 `B`, `C`, `P`, `U` as above and `d := c.denom`, `r := c.rank`.
 
 ```lean
-theorem checkRank_minor_ne_zero (h : checkRank A c = true) :
+theorem RankCert.det_ne_zero (h : checkRank A c = true) :
     det (selectedSubmatrix A c.rows c.cols) ≠ 0
-theorem checkRank_minor_succ_eq_zero (h : checkRank A c = true)
+theorem RankCert.det_succ_eq_zero (h : checkRank A c = true)
     (rows : Vector (Fin n) (c.rank + 1)) (cols : Vector (Fin m) (c.rank + 1)) :
     det (selectedSubmatrix A rows cols) = 0
-theorem checkRank_eq_zero_of_rank_zero (h : checkRank A c = true) (hr : c.rank = 0) :
+theorem RankCert.matrix_eq_zero (h : checkRank A c = true) (hr : c.rank = 0) :
     A = Matrix.zero n m
 ```
 
@@ -324,7 +340,7 @@ that a Mathlib-free library can state. The companion turns them into
 characterisation for `rowReduce_rank` over a field, and a consumer holding
 both gets `rowReduce_rank A = c.rank` over a field with no new proof.
 
-**Lower bound (`checkRank_minor_ne_zero`).** From identity 2,
+**Lower bound (`RankCert.det_ne_zero`).** From identity 2,
 `det (B * adj) = det (d • identity r)`. The left side is `det B · det adj`
 by `det_mul`. The right side is `d ^ r` by `det_rowScale` applied `r`
 times to `det_identity` (a lemma `det_smul : det (c • M) = c ^ k * det M`
@@ -333,11 +349,10 @@ for `M : Matrix R k k`, new in `HexDeterminant/RowOps.lean` if absent).
 and then `det B ≠ 0`. At `r = 0` the right side is `1`, and `1 ≠ 0` is
 `DomainLaws.one_ne_zero`; nothing else changes.
 
-**Upper bound (`checkRank_minor_succ_eq_zero`).** Fix `rows`, `cols` of
-length `r + 1`. From identity 3 and `selectedSubmatrix` commuting with
-scalar multiplication and with products of the shape `C * U`
-(`selectedSubmatrix (C * U) rows cols = selectRows C rows * selectCols U cols`,
-entrywise),
+**Upper bound (`RankCert.det_succ_eq_zero`).** Fix `rows`, `cols` of
+length `r + 1`. From identity 3, `selectedSubmatrix_smul`, and `selectedSubmatrix_mul`
+(`HexDeterminant/Gram.lean`:
+`selectedSubmatrix (C * U) rows cols = selectRows C rows * selectCols U cols`),
 
 ```text
 d ^ (r + 1) · det (selectedSubmatrix A rows cols)
@@ -354,7 +369,7 @@ Hence `d ^ (r + 1) · det (…) = 0`, and `d ^ (r + 1) ≠ 0` gives
 `det (…) = 0`. This is the same "empty middle sum" step that
 hex-determinantal-ideal's vanishing direction uses.
 
-**`rank = 0` (`checkRank_eq_zero_of_rank_zero`).** Identity 3 is
+**`rank = 0` (`RankCert.matrix_eq_zero`).** Identity 3 is
 `d • A = 0` entrywise, `d ≠ 0`, and `no_zero_div`. This is the upper bound
 at `r = 0` read directly, since `minors 1 A` are the entries.
 
@@ -400,7 +415,18 @@ zero divisors (so that "largest size of a nonzero minor" is a rank). It
 does not need an exact quotient: `adjugate` is polynomial in the entries.
 That is why the certificate is complete over every nontrivial domain even
 though the producer below is only defined over carriers with an executable
-exact quotient.
+exact quotient. The statement is a theorem of the companion,
+
+```lean
+theorem exists_rankCert [CommRing R] [IsDomain R] [DecidableEq R] (A : Hex.Matrix R n m) :
+    ∃ c : Hex.Matrix.RankCert R n m, Hex.Matrix.checkRank A c = true
+```
+
+with no quotient hypothesis. Its shortest proof is not the argument
+above but the producer's: every domain has an exact quotient classically,
+and `rankCertWith_check` then supplies the witness. The adjugate argument
+is recorded so that completeness is seen to hold for the certificate
+shape itself, independently of any elimination.
 
 ## The producer
 
@@ -438,16 +464,25 @@ Columns are scanned from `0` to `m - 1`. At column `j`:
    the coefficients the reduced form reports for that column.
 3. **Eliminate.** Otherwise `p` is appended to the pivot rows and `j` to
    the pivot columns, `pivot := M[p, j]`, and every row `i ≠ p` is updated
-   in the columns `j' > j`:
+   in every column `j' ≠ j`:
 
    ```text
    M[i, j'] ← quot (pivot · M[i, j'] − M[i, j] · M[p, j']) prev
    ```
 
-   after which `M[i, j] ← 0` for `i ≠ p`. Columns before `j` are
-   untouched: in a pivot row they hold earlier reduced entries, in a
-   non-pivot row they are already zero at pivot columns and are never
-   read again at skipped columns. Then `prev := pivot`.
+   after which `M[i, j] ← 0` for `i ≠ p`. The pivot row itself is not
+   changed. Then `prev := pivot`.
+
+   The columns before `j` are not exempt. In the pivot row `p` they are
+   zero (row `p` was a non-pivot row until now, so it is zero at every
+   earlier pivot column and at every earlier skipped column), so there
+   the formula is `quot (pivot · M[i, j']) prev`: in an earlier pivot row
+   it rescales the reduced entry from denominator `prev` to denominator
+   `pivot`, and in a non-pivot row it maps `0` to `0`. An implementation
+   may special-case the two shapes, but the reduced-form contract below
+   depends on the rescaling of the earlier pivot rows: on
+   `[[2, 0], [0, 3]]` the pass must end with `[[6, 0], [0, 6]]` and
+   `denom = 6`, not `[[2, 0], [0, 6]]`.
 
 **Rows are not moved.** The pivot row stays where it is, the search order
 in step 1 is the original row order, and the state records which rows are
@@ -475,9 +510,12 @@ returned: `denom = 1` and `matrix = A`, which is the zero matrix.
 The pass takes `[Zero R] [One R] [Sub R] [Mul R] [DecidableEq R]` and
 `quot`, the same operation classes as `bareissWith`. `One R` is for the
 seed. There is an in-place `rowReduceWithImpl` on `Array (Array R)`
-registered by `@[csimp]`, reusing `matrixToRows`, `rowsToMatrix` and
-`getEntry` from `HexBareiss/Bareiss.lean`; the public definition is the
-kernel-facing one, per design principle 11.
+registered by `@[csimp]`, reusing `getEntry` from
+`HexBareiss/Bareiss.lean` and rectangular forms of its `matrixToRows` and
+`rowsToMatrix` (the existing ones are `Matrix R n n` only; the
+`Matrix R n m` forms with their round-trip lemmas are listed under
+[Prerequisite changes](#prerequisite-changes-in-other-libraries)); the
+public definition is the kernel-facing one, per design principle 11.
 
 ### The rank profile
 
@@ -556,9 +594,10 @@ obligation are the same. Everything in the left column that concerns the
 determinant (`sign`, `lastDiag?`, `singularStep`, `BareissData.det`) has
 no counterpart here, and nothing here is a field added to `BareissData`.
 `bareissWith` stays the determinant algorithm: on a square full-rank
-matrix `rowReduceWith` does about half again the work of `bareissWith`
-(it updates rows above the pivot and never stops early), and a consumer
-that wants a determinant should not call it.
+matrix `rowReduceWith` does about three times the work of `bareissWith`
+(`(n − 1)(m − 1)` entries per step against `(n − 1 − k)²`, since it
+updates every row in every other column and never stops early), and a
+consumer that wants a determinant should not call it.
 
 `findPivot?` is not reused, because it scans a contiguous row range and
 the producer scans a filtered one. The array-storage layer is reused.
@@ -586,9 +625,18 @@ above, is:
 Under the invariant, the entry the update produces at a pivot row is
 `p · U'` and at a non-pivot row is `p · (p' • A[i,:] − A[i, cols'] * U')`
 where primes denote the next block, so `hquot` returns the primed value.
-The two identities are verified by left-multiplying by the nonsingular
-`B_{k+1}` and cancelling, using only `B_k * U = p • P_k` and
-`Matrix.mul_adjugate`. No Desnanot-Jacobi or Sylvester identity is used:
+The two identities are verified by left-multiplying by `B_{k+1}` and
+cancelling, using `B_k * U = p • P_k` and `Matrix.mul_adjugate`. The
+cancellation needs `B_{k+1}` nonsingular, and that is the one further
+step the induction establishes first: the pivot entry of the eliminated
+row, `p · A[rows[k], cols[k]] − A[rows[k], cols] * U[:, cols[k]]`, equals
+`det B_{k+1}` by the bordered-determinant identity
+`det [[B_k, u], [vᵀ, x]] = x · det B_k − vᵀ * adjugate B_k * u` (Laplace
+expansion along the last row, the identity
+[Completeness](#completeness) also uses), so the new pivot is a nonzero
+determinant and `prev` remains `det B_{k+1}`. That identity and
+`mul_adjugate` are the only determinant facts used. No Desnanot-Jacobi or
+Sylvester identity is used:
 characterising the pivot rows as the unique solution of a linear system
 over a domain replaces the bordered-minor recurrence that
 hex-bareiss-mathlib proves. This is a proof-route choice, not a claim that
@@ -654,13 +702,18 @@ second pass, so the pair is consistent whatever `π` is. (`rankCertWith`
 does not use the first pass's `denom`; it is reported by `rowReduceWith`
 for consumers that want `det B` without the adjugate.)
 
-The two-pass shape costs `O(n · r · m + r³)`. One pass over
-`[A | identity n]` also yields `adj B` (as the `rows × rows` block of the
-right half's pivot rows) and, in addition, the whole fraction-free
-transform, at `O(n · r · (m + n))`. It is never asymptotically cheaper
-and is worse for tall low-rank input, so it is not the default; a
-consumer that wants the transform (the `Decomposition` adapter in the
-companion is one) calls `rowReduceWith` on the augmented matrix itself.
+The two-pass shape costs `O(n · r · m + r³)`. A single pass over
+`[A | identity n]` would also yield `adj B` (as the `rows × rows` block
+of the right half's pivot rows) and the whole fraction-free transform,
+at `O(n · r · (m + n))`, but not by calling `rowReduceWith` on the
+augmented matrix: the loop would go on to find pivots in the identity
+block once the columns of `A` are exhausted, so the profile, `denom` and
+the right block would describe `[A | identity n]` (rank `n`) rather than
+`A`. Such a pass needs a pivot-search boundary at column `m`, with the
+row updates still applied to every column. It is never asymptotically
+cheaper than two passes and is worse for tall low-rank input, so this
+SPEC does not provide it; if a consumer wants the transform, the
+boundary parameter is the addition to make, not a second loop.
 
 `rankWith` and `rankProfileWith` are unchecked and fast, like `bareiss`;
 their correctness is `rankCertWith_check` plus soundness, in the
@@ -857,11 +910,17 @@ regenerated from this monorepo.
   moves down when a second consumer appears.
 - **`det_smul` in `HexDeterminant/RowOps.lean`**,
   `det (c • M) = c ^ k * det M` for `M : Matrix R k k`, by `det_rowScale`
-  iterated, and `selectedSubmatrix_smul`,
-  `selectedSubmatrix_mul_eq_selectRows_mul_selectCols` in
-  `HexDeterminant/Minor.lean`, both entrywise. hex-determinantal-ideal
-  asks for the column analogue `selectCols_mul`; these are of the same
-  kind and whichever library lands first adds them.
+  iterated, and `selectedSubmatrix_smul` in `HexDeterminant/Minor.lean`,
+  entrywise. (`selectedSubmatrix_mul` in `HexDeterminant/Gram.lean`
+  already exists and is what the upper bound uses.)
+- **`selectedColumnTuples_eq_nil_of_lt` in `HexDeterminant/Gram.lean`**,
+  `n < r → selectedColumnTuples r n = []`. hex-determinantal-ideal
+  specifies the same lemma and neither library imports the other, so it
+  lives in hex-determinant and whichever library lands first adds it.
+- **Rectangular `matrixToRows` and `rowsToMatrix`** for `Matrix R n m`,
+  with the round-trip lemmas, either generalised in place in
+  `HexBareiss/Bareiss.lean` (the square forms become the `n = m` case)
+  or added in `HexRank/Reduce.lean`.
 - **hex-modular-matrix SPEC amendment**, as listed under [Int](#int).
 - **`HexHermite`** may later return this certificate from its modular
   path; nothing is required now.
@@ -883,10 +942,17 @@ Fixtures follow [SPEC/testing.md](../testing.md). Lean drivers at
 The driver has the shape hex-bareiss's carrier SPEC gives its
 `scripts/oracle/matrix_carriers.py`, and shares code with it once that
 lands: python-flint for `Int` (`fmpz_mat`), `Rat` (`fmpq_mat`) and `ZMod64 p`
-(`nmod_mat`) records, SymPy for `DensePoly` and `MvPoly` records with the
-exact domain (`ZZ[x]`, `QQ[x]`, `GF(p)[x]`, `ZZ[x0, …]`, `QQ[x0, …]`)
-stated explicitly. Both are already installed and preflighted by the
-single oracle job; no install line changes.
+(`nmod_mat`) records, and SymPy's `DomainMatrix`
+(`sympy.polys.matrices`) for `DensePoly` and `MvPoly` records, constructed
+over the exact polynomial domain (`ZZ[x]`, `QQ[x]`, `GF(p)[x]`,
+`ZZ[x0, …]`, `QQ[x0, …]`) and converted with `to_field()` where a rank or
+reduced form is wanted. The ordinary `sympy.Matrix.rank()` and `rref()`
+are not used: they take no coefficient domain, so residues that were
+normalised entrywise are still added and multiplied in characteristic
+zero, and `[[1, 1], [1, 3]]` comes out of rank `2` where its rank over
+`GF(2)` is `1`. The same domain discipline applies to the certificate
+products the driver forms. Both packages are already installed and
+preflighted by the single oracle job; no install line changes.
 
 **Record format and operations.** A record carries the carrier, the
 matrix (integers, rationals, residues normalised to `[0, p)`, ascending
@@ -895,11 +961,11 @@ coefficient arrays for `DensePoly`, ordered exponent-vector terms for
 
 | `op` | Lean value | oracle recomputation and comparison |
 |---|---|---|
-| `rank` | `rankWith quot A` | `fmpz_mat.rank()` / `fmpq_mat.rank()` / `nmod_mat.rank()`; SymPy `Matrix.rank()` over the exact domain, compared as integers |
-| `colProfile` | `(rankProfileWith quot A).cols` | the pivot columns of the oracle's own reduced row echelon form (`fmpz_mat.rref()`, `fmpq_mat.rref()`, SymPy `Matrix.rref()`), compared as lists |
+| `rank` | `rankWith quot A` | `fmpz_mat.rank()` / `fmpq_mat.rank()` / `nmod_mat.rank()`; `DomainMatrix.rank()` over the exact domain, compared as integers |
+| `colProfile` | `(rankProfileWith quot A).cols` | the pivot columns of the oracle's own reduced row echelon form (`fmpz_mat.rref()`, `fmpq_mat.rref()`, `DomainMatrix.rref()` over the fraction field), compared as lists |
 | `rowProfile` | `(rankProfileWith quot A).rows` sorted | the rows `i` with `rank(A[0..i]) = rank(A[0..i-1]) + 1`, recomputed by the oracle with its own rank on row prefixes, compared as sorted lists |
 | `denom` | `(rowReduceWith quot A).denom` | the determinant of the oracle's submatrix at the Lean-reported `rows × cols`, compared exactly (this re-uses Lean's index selection, which is permitted canonicalisation: the value compared is the oracle's determinant) |
-| `cert` | `rankCertWith quot A`, with `checkRank A c` asserted `true` by `#guard` in `Conformance.lean` | the oracle re-verifies identities 1 to 3 with its own arithmetic (`fmpz_mat`/`fmpq_mat`/SymPy products) and re-checks `rank` against its own rank; a certificate that passes `checkRank` but fails the oracle's identities is a checker bug |
+| `cert` | `rankCertWith quot A`, with `checkRank A c` asserted `true` by `#guard` in `Conformance.lean` | the oracle re-verifies identities 1 to 3 with its own arithmetic (`fmpz_mat`/`fmpq_mat`/`DomainMatrix` products) and re-checks `rank` against its own rank; a certificate that passes `checkRank` but fails the oracle's identities is a checker bug |
 
 The `cert` row is the requirement that the certificate be checked by the
 oracle-independent checker: `checkRank` is asserted in Lean on every
@@ -912,7 +978,7 @@ implementation gets wrong:
 - `0 × 0`, `0 × m`, `n × 0`: rank `0`, `denom = 1`, empty profile, and
   the certificate checks;
 - the zero matrix at several shapes: rank `0`, `denom = 1`, and
-  `checkRank_eq_zero_of_rank_zero` by `decide` in `Conformance.lean`;
+  `RankCert.matrix_eq_zero` by `decide` in `Conformance.lean`;
 - `1 × 1` `[0]` and `[c]` for `c ≠ 0`, including negative `c` (so
   `denom = c` and `adj = [1]`);
 - `[[0, 1], [0, 0]]`: rank `1`, `cols = [1]`, `rows = [0]`, the matrix
@@ -975,15 +1041,33 @@ hoisted into `prep`) are separate `setup_benchmark` targets on every
 family, so that the ratio between producer and checker is a recorded
 number and not an assumption of the tactic SPEC.
 
-**Complexity claim**, mode 1 (two-sided parametric): on
-`low-rank-large-coefficients` at fixed `r`, `rowReduceWith` and
-`checkRank` are `Θ(n²)` big-integer operations at an entry size that does
-not grow with `n`, so the declared scaling is `n²` in `n`. On
-`dense-full-rank`, the declared scaling is the one hex-bareiss declares
-for `bareiss` on its dense family (cubic count at Hadamard-bounded entry
-size), because the operation count differs by a constant. The
-derivations are the operation counts in [Complexity](#complexity); they
-are written before measurement and are not fitted.
+**Complexity claims**, chosen per
+[SPEC/benchmarking.md §Choosing the complexity claim](../benchmarking.md#choosing-the-complexity-claim):
+
+- `low-rank-large-coefficients` and `rank-deficient-by-construction` at
+  fixed `r`: **mode 1**, two-sided parametric, declared scaling `n²`.
+  The count is `Θ(r · n · n)` operations, and every operand is a minor
+  of size at most `r` of a matrix whose entries have a fixed bit size,
+  so the operand size is bounded independently of `n` and the time model
+  is the operation count.
+- `dense-full-rank`: **mode 2**, one-sided upper bound, declared bound
+  `n⁵ · (log n + log B)²`. Mode 1 does not apply, because the operand
+  size grows with `n` (entries are minors of size up to `n`, of
+  `O(n · (log n + log B))` bits by Hadamard's bound, Bareiss 1968) and
+  GMP's multiplication cost is not one power law across the ladder, so
+  no tight family-specific time model can be derived. The bound is the
+  `Θ(n³)` operation count times the schoolbook cost `b²` of multiplying
+  or exactly dividing `b`-bit operands at the Hadamard size; GMP is
+  never slower than schoolbook, so a faster observation is expected and
+  is reported as *within declared upper bound (observed faster)*. The
+  same bound and reasoning apply to `bareiss` on this family, whose own
+  SPEC registers a structured tridiagonal family rather than a dense one.
+- `polynomial`: **mode 3**, a fixed registration with a ceiling taken
+  from the SymPy comparator, since the cost of a polynomial minor depends
+  on the support and no one-parameter model is claimed.
+
+The derivations are the operation counts in [Complexity](#complexity);
+they are written before measurement and are not fitted.
 
 **Comparators**, all `informational`, with the rationale recorded here
 and in `libraries.yml`:
@@ -992,7 +1076,7 @@ and in `libraries.yml`:
 |---|---|---|
 | python-flint `fmpz_mat.rank()` | `Int` families | FLINT selects between fraction-free and multi-modular rank by size, so the ratio compares algorithms, and no shared fixture history anchors a required ratio |
 | python-flint `fmpq_mat.rank()` | `Rat` variants of the `Int` families | as above, over `ℚ` |
-| SymPy `Matrix.rank()` over the exact polynomial domain | `polynomial` family | SymPy's rank chooses its own elimination and includes Python overhead |
+| SymPy `DomainMatrix.rank()` over the exact polynomial domain | `polynomial` family | SymPy's rank chooses its own elimination and includes Python overhead |
 
 Wired as persistent-subprocess drivers following `Hex.BenchOracle.Flint`,
 with trivial-request overhead recorded in
@@ -1007,7 +1091,7 @@ verify path at the smallest rung of each family.
 HexRank.lean                     umbrella
 HexRank/
   Cert.lean        RankCert, checkRank
-  Check.lean       checkRank_minor_ne_zero, checkRank_minor_succ_eq_zero, checkRank_eq_zero_of_rank_zero
+  Check.lean       RankCert.det_ne_zero, RankCert.det_succ_eq_zero, RankCert.matrix_eq_zero
   Reduce.lean      RankProfile, ReducedForm, rowReduceWith, rowReduceWithImpl, loop-step lemmas
   Produce.lean     rankProfileWith, rankCertWith, certifyRankWith, rankWith
   Int.lean         rowReduceFF, rankProfile, rankCert, certifyRank, rank
@@ -1035,7 +1119,7 @@ bench/HexRank/Bench.lean
         - tool: FLINT fmpq_mat.rank via python-flint
           class: informational
           rationale: the same over the rationals.
-        - tool: SymPy Matrix.rank over the exact polynomial domain
+        - tool: SymPy DomainMatrix.rank over the exact polynomial domain
           class: informational
           rationale: SymPy chooses its own elimination and includes interpreter overhead; it orients the polynomial carriers only.
       input_families:
@@ -1066,8 +1150,9 @@ bench/HexRank/Bench.lean
    the entry points. Conformance against the oracle for `rank`,
    `colProfile`, `rowProfile`, `denom` and `cert`.
 3. **The `Int` layer and the amendment to hex-modular-matrix.**
-4. **The companion.** `checkRank_sound`, `rankCertWith_check`, the
-   profile theorems, `rank_map_eq`, and the `Decomposition` adapters.
+4. **The companion.** `checkRank_sound`, `rankCertWith_check`,
+   `exists_rankCert`, the profile theorems, `rank_map_eq`, and the
+   `Decomposition` adapters and existence theorems.
    Begins after milestone 1.
 5. **Carriers and benchmarks.** The polynomial instantiations in the
    conformance and bench modules, the families above, and the headline
