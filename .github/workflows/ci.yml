@@ -254,6 +254,7 @@ jobs:
             hexrcf_emit_fixtures \
             hexroots_emit_fixtures hexresultant_emit_fixtures \
             hexnumberfield_emit_fixtures hexrealalgebraic_emit_fixtures hexrealalgebraic_conformance \
+            hexnumberfield_quadratic \
             hexnumberfieldtower_emit_fixtures hexgraphiso_emit_trace hexgraphiso_emit_campaign
       - name: Build HexManual
         run: lake build HexManual
@@ -319,6 +320,12 @@ jobs:
           python3 scripts/oracle/graphiso_trace.py /tmp/graphiso-trace.jsonl
           .lake/build/bin/hexgraphiso_emit_campaign | python3 scripts/oracle/graphiso_nauty.py
           .lake/build/bin/tower_factor_diff
+          # The compiled quadratic regression uses <100 MiB RSS locally.
+          # Keep generous catastrophic-regression limits, outside elaboration.
+          quadratic_cpu=$(python3 -c 'import os; c=sorted(os.sched_getaffinity(0)); print(c[os.getpid() % len(c)])')
+          sudo systemd-run --wait --pipe --collect \
+            -p MemoryMax=1G -p MemorySwapMax=0 -p CPUQuota=100% -p RuntimeMaxSec=30 \
+            taskset -c "$quadratic_cpu" "$PWD/.lake/build/bin/hexnumberfield_quadratic" regression 20
           bash scripts/ci/run_oracles.sh
           # Deterministic anti-regression gate: a recombination blow-up,
           # unexpected method downgrade, or unexpected decline/fallback fails the

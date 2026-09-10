@@ -1,0 +1,333 @@
+{
+  "baseline": "92d42a806",
+  "toolchain": "leanprover/lean4:v4.34.0-rc2",
+  "host": "chungus2",
+  "caps": {
+    "memory_bytes": 8589934592,
+    "swap_bytes": 0,
+    "cpu_quota": "100%",
+    "wall_seconds": 120
+  },
+  "samples": [
+    {
+      "implementation": "before",
+      "stage": "squarefree",
+      "height": 5,
+      "exit_code": 0,
+      "elapsed": "0:00.07",
+      "max_rss_kib": "68612",
+      "cgroup_peak": "92.6M (swap: 0B)",
+      "host_context": "cpu=61 load=(3.26806640625, 7.74609375, 26.064453125)"
+    },
+    {
+      "implementation": "before",
+      "stage": "factor",
+      "height": 5,
+      "exit_code": 0,
+      "elapsed": "0:00.03",
+      "max_rss_kib": "67840",
+      "cgroup_peak": "14.3M (swap: 0B)",
+      "host_context": "cpu=61 load=(3.26806640625, 7.74609375, 26.064453125)"
+    },
+    {
+      "implementation": "before",
+      "stage": "isolate",
+      "height": 5,
+      "exit_code": 0,
+      "elapsed": "0:00.03",
+      "max_rss_kib": "67636",
+      "cgroup_peak": "14.1M (swap: 0B)",
+      "host_context": "cpu=61 load=(3.26806640625, 7.74609375, 26.064453125)"
+    },
+    {
+      "implementation": "before",
+      "stage": "canonical",
+      "height": 5,
+      "exit_code": 0,
+      "elapsed": "0:00.04",
+      "max_rss_kib": "68408",
+      "cgroup_peak": "14M (swap: 0B)",
+      "host_context": "cpu=61 load=(3.26806640625, 7.74609375, 26.064453125)"
+    },
+    {
+      "implementation": "before",
+      "stage": "squarefree",
+      "height": 10,
+      "exit_code": 0,
+      "elapsed": "0:00.03",
+      "max_rss_kib": "67668",
+      "cgroup_peak": "14.1M (swap: 0B)",
+      "host_context": "cpu=61 load=(3.26806640625, 7.74609375, 26.064453125)"
+    },
+    {
+      "implementation": "before",
+      "stage": "factor",
+      "height": 10,
+      "exit_code": 0,
+      "elapsed": "0:00.04",
+      "max_rss_kib": "101960",
+      "cgroup_peak": "46.2M (swap: 0B)",
+      "host_context": "cpu=61 load=(3.26806640625, 7.74609375, 26.064453125)"
+    },
+    {
+      "implementation": "before",
+      "stage": "isolate",
+      "height": 10,
+      "exit_code": 0,
+      "elapsed": "0:00.03",
+      "max_rss_kib": "67668",
+      "cgroup_peak": "14M (swap: 0B)",
+      "host_context": "cpu=61 load=(3.26806640625, 7.74609375, 26.064453125)"
+    },
+    {
+      "implementation": "before",
+      "stage": "canonical",
+      "height": 10,
+      "exit_code": 0,
+      "elapsed": "0:00.06",
+      "max_rss_kib": "124484",
+      "cgroup_peak": "68.3M (swap: 0B)",
+      "host_context": "cpu=61 load=(3.26806640625, 7.74609375, 26.064453125)"
+    },
+    {
+      "implementation": "before",
+      "stage": "squarefree",
+      "height": 15,
+      "exit_code": 0,
+      "elapsed": "0:00.03",
+      "max_rss_kib": "67620",
+      "cgroup_peak": "14M (swap: 0B)",
+      "host_context": "cpu=61 load=(3.26806640625, 7.74609375, 26.064453125)"
+    },
+    {
+      "implementation": "before",
+      "stage": "factor",
+      "height": 15,
+      "exit_code": 1,
+      "elapsed": null,
+      "max_rss_kib": null,
+      "cgroup_peak": "8G (swap: 0B)",
+      "host_context": "cpu=61 load=(3.26806640625, 7.74609375, 26.064453125)"
+    },
+    {
+      "implementation": "before",
+      "stage": "isolate",
+      "height": 15,
+      "exit_code": 0,
+      "elapsed": "0:00.04",
+      "max_rss_kib": "67600",
+      "cgroup_peak": "14.1M (swap: 0B)",
+      "host_context": "cpu=61 load=(3.26806640625, 7.74609375, 26.064453125)"
+    },
+    {
+      "implementation": "before",
+      "stage": "canonical",
+      "height": 15,
+      "exit_code": 1,
+      "elapsed": null,
+      "max_rss_kib": null,
+      "cgroup_peak": "8G (swap: 0B)",
+      "host_context": "cpu=61 load=(3.26806640625, 7.74609375, 26.064453125)"
+    },
+    {
+      "implementation": "before",
+      "stage": "squarefree",
+      "height": 20,
+      "exit_code": 0,
+      "elapsed": "0:00.03",
+      "max_rss_kib": "67656",
+      "cgroup_peak": "14M (swap: 0B)",
+      "host_context": "cpu=61 load=(3.26806640625, 7.74609375, 26.064453125)"
+    },
+    {
+      "implementation": "before",
+      "stage": "factor",
+      "height": 20,
+      "exit_code": 1,
+      "elapsed": null,
+      "max_rss_kib": null,
+      "cgroup_peak": "8G (swap: 0B)",
+      "host_context": "cpu=61 load=(3.26806640625, 7.74609375, 26.064453125)"
+    },
+    {
+      "implementation": "before",
+      "stage": "isolate",
+      "height": 20,
+      "exit_code": 0,
+      "elapsed": "0:00.04",
+      "max_rss_kib": "67632",
+      "cgroup_peak": "13.9M (swap: 0B)",
+      "host_context": "cpu=61 load=(3.26806640625, 7.74609375, 26.064453125)"
+    },
+    {
+      "implementation": "before",
+      "stage": "canonical",
+      "height": 20,
+      "exit_code": 1,
+      "elapsed": null,
+      "max_rss_kib": null,
+      "cgroup_peak": "8G (swap: 0B)",
+      "host_context": "cpu=61 load=(3.26806640625, 7.74609375, 26.064453125)"
+    },
+    {
+      "implementation": "after",
+      "stage": "squarefree",
+      "height": 5,
+      "exit_code": 0,
+      "elapsed": "0:00.03",
+      "max_rss_kib": "68236",
+      "cgroup_peak": "14M (swap: 0B)",
+      "host_context": "cpu=65 load=(2.77880859375, 5.41552734375, 21.83251953125)"
+    },
+    {
+      "implementation": "after",
+      "stage": "factor",
+      "height": 5,
+      "exit_code": 0,
+      "elapsed": "0:00.03",
+      "max_rss_kib": "68332",
+      "cgroup_peak": "13.8M (swap: 0B)",
+      "host_context": "cpu=65 load=(2.77880859375, 5.41552734375, 21.83251953125)"
+    },
+    {
+      "implementation": "after",
+      "stage": "isolate",
+      "height": 5,
+      "exit_code": 0,
+      "elapsed": "0:00.03",
+      "max_rss_kib": "68240",
+      "cgroup_peak": "14.1M (swap: 0B)",
+      "host_context": "cpu=65 load=(2.77880859375, 5.41552734375, 21.83251953125)"
+    },
+    {
+      "implementation": "after",
+      "stage": "canonical",
+      "height": 5,
+      "exit_code": 0,
+      "elapsed": "0:00.04",
+      "max_rss_kib": "68256",
+      "cgroup_peak": "14.1M (swap: 0B)",
+      "host_context": "cpu=65 load=(2.77880859375, 5.41552734375, 21.83251953125)"
+    },
+    {
+      "implementation": "after",
+      "stage": "squarefree",
+      "height": 10,
+      "exit_code": 0,
+      "elapsed": "0:00.03",
+      "max_rss_kib": "68332",
+      "cgroup_peak": "14.1M (swap: 0B)",
+      "host_context": "cpu=65 load=(2.77880859375, 5.41552734375, 21.83251953125)"
+    },
+    {
+      "implementation": "after",
+      "stage": "factor",
+      "height": 10,
+      "exit_code": 0,
+      "elapsed": "0:00.03",
+      "max_rss_kib": "68184",
+      "cgroup_peak": "13.8M (swap: 0B)",
+      "host_context": "cpu=65 load=(2.77880859375, 5.41552734375, 21.83251953125)"
+    },
+    {
+      "implementation": "after",
+      "stage": "isolate",
+      "height": 10,
+      "exit_code": 0,
+      "elapsed": "0:00.03",
+      "max_rss_kib": "68252",
+      "cgroup_peak": "13.8M (swap: 0B)",
+      "host_context": "cpu=65 load=(2.77880859375, 5.41552734375, 21.83251953125)"
+    },
+    {
+      "implementation": "after",
+      "stage": "canonical",
+      "height": 10,
+      "exit_code": 0,
+      "elapsed": "0:00.04",
+      "max_rss_kib": "68244",
+      "cgroup_peak": "13.9M (swap: 0B)",
+      "host_context": "cpu=65 load=(2.77880859375, 5.41552734375, 21.83251953125)"
+    },
+    {
+      "implementation": "after",
+      "stage": "squarefree",
+      "height": 15,
+      "exit_code": 0,
+      "elapsed": "0:00.03",
+      "max_rss_kib": "68276",
+      "cgroup_peak": "14.1M (swap: 0B)",
+      "host_context": "cpu=65 load=(2.77880859375, 5.41552734375, 21.83251953125)"
+    },
+    {
+      "implementation": "after",
+      "stage": "factor",
+      "height": 15,
+      "exit_code": 0,
+      "elapsed": "0:00.03",
+      "max_rss_kib": "68264",
+      "cgroup_peak": "14M (swap: 0B)",
+      "host_context": "cpu=65 load=(2.77880859375, 5.41552734375, 21.83251953125)"
+    },
+    {
+      "implementation": "after",
+      "stage": "isolate",
+      "height": 15,
+      "exit_code": 0,
+      "elapsed": "0:00.03",
+      "max_rss_kib": "68320",
+      "cgroup_peak": "14M (swap: 0B)",
+      "host_context": "cpu=65 load=(2.77880859375, 5.41552734375, 21.83251953125)"
+    },
+    {
+      "implementation": "after",
+      "stage": "canonical",
+      "height": 15,
+      "exit_code": 0,
+      "elapsed": "0:00.04",
+      "max_rss_kib": "67492",
+      "cgroup_peak": "14.1M (swap: 0B)",
+      "host_context": "cpu=65 load=(2.77880859375, 5.41552734375, 21.83251953125)"
+    },
+    {
+      "implementation": "after",
+      "stage": "squarefree",
+      "height": 20,
+      "exit_code": 0,
+      "elapsed": "0:00.03",
+      "max_rss_kib": "68260",
+      "cgroup_peak": "14M (swap: 0B)",
+      "host_context": "cpu=65 load=(2.77880859375, 5.41552734375, 21.83251953125)"
+    },
+    {
+      "implementation": "after",
+      "stage": "factor",
+      "height": 20,
+      "exit_code": 0,
+      "elapsed": "0:00.03",
+      "max_rss_kib": "69040",
+      "cgroup_peak": "14M (swap: 0B)",
+      "host_context": "cpu=65 load=(2.77880859375, 5.41552734375, 21.83251953125)"
+    },
+    {
+      "implementation": "after",
+      "stage": "isolate",
+      "height": 20,
+      "exit_code": 0,
+      "elapsed": "0:00.03",
+      "max_rss_kib": "68216",
+      "cgroup_peak": "14.1M (swap: 0B)",
+      "host_context": "cpu=65 load=(2.77880859375, 5.41552734375, 21.83251953125)"
+    },
+    {
+      "implementation": "after",
+      "stage": "canonical",
+      "height": 20,
+      "exit_code": 0,
+      "elapsed": "0:00.04",
+      "max_rss_kib": "68252",
+      "cgroup_peak": "14M (swap: 0B)",
+      "host_context": "cpu=65 load=(2.77880859375, 5.41552734375, 21.83251953125)"
+    }
+  ]
+}
