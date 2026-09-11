@@ -43,7 +43,9 @@ jobs:
       # below still run. Pushes to main and manual dispatches always build
       # in full. The allowlist is deliberately simple and permissive: a
       # missed edge case costs one slow-to-detect breakage on the next code
-      # PR, not a release.
+      # PR, not a release. The same pass also decides whether a full-build
+      # PR needs the manual: library/manual Lean and build-configuration
+      # changes do; bench, conformance, example, and automation changes do not.
       - name: Classify the change (docs-only fast path)
         id: classify
         env:
@@ -51,6 +53,7 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           docs_only=false
+          build_manual=true
           if [ "$EVENT_NAME" != pull_request ]; then
             reason="\`$EVENT_NAME\` event; only pull requests take the fast path"
           elif ! base="$(git merge-base "$BASE_SHA" HEAD 2>/dev/null)"; then
@@ -58,23 +61,43 @@ jobs:
           else
             mapfile -t changed < <(git diff --name-only "$base" HEAD)
             docs_only=true
+            build_manual=false
             reason="all ${#changed[@]} changed files match the docs-only allowlist"
-            [ "${#changed[@]}" -gt 0 ] || { docs_only=false; reason="no changed files against the merge base"; }
+            [ "${#changed[@]}" -gt 0 ] || {
+              docs_only=false
+              build_manual=true
+              reason="no changed files against the merge base"
+            }
             for f in "${changed[@]}"; do
+              if [ "$docs_only" = true ]; then
+                case "$f" in
+                  HexConway/SPEC/*) docs_only=false; reason="\`$f\` requires the Conway rebuild observation" ;;
+                  *.md|SPEC/*|PLAN/*|docs/*|reports/*|libraries.yml|AGENTS.md|.claude/*|LICENSE|.gitignore) ;;
+                  *) docs_only=false; reason="\`$f\` is outside the docs-only allowlist" ;;
+                esac
+              fi
               case "$f" in
-                HexConway/SPEC/*) docs_only=false; reason="\`$f\` requires the Conway rebuild observation"; break ;;
-                *.md|SPEC/*|PLAN/*|docs/*|reports/*|libraries.yml|AGENTS.md|.claude/*|LICENSE|.gitignore) ;;
-                *) docs_only=false; reason="\`$f\` is outside the docs-only allowlist"; break ;;
+                HexManual.lean|HexManual/*|lakefile.lean|lake-manifest.json|lean-toolchain)
+                  build_manual=true ;;
+                *.lean)
+                  case "$f" in
+                    bench/*|conformance/*|Examples/*) ;;
+                    *) build_manual=true ;;
+                  esac ;;
               esac
             done
           fi
           echo "docs_only=$docs_only" >> "$GITHUB_OUTPUT"
+          echo "build_manual=$build_manual" >> "$GITHUB_OUTPUT"
           if [ "$docs_only" = true ]; then
             path="Docs-only fast path"
             detail="dependency installation, the Lean build and the verification tails are skipped."
-          else
+          elif [ "$build_manual" = true ]; then
             path="Full build"
-            detail="every step runs."
+            detail="the full graph, including HexManual, is built and verified."
+          else
+            path="Full build; HexManual skipped"
+            detail="the non-manual graph and verification tails run."
           fi
           echo "::notice title=CI path::$path: $reason"
           printf '## CI path\n\n**%s**: %s; %s\n' "$path" "$reason" "$detail" >> "$GITHUB_STEP_SUMMARY"
@@ -138,9 +161,11 @@ jobs:
       # --- System + Python deps (union of the bench comparator and the oracles) ---
       - name: Install system dependencies
         if: steps.classify.outputs.docs_only != 'true'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gap libgmp-dev libntl-dev pkg-config libpari-dev pari-gp singular
+        uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9 # v1.6.3
+        with:
+          packages: gap libgmp-dev libntl-dev pkg-config libpari-dev pari-gp singular
+          version: "1.0"
+          execute_install_scripts: true
       - name: Install Python dependencies (bench comparator + oracles)
         if: steps.classify.outputs.docs_only != 'true'
         run: |
@@ -182,14 +207,14 @@ jobs:
           test -d "$lean_prefix/lib/lean"
           echo "LD_LIBRARY_PATH=$lean_prefix/lib/lean:${LD_LIBRARY_PATH:-}" \
             >> "$GITHUB_ENV"
-      - name: Restore .lake/build (Hex modules only)
+      - name: Restore .lake/build (project modules)
         if: steps.classify.outputs.docs_only != 'true'
         id: hex-build-cache
         uses: actions/cache/restore@v4
         with:
           path: |
-            .lake/build/lib/lean/Hex*
-            .lake/build/ir/Hex*
+            .lake/build/lib/lean
+            .lake/build/ir
           key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
           restore-keys: |
             lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
@@ -352,7 +377,7 @@ jobs:
             hexnumberfield_quadratic \
             hexnumberfieldtower_emit_fixtures hexgraphiso_emit_trace hexgraphiso_emit_campaign
       - name: Build HexManual
-        if: steps.classify.outputs.docs_only != 'true'
+        if: steps.classify.outputs.build_manual == 'true'
         run: lake build HexManual
       # --- Parallel verification tails (single job, in-job parallel steps) ---
       # Both tails only read the already-built .lake/build; they write to
@@ -446,13 +471,13 @@ jobs:
       # Save only a fully verified main snapshot. Pull-request caches are scoped
       # to their merge ref and cannot help another PR, so saving one per PR would
       # churn the repository's cache quota without providing shared reuse.
-      - name: Save .lake/build (Hex modules only; main only)
+      - name: Save .lake/build (project modules; main only)
         if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.hex-build-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v4
         with:
           path: |
-            .lake/build/lib/lean/Hex*
-            .lake/build/ir/Hex*
+            .lake/build/lib/lean
+            .lake/build/ir
           key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
       # Publish only after every verification gate passes. R2 remains a
       # cross-runner fallback for a GitHub cache miss and for external consumers.
