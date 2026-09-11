@@ -19,8 +19,8 @@ The rank frontend on `Hex.Matrix` inputs.
 Domain rank names `Hex.Matrix.rankWith quot` or its integer specialization
 `Hex.Matrix.rank`, from `HexRank`; field rank names
 `Hex.Matrix.rowReduce_rank`, from `HexRowReduce`.  Both producers are
-structural, so the kernel replays the producer on the matrix literal for the
-equality; an inequality is the replayed equality followed by a checked
+structural, so the kernel replays the producer on the matrix expression for
+the equality; an inequality is the replayed equality followed by a checked
 natural-number comparison.  Rectangular and empty matrices are accepted.
 -/
 
@@ -135,11 +135,10 @@ private meta def rankModel? (e : Expr) : MetaM (Outcome (Model × Nat × Nat)) :
     return .declined m!"no numeric entry model for the carrier{indentExpr shape.carrier}"
   return .success (model, shape.rows, shape.cols)
 
-/-- Prove `fn A = r` by kernel replay of the producer on the literal. -/
+/-- Prove `fn A = r` by kernel replay of the producer on the original
+expression. -/
 private meta def proveRankEq {n m : Nat} (input : Input n m) (fn r : Expr) : MetaM Expr := do
-  let check ← kernelDecideProof "rank" (← mkEq (.headBeta (mkApp fn input.literal)) r)
-  let target ← mkEq (.headBeta (mkApp fn input.expr)) r
-  withTransparency .all <| mkExpectedTypeHint check target
+  kernelDecideProof "rank" (← mkEq (.headBeta (mkApp fn input.expr)) r)
 
 /-- The `rank% A` record for a Hex input. -/
 public meta def rankCertified (e : Expr) : MetaM (Outcome Expr) := do

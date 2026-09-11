@@ -87,6 +87,8 @@ example : True := by
 
 #check rank% #m[1, 2; 3, 4]
 
+example : (rank% #m[1, 2, 3; 2, 4, 6]).value = 1 := rfl
+
 example : Matrix.rank dense = 2 := by rank
 example : 2 = Matrix.rank dense := by rank
 example : Matrix.rank singular = 2 := by rank

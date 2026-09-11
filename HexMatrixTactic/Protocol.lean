@@ -108,13 +108,13 @@ public meta def vectorLit (ty : Expr) (n : Nat) (xs : List Expr) : MetaM Expr :=
     mkAppOptM ``_root_.Vector.mk
       #[some ty, some size, some (arrayLit ty xs), some (← mkAppM ``Eq.refl #[size])]
 
-/-- Reify a matrix from its row-major reified entries.  The literal is the
-flat buffer that `Hex.Matrix.mk` stores, so any matrix expression built through
-the public constructors is definitionally equal to it. -/
-public meta def matrixLit (ty : Expr) (n m : Nat) (xs : List Expr) : MetaM Expr :=
+/-- Reify a matrix from its reified rows through the public constructor
+`Hex.Matrix.ofRows`. -/
+public meta def matrixLit (ty : Expr) (n m : Nat) (rows : List (List Expr)) : MetaM Expr :=
   withTransparency .default do
-    let data ← vectorLit ty (n * m) xs
-    mkAppOptM ``Hex.Matrix.mk #[some ty, some (mkNatLit n), some (mkNatLit m), some data]
+    let rowType := mkApp2 (mkConst ``_root_.Vector [Level.zero]) ty (mkNatLit m)
+    let rows ← rows.mapM fun row => vectorLit ty m row
+    mkAppM ``Hex.Matrix.ofRows #[← vectorLit rowType n rows]
 
 /-- The literal `⟨i, _⟩ : Fin n`. -/
 public meta def finLit (n i : Nat) : MetaM Expr := do
@@ -129,9 +129,14 @@ public meta def reifyIntVector {n : Nat} (v : _root_.Vector Int n) : MetaM Expr 
 public meta def reifyZPoly (p : DensePoly Int) : MetaM Expr :=
   mkAppM ``DensePoly.ofCoeffs #[arrayLit (mkConst ``Int) (p.toArray.toList.map toExpr)]
 
+/-- The entries of a matrix, row by row, read through the public `rows`
+accessor. -/
+public meta def entryRows {R : Type} {n m : Nat} (A : Matrix R n m) : List (List R) :=
+  (Matrix.rows A).toList.map (·.toList)
+
 /-- Reify an integer matrix. -/
 public meta def reifyIntMatrix {n m : Nat} (A : Matrix Int n m) : MetaM Expr :=
-  matrixLit (mkConst ``Int) n m (A.data.toArray.toList.map toExpr)
+  matrixLit (mkConst ``Int) n m ((entryRows A).map (·.map toExpr))
 
 /-- Prove `DensePoly.beqCoeffs a b = true` by kernel evaluation. -/
 public meta def beqCoeffsProof (op : String) (a b : Expr) : MetaM Expr := do

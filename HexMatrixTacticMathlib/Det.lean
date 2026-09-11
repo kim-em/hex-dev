@@ -143,12 +143,17 @@ public meta def evalDetTac : Tactic.Tactic := fun _ => Tactic.withMainContext do
   Tactic.closeMainGoal `det proof
 
 /-- Rewrite `Matrix.det A` to its certified value when the Hex frontend
-applies; `none` when it does not. -/
+applies.  `none` is a decline (not a Mathlib matrix literal, open terms, or no
+numeric model); a malformed certificate or failed check propagates as an
+error rather than being masked by the fallback. -/
 public meta def normDet? (e : Expr) : MetaM (Option Simp.Result) := withTransparency .default do
   let e ← instantiateMVars e
   unless e.getAppFn.isConstOf ``Matrix.det do return none
-  match ← squareInput? e.appArg! with
+  let A := e.appArg!
+  if A.hasFVar || A.hasExprMVar then return none
+  match ← input? "det" A with
   | .success input =>
+      unless input.n = input.m do return none
       let some bareiss := input.hex.bareiss? | return none
       if h : input.n = input.m then
         let value ← bareiss h
@@ -156,7 +161,8 @@ public meta def normDet? (e : Expr) : MetaM (Option Simp.Result) := withTranspar
         return some { expr := value, proof? := some proof }
       else
         return none
-  | _ => return none
+  | .notApplicable | .declined _ => return none
+  | .failure msg => throwError "det: {msg}"
 
 end Det
 
@@ -165,9 +171,9 @@ end HexMatrixTacticMathlib
 open Lean Meta in
 /-- The `hex_norm_det` simproc rewrites the determinant of a closed matrix
 literal to its value through the Hex Bareiss frontend, and falls back to
-Mathlib's `norm_det` when the Hex frontend declines. -/
+Mathlib's `norm_det` when the Hex frontend declines; a failed Hex certificate
+is an error, not a fallback. -/
 simproc_decl hex_norm_det (Matrix.det _) := fun e => do
-  let hex? ← try HexMatrixTacticMathlib.Det.normDet? e catch _ => pure none
-  match hex? with
+  match ← HexMatrixTacticMathlib.Det.normDet? e with
   | some r => return .done r
   | none => norm_det e

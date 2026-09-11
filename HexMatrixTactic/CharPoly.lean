@@ -53,7 +53,7 @@ public meta def coreInput? (e : Expr) : MetaM (Option CoreInput) := do
     throwError "char_poly: unsupported coefficient type{indentExpr shape.carrier}\nOnly Int matrices are currently supported"
   unless shape.rows = shape.cols do
     throwError "char_poly: expected a square matrix, but got dimensions {shape.rows} × {shape.cols}"
-  let (value, _) ← evalMatrixChecked Int "char_poly" (mkConst ``Int) (fun z => pure (toExpr z))
+  let (value, _) ← evalMatrix Int "char_poly" (mkConst ``Int) (fun z => pure (toExpr z))
     shape.rows shape.rows e
   return some ⟨shape.rows, e, value⟩
 
@@ -258,7 +258,7 @@ private meta def buildCertificate (input : CoreInput) (ring : Expr) :
       let columnLiteral ← reifyIntVector column
       let columnSource := mkAppN (mkConst ``Matrix.columnOfMoments)
         #[ring, mkNatLit input.n, input.expr, mkNatLit k, leProof, moments.literal]
-      let columnCheck ← mkAppM ``Matrix.Vector.beqEntries
+      let columnCheck ← mkAppM ``_root_.Vector.beqEntries
         #[columnSource, columnLiteral]
       let columnProp ← mkEq columnCheck (mkConst ``Bool.true)
       let columnProof ← kernelDecideProof "char_poly" columnProp
@@ -266,7 +266,7 @@ private meta def buildCertificate (input : CoreInput) (ring : Expr) :
       let nextLiteral ← reifyIntVector next
       let step := mkAppN (mkConst ``Matrix.toeplitzMulVec [Level.zero])
         #[mkConst ``Int, ring, mkNatLit k, columnLiteral, previous.literal]
-      let stepCheck ← mkAppM ``Matrix.Vector.beqEntries #[step, nextLiteral]
+      let stepCheck ← mkAppM ``_root_.Vector.beqEntries #[step, nextLiteral]
       let stepProp ← mkEq stepCheck (mkConst ``Bool.true)
       let stepProof ← kernelDecideProof "char_poly" stepProp
       let proof := mkAppN (mkConst ``Matrix.BerkowitzCertificate.step)
@@ -290,14 +290,11 @@ public meta def polyOfDescending (descending : Expr) : MetaM Expr := do
 /-- Emit the certified result for a core matrix. -/
 public meta def resultForCore (input : CoreInput) : MetaM Expr := do
   let (_, p) ← computedPoly input
-  let matrixLiteral ← reifyIntMatrix input.value
-  let certificateInput := { input with expr := matrixLiteral }
-  let certificate ← certificateExpr certificateInput
-    (mkConst ``Lean.Grind.instCommRingInt)
+  let certificate ← certificateExpr input (mkConst ``Lean.Grind.instCommRingInt)
   let source ← polyOfDescending certificate.literal
   let check ← beqCoeffsProof "char_poly" source p
   let proof ← try
-      withTransparency .all <| mkAppM ``Matrix.charPoly_eq_of_check
+      mkAppM ``Matrix.charPoly_eq_of_check
         #[input.expr, certificate.literal, p, certificate.proof, check]
     catch _ =>
       throwError "char_poly: compiled evaluation succeeded, but the kernel could not replay the characteristic-polynomial check; the input is too opaque or Lean's ordinary reduction limits were reached"
@@ -326,10 +323,7 @@ private meta def proveCoreEquality (input : CoreInput) (rhs : Expr)
     (reverse : Bool) : MetaM Expr := do
   let (computed, _) ← computedPoly input
   checkCoreRhs computed rhs
-  let matrixLiteral ← reifyIntMatrix input.value
-  let certificateInput := { input with expr := matrixLiteral }
-  let certificate ← certificateExpr certificateInput
-    (mkConst ``Lean.Grind.instCommRingInt)
+  let certificate ← certificateExpr input (mkConst ``Lean.Grind.instCommRingInt)
   let source ← polyOfDescending certificate.literal
   let check ← beqCoeffsProof "char_poly" source rhs
   let proof ← try

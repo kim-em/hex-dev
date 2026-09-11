@@ -20,7 +20,9 @@ values in the kernel.
 
 The numeric models are `Int` (exact quotient `HexArith.Int.exactDiv`) and
 `Rat` (exact quotient `Hex.exactDiv`, the field division); both offer the
-Bareiss determinant and the domain rank of `HexRank`.
+Bareiss determinant and the domain rank of `HexRank`.  Matrices are read
+through the public `rows` accessor and quoted through the public `ofRows`
+constructor; the private buffer is never touched.
 -/
 
 namespace Hex.MatrixTactic
@@ -38,11 +40,11 @@ private meta unsafe def evalMatrixUnsafe (V : Type) (n m : Nat) (ty e : Expr) :
 private meta opaque evalMatrixCore (V : Type) (n m : Nat) (ty e : Expr) :
     MetaM (Except String (Hex.Matrix V n m))
 
-/-- Evaluate a closed `Hex.Matrix` expression with compiled code and check
-that its reified literal is definitionally visible through the original
-expression, so that a kernel check on the literal transfers to the original.
-Returns the value and the literal. -/
-public meta def evalMatrixChecked (V : Type) (op : String) (carrier : Expr)
+/-- Evaluate a closed `Hex.Matrix` expression with compiled code and quote the
+result through the public constructor.  Returns the value and its literal; the
+literal is only discovery data, every check the kernel replays on it is tied
+back to the original expression by a kernel-checked step. -/
+public meta def evalMatrix (V : Type) (op : String) (carrier : Expr)
     (reify : V → MetaM Expr) (n m : Nat) (e : Expr) :
     MetaM (Hex.Matrix V n m × Expr) := do
   let e ← instantiateMVars e
@@ -51,17 +53,15 @@ public meta def evalMatrixChecked (V : Type) (op : String) (carrier : Expr)
   | .error msg =>
       throwError "{op}: failed to evaluate the matrix with compiled code{indentExpr e}\n{msg}"
   | .ok value =>
-      let literal ← matrixLit carrier n m (← value.data.toArray.toList.mapM reify)
-      unless ← withTransparency .all <| isDefEq literal e do
-        throwError "{op}: the matrix{indentExpr e}\nevaluates to{indentExpr literal}\nbut is not definitionally transparent to the elaborator (an imported definition without `@[expose]`?); the kernel could not replay the check"
-      return (value, literal)
+      let rows ← (entryRows value).mapM (·.mapM reify)
+      return (value, ← matrixLit carrier n m rows)
 
 /-- A closed `n × m` matrix evaluated through a model: its literal and the
 producers the model offers on it, each run on demand. -/
 public meta structure Input (n m : Nat) where
   /-- The original matrix expression. -/
   expr : Expr
-  /-- The reified literal, definitionally equal to `expr`. -/
+  /-- The reified literal, built through `ofRows` from the evaluated entries. -/
   literal : Expr
   /-- The reified Bareiss determinant, when the model has an exact quotient. -/
   bareiss? : Option (n = m → MetaM Expr)
@@ -94,7 +94,7 @@ private meta def reifyRankCert {V : Type} (carrier : Expr) (reify : V → MetaM 
   let rows ← vectorLit (finType n) c.rank (← c.rows.toList.mapM fun i => finLit n i.val)
   let cols ← vectorLit (finType m) c.rank (← c.cols.toList.mapM fun j => finLit m j.val)
   let denom ← reify c.denom
-  let adj ← matrixLit carrier c.rank c.rank (← c.adj.data.toArray.toList.mapM reify)
+  let adj ← matrixLit carrier c.rank c.rank (← (entryRows c.adj).mapM (·.mapM reify))
   mkAppOptM ``Hex.Matrix.RankCert.mk
     #[some carrier, some (mkNatLit n), some (mkNatLit m), some (mkNatLit c.rank), some rows,
       some cols, some denom, some adj]
@@ -108,7 +108,7 @@ public meta def Model.ofType (V : Type) [Zero V] [One V] [Neg V] [Sub V] [Mul V]
   quot? := quot?.map (·.1)
   isField := field?.isSome
   evalInput op n m e := do
-    let (value, literal) ← evalMatrixChecked V op carrier reify n m e
+    let (value, literal) ← evalMatrix V op carrier reify n m e
     return {
       expr := e
       literal := literal
@@ -151,12 +151,14 @@ public meta def modelFor? (R : Expr) : MetaM (Option Model) := do
   return none
 
 /-- Elaborate a matrix argument.  A raw `#m[...]` literal is given an integer
-coefficient expectation so its numerals do not default to `Nat`. -/
+coefficient expectation so its numerals do not default to `Nat`; the two
+dimensions stay independent. -/
 public meta def elabMatrixArgument (t : Syntax) : Elab.Term.TermElabM Expr := do
   let e ←
     if t.getKind == ``Hex.Matrix.matrixLiteral then
       let n ← mkFreshExprMVar (mkConst ``Nat)
-      let expected := mkApp3 (mkConst ``Hex.Matrix [Level.zero]) (mkConst ``Int) n n
+      let m ← mkFreshExprMVar (mkConst ``Nat)
+      let expected := mkApp3 (mkConst ``Hex.Matrix [Level.zero]) (mkConst ``Int) n m
       Elab.Term.elabTerm t (some expected)
     else
       Elab.Term.elabTerm t none

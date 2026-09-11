@@ -156,7 +156,10 @@ public meta def toHexExpr (carrier : Expr) (n m : Nat) (A : Expr) : MetaM Expr :
 
 /-- Classify and evaluate a closed Mathlib matrix expression.  A type other
 than a Mathlib matrix is `notApplicable`; a matrix outside the literal fragment
-or without a numeric entry model is `declined`. -/
+or without a numeric entry model is `declined`.  Evaluation only discovers the
+entries; the reconstruction proof is the separate kernel check
+`reconstructionProof`, and no definitional identification of the enumeration
+with a literal is required. -/
 public meta def input? (op : String) (e : Expr) : MetaM (Outcome Input) := do
   let e ← instantiateMVars e
   let some shape ← shape? op (← inferType e) | return .notApplicable

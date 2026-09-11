@@ -54,7 +54,7 @@ open HexMatrixMathlib
 - `rowReduceWith_spec`: the reduced-form contract of the producer, proved by
   the loop invariant of `HexRankMathlib.Invariant` (the pivot rows are the
   rows of `adjugate B * P`, the denominator is `det B`);
-- `rankCertWith_check`, `rankWith_eq`, `rank_eq`: producer correctness and
+- `rankCertWith_check`, `rankWith_eq`, `rank_eq_rank`: producer correctness and
   the identification of the unchecked rank with `Matrix.rank`;
 - `exists_rankCert`: completeness of the certificate shape over every domain;
 - `rank_map_eq`, `rank_map_eq_rank_fractionRing`, `rank_eq_ratFunc_rank'`:

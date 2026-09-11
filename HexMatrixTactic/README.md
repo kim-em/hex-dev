@@ -35,5 +35,6 @@ example : Matrix.charPoly A = #p[-2, -5, 1] := by char_poly
 
 Supported carriers are `Int` (determinant by row-pivoted Bareiss, rank by the
 `HexRank` domain producer, characteristic polynomial by the Berkowitz
-certificate) and `Rat` (rank by field row reduction). A goal stated with
+certificate) and `Rat` (determinant by Bareiss and rank by the `HexRank`
+producer, both with the field division as exact quotient). A goal stated with
 `Hex.Matrix.det` is replayed through its Leibniz expansion up to dimension 5.

@@ -18,7 +18,7 @@ The determinant frontend on `Hex.Matrix` inputs.
 
 The producer is the row-pivoted fraction-free Bareiss elimination.  Compiled
 code discovers the value; the kernel replays the `ofFn` form of the pivot loop
-on the matrix literal (`bareissReplay`), so a `bareiss`/`bareissWith` goal is
+on the original matrix expression (`bareissReplay`), so a `bareiss`/`bareissWith` goal is
 closed without evaluating the Leibniz specification.  A goal stated with
 `Hex.Matrix.det` itself is replayed directly up to `leibnizDimension`, since
 no Mathlib-free theorem identifies the two; the Mathlib companion transports
@@ -67,13 +67,12 @@ private meta def squareModel? (op : String) (e : Expr) :
   return .success (model, shape.rows)
 
 /-- Prove `bareissWith quot A = rhs` by a kernel `decide` on `bareissReplay`
-over the literal of `A`. -/
+over the original expression `A`; the kernel unfolds `A` itself. -/
 private meta def proveBareiss {n : Nat} (input : Input n n) (quot rhs : Expr) :
     MetaM Expr := do
-  let replay ← mkAppM ``Hex.Matrix.bareissReplay #[quot, input.literal]
+  let replay ← mkAppM ``Hex.Matrix.bareissReplay #[quot, input.expr]
   let check ← kernelDecideProof "det" (← mkEq replay rhs)
-  withTransparency .all <|
-    mkAppM ``Hex.Matrix.bareissWith_eq_of_replay #[quot, input.expr, rhs, check]
+  mkAppM ``Hex.Matrix.bareissWith_eq_of_replay #[quot, input.expr, rhs, check]
 
 /-- The Bareiss determinant as a function expression, for the `det%` record. -/
 private meta def bareissFn (model : Model) (n : Nat) (quot : Expr) : MetaM Expr := do
@@ -125,7 +124,7 @@ public meta def proveDetGoal (target : Expr) : MetaM (Outcome Expr) := do
     | .leibniz =>
         if leibnizDimension < n then
           return .declined m!"replaying the Leibniz determinant in the kernel is limited to dimension {leibnizDimension}; state the goal with `Hex.Matrix.bareiss`, or import `HexMatrixTacticMathlib` and use a Mathlib matrix"
-        kernelDecideProof "det" (← mkEq (← mkAppM ``Hex.Matrix.det #[input.literal]) rhs)
+        kernelDecideProof "det" (← mkEq (← mkAppM ``Hex.Matrix.det #[input.expr]) rhs)
   return .success (← if reverse then mkEqSymm proof else pure proof)
 
 @[term_elab detTerm]

@@ -21,21 +21,21 @@ characteristic polynomial, so the kernel replays scalar, vector, and final
 coefficient checks instead of the recursive coefficient computation.
 -/
 
-namespace Hex.Matrix
-
 namespace Vector
 
 /-- Kernel-reducible pointwise equality check for fixed-length vectors. -/
 @[expose]
-def beqEntries {n : Nat} (a b : _root_.Vector Int n) : Bool :=
+def beqEntries {n : Nat} (a b : Vector Int n) : Bool :=
   decide (a.toList = b.toList)
 
 /-- Soundness of `beqEntries`. -/
-theorem eq_of_beqEntries {n : Nat} {a b : _root_.Vector Int n}
+theorem eq_of_beqEntries {n : Nat} {a b : Vector Int n}
     (h : beqEntries a b = true) : a = b := by
-  exact _root_.Vector.toList_inj.mp (of_decide_eq_true h)
+  exact Vector.toList_inj.mp (of_decide_eq_true h)
 
 end Vector
+
+namespace Hex.Matrix
 
 /-- Read one literal-vector entry through a helper convenient for generated
 certificate terms. -/
