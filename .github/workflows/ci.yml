@@ -62,6 +62,7 @@ jobs:
             [ "${#changed[@]}" -gt 0 ] || { docs_only=false; reason="no changed files against the merge base"; }
             for f in "${changed[@]}"; do
               case "$f" in
+                HexConway/SPEC/*) docs_only=false; reason="\`$f\` requires the Conway rebuild observation"; break ;;
                 *.md|SPEC/*|PLAN/*|docs/*|reports/*|libraries.yml|AGENTS.md|.claude/*|LICENSE|.gitignore) ;;
                 *) docs_only=false; reason="\`$f\` is outside the docs-only allowlist"; break ;;
               esac
@@ -251,6 +252,45 @@ jobs:
         run: |
           echo "HEX_LIB_TARGETS=HexBasic HexTruncatedSeries HexTruncatedSeriesMathlib HexArith HexPoly HexPolyFast HexRationalFn HexRationalFnMathlib HexRationalFnKernelProbe HexPolyFastKernels HexMvPoly HexModArith HexGF2 HexPolyZ HexRoots HexResultant HexInterval HexIntervalExperiment HexIntervalMathlib HexIntervalMathlibExperiment HexIntervalReplayProbe HexIntervalMathlibReplayProbe HexRealRootsMathlibReplayProbe HexRCFProofProbe HexPolyFp HexGFqRing HexGFqField HexBerlekamp HexHensel HexConway HexGFq HexPrimality HexIntFactor HexPrimalityKernelProbe HexPrimalityElabProbe HexPrimalityMathlibProofProbe HexIntFactorKernelProbe HexMvGcdKernelProbe HexBerlekampZassenhaus HexRealRoots HexMatrix HexRowReduce HexDeterminant HexBareiss HexHermite HexSmith HexCharPoly HexMinPoly HexPolySmith HexGramSchmidt HexLatticeEnum HexLatticeEnumMathlib HexLatticeEnumTests HexPermGroup HexPermGroupMathlib HexPermGroupTests HexLLL HexMatrixMathlib HexHermiteMathlib HexSmithMathlib HexSmithTests HexCharPolyMathlib HexMinPolyMathlib HexPolySmithMathlib HexGramSchmidtMathlib HexLLLMathlib HexBerlekampZassenhausMathlib HexBerlekampZassenhausMathlibProofProbe HexBerlekampMathlibProofProbe HexPrimalityMathlib HexIntFactorMathlib HexPolyFpMathlib HexFactorizationModules HexRealRootsMathlib HexGF2Mathlib HexGFqMathlib HexMvPolyMathlib HexMvPolyMathlibProofProbe HexRCF HexRootsMathlib HexResultantMathlib HexNumberField HexNumberFieldMathlib HexRealAlgebraic HexRealAlgebraicMathlib HexNumberFieldTower HexNumberFieldTowerMathlib HexReleaseTests HexReleaseExamples HexAggregateCheck" >> "$GITHUB_ENV"
           echo "HEX_EXE_TARGETS=hextruncatedseries_bench hexarith_bench hexpoly_bench hexpolyfast_bench hexrationalfn_bench hexpolysmith_bench hexmvpoly_bench hexmvgcd_bench hexsparsepoly_bench hexpolyz_bench hexpolyfp_bench hexmodarith_bench hexmodular_bench hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench hexhensel_bench hexprimality_bench hexprimality_policy_probe hexprimality_fuel_probe hexintfactor_bench hexberlekamp_bench hexbz_bench hexconway_bench hexconway_replay hexmatrix_bench hexgraphiso_bench hexpermgroup_bench hexstrassen_compare hexrowreduce_bench hexdeterminant_bench hexbareiss_bench hexcharpoly_bench hexminpoly_bench hexgramschmidt_bench hexlatticeenum_bench hexhermite_bench hexsmith_bench hexrealroots_bench hexrcf_bench hexroots_bench hexresultant_bench hexnumberfield_bench hexnumberfieldtower_bench tower_factor_diff hexinterval_decision_bench hexroots_demo hex_interval_representation_spike hex_interval_center_spike hex_interval_scale_spike hex_interval_scheduler_spike hex_interval_policy_frontier_spike hex_arith_floor hexlll_bench hexlll_gram_bench hexlll_external_reduction hexbz_factor_service" >> "$GITHUB_ENV"
+      - name: Decide whether to collect Conway rebuild evidence
+        id: conway-rebuild
+        if: steps.classify.outputs.docs_only != 'true'
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          collect=false
+          if [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF" == "refs/heads/main" ]]; then
+            collect=true
+          elif [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            if [[ -z "$PR_BASE_SHA" || -z "$PR_HEAD_SHA" ]]; then
+              echo "missing pull-request base or head SHA" >&2
+              exit 1
+            fi
+            set +e
+            git diff --quiet "$PR_BASE_SHA...$PR_HEAD_SHA" -- \
+              HexConway/ HexConway.lean HexGFq/ HexGFq.lean \
+              HexGFqMathlib/ HexGFqMathlib.lean scripts/conway/
+            diff_status=$?
+            set -e
+            case "$diff_status" in
+              0) ;;
+              1) collect=true ;;
+              *) exit "$diff_status" ;;
+            esac
+          fi
+          echo "collect=$collect" >> "$GITHUB_OUTPUT"
+      # On main pushes and Conway-touching PRs, warm external dependencies
+      # outside the measurement, then perform each clean build once before the
+      # rest of the graph. Hosted limits bound regressions; the 300-second
+      # acceptance ceiling belongs to the named machine.
+      - name: Collect Conway rebuild evidence
+        if: ${{ steps.conway-rebuild.outputs.collect == 'true' }}
+        run: |
+          python3 scripts/conway/measure.py ci-conway --runs 1 --threads 4 \
+            --warm-dependencies --ceiling 1800 --max-rss-kib 14680064
+          python3 scripts/conway/measure.py ci-bridge --runs 1 --threads 4 --companion \
+            --warm-dependencies --ceiling 1800 --max-rss-kib 14680064
       # Shared build. The libraries, bench exes, conformance #guard drivers, and
       # emit-fixture exes are all elaborated here so the two verification tails
       # below only *run* things, never rebuild them -- which is what lets the
@@ -260,30 +300,23 @@ jobs:
       # parallelize the Mathlib-heavy library compiles, the exe links, the
       # conformance/fixture builds, and the Verso manual all at once, whose
       # combined memory peak exhausts the runner. Sequential invocations share
-      # `.lake/build` after the initial clean Conway measurements, so unrelated
-      # elaboration peaks do not overlap. The RSS guard is conservative because
-      # shared mappings can be counted in several processes.
+      # `.lake/build`; when the clean Conway measurements run first, the build
+      # reuses their outputs. The RSS guard is conservative because shared
+      # mappings can be counted in several processes.
       - name: Build hex libraries + bench exes
         if: steps.classify.outputs.docs_only != 'true'
-        run: |
-          # Warm external dependencies outside the measurement, then perform
-          # each clean build once before the rest of the graph. Subsequent
-          # targets reuse these outputs. Hosted limits bound regressions;
-          # the 300-second acceptance ceiling belongs to the named machine.
-          python3 scripts/conway/measure.py ci-conway --runs 1 --threads 4 \
-            --warm-dependencies --ceiling 1800 --max-rss-kib 14680064
-          python3 scripts/conway/measure.py ci-bridge --runs 1 --threads 4 --companion \
-            --warm-dependencies --ceiling 1800 --max-rss-kib 14680064
-          lake build ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS} HexTruncatedSeriesTests
+        run: lake build ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS} HexTruncatedSeriesTests
       - name: Verify Conway generation and compiled certificates
         if: steps.classify.outputs.docs_only != 'true'
         run: |
           python3 -m unittest scripts/conway/test_tools.py
           python3 scripts/conway/generate.py --check
-          python3 scripts/conway/verify_provenance.py reports/conway/ci-conway.json reports/conway/ci-bridge.json --commit HEAD
           .lake/build/bin/hexconway_replay > reports/conway/ci-runtime.jsonl
+      - name: Verify Conway rebuild provenance
+        if: ${{ steps.conway-rebuild.outputs.collect == 'true' }}
+        run: python3 scripts/conway/verify_provenance.py reports/conway/ci-conway.json reports/conway/ci-bridge.json --commit HEAD
       - name: Upload Conway rebuild evidence
-        if: ${{ always() && steps.classify.outputs.docs_only != 'true' }}
+        if: ${{ always() && steps.conway-rebuild.outputs.collect == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: conway-rebuild-evidence
