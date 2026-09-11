@@ -483,57 +483,141 @@ and the standard remedy, due to Abbott, Bronstein, and Mulders ("Fast
 deterministic computation of determinants of dense matrices", ISSAC
 1999), removes the pessimism without weakening the argument.
 
-Solve `A x = b` for a random `b` by the Dixon solve below, obtaining `y`
-and `d > 0` with `A y = d b` and the pair reduced. The random vector is
-drawn from a seedable generator under the discipline the equal-degree
-splitting item in [future-work](../future-work.md) sets: the generator
-state is an explicit argument rather than a monad, the seed is a
-parameter of the public entry point so a run is reproducible, and the
-draw affects how many moduli the run needs and never what it returns.
-The tree has no such generator today, so the first consumer to land
-writes it, and it belongs in hex-basic rather than here. Then `d` divides
+Build the decomposition of `A` (`decomp?`, in
+[Decomposition and repeated solves](#decomposition-and-repeated-solves)),
+draw a right-hand side `b`, and solve `A x = b` through it, obtaining
+`y` and `d > 0` with `A y = d b` and the pair reduced. Then `d` divides
 `det A`, so the remaining factor `det A / d` is bounded by
 `hadamardBound A / d`, and Chinese remaindering only has to determine
 that much smaller number.
 
 ```lean
-namespace Hex.ModularMatrix
+/-- The divisibility behind the divisor: a reduced solution's
+denominator divides the determinant. -/
+theorem dvd_det_of_mulVec {A : Matrix Int n n} {y b : Vector Int n} {d : Int}
+    (hA : Matrix.det A ≠ 0) (h : A.mulVec y = d • b) (hd : 0 < d)
+    (hred : ∀ g : Int, (∀ i : Fin n, g ∣ y[i]) → g ∣ d → g ∣ 1) :
+    d ∣ Matrix.det A
 
-/-- The determinant, computed as a divisor found by lifting times a
-cofactor found by Chinese remaindering. -/
-def detViaDivisor (A : Hex.Matrix Int n n) (seed : Nat) : Int
+/-- The `divisor` route of `Hex.ModularMatrix.detWith`: a divisor found
+by lifting times a cofactor found by Chinese remaindering, with the
+advanced generator state; `none` when the prime search or the moduli
+loop runs out of budget. `fuel` bounds the moduli loop exactly as in
+`detModular?`; the prime search uses `solveFuel A`. -/
+def detViaDivisorWith (A : Matrix Int n n) (r : Rand) (fuel : Nat) :
+    Option Int × Rand
 
-end Hex.ModularMatrix
+theorem detViaDivisorWith_eq [LawfulDetBound]
+    (h : (detViaDivisorWith A r fuel).1 = some d) : d = Matrix.det A
 ```
+
+This is the algorithm body behind `Hex.ModularMatrix.detWith` at
+`useDivisor = true`, and `detViaDivisorWith_eq` is the value equation of
+its `divisor` route that "Public names and dispatch integration" asks
+for; `Hex.ModularMatrix.detViaDivisor A seed` is that dispatcher's
+projection and is not a second definition.
+
+**The right-hand side.** `b` is drawn from `Hex.Rand`
+(`HexBasic/Rand.lean`), the splitmix64 generator the tree already has,
+under the discipline its module docstring sets: `detViaDivisorWith`
+takes the state as an explicit argument and returns the advanced state,
+with no monad and no global generator; the dispatcher starts it from
+`Rand.ofSeed seed`, so a run is reproducible from its seed; and the draw
+affects how many moduli the run needs and never what it returns. Each entry is one `Rand.next` word
+truncated to its low sixteen bits and shifted to the symmetric range
+`[-2^15, 2^15)`. Truncation of a uniform word to a power of two is
+bias-free, so there is no rejection sampling and no `exhausted` branch
+to handle. Sixteen bits
+is the trade: every bit of `b` is a bit in the numerator bound `P`, hence
+a fraction of a lifting digit, and the next paragraph is what the bits
+buy.
+
+**What the divisor can be.** Writing `s_n` for the last invariant factor
+of `A`, the matrix `s_n · A⁻¹` is integral, so the reduced denominator of
+`A⁻¹ b` divides `s_n` for every `b`, and `d = s_n` is the best any
+right-hand side can do. The shortfall is `gcd(s_n, c)` for `c` the
+relevant integer combination of the entries of `b`, and against an
+ideal sampler a prime `q` dividing `s_n` divides `c` with probability
+about `1 / q`, so the expected shortfall is a few bits, each of which
+costs a fraction of one modulus and never correctness. That is a
+statement about cost, made against an ideal sampler as `Hex.Rand`'s
+docstring requires, and no theorem depends on it. When `d = s_n` the
+cofactor is `det A / s_n = s_1 ⋯ s_{n-1}`, which is `1` exactly when the
+cokernel of `A` is cyclic. For a random integer matrix that has density
+`∏_{k ≥ 2} ζ(k)⁻¹ ≈ 0.436`, and the cofactor is a few bits with
+probability close to `1`; "typical input" below means the dense random
+families of the Benchmarking section, on which that heuristic is the
+expectation and the measurement is the evidence. The worst case is a unimodular `A`, where `s_n = 1`, every
+solution is integral, and the divisor saves nothing; the `unimodular-
+determinant` bench family exists to keep that visible. Abbott, Bronstein
+and Mulders also combine two right-hand sides by `lcm`, which recovers
+the shortfall at the cost of a second lift; it is not adopted for the
+first version, and the bench family is where the case for it would be
+made.
 
 Three things make this rigorous rather than heuristic, and the middle one
 is easy to get wrong:
 
-- `d ∣ det A` needs Cramer's rule. From `A y = d b` with `A` nonsingular,
-  `y_i / d = det(A_i) / det(A)`, so `det(A) · y_i = d · det(A_i)` for
-  every `i`, so `d` divides `det(A) · gcd_i(y_i)`.
-- **The pair must be reduced first.** The divisibility conclusion needs
-  `gcd(gcd_i y_i, d) = 1`. Dixon's reconstruction returns a common
-  denominator that need not be the least one
-  ([hex-modular](../../HexModular/SPEC/hex-modular.md) says so explicitly under "Vectors with a
-  common denominator"), so `detViaDivisor` divides `y` and `d` through by
-  their common gcd before using `d`. Omitting that step gives a `d` that
-  does not divide the determinant and a wrong answer with no symptom.
+- `d ∣ det A` is Cramer's rule, and it is Mathlib-free:
+  `Hex.Matrix.adjugate_mul` in `HexDeterminant/Adjugate.lean` gives
+  `adjugate A * A = det A • identity n`, so from `A y = d b` follows
+  `det A • y = d • (adjugate A).mulVec b`, so `d ∣ det A · y_i` for
+  every `i`. Then `d / gcd(d, det A)` divides every `y_i` and divides
+  `d`, hence divides `1` by reducedness, so `d = gcd(d, det A)` since
+  `0 < d`. That is `dvd_det_of_mulVec`, in `Divisor.lean`.
+  (`adjugate_mul` is stated at size `n + 1`; the `n = 0` case is
+  `det A = 1` and `hred` at `g = d`.)
+- **The pair must be reduced first.** The lemma's `hred` is the whole
+  hypothesis: without it `d` need not divide `det A`, and the wrong
+  answer has no symptom. `ratReconVec?` (`HexModular/Recon.lean`)
+  divides its output through by the common gcd, but
+  `ratReconVec?_spec` does not say so, and the reconstruction runs
+  untrusted. So `solveWith` normalises the pair itself after
+  reconstruction and before the check, `solveWith_reduced` states it,
+  and `detViaDivisorWith` discharges `hred` from that theorem. The
+  route-level test constructs a non-reduced pair and checks the
+  normaliser, as the Conformance section says.
 - The cofactor still needs a bound, and it has one: `|det A / d| ≤
-  hadamardBound A / d`, from the same hypothesis as before, with floor
-  division on the right. Nothing is assumed about how large `d` is. A
-  small `d` costs moduli, never correctness.
+  hadamardBound A / d`, from `LawfulDetBound` and `d ∣ det A`, with
+  floor division on the right. Nothing is assumed about how large `d`
+  is. A small `d` costs moduli, never correctness.
 - **The images are of the cofactor, not of the determinant**, so each one
   is `(det A mod m) · (d⁻¹ mod m)` and a modulus with `gcd(d, m) ≠ 1` has
   no such inverse. Those moduli are skipped, exactly as the ones where
   `detMod?` returns `none` are. An implementation that reconstructs
   `det A` and divides afterwards has not saved anything, since the point
-  of the divisor is to shrink the modulus the reconstruction needs.
+  of the divisor is to shrink the modulus the reconstruction needs. The
+  decomposition's own prime supplies the first image for free: `p ∤ det A`
+  and `d ∣ det A` give `p ∤ d`, and `D.detImage · d⁻¹ mod p` needs no
+  elimination.
 
-Nonsingularity is not an extra assumption. The Dixon solve inverts `A`
-modulo a prime, and a matrix invertible modulo `p` has a determinant that
-is nonzero modulo `p`, hence nonzero. When the solve fails to find such a
-prime after its budget, `detViaDivisor` falls back to `det` above.
+The moduli loop is `crtLoop` (`HexModular/Loop.lean`), the same
+combinator `detModular?` uses, with the cofactor image in place of the
+determinant image and `2 · (hadamardBound A / d) < modulus` as the
+acceptance test, after which `crt_unique` identifies the symmetric
+representative with the cofactor and `detViaDivisorWith` returns `d`
+times it. `fuel` bounds the supply entries this loop inspects, with the
+same meaning as in `detModular?`; the prime search inside `decomp?` has
+its own budget, `solveFuel A` from the Dixon section, because the two
+loops fail for different reasons and a caller tuning one should not
+move the other.
+
+Nonsingularity is not an extra assumption. A matrix invertible modulo
+`p` has a determinant that is nonzero modulo `p`, hence nonzero, and
+`decomp?` returns `none` when it finds no such prime within its budget,
+which on a singular `A` it never does. On the `1 × 1` matrix `[L]` of the totality
+argument that is what happens: every prime below `2^31` divides `L`, so
+`decomp?` finds nothing and the divisor route never starts.
+`detViaDivisorWith` propagates that `none`, and also the `none` of a
+moduli loop that runs out of supply before the cofactor is determined,
+which the finite supply allows in principle even though a cofactor is
+smaller than the determinant it came from. What happens next is the
+dispatcher's: `detWith` at `useDivisor = true` continues with
+`detModular?` and then `Hex.Matrix.bareiss`, recording the route, and
+under design principle 8 each step is a complete algorithm, not a
+default value. At zero fuel the moduli loop inspects nothing and the
+divisor attempt fails, which is the behaviour the dispatcher's zero-fuel
+tests rely on.
 
 This is the entry point a caller should use, and it is what closes the
 measured gap: on typical input `d` is within a few bits of the
@@ -663,30 +747,45 @@ responsibility for computing the exact answer on that branch.
 
 ```lean
 /-- Solve `A x = b` over `ℚ` by `p`-adic lifting. Returns the numerator
-vector and the common denominator of `x`, reduced. -/
+vector and the common denominator of `x`, reduced as a pair. `fuel` is
+the number of primes from the supply tried for an invertible image. -/
 def solve? (A : Matrix Int n n) (b : Vector Int n) (fuel : Nat) :
     Option (Vector Int n × Int)
 
 theorem solve?_spec (h : solve? A b fuel = some (y, d)) :
     A.mulVec y = d • b ∧ 0 < d
 
+theorem solve?_reduced (h : solve? A b fuel = some (y, d)) :
+    ∀ g : Int, (∀ i : Fin n, g ∣ y[i]) → g ∣ d → g ∣ 1
+
 theorem solve?_unique (h : solve? A b fuel = some (y, d))
     (hA : Matrix.det A ≠ 0) (hz : A.mulVec z = e • b) (he : 0 < e) :
     e • y = d • z
 ```
 
-The algorithm, with the two steps that are easy to state wrongly marked:
+`solve? A b fuel` is `decomp? A fuel` followed by `solveWith D b`, both
+from the next section, and this section describes what the two do
+together. The algorithm, with the two steps that are easy to state
+wrongly marked:
 
 1. Find a prime `p` at which `A` is invertible, and compute `B` with
-   `B A ≡ I (mod p)`. This is the only `O(n³)` step, and it is done once.
-2. Set `r₀ = b`. Repeat: `xᵢ = B rᵢ mod p`, then
-   `rᵢ₊₁ = (rᵢ - A xᵢ) / p`. **The division is exact**, because
-   `A xᵢ ≡ A B rᵢ ≡ rᵢ (mod p)`, and it is a division rather than a
-   shift because `p` is not a power of two. This is where hex-arith's
-   `exactDiv` belongs.
+   `B A ≡ I (mod p)`. This is the only `O(n³)` step, and it is done once
+   per matrix, not once per right-hand side: it is `decomp?`.
+2. Set `r₀ = b`. Repeat: `xᵢ = B rᵢ mod p`, taken as the symmetric
+   representative, then `rᵢ₊₁ = (rᵢ - A xᵢ) / p`. **The division is
+   exact**, because `A xᵢ ≡ A B rᵢ ≡ rᵢ (mod p)`, and it is a division
+   rather than a shift because `p` is not a power of two. It is
+   `HexArith.Int.exactDiv` (`HexArith/ExactDiv.lean`), applied
+   entrywise; `Hex.Matrix.exactDiv` in hex-bareiss is now an alias of
+   it. With symmetric digits the residual satisfies
+   `|rᵢ|_∞ ≤ |b|_∞ / pⁱ + (n · B / 2) · p / (p - 1)` for `B` the entry
+   bound of `A` and `p > 1`, so it stays uniformly bounded however many
+   digits are taken, and each step is
+   one `O(n²)` word-arithmetic product and one `O(n²)` product of `A` by
+   a digit vector.
 3. After `k` steps, `x ≡ Σ xᵢ pⁱ (mod p^k)`, so the solution is known
-   modulo `p^k`.
-4. Reconstruct with `ratReconVec?` at bounds
+   modulo `p^k`. This is `Decomp.lift`.
+4. Reconstruct with `ratReconVec?` (`HexModular/Recon.lean`) at bounds
    `P = max_i hadamardBound (A with column i replaced by b)` and
    `Q = hadamardBound A`. **The number of steps is set by
    `p^k > 2 P Q`**, from Cramer's rule: the `i`-th numerator is the
@@ -694,14 +793,25 @@ The algorithm, with the two steps that are easy to state wrongly marked:
    denominator divides `det A`. The maximum over `i` is not decoration.
    For `A = [[1, N], [0, 1]]` and `b = (0, 1)` the solution is `(-N, 1)`,
    while replacing the second column alone gives a bound of `1`, so a
-   `P` read off one replaced column is wrong by a factor of `N`.
-5. Check `A y = d b` over `ℤ` and return `none` if it fails.
+   `P` read off one replaced column is wrong by a factor of `N`. The
+   maximum is `numeratorBound A b`, and it costs `O(n²)` rather than
+   `O(n³)`: `hadamardBound` is a product of one factor per column, so
+   for `n > 0` and no zero column the maximum over replaced columns is
+   `⌈‖b‖⌉ · hadamardBound A / c_min` with `c_min` the smallest column
+   factor, and at `n = 0` it is `0`. That is cheap beside the lift,
+   which is why the decomposition caches nothing about the bounds. `k`
+   is the least power with `p^k > 2 P Q`, found by repeated
+   multiplication, which terminates because `1 < p`; there is no
+   lifting fuel, because the digit count is determined before the loop
+   starts.
+5. Divide `y` and `d` through by their common gcd, then check
+   `A y = d b` over `ℤ` and return `none` if it fails.
 
 Because of step 5 the whole thing is a checked candidate. `solve?_spec`
-follows from the check alone and needs no hypothesis, not even
-`LawfulDetBound`: the bound governs how many lifting steps are enough,
-which is a question about whether the check will pass rather than about
-what it means when it does.
+and `solve?_reduced` follow from the check and the normalisation alone
+and need no hypothesis, not even `LawfulDetBound`: the bound governs how
+many lifting steps are enough, which is a question about whether the
+check will pass rather than about what it means when it does.
 
 `solve?_unique` is the other half, and the hypothesis it needs is
 nonsingularity, which the caller gets for free from step 1: a matrix
@@ -730,12 +840,252 @@ returned only that. What carries the argument is the residue: a nonzero
 value of `det A` modulo `w.modulus` proves `det A ≠ 0` as an integer, by
 the same one-line argument the rank certificate's lower bound uses. The
 solve already computes it, since inverting `A` modulo `p` produces the
-pivot product.
+pivot product, and the decomposition stores it as `Decomp.detImage`;
+`solveWitness?` is `solveWith` with the decomposition's `p` and
+`detImage` copied into the result. Primality of the modulus is not part
+of the witness and not used by the proof, which is `detMod?_reduce` at
+`w.modulus`.
+
+**What `none` means.** There are two ways for `solve?` to return `none`
+and they are not the same kind of failure:
+
+- `decomp? A fuel = none`: none of the first `fuel` primes of the supply
+  gives an invertible image. This is a resource failure, and it is the
+  only failure a caller can observe. The supply `ZMod64.primesBelow`
+  (`HexModArith/Modulus.lean`) descends from `2^31`, and while every
+  prime tried exceeds `2^30` (the first fifty million or so do), the
+  distinct ones dividing a nonzero `det A` multiply to at most
+  `|det A| ≤ hadamardBound A`, so at most
+  `⌊log₂ (hadamardBound A) / 30⌋` of them are unlucky, and
+  `solveFuel A := (hadamardBound A).log2 / 30 + 1` is the default. That
+  is `decomp?_isSome` below, and its hypothesis that the primes tried
+  all exceed `2^30` is not decoration: the supply is finite, and on the
+  `1 × 1` matrix `[L]` of the totality argument every prime below `2^31`
+  divides the nonzero determinant, so no budget finds one. So a `none`
+  at the default budget is a singular `A` under `LawfulDetBound` whenever
+  `hadamardBound A` has fewer than about `1.5 · 10⁹` bits, and is a
+  resource failure like `det`'s beyond that; a `none` at a smaller
+  budget is not evidence of anything. `solve?` does not certify
+  singularity either way; a caller who wants to know why runs
+  `rankCert?`.
+- `solveWith D b = none`: the check in step 5 failed. On a square input
+  with a decomposition this branch is
+  `unreachable-by-pipeline-invariant` under design principle 8, with
+  `solveWith_isSome [LawfulDetBound]` as the witness theorem: the true
+  solution `A⁻¹ b` has reduced common-denominator form within `P` and
+  `Q` by Cramer's rule and the bound, `p^k > 2 P Q` makes it the unique
+  such pair modulo `p^k`, and `ratReconVec?` finds it by hex-modular's
+  completeness theorem. The Mathlib-free layer keeps the check, because
+  that is what makes `solve?_spec` hypothesis-free, and states the
+  unreachability conditionally.
+
+So for square nonsingular input `none` never means inconsistency, and it
+cannot: a square nonsingular system is consistent. There is no digit
+budget to exhaust (step 4), and no third outcome. `solve?` does not
+return an `Except`, because the only observable failure has one cause.
+
+**Where an inconsistency witness would live.** Rectangular and
+inconsistent systems are out of scope, as the Scope section says. When
+they are added, the witness `yᵀ A = 0`, `yᵀ b ≠ 0` comes out of the rank
+certificate, not out of the lifting: with hex-rank's `RankCert`
+(`rows`, `cols`, `denom`, `adj`) the identity
+`denom • A = C * (adj * P)` says that every row `i` outside `rows` is
+`denom⁻¹ · C[i, ·] · adj` times the rows in `rows`, so
+`yᵀ = denom · eᵢᵀ - Σⱼ (C[i, ·] · adj)ⱼ · e_{rows j}ᵀ` annihilates `A`,
+and the system is inconsistent exactly when some such `y` has
+`yᵀ b ≠ 0`. The rectangular solve is therefore `solveMatWith` on the
+`r × r` pivot block against `b[rows]`, checked against every row of `A`,
+with a failing row's `y` as the witness; it belongs beside `kernel?` in
+`Rank.lean`, which already holds the certificate that produces it. This
+SPEC does not specify it.
 
 **Rational input, rational right-hand side.** A caller with `Rat` data
 clears denominators. `solve?` does not accept `Rat`, because the
 clearing is a scalar multiplication the caller can do exactly once, and
 accepting `Rat` would invite it to be done per call.
+
+## Decomposition and repeated solves
+
+Two consumers solve many systems against one matrix. The rank
+certificate obtains `adj B` and `det B` from `r` solves against the same
+`r × r` block `B`, and a rectangular solve, when it comes, solves
+repeatedly against one pivot block. Every solve rebuilding the `O(n³)`
+inverse modulo `p` would turn those into `O(n⁴)`. The decomposition is
+the object that holds what the lifting reuses.
+
+```lean
+/-- A matrix together with what one Dixon lift reuses: a modulus at
+which it is invertible, its inverse there, and the determinant residue,
+each with the law the lift and the witness need. -/
+structure Decomp (n : Nat) where
+  A : Matrix Int n n
+  p : Nat
+  [bounds : ZMod64.Bounds p]
+  one_lt : 1 < p
+  inv : Matrix (ZMod64 p) n n
+  inv_mul : inv * A.mapEntries (ZMod64.intCast p) = Matrix.identity n
+  /-- `det A mod p`, as a symmetric representative. -/
+  detImage : Int
+  detImage_congr : (Matrix.det A - detImage) % (p : Int) = 0
+  detImage_lt : 2 * detImage.natAbs < p
+  detImage_ne_zero : detImage ≠ 0
+
+/-- `max_i hadamardBound (A with column i replaced by b)`, the numerator
+bound Cramer's rule gives a solution of `A x = b`. -/
+def numeratorBound (A : Matrix Int n n) (b : Vector Int n) : Nat
+
+/-- The default prime budget: one more than the number of primes above
+`2^30` that can divide a determinant within the Hadamard bound. -/
+def solveFuel (A : Matrix Int n n) : Nat := (hadamardBound A).log2 / 30 + 1
+
+/-- The decomposition at one modulus, or `none` if `A` is not invertible
+there. -/
+def decompAt? (A : Matrix Int n n) (p : Nat) [ZMod64.Bounds p] (hp : 1 < p) :
+    Option (Decomp n)
+
+/-- The decomposition at the first of `fuel` supply primes at which `A`
+is invertible. -/
+def decomp? (A : Matrix Int n n) (fuel : Nat) : Option (Decomp n)
+
+/-- The `p`-adic expansion of the solution: `x` with
+`A x ≡ b (mod p^k)`, reduced to `0 ≤ x[i] < p^k` after the last digit. -/
+def Decomp.lift (D : Decomp n) (b : Vector Int n) (k : Nat) : Vector Int n
+
+/-- One lift, reconstruction, normalisation and check against `D.A`. -/
+def solveWith (D : Decomp n) (b : Vector Int n) : Option (Vector Int n × Int)
+
+/-- The same for a matrix right-hand side: `X` and `d` with
+`A * X = d • C`, reduced as a whole. -/
+def solveMatWith (D : Decomp n) (C : Matrix Int n m) : Option (Matrix Int n m × Int)
+
+def solveMat? (A : Matrix Int n n) (C : Matrix Int n m) (fuel : Nat) :
+    Option (Matrix Int n m × Int)
+
+theorem decompAt?_A [ZMod64.Bounds p] (h : decompAt? A p hp = some D) :
+    D.A = A ∧ D.p = p
+theorem decomp?_A (h : decomp? A fuel = some D) : D.A = A
+theorem Decomp.det_ne_zero (D : Decomp n) : Matrix.det D.A ≠ 0
+theorem decomp?_isSome [LawfulDetBound] (hA : Matrix.det A ≠ 0)
+    (hfuel : (hadamardBound A).log2 / 30 < fuel)
+    (hsupply : ∀ q ∈ ZMod64.primesBelow (2 ^ 31 - 1) fuel, 2 ^ 30 < q.m) :
+    (decomp? A fuel).isSome
+theorem Decomp.lift_spec (D : Decomp n) (b : Vector Int n) (k : Nat) :
+    ∀ i : Fin n, ((D.A.mulVec (D.lift b k))[i] - b[i]) % ((D.p : Int) ^ k) = 0
+theorem solveWith_spec (h : solveWith D b = some (y, d)) :
+    D.A.mulVec y = d • b ∧ 0 < d
+theorem solveWith_reduced (h : solveWith D b = some (y, d)) :
+    ∀ g : Int, (∀ i : Fin n, g ∣ y[i]) → g ∣ d → g ∣ 1
+theorem solveWith_isSome [LawfulDetBound] (D : Decomp n) (b : Vector Int n) :
+    (solveWith D b).isSome
+theorem solveMatWith_spec (h : solveMatWith D C = some (X, d)) :
+    D.A * X = d • C ∧ 0 < d
+theorem solveMatWith_reduced (h : solveMatWith D C = some (X, d)) :
+    ∀ g : Int, (∀ (i : Fin n) (j : Fin m), g ∣ X[i][j]) → g ∣ d → g ∣ 1
+theorem solveMatWith_isSome [LawfulDetBound] (D : Decomp n) (C : Matrix Int n m) :
+    (solveMatWith D C).isSome
+theorem solveMat?_spec (h : solveMat? A C fuel = some (X, d)) :
+    A * X = d • C ∧ 0 < d
+theorem solveMat?_unique (h : solveMat? A C fuel = some (X, d))
+    (hA : Matrix.det A ≠ 0) (hz : A * Z = e • C) (he : 0 < e) :
+    e • X = d • Z
+```
+
+**The laws are fields, not comments.** `inv_mul` is what `lift_spec`
+uses; `detImage_congr`, `detImage_lt` and `detImage_ne_zero` together
+are what `det_ne_zero` uses (a nonzero integer of absolute value below
+`p / 2` is nonzero modulo `p`, and `det A` is congruent to it; the
+range law is needed, since `detImage ≠ 0` alone does not exclude
+`detImage = p`); and `one_lt` is what makes the digit-count search
+terminate; so every theorem above holds for every value of the type,
+and the producer discharges the fields from the theorems about its own
+elimination rather than the consumer trusting the producer. `Bounds p`
+alone allows `p = 1`, at which every residue is `0`, the inverse
+identity is vacuous and `p^k` never exceeds anything; `one_lt` excludes
+it, and `decompAt?` takes the proof so that a caller with a bare
+modulus is asked for it once. `decompAt?_A` is stated as two equations
+rather than an identity involving `D.inv`, because `D.p` is not
+definitionally `p` and a statement mentioning both does not elaborate.
+
+`decompAt?` runs Gauss-Jordan on `[A mod p | identity n]` over `ZMod64 p`
+with the `Option`-returning entry inverse, so a pivot column with no unit
+gives `none`; it returns the right block and the pivot product, which is
+`det A mod p`, lifted to a symmetric representative. Primality is not
+used anywhere downstream (the lift needs only `B A ≡ I`, and the witness
+needs only a nonzero residue), so `Decomp` carries `ZMod64.Bounds` and
+no primality evidence, and `decompAt?` accepts any word-sized modulus.
+`decomp?` iterates `decompAt?` over `ZMod64.primesBelow`, because a
+composite modulus fails whenever any of its prime factors divides
+`det A` and so is never a better choice. A caller that already knows a
+good modulus calls `decompAt?` directly: the rank producer found `rows`
+and `cols` from a nonvanishing minor modulo its own `p`, so `B` is
+invertible there and `decompAt? B p` succeeds without a search.
+
+`solveWith` is steps 2 to 5 of the previous section against `D`, with
+`P = numeratorBound D.A b`, `Q = hadamardBound D.A`, and the digit count
+`k` from `p^k > 2 P Q`; `solve? A b fuel` is
+`(decomp? A fuel).bind (solveWith · b)`, and `solve?_spec`,
+`solve?_reduced`, `solve?_unique` are the `solveWith` theorems composed
+with `decomp?_A` and `Decomp.det_ne_zero`. At `n = 0` the bounds are
+`P = 0` and `Q = 1`, so `k = 0`, and `ratReconVec?` on the empty vector
+returns `(#v[], 1)`, which the check accepts: the empty system has the
+empty solution with denominator `1`, and nothing special-cases it. `solveWith_isSome` needs
+`ratReconVec?_complete`, the vector form of hex-modular's
+`ratRecon?_complete`, which
+[hex-modular](../../HexModular/SPEC/hex-modular.md) does not yet state:
+its "Vectors with a common denominator" gives soundness and uniqueness
+under `2PQ < m`, and the prerequisite below asks for the completeness
+half. Until it lands, `solveWith_isSome` is stated with `sorry` and the
+`none` branch is classified as above.
+
+**The matrix form.** `solveMatWith D C` lifts all `m` columns at once:
+each digit step is one `ZMod64` matrix product `inv * (Rᵢ mod p)` and one
+integer product `A * Xᵢ`, and the reconstruction runs `ratReconVec?` on
+the `n · m` residues as one vector, so that the returned `d` is the
+common denominator of the whole matrix, and the pair is normalised as a
+whole (`solveMatWith_reduced`). The bounds are
+`P = max_j numeratorBound A C_j` and `Q = hadamardBound A`: every entry
+of `d · A⁻¹ C` is `d / det A` times a replaced-column determinant, and
+`d` divides `det A` because the least common denominator of `A⁻¹ C`
+does. At `m = 0` or `n = 0` the result is the empty matrix with `d = 1`,
+by the same route as the empty vector. Lifting the columns together
+rather than in sequence
+shares the `p`-adic bookkeeping and turns `m` matrix-vector products per
+digit into one matrix product, which is the same work in a better
+memory order; the cost is `O(n² m)` word operations per digit, and the
+digit count is the one `k` set from the largest column.
+
+**The rank certificate goes through it.** The Rank section's producer
+calls `decompAt? B p` at the prime that selected `B`, obtains
+`d = det B` from `detModular?`, and calls
+`solveMatWith D (d • identity r)`. Because `adjugate B = det B · B⁻¹` is
+integral, the reduced pair that returns is `(adjugate B, 1)`
+(`solveMatWith_reduced` leaves no common factor, and the check
+`B * X = 1 • (d • identity r)` is identity 2 of the certificate), and it
+succeeds once `B` has a decomposition (`solveMatWith_isSome`). The
+alternative `solveMatWith D (identity r)` returns `(s_r · B⁻¹, s_r)`
+with `s_r` the last invariant factor of `B` (the least positive integer
+with `s_r · B⁻¹` integral), which for `B = 2 • identity 2` is
+`(identity 2, 2)` rather than `(2 • identity 2, 4)`; hex-rank's checker
+accepts either, and the Rank section explains why it stores the
+determinant and adjugate rather than the reduced pair. At `r = 0` both
+return `(identity 0, 1)`. What this section guarantees is the cost: the
+`r` solves are one `O(r³)` inverse plus `O(r³ · h / w)` lifting, not `r`
+inverses.
+
+**The `p`-adic expansion is exposed, and this settles a question an
+earlier draft left open.** A consumer that wants the solution modulo
+`p^k` rather than as a rational, a Hensel-style consumer or
+[hex-hermite](../../HexHermite/SPEC/hex-hermite.md)'s modular path,
+calls `Decomp.lift` directly and skips the reconstruction. `lift_spec`
+is its whole contract, the representative is the non-negative one so
+that a consumer reducing further can do so by `%`, and the digit count
+is the caller's: `lift` does not know the bounds, `solveWith` does. The
+decomposition is where the expansion belongs because it is the object
+that makes computing it cheap; a `solve?` that returned both would
+force every rational consumer to carry a vector it does not want.
+[hex-padics](hex-padics.md) records that the residual vector stays an
+integer vector rather than a `Vector (ZpApprox p N) n`, and `lift` is
+written that way.
 
 ## Rational kernel basis
 
@@ -839,8 +1189,11 @@ separately where they dominate, because that is the whole comparison.
 |---|---|---|---|
 | `detMod?` | elimination at one modulus | `O(n³)` | none |
 | `det` | `⌈h/w⌉` images plus CRT | `O(n³ h / w)` | `O(n · h² / w²)` for the CRT |
-| `detViaDivisor` | one solve plus `⌈log₂(H/d)/w⌉` images | `O(n³ + n² h)` typical | small |
-| `solve?` | one inverse plus `k = O(h/w)` steps | `O(n³ + n² h / w)` | `O(n·h)` in the reconstruction |
+| `detViaDivisor` | one decomposition, one solve, `⌈log₂(H/d)/w⌉` images | `O(n³ + n² h / w)` plus `O(n³)` per image | `O(n · h)` in the reconstruction |
+| `decomp?` | one Gauss-Jordan inverse modulo `p` per prime tried | `O(n³)` per prime | none |
+| `solveWith` | `k = O(h/w)` digit steps against a decomposition | `O(n² h / w)` | `O(n · h)` in the reconstruction |
+| `solve?` | `decomp?` plus `solveWith` | `O(n³ + n² h / w)` | `O(n · h)` in the reconstruction |
+| `solveMatWith` (`m` columns) | `k = O(h/w)` digit steps, each one matrix product | `O(n² m h / w)` | `O(n m h)` in the reconstruction |
 | `rankCert?` | per attempt: modular reduction, `det B`, one decomposition and `r` solves | `O(n m + n m r + r³ + r³ k)` plus the determinant route, for `k` lifting digits per solve | determinant/reconstruction costs plus `checkRank` below |
 | `Hex.Matrix.checkRank` | `B * adj`, `adj * P`, `C * U`, and scalar multiplication | none | `O(r³ + r² m + n r m + n m)` ring operations; operand sizes include the certificate |
 | `Hex.Matrix.bareiss` | fraction-free elimination | none | `O(n³)` at size up to `h` |
@@ -851,7 +1204,11 @@ bit cost carries a factor of `h` (and, with schoolbook multiplication, of
 `h²`). The multi-modular determinant performs `n³ h / w` multiplications
 on machine words. Dixon replaces the `h` in the first factor by a single
 `O(n³)` inverse plus `O(n²)` per digit, which is where its advantage over
-both comes from.
+both comes from. The `solveWith` row against the `solve?` row is the
+saving of the decomposition: `r` solves against one matrix cost
+`O(n³ + r n² h / w)` through it and `O(r n³ + r n² h / w)` without, and
+at `r = n` (the rank certificate's `solveMatWith D (identity n)`) the
+difference is `n⁴` against `n³`.
 
 ## Prerequisite changes in other libraries
 
@@ -897,6 +1254,30 @@ entrywise ring homomorphism) belongs in hex-determinant and is what
 namespace. `hadamardBound` computes one integer square root per column,
 and a Mathlib-free determinant library should not import a polynomial
 library for it.
+
+**`exactDiv` has moved to hex-arith.** `HexArith.Int.exactDiv` in
+`HexArith/ExactDiv.lean` is the function, and `Hex.Matrix.exactDiv` in
+`HexBareiss/Bareiss.lean` is now an alias of it. Dixon's lifting step
+divides an exactly-divisible vector by `p` once per digit, which is the
+hottest exact division in the tree, and it calls the hex-arith function
+directly.
+
+**`ratReconVec?_complete` is missing from hex-modular.** `ratRecon?_complete`
+in `HexModular/Recon.lean` is the scalar completeness theorem, and
+[hex-modular §Vectors with a common denominator](../../HexModular/SPEC/hex-modular.md)
+gives the vector form soundness (`ratReconVec?_spec`) and uniqueness
+under `2PQ < m` but not completeness: that under `2PQ < m`, a pair
+`(y, d)` within the bounds and congruent to the residues is found. The
+`unreachable-by-pipeline-invariant` classification of `solveWith`'s
+check needs it (`solveWith_isSome`), and so will hex-poly-z-gcd's
+reconstruction; it belongs in hex-modular beside the scalar theorem.
+
+**The seedable generator already exists.** `Hex.Rand` in
+`HexBasic/Rand.lean` (splitmix64, explicit state, `Rand.ofSeed`,
+`Rand.next`) is the generator `detViaDivisor` draws from, and the
+discipline in its module docstring is the one this SPEC's determinant
+divisor section follows. An earlier draft said the tree had none; it
+does, and nothing is to be written.
 
 **Hadamard's inequality should move to hex-matrix-mathlib.**
 `HexPolyZMathlib/Hadamard.lean` proves
@@ -1042,8 +1423,15 @@ Families:
   the crossover with the direct algorithm: the mandatory certificate
   check still costs big-integer products. The initial dispatch is on
   failure only; a size threshold requires these measurements.
-- **Solve**, with integral solutions and with large-denominator
-  solutions.
+- **Solve**, single right-hand sides with integral solutions and with
+  large-denominator solutions, at `n = 32 … 256`, timing `decomp?` and
+  `solveWith` separately so the inverse and the lifting are attributed.
+- **Repeated solve**, `r` right-hand sides against one matrix at
+  `r = 1, 8, n`, once through one decomposition (`solveMatWith`) and once
+  as `r` independent `solve?` calls. The difference is the `(r - 1)`
+  inverses the decomposition saves, and at `r = n` it is the cost of the
+  rank certificate's adjugate. FLINT has no counterpart for this family,
+  since `fmpq_mat_solve` does not expose its decomposition.
 
 **Comparators.** FLINT's `fmpz_mat_det` carries `class: gating` here,
 the required-check classification of
@@ -1108,7 +1496,19 @@ theorem rankModular_eq (A : Hex.Matrix Int n m) :
     rankModular A = (e A).rank
 
 theorem solve_eq (h : solve? A b fuel = some (y, d)) :
-    Matrix.mulVec (e A) (fun i => (y[i] : ℚ) / d) = fun i => (b[i] : ℚ)
+    Matrix.mulVec ((e A).map (Int.cast : ℤ → ℚ)) (fun i => ((y[i] : ℤ) : ℚ) / d) =
+      fun i => ((b[i] : ℤ) : ℚ)
+theorem solve_eq_inv (h : solve? A b fuel = some (y, d)) :
+    (fun i => ((y[i] : ℤ) : ℚ) / d) =
+      ((e A).map (Int.cast : ℤ → ℚ))⁻¹.mulVec (fun i => ((b[i] : ℤ) : ℚ))
+theorem solveMat_eq (h : solveMat? A C fuel = some (X, d)) :
+    (e A).map (Int.cast : ℤ → ℚ) * (e X).map (fun x => (x : ℚ) / d) =
+      (e C).map (Int.cast : ℤ → ℚ)
+theorem solveWitness_det_ne_zero (h : solveWitness? A b fuel = some w) :
+    Matrix.det (e A) ≠ 0
+theorem solve_isSome_of_det_ne_zero (hA : Matrix.det (e A) ≠ 0)
+    (hsupply : ∀ q ∈ ZMod64.primesBelow (2 ^ 31 - 1) (solveFuel A), 2 ^ 30 < q.m) :
+    (solve? A b (solveFuel A)).isSome
 
 theorem kernel_independent (h : kernel? A fuel = some K) :
     LinearIndependent ℚ (fun j : Fin (m - K.cert.rank) => v j)
@@ -1157,6 +1557,23 @@ nonsingular, hence those remaining coordinates vanish and `x = y`.
 This proves spanning without requiring the stored `adj` to be the
 canonical adjugate. It also covers the empty basis at full column rank.
 
+The solve theorems are transport and nothing more. `solve_eq` is
+`solve?_spec` cast into `ℚ` and divided by `d`, which `0 < d` allows.
+`solve_eq_inv` adds Mathlib's `Matrix.det ≠ 0`: `solveWitness_det_ne_zero`
+is `solveWitness?_det_ne_zero` through hex-determinant-mathlib's
+agreement between the executable `Matrix.det` and Mathlib's, and with
+the determinant nonzero the cast matrix is a unit, so `solve_eq` rewrites
+to the inverse form. That is the companion's statement of
+`solve?_unique`, and it is stronger than the Mathlib-free one only in
+naming the solution. `solve_isSome_of_det_ne_zero` is `decomp?_isSome`
+and `solveWith_isSome` composed, with the `LawfulDetBound` hypothesis
+discharged by the instance. `solveMat_eq` is `solveMatWith_spec`
+transported the same way, and the rank section's `rank_eq` consumes it
+through hex-rank's checker rather than directly. `solve_isSome_of_det_ne_zero`
+inherits `decomp?_isSome`'s hypothesis that the primes tried exceed
+`2^30`, stated as a hypothesis here too; the companion does not remove
+the finite-supply obstruction, it only discharges the bound.
+
 The determinant decidability instance follows, in the style of
 hex-berlekamp-mathlib's `Decidable (Irreducible f)`:
 
@@ -1193,12 +1610,19 @@ operation.
    bound and under `[LawfulDetBound]` at the Hadamard one, and there is
    no performance claim.
 
-3. **The Dixon solve.** `solve?`, `solveWitness?`, the exact division
-   step, the digit count, and the check. `solve?_spec` needs no
-   hypothesis, and `solve?_unique` needs only nonsingularity.
+3. **The Dixon solve.** `Decomp`, `decompAt?`, `decomp?`, `Decomp.lift`,
+   `solveWith`, `solve?`, `solveWitness?`, then `solveMatWith` and
+   `solveMat?`: the exact division step, `numeratorBound` and the digit
+   count, the normalisation, and the check. `solve?_spec` and
+   `solve?_reduced` need no hypothesis, `solve?_unique` needs only
+   nonsingularity, and `decomp?_isSome` and `solveWith_isSome` carry
+   `[LawfulDetBound]` (the second with `sorry` until hex-modular's
+   `ratReconVec?_complete` lands). The rank milestone's `r` solves and
+   the next milestone's single solve both go through `Decomp`.
 
-4. **The determinant divisor.** `detViaDivisor`, with the reduction step
-   and its divisibility lemma. This is the milestone that produces the
+4. **The determinant divisor.** `dvd_det_of_mulVec`,
+   `detViaDivisorWith`, `detViaDivisor`, and their theorems, with the
+   random right-hand side drawn from `Hex.Rand`. This is the milestone that produces the
    benchmark numbers, and the route-level test for the reduction step is
    written before the code.
 
@@ -1222,8 +1646,10 @@ HexModularMatrix/
   Image.lean        -- detMod?, detMod?_eq, detMod?_reduce
   Bound.lean        -- rowNormBound and its proof, hadamardBound, LawfulDetBound
   Det.lean          -- detBounded?, detModular?, their theorems, and the Hex.ModularMatrix wrappers
-  Dixon.lean        -- solve?, solveWitness?, the lifting loop
-  Divisor.lean      -- detViaDivisor and the divisibility argument
+  Dixon.lean        -- Decomp, decompAt?, decomp?, numeratorBound, solveFuel,
+                    --   Decomp.lift, solveWith, solveMatWith, solve?,
+                    --   solveMat?, solveWitness?
+  Divisor.lean      -- dvd_det_of_mulVec, detViaDivisorWith, detViaDivisor
   Rank.lean         -- rankModP, rankCert?, rankCert?_check, rankModular (imports HexRank)
   Kernel.lean       -- Kernel, kernel?, annihilation and free-block facts
 HexModularMatrix.lean
@@ -1231,7 +1657,8 @@ HexModularMatrixMathlib/
   Bound.lean        -- the LawfulDetBound instance
   Det.lean          -- det_eq and detWith_eq (total, via bareiss_eq_det), Decidable (A.det = 0)
   Rank.lean         -- rank_eq via HexRankMathlib, rankModular_eq, kernel_independent, kernel_span
-  Solve.lean        -- solve_eq
+  Solve.lean        -- solve_eq, solve_eq_inv, solveMat_eq,
+                    --   solveWitness_det_ne_zero, solve_isSome_of_det_ne_zero
 HexModularMatrixMathlib.lean
 ```
 
@@ -1253,7 +1680,7 @@ HexModularMatrixMathlib.lean
           rationale: no shared fixture history and a different crossover policy
         - tool: FLINT fmpq_mat_solve via python-flint
           class: informational
-          rationale: FLINT dispatches between multi-modular and Dixon with tuned crossovers
+          rationale: FLINT dispatches between fraction-free, multi-modular and Dixon solvers with tuned crossovers, and its solve does not expose a reusable decomposition, so the repeated-solve family has no FLINT counterpart
       input_families:
         - name: structured-determinant
           description: the deterministic tridiagonal fixture shared with HexBareiss.Bench
@@ -1266,7 +1693,9 @@ HexModularMatrixMathlib.lean
         - name: rank-bad-primes
           description: large-coefficient rank-deficient s L R matrices, with s the product of initial producer primes, requiring skips and a successful certificate
         - name: solve
-          description: systems with integral and with large-denominator solutions
+          description: single right-hand sides with integral and with large-denominator solutions, at n = 32 to 256, measuring decomp? and solveWith separately
+        - name: repeated-solve
+          description: r right-hand sides against one matrix through one decomposition, at r = 1, 8, n, against r independent solve? calls, measuring what the decomposition saves
   HexModularMatrixMathlib:
     deps: [HexModularMatrix, HexRankMathlib, HexMatrixMathlib, HexDeterminantMathlib, HexBareissMathlib, HexRowReduceMathlib, HexModularMathlib, HexPolyZMathlib]
     mathlib: true
@@ -1279,7 +1708,7 @@ and the Laplace expansion behind `rowNormBound`. Nothing here evaluates
 the Leibniz sum at runtime. `HexBareiss` supplies the total determinant
 fallback, and `HexBareissMathlib` is where its determinant equation
 lives. `HexPolyZMathlib` is where the Hadamard proof lives until it
-moves. `HexBasic` is for the random generator the determinant divisor
+moves. `HexBasic` is for `Hex.Rand`, the generator the determinant divisor
 draws its right-hand side from.
 
 ## Open questions
@@ -1296,12 +1725,6 @@ draws its right-hand side from.
   shares the memory traffic, and hex-matrix's `Strassen` and `Winograd`
   suggest the blocking machinery is available. Worth measuring after
   milestone 4, not before.
-- **Whether `solve?` should return the `p`-adic expansion.** A consumer
-  that wants the solution modulo `p^k` rather than as a rational (a
-  Hensel-style consumer, or [hex-hermite](hex-hermite.md)'s modular path)
-  currently has to reconstruct and re-reduce. Exposing the expansion
-  costs an API and would let the reconstruction be skipped entirely where
-  the caller does not need it.
 - **The determinant does not also produce a rank witness.** Its scalar
   result does not supply the selected minor and adjugate required by
   `Hex.Matrix.RankCert Int`; callers needing rank evidence use `rankCert?`
