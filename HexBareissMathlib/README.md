@@ -62,6 +62,14 @@ open HexMatrixMathlib
 - `bareissWith_eq_det` and `bareissWith_eq_mathlib_det`: the generic
   coefficient-ring correspondence for a supplied exact quotient.
 
+`Rat` can use the generic correspondence directly. Multivariate polynomials
+also have Mathlib ring structures, supplied separately by `HexMvPolyMathlib`.
+The executable `ZMod64` and dense-polynomial carriers currently have no global
+Mathlib `CommRing` instances: their computational conformance is checked by
+value guards and external oracles. Using the generic correspondence at those
+carriers also requires that separate bridge work; an exact-division law alone
+does not supply the Mathlib ring instance.
+
 # Verification
 
 The correspondence is fully proven over any commutative ring with decidable

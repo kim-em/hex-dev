@@ -65,6 +65,15 @@ specialization calls the GMP-backed `lean_int_div_exact` primitive directly;
 exactness is certified separately by the correspondence proof, rather than by
 passing a divisibility proof through the executable loop.
 
+The development conformance and benchmark targets exercise `bareissWith
+Hex.exactDiv` over `Rat`, prime `ZMod64`, `DensePoly Rat`,
+`DensePoly (ZMod64 p)`, `DensePoly Int`, and grevlex multivariate polynomials
+over `Int` and `Rat`. Polynomial exact-division providers are imported by the
+integration targets from `HexResultant.ExactDiv` and `HexMvGcd.Divide`.
+Canonical fixtures are checked against FLINT and SymPy's exact Berkowitz
+determinant. Field-carrier timings do not establish Bareiss as the preferred
+field determinant algorithm.
+
 # Verification
 
 The Mathlib-free layer proves the structural properties of the algorithm: the
