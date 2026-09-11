@@ -387,7 +387,7 @@ libraries:
     deps: [HexBareiss, HexCharPoly, HexRowReduce, HexPolyFp, HexResultant, HexMvGcd]
     mathlib: false
     done_through: 0
-    status: planned
+    status: active
     phase4:
       comparators:
         - tool: FLINT fmpz_mat.det() via python-flint
@@ -418,7 +418,7 @@ libraries:
     mathlib: true
     correspondence_only: true
     done_through: 0
-    status: planned
+    status: active
   HexCharPoly:
     deps: [HexMatrix, HexPoly]
     mathlib: false
