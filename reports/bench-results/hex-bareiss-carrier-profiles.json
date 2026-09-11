@@ -1,0 +1,2116 @@
+{
+  "capture": "perf cycles:u at 999 Hz; exact kernel windows, normalizer validates full timestamp sequence",
+  "host": "chungus2, AMD EPYC 9455, Linux x86_64",
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "source_sha256": {
+    "bench/HexBareiss/Bench.lean": "c4324c16cc5a19e75ca5080fc4f34645742aa5eca7a68ab15ec794a881a603d4",
+    "scripts/profile/normalize_perf.py": "fbe80a6081d4c952ccbf0e0c7d34096b7aab8b4ca3baa1850c3015cf2e6ca8c2",
+    "scripts/profile/elf_symbols.py": "5b1293b476d7e3df82ad8f93212000a5efc11603d49d50d43821c5013d111207",
+    "scripts/profile/summarize_profile.py": "ba36b14948d7986bb8c349f2655323b24d33cc05ad0349d492e9929e00ab24fe",
+    "scripts/profile/factor_sampling_profile.py": "3dce3d0975f811be1210b2c97bd7faf244e50b97db55b5d57eadae2fd407b1eb"
+  },
+  "runs": [
+    {
+      "cpu": 33,
+      "load": "0.82 1.98 5.38 2/5175 37761",
+      "commands": [
+        {
+          "command": [
+            "perf",
+            "record",
+            "--clockid",
+            "mono",
+            "-e",
+            "cycles:u",
+            "-F",
+            "999",
+            "--call-graph",
+            "dwarf",
+            "-o",
+            "/tmp/10170-perf-runBareissRatN16/perf.data",
+            "--",
+            "env",
+            "LEAN_BENCH_PROFILE_KERNEL=1",
+            "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/tmp/10170-perf-runBareissRatN16/timed-%p.jsonl",
+            "/home/kim/worktrees/hex-dev/hex-dev-issue-10170/.lake/build/bin/hexbareiss_bench",
+            "_child",
+            "--bench",
+            "Hex.BareissBench.runBareissRatN16",
+            "--param",
+            "0",
+            "--target-nanos",
+            "1500000000"
+          ],
+          "exit_code": 0
+        },
+        {
+          "command": [
+            "samply",
+            "import",
+            "--save-only",
+            "--no-open",
+            "--unstable-presymbolicate",
+            "-o",
+            "/tmp/10170-perf-runBareissRatN16/samply.json.gz",
+            "/tmp/10170-perf-runBareissRatN16/perf.data"
+          ],
+          "exit_code": 0
+        },
+        {
+          "command": [
+            "perf",
+            "script",
+            "--ns",
+            "-F",
+            "pid,tid,time,event",
+            "-i",
+            "/tmp/10170-perf-runBareissRatN16/perf.data"
+          ],
+          "exit_code": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/profile/normalize_perf.py",
+            "--profile",
+            "/tmp/10170-perf-runBareissRatN16/samply.json.gz",
+            "--perf-script",
+            "/tmp/10170-perf-runBareissRatN16/perf-samples.txt",
+            "--spawn-anchor",
+            "/tmp/10170-perf-runBareissRatN16/anchor.json",
+            "--output",
+            "/tmp/10170-perf-runBareissRatN16/normalized.json.gz"
+          ],
+          "exit_code": 0
+        },
+        {
+          "command": [
+            "python3",
+            "/tmp/hex10170-lean-bench-samply/scripts/filter_samply.py",
+            "--samply-json",
+            "/tmp/10170-perf-runBareissRatN16/normalized.json.gz",
+            "--sidecar",
+            "/tmp/10170-perf-runBareissRatN16/timed-37786.jsonl",
+            "--spawn-anchor",
+            "/tmp/10170-perf-runBareissRatN16/anchor.json",
+            "--out",
+            "/tmp/10170-perf-runBareissRatN16/filtered.json.gz",
+            "--diagnostics",
+            "/tmp/10170-perf-runBareissRatN16/diagnostics.json",
+            "--label-filter",
+            "kernel"
+          ],
+          "exit_code": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/profile/elf_symbols.py",
+            "/tmp/10170-perf-runBareissRatN16/filtered.json.gz",
+            "--output",
+            "/tmp/10170-perf-runBareissRatN16/symbols.json"
+          ],
+          "exit_code": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/profile/summarize_profile.py",
+            "/tmp/10170-perf-runBareissRatN16/filtered.json.gz",
+            "--symbols",
+            "/tmp/10170-perf-runBareissRatN16/symbols.json",
+            "--diagnostics",
+            "/tmp/10170-perf-runBareissRatN16/diagnostics.json",
+            "--thread",
+            "hexbareiss_bench",
+            "--top",
+            "25",
+            "--output",
+            "/tmp/10170-perf-runBareissRatN16/summary.json"
+          ],
+          "exit_code": 1
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/profile/summarize_profile.py",
+            "/tmp/10170-perf-runBareissRatN16/filtered.json.gz",
+            "--symbols",
+            "/tmp/10170-perf-runBareissRatN16/symbols.json",
+            "--diagnostics",
+            "/tmp/10170-perf-runBareissRatN16/diagnostics.json",
+            "--thread",
+            "hexbareiss_benc",
+            "--top",
+            "25",
+            "--output",
+            "/tmp/10170-perf-runBareissRatN16/summary.json"
+          ],
+          "exit_code": 0
+        }
+      ],
+      "executable_sha256": "496b69b934566f5702bd456023cb2285043885e525a7b139f60d31bad9086e56",
+      "name": "runBareissRatN16",
+      "raw_directory": "/tmp/10170-perf-runBareissRatN16",
+      "summary": {
+        "allocation_share_percent": 39.49,
+        "classified_percent": 93.96,
+        "diagnostics": {
+          "bench_pid": 37786,
+          "bench_thread_name": "hexbareiss_benc",
+          "bench_thread_tid": "37789",
+          "calibration": {
+            "candidates": {
+              "absolute-monotonic-ms": {
+                "boundary_residual_raw_max_ms": null,
+                "boundary_residual_trimmed_max_ms": null,
+                "hit_count": 0,
+                "regions_without_samples": 2063,
+                "within_residual_limit": false
+              },
+              "relative-to-meta-start-ms": {
+                "boundary_residual_raw_max_ms": 0.8069359958171844,
+                "boundary_residual_trimmed_max_ms": 0.627860002219677,
+                "hit_count": 1175,
+                "regions_without_samples": 888,
+                "within_residual_limit": true
+              }
+            },
+            "configured_max_residual_ms": 5.0,
+            "effective_max_residual_ms": 5.0,
+            "raw_max_residual_ms": 0.8069359958171844,
+            "residual_ms": 0.627860002219677,
+            "residual_statistic": "one-boundary-trimmed-maximum",
+            "sample_interval_ms": 1.001001,
+            "selected_mode": "relative-to-meta-start-ms",
+            "within_residual_limit": true
+          },
+          "calibration_max_residual_ms": 5.0,
+          "calibration_residual_ms": 0.627860002219677,
+          "confidence": "passed",
+          "expected_samples_bench_thread": 1179.7,
+          "low_confidence_reasons": [],
+          "minimum_retained_samples": 100,
+          "off_bench_thread_samples_in_window": 0,
+          "regions_total": 2063,
+          "rejected_samples_bench_thread": 3,
+          "retained_samples_bench_thread": 1175,
+          "samply_interval_ms": 1.001001,
+          "samply_meta_start_time_ms": 1789085429953.6277,
+          "samply_timestamp_mode": "relative-to-meta-start-ms",
+          "schema": 2,
+          "sensitivity": {
+            "cases": {
+              "minus": {
+                "retained_samples": 1170,
+                "shift_ms": -5.0,
+                "top_leaf_functions": [
+                  {
+                    "function": 99,
+                    "name": "0xaef3c",
+                    "samples": 73
+                  },
+                  {
+                    "function": 57,
+                    "name": "0xae90c",
+                    "samples": 59
+                  },
+                  {
+                    "function": 105,
+                    "name": "0xae923",
+                    "samples": 51
+                  }
+                ]
+              },
+              "nominal": {
+                "retained_samples": 1175,
+                "shift_ms": 0.0,
+                "top_leaf_functions": [
+                  {
+                    "function": 99,
+                    "name": "0xaef3c",
+                    "samples": 73
+                  },
+                  {
+                    "function": 57,
+                    "name": "0xae90c",
+                    "samples": 59
+                  },
+                  {
+                    "function": 105,
+                    "name": "0xae923",
+                    "samples": 51
+                  }
+                ]
+              },
+              "plus": {
+                "retained_samples": 1169,
+                "shift_ms": 5.0,
+                "top_leaf_functions": [
+                  {
+                    "function": 99,
+                    "name": "0xaef3c",
+                    "samples": 73
+                  },
+                  {
+                    "function": 57,
+                    "name": "0xae90c",
+                    "samples": 58
+                  },
+                  {
+                    "function": 105,
+                    "name": "0xae923",
+                    "samples": 51
+                  }
+                ]
+              }
+            },
+            "comparisons": {
+              "minus": {
+                "comparison_samples": 1170,
+                "effective_max_total_variation_distance": 0.1,
+                "exchanged_fraction": 0.005982905982905983,
+                "exchanged_samples": 7,
+                "failure_reasons": [],
+                "leaf_function_support_size": 322,
+                "maximum_sampling_noise_allowance": 0.5,
+                "noise_allowance_discriminating": true,
+                "sample_count_adequate": true,
+                "sampling_noise_allowance": 0.034431610936604136,
+                "total_variation_distance": 0.004840880160029105,
+                "verdict": "passed"
+              },
+              "plus": {
+                "comparison_samples": 1169,
+                "effective_max_total_variation_distance": 0.1,
+                "exchanged_fraction": 0.006843455945252352,
+                "exchanged_samples": 8,
+                "failure_reasons": [],
+                "leaf_function_support_size": 322,
+                "maximum_sampling_noise_allowance": 0.5,
+                "noise_allowance_discriminating": true,
+                "sample_count_adequate": true,
+                "sampling_noise_allowance": 0.036840427945101166,
+                "total_variation_distance": 0.005542471288426185,
+                "verdict": "passed"
+              }
+            },
+            "configured_max_total_variation_distance": 0.1,
+            "leaf_function_distributions_stable": true,
+            "maximum_sampling_noise_allowance": 0.5,
+            "minimum_comparison_samples": 100,
+            "reported_top_function_count": 3,
+            "sampling_noise_coefficient": 0.6,
+            "shift_ms": 5.0,
+            "verdict": "passed"
+          },
+          "sidecar_mono_anchor_ns": 56540207100122,
+          "spawn_anchor_mono_ns": 56540114923764,
+          "spawn_anchor_wall_ns": 1789085429913259021,
+          "stage": "complete",
+          "total_timed_ms": 1180.854079
+        },
+        "inclusive_hex": [
+          {
+            "function": "_private.HexBareiss.Bench.0_Hex.BareissBench.hexCarrier",
+            "percent": 99.91
+          },
+          {
+            "function": "Hex.Matrix.bareissArrayStateWith",
+            "percent": 98.98
+          },
+          {
+            "function": "Hex.Matrix.stepMatrixWithImpl",
+            "percent": 98.64
+          },
+          {
+            "function": "Hex.Matrix.pivotLoopWith",
+            "percent": 98.64
+          },
+          {
+            "function": "Hex.Matrix.ofFn",
+            "percent": 0.77
+          },
+          {
+            "function": "_private.HexBareiss.Bench.0_Hex.BareissBench.carrierMatrix",
+            "percent": 0.68
+          }
+        ],
+        "leaf_categories": {
+          "allocation": 39.49,
+          "gmp": 37.19,
+          "lean-own-code": 0.51,
+          "lean-runtime": 16.77,
+          "other": 6.04
+        },
+        "profile": "/tmp/10170-perf-runBareissRatN16/filtered.json.gz",
+        "samples": 1175,
+        "symbols": "/tmp/10170-perf-runBareissRatN16/symbols.json",
+        "top_inclusive": [
+          {
+            "function": "_private.HexBareiss.Bench.0_Hex.BareissBench.hexCarrier",
+            "percent": 99.91
+          },
+          {
+            "function": "lean-bench_.private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+            "percent": 99.91
+          },
+          {
+            "function": "__clone3",
+            "percent": 99.91
+          },
+          {
+            "function": "lean-bench.LeanBench.runChildMode",
+            "percent": 99.91
+          },
+          {
+            "function": "start_thread",
+            "percent": 99.91
+          },
+          {
+            "function": "_ZNSt3__110__function6__funcIZ13lean_run_mainE3$_0FvvEEclEv",
+            "percent": 99.91
+          },
+          {
+            "function": "lean-bench.LeanBench.autoTune",
+            "percent": 99.91
+          },
+          {
+            "function": "lean_apply_2",
+            "percent": 99.91
+          },
+          {
+            "function": "lean-bench.LeanBench.Cli.runChildCmd",
+            "percent": 99.91
+          },
+          {
+            "function": "lean-bench.LeanBench.kernelLoop",
+            "percent": 99.91
+          },
+          {
+            "function": "_ZN4lean7lthread3imp5_mainEPv",
+            "percent": 99.91
+          },
+          {
+            "function": "Hex.Matrix.bareissArrayStateWith",
+            "percent": 98.98
+          },
+          {
+            "function": "Hex.Matrix.stepMatrixWithImpl",
+            "percent": 98.64
+          },
+          {
+            "function": "Hex.Matrix.pivotLoopWith",
+            "percent": 98.64
+          },
+          {
+            "function": "Fin.foldl.loop",
+            "percent": 97.96
+          },
+          {
+            "function": "lean_nat_gcd",
+            "percent": 78.64
+          },
+          {
+            "function": "Rat.mul",
+            "percent": 78.38
+          },
+          {
+            "function": "_ZN4lean3mpzC2Em",
+            "percent": 50.64
+          },
+          {
+            "function": "__gmp_default_allocate",
+            "percent": 23.23
+          },
+          {
+            "function": "__gmpz_init_set_ui",
+            "percent": 21.36
+          },
+          {
+            "function": "malloc@@GLIBC_2.2.5",
+            "percent": 19.06
+          },
+          {
+            "function": "__gmpz_add",
+            "percent": 18.89
+          },
+          {
+            "function": "_ZN4lean3mpzD2Ev",
+            "percent": 16.51
+          },
+          {
+            "function": "Rat.sub",
+            "percent": 14.72
+          },
+          {
+            "function": "free@@GLIBC_2.2.5",
+            "percent": 14.55
+          }
+        ],
+        "top_self": [
+          {
+            "function": "malloc@@GLIBC_2.2.5",
+            "percent": 19.06
+          },
+          {
+            "function": "free@@GLIBC_2.2.5",
+            "percent": 14.55
+          },
+          {
+            "function": "__gmpz_add",
+            "percent": 11.49
+          },
+          {
+            "function": "Rat.mul",
+            "percent": 7.15
+          },
+          {
+            "function": "__gmpz_init_set_ui",
+            "percent": 5.11
+          },
+          {
+            "function": "__gmp_default_allocate",
+            "percent": 4.09
+          },
+          {
+            "function": "__gmpz_mul_2exp",
+            "percent": 4.09
+          },
+          {
+            "function": "realloc@@GLIBC_2.2.5",
+            "percent": 3.74
+          },
+          {
+            "function": "lean_nat_gcd",
+            "percent": 3.66
+          },
+          {
+            "function": "Fin.foldl.loop",
+            "percent": 2.81
+          },
+          {
+            "function": "__gmpn_gcd_11_x86_64",
+            "percent": 2.21
+          },
+          {
+            "function": "__gmpz_realloc",
+            "percent": 2.13
+          },
+          {
+            "function": "_ZNK4lean3mpz10get_size_tEv",
+            "percent": 2.13
+          },
+          {
+            "function": "__gmpn_gcd_1",
+            "percent": 1.79
+          },
+          {
+            "function": "__gmpz_gcd",
+            "percent": 1.79
+          },
+          {
+            "function": "_ZN4lean3mpzC2Em",
+            "percent": 1.62
+          },
+          {
+            "function": "mi_malloc_small",
+            "percent": 1.28
+          },
+          {
+            "function": "__gmpz_clear",
+            "percent": 1.11
+          },
+          {
+            "function": "Rat.sub",
+            "percent": 1.11
+          },
+          {
+            "function": "__gmp_default_reallocate",
+            "percent": 1.02
+          },
+          {
+            "function": "mi_free",
+            "percent": 0.68
+          },
+          {
+            "function": "Rat.inv",
+            "percent": 0.6
+          },
+          {
+            "function": "lean_dec_ref_cold",
+            "percent": 0.51
+          },
+          {
+            "function": "0x4e02680",
+            "percent": 0.51
+          },
+          {
+            "function": "__gmpz_init_set",
+            "percent": 0.43
+          }
+        ],
+        "top_self_undecorated": [
+          {
+            "percent": 19.06,
+            "symbol": "malloc@@GLIBC_2.2.5"
+          },
+          {
+            "percent": 14.55,
+            "symbol": "free@@GLIBC_2.2.5"
+          },
+          {
+            "percent": 11.49,
+            "symbol": "__gmpz_add"
+          },
+          {
+            "percent": 7.15,
+            "symbol": "Rat.mul"
+          },
+          {
+            "percent": 5.11,
+            "symbol": "__gmpz_init_set_ui"
+          },
+          {
+            "percent": 4.09,
+            "symbol": "__gmp_default_allocate"
+          },
+          {
+            "percent": 4.09,
+            "symbol": "__gmpz_mul_2exp"
+          },
+          {
+            "percent": 3.74,
+            "symbol": "realloc@@GLIBC_2.2.5"
+          },
+          {
+            "percent": 3.66,
+            "symbol": "lean_nat_gcd"
+          },
+          {
+            "percent": 2.47,
+            "symbol": "Fin.foldl.loop_.at_.00Hex.Matrix.stepMatrixWithImpl_.at_.00Hex.Matrix.pivotLoopWith_.at_.00Hex.Matrix.bareissArrayStateWith_.at_.00Hex.Matrix.bareissWith_.at_.00_private.HexBareiss.Bench.0_Hex.BareissBench.hexCarrier_.at_.00Hex.BareissBench.runBareissRat.spec_0.spec_2.spec_3.spec_4.spec_5.spec_7_.redArg"
+          },
+          {
+            "percent": 2.21,
+            "symbol": "__gmpn_gcd_11_x86_64"
+          },
+          {
+            "percent": 2.13,
+            "symbol": "__gmpz_realloc"
+          },
+          {
+            "percent": 2.13,
+            "symbol": "_ZNK4lean3mpz10get_size_tEv"
+          },
+          {
+            "percent": 1.79,
+            "symbol": "__gmpn_gcd_1"
+          },
+          {
+            "percent": 1.79,
+            "symbol": "__gmpz_gcd"
+          },
+          {
+            "percent": 1.62,
+            "symbol": "_ZN4lean3mpzC2Em"
+          },
+          {
+            "percent": 1.28,
+            "symbol": "mi_malloc_small"
+          },
+          {
+            "percent": 1.11,
+            "symbol": "__gmpz_clear"
+          },
+          {
+            "percent": 1.11,
+            "symbol": "Rat.sub"
+          },
+          {
+            "percent": 1.02,
+            "symbol": "__gmp_default_reallocate"
+          },
+          {
+            "percent": 0.68,
+            "symbol": "mi_free"
+          },
+          {
+            "percent": 0.6,
+            "symbol": "Rat.inv"
+          },
+          {
+            "percent": 0.51,
+            "symbol": "lean_dec_ref_cold"
+          },
+          {
+            "percent": 0.51,
+            "symbol": "0x4e02680"
+          },
+          {
+            "percent": 0.43,
+            "symbol": "__gmpz_init_set"
+          }
+        ],
+        "unresolved_leaf_percent": 0.68
+      },
+      "artifact_sha256": {
+        "anchor.json": "fba73b28a89be73bb3127bde062a212d9a0ff6dfaa43e3472e5eb42eb8b2fa43",
+        "commands.log": "2daac6c24c08c3ce53ed1f9e77932355ac1707c1930d15be741f91687caa3aa2",
+        "perf.data": "be0d4ac0f93b04ea41ff284eb2af003a9b9dc36bcf7dd7c12534465572e36934",
+        "timed-37786.jsonl": "c7483850d7a2fd696fab55b01c92abc521014f11cd09afb9d7d911787b6de121",
+        "metadata.json": "ef0a42c3dd0a04b2024062a157827113a92601c1f7256d9fdbd0a912a9eb1470",
+        "bench.json": "bcd83f9a1fca42641f4595b366bb3ffdf93b95bd0f6d689f1920282a8b61e043",
+        "samply.json.gz": "c8868ab6e31370c0237edf7a4cc053d2e4f14e89fbd076e064c5c87d4b5b9b1c",
+        "perf-samples.txt": "d56cca7faf68d977f4a706c0353321aaafe03a0b9d2947335990d38c72841952",
+        "normalized.json.gz": "b5eb25a54304b5aaad3cab9dca3e22c0221a8b06b36cfc9b6db98b87e8890ec2",
+        "filtered.json.gz": "848415eb93e53e5331f0dce51545090e67c770ee5e557f285e26746b68b8bf86",
+        "diagnostics.json": "121eab37ef011a1fd2ff8957662221d30da00e6f5e2974f7f55940aa330e773c",
+        "symbols.json": "47437fbce3bd79ea18c5f89f4a265339c7afa9fead2887222fb15cf1be42ba2d",
+        "summary.json": "5498d961c718ac6b08927c6cebd616682c3d4b76b70137104702ea6eda09e32f"
+      }
+    },
+    {
+      "cpu": 95,
+      "load": "1.97 2.06 5.22 4/5184 40321",
+      "commands": [
+        {
+          "command": [
+            "perf",
+            "record",
+            "--clockid",
+            "mono",
+            "-e",
+            "cycles:u",
+            "-F",
+            "999",
+            "--call-graph",
+            "dwarf",
+            "-o",
+            "/tmp/10170-perf-runBareissZPolyN5D3/perf.data",
+            "--",
+            "env",
+            "LEAN_BENCH_PROFILE_KERNEL=1",
+            "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/tmp/10170-perf-runBareissZPolyN5D3/timed-%p.jsonl",
+            "/home/kim/worktrees/hex-dev/hex-dev-issue-10170/.lake/build/bin/hexbareiss_bench",
+            "_child",
+            "--bench",
+            "Hex.BareissBench.runBareissZPolyN5D3",
+            "--param",
+            "0",
+            "--target-nanos",
+            "1500000000"
+          ],
+          "exit_code": 0
+        },
+        {
+          "command": [
+            "samply",
+            "import",
+            "--save-only",
+            "--no-open",
+            "--unstable-presymbolicate",
+            "-o",
+            "/tmp/10170-perf-runBareissZPolyN5D3/samply.json.gz",
+            "/tmp/10170-perf-runBareissZPolyN5D3/perf.data"
+          ],
+          "exit_code": 0
+        },
+        {
+          "command": [
+            "perf",
+            "script",
+            "--ns",
+            "-F",
+            "pid,tid,time,event",
+            "-i",
+            "/tmp/10170-perf-runBareissZPolyN5D3/perf.data"
+          ],
+          "exit_code": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/profile/normalize_perf.py",
+            "--profile",
+            "/tmp/10170-perf-runBareissZPolyN5D3/samply.json.gz",
+            "--perf-script",
+            "/tmp/10170-perf-runBareissZPolyN5D3/perf-samples.txt",
+            "--spawn-anchor",
+            "/tmp/10170-perf-runBareissZPolyN5D3/anchor.json",
+            "--output",
+            "/tmp/10170-perf-runBareissZPolyN5D3/normalized.json.gz"
+          ],
+          "exit_code": 0
+        },
+        {
+          "command": [
+            "python3",
+            "/tmp/hex10170-lean-bench-samply/scripts/filter_samply.py",
+            "--samply-json",
+            "/tmp/10170-perf-runBareissZPolyN5D3/normalized.json.gz",
+            "--sidecar",
+            "/tmp/10170-perf-runBareissZPolyN5D3/timed-40324.jsonl",
+            "--spawn-anchor",
+            "/tmp/10170-perf-runBareissZPolyN5D3/anchor.json",
+            "--out",
+            "/tmp/10170-perf-runBareissZPolyN5D3/filtered.json.gz",
+            "--diagnostics",
+            "/tmp/10170-perf-runBareissZPolyN5D3/diagnostics.json",
+            "--label-filter",
+            "kernel"
+          ],
+          "exit_code": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/profile/elf_symbols.py",
+            "/tmp/10170-perf-runBareissZPolyN5D3/filtered.json.gz",
+            "--output",
+            "/tmp/10170-perf-runBareissZPolyN5D3/symbols.json"
+          ],
+          "exit_code": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/profile/summarize_profile.py",
+            "/tmp/10170-perf-runBareissZPolyN5D3/filtered.json.gz",
+            "--symbols",
+            "/tmp/10170-perf-runBareissZPolyN5D3/symbols.json",
+            "--diagnostics",
+            "/tmp/10170-perf-runBareissZPolyN5D3/diagnostics.json",
+            "--thread",
+            "hexbareiss_benc",
+            "--top",
+            "25",
+            "--output",
+            "/tmp/10170-perf-runBareissZPolyN5D3/summary.json"
+          ],
+          "exit_code": 0
+        }
+      ],
+      "executable_sha256": "496b69b934566f5702bd456023cb2285043885e525a7b139f60d31bad9086e56",
+      "name": "runBareissZPolyN5D3",
+      "raw_directory": "/tmp/10170-perf-runBareissZPolyN5D3",
+      "summary": {
+        "allocation_share_percent": 40.18,
+        "classified_percent": 96.05,
+        "diagnostics": {
+          "bench_pid": 40324,
+          "bench_thread_name": "hexbareiss_benc",
+          "bench_thread_tid": "40327",
+          "calibration": {
+            "candidates": {
+              "absolute-monotonic-ms": {
+                "boundary_residual_raw_max_ms": null,
+                "boundary_residual_trimmed_max_ms": null,
+                "hit_count": 0,
+                "regions_without_samples": 33023,
+                "within_residual_limit": false
+              },
+              "relative-to-meta-start-ms": {
+                "boundary_residual_raw_max_ms": 0.08346100151538849,
+                "boundary_residual_trimmed_max_ms": 0.06562400609254837,
+                "hit_count": 784,
+                "regions_without_samples": 32239,
+                "within_residual_limit": true
+              }
+            },
+            "configured_max_residual_ms": 5.0,
+            "effective_max_residual_ms": 5.0,
+            "raw_max_residual_ms": 0.08346100151538849,
+            "residual_ms": 0.06562400609254837,
+            "residual_statistic": "one-boundary-trimmed-maximum",
+            "sample_interval_ms": 1.001001,
+            "selected_mode": "relative-to-meta-start-ms",
+            "within_residual_limit": true
+          },
+          "calibration_max_residual_ms": 5.0,
+          "calibration_residual_ms": 0.06562400609254837,
+          "confidence": "passed",
+          "expected_samples_bench_thread": 789.1,
+          "low_confidence_reasons": [],
+          "minimum_retained_samples": 100,
+          "off_bench_thread_samples_in_window": 0,
+          "regions_total": 33023,
+          "rejected_samples_bench_thread": 14,
+          "retained_samples_bench_thread": 784,
+          "samply_interval_ms": 1.001001,
+          "samply_meta_start_time_ms": 1789085478281.8992,
+          "samply_timestamp_mode": "relative-to-meta-start-ms",
+          "schema": 2,
+          "sensitivity": {
+            "cases": {
+              "minus": {
+                "retained_samples": 774,
+                "shift_ms": -5.0,
+                "top_leaf_functions": [
+                  {
+                    "function": 86,
+                    "name": "0x4d4b473",
+                    "samples": 95
+                  },
+                  {
+                    "function": 64,
+                    "name": "0x4d92dc8",
+                    "samples": 46
+                  },
+                  {
+                    "function": 171,
+                    "name": "0x4d92da3",
+                    "samples": 22
+                  }
+                ]
+              },
+              "nominal": {
+                "retained_samples": 784,
+                "shift_ms": 0.0,
+                "top_leaf_functions": [
+                  {
+                    "function": 86,
+                    "name": "0x4d4b473",
+                    "samples": 101
+                  },
+                  {
+                    "function": 64,
+                    "name": "0x4d92dc8",
+                    "samples": 47
+                  },
+                  {
+                    "function": 171,
+                    "name": "0x4d92da3",
+                    "samples": 22
+                  }
+                ]
+              },
+              "plus": {
+                "retained_samples": 781,
+                "shift_ms": 5.0,
+                "top_leaf_functions": [
+                  {
+                    "function": 86,
+                    "name": "0x4d4b473",
+                    "samples": 99
+                  },
+                  {
+                    "function": 64,
+                    "name": "0x4d92dc8",
+                    "samples": 47
+                  },
+                  {
+                    "function": 171,
+                    "name": "0x4d92da3",
+                    "samples": 22
+                  }
+                ]
+              }
+            },
+            "comparisons": {
+              "minus": {
+                "comparison_samples": 774,
+                "effective_max_total_variation_distance": 0.10651512581282273,
+                "exchanged_fraction": 0.041343669250646,
+                "exchanged_samples": 32,
+                "failure_reasons": [],
+                "leaf_function_support_size": 295,
+                "maximum_sampling_noise_allowance": 0.5,
+                "noise_allowance_discriminating": true,
+                "sample_count_adequate": true,
+                "sampling_noise_allowance": 0.10651512581282273,
+                "total_variation_distance": 0.02265925750145021,
+                "verdict": "passed"
+              },
+              "plus": {
+                "comparison_samples": 781,
+                "effective_max_total_variation_distance": 0.10049054955706574,
+                "exchanged_fraction": 0.03713188220230474,
+                "exchanged_samples": 29,
+                "failure_reasons": [],
+                "leaf_function_support_size": 295,
+                "maximum_sampling_noise_allowance": 0.5,
+                "noise_allowance_discriminating": true,
+                "sample_count_adequate": true,
+                "sampling_noise_allowance": 0.10049054955706574,
+                "total_variation_distance": 0.018471216911860776,
+                "verdict": "passed"
+              }
+            },
+            "configured_max_total_variation_distance": 0.1,
+            "leaf_function_distributions_stable": true,
+            "maximum_sampling_noise_allowance": 0.5,
+            "minimum_comparison_samples": 100,
+            "reported_top_function_count": 3,
+            "sampling_noise_coefficient": 0.6,
+            "shift_ms": 5.0,
+            "verdict": "passed"
+          },
+          "sidecar_mono_anchor_ns": 56588533308789,
+          "spawn_anchor_mono_ns": 56588446571706,
+          "spawn_anchor_wall_ns": 1789085478244907032,
+          "stage": "complete",
+          "total_timed_ms": 789.871598
+        },
+        "inclusive_hex": [
+          {
+            "function": "_private.HexBareiss.Bench.0_Hex.BareissBench.hexCarrier",
+            "percent": 99.23
+          },
+          {
+            "function": "Hex.Matrix.bareissArrayStateWith",
+            "percent": 86.73
+          },
+          {
+            "function": "Hex.Matrix.pivotLoopWith",
+            "percent": 85.59
+          },
+          {
+            "function": "Hex.Matrix.stepMatrixWithImpl",
+            "percent": 85.59
+          },
+          {
+            "function": "Hex.DensePoly.mulImpl",
+            "percent": 41.2
+          },
+          {
+            "function": "Hex.exactDiv",
+            "percent": 29.08
+          },
+          {
+            "function": "Hex.DensePoly.divMod",
+            "percent": 28.32
+          },
+          {
+            "function": "Hex.DensePoly.divModArray",
+            "percent": 25.64
+          },
+          {
+            "function": "Hex.DensePoly.trimTrailingZerosGo",
+            "percent": 18.88
+          },
+          {
+            "function": "_private.HexPoly.Euclid.DivGcd.0_Hex.DensePoly.divModArrayAuxImplGo",
+            "percent": 13.01
+          },
+          {
+            "function": "Hex.DensePoly.subImpl",
+            "percent": 9.69
+          },
+          {
+            "function": "_private.HexPoly.Euclid.DivGcd.0_Hex.DensePoly.subtractScaledShiftImpl",
+            "percent": 6.12
+          },
+          {
+            "function": "Hex.DensePoly.subtractScaledShiftStep",
+            "percent": 4.59
+          },
+          {
+            "function": "_private.HexBareiss.Bench.0_Hex.BareissBench.carrierMatrix",
+            "percent": 3.32
+          },
+          {
+            "function": "Hex.Matrix.ofFn",
+            "percent": 3.32
+          },
+          {
+            "function": "Hex.BareissBench.runBareissZPoly",
+            "percent": 2.42
+          },
+          {
+            "function": "Hex.DensePoly.arrayDegreeAux",
+            "percent": 1.79
+          },
+          {
+            "function": "_private.HexBareiss.Bench.0_Hex.BareissBench.initFn_.lam_0.00_@.HexBareiss.Bench.1879359265__hygCtx_.hyg.27__boxed",
+            "percent": 0.64
+          },
+          {
+            "function": "Hex.Matrix.bareissArrayDet",
+            "percent": 0.64
+          },
+          {
+            "function": "Hex.DensePoly.addImpl",
+            "percent": 0.64
+          }
+        ],
+        "leaf_categories": {
+          "allocation": 40.18,
+          "lean-own-code": 17.73,
+          "lean-runtime": 38.14,
+          "other": 3.95
+        },
+        "profile": "/tmp/10170-perf-runBareissZPolyN5D3/filtered.json.gz",
+        "samples": 784,
+        "symbols": "/tmp/10170-perf-runBareissZPolyN5D3/symbols.json",
+        "top_inclusive": [
+          {
+            "function": "_ZNSt3__110__function6__funcIZ13lean_run_mainE3$_0FvvEEclEv",
+            "percent": 100.0
+          },
+          {
+            "function": "__clone3",
+            "percent": 100.0
+          },
+          {
+            "function": "lean-bench.LeanBench.autoTune",
+            "percent": 100.0
+          },
+          {
+            "function": "lean-bench_.private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+            "percent": 100.0
+          },
+          {
+            "function": "lean-bench.LeanBench.Cli.runChildCmd",
+            "percent": 100.0
+          },
+          {
+            "function": "lean-bench.LeanBench.kernelLoop",
+            "percent": 100.0
+          },
+          {
+            "function": "_ZN4lean7lthread3imp5_mainEPv",
+            "percent": 100.0
+          },
+          {
+            "function": "lean_apply_2",
+            "percent": 100.0
+          },
+          {
+            "function": "start_thread",
+            "percent": 100.0
+          },
+          {
+            "function": "lean-bench.LeanBench.runChildMode",
+            "percent": 100.0
+          },
+          {
+            "function": "_private.HexBareiss.Bench.0_Hex.BareissBench.hexCarrier",
+            "percent": 99.23
+          },
+          {
+            "function": "Hex.Matrix.bareissArrayStateWith",
+            "percent": 86.73
+          },
+          {
+            "function": "Hex.Matrix.pivotLoopWith",
+            "percent": 85.59
+          },
+          {
+            "function": "Hex.Matrix.stepMatrixWithImpl",
+            "percent": 85.59
+          },
+          {
+            "function": "Fin.foldl.loop",
+            "percent": 85.2
+          },
+          {
+            "function": "Hex.DensePoly.mulImpl",
+            "percent": 41.2
+          },
+          {
+            "function": "List.foldl",
+            "percent": 35.33
+          },
+          {
+            "function": "Hex.exactDiv",
+            "percent": 29.08
+          },
+          {
+            "function": "Hex.DensePoly.divMod",
+            "percent": 28.32
+          },
+          {
+            "function": "Hex.DensePoly.divModArray",
+            "percent": 25.64
+          },
+          {
+            "function": "Hex.DensePoly.trimTrailingZerosGo",
+            "percent": 18.88
+          },
+          {
+            "function": "lean_dec_ref_cold",
+            "percent": 17.22
+          },
+          {
+            "function": "Option.instDecidableEq",
+            "percent": 15.69
+          },
+          {
+            "function": "List.range.loop",
+            "percent": 14.03
+          },
+          {
+            "function": "lean_free_object",
+            "percent": 13.52
+          }
+        ],
+        "top_self": [
+          {
+            "function": "List.foldl",
+            "percent": 13.65
+          },
+          {
+            "function": "lean_free_object",
+            "percent": 13.52
+          },
+          {
+            "function": "mi_malloc_small",
+            "percent": 11.35
+          },
+          {
+            "function": "mi_free",
+            "percent": 9.44
+          },
+          {
+            "function": "lean_dec_ref_cold",
+            "percent": 7.27
+          },
+          {
+            "function": "mi_malloc",
+            "percent": 4.72
+          },
+          {
+            "function": "Hex.DensePoly.subtractScaledShiftStep",
+            "percent": 4.59
+          },
+          {
+            "function": "lean_apply_1",
+            "percent": 4.21
+          },
+          {
+            "function": "List.range.loop",
+            "percent": 3.83
+          },
+          {
+            "function": "_private.HexPoly.Euclid.DivGcd.0_Hex.DensePoly.divModArrayAuxImplGo",
+            "percent": 2.81
+          },
+          {
+            "function": "Hex.DensePoly.subImpl",
+            "percent": 2.42
+          },
+          {
+            "function": "Hex.DensePoly.divMod",
+            "percent": 2.17
+          },
+          {
+            "function": "_ZN4leanL19lean_del_core_otherEP11lean_objecthS1_",
+            "percent": 2.17
+          },
+          {
+            "function": "lean_array_push",
+            "percent": 2.17
+          },
+          {
+            "function": "_private.Lean.Data.Json.Printer.0_Lean.Json.compress.go",
+            "percent": 1.66
+          },
+          {
+            "function": "_private.HexPoly.Euclid.DivGcd.0_Hex.DensePoly.subtractScaledShiftImpl",
+            "percent": 1.53
+          },
+          {
+            "function": "Hex.DensePoly.arrayDegreeAux",
+            "percent": 1.4
+          },
+          {
+            "function": "_private.Init.Data.Array.Basic.0_Array.ofFn.go",
+            "percent": 1.4
+          },
+          {
+            "function": "Fin.foldl.loop",
+            "percent": 1.28
+          },
+          {
+            "function": "_private.Init.Data.Array.Basic.0_Array.mapMUnsafe.map",
+            "percent": 1.15
+          },
+          {
+            "function": "Option.instDecidableEq",
+            "percent": 1.15
+          },
+          {
+            "function": "Hex.DensePoly.trimTrailingZerosGo",
+            "percent": 1.02
+          },
+          {
+            "function": "Hex.DensePoly.mulImpl",
+            "percent": 0.77
+          },
+          {
+            "function": "lean_inc_heartbeat",
+            "percent": 0.64
+          },
+          {
+            "function": "lean_alloc_object",
+            "percent": 0.51
+          }
+        ],
+        "top_self_undecorated": [
+          {
+            "percent": 13.52,
+            "symbol": "lean_free_object"
+          },
+          {
+            "percent": 12.12,
+            "symbol": "List.foldl_.at_.00Hex.DensePoly.mulImpl_.at_.00Hex.Matrix.bareissArrayDet_.at_.00Hex.Matrix.bareissWith_.at_.00_private.HexBareiss.Bench.0_Hex.BareissBench.hexCarrier_.at_.00Hex.BareissBench.runBareissZPoly.spec_3.spec_8.spec_14.spec_23.spec_31"
+          },
+          {
+            "percent": 11.35,
+            "symbol": "mi_malloc_small"
+          },
+          {
+            "percent": 9.44,
+            "symbol": "mi_free"
+          },
+          {
+            "percent": 7.27,
+            "symbol": "lean_dec_ref_cold"
+          },
+          {
+            "percent": 4.72,
+            "symbol": "mi_malloc"
+          },
+          {
+            "percent": 4.59,
+            "symbol": "Hex.DensePoly.subtractScaledShiftStep_.at_.00_private.HexPoly.Euclid.DivGcd.0_Hex.DensePoly.subtractScaledShiftImpl_.at_.00_private.HexPoly.Euclid.DivGcd.0_Hex.DensePoly.divModArrayAuxImplGo_.at_.00Hex.DensePoly.divModArrayAuxImpl_.at_.00Hex.DensePoly.divModArray_.at_.00Hex.DensePoly.divMod_.at_.00Hex.DensePoly.div_.at_.00Hex.exactDiv_.at_.00_private.HexBareiss.Bench.0_Hex.BareissBench.hexCarrier_.at_.00Hex.BareissBench.runBareissZPoly.spec_3.spec_7.spec_11.spec_15.spec_18.spec_21.spec_28.spec_37.spec_43"
+          },
+          {
+            "percent": 4.21,
+            "symbol": "lean_apply_1"
+          },
+          {
+            "percent": 3.83,
+            "symbol": "List.range.loop"
+          },
+          {
+            "percent": 2.81,
+            "symbol": "_private.HexPoly.Euclid.DivGcd.0_Hex.DensePoly.divModArrayAuxImplGo_.at_.00Hex.DensePoly.divModArrayAuxImpl_.at_.00Hex.DensePoly.divModArray_.at_.00Hex.DensePoly.divMod_.at_.00Hex.DensePoly.div_.at_.00Hex.exactDiv_.at_.00_private.HexBareiss.Bench.0_Hex.BareissBench.hexCarrier_.at_.00Hex.BareissBench.runBareissZPoly.spec_3.spec_7.spec_11.spec_15.spec_18.spec_21.spec_28"
+          },
+          {
+            "percent": 2.17,
+            "symbol": "_ZN4leanL19lean_del_core_otherEP11lean_objecthS1_"
+          },
+          {
+            "percent": 2.17,
+            "symbol": "lean_array_push"
+          },
+          {
+            "percent": 1.66,
+            "symbol": "_private.Lean.Data.Json.Printer.0_Lean.Json.compress.go"
+          },
+          {
+            "percent": 1.66,
+            "symbol": "Hex.DensePoly.subImpl_.at_.00Hex.Matrix.stepMatrixWithImpl_.at_.00Hex.Matrix.pivotLoopWith_.at_.00Hex.Matrix.bareissArrayStateWith_.at_.00Hex.Matrix.bareissWith_.at_.00_private.HexBareiss.Bench.0_Hex.BareissBench.hexCarrier_.at_.00Hex.BareissBench.runBareissZPoly.spec_3.spec_8.spec_13.spec_18.spec_22.spec_25_.lam_0"
+          },
+          {
+            "percent": 1.53,
+            "symbol": "List.foldl_.at_.00List.foldl_.at_.00Hex.DensePoly.mulImpl_.at_.00Hex.Matrix.bareissArrayDet_.at_.00Hex.Matrix.bareissWith_.at_.00_private.HexBareiss.Bench.0_Hex.BareissBench.hexCarrier_.at_.00Hex.BareissBench.runBareissZPoly.spec_3.spec_8.spec_14.spec_23.spec_32.spec_38"
+          },
+          {
+            "percent": 1.53,
+            "symbol": "_private.HexPoly.Euclid.DivGcd.0_Hex.DensePoly.subtractScaledShiftImpl_.at_.00_private.HexPoly.Euclid.DivGcd.0_Hex.DensePoly.divModArrayAuxImplGo_.at_.00Hex.DensePoly.divModArrayAuxImpl_.at_.00Hex.DensePoly.divModArray_.at_.00Hex.DensePoly.divMod_.at_.00Hex.DensePoly.div_.at_.00Hex.exactDiv_.at_.00_private.HexBareiss.Bench.0_Hex.BareissBench.hexCarrier_.at_.00Hex.BareissBench.runBareissZPoly.spec_3.spec_7.spec_11.spec_15.spec_18.spec_21.spec_28.spec_37"
+          },
+          {
+            "percent": 1.4,
+            "symbol": "Hex.DensePoly.arrayDegreeAux_.at_.00_private.HexPoly.Euclid.DivGcd.0_Hex.DensePoly.divModArrayAuxImplGo_.at_.00Hex.DensePoly.divModArrayAuxImpl_.at_.00Hex.DensePoly.divModArray_.at_.00Hex.DensePoly.divMod_.at_.00Hex.DensePoly.div_.at_.00Hex.exactDiv_.at_.00_private.HexBareiss.Bench.0_Hex.BareissBench.hexCarrier_.at_.00Hex.BareissBench.runBareissZPoly.spec_3.spec_7.spec_11.spec_15.spec_18.spec_21.spec_28.spec_36"
+          },
+          {
+            "percent": 1.4,
+            "symbol": "_private.Init.Data.Array.Basic.0_Array.ofFn.go_.redArg"
+          },
+          {
+            "percent": 1.15,
+            "symbol": "Hex.DensePoly.divMod_.at_.00Hex.DensePoly.div_.at_.00Hex.exactDiv_.at_.00_private.HexBareiss.Bench.0_Hex.BareissBench.hexCarrier_.at_.00Hex.BareissBench.runBareissZPoly.spec_3.spec_7.spec_11.spec_15_.lam_0"
+          },
+          {
+            "percent": 1.15,
+            "symbol": "Option.instDecidableEq_.redArg"
+          },
+          {
+            "percent": 1.02,
+            "symbol": "Hex.DensePoly.trimTrailingZerosGo_.at_.00Hex.DensePoly.trimTrailingZerosImpl_.at_.00Hex.DensePoly.ofCoeffs_.at_.00Hex.DensePoly.primitivePartImpl.spec_1.spec_1.spec_2"
+          },
+          {
+            "percent": 0.77,
+            "symbol": "Hex.DensePoly.mulImpl_.at_.00Hex.Matrix.bareissArrayDet_.at_.00Hex.Matrix.bareissWith_.at_.00_private.HexBareiss.Bench.0_Hex.BareissBench.hexCarrier_.at_.00Hex.BareissBench.runBareissZPoly.spec_3.spec_8.spec_14.spec_23"
+          },
+          {
+            "percent": 0.64,
+            "symbol": "Hex.DensePoly.subImpl_.at_.00Hex.Matrix.stepMatrixWithImpl_.at_.00Hex.Matrix.pivotLoopWith_.at_.00Hex.Matrix.bareissArrayStateWith_.at_.00Hex.Matrix.bareissWith_.at_.00_private.HexBareiss.Bench.0_Hex.BareissBench.hexCarrier_.at_.00Hex.BareissBench.runBareissZPoly.spec_3.spec_8.spec_13.spec_18.spec_22.spec_25_.lam_0_.boxed"
+          },
+          {
+            "percent": 0.64,
+            "symbol": "Hex.DensePoly.divMod_.at_.00Hex.DensePoly.div_.at_.00Hex.exactDiv_.at_.00_private.HexBareiss.Bench.0_Hex.BareissBench.hexCarrier_.at_.00Hex.BareissBench.runBareissZPoly.spec_3.spec_7.spec_11.spec_15"
+          },
+          {
+            "percent": 0.64,
+            "symbol": "Fin.foldl.loop_.at_.00Hex.Matrix.stepMatrixWithImpl_.at_.00Hex.Matrix.pivotLoopWith_.at_.00Hex.Matrix.bareissArrayStateWith_.at_.00Hex.Matrix.bareissWith_.at_.00_private.HexBareiss.Bench.0_Hex.BareissBench.hexCarrier_.at_.00Hex.BareissBench.runBareissZPoly.spec_3.spec_8.spec_13.spec_18.spec_22.spec_26_.redArg"
+          }
+        ],
+        "unresolved_leaf_percent": 0.13
+      },
+      "artifact_sha256": {
+        "anchor.json": "dc08b2c3b04773d02f61ea42d7a54f07c95a32f9c077f4e323f6462ac014af49",
+        "commands.log": "6ffd2618c589de727f5bbaed7c5c4c3824a3e230320eace186a7f008c6d72153",
+        "perf.data": "dff34de586bdeadd83aa889919cd76f4a9db990a0fa4cd333f9b53531a1f900b",
+        "timed-40324.jsonl": "1390ef13947af18a1e181f6fc94946ea39eb2c20909d6519c482c970c196d73e",
+        "metadata.json": "dd9232c31bce78643c03dd37a2c84e31399c3ef27cd50a516cb97b8896f8078b",
+        "bench.json": "a9e82d7cd8b7a31b9da5bb839be28b0c4c0c82bdc853d141d2645bc7db78afee",
+        "samply.json.gz": "6892222b83e280a8a60a442750649352dadd6079bb28cff4cade2957f0293965",
+        "perf-samples.txt": "b21fc0a6c82a54852370ee553de772f005f25cc060bd8f6b0c7c2889e3860b8b",
+        "normalized.json.gz": "85e6866d11dc0e6c58e114760605ee313fe59298007ceb724b0d0458b45cf93b",
+        "filtered.json.gz": "ee9dfa786eda72be8a7686bb8d9afae57968e3568cbdf51be473281d86ee2ddd",
+        "diagnostics.json": "3853d45b7c4fcaef52ae54a4e3afd988ef98ce53519464eef152ebdc728ba33e",
+        "symbols.json": "bafc9f8bec1dadd6e5e82a5534bc3ddf1a0ec1345d18fb601e8386e7f674064b",
+        "summary.json": "21f3119cbc8409d086ec797d59243c3c1a0e9947ceb5055788f0fc5f7689c3f6"
+      }
+    },
+    {
+      "cpu": 95,
+      "load": "1.89 2.04 5.20 1/5176 40675",
+      "commands": [
+        {
+          "command": [
+            "perf",
+            "record",
+            "--clockid",
+            "mono",
+            "-e",
+            "cycles:u",
+            "-F",
+            "999",
+            "--call-graph",
+            "dwarf",
+            "-o",
+            "/tmp/10170-perf-runBareissMvRatN5T4/perf.data",
+            "--",
+            "env",
+            "LEAN_BENCH_PROFILE_KERNEL=1",
+            "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/tmp/10170-perf-runBareissMvRatN5T4/timed-%p.jsonl",
+            "/home/kim/worktrees/hex-dev/hex-dev-issue-10170/.lake/build/bin/hexbareiss_bench",
+            "_child",
+            "--bench",
+            "Hex.BareissBench.runBareissMvRatN5T4",
+            "--param",
+            "0",
+            "--target-nanos",
+            "1500000000"
+          ],
+          "exit_code": 0
+        },
+        {
+          "command": [
+            "samply",
+            "import",
+            "--save-only",
+            "--no-open",
+            "--unstable-presymbolicate",
+            "-o",
+            "/tmp/10170-perf-runBareissMvRatN5T4/samply.json.gz",
+            "/tmp/10170-perf-runBareissMvRatN5T4/perf.data"
+          ],
+          "exit_code": 0
+        },
+        {
+          "command": [
+            "perf",
+            "script",
+            "--ns",
+            "-F",
+            "pid,tid,time,event",
+            "-i",
+            "/tmp/10170-perf-runBareissMvRatN5T4/perf.data"
+          ],
+          "exit_code": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/profile/normalize_perf.py",
+            "--profile",
+            "/tmp/10170-perf-runBareissMvRatN5T4/samply.json.gz",
+            "--perf-script",
+            "/tmp/10170-perf-runBareissMvRatN5T4/perf-samples.txt",
+            "--spawn-anchor",
+            "/tmp/10170-perf-runBareissMvRatN5T4/anchor.json",
+            "--output",
+            "/tmp/10170-perf-runBareissMvRatN5T4/normalized.json.gz"
+          ],
+          "exit_code": 0
+        },
+        {
+          "command": [
+            "python3",
+            "/tmp/hex10170-lean-bench-samply/scripts/filter_samply.py",
+            "--samply-json",
+            "/tmp/10170-perf-runBareissMvRatN5T4/normalized.json.gz",
+            "--sidecar",
+            "/tmp/10170-perf-runBareissMvRatN5T4/timed-40677.jsonl",
+            "--spawn-anchor",
+            "/tmp/10170-perf-runBareissMvRatN5T4/anchor.json",
+            "--out",
+            "/tmp/10170-perf-runBareissMvRatN5T4/filtered.json.gz",
+            "--diagnostics",
+            "/tmp/10170-perf-runBareissMvRatN5T4/diagnostics.json",
+            "--label-filter",
+            "kernel"
+          ],
+          "exit_code": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/profile/elf_symbols.py",
+            "/tmp/10170-perf-runBareissMvRatN5T4/filtered.json.gz",
+            "--output",
+            "/tmp/10170-perf-runBareissMvRatN5T4/symbols.json"
+          ],
+          "exit_code": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/profile/summarize_profile.py",
+            "/tmp/10170-perf-runBareissMvRatN5T4/filtered.json.gz",
+            "--symbols",
+            "/tmp/10170-perf-runBareissMvRatN5T4/symbols.json",
+            "--diagnostics",
+            "/tmp/10170-perf-runBareissMvRatN5T4/diagnostics.json",
+            "--thread",
+            "hexbareiss_benc",
+            "--top",
+            "25",
+            "--output",
+            "/tmp/10170-perf-runBareissMvRatN5T4/summary.json"
+          ],
+          "exit_code": 0
+        }
+      ],
+      "executable_sha256": "496b69b934566f5702bd456023cb2285043885e525a7b139f60d31bad9086e56",
+      "name": "runBareissMvRatN5T4",
+      "raw_directory": "/tmp/10170-perf-runBareissMvRatN5T4",
+      "summary": {
+        "allocation_share_percent": 39.42,
+        "classified_percent": 98.6,
+        "diagnostics": {
+          "bench_pid": 40677,
+          "bench_thread_name": "hexbareiss_benc",
+          "bench_thread_tid": "40680",
+          "calibration": {
+            "candidates": {
+              "absolute-monotonic-ms": {
+                "boundary_residual_raw_max_ms": null,
+                "boundary_residual_trimmed_max_ms": null,
+                "hit_count": 0,
+                "regions_without_samples": 65,
+                "within_residual_limit": false
+              },
+              "relative-to-meta-start-ms": {
+                "boundary_residual_raw_max_ms": 0.9843479990959167,
+                "boundary_residual_trimmed_max_ms": 0.9828459993004799,
+                "hit_count": 1210,
+                "regions_without_samples": 0,
+                "within_residual_limit": true
+              }
+            },
+            "configured_max_residual_ms": 5.0,
+            "effective_max_residual_ms": 5.0,
+            "raw_max_residual_ms": 0.9843479990959167,
+            "residual_ms": 0.9828459993004799,
+            "residual_statistic": "one-boundary-trimmed-maximum",
+            "sample_interval_ms": 1.001001,
+            "selected_mode": "relative-to-meta-start-ms",
+            "within_residual_limit": true
+          },
+          "calibration_max_residual_ms": 5.0,
+          "calibration_residual_ms": 0.9828459993004799,
+          "confidence": "passed",
+          "expected_samples_bench_thread": 1210.5,
+          "low_confidence_reasons": [],
+          "minimum_retained_samples": 100,
+          "off_bench_thread_samples_in_window": 0,
+          "regions_total": 65,
+          "rejected_samples_bench_thread": 16,
+          "retained_samples_bench_thread": 1210,
+          "samply_interval_ms": 1.001001,
+          "samply_meta_start_time_ms": 1789085485490.6738,
+          "samply_timestamp_mode": "relative-to-meta-start-ms",
+          "schema": 2,
+          "sensitivity": {
+            "cases": {
+              "minus": {
+                "retained_samples": 1209,
+                "shift_ms": -5.0,
+                "top_leaf_functions": [
+                  {
+                    "function": 82,
+                    "name": "0x4d92dc8",
+                    "samples": 129
+                  },
+                  {
+                    "function": 47,
+                    "name": "0x4d92dc0",
+                    "samples": 57
+                  },
+                  {
+                    "function": 133,
+                    "name": "0x4d92bdc",
+                    "samples": 30
+                  }
+                ]
+              },
+              "nominal": {
+                "retained_samples": 1210,
+                "shift_ms": 0.0,
+                "top_leaf_functions": [
+                  {
+                    "function": 82,
+                    "name": "0x4d92dc8",
+                    "samples": 130
+                  },
+                  {
+                    "function": 47,
+                    "name": "0x4d92dc0",
+                    "samples": 57
+                  },
+                  {
+                    "function": 133,
+                    "name": "0x4d92bdc",
+                    "samples": 30
+                  }
+                ]
+              },
+              "plus": {
+                "retained_samples": 1204,
+                "shift_ms": 5.0,
+                "top_leaf_functions": [
+                  {
+                    "function": 82,
+                    "name": "0x4d92dc8",
+                    "samples": 128
+                  },
+                  {
+                    "function": 47,
+                    "name": "0x4d92dc0",
+                    "samples": 57
+                  },
+                  {
+                    "function": 133,
+                    "name": "0x4d92bdc",
+                    "samples": 30
+                  }
+                ]
+              }
+            },
+            "comparisons": {
+              "minus": {
+                "comparison_samples": 1209,
+                "effective_max_total_variation_distance": 0.1,
+                "exchanged_fraction": 0.007444168734491315,
+                "exchanged_samples": 9,
+                "failure_reasons": [],
+                "leaf_function_support_size": 372,
+                "maximum_sampling_noise_allowance": 0.5,
+                "noise_allowance_discriminating": true,
+                "sample_count_adequate": true,
+                "sampling_noise_allowance": 0.04060997031360552,
+                "total_variation_distance": 0.00402696033194568,
+                "verdict": "passed"
+              },
+              "plus": {
+                "comparison_samples": 1204,
+                "effective_max_total_variation_distance": 0.1,
+                "exchanged_fraction": 0.0049833887043189366,
+                "exchanged_samples": 6,
+                "failure_reasons": [],
+                "leaf_function_support_size": 371,
+                "maximum_sampling_noise_allowance": 0.5,
+                "noise_allowance_discriminating": true,
+                "sample_count_adequate": true,
+                "sampling_noise_allowance": 0.03325081857331351,
+                "total_variation_distance": 0.0042132286318332865,
+                "verdict": "passed"
+              }
+            },
+            "configured_max_total_variation_distance": 0.1,
+            "leaf_function_distributions_stable": true,
+            "maximum_sampling_noise_allowance": 0.5,
+            "minimum_comparison_samples": 100,
+            "reported_top_function_count": 3,
+            "sampling_noise_coefficient": 0.6,
+            "shift_ms": 5.0,
+            "verdict": "passed"
+          },
+          "sidecar_mono_anchor_ns": 56595764447314,
+          "spawn_anchor_mono_ns": 56595658141749,
+          "spawn_anchor_wall_ns": 1789085485456477396,
+          "stage": "complete",
+          "total_timed_ms": 1211.733658
+        },
+        "inclusive_hex": [
+          {
+            "function": "_private.HexBareiss.Bench.0_Hex.BareissBench.hexCarrier",
+            "percent": 100.0
+          },
+          {
+            "function": "Hex.Matrix.bareissArrayStateWith",
+            "percent": 99.09
+          },
+          {
+            "function": "Hex.Matrix.pivotLoopWith",
+            "percent": 98.93
+          },
+          {
+            "function": "Hex.Matrix.stepMatrixWithImpl",
+            "percent": 98.76
+          },
+          {
+            "function": "Hex.Mono.grevlex",
+            "percent": 59.67
+          },
+          {
+            "function": "Hex.exactDiv",
+            "percent": 54.55
+          },
+          {
+            "function": "Hex.MvPoly.divExactAux",
+            "percent": 54.13
+          },
+          {
+            "function": "Hex.Mono.revlex",
+            "percent": 21.16
+          },
+          {
+            "function": "Hex.MvPoly.add",
+            "percent": 4.13
+          },
+          {
+            "function": "Hex.MvPoly.leadingTerm",
+            "percent": 2.81
+          },
+          {
+            "function": "Hex.Mono.mul",
+            "percent": 0.91
+          }
+        ],
+        "leaf_categories": {
+          "allocation": 39.42,
+          "gmp": 8.76,
+          "lean-own-code": 2.98,
+          "lean-runtime": 47.44,
+          "other": 1.4
+        },
+        "profile": "/tmp/10170-perf-runBareissMvRatN5T4/filtered.json.gz",
+        "samples": 1210,
+        "symbols": "/tmp/10170-perf-runBareissMvRatN5T4/symbols.json",
+        "top_inclusive": [
+          {
+            "function": "lean-bench.LeanBench.runChildMode",
+            "percent": 100.0
+          },
+          {
+            "function": "lean-bench.LeanBench.kernelLoop",
+            "percent": 100.0
+          },
+          {
+            "function": "lean-bench.LeanBench.autoTune",
+            "percent": 100.0
+          },
+          {
+            "function": "__clone3",
+            "percent": 100.0
+          },
+          {
+            "function": "_ZNSt3__110__function6__funcIZ13lean_run_mainE3$_0FvvEEclEv",
+            "percent": 100.0
+          },
+          {
+            "function": "lean-bench.LeanBench.Cli.runChildCmd",
+            "percent": 100.0
+          },
+          {
+            "function": "_private.HexBareiss.Bench.0_Hex.BareissBench.hexCarrier",
+            "percent": 100.0
+          },
+          {
+            "function": "start_thread",
+            "percent": 100.0
+          },
+          {
+            "function": "_ZN4lean7lthread3imp5_mainEPv",
+            "percent": 100.0
+          },
+          {
+            "function": "lean_apply_2",
+            "percent": 100.0
+          },
+          {
+            "function": "lean-bench_.private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+            "percent": 100.0
+          },
+          {
+            "function": "Hex.Matrix.bareissArrayStateWith",
+            "percent": 99.09
+          },
+          {
+            "function": "Hex.Matrix.pivotLoopWith",
+            "percent": 98.93
+          },
+          {
+            "function": "Hex.Matrix.stepMatrixWithImpl",
+            "percent": 98.76
+          },
+          {
+            "function": "Fin.foldl.loop",
+            "percent": 98.76
+          },
+          {
+            "function": "Std.DTreeMap.Internal.Impl.foldlM",
+            "percent": 94.55
+          },
+          {
+            "function": "Std.DTreeMap.Internal.Impl.Const.alter",
+            "percent": 79.83
+          },
+          {
+            "function": "Hex.Mono.grevlex",
+            "percent": 59.67
+          },
+          {
+            "function": "Hex.exactDiv",
+            "percent": 54.55
+          },
+          {
+            "function": "Hex.MvPoly.divExactAux",
+            "percent": 54.13
+          },
+          {
+            "function": "lean_apply_1",
+            "percent": 39.67
+          },
+          {
+            "function": "lean_apply_4",
+            "percent": 31.32
+          },
+          {
+            "function": "lean_apply_3",
+            "percent": 30.08
+          },
+          {
+            "function": "Fin.foldr.loop",
+            "percent": 25.29
+          },
+          {
+            "function": "Hex.Mono.revlex",
+            "percent": 21.16
+          }
+        ],
+        "top_self": [
+          {
+            "function": "mi_malloc_small",
+            "percent": 19.09
+          },
+          {
+            "function": "mi_free",
+            "percent": 10.83
+          },
+          {
+            "function": "lean_apply_1",
+            "percent": 9.34
+          },
+          {
+            "function": "lean_dec_ref_cold",
+            "percent": 7.11
+          },
+          {
+            "function": "List.foldl",
+            "percent": 4.88
+          },
+          {
+            "function": "Fin.foldr.loop",
+            "percent": 4.46
+          },
+          {
+            "function": "Std.DTreeMap.Internal.Impl.balance",
+            "percent": 3.72
+          },
+          {
+            "function": "free@@GLIBC_2.2.5",
+            "percent": 3.22
+          },
+          {
+            "function": "malloc@@GLIBC_2.2.5",
+            "percent": 2.98
+          },
+          {
+            "function": "__gmpz_add",
+            "percent": 2.64
+          },
+          {
+            "function": "List.compareLex",
+            "percent": 2.31
+          },
+          {
+            "function": "List.finRange",
+            "percent": 2.31
+          },
+          {
+            "function": "lean_array_to_list_impl",
+            "percent": 2.31
+          },
+          {
+            "function": "List.reverseAux",
+            "percent": 2.23
+          },
+          {
+            "function": "Std.DTreeMap.Internal.Impl.Const.alter",
+            "percent": 1.82
+          },
+          {
+            "function": "__gmp_default_allocate",
+            "percent": 1.49
+          },
+          {
+            "function": "Hex.Mono.grevlex",
+            "percent": 1.4
+          },
+          {
+            "function": "Std.DTreeMap.Internal.Impl.foldlM",
+            "percent": 1.24
+          },
+          {
+            "function": "lean_inc_heartbeat",
+            "percent": 1.16
+          },
+          {
+            "function": "realloc@@GLIBC_2.2.5",
+            "percent": 0.99
+          },
+          {
+            "function": "Rat.mul",
+            "percent": 0.91
+          },
+          {
+            "function": "lean_free_object",
+            "percent": 0.91
+          },
+          {
+            "function": "__gmpn_gcd_11_x86_64",
+            "percent": 0.91
+          },
+          {
+            "function": "__gmpz_init_set_ui",
+            "percent": 0.91
+          },
+          {
+            "function": "Hex.Mono.revlex",
+            "percent": 0.83
+          }
+        ],
+        "top_self_undecorated": [
+          {
+            "percent": 19.09,
+            "symbol": "mi_malloc_small"
+          },
+          {
+            "percent": 10.83,
+            "symbol": "mi_free"
+          },
+          {
+            "percent": 9.34,
+            "symbol": "lean_apply_1"
+          },
+          {
+            "percent": 7.11,
+            "symbol": "lean_dec_ref_cold"
+          },
+          {
+            "percent": 4.88,
+            "symbol": "List.foldl_.at_.00Hex.Mono.degree.spec_0"
+          },
+          {
+            "percent": 4.46,
+            "symbol": "Fin.foldr.loop_.at_.00List.ofFn.spec_0_.redArg"
+          },
+          {
+            "percent": 3.72,
+            "symbol": "Std.DTreeMap.Internal.Impl.balance_.redArg"
+          },
+          {
+            "percent": 3.22,
+            "symbol": "free@@GLIBC_2.2.5"
+          },
+          {
+            "percent": 2.98,
+            "symbol": "malloc@@GLIBC_2.2.5"
+          },
+          {
+            "percent": 2.64,
+            "symbol": "__gmpz_add"
+          },
+          {
+            "percent": 2.31,
+            "symbol": "List.compareLex_.at_.00Hex.Mono.revlex.spec_0"
+          },
+          {
+            "percent": 2.31,
+            "symbol": "lean_array_to_list_impl"
+          },
+          {
+            "percent": 2.23,
+            "symbol": "List.reverseAux_.redArg"
+          },
+          {
+            "percent": 2.07,
+            "symbol": "List.finRange_.lam_0_.boxed"
+          },
+          {
+            "percent": 1.49,
+            "symbol": "__gmp_default_allocate"
+          },
+          {
+            "percent": 1.24,
+            "symbol": "Hex.Mono.grevlex"
+          },
+          {
+            "percent": 1.16,
+            "symbol": "lean_inc_heartbeat"
+          },
+          {
+            "percent": 0.99,
+            "symbol": "realloc@@GLIBC_2.2.5"
+          },
+          {
+            "percent": 0.91,
+            "symbol": "Rat.mul"
+          },
+          {
+            "percent": 0.91,
+            "symbol": "lean_free_object"
+          },
+          {
+            "percent": 0.91,
+            "symbol": "__gmpn_gcd_11_x86_64"
+          },
+          {
+            "percent": 0.91,
+            "symbol": "__gmpz_init_set_ui"
+          },
+          {
+            "percent": 0.83,
+            "symbol": "Std.DTreeMap.Internal.Impl.Const.alter_.redArg"
+          },
+          {
+            "percent": 0.83,
+            "symbol": "Std.DTreeMap.Internal.Impl.Const.alter_.at_.00Hex.MvPoly.addMonomial_.at_.00Hex.MvPoly.mul_.at_.00_private.HexBareiss.Bench.0_Hex.BareissBench.mvEntry_.at_.00Hex.BareissBench.runBareissMvRat.spec_0.spec_3.spec_6.spec_9_.redArg"
+          },
+          {
+            "percent": 0.83,
+            "symbol": "Hex.Mono.revlex_.redArg"
+          }
+        ],
+        "unresolved_leaf_percent": 0.0
+      },
+      "artifact_sha256": {
+        "anchor.json": "4e5a57acde1135dfcabf4b39488f00dac0a0df80443c56759c29935f98e49f96",
+        "commands.log": "5899874578717411a8313accd54836f3cb15c6698e26c00392306a67aceb26b3",
+        "perf.data": "86f97ea80379f055251740c19c36388cf0578a639a221e32eaee2ceabfa2e57e",
+        "timed-40677.jsonl": "28591ba224a9b5b08c44b18c4daec16a94ff9f26b625f2a62682450f9a278500",
+        "metadata.json": "6de9df962a7d72e8c37ee384a21c661c21b06b035a7516a28bbc67786b0fe17c",
+        "bench.json": "63ae115f81a3a551596adb9329d0831600e2101b27a551b2a907818bb082f660",
+        "samply.json.gz": "a4ec20084c50da028c0217e95f7d805984bcb05f9ce5158539c93f4ddd29fb84",
+        "perf-samples.txt": "0d3a1769a4fd08bf756e364aee8cb749fc9a0c6316c29204f781961b647ba07f",
+        "normalized.json.gz": "8d435005c2a23e20f408167be5267692326e5672a80aac21695215b82d71c47e",
+        "filtered.json.gz": "053780d7085a38f83104d6d92e1eed90ee9cc09d2a6da1fc9a43b3d1b383b24c",
+        "diagnostics.json": "f8b4219745cba2af72701e94a5dcd757e4f21982ba16a8f8afa4661802595db7",
+        "symbols.json": "84c49d59887efbe9f210dd51ae12e5976c731bb242b038ef79191d10cfc59d7a",
+        "summary.json": "26b1dc1019155d84c96ae20aa8fe9b3c18fa83c1886dd0c00c7b77fc79587280"
+      }
+    }
+  ],
+  "failed_capture": {
+    "raw_directory": "/tmp/10170-runBareissRatN16.json.gz.failed-raw-lo8tir4i",
+    "diagnostics": {
+      "schema": 2,
+      "stage": "calibration",
+      "confidence": "low",
+      "low_confidence_reasons": [
+        "no matching candidate samply timestamp calibration: {\"absolute-monotonic-ms\": {\"boundary_residual_raw_max_ms\": null, \"boundary_residual_trimmed_max_ms\": null, \"hit_count\": 0, \"regions_without_samples\": 1031, \"within_residual_limit\": false}, \"relative-to-meta-start-ms\": {\"boundary_residual_raw_max_ms\": null, \"boundary_residual_trimmed_max_ms\": null, \"hit_count\": 0, \"regions_without_samples\": 1031, \"within_residual_limit\": false}}"
+      ],
+      "bench_pid": 27287,
+      "bench_thread_name": null,
+      "bench_thread_tid": null,
+      "regions_total": 1031,
+      "total_timed_ms": 588.996453,
+      "expected_samples_bench_thread": null,
+      "retained_samples_bench_thread": null,
+      "rejected_samples_bench_thread": null,
+      "off_bench_thread_samples_in_window": null,
+      "samply_interval_ms": 1.001001,
+      "spawn_anchor_wall_ns": 1789085232926086420,
+      "spawn_anchor_mono_ns": 56343127750392,
+      "sidecar_mono_anchor_ns": 56343300839752,
+      "samply_meta_start_time_ms": 1789085232927.2314,
+      "samply_timestamp_mode": null,
+      "calibration_residual_ms": null,
+      "calibration_max_residual_ms": 5.0,
+      "calibration": {
+        "selected_mode": null,
+        "residual_ms": null,
+        "raw_max_residual_ms": null,
+        "residual_statistic": "one-boundary-trimmed-maximum",
+        "configured_max_residual_ms": 5.0,
+        "sample_interval_ms": 1.001001,
+        "effective_max_residual_ms": 5.0,
+        "within_residual_limit": false,
+        "candidates": {
+          "absolute-monotonic-ms": {
+            "hit_count": 0,
+            "regions_without_samples": 1031,
+            "boundary_residual_trimmed_max_ms": null,
+            "boundary_residual_raw_max_ms": null,
+            "within_residual_limit": false
+          },
+          "relative-to-meta-start-ms": {
+            "hit_count": 0,
+            "regions_without_samples": 1031,
+            "boundary_residual_trimmed_max_ms": null,
+            "boundary_residual_raw_max_ms": null,
+            "within_residual_limit": false
+          }
+        }
+      },
+      "minimum_retained_samples": 100,
+      "sensitivity": null
+    },
+    "metadata": {
+      "cpu": 19,
+      "load": "1.41 2.74 6.35 2/5201 27283",
+      "runs": [
+        {
+          "name": "runBareissRatN16",
+          "command": [
+            "python3",
+            "/tmp/hex10170-lean-bench-samply/scripts/profile_bench.py",
+            "--bench-exe",
+            "/home/kim/worktrees/hex-dev/hex-dev-issue-10170/.lake/build/bin/hexbareiss_bench",
+            "--bench-name",
+            "Hex.BareissBench.runBareissRatN16",
+            "--target-nanos",
+            "1000000000",
+            "--label-filter",
+            "kernel",
+            "--out",
+            "/tmp/10170-runBareissRatN16.json.gz",
+            "--samply-args",
+            "--rate 999 --unstable-presymbolicate",
+            "--keep-raw"
+          ],
+          "exit_code": 2
+        }
+      ]
+    }
+  }
+}

@@ -55,6 +55,7 @@ ORACLES=(
   "HexRoots|hexroots_emit_fixtures|scripts/oracle/roots_flint.py|conformance-fixtures/HexRoots/roots.jsonl"
   "HexRealAlgebraic|hexrealalgebraic_emit_fixtures|scripts/oracle/real_algebraic_flint.py|conformance-fixtures/HexRealAlgebraic/real_algebraic.jsonl"
   # SymPy backed
+  "HexBareiss|hexbareiss_emit_carrier_fixtures|scripts/oracle/matrix_carriers.py|conformance-fixtures/HexBareiss/carriers.jsonl"
   "HexDeterminant|hexdeterminant_emit_carrier_fixtures|scripts/oracle/matrix_carriers.py|conformance-fixtures/HexDeterminant/carriers.jsonl"
   "HexRationalFn|hexrationalfn_emit_fixtures|scripts/oracle/rationalfn_sympy.py|conformance-fixtures/HexRationalFn/rationalfn.jsonl"
   "HexMvPoly|hexmvpoly_emit_fixtures|scripts/oracle/mvpoly_sympy.py|conformance-fixtures/HexMvPoly/mvpoly.jsonl"
@@ -179,6 +180,13 @@ run_tuple() {
     fi
     if ! python3 -m unittest scripts.oracle.test_real_algebraic_flint; then
       echo "FAIL: $lib :: oracle rejection tests failed"
+      return 1
+    fi
+  fi
+
+  if [ "$oracle" = "scripts/oracle/matrix_carriers.py" ]; then
+    if ! python3 -m unittest scripts.oracle.test_matrix_carriers; then
+      echo "FAIL: $lib :: carrier oracle rejection checks failed"
       return 1
     fi
   fi

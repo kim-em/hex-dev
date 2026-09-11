@@ -115,6 +115,8 @@ VALID_FIXTURE_KINDS = frozenset(
     {
         "poly",
         "matrix",
+        "bareiss_carrier",
+        "det",
         "polymatrix",
         "mvpoly",
         "mvgcd",
@@ -388,10 +390,34 @@ def _validate_fixture(record: dict[str, Any]) -> None:
     kind = record.get("kind")
     if kind not in VALID_FIXTURE_KINDS and kind != "result":
         raise FixtureError(f"unknown fixture kind: {kind!r}")
+    if kind == "det":
+        # Published HexDeterminant carrier records identify the library by kind.
+        _exact_keys(record, {"kind", "case", "carrier", "base", "arity", "modulus", "n",
+                             "matrix", "determinant"}, kind)
+        if any(not isinstance(record[k], str) for k in ("case", "carrier", "base")) or any(
+                not _is_nat(record[k]) for k in ("arity", "modulus", "n")):
+            raise FixtureError("invalid determinant carrier header")
+        rows = record["matrix"]
+        if not isinstance(rows, list) or len(rows) != record["n"] or any(
+                not isinstance(row, list) or len(row) != record["n"] for row in rows):
+            raise FixtureError("determinant carrier matrix must be square and match n")
+        return
     for key in ("lib", "case"):
         if not isinstance(record.get(key), str):
             raise FixtureError(f"missing/invalid {key!r} in {record!r}")
-    if kind == "poly":
+    if kind == "bareiss_carrier":
+        # Complete per-library carrier records embed their canonical answer.
+        # Coefficient-domain validation belongs to matrix_carriers.Carrier.
+        _exact_keys(record, {"kind", "lib", "case", "carrier", "n", "arity", "p", "rows", "result"}, kind)
+        if not isinstance(record["carrier"], str) or not _is_nat(record["n"]) or not _is_nat(record["arity"]):
+            raise FixtureError("invalid matrix carrier header")
+        if not _is_int(record["p"]):
+            raise FixtureError("invalid matrix carrier modulus")
+        rows = record["rows"]
+        if not isinstance(rows, list) or len(rows) != record["n"] or any(
+                not isinstance(row, list) or len(row) != record["n"] for row in rows):
+            raise FixtureError("matrix carrier rows must be square and match n")
+    elif kind == "poly":
         coeffs = record.get("coeffs")
         if not isinstance(coeffs, list) or not all(isinstance(c, int) for c in coeffs):
             raise FixtureError(f"poly.coeffs must be List[int]: {record!r}")

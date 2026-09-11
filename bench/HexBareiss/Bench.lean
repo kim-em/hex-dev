@@ -5,6 +5,11 @@ Authors: Kim Morrison
 -/
 
 import HexBareiss
+import HexPolyFp.PrimeField
+import HexResultant.ExactDiv
+import HexMvGcd.Divide
+import HexMvGcd.Instances
+import Hex.BenchOracle.Carriers
 import Hex.BenchOracle.Flint
 import Lean.Data.Json
 import LeanBench
@@ -229,7 +234,335 @@ setup_fixed_benchmark runFlintBareissDet384 where flintCompareConfig 12.0
 setup_fixed_benchmark runBareissDet512 where leanCompareConfig 25.0
 setup_fixed_benchmark runFlintBareissDet512 where flintCompareConfig 25.0
 
+
+/-! Carrier sweeps. Dense inputs have two nonzero coefficients while degree
+varies. Sparse inputs have arity three and total degree two while support varies.
+The tridiagonal leading minors force polynomial exact division from step one;
+the final determinant is not obtained by multiplying triangular entries.
+These fixed points record timings without asserting a bit-complexity model.
+Input construction and request encoding are outside the timed closures.
+-/
+
+instance : ZMod64.Bounds 101 := ⟨by decide, by decide⟩
+instance : ZMod64.PrimeModulus 101 := ZMod64.primeModulusOfPrime (by decide)
+abbrev Mod := ZMod64 101
+abbrev Mv (R : Type) [Zero R] := MvPoly 3 R Mono.grevlex
+
+private def ratJson (q : Rat) : Lean.Json := Lean.toJson #[Lean.toJson q.num, Lean.toJson q.den]
+private def modJson (q : Mod) : Lean.Json := Lean.toJson q.toNat
+private def denseJson {R : Type} [Zero R] [DecidableEq R]
+    (encode : R → Lean.Json) (f : DensePoly R) : Lean.Json :=
+  Lean.toJson (f.toArray.map encode)
+private def mvJson {R : Type} [Zero R] (encode : R → Lean.Json) (f : Mv R) : Lean.Json :=
+  Lean.toJson (f.termsList.map fun (m, c) => Lean.toJson #[Lean.toJson m.toList, encode c])
+
+private def carrierMatrix {R : Type} [Zero R] [One R] [Add R] [Neg R]
+    (n : Nat) (x : R) : Matrix R n n :=
+  Matrix.ofFn fun i j =>
+    if i.val = j.val then x + 1
+    else if i.val + 1 = j.val then 1
+    else if j.val + 1 = i.val then -1 else 0
+
+private def denseEntry {R : Type} [Lean.Grind.CommRing R] [DecidableEq R]
+    (degree : Nat) (a : R) : DensePoly R :=
+  DensePoly.ofCoeffs ((Array.range (degree + 1)).map fun i =>
+    if i = 0 then 1 else if i = degree then a else 0)
+
+private def mvEntry {R : Type} [Lean.Grind.CommRing R] [DecidableEq R]
+    [BEq R] [LawfulBEq R] (terms : Nat) (a : R) : Mv R :=
+  let x : Mv R := MvPoly.X 0
+  let y : Mv R := MvPoly.X 1
+  let z : Mv R := MvPoly.X 2
+  (#[MvPoly.C a * (x * y), y * z, x * z, x * x]).toList.take terms |>.foldl (· + ·) 0
+
+private def hexCarrier {R : Type} [Zero R] [One R] [Add R] [Neg R] [Sub R] [Mul R]
+    [DecidableEq R] [Div R]
+    (n : Nat) (x : R) (encode : R → Lean.Json) : Unit → IO String :=
+  let matrix := carrierMatrix n x
+  fun _ => return (encode (Matrix.bareissWith Hex.exactDiv matrix)).compress
+
+private def oracleCarrier {R : Type} [Zero R] [One R] [Add R] [Neg R]
+    (carrier : String) (arity n : Nat) (x : R) (encode : R → Lean.Json) : Unit → IO String :=
+  let matrix := carrierMatrix n x
+  let line := (Lean.Json.mkObj [
+    ("kind", Lean.toJson "bareiss_carrier"), ("carrier", Lean.toJson carrier),
+    ("n", Lean.toJson n), ("arity", Lean.toJson arity), ("p", Lean.toJson (101 : Nat)),
+    ("rows", Lean.toJson (matrix.rows.toArray.map fun row => Lean.toJson (row.toArray.map encode)))]).compress
+  fun _ => Hex.BenchOracle.Carriers.runLine line
+
+private def carrierConfig : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 5, maxSecondsPerCall := 10, minTotalSeconds := 0.2, warmupFirstIter := true }
+private def scheduledTag := "scheduled-hardware"
+
+private def oracleConfig : LeanBench.FixedBenchmarkConfig :=
+  { carrierConfig with tags := #[scheduledTag] }
+
+def runCarrierOverhead (_ : Unit) : IO String :=
+  Hex.BenchOracle.Carriers.runLine "{\"kind\":\"overhead\"}"
+setup_fixed_benchmark runCarrierOverhead where oracleConfig
+
+def runBareissRat (n : Nat) : Unit → IO String :=
+  hexCarrier n (3 / 2 : Rat) ratJson
+def runOracleRat (n : Nat) : Unit → IO String :=
+  oracleCarrier "rat" 0 n (3 / 2 : Rat) ratJson
+
+def runBareissRatN4 := runBareissRat 4
+def runOracleRatN4 := runOracleRat 4
+setup_fixed_benchmark runBareissRatN4 where { carrierConfig with expectedHash := some 0xe4e39b79a543e513 }
+setup_fixed_benchmark runOracleRatN4 where oracleConfig
+def runBareissRatN8 := runBareissRat 8
+def runOracleRatN8 := runOracleRat 8
+setup_fixed_benchmark runBareissRatN8 where { carrierConfig with expectedHash := some 0xca1569d8226f229d }
+setup_fixed_benchmark runOracleRatN8 where oracleConfig
+def runBareissRatN16 := runBareissRat 16
+def runOracleRatN16 := runOracleRat 16
+setup_fixed_benchmark runBareissRatN16 where { carrierConfig with expectedHash := some 0xd5e3127ec7e5d3fe }
+setup_fixed_benchmark runOracleRatN16 where oracleConfig
+
+def runBareissMod (n : Nat) : Unit → IO String :=
+  hexCarrier n (3 / 2 : Mod) modJson
+def runOracleMod (n : Nat) : Unit → IO String :=
+  oracleCarrier "mod" 0 n (3 / 2 : Mod) modJson
+
+def runBareissModN4 := runBareissMod 4
+def runOracleModN4 := runOracleMod 4
+setup_fixed_benchmark runBareissModN4 where { carrierConfig with expectedHash := some 0x470384a52bef7e9e }
+setup_fixed_benchmark runOracleModN4 where oracleConfig
+def runBareissModN8 := runBareissMod 8
+def runOracleModN8 := runOracleMod 8
+setup_fixed_benchmark runBareissModN8 where { carrierConfig with expectedHash := some 0xc8c7afc9611ffff0 }
+setup_fixed_benchmark runOracleModN8 where oracleConfig
+def runBareissModN16 := runBareissMod 16
+def runOracleModN16 := runOracleMod 16
+setup_fixed_benchmark runBareissModN16 where { carrierConfig with expectedHash := some 0xa00b9350ae2c0b96 }
+setup_fixed_benchmark runOracleModN16 where oracleConfig
+
+def runBareissDenseRat (n degree : Nat) : Unit → IO String :=
+  hexCarrier n (denseEntry degree (2 / 3 : Rat)) (denseJson ratJson)
+def runOracleDenseRat (n degree : Nat) : Unit → IO String :=
+  oracleCarrier "dense_rat" 1 n (denseEntry degree (2 / 3 : Rat)) (denseJson ratJson)
+
+def runBareissDenseRatN3D1 := runBareissDenseRat 3 1
+def runOracleDenseRatN3D1 := runOracleDenseRat 3 1
+setup_fixed_benchmark runBareissDenseRatN3D1 where { carrierConfig with expectedHash := some 0x8e5a76cf61c17b9a }
+setup_fixed_benchmark runOracleDenseRatN3D1 where oracleConfig
+def runBareissDenseRatN3D2 := runBareissDenseRat 3 2
+def runOracleDenseRatN3D2 := runOracleDenseRat 3 2
+setup_fixed_benchmark runBareissDenseRatN3D2 where { carrierConfig with expectedHash := some 0xc25123dc84842f83 }
+setup_fixed_benchmark runOracleDenseRatN3D2 where oracleConfig
+def runBareissDenseRatN3D3 := runBareissDenseRat 3 3
+def runOracleDenseRatN3D3 := runOracleDenseRat 3 3
+setup_fixed_benchmark runBareissDenseRatN3D3 where { carrierConfig with expectedHash := some 0xc2e366c074fae226 }
+setup_fixed_benchmark runOracleDenseRatN3D3 where oracleConfig
+def runBareissDenseRatN4D1 := runBareissDenseRat 4 1
+def runOracleDenseRatN4D1 := runOracleDenseRat 4 1
+setup_fixed_benchmark runBareissDenseRatN4D1 where { carrierConfig with expectedHash := some 0x693fc516dab65368 }
+setup_fixed_benchmark runOracleDenseRatN4D1 where oracleConfig
+def runBareissDenseRatN4D2 := runBareissDenseRat 4 2
+def runOracleDenseRatN4D2 := runOracleDenseRat 4 2
+setup_fixed_benchmark runBareissDenseRatN4D2 where { carrierConfig with expectedHash := some 0xfc882c7039e56053 }
+setup_fixed_benchmark runOracleDenseRatN4D2 where oracleConfig
+def runBareissDenseRatN4D3 := runBareissDenseRat 4 3
+def runOracleDenseRatN4D3 := runOracleDenseRat 4 3
+setup_fixed_benchmark runBareissDenseRatN4D3 where { carrierConfig with expectedHash := some 0xce2e831909027d61 }
+setup_fixed_benchmark runOracleDenseRatN4D3 where oracleConfig
+def runBareissDenseRatN5D1 := runBareissDenseRat 5 1
+def runOracleDenseRatN5D1 := runOracleDenseRat 5 1
+setup_fixed_benchmark runBareissDenseRatN5D1 where { carrierConfig with expectedHash := some 0xc8e6d9c43aa94a0d }
+setup_fixed_benchmark runOracleDenseRatN5D1 where oracleConfig
+def runBareissDenseRatN5D2 := runBareissDenseRat 5 2
+def runOracleDenseRatN5D2 := runOracleDenseRat 5 2
+setup_fixed_benchmark runBareissDenseRatN5D2 where { carrierConfig with expectedHash := some 0x9667d9423c83931d }
+setup_fixed_benchmark runOracleDenseRatN5D2 where oracleConfig
+def runBareissDenseRatN5D3 := runBareissDenseRat 5 3
+def runOracleDenseRatN5D3 := runOracleDenseRat 5 3
+setup_fixed_benchmark runBareissDenseRatN5D3 where { carrierConfig with expectedHash := some 0xa2473f9af49c705f }
+setup_fixed_benchmark runOracleDenseRatN5D3 where oracleConfig
+
+def runBareissDenseMod (n degree : Nat) : Unit → IO String :=
+  @hexCarrier (DensePoly Mod) _ _ _ _ _ _ DensePoly.instDecidableEq _
+    n (denseEntry degree (2 : Mod)) (denseJson modJson)
+def runOracleDenseMod (n degree : Nat) : Unit → IO String :=
+  oracleCarrier "dense_mod" 1 n (denseEntry degree (2 : Mod)) (denseJson modJson)
+
+def runBareissDenseModN3D1 := runBareissDenseMod 3 1
+def runOracleDenseModN3D1 := runOracleDenseMod 3 1
+setup_fixed_benchmark runBareissDenseModN3D1 where { carrierConfig with expectedHash := some 0x6d2f5c57370d6e0c }
+setup_fixed_benchmark runOracleDenseModN3D1 where oracleConfig
+def runBareissDenseModN3D2 := runBareissDenseMod 3 2
+def runOracleDenseModN3D2 := runOracleDenseMod 3 2
+setup_fixed_benchmark runBareissDenseModN3D2 where { carrierConfig with expectedHash := some 0x3b49b55d869b0ff5 }
+setup_fixed_benchmark runOracleDenseModN3D2 where oracleConfig
+def runBareissDenseModN3D3 := runBareissDenseMod 3 3
+def runOracleDenseModN3D3 := runOracleDenseMod 3 3
+setup_fixed_benchmark runBareissDenseModN3D3 where { carrierConfig with expectedHash := some 0xa01862690cbad9a7 }
+setup_fixed_benchmark runOracleDenseModN3D3 where oracleConfig
+def runBareissDenseModN4D1 := runBareissDenseMod 4 1
+def runOracleDenseModN4D1 := runOracleDenseMod 4 1
+setup_fixed_benchmark runBareissDenseModN4D1 where { carrierConfig with expectedHash := some 0x5e6bdfaf99352ab4 }
+setup_fixed_benchmark runOracleDenseModN4D1 where oracleConfig
+def runBareissDenseModN4D2 := runBareissDenseMod 4 2
+def runOracleDenseModN4D2 := runOracleDenseMod 4 2
+setup_fixed_benchmark runBareissDenseModN4D2 where { carrierConfig with expectedHash := some 0x9e3363f07db79551 }
+setup_fixed_benchmark runOracleDenseModN4D2 where oracleConfig
+def runBareissDenseModN4D3 := runBareissDenseMod 4 3
+def runOracleDenseModN4D3 := runOracleDenseMod 4 3
+setup_fixed_benchmark runBareissDenseModN4D3 where { carrierConfig with expectedHash := some 0xd7f0a898061fb609 }
+setup_fixed_benchmark runOracleDenseModN4D3 where oracleConfig
+def runBareissDenseModN5D1 := runBareissDenseMod 5 1
+def runOracleDenseModN5D1 := runOracleDenseMod 5 1
+setup_fixed_benchmark runBareissDenseModN5D1 where { carrierConfig with expectedHash := some 0x96ba65904ba6cf08 }
+setup_fixed_benchmark runOracleDenseModN5D1 where oracleConfig
+def runBareissDenseModN5D2 := runBareissDenseMod 5 2
+def runOracleDenseModN5D2 := runOracleDenseMod 5 2
+setup_fixed_benchmark runBareissDenseModN5D2 where { carrierConfig with expectedHash := some 0x7852839cac6c6217 }
+setup_fixed_benchmark runOracleDenseModN5D2 where oracleConfig
+def runBareissDenseModN5D3 := runBareissDenseMod 5 3
+def runOracleDenseModN5D3 := runOracleDenseMod 5 3
+setup_fixed_benchmark runBareissDenseModN5D3 where { carrierConfig with expectedHash := some 0x913f33b8567ef9f5 }
+setup_fixed_benchmark runOracleDenseModN5D3 where oracleConfig
+
+def runBareissZPoly (n degree : Nat) : Unit → IO String :=
+  hexCarrier n (denseEntry degree (2 : Int)) (denseJson Lean.toJson)
+def runOracleZPoly (n degree : Nat) : Unit → IO String :=
+  oracleCarrier "zpoly" 1 n (denseEntry degree (2 : Int)) (denseJson Lean.toJson)
+
+def runBareissZPolyN3D1 := runBareissZPoly 3 1
+def runOracleZPolyN3D1 := runOracleZPoly 3 1
+setup_fixed_benchmark runBareissZPolyN3D1 where { carrierConfig with expectedHash := some 0x6d2f5c57370d6e0c }
+setup_fixed_benchmark runOracleZPolyN3D1 where oracleConfig
+def runBareissZPolyN3D2 := runBareissZPoly 3 2
+def runOracleZPolyN3D2 := runOracleZPoly 3 2
+setup_fixed_benchmark runBareissZPolyN3D2 where { carrierConfig with expectedHash := some 0x3b49b55d869b0ff5 }
+setup_fixed_benchmark runOracleZPolyN3D2 where oracleConfig
+def runBareissZPolyN3D3 := runBareissZPoly 3 3
+def runOracleZPolyN3D3 := runOracleZPoly 3 3
+setup_fixed_benchmark runBareissZPolyN3D3 where { carrierConfig with expectedHash := some 0xa01862690cbad9a7 }
+setup_fixed_benchmark runOracleZPolyN3D3 where oracleConfig
+def runBareissZPolyN4D1 := runBareissZPoly 4 1
+def runOracleZPolyN4D1 := runOracleZPoly 4 1
+setup_fixed_benchmark runBareissZPolyN4D1 where { carrierConfig with expectedHash := some 0xfda799c9868d9ea2 }
+setup_fixed_benchmark runOracleZPolyN4D1 where oracleConfig
+def runBareissZPolyN4D2 := runBareissZPoly 4 2
+def runOracleZPolyN4D2 := runOracleZPoly 4 2
+setup_fixed_benchmark runBareissZPolyN4D2 where { carrierConfig with expectedHash := some 0x828899bfbe6372bc }
+setup_fixed_benchmark runOracleZPolyN4D2 where oracleConfig
+def runBareissZPolyN4D3 := runBareissZPoly 4 3
+def runOracleZPolyN4D3 := runOracleZPoly 4 3
+setup_fixed_benchmark runBareissZPolyN4D3 where { carrierConfig with expectedHash := some 0x8a3b30c3469614d5 }
+setup_fixed_benchmark runOracleZPolyN4D3 where oracleConfig
+def runBareissZPolyN5D1 := runBareissZPoly 5 1
+def runOracleZPolyN5D1 := runOracleZPoly 5 1
+setup_fixed_benchmark runBareissZPolyN5D1 where { carrierConfig with expectedHash := some 0xd2bd08a5126be42d }
+setup_fixed_benchmark runOracleZPolyN5D1 where oracleConfig
+def runBareissZPolyN5D2 := runBareissZPoly 5 2
+def runOracleZPolyN5D2 := runOracleZPoly 5 2
+setup_fixed_benchmark runBareissZPolyN5D2 where { carrierConfig with expectedHash := some 0x4f92439f3247680a }
+setup_fixed_benchmark runOracleZPolyN5D2 where oracleConfig
+def runBareissZPolyN5D3 := runBareissZPoly 5 3
+def runOracleZPolyN5D3 := runOracleZPoly 5 3
+setup_fixed_benchmark runBareissZPolyN5D3 where { carrierConfig with expectedHash := some 0x288e92aabd8fad6e }
+setup_fixed_benchmark runOracleZPolyN5D3 where oracleConfig
+
+def runBareissMvInt (n terms : Nat) : Unit → IO String :=
+  hexCarrier n (mvEntry terms (2 : Int)) (mvJson Lean.toJson)
+def runOracleMvInt (n terms : Nat) : Unit → IO String :=
+  oracleCarrier "mv_int" 3 n (mvEntry terms (2 : Int)) (mvJson Lean.toJson)
+
+def runBareissMvIntN3T2 := runBareissMvInt 3 2
+def runOracleMvIntN3T2 := runOracleMvInt 3 2
+setup_fixed_benchmark runBareissMvIntN3T2 where { carrierConfig with expectedHash := some 0x6ddf948aae3c92e7 }
+setup_fixed_benchmark runOracleMvIntN3T2 where oracleConfig
+def runBareissMvIntN3T3 := runBareissMvInt 3 3
+def runOracleMvIntN3T3 := runOracleMvInt 3 3
+setup_fixed_benchmark runBareissMvIntN3T3 where { carrierConfig with expectedHash := some 0xbdd0ae3db6b9a73b }
+setup_fixed_benchmark runOracleMvIntN3T3 where oracleConfig
+def runBareissMvIntN3T4 := runBareissMvInt 3 4
+def runOracleMvIntN3T4 := runOracleMvInt 3 4
+setup_fixed_benchmark runBareissMvIntN3T4 where { carrierConfig with expectedHash := some 0x9b59b471fa091466 }
+setup_fixed_benchmark runOracleMvIntN3T4 where oracleConfig
+def runBareissMvIntN4T2 := runBareissMvInt 4 2
+def runOracleMvIntN4T2 := runOracleMvInt 4 2
+setup_fixed_benchmark runBareissMvIntN4T2 where { carrierConfig with expectedHash := some 0x218e3309f71575fe }
+setup_fixed_benchmark runOracleMvIntN4T2 where oracleConfig
+def runBareissMvIntN4T3 := runBareissMvInt 4 3
+def runOracleMvIntN4T3 := runOracleMvInt 4 3
+setup_fixed_benchmark runBareissMvIntN4T3 where { carrierConfig with expectedHash := some 0x88e5d5424a4ff7f4 }
+setup_fixed_benchmark runOracleMvIntN4T3 where oracleConfig
+def runBareissMvIntN4T4 := runBareissMvInt 4 4
+def runOracleMvIntN4T4 := runOracleMvInt 4 4
+setup_fixed_benchmark runBareissMvIntN4T4 where { carrierConfig with expectedHash := some 0xac109eb5f191f9ef }
+setup_fixed_benchmark runOracleMvIntN4T4 where oracleConfig
+def runBareissMvIntN5T2 := runBareissMvInt 5 2
+def runOracleMvIntN5T2 := runOracleMvInt 5 2
+setup_fixed_benchmark runBareissMvIntN5T2 where { carrierConfig with expectedHash := some 0x4a93f54ed0f4bf15 }
+setup_fixed_benchmark runOracleMvIntN5T2 where oracleConfig
+def runBareissMvIntN5T3 := runBareissMvInt 5 3
+def runOracleMvIntN5T3 := runOracleMvInt 5 3
+setup_fixed_benchmark runBareissMvIntN5T3 where { carrierConfig with expectedHash := some 0x5c0c5a9098558fac }
+setup_fixed_benchmark runOracleMvIntN5T3 where oracleConfig
+def runBareissMvIntN5T4 := runBareissMvInt 5 4
+def runOracleMvIntN5T4 := runOracleMvInt 5 4
+setup_fixed_benchmark runBareissMvIntN5T4 where { carrierConfig with expectedHash := some 0xdbabfd0a0ac91e50 }
+setup_fixed_benchmark runOracleMvIntN5T4 where oracleConfig
+
+def runBareissMvRat (n terms : Nat) : Unit → IO String :=
+  hexCarrier n (mvEntry terms (2 / 3 : Rat)) (mvJson ratJson)
+def runOracleMvRat (n terms : Nat) : Unit → IO String :=
+  oracleCarrier "mv_rat" 3 n (mvEntry terms (2 / 3 : Rat)) (mvJson ratJson)
+
+def runBareissMvRatN3T2 := runBareissMvRat 3 2
+def runOracleMvRatN3T2 := runOracleMvRat 3 2
+setup_fixed_benchmark runBareissMvRatN3T2 where { carrierConfig with expectedHash := some 0x61c8648a3cf0b41f }
+setup_fixed_benchmark runOracleMvRatN3T2 where oracleConfig
+def runBareissMvRatN3T3 := runBareissMvRat 3 3
+def runOracleMvRatN3T3 := runOracleMvRat 3 3
+setup_fixed_benchmark runBareissMvRatN3T3 where { carrierConfig with expectedHash := some 0xa30b7647cce5d81d }
+setup_fixed_benchmark runOracleMvRatN3T3 where oracleConfig
+def runBareissMvRatN3T4 := runBareissMvRat 3 4
+def runOracleMvRatN3T4 := runOracleMvRat 3 4
+setup_fixed_benchmark runBareissMvRatN3T4 where { carrierConfig with expectedHash := some 0xc1afbd2597f98686 }
+setup_fixed_benchmark runOracleMvRatN3T4 where oracleConfig
+def runBareissMvRatN4T2 := runBareissMvRat 4 2
+def runOracleMvRatN4T2 := runOracleMvRat 4 2
+setup_fixed_benchmark runBareissMvRatN4T2 where { carrierConfig with expectedHash := some 0xc79deaae8255dba }
+setup_fixed_benchmark runOracleMvRatN4T2 where oracleConfig
+def runBareissMvRatN4T3 := runBareissMvRat 4 3
+def runOracleMvRatN4T3 := runOracleMvRat 4 3
+setup_fixed_benchmark runBareissMvRatN4T3 where { carrierConfig with expectedHash := some 0xd43a1b578d909614 }
+setup_fixed_benchmark runOracleMvRatN4T3 where oracleConfig
+def runBareissMvRatN4T4 := runBareissMvRat 4 4
+def runOracleMvRatN4T4 := runOracleMvRat 4 4
+setup_fixed_benchmark runBareissMvRatN4T4 where { carrierConfig with expectedHash := some 0x4bc36d60ed12ca14 }
+setup_fixed_benchmark runOracleMvRatN4T4 where oracleConfig
+def runBareissMvRatN5T2 := runBareissMvRat 5 2
+def runOracleMvRatN5T2 := runOracleMvRat 5 2
+setup_fixed_benchmark runBareissMvRatN5T2 where { carrierConfig with expectedHash := some 0x2fc4725b35a1c085 }
+setup_fixed_benchmark runOracleMvRatN5T2 where oracleConfig
+def runBareissMvRatN5T3 := runBareissMvRat 5 3
+def runOracleMvRatN5T3 := runOracleMvRat 5 3
+setup_fixed_benchmark runBareissMvRatN5T3 where { carrierConfig with expectedHash := some 0xbe366c20eccaacc3 }
+setup_fixed_benchmark runOracleMvRatN5T3 where oracleConfig
+def runBareissMvRatN5T4 := runBareissMvRat 5 4
+def runOracleMvRatN5T4 := runOracleMvRat 5 4
+setup_fixed_benchmark runBareissMvRatN5T4 where { carrierConfig with expectedHash := some 0x5bca1ea3a99f83b2 }
+setup_fixed_benchmark runOracleMvRatN5T4 where oracleConfig
+
+
+/-- Ordinary registration checks include all Hex carrier points. External carrier
+comparisons are informational and run only when explicitly selected. -/
+def verifyOrdinary : IO UInt32 := do
+  let parametric ← LeanBench.allRuntimeEntries
+  let fixed ← LeanBench.allFixedRuntimeEntries
+  let names := ((parametric.filter fun e => !e.spec.config.tags.contains scheduledTag).map (·.spec.name)).toList ++
+    ((fixed.filter fun e => !e.spec.config.tags.contains scheduledTag).map (·.spec.name)).toList
+  let reports ← LeanBench.verify names
+  IO.println (LeanBench.Format.fmtCombinedVerify reports)
+  return if reports.passed then 0 else 1
+
 end Hex.BareissBench
 
 def main (args : List String) : IO UInt32 :=
-  LeanBench.Cli.dispatch args
+  match args with
+  | ["verify"] => Hex.BareissBench.verifyOrdinary
+  | _ => LeanBench.Cli.dispatch args
