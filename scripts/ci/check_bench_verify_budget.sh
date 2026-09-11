@@ -3,7 +3,7 @@
 # "Time budget" subsection.
 #
 # Runs `lake exe X_bench list && lake exe X_bench verify` for each
-# bench-exe name passed on stdin or as args, captures wallclock per
+# bench specification passed as `Library=X_bench`, captures wallclock per
 # invocation, prints a sorted breakdown, emits `::warning::`
 # annotations for libraries over the per-library soft threshold, and
 # exits non-zero if the total wallclock exceeds the hard cap.
@@ -18,6 +18,8 @@
 #                                  for the initial rollout per HO-35
 #                                  so we collect telemetry before
 #                                  flipping the switch.
+#   HEX_LIBRARY_FILTER            optional whitespace-separated library
+#                                  names; empty or unset means all libraries.
 #
 # Run from the repository root, after `lake build`. Intended for
 # `.github/workflows/ci.yml`'s `build` job; also safe to run locally.
@@ -29,9 +31,42 @@ hard_cap="${BENCH_VERIFY_HARD_CAP_SECONDS:-600}"
 warn_only="${BENCH_VERIFY_WARN_ONLY:-0}"
 
 if [ "$#" -eq 0 ]; then
-  echo "usage: $0 <bench_exe_name> [<bench_exe_name> ...]" >&2
+  echo "usage: $0 <Library=bench_exe_name> [<Library=bench_exe_name> ...]" >&2
   exit 2
 fi
+
+library_selected() {
+  local wanted="$1"
+  [ -z "${HEX_LIBRARY_FILTER:-}" ] || [[ " $HEX_LIBRARY_FILTER " == *" $wanted "* ]]
+}
+
+if [ -z "${HEX_LIBRARY_FILTER:-}" ]; then
+  echo "Bench verify library filter: all libraries (no filter)"
+else
+  echo "Bench verify library filter: $HEX_LIBRARY_FILTER"
+fi
+
+filtered_benches=()
+for specification in "$@"; do
+  if [[ "$specification" == *=* ]]; then
+    library="${specification%%=*}"
+    bench="${specification#*=}"
+    if [ -z "$library" ] || [ -z "$bench" ]; then
+      echo "invalid bench specification: $specification" >&2
+      exit 2
+    fi
+  else
+    if [ -n "${HEX_LIBRARY_FILTER:-}" ]; then
+      echo "filtered runs require Library=bench_executable: $specification" >&2
+      exit 2
+    fi
+    bench="$specification"
+    library=""
+  fi
+  if library_selected "$library"; then
+    filtered_benches+=("$bench")
+  fi
+done
 
 # `gha_warn`: emit a workflow-command warning when running under GitHub
 # Actions (where `$GITHUB_ACTIONS == true`); otherwise just print to
@@ -49,7 +84,7 @@ results_file="$(mktemp)"
 trap 'rm -f "$results_file"' EXIT
 
 total=0
-for bench in "$@"; do
+for bench in "${filtered_benches[@]}"; do
   echo "::group::$bench"
   start=$(date +%s)
   # Run list + verify as a pair. GitHub Actions builds these executables

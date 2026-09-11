@@ -957,8 +957,10 @@ different settings layers — see [§Harness](#harness-lean-bench).
 
 The cap is enforced by
 `scripts/ci/check_bench_verify_budget.sh`, invoked at the tail of
-the `Bench verify` step. It wraps the per-library `lake exe X_bench
-verify` invocations (capturing wallclock per invocation), prints a
+the `Bench verify` step. CI passes explicit `Library=X_bench` ownership
+pairs so pull-request filtering cannot depend on executable-name inference.
+The script wraps the per-library `lake exe X_bench verify` invocations,
+captures wallclock per invocation, prints a
 sorted breakdown, logs the soft warnings, and exits non-zero if the
 total exceeds the hard cap.
 

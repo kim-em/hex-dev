@@ -97,6 +97,22 @@ Concretely:
   [SPEC/benchmarking.md §CI integration](benchmarking.md), `verify` is a
   smoke gate (does the bench module compile and run?), not a timing
   measurement; timing-relevant runs are collected manually on the shared host.
+
+  On pull requests, these two verification tails are scoped to the libraries
+  that own changed source, bench, conformance, fixture, or oracle paths. The
+  classifier uses `libraries.yml` ownership and the pull request's diff against
+  its merge base; changes to shared infrastructure and unclassified non-documentation
+  paths select every library. It reports both the selected library names and the
+  paths that caused the selection. This is deliberately an owner-only filter:
+  dependents are not added, so a change to `HexPoly` runs only `HexPoly`'s oracle
+  and bench verify. If an owning library has no oracle tuple or bench executable,
+  that verification tail has no per-library work for the change; downstream
+  coverage remains deferred to `main` by design.
+  The full conformance target set still builds before the tails, so this does
+  not weaken compile coverage. Pushes to `main` and manual runs leave the
+  filter empty and run every oracle, library-specific gate, and bench verify.
+  The oracle log records wall time for each tuple, and the bench log records
+  wall time for each executable.
 - Conformance used to be a second workflow (`conformance.yml`). It was
   folded into this job because a separate workflow re-elaborated the
   entire hex graph on a second runner — pure duplicated compute. Sharing
