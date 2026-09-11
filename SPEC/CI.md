@@ -101,6 +101,36 @@ Concretely:
   needed (e.g. a macOS dyld cross-check — not currently present), state
   the reason in a workflow-level comment.
 
+### Docs-only fast path
+
+A pull request whose diff against its merge base touches only
+documentation and planning text takes a fast path through the same
+`build` job. An early step classifies the change from
+`git diff --name-only` against the merge base with the base branch and
+records the decision in the job summary; every step from dependency
+installation through the verification tails carries
+`if: steps.classify.outputs.docs_only != 'true'`, and the fail-closed
+gate passes trivially on that path. The structural lints and the Python
+unit tests before that point (copyright headers, line counts, DAG,
+released manifest, manual split, `test_sync_released.py`, trust surface,
+Phase-4 and Phase-7 checks, conformance-matrix invariant) run on both
+paths; only the Mathlib-free bench lint, which reads Lean bench sources
+alone, is skipped.
+
+The allowlist is deliberately simple and permissive; a missed edge case
+costs one slow-to-detect breakage on the next code PR, not a release:
+
+- `**/*.md`, `SPEC/**`, `PLAN/**`, `docs/**`, `reports/**`,
+  `libraries.yml`, `AGENTS.md`, `.claude/**`, `LICENSE`, `.gitignore`.
+
+Anything else (`lakefile.lean`, `lake-manifest.json`, `lean-toolchain`,
+`.github/**`, `scripts/**`, any `.lean` file, ...) makes the PR a full
+build. Pushes to `main` and manual dispatches always build in full,
+regardless of the changed files, so the cache snapshot and the Lake
+cache publish only ever come from a fully verified tree. The fast path is
+neither a second job nor a workflow-level `paths` filter: the required
+check stays the single `build` job and is reported green either way.
+
 ### Polynomial-factorization performance artifacts
 
 Every pull request runs two deterministic checks for the published integer
