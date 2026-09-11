@@ -44,6 +44,7 @@ BUILD_ONLY_LIBS = {
     "HexBerlekampMathlibProofProbeScientific",
     "HexIntervalExperiment",
     "HexRankTests",
+    "HexRankMathlibProofProbe",
     "HexIntervalMathlibExperiment",
     "HexIntervalPntFks2Local",
     "HexIntervalPntFks2ConformanceLocal",
