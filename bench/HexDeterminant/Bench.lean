@@ -113,12 +113,19 @@ def carrierLine (line : String) : IO String := do
     | some child => pure child
     | none => do
       let python := (← IO.getEnv "HEX_MATRIX_CARRIERS_PYTHON").getD "python3"
-      let path := (← IO.getEnv "HEX_MATRIX_CARRIERS_DRIVER").getD
-        "scripts/oracle/matrix_carriers_bench_driver.py"
+      let rootPath : System.FilePath := "scripts/oracle/matrix_carriers_bench_driver.py"
+      let defaultPath ← if ← rootPath.pathExists then pure rootPath.toString
+        else pure s!"../{rootPath}"
+      let path := (← IO.getEnv "HEX_MATRIX_CARRIERS_DRIVER").getD defaultPath
+      if !(← (System.FilePath.mk path).pathExists) then
+        throw <| IO.userError s!"carrier driver not found: {path}; set HEX_MATRIX_CARRIERS_DRIVER"
       let child ← Hex.BenchOracle.Flint.PersistentComparator.spawn python #[path]
       carrierDriver.set (some child)
       pure child
-  let response ← child.requestLine line
+  -- Preserve a failed measurement, but let a later request start a new child.
+  let response ← try child.requestLine line catch error =>
+    carrierDriver.set none
+    throw error
   let json ← IO.ofExcept (Lean.Json.parse response)
   if (json.getObjValAs? Bool "ok").toOption != some true then
     throw <| IO.userError s!"carrier comparator failed: {response}"
@@ -138,12 +145,14 @@ def sympyAt (domain : Domain) (encode : R → Lean.Json)
   let line := (request domain encode M).compress
   fun _ => carrierLine line
 
+def scheduledOnlyTag : String := "scheduled-only"
+
 def carrierConfig : LeanBench.FixedBenchmarkConfig :=
   { repeats := 5, minTotalSeconds := 0.2, maxSecondsPerCall := 10.0,
     warmupFirstIter := true, tags := #["det-carrier"] }
 
 def sympyConfig : LeanBench.FixedBenchmarkConfig :=
-  { carrierConfig with tags := #["det-carrier", "scheduled-only"] }
+  { carrierConfig with tags := #["det-carrier", scheduledOnlyTag] }
 
 def runCarrierOverhead (_ : Unit) : IO String :=
   carrierLine "{\"kind\":\"overhead\"}"
@@ -338,9 +347,12 @@ setup_fixed_benchmark runSympyRatFn_3_4 where { sympyConfig with expectedHash :=
 
 /-- Default CI verifies every Lean carrier rung without launching SymPy. -/
 def verifyCarriers : IO UInt32 := do
+  let parametric ← LeanBench.allRuntimeEntries
   let fixed ← LeanBench.allFixedRuntimeEntries
-  let names := [`Hex.DeterminantBench.runLeibnizDet] ++
-    (fixed.filter (fun e => !e.spec.config.tags.contains "scheduled-only")
+  let names :=
+    (parametric.filter (fun e => !e.spec.config.tags.contains scheduledOnlyTag)
+      |>.map (·.spec.name) |>.toList) ++
+    (fixed.filter (fun e => !e.spec.config.tags.contains scheduledOnlyTag)
       |>.map (·.spec.name) |>.toList)
   let reports ← LeanBench.verify names
   IO.println (LeanBench.Format.fmtCombinedVerify reports)

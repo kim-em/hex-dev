@@ -1,12 +1,12 @@
 {
-  "cpu": 12,
+  "cpu": 14,
   "affinity": [
-    12
+    14
   ],
   "load_before": [
-    3.4853515625,
-    5.791015625,
-    8.91748046875
+    23.3173828125,
+    23.47998046875,
+    11.8896484375
   ],
   "command": [
     ".lake/build/bin/hexdeterminant_bench",
@@ -76,26 +76,21 @@
     "reports/bench-results/hex-determinant-carriers.json"
   ],
   "sha256": {
-    "bench/HexDeterminant/Bench.lean": "748788e87efc581245808f0d208fcc88078a47c97f8ec8c77178a6cd3fa43981",
+    "bench/HexDeterminant/Bench.lean": "9b21f18c5812e93e0fd95bf77870597c7a2922dd01c96f80a621efd6edfbefc1",
     "conformance/HexDeterminant/Carriers.lean": "ec29542502275f34221afa3ec78d68a67b10ce4466b7bca94aaaeb3a5f1879e9",
     "scripts/oracle/matrix_carriers.py": "3289cd0330d5ebaf3b2904f77da6a043cf25a43f2954eb2ed6c3323d226eb6c6",
-    "scripts/oracle/matrix_carriers_bench_driver.py": "c97674396165da35a7601b686c4a39440fbcaab7178eb816673a0498ac97391e"
+    "scripts/oracle/matrix_carriers_bench_driver.py": "ebf132f70a6119786944a3e9faeaef085c74fa9d4ff2efe05bc92c8b2aa62148"
   },
   "initial_run": {
     "file": "hex-determinant-carriers-initial.json",
     "affinity": "unbound",
     "multivariate_support": "all degree-four triples in ascending (a,b) enumeration"
   },
-  "calibration_run": {
-    "file": "hex-determinant-carriers-calibration.json",
-    "context": "hex-determinant-carriers-calibration-context.json",
-    "input_family": "same as current",
-    "expected_hash_checks": "unset"
-  },
   "load_after": [
-    2.76171875,
-    3.76416015625,
-    7.29248046875
+    22.0595703125,
+    27.56201171875,
+    16.970703125
   ],
-  "exit_code": 0
+  "exit_code": 0,
+  "source_hash_note": "The Bench.lean hash excludes fixed-registration expectedHash annotations; the other source hashes cover complete files."
 }

@@ -60,6 +60,23 @@ class BenchLintTests(unittest.TestCase):
                     self.assertEqual(chain[0], "Sample.Root")
                     self.assertTrue(chain[-1].startswith("Mathlib."))
 
+    def test_repository_library_source_directory_reaches_mathlib(self) -> None:
+        tmp, root = self.make_repo()
+        with tmp:
+            target = self.target(
+                root,
+                'lean_lib FixtureSupport where\n'
+                '  srcDir := "conformance"\n'
+                '  roots := #[`Sample.Carriers]\n'
+                'lean_exe sample_bench where\n'
+                '  srcDir := "bench"\n'
+                '  root := `Sample.Bench\n',
+            )
+            self.write(root, "bench/Sample/Bench.lean", "import Sample.Carriers\n")
+            self.write(root, "conformance/Sample/Carriers.lean", "import Mathlib.Data.Nat.Basic\n")
+            self.assertEqual(lint._walk_for_mathlib(target, root),
+                             ["Sample.Bench", "Sample.Carriers", "Mathlib.Data.Nat.Basic"])
+
     def test_prelude_before_import_reaches_mathlib(self) -> None:
         for header in ("prelude\n", "module\nprelude\n"):
             with self.subTest(header=header):

@@ -104,4 +104,9 @@ example (M : Matrix (RationalFn Rat) n n) : RationalFn Rat := Matrix.det M
 #guard (ratMv 0 0 2).termsList.all (fun (m, _) => m.toList.all (· > 0))
 #guard ((-102 : Mod).toNat, (204 : Mod).toNat) = (100, 2)
 
+-- Every benchmark entry retains its declared nonunit denominator degree.
+#guard ([1, 2, 4] : List Nat).all fun d =>
+  (List.range 4).all fun r => (List.range 4).all fun c =>
+    (fraction r c d).den.toArray.size == d + 1
+
 end DeterminantCarriers

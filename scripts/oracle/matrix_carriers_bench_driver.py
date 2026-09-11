@@ -15,15 +15,18 @@ from matrix_carriers import prepare
 @lru_cache(maxsize=128)
 def prepared(line):
     record = json.loads(line)
+    if record["kind"] == "overhead":
+        return None
     if record["kind"] != "det":
         raise ValueError("expected det record")
     return prepare(record)
 
 
 def run(line):
-    if json.loads(line).get("kind") == "overhead":
+    value = prepared(line)
+    if value is None:
         return 0
-    codec, matrix = prepared(line)
+    codec, matrix = value
     return codec.encode(matrix.det())
 
 

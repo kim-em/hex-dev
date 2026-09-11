@@ -5,7 +5,7 @@ The shared ``Hex.BenchOracle.Flint`` process is lazy and cached only within one
 LeanBench child.  A fixed registration that reaches ``runOp`` (possibly through
 local adapter definitions or an imported bench helper) must therefore use a
 configuration with ``warmupFirstIter := true``.  The same requirement applies
-to the HexGF2 NTL driver. Otherwise every outer child charges external-driver
+to the HexGF2 NTL driver and the symbolic matrix carrier driver. Otherwise every outer child charges external-driver
 startup to its first timed batch.
 
 This is deliberately a small source lint rather than a target-name allowlist:
@@ -48,7 +48,8 @@ _IDENT_RE = re.compile(
 _DRIVER_CALL_RE = re.compile(
     r"(?:\bHex\.BenchOracle\.Flint\."
     r"(?:runOp|runLine|sendRequest|sendRequestLine)\b"
-    r"|\brequestNtlLineWithRetry\b)"
+    r"|\brequestNtlLineWithRetry\b"
+    r"|\bcarrierLine\b)"
 )
 _WARM_TRUE_RE = re.compile(r"\bwarmupFirstIter\s*:=\s*true\b")
 _WARM_FALSE_RE = re.compile(r"\bwarmupFirstIter\s*:=\s*false\b")
