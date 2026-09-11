@@ -23,8 +23,11 @@ the carrier.
 Preservation of negation is not a separate hypothesis: a map preserving zero,
 one, addition and multiplication is a ring homomorphism, and ring homomorphisms
 preserve negation. Only the `ofInt ∘ toInt` direction of the inverse law is
-consumed, since the answer travels in that direction; the shipped `Int` recipe
-uses identity maps, where both are `rfl`.
+consumed, since the answer travels in that direction. Neither omission weakens
+the contract: a unital ring homomorphism into `Int` is surjective, because its
+image contains `1` and is closed under negation and addition, so the other
+inverse direction and the ring behaviour of `ofInt` follow. The shipped `Int`
+recipe uses identity maps, where every one of these laws is `rfl`.
 -/
 
 namespace HexDetMathlib

@@ -154,8 +154,10 @@ set_option linter.overlappingInstances false in
 
 The Mathlib structure is an explicit hypothesis, with `HexPolyMathlib.GrindReduct`
 recording that its lightweight reduct is the executable instance the carrier
-computes with. The executable carriers with no global Mathlib structure get one
-from `HexPolyMathlib.commRingOfGrind`, which supplies that instance. -/
+computes with. A carrier with no global Mathlib structure supplies one at the use
+site, with `letI : CommRing R := HexPolyMathlib.commRingOfGrind`; that is a
+definition rather than an instance, so instance search will not install it on the
+caller's behalf. `HexDetMathlib.Carriers` has an example of each form. -/
 theorem det_eq_mathlib [s : Lean.Grind.CommRing R] [inst : CommRing R]
     [HexPolyMathlib.GrindReduct R] [DetOps R] [LawfulDetOps R]
     (A : Hex.Matrix R n n) :

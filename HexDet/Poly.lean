@@ -57,11 +57,12 @@ example : (DetOps.policy (R := DensePoly Rat)).arm = Arm.bareiss := rfl
 example : (DetOps.policy (R := DensePoly Int)).arm = Arm.bareiss := rfl
 
 /-- The same recipe at `Hex.FpPoly p`, which instance search reaches only when
-the coefficient `Zero` is spelled the way that type spells it. The policy is the
-one `instDetOpsDensePoly` installs, so the two cannot disagree. -/
+the coefficient `Zero` is spelled the way that type spells it. This is literally
+`instDetOpsDensePoly` at `Hex.ZMod64 p`, restated at that spelling, so the two
+paths cannot drift apart. -/
 instance instDetOpsFpPoly {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p] :
-    DetOps (FpPoly p) where
-  policy := quotientPolicy
+    DetOps (FpPoly p) :=
+  instDetOpsDensePoly (R := ZMod64 p)
 
 example {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p] :
     (DetOps.policy (R := FpPoly p)).arm = Arm.bareiss := rfl

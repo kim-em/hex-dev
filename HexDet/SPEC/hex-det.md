@@ -29,16 +29,24 @@ identity maps, so its runner has no representation conversion. No generic
 ring is assumed to be `Int` by a typeclass search or unchecked cast.
 Field and integer constructors admit only arms implemented for that carrier.
 Before modular integration, integer policies admit only Bareiss. Before field elimination
-exists, field policies admit only Bareiss. Small cases precede every recipe.
+exists, field policies admit only Bareiss. An arm selector whose constructors are
+exactly the implemented arms is how that restriction is expressed, so a recipe
+cannot name an arm that does not exist below dispatch. Small cases precede every
+recipe.
 
 Policies carry the dimension and coefficient-size selection regions, cutoff
-tie rules, and applicable fuel and seed settings. A size-based recipe also
+tie rules, and applicable fuel and seed settings of the arms they admit. A
+carrier whose selector offers one arm has no region, tie rule or statistic to
+carry: that arm covers the whole `n > 2` range, and this is the state of every
+carrier until a second arm exists. An arm arrives together with the selection
+data that chooses it, so adding a constructor is adding a region, not a second
+unconditional choice. A size-based recipe also
 carries its executable input statistic, for example
 `size : {n : Nat} → Hex.Matrix R n n → Nat`, with the report specifying
 its units and aggregation rule. Integer entries use maximum absolute bit
 length. Rational policies may use maximum numerator and denominator bit
 lengths as separate statistics. Carriers without a supplied statistic have
-dimension-only regions. `Lean.Grind.CommRing` supplies no size measure. They also retain the
+dimension-only regions. `Lean.Grind.CommRing` supplies no size measure. Policies also retain the
 coefficient operations, including the quotient, that the runner uses. Field
 evidence must extend the ambient commutative-ring operations, not replace
 them with another ring structure. Thus

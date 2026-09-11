@@ -508,7 +508,7 @@ with the executable operations. `Hex.ZMod64 p` carries only `Lean.Grind.CommRing
 so bridge theorems stated over Mathlib's `CommRing` reach it through this
 transport; `HexPolyMathlib.toGrind_commRingOfGrind` returns their conclusions to
 the executable instance. -/
-@[instance_reducible] def zmod64CommRing : CommRing (Hex.ZMod64 p) :=
+@[instance_reducible, expose] def zmod64CommRing : CommRing (Hex.ZMod64 p) :=
   HexPolyMathlib.commRingOfGrind
 
 /-- The executable zero polynomial transports to Mathlib's zero polynomial. -/

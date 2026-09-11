@@ -67,13 +67,13 @@ instance instLawfulDetOpsDensePoly {R : Type u} [Lean.Grind.CommRing R] [Decidab
 -- The monomial-order context is the one the division provider requires, and the
 -- comparator instances the `Hex.MvPoly` type itself needs; neither can be dropped.
 set_option linter.overlappingInstances false in
-/-- The dense-polynomial recipe at `Hex.FpPoly p` is lawful. -/
+/-- The dense-polynomial recipe at `Hex.FpPoly p` is lawful. The recipe there is
+`instDetOpsDensePoly` restated at that type's own coefficient instances, so this
+is the dense-polynomial law restated with it, not a second proof that could
+drift. -/
 instance instLawfulDetOpsFpPoly {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p] :
-    LawfulDetOps (FpPoly p) where
-  lawful :=
-    lawfulPolicy_bareiss (R := FpPoly p) inferInstance Hex.exactDiv fun a _ hb =>
-      @Hex.exactDiv_mul_right (FpPoly p) _ _ _
-        (Hex.instExactDivLawsDensePoly (R := ZMod64 p)) a _ hb
+    LawfulDetOps (FpPoly p) :=
+  instLawfulDetOpsDensePoly (R := ZMod64 p)
 
 -- The monomial-order context is the one the division provider requires, and the
 -- comparator instances the `Hex.MvPoly` type itself needs; neither can be dropped.
@@ -164,6 +164,28 @@ example (B : Hex.Matrix Int 3 3) :
 example (B : Hex.Matrix Rat 3 3) :
     Hex.Det.det B = Matrix.det (HexMatrixMathlib.matrixEquiv B) :=
   det_eq_mathlib B
+
+/-- A carrier with no global Mathlib structure installs one at the use site.
+`HexPolyMathlib.commRingOfGrind` is a definition, not an instance, so the caller
+supplies it; `HexPolyMathlib.instGrindReductOfGrind` then discharges the
+compatibility hypothesis. -/
+example (B : Hex.Matrix (DensePoly Int) 3 3) :
+    letI : CommRing (DensePoly Int) := HexPolyMathlib.commRingOfGrind
+    Hex.Det.det B = Matrix.det (HexMatrixMathlib.matrixEquiv B) := by
+  let _ : CommRing (DensePoly Int) := HexPolyMathlib.commRingOfGrind
+  exact det_eq_mathlib B
+
+example {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
+    (B : Hex.Matrix (ZMod64 p) 3 3) :
+    letI : CommRing (ZMod64 p) := HexPolyMathlib.commRingOfGrind
+    Hex.Det.det B = Matrix.det (HexMatrixMathlib.matrixEquiv B) := by
+  let _ : CommRing (ZMod64 p) := HexPolyMathlib.commRingOfGrind
+  exact det_eq_mathlib B
+
+-- `HexPolyFpMathlib.zmod64CommRing` is that same structure, named where the
+-- residue carrier lives.
+example {p : Nat} [ZMod64.Bounds p] :
+    HexPolyFpMathlib.zmod64CommRing (p := p) = HexPolyMathlib.commRingOfGrind := rfl
 
 end Shapes
 
