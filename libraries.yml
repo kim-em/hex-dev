@@ -368,6 +368,36 @@ libraries:
     correspondence_only: true
     done_through: 0
     status: planned
+  HexDet:
+    deps: [HexBareiss, HexCharPoly, HexRowReduce, HexPolyFp, HexResultant, HexMvGcd]
+    mathlib: false
+    done_through: 0
+    status: planned
+    phase4:
+      comparators:
+        - tool: FLINT integer, rational, and prime-residue determinants via python-flint
+          class: informational
+          rationale: FLINT uses its own determinant selection and process protocol; internal adjacent-arm comparisons determine Hex dispatch policies.
+        - tool: SymPy Berkowitz determinant over exact polynomial domains
+          class: informational
+          rationale: Independent polynomial recurrence and Python process overhead provide conformance and timing context, not a dispatch cutoff.
+      input_families:
+        - name: integer
+          description: Dimension and coefficient-bit sweeps on dense, tridiagonal, triangular, singular, low-rank, and unimodular inputs; Bareiss, modular, and divisor comparisons. Initial Bareiss policy is unmeasured; record enabled constants and evidence in reports/hex-det-performance.md.
+        - name: field
+          description: Dimension, rational numerator and denominator size, and prime modulus; elimination versus Bareiss. Initial Bareiss policy is unmeasured; record enabled constants and evidence in reports/hex-det-performance.md.
+        - name: dense-poly
+          description: Dimension, degree, and coefficient size over Rat, prime ZMod64, and Int; Bareiss versus Berkowitz with nonconstant pivots.
+        - name: mv-poly
+          description: Dimension, variable count, degree, support, and coefficient size over Int and Rat; Bareiss versus Berkowitz with nonconstant pivots.
+        - name: dispatch
+          description: Tiny cases, both sides of measured cutoffs, modular fallback, and rings with zero divisors; dispatch versus its selected direct arm.
+  HexDetMathlib:
+    deps: [HexDet, HexBareissMathlib, HexCharPolyMathlib, HexDeterminantMathlib, HexPolyMathlib, HexPolyFpMathlib, HexMvPolyMathlib]
+    mathlib: true
+    correspondence_only: true
+    done_through: 0
+    status: planned
   HexCharPoly:
     deps: [HexMatrix, HexPoly]
     mathlib: false
