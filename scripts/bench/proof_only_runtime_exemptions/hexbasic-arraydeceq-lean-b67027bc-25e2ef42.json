@@ -1,0 +1,6 @@
+{
+  "path": "HexBasic/ArrayDecEq.lean",
+  "baseline_blob": "b67027bccef0d1c706fa1c2b35473dcb4fa52338",
+  "current_blob": "25e2ef4207843776854211debddd6af069de698b",
+  "reason": "Adds only a module docstring reminder to remove the downstream Array and Vector DecidableEq shims at Lean v4.35.0-rc1. No declaration or executable code changes."
+}

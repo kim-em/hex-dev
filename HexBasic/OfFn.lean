@@ -24,6 +24,11 @@ array of known capacity rather than build a linked list and convert, so each
 carries a `@[csimp]` lemma redirecting the compiler back to the core version.
 The {name}`List` route is then paid only in the kernel, which is where it is
 needed.
+
+Remove the `Array.ofFn'` and `Vector.ofFn'` shims and migrate their
+callers to the core operations when the pinned toolchain reaches Lean
+v4.35.0-rc1, which includes
+<https://github.com/leanprover/lean4/pull/14989>.
 -/
 
 namespace Hex
