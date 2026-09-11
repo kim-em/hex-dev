@@ -36,6 +36,47 @@ jobs:
         with:
           # The release-manifest admission check reads release-sync-baseline.
           fetch-depth: 0
+      # --- Docs-only fast path (SPEC/CI.md § Docs-only fast path) ---
+      # A pull request whose diff against its merge base touches only
+      # documentation and planning text skips everything from dependency
+      # installation onward; the structural lints and Python unit tests
+      # below still run. Pushes to main and manual dispatches always build
+      # in full. The allowlist is deliberately simple and permissive: a
+      # missed edge case costs one slow-to-detect breakage on the next code
+      # PR, not a release.
+      - name: Classify the change (docs-only fast path)
+        id: classify
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          docs_only=false
+          if [ "$EVENT_NAME" != pull_request ]; then
+            reason="\`$EVENT_NAME\` event; only pull requests take the fast path"
+          elif ! base="$(git merge-base "$BASE_SHA" HEAD 2>/dev/null)"; then
+            reason="no merge base against \`$BASE_SHA\`"
+          else
+            mapfile -t changed < <(git diff --name-only "$base" HEAD)
+            docs_only=true
+            reason="all ${#changed[@]} changed files match the docs-only allowlist"
+            [ "${#changed[@]}" -gt 0 ] || { docs_only=false; reason="no changed files against the merge base"; }
+            for f in "${changed[@]}"; do
+              case "$f" in
+                *.md|SPEC/*|PLAN/*|docs/*|reports/*|libraries.yml|AGENTS.md|.claude/*|LICENSE|.gitignore) ;;
+                *) docs_only=false; reason="\`$f\` is outside the docs-only allowlist"; break ;;
+              esac
+            done
+          fi
+          echo "docs_only=$docs_only" >> "$GITHUB_OUTPUT"
+          if [ "$docs_only" = true ]; then
+            path="Docs-only fast path"
+            detail="dependency installation, the Lean build and the verification tails are skipped."
+          else
+            path="Full build"
+            detail="every step runs."
+          fi
+          echo "::notice title=CI path::$path: $reason"
+          printf '## CI path\n\n**%s**: %s; %s\n' "$path" "$reason" "$detail" >> "$GITHUB_STEP_SUMMARY"
       # --- Structural + source lints ---
       - run: python3 scripts/check_copyright_headers.py
       - name: Lint Lean file line counts (SPEC/CI.md §Source-file lints)
@@ -81,8 +122,12 @@ jobs:
           python3 -m unittest scripts/oracle/test_flint_fmpq_bench.py
           python3 -m unittest scripts/oracle/test_singular_mpoly_bench.py
           python3 -m unittest scripts/oracle/test_rcf_flint_bench.py
-          python3 scripts/ci/check_benches_mathlib_free.py
           python3 scripts/ci/check_persistent_flint_warmup.py
+      # Walks the import graph of every Lean bench source, so it is the one
+      # slow lint; nothing it reads changes on a docs-only PR.
+      - name: Check benches are Mathlib-free (SPEC/benchmarking.md)
+        if: steps.classify.outputs.docs_only != 'true'
+        run: python3 scripts/ci/check_benches_mathlib_free.py
       - name: Verify conformance matrix invariant
         run: python3 scripts/conformance_targets.py --check
       - name: Validate committed PNT+ inventory (offline)
@@ -91,16 +136,19 @@ jobs:
           python3 scripts/maintenance/pnt_inventory.py --check
       # --- System + Python deps (union of the bench comparator and the oracles) ---
       - name: Install system dependencies
+        if: steps.classify.outputs.docs_only != 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y gap libgmp-dev libntl-dev pkg-config libpari-dev pari-gp singular
       - name: Install Python dependencies (bench comparator + oracles)
+        if: steps.classify.outputs.docs_only != 'true'
         run: |
           python3 -m pip install --user -r scripts/conway/requirements.txt \
             python-flint==0.9.0 gmpy2 cypari2 conway-polynomials matplotlib==3.11.1
           python3 -m unittest scripts/oracle/test_hermite_bench_drivers.py
           python3 -m unittest scripts/oracle/test_matrix_carriers.py
       - name: Verify performance measurements and figures are current
+        if: steps.classify.outputs.docs_only != 'true'
         run: |
           python3 -m unittest scripts/bench/test_sweep_freshness.py
           python3 -m unittest scripts/bench/test_check_factor_sweep_freshness.py
@@ -110,8 +158,10 @@ jobs:
           python3 scripts/bench/check_graphiso_sweep_freshness.py
           python3 scripts/bench/graphiso_pernode_fit.py --check 0.2
       - name: Set up pinned Lean toolchain (no build)
+        if: steps.classify.outputs.docs_only != 'true'
         run: bash scripts/ci/setup_lean_toolchain.sh
       - name: Fetch Mathlib cache
+        if: steps.classify.outputs.docs_only != 'true'
         # The cache endpoint flakes occasionally; a failed fetch costs a
         # whole CI lap, so retry before giving up. The populated-cache
         # hard-fail check below still rejects a triple failure.
@@ -122,14 +172,17 @@ jobs:
             sleep 30
           done
       - name: Verify Mathlib cache populated (hard fail on miss)
+        if: steps.classify.outputs.docs_only != 'true'
         run: bash scripts/ci/check_no_mathlib_rebuild.sh
       - name: Configure Lean shared library path
+        if: steps.classify.outputs.docs_only != 'true'
         run: |
           lean_prefix="$(lean --print-prefix)"
           test -d "$lean_prefix/lib/lean"
           echo "LD_LIBRARY_PATH=$lean_prefix/lib/lean:${LD_LIBRARY_PATH:-}" \
             >> "$GITHUB_ENV"
       - name: Restore .lake/build (Hex modules only)
+        if: steps.classify.outputs.docs_only != 'true'
         id: hex-build-cache
         uses: actions/cache/restore@v4
         with:
@@ -146,6 +199,7 @@ jobs:
       # recompiles only changed modules. Mathlib still comes from `lake exe
       # cache get`. ---
       - name: Configure Lake artifact cache (no-op unless endpoints set)
+        if: steps.classify.outputs.docs_only != 'true'
         env:
           PUBLIC_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC }}
           PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}
@@ -172,17 +226,19 @@ jobs:
             echo "::notice::Lake artifact cache not configured (set the LAKE_CACHE_*_PUBLIC repo variables to enable)"
           fi
       - name: Restore hex-dev oleans from the Lake cache (anonymous; non-fatal)
-        if: ${{ steps.hex-build-cache.outputs.cache-matched-key == '' && env.HEX_CACHE_ENABLED == '1' }}
+        if: ${{ steps.classify.outputs.docs_only != 'true' && steps.hex-build-cache.outputs.cache-matched-key == '' && env.HEX_CACHE_ENABLED == '1' }}
         run: |
           lake cache get --max-revs=20 --service hex-public --repo kim-em/hex-dev \
             || echo "::warning::lake cache miss for this revision; building from source"
       - name: Disable implicit Lake cache restores during build
+        if: steps.classify.outputs.docs_only != 'true'
         run: echo "LAKE_NO_CACHE=true" >> "$GITHUB_ENV"
       # With the cache env now active, assert the entire Mathlib graph is already
       # up to date. `--no-build` reports stale targets and exits non-zero instead
       # of building them, so this fails loudly (never silently rebuilds) if the
       # cache wiring ever invalidates the prebuilt Mathlib oleans.
       - name: Assert Mathlib will not rebuild (lake build --no-build)
+        if: steps.classify.outputs.docs_only != 'true'
         run: lake build --no-build Mathlib
       # Two target sets. HEX_LIB_TARGETS are the libraries we cache: their oleans
       # are the expensive elaboration and they restore cleanly. Executables are
@@ -191,6 +247,7 @@ jobs:
       # up-to-date yet cannot run. By never publishing them, exes always link
       # fresh against the restored libs, which is cheap.
       - name: Define the hex-dev cache + build target sets
+        if: steps.classify.outputs.docs_only != 'true'
         run: |
           echo "HEX_LIB_TARGETS=HexBasic HexTruncatedSeries HexTruncatedSeriesMathlib HexArith HexPoly HexPolyFast HexRationalFn HexRationalFnMathlib HexRationalFnKernelProbe HexPolyFastKernels HexMvPoly HexModArith HexGF2 HexPolyZ HexRoots HexResultant HexInterval HexIntervalExperiment HexIntervalMathlib HexIntervalMathlibExperiment HexIntervalReplayProbe HexIntervalMathlibReplayProbe HexRealRootsMathlibReplayProbe HexRCFProofProbe HexPolyFp HexGFqRing HexGFqField HexBerlekamp HexHensel HexConway HexGFq HexPrimality HexIntFactor HexPrimalityKernelProbe HexPrimalityElabProbe HexPrimalityMathlibProofProbe HexIntFactorKernelProbe HexMvGcdKernelProbe HexBerlekampZassenhaus HexRealRoots HexMatrix HexRowReduce HexDeterminant HexBareiss HexHermite HexSmith HexCharPoly HexMinPoly HexPolySmith HexGramSchmidt HexLatticeEnum HexLatticeEnumMathlib HexLatticeEnumTests HexPermGroup HexPermGroupMathlib HexPermGroupTests HexLLL HexMatrixMathlib HexHermiteMathlib HexSmithMathlib HexSmithTests HexCharPolyMathlib HexMinPolyMathlib HexPolySmithMathlib HexGramSchmidtMathlib HexLLLMathlib HexBerlekampZassenhausMathlib HexBerlekampZassenhausMathlibProofProbe HexBerlekampMathlibProofProbe HexPrimalityMathlib HexIntFactorMathlib HexPolyFpMathlib HexFactorizationModules HexRealRootsMathlib HexGF2Mathlib HexGFqMathlib HexMvPolyMathlib HexMvPolyMathlibProofProbe HexRCF HexRootsMathlib HexResultantMathlib HexNumberField HexNumberFieldMathlib HexRealAlgebraic HexRealAlgebraicMathlib HexNumberFieldTower HexNumberFieldTowerMathlib HexReleaseTests HexReleaseExamples HexAggregateCheck" >> "$GITHUB_ENV"
           echo "HEX_EXE_TARGETS=hextruncatedseries_bench hexarith_bench hexpoly_bench hexpolyfast_bench hexrationalfn_bench hexpolysmith_bench hexmvpoly_bench hexmvgcd_bench hexsparsepoly_bench hexpolyz_bench hexpolyfp_bench hexmodarith_bench hexmodular_bench hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench hexhensel_bench hexprimality_bench hexprimality_policy_probe hexprimality_fuel_probe hexintfactor_bench hexberlekamp_bench hexbz_bench hexconway_bench hexconway_replay hexmatrix_bench hexgraphiso_bench hexpermgroup_bench hexstrassen_compare hexrowreduce_bench hexdeterminant_bench hexbareiss_bench hexcharpoly_bench hexminpoly_bench hexgramschmidt_bench hexlatticeenum_bench hexhermite_bench hexsmith_bench hexrealroots_bench hexrcf_bench hexroots_bench hexresultant_bench hexnumberfield_bench hexnumberfieldtower_bench tower_factor_diff hexinterval_decision_bench hexroots_demo hex_interval_representation_spike hex_interval_center_spike hex_interval_scale_spike hex_interval_scheduler_spike hex_interval_policy_frontier_spike hex_arith_floor hexlll_bench hexlll_gram_bench hexlll_external_reduction hexbz_factor_service" >> "$GITHUB_ENV"
@@ -207,6 +264,7 @@ jobs:
       # elaboration peaks do not overlap. The RSS guard is conservative because
       # shared mappings can be counted in several processes.
       - name: Build hex libraries + bench exes
+        if: steps.classify.outputs.docs_only != 'true'
         run: |
           # Warm external dependencies outside the measurement, then perform
           # each clean build once before the rest of the graph. Subsequent
@@ -218,20 +276,23 @@ jobs:
             --warm-dependencies --ceiling 1800 --max-rss-kib 14680064
           lake build ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS} HexTruncatedSeriesTests
       - name: Verify Conway generation and compiled certificates
+        if: steps.classify.outputs.docs_only != 'true'
         run: |
           python3 -m unittest scripts/conway/test_tools.py
           python3 scripts/conway/generate.py --check
           python3 scripts/conway/verify_provenance.py reports/conway/ci-conway.json reports/conway/ci-bridge.json --commit HEAD
           .lake/build/bin/hexconway_replay > reports/conway/ci-runtime.jsonl
       - name: Upload Conway rebuild evidence
-        if: always()
+        if: ${{ always() && steps.classify.outputs.docs_only != 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: conway-rebuild-evidence
           path: reports/conway/ci-*
       - name: Verify deterministic HexPrimality table regeneration
+        if: steps.classify.outputs.docs_only != 'true'
         run: python3 scripts/bench/check_prime_table.py
       - name: Build conformance + emit-fixture targets
+        if: steps.classify.outputs.docs_only != 'true'
         run: |
           lake build \
             HexConformance HexMvFactorizationTests NautyFFI/nautyffi_tests hextruncatedseries_emit_fixtures \
@@ -258,6 +319,7 @@ jobs:
             hexnumberfield_quadratic \
             hexnumberfieldtower_emit_fixtures hexgraphiso_emit_trace hexgraphiso_emit_campaign
       - name: Build HexManual
+        if: steps.classify.outputs.docs_only != 'true'
         run: lake build HexManual
       # --- Parallel verification tails (single job, in-job parallel steps) ---
       # Both tails only read the already-built .lake/build; they write to
@@ -269,6 +331,7 @@ jobs:
       # propagation, so gating never depends on background-step exit codes.
       # (`shell: bash` is set job-wide, so these run under `-eo pipefail`.)
       - name: Bench verify (smoke gate per SPEC/benchmarking.md §CI integration)
+        if: steps.classify.outputs.docs_only != 'true'
         id: bench
         background: true
         env:
@@ -305,6 +368,7 @@ jobs:
           .lake/build/bin/hexinterval_decision_bench canary
           touch "$RUNNER_TEMP/bench.ok"
       - name: Conformance oracles + BZ gates
+        if: steps.classify.outputs.docs_only != 'true'
         id: conformance
         background: true
         env:
@@ -336,7 +400,12 @@ jobs:
           touch "$RUNNER_TEMP/conformance.ok"
       - wait-all:
       - name: Gate on parallel verification results (fail-closed)
+        env:
+          DOCS_ONLY: ${{ steps.classify.outputs.docs_only }}
         run: |
+          if [ "$DOCS_ONLY" = true ]; then
+            echo "docs-only fast path: verification tails were not run"; exit 0
+          fi
           rc=0
           [ -f "$RUNNER_TEMP/bench.ok" ] || { echo "::error::Bench verify did not complete successfully"; rc=1; }
           [ -f "$RUNNER_TEMP/conformance.ok" ] || { echo "::error::Conformance/oracles did not complete successfully"; rc=1; }
