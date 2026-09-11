@@ -368,6 +368,42 @@ libraries:
     correspondence_only: true
     done_through: 0
     status: planned
+  HexDet:
+    deps: [HexBareiss, HexCharPoly, HexRowReduce, HexPolyFp, HexResultant, HexMvGcd]
+    mathlib: false
+    done_through: 0
+    status: planned
+    phase4:
+      comparators:
+        - tool: FLINT fmpz_mat.det() via python-flint
+          class: informational
+          rationale: FLINT uses its own determinant selection and process protocol; internal adjacent-arm comparisons determine Hex dispatch policies.
+        - tool: FLINT fmpq_mat.det() via python-flint
+          class: informational
+          rationale: FLINT uses its own rational determinant selection; internal elimination versus Bareiss comparisons determine the field policy.
+        - tool: FLINT nmod_mat.det() via python-flint
+          class: informational
+          rationale: FLINT uses its own modular determinant selection; internal comparisons at the identical prime determine the field policy.
+        - tool: SymPy Matrix.det(method="berkowitz") over exact polynomial domains
+          class: informational
+          rationale: Independent polynomial recurrence and Python process overhead provide conformance and timing context, not a dispatch cutoff.
+      input_families:
+        - name: integer
+          description: Dimension and coefficient-bit sweeps on dense, tridiagonal, triangular, singular, low-rank, and unimodular inputs; Bareiss, modular, and divisor comparisons. Initial Bareiss policy is unmeasured; record enabled constants and evidence in reports/hex-det-performance.md.
+        - name: field
+          description: Dimension, rational numerator and denominator size, and prime modulus; elimination versus Bareiss. Initial Bareiss policy is unmeasured; record enabled constants and evidence in reports/hex-det-performance.md.
+        - name: dense-poly
+          description: Dimension, degree, and coefficient size over Rat, prime ZMod64, and Int; Bareiss versus Berkowitz with nonconstant pivots.
+        - name: mv-poly
+          description: Dimension, variable count, degree, support, and coefficient size over Int and Rat; Bareiss versus Berkowitz with nonconstant pivots.
+        - name: dispatch
+          description: Tiny cases and rings with zero divisors, plus both sides of measured cutoffs and modular fallback when enabled; dispatch versus its selected direct arm.
+  HexDetMathlib:
+    deps: [HexDet, HexBareissMathlib, HexCharPolyMathlib, HexDeterminantMathlib, HexPolyMathlib, HexPolyFpMathlib, HexMvPolyMathlib]
+    mathlib: true
+    correspondence_only: true
+    done_through: 0
+    status: planned
   HexCharPoly:
     deps: [HexMatrix, HexPoly]
     mathlib: false
