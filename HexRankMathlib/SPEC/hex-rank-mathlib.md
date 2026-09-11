@@ -400,8 +400,9 @@ certificate check, while the definitional identification costs `6 ms`.
 
 The proof follows `rank_eq_of_cert`. Lower bound: with `B` the pivot block
 `A.submatrix rows cols` and `V̄` the matrix of `vt` over `ZMod modulus`
-(zero below the diagonal), the product `B.map Int.cast * V̄` is lower
-triangular with unit diagonal (`Matrix.IsLowerTriangular`,
+(entries missing from a column are zero, entries past the block width are
+ignored), the product `B.map Int.cast * V̄` is lower triangular with unit
+diagonal (`Matrix.IsLowerTriangular`,
 `det_of_isLowerTriangular`), so its determinant is `1`, `det B` is nonzero
 in `ZMod modulus` (`Int.cast_det`, nontrivial since `modulus ≥ 2`) and so
 in `ℤ`; then `rank_of_det_ne_zero` and `rank_submatrix_le`. Upper bound:
@@ -427,22 +428,29 @@ r ≤ A.rank      A.rank ≥ r
 
 for `A : Matrix (Fin n) (Fin m) ℤ` a closed `!![…]` or `Matrix.of ![…]`
 literal, possibly behind definitions (unfolded within a small budget), and
-`r` a closed natural number. Entries are closed integer expressions that
-`norm_num` evaluates (`1 - 1` is accepted; the kernel then reduces
-`1 - 1` itself when the checker reads it).
+`r` a closed natural number compared in the ordinary order on `Nat`.
+Entries are closed integer expressions that `norm_num` evaluates and that
+the kernel reduces to their numerals: numerals and arithmetic on them
+(`1 - 1` is accepted). The row list `L` holds the numerals; a numeral
+entry of the literal is the same expression, so the identification is
+`rfl` at no cost, and any other entry is reduced once by the kernel.
 
 The tactic evaluates the entries with Mathlib's `evalRatEntry`, runs the
 compiled `Hex.Matrix.rankWitness`, quotes the witness with `toExpr`, and
 builds `rank_eq_of_checkList' A L c rfl (of_decide_eq_true rfl)` composed
 with a kernel-decided comparison of `c.rank` with `r`; the whole proof is
-added as an auxiliary theorem (`mkAuxTheorem`) so the kernel checks it
-exactly once. Outcomes follow the matrix-tactic protocol: a goal that is
-not a rank comparison is not applicable; a matrix with free variables, a
-non-integer carrier or a non-literal closed matrix is declined with the
+added as an auxiliary theorem (`mkAuxTheorem`, with asynchronous checking
+off) so the kernel checks it exactly once and the tactic sees a rejection.
+Outcomes follow the matrix-tactic protocol: a goal that is not a rank
+comparison is not applicable; a matrix with free variables, a non-integer
+carrier, a non-literal closed matrix or a `vecCons` chain not ending in
+`vecEmpty` is declined with the reason, as is a producer failure with its
 reason; a false target is reported with the certified rank before any
-proof is built; a certificate the kernel rejects is a failure, diagnosed
-by evaluating each decided proposition. Accepted theorems depend on
-`propext`, `Classical.choice` and `Quot.sound` only.
+proof is built; a rejection by the kernel is diagnosed by evaluating the
+bound, the certificate check and the identification of the literal in
+turn, and reported as a false target, a producer bug, or an entry the
+kernel cannot reduce. Accepted theorems depend on `propext`,
+`Classical.choice` and `Quot.sound` only.
 
 **Comparator.** The unmodified pinned `eval_rank` is the comparator. The
 fresh-module probes `bench/HexRankMathlib/ProofProbe/{Dense8,Dense16,
@@ -450,9 +458,24 @@ Deficient16,Dense32,LowRank32}{Hex,Mathlib}.lean` prove the same literal
 by `rank` and by `eval_rank`, each against its import-only baseline
 (`Baseline`, `MathlibBaseline`); `scripts/bench/rank_tactic_sweep.py`
 runs them through `fresh_module_sweep.py` (six samples, adjacent pairs,
-alternating orientation) and the family's comparator ratio is the
-`eval_rank` delta over the `rank` delta. Kernel-only times on the same
-literals, one run each on the shared host (`lake lean -Dprofiler=true`):
+alternating orientation). Each arm's delta is an absolute estimate of its
+proof cost, literal elaboration included; the family's comparator ratio
+is the ratio of the two medians and is only as resolved as the smaller
+delta. Medians from
+`reports/bench-results/hex-rank-mathlib-tactic-probes-70ca11975602-chungus2.json`
+(shared host, one CPU, both arms with `!![…]` elaboration inside the
+delta):
+
+| family | `eval_rank` | `rank` | ratio |
+|---|---|---|---|
+| dense `8 × 8` | 0.30 s | 0.10 s | 3.0 |
+| dense `16 × 16` | 1.80 s | 0.40 s | 4.5 |
+| dense `16 × 16`, rank 14 | 1.80 s | 0.40 s | 4.5 |
+| dense `32 × 32` | 13.9 s | 2.4 s | 5.9 |
+| `32 × 32`, rank 2 | 15.1 s | 0.70 s | 21.6 |
+
+Kernel-only times on the same literals, one run each on the shared host
+(`lake lean -Dprofiler=true`), which the sweep does not separate:
 
 | family | `eval_rank` | `rank` |
 |---|---|---|

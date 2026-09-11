@@ -19,11 +19,15 @@ The `rank` tactic on Mathlib matrices: closes `A.rank = r`, `A.rank ≤ r`,
 `r ≤ A.rank` (and their mirror images) for a closed integer matrix literal
 `A` written as `!![…]` or `Matrix.of ![…]`, possibly behind definitions.
 
-Compiled code evaluates the entries, runs the rank producer and builds a
-`RankWitness`; the proof is `rank_eq_of_checkList'` applied to `rfl` (the
-literal is definitionally `ofLists n m L` for its row list `L`) and to one
-kernel `decide` on `checkRankList`.  The whole proof is added as an auxiliary
-theorem so the kernel checks it exactly once.
+Compiled code evaluates the entries with `norm_num`, runs the rank producer
+and builds a `RankWitness`; the proof is `rank_eq_of_checkList'` applied to
+`rfl` (the literal is definitionally `ofLists n m L` for the row list `L`
+of its entries' numerals) and to one kernel `decide` on `checkRankList`.
+The whole proof is added as an auxiliary theorem, checked synchronously, so
+the kernel checks it exactly once and a rejection is reported by the tactic.
+Entries must be closed integer expressions that `norm_num` evaluates and
+that the kernel reduces to their numerals (numerals and arithmetic on
+them); an entry the kernel cannot reduce is reported as such.
 
 Outcomes follow the matrix-tactic protocol: a goal that is not a rank
 comparison is not applicable; a matrix that is not a closed integer literal is
@@ -47,7 +51,8 @@ inductive Rel where
   | ge
 
 /-- Recognize a rank target: the matrix, the other side, the relation from the
-rank's point of view, and whether an equality had the rank on the right. -/
+rank's point of view, and whether an equality had the rank on the right.
+Inequalities must use the ordinary order on `Nat`. -/
 def rankTarget? (target : Expr) : Option (Expr × Expr × Rel × Bool) :=
   let isRank (e : Expr) := e.getAppFn.isConstOf ``Matrix.rank
   match target.getAppFnArgs with
@@ -55,12 +60,14 @@ def rankTarget? (target : Expr) : Option (Expr × Expr × Rel × Bool) :=
       if isRank a then some (a.appArg!, b, .eq, false)
       else if isRank b then some (b.appArg!, a, .eq, true)
       else none
-  | (``LE.le, #[_, _, a, b]) =>
-      if isRank a then some (a.appArg!, b, .le, false)
+  | (``LE.le, #[_, inst, a, b]) =>
+      if !inst.isConstOf ``instLENat then none
+      else if isRank a then some (a.appArg!, b, .le, false)
       else if isRank b then some (b.appArg!, a, .ge, false)
       else none
-  | (``GE.ge, #[_, _, a, b]) =>
-      if isRank a then some (a.appArg!, b, .ge, false)
+  | (``GE.ge, #[_, inst, a, b]) =>
+      if !inst.isConstOf ``instLENat then none
+      else if isRank a then some (a.appArg!, b, .ge, false)
       else if isRank b then some (b.appArg!, a, .le, false)
       else none
   | _ => none
@@ -84,7 +91,8 @@ def unfoldBudget : Nat := 8
 its dimensions, entry type, and rows of entries.  Like Mathlib's
 `matchMatrixLit?`, but the dimensions may be any closed expressions that
 evaluate to numerals, as `Matrix.of ![…]` elaborates them as `Nat.succ`
-chains. -/
+chains, and every `vecCons` chain must end in `vecEmpty`, so that the
+literal is definitionally the `ofLists` of its entries. -/
 def matchLit? (A : Expr) : MetaM (Option (Nat × Nat × Expr × Array (Array Expr))) := do
   if A.hasFVar || A.hasMVar then return none
   let_expr Matrix finM finN R := ← inferType A | return none
@@ -94,12 +102,12 @@ def matchLit? (A : Expr) : MetaM (Option (Nat × Nat × Expr × Array (Array Exp
   let some n ← (Meta.evalNat nE).run | return none
   let_expr DFunLike.coe _ _ _ _ f v := A | return none
   let_expr Matrix.of _ _ _ := f | return none
-  let (rows, _, _) ← Matrix.matchVecConsPrefix mE v
-  unless rows.length == m do return none
+  let (rows, _, tail) ← Matrix.matchVecConsPrefix mE v
+  unless rows.length == m && tail.getAppFn.isConstOf ``Matrix.vecEmpty do return none
   let entries ← rows.toArray.mapM fun row => do
-    let (es, _, _) ← Matrix.matchVecConsPrefix nE row
+    let (es, _, tail) ← Matrix.matchVecConsPrefix nE row
+    unless es.length == n && tail.getAppFn.isConstOf ``Matrix.vecEmpty do failure
     return es.toArray
-  unless entries.all (·.size == n) do return none
   return some (m, n, R, entries)
 
 /-- Find the literal behind `A`, unfolding definitions within `unfoldBudget`. -/
@@ -127,14 +135,16 @@ def literal? (A : Expr) : MetaM (Option Literal) := do
 def witness (lit : Literal) : MetaM RankWitness := do
   let A : Hex.Matrix Int lit.n lit.m := Hex.Matrix.ofFn fun i j => (lit.values[i.val]!)[j.val]!
   match Hex.Matrix.rankWitness A with
-  | some w => return w
-  | none => throwError "rank: declined: no modulus in `witnessModuli` makes the pivot block's denominator a unit"
+  | .ok w => return w
+  | .error e => throwError "rank: declined: the producer found no witness: {e}"
 
-/-- The row list of a literal, reusing its entry expressions so that the
-identification with the literal is definitional. -/
+/-- The row list of a literal as integer numerals.  A numeral entry of the
+literal is syntactically the same expression, so the identification with
+the literal is by `rfl` at no cost; any other closed entry, such as
+`1 - 1`, is reduced to its numeral by the kernel once. -/
 def rowList (lit : Literal) : MetaM Expr := do
   let int := mkConst ``Int
-  let rows ← lit.entries.toList.mapM fun row => mkListLit int row.toList
+  let rows ← lit.values.toList.mapM fun row => mkListLit int (row.toList.map toExpr)
   mkListLit (mkApp (mkConst ``List [Level.zero]) int) rows
 
 /-- `of_decide_eq_true` on a closed decidable proposition, for the kernel to
@@ -143,20 +153,32 @@ def decideProof (prop : Expr) : MetaM Expr := do
   let d ← mkDecide prop
   return mkApp3 (mkConst ``of_decide_eq_true) prop d.appArg! (← mkEqRefl (mkConst ``Bool.true))
 
-/-- Diagnose a proof the kernel rejected: evaluate each decided proposition
-with the kernel and report the first that is false or stuck. -/
-def diagnose (props : List Expr) (e : Exception) : MetaM Exception := do
-  for prop in props do
-    let d ← mkDecide prop
-    match Kernel.whnf (← getEnv) (← getLCtx) d with
-    | .ok r =>
-        if r.isConstOf ``Bool.false then
-          return .error e.getRef m!"rank: the target is false: the kernel refutes{indentExpr prop}"
-        unless r.isConstOf ``Bool.true do
-          return .error e.getRef m!"rank: the kernel check got stuck{indentExpr prop}"
-    | .error err =>
-        return .error e.getRef
-          m!"rank: the kernel could not evaluate the check: {err.toMessageData (← getOptions)}"
+/-- Diagnose a proof the kernel rejected: evaluate the bound comparison and
+the certificate check with the kernel, and test the identification of the
+literal with its row list, reporting the first that fails. -/
+def diagnose (bound check : Expr) (A ofL : Expr) (e : Exception) : MetaM Exception := do
+  let env ← getEnv
+  let lctx ← getLCtx
+  let evalBool (prop : Expr) : MetaM (Option Bool) := do
+    match Kernel.whnf env lctx (← mkDecide prop) with
+    | .ok r => return if r.isConstOf ``Bool.true then some true
+        else if r.isConstOf ``Bool.false then some false else none
+    | .error _ => return none
+  match ← evalBool bound with
+  | some false => return .error e.getRef m!"rank: the target is false: the kernel refutes{indentExpr bound}"
+  | none => return .error e.getRef m!"rank: the kernel cannot decide the bound{indentExpr bound}"
+  | some true => pure ()
+  match ← evalBool check with
+  | some false =>
+      return .error e.getRef
+        m!"rank: the producer's certificate fails the kernel check (a producer bug){indentExpr check}"
+  | none => return .error e.getRef m!"rank: the kernel check got stuck{indentExpr check}"
+  | some true => pure ()
+  match Kernel.isDefEq env lctx A ofL with
+  | .ok true => pure ()
+  | _ =>
+      return .error e.getRef
+        m!"rank: the entries of the matrix do not reduce to their numerals in the kernel{indentExpr A}"
   return .error e.getRef m!"rank: the kernel rejected the proof: {e.toMessageData}"
 
 /-- Prove a rank target, or throw. -/
@@ -202,10 +224,12 @@ def proveGoal (target : Expr) : MetaM Expr := do
         if reverse then mkEqSymm proof else pure proof
     | .le => mkAppM ``HexMatrixMathlib.rank_le_of_checkList' #[A, L, c, hA, hcheck, hbound]
     | .ge => mkAppM ``HexMatrixMathlib.le_rank_of_checkList' #[A, L, c, hA, hcheck, hbound]
+  -- check synchronously, so that a rejection is reported here, not later
   try
-    mkAuxTheorem target proof
+    withOptions (Lean.Elab.async.set · false) do
+      mkAuxTheorem target proof
   catch e =>
-    throw (← diagnose [bound, check] e)
+    throw (← diagnose bound check A ofL e)
 
 /-- `rank` closes `A.rank = r`, `A.rank ≤ r` and `r ≤ A.rank` for a closed
 integer matrix literal `A`, with the kernel checking a rank certificate.  The

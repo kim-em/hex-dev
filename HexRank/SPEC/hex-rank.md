@@ -802,14 +802,18 @@ its own output and moves to the next modulus of `witnessModuli` if
 **Kernel discipline** (design principle 11, made concrete): every
 definition on the path is `@[expose]`; the arithmetic is `Nat.mul`,
 `Nat.add`, `Nat.mod`, `Int.mul`, `Int.add` called directly; comparisons
-are `Nat.beq` and `Nat.blt`; loops are structural recursion on the lists;
-no `Array`, `Vector`, `Fin`, `Finset`, `dite`, well-founded recursion or
-instance chain appears inside a loop. `List.ofFn`, `zipWith`, `take`,
+are `Nat.beq` and `Nat.blt`, and integer equality `decide (a = b)`, a
+fixed-cost `Int.decEq`; loops are structural recursion on the lists, and
+entries are read by structural recursion (`nthRow`, `nthInt`); no
+`Array`, `Vector`, `Fin`, `Finset`, `dite` or well-founded recursion
+appears on the path. `List.ofFn`, `zipWith`, `take`,
 `getD`, `replicate`, `range`, `filter`, `map` and `Int.emod` all reduce
 across a module boundary and may be used freely.
 
-**Cost.** `rank³ / 2` multiplications of numbers below the modulus plus
-`(n − rank) · rank · m` integer multiplications, against `checkRank`'s
+**Cost.** `rank³ / 2` multiplications of numbers below the modulus,
+`rank²` reductions of block entries to residues, plus
+`(n − rank) · (rank + 1) · m` integer multiplications for the non-pivot
+rows (`scaleRow` and the combination), against `checkRank`'s
 `n · rank · m + rank² · m + rank³ + n · m` products of minor-sized
 integers, and against the `n³ / 3` minor-by-entry products of Mathlib's
 `Echelon.Decomposition` check. With the companion's `rank` tactic on the
@@ -828,8 +832,11 @@ stated on Mathlib's `Matrix (Fin n) (Fin m) ℤ` directly, since the only
 consumer is a Mathlib goal. Mathlib-free, `checkRankList` is exercised in
 the conformance target: the producer's witness on the `3 × 4` example is
 replayed by `decide +kernel`, and witnesses with `denom := 0`, a wrong
-rank, a repeated row, a changed `vt` entry and a changed `z` entry are
-refuted by `decide +kernel`.
+rank, a repeated row index, a column index out of range, a ragged
+matrix, a changed `vt` entry and a changed `z` entry are refuted by
+`decide +kernel`; a witness modulo the composite `9`, columns of `vt`
+extended past the block width, and a `z` row shorter or longer than the
+rank are accepted.
 
 ## Carriers
 
@@ -1290,7 +1297,7 @@ bench/HexRank/Bench.lean
 - **A triangular `V` for the kernel certificate.** Column `j` of the last
   column of the adjugate of the leading `(j + 1)`-block of `B` (whose
   leading principal minors are the pivots, so nonzero) makes `B · V` lower
-  triangular with `rank³ / 6` products checked instead of `rank³ / 2`; a
+  triangular with `rank³ / 3` products checked instead of `rank³ / 2`; a
   prototype measured `55 ms` against `77 ms` at `n = 16`. It costs the
   producer `r` block adjugates and needs every leading principal minor to
   be a unit modulo the modulus. Measure on `dense-full-rank` before adding

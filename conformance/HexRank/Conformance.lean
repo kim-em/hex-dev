@@ -212,9 +212,33 @@ def kernelEx : Matrix Int 3 4 := #m[1, 2, 3, 4; 2, 4, 6, 8; 1, 0, 1, 0]
 /-- The witness `rankWitness kernelEx` produces. -/
 def kernelWitness : RankWitness := { rank := 2, modulus := 2147483647, rows := [0, 2], cols := [0, 1], vt := [[0, 1073741824], [1, 1073741823]], denom := -2, z := [[-4, 0]] }
 
-#guard rankWitness kernelEx = some kernelWitness
-#guard (rankWitness (0 : Matrix Int 0 0)).map (·.rank) = some 0
-#guard (rankWitness (0 : Matrix Int 2 3)).map (·.rank) = some 0
+#guard (rankWitness kernelEx).toOption = some kernelWitness
+#guard (rankWitness (0 : Matrix Int 0 0)).toOption.map (·.rank) = some 0
+#guard (rankWitness (0 : Matrix Int 2 3)).toOption.map (·.rank) = some 0
+#guard (rankWitnessWith 4 kernelEx).toOption = none   -- `-2` is not a unit modulo `4`
+
+/-- The same witness modulo the composite `9`; primality plays no role. -/
+def kernelWitness9 : RankWitness :=
+  { rank := 2, modulus := 9, rows := [0, 2], cols := [0, 1], vt := [[0, 5], [1, 4]], denom := -2,
+    z := [[-4, 0]] }
+
+#guard (rankWitnessWith 9 kernelEx).toOption = some kernelWitness9
+example : checkRankList 3 4 (toLists kernelEx) kernelWitness9 = true := by decide +kernel
+-- entries of `vt` past the block width, and coefficients missing or past the
+-- pivot count, are ignored or zero
+example : checkRankList 3 4 (toLists kernelEx)
+    { kernelWitness with vt := kernelWitness.vt.map (· ++ [7]) } = true := by decide +kernel
+example : checkRankList 3 4 (toLists kernelEx) { kernelWitness with z := [[-4]] } = true := by
+  decide +kernel
+example : checkRankList 3 4 (toLists kernelEx) { kernelWitness with z := [[-4, 0, 999]] } = true := by
+  decide +kernel
+-- a repeated index, an index out of range, and a ragged matrix are rejected
+example : checkRankList 3 4 (toLists kernelEx) { kernelWitness with rows := [0, 0] } = false := by
+  decide +kernel
+example : checkRankList 3 4 (toLists kernelEx) { kernelWitness with cols := [0, 4] } = false := by
+  decide +kernel
+example : checkRankList 3 4 [[1, 2, 3, 4], [2, 4, 6, 8], [1, 0, 1]] kernelWitness = false := by
+  decide +kernel
 
 example : checkRankList 3 4 (toLists kernelEx) kernelWitness = true := by decide +kernel
 example : checkRankList 3 4 (toLists kernelEx) { kernelWitness with denom := 0 } = false := by

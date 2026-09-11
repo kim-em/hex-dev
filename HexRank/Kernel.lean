@@ -213,12 +213,13 @@ def invMod? (u M : Nat) : Option Nat :=
   if g = 1 then some (Int.emod s (Int.ofNat M)).toNat else none
 
 open RankWitness in
-/-- The witness for a fixed modulus, or `none` when a diagonal entry is not
-a unit modulo it or the self-check fails. -/
-def rankWitnessWith (M : Nat) (A : Matrix Int n m) : Option RankWitness := do
+/-- The witness for a fixed modulus, or the reason there is none: `denom` is
+not a unit modulo `M`, or the self-check fails (a producer bug). -/
+def rankWitnessWith (M : Nat) (A : Matrix Int n m) : Except String RankWitness := do
   let c := rankCert A
   let r := c.rank
-  let dinv ← invMod? (residue M c.denom) M
+  let some dinv := invMod? (residue M c.denom) M |
+    throw s!"the denominator {c.denom} is not a unit modulo {M}"
   let rowsL := c.rows.toList.map (·.val)
   let colsL := c.cols.toList.map (·.val)
   let Al := toLists A
@@ -230,19 +231,28 @@ def rankWitnessWith (M : Nat) (A : Matrix Int n m) : Option RankWitness := do
     (List.finRange r).foldl (fun acc k => acc + A[(i, c.cols[k])] * c.adj[(k, l)]) 0
   let w : RankWitness :=
     { rank := r, modulus := M, rows := rowsL, cols := colsL, vt := vt, denom := c.denom, z := z }
-  if checkRankList n m Al w then some w else none
+  if checkRankList n m Al w then pure w
+  else throw s!"the witness fails its own check modulo {M}"
 
 /-- The kernel witness of an integer matrix: the first modulus in
-`witnessModuli` that works.  `none` only if every modulus fails the
-self-check, which the tactic reports as a decline. -/
-def rankWitness (A : Matrix Int n m) : Option RankWitness :=
-  witnessModuli.findSome? fun M => rankWitnessWith M A
+`witnessModuli` that works, or the reasons every modulus failed. -/
+def rankWitness (A : Matrix Int n m) : Except String RankWitness :=
+  go witnessModuli []
+where
+  /-- Try the moduli in order, collecting the failure reasons. -/
+  go : List Nat → List String → Except String RankWitness
+    | [], reasons => throw (String.intercalate "; " reasons.reverse)
+    | M :: Ms, reasons =>
+        match rankWitnessWith M A with
+        | .ok w => pure w
+        | .error e => go Ms (e :: reasons)
 
 /-- Compiled sanity check on a `3 × 4` matrix of rank `2`, and the same
 witness replayed by the kernel. -/
 private def witnessExample : Matrix Int 3 4 := #m[1, 2, 3, 4; 2, 4, 6, 8; 1, 0, 1, 0]
 
-#guard (rankWitness witnessExample).map (·.rank) = some 2
-#guard (rankWitness witnessExample).all fun w => checkRankList 3 4 (toLists witnessExample) w
+#guard (rankWitness witnessExample).toOption.map (·.rank) = some 2
+#guard (rankWitness witnessExample).toOption.all fun w =>
+  checkRankList 3 4 (toLists witnessExample) w
 
 end Hex.Matrix

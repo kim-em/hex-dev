@@ -5,9 +5,11 @@ Each family is one closed integer matrix literal proved twice in fresh
 modules: by `eval_rank` (reference arm, importing only
 `Mathlib.Tactic.NormRank`) and by `rank` (candidate arm, importing
 `HexRankMathlib`). Both arms are paired against their own import-only
-baseline, so a pair's delta is the cost of the proof itself: elaboration,
-certificate construction and the kernel check. The comparator ratio of a
-family is the Mathlib delta over the Hex delta.
+baseline, so a pair's delta is an absolute estimate of the cost of that
+proof: literal elaboration, certificate construction and the kernel check.
+The two arms of a family are separate estimates; the ratio of their medians
+is reported as the family's comparator ratio, and is only as resolved as
+the smaller of the two deltas.
 """
 
 from __future__ import annotations
@@ -46,12 +48,7 @@ FAMILIES = (
 
 
 def pairs() -> tuple[ProbePair, ...]:
-    out = [
-        ProbePair("import-null", BASELINE, BASELINE,
-                  {"component": "fresh-build-noise", "n": 0, "rank": 0}, null_control=True),
-        ProbePair("mathlib-import-null", MATHLIB_BASELINE, MATHLIB_BASELINE,
-                  {"component": "fresh-build-noise", "n": 0, "rank": 0}, null_control=True),
-    ]
+    out: list[ProbePair] = []
     for family, module, n, rank in FAMILIES:
         out.append(ProbePair(
             f"{family}-eval-rank", MATHLIB_BASELINE, probe(f"{module}Mathlib", True),
