@@ -71,7 +71,7 @@ open HexMatrixMathlib
 - the `rank` tactic: `A.rank = r`, `A.rank ≤ r` and `r ≤ A.rank` for a
   closed integer literal `A`, by the compiled producer and one kernel check
   of the certificate; 6 to 60 times less kernel time than Mathlib's
-  `eval_rank` on 16 × 16 to 32 × 32 literals.
+  `eval_rank` on 8 × 8 to 32 × 32 literals.
 
 # Verification
 

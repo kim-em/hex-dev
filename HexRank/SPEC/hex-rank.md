@@ -813,12 +813,14 @@ across a module boundary and may be used freely.
 `n · rank · m + rank² · m + rank³ + n · m` products of minor-sized
 integers, and against the `n³ / 3` minor-by-entry products of Mathlib's
 `Echelon.Decomposition` check. With the companion's `rank` tactic on the
-same literals as above, the kernel takes `133 ms` at `n = 16` (`eval_rank`
-`864 ms`), `1.2 s` at `n = 32` (`6.8 s`), and `117 ms` on a `32 × 32`
+same literals as above, the kernel takes `115 ms` at `n = 16` (`eval_rank`
+`864 ms`), `1.1 s` at `n = 32` (`6.8 s`), and `116 ms` on a `32 × 32`
 matrix of rank `2` (`7.3 s`); the same host, one run each, the tactic's
 proof probes under `bench/HexRankMathlib/ProofProbe` being the
-reproducible form. The remaining gap to a hand-written prototype (`55 ms`
-at `n = 16` with a triangular `V`) is an open question below.
+reproducible form. About half of the `115 ms` is the reduction of the
+`16 × 16` pivot block's entries to residues and the rest the `r³ / 2`
+products; the gap to a hand-written prototype (`55 ms` at `n = 16` with a
+triangular `V`) is an open question below.
 
 **Soundness** is the companion's `rank_eq_of_checkList`
 ([hex-rank-mathlib §Kernel certificate](../../HexRankMathlib/SPEC/hex-rank-mathlib.md#kernel-certificate)),

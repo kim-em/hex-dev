@@ -81,6 +81,19 @@ Structural recursion over lists, `Nat.mul`/`Nat.add`/`Nat.mod` and
 Nothing here touches `Array`, `Vector`, `Fin` or an instance chain, so the
 kernel reduces each step in a bounded number of unfoldings. -/
 
+/-- Row `i` of a row list, `[]` past the end.  Structural recursion, one step
+per element walked; `List.getD` is specified in terms of it. -/
+@[expose] def nthRow : List (List Int) → Nat → List Int
+  | [], _ => []
+  | a :: _, 0 => a
+  | _ :: as, i + 1 => nthRow as i
+
+/-- Entry `j` of a row, `0` past the end. -/
+@[expose] def nthInt : List Int → Nat → Int
+  | [], _ => 0
+  | a :: _, 0 => a
+  | _ :: as, j + 1 => nthInt as j
+
 /-- The residue of `a` modulo `M`, as a natural number. -/
 @[expose] def residue (M : Nat) (a : Int) : Nat := (Int.emod a (Int.ofNat M)).toNat
 
@@ -162,11 +175,11 @@ row `a` consumes the next coefficient row `z` and must satisfy
 
 /-- The selected rows of `A`. -/
 @[expose] def pivotRows (A : List (List Int)) (rows : List Nat) : List (List Int) :=
-  rows.map fun i => A.getD i []
+  rows.map fun i => nthRow A i
 
 /-- The pivot block of `A`, reduced modulo `M`. -/
 @[expose] def block (M : Nat) (A : List (List Int)) (rows cols : List Nat) : List (List Nat) :=
-  rows.map fun i => cols.map fun j => residue M ((A.getD i []).getD j 0)
+  rows.map fun i => cols.map fun j => residue M (nthInt (nthRow A i) j)
 
 end RankWitness
 

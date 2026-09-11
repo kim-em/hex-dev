@@ -456,11 +456,11 @@ literals, one run each on the shared host (`lake lean -Dprofiler=true`):
 
 | family | `eval_rank` | `rank` |
 |---|---|---|
-| dense `8 × 8`, rank 8 | 121 ms | 31 ms |
-| dense `16 × 16`, rank 16 | 864 ms | 133 ms |
-| dense `16 × 16`, rank 14 | 851 ms | 139 ms |
-| dense `32 × 32`, rank 32 | 6.8 s | 1.2 s |
-| `32 × 32`, rank 2 | 7.3 s | 117 ms |
+| dense `8 × 8`, rank 8 | 121 ms | 19 ms |
+| dense `16 × 16`, rank 16 | 864 ms | 115 ms |
+| dense `16 × 16`, rank 14 | 851 ms | 117 ms |
+| dense `32 × 32`, rank 32 | 6.8 s | 1.1 s |
+| `32 × 32`, rank 2 | 7.3 s | 116 ms |
 
 Rationals are a follow-up: clear each row's denominators (the rank is
 unchanged), certify the integer matrix, and check the scaling in the

@@ -262,13 +262,29 @@ theorem rowsCheck_spec (d : Int) (rows : List Nat) (P : List (List Int)) (m : Na
           have := ih (i + 1) zs hrest t (by simpa using ht)
           rwa [Nat.add_assoc, Nat.add_comm 1 t] at this
 
+theorem nthRow_eq_getD (A : List (List Int)) (i : Nat) : nthRow A i = A.getD i [] := by
+  induction A generalizing i with
+  | nil => simp [nthRow]
+  | cons a as ih =>
+    cases i with
+    | zero => simp [nthRow]
+    | succ i => simp only [nthRow, List.getD_cons_succ, ih]
+
+theorem nthInt_eq_getD (a : List Int) (j : Nat) : nthInt a j = a.getD j 0 := by
+  induction a generalizing j with
+  | nil => simp [nthInt]
+  | cons x xs ih =>
+    cases j with
+    | zero => simp [nthInt]
+    | succ j => simp only [nthInt, List.getD_cons_succ, ih]
+
 theorem pivotRows_length (A : List (List Int)) (rows : List Nat) :
     (pivotRows A rows).length = rows.length := List.length_map ..
 
 theorem pivotRows_getElem (A : List (List Int)) (rows : List Nat) (l : Nat)
     (hl : l < (pivotRows A rows).length) :
-    (pivotRows A rows)[l] = A.getD (rows[l]'(by simpa [pivotRows] using hl)) [] :=
-  List.getElem_map ..
+    (pivotRows A rows)[l] = A.getD (rows[l]'(by simpa [pivotRows] using hl)) [] := by
+  simp only [pivotRows, List.getElem_map, nthRow_eq_getD]
 
 theorem block_length (M : Nat) (A : List (List Int)) (rows cols : List Nat) :
     (block M A rows cols).length = rows.length := List.length_map ..
@@ -276,8 +292,8 @@ theorem block_length (M : Nat) (A : List (List Int)) (rows cols : List Nat) :
 theorem block_getElem (M : Nat) (A : List (List Int)) (rows cols : List Nat) (i : Nat)
     (hi : i < (block M A rows cols).length) :
     (block M A rows cols)[i] =
-      cols.map fun j => residue M ((A.getD (rows[i]'(by simpa [block] using hi)) []).getD j 0) :=
-  List.getElem_map ..
+      cols.map fun j => residue M ((A.getD (rows[i]'(by simpa [block] using hi)) []).getD j 0) := by
+  simp only [block, List.getElem_map, nthRow_eq_getD, nthInt_eq_getD]
 
 theorem residue_cast (M : Nat) (hM : M ≠ 0) (a : Int) :
     ((residue M a : Nat) : ZMod M) = (a : ZMod M) := by
@@ -382,7 +398,7 @@ theorem rank_eq_of_checkList (n m : Nat) (L : List (List Int)) (c : RankWitness)
       intro p hp
       obtain ⟨i, hi, rfl⟩ := List.mem_map.mp hp
       have hi' : i < L.length := by rw [hLlen]; exact hrowsLt i hi
-      rw [getD_eq_getElem' _ _ _ hi']
+      rw [nthRow_eq_getD, getD_eq_getElem' _ _ _ hi']
       exact hLrows _ (List.getElem_mem _)
     have key : ∀ i : Fin n, ∃ w : Fin r → ℤ,
         ∀ j : Fin m, c.denom * A i j = ∑ l, w l * A (rowF l) j := by
