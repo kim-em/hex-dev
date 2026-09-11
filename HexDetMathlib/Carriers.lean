@@ -142,8 +142,6 @@ supplies the row-swapped case and a repeated row the singular one. -/
 
 section Shapes
 
-variable {n : Nat} (A : Hex.Matrix Int n n)
-
 example (B : Hex.Matrix Int 0 0) : Hex.Det.det B = Hex.Matrix.det B := det_eq B
 example (B : Hex.Matrix Int 1 1) : Hex.Det.det B = Hex.Matrix.det B := det_eq B
 example (B : Hex.Matrix Int 2 2) : Hex.Det.det B = Hex.Matrix.det B := det_eq B
