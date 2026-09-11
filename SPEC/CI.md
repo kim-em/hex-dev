@@ -75,11 +75,14 @@ Concretely:
   libraries, the bench exes, the conformance `#guard` drivers, and the
   emit-fixture exes — including the `HexBerlekampZassenhausMathlib`
   bridge required by integer-factorization correctness — followed by a
-  separate memory-bounded `lake build HexManual`). Conway and its companion
-  first warm external imports, then clean their restored outputs and measure
-  their initial builds; the remaining targets reuse those outputs. These
-  hosted observations use explicit resource limits and do not enforce the
-  designated-machine Conway ceiling. It then runs the two
+  separate memory-bounded `lake build HexManual`). On pushes to `main` and on
+  pull requests touching `HexConway/`, `HexGFq/`, `HexGFqMathlib/`,
+  `scripts/conway/`, or `HexConway/SPEC/`, Conway and its companion first warm
+  external imports, then clean their restored outputs and measure their initial
+  builds; the remaining targets reuse those outputs. Other pull requests skip
+  this supplementary timing observation and proceed directly to the shared
+  build. These hosted observations use explicit resource limits and do not
+  enforce the designated-machine Conway ceiling. It then runs the two
   independent verification tails concurrently as `background:` steps: the
   per-library `bench verify` smoke gate per
   [SPEC/benchmarking.md §CI integration](benchmarking.md), and the
@@ -122,6 +125,10 @@ costs one slow-to-detect breakage on the next code PR, not a release:
 
 - `**/*.md`, `SPEC/**`, `PLAN/**`, `docs/**`, `reports/**`,
   `libraries.yml`, `AGENTS.md`, `.claude/**`, `LICENSE`, `.gitignore`.
+
+`HexConway/SPEC/**` is the narrow exception: the Conway rebuild observation
+is collected when those files change, so such a pull request takes the full
+build path despite containing documentation only.
 
 Anything else (`lakefile.lean`, `lake-manifest.json`, `lean-toolchain`,
 `.github/**`, `scripts/**`, any `.lean` file, ...) makes the PR a full
