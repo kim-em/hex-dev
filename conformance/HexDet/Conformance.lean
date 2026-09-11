@@ -75,6 +75,12 @@ private def fourInt : Matrix Int 4 4 :=
 private def singularFourInt : Matrix Int 4 4 :=
   square 4 #[#[1, 2, 3, 4], #[2, 4, 6, 8], #[3, 3, 3, 3], #[5, 4, 3, 2]]
 
+/-- A zero column forces the Bareiss pivot search to fail and return zero. -/
+private def zeroColumnInt : Matrix Int 4 4 :=
+  square 4 #[#[3, 0, 4, 1], #[5, 0, 2, 6], #[5, 0, 5, 8], #[9, 0, 9, 3]]
+
+private def zeroInt : Matrix Int 4 4 := square 4 #[]
+
 private def fiveInt : Matrix Int 5 5 :=
   square 5 #[#[2, 1, 0, 0, 1], #[1, 2, 1, 0, 0], #[0, 1, 2, 1, 0],
     #[0, 0, 1, 2, 1], #[1, 0, 0, 1, 2]]
@@ -99,6 +105,10 @@ forced recipe. -/
 #guard Hex.Det.det pivotInt = Matrix.det pivotInt
 #guard Hex.Det.det fourInt = Matrix.bareiss fourInt
 #guard Hex.Det.det singularFourInt = 0
+#guard Hex.Det.det zeroColumnInt = 0
+#guard Hex.Det.det zeroColumnInt = Matrix.det zeroColumnInt
+#guard Hex.Det.det zeroInt = 0
+#guard (runWith (Policy.berkowitz inferInstance) zeroColumnInt).value = 0
 #guard Hex.Det.det fiveInt = Matrix.bareiss fiveInt
 
 #guard (runWith (Policy.berkowitz inferInstance) fourInt).value = Hex.Det.det fourInt

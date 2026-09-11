@@ -78,7 +78,7 @@ def fixtures [Lean.Grind.CommRing R] [DetOps R] (domain : Domain)
     Matrix.ofFn fun i j =>
       if i = j then a else if i.val < j.val then b else c
   let singular : Matrix R 3 3 :=
-    Matrix.ofFn fun i j => if i.val = 2 then a * b else if i.val = 0 then a else b
+    Matrix.ofFn fun i _ => if i.val = 2 then a * b else if i.val = 0 then a else b
   let triangular : Matrix R 3 3 :=
     Matrix.ofFn fun i j => if i.val > j.val then 0 else if i = j then a else b
   #[record domain encode "nonconstant" dense,
