@@ -70,8 +70,11 @@ hex-basic ────┐
 hex-mv-poly ──┘
 ```
 
-The direction is deliberate. For example, `hex-matrix-tactic` may depend on
-`hex-reflect`, but `hex-reflect` does not know about matrices.
+The direction is deliberate. For example, the future `HexMatrixReflect`
+symbolic extension of
+[hex-matrix-tactic](hex-matrix-tactic.md) depends on `hex-reflect`, while the
+numeric frontend remains independent of reflection. `hex-reflect` does not
+know about matrices.
 
 ## Module and test layout
 
@@ -533,8 +536,9 @@ characteristic-polynomial, gcd, or factorization algorithm.
 
 ## First consumers and parser adoption
 
-The first symbolic consumers are `det` and `char_poly` in the planned
-`hex-matrix-tactic` library. They reify all entries in one batch, run the
+The first symbolic consumers are the `det` and `char_poly` providers in
+`HexMatrixReflect`, the future downstream symbolic extension of
+[hex-matrix-tactic](hex-matrix-tactic.md). They reify all entries in one batch, run the
 existing verified matrix algorithm over `Hex.MvPoly`, and interpret the result
 through this library's soundness theorem. The characteristic-polynomial
 variable remains the `DensePoly` variable. It is not added to the environment

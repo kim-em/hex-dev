@@ -386,7 +386,7 @@ libraries:
         - name: large-coefficients
           description: Dense and rank-two matrices with 64-, 256- and 1024-bit entries.
         - name: finite-carriers
-          description: Prime-modulus determinant, rank and characteristic polynomial, and composite-modulus determinant and characteristic polynomial.
+          description: Mathlib-free Fin 7 determinant, rank and characteristic polynomial, and Fin 8 determinant and characteristic polynomial.
         - name: closed-algebraic
           description: Rational-pair computations modulo alpha squared equals two, with number-field and real-algebraic interpretations.
   HexMinPoly:
@@ -1035,20 +1035,12 @@ libraries:
           class: gating
           goal: Wire the unmodified pinned comparator and report all shared fixture ratios; target a reproducible total-elaboration speedup on named families and document slower cases.
       input_families:
-        - name: dense
-          description: Seeded full-rank integer and rational matrices, varying dimension and entry bit size.
-        - name: structured
-          description: Tridiagonal and Vandermonde matrices including pivot swaps.
-        - name: singular
-          description: Duplicate rows and rank n minus one products including late failed pivots.
-        - name: low-rank
-          description: Rectangular products of known rank with nonleading pivot columns.
-        - name: large-coefficients
-          description: Dense and rank-two matrices with 64-, 256- and 1024-bit entries.
-        - name: finite-carriers
-          description: Prime-modulus determinant, rank and characteristic polynomial, and composite-modulus determinant and characteristic polynomial.
-        - name: closed-algebraic
-          description: Rational-pair computations modulo alpha squared equals two, with number-field and real-algebraic interpretations.
+        - name: literal-conversion
+          description: Fresh-module enumeration, interpretation and literal-emission probes for all numeric fixture families and supported Mathlib syntaxes.
+        - name: certificate-replay
+          description: Matched fresh-module certificate construction and kernel replay, including finite and closed-algebraic carriers.
+        - name: tactic-comparison
+          description: Full fresh-module det and rank comparisons with stock Mathlib tactics across all shared numeric ladders, including Zsqrtd 2 and separately labelled real embeddings.
   HexMinPolyMathlib:
     deps: [HexMinPoly, HexMatrixMathlib, HexPolyMathlib, HexCharPolyMathlib]
     mathlib: true

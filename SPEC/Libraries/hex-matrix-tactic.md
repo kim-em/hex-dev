@@ -32,10 +32,19 @@ The `libraries.yml` entries are `status: planned`, `done_through: 0`, with no
 Lake targets or umbrella files until activation. These edges follow
 `scripts/check_dag.py` and its `libgraph.may_import` dependency closure.
 The existing lower libraries must never import either frontend. Symbolic
-integration will live in a separately registered downstream library depending
-on both this frontend and reflection (and their companions where needed).
+integration will live in the future `HexMatrixReflect` library, depending on
+this frontend and reflection, with `HexMatrixReflectMathlib` above their
+companions. These extension libraries are outside the numeric activation.
 It cannot be an optional file in the numeric library whose import would
 silently expand that library's dependency closure.
+
+Activation must first make `HexRank` active, then activate `HexMatrixTactic`;
+the Mathlib path likewise requires active `HexRankMathlib` before
+`HexMatrixTacticMathlib`. Here active means the dependency's scaffolding and
+Lake registration exist, not that all its implementation phases are complete.
+Determinant and characteristic-polynomial work can then proceed while rank's
+certificate implementation is developed. No migration imports a planned
+library before this activation order is satisfied.
 
 ## Entry models and conversion
 
@@ -60,7 +69,7 @@ quotation are untrusted; an executable zero test is not a proof of its answer.
 | Closed `ZMod n`, `Fin n` | Literal modulus, kernel-decidable equality and lawful ring operations. `ZMod` recognition belongs in the companion; `Fin n` requires positive `n` for its modular ring. Determinant and characteristic polynomial allow composite moduli; rank requires a domain/field model, normally prime modulus, and cannot assume primality. `ZMod 0` follows its integer model. |
 | Literals in `ℝ`, `ℂ` | The companion proves entries equal to images of computable values using `norm_num` and registered interpretation lemmas. Rational-valued literals use `Rat`; complex literals involving `I` need an explicit computable extension. Never run kernel equality on classical real or complex instances. |
 | Closed algebraic entries | A registered computable number-field or real-algebraic carrier and certified embedding, with nonzero preservation for rank. This is a numeric provider extension, independent of symbolic reflection. |
-| Symbolic entries | A later `hex-reflect` provider converts the entire matrix in one batch, seals variables once and supplies interpretation equalities. Intermediate polynomial matrices are not printed and reparsed. |
+| Symbolic entries (future `HexMatrixReflect` extension) | A later `hex-reflect` provider converts the entire matrix in one batch, seals variables once and supplies interpretation equalities. Intermediate polynomial matrices are not printed and reparsed. |
 
 Determinant and characteristic polynomial commute with a ring homomorphism;
 rank additionally needs injectivity or explicit proofs that the chosen minor
@@ -72,17 +81,30 @@ is not promised. Piecewise rank and case splitting are later work.
 
 ## Frontends and results
 
-The term forms `det A`, `rank A`, and `char_poly A` return dependent records
+The term forms `det% A`, `rank% A`, and `char_poly A` return dependent records
 with fields `value` and `proof`, the latter asserting that the requested
 operation on the original matrix equals `value`. Determinant values are in
 the source carrier, rank values in `Nat`, and characteristic-polynomial
 values in `Hex.DensePoly R` or the companion's `Polynomial R`.
 
+The `%` distinguishes result-producing term syntax from ordinary `det A` and
+`rank A` function applications. The tactics remain plain `det`, `rank` and
+`char_poly`. Importing a frontend must not reserve bare `det` or `rank` as a
+term keyword or change existing name resolution; opening both matrix
+namespaces can already require qualifying their identically named functions.
+
 The goal forms close determinant equality, rank equality or either inequality,
-and characteristic-polynomial equality. On Hex inputs these refer to the
-selected executable determinant, field rank or explicitly interpreted integer
-rank, and `Hex.Matrix.charPoly`; the companion gives the exact Mathlib
-statements. Square shape is required for determinant and characteristic
+and characteristic-polynomial equality. On Hex inputs determinant goals name
+`Hex.Matrix.det`, `bareiss`, or
+`bareissWith` with its quotient law, and characteristic-polynomial goals name
+`Hex.Matrix.charPoly`. Field-rank goals name `Hex.Matrix.rowReduce_rank`
+(`[Lean.Grind.Field R] [DecidableEq R]`, `HexRowReduce/Api.lean`);
+domain-rank goals name the planned `Hex.Matrix.rankWith quot` with its exact
+quotient law, or its integer specialization `Hex.Matrix.rank`, from
+`hex-rank`. The integer result agrees with rank after casting to `Rat` via
+the companion's scalar-extension theorem. Each rank operation admits equality
+and the two inequality forms. The companion gives the Mathlib statements.
+Square shape is required for determinant and characteristic
 polynomial; rank supports rectangular and empty matrices. Empty square
 matrices have determinant `1`, rank `0`, and characteristic polynomial `1`.
 
@@ -110,8 +132,8 @@ Initial determinant selection is:
 | Closed `Int` | Row-pivoted fraction-free Bareiss |
 | Closed field with certified exact quotient | Bareiss, with denominator restoration when working integrally |
 | Commutative ring without exact quotient | Samuelson–Berkowitz, returning `(-1)^n` times the constant coefficient of `det(X I - A)` |
-| Symbolic polynomial entries with certified exact quotient | Polynomial Bareiss |
-| Symbolic polynomial entries without exact quotient | Samuelson–Berkowitz with the same sign correction |
+| Symbolic polynomial entries with certified exact quotient (future extension) | Polynomial Bareiss |
+| Symbolic polynomial entries without exact quotient (future extension) | Samuelson–Berkowitz with the same sign correction |
 
 Characteristic polynomial uses Samuelson–Berkowitz. The characteristic
 variable stays separate from reflected entry variables, for example in
@@ -177,6 +199,16 @@ restructured without a lower-library import of `HexMatrixTactic`: an old
 frontend import may need migration to the new umbrella. Importing both
 umbrellas must register each syntax handler only once.
 
+The migration change updates `HexCharPoly/SPEC/hex-char-poly.md` and
+`HexCharPolyMathlib/SPEC/hex-char-poly-mathlib.md` to name the new frontend
+imports; their current umbrella promises remain accurate until that change.
+Move `HexCharPoly/CharPolyElabTests.lean` and
+`HexCharPolyMathlib/CharPolyElabTests.lean` into the respective
+`HexMatrixTactic` and `HexMatrixTacticMathlib` directories, updating the
+`HexCharPolyTests` globs in `lakefile.lean` and the corresponding build-root
+allowlist. A build-only target does not exempt a test under a lower library's
+directory from that library's import boundary.
+
 ## Phase-4 evidence
 
 Follow [benchmarking](../benchmarking.md), especially fresh-module proof
@@ -190,8 +222,11 @@ correspondence-only layer because it implements frontends and adapters.
 **Fixtures.** Commit deterministic seeds, exact entries, dimensions, expected
 results and hashes in `conformance-fixtures/HexMatrixTactic/matrices.jsonl`;
 companion notation/interpretation cases live in
-`conformance-fixtures/HexMatrixTacticMathlib/literals.jsonl`. Use these named
-families, also in the Phase-4 tables:
+`conformance-fixtures/HexMatrixTacticMathlib/literals.jsonl`. The JSON records
+contain carrier-neutral entry data; base registrations use
+only Mathlib-free representations. Use the following named numeric fixture
+families in the Phase-4 tables. The symbolic row reserves an extension-owned
+family for later work, not a numeric Phase-4 obligation:
 
 | Family | Parameter ladder and purpose |
 |---|---|
@@ -200,9 +235,15 @@ families, also in the Phase-4 tables:
 | `singular` | Duplicate rows and products of certified rank `n-1`, including a late failed pivot, on that ladder. |
 | `low-rank` | Products of `n × r` and `r × m` factors with a known nonsingular `r`-minor, `n,m = 8,16,32,64`, `r = 1,2,4`; include nonleading pivot columns and rectangular shapes. |
 | `large-coefficients` | Dense and rank-2 inputs, dimensions `2,4,8,16`, entry bits `64,256,1024`; record intermediate bit lengths. |
-| `finite-carriers` | Corresponding small matrices over `ZMod 7`, `Fin 7`, and composite modulus `8`; composite cases test only determinant and characteristic polynomial. |
+| `finite-carriers` | Base cases use `Fin 7` and `Fin 8`; companion cases in `literals.jsonl` use `ZMod 7` and `ZMod 8`. Composite cases test only determinant and characteristic polynomial. |
 | `closed-algebraic` | Blocks `[[α,1],[1,α]]` with `α²=2`, and block-coupled variants, dimensions `2,4,8,16`; see companion for exact embeddings and comparator obligations. |
-| `symbolic` (later) | Dimensions `2,4,8`, variables `1,2,4,8`, degree `1,2,4`, support `1,4,16`; include repeated subexpressions, generic full rank and known low rank. Record realized support, not just generation limits. |
+| `symbolic` (future `HexMatrixReflect` fixtures) | Dimensions `2,4,8`, variables `1,2,4,8`, degree `1,2,4`, support `1,4,16`; include repeated subexpressions, generic full rank and known low rank. Record realized support, not just generation limits. |
+
+`symbolic` fixtures belong in
+`conformance-fixtures/HexMatrixReflect/matrices.jsonl` with Mathlib translations
+owned by `HexMatrixReflectMathlib`. Their later Phase-4 metadata and reports
+own the symbolic provider measurements; the numeric frontend does not acquire
+reflection imports or symbolic activation gates.
 
 **Compiled registrations.** `bench/HexMatrixTactic/Bench.lean` remains
 Mathlib-free. Register producer, certificate construction and checker
@@ -222,8 +263,24 @@ report matched differences as attribution estimates, not additive exact
 clocks. No clocks, timing loops, executables or LeanBench imports inside
 probes. Record producer time, certificate construction, kernel checking,
 proof-expression node count/serialized bytes, `.olean` size, and total
-elaboration separately. Include one representative compiled profile per declared numeric input family;
+elaboration separately. Include one representative compiled profile per
+declared numeric input family;
 proof-track attribution uses the matched builds above.
+
+The companion's metadata groups these probes as `literal-conversion`,
+`certificate-replay`, and `tactic-comparison`, each spanning the applicable
+numeric fixture families above. Its Profile section cites fresh-build
+attribution, not compiled timed-region sampling. With two declared
+comparators, it supplies the required plots
+`reports/figures/hex-matrix-tactic-mathlib-comparator-<family>.svg` for these
+three probe families, generated by
+`scripts/plots/hex-matrix-tactic-mathlib-comparator.py` from the retained raw
+samples. Here one invocation means one fresh module elaboration: plot total
+wall time and baseline-adjusted elaboration time on a log-y axis across each
+fixture ladder. Use separate panels for determinant and rank; component
+panels compare matched conversion/replay variants with the shared full-tactic
+references. Label the quantity as fresh-build time, never compiled call time.
+Retain ratios and inapplicability markers for every shared case.
 
 **Comparators.** In the companion, unmodified pinned `norm_det`/`eval_det` and
 `norm_rank`/`eval_rank` are gating comparators: wiring, coverage and reported
@@ -236,11 +293,12 @@ fragments are recorded with the diagnostic and a matched supported subfamily,
 never fabricated timings.
 
 **Required checks and ceilings.** The external proof-runner manifest records
-these fixed smoke/regression obligations before measurement; they are
+these fixed correctness/regression obligations before measurement; they are
 operational limits, not portable scientific budgets:
 
 | Check | Canonical input | Ceiling / required result |
 |---|---|---|
+| `syntax-compatibility` | Both frontend umbrellas, existing `det`/`rank` function names under each matrix namespace | Bare function application retains existing resolution; `det%`, `rank%`, `char_poly` return records. |
 | `literal-roundtrip` | All four Mathlib syntaxes, `0 × 0`, `0 × 3`, `3 × 0`, and `2 × 2` | Exact shape and entry proofs; reject transposed/incorrect entries. |
 | `numeric-proof` | `dense` dimension 4, 8-bit entries, each operation and rank inequality | Full proof-build median ≤ 10 s per case; theorem axiom audit passes. |
 | `large-proof` | `large-coefficients` dimension 4, 256-bit entries | Full proof-build median ≤ 30 s per case; serialized proof ≤ 32 MiB. |

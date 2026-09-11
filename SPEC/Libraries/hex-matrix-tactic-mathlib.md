@@ -13,8 +13,9 @@ listed as existing in the source inventory.
 `HexBareissMathlib`, `HexRowReduceMathlib`, `HexCharPolyMathlib`, and the
 planned `HexRankMathlib`, plus Mathlib. `HexDeterminantMathlib` and
 `HexPolyMathlib` are transitive dependencies. Numeric support has no
-`HexReflect` dependency. A future symbolic integration library sits above
-both frontend and reflection companions; no reverse edge is permitted.
+`HexReflect` dependency. The future `HexMatrixReflectMathlib` integration sits above
+`HexMatrixReflect` and both frontend and reflection companions; no reverse
+edge is permitted.
 
 The namespace is `HexMatrixTacticMathlib`, with proposed modules
 `Literal`, `Model`, `Det`, `Rank`, `CharPoly`, and opt-in `MathlibAdapters`.
@@ -23,7 +24,7 @@ module enables Hex in Mathlib's machinery without changing the baseline
 comparison by accident. This companion is not `correspondence_only`: it owns
 literal recognition, Meta registrations, conformance and fresh-module proof
 probes. Its benchmark contract and fixtures are specified in the base SPEC.
-It has no Mathlib-importing compiled bench executable.
+It has no compiled bench executable.
 
 ## Literal reconstruction
 
@@ -74,9 +75,12 @@ by rank       : A.rank = r        (also A.rank ≤ r and r ≤ A.rank)
 by char_poly  : A.charpoly = p
 ```
 
-The corresponding term forms return `{ value, proof }` with proof types
+The corresponding term forms `det% A`, `rank% A`, and `char_poly A` return `{
+value, proof }` with proof types
 `A.det = value`, `A.rank = value`, and `A.charpoly = value`.
-Names have no `hex_` prefix. Result reconstruction proves agreement with the
+Tactic names have no `hex_` prefix; `%` in the first two term forms avoids
+collisions with ordinary determinant/rank function applications. Result
+reconstruction proves agreement with the
 user's expression, not merely a printed numeral or polynomial. Preserve
 existing `char_poly` compatibility as described in the base SPEC.
 
@@ -206,7 +210,20 @@ irreducibility/injectivity evidence needed for field operations and rank.
 Use both an explicit number-field presentation and its real-algebraic image;
 the registered provider must prove the relation, not infer it from spelling.
 
-`norm_det` normalizes the determinant as a ring expression, treating `√2`
+Also require a matched integral subfamily over `Zsqrtd (2 : ℤ)`, with
+`α := ⟨0,1⟩`. The pinned `Mathlib.Tactic.Echelon.zsqrtdExt` already supplies a
+Bareiss computation model for this quadratic ring. Compare Hex with stock
+`norm_det` and stock `norm_rank` on the same `Zsqrtd` matrices; supply a
+locally proved `Zsqrtd.Nonsquare (2 : ℕ)` instance to synthesize the domain
+needed by `norm_rank`. This is an integral subring of the number field, so it
+covers the integer-coefficient block family and integer couplings, not every
+rational-pair input. Retain the rational number-field and real-embedding arms
+as distinct coverage. `norm_det` accepts the ring but may still need explicit
+algebraic normalization to close a chosen scalar target; record its actual
+output and the cost of completing that proof.
+
+On the real-embedding arm, `norm_det` normalizes the determinant as a ring
+expression, treating `√2`
 as an atom; its ring normalizer does not by itself use the algebraic relation.
 Measure raw `norm_det` output and whether it closes the target. For a complete
 proof comparator also measure `eval_det` followed by the explicitly supplied
@@ -231,10 +248,11 @@ claims about the current API.
 | `Matrix.ofArray`, `ofArray_apply`, `ofArray_ofFn` | `Mathlib/LinearAlgebra/Matrix/Defs.lean`: flat array plus `size = m*n`, row-major access, reconstruction of a `Fin` matrix; no ring assumptions. |
 | `Mathlib.Tactic.Echelon.BareissExt`, `Producer`, `BareissData`, `RingOps`, `mkProducer`, `bareiss_ext` | `Mathlib/Tactic/Echelon/Core.lean`: model lookup, nested-array producer, transform/swaps/pivots, arithmetic/preparation/restoration/quotation, and Meta registration attribute. |
 | `checkBareissApplicable`, `checkKernelDecide`, `mkCertificate`, `producerFor` | `Mathlib/Tactic/Echelon/Bareiss.lean`: domain applicability before dispatch; three kernel-decided certificate conditions; first supported extension then rational fallback. |
+| `Mathlib.Tactic.Echelon.zsqrtdExt` | `Mathlib/Tactic/Echelon/Zsqrtd.lean`: existing `bareiss_ext` model for `Zsqrtd d`, using exact division by conjugation. `Mathlib/NumberTheory/Zsqrtd/Basic.lean` supplies the domain instance for natural `d` under `Zsqrtd.Nonsquare d`. |
 | `Echelon.Decomposition`, `Echelon.Decomposition.rank_eq` | `Mathlib/LinearAlgebra/Matrix/Echelon/Decomposition.lean`: namespace is root `Echelon`, not `Matrix.Echelon`; `[CommRing R] [IsDomain R]`, finite linearly ordered indices; rank equals the number of finite pivots. |
 | `Matrix.IsPivotedBy` | `Mathlib/LinearAlgebra/Matrix/Echelon/Pivot.lean`: `[Zero R]`, ordered indices, row-echelon shape and leading nonzero entries; its rank theorem additionally assumes a domain and finite indices. |
-| `norm_det`, `eval_det` | `Mathlib/Tactic/NormDet.lean`: concrete square `Fin` matrix literals over `CommRing`, Bird determinant and certificate-chain normalization from `Mathlib/Tactic/Determinant/Bird/Cert.lean`; symbolic ring entries allowed. |
-| `norm_rank`, `eval_rank` | `Mathlib/Tactic/NormRank.lean`: non-symbolic literal matrices, applicability check then Bareiss certificate; supporting parsing and numeric models in `Mathlib/Tactic/Echelon/{Parsing,Rat,Zsqrtd}.lean`; certificate construction is in `Bareiss.lean`, not a separate `Echelon/Cert.lean` file. |
+| `norm_det`, `eval_det` | `Mathlib/Tactic/NormDet.lean`: `!![…]` / `Matrix.of` vector-chain square literals over `CommRing`, not general lambdas or `ofArray`; Bird determinant and certificate-chain normalization from `Mathlib/Tactic/Determinant/Bird/Cert.lean`; symbolic ring entries allowed. |
+| `norm_rank`, `eval_rank` | `Mathlib/Tactic/NormRank.lean`: `!![…]` / `Matrix.of` vector-chain matrices without free variables or metavariables, not general lambdas or `ofArray`; applicability check then Bareiss certificate; supporting parsing and numeric models in `Mathlib/Tactic/Echelon/{Parsing,Rat,Zsqrtd}.lean`; certificate construction is in `Bareiss.lean`, not a separate `Echelon/Cert.lean` file. |
 | `Real.sq_sqrt` | `Mathlib/Analysis/Real/Sqrt.lean`: `(√x)^2 = x` requires `0 ≤ x`. |
 
 | Existing Hex declaration | File and checked contract |
@@ -263,5 +281,7 @@ claims about the current API.
 - Verify the shared model through both the standalone Hex frontend and the
   `bareiss_ext` adapter. Record stock comparator, adapter and standalone costs
   separately under the base SPEC's Phase-4 fixtures and ceilings.
+- Check that term result syntax does not alter ordinary `det`/`rank` function
+  applications; test namespace opens and qualified names with both umbrellas.
 - Preserve existing `char_poly` numeric examples and proof strategy, migrate
   import paths without cycles or duplicate elaborators, and audit axiom sets.
