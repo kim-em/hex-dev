@@ -7,7 +7,7 @@ This library is a `correspondence-only-layer`.
 Computational conformance owner: `HexRowReduce`
 Computational performance owner: `HexRowReduce`
 
-Mathlib bridge for `hex-row-reduce`: connects our computable RREF / rank / span /
+Mathlib correspondence for `hex-row-reduce`: connects our computable RREF / rank / span /
 nullspace machinery to Mathlib's noncomputable linear-algebra definitions, via
 the base `matrixEquiv` from `hex-matrix-mathlib`.
 
@@ -23,7 +23,7 @@ theorem rank_eq [Field R]
 This is deliberately a theorem about a reduced row-echelon witness, not an
 arbitrary `IsEchelonForm`: the proof obtains the kernel dimension from the
 computed nullspace basis, whose completeness and independence require
-`IsRowReduced`. The bridge theorem uses Mathlib's `Field`; the executable
+`IsRowReduced`. The correspondence theorem uses Mathlib's `Field`; the executable
 row-reduction, span, and nullspace APIs in `HexRowReduce` use
 `Lean.Grind.Field` (and `DecidableEq` where computation requires it).
 
@@ -53,7 +53,7 @@ theorem spanContains_iff_mem_span [Field R] [DecidableEq R]
 This makes our row-reduction computations computable witnesses for Mathlib's
 noncomputable rank/kernel/span definitions.
 
-**Span coefficients:** The soundness bridge accepts an `IsEchelonForm`;
+**Span coefficients:** The soundness theorem accepts an `IsEchelonForm`;
 completeness of span testing above requires `IsRowReduced`.
 
 ```lean
@@ -78,9 +78,13 @@ The inverse and solve theorems in this section and the next are required
 extensions, paired with the computational contracts in
 [hex-row-reduce](../../HexRowReduce/SPEC/hex-row-reduce.md#field-inverse-and-complete-linear-solve).
 They live in namespace `HexMatrixMathlib`. Their coefficient assumptions
-are Mathlib `[Field F] [DecidableEq F]`; the standard `Field.toGrindField`
-instance supplies the executable field laws on the same operations. Use
-`matrixEquiv` for matrices and `vectorEquiv` for vectors throughout.
+are Mathlib `[Field F] [DecidableEq F]`, using the induced
+`Field.toGrindField` instance for the executable calls. Choose that instance
+before defining inputs and outputs, for example with
+`attribute [local instance 2000] Field.toGrindField` in examples. Do not assume
+it equals a separately installed `Lean.Grind.Field F` instance, or that
+results computed at another instance are directly accepted by these theorems.
+Use `matrixEquiv` for matrices and `vectorEquiv` for vectors throughout.
 
 ```lean
 theorem inverse?_eq_inv [Field F] [DecidableEq F]
@@ -143,7 +147,7 @@ for every successful result `s` and `x : Fin m → F`,
 
 ```lean
 (matrixEquiv A).mulVec x = vectorEquiv b ↔
-  ∃ c : Fin (m - Hex.Matrix.rowReduce_rank A) → F,
+  ∃! c : Fin (m - Hex.Matrix.rowReduce_rank A) → F,
     x = vectorEquiv s.1 + (matrixEquiv s.2).mulVec c
 ```
 
@@ -164,13 +168,14 @@ For every `Hex.Matrix.solve A b = .error y`, require
 `dotProduct (vectorEquiv y) (vectorEquiv b) ≠ 0`. Moreover failure is
 equivalent to existence of such a left-kernel separator. Prove the
 constructive direction using the actual returned row of the RREF
-transform, and the converse by applying that row functional to a
-hypothetical solution. No resource bound or additional consistency
-hypothesis may appear in these completeness statements.
+transform, and the converse by applying an arbitrary separating row
+functional to a hypothetical solution. No resource bound or additional
+consistency hypothesis may appear in these completeness statements.
 
 ## Verification and ownership
 
-Check the computational SPEC's boundary cases through these bridges:
+Check the computational SPEC's boundary cases through these
+correspondence theorems:
 
 - For `0 × 0`, Mathlib's determinant is `1`, the inverse is the empty
   identity, and solve returns the unique empty solution with no basis
@@ -183,12 +188,36 @@ Check the computational SPEC's boundary cases through these bridges:
   `[-1, 1]` has zero left product and dot product `1`, proving the
   rectangular system inconsistent over any field.
 
-Instantiate the bridges on `Rat`, prime-modulus `ZMod64 p`, and
-`RationalFn Rat` with the corresponding Mathlib field structures on the
-same executable operations; carrier-specific bridge imports belong in
-conformance modules. Relating to `ZMod p` or `RatFunc Rat` further uses
-the respective carrier equivalences. The generic companion remains a
-correspondence layer and does not import those carrier libraries.
+Exercise the carrier interpretations in a monorepo build-only module
+`Examples/RowReduce.lean`, registered in `HexReleaseExamples`, outside the
+generic companion's imports. These examples contain proof checks, not
+fixture emission or oracle tests.
+
+- `Rat`: computational conformance uses Lean's rational field instance.
+  Companion examples separately select the Mathlib-induced instance before
+  defining the matrices and calling inverse/solve. Equality of the two bundled
+  instances is not assumed. Transporting an already computed result between
+  them would require an additional explicit agreement proof.
+- `RationalFn Rat`: follow
+  [hex-rational-fn-mathlib's instance contract](../../HexRationalFnMathlib/SPEC/hex-rational-fn-mathlib.md#coefficient-instances-and-representation).
+  Choose the Mathlib-induced lightweight field on `Rat` before forming the
+  rational-function type, and the induced field on that type before forming
+  row-reduction calls. Use `HexRationalFnMathlib.field` and its equivalence
+  with `RatFunc Rat` for these examples. Computational fixtures separately
+  exercise the implementation with its executable instances. Changing
+  instance priorities does not convert previously defined values.
+- `ZMod64 p`: the tree provides an executable field under `Bounds p` and
+  `PrimeModulus p`, but no Mathlib `Field (ZMod64 p)`. For these examples,
+  transport the computational success and failure equations entrywise through
+  the existing `HexModArithMathlib.ZMod64.equiv` to `ZMod p`. Supply the prime
+  hypotheses for the executable and Mathlib fields. Multiplication, addition,
+  zero preservation and injectivity transport the inverse identities and
+  separating witness. Surjectivity also transports the quantified solution
+  and coefficient vectors, giving completeness and the affine solution set
+  over `ZMod p`. These example-level transport proofs are new obligations.
+  They use the ring equivalence without assuming a missing `toZMod_inv` lemma
+  or a Mathlib field structure on `ZMod64 p`, and do not require transporting
+  the elimination algorithm itself.
 
 `HexRowReduce` owns the exact FLINT/SymPy conformance and dimension/height
 benchmarks specified in its SPEC. This companion owns proof checks of the

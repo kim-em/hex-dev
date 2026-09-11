@@ -131,6 +131,7 @@ theorem inverse?_spec (A B : Matrix F n n) :
 theorem inverse?_isSome (A : Matrix F n n) :
     (inverse? A).isSome ↔ rowReduce_rank A = n
 
+/-- Convenience corollary of `inverse?_isSome`. -/
 theorem inverse?_eq_none (A : Matrix F n n) :
     inverse? A = none ↔ rowReduce_rank A ≠ n
 ```
@@ -150,6 +151,8 @@ The determinant form of completeness, `inverse? A = none ↔ det A = 0`,
 belongs to the companion, using `rank_eq` on `rowReduce_isRowReduced A`.
 The computational code decides only the rank test and does not evaluate a
 determinant. There is no fuel, search limit, or resource-failure return.
+This API exposes singularity through its completeness theorem. A separate
+witness-producing inverse operation is outside this extension's scope.
 
 ### Solve and inconsistency witness
 
@@ -176,6 +179,7 @@ theorem solve?_spec (A : Matrix F n m) (b : Vector F n) (s : SolveData A) :
 theorem solve?_isSome (A : Matrix F n m) (b : Vector F n) :
     (solve? A b).isSome ↔ ∃ x : Vector F m, A * x = b
 
+/-- Convenience corollary of `solve?_isSome`. -/
 theorem solve?_eq_none (A : Matrix F n m) (b : Vector F n) :
     solve? A b = none ↔ ¬ ∃ x : Vector F m, A * x = b
 
@@ -184,8 +188,12 @@ theorem solve_error (A : Matrix F n m) (b y : Vector F n) :
 
 theorem solve?_none_witness (A : Matrix F n m) (b : Vector F n) :
     solve? A b = none ↔
-      ∃ y : Vector F n, solve A b = .error y ∧
-        vecMul y A = 0 ∧ Vector.dotProduct y b ≠ 0
+      ∃ y : Vector F n, vecMul y A = 0 ∧ Vector.dotProduct y b ≠ 0
+
+/-- Uniqueness of the nullspace coefficients in a successful answer. -/
+theorem solve?_unique (A : Matrix F n m) (b : Vector F n) (s : SolveData A)
+    (c₁ c₂ : Vector F (m - rowReduce_rank A)) :
+    solve? A b = some s → s.2 * c₁ = s.2 * c₂ → c₁ = c₂
 ```
 
 `solve` is the witness-producing entry point; its `.error` means a proved
@@ -253,8 +261,11 @@ tactic selection and domain-certificate adapters belong to their consumers.
 
 ## Inverse and solve conformance
 
-Extend `conformance/HexRowReduce/{Conformance,EmitFixtures}.lean` and the
-existing oracle dispatch. Fixtures record dimensions explicitly (including
+Extend `conformance/HexRowReduce/{Conformance,EmitFixtures}.lean` and
+`scripts/oracle/matrix_flint.py`. Add carrier-tagged dispatch there, importing
+SymPy only for rational-function records. Preserve the existing rational and
+integer handlers used by the other matrix libraries. Add SymPy to the existing
+CI dependency step when implementing this extension. Fixtures record dimensions explicitly (including
 empty shapes), the carrier, `A`, `b`, and the returned inverse, particular
 solution and basis, or inconsistency witness. Exercise `Rat`, `ZMod64 p`
 with `[ZMod64.Bounds p] [ZMod64.PrimeModulus p]` and the field instance from
@@ -306,13 +317,29 @@ no cubic bit-complexity claim. Add modular dimension sweeps at a fixed prime
 and smaller rational-function dimensions `2, 4, 8` at fixed degree and
 coefficient height, recording those parameters separately.
 
+Represent each dimension sweep as a separate one-parameter registration per
+fixed carrier, height, and rank/consistency family, using a custom parameter
+schedule for the stated ladder. Represent each height sweep as a separate
+registration per fixed dimension and family. Use the harness's fixed,
+trial-major schedule for scientific measurements. The large dimensions and
+heights are scientific settings for manual shared-host runs, not CI inputs.
+For dimension registrations, configure the `verify` parameter to dimension
+`2` (`2n × n` or `n × 2n` for rectangular families), retaining the fixed
+coefficient height and rank/consistency family. For height registrations,
+use height `8` while retaining the fixed dimension and family. Use degree
+`1` and coefficient height `8` as the fixed rational-function family for both
+scientific runs and verification. Give verification minimal tuning budgets
+and repeat counts. Measure total `verify` time across registrations against
+the existing per-library warning and repository cap. Adjust only verification
+budgets if needed, retaining the scientific ladders and input families.
+
 Informational external comparisons use `fmpq_mat.inv()` and, for nonsingular
 square inputs with empty nullspace, `fmpq_mat.solve()`. Compare complete
 outputs on the same inputs, with construction outside timing. The general
 affine solution/witness surface has no matching python-flint callable;
 correctness still has the conformance checks above. Follow the shared-host
 schedule and retention rules in `SPEC/benchmarking.md`; extend the existing
-single CI job's smoke checks when implementing these targets.
+single CI job's `Bench verify` checks when implementing these targets.
 
 ## Complexity and benchmark contract
 
