@@ -20,6 +20,7 @@
 - **hex-bareiss**: the fraction-free Bareiss determinant algorithm
 - **[hex-rank](hex-rank.md)** (planned): matrix rank over any integral domain with a two-sided certificate (a nonsingular minor with its adjugate, and the identity expressing every column over the selected ones), the rectangular fraction-free producer, and the row and column rank profiles
 - **[hex-determinantal-ideal](hex-determinantal-ideal.md)** (planned): executable minors and determinantal-ideal generators of a matrix over a commutative ring, and the theorem that the rank over a field is below `r` exactly when every `r × r` minor vanishes
+- **[hex-matrix-tactic](hex-matrix-tactic.md)** (planned): proof-producing `det`, `rank`, and `char_poly` frontends, numeric entry models and certificate strategy
 - **hex-char-poly**: the characteristic polynomial by the division-free Samuelson-Berkowitz algorithm, over any commutative ring
 - **hex-min-poly**: the matrix minimal polynomial over a field, from Krylov sequences, with a certificate proving annihilation and minimality
 - **hex-hermite**: Hermite normal form over `Int`, unimodular transforms, integer lattice membership, integer kernel bases
@@ -77,6 +78,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-rational-fn-mathlib**: equivalence with `RatFunc K`, canonical numerator/denominator agreement and partial-evaluation semantics
 - **hex-sparse-poly-mathlib**: `SparsePoly R ≃+* Polynomial R`, and the identification of the stored term array with `Polynomial.support`
 - **hex-mv-poly-mathlib**: `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence
+- **[hex-matrix-tactic-mathlib](hex-matrix-tactic-mathlib.md)** (planned): Mathlib matrix literals, result transport and opt-in `norm_det` / `norm_rank` adapters
 - **hex-reflect-mathlib** (planned): Mathlib carrier translations and the `MvPolynomial` correspondence for reflected batches
 - **hex-mv-gcd-mathlib**: gcd maximality transported to `MvPolynomial (Fin n) R`, and decidable divisibility and squarefreeness
 - **hex-mv-hensel-mathlib**: the evaluation ideal and its residue ring as Mathlib objects, the lifted identities transported to `MvPolynomial (Fin (n+1)) ℤ`, and the factor-coefficient bound
