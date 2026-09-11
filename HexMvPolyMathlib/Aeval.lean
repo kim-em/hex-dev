@@ -59,24 +59,12 @@ theorem monoProd_eq_prod [CommSemiring S] (x : Fin n → S) (m : Mono n) :
     List.toFinset_finRange]
   simp
 
-/-- Evaluation transported through the Mathlib equivalence.
-
-This auxiliary homomorphism supplies the laws for the public direct
-evaluator. -/
-def eval₂MathlibHom [CommSemiring R] [DecidableEq R]
-    [CommSemiring S] (f : R →+* S) (x : Fin n → S) :
-    MvPoly n R cmp →+* S :=
-  (MvPolynomial.eval₂Hom f x).comp (equiv (cmp := cmp)).toRingHom
-
-/-- The Mathlib-transported evaluation homomorphism applies as direct
-`eval₂`. -/
-theorem eval₂MathlibHom_apply [CommSemiring R] [DecidableEq R]
+/-- Mathlib evaluation of the converted polynomial is direct `eval₂`. -/
+theorem eval₂_toMvPolynomial [CommSemiring R] [DecidableEq R]
     [CommSemiring S] (f : R →+* S) (x : Fin n → S)
     (p : MvPoly n R cmp) :
-    eval₂MathlibHom f x p = eval₂ f x p := by
-  rw [eval₂MathlibHom, RingHom.comp_apply]
-  change MvPolynomial.eval₂Hom f x (equiv p) = eval₂ f x p
-  rw [equiv_apply]
+    MvPolynomial.eval₂ f x (toMvPolynomial p) = eval₂ f x p := by
+  change MvPolynomial.eval₂Hom f x (toMvPolynomial p) = eval₂ f x p
   rw [toMvPolynomial_eq_sum]
   rw [map_sum (MvPolynomial.eval₂Hom f x), eval₂_eq]
   have eval_monomial (m : Mono n) (c : R) :
@@ -95,6 +83,26 @@ theorem eval₂MathlibHom_apply [CommSemiring R] [DecidableEq R]
   apply List.foldl_congr
   intro acc term hterm
   rw [coeff_eq_of_mem_terms p hterm]
+
+/-- Evaluation transported through the Mathlib equivalence.
+
+This auxiliary homomorphism supplies the laws for the public direct
+evaluator. -/
+def eval₂MathlibHom [CommSemiring R] [DecidableEq R]
+    [CommSemiring S] (f : R →+* S) (x : Fin n → S) :
+    MvPoly n R cmp →+* S :=
+  (MvPolynomial.eval₂Hom f x).comp (equiv (cmp := cmp)).toRingHom
+
+/-- The Mathlib-transported evaluation homomorphism applies as direct
+`eval₂`. -/
+theorem eval₂MathlibHom_apply [CommSemiring R] [DecidableEq R]
+    [CommSemiring S] (f : R →+* S) (x : Fin n → S)
+    (p : MvPoly n R cmp) :
+    eval₂MathlibHom f x p = eval₂ f x p := by
+  rw [eval₂MathlibHom, RingHom.comp_apply]
+  change MvPolynomial.eval₂Hom f x (equiv p) = eval₂ f x p
+  rw [equiv_apply]
+  exact eval₂_toMvPolynomial f x p
 
 /-- The auxiliary transported algebra evaluator is exactly the Mathlib-free
 direct evaluator with the coefficient algebra map. -/
