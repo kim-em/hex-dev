@@ -61,16 +61,28 @@ theorem det_eq_mathlib [CommRing R] [DetOps R] [LawfulDetOps R]
 For each policy constructor, prove `LawfulPolicy` by splitting on its actual
 dispatch and fallback branches and using the arm theorems below. The
 exact-quotient constructor requires the cancellation law for its stored
-quotient. Field policies use the field operations and equality they carry.
-The modular constructor requires the lower bound law. Instantiate
+quotient. Field policies require the carried division's explicit law
+`∀ a b : R, b ≠ 0 → div (a * b) b = a` for the initial Bareiss arm, and
+field laws over the ambient commutative-ring operations for elimination.
+The field constructor's evidence supplies these laws, rather than a second
+ring on the same type.
+
+The integer recipe's constructor proof takes mutual inverse laws for
+`toInt` and `ofInt` and preservation of `0`, `1`, addition, negation, and
+multiplication. Prove the finite Leibniz sum commutes with these maps and
+transport the integer arm equality back to `R`. For the shipped `Int`
+instance the maps and this transport are identities. When the modular arm
+is enabled, the constructor proof additionally takes
+`[Hex.Matrix.LawfulDetBound]` from the lower library. Instantiate
 `LawfulDetOps` for each shipped default from these constructor proofs.
 Explicit test policies, including zero fuel, use `LawfulPolicy` directly.
 The theorem for an arbitrary `DetOps` always requires laws for that same
 instance's policy. A supplied quotient cannot be declared correct without
 its law.
 
-`det_eq` projects the default policy's `value_eq`. `det_eq_mathlib` composes
-it with `HexMatrixMathlib.det_eq`. Although the first law uses only
+`det_eq` unpacks `LawfulDetOps.lawful` and projects the default policy's
+`value_eq`. The `lawful` field is not itself a registered instance.
+`det_eq_mathlib` composes it with `HexMatrixMathlib.det_eq`. Although the first law uses only
 Mathlib-free types, it lives here and is not available to Mathlib-free
 consumers in the first version. In particular, the supplied proofs must not
 assume a Mathlib `CommRing` instance exists on every executable carrier.
@@ -165,8 +177,11 @@ a ring with zero divisors, and the trivial ring.
 
 Exercise `det_eq` and `det_eq_mathlib` at empty, one-by-one, two-by-two,
 row-swapped, and singular inputs. For integration, call `runWith` to force
-each enabled arm and each fallback transition and apply its
-`LawfulPolicy.route_sound` law. Tiny closed values
+each enabled non-small arm at `n > 2` and each available fallback transition, then
+apply its
+`LawfulPolicy.route_sound` law. Tiny-size cross-arm comparisons call the
+lower algorithms directly because dispatch always uses the small arm.
+Tiny closed values
 may be checked with kernel `decide`. Certificate replay and tactic
 performance belong to the downstream matrix-tactic libraries. This
 companion introduces neither a certificate format nor a trusted evaluator.

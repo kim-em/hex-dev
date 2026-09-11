@@ -397,7 +397,7 @@ libraries:
         - name: mv-poly
           description: Dimension, variable count, degree, support, and coefficient size over Int and Rat; Bareiss versus Berkowitz with nonconstant pivots.
         - name: dispatch
-          description: Tiny cases, both sides of measured cutoffs, modular fallback, and rings with zero divisors; dispatch versus its selected direct arm.
+          description: Tiny cases and rings with zero divisors, plus both sides of measured cutoffs and modular fallback when enabled; dispatch versus its selected direct arm.
   HexDetMathlib:
     deps: [HexDet, HexBareissMathlib, HexCharPolyMathlib, HexDeterminantMathlib, HexPolyMathlib, HexPolyFpMathlib, HexMvPolyMathlib]
     mathlib: true

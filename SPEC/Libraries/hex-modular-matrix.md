@@ -148,18 +148,56 @@ so rather than accepting `Rat` matrices and doing it silently.
 
 ### Public names and dispatch integration
 
-The determinant API sketches below use local names. The production names of
-`det`, `detViaDivisor`, and their wrapper correspondence theorems belong in
+The executable wrappers `det` and `detViaDivisor` below belong in
 `Hex.ModularMatrix`, not `Hex.Matrix`: `Hex.Matrix.det` already denotes the
-Leibniz reference and cannot be redeclared. The shared production dispatcher
-is separately named `Hex.Det.det` in [hex-det](hex-det.md).
+Leibniz reference and cannot be redeclared. Their conditional correctness
+lemmas use that wrapper namespace. Mathlib correspondence remains in the
+companion namespace. Image, bound, and partial reconstruction operations
+remain in `Hex.Matrix`. The shared dispatcher is `Hex.Det.det` in
+[hex-det](hex-det.md), above this library.
 
-The modular library stays below `HexDet`. It must expose either the actual
-completion route of its total determinant routines, including Bareiss
-fallback, or partial operations with explicit fuel and seed parameters that
-let `HexDet` compose the same branches and report that route. The latter
-must use the production code paths so zero-fuel conformance can exercise
-fallback. No upward import of `HexDet` is required for either form.
+The total wrappers share this proposed executable interface:
+
+```lean
+namespace Hex.ModularMatrix
+
+inductive Method where
+  | modular | divisor | bareiss
+
+structure DetData where
+  value : Int
+  first : Method
+  rest : List Method
+
+def detWith (A : Hex.Matrix Int n n) (fuel seed : Nat)
+    (useDivisor : Bool) : DetData
+
+end Hex.ModularMatrix
+```
+
+`first :: rest` records attempted determinant methods in order. Its last
+entry is the method that supplied `value`. With `useDivisor = false`,
+`detWith` runs bounded modular reconstruction then Bareiss on exhaustion.
+With `useDivisor = true`, it first attempts the seeded divisor optimization,
+then ordinary modular reconstruction if the divisor attempt fails, and
+finally Bareiss if that reconstruction exhausts its budget. `fuel` bounds
+each attempted modular reconstruction and the divisor's bounded search.
+At zero fuel no modular or divisor attempt succeeds. Seed affects the
+divisor search only. The methods share the algorithm bodies described below.
+
+`det A` projects the value of `detWith A defaultFuel defaultSeed false`.
+`detViaDivisor A seed` projects `detWith A defaultFuel seed true`. The
+default fuel and seed are recorded implementation parameters. `HexDet`
+calls `detWith` with its own recorded parameters, converts this route to its
+public route type, and never guesses which fallback ran. Zero-fuel tests
+therefore exercise the production branches. The lower library never imports
+`HexDet`.
+
+The implementation owes `detWith_eq`, under
+`[Hex.Matrix.LawfulDetBound]`, asserting that every returned value equals
+`Hex.Matrix.det A`, and route equations for each success and failure branch.
+These are proposed obligations, not existing declarations. The correctness
+proofs of `det` and `detViaDivisor` project this shared result.
 
 ### One image
 
@@ -257,14 +295,23 @@ bound here as the fallback if a Mathlib-free consumer ever appears.
 moduli runs out before the bound is reached. -/
 def detModular? (A : Matrix Int n n) (fuel : Nat) : Option Int
 
-/-- The determinant. Falls back to `Hex.Matrix.bareiss` when the modular
-route does not finish. -/
-def det (A : Matrix Int n n) : Int
-
 theorem detModular?_eq [LawfulDetBound] (h : detModular? A fuel = some d) :
     d = Matrix.det A
-theorem det_eq [LawfulDetBound] (A : Matrix Int n n) :
-    det A = Matrix.det A
+```
+
+The total wrapper is in `Hex.ModularMatrix`:
+
+```lean
+namespace Hex.ModularMatrix
+
+/-- The determinant. Falls back to `Hex.Matrix.bareiss` when the modular
+route does not finish. -/
+def det (A : Hex.Matrix Int n n) : Int
+
+theorem det_eq [Hex.Matrix.LawfulDetBound] (A : Hex.Matrix Int n n) :
+    det A = Hex.Matrix.det A
+
+end Hex.ModularMatrix
 ```
 
 The loop folds one image per modulus into a `Crt` and stops when the
@@ -314,9 +361,13 @@ writes it, and it belongs in hex-basic rather than here. Then `d` divides
 that much smaller number.
 
 ```lean
+namespace Hex.ModularMatrix
+
 /-- The determinant, computed as a divisor found by lifting times a
 cofactor found by Chinese remaindering. -/
-def detViaDivisor (A : Matrix Int n n) : Int
+def detViaDivisor (A : Hex.Matrix Int n n) (seed : Nat) : Int
+
+end Hex.ModularMatrix
 ```
 
 Three things make this rigorous rather than heuristic, and the middle one
@@ -786,7 +837,8 @@ results. Writing `e` for hex-matrix-mathlib's `matrixEquiv`:
 ```lean
 instance : LawfulDetBound        -- from Matrix.norm_det_le_prod_norm_column
 
-theorem det_eq (A : Matrix Int n n) : det A = Matrix.det (e A)
+theorem det_eq (A : Hex.Matrix Int n n) :
+    Hex.ModularMatrix.det A = Matrix.det (e A)
 theorem rank_eq (A : Matrix Int n m) : rank A = Matrix.rank (e A)
 
 theorem solve_eq (h : solve? A b fuel = some (y, d)) :
@@ -869,7 +921,7 @@ HexModularMatrixMathlib.lean
 
 ```yaml
   HexModularMatrix:
-    deps: [HexModular, HexMatrix, HexRowReduce, HexDeterminant, HexModArith, HexArith, HexBasic]
+    deps: [HexModular, HexMatrix, HexRowReduce, HexDeterminant, HexBareiss, HexModArith, HexArith, HexBasic]
     mathlib: false
     done_through: 0
     status: planned
@@ -904,6 +956,7 @@ HexModularMatrixMathlib.lean
 
 `HexDeterminant` is a dependency for the row-operation determinant
 lemmas, not for the Leibniz determinant, which nothing here calls.
+`HexBareiss` supplies the total determinant fallback.
 `HexBasic` is for the random generator the determinant divisor draws
 its right-hand side from.
 

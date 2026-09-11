@@ -20,13 +20,25 @@ The following is the proposed public surface, not existing declarations.
 `Policy R` is a typed recipe for the available algorithms and their parameters.
 Its constructors are Berkowitz with decidable equality, exact-quotient
 Bareiss with equality and `quot`, field selection with field operations and
-equality, and integer selection with its modular settings. Field and integer
-constructors admit only arms implemented for that carrier. Before modular
-integration, integer policies admit only Bareiss. Before field elimination
+equality, and integer selection with its modular settings. To call the
+integer backend from the generic interpreter, the integer recipe carries
+`toInt : R → Int` and `ofInt : Int → R`. It maps entries through `toInt`
+and the answer through `ofInt`. The companion requires these maps to be
+mutual inverses preserving the ring operations. The `Int` instance uses
+identity maps, so its runner has no representation conversion. No generic
+ring is assumed to be `Int` by a typeclass search or unchecked cast.
+Field and integer constructors admit only arms implemented for that carrier.
+Before modular integration, integer policies admit only Bareiss. Before field elimination
 exists, field policies admit only Bareiss. Small cases precede every recipe.
 
 Policies carry the dimension and coefficient-size selection regions, cutoff
-tie rules, and applicable fuel and seed settings. They also retain the
+tie rules, and applicable fuel and seed settings. A size-based recipe also
+carries its executable input statistic, for example
+`size : {n : Nat} → Hex.Matrix R n n → Nat`, with the report specifying
+its units and aggregation rule. Integer entries use maximum absolute bit
+length. Rational policies may use maximum numerator and denominator bit
+lengths as separate statistics. Carriers without a supplied statistic have
+dimension-only regions. `Lean.Grind.CommRing` supplies no size measure. They also retain the
 coefficient operations, including the quotient, that the runner uses. Field
 evidence must extend the ambient commutative-ring operations, not replace
 them with another ring structure. Thus
@@ -76,18 +88,22 @@ fuel and completes through Bareiss records `[modular, bareiss]`. A divisor
 attempt can record an intermediate modular attempt before Bareiss. The
 route records determinant algorithms only, not every modular image or
 subsidiary solve. Diagnostics retain the resolved policy alongside the
-result so fuel, seed, and selection settings remain reproducible.
+result so fuel, seed, and selection settings remain reproducible. For
+`DetOps.run` this is precisely `DetOps.policy`. For `runWith p` the caller
+retains `p`. Neither the runner nor `Result` stores a second resolved policy.
 
 Each producer sets the route in the branch that actually returns the value.
 In particular, a wrapper must not label the opaque result of a total modular
 routine `modular` when that routine may have used Bareiss internally. The
 modular integration requires either a result-with-route API below dispatch,
 or composition of its partial operations with the same documented total
-fallback. No determinant is computed twice to discover its route.
+fallback. The modular SPEC requires `Hex.ModularMatrix.detWith` with explicit
+fuel, seed, divisor selection, and the completion route. No determinant is
+computed twice to discover its route.
 
 Conformance and build-only examples call `runWith` with explicit policies
-to force each available arm and transition, including zero modular fuel.
-These use the production interpreter, not a separate test implementation.
+to force each available arm and transition, including zero modular fuel
+once modular integration exists. These use the production interpreter, not a separate test implementation.
 A policy cannot request an unavailable arm. Every explicit policy used in
 a proof must satisfy the same companion laws as an installed default.
 
@@ -107,7 +123,7 @@ with `Int` and the generic cases stated separately.
 
 | Carrier | Required operations and laws | Selection after the small cases | Instance module in `HexDet` |
 |---|---|---|---|
-| `Int` | existing integer operations and native `Hex.Matrix.exactDiv` | Bareiss below the measured crossover, modular above it once available and measured | `Int.lean` |
+| `Int` | existing integer operations and native `HexArith.Int.exactDiv` | Bareiss below the measured crossover, modular above it once available and measured | `Int.lean` |
 | `Rat` | core `Lean.Grind.Field` and decidable equality | Bareiss initially, then the measured choice with division elimination once available | `Field.lean` |
 | `ZMod64 p` | `[ZMod64.Bounds p] [ZMod64.PrimeModulus p]`, field instance from `HexPolyFp.PrimeField` | Bareiss initially, then a field policy measured separately from `Rat` once elimination is available | `Field.lean` |
 | `DensePoly F` | `[Lean.Grind.Field F] [DecidableEq F]`, polynomial division and `Hex.instExactDivLawsDensePoly` from `HexResultant.ExactDiv` | Bareiss with `Hex.exactDiv`, exercising both `F = Rat` and `F = ZMod64 p` | `Poly.lean` |
@@ -190,20 +206,31 @@ those dependencies. The carrier instance modules live here, above both
 matrix algorithms and quotient providers. Neither `HexBareiss` nor a
 quotient provider acquires a dependency on `HexDet`.
 
+For field recipes, the carried division `div` must obey
+`div (a * b) b = a` whenever `b ≠ 0`. Their field evidence supplies this
+law for the ambient multiplication. The companion must use this specific
+law for the initial Bareiss arm, and the same field evidence for forward
+elimination. An unrelated field dictionary is not accepted.
+
 The intended files are `HexDet/{Basic,Int,Field,Poly,MvPoly}.lean` and the
 `HexDet.lean` umbrella. `Basic` owns the public protocol, small cases,
 Berkowitz default, and generic exact-quotient constructor. The other modules
-own carrier policies and instances. Consumers may import `HexDet.Basic` or
-`HexDet.Int` directly without the multivariate instance modules. This issue
+own carrier policies and instances. The umbrella is the supported way to obtain all concrete carrier policies.
+An integer-only consumer may import `HexDet.Int` without multivariate
+instances. Importing only `HexDet.Basic` deliberately exposes the generic
+Berkowitz default: other carriers need their instance module or the umbrella
+to obtain their production policy. Partial imports can change the selected
+arm while preserving correctness. This issue
 creates only the SPECs and
 planned metadata, not these source files or Lake targets.
 
 When registered and implemented, add `HexModularMatrix` to `HexDet.deps`,
 and `HexModularMatrixMathlib` to the companion's dependencies. Neither
-modular library may depend on `HexDet`. The lower modular API must use a
-namespace distinct from the existing `Hex.Matrix.det` and new `Hex.Det.det`.
-The `det` signatures in its SPEC describe planned operations, not existing
-callable names. Adding these edges preserves the topological order because
+modular library may depend on `HexDet`. The lower determinant wrappers use `Hex.ModularMatrix.det` and
+`Hex.ModularMatrix.detViaDivisor`, distinct from `Hex.Matrix.det` and
+`Hex.Det.det`. Its image, bound, and partial reconstruction helpers may
+remain in `Hex.Matrix`. These signatures describe planned operations, not
+existing callable names. Adding these edges preserves the topological order because
 both modular libraries depend only on libraries below dispatch.
 
 `scripts/check_dag.py` checks registered dependencies and actual imports,
@@ -243,10 +270,12 @@ but cannot import these companion theorems as Mathlib-free correctness.
 ## Conformance and measured policies
 
 `HexDet` owns conformance and performance. Compare dispatch and every
-available forced arm on identical matrices, including empty and tiny
+available lower algorithm on identical matrices, including empty and tiny
 matrices, row swaps, singular matrices, zero pivot columns, odd and even
-sizes, and the trivial ring where `1 = 0`. Check both values and actual
-route transitions, especially forced modular exhaustion. Exercise each
+sizes, and the trivial ring where `1 = 0`. At `n ≤ 2`, call the lower algorithms directly to compare with dispatch's
+mandatory small arm. At larger sizes, use `runWith` to force the available
+arms. Check both values and actual route transitions, including forced
+modular exhaustion once that arm is enabled. Exercise each
 carrier in the table, nonconstant polynomial pivots, and a commutative ring
 with zero divisors through Berkowitz. Compare against Leibniz at small
 sizes only. Larger oracle comparisons use python-flint `fmpz_mat.det()`,
@@ -262,7 +291,7 @@ The required Phase-4 input families are:
 | `field` | dimension, rational numerator/denominator bit lengths, and prime modulus: forward elimination versus Bareiss, with Berkowitz as a reference on feasible sizes |
 | `dense-poly` | dimension, entry degree, and coefficient size over `Rat`, prime `ZMod64`, and `Int`: Bareiss versus Berkowitz, including exact division by nonconstant pivots |
 | `mv-poly` | dimension, variable count, total degree, support, and coefficient size over `Int` and `Rat`: Bareiss versus Berkowitz, including nonconstant pivots and expression growth |
-| `dispatch` | tiny dimensions, both sides of each measured cutoff, modular fallback, and rings with zero divisors: dispatch overhead versus its selected direct arm |
+| `dispatch` | tiny dimensions and rings with zero divisors, plus both sides of each measured cutoff and modular fallback when enabled: dispatch overhead versus its selected direct arm |
 
 Crossovers are benchmark outputs, never numerical SPEC constants. Record
 each enabled cutoff, coefficient-size region, tie rule, seed, and fuel
