@@ -40,9 +40,18 @@ and explanations covering:
   conjugation and Repr round trips, migration of old isolation expressions,
   and possible changes to enumeration indices and nearest-root ties.
 
+The cyclotomic implementation must add its own library chapter covering
+checked positive indices, polynomial generation, partial index search, and
+the rational-angle number-field consumer. Both chapters must distinguish
+mathematical totality from measured usable index ranges and explain the
+budgeted interfaces for resource-constrained callers. Canonicalization
+migration must satisfy the owning SPEC's constructor performance acceptance
+bar and regenerate the committed Repr checks and fixture snapshots.
+
 Do not present proposed identifiers as available APIs. Link performance claims
 to phase-separated measurements including input construction and peak memory;
-the high-height quadratic in #10156 must not be advertised as fixed merely
-because a new approximation routine is fast. The real-algebraic chapter must
+use the [quadratic construction report](../reports/hex-number-field-quadratic.md)
+as the fixed baseline for the high-height regression in #10156, including
+the remaining trial-factorization allocation costs. The real-algebraic chapter must
 retain the nonnegative real square-root contract. Build the affected chapters
 with `lake build HexManual` and render the manual when those chapters change.

@@ -1201,6 +1201,9 @@ isolation cost have a complete
 and [manual requirements](../HexManual/README.md#direct-radical-design-requirements).
 Implementation remains future work. The polynomial generator follows the
 [cyclotomic SPEC](Libraries/hex-cyclotomic.md); broader comparison work in
-[#10142](https://github.com/kim-em/hex-dev/issues/10142) and the independent
-integer-root memory bug [#10156](https://github.com/kim-em/hex-dev/issues/10156)
-remain separate.
+[#10142](https://github.com/kim-em/hex-dev/issues/10142) remains separate.
+The [quadratic construction report](../reports/hex-number-field-quadratic.md)
+records the fix for the independent integer-root memory bug
+[#10156](https://github.com/kim-em/hex-dev/issues/10156) and the remaining
+trial-factorization allocation costs; preserve its regression when migrating
+canonical constructors.
