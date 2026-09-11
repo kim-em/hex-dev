@@ -18,7 +18,7 @@
 - **hex-row-reduce**: row reduction (RREF), rank, span, nullspace
 - **hex-determinant**: the Leibniz determinant and its cofactor/Cauchy-Binet/Plücker theory
 - **hex-bareiss**: the fraction-free Bareiss determinant algorithm
-- **[hex-det](hex-det.md)** (planned): production determinant dispatch with carrier policies, measured crossovers, and the completed algorithm reported for tactics
+- **hex-det**: production determinant dispatch with carrier policies, measured crossovers, and the completed algorithm reported for tactics
 - **[hex-rank](hex-rank.md)** (planned): matrix rank over any integral domain with a two-sided certificate (a nonsingular minor with its adjugate, and the identity expressing every column over the selected ones), the rectangular fraction-free producer, and the row and column rank profiles
 - **[hex-determinantal-ideal](hex-determinantal-ideal.md)** (planned): executable minors and determinantal-ideal generators of a matrix over a commutative ring, and the theorem that the rank over a field is below `r` exactly when every `r × r` minor vanishes
 - **hex-char-poly**: the characteristic polynomial by the division-free Samuelson-Berkowitz algorithm, over any commutative ring
@@ -88,7 +88,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-row-reduce-mathlib**: rank = `Matrix.rank`, nullspace = `LinearMap.ker`, span agreement
 - **hex-determinant-mathlib**: `det` agreement with `Matrix.det`, plus the Plücker / Desnanot-Jacobi assembly
 - **hex-bareiss-mathlib**: Bareiss determinant = `Matrix.det`, via the bordered-minor invariant
-- **[hex-det-mathlib](hex-det-mathlib.md)** (planned): determinant dispatch correctness and correspondence, including policy and fallback route laws
+- **hex-det-mathlib**: determinant dispatch correctness and correspondence, including policy and fallback route laws
 - **[hex-rank-mathlib](hex-rank-mathlib.md)** (planned): certificate soundness for `Matrix.rank` over any domain, rank invariance under `IsFractionRing` scalar extension, producer correctness, and the conversions to and from Mathlib's `Echelon.Decomposition`
 - **[hex-determinantal-ideal-mathlib](hex-determinantal-ideal-mathlib.md)** (planned): minors as `Matrix.det` of a `submatrix`, the rank-versus-minors theorem for `Matrix.rank` under any ring homomorphism into a field, rank-drop loci as zero sets, and invariance of `I_r(A)` under invertible row and column operations
 - **hex-char-poly-mathlib**: agreement with `Matrix.charpoly`, Cayley-Hamilton, the trace and determinant coefficients, transpose and similarity invariance
@@ -695,8 +695,6 @@ for developments whose source-local move has not happened yet.
 - [hex-bareiss-mathlib](https://github.com/leanprover/hex-bareiss-mathlib/blob/main/SPEC/hex-bareiss-mathlib.md) (released): Bareiss determinant correctness
 - [hex-rank](hex-rank.md) (planned): rank over any integral domain with an adjugate-and-column-expression certificate, the rectangular fraction-free producer, and the rank profiles
 - [hex-rank-mathlib](hex-rank-mathlib.md) (planned): `Matrix.rank` soundness over any domain, `IsFractionRing` scalar extension, producer correctness, and `Echelon.Decomposition` conversions
-- [hex-det](hex-det.md) (planned): carrier-specific determinant dispatch and measured policies
-- [hex-det-mathlib](hex-det-mathlib.md) (planned): determinant dispatch value and route correctness
 - [hex-determinantal-ideal](hex-determinantal-ideal.md) (planned): executable minors, determinantal-ideal generators, and the rank-versus-minors theorem with a Mathlib-free proof
 - [hex-determinantal-ideal-mathlib](hex-determinantal-ideal-mathlib.md) (planned): `Matrix.rank` versus minors under any ring homomorphism into a field, rank-drop loci, and invariance of determinantal ideals
 - [hex-char-poly.md](hex-char-poly.md): the characteristic polynomial by the division-free Samuelson-Berkowitz algorithm, with Cayley-Hamilton and the `Matrix.charpoly` correspondence (the Mathlib companion is specified in the same file)

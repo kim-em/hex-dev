@@ -387,7 +387,7 @@ libraries:
     deps: [HexBareiss, HexCharPoly, HexRowReduce, HexPolyFp, HexResultant, HexMvGcd]
     mathlib: false
     done_through: 0
-    status: planned
+    status: active
     phase4:
       comparators:
         - tool: FLINT fmpz_mat.det() via python-flint
@@ -408,9 +408,9 @@ libraries:
         - name: field
           description: Dimension, rational numerator and denominator size, and prime modulus; elimination versus Bareiss. Initial Bareiss policy is unmeasured; record enabled constants and evidence in reports/hex-det-performance.md.
         - name: dense-poly
-          description: Dimension, degree, and coefficient size over Rat, prime ZMod64, and Int; Bareiss versus Berkowitz with nonconstant pivots.
+          description: Dimension, degree, and coefficient size over Rat, prime ZMod64, and Int; Bareiss versus Berkowitz with nonconstant pivots. Initial Bareiss policy is unmeasured; evidence is in reports/hex-det-performance.md.
         - name: mv-poly
-          description: Dimension, variable count, degree, support, and coefficient size over Int and Rat; Bareiss versus Berkowitz with nonconstant pivots.
+          description: Dimension, variable count, degree, support, and coefficient size over Int and Rat; Bareiss versus Berkowitz with nonconstant pivots. Initial Bareiss policy is unmeasured, and the first evidence in reports/hex-det-performance.md favours Berkowitz on the measured family.
         - name: dispatch
           description: Tiny cases and rings with zero divisors, plus both sides of measured cutoffs and modular fallback when enabled; dispatch versus its selected direct arm.
   HexDetMathlib:
@@ -418,7 +418,7 @@ libraries:
     mathlib: true
     correspondence_only: true
     done_through: 0
-    status: planned
+    status: active
   HexCharPoly:
     deps: [HexMatrix, HexPoly]
     mathlib: false

@@ -1,6 +1,6 @@
 # hex-det-mathlib
 
-Correctness of [hex-det](hex-det.md)'s dispatch and correspondence with
+Correctness of [hex-det](../../HexDet/SPEC/hex-det.md)'s dispatch and correspondence with
 Mathlib's determinant. This is a `correspondence-only-layer`, registered
 with `correspondence_only: true`. It owns no runtime determinant, conformance
 driver, benchmark process, or tactic.
@@ -18,8 +18,10 @@ algorithm correctness and coefficient transport without placing Mathlib
 imports in `HexDet`. Add `HexModularMatrixMathlib` when the modular arm is
 integrated. No dependency points back from those providers to dispatch.
 
-The intended files are `HexDetMathlib/{Basic,Small,Bareiss,Berkowitz,Field,Carriers}.lean`
-and the umbrella `HexDetMathlib.lean`. A modular correspondence module is
+The intended files are
+`HexDetMathlib/{Basic,Small,Bareiss,Berkowitz,Field,Integer,Carriers}.lean`
+and the umbrella `HexDetMathlib.lean`, one per arm with `Basic` owning the
+contract and `Carriers` the assembly. A modular correspondence module is
 added with that algorithm. Build-only examples exercise the laws and
 instance resolution. They do not duplicate the owner's runtime conformance.
 
@@ -67,10 +69,14 @@ field laws over the ambient commutative-ring operations for elimination.
 The field constructor's evidence supplies these laws, rather than a second
 ring on the same type.
 
-The integer recipe's constructor proof takes mutual inverse laws for
-`toInt` and `ofInt` and preservation of `0`, `1`, addition, negation, and
-multiplication. Prove the finite Leibniz sum commutes with these maps and
-transport the integer arm equality back to `R`. For the shipped `Int`
+The integer recipe's constructor proof takes the laws making `toInt` a unital
+ring homomorphism, preserving `0`, `1`, addition and multiplication, together
+with `ofInt (toInt a) = a`. Negation and the other inverse direction are not
+separate hypotheses: a ring homomorphism preserves negation, and one into `Int`
+is surjective because its image contains `1` and is closed under negation and
+addition, so the remaining laws follow rather than being assumed. Prove the
+finite Leibniz sum commutes with these maps and transport the integer arm
+equality back to `R`. For the shipped `Int`
 instance the maps and this transport are identities. When the modular arm
 is enabled, the constructor proof additionally takes
 `[Hex.Matrix.LawfulDetBound]` from the lower library. Instantiate
@@ -127,7 +133,7 @@ failed-pivot column branch yields determinant zero. Until the operation
 and its correctness are supplied, the installed field policy is Bareiss.
 
 **Modular and divisor arms.** The operations and correctness in
-[hex-modular-matrix](hex-modular-matrix.md) are planned, not declarations
+[hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md) are planned, not declarations
 that can be imported today. Once implemented, compose their determinant
 equalities with the dispatch branches and discharge `LawfulDetBound` using
 the modular companion. The divisor route must also satisfy that library's
@@ -145,8 +151,7 @@ those carrier obligations.
 
 The implementation must supply compatible Mathlib algebraic structures in
 `HexPolyMathlib` for `DensePoly`/`ZPoly` and `HexPolyFpMathlib` for `ZMod64`,
-transported from the mathematical polynomial or residue types while retaining
-the executable operations. The private dense-polynomial structure in
+retaining the executable operations. The private dense-polynomial structure in
 `HexResultantMathlib/Specialize.lean` is not a reusable dependency and uses
 `npowRec`. Follow the executable-power choices in
 `HexMvPolyMathlib/Equiv.lean` and `HexGFqMathlib/Basic.lean`: install the
@@ -155,8 +160,22 @@ Then the generic arm proofs apply with the same quotient law. Transport
 must preserve the exact `Zero`, `One`, `Add`, `Neg`, `Mul`, and `Pow`
 operations used by `Lean.Grind.CommRing`, rather than introducing a second
 unrelated ring on the type. It must leave computational division and
-decidable equality intact. `HexDetMathlib/Carriers.lean` assembles those
-instances and the dispatch laws above both dependency chains.
+decidable equality intact.
+
+One transport of the whole `Lean.Grind.CommRing` structure discharges every
+carrier at once and is preferred to a structure per carrier: the arm theorems
+are then stated over `Lean.Grind.CommRing` directly, which is the instance every
+carrier computes with, and no carrier needs a structure of its own. What makes
+that sound is an accompanying equation saying the transported structure's
+lightweight reduct is the instance it came from, since the two are not
+definitionally equal: Mathlib's `Semiring.toGrindSemiring` chooses its numerals
+branchwise at `0`, `1` and `n + 2`, agreeing with an arbitrary
+`Lean.Grind.Semiring.ofNat` only up to `ofNat_eq_natCast`. Every other field is a
+projection of the original instance. The transport is a definition, not an
+instance: a carrier with no global Mathlib structure installs it at the use
+site. `HexPolyMathlib` and `HexPolyFpMathlib` name the dense-polynomial and
+residue specializations, and `HexDetMathlib/Carriers.lean` assembles the
+dispatch laws above both dependency chains.
 
 For a custom commutative carrier with only `Lean.Grind.CommRing`, the same
 compatibility work or a direct proof of its dispatch law is required in the
