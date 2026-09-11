@@ -1621,8 +1621,9 @@ operation.
    the next milestone's single solve both go through `Decomp`.
 
 4. **The determinant divisor.** `dvd_det_of_mulVec`,
-   `detViaDivisorWith`, `detViaDivisor`, and their theorems, with the
-   random right-hand side drawn from `Hex.Rand`. This is the milestone that produces the
+   `detViaDivisorWith` and `detViaDivisorWith_eq`, wired into
+   `detWith`'s `divisor` route, with the random right-hand side drawn
+   from `Hex.Rand`. This is the milestone that produces the
    benchmark numbers, and the route-level test for the reduction step is
    written before the code.
 
@@ -1649,7 +1650,7 @@ HexModularMatrix/
   Dixon.lean        -- Decomp, decompAt?, decomp?, numeratorBound, solveFuel,
                     --   Decomp.lift, solveWith, solveMatWith, solve?,
                     --   solveMat?, solveWitness?
-  Divisor.lean      -- dvd_det_of_mulVec, detViaDivisorWith, detViaDivisor
+  Divisor.lean      -- dvd_det_of_mulVec, detViaDivisorWith, detViaDivisorWith_eq
   Rank.lean         -- rankModP, rankCert?, rankCert?_check, rankModular (imports HexRank)
   Kernel.lean       -- Kernel, kernel?, annihilation and free-block facts
 HexModularMatrix.lean
