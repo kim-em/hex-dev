@@ -217,12 +217,13 @@ Routing is by the converted polynomials, not by syntax:
   conditions), and the arm never assumes an atom is zero either: with
   `hx : x = 0` in context the polynomial matrix still contains the
   indeterminate for `x`, and the user substitutes first. Unknown
-  nonzeroness of an atom is therefore not a decline reason and is never
-  asked about. The generic rank of `[x / y]` is `1` exactly as for `[x]`,
-  its condition reads `x / y ≠ 0`, and whether that is discharged depends
-  only on the local context. The condition returned below is the only
-  nonvanishing fact any output depends on, so this is the whole treatment
-  of atoms of unknown nonzeroness.
+  nonzeroness of an atom is therefore not a decline reason, and neither
+  classification nor the generic rank ever asks about it; it can surface
+  only inside the one condition of output 2. The generic rank of `[x / y]`
+  is `1` exactly as for `[x]`, its condition reads `x / y ≠ 0`, and whether
+  that is discharged depends only on the local context. The condition
+  returned below is the only nonvanishing fact any output depends on, so
+  this is the whole treatment of atoms of unknown nonzeroness.
 
 The batch debits the hex-reflect budget (source nodes, atoms, reflected
 nodes, exponent, terms, coefficient bits, proof nodes) and two dimensions
@@ -244,8 +245,10 @@ one-line instantiation that
 `HexReflect` and `HexRank`; nothing carrier-specific is added to `HexRank`.
 
 The certificate `c : RankCert (MvPoly k C cmp) n m` is closed data:
-`c.rank = r`, `c.denom` a nonzero polynomial `d` (an `r × r` minor of `P`),
-`c.adj` a polynomial matrix. `checkRank P c = true` is a closed Boolean over
+`c.rank = r`, `c.denom` a nonzero polynomial `d` (a signed `r × r` minor of
+`P`: `sign π · det B` for the producer's row order `π`, per
+[hex-rank §Entry points](hex-rank.md#entry-points)), `c.adj` a polynomial
+matrix. `checkRank P c = true` is a closed Boolean over
 polynomial arithmetic, proved by kernel `decide` per the certificate strategy
 of [§Algorithms and proof strategy](#algorithms-and-proof-strategy); its
 cost is the checker's `n · r · m` polynomial products at the certificate's
@@ -290,18 +293,26 @@ of [hex-rank §MvPoly](hex-rank.md#mvpoly).
 
 The companion closes a goal `M.rank = r` (or either inequality) with the
 generic rank only when the goal's matrix is the symbolic matrix itself:
-the carrier of `M` is `MvPolynomial σ C` for a domain `C`, every atom of the
-batch is `MvPolynomial.X i` for a literal `i : σ`, the atoms are pairwise
-distinct, and the coefficient interpretation `ι` is injective (it is for
-`Int` into a characteristic-zero domain and for the residue carrier into a
-characteristic-`p` domain, the registered cases). Then the interpretation
-map is `MvPolynomial.map ι` composed with `MvPolynomial.rename` along the
-atom-to-index map, injective by `MvPolynomial.map_injective` and
-`MvPolynomial.rename_injective`, and `checkRank_sound_map` at that map
-closes the goal. A goal over `MvPolynomial σ C` whose atoms include anything
+the carrier of `M` is `MvPolynomial σ D` for a domain `D`; every atom of
+the batch is `MvPolynomial.X i` for a literal `i : σ`, so the atom valuation
+is `X ∘ f` for a map `f : Fin k → σ`, and `f` is injective (the literals are
+pairwise distinct); and the coefficient interpretation factors as
+`ι = MvPolynomial.C.comp ι₀` for an injective `ι₀ : C →+* D`. The
+registered providers satisfy the last condition: in characteristic zero
+`ι` is `Int.cast` into `MvPolynomial σ D`, which is `C ∘ Int.cast` with
+`Int.cast : ℤ → D` injective, and in characteristic `p` it is `C` composed
+with the residue carrier's injective map into `D`. An arbitrary injective
+`ι : C →+* MvPolynomial σ D` would not do, since its image could meet the
+atom variables. Under these conditions the interpretation map is
+`MvPolynomial.rename f ∘ MvPolynomial.map ι₀ ∘ HexMvPolyMathlib.equiv`,
+injective by `MvPolynomial.rename_injective`, `MvPolynomial.map_injective`
+and `RingEquiv.injective`, and `checkRank_sound_map` at that map closes the
+goal. A goal over `MvPolynomial σ C` whose atoms include anything
 else (`MvPolynomial.C a` for a local `a`, a `rename`, an opaque term) is a
 specialised matrix like any other and goes to output 2: two distinct atoms
 may be equal in the carrier, and the interpretation need not be injective.
+So is a goal whose carrier is `MvPolynomial σ D` but whose coefficient
+provider does not factor through `C` as above.
 The fraction-field form
 `(M.map (algebraMap (MvPolynomial σ C) K)).rank = r` is accepted under the
 same atom condition through `rank_map_eq`.
@@ -328,7 +339,8 @@ Condition.proposition := φ c.denom ≠ 0
 displayed as the interpreted polynomial in the source atoms (`x ^ 2 - 1 ≠ 0`
 below), with provenance `provider` the extension's rank provider, `source`
 the matrix expression, `operation` `"rank"`, and `reason` naming the
-certificate denominator as a nonzero `r × r` minor of the polynomial matrix.
+certificate denominator as a nonzero signed `r × r` minor of the polynomial
+matrix.
 There is exactly one condition per invocation, so deduplication and ordering
 are trivial. The theorem is
 
@@ -346,8 +358,9 @@ companion proves it from hex-rank-mathlib's transport lemmas. It is the
 statement "rank exactly `r` wherever `denom` does not vanish" of
 hex-rank §Generic rank is not a specialised rank.
 
-The condition is sufficient, not necessary. `V(I_r(P)) ⊆ V(d)` and the
-inclusion is strict in general: `!![x, y]` has generic rank `1` with pivot
+The condition is sufficient, not necessary. `d` is a unit multiple of the
+minor `det B ∈ I_r(P)`, so `V(I_r(P)) ⊆ V(d)`, and the inclusion is strict
+in general: `!![x, y]` has generic rank `1` with pivot
 minor `x`, so the condition is `x ≠ 0`, while the rank is `1` wherever
 `(x, y) ≠ (0, 0)`. The arm does not search for a minor whose nonvanishing
 is easier to discharge; that search, and the exact set, belong to output 3
@@ -381,9 +394,13 @@ substituted, and `A.rank = 0` for `[x]` under `hx : x = 0` is reached by
 substituting `hx` and using the numeric arm, not by this arm. The term form
 `rank% A` has no `r'`: it returns `value := r` with proof `A.rank = r` when
 the condition is discharged at steps 1 and 2 below, and otherwise declines
-with the condition displayed. The programmatic interface returns a
-`ConditionalResult` whose `conditions` array holds the one condition and
-whose `proof` depends on it; it never creates goals.
+with the condition displayed, which is the rule of
+[§Frontends and results](#frontends-and-results) that an unconditional
+term form declines unresolved conditions. The programmatic interface
+returns a `ConditionalResult` whose `conditions` array holds the one
+condition and whose `proof` depends on it. Neither creates goals, as
+[hex-reflect §Shared results and conditions](hex-reflect.md#shared-results-and-conditions)
+requires of term and programmatic interfaces.
 
 Conditions are processed in the hex-reflect order and nowhere else:
 
@@ -439,8 +456,8 @@ fixed by its own SPEC.
 
 ### Three examples
 
-**`[x]`**, `x : F` a field element. `k = 1`, `P = [X_0]`, `r = 1`,
-`d = X_0`.
+**`[x]`**, `x : F` an element of a characteristic-zero field, so the
+coefficient provider is `Int`. `k = 1`, `P = [X_0]`, `r = 1`, `d = X_0`.
 
 1. Generic: `S = !![X 0]` over `MvPolynomial (Fin 1) ℤ` has rank `1`;
    `generic_rank% !![x]` returns `1` with that proof.
@@ -467,7 +484,17 @@ the sign of the second pass.
 **`[x ^ q − x]`** over `𝔽_q`, the finite-field example of hex-rank; take
 `x : ZMod 3` and the entry `x ^ 3 - x`. Characteristic-aware conversion
 (`toPolyC 3`) reduces coefficients, not exponents, so `P = [X_0³ − X_0]`,
-`r = 1`, `d = X_0³ − X_0`.
+`r = 1`, `d = X_0³ − X_0`. The coefficient carrier `C` is the
+positive-characteristic provider's residue carrier: it must supply
+`LawfulGcdOps C` for the producer, which `ZMod64 p` does
+(`HexMvGcd/Instances.lean`, under `ZMod64.Bounds p`), and for the companion
+a Mathlib `CommRing C` with an injective `C →+* ZMod 3`, which `ZMod64 p`
+does not have today (`HexModArithMathlib.ZMod64.equiv` is the ring
+equivalence, but the global `CommRing` instance is absent, as
+[hex-det-mathlib](hex-det-mathlib.md) records). Supplying that
+coefficientwise transport is the hex-reflect-mathlib carrier translation's
+obligation; this SPEC depends on it and does not restate it. The three
+outputs below are the mathematics that transport yields.
 
 1. Generic: `S = !![X 0 ^ 3 - X 0]` over `MvPolynomial (Fin 1) (ZMod 3)`
    has rank `1`. This is true and unconditional.
