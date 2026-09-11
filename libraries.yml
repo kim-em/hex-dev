@@ -1151,7 +1151,7 @@ libraries:
   HexRankMathlib:
     deps: [HexRank, HexBareissMathlib, HexDeterminantMathlib, HexMatrixMathlib]
     mathlib: true
-    correspondence_only: true
+    proof_probes: [bench/HexRankMathlib/ProofProbe]
     done_through: 3
     status: active
   HexModArithMathlib:

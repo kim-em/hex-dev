@@ -201,4 +201,33 @@ private def generic23 : Matrix (MvPoly 6 Int Mono.lex) 2 3 :=
 -- `denom` is one of the classical `2 × 2` minors: `x₀ x₄ - x₁ x₃`.
 #guard (rankCertWith Hex.exactDiv generic23).denom = v6 0 * v6 4 - v6 1 * v6 3
 
+
+/-! # The kernel certificate
+
+`rankWitness` on the `3 × 4` example, its witness replayed by `checkRankList`
+in the kernel, and mutated witnesses rejected. -/
+
+def kernelEx : Matrix Int 3 4 := #m[1, 2, 3, 4; 2, 4, 6, 8; 1, 0, 1, 0]
+
+/-- The witness `rankWitness kernelEx` produces. -/
+def kernelWitness : RankWitness := { rank := 2, modulus := 2147483647, rows := [0, 2], cols := [0, 1], vt := [[0, 1073741824], [1, 1073741823]], denom := -2, z := [[-4, 0]] }
+
+#guard rankWitness kernelEx = some kernelWitness
+#guard (rankWitness (0 : Matrix Int 0 0)).map (·.rank) = some 0
+#guard (rankWitness (0 : Matrix Int 2 3)).map (·.rank) = some 0
+
+example : checkRankList 3 4 (toLists kernelEx) kernelWitness = true := by decide +kernel
+example : checkRankList 3 4 (toLists kernelEx) { kernelWitness with denom := 0 } = false := by
+  decide +kernel
+example : checkRankList 3 4 (toLists kernelEx) { kernelWitness with rank := 3 } = false := by
+  decide +kernel
+example : checkRankList 3 4 (toLists kernelEx) { kernelWitness with rows := [0, 1] } = false := by
+  decide +kernel
+example : checkRankList 3 4 (toLists kernelEx)
+    { kernelWitness with vt := kernelWitness.vt.map fun c => c.map (· + 1) } = false := by
+  decide +kernel
+example : checkRankList 3 4 (toLists kernelEx)
+    { kernelWitness with z := kernelWitness.z.map fun r => r.map (· + 1) } = false := by
+  decide +kernel
+
 end Hex.RankConformance

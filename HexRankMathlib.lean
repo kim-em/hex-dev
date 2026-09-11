@@ -12,5 +12,7 @@ public import HexRankMathlib.Invariant
 public import HexRankMathlib.Produce
 public import HexRankMathlib.Cert
 public import HexRankMathlib.Extension
+public import HexRankMathlib.Kernel
+public import HexRankMathlib.Tactic
 public import HexRankMathlib.Profile
 public import HexRankMathlib.RowProfile
