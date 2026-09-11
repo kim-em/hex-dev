@@ -6,20 +6,25 @@ determines the rank over the domain itself, the rank is unchanged by
 extension of scalars to any fraction field (`IsFractionRing`), the
 producer's certificate checks, the producer's index sets are the row and
 column rank profiles, and a Hex certificate and a Mathlib
-`Echelon.Decomposition` each determine the other. Dependencies are
-`HexRank`, `HexBareissMathlib`, `HexDeterminantMathlib` and
-`HexMatrixMathlib`, plus Mathlib. The certificate shape, the checker, the
-Mathlib-free soundness statements and the producer are in the
-computational SPEC and are not restated here.
+`Echelon.Decomposition` each determine the other. The kernel certificate
+of hex-rank determines the rank of a Mathlib integer matrix given as a
+row list, and the `rank` tactic closes rank equalities and inequalities
+on closed integer literals with it. Dependencies are `HexRank`,
+`HexBareissMathlib`, `HexDeterminantMathlib` and `HexMatrixMathlib`, plus
+Mathlib. The certificate shapes, the checkers, the Mathlib-free soundness
+statements and the producers are in the computational SPEC and are not
+restated here.
 
-This library is `correspondence_only: true`, with comparator absence class
-**correspondence-only-layer**. It owns no runtime search, conformance
-driver or benchmark process. Build-only examples live in
-`HexRankMathlib/Tests.lean`.
+This library owns no runtime search, conformance driver or compiled
+benchmark. Its proof-side surface, the `rank` tactic, is measured by the
+fresh-module probes under `bench/HexRankMathlib/ProofProbe` against the
+unmodified pinned `eval_rank` ([The `rank` tactic](#the-rank-tactic)).
+Build-only examples live in `HexRankMathlib/Tests.lean`.
 
 Computational conformance owner: `HexRank`.
 
-Computational performance owner: `HexRank`.
+Computational performance owner: `HexRank` for the producer; this library
+for the tactic.
 
 Throughout, `e` is `HexMatrixMathlib.matrixEquiv`, `A : Hex.Matrix R n m`,
 `c : Hex.Matrix.RankCert R n m`, and `B`, `C`, `P`, `U`, `d`, `r` are as
@@ -367,6 +372,102 @@ The executable form runs `rankCertWith`'s second pass on `[B | 1]` for
 `adj` and `denom`, with `rows`, `cols` read off `D`; it is one `O(r³)`
 pass and no elimination of `A`.
 
+## Kernel certificate
+
+`HexRankMathlib/Kernel.lean` proves the kernel certificate of
+[hex-rank §The kernel certificate](../../HexRank/SPEC/hex-rank.md#the-kernel-certificate) sound
+for `Matrix.rank` over `ℤ`, stated on the Mathlib matrix directly:
+
+```lean
+def vecOfList [Zero α] : (k : Nat) → List α → (Fin k → α)
+def ofLists [Zero α] (n m : Nat) (L : List (List α)) : Matrix (Fin n) (Fin m) α
+theorem ofLists_apply (L) (i : Fin n) (j : Fin m) : ofLists n m L i j = (L.getD i []).getD j 0
+theorem rank_eq_of_checkList (n m) (L) (c : RankWitness)
+    (h : checkRankList n m L c = true) : (ofLists n m L).rank = c.rank
+theorem rank_eq_of_checkList' (A : Matrix (Fin n) (Fin m) ℤ) (L) (c)
+    (hA : A = ofLists n m L) (h : checkRankList n m L c = true) : A.rank = c.rank
+theorem rank_le_of_checkList' … (hr : c.rank ≤ r) : A.rank ≤ r
+theorem le_rank_of_checkList' … (hr : r ≤ c.rank) : r ≤ A.rank
+```
+
+`vecOfList (k + 1) (a :: l)` unfolds to `vecCons a (vecOfList k l)`, so a
+literal `!![…]` is *definitionally* `ofLists n m [[…], …]` of its own
+entry expressions, one unfolding per entry; `hA` is `rfl`, and the kernel
+never evaluates an entry through `Matrix.of` and `vecCons` inside the
+arithmetic. This matters: reading the entries of a `16 × 16` literal by
+kernel evaluation of `A i j` costs about `200 ms`, more than the whole
+certificate check, while the definitional identification costs `6 ms`.
+
+The proof follows `rank_eq_of_cert`. Lower bound: with `B` the pivot block
+`A.submatrix rows cols` and `V̄` the matrix of `vt` over `ZMod modulus`
+(zero below the diagonal), the product `B.map Int.cast * V̄` is lower
+triangular with unit diagonal (`Matrix.IsLowerTriangular`,
+`det_of_isLowerTriangular`), so its determinant is `1`, `det B` is nonzero
+in `ZMod modulus` (`Int.cast_det`, nontrivial since `modulus ≥ 2`) and so
+in `ℤ`; then `rank_of_det_ne_zero` and `rank_submatrix_le`. Upper bound:
+for every row `i` there are coefficients `w` with `denom * A i j =
+Σ_l w l * A (rows l) j`, from the pivot rows themselves or from the
+consumed `z` row, so `denom • A = W * A.submatrix rows id` for `W` built
+from the chosen coefficients (`Classical.choose`, no injectivity of
+`rows` needed), and `rank_smul_of_mem_nonZeroDivisors`, `rank_mul_le_right`,
+`rank_le_card_height`. The bridge from lists to sums is
+`dotNat_eq_sum`, `combo_getD` and `rowsCheck_spec`, each by induction on
+the list the checker recurses on.
+
+## The `rank` tactic
+
+`HexRankMathlib/Tactic.lean` declares the non-reserved tactic keyword
+`rank`, closing
+
+```text
+A.rank = r      r = A.rank
+A.rank ≤ r      r ≥ A.rank
+r ≤ A.rank      A.rank ≥ r
+```
+
+for `A : Matrix (Fin n) (Fin m) ℤ` a closed `!![…]` or `Matrix.of ![…]`
+literal, possibly behind definitions (unfolded within a small budget), and
+`r` a closed natural number. Entries are closed integer expressions that
+`norm_num` evaluates (`1 - 1` is accepted; the kernel then reduces
+`1 - 1` itself when the checker reads it).
+
+The tactic evaluates the entries with Mathlib's `evalRatEntry`, runs the
+compiled `Hex.Matrix.rankWitness`, quotes the witness with `toExpr`, and
+builds `rank_eq_of_checkList' A L c rfl (of_decide_eq_true rfl)` composed
+with a kernel-decided comparison of `c.rank` with `r`; the whole proof is
+added as an auxiliary theorem (`mkAuxTheorem`) so the kernel checks it
+exactly once. Outcomes follow the matrix-tactic protocol: a goal that is
+not a rank comparison is not applicable; a matrix with free variables, a
+non-integer carrier or a non-literal closed matrix is declined with the
+reason; a false target is reported with the certified rank before any
+proof is built; a certificate the kernel rejects is a failure, diagnosed
+by evaluating each decided proposition. Accepted theorems depend on
+`propext`, `Classical.choice` and `Quot.sound` only.
+
+**Comparator.** The unmodified pinned `eval_rank` is the comparator. The
+fresh-module probes `bench/HexRankMathlib/ProofProbe/{Dense8,Dense16,
+Deficient16,Dense32,LowRank32}{Hex,Mathlib}.lean` prove the same literal
+by `rank` and by `eval_rank`, each against its import-only baseline
+(`Baseline`, `MathlibBaseline`); `scripts/bench/rank_tactic_sweep.py`
+runs them through `fresh_module_sweep.py` (six samples, adjacent pairs,
+alternating orientation) and the family's comparator ratio is the
+`eval_rank` delta over the `rank` delta. Kernel-only times on the same
+literals, one run each on the shared host (`lake lean -Dprofiler=true`):
+
+| family | `eval_rank` | `rank` |
+|---|---|---|
+| dense `8 × 8`, rank 8 | 121 ms | 31 ms |
+| dense `16 × 16`, rank 16 | 864 ms | 133 ms |
+| dense `16 × 16`, rank 14 | 851 ms | 139 ms |
+| dense `32 × 32`, rank 32 | 6.8 s | 1.2 s |
+| `32 × 32`, rank 2 | 7.3 s | 117 ms |
+
+Rationals are a follow-up: clear each row's denominators (the rank is
+unchanged), certify the integer matrix, and check the scaling in the
+kernel. Rank goals on `Hex.Matrix` inputs are hex-matrix-tactic's; the
+witness cannot certify the executable's own value without a Mathlib-free
+rank theory.
+
 ## Decidability
 
 ```lean
@@ -439,7 +540,12 @@ An implementer must re-run these searches when the Mathlib pin moves.
   without going through `FractionRing`;
 - `exists_decomposition_of_checkRank` and
   `exists_rankCert_of_decomposition` on a `2 × 2` matrix of rank `1`, to
-  check that the hypotheses are stated in the form a consumer has.
+  check that the hypotheses are stated in the form a consumer has;
+- the `rank` tactic in every orientation on the `3 × 4` example, on
+  `!![…]` with a compound entry, on `Matrix.of ![…]`, on the empty shapes,
+  on a `16 × 16` full-rank and a `32 × 32` rank-`2` literal, and its
+  messages on a false target, a symbolic matrix, a rational matrix and a
+  closed non-literal (`#guard_msgs`).
 
 These are not an independent oracle. The conformance stream of `HexRank`
 is.
