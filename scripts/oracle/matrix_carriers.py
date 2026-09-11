@@ -10,7 +10,9 @@ in increasing grevlex order. Modular coefficients are in [0, p).
 The bareiss_carrier arm uses python-flint for scalars and SymPy Berkowitz
 for polynomials. The det arm retains the determinant stream's Codec and
 DomainMatrix.det (Bareiss in pinned SymPy), independently of Hex Leibniz.
-Both compare exact canonical coefficients without a simplifier.
+The charpoly_carrier arm uses DomainMatrix.det on fresh tI-A. All three
+compare exact canonical coefficients without a simplifier. --serve retains
+the characteristic-polynomial persistent protocol (op=noop returns []).
 Pass a JSONL path or read stdin. --server accepts the same records without the
 result field and returns one {ok, result} reply per line. The overhead kind is
 a trivial request for measuring persistent framing/dispatch overhead.
@@ -29,7 +31,7 @@ from sympy import __version__ as sympy_version, GF, QQ, ZZ, Matrix, Poly, Ration
 from sympy.polys.matrices import DomainMatrix
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from scripts.oracle.common import assert_equal, read_fixtures
+from common import FixtureError, assert_equal, read_fixtures
 
 
 def integer(x):
@@ -256,11 +258,112 @@ def prepare(record):
 
 def determinant(record):
     codec, matrix = prepare(record)
-    return codec.encode(matrix.det())
+    return codec.encode(matrix_det(matrix.to_list(), codec.domain))
+
+
+def carrier_domain(record):
+    from sympy import GF, QQ, ZZ
+    carrier = record["carrier"]
+    if carrier not in {"dense_int", "dense_rat", "dense_mod", "mv_int", "mv_rat", "rat_fn"}:
+        raise ValueError(f"unknown carrier {carrier}")
+    scalar = (GF(record["modulus"], symmetric=False) if carrier == "dense_mod"
+              else QQ if carrier.endswith("rat") or carrier == "rat_fn" else ZZ)
+    variables = tuple(f"x{i}" for i in range(record["arity"])) if carrier.startswith("mv_") else ("x",)
+    return scalar, (scalar.frac_field(*variables) if carrier == "rat_fn"
+                    else scalar.poly_ring(*variables))
+
+
+def scalar_decode(value, domain):
+    return domain(*value) if isinstance(value, list) else domain(value)
+
+
+def scalar_encode(value, domain):
+    if domain.is_QQ:
+        return [int(domain.numer(value)), int(domain.denom(value))]
+    return int(value) % int(domain.mod) if domain.is_FF else int(value)
+
+
+def dense_decode(value, domain):
+    return domain.ring.from_dict({(i,): scalar_decode(c, domain.domain)
+                                 for i, c in enumerate(value) if c != 0})
+
+
+def dense_encode(value, domain):
+    degree = int(value.degree()) if value else -1
+    return [scalar_encode(value.get((i,), domain.domain.zero), domain.domain)
+            for i in range(degree + 1)]
+
+
+def decode(value, record, scalar, domain):
+    carrier = record["carrier"]
+    if carrier == "rat_fn":
+        ring = scalar.poly_ring("x")
+        numerator = dense_decode(value["num"], ring)
+        denominator = dense_decode(value["den"], ring)
+        if not denominator:
+            raise ValueError("zero denominator")
+        return domain(numerator) / domain(denominator)
+    if carrier.startswith("mv_"):
+        return domain.ring.from_dict({tuple(m): scalar_decode(c, scalar) for m, c in value})
+    return dense_decode(value, domain)
+
+
+def encode(value, record, scalar, domain):
+    carrier = record["carrier"]
+    if carrier == "rat_fn":
+        ring = scalar.poly_ring("x")
+        leading = value.denom.LC
+        return {"num": dense_encode(value.numer / leading, ring),
+                "den": dense_encode(value.denom / leading, ring)}
+    if carrier.startswith("mv_"):
+        def grevlex(term):
+            m, _ = term
+            return (sum(m), tuple(-e for e in reversed(m)))
+        return [[list(m), scalar_encode(c, scalar)] for m, c in sorted(value.items(), key=grevlex)]
+    return dense_encode(value, domain)
+
+
+def matrix_det(rows, domain):
+    """Dense DomainMatrix on a polynomial domain selects ddm_idet (Bareiss)."""
+    from sympy.polys.matrices import DomainMatrix
+    n = len(rows)
+    if any(len(row) != n for row in rows):
+        raise ValueError("matrix must be square")
+    return DomainMatrix(rows, (n, n), domain).det()
+
+
+def charpoly(record):
+    if record.get("schema") != 1 or record.get("kind") != "charpoly_carrier":
+        raise ValueError("unsupported record kind or schema")
+    if not isinstance(record.get("carrier"), str) or record["carrier"] not in {"dense_int", "dense_rat", "dense_mod", "mv_int", "mv_rat", "rat_fn"}:
+        raise FixtureError("invalid coefficient carrier")
+    arity = record.get("arity")
+    if type(arity) is not int or arity < 1:
+        raise FixtureError("carrier arity must be positive")
+    if not record["carrier"].startswith("mv_") and arity != 1:
+        raise FixtureError("univariate carrier must have arity one")
+    modulus = record.get("modulus")
+    if record["carrier"] == "dense_mod" and (type(modulus) is not int or modulus < 2):
+        raise FixtureError("invalid carrier modulus")
+    scalar, carrier = carrier_domain(record)
+    rows = record["rows"]
+    n = record["n"]
+    if len(rows) != n or any(len(row) != n for row in rows):
+        raise ValueError("matrix dimensions disagree")
+    decoded = [[decode(c, record, scalar, carrier) for c in row] for row in rows]
+    # Reject noncanonical inputs as well as noncanonical outputs.
+    if [[encode(c, record, scalar, carrier) for c in row] for row in decoded] != rows:
+        raise ValueError("noncanonical carrier input")
+    domain = carrier.poly_ring("t")
+    t = domain.gens[0]
+    polynomial = matrix_det([[ (t if i == j else domain.zero) - domain(c)
+                               for j, c in enumerate(row)] for i, row in enumerate(decoded)], domain)
+    return [encode(polynomial.get((i,), carrier.zero), record, scalar, carrier)
+            for i in range(n + 1)]
 
 
 # Each library uses an independent algorithm and a disjoint record kind.
-HANDLERS = {"det": determinant, "bareiss_carrier": bareiss}
+HANDLERS = {"det": determinant, "bareiss_carrier": bareiss, "charpoly_carrier": charpoly}
 
 
 def dispatch(record):
@@ -268,17 +371,36 @@ def dispatch(record):
 
 
 def evaluate(record):
-    kind = record["kind"]
-    if kind not in HANDLERS:
-        raise ValueError(f"unknown record kind: {kind}")
-    return HANDLERS[kind](record)
+    kind = record.get("kind")
+    handler = HANDLERS.get(kind) if isinstance(kind, str) else None
+    if handler is None:
+        raise FixtureError(f"unsupported matrix carrier kind: {record.get('kind')!r}")
+    return handler(record)
+
+
+def serve():
+    # Import once, before accepting timed requests.
+    import sympy  # noqa: F401
+    for line in sys.stdin:
+        try:
+            request = json.loads(line)
+            result = [] if request.get("op") == "noop" else evaluate(request)
+            reply = {"ok": True, "result": result}
+        except Exception as exc:
+            reply = {"ok": False, "error": str(exc)}
+        print(json.dumps(reply, separators=(",", ":")), flush=True)
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("path", nargs="?", type=Path)
     parser.add_argument("--server", action="store_true")
+    parser.add_argument("--serve", action="store_true")
+    parser.add_argument("--failure-dir", type=Path)
     args = parser.parse_args()
+    if args.serve:
+        serve()
+        return
     if args.server:
         stream = args.path.open() if args.path else sys.stdin
         try:
@@ -308,6 +430,15 @@ def main():
             expected = record["determinant"]
             Codec(record).decode(expected)
             library = "HexDeterminant"
+        elif record["kind"] == "charpoly_carrier":
+            expected = record["value"]
+            scalar, domain = carrier_domain(record)
+            canonical = [encode(decode(c, record, scalar, domain), record, scalar, domain)
+                         for c in expected]
+            # JSON comparison distinguishes booleans from integer coefficients.
+            if json.dumps(canonical, sort_keys=True) != json.dumps(expected, sort_keys=True):
+                raise ValueError("noncanonical characteristic-polynomial coefficient")
+            library = record["lib"]
         else:
             expected = record["result"]
             Carrier(record).decode(expected)
@@ -317,7 +448,7 @@ def main():
                      kind=record["kind"], input_record=record,
                      oracle_name="FLINT/SymPy exact matrix carriers",
                      oracle_version=f"flint {flint_version}; sympy {sympy_version}",
-                     profile="core", seed=0)
+                     profile="core", seed=0, failure_dir=args.failure_dir)
         count += 1
     if not count:
         raise ValueError("empty fixture stream")

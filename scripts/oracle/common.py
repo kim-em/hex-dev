@@ -116,6 +116,7 @@ VALID_FIXTURE_KINDS = frozenset(
         "poly",
         "matrix",
         "bareiss_carrier",
+        "charpoly_carrier",
         "det",
         "polymatrix",
         "mvpoly",
@@ -417,6 +418,17 @@ def _validate_fixture(record: dict[str, Any]) -> None:
         if not isinstance(rows, list) or len(rows) != record["n"] or any(
                 not isinstance(row, list) or len(row) != record["n"] for row in rows):
             raise FixtureError("matrix carrier rows must be square and match n")
+    elif kind == "charpoly_carrier":
+        if record.get("schema") != 1 or not _is_nat(record.get("n")):
+            raise FixtureError("invalid charpoly_carrier schema or dimension")
+        if not isinstance(record.get("rows"), list) or not isinstance(record.get("value"), list):
+            raise FixtureError("charpoly_carrier rows/value must be arrays")
+        if not isinstance(record.get("carrier"), str) or record["carrier"] not in {"dense_int", "dense_rat", "dense_mod", "mv_int", "mv_rat", "rat_fn"}:
+            raise FixtureError("invalid charpoly_carrier coefficient carrier")
+        if not _is_int(record.get("arity")) or record["arity"] < 1:
+            raise FixtureError("charpoly_carrier arity must be positive")
+        if not _is_int(record.get("modulus")) or record["modulus"] < 2:
+            raise FixtureError("charpoly_carrier modulus must be an integer >= 2")
     elif kind == "poly":
         coeffs = record.get("coeffs")
         if not isinstance(coeffs, list) or not all(isinstance(c, int) for c in coeffs):
