@@ -213,18 +213,34 @@ from common import FixtureError, _validate_fixture
 FIXTURE = ROOT / "conformance-fixtures/HexCharPoly/carriers.jsonl"
 
 
-class CarrierTests(unittest.TestCase):
+class CharPolyTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.records = [json.loads(line) for line in FIXTURE.read_text().splitlines()]
 
     def test_mixed_stream(self):
         determinant = json.loads(FIXTURES.read_text().splitlines()[0])
+        bareiss = json.loads((ROOT / "conformance-fixtures/HexBareiss/carriers.jsonl").read_text().splitlines()[0])
         characteristic = self.records[0]
+        records = [determinant, bareiss, characteristic]
+        stream = "".join(json.dumps(r)+"\n" for r in records)
         result = subprocess.run([sys.executable, str(Path(oracle.__file__))],
-                                input=json.dumps(determinant)+"\n"+json.dumps(characteristic)+"\n",
-                                text=True, capture_output=True, check=True)
-        self.assertIn("OK: 2 exact matrix carrier records", result.stdout)
+                                input=stream, text=True, capture_output=True, check=True)
+        self.assertIn("OK: 3 exact matrix carrier records", result.stdout)
+        for protocol in ["--serve", "--server"]:
+            with self.subTest(protocol=protocol):
+                result = subprocess.run([sys.executable, str(Path(oracle.__file__)), protocol],
+                                        input=stream, text=True, capture_output=True, check=True)
+                self.assertEqual([json.loads(line)["result"] for line in result.stdout.splitlines()],
+                                 [determinant["determinant"], bareiss["result"], characteristic["value"]])
+
+    def test_boolean_coefficient(self):
+        record = copy.deepcopy(self.records[0])
+        record["value"] = [[True]]
+        result = subprocess.run([sys.executable, str(Path(oracle.__file__))],
+                                input=json.dumps(record)+"\n", text=True, capture_output=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("noncanonical", result.stderr)
 
     def test_independent_oracle(self):
         from sympy.polys.matrices import DomainMatrix

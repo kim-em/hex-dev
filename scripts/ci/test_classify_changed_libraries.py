@@ -11,7 +11,7 @@ from classify_changed_libraries import classify_paths, load_oracle_owners
 
 ORACLE_OWNERS = {
     "scripts/oracle/roots_flint.py": {"HexRoots"},
-    "scripts/oracle/matrix_flint.py": {"HexBareiss", "HexDeterminant", "HexCharPoly"},
+    "scripts/oracle/matrix_flint.py": {"HexBareiss", "HexDeterminant"},
 }
 
 
@@ -38,7 +38,7 @@ class ClassifyChangedLibrariesTests(unittest.TestCase):
     def test_oracle_script_selects_every_tuple_owner(self) -> None:
         result = self.classify("scripts/oracle/matrix_flint.py")
         self.assertFalse(result.all_libraries)
-        self.assertEqual(set(result.libraries), {"HexBareiss", "HexDeterminant", "HexCharPoly"})
+        self.assertEqual(set(result.libraries), {"HexBareiss", "HexDeterminant"})
 
     def test_common_oracle_selects_all(self) -> None:
         result = self.classify("scripts/oracle/common.py")
