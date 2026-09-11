@@ -16,7 +16,24 @@ are outside its scope.
 
 ## API and selection evidence
 
-The following is the proposed public surface, not existing declarations:
+The following is the proposed public surface, not existing declarations.
+`Policy R` is a typed recipe for the available algorithms and their parameters.
+Its constructors are Berkowitz with decidable equality, exact-quotient
+Bareiss with equality and `quot`, field selection with field operations and
+equality, and integer selection with its modular settings. Field and integer
+constructors admit only arms implemented for that carrier. Before modular
+integration, integer policies admit only Bareiss. Before field elimination
+exists, field policies admit only Bareiss. Small cases precede every recipe.
+
+Policies carry the dimension and coefficient-size selection regions, cutoff
+tie rules, and applicable fuel and seed settings. They also retain the
+coefficient operations, including the quotient, that the runner uses. Field
+evidence must extend the ambient commutative-ring operations, not replace
+them with another ring structure. Thus
+a policy determines an executable computation, rather than describing an
+arbitrary callback hidden in an instance. Quotient and algorithm correctness
+laws are supplied separately in the companion. The concrete carrier instances
+use the exact quotients and laws listed below.
 
 ```lean
 namespace Hex.Det
@@ -24,14 +41,22 @@ namespace Hex.Det
 inductive Arm where
   | small | bareiss | elimination | berkowitz | modular | divisor
 
+structure Route where
+  first : Arm
+  rest : List Arm
+
 structure Result (R : Type u) where
   value : R
-  selected : Arm
-  completed : Arm
-  attempts : List Arm
+  route : Route
 
 class DetOps (R : Type u) [Lean.Grind.CommRing R] where
-  run : {n : Nat} → Hex.Matrix R n n → Result R
+  policy : Policy R
+
+def runWith [Lean.Grind.CommRing R] (policy : Policy R)
+    (A : Hex.Matrix R n n) : Result R
+
+def DetOps.run [Lean.Grind.CommRing R] [DetOps R]
+    (A : Hex.Matrix R n n) : Result R := runWith DetOps.policy A
 
 def det [Lean.Grind.CommRing R] [DetOps R]
     (A : Hex.Matrix R n n) : R := (DetOps.run A).value
@@ -39,15 +64,19 @@ def det [Lean.Grind.CommRing R] [DetOps R]
 end Hex.Det
 ```
 
-`DetOps.run` computes once and returns both the value and the route.
-`det` is its value projection, not an independently dispatched computation.
-`selected` is the initial choice, `completed` is the arm that supplies the
-answer, and `attempts` is a nonempty, ordered list starting at `selected`
-and ending at `completed`. An ordinary call records a singleton. A modular
-attempt that exhausts its fuel and completes through Bareiss records
-`[modular, bareiss]`. A divisor attempt can record an intermediate modular
-attempt before Bareiss. The route records determinant algorithms only, not
-every modular image or subsidiary solve.
+`runWith` interprets the recipe by calling the lower algorithms, and
+`DetOps.run` uses the installed default. `det` is its value projection,
+not an independently dispatched computation. The public route accessors
+`selected`, `completed`, and `attempts` derive respectively the first arm,
+the last arm, and the list `first :: rest`. The route is nonempty by
+construction and stores its endpoints only once.
+
+An ordinary call records a singleton. A modular attempt that exhausts its
+fuel and completes through Bareiss records `[modular, bareiss]`. A divisor
+attempt can record an intermediate modular attempt before Bareiss. The
+route records determinant algorithms only, not every modular image or
+subsidiary solve. Diagnostics retain the resolved policy alongside the
+result so fuel, seed, and selection settings remain reproducible.
 
 Each producer sets the route in the branch that actually returns the value.
 In particular, a wrapper must not label the opaque result of a total modular
@@ -56,9 +85,15 @@ modular integration requires either a result-with-route API below dispatch,
 or composition of its partial operations with the same documented total
 fallback. No determinant is computed twice to discover its route.
 
+Conformance and build-only examples call `runWith` with explicit policies
+to force each available arm and transition, including zero modular fuel.
+These use the production interpreter, not a separate test implementation.
+A policy cannot request an unavailable arm. Every explicit policy used in
+a proof must satisfy the same companion laws as an installed default.
+
 The companion states correctness for the value and for the completed arm.
-These laws are separate from `DetOps`: an arbitrary user-supplied instance
-is executable code, not a proof of correctness. Selection metadata is also
+These laws are separate from `DetOps`: a user-supplied recipe is executable
+configuration, not a proof of correctness. Selection metadata is also
 ordinary data and cannot establish a determinant equation by itself.
 
 ## Selection rule
@@ -73,12 +108,12 @@ with `Int` and the generic cases stated separately.
 | Carrier | Required operations and laws | Selection after the small cases | Instance module in `HexDet` |
 |---|---|---|---|
 | `Int` | existing integer operations and native `Hex.Matrix.exactDiv` | Bareiss below the measured crossover, modular above it once available and measured | `Int.lean` |
-| `Rat` | core `Lean.Grind.Field` and decidable equality | measured choice between division elimination and Bareiss | `Field.lean` |
-| `ZMod64 p` | `[ZMod64.Bounds p] [ZMod64.PrimeModulus p]`, field instance from `HexPolyFp.PrimeField` | field policy measured separately from `Rat` | `Field.lean` |
+| `Rat` | core `Lean.Grind.Field` and decidable equality | Bareiss initially, then the measured choice with division elimination once available | `Field.lean` |
+| `ZMod64 p` | `[ZMod64.Bounds p] [ZMod64.PrimeModulus p]`, field instance from `HexPolyFp.PrimeField` | Bareiss initially, then a field policy measured separately from `Rat` once elimination is available | `Field.lean` |
 | `DensePoly F` | `[Lean.Grind.Field F] [DecidableEq F]`, polynomial division and `Hex.instExactDivLawsDensePoly` from `HexResultant.ExactDiv` | Bareiss with `Hex.exactDiv`, exercising both `F = Rat` and `F = ZMod64 p` | `Poly.lean` |
 | `ZPoly` (`DensePoly Int`) | recursive dense-polynomial exact division over `Hex.instExactDivLawsInt` | Bareiss with `Hex.exactDiv` | `Poly.lean` |
 | `MvPoly k R cmp` | the complete coefficient and order context below, with division from `HexMvGcd.Divide` | Bareiss with `Hex.exactDiv`, exercising `R = Int` and `R = Rat` | `MvPoly.lean` |
-| other fields `F` | `[Lean.Grind.Field F] [DecidableEq F]` | field constructor accepts a recorded policy choosing elimination or Bareiss | explicit constructor in `Field.lean` |
+| other fields `F` | `[Lean.Grind.Field F] [DecidableEq F]` | Bareiss initially; field constructor accepts measured elimination once available | explicit constructor in `Field.lean` |
 | other exact-quotient commutative rings `R` | `[Lean.Grind.CommRing R] [DecidableEq R]`, `quot` and its cancellation law below | Bareiss | explicit constructor in `Basic.lean` |
 | remaining commutative rings `R` | `[Lean.Grind.CommRing R] [DecidableEq R]` | Berkowitz, `(-1 : R)^n * (Hex.Matrix.charPoly A).coeff 0` | low-priority default in `Basic.lean` |
 
@@ -103,7 +138,9 @@ current polynomial computation even on this division-free route.
 
 `ZPoly` shares the `DensePoly Int` instance and receives no second instance
 through the alias. A field of polynomial coefficients is not a field of
-polynomials. Composite-modulus rings lacking the prime-field assumptions
+polynomials. More general ring-coefficient dense polynomials use the explicit
+exact-quotient constructor. A future recursive instance must subsume the
+existing dense-polynomial cases with the same policy, not compete with them. Composite-modulus rings lacking the prime-field assumptions
 use Berkowitz when their commutative-ring and equality instances exist.
 Zero divisors do not satisfy the exact-quotient law in general.
 
@@ -156,7 +193,9 @@ quotient provider acquires a dependency on `HexDet`.
 The intended files are `HexDet/{Basic,Int,Field,Poly,MvPoly}.lean` and the
 `HexDet.lean` umbrella. `Basic` owns the public protocol, small cases,
 Berkowitz default, and generic exact-quotient constructor. The other modules
-own carrier policies and instances. This issue creates only the SPECs and
+own carrier policies and instances. Consumers may import `HexDet.Basic` or
+`HexDet.Int` directly without the multivariate instance modules. This issue
+creates only the SPECs and
 planned metadata, not these source files or Lake targets.
 
 When registered and implemented, add `HexModularMatrix` to `HexDet.deps`,
@@ -210,9 +249,10 @@ sizes, and the trivial ring where `1 = 0`. Check both values and actual
 route transitions, especially forced modular exhaustion. Exercise each
 carrier in the table, nonconstant polynomial pivots, and a commutative ring
 with zero divisors through Berkowitz. Compare against Leibniz at small
-sizes only. Larger oracle comparisons use python-flint for integers,
-rationals, and prime residues, and SymPy's explicit Berkowitz method over
-identical exact polynomial domains for polynomial carriers.
+sizes only. Larger oracle comparisons use python-flint `fmpz_mat.det()`,
+`fmpq_mat.det()`, and `nmod_mat.det()` for integers, rationals, and prime
+residues. Polynomial carriers use SymPy `Matrix.det(method="berkowitz")`
+over identical exact polynomial domains.
 
 The required Phase-4 input families are:
 
@@ -246,6 +286,9 @@ first evidence is collected.
 
 Internal comparisons determine selection. External comparators are
 informational because their algorithm selection and process overhead differ.
+The dispatch-overhead and route-agreement surfaces have comparator-absence
+class `no-comparable-surface-in-named-comparator`: python-flint and SymPy do
+not expose Hex's arm selection or fallback route as callable operations.
 Ordinary Mathlib-free bench targets verify bounded fixture outputs and route
 agreement. Timing runs are manual, extending the existing benchmark setup
 under its CI wall-clock cap, with no new workflow jobs. Tactic elaboration,

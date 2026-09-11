@@ -146,6 +146,21 @@ so rather than accepting `Rat` matrices and doing it silently.
 
 ## The determinant
 
+### Public names and dispatch integration
+
+The determinant API sketches below use local names. The production names of
+`det`, `detViaDivisor`, and their wrapper correspondence theorems belong in
+`Hex.ModularMatrix`, not `Hex.Matrix`: `Hex.Matrix.det` already denotes the
+Leibniz reference and cannot be redeclared. The shared production dispatcher
+is separately named `Hex.Det.det` in [hex-det](hex-det.md).
+
+The modular library stays below `HexDet`. It must expose either the actual
+completion route of its total determinant routines, including Bareiss
+fallback, or partial operations with explicit fuel and seed parameters that
+let `HexDet` compose the same branches and report that route. The latter
+must use the production code paths so zero-fuel conformance can exercise
+fallback. No upward import of `HexDet` is required for either form.
+
 ### One image
 
 ```lean

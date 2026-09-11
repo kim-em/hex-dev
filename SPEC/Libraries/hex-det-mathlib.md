@@ -26,14 +26,29 @@ instance resolution. They do not duplicate the owner's runtime conformance.
 ## Contract
 
 The following declarations are proposed obligations, not existing theorems.
-Use namespace `Hex.Det` for the dispatch laws. Under
-`[Lean.Grind.CommRing R] [DetOps R]`, define the companion-only law class:
+Use namespace `HexDetMathlib` for the companion declarations below, with
+`open Hex.Det` for the executable API. Define one relation
+`ValidRoute (policy : Policy R) (A : Hex.Matrix R n n) (result : Result R)`.
+It follows the constructors of `Policy` and the branches of `runWith`:
+selection obeys the policy, each route transition is justified by the actual
+failure equation of the attempted operation, and the returned value equals
+the completed arm's result with the policy's coefficient operations and
+parameters on the same input. A small completion additionally asserts
+`n ≤ 2`. Endpoint consistency and nonemptiness hold by construction of
+`Route`. This definition must not trust the reported tags or hide an
+unspecified per-producer predicate.
+
+The proposed law class for an explicit policy is:
 
 ```lean
-class LawfulDetOps (R : Type u) [Lean.Grind.CommRing R] [DetOps R] : Prop where
+class LawfulPolicy [Lean.Grind.CommRing R] (policy : Policy R) : Prop where
   value_eq : ∀ {n} (A : Hex.Matrix R n n),
-    (DetOps.run A).value = Hex.Matrix.det A
-  route_sound : ∀ {n} (A : Hex.Matrix R n n), ValidRoute A (DetOps.run A)
+    (runWith policy A).value = Hex.Matrix.det A
+  route_sound : ∀ {n} (A : Hex.Matrix R n n),
+    ValidRoute policy A (runWith policy A)
+
+class LawfulDetOps (R : Type u) [Lean.Grind.CommRing R] [DetOps R] : Prop where
+  lawful : LawfulPolicy (DetOps.policy (R := R))
 
 theorem det_eq [Lean.Grind.CommRing R] [DetOps R] [LawfulDetOps R]
     (A : Hex.Matrix R n n) : Hex.Det.det A = Hex.Matrix.det A
@@ -43,29 +58,22 @@ theorem det_eq_mathlib [CommRing R] [DetOps R] [LawfulDetOps R]
     Hex.Det.det A = Matrix.det (HexMatrixMathlib.matrixEquiv A)
 ```
 
-`ValidRoute` is a proposed companion relation over the producer's installed
-policy and algorithm parameters. It asserts that `attempts` is nonempty,
-its first and last entries are `selected` and `completed`, selection obeys
-the policy, each transition is justified by the actual failure branch of
-the attempted algorithm, and the value equals the completed arm's result
-on the same input. A small completion additionally asserts `n ≤ 2`.
-The relation is defined using the lower operations and their return
-equations, not by trusting the reported tags. Its definition and the law
-instances must be supplied together with each enabled producer.
+For each policy constructor, prove `LawfulPolicy` by splitting on its actual
+dispatch and fallback branches and using the arm theorems below. The
+exact-quotient constructor requires the cancellation law for its stored
+quotient. Field policies use the field operations and equality they carry.
+The modular constructor requires the lower bound law. Instantiate
+`LawfulDetOps` for each shipped default from these constructor proofs.
+Explicit test policies, including zero fuel, use `LawfulPolicy` directly.
+The theorem for an arbitrary `DetOps` always requires laws for that same
+instance's policy. A supplied quotient cannot be declared correct without
+its law.
 
-For each concrete instance and each generic constructor, prove these laws
-by splitting on its actual dispatch and fallback branches and using the
-arm theorems below. Exact-quotient constructors require their quotient law.
-Field constructors require the field operations and equality they use.
-The modular constructor requires the lower bound law. The theorem for an
-arbitrary `DetOps` instance always requires `LawfulDetOps` for that same
-instance. An unconstrained implementation cannot be declared correct.
-
-`det_eq` is projection of `value_eq`. `det_eq_mathlib` composes it with
-`HexMatrixMathlib.det_eq`. Although the first law uses only Mathlib-free
-types, it lives here and is not available to Mathlib-free consumers in the
-first version. In particular, the supplied proofs must not assume a
-Mathlib `CommRing` instance exists on every executable carrier.
+`det_eq` projects the default policy's `value_eq`. `det_eq_mathlib` composes
+it with `HexMatrixMathlib.det_eq`. Although the first law uses only
+Mathlib-free types, it lives here and is not available to Mathlib-free
+consumers in the first version. In particular, the supplied proofs must not
+assume a Mathlib `CommRing` instance exists on every executable carrier.
 
 ## Existing proof routes
 
@@ -124,8 +132,13 @@ explains. The existence of the generic Bareiss theorem does not close
 those carrier obligations.
 
 The implementation must supply compatible Mathlib algebraic structures in
-the appropriate coefficient companions, transported from their mathematical
-polynomial or residue types while retaining the executable operations.
+`HexPolyMathlib` for `DensePoly`/`ZPoly` and `HexPolyFpMathlib` for `ZMod64`,
+transported from the mathematical polynomial or residue types while retaining
+the executable operations. The private dense-polynomial structure in
+`HexResultantMathlib/Specialize.lean` is not a reusable dependency and uses
+`npowRec`. Follow the executable-power choices in
+`HexMvPolyMathlib/Equiv.lean` and `HexGFqMathlib/Basic.lean`: install the
+executable `npow`, rather than introduce a second power operation.
 Then the generic arm proofs apply with the same quotient law. Transport
 must preserve the exact `Zero`, `One`, `Add`, `Neg`, `Mul`, and `Pow`
 operations used by `Lean.Grind.CommRing`, rather than introducing a second
@@ -151,8 +164,9 @@ explicit custom quotient constructor, the generic Berkowitz default over
 a ring with zero divisors, and the trivial ring.
 
 Exercise `det_eq` and `det_eq_mathlib` at empty, one-by-one, two-by-two,
-row-swapped, and singular inputs. For integration, force each enabled arm
-and each fallback transition and apply its route law. Tiny closed values
+row-swapped, and singular inputs. For integration, call `runWith` to force
+each enabled arm and each fallback transition and apply its
+`LawfulPolicy.route_sound` law. Tiny closed values
 may be checked with kernel `decide`. Certificate replay and tactic
 performance belong to the downstream matrix-tactic libraries. This
 companion introduces neither a certificate format nor a trusted evaluator.

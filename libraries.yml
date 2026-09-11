@@ -375,10 +375,16 @@ libraries:
     status: planned
     phase4:
       comparators:
-        - tool: FLINT integer, rational, and prime-residue determinants via python-flint
+        - tool: FLINT fmpz_mat.det() via python-flint
           class: informational
           rationale: FLINT uses its own determinant selection and process protocol; internal adjacent-arm comparisons determine Hex dispatch policies.
-        - tool: SymPy Berkowitz determinant over exact polynomial domains
+        - tool: FLINT fmpq_mat.det() via python-flint
+          class: informational
+          rationale: FLINT uses its own rational determinant selection; internal elimination versus Bareiss comparisons determine the field policy.
+        - tool: FLINT nmod_mat.det() via python-flint
+          class: informational
+          rationale: FLINT uses its own modular determinant selection; internal comparisons at the identical prime determine the field policy.
+        - tool: SymPy Matrix.det(method="berkowitz") over exact polynomial domains
           class: informational
           rationale: Independent polynomial recurrence and Python process overhead provide conformance and timing context, not a dispatch cutoff.
       input_families:
