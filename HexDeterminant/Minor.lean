@@ -24,7 +24,7 @@ used by row/column cofactor expansion.
 -/
 
 namespace Hex
-universe u
+universe u v
 namespace Matrix
 variable {α : Type u}
 
@@ -54,6 +54,14 @@ theorem selectedSubmatrix_transpose {R : Type u} {n m k : Nat}
   intro i j
   rw [getElem_selectedSubmatrix, getElem_transpose, getElem_transpose,
     getElem_selectedSubmatrix]
+
+/-- Selecting rows and columns commutes with scalar multiplication. -/
+theorem selectedSubmatrix_smul {R : Type u} {S : Type v} [SMul S R] {n m k : Nat}
+    (c : S) (M : Matrix R n m) (rows : Vector (Fin n) k) (cols : Vector (Fin m) k) :
+    selectedSubmatrix (c • M) rows cols = c • selectedSubmatrix M rows cols := by
+  apply ext_getElem
+  intro i j
+  rw [getElem_selectedSubmatrix, smul_getElem, smul_getElem, getElem_selectedSubmatrix]
 
 /-- Embed `Fin n` into `Fin (n + 1)` while skipping one deleted index. -/
 @[expose]

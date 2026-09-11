@@ -1,0 +1,6 @@
+{
+  "path": "HexMatrix/Basic.lean",
+  "baseline_blob": "6a265ec91b0fe573eb81f12634bcfc001bde9877",
+  "current_blob": "78c804503247fae991ad815e6ff8463d180dab07",
+  "reason": "Adds the scoped instance Hex.instDecidableEqMatrixKernel, a kernel-reducible DecidableEq (Matrix R n m) routed through the buffer's Vector equality, on top of the entrywise Matrix.map definition and its getElem_map lemma already exempted by hexmatrix-basic-lean-6a265ec9-9c1e4351.json. The instance is scoped to namespace Hex and activated only by open scoped Hex; no existing declaration changes, and the integer-factorization service does not compare Hex.Matrix values or call Matrix.map at runtime. Runtime-neutral for the retained factorization sweep."
+}

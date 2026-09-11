@@ -88,18 +88,6 @@ theorem minors_zero [Lean.Grind.Ring R] (A : Matrix R n m) : minors 0 A = [1] :=
   rw [selectedColumnTuples_zero, selectedColumnTuples_zero]
   simp [det_fin_zero]
 
-/-- No strictly increasing `r`-tuple fits in `Fin n` when `n < r`. -/
-theorem selectedColumnTuples_eq_nil_of_lt {r n : Nat} (h : n < r) :
-    selectedColumnTuples r n = [] := by
-  apply List.eq_nil_iff_forall_not_mem.mpr
-  intro cols hmem
-  have hsi := (mem_selectedColumnTuples_iff cols).mp hmem
-  have hr : 0 < r := by omega
-  have hle := index_le_of_strictlyIncreasing cols hsi ⟨r - 1, by omega⟩
-  have hlt := (cols[(⟨r - 1, by omega⟩ : Fin r)]).isLt
-  change r - 1 ≤ _ at hle
-  omega
-
 /-- The enumeration is empty exactly when `n < r`. -/
 theorem selectedColumnTuples_eq_nil_iff (r n : Nat) :
     selectedColumnTuples r n = [] ↔ n < r := by

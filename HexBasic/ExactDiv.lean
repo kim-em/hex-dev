@@ -119,6 +119,39 @@ theorem exactDiv_mul_right [Lean.Grind.CommRing R] [DecidableEq R] [Div R]
 instance instExactDivLawsInt : ExactDivLaws Int where
   mul_div_cancel_right := Int.mul_ediv_cancel
 
+/-- A nontrivial ring without zero divisors. Proof-only: a certificate checker
+that needs no quotient operation states its soundness over this class rather
+than over `ExactDivLaws`, so that a consumer re-checking a witness never has
+to supply a division. -/
+class DomainLaws (R : Type u) [Zero R] [One R] [Mul R] : Prop where
+  /-- The ring is nontrivial. -/
+  one_ne_zero : (1 : R) ≠ 0
+  /-- A vanishing product has a vanishing factor. -/
+  no_zero_div : ∀ a b : R, a * b = 0 → a = 0 ∨ b = 0
+
+/-- The integers form a domain. -/
+instance instDomainLawsInt : DomainLaws Int where
+  one_ne_zero := by decide
+  no_zero_div _ _ h := Int.mul_eq_zero.mp h
+
+/-- Every `Lean.Grind.Field` is a domain. -/
+instance instDomainLawsField {K : Type u} [Lean.Grind.Field K] : DomainLaws K where
+  one_ne_zero h := Lean.Grind.Field.zero_ne_one h.symm
+  no_zero_div _ _ h := Lean.Grind.Field.of_mul_eq_zero h
+
+/-- An exact quotient on a nontrivial ring rules out zero divisors. Stated as a
+theorem rather than an instance because `ExactDivLaws` alone does not imply
+nontriviality: the trivial ring satisfies it vacuously. -/
+theorem DomainLaws.of_exactDivLaws [Lean.Grind.CommRing R] [Div R] [ExactDivLaws R]
+    (h1 : (1 : R) ≠ 0) : DomainLaws R where
+  one_ne_zero := h1
+  no_zero_div a b h := by
+    by_cases ha : a = 0
+    · exact Or.inl ha
+    · by_cases hb : b = 0
+      · exact Or.inr hb
+      · exact absurd h (ExactDivLaws.mul_ne_zero ha hb)
+
 /-- Every `Lean.Grind.Field` supplies the exact-division law. -/
 instance instExactDivLawsField {K : Type u} [Lean.Grind.Field K] :
     ExactDivLaws K where
@@ -129,6 +162,7 @@ instance instExactDivLawsField {K : Type u} [Lean.Grind.Field K] :
 /-! Instance-contract check for the integer coefficient tower. -/
 
 example : ExactDivLaws Int := inferInstance
+example : DomainLaws Int := inferInstance
 
 /-! Value-level pin for the total quotient. -/
 

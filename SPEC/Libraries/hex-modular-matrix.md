@@ -644,7 +644,7 @@ def rankModular (A : Matrix Int n m) : Nat
 ```
 
 **One certificate and one checker.** The certificate is
-`Hex.Matrix.RankCert Int n m` from [hex-rank](hex-rank.md#the-certificate),
+`Hex.Matrix.RankCert Int n m` from [hex-rank](../../HexRank/SPEC/hex-rank.md#the-certificate),
 with fields `rank`, `rows`, `cols`, `denom`, and `adj`. There is no local
 `RankCert` structure or `checkRank` implementation. Write `r := c.rank`,
 `d := c.denom`, `B := A[rows, cols] : Matrix Int r r`,
