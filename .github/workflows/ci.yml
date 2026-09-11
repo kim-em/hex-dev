@@ -59,7 +59,7 @@ jobs:
           elif ! base="$(git merge-base "$BASE_SHA" HEAD 2>/dev/null)"; then
             reason="no merge base against \`$BASE_SHA\`"
           else
-            mapfile -t changed < <(git diff --name-only "$base" HEAD)
+            mapfile -t changed < <(git diff --no-renames --name-only "$base" HEAD)
             docs_only=true
             build_manual=false
             reason="all ${#changed[@]} changed files match the docs-only allowlist"
@@ -101,6 +101,8 @@ jobs:
           fi
           echo "::notice title=CI path::$path: $reason"
           printf '## CI path\n\n**%s**: %s; %s\n' "$path" "$reason" "$detail" >> "$GITHUB_STEP_SUMMARY"
+          python3 scripts/ci/classify_changed_libraries.py \
+            --event "$EVENT_NAME" --base "$BASE_SHA" --github-output "$GITHUB_OUTPUT"
       # --- Structural + source lints ---
       - run: python3 scripts/check_copyright_headers.py
       - name: Lint Lean file line counts (SPEC/CI.md §Source-file lints)
@@ -127,6 +129,8 @@ jobs:
       - name: Run bench source lints (SPEC/benchmarking.md)
         run: |
           python3 -m unittest scripts/ci/test_check_benches_mathlib_free.py
+          python3 -m unittest scripts/ci/test_check_bench_verify_budget.py
+          python3 -m unittest scripts/ci/test_classify_changed_libraries.py
           python3 -m unittest scripts/ci/test_check_persistent_flint_warmup.py
           python3 -m unittest scripts/bench/test_fresh_module_sweep.py
           python3 -m unittest scripts/bench/test_rationalfn_flint.py
@@ -395,35 +399,42 @@ jobs:
         env:
           # Hard cap per SPEC/benchmarking.md §CI integration "Time budget".
           BENCH_VERIFY_HARD_CAP_SECONDS: "360"
+          HEX_LIBRARY_FILTER: ${{ steps.classify.outputs.library_filter }}
         run: |
           bash scripts/ci/check_bench_verify_budget.sh \
-            hextruncatedseries_bench \
-            hexarith_bench hexpoly_bench hexpolyfast_bench hexrationalfn_bench hexpolysmith_bench \
-            hexmvpoly_bench hexmvgcd_bench \
-            hexpolyz_bench \
-            hexpolyzgcd_bench hexsparsepoly_bench hexpolyfp_bench \
-            hexmodarith_bench \
-            hexmodular_bench \
-            hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench \
-            hexhensel_bench hexprimality_bench hexintfactor_bench \
-            hexberlekamp_bench hexbz_bench \
-            hexconway_bench hexdeterminant_bench hexmatrix_bench hexrowreduce_bench \
-            hexhermite_bench hexsmith_bench \
-            hexcharpoly_bench hexminpoly_bench \
-            hexgramschmidt_bench hexlatticeenum_bench hexlll_gram_bench \
-            hexrealroots_bench hexrcf_bench hexroots_bench \
-            hexresultant_bench hexnumberfield_bench \
-            hexnumberfieldtower_bench hexinterval_decision_bench \
-            hexgraphiso_bench \
-            hexpermgroup_bench
+            HexTruncatedSeries=hextruncatedseries_bench \
+            HexArith=hexarith_bench HexPoly=hexpoly_bench \
+            HexPolyFast=hexpolyfast_bench HexRationalFn=hexrationalfn_bench \
+            HexPolySmith=hexpolysmith_bench HexMvPoly=hexmvpoly_bench \
+            HexMvGcd=hexmvgcd_bench HexPolyZ=hexpolyz_bench \
+            HexPolyZGcd=hexpolyzgcd_bench HexSparsePoly=hexsparsepoly_bench \
+            HexPolyFp=hexpolyfp_bench HexModArith=hexmodarith_bench \
+            HexModular=hexmodular_bench HexGF2=hexgf2_bench \
+            HexGFqRing=hexgfqring_bench HexGFqField=hexgfqfield_bench \
+            HexGFq=hexgfq_bench HexHensel=hexhensel_bench \
+            HexPrimality=hexprimality_bench HexIntFactor=hexintfactor_bench \
+            HexBerlekamp=hexberlekamp_bench HexBerlekampZassenhaus=hexbz_bench \
+            HexConway=hexconway_bench HexDeterminant=hexdeterminant_bench \
+            HexMatrix=hexmatrix_bench HexRowReduce=hexrowreduce_bench \
+            HexHermite=hexhermite_bench HexSmith=hexsmith_bench \
+            HexCharPoly=hexcharpoly_bench HexMinPoly=hexminpoly_bench \
+            HexGramSchmidt=hexgramschmidt_bench HexLatticeEnum=hexlatticeenum_bench \
+            HexLLL=hexlll_gram_bench HexRealRoots=hexrealroots_bench \
+            HexRCF=hexrcf_bench HexRoots=hexroots_bench \
+            HexResultant=hexresultant_bench HexNumberField=hexnumberfield_bench \
+            HexNumberFieldTower=hexnumberfieldtower_bench \
+            HexInterval=hexinterval_decision_bench HexGraphIso=hexgraphiso_bench \
+            HexPermGroup=hexpermgroup_bench
           # These two interval scheduler spikes are exact logical-count
           # canaries rather than lean-bench timing registrations. Build them
           # above and exercise their fixtures directly here.
-          .lake/build/bin/hex_interval_scheduler_spike canary
-          .lake/build/bin/hex_interval_policy_frontier_spike canary
-          # The decision target has fixed timing registrations above plus a
-          # separate canonical logical policy-comparison canary.
-          .lake/build/bin/hexinterval_decision_bench canary
+          if [ -z "$HEX_LIBRARY_FILTER" ] || [[ " $HEX_LIBRARY_FILTER " == *" HexInterval "* ]]; then
+            .lake/build/bin/hex_interval_scheduler_spike canary
+            .lake/build/bin/hex_interval_policy_frontier_spike canary
+            # The decision target has fixed timing registrations above plus a
+            # separate canonical logical policy-comparison canary.
+            .lake/build/bin/hexinterval_decision_bench canary
+          fi
           touch "$RUNNER_TEMP/bench.ok"
       - name: Conformance oracles + BZ gates
         if: steps.classify.outputs.docs_only != 'true'
@@ -437,24 +448,35 @@ jobs:
           HEX_EMIT_JOBS: "1"
           # Missing comparator packages are release failures, not green skips.
           HEX_REQUIRE_ORACLES: "1"
+          HEX_LIBRARY_FILTER: ${{ steps.classify.outputs.library_filter }}
         run: |
-          python3 -m unittest scripts/oracle/test_graphiso_trace.py scripts/bench/test_graphiso_compare.py
-          .lake/build/bin/hexgraphiso_emit_trace > /tmp/graphiso-trace.jsonl
-          python3 scripts/oracle/graphiso_trace.py /tmp/graphiso-trace.jsonl
-          .lake/build/bin/hexgraphiso_emit_campaign | python3 scripts/oracle/graphiso_nauty.py
-          .lake/build/bin/tower_factor_diff
-          # The compiled quadratic regression uses <100 MiB RSS locally.
-          # Keep generous catastrophic-regression limits, outside elaboration.
-          sudo systemd-run --wait --pipe --collect \
-            -p MemoryMax=1G -p MemorySwapMax=0 -p CPUQuota=100% -p RuntimeMaxSec=30 \
-            "$PWD/.lake/build/bin/hexnumberfield_quadratic" regression 20
+          selected() { [ -z "$HEX_LIBRARY_FILTER" ] || [[ " $HEX_LIBRARY_FILTER " == *" $1 "* ]]; }
+          echo "Conformance check library filter: ${HEX_LIBRARY_FILTER:-all libraries (no filter)}"
+          if selected HexGraphIso; then
+            python3 -m unittest scripts/oracle/test_graphiso_trace.py scripts/bench/test_graphiso_compare.py
+            .lake/build/bin/hexgraphiso_emit_trace > /tmp/graphiso-trace.jsonl
+            python3 scripts/oracle/graphiso_trace.py /tmp/graphiso-trace.jsonl
+            .lake/build/bin/hexgraphiso_emit_campaign | python3 scripts/oracle/graphiso_nauty.py
+          fi
+          if selected HexNumberFieldTower; then
+            .lake/build/bin/tower_factor_diff
+          fi
+          if selected HexNumberField; then
+            # The compiled quadratic regression uses <100 MiB RSS locally.
+            # Keep generous catastrophic-regression limits, outside elaboration.
+            sudo systemd-run --wait --pipe --collect \
+              -p MemoryMax=1G -p MemorySwapMax=0 -p CPUQuota=100% -p RuntimeMaxSec=30 \
+              "$PWD/.lake/build/bin/hexnumberfield_quadratic" regression 20
+          fi
           bash scripts/ci/run_oracles.sh
           # Deterministic anti-regression gate: a recombination blow-up,
           # unexpected method downgrade, or unexpected decline/fallback fails the
           # merge even though it would still factor correctly.
-          python3 scripts/oracle/bz_trace_gate.py
-          # Catastrophic (order-of-magnitude) slow-downs trip this generous cap.
-          timeout 180 lake exe hexbz_emit_fixtures > /dev/null
+          if selected HexBerlekampZassenhaus; then
+            python3 scripts/oracle/bz_trace_gate.py
+            # Catastrophic (order-of-magnitude) slow-downs trip this generous cap.
+            timeout 180 lake exe hexbz_emit_fixtures > /dev/null
+          fi
           touch "$RUNNER_TEMP/conformance.ok"
       - wait-all:
       - name: Gate on parallel verification results (fail-closed)

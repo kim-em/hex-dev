@@ -180,6 +180,19 @@ on the repository style guide's banned-vocabulary list.
 
 ## Oracle discipline
 
+On pull requests, external-oracle execution is filtered to the libraries that
+own paths changed against the merge base. Ownership includes library source,
+`bench/<Lib>/`, `conformance/<Lib>/`, `conformance-fixtures/<Lib>/`, and the
+oracle scripts consumed by a library's tuple. Shared CI, Lake, GitHub workflow,
+`Hex/`, common-oracle infrastructure, and unclassified non-documentation paths
+select all libraries. The filter does not include downstream dependents: a
+`HexPoly` change runs the `HexPoly` oracle tuple, not every consumer of `HexPoly`.
+A library with no oracle tuple contributes no oracle execution on its own PR.
+This scoping applies only to oracle and bench execution; CI continues to build
+all conformance and emit-fixture targets.
+Pushes to `main` and manual runs execute the complete suite, catching any
+downstream fixture breakage omitted from a pull request run.
+
 Every operation in a library's SPEC API surface that is exercised by fixtures
 via `conformance/HexFoo/EmitFixtures.lean` MUST have an external-oracle
 cross-check that satisfies all three rules below. A SPEC declaration
