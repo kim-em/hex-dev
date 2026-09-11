@@ -383,7 +383,7 @@ theorem ratReconVec?_spec {a : Vector Int k} {m : Nat} {P Q d : Int}
 /-- Every common divisor of a denominator `d` and the modulus divides every
 numerator of a congruent pair, so a pair reduced as a whole has a denominator
 whose divisors are all coprime to the modulus. -/
-private theorem gcd_eq_one_of_reduced {a y : Vector Int k} {m : Nat} {d t : Int}
+private theorem coprime_of_reduced {a y : Vector Int k} {m : Nat} {d t : Int}
     (hy : ∀ i : Fin k, (d * a[i] - y[i]) % (m : Int) = 0)
     (hred : ∀ g : Int, (∀ i : Fin k, g ∣ y[i]) → g ∣ d → g ∣ 1)
     (ht : t ∣ d) : Int.gcd t m = 1 := by
@@ -400,7 +400,7 @@ private theorem gcd_eq_one_of_reduced {a y : Vector Int k} {m : Nat} {d t : Int}
   exact this
 
 /-- Cancel a factor coprime to the modulus from a divisibility. -/
-private theorem dvd_of_dvd_mul_of_gcd_one {m t x : Int} (h : m ∣ t * x)
+private theorem cancel_coprime {m t x : Int} (h : m ∣ t * x)
     (hcop : Int.gcd t m = 1) : m ∣ x := by
   apply Int.natAbs_dvd_natAbs.mp
   have h' : m.natAbs ∣ t.natAbs * x.natAbs := by
@@ -458,10 +458,10 @@ private theorem target_rat {a y : Vector Int k} {m : Nat} {P Q d : Int}
   have hbound := (hy i).2
   generalize hq : Rat.divInt y[i] d = q at hdt hnt ⊢
   have hcop : Int.gcd t m = 1 :=
-    gcd_eq_one_of_reduced (fun j => (hy j).1) hred ⟨q.den, by rw [hdt]; ac_rfl⟩
+    coprime_of_reduced (fun j => (hy j).1) hred ⟨q.den, by rw [hdt]; ac_rfl⟩
   refine ⟨?_, ?_, ?_⟩
   · apply Int.emod_eq_zero_of_dvd
-    apply dvd_of_dvd_mul_of_gcd_one _ hcop
+    apply cancel_coprime _ hcop
     have h1 : (m : Int) ∣ d * a[i] - y[i] := Int.dvd_of_emod_eq_zero hcong
     rw [hdt, hnt] at h1
     rw [show t * (Int.ofNat q.den * a[i] - q.num) = (q.den : Int) * t * a[i] - q.num * t by
@@ -510,9 +510,9 @@ private theorem fast_eq {a y : Vector Int k} {m : Nat} {P Q d : Int} {dcur : Nat
     apply ratRecon_unique (a := a[i]) hm
     · generalize hq₁ : Rat.divInt f (dcur : Int) = q₁ at hdt₁ hft₁ ⊢
       have ht₁dvd : t₁ ∣ d := Int.dvd_trans ⟨q₁.den, by rw [hdt₁]; ac_rfl⟩ hdvd
-      have hcop₁ := gcd_eq_one_of_reduced (fun j => (hy j).1) hred ht₁dvd
+      have hcop₁ := coprime_of_reduced (fun j => (hy j).1) hred ht₁dvd
       apply Int.emod_eq_zero_of_dvd
-      apply dvd_of_dvd_mul_of_gcd_one _ hcop₁
+      apply cancel_coprime _ hcop₁
       have h1 : (m : Int) ∣ (dcur : Int) * a[i] - f := by
         apply Int.dvd_of_emod_eq_zero
         rw [Int.sub_emod, hfcong, Int.sub_self, Int.zero_emod]
@@ -593,7 +593,7 @@ private theorem ratReconVec.go_complete {a y : Vector Int k} {m : Nat} {P Q d : 
       simp only [Fin.getElem_fin] at hcoord
       rw [hcoord]
       simp only [Option.bind_eq_bind, Option.bind_some]
-      obtain ⟨t, ht, hdt, hnt⟩ := divInt_scale (n := y[i]) hd
+      obtain ⟨t, _, hdt, hnt⟩ := divInt_scale (n := y[i]) hd
       generalize hq : Rat.divInt y[i] d = q at hdt hnt ⊢
       have hdenPos : 0 < q.den := q.den_pos
       obtain ⟨s, hs⟩ := Nat.dvd_lcm_left dcur q.den
@@ -690,7 +690,7 @@ theorem ratReconVec?_complete {a y : Vector Int k} {m : Nat} {P Q d : Int}
     have hkpos : 0 < k := Nat.pos_of_ne_zero hk
     have hcoord := ratRecon?_coord hm hd hdQ hy hred ⟨0, hkpos⟩
     simp only [Fin.getElem_fin] at hcoord
-    obtain ⟨t, ht, hdt, hnt⟩ := divInt_scale (n := y[0]) hd
+    obtain ⟨t, _, hdt, hnt⟩ := divInt_scale (n := y[0]) hd
     generalize hq : Rat.divInt y[0] d = q at hdt hnt hcoord
     have hinv : ∀ j : Fin k, j.val < 1 →
         ((Vector.replicate k (0 : Int)).set 0 q.num)[j] * d = y[j] * (q.den : Int) := by

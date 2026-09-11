@@ -442,7 +442,7 @@ theorem ratReconVec?_spec : ratReconVec? a m P Q = some (y, d) →
     ∀ i, (d * a[i] - y[i]) % (m : Int) = 0 ∧ y[i].natAbs ≤ P
 ```
 
-The output is reduced as a whole (no integer divides `d` and every `yᵢ`)
+The output is reduced as a whole (no nonunit integer divides `d` and every `yᵢ`)
 but individual entries need not be in lowest terms, since `d` is the
 common denominator rather than each entry's own. Under `2PQ < m` the
 rational vector `y/d` is unique, by `ratRecon_unique` applied entrywise,
@@ -462,8 +462,8 @@ rational vector, and it needs the pair reduced as a whole. That
 hypothesis is not decoration. At `m = 18`, `a = (10)`, `P = 2`, `Q = 4`
 the pair `(2, 2)` satisfies the bound, the denominator bound and the
 congruence `2 · 10 - 2 ≡ 0`, but its reduced rational `1` has
-`1 · 10 - 1 = 9 ≢ 0 (mod 18)`, and no rational within the bounds satisfies
-the congruence, so the reconstruction returns `none`. The cancellation
+`1 · 10 - 1 = 9 ≢ 0 (mod 18)`, and no reduced rational within the bounds
+satisfies the congruence, so the reconstruction returns `none`. The cancellation
 that takes a congruence for `y/d` to one for its reduced form divides
 by `gcd(yᵢ, d)`, and that is only legitimate modulo `m` when the factor
 is coprime to `m`. Reducedness supplies exactly that: a prime dividing
