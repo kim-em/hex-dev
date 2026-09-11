@@ -597,6 +597,19 @@ def transpose (M : Matrix R n m) : Matrix R m n :=
   intro i j
   rw [getElem_transpose, getElem_transpose]
 
+/-- Apply `f` to every entry. A single pass over the flat buffer; no row is
+materialized. -/
+@[expose]
+def map {S : Type v} (M : Matrix R n m) (f : R → S) : Matrix S n m :=
+  ⟨M.data.map f⟩
+
+/-- Entry access for an entrywise map. -/
+@[grind =] theorem getElem_map {S : Type v} (M : Matrix R n m) (f : R → S)
+    (i : Fin n) (j : Fin m) :
+    (M.map f)[i][j] = f M[i][j] := by
+  rw [getElem_eq_getRow, getElem_getRow, getElem_eq_getRow, getElem_getRow]
+  simp [map]
+
 /-- The all-zero matrix. -/
 @[expose]
 protected def zero (n m : Nat) [OfNat R 0] : Matrix R n m :=

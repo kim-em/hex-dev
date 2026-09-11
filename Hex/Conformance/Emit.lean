@@ -136,6 +136,18 @@ private def jsonMvPolyList
     out := out ++ jsonMvPolyTerms terms
   out.push ']'
 
+private def jsonMvPolyMatrix
+    (rows : List (List (List (List Nat × Int)))) : String := Id.run do
+  let mut out := "["
+  let mut first := true
+  for row in rows do
+    if first then
+      first := false
+    else
+      out := out.push ','
+    out := out ++ jsonMvPolyList row
+  out.push ']'
+
 private def jsonOptionalInt : Option Int → String
   | none   => "null"
   | some n => jsonInt n
@@ -364,6 +376,24 @@ def emitMvPolyFixture (lib case : String) (arity : Nat) (order : String)
     ("arity", toString arity),
     ("order", jsonString order),
     ("terms", jsonMvPolyTerms terms)
+  ]
+
+/-- Emit an `mvpolymatrix` fixture: a matrix of multivariate polynomials in
+the shared term encoding, paired with the minor size `r`. `entries` holds
+exactly `rows` lists of exactly `cols` polynomials. -/
+def emitMvPolyMatrixFixture (lib case : String) (arity : Nat) (order : String)
+    (rows cols : Nat) (entries : List (List (List (List Nat × Int))))
+    (r : Nat) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind",    jsonString "mvpolymatrix"),
+    ("lib",     jsonString lib),
+    ("case",    jsonString case),
+    ("arity",   toString arity),
+    ("order",   jsonString order),
+    ("rows",    toString rows),
+    ("cols",    toString cols),
+    ("entries", jsonMvPolyMatrix entries),
+    ("r",       toString r)
   ]
 
 /-- Emit a fixed-precision univariate-series fixture. Coefficients use a

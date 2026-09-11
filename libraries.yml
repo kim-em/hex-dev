@@ -362,27 +362,6 @@ libraries:
           description: Square products of rank n - 1 and n / 2 with small entries, including pivot columns that are not the leading columns.
         - name: polynomial
           description: DensePoly Rat and MvPoly 2 Int matrices of dimension 4 to 12 at fixed support, full rank and rank deficient.
-  HexDeterminantalIdeal:
-    deps: [HexBasic, HexMatrix, HexDeterminant, HexRowReduce, HexMvPoly]
-    mathlib: false
-    done_through: 0
-    status: planned
-    phase4:
-      comparators:
-        - tool: SymPy combinations-and-det loop over the same minors
-          class: informational
-          rationale: SymPy chooses Bareiss or Berkowitz per minor while the Hex enumeration uses the Leibniz specification determinant, so the ratio compares algorithms; the evidence is the growth curve in r against the binomial-times-factorial operation count.
-      input_families:
-        - name: dense-int-minors
-          description: Square integer matrices of size 4 to 6 with every minor size r, showing the curve in r against n.choose r squared times r factorial.
-        - name: symbolic-2var
-          description: 4 x 4 matrices of random linear forms in two indeterminates over Int at r in 2, 3, 4, isolating polynomial arithmetic inside the same enumeration.
-  HexDeterminantalIdealMathlib:
-    deps: [HexDeterminantalIdeal, HexDeterminantMathlib, HexRowReduceMathlib, HexMvPolyMathlib]
-    mathlib: true
-    correspondence_only: true
-    done_through: 0
-    status: planned
   HexDet:
     deps: [HexBareiss, HexCharPoly, HexRowReduce, HexPolyFp, HexResultant, HexMvGcd]
     mathlib: false
@@ -527,6 +506,21 @@ libraries:
     done_through: 7
     status: active
 
+  HexDeterminantalIdeal:
+    deps: [HexArith, HexMatrix, HexDeterminant, HexRowReduce, HexMvPoly]
+    mathlib: false
+    done_through: 3
+    status: active
+    phase4:
+      comparators:
+        - tool: "SymPy combinations and det loop"
+          class: informational
+          rationale: "SymPy chooses its own per-minor determinant algorithm (Bareiss or Berkowitz), so a ratio against the Leibniz sum compares algorithms, not implementations."
+      input_families:
+        - name: dense-int-minors
+          description: Square integer matrices of dimension 4 to 6 with small entries, every minor size r, isolating the enumeration count n.choose r squared times r factorial times r.
+        - name: symbolic-2var
+          description: 4 by 4 matrices of random linear forms in two indeterminates over Int at r in 2, 3, 4, adding polynomial arithmetic to the same enumeration.
   # ---------- Depth 1 ----------
   HexModArith:
     deps: [HexArith]
@@ -1144,6 +1138,12 @@ libraries:
     status: active
   HexBareissMathlib:
     deps: [HexDeterminantMathlib]
+    mathlib: true
+    correspondence_only: true
+    done_through: 3
+    status: active
+  HexDeterminantalIdealMathlib:
+    deps: [HexDeterminantalIdeal, HexDeterminantMathlib, HexRowReduceMathlib, HexMvPolyMathlib]
     mathlib: true
     correspondence_only: true
     done_through: 3
