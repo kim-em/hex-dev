@@ -246,6 +246,9 @@ def _lean_lib_source_dirs(lakefile: Path) -> list[Path]:
 def _configured_source_roots(repo_root: Path) -> tuple[Path, ...]:
     """Repository and dependency library roots used by Lake module lookup."""
     roots: list[Path] = [repo_root]
+    lakefile = repo_root / "lakefile.lean"
+    if lakefile.is_file():
+        roots.extend(repo_root / src for src in _lean_lib_source_dirs(lakefile))
     packages = repo_root / ".lake" / "packages"
     if packages.is_dir():
         for package in sorted(path for path in packages.iterdir() if path.is_dir()):

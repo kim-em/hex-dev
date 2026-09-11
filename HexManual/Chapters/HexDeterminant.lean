@@ -211,6 +211,51 @@ arbitrary commutative ring and remains separate from the executable layer.
 
 {docstring HexMatrixMathlib.desnanot_jacobi_borderedMinor}
 
+# How to prove a fact about the Mathlib determinant by running Hex
+%%%
+tag := "hex-determinant-recipe-kernel-proof"
+%%%
+
+{name}`Matrix.det` is noncomputable, so `decide` cannot see it.
+{name}`HexMatrixMathlib.det_eq` identifies it with the executable Leibniz
+determinant {name}`Hex.Matrix.det`, which the kernel evaluates directly.
+Rewriting a Mathlib determinant goal backwards through `det_eq` turns it into
+a closed computation.
+
+The rewrite needs the goal's matrix to be in the image of
+{name}`HexMatrixMathlib.matrixEquiv`. For a matrix literal that is
+{name}`Equiv.apply_symm_apply`: replace `A` by `matrixEquiv (matrixEquiv.symm A)`,
+after which `det_eq` applies.
+
+```lean
+open Hex Hex.Matrix HexMatrixMathlib
+
+namespace HexDeterminantKernelProof
+
+def A : _root_.Matrix (Fin 3) (Fin 3) ℤ :=
+  !![2, 0, 1; 1, 3, 2; 0, 1, 1]
+
+theorem det_eq_three : A.det = 3 := by
+  rw [← matrixEquiv.apply_symm_apply A, ← det_eq]
+  decide +kernel
+
+end HexDeterminantKernelProof
+```
+
+`decide +kernel` runs the Leibniz determinant in Lean's kernel and checks the
+result. The proof depends only on `propext`, `Classical.choice`, and
+`Quot.sound`, never the compiler-trusting `native_decide` (banned
+project-wide). Once the value is known, Mathlib's determinant theory takes
+over: `det_eq_three` is what you rewrite with to reach
+{name _root_.Matrix.det_transpose}`Matrix.det_transpose` or a
+{name}`Matrix.nondegenerate_of_det_ne_zero` argument.
+
+The determinant is factorial in the matrix dimension, so this recipe is for
+small closed matrices. `Examples/DeterminantKernelProof.lean` holds the same
+theorems as a compiled example, and the rank recipe in
+{ref "hex-row-reduce-recipe-kernel-proof"}[the HexRowReduce chapter] is the
+same pattern for `Matrix.rank`.
+
 # Cross-references
 %%%
 tag := "hex-determinant-cross-references"

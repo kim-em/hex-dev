@@ -375,8 +375,7 @@ private theorem permutationVectors_identity_sum {R : Type u} [Lean.Grind.CommRin
       simp [permutationVectors, detTerm, detSign, detProduct, inversionCount]
       grind
   | succ n ih =>
-      simp only [permutationVectors]
-      rw [List.foldl_add_flatMap]
+      rw [permutationVectors_succ, List.foldl_add_flatMap]
       simp only [List.foldl_map, foldl_detTerm_identity_insertions]
       exact ih
 

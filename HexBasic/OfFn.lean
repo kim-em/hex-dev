@@ -117,6 +117,35 @@ so that the kernel can reduce it. -/
 @[csimp] theorem Array.map'_eq_map' : @Array.map' = @_root_.Array.map := by
   funext α β f a; exact Array.map'_eq_map f a
 
+/-! # `Vector.map` -/
+
+/-- A {name}`Vector.map` equivalent that reduces in the kernel under the
+module system: core {name}`Vector.map` delegates to {name}`Array.map`, whose
+implementation loop is not exposed, so `(v.map f)` stalls downstream.
+Remove this shim and migrate its callers to core {name}`Vector.map` when the
+pinned toolchain reaches Lean v4.35.0-rc1, alongside
+{name}`Hex.Array.map'`. -/
+@[expose] def Vector.map' {α : Type u} {β : Type v} {n : Nat} (f : α → β)
+    (v : Vector α n) : Vector β n :=
+  ⟨Array.map' f v.toArray, by simp⟩
+
+@[simp] theorem Vector.map'_eq_map {α : Type u} {β : Type v} {n : Nat} (f : α → β)
+    (v : Vector α n) : Vector.map' f v = v.map f :=
+  _root_.Vector.toArray_inj.mp (by simp [Vector.map'])
+
+@[simp] theorem Vector.toArray_map' {α : Type u} {β : Type v} {n : Nat} (f : α → β)
+    (v : Vector α n) : (Vector.map' f v).toArray = Array.map' f v.toArray := rfl
+
+@[simp] theorem Vector.getElem_map' {α : Type u} {β : Type v} {n : Nat} (f : α → β)
+    (v : Vector α n) (i : Nat) (h : i < n) :
+    (Vector.map' f v)[i] = f v[i] := by
+  simp [Vector.map']
+
+/-- Compiled code uses the core {name}`Vector.map`; the {name}`List` route
+exists only so that the kernel can reduce it. -/
+@[csimp] theorem Vector.map'_eq_map' : @Vector.map' = @_root_.Vector.map := by
+  funext α β n f v; exact Vector.map'_eq_map f v
+
 /-! # `Array.zipWith` -/
 
 /-- An {name}`Array.zipWith` equivalent that reduces in the kernel under the
