@@ -42,4 +42,20 @@ variable {R : Type u} {n m : Nat}
   simp only [matrixEquiv_apply, Hex.Matrix.getElem_takeRows, Matrix.submatrix_apply,
     Fin.castLE, id_eq]
 
+/-- Selecting rows is the submatrix reindexing rows by the index vector. -/
+@[simp, grind =] theorem matrixEquiv_selectRows {k : Nat} (M : Hex.Matrix R n m)
+    (rows : Vector (Fin n) k) :
+    matrixEquiv (Hex.Matrix.selectRows M rows) = (matrixEquiv M).submatrix rows.get id := by
+  ext i j
+  simp only [matrixEquiv_apply, Hex.Matrix.getElem_selectRows, Matrix.submatrix_apply, id_eq]
+  rfl
+
+/-- Selecting columns is the submatrix reindexing columns by the index vector. -/
+@[simp, grind =] theorem matrixEquiv_selectCols {k : Nat} (M : Hex.Matrix R n m)
+    (cols : Vector (Fin m) k) :
+    matrixEquiv (Hex.Matrix.selectCols M cols) = (matrixEquiv M).submatrix id cols.get := by
+  ext i j
+  simp only [matrixEquiv_apply, Hex.Matrix.getElem_selectCols, Matrix.submatrix_apply, id_eq]
+  rfl
+
 end HexMatrixMathlib

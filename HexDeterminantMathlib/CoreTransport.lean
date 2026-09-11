@@ -333,6 +333,17 @@ theorem det_borderedMinor_eq_submatrix_det [CommRing R]
             if hc : c.val < k then ⟨c.val, Nat.lt_trans hc hk⟩ else j)) := by
   rw [det_eq, matrixEquiv_borderedMinor]
 
+/-- Selecting rows and columns in the Hex matrix representation is the
+submatrix of the Mathlib representation along the two index vectors. -/
+@[simp, grind =] theorem matrixEquiv_selectedSubmatrix {m k : Nat} (M : Hex.Matrix R n m)
+    (rows : Vector (Fin n) k) (cols : Vector (Fin m) k) :
+    matrixEquiv (Hex.Matrix.selectedSubmatrix M rows cols) =
+      (matrixEquiv M).submatrix rows.get cols.get := by
+  ext i j
+  rw [matrixEquiv_apply, Matrix.submatrix_apply, matrixEquiv_apply,
+    Hex.Matrix.getElem_selectedSubmatrix]
+  rfl
+
 /-- Deleting a row and column in the Hex matrix representation is the same as
 submatrixing the Mathlib representation by the corresponding skip maps. -/
 theorem matrixEquiv_deleteRowCol

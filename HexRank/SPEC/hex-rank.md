@@ -9,13 +9,13 @@ and that `d • A` is a combination of the `r` selected columns of `A` (so the
 rank is at most `r`). The producer is rectangular fraction-free Gauss-Jordan
 elimination with column pivoting and skipped columns, which also returns the
 row and column rank profiles. Mathlib-free. The companion
-[hex-rank-mathlib](hex-rank-mathlib.md) proves that a checked certificate
+[hex-rank-mathlib](../../HexRankMathlib/SPEC/hex-rank-mathlib.md) proves that a checked certificate
 determines `Matrix.rank` over the domain itself and over any fraction field,
 proves that the producer's certificate checks, and relates the certificate
 to Mathlib's `Echelon.Decomposition`.
 
 This is the shared foundation for certified integer rank in
-[hex-modular-matrix](hex-modular-matrix.md), for the generic rank of
+[hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md), for the generic rank of
 polynomial matrices, and for the symbolic `rank` tactic of the planned
 `hex-matrix-tactic` (https://github.com/kim-em/hex-dev/issues/10151).
 
@@ -50,7 +50,7 @@ contract, not an extra return field on `BareissData`. The section
 [What is new relative to hex-bareiss](#what-is-new-relative-to-hex-bareiss)
 lists the differences against `bareissDataWith` and `pivotLoopWith`.
 
-[hex-modular-matrix](hex-modular-matrix.md) specifies a two-sided rank
+[hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md) specifies a two-sided rank
 certificate over `Int` for its multi-modular route. That certificate is the
 `Int` instance of the one here, and the section
 [Int](#int) records the amendment that makes the two coincide.
@@ -85,7 +85,7 @@ pass between them.
 
 It does not depend on `hex-row-reduce`: the field algorithm is a different
 algorithm, and the rank-versus-minors theorem that would identify the two
-over a field is [hex-determinantal-ideal](hex-determinantal-ideal.md)'s.
+over a field is [hex-determinantal-ideal](../../SPEC/Libraries/hex-determinantal-ideal.md)'s.
 It does not depend on `hex-determinantal-ideal` either. That SPEC states
 the relationship: the two are independent siblings, and this library's
 certificate is an instance of the nonzero-minor direction proved there,
@@ -750,7 +750,7 @@ hex-bareiss now aliases). The names `rank`, `rankProfile`, `rankCert`,
 (`RankCert n m` with `rows`, `cols`, `modulus`, `coeffs : Matrix Int r (m - r)`,
 `denom`) is amended to *be* `Hex.Matrix.RankCert Int n m`, and its
 `checkRank` to be this library's, with these consequences, recorded in
-[hex-modular-matrix §Rank](hex-modular-matrix.md#rank):
+[hex-modular-matrix §Rank](../../SPEC/Libraries/hex-modular-matrix.md#rank):
 
 - the `modulus` field and the "minor nonzero modulo `modulus`" test go
   away, replaced by the adjugate identity, which is a big-integer product
@@ -813,7 +813,7 @@ rank:
 2. **Conditional rank**: `rank (A.map (eval p)) = r` under the hypothesis
    `eval p denom ≠ 0`, or more generally under a nonvanishing hypothesis
    on the minor the certificate names. The hypothesis is a `Condition`
-   in the sense of [hex-reflect §Shared results and conditions](hex-reflect.md#shared-results-and-conditions),
+   in the sense of [hex-reflect §Shared results and conditions](../../HexReflect/SPEC/hex-reflect.md#shared-results-and-conditions),
    returned to the caller rather than discharged. The certificate supplies
    the condition as data: it is `denom`.
 3. **Rank locus**: the set of points where the rank drops below `r`, the
@@ -927,7 +927,7 @@ regenerated from this monorepo.
 
 ## Conformance
 
-Fixtures follow [SPEC/testing.md](../testing.md). Lean drivers at
+Fixtures follow [SPEC/testing.md](../../SPEC/testing.md). Lean drivers at
 `conformance/HexRank/Conformance.lean` and
 `conformance/HexRank/EmitFixtures.lean`, the latter exposed as
 `lean_exe hexrank_emit_fixtures`, a committed snapshot at
@@ -1011,7 +1011,7 @@ implementation gets wrong:
 
 ## Benchmarking
 
-Per [SPEC/benchmarking.md](../benchmarking.md), with drivers at
+Per [SPEC/benchmarking.md](../../SPEC/benchmarking.md), with drivers at
 `bench/HexRank/Bench.lean`, Mathlib-free, no import of any `Hex*Mathlib`
 module. The registrations extend the existing single bench job.
 
@@ -1042,7 +1042,7 @@ family, so that the ratio between producer and checker is a recorded
 number and not an assumption of the tactic SPEC.
 
 **Complexity claims**, chosen per
-[SPEC/benchmarking.md §Choosing the complexity claim](../benchmarking.md#choosing-the-complexity-claim):
+[SPEC/benchmarking.md §Choosing the complexity claim](../../SPEC/benchmarking.md#choosing-the-complexity-claim):
 
 - `low-rank-large-coefficients` and `rank-deficient-by-construction` at
   fixed `r`: **mode 1**, two-sided parametric, declared scaling `n²`.

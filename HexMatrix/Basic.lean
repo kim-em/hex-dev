@@ -61,6 +61,17 @@ instance {R : Type u} {n m : Nat} [BEq R] [LawfulBEq R] :
       change (a == a) = true
       exact beq_self_eq_true a
 
+/-- `DecidableEq (Matrix R n m)` that reduces in the kernel under the module
+system, routed through the buffer's `DecidableEq (Vector R (n * m))`. The
+derived instance above delegates to a generated `decEq` whose body is not
+exposed across a module boundary, so `decide +kernel` on a matrix equality
+sticks in any importing `module` file. Scoped like the `Vector` and `Array`
+instances of `HexBasic.ArrayDecEq`, and to be removed with them. -/
+scoped instance (priority := 1100) instDecidableEqMatrixKernel
+    {R : Type u} {n m : Nat} [DecidableEq R] : DecidableEq (Matrix R n m) := fun A B =>
+  decidable_of_iff (A.data = B.data)
+    ⟨fun h => by cases A; cases B; cases h; rfl, fun h => h ▸ rfl⟩
+
 end Hex
 
 namespace Vector

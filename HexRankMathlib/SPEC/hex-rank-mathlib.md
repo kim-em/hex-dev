@@ -1,7 +1,7 @@
 # hex-rank-mathlib
 
 Correspondence between the executable rank certificate of
-[hex-rank](hex-rank.md) and Mathlib's `Matrix.rank`: a checked certificate
+[hex-rank](../../HexRank/SPEC/hex-rank.md) and Mathlib's `Matrix.rank`: a checked certificate
 determines the rank over the domain itself, the rank is unchanged by
 extension of scalars to any fraction field (`IsFractionRing`), the
 producer's certificate checks, the producer's index sets are the row and
@@ -23,7 +23,7 @@ Computational performance owner: `HexRank`.
 
 Throughout, `e` is `HexMatrixMathlib.matrixEquiv`, `A : Hex.Matrix R n m`,
 `c : Hex.Matrix.RankCert R n m`, and `B`, `C`, `P`, `U`, `d`, `r` are as
-in [hex-rank §The certificate](hex-rank.md#the-certificate).
+in [hex-rank §The certificate](../../HexRank/SPEC/hex-rank.md#the-certificate).
 
 ## Transport
 
@@ -46,7 +46,7 @@ together with the existing `matrixEquiv_smul` and `matrixEquiv_one` in
 `matrixEquiv_mul`. `matrixEquiv_selectedSubmatrix` cannot, because
 `selectedSubmatrix` is defined in `HexDeterminant/Minor.lean`, above
 `HexMatrix`; it belongs in `HexDeterminantMathlib`, is also specified by
-[hex-determinantal-ideal-mathlib](hex-determinantal-ideal-mathlib.md),
+[hex-determinantal-ideal-mathlib](../../SPEC/Libraries/hex-determinantal-ideal-mathlib.md),
 and whichever of the two planned companions lands first adds it there.
 
 With these, `checkRank A c = true` transports to three facts about
@@ -184,12 +184,12 @@ theorem exists_rankCert [CommRing R] [IsDomain R] [DecidableEq R] (A : Hex.Matri
 `exists_rankCert` is completeness with no quotient hypothesis: the
 classical exact quotient of [Scalar extension](#scalar-extension) and
 `rankCertWith_check` supply the witness. The adjugate argument of
-[hex-rank §Completeness](hex-rank.md#completeness) is an alternative proof
+[hex-rank §Completeness](../../HexRank/SPEC/hex-rank.md#completeness) is an alternative proof
 that does not go through the producer.
 
 `rowReduceWith_spec` is proved by induction along the column loop with the
 invariant of
-[hex-rank §Exactness and producer correctness](hex-rank.md#exactness-and-producer-correctness):
+[hex-rank §Exactness and producer correctness](../../HexRank/SPEC/hex-rank.md#exactness-and-producer-correctness):
 after `k` pivots with block `B_k` and `p = B_k.det`, the pivot rows of the
 state are `B_k.adjugate * P_k` and each non-pivot row `i` is
 `p • A[i, :] − A[i, cols] * (B_k.adjugate * P_k)`. The pivot step first
@@ -249,7 +249,7 @@ column exactly when the reduced form has a nonzero entry in column `j` in
 some non-pivot row at the moment column `j` is scanned, and that is
 exactly when the rank of the first `j + 1` columns exceeds the rank of the
 first `j`. The row statement is the argument in
-[hex-rank §The rank profile](hex-rank.md#the-rank-profile), formalised as:
+[hex-rank §The rank profile](../../HexRank/SPEC/hex-rank.md#the-rank-profile), formalised as:
 the chosen pivot row at each step is the least-index non-pivot row with a
 nonzero eliminated entry, and every smaller-index non-pivot row with a
 nonzero eliminated entry would have been chosen first, so the chosen row
@@ -355,7 +355,7 @@ field, a product of a lower triangular and an upper triangular matrix
 with nonzero diagonals, so its determinant is nonzero. Then
 `d := B.det`, `adj := B.adjugate`, and the three identities hold by
 `Matrix.mul_adjugate` and the argument of
-[hex-rank §Completeness](hex-rank.md#completeness):
+[hex-rank §Completeness](../../HexRank/SPEC/hex-rank.md#completeness):
 
 ```lean
 theorem exists_rankCert_of_decomposition (D : Echelon.Decomposition (e A)) :
@@ -375,7 +375,7 @@ instance (A : Matrix (Fin n) (Fin m) ℤ) (r : Nat) : Decidable (A.rank = r)
 
 by `rank_eq` at `e.symm A`, in the style of hex-berlekamp-mathlib's
 `Decidable (Irreducible f)`. This is the instance
-[hex-modular-matrix](hex-modular-matrix.md) planned for its `rank`, now
+[hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md) planned for its `rank`, now
 supplied here with the direct algorithm; the multi-modular route may
 later replace the computation behind it without changing the statement.
 A generic instance for every carrier with an executable exact quotient is

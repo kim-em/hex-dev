@@ -1,0 +1,6 @@
+{
+  "path": "HexBasic/ExactDiv.lean",
+  "baseline_blob": "d21532df570af19a454bcf6c2fcd1e350ecf3ee1",
+  "current_blob": "d248144c8f256834a51e427a3f37df1efd56ae94",
+  "reason": "Adds the Prop-valued class Hex.DomainLaws with its Int and Lean.Grind.Field instances and the theorem DomainLaws.of_exactDivLaws, the law package of the hex-rank checker. Classes in Prop and theorems generate no code; exactDiv and ExactDivLaws are unchanged. Runtime-neutral for the retained factorization sweep."
+}

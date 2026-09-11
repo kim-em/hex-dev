@@ -66,7 +66,7 @@ class CheckBenchVerifyBudgetTests(unittest.TestCase):
             "bash scripts/ci/check_bench_verify_budget.sh \\\n", 1
         )[1].split("          # These two interval", 1)[0]
         pairs = re.findall(r"\b(Hex[A-Za-z0-9]+)=([a-z0-9_]+_bench)\b", block)
-        self.assertEqual(len(pairs), 46)
+        self.assertEqual(len(pairs), 47)
 
         lakefile = (REPO_ROOT / "lakefile.lean").read_text(encoding="utf-8")
         roots = dict(

@@ -922,6 +922,50 @@ theorem det_rowScale {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     det (rowScale M i c) = c * det M := by
   simpa [det] using det_rowScale_leibniz M i c
 
+/-- Scaling each row of a list of distinct rows in turn scales exactly the
+listed rows once. -/
+private theorem getElem_foldl_rowScale {R : Type u} [Mul R] {n m : Nat} (c : R)
+    (l : List (Fin n)) (hl : l.Nodup) (M : Matrix R n m) (r : Fin n) (k : Fin m) :
+    (l.foldl (fun A i => rowScale A i c) M)[r][k] =
+      if r ∈ l then c * M[r][k] else M[r][k] := by
+  induction l generalizing M with
+  | nil => simp
+  | cons i l ih =>
+    rw [List.nodup_cons] at hl
+    rw [List.foldl_cons, ih hl.2, getElem_rowScale]
+    by_cases hr : r ∈ l
+    · have hri : r ≠ i := fun h => hl.1 (h ▸ hr)
+      simp [hr, hri]
+    · by_cases hri : r = i
+      · subst hri
+        simp [hr]
+      · simp [hr, hri]
+
+/-- Scaling every row of a list scales the determinant once per listed row. -/
+private theorem det_foldl_rowScale {R : Type u} [Lean.Grind.CommRing R] {n : Nat} (c : R)
+    (l : List (Fin n)) (M : Matrix R n n) :
+    det (l.foldl (fun A i => rowScale A i c) M) = c ^ l.length * det M := by
+  induction l generalizing M with
+  | nil => simp [Lean.Grind.Semiring.pow_zero, Lean.Grind.Semiring.one_mul]
+  | cons i l ih =>
+    rw [List.foldl_cons, ih, det_rowScale, List.length_cons, Lean.Grind.Semiring.pow_succ,
+      Lean.Grind.Semiring.mul_assoc]
+
+/-- A scalar multiple of a matrix is the matrix with every row scaled. -/
+private theorem smul_eq_foldl_rowScale {R : Type u} [Mul R] {n m : Nat} (c : R)
+    (M : Matrix R n m) :
+    c • M = (List.finRange n).foldl (fun A i => rowScale A i c) M := by
+  apply ext_getElem
+  intro r k
+  rw [getElem_foldl_rowScale c _ (List.nodup_finRange n), smul_getElem]
+  simp [List.mem_finRange]
+  rfl
+
+/-- Scaling a square matrix by `c` scales the determinant by `c ^ n`. -/
+theorem det_smul {R : Type u} [Lean.Grind.CommRing R] {n : Nat} (c : R) (M : Matrix R n n) :
+    det (c • M) = c ^ n * det M := by
+  rw [smul_eq_foldl_rowScale, det_foldl_rowScale, List.length_finRange]
+
 /-- Adding a multiple of one row to a distinct row preserves the determinant. -/
 @[grind =]
 theorem det_rowAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
