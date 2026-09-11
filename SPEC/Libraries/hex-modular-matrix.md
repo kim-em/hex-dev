@@ -2,39 +2,54 @@
 
 Exact linear algebra over `ℤ` and `ℚ` computed through modular images:
 the determinant of an integer matrix from its residues modulo many
-moduli, the rank with a two-sided certificate, and the solution of
-`A x = b` over `ℚ` by `p`-adic lifting. Mathlib-free. The companion
-`hex-modular-matrix-mathlib` discharges the determinant bound the
-Mathlib-free layer carries as a hypothesis, and identifies the executable
-results with `Matrix.det`, `Matrix.rank`, and `Matrix.mulVec`.
+moduli, the rank through hex-rank's two-sided certificate produced by a
+modular route, and the solution of `A x = b` over `ℚ` by `p`-adic
+lifting. Mathlib-free. The companion `hex-modular-matrix-mathlib`
+discharges the Hadamard bound the Mathlib-free layer carries as a
+hypothesis, and identifies the executable results with `Matrix.det`,
+`Matrix.rank`, and `Matrix.mulVec`.
 
-This SPEC expands three of the five bullets in the "Modular techniques"
-entry of [future-work](../future-work.md), and depends on the
-reconstruction operations specified in [hex-modular](../../HexModular/SPEC/hex-modular.md). The
-fourth bullet, the modular gcd for `ℤ[x]`, is
-[hex-poly-z-gcd](../../HexPolyZGcd/SPEC/hex-poly-z-gcd.md); the fifth, rational reconstruction
-itself, is in [hex-modular](../../HexModular/SPEC/hex-modular.md).
+This SPEC depends on the reconstruction operations of
+[hex-modular](../../HexModular/SPEC/hex-modular.md) (`Crt`, `crtLoop`,
+rational reconstruction) and on the modulus supply in hex-mod-arith
+(`ZMod64.Modulus`, `ZMod64.Prime` and `ZMod64.primesBelow` in
+`HexModArith/Modulus.lean`). The modular gcd for `ℤ[x]`, the other
+consumer of the same machinery, is
+[hex-poly-z-gcd](../../HexPolyZGcd/SPEC/hex-poly-z-gcd.md). The rank
+certificate is [hex-rank](hex-rank.md)'s, at `R = Int`.
+
+Throughout, `det` is hex-determinant's Leibniz determinant
+`Hex.Matrix.det`, the reference every theorem here is stated against.
+The total wrappers this library adds (`det`, `detViaDivisor`, `detWith`)
+live in `Hex.ModularMatrix`, and the partial operations (`detMod?`, the
+bounds, `detBounded?`, `detModular?`) in `Hex.Matrix`, because the plain
+`Hex.Matrix.det` and `Hex.Matrix.rank` are hex-determinant's and
+hex-rank's. "Public names and dispatch integration" below records the
+split.
 
 ## Why this library exists
 
-**The gap is measured, and it is a factor of twenty.**
+**The gap is measured, and it is a factor of nine.**
 [reports/hex-bareiss-performance.md](../../reports/hex-bareiss-performance.md)
 records `Hex.Matrix.bareiss` against FLINT's `fmpz_mat.det` on the same
-deterministic tridiagonal fixture. The raw ratio crosses unity at
-`n = 128` and reaches `0.062x` at `n = 512`; on the rungs where the
-harness startup cost is small enough for the comparison to be eligible
-(`n = 320, 384, 512`) the adjusted ratio sits at `0.049x` to `0.057x`.
-FLINT spends about five percent of Hex's wall time on the same
+deterministic tridiagonal fixture at twelve rungs from `n = 16` to
+`n = 512`. Both arms discard a warmup call, so the ratios are of warmed
+medians. The raw ratio crosses unity between `n = 24` and `n = 32` and
+falls through every later rung to `0.116x` at `n = 512` (`1.252 s`
+against `145 ms`). All twelve rungs are eligible, and the
+overhead-adjusted ratio differs from the raw one only at `n = 16` and
+`n = 24`, where the subprocess call floor is a visible fraction of the
+FLINT time. FLINT spends about a ninth of Hex's wall time on the same
 determinant, and the gap widens with `n`.
 
 hex-bareiss's SPEC classifies that comparator as `informational` for a
 stated reason: FLINT uses multi-modular reduction with Chinese
 remaindering, and Bareiss is fraction-free elimination over `Int`, so the
 two have different asymptotic and constant-factor profiles. The report's
-own recommendation is to add "a multimodular CRT path layered over the
-existing Bareiss kernel". This library is that path, and implementing it
-is what turns the comparison into a like-for-like one, which is exactly
-what [future-work](../future-work.md) says.
+own conclusion is that a faster multimodular determinant would be a
+distinct surface rather than a repair to Bareiss. This library is that
+surface, and implementing it is what turns the comparison into a
+like-for-like one.
 
 **Fraction-free elimination pays for coefficient growth it cannot
 avoid.** Bareiss keeps every intermediate an integer, and those integers
@@ -49,96 +64,109 @@ computes integer determinants this way.
 hex-row-reduce solves over a field, so `Matrix Rat n m` works and every
 intermediate entry is a rational whose numerator and denominator grow
 through the elimination. hex-number-field's arithmetic, the integer
-kernel bases in [hex-hermite](hex-hermite.md), and the certified rank
-below all want an exact solve that does not pay that growth. Dixon
-lifting is the standard answer and its output is checkable by one
-matrix-vector product.
+kernel bases in [hex-hermite](../../HexHermite/SPEC/hex-hermite.md), and
+the certified rank below all want an exact solve that does not pay that
+growth. Dixon lifting is the standard answer and its output is checkable
+by one matrix-vector product.
 
-**hex-hermite needs a determinant.** The Domich-Kannan-Trotter modular
-Hermite algorithm reduces entries modulo a determinant of a square
-nonsingular submatrix, and [hex-hermite](hex-hermite.md) names
-hex-bareiss as the supplier. The determinant here is the faster supplier
-for exactly the sizes where the modular Hermite path is worth taking.
+**The modular Hermite route needs a determinant.**
+[hex-hermite](../../HexHermite/SPEC/hex-hermite.md) records the
+Domich-Kannan-Trotter algorithm as a future SPEC. That algorithm reduces
+entries modulo a determinant of a square nonsingular submatrix, and the
+only determinant supplier in the tree today is hex-bareiss. The
+determinant here is the faster supplier for exactly the sizes where the
+modular Hermite route is worth taking.
 
 ## What has a checker and what does not
 
-[future-work](../future-work.md) opens with a warning that a positive
-certificate establishes only what it carries a witness for. Applied to
-this library, the three operations come out differently, and the
-difference drives the whole design.
+[future-work](../future-work.md) opens with a warning that checking a
+positive claim establishes only that claim. Applied to this library, the
+three operations come out differently, and the difference drives the
+whole design.
 
 **The linear solve has a one-line checker.** A claimed solution `y/d`
 is accepted by testing `A y = d b` over `ℤ`, which is one matrix-vector
 product. Everything that produced it (the prime, the inverse modulo `p`,
 the lifting, the reconstruction) runs untrusted.
 
-**The rank has a two-sided certificate.** A lower bound is a square
-submatrix whose determinant is nonzero modulo one modulus, which is
-cheap and conclusive because a nonzero residue of an integer proves the
-integer nonzero. An upper bound is a rational expression of every other
-column in terms of the chosen ones, which is a matrix product to check.
-Neither half alone settles the rank, and together they settle it exactly.
+**The rank has a two-sided certificate.** [hex-rank](hex-rank.md)
+specifies it over any integral domain, and this library produces its
+`Int` instance: an `r × r` submatrix `B` of `A`, named by `rows` and
+`cols`, with `d = det B` and the adjugate of `B`. The identity
+`B * adj = d • identity r` with `d ≠ 0` proves the rank is at least `r`,
+and the identity `d • A = A[·, cols] * (adj * A[rows, ·])` proves it is
+at most `r`. Both halves are matrix products to check. hex-rank's
+`RankCert.det_ne_zero` and `RankCert.det_succ_eq_zero` are the
+Mathlib-free theorems, and hex-rank-mathlib's `checkRank_sound` is the
+statement against `Matrix.rank`. Everything the modular route does to
+find `rows` and `cols` runs untrusted.
 
-**The determinant has no cheap checker.** Verifying `det A = d` is, as
-far as anyone knows, no easier than computing it: the natural witnesses
-(the adjugate, a triangular factorisation) are the size of the answer
-times `n`, and checking them costs another `n³` big-integer
-multiplications. So the multi-modular determinant is a *proved algorithm*
-rather than a checked candidate, and it carries the only analytic
-hypothesis in this library. Everything downstream of that difference,
-including which reconstruction rule may be used and which may not, is
-recorded below where it applies.
+**The determinant's witnesses cost as much to check as the answer costs
+to compute.** A determinant does have a certificate: a triangular
+factorisation `P A = L U` over `ℚ` with `L` unit lower triangular
+determines `det A` as `± ∏ᵢ uᵢᵢ`. (An adjugate identity `A * X = d • I`
+is not one: it holds with `d = 2` and `X = I` for `A = 2 • I₂`, whose
+determinant is `4`, and [hex-rank](hex-rank.md) records the same
+counterexample.) Checking the factorisation is an `n × n` product of
+big rationals, `O(n³)` multiplications on numbers the size of the
+answer, which is the cost of Bareiss itself, so the witness saves the
+checker nothing over recomputing. The consequence is not that no certificate exists but that
+the multi-modular determinant is a *proved algorithm* rather than a
+checked candidate: its correctness theorem is unconditional given a bound
+on `|det A|`, that bound is the one analytic input to this library, and
+no check runs after the reconstruction. Which reconstruction rules that
+permits, and which it forbids, is recorded under "The reconstruction".
 
 That asymmetry has one further consequence worth stating in advance.
 Certified dispatch to an untrusted external implementation, in the shape
-`hex-lll`'s `certCheck` uses for fpLLL and [hex-hermite](hex-hermite.md)
-specifies for Hermite forms, is available for the solve and for the rank
-and is **not** available for the determinant. An external determinant
-would have to be trusted, and design principle 4 forbids that.
+`hex-lll`'s `certCheck` uses for fpLLL and
+[hex-hermite](../../HexHermite/SPEC/hex-hermite.md) specifies for Hermite
+forms, is available for the solve and for the rank. For the determinant
+it is available only at the price of a Bareiss-sized check, so this SPEC
+does not offer it: an external determinant re-verified at the cost of
+computing it saves nothing, and an unverified one is what design
+principle 4 forbids.
 
-## Two corrections to the future-work entry
+## What the moduli need to be
 
-**Primality is not among the checker's obligations.** That entry says
-they are "primality and distinctness of the moduli, the CRT congruences,
-and a reconstruction bound large enough to determine the answer". The
-determinant argument never uses primality: reduction modulo any `m` is a
-ring homomorphism, so `det (A mod m) = (det A) mod m` regardless, and
-what the *elimination* needs is that the pivots it inverts are units,
-which the arithmetic discovers rather than assumes. `detMod?` returning
-`some d` at a composite modulus is as good an image as any. Distinctness is not
+**Coprime, not prime.** Reduction modulo any `m` is a ring homomorphism,
+so `det (A mod m) = (det A) mod m` whether or not `m` is prime, and what
+the *elimination* needs is that the pivots it inverts are units, which
+the arithmetic discovers rather than assumes. `detMod?` returning `some d`
+at a composite modulus is as good an image as any. Distinctness is not
 the right property either, since distinct moduli need not be coprime;
-coprimality is what the reconstruction needs and `Crt.push` checks it.
-[hex-modular](../../HexModular/SPEC/hex-modular.md) sets this out in full under "Primality is
-not what the checkers need". Primality does appear here, once: the rank
-of an image modulo `p` is a rank only when `F_p` is a field, and the
-statement of `rankModP` says so.
+coprimality is what the reconstruction needs and `Crt.push` checks it
+with one extended gcd.
+[hex-modular](../../HexModular/SPEC/hex-modular.md) sets this out in full
+under "Primality is not what the checkers need". Primality does appear
+here, once: the rank of an image modulo `p` is a rank only when `F_p` is
+a field, and the statement of `rankModP` says so.
 
-**Reduction mod `p` dropping the rank is not by itself the lower
-bound.** The entry says "Reduction mod `p` can only drop rank, so the
-modular computation supplies a lower bound on the rational rank." The
-conclusion is right and the reason as stated is circular: the modular
-rank is a lower bound because a nonvanishing `r × r` minor modulo `p` is
-a nonvanishing integer minor, and that argument produces the *witness*
-the certificate carries. Phrasing it as "reduction can only drop rank"
-suggests the modular computation is the evidence, when in fact the
-submatrix is.
+**The rank's lower bound is a submatrix, not the modular computation.**
+Reduction modulo `p` can only lower the rank, but that is not the
+evidence. The modular rank is a lower bound because a nonvanishing
+`r × r` minor modulo `p` is a nonvanishing integer minor, and hex-rank's
+certificate carries the submatrix with its adjugate rather than the
+modulus. The modular computation is how the producer finds the
+submatrix, and nothing downstream depends on it.
 
 ## Scope
 
 In scope: the determinant of a square integer matrix; the rank of a
-rectangular integer matrix with a certificate; the solution of a square
-nonsingular integer system over `ℚ`; a rational kernel basis; and the
-determinant divisor optimisation that links the first to the third.
+rectangular integer matrix, as hex-rank's certificate produced by a
+modular route; the solution of a square nonsingular integer system over
+`ℚ`; a rational kernel basis; and the determinant divisor optimisation
+that links the first to the third.
 
 Not in scope for the first version: rectangular and inconsistent systems
 (the certificate shape differs and the consistency question is a rank
 question); matrix inversion as a returned object, since every consumer
 here wants a solve rather than an inverse; the Smith and Hermite normal
-forms, which are [hex-smith](hex-smith.md) and
-[hex-hermite](hex-hermite.md) and want this library rather than replace
-it; and the characteristic polynomial, whose multi-modular form is a
-separate entry in [future-work](../future-work.md) and is a consumer of
-this one.
+forms, which are [hex-smith](../../HexSmith/SPEC/hex-smith.md) and
+[hex-hermite](../../HexHermite/SPEC/hex-hermite.md) and want this library
+rather than replace it; and the characteristic polynomial, whose
+multi-modular form [hex-char-poly](hex-char-poly.md) lists among its
+candidate algorithms as a consumer of this determinant.
 
 Coefficients are `Int` throughout. A rational input is cleared to an
 integer matrix and a scalar denominator by the caller, and the API says
@@ -193,21 +221,25 @@ public route type, and never guesses which fallback ran. Zero-fuel tests
 therefore exercise the production branches. The lower library never imports
 `HexDet`.
 
-The implementation owes `detWith_eq`, under
-`[Hex.Matrix.LawfulDetBound]`, asserting that every returned value equals
-`Hex.Matrix.det A`, and route equations for each success and failure branch.
-These are proposed obligations, not existing declarations. The correctness
-proofs of `det` and `detViaDivisor` project this shared result.
+The implementation owes route equations for each success and failure
+branch, and `detWith_eq`, asserting that every returned value equals
+`Hex.Matrix.det A`. These are proposed obligations, not existing
+declarations, and they split across the layers as "The reconstruction"
+sets out: the value equations of the `modular` and `divisor` routes are
+Mathlib-free under `[Hex.Matrix.LawfulDetBound]`, and `detWith_eq` itself,
+whose `bareiss` route needs hex-bareiss-mathlib's determinant equation, is
+the companion's. The correctness proofs of `det` and `detViaDivisor`
+project this shared result.
 
 ### One image
 
 ```lean
 namespace Hex.Matrix
 
-/-- The determinant of `A` reduced modulo `m`, computed by elimination.
-Returns `some 0` when a pivot column is entirely zero, and `none` when
-the column contains a nonzero entry but no unit, which for composite `m`
-can happen without the matrix being singular. -/
+/-- The determinant of `A` reduced modulo `m`, computed by elimination
+below the pivot. Returns `some 0` when a pivot column is entirely zero,
+and `none` when the column contains a nonzero entry but no unit, which
+for composite `m` can happen without the matrix being singular. -/
 def detMod? (A : Matrix (ZMod64 m) n n) : Option (ZMod64 m)
 ```
 
@@ -216,10 +248,17 @@ column that is entirely zero proves the determinant is zero modulo `m`,
 which is a perfectly good residue to fold in: the transformed matrix has
 a zero column, so its determinant is `0`, and the accumulated row
 operations are determinant-preserving. Only a column with a nonzero
-nonunit gives `none`. Collapsing the two makes `det` on the zero matrix
-skip every modulus and never terminate, and it is the kind of mistake
-that no oracle fixture catches because the answer is right whenever the
-function returns.
+nonunit gives `none`. Collapsing the two makes the determinant of the
+zero matrix skip every modulus and never terminate, and it is the kind
+of mistake that no oracle fixture catches because the answer is right
+whenever the function returns.
+
+A pivot is inverted with `ZMod64.inv?`, the `Option` form of
+hex-mod-arith's total `ZMod64.inv` (a prerequisite below). `inv a` is
+the Bezout cofactor reduced modulo `m`, which is the inverse exactly
+when `a` is a unit, and one multiplication `a * inv a = 1` decides that.
+The check runs once per pivot, `n` times per image, and costs nothing
+beside the `n³` elimination.
 
 This is a dedicated elimination rather than a call into
 `hex-row-reduce`. Three reasons, in order of weight:
@@ -232,113 +271,210 @@ This is a dedicated elimination rather than a call into
   Gauss-Jordan reduction, and this is the operation the whole library
   exists to make fast.
 - `rowReduce` requires `Lean.Grind.Field`, so it requires the modulus to
-  be prime. `detMod?` is written against the `Option`-returning inverse
-  and works at any modulus, which is what lets the reconstruction argument
-  drop primality.
+  be prime. `detMod?` is written against `inv?` and works at any modulus,
+  which is what lets the reconstruction argument drop primality.
 
 Correctness comes from the row-operation determinant lemmas that
 hex-determinant already proves: `det_rowSwap`, `det_rowScale`, and
-`det_rowAdd` in `HexDeterminant/RowOps.lean`. The loop invariant is that
-the product of the pivots so far, times the sign of the accumulated
-permutation, times the determinant of the untouched trailing submatrix,
-equals `det A`.
+`det_rowAdd` in `HexDeterminant/RowOps.lean`, all stated over any
+`Lean.Grind.CommRing`, which `ZMod64 m` is for every `m`. The loop
+invariant is that the product of the pivots so far, times the sign of
+the accumulated permutation, times the determinant of the untouched
+trailing submatrix, equals `det A`.
 
 ```lean
-theorem detMod?_eq (h : detMod? A = some d) : Matrix.det A = d
+theorem detMod?_eq (h : detMod? A = some d) : det A = d
 theorem detMod?_reduce (A : Matrix Int n n) :
     detMod? (A.mapEntries (ZMod64.intCast m)) = some d →
-      (Matrix.det A) % (m : Int) = d.toInt % (m : Int)
+      (det A) % (m : Int) = (d.toNat : Int) % (m : Int)
 ```
 
-The second is the reduction homomorphism, and it holds for every modulus.
+The first is the invariant at exit, in the ring `ZMod64 m`. The second is
+the reduction homomorphism composed with it: `det` commutes with
+`mapEntries` along a ring homomorphism, a lemma about the Leibniz sum
+(`det_mapEntries`) that hex-determinant does not have today and
+milestone 1 adds beside `mapEntries`. Both hold for every modulus.
 
 ### The bound
 
 ```lean
-/-- The Hadamard bound: the product over columns of the ceiling of the
-Euclidean norm. An upper bound for `|det A|`. -/
+/-- The product over rows of the sum of the absolute values of the
+entries. An upper bound for `|det A|`, proved here. -/
+def rowNormBound (A : Matrix Int n n) : Nat
+
+theorem natAbs_det_le_rowNormBound (A : Matrix Int n n) :
+    (det A).natAbs ≤ rowNormBound A
+
+/-- The Hadamard bound: the smaller of the product over columns and
+the product over rows of the ceiling of the Euclidean norm. An upper
+bound for `|det A|`, never larger than `rowNormBound`, and a hypothesis
+in this library. -/
 def hadamardBound (A : Matrix Int n n) : Nat
 
-/-- The one analytic fact the multi-modular determinant rests on.
+/-- The one analytic fact the default determinant rests on.
 Discharged in `hex-modular-matrix-mathlib`. -/
 class LawfulDetBound : Prop where
-  abs_det_le : ∀ {n} (A : Matrix Int n n), (Matrix.det A).natAbs ≤ hadamardBound A
+  natAbs_det_le : ∀ {n} (A : Matrix Int n n), (det A).natAbs ≤ hadamardBound A
 ```
 
-Hadamard's inequality is an analytic statement (it is a Gram-matrix
-inequality, and the sharp form goes through Gram-Schmidt), so under
-design principle 2 the Mathlib-free layer states it and the companion
-proves it. The companion has almost nothing to do, because the proof
-already exists: `Matrix.norm_det_le_prod_norm_column` in
-`HexPolyZMathlib/Hadamard.lean` is the sharp column form over an
-`RCLike` field, written for the Mahler separation bound. That it lives in
-a polynomial library is a placement error, and moving it is one of the
-relocations below.
+Two bounds, one proved here and one stated here, and the reason for
+each.
 
-**The alternative that avoids the hypothesis, and what it costs.**
-The Leibniz expansion gives `|det A| ≤ n! · B^n` for `B` the largest
-entry, and that is an elementary bound with a Mathlib-free proof. It is
-not adopted, for two reasons. It needs
+**The row-norm bound has a Mathlib-free proof, so the library's
+correctness does not depend on the companion.** Expand along the first
+row (`det_eq_finFoldl_laplace_row` in `HexDeterminant/Laplace.lean`):
+`det A = Σⱼ a₀ⱼ · cofactor A 0 j`, and `cofactor` is a sign times the
+determinant of `deleteRowCol A 0 j`. With `Int.natAbs_add_le` and
+`Int.natAbs_mul` from `Init`, `|det A| ≤ Σⱼ |a₀ⱼ| · |det (deleteRowCol
+A 0 j)|`. By induction the minor's determinant is at most the product of
+its row sums, and each of those is at most the corresponding row sum of
+`A`, because deleting a column drops a nonnegative term. So
+`|det A| ≤ (Σⱼ |a₀ⱼ|) · ∏ᵢ≥₁ Σⱼ |aᵢⱼ| = rowNormBound A`. No enumeration
+lemma, no analysis, no length of `permutationVectors`. The same bound
+also follows from the Leibniz sum by extending it from permutations to
+all functions `Fin n → Fin n`, which `columnTupleVectors` in
+`HexDeterminant/CauchyBinet.lean` enumerates, but the Laplace induction
+is shorter.
+
+**The Hadamard bound is the one the default entry points use, because
+the difference is measured in images.** `hadamardBound` is the smaller
+of `∏ⱼ ceilSqrt (Σᵢ aᵢⱼ²)` and `∏ᵢ ceilSqrt (Σⱼ aᵢⱼ²)`, two passes over
+the matrix and one integer square root per column and per row
+(`ceilSqrt` from `HexPolyZ/Mignotte.lean` until it moves). Taking both
+forms matters: the column form alone is not comparable with
+`rowNormBound` (for `[[N, N], [0, 1]]` it is `N (N + 1)` against `2N`),
+while the row form is never larger than `rowNormBound`, because
+`Σⱼ aᵢⱼ² ≤ (Σⱼ |aᵢⱼ|)²` and the right side is a perfect square. So
+`hadamardBound A ≤ rowNormBound A` always, and a row's `1`-norm exceeds
+its `2`-norm by up to `√n`, so the gap is at most `n^{n/2}`. On a dense
+matrix with uniform entries of size `B` the gap is about
+`(log₂ n)/2 - 0.2` bits per row (`n B / 2` against `√(n/3) · B`): at
+`n = 512` about `2200` bits, or `70` moduli of `31` bits, each an
+`O(n³)` elimination. Against the Hadamard bound, the Chinese
+remaindering of a random dense matrix once the determinant divisor is in
+play needs about `0.7 n` bits, a dozen moduli at `n = 512`, so the
+row-norm bound would multiply that phase by six or seven. On the
+tridiagonal fixture an interior row is `(1, 3, -1)`, with row sum `5`
+against `ceilSqrt 11 = 4`, about a third of a bit per row and five or
+six extra images at `n = 512`, still several times the count the divisor
+leaves. A bound that costs several times the phase it governs is not
+the default. Hadamard's inequality is analytic (its proof goes through
+Gram-Schmidt), so under design principle 2 the Mathlib-free layer states
+it and the companion proves it. The companion has almost nothing to do:
+`Matrix.norm_det_le_prod_norm_column` in `HexPolyZMathlib/Hadamard.lean`
+is the sharp column form over an `RCLike` field, written for the Mahler
+separation bound, and the row form is the same lemma at the transpose
+with `det_transpose`. That it lives in a polynomial library is a
+placement error, and moving it is one of the relocations below.
+
+**Which theorems carry the hypothesis.** The reconstruction below takes
+the bound as a number, so its correctness theorem (`detBounded?_eq`)
+carries an explicit inequality `(det A).natAbs ≤ bound` and no instance.
+`[LawfulDetBound]` appears on exactly the theorems about the entry
+points that choose `hadamardBound`: `detModular?_eq` here, and `det_eq`,
+`detWith_eq` and `Decidable (A.det = 0)` in the companion.
+`detBounded?_eq`, `natAbs_det_le_rowNormBound`, and therefore
+`detBounded? A (rowNormBound A) fuel`, are unconditional in the
+Mathlib-free layer. A Mathlib-free consumer that cannot carry the
+instance calls `detBounded?` at `rowNormBound` and pays the images. None
+exists today. hex-hermite's modular route is the candidate, and this is
+the second reason the row-norm bound is a definition rather than a
+footnote.
+
+**Why not the Leibniz `n! · Bⁿ` bound.** It needs
 `(permutationVectors n).length = n !`, which hex-determinant does not
-prove today (the enumeration is in `HexDeterminant/Enumeration.lean` and
-carries inversion-count and nodup lemmas, not a length). And it is worse
-by `n log₂ n / 2 - 1.44 n` bits, which at small entries is close to a
-factor of two in the number of moduli and at large entries is
-negligible beside the `n log₂ B` term. The right resolution is to state
-the good bound as a hypothesis and discharge it, and to record the crude
-bound here as the fallback if a Mathlib-free consumer ever appears.
+prove (`HexDeterminant/Enumeration.lean` carries completeness and nodup
+lemmas, not a length), and it is not uniformly better than the row-norm
+bound. On a matrix all of whose entries are `B` it is smaller by a
+factor of about `eⁿ` (`n! · Bⁿ` against `nⁿ · Bⁿ`, `1.44 n` bits), while
+on a matrix whose row sums are well under `n · B` (sparse rows, or a few
+large entries among small ones) it is larger, since `rowNormBound` reads
+the actual row sums and `n! · Bⁿ` reads only the largest entry. Against the Hadamard bound it is worse by
+`n log₂ n / 2 - 1.44 n` bits. It is not adopted.
 
 ### The reconstruction
 
 ```lean
-/-- The determinant by Chinese remaindering, or `none` when the supply of
-moduli runs out before the bound is reached. -/
-def detModular? (A : Matrix Int n n) (fuel : Nat) : Option Int
+/-- The determinant by Chinese remaindering against a caller-supplied
+bound on `|det A|`, or `none` when the supply of moduli runs out before
+the accumulated modulus exceeds `2 · bound`. -/
+def detBounded? (A : Matrix Int n n) (bound : Nat) (fuel : Nat) : Option Int
 
+/-- `detBounded?` at the Hadamard bound. -/
+def detModular? (A : Matrix Int n n) (fuel : Nat) : Option Int :=
+  detBounded? A (hadamardBound A) fuel
+
+theorem detBounded?_eq (hB : (det A).natAbs ≤ bound)
+    (h : detBounded? A bound fuel = some d) : d = det A
 theorem detModular?_eq [LawfulDetBound] (h : detModular? A fuel = some d) :
-    d = Matrix.det A
+    d = det A
 ```
 
-The total wrapper is in `Hex.ModularMatrix`:
+The total wrappers `Hex.ModularMatrix.det` and `detWith` under "Public
+names and dispatch integration" project these: with `useDivisor = false`,
+`detWith` runs `detModular?` and, on `none`, `Hex.Matrix.bareiss`. There
+is no Mathlib-free `det_eq` or `detWith_eq`, and the reason is a boundary
+rather than an omission: [hex-bareiss](../../HexBareiss/SPEC/hex-bareiss.md)
+places every equation of the form `bareiss M = det M` over the Leibniz
+`det` in its companion and forbids restating one in a Mathlib-free
+library, so the `bareiss` route of a total theorem cannot be proved
+here. The Mathlib-free layer proves the modular route, and the
+companion's `det_eq` and `detWith_eq` are the total statements.
+[hex-det](hex-det.md) draws the same line for its dispatch: a
+Mathlib-free executable is not thereby a Mathlib-free proof.
 
-```lean
-namespace Hex.ModularMatrix
+The loop is hex-modular's `crtLoop` at `k = 1`. `image m` reduces `A`
+modulo `m` with `mapEntries`, runs `detMod?`, and returns the residue as
+a one-entry vector, or `none` to skip the modulus. `accept` returns the
+state's symmetric representative once `2 · bound < state.modulus` and
+`none` otherwise. The supply is `ZMod64.primesBelow` from `2^31`
+downward: primes are not required (see "What the moduli need to be"),
+but among moduli of one size they are the ones every other modulus is
+coprime to, so `Crt.push` rejects nothing. The fuel bounds the number of
+supply entries inspected.
 
-/-- The determinant. Falls back to `Hex.Matrix.bareiss` when the modular
-route does not finish. -/
-def det (A : Hex.Matrix Int n n) : Int
-
-theorem det_eq [Hex.Matrix.LawfulDetBound] (A : Hex.Matrix Int n n) :
-    det A = Hex.Matrix.det A
-
-end Hex.ModularMatrix
-```
-
-The loop folds one image per modulus into a `Crt` and stops when the
-accumulated modulus exceeds `2 · hadamardBound A`, at which point
-`crt_unique` identifies the symmetric representative with the answer.
-Moduli at which `detMod?` returns `none` are skipped.
+Correctness is the composition of four facts. `crtLoop_trace` says the
+result was accepted on a state reached by folding the consumed moduli
+(`CrtTrace`). `push_congr_new` and `push_congr_old` say one push leaves
+the state's value congruent to the new image modulo its modulus and to
+the old value modulo the old modulus, and `detMod?_reduce` says each
+image is `det A` modulo its modulus, so by induction along the trace the
+state's value is congruent to `det A` modulo the accumulated product.
+The acceptance test gives `2 · |det A| ≤ 2 · bound < modulus`, and the
+state carries `2 · |value| ≤ modulus` (`CrtVec.le`), so the class
+contains one integer. Two lemmas package this and neither exists yet:
+`CrtTrace.congr`, the induction along the trace, and
+`CrtVec.eq_of_congr`, the uniqueness with one strict and one non-strict
+bound (`crt_unique` is the scalar form with both strict). Both belong in
+hex-modular beside `crt_unique` and are listed under the prerequisites.
 
 **The fallback is not defensive coding, it is the only way `det` is
-total.** `ZMod64.Bounds` caps a modulus at `2^31`, so every allowed
+total, and it is the reason the total theorem is the companion's.** `ZMod64.Bounds` caps a modulus at `2^31`, so every allowed
 modulus divides `L = lcm(1, …, 2^31 - 1)` and so does every product of
 pairwise coprime allowed moduli. On the `1 x 1` matrix `[L]` the
-determinant is `L`, the Hadamard bound is `L`, every image is zero, and
+determinant is `L`, every bound is at least `L`, every image is zero, and
 the accumulated modulus never exceeds `2L`. No amount of fuel helps.
-[hex-modular](../../HexModular/SPEC/hex-modular.md) records the same obstruction for the
-supply as a whole. Under design principle 8 the classification is neither
-of the two fallback modes: `detModular?` propagates its `Option` upward,
-and `det` is a dispatch between two complete algorithms rather than a
-total form of a partial one.
+[hex-modular](../../HexModular/SPEC/hex-modular.md) records the same
+obstruction for the supply as a whole. Under design principle 8 the
+classification is neither of the two fallback modes: `detBounded?` and
+`detModular?` propagate their `Option` upward, and `det` is a dispatch
+between two complete algorithms rather than a total form of a partial
+one, with the route recorded in `DetData`. The companion's `det_eq` is
+therefore two cases, `detModular?_eq` and
+`HexMatrixMathlib.bareiss_eq_det` from hex-bareiss-mathlib.
 
 **Early termination is not available here, and this is the one place in
 the tree where that has to be said out loud.** Stopping when the
-reconstructed value stops changing across two further moduli is what a
-consumer with a check may do, and this operation has no check. A
-determinant produced by a stabilisation rule is a guess. The bound is
-therefore not an optimisation to be tuned away; it is the correctness
-argument. The next subsection is how to make the bound small rather than
-how to avoid it.
+reconstructed value stops changing across two further moduli, and
+maximal-quotient reconstruction (`ratReconMaxQuot?`), are what a
+consumer with a check may do, and this operation has no check cheaper
+than the computation. A determinant produced by a stabilisation rule is
+a guess. `detBounded?` therefore stops at the bound and only at the
+bound: no implementation of it may return before `2 · bound < modulus`,
+and no entry point may pass a bound that is not a proved one. The bound
+is not an optimisation to be tuned away. It is the correctness argument.
+The next subsection is how to make the bound small rather than how to
+avoid it.
 
 ### The determinant divisor
 
@@ -719,34 +855,48 @@ both comes from.
 
 ## Prerequisite changes in other libraries
 
-Five, of which three are shared with other planned libraries and are
-listed here because this library is a second consumer.
+Six remain, of which two are shared with other planned libraries and are
+listed here because this library is a second consumer. Two earlier ones
+are done: `ZMod64.Modulus`, `ZMod64.Prime` and `ZMod64.primesBelow` are in
+`HexModArith/Modulus.lean`, and `Hex.Matrix.exactDiv` in hex-bareiss
+aliases `HexArith.Int.exactDiv`.
 
-**The modulus supply should move to hex-mod-arith.** `ZMod64.Modulus`,
-the bundled `ZMod64.Prime`, and `ZMod64.primesBelow` belong beside `ZMod64`,
-per [hex-modular §The supply](../../HexModular/SPEC/hex-modular.md). This library is their
-main consumer, and it passes bare `Nat` moduli on to `crtLoop`.
+**`ZMod64.inv?` is missing.** hex-mod-arith's `ZMod64.inv` in
+`HexModArith/Residue.lean` is total and returns the Bezout cofactor
+reduced modulo `m`, which is the inverse exactly when the argument is a
+unit. `detMod?` needs the `Option` form, which multiplies once to check
+`a * inv a = 1`, together with `inv?_eq_some : inv? a = some b → a * b = 1`.
+One definition and one lemma beside `inv`.
+
+**Two CRT lemmas are missing.** `CrtTrace.congr` (a traced state's
+value is congruent, modulo the accumulated modulus, to any integer
+congruent to every folded image modulo its own modulus) and
+`CrtVec.eq_of_congr` (two integers congruent modulo the state's modulus,
+one with `2 · |x| < modulus` and the other with `2 · |y| ≤ modulus`, are
+equal). Both are the vector forms of arguments hex-modular already makes
+for `crt_unique`, and they belong in `HexModular/Loop.lean` and
+`HexModular/Crt.lean` beside `crtLoop_trace` and `crt_unique`.
 
 **`zmod64FieldOfPrime` should move to hex-mod-arith.** Set out in
 [hex-modular](../../HexModular/SPEC/hex-modular.md). Without it, `rankModP` forces a dependency
 on hex-poly-fp for one instance about a `ZMod64` type.
 
 **An entrywise `Matrix.mapEntries` is missing.** hex-matrix has
-`mapRows`, `mapRowsIdx`, and `modifyEntries`, and no entrywise map. Reducing an
-integer matrix modulo `m` and lifting a residue matrix back are the two
-most-executed operations in this library, and both are entrywise maps.
-The function belongs in hex-matrix next to `mapRows`, with the linear
-buffer discipline design principle 3 requires, and with the `getElem`
-characterisation lemma.
+`mapRows`, `mapRowsIdx`, and `modifyEntries` in `HexMatrix/Basic.lean`,
+and no entrywise map. Reducing an integer matrix modulo `m` and lifting a
+residue matrix back are the two most-executed operations in this
+library, and both are entrywise maps. The function belongs in hex-matrix
+next to `mapRows`, with the linear buffer discipline design principle 3
+requires, and with the `getElem` characterisation lemma. The companion
+lemma `det_mapEntries` (the Leibniz determinant commutes with an
+entrywise ring homomorphism) belongs in hex-determinant and is what
+`detMod?_reduce` rests on.
 
 **`floorSqrt` and `ceilSqrt` should move to hex-arith**, from
-`HexPolyZ/Mignotte.lean` where they sit under the `Hex.ZPoly` namespace.
-`hadamardBound` computes one integer square root per column.
-
-**`exactDiv` should move to hex-arith**, from `HexBareiss/Bareiss.lean`.
-[hex-hermite](hex-hermite.md) already asks for this. Dixon's lifting step
-divides an exactly-divisible vector by `p` once per digit, which is the
-hottest exact division in the tree.
+`HexPolyZ/Mignotte.lean` where they still sit under the `Hex.ZPoly`
+namespace. `hadamardBound` computes one integer square root per column,
+and a Mathlib-free determinant library should not import a polynomial
+library for it.
 
 **Hadamard's inequality should move to hex-matrix-mathlib.**
 `HexPolyZMathlib/Hadamard.lean` proves
@@ -756,7 +906,8 @@ hottest exact division in the tree.
 compatibility import of it across libraries, and this library's companion
 would be a third cross-library consumer. Move the file to
 hex-matrix-mathlib and leave compatibility imports in both current
-places.
+places. Until it moves, the companion imports `HexPolyZMathlib`, and the
+`libraries.yml` block below records that dependency.
 
 The rank path imports `HexRank` for its certificate, checker, and total
 fallback, and `HexRankMathlib` for soundness and scalar extension. These
@@ -832,6 +983,9 @@ present:
 - The `1 x 1` matrix `[L]` from the totality argument is not a fixture:
   `L` has hundreds of millions of digits. The Bareiss fallback is
   exercised instead by a fuel of zero, which is the same code path.
+- `detBounded?` at `rowNormBound` beside `detModular?` on the same
+  inputs, so the unconditional route is exercised and its image count
+  recorded next to the Hadamard one.
 - Rank cases: full rank, rank zero, rank deficient by one, wide and tall,
   and a matrix whose rank drops modulo a small prime, constructed so the
   certificate producer must retry.
@@ -854,7 +1008,8 @@ matrix product hex-matrix already measures.
 Families:
 
 - **Structured determinant**, the same deterministic tridiagonal fixture
-  `HexBareiss.Bench` uses, at the same rungs `n = 16 … 512`. Using the
+  `bench/HexBareiss/Bench.lean` uses, at the same twelve rungs
+  `n = 16 … 512`, for both `det` and `detViaDivisor`. Using the
   identical fixture is the point: it makes the new path directly
   comparable both to `Hex.Matrix.bareiss` and to the FLINT numbers
   already recorded in
@@ -890,22 +1045,31 @@ Families:
 - **Solve**, with integral solutions and with large-denominator
   solutions.
 
-**Comparators.** FLINT's `fmpz_mat_det` becomes `gating` here, and this
-is the one classification change this SPEC makes to an existing
+**Comparators.** FLINT's `fmpz_mat_det` carries `class: gating` here,
+the required-check classification of
+[SPEC/benchmarking.md](../benchmarking.md), and this is the one
+classification change this SPEC makes to an existing
 comparator relationship. hex-bareiss classifies it `informational`
 because the algorithms differ; once this library implements the same
 algorithm the comparison is like-for-like and the reason for the
-exemption is gone. Two thresholds, written down in advance:
+exemption is gone. Two thresholds, written against the numbers in
+[reports/hex-bareiss-performance.md](../../reports/hex-bareiss-performance.md)
+as they stand:
 
-- **Against `Hex.Matrix.bareiss`**, on the shared tridiagonal fixture,
-  `detViaDivisor` must be faster at `n = 512` by at least `4x`, and the
-  crossover rung below which Bareiss wins is **measured rather than
-  predicted**, then written into the dispatch and into this SPEC. An
-  earlier draft required "faster at every rung `n ≥ 64`", which guesses
-  the crossover in the same document that says it will not guess it.
+- **Against `Hex.Matrix.bareiss`**, on the shared tridiagonal fixture in
+  the same run, `detViaDivisor` must be faster at `n = 512` by at least
+  `4x`. On the report's host that is `313 ms` against Bareiss's
+  `1.252 s`, which is `2.2x` FLINT's `145 ms`. The crossover rung below
+  which Bareiss wins is **measured rather than predicted**, then written
+  into the dispatch and into this SPEC. An earlier draft required "faster
+  at every rung `n ≥ 64`", which guesses the crossover in the same
+  document that says it will not guess it.
 - **Against FLINT `fmpz_mat.det`**, on the same fixture and using the
-  same startup-adjusted ratio the existing report defines,
-  `detViaDivisor` should be within `5x` at every eligible rung. `5x` is a
+  same warmed, overhead-adjusted ratio the report defines,
+  `detViaDivisor` should be within `5x` at every eligible rung. At
+  `n = 512` the Bareiss threshold already implies `2.2x`, so the `5x`
+  target binds only at the small rungs, where the modular route pays its
+  fixed costs against a FLINT time of tens of microseconds. `5x` is a
   plausible constant factor between Lean and tuned C over GMP once the
   algorithms agree, and it is a target rather than a proved-reachable
   number: it becomes the required threshold after the first
@@ -914,7 +1078,9 @@ exemption is gone. Two thresholds, written down in advance:
 
 Stating it that way is deliberate. A required check whose number nobody
 has measured is either vacuous or an accident waiting to block a correct
-implementation, and this SPEC has no prototype behind either figure.
+implementation, and this SPEC has no prototype behind the FLINT figure.
+Absolute times are host-specific observations. The thresholds are
+ratios within one run.
 
 FLINT's `fmpz_mat.rank` and `fmpq_mat.solve` are `informational`: FLINT's
 solve uses a tuned multi-modular and Dixon hybrid with a different
@@ -951,10 +1117,19 @@ theorem kernel_span (h : kernel? A fuel = some K) :
       LinearMap.ker (Matrix.mulVecLin M)
 ```
 
-`det_eq` is the only one that needs the instance. Getting from the
-Mathlib-free `det_eq [LawfulDetBound]` to this unconditional statement is
-the discharge plus hex-determinant-mathlib's existing agreement between
-the executable `Matrix.det` and Mathlib's.
+`det_eq` is the only one that needs the instance, and it is the total
+theorem the Mathlib-free layer cannot state (see "The reconstruction").
+The instance casts `A` to `Matrix (Fin n) (Fin n) ℝ`, applies
+`norm_det_le_prod_norm_column` to `A` and to its transpose, bounds each
+column's or row's real norm by `ceilSqrt` of the integer sum of squares,
+and identifies the executable `det` with Mathlib's through
+hex-determinant-mathlib's `det_eq` in
+`HexDeterminantMathlib/CoreTransport.lean` (with `Int.cast` commuting
+with `Matrix.det`). `det_eq` is then two cases: the `modular` route is
+`detModular?_eq` under the instance plus that `det_eq`, and the
+`bareiss` route is `HexMatrixMathlib.bareiss_eq_det` from
+hex-bareiss-mathlib. `detWith_eq`, over every route including `divisor`,
+is proved the same way once milestone 4 lands.
 
 `rank_eq` is exactly `HexRankMathlib.checkRank_sound` at `R = Int`,
 with no new proof of either rank bound. Applying it to `rankCert?_check h`
@@ -1004,13 +1179,19 @@ operation.
 
 ## Milestones
 
-1. **One image.** `Matrix.mapEntries` (in hex-matrix), the
-   `Option`-returning modular inverse, `detMod?`, and its two theorems.
+1. **One image.** `Matrix.mapEntries` (in hex-matrix) with
+   `det_mapEntries` (in hex-determinant), `ZMod64.inv?` (in
+   hex-mod-arith), `detMod?`, `detMod?_eq`, and `detMod?_reduce`.
    Nothing multi-modular yet, and everything that follows depends on it.
 
-2. **The determinant.** `hadamardBound`, `LawfulDetBound`, the moduli
-   loop, `det`, and `det_eq`. At the end of this milestone the library
-   has a correct determinant and no performance claim.
+2. **The determinant.** The two CRT lemmas (in hex-modular),
+   `rowNormBound` with `natAbs_det_le_rowNormBound`, `hadamardBound`,
+   `LawfulDetBound`, `detBounded?`, `detModular?`, `detBounded?_eq`,
+   `detModular?_eq`, and the `Hex.ModularMatrix` wrappers `detWith` and
+   `det` with their route equations. At the end of this milestone the
+   modular route is proved correct, unconditionally at the row-norm
+   bound and under `[LawfulDetBound]` at the Hadamard one, and there is
+   no performance claim.
 
 3. **The Dixon solve.** `solve?`, `solveWitness?`, the exact division
    step, the digit count, and the check. `solve?_spec` needs no
@@ -1031,15 +1212,16 @@ operation.
    and implemented first.
 
 6. **The companion.** Begins as soon as milestone 2 is done, in parallel
-   with 3 through 5.
+   with 3 through 5. The `LawfulDetBound` instance and the total `det_eq`
+   are its first two theorems.
 
 ## File organisation
 
 ```
 HexModularMatrix/
-  Image.lean        -- detMod?, the Option-returning inverse, reduction lemmas
-  Bound.lean        -- hadamardBound, LawfulDetBound
-  Det.lean          -- det, the moduli loop, det_eq
+  Image.lean        -- detMod?, detMod?_eq, detMod?_reduce
+  Bound.lean        -- rowNormBound and its proof, hadamardBound, LawfulDetBound
+  Det.lean          -- detBounded?, detModular?, their theorems, and the Hex.ModularMatrix wrappers
   Dixon.lean        -- solve?, solveWitness?, the lifting loop
   Divisor.lean      -- detViaDivisor and the divisibility argument
   Rank.lean         -- rankModP, rankCert?, rankCert?_check, rankModular (imports HexRank)
@@ -1047,7 +1229,7 @@ HexModularMatrix/
 HexModularMatrix.lean
 HexModularMatrixMathlib/
   Bound.lean        -- the LawfulDetBound instance
-  Det.lean          -- det_eq, Decidable (A.det = 0)
+  Det.lean          -- det_eq and detWith_eq (total, via bareiss_eq_det), Decidable (A.det = 0)
   Rank.lean         -- rank_eq via HexRankMathlib, rankModular_eq, kernel_independent, kernel_span
   Solve.lean        -- solve_eq
 HexModularMatrixMathlib.lean
@@ -1065,7 +1247,7 @@ HexModularMatrixMathlib.lean
       comparators:
         - tool: FLINT fmpz_mat_det via python-flint
           class: gating
-          goal: faster than Hex.Matrix.bareiss by at least 4x at n = 512 on the shared tridiagonal fixture, with the FLINT ratio recorded and the 5x target reviewed after the first measurement
+          goal: detViaDivisor faster than Hex.Matrix.bareiss by at least 4x at n = 512 on the shared tridiagonal fixture in the same run (2.2x FLINT on the current report), with the FLINT ratio recorded and the 5x target at every eligible rung reviewed after the first measurement
         - tool: FLINT fmpz_mat_rank via python-flint
           class: informational
           rationale: no shared fixture history and a different crossover policy
@@ -1086,17 +1268,19 @@ HexModularMatrixMathlib.lean
         - name: solve
           description: systems with integral and with large-denominator solutions
   HexModularMatrixMathlib:
-    deps: [HexModularMatrix, HexRankMathlib, HexMatrixMathlib, HexDeterminantMathlib, HexRowReduceMathlib, HexModularMathlib]
+    deps: [HexModularMatrix, HexRankMathlib, HexMatrixMathlib, HexDeterminantMathlib, HexBareissMathlib, HexRowReduceMathlib, HexModularMathlib, HexPolyZMathlib]
     mathlib: true
     done_through: 0
     status: planned
 ```
 
-`HexDeterminant` is a dependency for the row-operation determinant
-lemmas, not for the Leibniz determinant, which nothing here calls.
-`HexBareiss` supplies the total determinant fallback.
-`HexBasic` is for the random generator the determinant divisor draws
-its right-hand side from.
+`HexDeterminant` supplies the reference `det`, the row-operation lemmas,
+and the Laplace expansion behind `rowNormBound`. Nothing here evaluates
+the Leibniz sum at runtime. `HexBareiss` supplies the total determinant
+fallback, and `HexBareissMathlib` is where its determinant equation
+lives. `HexPolyZMathlib` is where the Hadamard proof lives until it
+moves. `HexBasic` is for the random generator the determinant divisor
+draws its right-hand side from.
 
 ## Open questions
 
