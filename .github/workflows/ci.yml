@@ -269,7 +269,8 @@ jobs:
             fi
             set +e
             git diff --quiet "$PR_BASE_SHA...$PR_HEAD_SHA" -- \
-              HexConway/ HexGFq/ HexGFqMathlib/ scripts/conway/
+              HexConway/ HexConway.lean HexGFq/ HexGFq.lean \
+              HexGFqMathlib/ HexGFqMathlib.lean scripts/conway/
             diff_status=$?
             set -e
             case "$diff_status" in

@@ -76,13 +76,14 @@ Concretely:
   emit-fixture exes — including the `HexBerlekampZassenhausMathlib`
   bridge required by integer-factorization correctness — followed by a
   separate memory-bounded `lake build HexManual`). On pushes to `main` and on
-  pull requests touching `HexConway/`, `HexGFq/`, `HexGFqMathlib/`,
-  `scripts/conway/`, or `HexConway/SPEC/`, Conway and its companion first warm
-  external imports, then clean their restored outputs and measure their initial
-  builds; the remaining targets reuse those outputs. Other pull requests skip
-  this supplementary timing observation and proceed directly to the shared
-  build. These hosted observations use explicit resource limits and do not
-  enforce the designated-machine Conway ceiling. It then runs the two
+  pull requests touching `HexConway/`, `HexConway.lean`, `HexGFq/`,
+  `HexGFq.lean`, `HexGFqMathlib/`, `HexGFqMathlib.lean`, `scripts/conway/`, or
+  `HexConway/SPEC/`, Conway and its companion first warm external imports, then
+  clean their restored outputs and measure their initial builds; the remaining
+  targets reuse those outputs. Other pull requests skip this supplementary
+  timing observation and proceed directly to the shared build. These hosted
+  observations use explicit resource limits and do not enforce the
+  designated-machine Conway ceiling. It then runs the two
   independent verification tails concurrently as `background:` steps: the
   per-library `bench verify` smoke gate per
   [SPEC/benchmarking.md §CI integration](benchmarking.md), and the
