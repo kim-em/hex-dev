@@ -380,6 +380,365 @@ theorem ratReconVec?_spec {a : Vector Int k} {m : Nat} {P Q d : Int}
           cases h
           exact ratReconVecCheck_spec hcheck
 
+/-- Every common divisor of a denominator `d` and the modulus divides every
+numerator of a congruent pair, so a pair reduced as a whole has a denominator
+whose divisors are all coprime to the modulus. -/
+private theorem coprime_of_reduced {a y : Vector Int k} {m : Nat} {d t : Int}
+    (hy : ∀ i : Fin k, (d * a[i] - y[i]) % (m : Int) = 0)
+    (hred : ∀ g : Int, (∀ i : Fin k, g ∣ y[i]) → g ∣ d → g ∣ 1)
+    (ht : t ∣ d) : Int.gcd t m = 1 := by
+  apply Int.gcd_eq_one_iff.mpr
+  intro c hct hcm
+  have hcd : c ∣ d := Int.dvd_trans hct ht
+  apply hred c _ hcd
+  intro i
+  have hdiff : c ∣ d * a[i] - y[i] :=
+    Int.dvd_trans hcm (Int.dvd_of_emod_eq_zero (hy i))
+  have hprod : c ∣ d * a[i] := Int.dvd_mul_of_dvd_left hcd
+  have := Int.dvd_sub hprod hdiff
+  rw [show d * a[i] - (d * a[i] - y[i]) = y[i] by omega] at this
+  exact this
+
+/-- Cancel a factor coprime to the modulus from a divisibility. -/
+private theorem cancel_coprime {m t x : Int} (h : m ∣ t * x)
+    (hcop : Int.gcd t m = 1) : m ∣ x := by
+  apply Int.natAbs_dvd_natAbs.mp
+  have h' : m.natAbs ∣ t.natAbs * x.natAbs := by
+    have := Int.natAbs_dvd_natAbs.mpr h
+    rwa [Int.natAbs_mul] at this
+  have hcop' : Nat.Coprime m.natAbs t.natAbs := by
+    rw [Int.gcd_eq_natAbs_gcd_natAbs] at hcop
+    exact Nat.Coprime.symm hcop
+  exact Nat.Coprime.dvd_of_dvd_mul_left hcop' h'
+
+/-- The reduced form of `n / d` for `0 < d`: both `n` and `d` are the reduced
+numerator and denominator times one positive integer. -/
+private theorem divInt_scale {n d : Int} (hd : 0 < d) :
+    ∃ t : Int, 0 < t ∧ d = (Rat.divInt n d).den * t ∧ n = (Rat.divInt n d).num * t := by
+  generalize hq : Rat.divInt n d = q
+  have hdenPos : (0 : Int) < q.den := by exact_mod_cast q.den_pos
+  have hcross : n * q.den = q.num * d := by
+    have h := Rat.num_divInt_den q
+    exact (Rat.divInt_eq_divInt_iff (Int.ne_of_gt hd) (Int.ne_of_gt hdenPos)).mp
+      (hq.trans h.symm)
+  have hdenDvd : q.den ∣ d.natAbs := by
+    have h1 : (q.den : Int) ∣ q.num * d := ⟨n, by rw [← hcross]; ac_rfl⟩
+    have h2 : q.den ∣ q.num.natAbs * d.natAbs := by
+      have := Int.natAbs_dvd_natAbs.mpr h1
+      rwa [Int.natAbs_mul, Int.natAbs_natCast] at this
+    exact Nat.Coprime.dvd_of_dvd_mul_left q.reduced.symm h2
+  obtain ⟨s, hs⟩ := hdenDvd
+  refine ⟨s, ?_, ?_, ?_⟩
+  · have : 0 < d.natAbs := Int.natAbs_pos.mpr (Int.ne_of_gt hd)
+    rw [hs] at this
+    exact_mod_cast Nat.pos_of_mul_pos_left this
+  · have : d = (d.natAbs : Int) := (Int.natAbs_of_nonneg (Int.le_of_lt hd)).symm
+    rw [this, hs]
+    push_cast
+    rfl
+  · have hd' : d = (q.den : Int) * s := by
+      have : d = (d.natAbs : Int) := (Int.natAbs_of_nonneg (Int.le_of_lt hd)).symm
+      rw [this, hs]
+      push_cast
+      rfl
+    rw [hd'] at hcross
+    have : n * q.den = (q.num * s) * q.den := by rw [hcross]; ac_rfl
+    exact Int.eq_of_mul_eq_mul_right (Int.ne_of_gt hdenPos) this
+
+/-- A coordinate of a reduced, congruent, bounded pair, as a reduced rational,
+satisfies the scalar congruence and bounds. -/
+private theorem target_rat {a y : Vector Int k} {m : Nat} {P Q d : Int}
+    (hd : 0 < d) (hdQ : d ≤ Q)
+    (hy : ∀ i : Fin k, (d * a[i] - y[i]) % (m : Int) = 0 ∧ (y[i].natAbs : Int) ≤ P)
+    (hred : ∀ g : Int, (∀ i : Fin k, g ∣ y[i]) → g ∣ d → g ∣ 1) (i : Fin k) :
+    (Int.ofNat (Rat.divInt y[i] d).den * a[i] - (Rat.divInt y[i] d).num) % (m : Int) = 0 ∧
+      ((Rat.divInt y[i] d).num.natAbs : Int) ≤ P ∧ ((Rat.divInt y[i] d).den : Int) ≤ Q := by
+  obtain ⟨t, ht, hdt, hnt⟩ := divInt_scale (n := y[i]) hd
+  have hcong := (hy i).1
+  have hbound := (hy i).2
+  generalize hq : Rat.divInt y[i] d = q at hdt hnt ⊢
+  have hcop : Int.gcd t m = 1 :=
+    coprime_of_reduced (fun j => (hy j).1) hred ⟨q.den, by rw [hdt]; ac_rfl⟩
+  refine ⟨?_, ?_, ?_⟩
+  · apply Int.emod_eq_zero_of_dvd
+    apply cancel_coprime _ hcop
+    have h1 : (m : Int) ∣ d * a[i] - y[i] := Int.dvd_of_emod_eq_zero hcong
+    rw [hdt, hnt] at h1
+    rw [show t * (Int.ofNat q.den * a[i] - q.num) = (q.den : Int) * t * a[i] - q.num * t by
+      rw [Int.mul_sub]; ac_rfl]
+    exact h1
+  · have h1 : y[i].natAbs = q.num.natAbs * t.natAbs := by rw [hnt, Int.natAbs_mul]
+    have h2 : 0 < t.natAbs := Int.natAbs_pos.mpr (Int.ne_of_gt ht)
+    have h3 : q.num.natAbs ≤ y[i].natAbs := by
+      rw [h1]; exact Nat.le_mul_of_pos_right _ h2
+    exact Int.le_trans (Int.ofNat_le.mpr h3) hbound
+  · have h1 : (q.den : Int) ≤ d := by
+      rw [hdt]
+      have : (q.den : Int) * 1 ≤ (q.den : Int) * t :=
+        Int.mul_le_mul_of_nonneg_left ht (Int.natCast_nonneg _)
+      simpa using this
+    exact Int.le_trans h1 hdQ
+
+/-- A coordinate of a reduced, congruent, bounded pair is found by the scalar
+reconstruction. -/
+private theorem ratRecon?_coord {a y : Vector Int k} {m : Nat} {P Q d : Int}
+    (hm : 2 * P * Q < (m : Int)) (hd : 0 < d) (hdQ : d ≤ Q)
+    (hy : ∀ i : Fin k, (d * a[i] - y[i]) % (m : Int) = 0 ∧ (y[i].natAbs : Int) ≤ P)
+    (hred : ∀ g : Int, (∀ i : Fin k, g ∣ y[i]) → g ∣ d → g ∣ 1) (i : Fin k) :
+    ratRecon? a[i] m P Q = some (Rat.divInt y[i] d) := by
+  obtain ⟨hcong, hnum, hden⟩ := target_rat hd hdQ hy hred i
+  exact ratRecon?_complete hm hcong ⟨hnum, hden⟩
+
+/-- The fast branch of the loop, when it accepts, agrees with the target. -/
+private theorem fast_eq {a y : Vector Int k} {m : Nat} {P Q d : Int} {dcur : Nat}
+    (hm : 2 * P * Q < (m : Int)) (hd : 0 < d) (hdQ : d ≤ Q)
+    (hy : ∀ i : Fin k, (d * a[i] - y[i]) % (m : Int) = 0 ∧ (y[i].natAbs : Int) ≤ P)
+    (hred : ∀ g : Int, (∀ i : Fin k, g ∣ y[i]) → g ∣ d → g ∣ 1)
+    (hcur : 0 < dcur) (hdvd : (dcur : Int) ∣ d) (i : Fin k)
+    (hfast : ((symMod ((dcur : Int) * a[i]) m).natAbs : Int) ≤ P) :
+    symMod ((dcur : Int) * a[i]) m * d = y[i] * (dcur : Int) := by
+  have hP : 0 ≤ P := Int.le_trans (Int.natCast_nonneg _) hfast
+  have hQ : 0 < Q := Int.lt_of_lt_of_le hd hdQ
+  have hprod : 0 ≤ 2 * P * Q :=
+    Int.mul_nonneg (Int.mul_nonneg (by omega) hP) (Int.le_of_lt hQ)
+  have hm0 : 0 < m := Int.ofNat_lt.mp (Int.lt_of_le_of_lt hprod hm)
+  have hfcong := symMod_emod (a := (dcur : Int) * a[i]) hm0
+  generalize hf : symMod ((dcur : Int) * a[i]) m = f at hfast hfcong ⊢
+  have hdcurPos : (0 : Int) < (dcur : Int) := by omega
+  obtain ⟨t₁, ht₁, hdt₁, hft₁⟩ := divInt_scale (n := f) hdcurPos
+  have hcross : Rat.divInt f (dcur : Int) = Rat.divInt y[i] d := by
+    apply ratRecon_unique (a := a[i]) hm
+    · generalize hq₁ : Rat.divInt f (dcur : Int) = q₁ at hdt₁ hft₁ ⊢
+      have ht₁dvd : t₁ ∣ d := Int.dvd_trans ⟨q₁.den, by rw [hdt₁]; ac_rfl⟩ hdvd
+      have hcop₁ := coprime_of_reduced (fun j => (hy j).1) hred ht₁dvd
+      apply Int.emod_eq_zero_of_dvd
+      apply cancel_coprime _ hcop₁
+      have h1 : (m : Int) ∣ (dcur : Int) * a[i] - f := by
+        apply Int.dvd_of_emod_eq_zero
+        rw [Int.sub_emod, hfcong, Int.sub_self, Int.zero_emod]
+      rw [hdt₁, hft₁] at h1
+      rw [show t₁ * (Int.ofNat q₁.den * a[i] - q₁.num) =
+          (q₁.den : Int) * t₁ * a[i] - q₁.num * t₁ by rw [Int.mul_sub]; ac_rfl]
+      exact h1
+    · exact (target_rat hd hdQ hy hred i).1
+    · generalize hq₁ : Rat.divInt f (dcur : Int) = q₁ at hdt₁ hft₁ ⊢
+      refine ⟨?_, ?_⟩
+      · have h1 : f.natAbs = q₁.num.natAbs * t₁.natAbs := by rw [hft₁, Int.natAbs_mul]
+        have h2 : 0 < t₁.natAbs := Int.natAbs_pos.mpr (Int.ne_of_gt ht₁)
+        have h3 : q₁.num.natAbs ≤ f.natAbs := by
+          rw [h1]; exact Nat.le_mul_of_pos_right _ h2
+        exact Int.le_trans (Int.ofNat_le.mpr h3) hfast
+      · have h1 : (q₁.den : Int) ≤ (dcur : Int) := by
+          rw [hdt₁]
+          have : (q₁.den : Int) * 1 ≤ (q₁.den : Int) * t₁ :=
+            Int.mul_le_mul_of_nonneg_left ht₁ (Int.natCast_nonneg _)
+          simpa using this
+        exact Int.le_trans h1 (Int.le_trans (Int.le_of_dvd hd hdvd) hdQ)
+    · exact ⟨(target_rat hd hdQ hy hred i).2.1, (target_rat hd hdQ hy hred i).2.2⟩
+  exact (Rat.divInt_eq_divInt_iff (Int.ne_of_gt hdcurPos) (Int.ne_of_gt hd)).mp hcross
+
+/-- The loop keeps a denominator dividing the target's and numerators
+proportional to the target's, and never fails on a reduced, congruent,
+bounded target. -/
+private theorem ratReconVec.go_complete {a y : Vector Int k} {m : Nat} {P Q d : Int}
+    (hm : 2 * P * Q < (m : Int)) (hd : 0 < d) (hdQ : d ≤ Q)
+    (hy : ∀ i : Fin k, (d * a[i] - y[i]) % (m : Int) = 0 ∧ (y[i].natAbs : Int) ≤ P)
+    (hred : ∀ g : Int, (∀ i : Fin k, g ∣ y[i]) → g ∣ d → g ∣ 1) :
+    ∀ (i : Nat) (hi : i ≤ k) (nums : Vector Int k) (dcur : Nat),
+      0 < dcur → (dcur : Int) ∣ d →
+      (∀ j : Fin k, j.val < i → nums[j] * d = y[j] * (dcur : Int)) →
+      ∃ nums' : Vector Int k, ∃ dcur' : Nat,
+        ratReconVec.go a m P Q i hi nums dcur = some (nums', dcur') ∧
+        0 < dcur' ∧ (dcur' : Int) ∣ d ∧
+        ∀ j : Fin k, nums'[j] * d = y[j] * (dcur' : Int) := by
+  suffices key : ∀ n : Nat, ∀ (i : Nat) (hi : i ≤ k) (nums : Vector Int k) (dcur : Nat),
+      k - i = n → 0 < dcur → (dcur : Int) ∣ d →
+      (∀ j : Fin k, j.val < i → nums[j] * d = y[j] * (dcur : Int)) →
+      ∃ nums' : Vector Int k, ∃ dcur' : Nat,
+        ratReconVec.go a m P Q i hi nums dcur = some (nums', dcur') ∧
+        0 < dcur' ∧ (dcur' : Int) ∣ d ∧
+        ∀ j : Fin k, nums'[j] * d = y[j] * (dcur' : Int) from
+    fun i hi nums dcur => key (k - i) i hi nums dcur rfl
+  intro n
+  induction n with
+  | zero =>
+    intro i hi nums dcur hn hcur hdvd hinv
+    have hik : i = k := by omega
+    refine ⟨nums, dcur, ?_, hcur, hdvd, ?_⟩
+    · unfold ratReconVec.go
+      rw [dite_eq_left hik]
+    · intro j
+      exact hinv j (hik ▸ j.isLt)
+  | succ n ih =>
+    intro i hi nums dcur hn hcur hdvd hinv
+    have hik : i ≠ k := by omega
+    have hlt : i < k := by omega
+    unfold ratReconVec.go
+    rw [dite_eq_right hik]
+    dsimp only
+    simp only [Int.ofNat_eq_natCast]
+    by_cases hfast : ((symMod ((dcur : Int) * a[i]) m).natAbs : Int) ≤ P
+    · rw [ite_eq_left hfast]
+      apply ih (i + 1) (by omega) _ dcur (by omega) hcur hdvd
+      intro j hj
+      rw [Fin.getElem_fin, Vector.getElem_set]
+      split
+      · next hji =>
+        have := fast_eq hm hd hdQ hy hred hcur hdvd ⟨i, hlt⟩ hfast
+        simpa [← hji] using this
+      · next hji =>
+        exact hinv j (by omega)
+    · rw [ite_eq_right hfast]
+      have hcoord := ratRecon?_coord hm hd hdQ hy hred ⟨i, hlt⟩
+      simp only [Fin.getElem_fin] at hcoord
+      rw [hcoord]
+      simp only [Option.bind_eq_bind, Option.bind_some]
+      obtain ⟨t, _, hdt, hnt⟩ := divInt_scale (n := y[i]) hd
+      generalize hq : Rat.divInt y[i] d = q at hdt hnt ⊢
+      have hdenPos : 0 < q.den := q.den_pos
+      obtain ⟨s, hs⟩ := Nat.dvd_lcm_left dcur q.den
+      obtain ⟨s', hs'⟩ := Nat.dvd_lcm_right dcur q.den
+      have hlcmPos : 0 < Nat.lcm dcur q.den := Nat.lcm_pos hcur hdenPos
+      have hlcmDvd : ((Nat.lcm dcur q.den : Nat) : Int) ∣ d := by
+        have h1 : dcur ∣ d.natAbs := Int.natAbs_dvd_natAbs.mpr hdvd
+        have h2 : q.den ∣ d.natAbs := Int.natAbs_dvd_natAbs.mpr ⟨t, hdt⟩
+        have h3 := Nat.lcm_dvd h1 h2
+        have h4 : ((Nat.lcm dcur q.den : Nat) : Int) ∣ (d.natAbs : Int) := Int.ofNat_dvd.mpr h3
+        rwa [Int.natAbs_of_nonneg (Int.le_of_lt hd)] at h4
+      apply ih (i + 1) (by omega) _ (Nat.lcm dcur q.den) (by omega) hlcmPos hlcmDvd
+      intro j hj
+      simp only [Fin.getElem_fin]
+      rw [Vector.getElem_set]
+      split
+      · next hji =>
+        subst hji
+        rw [hs', Nat.mul_div_cancel_left _ hdenPos, hnt, hdt]
+        push_cast
+        ac_rfl
+      · next hji =>
+        rw [Vector.getElem_map, hs, Nat.mul_div_cancel_left _ hcur]
+        have := hinv j (by omega)
+        simp only [Fin.getElem_fin] at this
+        push_cast
+        calc nums[j.val] * (s : Int) * d = nums[j.val] * d * s := by ac_rfl
+          _ = y[j.val] * (dcur : Int) * s := by rw [this]
+          _ = y[j.val] * ((dcur : Int) * s) := by ac_rfl
+
+/-- The gcd fold divides its seed and every entry. -/
+private theorem foldl_gcd_dvd (nums : Vector Int k) (d : Nat) :
+    (nums.foldl (fun g value => Nat.gcd g value.natAbs) d) ∣ d ∧
+      ∀ j : Fin k, (nums.foldl (fun g value => Nat.gcd g value.natAbs) d) ∣ nums[j].natAbs := by
+  have key : ∀ (l : List Int) (init : Nat),
+      (l.foldl (fun g value => Nat.gcd g value.natAbs) init) ∣ init ∧
+        ∀ v ∈ l, (l.foldl (fun g value => Nat.gcd g value.natAbs) init) ∣ v.natAbs := by
+    intro l
+    induction l with
+    | nil => intro init; exact ⟨Nat.dvd_refl _, fun v hv => nomatch hv⟩
+    | cons x xs ih =>
+      intro init
+      simp only [List.foldl_cons]
+      obtain ⟨h1, h2⟩ := ih (Nat.gcd init x.natAbs)
+      refine ⟨Nat.dvd_trans h1 (Nat.gcd_dvd_left _ _), ?_⟩
+      intro v hv
+      rcases List.mem_cons.mp hv with rfl | hv'
+      · exact Nat.dvd_trans h1 (Nat.gcd_dvd_right _ _)
+      · exact h2 v hv'
+  rw [← Vector.foldl_toList]
+  obtain ⟨h1, h2⟩ := key nums.toList d
+  exact ⟨h1, fun j => h2 _ (Vector.mem_toList_iff.mpr (Vector.getElem_mem j.isLt))⟩
+
+/-- The converse of `ratReconVecCheck_spec`. -/
+private theorem ratReconVecCheck_of {a y : Vector Int k} {m : Nat} {P Q d : Int}
+    (hm : 0 < m) (hd : 0 < d) (hdQ : d ≤ Q)
+    (hy : ∀ i : Fin k, (d * a[i] - y[i]) % (m : Int) = 0 ∧ (y[i].natAbs : Int) ≤ P) :
+    ratReconVecCheck a y m P Q d = true := by
+  simp only [ratReconVecCheck, Bool.and_eq_true, decide_eq_true_eq]
+  refine ⟨⟨⟨hm, hd⟩, hdQ⟩, ?_⟩
+  apply Array.all_eq_true.mpr
+  intro i hi
+  simp only [Vector.getElem_toArray, Vector.getElem_zipWith,
+    Bool.and_eq_true, decide_eq_true_eq]
+  have hik : i < k := by simpa using hi
+  exact hy ⟨i, hik⟩
+
+/-- Under the uniqueness bound, common-denominator reconstruction finds every
+pair that is reduced as a whole, positive and bounded in its denominator,
+and congruent and bounded in every coordinate. Reducedness is not
+decoration: at `m = 18`, `a = (10)`, the pair `(2, 2)` satisfies every other
+hypothesis, but its reduced rational `1` does not satisfy the congruence and
+the reconstruction returns `none`. -/
+theorem ratReconVec?_complete {a y : Vector Int k} {m : Nat} {P Q d : Int}
+    (hm : 2 * P * Q < (m : Int)) (hP : 0 ≤ P) (hd : 0 < d) (hdQ : d ≤ Q)
+    (hy : ∀ i : Fin k, (d * a[i] - y[i]) % (m : Int) = 0 ∧ (y[i].natAbs : Int) ≤ P)
+    (hred : ∀ g : Int, (∀ i : Fin k, g ∣ y[i]) → g ∣ d → g ∣ 1) :
+    ratReconVec? a m P Q = some (y, d) := by
+  have hQ : 0 < Q := Int.lt_of_lt_of_le hd hdQ
+  have hprod : 0 ≤ 2 * P * Q :=
+    Int.mul_nonneg (Int.mul_nonneg (by omega) hP) (Int.le_of_lt hQ)
+  have hm0 : 0 < m := Int.ofNat_lt.mp (Int.lt_of_le_of_lt hprod hm)
+  unfold ratReconVec?
+  split
+  · next hk =>
+    subst hk
+    dsimp only
+    have hd1 : d = 1 :=
+      Int.eq_one_of_dvd_one (Int.le_of_lt hd) (hred d (fun i => i.elim0) (Int.dvd_refl d))
+    subst hd1
+    have hy0 : y = Vector.replicate 0 0 := Vector.ext (fun i hi => absurd hi (Nat.not_lt_zero _))
+    rw [ite_eq_left (ratReconVecCheck_of hm0 hd hdQ (fun i => i.elim0)), hy0]
+  · next hk =>
+    have hkpos : 0 < k := Nat.pos_of_ne_zero hk
+    have hcoord := ratRecon?_coord hm hd hdQ hy hred ⟨0, hkpos⟩
+    simp only [Fin.getElem_fin] at hcoord
+    obtain ⟨t, _, hdt, hnt⟩ := divInt_scale (n := y[0]) hd
+    generalize hq : Rat.divInt y[0] d = q at hdt hnt hcoord
+    have hinv : ∀ j : Fin k, j.val < 1 →
+        ((Vector.replicate k (0 : Int)).set 0 q.num)[j] * d = y[j] * (q.den : Int) := by
+      intro j hj
+      have hj0 : j = ⟨0, hkpos⟩ := Fin.ext (Nat.lt_one_iff.mp hj)
+      subst hj0
+      simp only [Fin.getElem_fin, Vector.getElem_set_self]
+      rw [hnt, hdt]
+      ac_rfl
+    obtain ⟨nums', dcur', hgo, hpos', hdvd', hinv'⟩ :=
+      ratReconVec.go_complete hm hd hdQ hy hred 1 hkpos _ q.den q.den_pos ⟨t, hdt⟩ hinv
+    obtain ⟨s, hs⟩ := hdvd'
+    have hdcurPos : (0 : Int) < dcur' := by omega
+    have hys : ∀ j : Fin k, y[j] = nums'[j] * s := by
+      intro j
+      have h1 := hinv' j
+      rw [hs] at h1
+      have h2 : y[j] * (dcur' : Int) = (nums'[j] * s) * (dcur' : Int) := by
+        rw [← h1]; ac_rfl
+      exact Int.eq_of_mul_eq_mul_right (Int.ne_of_gt hdcurPos) h2
+    have hs1 : s = 1 := by
+      have hsdvd : s ∣ 1 :=
+        hred s (fun j => ⟨nums'[j], by rw [hys j]; ac_rfl⟩) ⟨dcur', by rw [hs]; ac_rfl⟩
+      have habs : s.natAbs = 1 := Nat.eq_one_of_dvd_one (Int.natAbs_dvd_natAbs.mpr hsdvd)
+      rcases Int.natAbs_eq s with h | h <;> rw [habs] at h
+      · exact h
+      · rw [h] at hs
+        omega
+    subst hs1
+    have hnums : nums' = y := Vector.ext (fun j hj => by
+      have := hys ⟨j, hj⟩
+      rw [Fin.getElem_fin] at this
+      simpa using this.symm)
+    subst hnums
+    have hd' : d = (dcur' : Int) := by rw [hs]; simp
+    subst hd'
+    have hcommon : nums'.foldl (fun g value => Nat.gcd g value.natAbs) dcur' = 1 := by
+      obtain ⟨h1, h2⟩ := foldl_gcd_dvd nums' dcur'
+      apply Nat.eq_one_of_dvd_one
+      apply Int.ofNat_dvd.mp
+      apply hred
+      · intro j
+        exact Int.natAbs_dvd_natAbs.mp (by simpa using h2 j)
+      · exact Int.ofNat_dvd.mpr h1
+    simp only [Option.bind_eq_bind, hcoord, Option.bind_some, hgo, hcommon, Nat.div_one,
+      Int.ofNat_eq_natCast, Int.ofNat_one, Int.ediv_one, Vector.map_id']
+    rw [ite_eq_left (ratReconVecCheck_of hm0 hd hdQ hy)]
+
 /-- Track the row immediately preceding the largest quotient in an extended
 Euclidean run. -/
 private def maxQuotRow.go (oldR r : Nat) (oldT t : Int)
