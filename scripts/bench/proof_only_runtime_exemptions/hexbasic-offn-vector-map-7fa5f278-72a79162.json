@@ -1,0 +1,6 @@
+{
+  "path": "HexBasic/OfFn.lean",
+  "baseline_blob": "7fa5f2789534fe0333160fa3005a7d003840cc4d",
+  "current_blob": "72a79162cc362c9c3a4701652436694d6784bfaf",
+  "reason": "Combines the already exempted new Hex.Vector.map' shim (9775512d) with the removal-date docstrings (2c512ed4). Existing declarations and compiler rules are unchanged. The new csimp rule rewrites only the new Vector.map' constant, whose computational caller is HexDeterminant/Enumeration.lean; neither it nor HexDeterminant is in the integer-factorization service call graph. This exact combined transition is runtime-neutral for the retained factorization sweep."
+}

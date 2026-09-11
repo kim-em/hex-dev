@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Regression checks for exact carrier encodings and the persistent comparator."""
 import copy
+import os
+import tempfile
 import json
 from pathlib import Path
 import subprocess
@@ -9,14 +11,14 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from matrix_carriers import evaluate, prepare
+from matrix_carriers import Carrier, dispatch, evaluate, prepare
 from matrix_carriers_bench_driver import run
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURES = ROOT / "conformance-fixtures/HexDeterminant/carriers.jsonl"
 
 
-class MatrixCarriersTest(unittest.TestCase):
+class DeterminantCarriersTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.records = [json.loads(line) for line in FIXTURES.read_text().splitlines()]
@@ -114,5 +116,95 @@ class MatrixCarriersTest(unittest.TestCase):
         self.assertEqual(replies[2], {"ok": True, "result": record["determinant"]})
 
 
-if __name__ == "__main__":
+
+
+class MatrixCarriersTest(unittest.TestCase):
+    def setUp(self):
+        path = Path(__file__).resolve().parents[2] / 'conformance-fixtures/HexBareiss/carriers.jsonl'
+        self.records = [json.loads(line) for line in path.read_text().splitlines()]
+
+    def test_complete_stream(self):
+        for record in self.records:
+            with self.subTest(id=record['case']):
+                self.assertEqual(dispatch(record), record['result'])
+
+    def test_nonconstant_division(self):
+        # [[x, 1, 0], [-1, x, 1], [0, -1, x]] has x^3 + 2x.
+        for carrier in ['zpoly', 'dense_mod']:
+            record = dict(kind='bareiss_carrier', carrier=carrier, arity=1, p=101, n=3,
+                          rows=[[[0, 1], [1], []], [[-1] if carrier == 'zpoly' else [100],
+                                  [0, 1], [1]], [[], [-1] if carrier == 'zpoly' else [100], [0, 1]]])
+            self.assertEqual(dispatch(record), [0, 2, 0, 1])
+
+    def test_reject_noncanonical_coefficients(self):
+        bad = [('rat', [2, 4]), ('rat', [1, -2]), ('rat', [True, 1]),
+               ('mod', 101), ('mod', -1), ('zpoly', [1, 0]),
+               ('dense_mod', [102]), ('mv_int', [[[1, 0], 0]]),
+               ('mv_int', [[[1, 0], 1], [[1, 0], 2]]),
+               ('mv_int', [[[1, 0], 1], [[0, 0], 2]]),
+               ('mv_int', [[[-1, 0], 1]])]
+        for carrier, value in bad:
+            record = next(r for r in self.records if r['carrier'] == carrier)
+            with self.subTest(carrier=carrier, value=value), self.assertRaises(ValueError):
+                Carrier(record).decode(value)
+
+    def test_reject_shape_and_unknown_kind(self):
+        record = copy.deepcopy(self.records[0])
+        record['n'] = 1
+        with self.assertRaises(ValueError):
+            dispatch(record)
+        record['kind'] = 'unknown'
+        with self.assertRaises(KeyError):
+            dispatch(record)
+
+    def test_reject_wrong_result_and_empty_stream(self):
+        record = copy.deepcopy(self.records[0])
+        record['result'] = [0, 1]
+        driver = Path(__file__).with_name('matrix_carriers.py')
+        with tempfile.TemporaryDirectory() as failure_dir:
+            env = dict(os.environ, HEX_FAILURE_DIR=failure_dir)
+            for stream in ['', json.dumps(record) + '\n']:
+                result = subprocess.run([sys.executable, str(driver)], input=stream,
+                                        text=True, capture_output=True, env=env)
+                self.assertNotEqual(result.returncode, 0)
+            failures = list(Path(failure_dir).glob('*.json'))
+            self.assertEqual(len(failures), 1)
+            failure = json.loads(failures[0].read_text())
+            self.assertEqual(failure['input'], record)
+            self.assertEqual(failure['lean_output'], [0, 1])
+            self.assertEqual(failure['oracle_output'], [1, 1])
+
+    def test_mixed_library_dispatch(self):
+        determinant = json.loads(FIXTURES.read_text().splitlines()[0])
+        records = [determinant, self.records[0]]
+        driver = Path(__file__).with_name('matrix_carriers.py')
+        stream = ''.join(json.dumps(r) + '\n' for r in records)
+        result = subprocess.run([sys.executable, str(driver)], input=stream,
+                                text=True, capture_output=True, check=True)
+        self.assertIn('OK: 2 exact matrix carrier records', result.stdout)
+        result = subprocess.run([sys.executable, str(driver), '--server'], input=stream,
+                                text=True, capture_output=True, check=True)
+        self.assertEqual([json.loads(line)['result'] for line in result.stdout.splitlines()],
+                         [determinant['determinant'], self.records[0]['result']])
+
+    def test_shared_fixture_reader(self):
+        driver = Path(__file__).with_name('matrix_carriers.py')
+        stream = '# canonical fixture with blank lines\n\n' + json.dumps(self.records[0]) + '\n'
+        result = subprocess.run([sys.executable, str(driver)], input=stream,
+                                text=True, capture_output=True, check=True)
+        self.assertIn('OK: 1 exact matrix carrier records', result.stdout)
+
+    def test_persistent_protocol_recovers_after_bad_request(self):
+        driver = Path(__file__).with_name('matrix_carriers.py')
+        requests = [{'kind': 'overhead'}, {'kind': 'unknown'}, self.records[0]]
+        result = subprocess.run([sys.executable, str(driver), '--server'],
+                                input=''.join(json.dumps(r) + '\n' for r in requests),
+                                text=True, capture_output=True, check=True)
+        replies = [json.loads(line) for line in result.stdout.splitlines()]
+        self.assertEqual(replies[0], {'ok': True, 'result': 0})
+        self.assertFalse(replies[1]['ok'])
+        self.assertEqual(replies[2], {'ok': True, 'result': self.records[0]['result']})
+
+
+if __name__ == '__main__':
     unittest.main()
