@@ -2,5 +2,5 @@
   "path": "HexBasic/OfFn.lean",
   "baseline_blob": "7fa5f2789534fe0333160fa3005a7d003840cc4d",
   "current_blob": "72a79162cc362c9c3a4701652436694d6784bfaf",
-  "reason": "Combines the already exempted new Hex.Vector.map' shim (9775512d) with the removal-date docstrings (2c512ed4). Existing declarations and compiler rules are unchanged. The new csimp rule rewrites only the new Vector.map' constant, whose computational caller is HexDeterminant/Enumeration.lean; neither it nor HexDeterminant is in the integer-factorization service call graph. This exact combined transition is runtime-neutral for the retained factorization sweep."
+  "reason": "Updates only the Array.map' and Array.zipWith' docstrings in #10161 and the Array.ofFn'/Vector.ofFn' module documentation in #10169, then adds Hex.Vector.map' with its simp lemmas and a csimp rule for determinant enumeration in #10165. No existing declaration changes; every new simp and csimp rule's left-hand side contains the new Vector.map' constant, so none can match a pre-existing term. Its only non-test caller is Hex.Matrix.permutationVectors. HexDeterminant is linked into the service through HexGramSchmidt.Int.Core, but no factorization operation calls the Leibniz enumeration, so every measured operation and branch is unchanged."
 }
