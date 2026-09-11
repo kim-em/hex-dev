@@ -449,6 +449,40 @@ rational vector `y/d` is unique, by `ratRecon_unique` applied entrywise,
 which is exactly the case the uniqueness proof covers without a
 coprimality hypothesis.
 
+```lean
+theorem ratReconVec?_complete
+    (hm : 2 * P * Q < (m : Int)) (hP : 0 ≤ P) (hd : 0 < d) (hdQ : d ≤ Q)
+    (hy : ∀ i, (d * a[i] - y[i]) % (m : Int) = 0 ∧ (y[i].natAbs : Int) ≤ P)
+    (hred : ∀ g : Int, (∀ i, g ∣ y[i]) → g ∣ d → g ∣ 1) :
+    ratReconVec? a m P Q = some (y, d)
+```
+
+Completeness for the vector form is stated for a pair, not for a
+rational vector, and it needs the pair reduced as a whole. That
+hypothesis is not decoration. At `m = 18`, `a = (10)`, `P = 2`, `Q = 4`
+the pair `(2, 2)` satisfies the bound, the denominator bound and the
+congruence `2 · 10 - 2 ≡ 0`, but its reduced rational `1` has
+`1 · 10 - 1 = 9 ≢ 0 (mod 18)`, and no rational within the bounds satisfies
+the congruence, so the reconstruction returns `none`. The cancellation
+that takes a congruence for `y/d` to one for its reduced form divides
+by `gcd(yᵢ, d)`, and that is only legitimate modulo `m` when the factor
+is coprime to `m`. Reducedness supplies exactly that: a prime dividing
+both `d` and `m` divides every `d · aᵢ - yᵢ`, hence every `yᵢ`, so a
+pair reduced as a whole has a denominator all of whose divisors are
+coprime to `m`. Dixon's caller has the pair reduced by construction,
+and its `d` divides a determinant the modulus is coprime to, which is
+the same fact seen from the other side.
+
+The proof follows the algorithm: the first coordinate's reduced rational
+is found by `ratRecon?_complete`; the loop keeps a denominator dividing
+`d` and numerators proportional to `y`, where an accepted fast-path
+value agrees with the target by `ratRecon_unique`, and an `lcm` step
+stays a divisor of `d`; the loop therefore ends at exactly `(y, d)`, since
+`d` is a multiple of the loop's denominator by a factor that divides every
+`yᵢ`, hence `1`; and the final gcd is `1` for the same reason. The
+conclusion is the exact pair rather than an `isSome`, which is what a
+consumer proving that its check passes needs.
+
 **What `Q` has to bound.** The postcondition asserts `d ≤ Q`, and `d` is
 the least common denominator of the whole vector, not of any one entry.
 A caller whose bound covers each entry separately has not supplied a
