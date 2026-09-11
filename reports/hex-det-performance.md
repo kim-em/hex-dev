@@ -45,9 +45,10 @@ Scientific registrations, one per Phase-4 input family:
 - `Hex.DetBench.runBerkowitzInt`: `n * n * n * n` (the compared arm)
 
 Adjacent-arm fixed registrations: `runBareissInt{6,10,16,24}` against
-`runBerkowitzInt{…}`, `runBareissPoly{4,6,8}` against `runBerkowitzPoly{…}`,
-and `runDetInt{6,10,16,24}` against `runBareissInt{…}` for the `dispatch`
-family. `runRouteAgreement` is the Mathlib-free canary that checks routes and
+`runBerkowitzInt{…}`, `runBareissRat{6,10}` against `runBerkowitzRat{…}`,
+`runBareissPoly{4,6,8}` against `runBerkowitzPoly{…}`, `runBareissMv{3,4}`
+against `runBerkowitzMv{…}`, and `runDetInt{6,10,16,24}` against
+`runBareissInt{…}` for the `dispatch` family. `runRouteAgreement` is the Mathlib-free canary that checks routes and
 bounded fixture outputs; it runs in CI under `lake exe hexdet_bench verify`.
 
 ## Host context
@@ -96,6 +97,13 @@ Integer entries (tridiagonal fixture, deterministic salt 71):
 | 16 | 25.416 µs | 218.075 µs | 210.604 µs | 25.392 µs | 8.58x, 8.29x |
 | 24 | 87.772 µs | 1.129 ms | 1.140 ms | 87.402 µs | 12.87x, 12.99x |
 
+Rational entries (the integer fixture divided by three):
+
+| n | Bareiss (AB) | Berkowitz (AB) | Berkowitz (BA) | Bareiss (BA) | Berkowitz / Bareiss |
+|---:|---:|---:|---:|---:|---:|
+| 6 | 33.233 µs | 77.569 µs | 77.634 µs | 33.116 µs | 2.33x, 2.34x |
+| 10 | 150.105 µs | 529.143 µs | 525.999 µs | 149.994 µs | 3.53x, 3.50x |
+
 Dense integer polynomial entries (linear entries, same fixture):
 
 | n | Bareiss (AB) | Berkowitz (AB) | Berkowitz (BA) | Bareiss (BA) | Berkowitz / Bareiss |
@@ -104,18 +112,36 @@ Dense integer polynomial entries (linear entries, same fixture):
 | 6 | 34.262 µs | 63.556 µs | 63.296 µs | 34.016 µs | 1.86x, 1.85x |
 | 8 | 116.194 µs | 212.846 µs | 213.278 µs | 117.008 µs | 1.83x, 1.84x |
 
-Bareiss is ahead of Berkowitz at every measured dimension on both carriers, and
-its lead widens with dimension over `Int`, which is what the declared `n^3`
-against `n^4` models predict. Over dense polynomials the ratio is far smaller
-and flat near 1.85x: Berkowitz performs no division, while Bareiss pays for exact
+Two-variable polynomial entries (two-term entries, same fixture):
+
+| n | Bareiss (AB) | Berkowitz (AB) | Berkowitz (BA) | Bareiss (BA) | Berkowitz / Bareiss |
+|---:|---:|---:|---:|---:|---:|
+| 3 | 27.157 µs | 17.615 µs | 17.503 µs | 26.922 µs | 0.65x, 0.64x |
+| 4 | 87.037 µs | 55.919 µs | 55.838 µs | 86.593 µs | 0.64x, 0.64x |
+
+Bareiss is ahead of Berkowitz over `Int` and `Rat` at every measured dimension,
+and its lead widens with dimension, which is what the declared `n^3` against
+`n^4` models predict. Over dense polynomials the ratio is far smaller and flat
+near 1.85x: Berkowitz performs no division, while Bareiss pays for exact
 polynomial division by nonconstant pivots, and that cost grows alongside the
 operation-count advantage.
 
-These numbers do not move any policy. Both orientations agree to within 4% at
-every rung, so no comparison here is inconclusive and no rerun was needed. What
-they establish is that the shipped Bareiss selection is not contradicted by
-evidence on the carriers where both arms are available; a carrier without an
-exact quotient still has only Berkowitz.
+**Over `MvPoly 2 Int` the order reverses**: Berkowitz is about 1.55 times faster
+than Bareiss at both measured dimensions, consistently in both orientations. The
+same trade explains it, with the division side much more expensive: multivariate
+exact division goes through the coefficient gcd, while Berkowitz only multiplies
+and adds. This is one fixture family (tridiagonal, two-term entries) at `n = 3`
+and `n = 4`, so it is evidence that the multivariate row deserves a measured
+policy, not a measurement that settles one.
+
+These numbers move no policy, which is deliberate: this version ships the SPEC's
+initial availability rules and tunes no crossover. Both orientations agree to
+within 4% at every rung, so no comparison here is inconclusive and no rerun was
+needed. The integer, rational and dense-polynomial rows confirm the shipped
+Bareiss selection; the multivariate row contradicts it and should be re-measured
+across dimension, variable count, total degree, support and coefficient size
+before the `MvPoly` recipe is changed. A carrier without an exact quotient still
+has only Berkowitz either way.
 
 ## Dispatch overhead
 

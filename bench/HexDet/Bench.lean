@@ -102,6 +102,14 @@ def runBerkowitzInt (input : DetInput) : Int :=
 def runDetRat (input : DetInput) : Rat :=
   Hex.Det.det (ratMatrixOfFlat input.n input.entries)
 
+/-- The Bareiss arm over `Rat`, called directly. -/
+def runBareissRat (input : DetInput) : Rat :=
+  Matrix.bareissWith Hex.exactDiv (ratMatrixOfFlat input.n input.entries)
+
+/-- The Berkowitz arm over `Rat`, called directly. -/
+def runBerkowitzRat (input : DetInput) : Rat :=
+  berkowitzDet (ratMatrixOfFlat input.n input.entries)
+
 /-- Benchmark target: dispatch over dense integer polynomials, reported by its
 coefficient count so the registration records a bounded scalar. Reading the size
 forces the whole determinant. -/
@@ -120,6 +128,14 @@ def runBerkowitzPoly (input : DetInput) : DensePoly Int :=
 term count for the same reason. -/
 def runDetMv (input : DetInput) : Nat :=
   (Hex.Det.det (mvMatrixOfFlat input.n input.entries)).termCount
+
+/-- The Bareiss arm over two-variable polynomials, called directly. -/
+def runBareissMv (input : DetInput) : MvPoly 2 Int Mono.grevlex :=
+  Matrix.bareissWith Hex.exactDiv (mvMatrixOfFlat input.n input.entries)
+
+/-- The Berkowitz arm over two-variable polynomials, called directly. -/
+def runBerkowitzMv (input : DetInput) : MvPoly 2 Int Mono.grevlex :=
+  berkowitzDet (mvMatrixOfFlat input.n input.entries)
 
 /-! Per-rung wrappers for the paired fixed registrations. Each captures its
 prepared input outside the timed closure, so both arms of a comparison see the
@@ -141,6 +157,19 @@ def runBerkowitzPolyAt (n : Nat) : Unit → IO Nat :=
   let input := prepDetInput n
   fun _ => return (runBerkowitzPoly input).size
 
+def runBareissRatAt (n : Nat) : Unit → IO Rat :=
+  let input := prepDetInput n
+  fun _ => return runBareissRat input
+def runBerkowitzRatAt (n : Nat) : Unit → IO Rat :=
+  let input := prepDetInput n
+  fun _ => return runBerkowitzRat input
+def runBareissMvAt (n : Nat) : Unit → IO Nat :=
+  let input := prepDetInput n
+  fun _ => return (runBareissMv input).termCount
+def runBerkowitzMvAt (n : Nat) : Unit → IO Nat :=
+  let input := prepDetInput n
+  fun _ => return (runBerkowitzMv input).termCount
+
 def runDetInt6 : Unit → IO Int := runDetIntAt 6
 def runBareissInt6 : Unit → IO Int := runBareissIntAt 6
 def runBerkowitzInt6 : Unit → IO Int := runBerkowitzIntAt 6
@@ -153,6 +182,14 @@ def runBerkowitzInt16 : Unit → IO Int := runBerkowitzIntAt 16
 def runDetInt24 : Unit → IO Int := runDetIntAt 24
 def runBareissInt24 : Unit → IO Int := runBareissIntAt 24
 def runBerkowitzInt24 : Unit → IO Int := runBerkowitzIntAt 24
+def runBareissRat6 : Unit → IO Rat := runBareissRatAt 6
+def runBerkowitzRat6 : Unit → IO Rat := runBerkowitzRatAt 6
+def runBareissRat10 : Unit → IO Rat := runBareissRatAt 10
+def runBerkowitzRat10 : Unit → IO Rat := runBerkowitzRatAt 10
+def runBareissMv3 : Unit → IO Nat := runBareissMvAt 3
+def runBerkowitzMv3 : Unit → IO Nat := runBerkowitzMvAt 3
+def runBareissMv4 : Unit → IO Nat := runBareissMvAt 4
+def runBerkowitzMv4 : Unit → IO Nat := runBerkowitzMvAt 4
 def runBareissPoly4 : Unit → IO Nat := runBareissPolyAt 4
 def runBerkowitzPoly4 : Unit → IO Nat := runBerkowitzPolyAt 4
 def runBareissPoly6 : Unit → IO Nat := runBareissPolyAt 6
@@ -285,6 +322,14 @@ setup_fixed_benchmark runBerkowitzInt16 where armConfig
 setup_fixed_benchmark runDetInt24 where armConfig
 setup_fixed_benchmark runBareissInt24 where armConfig
 setup_fixed_benchmark runBerkowitzInt24 where armConfig
+setup_fixed_benchmark runBareissRat6 where armConfig
+setup_fixed_benchmark runBerkowitzRat6 where armConfig
+setup_fixed_benchmark runBareissRat10 where armConfig
+setup_fixed_benchmark runBerkowitzRat10 where armConfig
+setup_fixed_benchmark runBareissMv3 where armConfig
+setup_fixed_benchmark runBerkowitzMv3 where armConfig
+setup_fixed_benchmark runBareissMv4 where armConfig
+setup_fixed_benchmark runBerkowitzMv4 where armConfig
 setup_fixed_benchmark runBareissPoly4 where armConfig
 setup_fixed_benchmark runBerkowitzPoly4 where armConfig
 setup_fixed_benchmark runBareissPoly6 where armConfig
