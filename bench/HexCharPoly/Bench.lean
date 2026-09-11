@@ -288,7 +288,7 @@ Each fixed rung observes every canonical Toeplitz/coeff-vector entry and hashes
 the entire canonical polynomial. Timings include structural instrumentation. -/
 namespace Hex.CharPolyBench
 open Hex CharPolyCarriers Lean
-local instance [ZMod64.Bounds p] : Zero (ZMod64 p) := ⟨0⟩
+open scoped Hex.CharPolyCarriers
 
 private def peak [Lean.Grind.CommRing R] (size : R → Nat)
     (A : Matrix R n n) : (k : Nat) → k ≤ n → Vector R (k + 1) × Nat
@@ -301,7 +301,7 @@ private def peak [Lean.Grind.CommRing R] (size : R → Nat)
     (coeffs, coeffs.toArray.foldl (fun a c => max a (size c)) columnPeak)
 
 private def denseSize [Zero R] [DecidableEq R] (p : DensePoly R) : Nat := p.size
-private def mvSize [Zero R] (p : MV n R) : Nat := p.termsList.length
+private def mvSize [Zero R] (p : MV n R) : Nat := p.termCount
 private def fractionSize (f : RationalFn Rat) : Nat := f.num.size + f.den.size
 
 private def runCarrier [Lean.Grind.CommRing R] [DecidableEq R]
@@ -325,16 +325,26 @@ def runCharRatFn (n degree : Nat) (_ : Unit) : IO String :=
 
 initialize carrierDriver : IO.Ref (Option Hex.BenchOracle.Flint.PersistentComparator) ← IO.mkRef none
 
-private def sympyRequest (request : Json) : IO String := do
-  let child ← match ← carrierDriver.get with
-    | some child => pure child
+private def resolveCarrier : IO Hex.BenchOracle.Flint.PersistentComparator := do
+  if let some child ← carrierDriver.get then return child
+  let python := (← IO.getEnv "HEX_CARRIER_BENCH_PYTHON").getD "python3"
+  let driver ← match ← IO.getEnv "HEX_CARRIER_BENCH_DRIVER" with
+    | some path => pure path
     | none => do
-      let python := (← IO.getEnv "HEX_CARRIER_BENCH_PYTHON").getD "python3"
-      let driver := (← IO.getEnv "HEX_CARRIER_BENCH_DRIVER").getD "scripts/oracle/matrix_carriers.py"
-      let child ← Hex.BenchOracle.Flint.PersistentComparator.spawn python #[driver, "--serve"]
-      carrierDriver.set (some child)
-      pure child
-  let line ← child.requestLine request.compress
+      let path : System.FilePath := "scripts/oracle/matrix_carriers.py"
+      pure (if ← path.pathExists then path.toString else "../scripts/oracle/matrix_carriers.py")
+  let child ← Hex.BenchOracle.Flint.PersistentComparator.spawn python #[driver, "--serve"]
+  carrierDriver.set (some child)
+  return child
+
+private def sympyRequest (request : Json) : IO String := do
+  let requestLine := request.compress
+  let line ← try
+      (← resolveCarrier).requestLine requestLine
+    catch _ => do
+      carrierDriver.set none
+      try (← resolveCarrier).requestLine requestLine
+      catch _ => throw (IO.userError "carrier comparator transport failed after restarting its driver")
   let reply ← IO.ofExcept (Json.parse line)
   if (reply.getObjValAs? Bool "ok").toOption != some true then
     throw (IO.userError s!"carrier oracle failed: {line}")

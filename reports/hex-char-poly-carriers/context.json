@@ -1,18 +1,19 @@
 {
-  "cpu": 32,
+  "cpu": 1,
   "loadavg": [
-    32.11669921875,
-    12.59033203125,
-    5.67236328125
+    1.4375,
+    1.74609375,
+    4.56640625
   ],
-  "source_sha256": "14401c52876625d6995d4ddab162c75555159004df37122a480730230a85efb2",
+  "source_sha256": "535c65e185d05e1ba721622d54df70bd20ba8afdd7b4357867b85320dda97d4c",
   "sympy": "1.14.0",
   "schedule": "Five measured repeats per arm, discarded warmup, alternate arm order across points; all completed samples retained.",
-  "supporting_source_sha256": {
-    "conformance/HexCharPoly/Carriers.lean": "7ceea695c62dca1a95115490be75dcb9d377e333e2403075fca68856276d4328",
-    "scripts/oracle/matrix_carriers.py": "748906428edbe89dc7f17297b79bde8e1d498cdbb9b8f53d0c0785b00d3dd0f6"
-  },
   "python": "3.14.6",
   "sympy_ground_types": "flint",
-  "python_flint": "0.9.0"
+  "python_flint": "0.9.0",
+  "supporting_source_sha256": {
+    "conformance/HexCharPoly/Carriers.lean": "4687af71e980f5549499a109b61ea05bc7e03aa102fc33fe30a4d62a62a2ae09",
+    "scripts/oracle/matrix_carriers.py": "44c39e07e9664c3d8ae1e7418d31ed48fcede806f8485a1b5a5177f4d1beebaf",
+    "scripts/oracle/common.py": "a8a50611c9155661e31a519910ae8438ae06738b052febc26b320bab6b4554e9"
+  }
 }

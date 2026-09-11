@@ -8,7 +8,7 @@ import HexCharPoly.Carriers
 
 namespace Hex.CharPolyCarriers
 open Hex Lean
-local instance [ZMod64.Bounds p] : Zero (ZMod64 p) := ⟨0⟩
+open scoped Hex.CharPolyCarriers
 
 private def emit [Lean.Grind.CommRing R] [DecidableEq R]
     (encode : R → Json) (carrier : String) (arity : Nat) (entry : Nat → Nat → R) : IO Unit := do

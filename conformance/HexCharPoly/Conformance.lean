@@ -51,7 +51,7 @@ end Hex.CharPolyConformance
 namespace Hex.CharPolyCarriers
 open Hex
 
-local instance [ZMod64.Bounds p] : Zero (ZMod64 p) := ⟨0⟩
+open scoped Hex.CharPolyCarriers
 
 -- Pin direct instantiation, including the additional MvPoly equality classes.
 example (A : Matrix (DensePoly Int) n n) : DensePoly (DensePoly Int) := A.charPoly

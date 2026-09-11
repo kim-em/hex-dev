@@ -16,11 +16,12 @@ namespace Hex.CharPolyCarriers
 open Hex
 open Lean (Json toJson)
 
-instance : ZMod64.Bounds 101 := ⟨by decide, by decide⟩
+scoped instance bounds101 : ZMod64.Bounds 101 := ⟨by decide, by decide⟩
 
--- Use the ring numeral for the Zero parameter stored in DensePoly.
--- The residue-only Zero instance has a distinct opaque implementation.
-local instance [ZMod64.Bounds p] : Zero (ZMod64 p) := ⟨0⟩
+-- DensePoly stores its Zero instance in its type. Select the ring numeral
+-- (ZMod64.instOfNat 0), rather than ZMod64.instZero: their exported module
+-- interfaces are not definitionally interchangeable during instance search.
+scoped instance ringZero [ZMod64.Bounds p] : Zero (ZMod64 p) := ⟨0⟩
 
 abbrev Mod := ZMod64 101
 abbrev MV (n : Nat) (R : Type) [Zero R] := MvPoly n R Mono.grevlex
