@@ -371,6 +371,27 @@ def ratRank (A : Matrix Int n m) : Nat :=
 theorem checkRank_sound (h : checkRank A c = true) : ratRank A = c.r
 ```
 
+**Amendment: this certificate is the `Int` instance of hex-rank's.**
+[hex-rank](hex-rank.md) specifies the same two-sided certificate over
+every integral domain, and this library's certificate is its `Int`
+instance: `RankCert n m` is `Hex.Matrix.RankCert Int n m` (`rows`, `cols`,
+and `denom`, `adj` with `B * adj = denom • identity r`, which the producer
+fills with `det B` and `adjugate B`, in place of `coeffs`), `checkRank`
+is `Hex.Matrix.checkRank`, and `checkRank_sound` is hex-rank's soundness
+at `R = Int`. The `modulus` field, the modular minor test and the
+strictly-increasing check on `rows` and `cols` are dropped: the adjugate
+identity `B * adj = denom • identity r` certifies nonsingularity with no
+modulus, so the completeness obstruction for a bounded modulus below does
+not arise, and the all-column identity `denom • A = A[·, cols] * (adj * A[rows, ·])`
+indexes no complement. `rankCert?` keeps the modular route for finding
+`rows` and `cols` and obtains `adj B` and `det B` by Dixon solves of
+`B * X = det B • identity r` (`r` solves rather than `m - r`). The
+unchecked `rank` below is named `rankModular` in the implementation,
+since `Hex.Matrix.rank` is hex-rank's `Int` entry point and
+hex-matrix-tactic imports both. The rest of this section predates
+hex-rank and is read with that amendment; hex-rank's SPEC records the
+same list under its `Int` carrier.
+
 The soundness theorem targets `ratRank`, not the `rank` defined below.
 A certificate checker whose conclusion mentions the function it is meant
 to certify says nothing, and an earlier draft of this SPEC made exactly
