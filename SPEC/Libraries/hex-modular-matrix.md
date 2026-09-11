@@ -1028,14 +1028,13 @@ invertible there and `decompAt? B p` succeeds without a search.
 with `decomp?_A` and `Decomp.det_ne_zero`. At `n = 0` the bounds are
 `P = 0` and `Q = 1`, so `k = 0`, and `ratReconVec?` on the empty vector
 returns `(#v[], 1)`, which the check accepts: the empty system has the
-empty solution with denominator `1`, and nothing special-cases it. `solveWith_isSome` needs
-`ratReconVec?_complete`, the vector form of hex-modular's
-`ratRecon?_complete`, which
-[hex-modular](../../HexModular/SPEC/hex-modular.md) does not yet state:
-its "Vectors with a common denominator" gives soundness and uniqueness
-under `2PQ < m`, and the prerequisite below asks for the completeness
-half. Until it lands, `solveWith_isSome` is stated with `sorry` and the
-`none` branch is classified as above.
+empty solution with denominator `1`, and nothing special-cases it. `solveWith_isSome` is
+`ratReconVec?_complete` (`HexModular/Recon.lean`) applied to the reduced
+common-denominator form of `A⁻¹ b`, whose numerators and denominator
+are within `P` and `Q` by Cramer's rule under `LawfulDetBound`; the
+reducedness that theorem requires is what makes the reduced form the
+right pair to name, since at a composite modulus a non-reduced pair
+need not be found.
 
 **The matrix form.** `solveMatWith D C` lifts all `m` columns at once:
 each digit step is one `ZMod64` matrix product `inv * (Rᵢ mod p)` and one
@@ -1262,15 +1261,16 @@ divides an exactly-divisible vector by `p` once per digit, which is the
 hottest exact division in the tree, and it calls the hex-arith function
 directly.
 
-**`ratReconVec?_complete` is missing from hex-modular.** `ratRecon?_complete`
-in `HexModular/Recon.lean` is the scalar completeness theorem, and
+**`ratReconVec?_complete` is in hex-modular.** `HexModular/Recon.lean`
+proves that under `2PQ < m` a pair `(y, d)` that is reduced as a whole,
+congruent to the residues and within the bounds is what `ratReconVec?`
+returns, exactly. The `unreachable-by-pipeline-invariant` classification
+of `solveWith`'s check (`solveWith_isSome`) rests on it, and the
+reducedness hypothesis is why `solveWith`'s completeness argument
+speaks of the reduced form of `A⁻¹ b`: the theorem is false for
+non-reduced pairs at composite moduli, as
 [hex-modular §Vectors with a common denominator](../../HexModular/SPEC/hex-modular.md)
-gives the vector form soundness (`ratReconVec?_spec`) and uniqueness
-under `2PQ < m` but not completeness: that under `2PQ < m`, a pair
-`(y, d)` within the bounds and congruent to the residues is found. The
-`unreachable-by-pipeline-invariant` classification of `solveWith`'s
-check needs it (`solveWith_isSome`), and so will hex-poly-z-gcd's
-reconstruction; it belongs in hex-modular beside the scalar theorem.
+records with a counterexample.
 
 **The seedable generator already exists.** `Hex.Rand` in
 `HexBasic/Rand.lean` (splitmix64, explicit state, `Rand.ofSeed`,
@@ -1616,8 +1616,8 @@ operation.
    count, the normalisation, and the check. `solve?_spec` and
    `solve?_reduced` need no hypothesis, `solve?_unique` needs only
    nonsingularity, and `decomp?_isSome` and `solveWith_isSome` carry
-   `[LawfulDetBound]` (the second with `sorry` until hex-modular's
-   `ratReconVec?_complete` lands). The rank milestone's `r` solves and
+   `[LawfulDetBound]` (the second through hex-modular's
+   `ratReconVec?_complete`). The rank milestone's `r` solves and
    the next milestone's single solve both go through `Decomp`.
 
 4. **The determinant divisor.** `dvd_det_of_mulVec`,

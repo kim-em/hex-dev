@@ -37,7 +37,7 @@ jobs:
           # The release-manifest admission check reads release-sync-baseline.
           fetch-depth: 0
       # --- Docs-only fast path (SPEC/CI.md § Docs-only fast path) ---
-      # A pull request whose diff against its merge base touches only
+      # A pull request whose diff against its merge parent touches only
       # documentation and planning text skips everything from dependency
       # installation onward; the structural lints and Python unit tests
       # below still run. Pushes to main and manual dispatches always build
@@ -50,23 +50,34 @@ jobs:
         id: classify
         env:
           EVENT_NAME: ${{ github.event_name }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
+          # On pull_request the checkout is the synthetic merge commit, so
+          # HEAD^1 is the base tip this tree was actually built on -- the
+          # exact delta under test, even when the payload's base SHA has
+          # since moved. Reading the diff from a file (NUL-separated, after
+          # checking git's exit status) keeps a failed diff from looking
+          # like a short allowlisted list.
+          base=
           docs_only=false
           build_manual=true
+          changed_paths="$RUNNER_TEMP/changed-paths"
           if [ "$EVENT_NAME" != pull_request ]; then
             reason="\`$EVENT_NAME\` event; only pull requests take the fast path"
-          elif ! base="$(git merge-base "$BASE_SHA" HEAD 2>/dev/null)"; then
-            reason="no merge base against \`$BASE_SHA\`"
+          elif ! git rev-parse -q --verify HEAD^2 >/dev/null; then
+            reason="HEAD is not a merge commit"
+          elif ! base="$(git rev-parse --verify HEAD^1)" \
+            || ! git diff --no-renames --name-only -z "$base" HEAD > "$changed_paths"; then
+            base=
+            reason="could not compute the changed paths"
           else
-            mapfile -t changed < <(git diff --no-renames --name-only "$base" HEAD)
+            mapfile -d '' -t changed < "$changed_paths"
             docs_only=true
             build_manual=false
             reason="all ${#changed[@]} changed files match the docs-only allowlist"
             [ "${#changed[@]}" -gt 0 ] || {
               docs_only=false
               build_manual=true
-              reason="no changed files against the merge base"
+              reason="no changed files against the merge parent"
             }
             for f in "${changed[@]}"; do
               if [ "$docs_only" = true ]; then
@@ -102,7 +113,7 @@ jobs:
           echo "::notice title=CI path::$path: $reason"
           printf '## CI path\n\n**%s**: %s; %s\n' "$path" "$reason" "$detail" >> "$GITHUB_STEP_SUMMARY"
           python3 scripts/ci/classify_changed_libraries.py \
-            --event "$EVENT_NAME" --base "$BASE_SHA" --github-output "$GITHUB_OUTPUT"
+            --event "$EVENT_NAME" --base "$base" --github-output "$GITHUB_OUTPUT"
       # --- Structural + source lints ---
       - run: python3 scripts/check_copyright_headers.py
       - name: Lint Lean file line counts (SPEC/CI.md §Source-file lints)
@@ -372,7 +383,7 @@ jobs:
             hexconway_emit_fixtures \
             hexrowreduce_emit_fixtures hexdeterminant_emit_fixtures \
             hexbareiss_emit_fixtures hexhermite_emit_fixtures \
-            hexsmith_emit_fixtures hexcharpoly_emit_fixtures \
+            hexsmith_emit_fixtures hexcharpoly_emit_fixtures hexcharpoly_emit_carrier_fixtures \
             hexminpoly_emit_fixtures \
             hexgramschmidt_emit_fixtures hexlatticeenum_emit_fixtures \
             hexlll_emit_fixtures hexrealroots_emit_fixtures \

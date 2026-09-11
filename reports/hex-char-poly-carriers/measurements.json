@@ -1,0 +1,6062 @@
+{
+  "DenseInt-n2k1": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 1497330,
+            "status": "ok",
+            "result_hash": "0xd4f8e67c2b2a5693",
+            "repeat_index": 0,
+            "peak_rss_kb": 68412,
+            "inner_repeats": 512,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1478422,
+            "status": "ok",
+            "result_hash": "0xd4f8e67c2b2a5693",
+            "repeat_index": 1,
+            "peak_rss_kb": 68564,
+            "inner_repeats": 512,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1616116,
+            "status": "ok",
+            "result_hash": "0xd4f8e67c2b2a5693",
+            "repeat_index": 2,
+            "peak_rss_kb": 69068,
+            "inner_repeats": 512,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1356821,
+            "status": "ok",
+            "result_hash": "0xd4f8e67c2b2a5693",
+            "repeat_index": 3,
+            "peak_rss_kb": 68296,
+            "inner_repeats": 512,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1372134,
+            "status": "ok",
+            "result_hash": "0xd4f8e67c2b2a5693",
+            "repeat_index": 4,
+            "peak_rss_kb": 68156,
+            "inner_repeats": 512,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0xd4f8e67c2b2a5693",
+        "min_nanos": 2650,
+        "median_nanos": 2887,
+        "max_nanos": 3156,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.DenseInt.n2k1",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085650049,
+          "timestamp_iso": "2026-09-11T00:14:10Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 1405795,
+            "status": "ok",
+            "result_hash": "0xd4f8e67c2b2a5693",
+            "repeat_index": 0,
+            "peak_rss_kb": 68680,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1435098,
+            "status": "ok",
+            "result_hash": "0xd4f8e67c2b2a5693",
+            "repeat_index": 1,
+            "peak_rss_kb": 68724,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1398013,
+            "status": "ok",
+            "result_hash": "0xd4f8e67c2b2a5693",
+            "repeat_index": 2,
+            "peak_rss_kb": 68472,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1379715,
+            "status": "ok",
+            "result_hash": "0xd4f8e67c2b2a5693",
+            "repeat_index": 3,
+            "peak_rss_kb": 68788,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1380006,
+            "status": "ok",
+            "result_hash": "0xd4f8e67c2b2a5693",
+            "repeat_index": 4,
+            "peak_rss_kb": 68284,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0xd4f8e67c2b2a5693",
+        "min_nanos": 172464,
+        "median_nanos": 174751,
+        "max_nanos": 179387,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyDenseInt.n2k1",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085650223,
+          "timestamp_iso": "2026-09-11T00:14:10Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085650049,
+      "timestamp_iso": "2026-09-11T00:14:10Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "DenseInt-n3k1": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 1241190,
+            "status": "ok",
+            "result_hash": "0x6e7adfa6ac5d6781",
+            "repeat_index": 0,
+            "peak_rss_kb": 68952,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1218045,
+            "status": "ok",
+            "result_hash": "0x6e7adfa6ac5d6781",
+            "repeat_index": 1,
+            "peak_rss_kb": 68436,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1205847,
+            "status": "ok",
+            "result_hash": "0x6e7adfa6ac5d6781",
+            "repeat_index": 2,
+            "peak_rss_kb": 68764,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1233589,
+            "status": "ok",
+            "result_hash": "0x6e7adfa6ac5d6781",
+            "repeat_index": 3,
+            "peak_rss_kb": 68168,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1214961,
+            "status": "ok",
+            "result_hash": "0x6e7adfa6ac5d6781",
+            "repeat_index": 4,
+            "peak_rss_kb": 68516,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x6e7adfa6ac5d6781",
+        "min_nanos": 602923,
+        "median_nanos": 609022,
+        "max_nanos": 620595,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyDenseInt.n3k1",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085651532,
+          "timestamp_iso": "2026-09-11T00:14:11Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 1668123,
+            "status": "ok",
+            "result_hash": "0x6e7adfa6ac5d6781",
+            "repeat_index": 0,
+            "peak_rss_kb": 68596,
+            "inner_repeats": 256,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1679630,
+            "status": "ok",
+            "result_hash": "0x6e7adfa6ac5d6781",
+            "repeat_index": 1,
+            "peak_rss_kb": 68280,
+            "inner_repeats": 256,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1668223,
+            "status": "ok",
+            "result_hash": "0x6e7adfa6ac5d6781",
+            "repeat_index": 2,
+            "peak_rss_kb": 68656,
+            "inner_repeats": 256,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1664267,
+            "status": "ok",
+            "result_hash": "0x6e7adfa6ac5d6781",
+            "repeat_index": 3,
+            "peak_rss_kb": 68656,
+            "inner_repeats": 256,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1678419,
+            "status": "ok",
+            "result_hash": "0x6e7adfa6ac5d6781",
+            "repeat_index": 4,
+            "peak_rss_kb": 68768,
+            "inner_repeats": 256,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x6e7adfa6ac5d6781",
+        "min_nanos": 6501,
+        "median_nanos": 6516,
+        "max_nanos": 6561,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.DenseInt.n3k1",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085652816,
+          "timestamp_iso": "2026-09-11T00:14:12Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085651532,
+      "timestamp_iso": "2026-09-11T00:14:11Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "DenseInt-n3k2": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 1445022,
+            "status": "ok",
+            "result_hash": "0x2f5bed75b64e3f6c",
+            "repeat_index": 0,
+            "peak_rss_kb": 68768,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1506183,
+            "status": "ok",
+            "result_hash": "0x2f5bed75b64e3f6c",
+            "repeat_index": 1,
+            "peak_rss_kb": 68816,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1520274,
+            "status": "ok",
+            "result_hash": "0x2f5bed75b64e3f6c",
+            "repeat_index": 2,
+            "peak_rss_kb": 68756,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1471933,
+            "status": "ok",
+            "result_hash": "0x2f5bed75b64e3f6c",
+            "repeat_index": 3,
+            "peak_rss_kb": 68300,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1457941,
+            "status": "ok",
+            "result_hash": "0x2f5bed75b64e3f6c",
+            "repeat_index": 4,
+            "peak_rss_kb": 68300,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x2f5bed75b64e3f6c",
+        "min_nanos": 722511,
+        "median_nanos": 735966,
+        "max_nanos": 760137,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyDenseInt.n3k2",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085654536,
+          "timestamp_iso": "2026-09-11T00:14:14Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 1132809,
+            "status": "ok",
+            "result_hash": "0x2f5bed75b64e3f6c",
+            "repeat_index": 0,
+            "peak_rss_kb": 68816,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1192127,
+            "status": "ok",
+            "result_hash": "0x2f5bed75b64e3f6c",
+            "repeat_index": 1,
+            "peak_rss_kb": 68036,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1171196,
+            "status": "ok",
+            "result_hash": "0x2f5bed75b64e3f6c",
+            "repeat_index": 2,
+            "peak_rss_kb": 68028,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1171277,
+            "status": "ok",
+            "result_hash": "0x2f5bed75b64e3f6c",
+            "repeat_index": 3,
+            "peak_rss_kb": 68164,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1123646,
+            "status": "ok",
+            "result_hash": "0x2f5bed75b64e3f6c",
+            "repeat_index": 4,
+            "peak_rss_kb": 68812,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x2f5bed75b64e3f6c",
+        "min_nanos": 8778,
+        "median_nanos": 9149,
+        "max_nanos": 9313,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.DenseInt.n3k2",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085655849,
+          "timestamp_iso": "2026-09-11T00:14:15Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085654536,
+      "timestamp_iso": "2026-09-11T00:14:14Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "DenseInt-n3k3": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 1426094,
+            "status": "ok",
+            "result_hash": "0xe09046958676fb3c",
+            "repeat_index": 0,
+            "peak_rss_kb": 68580,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1420176,
+            "status": "ok",
+            "result_hash": "0xe09046958676fb3c",
+            "repeat_index": 1,
+            "peak_rss_kb": 68752,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1424933,
+            "status": "ok",
+            "result_hash": "0xe09046958676fb3c",
+            "repeat_index": 2,
+            "peak_rss_kb": 68580,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1436219,
+            "status": "ok",
+            "result_hash": "0xe09046958676fb3c",
+            "repeat_index": 3,
+            "peak_rss_kb": 68116,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1448388,
+            "status": "ok",
+            "result_hash": "0xe09046958676fb3c",
+            "repeat_index": 4,
+            "peak_rss_kb": 69072,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0xe09046958676fb3c",
+        "min_nanos": 11095,
+        "median_nanos": 11141,
+        "max_nanos": 11315,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.DenseInt.n3k3",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085656079,
+          "timestamp_iso": "2026-09-11T00:14:16Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 1695113,
+            "status": "ok",
+            "result_hash": "0xe09046958676fb3c",
+            "repeat_index": 0,
+            "peak_rss_kb": 69256,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1704016,
+            "status": "ok",
+            "result_hash": "0xe09046958676fb3c",
+            "repeat_index": 1,
+            "peak_rss_kb": 69244,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1701002,
+            "status": "ok",
+            "result_hash": "0xe09046958676fb3c",
+            "repeat_index": 2,
+            "peak_rss_kb": 68724,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1723105,
+            "status": "ok",
+            "result_hash": "0xe09046958676fb3c",
+            "repeat_index": 3,
+            "peak_rss_kb": 68788,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1733520,
+            "status": "ok",
+            "result_hash": "0xe09046958676fb3c",
+            "repeat_index": 4,
+            "peak_rss_kb": 68788,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0xe09046958676fb3c",
+        "min_nanos": 847556,
+        "median_nanos": 852008,
+        "max_nanos": 866760,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyDenseInt.n3k3",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085656249,
+          "timestamp_iso": "2026-09-11T00:14:16Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085656079,
+      "timestamp_iso": "2026-09-11T00:14:16Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "DenseInt-n4k1": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 1914999,
+            "status": "ok",
+            "result_hash": "0xf19b20b0d9bc3bc3",
+            "repeat_index": 0,
+            "peak_rss_kb": 68984,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1943331,
+            "status": "ok",
+            "result_hash": "0xf19b20b0d9bc3bc3",
+            "repeat_index": 1,
+            "peak_rss_kb": 68816,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1962589,
+            "status": "ok",
+            "result_hash": "0xf19b20b0d9bc3bc3",
+            "repeat_index": 2,
+            "peak_rss_kb": 68296,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1942570,
+            "status": "ok",
+            "result_hash": "0xf19b20b0d9bc3bc3",
+            "repeat_index": 3,
+            "peak_rss_kb": 68588,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1988227,
+            "status": "ok",
+            "result_hash": "0xf19b20b0d9bc3bc3",
+            "repeat_index": 4,
+            "peak_rss_kb": 68636,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0xf19b20b0d9bc3bc3",
+        "min_nanos": 14960,
+        "median_nanos": 15182,
+        "max_nanos": 15533,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.DenseInt.n4k1",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085653038,
+          "timestamp_iso": "2026-09-11T00:14:13Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 1876442,
+            "status": "ok",
+            "result_hash": "0xf19b20b0d9bc3bc3",
+            "repeat_index": 0,
+            "peak_rss_kb": 68952,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1752168,
+            "status": "ok",
+            "result_hash": "0xf19b20b0d9bc3bc3",
+            "repeat_index": 1,
+            "peak_rss_kb": 68956,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1750615,
+            "status": "ok",
+            "result_hash": "0xf19b20b0d9bc3bc3",
+            "repeat_index": 2,
+            "peak_rss_kb": 69188,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1794540,
+            "status": "ok",
+            "result_hash": "0xf19b20b0d9bc3bc3",
+            "repeat_index": 3,
+            "peak_rss_kb": 68792,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1730285,
+            "status": "ok",
+            "result_hash": "0xf19b20b0d9bc3bc3",
+            "repeat_index": 4,
+            "peak_rss_kb": 68788,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0xf19b20b0d9bc3bc3",
+        "min_nanos": 1730285,
+        "median_nanos": 1752168,
+        "max_nanos": 1876442,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyDenseInt.n4k1",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085653212,
+          "timestamp_iso": "2026-09-11T00:14:13Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085653038,
+      "timestamp_iso": "2026-09-11T00:14:13Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "DenseMod-n2k1": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 1791716,
+            "status": "ok",
+            "result_hash": "0x2fc1bf7245f621c",
+            "repeat_index": 0,
+            "peak_rss_kb": 69092,
+            "inner_repeats": 512,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1784566,
+            "status": "ok",
+            "result_hash": "0x2fc1bf7245f621c",
+            "repeat_index": 1,
+            "peak_rss_kb": 68744,
+            "inner_repeats": 512,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1771857,
+            "status": "ok",
+            "result_hash": "0x2fc1bf7245f621c",
+            "repeat_index": 2,
+            "peak_rss_kb": 68764,
+            "inner_repeats": 512,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1857424,
+            "status": "ok",
+            "result_hash": "0x2fc1bf7245f621c",
+            "repeat_index": 3,
+            "peak_rss_kb": 68292,
+            "inner_repeats": 512,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1851395,
+            "status": "ok",
+            "result_hash": "0x2fc1bf7245f621c",
+            "repeat_index": 4,
+            "peak_rss_kb": 68588,
+            "inner_repeats": 512,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x2fc1bf7245f621c",
+        "min_nanos": 3460,
+        "median_nanos": 3499,
+        "max_nanos": 3627,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.DenseMod.n2k1",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085665272,
+          "timestamp_iso": "2026-09-11T00:14:25Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 1475007,
+            "status": "ok",
+            "result_hash": "0x2fc1bf7245f621c",
+            "repeat_index": 0,
+            "peak_rss_kb": 68464,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1496228,
+            "status": "ok",
+            "result_hash": "0x2fc1bf7245f621c",
+            "repeat_index": 1,
+            "peak_rss_kb": 68788,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1504590,
+            "status": "ok",
+            "result_hash": "0x2fc1bf7245f621c",
+            "repeat_index": 2,
+            "peak_rss_kb": 69252,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1670286,
+            "status": "ok",
+            "result_hash": "0x2fc1bf7245f621c",
+            "repeat_index": 3,
+            "peak_rss_kb": 68752,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1455608,
+            "status": "ok",
+            "result_hash": "0x2fc1bf7245f621c",
+            "repeat_index": 4,
+            "peak_rss_kb": 69288,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x2fc1bf7245f621c",
+        "min_nanos": 181951,
+        "median_nanos": 187028,
+        "max_nanos": 208785,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyDenseMod.n2k1",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085665448,
+          "timestamp_iso": "2026-09-11T00:14:25Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085665272,
+      "timestamp_iso": "2026-09-11T00:14:25Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "DenseMod-n3k1": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 1251095,
+            "status": "ok",
+            "result_hash": "0x9c5fd28e381166b2",
+            "repeat_index": 0,
+            "peak_rss_kb": 68788,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1231956,
+            "status": "ok",
+            "result_hash": "0x9c5fd28e381166b2",
+            "repeat_index": 1,
+            "peak_rss_kb": 68424,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1240058,
+            "status": "ok",
+            "result_hash": "0x9c5fd28e381166b2",
+            "repeat_index": 2,
+            "peak_rss_kb": 68520,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1230875,
+            "status": "ok",
+            "result_hash": "0x9c5fd28e381166b2",
+            "repeat_index": 3,
+            "peak_rss_kb": 69348,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1254219,
+            "status": "ok",
+            "result_hash": "0x9c5fd28e381166b2",
+            "repeat_index": 4,
+            "peak_rss_kb": 68540,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x9c5fd28e381166b2",
+        "min_nanos": 615437,
+        "median_nanos": 620029,
+        "max_nanos": 627109,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyDenseMod.n3k1",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085666806,
+          "timestamp_iso": "2026-09-11T00:14:26Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 1070207,
+            "status": "ok",
+            "result_hash": "0x9c5fd28e381166b2",
+            "repeat_index": 0,
+            "peak_rss_kb": 69140,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1058329,
+            "status": "ok",
+            "result_hash": "0x9c5fd28e381166b2",
+            "repeat_index": 1,
+            "peak_rss_kb": 68808,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1061584,
+            "status": "ok",
+            "result_hash": "0x9c5fd28e381166b2",
+            "repeat_index": 2,
+            "peak_rss_kb": 68312,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1064368,
+            "status": "ok",
+            "result_hash": "0x9c5fd28e381166b2",
+            "repeat_index": 3,
+            "peak_rss_kb": 69164,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1083046,
+            "status": "ok",
+            "result_hash": "0x9c5fd28e381166b2",
+            "repeat_index": 4,
+            "peak_rss_kb": 68140,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x9c5fd28e381166b2",
+        "min_nanos": 8268,
+        "median_nanos": 8315,
+        "max_nanos": 8461,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.DenseMod.n3k1",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085668070,
+          "timestamp_iso": "2026-09-11T00:14:28Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085666806,
+      "timestamp_iso": "2026-09-11T00:14:26Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "DenseMod-n3k2": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 1484090,
+            "status": "ok",
+            "result_hash": "0xad11ad957ece66d2",
+            "repeat_index": 0,
+            "peak_rss_kb": 68432,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1451562,
+            "status": "ok",
+            "result_hash": "0xad11ad957ece66d2",
+            "repeat_index": 1,
+            "peak_rss_kb": 69284,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1482128,
+            "status": "ok",
+            "result_hash": "0xad11ad957ece66d2",
+            "repeat_index": 2,
+            "peak_rss_kb": 68472,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1480975,
+            "status": "ok",
+            "result_hash": "0xad11ad957ece66d2",
+            "repeat_index": 3,
+            "peak_rss_kb": 68952,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1467305,
+            "status": "ok",
+            "result_hash": "0xad11ad957ece66d2",
+            "repeat_index": 4,
+            "peak_rss_kb": 68836,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0xad11ad957ece66d2",
+        "min_nanos": 725781,
+        "median_nanos": 740487,
+        "max_nanos": 742045,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyDenseMod.n3k2",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085669789,
+          "timestamp_iso": "2026-09-11T00:14:29Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 1454808,
+            "status": "ok",
+            "result_hash": "0xad11ad957ece66d2",
+            "repeat_index": 0,
+            "peak_rss_kb": 68168,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1425193,
+            "status": "ok",
+            "result_hash": "0xad11ad957ece66d2",
+            "repeat_index": 1,
+            "peak_rss_kb": 68800,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1454847,
+            "status": "ok",
+            "result_hash": "0xad11ad957ece66d2",
+            "repeat_index": 2,
+            "peak_rss_kb": 68644,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1467896,
+            "status": "ok",
+            "result_hash": "0xad11ad957ece66d2",
+            "repeat_index": 3,
+            "peak_rss_kb": 69092,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1445122,
+            "status": "ok",
+            "result_hash": "0xad11ad957ece66d2",
+            "repeat_index": 4,
+            "peak_rss_kb": 68544,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0xad11ad957ece66d2",
+        "min_nanos": 11134,
+        "median_nanos": 11365,
+        "max_nanos": 11467,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.DenseMod.n3k2",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085671037,
+          "timestamp_iso": "2026-09-11T00:14:31Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085669789,
+      "timestamp_iso": "2026-09-11T00:14:29Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "DenseMod-n3k3": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 1960547,
+            "status": "ok",
+            "result_hash": "0x65e4852a7ee18de3",
+            "repeat_index": 0,
+            "peak_rss_kb": 68168,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1942620,
+            "status": "ok",
+            "result_hash": "0x65e4852a7ee18de3",
+            "repeat_index": 1,
+            "peak_rss_kb": 68584,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1944453,
+            "status": "ok",
+            "result_hash": "0x65e4852a7ee18de3",
+            "repeat_index": 2,
+            "peak_rss_kb": 68556,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1943701,
+            "status": "ok",
+            "result_hash": "0x65e4852a7ee18de3",
+            "repeat_index": 3,
+            "peak_rss_kb": 68172,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1957061,
+            "status": "ok",
+            "result_hash": "0x65e4852a7ee18de3",
+            "repeat_index": 4,
+            "peak_rss_kb": 68644,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x65e4852a7ee18de3",
+        "min_nanos": 15176,
+        "median_nanos": 15191,
+        "max_nanos": 15316,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.DenseMod.n3k3",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085671270,
+          "timestamp_iso": "2026-09-11T00:14:31Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 1001124,
+            "status": "ok",
+            "result_hash": "0x65e4852a7ee18de3",
+            "repeat_index": 0,
+            "peak_rss_kb": 68792,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1716795,
+            "status": "ok",
+            "result_hash": "0x65e4852a7ee18de3",
+            "repeat_index": 1,
+            "peak_rss_kb": 68476,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1766088,
+            "status": "ok",
+            "result_hash": "0x65e4852a7ee18de3",
+            "repeat_index": 2,
+            "peak_rss_kb": 68476,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1757897,
+            "status": "ok",
+            "result_hash": "0x65e4852a7ee18de3",
+            "repeat_index": 3,
+            "peak_rss_kb": 68752,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1709124,
+            "status": "ok",
+            "result_hash": "0x65e4852a7ee18de3",
+            "repeat_index": 4,
+            "peak_rss_kb": 68684,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x65e4852a7ee18de3",
+        "min_nanos": 854562,
+        "median_nanos": 878948,
+        "max_nanos": 1001124,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyDenseMod.n3k3",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085671444,
+          "timestamp_iso": "2026-09-11T00:14:31Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085671270,
+      "timestamp_iso": "2026-09-11T00:14:31Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "DenseMod-n4k1": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 1195342,
+            "status": "ok",
+            "result_hash": "0x4f33efff6f68ca92",
+            "repeat_index": 0,
+            "peak_rss_kb": 68612,
+            "inner_repeats": 64,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1225597,
+            "status": "ok",
+            "result_hash": "0x4f33efff6f68ca92",
+            "repeat_index": 1,
+            "peak_rss_kb": 68516,
+            "inner_repeats": 64,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1184006,
+            "status": "ok",
+            "result_hash": "0x4f33efff6f68ca92",
+            "repeat_index": 2,
+            "peak_rss_kb": 68600,
+            "inner_repeats": 64,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1203004,
+            "status": "ok",
+            "result_hash": "0x4f33efff6f68ca92",
+            "repeat_index": 3,
+            "peak_rss_kb": 68248,
+            "inner_repeats": 64,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1212688,
+            "status": "ok",
+            "result_hash": "0x4f33efff6f68ca92",
+            "repeat_index": 4,
+            "peak_rss_kb": 68292,
+            "inner_repeats": 64,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x4f33efff6f68ca92",
+        "min_nanos": 18500,
+        "median_nanos": 18796,
+        "max_nanos": 19149,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.DenseMod.n4k1",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085668292,
+          "timestamp_iso": "2026-09-11T00:14:28Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 1784215,
+            "status": "ok",
+            "result_hash": "0x4f33efff6f68ca92",
+            "repeat_index": 0,
+            "peak_rss_kb": 68484,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1763374,
+            "status": "ok",
+            "result_hash": "0x4f33efff6f68ca92",
+            "repeat_index": 1,
+            "peak_rss_kb": 68768,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1784555,
+            "status": "ok",
+            "result_hash": "0x4f33efff6f68ca92",
+            "repeat_index": 2,
+            "peak_rss_kb": 68932,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1744025,
+            "status": "ok",
+            "result_hash": "0x4f33efff6f68ca92",
+            "repeat_index": 3,
+            "peak_rss_kb": 68300,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1747310,
+            "status": "ok",
+            "result_hash": "0x4f33efff6f68ca92",
+            "repeat_index": 4,
+            "peak_rss_kb": 68784,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x4f33efff6f68ca92",
+        "min_nanos": 1744025,
+        "median_nanos": 1763374,
+        "max_nanos": 1784555,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyDenseMod.n4k1",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085668457,
+          "timestamp_iso": "2026-09-11T00:14:28Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085668292,
+      "timestamp_iso": "2026-09-11T00:14:28Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "DenseRat-n2k1": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 1611880,
+            "status": "ok",
+            "result_hash": "0x7a86dac9e136bb2d",
+            "repeat_index": 0,
+            "peak_rss_kb": 68756,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1661954,
+            "status": "ok",
+            "result_hash": "0x7a86dac9e136bb2d",
+            "repeat_index": 1,
+            "peak_rss_kb": 68512,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1600533,
+            "status": "ok",
+            "result_hash": "0x7a86dac9e136bb2d",
+            "repeat_index": 2,
+            "peak_rss_kb": 68932,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1602325,
+            "status": "ok",
+            "result_hash": "0x7a86dac9e136bb2d",
+            "repeat_index": 3,
+            "peak_rss_kb": 68756,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1621574,
+            "status": "ok",
+            "result_hash": "0x7a86dac9e136bb2d",
+            "repeat_index": 4,
+            "peak_rss_kb": 68836,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x7a86dac9e136bb2d",
+        "min_nanos": 200066,
+        "median_nanos": 201485,
+        "max_nanos": 207744,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyDenseRat.n2k1",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085657624,
+          "timestamp_iso": "2026-09-11T00:14:17Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 1435748,
+            "status": "ok",
+            "result_hash": "0x7a86dac9e136bb2d",
+            "repeat_index": 0,
+            "peak_rss_kb": 68568,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1408548,
+            "status": "ok",
+            "result_hash": "0x7a86dac9e136bb2d",
+            "repeat_index": 1,
+            "peak_rss_kb": 69088,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1413235,
+            "status": "ok",
+            "result_hash": "0x7a86dac9e136bb2d",
+            "repeat_index": 2,
+            "peak_rss_kb": 68804,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1440195,
+            "status": "ok",
+            "result_hash": "0x7a86dac9e136bb2d",
+            "repeat_index": 3,
+            "peak_rss_kb": 68596,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1405915,
+            "status": "ok",
+            "result_hash": "0x7a86dac9e136bb2d",
+            "repeat_index": 4,
+            "peak_rss_kb": 69088,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x7a86dac9e136bb2d",
+        "min_nanos": 10983,
+        "median_nanos": 11040,
+        "max_nanos": 11251,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.DenseRat.n2k1",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085658874,
+          "timestamp_iso": "2026-09-11T00:14:18Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085657624,
+      "timestamp_iso": "2026-09-11T00:14:17Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "DenseRat-n3k1": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 1217816,
+            "status": "ok",
+            "result_hash": "0x74ce2d93a8bd613",
+            "repeat_index": 0,
+            "peak_rss_kb": 68628,
+            "inner_repeats": 32,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1221181,
+            "status": "ok",
+            "result_hash": "0x74ce2d93a8bd613",
+            "repeat_index": 1,
+            "peak_rss_kb": 68348,
+            "inner_repeats": 32,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1210965,
+            "status": "ok",
+            "result_hash": "0x74ce2d93a8bd613",
+            "repeat_index": 2,
+            "peak_rss_kb": 68532,
+            "inner_repeats": 32,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1257534,
+            "status": "ok",
+            "result_hash": "0x74ce2d93a8bd613",
+            "repeat_index": 3,
+            "peak_rss_kb": 68500,
+            "inner_repeats": 32,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1212568,
+            "status": "ok",
+            "result_hash": "0x74ce2d93a8bd613",
+            "repeat_index": 4,
+            "peak_rss_kb": 69092,
+            "inner_repeats": 32,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x74ce2d93a8bd613",
+        "min_nanos": 37842,
+        "median_nanos": 38056,
+        "max_nanos": 39297,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.DenseRat.n3k1",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085659102,
+          "timestamp_iso": "2026-09-11T00:14:19Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 1439485,
+            "status": "ok",
+            "result_hash": "0x74ce2d93a8bd613",
+            "repeat_index": 0,
+            "peak_rss_kb": 68872,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1470420,
+            "status": "ok",
+            "result_hash": "0x74ce2d93a8bd613",
+            "repeat_index": 1,
+            "peak_rss_kb": 68788,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1475918,
+            "status": "ok",
+            "result_hash": "0x74ce2d93a8bd613",
+            "repeat_index": 2,
+            "peak_rss_kb": 68796,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1466384,
+            "status": "ok",
+            "result_hash": "0x74ce2d93a8bd613",
+            "repeat_index": 3,
+            "peak_rss_kb": 68896,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1479894,
+            "status": "ok",
+            "result_hash": "0x74ce2d93a8bd613",
+            "repeat_index": 4,
+            "peak_rss_kb": 68796,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x74ce2d93a8bd613",
+        "min_nanos": 719742,
+        "median_nanos": 735210,
+        "max_nanos": 739947,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyDenseRat.n3k1",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085659263,
+          "timestamp_iso": "2026-09-11T00:14:19Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085659102,
+      "timestamp_iso": "2026-09-11T00:14:19Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "DenseRat-n3k2": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 1128663,
+            "status": "ok",
+            "result_hash": "0x7fd6114349aaec80",
+            "repeat_index": 0,
+            "peak_rss_kb": 68160,
+            "inner_repeats": 16,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1124167,
+            "status": "ok",
+            "result_hash": "0x7fd6114349aaec80",
+            "repeat_index": 1,
+            "peak_rss_kb": 68584,
+            "inner_repeats": 16,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1188943,
+            "status": "ok",
+            "result_hash": "0x7fd6114349aaec80",
+            "repeat_index": 2,
+            "peak_rss_kb": 68524,
+            "inner_repeats": 16,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1132539,
+            "status": "ok",
+            "result_hash": "0x7fd6114349aaec80",
+            "repeat_index": 3,
+            "peak_rss_kb": 68576,
+            "inner_repeats": 16,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1139159,
+            "status": "ok",
+            "result_hash": "0x7fd6114349aaec80",
+            "repeat_index": 4,
+            "peak_rss_kb": 68408,
+            "inner_repeats": 16,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x7fd6114349aaec80",
+        "min_nanos": 70260,
+        "median_nanos": 70783,
+        "max_nanos": 74308,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.DenseRat.n3k2",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085662138,
+          "timestamp_iso": "2026-09-11T00:14:22Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 1016497,
+            "status": "ok",
+            "result_hash": "0x7fd6114349aaec80",
+            "repeat_index": 0,
+            "peak_rss_kb": 68772,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1010628,
+            "status": "ok",
+            "result_hash": "0x7fd6114349aaec80",
+            "repeat_index": 1,
+            "peak_rss_kb": 68840,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1002426,
+            "status": "ok",
+            "result_hash": "0x7fd6114349aaec80",
+            "repeat_index": 2,
+            "peak_rss_kb": 68772,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1008736,
+            "status": "ok",
+            "result_hash": "0x7fd6114349aaec80",
+            "repeat_index": 3,
+            "peak_rss_kb": 69224,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1014694,
+            "status": "ok",
+            "result_hash": "0x7fd6114349aaec80",
+            "repeat_index": 4,
+            "peak_rss_kb": 68092,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x7fd6114349aaec80",
+        "min_nanos": 1002426,
+        "median_nanos": 1010628,
+        "max_nanos": 1016497,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyDenseRat.n3k2",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085662301,
+          "timestamp_iso": "2026-09-11T00:14:22Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085662138,
+      "timestamp_iso": "2026-09-11T00:14:22Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "DenseRat-n3k3": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 1224546,
+            "status": "ok",
+            "result_hash": "0x9bc0d7758e7bf091",
+            "repeat_index": 0,
+            "peak_rss_kb": 68424,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1215031,
+            "status": "ok",
+            "result_hash": "0x9bc0d7758e7bf091",
+            "repeat_index": 1,
+            "peak_rss_kb": 69276,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1219518,
+            "status": "ok",
+            "result_hash": "0x9bc0d7758e7bf091",
+            "repeat_index": 2,
+            "peak_rss_kb": 68944,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1241540,
+            "status": "ok",
+            "result_hash": "0x9bc0d7758e7bf091",
+            "repeat_index": 3,
+            "peak_rss_kb": 68312,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1202123,
+            "status": "ok",
+            "result_hash": "0x9bc0d7758e7bf091",
+            "repeat_index": 4,
+            "peak_rss_kb": 68848,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x9bc0d7758e7bf091",
+        "min_nanos": 1202123,
+        "median_nanos": 1219518,
+        "max_nanos": 1241540,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyDenseRat.n3k3",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085663786,
+          "timestamp_iso": "2026-09-11T00:14:23Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 1817694,
+            "status": "ok",
+            "result_hash": "0x9bc0d7758e7bf091",
+            "repeat_index": 0,
+            "peak_rss_kb": 68616,
+            "inner_repeats": 16,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1807119,
+            "status": "ok",
+            "result_hash": "0x9bc0d7758e7bf091",
+            "repeat_index": 1,
+            "peak_rss_kb": 68744,
+            "inner_repeats": 16,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1817033,
+            "status": "ok",
+            "result_hash": "0x9bc0d7758e7bf091",
+            "repeat_index": 2,
+            "peak_rss_kb": 68656,
+            "inner_repeats": 16,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1809042,
+            "status": "ok",
+            "result_hash": "0x9bc0d7758e7bf091",
+            "repeat_index": 3,
+            "peak_rss_kb": 68516,
+            "inner_repeats": 16,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1815311,
+            "status": "ok",
+            "result_hash": "0x9bc0d7758e7bf091",
+            "repeat_index": 4,
+            "peak_rss_kb": 69088,
+            "inner_repeats": 16,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x9bc0d7758e7bf091",
+        "min_nanos": 112944,
+        "median_nanos": 113456,
+        "max_nanos": 113605,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.DenseRat.n3k3",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085665044,
+          "timestamp_iso": "2026-09-11T00:14:25Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085663786,
+      "timestamp_iso": "2026-09-11T00:14:23Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "DenseRat-n4k1": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 2169316,
+            "status": "ok",
+            "result_hash": "0x44154c9b946edf76",
+            "repeat_index": 0,
+            "peak_rss_kb": 68432,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 2204127,
+            "status": "ok",
+            "result_hash": "0x44154c9b946edf76",
+            "repeat_index": 1,
+            "peak_rss_kb": 68380,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 2184409,
+            "status": "ok",
+            "result_hash": "0x44154c9b946edf76",
+            "repeat_index": 2,
+            "peak_rss_kb": 69296,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 2195315,
+            "status": "ok",
+            "result_hash": "0x44154c9b946edf76",
+            "repeat_index": 3,
+            "peak_rss_kb": 68720,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 2154715,
+            "status": "ok",
+            "result_hash": "0x44154c9b946edf76",
+            "repeat_index": 4,
+            "peak_rss_kb": 68892,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x44154c9b946edf76",
+        "min_nanos": 2154715,
+        "median_nanos": 2184409,
+        "max_nanos": 2204127,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyDenseRat.n4k1",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085660623,
+          "timestamp_iso": "2026-09-11T00:14:20Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 1960616,
+            "status": "ok",
+            "result_hash": "0x44154c9b946edf76",
+            "repeat_index": 0,
+            "peak_rss_kb": 69036,
+            "inner_repeats": 16,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1916231,
+            "status": "ok",
+            "result_hash": "0x44154c9b946edf76",
+            "repeat_index": 1,
+            "peak_rss_kb": 67880,
+            "inner_repeats": 16,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1940497,
+            "status": "ok",
+            "result_hash": "0x44154c9b946edf76",
+            "repeat_index": 2,
+            "peak_rss_kb": 68564,
+            "inner_repeats": 16,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1911794,
+            "status": "ok",
+            "result_hash": "0x44154c9b946edf76",
+            "repeat_index": 3,
+            "peak_rss_kb": 68336,
+            "inner_repeats": 16,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1909822,
+            "status": "ok",
+            "result_hash": "0x44154c9b946edf76",
+            "repeat_index": 4,
+            "peak_rss_kb": 68548,
+            "inner_repeats": 16,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x44154c9b946edf76",
+        "min_nanos": 119363,
+        "median_nanos": 119764,
+        "max_nanos": 122538,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.DenseRat.n4k1",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085661911,
+          "timestamp_iso": "2026-09-11T00:14:21Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085660623,
+      "timestamp_iso": "2026-09-11T00:14:20Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "MvInt-n2k2": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 1560804,
+            "status": "ok",
+            "result_hash": "0x688d3832b2ba0c01",
+            "repeat_index": 0,
+            "peak_rss_kb": 68916,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1587824,
+            "status": "ok",
+            "result_hash": "0x688d3832b2ba0c01",
+            "repeat_index": 1,
+            "peak_rss_kb": 68440,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1562907,
+            "status": "ok",
+            "result_hash": "0x688d3832b2ba0c01",
+            "repeat_index": 2,
+            "peak_rss_kb": 68696,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1573082,
+            "status": "ok",
+            "result_hash": "0x688d3832b2ba0c01",
+            "repeat_index": 3,
+            "peak_rss_kb": 68892,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1575526,
+            "status": "ok",
+            "result_hash": "0x688d3832b2ba0c01",
+            "repeat_index": 4,
+            "peak_rss_kb": 68940,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x688d3832b2ba0c01",
+        "min_nanos": 195100,
+        "median_nanos": 196635,
+        "max_nanos": 198478,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyMvInt.n2k2",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085672755,
+          "timestamp_iso": "2026-09-11T00:14:32Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 1225938,
+            "status": "ok",
+            "result_hash": "0x688d3832b2ba0c01",
+            "repeat_index": 0,
+            "peak_rss_kb": 68484,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1212758,
+            "status": "ok",
+            "result_hash": "0x688d3832b2ba0c01",
+            "repeat_index": 1,
+            "peak_rss_kb": 68804,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1224386,
+            "status": "ok",
+            "result_hash": "0x688d3832b2ba0c01",
+            "repeat_index": 2,
+            "peak_rss_kb": 68160,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1212167,
+            "status": "ok",
+            "result_hash": "0x688d3832b2ba0c01",
+            "repeat_index": 3,
+            "peak_rss_kb": 68356,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1208091,
+            "status": "ok",
+            "result_hash": "0x688d3832b2ba0c01",
+            "repeat_index": 4,
+            "peak_rss_kb": 68808,
+            "inner_repeats": 128,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x688d3832b2ba0c01",
+        "min_nanos": 9438,
+        "median_nanos": 9474,
+        "max_nanos": 9577,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.MvInt.n2k2",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085674045,
+          "timestamp_iso": "2026-09-11T00:14:34Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085672755,
+      "timestamp_iso": "2026-09-11T00:14:32Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "MvInt-n3k2": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 1131618,
+            "status": "ok",
+            "result_hash": "0xf5a5378e7b8cc14f",
+            "repeat_index": 0,
+            "peak_rss_kb": 68796,
+            "inner_repeats": 32,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1120441,
+            "status": "ok",
+            "result_hash": "0xf5a5378e7b8cc14f",
+            "repeat_index": 1,
+            "peak_rss_kb": 68692,
+            "inner_repeats": 32,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1164076,
+            "status": "ok",
+            "result_hash": "0xf5a5378e7b8cc14f",
+            "repeat_index": 2,
+            "peak_rss_kb": 68784,
+            "inner_repeats": 32,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1167722,
+            "status": "ok",
+            "result_hash": "0xf5a5378e7b8cc14f",
+            "repeat_index": 3,
+            "peak_rss_kb": 68360,
+            "inner_repeats": 32,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1150206,
+            "status": "ok",
+            "result_hash": "0xf5a5378e7b8cc14f",
+            "repeat_index": 4,
+            "peak_rss_kb": 68856,
+            "inner_repeats": 32,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0xf5a5378e7b8cc14f",
+        "min_nanos": 35013,
+        "median_nanos": 35943,
+        "max_nanos": 36491,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.MvInt.n3k2",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085674264,
+          "timestamp_iso": "2026-09-11T00:14:34Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 1302571,
+            "status": "ok",
+            "result_hash": "0xf5a5378e7b8cc14f",
+            "repeat_index": 0,
+            "peak_rss_kb": 68816,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1298395,
+            "status": "ok",
+            "result_hash": "0xf5a5378e7b8cc14f",
+            "repeat_index": 1,
+            "peak_rss_kb": 69288,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1311775,
+            "status": "ok",
+            "result_hash": "0xf5a5378e7b8cc14f",
+            "repeat_index": 2,
+            "peak_rss_kb": 68552,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1323071,
+            "status": "ok",
+            "result_hash": "0xf5a5378e7b8cc14f",
+            "repeat_index": 3,
+            "peak_rss_kb": 68780,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1328920,
+            "status": "ok",
+            "result_hash": "0xf5a5378e7b8cc14f",
+            "repeat_index": 4,
+            "peak_rss_kb": 68916,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0xf5a5378e7b8cc14f",
+        "min_nanos": 649197,
+        "median_nanos": 655887,
+        "max_nanos": 664460,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyMvInt.n3k2",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085674431,
+          "timestamp_iso": "2026-09-11T00:14:34Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085674264,
+      "timestamp_iso": "2026-09-11T00:14:34Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "MvInt-n3k4": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 1216243,
+            "status": "ok",
+            "result_hash": "0xb370527eb6f0fd5b",
+            "repeat_index": 0,
+            "peak_rss_kb": 68760,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1227540,
+            "status": "ok",
+            "result_hash": "0xb370527eb6f0fd5b",
+            "repeat_index": 1,
+            "peak_rss_kb": 68596,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1226218,
+            "status": "ok",
+            "result_hash": "0xb370527eb6f0fd5b",
+            "repeat_index": 2,
+            "peak_rss_kb": 68156,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1235902,
+            "status": "ok",
+            "result_hash": "0xb370527eb6f0fd5b",
+            "repeat_index": 3,
+            "peak_rss_kb": 68572,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1237615,
+            "status": "ok",
+            "result_hash": "0xb370527eb6f0fd5b",
+            "repeat_index": 4,
+            "peak_rss_kb": 68588,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0xb370527eb6f0fd5b",
+        "min_nanos": 152030,
+        "median_nanos": 153442,
+        "max_nanos": 154701,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.MvInt.n3k4",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085677311,
+          "timestamp_iso": "2026-09-11T00:14:37Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 1588596,
+            "status": "ok",
+            "result_hash": "0xb370527eb6f0fd5b",
+            "repeat_index": 0,
+            "peak_rss_kb": 68752,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1073241,
+            "status": "ok",
+            "result_hash": "0xb370527eb6f0fd5b",
+            "repeat_index": 1,
+            "peak_rss_kb": 68224,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1066772,
+            "status": "ok",
+            "result_hash": "0xb370527eb6f0fd5b",
+            "repeat_index": 2,
+            "peak_rss_kb": 68732,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1053722,
+            "status": "ok",
+            "result_hash": "0xb370527eb6f0fd5b",
+            "repeat_index": 3,
+            "peak_rss_kb": 68360,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1075905,
+            "status": "ok",
+            "result_hash": "0xb370527eb6f0fd5b",
+            "repeat_index": 4,
+            "peak_rss_kb": 68880,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0xb370527eb6f0fd5b",
+        "min_nanos": 1053722,
+        "median_nanos": 1073241,
+        "max_nanos": 1588596,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyMvInt.n3k4",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085677481,
+          "timestamp_iso": "2026-09-11T00:14:37Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085677311,
+      "timestamp_iso": "2026-09-11T00:14:37Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "MvInt-n3k6": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 1711387,
+            "status": "ok",
+            "result_hash": "0x172355612795008d",
+            "repeat_index": 0,
+            "peak_rss_kb": 68752,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1693221,
+            "status": "ok",
+            "result_hash": "0x172355612795008d",
+            "repeat_index": 1,
+            "peak_rss_kb": 68148,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1692480,
+            "status": "ok",
+            "result_hash": "0x172355612795008d",
+            "repeat_index": 2,
+            "peak_rss_kb": 68408,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1715193,
+            "status": "ok",
+            "result_hash": "0x172355612795008d",
+            "repeat_index": 3,
+            "peak_rss_kb": 69168,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1683185,
+            "status": "ok",
+            "result_hash": "0x172355612795008d",
+            "repeat_index": 4,
+            "peak_rss_kb": 68884,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x172355612795008d",
+        "min_nanos": 1683185,
+        "median_nanos": 1693221,
+        "max_nanos": 1715193,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyMvInt.n3k6",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085678810,
+          "timestamp_iso": "2026-09-11T00:14:38Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 1080813,
+            "status": "ok",
+            "result_hash": "0x172355612795008d",
+            "repeat_index": 0,
+            "peak_rss_kb": 68600,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1069135,
+            "status": "ok",
+            "result_hash": "0x172355612795008d",
+            "repeat_index": 1,
+            "peak_rss_kb": 68560,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1758427,
+            "status": "ok",
+            "result_hash": "0x172355612795008d",
+            "repeat_index": 2,
+            "peak_rss_kb": 68712,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1059431,
+            "status": "ok",
+            "result_hash": "0x172355612795008d",
+            "repeat_index": 3,
+            "peak_rss_kb": 68712,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1121633,
+            "status": "ok",
+            "result_hash": "0x172355612795008d",
+            "repeat_index": 4,
+            "peak_rss_kb": 68364,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x172355612795008d",
+        "min_nanos": 529715,
+        "median_nanos": 540406,
+        "max_nanos": 879213,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.MvInt.n3k6",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085680168,
+          "timestamp_iso": "2026-09-11T00:14:40Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085678810,
+      "timestamp_iso": "2026-09-11T00:14:38Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "MvInt-n4k2": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 1864755,
+            "status": "ok",
+            "result_hash": "0x485406f4932bff7b",
+            "repeat_index": 0,
+            "peak_rss_kb": 68920,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1894359,
+            "status": "ok",
+            "result_hash": "0x485406f4932bff7b",
+            "repeat_index": 1,
+            "peak_rss_kb": 68920,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1874409,
+            "status": "ok",
+            "result_hash": "0x485406f4932bff7b",
+            "repeat_index": 2,
+            "peak_rss_kb": 68716,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1922701,
+            "status": "ok",
+            "result_hash": "0x485406f4932bff7b",
+            "repeat_index": 3,
+            "peak_rss_kb": 69296,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1921799,
+            "status": "ok",
+            "result_hash": "0x485406f4932bff7b",
+            "repeat_index": 4,
+            "peak_rss_kb": 68912,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x485406f4932bff7b",
+        "min_nanos": 1864755,
+        "median_nanos": 1894359,
+        "max_nanos": 1922701,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyMvInt.n4k2",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085675743,
+          "timestamp_iso": "2026-09-11T00:14:35Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 1931914,
+            "status": "ok",
+            "result_hash": "0x485406f4932bff7b",
+            "repeat_index": 0,
+            "peak_rss_kb": 69156,
+            "inner_repeats": 16,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1948809,
+            "status": "ok",
+            "result_hash": "0x485406f4932bff7b",
+            "repeat_index": 1,
+            "peak_rss_kb": 69160,
+            "inner_repeats": 16,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1893227,
+            "status": "ok",
+            "result_hash": "0x485406f4932bff7b",
+            "repeat_index": 2,
+            "peak_rss_kb": 68868,
+            "inner_repeats": 16,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1958523,
+            "status": "ok",
+            "result_hash": "0x485406f4932bff7b",
+            "repeat_index": 3,
+            "peak_rss_kb": 68592,
+            "inner_repeats": 16,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1014484,
+            "status": "ok",
+            "result_hash": "0x485406f4932bff7b",
+            "repeat_index": 4,
+            "peak_rss_kb": 68584,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x485406f4932bff7b",
+        "min_nanos": 118326,
+        "median_nanos": 121800,
+        "max_nanos": 126810,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.MvInt.n4k2",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085677063,
+          "timestamp_iso": "2026-09-11T00:14:37Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085675743,
+      "timestamp_iso": "2026-09-11T00:14:35Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "MvRat-n2k2": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 1135293,
+            "status": "ok",
+            "result_hash": "0xa38533413791861",
+            "repeat_index": 0,
+            "peak_rss_kb": 69120,
+            "inner_repeats": 64,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1141633,
+            "status": "ok",
+            "result_hash": "0xa38533413791861",
+            "repeat_index": 1,
+            "peak_rss_kb": 68680,
+            "inner_repeats": 64,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1136666,
+            "status": "ok",
+            "result_hash": "0xa38533413791861",
+            "repeat_index": 2,
+            "peak_rss_kb": 68152,
+            "inner_repeats": 64,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1138388,
+            "status": "ok",
+            "result_hash": "0xa38533413791861",
+            "repeat_index": 3,
+            "peak_rss_kb": 69152,
+            "inner_repeats": 64,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1128463,
+            "status": "ok",
+            "result_hash": "0xa38533413791861",
+            "repeat_index": 4,
+            "peak_rss_kb": 68612,
+            "inner_repeats": 64,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0xa38533413791861",
+        "min_nanos": 17632,
+        "median_nanos": 17760,
+        "max_nanos": 17838,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.MvRat.n2k2",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085680396,
+          "timestamp_iso": "2026-09-11T00:14:40Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 1832738,
+            "status": "ok",
+            "result_hash": "0xa38533413791861",
+            "repeat_index": 0,
+            "peak_rss_kb": 68580,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1106260,
+            "status": "ok",
+            "result_hash": "0xa38533413791861",
+            "repeat_index": 1,
+            "peak_rss_kb": 68724,
+            "inner_repeats": 4,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1206379,
+            "status": "ok",
+            "result_hash": "0xa38533413791861",
+            "repeat_index": 2,
+            "peak_rss_kb": 68744,
+            "inner_repeats": 4,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1036987,
+            "status": "ok",
+            "result_hash": "0xa38533413791861",
+            "repeat_index": 3,
+            "peak_rss_kb": 68892,
+            "inner_repeats": 4,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1866978,
+            "status": "ok",
+            "result_hash": "0xa38533413791861",
+            "repeat_index": 4,
+            "peak_rss_kb": 68904,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0xa38533413791861",
+        "min_nanos": 229092,
+        "median_nanos": 259246,
+        "max_nanos": 301594,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyMvRat.n2k2",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085680565,
+          "timestamp_iso": "2026-09-11T00:14:40Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085680396,
+      "timestamp_iso": "2026-09-11T00:14:40Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "MvRat-n3k2": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 1588104,
+            "status": "ok",
+            "result_hash": "0xadb7d20d7e530aa2",
+            "repeat_index": 0,
+            "peak_rss_kb": 68412,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1578520,
+            "status": "ok",
+            "result_hash": "0xadb7d20d7e530aa2",
+            "repeat_index": 1,
+            "peak_rss_kb": 69364,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1563158,
+            "status": "ok",
+            "result_hash": "0xadb7d20d7e530aa2",
+            "repeat_index": 2,
+            "peak_rss_kb": 68920,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1552943,
+            "status": "ok",
+            "result_hash": "0xadb7d20d7e530aa2",
+            "repeat_index": 3,
+            "peak_rss_kb": 68856,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1557689,
+            "status": "ok",
+            "result_hash": "0xadb7d20d7e530aa2",
+            "repeat_index": 4,
+            "peak_rss_kb": 68812,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0xadb7d20d7e530aa2",
+        "min_nanos": 776471,
+        "median_nanos": 781579,
+        "max_nanos": 794052,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyMvRat.n3k2",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085681975,
+          "timestamp_iso": "2026-09-11T00:14:41Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 1114382,
+            "status": "ok",
+            "result_hash": "0xadb7d20d7e530aa2",
+            "repeat_index": 0,
+            "peak_rss_kb": 68532,
+            "inner_repeats": 16,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1085980,
+            "status": "ok",
+            "result_hash": "0xadb7d20d7e530aa2",
+            "repeat_index": 1,
+            "peak_rss_kb": 68152,
+            "inner_repeats": 16,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1081854,
+            "status": "ok",
+            "result_hash": "0xadb7d20d7e530aa2",
+            "repeat_index": 2,
+            "peak_rss_kb": 68608,
+            "inner_repeats": 16,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1088334,
+            "status": "ok",
+            "result_hash": "0xadb7d20d7e530aa2",
+            "repeat_index": 3,
+            "peak_rss_kb": 68152,
+            "inner_repeats": 16,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1129434,
+            "status": "ok",
+            "result_hash": "0xadb7d20d7e530aa2",
+            "repeat_index": 4,
+            "peak_rss_kb": 68876,
+            "inner_repeats": 16,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0xadb7d20d7e530aa2",
+        "min_nanos": 67615,
+        "median_nanos": 68020,
+        "max_nanos": 70589,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.MvRat.n3k2",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085683248,
+          "timestamp_iso": "2026-09-11T00:14:43Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085681975,
+      "timestamp_iso": "2026-09-11T00:14:41Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "MvRat-n3k4": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 1893077,
+            "status": "ok",
+            "result_hash": "0x176d55b5cc32b4ee",
+            "repeat_index": 0,
+            "peak_rss_kb": 68772,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1367808,
+            "status": "ok",
+            "result_hash": "0x176d55b5cc32b4ee",
+            "repeat_index": 1,
+            "peak_rss_kb": 68592,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1346957,
+            "status": "ok",
+            "result_hash": "0x176d55b5cc32b4ee",
+            "repeat_index": 2,
+            "peak_rss_kb": 68880,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1360457,
+            "status": "ok",
+            "result_hash": "0x176d55b5cc32b4ee",
+            "repeat_index": 3,
+            "peak_rss_kb": 68744,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1346747,
+            "status": "ok",
+            "result_hash": "0x176d55b5cc32b4ee",
+            "repeat_index": 4,
+            "peak_rss_kb": 68748,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x176d55b5cc32b4ee",
+        "min_nanos": 1346747,
+        "median_nanos": 1360457,
+        "max_nanos": 1893077,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyMvRat.n3k4",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085685057,
+          "timestamp_iso": "2026-09-11T00:14:45Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 1037368,
+            "status": "ok",
+            "result_hash": "0x176d55b5cc32b4ee",
+            "repeat_index": 0,
+            "peak_rss_kb": 68868,
+            "inner_repeats": 4,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1695463,
+            "status": "ok",
+            "result_hash": "0x176d55b5cc32b4ee",
+            "repeat_index": 1,
+            "peak_rss_kb": 68720,
+            "inner_repeats": 4,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1045009,
+            "status": "ok",
+            "result_hash": "0x176d55b5cc32b4ee",
+            "repeat_index": 2,
+            "peak_rss_kb": 68808,
+            "inner_repeats": 4,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1048004,
+            "status": "ok",
+            "result_hash": "0x176d55b5cc32b4ee",
+            "repeat_index": 3,
+            "peak_rss_kb": 68584,
+            "inner_repeats": 4,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1060603,
+            "status": "ok",
+            "result_hash": "0x176d55b5cc32b4ee",
+            "repeat_index": 4,
+            "peak_rss_kb": 68548,
+            "inner_repeats": 4,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x176d55b5cc32b4ee",
+        "min_nanos": 259342,
+        "median_nanos": 262001,
+        "max_nanos": 423865,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.MvRat.n3k4",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085686337,
+          "timestamp_iso": "2026-09-11T00:14:46Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085685057,
+      "timestamp_iso": "2026-09-11T00:14:45Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "MvRat-n3k6": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 1863393,
+            "status": "ok",
+            "result_hash": "0xd9eb0f0258b93cd3",
+            "repeat_index": 0,
+            "peak_rss_kb": 68716,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1592381,
+            "status": "ok",
+            "result_hash": "0xd9eb0f0258b93cd3",
+            "repeat_index": 1,
+            "peak_rss_kb": 68600,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1583037,
+            "status": "ok",
+            "result_hash": "0xd9eb0f0258b93cd3",
+            "repeat_index": 2,
+            "peak_rss_kb": 68716,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1541585,
+            "status": "ok",
+            "result_hash": "0xd9eb0f0258b93cd3",
+            "repeat_index": 3,
+            "peak_rss_kb": 68872,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1618390,
+            "status": "ok",
+            "result_hash": "0xd9eb0f0258b93cd3",
+            "repeat_index": 4,
+            "peak_rss_kb": 68612,
+            "inner_repeats": 2,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0xd9eb0f0258b93cd3",
+        "min_nanos": 770792,
+        "median_nanos": 796190,
+        "max_nanos": 931696,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.MvRat.n3k6",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085686559,
+          "timestamp_iso": "2026-09-11T00:14:46Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 2451895,
+            "status": "ok",
+            "result_hash": "0xd9eb0f0258b93cd3",
+            "repeat_index": 0,
+            "peak_rss_kb": 68364,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 2497563,
+            "status": "ok",
+            "result_hash": "0xd9eb0f0258b93cd3",
+            "repeat_index": 1,
+            "peak_rss_kb": 68820,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 2417654,
+            "status": "ok",
+            "result_hash": "0xd9eb0f0258b93cd3",
+            "repeat_index": 2,
+            "peak_rss_kb": 68224,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 2433969,
+            "status": "ok",
+            "result_hash": "0xd9eb0f0258b93cd3",
+            "repeat_index": 3,
+            "peak_rss_kb": 68228,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 2481239,
+            "status": "ok",
+            "result_hash": "0xd9eb0f0258b93cd3",
+            "repeat_index": 4,
+            "peak_rss_kb": 68788,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0xd9eb0f0258b93cd3",
+        "min_nanos": 2417654,
+        "median_nanos": 2451895,
+        "max_nanos": 2497563,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyMvRat.n3k6",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085686732,
+          "timestamp_iso": "2026-09-11T00:14:46Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085686559,
+      "timestamp_iso": "2026-09-11T00:14:46Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "MvRat-n4k2": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 1856011,
+            "status": "ok",
+            "result_hash": "0x4a58639a0b402bcb",
+            "repeat_index": 0,
+            "peak_rss_kb": 68356,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1839738,
+            "status": "ok",
+            "result_hash": "0x4a58639a0b402bcb",
+            "repeat_index": 1,
+            "peak_rss_kb": 69164,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1837645,
+            "status": "ok",
+            "result_hash": "0x4a58639a0b402bcb",
+            "repeat_index": 2,
+            "peak_rss_kb": 68488,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1842882,
+            "status": "ok",
+            "result_hash": "0x4a58639a0b402bcb",
+            "repeat_index": 3,
+            "peak_rss_kb": 68656,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1842352,
+            "status": "ok",
+            "result_hash": "0x4a58639a0b402bcb",
+            "repeat_index": 4,
+            "peak_rss_kb": 68636,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x4a58639a0b402bcb",
+        "min_nanos": 229705,
+        "median_nanos": 230294,
+        "max_nanos": 232001,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.MvRat.n4k2",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085683467,
+          "timestamp_iso": "2026-09-11T00:14:43Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 2318557,
+            "status": "ok",
+            "result_hash": "0x4a58639a0b402bcb",
+            "repeat_index": 0,
+            "peak_rss_kb": 68916,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 2278017,
+            "status": "ok",
+            "result_hash": "0x4a58639a0b402bcb",
+            "repeat_index": 1,
+            "peak_rss_kb": 68944,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 2302884,
+            "status": "ok",
+            "result_hash": "0x4a58639a0b402bcb",
+            "repeat_index": 2,
+            "peak_rss_kb": 68428,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 2313209,
+            "status": "ok",
+            "result_hash": "0x4a58639a0b402bcb",
+            "repeat_index": 3,
+            "peak_rss_kb": 68752,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 2312278,
+            "status": "ok",
+            "result_hash": "0x4a58639a0b402bcb",
+            "repeat_index": 4,
+            "peak_rss_kb": 68372,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x4a58639a0b402bcb",
+        "min_nanos": 2278017,
+        "median_nanos": 2312278,
+        "max_nanos": 2318557,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyMvRat.n4k2",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085683644,
+          "timestamp_iso": "2026-09-11T00:14:43Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085683467,
+      "timestamp_iso": "2026-09-11T00:14:43Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "RatFn-n2k1": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 1694262,
+            "status": "ok",
+            "result_hash": "0x13995b70b4091168",
+            "repeat_index": 0,
+            "peak_rss_kb": 68320,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1701803,
+            "status": "ok",
+            "result_hash": "0x13995b70b4091168",
+            "repeat_index": 1,
+            "peak_rss_kb": 68768,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1725538,
+            "status": "ok",
+            "result_hash": "0x13995b70b4091168",
+            "repeat_index": 2,
+            "peak_rss_kb": 68724,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1761581,
+            "status": "ok",
+            "result_hash": "0x13995b70b4091168",
+            "repeat_index": 3,
+            "peak_rss_kb": 68476,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1721011,
+            "status": "ok",
+            "result_hash": "0x13995b70b4091168",
+            "repeat_index": 4,
+            "peak_rss_kb": 68328,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x13995b70b4091168",
+        "min_nanos": 1694262,
+        "median_nanos": 1721011,
+        "max_nanos": 1761581,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyRatFn.n2k1",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085688107,
+          "timestamp_iso": "2026-09-11T00:14:48Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 1738257,
+            "status": "ok",
+            "result_hash": "0x13995b70b4091168",
+            "repeat_index": 0,
+            "peak_rss_kb": 68660,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1738457,
+            "status": "ok",
+            "result_hash": "0x13995b70b4091168",
+            "repeat_index": 1,
+            "peak_rss_kb": 68232,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1724868,
+            "status": "ok",
+            "result_hash": "0x13995b70b4091168",
+            "repeat_index": 2,
+            "peak_rss_kb": 68472,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1757536,
+            "status": "ok",
+            "result_hash": "0x13995b70b4091168",
+            "repeat_index": 3,
+            "peak_rss_kb": 68556,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1745828,
+            "status": "ok",
+            "result_hash": "0x13995b70b4091168",
+            "repeat_index": 4,
+            "peak_rss_kb": 68616,
+            "inner_repeats": 8,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x13995b70b4091168",
+        "min_nanos": 215608,
+        "median_nanos": 217307,
+        "max_nanos": 219692,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.RatFn.n2k1",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085689393,
+          "timestamp_iso": "2026-09-11T00:14:49Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085688107,
+      "timestamp_iso": "2026-09-11T00:14:48Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "RatFn-n3k1": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 1960627,
+            "status": "ok",
+            "result_hash": "0xe55740a98f9879c8",
+            "repeat_index": 0,
+            "peak_rss_kb": 68200,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1944443,
+            "status": "ok",
+            "result_hash": "0xe55740a98f9879c8",
+            "repeat_index": 1,
+            "peak_rss_kb": 68696,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 5903383,
+            "status": "ok",
+            "result_hash": "0xe55740a98f9879c8",
+            "repeat_index": 2,
+            "peak_rss_kb": 68472,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 15980803,
+            "status": "ok",
+            "result_hash": "0xe55740a98f9879c8",
+            "repeat_index": 3,
+            "peak_rss_kb": 68748,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 1962269,
+            "status": "ok",
+            "result_hash": "0xe55740a98f9879c8",
+            "repeat_index": 4,
+            "peak_rss_kb": 68552,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0xe55740a98f9879c8",
+        "min_nanos": 1944443,
+        "median_nanos": 1962269,
+        "max_nanos": 15980803,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.RatFn.n3k1",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085689643,
+          "timestamp_iso": "2026-09-11T00:14:49Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 9405394,
+            "status": "ok",
+            "result_hash": "0xe55740a98f9879c8",
+            "repeat_index": 0,
+            "peak_rss_kb": 68792,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 9590778,
+            "status": "ok",
+            "result_hash": "0xe55740a98f9879c8",
+            "repeat_index": 1,
+            "peak_rss_kb": 68752,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 9580454,
+            "status": "ok",
+            "result_hash": "0xe55740a98f9879c8",
+            "repeat_index": 2,
+            "peak_rss_kb": 69284,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 9510069,
+            "status": "ok",
+            "result_hash": "0xe55740a98f9879c8",
+            "repeat_index": 3,
+            "peak_rss_kb": 68708,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 9448137,
+            "status": "ok",
+            "result_hash": "0xe55740a98f9879c8",
+            "repeat_index": 4,
+            "peak_rss_kb": 68424,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0xe55740a98f9879c8",
+        "min_nanos": 9405394,
+        "median_nanos": 9510069,
+        "max_nanos": 9590778,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyRatFn.n3k1",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085690059,
+          "timestamp_iso": "2026-09-11T00:14:50Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085689643,
+      "timestamp_iso": "2026-09-11T00:14:49Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "RatFn-n3k2": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 7688169,
+            "status": "ok",
+            "result_hash": "0xb2a86a7e7b105934",
+            "repeat_index": 0,
+            "peak_rss_kb": 68116,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 7718613,
+            "status": "ok",
+            "result_hash": "0xb2a86a7e7b105934",
+            "repeat_index": 1,
+            "peak_rss_kb": 68732,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 7669490,
+            "status": "ok",
+            "result_hash": "0xb2a86a7e7b105934",
+            "repeat_index": 2,
+            "peak_rss_kb": 69132,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 7723931,
+            "status": "ok",
+            "result_hash": "0xb2a86a7e7b105934",
+            "repeat_index": 3,
+            "peak_rss_kb": 68652,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 7659596,
+            "status": "ok",
+            "result_hash": "0xb2a86a7e7b105934",
+            "repeat_index": 4,
+            "peak_rss_kb": 69128,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0xb2a86a7e7b105934",
+        "min_nanos": 7659596,
+        "median_nanos": 7688169,
+        "max_nanos": 7723931,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.RatFn.n3k2",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085694096,
+          "timestamp_iso": "2026-09-11T00:14:54Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 11314815,
+            "status": "ok",
+            "result_hash": "0xb2a86a7e7b105934",
+            "repeat_index": 0,
+            "peak_rss_kb": 68792,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 12517308,
+            "status": "ok",
+            "result_hash": "0xb2a86a7e7b105934",
+            "repeat_index": 1,
+            "peak_rss_kb": 68476,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 11246634,
+            "status": "ok",
+            "result_hash": "0xb2a86a7e7b105934",
+            "repeat_index": 2,
+            "peak_rss_kb": 68764,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 90932923,
+            "status": "ok",
+            "result_hash": "0xb2a86a7e7b105934",
+            "repeat_index": 3,
+            "peak_rss_kb": 68748,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 11253114,
+            "status": "ok",
+            "result_hash": "0xb2a86a7e7b105934",
+            "repeat_index": 4,
+            "peak_rss_kb": 68836,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0xb2a86a7e7b105934",
+        "min_nanos": 11246634,
+        "median_nanos": 11314815,
+        "max_nanos": 90932923,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyRatFn.n3k2",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085694340,
+          "timestamp_iso": "2026-09-11T00:14:54Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085694096,
+      "timestamp_iso": "2026-09-11T00:14:54Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "RatFn-n3k3": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 14086504,
+            "status": "ok",
+            "result_hash": "0x83dfcd485a63b026",
+            "repeat_index": 0,
+            "peak_rss_kb": 68948,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 14067646,
+            "status": "ok",
+            "result_hash": "0x83dfcd485a63b026",
+            "repeat_index": 1,
+            "peak_rss_kb": 68436,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 13674944,
+            "status": "ok",
+            "result_hash": "0x83dfcd485a63b026",
+            "repeat_index": 2,
+            "peak_rss_kb": 68900,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 17794702,
+            "status": "ok",
+            "result_hash": "0x83dfcd485a63b026",
+            "repeat_index": 3,
+            "peak_rss_kb": 68612,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 13728293,
+            "status": "ok",
+            "result_hash": "0x83dfcd485a63b026",
+            "repeat_index": 4,
+            "peak_rss_kb": 68556,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x83dfcd485a63b026",
+        "min_nanos": 13674944,
+        "median_nanos": 14067646,
+        "max_nanos": 17794702,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyRatFn.n3k3",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085696607,
+          "timestamp_iso": "2026-09-11T00:14:56Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 26432397,
+            "status": "ok",
+            "result_hash": "0x83dfcd485a63b026",
+            "repeat_index": 0,
+            "peak_rss_kb": 68688,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 26339680,
+            "status": "ok",
+            "result_hash": "0x83dfcd485a63b026",
+            "repeat_index": 1,
+            "peak_rss_kb": 68708,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 29008918,
+            "status": "ok",
+            "result_hash": "0x83dfcd485a63b026",
+            "repeat_index": 2,
+            "peak_rss_kb": 69280,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 26263698,
+            "status": "ok",
+            "result_hash": "0x83dfcd485a63b026",
+            "repeat_index": 3,
+            "peak_rss_kb": 68432,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 26273022,
+            "status": "ok",
+            "result_hash": "0x83dfcd485a63b026",
+            "repeat_index": 4,
+            "peak_rss_kb": 68932,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x83dfcd485a63b026",
+        "min_nanos": 26263698,
+        "median_nanos": 26339680,
+        "max_nanos": 29008918,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.RatFn.n3k3",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085698076,
+          "timestamp_iso": "2026-09-11T00:14:58Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085696607,
+      "timestamp_iso": "2026-09-11T00:14:56Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  },
+  "RatFn-n4k1": {
+    "results": [
+      {
+        "points": [
+          {
+            "total_nanos": 44682114,
+            "status": "ok",
+            "result_hash": "0x5766b661d591e5d5",
+            "repeat_index": 0,
+            "peak_rss_kb": 68484,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 45792239,
+            "status": "ok",
+            "result_hash": "0x5766b661d591e5d5",
+            "repeat_index": 1,
+            "peak_rss_kb": 68752,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 45685302,
+            "status": "ok",
+            "result_hash": "0x5766b661d591e5d5",
+            "repeat_index": 2,
+            "peak_rss_kb": 68192,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 49279910,
+            "status": "ok",
+            "result_hash": "0x5766b661d591e5d5",
+            "repeat_index": 3,
+            "peak_rss_kb": 68792,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 45044471,
+            "status": "ok",
+            "result_hash": "0x5766b661d591e5d5",
+            "repeat_index": 4,
+            "peak_rss_kb": 68728,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x5766b661d591e5d5",
+        "min_nanos": 44682114,
+        "median_nanos": 45685302,
+        "max_nanos": 49279910,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.SympyRatFn.n4k1",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085691547,
+          "timestamp_iso": "2026-09-11T00:14:51Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      },
+      {
+        "points": [
+          {
+            "total_nanos": 36285124,
+            "status": "ok",
+            "result_hash": "0x5766b661d591e5d5",
+            "repeat_index": 0,
+            "peak_rss_kb": 68688,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 36203033,
+            "status": "ok",
+            "result_hash": "0x5766b661d591e5d5",
+            "repeat_index": 1,
+            "peak_rss_kb": 69216,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 36047282,
+            "status": "ok",
+            "result_hash": "0x5766b661d591e5d5",
+            "repeat_index": 2,
+            "peak_rss_kb": 68356,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 36316021,
+            "status": "ok",
+            "result_hash": "0x5766b661d591e5d5",
+            "repeat_index": 3,
+            "peak_rss_kb": 68868,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          },
+          {
+            "total_nanos": 36029656,
+            "status": "ok",
+            "result_hash": "0x5766b661d591e5d5",
+            "repeat_index": 4,
+            "peak_rss_kb": 68836,
+            "inner_repeats": 1,
+            "error": null,
+            "alloc_bytes": null
+          }
+        ],
+        "observed_hash": "0x5766b661d591e5d5",
+        "min_nanos": 36029656,
+        "median_nanos": 36203033,
+        "max_nanos": 36316021,
+        "kind": "fixed",
+        "hashes_agree": true,
+        "hashable": true,
+        "function": "Hex.CharPolyBench.RatFn.n4k1",
+        "expected_hash_check": {
+          "status": "unset"
+        },
+        "env": {
+          "timestamp_unix_ms": 1789085693437,
+          "timestamp_iso": "2026-09-11T00:14:53Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+          "exe_name": "hexcharpoly_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        },
+        "config": {
+          "warmup_first_iter": true,
+          "warmup": true,
+          "repeats": 5,
+          "min_total_seconds": 0.001,
+          "max_seconds_per_call": 30,
+          "expected_hash": null
+        },
+        "budget_truncated": false
+      }
+    ],
+    "lean_bench_version": "0.1.0",
+    "export_schema_version": 1,
+    "env": {
+      "timestamp_unix_ms": 1789085691547,
+      "timestamp_iso": "2026-09-11T00:14:51Z",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "os": "linux",
+      "lean_version": "4.34.0-rc2",
+      "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+      "lean_bench_version": "0.1.0",
+      "hostname": "chungus2",
+      "git_dirty": true,
+      "git_commit": "2a8fb0c7a0b889af2218df2f455cebd09fc4126b",
+      "exe_name": "hexcharpoly_bench",
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "cpu_cores": 96,
+      "arch": "x86_64"
+    }
+  }
+}

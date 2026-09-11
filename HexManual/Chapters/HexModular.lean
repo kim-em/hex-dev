@@ -105,6 +105,10 @@ strict uniqueness bound, every admissible rational is found.
 
 {docstring Hex.Modular.ratReconVec?}
 
+{docstring Hex.Modular.ratReconVec?_spec}
+
+{docstring Hex.Modular.ratReconVec?_complete}
+
 The maximal-quotient variant is intentionally heuristic. Its theorem promises
 only the checked modular congruence, not recovery of a preferred rational.
 

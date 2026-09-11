@@ -403,6 +403,30 @@ libraries:
     mathlib: false
     done_through: 0
     status: active
+    phase4:
+      comparators:
+        - tool: "FLINT fmpz_mat.charpoly via python-flint"
+          class: informational
+          rationale: "The existing integer random-dense fixed rungs compare FLINT's selected characteristic-polynomial routine with Berkowitz."
+        - tool: "PARI charpoly flag 3 via cypari2"
+          class: informational
+          rationale: "The existing integer random-dense fixed rungs compare PARI's Berkowitz implementation through the persistent driver."
+        - tool: "SymPy DomainMatrix.det (Bareiss) on tI-A"
+          class: informational
+          rationale: "Exact symbolic determinant over the identical coefficient carrier, independent of Berkowitz. Persistent-subprocess fixed rungs are scheduled-only; structural-growth instrumentation is included in the Hex timing."
+      input_families:
+        - name: random-dense-charpoly
+          description: "Existing dense integer dimension and entry-bit-width ladders, with peak intermediate coefficient bit sizes."
+        - name: tridiagonal-charpoly
+          description: "Existing tridiagonal integer dimension ladder with small entries."
+        - name: structured-charpoly
+          description: "Existing companion and Jordan dimension ladder checked against closed-form characteristic polynomials."
+        - name: dense-polynomial-charpoly
+          description: "runCharDenseInt, runCharDenseRat, runCharDenseMod sweep dimension 2/3/4 at degree 1 and degree 1/2/3 at dimension 3; maximum stored coefficient-array size is observed."
+        - name: multivariate-charpoly
+          description: "runCharMvInt and runCharMvRat sweep dimension 2/3/4 at two terms and term count 2/4/6 at dimension 3, with arity three and total degree five fixed; maximum canonical term count is observed."
+        - name: rational-function-charpoly
+          description: "runCharRatFn sweeps dimension 2/3/4 at numerator/denominator degree 1 and degree 1/2/3 at dimension 3; maximum sum of canonical numerator/denominator sizes is observed."
   HexMatrixTactic:
     deps: [HexMatrix, HexBareiss, HexRowReduce, HexCharPoly, HexRank]
     mathlib: false
