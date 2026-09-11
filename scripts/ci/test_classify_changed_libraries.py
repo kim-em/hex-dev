@@ -82,7 +82,10 @@ class ClassifyChangedLibrariesTests(unittest.TestCase):
     def test_live_oracle_registry_uses_library_owners(self) -> None:
         owners = load_oracle_owners()
         self.assertEqual(owners["scripts/oracle/roots_flint.py"], {"HexRoots"})
-        self.assertEqual(owners["scripts/oracle/matrix_carriers.py"], {"HexBareiss", "HexDeterminant", "HexCharPoly"})
+        self.assertEqual(
+            owners["scripts/oracle/matrix_carriers.py"],
+            {"HexBareiss", "HexDeterminant", "HexCharPoly", "HexDet"},
+        )
 
 
 if __name__ == "__main__":

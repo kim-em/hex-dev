@@ -1,0 +1,6 @@
+{
+  "path": "Hex/Conformance/Emit.lean",
+  "baseline_blob": "c271079bd9b688c504bdd9c4fd0b9a933ec22aad",
+  "current_blob": "72248c7c8ebf4bdb1ce351623fc42e0ac783747f",
+  "reason": "Adds the rational- and residue-matrix fixture record emitters and their JSON serializers for the new HexDet oracle streams. Every addition is a new declaration in the conformance emit helper library; no existing declaration, compiler rule or fixture shape changes. Hex.Conformance.Emit is a fixture-writing module used only by the *_emit_fixtures executables, and is not in the integer-factorization service call graph, so this transition is runtime-neutral for the retained factorization sweep."
+}
