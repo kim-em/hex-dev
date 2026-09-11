@@ -180,7 +180,7 @@ theorem rankCertWith_check (A : Hex.Matrix R n m) :
     Hex.Matrix.checkRank A (Hex.Matrix.rankCertWith quot A) = true
 theorem rankWith_eq (A : Hex.Matrix R n m) :
     Hex.Matrix.rankWith quot A = (e A).rank
-theorem rank_eq (A : Hex.Matrix Int n m) :
+theorem rank_eq_rank (A : Hex.Matrix Int n m) :
     Hex.Matrix.rank A = (e A).rank
 theorem exists_rankCert [CommRing R] [IsDomain R] [DecidableEq R] (A : Hex.Matrix R n m) :
     ∃ c : Hex.Matrix.RankCert R n m, Hex.Matrix.checkRank A c = true
@@ -226,7 +226,7 @@ rows are zero" clause of the first pass, read as
 `p • A[i, :] = A[i, cols] * (B.adjugate * P)`.
 
 `rankWith_eq` is `rankCertWith_check` composed with `checkRank_sound`, and
-`rank_eq` is its instance at `quot := HexArith.Int.exactDiv`,
+`rank_eq_rank` is its instance at `quot := HexArith.Int.exactDiv`,
 `hquot := Int.mul_ediv_cancel`.
 
 ### The rank profile
@@ -259,7 +259,7 @@ the chosen pivot row at each step is the least-index non-pivot row with a
 nonzero eliminated entry, and every smaller-index non-pivot row with a
 nonzero eliminated entry would have been chosen first, so the chosen row
 is not in the span of the rows before it. Neither theorem is needed for
-`rank_eq`; they are what makes `rankProfileWith` an API rather than an
+`rank_eq_rank`; they are what makes `rankProfileWith` an API rather than an
 implementation detail.
 
 ## Relation to `Echelon.Decomposition`
@@ -497,7 +497,7 @@ rank theory.
 instance (A : Matrix (Fin n) (Fin m) ℤ) (r : Nat) : Decidable (A.rank = r)
 ```
 
-by `rank_eq` at `e.symm A`, in the style of hex-berlekamp-mathlib's
+by `rank_eq_rank` at `e.symm A`, in the style of hex-berlekamp-mathlib's
 `Decidable (Irreducible f)`. This is the instance
 [hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md) planned for its `rank`, now
 supplied here with the direct algorithm; the multi-modular route may
@@ -556,7 +556,7 @@ An implementer must re-run these searches when the Mathlib pin moves.
 - `checkRank_sound` on a closed `Hex.Matrix ℤ 3 4` of rank `2` with a
   hand-written certificate, the check discharged by `decide +kernel`,
   concluding `(e A).rank = 2`;
-- `rank_eq` on the same matrix through `Hex.Matrix.rank`, and the
+- `rank_eq_rank` on the same matrix through `Hex.Matrix.rank`, and the
   `Decidable (A.rank = r)` instance on its Mathlib form by `decide`;
 - `rank_map_eq` instantiated at `IsFractionRing ℤ ℚ` and at
   `IsFractionRing ℚ[X] (RatFunc ℚ)`, to check the instances resolve

@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import VersoManual
 
 import HexCharPolyMathlib
+import HexMatrixTacticMathlib
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -141,8 +142,8 @@ The explicit tactic form introduces a transparent `poly` local
 definition and a `charPoly_eq` hypothesis. This is useful when the
 computed polynomial is an intermediate fact rather than the goal.
 
-Importing `HexCharPolyMathlib` adds the same interface for a closed
-`Matrix (Fin n) (Fin n) Int`. Direct goals use ordinary Mathlib
+The frontend lives in `HexMatrixTactic`; importing `HexMatrixTacticMathlib`
+adds the same interface for a closed `Matrix (Fin n) (Fin n) Int`. Direct goals use ordinary Mathlib
 polynomial notation.
 
 ```lean

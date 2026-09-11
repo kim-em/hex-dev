@@ -73,7 +73,7 @@ hex-mv-poly ──┘
 
 The direction is deliberate. For example, the future `HexMatrixReflect`
 symbolic extension of
-[hex-matrix-tactic](hex-matrix-tactic.md) depends on `hex-reflect`, while the
+[hex-matrix-tactic](../../HexMatrixTactic/SPEC/hex-matrix-tactic.md) depends on `hex-reflect`, while the
 numeric frontend remains independent of reflection. `hex-reflect` does not
 know about matrices.
 
@@ -551,7 +551,7 @@ characteristic-polynomial, gcd, or factorization algorithm.
 
 The first symbolic consumers are the `det` and `char_poly` providers in
 `HexMatrixReflect`, the future downstream symbolic extension of
-[hex-matrix-tactic](hex-matrix-tactic.md). They reify all entries in one batch, run the
+[hex-matrix-tactic](../../HexMatrixTactic/SPEC/hex-matrix-tactic.md). They reify all entries in one batch, run the
 existing verified matrix algorithm over `Hex.MvPoly`, and interpret the result
 through this library's soundness theorem. The characteristic-polynomial
 variable remains the `DensePoly` variable. It is not added to the environment

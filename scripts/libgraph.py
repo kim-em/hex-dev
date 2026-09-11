@@ -65,7 +65,7 @@ BUILD_ONLY_LIBS = {
     "HexDeterminantalIdealTests",
     "HexPermGroupTests",
     "HexGraphIsoTests",
-    "HexCharPolyTests",
+    "HexMatrixTacticTests",
     "HexReleaseExamples",
 }
 EXTERNAL_IMPORT_ROOTS = {"Mathlib", "Verso"}

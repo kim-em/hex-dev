@@ -12,12 +12,12 @@ public import HexCharPoly.CharPoly
 public import HexCharPoly.Trace
 public import HexCharPoly.EvalMatrix
 public import HexCharPoly.Small
-public meta import HexCharPoly.CharPolyElab
-public import HexCharPoly.CharPolyElab
+public import HexCharPoly.Certificate
 
 public section
 
 /-!
 The `HexCharPoly` library computes characteristic polynomials of dense square
-matrices by the division-free Samuelson--Berkowitz algorithm.
+matrices by the division-free Samuelson--Berkowitz algorithm.  The
+proof-producing `char_poly` frontend lives in `HexMatrixTactic`.
 -/

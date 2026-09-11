@@ -55,6 +55,6 @@ theorem rank_eq_ratFunc_rank' {F : Type u} [Field F]
 /-- Rank equations over `ℤ` are decided by the integer producer. -/
 instance (A : Matrix (Fin n) (Fin m) ℤ) (r : Nat) : Decidable (A.rank = r) :=
   decidable_of_iff (Hex.Matrix.rank (matrixEquiv.symm A) = r)
-    (by rw [rank_eq, Equiv.apply_symm_apply])
+    (by rw [rank_eq_rank, Equiv.apply_symm_apply])
 
 end HexMatrixMathlib

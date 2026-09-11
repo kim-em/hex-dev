@@ -26,7 +26,8 @@ is a general domain:
 
 - Over a field, `Hex.Matrix.rowReduce` (Gauss-Jordan to reduced row
   echelon form, `[Lean.Grind.Field R]`) with `rowReduce_rank`, and the
-  companion theorem `HexMatrixMathlib.rank_eq` against `Matrix.rank`.
+  companion theorem `HexMatrixMathlib.rank_eq` against `Matrix.rank`, and
+  `HexMatrixMathlib.rank_eq_rank` for this library's integer `rank`.
 - Over `Int`, through the Hermite form (`hnfRank`, with `hnfRank_eq_rank` in
   `HexHermiteMathlib/Rank.lean`) and the Smith form (`snfRank`, with
   `snfRank_eq_hnfRank` in `HexSmith/Structure.lean`).

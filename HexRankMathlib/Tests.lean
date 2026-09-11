@@ -27,7 +27,7 @@ example : (matrixEquiv rankTestMatrix).rank = 2 :=
   checkRank_sound (A := rankTestMatrix) (c := rankTestCert) (by decide +kernel)
 
 example : (matrixEquiv rankTestMatrix).rank = 2 :=
-  (rank_eq rankTestMatrix).symm.trans (by decide +kernel)
+  (rank_eq_rank rankTestMatrix).symm.trans (by decide +kernel)
 
 example : (matrixEquiv rankTestMatrix).rank = 2 := by decide +kernel
 

@@ -432,7 +432,7 @@ libraries:
     mathlib: false
     proof_probes: [bench/HexMatrixTactic/ProofProbe]
     done_through: 0
-    status: planned
+    status: active
     phase4:
       comparators:
         - tool: Existing Hex char_poly frontend
@@ -1115,7 +1115,7 @@ libraries:
     mathlib: true
     proof_probes: [bench/HexMatrixTacticMathlib/ProofProbe]
     done_through: 0
-    status: planned
+    status: active
     phase4:
       comparators:
         - tool: Mathlib norm_det / eval_det

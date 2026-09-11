@@ -27,10 +27,14 @@ coverage does not wait for that separate bridge. No carrier-specific
 `equiv_charPoly` theorem or executable conformance suite is added here; the
 carrier fixtures remain owned by `HexCharPoly`.
 
-Importing the umbrella extends `char_poly` to closed
-`Matrix (Fin n) (Fin n) Int` terms:
+The frontend library `HexMatrixTacticMathlib`, which imports this one, extends
+`char_poly` to closed `Matrix (Fin n) (Fin n) Int` terms; this library keeps
+the correspondence theorem `equiv_charPoly` that the frontend transports
+through:
 
 ```lean
+import HexMatrixTacticMathlib
+
 open Matrix Polynomial
 
 def A : Matrix (Fin 2) (Fin 2) Int := !![1, 2; 3, 4]

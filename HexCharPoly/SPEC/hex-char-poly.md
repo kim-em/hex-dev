@@ -45,13 +45,18 @@ noncomputable def evalMatrix (p : DensePoly R) (A : Matrix R n n) : Matrix R n n
 end Hex.Matrix
 ```
 
-For closed integer matrices, importing the umbrella also provides the
-`char_poly` elaborator and tactic:
+For closed integer matrices, the `char_poly` elaborator and tactic are
+provided by the frontend library `HexMatrixTactic`, which imports this one;
+this library keeps the executable algorithm and the kernel-checkable Berkowitz
+certificate (`HexCharPoly/Certificate.lean`) that the frontend replays:
 
 ```lean
+import HexMatrixTactic
+
 def A : Hex.Matrix Int 2 2 := #m[1, 2; 3, 4]
 
 #check char_poly A
+-- char_poly A : Hex.MatrixTactic.Certified Hex.Matrix.charPoly A
 -- (char_poly A).poly : Hex.DensePoly Int
 -- (char_poly A).charPoly_eq : Hex.Matrix.charPoly A = (char_poly A).poly
 

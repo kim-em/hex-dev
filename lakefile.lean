@@ -295,6 +295,9 @@ lean_lib HexGraphIsoMathlib where
 
 lean_lib HexCharPoly where
 
+lean_lib HexMatrixTactic where
+  precompileModules := true
+
 lean_lib HexMinPoly where
 
 lean_lib HexPolySmith where
@@ -353,6 +356,9 @@ lean_lib HexMatrixMathlib where
 
 @[default_target]
 lean_lib HexCharPolyMathlib where
+
+@[default_target]
+lean_lib HexMatrixTacticMathlib where
 
 @[default_target]
 lean_lib HexMinPolyMathlib where
@@ -1056,15 +1062,14 @@ lean_lib HexSmithTests where
     `HexSmithMathlib.LintTests,
     `HexSmithMathlib.QuickstartTests]
 
--- HexCharPoly is not yet a published split repository (its released.yml
--- entries were withdrawn until the phase pipeline completes), so its
+-- The matrix frontends are not yet published split repositories, so their
 -- verification-only elaborator regressions stay separate from the
--- release-manifest-backed target above; they rejoin HexReleaseTests (and
--- the manifest's test_modules) at publication.
+-- release-manifest-backed target above; they rejoin HexReleaseTests (and the
+-- manifest's test_modules) at publication.
 @[default_target]
-lean_lib HexCharPolyTests where
-  globs := #[`HexCharPoly.CharPolyElabTests,
-    `HexCharPolyMathlib.CharPolyElabTests]
+lean_lib HexMatrixTacticTests where
+  globs := #[`HexMatrixTactic.Tests,
+    `HexMatrixTacticMathlib.Tests]
 
 -- Mirrors the released aggregate's module-system umbrella, so a library that
 -- never adopted the module system fails here instead of after the publish-out

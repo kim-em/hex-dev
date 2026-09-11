@@ -99,7 +99,7 @@ UMBRELLA_BUILD_TARGETS = {
     "HexDeterminantalIdealTests",
     "HexPermGroupTests",
     "HexGraphIsoTests",
-    "HexCharPolyTests",
+    "HexMatrixTacticTests",
     "HexReleaseExamples",
 }
 

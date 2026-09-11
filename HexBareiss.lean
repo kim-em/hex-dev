@@ -8,6 +8,7 @@ module
 
 public import HexBareiss.BorderedMinor
 public import HexBareiss.Bareiss
+public import HexBareiss.Replay
 
 public section
 

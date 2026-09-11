@@ -39,7 +39,7 @@ open HexMatrixMathlib
 
 -- The producer's certificate checks, so the unchecked rank is Mathlib's.
 #check @rankCertWith_check
-#check @rank_eq
+#check @rank_eq_rank
 -- ∀ {n m} (A : Hex.Matrix ℤ n m), Hex.Matrix.rank A = (matrixEquiv A).rank
 
 -- Rank is unchanged by passing to any fraction field.

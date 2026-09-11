@@ -143,7 +143,7 @@ theorem rankWith_eq (hquot : ∀ a b : R, b ≠ 0 → quot (a * b) b = a) (h1 : 
   (inv_rowReduceWith hquot h1 A).rank_eq.symm
 
 /-- The integer rank is `Matrix.rank`. -/
-theorem rank_eq (A : Hex.Matrix Int n m) : Hex.Matrix.rank A = (matrixEquiv A).rank :=
+theorem rank_eq_rank (A : Hex.Matrix Int n m) : Hex.Matrix.rank A = (matrixEquiv A).rank :=
   rankWith_eq (quot := HexArith.Int.exactDiv) (fun a b hb => Int.mul_ediv_cancel a hb)
     (by decide) A
 
