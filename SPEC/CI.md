@@ -124,11 +124,14 @@ Concretely:
 
 ### Docs-only fast path
 
-A pull request whose diff against its merge base touches only
-documentation and planning text takes a fast path through the same
+A pull request whose diff touches only documentation, planning text,
+reports and repository metadata takes a fast path through the same
 `build` job. An early step classifies the change from
-`git diff --name-only` against the merge base with the base branch and
-records both the fast-path and manual-build decisions in the job summary.
+`git diff --no-renames --name-only` between the tested merge commit and
+its base parent (`HEAD^1`) -- the exact delta under test, and the
+spelling that counts a source file renamed under an allowlisted path as
+a source change -- and records both the fast-path and manual-build
+decisions in the job summary.
 Every step from dependency installation through the verification tails,
 apart from the separately guarded manual build, carries
 `if: steps.classify.outputs.docs_only != 'true'`, and the fail-closed gate
@@ -161,14 +164,16 @@ Within the full-build path, `HexManual` runs for changes to `HexManual.lean`,
 `HexManual/**`, `lakefile.lean`, `lake-manifest.json`, `lean-toolchain`, and
 ordinary library `.lean` sources. It is skipped when the only non-documentation
 changes are under `bench/**`, `conformance/**`, or `Examples/**`, or affect CI
-automation and scripts without changing those inputs. A missing merge base or
-an empty diff fails closed and builds the manual. Every non-pull-request run
-also builds it unconditionally.
+automation and scripts without changing those inputs. A non-merge `HEAD`, an
+unreadable diff, or an empty diff fails closed and builds the manual. Every
+non-pull-request run also builds it unconditionally.
 
 ### Polynomial-factorization performance artifacts
 
-Every pull request runs two deterministic checks for the published integer
-polynomial factorization comparison:
+Every full-path pull request and every push to `main` runs two
+deterministic checks for the published integer polynomial factorization
+comparison (a docs-only PR skips them, even when it edits `reports/`;
+see § Docs-only fast path):
 
 - `scripts/bench/check_factor_sweep_freshness.py` requires a complete,
   cross-checked current-corpus measurement for Hex, FLINT, NTL, PARI, Isabelle
