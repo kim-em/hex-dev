@@ -9,7 +9,7 @@ consumers request, while `determinant` names that existing foundational
 library. The new entry point is `Hex.Det.det`, so neither the library nor
 the Lean declaration replaces or overloads the reference definition.
 
-This is a specification, with a [Mathlib companion](hex-det-mathlib.md).
+This is a specification, with a [Mathlib companion](../../HexDetMathlib/SPEC/hex-det-mathlib.md).
 It adds no determinant implementation. Noncommutative rings, approximate
 floating-point determinants, rank, and characteristic-polynomial dispatch
 are outside its scope.
@@ -180,7 +180,7 @@ the field constructor uses Bareiss as its explicit initial policy.
 
 ### Integer modular integration
 
-[hex-modular-matrix](hex-modular-matrix.md) specifies the modular and divisor
+[hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md) specifies the modular and divisor
 algorithms but has no registered library or implementation today. Initial
 integer dispatch therefore uses Bareiss at every `n > 2`. Enable modular
 selection only after the lower algorithm, route reporting, correctness
@@ -199,7 +199,7 @@ never certifies an answer.
 
 ## Dependencies and files
 
-Register `HexDet` as planned, with direct dependencies on `HexBareiss`,
+Register `HexDet` with direct dependencies on `HexBareiss`,
 `HexCharPoly`, `HexRowReduce`, `HexPolyFp`, `HexResultant`, and `HexMvGcd`.
 `HexMatrix`, `HexDeterminant`, `HexBasic`, and `HexPoly` are reachable through
 those dependencies. The carrier instance modules live here, above both
@@ -220,9 +220,7 @@ An integer-only consumer may import `HexDet.Int` without multivariate
 instances. Importing only `HexDet.Basic` deliberately exposes the generic
 Berkowitz default: other carriers need their instance module or the umbrella
 to obtain their production policy. Partial imports can change the selected
-arm while preserving correctness. This issue
-creates only the SPECs and
-planned metadata, not these source files or Lake targets.
+arm while preserving correctness.
 
 When registered and implemented, add `HexModularMatrix` to `HexDet.deps`,
 and `HexModularMatrixMathlib` to the companion's dependencies. Neither
@@ -234,15 +232,14 @@ existing callable names. Adding these edges preserves the topological order beca
 both modular libraries depend only on libraries below dispatch.
 
 `scripts/check_dag.py` checks registered dependencies and actual imports,
-not Markdown arrows. The planned entries make the current graph checkable.
-The deferred modular edges must be registered and checked when their targets
-exist. `hex-matrix-tactic` is a downstream consumer, with no reverse edge.
+not Markdown arrows. The deferred modular edges must be registered and checked
+when their targets exist. `hex-matrix-tactic` is a downstream consumer, with no reverse edge.
 
 ## Correctness and tactic use
 
 Every shipped arm must equal `Hex.Matrix.det A`. All dispatch correctness
 statements and proofs in the first version live in
-[hex-det-mathlib](hex-det-mathlib.md), including statements whose two sides
+[hex-det-mathlib](../../HexDetMathlib/SPEC/hex-det-mathlib.md), including statements whose two sides
 are Mathlib-free expressions. A Mathlib-free executable is not thereby a
 Mathlib-free proof. A Mathlib-free proof of the Berkowitz determinant arm
 is future work. No axiom, `native_decide`, or invented lower-layer proof
@@ -304,7 +301,7 @@ policy constant names and values and a reference to the report's policy
 table. This uses the existing `phase4` schema, which has no `crossovers`
 field. The report and executable policy must agree with that record.
 
-Use the shared-host discipline in [benchmarking](../benchmarking.md):
+Use the shared-host discipline in [benchmarking](../../SPEC/benchmarking.md):
 automatically select and pin a CPU when supported, retain host context and
 all completed samples, use fixed trial-major schedules for scaling, and
 adjacent alternating AB/BA arms for comparisons. Allow at most one unchanged

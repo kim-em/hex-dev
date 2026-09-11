@@ -83,6 +83,22 @@ private def jsonRatList (xs : List Rat) : String :=
   "{" ++ jsonString "num" ++ ":" ++ jsonIntList nums ++
   "," ++ jsonString "den" ++ ":" ++ jsonIntList dens ++ "}"
 
+private def jsonRatPair (r : Rat) : String :=
+  "[" ++ jsonInt r.num ++ "," ++ jsonInt (r.den : Int) ++ "]"
+
+private def jsonRatPairMatrix (rows : List (List Rat)) : String := Id.run do
+  let mut out := "["
+  let mut firstRow := true
+  for row in rows do
+    if firstRow then firstRow := false else out := out.push ','
+    out := out.push '['
+    let mut firstEntry := true
+    for entry in row do
+      if firstEntry then firstEntry := false else out := out.push ','
+      out := out ++ jsonRatPair entry
+    out := out.push ']'
+  out.push ']'
+
 private def jsonIntPolyMatrix (rows : List (List (List Int))) : String := Id.run do
   let mut out := "["
   let mut firstRow := true
@@ -285,6 +301,28 @@ def emitMatrixFixture (lib case : String) (rows : List (List Int)) : IO Unit := 
     ("lib",  jsonString lib),
     ("case", jsonString case),
     ("rows", jsonIntMatrix rows)
+  ]
+
+/-- Emit a rational-matrix fixture. Each entry is a numerator/denominator
+pair, so the oracle can rebuild the matrix over `Q` without parsing. -/
+def emitRatMatrixFixture (lib case : String) (rows : List (List Rat)) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "ratmatrix"),
+    ("lib",  jsonString lib),
+    ("case", jsonString case),
+    ("rows", jsonRatPairMatrix rows)
+  ]
+
+/-- Emit a residue-matrix fixture modulo `p`. Entries are canonical residues in
+`[0, p)`. -/
+def emitModMatrixFixture (lib case : String) (p : Nat) (rows : List (List Nat)) :
+    IO Unit := do
+  emitLine <| jsonObject [
+    ("kind",    jsonString "modmatrix"),
+    ("lib",     jsonString lib),
+    ("case",    jsonString case),
+    ("modulus", toString p),
+    ("rows",    jsonIntMatrix (rows.map fun row => row.map Int.ofNat))
   ]
 
 /-- Emit a polynomial-matrix fixture over `ZMod64 p`. Polynomial
@@ -757,6 +795,9 @@ def emitResult (lib case op : String) (value : String) : IO Unit := do
     ("op",    jsonString op),
     ("value", value)
   ]
+
+/-- Rational result value: a numerator/denominator pair. -/
+def ratValue (r : Rat) : String := jsonRatPair r
 
 /-- Boolean result value. -/
 def boolValue (b : Bool) : String := if b then "true" else "false"

@@ -17,6 +17,12 @@ Operations cross-checked
 * `bareiss`   — Lean `Matrix.bareiss` (fraction-free Bareiss).  The
   oracle expectation is identical to `det`: any disagreement here means
   Lean's two determinant implementations have drifted.
+* `det-rat`   — Lean `Hex.Det.det` over `Rat`, read from a `ratmatrix`
+  fixture whose entries are `[num, den]` pairs and whose result value is
+  the same pair shape.  python-flint computes it with `fmpq_mat.det()`.
+* `det-mod`   — Lean `Hex.Det.det` over prime residues, read from a
+  `modmatrix` fixture carrying its modulus.  python-flint computes it
+  with `nmod_mat.det()`.
 * `rank`      — Lean `Matrix.rowReduce_rank` over `Q`.  python-flint's
   `fmpz_mat.rank()` agrees with the rational rank of the integer matrix.
 * `rref`      — Lean's rational reduced row echelon form (`Matrix.rowReduce`)
@@ -125,6 +131,18 @@ def _fmpq_mat_from_pairs(rows: list[list[list[int]]]):
             num, den = entry
             out[i, j] = fmpq(int(num), int(den))
     return out
+
+
+def _rat_rows(record: dict[str, Any]) -> list[list[list[int]]]:
+    rows = record["rows"]
+    if not rows or not rows[0]:
+        raise OracleMismatch("ratmatrix fixture has no entries")
+    return rows
+
+
+def _nmod_mat(rows: list[list[int]], modulus: int):
+    from flint import nmod_mat  # type: ignore[import-not-found]
+    return nmod_mat(len(rows), len(rows[0]), [x for row in rows for x in row], modulus)
 
 
 def _fmpz_rows(matrix: Any) -> list[list[int]]:
@@ -284,6 +302,78 @@ def _check_bareiss(
         profile=profile,
         seed=seed,
         oracle_version=oracle_version,
+    )
+
+
+def _check_det_rat(
+    *,
+    case_id: str,
+    lib: str,
+    matrix_record: dict[str, Any],
+    lean_value: list[int],
+    failure_dir: Path,
+    profile: str,
+    seed: int,
+    oracle_version: str,
+) -> None:
+    from flint import fmpq  # type: ignore[import-not-found]
+    rows = _rat_rows(matrix_record)
+    if len(rows) != len(rows[0]):
+        raise OracleMismatch(
+            f"{lib}/{case_id}: det-rat requires a square matrix, "
+            f"got {len(rows)}x{len(rows[0])}"
+        )
+    oracle_value = _fmpq_mat_from_pairs(rows).det()
+    if not isinstance(lean_value, list) or len(lean_value) != 2:
+        raise OracleMismatch(
+            f"{lib}/{case_id}: det-rat value must be a [num, den] pair"
+        )
+    lean_rational = fmpq(int(lean_value[0]), int(lean_value[1]))
+    assert_equal(
+        [int(lean_rational.p), int(lean_rational.q)],
+        [int(oracle_value.p), int(oracle_value.q)],
+        library=lib,
+        case_id=f"{case_id}:det-rat",
+        kind="det-rat",
+        input_record=matrix_record,
+        oracle_name="python-flint",
+        oracle_version=oracle_version,
+        failure_dir=failure_dir,
+        profile=profile,
+        seed=seed,
+    )
+
+
+def _check_det_mod(
+    *,
+    case_id: str,
+    lib: str,
+    matrix_record: dict[str, Any],
+    lean_value: int,
+    failure_dir: Path,
+    profile: str,
+    seed: int,
+    oracle_version: str,
+) -> None:
+    rows = matrix_record["rows"]
+    if not rows or len(rows) != len(rows[0]):
+        raise OracleMismatch(
+            f"{lib}/{case_id}: det-mod requires a nonempty square matrix"
+        )
+    modulus = int(matrix_record["modulus"])
+    oracle_value = int(str(_nmod_mat(rows, modulus).det()))
+    assert_equal(
+        int(lean_value) % modulus,
+        oracle_value % modulus,
+        library=lib,
+        case_id=f"{case_id}:det-mod",
+        kind="det-mod",
+        input_record=matrix_record,
+        oracle_name="python-flint",
+        oracle_version=oracle_version,
+        failure_dir=failure_dir,
+        profile=profile,
+        seed=seed,
     )
 
 
@@ -592,6 +682,8 @@ def check(
     checked = 0
     handlers = {
         "det":       _check_det,
+        "det-rat":   _check_det_rat,
+        "det-mod":   _check_det_mod,
         "bareiss":   _check_bareiss,
         "charpoly":  _check_charpoly,
         "minpoly":   _check_minpoly,

@@ -1,6 +1,6 @@
 # hex-det-mathlib
 
-Correctness of [hex-det](hex-det.md)'s dispatch and correspondence with
+Correctness of [hex-det](../../HexDet/SPEC/hex-det.md)'s dispatch and correspondence with
 Mathlib's determinant. This is a `correspondence-only-layer`, registered
 with `correspondence_only: true`. It owns no runtime determinant, conformance
 driver, benchmark process, or tactic.
@@ -127,7 +127,7 @@ failed-pivot column branch yields determinant zero. Until the operation
 and its correctness are supplied, the installed field policy is Bareiss.
 
 **Modular and divisor arms.** The operations and correctness in
-[hex-modular-matrix](hex-modular-matrix.md) are planned, not declarations
+[hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md) are planned, not declarations
 that can be imported today. Once implemented, compose their determinant
 equalities with the dispatch branches and discharge `LawfulDetBound` using
 the modular companion. The divisor route must also satisfy that library's
