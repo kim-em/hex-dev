@@ -450,25 +450,32 @@ vanishes. No local `ratRank` or duplicate soundness proof is needed.
 the companion below.
 
 **Producing a certificate.** Each attempt reduces `A` modulo a prime
-and uses elimination to select original row and column indices of a
-nonvanishing `r × r` minor. Row permutations must be tracked back to
-`A`; the rows of the transformed matrix are not row indices of a minor
-of `A`. As explained above, the nonzero minor modulo `p` proves the
-integer minor nonzero. `rankModP` is a rank because its modulus is
-prime; the nonzero-residue argument itself needs no primality.
+and calls `Hex.Matrix.rankProfileWith Hex.exactDiv` on that image, using
+hex-rank's field exact quotient for `ZMod64 p`. This supplies both the
+original row indices and column indices of a nonvanishing `r × r`
+minor; its rank is the prime-field rank computed by `rankModP`. The
+producer uses this one profile pass, not a separate `rankModP` pass.
+`RowEchelonData` from hex-row-reduce supplies pivot columns but no
+original-row selection, so it is not used to recover the minor's rows.
+The nonzero minor modulo `p` proves the integer minor nonzero, as
+explained above. `rankModP` is a rank because its modulus is prime; the
+nonzero-residue argument itself needs no primality.
 
 For that square block `B`, use the reusable `Decomp` and repeated-solve
 interface specified by [the Dixon and decomposition design](https://github.com/kim-em/hex-dev/issues/10178).
-All `r` right-hand sides share one modular inverse of `B`; do not call
-`solve?` independently `r` times or pass the rectangular block `C` to a
-square solver. Obtain `d = det B` through the determinant entry point,
-and obtain the columns of `adjugate B` by solving
-`B * X = d • identity r` through that decomposition. Concretely, a
-solve of `B y = q • (d • e_j)` returns `y/q`; require exact division by
-`q` entrywise to obtain column `j` of `X`. For the exact determinant
-these solutions are integral. A failed solve or inexact division rejects
-the candidate, and the final `Hex.Matrix.checkRank A c` is mandatory.
-The determinant computation is producer work, never checker work.
+Call its `decompAt? B p` at the already successful prime, then
+`solveMatWith` for the `r` right-hand sides; all share one modular
+inverse of `B`. Do not call `solve?` independently `r` times or pass the
+rectangular block `C` to a square solver. Obtain `d = det B` from
+`detModular? B fuel`, falling back to `Hex.Matrix.bareiss B` on `none`.
+This deterministic subcall does not use the random determinant-divisor
+route. Obtain `adjugate B` by `solveMatWith D (d • identity r)`:
+if it returns `(Y, q)`, require exact division of every entry of `Y` by
+`q` to obtain `X` with `B * X = d • identity r`. For the exact
+determinant these solutions are integral. A failed decomposition, solve,
+or inexact division rejects the candidate, and the final
+`Hex.Matrix.checkRank A c` is mandatory. The determinant computation is
+producer work, never checker work.
 
 Reduced solve denominators alone do not recover `det B`: for
 `B = 2 • identity 2`, solving against the unit vectors gives common
@@ -485,13 +492,17 @@ Reconstruction or resource failure can also reject a candidate; rejection
 is not a proof that the modular rank was too small.
 
 **Fuel and failure.** `fuel` bounds the number of prime candidates
-examined; each attempted decomposition and each of its `r` lifts also
-receives at most `fuel` units of its documented search or digit budget.
-Thus no nested search is unbounded. The determinant subcall uses its
-own total fallback contract. At `fuel = 0`, `rankCert?` returns `none`.
-Exhausting the budget or the bounded prime supply, failed reconstruction,
-inexact division, or a failed final check returns `none` after the
-remaining attempts are spent. `none` asserts no rank or singularity fact.
+examined and the number of moduli tried by each `detModular?` subcall.
+`decompAt?` uses the selected prime without another search. The matrix
+solve derives a finite digit count from its numerator and denominator
+bounds and `p^k > 2 P Q`, as specified by the decomposition interface;
+prime-search fuel is not a lifting-digit cap. The determinant subcall
+has its total Bareiss fallback. At `fuel = 0`, `rankCert?` returns `none`.
+Exhausting the budget or the bounded prime supply returns `none`.
+Failed decomposition, reconstruction, inexact division, or a failed
+final check rejects an attempt; return `none` if the remaining attempts
+are spent without a checked certificate. `none` asserts no rank or
+singularity fact.
 
 For `r = 0`, the candidate has empty selections and adjugate and
 `denom = 1`; it checks exactly when `A = 0`, including empty shapes.
@@ -507,7 +518,10 @@ without modular-search failure can use
 fraction-free integer algorithm. “Unchecked” means the caller receives
 only a `Nat`, not a certificate; it never means returning the last modular
 rank or a guessed zero. `Hex.Matrix.rank` remains hex-rank's entry point,
-so both libraries can be imported together without a name collision.
+so these rank entry points can be imported together. Under design
+principle 8 this is dispatch to a second complete algorithm, not an
+emergency value: `rankCert?` propagates failure, and `rankModular` takes
+responsibility for computing the exact answer on that branch.
 
 ## The Dixon solve
 
@@ -604,6 +618,8 @@ Write `K.rank := K.cert.rank` and `K.denom := K.cert.denom` as accessor
 abbreviations, not independent fields. The represented rational columns
 are `v_j i := (K.basis[i, j] : ℚ) / K.denom`. A raw `Kernel` value
 carries data only; the following guarantees require successful `kernel?`.
+The numerators and denominator retain the certificate's scaling and are
+not reduced by their common gcd.
 
 `kernel?` calls `rankCert?` once and propagates `none`. For a checked
 certificate, write `J := c.cols`, and let `F` enumerate the complement of
@@ -631,7 +647,7 @@ theorem kernel?_check (h : kernel? A fuel = some K) :
 
 theorem kernel?_freeCols (h : kernel? A fuel = some K) :
     K.freeCols.toList =
-      (List.finRange m).filter (fun j => j ∉ K.cert.cols.toList)
+      (List.finRange m).filter (fun j => decide (j ∉ K.cert.cols.toList))
 
 theorem kernel?_annihilate (h : kernel? A fuel = some K) :
     A * K.basis = Matrix.zero n (m - K.cert.rank)
@@ -689,7 +705,7 @@ separately where they dominate, because that is the whole comparison.
 | `det` | `⌈h/w⌉` images plus CRT | `O(n³ h / w)` | `O(n · h² / w²)` for the CRT |
 | `detViaDivisor` | one solve plus `⌈log₂(H/d)/w⌉` images | `O(n³ + n² h)` typical | small |
 | `solve?` | one inverse plus `k = O(h/w)` steps | `O(n³ + n² h / w)` | `O(n·h)` in the reconstruction |
-| `rankCert?` | per attempt: modular reduction, `det B`, one decomposition and `r` solves | `O(n m r + r³ + r³ k)` plus the determinant route, for `k` lifting digits per solve | determinant/reconstruction costs plus `checkRank` below |
+| `rankCert?` | per attempt: modular reduction, `det B`, one decomposition and `r` solves | `O(n m + n m r + r³ + r³ k)` plus the determinant route, for `k` lifting digits per solve | determinant/reconstruction costs plus `checkRank` below |
 | `Hex.Matrix.checkRank` | `B * adj`, `adj * P`, `C * U`, and scalar multiplication | none | `O(r³ + r² m + n r m + n m)` ring operations; operand sizes include the certificate |
 | `Hex.Matrix.bareiss` | fraction-free elimination | none | `O(n³)` at size up to `h` |
 
@@ -744,8 +760,14 @@ places.
 
 The rank path imports `HexRank` for its certificate, checker, and total
 fallback, and `HexRankMathlib` for soundness and scalar extension. These
-are prerequisites for the rank milestone; this library does not duplicate
-their declarations.
+are prerequisites for the rank milestone; this library reuses their
+implementations and soundness proofs. `Kernel.lean` supplies local
+Mathlib-free consequences of a passing check before constructing the
+complement: `denom ≠ 0` by projecting the first check, distinct columns
+by `RankCert.det_ne_zero` and the repeated-column determinant identity,
+and `rank ≤ m` by cardinality of that distinct index vector. These prove
+the filtered complement has length `m - rank`; no new hex-rank API is
+assumed. The analogous row facts are available by the same argument.
 
 The relocation requests above do not block starting the other milestones.
 
@@ -852,13 +874,19 @@ Families:
   are identities, their other entries are large, and `s` is the product
   of the first few primes in the producer's actual supply. The rank is
   exactly `r`, drops to zero at those primes, and is `r` at the next
-  prime. Record rejected primes, successful certificates and fallback
-  use; size the budget to require successful recovery after the skips.
+  prime. The driver constructs `s` from the supply used by that run and
+  asserts the expected initial skips and success at the next prime, so a
+  supply change cannot silently stop exercising the route. Record
+  rejected primes, successful certificates and fallback use; size the
+  budget to require successful recovery after the skips.
   Keep forced fuel-exhaustion cases separately labelled so that a fast
   fallback cannot stand in for modular-rank performance. The rank
   comparator is `FLINT fmpz_mat_rank via python-flint`, `informational`
   because there is no shared fixture history and crossover policies
-  differ.
+  differ. Also measure `Hex.Matrix.rank` on the same inputs to record
+  the crossover with the direct algorithm: the mandatory certificate
+  check still costs big-integer products. The initial dispatch is on
+  failure only; a size threshold requires these measurements.
 - **Solve**, with integral solutions and with large-denominator
   solutions.
 
@@ -910,6 +938,9 @@ theorem det_eq (A : Hex.Matrix Int n n) :
 theorem rank_eq (h : Hex.Matrix.checkRank A c = true) :
     (e A).rank = c.rank := HexRankMathlib.checkRank_sound h
 
+theorem rankModular_eq (A : Hex.Matrix Int n m) :
+    rankModular A = (e A).rank
+
 theorem solve_eq (h : solve? A b fuel = some (y, d)) :
     Matrix.mulVec (e A) (fun i => (y[i] : ℚ) / d) = fun i => (b[i] : ℚ)
 
@@ -929,8 +960,8 @@ the executable `Matrix.det` and Mathlib's.
 with no new proof of either rank bound. Applying it to `rankCert?_check h`
 identifies a successful producer's result with the integer `Matrix.rank`.
 `HexRankMathlib.rank_map_eq` at `IsFractionRing ℤ ℚ` identifies this with
-the rank of `M` over `ℚ`. It says nothing about equality with rank over
-`ZMod p`. The fallback branch of `rankModular` uses hex-rank-mathlib's
+the rank of `M` over `ℚ` (`algebraMap ℤ ℚ = Int.castRingHom ℚ`). It
+says nothing about equality with rank over `ZMod p`. The fallback branch of `rankModular` uses hex-rank-mathlib's
 `rank_eq` for `Hex.Matrix.rank`; together these give
 `rankModular A = (e A).rank`.
 
@@ -951,18 +982,17 @@ nonsingular, hence those remaining coordinates vanish and `x = y`.
 This proves spanning without requiring the stored `adj` to be the
 canonical adjugate. It also covers the empty basis at full column rank.
 
-Two decidability instances follow, in the style of
+The determinant decidability instance follows, in the style of
 hex-berlekamp-mathlib's `Decidable (Irreducible f)`:
 
 ```lean
 instance (A : Matrix (Fin n) (Fin n) ℤ) : Decidable (A.det = 0)
-instance (A : Matrix (Fin n) (Fin m) ℤ) (r : Nat) : Decidable (A.rank = r)
 ```
 
 The determinant instance uses its executable computation and correspondence.
-The rank instance is already supplied by hex-rank-mathlib: import and reuse
-it, without declaring an overlapping instance here. A modular decision
-procedure can branch on `rankCert?`, use `checkRank_sound` for a successful
+`Decidable (A.rank = r)` for `A : Matrix (Fin n) (Fin m) ℤ` is already
+supplied by hex-rank-mathlib: import and reuse that instance, without
+declaring an overlapping instance here. A modular decision procedure can branch on `rankCert?`, use `checkRank_sound` for a successful
 certificate, and on `none` use the total
 `rankCertWith HexArith.Int.exactDiv` certificate with its correctness
 theorem. Equality of the certified natural rank with `r` then decides
@@ -995,7 +1025,10 @@ operation.
    add `rankModP`, `rankCert?`, `rankCert?_check`, and `rankModular` using
    the reusable decomposition. Add `Kernel`, `kernel?`, annihilation and
    free-block facts; the companion reuses `checkRank_sound` and proves
-   `kernel_independent` and `kernel_span`.
+   `kernel_independent` and `kernel_span`. This milestone requires the
+   hex-rank certificate/profile producer and companion, and milestone 3's
+   decomposition and repeated-solve design from #10178 to be specified
+   and implemented first.
 
 6. **The companion.** Begins as soon as milestone 2 is done, in parallel
    with 3 through 5.
@@ -1015,7 +1048,7 @@ HexModularMatrix.lean
 HexModularMatrixMathlib/
   Bound.lean        -- the LawfulDetBound instance
   Det.lean          -- det_eq, Decidable (A.det = 0)
-  Rank.lean         -- rank_eq via HexRankMathlib, kernel_independent, kernel_span
+  Rank.lean         -- rank_eq via HexRankMathlib, rankModular_eq, kernel_independent, kernel_span
   Solve.lean        -- solve_eq
 HexModularMatrixMathlib.lean
 ```
