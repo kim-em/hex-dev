@@ -182,7 +182,7 @@ Leibniz reference and cannot be redeclared. Their conditional correctness
 lemmas use that wrapper namespace. Mathlib correspondence remains in the
 companion namespace. Image, bound, and partial reconstruction operations
 remain in `Hex.Matrix`. The shared dispatcher is `Hex.Det.det` in
-[hex-det](hex-det.md), above this library.
+[hex-det](../../HexDet/SPEC/hex-det.md), above this library.
 
 The total wrappers share this proposed executable interface:
 
@@ -420,7 +420,7 @@ places every equation of the form `bareiss M = det M` over the Leibniz
 library, so the `bareiss` route of a total theorem cannot be proved
 here. The Mathlib-free layer proves the modular route, and the
 companion's `det_eq` and `detWith_eq` are the total statements.
-[hex-det](hex-det.md) draws the same line for its dispatch: a
+[hex-det](../../HexDet/SPEC/hex-det.md) draws the same line for its dispatch: a
 Mathlib-free executable is not thereby a Mathlib-free proof.
 
 The loop is hex-modular's `crtLoop` at `k = 1`. `image m` reduces `A`

@@ -503,6 +503,14 @@ instance commRing : CommRing (Hex.FpPoly p) :=
     neg := fun a => Hex.DensePoly.neg a
     sub_eq_add_neg := Hex.FpPoly.sub_eq_add_neg }
 
+/-- Mathlib's `CommRing` structure on the executable machine-word residues,
+with the executable operations. `Hex.ZMod64 p` carries only `Lean.Grind.CommRing`,
+so bridge theorems stated over Mathlib's `CommRing` reach it through this
+transport; `HexPolyMathlib.toGrind_commRingOfGrind` returns their conclusions to
+the executable instance. -/
+@[instance_reducible, expose] def zmod64CommRing : CommRing (Hex.ZMod64 p) :=
+  HexPolyMathlib.commRingOfGrind
+
 /-- The executable zero polynomial transports to Mathlib's zero polynomial. -/
 @[simp, grind =]
 theorem toMathlibPolynomial_zero :

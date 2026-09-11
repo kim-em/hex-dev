@@ -18,6 +18,12 @@ JSONL fixture record shape (one record per line):
                      modulo the pinned prime.
 * ``matrix``     — ``{"kind": "matrix",     "lib": str, "case": str,
                       "rows": [[int...]...]}``
+* ``ratmatrix``  — ``{"kind": "ratmatrix",  "lib": str, "case": str,
+                      "rows": [[[num, den]...]...]}`` with positive
+                     denominators
+* ``modmatrix``  — ``{"kind": "modmatrix",  "lib": str, "case": str,
+                      "modulus": int, "rows": [[int...]...]}`` with
+                     canonical residues below the modulus
 * ``polymatrix`` — ``{"kind": "polymatrix", "lib": str, "case": str,
                      "field": {"p": int}|{"rat": true}, "rows": int,
                      "cols": int, "entries": <polynomial matrix>}``
@@ -128,6 +134,8 @@ VALID_FIXTURE_KINDS = frozenset(
         "bareiss_carrier",
         "charpoly_carrier",
         "det",
+        "ratmatrix",
+        "modmatrix",
         "polymatrix",
         "mvpoly",
         "mvpolymatrix",
@@ -509,6 +517,37 @@ def _validate_fixture(record: dict[str, Any]) -> None:
             for row in rows
         ):
             raise FixtureError(f"matrix.rows must be List[List[int]]: {record!r}")
+    elif kind == "ratmatrix":
+        rows = record.get("rows")
+        if not isinstance(rows, list) or not all(
+            isinstance(row, list)
+            and all(
+                isinstance(entry, list)
+                and len(entry) == 2
+                and all(isinstance(x, int) for x in entry)
+                and entry[1] > 0
+                for entry in row
+            )
+            for row in rows
+        ):
+            raise FixtureError(
+                f"ratmatrix.rows must be List[List[[num, den]]] with positive "
+                f"denominators: {record!r}"
+            )
+    elif kind == "modmatrix":
+        modulus = record.get("modulus")
+        if not _is_int(modulus) or modulus < 2:
+            raise FixtureError(f"modmatrix.modulus must be at least two: {record!r}")
+        rows = record.get("rows")
+        if not isinstance(rows, list) or not all(
+            isinstance(row, list)
+            and all(isinstance(x, int) and 0 <= x < modulus for x in row)
+            for row in rows
+        ):
+            raise FixtureError(
+                f"modmatrix.rows must be canonical residues below the "
+                f"modulus: {record!r}"
+            )
     elif kind == "polymatrix":
         rows = record.get("rows")
         cols = record.get("cols")
