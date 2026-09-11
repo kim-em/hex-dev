@@ -75,10 +75,15 @@ Concretely:
   libraries, the bench exes, the conformance `#guard` drivers, and the
   emit-fixture exes — including the `HexBerlekampZassenhausMathlib`
   bridge required by integer-factorization correctness — followed by a
-  separate memory-bounded `lake build HexManual`). Conway and its companion
-  first warm external imports, then clean their restored outputs and measure
-  their initial builds; the remaining targets reuse those outputs. These
-  hosted observations use explicit resource limits and do not enforce the
+  separate memory-bounded `lake build HexManual` when manual or library Lean
+  inputs changed, and on every non-pull-request run). On pushes to `main` and on
+  pull requests touching `HexConway/`, `HexConway.lean`, `HexGFq/`,
+  `HexGFq.lean`, `HexGFqMathlib/`, `HexGFqMathlib.lean`, `scripts/conway/`, or
+  `HexConway/SPEC/`, Conway and its companion first warm external imports, then
+  clean their restored outputs and measure their initial builds; the remaining
+  targets reuse those outputs. Other pull requests skip this supplementary
+  timing observation and proceed directly to the shared build. These hosted
+  observations use explicit resource limits and do not enforce the
   designated-machine Conway ceiling. It then runs the two
   independent verification tails concurrently as `background:` steps: the
   per-library `bench verify` smoke gate per
@@ -92,6 +97,22 @@ Concretely:
   [SPEC/benchmarking.md §CI integration](benchmarking.md), `verify` is a
   smoke gate (does the bench module compile and run?), not a timing
   measurement; timing-relevant runs are collected manually on the shared host.
+
+  On pull requests, these two verification tails are scoped to the libraries
+  that own changed source, bench, conformance, fixture, or oracle paths. The
+  classifier uses `libraries.yml` ownership and the pull request's diff against
+  its merge base; changes to shared infrastructure and unclassified non-documentation
+  paths select every library. It reports both the selected library names and the
+  paths that caused the selection. This is deliberately an owner-only filter:
+  dependents are not added, so a change to `HexPoly` runs only `HexPoly`'s oracle
+  and bench verify. If an owning library has no oracle tuple or bench executable,
+  that verification tail has no per-library work for the change; downstream
+  coverage remains deferred to `main` by design.
+  The full conformance target set still builds before the tails, so this does
+  not weaken compile coverage. Pushes to `main` and manual runs leave the
+  filter empty and run every oracle, library-specific gate, and bench verify.
+  The oracle log records wall time for each tuple, and the bench log records
+  wall time for each executable.
 - Conformance used to be a second workflow (`conformance.yml`). It was
   folded into this job because a separate workflow re-elaborated the
   entire hex graph on a second runner — pure duplicated compute. Sharing
@@ -100,6 +121,49 @@ Concretely:
 - Future work: extend this one job. If a second runner is genuinely
   needed (e.g. a macOS dyld cross-check — not currently present), state
   the reason in a workflow-level comment.
+
+### Docs-only fast path
+
+A pull request whose diff against its merge base touches only
+documentation and planning text takes a fast path through the same
+`build` job. An early step classifies the change from
+`git diff --name-only` against the merge base with the base branch and
+records both the fast-path and manual-build decisions in the job summary.
+Every step from dependency installation through the verification tails,
+apart from the separately guarded manual build, carries
+`if: steps.classify.outputs.docs_only != 'true'`, and the fail-closed gate
+passes trivially on that path. The structural lints and the Python
+unit tests before that point (copyright headers, line counts, DAG,
+released manifest, manual split, `test_sync_released.py`, trust surface,
+Phase-4 and Phase-7 checks, conformance-matrix invariant) run on both
+paths; only the Mathlib-free bench lint, which reads Lean bench sources
+alone, is skipped.
+
+The allowlist is deliberately simple and permissive; a missed edge case
+costs one slow-to-detect breakage on the next code PR, not a release:
+
+- `**/*.md`, `SPEC/**`, `PLAN/**`, `docs/**`, `reports/**`,
+  `libraries.yml`, `AGENTS.md`, `.claude/**`, `LICENSE`, `.gitignore`.
+
+`HexConway/SPEC/**` is the narrow exception: the Conway rebuild observation
+is collected when those files change, so such a pull request takes the full
+build path despite containing documentation only.
+
+Anything else (`lakefile.lean`, `lake-manifest.json`, `lean-toolchain`,
+`.github/**`, `scripts/**`, any `.lean` file, ...) makes the PR a full
+build. Pushes to `main` and manual dispatches always build in full,
+regardless of the changed files, so the cache snapshot and the Lake
+cache publish only ever come from a fully verified tree. The fast path is
+neither a second job nor a workflow-level `paths` filter: the required
+check stays the single `build` job and is reported green either way.
+
+Within the full-build path, `HexManual` runs for changes to `HexManual.lean`,
+`HexManual/**`, `lakefile.lean`, `lake-manifest.json`, `lean-toolchain`, and
+ordinary library `.lean` sources. It is skipped when the only non-documentation
+changes are under `bench/**`, `conformance/**`, or `Examples/**`, or affect CI
+automation and scripts without changing those inputs. A missing merge base or
+an empty diff fails closed and builds the manual. Every non-pull-request run
+also builds it unconditionally.
 
 ### Polynomial-factorization performance artifacts
 
@@ -258,6 +322,11 @@ repository's 10 GB cache quota without providing shared reuse. PRs and
 the Pages workflow restore the latest compatible `main` snapshot and
 let Lake rebuild their source delta.
 
+The cached Lean and IR directories cover every root-package module namespace,
+not only `Hex*`; in particular, the `Examples.*` release modules must survive a
+restore. Dependency packages keep their own build directories and are not part
+of this cache.
+
 Every build workflow installs the exact `lean-toolchain` pin through
 `scripts/ci/setup_lean_toolchain.sh`, which downloads the canonical GitHub
 release asset and verifies the reported version before placing its binaries on
@@ -271,8 +340,8 @@ verification gates pass.
 
 Coverage:
 
-- `.lake/build/lib/lean/Hex*` and `.lake/build/ir/Hex*` — the
-  project's own elaboration and IR outputs.
+- `.lake/build/lib/lean` and `.lake/build/ir` — the project's own elaboration
+  and IR outputs, including non-`Hex` namespaces such as `Examples`.
 - NOT Mathlib's build outputs — those come from `lake exe cache get`
   and are handled separately (see § Mathlib cache is mandatory).
 
@@ -343,7 +412,9 @@ To add a new conformance check, oracle, benchmark, or build target:
 1. **Default**: extend the script of the single `build` job in
    `ci.yml`. Conformance/oracle work goes in the conformance tail,
    build/check/benchmark work in the build phase or the bench tail.
-2. Add any new system dependency to the existing apt/brew step.
+2. Add any new system dependency to the cached apt package list. The list is
+   part of the cache key; bump its quoted `version` input only when manual
+   invalidation is required.
 3. Add any new Python or Lean dependency to the existing install
    step.
 4. Add a new sequential block to the helper script (e.g.
