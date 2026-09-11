@@ -1,12 +1,12 @@
 # hex-reflect-mathlib (Mathlib translations for hex-reflect)
 
 `hex-reflect-mathlib` is the Mathlib companion to
-[hex-reflect](hex-reflect.md). It translates supported Mathlib carriers into
+[hex-reflect](../../HexReflect/SPEC/hex-reflect.md). It translates supported Mathlib carriers into
 the provider and coefficient-interpretation records defined by
 `Hex.Reflect`, and states the `MvPolynomial` form of the conversion theorem.
 It contains no symbolic algorithm.
 
-This is a specification. It does not add an implementation.
+The implementation lives in `HexReflectMathlib`.
 
 This is a correspondence-only-layer.
 

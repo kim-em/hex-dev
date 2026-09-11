@@ -7,7 +7,8 @@ conversion preserves interpretation. It also defines the provider outcomes,
 conditions, result records, budgets, and decline reasons used by symbolic Hex
 frontends.
 
-This is a specification. It does not add an implementation.
+The implementation lives in `HexReflect`; release entries are added separately
+at publication.
 
 ## Boundary
 
@@ -79,13 +80,16 @@ know about matrices.
 ## Module and test layout
 
 The Lake library is `HexReflect`, its public namespace is `Hex.Reflect`, and
-`HexReflect.lean` is its umbrella. The intended initial modules are
-`State.lean`, `Budget.lean`, `Result.lean`, `Provider.lean`, `Session.lean`,
-`Convert.lean`, and `Proof.lean`. This is a support library: it owns no tactic
+`HexReflect.lean` is its umbrella. The modules are
+`Budget.lean`, `Result.lean`, `Convert.lean`, `Provider.lean`, `Proof.lean`,
+`State.lean`, and `Session.lean`. This is a support library: it owns no tactic
 syntax and no user-facing algebraic algorithm.
 
 Mathlib-free conformance belongs in
-`conformance/HexReflect/Conformance.lean`. Performance checks belong in
+`conformance/HexReflect/Conformance.lean`, with its test provider
+registrations in `conformance/HexReflect/TestProviders.lean`; the
+exact-instance scope check, which needs the `HexMvPolyMathlib` scope, is
+`conformance/HexReflect/ScopeConformance.lean`. Performance checks belong in
 `bench/HexReflect/Bench.lean`; the initial families exercise batch sharing,
 characteristic-aware normalization, and proof reconstruction. The companion
 layout and ownership are specified in `hex-reflect-mathlib`.
@@ -191,8 +195,10 @@ A batch has two phases.
 
 1. While the environment is growing, canonicalize and reify every input with
    the selected view. `reifyRing? e (skipVar := false)` enables top-level ring
-   variables; the current `reifySemiring? e` always enables its top-level
-   variable case. Thus an otherwise unrecognized value becomes one atom.
+   variables; the current `reifySemiring? e` enables its top-level variable
+   case except for a top-level power with a symbolic exponent, where it
+   returns `none`. Hex treats that `none` as the whole application being one
+   atom. Thus an otherwise unrecognized value becomes one atom.
 2. Seal the environment once at size `n`. Convert every stored variable index
    to the corresponding `Fin n` and convert every reflected input against that
    same environment.
@@ -343,6 +349,13 @@ The Meta proof returned to a caller is assembled as follows:
    syntax and atom array to the canonical source expression.
 5. Compose with the definitional equality between the caller's instantiated
    source and its canonical form.
+
+Both definitional equalities are checked by the session before the proof is
+returned, independently of any optional full type check. The pinned reifier
+accepts a numeral without inspecting its `OfNat` instance, so a nonstandard
+instance can make the denoted syntax differ from the source; that case is
+reported as an ill-typed-proof failure rather than a success. A
+proof-producing batch uses one carrier; mixing carriers is a decline.
 
 Kernel `decide` is not applied to an evaluation equality containing symbolic
 atoms. Such atoms can be local variables or opaque terms, so evaluating both
@@ -529,7 +542,7 @@ matrix entry index.
 ## Mathlib companion
 
 The companion is specified in
-[hex-reflect-mathlib](hex-reflect-mathlib.md). It supplies translations for
+[hex-reflect-mathlib](../../HexReflectMathlib/SPEC/hex-reflect-mathlib.md). It supplies translations for
 Mathlib carriers and relates the conversion to
 `MvPolynomial (Fin n) R`. It contains no determinant, row-reduction,
 characteristic-polynomial, gcd, or factorization algorithm.

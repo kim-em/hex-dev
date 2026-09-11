@@ -40,6 +40,7 @@ import HexManual.Chapters.HexNumberFieldTower
 -- Unreleased libraries (dependency order).
 import HexManual.Chapters.HexRealAlgebraic
 import HexManual.Chapters.HexTruncatedSeries
+import HexManual.Chapters.HexReflect
 import HexManual.Chapters.HexPolyFast
 import HexManual.Chapters.HexRationalFn
 import HexManual.Chapters.HexLatticeEnum
@@ -187,6 +188,8 @@ here to keep the reference chapters above focused on the released libraries.
 {include 2 HexManual.Chapters.HexRealAlgebraic}
 
 {include 2 HexManual.Chapters.HexTruncatedSeries}
+
+{include 2 HexManual.Chapters.HexReflect}
 
 {include 2 HexManual.Chapters.HexPolyFast}
 

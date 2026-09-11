@@ -2,5 +2,5 @@
   "path": "HexBasic/OfFn.lean",
   "baseline_blob": "7fa5f2789534fe0333160fa3005a7d003840cc4d",
   "current_blob": "72a79162cc362c9c3a4701652436694d6784bfaf",
-  "reason": "Records the Lean v4.35.0-rc1 removal point in the shim docstrings (#10161, #10169) and adds the Vector.map' kernel-reducible shim with its lemmas (#10165), keyed to the refreshed sweep baseline. No preexisting definition, theorem, attribute or compiler substitution changes, and no integer-factorization service computation calls Vector.map'."
+  "reason": "Retains the docstring-only transitions reviewed in hexbasic-offn-lean-7fa5f278-2c512ed4.json and adds the Vector.map' shim with its simp and csimp lemmas. The additions are new declarations only; no existing definition, instance, or compiled function changes, and the factorization service does not call the new shim, so the measured executable is unaffected."
 }

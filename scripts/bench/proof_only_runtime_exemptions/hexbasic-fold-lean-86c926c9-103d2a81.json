@@ -1,0 +1,6 @@
+{
+  "path": "HexBasic/Fold.lean",
+  "baseline_blob": "86c926c97ef4cc017d5e9854fdeb73490a07cce0",
+  "current_blob": "103d2a8178f881c04590c6da5fe84f441dd09cc7",
+  "reason": "Appends theorems only (foldl_mul_eq_self, foldl_mul_mul_start, foldl_mul_mul, foldl_mul_single), used by the HexMvPoly monomial-value lemmas and by HexReflect proofs. No definition, instance, or compiled function changes, so the factorization service's runtime is unaffected."
+}

@@ -530,6 +530,13 @@ theorem eval_eq         :
 theorem evalHorner_eq   : evalHorner x p = eval x p
 theorem eval₂_eq        :
     eval₂ g x p = (p.termsList.map fun t => g t.2 * t.1.prod x).sum
+theorem eval₂_zero      (hg0 : g 0 = 0) : eval₂ g x 0 = 0
+theorem eval₂_addMonomial (hg0 : g 0 = 0) (hgadd : ∀ a b, g (a + b) = g a + g b) :
+    eval₂ g x (p.addMonomial m c) = eval₂ g x p + g c * m.prod x
+theorem eval₂_ofTerms   (hg0 : g 0 = 0) (hgadd : ∀ a b, g (a + b) = g a + g b) :
+    eval₂ g x (ofTerms ts) = (ts.map fun t => g t.2 * t.1.prod x).sum
+theorem eval₂_add       (hg0 : g 0 = 0) (hgadd : ∀ a b, g (a + b) = g a + g b) :
+    eval₂ g x (p + q) = eval₂ g x p + eval₂ g x q
 theorem eval₂Horner_eq  : eval₂Horner g x p = eval₂ g x p
 theorem toUnivariate_coeff, ofUnivariate_coeff
 theorem toUnivariate_ofUnivariate, ofUnivariate_toUnivariate
