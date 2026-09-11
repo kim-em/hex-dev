@@ -1,0 +1,6 @@
+{
+  "path": "HexBareiss/Replay.lean",
+  "baseline_blob": null,
+  "current_blob": "86b6d368ab75e0c72cb7bb35c742e52e0e716f37",
+  "reason": "Adds the kernel-facing restatement of the row-pivoted Bareiss loop (stepMatrixReplay, pivotLoopReplay, bareissReplay) and the theorems identifying it with bareissWith. The new definitions are called only by the HexMatrixTactic det frontend when it builds a kernel check; no existing executable definition changes, bareissWith and its csimp implementation are untouched, and nothing on the integer-factorization service path references the new constants. Runtime-neutral for the retained factorization sweep."
+}
