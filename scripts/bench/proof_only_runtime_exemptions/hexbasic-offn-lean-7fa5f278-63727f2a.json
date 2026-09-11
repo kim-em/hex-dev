@@ -2,5 +2,5 @@
   "path": "HexBasic/OfFn.lean",
   "baseline_blob": "7fa5f2789534fe0333160fa3005a7d003840cc4d",
   "current_blob": "63727f2a00e049cae7890ca4406ca1e39d57c176",
-  "reason": "Updates only the docstrings on the Array.map' and Array.zipWith' compatibility shims to record their Lean v4.35.0-rc1 removal point (#10161), keyed to the refreshed sweep baseline. No declaration or executable code changes."
+  "reason": "Updates only the Array.map' and Array.zipWith' shim docstrings to name Lean v4.35.0-rc1 as their removal point. All definitions, theorem statements, proofs, attributes, imports and compiler substitutions are unchanged. This exact transition starts at the blob recorded by the quadratic-factorization sweep."
 }

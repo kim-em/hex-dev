@@ -1168,11 +1168,19 @@ until those entries land.
 The [direct radical design](../../HexNumberField/SPEC/hex-number-field.md#cyclotomic-construction-and-coprime-powers)
 specifies the consumer of this polynomial API. `HexNumberField` will depend on
 `HexCyclotomic`, and its companion on `HexCyclotomicMathlib`; neither edge is
-reversed. This SPEC's checked-factorization input, prime ladder, direct spread,
+reversed. The closed irreducibility-evidence constructor deliberately puts
+this dependency in `HexNumberField.Basic`; downstream number-field libraries
+inherit the cyclotomic and integer-factor package dependencies.
+This SPEC's checked-factorization input, prime ladder, direct spread,
 positive-index restriction, and companion irreducibility theorem remain the
 polynomial construction contract. The existing index search remains partial;
-the total algebraic-number front end uses a certified `X^N-1` fallback when
-checked factorization is unavailable. Exact order recognition uses bounded
+the total algebraic-number front end uses `xPowSubOne N` for its certified
+`X^N-1` fallback when checked factorization is unavailable. That route is a
+mathematical totality backstop, with degree-`N` factorization and
+`Θ(N*log(N+1))` Mahler certification precision, not a practical guarantee at
+arbitrary indices. The consumer must publish measured usable ranges and
+provide budgeted entry points that reject excessive allocation before
+constructing the dense polynomial. Exact order recognition uses bounded
 monic remainders and needs no index-factor search. Algebraic embedding selection and order
 recognition belong to number fields, not to this library.
 
@@ -1190,3 +1198,6 @@ separating index factorization, cyclotomic polynomial generation, selected-root
 certification and local canonicalization. This library retains its existing
 polynomial oracles and benchmarks. No current Lake or release dependency is
 added until the specified implementations exist.
+The implementation must also add a `HexManual` chapter for the cyclotomic
+library, covering checked indices, polynomial construction, partial index
+search and costs, and link it to the number-field rational-angle front end.
