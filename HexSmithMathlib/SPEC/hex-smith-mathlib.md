@@ -23,6 +23,9 @@ theorem smithNormalForm_chain (A : Hex.Matrix Int n m) (i : Nat)
     (smithNormalForm A).a ⟨i, by omega⟩ ∣
       (smithNormalForm A).a ⟨i + 1, h⟩
 
+theorem snfRank_eq_rank (A : Hex.Matrix Int n m) :
+    Hex.Matrix.snfRank A = (matrixEquiv A).rank
+
 noncomputable def quotientEquiv (A : Hex.Matrix Int n m) :
     ((Fin m → ℤ) ⧸ rowSpan A) ≃ₗ[ℤ]
       (Fin (m - Hex.Matrix.snfRank A) → ℤ) ×
@@ -38,6 +41,13 @@ the executable invariant factors, so the chain theorem comes from
 `Hex.Matrix.invariantFactors_chain` rather than Mathlib's noncomputable PID
 existence proof.
 
+`snfRank_eq_rank` is the consumer-facing rank corollary, in `HexSmithMathlib.Rank`.
+It composes the Mathlib-free `Hex.Matrix.snfRank_eq_hnfRank` with the
+Hermite-to-Mathlib bridge `HexHermiteMathlib.hnfRank_eq_rank`, so it belongs
+here rather than in `HexSmith`; the module imports `HexHermiteMathlib.Rank`,
+which the `HexHermiteMathlib.Span` chain the rest of this library uses does not
+reach.
+
 The quotient equivalence is rank-general. In ambient Smith coordinates its
 map keeps the final `m - snfRank A` coordinates as the free factor and reduces
 each leading coordinate modulo its invariant factor. Its kernel is proved to
@@ -48,28 +58,6 @@ cannot represent the free complement.
 The authoritative algorithm, correctness, uniqueness, conformance, and
 benchmark requirements shared with this layer are in
 [`SPEC/Libraries/hex-smith.md`](../../SPEC/Libraries/hex-smith.md).
-
-## Required outstanding obligations
-
-| obligation | status | requirement |
-|---|---|---|
-| `snfRank_eq_rank` | required; not yet implemented | one line from `Hex.Matrix.snfRank_eq_hnfRank` followed by `HexHermiteMathlib.hnfRank_eq_rank` |
-
-The required theorem and its intended proof are exactly the existing integer
-correspondence chain:
-
-```lean
-theorem snfRank_eq_rank (A : Hex.Matrix Int n m) :
-    Hex.Matrix.snfRank A = (matrixEquiv A).rank := by
-  rw [Hex.Matrix.snfRank_eq_hnfRank,
-    HexHermiteMathlib.hnfRank_eq_rank]
-```
-
-This theorem must live in `HexSmithMathlib`; it is a consumer-facing corollary
-of the Mathlib-free Smith/Hermite rank equality and the Hermite-to-Mathlib rank
-bridge, not a new computation in `HexSmith`. The implementing module must also
-import `HexHermiteMathlib.Rank`: the current `HexSmithMathlib` chain reaches
-`HexHermiteMathlib.Span`, which does not export `hnfRank_eq_rank`.
 
 ## Runtime boundary
 

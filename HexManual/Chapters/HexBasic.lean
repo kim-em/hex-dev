@@ -41,15 +41,17 @@ tag := "hex-basic-containers"
 
 Hex certificate checking runs `decide +kernel` over concrete arrays and
 vectors, so the kernel has to reduce both array construction and array
-equality. Under Lean's module system it does not, for three separate reasons.
-{name}`Array.ofFn` delegates to an unexposed `ofFn.go`; core's
+equality. Under Lean's module system it does not, for four separate reasons.
+{name}`Array.ofFn` delegates to an unexposed `ofFn.go`; {name}`Array.map`
+delegates to an unexposed implementation loop, and {name}`Vector.map` inherits
+that through it; core's
 {name}`Array.instDecidableEq` delegates to an unexposed
 {name}`Array.instDecidableEqImpl`; and {name}`Vector` gets its equality from
 `deriving DecidableEq`, whose generated `decEq` is likewise unexposed. In each
 case the callee's body is unavailable downstream, so reduction stalls on a term
 the kernel can see but cannot unfold.
 
-The workaround is the same in all three cases. Route through {name}`List`,
+The workaround is the same in every case. Route through {name}`List`,
 which is fully exposed and does reduce, and attach a `@[csimp]` lemma sending
 compiled code back to the core definition. The list detour is then paid only in
 the kernel, which is the one place it buys anything: {name}`Array.toList` is an
@@ -60,8 +62,16 @@ wrong shape for compiled code.
 
 {docstring Hex.Vector.ofFn'}
 
+{docstring Hex.Array.map'}
+
+{docstring Hex.Vector.map'}
+
 The accompanying simplification lemmas identify the primed constructors with
 their standard counterparts, so ordinary container lemmas remain available.
+{name}`Hex.Vector.map'` is what makes the Leibniz determinant reduce in the
+kernel: `Hex.Matrix.permutationVectors` builds its enumeration by
+mapping over the shorter permutations, so a stalled `Vector.map` stalls
+{ref "hex-determinant-recipe-kernel-proof"}[the whole determinant].
 
 {docstring Hex.instDecidableEqArray}
 
@@ -72,14 +82,20 @@ nowhere else, and never leak into a consumer that has not asked for them. A
 module that forgets to open the scope gets a stuck `decide`, which is a loud
 failure rather than a silent change of meaning.
 
-These four definitions are shims, not API this library wants to own. When
-[leanprover/lean4#14270](https://github.com/leanprover/lean4/pull/14270)
-lands and the toolchain moves past it, core's own `ofFn` and equality reduce
-in the kernel, the primed constructors and the priority instances go away, and
-callers move back to the standard names. `HexBasic.ModuleBoundaryTests` is
-what makes that removal checkable: it sits in a *separate* module from the
-definitions it exercises, because a same-module test passes whether or not the
-workaround is present and so proves nothing.
+These definitions are shims, not API this library wants to own, and they
+retire on different upstream fixes rather than all at once. `ofFn` and the two
+equality instances wait on
+[leanprover/lean4#14270](https://github.com/leanprover/lean4/pull/14270); the
+map shims wait on
+[leanprover/lean4#14996](https://github.com/leanprover/lean4/pull/14996),
+which ships in Lean v4.35.0-rc1. Once the toolchain moves past the relevant
+one, core's own operation reduces in the kernel, that shim goes away, and
+callers move back to the standard name. Retire them one at a time, and
+re-check that the *downstream* reduction still works before removing each: the
+stall these work around is only visible across a module boundary. `HexBasic.ModuleBoundaryTests` is what makes that
+checkable: it sits in a *separate* module from the definitions it exercises,
+because a same-module test passes whether or not the workaround is present and
+so proves nothing.
 
 `HexBasic` also supplies an entrywise vector update with the pointwise read
 law its callers reason with.
