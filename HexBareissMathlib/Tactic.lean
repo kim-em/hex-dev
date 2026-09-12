@@ -31,15 +31,17 @@ the row list `L` of its entries' numerals (`rfl` for a vector chain, one
 kernel `decide` on `entriesEq` otherwise) and to one kernel `decide` on
 `checkDetList`.  A rational matrix is scaled row by row to an integer one
 and proved by `det_eq_of_checkRat'`, whose kernel check `checkDetRat` also
-confirms the scaling and the value.  The whole proof is added as an
-auxiliary theorem, checked synchronously, so the kernel checks it exactly
-once and a rejection is reported by the tactic.
+confirms the scaling and the value.  The whole proof of the goal is added
+as an auxiliary theorem, checked synchronously, so the kernel checks it
+exactly once and a rejection is reported by the tactic.
 
 Outcomes follow the matrix-tactic protocol: a goal that is not a
 determinant equation is not applicable; a matrix that is not a closed
-integer or rational literal is declined (and the `det` tactic then runs the
-fallback simp set); a false target is reported with the certified value
-before any proof is built; a certificate the kernel rejects is a failure.
+integer or rational literal, or a value that is not a closed numeral, is
+declined (and the `det` tactic then runs the fallback simp set); a false
+target is reported with the certified value before any proof is built; a
+producer whose witness fails its own check, or a certificate the kernel
+rejects, is a failure, never a fallback.
 -/
 
 namespace HexMatrixMathlib.Det
@@ -88,7 +90,8 @@ def Cert.value (c : Cert) : Rat :=
   | none => c.witness.value
   | some (_, s) => (c.witness.value : Rat) / (s.foldl (· * ·) 1 : Nat)
 
-/-- Recognize a closed square integer or rational literal and certify it. -/
+/-- Recognize a closed square integer or rational literal and certify it.  A
+producer whose witness fails its own check is a failure, not a decline. -/
 def certify (A : Expr) : MetaM (Outcome Cert) := do
   if A.hasFVar || A.hasExprMVar then
     return .declined m!"the matrix{indentExpr A}\nmust be a closed term"
@@ -110,67 +113,85 @@ def certify (A : Expr) : MetaM (Outcome Cert) := do
       pure (rows, some (values, scales))
   match detWitnessOfLists lit.n (rows.toList.map (·.toList)) with
   | .ok w => return .success ⟨lit, w, rows, rat⟩
-  | .error e => return .declined m!"the producer found no witness: {e}"
+  | .error e => throwError "det: the producer's witness fails its own check (a producer bug): {e}"
 
-/-- Prove `Matrix.det A = v` for the certificate's value `v`, returning the
-value and the proof.  The proof is checked synchronously as an auxiliary
-theorem; a rejection is diagnosed. -/
-def prove (A : Expr) (c : Cert) : MetaM (Expr × Expr) := do
+/-- The proof of `Matrix.det A = v` for the certificate's value `v`, with the
+value, the kernel check it rests on, and the row list of the literal. -/
+structure Proof where
+  /-- The certified value, as a numeral. -/
+  value : Expr
+  /-- The proof term of `Matrix.det A = value`. -/
+  proof : Expr
+  /-- The certificate check the kernel evaluates. -/
+  check : Expr
+  /-- The row list the literal is identified with. -/
+  rowList : Expr
+
+/-- Build the proof of `Matrix.det A = v` for the certificate's value `v`. -/
+def build (A : Expr) (c : Cert) : MetaM Proof := do
   let nE := mkNatLit c.lit.n
   let w := toExpr c.witness
-  let int := mkConst ``Int
-  let B ← rowList int (c.rows.map (·.map toExpr))
-  let (value, ofL, check, proof) ← match c.rat with
-    | none =>
-        let value := toExpr c.witness.value
-        let ofL ← mkAppM ``HexMatrixMathlib.ofLists #[nE, nE, B]
-        let hA ← identification c.lit A B
-        let check ← mkEq (← mkAppM ``Hex.Matrix.checkDetList #[nE, B, w]) (mkConst ``Bool.true)
-        let hcheck ← decideProof check
-        let eq ← mkAppM ``HexMatrixMathlib.det_eq_of_checkList' #[A, B, w, hA, hcheck]
-        -- `DetWitness.value w` reduces to the numeral
-        let hvalue ← mkExpectedTypeHint (← mkEqRefl value)
-          (← mkEq (← mkAppM ``Hex.Matrix.DetWitness.value #[w]) value)
-        pure (value, ofL, check, ← mkEqTrans eq hvalue)
-    | some (rat, scales) =>
-        let value := toExpr c.value
-        let L ← rowList (mkConst ``Rat) (rat.map (·.map toExpr))
-        let s ← mkListLit (mkConst ``Nat) (scales.toList.map toExpr)
-        let ofL ← mkAppM ``HexMatrixMathlib.ofLists #[nE, nE, L]
-        let hA ← identification c.lit A L
-        let check ← mkEq (← mkAppM ``Hex.Matrix.checkDetRat #[nE, L, s, B, w, value])
+  let B ← rowList (mkConst ``Int) (c.rows.map (·.map toExpr))
+  match c.rat with
+  | none =>
+      let value := toExpr c.witness.value
+      let hA ← identification c.lit A B
+      let check ← mkEq (← mkAppM ``Hex.Matrix.checkDetList #[nE, B, w]) (mkConst ``Bool.true)
+      let hcheck ← decideProof check
+      let eq ← mkAppM ``HexMatrixMathlib.det_eq_of_checkList' #[A, B, w, hA, hcheck]
+      -- `DetWitness.value w` reduces to the numeral
+      let hvalue ← mkExpectedTypeHint (← mkEqRefl value)
+        (← mkEq (← mkAppM ``Hex.Matrix.DetWitness.value #[w]) value)
+      return ⟨value, ← mkEqTrans eq hvalue, check, B⟩
+  | some (rat, scales) =>
+      let value := toExpr c.value
+      let L ← rowList (mkConst ``Rat) (rat.map (·.map toExpr))
+      let s ← mkListLit (mkConst ``Nat) (scales.toList.map toExpr)
+      let hA ← identification c.lit A L
+      let check ← mkEq (← mkAppM ``Hex.Matrix.checkDetRat #[nE, L, s, B, w, value])
+        (mkConst ``Bool.true)
+      let hcheck ← decideProof check
+      let proof ← mkAppM ``HexMatrixMathlib.det_eq_of_checkRat' #[A, L, s, B, w, value, hA, hcheck]
+      return ⟨value, proof, check, L⟩
+
+/-- Diagnose a proof the kernel rejected: evaluate the certificate check with
+the kernel and test the identification of the literal with its row list
+along its route, reporting the first that fails. -/
+def diagnose (A : Expr) (c : Cert) (p : Proof) (e : Exception) : MetaM Exception := do
+  let env ← getEnv
+  let lctx ← getLCtx
+  let evalBool (prop : Expr) : MetaM (Option Bool) := do
+    match Kernel.whnf env lctx (← mkDecide prop) with
+    | .ok r => return if r.isConstOf ``Bool.true then some true
+        else if r.isConstOf ``Bool.false then some false else none
+    | .error _ => return none
+  match ← evalBool p.check with
+  | some false =>
+      return .error e.getRef
+        m!"det: the producer's certificate fails the kernel check (a producer bug){indentExpr p.check}"
+  | none => return .error e.getRef m!"det: the kernel check got stuck{indentExpr p.check}"
+  | some true => pure ()
+  let nE := mkNatLit c.lit.n
+  let identified ← match c.lit.route with
+    | .chain =>
+        let ofL ← mkAppM ``HexMatrixMathlib.ofLists #[nE, nE, p.rowList]
+        pure (match Kernel.isDefEq env lctx A ofL with | .ok true => true | _ => false)
+    | .entrywise =>
+        let check ← mkEq (← mkAppM ``HexMatrixMathlib.entriesEq #[nE, nE, A, p.rowList])
           (mkConst ``Bool.true)
-        let hcheck ← decideProof check
-        pure (value, ofL, check,
-          ← mkAppM ``HexMatrixMathlib.det_eq_of_checkRat' #[A, L, s, B, w, value, hA, hcheck])
-  let target ← mkEq (← mkAppM ``Matrix.det #[A]) value
-  -- check synchronously, so that a rejection is reported here, not later
+        pure ((← evalBool check) == some true)
+  unless identified do
+    return .error e.getRef
+      m!"det: the entries of the matrix do not reduce to their numerals in the kernel{indentExpr A}"
+  return .error e.getRef m!"det: the kernel rejected the proof: {e.toMessageData}"
+
+/-- Add `proof : target` as an auxiliary theorem checked synchronously, so
+that a rejection is reported here, not later, and diagnosed. -/
+def checked (A : Expr) (c : Cert) (p : Proof) (target proof : Expr) : MetaM Expr := do
   try
-    let proof ← withOptions (Lean.Elab.async.set · false) do mkAuxTheorem target proof
-    return (value, proof)
+    withOptions (Lean.Elab.async.set · false) do mkAuxTheorem target proof
   catch e =>
-    throw (← diagnose check A ofL e)
-where
-  /-- Diagnose a proof the kernel rejected: evaluate the certificate check
-  with the kernel and test the identification of the literal with its row
-  list, reporting the first that fails. -/
-  diagnose (check A ofL : Expr) (e : Exception) : MetaM Exception := do
-    let env ← getEnv
-    let lctx ← getLCtx
-    match Kernel.whnf env lctx (← mkDecide check) with
-    | .ok r =>
-        if r.isConstOf ``Bool.false then
-          return .error e.getRef
-            m!"det: the producer's certificate fails the kernel check (a producer bug){indentExpr check}"
-        unless r.isConstOf ``Bool.true do
-          return .error e.getRef m!"det: the kernel check got stuck{indentExpr check}"
-    | .error _ => return .error e.getRef m!"det: the kernel check got stuck{indentExpr check}"
-    match Kernel.isDefEq env lctx A ofL with
-    | .ok true => pure ()
-    | _ =>
-        return .error e.getRef
-          m!"det: the entries of the matrix do not reduce to their numerals in the kernel{indentExpr A}"
-    return .error e.getRef m!"det: the kernel rejected the proof: {e.toMessageData}"
+    throw (← diagnose A c p e)
 
 /-- Prove a determinant target in either orientation. -/
 def proveGoal (target : Expr) : MetaM (Outcome Expr) := do
@@ -182,15 +203,23 @@ def proveGoal (target : Expr) : MetaM (Outcome Expr) := do
     | .declined msg => return .declined msg
   if rhs.hasFVar || rhs.hasExprMVar then
     return .declined m!"the value{indentExpr rhs}\nmust be a closed term"
-  -- a value that evaluates is compared here, for a clear message on a false target
-  if let some v ← (try some <$> evalEntry rhs catch _ => pure none) then
-    unless v = c.value do
-      throwError "det: the target is false: the determinant is {c.value}"
-  let (value, proof) ← prove A c
+  -- the stated value is compared here, for a clear message on a false target
+  let some v ← (try some <$> evalEntry rhs catch _ => pure none) |
+    return .declined m!"the value{indentExpr rhs}\nmust be a closed numeral"
+  unless v = c.value do
+    throwError "det: the target is false: the determinant is {c.value}"
+  let p ← build A c
   -- the equality with the stated value, decided by the kernel as well
-  let hbound ← decideProof (← mkEq value rhs)
-  let proof ← mkEqTrans proof hbound
-  return .success (← if reverse then mkEqSymm proof else pure proof)
+  let hbound ← decideProof (← mkEq p.value rhs)
+  let proof ← mkEqTrans p.proof hbound
+  let proof ← if reverse then mkEqSymm proof else pure proof
+  return .success (← checked A c p target proof)
+
+/-- The proof of `Matrix.det A = v` for the certified value `v`, checked. -/
+def certifiedProof (A : Expr) (c : Cert) : MetaM Proof := do
+  let p ← build A c
+  let target ← mkEq (← mkAppM ``Matrix.det #[A]) p.value
+  return { p with proof := ← checked A c p target p.proof }
 
 /-- The `det% A` record: `Certified Matrix.det A`. -/
 def certified (A : Expr) : MetaM (Outcome Expr) := do
@@ -198,11 +227,11 @@ def certified (A : Expr) : MetaM (Outcome Expr) := do
     | .success c => pure c
     | .notApplicable => return .notApplicable
     | .declined msg => return .declined msg
-  let (value, proof) ← prove A c
-  let some (_, lhs, _) := (← inferType proof).eq? |
+  let p ← certifiedProof A c
+  let some (_, lhs, _) := (← inferType p.proof).eq? |
     throwError "det: internal error: the proof is not an equality"
   return .success (← mkAppOptM ``HexMatrixMathlib.Certified.mk
-    #[none, none, some lhs.appFn!, some A, some value, some proof])
+    #[none, none, some lhs.appFn!, some A, some p.value, some p.proof])
 
 /-- `det% A` computes the determinant of a closed integer or rational matrix
 literal `A` and returns a `HexMatrixMathlib.Certified Matrix.det A` record
@@ -228,8 +257,8 @@ def normDet? (e : Expr) : MetaM (Option Simp.Result) := do
   unless e.getAppFn.isConstOf ``Matrix.det do return none
   match ← certify e.appArg! with
   | .success c =>
-      let (value, proof) ← prove e.appArg! c
-      return some { expr := value, proof? := some proof }
+      let p ← certifiedProof e.appArg! c
+      return some { expr := p.value, proof? := some p.proof }
   | .notApplicable | .declined _ => return none
 
 end HexMatrixMathlib.Det
@@ -238,8 +267,8 @@ open Lean Meta in
 /-- The `hex_norm_det` simproc rewrites the determinant of a closed integer or
 rational matrix literal to its value through the Hex certificate, and falls
 back to Mathlib's `norm_det` when the Hex frontend declines (symbolic
-entries, other carriers); a certificate the kernel rejects is an error, not
-a fallback. -/
+entries, other carriers); a producer failure or a certificate the kernel
+rejects is an error, not a fallback. -/
 simproc_decl hex_norm_det (Matrix.det _) := fun e => do
   match ← HexMatrixMathlib.Det.normDet? e with
   | some r => return .done r

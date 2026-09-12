@@ -177,10 +177,11 @@ def matchChain? (n m : Nat) (A : Expr) : MetaM (Option (Array (Array Expr))) := 
   let_expr Matrix.of _ _ _ := f | return none
   let (rows, _, tail) ← Matrix.matchVecConsPrefix (mkNatLit n) v
   unless rows.length == n && tail.getAppFn.isConstOf ``Matrix.vecEmpty do return none
-  let entries ← rows.toArray.mapM fun row => do
+  let mut entries := #[]
+  for row in rows do
     let (es, _, tail) ← Matrix.matchVecConsPrefix (mkNatLit m) row
-    unless es.length == m && tail.getAppFn.isConstOf ``Matrix.vecEmpty do failure
-    return es.toArray
+    unless es.length == m && tail.getAppFn.isConstOf ``Matrix.vecEmpty do return none
+    entries := entries.push es.toArray
   return some entries
 
 /-- `⟨k, _⟩ : Fin n`. -/

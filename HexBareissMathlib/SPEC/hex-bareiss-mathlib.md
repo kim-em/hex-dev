@@ -254,3 +254,188 @@ amended ahead of the code: today it describes what is actually there.
 Both `CorePlucker.lean` consumers of `desnanot_jacobi_borderedMinor`
 (`HexBareissMathlib/Bareiss.lean` and `HexGramSchmidtMathlib/Int/Augmented.lean`)
 continue to work: the second stays at `Int` and picks up the corollary.
+
+## Kernel certificate
+
+`HexBareissMathlib/Kernel.lean` proves the kernel certificate of
+[hex-bareiss §The kernel certificate](../../HexBareiss/SPEC/hex-bareiss.md#the-kernel-certificate)
+sound for `Matrix.det` over `ℤ` and `ℚ`, stated on the Mathlib matrix of a
+row list (`ofLists`, from the literal layer of
+[hex-matrix-mathlib](../../HexMatrixMathlib/SPEC/hex-matrix-mathlib.md#matrix-literals)):
+
+```lean
+theorem det_eq_of_checkList (n) (L : List (List Int)) (c : DetWitness)
+    (h : checkDetList n L c = true) : (ofLists n n L).det = c.value
+theorem det_eq_of_checkList' (A : Matrix (Fin n) (Fin n) ℤ) (L) (c)
+    (hA : A = ofLists n n L) (h : checkDetList n L c = true) : A.det = c.value
+theorem det_eq_of_checkRat (n) (L : List (List Rat)) (s : List Nat) (B) (c) (v : Rat)
+    (h : checkDetRat n L s B c v = true) : (ofLists n n L).det = v
+theorem det_eq_of_checkRat' (A : Matrix (Fin n) (Fin n) ℚ) (L) (s) (B) (c) (v)
+    (hA : A = ofLists n n L) (h : checkDetRat n L s B c v = true) : A.det = v
+```
+
+The proof follows the certificate. Each recorded swap is a transposition
+of two rows below `n`, and `ofLists` of the swapped list is the submatrix
+along `Equiv.swap`, so `det_permute` and `sign_swap` give
+`det (ofLists (applySwaps s L)) = signOf s · det (ofLists L)` by induction
+on the swaps. The transform rows define `Lm i k = (T.getD i []).getD k 0`,
+lower triangular because row `i` has length `i + 1`
+(`IsLowerTriangular`, `det_of_isLowerTriangular`); the walk's
+specification `triangularCheck_spec`, by induction on the rows, gives the
+zero products below the diagonal, so `Lm * ofLists n n P` is upper
+triangular (`det_of_isUpperTriangular`), and the accumulated identity
+`(∏ lᵢ) · d = sign · ∏ uᵢ`. With `det_mul`, `sign² = 1` and `∏ lᵢ ≠ 0`
+(`Finset.prod_ne_zero_iff`, `mul_left_cancel₀`) the value is
+`det (ofLists n n L)`. A left kernel vector `v` gives
+`(fun i => v.getD i 0) ᵥ* ofLists n n L = 0` with a nonzero coordinate,
+and `exists_vecMul_eq_zero_iff` gives `det = 0`. The passage from lists to
+sums is `dotInt_eq_sum` (a dot product stopping at the shorter list is a
+sum over any `Fin r` with `r` at least the first list's length, the
+`getD` defaults supplying the zeros) with `column_getD` and `columns_getD`
+for the transposition. For `ℚ`, `scaledRows_spec` gives
+`diagonal s * ofLists n n L = (ofLists n n B).map Int.cast`, so
+`det_diagonal`, `det_mul` and `Int.cast_det` turn the integer theorem into
+`(∏ s) · det = value`, and the kernel-checked `v · ∏ s = value` cancels the
+nonzero product (`prodNat_cast`).
+
+## The `det` tactic
+
+`HexBareissMathlib/Tactic.lean` declares the non-reserved tactic keyword
+`det`, closing `A.det = d` and `d = A.det` for `A : Matrix (Fin n) (Fin n) R`
+with `R` either `ℤ` or `ℚ`, a closed literal in one of the four syntaxes
+of the literal layer of `hex-matrix-mathlib` (`!![…]`, `Matrix.of ![…]`,
+`fun i j => …`, `Matrix.ofArray xs h`), possibly behind definitions
+(unfolded within a small budget), and `d` a closed value; the term form
+`det% A` returning `Certified Matrix.det A` with its `value` and `proof`
+(the `!![…]` notations are given an integer expectation); and the simproc
+`hex_norm_det`, which rewrites `Matrix.det A` to its value and falls back
+to Mathlib's `norm_det` when the Hex frontend declines, so that the two
+form one simp set and no input `norm_det` accepts regresses. Entries are
+closed numeric expressions that `norm_num` evaluates (the `fun` form's
+entries first pass through the default simp set, for `Fin.val`, casts and
+`if i = j` tests) and that the kernel reduces to their numerals.
+
+The tactic evaluates the entries, runs the compiled `detWitnessOfLists`,
+quotes the witness with `toExpr`, and builds
+`det_eq_of_checkList' A L c hA (of_decide_eq_true rfl)` with `hA` the
+literal's identification with its row list (`rfl` for a vector chain, one
+kernel `decide` on `entriesEq` otherwise), composed with a kernel-decided
+comparison of the value with `d`. A rational matrix is scaled row by row by
+the least common multiple of its denominators to an integer one, whose
+witness is checked by `checkDetRat` together with the scaling and the
+value, through `det_eq_of_checkRat'`. The whole proof is added as an
+auxiliary theorem (`mkAuxTheorem`, with asynchronous checking off) so the
+kernel checks it exactly once and the tactic sees a rejection. Outcomes
+follow the protocol of [SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md):
+a goal that is not a determinant equation is not applicable; a matrix with
+free variables, a carrier other than `ℤ` or `ℚ`, a non-square shape, a
+non-literal closed matrix or an entry `norm_num` cannot evaluate is
+declined with the reason, and the `det` tactic then runs
+`simp only [hex_norm_det]`, which reaches `norm_det` for symbolic entries
+and other commutative rings (normalizing the determinant as `eval_det`
+does; the residual goal is for `ring` or `decide`) and reports the decline
+if that fails too; a false target is reported with the certified value
+before any proof is built; a rejection by the kernel is diagnosed by
+evaluating the certificate check and the identification of the literal in
+turn, and reported as a producer bug or an entry the kernel cannot
+reduce. Accepted theorems depend on `propext`, `Classical.choice` and
+`Quot.sound` only.
+
+**Comparator.** The unmodified pinned `eval_det` (Bird's algorithm with a
+certificate chain normalized by `ring`) is the comparator. The
+fresh-module probes `bench/HexBareissMathlib/ProofProbe/{Dense8, Dense12,
+Dense16, Dense32, Tridiagonal16, Vandermonde8, Singular16, Large8Bits64,
+Large4Bits256, Rational8}{Hex,Mathlib}.lean`, written by
+`scripts/bench/det_tactic_probes.py`, prove the same seeded literal by
+`det` and by `eval_det`, each against its import-only baseline
+(`Baseline`, `MathlibBaseline`); `scripts/bench/det_tactic_sweep.py` runs
+them through `fresh_module_sweep.py` (six samples, adjacent pairs,
+alternating orientation). Each arm's delta is an absolute estimate of its
+proof cost, literal elaboration included; the family's comparator ratio is
+the ratio of the two medians and is only as resolved as the smaller delta.
+`dense-32` has no `eval_det` arm: Bird's algorithm does not finish it
+within the `120 s` budget. Medians from
+`reports/bench-results/hex-bareiss-mathlib-tactic-probes-eed5c4c60624-chungus2.json`
+(shared host, one CPU, both arms with the literal's elaboration inside
+the delta):
+
+| family | `eval_det` | `det` | ratio |
+|---|---|---|---|
+| dense `8 × 8`, 8-bit | 0.51 s | 0.16 s | 3.3 |
+| dense `12 × 12`, 8-bit | 3.55 s | 0.30 s | 11.7 |
+| dense `16 × 16`, 8-bit | 18.8 s | 0.52 s | 36 |
+| dense `32 × 32`, 8-bit | over budget, no arm | 3.71 s | |
+| tridiagonal `16 × 16` | 4.40 s | 0.40 s | 10.9 |
+| Vandermonde `8 × 8`, leading zero | 0.40 s | 0.11 s | 3.6 |
+| singular `16 × 16`, rank `15` | 18.8 s | 0.32 s | 59 |
+| dense `8 × 8`, 64-bit | 0.60 s | 0.15 s | 4.0 |
+| dense `4 × 4`, 256-bit | 0.11 s | 0.09 s | 1.2 |
+| rational `8 × 8` | 0.69 s | 0.20 s | 3.5 |
+
+Proof time against dimension, for the dense `8`-bit, singular (rank
+`n − 1`) and dense `64`-bit families up to a ten-second cap per run, is
+recorded by `scripts/bench/det_tactic_size_sweep.py` (profiler totals per
+file, imports excluded, the median of three runs per point with the range
+kept); the current record is
+`reports/bench-results/hex-bareiss-mathlib-tactic-size-2166e872dce6-chungus2.json`.
+`eval_det` reaches `n = 14` in every family (6.7, 7.7 and 7.0 s) and `det`
+reaches `n = 40` on the dense family (7.2 s), `n = 48` on the singular
+family (5.3 s) and `n = 24`, the end of its ladder, on the 64-bit family
+(1.5 s); the kernel is about a third to a half of `det`'s time at those
+dimensions, the literal's elaboration and the compiled producer the rest.
+The record is plotted by `scripts/plots/hex-bareiss-mathlib-tactic-size.py`
+to `reports/figures/hex-bareiss-mathlib-tactic-size.svg`.
+
+Median kernel shares recorded by the same size sweep are:
+
+| family | `eval_det` | `det` |
+|---|---|---|
+| dense `8 × 8`, 8-bit | 246 ms | 23 ms |
+| dense `12 × 12`, 8-bit | 1.48 s | 63 ms |
+| dense `14 × 14`, 8-bit | 2.97 s | 103 ms |
+| dense `16 × 16`, 8-bit | timeout | 163 ms |
+| dense `32 × 32`, 8-bit | timeout | 1.55 s |
+| dense `40 × 40`, 8-bit | timeout | 3.73 s |
+| singular `8 × 8` | 244 ms | 13 ms |
+| singular `16 × 16` | timeout | 58 ms |
+| singular `32 × 32` | timeout | 721 ms |
+| singular `48 × 48` | timeout | 2.33 s |
+| dense `8 × 8`, 64-bit | 272 ms | 24 ms |
+| dense `16 × 16`, 64-bit | timeout | 170 ms |
+| dense `24 × 24`, 64-bit | timeout | 611 ms |
+
+The timeout entries have no profiler breakdown because the corresponding
+proof exceeded the sweep's ten-second cap.
+
+Determinants on `Hex.Matrix` inputs, finite and closed algebraic carriers
+and symbolic entries are out of scope here
+([SPEC/matrix-tactics.md §Placement](../../SPEC/matrix-tactics.md#placement)).
+
+## Tests
+
+`HexBareissMathlib/Tests.lean`, build-only:
+
+- `checkDetList` on a hand-written `2 × 2` triangular witness and on a
+  hand-written singular witness, discharged by `decide +kernel`, and
+  `det_eq_of_checkList` on each, concluding `det (ofLists 2 2 L) = -2` and
+  `= 0`;
+- the `det` tactic in both orientations on a `3 × 3` example behind a
+  definition and inline, on the four literal syntaxes (including a `fun`
+  form behind a definition), on compound entries, the empty and `1 × 1`
+  matrices, rational entries (a proper fraction, integers written in `ℚ`,
+  a singular rational matrix), odd and even dimensions with pivot swaps, a
+  `5 × 5` matrix with a late swap, singular inputs of every kind, and a
+  `16 × 16` literal with `8`-bit entries;
+- `det%` on a definition, inline and on a rational literal, and its
+  `proof` field closing the determinant equation;
+- `simp only [hex_norm_det]` on integer and rational literals, and on
+  symbolic entries through `norm_det` (with `ring`), plus the `det` tactic
+  reaching `norm_det` on symbolic entries and on `ZMod 7`;
+- the messages on a false target, a closed non-literal and a goal that is
+  not a determinant equation (`#guard_msgs`);
+- `Hex.Matrix.det` and the bare `det` identifier still usable on
+  `Hex.Matrix`;
+- the axiom audit of a `16 × 16` determinant proved by `det`.
+
+These are not an independent oracle. The conformance stream of `HexBareiss`
+is.

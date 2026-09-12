@@ -311,6 +311,82 @@ which needs only the `Zero R` already in scope. At `Int` the junk value is `0`
 either way, so the exported behavior `HexGramSchmidt.Int` relies on is
 unchanged.
 
+## The kernel certificate
+
+`bareissWith` is the reference computation, and replaying it in the kernel
+is the wrong certificate: the kernel would traverse `Vector` buffers,
+rebuild `ofFn` matrices at every access and run the pivot search and the
+exact divisions, which is what the withdrawn `det` frontend did and how it
+lost to `eval_det` by a factor of three per check
+([SPEC/matrix-tactics.md §Measured record](../../SPEC/matrix-tactics.md#measured-record)).
+`HexBareiss/Kernel.lean` therefore carries the triangularization the
+elimination produces as a certificate checked over lists, `DetWitness`,
+with a checker `checkDetList` written for the kernel, a rational form
+`checkDetRat`, and a producer `detWitness`.
+
+**Data.** All fields are lists of `Nat` or `Int`, so the kernel meets only
+structural recursion, `Int.mul`/`Int.add`/`Int.neg` and `Int.decEq`:
+
+```lean
+inductive DetWitness where
+  | triangular (swaps : List (Nat × Nat)) (transform : List (List Int)) (value : Int)
+  | singular (vec : List Int)
+```
+
+For a nonsingular `n × n` matrix `A` given as a row list, `swaps` are the
+row swaps of the pivot search in application order, `transform` is the
+lower triangular transform `L` given row by row with its `i + 1` leading
+entries (so its diagonal `lᵢ` is the last entry of row `i`), and `value`
+is `det A`. A singular matrix carries a nonzero left kernel vector `v`
+instead, and its value is `0`.
+
+**Checks.** `checkDetList n A c` on the row list `A` of the matrix:
+
+1. shapes: `A` has `n` rows of length `n`; every swap exchanges two
+   distinct rows below `n`; row `i` of the transform has length `i + 1`
+   and a nonzero last entry;
+2. the triangularization: the kernel arranges the rows itself
+   (`applySwaps`, each swap two `replaceRow`s), reads the sign of the
+   arrangement off the number of swaps, and transposes the arranged matrix
+   once (`columns`). For every row `i` of `L` it takes the products with
+   the columns `0, …, i` of `σA`: the first `i` must vanish, and the last
+   is the diagonal entry `uᵢ` of the upper triangular product `U = L · σA`
+   (`triangularCheck`). Nothing above the diagonal of `U` is computed;
+   the cost is about `n³ / 3` products of minor-sized integers;
+3. the value: `(∏ lᵢ) · value = sign σ · ∏ uᵢ` over `Int`, the products
+   accumulated during the walk. Since `det L · det (σA) = det U`, that is
+   `(∏ lᵢ) · det (σA) = ∏ uᵢ`, and `∏ lᵢ ≠ 0`, the value is `det A`;
+4. a singular witness instead: `v` has length `n` and a nonzero entry and
+   `v · A = 0`, checked as `n²` products against the columns of `A`.
+
+`checkDetRat n A s B c v` certifies a rational row list `A` through an
+integer one: the positive scales `s` take each row of `A` to the row of
+`B` (`scaledRows`, `n²` products by `Rat.mul` compared by `Rat.decEq`),
+`B` carries the witness `c`, and `v · ∏ s = value c`.
+
+**Producer.** `detWitnessOfLists n A` (and `detWitness` on a
+`Hex.Matrix Int n n`) is the row-pivoted fraction-free elimination in
+echelon form run on `[A | I]`: the pivot of column `c` is searched at or
+below the current pivot row, rows are swapped in both blocks and the swap
+recorded, and the rows below are eliminated by the Bareiss step
+`(p · x - f · y) / prev` in both blocks. After `r` pivots the entries of
+both blocks are minors of `[A | I]`, so every division is exact. With `n`
+pivots the right block is the transform in the original row order; its row
+`i` restricted to the current positions `0, …, i` is row `i` of `L`, its
+diagonal is `1, d₁, …, dₙ₋₁` and the diagonal of `U` is `d₁, …, dₙ` (the
+leading principal minors of the arranged matrix), so `value = sign σ · dₙ`.
+With fewer than `n` pivots the last row of the left block is zero, so the
+last row of the right block is a left kernel vector, nonzero because its
+last entry is a product of pivots. The producer re-checks its own output
+with `checkDetList` and reports a failure as an error rather than
+returning a witness.
+
+The soundness theorems `det_eq_of_checkList` and `det_eq_of_checkRat`
+(`Matrix.det` of the Mathlib matrix of the row list equals the value) are
+on the forbidden list above and live in
+[hex-bareiss-mathlib §Kernel certificate](../../HexBareissMathlib/SPEC/hex-bareiss-mathlib.md#kernel-certificate);
+this layer states no equation between the certificate and a determinant.
+
 ## Mathlib-free vs. Mathlib-bridge proof surface
 
 The following theorems live exclusively in the `*-mathlib` bridge layer and

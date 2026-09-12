@@ -127,6 +127,25 @@ error: det: declined: the matrix is not a closed `!![…]`, `Matrix.of ![…]`, 
 #guard_msgs in
 example : Matrix.det ((1 : Matrix (Fin 2) (Fin 2) ℤ) * 1) = 1 := by det
 
+/-- A row of a `Matrix.of` chain that is not itself a vector chain. -/
+def detRowFn : Fin 2 → ℤ := fun j => j.val + 3
+
+/--
+error: det: declined: the matrix is not a closed `!![…]`, `Matrix.of ![…]`, `fun i j => …` or `Matrix.ofArray` literal
+  Matrix.of ![![1, 2], detRowFn]
+-/
+#guard_msgs in
+example : Matrix.det (Matrix.of ![![(1 : ℤ), 2], detRowFn]) = -2 := by det
+
+/-- A closed value that `norm_num` does not evaluate. -/
+def detTarget : ℤ := -2
+
+-- declined as a value, so the simp set rewrites the determinant and, as with
+-- `eval_det`, leaves the rest of the goal
+example : Matrix.det (R := ℤ) !![1, 2; 3, 4] = detTarget := by
+  det
+  rfl
+
 /-- error: det: the goal is not `A.det = d` for a Mathlib matrix `A` -/
 #guard_msgs in
 example : (1 : ℤ) = 1 := by det
