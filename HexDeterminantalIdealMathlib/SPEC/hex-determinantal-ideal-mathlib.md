@@ -5,14 +5,17 @@ Correspondence between the executable minors of
 `Matrix.det` of a `submatrix`, and the rank-versus-minors theorem stated for
 `Matrix.rank` under an arbitrary ring homomorphism into a field.
 Dependencies are `HexDeterminantalIdeal`, `HexDeterminantMathlib`,
-`HexRowReduceMathlib` and `HexMvPolyMathlib`, plus Mathlib. The
+`HexRowReduceMathlib`, `HexMvPolyMathlib`, `HexRankMathlib` (for the
+fraction-field passage of the `rank_locus` tactic), `HexReflect`,
+`HexReflectMathlib` and `HexMatrixMathlib`, plus Mathlib. The
 computational contracts, the conventions at `r = 0` and `r > min n m`, and
 the Mathlib-free proof route are in the computational SPEC and are not
 restated here.
 
-This library is `correspondence_only: true`, with comparator absence class
-**correspondence-only-layer**. It owns no runtime search, conformance
-driver or benchmark process. Build-only examples live in
+The correspondence part of this library owns no runtime search,
+conformance driver or benchmark process; the `rank_locus` tactic below
+adds proof probes, so the library is not `correspondence_only` and carries
+a `proof_probes` entry in `libraries.yml`. Build-only examples live in
 `HexDeterminantalIdealMathlib/Tests.lean`.
 
 Computational conformance owner: `HexDeterminantalIdeal`.
@@ -159,6 +162,270 @@ the same module can have different shapes and are not related by
 invertible square factors alone. That presentation independence is the
 Fitting-ideal theorem, which this library does not prove and the pinned
 Mathlib does not contain.
+
+## The `rank_locus` tactic
+
+`rank_locus` states, for a Mathlib matrix whose entries are ring
+expressions in some atoms, exactly where its rank drops: it produces the
+generators of the determinantal ideal `I_r(P)` of the reified polynomial
+matrix `P`, interpreted back into the user's ring, and the theorem that
+the rank of the user's matrix is below `r` if and only if every generator
+vanishes. It is the tactic form of the headline theorem and adds nothing
+to its mathematics. It lives here because the theorem it packages is this
+library's, per [matrix-tactics §Placement](../../SPEC/matrix-tactics.md#placement);
+the default threshold `r`, when the user omits it, is the generic rank of
+`P`, supplied by a handler that
+[hex-generic-rank-mathlib](../../SPEC/Libraries/hex-generic-rank-mathlib.md)
+attaches to this library's syntax kind, so that this library does not
+depend on hex-rank.
+
+### Input and fragment
+
+The input is reified exactly as the symbolic arm of `rank` reifies it
+([hex-generic-rank-mathlib §Input classification](../../SPEC/Libraries/hex-generic-rank-mathlib.md#input-classification)):
+one hex-reflect batch over all entries, sealed at `k` atoms, giving
+`P : Hex.Matrix (MvPoly k C cmp) n m`, the atom valuation `v : Fin k → F`,
+the coefficient interpretation `ι : C →+* F`, and the entrywise proofs
+`eval₂ ι v P[i, j] = A i j`. Atoms are independent indeterminates;
+nothing about their nonzeroness is assumed or asked. Closed numeric
+matrices are accepted (every entry a constant, `k` possibly positive) and
+give a locus statement whose generators are constants, which is correct
+and useless; the diagnostic says so.
+
+`F` is a field or a domain. Over a domain that is not a field the
+statement is obtained by composing the interpretation with
+`algebraMap F (FractionRing F)`, applying the field theorem there, rewriting
+the rank back with hex-rank-mathlib's `rank_map_eq`
+([hex-rank-mathlib §Scalar extension](../../HexRankMathlib/SPEC/hex-rank-mathlib.md#scalar-extension)),
+and reflecting each generator's vanishing through the injectivity of the
+fraction-ring map; this is the passage the merged
+[hex-generic-rank-mathlib §Output 3](../../SPEC/Libraries/hex-generic-rank-mathlib.md#output-3-rank-locus)
+assigns to this tactic, and it is why `HexRankMathlib` is a dependency. It
+is also what makes the symbolic-matrix-itself output below reachable,
+since `MvPolynomial σ D` is a domain and not a field.
+
+`r` is a closed natural number. The budget the batch debits is
+hex-reflect's, plus one dimension this tactic adds: `minorWork`, the
+kernel work of the complete enumeration, `n.choose r * m.choose r * r!`
+Laplace terms, each weighted by the realised support of the entries (the
+count of minors alone would let a single `15 × 15` determinant through).
+Exceeding it is a `declined` outcome naming the dimension and the count.
+
+### Goal forms and outputs
+
+The primary form introduces a hypothesis and closes nothing:
+
+```text
+rank_locus A r            -- adds h : A.rank < r ↔ ⟦g₁⟧ = 0 ∧ ⋯ ∧ ⟦gₗ⟧ = 0
+rank_locus A r with h     -- names it
+rank_locus A              -- r := the generic rank of P (hex-generic-rank-mathlib's handler)
+```
+
+where `g₁, …, gₗ` is `detIdealGens r P` and `⟦g⟧` is the interpretation
+`eval₂ ι v g` denoted as an expression in the source atoms. The empty
+conjunction is `True` (so for `r > min n m` the hypothesis reads
+`A.rank < r ↔ True`), and at `r = 0` the single generator is `1`, giving
+`A.rank < 0 ↔ 1 = 0`; both follow from the enumeration conventions of
+[hex-determinantal-ideal §Conventions](../../HexDeterminantalIdeal/SPEC/hex-determinantal-ideal.md#conventions-a-minor-of-every-size)
+and need no special case.
+
+Closing forms, each an instance of the same theorem:
+
+| Goal | What closes it | Kernel obligation |
+|---|---|---|
+| `A.rank < r` | every `⟦gᵢ⟧ = 0` discharged | the full generator list |
+| `A.rank ≤ r` | every generator of `I_(r+1)(P)` discharged zero | the full list at `r + 1` |
+| `r ≤ A.rank` | one `⟦g⟧ ≠ 0` discharged, for a `g` the tactic names | membership of that one minor only |
+| `A.rank = r` | both of the previous two | both |
+
+Conditions are discharged in the hex-reflect order
+([hex-reflect §Shared results and conditions](../../HexReflect/SPEC/hex-reflect.md#shared-results-and-conditions)):
+definitional equality and local hypotheses, the configured cheap
+normalisers (`norm_num` on closed propositions by default), Grind facts
+when run under a Grind adapter, then side goals in tactic mode (one per
+undischarged generator, in list order), otherwise decline without touching
+the goal. For the lower-bound row the automatic tiers (definitional
+equality and hypotheses, cheap normalisers, Grind facts) are tried across
+every generator first, and the first generator they discharge is the one
+named; only if none is discharged does tactic mode pick the first
+generator and leave `⟦g⟧ ≠ 0` as a side goal, and the term form declines
+naming all of them. Nothing is substituted for a goal that does not
+close.
+
+The term form `rank_locus% A r` returns one fixed record
+`{ gens, proof, poly, ideal? }`: `gens`, the displayed generators; `proof`,
+the iff; `poly`, the polynomial data (`P`, the sealed environment,
+`detIdealGens r P` as `MvPoly` values) for programmatic consumers such as
+the later piecewise-rank extension; and `ideal?`, populated only when the
+goal's matrix is the symbolic matrix itself under the atom and coefficient
+conditions of
+[hex-generic-rank-mathlib §Output 1](../../SPEC/Libraries/hex-generic-rank-mathlib.md#output-1-generic-rank),
+holding `span_gens_map_eq` and `mem_zeroLocus_map_iff_rank_lt` below for
+the generators `G'` mapped into `MvPolynomial σ D`. The programmatic
+interface returns the same record and never creates goals.
+
+### Theorems
+
+Two generalisations of the existing statements, both in this library:
+
+```lean
+theorem rank_lt_iff_gens_map_zero [CommRing R] [DecidableEq R] [Field K]
+    (φ : R →+* K) (A : Hex.Matrix R n m) (r : Nat) :
+    ((matrixEquiv A).map φ).rank < r ↔ ∀ g ∈ Hex.Matrix.detIdealGens r A, φ g = 0
+theorem gens_vanish_iff_rank_lt [CommRing C] [Field F] [DecidableEq C]
+    (ι : C →+* F) (A : Hex.Matrix (Hex.MvPoly k C cmp) n m) (v : Fin k → F) (r : Nat) :
+    (∀ g ∈ Hex.Matrix.detIdealGens r A, MvPolynomial.eval₂ ι v (HexMvPolyMathlib.equiv g) = 0) ↔
+      ((matrixEquiv A).map (HexMvPolyMathlib.eval₂MathlibHom ι v)).rank < r
+theorem gens_vanish_iff_rank_lt_of_domain [CommRing C] [CommRing F] [IsDomain F] [DecidableEq C]
+    (ι : C →+* F) (A) (v : Fin k → F) (r : Nat) :
+    (∀ g ∈ Hex.Matrix.detIdealGens r A, MvPolynomial.eval₂ ι v (HexMvPolyMathlib.equiv g) = 0) ↔
+      ((matrixEquiv A).map (HexMvPolyMathlib.eval₂MathlibHom ι v)).rank < r
+theorem span_gens_map_eq [CommRing C] [CommRing D] [IsDomain D] [DecidableEq C]
+    (ι₀ : C →+* D) (f : Fin k → σ) (A) (r : Nat) :
+    Ideal.span ((Hex.Matrix.detIdealGens r A).map
+        (MvPolynomial.rename f ∘ MvPolynomial.map ι₀ ∘ HexMvPolyMathlib.equiv)).toSet =
+      Ideal.map (MvPolynomial.rename f).toRingHom
+        (Ideal.map (MvPolynomial.map ι₀) (Ideal.span ((Hex.Matrix.minors r A).map HexMvPolyMathlib.equiv).toSet))
+theorem mem_zeroLocus_map_iff_rank_lt [CommRing C] [Field D] [DecidableEq C]
+    (ι₀ : C →+* D) (f : Fin k → σ) (A) (r : Nat) (p : σ → D) :
+    p ∈ MvPolynomial.zeroLocus D (Ideal.span ((Hex.Matrix.detIdealGens r A).map
+        (MvPolynomial.rename f ∘ MvPolynomial.map ι₀ ∘ HexMvPolyMathlib.equiv)).toSet) ↔
+      ((matrixEquiv A).map (HexMvPolyMathlib.eval₂MathlibHom ι₀ (p ∘ f))).rank < r
+```
+
+`rank_lt_iff_gens_map_zero` is `rank_lt_iff_minors_map_eq_zero` with
+`mem_detIdealGens_iff` (a minor is zero or equal to a generator; duplicates
+do not matter). `gens_vanish_iff_rank_lt` is it at
+`φ := HexMvPolyMathlib.eval₂MathlibHom ι v`, and is the form the tactic
+uses: `P` has coefficients in `C` while the user's atoms take values in
+`F`, which the existing `mem_zeroLocus_iff_rank_lt` (same field for
+coefficients and point) does not cover; the existing theorem is the case
+`ι = RingHom.id`, `C = F`. The `_of_domain` form composes with
+`algebraMap F (FractionRing F)`, rewrites the rank with hex-rank-mathlib's
+`rank_map_eq`, and reflects zero through `IsFractionRing.injective`.
+`span_gens_map_eq` says the mapped generator list generates the mapped
+determinantal ideal (from `span_detIdealGens_eq` and `Ideal.map_span`),
+and `mem_zeroLocus_map_iff_rank_lt` is the zero-locus reading of it for
+the symbolic-matrix-itself output, where the atoms are `X ∘ f`.
+
+The lower-bound row uses `le_rank_iff_exists_minor_map_ne_zero` with the
+single named minor, and needs only that minor's membership in
+`minors r A`.
+
+### Kernel route
+
+[matrix-tactics §Kernel discipline](../../SPEC/matrix-tactics.md#kernel-discipline)
+forbids evaluating `detIdealGens r P` on `Hex.Matrix (MvPoly …)` in the
+kernel: the enumeration goes through `selectedColumnTuples` on `Vector`
+and `Fin`, and `det` through `permutationVectors`. The kernel form is in
+the Mathlib-free library
+([hex-determinantal-ideal §Kernel form](../../HexDeterminantalIdeal/SPEC/hex-determinantal-ideal.md#kernel-form)):
+`minorsList r L` enumerates index tuples as `List Nat` by structural
+recursion and computes each minor by Laplace expansion along the first row
+over the list form of `MvPoly` arithmetic, and `detIdealGensList r L`
+drops zeros and duplicates. The data and their denotations are kept
+apart: `L : List (List Term)` is the batch's matrix as canonical term
+lists, `denote : Term → MvPoly k C cmp` is hex-mv-poly-mathlib's
+denotation, and this library proves
+
+```lean
+theorem detIdealGensList_denote (L) (P) (hL : L.map (·.map denote) = rowLists P) (r) :
+    (detIdealGensList r L).map denote = Hex.Matrix.detIdealGens r P
+```
+
+where `rowLists P` is the row-major list of `P`'s entries (read off
+`Hex.Matrix.rows`, which returns nested `Vector`s), through
+`det_eq_foldl_laplace_row` and the denotation theorem. The transport of
+"drop zeros and duplicates" requires, and the list form must supply, the
+canonical-form properties recorded under
+[§Prerequisite changes](#prerequisite-changes-in-other-libraries): kernel
+zero recognition holds exactly when the denotation is zero, kernel
+equality holds exactly when denotations are equal, the operations
+preserve canonical form, and the enumeration order and first-occurrence
+rule match `detIdealGens`. Without them two term lists could denote one
+polynomial or a nonempty list could denote zero, and the two lists would
+keep different generators.
+
+The kernel therefore evaluates `detIdealGensList r L = G` for the compiled
+generator term lists `G`, one closed equality of term lists, and `hL` is
+`rfl` because the batch quotes `P` by its term lists in the first place;
+each displayed `⟦gᵢ⟧` is tied to `denote gᵢ` by hex-reflect's denotation
+proof. For the lower-bound row the kernel evaluates three closed facts
+instead: `rows ∈ indexTuples r n`, `cols ∈ indexTuples r m`, and
+`minorList rows cols L = g`; the memberships transport to
+`selectedColumnTuples` through `indexTuples_eq_selectedColumnTuples`, and
+together with the value they give `denote g ∈ minors r P`, which
+`le_rank_iff_exists_minor_map_ne_zero` needs. The value alone would not.
+
+Cost is `n.choose r * m.choose r` Laplace determinants of size `r`, each
+`r!` products at the realised support, the same work the compiled
+enumeration did; there is no cheaper complete certificate for "these are
+all the minors", and the `minorWork` budget bounds exactly this quantity.
+
+### Prerequisite changes in other libraries
+
+- The list form of `MvPoly` arithmetic in hex-mv-poly with its denotation
+  theorem, shared with hex-generic-rank-mathlib, as that SPEC records. For
+  this tactic the list form must additionally be canonical: a term list
+  denotes zero iff the kernel zero test accepts it, two term lists denote
+  the same polynomial iff the kernel equality accepts them, and addition,
+  multiplication and negation return canonical lists. These are the
+  properties `detIdealGensList_denote` consumes.
+- The shared literal layer (`ofLists`, `vecOfList`, literal recognition,
+  definitional identification of `!![…]`) at its final home in
+  hex-matrix-mathlib, tracked by https://github.com/kim-em/hex-dev/issues/10213.
+  Until that relocation lands it lives in `HexRankMathlib/Kernel.lean` and
+  `Tactic.lean`, which this library already imports for `rank_map_eq`, so
+  the dependency is satisfied either way.
+- hex-reflect's denotation of a reflected polynomial value back to a
+  source-ring expression with its proof `eval₂ ι v g = ⟦g⟧`, if it is not
+  already exposed for values that are not batch entries; the displayed
+  generators depend on it.
+- The residue coefficient provider in hex-reflect-mathlib, for the
+  positive-characteristic example, as hex-generic-rank-mathlib records.
+
+### Examples
+
+- `!![x]`, `r = 1`: `h : !![x].rank < 1 ↔ x = 0`.
+- `!![x, y]`, `r = 1`: `h : !![x, y].rank < 1 ↔ x = 0 ∧ y = 0`, the exact
+  locus that the conditional output of `rank` cannot give (its single
+  condition is `x ≠ 0`).
+- `!![x, 1; 1, x]`, `r = 2`: `h : … .rank < 2 ↔ x ^ 2 - 1 = 0`; at `r = 1`
+  the generators are `x` and `1`, and `norm_num` refutes `1 = 0`, so
+  `1 ≤ !![x, 1; 1, x].rank` closes by the lower-bound row with the minor
+  `1` named.
+- `!![1, x; 1, y]`, `r = 2`: `h : … .rank < 2 ↔ y - x = 0`.
+- `!![x ^ 3 - x]` over `ZMod 3`, `r = 1`: `h : … .rank < 1 ↔ x ^ 3 - x = 0`,
+  true at every point, which the statement neither knows nor needs; it
+  waits on the residue provider.
+
+### Proof probes and tests
+
+`HexDeterminantalIdealMathlib/Tests.lean` gains the five examples above in
+every goal form, the empty and `r = 0` shapes, and the `ℤ` case of
+`gens_vanish_iff_rank_lt_of_domain` on `!![x, 2 * x]`. Proof probes under
+`bench/HexDeterminantalIdealMathlib/ProofProbe` record, as fresh-module
+evidence with matched baselines, batch reification, compiled enumeration,
+kernel time of `detIdealGensList`, and total elaboration, on the
+`symbolic` family of [hex-generic-rank §Benchmarking](../../SPEC/Libraries/hex-generic-rank.md#benchmarking)
+restricted to `r ≤ 3`. There is no Mathlib comparator (no Lean tactic
+states a rank locus), declared as
+**no-comparable-surface-in-named-comparator**; the report is
+`reports/hex-determinantal-ideal-mathlib-performance.md` with absolute
+numbers and preregistered ceilings. The library therefore drops
+`correspondence_only` in `libraries.yml` and gains `proof_probes`, and its
+dependencies gain `HexRankMathlib`, `HexReflect`, `HexReflectMathlib` and
+`HexMatrixMathlib`.
+
+### What this tactic does not do
+
+It does not reduce the generator list: no Gröbner basis, no radical, no
+decomposition into components, no sign or leading-coefficient
+normalisation beyond `detIdealGens`'s dropping of zeros and duplicates.
+Those are the Gröbner-basis work that is out of scope for this round, and
+when it exists it consumes this tactic's `poly` field. It does not decide
+whether the locus is empty, nonempty, or everything; over a finite field
+the last is common and the statement is still correct pointwise.
 
 ## Tests
 

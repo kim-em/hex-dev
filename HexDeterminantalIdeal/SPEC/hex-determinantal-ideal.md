@@ -554,6 +554,7 @@ HexDeterminantalIdeal/
   Minors.lean        minors, detIdealGens, enumeration theorems, invariance expansions
   Rank.lean          rank_lt_iff_minors_eq_zero and its three corollaries
   MvPoly.lean        Matrix.map (if not yet in HexMatrix), specialize, rankAt, InLocus
+  Kernel.lean        indexTuples, minorList, minorsList, detIdealGensList and their enumeration theorems
   SPEC/hex-determinantal-ideal.md
   README.md
 conformance/HexDeterminantalIdeal/{Conformance,EmitFixtures}.lean
@@ -562,17 +563,54 @@ scripts/oracle/detideal_sympy.py
 bench/HexDeterminantalIdeal/Bench.lean
 ```
 
+## Kernel form
+
+[SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md) §Kernel discipline
+forbids evaluating `minors` or `detIdealGens` in the kernel on
+`Hex.Matrix` values: the enumeration goes through `selectedColumnTuples`
+on `Vector` and `Fin`, and `det` through `permutationVectors`. For the
+`rank_locus` tactic the library therefore also ships, in
+`HexDeterminantalIdeal/Kernel.lean`, a list form written for kernel
+reduction, in the style of hex-rank's `RankWitness`:
+
+- `indexTuples r n : List (List Nat)`, the strictly increasing `r`-tuples
+  in `0 … n - 1` in the order of `selectedColumnTuples`, by structural
+  recursion;
+- `minorList rows cols L`, the determinant of the selected block of a row
+  list `L : List (List α)` by Laplace expansion along the first row, by
+  structural recursion on `rows`, over the list form of the entry
+  arithmetic;
+- `minorsList r L` and `detIdealGensList r L`, the enumeration and the
+  zero-and-duplicate-free list, over `indexTuples`.
+
+The entry arithmetic is abstract over the carrier's list form: for
+`MvPoly` entries it is the list form of `MvPoly` arithmetic that
+hex-mv-poly supplies (a prerequisite of the tactic, recorded in
+[hex-generic-rank-mathlib](../../SPEC/Libraries/hex-generic-rank-mathlib.md#prerequisite-changes-in-other-libraries)),
+and for integer entries it is `Int`. Every definition is `@[expose]`,
+recurses structurally, and puts no `Array`, `Vector`, `Fin` or `Hex.Matrix`
+on the kernel's path. The Mathlib-free theorems are the enumeration facts
+(`indexTuples_eq_selectedColumnTuples` up to the index encoding,
+`length_minorsList`) and `minorList_eq_det_laplace`, identifying the
+list determinant with `det_eq_foldl_laplace_row` at the first row on the
+denoted block; the
+identification `detIdealGensList r (rows A) = detIdealGens r A` on denoted
+`MvPoly` values is the companion's, since it needs the denotation theorem.
+
+Cost is `n.choose r * m.choose r` determinants of `r!` products each, the
+same as the compiled enumeration; it is the price of a complete
+certificate that a list is all the minors, and the tactic budgets it.
+
 ## Consumers
 
-- The `rank_locus` tactic (later SPEC) takes a Mathlib matrix with
-  symbolic entries, reifies it through `hex-reflect`
-  ([spec issue](https://github.com/kim-em/hex-dev/issues/10152)) into a
-  `Matrix (MvPoly k R cmp) n m`, runs `detIdealGens r A` to display the
-  generators, and closes goals of the form "the rank at `p` is below `r`
-  iff `p` is in the zero set" with the companion's
-  `mem_zeroLocus_iff_rank_lt`. It needs this library for the theorem and
-  `hex-reflect` for its input, and nothing from `hex-rank` unless the
-  user asks for the generic rank as the default `r`.
+- The `rank_locus` tactic, specified in
+  [hex-determinantal-ideal-mathlib §The `rank_locus` tactic](../../HexDeterminantalIdealMathlib/SPEC/hex-determinantal-ideal-mathlib.md#the-rank_locus-tactic):
+  it reifies a Mathlib matrix with symbolic entries through hex-reflect
+  into a `Matrix (MvPoly k C cmp) n m`, runs `detIdealGens r A` in
+  compiled code, certifies the list through the kernel form above, and
+  states "the rank is below `r` iff every generator vanishes" through the
+  companion's `gens_vanish_iff_rank_lt`. Its default `r` is the generic
+  rank, supplied by hex-generic-rank-mathlib's handler on its syntax kind.
 - the matrix tactics ([SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md))
   may use `le_rank_iff_exists_minor_ne_zero` as the lower-bound half of a
   rank certificate. It is not required to.
