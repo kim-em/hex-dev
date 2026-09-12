@@ -229,6 +229,38 @@ and the direct field inverse agree after transport to a common field and
 undoing the certificate's row/column selections, by uniqueness of inverse;
 that consumer-level comparison adds no dependency between the libraries.
 
+## Frontend implementation and validation
+
+The tactic contracts below are design requirements. Their kernel-certificate
+subsections specify additions owned by the Mathlib-free algorithm library;
+they do not move that code into this companion. When implementing those
+additions, cross-link the algorithm's kernel-certificate SPEC to this contract.
+Keep existing phase evidence as evidence for the existing correspondence only.
+Before activating the frontend, remove `correspondence_only: true` if present,
+add `proof_probes: [bench/HexRowReduceMathlib/ProofProbe]`, and reopen the
+library's conformance/performance obligations: cap `done_through` at `2` until
+the new build-only proof tests pass, then at `3` until complete proof evidence
+passes. Do not add an empty reservation while retaining a completed Phase 4.
+This SPEC-only change does not alter the manifest or attest implementation.
+
+Proof tests live in `HexRowReduceMathlib/Tests.lean`, built with the ordinary
+library; malformed list certificates also belong in the algorithm library's
+Mathlib-free conformance driver. Proof probes are fresh modules, not runtime
+oracle drivers or Mathlib-importing benchmark executables. Each frontend uses
+`HexRowReduceMathlib/Tactic.lean`; result records and list soundness belong
+in `HexRowReduceMathlib/Kernel.lean`. No library name changes.
+
+For the named families below, shipping requires complete clean-tree evidence
+under the `absolute_only` mode of
+[SPEC/benchmarking.md](../../SPEC/benchmarking.md#fresh-module-proof-evidence).
+Preregister six rounds and a per-candidate absolute build budget of 60 seconds
+on the measurement host for every stated rung. Every candidate sample must
+meet it; report the median and kernel-only time as well. A timeout, incomplete
+pair, budget failure or provenance mismatch blocks the frontend's performance
+sign-off. This is an operational shipping gate, not an asymptotic or portable
+wall-time claim. Retain slow completed samples; do not trim the ladder to get
+a passing verdict. Any budget revision requires an explicit SPEC amendment.
+
 ## The `inverse` tactic
 
 This is a required frontend extension to the field inverse correspondence
@@ -281,9 +313,18 @@ case the quoted inverse is the witness: check its exact square shape and
 `A * B = I` and `B * A = I`. In the singular case check a vector of length
 `n`, a nonzero coordinate (with its index in range), and `A * v = 0`.
 The list products use only exposed structural recursion on `Nat`/`Int` data.
-For `ℚ`, encode numerator/positive denominator pairs, reject zero denominators,
-and use division-free rational arithmetic and cross multiplication. No
-`Array`, `Vector`, `Fin`, `Finset`, `Hex.Matrix`, well-founded recursion,
+For `ℚ`, follow the scaled-integer boundary of `checkDetRat` in
+`HexBareiss/Kernel.lean`. Keep each literal's row list at `Rat` for its
+`rfl` identification and check agreement with integer rows and a positive
+common denominator using entrywise numerator/denominator cross products.
+Encode each witness matrix/vector with its own common denominator. For
+`A = Z / d` and `B = V / e`, check `Z * V = (d * e) I`; for
+`v = w / s`, check `Z * w = 0`. Thus products and sums are integer list
+arithmetic, not repeated addition of unreduced fractions. Reject zero scales;
+the codec supplies the proved literal/encoding agreement. Product bit heights
+are bounded by the summed operand heights plus `O(log(n + 1))`; scale and
+witness numerator heights are recorded separately from original input heights.
+No `Array`, `Vector`, `Fin`, `Finset`, `Hex.Matrix`, well-founded recursion,
 field inversion or producer execution occurs on the reduction path.
 
 Require new `inverse_of_checkList` to transport the successful product checks
@@ -296,13 +337,47 @@ Mathlib inverse. These are new arbitrary-witness transport lemmas. They
 must not assume a positive dimension, nonzero determinant in the singular
 case, or that quoted data is definitionally the producer's output.
 
+Required result signature in `HexRowReduceMathlib/Kernel.lean` (namespace
+`HexMatrixMathlib`), using the same coherent field instance as above:
+
+```lean
+inductive InverseResult {F : Type u} [Field F] {n : Nat}
+    (A : Matrix (Fin n) (Fin n) F) where
+  | invertible (value : Matrix (Fin n) (Fin n) F)
+      (right_inv : A * value = 1) (left_inv : value * A = 1)
+      (inv_eq : A⁻¹ = value)
+  | singular (kernel : Fin n → F) (nonzero : kernel ≠ 0)
+      (annihilates : A.mulVec kernel = 0) (det_eq : A.det = 0)
+      (inv_eq : A⁻¹ = 0)
+
+-- Initial rational checker in HexRowReduce/Kernel.lean, namespace Hex.Matrix:
+def checkInverseList (n : Nat) (rows : List (List Rat))
+    (c : InverseWitness) : Bool
+
+-- Companion constructor; its proof fields come from the product/kernel lemmas.
+noncomputable def inverse_of_checkList {n : Nat}
+    (A : Matrix (Fin n) (Fin n) ℚ) (rows : List (List Rat))
+    (c : Hex.Matrix.InverseWitness)
+    (hA : A = HexMatrixMathlib.ofLists n n rows)
+    (hc : Hex.Matrix.checkInverseList n rows c = true) : InverseResult A
+```
+
+`InverseWitness` is a tagged list record: an invertible branch stores the
+scaled input and inverse blocks; a singular branch stores the scaled input
+block, scaled kernel vector and nonzero-coordinate index. Every scale is a
+`Nat` and every numerator is an `Int`. The constructor's projection theorems
+identify its returned value/vector with that branch's decoded literals.
+
 ### Producer and proof assembly
 
 Run the compiled field RREF inverse path once, retaining its reduced data.
 On failure of the full-rank test, extract a nonzero column of its existing
 nullspace basis; do not claim `inverse?` itself returns this vector. This
-witness-producing wrapper is a new HexRowReduce obligation and leaves the
-specified `inverse?` API intact. Re-check either list witness before quoting.
+witness-producing wrapper is a new HexRowReduce obligation for this tactic,
+requested against its SPEC's §Field inverse and complete linear solve. That
+section excludes such a wrapper only from the earlier algorithm extension;
+it must be extended before this frontend ships. The `inverse?` API stays intact.
+Re-check either list witness before quoting.
 
 Follow `HexRankMathlib/Kernel.lean` and `Tactic.lean`: shared literal
 identification, list soundness wrapper, and one synchronous auxiliary theorem
@@ -327,8 +402,11 @@ frontends, with inverse modules below `Inverse/`. Named seeded families:
 `dense-invertible`, `pivot-swaps`, `singular-kernel` (rank `n - 1` and
 `n / 2`), and `rational-height`; dimensions `2, 4, 8, 16`, input heights
 `8, 32` bits, and `64, 256` for the height family. Profile product and inverse
-goals separately, including singular inverse goals. No Mathlib tactic
-comparator exists. Record six complete fresh-module samples paired with
+goals separately, including singular inverse goals. Mathlib has no dedicated
+inverse tactic. Include an informational matched proof using entrywise
+`simp [Matrix.mul_apply]`/`norm_num` for small closed product goals; report
+whether it closes each rung rather than presuming a complete competitor.
+Record six complete fresh-module samples paired with
 import-only baselines, adjacent and alternating orientation, absolute
 wall times/medians, baseline deltas and one kernel-only profile per family
 per [SPEC/benchmarking.md](../../SPEC/benchmarking.md#fresh-module-proof-evidence).
@@ -347,7 +425,9 @@ It shares HexRowReduce's field certificate primitives with `inverse`.
 
 ### Goals, result and carriers
 
-Declare non-reserved `solve` and term form `solve% A b`. For closed
+Declare non-reserved `solve` and term form `solve% A b`. Add parser
+regression tests for the bare matrix tactic, term form and ordinary
+identifiers/function applications named `solve`. For closed
 `A : Matrix (Fin n) (Fin m) F`, `b : Fin n → F`, `x : Fin m → F`, accept
 `A.mulVec x = b` and its reverse. The stated `x` need not be the producer's
 canonical particular solution: check its residual directly. Also accept
@@ -403,8 +483,9 @@ checks for a particular residual, complete affine data, and inconsistency.
   `y · b ≠ 0`. This does not require an RREF certificate.
 
 All matrices/vectors are exact-length lists, indices are checked naturals,
-and field scalars use the division-free numerator/positive-denominator data
-of `inverse`. All reduction-path definitions are exposed structural list
+and field scalars use the positive-common-denominator integer blocks
+of `inverse`, clearing denominators once per identity. All reduction-path
+definitions are exposed structural list
 recursions, with no `Array`, `Vector`, `Fin`, `Finset`, `Hex.Matrix`,
 well-founded recursion or replay of row reduction/solve/nullspace search.
 
@@ -420,6 +501,46 @@ separator lemma transports the zero left product and nonzero dot product
 and rules out every solution by associativity. None of these new lemmas
 requires `solve A b = ...`. Wrappers take matrix/vector literal
 identifications for the actual Mathlib goal, just like rank's `hA` wrapper.
+
+Required result signature in `HexRowReduceMathlib/Kernel.lean`, namespace
+`HexMatrixMathlib`; `c` is explicitly indexed by the quoted nullity:
+
+```lean
+inductive SolveResult {F : Type u} [Field F] {n m : Nat}
+    (A : Matrix (Fin n) (Fin m) F) (b : Fin n → F) where
+  | consistent (value : Fin m → F) (nullity : Nat)
+      (basis : Matrix (Fin m) (Fin nullity) F)
+      (solution : A.mulVec value = b)
+      (complete : ∀ x : Fin m → F, A.mulVec x = b ↔
+        ∃! c : Fin nullity → F, x = value + basis.mulVec c)
+  | inconsistent (separator : Fin n → F)
+      (annihilates : Matrix.vecMul separator A = 0)
+      (separates : dotProduct separator b ≠ 0)
+      (impossible : ¬ ∃ x : Fin m → F, A.mulVec x = b)
+
+-- Initial rational residual checker, namespace Hex.Matrix:
+def checkSolutionList (n m : Nat) (rows : List (List Rat))
+    (rhs candidate : List Rat) : Bool
+
+-- Direct residual soundness, namespace HexMatrixMathlib:
+theorem solve_of_checkList {n m : Nat}
+    (A : Matrix (Fin n) (Fin m) ℚ) (b : Fin n → ℚ) (x : Fin m → ℚ)
+    (rows : List (List Rat)) (rhs candidate : List Rat)
+    (hA : A = ofLists n m rows) (hb : b = vecOfList n rhs)
+    (hx : x = vecOfList m candidate)
+    (hc : Hex.Matrix.checkSolutionList n m rows rhs candidate = true) :
+    A.mulVec x = b
+```
+
+The direct residual checker obtains common denominators by a structural
+list fold before integer products. The complete `checkSolveList` additionally
+takes a tagged `SolveWitness`: the consistent branch contains the scaled
+RREF/transform/inverse, pivot and free-column lists, rank, particular solution
+and basis; the inconsistent branch contains the scaled separator. Its new
+companion constructor `solveResult_of_checkList` takes the analogous `hA`,
+`hb` and accepted check and returns `SolveResult A b`, with projection
+lemmas fixing its literal data to the witness. These types avoid the existing
+`SolveData A`'s producer-dependent dimension on the reduction path.
 
 ### Producer and proof assembly
 
@@ -459,7 +580,11 @@ reservation. Named seeded families: `square-unique`, `tall-consistent`
 and `inconsistent-separator` (the same deficient matrices with inconsistent
 RHS), at `n = 2, 4, 8, 16` and rational input heights `8, 32, 128` bits.
 Measure the supplied-solution and complete-record surfaces separately.
-There is no Mathlib tactic comparator; record absolute numbers and no ratio.
+There is no dedicated Mathlib solve tactic. For supplied-solution goals,
+include an informational matched entrywise `simp [Matrix.mulVec]`/`norm_num`
+proof on small rungs where it closes the same goal. This normalization
+baseline does not compute a solution or certify the complete affine space;
+record absolute numbers for all surfaces.
 Per [SPEC/benchmarking.md](../../SPEC/benchmarking.md#fresh-module-proof-evidence),
 use six adjacent import-baseline/probe pairs, alternating orientation, retain
 all raw build times/medians and deltas, and record one kernel-only profile

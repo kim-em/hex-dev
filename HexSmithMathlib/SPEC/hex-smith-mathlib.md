@@ -73,6 +73,38 @@ For the correspondence API, `HexSmith` is the computational performance
 owner. The tactic below requires its own proof probes and report when
 implemented, while introducing no Mathlib-importing benchmark executable.
 
+## Frontend implementation and validation
+
+The tactic contracts below are design requirements. Their kernel-certificate
+subsections specify additions owned by the Mathlib-free algorithm library;
+they do not move that code into this companion. When implementing those
+additions, cross-link the algorithm's kernel-certificate SPEC to this contract.
+Keep existing phase evidence as evidence for the existing correspondence only.
+Before activating the frontend, remove `correspondence_only: true` if present,
+add `proof_probes: [bench/HexSmithMathlib/ProofProbe]`, and reopen the
+library's conformance/performance obligations: cap `done_through` at `2` until
+the new build-only proof tests pass, then at `3` until complete proof evidence
+passes. Do not add an empty reservation while retaining a completed Phase 4.
+This SPEC-only change does not alter the manifest or attest implementation.
+
+Proof tests live in `HexSmithMathlib/Tests.lean`, built with the ordinary
+library; malformed list certificates also belong in the algorithm library's
+Mathlib-free conformance driver. Proof probes are fresh modules, not runtime
+oracle drivers or Mathlib-importing benchmark executables. Each frontend uses
+`HexSmithMathlib/Tactic.lean`; result records and list soundness belong
+in `HexSmithMathlib/Kernel.lean`. No library name changes.
+
+For the named families below, shipping requires complete clean-tree evidence
+under the `absolute_only` mode of
+[SPEC/benchmarking.md](../../SPEC/benchmarking.md#fresh-module-proof-evidence).
+Preregister six rounds and a per-candidate absolute build budget of 60 seconds
+on the measurement host for every stated rung. Every candidate sample must
+meet it; report the median and kernel-only time as well. A timeout, incomplete
+pair, budget failure or provenance mismatch blocks the frontend's performance
+sign-off. This is an operational shipping gate, not an asymptotic or portable
+wall-time claim. Retain slow completed samples; do not trim the ladder to get
+a passing verdict. Any budget revision requires an explicit SPEC amendment.
+
 ## The `smith` tactic
 
 This is a required extension following
@@ -121,8 +153,12 @@ handler to this same syntax kind, and uses HexPolySmith's polynomial SNF
 certificate over `[Lean.Grind.Field F] [DecidableEq F]`. It must transport to
 Mathlib `Polynomial F` under coherent Mathlib field instances, use monic
 nonzero factors and exact coefficient-list identities, and supply its own
-arbitrary-certificate quotient bridge and proof evidence. The integer arm
-acquires no HexPolySmith dependency. This optional arm is not an assertion
+arbitrary-certificate quotient bridge and proof evidence. Activating this optional arm requires a future HexPolySmithMathlib change:
+add a dependency on HexSmithMathlib to import the syntax kind, remove its
+`correspondence_only` flag, reserve its own proof probes and reopen its
+conformance/performance phases as above. No such manifest edge or activation
+is part of the integer frontend. The integer arm acquires no HexPolySmith
+dependency. This optional arm is not an assertion
 that the current polynomial companion already provides that bridge.
 
 ### Kernel certificate and soundness
@@ -159,6 +195,41 @@ and surjectivity facts needed for the quotient equivalence. No reduction or
 equality proof of the producer's transforms is permitted; transforms need
 not be canonical even when factors are. The divisibility proof comes from
 the checked shape, rather than replaying `smithNormalForm_chain A`.
+
+Required API schemata (new declarations, not existing theorem citations):
+
+```lean
+-- HexSmith/Kernel.lean, namespace Hex.Matrix
+structure SmithWitness where
+  rank : Nat
+  diag : List Int
+  left leftInv right rightInv intermediate : List (List Int)
+
+def checkSmithList (n m : Nat) (rows : List (List Int))
+    (c : SmithWitness) : Bool
+
+-- HexSmithMathlib/Kernel.lean, namespace HexSmithMathlib
+structure SmithResult {n m : Nat} (A : Matrix (Fin n) (Fin m) ℤ) where
+  rank : Nat
+  rank_le : rank ≤ min n m
+  factors : Fin rank → ℤ
+  positive : ∀ i, 0 < factors i
+  chain : ∀ i j : Fin rank, i.val + 1 = j.val → factors i ∣ factors j
+  equiv : ((Fin m → ℤ) ⧸ Submodule.span ℤ (Set.range A)) ≃ₗ[ℤ]
+    (Fin (m - rank) → ℤ) ×
+      ⨁ i : Fin rank, ℤ ⧸ Ideal.span ({factors i} : Set ℤ)
+
+noncomputable def smith_of_checkList {n m : Nat}
+    (A : Matrix (Fin n) (Fin m) ℤ) (rows : List (List Int))
+    (c : Hex.Matrix.SmithWitness)
+    (hA : A = HexMatrixMathlib.ofLists n m rows)
+    (hc : Hex.Matrix.checkSmithList n m rows c = true) : SmithResult A
+```
+
+The constructor additionally exposes projection theorems equating its `rank`
+to `c.rank` and its factor function to `vecOfList c.rank c.diag` after that
+rank identification. It is a definition returning data; the identities it
+uses and the projection equalities are theorems, not computational SNF calls.
 
 ### Producer and proof assembly
 

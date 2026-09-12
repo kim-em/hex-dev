@@ -1,7 +1,7 @@
 # Matrix tactics
 
 Proof-producing tactics on closed matrices (`rank`, `det`, `char_poly`, and
-later `min_poly`, `inverse`, `solve`) are not a library of their own. Each
+later `min_poly`, `smith`, `hermite`, `inverse`, `solve`) are not a library of their own. Each
 tactic lives with the algorithm library whose certificate it checks, its
 Mathlib-input form lives in that library's Mathlib companion, and the only
 shared code is the literal layer of `hex-matrix-mathlib`. This note fixes
@@ -25,7 +25,18 @@ their library structure and their kernel-replay proof strategy do not.
 | `rank`, symbolic entries | `A.rank = r` (conditional), `A.rank ≤ r`, generic rank of the reified matrix | `hex-generic-rank`: hex-rank's certificate at `MvPoly` | `hex-generic-rank-mathlib`: a second handler on the `rank` syntax kind; `checkRank_sound_at` | specified: [hex-generic-rank-mathlib](Libraries/hex-generic-rank-mathlib.md) |
 | `det`, symbolic entries | `A.det = e`, `e = A.det`, `det% A` (unconditional) | `hex-bareiss`: generic `detWitness`, `checkDetPolyList`, instantiated at polynomials by the companion | `hex-bareiss-mathlib`: `checkDetPolyList_sound`, second handler on the `det` syntax kind | specified: [Symbolic determinant](../HexBareissMathlib/SPEC/hex-bareiss-mathlib.md#symbolic-determinant) |
 | `rank_locus` | `A.rank < r ↔ ⋀ gᵢ = 0` as a hypothesis; `A.rank < r`, `A.rank ≤ r`, `r ≤ A.rank`, `A.rank = r` | `hex-determinantal-ideal`: `detIdealGens`, and its list form `detIdealGensList` | `hex-determinantal-ideal-mathlib`: `gens_vanish_iff_rank_lt`, `HexDeterminantalIdealMathlib/Tactic.lean`; default `r` from a hex-generic-rank-mathlib handler | specified: [hex-determinantal-ideal-mathlib §The `rank_locus` tactic](../HexDeterminantalIdealMathlib/SPEC/hex-determinantal-ideal-mathlib.md#the-rank_locus-tactic) |
+| `min_poly` | `minpoly F A = p` | hex-min-poly: list form of `MinPolyCert` | hex-min-poly-mathlib | specified: [companion contract](../HexMinPolyMathlib/SPEC/hex-min-poly-mathlib.md#the-min_poly-tactic) |
+| `smith` | integer row-presentation quotient equivalence | hex-smith: list form of `snfCert` | hex-smith-mathlib; optional polynomial handler in hex-poly-smith-mathlib | specified: [companion contract](../HexSmithMathlib/SPEC/hex-smith-mathlib.md#the-smith-tactic) |
+| `hermite` | integer lattice membership and row-lattice basis | hex-hermite: list form of `hnfCert` and checked remainder | hex-hermite-mathlib | specified: [companion contract](../HexHermiteMathlib/SPEC/hex-hermite-mathlib.md#the-hermite-tactic) |
+| `inverse` | `A * B = 1`, `A⁻¹ = B` | hex-row-reduce: list products or nonzero kernel vector | hex-row-reduce-mathlib | specified: [companion contract](../HexRowReduceMathlib/SPEC/hex-row-reduce-mathlib.md#the-inverse-tactic) |
+| `solve` | `A.mulVec x = b`, existence or inconsistency | hex-row-reduce: list residual, complete RREF data or separator | hex-row-reduce-mathlib | specified: [companion contract](../HexRowReduceMathlib/SPEC/hex-row-reduce-mathlib.md#the-solve-tactic) |
 | literal layer | reading `!![…]`, `Matrix.of ![…]`, `fun i j => …`, `Matrix.ofArray xs h` | none | `hex-matrix-mathlib`: `ofLists`, `vecOfList`, `entriesEq`, literal recognition, definitional identification (`HexMatrixMathlib/Literal.lean`) | shipped (https://github.com/kim-em/hex-dev/pull/10218) |
+
+`invariant_factors` is reserved for hex-invariant-factors; it is not an alias
+for `smith`. The five structural frontends marked specified use the
+absolute-budget proof track in their companion contracts because Mathlib has
+no dedicated tactic for those results. Ordinary entrywise normalization is
+an informational baseline for inverse-product and supplied-solution goals.
 
 Rules that follow from the table:
 

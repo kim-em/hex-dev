@@ -80,8 +80,9 @@ proved in Lean. Its index type has the executable nullity
 ## Verification
 
 For the existing correspondence, Phase 3 is established by auditing
-the executable coverage in `hex-hermite`, not by adding a ceremonial Mathlib
-conformance module:
+the executable coverage in `hex-hermite`, without a separate runtime Mathlib
+conformance module. The frontend additionally requires the build-only proof
+tests below:
 
 - HNF form and transform checks cover `span_hnf` and `isUnit_transform`;
 - rank-deficient cases cover `hnfRank_eq_rank`;
@@ -99,6 +100,39 @@ The computational performance owner is `hex-hermite`; its benchmark target
 carries the evidence for HNF, rank, lattice membership and kernel extraction.
 The tactic below adds a proof-performance track when implemented, without a
 Mathlib-importing benchmark executable.
+
+## Frontend implementation and validation
+
+The tactic contracts below are design requirements. Their kernel-certificate
+subsections specify additions owned by the Mathlib-free algorithm library;
+they do not move that code into this companion. When implementing those
+additions, cross-link the algorithm's kernel-certificate SPEC to this contract.
+Keep existing phase evidence as evidence for the existing correspondence only.
+Before activating the frontend, remove `correspondence_only: true` if present,
+add `proof_probes: [bench/HexHermiteMathlib/ProofProbe]`, and reopen the
+library's conformance/performance obligations: cap `done_through` at `2` until
+the new build-only proof tests pass, then at `3` until complete proof evidence
+passes. Do not add an empty reservation while retaining a completed Phase 4.
+This SPEC-only change does not alter the manifest or attest implementation.
+
+Proof tests live in `HexHermiteMathlib/Tests.lean`, built with the ordinary
+library; malformed list certificates also belong in the algorithm library's
+Mathlib-free conformance driver. Proof probes are fresh modules, not runtime
+oracle drivers or Mathlib-importing benchmark executables. Each frontend uses
+`HexHermiteMathlib/Tactic.lean`; result records and list soundness belong
+in `HexHermiteMathlib/Kernel.lean` (Hermite's existing kernel-basis module
+may instead re-export a new certificate module). No library name changes.
+
+For the named families below, shipping requires complete clean-tree evidence
+under the `absolute_only` mode of
+[SPEC/benchmarking.md](../../SPEC/benchmarking.md#fresh-module-proof-evidence).
+Preregister six rounds and a per-candidate absolute build budget of 60 seconds
+on the measurement host for every stated rung. Every candidate sample must
+meet it; report the median and kernel-only time as well. A timeout, incomplete
+pair, budget failure or provenance mismatch blocks the frontend's performance
+sign-off. This is an operational shipping gate, not an asymptotic or portable
+wall-time claim. Retain slow completed samples; do not trim the ladder to get
+a passing verdict. Any budget revision requires an explicit SPEC amendment.
 
 ## The `hermite` tactic
 
@@ -177,6 +211,48 @@ trailing rows prove spanning, while strictly increasing positive pivots
 prove independence. Membership alone is insufficient to construct a basis.
 These arbitrary-witness and list-remainder bridges are new obligations,
 not claims that the existing canonical correspondence already accepts lists.
+
+Required API schemata (all new; proof fields supplement the prose contract):
+
+```lean
+-- HexHermite/Kernel.lean, namespace Hex.Matrix
+structure HermiteWitness where
+  rank : Nat
+  pivots : List Nat
+  form transform inverse : List (List Int)
+
+def checkHermiteList (n m : Nat) (rows : List (List Int))
+    (c : HermiteWitness) : Bool
+
+-- HexHermiteMathlib/Kernel.lean, namespace HexHermiteMathlib
+structure HermiteResult {n m : Nat} (A : Matrix (Fin n) (Fin m) ℤ) where
+  rank : Nat
+  rank_le : rank ≤ min n m
+  form : Matrix (Fin n) (Fin m) ℤ
+  inputRows : List (List Int)
+  input_eq : A = HexMatrixMathlib.ofLists n m inputRows
+  witness : Hex.Matrix.HermiteWitness
+  rank_eq : rank = witness.rank
+  form_eq : form = HexMatrixMathlib.ofLists n m witness.form
+  checked : Hex.Matrix.checkHermiteList n m inputRows witness = true
+  span : Submodule.span ℤ (Set.range form) = Submodule.span ℤ (Set.range A)
+  basis : Module.Basis (Fin rank) ℤ (Submodule.span ℤ (Set.range A))
+  basis_row : ∀ i : Fin rank,
+    (basis i : Fin m → ℤ) = form ⟨i.val, lt_of_lt_of_le i.isLt
+      (le_trans rank_le (Nat.min_le_left n m))⟩
+
+noncomputable def hermite_of_checkList {n m : Nat}
+    (A : Matrix (Fin n) (Fin m) ℤ) (rows : List (List Int))
+    (c : Hex.Matrix.HermiteWitness)
+    (hA : A = HexMatrixMathlib.ofLists n m rows)
+    (hc : Hex.Matrix.checkHermiteList n m rows c = true) : HermiteResult A
+```
+
+The record stores checked HNF data rather than requiring an equality to the
+output of `hnf`; `hnfCert_sound` supplies its `IsHNF` property without
+producer replay. Constructor projection theorems fix `rank` and `form` to
+the witness. Membership soundness takes this checked witness plus the
+coefficient/residual list checks and concludes `v ∈ L(A) ↔ residual = 0`.
 
 ### Producer and proof assembly
 

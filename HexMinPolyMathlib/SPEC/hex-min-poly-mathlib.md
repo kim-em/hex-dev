@@ -38,6 +38,38 @@ performance owner is `hex-min-poly`. Implementing the tactic below requires
 companion conformance and a `proof_probes` reservation, with fresh-module
 evidence rather than a Mathlib-importing benchmark executable.
 
+## Frontend implementation and validation
+
+The tactic contracts below are design requirements. Their kernel-certificate
+subsections specify additions owned by the Mathlib-free algorithm library;
+they do not move that code into this companion. When implementing those
+additions, cross-link the algorithm's kernel-certificate SPEC to this contract.
+Keep existing phase evidence as evidence for the existing correspondence only.
+Before activating the frontend, remove `correspondence_only: true` if present,
+add `proof_probes: [bench/HexMinPolyMathlib/ProofProbe]`, and reopen the
+library's conformance/performance obligations: cap `done_through` at `2` until
+the new build-only proof tests pass, then at `3` until complete proof evidence
+passes. Do not add an empty reservation while retaining a completed Phase 4.
+This SPEC-only change does not alter the manifest or attest implementation.
+
+Proof tests live in `HexMinPolyMathlib/Tests.lean`, built with the ordinary
+library; malformed list certificates also belong in the algorithm library's
+Mathlib-free conformance driver. Proof probes are fresh modules, not runtime
+oracle drivers or Mathlib-importing benchmark executables. Each frontend uses
+`HexMinPolyMathlib/Tactic.lean`; result records and list soundness belong
+in `HexMinPolyMathlib/Kernel.lean`. No library name changes.
+
+For the named families below, shipping requires complete clean-tree evidence
+under the `absolute_only` mode of
+[SPEC/benchmarking.md](../../SPEC/benchmarking.md#fresh-module-proof-evidence).
+Preregister six rounds and a per-candidate absolute build budget of 60 seconds
+on the measurement host for every stated rung. Every candidate sample must
+meet it; report the median and kernel-only time as well. A timeout, incomplete
+pair, budget failure or provenance mismatch blocks the frontend's performance
+sign-off. This is an operational shipping gate, not an asymptotic or portable
+wall-time claim. Retain slow completed samples; do not trim the ladder to get
+a passing verdict. Any budget revision requires an explicit SPEC amendment.
+
 ## The `min_poly` tactic
 
 This section specifies an extension, not an implemented frontend. Follow
@@ -102,22 +134,82 @@ order check:
   `result = left * incoming`; the final result equals `poly` and is monic.
 
 Krylov powers and Horner evaluation are structural list recursions, with
-no row reduction, GCD/LCM search or field division. For rationals use
-numerator/positive-denominator data and division-free cross multiplication
-for equality; check every denominator is nonzero. The reduction path uses
+no row reduction, GCD/LCM search or field division. For rationals follow the
+scaled-integer boundary of `checkDetRat` in
+`HexBareiss/Kernel.lean`: retain the input row list at `Rat` for cheap literal
+identification, and check its agreement with integer rows `Z` and a single
+positive scale `D`, so `A = Z / D`, by numerator/denominator cross products.
+This scaling is for certificate arithmetic; it does not claim that scaling
+preserves the minimal polynomial. Give each polynomial and inverse block its
+own positive common denominator, check those scale factors, and multiply out
+all denominator powers in the identities. The shared codec supplies the
+literal/encoding agreement proof; `A = ofLists ... rationalRows` remains
+`rfl` for numeral literals, never `A = ofLists ... (decode encodedRows)`.
+
+Recompute Krylov powers as integer vectors `Z^k eᵢ` with known scale `D^k`.
+The annihilation check for a degree-`d` polynomial with common denominator `s`
+checks the numerator of `s * D^d * p(A)eᵢ` using those powers. Do not multiply
+unreduced per-entry denominators at each dot-product addition. If `b` bounds
+bit heights in `Z` and `D`, power entries and scales have
+`O(k * (b + log(n + 1)))` bits; record this scaled input height separately
+from the original entry heights. Supplied polynomial/inverse numerators add
+their own recorded bit heights. LCM identities use integer coefficient
+convolutions with common denominators cleared once per identity.
+The reduction path uses
 only list data and exposed structural recursion on `Nat`/`Int`, as in
 `HexRank/Kernel.lean`; neither `DensePoly` nor `Hex.Matrix`, `Array`,
 `Vector`, `Fin`, `Finset` or well-founded recursion is reduced there.
 
 Required new companion theorem `minpoly_eq_of_checkList` takes dimensions,
 input lists, a witness and `checkMinPolyList ... = true`, and concludes
-`minpoly F (ofLists n n decodedRows) = decodedPolynomial`. Prove list checks
+`minpoly ℚ (ofLists n n rationalRows) = decodedPolynomial` on the initial
+rational arm (with the corresponding transport for any later field codec).
+Prove list checks
 imply the reference check (decoding stays in the proof, outside reduction),
 then use `MinPolyCert.check_sound`, `vectorEquiv_evalVec` and
 `minpoly.unique`, just as `equiv_minPoly` uses monicity, annihilation and
 minimal degree. Add a wrapper with `hA : A = ofLists ...` and the checked
 identification of `p`; both goal orientations reuse this soundness theorem.
 No hypothesis asserts that the witness came from the producer.
+
+The basis-wide certificate stores `O(n³)` inverse scalars in the worst case
+(`deg ≤ n` for each of `n` orders), plus the LCM/Bézout polynomial coefficients,
+whose supplied lengths and heights must also be recorded. Krylov reconstruction
+and inverse checks cost `O(n⁴)` scalar operations overall; polynomial identity
+checks additionally cost the pairwise products of their coefficient lengths.
+These are arithmetic counts, not a bit-complexity claim. The advertised first
+release is bounded to dimension `16`; larger inputs are `declined` with the
+configured dimension budget. The bound is a frontend capability limit, never
+a hypothesis of `minpoly_eq_of_checkList`. Retain the existing basis-wide
+certificate to reuse its proved minimality contract; any smaller certificate
+requires a separate soundness argument and new measured evidence.
+
+Required initial rational API schemata, with the integer-encoded witness
+fields specified above and a proved coefficient decoder `decodePoly`:
+
+```lean
+-- HexMinPoly/Kernel.lean, namespace Hex.Matrix
+def checkMinPolyList (n : Nat) (rows : List (List Rat))
+    (c : MinPolyWitness) : Bool
+
+-- HexMinPolyMathlib/Kernel.lean, namespace HexMinPolyMathlib
+theorem minpoly_eq_of_checkList {n : Nat}
+    (A : Matrix (Fin n) (Fin n) ℚ) (rows : List (List Rat))
+    (c : Hex.Matrix.MinPolyWitness)
+    (hA : A = HexMatrixMathlib.ofLists n n rows)
+    (hc : Hex.Matrix.checkMinPolyList n rows c = true) :
+    minpoly ℚ A = decodePoly c
+
+-- Type returned by min_poly% A:
+abbrev MinPolyResult {n : Nat} (A : Matrix (Fin n) (Fin n) ℚ) :=
+  HexMatrixMathlib.Certified (fun M => minpoly ℚ M) A
+```
+
+The exposed kernel checks read rational input numerators/denominators once
+for scale agreement, as `checkDetRat` does; Krylov and polynomial arithmetic
+then use only the encoded integer lists. `decodePoly` is used in the theorem
+statement and transport proof, not as a polynomial computation in the check.
+General field transport is parametric in a proved codec, as required above.
 
 ### Producer and proof assembly
 
