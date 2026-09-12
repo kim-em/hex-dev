@@ -1107,6 +1107,17 @@ libraries:
     proof_probes: [bench/HexRankMathlib/ProofProbe]
     done_through: 3
     status: active
+  HexGenericRank:
+    deps: [HexRank, HexMvGcd, HexBareiss, HexDeterminant, HexMatrix, HexBasic]
+    mathlib: false
+    done_through: 0
+    status: planned
+  HexGenericRankMathlib:
+    deps: [HexGenericRank, HexRankMathlib, HexReflect, HexReflectMathlib, HexMvPolyMathlib, HexDeterminantalIdealMathlib, HexMatrixMathlib]
+    mathlib: true
+    proof_probes: [bench/HexGenericRankMathlib/ProofProbe]
+    done_through: 0
+    status: planned
   HexModArithMathlib:
     deps: [HexModArith]
     mathlib: true
