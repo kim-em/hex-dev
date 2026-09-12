@@ -38,6 +38,26 @@ open HexMatrixMathlib
 #check @spanContains_iff_mem_span
 ```
 
+# Field inverse and complete solve
+
+`inverse?_eq_inv` identifies a successful executable inverse with Mathlib's
+`Matrix.inv`. `inverse?_eq_none` identifies failure with determinant zero;
+Mathlib's zero inverse at singular input is not an executable inverse witness.
+
+`solve?_spec` identifies the solution set with an affine translate of the
+kernel of `Matrix.mulVecLin`. `solve?_parameters` gives its unique basis
+coefficients, and `solve?_span` connects the returned columns to
+`nullspace_span_eq_ker`. `solve_error` transports the actual separating row;
+`solve?_none_witness` characterises failure by existence of a left-kernel
+separator. All statements include zero dimensions and rectangular systems.
+
+The companion uses Mathlib's `[Field F]` and its induced `Lean.Grind.Field F`.
+Select that instance before constructing matrices or calling elimination; the
+companion does not identify it with an independently installed executable
+field. `Examples/RowReduce.lean` in hex-dev checks rationals, rational functions,
+and entrywise transport from `ZMod64 p` to `ZMod p` without assuming a Mathlib
+field on `ZMod64 p`.
+
 # Functionality
 
 The library transports the executable row-reduction data of an

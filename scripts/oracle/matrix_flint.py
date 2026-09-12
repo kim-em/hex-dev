@@ -11,6 +11,10 @@ and exits non-zero so CI fails the job.
 Operations cross-checked
 ------------------------
 
+* `field-inverse`, `field-solve` — complete outputs over rationals, prime
+  residues, and rational functions. Check inverse identities, augmented rank,
+  affine-basis completeness, and inconsistency certificates. Rational functions
+  load SymPy lazily and use DomainMatrix over QQ.frac_field(t).
 * `det`       — Lean `Matrix.det` (combinatorial sum over `n!`
   permutations).  python-flint computes the integer determinant via
   `fmpz_mat.det()`.
@@ -669,6 +673,118 @@ def _check_nullspace(
     )
 
 
+def _field_check(record: dict[str, Any], value: Any, operation: str) -> None:
+    """Check full inverse/affine outputs in the fixture's exact field."""
+    from flint import fmpq, fmpq_mat, nmod_mat
+
+    carrier = record["carrier"]
+    n, m = record["n"], record["m"]
+    if carrier == "RationalFn":
+        # Keep SymPy out of the rational/integer/modular oracle paths.
+        from sympy import QQ, symbols
+        from sympy.polys.matrices import DomainMatrix
+        field = QQ.frac_field(symbols("t"))
+        t = field.gens[0]
+
+        def decode(q):
+            num, den = q
+            def poly(cs):
+                return sum((field.convert(QQ(*c)) * t**i for i, c in enumerate(cs)), field.zero)
+            return poly(num) / poly(den)
+
+        def construct(rows, nr, nc):
+            return DomainMatrix(rows, (nr, nc), field)
+
+        def rank(a):
+            return len(a.rref()[1])
+
+        def equal(a, b):
+            return (a - b).is_zero_matrix
+
+        def identity(k):
+            return DomainMatrix.eye(k, field).to_dense()
+
+        zero = field.zero
+    elif carrier in ("Rat", "ZMod64"):
+        if carrier == "Rat":
+            decode = lambda q: fmpq(*q)
+            construct = lambda rows, nr, nc: fmpq_mat(nr, nc, [x for r in rows for x in r])
+            zero = fmpq(0)
+        else:
+            p = record["modulus"]
+            if p < 2:
+                raise ValueError("invalid prime modulus")
+            decode = lambda q: int(q) % p
+            construct = lambda rows, nr, nc: nmod_mat(nr, nc, [x for r in rows for x in r], p)
+            zero = 0
+        rank = lambda a: a.rref()[1]
+        equal = lambda a, b: a == b
+        identity = lambda k: construct([[int(i == j) for j in range(k)] for i in range(k)], k, k)
+    else:
+        raise ValueError(f"unknown field carrier: {carrier}")
+
+    def matrix(rows, nr, nc):
+        if len(rows) != nr or any(len(r) != nc for r in rows):
+            raise ValueError(f"wrong matrix shape, expected {nr}x{nc}")
+        return construct([[decode(x) for x in r] for r in rows], nr, nc)
+
+    def zeros(nr, nc):
+        return construct([[zero] * nc for _ in range(nr)], nr, nc)
+
+    def require(ok, message):
+        if not ok:
+            raise ValueError(message)
+
+    a = matrix(record["rows"], n, m)
+    r = rank(a)
+    if operation == "field-inverse":
+        require(n == m, "inverse fixture is not square")
+        if value is None:
+            require(r < n, "inverse failed on an invertible matrix")
+        else:
+            b = matrix(value, n, n)
+            require(r == n, "inverse succeeded on a singular matrix")
+            require(equal(a * b, identity(n)) and equal(b * a, identity(n)), "inverse identities")
+            require(equal(b, a.inv()), "inverse disagrees with native exact inverse")
+        return
+
+    require(len(record["b"]) == n, "wrong RHS length")
+    rhs = matrix([[x] for x in record["b"]], n, 1)
+    augmented = matrix([row + [x] for row, x in zip(record["rows"], record["b"])], n, m + 1)
+    consistent = rank(augmented) == r
+    if "error" in value:
+        require(not consistent, "solve reported inconsistency for a consistent RHS")
+        y = matrix([value["error"]], 1, n)
+        require(equal(y * a, zeros(1, m)), "separator is not in the left kernel")
+        require(not equal(y * rhs, zeros(1, 1)), "separator does not separate the RHS")
+    else:
+        require(consistent, "solve succeeded for an inconsistent RHS")
+        require(len(value["particular"]) == m, "wrong particular length")
+        x = matrix([[x] for x in value["particular"]], m, 1)
+        basis = matrix(value["basis"], m, m - r)
+        require(equal(a * x, rhs), "particular solution residual")
+        require(equal(a * basis, zeros(n, m - r)), "nullspace basis residual")
+        require(rank(basis) == m - r, "basis does not span the whole kernel")
+        if n == m and r == n:
+            # FLINT solve only accepts invertible square coefficients.
+            expected = a.inv() * rhs if carrier == "RationalFn" else a.solve(rhs)
+            require(equal(x, expected), "unique solution disagrees with native exact solve")
+
+
+def _check_field(*, case_id, lib, matrix_record, lean_value, failure_dir,
+                 profile, seed, oracle_version, operation):
+    try:
+        _field_check(matrix_record, lean_value, operation)
+    except (ValueError, TypeError, KeyError, ZeroDivisionError) as exc:
+        from scripts.oracle.common import write_failure
+        write_failure(failure_dir, library=lib, profile=profile, seed=seed,
+                      case_id=case_id, kind=operation, input_record=matrix_record,
+                      lean_output=lean_value, oracle_output="exact field identities and completeness",
+                      oracle_name="SymPy DomainMatrix" if matrix_record["carrier"] == "RationalFn"
+                                  else "python-flint", oracle_version=oracle_version, diff=str(exc))
+        raise OracleMismatch(str(exc)) from exc
+
+
 def check(
     source: str | Path | None,
     *,
@@ -693,6 +809,8 @@ def check(
         "hnf": _check_hnf,
         "hnf-transform": _check_hnf_transform,
         "snf": _check_snf,
+        "field-inverse": lambda **kw: _check_field(**kw, operation="field-inverse"),
+        "field-solve": lambda **kw: _check_field(**kw, operation="field-solve"),
     }
     for result in results:
         lib = result["lib"]

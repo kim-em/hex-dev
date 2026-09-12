@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexRowReduce
+import HexRowReduce.FieldFixtures
 
 /-!
 Core conformance checks for `hex-row-reduce`.
@@ -18,6 +19,10 @@ Covered operations:
 - row reduction and span APIs (`rowReduce`, `rowReduce_rank`, `spanCoeffs`,
   `vecMul`, `spanContains`)
 - nullspace basis extraction (`nullspace`, `nullspaceBasisMatrix`)
+- field inverse, complete solve, and the option view (`inverse?`, `solve`, `solve?`)
+- canonical particular solutions, bases, and separating witnesses for Rat,
+  characteristic two, an odd prime, and rational functions; exact FLINT/SymPy
+  oracle checks include full solution-space dimension and empty shapes
 Covered properties:
 - `rowReduce` returns data whose transform matrix multiplies the input to the
   reported echelon form
@@ -153,3 +158,15 @@ example (M : Matrix Rat n m) (k : Fin (m - Matrix.rowReduce_rank M)) :
 end RowReduceWrapperAutomation
 
 end Matrix
+
+open scoped Hex.RowReduceFixtures in
+#guard (Hex.RowReduceFixtures.cases (1/2 : Rat)).all Hex.RowReduceFixtures.check
+
+open scoped Hex.RowReduceFixtures in
+#guard (Hex.RowReduceFixtures.cases (1 : Hex.ZMod64 2)).all Hex.RowReduceFixtures.check
+
+open scoped Hex.RowReduceFixtures in
+#guard (Hex.RowReduceFixtures.cases (3 : Hex.ZMod64 101)).all Hex.RowReduceFixtures.check
+
+#guard (Hex.RowReduceFixtures.cases Hex.RowReduceFixtures.rationalFunction).all
+  Hex.RowReduceFixtures.check

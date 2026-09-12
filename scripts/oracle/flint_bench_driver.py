@@ -824,8 +824,31 @@ def _fmpq_mat_overhead(_req: dict[str, Any]) -> int:
     return 0
 
 
+_FIELD_MATRIX_CACHE: dict[Any, Any] = {}
+
+
+def _fmpq_field(req: dict[str, Any], *, inverse: bool):
+    n = req["n"]
+    rows, rhs = req["rows"], req["rhs"]
+    if len(rows) != n or any(len(row) != n for row in rows) or len(rhs) != n:
+        raise ValueError("field inverse/solve shape mismatch")
+    key = (n, tuple(tuple(tuple(q) for q in row) for row in rows), tuple(map(tuple, rhs)))
+    if key not in _FIELD_MATRIX_CACHE:
+        a = flint.fmpq_mat(n, n, [flint.fmpq(*q) for row in rows for q in row])
+        b = flint.fmpq_mat(n, 1, [flint.fmpq(*q) for q in rhs])
+        _FIELD_MATRIX_CACHE[key] = a, b
+    a, b = _FIELD_MATRIX_CACHE[key]
+    result = a.inv() if inverse else a.solve(b)
+    encode = lambda q: [int(q.p), int(q.q)]
+    if inverse:
+        return [[encode(result[i, j]) for j in range(n)] for i in range(n)]
+    return [[encode(result[i, 0]) for i in range(n)], [[] for _ in range(n)]]
+
+
 _FMPQ_MAT_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
     "rank_dense": _fmpq_mat_rank_dense,
+    "field_inverse": lambda req: _fmpq_field(req, inverse=True),
+    "field_solve": lambda req: _fmpq_field(req, inverse=False),
     "overhead": _fmpq_mat_overhead,
 }
 

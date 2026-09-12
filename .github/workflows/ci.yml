@@ -185,7 +185,7 @@ jobs:
         if: steps.classify.outputs.docs_only != 'true'
         run: |
           python3 -m pip install --user -r scripts/conway/requirements.txt \
-            python-flint==0.9.0 gmpy2 cypari2 conway-polynomials matplotlib==3.11.1
+            python-flint==0.9.0 sympy==1.14.0 gmpy2 cypari2 conway-polynomials matplotlib==3.11.1
           python3 -m unittest scripts/oracle/test_hermite_bench_drivers.py
           python3 -m unittest scripts/oracle/test_matrix_carriers.py
       - name: Verify performance measurements and figures are current
