@@ -291,10 +291,15 @@ theorem indexCells_eq : indexCells = Sparse.indexCells := by
   funext n lab ptn level starts ends
   simp only [indexCells, Sparse.indexCells, range_forIn]
 
+set_option maxHeartbeats 1000000 in
 theorem splitCounts_eq : @splitCounts = @Sparse.splitCounts := by
   funext n level first distance s
-  simp only [splitCounts, Sparse.splitCounts, Sort.indirect_eq, range_forIn]
-  rfl
+  cases distance <;>
+    simp only [splitCounts, Sparse.splitCounts, CountSort.firstRun, CountSort.minima,
+      CountSort.finish, Sort.indirect_eq, range_forIn, RefineSt.hash, RefineSt.push,
+      Id.run, bind, pure, Bool.not_false, Bool.not_true,
+      Bool.false_eq_true, ite_true, ite_false]
+  all_goals repeat first | rfl | split
 
 theorem splitSingleton_eq : @splitSingleton = @Sparse.splitSingleton := by
   funext n g level split s

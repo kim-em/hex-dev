@@ -1343,6 +1343,16 @@ marking, and queue arrays prevent a dense scan for each splitter. Sorting
 public canonical rows normalizes storage only; it does not change the
 canonical label or run canonicalization again.
 
+The [sparse source guide](../Nauty/Sparse/README.md) maps the executable
+modules and their proof contracts. `Refine/Counts` implements count splitting
+as an initial equal-count scan, three-way insertion around the two minima,
+and fragment installation. These inline helpers are also the definitions
+used by the proofs. `Refine/CountSpec` supplies the shared insertion contract
+and `splitCounts_induct`. `CountSize`, `CountPattern`, `CountActive`,
+`CountQueue`, `CountIndex`, and `CountExecution` each establish their
+installation property from that contract. `Boundary` and `CountFrame` verify
+the complete executable composition directly.
+
 The working input view shares the native offset and `Fin n` neighbour arrays;
 reading a neighbour erases its proof without allocating a converted adjacency
 array. Initial colour buckets similarly read the native colour array directly.
