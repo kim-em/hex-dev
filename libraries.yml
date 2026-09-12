@@ -1096,7 +1096,7 @@ libraries:
     done_through: 3
     status: active
   HexDeterminantalIdealMathlib:
-    deps: [HexDeterminantalIdeal, HexDeterminantMathlib, HexRowReduceMathlib, HexMvPolyMathlib, HexReflect, HexReflectMathlib, HexMatrixMathlib]
+    deps: [HexDeterminantalIdeal, HexDeterminantMathlib, HexRowReduceMathlib, HexMvPolyMathlib, HexRankMathlib, HexReflect, HexReflectMathlib, HexMatrixMathlib]
     mathlib: true
     proof_probes: [bench/HexDeterminantalIdealMathlib/ProofProbe]
     done_through: 3

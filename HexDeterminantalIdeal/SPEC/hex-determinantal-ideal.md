@@ -554,6 +554,7 @@ HexDeterminantalIdeal/
   Minors.lean        minors, detIdealGens, enumeration theorems, invariance expansions
   Rank.lean          rank_lt_iff_minors_eq_zero and its three corollaries
   MvPoly.lean        Matrix.map (if not yet in HexMatrix), specialize, rankAt, InLocus
+  Kernel.lean        indexTuples, minorList, minorsList, detIdealGensList and their enumeration theorems
   SPEC/hex-determinantal-ideal.md
   README.md
 conformance/HexDeterminantalIdeal/{Conformance,EmitFixtures}.lean
@@ -591,7 +592,8 @@ recurses structurally, and puts no `Array`, `Vector`, `Fin` or `Hex.Matrix`
 on the kernel's path. The Mathlib-free theorems are the enumeration facts
 (`indexTuples_eq_selectedColumnTuples` up to the index encoding,
 `length_minorsList`) and `minorList_eq_det_laplace`, identifying the
-list determinant with `det_eq_foldl_laplace_col` on the denoted block; the
+list determinant with `det_eq_foldl_laplace_row` at the first row on the
+denoted block; the
 identification `detIdealGensList r (rows A) = detIdealGens r A` on denoted
 `MvPoly` values is the companion's, since it needs the denotation theorem.
 
@@ -607,7 +609,7 @@ certificate that a list is all the minors, and the tactic budgets it.
   into a `Matrix (MvPoly k C cmp) n m`, runs `detIdealGens r A` in
   compiled code, certifies the list through the kernel form above, and
   states "the rank is below `r` iff every generator vanishes" through the
-  companion's `mem_zeroLocus_iff_rank_lt'`. Its default `r` is the generic
+  companion's `gens_vanish_iff_rank_lt`. Its default `r` is the generic
   rank, supplied by hex-generic-rank-mathlib's handler on its syntax kind.
 - the matrix tactics ([SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md))
   may use `le_rank_iff_exists_minor_ne_zero` as the lower-bound half of a
