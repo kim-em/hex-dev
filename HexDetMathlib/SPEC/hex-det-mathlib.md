@@ -202,5 +202,5 @@ apply its
 lower algorithms directly because dispatch always uses the small arm.
 Tiny closed values
 may be checked with kernel `decide`. Certificate replay and tactic
-performance belong to the downstream matrix-tactic libraries. This
+performance belong to the downstream matrix tactics ([SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md)). This
 companion introduces neither a certificate format nor a trusted evaluator.

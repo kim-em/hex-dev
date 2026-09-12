@@ -241,7 +241,7 @@ both modular libraries depend only on libraries below dispatch.
 
 `scripts/check_dag.py` checks registered dependencies and actual imports,
 not Markdown arrows. The deferred modular edges must be registered and checked
-when their targets exist. `hex-matrix-tactic` is a downstream consumer, with no reverse edge.
+when their targets exist. the matrix tactics ([SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md)) are downstream consumers, with no reverse edge.
 
 ## Correctness and tactic use
 
@@ -253,8 +253,8 @@ Mathlib-free proof. A Mathlib-free proof of the Berkowitz determinant arm
 is future work. No axiom, `native_decide`, or invented lower-layer proof
 fills that gap.
 
-[hex-matrix-tactic (#10151)](https://github.com/kim-em/hex-dev/issues/10151)
-consumes `DetOps.run` and follows `completed`, retaining `selected` and
+The matrix tactics ([SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md))
+consume `DetOps.run` and follows `completed`, retaining `selected` and
 `attempts` for diagnostics and reproducible strategy measurements. Small
 forms permit direct normalization, Bareiss and elimination permit their
 correspondence plus kernel replay or a separately proved certificate,

@@ -347,8 +347,8 @@ not go through the given certificate's index sets.
 transform of a below-only fraction-free pass over `B`, which
 `Hex.Matrix.bareissNoPivotWith` performs without reporting. The
 executable adapter that produces `T`, and the `bareiss_ext` model that
-lets Hex's producer feed `norm_rank` directly, are hex-matrix-tactic's
-(https://github.com/kim-em/hex-dev/issues/10151), which names both.
+lets Hex's producer feed `norm_rank` directly, are follow-ups of this
+library under [SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md).
 
 **From a Decomposition.** Given `D : Echelon.Decomposition (e A)` with
 `r := #{i | D.pivot i ≠ ⊤}`, the rows with a pivot are the first `r` rows
@@ -441,7 +441,7 @@ builds `rank_eq_of_checkList' A L c rfl (of_decide_eq_true rfl)` composed
 with a kernel-decided comparison of `c.rank` with `r`; the whole proof is
 added as an auxiliary theorem (`mkAuxTheorem`, with asynchronous checking
 off) so the kernel checks it exactly once and the tactic sees a rejection.
-Outcomes follow the matrix-tactic protocol: a goal that is not a rank
+Outcomes follow the protocol of [SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md): a goal that is not a rank
 comparison is not applicable; a matrix with free variables, a non-integer
 carrier, a non-literal closed matrix or a `vecCons` chain not ending in
 `vecEmpty` is declined with the reason, as is a producer failure with its
@@ -487,8 +487,8 @@ Kernel-only times on the same literals, one run each on the shared host
 
 Rationals are a follow-up: clear each row's denominators (the rank is
 unchanged), certify the integer matrix, and check the scaling in the
-kernel. Rank goals on `Hex.Matrix` inputs are hex-matrix-tactic's; the
-witness cannot certify the executable's own value without a Mathlib-free
+kernel. Rank goals on `Hex.Matrix` inputs are a later obligation of this
+library; the witness cannot certify the executable's own value without a Mathlib-free
 rank theory.
 
 ## Decidability
