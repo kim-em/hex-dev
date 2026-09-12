@@ -828,14 +828,14 @@ integers, and against the `n³ / 3` minor-by-entry products of Mathlib's
 `Echelon.Decomposition` check. Two six-sample shared-host sweeps of the
 fresh-module proof probes under `bench/HexRankMathlib/ProofProbe`, before
 and after adopting the triangular transform, reported signed `rank`
-overheads over the paired import baseline of `95 → 95 ms` at dense `n = 8`,
-`365 → 316 ms` at dense `n = 16`, `2440 → 2095 ms` at dense `n = 32`,
-`403 → 392 ms` at rank-deficient `n = 16`, and `695 → 692 ms` at low-rank
-`n = 32`. The dense `n = 32` samples separated completely; the dense
-`n = 16` samples overlapped, and the other cases were essentially flat.
-After the change, the paired `eval_rank` overheads were `298`, `1806` and
-`14003 ms` on the three dense cases, `1852 ms` on the rank-deficient case,
-and `14918 ms` on the low-rank case. Both sweeps used the fixed trial-major
+overheads over the paired import baseline of `95 → 100 ms` at dense `n = 8`,
+`365 → 393 ms` at dense `n = 16`, `2440 → 2120 ms` at dense `n = 32`,
+`403 → 397 ms` at rank-deficient `n = 16`, and `695 → 703 ms` at low-rank
+`n = 32`. The dense `n = 32` samples separated completely; the other cases
+overlapped and were essentially flat. After the change, the paired
+`eval_rank` overheads were `298`, `1843` and `13906 ms` on the three dense
+cases, `1804 ms` on the rank-deficient case, and `14907 ms` on the low-rank
+case. Both sweeps used the fixed trial-major
 schedule with alternating `AB`/`BA` order, passed their fresh-module budgets
 and were release-quality measurements. The reduction of pivot-block entries
 to residues and the list traversal are independent of the triangular
