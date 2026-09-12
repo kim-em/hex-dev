@@ -32,7 +32,7 @@ theorem boundaryPolicy (ctx : Ctx n) (inf tcLevel bound saved : Nat) :
     intro level code st _ h
     change (compareCodes level code st).noncheaplevel = saved ∨ bound < (compareCodes level code st).noncheaplevel
     unfold compareCodes
-    simp only [Id.run_pure, apply_ite Id.run, apply_ite Search.noncheaplevel, ite_self]
+    simp only [Id.run_pure, apply_ite Id.run, apply_ite SearchState.noncheaplevel, ite_self]
     exact h
   target := by
     intro level numcells st _ h
@@ -44,7 +44,7 @@ theorem boundaryPolicy (ctx : Ctx n) (inf tcLevel bound saved : Nat) :
     change (classify ctx level numcells st).2.noncheaplevel = saved ∨ bound < (classify ctx level numcells st).2.noncheaplevel
     unfold Nauty.classify
     simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd, scatter_eq,
-      apply_ite Search.noncheaplevel, ite_self]
+      apply_ite SearchState.noncheaplevel, ite_self]
     exact h
   leaf := by
     intro leaf level st _ h
@@ -176,7 +176,7 @@ theorem Boundary.recover {G : Colored n k} {ctx : Ctx n} {current level : Nat} {
 theorem compare_noncheap (level code : Nat) (st : Search n) :
     (compareCodes level code st).noncheaplevel = st.noncheaplevel := by
   unfold compareCodes
-  simp only [Id.run_pure, apply_ite Id.run, apply_ite Search.noncheaplevel, ite_self]
+  simp only [Id.run_pure, apply_ite Id.run, apply_ite SearchState.noncheaplevel, ite_self]
 
 /-- Choosing either target preserves the boundary level. -/
 theorem target_noncheap (first : Bool) (ctx : Ctx n) (tcLevel level numcells : Nat) (st : Search n) :
@@ -188,7 +188,7 @@ theorem classify_noncheap (ctx : Ctx n) (level numcells : Nat) (st : Search n) :
     (classify ctx level numcells st).2.noncheaplevel = st.noncheaplevel := by
   unfold Nauty.classify
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd, scatter_eq,
-    apply_ite Search.noncheaplevel, ite_self]
+    apply_ite SearchState.noncheaplevel, ite_self]
 
 /-- The guard's boundary is at most the next child's level. -/
 theorem cheap_bound {level : Nat} {st : Search n} (first : Bool)
@@ -210,7 +210,7 @@ theorem Boundary.compare {G : Colored n k} {ctx : Ctx n} {level : Nat} {st : Sea
     Boundary G ctx level (compareCodes level code st) := by
   apply h.congr (compareCodes_frame level code st).1 (compareCodes_frame level code st).2.1
   unfold compareCodes
-  simp only [Id.run_pure, apply_ite Id.run, apply_ite Search.noncheaplevel, ite_self]
+  simp only [Id.run_pure, apply_ite Id.run, apply_ite SearchState.noncheaplevel, ite_self]
 
 /-- Target selection leaves the saved pair unchanged. -/
 theorem Boundary.target {G : Colored n k} {ctx : Ctx n} {level : Nat} {st : Search n}
@@ -227,7 +227,7 @@ theorem Boundary.classify {G : Colored n k} {ctx : Ctx n} {level : Nat} {st : Se
   apply h.congr (classify_frame ctx level numcells st).1 (classify_frame ctx level numcells st).2.1
   unfold Nauty.classify
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd, scatter_eq,
-    apply_ite Search.noncheaplevel, ite_self]
+    apply_ite SearchState.noncheaplevel, ite_self]
 
 /-- Leaf actions retain the saved pair, including after an admission. -/
 theorem Boundary.leaf {G : Colored n k} {ctx : Ctx n} {level : Nat} {st : Search n}

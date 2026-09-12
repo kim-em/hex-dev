@@ -172,7 +172,7 @@ theorem Comparison.leaf {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
     h.nonempty h.lower hgsz hsymm hloop
   have hne : bs' ≠ [] := by
     intro he
-    simp only [Search.key, he, ↓reduceIte] at hk
+    simp only [SearchState.key, he, ↓reduceIte] at hk
     contradiction
   have hf : out.firstlab = st.firstlab := by
     have hr := (leafExit_reference verdict.1 cs.length verdict.2).trans
@@ -181,7 +181,7 @@ theorem Comparison.leaf {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat}
   have hmax : incKey ctx bs' out.canonlab =
       keyMax (incKey ctx bs st.canonlab) (pathLeafKey ctx cs st.lab) := by
     apply Option.some.inj
-    simpa only [Search.key, hne, h.nonempty, ↓reduceIte, incMax] using hk
+    simpa only [SearchState.key, hne, h.nonempty, ↓reduceIte, incMax] using hk
   refine ⟨bs', hm, (h.first.classify n).leaf verdict.1, hne, ?_, hk⟩
   rw [hf, hmax]
   exact keyLe_trans h.lower (keyLe_iff.mpr (keyMax_not_lt_left _ _))
@@ -197,7 +197,7 @@ theorem comparison_recover {ctx : Ctx n} {cs bs fs : List Nat} {st : Search n}
   have hfirst := congrArg (fun r => r.2.2) ((referencePolicy ctx inf 0).recover level st)
   have hcanon : (Nauty.recover inf level st).canonlab = st.canonlab := by
     unfold Nauty.recover recoverLevels recoverPtn
-    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.canonlab, ite_self]
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite SearchState.canonlab, ite_self]
   change (Nauty.recover inf level st).firstlab = st.firstlab at hfirst
   rw [hfirst, hcanon]
   exact hlower

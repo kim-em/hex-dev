@@ -33,6 +33,17 @@ namespace Cover
 variable {G : Colored n k} {base : List (Fin n)} {guide : Fin n}
     {tcell tcell' : VSet n} {cursor : Option Nat}
 
+/-- Coverage at a reached cursor survives later generator admissions. -/
+theorem mono {more : List (Perm n)} (h : Cover G gs base guide tcell cursor)
+    (hsub : ∀ p ∈ gs, p ∈ more) : Cover G more base guide tcell cursor := by
+  constructor
+  · intro v hv
+    rcases h.cover v hv with hd | ⟨u, hu, hc, hle⟩
+    · exact Or.inl (hd.mono hsub)
+    · exact Or.inr ⟨u, hu, hc.mono hsub, hle⟩
+  · intro v hv hm ha
+    exact (h.past v hv hm ha).mono hsub
+
 /-- Before the first child, all images of the guide are live. -/
 theorem start (hwindow : ∀ v, Aut.Orbit G base guide v → tcell.mem v.val = true) :
     Cover G gs base guide tcell none := by

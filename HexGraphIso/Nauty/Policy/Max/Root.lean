@@ -87,9 +87,9 @@ theorem key_eq (G : Colored n k) (hn0 : 0 < n) (rules : Rules G 100) :
   change out.best { g := rowsOf G } = some (canonSpecKey G) at hb
   have hn : out.canonlevel ≠ 0 := by
     intro he
-    simp only [Search.best, he, ↓reduceIte] at hb
+    simp only [SearchState.best, he, ↓reduceIte] at hb
     cases hb
-  rw [Search.best, ite_eq_right hn] at hb
+  rw [SearchState.best, ite_eq_right hn] at hb
   have hk := (Option.some.inj hb).symm
   simpa only [Nauty.tracedKey, runColoredTraced, runTraced, finish,
     beq_eq_false_iff_ne.mpr (Nat.ne_of_gt hn0), Bool.false_eq_true, ↓reduceIte, out] using hk

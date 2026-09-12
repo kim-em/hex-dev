@@ -1,0 +1,49 @@
+{
+  "instances": 333,
+  "complete_passes": 1,
+  "process_results": 1274,
+  "process_counts_by_pass": {
+    "1": 1274
+  },
+  "statuses": {
+    "ok": 1268,
+    "over budget": 4,
+    "killed": 2
+  },
+  "solved": {
+    "hex-canon": 282,
+    "hex-run": 282,
+    "hex-ffi": 299,
+    "iso-canon": 296,
+    "iso-whole": 296,
+    "nauty": 307,
+    "sparse": 318,
+    "traces": 308,
+    "hex-sparse-canon": 310,
+    "hex-sparse-run": 310,
+    "hex-sparse-build": 333,
+    "hex-sparse-output": 315
+  },
+  "exact_node_comparisons": {
+    "hex-sparse-canon": 312,
+    "hex-sparse-run": 312
+  },
+  "solved_instances_with_exact_C_sparse_node_counts": 310,
+  "merged_reconstructed": true,
+  "five_retained_series_unchanged": true,
+  "every_process_minimum_matches_retained_repetitions": true,
+  "ratios": {
+    "sparse_over_dense": {
+      "cases": 282,
+      "median": 0.25101560139247503
+    },
+    "sparse_over_isograph": {
+      "cases": 296,
+      "median": 0.7893791982570928
+    },
+    "sparse_over_C_sparse": {
+      "cases": 310,
+      "median": 18.054431536596663
+    }
+  }
+}

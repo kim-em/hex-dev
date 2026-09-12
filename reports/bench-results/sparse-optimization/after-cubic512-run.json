@@ -1,0 +1,32 @@
+{
+  "command": [
+    "taskset",
+    "-c",
+    "0",
+    "perf",
+    "record",
+    "-q",
+    "-e",
+    "cycles:u",
+    "-F",
+    "999",
+    "-o",
+    "/tmp/sparse-after-cubic512-run.data",
+    "--",
+    "/tmp/hex-sparse-perf-baseline/iteration",
+    "/tmp/hex-sparse-corpus/cubic512.graph",
+    "run",
+    "21"
+  ],
+  "cpu": 0,
+  "binary_sha256": "60e859234a52808392fc28374ecd12ea70a915fc35afe601c25eb7a12822aa5c",
+  "started": 1788931405.56037,
+  "load_after": [
+    0.57177734375,
+    1.27099609375,
+    2.52978515625
+  ],
+  "stdout": "{\"elapsed_ns\":3234297775,\"iterations\":21,\"mode\":\"run\",\"name\":\"cubic512\",\"ns_per_iteration\":154014179,\"sink\":523777}\n",
+  "stderr": "",
+  "returncode": 0
+}

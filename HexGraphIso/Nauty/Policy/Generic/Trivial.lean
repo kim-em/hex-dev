@@ -68,7 +68,7 @@ therefore consumes exactly one frame pushed by `child`. -/
 /-- The exhaustive policy uses the specification's target selector and
 never removes a target position or returns past its immediate parent.
 Sweep entries are offsets in the target cell. -/
-instance policy : Policy (State n) n where
+instance policy : Policy (State n) n (γ := Ctx n) where
   visit ctx level numcells st :=
     let out := visit ctx level numcells st
     (out.frame.partition.numcells, out.frame.partition.longcode, out)

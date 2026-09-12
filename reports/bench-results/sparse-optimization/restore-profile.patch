@@ -1,0 +1,175 @@
+--- a/HexPermGroup/Perm.lean
++++ b/HexPermGroup/Perm.lean
+@@ -249,55 +249,6 @@
+ @[simp] theorem inv_get_get (p : Perm n) (i : Fin n) : p.inv.get (p.get i) = i := by
+   rw [get_inv, preimage_get]
+ 
+-/-- Check a vertex array in linear time: scatter a candidate inverse, then
+-check both inverse identities. The checks also reject repeated entries;
+-no pairwise membership scan is needed. -/
+-@[expose] def check (v : Vector (Fin n) n) : Option (Perm n) :=
+-  let inverse := (List.finRange n).foldl
+-    (fun (a : Vector (Fin n) n) (i : Fin n) => a.set (v[i.val]).val i (v[i.val]).isLt)
+-    (Hex.Vector.ofFn' fun i => i)
+-  if h : (∀ i : Fin n, inverse[(v[i.val]).val] = i) ∧
+-      (∀ i : Fin n, v[(inverse[i.val]).val] = i) then
+-    some ⟨v, nodup_toList (fun i j he => by
+-      have := congrArg (fun x : Fin n => inverse[x.val]) he
+-      exact (h.1 i).symm.trans (this.trans (h.1 j))),
+-      fun i => List.mem_iff_getElem.mpr
+-        ⟨(inverse[i.val]).val, by simp, by simpa using h.2 i⟩⟩
+-  else none
+-
+-/-- The linear checker accepts exactly the original checked constructor's
+-inputs and returns the same proof-carrying permutation. -/
+-@[csimp] theorem ofVector?_eq_check : @ofVector? = @check := by
+-  funext n v
+-  unfold ofVector?
+-  split
+-  · rename_i h
+-    let p : Perm n := ⟨v, h.1, h.2⟩
+-    have hl : ∀ i : Fin n, p.invVec[(v[i.val]).val] = i := p.preimage_get
+-    have hr : ∀ i : Fin n, v[(p.invVec[i.val]).val] = i := p.get_preimage
+-    unfold check
+-    dsimp only
+-    rw [dite_eq_left (show _ from ⟨hl, hr⟩)]
+-  · rename_i h
+-    unfold check
+-    dsimp only
+-    split
+-    · rename_i hc
+-      exfalso
+-      apply h
+-      exact ⟨nodup_toList (fun i j he => by
+-        have := congrArg (fun x : Fin n =>
+-          ((List.finRange n).foldl
+-            (fun (a : Vector (Fin n) n) (i : Fin n) => a.set (v[i.val]).val i (v[i.val]).isLt)
+-            (Hex.Vector.ofFn' fun i => i))[x.val]) he
+-        exact (hc.1 i).symm.trans (this.trans (hc.1 j))),
+-        fun i => List.mem_iff_getElem.mpr
+-          ⟨(((List.finRange n).foldl
+-            (fun (a : Vector (Fin n) n) (i : Fin n) => a.set (v[i.val]).val i (v[i.val]).isLt)
+-            (Hex.Vector.ofFn' fun i => i))[i.val]).val,
+-            by simp, by simpa using hc.2 i⟩⟩
+-    · rfl
+-
+ /-! # Algebra -/
+ 
+ @[simp] theorem comp_id (p : Perm n) : p.comp (Perm.id n) = p := by
+--- a/HexGraphIso/Nauty/Sparse/Refine.lean
++++ b/HexGraphIso/Nauty/Sparse/Refine.lean
+@@ -44,13 +44,9 @@
+ /-- Vertex-to-cell indices, using `n` for vertices in singleton cells. -/
+ def cellstarts (n : Nat) (lab ptn : Array Nat) (level : Nat) : Array Nat := Id.run do
+   let mut starts := Array.replicate n n
+-  let mut first := 0
+-  for _ in [0:n] do
+-    if first >= n then break
+-    let last := cellEnd ptn level first
++  for (first, last) in cells ptn level n do
+     if first < last then
+       for i in [first:last + 1] do starts := starts.set! lab[i]! first
+-    first := last + 1
+   return starts
+ 
+ /-- Divide one cell by counts or distances. The first two minimum
+@@ -156,9 +152,6 @@
+   let mut marks := s.marks
+   let mut touched := #[]
+   let mut hitVertices := s.vmarks
+-  -- The neighbour loop borrows `s` for cell indices. Release its aliases
+-  -- to the two arrays being updated, so their first writes can be in place.
+-  let s := { s with marks := #[], vmarks := #[] }
+   let vertex := s.lab[split]!
+   for e in [g.offsets[vertex]!:g.offsets[vertex + 1]!] do
+     let j := g.neighbors[e]!
+@@ -208,7 +201,6 @@
+   let stamp := s.stamp + 1
+   let mut marks := s.marks
+   let mut hits := s.hits
+-  let s := { s with marks := #[], hits := #[] }
+   let mut touched := #[]
+   let last := cellEnd s.ptn level split + 1
+   for i in [split:last] do
+@@ -233,32 +225,21 @@
+ singleton splitters among the first ten active entries. -/
+ def refine (g : Graph n) (level : Nat) (lab ptn : Array Nat)
+     (active : VSet n) (numcells : Nat) : RefineSt n := Id.run do
+-  -- Walk the packed set in the same ascending order as nauty's initial
+-  -- active scan, without constructing and filtering a list of all vertices.
+-  let mut initialQueue := #[]
+-  let mut next := active.nextElem none
+-  for _ in [0:n] do
+-    let some i := next | break
+-    initialQueue := initialQueue.push i
+-    next := active.nextElem (some i)
++  let queue := ((List.range n).filter active.mem).toArray
+   let mut s : RefineSt n := {
+-    lab, ptn, active, queue := initialQueue
++    lab, ptn, active, queue
+     cellstart := #[], hits := Array.replicate n 0, marks := Array.replicate n 0,
+     vmarks := Array.replicate n 0,
+     numcells, longcode := numcells }
+-  if initialQueue.isEmpty then return { s with longcode := cleanup s.longcode }
++  if queue.isEmpty then return { s with longcode := cleanup s.longcode }
+   s := { s with cellstart := cellstarts n lab ptn level }
+-  if level <= 2 && initialQueue.size == 1 && ptn[initialQueue[0]!]! <= level && numcells <= n / 8 then
+-    let split := initialQueue[0]!
++  if level <= 2 && queue.size == 1 && ptn[queue[0]!]! <= level && numcells <= n / 8 then
++    let split := queue[0]!
+     s := { s with
+       queue := #[], active := s.active.erase split
+       hits := distvals g lab[split]! }
+-    let mut first := 0
+-    for _ in [0:n] do
+-      if first >= n then break
+-      let last := cellEnd ptn level first
++    for (first, last) in cells ptn level n do
+       if first < last then s := splitCounts level first true s
+-      first := last + 1
+   -- A split adds no more queue entries than new cells. With at most n
+   -- initial active entries bounded by the initial cell count, n iterations
+   -- suffice before the queue empties.
+--- a/HexGraphIso/Nauty/Sparse/Target.lean
++++ b/HexGraphIso/Nauty/Sparse/Target.lean
+@@ -20,16 +20,12 @@
+   let mut starts := #[]
+   let mut sizes := #[]
+   let mut nntcell := Array.replicate n n
+-  let mut first := 0
+-  for _ in [0:n] do
+-    if first >= n then break
+-    let last := cellEnd ptn level first
++  for (first, last) in cells ptn level n do
+     if first < last then
+       let index := starts.size
+       starts := starts.push first
+       sizes := sizes.push (last - first + 1)
+       for j in [first:last + 1] do nntcell := nntcell.set! lab[j]! index
+-    first := last + 1
+   if starts.isEmpty then return n
+   let mut hits := Array.replicate starts.size 0
+   let mut best := 0
+--- a/bench/HexGraphIso/SparseBench.lean
++++ b/bench/HexGraphIso/SparseBench.lean
+@@ -8,9 +8,7 @@
+ 
+ /-! Native sparse timing driver for the six-way comparison. The shared
+ adjacency-text corpus is decoded before timing. Native JSON edge input is
+-also supported for larger graphs. Every timed repetition is emitted. An
+-optional iteration count runs one stage repeatedly for CPU profiling;
+-parsing and preparation remain outside that loop. -/
++also supported for larger graphs. Every timed repetition is emitted. -/
+ 
+ open Lean Hex.GraphIso
+ 
+@@ -97,8 +95,7 @@
+     let (warmup, samples) ← time action
+     let key := if mode == "canon" then "hex_sparse_ns"
+       else if mode == "run" then "hex_sparse_search_ns"
+-      else if mode == "build" then "hex_sparse_build_ns"
+-      else if mode == "label" then "hex_sparse_label_ns" else "hex_sparse_output_ns"
++      else if mode == "build" then "hex_sparse_build_ns" else "hex_sparse_output_ns"
+     let fields := [("name", toJson name), ("family", toJson family), ("n", toJson n),
+       (key, toJson (samples.foldl min samples[0]!)),
+       ("samples_ns", toJson samples), ("warmup_ns", toJson warmup),

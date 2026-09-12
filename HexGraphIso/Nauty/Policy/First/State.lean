@@ -17,20 +17,20 @@ public section
 
 namespace Hex.GraphIso.Nauty
 
-variable {n : Nat}
+variable {n : Nat} {κ : Type}
 
 /-- The saved first-path codes, target positions, and leaf labelling. -/
-def Search.reference (st : Search n) : Array Nat × Array Int × Array Nat :=
+def SearchState.reference (st : SearchState n κ) : Array Nat × Array Int × Array Nat :=
   (st.firstcode, st.firsttc, st.firstlab)
 
 /-- Workspace insertion preserves the first-path reference. -/
-theorem pushAuto_reference (st : Search n) (pair : VSet n × VSet n) :
+theorem pushAuto_reference (st : SearchState n κ) (pair : VSet n × VSet n) :
     (pushAuto st pair).reference = st.reference := by
   unfold pushAuto
   split <;> rfl
 
 /-- Scratch construction preserves the first-path reference. -/
-theorem scatter_reference (ref : Array Nat) (st : Search n) :
+theorem scatter_reference (ref : Array Nat) (st : SearchState n κ) :
     (scatter ref st).reference = st.reference := by
   rw [scatter_eq]
   rfl
@@ -40,24 +40,24 @@ theorem classify_reference (ctx : Ctx n) (level numcells : Nat) (st : Search n) 
     (classify ctx level numcells st).2.reference = st.reference := by
   unfold classify
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd, scatter_eq,
-    Search.reference, apply_ite Search.firstcode, apply_ite Search.firsttc,
-    apply_ite Search.firstlab, ite_self]
+    SearchState.reference, apply_ite SearchState.firstcode, apply_ite SearchState.firsttc,
+    apply_ite SearchState.firstlab, ite_self]
 
 /-- Recording a generator preserves the first-path reference. -/
-theorem admit_reference (st : Search n) : (admit st).reference = st.reference := by
+theorem admit_reference (st : SearchState n κ) : (admit st).reference = st.reference := by
   unfold admit pushAuto
   simp only [Id.run_pure]
   split <;> rfl
 
 /-- Pruning past a leaf preserves the first-path reference. -/
-theorem pruneReturn_reference (level : Nat) (st : Search n) :
+theorem pruneReturn_reference (level : Nat) (st : SearchState n κ) :
     (pruneReturn level st).2.reference = st.reference := by
   unfold pruneReturn
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd,
-    apply_ite Search.reference, pushAuto_reference, ite_self]
+    apply_ite SearchState.reference, pushAuto_reference, ite_self]
 
 /-- Off-path leaf processing never replaces the first-path reference. -/
-theorem leafExit_reference (leaf : Leaf) (level : Nat) (st : Search n) :
+theorem leafExit_reference (leaf : Leaf) (level : Nat) (st : SearchState n κ) :
     (leafExit leaf level st).2.reference = st.reference := by
   cases leaf <;> unfold leafExit
   all_goals simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
@@ -69,14 +69,14 @@ theorem leafExit_reference (leaf : Leaf) (level : Nat) (st : Search n) :
 
 /-- The search's off-path operations preserve all first-path reference fields. -/
 theorem referencePolicy (ctx : Ctx n) (inf tcLevel : Nat) :
-    Generic.ReferencePolicy ctx inf tcLevel (Search.reference (n := n)) where
+    Generic.ReferencePolicy ctx inf tcLevel (SearchState.reference (n := n) (κ := Array (VSet n))) where
   visit := fun _ _ _ => rfl
   compare := by
     intro level code st
     change (compareCodes level code st).reference = st.reference
     unfold compareCodes
-    simp only [Id.run_pure, apply_ite Id.run, Search.reference,
-      apply_ite Search.firstcode, apply_ite Search.firsttc, apply_ite Search.firstlab, ite_self]
+    simp only [Id.run_pure, apply_ite Id.run, SearchState.reference,
+      apply_ite SearchState.firstcode, apply_ite SearchState.firsttc, apply_ite SearchState.firstlab, ite_self]
   target := by
     intro level numcells st
     change (chooseTarget false ctx tcLevel level numcells st).2.2.2.reference = st.reference
@@ -97,8 +97,8 @@ theorem referencePolicy (ctx : Ctx n) (inf tcLevel : Nat) :
     intro level st
     change (Nauty.recover inf level st).reference = st.reference
     unfold Nauty.recover recoverLevels recoverPtn
-    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, Search.reference,
-      apply_ite Search.firstcode, apply_ite Search.firsttc, apply_ite Search.firstlab, ite_self]
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, SearchState.reference,
+      apply_ite SearchState.firstcode, apply_ite SearchState.firsttc, apply_ite SearchState.firstlab, ite_self]
   afterSweep := by
     intro first level size index st
     change (afterSweep first level size index st).reference = st.reference

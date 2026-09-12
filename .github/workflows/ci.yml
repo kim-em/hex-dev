@@ -472,7 +472,7 @@ jobs:
           selected() { [ -z "$HEX_LIBRARY_FILTER" ] || [[ " $HEX_LIBRARY_FILTER " == *" $1 "* ]]; }
           echo "Conformance check library filter: ${HEX_LIBRARY_FILTER:-all libraries (no filter)}"
           if selected HexGraphIso; then
-            python3 -m unittest scripts/oracle/test_graphiso_trace.py scripts/bench/test_graphiso_compare.py
+            python3 -m unittest scripts/oracle/test_graphiso_trace.py scripts/oracle/test_graphiso_nauty.py scripts/bench/test_graphiso_compare.py scripts/bench/test_graphiso_sweep.py
             .lake/build/bin/hexgraphiso_emit_trace > /tmp/graphiso-trace.jsonl
             python3 scripts/oracle/graphiso_trace.py /tmp/graphiso-trace.jsonl
             .lake/build/bin/hexgraphiso_emit_campaign | python3 scripts/oracle/graphiso_nauty.py

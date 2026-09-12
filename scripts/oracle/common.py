@@ -166,6 +166,8 @@ VALID_FIXTURE_KINDS = frozenset(
         "divisorfn",
         "graphiso",
         "graphisoautos",
+        "graphisosparse",
+        "graphisosparseautos",
         "order",
         "cyclotomic",
     }
@@ -392,11 +394,26 @@ def _validate_graphiso_core(record: dict[str, Any]) -> None:
     lab = record.get("canonLab")
     if not isinstance(lab, list) or len(lab) != n or sorted(lab) != list(range(n)):
         raise FixtureError(f"graphiso.canonLab must be a permutation of 0..n-1: {record!r}")
-    tri = record.get("canonTri")
-    if not isinstance(tri, str) or len(tri) != n * (n - 1) // 2 or any(
-        c not in "01" for c in tri
-    ):
-        raise FixtureError(f"graphiso.canonTri must be C(n,2) bits: {record!r}")
+    if record["kind"] in ("graphisosparse", "graphisosparseautos"):
+        canonical = record.get("canonEdges")
+        if not isinstance(canonical, list) or not all(
+            isinstance(e, list) and len(e) == 2 and
+            all(_is_nat(v) for v in e) and 0 <= e[0] < e[1] < n
+            for e in canonical
+        ) or canonical != [list(e) for e in sorted(set(map(tuple, canonical)))]:
+            raise FixtureError("graphisosparse.canonEdges must be sorted unique edges")
+        fields = {"numorbits", "numgenerators", "numnodes", "numbadleaves",
+                  "maxlevel", "tctotal", "canupdates"}
+        stats = record.get("stats")
+        if not isinstance(stats, dict) or set(stats) != fields or not all(
+                _is_nat(x) for x in stats.values()):
+            raise FixtureError("graphisosparse.stats must contain all seven Nat statistics")
+    else:
+        tri = record.get("canonTri")
+        if not isinstance(tri, str) or len(tri) != n * (n - 1) // 2 or any(
+            c not in "01" for c in tri
+        ):
+            raise FixtureError(f"graphiso.canonTri must be C(n,2) bits: {record!r}")
     sizes = record.get("cellSizes")
     if not isinstance(sizes, list) or len(sizes) != k or sum(sizes) != n or not all(
         isinstance(s, int) and s > 0 for s in sizes
@@ -469,9 +486,9 @@ def _validate_fixture(record: dict[str, Any]) -> None:
             raise FixtureError(
                 f"poly.modFactorDegrees requires modFactorPrime: {record!r}"
             )
-    elif kind == "graphiso":
+    elif kind in ("graphiso", "graphisosparse"):
         _validate_graphiso_core(record)
-    elif kind == "graphisoautos":
+    elif kind in ("graphisoautos", "graphisosparseautos"):
         # a superset of a `graphiso` record: the canonical fields are
         # validated by the same rules, so a consumer that only knows
         # canonical forms can read the whole stream

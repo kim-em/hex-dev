@@ -44,7 +44,7 @@ theorem Frame.emit_trace (ctx : Ctx n) (tcLevel : Nat) (f : Frame n) :
     dsimp only [p, prepareOther]
     rw [chooseTarget_fields]
     unfold compareCodes
-    simp only [Id.run_pure, apply_ite Id.run, apply_ite Search.genTrace, ite_self]
+    simp only [Id.run_pure, apply_ite Id.run, apply_ite SearchState.genTrace, ite_self]
     rfl
   have hw : (f.emit ctx tcLevel).2.workperm = c.2.workperm := leafExit_workperm c.1 f.level c.2
   change (leafExit c.1 f.level c.2).2.genTrace = _

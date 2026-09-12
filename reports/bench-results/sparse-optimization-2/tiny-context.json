@@ -1,0 +1,8 @@
+{
+  "base_checkpoint": "lists",
+  "binary_sha256": "48e37ccb3b7e76975b6c13d3b412d767b0ad4b79993cc5f6758d5f9d2801bb41",
+  "sources": {
+    "HexGraphIso/Nauty/Sparse/Cells.lean": "3765f2b7a964cf0bad78f6df4b4695bc05aaa12b276ced8d5bbfc799bb74292b",
+    "HexGraphIso/Nauty/Sparse/Refine.lean": "01de10d9a562a3e7a62ba7438b282932003cf7c3dc3b4d66a39c790079e72568"
+  }
+}

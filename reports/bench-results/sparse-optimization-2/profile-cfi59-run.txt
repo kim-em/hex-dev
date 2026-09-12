@@ -1,0 +1,44 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cycles:u'
+# Event count (approx.): 13903213512
+#
+# Overhead  Command          Shared Object             Symbol                                                                                                                                                                                                                                                                                                                                                                                                    
+# ........  ...............  ........................  ..........................................................................................................................................................................................................................................................................................................................................................................................................
+#
+    13.19%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_bestcell_spec__1___redArg
+     9.11%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)
+     8.51%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] lp_Hex_Hex_GraphIso_Nauty_cellEnd_go
+     6.02%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] mi_malloc_small
+     5.58%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_bestcell_spec__2___redArg
+     5.20%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_cellstarts_spec__1_spec__1___redArg
+     4.91%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_bestcell_spec__3___redArg
+     4.78%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] lp_Hex_Hex_GraphIso_Nauty_cheapautom_go
+     3.60%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] mi_free
+     2.52%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_bestcell_spec__4_spec__4___redArg
+     2.36%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] lp_Hex_Hex_GraphIso_Nauty_cellEnd
+     2.33%  hexgraphiso_spa  libc.so.6                 [.] malloc
+     2.03%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] lean_dec_ref_cold
+     1.94%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] lean_copy_expand_array
+     1.88%  hexgraphiso_spa  libc.so.6                 [.] cfree@GLIBC_2.2.5
+     1.50%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_cellstarts_spec__0___redArg
+     1.43%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_bestcell_spec__0___redArg
+     1.08%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] lp_Hex___private_Init_Data_Array_Basic_0__Array_forIn_x27Unsafe_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__3
+     0.92%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] mi_malloc
+     0.89%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] lean_mk_array
+     0.83%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] __gmpz_mul_2exp
+     0.70%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] __gmpz_add
+     0.67%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] lp_Hex_Hex_GraphIso_Nauty_VSet_insert
+     0.57%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_refine_spec__1_spec__1___redArg
+     0.57%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__0___redArg
+     0.57%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] _mi_malloc_generic(mi_theap_s*, unsigned long, unsigned long, unsigned long*)
+     0.57%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] lean_array_push
+     0.54%  hexgraphiso_spa  hexgraphiso_sparse_bench  [.] lp_Hex_Hex_GraphIso_Nauty_Sparse_splitCounts
+
+
+#
+# (Tip: To show assembler sample context control flow use perf record -b / perf report --samples 10 and then browse context)
+#

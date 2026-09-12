@@ -18,6 +18,8 @@ each declared model describes the timed operation alone.
 
 Scientific registrations:
 
+* `runSparseBuild`: native path construction from prepared edges, linear in
+  vertices and edges; no dense adjacency matrix is constructed.
 * `runDenseConvert`: dense bitset-row conversion of a coloured graph,
   quadratic in the vertex count.
 * `runRefine`: one full equitable refinement of the colour partition by
@@ -68,6 +70,34 @@ comparator register as fixed benchmarks on committed circulant sizes:
 namespace Hex.GraphIsoBench
 
 open Hex.GraphIso
+
+/-- A native edge-list input prepared outside the construction timer. -/
+structure SparseInput where
+  n : Nat
+  edges : List (Nat × Nat)
+  deriving Repr, BEq, Hashable
+
+/-- Paths have bounded degree and exactly `n - 1` edges. -/
+def prepSparse (n : Nat) : SparseInput :=
+  ⟨n, (List.range (n - 1)).map fun i => (i, i + 1)⟩
+
+/-- Construct and consume both compressed arrays from a native edge list. -/
+def runSparseBuild (input : SparseInput) : Nat :=
+  match Hex.SparseGraph.ofEdges? input.n input.edges with
+  | some g => g.offsets.foldl (· + ·) 0 +
+      g.neighbors.foldl (fun total v => total + v.val) 0
+  | none => 0
+
+/- Degree counting, prefix offsets, scattering, and consuming the result are
+linear in the vertices and edges. Row normalization is constant work per
+vertex on this degree-at-most-two family. -/
+setup_benchmark runSparseBuild n => n
+  with prep := prepSparse
+  where {
+    paramFloor := 1024
+    paramCeiling := 65536
+    maxSecondsPerCall := 1.0
+  }
 
 /-- Flattened benchmark input: a deterministic coloured circulant. -/
 structure GraphInput where

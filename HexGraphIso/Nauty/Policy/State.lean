@@ -17,13 +17,13 @@ namespace Hex.GraphIso.Nauty
 variable {n : Nat}
 
 /-- The bounded workspace does not change the full generator trace. -/
-theorem pushAuto_trace (st : Search n) (pair : VSet n × VSet n) :
+theorem pushAuto_trace {κ : Type} (st : SearchState n κ) (pair : VSet n × VSet n) :
     (pushAuto st pair).genTrace = st.genTrace := by
   rw [pushAuto]
   split <;> rfl
 
 /-- Admission appends the completed scratch permutation to the full trace. -/
-theorem admit_trace (st : Search n) :
+theorem admit_trace {κ : Type} (st : SearchState n κ) :
     (admit st).genTrace = st.genTrace.push st.workperm := by
   simp only [admit, Id.run_pure, pushAuto_trace]
 

@@ -40,7 +40,7 @@ theorem PairsOk.push {G : Colored n k} {ctx : Ctx n} {st : Search n} {pair : VSe
   exact ha
 
 /-- Admission records the scratch permutation's explicit pair. -/
-theorem admit_autos (st : Search n) :
+theorem admit_autos {κ : Type} (st : SearchState n κ) :
     (admit st).autos = (pushAuto st (fmperm st.workperm n)).autos := by
   unfold admit pushAuto
   simp only [Id.run_pure]
@@ -70,15 +70,15 @@ theorem PairsOk.prune {G : Colored n k} {ctx : Ctx n} {st : Search n} {level : N
   · exact h
 
 /-- The prune tail inserts exactly its implicit pair when the level differs from its boundary. -/
-theorem pruneReturn_autos (level : Nat) (st : Search n) :
+theorem pruneReturn_autos {κ : Type} (level : Nat) (st : SearchState n κ) :
     (pruneReturn level st).2.autos =
       if level != st.noncheaplevel then (pushAuto st (fmptn st.lab st.ptn st.noncheaplevel n)).autos
       else st.autos := by
   unfold pruneReturn
-  simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd, apply_ite Search.autos]
+  simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd, apply_ite SearchState.autos]
 
 /-- Workspace effects depend only on the admission kind and the incoming pair fields. -/
-theorem leafExit_autos (leaf : Leaf) (level : Nat) (st : Search n) :
+theorem leafExit_autos {κ : Type} (leaf : Leaf) (level : Nat) (st : SearchState n κ) :
     (leafExit leaf level st).2.autos =
       match leaf with
       | .internal => st.autos
@@ -86,8 +86,8 @@ theorem leafExit_autos (leaf : Leaf) (level : Nat) (st : Search n) :
       | .bad | .better _ => (pruneReturn level st).2.autos := by
   cases leaf <;> unfold leafExit
   all_goals simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd,
-    apply_ite Search.autos, admit_autos, pruneReturn_autos, install]
-  all_goals simp only [pushAuto, apply_ite Search.autos, ite_self]
+    apply_ite SearchState.autos, admit_autos, pruneReturn_autos, install]
+  all_goals simp only [pushAuto, apply_ite SearchState.autos, ite_self]
   all_goals repeat' split
   all_goals first | rfl | contradiction
 
@@ -112,7 +112,7 @@ theorem classify_autos (ctx : Ctx n) (level numcells : Nat) (st : Search n) :
     (classify ctx level numcells st).2.autos = st.autos := by
   unfold classify
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd, scatter_eq,
-    apply_ite Search.autos, ite_self]
+    apply_ite SearchState.autos, ite_self]
 
 /-- The empty initial workspace satisfies the ledger. -/
 theorem initial_pairs (G : Colored n k) (ctx : Ctx n) :

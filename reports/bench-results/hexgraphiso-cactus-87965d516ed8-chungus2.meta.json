@@ -1,0 +1,30 @@
+{
+  "fingerprint": "87965d516ed8",
+  "host": "chungus2",
+  "date": "2026-09-09T23:49:03Z",
+  "describe": "d55a63de6c1a",
+  "label": "Sparse canonical installation, full indirect sort and shortest-path proofs",
+  "cpu": 4,
+  "load_before": [
+    2.14697265625,
+    1.900390625,
+    1.59521484375
+  ],
+  "load_after": [
+    127.794921875,
+    87.74609375,
+    40.376953125
+  ],
+  "plot_python": "/tmp/plotenv/bin/python",
+  "orphan_cleanup": [
+    {
+      "pid": 3447176,
+      "command": "lean"
+    },
+    {
+      "pid": 3493535,
+      "command": "lean"
+    }
+  ],
+  "host_context": "A full-repository lake build ran during the tactic-timing leg; every completed measurement was retained."
+}

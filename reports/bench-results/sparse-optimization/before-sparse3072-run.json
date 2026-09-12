@@ -1,0 +1,32 @@
+{
+  "command": [
+    "taskset",
+    "-c",
+    "76",
+    "perf",
+    "record",
+    "-q",
+    "-e",
+    "cycles:u",
+    "-F",
+    "999",
+    "--call-graph",
+    "dwarf,8192",
+    "-o",
+    "/tmp/sparse-before-sparse3072-run.data",
+    "--",
+    "/tmp/hex-sparse-perf-baseline/profile",
+    "/tmp/hex-sparse-corpus/sparse3072.graph",
+    "run",
+    "300"
+  ],
+  "load": [
+    1.34326171875,
+    1.3896484375,
+    3.70361328125
+  ],
+  "started": 1788930665.5537257,
+  "stdout": "{\"elapsed_ns\":2541711718,\"iterations\":300,\"mode\":\"run\",\"name\":\"sparse3072\",\"ns_per_iteration\":8472372,\"sink\":0}\n",
+  "stderr": "",
+  "returncode": 0
+}

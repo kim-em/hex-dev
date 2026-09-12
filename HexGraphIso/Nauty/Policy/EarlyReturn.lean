@@ -46,15 +46,15 @@ theorem EarlyReturn.leave {ctx : Ctx n} {target tv : Nat} {short : Bool} {st : S
 private theorem compare_same (level code : Nat) (st : Search n) :
     (compareCodes level code st).allsamelevel = st.allsamelevel := by
   unfold compareCodes
-  simp only [Id.run_pure, apply_ite Id.run, apply_ite Search.allsamelevel, ite_self]
+  simp only [Id.run_pure, apply_ite Id.run, apply_ite SearchState.allsamelevel, ite_self]
 
 private theorem classify_same (ctx : Ctx n) (level numcells : Nat) (st : Search n) :
     (classify ctx level numcells st).2.allsamelevel = st.allsamelevel := by
   unfold classify
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd, scatter_eq,
-    apply_ite Search.allsamelevel, ite_self]
+    apply_ite SearchState.allsamelevel, ite_self]
 
-private theorem leafExit_same (leaf : Leaf) (level : Nat) (st : Search n) :
+private theorem leafExit_same {κ : Type} (leaf : Leaf) (level : Nat) (st : SearchState n κ) :
     (leafExit leaf level st).2.allsamelevel = st.allsamelevel := by
   cases leaf <;> unfold leafExit pruneReturn install admit pushAuto
   all_goals simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
@@ -64,7 +64,7 @@ private theorem leafExit_same (leaf : Leaf) (level : Nat) (st : Search n) :
 private theorem recover_same (inf level : Nat) (st : Search n) :
     (Nauty.recover inf level st).allsamelevel = st.allsamelevel := by
   unfold Nauty.recover recoverLevels recoverPtn
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.allsamelevel, ite_self]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite SearchState.allsamelevel, ite_self]
 
 private def earlyContract (ctx : Ctx n) : Generic.Contract (Search n) n where
   nodePre _ first _ _ _ := first = false

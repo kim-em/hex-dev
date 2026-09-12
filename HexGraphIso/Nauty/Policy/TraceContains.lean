@@ -30,7 +30,7 @@ theorem tracePolicy (ctx : Ctx n) (inf tcLevel : Nat) (γ : Array Nat) :
     intro level code st _ h
     change γ ∈ (compareCodes level code st).genTrace
     unfold compareCodes
-    simp only [Id.run_pure, apply_ite Id.run, apply_ite Search.genTrace, ite_self]
+    simp only [Id.run_pure, apply_ite Id.run, apply_ite SearchState.genTrace, ite_self]
     exact h
   target := by
     intro level numcells st h
@@ -58,11 +58,11 @@ theorem tracePolicy (ctx : Ctx n) (inf tcLevel : Nat) (γ : Array Nat) :
     intro level st h
     change γ ∈ (Nauty.recover inf level st).genTrace
     unfold Nauty.recover recoverLevels recoverPtn
-    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.genTrace, ite_self]
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite SearchState.genTrace, ite_self]
     exact h
   afterSweep := by
-    intro first level size index st h
-    change γ ∈ (afterSweep first level size index st).genTrace
+    intro level size index st h
+    change γ ∈ (afterSweep false level size index st).genTrace
     unfold afterSweep
     split <;> exact h
 

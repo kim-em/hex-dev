@@ -1,0 +1,27 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 11462336068
+#
+# Children      Self  Symbol                                                                                                                                                                                                                                IPC   [IPC Coverage]
+# ........  ........  ....................................................................................................................................................................................................................................  ....................
+#
+    42.14%    42.14%  [.] lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)                                                                                                                                                              -      -
+    21.88%    21.88%  [.] lean_copy_expand_array                                                                                                                                                                                                            -      -
+     6.43%     6.43%  [.] lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__0___redArg                                                                                      -      -
+     3.62%     3.62%  [.] lp_Hex_Hex_GraphIso_Nauty_cellEnd_go                                                                                                                                                                                              -      -
+     3.27%     3.27%  [.] lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitCounts_spec__1___redArg                                                                                         -      -
+     1.73%     1.73%  [.] lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitNontrivial_spec__1___redArg                                                                                     -      -
+     1.65%     1.65%  [.] mi_malloc_small                                                                                                                                                                                                                   -      -
+     1.61%     1.61%  [.] lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__2___redArg                                                                                      -      -
+     1.39%     1.39%  [.] mi_free                                                                                                                                                                                                                           -      -
+     1.23%     1.23%  [.] lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitNontrivial_spec__0___redArg                                                                                     -      -
+     1.03%     0.96%  [.] lean_dec_ref_cold                                                                                                                                                                                                                 -      -
+
+
+#
+# (Tip: Print event counts in machine readable CSV format with: perf stat -x\;)
+#

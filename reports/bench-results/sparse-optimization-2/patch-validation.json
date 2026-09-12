@@ -1,0 +1,24 @@
+{
+  "runtime_reconstructed": true,
+  "selected_source_sha256": {
+    "HexGraph/Sparse/Normalize.lean": "a6935f458d1452f040e0c85c14c808c973fb1ddf97d4ddd9c540b2ef8cfc1aa5",
+    "HexGraph/Sparse/Pack.lean": "161d4695f753e59fe91f767acc37b941c1750ed4a19467161576244e633ee721",
+    "HexGraph/Sparse/Relabel.lean": "4f400aeb3622185f8c7975f3316ec0dd1c3760929365a0233d42e5473a6d0f80",
+    "HexGraphIso/Nauty/Sparse/Cells.lean": "48935f8e16a5a519fccba60fd102c4607697c9e51defc470a6fc7889d011030b",
+    "HexGraphIso/Nauty/Sparse/Graph.lean": "ee6c85722a864011d085a7001044b94312408c11399d0171ca8f97be1da84bd7",
+    "HexGraphIso/Nauty/Sparse/Refine.lean": "01de10d9a562a3e7a62ba7438b282932003cf7c3dc3b4d66a39c790079e72568",
+    "HexGraphIso/Nauty/Sparse/Target.lean": "435caacdbb98e92cb3f936b95bc9d55d0e87e964cc934e0ea021a0757f3f810b",
+    "HexGraphIso/Nauty/Sparse/Search.lean": "46985a4299a12ba83d8d385a1e35a7ff5659e14bf17f4defac008a17fa8e5e69",
+    "HexGraphIso/Sparse/Run.lean": "a315af16603425752dfb2ed4cad7ebcb828df27d9adb0619be99ae0876fe23da",
+    "bench/HexGraphIso/SparseBench.lean": "86e6c5dd720cbf065be72b94212a3dd6fc3bf674780ec781577702602d0a8387"
+  },
+  "patch_chain": [
+    "cache",
+    "counts",
+    "direct",
+    "lists",
+    "tiny",
+    "selected"
+  ],
+  "all_baseline_runtime_changes_covered": true
+}

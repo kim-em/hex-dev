@@ -14,7 +14,7 @@ public section
 
 namespace Hex.GraphIso.Nauty.Generic
 
-variable {n : Nat} {σ : Type} [Policy σ n]
+variable {n : Nat} {σ : Type} {γ : Type} [Policy σ n (γ := γ)]
 
 /-- A short return carries a property established by its emitting leaf. -/
 def shortContract (P : Nat → σ → Prop) : Contract σ n where
@@ -27,7 +27,7 @@ def shortContract (P : Nat → σ → Prop) : Contract σ n where
 /-- Only leaf emission and cleanup along an unconsumed return must
 preserve the property. A receiving loop may consume it and resume. -/
 structure ShortPolicy (P : Nat → σ → Prop) : Prop where
-  leaf : ∀ (ctx : Ctx n) level numcells st,
+  leaf : ∀ (ctx : γ) level numcells st,
     let c := Policy.classify ctx level numcells st
     ∀ target, (Policy.leafExit (n := n) c.1 level c.2).1 = .unwind target true →
       P target (Policy.leafExit (n := n) c.1 level c.2).2
@@ -71,7 +71,7 @@ theorem short_advance {fuel cfuel : Nat} {next : SweepFn σ n}
 /-- A node can emit a short return only at a leaf or through its sweep. -/
 theorem short_node (h : ShortPolicy (n := n) P) {fuel : Nat} {next : SweepFn σ n}
     (hnext : (shortContract (n := n) P).sweepValid fuel (n + 1) next)
-    (ctx : Ctx n) (tcLevel : Nat) (first : Bool) (level numcells : Nat) (st : σ) :
+    (ctx : γ) (tcLevel : Nat) (first : Bool) (level numcells : Nat) (st : σ) :
     ∀ target, (nodeStep ctx tcLevel next first level numcells st).1 = .unwind target true →
       P target (nodeStep ctx tcLevel next first level numcells st).2 := by
   unfold nodeStep
@@ -155,7 +155,7 @@ theorem short_sweep (h : ShortPolicy (n := n) P) {fuel cfuel : Nat}
   · exact hnext _ _ _ _ _ _ _ _ _ trivial
 
 /-- The leaf rules instantiate the common recursion's contract. -/
-theorem ShortPolicy.sound (h : ShortPolicy (n := n) P) (ctx : Ctx n) (inf tcLevel : Nat) :
+theorem ShortPolicy.sound (h : ShortPolicy (n := n) P) (ctx : γ) (inf tcLevel : Nat) :
     SoundPolicy ctx inf tcLevel (shortContract (n := n) P) where
   node_zero := by intros; simp [shortContract]
   node_step := by
@@ -168,7 +168,7 @@ theorem ShortPolicy.sound (h : ShortPolicy (n := n) P) (ctx : Ctx n) (inf tcLeve
     exact short_sweep h hd hn inf first level numcells tc tv1 tv cell index st
 
 /-- Every short return carries a property of its emitting leaf. -/
-theorem node_short (h : ShortPolicy (n := n) P) (first : Bool) (ctx : Ctx n)
+theorem node_short (h : ShortPolicy (n := n) P) (first : Bool) (ctx : γ)
     (inf tcLevel fuel level numcells : Nat) (st : σ) :
     ∀ target, (node first ctx inf tcLevel fuel level numcells st).1 = .unwind target true →
       P target (node first ctx inf tcLevel fuel level numcells st).2 :=
@@ -176,7 +176,7 @@ theorem node_short (h : ShortPolicy (n := n) P) (first : Bool) (ctx : Ctx n)
 
 /-- An unconsumed short return retains its emitting leaf's property
 through any number of intermediate sweeps. -/
-theorem sweep_short (h : ShortPolicy (n := n) P) (first : Bool) (ctx : Ctx n)
+theorem sweep_short (h : ShortPolicy (n := n) P) (first : Bool) (ctx : γ)
     (inf tcLevel fuel cfuel level numcells tc tv1 : Nat) (cursor : Option Nat)
     (cell : VSet n) (index : Nat) (st : σ) :
     ∀ target, (sweep first ctx inf tcLevel fuel cfuel level numcells tc tv1 cursor cell index st).1 =

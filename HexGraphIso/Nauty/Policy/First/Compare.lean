@@ -234,7 +234,7 @@ theorem runState_incumbent (G : Colored n k) (hn0 : 0 < n) :
       { g := rowsOf G } = some key := by
   obtain ⟨fs, bs, hr⟩ := runState_codes G hn0
   rw [hr.read]
-  simp only [Search.key, hr.nonempty, ite_false]
+  simp only [SearchState.key, hr.nonempty, ite_false]
   exact ⟨_, rfl⟩
 
 end Hex.GraphIso.Nauty

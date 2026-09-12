@@ -1,0 +1,9 @@
+{
+  "binary_sha256": "07ff7a717637be82dfd8efeca97ffaa33f0513ec5a8637c1a48b7784785a0dff",
+  "sources": {
+    "HexGraphIso/Nauty/Sparse/Refine.lean": "f63d489f653c40b434ca0a2039408368c4be2a4b0fdf6b379c6a584f72d91e40",
+    "HexGraphIso/Nauty/Sparse/Search.lean": "37b35f6abb8cb777c2225f429af53d566cd217002e19028a3e3fdd25d2283cde",
+    "HexGraphIso/Nauty/Sparse/Target.lean": "ddd7d7bf5010dd3f99d91dc850a06228a72e766591487cd454a10f2edfeb3150",
+    "conformance/HexGraphIso/SparseCases.lean": "0932dd12d476904afb0ffeb8139be07c7407ab6287f7f568264b322cf07ceff5"
+  }
+}

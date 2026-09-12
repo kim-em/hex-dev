@@ -59,9 +59,9 @@ example : IsEmpty (c5a ≃g p5) := by graph_iso
 - `graph_iso` gains `SimpleGraph` goals (`G ≃g H`, `Nonempty (G ≃g H)`,
   `IsEmpty (G ≃g H)`, `¬ Nonempty (G ≃g H)`) and the corresponding
   `Colored.Iso` and `Colored.Isomorphic` goals, reusing the Mathlib-free
-  search under the same tactic name. It accepts the same three limits,
-  `(maxSearchNodes := ...)`, `(maxCertRecords := ...)` and
-  `(maxKernelSteps := ...)`, and does not reinterpret them.
+  search under the same tactic name. It accepts the same two limits,
+  `(maxSearchNodes := ...)` and `(maxCertRecords := ...)`, and does not
+  reinterpret them. Kernel replay uses Lean's actual resource controls.
 
 # Verification
 

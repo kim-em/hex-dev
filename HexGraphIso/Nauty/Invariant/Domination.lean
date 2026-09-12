@@ -149,12 +149,12 @@ end Frames
 
 section Seed
 
-private theorem ftF_eqlevFirst (level : Nat) (st : Search n) :
+private theorem ftF_eqlevFirst {κ : Type} (level : Nat) (st : SearchState n κ) :
     (firstterminal level st).eqlevFirst = level := by
   rw [firstterminal]
   simp only [Id.run_bind, Id.run_pure]
 
-private theorem ftF_firstcode (level : Nat) (st : Search n) :
+private theorem ftF_firstcode {κ : Type} (level : Nat) (st : SearchState n κ) :
     (firstterminal level st).firstcode =
       st.firstcode.set! (level + 1) codeSentinel := by
   rw [firstterminal]
@@ -162,8 +162,8 @@ private theorem ftF_firstcode (level : Nat) (st : Search n) :
 
 /-- `firstterminal` seeds the first-path machine: the just-installed
 first leaf agrees with itself at full depth. -/
-theorem firstterminal_firstCodeInv {nn : Nat} {cs : List Nat}
-    {st : Search n}
+theorem firstterminal_firstCodeInv {κ : Type} {nn : Nat} {cs : List Nat}
+    {st : SearchState n κ}
     (hsize : st.firstcode.size = nn + 2)
     (hLnn : cs.length ≤ nn)
     (hfc : ∀ i, 1 ≤ i → i ≤ cs.length →

@@ -1,0 +1,8 @@
+{
+  "base_checkpoint": "cache",
+  "binary_sha256": "329d22d1857adffd6415813a699fefd0075a79f6d7a679a31de571d9e3e5f4ce",
+  "sources": {
+    "HexGraph/Sparse/Normalize.lean": "a6935f458d1452f040e0c85c14c808c973fb1ddf97d4ddd9c540b2ef8cfc1aa5",
+    "HexGraph/Sparse/Relabel.lean": "1bb7bb648eb9002b02d9bf88f3611e2b2f473eca4df37b6551ec63fac0ec8dbc"
+  }
+}

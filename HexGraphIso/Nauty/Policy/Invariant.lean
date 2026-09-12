@@ -93,7 +93,7 @@ theorem RunInv.compare {G : Colored n k} {ctx : Ctx n} {st : Search n}
   apply h.congr hf hc ((storePolicy ctx 0 0).compare level code st trivial h.cache)
     ((scratchPolicy ctx 0 0).compare level code st)
   all_goals unfold compareCodes
-  all_goals simp only [Id.run_pure, apply_ite Id.run, apply_ite Search.genTrace, apply_ite Search.orbits, apply_ite Search.autos, apply_ite Search.wsCap, ite_self]
+  all_goals simp only [Id.run_pure, apply_ite Id.run, apply_ite SearchState.genTrace, apply_ite SearchState.orbits, apply_ite SearchState.autos, apply_ite SearchState.wsCap, ite_self]
 
 /-- Off-path target selection preserves the persistent state. -/
 theorem RunInv.target {G : Colored n k} {ctx : Ctx n} {st : Search n}
@@ -152,11 +152,11 @@ theorem RunInv.recover {G : Colored n k} {ctx : Ctx n} {st : Search n}
   have hf := congrArg (fun x : Array Nat × Array Int × Array Nat => x.2.2) hr
   have hc : (Nauty.recover inf level st).canonlab = st.canonlab := by
     unfold Nauty.recover recoverLevels recoverPtn
-    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.canonlab, ite_self]
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite SearchState.canonlab, ite_self]
   apply h.congr (out := Nauty.recover inf level st) hf hc ((storePolicy ctx inf 0).recover level st h.cache)
     ((scratchPolicy ctx inf 0).recover level st)
   all_goals unfold Nauty.recover recoverLevels recoverPtn
-  all_goals simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.genTrace, apply_ite Search.orbits, apply_ite Search.autos, apply_ite Search.wsCap, ite_self]
+  all_goals simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite SearchState.genTrace, apply_ite SearchState.orbits, apply_ite SearchState.autos, apply_ite SearchState.wsCap, ite_self]
 
 /-- Completing a sweep changes only its symmetry counter. -/
 theorem RunInv.afterSweep {G : Colored n k} {ctx : Ctx n} {st : Search n}

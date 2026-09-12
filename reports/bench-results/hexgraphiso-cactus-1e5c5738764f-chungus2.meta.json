@@ -1,0 +1,52 @@
+{
+  "fingerprint": "1e5c5738764f",
+  "host": "chungus2",
+  "date": "2026-09-10T10:37:52Z",
+  "describe": "d55a63de6c1a",
+  "label": "Sparse primitive proofs; bounded sequential validation with per-proof memory limits",
+  "cpu": 1,
+  "load_before": [
+    0.91357421875,
+    5.0087890625,
+    9.04345703125
+  ],
+  "memory_limit_bytes": 17179869184,
+  "memory_swap_max_bytes": 0,
+  "build_workers": 2,
+  "tactic_workers": 1,
+  "tactic_memory_mb": 4096,
+  "tactic_timeout_seconds": 120,
+  "full_build": {
+    "targets": 11938,
+    "memory_peak": "12.3G",
+    "swap": "0B"
+  },
+  "host_context": "Measurements ran sequentially after the capped full-repository build completed. Every completed sample from the earlier aggregate-limit failure is retained separately under fingerprint 5a4c7c74ae34.",
+  "exit_code": 0,
+  "load_after": [
+    1.68310546875,
+    3.9287109375,
+    8.15380859375
+  ],
+  "completed": true,
+  "memory_peak": "2.8G",
+  "swap": "0B",
+  "completed_cactus_cases": 98,
+  "completed_pair_cases": 34,
+  "tactic_cases": 34,
+  "unsolved_tactics": [
+    "neg-circ48-vs-2circ24",
+    "neg-circ96-vs-2circ48",
+    "neg-paley61-vs-circulant61"
+  ],
+  "plot_python": "/home/kim/worktrees/hex-dev/hex-dev-sparse-nauty/.lake/sparse-validation/plotenv/bin/python",
+  "matplotlib_version": "3.11.1",
+  "memory_limit_validation": {
+    "case": "neg-circ48-vs-2circ24",
+    "expected_exit_code": 1,
+    "diagnostic": "(kernel) excessive memory consumption detected",
+    "memory_peak": "2.5G",
+    "swap": "0B",
+    "log": "hexgraphiso-memory-limit-1e5c5738764f-chungus2.log"
+  }
+}

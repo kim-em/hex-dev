@@ -1,0 +1,22 @@
+{
+  "command": [
+    "taskset",
+    "-c",
+    "64",
+    "uv",
+    "run",
+    "--no-project",
+    "--with",
+    "matplotlib==3.11.1",
+    "bash",
+    "scripts/bench/graphiso_cactus_sweep.sh",
+    "sparse runtime and linear permutation validation"
+  ],
+  "cpu": 64,
+  "started": 1788931786.5550745,
+  "load": [
+    1.54296875,
+    1.30712890625,
+    2.08154296875
+  ]
+}

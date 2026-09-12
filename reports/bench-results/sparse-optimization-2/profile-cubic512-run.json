@@ -1,0 +1,36 @@
+{
+  "command": [
+    "perf",
+    "record",
+    "-q",
+    "-e",
+    "cycles:u",
+    "-F",
+    "999",
+    "-o",
+    "/tmp/hex-sparse-perf2-baseline/cubic512-run.data",
+    "--",
+    "taskset",
+    "-c",
+    "81",
+    "/tmp/hex-sparse-perf2-baseline/hexgraphiso_sparse_bench",
+    "/tmp/hex-sparse-corpus/cubic512.graph",
+    "run",
+    "20"
+  ],
+  "started": 1788937107.7799914,
+  "load_before": [
+    1.4697265625,
+    1.12451171875,
+    1.32568359375
+  ],
+  "returncode": 0,
+  "stdout": "{\"elapsed_ns\":3108010018,\"iterations\":20,\"mode\":\"run\",\"name\":\"cubic512\",\"ns_per_iteration\":155400500,\"sink\":0}\n",
+  "stderr": "",
+  "finished": 1788937110.94967,
+  "load_after": [
+    1.431640625,
+    1.1220703125,
+    1.32373046875
+  ]
+}

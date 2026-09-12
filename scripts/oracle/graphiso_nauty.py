@@ -2,7 +2,7 @@
 """External nauty 2.9.3 oracle for ``HexGraphIso``.
 
 Rebuilds each original coloured graph from its fixture record and runs the
-pinned dense-nauty configuration through the project-owned C shim
+pinned dense or sparse nauty configuration through the project-owned C shim
 (``graphiso_nauty_shim.c``), compiled against the vendored nauty 2.9.3
 source in ``vendor/nauty-2.9.3`` (unmodified files from the pinned
 archive, hash-recorded in that directory's README and version-controlled
@@ -28,9 +28,10 @@ the current corpus, they must agree entry by entry. The recorded list
 itself is pinned by the committed fixture, so a change in the traversal
 shows up as a fixture diff even where the subsequence relation would
 tolerate it. The orbit array, the orbit count and the group order are
-compared exactly; the order comparison refuses a case whose order has
-reached ``10 ** 10``, where nauty's ``grpsize1`` is no longer an exact
-integer.
+compared exactly; group order is the integer product of the level
+indices collected through ``userlevelproc``, without floating-point rounding.
+``graphisosparse`` and ``graphisosparseautos`` records use native edge input
+and compare ``canonEdges`` instead of a dense upper triangle.
 
 The compiled shim binary is cached in ``HEX_NAUTY_CACHE`` or
 ``~/.cache/hex-nauty``, keyed by the SHA-256 of the shim source together
@@ -40,6 +41,7 @@ reused. A compile failure, nauty error, or output mismatch fails the run.
 from __future__ import annotations
 
 import hashlib
+import math
 import os
 import subprocess
 import sys
@@ -68,7 +70,7 @@ def _cache_dir() -> Path:
 
 
 VENDOR_DIR = REPO_ROOT / "vendor" / "nauty-2.9.3"
-VENDOR_SOURCES = ["nauty.c", "nautil.c", "naugraph.c", "schreier.c",
+VENDOR_SOURCES = ["nauty.c", "nautil.c", "naugraph.c", "nausparse.c", "schreier.c",
                   "naurng.c"]
 VENDOR_HEADERS = ["nauty.h", "naututil.h", "nausparse.h", "schreier.h",
                   "naurng.h", "sorttemplates.c"]
@@ -96,46 +98,68 @@ def _build_shim() -> Path:
     return shim
 
 
+SPARSE_KINDS = ("graphisosparse", "graphisosparseautos")
+KINDS = ("graphiso", "graphisoautos") + SPARSE_KINDS
+STAT_FIELDS = ("numorbits", "numgenerators", "numnodes", "numbadleaves",
+               "maxlevel", "tctotal", "canupdates")
+
+
 def _shim_input(record: dict) -> str:
     n = record["n"]
     k = record["k"]
-    adj = [[0] * n for _ in range(n)]
-    for a, b in record["edges"]:
-        adj[a][b] = adj[b][a] = 1
     lines = [f"{n} {k}", " ".join(str(c) for c in record["colors"])]
-    for i in range(n):
-        lines.append("".join(str(adj[i][j]) for j in range(n)))
+    if record["kind"] in SPARSE_KINDS:
+        edges = sorted({tuple(sorted(edge)) for edge in record["edges"]})
+        lines.append(str(len(edges)))
+        lines.extend(f"{a} {b}" for a, b in edges)
+    else:
+        adj = [[0] * n for _ in range(n)]
+        for a, b in record["edges"]:
+            adj[a][b] = adj[b][a] = 1
+        lines.extend("".join(map(str, row)) for row in adj)
     return "\n".join(lines) + "\n"
 
 
 def _parse(line: str) -> dict:
-    """Split one shim answer into its labelled sections."""
-    head, rest = line.split(" | tri ")
-    tri, rest = rest.split(" | nodes ")
-    nodes, rest = rest.split(" | gens ")
-    gens, rest = rest.split(" | orbits ")
-    orbits, rest = rest.split(" | norbits ")
-    norbits, grp = rest.split(" | grp ")
-    gen_fields = gens.split()
-    ngens = int(gen_fields[0])
-    flat = [int(x) for x in gen_fields[1:]]
-    n = len(head.split()) - 1
+    """Decode either representation, including exact group order and statistics."""
+    sections = {}
+    for section in line.split(" | "):
+        name, _, value = section.partition(" ")
+        if name in sections:
+            raise OracleMismatch(f"duplicate shim section {name}")
+        sections[name] = value.strip()
+    lab = [int(x) for x in sections["lab"].split()]
+    n = len(lab)
+    gen_fields = [int(x) for x in sections["gens"].split()]
+    ngens, flat = gen_fields[0], gen_fields[1:]
     if ngens * n != len(flat):
-        raise OracleMismatch(
-            f"shim emitted {len(flat)} generator entries for {ngens} "
-            f"generators on {n} vertices"
-        )
-    g1, g2 = grp.split()
-    return {
-        "lab": [int(x) for x in head.split()[1:]],
-        "tri": tri.strip(),
-        "nodes": int(nodes),
+        raise OracleMismatch("wrong number of generator entries from shim")
+    g1, g2 = sections["grp"].split()
+    indices = [int(x) for x in sections["indices"].split()]
+    if any(i < 1 for i in indices):
+        raise OracleMismatch("nonpositive group index from shim")
+    stats = [int(x) for x in sections["stats"].split()]
+    if len(stats) != len(STAT_FIELDS):
+        raise OracleMismatch("wrong number of search statistics from shim")
+    answer = {
+        "lab": lab, "nodes": int(sections["nodes"]),
         "gens": [flat[t * n:(t + 1) * n] for t in range(ngens)],
-        "orbits": [int(x) for x in orbits.split()],
-        "norbits": int(norbits),
-        "grpsize1": float(g1),
-        "grpsize2": int(g2),
+        "orbits": [int(x) for x in sections["orbits"].split()],
+        "norbits": int(sections["norbits"]),
+        "grpsize1": float(g1), "grpsize2": int(g2),
+        "indices": indices, "order": math.prod(indices),
+        "stats": dict(zip(STAT_FIELDS, stats)),
     }
+    if "tri" in sections:
+        answer["tri"] = sections["tri"]
+    elif "edges" in sections:
+        count, *flat_edges = map(int, sections["edges"].split())
+        if len(flat_edges) != 2 * count:
+            raise OracleMismatch("wrong number of canonical edge entries from shim")
+        answer["edges"] = [flat_edges[i:i+2] for i in range(0, len(flat_edges), 2)]
+    else:
+        raise OracleMismatch("missing canonical adjacency from shim")
+    return answer
 
 
 def _is_subsequence(small: list, big: list) -> bool:
@@ -154,22 +178,7 @@ def _check_autos(record: dict, answer: dict) -> None:
             f"{case}: numOrbits {record['numOrbits']} != nauty "
             f"{answer['norbits']}"
         )
-    # nauty carries the group order as grpsize1 * 10 ** grpsize2, and
-    # normalizes out of the double only once the product reaches 1e10
-    # (nauty.h MULTIPLY). Below that the double is an exact integer and
-    # the comparison is exact; above it the mantissa has been divided and
-    # no integer can be recovered, so refuse rather than compare with a
-    # tolerance that would accept a wrong order. Every corpus case is
-    # well below the threshold; a case that is not has to be reconsidered
-    # here rather than silently weakened.
-    if answer["grpsize2"] != 0:
-        raise OracleMismatch(
-            f"{case}: nauty reports the group order as "
-            f"{answer['grpsize1']} * 10 ** {answer['grpsize2']}, past the "
-            f"range where it is an exact integer; the automorphism corpus "
-            f"must stay below 10 ** 10"
-        )
-    order = int(round(answer["grpsize1"]))
+    order = answer["order"]
     if order != record["order"]:
         raise OracleMismatch(
             f"{case}: order {record['order']} != nauty {order}"
@@ -197,9 +206,14 @@ def _check_autos(record: dict, answer: dict) -> None:
             f"{case}: nauty generators {answer['gens']} are not a "
             f"subsequence of the recorded trace {record['gens']}"
         )
+    edges = {tuple(sorted(edge)) for edge in record["edges"]}
+    colors = record["colors"]
     for gen in record["gens"]:
         if sorted(gen) != list(range(record["n"])):
             raise OracleMismatch(f"{case}: {gen} is not a permutation")
+        if any(colors[i] != colors[gen[i]] for i in range(record["n"])) or {
+                tuple(sorted((gen[a], gen[b]))) for a, b in edges} != edges:
+            raise OracleMismatch(f"{case}: {gen} is not a colour-preserving automorphism")
 
 
 def _check(record: dict, shim_line: str | None) -> None:
@@ -215,53 +229,70 @@ def _check(record: dict, shim_line: str | None) -> None:
             f"{case}: cellSizes {record['cellSizes']} != recomputed {sizes}"
         )
     if n == 0:
-        if record["canonLab"] != [] or record["canonTri"] != "":
+        if record["canonLab"] != [] or record.get("canonTri", "") != "" or record.get("canonEdges", []) != []:
             raise OracleMismatch(f"{case}: nonempty answer for the empty graph")
+        if record["numnodes"] != 1:
+            raise OracleMismatch(f"{case}: incorrect empty-graph node count")
+        if record["kind"] in SPARSE_KINDS and record["stats"] != dict(
+                zip(STAT_FIELDS, [0, 0, 1, 0, 1, 0, 1])):
+            raise OracleMismatch(f"{case}: incorrect empty sparse statistics")
         return
     assert shim_line is not None
     answer = _parse(shim_line)
     lab = answer["lab"]
-    tri = answer["tri"]
     nodes = answer["nodes"]
     if lab != record["canonLab"]:
         raise OracleMismatch(f"{case}: canonLab {record['canonLab']} != nauty {lab}")
-    if tri != record["canonTri"]:
-        raise OracleMismatch(f"{case}: canonTri {record['canonTri']} != nauty {tri}")
+    if record["kind"] in SPARSE_KINDS:
+        if answer["edges"] != record["canonEdges"]:
+            raise OracleMismatch(f"{case}: canonical edges differ from sparse nauty")
+        if record["stats"] != answer["stats"]:
+            raise OracleMismatch(f"{case}: sparse search statistics differ from nauty")
+    elif answer["tri"] != record["canonTri"]:
+        raise OracleMismatch(f"{case}: canonTri {record['canonTri']} != nauty {answer['tri']}")
     if nodes != record["numnodes"]:
         raise OracleMismatch(f"{case}: numnodes {record['numnodes']} != nauty {nodes}")
 
 
-def main() -> int:
+def check_records(records: list[dict], *, trace: bool = False) -> tuple[int, int]:
     shim = _build_shim()
-    records = [r for r in read_fixtures()
-               if r["kind"] in ("graphiso", "graphisoautos")]
+    checked = autos = 0
+    for sparse in (False, True):
+        selected = [r for r in records if (r["kind"] in SPARSE_KINDS) == sparse]
+        if not selected:
+            continue
+        payload = "".join(_shim_input(r) for r in selected if r["n"] >= 1) + "-1 -1\n"
+        command = [str(shim)] + (["--sparse"] if sparse else []) + (["--trace"] if trace else [])
+        proc = subprocess.run(command, input=payload, capture_output=True, text=True, check=True)
+        if trace:
+            sys.stderr.write(proc.stderr)
+        lines = proc.stdout.splitlines()
+        expected = sum(r["n"] >= 1 for r in selected)
+        if len(lines) != expected:
+            raise OracleMismatch(f"shim produced {len(lines)} answers for {expected} cases")
+        it = iter(lines)
+        for record in selected:
+            line = next(it) if record["n"] >= 1 else None
+            _check(record, line)
+            if record["kind"] in ("graphisoautos", "graphisosparseautos"):
+                if line is None:
+                    if (record["gens"] != [] or record["orbits"] != [] or
+                            record["numOrbits"] != 0 or record["numGenerators"] != 0 or
+                            record["order"] != 1):
+                        raise OracleMismatch("invalid empty-graph automorphism result")
+                else:
+                    _check_autos(record, _parse(line))
+                autos += 1
+            checked += 1
+    return checked, autos
+
+
+def main() -> int:
+    records = [r for r in read_fixtures() if r["kind"] in KINDS]
     if not records:
         print("graphiso oracle: no graphiso records on stdin", file=sys.stderr)
         return 1
-    payload = "".join(_shim_input(r) for r in records if r["n"] >= 1)
-    payload += "-1 -1\n"
-    proc = subprocess.run(
-        [str(shim)], input=payload, capture_output=True, text=True, check=True,
-    )
-    lines = [line for line in proc.stdout.splitlines() if line.startswith("lab")]
-    expected = sum(1 for r in records if r["n"] >= 1)
-    if len(lines) != expected:
-        raise OracleMismatch(
-            f"shim produced {len(lines)} answers for {expected} cases"
-        )
-    it = iter(lines)
-    checked = 0
-    autos = 0
-    for record in records:
-        line = next(it) if record["n"] >= 1 else None
-        # an automorphism record carries the canonical fields too, so
-        # both checks run on it
-        _check(record, line)
-        if record["kind"] == "graphisoautos":
-            assert line is not None
-            _check_autos(record, _parse(line))
-            autos += 1
-        checked += 1
+    checked, autos = check_records(records)
     print(f"graphiso oracle: {checked} cases checked against nauty 2.9.3 "
           f"({autos} automorphism-group cases)")
     return 0

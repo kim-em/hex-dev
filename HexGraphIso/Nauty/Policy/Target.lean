@@ -44,7 +44,7 @@ theorem chooseTarget_hinted {ctx : Ctx n} {tcLevel level numcells : Nat}
     Bool.and_self, Bool.false_eq_true, Bool.not_false, Bool.true_and,
     hcomp, ite_true, ite_false] at hkeep ⊢
   simp only [apply_ite Id.run, Id.run_pure, apply_ite Prod.snd,
-    apply_ite Search.eqlevFirst, apply_ite Prod.fst, ite_self] at hkeep ⊢
+    apply_ite SearchState.eqlevFirst, apply_ite Prod.fst, ite_self] at hkeep ⊢
   split at hkeep
   · omega
   · rename_i hmatch

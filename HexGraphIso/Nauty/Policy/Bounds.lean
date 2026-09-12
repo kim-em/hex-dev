@@ -23,7 +23,7 @@ theorem compareCodes_eqlev (level code : Nat) (st : Search n) :
     (compareCodes level code st).eqlevFirst =
       if st.eqlevFirst = level - 1 ∧ code = st.firstcode[level]! then level else st.eqlevFirst := by
   unfold compareCodes
-  simp only [Id.run_pure, apply_ite Id.run, apply_ite Search.eqlevFirst, ite_self,
+  simp only [Id.run_pure, apply_ite Id.run, apply_ite SearchState.eqlevFirst, ite_self,
     beq_iff_eq]
 
 /-- Once first-code agreement has diverged above a frame, descendants cannot restore it. -/
@@ -82,13 +82,13 @@ theorem sweep_diverged {ctx : Ctx n} {first : Bool}
   exact Generic.sweep_bounded (divergencePolicy ctx inf tcLevel bound) first fuel cfuel level numcells
     tc tv1 index cursor cell st hpast hlevel h
 
-private theorem admit_noncheap (st : Search n) :
+private theorem admit_noncheap {κ : Type} (st : SearchState n κ) :
     (admit st).noncheaplevel = st.noncheaplevel := by
   unfold admit pushAuto
   simp only [Id.run_pure]
   split <;> rfl
 
-private theorem pruneReturn_noncheap (level : Nat) (st : Search n) :
+private theorem pruneReturn_noncheap {κ : Type} (level : Nat) (st : SearchState n κ) :
     (pruneReturn level st).2.noncheaplevel = st.noncheaplevel := by
   unfold pruneReturn pushAuto
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
@@ -96,7 +96,7 @@ private theorem pruneReturn_noncheap (level : Nat) (st : Search n) :
   all_goals rfl
 
 /-- Classifying or acting on a leaf does not move the cheap boundary. -/
-theorem leafExit_noncheap (leaf : Leaf) (level : Nat) (st : Search n) :
+theorem leafExit_noncheap {κ : Type} (leaf : Leaf) (level : Nat) (st : SearchState n κ) :
     (leafExit leaf level st).2.noncheaplevel = st.noncheaplevel := by
   cases leaf <;> unfold leafExit
   all_goals simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
@@ -107,11 +107,11 @@ theorem leafExit_noncheap (leaf : Leaf) (level : Nat) (st : Search n) :
     | exact pruneReturn_noncheap level _
 
 /-- Recovery leaves a failed guard strictly below the recovered parent. -/
-theorem recover_noncheap (inf level : Nat) (st : Search n) :
+theorem recover_noncheap {κ : Type} (inf level : Nat) (st : SearchState n κ) :
     (Nauty.recover inf level st).noncheaplevel =
       if level < st.noncheaplevel then level + 1 else st.noncheaplevel := by
   unfold Nauty.recover recoverLevels recoverPtn
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.noncheaplevel, ite_self]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite SearchState.noncheaplevel, ite_self]
 
 /-- Searching below a noncheap ancestor cannot turn that ancestor cheap. -/
 theorem noncheapPolicy (ctx : Ctx n) (inf tcLevel bound : Nat) :
@@ -121,7 +121,7 @@ theorem noncheapPolicy (ctx : Ctx n) (inf tcLevel bound : Nat) :
     intro level code st _ h
     change bound < (compareCodes level code st).noncheaplevel
     unfold compareCodes
-    simp only [Id.run_pure, apply_ite Id.run, apply_ite Search.noncheaplevel, ite_self]
+    simp only [Id.run_pure, apply_ite Id.run, apply_ite SearchState.noncheaplevel, ite_self]
     exact h
   target := by
     intro level numcells st _ h
@@ -133,7 +133,7 @@ theorem noncheapPolicy (ctx : Ctx n) (inf tcLevel bound : Nat) :
     change bound < (classify ctx level numcells st).2.noncheaplevel
     unfold classify
     simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd, scatter_eq,
-      apply_ite Search.noncheaplevel, ite_self]
+      apply_ite SearchState.noncheaplevel, ite_self]
     exact h
   leaf := by
     intro leaf level st _ h

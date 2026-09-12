@@ -1,0 +1,32 @@
+{
+  "command": [
+    "taskset",
+    "-c",
+    "76",
+    "perf",
+    "record",
+    "-q",
+    "-e",
+    "cycles:u",
+    "-F",
+    "999",
+    "--call-graph",
+    "dwarf,8192",
+    "-o",
+    "/tmp/sparse-before-gnp1024-seed1-output.data",
+    "--",
+    "/tmp/hex-sparse-perf-baseline/profile",
+    "/tmp/hex-sparse-corpus/gnp1024-seed1.graph",
+    "output",
+    "40"
+  ],
+  "load": [
+    2.03955078125,
+    1.5439453125,
+    3.70458984375
+  ],
+  "started": 1788930681.3806903,
+  "stdout": "{\"elapsed_ns\":2607965986,\"iterations\":40,\"mode\":\"output\",\"name\":\"gnp1024-seed1\",\"ns_per_iteration\":65199149,\"sink\":0}\n",
+  "stderr": "",
+  "returncode": 0
+}

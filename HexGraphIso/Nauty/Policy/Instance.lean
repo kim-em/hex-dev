@@ -21,7 +21,7 @@ recursion, including exhausted calls and nonlocal exits.
 
 namespace Hex.GraphIso.Nauty
 
-instance policy : Generic.Policy (Search n) n where
+instance policy : Generic.Policy (Search n) n (γ := Ctx n) where
   visit := visit
   recordFirst := recordFirst
   compareCodes := compareCodes

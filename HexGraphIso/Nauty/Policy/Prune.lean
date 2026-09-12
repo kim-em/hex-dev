@@ -104,7 +104,7 @@ theorem Comparison.prune {ctx : Ctx n} {cs bs fs : List Nat} {st : Search n} {nu
 
 /-- The shared prune tail returns below the frozen comparison's
 receiving level only when the cheap boundary supplies its target. -/
-theorem pruneReturn_target (level : Nat) (st : Search n) :
+theorem pruneReturn_target {κ : Type} (level : Nat) (st : SearchState n κ) :
     ∃ target short, (pruneReturn level st).1 = .unwind target short ∧
       (st.eqlevCanon.toNat ≤ target ∨ target = st.noncheaplevel - 1) := by
   let save : Int := if Int.ofNat st.allsamelevel > st.eqlevCanon then
@@ -175,10 +175,10 @@ theorem Comparison.prune_result {ctx : Ctx n} {cs bs fs : List Nat}
     split
     · refine ⟨incKey ctx bs st.canonlab, ?_, h.canonical.prefix_le hneg key⟩
       rw [hkey]
-      simp only [Search.key, h.nonempty, ↓reduceIte]
+      simp only [SearchState.key, h.nonempty, ↓reduceIte]
     · intro tail
       refine ⟨incKey ctx bs (leafExit .bad cs.length st).2.canonlab, ?_, ?_⟩
-      · simp only [Search.key, h.nonempty, ↓reduceIte]
+      · simp only [SearchState.key, h.nonempty, ↓reduceIte]
       · exact h.prune_witness hnc hbad htarget target (Nat.le_refl _) (by omega) tail
 
 end Hex.GraphIso.Nauty
