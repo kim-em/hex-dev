@@ -79,6 +79,7 @@ UMBRELLA_BUILD_TARGETS = {
     "HexIntervalExperiment",
     "HexRankTests",
     "HexRankMathlibProofProbe",
+    "HexBareissMathlibProofProbe",
     "HexIntervalMathlibExperiment",
     "HexIntervalPntFks2Local",
     "HexIntervalPntFks2ConformanceLocal",

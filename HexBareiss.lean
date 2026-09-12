@@ -8,12 +8,15 @@ module
 
 public import HexBareiss.BorderedMinor
 public import HexBareiss.Bareiss
+public import HexBareiss.Kernel
 
 public section
 
 /-!
 The `HexBareiss` library exposes the executable fraction-free Bareiss
 determinant algorithm over `Int`, together with the bordered-minor support
-(`BorderedMinor`) its correctness development relies on. It builds on the
-`HexMatrix` dense core and the `HexDeterminant` Leibniz determinant.
+(`BorderedMinor`) its correctness development relies on, and the kernel
+determinant certificate (`Kernel`) produced by the elimination and checked
+by structural recursion over lists. It builds on the `HexMatrix` dense core
+and the `HexDeterminant` Leibniz determinant.
 -/

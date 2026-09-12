@@ -1,18 +1,26 @@
 # hex-bareiss-mathlib (depends on hex-bareiss + hex-determinant-mathlib + Mathlib)
 
-## Correspondence-only classification
-
-This library is a `correspondence-only-layer`.
-
-Computational conformance owner: `HexBareiss`
-Computational performance owner: `HexBareiss`
-
 Mathlib bridge for `hex-bareiss`: proves the row-pivoted Bareiss determinant
 correct against both Mathlib's determinant and our executable Leibniz
 determinant, via the no-pivot bordered-minor invariant and the determinant
 correspondence from `hex-determinant-mathlib`. The proofs are stated over an
 arbitrary commutative coefficient ring with an exact quotient; `Int` is a
-corollary, with no hypotheses beyond what it has today.
+corollary, with no hypotheses beyond what it has today. The kernel
+determinant certificate of hex-bareiss determines the determinant of a
+Mathlib integer or rational matrix given as a row list, and the `det`
+tactic closes determinant equalities on closed literals with it
+([Kernel certificate](#kernel-certificate), [The `det` tactic](#the-det-tactic)).
+
+This library owns no runtime search, conformance driver or compiled
+benchmark. Its proof-side surface, the `det` tactic, is measured by the
+fresh-module probes under `bench/HexBareissMathlib/ProofProbe` against the
+unmodified pinned `eval_det`. Build-only examples live in
+`HexBareissMathlib/Tests.lean`.
+
+Computational conformance owner: `HexBareiss`.
+
+Computational performance owner: `HexBareiss` for the producer; this library
+for the tactic.
 
 ## Coefficient contract
 
