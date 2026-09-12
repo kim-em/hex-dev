@@ -2,7 +2,8 @@
 
 ## Correspondence-only classification
 
-This library is a `correspondence-only-layer`.
+The existing API is a `correspondence-only-layer`; implementing the `hermite`
+frontend below adds companion conformance and fresh-module proof evidence.
 
 Computational conformance owner: `HexHermite`
 Computational performance owner: `HexHermite`
@@ -16,9 +17,8 @@ the core library.
 
 ## Scope
 
-This layer owns correspondence only. It has no executable reifier,
-certificate checker, tactic, conformance target, benchmark target, or proof
-performance probe of its own.
+The existing layer owns correspondence. The tactic below is a specified
+extension; its producer and list checker remain in HexHermite.
 
 Its public surface is:
 
@@ -79,7 +79,7 @@ proved in Lean. Its index type has the executable nullity
 
 ## Verification
 
-This is a correspondence-only layer, so Phase 3 is established by auditing
+For the existing correspondence, Phase 3 is established by auditing
 the executable coverage in `hex-hermite`, not by adding a ceremonial Mathlib
 conformance module:
 
@@ -95,7 +95,129 @@ build and by the pair's Mathlib lint regression.
 
 ## External comparators
 
-`correspondence-only-layer`: this library has zero benchmark targets because
-it owns no computational or proof-search surface. Its computational
-performance owner is `hex-hermite`; that library's benchmark target carries
-the evidence for HNF, rank, lattice membership, and kernel extraction.
+The computational performance owner is `hex-hermite`; its benchmark target
+carries the evidence for HNF, rank, lattice membership and kernel extraction.
+The tactic below adds a proof-performance track when implemented, without a
+Mathlib-importing benchmark executable.
+
+## The `hermite` tactic
+
+This required extension follows [the matrix tactic protocol](../../SPEC/matrix-tactics.md)
+and [the `rank` template](../../HexRankMathlib/SPEC/hex-rank-mathlib.md#the-rank-tactic).
+The list certificate and producer belong to HexHermite, with Mathlib transport
+and the frontend here. The existing `HexHermiteMathlib/Kernel.lean` proves
+kernel-basis correspondence; extend it or use a separate certificate module
+without displacing that API.
+
+### Goals, result and carriers
+
+Declare non-reserved `hermite` and term form `hermite% A`. Accept closed
+integer `A : Matrix (Fin n) (Fin m) ℤ`. Write
+`L(A) := Submodule.span ℤ (Set.range A)` in this section. Supported goals are
+`v ∈ L(A)`, `v ∉ L(A)` for a closed integer vector, and a basis goal
+`Basis (Fin r) ℤ L(A)` with a stated closed rank `r` (also its `Nonempty`
+wrapper). A basis goal constructs the canonical nonzero HNF rows; it is
+not an equality to an arbitrarily chosen noncomputable basis.
+
+The new term record `HermiteResult A` exposes `rank`, `rank_le : rank ≤ min n m`,
+`form : Matrix (Fin n) (Fin m) ℤ`, an HNF proof, `span : L(form) = L(A)`,
+`basis : Basis (Fin rank) ℤ L(A)`, and a theorem that the underlying vector
+of `basis i` is row `i` of `form` (using `rank_le` for its row index).
+The HNF proof is the existing `Hex.Matrix.IsHNF` on decoded data, transported
+through `matrixEquiv`; the record retains the checked pivots and transforms
+needed to state it. Values are literals, with no dependent dimension computed
+by reducing `hnfRank A`. This is the row-lattice basis from `hnfBasis`,
+not `HexHermiteMathlib.kernelBasis`, whose vectors live in `Fin n → ℤ`
+and describe the left kernel instead.
+
+Use [the shared literal layer](../../HexMatrixMathlib/SPEC/hex-matrix-mathlib.md#matrix-literals).
+Request against its SPEC the closed integer vector adapter for `v` and its
+`vecOfList` identification. Matrix recognition and supported unfolding stay
+with that layer. Noninteger and symbolic coefficients are outside this arm.
+
+### Kernel certificate and soundness
+
+Existing `Hex.Matrix.hnfCert A H U W r piv` in `HexHermite/Cert.lean`
+checks `U * A = H`, `U * W = I`, and `isHNFForm H r piv`.
+`hnfCert_sound` concludes `IsHNF A ⟨r, H, U, piv⟩` for arbitrary accepted
+data. It derives the reverse inverse over square integer matrices; that is
+not an extra producer hypothesis. Its packed matrix checker is a reference
+form, not a suitable reduction path for the tactic.
+
+Require `HermiteWitness`/`checkHermiteList` in HexHermite with row lists for
+`H`, `U`, `W`, a natural rank and a list of natural pivot columns. Check
+exact dimensions, rank bounds, pivot count/range/strict order, positive
+leading pivots, leading and below-pivot zeros, zero trailing rows, and the
+bounds `0 ≤ entry < pivot` above each pivot, as well as both displayed
+products. All arithmetic is exposed structural recursion on lists of
+`Int`/`Nat`, with no `Hex.Matrix`, `Array`, `Vector`, `Fin`, `Finset` or
+well-founded recursion on the reduction path. Do not run HNF elimination.
+
+For membership, augment the certificate with an integer coefficient list
+`q` of length `r` and residual `t` of length `m`, verifying
+`v = q * H.take r + t` and `0 ≤ t[piv i] < H[i,piv i]` for every pivot.
+The producer obtains these by the ordinary left-to-right HNF remainder
+calculation; the kernel only checks the identity and bounds. A zero residual
+certifies membership. A nonzero residual certifies nonmembership: if it were
+in the row lattice, its first nonzero pivot coefficient would make a pivot
+coordinate a nonzero multiple of the positive pivot, contradicting the
+bounds; successively zero coefficients force the whole residual to zero.
+This also covers a residual supported only in nonpivot columns and rank zero.
+
+Require new `hermite_of_checkList` to establish the record's HNF, span and
+basis properties from the Boolean check and `hA : A = ofLists n m rows`.
+The proof decodes to `hnfCert_sound`, then transports the arbitrary witness.
+Existing `span_hnf`, `hnfRank_eq_rank` and `latticeContains_iff_mem` in this
+companion are about the canonical producer output; they cannot be applied
+by evaluating `hnf A` or `latticeContains A v` in the kernel. Extend their
+proofs to checked `IsHNF` data, using the same membership equivalence as
+`latticeContains_iff_mem`, and add a list-remainder soundness theorem with
+both membership outcomes. For the basis, lattice preservation and zero
+trailing rows prove spanning, while strictly increasing positive pivots
+prove independence. Membership alone is insufficient to construct a basis.
+These arbitrary-witness and list-remainder bridges are new obligations,
+not claims that the existing canonical correspondence already accepts lists.
+
+### Producer and proof assembly
+
+Use compiled `Hex.Matrix.hnfWithInv`, which retains both transforms
+in `HermiteData`, reshape its `hnfCert` data, and compute membership remainder
+data only when needed. Re-check the complete list certificate before quoting.
+Following `HexRankMathlib/Kernel.lean` and `Tactic.lean`, keep decoding and
+transport in proved lemmas, use the shared literal identification, and check
+all certificate propositions in one synchronous auxiliary theorem. Construct
+the basis/term record from that theorem; do not pass a `Basis` type itself
+to `mkAuxTheorem`. There is no preliminary kernel evaluation of the check.
+
+Use the shared four outcomes: other operations/carriers are `notApplicable`,
+in-fragment capability/budget limits are `declined`, accepted proofs are
+`success`, and bad certificates/kernel rejections are `failure`. A false
+membership target reports the certified nonzero residual; a false
+nonmembership target reports the coefficients, and a wrong basis dimension
+reports the rank. Preserve the user's proposition and diagnose rejection
+without replaying `hnf` or `latticeContains`.
+
+### Conformance and proof probes
+
+Test both membership outcomes, basis construction and its row equations,
+term mode, every literal route, zero and empty shapes, tall/wide matrices,
+non-leading pivots and negative inputs. Refute incorrect transform products,
+inverses, dimensions, duplicate/out-of-range pivots, negative pivots,
+nonzero trailing rows, out-of-range above-pivot entries, corrupted remainder
+identities and residual bounds. Include nonmembership supported in a nonpivot
+column and a valid noncanonical transform. Audit all accepted proof axioms
+against `propext`, `Classical.choice`, `Quot.sound` only.
+
+On implementation reserve `bench/HexHermiteMathlib/ProofProbe`. Named seeded
+families: `unimodular-conjugate`, `tall-hermite` (`2n × n`),
+`rank-deficient-hermite` (rank `n / 2`), and `membership-residual` (members
+and nonmembers of the same lattice), at `n = 2, 4, 8, 16` and input heights
+`8, 32, 128` bits. Measure basis construction and membership separately.
+There is no Mathlib tactic comparator. Record absolute fresh-module times
+and medians, baseline deltas and a kernel-only profile per family, using
+six adjacent baseline/probe pairs with alternating orientation per
+[SPEC/benchmarking.md](../../SPEC/benchmarking.md#fresh-module-proof-evidence).
+Record certificate entry counts/serialized bytes, maximum integer height,
+emitted artifact sizes, axiom sets and source/toolchain/host provenance;
+retain all completed samples and timeouts. Preregister operational caps.
+Compiled producer/checker complexity evidence remains in HexHermite.
