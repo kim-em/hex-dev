@@ -877,7 +877,7 @@ lean_lib HexConformance where
 
     ++ #[`HexRealAlgebraic.Conformance, `HexRealAlgebraic.Checks, `HexNumberField.ComplexChecks, `HexRealAlgebraic.ReprChecks].map Glob.one
 
-    ++ #[`HexReflect.TestProviders, `HexReflect.Conformance, `HexReflect.ScopeConformance].map Glob.one
+    ++ #[`HexReflect.TestProviders, `HexReflect.Conformance, `HexReflect.ScopeConformance, `HexReflect.ResidueConformance].map Glob.one
 
     ++ #[`HexSmith.Conformance].map Glob.one
 
