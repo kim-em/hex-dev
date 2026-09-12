@@ -24,7 +24,7 @@ for the tactic.
 
 ## Coefficient contract
 
-Every theorem here takes `[CommRing R] [DecidableEq R]` (Mathlib's `CommRing`,
+The Bareiss correspondence theorems take `[CommRing R] [DecidableEq R]` (Mathlib's `CommRing`,
 which supplies the `Lean.Grind.CommRing` instance the Mathlib-free layer's
 `Hex.Matrix.det` needs) together with the exact quotient and its single law,
 exactly as specified in
@@ -34,7 +34,8 @@ exactly as specified in
 (quot : R → R → R) (hquot : ∀ a b : R, b ≠ 0 → quot (a * b) b = a)
 ```
 
-No public `IsDomain`, `NoZeroDivisors` or nontriviality hypothesis appears. The
+These correspondence theorems have no public `IsDomain`, `NoZeroDivisors`
+or nontriviality hypothesis. The
 coefficient facts the development needs are supplied by
 [`HexBasic/ExactDiv.lean`](https://github.com/leanprover/hex-basic/blob/main/HexBasic/ExactDiv.lean)
 and apply under a Mathlib `CommRing`: the two instance paths to `Zero R` and
@@ -297,6 +298,320 @@ for the transposition. For `ℚ`, `scaledRows_spec` gives
 `det_diagonal`, `det_mul` and `Int.cast_det` turn the integer theorem into
 `(∏ s) · det = value`, and the kernel-checked `v · ∏ s = value` cancels the
 nonzero product (`prodNat_cast`).
+
+## Symbolic determinant
+
+This specified extension attaches a second handler to the `det` syntax kind
+in `HexBareissMathlib/Tactic.lean`, with corresponding `det%` and
+`hex_norm_det` entry points. It uses the polynomial witness and
+`checkDetPolyList` specified in
+[hex-bareiss §Polynomial determinant certificate](../../HexBareiss/SPEC/hex-bareiss.md#polynomial-determinant-certificate).
+The numeric implementation above remains the closed-literal arm. The
+symbolic arm, its checker soundness and its proof probes are not yet shipped.
+
+### Prerequisites and input classification
+
+The shared prerequisites are the same as
+[hex-generic-rank-mathlib §Prerequisite changes](../../SPEC/Libraries/hex-generic-rank-mathlib.md#prerequisite-changes-in-other-libraries):
+canonical list arithmetic in hex-mv-poly and its denotation theorem in
+hex-mv-poly-mathlib block the kernel route; the numeric handlers' refactor
+to `throwUnsupportedSyntax` blocks composition; and the residue coefficient
+provider in hex-reflect-mathlib blocks positive characteristic. The
+polynomial producer generalisation belongs to hex-bareiss, its determinant
+soundness to this companion. These are implementation obligations, not
+claims that the proposed declarations already exist.
+
+Two frontend adaptations are also required: a proved pass clearing closed
+rational coefficients, and batch quotation using the canonical list
+layer's denotation constructor. Neither is provided by the current ring
+reifier. They belong to the symbolic frontend and its reflection bridge;
+they do not extend hex-reflect's fixed ring language with symbolic division.
+The companion must declare its added dependencies on `HexReflect`,
+`HexReflectMathlib`, `HexMvPolyMathlib` and `HexMvGcd` when implemented.
+Its symbolic handler module imports these and supplies polynomial operations
+to hex-bareiss's generic producer/checker; hex-bareiss imports no polynomial
+provider. The `det` syntax kind remains owned by `Tactic.lean`; a separate
+symbolic handler module may attach to it without redeclaring the syntax.
+
+Input classification is shared with
+[the symbolic `rank` arm](../../SPEC/Libraries/hex-generic-rank-mathlib.md#input-classification).
+The numeric handler runs first, returning `notApplicable` via
+`throwUnsupportedSyntax` outside its fragment. The symbolic handler reads a
+square matrix through the shared literal layer, including definitions
+unfolded within budget. It canonicalises and reifies all entries with
+`reifyRing?`, with top-level variables enabled, in one hex-reflect batch.
+For symbolic `fun` and `Matrix.ofArray` inputs, literal recognition is
+shared but proof identification uses finite extensionality and the batch's
+entry interpretation proofs, with structural unfolding of the literal's
+indexing. It must not use the numeric `entriesEq`/`decide` route, which
+requires reducible `DecidableEq F`. No equality decision on symbolic values
+is needed; these entrywise identification proofs are measured separately.
+The batch seals its environment at `k` atoms, converts with the
+characteristic-aware conversion when `Sym.Arith` supplies the characteristic
+and the plain conversion otherwise, and uses `cmp := Hex.Mono.grevlex`.
+It yields
+
+```text
+P : Hex.Matrix (Hex.MvPoly k C cmp) n n
+v : Fin k → F
+ι : C →+* F
+```
+
+and an interpretation proof `eval₂ ι v P[i, j] = A i j` for every entry.
+Here `F` is the user's carrier and `C` the coefficient provider's carrier.
+Routing is by the converted polynomials: any nonconstant entry selects the
+symbolic arm; if all entries convert to constants after cancellation, the
+same arm handles the resulting constant matrix, even with `k > 0`.
+
+Atoms are independent indeterminates. Expressions outside the fixed ring
+language, including `x / y`, opaque constants, `Real.exp t` and symbolic
+powers, become atoms. No hypotheses or algebraic relations between atoms
+are used: `hx : x = 0` does not change the polynomial for `x`. Atomisation
+can prove polynomial identities involving these terms, but cannot prove
+relations between them. The budgets are hex-reflect's (atoms, terms,
+coefficient bits and proof nodes), plus matrix dimension and certificate
+size; exhaustion returns `declined` naming the exhausted budget.
+
+In equality mode the user's expression `e` is reified in the same batch,
+using the matrix's atoms. Record the atoms allocated by the entries;
+reifying `e` must not allocate additional atoms. Seal once after both have
+been reified and convert both with that sealed environment. An expression
+which cannot be reified as a ring expression in those atoms declines with
+`det: symbolic determinant declined: target is not a ring expression in the matrix atoms`.
+This includes an opaque term appearing only in `e`.
+
+### Kernel certificate and soundness
+
+The compiled producer returns transform rows and a value `d : MvPoly k C cmp`,
+or a polynomial left kernel vector with value zero. Its meaning is always
+`Hex.Matrix.det P = d`, including when the determinant is identically zero;
+a matrix which becomes singular only at some atom valuations still has a
+nonzero polynomial determinant. All witness entries lie in the polynomial
+ring, never in a chosen specialisation or in the fraction field.
+
+The kernel checks `checkDetPolyList` on the row lists of canonical polynomial
+term lists and the witness in the same representation. Coefficients are
+encoded by `Int` for the integer arm and canonical `Nat` residues for the
+residue arm; exponent vectors are lists of `Nat`. Shape, canonicality,
+nonzero diagonals, vanishing products and the determinant value identity
+are checked as specified on the executable side. In particular the final
+value check uses `l₀ = 1`, `lᵢ₊₁ = uᵢ` and `d = sign σ * uₙ₋₁`
+(`d = 1` when `n = 0`), without expanding the product of pivot polynomials.
+Polynomial equality uses the list layer's `beq_iff` contract, not evaluation at sample points.
+
+The proposed `checkDetPolyList_sound` in this companion identifies a passing
+check with `Hex.Matrix.det P = d`, where `P` and `d` denote the supplied
+lists and `Hex.Matrix.det` is the Leibniz reference. It uses the list
+arithmetic denotation theorem, `HexMatrixMathlib.det_eq`, row permutation
+signs and the triangular determinant lemmas, just as `det_eq_of_checkList`
+does. Require `[CommRing C] [IsDomain C] [DecidableEq C]` on the
+coefficient carrier, in addition to the producer's lawful GCD/order context.
+Transport through `HexMvPolyMathlib.equiv` to `MvPolynomial (Fin k) C`,
+whose existing domain instance supplies cancellation and the singular-vector
+argument; no existing `IsDomain (MvPoly …)` instance is assumed. The
+transform's diagonal product is nonzero there. Its cancellation is a
+propositional argument using the checked adjacent-diagonal equalities, not
+an expansion of the product by the kernel. The singular branch uses
+`Matrix.exists_vecMul_eq_zero_iff` over that domain to prove determinant zero.
+Neither argument requires the vector or diagonal product to stay nonzero after
+specialisation.
+
+The batch must quote `P` with each entry *defined to be* the canonical
+list layer's denotation applied to its quoted entry list. Thus the batch's
+`P` and the checker's denoted row matrix contain the same constructor
+applications, giving definitional identification without evaluating them.
+This is a quotation contract, not a claim that independently constructed
+`MvPoly` trees are definitionally equal. Today's `HexReflect/Session.lean`
+quotes `ofIntTerms`; the list prerequisite must supply the bridge from
+conversion terms to canonical exponent lists and adapt that quotation and
+its entry interpretation proofs. A compiled `MvPoly` matrix is still built
+for the producer, but its tree representation is never quoted as a second
+matrix for the kernel to compare. The denotation lemmas justify list
+arithmetic without reducing reference polynomial operations or rebuilding
+trees; conversion, quotation and identification costs are recorded in the
+proof probes. Every definition on the arithmetic path is `@[expose]`, uses
+structural recursion on lists of `Nat`/`Int`, and obeys
+[matrix-tactics §Kernel discipline](../../SPEC/matrix-tactics.md#kernel-discipline).
+In particular the kernel never evaluates `bareissWith`, `detWitness`, a
+reference checker, or `Hex.Matrix.det` on `Hex.Matrix (MvPoly …)`. The
+reference determinant occurs in soundness statements only; neither `Array`,
+`Vector`, `Fin`, `Finset`, matrix indexing nor well-founded polynomial
+arithmetic is reduced to check a certificate. One auxiliary theorem is
+checked synchronously through `mkAuxTheorem`; there is no elaborator
+`Kernel.whnf` pre-check and no `native_decide`.
+
+### Transport and result reconstruction
+
+Write `E := HexMatrixMathlib.matrixEquiv` (to avoid confusing the matrix
+equivalence with the user's expression `e`) and
+`φ := HexMvPolyMathlib.eval₂MathlibHom ι v`. The entry proofs and
+`eval₂MathlibHom_apply` give `A = (E P).map φ`. Determinant correspondence
+and `RingHom.map_det` then give
+
+```text
+A.det = φ (Hex.Matrix.det P) = φ d.
+```
+
+If `q` is the polynomial reified from `e`, its batch proof gives `φ q = e`.
+The tactic checks equality of the canonical term lists of `d` and `q` in
+the kernel, uses `beq_iff` and denotation to obtain `d = q`, and composes
+these equalities. It proves agreement with the user's expression, without
+printing a polynomial and asking `ring` to prove it equal. A mismatch is a
+`declined` outcome displaying `φ d` and explaining that the target is not
+a polynomial identity in the sealed atoms; it is not evidence that the
+specialised target is false. For example, `!![x].det = 0` under `hx : x = 0`
+requires substitution before this arm can close it.
+
+The accepted goals are `A.det = e` and `e = A.det`, the latter by symmetry.
+With no target expression, `det% A` returns the existing
+`HexMatrixMathlib.Certified Matrix.det A`, with `value := φ d` and
+`proof : A.det = value`; the value is the denoted computed polynomial in
+`F`, not a polynomial object or an unproved pretty-printed expression.
+These results are unconditional. Even if a pivot polynomial vanishes at
+`v`, determinant transport is valid: unlike symbolic rank, this arm has no
+nonvanishing condition to discharge or leave as a goal. The empty matrix
+returns one.
+
+### Carriers and composition
+
+The initial characteristic-zero field arm uses the integer provider
+(`C := Int`, `ι := Int.castRingHom F`) and requires `[CharZero F]`, matching
+the symbolic rank classifier's injective coefficient interpretation.
+This is a frontend contract; `RingHom.map_det` itself needs no injectivity
+and works for commutative rings. There is no assumption that evaluation of
+polynomials at the atoms is injective.
+
+Rational coefficients use row scaling as `checkDetRat` does. Before ring
+reification, a proved coefficient-normalisation pass over `ℚ` recognises
+closed rational scalars and clears their denominators in each row. It
+returns positive integer scales `sᵢ` and integer polynomial expressions
+for `B`, with entry proofs `eval₂ ι v B[i, j] = sᵢ * A i j`. The pass
+shares the atom environment with matrix and target reification and treats
+division by symbolic terms as atoms; it does not rewrite `x / y` into
+polynomial division. Current `reifyRing?` atomises division, including
+`1 / 2`, so this pass is an explicit additional implementation obligation.
+Until it exists, denominator-clearing requests decline with
+`det: symbolic determinant declined: rational coefficient normalisation unavailable`;
+ordinary polynomial identities in atomised division terms remain sound.
+
+Certify the integer polynomial matrix `B` by `checkDetPolyList`. If
+`D := ∏ sᵢ` and `dB` is its certified determinant, the entry proofs and
+row-scaling theorem give `D * A.det = φ dB`; positivity and characteristic
+zero prove `(D : ℚ) ≠ 0` for cancellation. Apply the same proved pass to
+the target to obtain a positive integer `t` and integer polynomial `qZ`
+with `φ qZ = t * e`. Kernel list equality checks
+`t * dB = D * qZ`, again with nonzero integer scales interpreted in `ℚ`.
+The term form returns `φ dB / D`. All computational checks use integer
+lists; the entry/scalar normalisation proofs establish the scaling equations,
+so no rational polynomial list representation is assumed. Nonzero closed
+scalar denominators are proved by the normalisation pass, never left as
+user side goals.
+
+Positive characteristic uses the residue provider once available, with its
+canonical residue list arithmetic, Mathlib ring/domain bridge and lawful
+exact quotient at `MvPoly`. For `ZMod64 p`, this includes both
+`ZMod64.Bounds p` and `ZMod64.PrimeModulus p`; a composite modulus does not
+satisfy the domain contract. Characteristic-aware conversion reduces
+coefficients, not exponents or polynomial functions: `X³ - X` over
+`ZMod 3` is not the zero polynomial. Until the provider exists this arm
+declines with `det: symbolic determinant declined: residue coefficient provider unavailable`.
+
+`hex_norm_det` tries the numeric certificate, then the symbolic certificate,
+then the unmodified Mathlib `norm_det` fallback in the same simp set. A
+symbolic success rewrites to `φ d`; a decline leaves the original expression
+available to Mathlib. Check budgets before invoking the producer, and
+preserve the attempt's outcome/batch within the invocation: a tactic decline
+must not re-enter the same symbolic attempt through `hex_norm_det`. It
+hands off directly to `norm_det` or reuses the recorded result. No input
+`norm_det` accepts today regresses. Unsupported goals return `notApplicable`;
+capability or budget declines retain
+`det: symbolic determinant declined: <reason>`, including carrier or entry
+coordinate where relevant, for reporting if the composed tactic fails.
+A malformed or rejected producer certificate is `failure`, never a weaker
+result disguised as success. The axiom audit permits only `propext`,
+`Classical.choice` and `Quot.sound`, as for the numeric arm.
+
+### Proof probes and shipping bar
+
+Add symbolic probes under `bench/HexBareissMathlib/ProofProbe`, with the
+executable producer measurements owned by hex-bareiss. Sweep dimensions
+`2, 4, 8`, atom counts `1, 2, 4`, total entry degrees `1, 2, 4` and entry
+supports `1, 4, 16`, recording the actual canonical degree and support.
+Use all feasible combinations: a requested support larger than the number
+of monomials of the given degree bound and arity is marked infeasible,
+not silently generated with smaller support. Include dense, structured,
+pivot-swap and identically singular matrices, rational coefficient variants,
+and valuations at which a nonzero polynomial determinant becomes zero.
+
+The closed-algebraic family uses `ℚ(√2)` blocks, including
+`!![α, 1; 2, α]`. The shared polynomial target is `α² - 2`; both arms
+must be measured on that target with `α` treated as an atom. The target
+zero using `α² = 2` is a separate scope probe: independent-atom reification
+cannot use that relation, in Hex as in `norm_det`. Record the decline;
+do not claim an algebraic-number scope win without a separate certified
+coefficient provider that can prove the relation. Strictly larger scope
+must instead be demonstrated on accepted surfaces such as the shared
+literal layer's `fun i j => …`/`Matrix.ofArray` forms and `det%`.
+
+Compare against the unmodified pinned `norm_det` from
+`Mathlib/Tactic/NormDet.lean` on identical targets, with the same residual
+ring normalisation if the Mathlib arm needs it, in fresh modules against
+matched import-only baselines. Use `scripts/bench/fresh_module_sweep.py`:
+six samples, adjacent pairs, alternating `AB`/`BA`, retaining all completed
+runs on the shared host. Record batch reification, producer, list conversion,
+kernel check, entrywise identification and total elaboration separately,
+plus proof node count, `.olean` size, realised minor support/degree and
+coefficient bits. Record
+one kernel-only profile per family and median ratios in this SPEC before
+shipping; these are planned measurements, not inferred timing results.
+Preregister per-case cleanup timeouts and proof-build ceilings in the runner
+manifest; a timeout is reported as such and never removed from the ladder.
+Measure the full composed invocation on declines too, including work before
+fallback, so no decline can hide a regression against bare `norm_det`.
+
+Bird's `O(n⁴)` ring-normalised certificate chain is expected to lose as
+matrix dimension grows while minor support remains modest: the fraction-free
+list check uses about `n³ / 3` polynomial products (or `n²` for a singular
+vector), and never replays pivot search or division. With many variables,
+higher degrees or dense support, expanded minors and intermediate products
+can swell enough to reverse that advantage; small matrices can also be
+dominated by reification and list conversion. Report those losses and
+budget declines rather than extrapolating scalar operation counts to time.
+
+The shipping rule is exactly
+[matrix-tactics §The bar against Mathlib](../../SPEC/matrix-tactics.md#the-bar-against-mathlib):
+a smaller fresh-module median on every shared symbolic family, and a
+strictly larger accepted fragment while preserving Mathlib's accepted
+inputs through composition. Fallback preserves scope but does not establish
+a runtime win. A losing shared family blocks shipping this arm; a win on
+selected rungs, or the numeric arm's existing table, does not clear the bar.
+
+### Declaration inventory
+
+Existing declarations used by this design:
+
+| declarations | source |
+|---|---|
+| `Hex.Matrix.DetWitness`, `checkDetList`, `checkDetRat`, `detWitness` | `HexBareiss/Kernel.lean` (integer witness and producer today) |
+| `HexMatrixMathlib.det_eq_of_checkList`, `det_eq_of_checkRat` | `HexBareissMathlib/Kernel.lean` |
+| `hex_norm_det`, `det` and `det%` syntax | `HexBareissMathlib/Tactic.lean` |
+| `HexMatrixMathlib.Certified` | `HexMatrixMathlib/Literal.lean` |
+| `HexMvPolyMathlib.eval₂MathlibHom`, `eval₂MathlibHom_apply` | `HexMvPolyMathlib/Aeval.lean` |
+| `HexMatrixMathlib.det_eq` | `HexDeterminantMathlib/CoreTransport.lean` |
+| `RingHom.map_det` | Mathlib `LinearAlgebra/Matrix/Determinant/Basic.lean` |
+| `Matrix.det_of_isLowerTriangular`, `det_of_isUpperTriangular` | Mathlib `LinearAlgebra/Matrix/Block.lean` |
+
+The domain proof additionally uses `HexMvPolyMathlib.equiv` and
+`instCommRingMvPoly` (`HexMvPolyMathlib/Equiv.lean`) and
+`Matrix.exists_vecMul_eq_zero_iff` (Mathlib
+`LinearAlgebra/Matrix/ToLinearEquiv.lean`). Batch quotation is in
+`HexReflect/Session.lean`, sealing in `HexReflect/State.lean`, and
+`convertTerms?`/`ofIntTerms` in `HexReflect/Convert.lean`.
+
+`checkDetPolyList`, `checkDetPolyList_sound`, the polynomial generalisation
+of `detWitness`, and the canonical list layer's `beq_iff`/denotation API
+are proposed obligations. The checker stays Mathlib-free in hex-bareiss;
+its determinant soundness stays in this companion.
 
 ## The `det` tactic
 
