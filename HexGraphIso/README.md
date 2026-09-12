@@ -5,12 +5,14 @@ library for Lean 4. The aim is fast executable code, fully verified, built
 with spec-driven development.
 
 Canonical labelling and isomorphism of finite simple undirected graphs with
-ordered vertex colours, compatible with the pinned dense configuration of
-nauty 2.9.3, plus a `graph_iso` tactic that closes positive and negative
+ordered vertex colours, with verified Lean implementations of the pinned
+dense and sparse configurations of nauty 2.9.3, plus a `graph_iso` tactic
+that closes positive and negative
 goals through the kernel. It builds on
 [`hex-basic`](https://github.com/leanprover/hex-basic) and
-[`hex-matrix`](https://github.com/leanprover/hex-matrix), and ships the
-one-file `HexGraph` graph representation it is specified against.
+[`hex-matrix`](https://github.com/leanprover/hex-matrix), uses
+[`hex-perm-group`](https://github.com/leanprover/hex-perm-group), and ships
+the dense and sparse `HexGraph` representations it is specified against.
 Correspondence with Mathlib's `SimpleGraph` lives in
 [`hex-graph-iso-mathlib`](https://github.com/leanprover/hex-graph-iso-mathlib).
 
@@ -52,6 +54,21 @@ example : ¬ Isomorphic p3c k3c := by graph_iso
   neighbour arrays, and relabelling. `Colored n k` adds an ordered,
   surjective colouring by `Fin k`; an isomorphism preserves each colour index
   and never permutes cells.
+- `SparseGraph n` stores compressed, sorted adjacency rows in
+  `O(n + |E|)` space. `SparseGraph.ofEdges` builds from `Fin n` pairs,
+  dropping loops and duplicate edges; `SparseGraph.ofEdges?` accepts natural
+  endpoints and rejects loops and out-of-range vertices. `Sparse.Colored n k`
+  combines this representation with the same ordered `Coloring n k`.
+- `Sparse.canonicalize`, `canon`, `label`, `findIso`, `isIso` and `autos`
+  provide the corresponding sparse operations. The bare graph operations
+  live in `SparseGraph`. Canonicalization and isomorphism search are total,
+  including on the empty graph, and execute native sparse search.
+  Sparse automorphism output has complete generators, exact orbits and
+  exact integer group order.
+- The input type selects dense or sparse nauty. Explicit `Graph.toSparse`
+  and `SparseGraph.toDense` conversions preserve isomorphism, but the two
+  algorithms can select different canonical forms. Compare canonical forms
+  within one representation; there is no automatic engine switch.
 - `canonicalize`, `canon`, `label`, `findIso`, and `isIso` are the
   public surface: the checked result of the nauty-compatible search, carrying the full theorem surface.
 - Every operation and every theorem is available uncoloured, on a bare
@@ -75,7 +92,9 @@ example : ¬ Isomorphic p3c k3c := by graph_iso
   reports that two replayed keys differ, which is what refutes
   isomorphism.
 - `graph_iso` closes closed goals of the form `Isomorphic G H` and
-  `¬ Isomorphic G H`, coloured or uncoloured. A positive goal closes by
+  `¬ Isomorphic G H`, coloured or uncoloured, with dense or sparse inputs.
+  Sparse goals use native sparse search and sparse literal kernel checkers.
+  A dense positive goal closes by
   the relabel shortcut when one graph is syntactically a relabelling of
   the other, and otherwise by a literal transporter the kernel checks
   through `Kernel.checkIso`. A negative goal closes by the root
@@ -88,9 +107,9 @@ example : ¬ Isomorphic p3c k3c := by graph_iso
 
 # Verification
 
-The public surface carries the full theorem surface: canonical forms are
+For both representations, canonical forms are
 isomorphism-invariant and isomorphism is exactly equality of canonical
-forms. The anchor is the declarative canonical form `Nauty.specCanon`,
+forms. For dense graphs, the anchor is the declarative canonical form `Nauty.specCanon`,
 the maximum leaf key of the unpruned individualization-refinement tree,
 and `canon_eq_specCanon` identifies the public form with it. The pruned
 search is proved to compute that key
@@ -98,6 +117,13 @@ search is proved to compute that key
 the search's own answer on every input (`Nauty.certifyCanon?_isSome`)
 and no certificate is produced or replayed on the answer path. No
 theorem depends on the search being faithful to nauty.
+
+For sparse graphs, `Sparse.canon_eq_specCanon` identifies the executed
+canonical form with `Nauty.Sparse.specCanon`, the maximum of the unpruned
+sparse tree in sparse nauty's own key order. The production search's
+correctness and totality proofs reach the public API independently of
+certificate replay. Sparse certificates separately support kernel proofs
+of closed isomorphism and non-isomorphism goals.
 
 ```lean
 theorem iso_iff_canon_eq (G : Colored n k) (H : Colored n k) :
@@ -116,12 +142,18 @@ theorem Nauty.checkCanon_sound {G : Colored n k} {cert : Nauty.CertNode}
 
 Compatibility with nauty is a conformance property, not a theorem: an oracle
 pins canonical labels, canonical bits, and visited-node counts against the
-real nauty 2.9.3 on committed fixtures. That suite, and the benchmarks that
+corresponding dense or sparse C engine from nauty 2.9.3 on committed
+fixtures. That suite, and the benchmarks that
 time this library against nauty, run in
 [`hex-dev`](https://github.com/kim-em/hex-dev); they need a vendored nauty
 build, which is why they are not part of this repository. See the
 [SPEC](SPEC/hex-graph-iso.md) for the exact trust, budget, and compatibility
 contracts.
+
+The [manual](https://kim-em.github.io/hex-dev/HexGraphIso___-coloured-graph-canonical-labelling/)
+contains native sparse examples, the representation comparison, automorphism
+and Mathlib recipes, and the six-way performance plots. Traces is a C
+comparator; this library does not implement a Lean Traces engine.
 
 # Contributing
 

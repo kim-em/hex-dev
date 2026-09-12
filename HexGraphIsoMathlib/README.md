@@ -7,7 +7,7 @@ with spec-driven development.
 The Mathlib correspondence and tactic layer for
 [`hex-graph-iso`](https://github.com/leanprover/hex-graph-iso). It gives
 Mathlib-facing ordered-coloured graphs over an arbitrary finite vertex type,
-the finite encoding into the executable representation with its
+finite encodings into the dense and sparse executable representations with their
 correspondence theorems, and extends `graph_iso` to closed `SimpleGraph`
 goals.
 
@@ -53,6 +53,20 @@ example : IsEmpty (c5a ≃g p5) := by graph_iso
   `V ≃ Fin n` into the executable `Hex.GraphIso.Colored n k`;
   `encode_adj`, `encode_color`, and `encode_iso_iff` are the
   correspondence theorems.
+- `Sparse.encode` constructs native sparse rows without allocating a dense
+  matrix. Given an arbitrary decidable adjacency relation, it still tests
+  vertex pairs. `Sparse.encode_iso_iff`, `Sparse.iso_iff_canon_eq` and
+  `Sparse.canon_encode_eq` prove isomorphism correspondence, canonical-form
+  correctness and independence from the chosen enumeration.
+- Direct `graph_iso` calls on Mathlib goals use the dense encoding. To
+  select sparse nauty, apply `Sparse.encode_iso_iff` in the proof and then
+  call `graph_iso` on the resulting sparse goal. `Sparse.isoOfFindIso`
+  also decodes a transporter returned by the total sparse API.
+- `Sparse.autos_complete` proves that the decoded sparse generators
+  generate the full colour-preserving Mathlib automorphism group.
+  `Sparse.autos_sameOrbit`, `Sparse.autNumOrbits_card` and
+  `Sparse.autOrder_card` identify the reported orbits, orbit count and
+  group order with the full group's action and cardinality.
 - `colored_iso_iff_canon_eq` is the headline equivalence: Mathlib-side
   isomorphism holds exactly when the executable certified canonical forms of
   the two encodings agree.
@@ -89,6 +103,9 @@ Use [`hex-graph-iso`](https://github.com/leanprover/hex-graph-iso) alone for
 Mathlib-free computation. See the
 [SPEC](SPEC/hex-graph-iso-mathlib.md) for the encoding contract, tactic
 registration, and failure semantics.
+The [manual](https://kim-em.github.io/hex-dev/HexGraphIso___-coloured-graph-canonical-labelling/The-Mathlib-correspondence/)
+includes a sparse-search recipe whose definitions and conclusions use
+Mathlib types, with the encoding confined to the proofs.
 
 # Contributing
 
