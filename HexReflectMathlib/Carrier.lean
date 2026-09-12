@@ -59,9 +59,11 @@ theorem intCast_eq_intCastRingHom :
   rfl
 
 /-- Mathlib characteristic evidence gives the Grind form used by
-`Expr.toPolyC`. It is a theorem rather than a global instance, so importing
-this module does not change how `Lean.Meta.Sym.Arith` classifies a carrier;
-a frontend supplies it explicitly when it wants the characteristic arm. -/
+`Expr.toPolyC`. This helper is a theorem, not a global instance. Importing
+`Mathlib.Algebra.CharP.Basic` separately supplies a global bridge for
+cancellative semirings, so frontends may already obtain characteristic
+evidence through instance search. This theorem also permits supplying the
+Mathlib ring's exact characteristic instance explicitly. -/
 theorem isCharP_of_charP (p : Nat) [CharP R p] : Lean.Grind.IsCharP R p where
   ofNat_ext_iff {x y} := by
     rw [Lean.Grind.Semiring.ofNat_eq_natCast, Lean.Grind.Semiring.ofNat_eq_natCast]

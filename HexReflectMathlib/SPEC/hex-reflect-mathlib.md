@@ -20,7 +20,9 @@ The companion depends on `hex-reflect`, `hex-mv-poly-mathlib`,
 `hex-mod-arith-mathlib`, and Mathlib.
 It obtains `hex-mv-poly` and `hex-basic` transitively. No matrix,
 row-reduction, determinant, characteristic-polynomial, gcd, or factorization
-library is an implementation dependency.
+library is an implementation dependency. The modular arithmetic dependency
+also brings its precompiled native library and GMP linkage into consumers of
+this companion.
 
 ## Module layout
 
@@ -57,9 +59,13 @@ classified carrier reports positive characteristic `p`, `p` is prime,
 `p < 2^31`, and the target has compatible Mathlib `Field F` and `CharP F p`
 evidence. The registration has priority 5, above the universal integer
 provider. Unknown characteristic and characteristic zero retain integer
-coefficients. Frontends can supply `isCharP_of_charP` explicitly to enable
-characteristic recognition; this theorem remains outside global instance
-search.
+coefficients. Mathlib's `Algebra.CharP.Basic`, imported transitively here,
+provides a global bridge from `CharP` to Grind characteristic evidence for
+cancellative semirings. Recognition is therefore automatic when instance
+search finds that evidence. `isCharP_of_charP` remains a theorem for callers
+that need to supply an exact instance explicitly. A concrete `ZMod p` field
+requires Mathlib's usual `Fact (Nat.Prime p)` instance; the provider does not
+install target field instances.
 
 A recognized positive characteristic that is composite (or one) declines
 with a prime-characteristic diagnostic. Moduli `p ≥ 2^31` decline with the
@@ -72,7 +78,9 @@ The executable carrier uses `Hex.ZMod64.Bounds p` and
 without adding a gcd-library dependency here. The provider's `auxInstances`
 contains quoted bounds, primality, and the scoped Mathlib ring instance for
 consumers to introduce locally. Every auxiliary instance is type-checked by
-provider validation. Its interpretation is
+provider validation. Consumers still synthesize or check their required
+capability at the actual coefficient type: generic auxiliary evidence does
+not itself certify a particular downstream capability. Its interpretation is
 `residueHom p F`, the composite of `HexModArithMathlib.ZMod64.equiv` with
 `ZMod.castHom`. `residueHom_injective` proves injectivity into every ring
 of the same characteristic, in particular arbitrary field extensions of
@@ -80,7 +88,12 @@ of the same characteristic, in particular arbitrary field extensions of
 `CoeffLaws.changeRing` transfers those laws to the classified exact Grind
 ring after checking definitional equality of its integer cast, zero, and
 addition with the Mathlib operations. Other structure fields need not be
-definitionally identical. In particular, canonicalization can unfold
+definitionally identical. The quoted coefficient operations are the named
+executable `ZMod64` instances, independent of the caller's instance scope.
+`residuePrime` deduces primality evidence from the field's nonzero
+characteristic after this compatibility check succeeds. The runtime
+recognizer uses the existing bounded trial-division test, but the kernel
+does not replay that search to validate the auxiliary prime certificate. In particular, canonicalization can unfold
 `ZMod p` to `Fin p`; the provider also tries the Mathlib `ZMod p` field
 when its type is definitionally equal to the classified carrier. It never
 accepts evidence from the type name alone.
@@ -148,6 +161,7 @@ the Mathlib-free `hex-reflect` library depend on Mathlib.
 `conformance/HexReflect/ResidueConformance.lean` checks the matrix
 `!![x ^ 3 - x]` over `ZMod 3`: the quoted residue polynomial is `X₀³ − X₀`,
 and its interpretation equals the matrix entry by a kernel-checked proof.
+The residue provider also works with the coefficient-ring scope closed.
 It also checks an abstract characteristic-three field, downstream instance
 synthesis from the provider's auxiliary evidence at modulus five, and the
 decline and integer-fallback paths. Existing reflection conformance remains

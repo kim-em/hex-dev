@@ -183,3 +183,38 @@ run_meta do
     logInfo "arbitrary characteristic-three field: missing CharP declines, supplied CharP reifies"
 
 end Hex.ReflectResidueConformance
+
+namespace Hex.ReflectResidueClosedConformance
+
+open Lean Meta Hex.Reflect HexReflectMathlib
+
+-- No coefficient-ring scope, local bounds, or local Grind characteristic
+-- instance is active here. Mathlib discovers the target characteristic.
+/-- info: closed scope: executable coefficient instances, kernel accepted -/
+#guard_msgs in
+run_meta do
+  let ty := mkApp (mkConst ``ZMod) (mkNatLit 3)
+  withLocalDeclD `x ty fun x => do
+    let input ← mkAppM ``HSub.hSub #[← mkAppM ``HPow.hPow #[x, mkNatLit 3], x]
+    let outcome ← reflectRing input (cfg := { checkProofs := true })
+    let .success entry _ := outcome
+      | throwError "{outcome.toMessageData (fun _ => "entry")}"
+    let provider := entry.conversion.provider
+    unless provider.id == residueCoefficientsId && entry.conversion.terms.length == 2 do
+      throwError "wrong residue conversion"
+    unless provider.zeroInst.getAppFn.isConstOf ``Hex.ZMod64.instZero &&
+        provider.addInst.getAppFn.isConstOf ``Hex.ZMod64.instAdd do
+      throwError "coefficient operations depend on caller scope"
+    let name ← mkFreshUserName `Hex.ReflectResidueClosedConformance.proof
+    let type ← mkForallFVars #[x] (← inferType entry.result.proof)
+    let value ← mkLambdaFVars #[x] entry.result.proof
+    addDecl (.thmDecl { name, levelParams := [], type, value })
+    logInfo "closed scope: executable coefficient instances, kernel accepted"
+
+-- Even at the largest supported prime, the certificate follows from the
+-- field characteristic; the kernel does not run trial division.
+example (F : Type u) [Field F] [CharP F 2147483647] :
+    ZMod64.PrimeModulus 2147483647 :=
+  residuePrime 2147483647 F (by decide)
+
+end Hex.ReflectResidueClosedConformance

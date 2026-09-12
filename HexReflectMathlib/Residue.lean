@@ -36,6 +36,13 @@ theorem residueCoeffLaws (p : Nat) [Hex.ZMod64.Bounds p]
     CoeffLaws (C := Hex.ZMod64 p) (α := F) Int.cast (residueHom p F) :=
   coeffLaws_ofRingHom (residueHom p F) Int.cast (fun k => map_intCast _ k)
 
+/-- A nonzero field characteristic supplies the prime-modulus evidence needed
+by executable coefficient algorithms, without replaying a primality search. -/
+theorem residuePrime (p : Nat) (F : Type u) [Field F] [CharP F p] (hp : 0 < p) :
+    Hex.ZMod64.PrimeModulus p := by
+  have prime := CharP.char_prime_of_ne_zero F (Nat.ne_of_gt hp)
+  exact ⟨⟨prime.two_le, fun _ h => (Nat.dvd_prime prime).mp h⟩⟩
+
 meta section
 
 open Lean Meta
@@ -46,10 +53,11 @@ def residueCoefficientsId : ProviderId := { name := `HexReflectMathlib.residueCo
 /-- Recognize a known positive characteristic and quote the residue coefficient
 provider against the classified carrier's exact ring instance. -/
 def residueCoeffProvider (p : Nat) (ring : CarrierRequest) :
-    Sym.SymM (ProviderOutcome CoeffProvider) := do
+    Sym.SymM (ProviderOutcome CoeffProvider) := withNewMCtxDepth do
   let decline (reason : String) : ProviderOutcome CoeffProvider :=
     .declined (.providerCondition residueCoefficientsId reason) Budget.zero
-  if p ≥ 2147483648 then
+  let bound := Nat.pow 2 31
+  if p ≥ bound then
     return decline "residue coefficients require characteristic p < 2^31"
   if !Hex.Nat.isPrimeTrial p then
     return decline "residue coefficients require prime characteristic"
@@ -74,19 +82,17 @@ def residueCoeffProvider (p : Nat) (ring : CarrierRequest) :
   let charType ← mkAppOptM ``CharP #[carrier, castInst, pE]
   let some charInst ← Sym.synthInstance? charType
     | return decline "residue coefficients require Mathlib CharP evidence"
-  let bounds ← mkAppM ``Hex.ZMod64.Bounds.mk #[
-    ← mkDecideProof (← mkAppM ``LT.lt #[mkNatLit 0, pE]),
-    ← mkDecideProof (← mkAppM ``LT.lt #[pE, mkNatLit 2147483648])]
-  let prime ← mkAppM ``Hex.ZMod64.primeModulusOfPrime #[
-    ← mkDecideProof (mkApp (mkConst ``Hex.Nat.Prime) pE)]
-  let coeffRing ← mkAppOptM ``HexModArithMathlib.ZMod64.commRing #[pE, bounds]
+  let pos ← mkDecideProof (← mkAppM ``LT.lt #[mkNatLit 0, pE])
+  let bounds ← mkAppM ``Hex.ZMod64.Bounds.mk #[pos,
+    ← mkDecideProof (← mkAppM ``LT.lt #[pE, mkNatLit bound])]
   let coeffType := mkApp2 (mkConst ``Hex.ZMod64) pE bounds
-  let zeroInst ← Sym.synthInstance (mkApp (mkConst ``Zero [.zero]) coeffType)
-  let addInst ← Sym.synthInstance (mkApp (mkConst ``Add [.zero]) coeffType)
-  let beqInst ← Sym.synthInstance (mkApp (mkConst ``BEq [.zero]) coeffType)
-  let lawfulBEqInst ← Sym.synthInstance
-    (mkApp2 (mkConst ``LawfulBEq [.zero]) coeffType beqInst)
-  let ofInt ← mkAppOptM ``Int.cast #[coeffType, none]
+  let zeroInst ← mkAppOptM ``Hex.ZMod64.instZero #[pE, bounds]
+  let addInst ← mkAppOptM ``Hex.ZMod64.instAdd #[pE, bounds]
+  let decEq ← mkAppOptM ``Hex.ZMod64.instDecidableEq #[pE, bounds]
+  let beqInst ← mkAppOptM ``instBEqOfDecidableEq #[coeffType, decEq]
+  let lawfulBEqInst ← mkAppOptM ``instLawfulBEq #[coeffType, decEq]
+  let intCast ← mkAppOptM ``Hex.ZMod64.instIntCast #[pE, bounds]
+  let ofInt ← mkAppOptM ``Int.cast #[coeffType, intCast]
   let hom ← mkAppOptM ``residueHom #[pE, bounds, carrier, commRingInst, charInst]
   let interp ← mkAppM ``DFunLike.coe #[hom]
   let laws ← mkAppOptM ``residueCoeffLaws #[pE, bounds, carrier, commRingInst, charInst]
@@ -101,6 +107,8 @@ def residueCoeffProvider (p : Nat) (ring : CarrierRequest) :
     return some (mkAppN bridge proofs)
   let some laws := laws?
     | return decline "the classified ring operations do not agree with the Mathlib field"
+  let prime ← mkAppOptM ``residuePrime #[pE, carrier, fieldInst, charInst, pos]
+  let coeffRing ← mkAppOptM ``HexModArithMathlib.ZMod64.commRing #[pE, bounds]
   return .success {
     id := residueCoefficientsId
     coeffType, zeroInst, addInst, beqInst, lawfulBEqInst, ofInt, interp, laws
