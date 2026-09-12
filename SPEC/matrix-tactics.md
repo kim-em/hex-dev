@@ -20,9 +20,9 @@ their library structure and their kernel-replay proof strategy do not.
 | tactic | goals | executable side | Mathlib-input tactic and soundness | status |
 |---|---|---|---|---|
 | `rank` | `A.rank = r`, `A.rank ≤ r`, `r ≤ A.rank` | `hex-rank`: `RankWitness`, `checkRankList`, `rankWitness` | `hex-rank-mathlib`: `rank_eq_of_checkList`, `HexRankMathlib/Tactic.lean` | shipped (https://github.com/kim-em/hex-dev/pull/10207) |
-| `det` | `A.det = d` | `hex-bareiss`: a kernel-form triangular certificate produced by fraction-free elimination | `hex-bareiss-mathlib` | to do; see [The determinant certificate](#the-determinant-certificate) |
-| `char_poly` | `A.charpoly = p` | `hex-char-poly`: the Berkowitz certificate, in kernel form | `hex-char-poly-mathlib` | frontend exists in `HexCharPoly`/`HexCharPolyMathlib`; kernel form and measurement to do |
-| literal layer | reading `!![…]`, `Matrix.of ![…]`, `fun i j => …`, `Matrix.ofArray xs h` | none | `hex-matrix-mathlib`: `ofLists`, `vecOfList`, literal recognition, definitional identification | currently inside `hex-rank-mathlib`; to move down |
+| `det` | `A.det = d` | `hex-bareiss`: a kernel-form triangular certificate produced by fraction-free elimination | `hex-bareiss-mathlib` | to do: https://github.com/kim-em/hex-dev/issues/10211; see [The determinant certificate](#the-determinant-certificate) |
+| `char_poly` | `A.charpoly = p` | `hex-char-poly`: the Berkowitz certificate, in kernel form | `hex-char-poly-mathlib` | frontend exists in `HexCharPoly`/`HexCharPolyMathlib`; kernel form and measurement to do: https://github.com/kim-em/hex-dev/issues/10212 |
+| literal layer | reading `!![…]`, `Matrix.of ![…]`, `fun i j => …`, `Matrix.ofArray xs h` | none | `hex-matrix-mathlib`: `ofLists`, `vecOfList`, literal recognition, definitional identification | currently inside `hex-rank-mathlib`; to move down: https://github.com/kim-em/hex-dev/issues/10213 |
 
 Rules that follow from the table:
 
