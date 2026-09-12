@@ -1675,3 +1675,7 @@ lean_exe hexgraphiso_emit_trace where
 lean_exe hexnumberfield_quadratic where
   srcDir := "bench"
   root := `HexNumberField.Quadratic
+
+lean_lib HexCharPolyMathlibProofProbe where
+  srcDir := "bench"
+  globs := #[.submodules `HexCharPolyMathlib.ProofProbe]

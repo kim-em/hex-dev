@@ -1,0 +1,19 @@
+ℹ [3/3] Built HexCharPolyMathlib.ProofProbe.Dense16Computed (10s)
+info: bench/HexCharPolyMathlib/ProofProbe/Dense16Computed.lean:23:0: 'result' depends on axioms: [propext]
+info: stderr:
+cumulative profiling times:
+	.olean serialization 28.3ms
+	attribute application 0.0222ms
+	elaboration 8.22s
+	fix level params 0.183ms
+	instantiate metavars 1.44ms
+	let-to-have transformation 0.728ms
+	linting 16.6ms
+	module linting 0.00163ms
+	parsing 58.1ms
+	process pre-definitions 3.07ms
+	share common exprs 2.96ms
+	tactic execution 3.8s
+	type checking 4.24s
+	typeclass inference 33.8ms
+Build completed successfully (3 jobs).

@@ -1084,6 +1084,7 @@ libraries:
   HexCharPolyMathlib:
     deps: [HexCharPoly, HexMatrixMathlib, HexPolyMathlib, HexDeterminantMathlib]
     mathlib: true
+    proof_probes: [bench/HexCharPolyMathlib/ProofProbe]
     done_through: 0
     status: active
   HexMinPolyMathlib:
