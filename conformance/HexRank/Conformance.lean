@@ -209,6 +209,9 @@ in the kernel, and mutated witnesses rejected. -/
 
 def kernelEx : Matrix Int 3 4 := #m[1, 2, 3, 4; 2, 4, 6, 8; 1, 0, 1, 0]
 
+/-- A rank-three example exercising a non-final leading-block reduction. -/
+def kernelEx3 : Matrix Int 3 3 := #m[1, 2, 3; 0, 1, 4; 0, 0, 1]
+
 /-- The witness `rankWitness kernelEx` produces. -/
 def kernelWitness : RankWitness := { rank := 2, modulus := 2147483647, rows := [0, 2], cols := [0, 1], vt := [[1], [1, 1073741823]], denom := -2, z := [[-4, 0]] }
 
@@ -219,6 +222,13 @@ def kernelWitness : RankWitness := { rank := 2, modulus := 2147483647, rows := [
 #guard (rankWitnessWith 4 kernelEx).toOption = none   -- `-2` is not a unit modulo `4`
 -- The full determinant is a unit modulo `6`, but the leading determinant `2` is not.
 #guard (rankWitnessWith 6 (#m[2, 1; 1, 0] : Matrix Int 2 2)).toOption = none
+#guard (rankWitness kernelEx3).toOption.map (fun w => w.vt.map (·.length)) = some [1, 2, 3]
+#guard (rankWitness kernelEx3).toOption.map
+    (fun w => checkRankList 3 3 (toLists kernelEx3) w) = some true
+
+-- A non-unit first leading determinant makes the producer retry with the next modulus.
+#guard (rankWitness (#m[2147483647, 1; 1, 1] : Matrix Int 2 2)).toOption.map (·.modulus) =
+  some 2305843009213693951
 
 /-- The same witness modulo the composite `9`; primality plays no role. -/
 def kernelWitness9 : RankWitness :=

@@ -804,9 +804,9 @@ The producer takes column `j` of `V` to be the last column of
 with unit diagonal. It obtains every adjugate by running `rowReduceWith`
 on `augmentIdentity B_j`, reusing the full-block result that `rankCertOf`
 already needs for the upper-bound coefficients
-`z_k = A_i[cols] · adj B`. It re-checks its own output and moves to the
-next modulus of `witnessModuli` if any `det B_j` is not a unit modulo the
-current one.
+`z_k = A_i[cols] · adj B`. It computes this modulus-independent data once,
+then re-checks each modular instantiation and moves to the next modulus of
+`witnessModuli` if any `det B_j` is not a unit modulo the current one.
 
 **Kernel discipline** (design principle 11, made concrete): every
 definition on the path is `@[expose]`; the arithmetic is `Nat.mul`,
@@ -828,13 +828,18 @@ integers, and against the `n³ / 3` minor-by-entry products of Mathlib's
 `Echelon.Decomposition` check. Two six-sample shared-host sweeps of the
 fresh-module proof probes under `bench/HexRankMathlib/ProofProbe`, before
 and after adopting the triangular transform, reported signed `rank`
-overheads over the paired import baseline of `95 → 95 ms` at `n = 8`,
-`365 → 316 ms` at `n = 16` and `2440 → 2095 ms` at `n = 32`. Both sweeps
-used the fixed trial-major schedule with alternating `AB`/`BA` order,
-passed their fresh-module budgets and were release-quality measurements.
-The reduction of pivot-block entries to residues and the list traversal
-are independent of the triangular transform and remain separate profiling
-targets.
+overheads over the paired import baseline of `95 → 95 ms` at dense `n = 8`,
+`365 → 316 ms` at dense `n = 16`, `2440 → 2095 ms` at dense `n = 32`,
+`403 → 392 ms` at rank-deficient `n = 16`, and `695 → 692 ms` at low-rank
+`n = 32`. The dense `n = 32` samples separated completely; the dense
+`n = 16` samples overlapped, and the other cases were essentially flat.
+After the change, the paired `eval_rank` overheads were `298`, `1806` and
+`14003 ms` on the three dense cases, `1852 ms` on the rank-deficient case,
+and `14918 ms` on the low-rank case. Both sweeps used the fixed trial-major
+schedule with alternating `AB`/`BA` order, passed their fresh-module budgets
+and were release-quality measurements. The reduction of pivot-block entries
+to residues and the list traversal are independent of the triangular
+transform and remain separate profiling targets.
 
 **Soundness** is the companion's `rank_eq_of_checkList`
 ([hex-rank-mathlib §Kernel certificate](../../HexRankMathlib/SPEC/hex-rank-mathlib.md#kernel-certificate)),

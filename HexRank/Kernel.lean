@@ -215,53 +215,76 @@ def invMod? (u M : Nat) : Option Nat :=
   let (g, s, _) := HexArith.extGcd (u % M) M
   if g = 1 then some (Int.emod s (Int.ofNat M)).toNat else none
 
-open RankWitness in
-/-- The witness reuses the first reduction for the full certificate, keeping
-the full pivot-block adjugate for the upper bound and one truncated inverse
-column from each leading pivot block for the lower bound. -/
-def rankWitnessWith (M : Nat) (A : Matrix Int n m) : Except String RankWitness := do
-  let D := rowReduceFF A
-  let c := rankCertOf HexArith.Int.exactDiv A D
+private structure LeadingColumn where
+  order : Nat
+  denom : Int
+  entries : List Int
+
+private structure WitnessData (n m : Nat) where
+  matrix : List (List Int)
+  rank : Nat
+  rows : List Nat
+  cols : List Nat
+  leading : List LeadingColumn
+  denom : Int
+  z : List (List Int)
+
+/-- Compute the modulus-independent part of a kernel witness once, including
+the adjugate column and denominator of every leading pivot block. -/
+private def witnessData (A : Matrix Int n m) : WitnessData n m :=
+  let c := rankCert A
   let r := c.rank
   let rowsL := c.rows.toList.map (·.val)
   let colsL := c.cols.toList.map (·.val)
-  let Al := toLists A
   let B := selectedSubmatrix A c.rows c.cols
-  let vt ← (List.finRange r).mapM fun j => do
+  let leading := (List.finRange r).map fun j =>
     let k := j.val + 1
     if h : k = r then
-      let some dinv := invMod? (residue M c.denom) M |
-        throw s!"the leading determinant {c.denom} of order {k} is not a unit modulo {M}"
-      pure <| (List.finRange k).map fun i =>
-        Nat.mod (Nat.mul (residue M c.adj[(Fin.cast h i, j)]) dinv) M
+      { order := k, denom := c.denom
+        entries := (List.finRange k).map fun i => c.adj[(Fin.cast h i, j)] }
     else
       let Bk : Matrix Int k k := ofFn fun i l =>
         B[((⟨i.val, by omega⟩ : Fin r), (⟨l.val, by omega⟩ : Fin r))]
       let Dk := rowReduceFF (augmentIdentity Bk)
-      let some dinv := invMod? (residue M Dk.denom) M |
-        throw s!"the leading determinant {Dk.denom} of order {k} is not a unit modulo {M}"
-      pure <| (List.finRange k).map fun i =>
-        Nat.mod (Nat.mul (residue M (adjugateOf Dk)[(i, Fin.last j.val)]) dinv) M
-  let nonPivot := (List.finRange n).filter fun i => !(memNat i.val rowsL)
+      { order := k, denom := Dk.denom
+        entries := (List.finRange k).map fun i => (adjugateOf Dk)[(i, Fin.last j.val)] }
+  let nonPivot := (List.finRange n).filter fun i => !(RankWitness.memNat i.val rowsL)
   let z := nonPivot.map fun i => (List.finRange r).map fun l =>
     (List.finRange r).foldl (fun acc k => acc + A[(i, c.cols[k])] * c.adj[(k, l)]) 0
+  { matrix := toLists A, rank := r, rows := rowsL, cols := colsL
+    leading := leading, denom := c.denom, z := z }
+
+open RankWitness in
+/-- Instantiate prepared witness data at one modulus, or report a non-unit
+leading pivot-block denominator or a failed producer self-check. -/
+private def rankWitnessOf (M : Nat) (d : WitnessData n m) : Except String RankWitness := do
+  let vt ← d.leading.mapM fun col => do
+    let some dinv := invMod? (residue M col.denom) M |
+      throw s!"the leading pivot-block denominator {col.denom} of order {col.order} is not a unit modulo {M}"
+    pure <| col.entries.map fun x => Nat.mod (Nat.mul (residue M x) dinv) M
   let w : RankWitness :=
-    { rank := r, modulus := M, rows := rowsL, cols := colsL, vt := vt, denom := c.denom, z := z }
-  if checkRankList n m Al w then pure w
+    { rank := d.rank, modulus := M, rows := d.rows, cols := d.cols, vt := vt
+      denom := d.denom, z := d.z }
+  if checkRankList n m d.matrix w then pure w
   else throw s!"the witness fails its own check modulo {M}"
+
+/-- The witness for one fixed modulus. The modulus-independent integer
+reductions are shared across retries by `rankWitness`. -/
+def rankWitnessWith (M : Nat) (A : Matrix Int n m) : Except String RankWitness :=
+  rankWitnessOf M (witnessData A)
 
 /-- The kernel witness of an integer matrix: the first modulus in
 `witnessModuli` that works, or the reasons every modulus failed. -/
 def rankWitness (A : Matrix Int n m) : Except String RankWitness :=
-  go witnessModuli []
+  go (witnessData A) witnessModuli []
 where
   /-- Try the moduli in order, collecting the failure reasons. -/
-  go : List Nat → List String → Except String RankWitness
+  go (d : WitnessData n m) : List Nat → List String → Except String RankWitness
     | [], reasons => throw (String.intercalate "; " reasons.reverse)
     | M :: Ms, reasons =>
-        match rankWitnessWith M A with
+        match rankWitnessOf M d with
         | .ok w => pure w
-        | .error e => go Ms (e :: reasons)
+        | .error e => go d Ms (e :: reasons)
 
 /-- Compiled sanity check on a `3 × 4` matrix of rank `2`, and the same
 witness replayed by the kernel. -/
