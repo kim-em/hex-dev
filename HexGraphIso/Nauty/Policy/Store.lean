@@ -33,8 +33,8 @@ theorem storePolicy (ctx : Ctx n) (inf tcLevel : Nat) :
     change CanongInv ctx (compareCodes level code st).canong (compareCodes level code st).canonlab
       (compareCodes level code st).samerows
     unfold compareCodes
-    simp only [Id.run_pure, apply_ite Id.run, apply_ite Search.canong,
-      apply_ite Search.canonlab, apply_ite Search.samerows, ite_self]
+    simp only [Id.run_pure, apply_ite Id.run, apply_ite SearchState.canong,
+      apply_ite SearchState.canonlab, apply_ite SearchState.samerows, ite_self]
     exact h
   target := by
     intro level numcells st h
@@ -59,13 +59,13 @@ theorem storePolicy (ctx : Ctx n) (inf tcLevel : Nat) :
       (Nauty.recover inf level st).canonlab
       (Nauty.recover inf level st).samerows
     unfold Nauty.recover recoverLevels recoverPtn
-    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.canong,
-      apply_ite Search.canonlab, apply_ite Search.samerows, ite_self]
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite SearchState.canong,
+      apply_ite SearchState.canonlab, apply_ite SearchState.samerows, ite_self]
     exact h
   afterSweep := by
-    intro first level size index st h
-    change CanongInv ctx (afterSweep first level size index st).canong
-      (afterSweep first level size index st).canonlab (afterSweep first level size index st).samerows
+    intro level size index st h
+    change CanongInv ctx (afterSweep false level size index st).canong
+      (afterSweep false level size index st).canonlab (afterSweep false level size index st).samerows
     unfold afterSweep
     split <;> exact h
 
@@ -117,7 +117,12 @@ theorem firstPath_store {ctx : Ctx n} {inf tcLevel fuel level numcells last : Na
     let out := (node true ctx inf tcLevel fuel level numcells st).2
     CanongInv ctx out.canong out.canonlab out.samerows := by
   rw [node_eq_generic]
-  apply hpath.stable (storePolicy ctx inf tcLevel) (fun _ _ _ h => h)
+  apply hpath.stable (storePolicy ctx inf tcLevel) (fun _ _ _ h => h) (by
+    intro level size index st h
+    change CanongInv ctx (afterSweep true level size index st).canong
+      (afterSweep true level size index st).canonlab (afterSweep true level size index st).samerows
+    unfold afterSweep
+    split <;> exact h)
   change CanongInv ctx leaf.canong leaf.lab 0
   apply canongInv_zero
   rw [firstPath_canong hpath, hsize]

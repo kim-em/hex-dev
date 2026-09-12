@@ -17,11 +17,11 @@ public section
 
 namespace Hex.GraphIso.Nauty.Generic
 
-variable {n : Nat} {σ α : Type} [Policy σ n]
+variable {n : Nat} {σ α : Type} {γ : Type} [Policy σ n (γ := γ)]
 
 /-- An invariant established by the first child survives the entire sweep,
 including a return past the receiving frame. -/
-theorem sweep_first_bounded {ctx : Ctx n} {inf tcLevel bound : Nat} {P : σ → Prop}
+theorem sweep_first_bounded {ctx : γ} {inf tcLevel bound : Nat} {P : σ → Prop}
     (h : BoundedPolicy ctx inf tcLevel bound P)
     (hfirst : ∀ level tv st, P st → P (Policy.afterChildFirst (n := n) level tv st))
     (fuel cfuel level numcells tc tv index : Nat) (cell : VSet n) (st : σ)
@@ -61,7 +61,7 @@ theorem sweep_first_bounded {ctx : Ctx n} {inf tcLevel bound : Nat} {P : σ → 
     · cases short <;> exact hcontinue _ _ _ heq
 
 /-- An invariant established at the first leaf survives the full search. -/
-theorem FirstPath.bounded {ctx : Ctx n} {inf tcLevel bound : Nat} {P : σ → Prop}
+theorem FirstPath.bounded {ctx : γ} {inf tcLevel bound : Nat} {P : σ → Prop}
     (h : BoundedPolicy ctx inf tcLevel bound P)
     (hfirst : ∀ level tv st, P st → P (Policy.afterChildFirst (n := n) level tv st))
     {fuel level numcells last : Nat} {st leaf : σ}

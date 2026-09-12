@@ -906,7 +906,7 @@ lean_lib HexConformance where
     ++ #[`HexInterval.MinMaxConformance,
       `HexIntervalMathlib.MinMaxConformance].map Glob.one
 
-    ++ #[`HexGraphIso.Cases, `HexPermGroup.Conformance, `HexPermGroup.Limits].map Glob.one
+    ++ #[`HexGraphIso.Cases, `HexGraphIso.SparseCases, `HexPermGroup.Conformance, `HexPermGroup.Limits].map Glob.one
 
     ++ #[`HexInterval.PolicyFeatureConformance,
       `HexInterval.FeaturePolicyConformance,
@@ -982,9 +982,11 @@ lean_lib HexReleaseTests where
     `HexMvPoly.KernelTests,
     `HexSparsePoly.KernelTests,
     `HexGraphIso.TestGraphs,
+    `HexGraphIso.SparseTests,
     `HexGraphIso.TacticTests,
     `HexGraphIso.ModuleBoundaryTests,
     `HexGraphIsoMathlib.TacticTests,
+    `HexGraphIsoMathlib.SparseTacticTests,
     `HexPermGroupMathlib.Tests,
     `HexNumberFieldTower.Embed,
     `HexRCF.LanguageTests,
@@ -1207,6 +1209,18 @@ lean_exe hexgraphiso_emit_fixtures where
   srcDir := "conformance"
   root := `HexGraphIso.EmitFixtures
 
+lean_exe hexgraphiso_sparse_probe where
+  srcDir := "conformance"
+  root := `HexGraphIso.SparseProbe
+
+lean_exe hexgraphiso_emit_sparse where
+  srcDir := "conformance"
+  root := `HexGraphIso.EmitSparse
+
+lean_exe hexgraphiso_sparse_bench where
+  srcDir := "bench"
+  root := `HexGraphIso.SparseBench
+
 lean_exe hexpermgroup_emit_fixtures where
   srcDir := "conformance"
   root := `HexPermGroup.EmitFixtures
@@ -1284,6 +1298,21 @@ lean_lib HexGraphIsoProofProbe where
 lean_lib HexGraphIsoCfiProbe where
   srcDir := "bench"
   globs := #[`HexGraphIso.ProofProbe.Support, `HexGraphIso.ProofProbe.Cfi]
+
+lean_lib HexGraphIsoSparseProofProbe where
+  srcDir := "bench"
+  moreLeanArgs := #["-Dprofiler=true"]
+  globs := #[`HexGraphIso.SparseProofProbe.Support,
+    `HexGraphIso.SparseProofProbe.Baseline,
+    `HexGraphIso.SparseProofProbe.Positive12,
+    `HexGraphIso.SparseProofProbe.Negative12,
+    `HexGraphIso.SparseProofProbe.Coloured10Pos,
+    `HexGraphIso.SparseProofProbe.Coloured10Neg]
+
+lean_lib HexGraphIsoSparseCfiProbe where
+  srcDir := "bench"
+  moreLeanArgs := #["-Dprofiler=true"]
+  globs := #[`HexGraphIso.SparseProofProbe.Support, `HexGraphIso.SparseProofProbe.Cfi]
 
 lean_lib HexGraphIsoMathlibProofProbe where
   srcDir := "bench"

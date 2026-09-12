@@ -1,0 +1,16 @@
+{
+  "binary_sha256": {
+    "hexgraphiso_sparse_bench": "d51d375fcbfffd7c0f8403e88b679db0dfb6d1289b72bfd73516f116b092f88c",
+    "hexgraphiso_sparse_probe": "14ac983a2935a34476b1a2275224b422142d94f880b6ac2c6ace2c31e0dd66dd"
+  },
+  "source_sha256": {
+    "HexGraph/Sparse/Normalize.lean": "a6935f458d1452f040e0c85c14c808c973fb1ddf97d4ddd9c540b2ef8cfc1aa5",
+    "HexGraph/Sparse/Relabel.lean": "4f400aeb3622185f8c7975f3316ec0dd1c3760929365a0233d42e5473a6d0f80",
+    "HexGraph/Sparse/Pack.lean": "161d4695f753e59fe91f767acc37b941c1750ed4a19467161576244e633ee721",
+    "bench/HexGraphIso/SparseBench.lean": "86e6c5dd720cbf065be72b94212a3dd6fc3bf674780ec781577702602d0a8387",
+    "scripts/plots/hexgraphiso-comparison.py": "f5c830a96dcc8d0629292aa1a7f0ec2877ff5072d8c0725152c6604c24c6a7ed"
+  },
+  "toolchain": "leanprover/lean4:v4.34.0-rc2",
+  "base_commit": "d55a63de6c1a4a2132afb6e315cca7a322aabb57",
+  "comparison": "hexgraphiso-comparison-optimized2-chungus2.jsonl"
+}

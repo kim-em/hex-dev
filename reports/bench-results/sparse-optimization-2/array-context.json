@@ -1,0 +1,7 @@
+{
+  "binary_sha256": "7220d6570ca633b557a549b9e3fbad4b979b106339439a39be62a956e9ae3518",
+  "sources": {
+    "HexGraph/Sparse/Build.lean": "90e03d5129f747d41f94857a15e4a05a38f26f4ad488fdb2434920215166323c",
+    "HexGraph/Sparse/Relabel.lean": "f89cd0a3376c7d8517b9673876fddf584a4c55705c3d1c95dc58be14ec0a7244"
+  }
+}

@@ -60,6 +60,7 @@ RESULTS = REPO_ROOT / "reports" / "bench-results"
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import sweep_freshness as freshness  # noqa: E402
+from graphiso_sweep import run_group  # noqa: E402
 
 # The measured source is the cactus sweep's family, so a kernel record
 # and a sweep record at the same fingerprint describe the same code.
@@ -70,7 +71,7 @@ set_option trace.graph_iso true
 open Hex Hex.GraphIso
 def A : Colored {n} 1 := {exprA}
 def B : Colored {n} 1 := {exprB}
-example : {goal} := by graph_iso (maxSearchNodes := 100000000) (maxKernelSteps := 1000000000)
+example : {goal} := by graph_iso (maxSearchNodes := 100000000)
 """
 
 EVAL_FILE = """import HexGraphIso
@@ -141,9 +142,9 @@ def _run_lean(source: str, timeout: float) -> tuple[str, float, bool, int]:
         # `lake lean` (not `lake env lean`) loads the precompiled
         # `HexGraphIso` shared libraries, as a downstream `lake build`
         # does, so the compiled search runs compiled here too.
-        proc = subprocess.run(
+        proc = run_group(
             ["lake", "lean", str(path), "--", "-Dprofiler=true"],
-            cwd=REPO_ROOT, capture_output=True, text=True, timeout=timeout)
+            cwd=REPO_ROOT, timeout=timeout)
     except subprocess.TimeoutExpired as exc:
         out = (exc.stdout or b"").decode(errors="replace") if isinstance(
             exc.stdout, bytes) else (exc.stdout or "")
@@ -204,16 +205,12 @@ def _measure(record: dict, timeout: float) -> dict:
                          - result["interp_s"] - result["elab_s"])
     route = _route(output)
     result["route"] = route.get("route")
-    for key in ("records", "recordsG", "recordsH", "autom", "steps",
+    for key in ("records", "recordsG", "recordsH", "autom",
                 "nodes"):
         if key in route:
             result[key] = int(route[key])
     if result.get("records"):
         result["ms_per_record"] = 1e3 * result["typecheck_s"] / result["records"]
-        # the tactic's own charge: one unit per record, one more per
-        # automorphism record (generator validation), two fixed units
-        units = result["records"] + result.get("autom", 0) + 2
-        result["ms_per_unit"] = 1e3 * result["typecheck_s"] / units
     return result
 
 

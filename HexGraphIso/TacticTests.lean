@@ -39,9 +39,9 @@ def k3 : Colored 3 1 :=
 example : Isomorphic p3 p3' := by graph_iso
 example : ¬ Isomorphic p3 k3 := by graph_iso
 example : Isomorphic p3 p3' := by
-  graph_iso (maxSearchNodes := 200000) (maxKernelSteps := 10000000)
+  graph_iso (maxSearchNodes := 200000) (maxCertRecords := 200000)
 example : Isomorphic p3 p3' := by
-  graph_iso (maxKernelSteps := 10000000) (maxCertRecords := 200000)
+  graph_iso (maxCertRecords := 200000) (maxSearchNodes := 200000)
 -- A zero certificate budget must still close the goal. This pair is
 -- irregular, so the root separator closes it before the certificate leg.
 example : ¬ Isomorphic p3 k3 := by graph_iso (maxCertRecords := 0)
@@ -57,10 +57,6 @@ example : ¬ Isomorphic p3 p3' := by graph_iso
 /-- error: graph_iso: search exhausted: visited 6 nodes but maxSearchNodes := 0 -/
 #guard_msgs in
 example : Isomorphic p3 p3' := by graph_iso (maxSearchNodes := 0)
-
-/-- error: graph_iso: replay exhausted: checking the transporter takes 12 steps but maxKernelSteps := 0 -/
-#guard_msgs in
-example : Isomorphic p3 p3' := by graph_iso (maxKernelSteps := 0)
 
 /-- error: Invalid configuration option `maxFoo` for `Tactic.Config` -/
 #guard_msgs in
@@ -123,7 +119,7 @@ so the uncoloured goals need no wrapping at the call.
 example : Graph.Isomorphic petersenG kneser52G := by graph_iso
 
 example : Graph.Isomorphic petersenG kneser52G := by
-  graph_iso (maxSearchNodes := 200000) (maxKernelSteps := 10000000)
+  graph_iso (maxSearchNodes := 200000)
 
 set_option maxRecDepth 100000 in
 example : ¬ Graph.Isomorphic petersenG prism5G := by graph_iso

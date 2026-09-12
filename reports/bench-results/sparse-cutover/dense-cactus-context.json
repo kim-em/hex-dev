@@ -1,0 +1,22 @@
+{
+  "command": [
+    "taskset",
+    "-c",
+    "2",
+    "uv",
+    "run",
+    "--no-project",
+    "--with",
+    "matplotlib==3.11.1",
+    "bash",
+    "scripts/bench/graphiso_cactus_sweep.sh",
+    "sparse output normalization without a minimum graph order"
+  ],
+  "cpu": 2,
+  "started": 1788944273.638423,
+  "load": [
+    1.306640625,
+    1.76513671875,
+    1.27587890625
+  ]
+}

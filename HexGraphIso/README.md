@@ -70,9 +70,6 @@ example : ¬ Isomorphic p3c k3c := by graph_iso
 - `Aut.gens`, `Aut.orbits`, `Aut.numOrbits` and `Aut.order` are the four
   fields on their own, for a caller who wants one of them and not the
   traversals the others cost.
-- `checkIso?` is the replay-bounded permutation check. `ReplayLimits`
-  bounds kernel replay by `maxKernelSteps`, and exhaustion returns
-  `none`, never evidence of non-isomorphism.
 - `Nauty.certifyKey?` produces a canonical-key certificate and
   `Nauty.checkCanon` replays it against the graph. `Nauty.checkDiff`
   reports that two replayed keys differ, which is what refutes
@@ -86,8 +83,8 @@ example : ¬ Isomorphic p3c k3c := by graph_iso
   otherwise by replaying one canonical-key certificate per graph
   (`Kernel.checkKey`). `set_option trace.graph_iso true` names the route
   a call took. The limits `(maxSearchNodes := ...)`,
-  `(maxCertRecords := ...)` and `(maxKernelSteps := ...)` may be given
-  in any order and default to `100000`, `100000` and `5000000`.
+  `(maxCertRecords := ...)` may be given in either order; both default to
+  `100000`. Kernel replay uses Lean's actual resource controls.
 
 # Verification
 

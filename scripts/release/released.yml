@@ -493,7 +493,7 @@ repos:
     pins: [hex-basic, hex-perm-group]
     lakefile: toml
 
-  # `HexGraph` is a one-file graph representation with no SPEC surface of its
+  # `HexGraph` supplies dense and sparse graph representations with no SPEC surface of its
   # own, and `hex-graph-iso` is its only consumer, so it rides into this
   # repository through `extra_paths` rather than becoming a repository, a CI
   # workflow, a token slot and an aggregate-README row of its own. The released
@@ -503,7 +503,8 @@ repos:
   # duplicated across two mirrors.
   #
   # The pins are the published part of the closure `HexGraphIso` reaches:
-  # `HexBasic` directly, and `HexMatrix` through `HexGraph.Basic`. The
+  # `HexBasic` directly, `HexMatrix` through `HexGraph.Basic`, and
+  # `HexPermGroup` through sparse relabelling and automorphism operations. The
   # vendored nauty source and both nauty comparators -- the shim behind
   # `scripts/oracle/graphiso_nauty.py` and the in-process
   # `Hex.BenchOracle.Nauty` binding -- stay in this monorepo with every other
@@ -517,7 +518,7 @@ repos:
       zulip: https://leanprover.zulipchat.com/#narrow/channel/579630-Project-announcements/topic/Hex.3A.20graph.20isomorphism.20via.20a.20formalization.20of.20.60nauty.60/near/621968237
     lib: HexGraphIso
     test_modules: [HexGraphIso.TestGraphs, HexGraphIso.TacticTests,
-      HexGraphIso.ModuleBoundaryTests]
+      HexGraphIso.ModuleBoundaryTests, HexGraphIso.SparseTests]
     umbrella: true
     spec: hex-graph-iso
     extra_paths:
@@ -528,7 +529,7 @@ repos:
 
   - repo: leanprover/hex-graph-iso-mathlib
     lib: HexGraphIsoMathlib
-    test_modules: [HexGraphIsoMathlib.TacticTests]
+    test_modules: [HexGraphIsoMathlib.TacticTests, HexGraphIsoMathlib.SparseTacticTests]
     umbrella: true
     spec: hex-graph-iso-mathlib
     pins: [hex-basic, hex-matrix, hex-perm-group, hex-perm-group-mathlib, hex-graph-iso]

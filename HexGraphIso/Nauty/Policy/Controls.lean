@@ -18,12 +18,12 @@ namespace Hex.GraphIso.Nauty
 variable {n : Nat}
 
 /-- Admitting a generator retains the first-path ancestor. -/
-theorem admit_gca (st : Search n) : (admit st).gcaFirst = st.gcaFirst := by
+theorem admit_gca {κ : Type} (st : SearchState n κ) : (admit st).gcaFirst = st.gcaFirst := by
   unfold admit pushAuto
   simp only [Id.run_pure]
   split <;> rfl
 
-private theorem pruneReturn_gca (level : Nat) (st : Search n) :
+private theorem pruneReturn_gca {κ : Type} (level : Nat) (st : SearchState n κ) :
     (pruneReturn level st).2.gcaFirst = st.gcaFirst := by
   unfold pruneReturn pushAuto
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
@@ -31,7 +31,7 @@ private theorem pruneReturn_gca (level : Nat) (st : Search n) :
   all_goals rfl
 
 /-- Leaf actions preserve the ancestor shared with the first path. -/
-theorem leafExit_gca (leaf : Leaf) (level : Nat) (st : Search n) :
+theorem leafExit_gca {κ : Type} (leaf : Leaf) (level : Nat) (st : SearchState n κ) :
     (leafExit leaf level st).2.gcaFirst = st.gcaFirst := by
   cases leaf <;> unfold leafExit
   all_goals simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
@@ -42,19 +42,19 @@ theorem leafExit_gca (leaf : Leaf) (level : Nat) (st : Search n) :
     | exact pruneReturn_gca level _
 
 /-- Admitting a generator retains the canonical ancestor. -/
-theorem admit_canon (st : Search n) : (admit st).gcaCanon = st.gcaCanon := by
+theorem admit_canon {κ : Type} (st : SearchState n κ) : (admit st).gcaCanon = st.gcaCanon := by
   unfold admit pushAuto
   simp only [Id.run_pure]
   split <;> rfl
 
 /-- Admitting a generator retains the canonical labelling. -/
-theorem admit_ref (st : Search n) : (admit st).canonlab = st.canonlab := by
+theorem admit_ref {κ : Type} (st : SearchState n κ) : (admit st).canonlab = st.canonlab := by
   unfold admit pushAuto
   simp only [Id.run_pure]
   split <;> rfl
 
 /-- A canonical automorphism return retains its reference labelling. -/
-theorem autoCanon_ref (level : Nat) (st : Search n) :
+theorem autoCanon_ref {κ : Type} (level : Nat) (st : SearchState n κ) :
     (leafExit .autoCanon level st).2.canonlab = st.canonlab := by
   unfold leafExit
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
@@ -62,7 +62,7 @@ theorem autoCanon_ref (level : Nat) (st : Search n) :
   all_goals exact admit_ref _
 
 /-- A canonical automorphism return retains its canonical ancestor. -/
-theorem autoCanon_ancestor (level : Nat) (st : Search n) :
+theorem autoCanon_ancestor {κ : Type} (level : Nat) (st : SearchState n κ) :
     (leafExit .autoCanon level st).2.gcaCanon = st.gcaCanon := by
   unfold leafExit
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
@@ -70,7 +70,7 @@ theorem autoCanon_ancestor (level : Nat) (st : Search n) :
   all_goals exact admit_canon _
 
 /-- The shared prune tail retains the canonical ancestor. -/
-theorem pruneReturn_canon (level : Nat) (st : Search n) :
+theorem pruneReturn_canon {κ : Type} (level : Nat) (st : SearchState n κ) :
     (pruneReturn level st).2.gcaCanon = st.gcaCanon := by
   unfold pruneReturn pushAuto
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
@@ -78,18 +78,18 @@ theorem pruneReturn_canon (level : Nat) (st : Search n) :
   all_goals rfl
 
 /-- Parent recovery retains the stored canonical labelling. -/
-theorem recover_ref (inf level : Nat) (st : Search n) :
+theorem recover_ref {κ : Type} (inf level : Nat) (st : SearchState n κ) :
     (Nauty.recover inf level st).canonlab = st.canonlab := by
   unfold Nauty.recover recoverLevels recoverPtn
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.canonlab]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite SearchState.canonlab]
   repeat' split
   all_goals rfl
 
 /-- Code comparison retains the ancestor of the canonical path. -/
-theorem compare_canon (level code : Nat) (st : Search n) :
+theorem compare_canon {κ : Type} (level code : Nat) (st : SearchState n κ) :
     (compareCodes level code st).gcaCanon = st.gcaCanon := by
   unfold compareCodes
-  simp only [Id.run_pure, apply_ite Id.run, apply_ite Search.gcaCanon, ite_self]
+  simp only [Id.run_pure, apply_ite Id.run, apply_ite SearchState.gcaCanon, ite_self]
 
 /-- Target selection retains the ancestor of the canonical path. -/
 theorem target_canon (first : Bool) (ctx : Ctx n) (tcLevel level numcells : Nat)
@@ -102,24 +102,24 @@ theorem classify_canon (ctx : Ctx n) (level numcells : Nat) (st : Search n) :
     (classify ctx level numcells st).2.gcaCanon = st.gcaCanon := by
   unfold classify
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd, scatter_eq,
-    apply_ite Search.gcaCanon, ite_self]
+    apply_ite SearchState.gcaCanon, ite_self]
 
 /-- Testing a small cell retains the ancestor of the canonical path. -/
-theorem cheap_canon (first : Bool) (level : Nat) (st : Search n) :
+theorem cheap_canon {κ : Type} (first : Bool) (level : Nat) (st : SearchState n κ) :
     (cheapCheck first level st).gcaCanon = st.gcaCanon := by
   unfold cheapCheck
   split <;> rfl
 
 /-- Recovery clamps the canonical ancestor to the receiving sweep. -/
-theorem recover_canon {inf : Nat} (level : Nat) (st : Search n) :
+theorem recover_canon {κ : Type} {inf : Nat} (level : Nat) (st : SearchState n κ) :
     (Nauty.recover inf level st).gcaCanon = min level st.gcaCanon := by
   unfold Nauty.recover recoverLevels recoverPtn
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.gcaCanon]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite SearchState.gcaCanon]
   repeat' split
   all_goals omega
 
 /-- The recovered canonical ancestor is no deeper than its sweep. -/
-theorem recover_canon_le {inf : Nat} (level : Nat) (st : Search n) :
+theorem recover_canon_le {κ : Type} {inf : Nat} (level : Nat) (st : SearchState n κ) :
     (Nauty.recover inf level st).gcaCanon ≤ level := by
   rw [recover_canon]
   exact Nat.min_le_left _ _
@@ -132,7 +132,7 @@ theorem gcaPolicy (ctx : Ctx n) (inf tcLevel : Nat) :
     intro level code st
     change (compareCodes level code st).gcaFirst = st.gcaFirst
     unfold compareCodes
-    simp only [Id.run_pure, apply_ite Id.run, apply_ite Search.gcaFirst, ite_self]
+    simp only [Id.run_pure, apply_ite Id.run, apply_ite SearchState.gcaFirst, ite_self]
   target := by
     intro level numcells st
     change (chooseTarget false ctx tcLevel level numcells st).2.2.2.gcaFirst = st.gcaFirst
@@ -142,7 +142,7 @@ theorem gcaPolicy (ctx : Ctx n) (inf tcLevel : Nat) :
     change (classify ctx level numcells st).2.gcaFirst = st.gcaFirst
     unfold classify
     simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd, scatter_eq,
-      apply_ite Search.gcaFirst, ite_self]
+      apply_ite SearchState.gcaFirst, ite_self]
   leaf := leafExit_gca
   cheap := by
     intro first level st
@@ -155,7 +155,7 @@ theorem gcaPolicy (ctx : Ctx n) (inf tcLevel : Nat) :
     intro level st
     change (Nauty.recover inf level st).gcaFirst = st.gcaFirst
     unfold Nauty.recover recoverLevels recoverPtn
-    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.gcaFirst, ite_self]
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite SearchState.gcaFirst, ite_self]
   afterSweep := by
     intro first level size index st
     change (afterSweep first level size index st).gcaFirst = st.gcaFirst

@@ -54,21 +54,21 @@ theorem workspace_leaf {st : Search n} (h : WorkspaceOk st) (leaf : Leaf) (level
     | apply workspace_prune; exact h
 
 /-- Leaf emission retains the capacity used by its pair insertion. -/
-theorem leafExit_capacity (leaf : Leaf) (level : Nat) (st : Search n) :
+theorem leafExit_capacity {κ : Type} (leaf : Leaf) (level : Nat) (st : SearchState n κ) :
     (leafExit leaf level st).2.wsCap = st.wsCap := by
-  have hp : ∀ (s : Search n) pair, (pushAuto s pair).wsCap = s.wsCap := by
+  have hp : ∀ (s : SearchState n κ) pair, (pushAuto s pair).wsCap = s.wsCap := by
     intros
     unfold pushAuto
     split <;> rfl
-  have ha : ∀ s : Search n, (admit s).wsCap = s.wsCap := by
+  have ha : ∀ s : SearchState n κ, (admit s).wsCap = s.wsCap := by
     intro s
     unfold admit
     simp only [Id.run_pure, hp]
-  have hr : ∀ s : Search n, (pruneReturn level s).2.wsCap = s.wsCap := by
+  have hr : ∀ s : SearchState n κ, (pruneReturn level s).2.wsCap = s.wsCap := by
     intro s
     unfold pruneReturn
     simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd,
-      apply_ite Search.wsCap, hp, ite_self]
+      apply_ite SearchState.wsCap, hp, ite_self]
   cases leaf <;> unfold leafExit
   all_goals simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd]
   all_goals repeat' split
@@ -82,6 +82,6 @@ theorem classify_capacity (ctx : Ctx n) (level numcells : Nat) (st : Search n) :
     (classify ctx level numcells st).2.wsCap = st.wsCap := by
   unfold classify
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd, scatter_eq,
-    apply_ite Search.wsCap, ite_self]
+    apply_ite SearchState.wsCap, ite_self]
 
 end Hex.GraphIso.Nauty

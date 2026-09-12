@@ -44,7 +44,7 @@ theorem firstFloor (ctx : Ctx n) (inf tcLevel bound : Nat) :
     unfold chooseTarget
     simp only [Bool.false_eq_true, ite_false, Bool.not_false, Bool.true_and,
       Id.run_pure, apply_ite Id.run, apply_ite Prod.snd,
-      apply_ite Search.allsamelevel, apply_ite Search.eqlevFirst]
+      apply_ite SearchState.allsamelevel, apply_ite SearchState.eqlevFirst]
     repeat' split
     all_goals exact ⟨h.1, by first | exact h.2 | omega⟩
   classify := by

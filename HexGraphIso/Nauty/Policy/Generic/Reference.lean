@@ -12,11 +12,11 @@ public section
 
 namespace Hex.GraphIso.Nauty.Generic
 
-variable {n : Nat} {σ α : Type} [Policy σ n]
+variable {n : Nat} {σ α : Type} {γ : Type} [Policy σ n (γ := γ)]
 
 /-- Local operations outside the first descent preserve a projection
 of the policy state, such as the first labelling, codes, and target array. -/
-structure ReferencePolicy (ctx : Ctx n) (inf tcLevel : Nat) (project : σ → α) : Prop where
+structure ReferencePolicy (ctx : γ) (inf tcLevel : Nat) (project : σ → α) : Prop where
   visit : ∀ level numcells st, project (Policy.visit ctx level numcells st).2.2 = project st
   compare : ∀ level code st, project (Policy.compareCodes (n := n) level code st) = project st
   target : ∀ level numcells st,
@@ -30,7 +30,7 @@ structure ReferencePolicy (ctx : Ctx n) (inf tcLevel : Nat) (project : σ → α
   afterSweep : ∀ first level size index st,
     project (Policy.afterSweep (n := n) first level size index st) = project st
 
-variable {ctx : Ctx n} {inf tcLevel : Nat} {project : σ → α}
+variable {ctx : γ} {inf tcLevel : Nat} {project : σ → α}
 
 /-- Equal projections preserve the invariant of matching a fixed reference. -/
 theorem ReferencePolicy.stable (h : ReferencePolicy ctx inf tcLevel project) (ref : α) :
@@ -45,7 +45,7 @@ theorem ReferencePolicy.stable (h : ReferencePolicy ctx inf tcLevel project) (re
   child := fun first level tc tv st hin => (h.child first level tc tv st).trans hin
   leave := fun tv st hin => (h.leave tv st).trans hin
   recover := fun level st hin => (h.recover level st).trans hin
-  afterSweep := fun first level size index st hin => (h.afterSweep first level size index st).trans hin
+  afterSweep := fun level size index st hin => (h.afterSweep false level size index st).trans hin
 
 /-- An off-path node preserves the projected reference fields. -/
 theorem node_reference (h : ReferencePolicy ctx inf tcLevel project)

@@ -26,7 +26,7 @@ namespace Hex.GraphIso.Nauty
 variable {n k : Nat}
 
 /-- The refinement state at a search node, before target bookkeeping. -/
-def Search.refined (ctx : Ctx n) (level numcells : Nat) (st : Search n) : RefineSt n :=
+def SearchState.refined (ctx : Ctx n) (level numcells : Nat) (st : Search n) : RefineSt n :=
   refine ctx level st.lab st.ptn st.active numcells
 
 /-- First-path preparation retains the refined partition and writes its target. -/

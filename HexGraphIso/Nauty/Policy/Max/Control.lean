@@ -31,12 +31,12 @@ theorem Loop.canonlevel (ctx : Ctx n) (tcLevel : Nat) (l : Loop n) :
     (l.prepare ctx tcLevel).2.2.2.2.canonlevel = l.node.entry.canonlevel := by
   unfold Loop.prepare
   dsimp only
-  simp only [cheapCheck, apply_ite Search.canonlevel, ite_self]
+  simp only [cheapCheck, apply_ite SearchState.canonlevel, ite_self]
   cases hf : l.first
   · simp only [Bool.false_eq_true, ↓reduceIte]
     rw [chooseTarget_fields]
     unfold compareCodes
-    simp only [Id.run_pure, apply_ite Id.run, apply_ite Search.canonlevel, ite_self]
+    simp only [Id.run_pure, apply_ite Id.run, apply_ite SearchState.canonlevel, ite_self]
     rfl
   · simp only [↓reduceIte]
     rw [chooseFirst_fields]
@@ -47,12 +47,12 @@ theorem Loop.coset (ctx : Ctx n) (tcLevel : Nat) (l : Loop n) :
     (l.prepare ctx tcLevel).2.2.2.2.cosetindex = l.node.entry.cosetindex := by
   unfold Loop.prepare
   dsimp only
-  simp only [cheapCheck, apply_ite Search.cosetindex, ite_self]
+  simp only [cheapCheck, apply_ite SearchState.cosetindex, ite_self]
   cases hf : l.first
   · simp only [Bool.false_eq_true, ↓reduceIte]
     rw [chooseTarget_fields]
     unfold compareCodes
-    simp only [Id.run_pure, apply_ite Id.run, apply_ite Search.cosetindex, ite_self]
+    simp only [Id.run_pure, apply_ite Id.run, apply_ite SearchState.cosetindex, ite_self]
     rfl
   · simp only [↓reduceIte]
     rw [chooseFirst_fields]

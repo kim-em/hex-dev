@@ -1,0 +1,22 @@
+{
+  "command": [
+    "/run/current-system/sw/bin/python3",
+    "scripts/bench/graphiso_sweep.py",
+    "--corpus",
+    "/tmp/hex-sparse-corpus",
+    "--isograph",
+    "/tmp/IsoGraph",
+    "--passes",
+    "2",
+    "--only",
+    "hex-sparse-canon:cfi,hex-sparse-canon:circulant-12,hex-sparse-canon:circulant-1248,hex-sparse-canon:cubic,hex-sparse-canon:grid,hex-sparse-canon:hadamard,hex-sparse-canon:hypercube,hex-sparse-canon:johnson,hex-sparse-canon:kneser,hex-sparse-canon:latin,hex-sparse-canon:lattice,hex-sparse-canon:multipede,hex-sparse-canon:paley,hex-sparse-canon:projective-plane,hex-sparse-canon:random,hex-sparse-canon:shrunken-multipede,hex-sparse-canon:sparse-random,hex-sparse-canon:steiner,hex-sparse-canon:tree,hex-sparse-canon:union,hex-sparse-run:cfi,hex-sparse-run:circulant-12,hex-sparse-run:circulant-1248,hex-sparse-run:cubic,hex-sparse-run:grid,hex-sparse-run:hadamard,hex-sparse-run:hypercube,hex-sparse-run:johnson,hex-sparse-run:kneser,hex-sparse-run:latin,hex-sparse-run:lattice,hex-sparse-run:multipede,hex-sparse-run:paley,hex-sparse-run:projective-plane,hex-sparse-run:random,hex-sparse-run:shrunken-multipede,hex-sparse-run:sparse-random,hex-sparse-run:steiner,hex-sparse-run:tree,hex-sparse-run:union,hex-sparse-build:cfi,hex-sparse-build:circulant-12,hex-sparse-build:circulant-1248,hex-sparse-build:cubic,hex-sparse-build:grid,hex-sparse-build:hadamard,hex-sparse-build:hypercube,hex-sparse-build:johnson,hex-sparse-build:kneser,hex-sparse-build:latin,hex-sparse-build:lattice,hex-sparse-build:multipede,hex-sparse-build:paley,hex-sparse-build:projective-plane,hex-sparse-build:random,hex-sparse-build:shrunken-multipede,hex-sparse-build:sparse-random,hex-sparse-build:steiner,hex-sparse-build:tree,hex-sparse-build:union,hex-sparse-output:cfi,hex-sparse-output:circulant-12,hex-sparse-output:circulant-1248,hex-sparse-output:cubic,hex-sparse-output:grid,hex-sparse-output:hadamard,hex-sparse-output:hypercube,hex-sparse-output:johnson,hex-sparse-output:kneser,hex-sparse-output:latin,hex-sparse-output:lattice,hex-sparse-output:multipede,hex-sparse-output:paley,hex-sparse-output:projective-plane,hex-sparse-output:random,hex-sparse-output:shrunken-multipede,hex-sparse-output:sparse-random,hex-sparse-output:steiner,hex-sparse-output:tree,hex-sparse-output:union",
+    "--merge-into",
+    "reports/bench-results/sparse-optimization-2/comparison-seed.jsonl",
+    "--out",
+    "reports/bench-results/hexgraphiso-comparison-optimized2-chungus2.jsonl",
+    "--raw-out",
+    "reports/bench-results/hexgraphiso-optimized2-chungus2.runs.jsonl"
+  ],
+  "binary_sha256": "d51d375fcbfffd7c0f8403e88b679db0dfb6d1289b72bfd73516f116b092f88c",
+  "seed_sha256": "3696ad109d5bdf2d82fe16c932ea74ce3da158377b88bfb98d2c2a8652db52ea"
+}

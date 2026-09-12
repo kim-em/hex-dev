@@ -140,20 +140,20 @@ private theorem ite_or {α : Type} {P : α → Prop} {c : Prop}
   · exact hb
 
 /-- `recover` never changes the current labelling. -/
-theorem recover_lab {n : Nat} (inf level : Nat) (st : Search n) :
+theorem recover_lab {n : Nat} (inf level : Nat) (st : SearchState n κ) :
     (recover inf level st).lab = st.lab := by
   rw [recover, recoverLevels, recoverPtn]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.lab, ite_self]
+    apply_ite SearchState.lab, ite_self]
 
-private theorem recover_canonlab {n : Nat} (inf level : Nat) (st : Search n) :
+private theorem recover_canonlab {n : Nat} (inf level : Nat) (st : SearchState n κ) :
     (recover inf level st).canonlab = st.canonlab := by
   rw [recover, recoverLevels, recoverPtn]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.canonlab, ite_self]
+    apply_ite SearchState.canonlab, ite_self]
 
 private theorem recover_ptn_foldl {n : Nat} (inf level : Nat)
-    (st : Search n) :
+    (st : SearchState n κ) :
     (recover inf level st).ptn =
       (List.range n).foldl
         (fun r i => if r[i]! > level then r.set! i inf else r)
@@ -166,19 +166,19 @@ private theorem recover_ptn_foldl {n : Nat} (inf level : Nat)
           pure (ForInStep.yield r)) : Id (Array Nat)) := by
     rw [recover, recoverLevels, recoverPtn]
     simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-      apply_ite Search.ptn, ite_self]
+      apply_ite SearchState.ptn, ite_self]
     rfl
   rw [h1, forIn_range_eq', forIn_reopen_eq]
 
 /-- `recover` reopens exactly the entries above its receiving level. -/
-theorem recover_ptn {n : Nat} (inf level : Nat) (st : Search n)
+theorem recover_ptn {n : Nat} (inf level : Nat) (st : SearchState n κ)
     (q : Nat) :
     (recover inf level st).ptn[q]! =
       if q < n ∧ st.ptn[q]! > level then inf else st.ptn[q]! := by
   rw [recover_ptn_foldl, foldl_reopen_getElem]
 
 /-- Reopening a partition preserves its array size. -/
-theorem recover_ptn_size {n : Nat} (inf level : Nat) (st : Search n) :
+theorem recover_ptn_size {n : Nat} (inf level : Nat) (st : SearchState n κ) :
     (recover inf level st).ptn.size = st.ptn.size := by
   rw [recover_ptn_foldl, foldl_reopen_size]
 
@@ -255,7 +255,7 @@ theorem recover_out {G : Colored n k} {level : Nat}
   · left
     rw [recover, recoverLevels, recoverPtn]
     simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-      apply_ite Search.firstlab, ite_self]
+      apply_ite SearchState.firstlab, ite_self]
   · left
     rw [recover_canonlab]
   · rw [recover_canonlab]
@@ -265,27 +265,27 @@ private theorem compareCodes_lab (level code : Nat) (st : Search n) :
     (compareCodes level code st).lab = st.lab := by
   rw [compareCodes]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.lab, ite_self]
+    apply_ite SearchState.lab, ite_self]
 
 private theorem compareCodes_ptn (level code : Nat) (st : Search n) :
     (compareCodes level code st).ptn = st.ptn := by
   rw [compareCodes]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.ptn, ite_self]
+    apply_ite SearchState.ptn, ite_self]
 
 private theorem compareCodes_canonlab (level code : Nat)
     (st : Search n) :
     (compareCodes level code st).canonlab = st.canonlab := by
   rw [compareCodes]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.canonlab, ite_self]
+    apply_ite SearchState.canonlab, ite_self]
 
 private theorem compareCodes_firstlab (level code : Nat)
     (st : Search n) :
     (compareCodes level code st).firstlab = st.firstlab := by
   rw [compareCodes]
   simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-    apply_ite Search.firstlab, ite_self]
+    apply_ite SearchState.firstlab, ite_self]
 
 /-- The production initial state satisfies the partition invariant. -/
 theorem root_searchOk {k : Nat} (G : Colored n k)

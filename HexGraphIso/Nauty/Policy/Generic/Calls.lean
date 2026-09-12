@@ -22,20 +22,20 @@ contract; no additional recursion or executable search is introduced.
 
 namespace Hex.GraphIso.Nauty.Generic
 
-variable {n : Nat} {σ : Type} [Policy σ n]
+variable {n : Nat} {σ : Type} {γ : Type} [Policy σ n (γ := γ)]
 
 /-- A node continuation at a fixed recursion bound. -/
-def nodeCall (ctx : Ctx n) (inf tcLevel fuel : Nat) : NodeFn σ :=
+def nodeCall (ctx : γ) (inf tcLevel fuel : Nat) : NodeFn σ :=
   fun first level numcells st => node first ctx inf tcLevel fuel level numcells st
 
 /-- A sweep continuation at fixed node and cursor bounds. -/
-def sweepCall (ctx : Ctx n) (inf tcLevel fuel cfuel : Nat) : SweepFn σ n :=
+def sweepCall (ctx : γ) (inf tcLevel fuel cfuel : Nat) : SweepFn σ n :=
   fun first level numcells tc tv1 cursor cell index st =>
     sweep first ctx inf tcLevel fuel cfuel level numcells tc tv1 cursor cell index st
 
 /-- Call equations are unconditional; the desired postcondition follows
 when the original precondition holds. -/
-def callContract (ctx : Ctx n) (inf tcLevel : Nat) (C : Contract σ n) : Contract σ n where
+def callContract (ctx : γ) (inf tcLevel : Nat) (C : Contract σ n) : Contract σ n where
   nodePre _ _ _ _ _ := True
   nodePost fuel first level numcells st result :=
     result = node first ctx inf tcLevel fuel level numcells st ∧
@@ -47,7 +47,7 @@ def callContract (ctx : Ctx n) (inf tcLevel : Nat) (C : Contract σ n) : Contrac
         C.sweepPost fuel cfuel first level numcells tc tv1 cursor cell index st result)
 
 /-- Local induction rules expressed using the actual recursive calls. -/
-structure CallPolicy (ctx : Ctx n) (inf tcLevel : Nat) (C : Contract σ n) : Prop where
+structure CallPolicy (ctx : γ) (inf tcLevel : Nat) (C : Contract σ n) : Prop where
   node_zero : ∀ first level numcells st, C.nodePre 0 first level numcells st →
     C.nodePost 0 first level numcells st (.fuel, st)
   node_step : ∀ fuel, C.sweepValid fuel (n + 1) (sweepCall ctx inf tcLevel fuel (n + 1)) →
@@ -69,7 +69,7 @@ structure CallPolicy (ctx : Ctx n) (inf tcLevel : Nat) (C : Contract σ n) : Pro
         (sweepStep inf (nodeCall ctx inf tcLevel fuel) (sweepCall ctx inf tcLevel fuel cfuel)
           first level numcells tc tv1 tv cell index st)
 
-variable {ctx : Ctx n} {inf tcLevel : Nat} {C : Contract σ n}
+variable {ctx : γ} {inf tcLevel : Nat} {C : Contract σ n}
 
 /-- The call equations expose the actual node continuation and its contract. -/
 theorem callContract.node_eq {fuel : Nat} {next : NodeFn σ}

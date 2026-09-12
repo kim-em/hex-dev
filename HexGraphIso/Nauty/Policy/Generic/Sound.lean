@@ -40,7 +40,7 @@ structure Contract (σ : Type) (n : Nat) where
   sweepPost : Nat → Nat → Bool → Nat → Nat → Nat → Nat →
     Option Nat → VSet n → Nat → σ → Exit × Nat × σ → Prop
 
-variable {n : Nat} {σ : Type} [Policy σ n]
+variable {n : Nat} {σ : Type} {γ : Type} [Policy σ n (γ := γ)]
 
 /-- A continuation satisfies the node contract at its supplied fuel. -/
 def Contract.nodeValid (C : Contract σ n) (fuel : Nat) (f : NodeFn σ) : Prop :=
@@ -57,7 +57,7 @@ def Contract.sweepValid (C : Contract σ n) (fuel cfuel : Nat)
 
 /-- Local obligations sufficient for the contracts of every recursive call.
 The step obligations use only the contracts of their continuations. -/
-structure SoundPolicy (ctx : Ctx n) (inf tcLevel : Nat) (C : Contract σ n) : Prop where
+structure SoundPolicy (ctx : γ) (inf tcLevel : Nat) (C : Contract σ n) : Prop where
   /-- An exhausted node reports exhaustion without changing its state. -/
   node_zero : ∀ first level numcells st, C.nodePre 0 first level numcells st →
     C.nodePost 0 first level numcells st (.fuel, st)
@@ -84,7 +84,7 @@ structure SoundPolicy (ctx : Ctx n) (inf tcLevel : Nat) (C : Contract σ n) : Pr
       C.sweepPost fuel (cfuel + 1) first level numcells tc tv1 (some tv) cell index st
         (sweepStep inf descend next first level numcells tc tv1 tv cell index st)
 
-variable {ctx : Ctx n} {inf tcLevel : Nat} {C : Contract σ n}
+variable {ctx : γ} {inf tcLevel : Nat} {C : Contract σ n}
 
 mutual
 

@@ -27,11 +27,11 @@ public section
 
 namespace Hex.GraphIso.Nauty
 
-variable {n k : Nat}
+variable {n k : Nat} {κ : Type}
 
 /-- A returned generator retains its reference endpoint or its strictly
 smaller coset image. Cleanup does not erase this evidence. -/
-inductive RefReturn (ctx : Ctx n) (target : Nat) (out : Search n) : Prop where
+inductive RefReturn (ctx : Ctx n) (target : Nat) (out : SearchState n κ) : Prop where
   | first (returned : target = out.gcaFirst)
       (carrier : LabelCarrier ctx out.firstlab out.lab out.genTrace)
   | canon (returned : target = out.gcaCanon)
@@ -41,7 +41,7 @@ inductive RefReturn (ctx : Ctx n) (target : Nat) (out : Search n) : Prop where
 
 /-- A comparison prune can only return below one of its two saved
 subtree boundaries. This statement has no generator premise. -/
-theorem pruneReturn_boundary {level target : Nat} {st : Search n} {short : Bool}
+theorem pruneReturn_boundary {level target : Nat} {st : SearchState n κ} {short : Bool}
     (he : (pruneReturn level st).1 = .unwind target short) :
     st.noncheaplevel ≤ target + 1 ∨ st.allsamelevel ≤ target + 1 := by
   unfold pruneReturn pushAuto at he
@@ -125,7 +125,7 @@ theorem leaf_refReturn {G : Colored n k} {ctx : Ctx n} {level numcells target : 
 
 /-- Every non-generator leaf exit is bounded by a saved subtree
 boundary, including installation of a better canonical leaf. -/
-theorem leaf_boundary {leaf : Leaf} {level target : Nat} {st : Search n} {short : Bool}
+theorem leaf_boundary {leaf : Leaf} {level target : Nat} {st : SearchState n κ} {short : Bool}
     (hf : leaf ≠ .autoFirst) (hc : leaf ≠ .autoCanon)
     (he : (leafExit leaf level st).1 = .unwind target short) :
     (leafExit leaf level st).2.noncheaplevel ≤ target + 1 ∨
@@ -151,7 +151,7 @@ theorem leaf_boundary {leaf : Leaf} {level target : Nat} {st : Search n} {short 
       exact hh
 
 /-- Fixed-point cleanup preserves the emitted reference carrier. -/
-theorem RefReturn.fixed {ctx : Ctx n} {target : Nat} {st : Search n}
+theorem RefReturn.fixed {ctx : Ctx n} {target : Nat} {st : SearchState n κ}
     (h : RefReturn ctx target st) (fixed : VSet n) :
     RefReturn ctx target { st with fixedpts := fixed } := by
   cases h with
@@ -188,7 +188,7 @@ theorem EarlyReturn.reference {G : Colored n k} {ctx : Ctx n} {target bound : Na
   exact hr.fixed _
 
 /-- A short-prune request never targets the emitting first ancestor. -/
-theorem leaf_short_first {leaf : Leaf} {level target : Nat} {st : Search n}
+theorem leaf_short_first {leaf : Leaf} {level target : Nat} {st : SearchState n κ}
     (hpos : 0 < target) (he : (leafExit leaf level st).1 = .unwind target true) :
     target ≠ (leafExit leaf level st).2.gcaFirst := by
   rw [leafExit_gca]

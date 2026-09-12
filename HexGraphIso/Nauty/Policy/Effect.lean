@@ -16,16 +16,16 @@ public section
 
 namespace Hex.GraphIso.Nauty
 
-variable {n k : Nat}
+variable {n k : Nat} {κ : Type}
 
 /-- Code comparison changes no partition or leaf-reference array. -/
-theorem compareCodes_frame (level code : Nat) (st : Search n) :
+theorem compareCodes_frame (level code : Nat) (st : SearchState n κ) :
     let out := compareCodes level code st
     out.lab = st.lab ∧ out.ptn = st.ptn ∧
       out.firstlab = st.firstlab ∧ out.canonlab = st.canonlab := by
   unfold compareCodes
-  simp only [Id.run_pure, apply_ite Id.run, apply_ite Search.lab,
-    apply_ite Search.ptn, apply_ite Search.firstlab, apply_ite Search.canonlab, ite_self]
+  simp only [Id.run_pure, apply_ite Id.run, apply_ite SearchState.lab,
+    apply_ite SearchState.ptn, apply_ite SearchState.firstlab, apply_ite SearchState.canonlab, ite_self]
   trivial
 
 /-- Target selection changes no partition or leaf-reference array. -/
@@ -36,12 +36,12 @@ theorem chooseTarget_frame (first : Bool) (ctx : Ctx n)
       out.firstlab = st.firstlab ∧ out.canonlab = st.canonlab := by
   unfold chooseTarget
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd,
-    apply_ite Search.lab, apply_ite Search.ptn, apply_ite Search.firstlab,
-    apply_ite Search.canonlab, ite_self]
+    apply_ite SearchState.lab, apply_ite SearchState.ptn, apply_ite SearchState.firstlab,
+    apply_ite SearchState.canonlab, ite_self]
   trivial
 
 /-- Only an internal classification continues the current node. -/
-theorem leafExit_done (leaf : Leaf) (level : Nat) (st : Search n) :
+theorem leafExit_done (leaf : Leaf) (level : Nat) (st : SearchState n κ) :
     (leafExit leaf level st).1 = .done ↔ leaf = .internal := by
   cases leaf <;> unfold leafExit
   all_goals simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.fst]
@@ -52,14 +52,14 @@ theorem leafExit_done (leaf : Leaf) (level : Nat) (st : Search n) :
   all_goals simp
 
 /-- Pruning returns an ancestor level without consuming recursion fuel. -/
-theorem pruneReturn_noFuel (level : Nat) (st : Search n) :
+theorem pruneReturn_noFuel (level : Nat) (st : SearchState n κ) :
     (pruneReturn level st).1 ≠ .fuel := by
   unfold pruneReturn
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.fst]
   split <;> (intro h; cases h)
 
 /-- Leaf actions return control without consuming recursion fuel. -/
-theorem leafExit_noFuel (leaf : Leaf) (level : Nat) (st : Search n) :
+theorem leafExit_noFuel (leaf : Leaf) (level : Nat) (st : SearchState n κ) :
     (leafExit leaf level st).1 ≠ .fuel := by
   cases leaf <;> unfold leafExit
   all_goals simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.fst]
@@ -87,12 +87,12 @@ theorem classify_frame (ctx : Ctx n) (level numcells : Nat) (st : Search n) :
       out.firstlab = st.firstlab ∧ out.canonlab = st.canonlab := by
   unfold classify
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd, scatter_eq]
-  simp only [apply_ite Search.lab, apply_ite Search.ptn,
-    apply_ite Search.firstlab, apply_ite Search.canonlab, ite_self]
+  simp only [apply_ite SearchState.lab, apply_ite SearchState.ptn,
+    apply_ite SearchState.firstlab, apply_ite SearchState.canonlab, ite_self]
   trivial
 
 /-- Admitting a generator does not change the partition or leaf references. -/
-theorem admit_frame (st : Search n) :
+theorem admit_frame (st : SearchState n κ) :
     (admit st).lab = st.lab ∧ (admit st).ptn = st.ptn ∧
       (admit st).firstlab = st.firstlab ∧ (admit st).canonlab = st.canonlab := by
   unfold admit pushAuto
@@ -100,7 +100,7 @@ theorem admit_frame (st : Search n) :
   split <;> exact ⟨rfl, rfl, rfl, rfl⟩
 
 /-- A pruning return changes neither the partition nor the leaf references. -/
-theorem pruneReturn_frame (level : Nat) (st : Search n) :
+theorem pruneReturn_frame (level : Nat) (st : SearchState n κ) :
     let out := (pruneReturn level st).2
     out.lab = st.lab ∧ out.ptn = st.ptn ∧
       out.firstlab = st.firstlab ∧ out.canonlab = st.canonlab := by
@@ -111,7 +111,7 @@ theorem pruneReturn_frame (level : Nat) (st : Search n) :
 
 /-- Processing a leaf preserves the current partition and first leaf;
 the canonical labelling is retained or replaced by the current labelling. -/
-theorem leafExit_frame (leaf : Leaf) (level : Nat) (st : Search n) :
+theorem leafExit_frame (leaf : Leaf) (level : Nat) (st : SearchState n κ) :
     let out := (leafExit leaf level st).2
     out.lab = st.lab ∧ out.ptn = st.ptn ∧ out.firstlab = st.firstlab ∧
       (out.canonlab = st.canonlab ∨ out.canonlab = st.lab) := by

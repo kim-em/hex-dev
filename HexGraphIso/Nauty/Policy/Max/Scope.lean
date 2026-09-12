@@ -65,7 +65,7 @@ theorem SweepInput.restore_scope {G : Colored n k} {ctx : Ctx n} {tcLevel fuel c
   have hcanon : ready.canonlab = raw.canonlab := by
     dsimp only [ready]
     unfold Nauty.recover recoverLevels recoverPtn
-    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.canonlab, ite_self]
+    simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite SearchState.canonlab, ite_self]
     dsimp only [left, middle]
     split <;> rfl
   have hfirst : ready.firstlab = left.firstlab :=

@@ -1,0 +1,3990 @@
+{
+  "before-sparse3072-run": [
+    {
+      "percent": 42.14,
+      "symbol": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)"
+    },
+    {
+      "percent": 21.88,
+      "symbol": "lean_copy_expand_array"
+    },
+    {
+      "percent": 6.43,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__0___redArg"
+    },
+    {
+      "percent": 3.62,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_cellEnd_go"
+    },
+    {
+      "percent": 3.27,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitCounts_spec__1___redArg"
+    },
+    {
+      "percent": 1.73,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitNontrivial_spec__1___redArg"
+    },
+    {
+      "percent": 1.65,
+      "symbol": "mi_malloc_small"
+    },
+    {
+      "percent": 1.61,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__2___redArg"
+    },
+    {
+      "percent": 1.39,
+      "symbol": "mi_free"
+    },
+    {
+      "percent": 1.23,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitNontrivial_spec__0___redArg"
+    },
+    {
+      "percent": 0.96,
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_forIn_x27Unsafe_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__3"
+    },
+    {
+      "percent": 0.96,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_updatecan_spec__0___redArg"
+    },
+    {
+      "percent": 0.96,
+      "symbol": "lean_dec_ref_cold"
+    },
+    {
+      "percent": 0.59,
+      "symbol": "std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::push_back(char)"
+    },
+    {
+      "percent": 0.51,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_HexGraphIso_SparseBench_0__Hex_GraphIsoSparseBench_read_spec__0___redArg"
+    },
+    {
+      "percent": 0.5,
+      "symbol": "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeTR_go___redArg"
+    },
+    {
+      "percent": 0.5,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitCounts_spec__0___redArg"
+    },
+    {
+      "percent": 0.5,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_Sort_partition_spec__0___redArg"
+    },
+    {
+      "percent": 0.46,
+      "symbol": "mi_malloc"
+    },
+    {
+      "percent": 0.46,
+      "symbol": "cfree@GLIBC_2.2.5"
+    },
+    {
+      "percent": 0.46,
+      "symbol": "_mi_malloc_generic(mi_theap_s*, unsigned long, unsigned long, unsigned long*)"
+    },
+    {
+      "percent": 0.42,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_splitCounts"
+    },
+    {
+      "percent": 0.42,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_splitSingleton"
+    },
+    {
+      "percent": 0.42,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_Sort_partition_spec__1___redArg"
+    },
+    {
+      "percent": 0.35,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_refine_spec__1___redArg"
+    },
+    {
+      "percent": 0.35,
+      "symbol": "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_splitRevAt_go___redArg"
+    },
+    {
+      "percent": 0.31,
+      "symbol": "l_List_reverseAux___redArg"
+    },
+    {
+      "percent": 0.27,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__1___redArg"
+    },
+    {
+      "percent": 0.23,
+      "symbol": "lp_Hex___private_HexGraphIso_SparseBench_0__Hex_GraphIsoSparseBench_searchDigest"
+    },
+    {
+      "percent": 0.23,
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_mapMUnsafe_map___at___00Hex_GraphIso_Nauty_Sparse_Graph_ofGraph_spec__0"
+    },
+    {
+      "percent": 0.23,
+      "symbol": "malloc"
+    },
+    {
+      "percent": 0.21,
+      "symbol": "lean_apply_1"
+    },
+    {
+      "percent": 0.19,
+      "symbol": "__gmpz_mul_2exp"
+    },
+    {
+      "percent": 0.19,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitNontrivial_spec__2___redArg"
+    },
+    {
+      "percent": 0.19,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_VSet_erase"
+    },
+    {
+      "percent": 0.19,
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_forIn_x27Unsafe_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__3___lam__0"
+    },
+    {
+      "percent": 0.19,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitCounts_spec__2___redArg"
+    },
+    {
+      "percent": 0.15,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_refine_spec__2_spec__2___redArg"
+    },
+    {
+      "percent": 0.15,
+      "symbol": "lean_array_push"
+    },
+    {
+      "percent": 0.15,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_Sort_partition_spec__2_spec__2___redArg"
+    },
+    {
+      "percent": 0.15,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_RefineSt_hash___redArg"
+    },
+    {
+      "percent": 0.15,
+      "symbol": "lean_free_object"
+    },
+    {
+      "percent": 0.15,
+      "symbol": "lean::validate_utf8(unsigned char const*, unsigned long, unsigned long&, unsigned long&)"
+    },
+    {
+      "percent": 0.12,
+      "symbol": "__gmpz_realloc"
+    },
+    {
+      "percent": 0.12,
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_forIn_x27Unsafe_loop___at___00Hex_GraphIso_Nauty_Sparse_initialPartition_spec__2"
+    },
+    {
+      "percent": 0.12,
+      "symbol": "lp_Hex_List_filterTR_loop___at___00Hex_GraphIso_Nauty_Sparse_refine_spec__0"
+    },
+    {
+      "percent": 0.12,
+      "symbol": "__gmp_default_allocate"
+    },
+    {
+      "percent": 0.12,
+      "symbol": "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeSortTR_u2082_run___redArg"
+    },
+    {
+      "percent": 0.11,
+      "symbol": "lean::utf8_strlen(char const*, unsigned long)"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_updatecan_spec__1___redArg"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "l_List_toArrayAux___redArg"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "lean::mul2k(lean::mpz&, lean::mpz const&, unsigned int)"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "l_List_lengthTR___redArg"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "lean_inc_heartbeat"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_cellstarts_spec__0___redArg"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_Sort_partition_spec__3___redArg"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "__gmpz_clear"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "lean_mk_array"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "l_List_MergeSort_Internal_splitRevInTwo___redArg"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "lean::validate_utf8_one(unsigned char const*, unsigned long, unsigned long&)"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "lean_obj_once_cold"
+    },
+    {
+      "percent": 0.05,
+      "symbol": "l_Lean_Option_register___at___00__private_Lean_CoreM_0__Lean_initFn_00___x40_Lean_CoreM_1504562188____hygCtx___hyg_4__spec__0"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_initialPartition_spec__1___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lean_apply_2"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "memcpy@plt"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_VSet_insert"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_Sort_partition"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "__gmpz_init_set_ui"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_inverse_spec__0___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lean_list_to_array"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lean::mpz::mpz(unsigned int)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_cellEnd"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "realloc"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_Sort_pivot___lam__0"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_initial___lam__0___boxed"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "_mi_arenas_collect(bool, bool, mi_tld_s*)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_page_free_list_extend(mi_page_s*, unsigned long, unsigned long)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "__gmpz_add"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_arena_schedule_purge(mi_arena_s*, unsigned long, unsigned long)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeSortTR_u2082_run_x27___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lean_nat_shiftl"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "l_List_range_loop"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "__gmpn_lshift_x86_64"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "l_Nat_testBit"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "l_Nat_decLe___boxed"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lean_array_to_list_impl"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_page_queue_find_free_ex(mi_theap_s*, mi_page_queue_s*, bool)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "__memmove_avx512_unaligned_erms"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lean_mark_mt"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lean_st_ref_set"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "l___private_Lean_Data_Trie_0__Lean_Data_Trie_find_x3f_loop___redArg"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "l_Lean_PersistentHashMap_insertAux___at___00Lean_PersistentHashMap_insert___at___00Lean_Parser_SyntaxNodeKindSet_insert_spec__0_spec__0___redArg"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lean_nat_big_lt"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "_mi_page_retire(mi_page_s*)"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "_dl_relocate_object_no_relro"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "__GI___tunables_init"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "_dl_start"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "0xffffffffae201280"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "_start"
+    }
+  ],
+  "before-sparse3072-label": [
+    {
+      "percent": 14.23,
+      "symbol": "l_List_decidableBAll___redArg"
+    },
+    {
+      "percent": 13.13,
+      "symbol": "mi_free"
+    },
+    {
+      "percent": 12.91,
+      "symbol": "l_List_elem___redArg"
+    },
+    {
+      "percent": 12.56,
+      "symbol": "lean_array_to_list_impl"
+    },
+    {
+      "percent": 12.29,
+      "symbol": "lean_apply_2"
+    },
+    {
+      "percent": 6.59,
+      "symbol": "lean_inc_heartbeat"
+    },
+    {
+      "percent": 6.19,
+      "symbol": "lean_apply_1"
+    },
+    {
+      "percent": 6.12,
+      "symbol": "l_instDecidableEqFin___boxed"
+    },
+    {
+      "percent": 5.23,
+      "symbol": "lean_dec_ref_cold"
+    },
+    {
+      "percent": 3.03,
+      "symbol": "l_List_nodupDecidable___redArg___lam__0___boxed"
+    },
+    {
+      "percent": 2.47,
+      "symbol": "l_instBEqOfDecidableEq___redArg___lam__0___boxed"
+    },
+    {
+      "percent": 1.06,
+      "symbol": "lean_free_object"
+    },
+    {
+      "percent": 0.77,
+      "symbol": "mi_malloc_small"
+    },
+    {
+      "percent": 0.72,
+      "symbol": "mi_page_free_list_extend(mi_page_s*, unsigned long, unsigned long)"
+    },
+    {
+      "percent": 0.31,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_HexGraphIso_SparseBench_0__Hex_GraphIsoSparseBench_read_spec__0___redArg"
+    },
+    {
+      "percent": 0.3,
+      "symbol": "std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::push_back(char)"
+    },
+    {
+      "percent": 0.28,
+      "symbol": "lean::validate_utf8(unsigned char const*, unsigned long, unsigned long&, unsigned long&)"
+    },
+    {
+      "percent": 0.19,
+      "symbol": "lean_copy_expand_array"
+    },
+    {
+      "percent": 0.17,
+      "symbol": "mi_page_queue_find_free_ex(mi_theap_s*, mi_page_queue_s*, bool)"
+    },
+    {
+      "percent": 0.15,
+      "symbol": "_mi_malloc_generic(mi_theap_s*, unsigned long, unsigned long, unsigned long*)"
+    },
+    {
+      "percent": 0.12,
+      "symbol": "mi_page_extend_free(mi_theap_s*, mi_page_s*)"
+    },
+    {
+      "percent": 0.1,
+      "symbol": "mi_bitmap_setN(mi_bitmap_s*, unsigned long, unsigned long, unsigned long*)"
+    },
+    {
+      "percent": 0.1,
+      "symbol": "mi_bchunk_setN(mi_bchunk_s*, unsigned long, unsigned long, unsigned long*)"
+    },
+    {
+      "percent": 0.1,
+      "symbol": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "mi_bchunk_try_find_and_clear(mi_bchunk_s*, unsigned long*)"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "_mi_page_retire(mi_page_s*)"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "lean::utf8_strlen(char const*, unsigned long)"
+    },
+    {
+      "percent": 0.05,
+      "symbol": "mi_page_queue_remove(mi_page_queue_s*, mi_page_s*)"
+    },
+    {
+      "percent": 0.05,
+      "symbol": "l_Lean_PersistentHashMap_insertAux___at___00Lean_PersistentHashMap_insert___at___00Lean_Parser_SyntaxNodeKindSet_insert_spec__0_spec__0___redArg"
+    },
+    {
+      "percent": 0.05,
+      "symbol": "mi_malloc"
+    },
+    {
+      "percent": 0.05,
+      "symbol": "mi_page_queue_push(mi_theap_s*, mi_page_queue_s*, mi_page_s*)"
+    },
+    {
+      "percent": 0.05,
+      "symbol": "mi_bitmap_clearN(mi_bitmap_s*, unsigned long, unsigned long)"
+    },
+    {
+      "percent": 0.05,
+      "symbol": "mi_arenas_page_regular_alloc(mi_theap_s*, unsigned long, unsigned long)"
+    },
+    {
+      "percent": 0.05,
+      "symbol": "mi_arena_schedule_purge(mi_arena_s*, unsigned long, unsigned long)"
+    },
+    {
+      "percent": 0.05,
+      "symbol": "lean_mark_mt"
+    },
+    {
+      "percent": 0.02,
+      "symbol": "mi_bbitmap_setN(mi_bbitmap_s*, unsigned long, unsigned long)"
+    },
+    {
+      "percent": 0.02,
+      "symbol": "mi_bbitmap_try_find_and_clear_generic(mi_bbitmap_s*, unsigned long, unsigned long, unsigned long*, bool (*)(mi_bchunk_s*, unsigned long, unsigned long*))"
+    },
+    {
+      "percent": 0.02,
+      "symbol": "_mi_arenas_collect(bool, bool, mi_tld_s*)"
+    },
+    {
+      "percent": 0.02,
+      "symbol": "mi_arena_try_alloc_at(mi_arena_s*, unsigned long, bool, unsigned long, mi_memid_s*)"
+    },
+    {
+      "percent": 0.02,
+      "symbol": "l_List_lengthTR___redArg"
+    },
+    {
+      "percent": 0.02,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitNontrivial_spec__2___redArg"
+    },
+    {
+      "percent": 0.02,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_cellEnd_go"
+    },
+    {
+      "percent": 0.02,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__0___redArg"
+    },
+    {
+      "percent": 0.02,
+      "symbol": "lean_obj_once_cold"
+    },
+    {
+      "percent": 0.02,
+      "symbol": "l_Lean_Name_append"
+    },
+    {
+      "percent": 0.02,
+      "symbol": "lean_apply_4"
+    },
+    {
+      "percent": 0.02,
+      "symbol": "lean::validate_utf8_one(unsigned char const*, unsigned long, unsigned long&)"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "0xffffffffae201280"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "init_cpu_features.constprop.0"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "0xffffffffae1338bf"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "_start"
+    }
+  ],
+  "before-cubic512-run": [
+    {
+      "percent": 27.26,
+      "symbol": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)"
+    },
+    {
+      "percent": 16.49,
+      "symbol": "lean_copy_expand_array"
+    },
+    {
+      "percent": 5.9,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__0___redArg"
+    },
+    {
+      "percent": 5.2,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_cellEnd_go"
+    },
+    {
+      "percent": 4.47,
+      "symbol": "mi_malloc_small"
+    },
+    {
+      "percent": 4.03,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitCounts_spec__1___redArg"
+    },
+    {
+      "percent": 2.47,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__2___redArg"
+    },
+    {
+      "percent": 2.16,
+      "symbol": "lean_dec_ref_cold"
+    },
+    {
+      "percent": 2.13,
+      "symbol": "mi_free"
+    },
+    {
+      "percent": 1.71,
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_forIn_x27Unsafe_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__3"
+    },
+    {
+      "percent": 1.52,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitNontrivial_spec__0___redArg"
+    },
+    {
+      "percent": 1.43,
+      "symbol": "cfree@GLIBC_2.2.5"
+    },
+    {
+      "percent": 1.24,
+      "symbol": "_mi_malloc_generic(mi_theap_s*, unsigned long, unsigned long, unsigned long*)"
+    },
+    {
+      "percent": 1.08,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_splitSingleton"
+    },
+    {
+      "percent": 1.08,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_RefineSt_hash___redArg"
+    },
+    {
+      "percent": 1.08,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_refine_spec__2_spec__2___redArg"
+    },
+    {
+      "percent": 1.05,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_distvals_spec__0___redArg"
+    },
+    {
+      "percent": 1.02,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitCounts_spec__2___redArg"
+    },
+    {
+      "percent": 0.98,
+      "symbol": "malloc"
+    },
+    {
+      "percent": 0.95,
+      "symbol": "mi_malloc"
+    },
+    {
+      "percent": 0.86,
+      "symbol": "mi_page_queue_remove(mi_page_queue_s*, mi_page_s*)"
+    },
+    {
+      "percent": 0.86,
+      "symbol": "__gmpz_mul_2exp"
+    },
+    {
+      "percent": 0.79,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_refine_spec__1___redArg"
+    },
+    {
+      "percent": 0.79,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitNontrivial_spec__1___redArg"
+    },
+    {
+      "percent": 0.73,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_Sort_partition_spec__1___redArg"
+    },
+    {
+      "percent": 0.67,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_distvals_spec__1___redArg"
+    },
+    {
+      "percent": 0.64,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitCounts_spec__0___redArg"
+    },
+    {
+      "percent": 0.6,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_splitCounts"
+    },
+    {
+      "percent": 0.57,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__1___redArg"
+    },
+    {
+      "percent": 0.54,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_Sort_partition_spec__0___redArg"
+    },
+    {
+      "percent": 0.54,
+      "symbol": "lean_free_object"
+    },
+    {
+      "percent": 0.48,
+      "symbol": "l_List_lengthTR___redArg"
+    },
+    {
+      "percent": 0.44,
+      "symbol": "__gmpz_add"
+    },
+    {
+      "percent": 0.41,
+      "symbol": "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeTR_go___redArg"
+    },
+    {
+      "percent": 0.41,
+      "symbol": "__gmp_default_allocate"
+    },
+    {
+      "percent": 0.38,
+      "symbol": "mi_page_queue_find_free_ex(mi_theap_s*, mi_page_queue_s*, bool)"
+    },
+    {
+      "percent": 0.35,
+      "symbol": "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_splitRevAt_go___redArg"
+    },
+    {
+      "percent": 0.35,
+      "symbol": "lean_array_push"
+    },
+    {
+      "percent": 0.35,
+      "symbol": "__gmpz_init_set_ui"
+    },
+    {
+      "percent": 0.28,
+      "symbol": "lean_inc_heartbeat"
+    },
+    {
+      "percent": 0.25,
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_forIn_x27Unsafe_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__3___lam__0"
+    },
+    {
+      "percent": 0.25,
+      "symbol": "lean::mpz::mpz(unsigned long)"
+    },
+    {
+      "percent": 0.25,
+      "symbol": "lean_array_to_list_impl"
+    },
+    {
+      "percent": 0.22,
+      "symbol": "__gmpz_realloc"
+    },
+    {
+      "percent": 0.19,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_VSet_insert"
+    },
+    {
+      "percent": 0.19,
+      "symbol": "lean_apply_2"
+    },
+    {
+      "percent": 0.19,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_Sort_partition_spec__3___redArg"
+    },
+    {
+      "percent": 0.19,
+      "symbol": "lean::mpz::get_size_t() const"
+    },
+    {
+      "percent": 0.16,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_RefineSt_push"
+    },
+    {
+      "percent": 0.16,
+      "symbol": "l_List_toArrayAux___redArg"
+    },
+    {
+      "percent": 0.16,
+      "symbol": "realloc"
+    },
+    {
+      "percent": 0.16,
+      "symbol": "mi_page_queue_push(mi_theap_s*, mi_page_queue_s*, mi_page_s*)"
+    },
+    {
+      "percent": 0.16,
+      "symbol": "__gmpn_lshift_x86_64"
+    },
+    {
+      "percent": 0.13,
+      "symbol": "lp_Hex_List_filterTR_loop___at___00Hex_GraphIso_Nauty_Sparse_refine_spec__0"
+    },
+    {
+      "percent": 0.13,
+      "symbol": "__gmp_default_reallocate"
+    },
+    {
+      "percent": 0.13,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitCounts_spec__4___redArg"
+    },
+    {
+      "percent": 0.13,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_cellstarts_spec__0___redArg"
+    },
+    {
+      "percent": 0.13,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitNontrivial_spec__2___redArg"
+    },
+    {
+      "percent": 0.13,
+      "symbol": "mi_bin(unsigned long)"
+    },
+    {
+      "percent": 0.13,
+      "symbol": "l_List_MergeSort_Internal_mergeSortTR_u2082___redArg"
+    },
+    {
+      "percent": 0.13,
+      "symbol": "l_Nat_testBit"
+    },
+    {
+      "percent": 0.1,
+      "symbol": "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeSortTR_u2082_run_x27___redArg"
+    },
+    {
+      "percent": 0.1,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_splitNontrivial"
+    },
+    {
+      "percent": 0.1,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_Sort_partition_spec__2_spec__2___redArg"
+    },
+    {
+      "percent": 0.1,
+      "symbol": "mi_free_size"
+    },
+    {
+      "percent": 0.1,
+      "symbol": "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeSortTR_u2082_run___redArg"
+    },
+    {
+      "percent": 0.1,
+      "symbol": "lean_list_to_array"
+    },
+    {
+      "percent": 0.1,
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_forIn_x27Unsafe_loop___at___00Hex_GraphIso_Nauty_Sparse_splitNontrivial_spec__3"
+    },
+    {
+      "percent": 0.09,
+      "symbol": "l_List_reverseAux___redArg"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "l_Lean_PersistentHashMap_insertAux___at___00Lean_PersistentHashMap_insert___at___00Lean_Parser_SyntaxNodeKindSet_insert_spec__0_spec__0___redArg"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "l_Std_DTreeMap_Internal_Impl_insert___at___00Lean_NameMap_insert_spec__0___redArg"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Generic_resume___at___00Hex_GraphIso_Nauty_Generic_advance___at___00Hex_GraphIso_Nauty_Generic_sweepStep___at___00Hex_GraphIso_Nauty_Generic_sweep___at___00Hex_GraphIso_Nauty_Generic_node___at___00Hex_GraphIso_Nauty_Sparse_runState_spec__0_spec__0_spec__1_spec__3_spec__4_spec__5___redArg"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_breakout_go"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_Sort_partition_spec__2___redArg"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "mi_arena_schedule_purge(mi_arena_s*, unsigned long, unsigned long)"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "l_List_range_loop"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_VSet_erase"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "lean::mul2k(lean::mpz&, lean::mpz const&, unsigned int)"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "__gmpz_clear"
+    },
+    {
+      "percent": 0.05,
+      "symbol": "l___private_Init_Data_String_Extra_0__String_findLeadingSpacesSize_findNextLine"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "l_Lean_Parser_node"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "l___private_Lean_Data_Trie_0__Lean_Data_Trie_find_x3f_loop___redArg"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "l_Lean_Parser_symbolInfo___lam__0"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "initialize_Init_Data_Array_Sort_Lemmas"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "l_List_MergeSort_Internal_splitRevInTwo_x27___redArg"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "l_List_reverse___redArg"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "realloc@plt"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lean::mpz::~mpz()"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "_mi_theap_collect_retired(mi_theap_s*, bool)"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lean::mpz::is_size_t() const"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "_mi_arenas_collect(bool, bool, mi_tld_s*)"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "0xffffffffad53a06a"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "l_Nat_decLe___boxed"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_Sort_indirect_spec__0___redArg"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitCounts_spec__3___redArg"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lean::mpz::mpz(unsigned int)"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_Sort_median"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "__gmp_default_free"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lean_obj_once_cold"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "l_Lean_PersistentHashMap_insertAux___at___00Lean_PersistentHashMap_insert___at___00__private_Lean_Meta_Tactic_Simp_Simproc_0__Lean_Meta_Simp_initFn_00___x40_Lean_Meta_Tactic_Simp_Simproc_1881898657____hygCtx___hyg_2__spec__0_spec__0___redArg"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "0xffffffffae201280"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_HexGraphIso_SparseBench_0__Hex_GraphIsoSparseBench_read_spec__0___redArg"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "l_List_eraseRepsBy___redArg"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "_dl_debug_update"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "_dl_start"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "_start"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "0xffffffffae2015f0"
+    }
+  ],
+  "before-cfi59-run": [
+    {
+      "percent": 22.2,
+      "symbol": "mi_malloc_small"
+    },
+    {
+      "percent": 14.39,
+      "symbol": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)"
+    },
+    {
+      "percent": 7.99,
+      "symbol": "lean_dec_ref_cold"
+    },
+    {
+      "percent": 6.66,
+      "symbol": "mi_free"
+    },
+    {
+      "percent": 6.47,
+      "symbol": "lean_copy_expand_array"
+    },
+    {
+      "percent": 4.79,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_cells_go"
+    },
+    {
+      "percent": 2.87,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_cellEnd_go"
+    },
+    {
+      "percent": 2.69,
+      "symbol": "lp_Hex_List_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_bestcell_spec__1___redArg"
+    },
+    {
+      "percent": 2.59,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_bestcell_spec__2___redArg"
+    },
+    {
+      "percent": 2.45,
+      "symbol": "lp_Hex_List_filterTR_loop___at___00Hex_GraphIso_Nauty_Sparse_refine_spec__0"
+    },
+    {
+      "percent": 2.23,
+      "symbol": "l_Nat_testBit"
+    },
+    {
+      "percent": 2.2,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_bestcell_spec__3___redArg"
+    },
+    {
+      "percent": 2.03,
+      "symbol": "lp_Hex_List_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_cellstarts_spec__1___redArg"
+    },
+    {
+      "percent": 1.63,
+      "symbol": "lean_inc_heartbeat"
+    },
+    {
+      "percent": 1.56,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_cheapautom_go"
+    },
+    {
+      "percent": 1.14,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_bestcell_spec__4_spec__4___redArg"
+    },
+    {
+      "percent": 0.89,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_cellstarts_spec__0___redArg"
+    },
+    {
+      "percent": 0.85,
+      "symbol": "cfree@GLIBC_2.2.5"
+    },
+    {
+      "percent": 0.78,
+      "symbol": "l_List_range_loop"
+    },
+    {
+      "percent": 0.74,
+      "symbol": "malloc"
+    },
+    {
+      "percent": 0.6,
+      "symbol": "__gmpz_mul_2exp"
+    },
+    {
+      "percent": 0.57,
+      "symbol": "lean_array_push"
+    },
+    {
+      "percent": 0.53,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__2___redArg"
+    },
+    {
+      "percent": 0.53,
+      "symbol": "_mi_malloc_generic(mi_theap_s*, unsigned long, unsigned long, unsigned long*)"
+    },
+    {
+      "percent": 0.46,
+      "symbol": "lean_nat_shiftl"
+    },
+    {
+      "percent": 0.42,
+      "symbol": "mi_malloc"
+    },
+    {
+      "percent": 0.39,
+      "symbol": "_mi_page_retire(mi_page_s*)"
+    },
+    {
+      "percent": 0.39,
+      "symbol": "lean_mk_array"
+    },
+    {
+      "percent": 0.36,
+      "symbol": "lean_free_object"
+    },
+    {
+      "percent": 0.35,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_bestcell_spec__0___redArg"
+    },
+    {
+      "percent": 0.35,
+      "symbol": "__gmpz_add"
+    },
+    {
+      "percent": 0.32,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_compareCodes___redArg"
+    },
+    {
+      "percent": 0.32,
+      "symbol": "__gmp_default_allocate"
+    },
+    {
+      "percent": 0.28,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__1___redArg"
+    },
+    {
+      "percent": 0.28,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitNontrivial_spec__1___redArg"
+    },
+    {
+      "percent": 0.28,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_RefineSt_hash___redArg"
+    },
+    {
+      "percent": 0.25,
+      "symbol": "_mi_theap_collect_retired(mi_theap_s*, bool)"
+    },
+    {
+      "percent": 0.25,
+      "symbol": "__gmpz_realloc"
+    },
+    {
+      "percent": 0.21,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__0___redArg"
+    },
+    {
+      "percent": 0.21,
+      "symbol": "lean::mpz::mpz(unsigned long)"
+    },
+    {
+      "percent": 0.21,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_splitCounts"
+    },
+    {
+      "percent": 0.18,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_isautom_spec__2___redArg"
+    },
+    {
+      "percent": 0.17,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_VSet_insert"
+    },
+    {
+      "percent": 0.14,
+      "symbol": "lean_apply_2"
+    },
+    {
+      "percent": 0.14,
+      "symbol": "l_List_lengthTR___redArg"
+    },
+    {
+      "percent": 0.14,
+      "symbol": "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_splitRevAt_go___redArg"
+    },
+    {
+      "percent": 0.14,
+      "symbol": "mi_page_queue_remove(mi_page_queue_s*, mi_page_s*)"
+    },
+    {
+      "percent": 0.14,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_splitSingleton"
+    },
+    {
+      "percent": 0.14,
+      "symbol": "mi_bitmap_clearN(mi_bitmap_s*, unsigned long, unsigned long)"
+    },
+    {
+      "percent": 0.11,
+      "symbol": "mi_arena_schedule_purge(mi_arena_s*, unsigned long, unsigned long)"
+    },
+    {
+      "percent": 0.11,
+      "symbol": "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeSortTR_u2082_run___redArg"
+    },
+    {
+      "percent": 0.11,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitNontrivial_spec__0___redArg"
+    },
+    {
+      "percent": 0.11,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_classify_spec__0___redArg"
+    },
+    {
+      "percent": 0.11,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_fmperm_spec__1___redArg"
+    },
+    {
+      "percent": 0.11,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_refine_spec__2_spec__2___redArg"
+    },
+    {
+      "percent": 0.11,
+      "symbol": "lean::mpz::get_size_t() const"
+    },
+    {
+      "percent": 0.11,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Generic_sweepStep___at___00Hex_GraphIso_Nauty_Generic_sweep___at___00Hex_GraphIso_Nauty_Generic_node___at___00Hex_GraphIso_Nauty_Sparse_runState_spec__0_spec__0_spec__1"
+    },
+    {
+      "percent": 0.11,
+      "symbol": "realloc"
+    },
+    {
+      "percent": 0.1,
+      "symbol": "lean_apply_1"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "mi_arenas_page_regular_alloc(mi_theap_s*, unsigned long, unsigned long)"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "__gmpz_init_set_ui"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_orbjoin_spec__0___redArg"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitCounts_spec__0___redArg"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "mi_bchunk_setN(mi_bchunk_s*, unsigned long, unsigned long, unsigned long*)"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_refine"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_forIn_x27Unsafe_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__3"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_forIn_x27Unsafe_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__3___lam__0"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "mi_page_queue_find_free_ex(mi_theap_s*, mi_page_queue_s*, bool)"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "mi_bchunk_try_find_and_clear(mi_bchunk_s*, unsigned long*)"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Generic_advance___at___00Hex_GraphIso_Nauty_Generic_sweepStep___at___00Hex_GraphIso_Nauty_Generic_sweep___at___00Hex_GraphIso_Nauty_Generic_node___at___00Hex_GraphIso_Nauty_Sparse_runState_spec__0_spec__0_spec__1_spec__3"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_distvals_spec__1___redArg"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Generic_resume___at___00Hex_GraphIso_Nauty_Generic_advance___at___00Hex_GraphIso_Nauty_Generic_sweepStep___at___00Hex_GraphIso_Nauty_Generic_sweep___at___00Hex_GraphIso_Nauty_Generic_node___at___00Hex_GraphIso_Nauty_Sparse_runState_spec__0_spec__0_spec__1_spec__3_spec__4_spec__5___redArg"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitNontrivial_spec__2___redArg"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Generic_node___at___00Hex_GraphIso_Nauty_Sparse_runState_spec__0___lam__0___boxed"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_bestcell"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_HexGraphIso_SparseBench_0__Hex_GraphIsoSparseBench_read_spec__0___redArg"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "l_Std_DHashMap_Internal_AssocList_foldrM___at___00Lean_manualDomains_spec__0"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Generic_sweep___at___00Hex_GraphIso_Nauty_Generic_node___at___00Hex_GraphIso_Nauty_Sparse_runState_spec__0_spec__0___lam__0___boxed"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "l___private_Lean_Data_Trie_0__Lean_Data_Trie_find_x3f_loop___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_Sort_partition_spec__0___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_refine_spec__1___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "l_List_toArrayAux___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_bin(unsigned long)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Generic_node___at___00Hex_GraphIso_Nauty_Sparse_runState_spec__0"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Generic_sweep___at___00Hex_GraphIso_Nauty_Generic_node___at___00Hex_GraphIso_Nauty_Sparse_runState_spec__0_spec__0"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_breakout"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_forIn_x27Unsafe_loop___at___00Hex_GraphIso_Nauty_Sparse_splitNontrivial_spec__3"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lean::mpz::mpz()"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_orbjoin_spec__1___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_VSet_erase"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lean::mul2k(lean::mpz&, lean::mpz const&, unsigned int)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "_mi_arenas_collect(bool, bool, mi_tld_s*)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "__gmpz_clear"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "l_List_MergeSort_Internal_splitRevInTwo_x27___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitCounts_spec__2___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Generic_nodeStep___at___00Hex_GraphIso_Nauty_Generic_node___at___00Hex_GraphIso_Nauty_Sparse_runState_spec__0_spec__1"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_initial___lam__0___boxed"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_refine_spec__2___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "__gmpn_lshift_x86_64"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitCounts_spec__1___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_VSet_firstFrom___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_bbitmap_setN(mi_bbitmap_s*, unsigned long, unsigned long)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_isautom_spec__0___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_free_size"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "l_List_reverseAux___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitCounts_spec__4___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_classify"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lean_alloc_object"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_Sort_partition_spec__1___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_stats_add(mi_stats_s*, mi_stats_s const*)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lean_apply_9"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_splitNontrivial"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "__memmove_avx512_unaligned_erms"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "__gmp_default_reallocate"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "l___private_Init_Data_Array_Basic_0__Array_anyMUnsafe_any___redArg___lam__0___boxed"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_bbitmap_try_find_and_clear_generic(mi_bbitmap_s*, unsigned long, unsigned long, unsigned long*, bool (*)(mi_bchunk_s*, unsigned long, unsigned long*))"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "__gmpz_init"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_orbjoin_spec__2___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "l_Nat_decLe___boxed"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Generic_sweep___at___00Hex_GraphIso_Nauty_Generic_node___at___00Hex_GraphIso_Nauty_Sparse_runState_spec__0_spec__0___lam__1___boxed"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_arenas_try_find_free(mi_heap_s*, unsigned long, unsigned long, bool, bool, mi_arena_s*, unsigned long, int, mi_memid_s*)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_Sort_partition_spec__2___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_chooseTarget"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "l_Std_DTreeMap_Internal_Impl_insert___at___00Lean_NameMap_insert_spec__0___redArg"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lean_st_ref_take"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lean_io_prim_handle_get_line"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::push_back(char)"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "_dl_relocate_object_no_relro"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "__GI___tunables_init"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "_dl_start"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "0xffffffffae201280"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "_start"
+    }
+  ],
+  "before-gnp1024-seed1-output": [
+    {
+      "percent": 29.73,
+      "symbol": "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeTR_go___redArg"
+    },
+    {
+      "percent": 16.09,
+      "symbol": "lean_apply_2"
+    },
+    {
+      "percent": 9.07,
+      "symbol": "l_List_reverseAux___redArg"
+    },
+    {
+      "percent": 7.39,
+      "symbol": "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_splitRevAt_go___redArg"
+    },
+    {
+      "percent": 5.98,
+      "symbol": "l_Nat_decLe___boxed"
+    },
+    {
+      "percent": 4.6,
+      "symbol": "l_List_lengthTR___redArg"
+    },
+    {
+      "percent": 2.28,
+      "symbol": "mi_free"
+    },
+    {
+      "percent": 2.25,
+      "symbol": "l_List_foldl___at___00Array_appendList_spec__0___redArg"
+    },
+    {
+      "percent": 1.89,
+      "symbol": "mi_malloc_small"
+    },
+    {
+      "percent": 1.86,
+      "symbol": "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeSortTR_u2082_run_x27___redArg"
+    },
+    {
+      "percent": 1.7,
+      "symbol": "lean_dec_ref_cold"
+    },
+    {
+      "percent": 1.67,
+      "symbol": "lean_array_to_list_impl"
+    },
+    {
+      "percent": 1.63,
+      "symbol": "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeSortTR_u2082_run___redArg"
+    },
+    {
+      "percent": 1.47,
+      "symbol": "lean_inc_heartbeat"
+    },
+    {
+      "percent": 1.21,
+      "symbol": "l_List_toArrayAux___redArg"
+    },
+    {
+      "percent": 1.18,
+      "symbol": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)"
+    },
+    {
+      "percent": 1.08,
+      "symbol": "lean_array_push"
+    },
+    {
+      "percent": 1.04,
+      "symbol": "l_List_eraseRepsBy_loop___redArg"
+    },
+    {
+      "percent": 0.93,
+      "symbol": "l_Array_extract_loop___redArg"
+    },
+    {
+      "percent": 0.86,
+      "symbol": "lp_Hex_List_mapTR_loop___at___00Hex_SparseGraph_relabel_spec__0"
+    },
+    {
+      "percent": 0.85,
+      "symbol": "l_Nat_decEq___boxed"
+    },
+    {
+      "percent": 0.71,
+      "symbol": "lp_Hex___private_HexGraphIso_SparseBench_0__Hex_GraphIsoSparseBench_graphDigest___redArg"
+    },
+    {
+      "percent": 0.6,
+      "symbol": "l_List_MergeSort_Internal_splitRevInTwo___redArg"
+    },
+    {
+      "percent": 0.59,
+      "symbol": "l_List_MergeSort_Internal_splitRevInTwo_x27___redArg"
+    },
+    {
+      "percent": 0.48,
+      "symbol": "lean_free_object"
+    },
+    {
+      "percent": 0.44,
+      "symbol": "mi_page_free_list_extend(mi_page_s*, unsigned long, unsigned long)"
+    },
+    {
+      "percent": 0.26,
+      "symbol": "_mi_malloc_generic(mi_theap_s*, unsigned long, unsigned long, unsigned long*)"
+    },
+    {
+      "percent": 0.2,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_HexGraphIso_SparseBench_0__Hex_GraphIsoSparseBench_read_spec__0___redArg"
+    },
+    {
+      "percent": 0.19,
+      "symbol": "__memmove_avx512_unaligned_erms"
+    },
+    {
+      "percent": 0.15,
+      "symbol": "lean_apply_1"
+    },
+    {
+      "percent": 0.15,
+      "symbol": "mi_page_queue_find_free_ex(mi_theap_s*, mi_page_queue_s*, bool)"
+    },
+    {
+      "percent": 0.11,
+      "symbol": "_mi_page_retire(mi_page_s*)"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "l_List_elem___redArg"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "l_List_decidableBAll___redArg"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "lp_Hex_Hex_SparseGraph_Builder_add___redArg"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "lean_st_ref_take"
+    },
+    {
+      "percent": 0.05,
+      "symbol": "l_Lean_Name_append"
+    },
+    {
+      "percent": 0.05,
+      "symbol": "lean_mark_mt"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "l_Lean_PersistentHashMap_insertAtCollisionNodeAux___at___00Lean_PersistentHashMap_insertAtCollisionNode___at___00Lean_PersistentHashMap_insertAux___at___00Lean_PersistentHashMap_insert___at___00Lean_Parser_SyntaxNodeKindSet_insert_spec__0_spec__0_spec__1_spec__2___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "l___private_Lean_Data_Trie_0__Lean_Data_Trie_find_x3f_loop___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "__libc_malloc2"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "l_Lean_Meta_Simp_addSEvalprocBuiltinAttr"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_bin(unsigned long)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "l___private_Init_Data_Array_Basic_0__Array_ofFn_go___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_stats_add(mi_stats_s*, mi_stats_s const*)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_bitmap_clearN(mi_bitmap_s*, unsigned long, unsigned long)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex___private_Init_Data_List_Impl_0__List_flatMapTR_go___at___00Hex_SparseGraph_ofRows_spec__0"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_page_queue_push(mi_theap_s*, mi_page_queue_s*, mi_page_s*)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_bchunk_setN(mi_bchunk_s*, unsigned long, unsigned long, unsigned long*)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "_mi_arenas_collect(bool, bool, mi_tld_s*)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_page_extend_free(mi_theap_s*, mi_page_s*)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "l_List_MergeSort_Internal_mergeSortTR_u2082___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_page_queue_remove(mi_page_queue_s*, mi_page_s*)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "l_instDecidableEqFin___boxed"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "0xffffffffad5574ae"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_updatecan_spec__0___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__1___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitNontrivial_spec__1___redArg"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "__gmp_default_reallocate"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "l___private_Init_Data_Array_Basic_0__Array_anyMUnsafe_any___redArg"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "mi_malloc"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lean_copy_expand_array"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lean::validate_utf8_one(unsigned char const*, unsigned long, unsigned long&)"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lean::utf8_strlen(char const*, unsigned long)"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lean::validate_utf8(unsigned char const*, unsigned long, unsigned long&, unsigned long&)"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "_dl_relocate_object_no_relro"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "__GI___tunables_init"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "_dl_start"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "0xffffffffae201280"
+    }
+  ],
+  "after-sparse3072-run": [
+    {
+      "percent": 18.46,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__0___redArg"
+    },
+    {
+      "percent": 10.99,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitCounts_spec__1___redArg"
+    },
+    {
+      "percent": 10.95,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_cellEnd_go"
+    },
+    {
+      "percent": 5.75,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitNontrivial_spec__1___redArg"
+    },
+    {
+      "percent": 5.51,
+      "symbol": "mi_malloc_small"
+    },
+    {
+      "percent": 3.34,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitNontrivial_spec__0___redArg"
+    },
+    {
+      "percent": 2.86,
+      "symbol": "mi_free"
+    },
+    {
+      "percent": 2.86,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_updatecan_spec__0___redArg"
+    },
+    {
+      "percent": 2.69,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__2___redArg"
+    },
+    {
+      "percent": 2.55,
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_forIn_x27Unsafe_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__3"
+    },
+    {
+      "percent": 2.44,
+      "symbol": "lean_dec_ref_cold"
+    },
+    {
+      "percent": 1.74,
+      "symbol": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)"
+    },
+    {
+      "percent": 1.48,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_Sort_partition_spec__0___redArg"
+    },
+    {
+      "percent": 1.31,
+      "symbol": "malloc"
+    },
+    {
+      "percent": 1.27,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_splitCounts"
+    },
+    {
+      "percent": 1.24,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitCounts_spec__0___redArg"
+    },
+    {
+      "percent": 1.17,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_refine_spec__0___redArg"
+    },
+    {
+      "percent": 1.14,
+      "symbol": "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeTR_go___redArg"
+    },
+    {
+      "percent": 1.0,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_refine_spec__1_spec__1___redArg"
+    },
+    {
+      "percent": 1.0,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitCounts_spec__2___redArg"
+    },
+    {
+      "percent": 0.96,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_RefineSt_hash___redArg"
+    },
+    {
+      "percent": 0.96,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_Sort_partition_spec__1___redArg"
+    },
+    {
+      "percent": 0.86,
+      "symbol": "lean_array_push"
+    },
+    {
+      "percent": 0.83,
+      "symbol": "__gmpz_add"
+    },
+    {
+      "percent": 0.77,
+      "symbol": "lean_copy_expand_array"
+    },
+    {
+      "percent": 0.76,
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_mapMUnsafe_map___at___00Hex_GraphIso_Nauty_Sparse_Graph_ofGraph_spec__0"
+    },
+    {
+      "percent": 0.76,
+      "symbol": "lp_Hex___private_HexGraphIso_SparseBench_0__Hex_GraphIsoSparseBench_searchDigest"
+    },
+    {
+      "percent": 0.69,
+      "symbol": "lean_free_object"
+    },
+    {
+      "percent": 0.69,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_updatecan_spec__1___redArg"
+    },
+    {
+      "percent": 0.69,
+      "symbol": "mi_malloc"
+    },
+    {
+      "percent": 0.65,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_splitSingleton"
+    },
+    {
+      "percent": 0.59,
+      "symbol": "l_List_reverseAux___redArg"
+    },
+    {
+      "percent": 0.59,
+      "symbol": "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_splitRevAt_go___redArg"
+    },
+    {
+      "percent": 0.58,
+      "symbol": "cfree@GLIBC_2.2.5"
+    },
+    {
+      "percent": 0.55,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitNontrivial_spec__2___redArg"
+    },
+    {
+      "percent": 0.52,
+      "symbol": "__gmpz_mul_2exp"
+    },
+    {
+      "percent": 0.48,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__1___redArg"
+    },
+    {
+      "percent": 0.44,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_HexGraphIso_SparseBench_0__Hex_GraphIsoSparseBench_read_spec__0___redArg"
+    },
+    {
+      "percent": 0.43,
+      "symbol": "std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::push_back(char)"
+    },
+    {
+      "percent": 0.38,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_Sort_partition_spec__2_spec__2___redArg"
+    },
+    {
+      "percent": 0.34,
+      "symbol": "lean_apply_2"
+    },
+    {
+      "percent": 0.31,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_VSet_erase"
+    },
+    {
+      "percent": 0.31,
+      "symbol": "l_List_lengthTR___redArg"
+    },
+    {
+      "percent": 0.28,
+      "symbol": "l_Nat_decLe___boxed"
+    },
+    {
+      "percent": 0.28,
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_forIn_x27Unsafe_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__3___lam__0"
+    },
+    {
+      "percent": 0.28,
+      "symbol": "__gmp_default_allocate"
+    },
+    {
+      "percent": 0.24,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_RefineSt_push"
+    },
+    {
+      "percent": 0.24,
+      "symbol": "__gmpz_realloc"
+    },
+    {
+      "percent": 0.21,
+      "symbol": "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeSortTR_u2082_run___redArg"
+    },
+    {
+      "percent": 0.21,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_VSet_insert"
+    },
+    {
+      "percent": 0.21,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_initialPartition_spec__1___redArg"
+    },
+    {
+      "percent": 0.2,
+      "symbol": "lean::validate_utf8_one(unsigned char const*, unsigned long, unsigned long&)"
+    },
+    {
+      "percent": 0.2,
+      "symbol": "lean_apply_1"
+    },
+    {
+      "percent": 0.17,
+      "symbol": "l_List_toArrayAux___redArg"
+    },
+    {
+      "percent": 0.17,
+      "symbol": "__gmpz_init_set_ui"
+    },
+    {
+      "percent": 0.17,
+      "symbol": "lean::mpz::mpz(unsigned long)"
+    },
+    {
+      "percent": 0.17,
+      "symbol": "realloc"
+    },
+    {
+      "percent": 0.14,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitCounts_spec__4___redArg"
+    },
+    {
+      "percent": 0.14,
+      "symbol": "lean_array_to_list_impl"
+    },
+    {
+      "percent": 0.14,
+      "symbol": "lean_inc_heartbeat"
+    },
+    {
+      "percent": 0.14,
+      "symbol": "lean_mk_array"
+    },
+    {
+      "percent": 0.14,
+      "symbol": "_mi_malloc_generic(mi_theap_s*, unsigned long, unsigned long, unsigned long*)"
+    },
+    {
+      "percent": 0.1,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_splitNontrivial"
+    },
+    {
+      "percent": 0.1,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_inverse_spec__0___redArg"
+    },
+    {
+      "percent": 0.1,
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_forIn_x27Unsafe_loop___at___00Hex_GraphIso_Nauty_Sparse_initialPartition_spec__2"
+    },
+    {
+      "percent": 0.1,
+      "symbol": "lean_list_to_array"
+    },
+    {
+      "percent": 0.1,
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_mapMUnsafe_map___at___00Hex_GraphIso_Nauty_Sparse_runColored_spec__0"
+    },
+    {
+      "percent": 0.1,
+      "symbol": "lean::validate_utf8(unsigned char const*, unsigned long, unsigned long&, unsigned long&)"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "l_Lean_Parser_epsilonInfo___lam__0___boxed"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "realloc@plt"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "mi_free_size"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "lean_nat_shiftl"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "__memmove_avx512_unaligned_erms"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "free@plt"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeSortTR_u2082_run_x27___redArg"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "lean::mul2k(lean::mpz&, lean::mpz const&, unsigned int)"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "lean::mpz::get_size_t() const"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_cellstarts_spec__0___redArg"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "l_List_MergeSort_Internal_mergeSortTR_u2082___redArg"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_Sort_partition_spec__3___redArg"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "l_List_MergeSort_Internal_splitRevInTwo_x27___redArg"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "lean_io_prim_handle_get_line"
+    },
+    {
+      "percent": 0.05,
+      "symbol": "l_List_foldlM___at___00Lean_Parser_addParserTokens_spec__0"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lean_mark_persistent"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "l___private_Lean_Elab_Tactic_Ext_0__Lean_Elab_Tactic_Ext_initFn_00___x40_Lean_Elab_Tactic_Ext_2565641293____hygCtx___hyg_2_"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "l_Nat_testBit"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "mi_bchunk_try_find_and_clear(mi_bchunk_s*, unsigned long*)"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lean::mpz::~mpz()"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "__gmp_default_free"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "l_List_MergeSort_Internal_splitRevInTwo___redArg"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "__gmp_default_reallocate"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "mi_page_queue_find_free_ex(mi_theap_s*, mi_page_queue_s*, bool)"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "l___private_Init_Data_Array_Basic_0__Array_ofFn_go___redArg"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_cellEnd"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "mi_page_queue_push(mi_theap_s*, mi_page_queue_s*, mi_page_s*)"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "mi_page_free_list_extend(mi_page_s*, unsigned long, unsigned long)"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_Sort_median"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "__gmpn_copyd_x86_64"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_updatecan"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "__gmpz_clear"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "0xffffffffae2015f0"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "runtime_initialize_Lean_Linter_CheckUnivs"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "_mi_page_retire(mi_page_s*)"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "_mi_theap_collect_retired(mi_theap_s*, bool)"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lean::utf8_strlen(char const*, unsigned long)"
+    },
+    {
+      "percent": 0.01,
+      "symbol": "_dl_relocate_object_no_relro"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "init_cpu_features.constprop.0"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "0xffffffffae201280"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "_dl_start"
+    }
+  ],
+  "after-sparse3072-label": [
+    {
+      "percent": 33.01,
+      "symbol": "lean_apply_2"
+    },
+    {
+      "percent": 22.47,
+      "symbol": "lean_apply_1"
+    },
+    {
+      "percent": 5.72,
+      "symbol": "l___private_Init_Data_Nat_Lemmas_0__Nat_allLTTR_loop___redArg"
+    },
+    {
+      "percent": 4.15,
+      "symbol": "l_Array_instDecidableForallForallMemOfDecidablePred___redArg___lam__0___boxed"
+    },
+    {
+      "percent": 3.9,
+      "symbol": "mi_malloc_small"
+    },
+    {
+      "percent": 3.83,
+      "symbol": "lp_Hex_List_foldl___at___00Hex_Perm_check_spec__0___redArg"
+    },
+    {
+      "percent": 3.08,
+      "symbol": "l_Nat_decidableBallLTTR___redArg___lam__0___boxed"
+    },
+    {
+      "percent": 2.22,
+      "symbol": "l_Fin_foldr_loop___at___00List_ofFn_spec__0___redArg"
+    },
+    {
+      "percent": 2.04,
+      "symbol": "lp_Hex_Hex_Perm_check___lam__0___boxed"
+    },
+    {
+      "percent": 2.01,
+      "symbol": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)"
+    },
+    {
+      "percent": 1.93,
+      "symbol": "mi_free"
+    },
+    {
+      "percent": 1.75,
+      "symbol": "l___private_Init_Data_Array_Basic_0__Array_ofFn_go___redArg"
+    },
+    {
+      "percent": 1.65,
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_mapMUnsafe_map___at___00Hex_GraphIso_Label_ofArray_x3f_spec__0___redArg"
+    },
+    {
+      "percent": 1.57,
+      "symbol": "lean_array_push"
+    },
+    {
+      "percent": 1.29,
+      "symbol": "lp_Hex_Hex_Perm_id___lam__0___boxed"
+    },
+    {
+      "percent": 1.29,
+      "symbol": "lp_Hex_Hex_Perm_check___lam__1___boxed"
+    },
+    {
+      "percent": 1.22,
+      "symbol": "lp_Hex_Hex_GraphIso_Label_ofArray_x3f___lam__0___boxed"
+    },
+    {
+      "percent": 1.14,
+      "symbol": "l_List_finRange___lam__0___boxed"
+    },
+    {
+      "percent": 1.14,
+      "symbol": "l_Nat_decidableForallFin___redArg___lam__0___boxed"
+    },
+    {
+      "percent": 1.04,
+      "symbol": "lp_Hex_Hex_GraphIsoSparseBench_run___lam__1"
+    },
+    {
+      "percent": 0.59,
+      "symbol": "std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::push_back(char)"
+    },
+    {
+      "percent": 0.57,
+      "symbol": "lean_copy_expand_array"
+    },
+    {
+      "percent": 0.36,
+      "symbol": "lean_free_object"
+    },
+    {
+      "percent": 0.31,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_HexGraphIso_SparseBench_0__Hex_GraphIsoSparseBench_read_spec__0___redArg"
+    },
+    {
+      "percent": 0.29,
+      "symbol": "mi_page_free_list_extend(mi_page_s*, unsigned long, unsigned long)"
+    },
+    {
+      "percent": 0.17,
+      "symbol": "lean::validate_utf8_one(unsigned char const*, unsigned long, unsigned long&)"
+    },
+    {
+      "percent": 0.14,
+      "symbol": "lean_mark_mt"
+    },
+    {
+      "percent": 0.14,
+      "symbol": "lean::validate_utf8(unsigned char const*, unsigned long, unsigned long&, unsigned long&)"
+    },
+    {
+      "percent": 0.11,
+      "symbol": "_mi_malloc_generic(mi_theap_s*, unsigned long, unsigned long, unsigned long*)"
+    },
+    {
+      "percent": 0.1,
+      "symbol": "lean::utf8_strlen(char const*, unsigned long)"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "mi_bbitmap_setN(mi_bbitmap_s*, unsigned long, unsigned long)"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "__libc_malloc2"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__0___redArg"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "l_Lean_Parser_withAntiquot"
+    },
+    {
+      "percent": 0.05,
+      "symbol": "lean_mark_persistent"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "runtime_initialize_Lean_Util_NumObjs"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_page_queue_push(mi_theap_s*, mi_page_queue_s*, mi_page_s*)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_bchunk_setN(mi_bchunk_s*, unsigned long, unsigned long, unsigned long*)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_bchunk_try_find_and_clear(mi_bchunk_s*, unsigned long*)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_page_extend_free(mi_theap_s*, mi_page_s*)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_malloc"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_bitmap_clearN(mi_bitmap_s*, unsigned long, unsigned long)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "__vdso_clock_gettime"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_bin(unsigned long)"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lean_io_prim_handle_get_line"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lean_inc_heartbeat"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "0xffffffffae1be1de"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "__gmpz_clear"
+    },
+    {
+      "percent": 0.01,
+      "symbol": "0xffffffffae13366d"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "__GI___tunables_init"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "0xffffffffae201280"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "_dl_start"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "_start"
+    }
+  ],
+  "after-cubic512-run": [
+    {
+      "percent": 12.83,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__0___redArg"
+    },
+    {
+      "percent": 9.82,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitCounts_spec__1___redArg"
+    },
+    {
+      "percent": 9.48,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_cellEnd_go"
+    },
+    {
+      "percent": 7.66,
+      "symbol": "mi_malloc_small"
+    },
+    {
+      "percent": 4.89,
+      "symbol": "mi_free"
+    },
+    {
+      "percent": 3.72,
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_forIn_x27Unsafe_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__3"
+    },
+    {
+      "percent": 2.99,
+      "symbol": "lean_dec_ref_cold"
+    },
+    {
+      "percent": 2.65,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__2___redArg"
+    },
+    {
+      "percent": 2.55,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_refine_spec__1_spec__1___redArg"
+    },
+    {
+      "percent": 2.46,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitNontrivial_spec__0___redArg"
+    },
+    {
+      "percent": 2.28,
+      "symbol": "malloc"
+    },
+    {
+      "percent": 2.0,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_distvals_spec__0___redArg"
+    },
+    {
+      "percent": 1.79,
+      "symbol": "mi_malloc"
+    },
+    {
+      "percent": 1.72,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_RefineSt_hash___redArg"
+    },
+    {
+      "percent": 1.72,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitCounts_spec__0___redArg"
+    },
+    {
+      "percent": 1.66,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_refine_spec__0___redArg"
+    },
+    {
+      "percent": 1.66,
+      "symbol": "cfree@GLIBC_2.2.5"
+    },
+    {
+      "percent": 1.6,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_splitCounts"
+    },
+    {
+      "percent": 1.54,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitCounts_spec__2___redArg"
+    },
+    {
+      "percent": 1.26,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_distvals_spec__1___redArg"
+    },
+    {
+      "percent": 1.23,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_Sort_partition_spec__0___redArg"
+    },
+    {
+      "percent": 1.2,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_splitSingleton"
+    },
+    {
+      "percent": 1.2,
+      "symbol": "__gmpz_add"
+    },
+    {
+      "percent": 1.2,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_Sort_partition_spec__1___redArg"
+    },
+    {
+      "percent": 1.08,
+      "symbol": "lean_free_object"
+    },
+    {
+      "percent": 0.99,
+      "symbol": "__gmpz_mul_2exp"
+    },
+    {
+      "percent": 0.99,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitNontrivial_spec__1___redArg"
+    },
+    {
+      "percent": 0.83,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_VSet_erase"
+    },
+    {
+      "percent": 0.77,
+      "symbol": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)"
+    },
+    {
+      "percent": 0.74,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__1___redArg"
+    },
+    {
+      "percent": 0.68,
+      "symbol": "lean_array_push"
+    },
+    {
+      "percent": 0.58,
+      "symbol": "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeTR_go___redArg"
+    },
+    {
+      "percent": 0.55,
+      "symbol": "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_splitRevAt_go___redArg"
+    },
+    {
+      "percent": 0.55,
+      "symbol": "l_List_lengthTR___redArg"
+    },
+    {
+      "percent": 0.52,
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_forIn_x27Unsafe_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__3___lam__0"
+    },
+    {
+      "percent": 0.52,
+      "symbol": "__gmpz_realloc"
+    },
+    {
+      "percent": 0.5,
+      "symbol": "lean_copy_expand_array"
+    },
+    {
+      "percent": 0.43,
+      "symbol": "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeSortTR_u2082_run___redArg"
+    },
+    {
+      "percent": 0.4,
+      "symbol": "lean::mpz::get_size_t() const"
+    },
+    {
+      "percent": 0.4,
+      "symbol": "__gmp_default_allocate"
+    },
+    {
+      "percent": 0.37,
+      "symbol": "lean_apply_2"
+    },
+    {
+      "percent": 0.37,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_Sort_partition_spec__3___redArg"
+    },
+    {
+      "percent": 0.37,
+      "symbol": "l_List_toArrayAux___redArg"
+    },
+    {
+      "percent": 0.34,
+      "symbol": "lean_array_to_list_impl"
+    },
+    {
+      "percent": 0.34,
+      "symbol": "__gmpz_clear"
+    },
+    {
+      "percent": 0.34,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_VSet_insert"
+    },
+    {
+      "percent": 0.34,
+      "symbol": "lean_inc_heartbeat"
+    },
+    {
+      "percent": 0.28,
+      "symbol": "lean_nat_shiftl"
+    },
+    {
+      "percent": 0.28,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_Sort_partition_spec__2_spec__2___redArg"
+    },
+    {
+      "percent": 0.28,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitCounts_spec__4___redArg"
+    },
+    {
+      "percent": 0.28,
+      "symbol": "lean::mpz::mpz(unsigned long)"
+    },
+    {
+      "percent": 0.28,
+      "symbol": "l_Nat_testBit"
+    },
+    {
+      "percent": 0.25,
+      "symbol": "realloc"
+    },
+    {
+      "percent": 0.25,
+      "symbol": "__gmpz_init_set_ui"
+    },
+    {
+      "percent": 0.22,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_cellstarts_spec__0___redArg"
+    },
+    {
+      "percent": 0.22,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitNontrivial_spec__2___redArg"
+    },
+    {
+      "percent": 0.22,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Generic_resume___at___00Hex_GraphIso_Nauty_Generic_advance___at___00Hex_GraphIso_Nauty_Generic_sweepStep___at___00Hex_GraphIso_Nauty_Generic_sweep___at___00Hex_GraphIso_Nauty_Generic_node___at___00Hex_GraphIso_Nauty_Sparse_runState_spec__0_spec__0_spec__1_spec__3_spec__4_spec__5___redArg"
+    },
+    {
+      "percent": 0.22,
+      "symbol": "l_Nat_decLe___boxed"
+    },
+    {
+      "percent": 0.22,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_RefineSt_push"
+    },
+    {
+      "percent": 0.15,
+      "symbol": "free@plt"
+    },
+    {
+      "percent": 0.15,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_splitNontrivial"
+    },
+    {
+      "percent": 0.12,
+      "symbol": "l_List_MergeSort_Internal_mergeSortTR_u2082___redArg"
+    },
+    {
+      "percent": 0.12,
+      "symbol": "lean_alloc_object"
+    },
+    {
+      "percent": 0.12,
+      "symbol": "lean_list_to_array"
+    },
+    {
+      "percent": 0.09,
+      "symbol": "__gmpn_lshift_x86_64"
+    },
+    {
+      "percent": 0.09,
+      "symbol": "realloc@plt"
+    },
+    {
+      "percent": 0.09,
+      "symbol": "__gmp_default_reallocate"
+    },
+    {
+      "percent": 0.09,
+      "symbol": "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeSortTR_u2082_run_x27___redArg"
+    },
+    {
+      "percent": 0.09,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_breakout_go"
+    },
+    {
+      "percent": 0.09,
+      "symbol": "_mi_malloc_generic(mi_theap_s*, unsigned long, unsigned long, unsigned long*)"
+    },
+    {
+      "percent": 0.09,
+      "symbol": "l_List_reverseAux___redArg"
+    },
+    {
+      "percent": 0.09,
+      "symbol": "_mi_page_retire(mi_page_s*)"
+    },
+    {
+      "percent": 0.09,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitCounts_spec__3___redArg"
+    },
+    {
+      "percent": 0.09,
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_forIn_x27Unsafe_loop___at___00Hex_GraphIso_Nauty_Sparse_splitNontrivial_spec__3"
+    },
+    {
+      "percent": 0.09,
+      "symbol": "lean_mk_array"
+    },
+    {
+      "percent": 0.09,
+      "symbol": "lean::mpz::is_size_t() const"
+    },
+    {
+      "percent": 0.09,
+      "symbol": "mi_page_free_list_extend(mi_page_s*, unsigned long, unsigned long)"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "lean_apply_1"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "lean_array_to_list"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Generic_resume___at___00Hex_GraphIso_Nauty_Generic_advance___at___00Hex_GraphIso_Nauty_Generic_sweepStep___at___00Hex_GraphIso_Nauty_Generic_sweep___at___00Hex_GraphIso_Nauty_Generic_node___at___00Hex_GraphIso_Nauty_Sparse_runState_spec__0_spec__0_spec__1_spec__3_spec__4___redArg"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "mi_free_size"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_Sort_indirect_spec__0___redArg"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_cellEnd"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "mi_bin(unsigned long)"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "lean_st_ref_take"
+    },
+    {
+      "percent": 0.05,
+      "symbol": "l_Lean_Parser_andthenInfo"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lean_mark_mt"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "l___private_Init_Data_Array_Basic_0__Array_anyMUnsafe_any___redArg"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "0xffffffffae201280"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::push_back(char)"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_Sort_pivot"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_Sort_median"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lean_array_mk"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_VSet_nextElem___redArg"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lean::mul2k(lean::mpz&, lean::mpz const&, unsigned int)"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lean_dec_ref_known"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_Sort_partition_spec__2___redArg"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "__vdso_clock_gettime"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "__memmove_avx512_unaligned_erms"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "0xffffffffad48c19f"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_refine_spec__2___redArg"
+    },
+    {
+      "percent": 0.01,
+      "symbol": "_dl_relocate_object_no_relro"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "get_common_indices.constprop.0"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "_dl_start"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "_start"
+    }
+  ],
+  "after-cfi59-run": [
+    {
+      "percent": 12.09,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_bestcell_spec__1___redArg"
+    },
+    {
+      "percent": 9.92,
+      "symbol": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)"
+    },
+    {
+      "percent": 7.27,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_cellEnd_go"
+    },
+    {
+      "percent": 5.7,
+      "symbol": "mi_malloc_small"
+    },
+    {
+      "percent": 5.29,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_bestcell_spec__2___redArg"
+    },
+    {
+      "percent": 5.26,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_cellstarts_spec__1_spec__1___redArg"
+    },
+    {
+      "percent": 5.07,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_bestcell_spec__3___redArg"
+    },
+    {
+      "percent": 4.82,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_cheapautom_go"
+    },
+    {
+      "percent": 3.72,
+      "symbol": "mi_free"
+    },
+    {
+      "percent": 3.02,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_bestcell_spec__4_spec__4___redArg"
+    },
+    {
+      "percent": 2.46,
+      "symbol": "malloc"
+    },
+    {
+      "percent": 2.39,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_cellEnd"
+    },
+    {
+      "percent": 2.23,
+      "symbol": "lean_dec_ref_cold"
+    },
+    {
+      "percent": 1.95,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_cellstarts_spec__0___redArg"
+    },
+    {
+      "percent": 1.86,
+      "symbol": "cfree@GLIBC_2.2.5"
+    },
+    {
+      "percent": 1.71,
+      "symbol": "lean_copy_expand_array"
+    },
+    {
+      "percent": 1.7,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_bestcell_spec__0___redArg"
+    },
+    {
+      "percent": 1.23,
+      "symbol": "__gmpz_add"
+    },
+    {
+      "percent": 1.1,
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_forIn_x27Unsafe_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__3"
+    },
+    {
+      "percent": 1.01,
+      "symbol": "mi_malloc"
+    },
+    {
+      "percent": 0.82,
+      "symbol": "__gmpz_mul_2exp"
+    },
+    {
+      "percent": 0.76,
+      "symbol": "lean_mk_array"
+    },
+    {
+      "percent": 0.69,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_refine_spec__1_spec__1___redArg"
+    },
+    {
+      "percent": 0.69,
+      "symbol": "lean_array_push"
+    },
+    {
+      "percent": 0.69,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_VSet_insert"
+    },
+    {
+      "percent": 0.66,
+      "symbol": "lean_nat_shiftl"
+    },
+    {
+      "percent": 0.57,
+      "symbol": "__gmpz_init_set_ui"
+    },
+    {
+      "percent": 0.54,
+      "symbol": "_mi_page_retire(mi_page_s*)"
+    },
+    {
+      "percent": 0.5,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_splitCounts"
+    },
+    {
+      "percent": 0.5,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitNontrivial_spec__1___redArg"
+    },
+    {
+      "percent": 0.5,
+      "symbol": "lean_free_object"
+    },
+    {
+      "percent": 0.44,
+      "symbol": "__gmpz_realloc"
+    },
+    {
+      "percent": 0.41,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_isautom_spec__2___redArg"
+    },
+    {
+      "percent": 0.38,
+      "symbol": "__gmp_default_allocate"
+    },
+    {
+      "percent": 0.38,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_RefineSt_hash___redArg"
+    },
+    {
+      "percent": 0.38,
+      "symbol": "_mi_malloc_generic(mi_theap_s*, unsigned long, unsigned long, unsigned long*)"
+    },
+    {
+      "percent": 0.38,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_compareCodes___redArg"
+    },
+    {
+      "percent": 0.35,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_orbjoin_spec__2___redArg"
+    },
+    {
+      "percent": 0.35,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__2___redArg"
+    },
+    {
+      "percent": 0.32,
+      "symbol": "lean_inc_heartbeat"
+    },
+    {
+      "percent": 0.31,
+      "symbol": "lean::mpz::get_size_t() const"
+    },
+    {
+      "percent": 0.31,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_VSet_erase"
+    },
+    {
+      "percent": 0.28,
+      "symbol": "realloc"
+    },
+    {
+      "percent": 0.28,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_fmperm_spec__1___redArg"
+    },
+    {
+      "percent": 0.28,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitCounts_spec__0___redArg"
+    },
+    {
+      "percent": 0.25,
+      "symbol": "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeTR_go___redArg"
+    },
+    {
+      "percent": 0.25,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitNontrivial_spec__0___redArg"
+    },
+    {
+      "percent": 0.25,
+      "symbol": "lean_apply_2"
+    },
+    {
+      "percent": 0.25,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitNontrivial_spec__2___redArg"
+    },
+    {
+      "percent": 0.25,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Generic_resume___at___00Hex_GraphIso_Nauty_Generic_advance___at___00Hex_GraphIso_Nauty_Generic_sweepStep___at___00Hex_GraphIso_Nauty_Generic_sweep___at___00Hex_GraphIso_Nauty_Generic_node___at___00Hex_GraphIso_Nauty_Sparse_runState_spec__0_spec__0_spec__1_spec__3_spec__4_spec__5___redArg"
+    },
+    {
+      "percent": 0.22,
+      "symbol": "lean::mpz::mpz(unsigned long)"
+    },
+    {
+      "percent": 0.19,
+      "symbol": "__gmpz_clear"
+    },
+    {
+      "percent": 0.19,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_refine_spec__0___redArg"
+    },
+    {
+      "percent": 0.19,
+      "symbol": "mi_arena_schedule_purge(mi_arena_s*, unsigned long, unsigned long)"
+    },
+    {
+      "percent": 0.19,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Generic_sweepStep___at___00Hex_GraphIso_Nauty_Generic_sweep___at___00Hex_GraphIso_Nauty_Generic_node___at___00Hex_GraphIso_Nauty_Sparse_runState_spec__0_spec__0_spec__1"
+    },
+    {
+      "percent": 0.19,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__1___redArg"
+    },
+    {
+      "percent": 0.19,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__0___redArg"
+    },
+    {
+      "percent": 0.19,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_splitSingleton"
+    },
+    {
+      "percent": 0.19,
+      "symbol": "_mi_theap_collect_retired(mi_theap_s*, bool)"
+    },
+    {
+      "percent": 0.19,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Generic_nodeStep___at___00Hex_GraphIso_Nauty_Generic_node___at___00Hex_GraphIso_Nauty_Sparse_runState_spec__0_spec__1"
+    },
+    {
+      "percent": 0.16,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_chooseTarget"
+    },
+    {
+      "percent": 0.16,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitCounts_spec__1___redArg"
+    },
+    {
+      "percent": 0.16,
+      "symbol": "__gmp_default_reallocate"
+    },
+    {
+      "percent": 0.16,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_splitNontrivial"
+    },
+    {
+      "percent": 0.16,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_classify_spec__0___redArg"
+    },
+    {
+      "percent": 0.16,
+      "symbol": "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeSortTR_u2082_run___redArg"
+    },
+    {
+      "percent": 0.16,
+      "symbol": "__gmpn_lshift_x86_64"
+    },
+    {
+      "percent": 0.16,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_isautom_spec__0___redArg"
+    },
+    {
+      "percent": 0.13,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_refine_spec__1___redArg"
+    },
+    {
+      "percent": 0.13,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_orbjoin_spec__1___redArg"
+    },
+    {
+      "percent": 0.13,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Generic_sweep___at___00Hex_GraphIso_Nauty_Generic_node___at___00Hex_GraphIso_Nauty_Sparse_runState_spec__0_spec__0___lam__0___boxed"
+    },
+    {
+      "percent": 0.13,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_isautom_spec__1___redArg"
+    },
+    {
+      "percent": 0.13,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_bestcell"
+    },
+    {
+      "percent": 0.13,
+      "symbol": "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_splitRevAt_go___redArg"
+    },
+    {
+      "percent": 0.13,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_orbjoin_spec__0___redArg"
+    },
+    {
+      "percent": 0.13,
+      "symbol": "free@plt"
+    },
+    {
+      "percent": 0.09,
+      "symbol": "l_List_toArrayAux___redArg"
+    },
+    {
+      "percent": 0.09,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_fmperm_spec__0___redArg"
+    },
+    {
+      "percent": 0.09,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_bestcell_spec__4___redArg"
+    },
+    {
+      "percent": 0.09,
+      "symbol": "realloc@plt"
+    },
+    {
+      "percent": 0.09,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_lowBitGo"
+    },
+    {
+      "percent": 0.09,
+      "symbol": "l_Std_DTreeMap_Internal_Impl_insert___at___00Lean_Parser_TokenMap_insert_spec__1___redArg"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "lp_Hex_List_foldl___at___00Hex_GraphIso_Nauty_worksetOf_spec__0"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_refine"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Generic_resume___at___00Hex_GraphIso_Nauty_Generic_advance___at___00Hex_GraphIso_Nauty_Generic_sweepStep___at___00Hex_GraphIso_Nauty_Generic_sweep___at___00Hex_GraphIso_Nauty_Generic_node___at___00Hex_GraphIso_Nauty_Sparse_runState_spec__0_spec__0_spec__1_spec__3_spec__4___redArg"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitCounts_spec__2___redArg"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "mi_arenas_page_regular_alloc(mi_theap_s*, unsigned long, unsigned long)"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_classify"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "lean::mpz::is_size_t() const"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_distvals_spec__1___redArg"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_distvals_spec__0___redArg"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "l_List_lengthTR___redArg"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_refine_spec__2___redArg"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Generic_advance___at___00Hex_GraphIso_Nauty_Generic_sweepStep___at___00Hex_GraphIso_Nauty_Generic_sweep___at___00Hex_GraphIso_Nauty_Generic_node___at___00Hex_GraphIso_Nauty_Sparse_runState_spec__0_spec__0_spec__1_spec__3"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "__gmpz_init"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Generic_sweep___at___00Hex_GraphIso_Nauty_Generic_node___at___00Hex_GraphIso_Nauty_Sparse_runState_spec__0_spec__0___lam__1___boxed"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "mi_bin(unsigned long)"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "l_Nat_testBit"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "__memmove_avx512_unaligned_erms"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "mi_bchunk_try_find_and_clear(mi_bchunk_s*, unsigned long*)"
+    },
+    {
+      "percent": 0.06,
+      "symbol": "std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::push_back(char)"
+    },
+    {
+      "percent": 0.05,
+      "symbol": "lean_apply_1"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lean_mark_mt"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lean_st_ref_take"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "l___private_Init_Data_Array_Basic_0__Array_anyMUnsafe_any___redArg___lam__0___boxed"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "mi_page_queue_remove(mi_page_queue_s*, mi_page_s*)"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_breakout_go"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_updatecan_spec__1___redArg"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "mi_page_free_list_extend(mi_page_s*, unsigned long, unsigned long)"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lean::mpz::mpz()"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeSortTR_u2082_run_x27___redArg"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "mi_page_queue_push(mi_theap_s*, mi_page_queue_s*, mi_page_s*)"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_RefineSt_push"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_VSet_firstFrom___redArg"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "mi_bitmap_setN(mi_bitmap_s*, unsigned long, unsigned long, unsigned long*)"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Generic_instBEqLeaf_beq"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_Sort_insertion_spec__1___redArg"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_cellstarts"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_forIn_x27Unsafe_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__3___lam__0"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitCounts_spec__3___redArg"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lean_apply_4"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_Sort_partition_spec__1___redArg"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_visit"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_Sort_partition_spec__0___redArg"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "mi_bchunk_setN(mi_bchunk_s*, unsigned long, unsigned long, unsigned long*)"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "l_Nat_decLe___boxed"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "mi_bbitmap_setN(mi_bbitmap_s*, unsigned long, unsigned long)"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "l_List_reverseAux___redArg"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "l_List_range_loop"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_breakout"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lean::mpz::~mpz()"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lean_array_to_list_impl"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Generic_node___at___00Hex_GraphIso_Nauty_Sparse_runState_spec__0___lam__0___boxed"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lean_apply_9"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "mi_page_queue_find_free_ex(mi_theap_s*, mi_page_queue_s*, bool)"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "_mi_arenas_collect(bool, bool, mi_tld_s*)"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "l_Std_DTreeMap_Internal_Impl_insert___at___00Lean_NameMap_insert_spec__0___redArg"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lean::validate_utf8_one(unsigned char const*, unsigned long, unsigned long&)"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_HexGraphIso_SparseBench_0__Hex_GraphIsoSparseBench_read_spec__0___redArg"
+    },
+    {
+      "percent": 0.01,
+      "symbol": "_dl_relocate_object_no_relro"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "0xffffffffae1be1b4"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "0xffffffffae201280"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "_dl_start"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "_start"
+    }
+  ],
+  "after-tree1024-run": [
+    {
+      "percent": 23.35,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_bestcell_spec__1___redArg"
+    },
+    {
+      "percent": 11.3,
+      "symbol": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)"
+    },
+    {
+      "percent": 10.76,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_cellEnd_go"
+    },
+    {
+      "percent": 8.99,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_cheapautom_go"
+    },
+    {
+      "percent": 8.46,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_cellstarts_spec__1_spec__1___redArg"
+    },
+    {
+      "percent": 4.32,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_cellEnd"
+    },
+    {
+      "percent": 3.16,
+      "symbol": "malloc"
+    },
+    {
+      "percent": 2.44,
+      "symbol": "cfree@GLIBC_2.2.5"
+    },
+    {
+      "percent": 1.96,
+      "symbol": "mi_malloc_small"
+    },
+    {
+      "percent": 1.95,
+      "symbol": "lean_copy_expand_array"
+    },
+    {
+      "percent": 1.5,
+      "symbol": "__gmpz_add"
+    },
+    {
+      "percent": 1.35,
+      "symbol": "lean_mk_array"
+    },
+    {
+      "percent": 1.35,
+      "symbol": "mi_free"
+    },
+    {
+      "percent": 1.05,
+      "symbol": "__gmpz_mul_2exp"
+    },
+    {
+      "percent": 0.9,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_VSet_insert"
+    },
+    {
+      "percent": 0.75,
+      "symbol": "__gmpz_realloc"
+    },
+    {
+      "percent": 0.64,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_cellstarts_spec__0___redArg"
+    },
+    {
+      "percent": 0.6,
+      "symbol": "lean_nat_shiftl"
+    },
+    {
+      "percent": 0.6,
+      "symbol": "__gmp_default_allocate"
+    },
+    {
+      "percent": 0.6,
+      "symbol": "lean_dec_ref_cold"
+    },
+    {
+      "percent": 0.56,
+      "symbol": "__gmpz_init_set_ui"
+    },
+    {
+      "percent": 0.56,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_bestcell_spec__3___redArg"
+    },
+    {
+      "percent": 0.53,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_bestcell_spec__4_spec__4___redArg"
+    },
+    {
+      "percent": 0.49,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__0___redArg"
+    },
+    {
+      "percent": 0.45,
+      "symbol": "mi_malloc"
+    },
+    {
+      "percent": 0.45,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_compareCodes___redArg"
+    },
+    {
+      "percent": 0.45,
+      "symbol": "lean_array_push"
+    },
+    {
+      "percent": 0.41,
+      "symbol": "mi_bchunk_setN(mi_bchunk_s*, unsigned long, unsigned long, unsigned long*)"
+    },
+    {
+      "percent": 0.41,
+      "symbol": "lean::mpz::get_size_t() const"
+    },
+    {
+      "percent": 0.38,
+      "symbol": "_mi_page_retire(mi_page_s*)"
+    },
+    {
+      "percent": 0.38,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_orbjoin_spec__2___redArg"
+    },
+    {
+      "percent": 0.34,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_bestcell_spec__2___redArg"
+    },
+    {
+      "percent": 0.34,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Generic_sweepStep___at___00Hex_GraphIso_Nauty_Generic_sweep___at___00Hex_GraphIso_Nauty_Generic_node___at___00Hex_GraphIso_Nauty_Sparse_runState_spec__0_spec__0_spec__1"
+    },
+    {
+      "percent": 0.34,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_classify_spec__0___redArg"
+    },
+    {
+      "percent": 0.34,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_isautom_spec__2___redArg"
+    },
+    {
+      "percent": 0.3,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_chooseTarget"
+    },
+    {
+      "percent": 0.3,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_fmperm_spec__1___redArg"
+    },
+    {
+      "percent": 0.3,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Generic_resume___at___00Hex_GraphIso_Nauty_Generic_advance___at___00Hex_GraphIso_Nauty_Generic_sweepStep___at___00Hex_GraphIso_Nauty_Generic_sweep___at___00Hex_GraphIso_Nauty_Generic_node___at___00Hex_GraphIso_Nauty_Sparse_runState_spec__0_spec__0_spec__1_spec__3_spec__4_spec__5___redArg"
+    },
+    {
+      "percent": 0.3,
+      "symbol": "__gmpn_lshift_x86_64"
+    },
+    {
+      "percent": 0.26,
+      "symbol": "__gmpz_clear"
+    },
+    {
+      "percent": 0.26,
+      "symbol": "lean_free_object"
+    },
+    {
+      "percent": 0.26,
+      "symbol": "realloc"
+    },
+    {
+      "percent": 0.26,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_bestcell_spec__0___redArg"
+    },
+    {
+      "percent": 0.23,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Generic_nodeStep___at___00Hex_GraphIso_Nauty_Generic_node___at___00Hex_GraphIso_Nauty_Sparse_runState_spec__0_spec__1"
+    },
+    {
+      "percent": 0.23,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_VSet_firstFrom___redArg"
+    },
+    {
+      "percent": 0.19,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_orbjoin_spec__1___redArg"
+    },
+    {
+      "percent": 0.19,
+      "symbol": "_mi_malloc_generic(mi_theap_s*, unsigned long, unsigned long, unsigned long*)"
+    },
+    {
+      "percent": 0.15,
+      "symbol": "__gmp_default_reallocate"
+    },
+    {
+      "percent": 0.15,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_refine_spec__1___redArg"
+    },
+    {
+      "percent": 0.15,
+      "symbol": "lean_apply_9"
+    },
+    {
+      "percent": 0.15,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_lowBitGo"
+    },
+    {
+      "percent": 0.11,
+      "symbol": "_mi_theap_collect_retired(mi_theap_s*, bool)"
+    },
+    {
+      "percent": 0.11,
+      "symbol": "realloc@plt"
+    },
+    {
+      "percent": 0.11,
+      "symbol": "_mi_arenas_collect(bool, bool, mi_tld_s*)"
+    },
+    {
+      "percent": 0.11,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_VSet_nextElem___redArg"
+    },
+    {
+      "percent": 0.11,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_bestcell_spec__4___redArg"
+    },
+    {
+      "percent": 0.11,
+      "symbol": "lean_inc_heartbeat"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "lean_apply_1"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "lean_mark_mt"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "lean::mpz::mpz(unsigned long)"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Generic_resume___at___00Hex_GraphIso_Nauty_Generic_advance___at___00Hex_GraphIso_Nauty_Generic_sweepStep___at___00Hex_GraphIso_Nauty_Generic_sweep___at___00Hex_GraphIso_Nauty_Generic_node___at___00Hex_GraphIso_Nauty_Sparse_runState_spec__0_spec__0_spec__1_spec__3_spec__4___redArg"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "mi_bbitmap_setN(mi_bbitmap_s*, unsigned long, unsigned long)"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__2___redArg"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_refine_spec__0___redArg"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "mi_bchunk_try_find_and_clear(mi_bchunk_s*, unsigned long*)"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitNontrivial_spec__0___redArg"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_refine"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_forIn_x27Unsafe_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__3"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitCounts_spec__1___redArg"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Generic_sweep___at___00Hex_GraphIso_Nauty_Generic_node___at___00Hex_GraphIso_Nauty_Sparse_runState_spec__0_spec__0___lam__0___boxed"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_VSet_empty"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_refine_spec__1_spec__1___redArg"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "lean::mpz::~mpz()"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_classify"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "mi_page_queue_push(mi_theap_s*, mi_page_queue_s*, mi_page_s*)"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "mi_arenas_page_regular_alloc(mi_theap_s*, unsigned long, unsigned long)"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "free@plt"
+    },
+    {
+      "percent": 0.08,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_splitSingleton"
+    },
+    {
+      "percent": 0.07,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_refine_spec__2___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "l_Lean_PersistentHashMap_getCollisionNodeSize___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_bbitmap_try_find_and_clear_generic(mi_bbitmap_s*, unsigned long, unsigned long, unsigned long*, bool (*)(mi_bchunk_s*, unsigned long, unsigned long*))"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitNontrivial_spec__1___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_RefineSt_hash___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_breakout_go"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_splitSingleton_spec__1___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_inverse_spec__0___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "0xffffffffad484e53"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "clock_gettime@@GLIBC_2.17"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lean::mpz::is_size_t() const"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_splitCounts"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_arena_schedule_purge(mi_arena_s*, unsigned long, unsigned long)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "0xffffffffae1c0e4a"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lean_apply_4"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex_List_foldl___at___00Hex_GraphIso_Nauty_worksetOf_spec__0"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_bestcell"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_cellstarts"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "l_Nat_testBit"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_breakout"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Generic_sweep___at___00Hex_GraphIso_Nauty_Generic_node___at___00Hex_GraphIso_Nauty_Sparse_runState_spec__0_spec__0___lam__1___boxed"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_bitmap_clearN(mi_bitmap_s*, unsigned long, unsigned long)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_arenas_page_alloc_fresh(mi_theap_s*, unsigned long, unsigned long, unsigned long, bool)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex___private_HexGraphIso_SparseBench_0__Hex_GraphIsoSparseBench_searchDigest"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "l___private_Init_Data_List_Sort_Impl_0__List_MergeSort_Internal_mergeSortTR_u2082_run___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_bitmap_setN(mi_bitmap_s*, unsigned long, unsigned long, unsigned long*)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_VSet_erase"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_GraphIso_Nauty_Sparse_updatecan_spec__0___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_cheapautom"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_page_queue_find_free_ex(mi_theap_s*, mi_page_queue_s*, bool)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "mi_arenas_try_find_free(mi_heap_s*, unsigned long, unsigned long, bool, bool, mi_arena_s*, unsigned long, int, mi_memid_s*)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex_Hex_GraphIso_Nauty_Sparse_splitNontrivial"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "l___private_Init_Data_Array_Basic_0__Array_anyMUnsafe_any___redArg___lam__0___boxed"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "l_Std_DTreeMap_Internal_Impl_insert___at___00Lean_NameMap_insert_spec__0___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "__libc_malloc2"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lean_alloc_object"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::push_back(char)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_HexGraphIso_SparseBench_0__Hex_GraphIsoSparseBench_read_spec__0___redArg"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lean::utf8_strlen(char const*, unsigned long)"
+    },
+    {
+      "percent": 0.04,
+      "symbol": "lean::validate_utf8(unsigned char const*, unsigned long, unsigned long&, unsigned long&)"
+    },
+    {
+      "percent": 0.03,
+      "symbol": "l___private_Lean_Data_Trie_0__Lean_Data_Trie_find_x3f_loop___redArg"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "0xffffffffae133544"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "__GI___tunables_init"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "0xffffffffae201280"
+    },
+    {
+      "percent": 0.0,
+      "symbol": "_dl_start"
+    }
+  ]
+}

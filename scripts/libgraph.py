@@ -22,6 +22,8 @@ BUILD_ONLY_LIBS = {
     "HexPolyFastKernels",
     "HexGraphIsoProofProbe",
     "HexGraphIsoCfiProbe",
+    "HexGraphIsoSparseProofProbe",
+    "HexGraphIsoSparseCfiProbe",
     "HexGraphIsoMathlibProofProbe",
     "HexLLLBenchSupport",
     "HexGF2BenchSupport",

@@ -196,34 +196,27 @@ private theorem sub_or_cancel {x a b : VSet n}
 
 /-! # The certificate invariant survives one refinement step -/
 
-theorem certInv_refineStep {ctx : Ctx n} {level split1 : Nat}
-    {st : RefineSt n} (hok : StOk n level st)
+/-- The certificate invariant is preserved by any cell refinement which
+stabilizes the retired splitter and activates every fragment of an active
+non-splitter cell, leaving at most one inactive fragment of each other cell. -/
+theorem certInv_transport {ctx : Ctx n} {level split1 : Nat} {st r : RefineSt n}
+    (hok : StOk n level st) (hrok : StOk n level r)
     (hinj : LabInj st.lab n) (hstarts : StartsOk level st)
-    (hsymm : ∀ u w, u < n → w < n →
-      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
     (hmem : st.active.mem split1 = true) (hs1 : split1 < n)
-    (hinv : CertInv ctx level st) :
-    CertInv ctx level (refineStep ctx level split1 st) := by
+    (hRI : RefInv level st.lab st.ptn r)
+    (hcc : ∀ a len, IsCell r.ptn level a len → a + len ≤ n →
+      ConstOn ctx (worksetOf n st.lab split1 (cellEnd st.ptn level split1)) (segN r.lab a len))
+    (hact3 : ∀ p ∈ cells st.ptn level n,
+      (st.active.mem p.1 = true → p.1 ≠ split1 →
+        ∀ u, p.1 ≤ u → u ≤ p.2 →
+          (u = p.1 ∨ r.ptn[u - 1]! ≤ level) → r.active.mem u = true) ∧
+      ((st.active.mem p.1 = false ∨ p.1 = split1) →
+        ∃ w, ∀ u, p.1 ≤ u → u ≤ p.2 →
+          (u = p.1 ∨ r.ptn[u - 1]! ≤ level) → u ≠ w → r.active.mem u = true))
+    (hinv : CertInv ctx level st) : CertInv ctx level r := by
   have hps := hok.ptnSize
-  have hls := hok.labSize
   have hend := hok.ptnEnd
-  have hendn : st.ptn[n - 1]! ≤ level := by
-    have h := hend
-    rw [hps] at h
-    exact h
-  have hrok : StOk n level (refineStep ctx level split1 st) :=
-    refineStep_stOk hok
-  have hRI : RefInv level st.lab st.ptn
-      (refineStep ctx level split1 st) :=
-    refInv_refineStep ⟨rfl, rfl, fun _ h => h, cellsPerm_refl _ _ _⟩
-      (Nat.le_of_eq hps.symm) (hls.trans hps.symm) hend
-  obtain ⟨r, hr⟩ : ∃ r, refineStep ctx level split1 st = r := ⟨_, rfl⟩
-  rw [hr] at hrok hRI
-  have hcc := refineStep_cell_const (st := st) hok hsymm hs1
-  obtain ⟨_, _, hact3⟩ :=
-    refineStep_state (st := st) hok hmem
-  rw [hr] at hcc hact3
-  rw [hr]
+  have hendn : st.ptn[n - 1]! ≤ level := by simpa only [hps] using hend
   have hgrow := hRI.grow
   have hperm := hRI.perm
   have hrps := hrok.ptnSize
@@ -637,6 +630,21 @@ theorem certInv_refineStep {ctx : Ctx n} {level split1 : Nat}
         rw [← VSet.union_assoc, sub_or_xor hp'sub, hWD]
       rw [hor]
       exact hgoal
+
+/-- The executed dense refinement step supplies the partition, splitter,
+and activation facts of the shared certificate-transport theorem. -/
+theorem certInv_refineStep {ctx : Ctx n} {level split1 : Nat}
+    {st : RefineSt n} (hok : StOk n level st)
+    (hinj : LabInj st.lab n) (hstarts : StartsOk level st)
+    (hsymm : ∀ u w, u < n → w < n →
+      (ctx.g[u]!).mem w = (ctx.g[w]!).mem u)
+    (hmem : st.active.mem split1 = true) (hs1 : split1 < n)
+    (hinv : CertInv ctx level st) :
+    CertInv ctx level (refineStep ctx level split1 st) :=
+  certInv_transport hok (refineStep_stOk hok) hinj hstarts hmem hs1
+    (refInv_refineStep ⟨rfl, rfl, fun _ h => h, cellsPerm_refl _ _ _⟩
+      (Nat.le_of_eq hok.ptnSize.symm) (hok.labSize.trans hok.ptnSize.symm) hok.ptnEnd)
+    (refineStep_cell_const hok hsymm hs1) (refineStep_state hok hmem).2.2 hinv
 
 /-! # The fixpoint: refine's output is equitable -/
 

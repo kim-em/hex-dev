@@ -249,6 +249,55 @@ theorem get_inv (p : Perm n) (i : Fin n) : p.inv.get i = p.preimage i :=
 @[simp] theorem inv_get_get (p : Perm n) (i : Fin n) : p.inv.get (p.get i) = i := by
   rw [get_inv, preimage_get]
 
+/-- Check a vertex array in linear time: scatter a candidate inverse, then
+check both inverse identities. The checks also reject repeated entries;
+no pairwise membership scan is needed. -/
+@[expose] def check (v : Vector (Fin n) n) : Option (Perm n) :=
+  let inverse := (List.finRange n).foldl
+    (fun (a : Vector (Fin n) n) (i : Fin n) => a.set (v[i.val]).val i (v[i.val]).isLt)
+    (Hex.Vector.ofFn' fun i => i)
+  if h : (∀ i : Fin n, inverse[(v[i.val]).val] = i) ∧
+      (∀ i : Fin n, v[(inverse[i.val]).val] = i) then
+    some ⟨v, nodup_toList (fun i j he => by
+      have := congrArg (fun x : Fin n => inverse[x.val]) he
+      exact (h.1 i).symm.trans (this.trans (h.1 j))),
+      fun i => List.mem_iff_getElem.mpr
+        ⟨(inverse[i.val]).val, by simp, by simpa using h.2 i⟩⟩
+  else none
+
+/-- The linear checker accepts exactly the original checked constructor's
+inputs and returns the same proof-carrying permutation. -/
+@[csimp] theorem ofVector?_eq_check : @ofVector? = @check := by
+  funext n v
+  unfold ofVector?
+  split
+  · rename_i h
+    let p : Perm n := ⟨v, h.1, h.2⟩
+    have hl : ∀ i : Fin n, p.invVec[(v[i.val]).val] = i := p.preimage_get
+    have hr : ∀ i : Fin n, v[(p.invVec[i.val]).val] = i := p.get_preimage
+    unfold check
+    dsimp only
+    rw [dite_eq_left (show _ from ⟨hl, hr⟩)]
+  · rename_i h
+    unfold check
+    dsimp only
+    split
+    · rename_i hc
+      exfalso
+      apply h
+      exact ⟨nodup_toList (fun i j he => by
+        have := congrArg (fun x : Fin n =>
+          ((List.finRange n).foldl
+            (fun (a : Vector (Fin n) n) (i : Fin n) => a.set (v[i.val]).val i (v[i.val]).isLt)
+            (Hex.Vector.ofFn' fun i => i))[x.val]) he
+        exact (hc.1 i).symm.trans (this.trans (hc.1 j))),
+        fun i => List.mem_iff_getElem.mpr
+          ⟨(((List.finRange n).foldl
+            (fun (a : Vector (Fin n) n) (i : Fin n) => a.set (v[i.val]).val i (v[i.val]).isLt)
+            (Hex.Vector.ofFn' fun i => i))[i.val]).val,
+            by simp, by simpa using hc.2 i⟩⟩
+    · rfl
+
 /-! # Algebra -/
 
 @[simp] theorem comp_id (p : Perm n) : p.comp (Perm.id n) = p := by

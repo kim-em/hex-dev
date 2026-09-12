@@ -65,6 +65,11 @@ entries, every entry must be below `n`, and entries must be distinct. Do not
 silently reduce out-of-range images modulo `n` or infer the degree from the
 largest moved point.
 
+Compiled checked construction uses linear time and linear auxiliary storage
+in the degree: scatter a candidate inverse and check both inverse identities.
+Prove equality with the duplicate-free, complete-array specification so the
+compiler replacement preserves rejection as well as successful results.
+
 Cycles omit fixed points, begin with their least point, follow the permutation's
 direction and are ordered by their first point. Prove that the disjoint cycles
 reconstruct the permutation. `Perm.order` is the lcm of the cycle lengths,

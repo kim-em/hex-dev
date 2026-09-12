@@ -1,0 +1,29 @@
+{
+  "cpu": 21,
+  "host": "chungus2",
+  "command": [
+    "taskset",
+    "-c",
+    "21",
+    ".lake/build/bin/hexgraphiso_bench",
+    "run",
+    "Hex.GraphIsoBench.runSparseBuild",
+    "--outer-trials",
+    "3",
+    "--export-file",
+    "reports/bench-results/hexgraphiso-sparse-build-release.json"
+  ],
+  "load_before": [
+    4.1171875,
+    3.8310546875,
+    7.85107421875
+  ],
+  "source_sha256": "ca3af28186865a304a0938e93a161157d40a829ec7589680ebc5300baa76ccb6",
+  "binary_sha256": "cef930224162880dbaa1b4526987372b47dd3c92a4e5653706a37a79cb81abda",
+  "returncode": 2,
+  "load_after": [
+    4.18798828125,
+    3.8505859375,
+    7.83544921875
+  ]
+}

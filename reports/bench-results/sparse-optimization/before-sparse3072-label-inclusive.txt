@@ -1,0 +1,28 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 4K of event 'cycles:u'
+# Event count (approx.): 17899356325
+#
+# Children      Self  Symbol                                                                                                                                                                     IPC   [IPC Coverage]
+# ........  ........  .........................................................................................................................................................................  ....................
+#
+    14.23%    14.23%  [.] l_List_decidableBAll___redArg                                                                                                                                          -      -
+    13.13%    13.13%  [.] mi_free                                                                                                                                                                -      -
+    12.91%    12.91%  [.] l_List_elem___redArg                                                                                                                                                   -      -
+    12.56%    12.56%  [.] lean_array_to_list_impl                                                                                                                                                -      -
+    12.29%    12.29%  [.] lean_apply_2                                                                                                                                                           -      -
+     6.59%     6.59%  [.] lean_inc_heartbeat                                                                                                                                                     -      -
+     6.21%     6.19%  [.] lean_apply_1                                                                                                                                                           -      -
+     6.12%     6.12%  [.] l_instDecidableEqFin___boxed                                                                                                                                           -      -
+     5.25%     5.23%  [.] lean_dec_ref_cold                                                                                                                                                      -      -
+     3.03%     3.03%  [.] l_List_nodupDecidable___redArg___lam__0___boxed                                                                                                                        -      -
+     2.47%     2.47%  [.] l_instBEqOfDecidableEq___redArg___lam__0___boxed                                                                                                                       -      -
+     1.06%     1.06%  [.] lean_free_object                                                                                                                                                       -      -
+
+
+#
+# (Tip: To show assembler sample context control flow use perf record -b / perf report --samples 10 and then browse context)
+#

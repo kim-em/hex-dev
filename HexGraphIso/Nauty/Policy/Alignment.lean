@@ -168,7 +168,7 @@ theorem Aligned.child {G : Colored n k} {ctx : Ctx n} {base level numcells tc tv
 theorem recover_eqlev (inf level : Nat) (st : Search n) :
     (Nauty.recover inf level st).eqlevFirst = min st.eqlevFirst level := by
   unfold Nauty.recover recoverLevels recoverPtn
-  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite Search.eqlevFirst, ite_self]
+  simp only [Id.run_bind, Id.run_pure, apply_ite Id.run, apply_ite SearchState.eqlevFirst, ite_self]
   split <;> omega
 
 /-- A child that cannot restore an earlier divergence retains the parent history on recovery. -/

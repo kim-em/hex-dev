@@ -1,0 +1,22 @@
+{
+  "command": [
+    "taskset",
+    "-c",
+    "61",
+    "uv",
+    "run",
+    "--no-project",
+    "--with",
+    "matplotlib==3.11.1",
+    "bash",
+    "scripts/bench/graphiso_cactus_sweep.sh",
+    "sparse cached refinement and proved output optimizations"
+  ],
+  "cpu": 61,
+  "started": 1788941108.7195082,
+  "load": [
+    0.84814453125,
+    1.2705078125,
+    1.50830078125
+  ]
+}

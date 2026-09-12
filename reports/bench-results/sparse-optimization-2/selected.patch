@@ -1,0 +1,11 @@
+--- a/HexGraphIso/Nauty/Sparse/Cells.lean
++++ b/HexGraphIso/Nauty/Sparse/Cells.lean
+@@ -17,7 +17,7 @@
+ 
+ /-- Tiny touched sets need only direct comparisons; larger sets retain the
+ existing verified merge sort. -/
+-def sortCellsFast (xs : Array Nat) : Array Nat :=
++@[inline] def sortCellsFast (xs : Array Nat) : Array Nat :=
+   match xs.size with
+   | 0 | 1 => xs
+   | 2 =>

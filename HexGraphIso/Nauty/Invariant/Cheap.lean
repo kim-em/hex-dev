@@ -101,7 +101,7 @@ theorem CheapOk.recover {ctx : Ctx n} {rlab rptn : Array Nat}
       else st.noncheaplevel := by
     rw [Nauty.recover, recoverLevels, recoverPtn]
     simp only [Id.run_bind, Id.run_pure, apply_ite Id.run,
-      apply_ite Search.noncheaplevel, ite_self]
+      apply_ite SearchState.noncheaplevel, ite_self]
   constructor
   · rw [hncl]
     split

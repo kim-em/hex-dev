@@ -30,13 +30,13 @@ theorem OrbitsOk.congr {st out : Search n} (h : OrbitsOk st)
   exact h
 
 /-- Workspace replacement changes no orbit pointer. -/
-theorem pushAuto_orbits (st : Search n) (pair : VSet n × VSet n) :
+theorem pushAuto_orbits {κ : Type} (st : SearchState n κ) (pair : VSet n × VSet n) :
     (pushAuto st pair).orbits = st.orbits := by
   unfold pushAuto
   split <;> rfl
 
 /-- Admission joins the existing pointers with the scratch permutation. -/
-theorem admit_orbits (st : Search n) :
+theorem admit_orbits {κ : Type} (st : SearchState n κ) :
     (admit st).orbits = (orbjoin st.orbits st.workperm n).1 := by
   unfold admit pushAuto
   simp only [Id.run_pure]
@@ -72,21 +72,21 @@ theorem OrbitsOk.prune {st : Search n} (h : OrbitsOk st) (level : Nat) :
   · exact h
 
 /-- The shared prune tail changes no orbit pointer. -/
-theorem pruneReturn_orbits (level : Nat) (st : Search n) :
+theorem pruneReturn_orbits {κ : Type} (level : Nat) (st : SearchState n κ) :
     (pruneReturn level st).2.orbits = st.orbits := by
   unfold pruneReturn
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd,
-    apply_ite Search.orbits, pushAuto_orbits, ite_self]
+    apply_ite SearchState.orbits, pushAuto_orbits, ite_self]
 
 /-- Only the two automorphism verdicts join new orbit pointers. -/
-theorem leafExit_orbits (leaf : Leaf) (level : Nat) (st : Search n) :
+theorem leafExit_orbits {κ : Type} (leaf : Leaf) (level : Nat) (st : SearchState n κ) :
     (leafExit leaf level st).2.orbits =
       match leaf with
       | .autoFirst | .autoCanon => (orbjoin st.orbits st.workperm n).1
       | _ => st.orbits := by
   cases leaf <;> unfold leafExit
   all_goals simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd,
-    apply_ite Search.orbits, admit_orbits, pruneReturn_orbits, install, ite_self]
+    apply_ite SearchState.orbits, admit_orbits, pruneReturn_orbits, install, ite_self]
 
 /-- Every leaf action preserves pointer soundness once its admissions are checked. -/
 theorem OrbitsOk.leaf {ctx : Ctx n} {st : Search n} (h : OrbitsOk st)
@@ -106,7 +106,7 @@ theorem classify_orbits (ctx : Ctx n) (level numcells : Nat) (st : Search n) :
     (classify ctx level numcells st).2.orbits = st.orbits := by
   unfold classify
   simp only [Id.run_pure, apply_ite Id.run, apply_ite Prod.snd, scatter_eq,
-    apply_ite Search.orbits, ite_self]
+    apply_ite SearchState.orbits, ite_self]
 
 /-- Identity pointers are connected in the empty initial trace. -/
 theorem initial_orbits (n : Nat) (lab0 : Array Nat) (cellEnds : List Nat) :

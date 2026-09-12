@@ -114,26 +114,26 @@ theorem NodeInput.prepare_scope {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : 
     hv.2 _ (hc.effect.trans (ht.1.effect.trans hh.effect))
   have hfirst : out.firstlab = f.entry.firstlab := by
     dsimp only [out, Loop.prepare, l]
-    simp only [cheapCheck, apply_ite Search.firstlab, ite_self]
+    simp only [cheapCheck, apply_ite SearchState.firstlab, ite_self]
     rw [(chooseTarget_frame ..).2.2.1]
     split
     · rfl
     · exact (compareCodes_frame ..).2.2.1
   have hcanon : out.canonlab = f.entry.canonlab := by
     dsimp only [out, Loop.prepare, l]
-    simp only [cheapCheck, apply_ite Search.canonlab, ite_self]
+    simp only [cheapCheck, apply_ite SearchState.canonlab, ite_self]
     rw [(chooseTarget_frame ..).2.2.2]
     split
     · rfl
     · exact (compareCodes_frame ..).2.2.2
   have htrace : out.genTrace = f.entry.genTrace := by
     dsimp only [out, Loop.prepare, l]
-    simp only [cheapCheck, apply_ite Search.genTrace, ite_self]
+    simp only [cheapCheck, apply_ite SearchState.genTrace, ite_self]
     cases first
     · simp only [Bool.false_eq_true, ↓reduceIte]
       rw [chooseTarget_fields]
       unfold compareCodes
-      simp only [Id.run_pure, apply_ite Id.run, apply_ite Search.genTrace, ite_self]
+      simp only [Id.run_pure, apply_ite Id.run, apply_ite SearchState.genTrace, ite_self]
       rfl
     · simp only [↓reduceIte]
       rw [chooseFirst_fields]; rfl
@@ -249,7 +249,7 @@ theorem Loop.first_shape {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat} {l : Lo
     simp only [chooseTarget, bne_iff_ne.mpr hne, Bool.not_true, Bool.false_and,
       Bool.false_eq_true, ↓reduceIte, hm, Id.run_pure]
   rw [hprep]
-  simp only [cheapCheck, apply_ite Search.lab, apply_ite Search.ptn, ite_self]
+  simp only [cheapCheck, apply_ite SearchState.lab, apply_ite SearchState.ptn, ite_self]
   refine ⟨hcell, hlen, hr, ?_⟩
   apply VSet.ext
   intro v
@@ -403,7 +403,7 @@ theorem Loop.other_shape {G : Colored n k} {ctx : Ctx n} {tcLevel : Nat} {l : Lo
       (l.prepare ctx tcLevel).2.2.2.2.ptn = c.ptn := by
     dsimp only [Loop.prepare]
     simp only [hf, Bool.false_eq_true, ↓reduceIte, cheapCheck,
-      apply_ite Search.lab, apply_ite Search.ptn, ite_self]
+      apply_ite SearchState.lab, apply_ite SearchState.ptn, ite_self]
     rw [chooseTarget_fields]
     exact ⟨rfl, rfl⟩
   dsimp only
@@ -460,7 +460,7 @@ theorem NodeInput.other_input {G : Colored n k} {ctx : Ctx n} {tcLevel fuel : Na
     · left
       dsimp only [p, Loop.prepare, l]
       simp only [Bool.false_eq_true, ↓reduceIte, cheapCheck,
-        apply_ite Search.compCanon, ite_self]
+        apply_ite SearchState.compCanon, ite_self]
       exact hc
     · exact Or.inr ⟨rfl, hc⟩
   · intro v hv

@@ -1,0 +1,42 @@
+{
+  "graphiso.jsonl": {
+    "records": 6233,
+    "sha256": "bd263a0211a436c85f18640406388d47d18ed367cd0e24038e3946dc151ce42c",
+    "byte_identical": true,
+    "C_oracle": "pass"
+  },
+  "sparse.jsonl": {
+    "records": 6233,
+    "sha256": "68739394882dc0ecf9601ed8dde7ca59273f320cfe061d2d4bc8149615a3ff42",
+    "byte_identical": true,
+    "C_oracle": "pass"
+  },
+  "trace.jsonl.gz": {
+    "records": 39032,
+    "sha256_sorted_records": "136b2e52eb9a65e55a7324cad2bae9b116dbd0d9bd1d30f9ff6e87392ae983ba",
+    "records_identical": true,
+    "note": "Committed archive sorts records by corpus/name; emission uses corpus enumeration order."
+  },
+  "build": {
+    "targets": [
+      "hexgraphiso_emit_fixtures",
+      "hexgraphiso_emit_sparse",
+      "hexgraphiso_emit_trace",
+      "HexGraphIsoMathlib"
+    ],
+    "jobs": 2231,
+    "result": "pass"
+  },
+  "python_tests": {
+    "tests": 40,
+    "result": "pass"
+  },
+  "trust_surface": {
+    "files": 1312,
+    "result": "no axioms, sorries, or native_decide"
+  },
+  "dense_cactus": {
+    "fingerprint": "8019e6bc2310",
+    "freshness_check": "pass"
+  }
+}

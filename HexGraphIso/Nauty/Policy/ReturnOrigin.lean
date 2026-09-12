@@ -146,22 +146,22 @@ theorem LeafReturn.admission {target : Nat} {out : Search n}
       (out.autos.back? = some (fmptn out.lab out.ptn out.noncheaplevel n) ∧
         target ≤ out.noncheaplevel - 1) := by
   obtain ⟨leaf, level, st, ⟨ctx, numcells, before, hclass⟩, he, hs⟩ := h
-  have hc := congrArg Search.wsCap hs
+  have hc := congrArg SearchState.wsCap hs
   change out.wsCap = (leafExit leaf level st).2.wsCap at hc
   rw [leafExit_capacity] at hc
-  have hb := congrArg Search.autos hs
+  have hb := congrArg SearchState.autos hs
   change out.autos = (leafExit leaf level st).2.autos at hb
   rcases leafExit_short_pair (hc ▸ hcap) he with ⟨rfl, hp⟩ | ⟨ha, hp⟩
   · have hw : out.workperm = st.workperm :=
-      (congrArg Search.workperm hs).trans (leafExit_workperm .autoCanon level st)
+      (congrArg SearchState.workperm hs).trans (leafExit_workperm .autoCanon level st)
     have hcanon : out.canonlab = st.canonlab :=
-      (congrArg Search.canonlab hs).trans (autoCanon_ref level st)
+      (congrArg SearchState.canonlab hs).trans (autoCanon_ref level st)
     have hlab : out.lab = st.lab :=
-      (congrArg Search.lab hs).trans (leafExit_frame .autoCanon level st).1
+      (congrArg SearchState.lab hs).trans (leafExit_frame .autoCanon level st).1
     refine Or.inl ⟨?_, ?_, ?_, ?_⟩
     · rwa [hb, hw]
-    · exact (leafExit_canon_target he).trans (congrArg Search.gcaCanon hs).symm
-    · have ht := congrArg Search.genTrace hs
+    · exact (leafExit_canon_target he).trans (congrArg SearchState.gcaCanon hs).symm
+    · have ht := congrArg SearchState.genTrace hs
       change out.genTrace = (leafExit .autoCanon level st).2.genTrace at ht
       rw [ht, leafExit_trace, hw]
       simp
@@ -171,10 +171,10 @@ theorem LeafReturn.admission {target : Nat} {out : Search n}
       rw [hclass] at hm
       simp only [hw, hcanon, hlab] at hwork hsize hperm ⊢
       exact hm hwork hsize hperm
-  · have hl : out.lab = st.lab := (congrArg Search.lab hs).trans (leafExit_frame leaf level st).1
-    have hptn : out.ptn = st.ptn := (congrArg Search.ptn hs).trans (leafExit_frame leaf level st).2.1
+  · have hl : out.lab = st.lab := (congrArg SearchState.lab hs).trans (leafExit_frame leaf level st).1
+    have hptn : out.ptn = st.ptn := (congrArg SearchState.ptn hs).trans (leafExit_frame leaf level st).2.1
     have hn : out.noncheaplevel = st.noncheaplevel :=
-      (congrArg Search.noncheaplevel hs).trans (leafExit_noncheap leaf level st)
+      (congrArg SearchState.noncheaplevel hs).trans (leafExit_noncheap leaf level st)
     refine Or.inr ⟨?_, ?_⟩
     · rwa [hb, hl, hptn, hn]
     · rw [hn]

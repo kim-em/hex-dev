@@ -14,7 +14,7 @@ public section
 
 namespace Hex.GraphIso.Nauty.Generic
 
-variable {n : Nat} {σ : Type} [Policy σ n]
+variable {n : Nat} {σ : Type} {γ : Type} [Policy σ n (γ := γ)]
 
 /-- A sweep consumes every unwind that does not leave its level. -/
 def exitContract : Contract σ n where
@@ -58,7 +58,7 @@ theorem bound_advance {fuel cfuel : Nat} {next : SweepFn σ n}
 The sweep bound is independent of the state passed to the continuation. -/
 theorem bound_node {fuel : Nat} {next : SweepFn σ n}
     (hnext : (exitContract (σ := σ) (n := n)).sweepValid fuel (n + 1) next)
-    (ctx : Ctx n) (tcLevel : Nat) (first : Bool) (level numcells : Nat) (st : σ)
+    (ctx : γ) (tcLevel : Nat) (first : Bool) (level numcells : Nat) (st : σ)
     (hlevel : 1 ≤ level)
     (hleaf : first = false →
       let r := Policy.visit ctx level numcells st
@@ -118,7 +118,7 @@ theorem bound_node {fuel : Nat} {next : SweepFn σ n}
     | fuel => simp
 
 /-- The unwind bound depends only on the generic sweep's control flow. -/
-theorem exitPolicy (ctx : Ctx n) (inf tcLevel : Nat) :
+theorem exitPolicy (ctx : γ) (inf tcLevel : Nat) :
     SoundPolicy (σ := σ) ctx inf tcLevel exitContract where
   node_zero := by intros; trivial
   node_step := by intros; trivial
@@ -138,7 +138,7 @@ theorem exitPolicy (ctx : Ctx n) (inf tcLevel : Nat) :
 
 /-- Every sweep returns an unwind strictly below its own level, regardless
 of the child policies, input state, or recursion bounds. -/
-theorem sweep_bound (first : Bool) (ctx : Ctx n)
+theorem sweep_bound (first : Bool) (ctx : γ)
     (inf tcLevel fuel cfuel level numcells tc tv1 : Nat) (cursor : Option Nat)
     (cell : VSet n) (index : Nat) (st : σ) :
     ∀ target short,
