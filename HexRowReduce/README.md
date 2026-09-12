@@ -5,8 +5,8 @@ library for Lean 4. The aim is fast executable code, fully verified, built
 with spec-driven development.
 
 `hex-row-reduce` provides Gauss-Jordan row reduction to reduced row echelon
-form over a field, together with row-span and nullspace computations built on
-it. This library depends only on [`hex-matrix`](https://github.com/leanprover/hex-matrix).
+form over a field, together with row-span and nullspace computations,
+two-sided field inversion, and complete linear solving. This library depends only on [`hex-matrix`](https://github.com/leanprover/hex-matrix).
 See [`hex-row-reduce-mathlib`](https://github.com/leanprover/hex-row-reduce-mathlib)
 for the correspondence with Mathlib's types and theory.
 
@@ -49,7 +49,38 @@ def M : Matrix Rat 2 3 := Matrix.ofFn fun i j => (i + 1) * (j + 1 : Rat)
   vector, or test row-span membership;
 - `rowCombination`: the linear combination of the rows of a matrix;
 - `nullspace` and `nullspaceBasisMatrix`: a basis for the nullspace, one vector
-  per free column, as a vector of vectors or as a matrix of columns.
+  per free column, as a vector of vectors or as a matrix of columns;
+- `inverse? A`: returns a two-sided inverse exactly when a square matrix has
+  full rank, including the empty identity at dimension zero;
+- `solve A b`: returns `.ok (x₀, N)` describing every solution as `x₀ + N * c`,
+  with unique coefficients `c`, or `.error y` with `vecMul y A = 0` and
+  `Vector.dotProduct y b ≠ 0`;
+- `solve? A b`: the option view of `solve`, forgetting the error witness.
+
+Inverse and solve use `Lean.Grind.Field` and decidable equality. They share
+the coefficient matrix reduction with the transform and basis construction.
+Failure means singularity for inverse, and inconsistency for solve; singular
+systems can have many solutions. There is no resource-failure return.
+
+The main contracts are `inverse?_spec`, `inverse?_isSome`, `solve?_spec`,
+`solve?_isSome`, `solve_error`, `solve?_none_witness`, and `solve?_unique`.
+`solve?_free` states that the particular solution has zero free coordinates.
+The conformance suite exercises `Rat`, prime `ZMod64`, and `RationalFn Rat`,
+including empty and rectangular shapes.
+
+# Relationship to domain rank certificates
+
+The hex-rank certificate API works over domains and checks a numerator `adj`
+and nonzero denominator for the inverse of a selected nonsingular minor.
+Division belongs in a fraction field unless the denominator is a unit; an
+invertible rational matrix with integer entries need not have an integer
+inverse. If the selected full-size minor is `B = P * A * Q`, undo the
+selections to obtain `A⁻¹ = Q * (denom⁻¹ • adj) * P`. The certificate numerator
+and denominator need not be the literal adjugate and determinant.
+
+`inverse?` works directly over a field and returns the inverse in the original
+indexing. The two answers agree over a common field by uniqueness of a
+two-sided inverse. Neither library depends on the other.
 
 # Verification
 
