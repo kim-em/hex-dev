@@ -40,6 +40,8 @@ port to dense Hex, IsoGraph and the three C engines. The
 [sparse validation report](sparse-nauty-validation.md) records native
 construction scaling, adjacent performance comparisons, conformance and
 imported kernel replay, with links to every retained measurement campaign.
+The [sparse cleanup report](sparse-nauty-cleanup.md) records the shared
+count-splitter refactor and its adjacent performance comparisons.
 
 Run `scripts/bench/graphiso_cactus_sweep.sh LABEL` on chungus2 to regenerate
 the data, manifest and figures. Pin the command with `taskset -c "$(python3 scripts/bench/idle_core.py)"`

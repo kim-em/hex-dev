@@ -1,0 +1,88 @@
+{
+  "baseline_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+  "toolchain": "leanprover/lean4:v4.34.0-rc2",
+  "source_fingerprint": "3651af415613",
+  "dirty": true,
+  "selected_variant": "reviewed-final",
+  "build_jobs": {
+    "library_and_native_executables": 2912,
+    "full_repository_and_manual": 13736,
+    "release_regressions_and_probes": 12467
+  },
+  "checks": {
+    "published_lean_files_without_axioms_sorry_native_decide": 1932,
+    "exact_sparse_sorts": 130,
+    "exact_sparse_refinements": 220,
+    "exact_sparse_searches_and_group_orders": 45491,
+    "sparse_search_matches_baseline": true,
+    "dense_fixtures_match_committed": true,
+    "sparse_fixtures_match_committed": true,
+    "cactus_freshness_fingerprint": "3651af415613",
+    "per_node_exponent_margin": 0.2,
+    "released_split_repositories": 57,
+    "released_aggregates": 1,
+    "net_lean_lines_removed": 564,
+    "measured_sources_match_final": true,
+    "measured_executables_match_final": true,
+    "benchmark_mathlib_free_executables": 50,
+    "build_only_proof_probes": 237,
+    "cactus_freshness_passed": true,
+    "per_node_exponent_passed": true,
+    "final_executables_equal_measured_variant": true
+  },
+  "streams": {
+    "sparse_search": {
+      "sha256": "3c2e1316becbab2e85015f8fe47e6f8bcbb309bc0a54302d5225c52063ef0c57",
+      "records": 45491
+    },
+    "dense_fixtures": {
+      "sha256": "bd263a0211a436c85f18640406388d47d18ed367cd0e24038e3946dc151ce42c",
+      "records": 6233
+    },
+    "sparse_fixtures": {
+      "sha256": "68739394882dc0ecf9601ed8dde7ca59273f320cfe061d2d4bc8149615a3ff42",
+      "records": 6233
+    }
+  },
+  "selected_median_ratios": {
+    "gnp64-seed1": 0.9993905766291273,
+    "gnp128-seed1": 1.0033448033633894,
+    "gnp512-seed1": 0.9985940646889803,
+    "sparse1024": 0.98184984350871,
+    "tree1024": 0.9693799302866506,
+    "cubic256": 0.9737726080430642,
+    "grid10x10": 0.9788650527498033,
+    "q7": 0.9812495013984799
+  },
+  "proof_diagnostics": [
+    "\u2139 [12418/12467] Built HexGraphIso.SparseProofProbe.Support (1.7s)",
+    "\u2139 [12431/12467] Built HexGraphIso.SparseProofProbe.Baseline (1.3s)",
+    "\u2139 [12432/12467] Built HexGraphIso.SparseProofProbe.Coloured10Pos (1.5s)",
+    "info: bench/HexGraphIso/SparseProofProbe/Coloured10Pos.lean:14:0: 'Hex.GraphIso.SparseProofProbe.coloured10Pos' depends on axioms: [propext, Classical.choice, Quot.sound]",
+    "\u2139 [12437/12467] Built HexGraphIso.SparseProofProbe.Positive12 (3.1s)",
+    "info: bench/HexGraphIso/SparseProofProbe/Positive12.lean:14:0: 'Hex.GraphIso.SparseProofProbe.positive12' depends on axioms: [propext, Classical.choice, Quot.sound]",
+    "\u2139 [12443/12467] Built HexGraphIso.SparseProofProbe.Coloured10Neg (4.7s)",
+    "info: bench/HexGraphIso/SparseProofProbe/Coloured10Neg.lean:14:0: 'Hex.GraphIso.SparseProofProbe.coloured10Neg' depends on axioms: [propext, Classical.choice, Quot.sound]",
+    "\u2139 [12447/12467] Built HexGraphIso.SparseProofProbe.Negative12 (5.0s)",
+    "info: bench/HexGraphIso/SparseProofProbe/Negative12.lean:14:0: 'Hex.GraphIso.SparseProofProbe.negative12' depends on axioms: [propext, Classical.choice, Quot.sound]",
+    "\u2139 [12466/12467] Built HexGraphIso.SparseProofProbe.Cfi (100s)",
+    "info: bench/HexGraphIso/SparseProofProbe/Cfi.lean:17:0: 'Hex.GraphIso.SparseProofProbe.cfi_ne' depends on axioms: [propext, Classical.choice, Quot.sound]"
+  ],
+  "cactus_context": {
+    "host": "chungus2",
+    "cpu": 3,
+    "command": [
+      "taskset",
+      "-c",
+      "3",
+      "scripts/bench/graphiso_cactus_sweep.sh",
+      "sparse splitter cleanup after independent review"
+    ],
+    "returncode": 0,
+    "fingerprint": "3651af415613"
+  },
+  "environment": {
+    "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+    "python": "3.14.6"
+  }
+}

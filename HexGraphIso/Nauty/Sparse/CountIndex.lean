@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Sparse.IndexScan
+public import HexGraphIso.Nauty.Sparse.Refine.CountSpec
 import Std.Tactic.Do
 
 public section
@@ -16,26 +17,40 @@ open Std.Do
 set_option mvcgen.warning false
 set_option maxHeartbeats 4000000
 
-/-- The actual count splitter installs all constant-count run indices and
-preserves cache entries outside the original cell. -/
-theorem splitCounts_cache (level first : Nat) (distance : Bool) (s : RefineSt n)
+private theorem range_position {first last cur : Nat} {pref suff : List Nat}
+    (h : [first:last].toList = pref ++ cur :: suff) :
+    cur = first + pref.length ∧ cur < last := by
+  have hr : List.range' first (last - first) = pref ++ cur :: suff := by
+    simpa only [Std.Legacy.Range.toList, Nat.div_one, Nat.add_sub_cancel] using h
+  have hp := List.eq_of_range'_eq_append_cons hr
+  have hb := List.mem_of_range'_eq_append_cons hr
+  simp only [Nat.one_mul] at hp
+  simp only [List.mem_range'] at hb
+  exact ⟨hp, by obtain ⟨i, hi, rfl⟩ := hb; omega⟩
+
+/-- Fragment installation indexes every constant-count run and preserves
+cache entries outside the original cell. -/
+theorem CountSort.finish_cache (level first : Nat) (distance : Bool) (s : RefineSt n)
+    (lab : Array Nat) (w1 v2 w2 v3 : Nat)
     (hp : s.lab.toList.Perm (List.range n))
     (hs : s.cellstart.size = n) (he : s.cellend.size = n)
     (hf : first ≤ s.cellend[first]!) (hb : s.cellend[first]! < n)
     (hc : ∀ q, first ≤ q → q ≤ s.cellend[first]! →
       s.cellstart[s.lab[q]!]! = if first = s.cellend[first]! then n else first)
-    (hk : ∀ q, first ≤ q → q ≤ s.cellend[first]! → s.hits[s.lab[q]!]! < n + 2) :
+    (hm : Minima.Permuted s.lab lab s.hits first (s.cellend[first]! + 1)
+      v2 v3 (s.cellend[first]! + 1) w1 w2 (n + 2)) :
     Index.Complete n first s.cellend[first]! s.lab s.hits s.cellstart s.cellend
-      (splitCounts level first distance s) := by
+      (CountSort.finish level first (s.cellend[first]! + 1) distance { s with lab } w1 v2 w2 v3) := by
   have hl : s.lab.size = n := by simpa using hp.length_eq
+  have bounds := hm.bounds
   rw [Index.Complete.iff]
-  unfold splitCounts
-  simp only
-  apply Id.of_wp_run_eq rfl (fun t : RefineSt n =>
+  cases distance <;> unfold CountSort.finish
+  all_goals simp only [Bool.not_true, Bool.not_false, Bool.false_eq_true, ite_true, ite_false]
+  all_goals apply Id.of_wp_run_eq rfl (fun t : RefineSt n =>
     Sort.Window s.lab t.lab first (s.cellend[first]! + 1) ∧
     Index.Runs n first s.cellend[first]! (s.cellend[first]! + 1) t.lab s.hits t.cellstart t.cellend ∧
     Index.Frame n first s.cellend[first]! s.lab t.lab s.cellstart t.cellstart s.cellend t.cellend)
-  mvcgen +jp
+  all_goals mvcgen +jp
   all_goals try
     guard_target = Invariant _ _ _
     first
@@ -53,115 +68,26 @@ theorem splitCounts_cache (level first : Nat) (distance : Bool) (s : RefineSt n)
             (state.2 = r.2.2.2 + 1 + cursor.prefix.length ∨
               s.hits[state.1.lab[state.2 + 1]!]! ≠ s.hits[r.1.lab[r.2.2.2 + 1]!]!)⌝)
       | exact (⇓⟨cursor, state⟩ => ⌜
-          Minima.Permuted s.lab state.2.2.2.2 s.hits first (s.cellend[first]! + 1)
-            state.2.1 state.2.2.2.1 (s.cellend[first]! + 1 - cursor.suffix.length)
-            state.1 state.2.2.1 (n + 2)⌝)
-      | exact (⇓⟨cursor, state⟩ => ⌜first < state ∧ state ≤ s.cellend[first]! + 1 ∧
-          (∀ q, first ≤ q → q < state → s.hits[s.lab[q]!]! = s.hits[s.lab[first]!]!) ∧
-          (state = first + 1 + cursor.prefix.length ∨
-            s.hits[s.lab[state]!]! ≠ s.hits[s.lab[first]!]!)⌝)
-      | exact (let r : Nat × Nat × Nat × Nat × Array Nat := by assumption
-          ⇓⟨cursor, state⟩ => ⌜
-            Minima.Permuted s.lab r.2.2.2.2 s.hits first (s.cellend[first]! + 1)
-              r.2.1 r.2.2.2.1 (s.cellend[first]! + 1) r.1 r.2.2.1 (n + 2) ∧
-            Index.Two n first r.2.1 r.2.2.2.1 (r.2.1 + cursor.prefix.length) r.2.2.2.2 state ∧
-            Index.Frame n first s.cellend[first]! s.lab r.2.2.2.2
-              s.cellstart state s.cellend s.cellend⌝)
+          Index.Two n first v2 v3 (v2 + cursor.prefix.length) lab state ∧
+          Index.Frame n first s.cellend[first]! s.lab lab
+            s.cellstart state s.cellend s.cellend⌝)
+  all_goals try
+    rename_i hi
+    change Index.Two n first v2 v3 _ lab _ ∧
+      Index.Frame n first s.cellend[first]! s.lab lab s.cellstart _ s.cellend s.cellend at hi
+    obtain ⟨ht, hframe⟩ := hi
   all_goals
     simp_all +zetaDelta [RefineSt.hash, RefineSt.push, Std.Legacy.Range.toList]
     try omega
-  case vc3.pre =>
-    intro q hq hq'
-    have he : q = first := by omega
-    rw [he]
-  case vc10.post.success.isFalse.pre =>
-    rename_i r hne hin
-    have he : s.cellend[first]! + 1 - (s.cellend[first]! + 1 - r) = r := by omega
-    rw [he]
-    exact Minima.Permuted.initial hin.1 hin.2.1 (by omega)
-      (fun q hq he => hk q hq (by omega)) hin.2.2.1
-  case vc2.step.isFalse =>
-    rename_i pref j suff hr b he hin
-    have hj := range_cursor (by omega : first + 1 ≤ s.cellend[first]! + 1) hr
-    have hp : j = first + 1 + pref.length := by
-      have hp := List.eq_of_range'_eq_append_cons (show
-        List.range' (first + 1) (s.cellend[first]! - first) = pref ++ j :: suff from by
-          simpa only [Std.Legacy.Range.toList, Nat.div_one, Nat.add_sub_cancel,
-            Nat.add_sub_add_right] using hr)
-      simpa only [Nat.one_mul] using hp
-    refine ⟨by omega, by omega, ?_, Or.inl (by omega)⟩
-    intro q hq hq'
-    by_cases heq : q = b
-    · simpa only [heq, hin.2.2.2] using he
-    · exact hin.2.2.1 q hq (by omega)
-  case vc5.step.isTrue =>
-    rename_i r pref j suff hr b hne hscan hkey hin
-    have hj := range_cursor hscan.2.1 hr
-    have hj0 : s.cellend[first]! - suff.length = j := by omega
-    have hj1 : s.cellend[first]! + 1 - suff.length = j + 1 := by omega
-    rw [hj0] at hin
-    rw [hj1]
-    have bounds := hin.bounds
-    have hjb : j < b.2.2.2.2.size := by have := hin.size; omega
-    have hread := rotate_read b.2.2.2.2 j b.2.2.2.1 b.2.1 (by omega) (by omega) hjb
-    simp only [Array.set!_eq_setIfInBounds] at hread
-    rw [hread]
-    exact hin.hit_min (by omega) hkey
-  case vc6.step.isFalse.isTrue =>
-    rename_i r pref j suff hr b hne hscan hn1 hkey hin
-    have hj := range_cursor hscan.2.1 hr
-    have hj0 : s.cellend[first]! - suff.length = j := by omega
-    have hj1 : s.cellend[first]! + 1 - suff.length = j + 1 := by omega
-    rw [hj0] at hin
-    rw [hj1]
-    exact hin.hit_second (by omega) hkey
-  case vc7.step.isFalse.isFalse.isTrue =>
-    rename_i r pref j suff hr b hne hscan hn1 hn2 hkey hin
-    have hj := range_cursor hscan.2.1 hr
-    have hj0 : s.cellend[first]! - suff.length = j := by omega
-    have hj1 : s.cellend[first]! + 1 - suff.length = j + 1 := by omega
-    rw [hj0] at hin
-    rw [hj1]
-    have bounds := hin.bounds
-    have hjb : j < b.2.2.2.2.size := by have := hin.size; omega
-    have hread := rotate_read b.2.2.2.2 j b.2.1 first (by omega) (by omega) hjb
-    simp only [Array.set!_eq_setIfInBounds] at hread
-    rw [hread]
-    exact hin.new_min (by omega) hkey
-  case vc8.step.isFalse.isFalse.isFalse.isTrue =>
-    rename_i r pref j suff hr b hne hscan hn1 hn2 hlo hhi hin
-    have hj := range_cursor hscan.2.1 hr
-    have hj0 : s.cellend[first]! - suff.length = j := by omega
-    have hj1 : s.cellend[first]! + 1 - suff.length = j + 1 := by omega
-    rw [hj0] at hin
-    rw [hj1]
-    exact hin.new_second (by omega) (by omega) hhi
-  case vc9.step.isFalse.isFalse.isFalse.isFalse =>
-    rename_i r pref j suff hr b hne hscan hn1 hn2 hlo hhi hin
-    have hj := range_cursor hscan.2.1 hr
-    have hj0 : s.cellend[first]! - suff.length = j := by omega
-    have hj1 : s.cellend[first]! + 1 - suff.length = j + 1 := by omega
-    rw [hj0] at hin
-    rw [hj1]
-    exact hin.above (by omega) (by omega)
-
-
-  case vc4.post.success.isTrue =>
-    rename_i r heq hin
-    exact Index.Complete.iff.mp (Index.Complete.constant (s := s)
-      (Sort.Window.refl _ _ _) rfl rfl hs he (by omega) hf rfl hc
-      (fun q hq hu => hin.2.1 q hq (by omega)))
-  case vc11.post.success.isFalse.post.success.isTrue =>
-    rename_i r b hn heq hin
-    have hw : Sort.Window s.lab b.2.2.2.2 first (s.cellend[first]! + 1) := by
-      simpa only [heq] using hin.window
-    have hb' : s.cellend[first]! < b.2.2.2.2.size := by
-      have := hin.window.size
-      omega
-    have hh := Index.Complete.constant (s := { s with lab := b.2.2.2.2 }) hw
-      rfl rfl hs he hb' hf rfl hc
-      (fun q hq hu => hin.minimum q hq (by omega))
-    simpa only [heq] using Index.Complete.iff.mp hh
+  all_goals try
+    have hin := And.intro ht hframe
+  all_goals try
+    have bounds := hm.bounds
+    have hw : Sort.Window s.lab lab first (s.cellend[first]! + 1) := by simpa only [*] using hm.window
+    have hh := Index.Complete.constant (s := { s with lab }) hw
+      rfl rfl hs he (by change s.cellend[first]! < lab.size; have := hm.window.size; omega) hf rfl hc
+      (fun q hq hu => hm.minimum q hq (by omega))
+    simpa only [*] using Index.Complete.iff.mp hh
   all_goals try
     rename_i hin
     have bounds := hin.1.bounds
@@ -203,90 +129,81 @@ theorem splitCounts_cache (level first : Nat) (distance : Bool) (s : RefineSt n)
     refine ⟨?_, by omega⟩
     simpa only [ite_eq_right hsize] using hh
   all_goals try
-    rename_i hin
-    have bounds := hin.bounds
-    have hh := hin.indices hp (by omega) hs (by
+    have bounds := hm.bounds
+    have hh := hm.indices (s := s) hp (by omega) hs (by
       intro q hq hu
       rw [hc q hq (by omega), ite_eq_right (by omega)])
     simp_all only [Nat.add_sub_cancel, ite_true, ite_false, and_true]
     done
-  case vc194.step =>
-    rename_i r0 r pref cur suff hr b hn hscan hfirst hv2 hv3 hm hin
+  all_goals try
+    rename_i hin
     have bounds := hm.bounds
-    have hi : cur = first + 1 + pref.length := by
-      have hh := List.eq_of_range'_eq_append_cons (show
-        List.range' (first + 1) (r.2.2.2.1 - (first + 1)) = pref ++ cur :: suff from by
-          simpa only [Std.Legacy.Range.toList, Nat.div_one, Nat.add_sub_cancel, hv2] using hr)
-      simpa only [Nat.one_mul] using hh
-    have hc := List.mem_of_range'_eq_append_cons (show
-      List.range' (first + 1) (r.2.2.2.1 - (first + 1)) = pref ++ cur :: suff from by
-        simpa only [Std.Legacy.Range.toList, Nat.div_one, Nat.add_sub_cancel, hv2] using hr)
-    have hcur : cur < r.2.2.2.1 := by
-      have hh := List.mem_range'.mp hc
-      omega
-    rw [hi]
+    have pos := range_position (by assumption)
+    simp_all only []
     have hh := hin.1.set_long hin.2 (hm.window.perm.trans hp)
-      (by omega) (by omega) (by omega) (by omega) hv3
-    simpa only [Nat.add_assoc] using hh
-  case vc560.step =>
-    rename_i r0 r pref cur suff hr b hn hscan hfirst hv2 hv3 hm hin
-    have bounds := hm.bounds
-    have hi : cur = r.2.1 + pref.length := by
-      have hh := List.eq_of_range'_eq_append_cons (show
-        List.range' r.2.1 (r.2.2.2.1 - r.2.1) = pref ++ cur :: suff from by
-          simpa only [Std.Legacy.Range.toList, Nat.div_one, Nat.add_sub_cancel] using hr)
-      simpa only [Nat.one_mul] using hh
-    have hc := List.mem_of_range'_eq_append_cons (show
-      List.range' r.2.1 (r.2.2.2.1 - r.2.1) = pref ++ cur :: suff from by
-        simpa only [Std.Legacy.Range.toList, Nat.div_one, Nat.add_sub_cancel] using hr)
-    have hcur : cur < r.2.2.2.1 := by
-      have hh := List.mem_range'.mp hc
-      omega
-    rw [hi]
-    have hh := hin.1.set_long hin.2 (hm.window.perm.trans hp)
-      (by omega) (by omega) (by omega) (by omega) hv3
+      (by omega) (by omega) (by omega) (by omega) (by simp_all)
     simpa only [Nat.add_assoc] using hh
   all_goals try
-    rename_i hm
     have bounds := hm.bounds
-    have hi := hm.indices_single hp (by omega) hs (by
+    have hi := hm.indices_single (s := s) hp (by omega) hs (by
       intro q hq hu
-      first
-      | exact hc q hq (by omega)
-      | have hh := hc q hq (by omega)
-        split at hh <;> first | omega | exact hh) (by omega)
-    have ht := Index.Complete.of_two hm hi.1 hi.2 (by omega) (by omega) he
+      have hh := hc q hq (by omega)
+      first | exact hh | split at hh <;> first | omega | exact hh) (by omega)
+    have ht := Index.Complete.of_two (s := s) hm hi.1 hi.2 (by omega) (by omega) he
     have hh := Index.Complete.iff.mp ht
     simp_all only [Nat.add_sub_cancel, ite_true, ite_false, and_true]
     done
   all_goals try
     rename_i hin
-    have bounds := hin.1.bounds
-    have hh := Index.Complete.of_scatter hin.1 hin.2.1 hin.2.2 (by omega)
-      (by omega) (by omega) he
+    have bounds := hm.bounds
+    have hh := Index.Complete.of_scatter (s := s) hm
+      (by simpa only [Nat.add_sub_of_le bounds.2.1] using hin.1) hin.2
+      (by omega) (by omega) (by omega) he
     simpa only [Nat.add_sub_cancel] using hh
   all_goals try
-    rename_i hm
     have bounds := hm.bounds
-    have hi := hm.indices_single hp (by omega) hs (by
+    have hi := hm.indices_single (s := s) hp (by omega) hs (by
       intro q hq hu
-      first
-      | exact hc q hq (by omega)
-      | have hh := hc q hq (by omega)
-        split at hh <;> first | omega | exact hh) (by omega)
-    have ht := Index.Tail.initial hm hi.1 hi.2 (by omega) (by omega) he
+      have hh := hc q hq (by omega)
+      first | exact hh | split at hh <;> first | omega | exact hh) (by omega)
+    have ht := Index.Tail.initial (s := s) hm hi.1 hi.2 (by omega) (by omega) he
     simp only [Nat.add_sub_cancel] at ht
-    refine ⟨?_, by omega⟩
-    apply ht.transfer <;> simp_all only [Nat.add_sub_cancel, Nat.add_sub_add_right, ite_true, ite_false]
+    first
+    | apply ht.transfer <;> simp_all only [Nat.add_sub_cancel, Nat.add_sub_add_right, ite_true, ite_false]
+    | refine ⟨?_, by omega⟩
+      apply ht.transfer <;> simp_all only [Nat.add_sub_cancel, Nat.add_sub_add_right, ite_true, ite_false]
   all_goals try
-    rename_i hm hn hd hbig hin
+    rename_i hin
     have bounds := hm.bounds
     have gap := hm.toBounded.second_pos (by omega)
-    have ht := Index.Tail.initial hm
+    have ht := Index.Tail.initial (s := s) hm
       (by simpa only [Nat.add_sub_of_le bounds.2.1] using hin.1)
       (by simpa only [Nat.add_sub_cancel] using hin.2) gap (by omega) he
     simp only [Nat.add_sub_cancel] at ht
-    refine ⟨?_, by omega⟩
-    apply ht.transfer <;> rfl
+    first
+    | apply ht.transfer <;> simp_all only [Nat.add_sub_cancel, Nat.add_sub_add_right, ite_true, ite_false]
+    | refine ⟨?_, by omega⟩
+      apply ht.transfer <;> rfl
+
+/-- Count splitting installs all constant-count run indices and preserves
+the cache outside its original cell. -/
+theorem splitCounts_cache (level first : Nat) (distance : Bool) (s : RefineSt n)
+    (hp : s.lab.toList.Perm (List.range n))
+    (hs : s.cellstart.size = n) (he : s.cellend.size = n)
+    (hf : first ≤ s.cellend[first]!) (hb : s.cellend[first]! < n)
+    (hc : ∀ q, first ≤ q → q ≤ s.cellend[first]! →
+      s.cellstart[s.lab[q]!]! = if first = s.cellend[first]! then n else first)
+    (hk : ∀ q, first ≤ q → q ≤ s.cellend[first]! → s.hits[s.lab[q]!]! < n + 2) :
+    Index.Complete n first s.cellend[first]! s.lab s.hits s.cellstart s.cellend
+      (splitCounts level first distance s) := by
+  have hl : s.lab.size = n := by simpa using hp.length_eq
+  apply splitCounts_induct level first distance s
+    (Index.Complete n first s.cellend[first]! s.lab s.hits s.cellstart s.cellend)
+    hf (by omega) hk
+  · intro hu
+    exact Index.Complete.constant (Sort.Window.refl _ _ _) rfl rfl hs he (by simpa only [RefineSt.hash] using (show s.cellend[first]! < s.lab.size by omega)) hf rfl hc hu
+  · intro lab w1 v2 w2 v3 hm
+    exact CountSort.finish_cache level first distance (s.hash first) lab w1 v2 w2 v3
+      hp hs he hf hb hc hm
 
 end Hex.GraphIso.Nauty.Sparse

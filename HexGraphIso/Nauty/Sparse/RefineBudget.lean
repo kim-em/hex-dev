@@ -32,16 +32,16 @@ end RefineSt
 
 open Std.Do
 set_option mvcgen.warning false
-set_option maxHeartbeats 800000
+set_option maxHeartbeats 2000000
 
-/-- The executed count splitter adds at most one activation per new cell,
-including the replacement of the largest inactive fragment. -/
-theorem splitCounts_budget (level first : Nat) (distance : Bool) (s : RefineSt n) :
-    RefineSt.Budget s (splitCounts level first distance s) := by
-  unfold splitCounts
-  simp only
-  all_goals apply Id.of_wp_run_eq rfl (fun t : RefineSt n => RefineSt.Budget s t)
-  all_goals mvcgen +jp
+/-- Installing count fragments adds at most one activation per new cell,
+including replacement of the largest inactive fragment. -/
+theorem CountSort.finish_budget (level first last : Nat) (distance : Bool)
+    (s : RefineSt n) (w1 v2 w2 v3 : Nat) :
+    RefineSt.Budget s (CountSort.finish level first last distance s w1 v2 w2 v3) := by
+  unfold CountSort.finish
+  apply Id.of_wp_run_eq rfl (fun t : RefineSt n => RefineSt.Budget s t)
+  mvcgen
   all_goals first
     | exact (⇓⟨_, state⟩ => ⌜RefineSt.Budget s state.1⌝)
     | exact (⇓⟨_, _⟩ => ⌜True⌝)
@@ -49,5 +49,18 @@ theorem splitCounts_budget (level first : Nat) (distance : Bool) (s : RefineSt n
   all_goals
     simp_all +zetaDelta [RefineSt.hash, RefineSt.push] <;>
       grind [RefineSt.Budget]
+
+/-- The complete count splitter adds at most one activation per new cell. -/
+theorem splitCounts_budget (level first : Nat) (distance : Bool) (s : RefineSt n) :
+    RefineSt.Budget s (splitCounts level first distance s) := by
+  unfold splitCounts
+  simp only [Id.run, bind, pure]
+  split
+  · exact ⟨Nat.le_refl _, Nat.le_refl _⟩
+  · let m := CountSort.minima s.lab s.hits (n + 2) first (s.cellend[first]! + 1)
+        (CountSort.firstRun s.lab s.hits first (s.cellend[first]! + 1))
+    have h := CountSort.finish_budget level first (s.cellend[first]! + 1) distance
+        { s.hash first with lab := m.2.2.2.2 } m.1 m.2.1 m.2.2.1 m.2.2.2.1
+    exact ⟨h.cells, h.queue⟩
 
 end Hex.GraphIso.Nauty.Sparse

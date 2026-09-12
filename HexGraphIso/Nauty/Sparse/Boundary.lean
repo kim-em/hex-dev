@@ -55,8 +55,8 @@ set_option maxHeartbeats 2000000
 all indirect-sort, queue-replacement and distance-code branches. -/
 theorem splitCounts_boundary (level first : Nat) (distance : Bool) (s : RefineSt n) :
     Boundary level s.ptn (splitCounts level first distance s).ptn := by
-  unfold splitCounts
-  simp only
+  unfold splitCounts CountSort.firstRun CountSort.minima CountSort.finish
+  simp only [Id.run]
   apply Id.of_wp_run_eq rfl (fun t : RefineSt n => Boundary level s.ptn t.ptn)
   mvcgen
   all_goals first

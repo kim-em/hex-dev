@@ -34,8 +34,8 @@ set_option maxHeartbeats 2000000
 arrays, generation, cache flag, and label/partition/index allocations. -/
 theorem splitCounts_frame (level first : Nat) (distance : Bool) (s : RefineSt n) :
     CountFrame s (splitCounts level first distance s) := by
-  unfold splitCounts
-  simp only
+  unfold splitCounts CountSort.firstRun CountSort.minima CountSort.finish
+  simp only [Id.run]
   apply Id.of_wp_run_eq rfl (fun t : RefineSt n => CountFrame s t)
   mvcgen
   all_goals first
