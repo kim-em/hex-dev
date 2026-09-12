@@ -16,8 +16,8 @@ to Mathlib's `Echelon.Decomposition`.
 
 This is the shared foundation for certified integer rank in
 [hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md), for the generic rank of
-polynomial matrices, and for the symbolic `rank` tactic of the planned
-`hex-matrix-tactic` (https://github.com/kim-em/hex-dev/issues/10151).
+polynomial matrices, and for the symbolic arm of the `rank` tactic
+([SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md)).
 
 ## Why this library exists
 
@@ -105,7 +105,8 @@ hex-hermite), the rank of a specialised polynomial matrix at a point and
 the rank-drop locus (hex-determinantal-ideal), a modular or multi-modular
 rank over `Int` as a *producer* (hex-modular-matrix, which will produce
 this library's certificate by a faster route), and tactic frontends on
-Hex inputs (hex-matrix-tactic). The tactic on Mathlib inputs lives with
+Hex inputs (a later obligation of this library, per
+[SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md)). The tactic on Mathlib inputs lives with
 the soundness theorem it uses, in the companion: a tactic belongs to the
 library whose algorithm it runs.
 
@@ -883,8 +884,7 @@ hex-bareiss now aliases). The names `rank`, `rankProfile`, `rankCert`,
   it;
 - its unchecked `rank : Matrix Int n m → Nat` is renamed
   `rankModular`, since `Hex.Matrix.rank` is this library's `Int`
-  entry point and both libraries are imported together by
-  hex-matrix-tactic.
+  entry point and both libraries may be imported together.
 
 hex-modular-matrix is unimplemented, so this is a SPEC amendment with no
 code to migrate.
@@ -952,8 +952,8 @@ rank:
 - a production consumer that wants a named `MvPoly` rank defines it
   itself, as `rankWith Hex.exactDiv` under the `HexMvGcd.Divide` context,
   in a library already above `HexMvGcd`. The `rank_locus` and symbolic
-  `rank` tactics are the expected first such consumers, through
-  hex-matrix-tactic, and that one-line instantiation is theirs to make.
+  `rank` tactics are the expected first such consumers, and that one-line
+  instantiation is theirs to make.
   Nothing carrier-specific is added to `HexRank/*`.
 
 ## Complexity

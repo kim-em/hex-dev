@@ -573,7 +573,7 @@ bench/HexDeterminantalIdeal/Bench.lean
   `mem_zeroLocus_iff_rank_lt`. It needs this library for the theorem and
   `hex-reflect` for its input, and nothing from `hex-rank` unless the
   user asks for the generic rank as the default `r`.
-- `hex-matrix-tactic` ([spec issue](https://github.com/kim-em/hex-dev/issues/10151))
+- the matrix tactics ([SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md))
   may use `le_rank_iff_exists_minor_ne_zero` as the lower-bound half of a
   rank certificate. It is not required to.
 - `hex-smith` and `hex-poly-smith` keep their `noncomputable`

@@ -46,7 +46,7 @@ shared-tactics plan. H0 consists of the first five items in that draft's
 The remaining items from that list are consumers of this library, not H0.
 Standard scalar providers and closed matrix frontends come later. Symbolic
 determinant and characteristic-polynomial frontends belong in
-`hex-matrix-tactic`. Factorization dispatch and typed polynomial translations
+the matrix tactics of [SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md). Factorization dispatch and typed polynomial translations
 remain with the factorization libraries.
 
 H0 does not wait for the planned copy-switch-delete migration of Grind's
@@ -73,7 +73,7 @@ hex-mv-poly ──┘
 
 The direction is deliberate. For example, the future `HexMatrixReflect`
 symbolic extension of
-[hex-matrix-tactic](hex-matrix-tactic.md) depends on `hex-reflect`, while the
+the symbolic arms of the matrix tactics ([SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md)) depend on `hex-reflect`, while the
 numeric frontend remains independent of reflection. `hex-reflect` does not
 know about matrices.
 
@@ -551,7 +551,7 @@ characteristic-polynomial, gcd, or factorization algorithm.
 
 The first symbolic consumers are the `det` and `char_poly` providers in
 `HexMatrixReflect`, the future downstream symbolic extension of
-[hex-matrix-tactic](hex-matrix-tactic.md). They reify all entries in one batch, run the
+the matrix tactics ([SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md)). They reify all entries in one batch, run the
 existing verified matrix algorithm over `Hex.MvPoly`, and interpret the result
 through this library's soundness theorem. The characteristic-polynomial
 variable remains the `DensePoly` variable. It is not added to the environment
@@ -574,7 +574,7 @@ The three existing structural polynomial parsers have different futures:
   not its retirement condition.
 - `HexCharPolyMathlib/CharPolyElab.lean` parses a user-supplied
   `Polynomial Int` result and constructs its existing characteristic-polynomial
-  certificate. It stays until `hex-matrix-tactic` replaces that frontend's
+  certificate. It stays until the matrix tactics of [SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md) replaces that frontend's
   literal and result reconstruction. `hex-reflect` does not parse
   `Polynomial.X` or `Polynomial.C` as part of its scalar language.
 
@@ -582,7 +582,7 @@ The planned generic expression arm in `HexMvFactor/SPEC/hex-mv-factor.md`
 must consume `hex-reflect`; it must not introduce the temporary
 `HexMvFactorMathlib/Reify.lean` parser previously proposed there.
 `HexCharPoly/CharPolyElab.lean` parses matrix literals rather than polynomial
-ring expressions. It belongs to the planned `hex-matrix-tactic` migration and
+ring expressions. It belongs to the planned the matrix tactics of [SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md) migration and
 is not a fourth parser owned by this library.
 
 No parser is deleted as part of this documentation issue or H0 itself.
