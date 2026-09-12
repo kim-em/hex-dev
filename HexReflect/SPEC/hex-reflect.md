@@ -248,9 +248,10 @@ coefficient type.
 
 The residue provider uses `Bounds p` and `PrimeModulus p`, and interprets
 coefficients injectively through `ZMod p`. Recognized composite
-characteristic, out-of-bounds moduli, or missing carrier evidence decline
-with a provider condition diagnostic; unknown characteristic and zero keep
-the integer provider. See the companion SPEC for the scoped ring transport.
+characteristic, out-of-bounds moduli, or missing characteristic evidence for
+a recognized field decline with a provider condition diagnostic. Unknown
+characteristic, zero, and prime-characteristic carriers without a Mathlib
+field instance keep the integer provider. See the companion SPEC for the scoped ring transport.
 
 The pinned ring reifier recognizes nested `BitVec.ofNat` inside its recursive
 worker, but its top-level match has no `BitVec.ofNat` arm. Consequently a

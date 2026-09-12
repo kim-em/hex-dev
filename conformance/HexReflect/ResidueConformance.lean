@@ -123,7 +123,7 @@ run_meta do
   declineProbe 4294967291 "residue coefficients require characteristic p < 2^31"
   logInfo "composite, modulus one, and oversized characteristic decline with reasons"
 
-/-- info: missing field declines; zero and unknown characteristic retain integers -/
+/-- info: non-fields, zero and unknown characteristic retain integers -/
 #guard_msgs in
 run_meta do
   let ty := mkConst ``Int
@@ -131,10 +131,8 @@ run_meta do
     Hex.Reflect.run do
       let .success r _ ← reifyCommRing x | throwError "reification declined"
       let ring ← ringOf r
-      let .declined (.providerCondition _ message) _ ← residueCoeffProvider 3 ring
-        | throwError "expected missing field decline"
-      unless message == "residue coefficients require a Mathlib Field instance" do
-        throwError "wrong decline"
+      let .notApplicable ← residueCoeffProvider 3 ring
+        | throwError "non-field should retain integer fallback"
       -- Exercise dispatch's two non-applicable paths independently of the
       -- characteristic instances a particular toolchain provides for Int.
       for charInst? in [none, some (mkConst ``True.intro, 0)] do
@@ -144,7 +142,7 @@ run_meta do
       let some result := entry.entries[0]? | throwError "empty batch"
       unless result.conversion.provider.id == intCoefficientsId do
         throwError "integer fallback changed"
-    logInfo "missing field declines; zero and unknown characteristic retain integers"
+    logInfo "non-fields, zero and unknown characteristic retain integers"
 
 /-- info: arbitrary characteristic-three field: missing CharP declines, supplied CharP reifies -/
 #guard_msgs in
@@ -218,3 +216,37 @@ example (F : Type u) [Field F] [CharP F 2147483647] :
   residuePrime 2147483647 F (by decide)
 
 end Hex.ReflectResidueClosedConformance
+
+namespace Hex.ReflectResidueFallbackConformance
+
+open Lean Meta Hex.Reflect
+
+private def probe (ty : Expr) (xs : Array Expr) (p : Nat) : MetaM Unit :=
+  withLocalDeclD `x ty fun x => do
+    let input ← mkAppM ``HAdd.hAdd #[x, x]
+    let outcome ← reflectRing input (cfg := { checkProofs := true })
+    let .success entry _ := outcome
+      | throwError "{outcome.toMessageData (fun _ => "entry")}"
+    unless entry.reflected.charInst?.map (·.2) == some p do
+      throwError "expected characteristic {p}"
+    unless entry.conversion.provider.id == intCoefficientsId do
+      throwError "non-field lost integer fallback"
+    let name ← mkFreshUserName `Hex.ReflectResidueFallbackConformance.proof
+    let type ← mkForallFVars (xs.push x) (← inferType entry.result.proof)
+    let value ← mkLambdaFVars (xs.push x) entry.result.proof
+    addDecl (.thmDecl { name, levelParams := [], type, value })
+
+/-- info: prime-characteristic rings without field instances: integer fallback, kernel accepted -/
+#guard_msgs in
+run_meta do
+  -- A concrete prime modulus without Mathlib's `Fact (Nat.Prime 7)`.
+  probe (mkApp (mkConst ``ZMod) (mkNatLit 7)) #[] 7
+  -- An arbitrary characteristic-three commutative ring, with no Field assumption.
+  withLocalDeclD `R (mkSort (.succ .zero)) fun r => do
+  withLocalDecl `ring .instImplicit (mkApp (mkConst ``CommRing [.zero]) r) fun ring => do
+    let charTy ← mkAppOptM ``CharP #[r, none, mkNatLit 3]
+    withLocalDecl `char .instImplicit charTy fun char => do
+      probe r #[r, ring, char] 3
+  logInfo "prime-characteristic rings without field instances: integer fallback, kernel accepted"
+
+end Hex.ReflectResidueFallbackConformance

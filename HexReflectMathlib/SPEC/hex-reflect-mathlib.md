@@ -65,13 +65,18 @@ cancellative semirings. Recognition is therefore automatic when instance
 search finds that evidence. `isCharP_of_charP` remains a theorem for callers
 that need to supply an exact instance explicitly. A concrete `ZMod p` field
 requires Mathlib's usual `Fact (Nat.Prime p)` instance; the provider does not
-install target field instances.
+install target field instances. When the modulus passes the prime and word
+checks but no target `Field` instance is available, the provider is not
+applicable and the universal integer provider remains available. This
+includes prime-characteristic rings with zero divisors and concrete `ZMod p`
+carriers lacking a `Fact (Nat.Prime p)` instance.
 
 A recognized positive characteristic that is composite (or one) declines
 with a prime-characteristic diagnostic. Moduli `p ≥ 2^31` decline with the
-word-bound diagnostic before primality testing. Missing field or Mathlib
-characteristic evidence, and incompatible interpretation operations also
-decline with their reason. These declines stop fallback to the integer provider.
+word-bound diagnostic before primality testing. For a recognized field,
+missing Mathlib characteristic evidence and incompatible interpretation
+operations decline with their reason. These declines stop fallback to the
+integer provider.
 
 The executable carrier uses `Hex.ZMod64.Bounds p` and
 `Hex.ZMod64.PrimeModulus p`; the latter supports downstream `LawfulGcdOps`

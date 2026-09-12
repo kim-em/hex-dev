@@ -72,8 +72,7 @@ def residueCoeffProvider (p : Nat) (ring : CarrierRequest) :
     if ← isDefEq ring.type zmod then
       carrier := zmod
       fieldInst? ← Sym.synthInstance? (mkApp (mkConst ``Field [ring.u]) carrier)
-  let some fieldInst := fieldInst?
-    | return decline "residue coefficients require a Mathlib Field instance"
+  let some fieldInst := fieldInst? | return .notApplicable
   let commRingInst ← mkAppOptM ``Field.toCommRing #[carrier, fieldInst]
   let mathlibRingInst ← mkAppOptM ``CommRing.toRing #[carrier, commRingInst]
   let mathlibRing ← mkAppOptM ``Ring.toGrindRing #[carrier, mathlibRingInst]
