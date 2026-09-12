@@ -479,22 +479,26 @@ Proof time against dimension, for the full-rank, rank `n − 2`, rank
 by `scripts/bench/rank_tactic_size_sweep.py` (profiler totals per file,
 imports excluded, the median of three runs per point with the range kept)
 and plotted by `scripts/plots/hex-rank-mathlib-tactic-size.py` to
-`reports/figures/hex-rank-mathlib-tactic-size.svg`. Under that cap
-`eval_rank` reaches `n = 28` in every family (about `10 s`) and `rank`
-reaches `n = 48` at full rank, rank `n − 2` and rank `n / 2` (about
-`7.5 s`) and `n = 128` at rank `2` (`7.7 s`, of which the kernel is
-`1.1 s` and the literal's elaboration most of the rest).
+`reports/figures/hex-rank-mathlib-tactic-size.svg`. The current record is
+`reports/bench-results/hex-rank-mathlib-tactic-size-b7794180e909-chungus2.json`.
+Under the ten-second cap
+`eval_rank` reaches `n = 28` in every family (about `9.6 s`) and `rank`
+reaches `n = 48` at full rank, rank `n − 2` and rank `n / 2` (`6.6`,
+`7.0` and `7.2 s`) and `n = 128` at rank `2` (`7.8 s`, of which the
+kernel is `1.0 s` and the literal's elaboration most of the rest).
 
-Kernel-only times on the same literals, one run each on the shared host
-(`lake lean -Dprofiler=true`), which the sweep does not separate:
+Median kernel shares recorded by the same size sweep are:
 
 | family | `eval_rank` | `rank` |
 |---|---|---|
-| dense `8 × 8`, rank 8 | 121 ms | 19 ms |
-| dense `16 × 16`, rank 16 | 864 ms | 115 ms |
-| dense `16 × 16`, rank 14 | 851 ms | 117 ms |
-| dense `32 × 32`, rank 32 | 6.8 s | 1.1 s |
-| `32 × 32`, rank 2 | 7.3 s | 116 ms |
+| dense `8 × 8`, rank 8 | 122 ms | 16 ms |
+| dense `16 × 16`, rank 16 | 857 ms | 99 ms |
+| dense `16 × 16`, rank 14 | 854 ms | 106 ms |
+| dense `32 × 32`, rank 32 | timeout | 840 ms |
+| `32 × 32`, rank 2 | timeout | 132 ms |
+
+The timeout entries have no profiler breakdown because the corresponding
+proof exceeded the sweep's ten-second cap.
 
 Rationals are a follow-up: clear each row's denominators (the rank is
 unchanged), certify the integer matrix, and check the scaling in the
