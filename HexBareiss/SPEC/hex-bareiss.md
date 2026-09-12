@@ -392,15 +392,26 @@ this layer states no equation between the certificate and a determinant.
 The symbolic `det` arm specified in
 [hex-bareiss-mathlib §Symbolic determinant](../../HexBareissMathlib/SPEC/hex-bareiss-mathlib.md#symbolic-determinant)
 uses the same certificate as [§The kernel certificate](#the-kernel-certificate),
-generalised from integers to `MvPoly k C Hex.Mono.grevlex`. This is a
-specified extension; `HexBareiss/Kernel.lean` currently provides the integer
+generalised over a coefficient type and instantiated by the companion at
+`MvPoly k C Hex.Mono.grevlex`. This is a specified extension; `HexBareiss/Kernel.lean` currently provides the integer
 `DetWitness`, `detWitness` and list checkers. Canonical polynomial list
 arithmetic in hex-mv-poly is a prerequisite for the polynomial kernel route.
 
-**Producer and witness.** Generalise `detWitness` and its witness data to
-polynomial entries, preserving the integer API. The producer runs in compiled
+**Placement.** Keep the dependency boundary of
+[§Placement in the dependency graph](#placement-in-the-dependency-graph).
+The witness and producer in hex-bareiss are generic over ring operations,
+equality and an exact quotient supplied by the caller; they do not import
+`HexMvGcd` or `HexMvPoly`. Likewise `checkDetPolyList` takes the canonical
+term-list operations as parameters, with soundness laws supplied only in
+the companion. The companion instantiates these generic executable definitions
+with hex-mv-poly's list arithmetic and hex-mv-gcd's polynomial quotient.
+No polynomial-specific public alias or division implementation is added to
+hex-bareiss, and its dependency list does not grow.
+
+**Producer and witness.** Generalise `detWitness` and its witness data over
+the coefficient type, preserving the integer API. The producer runs in compiled
 code, with the coefficient/order context of the `MvPoly` carrier contract
-above, including `LawfulGcdOps C`. It performs row-pivoted fraction-free
+below, including `LawfulGcdOps C`. It performs row-pivoted fraction-free
 elimination on `[P | I]`, applying each swap and each update
 `Hex.exactDiv (pivot * x - factor * y) previousPivot` to both blocks.
 `HexMvGcd/Divide.lean` supplies `Hex.MvPoly.instDiv` and
@@ -434,9 +445,15 @@ multiplication and equality with denotation laws, and preserves canonicality.
 As in `checkDetList`, the checker itself applies the swaps and obtains their
 sign. For each row `i` of `L`, it checks that the first `i` products with
 columns of `σP` vanish, obtains `uᵢ` from column `i`, and requires the last
-entry `lᵢ` of the transform row to be nonzero. It then checks the canonical
-polynomial identity `(∏ lᵢ) * d = sign σ * ∏ uᵢ`. A singular witness instead
-checks a nonzero entry of `v` and every component of `v · P = 0`. The cost is
+entry `lᵢ` of the transform row to be nonzero. For `n > 0`,
+it checks `l₀ = 1`, `lᵢ₊₁ = uᵢ` for `i < n - 1`, and
+`d = sign σ * uₙ₋₁` by canonical list equality. These are the diagonal
+relations of this producer, already recorded for the integer witness above.
+The general determinant identity `(∏ lᵢ) * d = sign σ * ∏ uᵢ` follows
+in the soundness proof by cancellation; neither diagonal product is expanded
+in the kernel. Forming them would multiply supports of successive minors,
+far beyond the support of the determinant itself. For `n = 0` the checker
+requires `d = 1`. A singular witness instead checks a nonzero entry of `v` and every component of `v · P = 0`. The cost is
 about `n³ / 3` polynomial products for triangularisation and `n²` for a
 singular vector, plus canonicality and final value checks, at the realised
 minor support and coefficient sizes. There are no divisions in the checker.
@@ -445,11 +462,13 @@ Every definition on the kernel arithmetic path is `@[expose]` and structurally
 recursive on lists of `Nat`/`Int`, per
 [matrix-tactics §Kernel discipline](../../SPEC/matrix-tactics.md#kernel-discipline).
 In particular converting reference polynomials to lists is producer work;
-the kernel receives quoted lists and does not traverse `MvPoly` arrays or
+the kernel receives quoted lists and does not traverse `MvPoly` trees or
 monomial vectors. The companion identifies the quoted polynomial matrix
-with the denoted row list definitionally. Rationals clear row coefficient
-denominators to integer polynomials, checking positive scales and scaling
-identities in list form as specified in the companion; positive characteristic
+with the denoted row list definitionally. Rationals use the companion's proved
+coefficient denominator-clearing pass to supply integer polynomial rows and
+positive scales; the kernel checks the resulting integer lists, including
+cross-multiplied target equality. No rational polynomial list arithmetic is
+assumed. As specified in the companion, positive characteristic
 requires the residue provider and its canonical list operations.
 
 The proposed `checkDetPolyList_sound`, concluding `Hex.Matrix.det P = d`
