@@ -34,6 +34,13 @@
    bridge, transported along the equivalence so the operations stay the
    executable ones.
 
+   cslib also depends on Mathlib. A computational library therefore does not
+   import cslib. A planned `-cslib` proof library may import a computational
+   library and prove operation-count theorems for definitions in it. Such a
+   library has no executable API, conformance target, or benchmark target.
+   [hex-poly-fast-cslib](Libraries/hex-poly-fast-cslib.md) specifies the first
+   instance of this pattern.
+
 3. **Performant by default.** Dense array-backed representations, `UInt64`
    coefficients for `F_p`, Barrett/Montgomery reduction for modular
    arithmetic. New GMP `@[extern]` primitives where Lean's runtime
