@@ -23,6 +23,38 @@ Dependencies: `HexGenericRank`, `HexRankMathlib`, `HexReflect`,
 entry; the library is not `correspondence_only`, since it implements a
 tactic handler and owns proof probes.
 
+## Prerequisite changes in other libraries
+
+None of these is this library's to write, and each blocks a named part of
+it.
+
+- **`HexRankMathlib/Tactic.lean` answers `throwUnsupportedSyntax` outside
+  its fragment.** Today the numeric handler throws ordinary errors for a
+  matrix with free variables or a non-integer carrier
+  (`Tactic.lean`, the decline branches), so a second handler on the same
+  syntax kind never runs. The refactor is the one
+  [matrix-tactics §Placement](../matrix-tactics.md#placement) prescribes:
+  the numeric handler classifies, and outside its fragment it throws
+  `throwUnsupportedSyntax` so the next handler is tried. Blocks the
+  tactic; the term forms and the programmatic interface do not need it.
+- **A list form of `MvPoly` arithmetic in hex-mv-poly**, with its
+  denotation theorem in hex-mv-poly-mathlib: canonical term lists
+  (ordered exponent-vector lists with coefficients in the carrier's kernel
+  representation), addition, multiplication, scalar multiplication and
+  equality by structural recursion, and the theorem identifying the list
+  form with `MvPoly`'s reference operations. Blocks the kernel route
+  below. Shared with `rank_locus`.
+- **A residue coefficient provider in hex-reflect-mathlib.** Today
+  `HexReflectMathlib/Carrier.lean` supplies the universal integer
+  interpretation and a `CharP` translation theorem that is deliberately not
+  a global instance; there is no provider whose carrier is a residue ring,
+  and `ZMod64 p` has no global Mathlib `CommRing` instance. Until the
+  provider exists, the positive-characteristic arm is specified but not
+  implementable, and the finite-field example below is a statement of what
+  the provider must deliver. Note that `LawfulGcdOps (ZMod64 p)` needs
+  both `ZMod64.Bounds p` and `ZMod64.PrimeModulus p`
+  (`HexMvGcd/Instances.lean`).
+
 ## Input classification
 
 hex-rank-mathlib's numeric handler runs first and answers `notApplicable`
@@ -84,43 +116,39 @@ compiled code; `c : RankCert (MvPoly k C cmp) n m` is closed data with
 `c.rank = r` and `c.denom = d`. All three outputs are read off the same
 `c`; in particular `d` *is* the condition of output 2.
 
+`checkRank P c = true` is the single Boolean every soundness theorem below
+consumes, and it has three parts: `d ≠ 0`; the pivot-block identity
+`B * adj = d • I` for `B` the selected `r × r` block; and the all-column
+identity `d • P = P_cols * (adj * P_rows)`. The conditional output needs
+all three, because `checkRank_sound_at` transports the pivot-block
+identity along the specialisation to obtain the lower bound wherever
+`φ d ≠ 0`; no witness about some other specialisation can replace it. So
+the kernel checks all three, as polynomial identities, and nothing else.
+
 What the kernel checks is governed by
 [matrix-tactics §Kernel discipline](../matrix-tactics.md#kernel-discipline):
 never the producer, and never a matrix identity stated on `Hex.Matrix`.
-The two halves of the certificate are checked differently.
+The reference `checkRank P c` on `Hex.Matrix (MvPoly …)` is therefore
+never evaluated by the kernel, at any size; a measurement cannot license
+it. The kernel form is `checkRankPolyList`, the polynomial analogue of
+hex-rank's `checkRankList`: the matrix as a list of rows of canonical term
+lists, the certificate as `rows`, `cols`, `denom` and `adj` in the same
+representation, and the three identities checked by structural recursion
+with the list form of `MvPoly` arithmetic from hex-mv-poly (a prerequisite
+above). Its soundness theorem, `checkRankPolyList_sound`, identifies a
+passing list check with `checkRank P c = true` on the `MvPoly` values the
+lists denote, through hex-mv-poly-mathlib's denotation theorem, and the
+quoted `P` produced by the batch is identified with its row list
+definitionally, entry by entry, exactly as `ofLists` does for integer
+literals. Kernel evaluation is applied to the lists and the check only,
+never to a statement containing the atoms.
 
-**Lower bound by specialisation, no polynomial arithmetic.** The producer
-also returns an integer point `w : Fin k → ℤ` (drawn from the seedable
-generator of hex-basic, seed a parameter of the entry point) at which
-`d(w) ≠ 0`, together with the integer matrix `P(w)` and its integer kernel
-witness `RankWitness` from hex-rank. The kernel checks
-`checkRankList n m (P(w) as lists) witness = true` exactly as the numeric
-`rank` does, at integer cost, and the identification of `P(w)` with the
-evaluation of `P` at `w` is one closed polynomial evaluation per entry,
-also list-structured. Since specialisation cannot raise rank
-(`HexDeterminantalIdealMathlib.rank_map_le_rank_fractionRing`),
-`rank P(w) = r` gives `r ≤` generic rank. When `C` has positive
-characteristic the point is drawn in `C` and the same argument applies
-over `C`; if no point with `d(w) ≠ 0` exists (the `[X^p − X]` case below
-over the base field), the producer reports it and the lower bound falls
-back to the polynomial identity `B * adj = d • I`, which is then checked as
-in the next paragraph.
-
-**Upper bound as a polynomial identity.** `d • P = P_cols * (adj * P_rows)`
-is `n · m` polynomial equalities. The kernel checks them on a
-list-structured canonical form of the entries (ordered exponent-vector
-terms with `Int` or residue coefficients), by structural recursion over
-term lists, with `P`'s entries identified with their canonical lists
-definitionally through the batch's quoted `P`. Whether a dedicated kernel
-form of `MvPoly` arithmetic is required, or the reference representation
-is small enough at the target sizes, is the measurement recorded in
-[§Proof probes](#proof-probes); the first implementation may use the
-reference `checkRank P c` through `decide` only if the probes show it
-within the bar, and must say so in the report.
-
-`checkRank P c = true`, however obtained, is the single Boolean the
-soundness theorems below consume. Kernel evaluation is applied to `P`, `c`,
-`w` and the checks only, never to a statement containing the atoms.
+Cost is the checker's `n · r · m` polynomial products at the certificate's
+realised support, plus `r³` for the pivot block; the producer's pivot
+search and exact divisions are never replayed. Reducing that cost by
+checking an identity at sample points is not sound as a proof of the
+identity and is not adopted; the realised cost is what
+[§Proof probes](#proof-probes) records.
 
 ## Output 1: generic rank
 
@@ -199,10 +227,11 @@ theorem checkRank_sound_at [CommRing R] [CommRing S] [IsDomain S] [DecidableEq R
 ```
 
 Its proof is that of hex-rank-mathlib's `checkRank_sound_map`, whose
-injectivity hypothesis is used only to obtain `φ c.denom ≠ 0`; hex-rank-mathlib
-should adopt it as the general form, with `checkRank_sound_map` as the
-corollary, and until then this library proves it from hex-rank-mathlib's
-transport lemmas. It is the statement "rank exactly `r` wherever `denom`
+injectivity hypothesis is used only to obtain `φ c.denom ≠ 0`; the domain
+hypothesis is on the target `S` only, and none is needed on the source.
+hex-rank-mathlib should adopt it as the general form, with
+`checkRank_sound_map` as the corollary, and until then this library proves
+it from hex-rank-mathlib's transport lemmas. It is the statement "rank exactly `r` wherever `denom`
 does not vanish" of hex-rank §Generic rank is not a specialised rank.
 
 The condition is sufficient, not necessary. `d` is a unit multiple of the
@@ -280,10 +309,18 @@ generic-rank provider, receives the `ProviderOutcome` carrying `P`, `c` and
 the sealed environment, takes `r := c.rank`, and runs `detIdealGens r P` on
 that same `P`, so its generators are over the same atoms as the `rank`
 diagnostics. The default `r` is therefore the generic rank, and the default
-locus is "rank drops below the generic rank", `InLocus c.rank P p` in
-hex-determinantal-ideal's terms. Choosing `r` is the whole of this arm's
-part; the locus goal forms, `mem_zeroLocus_iff_rank_lt`, and the display of
-generators belong to `rank_locus`.
+locus is "rank drops below the generic rank". Note the types: `P` has
+coefficients in `C` and the user's atoms take values in `F` through
+`ι : C →+* F`, while hex-determinantal-ideal's `InLocus` and
+`mem_zeroLocus_iff_rank_lt` today take a matrix over `MvPoly k F cmp` and
+a point in the same field. The locus statement the user needs is the
+headline theorem at `φ := eval₂Hom ι v`, which `rank_lt_iff_minors_map_eq_zero`
+already provides for any ring homomorphism into a field; the `eval₂`
+form of the zero-locus statement, and the `FractionRing F` passage when
+`F` is a domain that is not a field, are the `rank_locus` SPEC's to add to
+hex-determinantal-ideal-mathlib. Choosing `r` is the whole of this arm's
+part; the locus goal forms and the display of generators belong to
+`rank_locus`.
 
 ## Piecewise rank (later extension)
 
@@ -328,18 +365,15 @@ the sign of the second pass.
 **`[x ^ q − x]`** over `𝔽_q`, the finite-field example of hex-rank; take
 `x : ZMod 3` and the entry `x ^ 3 - x`. Characteristic-aware conversion
 reduces coefficients, not exponents, so `P = [X_0³ − X_0]`, `r = 1`,
-`d = X_0³ − X_0`. No base-field point has `d(w) ≠ 0`, so the lower bound
-is checked as the polynomial identity, as [§The certificate and its kernel
-route](#the-certificate-and-its-kernel-route) provides. The coefficient
-carrier `C` is the positive-characteristic provider's residue carrier: it
-must supply `LawfulGcdOps C` for the producer, which `ZMod64 p` does
-(`HexMvGcd/Instances.lean`, under `ZMod64.Bounds p`), and for the
-companion a Mathlib `CommRing C` with an injective `C →+* ZMod 3`, which
-`ZMod64 p` does not have today (`HexModArithMathlib.ZMod64.equiv` is the
-ring equivalence, but the global `CommRing` instance is absent, as
-[hex-det-mathlib](hex-det-mathlib.md) records). Supplying that
-coefficientwise transport is the hex-reflect-mathlib carrier translation's
-obligation; this SPEC depends on it and does not restate it.
+`d = X_0³ − X_0`. The coefficient carrier `C` is the residue provider's
+carrier (a prerequisite above): it must supply `LawfulGcdOps C` for the
+producer, which `ZMod64 p` does under `ZMod64.Bounds p` and
+`ZMod64.PrimeModulus p` (`HexMvGcd/Instances.lean`), and for the companion
+a Mathlib `CommRing C` with an injective `C →+* ZMod 3`, which `ZMod64 p`
+does not have today (`HexModArithMathlib.ZMod64.equiv` is the ring
+equivalence, but the global `CommRing` instance is absent, as
+[hex-det-mathlib](hex-det-mathlib.md) records). Until that provider
+exists this example is the statement of what it must deliver, not a test.
 
 1. Generic: `S = !![X 0 ^ 3 - X 0]` over `MvPolynomial (Fin 1) (ZMod 3)`
    has rank `1`. This is true and unconditional.
@@ -372,11 +406,11 @@ the three examples above, the three outputs: generic rank on a
 `MvPolynomial` goal, conditional rank with the condition discharged from a
 hypothesis, and conditional rank leaving a side goal. Each records, as
 fresh-module proof evidence with matched import-only baselines: batch
-reification and conversion time; producer time; the kernel time of the
-lower-bound specialisation check and of the upper-bound polynomial
-identity, separately, so the open question of a kernel form for `MvPoly`
-arithmetic is answered by data; proof-expression node count, `.olean` size
-and total elaboration. Each probe has the 120 s cleanup timeout and a
+reification and conversion time; producer time; the kernel time of
+`checkRankPolyList`, split between the pivot-block identity and the
+all-column identity, so the realised cost of list-form polynomial
+arithmetic is on record; proof-expression node count, `.olean` size and
+total elaboration. Each probe has the 120 s cleanup timeout and a
 preregistered 30 s full-proof-build ceiling per case recorded in the
 external proof-runner manifest beside the numeric checks. The report is
 `reports/hex-generic-rank-mathlib-performance.md`.
@@ -387,7 +421,7 @@ external proof-runner manifest beside the numeric checks. The report is
 HexGenericRankMathlib/
   Transport.lean    -- S, the atom-condition lemmas, eval₂ transport
   Sound.lean        -- checkRank_sound_at, generic-rank and fraction-field forms
-  Kernel.lean       -- specialisation lower bound, polynomial-identity upper bound
+  Kernel.lean       -- checkRankPolyList, checkRankPolyList_sound, list identification of the batch's P
   Provider.lean     -- the hex-reflect provider, conditions, budgets
   Tactic.lean       -- the handler on hex-rank-mathlib's `rank` syntax kind; generic_rank%, rank%
   Tests.lean
@@ -416,7 +450,8 @@ Checked against the pinned Mathlib by name: `MvPolynomial.rename_injective`,
 (`HexDeterminantalIdealMathlib/Locus.lean`), `detIdealGens`
 (`HexDeterminantalIdeal/Minors.lean`), `eval₂MathlibHom`
 (`HexMvPolyMathlib/Aeval.lean`), `instCommRingMvPoly`
-(`HexMvPolyMathlib/Equiv.lean`), `RankWitness`, `checkRankList`,
-`rank_eq_of_checkList` (`HexRank/Kernel.lean`), `syntax (name := rankTac)`
+(`HexMvPolyMathlib/Equiv.lean`), `RankWitness`, `checkRankList`
+(`HexRank/Kernel.lean`), `rank_eq_of_checkList` (`HexRankMathlib/Kernel.lean`),
+`rankCertWith_check` (`HexRankMathlib/Cert.lean`), `syntax (name := rankTac)`
 (`HexRankMathlib/Tactic.lean`). An implementer re-runs these searches when
 the pins move.

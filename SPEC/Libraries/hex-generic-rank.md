@@ -35,9 +35,9 @@ whole content of the companion's three outputs.
 
 ## Scope and dependencies
 
-In scope: `genericRankWith`, `genericCertWith` and `genericRank` over
-`MvPoly k C cmp` for a coefficient domain `C` with `LawfulGcdOps C`; the
-Mathlib-free statement that the certified `r` is the largest size of a
+In scope: `genericCert` and `genericRank` over `MvPoly k C cmp` for a
+coefficient domain `C` with `LawfulGcdOps C`; the Mathlib-free statement
+that a certificate which passes `checkRank` names the largest size of a
 nonzero minor; conformance fixtures with a SymPy oracle; and lean-bench
 families. The Mathlib-free goal form
 `Hex.Matrix.rankWith Hex.exactDiv P = r` for a closed polynomial literal
@@ -76,7 +76,7 @@ def genericRank (P : Matrix (MvPoly k C cmp) n m) : Nat :=
 The exact quotient is `Hex.MvPoly.instDiv` with its law
 `Hex.MvPoly.instExactDivLaws` from `HexMvGcd/Divide.lean`, which needs
 `[LawfulGcdOps C]`; `HexMvGcd/Instances.lean` supplies it for `Int`, `Rat`
-and `ZMod64 p` (under `ZMod64.Bounds p`). `DomainLaws (MvPoly k C cmp)` is
+and `ZMod64 p` (under `ZMod64.Bounds p` and `ZMod64.PrimeModulus p`). `DomainLaws (MvPoly k C cmp)` is
 `DomainLaws.of_exactDivLaws` with `LawfulGcdOps.one_ne_zero`. The term
 order is fixed at `Hex.Mono.grevlex`, whose `IsMonomialOrder`,
 `Std.TransCmp` and `Std.LawfulEqCmp` instances exist; a consumer that
@@ -86,12 +86,18 @@ The certificate `c := genericCert P` is closed data: `c.rank = r`,
 `c.denom` a nonzero polynomial `d` (a signed `r × r` minor of `P`,
 `sign π · det B` for the producer's row order `π`, per
 [hex-rank §Entry points](../../HexRank/SPEC/hex-rank.md#entry-points)), and
-`c.adj` a polynomial matrix. `checkRank P c = true` by producer
-correctness (`rankCertWith_check` in hex-rank-mathlib), and hex-rank's
-Mathlib-free `RankCert.det_ne_zero` and `RankCert.det_succ_eq_zero` at `P`
-say that `r` is the largest size of a nonzero minor of `P`. That is the
-Mathlib-free content of "generic rank"; the fraction-field statement is
-the companion's.
+`c.adj` a polynomial matrix. What this library proves Mathlib-free is
+conditional on the check: from `checkRank P c = true`, hex-rank's
+`RankCert.det_ne_zero` and `RankCert.det_succ_eq_zero` at `P` say that
+`c.rank` is the largest size of a nonzero minor of `P`. That the producer's
+certificate passes the check is producer correctness,
+`rankCertWith_check`, which lives in `HexRankMathlib/Cert.lean` and not in
+the Mathlib-free layer, so the unconditional statement "`genericRank P` is
+the largest size of a nonzero minor" is the companion's theorem. The
+Mathlib-free library exposes `genericCert?`, returning the certificate only
+when `checkRank` accepts it in compiled code, so that a Mathlib-free
+consumer can state its own results conditionally on a value it has seen
+checked.
 
 `d` is the datum every consumer reads. It is the condition of the
 companion's conditional output, and its vanishing set contains the locus
@@ -104,7 +110,7 @@ is strict in general, see the companion).
 |---|---|---|---|
 | `Int` | `HexMvGcd/Instances.lean` | two- and three-variable integer matrices of generic full rank, of known low rank (products of `n × r` and `r × m` polynomial factors, so `r` and a nonzero `r`-minor are known at generation), and with repeated subexpressions | SymPy `Matrix.rank()` over `ZZ[x0, …]` through its fraction-field domain |
 | `Rat` | same | the same shapes with rational coefficients | SymPy over `QQ[x0, …]` |
-| `ZMod64 p` | same, under `ZMod64.Bounds p` | the same shapes at a fixed prime below `2^31`, plus `[X^p − X]`-style entries vanishing at every base-field point | SymPy over `GF(p, symmetric=False)[x0, …]` |
+| `ZMod64 p` | same, under `ZMod64.Bounds p` and `ZMod64.PrimeModulus p` | the same shapes at a fixed prime below `2^31`, plus `[X^p − X]`-style entries vanishing at every base-field point | SymPy over `GF(p, symmetric=False)[x0, …]` |
 
 Each record stores the realised support of the entries, the expected
 generic rank, and the expected `denom` up to sign; the oracle checks the
@@ -182,14 +188,14 @@ HexGenericRank.lean
 
 ## Open questions
 
-- **A kernel form of the polynomial certificate.** The companion's
-  conditional output checks `d • P = C * (adj * P_rows)` in the kernel as a
-  polynomial identity. Whether that needs a list-structured kernel form of
-  `MvPoly` arithmetic (as `RankWitness` is for `Int`), or whether the
-  identity is small enough at the target sizes to check through the
-  reference representation, is a measurement the companion's proof probes
-  settle. The lower bound needs no polynomial arithmetic in the kernel at
-  all, see the companion.
+- **The list form of `MvPoly` arithmetic.** The companion checks the three
+  certificate identities in the kernel as polynomial identities on
+  list-structured entries. That needs a kernel form of `MvPoly` addition,
+  multiplication and equality over canonical term lists, with a denotation
+  theorem, which belongs in hex-mv-poly and its companion (as `RankWitness`
+  belongs in hex-rank) and does not exist today. It is a prerequisite of
+  the companion, shared with the `rank_locus` tactic, and is not this
+  library's to write.
 - **Univariate specialisation.** At `k = 1` the same certificate competes
   with hex-poly-smith's `snfRank`; whether one routes to the other is
   decided by the benchmark, not here.
