@@ -21,7 +21,7 @@ import time
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("prefix", type=Path)
-    parser.add_argument("--phase", choices=("scientific", "comparisons"), default="scientific")
+    parser.add_argument("--phase", choices=("scientific", "comparisons", "overhead"), default="scientific")
     parser.add_argument("--names", nargs="*", help="Specific unchanged registrations for a rerun")
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[2]
@@ -47,14 +47,18 @@ def main() -> int:
     os.environ["LEAN_NUM_THREADS"] = "1"
     sources = ["bench/HexRowReduce/Bench.lean", "HexRowReduce/Inverse.lean",
                "HexRowReduce/Solve.lean", "scripts/oracle/flint_bench_driver.py",
-               "scripts/bench/row_reduce_fields.py"]
+               "scripts/bench/row_reduce_fields.py", "scripts/oracle/row_reduce_overhead.py"]
+    if args.phase == "overhead":
+        os.environ["HEX_FLINT_BENCH_DRIVER"] = str(root / "scripts/oracle/row_reduce_overhead.py")
     metadata = {
         "source_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip(),
         "source_sha256": {p: hashlib.sha256((root / p).read_bytes()).hexdigest() for p in sources},
         "cpu": cpu, "hostname": os.uname().nodename,
         "load_before": Path("/proc/loadavg").read_text().strip(),
         "phase": args.phase,
-        "schedule": "fixed trial-major" if args.phase == "scientific" else "four adjacent AB/BA blocks",
+        "schedule": {"scientific": "fixed trial-major", "comparisons": "four adjacent AB/BA blocks",
+                     "overhead": "four fixed repeats per identical-payload calibration"}[args.phase],
+        "driver_override": os.environ.get("HEX_FLINT_BENCH_DRIVER"),
         "commands": [],
     }
 
@@ -81,6 +85,11 @@ def main() -> int:
         names = args.names or ["Hex.RowReduceBench.Field." + n for n in
                               re.findall(r"^setup_benchmark (\w+)", section, re.M)]
         failures += run(["run", *names], "") != 0
+    elif args.phase == "overhead":
+        for n in (8, 16, 32):
+            for op in ("Inverse", "Solve"):
+                failures += run(["run", f"Hex.RowReduceBench.Field.flint{op}{n}", "--repeats", "4"],
+                                f"-{op.lower()}-{n}") != 0
     else:
         for n in (8, 16, 32):
             for op in ("Inverse", "Solve"):

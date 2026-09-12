@@ -825,9 +825,10 @@ def _fmpq_mat_overhead(_req: dict[str, Any]) -> int:
 
 
 _FIELD_MATRIX_CACHE: dict[Any, Any] = {}
+_FIELD_RESULT_CACHE: dict[Any, Any] = {}
 
 
-def _fmpq_field(req: dict[str, Any], *, inverse: bool):
+def _fmpq_field(req: dict[str, Any], *, inverse: bool, cached_result: bool = False):
     n = req["n"]
     rows, rhs = req["rows"], req["rhs"]
     if len(rows) != n or any(len(row) != n for row in rows) or len(rhs) != n:
@@ -838,7 +839,13 @@ def _fmpq_field(req: dict[str, Any], *, inverse: bool):
         b = flint.fmpq_mat(n, 1, [flint.fmpq(*q) for q in rhs])
         _FIELD_MATRIX_CACHE[key] = a, b
     a, b = _FIELD_MATRIX_CACHE[key]
-    result = a.inv() if inverse else a.solve(b)
+    result_key = inverse, key
+    if cached_result and result_key in _FIELD_RESULT_CACHE:
+        result = _FIELD_RESULT_CACHE[result_key]
+    else:
+        result = a.inv() if inverse else a.solve(b)
+        if cached_result:
+            _FIELD_RESULT_CACHE[result_key] = result
     encode = lambda q: [int(q.p), int(q.q)]
     if inverse:
         return [[encode(result[i, j]) for j in range(n)] for i in range(n)]

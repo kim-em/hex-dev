@@ -332,9 +332,10 @@ private def prepare [Lean.Grind.Field F] [DecidableEq F] (n family : Nat)
   let cols := if family == 6 then 2*n else n
   let A : Matrix F rows cols := Matrix.ofFn fun i j =>
     (if i.val % r = j.val % r then 1 else 0) + u (i.val % r) * v (j.val % r)
-  let consistent := A * (Vector.ofFn (fun _ => (1 : F)) : Vector F cols)
+  -- A column gives a dense consistent RHS without increasing coefficient height.
+  let consistent := A * (Vector.ofFn (fun i => if i.val = 0 then (1 : F) else 0) : Vector F cols)
   let bad := family == 3 || family == 4
-  let b := Vector.ofFn fun i => consistent[i] + (if bad && i.val + 1 == rows then 1 else 0)
+  let b := Vector.ofFn fun i => consistent[i] - (if bad && i.val + 1 == rows then 1 else 0)
   let augmented : Matrix F rows (cols + 1) := Matrix.ofFn fun i j =>
     if h : j.val < cols then A[(i, (⟨j.val, h⟩ : Fin cols))] else b[i]
   if Matrix.rowReduce_rank A != r || Matrix.rowReduce_rank augmented != r + (if bad then 1 else 0) then
@@ -349,7 +350,9 @@ private def rational (h n family : Nat) : Input Rat :=
   let h := max 8 h
   let d := 2^(h-1) + 1
   prepare n family
-    (fun i => (Rat.ofInt (Int.ofNat (2^(h-1) + seeded (h-1) i))) / Rat.ofInt (Int.ofNat d))
+    -- Leave four numerator bits for multiplication by v ≤ 8 and the diagonal.
+    -- Both numerator and denominator of every entry then have at most h bits.
+    (fun i => (Rat.ofInt (Int.ofNat (2^(h-5) + seeded (h-5) i))) / Rat.ofInt (Int.ofNat d))
     (fun j => Rat.ofInt (Int.ofNat (1 + seeded 3 (j+31)))) hash
 
 scoped instance : ZMod64.Bounds 101 := ⟨by decide, by decide⟩
@@ -369,7 +372,8 @@ private def functionHash (f : RationalFn Rat) : UInt64 :=
 
 private def functions (n family : Nat) : Input (RationalFn Rat) :=
   let t : RationalFn Rat := RationalFn.X
-  let u := fun i => (RationalFn.C (Rat.ofInt (128 + Int.ofNat (seeded 7 i))) * t + 1) / (t + 1)
+  -- Including v ≤ 8 and the diagonal, coefficients are at most 31 * 8 + 1 = 249.
+  let u := fun i => (RationalFn.C (Rat.ofInt (24 + Int.ofNat (seeded 3 i))) * t + 1) / (t + 1)
   prepare n family u (fun j => RationalFn.C (Rat.ofInt (1 + Int.ofNat (seeded 3 (j+31))))) functionHash
 
 private def dimConfig (schedule : Array Nat) : LeanBench.BenchmarkConfig :=
@@ -1047,18 +1051,18 @@ def flintInverse32 := flintAt "field_inverse" fields32
 def leanSolve32 := leanAt "field_solve" input32
 def flintSolve32 := flintAt "field_solve" fields32
 
-setup_fixed_benchmark leanInverse8 where comparisonConfig 0x386bde7013009693
-setup_fixed_benchmark flintInverse8 where comparisonConfig 0x386bde7013009693
-setup_fixed_benchmark leanSolve8 where comparisonConfig 0x9a2a4e0d29ac0f9
-setup_fixed_benchmark flintSolve8 where comparisonConfig 0x9a2a4e0d29ac0f9
-setup_fixed_benchmark leanInverse16 where comparisonConfig 0xc0e229f2fbba2a35
-setup_fixed_benchmark flintInverse16 where comparisonConfig 0xc0e229f2fbba2a35
-setup_fixed_benchmark leanSolve16 where comparisonConfig 0x6da2044201524393
-setup_fixed_benchmark flintSolve16 where comparisonConfig 0x6da2044201524393
-setup_fixed_benchmark leanInverse32 where comparisonConfig 0x18ded232abb746bd
-setup_fixed_benchmark flintInverse32 where comparisonConfig 0x18ded232abb746bd
-setup_fixed_benchmark leanSolve32 where comparisonConfig 0x2de9fc4d9d0ecd4
-setup_fixed_benchmark flintSolve32 where comparisonConfig 0x2de9fc4d9d0ecd4
+setup_fixed_benchmark leanInverse8 where comparisonConfig 0x1b1e2cdba528af46
+setup_fixed_benchmark flintInverse8 where comparisonConfig 0x1b1e2cdba528af46
+setup_fixed_benchmark leanSolve8 where comparisonConfig 0xf09b770e65e36cd1
+setup_fixed_benchmark flintSolve8 where comparisonConfig 0xf09b770e65e36cd1
+setup_fixed_benchmark leanInverse16 where comparisonConfig 0x7f0a7938dad91bb5
+setup_fixed_benchmark flintInverse16 where comparisonConfig 0x7f0a7938dad91bb5
+setup_fixed_benchmark leanSolve16 where comparisonConfig 0x2fbc47be395702dd
+setup_fixed_benchmark flintSolve16 where comparisonConfig 0x2fbc47be395702dd
+setup_fixed_benchmark leanInverse32 where comparisonConfig 0xfaafb9d216353207
+setup_fixed_benchmark flintInverse32 where comparisonConfig 0xfaafb9d216353207
+setup_fixed_benchmark leanSolve32 where comparisonConfig 0x790712b14bebe0c8
+setup_fixed_benchmark flintSolve32 where comparisonConfig 0x790712b14bebe0c8
 
 private def bits (n : Nat) : Nat := if n == 0 then 0 else n.log2 + 1
 private def ratHeights (q : Rat) : Nat × Nat := (bits q.num.natAbs, bits q.den)
