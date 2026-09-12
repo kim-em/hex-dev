@@ -474,6 +474,16 @@ delta):
 | dense `32 × 32` | 13.9 s | 2.4 s | 5.9 |
 | `32 × 32`, rank 2 | 15.1 s | 0.70 s | 21.6 |
 
+Proof time against dimension, for the full-rank, rank `n − 2`, rank
+`n / 2` and rank `2` families at geometric dimensions up to a ten-second
+cap per run, is recorded by `scripts/bench/rank_tactic_size_sweep.py`
+(profiler totals per file, imports excluded, one sample per point) and
+plotted by `scripts/plots/hex-rank-mathlib-tactic-size.py` to
+`reports/figures/hex-rank-mathlib-tactic-size.svg`. Under that cap
+`eval_rank` reaches `n = 24` in every family and `rank` reaches `n = 48`
+at full rank, rank `n − 2` and rank `n / 2`, and `n = 128` at rank `2`,
+where the literal's elaboration is most of the time.
+
 Kernel-only times on the same literals, one run each on the shared host
 (`lake lean -Dprofiler=true`), which the sweep does not separate:
 

@@ -196,6 +196,7 @@ jobs:
           python3 -m unittest scripts/bench/test_check_graphiso_sweep_freshness.py
           python3 scripts/bench/check_factor_sweep_freshness.py
           python3 scripts/plots/hexbz-cactus.py --check
+          python3 scripts/plots/hex-rank-mathlib-tactic-size.py --check
           python3 scripts/bench/check_graphiso_sweep_freshness.py
           python3 scripts/bench/graphiso_pernode_fit.py --check 0.2
       - name: Set up pinned Lean toolchain (no build)
