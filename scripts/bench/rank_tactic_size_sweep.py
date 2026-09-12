@@ -8,11 +8,11 @@ each dimension, one seeded ``n × n`` integer literal with entries in
 categories (elaboration of the literal, tactic execution, interpretation of
 tactic code, kernel type checking, linting) is recorded as the proof time,
 with the kernel's ``type checking`` share kept separately; imports are not
-counted. One sample per point. Dimensions grow
-geometrically, since the growth is regular; a family stops for a tactic at
-the first dimension whose proof time exceeds ``--cap`` seconds (default 10),
-and no run is allowed more than the cap beyond the import baseline. The
-record goes to
+counted. Each point is the median of ``--samples`` runs (default 3), the
+samples kept in the record. A family stops for a tactic at the first
+dimension whose median exceeds ``--cap`` seconds (default 10), and no run
+is allowed more than the cap beyond the import baseline. The record goes
+to
 ``reports/bench-results/hex-rank-mathlib-tactic-size-<sha>-<host>.json`` and
 is plotted by ``scripts/plots/hex-rank-mathlib-tactic-size.py``.
 
@@ -41,7 +41,12 @@ FAMILIES = {
     "half": ("rank n / 2", lambda n: n // 2),
     "low": ("rank 2", lambda n: 2),
 }
-SIZES = [8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256]
+SIZES = {
+    "full": [8, 10, 12, 14, 16, 20, 24, 28, 32, 40, 48],
+    "deficient": [8, 10, 12, 14, 16, 20, 24, 28, 32, 40, 48],
+    "half": [8, 10, 12, 14, 16, 20, 24, 28, 32, 40, 48],
+    "low": [8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96, 112, 128],
+}
 TOOLS = {
     "eval_rank": ("Mathlib.Tactic.NormRank", "eval_rank"),
     "rank": ("HexRankMathlib", "rank"),
@@ -87,7 +92,8 @@ def run_lean(path: Path, timeout: float, cpu: int | None) -> tuple[float | None,
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
     parser.add_argument("--cap", type=float, default=10.0,
-                        help="stop a family at the first proof over this many seconds; no run may exceed it")
+                        help="stop a family at the first median over this many seconds; no run may exceed it")
+    parser.add_argument("--samples", type=int, default=3, help="runs per point; the median is reported")
     parser.add_argument("--seed", type=int, default=2026)
     parser.add_argument("--cpu", type=int, help="logical CPU for the timed processes")
     parser.add_argument("--output", type=Path)
@@ -109,7 +115,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"[baseline] {tool} {baseline[tool]:.2f}s", flush=True)
         for family in FAMILIES:
             stopped: set[str] = set()
-            for n in SIZES:
+            for n in SIZES[family]:
                 if len(stopped) == len(TOOLS):
                     break
                 m = matrix(family, n, args.seed)
@@ -122,18 +128,31 @@ def main(argv: list[str] | None = None) -> int:
                                     f"set_option maxHeartbeats 0\nset_option profiler true\n"
                                     f"set_option profiler.threshold 1000000\n"
                                     f"example : Matrix.rank (R := ℤ) {literal(m)} = {r} := by {tactic}\n")
-                    wall, ok, profile = run_lean(path, baseline[tool] + args.cap + 1.0, args.cpu)
                     point: dict[str, object] = {"family": family, "n": n, "rank": r, "tool": tool}
-                    if wall is None:
-                        point.update({"status": "timeout"})
-                        stopped.add(tool)
-                    else:
-                        proof = sum(profile.values())
-                        point.update({"status": "ok" if ok else "failed", "wall_s": wall,
-                                      "proof_s": proof, "kernel_s": profile.get("type checking", 0.0),
-                                      "profile_s": profile})
-                        if proof > args.cap or not ok:
+                    samples: list[dict[str, object]] = []
+                    for _ in range(args.samples):
+                        wall, ok, profile = run_lean(path, baseline[tool] + args.cap + 1.0, args.cpu)
+                        if wall is None:
+                            samples.append({"status": "timeout"})
+                            break
+                        samples.append({"status": "ok" if ok else "failed", "wall_s": wall,
+                                        "proof_s": sum(profile.values()),
+                                        "kernel_s": profile.get("type checking", 0.0),
+                                        "profile_s": profile})
+                        if not ok:
+                            break
+                    point["samples"] = samples
+                    if all(sample["status"] == "ok" for sample in samples):
+                        proofs = sorted(float(sample["proof_s"]) for sample in samples)
+                        kernels = sorted(float(sample["kernel_s"]) for sample in samples)
+                        point.update({"status": "ok", "proof_s": proofs[len(proofs) // 2],
+                                      "kernel_s": kernels[len(kernels) // 2],
+                                      "proof_min_s": proofs[0], "proof_max_s": proofs[-1]})
+                        if point["proof_s"] > args.cap:
                             stopped.add(tool)
+                    else:
+                        point["status"] = samples[-1]["status"]
+                        stopped.add(tool)
                     points.append(point)
                     print(f"[point] {family} n={n} {tool} {point}", flush=True)
     record = {
@@ -145,6 +164,7 @@ def main(argv: list[str] | None = None) -> int:
         "toolchain": toolchain,
         "seed": args.seed,
         "cap_s": args.cap,
+        "samples_per_point": args.samples,
         "cpu": args.cpu,
         "load_average_at_end": os.getloadavg(),
         "baseline_s": baseline,

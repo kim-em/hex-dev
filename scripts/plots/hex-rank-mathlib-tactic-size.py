@@ -4,10 +4,11 @@
 Reads the newest ``reports/bench-results/hex-rank-mathlib-tactic-size-*.json``
 (``scripts/bench/rank_tactic_size_sweep.py`` output) and writes
 ``reports/figures/hex-rank-mathlib-tactic-size.svg``: one panel per family
-(full rank, rank ``n - 2``, rank ``n / 2``, rank ``2``), proof time on a log
-axis against the dimension ``n`` on a log axis, one line per tactic. Points
-that failed or timed out are not drawn; a family's line ends at the last
-dimension that tactic completed within the sweep's cap.
+(full rank, rank ``n - 2``, rank ``n / 2``, rank ``2``), the median proof
+time on a log axis against the dimension ``n`` on a log axis, one line per
+tactic, with the sample range as error bars. Points that failed or timed
+out are not drawn; a family's line ends at the last dimension that tactic
+completed within the sweep's cap.
 
 ``--check`` regenerates the figure to a temporary file and fails when the
 committed figure differs, as CI runs it.
@@ -49,8 +50,9 @@ def newest_record() -> Path:
 
 def render(record: dict, out: Path) -> None:
     fig, axes = plt.subplots(2, 2, figsize=(9, 7), sharex=False, sharey=True)
+    samples = record.get("samples_per_point", 1)
     fig.suptitle("Proof time (literal elaboration, certificate, kernel check) against dimension; "
-                 f"{record['host']} at {record['commit']}, one sample per point")
+                 f"{record['host']} at {record['commit']}, median of {samples}, range as bars")
     for ax, family in zip(axes.flat, FAMILY_ORDER):
         for tool, style in STYLE.items():
             pts = sorted((p for p in record["points"]
@@ -58,8 +60,12 @@ def render(record: dict, out: Path) -> None:
                          key=lambda p: p["n"])
             if not pts:
                 continue
-            ax.plot([p["n"] for p in pts], [p["proof_s"] for p in pts],
-                    marker=style["marker"], color=style["color"], label=style["label"])
+            ys = [p["proof_s"] for p in pts]
+            ax.errorbar([p["n"] for p in pts], ys,
+                        yerr=[[y - p.get("proof_min_s", y) for p, y in zip(pts, ys)],
+                              [p.get("proof_max_s", y) - y for p, y in zip(pts, ys)]],
+                        marker=style["marker"], color=style["color"], label=style["label"],
+                        capsize=2, linewidth=1.2)
         ax.axhline(10.0, color="0.6", linestyle=":", linewidth=1)
         ax.set_xscale("log", base=2)
         ax.set_yscale("log")
