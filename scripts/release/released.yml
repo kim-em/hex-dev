@@ -394,6 +394,7 @@ repos:
 
   - repo: leanprover/hex-bareiss-mathlib
     lib: HexBareissMathlib
+    test_modules: [HexBareissMathlib.Tests]
     umbrella: true
     spec: hex-bareiss-mathlib
     pins: [hex-basic, hex-arith, hex-determinant-mathlib, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-matrix]

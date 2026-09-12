@@ -7,6 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexBareissMathlib.Bareiss
+public import HexBareissMathlib.Kernel
+public import HexBareissMathlib.Tactic
 
 public section
 

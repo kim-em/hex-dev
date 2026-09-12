@@ -8,7 +8,9 @@ with spec-driven development.
 [`hex-bareiss`](https://github.com/leanprover/hex-bareiss). It proves the
 row-pivoted Bareiss determinant correct, both against Mathlib's `Matrix.det`
 and against the executable Leibniz determinant from
-[`hex-determinant`](https://github.com/leanprover/hex-determinant). It depends on
+[`hex-determinant`](https://github.com/leanprover/hex-determinant), and it
+ships the `det` tactic, which closes determinant equations on closed integer
+and rational matrix literals with a kernel-checked certificate. It depends on
 [`hex-bareiss`](https://github.com/leanprover/hex-bareiss),
 [`hex-determinant-mathlib`](https://github.com/leanprover/hex-determinant-mathlib),
 and Mathlib.
@@ -48,6 +50,20 @@ open HexMatrixMathlib
 --   (quot : R → R → R), (∀ a b, b ≠ 0 → quot (a * b) b = a) →
 --   ∀ M : Hex.Matrix R n n,
 --     Matrix.bareissWith quot M = (matrixEquiv M).det
+
+-- The `det` tactic closes determinant equations on closed integer and
+-- rational literals, in either orientation, with a kernel-checked
+-- certificate; `det%` returns the certified value and its proof.
+example : Matrix.det (R := ℤ) !![0, 2, 1; 3, 1, 4; 1, 5, 9] = -32 := by det
+example : Matrix.det (R := ℚ) !![1 / 2, -1; 3, 5 / 3] = 23 / 6 := by det
+#check (det% !![1, 2; 3, 4]).proof
+-- (det% !![1, 2; 3, 4]).proof : Matrix.det !![1, 2; 3, 4] = -2
+
+-- `hex_norm_det` is the same certificate as a simproc, with Mathlib's
+-- `norm_det` as its fallback for symbolic entries.
+example (a b c d : ℤ) : Matrix.det !![a, b; c, d] = a * d - b * c := by
+  simp only [hex_norm_det]
+  ring
 ```
 
 # Functionality
@@ -61,6 +77,14 @@ open HexMatrixMathlib
   argument that drives the no-pivot correctness proof;
 - `bareissWith_eq_det` and `bareissWith_eq_mathlib_det`: the generic
   coefficient-ring correspondence for a supplied exact quotient.
+- `det_eq_of_checkList` and `det_eq_of_checkRat`: a passing kernel
+  determinant certificate of `hex-bareiss` determines Mathlib's `Matrix.det`
+  of an integer or rational matrix given as a row list;
+- the `det` tactic, the `det%` term form and the `hex_norm_det` simproc:
+  determinants of closed integer and rational literals (`!![…]`,
+  `Matrix.of ![…]`, `fun i j => …`, `Matrix.ofArray`), checked in the
+  kernel as a triangularization, faster than Mathlib's `eval_det` on every
+  shared family, with `norm_det` composed as the fallback.
 
 `Rat` can use the generic correspondence directly. Multivariate polynomials
 also have Mathlib ring structures, supplied separately by `HexMvPolyMathlib`.

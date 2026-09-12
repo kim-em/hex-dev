@@ -373,6 +373,31 @@ lean_lib HexDeterminantalIdealTests where
 @[default_target]
 lean_lib HexBareissMathlib where
 
+lean_lib HexBareissMathlibProofProbe where
+  srcDir := "bench"
+  globs := #[`HexBareissMathlib.ProofProbe.Baseline,
+    `HexBareissMathlib.ProofProbe.MathlibBaseline,
+    `HexBareissMathlib.ProofProbe.Dense8Hex,
+    `HexBareissMathlib.ProofProbe.Dense8Mathlib,
+    `HexBareissMathlib.ProofProbe.Dense12Hex,
+    `HexBareissMathlib.ProofProbe.Dense12Mathlib,
+    `HexBareissMathlib.ProofProbe.Dense16Hex,
+    `HexBareissMathlib.ProofProbe.Dense16Mathlib,
+    `HexBareissMathlib.ProofProbe.Dense32Hex,
+    `HexBareissMathlib.ProofProbe.Tridiagonal16Hex,
+    `HexBareissMathlib.ProofProbe.Tridiagonal16Mathlib,
+    `HexBareissMathlib.ProofProbe.Vandermonde8Hex,
+    `HexBareissMathlib.ProofProbe.Vandermonde8Mathlib,
+    `HexBareissMathlib.ProofProbe.Singular16Hex,
+    `HexBareissMathlib.ProofProbe.Singular16Mathlib,
+    `HexBareissMathlib.ProofProbe.Large8Bits64Hex,
+    `HexBareissMathlib.ProofProbe.Large8Bits64Mathlib,
+    `HexBareissMathlib.ProofProbe.Large4Bits256Hex,
+    `HexBareissMathlib.ProofProbe.Large4Bits256Mathlib,
+    `HexBareissMathlib.ProofProbe.Rational8Hex,
+    `HexBareissMathlib.ProofProbe.Rational8Mathlib]
+
+
 @[default_target]
 lean_lib HexDetMathlib where
 
@@ -968,6 +993,7 @@ lean_exe hex_interval_pnt_fks2_local where
 -- removing them from an umbrella cannot silently remove them from CI.
 lean_lib HexReleaseTests where
   globs := #[`HexMatrixMathlib.Tests,
+    `HexBareissMathlib.Tests,
     `HexBerlekamp.FactorTacticTests,
     `HexBerlekampMathlib.FactorPolyTests,
     `HexBerlekampZassenhaus.FactorTacticTests,

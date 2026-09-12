@@ -59,6 +59,13 @@ def Q : Matrix Rat 2 2 := Matrix.ofFn fun i j =>
   without pivot search, for inputs whose leading pivots are already nonzero;
 - `borderedMinor`: the bordered minors that the correctness development uses to
   track the elimination invariant.
+- `DetWitness`, `checkDetList`, `checkDetRat` and `detWitness`: the kernel
+  determinant certificate (a fraction-free triangularization with its row
+  swaps and lower triangular transform, or a left kernel vector for a
+  singular matrix), its list-structured checkers for the kernel, and the
+  producer from the elimination on `[A | I]`; the `det` tactic of
+  [`hex-bareiss-mathlib`](https://github.com/leanprover/hex-bareiss-mathlib)
+  is built on it;
 
 The generic functions make their quotient operation explicit. The `Int`
 specialization calls the GMP-backed `lean_int_div_exact` primitive directly;

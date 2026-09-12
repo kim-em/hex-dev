@@ -20,11 +20,11 @@ their library structure and their kernel-replay proof strategy do not.
 | tactic | goals | executable side | Mathlib-input tactic and soundness | status |
 |---|---|---|---|---|
 | `rank` | `A.rank = r`, `A.rank ≤ r`, `r ≤ A.rank` | `hex-rank`: `RankWitness`, `checkRankList`, `rankWitness` | `hex-rank-mathlib`: `rank_eq_of_checkList`, `HexRankMathlib/Tactic.lean` | shipped (https://github.com/kim-em/hex-dev/pull/10207) |
-| `det` | `A.det = d` | `hex-bareiss`: a kernel-form triangular certificate produced by fraction-free elimination | `hex-bareiss-mathlib` | to do: https://github.com/kim-em/hex-dev/issues/10211; see [The determinant certificate](#the-determinant-certificate) |
+| `det` | `A.det = d` | `hex-bareiss`: `DetWitness`, `checkDetList`, `checkDetRat`, `detWitness` | `hex-bareiss-mathlib`: `det_eq_of_checkList`, `det_eq_of_checkRat`, `HexBareissMathlib/Tactic.lean` (`det`, `det%`, `hex_norm_det`) | shipped (https://github.com/kim-em/hex-dev/pull/10224); see [The determinant certificate](#the-determinant-certificate) |
 | `char_poly` | `A.charpoly = p` | `hex-char-poly`: the Berkowitz certificate, in kernel form | `hex-char-poly-mathlib` | frontend exists in `HexCharPoly`/`HexCharPolyMathlib`; kernel form and measurement to do: https://github.com/kim-em/hex-dev/issues/10212 |
 | `rank`, symbolic entries | `A.rank = r` (conditional), `A.rank ≤ r`, generic rank of the reified matrix | `hex-generic-rank`: hex-rank's certificate at `MvPoly` | `hex-generic-rank-mathlib`: a second handler on the `rank` syntax kind; `checkRank_sound_at` | specified: [hex-generic-rank-mathlib](Libraries/hex-generic-rank-mathlib.md) |
 | `rank_locus` | `A.rank < r ↔ ⋀ gᵢ = 0` as a hypothesis; `A.rank < r`, `A.rank ≤ r`, `r ≤ A.rank`, `A.rank = r` | `hex-determinantal-ideal`: `detIdealGens`, and its list form `detIdealGensList` | `hex-determinantal-ideal-mathlib`: `gens_vanish_iff_rank_lt`, `HexDeterminantalIdealMathlib/Tactic.lean`; default `r` from a hex-generic-rank-mathlib handler | specified: [hex-determinantal-ideal-mathlib §The `rank_locus` tactic](../HexDeterminantalIdealMathlib/SPEC/hex-determinantal-ideal-mathlib.md#the-rank_locus-tactic) |
-| literal layer | reading `!![…]`, `Matrix.of ![…]`, `fun i j => …`, `Matrix.ofArray xs h` | none | `hex-matrix-mathlib`: `ofLists`, `vecOfList`, literal recognition, definitional identification | currently inside `hex-rank-mathlib`; to move down: https://github.com/kim-em/hex-dev/issues/10213 |
+| literal layer | reading `!![…]`, `Matrix.of ![…]`, `fun i j => …`, `Matrix.ofArray xs h` | none | `hex-matrix-mathlib`: `ofLists`, `vecOfList`, `entriesEq`, literal recognition, definitional identification (`HexMatrixMathlib/Literal.lean`) | shipped (https://github.com/kim-em/hex-dev/pull/10218) |
 
 Rules that follow from the table:
 
@@ -111,38 +111,41 @@ reference certificate (`rankWitness` from `rankCert`).
 For `A : Matrix (Fin n) (Fin n) ℤ` given as a row list, the kernel
 certificate of `det A = d` is the list form of a fraction-free
 triangularization, the same data Mathlib's `Echelon.Decomposition` carries
-but checked as lists:
+but checked as lists (`Hex.Matrix.DetWitness`, `checkDetList`):
 
-- a row arrangement `σ` (the swaps of the pivot search, as a list of pairs,
-  or the row order as a list), with `sign σ` computed by the kernel from the
-  list;
+- the row swaps of the pivot search, in application order; the kernel
+  arranges the rows itself and reads `sign σ` off the number of swaps;
 - a lower-triangular integer transform `L` given row by row with its
-  leading entries only, and its diagonal `l₀, …, lₙ₋₁`, all nonzero;
-- the diagonal `u₀, …, uₙ₋₁` of the upper-triangular product, with the
-  check that every entry of `L · (σ A)` below the diagonal is `0` and the
-  diagonal is `u`;
-- the value `d` with `(∏ lᵢ) · d = sign σ · ∏ uᵢ` checked over `Int`.
+  `i + 1` leading entries, so its diagonal `l₀, …, lₙ₋₁` is the last entry
+  of each row, all nonzero;
+- the value `d`.
 
-Soundness in `hex-bareiss-mathlib`: `det L · det (σ A) = det U`, the
-determinant of a triangular matrix is the product of its diagonal
-(`det_of_isLowerTriangular` and its upper form, as `rank_eq_of_checkList`
-already uses), `det (σ A) = sign σ · det A`, and cancellation of the
-nonzero `∏ lᵢ` in `ℤ`. The producer is the row-pivoted fraction-free
-elimination of `hex-bareiss` extended to retain its transform, for which
-`L` has diagonal `1, d₁, …, dₙ₋₁` (the leading principal minors) and
-`U` has diagonal `d₁, …, dₙ`, so `d = dₙ` and the cost of the check is
-about `n³ / 6` products of minor-sized integers, the shape that `eval_rank`
-pays in `Matrix.of` form and `checkRankList` avoided. A singular matrix is
-certified separately and more cheaply by a nonzero integer vector `v` with
-`A ·ᵥ v = 0` checked as `n²` products (`exists_mulVec_eq_zero_iff`, or
-directly `det_eq_zero_of_mulVec_eq_zero_of_mem_nonZeroDivisors`). Over `ℚ`
-the rows are scaled to integers and the scaling factor is checked in the
-kernel, as the rank SPEC plans for its rational follow-up.
+The check takes, for every row `i` of `L`, its products with the columns
+`0, …, i` of `σA`: the first `i` vanish and the last is the diagonal entry
+`uᵢ` of the upper-triangular product `U = L · σA`, so the diagonal of `U`
+is computed rather than carried; then `(∏ lᵢ) · d = sign σ · ∏ uᵢ` is
+checked over `Int`. Soundness in `hex-bareiss-mathlib`:
+`det L · det (σA) = det U`, the determinant of a triangular matrix is the
+product of its diagonal (`det_of_isLowerTriangular` and its upper form, as
+`rank_eq_of_checkList` already uses), `det (σA) = sign σ · det A` by
+induction over the swaps (`det_permute`, `sign_swap`), and cancellation of
+the nonzero `∏ lᵢ` in `ℤ`. The producer is the row-pivoted fraction-free
+elimination of `hex-bareiss` run on `[A | I]` to retain its transform, for
+which `L` has diagonal `1, d₁, …, dₙ₋₁` (the leading principal minors) and
+`U` has diagonal `d₁, …, dₙ`, so `d = sign σ · dₙ` and the cost of the
+check is about `n³ / 3` products of minor-sized integers, the shape that
+`eval_rank` pays in `Matrix.of` form and `checkRankList` avoided. A
+singular matrix is certified separately and more cheaply by a nonzero
+integer row vector `v` with `v · A = 0` checked as `n²` products
+(`exists_vecMul_eq_zero_iff`); the elimination in echelon form yields it as
+the last row of the transform. Over `ℚ` the rows are scaled to integers and
+the scaling factors are checked in the kernel (`checkDetRat`,
+`det_eq_of_checkRat`), as the rank SPEC plans for its rational follow-up.
 
-This is a design to be measured, not a promise: the requirement is the bar
-below, and if the triangular form does not clear it, the multimodular
+Measured, this form clears the bar on every shared family by an order of
+magnitude or more ([Measured record](#measured-record)); the multimodular
 route of `hex-det` (triangularizations modulo several small primes plus
-`Matrix.det_le` as the size bound) is the next candidate.
+`Matrix.det_le` as the size bound) is not needed.
 
 ## The bar against Mathlib
 
@@ -198,6 +201,12 @@ they exist.
 | same | dense `12 × 12` | 6.6 s (+6.7 s) | `eval_det` 1.5 s | rejected |
 | same | dense `16 × 16` | 30.6 s (+28.9 s) | `eval_det` 5.3 s | rejected |
 | `det` by Leibniz replay of `Hex.Matrix.det` | dense `6 × 6` | 6.3 s | | rejected beyond `5 × 5` |
+| `det` by `checkDetList` (shipped) | dense `8 × 8`, 8-bit | 23 ms | `eval_det` 246 ms | 10.7x; fresh-module 3.3x |
+| same | dense `12 × 12` | 63 ms | `eval_det` 1.48 s | 23x; fresh-module 11.7x |
+| same | dense `16 × 16` | 163 ms | `eval_det` 6.9 s (one profiled run, over the size sweep's cap) | 42x; fresh-module 36x |
+| same | dense `32 × 32` | 1.55 s | `eval_det` over 300 s | fresh-module 3.7 s with no `eval_det` arm |
+| `det` by a left kernel vector (shipped) | singular `16 × 16` | 58 ms | `eval_det` 6.7 s (one profiled run) | 116x; fresh-module 59x |
+| `det` by `checkDetRat` (shipped) | rational `8 × 8` | 39 ms | `eval_det` 351 ms (one profiled run) | 9x; fresh-module 3.5x |
 
 Reading the literal's entries by kernel evaluation of `A i j` costs about
 200 ms at `16 × 16`, more than the shipped rank check; the definitional
