@@ -32,19 +32,21 @@ The witness names pivot rows `rows` (elimination order) and pivot columns
   `B * V ≡ L (mod modulus)` for the pivot block `B` and some lower triangular
   `L` with unit diagonal.  Then `det B · det V ≡ 1`, so `det B` is nonzero
   over `Int`.  The kernel computes only the diagonal and the entries above
-  it, about `rank³ / 2` small multiplications; a column may be truncated to
-  its leading entries, the missing ones being zero, so a triangular `V` costs
-  `rank³ / 3`.  Primality of the modulus plays no role.
+  it.  Column `j` of the producer's upper-triangular `V` has `j + 1`
+  entries, so the check costs about `rank³ / 3` small multiplications.
+  Primality of the modulus plays no role.
 * an upper bound over `Int`: for every non-pivot row `i`, in increasing
   order, coefficients `z` with `denom • A_i = Σ z_l • A_{rows l}`, so every
   row of `denom • A` lies in the span of the pivot rows.  This costs
   `(n - rank) · rank · m` integer multiplications and nothing at full rank.
 
-The producer derives everything from `rankCert`: `z` from the adjugate
-(identity 3 restricted to a row) and `V` as the adjugate scaled by the
-inverse of `denom` modulo `modulus`, so that `B * V ≡ 1`.  It re-checks its
-own output before returning it.  The two halves are independent: nothing
-relates `denom` to the modular data, and each bound is sound on its own.
+The producer derives `z` from the full pivot-block adjugate (identity 3
+restricted to a row).  Column `j` of `V` is the last column of the adjugate
+of the leading `(j + 1) × (j + 1)` pivot block, scaled by the inverse of that
+block's determinant modulo `modulus`.  Thus `V` is upper triangular and
+`B * V` is lower triangular with unit diagonal.  It re-checks its own output
+before returning it.  The two halves are independent: nothing relates
+`denom` to the modular data, and each bound is sound on its own.
 
 The soundness theorem `rank_eq_of_checkList` (`Matrix.rank` of the Mathlib
 matrix equals `rank`) is in `HexRankMathlib`.
@@ -204,7 +206,8 @@ variable {n m : Nat}
 def toLists (A : Matrix Int n m) : List (List Int) := A.rows.toList.map (·.toList)
 
 /-- The moduli tried in order, Mersenne primes.  Primality is irrelevant
-to soundness; it only makes `denom` a unit on the first try. -/
+to soundness; it makes the leading pivot-block determinants likely to be
+units on the first try. -/
 def witnessModuli : List Nat := [2147483647, 2305843009213693951, 618970019642690137449562111]
 
 /-- The inverse of `u` modulo `M`, when `u` is a unit. -/
@@ -213,19 +216,32 @@ def invMod? (u M : Nat) : Option Nat :=
   if g = 1 then some (Int.emod s (Int.ofNat M)).toNat else none
 
 open RankWitness in
-/-- The witness for a fixed modulus, or the reason there is none: `denom` is
-not a unit modulo `M`, or the self-check fails (a producer bug). -/
+/-- The witness reuses the first reduction for the full certificate, keeping
+the full pivot-block adjugate for the upper bound and one truncated inverse
+column from each leading pivot block for the lower bound. -/
 def rankWitnessWith (M : Nat) (A : Matrix Int n m) : Except String RankWitness := do
-  let c := rankCert A
+  let D := rowReduceFF A
+  let c := rankCertOf HexArith.Int.exactDiv A D
   let r := c.rank
-  let some dinv := invMod? (residue M c.denom) M |
-    throw s!"the denominator {c.denom} is not a unit modulo {M}"
   let rowsL := c.rows.toList.map (·.val)
   let colsL := c.cols.toList.map (·.val)
   let Al := toLists A
-  -- `V = denom⁻¹ • adj`, so `B * V ≡ 1`; column `j` lists `V[0..r-1, j]`.
-  let vt := (List.finRange r).map fun j => (List.finRange r).map fun i =>
-    Nat.mod (Nat.mul (residue M c.adj[(i, j)]) dinv) M
+  let B := selectedSubmatrix A c.rows c.cols
+  let vt ← (List.finRange r).mapM fun j => do
+    let k := j.val + 1
+    if h : k = r then
+      let some dinv := invMod? (residue M c.denom) M |
+        throw s!"the leading determinant {c.denom} of order {k} is not a unit modulo {M}"
+      pure <| (List.finRange k).map fun i =>
+        Nat.mod (Nat.mul (residue M c.adj[(Fin.cast h i, j)]) dinv) M
+    else
+      let Bk : Matrix Int k k := ofFn fun i l =>
+        B[((⟨i.val, by omega⟩ : Fin r), (⟨l.val, by omega⟩ : Fin r))]
+      let Dk := rowReduceFF (augmentIdentity Bk)
+      let some dinv := invMod? (residue M Dk.denom) M |
+        throw s!"the leading determinant {Dk.denom} of order {k} is not a unit modulo {M}"
+      pure <| (List.finRange k).map fun i =>
+        Nat.mod (Nat.mul (residue M (adjugateOf Dk)[(i, Fin.last j.val)]) dinv) M
   let nonPivot := (List.finRange n).filter fun i => !(memNat i.val rowsL)
   let z := nonPivot.map fun i => (List.finRange r).map fun l =>
     (List.finRange r).foldl (fun acc k => acc + A[(i, c.cols[k])] * c.adj[(k, l)]) 0

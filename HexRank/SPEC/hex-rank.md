@@ -750,10 +750,11 @@ certificate takes `0.12 s`, `0.37 s` and `0.86 s`.
 
 `HexRank/Kernel.lean` therefore carries a second certificate form for
 `Int`, `RankWitness`, with a checker `checkRankList` written for the kernel
-and a producer `rankWitness` derived from `rankCert`. The two forms
-certify the same thing from the same data (pivot rows and columns, `det B`,
-`adj B`); the witness only reshapes it into what the kernel reduces
-cheaply. Nothing in this section changes `RankCert` or `checkRank`.
+and a producer `rankWitness`. The two forms use the same pivot rows and
+columns and the same full-block adjugate for the upper bound. The kernel
+witness additionally uses the leading pivot blocks to make its modular
+transform triangular. Nothing in this section changes `RankCert` or
+`checkRank`.
 
 **Data.** All fields are lists of `Nat` or `Int`, so the kernel meets only
 structural recursion and GMP-backed `Nat` arithmetic:
@@ -779,11 +780,12 @@ structure RankWitness where
    product `B_i ⬝ vt_j` is `1` modulo `modulus` for `j = i` and `0` for
    `j > i`. So `B · V ≡ L` with `L` lower triangular with unit diagonal,
    `det B · det V ≡ 1`, and `det B ≠ 0` over `Int`: `rank ≤ Matrix.rank`.
-   A column may be shorter than `rank`; the missing entries are zero, so a
-   triangular `V` costs `rank³ / 3` and the producer's full `V` costs
-   `rank³ / 2` small multiplications. Nothing below the diagonal is
-   computed. Primality of the modulus plays no role: the diagonal test is
-   `≡ 1`, and any `modulus ≥ 2` makes `ZMod modulus` nontrivial;
+   A column may be shorter than `rank`; the missing entries are zero. The
+   producer emits an upper-triangular `V`, with column `j` of length `j + 1`,
+   so the check costs `rank³ / 3` small multiplications. Nothing below the
+   diagonal is computed. Primality of the modulus plays no role: the
+   diagonal test is `≡ 1`, and any `modulus ≥ 2` makes `ZMod modulus`
+   nontrivial;
 3. the upper bound, over `Int`: walking the rows of `A` in order, a pivot
    row is skipped and the `k`-th non-pivot row `a` consumes `z_k` and must
    satisfy `denom • a = Σ_l z_{k,l} • A_{rows l}` as lists. So every row of
@@ -795,10 +797,16 @@ structure RankWitness where
 
 The two halves are independent: nothing relates `denom` to the modular
 data, and each bound is sound on its own, as `RankCert`'s docstring says
-of its fields. The producer chooses `V = denom⁻¹ · adj B mod modulus`, so
-`B · V ≡ 1`, and `z_k = A_i[cols] · adj B` from identity 3; it re-checks
-its own output and moves to the next modulus of `witnessModuli` if
-`denom` is not a unit modulo the current one.
+of its fields. Let `B_j` be the leading `(j + 1) × (j + 1)` block of `B`.
+The producer takes column `j` of `V` to be the last column of
+`det(B_j)⁻¹ · adj B_j mod modulus`, extended by zeros. Hence its first
+`j + 1` entries solve `B_j · v_j = e_j`, so `B · V` is lower triangular
+with unit diagonal. It obtains every adjugate by running `rowReduceWith`
+on `augmentIdentity B_j`, reusing the full-block result that `rankCertOf`
+already needs for the upper-bound coefficients
+`z_k = A_i[cols] · adj B`. It re-checks its own output and moves to the
+next modulus of `witnessModuli` if any `det B_j` is not a unit modulo the
+current one.
 
 **Kernel discipline** (design principle 11, made concrete): every
 definition on the path is `@[expose]`; the arithmetic is `Nat.mul`,
@@ -811,21 +819,22 @@ appears on the path. `List.ofFn`, `zipWith`, `take`,
 `getD`, `replicate`, `range`, `filter`, `map` and `Int.emod` all reduce
 across a module boundary and may be used freely.
 
-**Cost.** `rank³ / 2` multiplications of numbers below the modulus,
+**Cost.** `rank³ / 3` multiplications of numbers below the modulus,
 `rank²` reductions of block entries to residues, plus
 `(n − rank) · (rank + 1) · m` integer multiplications for the non-pivot
 rows (`scaleRow` and the combination), against `checkRank`'s
 `n · rank · m + rank² · m + rank³ + n · m` products of minor-sized
 integers, and against the `n³ / 3` minor-by-entry products of Mathlib's
-`Echelon.Decomposition` check. With the companion's `rank` tactic on the
-same literals as above, the kernel takes `115 ms` at `n = 16` (`eval_rank`
-`864 ms`), `1.1 s` at `n = 32` (`6.8 s`), and `116 ms` on a `32 × 32`
-matrix of rank `2` (`7.3 s`); the same host, one run each, the tactic's
-proof probes under `bench/HexRankMathlib/ProofProbe` being the
-reproducible form. About half of the `115 ms` is the reduction of the
-`16 × 16` pivot block's entries to residues and the rest the `r³ / 2`
-products; the gap to a hand-written prototype (`55 ms` at `n = 16` with a
-triangular `V`) is an open question below.
+`Echelon.Decomposition` check. Two six-sample shared-host sweeps of the
+fresh-module proof probes under `bench/HexRankMathlib/ProofProbe`, before
+and after adopting the triangular transform, reported signed `rank`
+overheads over the paired import baseline of `95 → 95 ms` at `n = 8`,
+`365 → 316 ms` at `n = 16` and `2440 → 2095 ms` at `n = 32`. Both sweeps
+used the fixed trial-major schedule with alternating `AB`/`BA` order,
+passed their fresh-module budgets and were release-quality measurements.
+The reduction of pivot-block entries to residues and the list traversal
+are independent of the triangular transform and remain separate profiling
+targets.
 
 **Soundness** is the companion's `rank_eq_of_checkList`
 ([hex-rank-mathlib §Kernel certificate](../../HexRankMathlib/SPEC/hex-rank-mathlib.md#kernel-certificate)),
@@ -966,8 +975,8 @@ rank:
 | `rankCertWith` | `rowReduceWith` plus `O(r³)` | plus `O(r³)` | the second pass on `[B \| identity r]` |
 | `checkRank` | `n · r · m + r² · m + r³ + n · m` | none | one product dominates; no determinant |
 | `rankWith`, `rankProfileWith` | as `rowReduceWith` | | |
-| `checkRankList` | `r³ / 2` modulo `modulus`, plus `(n − r) · r · m` over `Int` | none | the kernel form; nothing at full rank for the second term |
-| `rankWitness` | `rankCertWith` plus `O((n − r) · r²)` | plus one modular inverse | |
+| `checkRankList` | `r³ / 3` modulo `modulus`, plus `(n − r) · r · m` over `Int` | none | the kernel form; nothing at full rank for the second term |
+| `rankWitness` | `rankCertWith` plus `O(r⁴ + (n − r) · r²)` | plus `r` modular inverses | one augmented reduction per leading pivot block, reusing the full block |
 
 **Growth.** The invariant says every stored entry is a minor of `A` (a
 bordered `(k + 1) × (k + 1)` minor in a non-pivot row, a `k × k` minor with
@@ -1294,14 +1303,6 @@ bench/HexRank/Bench.lean
   consumer that wants `det` of the sorted block must compute the sign.
   Adding a `sortedSign` field is cheap for the producer and not needed by
   any consumer named here.
-- **A triangular `V` for the kernel certificate.** Column `j` of the last
-  column of the adjugate of the leading `(j + 1)`-block of `B` (whose
-  leading principal minors are the pivots, so nonzero) makes `B · V` lower
-  triangular with `rank³ / 3` products checked instead of `rank³ / 2`; a
-  prototype measured `55 ms` against `77 ms` at `n = 16`. It costs the
-  producer `r` block adjugates and needs every leading principal minor to
-  be a unit modulo the modulus. Measure on `dense-full-rank` before adding
-  it; the checker already accepts truncated columns.
 - **The crossover with `hnfRank` and with the multi-modular route over
   `Int`.** Both are expected to win at large size; the benchmark decides
   the size, and this SPEC does not guess it.
