@@ -14,6 +14,7 @@ public import HexMvPoly.Eval
 public import HexMvPoly.Structural
 public import HexMvPoly.Recursive
 public import HexMvPoly.Ring
+public import HexMvPoly.Kernel
 
 public section
 

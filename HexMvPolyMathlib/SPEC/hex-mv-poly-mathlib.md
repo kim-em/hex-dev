@@ -46,6 +46,25 @@ theorem coeff_toMvPolynomial [CommSemiring R] [DecidableEq R]
 Its inverse builds the canonical sparse form, so the two round trips are
 propositional equalities rather than quotient-level equivalences.
 
+## Kernel term-list denotation
+
+`HexMvPolyMathlib.Kernel.denote` composes the Mathlib-free canonical-list
+denotation with `equiv`:
+
+```lean
+noncomputable def Kernel.denote (p : Hex.MvPoly.Kernel.PolyList R) :
+    MvPolynomial (Fin n) R :=
+  equiv (Hex.MvPoly.Kernel.denote p)
+```
+
+It preserves list addition, multiplication, negation, and scalar
+multiplication by a constant. Consequently the canonical zero and equality
+theorems proved in `hex-mv-poly` transport to the exact `MvPolynomial`
+statements used by symbolic `rank`, `det`, and `rank_locus` consumers. The
+bridge is semantic only: no Mathlib value occurs in the closed Boolean
+certificate check, and matrix entries are related to nested term lists by
+mapping this denotation after replay.
+
 ## Evaluation
 
 `aeval` uses the executable core evaluator and agrees with Mathlib:
