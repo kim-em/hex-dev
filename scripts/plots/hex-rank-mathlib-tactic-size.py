@@ -51,8 +51,9 @@ def newest_record() -> Path:
 def render(record: dict, out: Path) -> None:
     fig, axes = plt.subplots(2, 2, figsize=(9, 7), sharex=False, sharey=True)
     samples = record.get("samples_per_point", 1)
-    fig.suptitle("Proof time (literal elaboration, certificate, kernel check) against dimension; "
-                 f"{record['host']} at {record['commit']}, median of {samples}, range as bars")
+    fig.suptitle("Proof time (literal elaboration, certificate, kernel check) against dimension\n"
+                 f"{record['host']} at {record['commit']}, median of {samples} runs, range as bars",
+                 fontsize=11)
     for ax, family in zip(axes.flat, FAMILY_ORDER):
         for tool, style in STYLE.items():
             pts = sorted((p for p in record["points"]
@@ -75,7 +76,7 @@ def render(record: dict, out: Path) -> None:
     for ax in axes[:, 0]:
         ax.set_ylabel("proof time (s)")
     axes[0, 0].legend(loc="upper left")
-    fig.tight_layout(rect=(0, 0, 1, 0.96))
+    fig.tight_layout(rect=(0, 0, 1, 0.94))
     out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out, format="svg", metadata={"Date": None, "Creator": None})
     plt.close(fig)
