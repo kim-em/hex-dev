@@ -382,6 +382,21 @@ lean_lib HexRankMathlib where
 lean_lib HexRankTests where
   globs := #[`HexRankMathlib.Tests]
 
+lean_lib HexRankMathlibProofProbe where
+  srcDir := "bench"
+  globs := #[`HexRankMathlib.ProofProbe.Baseline,
+    `HexRankMathlib.ProofProbe.MathlibBaseline,
+    `HexRankMathlib.ProofProbe.Dense8Hex,
+    `HexRankMathlib.ProofProbe.Dense8Mathlib,
+    `HexRankMathlib.ProofProbe.Dense16Hex,
+    `HexRankMathlib.ProofProbe.Dense16Mathlib,
+    `HexRankMathlib.ProofProbe.Deficient16Hex,
+    `HexRankMathlib.ProofProbe.Deficient16Mathlib,
+    `HexRankMathlib.ProofProbe.Dense32Hex,
+    `HexRankMathlib.ProofProbe.Dense32Mathlib,
+    `HexRankMathlib.ProofProbe.LowRank32Hex,
+    `HexRankMathlib.ProofProbe.LowRank32Mathlib]
+
 @[default_target]
 lean_lib HexGramSchmidtMathlib where
 

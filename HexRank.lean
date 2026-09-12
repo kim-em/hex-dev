@@ -12,3 +12,4 @@ public import HexRank.Reduce
 public import HexRank.ReduceImpl
 public import HexRank.Produce
 public import HexRank.Int
+public import HexRank.Kernel

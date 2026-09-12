@@ -64,7 +64,14 @@ open HexMatrixMathlib
   are, as a set, the row rank profile (`IsColRankProfile`,
   `IsRowRankProfile`);
 - a `Decidable (A.rank = r)` instance for integer matrices, run by the
-  producer.
+  producer;
+- `rank_eq_of_checkList`: soundness of hex-rank's kernel certificate for
+  `Matrix.rank` of an integer matrix given as a row list, with `ofLists`
+  identifying a `!![…]` literal with its row list definitionally;
+- the `rank` tactic: `A.rank = r`, `A.rank ≤ r` and `r ≤ A.rank` for a
+  closed integer literal `A`, by the compiled producer and one kernel check
+  of the certificate; 6 to 60 times less kernel time than Mathlib's
+  `eval_rank` on 8 × 8 to 32 × 32 literals.
 
 # Verification
 

@@ -95,14 +95,19 @@ production library, see [Placement](#placement).
 
 In scope: the certificate and its checker, the soundness and completeness
 statements, the rectangular fraction-free producer, the rank profile, the
-`Int` specialisation, and the carrier instantiations named below.
+`Int` specialisation, the carrier instantiations named below, and the
+kernel form of the integer certificate ([The kernel
+certificate](#the-kernel-certificate)), which the companion's `rank`
+tactic checks.
 
 Not in scope: a rational or integer kernel basis (hex-modular-matrix and
 hex-hermite), the rank of a specialised polynomial matrix at a point and
 the rank-drop locus (hex-determinantal-ideal), a modular or multi-modular
-rank over `Int` (hex-modular-matrix, which will produce this library's
-certificate by a faster route), and any tactic frontend
-(hex-matrix-tactic).
+rank over `Int` as a *producer* (hex-modular-matrix, which will produce
+this library's certificate by a faster route), and tactic frontends on
+Hex inputs (hex-matrix-tactic). The tactic on Mathlib inputs lives with
+the soundness theorem it uses, in the companion: a tactic belongs to the
+library whose algorithm it runs.
 
 The namespace is `Hex.Matrix`, beside `det`, `bareissWith` and
 `rowReduce`.
@@ -725,6 +730,114 @@ route through it, so no fallback value is ever chosen. A caller that
 wants both the profile and the certificate calls `rankCertWith` once: the
 certificate's `rows`, `cols` *are* the profile.
 
+## The kernel certificate
+
+`checkRank` is the reference checker: it states the two identities as
+matrix equations over the carrier, which is the form the soundness proofs
+and compiled re-checking want. It is not the form the kernel wants. Every
+entry access through the flat buffer is a list traversal, every `ofFn`
+matrix (`selectRows`, `selectCols`, `scale`, `identity`, the `row` and
+`col` of `mul`) is rebuilt at each access, the equality tests go through
+the buffer's `List` equality, and the two identities do about `3 n³`
+multiplications at full rank against the `n³ / 3` of a triangular check.
+Measured on random full-rank `n × n` integer matrices with entries in
+`[-9, 9]` (one run each, shared host, kernel "type checking" time of
+`decide +kernel`): `checkRank` on a precomputed `RankCert` takes `6.9 s`,
+`53 s` and `371 s` at `n = 8, 12, 16`, and `decide +kernel` through the
+producer itself takes `0.7 s`, `6 s` and `27 s`; Mathlib's `eval_rank`
+certificate takes `0.12 s`, `0.37 s` and `0.86 s`.
+
+`HexRank/Kernel.lean` therefore carries a second certificate form for
+`Int`, `RankWitness`, with a checker `checkRankList` written for the kernel
+and a producer `rankWitness` derived from `rankCert`. The two forms
+certify the same thing from the same data (pivot rows and columns, `det B`,
+`adj B`); the witness only reshapes it into what the kernel reduces
+cheaply. Nothing in this section changes `RankCert` or `checkRank`.
+
+**Data.** All fields are lists of `Nat` or `Int`, so the kernel meets only
+structural recursion and GMP-backed `Nat` arithmetic:
+
+```lean
+structure RankWitness where
+  rank : Nat
+  modulus : Nat            -- any value ≥ 2 is sound
+  rows : List Nat          -- pivot rows, elimination order
+  cols : List Nat          -- pivot columns, increasing
+  vt : List (List Nat)     -- column j of V, its leading entries mod modulus
+  denom : Int              -- nonzero; det B for the producer
+  z : List (List Int)      -- one row of coefficients per non-pivot row
+```
+
+**Checks.** `checkRankList n m A c` on the row list `A` of the matrix:
+
+1. shapes and ranges: `A` has `n` rows of length `m`, `rows` and `cols`
+   have length `rank`, their entries are below `n` and `m`, `denom ≠ 0`,
+   `modulus ≥ 2`;
+2. the lower bound, modulo `modulus`: with `B` the pivot block reduced to
+   residues, for every row `i` and every column `j ≥ i` of `vt`, the
+   product `B_i ⬝ vt_j` is `1` modulo `modulus` for `j = i` and `0` for
+   `j > i`. So `B · V ≡ L` with `L` lower triangular with unit diagonal,
+   `det B · det V ≡ 1`, and `det B ≠ 0` over `Int`: `rank ≤ Matrix.rank`.
+   A column may be shorter than `rank`; the missing entries are zero, so a
+   triangular `V` costs `rank³ / 3` and the producer's full `V` costs
+   `rank³ / 2` small multiplications. Nothing below the diagonal is
+   computed. Primality of the modulus plays no role: the diagonal test is
+   `≡ 1`, and any `modulus ≥ 2` makes `ZMod modulus` nontrivial;
+3. the upper bound, over `Int`: walking the rows of `A` in order, a pivot
+   row is skipped and the `k`-th non-pivot row `a` consumes `z_k` and must
+   satisfy `denom • a = Σ_l z_{k,l} • A_{rows l}` as lists. So every row of
+   `denom • A` lies in the span of the pivot rows, `denom • A = W · P` for
+   the `n × rank` matrix `W` whose pivot rows are `denom • e_k`, and
+   `Matrix.rank ≤ rank`. This costs `(n − rank) · rank · m` integer
+   multiplications and nothing at full rank. It cannot be taken modulo
+   anything: reduction can only lower the rank.
+
+The two halves are independent: nothing relates `denom` to the modular
+data, and each bound is sound on its own, as `RankCert`'s docstring says
+of its fields. The producer chooses `V = denom⁻¹ · adj B mod modulus`, so
+`B · V ≡ 1`, and `z_k = A_i[cols] · adj B` from identity 3; it re-checks
+its own output and moves to the next modulus of `witnessModuli` if
+`denom` is not a unit modulo the current one.
+
+**Kernel discipline** (design principle 11, made concrete): every
+definition on the path is `@[expose]`; the arithmetic is `Nat.mul`,
+`Nat.add`, `Nat.mod`, `Int.mul`, `Int.add` called directly; comparisons
+are `Nat.beq` and `Nat.blt`, and integer equality `decide (a = b)`, a
+fixed-cost `Int.decEq`; loops are structural recursion on the lists, and
+entries are read by structural recursion (`nthRow`, `nthInt`); no
+`Array`, `Vector`, `Fin`, `Finset`, `dite` or well-founded recursion
+appears on the path. `List.ofFn`, `zipWith`, `take`,
+`getD`, `replicate`, `range`, `filter`, `map` and `Int.emod` all reduce
+across a module boundary and may be used freely.
+
+**Cost.** `rank³ / 2` multiplications of numbers below the modulus,
+`rank²` reductions of block entries to residues, plus
+`(n − rank) · (rank + 1) · m` integer multiplications for the non-pivot
+rows (`scaleRow` and the combination), against `checkRank`'s
+`n · rank · m + rank² · m + rank³ + n · m` products of minor-sized
+integers, and against the `n³ / 3` minor-by-entry products of Mathlib's
+`Echelon.Decomposition` check. With the companion's `rank` tactic on the
+same literals as above, the kernel takes `115 ms` at `n = 16` (`eval_rank`
+`864 ms`), `1.1 s` at `n = 32` (`6.8 s`), and `116 ms` on a `32 × 32`
+matrix of rank `2` (`7.3 s`); the same host, one run each, the tactic's
+proof probes under `bench/HexRankMathlib/ProofProbe` being the
+reproducible form. About half of the `115 ms` is the reduction of the
+`16 × 16` pivot block's entries to residues and the rest the `r³ / 2`
+products; the gap to a hand-written prototype (`55 ms` at `n = 16` with a
+triangular `V`) is an open question below.
+
+**Soundness** is the companion's `rank_eq_of_checkList`
+([hex-rank-mathlib §Kernel certificate](../../HexRankMathlib/SPEC/hex-rank-mathlib.md#kernel-certificate)),
+stated on Mathlib's `Matrix (Fin n) (Fin m) ℤ` directly, since the only
+consumer is a Mathlib goal. Mathlib-free, `checkRankList` is exercised in
+the conformance target: the producer's witness on the `3 × 4` example is
+replayed by `decide +kernel`, and witnesses with `denom := 0`, a wrong
+rank, a repeated row index, a column index out of range, a ragged
+matrix, a changed `vt` entry and a changed `z` entry are refuted by
+`decide +kernel`; a witness modulo the composite `9`, columns of `vt`
+extended past the block width, and a `z` row shorter or longer than the
+rank are accepted.
+
 ## Carriers
 
 The producer is one function. Each carrier supplies its quotient and its
@@ -853,6 +966,8 @@ rank:
 | `rankCertWith` | `rowReduceWith` plus `O(r³)` | plus `O(r³)` | the second pass on `[B \| identity r]` |
 | `checkRank` | `n · r · m + r² · m + r³ + n · m` | none | one product dominates; no determinant |
 | `rankWith`, `rankProfileWith` | as `rowReduceWith` | | |
+| `checkRankList` | `r³ / 2` modulo `modulus`, plus `(n − r) · r · m` over `Int` | none | the kernel form; nothing at full rank for the second term |
+| `rankWitness` | `rankCertWith` plus `O((n − r) · r²)` | plus one modular inverse | |
 
 **Growth.** The invariant says every stored entry is a minor of `A` (a
 bordered `(k + 1) × (k + 1)` minor in a non-pivot row, a `k × k` minor with
@@ -1095,6 +1210,7 @@ HexRank/
   Reduce.lean      RankProfile, ReducedForm, rowReduceWith, rowReduceWithImpl, loop-step lemmas
   Produce.lean     rankProfileWith, rankCertWith, certifyRankWith, rankWith
   Int.lean         rowReduceFF, rankProfile, rankCert, certifyRank, rank
+  Kernel.lean      RankWitness, checkRankList, rankWitness, the kernel primitives
   SPEC/hex-rank.md
   README.md
 conformance/HexRank/{Conformance,EmitFixtures}.lean
@@ -1157,6 +1273,9 @@ bench/HexRank/Bench.lean
 5. **Carriers and benchmarks.** The polynomial instantiations in the
    conformance and bench modules, the families above, and the headline
    report.
+6. **The kernel certificate and the tactic.** `RankWitness`,
+   `checkRankList`, `rankWitness`, the companion's `rank_eq_of_checkList`
+   and `rank` tactic, and the fresh-module probes against `eval_rank`.
 
 ## Open questions
 
@@ -1175,6 +1294,14 @@ bench/HexRank/Bench.lean
   consumer that wants `det` of the sorted block must compute the sign.
   Adding a `sortedSign` field is cheap for the producer and not needed by
   any consumer named here.
+- **A triangular `V` for the kernel certificate.** Column `j` of the last
+  column of the adjugate of the leading `(j + 1)`-block of `B` (whose
+  leading principal minors are the pivots, so nonzero) makes `B · V` lower
+  triangular with `rank³ / 3` products checked instead of `rank³ / 2`; a
+  prototype measured `55 ms` against `77 ms` at `n = 16`. It costs the
+  producer `r` block adjugates and needs every leading principal minor to
+  be a unit modulo the modulus. Measure on `dense-full-rank` before adding
+  it; the checker already accepts truncated columns.
 - **The crossover with `hnfRank` and with the multi-modular route over
   `Int`.** Both are expected to win at large size; the benchmark decides
   the size, and this SPEC does not guess it.
