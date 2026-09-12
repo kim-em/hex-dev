@@ -967,7 +967,8 @@ lean_exe hex_interval_pnt_fks2_local where
 -- examples and regression tests are compiled through this separate target so
 -- removing them from an umbrella cannot silently remove them from CI.
 lean_lib HexReleaseTests where
-  globs := #[`HexBerlekamp.FactorTacticTests,
+  globs := #[`HexMatrixMathlib.Tests,
+    `HexBerlekamp.FactorTacticTests,
     `HexBerlekampMathlib.FactorPolyTests,
     `HexBerlekampZassenhaus.FactorTacticTests,
     `HexBerlekampZassenhausMathlib.FactorPolyTests,
@@ -999,6 +1000,9 @@ lean_lib HexReleaseTests where
     `HexRCF.DecisionTests,
     `HexRCF.ReifyTests,
     `HexRCF.LintTests]
+    -- a name array mapped through Glob.one: an array literal this long is
+    -- elaborated in chunks, on which the name-to-glob coercion fails
+    |>.map Glob.one
 
 -- Verification-only modules for the incubating multivariate factorization
 -- stack. Keep this separate from the released-test target, whose module list

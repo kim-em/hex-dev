@@ -8,8 +8,6 @@ module
 
 public meta import HexRankMathlib.Kernel
 public import HexRankMathlib.Kernel
-public meta import Mathlib.Data.Fin.VecNotation
-public meta import Mathlib.Tactic.Echelon.Rat
 public meta import Lean
 
 public meta section
@@ -17,12 +15,15 @@ public meta section
 /-!
 The `rank` tactic on Mathlib matrices: closes `A.rank = r`, `A.rank ≤ r`,
 `r ≤ A.rank` (and their mirror images) for a closed integer matrix literal
-`A` written as `!![…]` or `Matrix.of ![…]`, possibly behind definitions.
+`A` in one of the four syntaxes of `HexMatrixMathlib.Literal` (`!![…]`,
+`Matrix.of ![…]`, `fun i j => …`, `Matrix.ofArray xs h`), possibly behind
+definitions.
 
 Compiled code evaluates the entries with `norm_num`, runs the rank producer
 and builds a `RankWitness`; the proof is `rank_eq_of_checkList'` applied to
-`rfl` (the literal is definitionally `ofLists n m L` for the row list `L`
-of its entries' numerals) and to one kernel `decide` on `checkRankList`.
+the identification of the literal with the row list `L` of its entries'
+numerals (`rfl` for a vector chain, one kernel `decide` on `entriesEq`
+otherwise) and to one kernel `decide` on `checkRankList`.
 The whole proof is added as an auxiliary theorem, checked synchronously, so
 the kernel checks it exactly once and a rejection is reported by the tactic.
 Entries must be closed integer expressions that `norm_num` evaluates and
@@ -72,68 +73,29 @@ def rankTarget? (target : Expr) : Option (Expr × Expr × Rel × Bool) :=
       else none
   | _ => none
 
-/-- A recognized integer matrix literal: its shape, the entry expressions as
-written, and their values. -/
+/-- A recognized integer matrix literal with its evaluated entries. -/
 structure Literal where
-  /-- Rows. -/
-  n : Nat
-  /-- Columns. -/
-  m : Nat
-  /-- The entry expressions, row-major, as they appear in the literal. -/
-  entries : Array (Array Expr)
+  /-- The recognized literal. -/
+  lit : HexMatrixMathlib.Literal.Recognized
   /-- The evaluated entries. -/
   values : Array (Array Int)
 
-/-- How many definitions are unfolded when looking for a literal. -/
-def unfoldBudget : Nat := 8
-
-/-- Match a closed `Matrix.of ![…]` literal (the `!![…]` notation included):
-its dimensions, entry type, and rows of entries.  Like Mathlib's
-`matchMatrixLit?`, but the dimensions may be any closed expressions that
-evaluate to numerals, as `Matrix.of ![…]` elaborates them as `Nat.succ`
-chains, and every `vecCons` chain must end in `vecEmpty`, so that the
-literal is definitionally the `ofLists` of its entries. -/
-def matchLit? (A : Expr) : MetaM (Option (Nat × Nat × Expr × Array (Array Expr))) := do
-  if A.hasFVar || A.hasMVar then return none
-  let_expr Matrix finM finN R := ← inferType A | return none
-  let_expr Fin mE := ← whnfR finM | return none
-  let_expr Fin nE := ← whnfR finN | return none
-  let some m ← (Meta.evalNat mE).run | return none
-  let some n ← (Meta.evalNat nE).run | return none
-  let_expr DFunLike.coe _ _ _ _ f v := A | return none
-  let_expr Matrix.of _ _ _ := f | return none
-  let (rows, _, tail) ← Matrix.matchVecConsPrefix mE v
-  unless rows.length == m && tail.getAppFn.isConstOf ``Matrix.vecEmpty do return none
-  let entries ← rows.toArray.mapM fun row => do
-    let (es, _, tail) ← Matrix.matchVecConsPrefix nE row
-    unless es.length == n && tail.getAppFn.isConstOf ``Matrix.vecEmpty do failure
-    return es.toArray
-  return some (m, n, R, entries)
-
-/-- Find the literal behind `A`, unfolding definitions within `unfoldBudget`. -/
-partial def matchLiteral? (A : Expr) (budget : Nat := unfoldBudget) :
-    MetaM (Option (Nat × Nat × Expr × Array (Array Expr))) := do
-  if let some r ← matchLit? A then return some r
-  if budget = 0 then return none
-  match ← unfoldDefinition? A with
-  | some A' => matchLiteral? A' (budget - 1)
-  | none => return none
-
 /-- Recognize and evaluate a closed integer literal. -/
 def literal? (A : Expr) : MetaM (Option Literal) := do
-  let some (n, m, R, entries) ← matchLiteral? A | return none
-  unless (← whnfR R).isConstOf ``Int do
-    throwError "rank: declined: only integer matrices are supported; the entry type is{indentExpr R}"
-  let values ← entries.mapM (·.mapM fun e => do
-    let q ← Mathlib.Tactic.Echelon.evalRatEntry true e
+  let some lit ← HexMatrixMathlib.Literal.literal? A | return none
+  unless lit.carrier.isConstOf ``Int do
+    throwError "rank: declined: only integer matrices are supported; the entry type is{indentExpr lit.carrier}"
+  let values ← lit.entries.mapM (·.mapM fun e => do
+    let q ← HexMatrixMathlib.Literal.evalEntry e
     unless q.den = 1 do
       throwError "rank: declined: the entry is not an integer{indentExpr e}"
     return q.num)
-  return some ⟨n, m, entries, values⟩
+  return some ⟨lit, values⟩
 
 /-- The witness of a literal, by the compiled producer. -/
 def witness (lit : Literal) : MetaM RankWitness := do
-  let A : Hex.Matrix Int lit.n lit.m := Hex.Matrix.ofFn fun i j => (lit.values[i.val]!)[j.val]!
+  let A : Hex.Matrix Int lit.lit.n lit.lit.m :=
+    Hex.Matrix.ofFn fun i j => (lit.values[i.val]!)[j.val]!
   match Hex.Matrix.rankWitness A with
   | .ok w => return w
   | .error e => throwError "rank: declined: the producer found no witness: {e}"
@@ -142,16 +104,10 @@ def witness (lit : Literal) : MetaM RankWitness := do
 literal is syntactically the same expression, so the identification with
 the literal is by `rfl` at no cost; any other closed entry, such as
 `1 - 1`, is reduced to its numeral by the kernel once. -/
-def rowList (lit : Literal) : MetaM Expr := do
-  let int := mkConst ``Int
-  let rows ← lit.values.toList.mapM fun row => mkListLit int (row.toList.map toExpr)
-  mkListLit (mkApp (mkConst ``List [Level.zero]) int) rows
+def rowList (lit : Literal) : MetaM Expr :=
+  HexMatrixMathlib.Literal.rowList (mkConst ``Int) (lit.values.map (·.map toExpr))
 
-/-- `of_decide_eq_true` on a closed decidable proposition, for the kernel to
-evaluate; no elaborator-side evaluation happens. -/
-def decideProof (prop : Expr) : MetaM Expr := do
-  let d ← mkDecide prop
-  return mkApp3 (mkConst ``of_decide_eq_true) prop d.appArg! (← mkEqRefl (mkConst ``Bool.true))
+open HexMatrixMathlib.Literal (decideProof)
 
 /-- Diagnose a proof the kernel rejected: evaluate the bound comparison and
 the certificate check with the kernel, and test the identification of the
@@ -191,14 +147,14 @@ def proveGoal (target : Expr) : MetaM Expr := do
   if other.hasFVar || other.hasExprMVar then
     throwError "rank: declined: the bound{indentExpr other}\nmust be a closed term"
   let some lit ← literal? A |
-    throwError "rank: declined: the matrix is not a closed `!![…]` or `Matrix.of ![…]` literal{indentExpr A}"
+    throwError "rank: declined: the matrix is not a closed `!![…]`, `Matrix.of ![…]`, `fun i j => …` or `Matrix.ofArray` literal{indentExpr A}"
   let w ← witness lit
   let L ← rowList lit
   let c := toExpr w
-  let nE := mkNatLit lit.n
-  let mE := mkNatLit lit.m
+  let nE := mkNatLit lit.lit.n
+  let mE := mkNatLit lit.lit.m
   let ofL ← mkAppM ``HexMatrixMathlib.ofLists #[nE, mE, L]
-  let hA ← mkExpectedTypeHint (← mkEqRefl A) (← mkEq A ofL)
+  let hA ← HexMatrixMathlib.Literal.identification lit.lit A L
   let check ← mkEq (← mkAppM ``Hex.Matrix.checkRankList #[nE, mE, L, c]) (mkConst ``Bool.true)
   let hcheck ← decideProof check
   -- the certified rank as a literal; `c.rank` reduces to it

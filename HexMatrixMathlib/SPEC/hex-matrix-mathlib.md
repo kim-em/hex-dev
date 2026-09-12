@@ -73,3 +73,41 @@ theorem matrixEquiv_principalSubmatrix : matrixEquiv (principalSubmatrix M k hk)
 ```
 
 (plus `matrixEquiv_takeRows`).
+
+## Matrix literals
+
+`HexMatrixMathlib/Literal.lean` is the literal layer the matrix tactics
+share ([SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md) §Placement);
+no tactic lives here.
+
+```lean
+def vecOfList [Zero α] : (k : Nat) → List α → (Fin k → α)
+def ofLists [Zero α] (n m : Nat) (L : List (List α)) : Matrix (Fin n) (Fin m) α
+theorem ofLists_apply (L) (i : Fin n) (j : Fin m) : ofLists n m L i j = (L.getD i []).getD j 0
+def entriesEq [Zero α] [DecidableEq α] (n m) (A : Matrix (Fin n) (Fin m) α) (L) : Bool
+theorem eq_ofLists_of_entriesEq (h : entriesEq n m A L = true) : A = ofLists n m L
+structure Certified (f : α → β) (a : α) where value : β; proof : f a = value
+```
+
+A tactic accepts a closed matrix in four syntaxes, possibly behind
+definitions unfolded within a budget of eight, and identifies it with the
+row list `L` of its entries by one of two routes:
+
+| syntax | route | cost at `16 × 16` |
+|---|---|---|
+| `!![…]`, `Matrix.of ![…]` | definitional: `vecOfList (k + 1) (a :: l)` unfolds to `vecCons a (vecOfList k l)`, so `A = ofLists n m L` is `rfl`, one unfolding per entry | 6 ms |
+| `fun i j => …`, `Matrix.ofArray xs h` | one kernel `decide` on `entriesEq n m A L`, which evaluates `A i j` at every index pair | about 200 ms |
+
+The definitional route is the primary one: the kernel never evaluates an
+entry through `Matrix.of` and `vecCons` inside a certificate's arithmetic.
+The meta section (`HexMatrixMathlib.Literal`) recognizes the shape and
+carrier from the type (`shape?`), the literal behind definitions
+(`matchLiteral?`, returning the dimensions, carrier, row-major entry
+expressions and the route), evaluates entries with Mathlib's
+`evalRatEntry` (`evalEntries`), quotes row lists (`rowList`), builds the
+identification proof along the route (`identification`) and elaborates a
+term-form argument with an integer expectation for the `!![…]` notations
+(`elabArgument`). `Certified` is the record the `%` term forms return.
+The empty shapes `!![]`, `!![,,,]` and `!![;;;]` are literals of their
+dimensions. Tests: `HexMatrixMathlib/Tests.lean` identifies each syntax and
+the empty shapes with its row list.

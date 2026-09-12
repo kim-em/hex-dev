@@ -9,7 +9,7 @@ module
 public import HexRank.Kernel
 public import Mathlib.LinearAlgebra.Matrix.Rank
 public import Mathlib.LinearAlgebra.Matrix.Block
-public import Mathlib.LinearAlgebra.Matrix.Notation
+public import HexMatrixMathlib.Literal
 public import Mathlib.Data.ZMod.Basic
 
 public section
@@ -18,10 +18,9 @@ public section
 Soundness of the kernel certificate: a passing `checkRankList` on the rows of
 a Mathlib matrix determines `Matrix.rank`.
 
-`ofLists n m L` is the Mathlib matrix of a row list, built so that a literal
-`!![…]` is definitionally `ofLists n m [[…], …]` after unfolding, one step
-per entry; the tactic discharges that identification by `rfl` and the kernel
-never evaluates an entry through `Matrix.of`/`vecCons` inside the arithmetic.
+The row list is identified with the Mathlib matrix through `ofLists` of the
+shared literal layer (`HexMatrixMathlib.Literal`), so the kernel never
+evaluates an entry through `Matrix.of`/`vecCons` inside the arithmetic.
 -/
 
 open Matrix
@@ -29,53 +28,6 @@ open Matrix
 namespace HexMatrixMathlib
 
 open Hex.Matrix Hex.Matrix.RankWitness
-
-/-! # `List.getD` -/
-
-theorem getD_eq_getElem' {α : Type*} (l : List α) (i : Nat) (d : α) (h : i < l.length) :
-    l.getD i d = l[i] := by
-  rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem h, Option.getD_some]
-
-theorem getD_eq_default' {α : Type*} (l : List α) (i : Nat) (d : α) (h : l.length ≤ i) :
-    l.getD i d = d := by
-  rw [List.getD_eq_getElem?_getD, List.getElem?_eq_none h, Option.getD_none]
-
-/-! # Row lists as Mathlib matrices -/
-
-/-- A list as a vector, padded with zeros; `vecOfList (k + 1) (a :: l)` unfolds
-to `vecCons a (vecOfList k l)`, so a `![…]` literal is definitionally
-`vecOfList` of its entries. -/
-@[expose] def vecOfList {α : Type*} [Zero α] : (k : Nat) → List α → (Fin k → α)
-  | 0, _ => ![]
-  | k + 1, a :: l => Matrix.vecCons a (vecOfList k l)
-  | _ + 1, [] => fun _ => 0
-
-/-- The Mathlib matrix of a row list, padded with zeros. -/
-@[expose] def ofLists {α : Type*} [Zero α] (n m : Nat) (L : List (List α)) : Matrix (Fin n) (Fin m) α :=
-  Matrix.of (vecOfList n (L.map (vecOfList m)))
-
-theorem vecOfList_apply {α : Type*} [Zero α] (k : Nat) (l : List α) (i : Fin k) :
-    vecOfList k l i = l.getD i 0 := by
-  induction k generalizing l with
-  | zero => exact i.elim0
-  | succ k ih =>
-    cases l with
-    | nil => simp [vecOfList]
-    | cons a l =>
-      refine Fin.cases ?_ (fun i => ?_) i
-      · simp [vecOfList]
-      · simp [vecOfList, ih]
-
-theorem ofLists_apply {α : Type*} [Zero α] (n m : Nat) (L : List (List α)) (i : Fin n)
-    (j : Fin m) : ofLists n m L i j = (L.getD i []).getD j 0 := by
-  rw [ofLists, Matrix.of_apply, vecOfList_apply]
-  by_cases hi : (i : Nat) < L.length
-  · rw [getD_eq_getElem' _ _ _ (by simpa using hi), List.getElem_map, vecOfList_apply,
-      getD_eq_getElem' _ _ _ hi]
-  · have h1 : (L.map (vecOfList m)).getD i 0 = 0 := getD_eq_default' _ _ _ (by simpa using hi)
-    have h2 : L.getD i [] = [] := getD_eq_default' _ _ _ (by omega)
-    rw [h1, h2]
-    rfl
 
 /-! # The checker's primitives -/
 
