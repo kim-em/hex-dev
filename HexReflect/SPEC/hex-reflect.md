@@ -237,8 +237,20 @@ rather than an independent Hex rewrite, justify that collapse.
 
 A coefficient provider supplies an executable coefficient type, a map from
 reflected integer coefficients, an interpretation into the source carrier,
-and the laws needed by `Hex.MvPoly.eval₂`. There is no universal rational
+and the laws needed by `Hex.MvPoly.eval₂`. Providers may also return
+type-checked auxiliary coefficient instances for downstream consumers to introduce locally. There is no universal rational
 coefficient type.
+
+| Provider | Owner | Coefficient carrier | Selection |
+| --- | --- | --- | --- |
+| `intCoeffProvider` | `hex-reflect` | `Int` | Universal, priority 0 |
+| `residueCoeffProvider p` | `hex-reflect-mathlib` | `ZMod64 p` | Known prime characteristic `0 < p < 2^31`, compatible Mathlib field and `CharP`; priority 5 |
+
+The residue provider uses `Bounds p` and `PrimeModulus p`, and interprets
+coefficients injectively through `ZMod p`. Recognized composite
+characteristic, out-of-bounds moduli, or missing carrier evidence decline
+with a provider condition diagnostic; unknown characteristic and zero keep
+the integer provider. See the companion SPEC for the scoped ring transport.
 
 The pinned ring reifier recognizes nested `BitVec.ofNat` inside its recursive
 worker, but its top-level match has no `BitVec.ofNat` arm. Consequently a

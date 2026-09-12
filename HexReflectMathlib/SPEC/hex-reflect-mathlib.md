@@ -16,7 +16,8 @@ Computational performance owner: `HexReflect`.
 
 ## Dependencies
 
-The companion depends on `hex-reflect`, `hex-mv-poly-mathlib`, and Mathlib.
+The companion depends on `hex-reflect`, `hex-mv-poly-mathlib`,
+`hex-mod-arith-mathlib`, and Mathlib.
 It obtains `hex-mv-poly` and `hex-basic` transitively. No matrix,
 row-reduction, determinant, characteristic-polynomial, gcd, or factorization
 library is an implementation dependency.
@@ -24,9 +25,10 @@ library is an implementation dependency.
 ## Module layout
 
 The Lake library is `HexReflectMathlib`, its namespace is
-`HexReflectMathlib`, and `HexReflectMathlib.lean` is its umbrella. The initial
-modules are `Carrier.lean` for registrations and `Correspondence.lean` for
-theorems. It has no independent conformance, benchmark, or proof-probe target;
+`HexReflectMathlib`, and `HexReflectMathlib.lean` is its umbrella. The
+modules are `Carrier.lean` for carrier laws, `Residue.lean` for the residue
+provider, and `Correspondence.lean` for polynomial theorems. It has no
+independent conformance, benchmark, or proof-probe target;
 the computational owner tests each registration and conversion path.
 
 ## Carrier translations
@@ -47,6 +49,54 @@ A frontend re-synthesizes and canonicalizes its requested structures in its
 actual scope. Open- and closed-scope Grind instances are distinct exact
 instance identities; a registration may support both explicitly, but provider
 lookup and caches never identify them solely from the carrier type.
+
+## Positive-characteristic coefficients
+
+`residueCoeffProvider p` supplies `Hex.ZMod64 p` coefficients when the
+classified carrier reports positive characteristic `p`, `p` is prime,
+`p < 2^31`, and the target has compatible Mathlib `Field F` and `CharP F p`
+evidence. The registration has priority 5, above the universal integer
+provider. Unknown characteristic and characteristic zero retain integer
+coefficients. Frontends can supply `isCharP_of_charP` explicitly to enable
+characteristic recognition; this theorem remains outside global instance
+search.
+
+A recognized positive characteristic that is composite (or one) declines
+with a prime-characteristic diagnostic. Moduli `p ≥ 2^31` decline with the
+word-bound diagnostic before primality testing. Missing field or Mathlib
+characteristic evidence, and incompatible interpretation operations also
+decline with their reason. These declines stop fallback to the integer provider.
+
+The executable carrier uses `Hex.ZMod64.Bounds p` and
+`Hex.ZMod64.PrimeModulus p`; the latter supports downstream `LawfulGcdOps`
+without adding a gcd-library dependency here. The provider's `auxInstances`
+contains quoted bounds, primality, and the scoped Mathlib ring instance for
+consumers to introduce locally. Every auxiliary instance is type-checked by
+provider validation. Its interpretation is
+`residueHom p F`, the composite of `HexModArithMathlib.ZMod64.equiv` with
+`ZMod.castHom`. `residueHom_injective` proves injectivity into every ring
+of the same characteristic, in particular arbitrary field extensions of
+`ZMod p`. `residueCoeffLaws` follows from `coeffLaws_ofRingHom`.
+`CoeffLaws.changeRing` transfers those laws to the classified exact Grind
+ring after checking definitional equality of its integer cast, zero, and
+addition with the Mathlib operations. Other structure fields need not be
+definitionally identical. In particular, canonicalization can unfold
+`ZMod p` to `Fin p`; the provider also tries the Mathlib `ZMod p` field
+when its type is definitionally equal to the classified carrier. It never
+accepts evidence from the type name alone.
+
+The Mathlib `CommRing (Hex.ZMod64 p)` instance lives in
+`HexModArithMathlib.Ring`, in scope `HexModArithMathlib.ZMod64`, which the
+provider opens. It transports laws along the existing equivalence while
+retaining executable zero, one, addition, subtraction, negation,
+multiplication, powers, casts, and scalar multiplication. Division and
+decidable equality are unchanged. The instance is scoped because the Mathlib
+Grind reduct has different numeral instance expressions from the executable
+ring. The
+[determinant transport audit](../../HexDetMathlib/SPEC/hex-det-mathlib.md#outstanding-arm-and-carrier-obligations)
+requires compatibility with executable operations; a scoped instance keeps
+the existing explicit structure-selection discipline of those transports. Consumers open this scope when using the
+Mathlib coefficient homomorphism.
 
 ## `MvPolynomial` correspondence
 
@@ -95,6 +145,14 @@ the Mathlib-free `hex-reflect` library depend on Mathlib.
 
 ## Verification requirements
 
+`conformance/HexReflect/ResidueConformance.lean` checks the matrix
+`!![x ^ 3 - x]` over `ZMod 3`: the quoted residue polynomial is `X₀³ − X₀`,
+and its interpretation equals the matrix entry by a kernel-checked proof.
+It also checks an abstract characteristic-three field, downstream instance
+synthesis from the provider's auxiliary evidence at modulus five, and the
+decline and integer-fallback paths. Existing reflection conformance remains
+unchanged.
+
 - Every carrier registration includes the exact instance expressions in its
   lookup identity.
 - Open- and closed-`HexMvPolyMathlib`-scope instances cannot share a cache
@@ -103,5 +161,5 @@ the Mathlib-free `hex-reflect` library depend on Mathlib.
   Mathlib-free soundness theorem.
 - No source parser, computational algebra algorithm, or `native_decide` use is
   added.
-- The import graph contains only `hex-reflect`, `hex-mv-poly-mathlib`, their
-  transitive dependencies, and Mathlib.
+- The import graph contains only `hex-reflect`, `hex-mv-poly-mathlib`,
+  `hex-mod-arith-mathlib`, their transitive dependencies, and Mathlib.
