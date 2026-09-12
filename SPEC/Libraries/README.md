@@ -20,6 +20,7 @@
 - **hex-bareiss**: the fraction-free Bareiss determinant algorithm
 - **hex-det**: production determinant dispatch with carrier policies, measured crossovers, and the completed algorithm reported for tactics
 - **[hex-rank](../../HexRank/SPEC/hex-rank.md)**: matrix rank over any integral domain with a two-sided certificate (a nonsingular minor with its adjugate, and the identity expressing every column over the selected ones), the rectangular fraction-free producer, and the row and column rank profiles
+- **hex-generic-rank**: the rank of a multivariate polynomial matrix over its fraction field, as hex-rank's certificate at `MvPoly`, with the fixture families and benches that make polynomial-entry rank a supported operation
 - **[hex-determinantal-ideal](../../HexDeterminantalIdeal/SPEC/hex-determinantal-ideal.md)**: executable minors and determinantal-ideal generators of a matrix over a commutative ring, and the theorem that the rank over a field is below `r` exactly when every `r × r` minor vanishes
 - **hex-char-poly**: the characteristic polynomial by the division-free Samuelson-Berkowitz algorithm, over any commutative ring
 - **matrix tactics** are not a library: `rank`, `det` and `char_poly` live with their algorithm libraries per [SPEC/matrix-tactics.md](../matrix-tactics.md)
@@ -90,6 +91,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-bareiss-mathlib**: Bareiss determinant = `Matrix.det`, via the bordered-minor invariant
 - **hex-det-mathlib**: determinant dispatch correctness and correspondence, including policy and fallback route laws
 - **[hex-rank-mathlib](../../HexRankMathlib/SPEC/hex-rank-mathlib.md)**: certificate soundness for `Matrix.rank` over any domain, rank invariance under `IsFractionRing` scalar extension, producer correctness, and the conversions to and from Mathlib's `Echelon.Decomposition`
+- **hex-generic-rank-mathlib**: the symbolic arm of the `rank` tactic as a handler on hex-rank-mathlib's syntax kind, with its three outputs (generic rank, conditional rank under the certificate's nonvanishing condition, handoff to the rank locus) and their soundness
 - **[hex-determinantal-ideal-mathlib](../../HexDeterminantalIdealMathlib/SPEC/hex-determinantal-ideal-mathlib.md)**: minors as `Matrix.det` of a `submatrix`, the rank-versus-minors theorem for `Matrix.rank` under any ring homomorphism into a field, rank-drop loci as zero sets, and invariance of `I_r(A)` under invertible row and column operations
 - **hex-char-poly-mathlib**: agreement with `Matrix.charpoly`, Cayley-Hamilton, the trace and determinant coefficients, transpose and similarity invariance
 - **hex-min-poly-mathlib**: agreement with `minpoly`, the annihilator-generator statement for the vector order polynomial, divisibility into the characteristic polynomial, and the degree bound
@@ -143,6 +145,7 @@ Each library with its immediate dependencies:
 - **hex-bareiss**: hex-determinant, hex-matrix
 - **hex-det** (planned): hex-bareiss, hex-char-poly, hex-row-reduce, hex-poly-fp, hex-resultant, hex-mv-gcd (plus hex-modular-matrix when implemented)
 - **hex-rank**: hex-bareiss, hex-determinant, hex-matrix, hex-arith, hex-basic
+- **hex-generic-rank** (planned): hex-rank, hex-mv-gcd, hex-bareiss, hex-determinant, hex-matrix, hex-basic
 - **hex-determinantal-ideal**: hex-basic, hex-arith, hex-matrix, hex-determinant, hex-row-reduce, hex-mv-poly
 - **hex-char-poly**: hex-matrix, hex-poly
 - **hex-min-poly**: hex-matrix, hex-row-reduce, hex-poly

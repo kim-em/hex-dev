@@ -22,6 +22,7 @@ their library structure and their kernel-replay proof strategy do not.
 | `rank` | `A.rank = r`, `A.rank ≤ r`, `r ≤ A.rank` | `hex-rank`: `RankWitness`, `checkRankList`, `rankWitness` | `hex-rank-mathlib`: `rank_eq_of_checkList`, `HexRankMathlib/Tactic.lean` | shipped (https://github.com/kim-em/hex-dev/pull/10207) |
 | `det` | `A.det = d` | `hex-bareiss`: a kernel-form triangular certificate produced by fraction-free elimination | `hex-bareiss-mathlib` | to do: https://github.com/kim-em/hex-dev/issues/10211; see [The determinant certificate](#the-determinant-certificate) |
 | `char_poly` | `A.charpoly = p` | `hex-char-poly`: the Berkowitz certificate, in kernel form | `hex-char-poly-mathlib` | frontend exists in `HexCharPoly`/`HexCharPolyMathlib`; kernel form and measurement to do: https://github.com/kim-em/hex-dev/issues/10212 |
+| `rank`, symbolic entries | `A.rank = r` (conditional), `A.rank ≤ r`, generic rank of the reified matrix | `hex-generic-rank`: hex-rank's certificate at `MvPoly` | `hex-generic-rank-mathlib`: a second handler on the `rank` syntax kind; `checkRank_sound_at` | specified: [hex-generic-rank-mathlib](Libraries/hex-generic-rank-mathlib.md) |
 | literal layer | reading `!![…]`, `Matrix.of ![…]`, `fun i j => …`, `Matrix.ofArray xs h` | none | `hex-matrix-mathlib`: `ofLists`, `vecOfList`, literal recognition, definitional identification | currently inside `hex-rank-mathlib`; to move down: https://github.com/kim-em/hex-dev/issues/10213 |
 
 Rules that follow from the table:
@@ -44,10 +45,15 @@ Rules that follow from the table:
   kernel and measurement discipline as the Mathlib forms. They need a
   Mathlib-free soundness theory for the certificate, which `hex-rank` does
   not have today; they are deferred until that exists.
-- Symbolic entries wait for `hex-reflect`; a numeric tactic declines them.
-  Until then a Mathlib tactic that also handles symbolic input (`norm_det`)
-  is composed as the fallback of the Hex tactic in one explicit simp set,
-  so no input that Mathlib accepts today regresses.
+- Symbolic entries are a separate handler on the owner's syntax kind,
+  living with the `MvPoly` instantiation of the certificate; a numeric
+  handler declines them. For `rank` that handler is specified in
+  [hex-generic-rank-mathlib](Libraries/hex-generic-rank-mathlib.md), with
+  the three outputs (generic, conditional, locus) that a symbolic rank may
+  take. Until a symbolic handler exists for an operation, a Mathlib tactic
+  that also handles symbolic input (`norm_det`) is composed as the fallback
+  of the Hex tactic in one explicit simp set, so no input that Mathlib
+  accepts today regresses.
 
 ## Outcome protocol and diagnostics
 
