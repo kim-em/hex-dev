@@ -20,7 +20,7 @@ values in the kernel.
 
 The numeric models are `Int` (exact quotient `HexArith.Int.exactDiv`) and
 `Rat` (exact quotient `Hex.exactDiv`, the field division); both offer the
-Bareiss determinant and the domain rank of `HexRank`.  Matrices are read
+Bareiss determinant.  Matrices are read
 through the public `rows` accessor and quoted through the public `ofRows`
 constructor; the private buffer is never touched.
 -/
@@ -65,13 +65,6 @@ public meta structure Input (n m : Nat) where
   literal : Expr
   /-- The reified Bareiss determinant, when the model has an exact quotient. -/
   bareiss? : Option (n = m → MetaM Expr)
-  /-- The domain rank `rankWith quot`, when the model has an exact quotient. -/
-  domainRank? : Option (MetaM Nat)
-  /-- The field rank `rowReduce_rank`, when the model is a field. -/
-  fieldRank? : Option (MetaM Nat)
-  /-- The reified two-sided rank certificate `rankCertWith quot`, when the
-  model has an exact quotient. -/
-  rankCert? : Option (MetaM Expr)
 
 /-- A computation model for one closed carrier. -/
 public meta structure Model where
@@ -81,49 +74,28 @@ public meta structure Model where
   carrier : Expr
   /-- The exact quotient function, when the carrier has a certified one. -/
   quot? : Option Expr
-  /-- Whether the carrier is a field with kernel-evaluable arithmetic. -/
-  isField : Bool
   /-- Compiled evaluation of a closed matrix of the given shape. -/
   evalInput : (op : String) → (n m : Nat) → Expr → MetaM (Input n m)
-
-/-- Reify a rank certificate: `⟨rank, rows, cols, denom, adj⟩` with literal
-index vectors, a quoted denominator and a matrix literal. -/
-private meta def reifyRankCert {V : Type} (carrier : Expr) (reify : V → MetaM Expr)
-    {n m : Nat} (c : Hex.Matrix.RankCert V n m) : MetaM Expr := do
-  let finType (k : Nat) := mkApp (mkConst ``Fin) (mkNatLit k)
-  let rows ← vectorLit (finType n) c.rank (← c.rows.toList.mapM fun i => finLit n i.val)
-  let cols ← vectorLit (finType m) c.rank (← c.cols.toList.mapM fun j => finLit m j.val)
-  let denom ← reify c.denom
-  let adj ← matrixLit carrier c.rank c.rank (← (entryRows c.adj).mapM (·.mapM reify))
-  mkAppOptM ``Hex.Matrix.RankCert.mk
-    #[some carrier, some (mkNatLit n), some (mkNatLit m), some (mkNatLit c.rank), some rows,
-      some cols, some denom, some adj]
 
 /-- Package an executable value type and its arithmetic into a model. -/
 public meta def Model.ofType (V : Type) [Zero V] [One V] [Neg V] [Sub V] [Mul V]
     [DecidableEq V] (name : String) (carrier : Expr) (reify : V → MetaM Expr)
-    (quot? : Option (Expr × (V → V → V))) (field? : Option (Lean.Grind.Field V)) : Model where
+    (quot? : Option (Expr × (V → V → V))) : Model where
   name := name
   carrier := carrier
   quot? := quot?.map (·.1)
-  isField := field?.isSome
   evalInput op n m e := do
     let (value, literal) ← evalMatrix V op carrier reify n m e
     return {
       expr := e
       literal := literal
       bareiss? := quot?.map fun (_, quot) h =>
-        reify (Hex.Matrix.bareissWith quot (h ▸ value))
-      domainRank? := quot?.map fun (_, quot) => pure (Hex.Matrix.rankWith quot value)
-      fieldRank? := field?.map fun field =>
-        pure (@Hex.Matrix.rowReduce_rank V n m field _ value)
-      rankCert? := quot?.map fun (_, quot) =>
-        reifyRankCert carrier reify (Hex.Matrix.rankCertWith quot value) }
+        reify (Hex.Matrix.bareissWith quot (h ▸ value)) }
 
 /-- The integer model. -/
 public meta def intModel : Model :=
   Model.ofType Int "Int" (mkConst ``Int) (fun z => pure (toExpr z))
-    (some (mkConst ``HexArith.Int.exactDiv, HexArith.Int.exactDiv)) none
+    (some (mkConst ``HexArith.Int.exactDiv, HexArith.Int.exactDiv))
 
 /-- Quote a rational as `num / den`, or as an integer numeral when `den = 1`. -/
 private meta def ratLit (q : Rat) : MetaM Expr := do
@@ -134,13 +106,10 @@ private meta def ratLit (q : Rat) : MetaM Expr := do
   mkAppM ``HDiv.hDiv #[num, ← mkNumeral rat q.den]
 
 /-- The rational model: a field whose exact quotient is `Hex.exactDiv`, so the
-Bareiss determinant and the domain rank replay in the kernel.  The field
-row-reduction producer `rowReduce` is offered for `rowReduce_rank` goals, but
-its body is not kernel-visible from a `module` file. -/
+Bareiss determinant replays in the kernel. -/
 public meta def ratModel : MetaM Model := do
   let quot ← mkAppOptM ``Hex.exactDiv #[some (mkConst ``Rat), none, none, none]
   return Model.ofType Rat "Rat" (mkConst ``Rat) ratLit (some (quot, Hex.exactDiv))
-    (some inferInstance)
 
 /-- Select the model for a carrier expression, or `none` when no numeric model
 matches.  Matching is on the exact carrier constant. -/

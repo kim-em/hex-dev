@@ -11,12 +11,13 @@ public import Lean
 public section
 
 /-!
-The syntax of the matrix frontends.  The term forms `det% A`, `rank% A` and
-`char_poly A` return a `Hex.MatrixTactic.Certified` record; the tactics `det`, `rank` and
-`char_poly` close a goal about the corresponding operation.  `det` and `rank`
-are non-reserved tactic keywords, so importing a frontend leaves the ordinary
-`det` and `rank` function applications and identifiers untouched; the `%`
-distinguishes the result-producing term forms from those applications.
+The syntax of the matrix frontends.  The term forms `det% A` and `char_poly A` return a
+`Hex.MatrixTactic.Certified` record; the tactics `det` and `char_poly` close a
+goal about the corresponding operation.  `det` is a non-reserved tactic
+keyword, so importing a frontend leaves the ordinary `det` function
+applications and identifiers untouched; the `%` distinguishes the
+result-producing term form from those applications.  Rank tactics live with
+their algorithm library, `HexRank`, not here.
 
 Each syntax is declared once, here.  Frontends attach their own elaborators
 to these kinds and answer `throwUnsupportedSyntax` outside their fragment, so
@@ -30,19 +31,12 @@ namespace Hex.MatrixTactic
 `Hex.MatrixTactic.Certified` record with its value and proof. -/
 syntax (name := detTerm) "det%" term:max : term
 
-/-- `rank% A` computes the rank of a closed matrix `A` and returns a
-`Hex.MatrixTactic.Certified` record with its value and proof. -/
-syntax (name := rankTerm) "rank%" term:max : term
-
 /-- `char_poly A` computes the characteristic polynomial of a closed square
 matrix `A` and returns a `Hex.MatrixTactic.Certified` record with its value and proof. -/
 syntax (name := charPolyTerm) "char_poly" term:max : term
 
 /-- `det` closes a determinant equality on a closed matrix. -/
 syntax (name := detTac) &"det" : tactic
-
-/-- `rank` closes a rank equality or inequality on a closed matrix. -/
-syntax (name := rankTac) &"rank" : tactic
 
 /-- `char_poly` closes a characteristic-polynomial equality on a closed square
 matrix. -/

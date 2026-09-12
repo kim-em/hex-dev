@@ -7,15 +7,13 @@ Authors: Kim Morrison
 module
 
 public import HexBareiss
-public import HexRank
-public import HexRowReduce
 public import HexCharPoly
 
 public section
 
 /-!
-The uniform result record returned by the proof-producing term forms `det%`,
-`rank%` and `char_poly`, its compatibility projections for the
+The uniform result record returned by the proof-producing term forms `det%`
+and `char_poly`, its compatibility projections for the
 characteristic-polynomial frontend, and the transport from the replayed Bareiss
 loop to the executable determinant that the `det` frontend uses.
 -/
@@ -27,7 +25,7 @@ universe u v
 namespace MatrixTactic
 
 /-- A computed value of `f a` together with the proof that it is `f a`.  The
-term forms `det% A`, `rank% A` and `char_poly A` return this record with `f`
+term forms `det% A` and `char_poly A` return this record with `f`
 the requested operation and `a` the original matrix. -/
 structure Certified {α : Sort u} {β : Sort v} (f : α → β) (a : α) where
   /-- The computed value. -/

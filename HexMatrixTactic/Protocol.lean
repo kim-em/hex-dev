@@ -116,11 +116,6 @@ public meta def matrixLit (ty : Expr) (n m : Nat) (rows : List (List Expr)) : Me
     let rows ← rows.mapM fun row => vectorLit ty m row
     mkAppM ``Hex.Matrix.ofRows #[← vectorLit rowType n rows]
 
-/-- The literal `⟨i, _⟩ : Fin n`. -/
-public meta def finLit (n i : Nat) : MetaM Expr := do
-  let lt ← mkAppM ``LT.lt #[mkNatLit i, mkNatLit n]
-  mkAppM ``Fin.mk #[mkNatLit i, ← mkDecideProof lt]
-
 /-- Reify an integer vector. -/
 public meta def reifyIntVector {n : Nat} (v : _root_.Vector Int n) : MetaM Expr :=
   vectorLit (mkConst ``Int) n (v.toArray.toList.map toExpr)

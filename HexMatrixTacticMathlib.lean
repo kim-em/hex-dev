@@ -10,18 +10,16 @@ public meta import HexMatrixTacticMathlib.Literal
 public import HexMatrixTacticMathlib.Literal
 public meta import HexMatrixTacticMathlib.Det
 public import HexMatrixTacticMathlib.Det
-public meta import HexMatrixTacticMathlib.Rank
-public import HexMatrixTacticMathlib.Rank
 public meta import HexMatrixTacticMathlib.CharPoly
 public import HexMatrixTacticMathlib.CharPoly
 
 public section
 
 /-!
-The `HexMatrixTacticMathlib` library extends the `det`, `rank` and
-`char_poly` frontends of `HexMatrixTactic` to closed Mathlib matrices: the
-term forms return `Hex.MatrixTactic.Certified` records about `Matrix.det`, `Matrix.rank`
-and `Matrix.charpoly`, the tactics close the corresponding goals, and the
-opt-in `hex_norm_det` simproc composes the Hex determinant with Mathlib's
-`norm_det` as its fallback.
+The `HexMatrixTacticMathlib` library extends the `det` and `char_poly`
+frontends of `HexMatrixTactic` to closed Mathlib matrices: the term forms
+return `Hex.MatrixTactic.Certified` records about `Matrix.det` and
+`Matrix.charpoly`, the tactics close the corresponding goals, and the opt-in
+`hex_norm_det` simproc composes the Hex determinant with Mathlib's `norm_det`
+as its fallback.
 -/
