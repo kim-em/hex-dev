@@ -111,3 +111,28 @@ term-form argument with an integer expectation for the `!![…]` notations
 The empty shapes `!![]`, `!![,,,]` and `!![;;;]` are literals of their
 dimensions. Tests: `HexMatrixMathlib/Tests.lean` identifies each syntax and
 the empty shapes with its row list.
+
+
+### Requests from structural tactic frontends
+
+The [structural tactic contracts](../../SPEC/matrix-tactics.md#placement)
+request the following extensions to this shared layer before the relevant
+numeric handler ships. They are requirements, not descriptions of current
+`Literal.lean` capabilities:
+
+- Field-aware `%` argument elaboration, preserving the expected carrier
+  rather than defaulting every unannotated literal to integers.
+- Rational and prime-residue entry codecs with proved decoding/arithmetic
+  agreement and coherent field instances. Rational codecs preserve a `Rat`
+  input row list for definitional literal identification and certify its
+  agreement with integer rows and a positive common scale, following
+  `checkDetRat`'s boundary. Algorithm-specific products and polynomial checks
+  remain in their owning libraries.
+- Closed vector/factor-function literal recognition with a `vecOfList`
+  identification theorem, for RHSs, stated solutions, lattice members and
+  invariant-factor targets. Match the matrix layer's supported unfolding and
+  diagnostic discipline.
+
+These adapters serve `min_poly`, `smith`, `hermite`, `inverse` and `solve`;
+they introduce no shared tactic dispatcher or new library. Polynomial-target
+recognition is requested separately against hex-poly-mathlib.

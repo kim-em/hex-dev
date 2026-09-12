@@ -24,3 +24,17 @@ matched inputs and verify hash agreement; that is the relevant
 shape of comparison for a correspondence library. External tools (FLINT
 etc.) would compare against the underlying polynomial arithmetic,
 which is HexPoly's surface and is covered there.
+
+
+## Polynomial literal adapter request
+
+[The `min_poly` frontend](../../HexMinPolyMathlib/SPEC/hex-min-poly-mathlib.md#the-min_poly-tactic)
+requires a closed Mathlib polynomial literal adapter: recognize a polynomial
+in the supported field codec, expose ascending coefficients, and prove the
+identification with their decoded polynomial. Reuse this layer's polynomial
+equivalence and the field codecs requested against
+[hex-matrix-mathlib](../../HexMatrixMathlib/SPEC/hex-matrix-mathlib.md#requests-from-structural-tactic-frontends).
+The initial carrier is `ℚ`; prime residues are a later codec extension.
+This is a requested shared adapter, not an existing API or an alternative
+minimal-polynomial checker. Its elaboration cost belongs in the consuming
+tactic's complete fresh-module probes.

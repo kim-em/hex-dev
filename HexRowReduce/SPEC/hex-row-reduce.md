@@ -152,7 +152,14 @@ belongs to the companion, using `rank_eq` on `rowReduce_isRowReduced A`.
 The computational code decides only the rank test and does not evaluate a
 determinant. There is no fuel, search limit, or resource-failure return.
 This API exposes singularity through its completeness theorem. A separate
-witness-producing inverse operation is outside this extension's scope.
+witness-producing inverse operation is outside this algorithm extension's
+scope. The [inverse tactic contract](../../HexRowReduceMathlib/SPEC/hex-row-reduce-mathlib.md#the-inverse-tactic)
+additionally requests a certificate-producer wrapper here: retain this RREF
+and extract a nonzero nullspace column on singular input, without changing
+`inverse?`. The [solve tactic contract](../../HexRowReduceMathlib/SPEC/hex-row-reduce-mathlib.md#the-solve-tactic)
+requests retained inverse-transform data for its complete list certificate.
+Those wrappers and list checkers are required before the frontends ship;
+their reduction paths never execute inverse, solve or RREF producers.
 
 ### Solve and inconsistency witness
 
@@ -241,7 +248,7 @@ These equations hold over every field, including characteristic two.
 
 ### Relationship to the domain rank certificate
 
-[hex-rank](../../SPEC/Libraries/hex-rank.md) specifies fraction-free
+[hex-rank](../../HexRank/SPEC/hex-rank.md) specifies fraction-free
 elimination over domains with a checked numerator `adj` and nonzero
 `denom` for the inverse of a selected nonsingular minor. Division by
 `denom` takes place in a fraction field, or in the domain only when that
