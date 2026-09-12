@@ -9,6 +9,7 @@ module
 public import HexMvPolyMathlib.Aeval
 public import HexMvPolyMathlib.Correspondence
 public import HexMvPolyMathlib.Equiv
+public import HexMvPolyMathlib.Kernel
 public import HexMvPolyMathlib.Recursive
 
 public section

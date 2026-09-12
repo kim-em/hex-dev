@@ -228,6 +228,100 @@ example : (X 0 : P1) * X 0 = monomial
     (Mono.succAt 0 (Mono.unit 0)) 1 := by
   decide +kernel
 
+/-! # Canonical list-form replay -/
+
+abbrev PL := Kernel.PolyList Int
+
+@[expose] def listX : PL := [([1, 0], 1)]
+@[expose] def listY : PL := [([0, 1], 1)]
+@[expose] def listP : PL := Kernel.add (Kernel.one 2) (Kernel.add listX listY)
+
+example : Kernel.isCanonical 2 listP = true := by
+  decide +kernel
+
+example : Kernel.beq (Kernel.add listP (Kernel.neg listP)) [] = true := by
+  decide +kernel
+
+example : Kernel.isZero (Kernel.add listP (Kernel.neg listP)) = true := by
+  decide +kernel
+
+example :
+    Kernel.beq (Kernel.mul listP listP)
+      [([2, 0], 1), ([1, 1], 2), ([1, 0], 2),
+       ([0, 2], 1), ([0, 1], 2), ([0, 0], 1)] = true := by
+  decide +kernel
+
+example : Kernel.evalAt [2, 3] listP = 6 := by
+  decide +kernel
+
+abbrev QPL := Kernel.PolyList Rat
+
+@[expose] def listQ : QPL :=
+  [([1, 0], 1), ([0, 1], 1), ([0, 0], 1 / 2)]
+
+example : Kernel.evalAt [2, 3] listQ = 11 / 2 := by
+  decide +kernel
+
+example : Kernel.isCanonical 2 listQ = true := by
+  decide +kernel
+
+/-- Dot product over canonical polynomial lists. -/
+@[expose] def listDot : List PL → List PL → PL
+  | a :: as, b :: bs => Kernel.add (Kernel.mul a b) (listDot as bs)
+  | _, _ => []
+
+/-- The first `n` columns of a row-list matrix. -/
+@[expose] def listColumns : Nat → List (List PL) → List (List PL)
+  | 0, _ => []
+  | n + 1, rows =>
+      rows.map (fun row => row.getD 0 []) ::
+        listColumns n (rows.map (fun row => row.drop 1))
+
+/-- Matrix multiplication used only by the closed certificate replay below. -/
+@[expose] def listMatMul (columns : Nat) (a b : List (List PL)) :
+    List (List PL) :=
+  let bs := listColumns columns b
+  a.map fun row => bs.map (listDot row)
+
+/-- Entrywise equality through the polynomial list equality checker. -/
+@[expose] def listMatrixBeq : List (List PL) → List (List PL) → Bool
+  | [], [] => true
+  | a :: as, b :: bs =>
+      (a.zip b).all (fun e => Kernel.beq e.1 e.2) &&
+        Nat.beq a.length b.length && listMatrixBeq as bs
+  | _, _ => false
+
+@[expose] def listDiag4 (a : PL) : List (List PL) :=
+  [[a, [], [], []], [[], a, [], []], [[], [], a, []], [[], [], [], a]]
+
+@[expose] def listP3 : PL := Kernel.mul listP (Kernel.mul listP listP)
+@[expose] def listP4 : PL := Kernel.mul listP listP3
+
+set_option trace.profiler true in
+/-- A `4 × 4` diagonal adjugate identity. Its proof term evaluates only
+`List`, `Nat`, and `Int` primitives on the certificate path. -/
+theorem list_certificate_4x4 :
+    listMatrixBeq (listMatMul 4 (listDiag4 listP) (listDiag4 listP3))
+      (listDiag4 listP4) = true := by
+  decide +kernel
+
+example : Kernel.Canonical 2 listP := by
+  exact Kernel.isCanonical_iff.mp (by decide +kernel)
+
+example :
+    Kernel.isZero (Kernel.add listP (Kernel.neg listP)) = true ↔
+      Kernel.denote (cmp := Mono.lex)
+        (n := 2)
+        (Kernel.add listP (Kernel.neg listP)) = 0 :=
+  Kernel.isZero_iff
+    (Kernel.add_canonical
+      ((Kernel.isCanonical_iff (n := 2) (p := listP)).mp (by decide +kernel))
+      (Kernel.neg_canonical
+        ((Kernel.isCanonical_iff (n := 2) (p := listP)).mp (by decide +kernel))))
+
+example : Kernel.beq (Kernel.mul listP listP) (Kernel.mul listP listP) = true :=
+  Kernel.beq_refl _
+
 /-! # Axiom hygiene -/
 
 /-- info: 'Hex.MvPoly.KernelTests.splitFirst_roundtrip' depends on axioms: [propext, Classical.choice, Quot.sound] -/
