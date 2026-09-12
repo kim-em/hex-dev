@@ -776,12 +776,15 @@ def _check_field(*, case_id, lib, matrix_record, lean_value, failure_dir,
     try:
         _field_check(matrix_record, lean_value, operation)
     except (ValueError, TypeError, KeyError, ZeroDivisionError) as exc:
+        from importlib.metadata import version
         from scripts.oracle.common import write_failure
+        rational_functions = matrix_record["carrier"] == "RationalFn"
         write_failure(failure_dir, library=lib, profile=profile, seed=seed,
                       case_id=case_id, kind=operation, input_record=matrix_record,
                       lean_output=lean_value, oracle_output="exact field identities and completeness",
-                      oracle_name="SymPy DomainMatrix" if matrix_record["carrier"] == "RationalFn"
-                                  else "python-flint", oracle_version=oracle_version, diff=str(exc))
+                      oracle_name="SymPy DomainMatrix" if rational_functions else "python-flint",
+                      oracle_version=version("sympy") if rational_functions else oracle_version,
+                      diff=str(exc))
         raise OracleMismatch(str(exc)) from exc
 
 
