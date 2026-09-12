@@ -78,8 +78,13 @@ passes its freshness and per-node checks.
 The [adjacent AB/BA comparison](bench-results/hexgraphiso-sparse-release-pairs.jsonl)
 compares the integrated executable with the preserved optimized binary on
 eight fixed cases. All result digests agree; median ratios range from
-0.973 to 1.023. This shows no substantial regression from proof integration,
-rather than an additional optimization. The
+0.973 to 1.023. This shows no substantial regression from proof integration.
+A further [integration comparison](bench-results/hexgraphiso-sparse-merge-pairs.jsonl)
+checks the binary after adopting `main`'s shared proof layout and recovery API:
+all digests agree and its eight median ratios range from 0.994 to 1.014.
+The source and binary hashes are in its
+[metadata](bench-results/hexgraphiso-sparse-merge.meta.json).
+The
 [optimization report](graphiso-sparse-performance.md),
 [further optimization report](graphiso-sparse-performance-2.md), and
 [cutoff report](graphiso-sparse-cutover.md) retain the measurements supporting

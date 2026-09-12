@@ -10,12 +10,13 @@ are in the [computational SPEC](../HexGraphIso/SPEC/hex-graph-iso.md),
 
 ## Build, trust and conformance
 
-The full `lake build` passes 13,587 jobs with Lean v4.34.0-rc2. Separate dense,
-sparse and Mathlib proof-probe builds pass, including both CFI probes. The
-published trust audit checks 1,896 Lean source files with no added axioms,
+The full `lake build` passes 13,719 jobs with Lean v4.34.0-rc2, including the
+manual. The combined regression, conformance and proof-probe build passes
+13,667 jobs, including dense, sparse and Mathlib probes and both CFI probes.
+The published trust audit checks 1,924 Lean source files with no added axioms,
 unfinished proofs or `native_decide`. Dependency and release-manifest checks
 pass for all 57 split repositories and the aggregate. The benchmark import
-audit passes for 46 executables and 204 build-only proof probes; all 24
+audit passes for 50 executables and 216 build-only proof probes; all 24
 `HexGraphIso.Bench` smoke checks pass.
 
 The rebuilt executables pass the pinned nauty 2.9.3 campaign:
@@ -34,7 +35,10 @@ Sparse labels, canonical adjacency, colours, all seven statistics, generators,
 orbits and group orders agree with C. The complete sparse campaign, both fixture
 streams and the dense trace stream are byte-for-byte unchanged from the preceding
 validated implementation. Source and executable fingerprints accompany the
-performance archives.
+performance archives. The [integration validation record](bench-results/hexgraphiso-merge-validation.json)
+retains the source commit, output digests, conformance results and proof-probe
+diagnostics. CI selects both graph-isomorphism oracle streams under the
+`HexGraphIso` library filter.
 
 ## Imported kernel replay
 
@@ -70,6 +74,13 @@ agrees. Median new/previous canonicalization ratios range from 0.973 to 1.023:
 the measurements show no substantial regression from integrating the proofs.
 They do not establish an additional speedup.
 
+The [integration comparison](bench-results/hexgraphiso-sparse-merge-pairs.jsonl)
+repeats the same four AB/BA blocks after adopting the shared proof-module
+layout and recovery API from `main`. All result digests agree, and median
+ratios range from 0.994 to 1.014. The native sparse implementation is preserved;
+the six-way campaign remains the measured comparison of its representation
+choices.
+
 Native path construction is registered with lean-bench as `runSparseBuild`.
 The input edge list is prepared outside the timer; compressed construction and
 consuming both output arrays are timed. Sizes range from 1,024 to 65,536,
@@ -82,7 +93,7 @@ range from 98 microseconds to 6.26 milliseconds, consistent with linear
 construction on this bounded-degree family. This is not a complexity claim
 about arbitrary graph canonicalization.
 
-The dense cactus refresh records source fingerprint `fd59b148544e`. Its
+The dense cactus refresh records source fingerprint `b6d628ac4165`. Its
 freshness check and the required 0.2 per-node exponent check pass. Without the
 removed replay limits, the tactic closes 33 of the 34 recorded pairs within
 the unchanged 120-second timeout, compared with 31 in the preceding archive.

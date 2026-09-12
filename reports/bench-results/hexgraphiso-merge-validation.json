@@ -1,0 +1,87 @@
+{
+  "source_commit": "22bde27df44665a074d6420f32e94bcd6798fe77",
+  "toolchain": "leanprover/lean4:v4.34.0-rc2",
+  "build_jobs": {
+    "full_repository_and_manual": 13719,
+    "graphiso_libraries": 3944,
+    "conformance_regressions_and_probes": 13667
+  },
+  "checks": {
+    "published_lean_files_without_axioms_sorry_native_decide": 1924,
+    "released_split_repositories": 57,
+    "released_aggregates": 1,
+    "mathlib_free_bench_executables": 50,
+    "build_only_proof_probes": 216,
+    "benchmark_smoke_cases": 24,
+    "exact_sparse_sorts": 130,
+    "exact_sparse_refinements": 220,
+    "exact_sparse_searches_and_group_orders": 45491,
+    "dense_search_traces": 39032
+  },
+  "fixture_streams": {
+    "conformance": {
+      "sha256": "3c2e1316becbab2e85015f8fe47e6f8bcbb309bc0a54302d5225c52063ef0c57",
+      "records": 45491,
+      "matches_premerge": true
+    },
+    "sparse-fixtures": {
+      "sha256": "68739394882dc0ecf9601ed8dde7ca59273f320cfe061d2d4bc8149615a3ff42",
+      "records": 6233,
+      "matches_premerge": true
+    },
+    "dense-fixtures": {
+      "sha256": "bd263a0211a436c85f18640406388d47d18ed367cd0e24038e3946dc151ce42c",
+      "records": 6233,
+      "matches_premerge": true
+    },
+    "dense-trace": {
+      "sha256": "ab16d5eee69c8b878499dbfa89c233a0637aec056f16ef5a8cb59268aceb21fd",
+      "records": 39032,
+      "matches_premerge": true
+    }
+  },
+  "proof_diagnostics": [
+    "\u2714 [12677/12780] Built HexGraphIso.SparseKernelTests (720ms)",
+    "\u2714 [12839/13027] Built HexGraphIso.SparseLimitTests (1.5s)",
+    "\u2714 [12899/13110] Built HexGraphIso.TacticTests (1.8s)",
+    "\u2714 [13205/13458] Built HexGraphIso.ModuleBoundaryTests (2.8s)",
+    "\u2714 [13322/13667] Built HexGraphIso.SparseProbe (598ms)",
+    "\u2714 [13338/13667] Built HexGraphIso.ProofProbe.Support (1.9s)",
+    "\u2714 [13353/13667] Built HexGraphIsoMathlib.TacticTests (5.6s)",
+    "\u2714 [13360/13667] Built HexGraphIsoMathlib.ProofProbe.Support (2.8s)",
+    "\u2714 [13376/13667] Built HexGraphIso.SparseTacticTests (6.0s)",
+    "\u2139 [13382/13667] Built HexGraphIso.SparseProofProbe.Support (1.5s)",
+    "\u2714 [13385/13667] Built HexGraphIso.ProofProbe.Negative12 (1.6s)",
+    "\u2714 [13390/13667] Built HexGraphIso.ProofProbe.Baseline (1.8s)",
+    "\u2714 [13391/13667] Built HexGraphIso.SparseCertTests (6.2s)",
+    "\u2714 [13393/13667] Built HexGraphIso.ProofProbe.Coloured10Neg (1.8s)",
+    "\u2714 [13396/13667] Built HexGraphIso.ProofProbe.Positive12 (1.0s)",
+    "\u2714 [13397/13667] Built HexGraphIso.ProofProbe.Coloured10Pos (1.0s)",
+    "\u2139 [13415/13667] Built HexGraphIso.SparseProofProbe.Baseline (1.4s)",
+    "\u2714 [13416/13667] Built HexGraphIsoMathlib.ProofProbe.MathlibBaseline (2.0s)",
+    "\u2139 [13418/13667] Built HexGraphIso.SparseProofProbe.Coloured10Pos (1.5s)",
+    "info: bench/HexGraphIso/SparseProofProbe/Coloured10Pos.lean:14:0: 'Hex.GraphIso.SparseProofProbe.coloured10Pos' depends on axioms: [propext, Classical.choice, Quot.sound]",
+    "\u2714 [13422/13667] Built HexGraphIsoMathlib.SparseTacticTests (2.5s)",
+    "\u2714 [13424/13667] Built HexGraphIso.SparseTests (1.4s)",
+    "\u2714 [13426/13667] Built HexGraphIsoMathlib.ProofProbe.MathlibNegative10 (2.4s)",
+    "\u2139 [13429/13667] Built HexGraphIso.SparseProofProbe.Positive12 (1.9s)",
+    "info: bench/HexGraphIso/SparseProofProbe/Positive12.lean:14:0: 'Hex.GraphIso.SparseProofProbe.positive12' depends on axioms: [propext, Classical.choice, Quot.sound]",
+    "\u2714 [13430/13667] Built HexGraphIsoMathlib.ProofProbe.MathlibPositive10 (2.5s)",
+    "\u2714 [13431/13667] Built HexGraphIsoMathlib.ProofProbe.MathlibPositive12 (2.5s)",
+    "\u2714 [13432/13667] Built HexGraphIsoMathlib.ProofProbe.MathlibNegative12 (2.7s)",
+    "\u2139 [13481/13667] Built HexGraphIso.SparseProofProbe.Coloured10Neg (4.2s)",
+    "info: bench/HexGraphIso/SparseProofProbe/Coloured10Neg.lean:14:0: 'Hex.GraphIso.SparseProofProbe.coloured10Neg' depends on axioms: [propext, Classical.choice, Quot.sound]",
+    "\u2139 [13514/13667] Built HexGraphIso.SparseProofProbe.Negative12 (5.4s)",
+    "info: bench/HexGraphIso/SparseProofProbe/Negative12.lean:14:0: 'Hex.GraphIso.SparseProofProbe.negative12' depends on axioms: [propext, Classical.choice, Quot.sound]",
+    "\u2714 [13547/13667] Built HexGraphIso.ProofProbe.Cfi (9.3s)",
+    "\u2139 [13658/13667] Built HexGraphIso.SparseProofProbe.Cfi (74s)",
+    "info: bench/HexGraphIso/SparseProofProbe/Cfi.lean:17:0: 'Hex.GraphIso.SparseProofProbe.cfi_ne' depends on axioms: [propext, Classical.choice, Quot.sound]"
+  ],
+  "conformance_output": "sparse sort: 130 exact comparisons\nsparse refinement: 220 exact comparisons\nsparse search: 45491 cases, 45491 exact group checks\ngraphiso oracle: 6233 cases checked against nauty 2.9.3 (6233 automorphism-group cases)\ngraphiso oracle: 6233 cases checked against nauty 2.9.3 (205 automorphism-group cases)\nsearch traces: 39032 cases match committed records\n",
+  "ci_oracle_output": "Oracle library filter: HexGraphIso\nBuild completed successfully (2903 jobs).\n\n==========================================================\n>>> HexGraphIso :: emit=hexgraphiso_emit_fixtures oracle=scripts/oracle/graphiso_nauty.py\n==========================================================\ngraphiso oracle: 6233 cases checked against nauty 2.9.3 (205 automorphism-group cases)\nOK: HexGraphIso\nTIMING: HexGraphIso (hexgraphiso_emit_fixtures) 0s\n\n==========================================================\n>>> HexGraphIso :: emit=hexgraphiso_emit_sparse oracle=scripts/oracle/graphiso_nauty.py\n==========================================================\ngraphiso oracle: 6233 cases checked against nauty 2.9.3 (6233 automorphism-group cases)\nOK: HexGraphIso\nTIMING: HexGraphIso (hexgraphiso_emit_sparse) 0s\nnauty-ffi tests: 6233 canonical forms and 2 isomorphism pairs passed\n\nConformance: all oracles passed.\n",
+  "build_log_sha256": {
+    "merge-full-build.log": "d055dc7ad48a2801277cadfaf5a3798372943bce37be89bc5b9ee2f6fb65f066",
+    "merge-graph-build.log": "4ab2e93520e04b7dcdb98f773b1697ddead57c60b21264dd980c6b3f2b68a4b5",
+    "merge-probes-build.log": "8fa1ed51a1158ca1505ccc29eebb5c29f681b92daa75a682be7cec7a2cd02414"
+  }
+}
