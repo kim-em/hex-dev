@@ -57,8 +57,9 @@ def Q : Matrix Rat 2 2 := #m[(1 : Rat) / 2, 1 / 3; 1 / 4, 1 / 6]
 - `RankWitness`, `checkRankList` and `rankWitness`: the kernel form of the
   integer certificate, a list-based checker (a modular lower bound, an
   exact upper bound over the non-pivot rows) written for kernel reduction,
-  and its producer from `rankCert`. This is what the companion's `rank`
-  tactic replays;
+  and its producer. The modular transform is upper triangular: column `j`
+  is derived from the leading `(j + 1) × (j + 1)` pivot block and contains
+  only `j + 1` entries. This is what the companion's `rank` tactic replays;
 - `rowReduceWith`: fraction-free Gauss-Jordan elimination over any
   coefficient type with a caller-supplied exact quotient, returning the rank
   profile, the last pivot (`det` of the pivot block) and the reduced form.
