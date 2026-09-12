@@ -12,6 +12,7 @@ public import HexMatrixMathlib.Algebra
 public import HexMatrixMathlib.Lemmas
 public import HexMatrixMathlib.Gram
 public import HexMatrixMathlib.Submatrix
+public import HexMatrixMathlib.Literal
 
 public section
 

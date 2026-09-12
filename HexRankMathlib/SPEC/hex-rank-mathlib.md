@@ -376,12 +376,11 @@ pass and no elimination of `A`.
 
 `HexRankMathlib/Kernel.lean` proves the kernel certificate of
 [hex-rank §The kernel certificate](../../HexRank/SPEC/hex-rank.md#the-kernel-certificate) sound
-for `Matrix.rank` over `ℤ`, stated on the Mathlib matrix directly:
+for `Matrix.rank` over `ℤ`, stated on the Mathlib matrix of a row list
+(`ofLists`, from the literal layer of
+[hex-matrix-mathlib](../../HexMatrixMathlib/SPEC/hex-matrix-mathlib.md#matrix-literals)):
 
 ```lean
-def vecOfList [Zero α] : (k : Nat) → List α → (Fin k → α)
-def ofLists [Zero α] (n m : Nat) (L : List (List α)) : Matrix (Fin n) (Fin m) α
-theorem ofLists_apply (L) (i : Fin n) (j : Fin m) : ofLists n m L i j = (L.getD i []).getD j 0
 theorem rank_eq_of_checkList (n m) (L) (c : RankWitness)
     (h : checkRankList n m L c = true) : (ofLists n m L).rank = c.rank
 theorem rank_eq_of_checkList' (A : Matrix (Fin n) (Fin m) ℤ) (L) (c)
@@ -390,13 +389,13 @@ theorem rank_le_of_checkList' … (hr : c.rank ≤ r) : A.rank ≤ r
 theorem le_rank_of_checkList' … (hr : r ≤ c.rank) : r ≤ A.rank
 ```
 
-`vecOfList (k + 1) (a :: l)` unfolds to `vecCons a (vecOfList k l)`, so a
-literal `!![…]` is *definitionally* `ofLists n m [[…], …]` of its own
+A literal `!![…]` is *definitionally* `ofLists n m [[…], …]` of its own
 entry expressions, one unfolding per entry; `hA` is `rfl`, and the kernel
 never evaluates an entry through `Matrix.of` and `vecCons` inside the
 arithmetic. This matters: reading the entries of a `16 × 16` literal by
 kernel evaluation of `A i j` costs about `200 ms`, more than the whole
-certificate check, while the definitional identification costs `6 ms`.
+certificate check, while the definitional identification costs `6 ms`; the
+`fun i j => …` and `Matrix.ofArray` forms take the `200 ms` route.
 
 The proof follows `rank_eq_of_cert`. Lower bound: with `B` the pivot block
 `A.submatrix rows cols` and `V̄` the matrix of `vt` over `ZMod modulus`
@@ -426,8 +425,10 @@ A.rank ≤ r      r ≥ A.rank
 r ≤ A.rank      A.rank ≥ r
 ```
 
-for `A : Matrix (Fin n) (Fin m) ℤ` a closed `!![…]` or `Matrix.of ![…]`
-literal, possibly behind definitions (unfolded within a small budget), and
+for `A : Matrix (Fin n) (Fin m) ℤ` a closed literal in one of the four
+syntaxes of the literal layer of `hex-matrix-mathlib` (`!![…]`,
+`Matrix.of ![…]`, `fun i j => …`, `Matrix.ofArray xs h`), possibly behind
+definitions (unfolded within a small budget), and
 `r` a closed natural number compared in the ordinary order on `Nat`.
 Entries are closed integer expressions that `norm_num` evaluates and that
 the kernel reduces to their numerals: numerals and arithmetic on them
@@ -580,7 +581,8 @@ An implementer must re-run these searches when the Mathlib pin moves.
   `exists_rankCert_of_decomposition` on a `2 × 2` matrix of rank `1`, to
   check that the hypotheses are stated in the form a consumer has;
 - the `rank` tactic in every orientation on the `3 × 4` example, on
-  `!![…]` with a compound entry, on `Matrix.of ![…]`, on the empty shapes,
+  `!![…]` with a compound entry, on `Matrix.of ![…]`, `fun i j => …` and
+  `Matrix.ofArray` literals, on the empty shapes,
   on a `16 × 16` full-rank and a `32 × 32` rank-`2` literal, and its
   messages on a false target, a symbolic matrix, a rational matrix and a
   closed non-literal (`#guard_msgs`).

@@ -67,6 +67,18 @@ example : Matrix.rank (R := ℤ) !![1, 2, 3; 2, 4, 6] = 1 := by rank
 example : Matrix.rank (R := ℤ) !![1; 2; 3] = 1 := by rank
 example : Matrix.rank (R := ℤ) !![0, 1; 0, 0] = 1 := by rank
 
+/-- The rank-`1` matrix as a `fun i j => …` literal. -/
+def rankFromFn : Matrix (Fin 3) (Fin 3) ℤ := fun i j => (i.val : ℤ) * j.val
+
+example : rankFromFn.rank = 1 := by rank
+example : Matrix.rank (fun i j : Fin 2 => if i = j then (2 : ℤ) else 0) = 2 := by rank
+
+/-- The rank-`2` matrix as a row-major array literal. -/
+def rankOfArray : Matrix (Fin 2) (Fin 3) ℤ := Matrix.ofArray #[1, 2, 3, 2, 4, 7] rfl
+
+example : rankOfArray.rank = 2 := by rank
+example : Matrix.rank (Matrix.ofArray (m := 2) (n := 2) #[(1 : ℤ), 2, 2, 4] rfl) = 1 := by rank
+
 /-- A `16 × 16` matrix of full rank. -/
 def dense16 : Matrix (Fin 16) (Fin 16) ℤ :=
   !![-9, 2, 8, -1, -6, -2, -1, -8, 2, 1, 9, -6, 9, 8, -5, 0;
@@ -146,7 +158,7 @@ error: rank: declined: only integer matrices are supported; the entry type is
 example : Matrix.rank (R := ℚ) !![1 / 2, 1; 1, 2] = 1 := by rank
 
 /--
-error: rank: declined: the matrix is not a closed `!![…]` or `Matrix.of ![…]` literal
+error: rank: declined: the matrix is not a closed `!![…]`, `Matrix.of ![…]`, `fun i j => …` or `Matrix.ofArray` literal
   1 * 1
 -/
 #guard_msgs in

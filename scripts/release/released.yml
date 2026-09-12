@@ -372,6 +372,7 @@ repos:
 
   - repo: leanprover/hex-matrix-mathlib
     lib: HexMatrixMathlib
+    test_modules: [HexMatrixMathlib.Tests]
     umbrella: true
     spec: hex-matrix-mathlib
     pins: [hex-basic, hex-matrix]
