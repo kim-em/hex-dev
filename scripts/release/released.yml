@@ -236,11 +236,27 @@ repos:
     pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp]
     lakefile: toml
 
+  - repo: leanprover/hex-matrix
+    component: Matrices
+    lib: HexMatrix
+    umbrella: true
+    spec: hex-matrix
+    pins: [hex-basic]
+    lakefile: toml
+
+  - repo: leanprover/hex-matrix-mathlib
+    lib: HexMatrixMathlib
+    test_modules: [HexMatrixMathlib.Tests]
+    umbrella: true
+    spec: hex-matrix-mathlib
+    pins: [hex-basic, hex-matrix]
+    lakefile: toml
+
   - repo: leanprover/hex-poly-z-mathlib
     lib: HexPolyZMathlib
     umbrella: true
     spec: hex-poly-z-mathlib
-    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib, hex-mod-arith-mathlib]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib, hex-mod-arith-mathlib, hex-matrix, hex-matrix-mathlib]
     lakefile: toml
 
   - repo: leanprover/hex-hensel-mathlib
@@ -272,7 +288,7 @@ repos:
     test_modules: [HexRootsMathlib.Examples]
     umbrella: true
     spec: hex-roots-mathlib
-    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-z-mathlib, hex-roots]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-z-mathlib, hex-roots, hex-matrix, hex-matrix-mathlib]
     lakefile: toml
 
   - repo: leanprover/hex-real-roots-mathlib
@@ -280,15 +296,7 @@ repos:
     test_modules: [HexRealRootsMathlib.IsolateRootsTests, HexRealRootsMathlib.IsolateRootsElabTests, HexRealRootsMathlib.SturmTests, HexRealRootsMathlib.RealRootCountTests]
     umbrella: true
     spec: hex-real-roots-mathlib
-    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-z-mathlib, hex-real-roots]
-    lakefile: toml
-
-  - repo: leanprover/hex-matrix
-    component: Matrices
-    lib: HexMatrix
-    umbrella: true
-    spec: hex-matrix
-    pins: [hex-basic]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-z-mathlib, hex-real-roots, hex-matrix, hex-matrix-mathlib]
     lakefile: toml
 
   - repo: leanprover/hex-row-reduce
@@ -368,14 +376,6 @@ repos:
     umbrella: true
     spec: hex-bareiss
     pins: [hex-basic, hex-arith, hex-determinant, hex-matrix]
-    lakefile: toml
-
-  - repo: leanprover/hex-matrix-mathlib
-    lib: HexMatrixMathlib
-    test_modules: [HexMatrixMathlib.Tests]
-    umbrella: true
-    spec: hex-matrix-mathlib
-    pins: [hex-basic, hex-matrix]
     lakefile: toml
 
   - repo: leanprover/hex-row-reduce-mathlib
@@ -600,7 +600,7 @@ repos:
     test_modules: [HexRCF.LanguageTests, HexRCF.SturmBuilderTests, HexRCF.CarrierTests, HexRCF.IsolationsTests, HexRCF.SeparationTests, HexRCF.CellsTests, HexRCF.CommonRootTests, HexRCF.SignMatrixTests, HexRCF.BuilderTests, HexRCF.CertificateTests, HexRCF.DecisionTests, HexRCF.ReifyTests, HexRCF.LintTests]
     umbrella: true
     spec: hex-rcf
-    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-hensel, hex-poly-z-mathlib, hex-real-roots, hex-real-roots-mathlib]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-hensel, hex-poly-z-mathlib, hex-real-roots, hex-real-roots-mathlib, hex-matrix, hex-matrix-mathlib]
     lakefile: toml
 
   # Aggregate: re-pinned only, never regenerated from managed source (its

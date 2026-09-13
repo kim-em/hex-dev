@@ -1,0 +1,2916 @@
+{
+  "versions": {
+    "python": "3.11.15",
+    "python_flint": "0.9.0"
+  },
+  "cpu": 40,
+  "load_before": "419.39 387.89 283.99 425/12297 175448",
+  "source_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+  "source_sha256": {
+    "bench/HexModularMatrix/Bench.lean": "07353880462c16613bf93ae35085e5b750f02e2ef5a881a542d35b17a11898e8",
+    "conformance/HexModularMatrix/Fixtures.lean": "0804777a5207d835e1325e6b10868705d8e500e6c219a9d07445835bdea25dea",
+    "HexModularMatrix/Image.lean": "1c6f257e570c907466f1722e19eea6d8ec35bcf93bd8217612f6abeca33382fe",
+    "HexModularMatrix/Bound.lean": "fceb6644aeca0b32a8593b6403482215fd93a3da541923fcec4d46c2e0e3a99d",
+    "HexModularMatrix/Det.lean": "055f613fee72577bba549bc54d321edc6d37eab175473e025f704e741851794d",
+    "Hex/BenchOracle/Flint.lean": "aacd1a67738c94d983ab930ddb3727ded8c421f5e529652fe2f8082e52e5646b",
+    "scripts/oracle/flint_bench_driver.py": "dd557f82a4d42ed27b07cef19287bd9a24c2d9d524af0c0ec5bc88953a6d091e",
+    "scripts/bench/modmat_flint.py": "d8f0e128617e3fb5a8403f94f8a049a443cccaa3e2c31a0a65e130f11d695c86"
+  },
+  "sampling": "five fixed repeats, 0.2 s floor, discarded outer and inner warmups; adjacent modular/Bareiss/FLINT arms reverse on alternate rungs",
+  "runs": [
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench",
+        "run",
+        "Hex.ModularMatrixBench.runFlintOverhead",
+        "--export-file",
+        "/tmp/modmat-flint-cdj8bsj3/0.json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 8.109160630992847,
+      "load": "424.98 390.12 285.83 430/12504 180359",
+      "log": "Hex.ModularMatrixBench.runFlintOverhead    [fixed] repeats=5\n  env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=f566403-dirty, 2026-09-12T21:11:23Z, host=chungus2\n  repeat 0  40.492 \u00b5s  (\u00d72^15, total 1.327 s)\n  repeat 1  24.511 \u00b5s  (\u00d72^13, total 200.796 ms)\n  repeat 2  46.778 \u00b5s  (\u00d72^14, total 766.426 ms)\n  repeat 3  36.061 \u00b5s  (\u00d72^14, total 590.839 ms)\n  repeat 4  39.508 \u00b5s  (\u00d72^14, total 647.303 ms)\n  median: 39.508 \u00b5s    min: 24.511 \u00b5s    max: 46.778 \u00b5s\n  hash: all repeats agree\n  observed hash: 0x0\n  peak RSS: 62_648 kB..68_144 kB (across 5 ok repeat(s))\nexported to /tmp/modmat-flint-cdj8bsj3/0.json\n",
+      "export": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 1326864344,
+                "status": "ok",
+                "result_hash": "0x0",
+                "repeat_index": 0,
+                "peak_rss_kb": 64396,
+                "inner_repeats": 32768,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 200795656,
+                "status": "ok",
+                "result_hash": "0x0",
+                "repeat_index": 1,
+                "peak_rss_kb": 66328,
+                "inner_repeats": 8192,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 766425530,
+                "status": "ok",
+                "result_hash": "0x0",
+                "repeat_index": 2,
+                "peak_rss_kb": 62648,
+                "inner_repeats": 16384,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 590839211,
+                "status": "ok",
+                "result_hash": "0x0",
+                "repeat_index": 3,
+                "peak_rss_kb": 68144,
+                "inner_repeats": 16384,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 647303326,
+                "status": "ok",
+                "result_hash": "0x0",
+                "repeat_index": 4,
+                "peak_rss_kb": 65984,
+                "inner_repeats": 16384,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x0",
+            "min_nanos": 24511,
+            "median_nanos": 39508,
+            "max_nanos": 46778,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.ModularMatrixBench.runFlintOverhead",
+            "expected_hash_check": {
+              "status": "unset"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789247483140,
+              "timestamp_iso": "2026-09-12T21:11:23Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+              "exe_name": "hexmodularmatrix_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": true,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.2,
+              "max_seconds_per_call": 10,
+              "expected_hash": null
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1789247483140,
+          "timestamp_iso": "2026-09-12T21:11:23Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+          "exe_name": "hexmodularmatrix_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench",
+        "compare",
+        "Hex.ModularMatrixBench.runModularStructuredN16B8",
+        "Hex.ModularMatrixBench.runBareissStructuredN16B8",
+        "Hex.ModularMatrixBench.runFlintStructuredN16B8",
+        "--export-file",
+        "/tmp/modmat-flint-cdj8bsj3/1.json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 15.887416434008628,
+      "load": "429.56 392.85 288.40 421/12539 186979",
+      "log": "env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=f566403-dirty, 2026-09-12T21:11:31Z, host=chungus2\nHex.ModularMatrixBench.runModularStructuredN16B8    [fixed] repeats=5\n  repeat 0  73.225 ms  (\u00d72^2, total 292.901 ms)\n  repeat 1  71.613 ms  (\u00d72^3, total 572.902 ms)\n  repeat 2  25.299 ms  (\u00d72^4, total 404.784 ms)\n  repeat 3  34.056 ms  (\u00d72^3, total 272.446 ms)\n  repeat 4  15.952 ms  (\u00d72^4, total 255.239 ms)\n  median: 34.056 ms    min: 15.952 ms    max: 73.225 ms\n  hash: all repeats agree\n  observed hash: 0x15e450ea\n  peak RSS: 61_568 kB..64_540 kB (across 5 ok repeat(s))\n\nHex.ModularMatrixBench.runBareissStructuredN16B8    [fixed] repeats=5\n  repeat 0   54.301 \u00b5s  (\u00d72^12, total 222.418 ms)\n  repeat 1   82.709 \u00b5s  (\u00d72^13, total 677.558 ms)\n  repeat 2  212.786 \u00b5s  (\u00d72^10, total 217.893 ms)\n  repeat 3   88.501 \u00b5s  (\u00d72^13, total 725.007 ms)\n  repeat 4   75.246 \u00b5s  (\u00d72^12, total 308.210 ms)\n  median: 82.709 \u00b5s    min: 54.301 \u00b5s    max: 212.786 \u00b5s\n  hash: all repeats agree\n  observed hash: 0x15e450ea\n  peak RSS: 61_860 kB..65_808 kB (across 5 ok repeat(s))\n\nHex.ModularMatrixBench.runFlintStructuredN16B8    [fixed] repeats=5\n  repeat 0  211.803 \u00b5s  (\u00d72^10, total 216.887 ms)\n  repeat 1  229.823 \u00b5s  (\u00d72^11, total 470.678 ms)\n  repeat 2  139.948 \u00b5s  (\u00d72^11, total 286.614 ms)\n  repeat 3  119.758 \u00b5s  (\u00d72^11, total 245.265 ms)\n  repeat 4  220.362 \u00b5s  (\u00d72^10, total 225.651 ms)\n  median: 211.803 \u00b5s    min: 119.758 \u00b5s    max: 229.823 \u00b5s\n  hash: all repeats agree\n  observed hash: 0x15e450ea\n  peak RSS: 62_104 kB..67_692 kB (across 5 ok repeat(s))\n\nrelative median (baseline = Hex.ModularMatrixBench.runModularStructuredN16B8, the first CLI argument):\n  Hex.ModularMatrixBench.runModularStructuredN16B8: 1.000\u00d7 (34.056 ms)\n  Hex.ModularMatrixBench.runBareissStructuredN16B8: 0.002\u00d7 (82.709 \u00b5s)\n  Hex.ModularMatrixBench.runFlintStructuredN16B8: 0.006\u00d7 (211.803 \u00b5s)\nagreement: all functions agree on output\nexported to /tmp/modmat-flint-cdj8bsj3/1.json\n",
+      "export": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 292900557,
+                "status": "ok",
+                "result_hash": "0x15e450ea",
+                "repeat_index": 0,
+                "peak_rss_kb": 61568,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 572902354,
+                "status": "ok",
+                "result_hash": "0x15e450ea",
+                "repeat_index": 1,
+                "peak_rss_kb": 61648,
+                "inner_repeats": 8,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 404783967,
+                "status": "ok",
+                "result_hash": "0x15e450ea",
+                "repeat_index": 2,
+                "peak_rss_kb": 61948,
+                "inner_repeats": 16,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 272445975,
+                "status": "ok",
+                "result_hash": "0x15e450ea",
+                "repeat_index": 3,
+                "peak_rss_kb": 61688,
+                "inner_repeats": 8,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 255238501,
+                "status": "ok",
+                "result_hash": "0x15e450ea",
+                "repeat_index": 4,
+                "peak_rss_kb": 64540,
+                "inner_repeats": 16,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x15e450ea",
+            "min_nanos": 15952406,
+            "median_nanos": 34055746,
+            "max_nanos": 73225139,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.ModularMatrixBench.runModularStructuredN16B8",
+            "expected_hash_check": {
+              "status": "unset"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789247491366,
+              "timestamp_iso": "2026-09-12T21:11:31Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+              "exe_name": "hexmodularmatrix_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": true,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.2,
+              "max_seconds_per_call": 10,
+              "expected_hash": null
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 222418079,
+                "status": "ok",
+                "result_hash": "0x15e450ea",
+                "repeat_index": 0,
+                "peak_rss_kb": 62056,
+                "inner_repeats": 4096,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 677558348,
+                "status": "ok",
+                "result_hash": "0x15e450ea",
+                "repeat_index": 1,
+                "peak_rss_kb": 61860,
+                "inner_repeats": 8192,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 217893115,
+                "status": "ok",
+                "result_hash": "0x15e450ea",
+                "repeat_index": 2,
+                "peak_rss_kb": 63020,
+                "inner_repeats": 1024,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 725007235,
+                "status": "ok",
+                "result_hash": "0x15e450ea",
+                "repeat_index": 3,
+                "peak_rss_kb": 65808,
+                "inner_repeats": 8192,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 308209513,
+                "status": "ok",
+                "result_hash": "0x15e450ea",
+                "repeat_index": 4,
+                "peak_rss_kb": 65684,
+                "inner_repeats": 4096,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x15e450ea",
+            "min_nanos": 54301,
+            "median_nanos": 82709,
+            "max_nanos": 212786,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.ModularMatrixBench.runBareissStructuredN16B8",
+            "expected_hash_check": {
+              "status": "unset"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789247496343,
+              "timestamp_iso": "2026-09-12T21:11:36Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+              "exe_name": "hexmodularmatrix_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": true,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.2,
+              "max_seconds_per_call": 10,
+              "expected_hash": null
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 216886991,
+                "status": "ok",
+                "result_hash": "0x15e450ea",
+                "repeat_index": 0,
+                "peak_rss_kb": 67692,
+                "inner_repeats": 1024,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 470678073,
+                "status": "ok",
+                "result_hash": "0x15e450ea",
+                "repeat_index": 1,
+                "peak_rss_kb": 65980,
+                "inner_repeats": 2048,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 286613555,
+                "status": "ok",
+                "result_hash": "0x15e450ea",
+                "repeat_index": 2,
+                "peak_rss_kb": 63048,
+                "inner_repeats": 2048,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 245264569,
+                "status": "ok",
+                "result_hash": "0x15e450ea",
+                "repeat_index": 3,
+                "peak_rss_kb": 62104,
+                "inner_repeats": 2048,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 225650925,
+                "status": "ok",
+                "result_hash": "0x15e450ea",
+                "repeat_index": 4,
+                "peak_rss_kb": 64452,
+                "inner_repeats": 1024,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x15e450ea",
+            "min_nanos": 119758,
+            "median_nanos": 211803,
+            "max_nanos": 229823,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.ModularMatrixBench.runFlintStructuredN16B8",
+            "expected_hash_check": {
+              "status": "unset"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789247501676,
+              "timestamp_iso": "2026-09-12T21:11:41Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+              "exe_name": "hexmodularmatrix_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": true,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.2,
+              "max_seconds_per_call": 10,
+              "expected_hash": null
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1789247491366,
+          "timestamp_iso": "2026-09-12T21:11:31Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+          "exe_name": "hexmodularmatrix_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench",
+        "compare",
+        "Hex.ModularMatrixBench.runFlintStructuredN24B8",
+        "Hex.ModularMatrixBench.runBareissStructuredN24B8",
+        "Hex.ModularMatrixBench.runModularStructuredN24B8",
+        "--export-file",
+        "/tmp/modmat-flint-cdj8bsj3/2.json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 15.137923526985105,
+      "load": "430.82 394.89 290.74 421/12605 192977",
+      "log": "env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=f566403-dirty, 2026-09-12T21:11:47Z, host=chungus2\nHex.ModularMatrixBench.runFlintStructuredN24B8    [fixed] repeats=5\n  repeat 0  982.919 \u00b5s  (\u00d72^8, total 251.627 ms)\n  repeat 1  448.972 \u00b5s  (\u00d72^10, total 459.748 ms)\n  repeat 2  393.251 \u00b5s  (\u00d72^10, total 402.690 ms)\n  repeat 3  396.568 \u00b5s  (\u00d72^9, total 203.043 ms)\n  repeat 4  626.686 \u00b5s  (\u00d72^9, total 320.864 ms)\n  median: 448.972 \u00b5s    min: 393.251 \u00b5s    max: 982.919 \u00b5s\n  hash: all repeats agree\n  observed hash: 0x4baced6d8e2\n  peak RSS: 61_756 kB..63_868 kB (across 5 ok repeat(s))\n\nHex.ModularMatrixBench.runBareissStructuredN24B8    [fixed] repeats=5\n  repeat 0  246.277 \u00b5s  (\u00d72^10, total 252.189 ms)\n  repeat 1  418.360 \u00b5s  (\u00d72^11, total 856.802 ms)\n  repeat 2  278.921 \u00b5s  (\u00d72^11, total 571.232 ms)\n  repeat 3  415.597 \u00b5s  (\u00d72^9, total 212.786 ms)\n  repeat 4  211.876 \u00b5s  (\u00d72^10, total 216.962 ms)\n  median: 278.921 \u00b5s    min: 211.876 \u00b5s    max: 418.360 \u00b5s\n  hash: all repeats agree\n  observed hash: 0x4baced6d8e2\n  peak RSS: 61_272 kB..66_344 kB (across 5 ok repeat(s))\n\nHex.ModularMatrixBench.runModularStructuredN24B8    [fixed] repeats=5\n  repeat 0  22.775 ms  (\u00d72^4, total 364.400 ms)\n  repeat 1  31.160 ms  (\u00d72^4, total 498.553 ms)\n  repeat 2  54.407 ms  (\u00d72^2, total 217.630 ms)\n  repeat 3  19.626 ms  (\u00d72^4, total 314.014 ms)\n  repeat 4  18.570 ms  (\u00d72^4, total 297.123 ms)\n  median: 22.775 ms    min: 18.570 ms    max: 54.407 ms\n  hash: all repeats agree\n  observed hash: 0x4baced6d8e2\n  peak RSS: 61_872 kB..67_580 kB (across 5 ok repeat(s))\n\nrelative median (baseline = Hex.ModularMatrixBench.runFlintStructuredN24B8, the first CLI argument):\n  Hex.ModularMatrixBench.runFlintStructuredN24B8: 1.000\u00d7 (448.972 \u00b5s)\n  Hex.ModularMatrixBench.runBareissStructuredN24B8: 0.621\u00d7 (278.921 \u00b5s)\n  Hex.ModularMatrixBench.runModularStructuredN24B8: 50.727\u00d7 (22.775 ms)\nagreement: all functions agree on output\nexported to /tmp/modmat-flint-cdj8bsj3/2.json\n",
+      "export": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 251627471,
+                "status": "ok",
+                "result_hash": "0x4baced6d8e2",
+                "repeat_index": 0,
+                "peak_rss_kb": 61884,
+                "inner_repeats": 256,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 459747993,
+                "status": "ok",
+                "result_hash": "0x4baced6d8e2",
+                "repeat_index": 1,
+                "peak_rss_kb": 63372,
+                "inner_repeats": 1024,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 402690006,
+                "status": "ok",
+                "result_hash": "0x4baced6d8e2",
+                "repeat_index": 2,
+                "peak_rss_kb": 61980,
+                "inner_repeats": 1024,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 203043157,
+                "status": "ok",
+                "result_hash": "0x4baced6d8e2",
+                "repeat_index": 3,
+                "peak_rss_kb": 61756,
+                "inner_repeats": 512,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 320863718,
+                "status": "ok",
+                "result_hash": "0x4baced6d8e2",
+                "repeat_index": 4,
+                "peak_rss_kb": 63868,
+                "inner_repeats": 512,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x4baced6d8e2",
+            "min_nanos": 393251,
+            "median_nanos": 448972,
+            "max_nanos": 982919,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.ModularMatrixBench.runFlintStructuredN24B8",
+            "expected_hash_check": {
+              "status": "unset"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789247507347,
+              "timestamp_iso": "2026-09-12T21:11:47Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+              "exe_name": "hexmodularmatrix_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": true,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.2,
+              "max_seconds_per_call": 10,
+              "expected_hash": null
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 252188513,
+                "status": "ok",
+                "result_hash": "0x4baced6d8e2",
+                "repeat_index": 0,
+                "peak_rss_kb": 65212,
+                "inner_repeats": 1024,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 856801716,
+                "status": "ok",
+                "result_hash": "0x4baced6d8e2",
+                "repeat_index": 1,
+                "peak_rss_kb": 66344,
+                "inner_repeats": 2048,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 571232047,
+                "status": "ok",
+                "result_hash": "0x4baced6d8e2",
+                "repeat_index": 2,
+                "peak_rss_kb": 61860,
+                "inner_repeats": 2048,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 212785814,
+                "status": "ok",
+                "result_hash": "0x4baced6d8e2",
+                "repeat_index": 3,
+                "peak_rss_kb": 62172,
+                "inner_repeats": 512,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 216961971,
+                "status": "ok",
+                "result_hash": "0x4baced6d8e2",
+                "repeat_index": 4,
+                "peak_rss_kb": 61272,
+                "inner_repeats": 1024,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x4baced6d8e2",
+            "min_nanos": 211876,
+            "median_nanos": 278921,
+            "max_nanos": 418360,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.ModularMatrixBench.runBareissStructuredN24B8",
+            "expected_hash_check": {
+              "status": "unset"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789247513279,
+              "timestamp_iso": "2026-09-12T21:11:53Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+              "exe_name": "hexmodularmatrix_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": true,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.2,
+              "max_seconds_per_call": 10,
+              "expected_hash": null
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 364400368,
+                "status": "ok",
+                "result_hash": "0x4baced6d8e2",
+                "repeat_index": 0,
+                "peak_rss_kb": 66888,
+                "inner_repeats": 16,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 498553261,
+                "status": "ok",
+                "result_hash": "0x4baced6d8e2",
+                "repeat_index": 1,
+                "peak_rss_kb": 63448,
+                "inner_repeats": 16,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 217629641,
+                "status": "ok",
+                "result_hash": "0x4baced6d8e2",
+                "repeat_index": 2,
+                "peak_rss_kb": 67580,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 314014082,
+                "status": "ok",
+                "result_hash": "0x4baced6d8e2",
+                "repeat_index": 3,
+                "peak_rss_kb": 64796,
+                "inner_repeats": 16,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 297123037,
+                "status": "ok",
+                "result_hash": "0x4baced6d8e2",
+                "repeat_index": 4,
+                "peak_rss_kb": 61872,
+                "inner_repeats": 16,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x4baced6d8e2",
+            "min_nanos": 18570189,
+            "median_nanos": 22775023,
+            "max_nanos": 54407410,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.ModularMatrixBench.runModularStructuredN24B8",
+            "expected_hash_check": {
+              "status": "unset"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789247518046,
+              "timestamp_iso": "2026-09-12T21:11:58Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+              "exe_name": "hexmodularmatrix_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": true,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.2,
+              "max_seconds_per_call": 10,
+              "expected_hash": null
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1789247507347,
+          "timestamp_iso": "2026-09-12T21:11:47Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+          "exe_name": "hexmodularmatrix_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench",
+        "compare",
+        "Hex.ModularMatrixBench.runModularStructuredN32B8",
+        "Hex.ModularMatrixBench.runBareissStructuredN32B8",
+        "Hex.ModularMatrixBench.runFlintStructuredN32B8",
+        "--export-file",
+        "/tmp/modmat-flint-cdj8bsj3/3.json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 14.694703273009509,
+      "load": "427.58 395.99 292.77 367/12328 198269",
+      "log": "env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=f566403-dirty, 2026-09-12T21:12:02Z, host=chungus2\nHex.ModularMatrixBench.runModularStructuredN32B8    [fixed] repeats=5\n  repeat 0  23.728 ms  (\u00d72^4, total 379.656 ms)\n  repeat 1  25.557 ms  (\u00d72^3, total 204.458 ms)\n  repeat 2  27.016 ms  (\u00d72^3, total 216.125 ms)\n  repeat 3  26.909 ms  (\u00d72^4, total 430.540 ms)\n  repeat 4  25.875 ms  (\u00d72^3, total 207.003 ms)\n  median: 25.875 ms    min: 23.728 ms    max: 27.016 ms\n  hash: all repeats agree\n  observed hash: 0x1059815e7012ad4\n  peak RSS: 64_528 kB..67_804 kB (across 5 ok repeat(s))\n\nHex.ModularMatrixBench.runBareissStructuredN32B8    [fixed] repeats=5\n  repeat 0  520.486 \u00b5s  (\u00d72^9, total 266.489 ms)\n  repeat 1    2.140 ms  (\u00d72^7, total 273.908 ms)\n  repeat 2  921.123 \u00b5s  (\u00d72^9, total 471.615 ms)\n  repeat 3    1.114 ms  (\u00d72^9, total 570.370 ms)\n  repeat 4    1.754 ms  (\u00d72^8, total 449.090 ms)\n  median: 1.114 ms    min: 520.486 \u00b5s    max: 2.140 ms\n  hash: all repeats agree\n  observed hash: 0x1059815e7012ad4\n  peak RSS: 64_144 kB..66_064 kB (across 5 ok repeat(s))\n\nHex.ModularMatrixBench.runFlintStructuredN32B8    [fixed] repeats=5\n  repeat 0  966.956 \u00b5s  (\u00d72^8, total 247.541 ms)\n  repeat 1  622.747 \u00b5s  (\u00d72^9, total 318.847 ms)\n  repeat 2  453.309 \u00b5s  (\u00d72^9, total 232.094 ms)\n  repeat 3  582.165 \u00b5s  (\u00d72^9, total 298.069 ms)\n  repeat 4  747.525 \u00b5s  (\u00d72^9, total 382.733 ms)\n  median: 622.747 \u00b5s    min: 453.309 \u00b5s    max: 966.956 \u00b5s\n  hash: all repeats agree\n  observed hash: 0x1059815e7012ad4\n  peak RSS: 64_004 kB..68_256 kB (across 5 ok repeat(s))\n\nrelative median (baseline = Hex.ModularMatrixBench.runModularStructuredN32B8, the first CLI argument):\n  Hex.ModularMatrixBench.runModularStructuredN32B8: 1.000\u00d7 (25.875 ms)\n  Hex.ModularMatrixBench.runBareissStructuredN32B8: 0.043\u00d7 (1.114 ms)\n  Hex.ModularMatrixBench.runFlintStructuredN32B8: 0.024\u00d7 (622.747 \u00b5s)\nagreement: all functions agree on output\nexported to /tmp/modmat-flint-cdj8bsj3/3.json\n",
+      "export": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 379655704,
+                "status": "ok",
+                "result_hash": "0x1059815e7012ad4",
+                "repeat_index": 0,
+                "peak_rss_kb": 67804,
+                "inner_repeats": 16,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 204458126,
+                "status": "ok",
+                "result_hash": "0x1059815e7012ad4",
+                "repeat_index": 1,
+                "peak_rss_kb": 67708,
+                "inner_repeats": 8,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 216124978,
+                "status": "ok",
+                "result_hash": "0x1059815e7012ad4",
+                "repeat_index": 2,
+                "peak_rss_kb": 65824,
+                "inner_repeats": 8,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 430540308,
+                "status": "ok",
+                "result_hash": "0x1059815e7012ad4",
+                "repeat_index": 3,
+                "peak_rss_kb": 66276,
+                "inner_repeats": 16,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 207002671,
+                "status": "ok",
+                "result_hash": "0x1059815e7012ad4",
+                "repeat_index": 4,
+                "peak_rss_kb": 64528,
+                "inner_repeats": 8,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1059815e7012ad4",
+            "min_nanos": 23728481,
+            "median_nanos": 25875333,
+            "max_nanos": 27015622,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.ModularMatrixBench.runModularStructuredN32B8",
+            "expected_hash_check": {
+              "status": "unset"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789247522503,
+              "timestamp_iso": "2026-09-12T21:12:02Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+              "exe_name": "hexmodularmatrix_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": true,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.2,
+              "max_seconds_per_call": 10,
+              "expected_hash": null
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 266488990,
+                "status": "ok",
+                "result_hash": "0x1059815e7012ad4",
+                "repeat_index": 0,
+                "peak_rss_kb": 65024,
+                "inner_repeats": 512,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 273907928,
+                "status": "ok",
+                "result_hash": "0x1059815e7012ad4",
+                "repeat_index": 1,
+                "peak_rss_kb": 65444,
+                "inner_repeats": 128,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 471615437,
+                "status": "ok",
+                "result_hash": "0x1059815e7012ad4",
+                "repeat_index": 2,
+                "peak_rss_kb": 64144,
+                "inner_repeats": 512,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 570370234,
+                "status": "ok",
+                "result_hash": "0x1059815e7012ad4",
+                "repeat_index": 3,
+                "peak_rss_kb": 64744,
+                "inner_repeats": 512,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 449089762,
+                "status": "ok",
+                "result_hash": "0x1059815e7012ad4",
+                "repeat_index": 4,
+                "peak_rss_kb": 66064,
+                "inner_repeats": 256,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1059815e7012ad4",
+            "min_nanos": 520486,
+            "median_nanos": 1114004,
+            "max_nanos": 2139905,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.ModularMatrixBench.runBareissStructuredN32B8",
+            "expected_hash_check": {
+              "status": "unset"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789247527370,
+              "timestamp_iso": "2026-09-12T21:12:07Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+              "exe_name": "hexmodularmatrix_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": true,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.2,
+              "max_seconds_per_call": 10,
+              "expected_hash": null
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 247540823,
+                "status": "ok",
+                "result_hash": "0x1059815e7012ad4",
+                "repeat_index": 0,
+                "peak_rss_kb": 64004,
+                "inner_repeats": 256,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 318846540,
+                "status": "ok",
+                "result_hash": "0x1059815e7012ad4",
+                "repeat_index": 1,
+                "peak_rss_kb": 64836,
+                "inner_repeats": 512,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 232094473,
+                "status": "ok",
+                "result_hash": "0x1059815e7012ad4",
+                "repeat_index": 2,
+                "peak_rss_kb": 64736,
+                "inner_repeats": 512,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 298068568,
+                "status": "ok",
+                "result_hash": "0x1059815e7012ad4",
+                "repeat_index": 3,
+                "peak_rss_kb": 68256,
+                "inner_repeats": 512,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 382732936,
+                "status": "ok",
+                "result_hash": "0x1059815e7012ad4",
+                "repeat_index": 4,
+                "peak_rss_kb": 64912,
+                "inner_repeats": 512,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1059815e7012ad4",
+            "min_nanos": 453309,
+            "median_nanos": 622747,
+            "max_nanos": 966956,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.ModularMatrixBench.runFlintStructuredN32B8",
+            "expected_hash_check": {
+              "status": "unset"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789247532035,
+              "timestamp_iso": "2026-09-12T21:12:12Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+              "exe_name": "hexmodularmatrix_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": true,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.2,
+              "max_seconds_per_call": 10,
+              "expected_hash": null
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1789247522503,
+          "timestamp_iso": "2026-09-12T21:12:02Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+          "exe_name": "hexmodularmatrix_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench",
+        "compare",
+        "Hex.ModularMatrixBench.runFlintStructuredN48B8",
+        "Hex.ModularMatrixBench.runBareissStructuredN48B8",
+        "Hex.ModularMatrixBench.runModularStructuredN48B8",
+        "--export-file",
+        "/tmp/modmat-flint-cdj8bsj3/4.json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 16.70223128402722,
+      "load": "430.96 398.32 295.19 362/12218 204632",
+      "log": "env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=f566403-dirty, 2026-09-12T21:12:17Z, host=chungus2\nHex.ModularMatrixBench.runFlintStructuredN48B8    [fixed] repeats=5\n  repeat 0    4.048 ms  (\u00d72^6, total 259.095 ms)\n  repeat 1  986.485 \u00b5s  (\u00d72^8, total 252.540 ms)\n  repeat 2    1.579 ms  (\u00d72^7, total 202.109 ms)\n  repeat 3    1.585 ms  (\u00d72^7, total 202.855 ms)\n  repeat 4    4.923 ms  (\u00d72^7, total 630.115 ms)\n  median: 1.585 ms    min: 986.485 \u00b5s    max: 4.923 ms\n  hash: all repeats agree\n  observed hash: 0xe6bb9e197272dbc2\n  peak RSS: 62_804 kB..67_528 kB (across 5 ok repeat(s))\n\nHex.ModularMatrixBench.runBareissStructuredN48B8    [fixed] repeats=5\n  repeat 0  1.792 ms  (\u00d72^7, total 229.317 ms)\n  repeat 1  2.463 ms  (\u00d72^7, total 315.220 ms)\n  repeat 2  5.672 ms  (\u00d72^6, total 363.027 ms)\n  repeat 3  4.523 ms  (\u00d72^6, total 289.480 ms)\n  repeat 4  1.592 ms  (\u00d72^7, total 203.787 ms)\n  median: 2.463 ms    min: 1.592 ms    max: 5.672 ms\n  hash: all repeats agree\n  observed hash: 0xe6bb9e197272dbc2\n  peak RSS: 64_252 kB..67_900 kB (across 5 ok repeat(s))\n\nHex.ModularMatrixBench.runModularStructuredN48B8    [fixed] repeats=5\n  repeat 0  105.181 ms  (\u00d72^3, total 841.449 ms)\n  repeat 1  103.458 ms  (\u00d72^2, total 413.834 ms)\n  repeat 2  156.276 ms  (\u00d72^1, total 312.552 ms)\n  repeat 3  156.467 ms  (\u00d72^1, total 312.934 ms)\n  repeat 4   62.228 ms  (\u00d72^2, total 248.913 ms)\n  median: 105.181 ms    min: 62.228 ms    max: 156.467 ms\n  hash: all repeats agree\n  observed hash: 0xe6bb9e197272dbc2\n  peak RSS: 64_756 kB..68_044 kB (across 5 ok repeat(s))\n\nrelative median (baseline = Hex.ModularMatrixBench.runFlintStructuredN48B8, the first CLI argument):\n  Hex.ModularMatrixBench.runFlintStructuredN48B8: 1.000\u00d7 (1.585 ms)\n  Hex.ModularMatrixBench.runBareissStructuredN48B8: 1.554\u00d7 (2.463 ms)\n  Hex.ModularMatrixBench.runModularStructuredN48B8: 66.368\u00d7 (105.181 ms)\nagreement: all functions agree on output\nexported to /tmp/modmat-flint-cdj8bsj3/4.json\n",
+      "export": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 259094516,
+                "status": "ok",
+                "result_hash": "0xe6bb9e197272dbc2",
+                "repeat_index": 0,
+                "peak_rss_kb": 62804,
+                "inner_repeats": 64,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 252540221,
+                "status": "ok",
+                "result_hash": "0xe6bb9e197272dbc2",
+                "repeat_index": 1,
+                "peak_rss_kb": 64716,
+                "inner_repeats": 256,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 202108608,
+                "status": "ok",
+                "result_hash": "0xe6bb9e197272dbc2",
+                "repeat_index": 2,
+                "peak_rss_kb": 67528,
+                "inner_repeats": 128,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 202855285,
+                "status": "ok",
+                "result_hash": "0xe6bb9e197272dbc2",
+                "repeat_index": 3,
+                "peak_rss_kb": 64572,
+                "inner_repeats": 128,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 630114711,
+                "status": "ok",
+                "result_hash": "0xe6bb9e197272dbc2",
+                "repeat_index": 4,
+                "peak_rss_kb": 65512,
+                "inner_repeats": 128,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0xe6bb9e197272dbc2",
+            "min_nanos": 986485,
+            "median_nanos": 1584806,
+            "max_nanos": 4922771,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.ModularMatrixBench.runFlintStructuredN48B8",
+            "expected_hash_check": {
+              "status": "unset"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789247537255,
+              "timestamp_iso": "2026-09-12T21:12:17Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+              "exe_name": "hexmodularmatrix_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": true,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.2,
+              "max_seconds_per_call": 10,
+              "expected_hash": null
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 229316729,
+                "status": "ok",
+                "result_hash": "0xe6bb9e197272dbc2",
+                "repeat_index": 0,
+                "peak_rss_kb": 64256,
+                "inner_repeats": 128,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 315220096,
+                "status": "ok",
+                "result_hash": "0xe6bb9e197272dbc2",
+                "repeat_index": 1,
+                "peak_rss_kb": 67900,
+                "inner_repeats": 128,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 363026734,
+                "status": "ok",
+                "result_hash": "0xe6bb9e197272dbc2",
+                "repeat_index": 2,
+                "peak_rss_kb": 64252,
+                "inner_repeats": 64,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 289479882,
+                "status": "ok",
+                "result_hash": "0xe6bb9e197272dbc2",
+                "repeat_index": 3,
+                "peak_rss_kb": 65172,
+                "inner_repeats": 64,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 203787108,
+                "status": "ok",
+                "result_hash": "0xe6bb9e197272dbc2",
+                "repeat_index": 4,
+                "peak_rss_kb": 65200,
+                "inner_repeats": 128,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0xe6bb9e197272dbc2",
+            "min_nanos": 1592086,
+            "median_nanos": 2462657,
+            "max_nanos": 5672292,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.ModularMatrixBench.runBareissStructuredN48B8",
+            "expected_hash_check": {
+              "status": "unset"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789247543598,
+              "timestamp_iso": "2026-09-12T21:12:23Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+              "exe_name": "hexmodularmatrix_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": true,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.2,
+              "max_seconds_per_call": 10,
+              "expected_hash": null
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 841449205,
+                "status": "ok",
+                "result_hash": "0xe6bb9e197272dbc2",
+                "repeat_index": 0,
+                "peak_rss_kb": 65220,
+                "inner_repeats": 8,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 413833563,
+                "status": "ok",
+                "result_hash": "0xe6bb9e197272dbc2",
+                "repeat_index": 1,
+                "peak_rss_kb": 66064,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 312551636,
+                "status": "ok",
+                "result_hash": "0xe6bb9e197272dbc2",
+                "repeat_index": 2,
+                "peak_rss_kb": 66184,
+                "inner_repeats": 2,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 312934174,
+                "status": "ok",
+                "result_hash": "0xe6bb9e197272dbc2",
+                "repeat_index": 3,
+                "peak_rss_kb": 64756,
+                "inner_repeats": 2,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 248913127,
+                "status": "ok",
+                "result_hash": "0xe6bb9e197272dbc2",
+                "repeat_index": 4,
+                "peak_rss_kb": 68044,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0xe6bb9e197272dbc2",
+            "min_nanos": 62228281,
+            "median_nanos": 105181150,
+            "max_nanos": 156467087,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.ModularMatrixBench.runModularStructuredN48B8",
+            "expected_hash_check": {
+              "status": "unset"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789247547858,
+              "timestamp_iso": "2026-09-12T21:12:27Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+              "exe_name": "hexmodularmatrix_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": true,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.2,
+              "max_seconds_per_call": 10,
+              "expected_hash": null
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1789247537255,
+          "timestamp_iso": "2026-09-12T21:12:17Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+          "exe_name": "hexmodularmatrix_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench",
+        "compare",
+        "Hex.ModularMatrixBench.runModularStructuredN64B8",
+        "Hex.ModularMatrixBench.runBareissStructuredN64B8",
+        "Hex.ModularMatrixBench.runFlintStructuredN64B8",
+        "--export-file",
+        "/tmp/modmat-flint-cdj8bsj3/5.json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 14.731341296021128,
+      "load": "416.56 396.82 296.35 328/12043 209773",
+      "log": "env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=f566403-dirty, 2026-09-12T21:12:33Z, host=chungus2\nHex.ModularMatrixBench.runModularStructuredN64B8    [fixed] repeats=5\n  repeat 0  335.991 ms  (\u00d72^1, total 671.982 ms)\n  repeat 1  139.523 ms  (\u00d72^1, total 279.046 ms)\n  repeat 2  120.864 ms  (\u00d72^1, total 241.728 ms)\n  repeat 3  110.336 ms  (\u00d72^1, total 220.673 ms)\n  repeat 4   96.121 ms  (\u00d72^2, total 384.483 ms)\n  median: 120.864 ms    min: 96.121 ms    max: 335.991 ms\n  hash: all repeats agree\n  observed hash: 0x1cd9a44bfd59f62a\n  peak RSS: 65_596 kB..71_696 kB (across 5 ok repeat(s))\n\nHex.ModularMatrixBench.runBareissStructuredN64B8    [fixed] repeats=5\n  repeat 0  7.160 ms  (\u00d72^6, total 458.252 ms)\n  repeat 1  6.680 ms  (\u00d72^5, total 213.752 ms)\n  repeat 2  8.391 ms  (\u00d72^5, total 268.498 ms)\n  repeat 3  4.018 ms  (\u00d72^6, total 257.128 ms)\n  repeat 4  6.776 ms  (\u00d72^5, total 216.824 ms)\n  median: 6.776 ms    min: 4.018 ms    max: 8.391 ms\n  hash: all repeats agree\n  observed hash: 0x1cd9a44bfd59f62a\n  peak RSS: 62_064 kB..66_424 kB (across 5 ok repeat(s))\n\nHex.ModularMatrixBench.runFlintStructuredN64B8    [fixed] repeats=5\n  repeat 0  2.938 ms  (\u00d72^7, total 376.111 ms)\n  repeat 1  7.441 ms  (\u00d72^5, total 238.124 ms)\n  repeat 2  5.047 ms  (\u00d72^7, total 646.007 ms)\n  repeat 3  8.171 ms  (\u00d72^6, total 522.930 ms)\n  repeat 4  7.618 ms  (\u00d72^5, total 243.776 ms)\n  median: 7.441 ms    min: 2.938 ms    max: 8.171 ms\n  hash: all repeats agree\n  observed hash: 0x1cd9a44bfd59f62a\n  peak RSS: 64_964 kB..69_252 kB (across 5 ok repeat(s))\n\nrelative median (baseline = Hex.ModularMatrixBench.runModularStructuredN64B8, the first CLI argument):\n  Hex.ModularMatrixBench.runModularStructuredN64B8: 1.000\u00d7 (120.864 ms)\n  Hex.ModularMatrixBench.runBareissStructuredN64B8: 0.056\u00d7 (6.776 ms)\n  Hex.ModularMatrixBench.runFlintStructuredN64B8: 0.062\u00d7 (7.441 ms)\nagreement: all functions agree on output\nexported to /tmp/modmat-flint-cdj8bsj3/5.json\n",
+      "export": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 671981710,
+                "status": "ok",
+                "result_hash": "0x1cd9a44bfd59f62a",
+                "repeat_index": 0,
+                "peak_rss_kb": 65596,
+                "inner_repeats": 2,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 279045738,
+                "status": "ok",
+                "result_hash": "0x1cd9a44bfd59f62a",
+                "repeat_index": 1,
+                "peak_rss_kb": 67612,
+                "inner_repeats": 2,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 241728235,
+                "status": "ok",
+                "result_hash": "0x1cd9a44bfd59f62a",
+                "repeat_index": 2,
+                "peak_rss_kb": 71528,
+                "inner_repeats": 2,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 220672551,
+                "status": "ok",
+                "result_hash": "0x1cd9a44bfd59f62a",
+                "repeat_index": 3,
+                "peak_rss_kb": 71264,
+                "inner_repeats": 2,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 384483410,
+                "status": "ok",
+                "result_hash": "0x1cd9a44bfd59f62a",
+                "repeat_index": 4,
+                "peak_rss_kb": 71696,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1cd9a44bfd59f62a",
+            "min_nanos": 96120852,
+            "median_nanos": 120864117,
+            "max_nanos": 335990855,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.ModularMatrixBench.runModularStructuredN64B8",
+            "expected_hash_check": {
+              "status": "unset"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789247553699,
+              "timestamp_iso": "2026-09-12T21:12:33Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+              "exe_name": "hexmodularmatrix_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": true,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.2,
+              "max_seconds_per_call": 10,
+              "expected_hash": null
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 458251529,
+                "status": "ok",
+                "result_hash": "0x1cd9a44bfd59f62a",
+                "repeat_index": 0,
+                "peak_rss_kb": 62064,
+                "inner_repeats": 64,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 213752463,
+                "status": "ok",
+                "result_hash": "0x1cd9a44bfd59f62a",
+                "repeat_index": 1,
+                "peak_rss_kb": 62680,
+                "inner_repeats": 32,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 268497646,
+                "status": "ok",
+                "result_hash": "0x1cd9a44bfd59f62a",
+                "repeat_index": 2,
+                "peak_rss_kb": 63436,
+                "inner_repeats": 32,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 257127755,
+                "status": "ok",
+                "result_hash": "0x1cd9a44bfd59f62a",
+                "repeat_index": 3,
+                "peak_rss_kb": 63436,
+                "inner_repeats": 64,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 216824281,
+                "status": "ok",
+                "result_hash": "0x1cd9a44bfd59f62a",
+                "repeat_index": 4,
+                "peak_rss_kb": 66424,
+                "inner_repeats": 32,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1cd9a44bfd59f62a",
+            "min_nanos": 4017621,
+            "median_nanos": 6775758,
+            "max_nanos": 8390551,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.ModularMatrixBench.runBareissStructuredN64B8",
+            "expected_hash_check": {
+              "status": "unset"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789247558119,
+              "timestamp_iso": "2026-09-12T21:12:38Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+              "exe_name": "hexmodularmatrix_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": true,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.2,
+              "max_seconds_per_call": 10,
+              "expected_hash": null
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 376110825,
+                "status": "ok",
+                "result_hash": "0x1cd9a44bfd59f62a",
+                "repeat_index": 0,
+                "peak_rss_kb": 69252,
+                "inner_repeats": 128,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 238124096,
+                "status": "ok",
+                "result_hash": "0x1cd9a44bfd59f62a",
+                "repeat_index": 1,
+                "peak_rss_kb": 68852,
+                "inner_repeats": 32,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 646007025,
+                "status": "ok",
+                "result_hash": "0x1cd9a44bfd59f62a",
+                "repeat_index": 2,
+                "peak_rss_kb": 68780,
+                "inner_repeats": 128,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 522930159,
+                "status": "ok",
+                "result_hash": "0x1cd9a44bfd59f62a",
+                "repeat_index": 3,
+                "peak_rss_kb": 64964,
+                "inner_repeats": 64,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 243775551,
+                "status": "ok",
+                "result_hash": "0x1cd9a44bfd59f62a",
+                "repeat_index": 4,
+                "peak_rss_kb": 66900,
+                "inner_repeats": 32,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x1cd9a44bfd59f62a",
+            "min_nanos": 2938365,
+            "median_nanos": 7441378,
+            "max_nanos": 8170783,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.ModularMatrixBench.runFlintStructuredN64B8",
+            "expected_hash_check": {
+              "status": "unset"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789247562340,
+              "timestamp_iso": "2026-09-12T21:12:42Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+              "exe_name": "hexmodularmatrix_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": true,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.2,
+              "max_seconds_per_call": 10,
+              "expected_hash": null
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1789247553699,
+          "timestamp_iso": "2026-09-12T21:12:33Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+          "exe_name": "hexmodularmatrix_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench",
+        "compare",
+        "Hex.ModularMatrixBench.runFlintStructuredN96B8",
+        "Hex.ModularMatrixBench.runBareissStructuredN96B8",
+        "Hex.ModularMatrixBench.runModularStructuredN96B8",
+        "--export-file",
+        "/tmp/modmat-flint-cdj8bsj3/6.json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 16.281844686018303,
+      "load": "402.06 394.85 297.85 345/11888 215546",
+      "log": "env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=f566403-dirty, 2026-09-12T21:12:48Z, host=chungus2\nHex.ModularMatrixBench.runFlintStructuredN96B8    [fixed] repeats=5\n  repeat 0   7.194 ms  (\u00d72^5, total 230.215 ms)\n  repeat 1  18.388 ms  (\u00d72^5, total 588.409 ms)\n  repeat 2  15.630 ms  (\u00d72^4, total 250.079 ms)\n  repeat 3  17.941 ms  (\u00d72^4, total 287.052 ms)\n  repeat 4  25.752 ms  (\u00d72^3, total 206.012 ms)\n  median: 17.941 ms    min: 7.194 ms    max: 25.752 ms\n  hash: all repeats agree\n  observed hash: 0x5555af3ce4f5df82\n  peak RSS: 62_840 kB..68_972 kB (across 5 ok repeat(s))\n\nHex.ModularMatrixBench.runBareissStructuredN96B8    [fixed] repeats=5\n  repeat 0  25.220 ms  (\u00d72^3, total 201.760 ms)\n  repeat 1  55.079 ms  (\u00d72^2, total 220.317 ms)\n  repeat 2  51.645 ms  (\u00d72^2, total 206.581 ms)\n  repeat 3  42.111 ms  (\u00d72^3, total 336.891 ms)\n  repeat 4  21.690 ms  (\u00d72^4, total 347.045 ms)\n  median: 42.111 ms    min: 21.690 ms    max: 55.079 ms\n  hash: all repeats agree\n  observed hash: 0x5555af3ce4f5df82\n  peak RSS: 61_384 kB..64_104 kB (across 5 ok repeat(s))\n\nHex.ModularMatrixBench.runModularStructuredN96B8    [fixed] repeats=5\n  repeat 0  788.824 ms\n  repeat 1  303.425 ms\n  repeat 2  269.895 ms\n  repeat 3  310.843 ms\n  repeat 4  701.489 ms\n  median: 310.843 ms    min: 269.895 ms    max: 788.824 ms\n  hash: all repeats agree\n  observed hash: 0x5555af3ce4f5df82\n  peak RSS: 71_416 kB..76_140 kB (across 5 ok repeat(s))\n\nrelative median (baseline = Hex.ModularMatrixBench.runFlintStructuredN96B8, the first CLI argument):\n  Hex.ModularMatrixBench.runFlintStructuredN96B8: 1.000\u00d7 (17.941 ms)\n  Hex.ModularMatrixBench.runBareissStructuredN96B8: 2.347\u00d7 (42.111 ms)\n  Hex.ModularMatrixBench.runModularStructuredN96B8: 17.326\u00d7 (310.843 ms)\nagreement: all functions agree on output\nexported to /tmp/modmat-flint-cdj8bsj3/6.json\n",
+      "export": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 230214699,
+                "status": "ok",
+                "result_hash": "0x5555af3ce4f5df82",
+                "repeat_index": 0,
+                "peak_rss_kb": 64440,
+                "inner_repeats": 32,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 588409468,
+                "status": "ok",
+                "result_hash": "0x5555af3ce4f5df82",
+                "repeat_index": 1,
+                "peak_rss_kb": 67704,
+                "inner_repeats": 32,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 250078763,
+                "status": "ok",
+                "result_hash": "0x5555af3ce4f5df82",
+                "repeat_index": 2,
+                "peak_rss_kb": 65916,
+                "inner_repeats": 16,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 287052345,
+                "status": "ok",
+                "result_hash": "0x5555af3ce4f5df82",
+                "repeat_index": 3,
+                "peak_rss_kb": 68972,
+                "inner_repeats": 16,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 206012256,
+                "status": "ok",
+                "result_hash": "0x5555af3ce4f5df82",
+                "repeat_index": 4,
+                "peak_rss_kb": 62840,
+                "inner_repeats": 8,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x5555af3ce4f5df82",
+            "min_nanos": 7194209,
+            "median_nanos": 17940771,
+            "max_nanos": 25751532,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.ModularMatrixBench.runFlintStructuredN96B8",
+            "expected_hash_check": {
+              "status": "unset"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789247568592,
+              "timestamp_iso": "2026-09-12T21:12:48Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+              "exe_name": "hexmodularmatrix_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": true,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.2,
+              "max_seconds_per_call": 10,
+              "expected_hash": null
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 201759616,
+                "status": "ok",
+                "result_hash": "0x5555af3ce4f5df82",
+                "repeat_index": 0,
+                "peak_rss_kb": 64104,
+                "inner_repeats": 8,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 220316882,
+                "status": "ok",
+                "result_hash": "0x5555af3ce4f5df82",
+                "repeat_index": 1,
+                "peak_rss_kb": 63408,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 206580930,
+                "status": "ok",
+                "result_hash": "0x5555af3ce4f5df82",
+                "repeat_index": 2,
+                "peak_rss_kb": 61384,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 336891077,
+                "status": "ok",
+                "result_hash": "0x5555af3ce4f5df82",
+                "repeat_index": 3,
+                "peak_rss_kb": 63268,
+                "inner_repeats": 8,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 347044573,
+                "status": "ok",
+                "result_hash": "0x5555af3ce4f5df82",
+                "repeat_index": 4,
+                "peak_rss_kb": 62636,
+                "inner_repeats": 16,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x5555af3ce4f5df82",
+            "min_nanos": 21690285,
+            "median_nanos": 42111384,
+            "max_nanos": 55079220,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.ModularMatrixBench.runBareissStructuredN96B8",
+            "expected_hash_check": {
+              "status": "unset"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789247574060,
+              "timestamp_iso": "2026-09-12T21:12:54Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+              "exe_name": "hexmodularmatrix_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": true,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.2,
+              "max_seconds_per_call": 10,
+              "expected_hash": null
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 788824125,
+                "status": "ok",
+                "result_hash": "0x5555af3ce4f5df82",
+                "repeat_index": 0,
+                "peak_rss_kb": 76140,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 303425299,
+                "status": "ok",
+                "result_hash": "0x5555af3ce4f5df82",
+                "repeat_index": 1,
+                "peak_rss_kb": 73412,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 269894595,
+                "status": "ok",
+                "result_hash": "0x5555af3ce4f5df82",
+                "repeat_index": 2,
+                "peak_rss_kb": 71416,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 310843105,
+                "status": "ok",
+                "result_hash": "0x5555af3ce4f5df82",
+                "repeat_index": 3,
+                "peak_rss_kb": 73704,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 701489284,
+                "status": "ok",
+                "result_hash": "0x5555af3ce4f5df82",
+                "repeat_index": 4,
+                "peak_rss_kb": 72092,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x5555af3ce4f5df82",
+            "min_nanos": 269894595,
+            "median_nanos": 310843105,
+            "max_nanos": 788824125,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.ModularMatrixBench.runModularStructuredN96B8",
+            "expected_hash_check": {
+              "status": "unset"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789247577705,
+              "timestamp_iso": "2026-09-12T21:12:57Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+              "exe_name": "hexmodularmatrix_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": true,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.2,
+              "max_seconds_per_call": 10,
+              "expected_hash": null
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1789247568592,
+          "timestamp_iso": "2026-09-12T21:12:48Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+          "exe_name": "hexmodularmatrix_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench",
+        "compare",
+        "Hex.ModularMatrixBench.runModularStructuredN128B8",
+        "Hex.ModularMatrixBench.runBareissStructuredN128B8",
+        "Hex.ModularMatrixBench.runFlintStructuredN128B8",
+        "--export-file",
+        "/tmp/modmat-flint-cdj8bsj3/7.json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 31.688281203998486,
+      "load": "374.64 389.07 299.03 312/11641 224643",
+      "log": "env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=f566403-dirty, 2026-09-12T21:13:04Z, host=chungus2\nHex.ModularMatrixBench.runModularStructuredN128B8    [fixed] repeats=5\n  repeat 0  929.035 ms\n  repeat 1    1.387 s \n  repeat 2    1.164 s \n  repeat 3    2.036 s \n  repeat 4    1.983 s \n  median: 1.387 s    min: 929.035 ms    max: 2.036 s\n  hash: all repeats agree\n  observed hash: 0x9539d45f660ba8d4\n  peak RSS: 92_540 kB..99_644 kB (across 5 ok repeat(s))\n\nHex.ModularMatrixBench.runBareissStructuredN128B8    [fixed] repeats=5\n  repeat 0   42.624 ms  (\u00d72^3, total 340.989 ms)\n  repeat 1   36.167 ms  (\u00d72^3, total 289.338 ms)\n  repeat 2   65.601 ms  (\u00d72^2, total 262.403 ms)\n  repeat 3  104.416 ms  (\u00d72^2, total 417.662 ms)\n  repeat 4   64.859 ms  (\u00d72^3, total 518.874 ms)\n  median: 64.859 ms    min: 36.167 ms    max: 104.416 ms\n  hash: all repeats agree\n  observed hash: 0x9539d45f660ba8d4\n  peak RSS: 61_744 kB..69_016 kB (across 5 ok repeat(s))\n\nHex.ModularMatrixBench.runFlintStructuredN128B8    [fixed] repeats=5\n  repeat 0  17.143 ms  (\u00d72^4, total 274.289 ms)\n  repeat 1  52.568 ms  (\u00d72^2, total 210.273 ms)\n  repeat 2  13.843 ms  (\u00d72^5, total 442.961 ms)\n  repeat 3  12.546 ms  (\u00d72^4, total 200.738 ms)\n  repeat 4  22.406 ms  (\u00d72^4, total 358.495 ms)\n  median: 17.143 ms    min: 12.546 ms    max: 52.568 ms\n  hash: all repeats agree\n  observed hash: 0x9539d45f660ba8d4\n  peak RSS: 65_540 kB..70_544 kB (across 5 ok repeat(s))\n\nrelative median (baseline = Hex.ModularMatrixBench.runModularStructuredN128B8, the first CLI argument):\n  Hex.ModularMatrixBench.runModularStructuredN128B8: 1.000\u00d7 (1.387 s)\n  Hex.ModularMatrixBench.runBareissStructuredN128B8: 0.047\u00d7 (64.859 ms)\n  Hex.ModularMatrixBench.runFlintStructuredN128B8: 0.012\u00d7 (17.143 ms)\nagreement: all functions agree on output\nexported to /tmp/modmat-flint-cdj8bsj3/7.json\n",
+      "export": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 929034597,
+                "status": "ok",
+                "result_hash": "0x9539d45f660ba8d4",
+                "repeat_index": 0,
+                "peak_rss_kb": 97224,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1387027132,
+                "status": "ok",
+                "result_hash": "0x9539d45f660ba8d4",
+                "repeat_index": 1,
+                "peak_rss_kb": 99644,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1163805760,
+                "status": "ok",
+                "result_hash": "0x9539d45f660ba8d4",
+                "repeat_index": 2,
+                "peak_rss_kb": 96140,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 2036287536,
+                "status": "ok",
+                "result_hash": "0x9539d45f660ba8d4",
+                "repeat_index": 3,
+                "peak_rss_kb": 96924,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1983334980,
+                "status": "ok",
+                "result_hash": "0x9539d45f660ba8d4",
+                "repeat_index": 4,
+                "peak_rss_kb": 92540,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x9539d45f660ba8d4",
+            "min_nanos": 929034597,
+            "median_nanos": 1387027132,
+            "max_nanos": 2036287536,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.ModularMatrixBench.runModularStructuredN128B8",
+            "expected_hash_check": {
+              "status": "unset"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789247584773,
+              "timestamp_iso": "2026-09-12T21:13:04Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+              "exe_name": "hexmodularmatrix_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": true,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.2,
+              "max_seconds_per_call": 10,
+              "expected_hash": null
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 340989453,
+                "status": "ok",
+                "result_hash": "0x9539d45f660ba8d4",
+                "repeat_index": 0,
+                "peak_rss_kb": 61840,
+                "inner_repeats": 8,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 289337641,
+                "status": "ok",
+                "result_hash": "0x9539d45f660ba8d4",
+                "repeat_index": 1,
+                "peak_rss_kb": 69016,
+                "inner_repeats": 8,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 262402695,
+                "status": "ok",
+                "result_hash": "0x9539d45f660ba8d4",
+                "repeat_index": 2,
+                "peak_rss_kb": 62740,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 417662340,
+                "status": "ok",
+                "result_hash": "0x9539d45f660ba8d4",
+                "repeat_index": 3,
+                "peak_rss_kb": 65992,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 518873869,
+                "status": "ok",
+                "result_hash": "0x9539d45f660ba8d4",
+                "repeat_index": 4,
+                "peak_rss_kb": 61744,
+                "inner_repeats": 8,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x9539d45f660ba8d4",
+            "min_nanos": 36167205,
+            "median_nanos": 64859233,
+            "max_nanos": 104415585,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.ModularMatrixBench.runBareissStructuredN128B8",
+            "expected_hash_check": {
+              "status": "unset"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789247606583,
+              "timestamp_iso": "2026-09-12T21:13:26Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+              "exe_name": "hexmodularmatrix_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": true,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.2,
+              "max_seconds_per_call": 10,
+              "expected_hash": null
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 274288511,
+                "status": "ok",
+                "result_hash": "0x9539d45f660ba8d4",
+                "repeat_index": 0,
+                "peak_rss_kb": 69456,
+                "inner_repeats": 16,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 210272674,
+                "status": "ok",
+                "result_hash": "0x9539d45f660ba8d4",
+                "repeat_index": 1,
+                "peak_rss_kb": 68536,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 442961007,
+                "status": "ok",
+                "result_hash": "0x9539d45f660ba8d4",
+                "repeat_index": 2,
+                "peak_rss_kb": 65540,
+                "inner_repeats": 32,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 200737866,
+                "status": "ok",
+                "result_hash": "0x9539d45f660ba8d4",
+                "repeat_index": 3,
+                "peak_rss_kb": 67460,
+                "inner_repeats": 16,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 358494556,
+                "status": "ok",
+                "result_hash": "0x9539d45f660ba8d4",
+                "repeat_index": 4,
+                "peak_rss_kb": 70544,
+                "inner_repeats": 16,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x9539d45f660ba8d4",
+            "min_nanos": 12546116,
+            "median_nanos": 17143031,
+            "max_nanos": 52568168,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.ModularMatrixBench.runFlintStructuredN128B8",
+            "expected_hash_check": {
+              "status": "unset"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789247611528,
+              "timestamp_iso": "2026-09-12T21:13:31Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+              "exe_name": "hexmodularmatrix_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": true,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.2,
+              "max_seconds_per_call": 10,
+              "expected_hash": null
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1789247584773,
+          "timestamp_iso": "2026-09-12T21:13:04Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+          "exe_name": "hexmodularmatrix_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench",
+        "compare",
+        "Hex.ModularMatrixBench.runFlintStructuredN192B8",
+        "Hex.ModularMatrixBench.runBareissStructuredN192B8",
+        "Hex.ModularMatrixBench.runModularStructuredN192B8",
+        "--export-file",
+        "/tmp/modmat-flint-cdj8bsj3/8.json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 101.24101223199978,
+      "load": "294.51 356.27 296.44 288/10946 262430",
+      "log": "env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=f566403-dirty, 2026-09-12T21:13:36Z, host=chungus2\nHex.ModularMatrixBench.runFlintStructuredN192B8    [fixed] repeats=5\n  repeat 0   53.034 ms  (\u00d72^3, total 424.275 ms)\n  repeat 1  109.483 ms  (\u00d72^2, total 437.931 ms)\n  repeat 2   55.348 ms  (\u00d72^2, total 221.391 ms)\n  repeat 3   58.303 ms  (\u00d72^2, total 233.210 ms)\n  repeat 4   32.652 ms  (\u00d72^3, total 261.213 ms)\n  median: 55.348 ms    min: 32.652 ms    max: 109.483 ms\n  hash: all repeats agree\n  observed hash: 0xf919b130a3f85f02\n  peak RSS: 66_580 kB..71_092 kB (across 5 ok repeat(s))\n\nHex.ModularMatrixBench.runBareissStructuredN192B8    [fixed] repeats=5\n  repeat 0  528.028 ms\n  repeat 1  326.444 ms\n  repeat 2  744.016 ms\n  repeat 3  909.606 ms\n  repeat 4  635.648 ms  (\u00d72^1, total 1.271 s)\n  median: 635.648 ms    min: 326.444 ms    max: 909.606 ms\n  hash: all repeats agree\n  observed hash: 0xf919b130a3f85f02\n  peak RSS: 63_696 kB..67_800 kB (across 5 ok repeat(s))\n\nHex.ModularMatrixBench.runModularStructuredN192B8    [fixed] repeats=5\n  repeat 0  6.164 s\n  repeat 1  5.757 s\n  repeat 2  7.204 s\n  repeat 3  5.378 s\n  repeat 4  6.774 s\n  median: 6.164 s    min: 5.378 s    max: 7.204 s\n  hash: all repeats agree\n  observed hash: 0xf919b130a3f85f02\n  peak RSS: 136_372 kB..146_372 kB (across 5 ok repeat(s))\n\nrelative median (baseline = Hex.ModularMatrixBench.runFlintStructuredN192B8, the first CLI argument):\n  Hex.ModularMatrixBench.runFlintStructuredN192B8: 1.000\u00d7 (55.348 ms)\n  Hex.ModularMatrixBench.runBareissStructuredN192B8: 11.485\u00d7 (635.648 ms)\n  Hex.ModularMatrixBench.runModularStructuredN192B8: 111.369\u00d7 (6.164 s)\nagreement: all functions agree on output\nexported to /tmp/modmat-flint-cdj8bsj3/8.json\n",
+      "export": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 424275191,
+                "status": "ok",
+                "result_hash": "0xf919b130a3f85f02",
+                "repeat_index": 0,
+                "peak_rss_kb": 71092,
+                "inner_repeats": 8,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 437931154,
+                "status": "ok",
+                "result_hash": "0xf919b130a3f85f02",
+                "repeat_index": 1,
+                "peak_rss_kb": 67824,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 221391431,
+                "status": "ok",
+                "result_hash": "0xf919b130a3f85f02",
+                "repeat_index": 2,
+                "peak_rss_kb": 67312,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 233210117,
+                "status": "ok",
+                "result_hash": "0xf919b130a3f85f02",
+                "repeat_index": 3,
+                "peak_rss_kb": 67548,
+                "inner_repeats": 4,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 261213138,
+                "status": "ok",
+                "result_hash": "0xf919b130a3f85f02",
+                "repeat_index": 4,
+                "peak_rss_kb": 66580,
+                "inner_repeats": 8,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0xf919b130a3f85f02",
+            "min_nanos": 32651642,
+            "median_nanos": 55347857,
+            "max_nanos": 109482788,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.ModularMatrixBench.runFlintStructuredN192B8",
+            "expected_hash_check": {
+              "status": "unset"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789247616510,
+              "timestamp_iso": "2026-09-12T21:13:36Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+              "exe_name": "hexmodularmatrix_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": true,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.2,
+              "max_seconds_per_call": 10,
+              "expected_hash": null
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 528028268,
+                "status": "ok",
+                "result_hash": "0xf919b130a3f85f02",
+                "repeat_index": 0,
+                "peak_rss_kb": 64404,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 326444208,
+                "status": "ok",
+                "result_hash": "0xf919b130a3f85f02",
+                "repeat_index": 1,
+                "peak_rss_kb": 63696,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 744015599,
+                "status": "ok",
+                "result_hash": "0xf919b130a3f85f02",
+                "repeat_index": 2,
+                "peak_rss_kb": 67800,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 909606052,
+                "status": "ok",
+                "result_hash": "0xf919b130a3f85f02",
+                "repeat_index": 3,
+                "peak_rss_kb": 65788,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 1271296216,
+                "status": "ok",
+                "result_hash": "0xf919b130a3f85f02",
+                "repeat_index": 4,
+                "peak_rss_kb": 66680,
+                "inner_repeats": 2,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0xf919b130a3f85f02",
+            "min_nanos": 326444208,
+            "median_nanos": 635648108,
+            "max_nanos": 909606052,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.ModularMatrixBench.runBareissStructuredN192B8",
+            "expected_hash_check": {
+              "status": "unset"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789247622437,
+              "timestamp_iso": "2026-09-12T21:13:42Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+              "exe_name": "hexmodularmatrix_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": true,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.2,
+              "max_seconds_per_call": 10,
+              "expected_hash": null
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 6164058166,
+                "status": "ok",
+                "result_hash": "0xf919b130a3f85f02",
+                "repeat_index": 0,
+                "peak_rss_kb": 142964,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 5756874352,
+                "status": "ok",
+                "result_hash": "0xf919b130a3f85f02",
+                "repeat_index": 1,
+                "peak_rss_kb": 143940,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 7203580050,
+                "status": "ok",
+                "result_hash": "0xf919b130a3f85f02",
+                "repeat_index": 2,
+                "peak_rss_kb": 141668,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 5377723814,
+                "status": "ok",
+                "result_hash": "0xf919b130a3f85f02",
+                "repeat_index": 3,
+                "peak_rss_kb": 136372,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 6773970746,
+                "status": "ok",
+                "result_hash": "0xf919b130a3f85f02",
+                "repeat_index": 4,
+                "peak_rss_kb": 146372,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0xf919b130a3f85f02",
+            "min_nanos": 5377723814,
+            "median_nanos": 6164058166,
+            "max_nanos": 7203580050,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.ModularMatrixBench.runModularStructuredN192B8",
+            "expected_hash_check": {
+              "status": "unset"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789247630288,
+              "timestamp_iso": "2026-09-12T21:13:50Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+              "exe_name": "hexmodularmatrix_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": true,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.2,
+              "max_seconds_per_call": 10,
+              "expected_hash": null
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1789247616510,
+          "timestamp_iso": "2026-09-12T21:13:36Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+          "exe_name": "hexmodularmatrix_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench",
+        "compare",
+        "Hex.ModularMatrixBench.runModularStructuredN256B8",
+        "Hex.ModularMatrixBench.runBareissStructuredN256B8",
+        "Hex.ModularMatrixBench.runFlintStructuredN256B8",
+        "--export-file",
+        "/tmp/modmat-flint-cdj8bsj3/9.json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 200.32668692898005,
+      "load": "314.28 336.21 300.04 268/10890 327491",
+      "log": "env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=f566403-dirty, 2026-09-12T21:15:17Z, host=chungus2\nHex.ModularMatrixBench.runModularStructuredN256B8    [fixed] repeats=5\n  repeat 0  20.899 s\n  repeat 1  16.555 s\n  repeat 2  15.914 s\n  repeat 3  12.166 s\n  repeat 4  12.820 s\n  median: 15.914 s    min: 12.166 s    max: 20.899 s\n  hash: all repeats agree\n  observed hash: 0x445f5aac7d555b2a\n  peak RSS: 222_528 kB..255_612 kB (across 5 ok repeat(s))\n\nHex.ModularMatrixBench.runBareissStructuredN256B8    [fixed] repeats=5\n  repeat 0  \u2014  [error: child exited with code 255; stderr: could not execute external process '/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench (deleted)']\n  repeat 1  \u2014  [error: child exited with code 255; stderr: could not execute external process '/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench (deleted)']\n  repeat 2  \u2014  [error: child exited with code 255; stderr: could not execute external process '/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench (deleted)']\n  repeat 3  \u2014  [error: child exited with code 255; stderr: could not execute external process '/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench (deleted)']\n  repeat 4  \u2014  [error: child exited with code 255; stderr: could not execute external process '/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench (deleted)']\n  median: \u2014 (no successful repeats)\n  hash: all repeats agree\n\nHex.ModularMatrixBench.runFlintStructuredN256B8    [fixed] repeats=5\n  repeat 0  \u2014  [error: child exited with code 255; stderr: could not execute external process '/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench (deleted)']\n  repeat 1  \u2014  [error: child exited with code 255; stderr: could not execute external process '/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench (deleted)']\n  repeat 2  \u2014  [error: child exited with code 255; stderr: could not execute external process '/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench (deleted)']\n  repeat 3  \u2014  [error: child exited with code 255; stderr: could not execute external process '/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench (deleted)']\n  repeat 4  \u2014  [error: child exited with code 255; stderr: could not execute external process '/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench (deleted)']\n  median: \u2014 (no successful repeats)\n  hash: all repeats agree\n\nrelative median (baseline = Hex.ModularMatrixBench.runModularStructuredN256B8, the first CLI argument):\n  Hex.ModularMatrixBench.runModularStructuredN256B8: 1.000\u00d7 (15.914 s)\n  Hex.ModularMatrixBench.runBareissStructuredN256B8: \u2014 (no successful repeats)\n  Hex.ModularMatrixBench.runFlintStructuredN256B8: \u2014 (no successful repeats)\nagreement: all functions agree on output\nexported to /tmp/modmat-flint-cdj8bsj3/9.json\n",
+      "export": {
+        "results": [
+          {
+            "points": [
+              {
+                "total_nanos": 20899443337,
+                "status": "ok",
+                "result_hash": "0x445f5aac7d555b2a",
+                "repeat_index": 0,
+                "peak_rss_kb": 232428,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 16554952898,
+                "status": "ok",
+                "result_hash": "0x445f5aac7d555b2a",
+                "repeat_index": 1,
+                "peak_rss_kb": 255612,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 15914088004,
+                "status": "ok",
+                "result_hash": "0x445f5aac7d555b2a",
+                "repeat_index": 2,
+                "peak_rss_kb": 222528,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 12165836189,
+                "status": "ok",
+                "result_hash": "0x445f5aac7d555b2a",
+                "repeat_index": 3,
+                "peak_rss_kb": 223148,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 12819647486,
+                "status": "ok",
+                "result_hash": "0x445f5aac7d555b2a",
+                "repeat_index": 4,
+                "peak_rss_kb": 250612,
+                "inner_repeats": 1,
+                "error": null,
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": "0x445f5aac7d555b2a",
+            "min_nanos": 12165836189,
+            "median_nanos": 15914088004,
+            "max_nanos": 20899443337,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.ModularMatrixBench.runModularStructuredN256B8",
+            "expected_hash_check": {
+              "status": "unset"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789247717677,
+              "timestamp_iso": "2026-09-12T21:15:17Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+              "exe_name": "hexmodularmatrix_bench",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": true,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.2,
+              "max_seconds_per_call": 10,
+              "expected_hash": null
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 0,
+                "status": "error",
+                "result_hash": null,
+                "repeat_index": 0,
+                "peak_rss_kb": null,
+                "inner_repeats": 0,
+                "error": "child exited with code 255; stderr: could not execute external process '/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench (deleted)'",
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 0,
+                "status": "error",
+                "result_hash": null,
+                "repeat_index": 1,
+                "peak_rss_kb": null,
+                "inner_repeats": 0,
+                "error": "child exited with code 255; stderr: could not execute external process '/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench (deleted)'",
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 0,
+                "status": "error",
+                "result_hash": null,
+                "repeat_index": 2,
+                "peak_rss_kb": null,
+                "inner_repeats": 0,
+                "error": "child exited with code 255; stderr: could not execute external process '/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench (deleted)'",
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 0,
+                "status": "error",
+                "result_hash": null,
+                "repeat_index": 3,
+                "peak_rss_kb": null,
+                "inner_repeats": 0,
+                "error": "child exited with code 255; stderr: could not execute external process '/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench (deleted)'",
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 0,
+                "status": "error",
+                "result_hash": null,
+                "repeat_index": 4,
+                "peak_rss_kb": null,
+                "inner_repeats": 0,
+                "error": "child exited with code 255; stderr: could not execute external process '/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench (deleted)'",
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": null,
+            "min_nanos": null,
+            "median_nanos": null,
+            "max_nanos": null,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.ModularMatrixBench.runBareissStructuredN256B8",
+            "expected_hash_check": {
+              "status": "unset"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789247917655,
+              "timestamp_iso": "2026-09-12T21:18:37Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+              "exe_name": "hexmodularmatrix_bench (deleted)",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": true,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.2,
+              "max_seconds_per_call": 10,
+              "expected_hash": null
+            },
+            "budget_truncated": false
+          },
+          {
+            "points": [
+              {
+                "total_nanos": 0,
+                "status": "error",
+                "result_hash": null,
+                "repeat_index": 0,
+                "peak_rss_kb": null,
+                "inner_repeats": 0,
+                "error": "child exited with code 255; stderr: could not execute external process '/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench (deleted)'",
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 0,
+                "status": "error",
+                "result_hash": null,
+                "repeat_index": 1,
+                "peak_rss_kb": null,
+                "inner_repeats": 0,
+                "error": "child exited with code 255; stderr: could not execute external process '/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench (deleted)'",
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 0,
+                "status": "error",
+                "result_hash": null,
+                "repeat_index": 2,
+                "peak_rss_kb": null,
+                "inner_repeats": 0,
+                "error": "child exited with code 255; stderr: could not execute external process '/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench (deleted)'",
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 0,
+                "status": "error",
+                "result_hash": null,
+                "repeat_index": 3,
+                "peak_rss_kb": null,
+                "inner_repeats": 0,
+                "error": "child exited with code 255; stderr: could not execute external process '/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench (deleted)'",
+                "alloc_bytes": null
+              },
+              {
+                "total_nanos": 0,
+                "status": "error",
+                "result_hash": null,
+                "repeat_index": 4,
+                "peak_rss_kb": null,
+                "inner_repeats": 0,
+                "error": "child exited with code 255; stderr: could not execute external process '/home/kim/worktrees/hex-dev/hex-dev-issue-10219/.lake/build/bin/hexmodularmatrix_bench (deleted)'",
+                "alloc_bytes": null
+              }
+            ],
+            "observed_hash": null,
+            "min_nanos": null,
+            "median_nanos": null,
+            "max_nanos": null,
+            "kind": "fixed",
+            "hashes_agree": true,
+            "hashable": true,
+            "function": "Hex.ModularMatrixBench.runFlintStructuredN256B8",
+            "expected_hash_check": {
+              "status": "unset"
+            },
+            "env": {
+              "timestamp_unix_ms": 1789247917773,
+              "timestamp_iso": "2026-09-12T21:18:37Z",
+              "platform_target": "x86_64-unknown-linux-gnu",
+              "os": "linux",
+              "lean_version": "4.34.0-rc2",
+              "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+              "lean_bench_version": "0.1.0",
+              "hostname": "chungus2",
+              "git_dirty": true,
+              "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+              "exe_name": "hexmodularmatrix_bench (deleted)",
+              "cpu_model": "AMD EPYC 9455 48-Core Processor",
+              "cpu_cores": 96,
+              "arch": "x86_64"
+            },
+            "config": {
+              "warmup_first_iter": true,
+              "warmup": true,
+              "repeats": 5,
+              "min_total_seconds": 0.2,
+              "max_seconds_per_call": 10,
+              "expected_hash": null
+            },
+            "budget_truncated": false
+          }
+        ],
+        "lean_bench_version": "0.1.0",
+        "export_schema_version": 1,
+        "env": {
+          "timestamp_unix_ms": 1789247717677,
+          "timestamp_iso": "2026-09-12T21:15:17Z",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "os": "linux",
+          "lean_version": "4.34.0-rc2",
+          "lean_toolchain": "leanprover/lean4:4.34.0-rc2",
+          "lean_bench_version": "0.1.0",
+          "hostname": "chungus2",
+          "git_dirty": true,
+          "git_commit": "f566403719742868f2f9f16403c5609e8babe45a",
+          "exe_name": "hexmodularmatrix_bench",
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "cpu_cores": 96,
+          "arch": "x86_64"
+        }
+      }
+    }
+  ],
+  "load_after": "314.28 336.21 300.04 267/10890 327491",
+  "source_overrides": {
+    "bench/HexModularMatrix/Bench.lean": "/-\nCopyright (c) 2026 Lean FRO, LLC. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Kim Morrison\n-/\n\nimport HexModularMatrix.Fixtures\nimport Hex.BenchOracle.Flint\nimport LeanBench\n\n/-!\nFixed determinant comparisons for the structured, dense random and unimodular\nfamilies. Matrix construction and FLINT request encoding precede the timed\nclosures. These are comparator anchors for the bounded modular route; the\nDixon/divisor performance goal belongs to its later implementation.\n-/\n\nnamespace Hex.ModularMatrixBench\n\n/-- Select a deterministic family, dimension and entry width. -/\ndef input (family : String) (n bits : Nat) : Matrix Int n n :=\n  if family = \"structured\" then ModularMatrixFixtures.structured n\n  else if family = \"dense\" then ModularMatrixFixtures.dense n bits\n  else ModularMatrixFixtures.unimodular n bits\n\n/-- The production modular route, failing the measurement if it falls back. -/\ndef runModularAt (family : String) (n bits : Nat) : Unit \u2192 IO Int :=\n  let A := input family n bits\n  fun _ => do\n    let result := ModularMatrix.detWith A (ModularMatrix.defaultFuel A)\n    if result.rest.isEmpty then return result.value\n    throw <| IO.userError \"unexpected Bareiss fallback in modular benchmark\"\n\n/-- The direct Bareiss comparator on the identical input. -/\ndef runBareissAt (family : String) (n bits : Nat) : Unit \u2192 IO Int :=\n  let A := input family n bits\n  fun _ => return A.bareiss\n\n/-- FLINT request data prepared outside the timed closure. -/\ndef rowsJson (A : Matrix Int n n) : Lean.Json :=\n  Lean.Json.arr (A.rows.toArray.map fun r =>\n    Hex.BenchOracle.Flint.intsToJson r.toList)\n\n/-- FLINT's integer determinant through the shared persistent oracle process. -/\ndef runFlintAt (family : String) (n bits : Nat) : Unit \u2192 IO Int :=\n  let rows := rowsJson (input family n bits)\n  fun _ => do\n    let result \u2190 Hex.BenchOracle.Flint.runOp \"fmpz_mat\" \"det\" #[(\"rows\", rows)]\n    match result.getInt? with\n    | .ok d => return d\n    | .error message => throw <| IO.userError message\n\n/-- Calibrate framing and dispatch without matrix work. -/\ndef runFlintOverhead (_ : Unit) : IO Int := do\n  let result \u2190 Hex.BenchOracle.Flint.runOp \"fmpz_mat\" \"overhead\" #[]\n  match result.getInt? with\n  | .ok d => return d\n  | .error message => throw <| IO.userError message\n\n/-- Scientific comparator settings; these anchors are collected manually. -/\ndef compareConfig : LeanBench.FixedBenchmarkConfig :=\n  { repeats := 5, minTotalSeconds := 0.2, warmupFirstIter := true,\n    maxSecondsPerCall := 10.0, tags := #[\"scheduled\"] }\n\nsetup_fixed_benchmark runFlintOverhead where compareConfig\n\n-- Small independent hash anchors keep CI's verification cost bounded.\ndef smokeStructured := runModularAt \"structured\" 4 8\ndef smokeDense := runModularAt \"dense\" 4 64\ndef smokeUnimodular := runModularAt \"unimodular\" 4 64\nsetup_fixed_benchmark smokeStructured\nsetup_fixed_benchmark smokeDense\nsetup_fixed_benchmark smokeUnimodular\n\ndef runModularStructuredN16B8 := runModularAt \"structured\" 16 8\nsetup_fixed_benchmark runModularStructuredN16B8 where compareConfig\ndef runBareissStructuredN16B8 := runBareissAt \"structured\" 16 8\nsetup_fixed_benchmark runBareissStructuredN16B8 where compareConfig\ndef runFlintStructuredN16B8 := runFlintAt \"structured\" 16 8\nsetup_fixed_benchmark runFlintStructuredN16B8 where compareConfig\ndef runModularStructuredN24B8 := runModularAt \"structured\" 24 8\nsetup_fixed_benchmark runModularStructuredN24B8 where compareConfig\ndef runBareissStructuredN24B8 := runBareissAt \"structured\" 24 8\nsetup_fixed_benchmark runBareissStructuredN24B8 where compareConfig\ndef runFlintStructuredN24B8 := runFlintAt \"structured\" 24 8\nsetup_fixed_benchmark runFlintStructuredN24B8 where compareConfig\ndef runModularStructuredN32B8 := runModularAt \"structured\" 32 8\nsetup_fixed_benchmark runModularStructuredN32B8 where compareConfig\ndef runBareissStructuredN32B8 := runBareissAt \"structured\" 32 8\nsetup_fixed_benchmark runBareissStructuredN32B8 where compareConfig\ndef runFlintStructuredN32B8 := runFlintAt \"structured\" 32 8\nsetup_fixed_benchmark runFlintStructuredN32B8 where compareConfig\ndef runModularStructuredN48B8 := runModularAt \"structured\" 48 8\nsetup_fixed_benchmark runModularStructuredN48B8 where compareConfig\ndef runBareissStructuredN48B8 := runBareissAt \"structured\" 48 8\nsetup_fixed_benchmark runBareissStructuredN48B8 where compareConfig\ndef runFlintStructuredN48B8 := runFlintAt \"structured\" 48 8\nsetup_fixed_benchmark runFlintStructuredN48B8 where compareConfig\ndef runModularStructuredN64B8 := runModularAt \"structured\" 64 8\nsetup_fixed_benchmark runModularStructuredN64B8 where compareConfig\ndef runBareissStructuredN64B8 := runBareissAt \"structured\" 64 8\nsetup_fixed_benchmark runBareissStructuredN64B8 where compareConfig\ndef runFlintStructuredN64B8 := runFlintAt \"structured\" 64 8\nsetup_fixed_benchmark runFlintStructuredN64B8 where compareConfig\ndef runModularStructuredN96B8 := runModularAt \"structured\" 96 8\nsetup_fixed_benchmark runModularStructuredN96B8 where compareConfig\ndef runBareissStructuredN96B8 := runBareissAt \"structured\" 96 8\nsetup_fixed_benchmark runBareissStructuredN96B8 where compareConfig\ndef runFlintStructuredN96B8 := runFlintAt \"structured\" 96 8\nsetup_fixed_benchmark runFlintStructuredN96B8 where compareConfig\ndef runModularStructuredN128B8 := runModularAt \"structured\" 128 8\nsetup_fixed_benchmark runModularStructuredN128B8 where compareConfig\ndef runBareissStructuredN128B8 := runBareissAt \"structured\" 128 8\nsetup_fixed_benchmark runBareissStructuredN128B8 where compareConfig\ndef runFlintStructuredN128B8 := runFlintAt \"structured\" 128 8\nsetup_fixed_benchmark runFlintStructuredN128B8 where compareConfig\ndef runModularStructuredN192B8 := runModularAt \"structured\" 192 8\nsetup_fixed_benchmark runModularStructuredN192B8 where compareConfig\ndef runBareissStructuredN192B8 := runBareissAt \"structured\" 192 8\nsetup_fixed_benchmark runBareissStructuredN192B8 where compareConfig\ndef runFlintStructuredN192B8 := runFlintAt \"structured\" 192 8\nsetup_fixed_benchmark runFlintStructuredN192B8 where compareConfig\ndef runModularStructuredN256B8 := runModularAt \"structured\" 256 8\nsetup_fixed_benchmark runModularStructuredN256B8 where compareConfig\ndef runBareissStructuredN256B8 := runBareissAt \"structured\" 256 8\nsetup_fixed_benchmark runBareissStructuredN256B8 where compareConfig\ndef runFlintStructuredN256B8 := runFlintAt \"structured\" 256 8\nsetup_fixed_benchmark runFlintStructuredN256B8 where compareConfig\ndef runModularStructuredN320B8 := runModularAt \"structured\" 320 8\nsetup_fixed_benchmark runModularStructuredN320B8 where compareConfig\ndef runBareissStructuredN320B8 := runBareissAt \"structured\" 320 8\nsetup_fixed_benchmark runBareissStructuredN320B8 where compareConfig\ndef runFlintStructuredN320B8 := runFlintAt \"structured\" 320 8\nsetup_fixed_benchmark runFlintStructuredN320B8 where compareConfig\ndef runModularStructuredN384B8 := runModularAt \"structured\" 384 8\nsetup_fixed_benchmark runModularStructuredN384B8 where compareConfig\ndef runBareissStructuredN384B8 := runBareissAt \"structured\" 384 8\nsetup_fixed_benchmark runBareissStructuredN384B8 where compareConfig\ndef runFlintStructuredN384B8 := runFlintAt \"structured\" 384 8\nsetup_fixed_benchmark runFlintStructuredN384B8 where compareConfig\ndef runModularStructuredN512B8 := runModularAt \"structured\" 512 8\nsetup_fixed_benchmark runModularStructuredN512B8 where compareConfig\ndef runBareissStructuredN512B8 := runBareissAt \"structured\" 512 8\nsetup_fixed_benchmark runBareissStructuredN512B8 where compareConfig\ndef runFlintStructuredN512B8 := runFlintAt \"structured\" 512 8\nsetup_fixed_benchmark runFlintStructuredN512B8 where compareConfig\ndef runModularDenseN32B8 := runModularAt \"dense\" 32 8\nsetup_fixed_benchmark runModularDenseN32B8 where compareConfig\ndef runBareissDenseN32B8 := runBareissAt \"dense\" 32 8\nsetup_fixed_benchmark runBareissDenseN32B8 where compareConfig\ndef runFlintDenseN32B8 := runFlintAt \"dense\" 32 8\nsetup_fixed_benchmark runFlintDenseN32B8 where compareConfig\ndef runModularDenseN64B8 := runModularAt \"dense\" 64 8\nsetup_fixed_benchmark runModularDenseN64B8 where compareConfig\ndef runBareissDenseN64B8 := runBareissAt \"dense\" 64 8\nsetup_fixed_benchmark runBareissDenseN64B8 where compareConfig\ndef runFlintDenseN64B8 := runFlintAt \"dense\" 64 8\nsetup_fixed_benchmark runFlintDenseN64B8 where compareConfig\ndef runModularDenseN96B8 := runModularAt \"dense\" 96 8\nsetup_fixed_benchmark runModularDenseN96B8 where compareConfig\ndef runBareissDenseN96B8 := runBareissAt \"dense\" 96 8\nsetup_fixed_benchmark runBareissDenseN96B8 where compareConfig\ndef runFlintDenseN96B8 := runFlintAt \"dense\" 96 8\nsetup_fixed_benchmark runFlintDenseN96B8 where compareConfig\ndef runModularDenseN128B8 := runModularAt \"dense\" 128 8\nsetup_fixed_benchmark runModularDenseN128B8 where compareConfig\ndef runBareissDenseN128B8 := runBareissAt \"dense\" 128 8\nsetup_fixed_benchmark runBareissDenseN128B8 where compareConfig\ndef runFlintDenseN128B8 := runFlintAt \"dense\" 128 8\nsetup_fixed_benchmark runFlintDenseN128B8 where compareConfig\ndef runModularDenseN192B8 := runModularAt \"dense\" 192 8\nsetup_fixed_benchmark runModularDenseN192B8 where compareConfig\ndef runBareissDenseN192B8 := runBareissAt \"dense\" 192 8\nsetup_fixed_benchmark runBareissDenseN192B8 where compareConfig\ndef runFlintDenseN192B8 := runFlintAt \"dense\" 192 8\nsetup_fixed_benchmark runFlintDenseN192B8 where compareConfig\ndef runModularDenseN256B8 := runModularAt \"dense\" 256 8\nsetup_fixed_benchmark runModularDenseN256B8 where compareConfig\ndef runBareissDenseN256B8 := runBareissAt \"dense\" 256 8\nsetup_fixed_benchmark runBareissDenseN256B8 where compareConfig\ndef runFlintDenseN256B8 := runFlintAt \"dense\" 256 8\nsetup_fixed_benchmark runFlintDenseN256B8 where compareConfig\ndef runModularDenseN32B64 := runModularAt \"dense\" 32 64\nsetup_fixed_benchmark runModularDenseN32B64 where compareConfig\ndef runBareissDenseN32B64 := runBareissAt \"dense\" 32 64\nsetup_fixed_benchmark runBareissDenseN32B64 where compareConfig\ndef runFlintDenseN32B64 := runFlintAt \"dense\" 32 64\nsetup_fixed_benchmark runFlintDenseN32B64 where compareConfig\ndef runModularDenseN64B64 := runModularAt \"dense\" 64 64\nsetup_fixed_benchmark runModularDenseN64B64 where compareConfig\ndef runBareissDenseN64B64 := runBareissAt \"dense\" 64 64\nsetup_fixed_benchmark runBareissDenseN64B64 where compareConfig\ndef runFlintDenseN64B64 := runFlintAt \"dense\" 64 64\nsetup_fixed_benchmark runFlintDenseN64B64 where compareConfig\ndef runModularDenseN96B64 := runModularAt \"dense\" 96 64\nsetup_fixed_benchmark runModularDenseN96B64 where compareConfig\ndef runBareissDenseN96B64 := runBareissAt \"dense\" 96 64\nsetup_fixed_benchmark runBareissDenseN96B64 where compareConfig\ndef runFlintDenseN96B64 := runFlintAt \"dense\" 96 64\nsetup_fixed_benchmark runFlintDenseN96B64 where compareConfig\ndef runModularDenseN128B64 := runModularAt \"dense\" 128 64\nsetup_fixed_benchmark runModularDenseN128B64 where compareConfig\ndef runBareissDenseN128B64 := runBareissAt \"dense\" 128 64\nsetup_fixed_benchmark runBareissDenseN128B64 where compareConfig\ndef runFlintDenseN128B64 := runFlintAt \"dense\" 128 64\nsetup_fixed_benchmark runFlintDenseN128B64 where compareConfig\ndef runModularDenseN192B64 := runModularAt \"dense\" 192 64\nsetup_fixed_benchmark runModularDenseN192B64 where compareConfig\ndef runBareissDenseN192B64 := runBareissAt \"dense\" 192 64\nsetup_fixed_benchmark runBareissDenseN192B64 where compareConfig\ndef runFlintDenseN192B64 := runFlintAt \"dense\" 192 64\nsetup_fixed_benchmark runFlintDenseN192B64 where compareConfig\ndef runModularDenseN256B64 := runModularAt \"dense\" 256 64\nsetup_fixed_benchmark runModularDenseN256B64 where compareConfig\ndef runBareissDenseN256B64 := runBareissAt \"dense\" 256 64\nsetup_fixed_benchmark runBareissDenseN256B64 where compareConfig\ndef runFlintDenseN256B64 := runFlintAt \"dense\" 256 64\nsetup_fixed_benchmark runFlintDenseN256B64 where compareConfig\ndef runModularDenseN32B1024 := runModularAt \"dense\" 32 1024\nsetup_fixed_benchmark runModularDenseN32B1024 where compareConfig\ndef runBareissDenseN32B1024 := runBareissAt \"dense\" 32 1024\nsetup_fixed_benchmark runBareissDenseN32B1024 where compareConfig\ndef runFlintDenseN32B1024 := runFlintAt \"dense\" 32 1024\nsetup_fixed_benchmark runFlintDenseN32B1024 where compareConfig\ndef runModularDenseN64B1024 := runModularAt \"dense\" 64 1024\nsetup_fixed_benchmark runModularDenseN64B1024 where compareConfig\ndef runBareissDenseN64B1024 := runBareissAt \"dense\" 64 1024\nsetup_fixed_benchmark runBareissDenseN64B1024 where compareConfig\ndef runFlintDenseN64B1024 := runFlintAt \"dense\" 64 1024\nsetup_fixed_benchmark runFlintDenseN64B1024 where compareConfig\ndef runModularDenseN96B1024 := runModularAt \"dense\" 96 1024\nsetup_fixed_benchmark runModularDenseN96B1024 where compareConfig\ndef runBareissDenseN96B1024 := runBareissAt \"dense\" 96 1024\nsetup_fixed_benchmark runBareissDenseN96B1024 where compareConfig\ndef runFlintDenseN96B1024 := runFlintAt \"dense\" 96 1024\nsetup_fixed_benchmark runFlintDenseN96B1024 where compareConfig\ndef runModularDenseN128B1024 := runModularAt \"dense\" 128 1024\nsetup_fixed_benchmark runModularDenseN128B1024 where compareConfig\ndef runBareissDenseN128B1024 := runBareissAt \"dense\" 128 1024\nsetup_fixed_benchmark runBareissDenseN128B1024 where compareConfig\ndef runFlintDenseN128B1024 := runFlintAt \"dense\" 128 1024\nsetup_fixed_benchmark runFlintDenseN128B1024 where compareConfig\ndef runModularDenseN192B1024 := runModularAt \"dense\" 192 1024\nsetup_fixed_benchmark runModularDenseN192B1024 where compareConfig\ndef runBareissDenseN192B1024 := runBareissAt \"dense\" 192 1024\nsetup_fixed_benchmark runBareissDenseN192B1024 where compareConfig\ndef runFlintDenseN192B1024 := runFlintAt \"dense\" 192 1024\nsetup_fixed_benchmark runFlintDenseN192B1024 where compareConfig\ndef runModularDenseN256B1024 := runModularAt \"dense\" 256 1024\nsetup_fixed_benchmark runModularDenseN256B1024 where compareConfig\ndef runBareissDenseN256B1024 := runBareissAt \"dense\" 256 1024\nsetup_fixed_benchmark runBareissDenseN256B1024 where compareConfig\ndef runFlintDenseN256B1024 := runFlintAt \"dense\" 256 1024\nsetup_fixed_benchmark runFlintDenseN256B1024 where compareConfig\ndef runModularUnimodularN32B64 := runModularAt \"unimodular\" 32 64\nsetup_fixed_benchmark runModularUnimodularN32B64 where compareConfig\ndef runBareissUnimodularN32B64 := runBareissAt \"unimodular\" 32 64\nsetup_fixed_benchmark runBareissUnimodularN32B64 where compareConfig\ndef runFlintUnimodularN32B64 := runFlintAt \"unimodular\" 32 64\nsetup_fixed_benchmark runFlintUnimodularN32B64 where compareConfig\ndef runModularUnimodularN64B64 := runModularAt \"unimodular\" 64 64\nsetup_fixed_benchmark runModularUnimodularN64B64 where compareConfig\ndef runBareissUnimodularN64B64 := runBareissAt \"unimodular\" 64 64\nsetup_fixed_benchmark runBareissUnimodularN64B64 where compareConfig\ndef runFlintUnimodularN64B64 := runFlintAt \"unimodular\" 64 64\nsetup_fixed_benchmark runFlintUnimodularN64B64 where compareConfig\ndef runModularUnimodularN96B64 := runModularAt \"unimodular\" 96 64\nsetup_fixed_benchmark runModularUnimodularN96B64 where compareConfig\ndef runBareissUnimodularN96B64 := runBareissAt \"unimodular\" 96 64\nsetup_fixed_benchmark runBareissUnimodularN96B64 where compareConfig\ndef runFlintUnimodularN96B64 := runFlintAt \"unimodular\" 96 64\nsetup_fixed_benchmark runFlintUnimodularN96B64 where compareConfig\ndef runModularUnimodularN128B64 := runModularAt \"unimodular\" 128 64\nsetup_fixed_benchmark runModularUnimodularN128B64 where compareConfig\ndef runBareissUnimodularN128B64 := runBareissAt \"unimodular\" 128 64\nsetup_fixed_benchmark runBareissUnimodularN128B64 where compareConfig\ndef runFlintUnimodularN128B64 := runFlintAt \"unimodular\" 128 64\nsetup_fixed_benchmark runFlintUnimodularN128B64 where compareConfig\ndef runModularUnimodularN192B64 := runModularAt \"unimodular\" 192 64\nsetup_fixed_benchmark runModularUnimodularN192B64 where compareConfig\ndef runBareissUnimodularN192B64 := runBareissAt \"unimodular\" 192 64\nsetup_fixed_benchmark runBareissUnimodularN192B64 where compareConfig\ndef runFlintUnimodularN192B64 := runFlintAt \"unimodular\" 192 64\nsetup_fixed_benchmark runFlintUnimodularN192B64 where compareConfig\ndef runModularUnimodularN256B64 := runModularAt \"unimodular\" 256 64\nsetup_fixed_benchmark runModularUnimodularN256B64 where compareConfig\ndef runBareissUnimodularN256B64 := runBareissAt \"unimodular\" 256 64\nsetup_fixed_benchmark runBareissUnimodularN256B64 where compareConfig\ndef runFlintUnimodularN256B64 := runFlintAt \"unimodular\" 256 64\nsetup_fixed_benchmark runFlintUnimodularN256B64 where compareConfig\n\n/-- Run the small hash anchors in CI; the full comparator ladder is scheduled. -/\ndef verifySmoke : IO UInt32 := do\n  let reports \u2190 LeanBench.verify [`Hex.ModularMatrixBench.smokeStructured,\n    `Hex.ModularMatrixBench.smokeDense, `Hex.ModularMatrixBench.smokeUnimodular]\n  IO.println (LeanBench.Format.fmtCombinedVerify reports)\n  return if reports.passed then 0 else 1\n\nend Hex.ModularMatrixBench\n\ndef main (args : List String) : IO UInt32 :=\n  match args with\n  | [\"verify\"] => Hex.ModularMatrixBench.verifySmoke\n  | _ => LeanBench.Cli.dispatch args\n",
+    "scripts/bench/modmat_flint.py": "#!/usr/bin/env python3\n\"\"\"Collect the bounded modular determinant baseline against Bareiss and FLINT.\n\nUses the registered fixed sampling settings, alternates the adjacent arm order,\nand retains every export, including capped calls. A nonblocking CPU lease picks\nplacement without waiting for an idle core. Set HEX_FLINT_BENCH_PYTHON to a\nPython containing python-flint. Run after lake build hexmodularmatrix_bench.\n\"\"\"\nimport argparse\nimport fcntl\nimport hashlib\nimport json\nimport os\nfrom pathlib import Path\nimport re\nimport subprocess\nimport tempfile\nimport time\n\n\ndef main():\n    parser = argparse.ArgumentParser(description=__doc__)\n    parser.add_argument('output', type=Path)\n    args = parser.parse_args()\n    root = Path(__file__).resolve().parents[2]\n    cpus = sorted(os.sched_getaffinity(0))\n    offset = os.getpid() % len(cpus)\n    for cpu in cpus[offset:] + cpus[:offset]:\n        lease = open(f'/tmp/hex-bench-cpu-{cpu}.lock', 'a')\n        try:\n            fcntl.flock(lease, fcntl.LOCK_EX | fcntl.LOCK_NB)\n            break\n        except BlockingIOError:\n            lease.close()\n    else:\n        raise RuntimeError('all measurement CPU leases are held')\n    os.sched_setaffinity(0, {cpu})\n    os.environ['LEAN_NUM_THREADS'] = '1'\n    source = root / 'bench/HexModularMatrix/Bench.lean'\n    names = re.findall(r'setup_fixed_benchmark (runModular\\w+)', source.read_text())\n    python = os.environ.get('HEX_FLINT_BENCH_PYTHON', 'python3')\n    versions = subprocess.check_output([python, '-c',\n        'import json, platform, flint; print(json.dumps(dict('\n        'python=platform.python_version(), python_flint=flint.__version__)))'], text=True)\n    sources = ['bench/HexModularMatrix/Bench.lean',\n               'conformance/HexModularMatrix/Fixtures.lean',\n               'HexModularMatrix/Image.lean', 'HexModularMatrix/Bound.lean',\n               'HexModularMatrix/Det.lean', 'Hex/BenchOracle/Flint.lean',\n               'scripts/oracle/flint_bench_driver.py', 'scripts/bench/modmat_flint.py']\n    data = {\n        'versions': json.loads(versions), 'cpu': cpu,\n        'load_before': Path('/proc/loadavg').read_text().strip(),\n        'source_commit': subprocess.check_output(\n            ['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip(),\n        'source_sha256': {p: hashlib.sha256((root / p).read_bytes()).hexdigest()\n                          for p in sources},\n        'sampling': 'five fixed repeats, 0.2 s floor, discarded outer and inner '\n                    'warmups; adjacent modular/Bareiss/FLINT arms reverse on alternate rungs',\n        'runs': [],\n    }\n    args.output.parent.mkdir(parents=True, exist_ok=True)\n    with tempfile.TemporaryDirectory(prefix='modmat-flint-') as temporary:\n        for index, name in enumerate(['runFlintOverhead'] + names):\n            arms = ['Hex.ModularMatrixBench.' + name]\n            if index:\n                arms += [arms[0].replace('runModular', 'runBareiss'),\n                         arms[0].replace('runModular', 'runFlint')]\n                if index % 2 == 0:\n                    arms.reverse()\n            export = Path(temporary) / f'{index}.json'\n            command = [str(root / '.lake/build/bin/hexmodularmatrix_bench'),\n                       'compare' if index else 'run', *arms, '--export-file', str(export)]\n            start = time.monotonic()\n            result = subprocess.run(command, cwd=root, text=True,\n                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT)\n            run = {'command': command, 'exit_code': result.returncode,\n                   'wall_seconds': time.monotonic() - start,\n                   'load': Path('/proc/loadavg').read_text().strip(), 'log': result.stdout}\n            if export.exists():\n                run['export'] = json.loads(export.read_text())\n            data['runs'].append(run)\n            data['load_after'] = Path('/proc/loadavg').read_text().strip()\n            args.output.write_text(json.dumps(data, indent=2) + '\\n')\n            print(f'{index}: {name}: exit {result.returncode}', flush=True)\n\n\nif __name__ == '__main__':\n    main()\n"
+  },
+  "interruption": "The incomplete dimension-320 comparison was stopped after diagnosing the single-worker cap starvation. No completed comparison export was removed."
+}

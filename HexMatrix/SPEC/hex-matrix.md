@@ -535,3 +535,9 @@ the headline report.
 Structured metadata in the project's
 [`libraries.yml`](https://github.com/kim-em/hex-dev/blob/main/libraries.yml)
 under `HexMatrix.phase4`.
+
+## Entrywise maps
+
+`Matrix.mapEntries` applies any coefficient function in one pass over the
+flat buffer; `getElem_mapEntries` states its entry equation. Determinant
+transport under ring homomorphisms belongs to hex-determinant.

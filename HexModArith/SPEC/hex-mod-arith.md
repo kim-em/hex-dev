@@ -271,3 +271,10 @@ butterflies — are registered as
 `SPEC/benchmarking.md §"Within-Lean comparisons"`). Those
 comparisons are the right shape for this library; an external tool
 would just be wrapping the same underlying word-level operations.
+
+## Checked inversion and integer reduction
+
+`ZMod64.inv?` checks the inverse candidate by multiplication and returns
+`none` for a nonunit. `inv?_eq_some` proves the inverse equation on success
+for every supported modulus, without primality. `toNat_intCast` identifies
+the canonical representative of an integer cast with its integer remainder.

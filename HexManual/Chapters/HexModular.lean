@@ -181,3 +181,8 @@ tag := "hex-modular-cross-references"
   modulus stream used by modular algorithms.
 * `HexPolyZGcd`, `HexMvGcd`, and `HexMvHensel` consume this library's CRT,
   reconstruction, and multimodular-loop APIs.
+
+Bounded integer reconstruction uses {name}`Hex.Modular.CrtVec.push_congr`
+to preserve a target residue through an accepted push and
+{name}`Hex.Modular.CrtVec.eq_of_congr` to identify its balanced value once
+the modulus exceeds twice the target magnitude.

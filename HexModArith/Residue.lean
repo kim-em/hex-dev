@@ -580,6 +580,22 @@ instance : Pow (ZMod64 p) Nat where
 instance : Inv (ZMod64 p) where
   inv := ZMod64.inv
 
+/-- Invert a unit, returning `none` if the Bezout candidate is not an inverse.
+The multiplication check works for composite moduli as well as primes. -/
+@[expose]
+def inv? (a : ZMod64 p) : Option (ZMod64 p) :=
+  let b := inv a
+  if a * b = 1 then some b else none
+
+/-- Every returned inverse multiplies its argument to one. -/
+theorem inv?_eq_some {a b : ZMod64 p} (h : inv? a = some b) : a * b = 1 := by
+  unfold inv? at h
+  dsimp only at h
+  split at h
+  · cases h
+    assumption
+  · contradiction
+
 /-- The canonical representative of the zero residue is `0`. -/
 @[simp, grind =] theorem toNat_zero : (ZMod64.zero : ZMod64 p).toNat = 0 := by
   rw [ZMod64.zero, toNat_ofNat]

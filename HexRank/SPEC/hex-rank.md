@@ -15,7 +15,7 @@ proves that the producer's certificate checks, and relates the certificate
 to Mathlib's `Echelon.Decomposition`.
 
 This is the shared foundation for certified integer rank in
-[hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md), for the generic rank of
+[hex-modular-matrix](../../HexModularMatrix/SPEC/hex-modular-matrix.md), for the generic rank of
 polynomial matrices, and for the symbolic arm of the `rank` tactic
 ([SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md)).
 
@@ -50,7 +50,7 @@ contract, not an extra return field on `BareissData`. The section
 [What is new relative to hex-bareiss](#what-is-new-relative-to-hex-bareiss)
 lists the differences against `bareissDataWith` and `pivotLoopWith`.
 
-[hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md) specifies a two-sided rank
+[hex-modular-matrix](../../HexModularMatrix/SPEC/hex-modular-matrix.md) specifies a two-sided rank
 certificate over `Int` for its multi-modular route. That certificate is the
 `Int` instance of the one here, and the section
 [Int](#int) records the amendment that makes the two coincide.
@@ -878,7 +878,7 @@ hex-bareiss now aliases). The names `rank`, `rankProfile`, `rankCert`,
 (`RankCert n m` with `rows`, `cols`, `modulus`, `coeffs : Matrix Int r (m - r)`,
 `denom`) is amended to *be* `Hex.Matrix.RankCert Int n m`, and its
 `checkRank` to be this library's, with these consequences, recorded in
-[hex-modular-matrix §Rank](../../SPEC/Libraries/hex-modular-matrix.md#rank):
+[hex-modular-matrix §Rank](../../HexModularMatrix/SPEC/hex-modular-matrix.md#rank):
 
 - the `modulus` field and the "minor nonzero modulo `modulus`" test go
   away, replaced by the adjugate identity, which is a big-integer product

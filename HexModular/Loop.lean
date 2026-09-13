@@ -52,6 +52,28 @@ theorem CrtTrace.le_size {image : Nat → Option (Vector Int k)}
   | reject _ hi _ _ ih => omega
   | push _ hi _ _ ih => omega
 
+/-- A traced state agrees modulo its accumulated modulus with every vector
+whose coordinates agree with all successful images in the consumed prefix. -/
+theorem CrtTrace.congr {image : Nat → Option (Vector Int k)}
+    {supply : Array Nat} {consumed : Nat} {state : CrtVec k}
+    (trace : CrtTrace image supply consumed state) (x : Vector Int k)
+    (himage : ∀ j (hj : j < supply.size), j < consumed →
+      ∀ r, image supply[j] = some r →
+        ∀ i : Fin k, r[i] % (supply[j] : Int) = x[i] % (supply[j] : Int)) :
+    ∀ i : Fin k, state.value[i] % (state.modulus : Int) =
+      x[i] % (state.modulus : Int) := by
+  induction trace with
+  | init => intro i; simp [CrtVec.init]
+  | skip trace hi he ih =>
+    exact ih (fun j hj hjc => himage j hj (by omega))
+  | reject trace hi he hp ih =>
+    exact ih (fun j hj hjc => himage j hj (by omega))
+  | @push index state next trace hi r he hp ih =>
+    intro i
+    exact CrtVec.push_congr hp i x[i]
+      (ih (fun j hj hjc => himage j hj (by omega)) i)
+      (himage index hi (by omega) r he i)
+
 /-- Consume the remaining supply entries, skipping rejected images and
 non-coprime moduli and testing `accept` only after a successful CRT push. -/
 private def crtLoop.go (image : Nat → Option (Vector Int k))

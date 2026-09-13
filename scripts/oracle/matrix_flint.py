@@ -258,7 +258,7 @@ def _check_det(
     oracle_version: str,
 ) -> None:
     rows = _rows(matrix_record)
-    if len(rows) != len(rows[0]):
+    if any(len(row) != len(rows) for row in rows):
         raise OracleMismatch(
             f"{lib}/{case_id}: det requires a square matrix, "
             f"got {len(rows)}x{len(rows[0])}"

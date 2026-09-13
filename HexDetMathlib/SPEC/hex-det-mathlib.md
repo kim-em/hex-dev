@@ -132,10 +132,10 @@ to the input determinant. Use the row-operation lemmas above. Prove the
 failed-pivot column branch yields determinant zero. Until the operation
 and its correctness are supplied, the installed field policy is Bareiss.
 
-**Modular and divisor arms.** The operations and correctness in
-[hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md) are planned, not declarations
-that can be imported today. Once implemented, compose their determinant
-equalities with the dispatch branches and discharge `LawfulDetBound` using
+**Modular and divisor arms.** The bounded modular operation and its correctness are in
+[hex-modular-matrix](../../HexModularMatrix/SPEC/hex-modular-matrix.md); the divisor arm remains
+a later milestone. When enabling either dispatch arm, compose its determinant
+equality with the dispatch branch and discharge `LawfulDetBound` using
 the modular companion. The divisor route must also satisfy that library's
 certified solve and divisibility contracts. Modular exhaustion must use the
 Bareiss proof and report Bareiss completion. Never assume finite fuel always

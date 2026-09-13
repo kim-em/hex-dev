@@ -13,6 +13,7 @@ public import HexMatrixMathlib.Lemmas
 public import HexMatrixMathlib.Gram
 public import HexMatrixMathlib.Submatrix
 public import HexMatrixMathlib.Literal
+public import HexMatrixMathlib.Hadamard
 
 public section
 

@@ -527,7 +527,7 @@ instance (A : Matrix (Fin n) (Fin m) ℤ) (r : Nat) : Decidable (A.rank = r)
 
 by `rank_eq` at `e.symm A`, in the style of hex-berlekamp-mathlib's
 `Decidable (Irreducible f)`. This is the instance
-[hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md) planned for its `rank`, now
+[hex-modular-matrix](../../HexModularMatrix/SPEC/hex-modular-matrix.md) planned for its `rank`, now
 supplied here with the direct algorithm; the multi-modular route may
 later replace the computation behind it without changing the statement.
 A generic instance for every carrier with an executable exact quotient is

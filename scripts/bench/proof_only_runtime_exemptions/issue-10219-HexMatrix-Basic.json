@@ -1,0 +1,6 @@
+{
+  "path": "HexMatrix/Basic.lean",
+  "baseline_blob": "6a265ec91b0fe573eb81f12634bcfc001bde9877",
+  "current_blob": "66a6448eaad9825f614df3a2e1f01fe036551f81",
+  "reason": "Adds mapEntries and its indexing theorem. The existing integer-factorization service does not call the new function. The manifest-to-current transition also includes the existing map API and scoped kernel-reducing matrix equality instance: the map is unused by integer factorization, and equality still compares the same backing vectors. Existing arithmetic operations are unchanged."
+}

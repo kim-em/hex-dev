@@ -271,3 +271,6 @@ laws are proved here).
 * `HexDeterminantMathlib` identifies this executable determinant with
   Mathlib's {name _root_.Matrix.det}`Matrix.det`.
   `HexDeterminant` itself is Mathlib-free.
+
+Entrywise coefficient conversion commutes with the determinant through
+{name}`Hex.Matrix.det_mapEntries`, given the four ring-homomorphism laws.

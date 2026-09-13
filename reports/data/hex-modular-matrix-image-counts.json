@@ -1,0 +1,77 @@
+[
+  {
+    "case": "empty",
+    "row_norm": 1,
+    "hadamard": 1
+  },
+  {
+    "case": "singleton-negative",
+    "row_norm": 1,
+    "hadamard": 1
+  },
+  {
+    "case": "zero",
+    "row_norm": 1,
+    "hadamard": 1
+  },
+  {
+    "case": "singular",
+    "row_norm": 1,
+    "hadamard": 1
+  },
+  {
+    "case": "swap-sign",
+    "row_norm": 1,
+    "hadamard": 1
+  },
+  {
+    "case": "modulus",
+    "row_norm": 2,
+    "hadamard": 2
+  },
+  {
+    "case": "two-bad-primes",
+    "row_norm": 3,
+    "hadamard": 3
+  },
+  {
+    "case": "large-small-determinant",
+    "row_norm": 133,
+    "hadamard": 133
+  },
+  {
+    "case": "scaled-hadamard",
+    "row_norm": 3,
+    "hadamard": 3
+  },
+  {
+    "case": "structured-determinant/8",
+    "row_norm": 1,
+    "hadamard": 1
+  },
+  {
+    "case": "dense-random-determinant/8-bit",
+    "row_norm": 2,
+    "hadamard": 1
+  },
+  {
+    "case": "dense-random-determinant/64-bit",
+    "row_norm": 9,
+    "hadamard": 9
+  },
+  {
+    "case": "dense-random-determinant/1024-bit",
+    "row_norm": 100,
+    "hadamard": 100
+  },
+  {
+    "case": "unimodular-determinant/positive",
+    "row_norm": 13,
+    "hadamard": 13
+  },
+  {
+    "case": "unimodular-determinant/negative",
+    "row_norm": 13,
+    "hadamard": 13
+  }
+]
