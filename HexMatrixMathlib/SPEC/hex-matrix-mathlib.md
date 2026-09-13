@@ -107,9 +107,11 @@ expressions and the route), evaluates entries with Mathlib's
 `evalRatEntry` (`evalEntries`), quotes row lists (`rowList`), builds the
 identification proof along the route (`identification`), adds a closed
 proof as an auxiliary lemma checked by the kernel synchronously and exactly
-once (`addClosedProof`: `mkAuxLemma` as `decide +kernel` uses it, never
-`mkAuxTheorem`, whose closure step type-checks the proof in the elaborator
-first and doubles the cost) and elaborates a term-form argument with an
+once (`addClosedProof`: `mkAuxLemma` without lemma reuse, the
+declaration-checking path `decide +kernel` uses, never `mkAuxTheorem`,
+whose closure step type-checks the proof in the elaborator first and
+evaluates the certificate a second time) and elaborates a term-form
+argument with an
 integer expectation for the `!![…]` notations (`elabArgument`). `Certified` is the record the `%` term forms return.
 The empty shapes `!![]`, `!![,,,]` and `!![;;;]` are literals of their
 dimensions. Tests: `HexMatrixMathlib/Tests.lean` identifies each syntax and

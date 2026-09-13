@@ -481,36 +481,13 @@ delta. Medians from
 (shared host, one CPU, both arms with `!![…]` elaboration inside the
 delta):
 
-| family | `eval_rank` | `rank` | ratio |
-|---|---|---|---|
-| dense `8 × 8` | 0.30 s | 0.10 s | 3.0 |
-| dense `16 × 16` | 1.84 s | 0.39 s | 4.7 |
-| dense `16 × 16`, rank 14 | 1.80 s | 0.40 s | 4.5 |
-| dense `32 × 32` | 13.9 s | 2.1 s | 6.6 |
-| `32 × 32`, rank 2 | 14.9 s | 0.70 s | 21.2 |
-
-Proof time against dimension, for the full-rank, rank `n − 2`, rank
-`n / 2` and rank `2` families up to a ten-second cap per run, is recorded
-by `scripts/bench/rank_tactic_size_sweep.py` (profiler totals per file,
-imports excluded, the median of three runs per point with the range kept)
-and plotted by `scripts/plots/hex-rank-mathlib-tactic-size.py` to
-`reports/figures/hex-rank-mathlib-tactic-size.svg`. The current record is
-`reports/bench-results/hex-rank-mathlib-tactic-size-b7794180e909-chungus2.json`.
-Under the ten-second cap
-`eval_rank` reaches `n = 28` in every family (about `9.6 s`) and `rank`
-reaches `n = 48` at full rank, rank `n − 2` and rank `n / 2` (`6.6`,
-`7.0` and `7.2 s`) and `n = 128` at rank `2` (`7.8 s`, of which the
-kernel is `1.0 s` and the literal's elaboration most of the rest).
-
-Median kernel shares recorded by the same size sweep are:
-
 | family | `eval_rank` | `rank` |
 |---|---|---|
-| dense `8 × 8`, rank 8 | 122 ms | 16 ms |
-| dense `16 × 16`, rank 16 | 857 ms | 99 ms |
-| dense `16 × 16`, rank 14 | 854 ms | 106 ms |
-| dense `32 × 32`, rank 32 | timeout | 840 ms |
-| `32 × 32`, rank 2 | timeout | 132 ms |
+| dense `8 × 8`, rank 8 | 127 ms | 17 ms |
+| dense `16 × 16`, rank 16 | 923 ms | 101 ms |
+| dense `16 × 16`, rank 14 | 860 ms | 105 ms |
+| dense `32 × 32`, rank 32 | timeout | 879 ms |
+| `32 × 32`, rank 2 | timeout | 131 ms |
 
 The timeout entries have no profiler breakdown because the corresponding
 proof exceeded the sweep's ten-second cap.

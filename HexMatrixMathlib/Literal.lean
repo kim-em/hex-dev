@@ -259,15 +259,20 @@ def decideProof (prop : Expr) : MetaM Expr := do
 
 /-- Add the closed proof `proof : target` as an auxiliary lemma, checked by
 the kernel synchronously and exactly once, and return the constant.  This
-is what `decide +kernel` does.  `mkAuxTheorem` is not used: with its
-default `zetaDelta := false` its closure step type-checks the proof in the
+is the declaration-checking path `decide +kernel` uses (`mkAuxLemma`),
+without reuse of an earlier lemma for the same statement, so every
+supplied proof is checked.  `mkAuxTheorem` is not used: with its default
+`zetaDelta := false` its closure step type-checks the proof in the
 elaborator (`Meta.check`) before the kernel does, which evaluates the
-certificate a second time and doubles the cost of a matrix tactic.  The
-target and the proof must be closed; the universe parameters are the
-level parameters they mention. -/
+certificate a second time.  The target and the proof must be closed, with
+no free variables and no expression or universe metavariables; the
+universe parameters are the level parameters they mention. -/
 def addClosedProof (target proof : Expr) : MetaM Expr := do
+  if target.hasFVar || target.hasMVar || proof.hasFVar || proof.hasMVar then
+    throwError "the target and the proof must be closed{indentExpr target}"
   let levels := (collectLevelParams (collectLevelParams {} target) proof).params.toList
-  let name ← withOptions (Lean.Elab.async.set · false) do mkAuxLemma levels target proof
+  let name ← withOptions (Lean.Elab.async.set · false) do
+    mkAuxLemma levels target proof (cache := false)
   return mkConst name (levels.map Level.param)
 
 /-- The proof of `A = ofLists n m L` along the literal's route: `rfl` for a
