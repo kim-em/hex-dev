@@ -583,6 +583,23 @@ instance : Lean.Grind.CommRing (ZMod64 p) := by
 instance : Lean.Grind.IsCharP (ZMod64 p) p where
   ofNat_ext_iff {x y} := natCast_eq_natCast_iff (p := p) x y
 
+/-- The canonical representative of an integer cast is its Euclidean remainder. -/
+theorem toNat_intCast (z : Int) : ((intCast p z).toNat : Int) = z % (p : Int) := by
+  cases z with
+  | ofNat n =>
+    rw [toNat_intCast_ofNat]
+    rfl
+  | negSucc n =>
+    rw [toNat_intCast_negSucc, Int.natCast_emod,
+      Int.natCast_sub (Nat.le_of_lt (Nat.mod_lt _ (Bounds.pPos (p := p)))),
+      Int.natCast_emod]
+    change ((p : Int) - ((n + 1 : Nat) : Int) % (p : Int)) % (p : Int) =
+      (-((n + 1 : Nat) : Int)) % (p : Int)
+    rw [Int.neg_emod_eq_sub_emod]
+    conv => lhs; rw [Int.sub_emod]
+    conv => rhs; rw [Int.sub_emod]
+    simp only [Int.emod_emod]
+
 end ZMod64
 
 end Hex

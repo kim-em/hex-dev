@@ -1,0 +1,6 @@
+{
+  "path": "HexPolyZ/Mignotte.lean",
+  "baseline_blob": "6d8b161f58d48d2e445913cd67bda7b52c1cf113",
+  "current_blob": "38d79850b04562d53b5595b2e769258b5d0507ba",
+  "reason": "Moves the same natural Newton square-root code to HexArith.Nat.Sqrt and leaves reducible aliases at the original public names. No arithmetic, iteration fuel, branching, or coefficient-bound formula changes; proof edits only accommodate the aliases."
+}

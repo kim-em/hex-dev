@@ -188,9 +188,9 @@ the field constructor uses Bareiss as its explicit initial policy.
 
 ### Integer modular integration
 
-[hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md) specifies the modular and divisor
-algorithms but has no registered library or implementation today. Initial
-integer dispatch therefore uses Bareiss at every `n > 2`. Enable modular
+[hex-modular-matrix](../../HexModularMatrix/SPEC/hex-modular-matrix.md) provides the bounded modular
+algorithm and specifies the later divisor route. Initial integer dispatch
+uses Bareiss at every `n > 2`. Enable modular
 selection only after the lower algorithm, route reporting, correctness
 integration, and crossover measurement exist. This initial availability
 rule is not a claim that Bareiss wins for large matrices.

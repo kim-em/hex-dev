@@ -9,7 +9,7 @@ them usable from a Mathlib goal.
 
 This SPEC is the first of three expanding the "Modular techniques" entry
 in [future-work](../../SPEC/future-work.md). The other two are
-[hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md), which holds the
+[hex-modular-matrix](../../HexModularMatrix/SPEC/hex-modular-matrix.md), which holds the
 multi-modular determinant, certified rank, and Dixon lifting, and
 [hex-poly-z-gcd](../../HexPolyZGcd/SPEC/hex-poly-z-gcd.md), which holds the modular gcd for
 `ℤ[x]`. This library is what all three of them share.
@@ -27,7 +27,7 @@ than a check, derivable from `gcd(p, q) = 1` and the congruence. See
 ## Why this library exists
 
 **Three consumers, none of which should depend on the others.**
-[hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md) reconstructs an integer
+[hex-modular-matrix](../../HexModularMatrix/SPEC/hex-modular-matrix.md) reconstructs an integer
 determinant from residues and a rational solution vector from a `p`-adic
 expansion. [hex-poly-z-gcd](../../HexPolyZGcd/SPEC/hex-poly-z-gcd.md) reconstructs an integer
 polynomial coefficient vector from residues.
@@ -88,7 +88,7 @@ denominator; the modulus supply and its runtime primality test; and the
 loop combinator that adds moduli until a caller-supplied check accepts.
 
 Not in scope: `p`-adic lifting (that is Dixon's, and it lives with its
-consumer in [hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md)); the
+consumer in [hex-modular-matrix](../../HexModularMatrix/SPEC/hex-modular-matrix.md)); the
 coefficient bounds that tell a consumer how large a modulus it needs
 (a Hadamard bound is a matrix fact and a Mignotte bound is a polynomial
 fact, so each belongs with its own type); prime *choice* heuristics,
@@ -511,7 +511,7 @@ The soundness theorem is the congruence and nothing else, which is
 honest, and it is enough for a consumer whose check is exact (trial
 division for a gcd, one matrix-vector product for a linear solve). It is
 **not** enough for the multi-modular determinant, which has no cheap
-check, and [hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md) says so in the one
+check, and [hex-modular-matrix](../../HexModularMatrix/SPEC/hex-modular-matrix.md) says so in the one
 place it matters. Monagan, "Maximal quotient rational reconstruction: an
 almost optimal algorithm for rational reconstruction" (ISSAC 2004), is
 the reference, and the failure probability analysis there is the reason
@@ -640,7 +640,7 @@ the modulus exceeds twice the bound never stops.
 
 Nothing in this library can fix that, and it is recorded here because it
 is the shared cause of three separate obligations elsewhere:
-[hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md)'s determinant needs a
+[hex-modular-matrix](../../HexModularMatrix/SPEC/hex-modular-matrix.md)'s determinant needs a
 fallback that does not use moduli at all, its rank certificate needs a
 lower-bound witness that is not restricted to small moduli, and
 [hex-poly-z-gcd](../../HexPolyZGcd/SPEC/hex-poly-z-gcd.md)'s coprimality certificate needs a
@@ -872,7 +872,7 @@ Mathlib has `ZMod.chineseRemainder` for coprime moduli, so the
 correspondence for a two-modulus push is a transport. The `k`-modulus
 statement is an induction over the fold, and the reason to state it at all
 is that a Mathlib-facing consumer (the determinant correspondence in
-[hex-modular-matrix-mathlib](../../SPEC/Libraries/hex-modular-matrix.md)) wants to argue in
+[hex-modular-matrix-mathlib](../../HexModularMatrix/SPEC/hex-modular-matrix.md)) wants to argue in
 `ZMod` and land in `ℤ`.
 
 Rational reconstruction has no Mathlib counterpart to correspond with, so
@@ -910,13 +910,13 @@ hex-mod-arith type, its proof uses `ZMod64` lemmas and
 `HexPolyFp.Degree`. As it stands, any library wanting to do linear
 algebra over `F_p` must depend on hex-poly-fp for one instance about a
 type it already has, which is what
-[hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md) would otherwise have to do.
+[hex-modular-matrix](../../HexModularMatrix/SPEC/hex-modular-matrix.md) would otherwise have to do.
 
 **`floorSqrt` and `ceilSqrt` should move to hex-arith.** They are
 Newton-iteration integer square roots defined in `HexPolyZ/Mignotte.lean`
 under the `Hex.ZPoly` namespace, where the Mignotte bound needed them.
 `ratReconWide?` needs `⌊√((m-1)/2)⌋` and the Hadamard bound in
-[hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md) needs `ceilSqrt` per column.
+[hex-modular-matrix](../../HexModularMatrix/SPEC/hex-modular-matrix.md) needs `ceilSqrt` per column.
 An integer square root under a polynomial namespace is a naming error as
 well as a placement one.
 
@@ -1015,5 +1015,5 @@ planned until its correspondence and decidability layer is implemented.
   [future-work](../../SPEC/future-work.md) proposes `Zp` and `Qp` at fixed
   precision, with Dixon named as a consumer. If that lands, the precision
   contract it specifies is the natural home for the lifting loop that
-  [hex-modular-matrix](../../SPEC/Libraries/hex-modular-matrix.md) currently writes out. The
+  [hex-modular-matrix](../../HexModularMatrix/SPEC/hex-modular-matrix.md) currently writes out. The
   reconstruction and the CRT stay here either way.

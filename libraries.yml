@@ -531,6 +531,29 @@ libraries:
           description: Fibonacci-shaped late Euclidean runs through 262144 bits and early-success cases through 100000 bits.
         - name: failure-cost
           description: Full Euclidean runs whose impossible numerator bound forces reconstruction failure through the final checks.
+  HexModularMatrix:
+    deps: [HexModular, HexMatrix, HexDeterminant, HexBareiss, HexModArith, HexArith]
+    mathlib: false
+    done_through: 1
+    status: active
+    phase4:
+      comparators:
+        - tool: "FLINT fmpz_mat_det via python-flint"
+          class: gating
+          goal: "detViaDivisor faster than Hex.Matrix.bareiss by at least 4x at n = 512 on the shared tridiagonal fixture in the same run (2.2x FLINT on the current report), with the FLINT ratio recorded and the 5x target at every eligible rung reviewed after the first measurement"
+      input_families:
+        - name: structured-determinant
+          description: Shared Bareiss tridiagonal fixture at dimensions 16 through 512.
+        - name: dense-random-determinant
+          description: Deterministic dense integer matrices at dimensions 32 through 256 and entry widths 8, 64 and 1024 bits.
+        - name: unimodular-determinant
+          description: Dense rank-one updates of the identity with determinant one and coefficient scale 2^64.
+  HexModularMatrixMathlib:
+    deps: [HexModularMatrix, HexMatrixMathlib, HexDeterminantMathlib, HexBareissMathlib]
+    mathlib: true
+    correspondence_only: true
+    done_through: 1
+    status: active
   HexGramSchmidt:
     deps: [HexRowReduce, HexDeterminant, HexBareiss]
     mathlib: false
@@ -1133,7 +1156,7 @@ libraries:
     done_through: 3
     status: active
   HexPolyZMathlib:
-    deps: [HexPolyZ, HexHensel, HexPolyMathlib, HexModArithMathlib]
+    deps: [HexPolyZ, HexHensel, HexPolyMathlib, HexModArithMathlib, HexMatrixMathlib]
     mathlib: true
     done_through: 3
     status: active

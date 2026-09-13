@@ -324,3 +324,7 @@ libraries:
   inheriting the ring structure and the
   {ref "hex-mod-arith-key-correctness"}[field facts] above for prime
   `p`.
+
+For arbitrary moduli, {name}`Hex.ZMod64.inv?` returns an inverse only after
+checking its product with the input is one. The success theorem
+{name}`Hex.ZMod64.inv?_eq_some` supplies that equation for elimination.

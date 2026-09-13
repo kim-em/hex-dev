@@ -57,6 +57,40 @@ def detTerm {R : Type u} [Lean.Grind.Ring R] {n : Nat}
 def det {R : Type u} [Lean.Grind.Ring R] {n : Nat} (M : Matrix R n n) : R :=
   (permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0
 
+/-- The Leibniz determinant commutes with an entrywise ring homomorphism.
+The homomorphism laws are explicit to keep this statement Mathlib-free. -/
+theorem det_mapEntries {S : Type v} {R : Type u}
+    [Lean.Grind.CommRing R] [Lean.Grind.CommRing S] {n : Nat}
+    (M : Matrix R n n) (f : R → S)
+    (hzero : f 0 = 0) (hone : f 1 = 1)
+    (hadd : ∀ a b, f (a + b) = f a + f b)
+    (hmul : ∀ a b, f (a * b) = f a * f b) :
+    det (M.mapEntries f) = f (det M) := by
+  have hneg : f (-1) = -1 := by
+    have h := hadd 1 (-1)
+    have hsum : (1 : R) + -1 = 0 := by grind
+    rw [hsum, hzero, hone] at h
+    grind
+  have hterm (p : Vector (Fin n) n) :
+      detTerm (M.mapEntries f) p = f (detTerm M p) := by
+    have hprod : detProduct (M.mapEntries f) p = f (detProduct M p) := by
+      simp only [detProduct, Fin.foldl_eq_finRange_foldl]
+      rw [← List.foldl_hom f (g₂ := fun acc i => acc * f M[(i, p[i])])
+        (fun a i => (hmul a M[(i, p[i])]).symm), hone]
+      apply List.foldl_congr
+      intro acc i _
+      rw [getElem_mapEntries]
+    simp only [detTerm, hmul, hprod]
+    congr 1
+    unfold detSign
+    split <;> simp_all
+  unfold det
+  rw [← List.foldl_hom f (g₂ := fun acc p => acc + f (detTerm M p))
+    (fun a p => (hadd a (detTerm M p)).symm), hzero]
+  apply List.foldl_congr
+  intro acc p _
+  rw [hterm]
+
 /-- The determinant of the empty leading prefix is the Bareiss previous-pivot
 convention `1`. -/
 @[simp, grind =] theorem det_principalSubmatrix_zero {R : Type u} [Lean.Grind.Ring R]
