@@ -23,7 +23,7 @@ variable {A : Matrix F n m} {D : RowEchelonData F n m}
 
 /-- Place the pivot-row coordinates in their pivot columns, with zero free
 coordinates. Columns beyond the rank are zero. -/
-private def pivotLift (D : RowEchelonData F n m) : Matrix F m n :=
+@[expose] def pivotLift (D : RowEchelonData F n m) : Matrix F m n :=
   Matrix.ofFn fun i j =>
     if h : j.val < D.rank then
       if D.pivotCols.get ⟨j.val, h⟩ = i then 1 else 0
@@ -132,12 +132,14 @@ abbrev SolveData (A : Matrix F n m) :=
 
 /-- Solve a field system completely. An error carries the first separating
 row of the RREF transform; success includes the canonical nullspace basis. -/
+@[expose]
 def solve (A : Matrix F n m) (b : Vector F n) : Except (Vector F n) (SolveData A) :=
   let D := rowReduce A
+  let E : IsRowReduced A D := rowReduce_isRowReduced A
   let c := D.transform * b
   match (List.finRange n).find? (fun i => decide (D.rank ≤ i.val ∧ c[i] ≠ 0)) with
   | some i => .error (row D.transform i)
-  | none => .ok (pivotLift D * c, (rowReduce_isRowReduced A).nullspaceMatrix)
+  | none => .ok (pivotLift D * c, E.nullspaceMatrix)
 
 /-- The option view of `solve`, forgetting only the inconsistency witness. -/
 @[expose]

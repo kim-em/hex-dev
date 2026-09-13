@@ -96,11 +96,7 @@ def emit [Lean.Grind.Field F] [DecidableEq F] (carrier : String) (modulus : Nat)
     ("case", toJson name), ("carrier", toJson carrier), ("modulus", toJson modulus),
     ("n", toJson c.n), ("m", toJson c.m), ("rows", matrixJson enc c.A),
     ("b", vectorJson enc c.b)]
-  match (← IO.getEnv "HEX_FIXTURE_OUTPUT") with
-  | none => IO.println input.compress
-  | some path =>
-    let handle ← IO.FS.Handle.mk path IO.FS.Mode.append
-    handle.putStrLn input.compress
+  Hex.Conformance.Emit.emitLine input.compress
   let result := match Matrix.solve c.A c.b with
     | .error y => Json.mkObj [("error", vectorJson enc y)]
     | .ok (x, N) => Json.mkObj [("particular", vectorJson enc x), ("basis", matrixJson enc N)]

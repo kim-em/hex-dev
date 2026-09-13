@@ -89,7 +89,10 @@ quadratic arithmetic upper bound. GMP documents the quadratic bound for
 [Lehmer/Euclidean GCD](https://gmplib.org/manual/Lehmer_0027s-Algorithm), the
 normalisation phase represented in the profiles below. A tight runtime model
 is unavailable across small-integer/GMP representation and arithmetic
-thresholds on this short height ladder. Faster observed scaling is assessed
+thresholds on this short height ladder. The shared-denominator rank-one update
+also controls intermediate and output growth: this is an operand-width sweep
+of that structured family, not a stress test of generic dense coefficient
+growth. Faster observed scaling is assessed
 as *within declared upper bound (observed faster)*, separately from the
 harness's two-sided verdict; it is not called two-sided consistency.
 
@@ -148,12 +151,16 @@ inconclusive on both runs. All 34 height registrations are within the declared
 upper bound (observed faster); their two-sided harness verdict is inconclusive.
 Every primary and rerun measurement completed with status `ok`.
 
-The source benchmark is commit `9c14175b0`,
-with benchmark-file SHA-256
+The run metadata records the pre-rebase source commit `9c14175b0`; the file
+hashes are the reproducibility anchor, since that commit need not remain
+reachable after squash merge. The benchmark-file SHA-256 is
 `2cbc832931b6abb022ff3d48a5790077076cde273c1d565cc9dce804f408c0ca`.
 The [scientific metadata](bench-results/hex-row-reduce-fields-bounded.meta.json)
 records source hashes, exact argv, automatically leased CPU, host, and load.
 Measurements use Lean 4.34.0-rc2 on the shared `chungus2` AMD EPYC 9455 host.
+Both the measured compiled code and the current implementation perform a
+single reduction. The collector rejects logged Lean panics, independently of
+the child exit status; all retained measurements are free of such diagnostics.
 
 ```sh
 HEX_FLINT_BENCH_PYTHON=/tmp/hexvenv/bin/python \
@@ -374,3 +381,9 @@ rerun is retained alongside the first result; no further retry or ladder/model
 change is used to force agreement. Native FLINT timing ratios remain unresolved
 because complete-payload overhead dominates. Correctness, smoke verification,
 and the documented measurement coverage are independent of these limitations.
+
+The particular-solution step materialises a dense pivot-selector matrix and
+multiplies it by the transformed RHS. This stays within the stated total
+field-operation bound but allocates O(mn) entries; a direct pivot scatter could
+reduce that cost. The current profile places this work within the 3.01%
+matrix-vector multiplication share rather than the dominant row reduction.

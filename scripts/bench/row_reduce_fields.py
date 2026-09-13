@@ -72,11 +72,15 @@ def main() -> int:
         start = time.monotonic()
         with open(str(prefix) + suffix + ".log", "w") as log:
             result = subprocess.run(command, cwd=root, stdout=log, stderr=subprocess.STDOUT)
-        metadata["commands"].append({"argv": command, "exit_code": result.returncode,
+        # Pure Lean panic! can return a default value and still exit successfully.
+        # A failed preparation must never certify a measurement of that default.
+        panicked = "panic" in Path(str(prefix) + suffix + ".log").read_text().lower()
+        exit_code = result.returncode or int(panicked)
+        metadata["commands"].append({"argv": command, "exit_code": exit_code, "panic_detected": panicked,
                                      "seconds": time.monotonic() - start})
         save()
-        print("finished", suffix or "scientific", "exit", result.returncode, flush=True)
-        return result.returncode
+        print("finished", suffix or "scientific", "exit", exit_code, flush=True)
+        return exit_code
 
     save()
     failures = 0

@@ -79,8 +79,58 @@ example : (Hex.Matrix.solve? (Hex.Matrix.identity (R := Rat) 0) #v[]).isSome := 
   rw [Hex.Matrix.solve?_isSome]
   exact ⟨#v[], Hex.Matrix.identity_mulVec _⟩
 
+example : Hex.Matrix.solve? (Hex.Matrix.identity (R := Rat) 0) #v[] =
+    some (#v[], Hex.Matrix.ofFn (fun i _ => Fin.elim0 i)) := by decide +kernel
+
+example (s : Hex.Matrix.SolveData (Hex.Matrix.identity (R := Rat) 0))
+    (h : Hex.Matrix.solve? (Hex.Matrix.identity (R := Rat) 0) #v[] = some s)
+    (x : Fin 0 → Rat) : ∃! c : Fin (0 - Hex.Matrix.rowReduce_rank
+      (Hex.Matrix.identity (R := Rat) 0)) → Rat,
+      x = vectorEquiv s.1 + (matrixEquiv s.2).mulVec c := by
+  apply (solve?_parameters _ _ s h x).mp
+  funext i
+  exact Fin.elim0 i
+
+example (A : Hex.Matrix Rat 0 m) (s : Hex.Matrix.SolveData A)
+    (h : Hex.Matrix.solve? A #v[] = some s) :
+    Submodule.span Rat (Set.range fun k => vectorEquiv (Hex.Matrix.col s.2 k)) = ⊤ := by
+  rw [solve?_span A #v[] s h]
+  ext x
+  simp only [Submodule.mem_top, iff_true, LinearMap.mem_ker]
+  funext i
+  exact Fin.elim0 i
+
+-- No equations: the returned columns are the standard basis, in order.
+example (s : Hex.Matrix.SolveData (0 : Hex.Matrix Rat 0 2))
+    (h : Hex.Matrix.solve? (0 : Hex.Matrix Rat 0 2) #v[] = some s) :
+    matrixEquiv s.2 = (1 : Matrix (Fin 2) (Fin 2) Rat) := by
+  have hs := (Hex.Matrix.solve?_spec _ _ _ h).2.1
+  rw [hs]
+  ext i j
+  fin_cases i <;> fin_cases j <;> decide +kernel
+
+example (A : Hex.Matrix Rat n 0) (b : Vector Rat n) :
+    (∃ x : Fin 0 → Rat, (matrixEquiv A).mulVec x = vectorEquiv b) ↔ b = 0 := by
+  have he := not_congr (solve?_eq_none A b)
+  rw [Hex.Matrix.solve?_eq_none] at he
+  simpa only [not_not, ← Hex.Matrix.solve?_isSome, Hex.Matrix.solve?_noCols] using he.symm
+
 private def singular : Hex.Matrix Rat 2 2 := Hex.Matrix.ofFn fun i j =>
   if i.val = 0 ∧ j.val = 0 then 1 else 0
+
+example (a : Rat) : ∃ s, Hex.Matrix.solve? singular #v[a, 0] = some s := by
+  have hc : ∃ x : Fin 2 → Rat, (matrixEquiv singular).mulVec x = vectorEquiv #v[a, 0] := by
+    refine ⟨![a, 0], ?_⟩
+    have hm : matrixEquiv singular = !![(1 : Rat), 0; 0, 0] := by
+      ext i j
+      fin_cases i <;> fin_cases j <;> rfl
+    rw [hm]
+    funext i
+    fin_cases i <;>
+      simp [Matrix.mulVec, dotProduct, Fin.sum_univ_two, vectorEquiv]
+  cases h : Hex.Matrix.solve? singular #v[a, 0] with
+  | none => exact False.elim ((solve?_eq_none singular #v[a, 0]).mp h hc)
+  | some s => exact ⟨s, rfl⟩
 
 example : Hex.Matrix.inverse? singular = none := by
   rw [inverse?_eq_none]
@@ -92,6 +142,27 @@ example : Hex.Matrix.inverse? singular = none := by
 
 private def inconsistent : Hex.Matrix Rat 2 3 := Hex.Matrix.ofFn fun _ j =>
   if j.val = 0 then 1 else 0
+
+example (a : Rat) (s : Hex.Matrix.SolveData singular)
+    (h : Hex.Matrix.solve? singular #v[a, 0] = some s) (x : Fin 2 → Rat) :
+    (∃! c : Fin (2 - Hex.Matrix.rowReduce_rank singular) → Rat,
+      x = vectorEquiv s.1 + (matrixEquiv s.2).mulVec c) ↔
+        ∃ t : Rat, x = ![a, t] := by
+  rw [← solve?_parameters singular #v[a, 0] s h x]
+  have hm : matrixEquiv singular = !![(1 : Rat), 0; 0, 0] := by
+    ext i j
+    fin_cases i <;> fin_cases j <;> rfl
+  rw [hm]
+  constructor
+  · intro hx
+    refine ⟨x 1, ?_⟩
+    have hx0 := congrFun hx 0
+    simp [Matrix.mulVec, dotProduct, Fin.sum_univ_two, vectorEquiv] at hx0
+    funext i
+    fin_cases i <;> simp [hx0]
+  · rintro ⟨t, rfl⟩
+    funext i
+    fin_cases i <;> simp [Matrix.mulVec, dotProduct, Fin.sum_univ_two, vectorEquiv]
 
 example : Hex.Matrix.solve? inconsistent #v[0, 1] = none := by
   rw [solve?_none_witness]
