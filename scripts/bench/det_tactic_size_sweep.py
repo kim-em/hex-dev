@@ -24,6 +24,7 @@ import json
 import os
 import platform
 import random
+import signal
 import socket
 import subprocess
 import sys
@@ -91,11 +92,24 @@ def run_lean(path: Path, timeout: float, cpu: int | None) -> tuple[float | None,
     if cpu is not None:
         cmd = ["taskset", "-c", str(cpu)] + cmd
     start = time.monotonic()
-    try:
-        proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=timeout)
-    except subprocess.TimeoutExpired:
-        return None, False, {}
-    out = proc.stdout + proc.stderr
+    # `lake lean` spawns `lean` as a child; on a timeout the whole process group
+    # is killed, or the child would keep running on the pinned CPU and slow the
+    # runs that follow.
+    with subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                          start_new_session=True) as proc:
+        try:
+            stdout, stderr = proc.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            try:
+                proc.communicate()
+            except UnicodeDecodeError:
+                pass  # output cut mid-character by the kill; it is discarded anyway
+            return None, False, {}
+    out = stdout + stderr
     profile: dict[str, float] = {}
     if "cumulative profiling times:" in out:
         for line in out.split("cumulative profiling times:", 1)[1].splitlines()[1:]:
