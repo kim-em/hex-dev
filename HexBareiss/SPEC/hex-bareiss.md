@@ -350,8 +350,9 @@ instead, and its value is `0`.
    arrangement off the number of swaps, and transposes the arranged matrix
    once (`columns`, one pass over the rows prepending each entry to its
    column, `n²` list steps; not `n²` indexed reads of `O(index)` each,
-   which cost as much as the arithmetic on a dense `40 × 40` matrix and
-   most of the check on a singular one). For every row `i` of `L` it takes
+   which measured as much as the arithmetic on the dense `40 × 40` bench
+   matrix and most of the check on the singular one). For every row `i`
+   of `L` it takes
    the products with
    the columns `0, …, i` of `σA`: the first `i` must vanish, and the last
    is the diagonal entry `uᵢ` of the upper triangular product `U = L · σA`

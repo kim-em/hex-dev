@@ -816,16 +816,18 @@ fixed-cost `Int.decEq`; loops are structural recursion on the lists; no
 `Array`, `Vector`, `Fin`, `Finset`, `dite` or well-founded recursion
 appears on the path. Entries are never read by an indexed access per
 entry: `nthInt` costs `O(index)`, so reading the `rank²` block entries
-that way cost about as many list steps as the multiplications (half the
-kernel time at `n = 40`). The pivot block is read by walking each pivot
-row once against the increasing pivot columns (`pickCols`), `rank · m`
-steps in all, which is why the checker requires `cols` to increase; the
-pivot rows themselves are selected by `nthRow`, one walk per row. `List.ofFn`, `zipWith`, `take`,
+that way cost about as many list steps as the multiplications (measured
+as about half the kernel time on the `40 × 40` full-rank bench matrix).
+The pivot block is read by walking each pivot row once against the
+increasing pivot columns (`pickCols`), at most `rank · m` steps in all,
+which is why the checker requires `cols` to increase; the pivot rows
+themselves are selected by `nthRow`, one walk per row. `List.ofFn`, `zipWith`, `take`,
 `getD`, `replicate`, `range`, `filter`, `map` and `Int.emod` all reduce
 across a module boundary and may be used freely.
 
 **Cost.** `rank³ / 3` multiplications of numbers below the modulus,
-`rank · m` list steps and `rank²` residue reductions to read the block, plus
+at most `rank · m` list steps and `rank²` residue reductions to read the
+block, plus
 `(n − rank) · (rank + 1) · m` integer multiplications for the non-pivot
 rows (`scaleRow` and the combination), against `checkRank`'s
 `n · rank · m + rank² · m + rank³ + n · m` products of minor-sized
