@@ -4,18 +4,18 @@
     "family": "empty-columns",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.517979427,
-    "max_fresh_seconds": 2.611279263,
-    "median_baseline_delta_seconds": 0.048238191,
+    "median_fresh_seconds": 2.610274072,
+    "max_fresh_seconds": 2.637646313,
+    "median_baseline_delta_seconds": 0.098534114,
     "kernel_seconds": [
-      0.00479,
-      0.00479,
-      0.00479,
-      0.0048,
-      0.00479,
-      0.00479
+      0.00524,
+      0.004889999999999999,
+      0.00488,
+      0.0047599999999999995,
+      0.004730000000000001,
+      0.00483
     ],
-    "median_kernel_seconds": 0.00479,
+    "median_kernel_seconds": 0.004855,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -47,18 +47,18 @@
     "family": "empty-rows",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.517630973,
-    "max_fresh_seconds": 2.609519156,
-    "median_baseline_delta_seconds": 0.030237173,
+    "median_fresh_seconds": 2.542324457,
+    "max_fresh_seconds": 2.643335582,
+    "median_baseline_delta_seconds": 0.029939281,
     "kernel_seconds": [
+      0.0016699999999999998,
+      0.0016899999999999999,
       0.00165,
-      0.00173,
-      0.00166,
-      0.00165,
-      0.00165,
-      0.00164
+      0.0016699999999999998,
+      0.0016799999999999999,
+      0.00165
     ],
-    "median_kernel_seconds": 0.00165,
+    "median_kernel_seconds": 0.0016699999999999998,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -90,18 +90,18 @@
     "family": "entrywise-literal",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 17.82758259,
-    "max_fresh_seconds": 18.006835752,
-    "median_baseline_delta_seconds": 15.356066681,
+    "median_fresh_seconds": 17.814677419,
+    "max_fresh_seconds": 18.433696226,
+    "median_baseline_delta_seconds": 15.307138384,
     "kernel_seconds": [
-      2.52,
-      2.6,
-      2.48,
-      2.5,
-      2.5,
-      2.51
+      2.66,
+      2.64,
+      2.51,
+      2.49,
+      2.47,
+      2.49
     ],
-    "median_kernel_seconds": 2.505,
+    "median_kernel_seconds": 2.5,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -141,18 +141,18 @@
     "family": "membership-residual",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 3.223940181,
-    "max_fresh_seconds": 3.299098814,
-    "median_baseline_delta_seconds": 0.753525382,
+    "median_fresh_seconds": 3.222173621,
+    "max_fresh_seconds": 3.339379152,
+    "median_baseline_delta_seconds": 0.751635657,
     "kernel_seconds": [
-      0.562,
+      0.583,
+      0.643,
+      0.557,
       0.565,
-      0.556,
-      0.558,
       0.555,
-      0.557
+      0.552
     ],
-    "median_kernel_seconds": 0.5575000000000001,
+    "median_kernel_seconds": 0.5609999999999999,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -184,18 +184,18 @@
     "family": "membership-residual",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 4.110279893,
-    "max_fresh_seconds": 4.120256009,
-    "median_baseline_delta_seconds": 1.604100666,
+    "median_fresh_seconds": 4.12871614,
+    "max_fresh_seconds": 4.341133063,
+    "median_baseline_delta_seconds": 1.618448389,
     "kernel_seconds": [
-      0.588,
-      0.586,
-      0.579,
-      0.583,
-      0.581,
+      0.685,
+      0.653,
+      0.578,
+      0.585,
+      0.575,
       0.577
     ],
-    "median_kernel_seconds": 0.582,
+    "median_kernel_seconds": 0.5814999999999999,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -235,18 +235,18 @@
     "family": "membership-residual",
     "component": "nonmember",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 4.11109738,
-    "max_fresh_seconds": 4.127986427,
-    "median_baseline_delta_seconds": 1.6439082,
+    "median_fresh_seconds": 4.12186671,
+    "max_fresh_seconds": 4.320227714,
+    "median_baseline_delta_seconds": 1.61142111,
     "kernel_seconds": [
+      0.672,
+      0.61,
+      0.578,
       0.59,
-      0.607,
-      0.582,
-      0.582,
-      0.577,
-      0.585
+      0.575,
+      0.578
     ],
-    "median_kernel_seconds": 0.5834999999999999,
+    "median_kernel_seconds": 0.584,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -286,18 +286,18 @@
     "family": "membership-residual",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 3.201406965,
-    "max_fresh_seconds": 3.215742658,
-    "median_baseline_delta_seconds": 0.695216144,
+    "median_fresh_seconds": 3.171950825,
+    "max_fresh_seconds": 3.239313486,
+    "median_baseline_delta_seconds": 0.620155782,
     "kernel_seconds": [
-      0.487,
-      0.487,
-      0.48,
-      0.496,
-      0.498,
-      0.481
+      0.502,
+      0.499,
+      0.478,
+      0.49,
+      0.474,
+      0.475
     ],
-    "median_kernel_seconds": 0.487,
+    "median_kernel_seconds": 0.484,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -329,18 +329,18 @@
     "family": "membership-residual",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 3.918268195,
-    "max_fresh_seconds": 4.020697942,
-    "median_baseline_delta_seconds": 1.42107308,
+    "median_fresh_seconds": 3.931148006,
+    "max_fresh_seconds": 4.156819377,
+    "median_baseline_delta_seconds": 1.422824064,
     "kernel_seconds": [
-      0.5,
-      0.508,
-      0.504,
-      0.512,
-      0.501,
-      0.501
+      0.585,
+      0.572,
+      0.499,
+      0.503,
+      0.507,
+      0.498
     ],
-    "median_kernel_seconds": 0.5025,
+    "median_kernel_seconds": 0.505,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -380,18 +380,18 @@
     "family": "membership-residual",
     "component": "nonmember",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 3.925160083,
-    "max_fresh_seconds": 3.934892295,
-    "median_baseline_delta_seconds": 1.416770273,
+    "median_fresh_seconds": 3.941534691,
+    "max_fresh_seconds": 4.052966456,
+    "median_baseline_delta_seconds": 1.420886721,
     "kernel_seconds": [
-      0.504,
-      0.508,
-      0.503,
-      0.502,
-      0.5,
-      0.501
+      0.527,
+      0.534,
+      0.501,
+      0.507,
+      0.497,
+      0.497
     ],
-    "median_kernel_seconds": 0.5025,
+    "median_kernel_seconds": 0.504,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -431,18 +431,18 @@
     "family": "membership-residual",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 3.202313744,
-    "max_fresh_seconds": 3.212279044,
-    "median_baseline_delta_seconds": 0.703111279,
+    "median_fresh_seconds": 3.219850693,
+    "max_fresh_seconds": 3.32784337,
+    "median_baseline_delta_seconds": 0.714259967,
     "kernel_seconds": [
-      0.538,
-      0.546,
-      0.545,
-      0.545,
-      0.545,
-      0.539
+      0.578,
+      0.576,
+      0.578,
+      0.539,
+      0.539,
+      0.536
     ],
-    "median_kernel_seconds": 0.545,
+    "median_kernel_seconds": 0.5575,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -474,18 +474,18 @@
     "family": "membership-residual",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 4.006875177,
-    "max_fresh_seconds": 4.030274335,
-    "median_baseline_delta_seconds": 1.515620698,
+    "median_fresh_seconds": 4.03197626,
+    "max_fresh_seconds": 4.225247,
+    "median_baseline_delta_seconds": 1.501405048,
     "kernel_seconds": [
+      0.617,
+      0.587,
+      0.644,
+      0.555,
       0.557,
-      0.588,
-      0.56,
-      0.562,
-      0.562,
-      0.56
+      0.559
     ],
-    "median_kernel_seconds": 0.561,
+    "median_kernel_seconds": 0.573,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -525,18 +525,18 @@
     "family": "membership-residual",
     "component": "nonmember",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 4.010265509,
-    "max_fresh_seconds": 4.121175641,
-    "median_baseline_delta_seconds": 1.554185586,
+    "median_fresh_seconds": 4.022869611,
+    "max_fresh_seconds": 4.124417761,
+    "median_baseline_delta_seconds": 1.509811559,
     "kernel_seconds": [
-      0.567,
-      0.57,
-      0.566,
+      0.624,
+      0.634,
       0.564,
-      0.566,
-      0.566
+      0.557,
+      0.556,
+      0.56
     ],
-    "median_kernel_seconds": 0.566,
+    "median_kernel_seconds": 0.562,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -576,18 +576,18 @@
     "family": "membership-residual",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.5156588,
-    "max_fresh_seconds": 2.608454512,
-    "median_baseline_delta_seconds": 0.052227993,
+    "median_fresh_seconds": 2.618281857,
+    "max_fresh_seconds": 2.629274045,
+    "median_baseline_delta_seconds": 0.09459599,
     "kernel_seconds": [
-      0.005019999999999999,
-      0.005059999999999999,
-      0.00514,
-      0.0051600000000000005,
-      0.00504,
-      0.005059999999999999
+      0.00515,
+      0.0052,
+      0.00535,
+      0.00505,
+      0.005030000000000001,
+      0.00524
     ],
-    "median_kernel_seconds": 0.005059999999999999,
+    "median_kernel_seconds": 0.005175,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -619,18 +619,18 @@
     "family": "membership-residual",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.600816165,
-    "max_fresh_seconds": 2.611558995,
-    "median_baseline_delta_seconds": 0.096503718,
+    "median_fresh_seconds": 2.616420592,
+    "max_fresh_seconds": 2.634055499,
+    "median_baseline_delta_seconds": 0.10145069,
     "kernel_seconds": [
-      0.00556,
-      0.00579,
-      0.005719999999999999,
-      0.005679999999999999,
-      0.00552,
-      0.00564
+      0.0058,
+      0.0075,
+      0.00567,
+      0.00587,
+      0.00555,
+      0.0055899999999999995
     ],
-    "median_kernel_seconds": 0.00566,
+    "median_kernel_seconds": 0.005735,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -670,18 +670,18 @@
     "family": "membership-residual",
     "component": "nonmember",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.570541723,
-    "max_fresh_seconds": 2.613848566,
-    "median_baseline_delta_seconds": 0.089696215,
+    "median_fresh_seconds": 2.608552737,
+    "max_fresh_seconds": 2.642596662,
+    "median_baseline_delta_seconds": 0.099280471,
     "kernel_seconds": [
-      0.0056500000000000005,
-      0.0058,
-      0.00591,
+      0.005849999999999999,
+      0.0063,
+      0.00558,
+      0.00561,
       0.00578,
-      0.00571,
-      0.00562
+      0.00555
     ],
-    "median_kernel_seconds": 0.005745,
+    "median_kernel_seconds": 0.005695,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -721,18 +721,18 @@
     "family": "membership-residual",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.60688873,
-    "max_fresh_seconds": 2.6176252,
-    "median_baseline_delta_seconds": 0.108466384,
+    "median_fresh_seconds": 2.615536713,
+    "max_fresh_seconds": 2.644527921,
+    "median_baseline_delta_seconds": 0.102231437,
     "kernel_seconds": [
-      0.005,
-      0.00519,
-      0.00512,
       0.00511,
-      0.0049900000000000005,
-      0.00508
+      0.00536,
+      0.00537,
+      0.00515,
+      0.00508,
+      0.00505
     ],
-    "median_kernel_seconds": 0.005095000000000001,
+    "median_kernel_seconds": 0.00513,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -764,18 +764,18 @@
     "family": "membership-residual",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.534558088,
-    "max_fresh_seconds": 2.614981497,
-    "median_baseline_delta_seconds": 0.065396043,
+    "median_fresh_seconds": 2.608095382,
+    "max_fresh_seconds": 2.624241933,
+    "median_baseline_delta_seconds": 0.097102583,
     "kernel_seconds": [
-      0.00556,
-      0.0056500000000000005,
-      0.005690000000000001,
-      0.00566,
-      0.00566,
+      0.00558,
+      0.00718,
+      0.00604,
+      0.00596,
+      0.005679999999999999,
       0.00551
     ],
-    "median_kernel_seconds": 0.005655,
+    "median_kernel_seconds": 0.00582,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -815,18 +815,18 @@
     "family": "membership-residual",
     "component": "nonmember",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.603331222,
-    "max_fresh_seconds": 2.612238525,
-    "median_baseline_delta_seconds": 0.101934703,
+    "median_fresh_seconds": 2.618462258,
+    "max_fresh_seconds": 2.640429459,
+    "median_baseline_delta_seconds": 0.103828207,
     "kernel_seconds": [
-      0.00564,
-      0.00611,
-      0.00566,
-      0.00575,
-      0.00563,
-      0.00557
+      0.0056500000000000005,
+      0.00646,
+      0.00666,
+      0.005849999999999999,
+      0.00597,
+      0.0058200000000000005
     ],
-    "median_kernel_seconds": 0.0056500000000000005,
+    "median_kernel_seconds": 0.0059099999999999995,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -866,18 +866,18 @@
     "family": "membership-residual",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.604398751,
-    "max_fresh_seconds": 2.609390449,
-    "median_baseline_delta_seconds": 0.096786557,
+    "median_fresh_seconds": 2.614153921,
+    "max_fresh_seconds": 2.688758197,
+    "median_baseline_delta_seconds": 0.09689687,
     "kernel_seconds": [
-      0.0049900000000000005,
-      0.0052,
-      0.005,
-      0.00505,
-      0.0049900000000000005,
-      0.00508
+      0.00522,
+      0.00521,
+      0.00522,
+      0.00496,
+      0.00497,
+      0.0051600000000000005
     ],
-    "median_kernel_seconds": 0.005025,
+    "median_kernel_seconds": 0.005185,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -909,18 +909,18 @@
     "family": "membership-residual",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.609782511,
-    "max_fresh_seconds": 2.617219999,
-    "median_baseline_delta_seconds": 0.101802517,
+    "median_fresh_seconds": 2.616873038,
+    "max_fresh_seconds": 2.642557911,
+    "median_baseline_delta_seconds": 0.099628648,
     "kernel_seconds": [
-      0.00544,
-      0.00583,
-      0.005679999999999999,
-      0.00544,
-      0.00555,
-      0.00563
+      0.0058,
+      0.00596,
+      0.00595,
+      0.0058200000000000005,
+      0.0056500000000000005,
+      0.00553
     ],
-    "median_kernel_seconds": 0.0055899999999999995,
+    "median_kernel_seconds": 0.00581,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -960,18 +960,18 @@
     "family": "membership-residual",
     "component": "nonmember",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.610246101,
-    "max_fresh_seconds": 2.624572104,
-    "median_baseline_delta_seconds": 0.100885597,
+    "median_fresh_seconds": 2.61207031,
+    "max_fresh_seconds": 2.648962137,
+    "median_baseline_delta_seconds": 0.0985017,
     "kernel_seconds": [
-      0.00555,
-      0.00583,
+      0.00641,
+      0.00725,
+      0.0057599999999999995,
+      0.005690000000000001,
       0.005730000000000001,
-      0.0056,
-      0.00561,
-      0.00575
+      0.00579
     ],
-    "median_kernel_seconds": 0.0056700000000000006,
+    "median_kernel_seconds": 0.005775,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -1011,18 +1011,18 @@
     "family": "membership-residual",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.573008492,
-    "max_fresh_seconds": 2.6167694,
-    "median_baseline_delta_seconds": 0.085143274,
+    "median_fresh_seconds": 2.621123892,
+    "max_fresh_seconds": 2.64403353,
+    "median_baseline_delta_seconds": 0.105173319,
     "kernel_seconds": [
-      0.0144,
-      0.0144,
-      0.0147,
-      0.0149,
+      0.0157,
       0.0146,
-      0.0144
+      0.0154,
+      0.0145,
+      0.0145,
+      0.0147
     ],
-    "median_kernel_seconds": 0.014499999999999999,
+    "median_kernel_seconds": 0.01465,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -1054,18 +1054,18 @@
     "family": "membership-residual",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.605978529,
-    "max_fresh_seconds": 2.614129533,
-    "median_baseline_delta_seconds": 0.088813511,
+    "median_fresh_seconds": 2.61304585,
+    "max_fresh_seconds": 2.649277214,
+    "median_baseline_delta_seconds": 0.10281999,
     "kernel_seconds": [
-      0.0158,
-      0.016,
-      0.0156,
+      0.0182,
+      0.0161,
       0.0162,
-      0.0154,
+      0.0156,
+      0.0155,
       0.0154
     ],
-    "median_kernel_seconds": 0.0157,
+    "median_kernel_seconds": 0.01585,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -1105,18 +1105,18 @@
     "family": "membership-residual",
     "component": "nonmember",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.605116016,
-    "max_fresh_seconds": 2.611277011,
-    "median_baseline_delta_seconds": 0.099344535,
+    "median_fresh_seconds": 2.621607196,
+    "max_fresh_seconds": 2.653371072,
+    "median_baseline_delta_seconds": 0.102759545,
     "kernel_seconds": [
-      0.0157,
-      0.016399999999999998,
-      0.0159,
-      0.016,
-      0.0157,
+      0.0179,
+      0.0167,
+      0.0162,
+      0.0158,
+      0.0162,
       0.0161
     ],
-    "median_kernel_seconds": 0.01595,
+    "median_kernel_seconds": 0.0162,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -1156,18 +1156,18 @@
     "family": "membership-residual",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.605030486,
-    "max_fresh_seconds": 2.616517471,
-    "median_baseline_delta_seconds": 0.09820749,
+    "median_fresh_seconds": 2.621989655,
+    "max_fresh_seconds": 2.757203666,
+    "median_baseline_delta_seconds": 0.105182357,
     "kernel_seconds": [
-      0.013800000000000002,
-      0.013900000000000001,
+      0.0147,
+      0.0145,
+      0.014199999999999999,
+      0.013699999999999999,
       0.014,
-      0.0146,
-      0.013900000000000001,
       0.013900000000000001
     ],
-    "median_kernel_seconds": 0.013900000000000001,
+    "median_kernel_seconds": 0.0141,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -1199,18 +1199,18 @@
     "family": "membership-residual",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.597285256,
-    "max_fresh_seconds": 2.614508591,
-    "median_baseline_delta_seconds": 0.099335116,
+    "median_fresh_seconds": 2.610877343,
+    "max_fresh_seconds": 2.707289871,
+    "median_baseline_delta_seconds": 0.099705904,
     "kernel_seconds": [
-      0.0149,
-      0.0157,
-      0.0145,
-      0.0145,
+      0.016399999999999998,
       0.0147,
-      0.0148
+      0.015,
+      0.0145,
+      0.0146,
+      0.0146
     ],
-    "median_kernel_seconds": 0.01475,
+    "median_kernel_seconds": 0.01465,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -1250,18 +1250,18 @@
     "family": "membership-residual",
     "component": "nonmember",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.601732598,
-    "max_fresh_seconds": 2.615856468,
-    "median_baseline_delta_seconds": 0.094119441,
+    "median_fresh_seconds": 2.616304481,
+    "max_fresh_seconds": 2.641157849,
+    "median_baseline_delta_seconds": 0.104376073,
     "kernel_seconds": [
-      0.015099999999999999,
-      0.015099999999999999,
-      0.0158,
-      0.015300000000000001,
+      0.0175,
+      0.0171,
+      0.0157,
       0.015,
-      0.015300000000000001
+      0.015300000000000001,
+      0.015099999999999999
     ],
-    "median_kernel_seconds": 0.0152,
+    "median_kernel_seconds": 0.0155,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -1301,18 +1301,18 @@
     "family": "membership-residual",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.606015236,
-    "max_fresh_seconds": 2.611226829,
-    "median_baseline_delta_seconds": 0.090313951,
+    "median_fresh_seconds": 2.617739717,
+    "max_fresh_seconds": 2.665280041,
+    "median_baseline_delta_seconds": 0.098544012,
     "kernel_seconds": [
-      0.014199999999999999,
-      0.0144,
       0.0146,
       0.0145,
-      0.0141,
+      0.0157,
+      0.0146,
+      0.0145,
       0.014199999999999999
     ],
-    "median_kernel_seconds": 0.0143,
+    "median_kernel_seconds": 0.01455,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -1344,18 +1344,18 @@
     "family": "membership-residual",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.612814281,
-    "max_fresh_seconds": 2.678483429,
-    "median_baseline_delta_seconds": 0.105582053,
+    "median_fresh_seconds": 2.61582693,
+    "max_fresh_seconds": 2.717675463,
+    "median_baseline_delta_seconds": 0.098862434,
     "kernel_seconds": [
-      0.0152,
-      0.016,
-      0.015300000000000001,
-      0.0152,
-      0.015099999999999999,
+      0.0155,
+      0.0162,
+      0.0165,
+      0.0154,
+      0.0157,
       0.015300000000000001
     ],
-    "median_kernel_seconds": 0.01525,
+    "median_kernel_seconds": 0.0156,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -1395,18 +1395,18 @@
     "family": "membership-residual",
     "component": "nonmember",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.60915974,
-    "max_fresh_seconds": 2.612664539,
-    "median_baseline_delta_seconds": 0.097728202,
+    "median_fresh_seconds": 2.61975585,
+    "max_fresh_seconds": 2.730038938,
+    "median_baseline_delta_seconds": 0.101241122,
     "kernel_seconds": [
-      0.016,
+      0.0161,
+      0.0161,
       0.0156,
-      0.0154,
-      0.0158,
-      0.0158,
-      0.0157
+      0.0157,
+      0.0156,
+      0.0156
     ],
-    "median_kernel_seconds": 0.01575,
+    "median_kernel_seconds": 0.015649999999999997,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -1446,18 +1446,18 @@
     "family": "membership-residual",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.665522813,
-    "max_fresh_seconds": 2.71590336,
-    "median_baseline_delta_seconds": 0.157467549,
+    "median_fresh_seconds": 2.710754476,
+    "max_fresh_seconds": 2.730061169,
+    "median_baseline_delta_seconds": 0.172121856,
     "kernel_seconds": [
-      0.0694,
-      0.0719,
+      0.0837,
+      0.081,
+      0.0734,
       0.0685,
-      0.0691,
-      0.0708,
-      0.0669
+      0.0669,
+      0.0679
     ],
-    "median_kernel_seconds": 0.06925,
+    "median_kernel_seconds": 0.07095000000000001,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -1489,18 +1489,18 @@
     "family": "membership-residual",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.713254327,
-    "max_fresh_seconds": 2.795804682,
-    "median_baseline_delta_seconds": 0.205324087,
+    "median_fresh_seconds": 2.741520032,
+    "max_fresh_seconds": 2.810282236,
+    "median_baseline_delta_seconds": 0.204418602,
     "kernel_seconds": [
-      0.0722,
-      0.0715,
-      0.0719,
-      0.072,
-      0.0718,
-      0.0718
+      0.0831,
+      0.0847,
+      0.0793,
+      0.0705,
+      0.0712,
+      0.0709
     ],
-    "median_kernel_seconds": 0.07185,
+    "median_kernel_seconds": 0.07525,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -1540,18 +1540,18 @@
     "family": "membership-residual",
     "component": "nonmember",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.704787831,
-    "max_fresh_seconds": 2.714856795,
-    "median_baseline_delta_seconds": 0.20525553,
+    "median_fresh_seconds": 2.728175424,
+    "max_fresh_seconds": 2.832947811,
+    "median_baseline_delta_seconds": 0.200510961,
     "kernel_seconds": [
-      0.0726,
-      0.07490000000000001,
-      0.0732,
-      0.0728,
-      0.0726,
-      0.07490000000000001
+      0.0808,
+      0.0891,
+      0.077,
+      0.0717,
+      0.0713,
+      0.0741
     ],
-    "median_kernel_seconds": 0.07300000000000001,
+    "median_kernel_seconds": 0.07555,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -1591,18 +1591,18 @@
     "family": "membership-residual",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.609433625,
-    "max_fresh_seconds": 2.706525631,
-    "median_baseline_delta_seconds": 0.176788436,
+    "median_fresh_seconds": 2.640975754,
+    "max_fresh_seconds": 2.729975161,
+    "median_baseline_delta_seconds": 0.13183685,
     "kernel_seconds": [
-      0.0603,
-      0.0608,
-      0.060899999999999996,
-      0.0596,
+      0.0697,
+      0.0624,
+      0.0634,
+      0.0584,
       0.0593,
-      0.0595
+      0.0598
     ],
-    "median_kernel_seconds": 0.05995,
+    "median_kernel_seconds": 0.0611,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -1634,18 +1634,18 @@
     "family": "membership-residual",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.711375518,
-    "max_fresh_seconds": 2.73929349,
-    "median_baseline_delta_seconds": 0.226020951,
+    "median_fresh_seconds": 2.762650144,
+    "max_fresh_seconds": 2.832623266,
+    "median_baseline_delta_seconds": 0.273828708,
     "kernel_seconds": [
-      0.06420000000000001,
-      0.0659,
-      0.0677,
-      0.06420000000000001,
-      0.06409999999999999,
-      0.06409999999999999
+      0.0747,
+      0.0829,
+      0.0691,
+      0.0631,
+      0.0633,
+      0.0633
     ],
-    "median_kernel_seconds": 0.06420000000000001,
+    "median_kernel_seconds": 0.0662,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -1685,18 +1685,18 @@
     "family": "membership-residual",
     "component": "nonmember",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.711915108,
-    "max_fresh_seconds": 2.737921391,
-    "median_baseline_delta_seconds": 0.215531244,
+    "median_fresh_seconds": 2.73600955,
+    "max_fresh_seconds": 2.829995906,
+    "median_baseline_delta_seconds": 0.229912394,
     "kernel_seconds": [
-      0.06570000000000001,
-      0.06659999999999999,
+      0.07390000000000001,
+      0.0709,
+      0.07440000000000001,
       0.0645,
-      0.065,
-      0.06409999999999999,
-      0.06470000000000001
+      0.0637,
+      0.0643
     ],
-    "median_kernel_seconds": 0.06485,
+    "median_kernel_seconds": 0.06770000000000001,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -1736,18 +1736,18 @@
     "family": "membership-residual",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.620700762,
-    "max_fresh_seconds": 2.708997829,
-    "median_baseline_delta_seconds": 0.113805538,
+    "median_fresh_seconds": 2.646614162,
+    "max_fresh_seconds": 2.742397148,
+    "median_baseline_delta_seconds": 0.122934194,
     "kernel_seconds": [
-      0.0631,
-      0.0593,
+      0.07440000000000001,
+      0.0772,
+      0.0723,
       0.0583,
-      0.060700000000000004,
-      0.058,
+      0.0577,
       0.0579
     ],
-    "median_kernel_seconds": 0.0588,
+    "median_kernel_seconds": 0.0653,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -1779,18 +1779,18 @@
     "family": "membership-residual",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.71069049,
-    "max_fresh_seconds": 2.728894024,
-    "median_baseline_delta_seconds": 0.233822527,
+    "median_fresh_seconds": 2.732898927,
+    "max_fresh_seconds": 2.802844286,
+    "median_baseline_delta_seconds": 0.211813464,
     "kernel_seconds": [
-      0.0679,
-      0.063,
-      0.0619,
-      0.06670000000000001,
-      0.06409999999999999,
-      0.0624
+      0.0787,
+      0.07629999999999999,
+      0.067,
+      0.0626,
+      0.062299999999999994,
+      0.0621
     ],
-    "median_kernel_seconds": 0.06355,
+    "median_kernel_seconds": 0.0648,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -1830,18 +1830,18 @@
     "family": "membership-residual",
     "component": "nonmember",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.706396229,
-    "max_fresh_seconds": 2.728419217,
-    "median_baseline_delta_seconds": 0.214877489,
+    "median_fresh_seconds": 2.726411774,
+    "max_fresh_seconds": 2.808621534,
+    "median_baseline_delta_seconds": 0.20816847,
     "kernel_seconds": [
-      0.0628,
-      0.0637,
-      0.0632,
-      0.0632,
-      0.0628,
-      0.063
+      0.0737,
+      0.07479999999999999,
+      0.0676,
+      0.0629,
+      0.0635,
+      0.0628
     ],
-    "median_kernel_seconds": 0.0631,
+    "median_kernel_seconds": 0.06555,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -1881,18 +1881,18 @@
     "family": "rank-deficient-hermite",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 3.21291086,
-    "max_fresh_seconds": 3.223712781,
-    "median_baseline_delta_seconds": 0.704088259,
+    "median_fresh_seconds": 3.222186259,
+    "max_fresh_seconds": 3.317195599,
+    "median_baseline_delta_seconds": 0.706265081,
     "kernel_seconds": [
-      0.521,
-      0.537,
-      0.517,
-      0.52,
-      0.515,
-      0.517
+      0.596,
+      0.563,
+      0.602,
+      0.514,
+      0.514,
+      0.516
     ],
-    "median_kernel_seconds": 0.5185,
+    "median_kernel_seconds": 0.5395,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -1924,18 +1924,18 @@
     "family": "rank-deficient-hermite",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 4.016113703,
-    "max_fresh_seconds": 4.10483243,
-    "median_baseline_delta_seconds": 1.515664612,
+    "median_fresh_seconds": 4.083246599,
+    "max_fresh_seconds": 4.21065337,
+    "median_baseline_delta_seconds": 1.568232616,
     "kernel_seconds": [
-      0.55,
-      0.561,
-      0.539,
-      0.541,
+      0.603,
+      0.626,
+      0.617,
       0.536,
-      0.538
+      0.54,
+      0.535
     ],
-    "median_kernel_seconds": 0.54,
+    "median_kernel_seconds": 0.5715,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -1975,18 +1975,18 @@
     "family": "rank-deficient-hermite",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 3.208836411,
-    "max_fresh_seconds": 3.21400459,
-    "median_baseline_delta_seconds": 0.697388434,
+    "median_fresh_seconds": 3.210387806,
+    "max_fresh_seconds": 3.316840532,
+    "median_baseline_delta_seconds": 0.699698415,
     "kernel_seconds": [
-      0.493,
-      0.506,
-      0.49,
-      0.49,
-      0.484,
-      0.488
+      0.518,
+      0.562,
+      0.511,
+      0.483,
+      0.483,
+      0.483
     ],
-    "median_kernel_seconds": 0.49,
+    "median_kernel_seconds": 0.497,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -2018,18 +2018,18 @@
     "family": "rank-deficient-hermite",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 4.317041171,
-    "max_fresh_seconds": 4.336248212,
-    "median_baseline_delta_seconds": 1.800059511,
+    "median_fresh_seconds": 4.368033279,
+    "max_fresh_seconds": 4.537133647,
+    "median_baseline_delta_seconds": 1.849600745,
     "kernel_seconds": [
+      0.589,
+      0.588,
+      0.594,
       0.507,
-      0.529,
-      0.515,
-      0.511,
-      0.502,
+      0.513,
       0.506
     ],
-    "median_kernel_seconds": 0.509,
+    "median_kernel_seconds": 0.5505,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -2069,18 +2069,18 @@
     "family": "rank-deficient-hermite",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 3.171245016,
-    "max_fresh_seconds": 3.212044173,
-    "median_baseline_delta_seconds": 0.649554179,
+    "median_fresh_seconds": 3.214330231,
+    "max_fresh_seconds": 3.229780413,
+    "median_baseline_delta_seconds": 0.61403103,
     "kernel_seconds": [
-      0.503,
-      0.492,
-      0.511,
+      0.564,
+      0.536,
+      0.514,
       0.487,
-      0.491,
+      0.485,
       0.487
     ],
-    "median_kernel_seconds": 0.4915,
+    "median_kernel_seconds": 0.5005,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -2112,18 +2112,18 @@
     "family": "rank-deficient-hermite",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 4.210197529,
-    "max_fresh_seconds": 4.24622859,
-    "median_baseline_delta_seconds": 1.702827676,
+    "median_fresh_seconds": 4.22320434,
+    "max_fresh_seconds": 4.324236269,
+    "median_baseline_delta_seconds": 1.704130086,
     "kernel_seconds": [
-      0.515,
-      0.514,
-      0.511,
-      0.511,
+      0.535,
+      0.58,
+      0.578,
+      0.503,
       0.505,
       0.503
     ],
-    "median_kernel_seconds": 0.511,
+    "median_kernel_seconds": 0.52,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -2163,18 +2163,18 @@
     "family": "rank-deficient-hermite",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.521515494,
-    "max_fresh_seconds": 2.610841744,
-    "median_baseline_delta_seconds": 0.076502209,
+    "median_fresh_seconds": 2.611304533,
+    "max_fresh_seconds": 2.624836072,
+    "median_baseline_delta_seconds": 0.095669114,
     "kernel_seconds": [
-      0.004889999999999999,
-      0.00475,
-      0.00475,
-      0.004730000000000001,
-      0.00479,
-      0.004860000000000001
+      0.00492,
+      0.004860000000000001,
+      0.0052,
+      0.00492,
+      0.0048200000000000005,
+      0.00477
     ],
-    "median_kernel_seconds": 0.00477,
+    "median_kernel_seconds": 0.00489,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -2206,18 +2206,18 @@
     "family": "rank-deficient-hermite",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.602614078,
-    "max_fresh_seconds": 2.613108574,
-    "median_baseline_delta_seconds": 0.10024726,
+    "median_fresh_seconds": 2.606316444,
+    "max_fresh_seconds": 2.618492252,
+    "median_baseline_delta_seconds": 0.09703235,
     "kernel_seconds": [
-      0.0052,
+      0.00534,
       0.00511,
-      0.00525,
-      0.00511,
-      0.00507,
-      0.00521
+      0.00523,
+      0.00522,
+      0.00509,
+      0.005059999999999999
     ],
-    "median_kernel_seconds": 0.005155,
+    "median_kernel_seconds": 0.0051649999999999995,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -2257,18 +2257,18 @@
     "family": "rank-deficient-hermite",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.567245656,
-    "max_fresh_seconds": 2.613375667,
-    "median_baseline_delta_seconds": 0.098768983,
+    "median_fresh_seconds": 2.607859549,
+    "max_fresh_seconds": 2.653035583,
+    "median_baseline_delta_seconds": 0.099691952,
     "kernel_seconds": [
-      0.00498,
-      0.00523,
-      0.004940000000000001,
-      0.00497,
-      0.00514,
-      0.0049900000000000005
+      0.00518,
+      0.00524,
+      0.00515,
+      0.00511,
+      0.00496,
+      0.00497
     ],
-    "median_kernel_seconds": 0.004985,
+    "median_kernel_seconds": 0.00513,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -2300,18 +2300,18 @@
     "family": "rank-deficient-hermite",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.569348158,
-    "max_fresh_seconds": 2.614374604,
-    "median_baseline_delta_seconds": 0.092410705,
+    "median_fresh_seconds": 2.613934414,
+    "max_fresh_seconds": 2.700334327,
+    "median_baseline_delta_seconds": 0.094140621,
     "kernel_seconds": [
-      0.005809999999999999,
-      0.00564,
-      0.00556,
-      0.0060999999999999995,
-      0.0055899999999999995,
-      0.00558
+      0.00551,
+      0.00561,
+      0.005849999999999999,
+      0.005679999999999999,
+      0.00557,
+      0.00545
     ],
-    "median_kernel_seconds": 0.005615,
+    "median_kernel_seconds": 0.00559,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -2351,18 +2351,18 @@
     "family": "rank-deficient-hermite",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.557050557,
-    "max_fresh_seconds": 2.608296429,
-    "median_baseline_delta_seconds": 0.093626019,
+    "median_fresh_seconds": 2.574611654,
+    "max_fresh_seconds": 2.61559268,
+    "median_baseline_delta_seconds": 0.06255754,
     "kernel_seconds": [
-      0.00522,
-      0.00513,
-      0.00515,
       0.00508,
-      0.005059999999999999,
-      0.00504
+      0.00557,
+      0.0050999999999999995,
+      0.005,
+      0.0052,
+      0.00505
     ],
-    "median_kernel_seconds": 0.005105,
+    "median_kernel_seconds": 0.00509,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -2394,18 +2394,18 @@
     "family": "rank-deficient-hermite",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.603018106,
-    "max_fresh_seconds": 2.615802989,
-    "median_baseline_delta_seconds": 0.099367861,
+    "median_fresh_seconds": 2.608808551,
+    "max_fresh_seconds": 2.634793189,
+    "median_baseline_delta_seconds": 0.09953936,
     "kernel_seconds": [
-      0.0055899999999999995,
+      0.00555,
+      0.00594,
       0.005690000000000001,
-      0.00554,
-      0.00564,
+      0.00552,
       0.005690000000000001,
-      0.00554
+      0.005679999999999999
     ],
-    "median_kernel_seconds": 0.005615,
+    "median_kernel_seconds": 0.005685,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -2445,18 +2445,18 @@
     "family": "rank-deficient-hermite",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.611086757,
-    "max_fresh_seconds": 2.623834635,
-    "median_baseline_delta_seconds": 0.1034123,
+    "median_fresh_seconds": 2.620257228,
+    "max_fresh_seconds": 2.635802672,
+    "median_baseline_delta_seconds": 0.102016911,
     "kernel_seconds": [
-      0.0144,
-      0.014199999999999999,
+      0.016,
       0.0149,
-      0.014199999999999999,
+      0.0145,
+      0.0141,
       0.0141,
       0.0143
     ],
-    "median_kernel_seconds": 0.014249999999999999,
+    "median_kernel_seconds": 0.0144,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -2488,18 +2488,18 @@
     "family": "rank-deficient-hermite",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.605548305,
-    "max_fresh_seconds": 2.613621868,
-    "median_baseline_delta_seconds": 0.107656946,
+    "median_fresh_seconds": 2.615386581,
+    "max_fresh_seconds": 2.652593862,
+    "median_baseline_delta_seconds": 0.098669339,
     "kernel_seconds": [
-      0.0155,
-      0.015099999999999999,
-      0.0152,
+      0.0158,
+      0.0169,
+      0.0161,
       0.015300000000000001,
-      0.0154,
-      0.0154
+      0.0155,
+      0.015099999999999999
     ],
-    "median_kernel_seconds": 0.01535,
+    "median_kernel_seconds": 0.01565,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -2539,18 +2539,18 @@
     "family": "rank-deficient-hermite",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.602565823,
-    "max_fresh_seconds": 2.612107273,
-    "median_baseline_delta_seconds": 0.097886052,
+    "median_fresh_seconds": 2.608130929,
+    "max_fresh_seconds": 2.620703872,
+    "median_baseline_delta_seconds": 0.09253044,
     "kernel_seconds": [
-      0.013800000000000002,
-      0.0141,
-      0.014199999999999999,
-      0.013800000000000002,
-      0.0136,
-      0.013699999999999999
+      0.0158,
+      0.0149,
+      0.014,
+      0.0143,
+      0.013699999999999999,
+      0.013800000000000002
     ],
-    "median_kernel_seconds": 0.013800000000000002,
+    "median_kernel_seconds": 0.01415,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -2582,18 +2582,18 @@
     "family": "rank-deficient-hermite",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.602617339,
-    "max_fresh_seconds": 2.610831174,
-    "median_baseline_delta_seconds": 0.094555773,
+    "median_fresh_seconds": 2.61440708,
+    "max_fresh_seconds": 2.638699008,
+    "median_baseline_delta_seconds": 0.09844351,
     "kernel_seconds": [
-      0.015099999999999999,
-      0.015099999999999999,
+      0.0156,
+      0.018,
+      0.0158,
+      0.0149,
       0.0148,
-      0.0148,
-      0.0146,
-      0.015
+      0.0148
     ],
-    "median_kernel_seconds": 0.0149,
+    "median_kernel_seconds": 0.01525,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -2633,18 +2633,18 @@
     "family": "rank-deficient-hermite",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.609160841,
-    "max_fresh_seconds": 2.683665895,
-    "median_baseline_delta_seconds": 0.101833543,
+    "median_fresh_seconds": 2.61190657,
+    "max_fresh_seconds": 2.689210059,
+    "median_baseline_delta_seconds": 0.101190675,
     "kernel_seconds": [
-      0.0136,
-      0.0145,
+      0.0141,
+      0.015099999999999999,
+      0.014199999999999999,
       0.0135,
-      0.0134,
-      0.0134,
+      0.0135,
       0.0135
     ],
-    "median_kernel_seconds": 0.0135,
+    "median_kernel_seconds": 0.0138,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -2676,18 +2676,18 @@
     "family": "rank-deficient-hermite",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.605931588,
-    "max_fresh_seconds": 2.666730581,
-    "median_baseline_delta_seconds": 0.097696311,
+    "median_fresh_seconds": 2.617293205,
+    "max_fresh_seconds": 2.710217737,
+    "median_baseline_delta_seconds": 0.101863587,
     "kernel_seconds": [
-      0.015,
-      0.0152,
-      0.0146,
-      0.0146,
+      0.0169,
+      0.017,
       0.0148,
-      0.015300000000000001
+      0.0146,
+      0.0146,
+      0.0147
     ],
-    "median_kernel_seconds": 0.0149,
+    "median_kernel_seconds": 0.01475,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -2727,18 +2727,18 @@
     "family": "rank-deficient-hermite",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.631142779,
-    "max_fresh_seconds": 2.642198311,
-    "median_baseline_delta_seconds": 0.129255239,
+    "median_fresh_seconds": 2.67207453,
+    "max_fresh_seconds": 2.730388822,
+    "median_baseline_delta_seconds": 0.168206048,
     "kernel_seconds": [
-      0.061799999999999994,
+      0.0697,
+      0.0741,
+      0.0735,
+      0.0613,
       0.0619,
-      0.062299999999999994,
-      0.061700000000000005,
-      0.0619,
-      0.061799999999999994
+      0.0619
     ],
-    "median_kernel_seconds": 0.061849999999999995,
+    "median_kernel_seconds": 0.0658,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -2770,18 +2770,18 @@
     "family": "rank-deficient-hermite",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.712021617,
-    "max_fresh_seconds": 2.737718199,
-    "median_baseline_delta_seconds": 0.204845216,
+    "median_fresh_seconds": 2.77186701,
+    "max_fresh_seconds": 2.844149381,
+    "median_baseline_delta_seconds": 0.249625943,
     "kernel_seconds": [
-      0.0782,
-      0.0668,
-      0.0718,
-      0.06570000000000001,
-      0.0664,
-      0.066
+      0.07759999999999999,
+      0.0878,
+      0.0717,
+      0.066,
+      0.066,
+      0.06559999999999999
     ],
-    "median_kernel_seconds": 0.06659999999999999,
+    "median_kernel_seconds": 0.06885,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -2821,18 +2821,18 @@
     "family": "rank-deficient-hermite",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.615840771,
-    "max_fresh_seconds": 2.718548379,
-    "median_baseline_delta_seconds": 0.150310754,
+    "median_fresh_seconds": 2.67797013,
+    "max_fresh_seconds": 2.73153239,
+    "median_baseline_delta_seconds": 0.16151849,
     "kernel_seconds": [
-      0.06459999999999999,
-      0.062,
-      0.064,
-      0.0686,
-      0.063,
-      0.0631
+      0.0783,
+      0.06709999999999999,
+      0.076,
+      0.0628,
+      0.062299999999999994,
+      0.0628
     ],
-    "median_kernel_seconds": 0.06355,
+    "median_kernel_seconds": 0.06495,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -2864,18 +2864,18 @@
     "family": "rank-deficient-hermite",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.720042229,
-    "max_fresh_seconds": 2.805809869,
-    "median_baseline_delta_seconds": 0.221761284,
+    "median_fresh_seconds": 2.766896195,
+    "max_fresh_seconds": 2.837882075,
+    "median_baseline_delta_seconds": 0.209236157,
     "kernel_seconds": [
-      0.067,
-      0.0674,
-      0.0691,
+      0.08159999999999999,
+      0.071,
+      0.07809999999999999,
+      0.066,
       0.06670000000000001,
-      0.0676,
-      0.0668
+      0.06620000000000001
     ],
-    "median_kernel_seconds": 0.06720000000000001,
+    "median_kernel_seconds": 0.06885,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -2915,18 +2915,18 @@
     "family": "rank-deficient-hermite",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.610016951,
-    "max_fresh_seconds": 2.716473366,
-    "median_baseline_delta_seconds": 0.176319559,
+    "median_fresh_seconds": 2.639032284,
+    "max_fresh_seconds": 2.737784503,
+    "median_baseline_delta_seconds": 0.125820134,
     "kernel_seconds": [
-      0.0593,
-      0.0591,
-      0.060700000000000004,
-      0.0619,
-      0.061399999999999996,
-      0.0591
+      0.0677,
+      0.071,
+      0.0676,
+      0.0587,
+      0.0589,
+      0.061200000000000004
     ],
-    "median_kernel_seconds": 0.06,
+    "median_kernel_seconds": 0.0644,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -2958,18 +2958,18 @@
     "family": "rank-deficient-hermite",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.709452326,
-    "max_fresh_seconds": 2.741466358,
-    "median_baseline_delta_seconds": 0.198159809,
+    "median_fresh_seconds": 2.719388533,
+    "max_fresh_seconds": 2.745006041,
+    "median_baseline_delta_seconds": 0.203047782,
     "kernel_seconds": [
-      0.0643,
-      0.0643,
-      0.0635,
-      0.06570000000000001,
-      0.06420000000000001,
-      0.0632
+      0.078,
+      0.0767,
+      0.0768,
+      0.0625,
+      0.06409999999999999,
+      0.0628
     ],
-    "median_kernel_seconds": 0.06425,
+    "median_kernel_seconds": 0.07039999999999999,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -3009,18 +3009,18 @@
     "family": "tall-hermite",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 5.804470233,
-    "max_fresh_seconds": 5.812039076,
-    "median_baseline_delta_seconds": 3.304465331,
+    "median_fresh_seconds": 5.899886579,
+    "max_fresh_seconds": 6.051834453,
+    "median_baseline_delta_seconds": 3.329719721,
     "kernel_seconds": [
-      3.03,
+      3.18,
+      3.13,
+      3.19,
       2.99,
-      3.04,
-      2.98,
-      2.99,
-      2.98
+      2.96,
+      3.0
     ],
-    "median_kernel_seconds": 2.99,
+    "median_kernel_seconds": 3.065,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -3052,18 +3052,18 @@
     "family": "tall-hermite",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 9.614320952,
-    "max_fresh_seconds": 9.706431974,
-    "median_baseline_delta_seconds": 7.11213516,
+    "median_fresh_seconds": 9.776501656,
+    "max_fresh_seconds": 10.025071365,
+    "median_baseline_delta_seconds": 7.221462017,
     "kernel_seconds": [
-      3.11,
-      3.1,
-      3.09,
-      3.06,
+      3.19,
+      3.28,
+      3.27,
       3.03,
-      3.03
+      3.03,
+      3.02
     ],
-    "median_kernel_seconds": 3.075,
+    "median_kernel_seconds": 3.11,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -3103,18 +3103,18 @@
     "family": "tall-hermite",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 5.698058184,
-    "max_fresh_seconds": 5.739050996,
-    "median_baseline_delta_seconds": 3.196899756,
+    "median_fresh_seconds": 5.768711969,
+    "max_fresh_seconds": 6.045539299,
+    "median_baseline_delta_seconds": 3.260175557,
     "kernel_seconds": [
-      2.86,
-      2.93,
-      2.86,
-      2.85,
+      3.16,
+      3.01,
+      3.0,
       2.84,
-      2.81
+      2.83,
+      2.88
     ],
-    "median_kernel_seconds": 2.855,
+    "median_kernel_seconds": 2.94,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -3146,18 +3146,18 @@
     "family": "tall-hermite",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 9.033852901,
-    "max_fresh_seconds": 9.132105766,
-    "median_baseline_delta_seconds": 6.559932754,
+    "median_fresh_seconds": 9.229190462,
+    "max_fresh_seconds": 9.4441018,
+    "median_baseline_delta_seconds": 6.720222287,
     "kernel_seconds": [
-      2.95,
-      2.98,
-      2.88,
-      2.86,
-      2.86,
-      2.87
+      3.03,
+      3.02,
+      3.1,
+      2.87,
+      2.83,
+      2.88
     ],
-    "median_kernel_seconds": 2.875,
+    "median_kernel_seconds": 2.95,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -3197,18 +3197,18 @@
     "family": "tall-hermite",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 6.112668415,
-    "max_fresh_seconds": 6.128984362,
-    "median_baseline_delta_seconds": 3.620186992,
+    "median_fresh_seconds": 6.122160305,
+    "max_fresh_seconds": 6.441383146,
+    "median_baseline_delta_seconds": 3.654693281,
     "kernel_seconds": [
-      3.39,
-      3.34,
-      3.41,
-      3.32,
+      3.46,
+      3.55,
+      3.42,
       3.31,
-      3.31
+      3.29,
+      3.28
     ],
-    "median_kernel_seconds": 3.33,
+    "median_kernel_seconds": 3.365,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -3240,18 +3240,18 @@
     "family": "tall-hermite",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 8.905793923,
-    "max_fresh_seconds": 8.918146329,
-    "median_baseline_delta_seconds": 6.407436693,
+    "median_fresh_seconds": 9.076994593,
+    "max_fresh_seconds": 9.335943829,
+    "median_baseline_delta_seconds": 6.551894604,
     "kernel_seconds": [
-      3.4,
-      3.39,
-      3.38,
+      3.54,
+      3.59,
+      3.58,
       3.33,
-      3.34,
-      3.33
+      3.3,
+      3.34
     ],
-    "median_kernel_seconds": 3.36,
+    "median_kernel_seconds": 3.44,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -3291,18 +3291,18 @@
     "family": "tall-hermite",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.606055434,
-    "max_fresh_seconds": 2.613815202,
-    "median_baseline_delta_seconds": 0.098610848,
+    "median_fresh_seconds": 2.618245992,
+    "max_fresh_seconds": 2.642472721,
+    "median_baseline_delta_seconds": 0.101496861,
     "kernel_seconds": [
+      0.0114,
       0.0116,
-      0.012,
+      0.0112,
       0.0112,
       0.011300000000000001,
-      0.012,
-      0.0112
+      0.0114
     ],
-    "median_kernel_seconds": 0.01145,
+    "median_kernel_seconds": 0.01135,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -3334,18 +3334,18 @@
     "family": "tall-hermite",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.601875064,
-    "max_fresh_seconds": 2.614722742,
-    "median_baseline_delta_seconds": 0.095867477,
+    "median_fresh_seconds": 2.614179513,
+    "max_fresh_seconds": 2.634651061,
+    "median_baseline_delta_seconds": 0.102684961,
     "kernel_seconds": [
-      0.0121,
-      0.0121,
-      0.0125,
-      0.0121,
       0.012199999999999999,
-      0.011699999999999999
+      0.0123,
+      0.0123,
+      0.011800000000000001,
+      0.0121,
+      0.011800000000000001
     ],
-    "median_kernel_seconds": 0.0121,
+    "median_kernel_seconds": 0.01215,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -3385,18 +3385,18 @@
     "family": "tall-hermite",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.601902776,
-    "max_fresh_seconds": 2.615534479,
-    "median_baseline_delta_seconds": 0.096273843,
+    "median_fresh_seconds": 2.609537445,
+    "max_fresh_seconds": 2.654788746,
+    "median_baseline_delta_seconds": 0.100372289,
     "kernel_seconds": [
-      0.011300000000000001,
-      0.011300000000000001,
       0.0115,
+      0.0123,
+      0.0112,
       0.0111,
-      0.0115,
-      0.011699999999999999
+      0.0112,
+      0.0116
     ],
-    "median_kernel_seconds": 0.0114,
+    "median_kernel_seconds": 0.011349999999999999,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -3428,16 +3428,16 @@
     "family": "tall-hermite",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.601722733,
-    "max_fresh_seconds": 2.610584507,
-    "median_baseline_delta_seconds": 0.09593985,
+    "median_fresh_seconds": 2.613944836,
+    "max_fresh_seconds": 2.639355319,
+    "median_baseline_delta_seconds": 0.100508082,
     "kernel_seconds": [
-      0.011699999999999999,
-      0.011699999999999999,
-      0.011699999999999999,
-      0.0119,
+      0.013699999999999999,
       0.011800000000000001,
-      0.012199999999999999
+      0.011699999999999999,
+      0.0116,
+      0.0121,
+      0.0115
     ],
     "median_kernel_seconds": 0.01175,
     "certificates": [
@@ -3479,18 +3479,18 @@
     "family": "tall-hermite",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.601709968,
-    "max_fresh_seconds": 2.617949632,
-    "median_baseline_delta_seconds": 0.101038286,
+    "median_fresh_seconds": 2.611719563,
+    "max_fresh_seconds": 2.666534275,
+    "median_baseline_delta_seconds": 0.102332408,
     "kernel_seconds": [
-      0.0115,
-      0.011800000000000001,
-      0.0115,
       0.011699999999999999,
-      0.011800000000000001,
-      0.011800000000000001
+      0.012199999999999999,
+      0.011699999999999999,
+      0.0116,
+      0.011699999999999999,
+      0.0114
     ],
-    "median_kernel_seconds": 0.01175,
+    "median_kernel_seconds": 0.011699999999999999,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -3522,18 +3522,18 @@
     "family": "tall-hermite",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.606526266,
-    "max_fresh_seconds": 2.615887253,
-    "median_baseline_delta_seconds": 0.099783787,
+    "median_fresh_seconds": 2.610600898,
+    "max_fresh_seconds": 2.660458144,
+    "median_baseline_delta_seconds": 0.097195528,
     "kernel_seconds": [
-      0.0123,
+      0.014,
+      0.0124,
       0.012199999999999999,
-      0.012199999999999999,
-      0.0121,
       0.0125,
-      0.0121
+      0.012,
+      0.012
     ],
-    "median_kernel_seconds": 0.012199999999999999,
+    "median_kernel_seconds": 0.012299999999999998,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -3573,18 +3573,18 @@
     "family": "tall-hermite",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.611733486,
-    "max_fresh_seconds": 2.63830528,
-    "median_baseline_delta_seconds": 0.101717601,
+    "median_fresh_seconds": 2.701614916,
+    "max_fresh_seconds": 2.723678802,
+    "median_baseline_delta_seconds": 0.113874121,
     "kernel_seconds": [
-      0.0479,
-      0.0494,
-      0.0487,
-      0.048,
-      0.0495,
-      0.0498
+      0.056799999999999996,
+      0.0514,
+      0.0511,
+      0.049,
+      0.0476,
+      0.047700000000000006
     ],
-    "median_kernel_seconds": 0.049049999999999996,
+    "median_kernel_seconds": 0.05005,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -3616,18 +3616,18 @@
     "family": "tall-hermite",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.633911436,
-    "max_fresh_seconds": 2.720064294,
-    "median_baseline_delta_seconds": 0.127139166,
+    "median_fresh_seconds": 2.666890591,
+    "max_fresh_seconds": 2.725853081,
+    "median_baseline_delta_seconds": 0.157660556,
     "kernel_seconds": [
-      0.0495,
-      0.0495,
-      0.0522,
-      0.0493,
-      0.0518,
-      0.0497
+      0.0599,
+      0.0528,
+      0.060899999999999996,
+      0.0484,
+      0.0487,
+      0.0489
     ],
-    "median_kernel_seconds": 0.049600000000000005,
+    "median_kernel_seconds": 0.05085,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -3667,18 +3667,18 @@
     "family": "tall-hermite",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.609259294,
-    "max_fresh_seconds": 2.645521042,
-    "median_baseline_delta_seconds": 0.101400088,
+    "median_fresh_seconds": 2.634892509,
+    "max_fresh_seconds": 2.735678903,
+    "median_baseline_delta_seconds": 0.10965073,
     "kernel_seconds": [
-      0.045,
-      0.0446,
-      0.0441,
-      0.0446,
-      0.0465,
-      0.044899999999999995
+      0.053,
+      0.0455,
+      0.046700000000000005,
+      0.0458,
+      0.0444,
+      0.0446
     ],
-    "median_kernel_seconds": 0.04475,
+    "median_kernel_seconds": 0.045649999999999996,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -3710,18 +3710,18 @@
     "family": "tall-hermite",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.647897411,
-    "max_fresh_seconds": 2.707769703,
-    "median_baseline_delta_seconds": 0.160830688,
+    "median_fresh_seconds": 2.720401179,
+    "max_fresh_seconds": 2.734489129,
+    "median_baseline_delta_seconds": 0.150246241,
     "kernel_seconds": [
-      0.046,
-      0.0469,
-      0.046,
-      0.0455,
-      0.048,
-      0.045399999999999996
+      0.047799999999999995,
+      0.047,
+      0.0482,
+      0.0475,
+      0.045899999999999996,
+      0.0455
     ],
-    "median_kernel_seconds": 0.046,
+    "median_kernel_seconds": 0.04725,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -3761,18 +3761,18 @@
     "family": "tall-hermite",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.614429381,
-    "max_fresh_seconds": 2.718220297,
-    "median_baseline_delta_seconds": 0.100781536,
+    "median_fresh_seconds": 2.625193263,
+    "max_fresh_seconds": 2.74274952,
+    "median_baseline_delta_seconds": 0.107060137,
     "kernel_seconds": [
-      0.0445,
-      0.045200000000000004,
+      0.048,
+      0.045700000000000005,
+      0.0489,
+      0.0453,
       0.044,
-      0.045899999999999996,
-      0.0441,
-      0.0439
+      0.0442
     ],
-    "median_kernel_seconds": 0.0443,
+    "median_kernel_seconds": 0.0455,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -3804,18 +3804,18 @@
     "family": "tall-hermite",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.624667615,
-    "max_fresh_seconds": 2.710424872,
-    "median_baseline_delta_seconds": 0.135304403,
+    "median_fresh_seconds": 2.68083878,
+    "max_fresh_seconds": 2.739912531,
+    "median_baseline_delta_seconds": 0.159240362,
     "kernel_seconds": [
-      0.045700000000000005,
-      0.0453,
-      0.0456,
-      0.044899999999999995,
-      0.0465,
-      0.045399999999999996
+      0.0497,
+      0.0476,
+      0.0501,
+      0.046799999999999994,
+      0.0451,
+      0.044700000000000004
     ],
-    "median_kernel_seconds": 0.0455,
+    "median_kernel_seconds": 0.0472,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -3855,18 +3855,18 @@
     "family": "tall-hermite",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.931501187,
-    "max_fresh_seconds": 3.002369451,
-    "median_baseline_delta_seconds": 0.429346662,
+    "median_fresh_seconds": 2.972429106,
+    "max_fresh_seconds": 3.062591246,
+    "median_baseline_delta_seconds": 0.454927974,
     "kernel_seconds": [
-      0.332,
+      0.388,
+      0.376,
+      0.374,
       0.328,
-      0.339,
-      0.327,
-      0.329,
+      0.325,
       0.326
     ],
-    "median_kernel_seconds": 0.3285,
+    "median_kernel_seconds": 0.351,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -3898,18 +3898,18 @@
     "family": "tall-hermite",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 3.123098145,
-    "max_fresh_seconds": 3.212255533,
-    "median_baseline_delta_seconds": 0.626147957,
+    "median_fresh_seconds": 3.207474097,
+    "max_fresh_seconds": 3.25354221,
+    "median_baseline_delta_seconds": 0.700192017,
     "kernel_seconds": [
+      0.411,
+      0.399,
+      0.359,
       0.35,
-      0.347,
-      0.363,
-      0.346,
-      0.347,
-      0.348
+      0.35,
+      0.355
     ],
-    "median_kernel_seconds": 0.3475,
+    "median_kernel_seconds": 0.357,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -3949,18 +3949,18 @@
     "family": "tall-hermite",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 3.002195838,
-    "max_fresh_seconds": 3.012106876,
-    "median_baseline_delta_seconds": 0.496617079,
+    "median_fresh_seconds": 3.020043253,
+    "max_fresh_seconds": 3.149329208,
+    "median_baseline_delta_seconds": 0.501517976,
     "kernel_seconds": [
-      0.376,
-      0.37,
-      0.386,
-      0.37,
+      0.39,
+      0.431,
+      0.423,
       0.371,
-      0.372
+      0.369,
+      0.371
     ],
-    "median_kernel_seconds": 0.3715,
+    "median_kernel_seconds": 0.3805,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -3992,18 +3992,18 @@
     "family": "tall-hermite",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 3.205064192,
-    "max_fresh_seconds": 3.212179268,
-    "median_baseline_delta_seconds": 0.70292301,
+    "median_fresh_seconds": 3.241994643,
+    "max_fresh_seconds": 3.336580634,
+    "median_baseline_delta_seconds": 0.714349915,
     "kernel_seconds": [
+      0.44,
+      0.433,
+      0.431,
       0.376,
-      0.387,
-      0.386,
-      0.373,
-      0.375,
-      0.375
+      0.374,
+      0.372
     ],
-    "median_kernel_seconds": 0.3755,
+    "median_kernel_seconds": 0.40349999999999997,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -4043,18 +4043,18 @@
     "family": "tall-hermite",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 3.007346138,
-    "max_fresh_seconds": 3.013148929,
-    "median_baseline_delta_seconds": 0.494191368,
+    "median_fresh_seconds": 3.014564513,
+    "max_fresh_seconds": 3.13672623,
+    "median_baseline_delta_seconds": 0.509229645,
     "kernel_seconds": [
-      0.38,
-      0.377,
-      0.395,
-      0.379,
+      0.42,
+      0.393,
+      0.401,
       0.378,
-      0.38
+      0.376,
+      0.378
     ],
-    "median_kernel_seconds": 0.3795,
+    "median_kernel_seconds": 0.3855,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -4086,18 +4086,18 @@
     "family": "tall-hermite",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 3.212300897,
-    "max_fresh_seconds": 3.261631747,
-    "median_baseline_delta_seconds": 0.702644008,
+    "median_fresh_seconds": 3.225652542,
+    "max_fresh_seconds": 3.351996236,
+    "median_baseline_delta_seconds": 0.700864332,
     "kernel_seconds": [
-      0.384,
-      0.385,
-      0.409,
+      0.402,
+      0.422,
+      0.437,
       0.379,
-      0.386,
-      0.386
+      0.378,
+      0.379
     ],
-    "median_kernel_seconds": 0.3855,
+    "median_kernel_seconds": 0.3905,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -4137,18 +4137,18 @@
     "family": "unimodular-conjugate",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 3.802974956,
-    "max_fresh_seconds": 3.813753467,
-    "median_baseline_delta_seconds": 1.303240398,
+    "median_fresh_seconds": 3.868540413,
+    "max_fresh_seconds": 3.972112245,
+    "median_baseline_delta_seconds": 1.302903575,
     "kernel_seconds": [
-      1.08,
+      1.19,
+      1.17,
+      1.13,
       1.07,
-      1.08,
-      1.08,
       1.07,
       1.08
     ],
-    "median_kernel_seconds": 1.08,
+    "median_kernel_seconds": 1.105,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -4180,18 +4180,18 @@
     "family": "unimodular-conjugate",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 4.700444294,
-    "max_fresh_seconds": 4.740131291,
-    "median_baseline_delta_seconds": 2.200349647,
+    "median_fresh_seconds": 4.779692992,
+    "max_fresh_seconds": 4.936141897,
+    "median_baseline_delta_seconds": 2.245831143,
     "kernel_seconds": [
-      1.15,
+      1.27,
+      1.26,
+      1.23,
       1.13,
-      1.15,
-      1.16,
-      1.14,
-      1.21
+      1.13,
+      1.14
     ],
-    "median_kernel_seconds": 1.15,
+    "median_kernel_seconds": 1.185,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -4231,18 +4231,18 @@
     "family": "unimodular-conjugate",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 3.637043551,
-    "max_fresh_seconds": 3.719717904,
-    "median_baseline_delta_seconds": 1.17804927,
+    "median_fresh_seconds": 3.697780667,
+    "max_fresh_seconds": 3.833207301,
+    "median_baseline_delta_seconds": 1.191624879,
     "kernel_seconds": [
-      0,
-      0.983,
-      0.972,
-      0.981,
-      0.969,
-      0.971
+      1.08,
+      1.03,
+      1.11,
+      0.975,
+      0.971,
+      0.965
     ],
-    "median_kernel_seconds": 0.9715,
+    "median_kernel_seconds": 1.0025,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -4274,18 +4274,18 @@
     "family": "unimodular-conjugate",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 4.610109314,
-    "max_fresh_seconds": 4.640083636,
-    "median_baseline_delta_seconds": 2.115269202,
+    "median_fresh_seconds": 4.668695387,
+    "max_fresh_seconds": 4.841336293,
+    "median_baseline_delta_seconds": 2.161922908,
     "kernel_seconds": [
+      1.14,
+      1.16,
+      1.07,
       1.01,
-      1.02,
-      1.02,
-      1.02,
       1.01,
       1.01
     ],
-    "median_kernel_seconds": 1.0150000000000001,
+    "median_kernel_seconds": 1.04,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -4325,18 +4325,18 @@
     "family": "unimodular-conjugate",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 3.202887115,
-    "max_fresh_seconds": 3.21841684,
-    "median_baseline_delta_seconds": 0.699306368,
+    "median_fresh_seconds": 3.230175524,
+    "max_fresh_seconds": 3.335268377,
+    "median_baseline_delta_seconds": 0.716005716,
     "kernel_seconds": [
-      0.508,
-      0.516,
-      0.508,
-      0.525,
-      0.522,
-      0.502
+      0.564,
+      0.547,
+      0.549,
+      0.502,
+      0.502,
+      0.499
     ],
-    "median_kernel_seconds": 0.512,
+    "median_kernel_seconds": 0.5245,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -4368,18 +4368,18 @@
     "family": "unimodular-conjugate",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 4.10658988,
-    "max_fresh_seconds": 4.135197616,
-    "median_baseline_delta_seconds": 1.596256038,
+    "median_fresh_seconds": 4.173955317,
+    "max_fresh_seconds": 4.266423232,
+    "median_baseline_delta_seconds": 1.647620804,
     "kernel_seconds": [
-      0.559,
-      0.545,
-      0.545,
-      0.539,
-      0.539,
-      0.54
+      0.629,
+      0.606,
+      0.625,
+      0.542,
+      0.537,
+      0.538
     ],
-    "median_kernel_seconds": 0.5425,
+    "median_kernel_seconds": 0.5740000000000001,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -4419,18 +4419,18 @@
     "family": "unimodular-conjugate",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.608835947,
-    "max_fresh_seconds": 2.633509623,
-    "median_baseline_delta_seconds": 0.099922066,
+    "median_fresh_seconds": 2.616445854,
+    "max_fresh_seconds": 2.639943865,
+    "median_baseline_delta_seconds": 0.064795288,
     "kernel_seconds": [
-      0.005849999999999999,
-      0.00598,
-      0.00567,
-      0.005679999999999999,
-      0.005690000000000001,
-      0.00571
+      0.00604,
+      0.00575,
+      0.00577,
+      0.005809999999999999,
+      0.0056500000000000005,
+      0.005809999999999999
     ],
-    "median_kernel_seconds": 0.0057,
+    "median_kernel_seconds": 0.00579,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -4462,18 +4462,18 @@
     "family": "unimodular-conjugate",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.602263296,
-    "max_fresh_seconds": 2.614738241,
-    "median_baseline_delta_seconds": 0.101582103,
+    "median_fresh_seconds": 2.606676188,
+    "max_fresh_seconds": 2.639572555,
+    "median_baseline_delta_seconds": 0.082796792,
     "kernel_seconds": [
-      0.00667,
-      0.00707,
-      0.006730000000000001,
-      0.0066,
-      0.00657,
-      0.006549999999999999
+      0.00671,
+      0.0069500000000000004,
+      0.00687,
+      0.0069500000000000004,
+      0.00691,
+      0.0067599999999999995
     ],
-    "median_kernel_seconds": 0.006635,
+    "median_kernel_seconds": 0.00689,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -4513,18 +4513,18 @@
     "family": "unimodular-conjugate",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.607359803,
-    "max_fresh_seconds": 2.609665999,
-    "median_baseline_delta_seconds": 0.096468912,
+    "median_fresh_seconds": 2.607684425,
+    "max_fresh_seconds": 2.632957057,
+    "median_baseline_delta_seconds": 0.098278343,
     "kernel_seconds": [
-      0.005860000000000001,
-      0.00546,
+      0.00538,
+      0.00567,
       0.00536,
       0.00532,
-      0.00539,
-      0.00534
+      0.00535,
+      0.00546
     ],
-    "median_kernel_seconds": 0.005375,
+    "median_kernel_seconds": 0.00537,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -4556,18 +4556,18 @@
     "family": "unimodular-conjugate",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.572472012,
-    "max_fresh_seconds": 2.613687226,
-    "median_baseline_delta_seconds": 0.061500899,
+    "median_fresh_seconds": 2.607492494,
+    "max_fresh_seconds": 2.649565346,
+    "median_baseline_delta_seconds": 0.102704998,
     "kernel_seconds": [
-      0.00624,
-      0.00624,
-      0.00631,
+      0.00622,
+      0.0062900000000000005,
       0.00607,
-      0.00608,
-      0.00625
+      0.0062900000000000005,
+      0.006059999999999999,
+      0.00607
     ],
-    "median_kernel_seconds": 0.00624,
+    "median_kernel_seconds": 0.006144999999999999,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -4607,18 +4607,18 @@
     "family": "unimodular-conjugate",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.606779914,
-    "max_fresh_seconds": 2.61026944,
-    "median_baseline_delta_seconds": 0.097600121,
+    "median_fresh_seconds": 2.582617328,
+    "max_fresh_seconds": 2.608428154,
+    "median_baseline_delta_seconds": 0.064155297,
     "kernel_seconds": [
-      0.0056,
+      0.00555,
+      0.00563,
       0.00553,
-      0.00587,
       0.00566,
-      0.00552,
-      0.00563
+      0.00556,
+      0.00561
     ],
-    "median_kernel_seconds": 0.005615,
+    "median_kernel_seconds": 0.005585,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -4650,18 +4650,18 @@
     "family": "unimodular-conjugate",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.609751144,
-    "max_fresh_seconds": 2.621950964,
-    "median_baseline_delta_seconds": 0.098755821,
+    "median_fresh_seconds": 2.609346983,
+    "max_fresh_seconds": 2.623174401,
+    "median_baseline_delta_seconds": 0.102460354,
     "kernel_seconds": [
-      0.00622,
-      0.00645,
-      0.00645,
-      0.00631,
-      0.0062,
+      0.00625,
+      0.00642,
+      0.00664,
+      0.00644,
+      0.00625,
       0.00622
     ],
-    "median_kernel_seconds": 0.006265,
+    "median_kernel_seconds": 0.006335,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -4701,18 +4701,18 @@
     "family": "unimodular-conjugate",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.607466411,
-    "max_fresh_seconds": 2.616971768,
-    "median_baseline_delta_seconds": 0.105550112,
+    "median_fresh_seconds": 2.621856534,
+    "max_fresh_seconds": 2.652767408,
+    "median_baseline_delta_seconds": 0.103156565,
     "kernel_seconds": [
-      0.019100000000000002,
-      0.0208,
-      0.0185,
-      0.0188,
+      0.0214,
+      0.018699999999999998,
+      0.0198,
       0.0184,
-      0.018600000000000002
+      0.018699999999999998,
+      0.0189
     ],
-    "median_kernel_seconds": 0.0187,
+    "median_kernel_seconds": 0.018799999999999997,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -4744,16 +4744,16 @@
     "family": "unimodular-conjugate",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.606946718,
-    "max_fresh_seconds": 2.60969262,
-    "median_baseline_delta_seconds": 0.09648123,
+    "median_fresh_seconds": 2.616263724,
+    "max_fresh_seconds": 2.653121626,
+    "median_baseline_delta_seconds": 0.100044313,
     "kernel_seconds": [
-      0.0206,
-      0.0215,
-      0.0208,
+      0.022,
+      0.0213,
       0.0211,
-      0.0211,
-      0.0209
+      0.0209,
+      0.0207,
+      0.0206
     ],
     "median_kernel_seconds": 0.020999999999999998,
     "certificates": [
@@ -4795,16 +4795,16 @@
     "family": "unimodular-conjugate",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.609285158,
-    "max_fresh_seconds": 2.65007035,
-    "median_baseline_delta_seconds": 0.099429302,
+    "median_fresh_seconds": 2.618551268,
+    "max_fresh_seconds": 2.74206508,
+    "median_baseline_delta_seconds": 0.100716753,
     "kernel_seconds": [
-      0.018,
-      0.018,
-      0.0182,
-      0.0177,
-      0.0179,
-      0.0178
+      0.0197,
+      0.0181,
+      0.018699999999999998,
+      0.0178,
+      0.0176,
+      0.0174
     ],
     "median_kernel_seconds": 0.01795,
     "certificates": [
@@ -4838,18 +4838,18 @@
     "family": "unimodular-conjugate",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.61051532,
-    "max_fresh_seconds": 2.614695075,
-    "median_baseline_delta_seconds": 0.09979769,
+    "median_fresh_seconds": 2.61364664,
+    "max_fresh_seconds": 2.644534891,
+    "median_baseline_delta_seconds": 0.099295121,
     "kernel_seconds": [
-      0.019899999999999998,
-      0.0198,
-      0.0198,
-      0.019399999999999997,
-      0.0198,
-      0.0197
+      0.0215,
+      0.0207,
+      0.0207,
+      0.0195,
+      0.0195,
+      0.0202
     ],
-    "median_kernel_seconds": 0.0198,
+    "median_kernel_seconds": 0.02045,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -4889,18 +4889,18 @@
     "family": "unimodular-conjugate",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.602908496,
-    "max_fresh_seconds": 2.613654414,
-    "median_baseline_delta_seconds": 0.09937339,
+    "median_fresh_seconds": 2.608880293,
+    "max_fresh_seconds": 2.678423289,
+    "median_baseline_delta_seconds": 0.100714615,
     "kernel_seconds": [
-      0.0169,
-      0.0167,
-      0.0171,
-      0.0167,
-      0.0167,
+      0.018,
+      0.0178,
+      0.0174,
+      0.0166,
+      0.016800000000000002,
       0.016800000000000002
     ],
-    "median_kernel_seconds": 0.01675,
+    "median_kernel_seconds": 0.0171,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -4932,18 +4932,18 @@
     "family": "unimodular-conjugate",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.605138111,
-    "max_fresh_seconds": 2.611545915,
-    "median_baseline_delta_seconds": 0.073689973,
+    "median_fresh_seconds": 2.610995714,
+    "max_fresh_seconds": 2.651620224,
+    "median_baseline_delta_seconds": 0.097542616,
     "kernel_seconds": [
-      0.0185,
-      0.020300000000000002,
-      0.018699999999999998,
+      0.019399999999999997,
+      0.019,
+      0.0195,
       0.018600000000000002,
-      0.0185,
+      0.0184,
       0.018600000000000002
     ],
-    "median_kernel_seconds": 0.018600000000000002,
+    "median_kernel_seconds": 0.0188,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -4983,18 +4983,18 @@
     "family": "unimodular-conjugate",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.70481591,
-    "max_fresh_seconds": 2.735943628,
-    "median_baseline_delta_seconds": 0.201871848,
+    "median_fresh_seconds": 2.724953382,
+    "max_fresh_seconds": 2.842322498,
+    "median_baseline_delta_seconds": 0.214079212,
     "kernel_seconds": [
+      0.126,
+      0.128,
+      0.136,
       0.11,
-      0.11,
-      0.113,
-      0.113,
       0.109,
-      0.11
+      0.109
     ],
-    "median_kernel_seconds": 0.11,
+    "median_kernel_seconds": 0.118,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -5026,18 +5026,18 @@
     "family": "unimodular-conjugate",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.799528593,
-    "max_fresh_seconds": 2.822999124,
-    "median_baseline_delta_seconds": 0.296006648,
+    "median_fresh_seconds": 2.819402309,
+    "max_fresh_seconds": 2.937490848,
+    "median_baseline_delta_seconds": 0.301660754,
     "kernel_seconds": [
-      0.121,
+      0.144,
+      0.146,
+      0.146,
       0.122,
-      0.122,
-      0.125,
       0.121,
       0.121
     ],
-    "median_kernel_seconds": 0.1215,
+    "median_kernel_seconds": 0.133,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -5077,18 +5077,18 @@
     "family": "unimodular-conjugate",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.701240044,
-    "max_fresh_seconds": 2.716146926,
-    "median_baseline_delta_seconds": 0.199054046,
+    "median_fresh_seconds": 2.715021344,
+    "max_fresh_seconds": 2.769045469,
+    "median_baseline_delta_seconds": 0.201180844,
     "kernel_seconds": [
-      0.104,
+      0.124,
+      0.124,
+      0.116,
       0.105,
       0.103,
-      0.106,
-      0.104,
-      0.104
+      0.102
     ],
-    "median_kernel_seconds": 0.104,
+    "median_kernel_seconds": 0.1105,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -5120,18 +5120,18 @@
     "family": "unimodular-conjugate",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.803100852,
-    "max_fresh_seconds": 2.820240169,
-    "median_baseline_delta_seconds": 0.298326558,
+    "median_fresh_seconds": 2.814522514,
+    "max_fresh_seconds": 2.840733931,
+    "median_baseline_delta_seconds": 0.301331919,
     "kernel_seconds": [
+      0.132,
+      0.121,
+      0.13,
       0.112,
       0.112,
-      0.114,
-      0.117,
-      0.113,
-      0.112
+      0.113
     ],
-    "median_kernel_seconds": 0.1125,
+    "median_kernel_seconds": 0.11699999999999999,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -5171,18 +5171,18 @@
     "family": "unimodular-conjugate",
     "component": "basis",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.698873744,
-    "max_fresh_seconds": 2.718922621,
-    "median_baseline_delta_seconds": 0.190778018,
+    "median_fresh_seconds": 2.710964258,
+    "max_fresh_seconds": 2.751002291,
+    "median_baseline_delta_seconds": 0.200037957,
     "kernel_seconds": [
-      0.0831,
-      0.0834,
-      0.0849,
-      0.088,
-      0.0844,
-      0.0844
+      0.105,
+      0.0986,
+      0.09770000000000001,
+      0.0852,
+      0.0843,
+      0.085
     ],
-    "median_kernel_seconds": 0.0844,
+    "median_kernel_seconds": 0.09145,
     "certificates": [
       {
         "denominator_entries": 0,
@@ -5214,18 +5214,18 @@
     "family": "unimodular-conjugate",
     "component": "member",
     "owner": "HexHermiteMathlib",
-    "median_fresh_seconds": 2.730958824,
-    "max_fresh_seconds": 2.818372017,
-    "median_baseline_delta_seconds": 0.229909429,
+    "median_fresh_seconds": 2.778155112,
+    "max_fresh_seconds": 2.860144896,
+    "median_baseline_delta_seconds": 0.255272211,
     "kernel_seconds": [
-      0.0942,
-      0.092,
-      0.0937,
-      0.0958,
-      0.09190000000000001,
-      0.0922
+      0.109,
+      0.111,
+      0.099,
+      0.09290000000000001,
+      0.0911,
+      0.0911
     ],
-    "median_kernel_seconds": 0.09295,
+    "median_kernel_seconds": 0.09595000000000001,
     "certificates": [
       {
         "denominator_entries": 0,
