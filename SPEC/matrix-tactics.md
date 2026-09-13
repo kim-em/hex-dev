@@ -128,12 +128,26 @@ pre-evaluation of the check nor the `Meta.check` of the proof that
 `mkAuxTheorem`'s closure step performs under its default
 `zetaDelta := false`; either evaluates the certificate a second time.
 
+The closed-entry `rank` handlers support integers, rationals and
+`Zsqrtd d` with an integral-domain instance through `HexRankMathlib`.
+`HexRankMathlib.NumberFieldTactic` additionally supports `QAdjoin a` and
+checked `PolyQuot p x` presentations, including rational coordinates.
+The latter import is optional; the ordinary rank frontend does not load
+the number-field bridge. The `closed-algebraic` fixture is the block
+`[[α, 1], [1, α]]` with `α² = 2`.
+
 ## Kernel discipline
 
 Design principle 11, as `hex-rank` made it concrete: everything on the
 kernel's path is a list of `Nat` or `Int`, read by structural recursion,
 with arithmetic through `Nat.mul`, `Nat.add`, `Nat.mod`, `Int.mul`,
 `Int.add` and comparisons through `Nat.beq`, `Nat.blt` and `Int.decEq`.
+Polynomial quotient certificates use coefficient lists and explicit
+polynomial-division witnesses, so checking does not divide polynomials.
+They require a nontrivial modular quotient, proved from a positive-degree
+monic normalization, without a primality or irreducibility test. Rational
+row scaling and number-field entry identification are separate linear-size
+checks; they may reduce the executable carrier once per matrix entry.
 No `Array`, `Vector`, `Fin`, `Finset`, `Hex.Matrix`, `Matrix.of`, `dite`
 or well-founded recursion appears on the path, every definition on it is
 `@[expose]`, and a Mathlib literal is identified with its row list

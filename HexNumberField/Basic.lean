@@ -381,6 +381,39 @@ theorem ofNormalized?_p
     cases h
     rfl
 
+/-- Canonicality is preserved when the defining polynomial is identified. -/
+theorem canonical_transport (a : AlgebraicNumber) (p : ZPoly) (h : a.p = p) :
+    IsCanonical p (h ▸ a.squarefree) (h ▸ a.isolation).base := by
+  subst p
+  exact a.canonical
+
+set_option backward.privateInPublic true in
+set_option backward.privateInPublic.warn false in
+/-- The checked total constructor retains the defining polynomial as literal
+data. Its root is the same canonical root returned by `ofNormalized?`; reading
+the polynomial does not replay the isolation pipeline. -/
+@[expose]
+def ofNormalized
+    (p : ZPoly) (prim : ZPoly.Primitive p) (pos_lc : 0 < p.leadingCoeff)
+    (pos_degree : 0 < p.natDegree)
+    (checked : ZPoly.CheckedIrreducible p) (squarefree : HasOnlySimpleRoots p)
+    (rep : RefinedIsolation p)
+    (h : (ofNormalized? p prim pos_lc pos_degree checked squarefree rep).isSome) :
+    AlgebraicNumber :=
+  let a := (ofNormalized? p prim pos_lc pos_degree checked squarefree rep).get h
+  let hp : a.p = p := ofNormalized?_p p prim pos_lc pos_degree checked squarefree rep
+    (Option.some_get h).symm
+  mk p (hp ▸ a.prim) (hp ▸ a.pos_lc) (hp ▸ a.pos_degree)
+    (hp ▸ a.checked) (hp ▸ a.squarefree) (hp ▸ a.isolation)
+    (canonical_transport a p hp)
+
+@[simp] theorem ofNormalized_p
+    (p : ZPoly) (prim : ZPoly.Primitive p) (pos_lc : 0 < p.leadingCoeff)
+    (pos_degree : 0 < p.natDegree)
+    (checked : ZPoly.CheckedIrreducible p) (squarefree : HasOnlySimpleRoots p)
+    (rep : RefinedIsolation p) (h) :
+    (ofNormalized p prim pos_lc pos_degree checked squarefree rep h).p = p := rfl
+
 /-- A successful canonicalization either takes the explicit zero path or
 stores a representative intersecting the supplied isolation. This is the
 Mathlib-free behavioral boundary used by semantic soundness proofs. -/

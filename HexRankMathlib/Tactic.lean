@@ -6,15 +6,15 @@ Authors: Kim Morrison
 
 module
 
-public meta import HexRankMathlib.Kernel
-public import HexRankMathlib.Kernel
+public meta import HexRankMathlib.Rational
+public import HexRankMathlib.Rational
 public meta import Lean
 
 public meta section
 
 /-!
 The `rank` tactic on Mathlib matrices: closes `A.rank = r`, `A.rank ≤ r`,
-`r ≤ A.rank` (and their mirror images) for a closed integer matrix literal
+`r ≤ A.rank` (and their mirror images) for a closed integer or rational matrix literal
 `A` in one of the four syntaxes of `HexMatrixMathlib.Literal` (`!![…]`,
 `Matrix.of ![…]`, `fun i j => …`, `Matrix.ofArray xs h`), possibly behind
 definitions.
@@ -27,13 +27,14 @@ otherwise) and to one kernel `decide` on `checkRankList`.
 The whole proof is added as an auxiliary lemma on the closed target
 (`addClosedProof`), checked synchronously, so the kernel checks it exactly
 once, with no elaborator type check first, and a rejection is reported by
-the tactic.
-Entries must be closed integer expressions that `norm_num` evaluates and
+the tactic. Rational rows are scaled by their positive denominator least common
+multiples and checked by `rank_eq_of_scaledRows`. Entries must be closed numeric
+expressions that `norm_num` evaluates and
 that the kernel reduces to their numerals (numerals and arithmetic on
 them); an entry the kernel cannot reduce is reported as such.
 
 Outcomes follow the matrix-tactic protocol: a goal that is not a rank
-comparison, a matrix that is not a closed integer literal, or an open bound
+comparison, a matrix that is not a closed integer or rational literal, or an open bound
 is not applicable and delegates to the next handler; in-fragment errors commit.
 A certificate the kernel rejects is a failure (a producer bug, since the
 producer re-checks its own output).
@@ -76,12 +77,14 @@ def rankTarget? (target : Expr) : Option (Expr × Expr × Rel × Bool) :=
       else none
   | _ => none
 
-/-- A recognized integer matrix literal with its evaluated entries. -/
+/-- A recognized integer or rational matrix, with integral rows for certification. -/
 structure Literal where
   /-- The recognized literal. -/
   lit : HexMatrixMathlib.Literal.Recognized
   /-- The evaluated entries. -/
   values : Array (Array Int)
+  /-- Original rational rows and their positive integer scales. -/
+  rat : Option (Array (Array Rat) × Array Nat) := none
 
 /-- Classify the target before evaluating entries or running the producer. An
 error here is a reason for numeric inapplicability, not a tactic failure. -/
@@ -96,18 +99,18 @@ def classify (target : Expr) : MetaM
     return .error m!"the bound{indentExpr other}\nmust be a closed term"
   let some lit ← HexMatrixMathlib.Literal.literal? A |
     return .error m!"the matrix is not a closed `!![…]`, `Matrix.of ![…]`, `fun i j => …` or `Matrix.ofArray` literal{indentExpr A}"
-  unless lit.carrier.isConstOf ``Int do
-    return .error m!"only integer matrices are supported; the entry type is{indentExpr lit.carrier}"
+  unless lit.carrier.isConstOf ``Int || lit.carrier.isConstOf ``Rat do
+    return .error m!"only integer and rational matrices are supported; the entry type is{indentExpr lit.carrier}"
   return .ok (A, other, rel, reverse, lit)
 
-/-- Evaluate a recognized integer literal. -/
+/-- Evaluate a recognized literal and clear rational row denominators. -/
 def evalLiteral (lit : HexMatrixMathlib.Literal.Recognized) : MetaM Literal := do
-  let values ← lit.entries.mapM (·.mapM fun e => do
-    let q ← HexMatrixMathlib.Literal.evalEntry e
-    unless q.den = 1 do
-      throwError "rank: declined: the entry is not an integer{indentExpr e}"
-    return q.num)
-  return ⟨lit, values⟩
+  let values ← lit.entries.mapM (·.mapM HexMatrixMathlib.Literal.evalEntry)
+  if lit.carrier.isConstOf ``Int then
+    return ⟨lit, values.map (·.map (·.num)), none⟩
+  let scales := values.map fun row => row.foldl (fun l q => Nat.lcm l q.den) 1
+  let rows := values.zipWith (fun row s => row.map fun q => (q * (s : Rat)).num) scales
+  return ⟨lit, rows, some (values, scales)⟩
 
 /-- The witness of a literal, by the compiled producer. -/
 def witness (lit : Literal) : MetaM RankWitness := do
@@ -154,6 +157,33 @@ def diagnose (bound check : Expr) (A ofL : Expr) (e : Exception) : MetaM Excepti
         m!"rank: the entries of the matrix do not reduce to their numerals in the kernel{indentExpr A}"
   return .error e.getRef m!"rank: the kernel rejected the proof: {e.toMessageData}"
 
+/-- Combine a certified rank with the requested comparison, reporting a false
+closed target before constructing its kernel proof. -/
+def boundProof (r : Nat) (eq other : Expr) (rel : Rel) (reverse : Bool) : MetaM (Expr × Expr) := do
+  -- the certified rank as a literal; `c.rank` reduces to it
+  let crank := mkNatLit r
+  -- a bound that evaluates is compared here, for a clear message on a false target
+  if let some v ← (Meta.evalNat other).run then
+    let ok : Bool := match rel with
+      | .eq => r == v
+      | .le => decide (r ≤ v)
+      | .ge => decide (v ≤ r)
+    unless ok do
+      throwError "rank: the target is false: the rank is {r}"
+  -- the comparison with the stated bound, decided by the kernel as well
+  let bound ← match rel with
+    | .eq => mkEq crank other
+    | .le => mkAppM ``LE.le #[crank, other]
+    | .ge => mkAppM ``LE.le #[other, crank]
+  let hbound ← decideProof bound
+  let proof ← match rel with
+    | .eq =>
+        let proof ← mkEqTrans eq hbound
+        if reverse then mkEqSymm proof else pure proof
+    | .le => mkAppM ``LE.le.trans #[(← mkAppM ``Eq.le #[eq]), hbound]
+    | .ge => mkAppM ``LE.le.trans #[hbound, (← mkAppM ``Eq.ge #[eq])]
+  return (proof, bound)
+
 /-- Prove a rank target, or throw. -/
 def proveGoal (target : Expr) : MetaM Expr := do
   let target ← instantiateMVars target
@@ -164,33 +194,23 @@ def proveGoal (target : Expr) : MetaM Expr := do
   let c := toExpr w
   let nE := mkNatLit lit.lit.n
   let mE := mkNatLit lit.lit.m
-  let ofL ← mkAppM ``HexMatrixMathlib.ofLists #[nE, mE, L]
-  let hA ← HexMatrixMathlib.Literal.identification lit.lit A L
   let check ← mkEq (← mkAppM ``Hex.Matrix.checkRankList #[nE, mE, L, c]) (mkConst ``Bool.true)
   let hcheck ← decideProof check
-  -- the certified rank as a literal; `c.rank` reduces to it
-  let crank := mkNatLit w.rank
-  -- a bound that evaluates is compared here, for a clear message on a false target
-  if let some v ← (Meta.evalNat other).run then
-    let ok : Bool := match rel with
-      | .eq => w.rank == v
-      | .le => decide (w.rank ≤ v)
-      | .ge => decide (v ≤ w.rank)
-    unless ok do
-      throwError "rank: the target is false: the rank is {w.rank}"
-  -- the comparison with the stated bound, decided by the kernel as well
-  let bound ← match rel with
-    | .eq => mkEq crank other
-    | .le => mkAppM ``LE.le #[crank, other]
-    | .ge => mkAppM ``LE.le #[other, crank]
-  let hbound ← decideProof bound
-  let proof ← match rel with
-    | .eq =>
-        let eq ← mkAppM ``HexMatrixMathlib.rank_eq_of_checkList' #[A, L, c, hA, hcheck]
-        let proof ← mkEqTrans eq hbound
-        if reverse then mkEqSymm proof else pure proof
-    | .le => mkAppM ``HexMatrixMathlib.rank_le_of_checkList' #[A, L, c, hA, hcheck, hbound]
-    | .ge => mkAppM ``HexMatrixMathlib.le_rank_of_checkList' #[A, L, c, hA, hcheck, hbound]
+  let (eq, ofL) ← match lit.rat with
+    | none =>
+      let ofL ← mkAppM ``HexMatrixMathlib.ofLists #[nE, mE, L]
+      let hA ← HexMatrixMathlib.Literal.identification lit.lit A L
+      let eq ← mkAppM ``HexMatrixMathlib.rank_eq_of_checkList' #[A, L, c, hA, hcheck]
+      pure (eq, ofL)
+    | some (values, scales) =>
+      let Q ← HexMatrixMathlib.Literal.rowList (mkConst ``Rat) (values.map (·.map toExpr))
+      let s := toExpr scales.toList
+      let hA ← HexMatrixMathlib.Literal.identification lit.lit A Q
+      let hs ← decideProof (← mkEq
+        (← mkAppM ``Hex.Matrix.DetWitness.scaledRows #[s, Q, L]) (mkConst ``Bool.true))
+      let eq ← mkAppM ``HexMatrixMathlib.rank_eq_of_scaledRows #[A, Q, s, L, c, hA, hs, hcheck]
+      pure (eq, ← mkAppM ``HexMatrixMathlib.ofLists #[nE, mE, Q])
+  let (proof, bound) ← boundProof w.rank eq other rel reverse
   -- check synchronously, so that a rejection is reported here, not later
   try
     HexMatrixMathlib.Literal.addClosedProof target proof

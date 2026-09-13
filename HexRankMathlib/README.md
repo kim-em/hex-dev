@@ -39,7 +39,7 @@ open HexMatrixMathlib
 
 -- The producer's certificate checks, so the unchecked rank is Mathlib's.
 #check @rankCertWith_check
-#check @rank_eq
+#check @Rank.rank_eq
 -- ∀ {n m} (A : Hex.Matrix ℤ n m), Hex.Matrix.rank A = (matrixEquiv A).rank
 
 -- Rank is unchanged by passing to any fraction field.
@@ -54,7 +54,7 @@ open HexMatrixMathlib
 - `rowReduceWith_spec`: the reduced-form contract of the producer, proved by
   the loop invariant of `HexRankMathlib.Invariant` (the pivot rows are the
   rows of `adjugate B * P`, the denominator is `det B`);
-- `rankCertWith_check`, `rankWith_eq`, `rank_eq`: producer correctness and
+- `rankCertWith_check`, `rankWith_eq`, `Rank.rank_eq`: producer correctness and
   the identification of the unchecked rank with `Matrix.rank`;
 - `exists_rankCert`: completeness of the certificate shape over every domain;
 - `rank_map_eq`, `rank_map_eq_rank_fractionRing`, `rank_eq_ratFunc_rank'`:
@@ -69,9 +69,16 @@ open HexMatrixMathlib
   `Matrix.rank` of an integer matrix given as a row list, with `ofLists`
   identifying a `!![…]` literal with its row list definitionally;
 - the `rank` tactic: `A.rank = r`, `A.rank ≤ r` and `r ≤ A.rank` for a
-  closed integer literal `A`, by the compiled producer and one kernel check
-  of the certificate; 6 to 60 times less kernel time than Mathlib's
-  `eval_rank` on 8 × 8 to 32 × 32 literals.
+  closed integer, rational or quadratic-integer literal `A`, by a compiled
+  producer and a kernel check of the certificate; 6 to 60 times less kernel time than Mathlib's
+  `eval_rank` on 8 × 8 to 32 × 32 integer literals;
+- `HexRankMathlib.NumberFieldTactic`: an optional `rank` handler for
+  `Hex.QAdjoin a` and checked `Hex.PolyQuot p x` fields. Open
+  `Hex.PolyQuot.QAdjoinField` for their Mathlib field instances. Rational
+  coordinates and nonmonic primitive defining polynomials are supported.
+  The defining polynomial must be kernel-reducible; for `QAdjoin` use the
+  checked `AlgebraicNumber.ofNormalized` constructor when root-search
+  constructors do not expose their polynomial.
 
 # Verification
 

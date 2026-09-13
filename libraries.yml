@@ -343,7 +343,7 @@ libraries:
         - name: multivariate-carriers
           description: Grevlex trivariate Int and Rat tridiagonal matrices; dimensions 3, 4, 5 crossed with 2, 3, 4 nonconstant terms (plus the diagonal constant), total degree two. Mixed monomials and nonconstant leading minors exercise exact division.
   HexRank:
-    deps: [HexBareiss, HexDeterminant, HexMatrix, HexArith, HexBasic]
+    deps: [HexBareiss, HexDeterminant, HexMatrix, HexArith, HexBasic, HexPoly]
     mathlib: false
     done_through: 3
     status: active
@@ -1132,7 +1132,7 @@ libraries:
     done_through: 3
     status: active
   HexRankMathlib:
-    deps: [HexRank, HexBareissMathlib, HexDeterminantMathlib, HexMatrixMathlib]
+    deps: [HexRank, HexBareissMathlib, HexDeterminantMathlib, HexMatrixMathlib, HexNumberFieldMathlib]
     mathlib: true
     proof_probes: [bench/HexRankMathlib/ProofProbe]
     done_through: 3

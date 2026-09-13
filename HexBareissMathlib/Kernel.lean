@@ -46,7 +46,7 @@ private theorem intMul_eq (a b : Int) : Int.mul a b = a * b := rfl
 private theorem intAdd_eq (a b : Int) : Int.add a b = a + b := rfl
 private theorem intNeg_eq (a : Int) : Int.neg a = -a := rfl
 
-theorem nthRow_eq_getD (A : List (List Int)) (i : Nat) : nthRow A i = A.getD i [] := by
+theorem Det.nthRow_eq_getD (A : List (List Int)) (i : Nat) : nthRow A i = A.getD i [] := by
   induction A generalizing i with
   | nil => simp [nthRow]
   | cons a as ih =>
@@ -54,7 +54,7 @@ theorem nthRow_eq_getD (A : List (List Int)) (i : Nat) : nthRow A i = A.getD i [
     | zero => simp [nthRow]
     | succ i => simp only [nthRow, List.getD_cons_succ, ih]
 
-theorem nthInt_eq_getD (a : List Int) (j : Nat) : nthInt a j = a.getD j 0 := by
+theorem Det.nthInt_eq_getD (a : List Int) (j : Nat) : nthInt a j = a.getD j 0 := by
   induction a generalizing j with
   | nil => simp [nthInt]
   | cons x xs ih =>
@@ -95,7 +95,7 @@ theorem swapRows_getD (a b : Nat) (A : List (List Int)) (ha : a < A.length) (hb 
       A.getD (if k = a then b else if k = b then a else k) [] := by
   unfold swapRows
   rw [replaceRow_getD _ _ _ _ (by rw [replaceRow_length]; exact hb), replaceRow_getD _ _ _ _ ha,
-    nthRow_eq_getD, nthRow_eq_getD]
+    Det.nthRow_eq_getD, Det.nthRow_eq_getD]
   by_cases hka : k = a
   · subst hka
     by_cases hkb : k = b
@@ -122,7 +122,7 @@ theorem signOf_eq (s : List (Nat × Nat)) : signOf s = (-1) ^ s.length := by
   | nil => rfl
   | cons _ s ih => simp [signOf, intNeg_eq, ih, pow_succ]
 
-theorem rowsLen_iff (m : Nat) (L : List (List Int)) :
+theorem Det.rowsLen_iff (m : Nat) (L : List (List Int)) :
     rowsLen m L = true ↔ ∀ r ∈ L, r.length = m := by
   induction L with
   | nil => simp [rowsLen]
@@ -153,7 +153,7 @@ theorem column_getD (j : Nat) (A : List (List Int)) (k : Nat) :
   | nil => simp [column]
   | cons r rs ih =>
     cases k with
-    | zero => simp [column, nthInt_eq_getD]
+    | zero => simp [column, Det.nthInt_eq_getD]
     | succ k => simp only [column, List.getD_cons_succ, ih]
 
 theorem emptyCols_length (m : Nat) : (emptyCols m).length = m := by
@@ -354,14 +354,14 @@ theorem det_eq_of_checkList (n : Nat) (L : List (List Int)) (c : DetWitness)
     have hdetU : (Lm * Pm).det = ∏ i, (Lm * Pm) i i := Matrix.det_of_isUpperTriangular hupper
     have hl0 : (∏ i, Lm i i) ≠ 0 := Finset.prod_ne_zero_iff.mpr fun i _ => by
       have := (hrows i i.isLt).2.1
-      rwa [nthInt_eq_getD, Nat.zero_add] at this
+      rwa [Det.nthInt_eq_getD, Nat.zero_add] at this
     have hsign : signOf swaps * signOf swaps = 1 := by
       rw [signOf_eq, ← mul_pow]
       norm_num
     have hprodL : (List.ofFn fun k : Fin T.length => nthInt (T.getD k []) (0 + k)).prod =
         ∏ i, Lm i i := by
       rw [List.prod_ofFn]
-      exact Finset.prod_congr rfl fun i _ => by simp [Lm, nthInt_eq_getD]
+      exact Finset.prod_congr rfl fun i _ => by simp [Lm, Det.nthInt_eq_getD]
     have hprodU : (List.ofFn fun k : Fin T.length =>
         dotInt (T.getD k []) ((columns T.length P).getD k [])).prod = ∏ i, (Lm * Pm) i i := by
       rw [List.prod_ofFn]

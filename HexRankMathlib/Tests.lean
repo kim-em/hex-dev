@@ -7,6 +7,7 @@ module
 
 import HexRank
 import HexRankMathlib
+import HexRankMathlib.CarrierTests
 import HexMatrix.Notation
 
 /-! Build-only examples: a hand-written certificate discharged in the kernel,
@@ -27,7 +28,7 @@ example : (matrixEquiv rankTestMatrix).rank = 2 :=
   checkRank_sound (A := rankTestMatrix) (c := rankTestCert) (by decide +kernel)
 
 example : (matrixEquiv rankTestMatrix).rank = 2 :=
-  (rank_eq rankTestMatrix).symm.trans (by decide +kernel)
+  (Rank.rank_eq rankTestMatrix).symm.trans (by decide +kernel)
 
 example : (matrixEquiv rankTestMatrix).rank = 2 := by decide +kernel
 
@@ -150,12 +151,25 @@ must be a closed term
 #guard_msgs in
 example (a : ℤ) : Matrix.rank !![a, 1; 1, a] = 2 := by rank
 
-/--
-error: rank: not applicable: only integer matrices are supported; the entry type is
-  ℚ
--/
+theorem rationalRank : Matrix.rank (R := ℚ) !![1 / 2, 1; 1, 2] = 1 := by rank
+
+example : 1 = Matrix.rank (R := ℚ) !![1 / 2, 1; 1, 2] := by rank
+example : Matrix.rank (R := ℚ) !![1 / 2, 1; 1, 2] ≤ 2 := by rank
+example : 1 ≤ Matrix.rank (R := ℚ) !![1 / 2, 1; 1, 2] := by rank
+example : Matrix.rank (R := ℚ) !![0, 1 / 3, -2 / 5; 1 / 2, 0, 1 / 7] = 2 := by rank
+example : Matrix.rank (R := ℚ) !![0, 0; 0, 0] = 0 := by rank
+example : Matrix.rank (fun (_ : Fin 0) (_ : Fin 3) => (0 : ℚ)) = 0 := by rank
+example : Matrix.rank (fun (_ : Fin 3) (_ : Fin 0) => (0 : ℚ)) = 0 := by rank
+example : Matrix.rank (fun (i j : Fin 2) => ((i.val + j.val : ℕ) : ℚ) / 3) = 2 := by rank
+example : Matrix.rank (R := ℚ) (Matrix.of ![![1 / 2, 1], ![1, 2]]) = 1 := by rank
+
+/-- info: '_private.HexRankMathlib.Tests.0.rationalRank' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-example : Matrix.rank (R := ℚ) !![1 / 2, 1; 1, 2] = 1 := by rank
+#print axioms rationalRank
+
+/-- error: rank: the target is false: the rank is 1 -/
+#guard_msgs in
+example : Matrix.rank (R := ℚ) !![1 / 2, 1; 1, 2] = 2 := by rank
 
 /--
 error: rank: not applicable: the matrix is not a closed `!![…]`, `Matrix.of ![…]`, `fun i j => …` or `Matrix.ofArray` literal
@@ -187,7 +201,8 @@ run_cmd do
   let handlers := (tacticElabAttribute.getEntries (← getEnv)
     ``HexMatrixMathlib.Rank.rankTac).map (·.declName)
   unless handlers ==
-      [``HexMatrixMathlib.Rank.evalRankTac, ``HexMatrixMathlib.Rank.rankFallback] do
+      [``HexMatrixMathlib.Rank.evalQuadraticRank,
+        ``HexMatrixMathlib.Rank.evalRankTac, ``HexMatrixMathlib.Rank.rankFallback] do
     throwError "unexpected shipped rank handler order: {handlers}"
 
 /-! Numeric delegation must be tested with the numeric handler first. A stub
@@ -207,7 +222,7 @@ run_cmd do
     ``HexMatrixMathlib.Rank.rankTac).map (·.declName)
   unless handlers ==
       [``HexMatrixMathlib.Rank.evalRankTac, ``rankStub,
-        ``HexMatrixMathlib.Rank.evalRankTac, ``HexMatrixMathlib.Rank.rankFallback] do
+        ``HexMatrixMathlib.Rank.evalQuadraticRank, ``HexMatrixMathlib.Rank.evalRankTac, ``HexMatrixMathlib.Rank.rankFallback] do
     throwError "unexpected rank handler order: {handlers}"
 
 /-- info: rank stub -/
@@ -220,7 +235,7 @@ example (r : ℕ) (h : Matrix.rank (R := ℤ) !![1] = r) : Matrix.rank (R := ℤ
 
 /-- info: rank stub -/
 #guard_msgs in
-example (h : Matrix.rank (R := ℚ) !![1] = 1) : Matrix.rank (R := ℚ) !![1] = 1 := by rank
+example (h : Matrix.rank (R := ℝ) !![1] = 1) : Matrix.rank (R := ℝ) !![1] = 1 := by rank
 
 /-- info: rank stub -/
 #guard_msgs in
