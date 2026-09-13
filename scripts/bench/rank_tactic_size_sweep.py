@@ -83,8 +83,14 @@ def run_lean(path: Path, timeout: float, cpu: int | None) -> tuple[float | None,
         try:
             stdout, stderr = proc.communicate(timeout=timeout)
         except subprocess.TimeoutExpired:
-            os.killpg(proc.pid, signal.SIGKILL)
-            proc.communicate()
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            try:
+                proc.communicate()
+            except UnicodeDecodeError:
+                pass  # output cut mid-character by the kill; it is discarded anyway
             return None, False, {}
     out = stdout + stderr
     profile: dict[str, float] = {}
