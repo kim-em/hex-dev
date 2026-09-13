@@ -184,8 +184,13 @@ def boundProof (r : Nat) (eq other : Expr) (rel : Rel) (reverse : Bool) : MetaM 
     | .ge => mkAppM ``LE.le.trans #[hbound, (← mkAppM ``Eq.ge #[eq])]
   return (proof, bound)
 
+/-- The slot width for the packed check: the least positive `W` with
+`rank · modulus² < 2^W` (`Nat.lt_log2_self`). -/
+def slotWidth (w : RankWitness) : Nat :=
+  Nat.log2 (w.rank * (w.modulus * w.modulus)) + 1
+
 /-- Prove a rank target, or throw. -/
-def proveGoal (target : Expr) : MetaM Expr := do
+def proveGoal (cfg : HexMatrixMathlib.KernelConfig) (target : Expr) : MetaM Expr := do
   let target ← instantiateMVars target
   let .ok (A, other, rel, reverse, recognized) ← classify target | throwUnsupportedSyntax
   let lit ← evalLiteral recognized
@@ -194,8 +199,16 @@ def proveGoal (target : Expr) : MetaM Expr := do
   let c := toExpr w
   let nE := mkNatLit lit.lit.n
   let mE := mkNatLit lit.lit.m
-  let check ← mkEq (← mkAppM ``Hex.Matrix.checkRankList #[nE, mE, L, c]) (mkConst ``Bool.true)
-  let hcheck ← decideProof check
+  -- the check the kernel evaluates, and a proof of the plain check from it
+  let plainCheck ← mkEq (← mkAppM ``Hex.Matrix.checkRankList #[nE, mE, L, c]) (mkConst ``Bool.true)
+  let (check, hcheck) ← if cfg.packing then do
+      let wE := mkNatLit (slotWidth w)
+      let check ← mkEq (← mkAppM ``Hex.Matrix.checkRankListPacked #[wE, nE, mE, L, c])
+        (mkConst ``Bool.true)
+      let hpacked ← decideProof check
+      pure (check, ← mkAppM ``HexMatrixMathlib.checkRankList_of_packed #[wE, nE, mE, L, c, hpacked])
+    else
+      pure (plainCheck, ← decideProof plainCheck)
   let (eq, ofL) ← match lit.rat with
     | none =>
       let ofL ← mkAppM ``HexMatrixMathlib.ofLists #[nE, mE, L]
@@ -222,7 +235,7 @@ integer or rational matrix literal `A`, with the kernel checking a rank certific
 keyword is non-reserved, so `rank` stays usable as an identifier. Extensions
 must use `@[no_fallback]` to preserve their errors and `throwUnsupportedSyntax`
 to delegate outside their fragment. -/
-syntax (name := rankTac) &"rank" : tactic
+syntax (name := rankTac) &"rank" optConfig : tactic
 
 /-- Registered before the numeric handler because Lean tries equal-priority
 handlers in reverse registration order. Reclassify only to report the reason;
@@ -235,8 +248,9 @@ def rankFallback : Tactic.Tactic := fun _ => Tactic.withMainContext do
 
 -- Ordinary errors commit; unsupported syntax still tries the next handler.
 @[tactic rankTac, no_fallback]
-def evalRankTac : Tactic.Tactic := fun _ => Tactic.withMainContext do
-  let proof ← proveGoal (← Tactic.getMainTarget)
+def evalRankTac : Tactic.Tactic := fun stx => Tactic.withMainContext do
+  let cfg ← HexMatrixMathlib.Literal.elabKernelConfig stx[1]
+  let proof ← proveGoal cfg (← Tactic.getMainTarget)
   Tactic.closeMainGoal `rank proof
 
 end HexMatrixMathlib.Rank

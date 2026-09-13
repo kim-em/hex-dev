@@ -37,6 +37,7 @@ FAMILY_ORDER = ["full", "deficient", "half", "low"]
 STYLE = {
     "eval_rank": {"color": "#d62728", "marker": "s", "label": "Mathlib `eval_rank`"},
     "rank": {"color": "#1f77b4", "marker": "o", "label": "hex-rank `rank`"},
+    "rank_plain": {"color": "#2ca02c", "marker": "^", "label": "hex-rank `rank -packing`"},
 }
 
 

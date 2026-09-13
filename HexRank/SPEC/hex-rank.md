@@ -898,6 +898,45 @@ and returns only a witness that passes `checkRankPoly`. Source polynomials
 may be unreduced. The intended source quotient is a domain; a reducible
 presentation can cause the untrusted producer to decline.
 
+### Packed evaluation
+
+`checkRankListPacked W n m A c` is `checkRankList` with the lower bound's
+dot products taken on Kronecker-packed rows, and is the checker the `rank`
+tactic uses unless configured otherwise (`rank -packing`). The certificate
+is unchanged; only the evaluation strategy differs, and a passing packed
+check implies a passing plain check (the companion's
+`checkRankList_of_packed`), so the plain checker remains the specification
+and the soundness theorem of the packed one is the plain one after a
+rewrite.
+
+A row of residues `a₀, …, a_{r−1}` is packed into the one number
+`Σ aₖ · 2^(W·k)` (`packRow`, `Nat.ofDigits` at the base `2^W`), and a
+column of `vt` is cut or zero-padded to `r` entries and packed in reverse
+order by a Horner loop of `r` steps (`packCol`). The product of a packed
+row and a reverse-packed column is the digit list of the convolution of
+the two rows, and its slot `r − 1` is their dot product (`dotPacked`:
+`Nat.shiftRight` by `W · (r − 1)`, then `Nat.land` with `2^W − 1`), as
+long as no convolution coefficient reaches `2^W`. Every coefficient is a
+sum of at most `r` products of entries below `modulus`, so the packed
+checker additionally requires every entry of `vt` below `modulus`
+(`allLtRows`; the block's entries are residues) and
+`rank · modulus² < 2^W`, and the tactic passes the least such `W`
+(`Nat.log2 (rank · modulus²) + 1`). In the kernel a dot product is then
+one GMP multiplication of two numbers of `r · W` bits, one shift and one
+mask, `Nat.mod` and `Nat.beq`, in place of `r` multiply-adds; the
+`rank³ / 3` multiplications of the plain lower bound become `rank² / 2`
+multiplications of packed rows plus `rank²` shift-adds of packing. The
+primitives `Nat.shiftLeft`, `Nat.shiftRight`, `Nat.land` and `Nat.pow`
+join the kernel-discipline list; all are GMP-accelerated in the kernel.
+On the `40 × 40` full-rank tactic-size bench matrix the kernel share of
+`rank` measured `0.89 s` plain and `0.26 s` packed, and `3.9 s` against
+`0.77 s` at `64 × 64`.
+
+The conformance target replays the recorded witnesses through both
+checkers, accepts the composite-modulus witness at slot width `8`
+(`2 · 9² < 2^8`), and refutes the first witness at slot width `8` and a
+witness with a `vt` entry at or above the modulus.
+
 ## Carriers
 
 The producer is one function. Each carrier supplies its quotient and its
@@ -1026,6 +1065,7 @@ rank:
 | `checkRank` | `n · r · m + r² · m + r³ + n · m` | none | one product dominates; no determinant |
 | `rankWith`, `rankProfileWith` | as `rowReduceWith` | | |
 | `checkRankList` | `r³ / 3` modulo `modulus`, plus `(n − r) · r · m` over `Int` | none | the kernel form; nothing at full rank for the second term |
+| `checkRankListPacked` | `r² / 2` products of `r · W`-bit numbers plus `r²` shift-adds, plus `(n − r) · r · m` over `Int` | none | the packed evaluation of the lower bound, `W` the slot width |
 | `rankWitness` | `rankCertWith` plus `O((n − r) · r²)` over `Int` and `O(r³)` modular arithmetic operations | plus `r` modular inverses | one elimination of the pivot block modulo `modulus` and back substitution per column |
 
 **Growth.** The invariant says every stored entry is a minor of `A` (a

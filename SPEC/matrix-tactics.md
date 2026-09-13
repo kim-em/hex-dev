@@ -116,6 +116,7 @@ handler, assert their dispatch order, and exercise both delegation and
 committed numeric errors. A later stub alone would run first and would not
 test numeric delegation.
 
+<<<<<<< HEAD
 The proof is added as one auxiliary lemma on the closed target
 (`HexMatrixMathlib.Literal.addClosedProof`: `mkAuxLemma` with
 asynchronous checking off and no reuse of an earlier lemma for the same
@@ -127,6 +128,23 @@ evaluates nothing before the kernel does: neither a `Kernel.whnf`
 pre-evaluation of the check nor the `Meta.check` of the proof that
 `mkAuxTheorem`'s closure step performs under its default
 `zetaDelta := false`; either evaluates the certificate a second time.
+=======
+The tactics are configured only through the shared structure
+`HexMatrixMathlib.KernelConfig`, taken as an `optConfig` in the style of
+`decide +kernel` (`rank -packing`, `det -packing`), never through options:
+`packing` (default on) selects the Kronecker-packed evaluation of the
+certificate's dot products, a second checker proven equal to the plain one
+under bounds it verifies, and off gives the plain checker, so the plain
+certificate stays measurable and is what a comparison with another
+system's certificate refers to.
+
+The proof is assembled as one auxiliary theorem (`mkAuxTheorem` with
+asynchronous checking off), so the kernel checks the certificate exactly
+once and the tactic sees a rejection and can diagnose it (false target,
+producer bug, or an entry the kernel cannot reduce). The elaborator does
+not pre-evaluate the check with `Kernel.whnf` and then let the kernel check
+it again; that doubled the cost of the withdrawn `det`.
+>>>>>>> 8b53a60e1 (perf(rank): Kronecker-packed lower bound as a configurable evaluation)
 
 The closed-entry `rank` handlers support integers, rationals and
 `Zsqrtd d` with an integral-domain instance through `HexRankMathlib`.

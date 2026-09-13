@@ -417,6 +417,20 @@ the list the checker recurses on, and `pickCols_eq`, which identifies the
 one-pass read of the pivot block with indexed reads for strictly
 increasing pivot columns (`strictInc_iff`).
 
+The packed checker of
+[hex-rank §Packed evaluation](../../HexRank/SPEC/hex-rank.md#packed-evaluation)
+is sound through `checkRankList_of_packed`: `packRow` is `Nat.ofDigits`
+at `2^W` (`packRow_eq_ofDigits`, `packCol_eq` for the Horner loop), the
+product of two packed lists is `ofDigits` of their convolution
+(`ofDigits_conv`), a convolution coefficient of rows with entries below
+`M` is at most `r · M²` (`conv_getD_le`), digit `k` of an `ofDigits` with
+digits below the base is read off by division and remainder
+(`ofDigits_digit`), and the coefficient `r − 1` of a row against a
+reversed column is their dot product (`dotNat_eq_conv_reverse`); hence
+`dotPacked_eq`, `lowerCheckPacked_eq` and the implication, and
+`rank_eq_of_checkListPacked'` with its `≤`/`≥` forms are the plain
+theorems after a rewrite.
+
 ## The `rank` tactic
 
 `HexRankMathlib/Tactic.lean` declares the non-reserved tactic keyword
@@ -439,9 +453,15 @@ the kernel reduces to their numerals: numerals and arithmetic on them
 entry of the literal is the same expression, so the identification is
 `rfl` at no cost, and any other entry is reduced once by the kernel.
 
-The tactic evaluates the entries with Mathlib's `evalRatEntry`, runs the
-compiled `Hex.Matrix.rankWitness`, quotes the witness with `toExpr`, and
-builds `rank_eq_of_checkList' A L c rfl (of_decide_eq_true rfl)` composed
+The tactic takes the shared configuration structure
+`HexMatrixMathlib.KernelConfig` as an `optConfig` (`rank -packing`,
+`rank (config := { packing := false })`; the default is packed), and is
+configured in no other way. It evaluates the entries with Mathlib's
+`evalRatEntry`, runs the compiled `Hex.Matrix.rankWitness`, quotes the
+witness with `toExpr`, and builds
+`rank_eq_of_checkListPacked' A L c W rfl (of_decide_eq_true rfl)`, or
+`rank_eq_of_checkList' A L c rfl (of_decide_eq_true rfl)` with packing
+off, composed
 with a kernel-decided comparison of `c.rank` with `r`; the whole proof is
 added as an auxiliary lemma on the closed target (`addClosedProof` of the
 literal layer, with asynchronous checking off) so the kernel checks it
