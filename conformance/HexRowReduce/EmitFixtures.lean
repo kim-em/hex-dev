@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import Hex.Conformance.Emit
 import HexRowReduce
+import HexRowReduce.FieldFixtures
 
 /-!
 JSONL emit driver for the `hex-row-reduce` oracle.
@@ -188,5 +189,6 @@ private def emitAll : IO Unit := do
 
 end Hex.RowReduceEmit
 
-def main : IO Unit :=
+def main : IO Unit := do
   Hex.RowReduceEmit.emitAll
+  Hex.RowReduceFixtures.emitAll

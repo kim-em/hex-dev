@@ -1,0 +1,12 @@
+Hex.RowReduceBench.Field.flintSolve32    [fixed] repeats=4
+  env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=f589e37-dirty, 2026-09-12T21:34:46Z, host=chungus2
+  repeat 0  1.387 ms  (×2^8, total 355.034 ms)
+  repeat 1  1.155 ms  (×2^8, total 295.646 ms)
+  repeat 2  1.153 ms  (×2^8, total 295.285 ms)
+  repeat 3  1.416 ms  (×2^8, total 362.376 ms)
+  median: 1.387 ms    min: 1.153 ms    max: 1.416 ms
+  hash: all repeats agree
+  observed hash: 0x2de9fc4d9d0ecd4
+  expected hash: matches
+  peak RSS: 60_880 kB..65_260 kB (across 4 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-payload-solve-32.json

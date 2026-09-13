@@ -135,6 +135,7 @@ VALID_FIXTURE_KINDS = frozenset(
         "charpoly_carrier",
         "det",
         "ratmatrix",
+        "fieldmatrix",
         "modmatrix",
         "polymatrix",
         "mvpoly",
@@ -534,6 +535,32 @@ def _validate_fixture(record: dict[str, Any]) -> None:
             for row in rows
         ):
             raise FixtureError(f"matrix.rows must be List[List[int]]: {record!r}")
+    elif kind == "fieldmatrix":
+        n, m = record.get("n"), record.get("m")
+        rows, rhs = record.get("rows"), record.get("b")
+        carrier, modulus = record.get("carrier"), record.get("modulus")
+        if not _is_nat(n) or not _is_nat(m):
+            raise FixtureError("fieldmatrix requires explicit nonnegative dimensions")
+        if carrier not in ("Rat", "ZMod64", "RationalFn") or not _is_nat(modulus):
+            raise FixtureError("invalid fieldmatrix carrier")
+        if carrier == "ZMod64" and modulus < 2:
+            raise FixtureError("fieldmatrix modulus must be at least two")
+        def rational(q):
+            return (isinstance(q, list) and len(q) == 2 and
+                    all(_is_int(x) for x in q) and q[1] > 0)
+        def entry(q):
+            if carrier == "Rat":
+                return rational(q)
+            if carrier == "ZMod64":
+                return _is_nat(q) and q < modulus
+            return (isinstance(q, list) and len(q) == 2 and
+                    all(isinstance(cs, list) and all(rational(x) for x in cs) for cs in q)
+                    and len(q[1]) > 0 and any(x[0] != 0 for x in q[1]))
+        if (not isinstance(rows, list) or len(rows) != n or
+                any(not isinstance(row, list) or len(row) != m or
+                    not all(entry(x) for x in row) for row in rows) or
+                not isinstance(rhs, list) or len(rhs) != n or not all(entry(x) for x in rhs)):
+            raise FixtureError("invalid fieldmatrix entries or dimensions")
     elif kind == "ratmatrix":
         rows = record.get("rows")
         if not isinstance(rows, list) or not all(

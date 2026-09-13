@@ -214,7 +214,7 @@ private def jsonRatPolyMatrix (rows : List (List (List Rat))) : String := Id.run
 
 /-- Write a single JSONL record (the trailing newline) either to
 `stdout` or, when set, to the file named by `HEX_FIXTURE_OUTPUT`. -/
-private def emitLine (record : String) : IO Unit := do
+def emitLine (record : String) : IO Unit := do
   let line := record.push '\n'
   match (← IO.getEnv "HEX_FIXTURE_OUTPUT") with
   | none      => IO.print line

@@ -282,10 +282,15 @@ libraries:
     status: active
     phase4:
       comparators:
+        - tool: "FLINT fmpq_mat.inv()/solve() via python-flint"
+          class: informational
+          rationale: "Complete inverse and unique square solve outputs on the same seeded rational inputs; general affine solutions and separating witnesses have no matching native callable."
         - tool: "FLINT fmpq_mat.rref rank via python-flint"
           class: informational
           rationale: "The rank result is identical and constant-size, so cached dense inputs permit a valid persistent-subprocess comparison. Full rowReduce is not paired because Hex additionally returns the row transform; nullspace and span witnesses have no native identical callable result in python-flint."
       input_families:
+        - name: field-inverse-solve
+          description: Seeded dense field systems over Rat, ZMod64 101, and RationalFn Rat; dimension and rational coefficient-height sweeps with full, n-1, and n/2 ranks, consistent and inconsistent RHSs, and tall/wide shapes.
         - name: dense-rational-rref
           description: Dense square rational I + J matrices with a pivot in every column and nonzero elimination above and below every pivot, plus a known row-span member.
         - name: rank-deficient-rational-nullspace

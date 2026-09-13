@@ -164,7 +164,7 @@ private theorem strictFin_eq_self {m : Nat} (f : Fin m → Fin m)
 
 /-- If row reduction finds full column rank, the leading square block of
 the reduced echelon form is the identity. -/
-theorem rowReduce_takeRows_echelon_eq_identity [Lean.Grind.Field R] [DecidableEq R]
+theorem rowReduce_head_identity [Lean.Grind.Field R] [DecidableEq R]
     (M : Matrix R n m) (hm : m ≤ n) (hrank : rowReduce_rank M = m) :
     Matrix.takeRows (rowReduce M).echelon m hm = Matrix.identity (R := R) m := by
   let D := rowReduce M
