@@ -80,11 +80,23 @@ example : Hex.Matrix.checkMinPolyList 1 [[2]]
       [⟨⟨1, [1]⟩, ⟨1, [1]⟩, ⟨1, [-2, 1]⟩, ⟨1, []⟩, ⟨1, []⟩, ⟨1, [-2, 1]⟩⟩] } = false := by
   decide +kernel
 
+/-- info: '_private.HexMinPolyMathlib.Tests.0.minPolyDiagonal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms minPolyDiagonal
+/-- info: '_private.HexMinPolyMathlib.Tests.0.minPolyReversed' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms minPolyReversed
+/-- info: '_private.HexMinPolyMathlib.Tests.0.minPolyRational' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms minPolyRational
+/-- info: '_private.HexMinPolyMathlib.Tests.0.minPolyNilpotent' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms minPolyNilpotent
+/-- info: '_private.HexMinPolyMathlib.Tests.0.minPolyEmpty' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms minPolyEmpty
+/-- info: '_private.HexMinPolyMathlib.Tests.0.minPolyCertificateChecked' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
 #print axioms minPolyCertificateChecked
 
 /-- error: min_poly: the stated polynomial is false; computed ascending coefficients [-2, 1] -/
@@ -109,3 +121,62 @@ example {F : Type} [Field F] (A : Matrix (Fin 1) (Fin 1) F) : minpoly F A = 0 :=
 /-- error: min_poly: expected minpoly ℚ A = p or p = minpoly ℚ A for a square rational literal -/
 #guard_msgs in
 example : minpoly ℚ (fun i j : Fin 2 => if i = j then (1 / 2 : ℚ) else 0) = X := by min_poly
+
+open Lean Elab Tactic
+
+run_cmd do
+  let handlers := (tacticElabAttribute.getEntries (← getEnv) ``HexMinPolyMathlib.Tactic.minPolyTac).map (·.declName)
+  unless handlers == [``HexMinPolyMathlib.Tactic.evalMinPoly, ``HexMinPolyMathlib.Tactic.minpolyFallback] do
+    throwError "unexpected shipped handler order: {handlers}"
+
+section Delegation
+
+@[no_fallback]
+private meta def extensionStub : Tactic := fun _ => do
+  logInfo "structural extension"
+  evalTactic (← `(tactic| assumption))
+
+attribute [local tactic HexMinPolyMathlib.Tactic.minPolyTac] extensionStub
+attribute [local tactic HexMinPolyMathlib.Tactic.minPolyTac] HexMinPolyMathlib.Tactic.evalMinPoly
+
+/-- info: structural extension -/
+#guard_msgs in
+example (h : True) : True := by min_poly
+
+/-- error: min_poly: the stated polynomial is false; computed ascending coefficients [-2, 1] -/
+#guard_msgs in
+example (h : minpoly ℚ (!![2] : Matrix (Fin 1) (Fin 1) ℚ) = X - 3) : minpoly ℚ (!![2] : Matrix (Fin 1) (Fin 1) ℚ) = X - 3 := by min_poly
+
+end Delegation
+
+def repeatedOrders : Hex.Matrix.MinPolyWitness where
+  input := ⟨1, [[2, 0, 0], [0, 2, 0], [0, 0, 3]]⟩
+  poly := ⟨1, [6, -5, 1]⟩
+  order := [⟨⟨1, [-2, 1]⟩, 1, ⟨1, [[1], [0], [0]]⟩⟩,
+    ⟨⟨1, [-2, 1]⟩, 1, ⟨1, [[0], [1], [0]]⟩⟩,
+    ⟨⟨1, [-3, 1]⟩, 1, ⟨1, [[0], [0], [1]]⟩⟩]
+  steps := [⟨⟨1, [1]⟩, ⟨1, [1]⟩, ⟨1, [-2, 1]⟩, ⟨1, [1]⟩, ⟨1, []⟩, ⟨1, [-2, 1]⟩⟩,
+    ⟨⟨1, [-2, 1]⟩, ⟨1, [1]⟩, ⟨1, [1]⟩, ⟨1, [1]⟩, ⟨1, []⟩, ⟨1, [-2, 1]⟩⟩,
+    ⟨⟨1, [1]⟩, ⟨1, [-2, 1]⟩, ⟨1, [-3, 1]⟩, ⟨1, [1]⟩, ⟨1, [-1]⟩, ⟨1, [6, -5, 1]⟩⟩]
+
+example : Hex.Matrix.checkMinPolyList 3 [[2, 0, 0], [0, 2, 0], [0, 0, 3]] repeatedOrders = true := by
+  decide +kernel
+
+example : Hex.Matrix.checkMinPolyList 3 [[2, 0, 0], [0, 2, 0], [0, 0, 3]]
+    { repeatedOrders with order := repeatedOrders.order.drop 1 ++ repeatedOrders.order.take 1 } = false := by
+  decide +kernel
+
+section TermDelegation
+
+private meta def termStub : Term.TermElab := fun _ _ => do
+  logInfo "structural term extension"
+  return Lean.mkNatLit 2
+
+attribute [local term_elab HexMinPolyMathlib.Tactic.minPolyTerm] termStub
+attribute [local term_elab HexMinPolyMathlib.Tactic.minPolyTerm] HexMinPolyMathlib.Tactic.elabMinPolyTerm
+
+/-- info: structural term extension -/
+#guard_msgs in
+example : (min_poly% (2 : ℕ)) = 2 := rfl
+
+end TermDelegation

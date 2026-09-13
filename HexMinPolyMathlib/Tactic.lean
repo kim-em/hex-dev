@@ -48,8 +48,7 @@ def certify (A : Expr) : MetaM (Outcome Certificate) := do
   let some lit ← literal? A |
     return .declined m!"the matrix must be a closed literal within the unfolding budget of {unfoldBudget}{indentExpr A}"
   let entries ← try evalEntries lit catch e => return .declined e.toMessageData
-  let values : Array (Array _root_.Rat) :=
-    entries.map (fun row => row.map (fun q => (q.num / q.den : _root_.Rat)))
+  let values := entries
   let rows := values.toList.map (·.toList)
   let matrix : Hex.Matrix ℚ n n := Hex.Matrix.ofFn fun i j => (values[i.val]!)[j.val]!
   let witness := Hex.Matrix.MinPolyWitness.ofCert matrix (Hex.Matrix.minPolyCert matrix)
@@ -127,20 +126,30 @@ def prove (target : Expr) : MetaM (Outcome Expr) := do
 
 syntax (name := minPolyTerm) "min_poly% " term : term
 
+/-- Final diagnostic after term elaborators have delegated unsupported carriers. -/
+@[term_elab minPolyTerm]
+def minpolyTermFallback : Term.TermElab := fun _ _ =>
+  throwError "min_poly: the input must be a square rational matrix"
+
 @[term_elab minPolyTerm] def elabMinPolyTerm : Term.TermElab := fun stx expected => do
   let `(min_poly% $t) := stx | throwUnsupportedSyntax
   let A ← elabArgument t (mkConst ``_root_.Rat)
   match ← certify A with
   | .success c => Term.ensureHasType expected (← result A c)
-  | .notApplicable => throwError "min_poly: the input must be a square rational matrix"
+  | .notApplicable => throwUnsupportedSyntax
   | .declined msg => throwError "min_poly: declined: {msg}"
 
 syntax (name := minPolyTac) &"min_poly" : tactic
 
-@[tactic minPolyTac] def evalMinPoly : Tactic.Tactic := fun _ => Tactic.withMainContext do
+/-- Last-resort diagnostic, registered before the extensible numeric handler. -/
+@[tactic minPolyTac, no_fallback]
+def minpolyFallback : Tactic.Tactic := fun _ =>
+  throwError "min_poly: expected minpoly ℚ A = p or p = minpoly ℚ A for a square rational literal"
+
+@[tactic minPolyTac, no_fallback] def evalMinPoly : Tactic.Tactic := fun _ => Tactic.withMainContext do
   match ← prove (← Tactic.getMainTarget) with
   | .success proof => Tactic.closeMainGoal `min_poly proof
-  | .notApplicable => throwError "min_poly: expected minpoly ℚ A = p or p = minpoly ℚ A for a square rational literal"
+  | .notApplicable => throwUnsupportedSyntax
   | .declined msg => throwError "min_poly: declined: {msg}"
 
 end HexMinPolyMathlib.Tactic

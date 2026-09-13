@@ -8,6 +8,8 @@ module
 public import HexMinPolyMathlib.Krylov
 public import HexMinPolyMathlib.Basic
 
+public import Batteries.Data.Vector.Lemmas
+
 public section
 
 /-! Transport of arbitrary accepted list certificates to Mathlib minimal polynomials. -/
@@ -32,18 +34,13 @@ local instance : Lean.Grind.Field ℚ := Field.toGrindField
   ⟨decodeBlock c.poly, Vector.ofFn (fun i => decodeOrder n (entry default c.order i)),
     Vector.ofFn (fun i => decodeStep (entry default c.steps i))⟩
 
-private theorem get_ofFn {α : Type} {n : Nat} (f : Fin n → α) (i : Fin n) :
-    (Vector.ofFn f).get i = f i := by
-  change (Vector.ofFn f)[i.val] = _
-  rw [Vector.getElem_ofFn]
-
 theorem decode_order {n : Nat} (c : MinPolyWitness) (i : Fin n) :
     (decodeWitness n c).order.get i = decodeOrder n (entry default c.order i) := by
-  exact get_ofFn _ _
+  exact Vector.get_ofFn _ _
 
 theorem decode_step {n : Nat} (c : MinPolyWitness) (i : Fin n) :
     (decodeWitness n c).steps.get i = decodeStep (entry default c.steps i) := by
-  exact get_ofFn _ _
+  exact Vector.get_ofFn _ _
 
 /-- The running polynomial before a fold index. -/
 @[expose] def runningAt (first : Scaled) (steps : List LcmWitness) : Nat → Scaled
@@ -102,7 +99,7 @@ theorem decode_running {n : Nat} (c : MinPolyWitness) (j : Nat) (hj : j ≤ n) :
     rw [← blockPolynomial_eq]
     simp [blockPolynomial, decodeList, decodeScalar, polynomialOfList]
   | succ j =>
-    simp only [MinPolyCert.running, decodeWitness, get_ofFn, decodeStep, runningAt]
+    simp only [MinPolyCert.running, decodeWitness, Vector.get_ofFn, decodeStep, runningAt]
 
 theorem reference_check {n : Nat} (rows : List (List Rat)) (c : MinPolyWitness)
     (h : checkMinPolyList n rows c = true) :

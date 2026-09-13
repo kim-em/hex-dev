@@ -15,7 +15,15 @@ class StructuralProbesTest(unittest.TestCase):
                     for row in probes.fixture_cases()]
         self.assertEqual(json.loads(runner.MANIFEST.read_text()), expected)
         self.assertEqual(len({row["module"] for row in expected}), len(expected))
-        self.assertEqual(len(expected), 193)
+        self.assertEqual(len(expected), 196)
+
+    def test_committed_sources_match_generator(self):
+        for case in probes.fixture_cases():
+            source = probes.ROOT / "bench" / Path(*case["module"].split(".")).with_suffix(".lean")
+            self.assertEqual(source.read_text(), probes.probe_source(case), case["module"])
+        entrywise = [case for case in probes.fixture_cases() if case["literal_route"] == "entrywise"]
+        self.assertEqual({case["owner"] for case in entrywise}, set(runner.OWNERS))
+        self.assertTrue(all(case["rows"] == case["columns"] == 16 for case in entrywise))
 
     def test_complete_named_ladders(self):
         cases = probes.fixture_cases()
@@ -48,6 +56,7 @@ class StructuralProbesTest(unittest.TestCase):
         sweep.validate_spec(spec)
         self.assertEqual(spec.required_samples, 6)
         self.assertTrue(spec.absolute_only)
+        self.assertTrue(spec.retain_compiler_output)
         for pair in spec.pairs:
             self.assertEqual(pair.metadata["fresh_module_budget_ms"], 60000)
             self.assertEqual(pair.metadata["comparator_status"],

@@ -103,9 +103,17 @@ example : Hex.Matrix.checkSmithList 2 2 [[2, 0], [0, 6]]
 example : Hex.Matrix.checkSmithList 2 2 [[2, 0], [0, 6]]
     { smithCertificate with diag := [2, 8] } = false := by decide +kernel
 
+/-- info: '_private.HexSmithMathlib.Tests.0.smithDiagonal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms smithDiagonal
+/-- info: '_private.HexSmithMathlib.Tests.0.smithDiagonalExists' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms smithDiagonalExists
+/-- info: '_private.HexSmithMathlib.Tests.0.smithCertificateChecked' depends on axioms: [propext] -/
+#guard_msgs in
 #print axioms smithCertificateChecked
+/-- info: '_private.HexSmithMathlib.Tests.0.smithTermEquiv' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms smithTermEquiv
 
 /-- error: smith: the target factors do not match: rank 2, factors [2, 6] -/
@@ -129,3 +137,45 @@ example (A : Matrix (Fin 2) (Fin 2) ℤ) : Nonempty (SmithQuotient A 2 ![2, 6]) 
 /-- error: smith: expected an integer row-presentation quotient equivalence or its Nonempty wrapper -/
 #guard_msgs in
 example : (2 : ℕ) = 3 := by smith
+
+open Lean Elab Tactic
+
+run_cmd do
+  let handlers := (tacticElabAttribute.getEntries (← getEnv) ``HexSmithMathlib.Tactic.smithTac).map (·.declName)
+  unless handlers == [``HexSmithMathlib.Tactic.evalSmith, ``HexSmithMathlib.Tactic.smithFallback] do
+    throwError "unexpected shipped handler order: {handlers}"
+
+section Delegation
+
+@[no_fallback]
+private meta def extensionStub : Tactic := fun _ => do
+  logInfo "structural extension"
+  evalTactic (← `(tactic| assumption))
+
+attribute [local tactic HexSmithMathlib.Tactic.smithTac] extensionStub
+attribute [local tactic HexSmithMathlib.Tactic.smithTac] HexSmithMathlib.Tactic.evalSmith
+
+/-- info: structural extension -/
+#guard_msgs in
+example (h : True) : True := by smith
+
+/-- error: smith: the target factors do not match: rank 1, factors [2] -/
+#guard_msgs in
+example (h : Nonempty (SmithQuotient !![2] 1 ![3])) : Nonempty (SmithQuotient !![2] 1 ![3]) := by smith
+
+end Delegation
+
+section TermDelegation
+
+private meta def termStub : Term.TermElab := fun _ _ => do
+  logInfo "structural term extension"
+  return Lean.mkNatLit 2
+
+attribute [local term_elab HexSmithMathlib.Tactic.smithTerm] termStub
+attribute [local term_elab HexSmithMathlib.Tactic.smithTerm] HexSmithMathlib.Tactic.elabSmithTerm
+
+/-- info: structural term extension -/
+#guard_msgs in
+example : (smith% (2 : ℕ)) = 2 := rfl
+
+end TermDelegation

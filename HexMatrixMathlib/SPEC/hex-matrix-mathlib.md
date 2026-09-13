@@ -150,6 +150,12 @@ prime-residue support for these structural frontends is a later extension.
 The optional `trace.HexMatrix.certificate` records serialized certificate
 bytes, entry counts and numerator/denominator bit heights for proof probes.
 
+The shared `Hex.Matrix.Lists` arithmetic includes integer coefficient addition,
+scaling and convolution. `Scaled` blocks provide addition, multiplication,
+negation, subtraction and structural powers with common denominators. Both
+minimal-polynomial certificate checks and the polynomial literal adapter reuse
+these operations; neither reduces rational coefficient normalization there.
+
 ## Kronecker-packed dot products
 
 `HexMatrixMathlib/Packed.lean` proves the packed dot product of

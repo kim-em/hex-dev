@@ -114,8 +114,14 @@ example : Hex.Matrix.checkHermiteList 2 2 [[2, 0], [0, 0]]
     { rank := 1, pivots := [0], form := [[2, 0], [0, 0]],
       transform := [[1, 1], [0, 1]], inverse := [[1, -1], [0, 1]] } = true := by decide +kernel
 
+/-- info: '_private.HexHermiteMathlib.Tests.0.hermiteMember' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms hermiteMember
+/-- info: '_private.HexHermiteMathlib.Tests.0.hermiteNonmember' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms hermiteNonmember
+/-- info: '_private.HexHermiteMathlib.Tests.0.hermiteBasisExists' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms hermiteBasisExists
 
 /-- error: hermite: the vector is not a member; nonzero residual [0, 1] -/
@@ -152,3 +158,48 @@ example : (2 : ℕ) = 3 := by hermite
 #guard_msgs in
 example : (![2] : Fin 1 → ℤ) ∈
     (Submodule.span ℤ (Set.range !![2]) ⊓ ⊥) := by hermite
+
+open Lean Elab Tactic
+
+run_cmd do
+  let handlers := (tacticElabAttribute.getEntries (← getEnv) ``HexHermiteMathlib.Tactic.hermiteTac).map (·.declName)
+  unless handlers == [``HexHermiteMathlib.Tactic.evalHermite, ``HexHermiteMathlib.Tactic.hermiteFallback] do
+    throwError "unexpected shipped handler order: {handlers}"
+
+section Delegation
+
+@[no_fallback]
+private meta def extensionStub : Tactic := fun _ => do
+  logInfo "structural extension"
+  evalTactic (← `(tactic| assumption))
+
+attribute [local tactic HexHermiteMathlib.Tactic.hermiteTac] extensionStub
+attribute [local tactic HexHermiteMathlib.Tactic.hermiteTac] HexHermiteMathlib.Tactic.evalHermite
+
+/-- info: structural extension -/
+#guard_msgs in
+example (h : True) : True := by hermite
+
+/-- error: hermite: the vector is not a member; nonzero residual [1] -/
+#guard_msgs in
+example (h : (![1] : Fin 1 → ℤ) ∈ Submodule.span ℤ (Set.range !![2])) : (![1] : Fin 1 → ℤ) ∈ Submodule.span ℤ (Set.range !![2]) := by hermite
+
+end Delegation
+
+example : (![4, 12] : Fin 2 → ℤ) ∈
+    Submodule.span ℤ (Set.range (Matrix.row !![2, 0; 0, 6])) := by hermite
+
+section TermDelegation
+
+private meta def termStub : Term.TermElab := fun _ _ => do
+  logInfo "structural term extension"
+  return Lean.mkNatLit 2
+
+attribute [local term_elab HexHermiteMathlib.Tactic.hermiteTerm] termStub
+attribute [local term_elab HexHermiteMathlib.Tactic.hermiteTerm] HexHermiteMathlib.Tactic.elabHermiteTerm
+
+/-- info: structural term extension -/
+#guard_msgs in
+example : (hermite% (2 : ℕ)) = 2 := rfl
+
+end TermDelegation

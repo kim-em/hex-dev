@@ -126,12 +126,15 @@ def max_bits(a):
 def fixture_cases():
     cases = []
 
-    def add(owner, family, n, bits, a, rank=None, factors=None, coeffs=None, components=("basis",)):
+    def add(owner, family, n, bits, a, rank=None, factors=None, coeffs=None, components=("basis",), route="chain"):
         m = len(a[0]) if a else n
         stem = "".join(s.title() for s in family.split("-")) + f"N{n}M{m}Bits{bits}"
         for component in components:
             name = stem + component.title().replace("-", "")
             literal = matrix(a, m)
+            if route == "entrywise":
+                entries = ", ".join(rational(x) for row in a for x in row)
+                literal = f"(Matrix.ofArray (m := {len(a)}) (n := {m}) #[{entries}] rfl)"
             if owner == "HexMinPolyMathlib":
                 proposition = f"minpoly ℚ ({literal} : Matrix (Fin {len(a)}) (Fin {m}) ℚ) =\n    {polynomial(coeffs)}"
                 tactic = "min_poly"
@@ -152,7 +155,7 @@ def fixture_cases():
                               configured_input_bits=bits, actual_input_numerator_bits=max_bits(a),
                               actual_input_denominator_bits=max((Fraction(x).denominator.bit_length()
                                   for row in a for x in row), default=0),
-                              rank=rank, component=component, module=f"{owner}.ProofProbe.{name}",
+                              rank=rank, component=component, literal_route=route, module=f"{owner}.ProofProbe.{name}",
                               proposition=proposition, tactic=tactic, seed=SEED,
                               comparator_status="no-comparable-surface-in-named-comparator",
                               fresh_module_budget_ms=60_000))
@@ -205,7 +208,23 @@ def fixture_cases():
         component = "quotient" if owner == "HexSmithMathlib" else "basis"
         add(owner, "empty-rows", 3, 0, [], 0, [], components=(component,))
         add(owner, "empty-columns", 3, 0, [[], [], []], 0, [], components=(component,))
+    a = [[2 if i == j else 0 for j in range(16)] for i in range(16)]
+    add("HexMinPolyMathlib", "entrywise-literal", 16, 8, a, coeffs=[-2, 1],
+        components=("equality",), route="entrywise")
+    add("HexSmithMathlib", "entrywise-literal", 16, 8, a, 16, [2] * 16,
+        components=("quotient",), route="entrywise")
+    add("HexHermiteMathlib", "entrywise-literal", 16, 8, a, 16,
+        components=("member",), route="entrywise")
     return cases
+
+
+def probe_source(case):
+    source = HEADER + f"import {case['owner']}.Tactic\n\n"
+    source += "set_option maxHeartbeats 0\nset_option maxRecDepth 100000\n"
+    source += "set_option profiler true\nset_option profiler.threshold 1000000\n"
+    source += "set_option trace.HexMatrix.certificate true\n\n"
+    source += f"theorem result : {case['proposition']} := by {case['tactic']}\n\n#print axioms result\n"
+    return source
 
 
 def main():
@@ -215,13 +234,8 @@ def main():
         directory.mkdir(parents=True, exist_ok=True)
         (directory / "Baseline.lean").write_text(HEADER + f"import {owner}.Tactic\n")
     for case in cases:
-        source = HEADER + f"import {case['owner']}.Tactic\n\n"
-        source += "set_option maxHeartbeats 0\nset_option maxRecDepth 100000\n"
-        source += "set_option profiler true\nset_option profiler.threshold 1000000\n"
-        source += "set_option trace.HexMatrix.certificate true\n\n"
-        source += f"theorem result : {case['proposition']} := by {case['tactic']}\n\n#print axioms result\n"
         path = ROOT / "bench" / Path(*case['module'].split(".")).with_suffix(".lean")
-        path.write_text(source)
+        path.write_text(probe_source(case))
     manifest = [{k: v for k, v in case.items() if k != "proposition"} for case in cases]
     (ROOT / "scripts/bench/structural_tactic_probes.json").write_text(json.dumps(manifest, indent=2) + "\n")
     print(f"Generated {len(cases)} candidates and three import-only baselines")

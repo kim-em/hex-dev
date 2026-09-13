@@ -49,4 +49,24 @@ def ScaledRows.encode (xs : List (List Rat)) : ScaledRows :=
   let d := (Scaled.encode xs.flatten).denom
   ⟨d, xs.map (fun row => row.map (fun q => q.num * Int.ofNat (d / q.den)))⟩
 
+/-- Common denominators are cleared once per polynomial operation. -/
+@[expose] def Scaled.add (a b : Scaled) : Scaled :=
+  ⟨Nat.mul a.denom b.denom,
+    Hex.Matrix.Lists.add (scale (Int.ofNat b.denom) a.nums) (scale (Int.ofNat a.denom) b.nums)⟩
+
+/-- Multiplication without rational normalization. -/
+@[expose] def Scaled.mul (a b : Scaled) : Scaled :=
+  ⟨Nat.mul a.denom b.denom, Hex.Matrix.Lists.mul a.nums b.nums⟩
+
+/-- Negation with the denominator retained. -/
+@[expose] def Scaled.neg (a : Scaled) : Scaled := ⟨a.denom, scale (-1) a.nums⟩
+
+/-- Subtraction with cleared denominators. -/
+@[expose] def Scaled.sub (a b : Scaled) : Scaled := a.add b.neg
+
+/-- Structural powers of a coefficient block. -/
+@[expose] def Scaled.pow (a : Scaled) : Nat → Scaled
+  | 0 => ⟨1, [1]⟩
+  | n + 1 => (a.pow n).mul a
+
 end Hex.Matrix.Lists

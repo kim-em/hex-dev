@@ -5,8 +5,8 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexPolyMathlib.LiteralData
-public meta import HexPolyMathlib.LiteralData
+public import HexPolyMathlib.ScaledLiteral
+public meta import HexPolyMathlib.ScaledLiteral
 public meta import HexMatrixMathlib.Literal
 
 public meta section
@@ -20,20 +20,40 @@ structure Recognized where
   coefficients : List _root_.Rat
   proof : Expr
 
-/-- Finish an adapter step with equality of structural rational lists. -/
-def finish (raw : Expr) (xs : List _root_.Rat) (proof : Expr) : MetaM Recognized := do
-  let h ← decideProof (← mkEq raw (toExpr xs))
-  let h ← mkCongrArg (mkConst ``polynomialOfList) h
-  return ⟨xs, ← mkEqTrans proof h⟩
+/-- Integer cross products identify a compiled coefficient list with a block. -/
+def blockProof (xs : List _root_.Rat) (block : Expr) : MetaM Expr := do
+  let d ← mkAppM ``Hex.Matrix.Lists.Scaled.denom #[block]
+  let nums ← mkAppM ``Hex.Matrix.Lists.Scaled.nums #[block]
+  let hd ← decideProof (← mkAppM ``LT.lt #[mkNatLit 0, d])
+  let hc ← decideProof (← mkEq
+    (← mkAppM ``Hex.Matrix.Lists.scaleRow #[d, toExpr xs, nums]) (mkConst ``Bool.true))
+  mkAppM ``polynomialOfList_eq_block #[toExpr xs, block, hd, hc]
 
-/-- Combine two identified literals through a proved list operation. -/
+/-- Encode coefficients in compiled code; only cross products enter the proof. -/
+def encode (a : Recognized) : MetaM (Expr × Expr) := do
+  let block := Hex.Matrix.Lists.Scaled.encode a.coefficients
+  let e ← mkAppM ``Hex.Matrix.Lists.Scaled.mk #[toExpr block.denom, toExpr block.nums]
+  return (e, ← mkEqTrans a.proof (← blockProof a.coefficients e))
+
+/-- Finish an adapter step without reducing rational coefficient arithmetic. -/
+def finish (raw : Expr) (xs : List _root_.Rat) (proof : Expr) : MetaM Recognized := do
+  return ⟨xs, ← mkEqTrans proof (← mkEqSymm (← blockProof xs raw))⟩
+
+/-- Combine two identified literals through integer coefficient operations. -/
 def binary (a b : Recognized) (op theoremName listOp : Name)
     (xs : List _root_.Rat) : MetaM Recognized := do
-  let ty ← inferType (← mkAppM ``polynomialOfList #[toExpr a.coefficients])
+  let (ea, ha) ← encode a
+  let (eb, hb) ← encode b
+  let ty ← inferType (← mkAppM ``blockPolynomial #[ea])
   let f ← mkAppOptM op #[some ty, some ty, some ty, none]
-  let h ← mkCongr (← mkCongrArg f a.proof) b.proof
-  let ht ← mkAppM theoremName #[toExpr a.coefficients, toExpr b.coefficients]
-  let raw ← mkAppM listOp #[toExpr a.coefficients, toExpr b.coefficients]
+  let h ← mkCongr (← mkCongrArg f ha) hb
+  let mut args := #[ea, eb]
+  if theoremName == ``blockPolynomial_add || theoremName == ``blockPolynomial_sub then
+    for e in #[ea, eb] do
+      let d ← mkAppM ``Hex.Matrix.Lists.Scaled.denom #[e]
+      args := args.push (← decideProof (← mkAppM ``LT.lt #[mkNatLit 0, d]))
+  let ht ← mkAppM theoremName args
+  let raw ← mkAppM listOp #[ea, eb]
   finish raw xs (← mkEqTrans h (← mkEqSymm ht))
 
 /-- Ascending coefficients of a subtraction, used only in adapter identities. -/
@@ -59,30 +79,26 @@ partial def parse (e : Expr) (fuel : Nat := 64) : MetaM Recognized := do
   if e.isAppOfArity ``HAdd.hAdd 6 then
     let a ← parse args[4]! next
     let b ← parse args[5]! next
-    return ← binary a b ``HAdd.hAdd ``polynomialOfList_add ``addLists
+    return ← binary a b ``HAdd.hAdd ``blockPolynomial_add ``Hex.Matrix.Lists.Scaled.add
       (addLists a.coefficients b.coefficients)
   if e.isAppOfArity ``HSub.hSub 6 then
     let a ← parse args[4]! next
     let b ← parse args[5]! next
-    let ty ← inferType e
-    let f ← mkAppOptM ``HSub.hSub #[some ty, some ty, some ty, none]
-    let h ← mkCongr (← mkCongrArg f a.proof) b.proof
-    let ht ← mkAppM ``polynomialOfList_sub #[toExpr a.coefficients, toExpr b.coefficients]
-    let raw ← mkAppM ``addLists #[toExpr a.coefficients,
-      ← mkAppM ``scaleList #[toExpr (-1 : _root_.Rat), toExpr b.coefficients]]
-    return ← finish raw (subLists a.coefficients b.coefficients) (← mkEqTrans h (← mkEqSymm ht))
+    return ← binary a b ``HSub.hSub ``blockPolynomial_sub ``Hex.Matrix.Lists.Scaled.sub
+      (subLists a.coefficients b.coefficients)
   if e.isAppOfArity ``HMul.hMul 6 then
     let a ← parse args[4]! next
     let b ← parse args[5]! next
     if a.coefficients.length + b.coefficients.length > 1025 then
       throwError "polynomial literal exceeds the coefficient budget of 1024"
-    return ← binary a b ``HMul.hMul ``polynomialOfList_mul ``mulLists
+    return ← binary a b ``HMul.hMul ``blockPolynomial_mul ``Hex.Matrix.Lists.Scaled.mul
       (mulLists a.coefficients b.coefficients)
   if e.isAppOfArity ``Neg.neg 3 then
     let a ← parse args[2]! next
-    let h ← mkCongrArg e.appFn! a.proof
-    let ht ← mkAppM ``polynomialOfList_neg #[toExpr a.coefficients]
-    let raw ← mkAppM ``scaleList #[toExpr (-1 : _root_.Rat), toExpr a.coefficients]
+    let (ea, ha) ← encode a
+    let h ← mkCongrArg e.appFn! ha
+    let ht ← mkAppM ``blockPolynomial_neg #[ea]
+    let raw ← mkAppM ``Hex.Matrix.Lists.Scaled.neg #[ea]
     return ← finish raw (scaleList (-1) a.coefficients) (← mkEqTrans h (← mkEqSymm ht))
   if e.isAppOfArity ``HPow.hPow 6 then
     let some n ← (Meta.evalNat args[5]!).run |
@@ -91,9 +107,10 @@ partial def parse (e : Expr) (fuel : Nat := 64) : MetaM Recognized := do
     let a ← parse args[4]! next
     if n * (a.coefficients.length - 1) + 1 > 1024 then
       throwError "polynomial literal exceeds the coefficient budget of 1024"
-    let h ← mkCongr (← mkCongrArg e.appFn!.appFn! a.proof) (← mkEqRefl args[5]!)
-    let ht ← mkAppM ``polynomialOfList_pow #[toExpr a.coefficients, mkNatLit n]
-    let raw ← mkAppM ``powList #[toExpr a.coefficients, mkNatLit n]
+    let (ea, ha) ← encode a
+    let h ← mkCongr (← mkCongrArg e.appFn!.appFn! ha) (← mkEqRefl args[5]!)
+    let ht ← mkAppM ``blockPolynomial_pow #[ea, mkNatLit n]
+    let raw ← mkAppM ``Hex.Matrix.Lists.Scaled.pow #[ea, mkNatLit n]
     return ← finish raw (powList a.coefficients n) (← mkEqTrans h (← mkEqSymm ht))
   if e.isAppOfArity ``OfNat.ofNat 3 then
     let some n ← (Meta.evalNat args[1]!).run | throwError "unsupported polynomial numeral"

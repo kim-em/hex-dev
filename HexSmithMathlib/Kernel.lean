@@ -37,26 +37,6 @@ theorem decode_diag (n m : Nat) (c : Hex.Matrix.SmithWitness) (i : Fin c.rank) :
   change (Vector.ofFn (fun i : Fin c.rank => entry 0 c.diag i))[i.val] = _
   rw [Vector.getElem_ofFn]
 
-private theorem product_eq {n k m : Nat} {a b d : List (List Int)}
-    (ha : shape n k a = true) (h : product n m a b (get d) = true) :
-    matrixOfLists n k a * matrixOfLists k m b = matrixOfLists n m d := by
-  apply matrixEquiv.injective
-  rw [matrixEquiv_mul, matrixEquiv_matrixOfLists, matrixEquiv_matrixOfLists,
-    matrixEquiv_matrixOfLists, mul_of_product ha h]
-  ext i j
-  simp [Hex.Matrix.Lists.get, entry_eq_getD, ofLists_apply]
-
-private theorem inverse_eq {n : Nat} {a b : List (List Int)}
-    (ha : shape n n a = true) (h : product n n a b identity = true) :
-    matrixOfLists n n a * matrixOfLists n n b = Hex.Matrix.identity n := by
-  apply matrixEquiv.injective
-  rw [matrixEquiv_mul, matrixEquiv_matrixOfLists, matrixEquiv_matrixOfLists,
-    mul_of_product ha h]
-  change (fun (i j : Fin n) => identity i j) = matrixEquiv (1 : Hex.Matrix Int n n)
-  rw [matrixEquiv_one]
-  ext i j
-  simp [identity, Matrix.one_apply, Fin.ext_iff]
-
 private theorem diagonal_eq {n m : Nat} (c : Hex.Matrix.SmithWitness)
     (hlen : c.diag.length = c.rank) :
     (fun (i : Fin n) (j : Fin m) => diagonal c.diag i j) =
@@ -87,14 +67,14 @@ theorem reference_check {n m : Nat} (rows : List (List Int))
   simp only [Hex.Matrix.checkSmithList, Bool.and_eq_true, Nat.ble_eq,
     Nat.beq_eq, and_assoc] at hc
   obtain ⟨_, hrn, hrm, hlen, hl, _, hr, _, ht, hp, hd, hT, hD, hL, hR⟩ := hc
-  have hleft := product_eq hl hT
+  have hleft := matrix_mul_of_product hl hT
   have hdiag : matrixOfLists n m c.intermediate * matrixOfLists m m c.right =
       Hex.Matrix.diagMatrix (decodeWitness n m c).diag n m := by
     apply matrixEquiv.injective
     rw [matrixEquiv_mul, matrixEquiv_matrixOfLists, matrixEquiv_matrixOfLists,
       mul_of_product ht hD, diagonal_eq c hlen]
-  have hleftInv := inverse_eq hl hL
-  have hrightInv := inverse_eq hr hR
+  have hleftInv := matrix_inverse_of_product hl hL
+  have hrightInv := matrix_inverse_of_product hr hR
   simp only [Hex.Matrix.snfCert, Bool.and_eq_true, Hex.Matrix.mulEqCert_iff,
     Hex.Matrix.isSNFShape_iff, and_assoc]
   refine ⟨hleft, ?_, hleftInv, hrightInv, hrn, hrm, ?_, ?_⟩

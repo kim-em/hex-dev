@@ -37,8 +37,12 @@ equivalence and the field codecs requested against
 The initial carrier is `ℚ`; prime residues are a later codec extension.
 `HexPolyMathlib.Literal.recognize` implements this adapter in `Literal.lean`,
 returning ascending rational coefficients and an identification with
-`polynomialOfList`. `LiteralData.lean` proves its structural coefficient
-operations agree with Mathlib polynomial operations. The fragment includes
+`polynomialOfList`. `LiteralData.lean` supplies the compiled rational coefficient operations.
+`ScaledLiteral.lean` proves that shared integer coefficient blocks agree with
+Mathlib polynomial operations. The identification proof uses those blocks and
+integer cross products; coefficient addition, multiplication and powers do not
+reduce rational normalization in the kernel. Scalar literals still use the
+shared rational codec. The fragment includes
 `C`, `X`, numerals, addition, subtraction, multiplication, negation and closed
 natural powers. Unfolding is bounded at 64, exponents at 256 and coefficient
 lists at 1024. Rational entries reuse `HexMatrixMathlib.Literal.evalEntry`;

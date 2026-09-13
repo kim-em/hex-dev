@@ -43,28 +43,11 @@ structure MinPolyWitness where
 
 namespace MinPolyLists
 
-/-- Exact unnormalized integer coefficient addition. -/
-@[expose] def add : List Int → List Int → List Int
-  | [], ys => ys
-  | xs, [] => xs
-  | x :: xs, y :: ys => Int.add x y :: add xs ys
+/-- Clear the common denominators for coefficient addition. -/
+@[expose] def addPoly (a b : Scaled) : Scaled := a.add b
 
-/-- Integer coefficient scaling. -/
-@[expose] def scale (a : Int) (xs : List Int) : List Int := xs.map (Int.mul a)
-
-/-- Structural integer coefficient convolution. -/
-@[expose] def mul : List Int → List Int → List Int
-  | [], _ => []
-  | x :: xs, ys => add (scale x ys) (0 :: mul xs ys)
-
-/-- Common denominators are cleared once per polynomial operation. -/
-@[expose] def addPoly (a b : Scaled) : Scaled :=
-  ⟨Nat.mul a.denom b.denom,
-    add (scale (Int.ofNat b.denom) a.nums) (scale (Int.ofNat a.denom) b.nums)⟩
-
-/-- Multiplication without rational normalization. -/
-@[expose] def mulPoly (a b : Scaled) : Scaled :=
-  ⟨Nat.mul a.denom b.denom, mul a.nums b.nums⟩
+/-- Multiply coefficient blocks without rational normalization. -/
+@[expose] def mulPoly (a b : Scaled) : Scaled := a.mul b
 
 /-- Equality modulo trailing zero coefficients, by integer cross products. -/
 @[expose] def eqPoly (a b : Scaled) : Bool :=

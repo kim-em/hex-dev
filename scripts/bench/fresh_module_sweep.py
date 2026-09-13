@@ -87,6 +87,7 @@ class SweepSpec:
     required_samples: int | None = None
     import_baseline_control: str | None = None
     absolute_only: bool = False
+    retain_compiler_output: bool = False
 
 
 def parse_args(
@@ -852,6 +853,7 @@ def build_sample(
     measurement_cpu: int | None = None,
     monitored_cpus: Sequence[int] = (),
     sample_observer: SampleObserver | None = None,
+    retain_compiler_output: bool = False,
 ) -> dict[str, object]:
     remove_module_outputs(module)
     host_before = sampled_host_state(host_state())
@@ -941,7 +943,6 @@ def build_sample(
         "wall_nanos": elapsed,
         **metrics,
         "axioms": parse_axioms(output),
-        "compiler_output": output,
         "host_before": host_before,
         "host_after": host_after,
         "cpu_accounting": {
@@ -966,6 +967,8 @@ def build_sample(
             ),
         },
     }
+    if retain_compiler_output:
+        result["compiler_output"] = output
     if sample_observer is not None:
         sample_observer(module, result)
     return result
@@ -1034,6 +1037,7 @@ def build_shared_host_pair(
     monitored_cpus: Sequence[int],
     sibling_cpus: Sequence[int],
     sample_observer: SampleObserver | None = None,
+    retain_compiler_output: bool = False,
 ) -> dict[str, object]:
     """Build one adjacent pair and retain host activity as context."""
     attempt_state = sampled_host_state(host_state())
@@ -1046,6 +1050,7 @@ def build_shared_host_pair(
             measurement_cpu=measurement_cpu,
             monitored_cpus=monitored_cpus,
             sample_observer=sample_observer,
+            **({"retain_compiler_output": True} if retain_compiler_output else {}),
         )
         if cpu_affinity() != [measurement_cpu]:
             raise RuntimeError("shared-host CPU affinity changed during the sweep")
@@ -1909,6 +1914,7 @@ def run_cli(
                     monitored_cpus,
                     sibling_cpus,
                     sample_observer,
+                    **({"retain_compiler_output": True} if spec.retain_compiler_output else {}),
                 )
                 rows[pair.name].append(row)
             else:
@@ -1926,6 +1932,7 @@ def run_cli(
                         measurement_cpu=None,
                         monitored_cpus=monitored_cpus,
                         sample_observer=sample_observer,
+                        **({"retain_compiler_output": True} if spec.retain_compiler_output else {}),
                     )
                     validate_axioms(pair.name, role, module, sample)
                     built[role] = sample
@@ -2017,6 +2024,7 @@ def run_cli(
                 "measurement-cpu-foreign-plus-all-SMT-sibling-busy",
             "null_magnitude_factor": NULL_MAGNITUDE_FACTOR,
             "absolute_only": spec.absolute_only,
+            "retain_compiler_output": spec.retain_compiler_output,
             "import_baseline_control": spec.import_baseline_control,
             "frequency_measurement":
                 "cpufreq-time-in-state-arm-mean",

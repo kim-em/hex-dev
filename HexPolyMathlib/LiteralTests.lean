@@ -27,8 +27,12 @@ example : (1 : Polynomial ℚ) = polynomialOfList [1] := by check_poly_literal
 
 /-- error: polynomial literal exceeds the coefficient budget of 1024 -/
 #guard_msgs in
-example : ((X ^ 64) ^ 64 : Polynomial ℚ) = polynomialOfList [] := by
+example : ((X ^ 64) ^ 64 : Polynomial ℚ) = polynomialOfList (List.replicate 4096 0 ++ [1]) := by
   check_poly_literal
 
+/-- info: '_private.HexPolyMathlib.LiteralTests.0.rationalLiteral' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms rationalLiteral
+/-- info: '_private.HexPolyMathlib.LiteralTests.0.factoredLiteral' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms factoredLiteral

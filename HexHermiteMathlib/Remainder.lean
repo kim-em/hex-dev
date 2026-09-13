@@ -7,6 +7,8 @@ module
 
 public import HexHermiteMathlib.Certificate
 
+public import Batteries.Data.Vector.Lemmas
+
 public section
 
 /-! Soundness of structural list remainder checks for integer row lattices. -/
@@ -14,11 +16,6 @@ public section
 namespace HexHermiteMathlib
 
 open HexMatrixMathlib Hex.Matrix.Lists
-
-private theorem get_ofFn {α : Type*} {k : Nat} (f : Fin k → α) (i : Fin k) :
-    (Vector.ofFn f).get i = f i := by
-  change (Vector.ofFn f)[i.val] = _
-  rw [Vector.getElem_ofFn]
 
 theorem residual_zero_iff (m : Nat) (r : Hex.Matrix.HermiteRemainder) :
     r.isZero m = true ↔ vecOfList m r.residual = 0 := by
@@ -109,7 +106,7 @@ theorem mem_iff_remainder {n m : Nat} (rows : List (List Int))
         t[(decodeWitness n m c (check_form rows c hc)).pivotCols.get i] <
           (matrixOfLists n m c.form)[h.toIsEchelonForm.pivotRow i][(decodeWitness n m c (check_form rows c hc)).pivotCols.get i]
       simp only [htget, matrixOfLists_get]
-      simp only [decodeWitness, get_ofFn, Fin.val_mk, Hex.Matrix.IsEchelonForm.pivotRow]
+      simp only [decodeWitness, Vector.get_ofFn, Fin.val_mk, Hex.Matrix.IsEchelonForm.pivotRow]
       simpa only [Bool.and_eq_true, decide_eq_true_eq, Fin.val_mk] using hb i.val i.isLt
     rw [← he, hz, vectorEquiv_zero]
   · intro hz

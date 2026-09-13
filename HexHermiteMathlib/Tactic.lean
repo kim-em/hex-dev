@@ -167,20 +167,30 @@ def prove (target : Expr) : MetaM (Outcome Expr) := do
 
 syntax (name := hermiteTerm) "hermite% " term : term
 
+/-- Final diagnostic after term elaborators have delegated unsupported carriers. -/
+@[term_elab hermiteTerm]
+def hermiteTermFallback : Term.TermElab := fun _ _ =>
+  throwError "hermite: the input must be an integer matrix"
+
 @[term_elab hermiteTerm] def elabHermiteTerm : Term.TermElab := fun stx expected => do
   let `(hermite% $t) := stx | throwUnsupportedSyntax
   let A ← elabArgument t
   match ← certify A with
   | .success c => Term.ensureHasType expected (← result A c)
-  | .notApplicable => throwError "hermite: the input must be an integer matrix"
+  | .notApplicable => throwUnsupportedSyntax
   | .declined msg => throwError "hermite: declined: {msg}"
 
 syntax (name := hermiteTac) &"hermite" : tactic
 
-@[tactic hermiteTac] def evalHermite : Tactic.Tactic := fun _ => Tactic.withMainContext do
+/-- Last-resort diagnostic, registered before the extensible numeric handler. -/
+@[tactic hermiteTac, no_fallback]
+def hermiteFallback : Tactic.Tactic := fun _ =>
+  throwError "hermite: expected integer row-lattice membership, nonmembership, or a row-lattice basis"
+
+@[tactic hermiteTac, no_fallback] def evalHermite : Tactic.Tactic := fun _ => Tactic.withMainContext do
   match ← prove (← Tactic.getMainTarget) with
   | .success e => Tactic.closeMainGoal `hermite e
-  | .notApplicable => throwError "hermite: expected integer row-lattice membership, nonmembership, or a row-lattice basis"
+  | .notApplicable => throwUnsupportedSyntax
   | .declined msg => throwError "hermite: declined: {msg}"
 
 end HexHermiteMathlib.Tactic

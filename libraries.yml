@@ -1182,13 +1182,13 @@ libraries:
     deps: [HexHermite, HexRowReduceMathlib]
     mathlib: true
     proof_probes: [bench/HexHermiteMathlib/ProofProbe]
-    done_through: 4
+    done_through: 3
     status: active
   HexSmithMathlib:
     deps: [HexSmith, HexHermiteMathlib]
     mathlib: true
     proof_probes: [bench/HexSmithMathlib/ProofProbe]
-    done_through: 4
+    done_through: 3
     status: active
   HexPolyFpMathlib:
     deps: [HexPolyFp, HexPolyMathlib, HexModArithMathlib]

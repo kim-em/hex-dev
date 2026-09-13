@@ -38,7 +38,7 @@ def specification(owner=None):
         description=__doc__, pairs=pairs, probe_target="HexStructuralTacticProofProbe",
         schema="hex-structural-tactic-probes-v1",
         measurement="paired-fresh-module-olean-wall-absolute-v1",
-        output_stem="hex-structural-tactic-probes", required_samples=6, absolute_only=True,
+        output_stem="hex-structural-tactic-probes", required_samples=6, absolute_only=True, retain_compiler_output=True,
         extra_sources=(Path("scripts/bench/structural_tactic_probes.py"),
                        Path("scripts/bench/structural_tactic_probes.json"),
                        *(Path(owner) / "SPEC" / name for owner, name in (

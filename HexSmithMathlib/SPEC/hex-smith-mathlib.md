@@ -84,7 +84,9 @@ phase remains lower). The ordinary build includes the frontend tests through
 `HexStructuralTacticTests`.
 
 `scripts/bench/structural_tactic_probes.py` generates the complete named ladders
-with seed 10238. `scripts/bench/structural_tactic_sweep.py` runs six adjacent
+with seed 10238, plus one 16×16 `Matrix.ofArray` fixture exercising the
+entrywise identification route for this owner. A regression compares every
+committed probe source with the generator. `scripts/bench/structural_tactic_sweep.py` runs six adjacent
 import-baseline/candidate pairs per fixture, rotating pairs and alternating
 arm order on one automatically leased CPU. An external append-only journal
 retains each completed arm and partial timeout output. Certificate sizes,

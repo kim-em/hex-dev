@@ -116,6 +116,7 @@ def prove (target : Expr) : MetaM (Outcome Expr) := do
   let body ← whnfR body
   unless body.getAppFn.isConstOf ``LinearEquiv do return .notApplicable
   let args := body.getAppArgs
+  -- Argument 8 is the source module of `LinearEquiv`; the full type is checked below.
   let some domain := args[8]? | return .notApplicable
   let some A ← presentationInput? domain | return .notApplicable
   let some (_, _, carrier) ← shape? (← inferType A) | return .notApplicable
@@ -150,23 +151,33 @@ def prove (target : Expr) : MetaM (Outcome Expr) := do
 /-- Return the checked rank, canonical factors and quotient equivalence. -/
 syntax (name := smithTerm) "smith% " term : term
 
+/-- Final diagnostic after term elaborators have delegated unsupported carriers. -/
+@[term_elab smithTerm]
+def smithTermFallback : Term.TermElab := fun _ _ =>
+  throwError "smith: the input must be an integer matrix"
+
 /-- Elaborate the literal Smith result with all its proof fields. -/
 @[term_elab smithTerm] def elabSmithTerm : Term.TermElab := fun stx expected => do
   let `(smith% $t) := stx | throwUnsupportedSyntax
   let A ← elabArgument t
   match ← certify A with
   | .success c => Term.ensureHasType expected (← checked A c)
-  | .notApplicable => throwError "smith: the input must be an integer matrix"
+  | .notApplicable => throwUnsupportedSyntax
   | .declined msg => throwError "smith: declined: {msg}"
 
 /-- Construct a canonical integer row-presentation quotient equivalence. -/
 syntax (name := smithTac) &"smith" : tactic
 
+/-- Last-resort diagnostic, registered before the extensible numeric handler. -/
+@[tactic smithTac, no_fallback]
+def smithFallback : Tactic.Tactic := fun _ =>
+  throwError "smith: expected an integer row-presentation quotient equivalence or its Nonempty wrapper"
+
 /-- Discharge a Smith quotient goal or report the protocol outcome. -/
-@[tactic smithTac] def evalSmith : Tactic.Tactic := fun _ => Tactic.withMainContext do
+@[tactic smithTac, no_fallback] def evalSmith : Tactic.Tactic := fun _ => Tactic.withMainContext do
   match ← prove (← Tactic.getMainTarget) with
   | .success e => Tactic.closeMainGoal `smith e
-  | .notApplicable => throwError "smith: expected an integer row-presentation quotient equivalence or its Nonempty wrapper"
+  | .notApplicable => throwUnsupportedSyntax
   | .declined msg => throwError "smith: declined: {msg}"
 
 end HexSmithMathlib.Tactic

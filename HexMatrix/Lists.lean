@@ -75,4 +75,18 @@ theorem entry_eq_getD (zero : α) (xs : List α) (i : Nat) :
   | nil => simp [entry]
   | cons x xs ih => cases i <;> simp [entry, ih]
 
+/-- Exact unnormalized integer coefficient addition. -/
+@[expose] def add : List Int → List Int → List Int
+  | [], ys => ys
+  | xs, [] => xs
+  | x :: xs, y :: ys => Int.add x y :: add xs ys
+
+/-- Integer coefficient scaling. -/
+@[expose] def scale (a : Int) (xs : List Int) : List Int := xs.map (Int.mul a)
+
+/-- Structural integer coefficient convolution. -/
+@[expose] def mul : List Int → List Int → List Int
+  | [], _ => []
+  | x :: xs, ys => add (scale x ys) (0 :: mul xs ys)
+
 end Hex.Matrix.Lists
