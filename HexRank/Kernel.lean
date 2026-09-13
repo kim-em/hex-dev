@@ -41,10 +41,16 @@ The witness names pivot rows `rows` (elimination order) and pivot columns
   `(n - rank) · rank · m` integer multiplications and nothing at full rank.
 
 The producer derives `z` from the full pivot-block adjugate (identity 3
-restricted to a row).  Column `j` of `V` is the last column of the adjugate
-of the leading `(j + 1) × (j + 1)` pivot block, scaled by the inverse of that
-block's determinant modulo `modulus`.  Thus `V` is upper triangular and
-`B * V` is lower triangular with unit diagonal.  It re-checks its own output
+restricted to a row).  Column `j` of `V` is `B_j⁻¹ e_j` modulo `modulus`
+for the leading `(j + 1) × (j + 1)` pivot block `B_j`, so `V` is upper
+triangular and `B * V` is lower triangular with unit diagonal.  It obtains
+every column from one Gaussian elimination of the block modulo `modulus`
+without pivoting, whose upper factor's leading blocks are the upper
+factors of the `B_j`, by back substitution: `O(rank³)` modular arithmetic
+operations in all.  While the preceding pivots are units, a pivot is a
+unit exactly when the leading block it completes is, so the first pivot
+that is not a unit is the first leading block that is not, and it sends
+the producer to the next modulus.  It re-checks its own output
 before returning it.  The two halves are independent: nothing relates
 `denom` to the modular data, and each bound is sound on its own.
 
@@ -215,53 +221,74 @@ def invMod? (u M : Nat) : Option Nat :=
   let (g, s, _) := HexArith.extGcd (u % M) M
   if g = 1 then some (Int.emod s (Int.ofNat M)).toNat else none
 
-private structure LeadingColumn where
-  order : Nat
-  denom : Int
-  entries : List Int
-
 private structure WitnessData (n m : Nat) where
   matrix : List (List Int)
   rank : Nat
   rows : List Nat
   cols : List Nat
-  leading : List LeadingColumn
+  /-- The pivot block `B`, rows in elimination order, columns increasing. -/
+  block : List (List Int)
   denom : Int
   z : List (List Int)
 
-/-- Compute the modulus-independent part of a kernel witness once, including
-the adjugate column and denominator of every leading pivot block. -/
+/-- The modulus-independent part of a kernel witness: the profile, the pivot
+block, and the upper-bound coefficients from the full-block adjugate. -/
 private def witnessData (A : Matrix Int n m) : WitnessData n m :=
   let c := rankCert A
   let r := c.rank
   let rowsL := c.rows.toList.map (·.val)
   let colsL := c.cols.toList.map (·.val)
   let B := selectedSubmatrix A c.rows c.cols
-  let leading := (List.finRange r).map fun j =>
-    let k := j.val + 1
-    if h : k = r then
-      { order := k, denom := c.denom
-        entries := (List.finRange k).map fun i => c.adj[(Fin.cast h i, j)] }
-    else
-      let Bk : Matrix Int k k := ofFn fun i l =>
-        B[((⟨i.val, by omega⟩ : Fin r), (⟨l.val, by omega⟩ : Fin r))]
-      let Dk := rowReduceFF (augmentIdentity Bk)
-      { order := k, denom := Dk.denom
-        entries := (List.finRange k).map fun i => (adjugateOf Dk)[(i, Fin.last j.val)] }
   let nonPivot := (List.finRange n).filter fun i => !(RankWitness.memNat i.val rowsL)
   let z := nonPivot.map fun i => (List.finRange r).map fun l =>
     (List.finRange r).foldl (fun acc k => acc + A[(i, c.cols[k])] * c.adj[(k, l)]) 0
   { matrix := toLists A, rank := r, rows := rowsL, cols := colsL
-    leading := leading, denom := c.denom, z := z }
+    block := toLists B, denom := c.denom, z := z }
+
+/-- Gaussian elimination without pivoting modulo `M` on the residues of the
+pivot block: the upper triangular factor `U` and the inverses of its
+diagonal, or `none` at the first pivot that is not a unit, which is the
+first leading principal minor that is not a unit modulo `M`. -/
+private def upperFactorMod (M : Nat) (B : List (List Int)) :
+    Option (Array (Array Nat) × Array Nat) := Id.run do
+  let mut U : Array (Array Nat) := B.toArray.map fun row => row.toArray.map (RankWitness.residue M)
+  let r := U.size
+  let mut invDiag : Array Nat := #[]
+  for k in [0:r] do
+    let some inv := invMod? (U[k]![k]!) M | return none
+    invDiag := invDiag.push inv
+    let rowk := U[k]!
+    for i in [k + 1:r] do
+      let rowi := U[i]!
+      let f := rowi[k]! * inv % M
+      if f != 0 then
+        U := U.set! i (Array.ofFn (n := r) fun j =>
+          (rowi[j]! + (M - f * rowk[j]! % M)) % M)
+  return some (U, invDiag)
+
+/-- Column `j` of `V`, the last column of the inverse of the leading
+`(j + 1) × (j + 1)` block of `U`, by back substitution modulo `M`: `j + 1`
+entries. -/
+private def solveColumn (M : Nat) (U : Array (Array Nat)) (invDiag : Array Nat) (j : Nat) :
+    List Nat := Id.run do
+  let mut v : Array Nat := Array.replicate (j + 1) 0
+  v := v.set! j invDiag[j]!
+  for t in [0:j] do
+    let i := j - 1 - t
+    let mut s := 0
+    for k in [i + 1:j + 1] do
+      s := (s + U[i]![k]! * v[k]!) % M
+    v := v.set! i ((M - s) % M * invDiag[i]! % M)
+  return v.toList
 
 open RankWitness in
-/-- Instantiate prepared witness data at one modulus, or report a non-unit
-leading pivot-block denominator or a failed producer self-check. -/
+/-- Instantiate prepared witness data at one modulus: the columns of `V`
+from one elimination of the pivot block modulo `M`, or a leading pivot
+block that is not a unit, or a failed producer self-check. -/
 private def rankWitnessOf (M : Nat) (d : WitnessData n m) : Except String RankWitness := do
-  let vt ← d.leading.mapM fun col => do
-    let some dinv := invMod? (residue M col.denom) M |
-      throw s!"the leading pivot-block denominator {col.denom} of order {col.order} is not a unit modulo {M}"
-    pure <| col.entries.map fun x => Nat.mod (Nat.mul (residue M x) dinv) M
+  let some (U, invDiag) := upperFactorMod M d.block |
+    throw s!"a leading pivot block of order at most {d.rank} is not a unit modulo {M}"
+  let vt := (List.range d.rank).map (solveColumn M U invDiag)
   let w : RankWitness :=
     { rank := d.rank, modulus := M, rows := d.rows, cols := d.cols, vt := vt
       denom := d.denom, z := d.z }

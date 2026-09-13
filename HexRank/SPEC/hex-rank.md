@@ -798,15 +798,21 @@ structure RankWitness where
 The two halves are independent: nothing relates `denom` to the modular
 data, and each bound is sound on its own, as `RankCert`'s docstring says
 of its fields. Let `B_j` be the leading `(j + 1) × (j + 1)` block of `B`.
-The producer takes column `j` of `V` to be the last column of
-`det(B_j)⁻¹ · adj B_j mod modulus`, extended by zeros. Hence its first
-`j + 1` entries solve `B_j · v_j = e_j`, so `B · V` is lower triangular
-with unit diagonal. It obtains every adjugate by running `rowReduceWith`
-on `augmentIdentity B_j`, reusing the full-block result that `rankCertOf`
-already needs for the upper-bound coefficients
-`z_k = A_i[cols] · adj B`. It computes this modulus-independent data once,
-then re-checks each modular instantiation and moves to the next modulus of
-`witnessModuli` if any `det B_j` is not a unit modulo the current one.
+The producer takes column `j` of `V` to be `B_j⁻¹ e_j` modulo `modulus`,
+extended by zeros, so `B · V` is lower triangular with unit diagonal. It
+obtains every column from one Gaussian elimination of the block modulo
+`modulus` without pivoting, whose upper factor `U` has the upper factors
+of the `B_j` as its leading blocks, so `v_j` is the last column of the
+inverse of the leading block of `U`, by back substitution: about `rank³`
+modular arithmetic operations for the factorisation and `rank³ / 3` for
+the columns. While the preceding pivots are units, a pivot is a unit
+exactly when the leading block it completes is, so the first pivot that
+is not a unit is the first leading block that is not, and it sends the
+producer to the next modulus of `witnessModuli`. The
+upper-bound coefficients `z_k = A_i[cols] · adj B` come from the
+full-block adjugate that `rankCertOf` computes over `Int`; this
+modulus-independent data is computed once, and each modular instantiation
+is re-checked before it is returned.
 
 **Kernel discipline** (design principle 11, made concrete): every
 definition on the path is `@[expose]`; the arithmetic is `Nat.mul`,
@@ -981,7 +987,7 @@ rank:
 | `checkRank` | `n · r · m + r² · m + r³ + n · m` | none | one product dominates; no determinant |
 | `rankWith`, `rankProfileWith` | as `rowReduceWith` | | |
 | `checkRankList` | `r³ / 3` modulo `modulus`, plus `(n − r) · r · m` over `Int` | none | the kernel form; nothing at full rank for the second term |
-| `rankWitness` | `rankCertWith` plus `O(r⁴ + (n − r) · r²)` | plus `r` modular inverses | one augmented reduction per leading pivot block, reusing the full block |
+| `rankWitness` | `rankCertWith` plus `O((n − r) · r²)` over `Int` and `O(r³)` modular arithmetic operations | plus `r` modular inverses | one elimination of the pivot block modulo `modulus` and back substitution per column |
 
 **Growth.** The invariant says every stored entry is a minor of `A` (a
 bordered `(k + 1) × (k + 1)` minor in a non-pivot row, a `k × k` minor with
