@@ -1705,3 +1705,20 @@ closed evidence type. Update `libraries.yml`, Lake requirements, and the authori
 and edges actually exist. Existing release pins are not changed by a design.
 Manual acceptance requirements live in
 [HexManual](../../HexManual/README.md#direct-radical-design-requirements).
+
+## Checked fixed presentations
+
+`AlgebraicNumber.ofNormalized` accepts the same normalized polynomial,
+irreducibility, square-freeness and selected-root data as `ofNormalized?`,
+plus a proof that its result is present. It returns that canonical number
+with the defining polynomial stored directly; `ofNormalized_p` is
+reflexivity. Thus a `QAdjoin` literal can expose its polynomial coefficients
+without replaying root isolation in the kernel. The canonicality evidence
+and selected isolation are transported from the successful result, so the
+sealed-constructor invariant is preserved. The Mathlib companion's
+`AlgebraicNumber.ofNormalized?_isSome` discharges the success obligation.
+
+`ZPoly.toRatPoly` uses a coefficient-list specification for kernel reduction
+and its original array implementation through a proved `@[csimp]` equality.
+This lets fixed-presentation arithmetic reduce in entry-identification
+checks while preserving compiled arithmetic.

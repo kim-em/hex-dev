@@ -550,6 +550,14 @@ noncomputable scoped instance (p : ZPoly) (x : SimpleRoot p)
   simp only [map_smul, map_one, mul_one] at hvalue
   exact_mod_cast hvalue
 
+/-- The canonical-number wrapper inherits the fixed-presentation field. -/
+noncomputable scoped instance (a : AlgebraicNumber) : Field (QAdjoin a) :=
+  inferInstanceAs (Field (PolyQuot a.p a.x))
+
+/-- The canonical-number wrapper has characteristic zero. -/
+noncomputable scoped instance (a : AlgebraicNumber) : CharZero (QAdjoin a) :=
+  inferInstanceAs (CharZero (PolyQuot a.p a.x))
+
 end QAdjoinField
 
 open scoped QAdjoinField

@@ -866,6 +866,38 @@ matrix, a changed `vt` entry and a changed `z` entry are refuted by
 extended past the block width, and a `z` row shorter or longer than the
 rank are accepted.
 
+### Polynomial coefficient witnesses
+
+`HexRank/Polynomial.lean` provides `PolyWitness` and `checkRankPoly` for
+integer polynomial entries with a fixed defining polynomial `f`. It keeps
+the integer `RankWitness` path unchanged. Coefficients are lists in ascending
+degree order; all checking arithmetic is structural recursion over lists
+using direct `Int` primitives.
+
+In addition to the pivot indices, triangular transform and exact row
+coefficients, the witness carries polynomial quotients for every checked
+identity. The lower half checks `Bᵢ · Vⱼ = δᵢⱼ + f * qᵢⱼ` coefficientwise
+modulo `M`. The upper half checks `denom * Aᵢⱼ = Σ zᵢₗ Aₗⱼ + f * qᵢⱼ`
+coefficientwise over `Int`. Thus the kernel performs polynomial convolution
+and additions, with no polynomial division or elimination. `denom` is a
+nonzero integer. At `M = 0` the same coefficient comparison is exact.
+
+The guards also require `M > 1`, positive degree of `f`, and an explicit
+inverse of its leading coefficient modulo `M`. These imply that the
+normalized modular defining polynomial is monic of positive degree. The
+Mathlib bridge therefore obtains a nontrivial modular quotient even when
+`M` is composite or the reduced polynomial is reducible.
+
+`HexRank/PolyProduce.lean` performs elimination over rational polynomials
+modulo `f`, clears denominators of the exact row coefficients, and computes
+all polynomial quotient witnesses natively. Modular witnesses are reductions
+of rational identities, so the producer needs no inversion algorithm for
+a finite polynomial quotient. It tries the configured integer moduli,
+rejecting any that divide a required denominator or leading coefficient,
+and returns only a witness that passes `checkRankPoly`. Source polynomials
+may be unreduced. The intended source quotient is a domain; a reducible
+presentation can cause the untrusted producer to decline.
+
 ## Carriers
 
 The producer is one function. Each carrier supplies its quotient and its
@@ -1238,6 +1270,8 @@ HexRank/
   Produce.lean     rankProfileWith, rankCertWith, certifyRankWith, rankWith
   Int.lean         rowReduceFF, rankProfile, rankCert, certifyRank, rank
   Kernel.lean      RankWitness, checkRankList, rankWitness, the kernel primitives
+  Polynomial.lean  PolyWitness, checkRankPoly, coefficient-list primitives
+  PolyProduce.lean polynomial quotient witness producer
   SPEC/hex-rank.md
   README.md
 conformance/HexRank/{Conformance,EmitFixtures}.lean

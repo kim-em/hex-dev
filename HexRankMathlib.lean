@@ -14,5 +14,6 @@ public import HexRankMathlib.Cert
 public import HexRankMathlib.Extension
 public import HexRankMathlib.Kernel
 public import HexRankMathlib.Tactic
+public import HexRankMathlib.QuadraticTactic
 public import HexRankMathlib.Profile
 public import HexRankMathlib.RowProfile

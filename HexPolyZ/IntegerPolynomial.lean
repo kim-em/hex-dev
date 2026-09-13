@@ -259,17 +259,33 @@ theorem isUnit_of_eq_neg_one {f : ZPoly} (h : f = -1) : IsUnit f := by
 @[simp, grind .] theorem isUnit_neg_one : IsUnit (-1 : ZPoly) :=
   isUnit_of_eq_neg_one rfl
 
-/-- View an integer polynomial as a rational polynomial. -/
+/-- View an integer polynomial as a rational polynomial. The kernel reads
+the coefficient list; compiled code uses `toRatPolyImpl`. -/
 @[expose]
-def toRatPoly (f : ZPoly) : DensePoly Rat :=
+noncomputable def toRatPoly (f : ZPoly) : DensePoly Rat :=
+  DensePoly.ofList (f.toList.map fun coeff : Int => (coeff : Rat))
+
+/-- Array implementation of rational coefficient conversion. -/
+@[expose]
+def toRatPolyImpl (f : ZPoly) : DensePoly Rat :=
   DensePoly.ofCoeffs <| f.toArray.map fun coeff : Int => (coeff : Rat)
+
+/-- The executable array conversion agrees with the list specification. -/
+theorem toRatPoly_eq_impl (f : ZPoly) : toRatPoly f = toRatPolyImpl f := by
+  unfold toRatPoly toRatPolyImpl DensePoly.ofList DensePoly.toList
+  congr 1
+  rw [← Array.toList_map, Array.toArray_toList]
+
+@[csimp] theorem toRatPoly_eq : toRatPoly = toRatPolyImpl :=
+  funext toRatPoly_eq_impl
 
 /-- Coefficients of `toRatPoly f` are the rational casts of the coefficients of
 `f`. -/
 @[simp, grind =]
 theorem coeff_toRatPoly (f : ZPoly) (n : Nat) :
     (toRatPoly f).coeff n = (f.coeff n : Rat) := by
-  unfold toRatPoly
+  rw [toRatPoly_eq_impl]
+  unfold toRatPolyImpl
   rw [DensePoly.coeff_ofCoeffs]
   unfold DensePoly.coeff DensePoly.toArray
   by_cases hn : n < f.coeffs.size

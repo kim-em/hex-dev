@@ -13,3 +13,6 @@ public import HexRank.ReduceImpl
 public import HexRank.Produce
 public import HexRank.Int
 public import HexRank.Kernel
+
+public import HexRank.Polynomial
+public import HexRank.PolyProduce

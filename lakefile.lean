@@ -411,7 +411,7 @@ lean_lib HexRankMathlib where
 
 @[default_target]
 lean_lib HexRankTests where
-  globs := #[`HexRankMathlib.Tests]
+  globs := #[`HexRankMathlib.Tests, `HexRankMathlib.NumberFieldTests]
 
 lean_lib HexRankMathlibProofProbe where
   srcDir := "bench"
@@ -426,7 +426,20 @@ lean_lib HexRankMathlibProofProbe where
     `HexRankMathlib.ProofProbe.Dense32Hex,
     `HexRankMathlib.ProofProbe.Dense32Mathlib,
     `HexRankMathlib.ProofProbe.LowRank32Hex,
-    `HexRankMathlib.ProofProbe.LowRank32Mathlib]
+    `HexRankMathlib.ProofProbe.LowRank32Mathlib,
+    `HexRankMathlib.ProofProbe.QuadraticBaseline,
+    `HexRankMathlib.ProofProbe.QuadraticMathlibBaseline,
+    `HexRankMathlib.ProofProbe.Rational8Hex,
+    `HexRankMathlib.ProofProbe.Rational8Mathlib,
+    `HexRankMathlib.ProofProbe.RationalDeficient16Hex,
+    `HexRankMathlib.ProofProbe.RationalDeficient16Mathlib,
+    `HexRankMathlib.ProofProbe.Quadratic8Hex,
+    `HexRankMathlib.ProofProbe.Quadratic8Mathlib,
+    `HexRankMathlib.ProofProbe.QuadraticDeficient16Hex,
+    `HexRankMathlib.ProofProbe.QuadraticDeficient16Mathlib,
+    `HexRankMathlib.ProofProbe.NumberFieldSupport,
+    `HexRankMathlib.ProofProbe.NumberFieldBaseline,
+    `HexRankMathlib.ProofProbe.Algebraic8Hex]
 
 @[default_target]
 lean_lib HexGramSchmidtMathlib where

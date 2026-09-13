@@ -921,7 +921,7 @@ theorem dvd_of_toRatPoly_dvd_of_primitive
 
 /-- `ratPolyPrimitivePart` of a nonzero rational polynomial of size at most one
 (a nonzero rational constant) is `1`. -/
-private theorem ratPolyPrimitivePart_eq_one_of_size_le_one
+private theorem ratPolyPrimitivePart_eq_one
     (p : DensePoly Rat) (hne : p ≠ 0) (hsize : p.size ≤ 1) :
     ratPolyPrimitivePart p = 1 := by
   rcases ratPolyPrimitivePart_rational_associate p with ⟨u, hu⟩
@@ -945,7 +945,7 @@ private theorem ratPolyPrimitivePart_eq_one_of_size_le_one
 
 /-- On a nonzero input whose primitive part is square-free over `ℚ`, the
 repeated part of the primitive square-free decomposition is `1`. -/
-theorem primitiveSquareFreeDecomposition_repeatedPart_eq_one_of_squareFreeRat
+theorem PrimitiveSquareFreeDecomposition.repeatedPart_eq_one
     (core : ZPoly) (hne : core ≠ 0)
     (hsq : SquareFreeRat (primitivePart core)) :
     (primitiveSquareFreeDecomposition core).repeatedPart = 1 := by
@@ -960,9 +960,12 @@ theorem primitiveSquareFreeDecomposition_repeatedPart_eq_one_of_squareFreeRat
   by_cases hderiv : (DensePoly.derivative (toRatPoly (primitivePart core))).isZero = true
   · rw [ite_eq_left hderiv]
   · rw [ite_eq_right hderiv]
+    dsimp only
     have hratPrim_ne : toRatPoly (primitivePart core) ≠ 0 :=
       toRatPoly_ne_zero_of_ne_zero _ hprimitive_ne
-    apply ratPolyPrimitivePart_eq_one_of_size_le_one
+    change ratPolyPrimitivePart (DensePoly.gcd (toRatPoly (primitivePart core))
+      (DensePoly.derivative (toRatPoly (primitivePart core)))) = 1
+    refine ratPolyPrimitivePart_eq_one _ ?_ ?_
     · intro h0
       exact rat_gcd_size_ne_zero_of_left_ne_zero (toRatPoly (primitivePart core))
         (DensePoly.derivative (toRatPoly (primitivePart core))) hratPrim_ne
@@ -972,7 +975,7 @@ theorem primitiveSquareFreeDecomposition_repeatedPart_eq_one_of_squareFreeRat
 /-- On a nonzero input whose primitive part is square-free over `ℚ`, the
 square-free part of the primitive square-free decomposition is exactly the
 sign-normalized primitive part.  Together with
-`primitiveSquareFreeDecomposition_repeatedPart_eq_one_of_squareFreeRat`, this is
+`PrimitiveSquareFreeDecomposition.repeatedPart_eq_one`, this is
 the trivial decomposition that the modular square-free fast path returns. -/
 theorem primitiveSquareFreeDecomposition_squareFreeCore_eq_of_squareFreeRat
     (core : ZPoly) (hne : core ≠ 0)
@@ -982,7 +985,7 @@ theorem primitiveSquareFreeDecomposition_squareFreeCore_eq_of_squareFreeRat
   have hprimitive_ne : primitivePart core ≠ 0 :=
     ne_zero_of_primitive _ (primitivePart_primitive core (content_ne_zero_of_ne_zero core hne))
   have hrep : (primitiveSquareFreeDecomposition core).repeatedPart = 1 :=
-    primitiveSquareFreeDecomposition_repeatedPart_eq_one_of_squareFreeRat core hne hsq
+    PrimitiveSquareFreeDecomposition.repeatedPart_eq_one core hne hsq
   rcases primitiveSquareFreeDecomposition_reassembly_signed core hne with ⟨ε, hε, hre⟩
   rw [hrep, DensePoly.mul_one_right_poly] at hre
   have hlead_nonneg :
