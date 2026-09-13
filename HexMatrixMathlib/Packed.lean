@@ -288,4 +288,267 @@ theorem packCol_eq (W r : Nat) (c : List Nat) :
   rw [packCol, packRevAux_eq]
   simp
 
+theorem dotInt_eq_sum (a b : List Int) (r : Nat) (h : a.length ≤ r) :
+    dotInt a b = ∑ k : Fin r, a.getD k 0 * b.getD k 0 := by
+  induction a generalizing b r with
+  | nil => simp [dotInt]
+  | cons x xs ih =>
+    obtain ⟨r, rfl⟩ : ∃ r', r = r' + 1 := ⟨r - 1, by simp at h; omega⟩
+    rw [Fin.sum_univ_succ]
+    simp only [Fin.val_zero, List.getD_cons_zero, Fin.val_succ, List.getD_cons_succ]
+    cases b with
+    | nil => simp [dotInt]
+    | cons y ys =>
+      simp only [dotInt, Int.add_def, Int.mul_def, List.getD_cons_zero, List.getD_cons_succ]
+      rw [ih ys r (by simpa using h)]
+
+theorem column_length (j : Nat) (A : List (List Int)) : (column j A).length = A.length := by
+  induction A with
+  | nil => rfl
+  | cons r rs ih => simp [column, ih]
+
+theorem column_getD (j : Nat) (A : List (List Int)) (k : Nat) :
+    (column j A).getD k 0 = (A.getD k []).getD j 0 := by
+  induction A generalizing k with
+  | nil => simp [column]
+  | cons r rs ih =>
+    cases k with
+    | zero => simp [column]
+    | succ k => simp only [column, List.getD_cons_succ, ih]
+
+theorem emptyCols_length (m : Nat) : (emptyCols m).length = m := by
+  induction m with
+  | zero => rfl
+  | succ m ih => simp [emptyCols, ih]
+
+theorem emptyCols_getD (m l : Nat) : (emptyCols m).getD l [] = [] := by
+  induction m generalizing l with
+  | zero => simp [emptyCols]
+  | succ m ih =>
+    cases l with
+    | zero => rfl
+    | succ l =>
+      simp only [emptyCols, List.getD_cons_succ]
+      exact ih l
+
+theorem consCols_length (r : List Int) (cs : List (List Int)) :
+    (consCols r cs).length = cs.length := by
+  induction cs generalizing r with
+  | nil => cases r <;> rfl
+  | cons c cs ih => cases r <;> simp [consCols, ih]
+
+theorem consCols_getD (r : List Int) (cs : List (List Int)) (l : Nat) (hl : l < cs.length) :
+    (consCols r cs).getD l [] = r.getD l 0 :: cs.getD l [] := by
+  induction cs generalizing r l with
+  | nil => simp at hl
+  | cons c cs ih =>
+    cases r with
+    | nil =>
+      cases l with
+      | zero => simp [consCols]
+      | succ l =>
+        simp only [consCols, List.getD_cons_succ, List.getD_nil]
+        rw [ih [] l (by simpa using hl)]
+        simp
+    | cons a as =>
+      cases l with
+      | zero => simp [consCols]
+      | succ l =>
+        simp only [consCols, List.getD_cons_succ]
+        exact ih as l (by simpa using hl)
+
+theorem columns_length (m : Nat) (A : List (List Int)) : (columns m A).length = m := by
+  induction A with
+  | nil => exact emptyCols_length m
+  | cons r rs ih => simp [columns, consCols_length, ih]
+
+theorem columns_getD (m : Nat) (A : List (List Int)) (l : Nat) (hl : l < m) :
+    (columns m A).getD l [] = column l A := by
+  induction A with
+  | nil =>
+    simp only [columns, column]
+    exact emptyCols_getD m l
+  | cons r rs ih =>
+    simp only [columns, column]
+    rw [consCols_getD r _ l (by rw [columns_length]; exact hl), ih]
+
+
+theorem dotNat_comm (a b : List Nat) : dotNat a b = dotNat b a := by
+  induction a generalizing b with
+  | nil => cases b <;> rfl
+  | cons x xs ih =>
+    cases b with
+    | nil => rfl
+    | cons y ys => simp [dotNat, ih, Nat.mul_comm]
+
+/-- Cutting or zero-padding the first list to the length of the second changes
+nothing. -/
+theorem dotNat_cut (a b : List Nat) (r : Nat) (hb : b.length = r) :
+    dotNat (List.take r a ++ List.replicate (r - a.length) 0) b = dotNat a b := by
+  rw [dotNat_comm, dotNat_pad b a r hb, dotNat_comm]
+
+theorem posPart_length (l : List Int) : (posParts l).length = l.length := by
+  induction l with
+  | nil => rfl
+  | cons a as ih => simp [posParts, ih]
+
+theorem negPart_length (l : List Int) : (negParts l).length = l.length := by
+  induction l with
+  | nil => rfl
+  | cons a as ih => simp [negParts, ih]
+
+theorem allAbsLt_iff (k : Nat) (l : List Int) : allAbsLt k l = true ↔ ∀ x ∈ l, x.natAbs < k := by
+  induction l with
+  | nil => simp [allAbsLt]
+  | cons a as ih => simp [allAbsLt, ih]
+
+theorem allAbsLtRows_iff (k : Nat) (rs : List (List Int)) :
+    allAbsLtRows k rs = true ↔ ∀ r ∈ rs, ∀ x ∈ r, x.natAbs < k := by
+  induction rs with
+  | nil => simp [allAbsLtRows]
+  | cons r rs ih => simp [allAbsLtRows, allAbsLt_iff, ih]
+
+theorem posPart_lt (k : Nat) (l : List Int) (h : ∀ x ∈ l, x.natAbs < k) :
+    ∀ x ∈ posParts l, x < k := by
+  induction l with
+  | nil => simp [posParts]
+  | cons a as ih =>
+    simp only [posParts, List.mem_cons, forall_eq_or_imp]
+    refine ⟨?_, ih fun x hx => h x (by simp [hx])⟩
+    have := h a (by simp)
+    have h2 : a.toNat ≤ a.natAbs := by omega
+    omega
+
+theorem negPart_lt (k : Nat) (l : List Int) (h : ∀ x ∈ l, x.natAbs < k) :
+    ∀ x ∈ negParts l, x < k := by
+  induction l with
+  | nil => simp [negParts]
+  | cons a as ih =>
+    simp only [negParts, List.mem_cons, forall_eq_or_imp]
+    refine ⟨?_, ih fun x hx => h x (by simp [hx])⟩
+    have := h a (by simp)
+    have h2 : (Int.neg a).toNat ≤ a.natAbs := by
+      show (-a).toNat ≤ a.natAbs
+      omega
+    omega
+
+/-- A signed dot product as the four dot products of the parts. -/
+theorem dotInt_parts (t c : List Int) :
+    dotInt t c =
+      ((dotNat (posParts t) (posParts c) + dotNat (negParts t) (negParts c) : Nat) : Int) -
+        ((dotNat (posParts t) (negParts c) + dotNat (negParts t) (posParts c) : Nat) : Int) := by
+  induction t generalizing c with
+  | nil => cases c <;> simp [dotInt, posParts, negParts, dotNat]
+  | cons a as ih =>
+    cases c with
+    | nil => simp [dotInt, posParts, negParts, dotNat]
+    | cons b bs =>
+      simp only [dotInt, posParts, negParts, dotNat, Int.add_def, Int.mul_def, Nat.add_eq, Nat.mul_eq,
+        ih bs]
+      have ha : ((a.toNat : Nat) : Int) - ((Int.neg a).toNat : Int) = a := Int.toNat_sub_toNat_neg a
+      have hb : ((b.toNat : Nat) : Int) - ((Int.neg b).toNat : Int) = b := Int.toNat_sub_toNat_neg b
+      push_cast
+      linear_combination (-(b : Int)) * ha - ((a.toNat : Int) - ((Int.neg a).toNat : Int)) * hb
+
+/-- The packed signed dot product of a row (cut or padded to `r`) with a
+column of `r` entries, both with absolute values below `k` and
+`r · k² < 2^W`. -/
+theorem dotIntPacked_eq (W r k : Nat) (t c : List Int) (hc : c.length = r)
+    (ht : ∀ x ∈ t, x.natAbs < k) (hck : ∀ x ∈ c, x.natAbs < k) (hW : r * (k * k) < 2 ^ W) :
+    dotIntPacked W r (packSignedCut W r t) (packSignedCol W r c) = dotInt t c := by
+  rcases Nat.eq_zero_or_pos r with rfl | hr
+  · cases c with
+    | cons => simp at hc
+    | nil =>
+      have h0 : dotInt t [] = 0 := by cases t <;> rfl
+      have hslot : ∀ x, dotPacked W 0 0 x = 0 := fun x => by
+        show ((0 : Nat) * x) >>> (W * (0 - 1)) &&& (2 ^ W - 1) = 0
+        simp
+      rw [h0]
+      simp [dotIntPacked, packSignedCut, packSignedCol, packCut, packCol, packRevAux, packRow, hslot]
+      rfl
+  have hk : 0 < k := by
+    cases c with
+    | nil => simp at hc; omega
+    | cons x xs => exact lt_of_le_of_lt (Nat.zero_le _) (hck x (by simp))
+  have hcpos : (posParts c).length = r := by rw [posPart_length, hc]
+  have hcneg : (negParts c).length = r := by rw [negPart_length, hc]
+  have cut_len : ∀ l : List Nat, (List.take r l ++ List.replicate (r - l.length) 0).length = r :=
+    fun l => padded_length r l
+  have cut_lt : ∀ l : List Nat, (∀ x ∈ l, x < k) →
+      ∀ x ∈ List.take r l ++ List.replicate (r - l.length) 0, x < k :=
+    fun l hl => padded_lt k r hk l hl
+  have key : ∀ (p : List Nat) (q : List Nat), (∀ x ∈ p, x < k) → (∀ x ∈ q, x < k) → q.length = r →
+      dotPacked W r (packCut W r p) (packCol W r q) = dotNat p q := by
+    intro p q hp hq hq_len
+    rw [packCut, packCol_eq, dotPacked_eq k W r _ _ (cut_len p) (padded_length r q) (cut_lt p hp)
+      (padded_lt k r hk q hq) hW, dotNat_pad _ q r (cut_len p), dotNat_cut p q r hq_len]
+  simp only [dotIntPacked, packSignedCut, packSignedCol]
+  rw [key _ _ (posPart_lt k t ht) (posPart_lt k c hck) hcpos,
+    key _ _ (negPart_lt k t ht) (negPart_lt k c hck) hcneg,
+    key _ _ (posPart_lt k t ht) (negPart_lt k c hck) hcneg,
+    key _ _ (negPart_lt k t ht) (posPart_lt k c hck) hcpos, dotInt_parts]
+  rfl
+
+theorem mem_column (j : Nat) (A : List (List Int)) (x : Int) (hx : x ∈ column j A) :
+    (∃ r ∈ A, x ∈ r) ∨ x = 0 := by
+  induction A with
+  | nil => simp [column] at hx
+  | cons r rs ih =>
+    simp only [column, List.mem_cons] at hx
+    rcases hx with rfl | hx
+    · by_cases h : j < r.length
+      · left
+        exact ⟨r, by simp, by rw [getD_eq_getElem' _ _ _ h]; exact List.getElem_mem h⟩
+      · right
+        exact getD_eq_default' _ _ _ (not_lt.mp h)
+    · rcases ih hx with ⟨r', hr', hx'⟩ | h
+      · left; exact ⟨r', List.mem_cons_of_mem _ hr', hx'⟩
+      · right; exact h
+
+theorem mem_columns (m : Nat) (A : List (List Int)) (c : List Int) (hc : c ∈ columns m A) :
+    ∃ j < m, c = column j A := by
+  obtain ⟨j, hj, rfl⟩ := List.mem_iff_getElem.mp hc
+  have hj' : j < m := by rwa [columns_length] at hj
+  exact ⟨j, hj', by rw [← getD_eq_getElem' _ _ _ hj, columns_getD m A j hj']⟩
+
+/-- The `m` columns of a matrix with entries below `k > 0` in absolute value
+have as many entries as the matrix has rows, all below `k`. -/
+theorem columns_bound (m k : Nat) (hk : 0 < k) (P : List (List Int))
+    (hb : ∀ r ∈ P, ∀ x ∈ r, x.natAbs < k) :
+    ∀ c ∈ columns m P, c.length = P.length ∧ ∀ x ∈ c, x.natAbs < k := by
+  intro c hc
+  obtain ⟨j, _, rfl⟩ := mem_columns m P c hc
+  refine ⟨column_length j P, fun x hx => ?_⟩
+  rcases mem_column j P x hx with ⟨r, hr, hxr⟩ | rfl
+  · exact hb r hr x hxr
+  · simpa using hk
+
+
+theorem dotInt_eq_sum_right (a b : List Int) (r : Nat) (hb : b.length = r) :
+    dotInt a b = ∑ l : Fin r, a.getD l 0 * b.getD l 0 := by
+  induction b generalizing a r with
+  | nil =>
+    subst hb
+    cases a <;> simp [dotInt]
+  | cons y ys ih =>
+    obtain ⟨r, rfl⟩ : ∃ r', r = r' + 1 := ⟨r - 1, by simp at hb; omega⟩
+    rw [Fin.sum_univ_succ]
+    simp only [Fin.val_zero, List.getD_cons_zero, Fin.val_succ, List.getD_cons_succ]
+    cases a with
+    | nil =>
+      have h0 : dotInt [] (y :: ys) = 0 := rfl
+      rw [h0]
+      simp
+    | cons x xs =>
+      simp only [dotInt, Int.add_def, Int.mul_def, List.getD_cons_zero, List.getD_cons_succ]
+      rw [ih xs r (by simpa using hb)]
+
+theorem list_ext_getD (l₁ l₂ : List Int) (hlen : l₁.length = l₂.length)
+    (h : ∀ j, j < l₁.length → l₁.getD j 0 = l₂.getD j 0) : l₁ = l₂ := by
+  apply List.ext_getElem hlen
+  intro j hj₁ hj₂
+  have := h j hj₁
+  rwa [getD_eq_getElem' _ _ _ hj₁, getD_eq_getElem' _ _ _ hj₂] at this
+
 end HexMatrixMathlib

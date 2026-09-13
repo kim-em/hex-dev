@@ -436,7 +436,16 @@ In particular the kernel never evaluates `bareissWith`, `detWitness`, a
 reference checker, or `Hex.Matrix.det` on `Hex.Matrix (MvPoly …)`. The
 reference determinant occurs in soundness statements only; neither `Array`,
 `Vector`, `Fin`, `Finset`, matrix indexing nor well-founded polynomial
-arithmetic is reduced to check a certificate. One auxiliary lemma is
+arithmetic is reduced to check a certificate. The packed checkers of
+[hex-bareiss §Packed evaluation](../../HexBareiss/SPEC/hex-bareiss.md#packed-evaluation)
+are sound through `checkDetList_of_packed` and `checkDetRat_of_packed`:
+`triangularCheckPacked_eq` and `zeroDotsPacked_eq` identify the packed
+walk with the plain one under the entry bounds, by `dotIntPacked_eq` of
+[hex-matrix-mathlib §Kronecker-packed dot products](../../HexMatrixMathlib/SPEC/hex-matrix-mathlib.md#kronecker-packed-dot-products),
+and the columns of the arranged matrix inherit the bounds of the rows
+(`mem_applySwaps`, `columns_bound`); `det_eq_of_checkListPacked'` and
+`det_eq_of_checkRatPacked'` are the plain theorems after the implication.
+One auxiliary lemma is
 checked synchronously through the literal layer's `addClosedProof`; there
 is no elaborator `Kernel.whnf` pre-check, no elaborator type check of the
 proof before the kernel's, and no `native_decide`.
@@ -639,7 +648,14 @@ kernel `decide` on `entriesEq` otherwise), composed with a kernel-decided
 comparison of the value with `d`. A rational matrix is scaled row by row by
 the least common multiple of its denominators to an integer one, whose
 witness is checked by `checkDetRat` together with the scaling and the
-value, through `det_eq_of_checkRat'`. The whole proof is added as an
+value, through `det_eq_of_checkRat'`. The tactic takes the shared
+configuration structure `HexMatrixMathlib.KernelConfig` as an `optConfig`
+(`det -packing`; the default is packed) and is configured in no other way;
+with packing on the checks are `checkDetListPacked` and `checkDetRatPacked`
+with the entry bound and slot width the tactic computes from the entries
+and the transform, through `det_eq_of_checkListPacked'` and
+`det_eq_of_checkRatPacked'`. The term form `det%` and the simproc
+`hex_norm_det` use the default configuration. The whole proof is added as an
 auxiliary lemma on the closed target (`addClosedProof` of the literal
 layer, with asynchronous checking off) so the kernel checks it exactly
 once, with no elaborator type check first, and the tactic sees a
@@ -710,37 +726,39 @@ the delta):
 | rational `8 × 8` | 0.69 s | 0.20 s | 3.5 |
 
 Proof time against dimension, for the dense `8`-bit, singular (rank
-`n − 1`) and dense `64`-bit families up to a ten-second cap per run, is
+`n − 1`) and dense `64`-bit families up to a ten-second cap per run, in
+three arms (`eval_det`, `det`, and `det -packing` for the plain checker on
+the same certificate), is
 recorded by `scripts/bench/det_tactic_size_sweep.py` (profiler totals per
 file, imports excluded, the median of three runs per point with the range
 kept); the current record is
-`reports/bench-results/hex-bareiss-mathlib-tactic-size-753b5dd13f6d-chungus2.json`.
-`eval_det` reaches `n = 14` in every family (6.9, 6.8 and 6.8 s) and `det`
-reaches `n = 48` on the dense family (6.3 s), `n = 48` on the singular
-family (2.5 s) and `n = 24`, the end of its ladder, on the 64-bit family
-(0.8 s); the kernel is most of `det`'s time at those dimensions, the
-literal's elaboration, the entries' evaluation and the compiled producer
-the rest. The record is plotted by
+`reports/bench-results/hex-bareiss-mathlib-tactic-size-bc80920326fc-chungus2.json`.
+`eval_det` reaches `n = 14` in every family (8.2, 8.3 and 8.2 s) and `det`
+reaches `n = 48` on the dense family (2.3 s, of which the kernel is
+1.5 s), `n = 48` on the singular family (1.2 s, kernel 0.4 s) and
+`n = 24`, the end of its ladder, on the 64-bit family (0.6 s, kernel
+0.4 s); `det -packing` reaches the same dimensions at 5.2, 1.2 and 0.7 s.
+The record is plotted by
 `scripts/plots/hex-bareiss-mathlib-tactic-size.py` to
 `reports/figures/hex-bareiss-mathlib-tactic-size.svg`.
 
 Median kernel shares recorded by the same size sweep are:
 
-| family | `eval_det` | `det` |
-|---|---|---|
-| dense `8 × 8`, 8-bit | 237 ms | 23 ms |
-| dense `12 × 12`, 8-bit | 1.54 s | 66 ms |
-| dense `14 × 14`, 8-bit | 3.08 s | 104 ms |
-| dense `16 × 16`, 8-bit | timeout | 162 ms |
-| dense `32 × 32`, 8-bit | timeout | 1.64 s |
-| dense `40 × 40`, 8-bit | timeout | 3.13 s |
-| singular `8 × 8` | 241 ms | 13 ms |
-| singular `16 × 16` | timeout | 59 ms |
-| singular `32 × 32` | timeout | 473 ms |
-| singular `48 × 48` | timeout | 1.69 s |
-| dense `8 × 8`, 64-bit | 252 ms | 37 ms |
-| dense `16 × 16`, 64-bit | timeout | 164 ms |
-| dense `24 × 24`, 64-bit | timeout | 597 ms |
+| family | `eval_det` | `det` | `det -packing` |
+|---|---|---|---|
+| dense `8 × 8`, 8-bit | 281 ms | 27 ms | 22 ms |
+| dense `12 × 12`, 8-bit | 1.77 s | 63 ms | 60 ms |
+| dense `14 × 14`, 8-bit | 3.42 s | 84 ms | 90 ms |
+| dense `16 × 16`, 8-bit | timeout | 109 ms | 138 ms |
+| dense `32 × 32`, 8-bit | timeout | 532 ms | 1.22 s |
+| dense `40 × 40`, 8-bit | timeout | 931 ms | 2.43 s |
+| singular `8 × 8` | 277 ms | 11 ms | 21 ms |
+| singular `16 × 16` | timeout | 34 ms | 34 ms |
+| singular `32 × 32` | timeout | 147 ms | 141 ms |
+| singular `48 × 48` | timeout | 378 ms | 366 ms |
+| dense `8 × 8`, 64-bit | 296 ms | 31 ms | 21 ms |
+| dense `16 × 16`, 64-bit | timeout | 137 ms | 131 ms |
+| dense `24 × 24`, 64-bit | timeout | 390 ms | 508 ms |
 
 The timeout entries have no profiler breakdown because the corresponding
 proof exceeded the sweep's ten-second cap.

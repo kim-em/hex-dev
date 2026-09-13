@@ -380,12 +380,109 @@ theorem lowerCheckPacked_eq (M W r : Nat) (hM : 0 < M) (hW : r * (M * M) < 2 ^ W
         zeroRowPacked_eq M W r hM hW b hb hbM cs (fun c hc => hcs c (by simp [hc])),
         ih (fun b hb => hbs b (by simp [hb])) cs (fun c hc => hcs c (by simp [hc]))]
 
+theorem rowSpanPacked_spec (W r k : Nat) (hW : r * (k * k) < 2 ^ W) (d : Int) (z : List Int)
+    (hz : ∀ x ∈ z, x.natAbs < k) :
+    ∀ (a : List Int) (cs : List (List Int)), (∀ c ∈ cs, c.length = r ∧ ∀ x ∈ c, x.natAbs < k) →
+      rowSpanPacked W r d (packSignedCut W r z) a (packSignedCols W r cs) = true →
+      a.length = cs.length ∧ ∀ j, j < a.length → d * a.getD j 0 = dotInt z (cs.getD j []) := by
+  intro a
+  induction a with
+  | nil =>
+    intro cs _ h
+    cases cs with
+    | nil => simp
+    | cons => exact nomatch h
+  | cons x xs ih =>
+    intro cs hcs h
+    cases cs with
+    | nil => exact nomatch h
+    | cons c cs =>
+      simp only [packSignedCols, rowSpanPacked, Bool.and_eq_true, decide_eq_true_eq] at h
+      obtain ⟨hx, hrest⟩ := h
+      obtain ⟨hcl, hcb⟩ := hcs c (by simp)
+      obtain ⟨hlen, hj⟩ := ih cs (fun c hc => hcs c (by simp [hc])) hrest
+      refine ⟨by simpa using hlen, fun j hj' => ?_⟩
+      cases j with
+      | zero =>
+        simp only [List.getD_cons_zero]
+        rw [← dotIntPacked_eq W r k z c hcl hz hcb hW]
+        exact hx
+      | succ j =>
+        simp only [List.getD_cons_succ]
+        exact hj j (by simpa using hj')
+
+theorem rowsCheckPacked_imp (W r k m : Nat) (hW : r * (k * k) < 2 ^ W) (hk : 0 < k) (d : Int)
+    (rows : List Nat) (P : List (List Int)) (hPlen : P.length = r) (hP : ∀ p ∈ P, p.length = m)
+    (hPb : ∀ p ∈ P, ∀ x ∈ p, x.natAbs < k) :
+    ∀ (i : Nat) (as zs : List (List Int)), (∀ z ∈ zs, ∀ x ∈ z, x.natAbs < k) →
+      rowsCheckPacked W r d rows (packSignedCols W r (columns m P)) i as zs = true →
+      rowsCheck d rows P m i as zs = true := by
+  have hcols : ∀ c ∈ columns m P, c.length = r ∧ ∀ x ∈ c, x.natAbs < k := fun c hc =>
+    ⟨by rw [(columns_bound m k hk P hPb c hc).1, hPlen], (columns_bound m k hk P hPb c hc).2⟩
+  intro i as
+  induction as generalizing i with
+  | nil =>
+    intro zs _ h
+    cases zs with
+    | nil => rfl
+    | cons => simp [rowsCheckPacked] at h
+  | cons a as ih =>
+    intro zs hzs h
+    simp only [rowsCheckPacked] at h
+    simp only [rowsCheck]
+    cases hmem : memNat i rows with
+    | true =>
+      simp only [hmem, Bool.cond_true] at h ⊢
+      exact ih (i + 1) zs hzs h
+    | false =>
+      simp only [hmem, Bool.cond_false] at h ⊢
+      cases zs with
+      | nil => simp at h
+      | cons z zs' =>
+        simp only [Bool.and_eq_true] at h ⊢
+        obtain ⟨hrow, hrest⟩ := h
+        refine ⟨?_, ih (i + 1) zs' (fun z hz => hzs z (by simp [hz])) hrest⟩
+        rw [beqInt_iff]
+        have hz : ∀ x ∈ z, x.natAbs < k := hzs z (by simp)
+        obtain ⟨hlen, hj⟩ := rowSpanPacked_spec W r k hW d z hz a (columns m P) hcols hrow
+        rw [columns_length] at hlen
+        apply list_ext_getD
+        · rw [scaleRow_length, combo_length m z P hP, hlen]
+        · intro j hj'
+          rw [scaleRow_length] at hj'
+          rw [scaleRow_getD, combo_getD m z P hP j (by omega), hj j hj',
+            columns_getD m P j (by omega), dotInt_eq_sum_right z _ P.length (column_length j P)]
+          refine Finset.sum_congr rfl fun l _ => ?_
+          rw [column_getD, getD_eq_getElem' _ _ _ l.isLt]
+          rfl
+
 /-- A passing packed check is a passing plain check. -/
-theorem checkRankList_of_packed (W n m : Nat) (L : List (List Int)) (c : RankWitness)
-    (h : checkRankListPacked W n m L c = true) : checkRankList n m L c = true := by
+theorem checkRankList_of_packed (W k n m : Nat) (L : List (List Int)) (c : RankWitness)
+    (h : checkRankListPacked W k n m L c = true) : checkRankList n m L c = true := by
   simp only [checkRankListPacked, Bool.and_eq_true] at h
-  obtain ⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨h1, h2⟩, h3⟩, h4⟩, h5⟩, h6⟩, h7⟩, hinc⟩, h8⟩, hvt⟩, hW⟩, hlow⟩, h10⟩ := h
+  obtain ⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨h1, h2⟩, h3⟩, h4⟩, h5⟩, h6⟩, h7⟩, hinc⟩, h8⟩, hvt⟩, hW⟩, hlow⟩, hk⟩,
+    hA⟩, hz⟩, hWk⟩, hrows⟩ := h
   simp only [checkRankList, Bool.and_eq_true]
+  have h10 : rowsCheck c.denom c.rows (pivotRows L c.rows) m 0 L c.z = true := by
+    have hk' : 0 < k := by simpa using hk
+    have hWk' : c.rank * (k * k) < 2 ^ W := by simpa using hWk
+    have hA' := (allAbsLtRows_iff _ _).mp hA
+    have hz' := (allAbsLtRows_iff _ _).mp hz
+    have hLrows : ∀ x ∈ L, x.length = m := (Rank.rowsLen_iff m L).mp h2
+    have hLlen : L.length = n := by simpa using h1
+    have hrowsLt : ∀ i ∈ c.rows, i < n := (allLt_iff _ _).mp h6
+    have hrowsLen : c.rows.length = c.rank := by simpa using h4
+    have hPmem : ∀ p ∈ pivotRows L c.rows, p ∈ L := by
+      intro p hp
+      obtain ⟨l, hl, rfl⟩ := List.mem_iff_getElem.mp hp
+      rw [pivotRows_getElem]
+      have hlt : c.rows[l]'(by simpa [pivotRows] using hl) < n :=
+        hrowsLt _ (List.getElem_mem _)
+      rw [getD_eq_getElem' _ _ _ (by omega)]
+      exact List.getElem_mem _
+    exact rowsCheckPacked_imp W c.rank k m hWk' hk' c.denom c.rows (pivotRows L c.rows)
+      (by rw [pivotRows_length, hrowsLen]) (fun p hp => hLrows p (hPmem p hp))
+      (fun p hp => hA' p (hPmem p hp)) 0 L c.z hz' hrows
   refine ⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨h1, h2⟩, h3⟩, h4⟩, h5⟩, h6⟩, h7⟩, hinc⟩, h8⟩, ?_⟩, h10⟩
   have hM : 1 < c.modulus := by simpa using h3
   have hcolsLen : c.cols.length = c.rank := by simpa using h5
@@ -547,23 +644,23 @@ theorem le_rank_of_checkList' {n m : Nat} (A : Matrix (Fin n) (Fin m) ℤ)
 
 
 /-- `rank_eq_of_checkList` through the packed check. -/
-theorem rank_eq_of_checkListPacked (W n m : Nat) (L : List (List Int)) (c : RankWitness)
-    (h : checkRankListPacked W n m L c = true) : (ofLists n m L).rank = c.rank :=
-  rank_eq_of_checkList n m L c (checkRankList_of_packed W n m L c h)
+theorem rank_eq_of_checkListPacked (W k n m : Nat) (L : List (List Int)) (c : RankWitness)
+    (h : checkRankListPacked W k n m L c = true) : (ofLists n m L).rank = c.rank :=
+  rank_eq_of_checkList n m L c (checkRankList_of_packed W k n m L c h)
 
 theorem rank_eq_of_checkListPacked' {n m : Nat} (A : Matrix (Fin n) (Fin m) ℤ)
-    (L : List (List Int)) (c : RankWitness) (W : Nat) (hA : A = ofLists n m L)
-    (h : checkRankListPacked W n m L c = true) : A.rank = c.rank :=
-  hA ▸ rank_eq_of_checkListPacked W n m L c h
+    (L : List (List Int)) (c : RankWitness) (W k : Nat) (hA : A = ofLists n m L)
+    (h : checkRankListPacked W k n m L c = true) : A.rank = c.rank :=
+  hA ▸ rank_eq_of_checkListPacked W k n m L c h
 
 theorem rank_le_of_checkListPacked' {n m : Nat} (A : Matrix (Fin n) (Fin m) ℤ)
-    (L : List (List Int)) (c : RankWitness) (W : Nat) (hA : A = ofLists n m L)
-    (h : checkRankListPacked W n m L c = true) {r : Nat} (hr : c.rank ≤ r) : A.rank ≤ r :=
-  (rank_eq_of_checkListPacked' A L c W hA h).le.trans hr
+    (L : List (List Int)) (c : RankWitness) (W k : Nat) (hA : A = ofLists n m L)
+    (h : checkRankListPacked W k n m L c = true) {r : Nat} (hr : c.rank ≤ r) : A.rank ≤ r :=
+  (rank_eq_of_checkListPacked' A L c W k hA h).le.trans hr
 
 theorem le_rank_of_checkListPacked' {n m : Nat} (A : Matrix (Fin n) (Fin m) ℤ)
-    (L : List (List Int)) (c : RankWitness) (W : Nat) (hA : A = ofLists n m L)
-    (h : checkRankListPacked W n m L c = true) {r : Nat} (hr : r ≤ c.rank) : r ≤ A.rank :=
-  hr.trans (rank_eq_of_checkListPacked' A L c W hA h).ge
+    (L : List (List Int)) (c : RankWitness) (W k : Nat) (hA : A = ofLists n m L)
+    (h : checkRankListPacked W k n m L c = true) {r : Nat} (hr : r ≤ c.rank) : r ≤ A.rank :=
+  hr.trans (rank_eq_of_checkListPacked' A L c W k hA h).ge
 
 end HexMatrixMathlib

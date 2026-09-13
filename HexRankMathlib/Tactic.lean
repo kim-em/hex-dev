@@ -184,10 +184,16 @@ def boundProof (r : Nat) (eq other : Expr) (rel : Rel) (reverse : Bool) : MetaM 
     | .ge => mkAppM ``LE.le.trans #[hbound, (← mkAppM ``Eq.ge #[eq])]
   return (proof, bound)
 
+/-- The entry bound of the packed check: one more than the largest absolute
+value among the matrix entries and the upper-bound coefficients. -/
+def entryBound (lit : Literal) (w : RankWitness) : Nat :=
+  1 + w.z.foldl (fun m z => z.foldl (fun m x => max m x.natAbs) m)
+    (lit.values.foldl (fun m r => r.foldl (fun m x => max m x.natAbs) m) 0)
+
 /-- The slot width for the packed check: the least positive `W` with
-`rank · modulus² < 2^W` (`Nat.lt_log2_self`). -/
-def slotWidth (w : RankWitness) : Nat :=
-  Nat.log2 (w.rank * (w.modulus * w.modulus)) + 1
+`rank · modulus² < 2^W` and `rank · k² < 2^W` (`Nat.lt_log2_self`). -/
+def slotWidth (w : RankWitness) (k : Nat) : Nat :=
+  max (Nat.log2 (w.rank * (w.modulus * w.modulus)) + 1) (Nat.log2 (w.rank * (k * k)) + 1)
 
 /-- Prove a rank target, or throw. -/
 def proveGoal (cfg : HexMatrixMathlib.KernelConfig) (target : Expr) : MetaM Expr := do
@@ -202,11 +208,14 @@ def proveGoal (cfg : HexMatrixMathlib.KernelConfig) (target : Expr) : MetaM Expr
   -- the check the kernel evaluates, and a proof of the plain check from it
   let plainCheck ← mkEq (← mkAppM ``Hex.Matrix.checkRankList #[nE, mE, L, c]) (mkConst ``Bool.true)
   let (check, hcheck) ← if cfg.packing then do
-      let wE := mkNatLit (slotWidth w)
-      let check ← mkEq (← mkAppM ``Hex.Matrix.checkRankListPacked #[wE, nE, mE, L, c])
+      let k := entryBound lit w
+      let kE := mkNatLit k
+      let wE := mkNatLit (slotWidth w k)
+      let check ← mkEq (← mkAppM ``Hex.Matrix.checkRankListPacked #[wE, kE, nE, mE, L, c])
         (mkConst ``Bool.true)
       let hpacked ← decideProof check
-      pure (check, ← mkAppM ``HexMatrixMathlib.checkRankList_of_packed #[wE, nE, mE, L, c, hpacked])
+      pure (check,
+        ← mkAppM ``HexMatrixMathlib.checkRankList_of_packed #[wE, kE, nE, mE, L, c, hpacked])
     else
       pure (plainCheck, ← decideProof plainCheck)
   let (eq, ofL) ← match lit.rat with

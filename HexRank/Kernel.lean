@@ -226,6 +226,28 @@ row `a` consumes the next coefficient row `z` and must satisfy
           | [] => false)
   | _, [], _ :: _ => false
 
+/-- `d • a = z · Pᵀ` entrywise on packed data: the entries of the non-pivot
+row `a` against the packed columns of the pivot rows. -/
+@[expose] def rowSpanPacked (W r : Nat) (d : Int) (zp : Nat × Nat) :
+    List Int → List (Nat × Nat) → Bool
+  | [], [] => true
+  | x :: xs, c :: cs =>
+      decide (Int.mul d x = Packed.dotIntPacked W r zp c) && rowSpanPacked W r d zp xs cs
+  | _, _ => false
+
+/-- `rowsCheck` on packed data: `Pcols` the packed columns of the pivot rows,
+each non-pivot row's coefficients cut or padded to the rank and packed. -/
+@[expose] def rowsCheckPacked (W r : Nat) (d : Int) (rows : List Nat) (Pcols : List (Nat × Nat)) :
+    Nat → List (List Int) → List (List Int) → Bool
+  | _, [], [] => true
+  | i, a :: as, zs =>
+      cond (memNat i rows) (rowsCheckPacked W r d rows Pcols (i + 1) as zs)
+        (match zs with
+          | z :: zs' => rowSpanPacked W r d (Packed.packSignedCut W r z) a Pcols &&
+              rowsCheckPacked W r d rows Pcols (i + 1) as zs'
+          | [] => false)
+  | _, [], _ :: _ => false
+
 /-- Every row has length `m`. -/
 @[expose] def rowsLen (m : Nat) : List (List Int) → Bool
   | [] => true
@@ -257,13 +279,16 @@ module docstring. -/
   rowsCheck c.denom c.rows (pivotRows A c.rows) m 0 A c.z
 
 open RankWitness in
-/-- The kernel checker with the lower bound on packed rows, slot width `W`:
-`checkRankList` with `lowerCheck` replaced by `lowerCheckPacked` on the
-packed block and columns, plus the bounds that make the packed dot
-products exact: every entry of `vt` below the modulus and
-`rank · modulus² < 2^W`.  A passing packed check implies a passing
-`checkRankList`; see the companion's `checkRankList_of_packed`. -/
-@[expose] def checkRankListPacked (W n m : Nat) (A : List (List Int)) (c : RankWitness) : Bool :=
+/-- The kernel checker with both bounds on packed rows, slot width `W` and
+entry bound `k`: `checkRankList` with `lowerCheck` replaced by
+`lowerCheckPacked` on the packed block and columns and `rowsCheck` by
+`rowsCheckPacked` on the packed columns of the pivot rows, plus the bounds
+that make the packed dot products exact: every entry of `vt` below the
+modulus and `rank · modulus² < 2^W`; every entry of `A` and of `z` below
+`k > 0` in absolute value and `rank · k² < 2^W`.  A passing packed check
+implies a passing `checkRankList`; see the companion's
+`checkRankList_of_packed`. -/
+@[expose] def checkRankListPacked (W k n m : Nat) (A : List (List Int)) (c : RankWitness) : Bool :=
   Nat.beq A.length n && rowsLen m A &&
   Nat.blt 1 c.modulus &&
   Nat.beq c.rows.length c.rank && Nat.beq c.cols.length c.rank &&
@@ -273,7 +298,10 @@ products exact: every entry of `vt` below the modulus and
   Nat.blt (Nat.mul c.rank (Nat.mul c.modulus c.modulus)) (Nat.pow 2 W) &&
   lowerCheckPacked c.modulus W c.rank (Packed.packRows W (block c.modulus A c.rows c.cols))
     (Packed.packCols W c.rank c.vt) &&
-  rowsCheck c.denom c.rows (pivotRows A c.rows) m 0 A c.z
+  Nat.blt 0 k && Packed.allAbsLtRows k A && Packed.allAbsLtRows k c.z &&
+  Nat.blt (Nat.mul c.rank (Nat.mul k k)) (Nat.pow 2 W) &&
+  rowsCheckPacked W c.rank c.denom c.rows
+    (Packed.packSignedCols W c.rank (Packed.columns m (pivotRows A c.rows))) 0 A c.z
 
 /-! # The producer -/
 
