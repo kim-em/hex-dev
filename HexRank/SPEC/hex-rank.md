@@ -909,10 +909,13 @@ check implies a passing plain check (the companion's
 and the soundness theorem of the packed one is the plain one after a
 rewrite.
 
-A row of residues `a₀, …, a_{r−1}` is packed into the one number
-`Σ aₖ · 2^(W·k)` (`packRow`, `Nat.ofDigits` at the base `2^W`), and a
-column of `vt` is cut or zero-padded to `r` entries and packed in reverse
-order by a Horner loop of `r` steps (`packCol`). The product of a packed
+The packing primitives are the shared, Mathlib-free `HexMatrix/Packed.lean`
+(`Hex.Matrix.Packed`), with their soundness in `HexMatrixMathlib/Packed.lean`,
+so that the determinant checker can use the same ones. A row of residues
+`a₀, …, a_{r−1}` is packed into the one number `Σ aₖ · 2^(W·k)`
+(`packRow`, `Nat.ofDigits` at the base `2^W`), and a column of `vt` is cut
+or zero-padded to `r` entries and packed in reverse order by a Horner loop
+of `r` steps (`packCol`). The product of a packed
 row and a reverse-packed column is the digit list of the convolution of
 the two rows, and its slot `r − 1` is their dot product (`dotPacked`:
 `Nat.shiftRight` by `W · (r − 1)`, then `Nat.land` with `2^W − 1`), as
@@ -920,8 +923,8 @@ long as no convolution coefficient reaches `2^W`. Every coefficient is a
 sum of at most `r` products of entries below `modulus`, so the packed
 checker additionally requires every entry of `vt` below `modulus`
 (`allLtRows`; the block's entries are residues) and
-`rank · modulus² < 2^W`, and the tactic passes the least such `W`
-(`Nat.log2 (rank · modulus²) + 1`). In the kernel a dot product is then
+`rank · modulus² < 2^W`, and the tactic passes the least positive such
+`W` (`Nat.log2 (rank · modulus²) + 1`, by `Nat.lt_log2_self`). In the kernel a dot product is then
 one GMP multiplication of two numbers of `r · W` bits, one shift and one
 mask, `Nat.mod` and `Nat.beq`, in place of `r` multiply-adds; the
 `rank³ / 3` multiplications of the plain lower bound become `rank² / 2`

@@ -131,7 +131,8 @@ pre-evaluation of the check nor the `Meta.check` of the proof that
 =======
 The tactics are configured only through the shared structure
 `HexMatrixMathlib.KernelConfig`, taken as an `optConfig` in the style of
-`decide +kernel` (`rank -packing`, `det -packing`), never through options:
+`decide +kernel` (`rank -packing`; `det` takes the same structure once its
+checker has a packed form), never through options:
 `packing` (default on) selects the Kronecker-packed evaluation of the
 certificate's dot products, a second checker proven equal to the plain one
 under bounds it verifies, and off gives the plain checker, so the plain

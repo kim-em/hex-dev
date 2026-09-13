@@ -23,6 +23,7 @@ public import HexMatrix.Strassen
 public import HexMatrix.Gram
 public import HexMatrix.Lattice
 public import HexMatrix.Certificate
+public import HexMatrix.Packed
 
 public section
 

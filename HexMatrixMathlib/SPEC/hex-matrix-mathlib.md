@@ -141,3 +141,20 @@ numeric handler ships. They are requirements, not descriptions of current
 These adapters serve `min_poly`, `smith`, `hermite`, `inverse` and `solve`;
 they introduce no shared tactic dispatcher or new library. Polynomial-target
 recognition is requested separately against hex-poly-mathlib.
+
+## Kronecker-packed dot products
+
+`HexMatrixMathlib/Packed.lean` proves the packed dot product of
+[hex-matrix §Kronecker-packed dot products](../../HexMatrix/SPEC/hex-matrix.md#kronecker-packed-dot-products)
+exact: `packRow` is `Nat.ofDigits` at the base `2^W`
+(`packRow_eq_ofDigits`; `packCol_eq` for the Horner loop), the product of
+two packed lists is `ofDigits` of their convolution (`conv`,
+`ofDigits_conv`), a convolution coefficient of lists with entries below
+`M` is at most `r · M²` (`conv_getD_le`), digit `k` of an `ofDigits` with
+digits below the base is read off by division and remainder
+(`ofDigits_digit`), and the coefficient `r − 1` of a row against a
+reversed column is their dot product (`dotNat_eq_conv_reverse`); hence
+`dotPacked_eq`: for lists of length `r` with entries below `M` and
+`r · M² < 2^W`, `dotPacked W r (packRow W b) (packRow W c.reverse) =
+dotNat b c`, and `dotNat_pad` for a column cut or zero-padded to `r`.
+Every packed checker's equality to its plain form reduces to this lemma.
