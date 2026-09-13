@@ -468,7 +468,7 @@ theorem checkRankList_of_packed (W k n m : Nat) (L : List (List Int)) (c : RankW
     have hWk' : c.rank * (k * k) < 2 ^ W := by simpa using hWk
     have hA' := (allAbsLtRows_iff _ _).mp hA
     have hz' := (allAbsLtRows_iff _ _).mp hz
-    have hLrows : ∀ x ∈ L, x.length = m := (rowsLen_iff m L).mp h2
+    have hLrows : ∀ x ∈ L, x.length = m := (Rank.rowsLen_iff m L).mp h2
     have hLlen : L.length = n := by simpa using h1
     have hrowsLt : ∀ i ∈ c.rows, i < n := (allLt_iff _ _).mp h6
     have hrowsLen : c.rows.length = c.rank := by simpa using h4
