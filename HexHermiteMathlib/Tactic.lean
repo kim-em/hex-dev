@@ -136,6 +136,11 @@ def prove (target : Expr) : MetaM (Outcome Expr) := do
   if member.isAppOfArity ``Membership.mem 5 then
     let args := member.getAppArgs
     let some A ← latticeInput? args[3]! | return .notApplicable
+    let some (_, _, carrier) ← shape? (← inferType A) | return .notApplicable
+    unless (← whnfR carrier).isConstOf ``Int do return .notApplicable
+    let span ← mkAppM ``Submodule.span #[mkConst ``Int, ← mkAppM ``Set.range #[A]]
+    let expected ← mkAppM ``Membership.mem #[span, args[4]!]
+    unless ← isDefEq expected member do return .notApplicable
     return ← membership A args[4]! negated
   let wrapped := target.getAppFn.isConstOf ``Nonempty
   let body ← whnfR (if wrapped then target.appArg! else target)

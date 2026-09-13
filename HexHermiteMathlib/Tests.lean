@@ -133,3 +133,8 @@ example (A : Matrix (Fin 2) (Fin 2) ℤ) : Nonempty (HermiteBasis A 2) := by her
 /-- error: hermite: expected integer row-lattice membership, nonmembership, or a row-lattice basis -/
 #guard_msgs in
 example : (2 : ℕ) = 3 := by hermite
+
+/-- error: hermite: expected integer row-lattice membership, nonmembership, or a row-lattice basis -/
+#guard_msgs in
+example : (![2] : Fin 1 → ℤ) ∈
+    (Submodule.span ℤ (Set.range !![2]) ⊓ ⊥) := by hermite
