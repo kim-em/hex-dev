@@ -480,25 +480,29 @@ alternating orientation). Each arm's delta is an absolute estimate of its
 proof cost, literal elaboration included; the family's comparator ratio
 is the ratio of the two medians and is only as resolved as the smaller
 delta. Medians from
-`reports/bench-results/hex-rank-mathlib-tactic-probes-bb3d8a45fd6d-chungus2.json`
+`reports/bench-results/hex-rank-mathlib-tactic-probes-10216.json`
 (shared host, one CPU, both arms with `!![…]` elaboration inside the
 delta):
 
 | family | `eval_rank` | `rank` | ratio |
 |---|---|---|---|
-| dense `8 × 8` | 0.30 s | 0.10 s | 3.0 |
-| dense `16 × 16` | 1.84 s | 0.39 s | 4.7 |
+| dense `8 × 8` | 0.30 s | 0.14 s | 2.1 |
+| dense `16 × 16` | 1.81 s | 0.39 s | 4.7 |
 | dense `16 × 16`, rank 14 | 1.80 s | 0.40 s | 4.5 |
-| dense `32 × 32` | 13.9 s | 2.1 s | 6.6 |
-| `32 × 32`, rank 2 | 14.9 s | 0.70 s | 21.2 |
+| dense `32 × 32` | 13.94 s | 2.17 s | 6.4 |
+| `32 × 32`, rank 2 | 15.01 s | 0.69 s | 21.8 |
 
 Proof time against dimension, for the full-rank, rank `n − 2`, rank
 `n / 2` and rank `2` families up to a ten-second cap per run, is recorded
 by `scripts/bench/rank_tactic_size_sweep.py` (profiler totals per file,
 imports excluded, the median of three runs per point with the range kept)
 and plotted by `scripts/plots/hex-rank-mathlib-tactic-size.py` to
-`reports/figures/hex-rank-mathlib-tactic-size.svg`. The current record is
+`reports/figures/hex-rank-mathlib-tactic-size.svg`. The dimension record is
 `reports/bench-results/hex-rank-mathlib-tactic-size-753b5dd13f6d-chungus2.json`.
+It measures the integer-only frontend at that revision, excluding the additional
+carrier handlers and their imports. Full module costs and import baselines for
+the additional carriers are in the
+[carrier performance report](../../reports/hex-rank-carriers-performance.md).
 Under the ten-second cap
 `eval_rank` reaches `n = 28` at full rank, rank `n − 2` and rank `n / 2`
 (about `9.9 s`) and `n = 24` at rank `2` (`6.7 s`), and `rank` reaches
