@@ -513,7 +513,9 @@ delta):
 | `32 × 32`, rank 2 | 16.11 s | 0.57 s | 28.1 |
 
 Proof time against dimension, for the full-rank, rank `n − 2`, rank
-`n / 2` and rank `2` families up to a ten-second cap per run, is recorded
+`n / 2` and rank `2` families up to a ten-second cap per run, in three
+arms (`eval_rank`, `rank`, and `rank -packing` for the plain checker on
+the same certificate), is recorded
 by `scripts/bench/rank_tactic_size_sweep.py` (profiler totals per file,
 imports excluded, the median of three runs per point with the range kept)
 and plotted by `scripts/plots/hex-rank-mathlib-tactic-size.py` to
