@@ -184,4 +184,19 @@ private def certifies {n m : Nat} (A : Matrix Int n m) : Bool :=
 #guard !(hnfCert diagonal diagonal (#m[1, 1; 0, 1]) (Matrix.identity 2)
   2 #v[0, 1])
 
+private def listWitness := hermiteWitness (#m[2, 0; 0, 6] : Matrix Int 2 2)
+#guard checkHermiteList 2 2 [[2, 0], [0, 6]] listWitness
+#guard !checkHermiteList 2 2 [[2, 0], [0, 6]] { listWitness with transform := [[2, 0], [0, 1]] }
+#guard !checkHermiteList 2 2 [[2, 0], [0, 6]] { listWitness with inverse := [[2, 0], [0, 1]] }
+#guard !checkHermiteList 2 2 [[2, 0], [0, 6]] { listWitness with form := [[2, 0]] }
+#guard !checkHermiteList 2 2 [[2, 0], [0, 6]] { listWitness with pivots := [0, 0] }
+#guard !checkHermiteList 2 2 [[2, 0], [0, 6]] { listWitness with pivots := [0, 2] }
+#guard !checkHermiteList 2 2 [[2, 0], [0, 6]] { listWitness with rank := 1, pivots := [0] }
+#guard !HermiteWitness.checkForm 2 2 { listWitness with form := [[-2, 0], [0, 6]] }
+#guard !HermiteWitness.checkForm 2 2 { listWitness with form := [[2, 6], [0, 6]] }
+#guard !checkRemainder 2 [4, 13] listWitness ⟨[2, 2], [0, 0]⟩
+#guard !checkRemainder 2 [4, 13] listWitness ⟨[2, 1], [0, 7]⟩
+#guard !checkRemainder 2 [4, 13] listWitness ⟨[2], [0, 1]⟩
+#guard checkRemainder 2 [4, 13] listWitness (hermiteRemainder [4, 13] listWitness)
+
 end Hex.Matrix.Hermite.Conformance

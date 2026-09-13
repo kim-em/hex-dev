@@ -35,3 +35,9 @@ example : ofArr = ofLists 2 2 [[1, 2], [3, 4]] :=
 
 example (i : Fin 2) (j : Fin 3) : ofLists 2 3 [[1, 2, 3], [4, 5, 6]] i j = ([[1, 2, 3], [4, 5, 6]].getD i []).getD j (0 : ℤ) :=
   ofLists_apply 2 3 _ i j
+
+example : (![(2 : ℤ), -3] : Fin 2 → ℤ) = vecOfList 2 [2, -3] := rfl
+example : (![] : Fin 0 → ℤ) = vecOfList 0 [] := rfl
+example : (fun i : Fin 3 => (i : ℤ) - 1) = vecOfList 3 [-1, 0, 1] :=
+  eq_vecOfList_of_entriesEq 3 _ _ (by decide +kernel)
+example : vectorEntriesEq 2 (![(2 : ℤ), -3]) [2, 3] = false := by decide +kernel

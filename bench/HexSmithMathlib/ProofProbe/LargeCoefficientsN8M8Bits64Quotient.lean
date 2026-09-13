@@ -1,0 +1,16 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import HexSmithMathlib.Tactic
+
+set_option maxHeartbeats 0
+set_option maxRecDepth 100000
+set_option profiler true
+set_option profiler.threshold 1000000
+set_option trace.HexMatrix.certificate true
+
+theorem result : Nonempty (HexSmithMathlib.SmithQuotient !![1, 1, -1, 1, 1, 1, -1, 1; -1, 255, -255, -257, 255, -257, -255, 255; -1, 255, 130817, -131329, 131327, -131329, 130817, 131327; 1, 257, 130815, 33423105, 33685761, -33685759, 33685247, -33423103; 1, -255, -130817, -33423103, 17146183425, -17146183423, 17146183935, -17146446079; -1, -257, 131329, -33685249, 17146445567, 4380900065535, 4415192957185, 4380900327167; -1, -257, 131329, -33685249, 17146445567, 4380900065535, 2256215006642433, -2247418913358081; 1, -255, -130817, -33423103, 17146183425, -4415192694527, 2247418913358079, 1150665289600204545] 8 ![1, 256, 131072, 33554432, 17179869184, 4398046511104, 2251799813685248, 1152921504606846976]) := by smith
+
+#print axioms result

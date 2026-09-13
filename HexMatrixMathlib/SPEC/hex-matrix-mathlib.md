@@ -121,9 +121,7 @@ the empty shapes with its row list.
 ### Requests from structural tactic frontends
 
 The [structural tactic contracts](../../SPEC/matrix-tactics.md#placement)
-request the following extensions to this shared layer before the relevant
-numeric handler ships. They are requirements, not descriptions of current
-`Literal.lean` capabilities:
+require the following shared adapters:
 
 - Field-aware `%` argument elaboration, preserving the expected carrier
   rather than defaulting every unannotated literal to integers.
@@ -141,6 +139,16 @@ numeric handler ships. They are requirements, not descriptions of current
 These adapters serve `min_poly`, `smith`, `hermite`, `inverse` and `solve`;
 they introduce no shared tactic dispatcher or new library. Polynomial-target
 recognition is requested separately against hex-poly-mathlib.
+
+`Literal.elabArgument` accepts an expected carrier. `VectorLiteral`,
+`vectorEntriesEq` and `vectorIdentification` provide the closed vector route
+with the same bounded unfolding as matrices. `Rational.lean` proves decoding
+and common-denominator scaling for the integer list representation in
+`HexMatrix/Scaled.lean`; `ListProducts.lean` transports structural list
+products to both matrix representations. The rational codec is implemented;
+prime-residue support for these structural frontends is a later extension.
+The optional `trace.HexMatrix.certificate` records serialized certificate
+bytes, entry counts and numerator/denominator bit heights for proof probes.
 
 ## Kronecker-packed dot products
 

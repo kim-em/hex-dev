@@ -29,7 +29,7 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Sequence, TypeVar
+from typing import Callable, Sequence, TypeVar
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -43,6 +43,7 @@ VOLUNTARY_CONTEXT_MARKER = "__HEX_VOLUNTARY_CONTEXT__="
 NULL_MAGNITUDE_FACTOR = 3.0
 ACCOUNTING_QUANTIZATION_TICKS = 3
 T = TypeVar("T")
+SampleObserver = Callable[[str, dict[str, object]], None]
 
 sys.path.insert(0, str(ROOT))
 from scripts.ci.check_benches_mathlib_free import (  # noqa: E402
@@ -850,6 +851,7 @@ def build_sample(
     timeout: float,
     measurement_cpu: int | None = None,
     monitored_cpus: Sequence[int] = (),
+    sample_observer: SampleObserver | None = None,
 ) -> dict[str, object]:
     remove_module_outputs(module)
     host_before = sampled_host_state(host_state())
@@ -860,11 +862,26 @@ def build_sample(
     try:
         proc, elapsed, metrics = run_timed(command, timeout)
     except subprocess.TimeoutExpired as exc:
+        if sample_observer is not None:
+            sample_observer(module, {
+                "state": "timeout", "timeout_seconds": timeout,
+                "command": command,
+                "compiler_output": (
+                    (exc.stdout or b"").decode(errors="replace")
+                    if isinstance(exc.stdout, bytes) else (exc.stdout or "")
+                ),
+            })
         raise RuntimeError(
             f"probe timed out after {timeout:g}s: {' '.join(command)}"
         ) from exc
     output = proc.stdout + proc.stderr
     if proc.returncode != 0:
+        if sample_observer is not None:
+            sample_observer(module, {
+                "state": "failed", "returncode": proc.returncode,
+                "wall_nanos": elapsed, "command": command,
+                "compiler_output": output, **metrics,
+            })
         sys.stderr.write(output)
         raise RuntimeError(
             f"probe failed ({proc.returncode}): {' '.join(command)}"
@@ -924,6 +941,7 @@ def build_sample(
         "wall_nanos": elapsed,
         **metrics,
         "axioms": parse_axioms(output),
+        "compiler_output": output,
         "host_before": host_before,
         "host_after": host_after,
         "cpu_accounting": {
@@ -948,6 +966,8 @@ def build_sample(
             ),
         },
     }
+    if sample_observer is not None:
+        sample_observer(module, result)
     return result
 
 
@@ -1013,6 +1033,7 @@ def build_shared_host_pair(
     measurement_cpu: int,
     monitored_cpus: Sequence[int],
     sibling_cpus: Sequence[int],
+    sample_observer: SampleObserver | None = None,
 ) -> dict[str, object]:
     """Build one adjacent pair and retain host activity as context."""
     attempt_state = sampled_host_state(host_state())
@@ -1024,6 +1045,7 @@ def build_shared_host_pair(
             timeout,
             measurement_cpu=measurement_cpu,
             monitored_cpus=monitored_cpus,
+            sample_observer=sample_observer,
         )
         if cpu_affinity() != [measurement_cpu]:
             raise RuntimeError("shared-host CPU affinity changed during the sweep")
@@ -1810,6 +1832,7 @@ def run_cli(
     spec: SweepSpec,
     caller_file: Path,
     argv: Sequence[str] | None = None,
+    sample_observer: SampleObserver | None = None,
 ) -> int:
     validate_spec(spec)
     args = parse_args(
@@ -1885,6 +1908,7 @@ def run_cli(
                     args.cpu,
                     monitored_cpus,
                     sibling_cpus,
+                    sample_observer,
                 )
                 rows[pair.name].append(row)
             else:
@@ -1901,6 +1925,7 @@ def run_cli(
                         args.timeout,
                         measurement_cpu=None,
                         monitored_cpus=monitored_cpus,
+                        sample_observer=sample_observer,
                     )
                     validate_axioms(pair.name, role, module, sample)
                     built[role] = sample
