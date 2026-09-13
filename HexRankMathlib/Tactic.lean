@@ -24,8 +24,10 @@ and builds a `RankWitness`; the proof is `rank_eq_of_checkList'` applied to
 the identification of the literal with the row list `L` of its entries'
 numerals (`rfl` for a vector chain, one kernel `decide` on `entriesEq`
 otherwise) and to one kernel `decide` on `checkRankList`.
-The whole proof is added as an auxiliary theorem, checked synchronously, so
-the kernel checks it exactly once and a rejection is reported by the tactic.
+The whole proof is added as an auxiliary lemma on the closed target
+(`addClosedProof`), checked synchronously, so the kernel checks it exactly
+once, with no elaborator type check first, and a rejection is reported by
+the tactic.
 Entries must be closed integer expressions that `norm_num` evaluates and
 that the kernel reduces to their numerals (numerals and arithmetic on
 them); an entry the kernel cannot reduce is reported as such.
@@ -191,8 +193,7 @@ def proveGoal (target : Expr) : MetaM Expr := do
     | .ge => mkAppM ``HexMatrixMathlib.le_rank_of_checkList' #[A, L, c, hA, hcheck, hbound]
   -- check synchronously, so that a rejection is reported here, not later
   try
-    withOptions (Lean.Elab.async.set · false) do
-      mkAuxTheorem target proof
+    HexMatrixMathlib.Literal.addClosedProof target proof
   catch e =>
     throw (← diagnose bound check A ofL e)
 

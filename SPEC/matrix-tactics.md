@@ -116,12 +116,17 @@ handler, assert their dispatch order, and exercise both delegation and
 committed numeric errors. A later stub alone would run first and would not
 test numeric delegation.
 
-The proof is assembled as one auxiliary theorem (`mkAuxTheorem` with
-asynchronous checking off), so the kernel checks the certificate exactly
-once and the tactic sees a rejection and can diagnose it (false target,
-producer bug, or an entry the kernel cannot reduce). The elaborator does
-not pre-evaluate the check with `Kernel.whnf` and then let the kernel check
-it again; that doubled the cost of the withdrawn `det`.
+The proof is added as one auxiliary lemma on the closed target
+(`HexMatrixMathlib.Literal.addClosedProof`: `mkAuxLemma` with
+asynchronous checking off and no reuse of an earlier lemma for the same
+statement, the declaration-checking path `decide +kernel` uses), so the
+kernel checks every supplied certificate synchronously and exactly once
+and the tactic sees a rejection and can diagnose it (false target,
+producer bug, or an entry the kernel cannot reduce). The elaborator
+evaluates nothing before the kernel does: neither a `Kernel.whnf`
+pre-evaluation of the check nor the `Meta.check` of the proof that
+`mkAuxTheorem`'s closure step performs under its default
+`zetaDelta := false`; either evaluates the certificate a second time.
 
 ## Kernel discipline
 

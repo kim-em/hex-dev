@@ -436,9 +436,10 @@ In particular the kernel never evaluates `bareissWith`, `detWitness`, a
 reference checker, or `Hex.Matrix.det` on `Hex.Matrix (MvPoly …)`. The
 reference determinant occurs in soundness statements only; neither `Array`,
 `Vector`, `Fin`, `Finset`, matrix indexing nor well-founded polynomial
-arithmetic is reduced to check a certificate. One auxiliary theorem is
-checked synchronously through `mkAuxTheorem`; there is no elaborator
-`Kernel.whnf` pre-check and no `native_decide`.
+arithmetic is reduced to check a certificate. One auxiliary lemma is
+checked synchronously through the literal layer's `addClosedProof`; there
+is no elaborator `Kernel.whnf` pre-check, no elaborator type check of the
+proof before the kernel's, and no `native_decide`.
 
 ### Transport and result reconstruction
 
@@ -639,8 +640,10 @@ comparison of the value with `d`. A rational matrix is scaled row by row by
 the least common multiple of its denominators to an integer one, whose
 witness is checked by `checkDetRat` together with the scaling and the
 value, through `det_eq_of_checkRat'`. The whole proof is added as an
-auxiliary theorem (`mkAuxTheorem`, with asynchronous checking off) so the
-kernel checks it exactly once and the tactic sees a rejection. Outcomes
+auxiliary lemma on the closed target (`addClosedProof` of the literal
+layer, with asynchronous checking off) so the kernel checks it exactly
+once, with no elaborator type check first, and the tactic sees a
+rejection. Outcomes
 follow the protocol of [SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md):
 before evaluating entries or running the producer, a goal outside determinant
 equalities, an open matrix or value (including unresolved metavariables),
@@ -693,50 +696,21 @@ within the `120 s` budget. Medians from
 (shared host, one CPU, both arms with the literal's elaboration inside
 the delta):
 
-| family | `eval_det` | `det` | ratio |
-|---|---|---|---|
-| dense `8 × 8`, 8-bit | 0.51 s | 0.16 s | 3.3 |
-| dense `12 × 12`, 8-bit | 3.55 s | 0.30 s | 11.7 |
-| dense `16 × 16`, 8-bit | 18.8 s | 0.52 s | 36 |
-| dense `32 × 32`, 8-bit | over budget, no arm | 3.71 s | |
-| tridiagonal `16 × 16` | 4.40 s | 0.40 s | 10.9 |
-| Vandermonde `8 × 8`, leading zero | 0.40 s | 0.11 s | 3.6 |
-| singular `16 × 16`, rank `15` | 18.8 s | 0.32 s | 59 |
-| dense `8 × 8`, 64-bit | 0.60 s | 0.15 s | 4.0 |
-| dense `4 × 4`, 256-bit | 0.11 s | 0.09 s | 1.2 |
-| rational `8 × 8` | 0.69 s | 0.20 s | 3.5 |
-
-Proof time against dimension, for the dense `8`-bit, singular (rank
-`n − 1`) and dense `64`-bit families up to a ten-second cap per run, is
-recorded by `scripts/bench/det_tactic_size_sweep.py` (profiler totals per
-file, imports excluded, the median of three runs per point with the range
-kept); the current record is
-`reports/bench-results/hex-bareiss-mathlib-tactic-size-2166e872dce6-chungus2.json`.
-`eval_det` reaches `n = 14` in every family (6.7, 7.7 and 7.0 s) and `det`
-reaches `n = 40` on the dense family (7.2 s), `n = 48` on the singular
-family (5.3 s) and `n = 24`, the end of its ladder, on the 64-bit family
-(1.5 s); the kernel is about a third to a half of `det`'s time at those
-dimensions, the literal's elaboration and the compiled producer the rest.
-The record is plotted by `scripts/plots/hex-bareiss-mathlib-tactic-size.py`
-to `reports/figures/hex-bareiss-mathlib-tactic-size.svg`.
-
-Median kernel shares recorded by the same size sweep are:
-
 | family | `eval_det` | `det` |
 |---|---|---|
-| dense `8 × 8`, 8-bit | 246 ms | 23 ms |
-| dense `12 × 12`, 8-bit | 1.48 s | 63 ms |
-| dense `14 × 14`, 8-bit | 2.97 s | 103 ms |
-| dense `16 × 16`, 8-bit | timeout | 163 ms |
-| dense `32 × 32`, 8-bit | timeout | 1.55 s |
-| dense `40 × 40`, 8-bit | timeout | 3.73 s |
-| singular `8 × 8` | 244 ms | 13 ms |
-| singular `16 × 16` | timeout | 58 ms |
-| singular `32 × 32` | timeout | 721 ms |
-| singular `48 × 48` | timeout | 2.33 s |
-| dense `8 × 8`, 64-bit | 272 ms | 24 ms |
-| dense `16 × 16`, 64-bit | timeout | 170 ms |
-| dense `24 × 24`, 64-bit | timeout | 611 ms |
+| dense `8 × 8`, 8-bit | 237 ms | 23 ms |
+| dense `12 × 12`, 8-bit | 1.54 s | 66 ms |
+| dense `14 × 14`, 8-bit | 3.08 s | 104 ms |
+| dense `16 × 16`, 8-bit | timeout | 162 ms |
+| dense `32 × 32`, 8-bit | timeout | 1.64 s |
+| dense `40 × 40`, 8-bit | timeout | 3.13 s |
+| singular `8 × 8` | 241 ms | 13 ms |
+| singular `16 × 16` | timeout | 59 ms |
+| singular `32 × 32` | timeout | 473 ms |
+| singular `48 × 48` | timeout | 1.69 s |
+| dense `8 × 8`, 64-bit | 252 ms | 37 ms |
+| dense `16 × 16`, 64-bit | timeout | 164 ms |
+| dense `24 × 24`, 64-bit | timeout | 597 ms |
 
 The timeout entries have no profiler breakdown because the corresponding
 proof exceeded the sweep's ten-second cap.
