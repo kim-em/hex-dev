@@ -257,6 +257,19 @@ example : checkRankList 3 4 [[1, 2, 3, 4], [2, 4, 6, 8], [1, 0, 1]] kernelWitnes
   decide +kernel
 
 example : checkRankList 3 4 (toLists kernelEx) kernelWitness = true := by decide +kernel
+-- the packed lower bound: the same witnesses, slot width `64`, and `W` too
+-- small for `rank · modulus²` refuted
+example : checkRankListPacked 64 3 4 (toLists kernelEx) kernelWitness = true := by decide +kernel
+example : checkRankListPacked 64 3 4 (toLists kernelEx) kernelWitness9 = true := by decide +kernel
+example : checkRankListPacked 8 3 4 (toLists kernelEx) kernelWitness9 = true := by decide +kernel
+example : checkRankListPacked 8 3 4 (toLists kernelEx) kernelWitness = false := by decide +kernel
+example : checkRankListPacked 64 3 4 (toLists kernelEx)
+    { kernelWitness with vt := kernelWitness.vt.map (· ++ [0, 7]) } = true := by decide +kernel
+-- an entry of `vt` at or above the modulus is refused by the packed check
+example : checkRankListPacked 64 3 4 (toLists kernelEx)
+    { kernelWitness with vt := [[1], [1, 1073741823 + 2147483647]] } = false := by decide +kernel
+#guard (rankWitness kernelEx3).toOption.map
+    (fun w => checkRankListPacked 64 3 3 (toLists kernelEx3) w) = some true
 example : checkRankList 3 4 (toLists kernelEx) { kernelWitness with denom := 0 } = false := by
   decide +kernel
 example : checkRankList 3 4 (toLists kernelEx) { kernelWitness with rank := 3 } = false := by

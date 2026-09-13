@@ -278,6 +278,23 @@ example (h : Matrix.rank !![rankEntry] = 1) : Matrix.rank !![rankEntry] = 1 := b
 
 end Delegation
 
+section Configuration
+
+-- the packed lower bound is the default; `-packing` takes the plain checker,
+-- with the same certificate and outcomes
+example : Matrix.rank (R := ℤ) !![1, 2, 3; 2, 4, 6; 1, 0, 1] = 2 := by rank -packing
+example : Matrix.rank (R := ℤ) !![1, 2, 3; 2, 4, 6; 1, 0, 1] = 2 := by rank +packing
+example : Matrix.rank (R := ℤ) !![1, 2, 3; 2, 4, 6; 1, 0, 1] ≤ 2 := by rank -packing
+example : 2 ≤ Matrix.rank (R := ℤ) !![1, 2, 3; 2, 4, 6; 1, 0, 1] := by
+  rank (config := { packing := false })
+example : Matrix.rank (R := ℤ) !![1, 2; 3, 4] = 2 := by rank -packing
+
+/-- error: rank: the target is false: the rank is 2 -/
+#guard_msgs in
+example : Matrix.rank (R := ℤ) !![1, 2, 3; 2, 4, 6; 1, 0, 1] = 3 := by rank -packing
+
+end Configuration
+
 section ExtensionErrors
 
 -- A downstream extension must commit its own in-fragment errors too.

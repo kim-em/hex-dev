@@ -541,3 +541,20 @@ under `HexMatrix.phase4`.
 `Matrix.mapEntries` applies any coefficient function in one pass over the
 flat buffer; `getElem_mapEntries` states its entry equation. Determinant
 transport under ring homomorphisms belongs to hex-determinant.
+
+## Kronecker-packed dot products
+
+`HexMatrix/Packed.lean` (`Hex.Matrix.Packed`) is the shared, Mathlib-free
+kernel of the packed evaluation used by the certificate checkers of
+[hex-rank §Packed evaluation](../../HexRank/SPEC/hex-rank.md#packed-evaluation):
+`dotNat` (the plain dot product of natural-number lists, stopping at the
+shorter), `packRow` (a list as `Σ aₖ · 2^(W·k)`), `packCol` (a list cut or
+zero-padded to `r` entries and packed in reverse order by a Horner loop of
+`r` steps, `packRevAux`), `packRows`/`packCols`, `slot` (bits
+`W·(r − 1), …, W·r − 1`) and `dotPacked` (slot `r − 1` of the product of a
+packed row and a reverse-packed column, which is their dot product when
+no convolution coefficient reaches `2^W`). Structural recursion and the
+`Nat` primitives `Nat.add`, `Nat.mul`, `Nat.shiftLeft`, `Nat.shiftRight`,
+`Nat.land` and `Nat.pow` only, all GMP-accelerated in the kernel. The
+soundness lemma `dotPacked_eq` is in
+[hex-matrix-mathlib](../../HexMatrixMathlib/SPEC/hex-matrix-mathlib.md#kronecker-packed-dot-products).

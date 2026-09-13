@@ -417,6 +417,20 @@ the list the checker recurses on, and `pickCols_eq`, which identifies the
 one-pass read of the pivot block with indexed reads for strictly
 increasing pivot columns (`strictInc_iff`).
 
+The packed checker of
+[hex-rank §Packed evaluation](../../HexRank/SPEC/hex-rank.md#packed-evaluation)
+is sound through `checkRankList_of_packed`: `packRow` is `Nat.ofDigits`
+at `2^W` (`packRow_eq_ofDigits`, `packCol_eq` for the Horner loop), the
+product of two packed lists is `ofDigits` of their convolution
+(`ofDigits_conv`), a convolution coefficient of rows with entries below
+`M` is at most `r · M²` (`conv_getD_le`), digit `k` of an `ofDigits` with
+digits below the base is read off by division and remainder
+(`ofDigits_digit`), and the coefficient `r − 1` of a row against a
+reversed column is their dot product (`dotNat_eq_conv_reverse`); hence
+`dotPacked_eq`, `lowerCheckPacked_eq` and the implication, and
+`rank_eq_of_checkListPacked'` with its `≤`/`≥` forms are the plain
+theorems after a rewrite.
+
 ## The `rank` tactic
 
 `HexRankMathlib/Tactic.lean` declares the non-reserved tactic keyword
@@ -439,9 +453,15 @@ the kernel reduces to their numerals: numerals and arithmetic on them
 entry of the literal is the same expression, so the identification is
 `rfl` at no cost, and any other entry is reduced once by the kernel.
 
-The tactic evaluates the entries with Mathlib's `evalRatEntry`, runs the
-compiled `Hex.Matrix.rankWitness`, quotes the witness with `toExpr`, and
-builds `rank_eq_of_checkList' A L c rfl (of_decide_eq_true rfl)` composed
+The tactic takes the shared configuration structure
+`HexMatrixMathlib.KernelConfig` as an `optConfig` (`rank -packing`,
+`rank (config := { packing := false })`; the default is packed), and is
+configured in no other way. It evaluates the entries with Mathlib's
+`evalRatEntry`, runs the compiled `Hex.Matrix.rankWitness`, quotes the
+witness with `toExpr`, and builds
+`rank_eq_of_checkListPacked' A L c W rfl (of_decide_eq_true rfl)`, or
+`rank_eq_of_checkList' A L c rfl (of_decide_eq_true rfl)` with packing
+off, composed
 with a kernel-decided comparison of `c.rank` with `r`; the whole proof is
 added as an auxiliary lemma on the closed target (`addClosedProof` of the
 literal layer, with asynchronous checking off) so the kernel checks it
@@ -493,33 +513,37 @@ delta):
 | `32 × 32`, rank 2 | 16.11 s | 0.57 s | 28.1 |
 
 Proof time against dimension, for the full-rank, rank `n − 2`, rank
-`n / 2` and rank `2` families up to a ten-second cap per run, is recorded
+`n / 2` and rank `2` families up to a ten-second cap per run, in three
+arms (`eval_rank`, `rank`, and `rank -packing` for the plain checker on
+the same certificate), is recorded
 by `scripts/bench/rank_tactic_size_sweep.py` (profiler totals per file,
 imports excluded, the median of three runs per point with the range kept)
 and plotted by `scripts/plots/hex-rank-mathlib-tactic-size.py` to
 `reports/figures/hex-rank-mathlib-tactic-size.svg`. The dimension record is
-`reports/bench-results/hex-rank-mathlib-tactic-size-753b5dd13f6d-chungus2.json`.
+`reports/bench-results/hex-rank-mathlib-tactic-size-a064f87dd9f3-chungus2.json`.
 It measures the integer-only frontend at that revision, excluding the additional
 carrier handlers and their imports. Full module costs and import baselines for
 the additional carriers are in the
 [carrier performance report](../../reports/hex-rank-carriers-performance.md).
 Under the ten-second cap
 `eval_rank` reaches `n = 28` at full rank, rank `n − 2` and rank `n / 2`
-(about `9.9 s`) and `n = 24` at rank `2` (`6.7 s`), and `rank` reaches
-`n = 48` at full rank, rank `n − 2` and rank `n / 2` (`4.1` to `4.2 s`,
-of which the kernel is `3.1` to `3.3 s`) and `n = 128` at rank `2` (`7.2 s`, of
-which the kernel is `1.1 s` and the literal's elaboration and the entries'
-evaluation most of the rest).
+(about `10.5 s`) and `n = 24` at rank `2` (`7.0 s`); `rank` reaches
+`n = 48` at full rank (`1.3 s`, of which the kernel is `0.45 s`), rank
+`n − 2` (`1.7 s`, kernel `0.9 s`) and rank `n / 2` (`4.0 s`, kernel
+`3.2 s`, the plain upper bound), and `n = 128` at rank `2` (`7.1 s`, of
+which the kernel is `1.2 s` and the literal's elaboration and the entries'
+evaluation most of the rest); `rank -packing` reaches the same dimensions
+at `2.5`, `2.9`, `4.2` and `7.1 s`.
 
 Median kernel shares recorded by the same size sweep are:
 
-| family | `eval_rank` | `rank` |
-|---|---|---|
-| dense `8 × 8`, rank 8 | 127 ms | 17 ms |
-| dense `16 × 16`, rank 16 | 923 ms | 101 ms |
-| dense `16 × 16`, rank 14 | 860 ms | 105 ms |
-| dense `32 × 32`, rank 32 | timeout | 879 ms |
-| `32 × 32`, rank 2 | timeout | 131 ms |
+| family | `eval_rank` | `rank` | `rank -packing` |
+|---|---|---|---|
+| dense `8 × 8`, rank 8 | 128 ms | 13 ms | 14 ms |
+| dense `16 × 16`, rank 16 | 1.00 s | 39 ms | 70 ms |
+| dense `16 × 16`, rank 14 | 1.03 s | 69 ms | 93 ms |
+| dense `32 × 32`, rank 32 | timeout | 183 ms | 528 ms |
+| `32 × 32`, rank 2 | timeout | 149 ms | 137 ms |
 
 The timeout entries have no profiler breakdown because the corresponding
 proof exceeded the sweep's ten-second cap.

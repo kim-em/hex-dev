@@ -9,6 +9,7 @@ module
 public import HexRank.Int
 public import HexArith.ExtGcd
 public import HexMatrix.Notation
+public import HexMatrix.Packed
 
 public section
 
@@ -82,6 +83,8 @@ structure RankWitness where
 
 namespace RankWitness
 
+open Packed (dotNat packRow packRows packCol packCols dotPacked)
+
 /-! # Kernel primitives
 
 Structural recursion over lists, `Nat.mul`/`Nat.add`/`Nat.mod` and
@@ -108,11 +111,6 @@ per element walked; `List.getD` is specified in terms of it. -/
 
 /-- The residue of `a` modulo `M`, as a natural number. -/
 @[expose] def residue (M : Nat) (a : Int) : Nat := (Int.emod a (Int.ofNat M)).toNat
-
-/-- The dot product of two natural-number lists, stopping at the shorter. -/
-@[expose] def dotNat : List Nat → List Nat → Nat
-  | a :: as, b :: bs => Nat.add (Nat.mul a b) (dotNat as bs)
-  | _, _ => 0
 
 /-- Every entry is below `k`. -/
 @[expose] def allLt (k : Nat) : List Nat → Bool
@@ -161,6 +159,32 @@ one column per step. -/
 @[expose] def lowerCheck (M : Nat) : List (List Nat) → List (List Nat) → Bool
   | [], [] => true
   | b :: bs, c :: cs => unitDiag M b c && zeroRow M b cs && lowerCheck M bs cs
+  | _, _ => false
+
+/-! # Packed evaluation
+
+The lower-bound dot products on Kronecker-packed rows (`Hex.Matrix.Packed`):
+a row of residues is one number with `W`-bit slots and the dot product of a
+row with a reverse-packed column is one multiplication, shift and mask in
+the kernel instead of `r` multiply-adds.  Exactness needs entries below
+`M` and `r · M² < 2^W`, which `checkRankListPacked` verifies. -/
+
+/-- Every entry of every row is below `k`. -/
+@[expose] def allLtRows (k : Nat) : List (List Nat) → Bool
+  | [] => true
+  | r :: rs => allLt k r && allLtRows k rs
+
+/-- `zeroRow` on packed data. -/
+@[expose] def zeroRowPacked (M W r : Nat) (b : Nat) : List Nat → Bool
+  | [] => true
+  | c :: cs => Nat.beq (Nat.mod (dotPacked W r b c) M) 0 && zeroRowPacked M W r b cs
+
+/-- `lowerCheck` on packed data. -/
+@[expose] def lowerCheckPacked (M W r : Nat) : List Nat → List Nat → Bool
+  | [], [] => true
+  | b :: bs, c :: cs =>
+      Nat.beq (Nat.mod (dotPacked W r b c) M) 1 && zeroRowPacked M W r b cs &&
+        lowerCheckPacked M W r bs cs
   | _, _ => false
 
 /-- `d • a`. -/
@@ -230,6 +254,25 @@ module docstring. -/
   allLt n c.rows && allLt m c.cols && strictInc c.cols &&
   !(decide (c.denom = 0)) &&
   lowerCheck c.modulus (block c.modulus A c.rows c.cols) c.vt &&
+  rowsCheck c.denom c.rows (pivotRows A c.rows) m 0 A c.z
+
+open RankWitness in
+/-- The kernel checker with the lower bound on packed rows, slot width `W`:
+`checkRankList` with `lowerCheck` replaced by `lowerCheckPacked` on the
+packed block and columns, plus the bounds that make the packed dot
+products exact: every entry of `vt` below the modulus and
+`rank · modulus² < 2^W`.  A passing packed check implies a passing
+`checkRankList`; see the companion's `checkRankList_of_packed`. -/
+@[expose] def checkRankListPacked (W n m : Nat) (A : List (List Int)) (c : RankWitness) : Bool :=
+  Nat.beq A.length n && rowsLen m A &&
+  Nat.blt 1 c.modulus &&
+  Nat.beq c.rows.length c.rank && Nat.beq c.cols.length c.rank &&
+  allLt n c.rows && allLt m c.cols && strictInc c.cols &&
+  !(decide (c.denom = 0)) &&
+  allLtRows c.modulus c.vt &&
+  Nat.blt (Nat.mul c.rank (Nat.mul c.modulus c.modulus)) (Nat.pow 2 W) &&
+  lowerCheckPacked c.modulus W c.rank (Packed.packRows W (block c.modulus A c.rows c.cols))
+    (Packed.packCols W c.rank c.vt) &&
   rowsCheck c.denom c.rows (pivotRows A c.rows) m 0 A c.z
 
 /-! # The producer -/

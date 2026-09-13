@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Proof time against dimension for the `rank` tactic and Mathlib's `eval_rank`.
 
+Three arms: `eval_rank`, `rank` (the packed lower bound, the default) and
+`rank -packing` (the plain checker on the same certificate).
+
 For each family (full rank, rank ``n - 2``, rank ``n / 2``, rank ``2``) and
 each dimension, one seeded ``n × n`` integer literal with entries in
 ``[-9, 9]`` is proved by both tactics in a scratch file under
@@ -51,6 +54,7 @@ SIZES = {
 TOOLS = {
     "eval_rank": ("Mathlib.Tactic.NormRank", "eval_rank"),
     "rank": ("HexRankMathlib", "rank"),
+    "rank_plain": ("HexRankMathlib", "rank -packing"),
 }
 
 

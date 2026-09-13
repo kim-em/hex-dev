@@ -116,6 +116,16 @@ handler, assert their dispatch order, and exercise both delegation and
 committed numeric errors. A later stub alone would run first and would not
 test numeric delegation.
 
+The tactics are configured only through the shared structure
+`HexMatrixMathlib.KernelConfig`, taken as an `optConfig` in the style of
+`decide +kernel` (`rank -packing`; `det` takes the same structure once its
+checker has a packed form), never through options:
+`packing` (default on) selects the Kronecker-packed evaluation of the
+certificate's dot products, a second checker proven equal to the plain one
+under bounds it verifies, and off gives the plain checker, so the plain
+certificate stays measurable and is what a comparison with another
+system's certificate refers to.
+
 The proof is added as one auxiliary lemma on the closed target
 (`HexMatrixMathlib.Literal.addClosedProof`: `mkAuxLemma` with
 asynchronous checking off and no reuse of an earlier lemma for the same

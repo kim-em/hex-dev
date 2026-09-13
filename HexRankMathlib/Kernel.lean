@@ -10,6 +10,7 @@ public import HexRank.Kernel
 public import Mathlib.LinearAlgebra.Matrix.Rank
 public import Mathlib.LinearAlgebra.Matrix.Block
 public import HexMatrixMathlib.Literal
+public import HexMatrixMathlib.Packed
 public import Mathlib.Data.ZMod.Basic
 
 public section
@@ -27,7 +28,7 @@ open Matrix
 
 namespace HexMatrixMathlib
 
-open Hex.Matrix Hex.Matrix.RankWitness
+open Hex.Matrix Hex.Matrix.RankWitness Hex.Matrix.Packed
 
 /-! # The checker's primitives -/
 
@@ -54,15 +55,6 @@ theorem beqInt_iff (a b : List Int) : beqInt a b = true ↔ a = b := by
   induction a generalizing b with
   | nil => cases b <;> simp [beqInt]
   | cons x xs ih => cases b <;> simp [beqInt, ih]
-
-theorem dotNat_eq_sum (a b : List Nat) :
-    dotNat a b = ∑ i : Fin a.length, a[i] * b.getD i 0 := by
-  induction a generalizing b with
-  | nil => simp [dotNat]
-  | cons x xs ih =>
-    cases b with
-    | nil => simp [dotNat]
-    | cons y ys => simp [dotNat, Fin.sum_univ_succ, ih]
 
 theorem zeroRow_iff (M : Nat) (b : List Nat) (cs : List (List Nat)) :
     zeroRow M b cs = true ↔ ∀ c ∈ cs, dotNat b c % M = 0 := by
@@ -331,14 +323,6 @@ theorem residue_cast (M : Nat) (hM : M ≠ 0) (a : Int) :
     Int.toNat_of_nonneg (Int.emod_nonneg _ (by exact_mod_cast hM))
   rw [residue, h1, ← Int.cast_natCast, h2, ZMod.intCast_mod]
 
-theorem dotNat_eq_sum' (a b : List Nat) (r : Nat) (ha : a.length = r) :
-    dotNat a b = ∑ i : Fin r, a.getD i 0 * b.getD i 0 := by
-  subst ha
-  rw [dotNat_eq_sum]
-  refine Finset.sum_congr rfl fun i _ => ?_
-  rw [getD_eq_getElem' _ _ _ i.isLt]
-  rfl
-
 theorem combo_getD' (m : Nat) (z : List Int) (P : List (List Int))
     (hP : ∀ p ∈ P, p.length = m) (j : Nat) (hj : j < m) (r : Nat) (hr : P.length = r) :
     (combo m z P).getD j 0 = ∑ l : Fin r, z.getD l 0 * (P.getD l []).getD j 0 := by
@@ -347,6 +331,77 @@ theorem combo_getD' (m : Nat) (z : List Int) (P : List (List Int))
   refine Finset.sum_congr rfl fun l _ => ?_
   rw [getD_eq_getElem' _ _ _ l.isLt]
   rfl
+
+/-! # Packed evaluation
+
+The packed lower bound agrees with the plain one under the bounds the
+packed checker verifies, through `dotPacked_eq` of
+`HexMatrixMathlib.Packed`. -/
+
+theorem allLtRows_iff (k : Nat) (rs : List (List Nat)) :
+    allLtRows k rs = true ↔ ∀ r ∈ rs, ∀ x ∈ r, x < k := by
+  induction rs with
+  | nil => simp [allLtRows]
+  | cons r rs ih => simp [allLtRows, allLt_iff, ih]
+
+theorem residue_lt (M : Nat) (hM : 0 < M) (a : Int) : residue M a < M := by
+  have hpos : (0 : Int) < (M : Int) := by exact_mod_cast hM
+  have h0 : 0 ≤ a % (M : Int) := Int.emod_nonneg a (by omega)
+  have h1 : a % (M : Int) < (M : Int) := Int.emod_lt_of_pos a hpos
+  show (a % (M : Int)).toNat < M
+  exact (Int.toNat_lt h0).mpr h1
+
+theorem zeroRowPacked_eq (M W r : Nat) (hM : 0 < M) (hW : r * (M * M) < 2 ^ W) (b : List Nat)
+    (hb : b.length = r) (hbM : ∀ x ∈ b, x < M) (cs : List (List Nat))
+    (hcs : ∀ c ∈ cs, ∀ x ∈ c, x < M) :
+    zeroRowPacked M W r (packRow W b) (packCols W r cs) = zeroRow M b cs := by
+  induction cs with
+  | nil => rfl
+  | cons c cs ih =>
+    simp only [packCols, zeroRowPacked, zeroRow, packCol_eq]
+    rw [dotPacked_eq M W r b _ hb (padded_length r c) hbM
+      (padded_lt M r hM c (hcs c (by simp))) hW, dotNat_pad b c r hb,
+      ih (fun c hc => hcs c (by simp [hc]))]
+
+theorem lowerCheckPacked_eq (M W r : Nat) (hM : 0 < M) (hW : r * (M * M) < 2 ^ W)
+    (bs : List (List Nat)) (hbs : ∀ b ∈ bs, b.length = r ∧ ∀ x ∈ b, x < M)
+    (cs : List (List Nat)) (hcs : ∀ c ∈ cs, ∀ x ∈ c, x < M) :
+    lowerCheckPacked M W r (packRows W bs) (packCols W r cs) = lowerCheck M bs cs := by
+  induction bs generalizing cs with
+  | nil => cases cs <;> rfl
+  | cons b bs ih =>
+    cases cs with
+    | nil => rfl
+    | cons c cs =>
+      obtain ⟨hb, hbM⟩ := hbs b (by simp)
+      simp only [packRows, packCols, lowerCheckPacked, lowerCheck, unitDiag, packCol_eq]
+      rw [dotPacked_eq M W r b _ hb (padded_length r c) hbM
+        (padded_lt M r hM c (hcs c (by simp))) hW, dotNat_pad b c r hb,
+        zeroRowPacked_eq M W r hM hW b hb hbM cs (fun c hc => hcs c (by simp [hc])),
+        ih (fun b hb => hbs b (by simp [hb])) cs (fun c hc => hcs c (by simp [hc]))]
+
+/-- A passing packed check is a passing plain check. -/
+theorem checkRankList_of_packed (W n m : Nat) (L : List (List Int)) (c : RankWitness)
+    (h : checkRankListPacked W n m L c = true) : checkRankList n m L c = true := by
+  simp only [checkRankListPacked, Bool.and_eq_true] at h
+  obtain ⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨h1, h2⟩, h3⟩, h4⟩, h5⟩, h6⟩, h7⟩, hinc⟩, h8⟩, hvt⟩, hW⟩, hlow⟩, h10⟩ := h
+  simp only [checkRankList, Bool.and_eq_true]
+  refine ⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨h1, h2⟩, h3⟩, h4⟩, h5⟩, h6⟩, h7⟩, hinc⟩, h8⟩, ?_⟩, h10⟩
+  have hM : 1 < c.modulus := by simpa using h3
+  have hcolsLen : c.cols.length = c.rank := by simpa using h5
+  have hcolsInc := (strictInc_iff _).mp hinc
+  have hW' : c.rank * (c.modulus * c.modulus) < 2 ^ W := by simpa using hW
+  have hvt' := (allLtRows_iff _ _).mp hvt
+  have hbs : ∀ b ∈ block c.modulus L c.rows c.cols, b.length = c.rank ∧ ∀ x ∈ b, x < c.modulus := by
+    intro b hb
+    obtain ⟨i, hi, rfl⟩ := List.mem_iff_getElem.mp hb
+    rw [block_getElem _ _ _ _ hcolsInc]
+    refine ⟨by simp [hcolsLen], ?_⟩
+    intro x hx
+    obtain ⟨j, _, rfl⟩ := List.mem_map.mp hx
+    exact residue_lt _ (by omega) _
+  rw [← lowerCheckPacked_eq c.modulus W c.rank (by omega) hW' _ hbs _ hvt']
+  exact hlow
 
 /-! # Soundness -/
 
@@ -489,5 +544,26 @@ theorem le_rank_of_checkList' {n m : Nat} (A : Matrix (Fin n) (Fin m) ℤ)
     (L : List (List Int)) (c : RankWitness) (hA : A = ofLists n m L)
     (h : checkRankList n m L c = true) {r : Nat} (hr : r ≤ c.rank) : r ≤ A.rank :=
   hr.trans (rank_eq_of_checkList' A L c hA h).ge
+
+
+/-- `rank_eq_of_checkList` through the packed check. -/
+theorem rank_eq_of_checkListPacked (W n m : Nat) (L : List (List Int)) (c : RankWitness)
+    (h : checkRankListPacked W n m L c = true) : (ofLists n m L).rank = c.rank :=
+  rank_eq_of_checkList n m L c (checkRankList_of_packed W n m L c h)
+
+theorem rank_eq_of_checkListPacked' {n m : Nat} (A : Matrix (Fin n) (Fin m) ℤ)
+    (L : List (List Int)) (c : RankWitness) (W : Nat) (hA : A = ofLists n m L)
+    (h : checkRankListPacked W n m L c = true) : A.rank = c.rank :=
+  hA ▸ rank_eq_of_checkListPacked W n m L c h
+
+theorem rank_le_of_checkListPacked' {n m : Nat} (A : Matrix (Fin n) (Fin m) ℤ)
+    (L : List (List Int)) (c : RankWitness) (W : Nat) (hA : A = ofLists n m L)
+    (h : checkRankListPacked W n m L c = true) {r : Nat} (hr : c.rank ≤ r) : A.rank ≤ r :=
+  (rank_eq_of_checkListPacked' A L c W hA h).le.trans hr
+
+theorem le_rank_of_checkListPacked' {n m : Nat} (A : Matrix (Fin n) (Fin m) ℤ)
+    (L : List (List Int)) (c : RankWitness) (W : Nat) (hA : A = ofLists n m L)
+    (h : checkRankListPacked W n m L c = true) {r : Nat} (hr : r ≤ c.rank) : r ≤ A.rank :=
+  hr.trans (rank_eq_of_checkListPacked' A L c W hA h).ge
 
 end HexMatrixMathlib

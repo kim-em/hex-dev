@@ -116,6 +116,15 @@ structure Certified {α : Type*} {β : Type*} (f : α → β) (a : α) where
   /-- The certificate that it is `f a`. -/
   proof : f a = value
 
+/-- Configuration shared by the matrix tactics `rank` and `det`, in the
+style of `decide +kernel`: `rank -packing`, `det -packing`. -/
+structure KernelConfig where
+  /-- Evaluate the certificate's dot products on Kronecker-packed rows (one
+  multiplication, shift and mask per dot product in the kernel) instead of
+  term by term.  The certificate is the same; the packed checker is proven
+  equal to the plain one under a bound the kernel verifies. -/
+  packing : Bool := true
+
 end HexMatrixMathlib
 
 end
@@ -123,6 +132,9 @@ end
 public meta section
 
 namespace HexMatrixMathlib.Literal
+
+/-- Elaborate the `optConfig` of a matrix tactic into a `KernelConfig`. -/
+declare_config_elab elabKernelConfig KernelConfig
 
 open Lean Meta Elab
 
