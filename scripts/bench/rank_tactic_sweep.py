@@ -70,6 +70,7 @@ SPEC = SweepSpec(
     output_stem="hex-rank-mathlib-tactic-probes",
     extra_sources=(
         Path("HexRank/Kernel.lean"),
+        Path("HexMatrixMathlib/Literal.lean"),
         Path("HexRankMathlib/Kernel.lean"),
         Path("HexRankMathlib/Tactic.lean"),
         Path("HexRankMathlib/QuadraticTactic.lean"),

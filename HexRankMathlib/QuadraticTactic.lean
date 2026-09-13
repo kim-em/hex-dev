@@ -71,7 +71,7 @@ def evalQuadraticRank : Tactic.Tactic := fun _ => Tactic.withMainContext do
   let (proof, bound) ← boundProof w.rank eq other rel reverse
   let ofL ← mkAppM ``PolyWitness.ofPolys #[root, mkNatLit lit.n, mkNatLit lit.m, L]
   let proof ← try
-    withOptions (Lean.Elab.async.set · false) do mkAuxTheorem target proof
+    addProof target proof
   catch e => throw (← diagnose bound check A ofL e)
   Tactic.closeMainGoal `rank proof
 

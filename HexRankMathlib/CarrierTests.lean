@@ -111,3 +111,7 @@ error: rank: declined: no integral-domain instance is available for
 -/
 #guard_msgs in
 example : Matrix.rank (R := Zsqrtd 4) !![1, 0; 0, 1] = 2 := by rank
+
+-- A local domain instance may occur in the proof of a closed matrix goal.
+example [IsDomain (Zsqrtd 2)] :
+    Matrix.rank (R := Zsqrtd 2) !![⟨0, 1⟩, 1; 1, ⟨0, 1⟩] = 2 := by rank

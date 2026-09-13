@@ -24,4 +24,14 @@ def polynomialRows (carrier root : Expr) (values : Array (Array (List Int))) : M
   let entries ← values.mapM (·.mapM fun p => mkAppM ``PolyWitness.eval #[root, toExpr p])
   HexMatrixMathlib.Literal.rowList carrier entries
 
+/-- Insert a closed certificate directly through the shared kernel-only path.
+Local instance dependencies retain the elaborator's proof-closing path. -/
+def addProof (target proof : Expr) : MetaM Expr := do
+  let target ← instantiateMVars target
+  let proof ← instantiateMVars proof
+  if target.hasFVar || target.hasMVar || proof.hasFVar || proof.hasMVar then
+    withOptions (Lean.Elab.async.set · false) do mkAuxTheorem target proof
+  else
+    HexMatrixMathlib.Literal.addClosedProof target proof
+
 end HexMatrixMathlib.Rank

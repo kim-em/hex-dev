@@ -126,7 +126,7 @@ def evalNumberFieldRank : Tactic.Tactic := fun _ => Tactic.withMainContext do
       ← decideProof scaleCheck, ← decideProof check]
   let (proof, _) ← boundProof w.rank eq other rel reverse
   let proof ← try
-    withOptions (Lean.Elab.async.set · false) do mkAuxTheorem target proof
+    addProof target proof
   catch e => throwError "rank: number-field kernel check failed: {e.toMessageData}"
   Tactic.closeMainGoal `rank proof
 

@@ -589,6 +589,10 @@ imports Mathlib's `Echelon.Zsqrtd` registration explicitly.
 The [carrier performance report](../../reports/hex-rank-carriers-performance.md)
 records all six trials and representative kernel-attribution profiles.
 
+Closed carrier proofs use the literal layer’s `addClosedProof`, avoiding a
+preliminary elaborator type check. Proofs that depend on local instances are
+closed by `mkAuxTheorem` before insertion.
+
 Each handler obtains an equality and derives bounds with `Eq.le`, `Eq.ge`
 and transitivity, using a kernel-decided comparison of natural numbers.
 

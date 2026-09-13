@@ -45,7 +45,8 @@ SPEC = SweepSpec(
     measurement="paired-fresh-module-olean-wall-robust-null-v2",
     output_stem="hex-rank-mathlib-carrier-probes",
     extra_sources=tuple(Path(p) for p in (
-        "HexRank/Polynomial.lean", "HexRank/PolyProduce.lean",
+        "HexRank/Polynomial.lean", "HexRank/PolyProduce.lean", "HexRank/Kernel.lean",
+        "HexMatrixMathlib/Literal.lean", "HexBareiss/Kernel.lean",
         "HexRankMathlib/Rational.lean", "HexRankMathlib/Polynomial.lean",
         "HexRankMathlib/Quotient.lean", "HexRankMathlib/Quadratic.lean",
         "HexRankMathlib/NumberField.lean", "HexRankMathlib/NumberFieldTactic.lean",
