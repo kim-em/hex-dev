@@ -892,38 +892,19 @@ operation.
 
 ## Prerequisite changes in other libraries
 
-Three relocations, each with a reason independent of this library.
+The modulus supply (`Modulus`, bundled `Prime`, and `primesBelow`) lives in
+hex-mod-arith. Integer square roots `floorSqrt` and `ceilSqrt` live in
+`HexArith/Nat/Sqrt.lean`; `HexPolyZ/Mignotte.lean` retains compatibility aliases.
+`ratReconWide?` needs `⌊√((m-1)/2)⌋`, and the Hadamard bound in
+[hex-modular-matrix](../../HexModularMatrix/SPEC/hex-modular-matrix.md) uses
+`ceilSqrt` per row and column.
 
-**`Modulus`, the bundled `Prime`, and `primesBelow` belong in
-hex-mod-arith**, as "The supply" above sets out, and
-`SmallPrimeCandidate` from `HexBerlekampZassenhaus/PrimeSelection.lean`
-should become the special case of them rather than a parallel
-definition. Unlike the other two relocations, this one is a
-precondition: without it this library acquires a dependency on
-hex-mod-arith that its subject does not justify.
-
-**`zmod64FieldOfPrime` should move to hex-mod-arith.** The
-`Lean.Grind.Field (ZMod64 p)` instance and the `ZMod64.intPow` it needs
-live in `HexPolyFp/PrimeField.lean`. The instance is a statement about a
-hex-mod-arith type, its proof uses `ZMod64` lemmas and
-`Init.Grind.Ring.Field`, and the module's only polynomial import is
-`HexPolyFp.Degree`. As it stands, any library wanting to do linear
-algebra over `F_p` must depend on hex-poly-fp for one instance about a
-type it already has, which is what
-[hex-modular-matrix](../../HexModularMatrix/SPEC/hex-modular-matrix.md) would otherwise have to do.
-
-**`floorSqrt` and `ceilSqrt` should move to hex-arith.** They are
-Newton-iteration integer square roots defined in `HexPolyZ/Mignotte.lean`
-under the `Hex.ZPoly` namespace, where the Mignotte bound needed them.
-`ratReconWide?` needs `⌊√((m-1)/2)⌋` and the Hadamard bound in
-[hex-modular-matrix](../../HexModularMatrix/SPEC/hex-modular-matrix.md) needs `ceilSqrt` per column.
-An integer square root under a polynomial namespace is a naming error as
-well as a placement one.
-
-The second and third do not block starting work here, and until they
-land this library can name the existing paths. The first does block, in
-the weak sense that skipping it costs a dependency this SPEC's placement
-argument says should not exist.
+**`zmod64FieldOfPrime` should move to hex-mod-arith when needed.** The
+`Lean.Grind.Field (ZMod64 p)` instance and `ZMod64.intPow` live in
+`HexPolyFp/PrimeField.lean`. Their proofs concern hex-mod-arith types; a
+consumer needing field-based linear algebra should not acquire a polynomial
+dependency solely for that instance. Unit-pivot determinant elimination uses
+checked inverses and does not require it.
 
 ## Milestones
 

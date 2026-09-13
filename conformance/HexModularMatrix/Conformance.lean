@@ -51,6 +51,46 @@ private def checkCase (c : ModularMatrixFixtures.Case) : Bool :=
     A.hadamardBound ≤ bound
 
 #guard ModularMatrixFixtures.cases.all checkCase
+
+-- Recover the consumed prefix length from the actual CRT modulus. The supply
+-- consists of distinct primes, so a successful image contributes one factor.
+private def imageCount (A : Matrix Int n n) (bound fuel : Nat) : Option Nat := do
+  let state ← A.detCrt? bound fuel
+  let (product, count) := (ZMod64.primesBelow (2 ^ 31 - 1) fuel).foldl
+    (fun (product, count) p =>
+      if product < state.modulus then (product * p.m, count + 1)
+      else (product, count)) (1, 0)
+  if product = state.modulus then some count else none
+
+private def imageCounts (c : ModularMatrixFixtures.Case) : Option (Nat × Nat) := do
+  let fuel := c.matrix.rowNormBound.log2 / 30 + 2
+  let row ← imageCount c.matrix c.matrix.rowNormBound fuel
+  let hadamard ← imageCount c.matrix c.matrix.hadamardBound fuel
+  return (row, hadamard)
+
+#guard ModularMatrixFixtures.cases.all fun c =>
+  match imageCounts c with
+  | some (row, hadamard) => hadamard ≤ row
+  | none => false
+
+/-- info: [("empty", some (1, 1)),
+ ("singleton-negative", some (1, 1)),
+ ("zero", some (1, 1)),
+ ("singular", some (1, 1)),
+ ("swap-sign", some (1, 1)),
+ ("modulus", some (2, 2)),
+ ("two-bad-primes", some (3, 3)),
+ ("large-small-determinant", some (133, 133)),
+ ("scaled-hadamard", some (3, 3)),
+ ("structured-determinant/8", some (1, 1)),
+ ("dense-random-determinant/8-bit", some (2, 1)),
+ ("dense-random-determinant/64-bit", some (9, 9)),
+ ("dense-random-determinant/1024-bit", some (100, 100)),
+ ("unimodular-determinant/positive", some (13, 13)),
+ ("unimodular-determinant/negative", some (13, 13))] -/
+#guard_msgs in
+#eval ModularMatrixFixtures.cases.map fun c => (c.name, imageCounts c)
+
 #guard (ModularMatrixFixtures.unimodular 6 64).detModular? 16 == some 1
 -- Two zero residues are insufficient at this bound: the third image is required.
 #guard ((ZMod64.primesBelow (2 ^ 31 - 1) 2).map (·.m)) == #[2147483647, 2147483629]

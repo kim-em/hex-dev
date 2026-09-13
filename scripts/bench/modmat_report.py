@@ -15,8 +15,8 @@ def main():
     lines = [
         '# Bounded modular determinant baseline', '',
         'This report measures the ordinary bounded CRT determinant from milestones 1–2. '
-        'It makes no Phase-4 completion or divisor-route speed claim. The structured '
-        'family is slower than Bareiss at the completed common rungs; large modular '
+        'It makes no Phase-4 completion or divisor-route speed claim. Across all three '
+        'families, the modular route is slower than Bareiss at every completed common rung; large modular '
         'calls reach the harness cap. Dixon and the determinant-divisor optimization '
         'are separate milestones.', '',
         'These fixed registrations are external-comparator anchors, not an empirical '
@@ -42,7 +42,13 @@ def main():
         'inside each child, and five fixed repeats with a 0.2-second auto-tuning '
         'floor. Adjacent modular/Bareiss/FLINT arms reverse order on alternate '
         'rungs. CPU placement uses a nonblocking lease on the shared host. Every '
-        'completed export is retained; host load is recorded without filtering.', '',
+        'completed export is retained; host load is recorded without filtering. The two '
+        'structured dimension-16 observations differ by 2.4× in modular time, and '
+        'their Hex/FLINT ratios differ by 65%. These are host-specific observations; '
+        'rows in different datasets must not be treated as a controlled comparison, and '
+        'the small-rung differences do not establish an algorithmic scaling trend. '
+        'The listed source fingerprints cover selected files; the executable SHA-256 '
+        'pins the complete compiled implementation, including the Bareiss comparator.', '',
         'The initial run used one Lean worker. A blocking stderr reader prevented '
         'the harness timer from running, so its completed timings can exceed the '
         'configured ten-second cap. Relinking the executable interrupted the '
@@ -91,7 +97,7 @@ def main():
                 result = arms[arm]
                 statuses = [p['status'] for p in result['points']]
                 if all(s == 'ok' for s in statuses) and len(statuses) == 5:
-                    return f"{result['median_nanos'] / 1e9:.6g}"
+                    return f"{result['median_nanos'] / 1e9:.3g}"
                 if len(statuses) == 5 and all(s == 'killed_at_cap' for s in statuses):
                     return 'cap (5/5)'
                 return f"{statuses.count('ok')}/5 ok"
@@ -100,14 +106,22 @@ def main():
                 for r in arms.values())
             ratio = '—'
             if complete and arms['Flint']['median_nanos'] > overhead:
-                ratio = f"{arms['Modular']['median_nanos'] / (arms['Flint']['median_nanos'] - overhead):.2f}×"
+                ratio = f"{arms['Modular']['median_nanos'] / (arms['Flint']['median_nanos'] - overhead):.1f}×"
             hashes = {r['observed_hash'] for r in arms.values() if r['observed_hash'] is not None}
             if len(hashes) > 1 or any(not r['hashes_agree'] for r in arms.values()):
                 raise ValueError(f'answer hash disagreement at {family}/{n}/{bits}')
             lines.append(f'| {family.lower()} | {n} | {bits} | {cell("Modular")} | '
                          f'{cell("Bareiss")} | {cell("Flint")} | {ratio} |')
         lines.append('')
-    lines += [
+    counts = json.loads((Path(__file__).resolve().parents[2] /
+        'reports/data/hex-modular-matrix-image-counts.json').read_text())
+    lines += ['## Bound image counts', '',
+              'Conformance recovers each consumed prime-prefix length from the actual '
+              'CRT modulus and checks that Hadamard uses no more images than the '
+              'row-norm bound. [Recorded counts](data/hex-modular-matrix-image-counts.json).', '',
+              '| Fixture | Row norm | Hadamard |', '|---|---:|---:|']
+    lines += [f"| {c['case']} | {c['row_norm']} | {c['hadamard']} |" for c in counts]
+    lines += ['',
         '## Attribution and verification', '',
         'A diagnostic `perf` profile at structured dimension 128 attributes '
         '18.75% of self samples to `lean_apply_2`, 8.75% to `lean_apply_1`, '

@@ -540,7 +540,7 @@ libraries:
       comparators:
         - tool: "FLINT fmpz_mat_det via python-flint"
           class: gating
-          goal: "detViaDivisor faster than Hex.Matrix.bareiss by at least 4x at n = 512 on the shared tridiagonal fixture in the same run (2.2x FLINT on the current report), with the FLINT ratio recorded and the 5x target at every eligible rung reviewed after the first measurement"
+          goal: "detViaDivisor faster than Hex.Matrix.bareiss by at least 4x at n = 512 on the shared tridiagonal fixture in the same run, with the FLINT ratio recorded and the 5x target at every eligible rung reviewed after the first measurement"
       input_families:
         - name: structured-determinant
           description: Shared Bareiss tridiagonal fixture at dimensions 16 through 512.

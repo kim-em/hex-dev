@@ -9,6 +9,7 @@ module
 public import HexModularMatrix.Det
 public import HexModularMatrixMathlib.Bound
 public import HexBareissMathlib
+meta import HexModularMatrix.Det
 
 public section
 
@@ -32,10 +33,15 @@ theorem det_eq (A : Hex.Matrix Int n n) :
     Hex.ModularMatrix.det A = Matrix.det (HexMatrixMathlib.matrixEquiv A) :=
   detWith_eq A (Hex.ModularMatrix.defaultFuel A)
 
-/-- Decide integer-matrix singularity through the total modular determinant. -/
+/-- Decide integer-matrix singularity through the total modular determinant.
+This instance supports compiled evaluation; it does not promise kernel reduction
+of the modular prime-supply and default-fuel computations for `by decide`. -/
 instance (priority := 1100) detDecidable (A : Matrix (Fin n) (Fin n) Int) :
     Decidable (A.det = 0) :=
   decidable_of_iff (Hex.ModularMatrix.det (HexMatrixMathlib.matrixEquiv.symm A) = 0)
     (by rw [det_eq, Equiv.apply_symm_apply])
+
+#guard decide ((0 : Matrix (Fin 2) (Fin 2) Int).det = 0)
+#guard !(decide ((1 : Matrix (Fin 2) (Fin 2) Int).det = 0))
 
 end HexModularMatrixMathlib

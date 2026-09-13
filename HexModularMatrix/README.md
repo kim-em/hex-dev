@@ -29,3 +29,10 @@ FLINT on identical structured, dense random and unimodular inputs. Its
 collected by `scripts/bench/modmat_flint.py` on the shared host.
 The [baseline report](../reports/hex-modular-matrix-performance.md) records
 timings, capped calls, comparator errors and the subsequent corrected runs.
+
+The default fuel cap is 16384 primes below 2³¹. A Hadamard bound of at least
+2⁵⁰⁷⁹⁰³ therefore cannot be reconstructed within that budget and reaches
+Bareiss fallback. The baseline also includes two evaluations of the Hadamard
+bound in the default route and the relocated square-root routine's conservative
+Newton starting value. Bound reuse, square-root initialization and elimination
+buffer specialization remain opportunities for performance work.

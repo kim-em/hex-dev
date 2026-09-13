@@ -289,3 +289,9 @@ the existing **structural-layer** comparator-absence declaration. The symbolic
 carrier targets above add SymPy as an informational comparator, scoped only to
 those targets. `libraries.yml` records that scoped comparator and the carrier
 input families when the implementation lands.
+
+## Determinant transport
+
+`det_mapEntries` commutes the determinant with a coefficient map preserving
+zero, one, addition and multiplication. Its Mathlib-free proof transports
+the finite Leibniz sum and products; modular images use it for integer casts.

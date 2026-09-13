@@ -539,3 +539,10 @@ covered by the `compare` group against the GMP-backed
 `Hex.gmpIntExtGcd`. Those internal comparisons are the right
 shape for HexArith; an external tool would just be wrapping GMP
 again.
+
+## Integer square roots
+
+`HexArith/Nat/Sqrt.lean` provides Newton-iteration `HexArith.Nat.floorSqrt`
+and `ceilSqrt`, with zero equations, `floorSqrt_sq_le`, `le_ceilSqrt_sq`,
+and `ceilSqrt_le` for comparison with a known square bound. The polynomial
+Mignotte module retains compatibility aliases.

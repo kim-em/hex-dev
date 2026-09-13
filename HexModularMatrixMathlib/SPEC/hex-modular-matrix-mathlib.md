@@ -11,7 +11,11 @@ remain in the Mathlib-free layer.
 `Det.lean` proves `HexModularMatrixMathlib.detWith_eq` and `det_eq`, including the
 exhaustion route through `HexMatrixMathlib.bareiss_eq_det`. Its decidable
 instance for `A.det = 0` computes the total determinant and transports the
-answer through the correctness theorem.
+answer through the correctness theorem. Importing this companion deliberately
+selects its modular dispatcher for decidability, so the proved route remains
+usable from Mathlib before a crossover is established. The baseline currently
+favors Bareiss; this instance replaces Mathlib’s permutation enumeration, while
+the general `Hex.Det` dispatcher retains its independent Bareiss policy.
 
 The milestone-2 dispatcher takes a matrix and fuel. The divisor and seeded
 dispatcher extension belongs to the subsequent Dixon/divisor milestone.

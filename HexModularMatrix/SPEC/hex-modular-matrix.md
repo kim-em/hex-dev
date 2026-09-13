@@ -16,7 +16,7 @@ rational reconstruction) and on the modulus supply in hex-mod-arith
 `HexModArith/Modulus.lean`). The modular gcd for `ℤ[x]`, the other
 consumer of the same machinery, is
 [hex-poly-z-gcd](../../HexPolyZGcd/SPEC/hex-poly-z-gcd.md). The rank
-certificate is [hex-rank](../../SPEC/Libraries/hex-rank.md)'s, at `R = Int`.
+certificate is [hex-rank](../../HexRank/SPEC/hex-rank.md)'s, at `R = Int`.
 
 Throughout, `det` is hex-determinant's Leibniz determinant
 `Hex.Matrix.det`, the reference every theorem here is stated against.
@@ -93,7 +93,7 @@ is accepted by testing `A y = d b` over `ℤ`, which is one matrix-vector
 product. Everything that produced it (the prime, the inverse modulo `p`,
 the lifting, the reconstruction) runs untrusted.
 
-**The rank has a two-sided certificate.** [hex-rank](../../SPEC/Libraries/hex-rank.md)
+**The rank has a two-sided certificate.** [hex-rank](../../HexRank/SPEC/hex-rank.md)
 specifies it over any integral domain, and this library produces its
 `Int` instance: an `r × r` submatrix `B` of `A`, named by `rows` and
 `cols`, with `d = det B` and the adjugate of `B`. The identity
@@ -110,7 +110,7 @@ to compute.** A determinant does have a certificate: a triangular
 factorisation `P A = L U` over `ℚ` with `L` unit lower triangular
 determines `det A` as `± ∏ᵢ uᵢᵢ`. (An adjugate identity `A * X = d • I`
 is not one: it holds with `d = 2` and `X = I` for `A = 2 • I₂`, whose
-determinant is `4`, and [hex-rank](../../SPEC/Libraries/hex-rank.md) records the same
+determinant is `4`, and [hex-rank](../../HexRank/SPEC/hex-rank.md) records the same
 counterexample.) Checking the factorisation is an `n × n` product of
 big rationals, `O(n³)` multiplications on numbers the size of the
 answer, which is the cost of Bareiss itself, so the witness saves the
@@ -344,7 +344,7 @@ is shorter.
 the difference is measured in images.** `hadamardBound` is the smaller
 of `∏ⱼ ceilSqrt (Σᵢ aᵢⱼ²)` and `∏ᵢ ceilSqrt (Σⱼ aᵢⱼ²)`, two passes over
 the matrix and one integer square root per column and per row
-(`ceilSqrt` from `HexPolyZ/Mignotte.lean` until it moves). Taking both
+(`ceilSqrt` from `HexArith/Nat/Sqrt.lean`). Taking both
 forms matters: the column form alone is not comparable with
 `rowNormBound` (for `[[N, N], [0, 1]]` it is `N (N + 1)` against `2N`),
 while the row form is never larger than `rowNormBound`, because
@@ -1174,7 +1174,7 @@ well as the signs and denominator.
 
 The integer kernel (a basis of `ker A ∩ ℤ^m` as a lattice, saturated) is
 **not** this object, and the difference is the reason
-[hex-hermite](../../SPEC/Libraries/hex-hermite.md) exists: `kernelBasis` there is a lattice
+[hex-hermite](../../HexHermite/SPEC/hex-hermite.md) exists: `kernelBasis` there is a lattice
 basis and this is a vector space basis with a denominator. Both are
 wanted, they are not interchangeable, and this SPEC uses the word
 "kernel" only for the rational one.
@@ -1669,7 +1669,7 @@ HexModularMatrixMathlib.lean
       comparators:
         - tool: FLINT fmpz_mat_det via python-flint
           class: gating
-          goal: detViaDivisor faster than Hex.Matrix.bareiss by at least 4x at n = 512 on the shared tridiagonal fixture in the same run (2.2x FLINT on the current report), with the FLINT ratio recorded and the 5x target at every eligible rung reviewed after the first measurement
+          goal: detViaDivisor faster than Hex.Matrix.bareiss by at least 4x at n = 512 on the shared tridiagonal fixture in the same run, with the FLINT ratio recorded and the 5x target at every eligible rung reviewed after the first measurement
         - tool: FLINT fmpz_mat_rank via python-flint
           class: informational
           rationale: no shared fixture history and a different crossover policy
@@ -1712,8 +1712,10 @@ draws its right-hand side from.
   times per image, and hex-arith has both reductions. Which one wins
   depends on whether the modulus is fixed across the whole image (it is)
   and on how many products can be accumulated before a reduction, which
-  the `ZMod64` bound was chosen to allow. This is a measurement, and it
-  is the single largest constant factor in the library.
+  the `ZMod64` bound was chosen to allow. The bounded-route profile also
+  identifies closure dispatch, allocation and row-buffer operations as
+  substantial costs. Measure specialization and buffer layout alongside
+  reduction strategy before choosing an optimized elimination kernel.
 - **Whether the images should be computed in blocks.** Reducing the
   matrix modulo several moduli at once and eliminating them together
   shares the memory traffic, and hex-matrix's `Strassen` and `Winograd`
