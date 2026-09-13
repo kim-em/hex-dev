@@ -1,0 +1,98 @@
+{
+  "source_commit": "f589e3791408659f1fe84c3efbaf8f96e92a3e75",
+  "source_sha256": {
+    "bench/HexRowReduce/Bench.lean": "efe9eafb6e4777bf7f68e5709c4041c1d314135b09921efba66473282866dbd5",
+    "HexRowReduce/Inverse.lean": "78d35ec2bb92eb2df15e343d5973ed6e3b183f1696ed1a0f791824590d16ceb8",
+    "HexRowReduce/Solve.lean": "3b26df148fbe74a743dc02090a996bd8e3b51661b2bea89d777b40d76cad63cf",
+    "scripts/oracle/flint_bench_driver.py": "7fd6d0393e8fdd538d0c2b461e7cb5b20095c802db254c4d5c94ee90d3111de1",
+    "scripts/bench/row_reduce_fields.py": "d8629d38283fff5991825c6eb5d2e779633e4894aff2d0672837629bdf65833a",
+    "scripts/oracle/row_reduce_overhead.py": "c435a3180ea93767f6e3dd62e61a637a0ddcec943a023d74a098a9e4f84fe297"
+  },
+  "cpu": 11,
+  "hostname": "chungus2",
+  "load_before": "389.72 408.29 372.40 336/10591 568853",
+  "phase": "overhead",
+  "schedule": "four fixed repeats per identical-payload calibration",
+  "driver_override": "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/scripts/oracle/row_reduce_overhead.py",
+  "commands": [
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "run",
+        "Hex.RowReduceBench.Field.flintInverse8",
+        "--repeats",
+        "4",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-payload-inverse-8.json"
+      ],
+      "exit_code": 0,
+      "seconds": 5.244636043993523
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "run",
+        "Hex.RowReduceBench.Field.flintSolve8",
+        "--repeats",
+        "4",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-payload-solve-8.json"
+      ],
+      "exit_code": 0,
+      "seconds": 5.560975450993283
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "run",
+        "Hex.RowReduceBench.Field.flintInverse16",
+        "--repeats",
+        "4",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-payload-inverse-16.json"
+      ],
+      "exit_code": 0,
+      "seconds": 5.370669268013444
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "run",
+        "Hex.RowReduceBench.Field.flintSolve16",
+        "--repeats",
+        "4",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-payload-solve-16.json"
+      ],
+      "exit_code": 0,
+      "seconds": 6.318279788974905
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "run",
+        "Hex.RowReduceBench.Field.flintInverse32",
+        "--repeats",
+        "4",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-payload-inverse-32.json"
+      ],
+      "exit_code": 0,
+      "seconds": 4.9521449049934745
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/.lake/build/bin/hexrowreduce_bench",
+        "run",
+        "Hex.RowReduceBench.Field.flintSolve32",
+        "--repeats",
+        "4",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-payload-solve-32.json"
+      ],
+      "exit_code": 0,
+      "seconds": 6.185279405995971
+    }
+  ],
+  "load_after": "378.93 403.48 372.12 414/10443 577421"
+}

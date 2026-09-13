@@ -1,0 +1,104 @@
+{
+  "purpose": "establish complete-output hash anchors after bounding input heights",
+  "cpu": 75,
+  "load": "93.85 152.92 253.40 94/7442 782959\n",
+  "commands": [
+    {
+      "argv": [
+        ".lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.leanInverse8",
+        "Hex.RowReduceBench.Field.flintInverse8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.001",
+        "--export-file",
+        "reports/bench-results/hex-row-reduce-fields-hashes-inverse-8.json"
+      ],
+      "exit_code": 1,
+      "observed_hash": "0x1b1e2cdba528af46"
+    },
+    {
+      "argv": [
+        ".lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.leanSolve8",
+        "Hex.RowReduceBench.Field.flintSolve8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.001",
+        "--export-file",
+        "reports/bench-results/hex-row-reduce-fields-hashes-solve-8.json"
+      ],
+      "exit_code": 1,
+      "observed_hash": "0xf09b770e65e36cd1"
+    },
+    {
+      "argv": [
+        ".lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.leanInverse16",
+        "Hex.RowReduceBench.Field.flintInverse16",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.001",
+        "--export-file",
+        "reports/bench-results/hex-row-reduce-fields-hashes-inverse-16.json"
+      ],
+      "exit_code": 1,
+      "observed_hash": "0x7f0a7938dad91bb5"
+    },
+    {
+      "argv": [
+        ".lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.leanSolve16",
+        "Hex.RowReduceBench.Field.flintSolve16",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.001",
+        "--export-file",
+        "reports/bench-results/hex-row-reduce-fields-hashes-solve-16.json"
+      ],
+      "exit_code": 1,
+      "observed_hash": "0x2fbc47be395702dd"
+    },
+    {
+      "argv": [
+        ".lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.leanInverse32",
+        "Hex.RowReduceBench.Field.flintInverse32",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.001",
+        "--export-file",
+        "reports/bench-results/hex-row-reduce-fields-hashes-inverse-32.json"
+      ],
+      "exit_code": 1,
+      "observed_hash": "0xfaafb9d216353207"
+    },
+    {
+      "argv": [
+        ".lake/build/bin/hexrowreduce_bench",
+        "compare",
+        "Hex.RowReduceBench.Field.leanSolve32",
+        "Hex.RowReduceBench.Field.flintSolve32",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.001",
+        "--export-file",
+        "reports/bench-results/hex-row-reduce-fields-hashes-solve-32.json"
+      ],
+      "exit_code": 1,
+      "observed_hash": "0x790712b14bebe0c8"
+    }
+  ],
+  "bench_sha256": "d09f583a73a0c06b8def809a19c06677f64ca80a4ed8d4d95aac196cf0e71dd7"
+}

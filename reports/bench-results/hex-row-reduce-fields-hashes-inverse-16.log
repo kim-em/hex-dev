@@ -1,0 +1,23 @@
+compare: 2 fixed benchmark(s) failed expectedHash check: Hex.RowReduceBench.Field.leanInverse16, Hex.RowReduceBench.Field.flintInverse16
+env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=f589e37-dirty, 2026-09-12T21:51:59Z, host=chungus2
+Hex.RowReduceBench.Field.leanInverse16    [fixed] repeats=1
+  repeat 0  9.266 ms
+  median: 9.266 ms    min: 9.266 ms    max: 9.266 ms
+  hash: all repeats agree
+  observed hash: 0x7f0a7938dad91bb5
+  expected hash: FAIL — expected 0xc0e229f2fbba2a35, got 0x7f0a7938dad91bb5
+  peak RSS: 68_304 kB (across 1 ok repeat(s))
+
+Hex.RowReduceBench.Field.flintInverse16    [fixed] repeats=1
+  repeat 0  1.526 ms
+  median: 1.526 ms    min: 1.526 ms    max: 1.526 ms
+  hash: all repeats agree
+  observed hash: 0x7f0a7938dad91bb5
+  expected hash: FAIL — expected 0xc0e229f2fbba2a35, got 0x7f0a7938dad91bb5
+  peak RSS: 71_172 kB (across 1 ok repeat(s))
+
+relative median (baseline = Hex.RowReduceBench.Field.leanInverse16, the first CLI argument):
+  Hex.RowReduceBench.Field.leanInverse16: 1.000× (9.266 ms)
+  Hex.RowReduceBench.Field.flintInverse16: 0.165× (1.526 ms)
+agreement: all functions agree on output
+exported to reports/bench-results/hex-row-reduce-fields-hashes-inverse-16.json

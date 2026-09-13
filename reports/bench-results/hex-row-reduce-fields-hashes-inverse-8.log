@@ -1,0 +1,23 @@
+compare: 2 fixed benchmark(s) failed expectedHash check: Hex.RowReduceBench.Field.leanInverse8, Hex.RowReduceBench.Field.flintInverse8
+env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=f589e37-dirty, 2026-09-12T21:51:56Z, host=chungus2
+Hex.RowReduceBench.Field.leanInverse8    [fixed] repeats=1
+  repeat 0  914.492 µs  (×2^1, total 1.829 ms)
+  median: 914.492 µs    min: 914.492 µs    max: 914.492 µs
+  hash: all repeats agree
+  observed hash: 0x1b1e2cdba528af46
+  expected hash: FAIL — expected 0x386bde7013009693, got 0x1b1e2cdba528af46
+  peak RSS: 69_012 kB (across 1 ok repeat(s))
+
+Hex.RowReduceBench.Field.flintInverse8    [fixed] repeats=1
+  repeat 0  296.114 µs  (×2^2, total 1.184 ms)
+  median: 296.114 µs    min: 296.114 µs    max: 296.114 µs
+  hash: all repeats agree
+  observed hash: 0x1b1e2cdba528af46
+  expected hash: FAIL — expected 0x386bde7013009693, got 0x1b1e2cdba528af46
+  peak RSS: 68_696 kB (across 1 ok repeat(s))
+
+relative median (baseline = Hex.RowReduceBench.Field.leanInverse8, the first CLI argument):
+  Hex.RowReduceBench.Field.leanInverse8: 1.000× (914.492 µs)
+  Hex.RowReduceBench.Field.flintInverse8: 0.324× (296.114 µs)
+agreement: all functions agree on output
+exported to reports/bench-results/hex-row-reduce-fields-hashes-inverse-8.json

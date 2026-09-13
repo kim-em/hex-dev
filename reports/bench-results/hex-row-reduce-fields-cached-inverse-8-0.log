@@ -1,0 +1,22 @@
+env: lean=4.34.0-rc2, os=linux, arch=x86_64, commit=1f10e6e-dirty, 2026-09-12T21:23:59Z, host=chungus2
+Hex.RowReduceBench.Field.leanInverse8    [fixed] repeats=1
+  repeat 0  1.346 ms  (×2^8, total 344.545 ms)
+  median: 1.346 ms    min: 1.346 ms    max: 1.346 ms
+  hash: all repeats agree
+  observed hash: 0x386bde7013009693
+  expected hash: matches
+  peak RSS: 62_516 kB (across 1 ok repeat(s))
+
+Hex.RowReduceBench.Field.flintInverse8    [fixed] repeats=1
+  repeat 0  407.983 µs  (×2^9, total 208.888 ms)
+  median: 407.983 µs    min: 407.983 µs    max: 407.983 µs
+  hash: all repeats agree
+  observed hash: 0x386bde7013009693
+  expected hash: matches
+  peak RSS: 65_476 kB (across 1 ok repeat(s))
+
+relative median (baseline = Hex.RowReduceBench.Field.leanInverse8, the first CLI argument):
+  Hex.RowReduceBench.Field.leanInverse8: 1.000× (1.346 ms)
+  Hex.RowReduceBench.Field.flintInverse8: 0.303× (407.983 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10222/reports/bench-results/hex-row-reduce-fields-cached-inverse-8-0.json

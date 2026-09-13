@@ -1,0 +1,26 @@
+{
+  "cpu": 53,
+  "command": [
+    "python3",
+    "/tmp/hex10170-lean-bench-samply/scripts/profile_bench.py",
+    "--bench-exe",
+    "/tmp/issue-10222-profile-final-child",
+    "--bench-name",
+    "Hex.RowReduceBench.Field.rat32FullSolve",
+    "--param",
+    "32",
+    "--target-nanos",
+    "3000000000",
+    "--out",
+    "/tmp/hex-profile-rowreduce-fields-final.json.gz",
+    "--samply-args",
+    "--rate 999 --unstable-presymbolicate"
+  ],
+  "load_before": "431.00 404.78 350.51 284/11510 476804\n",
+  "placement": "child pinned; recorder retains host affinity",
+  "source_commit": "1f10e6e0318d19f7b8df3f8c38d1aec4899eb222",
+  "bench_sha256": "efe9eafb6e4777bf7f68e5709c4041c1d314135b09921efba66473282866dbd5",
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "exit_code": 0,
+  "load_after": "427.87 404.57 350.74 391/11459 478119\n"
+}
