@@ -726,7 +726,9 @@ the delta):
 | rational `8 × 8` | 0.69 s | 0.20 s | 3.5 |
 
 Proof time against dimension, for the dense `8`-bit, singular (rank
-`n − 1`) and dense `64`-bit families up to a ten-second cap per run, is
+`n − 1`) and dense `64`-bit families up to a ten-second cap per run, in
+three arms (`eval_det`, `det`, and `det -packing` for the plain checker on
+the same certificate), is
 recorded by `scripts/bench/det_tactic_size_sweep.py` (profiler totals per
 file, imports excluded, the median of three runs per point with the range
 kept); the current record is
