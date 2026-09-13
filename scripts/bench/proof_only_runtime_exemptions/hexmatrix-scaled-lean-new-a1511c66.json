@@ -1,0 +1,6 @@
+{
+  "path": "HexMatrix/Scaled.lean",
+  "baseline_blob": null,
+  "current_blob": "a1511c66929d47b28e549de9d2666f996eebae51",
+  "reason": "Adds common-denominator rational list encodings and cross-product checks under the new Hex.Matrix.Lists namespace for the min_poly, smith and hermite certificate frontends. The measured factorization service and its Berlekamp, Hensel, LLL and BZ paths do not reference these declarations. Existing matrix arithmetic and factorization definitions are unchanged; the new derived instances are restricted to the new encoding types, and no global simp or compiler replacement attributes change existing code. This addition therefore does not change the measured factorization runtime."
+}

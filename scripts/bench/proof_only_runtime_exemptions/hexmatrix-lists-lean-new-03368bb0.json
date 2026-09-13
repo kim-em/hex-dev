@@ -1,0 +1,6 @@
+{
+  "path": "HexMatrix/Lists.lean",
+  "baseline_blob": null,
+  "current_blob": "03368bb08cdf938eeb8867d347edccd5079a67f0",
+  "reason": "Adds structural integer list lookup, shape, dot-product and product checkers under the new Hex.Matrix.Lists namespace for the min_poly, smith and hermite certificate frontends. The measured factorization service and its Berlekamp, Hensel, LLL and BZ paths do not reference these declarations. Existing matrix arithmetic and factorization definitions are unchanged; the new derived instances are restricted to the new encoding types, and no global simp or compiler replacement attributes change existing code. This addition therefore does not change the measured factorization runtime."
+}
