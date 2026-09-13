@@ -36,6 +36,7 @@ FIGURE = ROOT / "reports" / "figures" / "hex-rank-mathlib-tactic-size.svg"
 FAMILY_ORDER = ["full", "deficient", "half", "low"]
 STYLE = {
     "eval_rank": {"color": "#d62728", "marker": "s", "label": "Mathlib `eval_rank`"},
+    "eval_rank_alt": {"color": "#ff7f0e", "marker": "D", "label": "Mathlib `eval_rank` at {label}"},
     "rank": {"color": "#1f77b4", "marker": "o", "label": "hex-rank `rank`"},
     "rank_plain": {"color": "#2ca02c", "marker": "^", "label": "hex-rank `rank -packing`"},
 }
@@ -55,8 +56,10 @@ def render(record: dict, out: Path) -> None:
     fig.suptitle("Proof time (literal elaboration, certificate, kernel check) against dimension\n"
                  f"{record['host']} at {record['commit']}, median of {samples} runs, range as bars",
                  fontsize=11)
+    alt = record.get("mathlib_alt") or {}
     for ax, family in zip(axes.flat, FAMILY_ORDER):
         for tool, style in STYLE.items():
+            style = dict(style, label=style["label"].format(label=alt.get("label", "")))
             pts = sorted((p for p in record["points"]
                           if p["family"] == family and p["tool"] == tool and p["status"] == "ok"),
                          key=lambda p: p["n"])
