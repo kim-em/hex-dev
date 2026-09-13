@@ -436,7 +436,16 @@ In particular the kernel never evaluates `bareissWith`, `detWitness`, a
 reference checker, or `Hex.Matrix.det` on `Hex.Matrix (MvPoly …)`. The
 reference determinant occurs in soundness statements only; neither `Array`,
 `Vector`, `Fin`, `Finset`, matrix indexing nor well-founded polynomial
-arithmetic is reduced to check a certificate. One auxiliary lemma is
+arithmetic is reduced to check a certificate. The packed checkers of
+[hex-bareiss §Packed evaluation](../../HexBareiss/SPEC/hex-bareiss.md#packed-evaluation)
+are sound through `checkDetList_of_packed` and `checkDetRat_of_packed`:
+`triangularCheckPacked_eq` and `zeroDotsPacked_eq` identify the packed
+walk with the plain one under the entry bounds, by `dotIntPacked_eq` of
+[hex-matrix-mathlib §Kronecker-packed dot products](../../HexMatrixMathlib/SPEC/hex-matrix-mathlib.md#kronecker-packed-dot-products),
+and the columns of the arranged matrix inherit the bounds of the rows
+(`mem_applySwaps`, `columns_bound`); `det_eq_of_checkListPacked'` and
+`det_eq_of_checkRatPacked'` are the plain theorems after the implication.
+One auxiliary lemma is
 checked synchronously through the literal layer's `addClosedProof`; there
 is no elaborator `Kernel.whnf` pre-check, no elaborator type check of the
 proof before the kernel's, and no `native_decide`.
@@ -639,7 +648,14 @@ kernel `decide` on `entriesEq` otherwise), composed with a kernel-decided
 comparison of the value with `d`. A rational matrix is scaled row by row by
 the least common multiple of its denominators to an integer one, whose
 witness is checked by `checkDetRat` together with the scaling and the
-value, through `det_eq_of_checkRat'`. The whole proof is added as an
+value, through `det_eq_of_checkRat'`. The tactic takes the shared
+configuration structure `HexMatrixMathlib.KernelConfig` as an `optConfig`
+(`det -packing`; the default is packed) and is configured in no other way;
+with packing on the checks are `checkDetListPacked` and `checkDetRatPacked`
+with the entry bound and slot width the tactic computes from the entries
+and the transform, through `det_eq_of_checkListPacked'` and
+`det_eq_of_checkRatPacked'`. The term form `det%` and the simproc
+`hex_norm_det` use the default configuration. The whole proof is added as an
 auxiliary lemma on the closed target (`addClosedProof` of the literal
 layer, with asynchronous checking off) so the kernel checks it exactly
 once, with no elaborator type check first, and the tactic sees a
