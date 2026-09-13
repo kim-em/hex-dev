@@ -1045,7 +1045,7 @@ libraries:
     done_through: 1
     status: active
   HexReflectMathlib:
-    deps: [HexReflect, HexMvPolyMathlib]
+    deps: [HexReflect, HexMvPolyMathlib, HexModArithMathlib]
     mathlib: true
     correspondence_only: true
     done_through: 1

@@ -68,6 +68,8 @@ inductive Decline where
   | ambiguousProvider (capability : Capability) (candidates : Array ProviderId)
   /-- The source type is outside the supported translations. -/
   | unsupportedSourceType (type : Expr)
+  /-- A recognizing provider cannot satisfy a required condition. -/
+  | providerCondition (provider : ProviderId) (reason : String)
   /-- A budget dimension would be exceeded. -/
   | budgetExhausted (info : BudgetExhausted)
   /-- A proof-producing batch mixes two carriers. -/
@@ -290,6 +292,7 @@ def Decline.toMessageData : Decline → MessageData
       {candidates.map (·.name)}"
   | .unsupportedSourceType type =>
     m!"unsupported source type{indentExpr type}"
+  | .providerCondition provider reason => m!"provider {provider.name}: {reason}"
   | .budgetExhausted info => info.toMessageData
   | .mixedCarriers first second =>
     m!"a batch must use one carrier, but found both{indentExpr first}\nand{indentExpr second}"

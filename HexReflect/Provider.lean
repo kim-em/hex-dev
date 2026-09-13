@@ -47,6 +47,24 @@ structure CoeffLaws {C : Type} {α : Type u} [Zero C] [Add C] [Lean.Grind.Ring �
   /-- The interpretation is additive. -/
   interp_add : ∀ a b : C, interp (a + b) = interp a + interp b
 
+/-- Reuse coefficient laws at a ring with the same interpretation operations.
+Other ring fields, such as the implementation of powers, need not coincide. -/
+theorem CoeffLaws.changeRing {C : Type} {α : Type u} [Zero C] [Add C]
+    (r s : Lean.Grind.Ring α) (ofInt : Int → C) (interp : C → α)
+    (h : @CoeffLaws C α _ _ r ofInt interp)
+    (cast_eq : (letI := r; (Int.cast : Int → α)) = (letI := s; (Int.cast : Int → α)))
+    (zero_eq : (letI := r; (0 : α)) = (letI := s; (0 : α)))
+    (add_eq : (letI := r; (fun a b : α => a + b)) =
+      (letI := s; (fun a b : α => a + b))) :
+    @CoeffLaws C α _ _ s ofInt interp := by
+  rcases h with ⟨hc, hz, ha⟩
+  constructor
+  · intro k
+    exact (hc k).trans (congrFun cast_eq k)
+  · exact hz.trans zero_eq
+  · intro a b
+    exact (ha a b).trans (congrFun (congrFun add_eq (interp a)) (interp b))
+
 /-- Integer coefficients interpreted by the integer cast satisfy the laws in
 every ring. -/
 theorem CoeffLaws.int {α : Type u} [Lean.Grind.Ring α] :
@@ -74,6 +92,10 @@ structure CoeffProvider where
   interp : Expr
   /-- A proof of `CoeffLaws ofInt interp` for the carrier's exact instances. -/
   laws : Expr
+  /-- Additional quoted instances for downstream coefficient algorithms, such
+  as modulus bounds and primality. Consumers can introduce these as local
+  instances; they are not installed globally by provider selection. -/
+  auxInstances : Array Expr := #[]
 
 /-- Evidence returned by a recognizing registration. -/
 inductive Evidence where

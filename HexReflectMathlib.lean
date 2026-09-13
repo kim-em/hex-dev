@@ -8,6 +8,7 @@ module
 
 public import HexReflectMathlib.Carrier
 public import HexReflectMathlib.Correspondence
+public import HexReflectMathlib.Residue
 
 public section
 

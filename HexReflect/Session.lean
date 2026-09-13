@@ -360,6 +360,12 @@ def validateCoefficients (ring : Arith.CommRing) (p : CoeffProvider) : m Unit :=
     (mkForall `c .default p.coeffType ring.type)
   checkField p.id "laws" p.laws (mkAppN (mkConst ``CoeffLaws [ring.u])
     #[p.coeffType, ring.type, p.zeroInst, p.addInst, ring.ringInst, p.ofInt, p.interp])
+  for inst in p.auxInstances do
+    let some ty ← (observing? (inferType inst) : MetaM (Option Expr))
+      | failWith (.invalidProviderEvidence p.id "auxiliary instance is ill-typed")
+    unless (← (isClass? ty : MetaM (Option Name))).isSome do
+      failWith (.invalidProviderEvidence p.id "auxiliary evidence is not a typeclass instance")
+    checkField p.id "auxiliary instance" inst ty
 
 /-- Validate the evidence returned by a registration. -/
 private def validateEvidence (ring : Arith.CommRing) (reg : Registration) : Evidence → m Unit
