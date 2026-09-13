@@ -4,18 +4,18 @@
     "family": "cyclic",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 17.442150674,
-    "max_fresh_seconds": 17.555812787,
-    "median_baseline_delta_seconds": 14.842614932,
+    "median_fresh_seconds": 18.49237992,
+    "max_fresh_seconds": 18.560626828,
+    "median_baseline_delta_seconds": 15.923039746,
     "kernel_seconds": [
-      13.7,
-      13.7,
-      13.6,
-      13.6,
-      13.6,
-      13.7
+      14.7,
+      14.7,
+      14.7,
+      14.6,
+      14.6,
+      14.5
     ],
-    "median_kernel_seconds": 13.649999999999999,
+    "median_kernel_seconds": 14.649999999999999,
     "certificates": [
       {
         "denominator_entries": 386,
@@ -162,7 +162,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 2548,
-      "olean_bytes": 1337568,
+      "olean_bytes": 1418232,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 2104
@@ -179,18 +179,18 @@
     "family": "cyclic",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 17.261486915,
-    "max_fresh_seconds": 17.362360987,
-    "median_baseline_delta_seconds": 14.742570644,
+    "median_fresh_seconds": 18.086206281,
+    "max_fresh_seconds": 18.190355453,
+    "median_baseline_delta_seconds": 15.489483083,
     "kernel_seconds": [
-      13.7,
-      13.7,
-      13.6,
-      13.6,
-      13.6,
-      13.6
+      14.5,
+      14.5,
+      14.3,
+      14.4,
+      14.3,
+      14.5
     ],
-    "median_kernel_seconds": 13.6,
+    "median_kernel_seconds": 14.45,
     "certificates": [
       {
         "denominator_entries": 386,
@@ -337,7 +337,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 2544,
-      "olean_bytes": 861368,
+      "olean_bytes": 940432,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 1870
@@ -354,18 +354,18 @@
     "family": "cyclic",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 2.646524132,
-    "max_fresh_seconds": 2.714835656,
-    "median_baseline_delta_seconds": 0.10337784,
+    "median_fresh_seconds": 2.631073799,
+    "max_fresh_seconds": 2.741083566,
+    "median_baseline_delta_seconds": 0.094466433,
     "kernel_seconds": [
-      0.0198,
-      0.019899999999999998,
-      0.019,
-      0.021,
-      0.0213,
-      0.019899999999999998
+      0.019399999999999997,
+      0.018699999999999998,
+      0.0188,
+      0.0207,
+      0.020399999999999998,
+      0.0201
     ],
-    "median_kernel_seconds": 0.019899999999999998,
+    "median_kernel_seconds": 0.019749999999999997,
     "certificates": [
       {
         "denominator_entries": 22,
@@ -400,7 +400,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 1837,
-      "olean_bytes": 40040,
+      "olean_bytes": 47264,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 571
@@ -417,18 +417,18 @@
     "family": "cyclic",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 2.695893666,
-    "max_fresh_seconds": 2.726376354,
-    "median_baseline_delta_seconds": 0.081245869,
+    "median_fresh_seconds": 2.70381207,
+    "max_fresh_seconds": 2.754986149,
+    "median_baseline_delta_seconds": 0.0818786,
     "kernel_seconds": [
-      0.0206,
-      0.0206,
-      0.019600000000000003,
-      0.02,
-      0.0202,
-      0.0198
+      0.0213,
+      0.0212,
+      0.0205,
+      0.0188,
+      0.020300000000000002,
+      0.0192
     ],
-    "median_kernel_seconds": 0.0201,
+    "median_kernel_seconds": 0.0204,
     "certificates": [
       {
         "denominator_entries": 22,
@@ -463,7 +463,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 1834,
-      "olean_bytes": 40040,
+      "olean_bytes": 47264,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 545
@@ -480,18 +480,18 @@
     "family": "cyclic",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 2.820674717,
-    "max_fresh_seconds": 2.841185868,
-    "median_baseline_delta_seconds": 0.211877957,
+    "median_fresh_seconds": 2.789562642,
+    "max_fresh_seconds": 2.844560604,
+    "median_baseline_delta_seconds": 0.225805665,
     "kernel_seconds": [
-      0.09,
-      0.0823,
-      0.0897,
-      0.08109999999999999,
-      0.0788,
-      0.0887
+      0.09409999999999999,
+      0.0959,
+      0.0858,
+      0.0922,
+      0.094,
+      0.0831
     ],
-    "median_kernel_seconds": 0.08549999999999999,
+    "median_kernel_seconds": 0.0931,
     "certificates": [
       {
         "denominator_entries": 50,
@@ -542,7 +542,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 1944,
-      "olean_bytes": 63128,
+      "olean_bytes": 80080,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 717
@@ -559,18 +559,18 @@
     "family": "cyclic",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 2.778667595,
-    "max_fresh_seconds": 2.829124943,
-    "median_baseline_delta_seconds": 0.198856115,
+    "median_fresh_seconds": 2.772700789,
+    "max_fresh_seconds": 2.8309204,
+    "median_baseline_delta_seconds": 0.204444173,
     "kernel_seconds": [
-      0.09090000000000001,
-      0.0861,
-      0.07959999999999999,
-      0.0925,
-      0.0915,
-      0.0856
+      0.09340000000000001,
+      0.0854,
+      0.0828,
+      0.0768,
+      0.07659999999999999,
+      0.0837
     ],
-    "median_kernel_seconds": 0.0885,
+    "median_kernel_seconds": 0.08324999999999999,
     "certificates": [
       {
         "denominator_entries": 50,
@@ -621,7 +621,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 1937,
-      "olean_bytes": 58608,
+      "olean_bytes": 75528,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 663
@@ -638,18 +638,18 @@
     "family": "cyclic",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 3.825135705,
-    "max_fresh_seconds": 3.8387806,
-    "median_baseline_delta_seconds": 1.230343975,
+    "median_fresh_seconds": 3.813207866,
+    "max_fresh_seconds": 3.91579488,
+    "median_baseline_delta_seconds": 1.270379172,
     "kernel_seconds": [
-      0.968,
-      0.98,
-      0.98,
-      1.04,
-      0.963,
-      0.965
+      1.02,
+      0.998,
+      0.997,
+      0.992,
+      0.975,
+      1.04
     ],
-    "median_kernel_seconds": 0.974,
+    "median_kernel_seconds": 0.9975,
     "certificates": [
       {
         "denominator_entries": 130,
@@ -732,7 +732,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 2144,
-      "olean_bytes": 211056,
+      "olean_bytes": 248232,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 1075
@@ -749,18 +749,18 @@
     "family": "cyclic",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 3.83878596,
-    "max_fresh_seconds": 3.894841828,
-    "median_baseline_delta_seconds": 1.284409629,
+    "median_fresh_seconds": 3.859918608,
+    "max_fresh_seconds": 3.937704917,
+    "median_baseline_delta_seconds": 1.320194559,
     "kernel_seconds": [
-      0.984,
-      1.02,
-      1.01,
-      0.957,
-      0.988,
-      0.933
+      0.99,
+      1.05,
+      1.06,
+      1.08,
+      1.05,
+      1.08
     ],
-    "median_kernel_seconds": 0.986,
+    "median_kernel_seconds": 1.0550000000000002,
     "certificates": [
       {
         "denominator_entries": 130,
@@ -843,7 +843,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 2140,
-      "olean_bytes": 135544,
+      "olean_bytes": 172688,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 963
@@ -860,18 +860,18 @@
     "family": "empty",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 2.62360254,
-    "max_fresh_seconds": 2.629770644,
-    "median_baseline_delta_seconds": 0.069217679,
+    "median_fresh_seconds": 2.622762367,
+    "max_fresh_seconds": 2.638396311,
+    "median_baseline_delta_seconds": 0.087520978,
     "kernel_seconds": [
-      0.00265,
-      0.00252,
-      0.00248,
       0.0023799999999999997,
-      0.0024300000000000003,
-      0.00242
+      0.0024100000000000002,
+      0.00302,
+      0.0029300000000000003,
+      0.003,
+      0.00239
     ],
-    "median_kernel_seconds": 0.002455,
+    "median_kernel_seconds": 0.0026700000000000005,
     "certificates": [
       {
         "denominator_entries": 2,
@@ -902,22 +902,197 @@
     "budget_status": "passed"
   },
   {
+    "module": "HexMinPolyMathlib.ProofProbe.EntrywiseLiteralN16M16Bits8Equality",
+    "family": "entrywise-literal",
+    "component": "equality",
+    "owner": "HexMinPolyMathlib",
+    "median_fresh_seconds": 18.425158121,
+    "max_fresh_seconds": 18.47000146,
+    "median_baseline_delta_seconds": 15.797665418,
+    "kernel_seconds": [
+      2.68,
+      2.69,
+      2.69,
+      2.68,
+      2.69,
+      2.7
+    ],
+    "median_kernel_seconds": 2.69,
+    "certificates": [
+      {
+        "denominator_entries": 386,
+        "integer_entries": 914,
+        "max_denominator_bits": 1,
+        "max_numerator_bits": 2,
+        "order_degrees": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "polynomial_lengths": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          1,
+          1,
+          2,
+          1,
+          0,
+          2,
+          2,
+          1,
+          1,
+          0,
+          1,
+          2,
+          2,
+          1,
+          1,
+          0,
+          1,
+          2,
+          2,
+          1,
+          1,
+          0,
+          1,
+          2,
+          2,
+          1,
+          1,
+          0,
+          1,
+          2,
+          2,
+          1,
+          1,
+          0,
+          1,
+          2,
+          2,
+          1,
+          1,
+          0,
+          1,
+          2,
+          2,
+          1,
+          1,
+          0,
+          1,
+          2,
+          2,
+          1,
+          1,
+          0,
+          1,
+          2,
+          2,
+          1,
+          1,
+          0,
+          1,
+          2,
+          2,
+          1,
+          1,
+          0,
+          1,
+          2,
+          2,
+          1,
+          1,
+          0,
+          1,
+          2,
+          2,
+          1,
+          1,
+          0,
+          1,
+          2,
+          2,
+          1,
+          1,
+          0,
+          1,
+          2,
+          2,
+          1,
+          1,
+          0,
+          1,
+          2,
+          2,
+          1,
+          1,
+          0,
+          1,
+          2
+        ],
+        "scaled_input_bits": 2,
+        "serialized_bytes": 11261,
+        "tactic": "min_poly"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 2060,
+      "olean_bytes": 61496,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 1298
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
     "module": "HexMinPolyMathlib.ProofProbe.NilpotentN16M16Bits32Equality",
     "family": "nilpotent",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 7.649687176,
-    "max_fresh_seconds": 7.750808526,
-    "median_baseline_delta_seconds": 5.08354592,
+    "median_fresh_seconds": 7.834474652,
+    "max_fresh_seconds": 8.074422345,
+    "median_baseline_delta_seconds": 5.256369023,
     "kernel_seconds": [
-      4.78,
-      4.79,
-      4.78,
-      4.85,
-      4.83,
-      4.8
+      5.02,
+      4.99,
+      4.86,
+      5.09,
+      5.01,
+      4.97
     ],
-    "median_kernel_seconds": 4.795,
+    "median_kernel_seconds": 5.0,
     "certificates": [
       {
         "denominator_entries": 386,
@@ -1064,7 +1239,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 1676,
-      "olean_bytes": 155736,
+      "olean_bytes": 157096,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 1370
@@ -1081,18 +1256,18 @@
     "family": "nilpotent",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 7.646071601,
-    "max_fresh_seconds": 7.73446446,
-    "median_baseline_delta_seconds": 5.073644394,
+    "median_fresh_seconds": 7.879095404,
+    "max_fresh_seconds": 7.957298519,
+    "median_baseline_delta_seconds": 5.311117887,
     "kernel_seconds": [
-      4.8,
-      4.83,
-      4.79,
-      4.75,
-      4.91,
-      4.78
+      4.97,
+      4.95,
+      5.01,
+      5.07,
+      5.0,
+      5.08
     ],
-    "median_kernel_seconds": 4.795,
+    "median_kernel_seconds": 5.005,
     "certificates": [
       {
         "denominator_entries": 386,
@@ -1239,7 +1414,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 1674,
-      "olean_bytes": 92352,
+      "olean_bytes": 93712,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 1261
@@ -1256,18 +1431,18 @@
     "family": "nilpotent",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 2.642515967,
-    "max_fresh_seconds": 2.725569662,
-    "median_baseline_delta_seconds": 0.09891407,
+    "median_fresh_seconds": 2.710139466,
+    "max_fresh_seconds": 2.751699996,
+    "median_baseline_delta_seconds": 0.09507599,
     "kernel_seconds": [
-      0.0135,
-      0.013900000000000001,
-      0.013800000000000002,
-      0.0143,
-      0.013800000000000002,
-      0.014199999999999999
+      0.0141,
+      0.0127,
+      0.0125,
+      0.0136,
+      0.0125,
+      0.0124
     ],
-    "median_kernel_seconds": 0.013850000000000001,
+    "median_kernel_seconds": 0.0126,
     "certificates": [
       {
         "denominator_entries": 22,
@@ -1302,7 +1477,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 1664,
-      "olean_bytes": 28160,
+      "olean_bytes": 29520,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 493
@@ -1319,18 +1494,18 @@
     "family": "nilpotent",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 2.635319514,
-    "max_fresh_seconds": 2.659878603,
-    "median_baseline_delta_seconds": 0.083263099,
+    "median_fresh_seconds": 2.680580845,
+    "max_fresh_seconds": 2.757677429,
+    "median_baseline_delta_seconds": 0.112718072,
     "kernel_seconds": [
-      0.0141,
-      0.013800000000000002,
-      0.0154,
-      0.0134,
-      0.013699999999999999,
-      0.013800000000000002
+      0.0128,
+      0.0146,
+      0.0128,
+      0.0127,
+      0.013,
+      0.0129
     ],
-    "median_kernel_seconds": 0.013800000000000002,
+    "median_kernel_seconds": 0.01285,
     "certificates": [
       {
         "denominator_entries": 22,
@@ -1365,7 +1540,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 1662,
-      "olean_bytes": 28160,
+      "olean_bytes": 29520,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 484
@@ -1382,18 +1557,18 @@
     "family": "nilpotent",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 2.738403034,
-    "max_fresh_seconds": 2.74255683,
-    "median_baseline_delta_seconds": 0.153812059,
+    "median_fresh_seconds": 2.706875336,
+    "max_fresh_seconds": 2.782022803,
+    "median_baseline_delta_seconds": 0.093375085,
     "kernel_seconds": [
-      0.0489,
-      0.0461,
-      0.044700000000000004,
-      0.0471,
-      0.048299999999999996,
-      0.047299999999999995
+      0.0469,
+      0.048799999999999996,
+      0.041299999999999996,
+      0.0425,
+      0.0436,
+      0.0442
     ],
-    "median_kernel_seconds": 0.0472,
+    "median_kernel_seconds": 0.0439,
     "certificates": [
       {
         "denominator_entries": 50,
@@ -1444,7 +1619,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 1672,
-      "olean_bytes": 33848,
+      "olean_bytes": 35208,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 545
@@ -1461,18 +1636,18 @@
     "family": "nilpotent",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 2.739887285,
-    "max_fresh_seconds": 2.799781422,
-    "median_baseline_delta_seconds": 0.135166501,
+    "median_fresh_seconds": 2.71731136,
+    "max_fresh_seconds": 2.741014103,
+    "median_baseline_delta_seconds": 0.090292707,
     "kernel_seconds": [
-      0.0453,
-      0.048299999999999996,
-      0.046799999999999994,
-      0.044899999999999995,
-      0.0485,
-      0.0501
+      0.0423,
+      0.0441,
+      0.0471,
+      0.0476,
+      0.040799999999999996,
+      0.041
     ],
-    "median_kernel_seconds": 0.047549999999999995,
+    "median_kernel_seconds": 0.0432,
     "certificates": [
       {
         "denominator_entries": 50,
@@ -1523,7 +1698,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 1666,
-      "olean_bytes": 33040,
+      "olean_bytes": 34400,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 524
@@ -1540,18 +1715,18 @@
     "family": "nilpotent",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 3.044183813,
-    "max_fresh_seconds": 3.130656126,
-    "median_baseline_delta_seconds": 0.500587857,
+    "median_fresh_seconds": 3.067147342,
+    "max_fresh_seconds": 3.129176021,
+    "median_baseline_delta_seconds": 0.492726275,
     "kernel_seconds": [
-      0.413,
-      0.395,
-      0.392,
-      0.376,
-      0.424,
-      0.414
+      0.401,
+      0.42,
+      0.374,
+      0.411,
+      0.425,
+      0.43
     ],
-    "median_kernel_seconds": 0.404,
+    "median_kernel_seconds": 0.4155,
     "certificates": [
       {
         "denominator_entries": 130,
@@ -1634,7 +1809,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 1672,
-      "olean_bytes": 55432,
+      "olean_bytes": 56792,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 723
@@ -1651,18 +1826,18 @@
     "family": "nilpotent",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 3.074294844,
-    "max_fresh_seconds": 3.146087296,
-    "median_baseline_delta_seconds": 0.489276769,
+    "median_fresh_seconds": 3.134074926,
+    "max_fresh_seconds": 3.161744479,
+    "median_baseline_delta_seconds": 0.517463173,
     "kernel_seconds": [
-      0.409,
-      0.378,
-      0.37,
-      0.391,
-      0.417,
-      0.414
+      0.389,
+      0.398,
+      0.419,
+      0.385,
+      0.431,
+      0.413
     ],
-    "median_kernel_seconds": 0.4,
+    "median_kernel_seconds": 0.40549999999999997,
     "certificates": [
       {
         "denominator_entries": 130,
@@ -1745,7 +1920,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 1670,
-      "olean_bytes": 45488,
+      "olean_bytes": 46848,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 675
@@ -1762,18 +1937,18 @@
     "family": "rational-dense",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 29.486026307,
-    "max_fresh_seconds": 29.575872557,
-    "median_baseline_delta_seconds": 26.926665611,
+    "median_fresh_seconds": 30.748031364,
+    "max_fresh_seconds": 31.025827244,
+    "median_baseline_delta_seconds": 28.129827419,
     "kernel_seconds": [
-      18.0,
-      17.9,
-      17.9,
-      18.0,
-      18.0,
-      18.0
+      19.2,
+      19.2,
+      19.2,
+      19.1,
+      19.2,
+      19.4
     ],
-    "median_kernel_seconds": 18.0,
+    "median_kernel_seconds": 19.2,
     "certificates": [
       {
         "denominator_entries": 386,
@@ -1920,7 +2095,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 2630,
-      "olean_bytes": 6605328,
+      "olean_bytes": 6739112,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 10434
@@ -1937,18 +2112,18 @@
     "family": "rational-dense",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 23.800578938,
-    "max_fresh_seconds": 24.342338854,
-    "median_baseline_delta_seconds": 21.160444007,
+    "median_fresh_seconds": 24.993805225,
+    "max_fresh_seconds": 25.198670045,
+    "median_baseline_delta_seconds": 22.43512421,
     "kernel_seconds": [
-      18.4,
-      17.9,
-      17.9,
-      17.8,
-      17.8,
-      17.9
+      19.1,
+      19.0,
+      19.1,
+      19.1,
+      19.0,
+      19.0
     ],
-    "median_kernel_seconds": 17.9,
+    "median_kernel_seconds": 19.05,
     "certificates": [
       {
         "denominator_entries": 386,
@@ -2095,7 +2270,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 2595,
-      "olean_bytes": 3611160,
+      "olean_bytes": 3733712,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 4863
@@ -2112,18 +2287,18 @@
     "family": "rational-dense",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 2.724546862,
-    "max_fresh_seconds": 2.737316992,
-    "median_baseline_delta_seconds": 0.084676031,
+    "median_fresh_seconds": 2.719987005,
+    "max_fresh_seconds": 2.74382693,
+    "median_baseline_delta_seconds": 0.109059662,
     "kernel_seconds": [
-      0.0214,
-      0.0214,
-      0.0221,
+      0.0213,
+      0.0222,
+      0.0225,
       0.0218,
-      0.0229,
-      0.0217
+      0.0224,
+      0.0237
     ],
-    "median_kernel_seconds": 0.02175,
+    "median_kernel_seconds": 0.0223,
     "certificates": [
       {
         "denominator_entries": 22,
@@ -2158,7 +2333,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 1863,
-      "olean_bytes": 43224,
+      "olean_bytes": 50672,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 698
@@ -2175,18 +2350,18 @@
     "family": "rational-dense",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 2.723098829,
-    "max_fresh_seconds": 2.745780174,
-    "median_baseline_delta_seconds": 0.093726534,
+    "median_fresh_seconds": 2.722384736,
+    "max_fresh_seconds": 2.729476999,
+    "median_baseline_delta_seconds": 0.094278801,
     "kernel_seconds": [
-      0.0212,
-      0.0216,
-      0.021,
-      0.0214,
+      0.0235,
+      0.023100000000000002,
+      0.0228,
+      0.0222,
       0.0205,
-      0.0216
+      0.0228
     ],
-    "median_kernel_seconds": 0.0213,
+    "median_kernel_seconds": 0.0228,
     "certificates": [
       {
         "denominator_entries": 22,
@@ -2221,7 +2396,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 1852,
-      "olean_bytes": 43400,
+      "olean_bytes": 50944,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 592
@@ -2238,18 +2413,18 @@
     "family": "rational-dense",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 2.826800961,
-    "max_fresh_seconds": 2.840598607,
-    "median_baseline_delta_seconds": 0.207909692,
+    "median_fresh_seconds": 2.813147079,
+    "max_fresh_seconds": 2.933862226,
+    "median_baseline_delta_seconds": 0.205425519,
     "kernel_seconds": [
-      0.09809999999999999,
-      0.0932,
-      0.09140000000000001,
-      0.0948,
-      0.09559999999999999,
-      0.0974
+      0.0973,
+      0.0974,
+      0.104,
+      0.0879,
+      0.0994,
+      0.104
     ],
-    "median_kernel_seconds": 0.09519999999999999,
+    "median_kernel_seconds": 0.0984,
     "certificates": [
       {
         "denominator_entries": 50,
@@ -2300,7 +2475,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 1965,
-      "olean_bytes": 144576,
+      "olean_bytes": 165688,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 1217
@@ -2317,18 +2492,18 @@
     "family": "rational-dense",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 2.828230048,
-    "max_fresh_seconds": 2.87120198,
-    "median_baseline_delta_seconds": 0.210147736,
+    "median_fresh_seconds": 2.817945608,
+    "max_fresh_seconds": 2.848022839,
+    "median_baseline_delta_seconds": 0.206215223,
     "kernel_seconds": [
       0.1,
-      0.0882,
+      0.102,
       0.1,
-      0.08990000000000001,
-      0.09509999999999999,
-      0.09759999999999999
+      0.103,
+      0.0895,
+      0.108
     ],
-    "median_kernel_seconds": 0.09634999999999999,
+    "median_kernel_seconds": 0.101,
     "certificates": [
       {
         "denominator_entries": 50,
@@ -2379,7 +2554,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 1958,
-      "olean_bytes": 73024,
+      "olean_bytes": 90904,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 843
@@ -2396,18 +2571,18 @@
     "family": "rational-dense",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 4.233158114,
-    "max_fresh_seconds": 4.349789843,
-    "median_baseline_delta_seconds": 1.66993384,
+    "median_fresh_seconds": 4.332657215,
+    "max_fresh_seconds": 4.368531051,
+    "median_baseline_delta_seconds": 1.757222933,
     "kernel_seconds": [
-      1.18,
-      1.18,
-      1.14,
-      1.23,
+      1.19,
+      1.25,
       1.15,
-      1.2
+      1.23,
+      1.3,
+      1.28
     ],
-    "median_kernel_seconds": 1.18,
+    "median_kernel_seconds": 1.24,
     "certificates": [
       {
         "denominator_entries": 130,
@@ -2490,7 +2665,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 2174,
-      "olean_bytes": 640568,
+      "olean_bytes": 693136,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 3150
@@ -2507,18 +2682,18 @@
     "family": "rational-dense",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 4.125966467,
-    "max_fresh_seconds": 4.241349812,
-    "median_baseline_delta_seconds": 1.550424845,
+    "median_fresh_seconds": 4.20942824,
+    "max_fresh_seconds": 4.334802541,
+    "median_baseline_delta_seconds": 1.644662976,
     "kernel_seconds": [
-      1.18,
+      1.21,
       1.15,
-      1.2,
       1.19,
+      1.21,
       1.14,
-      1.1
+      1.23
     ],
-    "median_kernel_seconds": 1.165,
+    "median_kernel_seconds": 1.2,
     "certificates": [
       {
         "denominator_entries": 130,
@@ -2601,7 +2776,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 2161,
-      "olean_bytes": 365984,
+      "olean_bytes": 405560,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 1692
@@ -2618,18 +2793,18 @@
     "family": "repeated-block",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 7.540275852,
-    "max_fresh_seconds": 7.635202999,
-    "median_baseline_delta_seconds": 4.970758752,
+    "median_fresh_seconds": 7.81567738,
+    "max_fresh_seconds": 7.844614471,
+    "median_baseline_delta_seconds": 5.202896686,
     "kernel_seconds": [
-      4.44,
-      4.44,
-      4.39,
-      4.36,
-      4.43,
-      4.35
+      4.68,
+      4.71,
+      4.61,
+      4.68,
+      4.69,
+      4.62
     ],
-    "median_kernel_seconds": 4.41,
+    "median_kernel_seconds": 4.68,
     "certificates": [
       {
         "denominator_entries": 386,
@@ -2776,7 +2951,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 2163,
-      "olean_bytes": 345856,
+      "olean_bytes": 383032,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 1736
@@ -2793,18 +2968,18 @@
     "family": "repeated-block",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 7.45401186,
-    "max_fresh_seconds": 7.563050068,
-    "median_baseline_delta_seconds": 4.902612296,
+    "median_fresh_seconds": 7.762136077,
+    "max_fresh_seconds": 7.8305068,
+    "median_baseline_delta_seconds": 5.17981647,
     "kernel_seconds": [
-      4.39,
-      4.35,
-      4.36,
-      4.36,
-      4.38,
-      4.36
+      4.58,
+      4.57,
+      4.66,
+      4.66,
+      4.68,
+      4.53
     ],
-    "median_kernel_seconds": 4.36,
+    "median_kernel_seconds": 4.62,
     "certificates": [
       {
         "denominator_entries": 386,
@@ -2951,7 +3126,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 2158,
-      "olean_bytes": 157984,
+      "olean_bytes": 195128,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 1556
@@ -2968,18 +3143,18 @@
     "family": "repeated-block",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 2.646985591,
-    "max_fresh_seconds": 2.725512058,
-    "median_baseline_delta_seconds": 0.105606671,
+    "median_fresh_seconds": 2.698418722,
+    "max_fresh_seconds": 2.726841205,
+    "median_baseline_delta_seconds": 0.099190079,
     "kernel_seconds": [
       0.0125,
+      0.013099999999999999,
       0.0125,
-      0.0132,
-      0.0123,
-      0.013800000000000002,
-      0.0125
+      0.0126,
+      0.0121,
+      0.0144
     ],
-    "median_kernel_seconds": 0.0125,
+    "median_kernel_seconds": 0.01255,
     "certificates": [
       {
         "denominator_entries": 22,
@@ -3014,7 +3189,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 1804,
-      "olean_bytes": 30776,
+      "olean_bytes": 33240,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 526
@@ -3031,18 +3206,18 @@
     "family": "repeated-block",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 2.626114931,
-    "max_fresh_seconds": 2.748003514,
-    "median_baseline_delta_seconds": 0.084655883,
+    "median_fresh_seconds": 2.703223858,
+    "max_fresh_seconds": 2.715089943,
+    "median_baseline_delta_seconds": 0.104964766,
     "kernel_seconds": [
-      0.0123,
-      0.0121,
-      0.0128,
-      0.0121,
-      0.0121,
-      0.0132
+      0.0127,
+      0.0124,
+      0.0125,
+      0.012,
+      0.0132,
+      0.013900000000000001
     ],
-    "median_kernel_seconds": 0.012199999999999999,
+    "median_kernel_seconds": 0.0126,
     "certificates": [
       {
         "denominator_entries": 22,
@@ -3077,7 +3252,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 1802,
-      "olean_bytes": 30776,
+      "olean_bytes": 33240,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 503
@@ -3094,18 +3269,18 @@
     "family": "repeated-block",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 2.724580151,
-    "max_fresh_seconds": 2.755099333,
-    "median_baseline_delta_seconds": 0.174467017,
+    "median_fresh_seconds": 2.709889526,
+    "max_fresh_seconds": 2.739801921,
+    "median_baseline_delta_seconds": 0.096443328,
     "kernel_seconds": [
+      0.041100000000000005,
       0.0362,
-      0.038,
-      0.038299999999999994,
-      0.0421,
-      0.040299999999999996,
-      0.037399999999999996
+      0.0373,
+      0.039700000000000006,
+      0.0431,
+      0.0432
     ],
-    "median_kernel_seconds": 0.038149999999999996,
+    "median_kernel_seconds": 0.040400000000000005,
     "certificates": [
       {
         "denominator_entries": 50,
@@ -3156,7 +3331,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 1859,
-      "olean_bytes": 42488,
+      "olean_bytes": 49712,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 626
@@ -3173,18 +3348,18 @@
     "family": "repeated-block",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 2.727458811,
-    "max_fresh_seconds": 2.737089941,
-    "median_baseline_delta_seconds": 0.169827522,
+    "median_fresh_seconds": 2.716294293,
+    "max_fresh_seconds": 2.746475523,
+    "median_baseline_delta_seconds": 0.106175014,
     "kernel_seconds": [
-      0.0367,
-      0.0404,
-      0.0418,
-      0.038799999999999994,
-      0.0386,
-      0.039299999999999995
+      0.036,
+      0.037200000000000004,
+      0.038700000000000005,
+      0.0394,
+      0.039700000000000006,
+      0.0412
     ],
-    "median_kernel_seconds": 0.039049999999999994,
+    "median_kernel_seconds": 0.03905,
     "certificates": [
       {
         "denominator_entries": 50,
@@ -3235,7 +3410,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 1851,
-      "olean_bytes": 42352,
+      "olean_bytes": 49576,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 578
@@ -3252,18 +3427,18 @@
     "family": "repeated-block",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 3.030464086,
-    "max_fresh_seconds": 3.049899539,
-    "median_baseline_delta_seconds": 0.452994749,
+    "median_fresh_seconds": 3.022399798,
+    "max_fresh_seconds": 3.154232589,
+    "median_baseline_delta_seconds": 0.456736554,
     "kernel_seconds": [
-      0.31,
-      0.314,
-      0.317,
-      0.308,
-      0.284,
-      0.307
+      0.347,
+      0.302,
+      0.297,
+      0.292,
+      0.293,
+      0.281
     ],
-    "median_kernel_seconds": 0.309,
+    "median_kernel_seconds": 0.295,
     "certificates": [
       {
         "denominator_entries": 130,
@@ -3346,7 +3521,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 1959,
-      "olean_bytes": 75040,
+      "olean_bytes": 91960,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 892
@@ -3363,18 +3538,18 @@
     "family": "repeated-block",
     "component": "equality",
     "owner": "HexMinPolyMathlib",
-    "median_fresh_seconds": 3.027629457,
-    "max_fresh_seconds": 3.034068803,
-    "median_baseline_delta_seconds": 0.443605758,
+    "median_fresh_seconds": 3.024729572,
+    "max_fresh_seconds": 3.0519018,
+    "median_baseline_delta_seconds": 0.427410583,
     "kernel_seconds": [
-      0.309,
-      0.317,
       0.305,
+      0.316,
       0.288,
-      0.294,
-      0.323
+      0.291,
+      0.281,
+      0.341
     ],
-    "median_kernel_seconds": 0.307,
+    "median_kernel_seconds": 0.298,
     "certificates": [
       {
         "denominator_entries": 130,
@@ -3457,7 +3632,7 @@
     ],
     "artifacts": {
       "ilean_bytes": 1954,
-      "olean_bytes": 66064,
+      "olean_bytes": 82984,
       "olean_private_bytes": null,
       "olean_server_bytes": null,
       "source_bytes": 809
