@@ -523,30 +523,30 @@ by `scripts/bench/rank_tactic_size_sweep.py` (profiler totals per file,
 imports excluded, the median of three runs per point with the range kept)
 and plotted by `scripts/plots/hex-rank-mathlib-tactic-size.py` to
 `reports/figures/hex-rank-mathlib-tactic-size.svg`. The dimension record is
-`reports/bench-results/hex-rank-mathlib-tactic-size-a064f87dd9f3-chungus2.json`.
+`reports/bench-results/hex-rank-mathlib-tactic-size-bc80920326fc-chungus2.json`.
 It measures the integer-only frontend at that revision, excluding the additional
 carrier handlers and their imports. Full module costs and import baselines for
 the additional carriers are in the
 [carrier performance report](../../reports/hex-rank-carriers-performance.md).
 Under the ten-second cap
 `eval_rank` reaches `n = 28` at full rank, rank `n − 2` and rank `n / 2`
-(about `10.5 s`) and `n = 24` at rank `2` (`7.0 s`); `rank` reaches
-`n = 48` at full rank (`1.3 s`, of which the kernel is `0.45 s`), rank
-`n − 2` (`1.7 s`, kernel `0.9 s`) and rank `n / 2` (`4.0 s`, kernel
-`3.2 s`, the plain upper bound), and `n = 128` at rank `2` (`7.1 s`, of
-which the kernel is `1.2 s` and the literal's elaboration and the entries'
-evaluation most of the rest); `rank -packing` reaches the same dimensions
-at `2.5`, `2.9`, `4.2` and `7.1 s`.
+(`10.2` to `10.6 s`) and `n = 24` at rank `2` (`6.6 s`); `rank` reaches
+`n = 48` at full rank (`1.3 s`, of which the kernel is `0.5 s`), rank
+`n − 2` (`1.7 s`, kernel `0.9 s`) and rank `n / 2` (`1.6 s`, kernel
+`0.8 s`), and `n = 128` at rank `2` (`6.6 s`, of which the kernel is
+`0.9 s` and the literal's elaboration and the entries' evaluation most of
+the rest); `rank -packing` reaches the same dimensions at `2.6`, `2.8`,
+`4.0` and `6.8 s`.
 
 Median kernel shares recorded by the same size sweep are:
 
 | family | `eval_rank` | `rank` | `rank -packing` |
 |---|---|---|---|
-| dense `8 × 8`, rank 8 | 128 ms | 13 ms | 14 ms |
-| dense `16 × 16`, rank 16 | 1.00 s | 39 ms | 70 ms |
-| dense `16 × 16`, rank 14 | 1.03 s | 69 ms | 93 ms |
-| dense `32 × 32`, rank 32 | timeout | 183 ms | 528 ms |
-| `32 × 32`, rank 2 | timeout | 149 ms | 137 ms |
+| dense `8 × 8`, rank 8 | 136 ms | 14 ms | 14 ms |
+| dense `16 × 16`, rank 16 | 1.03 s | 47 ms | 70 ms |
+| dense `16 × 16`, rank 14 | 1.02 s | 74 ms | 89 ms |
+| dense `32 × 32`, rank 32 | timeout | 213 ms | 537 ms |
+| `32 × 32`, rank 2 | timeout | 129 ms | 131 ms |
 
 The timeout entries have no profiler breakdown because the corresponding
 proof exceeded the sweep's ten-second cap.
