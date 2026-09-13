@@ -518,35 +518,41 @@ delta):
 Proof time against dimension, for the full-rank, rank `n − 2`, rank
 `n / 2` and rank `2` families up to a ten-second cap per run, in three
 arms (`eval_rank`, `rank`, and `rank -packing` for the plain checker on
-the same certificate), is recorded
+the same certificate) plus, with `--mathlib-root`, the `eval_rank` of
+another Mathlib checkout as a fourth arm (the record names its commit and
+label; the current record measures the open Mathlib pull request #43438,
+which replaces the `Echelon.Decomposition` check by list-based
+certificates), is recorded
 by `scripts/bench/rank_tactic_size_sweep.py` (profiler totals per file,
 imports excluded, the median of three runs per point with the range kept)
 and plotted by `scripts/plots/hex-rank-mathlib-tactic-size.py` to
 `reports/figures/hex-rank-mathlib-tactic-size.svg`. The dimension record is
-`reports/bench-results/hex-rank-mathlib-tactic-size-bc80920326fc-chungus2.json`.
+`reports/bench-results/hex-rank-mathlib-tactic-size-737b94cf8d16-chungus2.json`.
 It measures the integer-only frontend at that revision, excluding the additional
 carrier handlers and their imports. Full module costs and import baselines for
 the additional carriers are in the
 [carrier performance report](../../reports/hex-rank-carriers-performance.md).
 Under the ten-second cap
-`eval_rank` reaches `n = 28` at full rank, rank `n − 2` and rank `n / 2`
-(`10.2` to `10.6 s`) and `n = 24` at rank `2` (`6.6 s`); `rank` reaches
-`n = 48` at full rank (`1.3 s`, of which the kernel is `0.5 s`), rank
-`n − 2` (`1.7 s`, kernel `0.9 s`) and rank `n / 2` (`1.6 s`, kernel
-`0.8 s`), and `n = 128` at rank `2` (`6.6 s`, of which the kernel is
-`0.9 s` and the literal's elaboration and the entries' evaluation most of
-the rest); `rank -packing` reaches the same dimensions at `2.6`, `2.8`,
-`4.0` and `6.8 s`.
+the pinned Mathlib's `eval_rank` reaches `n = 24` at full rank and rank
+`n − 2` (`6.9` and `8.7 s`), `n = 28` at rank `n / 2` (`10.4 s`) and
+`n = 24` at rank `2` (`6.6 s`); the `eval_rank` of #43438 reaches `n = 48` at full rank, rank
+`n − 2` and rank `n / 2` (`8.0`, `7.4` and `6.7 s`) and `n = 64` at rank `2`
+(`8.2 s`); `rank` reaches `n = 48` at full rank (`1.3 s`, of which the
+kernel is `0.5 s`), rank `n − 2` (`1.7 s`, kernel `0.9 s`) and rank
+`n / 2` (`1.7 s`, kernel `0.9 s`), and `n = 128` at rank `2` (`6.6 s`, of which
+the kernel is `0.9 s` and the literal's elaboration and the entries'
+evaluation most of the rest); `rank -packing` reaches the same dimensions
+at `2.8`, `2.7`, `4.1` and `6.7 s`.
 
 Median kernel shares recorded by the same size sweep are:
 
-| family | `eval_rank` | `rank` | `rank -packing` |
-|---|---|---|---|
-| dense `8 × 8`, rank 8 | 136 ms | 14 ms | 14 ms |
-| dense `16 × 16`, rank 16 | 1.03 s | 47 ms | 70 ms |
-| dense `16 × 16`, rank 14 | 1.02 s | 74 ms | 89 ms |
-| dense `32 × 32`, rank 32 | timeout | 213 ms | 537 ms |
-| `32 × 32`, rank 2 | timeout | 129 ms | 131 ms |
+| family | `eval_rank` | `eval_rank` at #43438 | `rank` | `rank -packing` |
+|---|---|---|---|---|
+| dense `8 × 8`, rank 8 | 118 ms | 29 ms | 13 ms | 13 ms |
+| dense `16 × 16`, rank 16 | 846 ms | 144 ms | 40 ms | 59 ms |
+| dense `16 × 16`, rank 14 | 948 ms | 160 ms | 71 ms | 84 ms |
+| dense `32 × 32`, rank 32 | timeout | 1.14 s | 195 ms | 504 ms |
+| `32 × 32`, rank 2 | timeout | 468 ms | 129 ms | 133 ms |
 
 The timeout entries have no profiler breakdown because the corresponding
 proof exceeded the sweep's ten-second cap.

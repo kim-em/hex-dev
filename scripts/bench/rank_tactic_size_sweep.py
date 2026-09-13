@@ -2,7 +2,11 @@
 """Proof time against dimension for the `rank` tactic and Mathlib's `eval_rank`.
 
 Three arms: `eval_rank`, `rank` (the packed lower bound, the default) and
-`rank -packing` (the plain checker on the same certificate).
+`rank -packing` (the plain checker on the same certificate). With
+``--mathlib-root`` a fourth arm, ``eval_rank_alt``, proves the same literals
+with the `eval_rank` of that Mathlib checkout (built for
+`Mathlib.Tactic.NormRank`), so an unreleased Mathlib revision can be put on
+the same figure; the record notes its commit and label.
 
 For each family (full rank, rank ``n - 2``, rank ``n / 2``, rank ``2``) and
 each dimension, one seeded ``n × n`` integer literal with entries in
@@ -73,7 +77,8 @@ def literal(m: list[list[int]]) -> str:
     return "!![" + "; ".join(", ".join(str(x) for x in row) for row in m) + "]"
 
 
-def run_lean(path: Path, timeout: float, cpu: int | None) -> tuple[float | None, bool, dict[str, float]]:
+def run_lean(path: Path, timeout: float, cpu: int | None,
+             cwd: Path = ROOT) -> tuple[float | None, bool, dict[str, float]]:
     """Wall time, success, and the profiler's cumulative categories in seconds."""
     cmd = ["lake", "lean", str(path)]
     if cpu is not None:
@@ -82,7 +87,7 @@ def run_lean(path: Path, timeout: float, cpu: int | None) -> tuple[float | None,
     # `lake lean` spawns `lean` as a child; on a timeout the whole process group
     # is killed, or the child would keep running on the pinned CPU and slow the
     # runs that follow.
-    with subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+    with subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
                           start_new_session=True) as proc:
         try:
             stdout, stderr = proc.communicate(timeout=timeout)
@@ -115,7 +120,21 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--seed", type=int, default=2026)
     parser.add_argument("--cpu", type=int, help="logical CPU for the timed processes")
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--mathlib-root", type=Path,
+                        help="a Mathlib checkout, built for Mathlib.Tactic.NormRank, whose eval_rank "
+                             "is measured as a fourth arm")
+    parser.add_argument("--mathlib-label", help="how the figure names that arm (default: its commit)")
     args = parser.parse_args(argv)
+    tools = dict(TOOLS)
+    cwds: dict[str, Path] = {tool: ROOT for tool in tools}
+    mathlib_alt: dict[str, str] | None = None
+    if args.mathlib_root is not None:
+        root = args.mathlib_root.resolve()
+        alt_sha = subprocess.run(["git", "rev-parse", "--short=12", "HEAD"], cwd=root,
+                                 capture_output=True, text=True, check=True).stdout.strip()
+        mathlib_alt = {"root": str(root), "commit": alt_sha, "label": args.mathlib_label or alt_sha}
+        tools["eval_rank_alt"] = ("Mathlib.Tactic.NormRank", "eval_rank")
+        cwds["eval_rank_alt"] = root
     sha = subprocess.run(["git", "rev-parse", "--short=12", "HEAD"], cwd=ROOT,
                          capture_output=True, text=True, check=True).stdout.strip()
     host = socket.gethostname()
@@ -125,20 +144,20 @@ def main(argv: list[str] | None = None) -> int:
     with tempfile.TemporaryDirectory(prefix="rank-size-") as tmp:
         tmpdir = Path(tmp)
         baseline: dict[str, float] = {}
-        for tool, (imp, _) in TOOLS.items():
+        for tool, (imp, _) in tools.items():
             path = tmpdir / f"base_{tool}.lean"
             path.write_text(f"import {imp}\nexample : True := trivial\n")
-            samples = [run_lean(path, 600.0, args.cpu)[0] for _ in range(2)]
+            samples = [run_lean(path, 600.0, args.cpu, cwds[tool])[0] for _ in range(2)]
             baseline[tool] = min(s for s in samples if s is not None)
             print(f"[baseline] {tool} {baseline[tool]:.2f}s", flush=True)
         for family in FAMILIES:
             stopped: set[str] = set()
             for n in SIZES[family]:
-                if len(stopped) == len(TOOLS):
+                if len(stopped) == len(tools):
                     break
                 m = matrix(family, n, args.seed)
                 r = FAMILIES[family][1](n)
-                for tool, (imp, tactic) in TOOLS.items():
+                for tool, (imp, tactic) in tools.items():
                     if tool in stopped:
                         continue
                     path = tmpdir / f"{family}_{n}_{tool}.lean"
@@ -149,7 +168,8 @@ def main(argv: list[str] | None = None) -> int:
                     point: dict[str, object] = {"family": family, "n": n, "rank": r, "tool": tool}
                     samples: list[dict[str, object]] = []
                     for _ in range(args.samples):
-                        wall, ok, profile = run_lean(path, baseline[tool] + args.cap + 1.0, args.cpu)
+                        wall, ok, profile = run_lean(path, baseline[tool] + args.cap + 1.0, args.cpu,
+                                                     cwds[tool])
                         if wall is None:
                             samples.append({"status": "timeout"})
                             break
@@ -187,6 +207,7 @@ def main(argv: list[str] | None = None) -> int:
         "load_average_at_end": os.getloadavg(),
         "baseline_s": baseline,
         "families": {k: v[0] for k, v in FAMILIES.items()},
+        "mathlib_alt": mathlib_alt,
         "points": points,
     }
     output.parent.mkdir(parents=True, exist_ok=True)
