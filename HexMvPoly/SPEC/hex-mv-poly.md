@@ -84,8 +84,10 @@ Ordered iteration gives the leading term in the monomial order, which
 every algorithm above the ring operations needs. Extensionality comes
 with the type, so two polynomials with equal key-value sets are
 propositionally equal and the canonical form condition reduces to "no
-zero values". The Phase 4 proof probes described below determine
-whether this representation also meets the kernel-reduction budget.
+zero values". The reference representation remains the
+compiled-computation interface. Kernel certificate replay uses the canonical
+list form specified below, exercised directly by the closed certificate in
+`KernelTests.lean`. The Phase 4 reference/proxy probes are separate benchmarks.
 
 Reusable map algorithms belong in `HexBasic/ExtTreeMap.lean`, in the
 `Std.ExtTreeMap` namespace, with no Hex-specific types or polynomial
@@ -212,39 +214,87 @@ laws, all of which the S-polynomial construction uses.
 
 ## Kernel reduction
 
-The tactic consumers (`sos`, and anything in the `factor_poly` family
-that grows a multivariate arm) check certificates with `decide +kernel`.
-The representation therefore has to reduce in the kernel, not merely
-compile.
+Certificate-producing tactics use the reference `MvPoly` for compiled
+computation and quote their results into `Hex.MvPoly.Kernel.PolyList` for
+`decide +kernel` replay. The two representations have deliberately separate
+jobs: the `Std.ExtTreeMap` representation remains the fast executable source
+of truth, while the list form keeps `Vector`, `Fin`, arrays, dependent
+conditionals, and well-founded recursion off the certificate path.
 
-`Std.ExtTreeMap` is the candidate representation, but it is not accepted
-for certificate replay until a downstream module proves that the full
-production equality and arithmetic path reduces. That probe uses
-`module`, `public import`, the intended `@[expose]` closure,
-`Vector Nat n` keys, the `nonzero` wrapper, and both `Int` and `Rat`
-coefficients. Testing a bare container or a legacy non-module file does
-not answer the question.
+`Kernel.Term κ` is `List Nat × κ`, and `Kernel.PolyList κ` is a list of
+terms. A list is `Canonical n` when every exponent has length `n`, exponent
+lists are strictly decreasing in ordinary lexicographic order, and every
+coefficient is nonzero. The arity condition is part of the invariant: without
+it, distinct lists can denote the same fixed-arity monomial through padding.
+The list order is fixed and does not depend on the reference polynomial's
+storage comparator.
 
-The comparative probe implements a competent canonical sorted-list
-representation as well. Its addition is a linear merge, and its
-multiplication uses translated-row merging or a produce-sort-combine
-pass rather than repeated linear insertion. Workloads include disjoint
-and interleaved addition, low- and high-collision multiplication,
-cancellation-heavy identities, sparse random supports, rename and
-substitution collisions, and real SOS certificate identities. They vary
-arity, degree, term count, coefficient type, and monomial order.
+The exposed computational API is structural recursion on `List` or `Nat`:
 
-These elaboration measurements live under the `mathlib: true`
-`HexMvPolyMathlib` proof-probe root. They are not LeanBench targets and
-do not define `main`. The Mathlib-free `HexMvPoly` bench contains only
-compiled performance measurements. A second kernel-specialised
-representation is justified only if the sorted form beats
-`ExtTreeMap` by more than 2× on at least two workload families at the
-largest size within the proof-probe time budget. Otherwise the single
-representation stands. The `PolyOps`-style abstraction in
-[future work](https://github.com/kim-em/hex-dev/blob/main/SPEC/future-work.md)
-is where a second representation would
-attach.
+```lean
+normalize, add, sub, mul, neg, smul : PolyList κ → ... → PolyList κ
+one : Nat → PolyList κ
+isZero : PolyList κ → Bool
+beq : PolyList κ → PolyList κ → Bool
+evalAt : List κ → PolyList κ → κ
+```
+
+Exponent equality and ordering use `Nat.beq` and `Nat.blt`; exponent addition
+uses `Nat.add`. Coefficient computation uses the representation's ordinary
+primitive operations. Thus `Int` replay reduces through `Int.add`, `Int.mul`,
+and `Int.neg`; Lean's `Rat` supplies its reduced numerator-denominator
+representation. A positive-characteristic reflection provider supplies
+canonical `Nat` residues and modulus-parametrised operations before invoking
+this generic list layer. The small rational fixtures establish reduction and
+correctness, not a general rational certificate performance budget; consumers
+that clear denominators can continue replaying entirely over `Int`.
+
+Addition is a linear merge, structurally recursive on a budget equal to the
+sum of the input lengths. Multiplication translates one row per left term
+and combines adjacent rows in balanced merge rounds. The row-count budget
+makes those rounds structurally recursive as well. Both workers have total
+fallbacks with unconditional denotation laws; the public budgets suffice to
+reach the empty or singleton cases without using those fallbacks.
+
+`denote` reads exact-length exponent lists as `Mono n` and sums their
+monomials in the Mathlib-free reference type. The public laws are
+`denote_one`, `denote_add`, `denote_sub`, `denote_mul`, `denote_neg`, `denote_smul`, and
+`evalAt_denote`. Every arithmetic operation preserves `Canonical`; on
+canonical inputs:
+
+```lean
+isZero p = true ↔ denote p = 0
+beq p q = true ↔ denote p = denote q
+```
+
+Structural `beq` is reflexive, symmetric, and transitive. These results make
+dropping zeros and duplicate polynomials transport without asking the kernel
+to compare reference trees.
+
+`toList : MvPoly n κ cmp → PolyList κ` is producer-side only. It emits a
+canonical list and satisfies `denote_toList`; conversely `toList_denote`
+recovers every canonical list. Reversing the reference term stream and
+checking canonicality gives a linear path for the default lexicographic
+comparator; other orders fall back to normalization when necessary.
+In particular the symbolic-rank consumer's grevlex storage can take the
+quadratic fallback; that sorting is compiled producer work, outside replay.
+`toRows` quotes nested reference polynomial lists, and `denote_toRows`
+proves entrywise denotation recovers those lists. The matrix-owning consumer
+defines its polymorphic `rowLists P := P.rows.toList.map Vector.toList`
+(the current Bareiss `rowLists` is specialized to integers). Applying
+`denote_toRows` to those rows supplies the matrix identification:
+`L.map (·.map denote) = rowLists P`, in the same way that the shared matrix
+literal layer identifies scalar row lists with `ofLists`. Certificate replay
+uses `L`, never the reference matrix or `toList` computation.
+
+`KernelTests.lean` exercises `Int` and `Rat`, canonicality, zero and equality
+fixtures, evaluation, and a `4 × 4` tridiagonal polynomial adjugate identity.
+The adjugate and determinant are independent coefficient literals, both
+multiplication orders are checked, and a corrupted determinant is rejected.
+The main identity retains a scoped `trace.profiler` on its `decide +kernel`
+proof so builds report its timing. Its kernel check measured 77 ms on the
+shared host; the target is well under one second. This records an observation,
+not an automatically enforced wall-clock limit or a general size-scaling claim.
 
 ## Kernel exposure
 
@@ -280,14 +330,15 @@ The equality and construction constraints are shims for
 and disappear when it lands. The comparison shim remains until
 `Array.compareLex` itself is exposed upstream.
 
-The kernel replay closure is everything a certificate check touches:
-`Mono` operations, the comparator, `ExtTreeMap` lookup and `alter`,
-arithmetic and equality, direct and Horner evaluation, substitution and
-partial evaluation, and the recursive view. Each is `@[expose]`, and a
-downstream module carries `decide +kernel` tests that fail if any of them
-stops reducing. Storage-order and reporting queries such as
-`totalDegree`, `vars`, and pretty-printing remain outside that closure
-and expose their behavior through characterizing lemmas instead.
+The certificate replay closure is the API of `Kernel.lean`: list comparison,
+insertion and normalization, arithmetic, equality and zero checks, and list
+evaluation. The enclosing public section exposes each of these definitions,
+and a downstream module carries `decide +kernel` tests that fail if any stops
+reducing. The reference `Mono` comparators and `MvPoly` operations remain
+exposed for their smaller direct users, but symbolic matrix certificates do
+not place `ExtTreeMap`, `Vector`, or `Fin` in the replay closure. Storage-order
+and reporting queries such as `totalDegree`, `vars`, and pretty-printing stay
+outside that closure and expose their behavior through characterizing lemmas.
 
 Operations whose kernel-friendly shape differs from the fast shape carry
 a `@[csimp]` pair, as `Hex.Array.ofFn'` does. Multiplication is the
@@ -300,6 +351,9 @@ Complexity is in terms of the term counts `s = p.termCount` and
 `t = q.termCount`, arity `n`, the maximum exponent `d`, and the cost of
 one coefficient operation. Monomial comparison is `O(n)`, which is not
 constant and shows up in every tree operation.
+The `Kernel` arithmetic bounds below assume canonical input lists; in
+particular translating a canonical product row makes each insertion a
+constant number of comparisons.
 
 | operation | algorithm | cost |
 |---|---|---|
@@ -313,6 +367,12 @@ constant and shows up in every tree operation.
 | `rename` | rebuild, combining collisions | `O(n · s log s)` |
 | `eval` | Horner over the recursive view, or direct term sum with repeated-squaring powers | `O(s · n · log d)` coefficient operations in the direct form |
 | `toUnivariate` | partition by the main variable's exponent | `O(n · s log s)` |
+| `Kernel.add` | linear merge of descending term lists | `O(n · (s+t))` |
+| `Kernel.mul` | translate rows, then balanced merge rounds | `O(n · s · t · log(s+1))` |
+| `Kernel.neg`, `Kernel.smul` | map coefficients and drop zeros | `O(s)` coefficient operations |
+| `Kernel.normalize` | insert arbitrary terms into descending order | `O(n · s²)` |
+| `Kernel.toList` | check reversed stream, otherwise normalize | `O(n · s)` for `Mono.lex`, `O(n · s²)` worst case |
+| `Kernel.evalAt` | structural linear powers and term sum | `O(s · n · (d+1))` coefficient operations |
 
 Multiplication is the one to fix now rather than defer, per design
 principle 7. The chosen algorithm is the accumulate-into-one-map form
@@ -672,9 +732,9 @@ coefficient type is itself computable. A tactic can therefore restrict
 itself to coefficients it can normalise, or prove
 `p : ℝ[X] = algebraMap ℚ[X] ℝ[X] p'` and compute in the `ℚ` model. The
 Mathlib-free representation and its companion support the second route
-without making the computational library depend on Mathlib. The kernel
-proof probes compare it with the sorted-list alternative before either
-representation is recommended for tactic use.
+without making the computational library depend on Mathlib. The existing
+kernel proof probes compare the reference tree with a sorted-list proxy;
+certificate consumers use the separate `Kernel.PolyList` API specified above.
 
 ## Conformance
 
@@ -759,72 +819,35 @@ two consumers stress different things and a single number would hide
 both.
 
 **Kernel suite.** `decide +kernel` on identities, reported as
-elaboration wallclock. This is a build-only
-`HexMvPolyMathlib` proof probe, not a LeanBench target. It runs the
-production types (`Vector Nat n` keys, the real `DecidableEq`, `Rat` as
-well as `Int`) from a downstream module under the module system,
-against both the `ExtTreeMap` form and a competently implemented sorted
-form. Workload families are disjoint and interleaved addition,
+elaboration wallclock. `HexMvPoly/KernelTests.lean` covers the mandatory
+small list-form replay, while larger build-only `HexMvPolyMathlib` proof
+probes are not LeanBench targets. They run both `Int` and `Rat` from a
+downstream module under the module system. Workload families are disjoint
+and interleaved addition,
 low-collision and high-collision multiplication, cancellation-heavy
 identities, sparse random supports, `rename` and `subst` collisions, and
 real `sos` certificates. They vary arity, degree, term count, and
-comparator.
+reference comparator; the canonical list order itself is fixed.
 
 **Native suite.** Compiled throughput on the same families, which is
 what CompPoly's consumers care about and what would justify retiring
 their module.
 
-**Comparators.** CompPoly and `MvSparsePoly` are the two that matter and
-both are `informational` rather than required checks: they are
-structurally different designs, and the point of measuring them is to
-decide a design question rather than to hold a ratio. SymPy is not a
-performance comparator. Since both Lean comparators import Mathlib,
-their adapters run as external comparator drivers over the shared input
-corpus rather than as imports of the Mathlib-free LeanBench target.
-The core registration owns the five native-family comparisons. The
-Mathlib companion separately registers `MvSparsePoly` for the kernel
-families, where the representation decision is made.
-
-**The threshold, written down in advance.** A second, kernel-specialised
-representation is justified only if the kernel suite shows the sorted
-form beating `ExtTreeMap` by more than 2× on at least two workload
-families at the largest size that fits the bench time budget. The ratio
-is the median production workload time divided by the median sorted
-workload time after subtracting the same round's matched import-only
-module build from each arm. Raw fresh-module wall times are still
-reported, together with the maximum raw ratio attainable if the sorted
-workload itself took zero time; an import-dominated raw ratio is not
-used for this decision.
-
-Both baseline-subtracted medians must exceed the robust variability
-envelope of the round-matched import baseline. The record separately
-calibrates pair-order noise with same-module controls at three build
-magnitudes, including a large SOS-scale control. At each substantive build
-magnitude it interpolates median/MAD/IQR/Tukey statistics and makes the
-conservative envelope no smaller than the maximum observed absolute null
-delta. The record is invalid when a control's IQR exceeds 10% of its build
-magnitude. A baseline-limited ratio or a comparison whose arm delta is
-unresolved against the interpolated null envelope does not count toward the
-threshold. Reference and candidate arms use the same coefficient type,
-arity, comparator, support stream, and identity; the report records those
-axes for every pair. Anything short of two conservative greater-than-2×
-workload ratios leaves the single representation standing. Concretely, if
-the attributed reference and candidate workloads are `r` and `c` and the
-comparable null envelope is `e`, the threshold interval is
-`(r - e) / (c + e)` through `(r + e) / (c - e)`. A family passes only
-when the comparison is resolved and the lower bound exceeds 2; a point
-estimate above 2 is not sufficient.
-
-When a workload includes materially different input construction, a matched
-construction-only pair is subtracted round by round after import subtraction.
-The resulting net ratio counts only when both net arms exceed the sum of the
-full-workload and construction-control null envelopes. This prevents a faster
-constructor from being reported as a faster arithmetic operation.
+**Comparators.** CompPoly and the existing sorted-list proxy remain
+informational compiled-throughput comparators. SymPy is not a performance
+comparator. The kernel representation decision is no longer conditional:
+symbolic matrix certificates require the canonical `PolyList` path under
+`SPEC/matrix-tactics.md`'s prohibition on `Vector`/`Fin` in replay. The
+integer matrix timing cited there motivates this discipline; it is not a
+measurement of reference `MvPoly` arithmetic. `KernelTests.lean` measures
+the actual list-form certificate path on a small closed identity.
 
 The native driver lives at `bench/HexMvPoly/Bench.lean`. Kernel probes
 live below `bench/HexMvPolyMathlib/ProofProbe/`, contain no `main`,
 import no `LeanBench`, and are registered through
-`HexMvPolyMathlib.proof_probes`.
+`HexMvPolyMathlib.proof_probes`. Those probes still measure the reference
+tree and the `Mono`-keyed sorted-list proxy, not `Kernel.PolyList`; they do
+not establish performance or a scaling budget for the new list API.
 
 Because the native registration names two comparators, Phase 4 also
 commits the five required comparator plots under
@@ -842,9 +865,11 @@ HexMvPoly/
   Eval.lean          -- eval, eval₂, Horner, partialEval
   Structural.lean    -- rename, reorder, subst, derivative, homogeneous parts
   Recursive.lean     -- toUnivariate, ofUnivariate, round trips
+  Kernel.lean        -- canonical list arithmetic and reference denotation
 HexMvPoly.lean       -- umbrella
 HexMvPolyMathlib/
   Equiv.lean         -- MvPoly n R cmp ≃+* MvPolynomial (Fin n) R
+  Kernel.lean        -- term-list denotation into MvPolynomial
   Recursive.lean     -- zero-arity, one-variable, and finSucc ring equivalences
   Aeval.lean         -- aeval and its homomorphism lemmas
   Correspondence.lean-- coeff/eval/degree/rename/subst/recursive-view transport
@@ -866,7 +891,7 @@ HexMvPolyMathlib.lean
           rationale: "CompPoly uses the same ExtTreeMap representation behind a Mathlib-dependent API; the comparison records integration and implementation overhead rather than gating release."
         - tool: "canonical sorted-list MvSparsePoly proxy"
           class: informational
-          rationale: "The pinned Mathlib revision has no MvSparsePoly, so a local canonical sorted-list proxy records compiled throughput for the alternative algorithmic shape. The native comparison is informational; only the registered kernel proof probes can decide whether a second representation is justified."
+          rationale: "The pinned Mathlib revision has no MvSparsePoly, so a local canonical sorted-list proxy records compiled throughput for the alternative algorithmic shape. The registered kernel proof probes compare that proxy with the reference tree; KernelTests separately checks the actual PolyList certificate path."
       input_families:
         - name: sparse-addition
           description: Disjoint and interleaved sparse supports across lexicographic, graded lexicographic, and graded reverse lexicographic order.
@@ -888,7 +913,7 @@ HexMvPolyMathlib.lean
       comparators:
         - tool: "canonical sorted-list MvSparsePoly proxy"
           class: informational
-          rationale: "Mathlib MvSparsePoly is not yet available in the pinned Mathlib revision, so a local canonical sorted-list proxy with linear merge addition and balanced translated-row multiplication is used to decide whether HexMvPoly needs a second representation."
+          rationale: "Mathlib MvSparsePoly is not yet available in the pinned Mathlib revision, so a local canonical sorted-list proxy with linear merge addition and balanced translated-row multiplication remains an informational comparison for the canonical PolyList certificate path."
       input_families:
         - name: kernel-sparse-addition
           description: Disjoint, interleaved, and scattered supports checked under lex and grevlex, including an arity-eight case.
@@ -969,21 +994,16 @@ check, because it is the acceptance test for the surface listed here.
    the recursive view.
 4. Add conformance fixtures and the Mathlib correspondence.
 5. Run the module-boundary kernel probes and native benchmarks. Keep
-   `ExtTreeMap` as the compiled representation. If the recorded threshold
-   selects the sorted form, record the justified kernel-specialized second
-   representation under
-   [future work](https://github.com/kim-em/hex-dev/blob/main/SPEC/future-work.md),
-   where the
-   representation abstraction belongs.
+   `ExtTreeMap` as the compiled representation and use `Kernel.PolyList` as
+   the mandatory quoted representation for symbolic matrix certificate
+   replay.
 
 ## Open questions
 
 - **Coefficient types.** The library is generic in `R`. CompPoly
-  compatibility and the later Hex work both require that, so it is not
-  in question. The open part is that `sos` needs `Rat`, whose
-  kernel-reduction cost must be measured separately from the polynomial
-  container. If that cost dominates, a kernel-friendly rational
-  representation is a separate library decision.
+  compatibility and later Hex work both require that. Kernel certificates
+  use representation types with primitive arithmetic: `Int`, reduced `Rat`,
+  or canonical `Nat` residues supplied by the reflection layer.
 - **Sparse coefficients versus sparse exponents.** `Mono n` as a dense
   `Vector Nat n` is right for small `n`. Whether large `n` with few
   active variables wants a sparse exponent vector should be settled by
