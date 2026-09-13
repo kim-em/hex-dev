@@ -131,18 +131,31 @@ each step in a bounded number of unfoldings. -/
   | a :: as, b :: bs => Int.add (Int.mul a b) (dotInt as bs)
   | _, _ => 0
 
-/-- Column `j` of a row list. -/
+/-- Column `j` of a row list: the specification of `columns`, not on the
+kernel path. -/
 @[expose] def column (j : Nat) : List (List Int) → List Int
   | [] => []
   | r :: rs => nthInt r j :: column j rs
 
-/-- Columns `j, …, j + k - 1` of a row list. -/
-@[expose] def columnsFrom (A : List (List Int)) (j : Nat) : Nat → List (List Int)
-  | 0 => []
-  | k + 1 => column j A :: columnsFrom A (j + 1) k
+/-- A row prepended entrywise to a list of columns: entry `j` of the row goes
+on top of column `j`; a short row contributes `0`s, and entries past the
+last column are dropped. -/
+@[expose] def consCols : List Int → List (List Int) → List (List Int)
+  | a :: as, c :: cs => (a :: c) :: consCols as cs
+  | [], c :: cs => (0 :: c) :: consCols [] cs
+  | _, [] => []
 
-/-- The `m` columns of a row list. -/
-@[expose] def columns (m : Nat) (A : List (List Int)) : List (List Int) := columnsFrom A 0 m
+/-- `m` empty columns. -/
+@[expose] def emptyCols : Nat → List (List Int)
+  | 0 => []
+  | k + 1 => [] :: emptyCols k
+
+/-- The `m` columns of a row list, built in one pass over the rows: `n · m`
+list steps, against the `n · m` indexed reads of `O(index)` each that
+`column` would cost. -/
+@[expose] def columns (m : Nat) : List (List Int) → List (List Int)
+  | [] => emptyCols m
+  | r :: rs => consCols r (columns m rs)
 
 /-- The row is orthogonal to every column in the list. -/
 @[expose] def zeroDots (t : List Int) : List (List Int) → Bool

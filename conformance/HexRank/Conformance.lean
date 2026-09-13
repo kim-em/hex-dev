@@ -250,6 +250,9 @@ example : checkRankList 3 4 (toLists kernelEx) { kernelWitness with rows := [0, 
   decide +kernel
 example : checkRankList 3 4 (toLists kernelEx) { kernelWitness with cols := [0, 4] } = false := by
   decide +kernel
+-- pivot columns must increase: the block is read in one walk of each row
+example : checkRankList 3 4 (toLists kernelEx) { kernelWitness with cols := [1, 0] } = false := by
+  decide +kernel
 example : checkRankList 3 4 [[1, 2, 3, 4], [2, 4, 6, 8], [1, 0, 1]] kernelWitness = false := by
   decide +kernel
 

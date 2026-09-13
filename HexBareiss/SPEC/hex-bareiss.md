@@ -348,7 +348,12 @@ instead, and its value is `0`.
 2. the triangularization: the kernel arranges the rows itself
    (`applySwaps`, each swap two `replaceRow`s), reads the sign of the
    arrangement off the number of swaps, and transposes the arranged matrix
-   once (`columns`). For every row `i` of `L` it takes the products with
+   once (`columns`, one pass over the rows prepending each entry to its
+   column, `n²` list steps; not `n²` indexed reads of `O(index)` each,
+   which measured as much as the arithmetic on the dense `40 × 40` bench
+   matrix and most of the check on the singular one). For every row `i`
+   of `L` it takes
+   the products with
    the columns `0, …, i` of `σA`: the first `i` must vanish, and the last
    is the diagonal entry `uᵢ` of the upper triangular product `U = L · σA`
    (`triangularCheck`). Nothing above the diagonal of `U` is computed;

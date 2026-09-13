@@ -412,7 +412,9 @@ from the chosen coefficients (`Classical.choose`, no injectivity of
 `rows` needed), and `rank_smul_of_mem_nonZeroDivisors`, `rank_mul_le_right`,
 `rank_le_card_height`. The bridge from lists to sums is
 `dotNat_eq_sum`, `combo_getD` and `rowsCheck_spec`, each by induction on
-the list the checker recurses on.
+the list the checker recurses on, and `pickCols_eq`, which identifies the
+one-pass read of the pivot block with indexed reads for strictly
+increasing pivot columns (`strictInc_iff`).
 
 ## The `rank` tactic
 

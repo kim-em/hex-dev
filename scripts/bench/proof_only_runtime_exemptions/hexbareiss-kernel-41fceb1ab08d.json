@@ -1,0 +1,6 @@
+{
+  "path": "HexBareiss/Kernel.lean",
+  "baseline_blob": null,
+  "current_blob": "41fceb1ab08dc660afa15d24bf874aabd01ce0a8",
+  "reason": "Replaces the column extraction of the kernel determinant certificate checker (columnsFrom by a one-pass consCols/emptyCols transpose, column kept as its specification); the module is the kernel certificate of the det tactic, nothing on the factorization path calls it, and no measured operation or branch of the factorization sweep changes."
+}
