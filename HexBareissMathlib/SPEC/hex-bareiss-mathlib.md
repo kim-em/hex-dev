@@ -648,7 +648,9 @@ a carrier other than `ℤ` or `ℚ`, a non-square shape, or an unrecognized
 literal is `notApplicable`. The numeric tactic throws
 `throwUnsupportedSyntax` for those cases. The last-resort handler is
 registered **before** the numeric one, so Lean's reverse registration order
-tries it **after** the numeric one and any later extensions. It reclassifies
+tries it **after** the numeric one and any later extensions. Extensions
+must also use `@[no_fallback]` for their own errors and
+`throwUnsupportedSyntax` outside their fragments. It reclassifies
 the target and, for determinant equations, tries `simp only [hex_norm_det]`
 before reporting `det: not applicable: …` with the reason. This preserves
 `norm_det` for symbolic entries and other commutative rings, normalizing
@@ -660,6 +662,9 @@ the reason; the numeric handler retains the same simp fallback for these
 capability declines. Its `@[no_fallback]` attribute commits ordinary errors,
 so producer failures, rejected certificates and budget errors cannot be
 masked by a later tactic handler. Unsupported syntax still delegates.
+The simp fallback propagates errors unchanged, including certificate errors
+from its simproc; it reports the original reason only when simp makes no
+progress.
 The `det%` form reports the classification reason directly; the simproc
 returns no result for either inapplicability or a capability decline and
 continues to compose with `norm_det`.

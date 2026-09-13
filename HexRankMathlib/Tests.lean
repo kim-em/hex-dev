@@ -166,6 +166,8 @@ example : Matrix.rank ((1 : Matrix (Fin 2) (Fin 2) ℤ) * 1) = 2 := by rank
 
 end RankTactic
 
+/-! # Handler diagnostics and composition -/
+
 /--
 error: rank: not applicable: the bound
   r
@@ -178,12 +180,21 @@ example (r : ℕ) : Matrix.rank (R := ℤ) !![1] = r := by rank
 #guard_msgs in
 example : True := by rank
 
+open Lean Elab Tactic
+
+-- Check the shipped order before adding any test handlers.
+run_cmd do
+  let handlers := (tacticElabAttribute.getEntries (← getEnv)
+    ``HexMatrixMathlib.Rank.rankTac).map (·.declName)
+  unless handlers ==
+      [``HexMatrixMathlib.Rank.evalRankTac, ``HexMatrixMathlib.Rank.rankFallback] do
+    throwError "unexpected shipped rank handler order: {handlers}"
+
 /-! Numeric delegation must be tested with the numeric handler first. A stub
 registered later without re-registering the numeric handler would run first. -/
 section Delegation
 
-open Lean Elab Tactic
-
+@[no_fallback]
 private meta def rankStub : Tactic := fun _ => do
   logInfo "rank stub"
   evalTactic (← `(tactic| assumption))
@@ -194,8 +205,9 @@ attribute [local tactic HexMatrixMathlib.Rank.rankTac] HexMatrixMathlib.Rank.eva
 run_cmd do
   let handlers := (tacticElabAttribute.getEntries (← getEnv)
     ``HexMatrixMathlib.Rank.rankTac).map (·.declName)
-  unless handlers.take 2 ==
-      [``HexMatrixMathlib.Rank.evalRankTac, ``rankStub] do
+  unless handlers ==
+      [``HexMatrixMathlib.Rank.evalRankTac, ``rankStub,
+        ``HexMatrixMathlib.Rank.evalRankTac, ``HexMatrixMathlib.Rank.rankFallback] do
     throwError "unexpected rank handler order: {handlers}"
 
 /-- info: rank stub -/
@@ -226,8 +238,35 @@ example (h : True) : True := by rank
 example (h : Matrix.rank (R := ℤ) !![1, 2; 3, 4] = 1) :
     Matrix.rank (R := ℤ) !![1, 2; 3, 4] = 1 := by rank
 
--- Numeric success must also precede the stub (which has no usable hypothesis).
+-- The stub could solve from the hypothesis, so its message would expose an
+-- incorrect order even on numeric success.
 #guard_msgs in
-example : Matrix.rank (R := ℤ) !![1] = 1 := by rank
+example (_h : Matrix.rank (R := ℤ) !![1] = 1) :
+    Matrix.rank (R := ℤ) !![1] = 1 := by rank
+
+/-- A closed entry outside the entry evaluator's capabilities. -/
+opaque rankEntry : ℤ := 1
+
+/--
+error: the following entry cannot be simplified to a numeral
+  rankEntry
+-/
+#guard_msgs in
+example (h : Matrix.rank !![rankEntry] = 1) : Matrix.rank !![rankEntry] = 1 := by rank
 
 end Delegation
+
+section ExtensionErrors
+
+-- A downstream extension must commit its own in-fragment errors too.
+@[no_fallback]
+private meta def rankDecline : Tactic := fun _ =>
+  throwError "rank: test capability decline"
+
+attribute [local tactic HexMatrixMathlib.Rank.rankTac] rankDecline
+
+/-- error: rank: test capability decline -/
+#guard_msgs in
+example : True := by rank
+
+end ExtensionErrors

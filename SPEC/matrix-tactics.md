@@ -88,7 +88,10 @@ literal, or a carrier outside the numeric fragment (`ℤ` for `rank`, `ℤ`
 and `ℚ` for `det`) is `notApplicable`. The numeric handler throws
 `throwUnsupportedSyntax` for these cases. Entry evaluation, producer,
 false-target, certificate and budget errors retain their existing diagnostics;
-they are not reclassified as unsupported syntax.
+they are not reclassified as unsupported syntax. The literal recognizer
+only searches within its fixed unfolding window; not finding a literal
+within that window is `notApplicable`, as for any unrecognized expression.
+This is distinct from an execution-budget exception, which propagates.
 
 Both numeric handlers have `@[no_fallback]`: in the pinned Lean, ordinary
 tactic errors otherwise also try the next handler and a last-resort error
@@ -96,13 +99,17 @@ can mask a numeric failure. `throwUnsupportedSyntax` delegates even with
 this attribute. Each owning library registers its diagnostic handler first,
 then its numeric handler, because Lean tries equal-priority handlers in
 reverse registration order. An extension registered later is tried before
-these two and must also answer `throwUnsupportedSyntax` outside its fragment.
+these two. Extensions must also have `@[no_fallback]` to preserve their
+in-fragment errors, and answer `throwUnsupportedSyntax` outside their
+fragment; otherwise the last diagnostic handler can mask an extension error.
 The diagnostic handler reclassifies and reports `rank: not applicable: …`
 or `det: not applicable: …` when no handler accepts. For determinant
 equations, the last-resort handler first tries `simp only [hex_norm_det]`,
 preserving Mathlib's symbolic and other-carrier normalization. The numeric
 `det` handler also retains that simp fallback for an in-fragment capability
-decline; producer failures and rejected certificates do not use it.
+decline. Errors raised during simp, including producer failures and rejected
+certificates, propagate unchanged; only a no-progress result is replaced
+with the classification or capability diagnostic.
 
 Regression tests register a stub and then locally re-register the numeric
 handler, assert their dispatch order, and exercise both delegation and

@@ -198,13 +198,15 @@ def proveGoal (target : Expr) : MetaM Expr := do
 
 /-- `rank` closes `A.rank = r`, `A.rank ≤ r` and `r ≤ A.rank` for a closed
 integer matrix literal `A`, with the kernel checking a rank certificate.  The
-keyword is non-reserved, so `rank` stays usable as an identifier. -/
+keyword is non-reserved, so `rank` stays usable as an identifier. Extensions
+must use `@[no_fallback]` to preserve their errors and `throwUnsupportedSyntax`
+to delegate outside their fragment. -/
 syntax (name := rankTac) &"rank" : tactic
 
 /-- Registered before the numeric handler because Lean tries equal-priority
 handlers in reverse registration order. Reclassify only to report the reason;
 entry evaluation and certificate production belong to the numeric handler. -/
-@[tactic rankTac]
+@[tactic rankTac, no_fallback]
 def rankFallback : Tactic.Tactic := fun _ => Tactic.withMainContext do
   match ← classify (← Tactic.getMainTarget) with
   | .error msg => throwError "rank: not applicable: {msg}"

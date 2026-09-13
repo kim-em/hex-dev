@@ -451,11 +451,13 @@ literal (including a `vecCons` chain not ending in `vecEmpty`) as
 repeats only classification and reports `rank: not applicable: …` with its
 reason. It is registered **before** the numeric handler, so Lean's reverse
 registration order tries it **after** the numeric one. Later extensions
-register on the same syntax kind and delegate outside their own fragments.
+register on the same syntax kind, use `@[no_fallback]` for their own errors,
+and delegate with `throwUnsupportedSyntax` outside their fragments.
 The numeric handler has `@[no_fallback]`, so ordinary errors cannot fall
 through and be hidden by another handler, while unsupported syntax still
 delegates. Entry evaluation and budget errors retain their diagnostics;
-a producer failure is declined with its reason;
+a producer failure is declined with its reason. Such a capability decline
+is an ordinary error: `rank` has no internal fallback for it;
 a false target is reported with the certified rank before any
 proof is built; a rejection by the kernel is diagnosed by evaluating the
 bound, the certificate check and the identification of the literal in

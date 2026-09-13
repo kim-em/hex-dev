@@ -109,15 +109,16 @@ def classify (target : Expr) : MetaM (Outcome (Expr × Expr × Bool × Recognize
   let target ← instantiateMVars target
   let some (A, rhs, reverse) := detTarget? target |
     return .notApplicable m!"the goal is not `A.det = d` for a Mathlib matrix `A`"
+  let lit ← match ← recognize A with
+    | .success lit => pure lit
+    | .notApplicable msg => return .notApplicable msg
+    | .declined msg => return .declined msg
   if rhs.hasFVar || rhs.hasExprMVar then
     return .notApplicable m!"the value{indentExpr rhs}\nmust be a closed term"
-  match ← recognize A with
-  | .success lit => return .success (A, rhs, reverse, lit)
-  | .notApplicable msg => return .notApplicable msg
-  | .declined msg => return .declined msg
+  return .success (A, rhs, reverse, lit)
 
-/-- Certify a recognized numeric literal. A producer whose witness fails its
-own check is a failure, not a decline. -/
+/-- Certify a square literal over `Int` or `Rat`, as returned by `recognize`.
+A producer whose witness fails its own check is a failure, not a decline. -/
 def certifyLiteral (lit : Recognized) : MetaM (Outcome Cert) := do
   let isInt := lit.carrier.isConstOf ``Int
   let values ← try evalEntries lit catch e => return .declined e.toMessageData
@@ -306,24 +307,33 @@ open Lean Elab
 
 /-- `det` closes `A.det = d` and `d = A.det` for a closed integer or rational
 matrix literal `A`, with the kernel checking a determinant certificate; an
-input outside that fragment is handed to the simp set `hex_norm_det`, whose
-fallback is Mathlib's `norm_det`.  The keyword is non-reserved, so `det`
+equation outside that fragment delegates to other handlers and then to the
+simp set `hex_norm_det`, whose fallback is Mathlib's `norm_det`. Extensions
+must use `@[no_fallback]` to preserve their errors and `throwUnsupportedSyntax`
+to delegate outside their fragment. The keyword is non-reserved, so `det`
 stays usable as an identifier. -/
 syntax (name := detTac) &"det" : tactic
+
+/-- Try the simp fallback, reporting the classification or capability reason
+only when it makes no progress. Errors from simprocs must propagate unchanged. -/
+def simpFallback (msg : MessageData) : Tactic.TacticM Unit := do
+  let goals ← Tactic.getGoals
+  Tactic.evalTactic (← `(tactic| simp (config := { failIfUnchanged := false }) only [hex_norm_det]))
+  if (← Tactic.getGoals) == goals then
+    throwError "{msg}"
 
 /-- Registered before the numeric handler, so tried after it (Lean reverses
 registration order at equal priority). Preserve the Mathlib simp fallback for
 determinant equations outside the numeric fragment, reporting the classification
 reason if it cannot make progress. Classification itself produces no certificate. -/
-@[tactic detTac]
+@[tactic detTac, no_fallback]
 def detFallback : Tactic.Tactic := fun _ => Tactic.withMainContext do
   let target ← instantiateMVars (← Tactic.getMainTarget)
   match ← classify target with
   | .notApplicable msg =>
       if (detTarget? target).isNone then
         throwError "det: not applicable: {msg}"
-      try Tactic.evalTactic (← `(tactic| simp only [hex_norm_det]))
-      catch _ => throwError "det: not applicable: {msg}"
+      simpFallback m!"det: not applicable: {msg}"
   | _ => throwUnsupportedSyntax
 
 -- Ordinary errors commit; unsupported syntax still tries the next handler.
@@ -333,7 +343,6 @@ def evalDetTac : Tactic.Tactic := fun _ => Tactic.withMainContext do
   | .success proof => Tactic.closeMainGoal `det proof
   | .notApplicable _ => throwUnsupportedSyntax
   | .declined msg =>
-      try Tactic.evalTactic (← `(tactic| simp only [hex_norm_det]))
-      catch _ => throwError "det: declined: {msg}"
+      simpFallback m!"det: declined: {msg}"
 
 end HexMatrixMathlib.Det
