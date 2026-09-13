@@ -1,0 +1,6 @@
+{
+  "path": "HexBerlekampZassenhaus/FactorizationData.lean",
+  "baseline_blob": "61504f0a0c854ec7100669df75a33872e40a4d2c",
+  "current_blob": "8a49cfb38c203da541c78fe06a3695de01de5257",
+  "reason": "Updates one theorem reference inside the proof of normalizeForFactor_eq_normalizeForFactorFast after moving the repeated-part theorem into its namespace. No executable definition or compiler substitution changes."
+}
