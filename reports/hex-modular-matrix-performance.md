@@ -14,7 +14,7 @@ The three arms receive identical matrices. Matrix construction and FLINT request
 
 Each arm has a discarded outer warmup, a discarded first invocation inside each child, and five fixed repeats with a 0.2-second auto-tuning floor. Adjacent modular/Bareiss/FLINT arms reverse order on alternate rungs. CPU placement uses a nonblocking lease on the shared host. Every completed export is retained; host load is recorded without filtering.
 
-The initial run used one Lean worker. A blocking stderr reader prevented the harness timer from running, so its completed timings can exceed the configured ten-second cap. Relinking the executable interrupted the Bareiss and FLINT child launches at dimension 256. The incomplete dimension-320 comparison was stopped before its combined export was written; its partial arm output is unavailable. The resumed run uses two workers on one CPU and an immutable executable copy; it repeats dimension 256 once and completes the remaining schedule. Both datasets are retained.
+The initial run used one Lean worker. A blocking stderr reader prevented the harness timer from running, so its completed timings can exceed the configured ten-second cap. Relinking the executable interrupted the Bareiss and FLINT child launches at dimension 256. The incomplete dimension-320 comparison was stopped before its combined export was written; its partial arm output is unavailable. The resumed run uses two workers on one CPU and an immutable executable copy; it repeats dimension 256 once and completes the remaining schedule. Both datasets are retained. A final collector check verifies per-arm checkpoints, so future interrupted comparisons preserve completed arms. Large determinant replies also exposed Python’s default 4300-digit conversion limit; the large-integers dataset repeats the affected dense 256/64 and 1024-bit range with `PYTHONINTMAXSTRDIGITS=0`. The original errors remain visible.
 
 `Hex / FLINT` means modular median divided by the FLINT median minus that dataset’s empty-protocol median; lower is faster. Raw medians are in seconds. The parameter b is the dense signed-entry width or the unimodular power-of-two exponent; it is unused for the fixed structured fixture. `cap` denotes a killed child batch, including setup and warmup; it is not a lower bound on the timed call alone. Ratios are omitted if an arm lacks all five successful repeats. No partial sample is silently promoted to a complete comparison.
 
@@ -82,6 +82,22 @@ Load before: `94.53 155.06 255.17 88/7483 781804`; after: `93.86 151.94 252.55 9
 | Family | n | b | Modular s | Bareiss s | FLINT s | Hex / FLINT |
 |---|---:|---:|---:|---:|---:|---:|
 | structured | 16 | 8 | 0.0144186 | 5.2471e-05 | 0.000131595 | 119.64× |
+
+## hex-modular-matrix-large-integers
+
+Host `chungus2`, AMD EPYC 9455 48-Core Processor, CPU 75; Lean 4.34.0-rc2, python-flint 0.9.0. Protocol median: 6.774 µs.
+
+Load before: `37.96 66.72 52.34 30/6811 2951596`; after: `14.61 26.04 42.62 15/6888 3130637`. [Complete exports and source fingerprints](data/hex-modular-matrix-large-integers.json).
+
+| Family | n | b | Modular s | Bareiss s | FLINT s | Hex / FLINT |
+|---|---:|---:|---:|---:|---:|---:|
+| dense | 256 | 64 | cap (5/5) | cap (5/5) | 0.200001 | — |
+| dense | 32 | 1024 | 4/5 ok | 0.190938 | 0.135085 | — |
+| dense | 64 | 1024 | cap (5/5) | cap (5/5) | 1.03037 | — |
+| dense | 96 | 1024 | cap (5/5) | cap (5/5) | 2.98346 | — |
+| dense | 128 | 1024 | cap (5/5) | cap (5/5) | 4.58511 | — |
+| dense | 192 | 1024 | cap (5/5) | cap (5/5) | cap (5/5) | — |
+| dense | 256 | 1024 | cap (5/5) | cap (5/5) | cap (5/5) | — |
 
 ## Attribution and verification
 

@@ -27,3 +27,5 @@ bad initial primes, large entries and forced fallback. The benchmark target
 FLINT on identical structured, dense random and unimodular inputs. Its
 `verify` command runs three small CI anchors; the full comparator ladder is
 collected by `scripts/bench/modmat_flint.py` on the shared host.
+The [baseline report](../reports/hex-modular-matrix-performance.md) records
+timings, capped calls, comparator errors and the subsequent corrected runs.
