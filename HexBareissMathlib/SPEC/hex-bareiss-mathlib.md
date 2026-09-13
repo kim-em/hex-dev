@@ -642,14 +642,28 @@ value, through `det_eq_of_checkRat'`. The whole proof is added as an
 auxiliary theorem (`mkAuxTheorem`, with asynchronous checking off) so the
 kernel checks it exactly once and the tactic sees a rejection. Outcomes
 follow the protocol of [SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md):
-a goal that is not a determinant equation is not applicable; a matrix with
-free variables, a carrier other than `ℤ` or `ℚ`, a non-square shape, a
-non-literal closed matrix or an entry `norm_num` cannot evaluate is
-declined with the reason, and the `det` tactic then runs
-`simp only [hex_norm_det]`, which reaches `norm_det` for symbolic entries
-and other commutative rings (normalizing the determinant as `eval_det`
-does; the residual goal is for `ring` or `decide`) and reports the decline
-if that fails too; a false target is reported with the certified value
+before evaluating entries or running the producer, a goal outside determinant
+equalities, an open matrix or value (including unresolved metavariables),
+a carrier other than `ℤ` or `ℚ`, a non-square shape, or an unrecognized
+literal is `notApplicable`. The numeric tactic throws
+`throwUnsupportedSyntax` for those cases. The last-resort handler is
+registered **before** the numeric one, so Lean's reverse registration order
+tries it **after** the numeric one and any later extensions. It reclassifies
+the target and, for determinant equations, tries `simp only [hex_norm_det]`
+before reporting `det: not applicable: …` with the reason. This preserves
+`norm_det` for symbolic entries and other commutative rings, normalizing
+the determinant as `eval_det` does and leaving a residual goal for `ring`
+or `decide`.
+
+An entry or closed value that cannot be evaluated is still declined with
+the reason; the numeric handler retains the same simp fallback for these
+capability declines. Its `@[no_fallback]` attribute commits ordinary errors,
+so producer failures, rejected certificates and budget errors cannot be
+masked by a later tactic handler. Unsupported syntax still delegates.
+The `det%` form reports the classification reason directly; the simproc
+returns no result for either inapplicability or a capability decline and
+continues to compose with `norm_det`.
+A false target is reported with the certified value
 before any proof is built; a rejection by the kernel is diagnosed by
 evaluating the certificate check and the identification of the literal in
 turn, and reported as a producer bug or an entry the kernel cannot
@@ -747,7 +761,12 @@ and symbolic entries are out of scope here
   symbolic entries through `norm_det` (with `ring`), plus the `det` tactic
   reaching `norm_det` on symbolic entries and on `ZMod 7`;
 - the messages on a false target, a closed non-literal and a goal that is
-  not a determinant equation (`#guard_msgs`);
+  not a determinant equation, plus open-matrix and open-value diagnostics
+  without a test stub (`#guard_msgs`);
+- numeric-first dispatch to a test stub for open matrices and values, other
+  carriers, unrecognized literals and unrelated goals, with the handler order
+  asserted explicitly; numeric successes and false-target errors precede the
+  stub;
 - `Hex.Matrix.det` and the bare `det` identifier still usable on
   `Hex.Matrix`;
 - the axiom audit of a `16 × 16` determinant proved by `det`.

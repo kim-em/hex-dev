@@ -60,7 +60,7 @@ Rules that follow from the table:
   not have today; they are deferred until that exists.
 - Symbolic entries are a separate handler on the owner's syntax kind,
   living with the `MvPoly` instantiation of the certificate; a numeric
-  handler declines them. For `rank` that handler is specified in
+  handler reports `notApplicable` for them. For `rank` that handler is specified in
   [hex-generic-rank-mathlib](Libraries/hex-generic-rank-mathlib.md), with
   the three outputs (generic, conditional, locus) that a symbolic rank may
   take. Until a symbolic handler exists for an operation, a Mathlib tactic
@@ -80,6 +80,34 @@ reported with the certified value before any proof is built. No failure
 substitutes a weaker goal. Accepted theorems depend on `propext`,
 `Classical.choice` and `Quot.sound` only, and each tactic's tests audit
 that axiom set.
+
+For numeric `rank` and `det`, classification precedes entry evaluation and
+certificate production. A goal outside the supported comparisons, an open
+matrix or bound (including unresolved metavariables), an unrecognized
+literal, or a carrier outside the numeric fragment (`ℤ` for `rank`, `ℤ`
+and `ℚ` for `det`) is `notApplicable`. The numeric handler throws
+`throwUnsupportedSyntax` for these cases. Entry evaluation, producer,
+false-target, certificate and budget errors retain their existing diagnostics;
+they are not reclassified as unsupported syntax.
+
+Both numeric handlers have `@[no_fallback]`: in the pinned Lean, ordinary
+tactic errors otherwise also try the next handler and a last-resort error
+can mask a numeric failure. `throwUnsupportedSyntax` delegates even with
+this attribute. Each owning library registers its diagnostic handler first,
+then its numeric handler, because Lean tries equal-priority handlers in
+reverse registration order. An extension registered later is tried before
+these two and must also answer `throwUnsupportedSyntax` outside its fragment.
+The diagnostic handler reclassifies and reports `rank: not applicable: …`
+or `det: not applicable: …` when no handler accepts. For determinant
+equations, the last-resort handler first tries `simp only [hex_norm_det]`,
+preserving Mathlib's symbolic and other-carrier normalization. The numeric
+`det` handler also retains that simp fallback for an in-fragment capability
+decline; producer failures and rejected certificates do not use it.
+
+Regression tests register a stub and then locally re-register the numeric
+handler, assert their dispatch order, and exercise both delegation and
+committed numeric errors. A later stub alone would run first and would not
+test numeric delegation.
 
 The proof is assembled as one auxiliary theorem (`mkAuxTheorem` with
 asynchronous checking off), so the kernel checks the certificate exactly

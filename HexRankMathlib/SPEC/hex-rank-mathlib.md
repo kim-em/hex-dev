@@ -442,11 +442,21 @@ builds `rank_eq_of_checkList' A L c rfl (of_decide_eq_true rfl)` composed
 with a kernel-decided comparison of `c.rank` with `r`; the whole proof is
 added as an auxiliary theorem (`mkAuxTheorem`, with asynchronous checking
 off) so the kernel checks it exactly once and the tactic sees a rejection.
-Outcomes follow the protocol of [SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md): a goal that is not a rank
-comparison is not applicable; a matrix with free variables, a non-integer
-carrier, a non-literal closed matrix or a `vecCons` chain not ending in
-`vecEmpty` is declined with the reason, as is a producer failure with its
-reason; a false target is reported with the certified rank before any
+Outcomes follow the protocol of [SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md).
+Before evaluating entries or producing a certificate, the handler classifies
+a goal outside the rank comparisons, a matrix or bound with free variables
+or unresolved metavariables, a non-integer carrier, and an unrecognized
+literal (including a `vecCons` chain not ending in `vecEmpty`) as
+`notApplicable`, throwing `throwUnsupportedSyntax`. A last-resort handler
+repeats only classification and reports `rank: not applicable: …` with its
+reason. It is registered **before** the numeric handler, so Lean's reverse
+registration order tries it **after** the numeric one. Later extensions
+register on the same syntax kind and delegate outside their own fragments.
+The numeric handler has `@[no_fallback]`, so ordinary errors cannot fall
+through and be hidden by another handler, while unsupported syntax still
+delegates. Entry evaluation and budget errors retain their diagnostics;
+a producer failure is declined with its reason;
+a false target is reported with the certified rank before any
 proof is built; a rejection by the kernel is diagnosed by evaluating the
 bound, the certificate check and the identification of the literal in
 turn, and reported as a false target, a producer bug, or an entry the
@@ -585,7 +595,11 @@ An implementer must re-run these searches when the Mathlib pin moves.
   `Matrix.ofArray` literals, on the empty shapes,
   on a `16 × 16` full-rank and a `32 × 32` rank-`2` literal, and its
   messages on a false target, a symbolic matrix, a rational matrix and a
-  closed non-literal (`#guard_msgs`).
+  closed non-literal (`#guard_msgs`);
+- numeric-first dispatch to a test stub for open matrices and bounds, other
+  carriers, unrecognized literals and unrelated goals, with the handler order
+  asserted explicitly; numeric successes and false-target errors precede the
+  stub, and last-resort messages are checked without the stub.
 
 These are not an independent oracle. The conformance stream of `HexRank`
 is.

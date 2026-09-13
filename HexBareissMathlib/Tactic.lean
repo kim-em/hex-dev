@@ -36,9 +36,11 @@ as an auxiliary theorem, checked synchronously, so the kernel checks it
 exactly once and a rejection is reported by the tactic.
 
 Outcomes follow the matrix-tactic protocol: a goal that is not a
-determinant equation is not applicable; a matrix that is not a closed
-integer or rational literal, or a value that is not a closed numeral, is
-declined (and the `det` tactic then runs the fallback simp set); a false
+determinant equation, a matrix that is not a closed integer or rational
+literal, or an open value is not applicable and delegates to the next
+handler. The last-resort handler tries the fallback simp set on determinant
+equations. A closed value that is not evaluable is declined (and the numeric
+handler runs the fallback simp set); a false
 target is reported with the certified value before any proof is built; a
 producer whose witness fails its own check, or a certificate the kernel
 rejects, is a failure, never a fallback.
@@ -54,7 +56,7 @@ deriving instance ToExpr for Hex.Matrix.DetWitness
 throws. -/
 inductive Outcome (α : Type) where
   /-- The goal or input is not in the fragment; the next handler may try. -/
-  | notApplicable
+  | notApplicable (msg : MessageData)
   /-- In the fragment, but a capability is missing; the message names it. -/
   | declined (msg : MessageData)
   /-- A value and a proof. -/
@@ -90,18 +92,34 @@ def Cert.value (c : Cert) : Rat :=
   | none => c.witness.value
   | some (_, s) => (c.witness.value : Rat) / (s.foldl (· * ·) 1 : Nat)
 
-/-- Recognize a closed square integer or rational literal and certify it.  A
-producer whose witness fails its own check is a failure, not a decline. -/
-def certify (A : Expr) : MetaM (Outcome Cert) := do
+/-- Recognize the numeric matrix fragment without evaluating its entries. -/
+def recognize (A : Expr) : MetaM (Outcome Recognized) := do
   if A.hasFVar || A.hasExprMVar then
-    return .declined m!"the matrix{indentExpr A}\nmust be a closed term"
+    return .notApplicable m!"the matrix{indentExpr A}\nmust be a closed term"
   let some lit ← literal? A |
-    return .declined m!"the matrix is not a closed `!![…]`, `Matrix.of ![…]`, `fun i j => …` or `Matrix.ofArray` literal{indentExpr A}"
+    return .notApplicable m!"the matrix is not a closed `!![…]`, `Matrix.of ![…]`, `fun i j => …` or `Matrix.ofArray` literal{indentExpr A}"
   unless lit.n = lit.m do
-    return .declined m!"the matrix is {lit.n} × {lit.m}, not square"
+    return .notApplicable m!"the matrix is {lit.n} × {lit.m}, not square"
+  unless lit.carrier.isConstOf ``Int || lit.carrier.isConstOf ``Rat do
+    return .notApplicable m!"only integer and rational matrices are supported; the entry type is{indentExpr lit.carrier}"
+  return .success lit
+
+/-- Classify the target before evaluating entries or running the producer. -/
+def classify (target : Expr) : MetaM (Outcome (Expr × Expr × Bool × Recognized)) := do
+  let target ← instantiateMVars target
+  let some (A, rhs, reverse) := detTarget? target |
+    return .notApplicable m!"the goal is not `A.det = d` for a Mathlib matrix `A`"
+  if rhs.hasFVar || rhs.hasExprMVar then
+    return .notApplicable m!"the value{indentExpr rhs}\nmust be a closed term"
+  match ← recognize A with
+  | .success lit => return .success (A, rhs, reverse, lit)
+  | .notApplicable msg => return .notApplicable msg
+  | .declined msg => return .declined msg
+
+/-- Certify a recognized numeric literal. A producer whose witness fails its
+own check is a failure, not a decline. -/
+def certifyLiteral (lit : Recognized) : MetaM (Outcome Cert) := do
   let isInt := lit.carrier.isConstOf ``Int
-  unless isInt || lit.carrier.isConstOf ``Rat do
-    return .declined m!"only integer and rational matrices are supported; the entry type is{indentExpr lit.carrier}"
   let values ← try evalEntries lit catch e => return .declined e.toMessageData
   let (rows, rat) ←
     if isInt then
@@ -114,6 +132,13 @@ def certify (A : Expr) : MetaM (Outcome Cert) := do
   match detWitnessOfLists lit.n (rows.toList.map (·.toList)) with
   | .ok w => return .success ⟨lit, w, rows, rat⟩
   | .error e => throwError "det: the producer's witness fails its own check (a producer bug): {e}"
+
+/-- Recognize a closed square integer or rational literal and certify it. -/
+def certify (A : Expr) : MetaM (Outcome Cert) := do
+  match ← recognize A with
+  | .success lit => certifyLiteral lit
+  | .notApplicable msg => return .notApplicable msg
+  | .declined msg => return .declined msg
 
 /-- The proof of `Matrix.det A = v` for the certificate's value `v`, with the
 value, the kernel check it rests on, and the row list of the literal. -/
@@ -196,13 +221,14 @@ def checked (A : Expr) (c : Cert) (p : Proof) (target proof : Expr) : MetaM Expr
 /-- Prove a determinant target in either orientation. -/
 def proveGoal (target : Expr) : MetaM (Outcome Expr) := do
   let target ← instantiateMVars target
-  let some (A, rhs, reverse) := detTarget? target | return .notApplicable
-  let c ← match ← certify A with
-    | .success c => pure c
-    | .notApplicable => return .notApplicable
+  let (A, rhs, reverse, lit) ← match ← classify target with
+    | .success input => pure input
+    | .notApplicable msg => return .notApplicable msg
     | .declined msg => return .declined msg
-  if rhs.hasFVar || rhs.hasExprMVar then
-    return .declined m!"the value{indentExpr rhs}\nmust be a closed term"
+  let c ← match ← certifyLiteral lit with
+    | .success c => pure c
+    | .notApplicable msg => return .notApplicable msg
+    | .declined msg => return .declined msg
   -- the stated value is compared here, for a clear message on a false target
   let some v ← (try some <$> evalEntry rhs catch _ => pure none) |
     return .declined m!"the value{indentExpr rhs}\nmust be a closed numeral"
@@ -225,7 +251,7 @@ def certifiedProof (A : Expr) (c : Cert) : MetaM Proof := do
 def certified (A : Expr) : MetaM (Outcome Expr) := do
   let c ← match ← certify A with
     | .success c => pure c
-    | .notApplicable => return .notApplicable
+    | .notApplicable msg => return .notApplicable msg
     | .declined msg => return .declined msg
   let p ← certifiedProof A c
   let some (_, lhs, _) := (← inferType p.proof).eq? |
@@ -246,7 +272,7 @@ def elabDetTerm : Term.TermElab := fun stx expectedType? => do
       let A ← elabArgument t
       match ← certified A with
       | .success r => Term.ensureHasType expectedType? r
-      | .notApplicable => throwError "det: not a Mathlib matrix{indentExpr A}"
+      | .notApplicable msg => throwError "det: not applicable: {msg}"
       | .declined msg => throwError "det: declined: {msg}"
   | _ => throwUnsupportedSyntax
 
@@ -259,7 +285,7 @@ def normDet? (e : Expr) : MetaM (Option Simp.Result) := do
   | .success c =>
       let p ← certifiedProof e.appArg! c
       return some { expr := p.value, proof? := some p.proof }
-  | .notApplicable | .declined _ => return none
+  | .notApplicable _ | .declined _ => return none
 
 end HexMatrixMathlib.Det
 
@@ -285,12 +311,27 @@ fallback is Mathlib's `norm_det`.  The keyword is non-reserved, so `det`
 stays usable as an identifier. -/
 syntax (name := detTac) &"det" : tactic
 
+/-- Registered before the numeric handler, so tried after it (Lean reverses
+registration order at equal priority). Preserve the Mathlib simp fallback for
+determinant equations outside the numeric fragment, reporting the classification
+reason if it cannot make progress. Classification itself produces no certificate. -/
 @[tactic detTac]
+def detFallback : Tactic.Tactic := fun _ => Tactic.withMainContext do
+  let target ← instantiateMVars (← Tactic.getMainTarget)
+  match ← classify target with
+  | .notApplicable msg =>
+      if (detTarget? target).isNone then
+        throwError "det: not applicable: {msg}"
+      try Tactic.evalTactic (← `(tactic| simp only [hex_norm_det]))
+      catch _ => throwError "det: not applicable: {msg}"
+  | _ => throwUnsupportedSyntax
+
+-- Ordinary errors commit; unsupported syntax still tries the next handler.
+@[tactic detTac, no_fallback]
 def evalDetTac : Tactic.Tactic := fun _ => Tactic.withMainContext do
   match ← proveGoal (← Tactic.getMainTarget) with
   | .success proof => Tactic.closeMainGoal `det proof
-  | .notApplicable =>
-      throwError "det: the goal is not `A.det = d` for a Mathlib matrix `A`"
+  | .notApplicable _ => throwUnsupportedSyntax
   | .declined msg =>
       try Tactic.evalTactic (← `(tactic| simp only [hex_norm_det]))
       catch _ => throwError "det: declined: {msg}"

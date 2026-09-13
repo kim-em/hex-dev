@@ -143,7 +143,7 @@ example : lowRank32.rank ≤ 2 := by rank
 example : Matrix.rank (R := ℤ) !![1, 2; 3, 4] = 1 := by rank
 
 /--
-error: rank: declined: the matrix
+error: rank: not applicable: the matrix
   !![a, 1; 1, a]
 must be a closed term
 -/
@@ -151,17 +151,83 @@ must be a closed term
 example (a : ℤ) : Matrix.rank !![a, 1; 1, a] = 2 := by rank
 
 /--
-error: rank: declined: only integer matrices are supported; the entry type is
+error: rank: not applicable: only integer matrices are supported; the entry type is
   ℚ
 -/
 #guard_msgs in
 example : Matrix.rank (R := ℚ) !![1 / 2, 1; 1, 2] = 1 := by rank
 
 /--
-error: rank: declined: the matrix is not a closed `!![…]`, `Matrix.of ![…]`, `fun i j => …` or `Matrix.ofArray` literal
+error: rank: not applicable: the matrix is not a closed `!![…]`, `Matrix.of ![…]`, `fun i j => …` or `Matrix.ofArray` literal
   1 * 1
 -/
 #guard_msgs in
 example : Matrix.rank ((1 : Matrix (Fin 2) (Fin 2) ℤ) * 1) = 2 := by rank
 
 end RankTactic
+
+/--
+error: rank: not applicable: the bound
+  r
+must be a closed term
+-/
+#guard_msgs in
+example (r : ℕ) : Matrix.rank (R := ℤ) !![1] = r := by rank
+
+/-- error: rank: not applicable: the goal is not `A.rank = r`, `A.rank ≤ r` or `r ≤ A.rank` for a Mathlib matrix `A` -/
+#guard_msgs in
+example : True := by rank
+
+/-! Numeric delegation must be tested with the numeric handler first. A stub
+registered later without re-registering the numeric handler would run first. -/
+section Delegation
+
+open Lean Elab Tactic
+
+private meta def rankStub : Tactic := fun _ => do
+  logInfo "rank stub"
+  evalTactic (← `(tactic| assumption))
+
+attribute [local tactic HexMatrixMathlib.Rank.rankTac] rankStub
+attribute [local tactic HexMatrixMathlib.Rank.rankTac] HexMatrixMathlib.Rank.evalRankTac
+
+run_cmd do
+  let handlers := (tacticElabAttribute.getEntries (← getEnv)
+    ``HexMatrixMathlib.Rank.rankTac).map (·.declName)
+  unless handlers.take 2 ==
+      [``HexMatrixMathlib.Rank.evalRankTac, ``rankStub] do
+    throwError "unexpected rank handler order: {handlers}"
+
+/-- info: rank stub -/
+#guard_msgs in
+example (a : ℤ) (h : Matrix.rank !![a, 1; 1, a] = 2) : Matrix.rank !![a, 1; 1, a] = 2 := by rank
+
+/-- info: rank stub -/
+#guard_msgs in
+example (r : ℕ) (h : Matrix.rank (R := ℤ) !![1] = r) : Matrix.rank (R := ℤ) !![1] = r := by rank
+
+/-- info: rank stub -/
+#guard_msgs in
+example (h : Matrix.rank (R := ℚ) !![1] = 1) : Matrix.rank (R := ℚ) !![1] = 1 := by rank
+
+/-- info: rank stub -/
+#guard_msgs in
+example (h : Matrix.rank ((1 : Matrix (Fin 2) (Fin 2) ℤ) * 1) = 2) :
+    Matrix.rank ((1 : Matrix (Fin 2) (Fin 2) ℤ) * 1) = 2 := by rank
+
+/-- info: rank stub -/
+#guard_msgs in
+example (h : True) : True := by rank
+
+-- The stub could close this goal from its hypothesis if numeric errors fell
+-- through. The numeric error must be preserved, with no stub message.
+/-- error: rank: the target is false: the rank is 2 -/
+#guard_msgs in
+example (h : Matrix.rank (R := ℤ) !![1, 2; 3, 4] = 1) :
+    Matrix.rank (R := ℤ) !![1, 2; 3, 4] = 1 := by rank
+
+-- Numeric success must also precede the stub (which has no usable hypothesis).
+#guard_msgs in
+example : Matrix.rank (R := ℤ) !![1] = 1 := by rank
+
+end Delegation
