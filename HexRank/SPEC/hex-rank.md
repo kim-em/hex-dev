@@ -803,10 +803,12 @@ extended by zeros, so `B · V` is lower triangular with unit diagonal. It
 obtains every column from one Gaussian elimination of the block modulo
 `modulus` without pivoting, whose upper factor `U` has the upper factors
 of the `B_j` as its leading blocks, so `v_j` is the last column of the
-inverse of the leading block of `U`, by back substitution: `rank³` word
-operations for the factorisation and `rank³ / 3` for the columns. A pivot
-that is not a unit is exactly a leading block that is not a unit, and
-sends the producer to the next modulus of `witnessModuli`. The
+inverse of the leading block of `U`, by back substitution: about `rank³`
+modular arithmetic operations for the factorisation and `rank³ / 3` for
+the columns. While the preceding pivots are units, a pivot is a unit
+exactly when the leading block it completes is, so the first pivot that
+is not a unit is the first leading block that is not, and it sends the
+producer to the next modulus of `witnessModuli`. The
 upper-bound coefficients `z_k = A_i[cols] · adj B` come from the
 full-block adjugate that `rankCertOf` computes over `Int`; this
 modulus-independent data is computed once, and each modular instantiation
@@ -985,7 +987,7 @@ rank:
 | `checkRank` | `n · r · m + r² · m + r³ + n · m` | none | one product dominates; no determinant |
 | `rankWith`, `rankProfileWith` | as `rowReduceWith` | | |
 | `checkRankList` | `r³ / 3` modulo `modulus`, plus `(n − r) · r · m` over `Int` | none | the kernel form; nothing at full rank for the second term |
-| `rankWitness` | `rankCertWith` plus `O((n − r) · r²)` over `Int` and `O(r³)` modulo `modulus` | plus `r` modular inverses | one elimination of the pivot block modulo `modulus` and back substitution per column |
+| `rankWitness` | `rankCertWith` plus `O((n − r) · r²)` over `Int` and `O(r³)` modular arithmetic operations | plus `r` modular inverses | one elimination of the pivot block modulo `modulus` and back substitution per column |
 
 **Growth.** The invariant says every stored entry is a minor of `A` (a
 bordered `(k + 1) × (k + 1)` minor in a non-pivot row, a `k × k` minor with

@@ -45,10 +45,12 @@ restricted to a row).  Column `j` of `V` is `B_j⁻¹ e_j` modulo `modulus`
 for the leading `(j + 1) × (j + 1)` pivot block `B_j`, so `V` is upper
 triangular and `B * V` is lower triangular with unit diagonal.  It obtains
 every column from one Gaussian elimination of the block modulo `modulus`
-without pivoting, whose upper factor's leading blocks are those of the
-`B_j`, by back substitution: `rank³` word operations in all, and a pivot
-that is not a unit is exactly a leading block that is not a unit, which
-sends the producer to the next modulus.  It re-checks its own output
+without pivoting, whose upper factor's leading blocks are the upper
+factors of the `B_j`, by back substitution: `O(rank³)` modular arithmetic
+operations in all.  While the preceding pivots are units, a pivot is a
+unit exactly when the leading block it completes is, so the first pivot
+that is not a unit is the first leading block that is not, and it sends
+the producer to the next modulus.  It re-checks its own output
 before returning it.  The two halves are independent: nothing relates
 `denom` to the modular data, and each bound is sound on its own.
 
@@ -281,9 +283,8 @@ private def solveColumn (M : Nat) (U : Array (Array Nat)) (invDiag : Array Nat) 
 
 open RankWitness in
 /-- Instantiate prepared witness data at one modulus: the columns of `V`
-from one elimination of the pivot block modulo `M`, or the order of the
-first leading pivot block that is not a unit, or a failed producer
-self-check. -/
+from one elimination of the pivot block modulo `M`, or a leading pivot
+block that is not a unit, or a failed producer self-check. -/
 private def rankWitnessOf (M : Nat) (d : WitnessData n m) : Except String RankWitness := do
   let some (U, invDiag) := upperFactorMod M d.block |
     throw s!"a leading pivot block of order at most {d.rank} is not a unit modulo {M}"
