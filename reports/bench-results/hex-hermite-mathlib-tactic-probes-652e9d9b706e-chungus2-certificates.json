@@ -1,0 +1,5212 @@
+[
+  {
+    "module": "HexHermiteMathlib.ProofProbe.EmptyColumnsN3M0Bits0Basis",
+    "family": "empty-columns",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.582112164,
+    "max_fresh_seconds": 2.617853701,
+    "median_baseline_delta_seconds": 0.065744071,
+    "kernel_seconds": [
+      0.004940000000000001,
+      0.00488,
+      0.00487,
+      0.00484,
+      0.00492,
+      0.00477
+    ],
+    "median_kernel_seconds": 0.004875,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 18,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 1,
+        "pivot_entries": 0,
+        "rank": 0,
+        "serialized_bytes": 172,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1272,
+      "olean_bytes": 17152,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 454
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.EmptyRowsN3M3Bits0Basis",
+    "family": "empty-rows",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.539598561,
+    "max_fresh_seconds": 2.611463507,
+    "median_baseline_delta_seconds": 0.045643797,
+    "kernel_seconds": [
+      0.0017900000000000001,
+      0.0016799999999999999,
+      0.00165,
+      0.0016899999999999999,
+      0.0016699999999999998,
+      0.00166
+    ],
+    "median_kernel_seconds": 0.0016749999999999998,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 0,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 0,
+        "pivot_entries": 0,
+        "rank": 0,
+        "serialized_bytes": 77,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1266,
+      "olean_bytes": 15200,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 454
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN16M16Bits128Basis",
+    "family": "membership-residual",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 3.317520458,
+    "max_fresh_seconds": 3.327567135,
+    "median_baseline_delta_seconds": 0.790433272,
+    "kernel_seconds": [
+      0.563,
+      0.577,
+      0.575,
+      0.586,
+      0.579,
+      0.581
+    ],
+    "median_kernel_seconds": 0.578,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 1024,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 125,
+        "pivot_entries": 8,
+        "rank": 8,
+        "serialized_bytes": 13614,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1294,
+      "olean_bytes": 234184,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 6742
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN16M16Bits128Member",
+    "family": "membership-residual",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 4.176458061,
+    "max_fresh_seconds": 4.226931252,
+    "median_baseline_delta_seconds": 1.654497435,
+    "kernel_seconds": [
+      0.587,
+      0.61,
+      0.586,
+      0.61,
+      0.607,
+      0.579
+    ],
+    "median_kernel_seconds": 0.597,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 1024,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 125,
+        "pivot_entries": 8,
+        "rank": 8,
+        "serialized_bytes": 13614,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 40,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 125,
+        "serialized_bytes": 618,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1537,
+      "olean_bytes": 219952,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 7257
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN16M16Bits128Nonmember",
+    "family": "membership-residual",
+    "component": "nonmember",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 4.117399576,
+    "max_fresh_seconds": 4.151680647,
+    "median_baseline_delta_seconds": 1.612220443,
+    "kernel_seconds": [
+      0.597,
+      0.601,
+      0.589,
+      0.581,
+      0.579,
+      0.586
+    ],
+    "median_kernel_seconds": 0.5874999999999999,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 1024,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 125,
+        "pivot_entries": 8,
+        "rank": 8,
+        "serialized_bytes": 13614,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 40,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 125,
+        "serialized_bytes": 618,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1543,
+      "olean_bytes": 220464,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 7257
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN16M16Bits32Basis",
+    "family": "membership-residual",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 3.218953592,
+    "max_fresh_seconds": 3.226712344,
+    "median_baseline_delta_seconds": 0.698414635,
+    "kernel_seconds": [
+      0.507,
+      0.484,
+      0.497,
+      0.501,
+      0.51,
+      0.498
+    ],
+    "median_kernel_seconds": 0.4995,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 1024,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 29,
+        "pivot_entries": 8,
+        "rank": 8,
+        "serialized_bytes": 6088,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1292,
+      "olean_bytes": 93880,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 2474
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN16M16Bits32Member",
+    "family": "membership-residual",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 3.987290123,
+    "max_fresh_seconds": 4.027300106,
+    "median_baseline_delta_seconds": 1.480778787,
+    "kernel_seconds": [
+      0.499,
+      0.506,
+      0.508,
+      0.522,
+      0.524,
+      0.513
+    ],
+    "median_kernel_seconds": 0.5105,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 1024,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 29,
+        "pivot_entries": 8,
+        "rank": 8,
+        "serialized_bytes": 6088,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 40,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 29,
+        "serialized_bytes": 261,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1535,
+      "olean_bytes": 100504,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 2640
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN16M16Bits32Nonmember",
+    "family": "membership-residual",
+    "component": "nonmember",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 3.97919064,
+    "max_fresh_seconds": 4.023795635,
+    "median_baseline_delta_seconds": 1.4995844,
+    "kernel_seconds": [
+      0.506,
+      0.507,
+      0.525,
+      0.516,
+      0.526,
+      0.498
+    ],
+    "median_kernel_seconds": 0.5115000000000001,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 1024,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 29,
+        "pivot_entries": 8,
+        "rank": 8,
+        "serialized_bytes": 6088,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 40,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 29,
+        "serialized_bytes": 261,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1541,
+      "olean_bytes": 101016,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 2640
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN16M16Bits8Basis",
+    "family": "membership-residual",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 3.213331112,
+    "max_fresh_seconds": 3.23963957,
+    "median_baseline_delta_seconds": 0.700046398,
+    "kernel_seconds": [
+      0.544,
+      0.558,
+      0.544,
+      0.537,
+      0.566,
+      0.539
+    ],
+    "median_kernel_seconds": 0.544,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 1024,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 7,
+        "pivot_entries": 8,
+        "rank": 8,
+        "serialized_bytes": 4428,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1290,
+      "olean_bytes": 67120,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 1417
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN16M16Bits8Member",
+    "family": "membership-residual",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 4.071264655,
+    "max_fresh_seconds": 4.137551801,
+    "median_baseline_delta_seconds": 1.561082903,
+    "kernel_seconds": [
+      0.571,
+      0.585,
+      0.577,
+      0.584,
+      0.589,
+      0.56
+    ],
+    "median_kernel_seconds": 0.5805,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 1024,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 7,
+        "pivot_entries": 8,
+        "rank": 8,
+        "serialized_bytes": 4428,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 40,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 7,
+        "serialized_bytes": 178,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1530,
+      "olean_bytes": 72200,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 1501
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN16M16Bits8Nonmember",
+    "family": "membership-residual",
+    "component": "nonmember",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 4.115923062,
+    "max_fresh_seconds": 4.125992675,
+    "median_baseline_delta_seconds": 1.596703827,
+    "kernel_seconds": [
+      0.587,
+      0.585,
+      0.575,
+      0.59,
+      0.591,
+      0.585
+    ],
+    "median_kernel_seconds": 0.586,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 1024,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 7,
+        "pivot_entries": 8,
+        "rank": 8,
+        "serialized_bytes": 4428,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 40,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 7,
+        "serialized_bytes": 178,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1536,
+      "olean_bytes": 72912,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 1501
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN2M2Bits128Basis",
+    "family": "membership-residual",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.545982295,
+    "max_fresh_seconds": 2.609692596,
+    "median_baseline_delta_seconds": 0.059709445,
+    "kernel_seconds": [
+      0.00508,
+      0.00524,
+      0.00512,
+      0.00504,
+      0.00504,
+      0.00514
+    ],
+    "median_kernel_seconds": 0.0051,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 16,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 2,
+        "pivot_entries": 1,
+        "rank": 1,
+        "serialized_bytes": 140,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1288,
+      "olean_bytes": 18312,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 463
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN2M2Bits128Member",
+    "family": "membership-residual",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.613374258,
+    "max_fresh_seconds": 2.615037999,
+    "median_baseline_delta_seconds": 0.100772485,
+    "kernel_seconds": [
+      0.00566,
+      0.00583,
+      0.00584,
+      0.005719999999999999,
+      0.00564,
+      0.00555
+    ],
+    "median_kernel_seconds": 0.00569,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 16,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 2,
+        "pivot_entries": 1,
+        "rank": 1,
+        "serialized_bytes": 140,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 5,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 3,
+        "serialized_bytes": 49,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1527,
+      "olean_bytes": 21056,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 485
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN2M2Bits128Nonmember",
+    "family": "membership-residual",
+    "component": "nonmember",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.611735504,
+    "max_fresh_seconds": 2.664830941,
+    "median_baseline_delta_seconds": 0.097690998,
+    "kernel_seconds": [
+      0.00636,
+      0.006059999999999999,
+      0.005679999999999999,
+      0.00615,
+      0.0059900000000000005,
+      0.00566
+    ],
+    "median_kernel_seconds": 0.006025,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 16,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 2,
+        "pivot_entries": 1,
+        "rank": 1,
+        "serialized_bytes": 140,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 5,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 3,
+        "serialized_bytes": 49,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1533,
+      "olean_bytes": 21544,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 485
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN2M2Bits32Basis",
+    "family": "membership-residual",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.595673254,
+    "max_fresh_seconds": 2.618945738,
+    "median_baseline_delta_seconds": 0.091538299,
+    "kernel_seconds": [
+      0.0051600000000000005,
+      0.00511,
+      0.00505,
+      0.00509,
+      0.0052699999999999995,
+      0.00531
+    ],
+    "median_kernel_seconds": 0.005135000000000001,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 16,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 2,
+        "pivot_entries": 1,
+        "rank": 1,
+        "serialized_bytes": 140,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1286,
+      "olean_bytes": 18312,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 463
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN2M2Bits32Member",
+    "family": "membership-residual",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.576182746,
+    "max_fresh_seconds": 2.62217487,
+    "median_baseline_delta_seconds": 0.093481883,
+    "kernel_seconds": [
+      0.00604,
+      0.006019999999999999,
+      0.00563,
+      0.00555,
+      0.00561,
+      0.00552
+    ],
+    "median_kernel_seconds": 0.00562,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 16,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 2,
+        "pivot_entries": 1,
+        "rank": 1,
+        "serialized_bytes": 140,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 5,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 3,
+        "serialized_bytes": 49,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1525,
+      "olean_bytes": 21056,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 485
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN2M2Bits32Nonmember",
+    "family": "membership-residual",
+    "component": "nonmember",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.57871737,
+    "max_fresh_seconds": 2.614912445,
+    "median_baseline_delta_seconds": 0.072696981,
+    "kernel_seconds": [
+      0.00592,
+      0.00571,
+      0.005900000000000001,
+      0.00583,
+      0.00562,
+      0.00609
+    ],
+    "median_kernel_seconds": 0.005865,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 16,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 2,
+        "pivot_entries": 1,
+        "rank": 1,
+        "serialized_bytes": 140,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 5,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 3,
+        "serialized_bytes": 49,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1531,
+      "olean_bytes": 21544,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 485
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN2M2Bits8Basis",
+    "family": "membership-residual",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.565564801,
+    "max_fresh_seconds": 2.619797133,
+    "median_baseline_delta_seconds": 0.050358026,
+    "kernel_seconds": [
+      0.00515,
+      0.00526,
+      0.0050999999999999995,
+      0.00519,
+      0.0049900000000000005,
+      0.00524
+    ],
+    "median_kernel_seconds": 0.00517,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 16,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 2,
+        "pivot_entries": 1,
+        "rank": 1,
+        "serialized_bytes": 139,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1284,
+      "olean_bytes": 18312,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 463
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN2M2Bits8Member",
+    "family": "membership-residual",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.609486989,
+    "max_fresh_seconds": 2.616866708,
+    "median_baseline_delta_seconds": 0.095583259,
+    "kernel_seconds": [
+      0.0062900000000000005,
+      0.00567,
+      0.00571,
+      0.00588,
+      0.005900000000000001,
+      0.00574
+    ],
+    "median_kernel_seconds": 0.00581,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 16,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 2,
+        "pivot_entries": 1,
+        "rank": 1,
+        "serialized_bytes": 139,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 5,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 3,
+        "serialized_bytes": 50,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1523,
+      "olean_bytes": 21024,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 486
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN2M2Bits8Nonmember",
+    "family": "membership-residual",
+    "component": "nonmember",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.534535795,
+    "max_fresh_seconds": 2.616085277,
+    "median_baseline_delta_seconds": 0.029160031,
+    "kernel_seconds": [
+      0.0056500000000000005,
+      0.006019999999999999,
+      0.00588,
+      0.005679999999999999,
+      0.0055899999999999995,
+      0.005679999999999999
+    ],
+    "median_kernel_seconds": 0.005679999999999999,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 16,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 2,
+        "pivot_entries": 1,
+        "rank": 1,
+        "serialized_bytes": 139,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 5,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 3,
+        "serialized_bytes": 50,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1529,
+      "olean_bytes": 21576,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 486
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN4M4Bits128Basis",
+    "family": "membership-residual",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.609400565,
+    "max_fresh_seconds": 2.622799797,
+    "median_baseline_delta_seconds": 0.098333337,
+    "kernel_seconds": [
+      0.0147,
+      0.0143,
+      0.0148,
+      0.0148,
+      0.0148,
+      0.0147
+    ],
+    "median_kernel_seconds": 0.01475,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 64,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 127,
+        "pivot_entries": 2,
+        "rank": 2,
+        "serialized_bytes": 835,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1289,
+      "olean_bytes": 28744,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 836
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN4M4Bits128Member",
+    "family": "membership-residual",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.571140338,
+    "max_fresh_seconds": 2.622753493,
+    "median_baseline_delta_seconds": 0.08247516,
+    "kernel_seconds": [
+      0.0161,
+      0.016,
+      0.016,
+      0.0162,
+      0.0162,
+      0.0157
+    ],
+    "median_kernel_seconds": 0.016050000000000002,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 64,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 127,
+        "pivot_entries": 2,
+        "rank": 2,
+        "serialized_bytes": 835,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 10,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 127,
+        "serialized_bytes": 180,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1532,
+      "olean_bytes": 31832,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 977
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN4M4Bits128Nonmember",
+    "family": "membership-residual",
+    "component": "nonmember",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.613712483,
+    "max_fresh_seconds": 2.620365099,
+    "median_baseline_delta_seconds": 0.100922647,
+    "kernel_seconds": [
+      0.016399999999999998,
+      0.0157,
+      0.0159,
+      0.0165,
+      0.0158,
+      0.016300000000000002
+    ],
+    "median_kernel_seconds": 0.016100000000000003,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 64,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 127,
+        "pivot_entries": 2,
+        "rank": 2,
+        "serialized_bytes": 835,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 10,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 127,
+        "serialized_bytes": 180,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1538,
+      "olean_bytes": 32424,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 977
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN4M4Bits32Basis",
+    "family": "membership-residual",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.60680926,
+    "max_fresh_seconds": 2.626064326,
+    "median_baseline_delta_seconds": 0.098448997,
+    "kernel_seconds": [
+      0.014,
+      0.0143,
+      0.013800000000000002,
+      0.013800000000000002,
+      0.014199999999999999,
+      0.014
+    ],
+    "median_kernel_seconds": 0.014,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 64,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 31,
+        "pivot_entries": 2,
+        "rank": 2,
+        "serialized_bytes": 442,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1287,
+      "olean_bytes": 21424,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 585
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN4M4Bits32Member",
+    "family": "membership-residual",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.603047043,
+    "max_fresh_seconds": 2.620239413,
+    "median_baseline_delta_seconds": 0.092972586,
+    "kernel_seconds": [
+      0.0146,
+      0.0149,
+      0.015,
+      0.0149,
+      0.0149,
+      0.015300000000000001
+    ],
+    "median_kernel_seconds": 0.0149,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 64,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 31,
+        "pivot_entries": 2,
+        "rank": 2,
+        "serialized_bytes": 442,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 10,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 31,
+        "serialized_bytes": 91,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1526,
+      "olean_bytes": 24032,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 641
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN4M4Bits32Nonmember",
+    "family": "membership-residual",
+    "component": "nonmember",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.604499858,
+    "max_fresh_seconds": 2.620644532,
+    "median_baseline_delta_seconds": 0.098528049,
+    "kernel_seconds": [
+      0.0155,
+      0.015300000000000001,
+      0.015300000000000001,
+      0.015300000000000001,
+      0.015099999999999999,
+      0.015
+    ],
+    "median_kernel_seconds": 0.015300000000000001,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 64,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 31,
+        "pivot_entries": 2,
+        "rank": 2,
+        "serialized_bytes": 442,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 10,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 31,
+        "serialized_bytes": 91,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1532,
+      "olean_bytes": 24744,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 641
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN4M4Bits8Basis",
+    "family": "membership-residual",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.607454257,
+    "max_fresh_seconds": 2.619681477,
+    "median_baseline_delta_seconds": 0.092251721,
+    "kernel_seconds": [
+      0.014199999999999999,
+      0.0146,
+      0.0144,
+      0.0146,
+      0.0145,
+      0.0143
+    ],
+    "median_kernel_seconds": 0.014450000000000001,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 64,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 7,
+        "pivot_entries": 2,
+        "rank": 2,
+        "serialized_bytes": 339,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1285,
+      "olean_bytes": 21840,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 512
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN4M4Bits8Member",
+    "family": "membership-residual",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.604303703,
+    "max_fresh_seconds": 2.62646985,
+    "median_baseline_delta_seconds": 0.097309683,
+    "kernel_seconds": [
+      0.0154,
+      0.0156,
+      0.0152,
+      0.0155,
+      0.0162,
+      0.0154
+    ],
+    "median_kernel_seconds": 0.01545,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 64,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 7,
+        "pivot_entries": 2,
+        "rank": 2,
+        "serialized_bytes": 339,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 10,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 7,
+        "serialized_bytes": 69,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1524,
+      "olean_bytes": 25296,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 545
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN4M4Bits8Nonmember",
+    "family": "membership-residual",
+    "component": "nonmember",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.608207651,
+    "max_fresh_seconds": 2.619086137,
+    "median_baseline_delta_seconds": 0.09598486,
+    "kernel_seconds": [
+      0.016,
+      0.0157,
+      0.0157,
+      0.0157,
+      0.0158,
+      0.0166
+    ],
+    "median_kernel_seconds": 0.01575,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 64,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 7,
+        "pivot_entries": 2,
+        "rank": 2,
+        "serialized_bytes": 339,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 10,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 7,
+        "serialized_bytes": 69,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1530,
+      "olean_bytes": 25880,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 545
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN8M8Bits128Basis",
+    "family": "membership-residual",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.642100455,
+    "max_fresh_seconds": 2.705251874,
+    "median_baseline_delta_seconds": 0.132500946,
+    "kernel_seconds": [
+      0.071,
+      0.0765,
+      0.0707,
+      0.0693,
+      0.0688,
+      0.0686
+    ],
+    "median_kernel_seconds": 0.07,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 256,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 126,
+        "pivot_entries": 4,
+        "rank": 4,
+        "serialized_bytes": 3628,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1290,
+      "olean_bytes": 70864,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 2021
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN8M8Bits128Member",
+    "family": "membership-residual",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.726003549,
+    "max_fresh_seconds": 2.853536273,
+    "median_baseline_delta_seconds": 0.216862515,
+    "kernel_seconds": [
+      0.0727,
+      0.0756,
+      0.07809999999999999,
+      0.0722,
+      0.0724,
+      0.0721
+    ],
+    "median_kernel_seconds": 0.07255,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 256,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 126,
+        "pivot_entries": 4,
+        "rank": 4,
+        "serialized_bytes": 3628,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 20,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 127,
+        "serialized_bytes": 330,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1533,
+      "olean_bytes": 70640,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 2291
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN8M8Bits128Nonmember",
+    "family": "membership-residual",
+    "component": "nonmember",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.716768724,
+    "max_fresh_seconds": 2.826790411,
+    "median_baseline_delta_seconds": 0.209266529,
+    "kernel_seconds": [
+      0.0721,
+      0.0735,
+      0.07790000000000001,
+      0.073,
+      0.07429999999999999,
+      0.0747
+    ],
+    "median_kernel_seconds": 0.0739,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 256,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 126,
+        "pivot_entries": 4,
+        "rank": 4,
+        "serialized_bytes": 3628,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 20,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 127,
+        "serialized_bytes": 330,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1539,
+      "olean_bytes": 71088,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 2291
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN8M8Bits32Basis",
+    "family": "membership-residual",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.628768532,
+    "max_fresh_seconds": 2.722446247,
+    "median_baseline_delta_seconds": 0.127726135,
+    "kernel_seconds": [
+      0.061799999999999994,
+      0.0598,
+      0.061399999999999996,
+      0.060399999999999995,
+      0.06420000000000001,
+      0.0595
+    ],
+    "median_kernel_seconds": 0.060899999999999996,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 256,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 30,
+        "pivot_entries": 4,
+        "rank": 4,
+        "serialized_bytes": 1741,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1287,
+      "olean_bytes": 34832,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 967
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN8M8Bits32Member",
+    "family": "membership-residual",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.724510053,
+    "max_fresh_seconds": 2.822125521,
+    "median_baseline_delta_seconds": 0.223455823,
+    "kernel_seconds": [
+      0.06420000000000001,
+      0.0677,
+      0.0645,
+      0.065,
+      0.0703,
+      0.06570000000000001
+    ],
+    "median_kernel_seconds": 0.06535,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 256,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 30,
+        "pivot_entries": 4,
+        "rank": 4,
+        "serialized_bytes": 1741,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 20,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 30,
+        "serialized_bytes": 152,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1530,
+      "olean_bytes": 39840,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 1063
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN8M8Bits32Nonmember",
+    "family": "membership-residual",
+    "component": "nonmember",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.739983259,
+    "max_fresh_seconds": 2.822899665,
+    "median_baseline_delta_seconds": 0.247581592,
+    "kernel_seconds": [
+      0.0664,
+      0.06459999999999999,
+      0.0655,
+      0.0705,
+      0.0732,
+      0.065
+    ],
+    "median_kernel_seconds": 0.06595000000000001,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 256,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 30,
+        "pivot_entries": 4,
+        "rank": 4,
+        "serialized_bytes": 1741,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 20,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 30,
+        "serialized_bytes": 152,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1536,
+      "olean_bytes": 40256,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 1063
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN8M8Bits8Basis",
+    "family": "membership-residual",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.617651608,
+    "max_fresh_seconds": 2.724369122,
+    "median_baseline_delta_seconds": 0.108977908,
+    "kernel_seconds": [
+      0.0587,
+      0.0595,
+      0.0626,
+      0.0588,
+      0.0613,
+      0.0583
+    ],
+    "median_kernel_seconds": 0.059149999999999994,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 256,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 6,
+        "pivot_entries": 4,
+        "rank": 4,
+        "serialized_bytes": 1353,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1285,
+      "olean_bytes": 32792,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 705
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN8M8Bits8Member",
+    "family": "membership-residual",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.709066957,
+    "max_fresh_seconds": 2.738123609,
+    "median_baseline_delta_seconds": 0.20572671,
+    "kernel_seconds": [
+      0.0643,
+      0.0627,
+      0.06709999999999999,
+      0.0636,
+      0.06670000000000001,
+      0.0626
+    ],
+    "median_kernel_seconds": 0.06395,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 256,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 6,
+        "pivot_entries": 4,
+        "rank": 4,
+        "serialized_bytes": 1353,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 20,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 6,
+        "serialized_bytes": 105,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1524,
+      "olean_bytes": 37064,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 755
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.MembershipResidualN8M8Bits8Nonmember",
+    "family": "membership-residual",
+    "component": "nonmember",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.712864646,
+    "max_fresh_seconds": 2.820229614,
+    "median_baseline_delta_seconds": 0.250328832,
+    "kernel_seconds": [
+      0.06459999999999999,
+      0.06409999999999999,
+      0.0637,
+      0.0694,
+      0.0689,
+      0.0634
+    ],
+    "median_kernel_seconds": 0.06434999999999999,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 256,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 6,
+        "pivot_entries": 4,
+        "rank": 4,
+        "serialized_bytes": 1353,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 20,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 6,
+        "serialized_bytes": 105,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1530,
+      "olean_bytes": 37648,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 755
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.RankDeficientHermiteN16M16Bits128Basis",
+    "family": "rank-deficient-hermite",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 3.210181924,
+    "max_fresh_seconds": 3.223903113,
+    "median_baseline_delta_seconds": 0.702801383,
+    "kernel_seconds": [
+      0.524,
+      0.519,
+      0.518,
+      0.521,
+      0.513,
+      0.51
+    ],
+    "median_kernel_seconds": 0.5185,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 1024,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 125,
+        "pivot_entries": 8,
+        "rank": 8,
+        "serialized_bytes": 13348,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1298,
+      "olean_bytes": 223400,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 6731
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.RankDeficientHermiteN16M16Bits128Member",
+    "family": "rank-deficient-hermite",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 4.112080563,
+    "max_fresh_seconds": 4.18242889,
+    "median_baseline_delta_seconds": 1.60511092,
+    "kernel_seconds": [
+      0.572,
+      0.567,
+      0.546,
+      0.545,
+      0.545,
+      0.537
+    ],
+    "median_kernel_seconds": 0.5455000000000001,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 1024,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 125,
+        "pivot_entries": 8,
+        "rank": 8,
+        "serialized_bytes": 13348,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 40,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 126,
+        "serialized_bytes": 619,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1541,
+      "olean_bytes": 209968,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 7248
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.RankDeficientHermiteN16M16Bits32Basis",
+    "family": "rank-deficient-hermite",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 3.217465411,
+    "max_fresh_seconds": 3.245333086,
+    "median_baseline_delta_seconds": 0.692098657,
+    "kernel_seconds": [
+      0.514,
+      0.489,
+      0.491,
+      0.493,
+      0.514,
+      0.498
+    ],
+    "median_kernel_seconds": 0.4955,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 1024,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 29,
+        "pivot_entries": 8,
+        "rank": 8,
+        "serialized_bytes": 6280,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1296,
+      "olean_bytes": 97160,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 2501
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.RankDeficientHermiteN16M16Bits32Member",
+    "family": "rank-deficient-hermite",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 4.320801409,
+    "max_fresh_seconds": 4.475570475,
+    "median_baseline_delta_seconds": 1.811217827,
+    "kernel_seconds": [
+      0.525,
+      0.523,
+      0.512,
+      0.512,
+      0.534,
+      0.512
+    ],
+    "median_kernel_seconds": 0.5175000000000001,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 1024,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 29,
+        "pivot_entries": 8,
+        "rank": 8,
+        "serialized_bytes": 6280,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 40,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 29,
+        "serialized_bytes": 263,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1539,
+      "olean_bytes": 104208,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 2670
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.RankDeficientHermiteN16M16Bits8Basis",
+    "family": "rank-deficient-hermite",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 3.170346667,
+    "max_fresh_seconds": 3.218941239,
+    "median_baseline_delta_seconds": 0.69437409,
+    "kernel_seconds": [
+      0.514,
+      0.498,
+      0.5,
+      0.491,
+      0.499,
+      0.504
+    ],
+    "median_kernel_seconds": 0.4995,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 1024,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 6,
+        "pivot_entries": 8,
+        "rank": 8,
+        "serialized_bytes": 4361,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1294,
+      "olean_bytes": 62904,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 1432
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.RankDeficientHermiteN16M16Bits8Member",
+    "family": "rank-deficient-hermite",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 4.220305008,
+    "max_fresh_seconds": 4.242470711,
+    "median_baseline_delta_seconds": 1.703685246,
+    "kernel_seconds": [
+      0.538,
+      0.514,
+      0.508,
+      0.547,
+      0.531,
+      0.518
+    ],
+    "median_kernel_seconds": 0.5245,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 1024,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 6,
+        "pivot_entries": 8,
+        "rank": 8,
+        "serialized_bytes": 4361,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 40,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 7,
+        "serialized_bytes": 190,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1536,
+      "olean_bytes": 68232,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 1523
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.RankDeficientHermiteN2M2Bits128Basis",
+    "family": "rank-deficient-hermite",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.571553086,
+    "max_fresh_seconds": 2.633998469,
+    "median_baseline_delta_seconds": 0.060014942,
+    "kernel_seconds": [
+      0.00495,
+      0.00479,
+      0.0052,
+      0.006889999999999999,
+      0.00491,
+      0.00495
+    ],
+    "median_kernel_seconds": 0.00495,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 16,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 2,
+        "pivot_entries": 1,
+        "rank": 1,
+        "serialized_bytes": 140,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1292,
+      "olean_bytes": 18152,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 463
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.RankDeficientHermiteN2M2Bits128Member",
+    "family": "rank-deficient-hermite",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.616015853,
+    "max_fresh_seconds": 2.657907858,
+    "median_baseline_delta_seconds": 0.099624305,
+    "kernel_seconds": [
+      0.0053,
+      0.00525,
+      0.00545,
+      0.0051600000000000005,
+      0.00533,
+      0.00518
+    ],
+    "median_kernel_seconds": 0.005275,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 16,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 2,
+        "pivot_entries": 1,
+        "rank": 1,
+        "serialized_bytes": 140,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 5,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 0,
+        "serialized_bytes": 47,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1531,
+      "olean_bytes": 20600,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 484
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.RankDeficientHermiteN2M2Bits32Basis",
+    "family": "rank-deficient-hermite",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.565570921,
+    "max_fresh_seconds": 2.6287333,
+    "median_baseline_delta_seconds": 0.05147457,
+    "kernel_seconds": [
+      0.00511,
+      0.00515,
+      0.00517,
+      0.00496,
+      0.00518,
+      0.00509
+    ],
+    "median_kernel_seconds": 0.00513,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 16,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 2,
+        "pivot_entries": 1,
+        "rank": 1,
+        "serialized_bytes": 139,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1290,
+      "olean_bytes": 18312,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 463
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.RankDeficientHermiteN2M2Bits32Member",
+    "family": "rank-deficient-hermite",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.619675756,
+    "max_fresh_seconds": 2.633561212,
+    "median_baseline_delta_seconds": 0.103861419,
+    "kernel_seconds": [
+      0.005679999999999999,
+      0.00557,
+      0.00563,
+      0.005889999999999999,
+      0.00549,
+      0.0058200000000000005
+    ],
+    "median_kernel_seconds": 0.0056549999999999994,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 16,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 2,
+        "pivot_entries": 1,
+        "rank": 1,
+        "serialized_bytes": 139,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 5,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 3,
+        "serialized_bytes": 50,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1529,
+      "olean_bytes": 21024,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 486
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.RankDeficientHermiteN2M2Bits8Basis",
+    "family": "rank-deficient-hermite",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.608946891,
+    "max_fresh_seconds": 2.626420786,
+    "median_baseline_delta_seconds": 0.101036225,
+    "kernel_seconds": [
+      0.00514,
+      0.00514,
+      0.00543,
+      0.00507,
+      0.00543,
+      0.00547
+    ],
+    "median_kernel_seconds": 0.005285,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 16,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 2,
+        "pivot_entries": 1,
+        "rank": 1,
+        "serialized_bytes": 140,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1288,
+      "olean_bytes": 18312,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 463
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.RankDeficientHermiteN2M2Bits8Member",
+    "family": "rank-deficient-hermite",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.579884549,
+    "max_fresh_seconds": 2.629102684,
+    "median_baseline_delta_seconds": 0.069985654,
+    "kernel_seconds": [
+      0.0057599999999999995,
+      0.00571,
+      0.00622,
+      0.0062,
+      0.00575,
+      0.005719999999999999
+    ],
+    "median_kernel_seconds": 0.005755,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 16,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 2,
+        "pivot_entries": 1,
+        "rank": 1,
+        "serialized_bytes": 140,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 5,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 3,
+        "serialized_bytes": 49,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1527,
+      "olean_bytes": 21056,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 485
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.RankDeficientHermiteN4M4Bits128Basis",
+    "family": "rank-deficient-hermite",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.569580035,
+    "max_fresh_seconds": 2.619862747,
+    "median_baseline_delta_seconds": 0.093932976,
+    "kernel_seconds": [
+      0.014199999999999999,
+      0.0146,
+      0.0144,
+      0.0145,
+      0.0143,
+      0.014199999999999999
+    ],
+    "median_kernel_seconds": 0.01435,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 64,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 127,
+        "pivot_entries": 2,
+        "rank": 2,
+        "serialized_bytes": 831,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1293,
+      "olean_bytes": 28648,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 836
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.RankDeficientHermiteN4M4Bits128Member",
+    "family": "rank-deficient-hermite",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.616275779,
+    "max_fresh_seconds": 2.696492309,
+    "median_baseline_delta_seconds": 0.104467997,
+    "kernel_seconds": [
+      0.0158,
+      0.0152,
+      0.0162,
+      0.0152,
+      0.0154,
+      0.0154
+    ],
+    "median_kernel_seconds": 0.0154,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 64,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 127,
+        "pivot_entries": 2,
+        "rank": 2,
+        "serialized_bytes": 831,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 10,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 128,
+        "serialized_bytes": 182,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1536,
+      "olean_bytes": 31688,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 979
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.RankDeficientHermiteN4M4Bits32Basis",
+    "family": "rank-deficient-hermite",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.574622387,
+    "max_fresh_seconds": 2.617443994,
+    "median_baseline_delta_seconds": 0.085221422,
+    "kernel_seconds": [
+      0.013800000000000002,
+      0.013699999999999999,
+      0.014,
+      0.014199999999999999,
+      0.013900000000000001,
+      0.014199999999999999
+    ],
+    "median_kernel_seconds": 0.01395,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 64,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 31,
+        "pivot_entries": 2,
+        "rank": 2,
+        "serialized_bytes": 504,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1291,
+      "olean_bytes": 21488,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 583
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.RankDeficientHermiteN4M4Bits32Member",
+    "family": "rank-deficient-hermite",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.570903942,
+    "max_fresh_seconds": 2.622950985,
+    "median_baseline_delta_seconds": 0.101468293,
+    "kernel_seconds": [
+      0.0155,
+      0.0148,
+      0.015,
+      0.015,
+      0.015,
+      0.0147
+    ],
+    "median_kernel_seconds": 0.015,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 64,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 31,
+        "pivot_entries": 2,
+        "rank": 2,
+        "serialized_bytes": 504,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 10,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 31,
+        "serialized_bytes": 93,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1530,
+      "olean_bytes": 24256,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 640
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.RankDeficientHermiteN4M4Bits8Basis",
+    "family": "rank-deficient-hermite",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.562897663,
+    "max_fresh_seconds": 2.62407338,
+    "median_baseline_delta_seconds": 0.098533838,
+    "kernel_seconds": [
+      0.0136,
+      0.013800000000000002,
+      0.013800000000000002,
+      0.013900000000000001,
+      0.013900000000000001,
+      0.013699999999999999
+    ],
+    "median_kernel_seconds": 0.013800000000000002,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 64,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 7,
+        "pivot_entries": 2,
+        "rank": 2,
+        "serialized_bytes": 339,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1289,
+      "olean_bytes": 21424,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 515
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.RankDeficientHermiteN4M4Bits8Member",
+    "family": "rank-deficient-hermite",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.611390821,
+    "max_fresh_seconds": 2.621839857,
+    "median_baseline_delta_seconds": 0.103490152,
+    "kernel_seconds": [
+      0.0149,
+      0.015,
+      0.015300000000000001,
+      0.0148,
+      0.0146,
+      0.0149
+    ],
+    "median_kernel_seconds": 0.0149,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 64,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 7,
+        "pivot_entries": 2,
+        "rank": 2,
+        "serialized_bytes": 339,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 10,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 8,
+        "serialized_bytes": 71,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1528,
+      "olean_bytes": 24880,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 550
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.RankDeficientHermiteN8M8Bits128Basis",
+    "family": "rank-deficient-hermite",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.619742663,
+    "max_fresh_seconds": 2.724734689,
+    "median_baseline_delta_seconds": 0.152657787,
+    "kernel_seconds": [
+      0.0637,
+      0.0625,
+      0.0629,
+      0.063,
+      0.06709999999999999,
+      0.0658
+    ],
+    "median_kernel_seconds": 0.06335,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 256,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 126,
+        "pivot_entries": 4,
+        "rank": 4,
+        "serialized_bytes": 3533,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1294,
+      "olean_bytes": 69152,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 2020
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.RankDeficientHermiteN8M8Bits128Member",
+    "family": "rank-deficient-hermite",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.725292274,
+    "max_fresh_seconds": 2.828271273,
+    "median_baseline_delta_seconds": 0.256059129,
+    "kernel_seconds": [
+      0.0745,
+      0.06670000000000001,
+      0.0684,
+      0.0682,
+      0.0669,
+      0.0697
+    ],
+    "median_kernel_seconds": 0.0683,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 256,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 126,
+        "pivot_entries": 4,
+        "rank": 4,
+        "serialized_bytes": 3533,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 20,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 128,
+        "serialized_bytes": 315,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1537,
+      "olean_bytes": 68504,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 2276
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.RankDeficientHermiteN8M8Bits32Basis",
+    "family": "rank-deficient-hermite",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.670096675,
+    "max_fresh_seconds": 2.719141288,
+    "median_baseline_delta_seconds": 0.151561089,
+    "kernel_seconds": [
+      0.0675,
+      0.0659,
+      0.06459999999999999,
+      0.0679,
+      0.0659,
+      0.0683
+    ],
+    "median_kernel_seconds": 0.06670000000000001,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 256,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 30,
+        "pivot_entries": 4,
+        "rank": 4,
+        "serialized_bytes": 1740,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1291,
+      "olean_bytes": 35216,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 965
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.RankDeficientHermiteN8M8Bits32Member",
+    "family": "rank-deficient-hermite",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.740405111,
+    "max_fresh_seconds": 2.814967848,
+    "median_baseline_delta_seconds": 0.267596369,
+    "kernel_seconds": [
+      0.0697,
+      0.0705,
+      0.0688,
+      0.0677,
+      0.0727,
+      0.0724
+    ],
+    "median_kernel_seconds": 0.0701,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 256,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 30,
+        "pivot_entries": 4,
+        "rank": 4,
+        "serialized_bytes": 1740,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 20,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 30,
+        "serialized_bytes": 151,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1534,
+      "olean_bytes": 39960,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 1059
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.RankDeficientHermiteN8M8Bits8Basis",
+    "family": "rank-deficient-hermite",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.629634528,
+    "max_fresh_seconds": 2.732756357,
+    "median_baseline_delta_seconds": 0.16790231,
+    "kernel_seconds": [
+      0.0645,
+      0.0611,
+      0.0601,
+      0.060899999999999996,
+      0.0615,
+      0.062299999999999994
+    ],
+    "median_kernel_seconds": 0.0613,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 256,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 6,
+        "pivot_entries": 4,
+        "rank": 4,
+        "serialized_bytes": 1344,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1289,
+      "olean_bytes": 33112,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 697
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.RankDeficientHermiteN8M8Bits8Member",
+    "family": "rank-deficient-hermite",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.712682845,
+    "max_fresh_seconds": 2.74431524,
+    "median_baseline_delta_seconds": 0.207272711,
+    "kernel_seconds": [
+      0.06509999999999999,
+      0.0677,
+      0.0689,
+      0.06520000000000001,
+      0.0675,
+      0.06670000000000001
+    ],
+    "median_kernel_seconds": 0.0671,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 256,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 6,
+        "pivot_entries": 4,
+        "rank": 4,
+        "serialized_bytes": 1344,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 20,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 6,
+        "serialized_bytes": 102,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1528,
+      "olean_bytes": 36632,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 745
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.TallHermiteN16M16Bits128Basis",
+    "family": "tall-hermite",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 5.825442177,
+    "max_fresh_seconds": 5.963806372,
+    "median_baseline_delta_seconds": 3.326776985,
+    "kernel_seconds": [
+      3.03,
+      3.02,
+      3.05,
+      2.99,
+      3.09,
+      2.98
+    ],
+    "median_kernel_seconds": 3.025,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 3072,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 124,
+        "pivot_entries": 16,
+        "rank": 16,
+        "serialized_bytes": 23921,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1280,
+      "olean_bytes": 392808,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 9829
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.TallHermiteN16M16Bits128Member",
+    "family": "tall-hermite",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 9.647374641,
+    "max_fresh_seconds": 9.758384058,
+    "median_baseline_delta_seconds": 7.173199604,
+    "kernel_seconds": [
+      3.08,
+      3.13,
+      3.09,
+      3.05,
+      3.11,
+      3.02
+    ],
+    "median_kernel_seconds": 3.085,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 3072,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 124,
+        "pivot_entries": 16,
+        "rank": 16,
+        "serialized_bytes": 23921,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 48,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 124,
+        "serialized_bytes": 492,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1523,
+      "olean_bytes": 372064,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 10189
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.TallHermiteN16M16Bits32Basis",
+    "family": "tall-hermite",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 5.721742656,
+    "max_fresh_seconds": 5.838815381,
+    "median_baseline_delta_seconds": 3.240032997,
+    "kernel_seconds": [
+      2.85,
+      2.94,
+      2.87,
+      2.83,
+      2.92,
+      2.83
+    ],
+    "median_kernel_seconds": 2.8600000000000003,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 3072,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 28,
+        "pivot_entries": 16,
+        "rank": 16,
+        "serialized_bytes": 15194,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1278,
+      "olean_bytes": 222344,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 3670
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.TallHermiteN16M16Bits32Member",
+    "family": "tall-hermite",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 9.113059096,
+    "max_fresh_seconds": 9.311683991,
+    "median_baseline_delta_seconds": 6.598633739,
+    "kernel_seconds": [
+      2.98,
+      2.85,
+      2.92,
+      2.88,
+      2.94,
+      2.85
+    ],
+    "median_kernel_seconds": 2.9,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 3072,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 28,
+        "pivot_entries": 16,
+        "rank": 16,
+        "serialized_bytes": 15194,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 48,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 31,
+        "serialized_bytes": 266,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1521,
+      "olean_bytes": 229080,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 3809
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.TallHermiteN16M16Bits8Basis",
+    "family": "tall-hermite",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 6.182512021,
+    "max_fresh_seconds": 6.505442041,
+    "median_baseline_delta_seconds": 3.696050816,
+    "kernel_seconds": [
+      3.76,
+      3.37,
+      3.33,
+      3.35,
+      3.36,
+      3.31
+    ],
+    "median_kernel_seconds": 3.355,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 3072,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 19,
+        "pivot_entries": 16,
+        "rank": 16,
+        "serialized_bytes": 13796,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1276,
+      "olean_bytes": 175432,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 2261
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.TallHermiteN16M16Bits8Member",
+    "family": "tall-hermite",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 8.923590206,
+    "max_fresh_seconds": 9.027836777,
+    "median_baseline_delta_seconds": 6.457696302,
+    "kernel_seconds": [
+      3.33,
+      3.39,
+      3.36,
+      3.4,
+      3.32,
+      3.35
+    ],
+    "median_kernel_seconds": 3.355,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 3072,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 19,
+        "pivot_entries": 16,
+        "rank": 16,
+        "serialized_bytes": 13796,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 48,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 7,
+        "serialized_bytes": 214,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1517,
+      "olean_bytes": 180320,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 2345
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.TallHermiteN2M2Bits128Basis",
+    "family": "tall-hermite",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.566290724,
+    "max_fresh_seconds": 2.620383653,
+    "median_baseline_delta_seconds": 0.060697725,
+    "kernel_seconds": [
+      0.0114,
+      0.011800000000000001,
+      0.0114,
+      0.0114,
+      0.0119,
+      0.011699999999999999
+    ],
+    "median_kernel_seconds": 0.01155,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 48,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 127,
+        "pivot_entries": 2,
+        "rank": 2,
+        "serialized_bytes": 425,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1275,
+      "olean_bytes": 23208,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 585
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.TallHermiteN2M2Bits128Member",
+    "family": "tall-hermite",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.569750881,
+    "max_fresh_seconds": 2.620419796,
+    "median_baseline_delta_seconds": 0.066023378,
+    "kernel_seconds": [
+      0.011800000000000001,
+      0.0125,
+      0.012,
+      0.0123,
+      0.0119,
+      0.0127
+    ],
+    "median_kernel_seconds": 0.012150000000000001,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 48,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 127,
+        "pivot_entries": 2,
+        "rank": 2,
+        "serialized_bytes": 425,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 6,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 126,
+        "serialized_bytes": 89,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1514,
+      "olean_bytes": 25928,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 644
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.TallHermiteN2M2Bits32Basis",
+    "family": "tall-hermite",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.613062734,
+    "max_fresh_seconds": 2.626348339,
+    "median_baseline_delta_seconds": 0.096400875,
+    "kernel_seconds": [
+      0.011300000000000001,
+      0.0114,
+      0.011300000000000001,
+      0.0115,
+      0.011300000000000001,
+      0.0111
+    ],
+    "median_kernel_seconds": 0.011300000000000001,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 48,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 31,
+        "pivot_entries": 2,
+        "rank": 2,
+        "serialized_bytes": 307,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1273,
+      "olean_bytes": 20456,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 503
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.TallHermiteN2M2Bits32Member",
+    "family": "tall-hermite",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.610787433,
+    "max_fresh_seconds": 2.700987068,
+    "median_baseline_delta_seconds": 0.092960191,
+    "kernel_seconds": [
+      0.011800000000000001,
+      0.012,
+      0.0116,
+      0.0121,
+      0.0121,
+      0.0119
+    ],
+    "median_kernel_seconds": 0.01195,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 48,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 31,
+        "pivot_entries": 2,
+        "rank": 2,
+        "serialized_bytes": 307,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 6,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 31,
+        "serialized_bytes": 61,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1512,
+      "olean_bytes": 23032,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 534
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.TallHermiteN2M2Bits8Basis",
+    "family": "tall-hermite",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.611404286,
+    "max_fresh_seconds": 2.624626599,
+    "median_baseline_delta_seconds": 0.056120749,
+    "kernel_seconds": [
+      0.0119,
+      0.0121,
+      0.0119,
+      0.0119,
+      0.0121,
+      0.012
+    ],
+    "median_kernel_seconds": 0.01195,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 48,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 7,
+        "pivot_entries": 2,
+        "rank": 2,
+        "serialized_bytes": 279,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1271,
+      "olean_bytes": 20944,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 480
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.TallHermiteN2M2Bits8Member",
+    "family": "tall-hermite",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.615265867,
+    "max_fresh_seconds": 2.656721907,
+    "median_baseline_delta_seconds": 0.106610156,
+    "kernel_seconds": [
+      0.0124,
+      0.0123,
+      0.0123,
+      0.0129,
+      0.013,
+      0.0123
+    ],
+    "median_kernel_seconds": 0.01235,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 48,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 7,
+        "pivot_entries": 2,
+        "rank": 2,
+        "serialized_bytes": 279,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 6,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 6,
+        "serialized_bytes": 54,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1509,
+      "olean_bytes": 24208,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 504
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.TallHermiteN4M4Bits128Basis",
+    "family": "tall-hermite",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.63285494,
+    "max_fresh_seconds": 2.721456423,
+    "median_baseline_delta_seconds": 0.159596897,
+    "kernel_seconds": [
+      0.048299999999999996,
+      0.0496,
+      0.0484,
+      0.051,
+      0.0504,
+      0.048100000000000004
+    ],
+    "median_kernel_seconds": 0.049,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 192,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 126,
+        "pivot_entries": 4,
+        "rank": 4,
+        "serialized_bytes": 1810,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1275,
+      "olean_bytes": 42592,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 1025
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.TallHermiteN4M4Bits128Member",
+    "family": "tall-hermite",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.645954135,
+    "max_fresh_seconds": 2.723053178,
+    "median_baseline_delta_seconds": 0.130824428,
+    "kernel_seconds": [
+      0.0494,
+      0.0546,
+      0.0497,
+      0.05,
+      0.0509,
+      0.0498
+    ],
+    "median_kernel_seconds": 0.0499,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 192,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 126,
+        "pivot_entries": 4,
+        "rank": 4,
+        "serialized_bytes": 1810,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 12,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 126,
+        "serialized_bytes": 147,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1518,
+      "olean_bytes": 44488,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 1128
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.TallHermiteN4M4Bits32Basis",
+    "family": "tall-hermite",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.609037037,
+    "max_fresh_seconds": 2.640780259,
+    "median_baseline_delta_seconds": 0.105344654,
+    "kernel_seconds": [
+      0.045700000000000005,
+      0.047,
+      0.044700000000000004,
+      0.0475,
+      0.0445,
+      0.045
+    ],
+    "median_kernel_seconds": 0.04535,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 192,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 30,
+        "pivot_entries": 4,
+        "rank": 4,
+        "serialized_bytes": 1249,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1273,
+      "olean_bytes": 30680,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 662
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.TallHermiteN4M4Bits32Member",
+    "family": "tall-hermite",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.62403802,
+    "max_fresh_seconds": 2.725841328,
+    "median_baseline_delta_seconds": 0.112262869,
+    "kernel_seconds": [
+      0.046,
+      0.0479,
+      0.046200000000000005,
+      0.0482,
+      0.046200000000000005,
+      0.0466
+    ],
+    "median_kernel_seconds": 0.046400000000000004,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 192,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 30,
+        "pivot_entries": 4,
+        "rank": 4,
+        "serialized_bytes": 1249,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 12,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 30,
+        "serialized_bytes": 90,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1512,
+      "olean_bytes": 34080,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 709
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.TallHermiteN4M4Bits8Basis",
+    "family": "tall-hermite",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.6149228,
+    "max_fresh_seconds": 3.109770469,
+    "median_baseline_delta_seconds": 0.141623391,
+    "kernel_seconds": [
+      0.044899999999999995,
+      0.0979,
+      0.0455,
+      0.0453,
+      0.0443,
+      0.044700000000000004
+    ],
+    "median_kernel_seconds": 0.0451,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 192,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 6,
+        "pivot_entries": 4,
+        "rank": 4,
+        "serialized_bytes": 1122,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1271,
+      "olean_bytes": 28736,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 573
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.TallHermiteN4M4Bits8Member",
+    "family": "tall-hermite",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.633263662,
+    "max_fresh_seconds": 2.726791678,
+    "median_baseline_delta_seconds": 0.159299853,
+    "kernel_seconds": [
+      0.046,
+      0.0453,
+      0.0453,
+      0.0471,
+      0.0461,
+      0.046
+    ],
+    "median_kernel_seconds": 0.046,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 192,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 6,
+        "pivot_entries": 4,
+        "rank": 4,
+        "serialized_bytes": 1122,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 12,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 6,
+        "serialized_bytes": 74,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1510,
+      "olean_bytes": 31632,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 604
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.TallHermiteN8M8Bits128Basis",
+    "family": "tall-hermite",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.979635905,
+    "max_fresh_seconds": 3.025714697,
+    "median_baseline_delta_seconds": 0.498234663,
+    "kernel_seconds": [
+      0.328,
+      0.343,
+      0.337,
+      0.335,
+      0.332,
+      0.351
+    ],
+    "median_kernel_seconds": 0.336,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 768,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 125,
+        "pivot_entries": 8,
+        "rank": 8,
+        "serialized_bytes": 6124,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1276,
+      "olean_bytes": 109224,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 2766
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.TallHermiteN8M8Bits128Member",
+    "family": "tall-hermite",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 3.216345813,
+    "max_fresh_seconds": 3.243290589,
+    "median_baseline_delta_seconds": 0.69753552,
+    "kernel_seconds": [
+      0.354,
+      0.37,
+      0.377,
+      0.363,
+      0.362,
+      0.357
+    ],
+    "median_kernel_seconds": 0.3625,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 768,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 125,
+        "pivot_entries": 8,
+        "rank": 8,
+        "serialized_bytes": 6124,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 24,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 126,
+        "serialized_bytes": 255,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1519,
+      "olean_bytes": 106872,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 2950
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.TallHermiteN8M8Bits32Basis",
+    "family": "tall-hermite",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 3.016345257,
+    "max_fresh_seconds": 3.019587106,
+    "median_baseline_delta_seconds": 0.500519215,
+    "kernel_seconds": [
+      0.39,
+      0.388,
+      0.377,
+      0.373,
+      0.374,
+      0.374
+    ],
+    "median_kernel_seconds": 0.3755,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 768,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 29,
+        "pivot_entries": 8,
+        "rank": 8,
+        "serialized_bytes": 3965,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1273,
+      "olean_bytes": 67784,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 1272
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.TallHermiteN8M8Bits32Member",
+    "family": "tall-hermite",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 3.213149888,
+    "max_fresh_seconds": 3.260402171,
+    "median_baseline_delta_seconds": 0.695852969,
+    "kernel_seconds": [
+      0.382,
+      0.397,
+      0.382,
+      0.379,
+      0.39,
+      0.394
+    ],
+    "median_kernel_seconds": 0.386,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 768,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 29,
+        "pivot_entries": 8,
+        "rank": 8,
+        "serialized_bytes": 3965,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 24,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 31,
+        "serialized_bytes": 147,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1512,
+      "olean_bytes": 72560,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 1348
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.TallHermiteN8M8Bits8Basis",
+    "family": "tall-hermite",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 3.012694577,
+    "max_fresh_seconds": 3.030644664,
+    "median_baseline_delta_seconds": 0.500229645,
+    "kernel_seconds": [
+      0.382,
+      0.399,
+      0.386,
+      0.381,
+      0.388,
+      0.38
+    ],
+    "median_kernel_seconds": 0.384,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 768,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 8,
+        "pivot_entries": 8,
+        "rank": 8,
+        "serialized_bytes": 3516,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1271,
+      "olean_bytes": 55648,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 918
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.TallHermiteN8M8Bits8Member",
+    "family": "tall-hermite",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 3.210303759,
+    "max_fresh_seconds": 3.218013388,
+    "median_baseline_delta_seconds": 0.698341547,
+    "kernel_seconds": [
+      0.396,
+      0.404,
+      0.386,
+      0.382,
+      0.38,
+      0.401
+    ],
+    "median_kernel_seconds": 0.391,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 768,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 8,
+        "pivot_entries": 8,
+        "rank": 8,
+        "serialized_bytes": 3516,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 24,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 7,
+        "serialized_bytes": 111,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1510,
+      "olean_bytes": 59096,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 963
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.UnimodularConjugateN16M16Bits128Basis",
+    "family": "unimodular-conjugate",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 3.821209269,
+    "max_fresh_seconds": 3.908734292,
+    "median_baseline_delta_seconds": 1.301248997,
+    "kernel_seconds": [
+      1.1,
+      1.09,
+      1.28,
+      1.07,
+      1.1,
+      1.11
+    ],
+    "median_kernel_seconds": 1.1,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 1024,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 124,
+        "pivot_entries": 16,
+        "rank": 16,
+        "serialized_bytes": 35229,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1297,
+      "olean_bytes": 540872,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 10764
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.UnimodularConjugateN16M16Bits128Member",
+    "family": "unimodular-conjugate",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 4.772503215,
+    "max_fresh_seconds": 4.89026117,
+    "median_baseline_delta_seconds": 2.257883957,
+    "kernel_seconds": [
+      1.18,
+      1.2,
+      1.2,
+      1.14,
+      1.18,
+      1.18
+    ],
+    "median_kernel_seconds": 1.18,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 1024,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 124,
+        "pivot_entries": 16,
+        "rank": 16,
+        "serialized_bytes": 35229,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 48,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 125,
+        "serialized_bytes": 1194,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1540,
+      "olean_bytes": 526232,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 11425
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.UnimodularConjugateN16M16Bits32Basis",
+    "family": "unimodular-conjugate",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 3.680569843,
+    "max_fresh_seconds": 3.747009239,
+    "median_baseline_delta_seconds": 1.161887576,
+    "kernel_seconds": [
+      0.991,
+      0.998,
+      0.991,
+      0.97,
+      1.02,
+      0.983
+    ],
+    "median_kernel_seconds": 0.991,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 1024,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 28,
+        "pivot_entries": 16,
+        "rank": 16,
+        "serialized_bytes": 10205,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1294,
+      "olean_bytes": 207456,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 3352
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.UnimodularConjugateN16M16Bits32Member",
+    "family": "unimodular-conjugate",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 4.636914998,
+    "max_fresh_seconds": 4.716231434,
+    "median_baseline_delta_seconds": 2.121299281,
+    "kernel_seconds": [
+      1.03,
+      1.01,
+      1.03,
+      1.02,
+      1.02,
+      1.05
+    ],
+    "median_kernel_seconds": 1.025,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 1024,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 28,
+        "pivot_entries": 16,
+        "rank": 16,
+        "serialized_bytes": 10205,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 48,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 30,
+        "serialized_bytes": 425,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1537,
+      "olean_bytes": 218192,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 3550
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.UnimodularConjugateN16M16Bits8Basis",
+    "family": "unimodular-conjugate",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 3.208536009,
+    "max_fresh_seconds": 3.223649824,
+    "median_baseline_delta_seconds": 0.704918819,
+    "kernel_seconds": [
+      0.51,
+      0.514,
+      0.51,
+      0.5,
+      0.525,
+      0.539
+    ],
+    "median_kernel_seconds": 0.512,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 1024,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 4,
+        "pivot_entries": 16,
+        "rank": 16,
+        "serialized_bytes": 4363,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1291,
+      "olean_bytes": 56504,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 1347
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.UnimodularConjugateN16M16Bits8Member",
+    "family": "unimodular-conjugate",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 4.119100863,
+    "max_fresh_seconds": 4.23476599,
+    "median_baseline_delta_seconds": 1.614451907,
+    "kernel_seconds": [
+      0.549,
+      0.549,
+      0.539,
+      0.54,
+      0.569,
+      0.536
+    ],
+    "median_kernel_seconds": 0.5445,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 1024,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 4,
+        "pivot_entries": 16,
+        "rank": 16,
+        "serialized_bytes": 4363,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 48,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 5,
+        "serialized_bytes": 212,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1532,
+      "olean_bytes": 62488,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 1434
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.UnimodularConjugateN2M2Bits128Basis",
+    "family": "unimodular-conjugate",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.606240375,
+    "max_fresh_seconds": 2.619567058,
+    "median_baseline_delta_seconds": 0.096574349,
+    "kernel_seconds": [
+      0.00583,
+      0.00587,
+      0.0060999999999999995,
+      0.00598,
+      0.00618,
+      0.00584
+    ],
+    "median_kernel_seconds": 0.005925,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 16,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 126,
+        "pivot_entries": 2,
+        "rank": 2,
+        "serialized_bytes": 412,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1291,
+      "olean_bytes": 23232,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 536
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.UnimodularConjugateN2M2Bits128Member",
+    "family": "unimodular-conjugate",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.612050135,
+    "max_fresh_seconds": 2.62355025,
+    "median_baseline_delta_seconds": 0.101809511,
+    "kernel_seconds": [
+      0.006809999999999999,
+      0.00667,
+      0.00688,
+      0.00679,
+      0.00658,
+      0.006730000000000001
+    ],
+    "median_kernel_seconds": 0.00676,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 16,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 126,
+        "pivot_entries": 2,
+        "rank": 2,
+        "serialized_bytes": 412,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 6,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 127,
+        "serialized_bytes": 128,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1530,
+      "olean_bytes": 26232,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 596
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.UnimodularConjugateN2M2Bits32Basis",
+    "family": "unimodular-conjugate",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.615201838,
+    "max_fresh_seconds": 2.677959914,
+    "median_baseline_delta_seconds": 0.105113959,
+    "kernel_seconds": [
+      0.0053,
+      0.00535,
+      0.00546,
+      0.00542,
+      0.00539,
+      0.0054
+    ],
+    "median_kernel_seconds": 0.0053950000000000005,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 16,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 30,
+        "pivot_entries": 2,
+        "rank": 2,
+        "serialized_bytes": 193,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1289,
+      "olean_bytes": 18816,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 479
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.UnimodularConjugateN2M2Bits32Member",
+    "family": "unimodular-conjugate",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.613030754,
+    "max_fresh_seconds": 2.660524022,
+    "median_baseline_delta_seconds": 0.094370164,
+    "kernel_seconds": [
+      0.00657,
+      0.00633,
+      0.00625,
+      0.00609,
+      0.0064,
+      0.00635
+    ],
+    "median_kernel_seconds": 0.00634,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 16,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 30,
+        "pivot_entries": 2,
+        "rank": 2,
+        "serialized_bytes": 193,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 6,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 30,
+        "serialized_bytes": 77,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1527,
+      "olean_bytes": 21888,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 518
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.UnimodularConjugateN2M2Bits8Basis",
+    "family": "unimodular-conjugate",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.61122311,
+    "max_fresh_seconds": 2.622423904,
+    "median_baseline_delta_seconds": 0.096226437,
+    "kernel_seconds": [
+      0.00553,
+      0.00584,
+      0.00601,
+      0.005679999999999999,
+      0.00575,
+      0.00588
+    ],
+    "median_kernel_seconds": 0.005795,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 16,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 6,
+        "pivot_entries": 2,
+        "rank": 2,
+        "serialized_bytes": 158,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1286,
+      "olean_bytes": 19576,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 464
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.UnimodularConjugateN2M2Bits8Member",
+    "family": "unimodular-conjugate",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.612442759,
+    "max_fresh_seconds": 2.626006998,
+    "median_baseline_delta_seconds": 0.052668373,
+    "kernel_seconds": [
+      0.00634,
+      0.006679999999999999,
+      0.00662,
+      0.00636,
+      0.00624,
+      0.00647
+    ],
+    "median_kernel_seconds": 0.0064150000000000006,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 16,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 6,
+        "pivot_entries": 2,
+        "rank": 2,
+        "serialized_bytes": 158,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 6,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 7,
+        "serialized_bytes": 54,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1525,
+      "olean_bytes": 22656,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 487
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.UnimodularConjugateN4M4Bits128Basis",
+    "family": "unimodular-conjugate",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.612113308,
+    "max_fresh_seconds": 2.618796453,
+    "median_baseline_delta_seconds": 0.099263881,
+    "kernel_seconds": [
+      0.019100000000000002,
+      0.019100000000000002,
+      0.0185,
+      0.019100000000000002,
+      0.0193,
+      0.0189
+    ],
+    "median_kernel_seconds": 0.019100000000000002,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 64,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 126,
+        "pivot_entries": 4,
+        "rank": 4,
+        "serialized_bytes": 2001,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1291,
+      "olean_bytes": 48504,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 1033
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.UnimodularConjugateN4M4Bits128Member",
+    "family": "unimodular-conjugate",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.60384049,
+    "max_fresh_seconds": 2.619143858,
+    "median_baseline_delta_seconds": 0.094203922,
+    "kernel_seconds": [
+      0.0213,
+      0.0213,
+      0.0209,
+      0.0219,
+      0.0212,
+      0.022
+    ],
+    "median_kernel_seconds": 0.0213,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 64,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 126,
+        "pivot_entries": 4,
+        "rank": 4,
+        "serialized_bytes": 2001,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 12,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 128,
+        "serialized_bytes": 330,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1534,
+      "olean_bytes": 52240,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 1200
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.UnimodularConjugateN4M4Bits32Basis",
+    "family": "unimodular-conjugate",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.614402196,
+    "max_fresh_seconds": 2.628468242,
+    "median_baseline_delta_seconds": 0.097994629,
+    "kernel_seconds": [
+      0.018699999999999998,
+      0.0183,
+      0.018699999999999998,
+      0.0178,
+      0.0185,
+      0.0184
+    ],
+    "median_kernel_seconds": 0.01845,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 64,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 30,
+        "pivot_entries": 4,
+        "rank": 4,
+        "serialized_bytes": 781,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1289,
+      "olean_bytes": 30744,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 622
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.UnimodularConjugateN4M4Bits32Member",
+    "family": "unimodular-conjugate",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.606886173,
+    "max_fresh_seconds": 2.617682769,
+    "median_baseline_delta_seconds": 0.099264882,
+    "kernel_seconds": [
+      0.020300000000000002,
+      0.02,
+      0.020399999999999998,
+      0.0201,
+      0.019899999999999998,
+      0.0206
+    ],
+    "median_kernel_seconds": 0.020200000000000003,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 64,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 30,
+        "pivot_entries": 4,
+        "rank": 4,
+        "serialized_bytes": 781,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 12,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 30,
+        "serialized_bytes": 131,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1528,
+      "olean_bytes": 34776,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 683
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.UnimodularConjugateN4M4Bits8Basis",
+    "family": "unimodular-conjugate",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.621719592,
+    "max_fresh_seconds": 2.66424509,
+    "median_baseline_delta_seconds": 0.107368249,
+    "kernel_seconds": [
+      0.017,
+      0.016800000000000002,
+      0.016800000000000002,
+      0.017,
+      0.0169,
+      0.017
+    ],
+    "median_kernel_seconds": 0.01695,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 64,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 6,
+        "pivot_entries": 4,
+        "rank": 4,
+        "serialized_bytes": 361,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1287,
+      "olean_bytes": 26616,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 514
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.UnimodularConjugateN4M4Bits8Member",
+    "family": "unimodular-conjugate",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.616308299,
+    "max_fresh_seconds": 2.65817849,
+    "median_baseline_delta_seconds": 0.098607973,
+    "kernel_seconds": [
+      0.018600000000000002,
+      0.019,
+      0.0193,
+      0.0198,
+      0.019,
+      0.0197
+    ],
+    "median_kernel_seconds": 0.01915,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 64,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 6,
+        "pivot_entries": 4,
+        "rank": 4,
+        "serialized_bytes": 361,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 12,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 5,
+        "serialized_bytes": 74,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1526,
+      "olean_bytes": 29448,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 545
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.UnimodularConjugateN8M8Bits128Basis",
+    "family": "unimodular-conjugate",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.713412398,
+    "max_fresh_seconds": 2.751058223,
+    "median_baseline_delta_seconds": 0.204580409,
+    "kernel_seconds": [
+      0.111,
+      0.111,
+      0.117,
+      0.111,
+      0.116,
+      0.116
+    ],
+    "median_kernel_seconds": 0.1135,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 256,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 125,
+        "pivot_entries": 8,
+        "rank": 8,
+        "serialized_bytes": 8773,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1292,
+      "olean_bytes": 153512,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 2987
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.UnimodularConjugateN8M8Bits128Member",
+    "family": "unimodular-conjugate",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.811905636,
+    "max_fresh_seconds": 2.826651342,
+    "median_baseline_delta_seconds": 0.301946977,
+    "kernel_seconds": [
+      0.124,
+      0.124,
+      0.123,
+      0.123,
+      0.124,
+      0.127
+    ],
+    "median_kernel_seconds": 0.124,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 256,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 125,
+        "pivot_entries": 8,
+        "rank": 8,
+        "serialized_bytes": 8773,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 24,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 125,
+        "serialized_bytes": 636,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1535,
+      "olean_bytes": 154880,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 3322
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.UnimodularConjugateN8M8Bits32Basis",
+    "family": "unimodular-conjugate",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.716492868,
+    "max_fresh_seconds": 2.74254722,
+    "median_baseline_delta_seconds": 0.19643417,
+    "kernel_seconds": [
+      0.105,
+      0.106,
+      0.105,
+      0.105,
+      0.105,
+      0.11
+    ],
+    "median_kernel_seconds": 0.105,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 256,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 29,
+        "pivot_entries": 8,
+        "rank": 8,
+        "serialized_bytes": 2777,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1289,
+      "olean_bytes": 71088,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 1176
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.UnimodularConjugateN8M8Bits32Member",
+    "family": "unimodular-conjugate",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.812129432,
+    "max_fresh_seconds": 2.830522286,
+    "median_baseline_delta_seconds": 0.295748649,
+    "kernel_seconds": [
+      0.115,
+      0.113,
+      0.113,
+      0.112,
+      0.118,
+      0.121
+    ],
+    "median_kernel_seconds": 0.114,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 256,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 29,
+        "pivot_entries": 8,
+        "rank": 8,
+        "serialized_bytes": 2777,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 24,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 30,
+        "serialized_bytes": 220,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1532,
+      "olean_bytes": 77632,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 1282
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.UnimodularConjugateN8M8Bits8Basis",
+    "family": "unimodular-conjugate",
+    "component": "basis",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.726083946,
+    "max_fresh_seconds": 2.751314189,
+    "median_baseline_delta_seconds": 0.2046604,
+    "kernel_seconds": [
+      0.0858,
+      0.0895,
+      0.0878,
+      0.0905,
+      0.0896,
+      0.0881
+    ],
+    "median_kernel_seconds": 0.08879999999999999,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 256,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 5,
+        "pivot_entries": 8,
+        "rank": 8,
+        "serialized_bytes": 1403,
+        "tactic": "hermite"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1287,
+      "olean_bytes": 35504,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 722
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  },
+  {
+    "module": "HexHermiteMathlib.ProofProbe.UnimodularConjugateN8M8Bits8Member",
+    "family": "unimodular-conjugate",
+    "component": "member",
+    "owner": "HexHermiteMathlib",
+    "median_fresh_seconds": 2.806840234,
+    "max_fresh_seconds": 2.824538424,
+    "median_baseline_delta_seconds": 0.286358295,
+    "kernel_seconds": [
+      0.0937,
+      0.09759999999999999,
+      0.0937,
+      0.09809999999999999,
+      0.0948,
+      0.09820000000000001
+    ],
+    "median_kernel_seconds": 0.0962,
+    "certificates": [
+      {
+        "denominator_entries": 0,
+        "integer_entries": 256,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 5,
+        "pivot_entries": 8,
+        "rank": 8,
+        "serialized_bytes": 1403,
+        "tactic": "hermite"
+      },
+      {
+        "denominator_entries": 0,
+        "integer_entries": 24,
+        "max_denominator_bits": 0,
+        "max_numerator_bits": 7,
+        "serialized_bytes": 129,
+        "tactic": "hermite_remainder"
+      }
+    ],
+    "artifacts": {
+      "ilean_bytes": 1526,
+      "olean_bytes": 40712,
+      "olean_private_bytes": null,
+      "olean_server_bytes": null,
+      "source_bytes": 774
+    },
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "budget_status": "passed"
+  }
+]
