@@ -11,6 +11,6 @@ set_option profiler true
 set_option profiler.threshold 1000000
 set_option trace.HexMatrix.certificate true
 
-theorem result : Nonempty (HexHermiteMathlib.HermiteBasis !![2, 2; -2, 85070591730234615865843651857942052862] 2) := by hermite
+theorem result : Nonempty (HexHermiteMathlib.HermiteBasis !![42535295865117307932921825928971026432, 0; -85070591730234615865843651857942052860, 2] 2) := by hermite
 
 #print axioms result

@@ -11,7 +11,7 @@ set_option profiler true
 set_option profiler.threshold 1000000
 set_option trace.HexMatrix.certificate true
 
-theorem result : (![-4, 8, -16, 48] : Fin 4 → ℤ) ∈
-    Submodule.span ℤ (Set.range !![2, -2, 2, -2; -2, 6, 2, -2; -2, -2, 2, -2; -2, -2, -14, 46]) := by hermite
+theorem result : (![24, -22, 18, 6] : Fin 4 → ℤ) ∈
+    Submodule.span ℤ (Set.range !![28, -24, 20, 4; 28, -22, 22, 2; 32, -30, 34, -2; 56, -54, 50, 6]) := by hermite
 
 #print axioms result

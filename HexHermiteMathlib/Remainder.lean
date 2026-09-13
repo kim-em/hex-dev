@@ -64,7 +64,7 @@ theorem remainder_identity {n m : Nat} (rows : List (List Int))
   rw [hd]
   apply Finset.sum_congr rfl
   intro i _
-  rw [column_getD, htake]
+  rw [ListProducts.column_getD, htake]
 
 /-- A checked reduced remainder vanishes exactly on members of the input lattice. -/
 theorem mem_iff_remainder {n m : Nat} (rows : List (List Int))

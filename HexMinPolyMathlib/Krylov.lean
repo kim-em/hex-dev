@@ -151,7 +151,7 @@ theorem annihilation_of_check {n : Nat} (z : ScaledRows) (hz : shape n n z.nums 
     have hk := congrFun (scaled_powers z hz hd i (o.deg + 1) k k.isLt) jj
     simp only [integerVector, Pi.smul_apply, smul_eq_mul, vectorEquiv_apply,
       entry_eq_getD] at hk
-    rw [column_getD, hk, decodeBlock_coeff, decodeScalar, entry_eq_getD]
+    rw [ListProducts.column_getD, hk, decodeBlock_coeff, decodeScalar, entry_eq_getD]
     have hpow : (z.denom : ℚ) ^ (o.deg - k.val) * (z.denom : ℚ) ^ k.val =
         (z.denom : ℚ) ^ o.deg := by
       rw [← pow_add, Nat.sub_add_cancel (by omega)]
@@ -225,7 +225,7 @@ theorem rightInverse_of_check {n : Nat} (z : ScaledRows) (hz : shape n n z.nums 
     rw [matrixEquiv_apply, Hex.Matrix.getElem_eq_getRow, Hex.Matrix.getRow_krylovMat]
   rw [hk]
   simp only [inverseMatrix, Equiv.apply_symm_apply, ofLists_apply, decodeRows_getD,
-    decodeScalar, column_getD, entry_eq_getD]
+    decodeScalar, ListProducts.column_getD, entry_eq_getD]
   rw [hp]
   field_simp
 

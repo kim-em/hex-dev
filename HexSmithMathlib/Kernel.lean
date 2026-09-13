@@ -31,6 +31,7 @@ def decodeWitness (n m : Nat) (c : Hex.Matrix.SmithWitness) : Hex.Matrix.SmithDa
   right := matrixOfLists m m c.right
   rightInv := matrixOfLists m m c.rightInv
 
+/-- Decoding preserves every diagonal coefficient. -/
 theorem decode_diag (n m : Nat) (c : Hex.Matrix.SmithWitness) (i : Fin c.rank) :
     (decodeWitness n m c).diag[i] = entry 0 c.diag i := by
   change (Vector.ofFn (fun i : Fin c.rank => entry 0 c.diag i))[i.val] = _
@@ -144,6 +145,7 @@ noncomputable def coordinates (h : Hex.Matrix.IsSNF A S) :
     change Matrix.vecMul x (matrixEquiv (1 : Hex.Matrix Int m m)) = x
     rw [matrixEquiv_one, Matrix.vecMul_one]
 
+/-- Smith coordinates agree with executable multiplication by the right transform. -/
 theorem coordinates_apply (h : Hex.Matrix.IsSNF A S) (v : Vector Int m) :
     coordinates h (vectorEquiv v) = vectorEquiv (Hex.Matrix.vecMul v S.right) := by
   exact (HexHermiteMathlib.vectorEquiv_vecMulLinear S.right v).symm
@@ -194,6 +196,7 @@ noncomputable def presentation (h : Hex.Matrix.IsSNF A S) :
   (freeProjection h).prod
     ((DirectSum.linearEquivFunOnFintype ℤ _ _).symm.toLinearMap.comp (torsionFun h))
 
+/-- The presentation map kills exactly the input row lattice. -/
 theorem ker_presentation (h : Hex.Matrix.IsSNF A S) :
     LinearMap.ker (presentation h) = Submodule.span ℤ (Set.range (matrixEquiv A)) := by
   ext x
@@ -223,6 +226,7 @@ theorem ker_presentation (h : Hex.Matrix.IsSNF A S) :
       rw [Submodule.mkQ_apply, Submodule.Quotient.mk_eq_zero, Ideal.mem_span_singleton]
       exact hd i
 
+/-- Every free and torsion coordinate tuple has a representative. -/
 theorem presentation_surjective (h : Hex.Matrix.IsSNF A S) :
     Function.Surjective (presentation h) := by
   classical
@@ -265,15 +269,22 @@ abbrev SmithQuotient {n m : Nat} (A : Matrix (Fin n) (Fin m) ℤ)
 
 /-- A literal Smith decomposition of an integer row presentation. -/
 structure SmithResult {n m : Nat} (A : Matrix (Fin n) (Fin m) ℤ) where
+  /-- The literal rank of the presentation. -/
   rank : Nat
+  /-- The rank is bounded by both matrix dimensions. -/
   rank_le : rank ≤ min n m
+  /-- The literal canonical invariant-factor function. -/
   factors : Fin rank → ℤ
+  /-- Every invariant factor is positive. -/
   positive : ∀ i, 0 < factors i
+  /-- Successive invariant factors form a divisibility chain. -/
   chain : ∀ i j : Fin rank, i.val + 1 = j.val → factors i ∣ factors j
+  /-- The row-presentation quotient, including its free complement. -/
   equiv : SmithQuotient A rank factors
 
 /-- Construct the literal result from a checked witness and input identification. -/
-@[expose]
+-- The certificate contract uses theorem-style names for these Type-valued bridges.
+@[expose, nolint defsWithUnderscore]
 noncomputable def smith_of_checkList {n m : Nat}
     (A : Matrix (Fin n) (Fin m) ℤ) (rows : List (List Int))
     (c : Hex.Matrix.SmithWitness) (hA : A = ofLists n m rows)
@@ -313,6 +324,7 @@ noncomputable def smith_of_checkList {n m : Nat}
     rw [matrixEquiv_matrixOfLists] at e
     exact e
 
+/-- The checked result retains the literal rank. -/
 @[simp] theorem smith_of_checkList_rank {n m : Nat}
     (A : Matrix (Fin n) (Fin m) ℤ) (rows : List (List Int))
     (c : Hex.Matrix.SmithWitness) (hA : A = ofLists n m rows)
@@ -320,6 +332,7 @@ noncomputable def smith_of_checkList {n m : Nat}
     (smith_of_checkList A rows c hA hc).rank = c.rank := by
   rfl
 
+/-- The checked result retains the literal factor list. -/
 theorem smith_of_checkList_factors {n m : Nat}
     (A : Matrix (Fin n) (Fin m) ℤ) (rows : List (List Int))
     (c : Hex.Matrix.SmithWitness) (hA : A = ofLists n m rows)
@@ -328,6 +341,7 @@ theorem smith_of_checkList_factors {n m : Nat}
   rfl
 
 /-- Construct a quotient equivalence with an identified closed target factor function. -/
+@[nolint defsWithUnderscore]
 noncomputable def smith_equiv_of_checkList {n m : Nat}
     (A : Matrix (Fin n) (Fin m) ℤ) (rows : List (List Int))
     (c : Hex.Matrix.SmithWitness) (hA : A = ofLists n m rows)

@@ -88,6 +88,21 @@ example : Hex.Matrix.checkSmithList 2 2 [[2, 0], [0, 6]]
       rightInv := [[-1, 0], [0, -1]]
       intermediate := [[-2, 0], [0, -6]] } = true := by decide +kernel
 
+-- Keep dimensions, invertibility and the chain valid while corrupting each
+-- product connecting the presentation to its diagonal.
+example : Hex.Matrix.checkSmithList 2 2 [[2, 0], [0, 6]]
+    { smithCertificate with
+      left := [[1, 1], [0, 1]]
+      leftInv := [[1, -1], [0, 1]] } = false := by decide +kernel
+
+example : Hex.Matrix.checkSmithList 2 2 [[2, 0], [0, 6]]
+    { smithCertificate with
+      right := [[0, 1], [1, 0]]
+      rightInv := [[0, 1], [1, 0]] } = false := by decide +kernel
+
+example : Hex.Matrix.checkSmithList 2 2 [[2, 0], [0, 6]]
+    { smithCertificate with diag := [2, 8] } = false := by decide +kernel
+
 #print axioms smithDiagonal
 #print axioms smithDiagonalExists
 #print axioms smithCertificateChecked

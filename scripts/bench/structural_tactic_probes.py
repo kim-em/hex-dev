@@ -50,6 +50,23 @@ def transformed(n, m, rank, bits, rng, even=False):
     return a, factors
 
 
+def conjugated(n, bits, rng):
+    # N = u v^T has N^2 = 0, so I + N and I - N are inverse integer
+    # transforms. This gives genuine, generally dense unimodular conjugates.
+    exponent = max(1, bits - (n + 3).bit_length() - 1)
+    factors = [2 ** (1 + i * exponent // (n - 1)) for i in range(n)]
+    u = [rng.choice((-1, 1)) for _ in range(n)]
+    v = []
+    for i in range(0, n, 2):
+        sign = rng.choice((-1, 1))
+        v.extend((sign * u[i], -sign * u[i + 1]))
+    p = [[int(i == j) + u[i] * v[j] for j in range(n)] for i in range(n)]
+    inverse = [[int(i == j) - u[i] * v[j] for j in range(n)] for i in range(n)]
+    assert product(p, inverse) == identity(n)
+    diagonal = [[factors[i] if i == j else 0 for j in range(n)] for i in range(n)]
+    return product(product(p, diagonal), inverse), factors
+
+
 def companion(coeffs):
     n = len(coeffs) - 1
     return [[int(i == j + 1) if j != n - 1 else -coeffs[i]
@@ -177,7 +194,10 @@ def fixture_cases():
                 rng = random.Random(SEED + 2000000 + 100000 * fidx + 100 * n + bits)
                 nr = 2 * n if family == "tall-hermite" else n
                 rank = n // 2 if family in ("rank-deficient-hermite", "membership-residual") else n
-                a, _ = transformed(nr, n, rank, bits - 1, rng, even=True)
+                if family == "unimodular-conjugate":
+                    a, _ = conjugated(n, bits, rng)
+                else:
+                    a, _ = transformed(nr, n, rank, bits - 1, rng, even=True)
                 components = ("basis", "member", "nonmember") if family == "membership-residual" else ("basis", "member")
                 add("HexHermiteMathlib", family, n, bits, a, rank, components=components)
     add("HexMinPolyMathlib", "empty", 0, 0, [], coeffs=[1], components=("equality",))

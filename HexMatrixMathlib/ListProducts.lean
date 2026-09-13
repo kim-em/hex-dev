@@ -37,7 +37,7 @@ theorem dot_eq_sum (a b : List Int) :
     | nil => simp [dot]
     | cons y ys => simp [dot, Fin.sum_univ_succ, ih]
 
-theorem column_getD (j : Nat) (rows : List (List Int)) (i : Nat) :
+theorem ListProducts.column_getD (j : Nat) (rows : List (List Int)) (i : Nat) :
     (column j rows).getD i 0 = (rows.getD i []).getD j 0 := by
   induction rows generalizing i with
   | nil => simp [column]
@@ -62,7 +62,7 @@ theorem mul_of_product {n k m : Nat} {a b : List (List Int)}
         ∑ x : Fin k, (a.getD i []).getD x 0 * (b.getD x []).getD j 0 := by
       simp only [Matrix.mul_apply, ofLists_apply]
     _ = dot (entry [] a i) (column j b) := by
-      simpa only [entry_eq_getD, column_getD] using hd.symm
+      simpa only [entry_eq_getD, ListProducts.column_getD] using hd.symm
     _ = c i j := hij
 
 /-- Decode lists to the executable matrix representation for reference

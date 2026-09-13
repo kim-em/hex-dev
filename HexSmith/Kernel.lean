@@ -16,12 +16,19 @@ namespace Hex.Matrix
 
 /-- Rank, diagonal and unimodular transforms of a Smith certificate. -/
 structure SmithWitness where
+  /-- Number of positive invariant factors. -/
   rank : Nat
+  /-- The positive factors, in divisibility order. -/
   diag : List Int
+  /-- The left unimodular transform. -/
   left : List (List Int)
+  /-- An integer right inverse of the left transform. -/
   leftInv : List (List Int)
+  /-- The right unimodular transform. -/
   right : List (List Int)
+  /-- An integer right inverse of the right transform. -/
   rightInv : List (List Int)
+  /-- The supplied product of the left transform with the input. -/
   intermediate : List (List Int)
   deriving Repr, Inhabited, DecidableEq
 

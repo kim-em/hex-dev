@@ -15,6 +15,20 @@ theorem hermiteMember : (![4, 12] : Fin 2 → ℤ) ∈ Submodule.span ℤ (Set.r
 theorem hermiteNonmember : (![4, 13] : Fin 2 → ℤ) ∉ Submodule.span ℤ (Set.range !![2, 0; 0, 6]) := by
   hermite
 
+example : Nonempty (HermiteBasis !![0, 0; 0, 0] 0) := by hermite
+
+example : (![0, 0] : Fin 2 → ℤ) ∈ Submodule.span ℤ (Set.range !![0, 0; 0, 0]) := by
+  hermite
+
+example : (![1, 0] : Fin 2 → ℤ) ∉ Submodule.span ℤ (Set.range !![0, 0; 0, 0]) := by
+  hermite
+
+example : (![0, 0, 0] : Fin 3 → ℤ) ∈
+    Submodule.span ℤ (Set.range (!![,,,] : Matrix (Fin 0) (Fin 3) ℤ)) := by hermite
+
+example : (![0, 1, 0] : Fin 3 → ℤ) ∉
+    Submodule.span ℤ (Set.range (!![,,,] : Matrix (Fin 0) (Fin 3) ℤ)) := by hermite
+
 noncomputable def hermiteBasis : HermiteBasis !![2, 0; 0, 6] 2 := by hermite
 
 theorem hermiteBasisExists : Nonempty (HermiteBasis !![2, 0; 0, 6] 2) := by hermite

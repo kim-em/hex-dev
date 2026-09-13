@@ -294,9 +294,11 @@ against `propext`, `Classical.choice`, `Quot.sound` only.
 families: `unimodular-conjugate`, `tall-hermite` (`2n × n`),
 `rank-deficient-hermite` (rank `n / 2`), and `membership-residual` (members
 and nonmembers of the same lattice), at `n = 2, 4, 8, 16` and input heights
-`8, 32, 128` bits. The generator applies independent signed unit lower- and
-upper-triangular transforms to even positive diagonal chains, padding by zero
-rows or columns for the stated shapes and ranks. Members are signed sums of
+`8, 32, 128` bits. The `unimodular-conjugate` generator uses `P D P⁻¹`, with
+`P = I + u vᵀ`, `vᵀu = 0`, and hence `P⁻¹ = I - u vᵀ`; `D` is an even
+positive diagonal chain. The other families use independent signed unit lower-
+and upper-triangular transforms of even diagonal chains, padding by zero rows
+or columns for the stated shapes and ranks. Members are signed sums of
 input rows; nonmembers add one to the final coordinate of a member in this
 even lattice. The input-height parameter bounds entries; actual heights are
 recorded separately. Measure basis construction and membership separately.

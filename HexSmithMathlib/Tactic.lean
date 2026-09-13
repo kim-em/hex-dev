@@ -17,7 +17,12 @@ namespace HexSmithMathlib.Tactic
 
 open Lean Meta Elab HexMatrixMathlib HexMatrixMathlib.Literal
 
-deriving instance ToExpr for Hex.Matrix.SmithWitness
+/-- Quote the literal fields of a checked Smith witness. -/
+instance instToExprSmithWitness : ToExpr Hex.Matrix.SmithWitness where
+  toExpr c := mkAppN (mkConst ``Hex.Matrix.SmithWitness.mk)
+    #[toExpr c.rank, toExpr c.diag, toExpr c.left, toExpr c.leftInv,
+      toExpr c.right, toExpr c.rightInv, toExpr c.intermediate]
+  toTypeExpr := mkConst ``Hex.Matrix.SmithWitness
 
 /-- The shared protocol's nonexceptional outcomes; rejected certificates throw. -/
 inductive Outcome (α : Type) where
@@ -27,10 +32,14 @@ inductive Outcome (α : Type) where
 
 /-- Evaluated input and its rechecked list certificate. -/
 structure Certificate where
+  /-- The recognized matrix and its identification route. -/
   literal : Recognized
+  /-- The evaluated integer input rows. -/
   rows : List (List Int)
+  /-- The rechecked Smith certificate. -/
   witness : Hex.Matrix.SmithWitness
 
+/-- Recognize an integer matrix and produce a rechecked list witness. -/
 def certify (A : Expr) : MetaM (Outcome Certificate) := do
   let some (_, _, carrier) ← shape? (← inferType A) | return .notApplicable
   unless (← whnfR carrier).isConstOf ``Int do return .notApplicable
@@ -99,6 +108,7 @@ def checked (A : Expr) (c : Certificate) (targetFactors? : Option (Expr × Vecto
         #[A, rows, w, ← mkAppM ``And.left #[pair], ← mkAppM ``And.right #[pair],
           d, ← mkAppM ``And.right #[proof]]
 
+/-- Recognize a canonical quotient goal and assemble its checked equivalence. -/
 def prove (target : Expr) : MetaM (Outcome Expr) := do
   let target ← instantiateMVars target
   let (body, wrapped) := if target.getAppFn.isConstOf ``Nonempty then
@@ -140,6 +150,7 @@ def prove (target : Expr) : MetaM (Outcome Expr) := do
 /-- Return the checked rank, canonical factors and quotient equivalence. -/
 syntax (name := smithTerm) "smith% " term : term
 
+/-- Elaborate the literal Smith result with all its proof fields. -/
 @[term_elab smithTerm] def elabSmithTerm : Term.TermElab := fun stx expected => do
   let `(smith% $t) := stx | throwUnsupportedSyntax
   let A ← elabArgument t
@@ -151,6 +162,7 @@ syntax (name := smithTerm) "smith% " term : term
 /-- Construct a canonical integer row-presentation quotient equivalence. -/
 syntax (name := smithTac) &"smith" : tactic
 
+/-- Discharge a Smith quotient goal or report the protocol outcome. -/
 @[tactic smithTac] def evalSmith : Tactic.Tactic := fun _ => Tactic.withMainContext do
   match ← prove (← Tactic.getMainTarget) with
   | .success e => Tactic.closeMainGoal `smith e
