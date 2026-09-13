@@ -8,6 +8,7 @@ module
 
 import HexRankMathlib.NumberFieldTactic
 import HexNumberFieldMathlib.Exact
+import HexNumberField.Nearest
 
 open Hex
 open scoped Hex.PolyQuot.QAdjoinField
@@ -89,3 +90,9 @@ private def δ : K₃ := PolyQuot.Rank.generator cubic cubicRoot
 
 example : (!![δ, 1; δ ^ 2, δ] : _root_.Matrix (Fin 2) (Fin 2) K₃).rank = 1 := by rank
 example : (!![δ, 1; 1, δ] : _root_.Matrix (Fin 2) (Fin 2) K₃).rank = 2 := by rank
+
+private def searched : AlgebraicNumber := ZPoly.rootNear p (3 / 2)
+
+/-- error: rank: declined: the defining polynomial is not kernel-reducible; use a literal presentation or AlgebraicNumber.ofNormalized -/
+#guard_msgs in
+example : _root_.Matrix.rank (R := QAdjoin searched) !![1] = 1 := by rank

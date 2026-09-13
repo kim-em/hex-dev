@@ -7,9 +7,11 @@ Authors: Kim Morrison
 module
 
 public import HexRankMathlib.NumberField
-public import HexRankMathlib.QuadraticTactic
+public import HexRankMathlib
+public import HexRankMathlib.PolyExpr
 public meta import HexRankMathlib.NumberField
-public meta import HexRankMathlib.QuadraticTactic
+public meta import HexRankMathlib
+public meta import HexRankMathlib.PolyExpr
 public meta import HexRank.PolyProduce
 
 public meta section
@@ -32,6 +34,23 @@ private unsafe def evalPolynomialUnsafe (e : Expr) : MetaM (Except String Hex.ZP
 
 @[implemented_by evalPolynomialUnsafe]
 private opaque evalPolynomial (e : Expr) : MetaM (Except String Hex.ZPoly)
+
+/-- Check that the defining polynomial reduces to its quoted data before
+handing it to the kernel. In particular, an irreducible root-search wrapper
+must decline instead of starting a kernel search. -/
+private def literalPolynomial (p : Expr) : MetaM Hex.ZPoly := do
+  try
+    withCurrHeartbeats <| withTheReader Core.Context
+        (fun ctx => { ctx with maxHeartbeats :=
+          if ctx.maxHeartbeats = 0 then 20000000 else min ctx.maxHeartbeats 20000000 }) do
+      let p' ← whnf p
+      unless p'.isAppOf ``Hex.DensePoly.mk do throwError "not a polynomial constructor"
+      let .ok f ← evalPolynomial p' | throwError "cannot evaluate the polynomial"
+      let quoted ← mkAppM ``Hex.DensePoly.ofList #[toExpr f.coeffs.toList]
+      unless ← isDefEq p quoted do throwError "coefficients do not reduce"
+      return f
+  catch _ =>
+    throwError "rank: declined: the defining polynomial is not kernel-reducible; use a literal presentation or AlgebraicNumber.ofNormalized"
 
 /-- Read canonical rational coordinates. Projection reduction removes the
 proof-bearing field instance before compiling the executable arithmetic. -/
@@ -61,21 +80,20 @@ private def fieldEntry (e : Expr) : MetaM (List Rat) := do
 def evalNumberFieldRank : Tactic.Tactic := fun _ => Tactic.withMainContext do
   let target ← instantiateMVars (← Tactic.getMainTarget)
   let some (A, other, rel, reverse) := rankTarget? target | throwUnsupportedSyntax
-  let some lit ← HexMatrixMathlib.Literal.literal? A | throwUnsupportedSyntax
-  let carrier ← whnfR lit.carrier
+  let some (_, _, R) ← HexMatrixMathlib.Literal.shape? (← inferType A) | throwUnsupportedSyntax
+  let carrier ← whnfR R
   let (p, x) ←
     if carrier.isAppOfArity ``Hex.PolyQuot 2 then
       pure (carrier.appFn!.appArg!, carrier.appArg!)
     else
       let_expr Hex.QAdjoin a := carrier | throwUnsupportedSyntax
       pure (← mkAppM ``Hex.AlgebraicNumber.p #[a], ← mkAppM ``Hex.AlgebraicNumber.x #[a])
+  let some lit ← HexMatrixMathlib.Literal.literal? A | throwUnsupportedSyntax
   if A.hasFVar || A.hasExprMVar || other.hasFVar || other.hasExprMVar then
     throwUnsupportedSyntax
   let .some _ ← trySynthInstance (← mkAppM ``Hex.ZPoly.CheckedIrreducible #[p]) |
     throwError "rank: declined: the defining polynomial needs checked irreducibility"
-  let f ← match ← evalPolynomial p with
-    | .ok f => pure f.coeffs.toList
-    | .error msg => throwError "rank: declined: cannot evaluate the defining polynomial: {msg}"
+  let f := (← literalPolynomial p).coeffs.toList
   let qs ← lit.entries.mapM (·.mapM fun e => do return ← fieldEntry e)
   let scales : Array Nat := qs.map fun row =>
     row.foldl (fun (d : Nat) q => q.foldl (fun (d : Nat) (r : Rat) => d.lcm r.den) d) 1

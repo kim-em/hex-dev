@@ -43,6 +43,13 @@ by `PolyQuot`. The direct `QAdjoin` route is covered separately by kernel
 regression tests. The Gaussian comparator explicitly imports Mathlib’s
 `Echelon.Zsqrtd` tactic registration.
 
+These fixtures test row-denominator clearing and certificate transport. They
+do not characterize coefficient growth on dense matrices with independently
+mixed extension coefficients or on higher-degree number fields. The Gaussian
+results are close to `eval_rank` at these sizes; they do not establish a
+performance advantage. The quadratic handler is included for carrier support,
+with cheap carrier dispatch before literal parsing.
+
 ## Kernel attribution
 
 The [profile record](bench-results/hex-rank-carrier-kernel-10216.json) contains

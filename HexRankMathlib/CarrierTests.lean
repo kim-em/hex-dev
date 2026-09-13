@@ -87,3 +87,27 @@ example : Hex.Matrix.checkRankPoly 2 2 [-2, 0, 1]
 -- Changing an exact relation by a multiple of the modulus must still fail.
 example : Hex.Matrix.checkRankPoly 2 2 [-2, 0, 1]
     [[[0, 1], [1]], [[17], [0, 1]]] dependent = false := by decide +kernel
+
+-- Every guard is necessary independently of the polynomial identities.
+example : Hex.Matrix.checkRankPoly 2 2 [-2, 0, 1]
+    [[[0, 1], [1]], [[1], [0, 1]]]
+    { composite with denom := 0 } = false := by decide +kernel
+example : Hex.Matrix.checkRankPoly 2 2 [-2, 0, 1]
+    [[[0, 1], [1]], [[1], [0, 1]]]
+    { composite with modulus := 1 } = false := by decide +kernel
+example : Hex.Matrix.checkRankPoly 2 2 [-2, 0, 1]
+    [[[0, 1], [1]], [[1], [0, 1]]]
+    { composite with modulus := 0 } = false := by decide +kernel
+example : Hex.Matrix.checkRankPoly 2 2 [-2, 0, 1]
+    [[[0, 1], [1]], [[1], [0, 1]]]
+    { composite with rows := [0, 2] } = false := by decide +kernel
+example : Hex.Matrix.checkRankPoly 2 2 [-2, 0, 1]
+    [[[0, 1], [1]], [[1], [0, 1]]]
+    { composite with rank := 1 } = false := by decide +kernel
+
+/--
+error: rank: declined: no integral-domain instance is available for
+  ℤ√4
+-/
+#guard_msgs in
+example : Matrix.rank (R := Zsqrtd 4) !![1, 0; 0, 1] = 2 := by rank

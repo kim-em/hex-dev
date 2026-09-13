@@ -45,7 +45,7 @@ theorem memNat_iff (i : Nat) (l : List Nat) : memNat i l = true ↔ i ∈ l := b
   | nil => simp [memNat]
   | cons a l ih => simp [memNat, ih]
 
-theorem rowsLen_iff (m : Nat) (L : List (List Int)) : rowsLen m L = true ↔ ∀ r ∈ L, r.length = m := by
+theorem Rank.rowsLen_iff (m : Nat) (L : List (List Int)) : rowsLen m L = true ↔ ∀ r ∈ L, r.length = m := by
   induction L with
   | nil => simp [rowsLen]
   | cons r L ih => simp [rowsLen, ih]
@@ -214,7 +214,7 @@ theorem rowsCheck_spec (d : Int) (rows : List Nat) (P : List (List Int)) (m : Na
           have := ih (i + 1) zs hrest t (by simpa using ht)
           rwa [Nat.add_assoc, Nat.add_comm 1 t] at this
 
-theorem nthRow_eq_getD (A : List (List Int)) (i : Nat) : nthRow A i = A.getD i [] := by
+theorem Rank.nthRow_eq_getD (A : List (List Int)) (i : Nat) : nthRow A i = A.getD i [] := by
   induction A generalizing i with
   | nil => simp [nthRow]
   | cons a as ih =>
@@ -222,7 +222,7 @@ theorem nthRow_eq_getD (A : List (List Int)) (i : Nat) : nthRow A i = A.getD i [
     | zero => simp [nthRow]
     | succ i => simp only [nthRow, List.getD_cons_succ, ih]
 
-theorem nthInt_eq_getD (a : List Int) (j : Nat) : nthInt a j = a.getD j 0 := by
+theorem Rank.nthInt_eq_getD (a : List Int) (j : Nat) : nthInt a j = a.getD j 0 := by
   induction a generalizing j with
   | nil => simp [nthInt]
   | cons x xs ih =>
@@ -236,7 +236,7 @@ theorem pivotRows_length (A : List (List Int)) (rows : List Nat) :
 theorem pivotRows_getElem (A : List (List Int)) (rows : List Nat) (l : Nat)
     (hl : l < (pivotRows A rows).length) :
     (pivotRows A rows)[l] = A.getD (rows[l]'(by simpa [pivotRows] using hl)) [] := by
-  simp only [pivotRows, List.getElem_map, nthRow_eq_getD]
+  simp only [pivotRows, List.getElem_map, Rank.nthRow_eq_getD]
 
 theorem residue_zero (M : Nat) : residue M 0 = 0 := by
   have h : Int.emod 0 (Int.ofNat M) = 0 := Int.zero_emod _
@@ -320,7 +320,7 @@ theorem block_getElem (M : Nat) (A : List (List Int)) (rows cols : List Nat)
     (hinc : cols.Pairwise (· < ·)) (i : Nat) (hi : i < (block M A rows cols).length) :
     (block M A rows cols)[i] =
       cols.map fun j => residue M ((A.getD (rows[i]'(by simpa [block] using hi)) []).getD j 0) := by
-  simp only [block, List.getElem_map, nthRow_eq_getD]
+  simp only [block, List.getElem_map, Rank.nthRow_eq_getD]
   rw [pickCols_eq M _ cols 0 hinc (fun _ _ => Nat.zero_le _)]
   simp
 
@@ -358,7 +358,7 @@ theorem rank_eq_of_checkList (n m : Nat) (L : List (List Int)) (c : RankWitness)
   obtain ⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨h1, h2⟩, h3⟩, h4⟩, h5⟩, h6⟩, h7⟩, hinc⟩, h8⟩, h9⟩, h10⟩ := h
   set r := c.rank with hr
   have hLlen : L.length = n := by simpa using h1
-  have hLrows : ∀ x ∈ L, x.length = m := (rowsLen_iff m L).mp h2
+  have hLrows : ∀ x ∈ L, x.length = m := (Rank.rowsLen_iff m L).mp h2
   have hM : 1 < c.modulus := by simpa using h3
   have hrowsLen : c.rows.length = r := by simpa using h4
   have hcolsLen : c.cols.length = r := by simpa using h5
@@ -430,7 +430,7 @@ theorem rank_eq_of_checkList (n m : Nat) (L : List (List Int)) (c : RankWitness)
       intro p hp
       obtain ⟨i, hi, rfl⟩ := List.mem_map.mp hp
       have hi' : i < L.length := by rw [hLlen]; exact hrowsLt i hi
-      rw [nthRow_eq_getD, getD_eq_getElem' _ _ _ hi']
+      rw [Rank.nthRow_eq_getD, getD_eq_getElem' _ _ _ hi']
       exact hLrows _ (List.getElem_mem _)
     have key : ∀ i : Fin n, ∃ w : Fin r → ℤ,
         ∀ j : Fin m, c.denom * A i j = ∑ l, w l * A (rowF l) j := by

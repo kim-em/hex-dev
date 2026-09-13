@@ -49,7 +49,9 @@ SPEC = SweepSpec(
         "HexRankMathlib/Rational.lean", "HexRankMathlib/Polynomial.lean",
         "HexRankMathlib/Quotient.lean", "HexRankMathlib/Quadratic.lean",
         "HexRankMathlib/NumberField.lean", "HexRankMathlib/NumberFieldTactic.lean",
-        "HexPolyZ/IntegerPolynomial.lean",
+        "HexRankMathlib/PolyExpr.lean",
+        "HexPolyZ/IntegerPolynomial.lean", "HexNumberField/Basic.lean",
+        "HexNumberFieldMathlib/AdjoinRoot.lean", "HexRankMathlib/Kernel.lean",
         "HexRankMathlib/Tactic.lean", "HexRankMathlib/QuadraticTactic.lean",
     )),
     required_samples=6, absolute_only=True,
@@ -59,7 +61,9 @@ if __name__ == "__main__":
     # Share the placement lease used by other Hex carrier measurements.
     # No host-idleness test or waiting is involved.
     lease = None
-    if "--shared-host" in sys.argv and "--cpu" not in sys.argv:
+    if "--shared-host" in sys.argv and not any(
+        arg == "--cpu" or arg.startswith("--cpu=") for arg in sys.argv
+    ):
         cpus = sorted(os.sched_getaffinity(0))
         offset = os.getpid() % len(cpus)
         for cpu in cpus[offset:] + cpus[:offset]:

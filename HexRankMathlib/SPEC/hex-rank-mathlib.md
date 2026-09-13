@@ -568,8 +568,11 @@ The defining polynomial must reduce to literal coefficients. For `QAdjoin`,
 it stores the supplied polynomial directly, with its canonical isolation
 obtained from `ofNormalized?` and an explicit success proof. The companion's
 `AlgebraicNumber.ofNormalized?_isSome` supplies that proof. A value built by
-`rootNear` may run opaque search when its polynomial is projected; use the
-checked constructor when that projection is not kernel-reducible.
+`rootNear` hides a root search behind an irreducible definition. The handler
+first requires the defining polynomial to reduce to a constructor and its
+quoted coefficient data, with a local limit of 20,000 heartbeats (or the
+smaller ambient limit). It declines presentations that fail this check before
+invoking the kernel; use the checked constructor for such presentations.
 
 Tests include quadratic and cubic presentations, a nonmonic primitive
 polynomial, fractional coordinates, empty and rectangular shapes, and forged

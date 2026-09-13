@@ -151,6 +151,13 @@ must be a closed term
 #guard_msgs in
 example (a : ℤ) : Matrix.rank !![a, 1; 1, a] = 2 := by rank
 
+/--
+error: rank: not applicable: only integer and rational matrices are supported; the entry type is
+  ℝ
+-/
+#guard_msgs in
+example : Matrix.rank (R := ℝ) !![1, 2; 3, 4] = 2 := by rank
+
 theorem rationalRank : Matrix.rank (R := ℚ) !![1 / 2, 1; 1, 2] = 1 := by rank
 
 example : 1 = Matrix.rank (R := ℚ) !![1 / 2, 1; 1, 2] := by rank
