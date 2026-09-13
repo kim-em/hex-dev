@@ -436,9 +436,10 @@ In particular the kernel never evaluates `bareissWith`, `detWitness`, a
 reference checker, or `Hex.Matrix.det` on `Hex.Matrix (MvPoly …)`. The
 reference determinant occurs in soundness statements only; neither `Array`,
 `Vector`, `Fin`, `Finset`, matrix indexing nor well-founded polynomial
-arithmetic is reduced to check a certificate. One auxiliary theorem is
-checked synchronously through `mkAuxTheorem`; there is no elaborator
-`Kernel.whnf` pre-check and no `native_decide`.
+arithmetic is reduced to check a certificate. One auxiliary lemma is
+checked synchronously through the literal layer's `addClosedProof`; there
+is no elaborator `Kernel.whnf` pre-check, no elaborator type check of the
+proof before the kernel's, and no `native_decide`.
 
 ### Transport and result reconstruction
 
@@ -639,8 +640,10 @@ comparison of the value with `d`. A rational matrix is scaled row by row by
 the least common multiple of its denominators to an integer one, whose
 witness is checked by `checkDetRat` together with the scaling and the
 value, through `det_eq_of_checkRat'`. The whole proof is added as an
-auxiliary theorem (`mkAuxTheorem`, with asynchronous checking off) so the
-kernel checks it exactly once and the tactic sees a rejection. Outcomes
+auxiliary lemma on the closed target (`addClosedProof` of the literal
+layer, with asynchronous checking off) so the kernel checks it exactly
+once, with no elaborator type check first, and the tactic sees a
+rejection. Outcomes
 follow the protocol of [SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md):
 before evaluating entries or running the producer, a goal outside determinant
 equalities, an open matrix or value (including unresolved metavariables),

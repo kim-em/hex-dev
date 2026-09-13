@@ -32,8 +32,9 @@ kernel `decide` on `entriesEq` otherwise) and to one kernel `decide` on
 `checkDetList`.  A rational matrix is scaled row by row to an integer one
 and proved by `det_eq_of_checkRat'`, whose kernel check `checkDetRat` also
 confirms the scaling and the value.  The whole proof of the goal is added
-as an auxiliary theorem, checked synchronously, so the kernel checks it
-exactly once and a rejection is reported by the tactic.
+as an auxiliary lemma on the closed target (`addClosedProof`), checked
+synchronously, so the kernel checks it exactly once, with no elaborator
+type check first, and a rejection is reported by the tactic.
 
 Outcomes follow the matrix-tactic protocol: a goal that is not a
 determinant equation, a matrix that is not a closed integer or rational
@@ -211,11 +212,11 @@ def diagnose (A : Expr) (c : Cert) (p : Proof) (e : Exception) : MetaM Exception
       m!"det: the entries of the matrix do not reduce to their numerals in the kernel{indentExpr A}"
   return .error e.getRef m!"det: the kernel rejected the proof: {e.toMessageData}"
 
-/-- Add `proof : target` as an auxiliary theorem checked synchronously, so
+/-- Add `proof : target` as an auxiliary lemma checked synchronously, so
 that a rejection is reported here, not later, and diagnosed. -/
 def checked (A : Expr) (c : Cert) (p : Proof) (target proof : Expr) : MetaM Expr := do
   try
-    withOptions (Lean.Elab.async.set · false) do mkAuxTheorem target proof
+    HexMatrixMathlib.Literal.addClosedProof target proof
   catch e =>
     throw (← diagnose A c p e)
 

@@ -440,8 +440,10 @@ The tactic evaluates the entries with Mathlib's `evalRatEntry`, runs the
 compiled `Hex.Matrix.rankWitness`, quotes the witness with `toExpr`, and
 builds `rank_eq_of_checkList' A L c rfl (of_decide_eq_true rfl)` composed
 with a kernel-decided comparison of `c.rank` with `r`; the whole proof is
-added as an auxiliary theorem (`mkAuxTheorem`, with asynchronous checking
-off) so the kernel checks it exactly once and the tactic sees a rejection.
+added as an auxiliary lemma on the closed target (`addClosedProof` of the
+literal layer, with asynchronous checking off) so the kernel checks it
+exactly once, with no elaborator type check first, and the tactic sees a
+rejection.
 Outcomes follow the protocol of [SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md).
 Before evaluating entries or producing a certificate, the handler classifies
 a goal outside the rank comparisons, a matrix or bound with free variables

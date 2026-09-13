@@ -257,6 +257,19 @@ def decideProof (prop : Expr) : MetaM Expr := do
   let d ← mkDecide prop
   return mkApp3 (mkConst ``of_decide_eq_true) prop d.appArg! (← mkEqRefl (mkConst ``Bool.true))
 
+/-- Add the closed proof `proof : target` as an auxiliary lemma, checked by
+the kernel synchronously and exactly once, and return the constant.  This
+is what `decide +kernel` does.  `mkAuxTheorem` is not used: with its
+default `zetaDelta := false` its closure step type-checks the proof in the
+elaborator (`Meta.check`) before the kernel does, which evaluates the
+certificate a second time and doubles the cost of a matrix tactic.  The
+target and the proof must be closed; the universe parameters are the
+level parameters they mention. -/
+def addClosedProof (target proof : Expr) : MetaM Expr := do
+  let levels := (collectLevelParams (collectLevelParams {} target) proof).params.toList
+  let name ← withOptions (Lean.Elab.async.set · false) do mkAuxLemma levels target proof
+  return mkConst name (levels.map Level.param)
+
 /-- The proof of `A = ofLists n m L` along the literal's route: `rfl` for a
 vector chain, one kernel `decide` on `entriesEq` otherwise. -/
 def identification (lit : Recognized) (A L : Expr) : MetaM Expr := do
