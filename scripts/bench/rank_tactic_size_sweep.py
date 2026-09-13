@@ -147,8 +147,12 @@ def main(argv: list[str] | None = None) -> int:
         for tool, (imp, _) in tools.items():
             path = tmpdir / f"base_{tool}.lean"
             path.write_text(f"import {imp}\nexample : True := trivial\n")
-            samples = [run_lean(path, 600.0, args.cpu, cwds[tool])[0] for _ in range(2)]
-            baseline[tool] = min(s for s in samples if s is not None)
+            samples = [run_lean(path, 600.0, args.cpu, cwds[tool]) for _ in range(2)]
+            good = [wall for wall, ok, _ in samples if wall is not None and ok]
+            if not good:
+                raise SystemExit(f"the import baseline of {tool} (import {imp}) failed or timed out "
+                                 f"in {cwds[tool]}; is that checkout built?")
+            baseline[tool] = min(good)
             print(f"[baseline] {tool} {baseline[tool]:.2f}s", flush=True)
         for family in FAMILIES:
             stopped: set[str] = set()

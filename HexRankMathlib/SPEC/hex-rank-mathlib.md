@@ -532,7 +532,9 @@ It measures the integer-only frontend at that revision, excluding the additional
 carrier handlers and their imports. Full module costs and import baselines for
 the additional carriers are in the
 [carrier performance report](../../reports/hex-rank-carriers-performance.md).
-Under the ten-second cap
+With the ten-second cap (a family stops for an arm after the first
+dimension whose median exceeds the cap, that dimension kept, and the
+ladders end at `n = 48` and, for rank `2`, `n = 128`),
 the pinned Mathlib's `eval_rank` reaches `n = 24` at full rank and rank
 `n − 2` (`6.9` and `8.7 s`), `n = 28` at rank `n / 2` (`10.4 s`) and
 `n = 24` at rank `2` (`6.6 s`); the `eval_rank` of #43438 reaches `n = 48` at full rank, rank
@@ -551,11 +553,13 @@ Median kernel shares recorded by the same size sweep are:
 | dense `8 × 8`, rank 8 | 118 ms | 29 ms | 13 ms | 13 ms |
 | dense `16 × 16`, rank 16 | 846 ms | 144 ms | 40 ms | 59 ms |
 | dense `16 × 16`, rank 14 | 948 ms | 160 ms | 71 ms | 84 ms |
-| dense `32 × 32`, rank 32 | timeout | 1.14 s | 195 ms | 504 ms |
+| dense `32 × 32`, rank 32 | not run | 1.14 s | 195 ms | 504 ms |
 | `32 × 32`, rank 2 | timeout | 468 ms | 129 ms | 133 ms |
 
-The timeout entries have no profiler breakdown because the corresponding
-proof exceeded the sweep's ten-second cap.
+A timeout entry has no profiler breakdown because the corresponding proof
+exceeded the sweep's wall limit (the cap plus the import baseline), and a
+"not run" entry is a dimension the arm never reached because its family
+had already stopped.
 
 ### Additional entry models
 
