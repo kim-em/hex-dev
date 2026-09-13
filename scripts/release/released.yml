@@ -253,22 +253,6 @@ repos:
     pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp]
     lakefile: toml
 
-  - repo: leanprover/hex-matrix
-    component: Matrices
-    lib: HexMatrix
-    umbrella: true
-    spec: hex-matrix
-    pins: [hex-basic]
-    lakefile: toml
-
-  - repo: leanprover/hex-matrix-mathlib
-    lib: HexMatrixMathlib
-    test_modules: [HexMatrixMathlib.Tests]
-    umbrella: true
-    spec: hex-matrix-mathlib
-    pins: [hex-basic, hex-matrix]
-    lakefile: toml
-
   - repo: leanprover/hex-poly-z-mathlib
     lib: HexPolyZMathlib
     umbrella: true
