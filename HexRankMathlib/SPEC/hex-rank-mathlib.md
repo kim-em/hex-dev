@@ -480,17 +480,17 @@ alternating orientation). Each arm's delta is an absolute estimate of its
 proof cost, literal elaboration included; the family's comparator ratio
 is the ratio of the two medians and is only as resolved as the smaller
 delta. Medians from
-`reports/bench-results/hex-rank-mathlib-tactic-probes-10216.json`
+`reports/bench-results/hex-rank-mathlib-tactic-probes-10216-rebased.json`
 (shared host, one CPU, both arms with `!![…]` elaboration inside the
 delta):
 
 | family | `eval_rank` | `rank` | ratio |
 |---|---|---|---|
-| dense `8 × 8` | 0.30 s | 0.14 s | 2.1 |
-| dense `16 × 16` | 1.81 s | 0.39 s | 4.7 |
-| dense `16 × 16`, rank 14 | 1.80 s | 0.40 s | 4.5 |
-| dense `32 × 32` | 13.94 s | 2.17 s | 6.4 |
-| `32 × 32`, rank 2 | 15.01 s | 0.69 s | 21.8 |
+| dense `8 × 8` | 0.29 s | 0.11 s | 2.6 |
+| dense `16 × 16` | 1.95 s | 0.20 s | 9.6 |
+| dense `16 × 16`, rank 14 | 1.90 s | 0.28 s | 6.8 |
+| dense `32 × 32` | 15.11 s | 0.91 s | 16.6 |
+| `32 × 32`, rank 2 | 16.11 s | 0.57 s | 28.1 |
 
 Proof time against dimension, for the full-rank, rank `n − 2`, rank
 `n / 2` and rank `2` families up to a ten-second cap per run, is recorded
