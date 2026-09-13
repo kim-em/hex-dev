@@ -31,9 +31,10 @@ that the kernel reduces to their numerals (numerals and arithmetic on
 them); an entry the kernel cannot reduce is reported as such.
 
 Outcomes follow the matrix-tactic protocol: a goal that is not a rank
-comparison is not applicable; a matrix that is not a closed integer literal is
-declined; a certificate the kernel rejects is a failure (a producer bug, since
-the producer re-checks its own output).
+comparison, a matrix that is not a closed integer literal, or an open bound
+is not applicable and delegates to the next handler; in-fragment errors commit.
+A certificate the kernel rejects is a failure (a producer bug, since the
+producer re-checks its own output).
 -/
 
 namespace HexMatrixMathlib.Rank
@@ -80,17 +81,31 @@ structure Literal where
   /-- The evaluated entries. -/
   values : Array (Array Int)
 
-/-- Recognize and evaluate a closed integer literal. -/
-def literal? (A : Expr) : MetaM (Option Literal) := do
-  let some lit ← HexMatrixMathlib.Literal.literal? A | return none
+/-- Classify the target before evaluating entries or running the producer. An
+error here is a reason for numeric inapplicability, not a tactic failure. -/
+def classify (target : Expr) : MetaM
+    (Except MessageData (Expr × Expr × Rel × Bool × HexMatrixMathlib.Literal.Recognized)) := do
+  let target ← instantiateMVars target
+  let some (A, other, rel, reverse) := rankTarget? target |
+    return .error m!"the goal is not `A.rank = r`, `A.rank ≤ r` or `r ≤ A.rank` for a Mathlib matrix `A`"
+  if A.hasFVar || A.hasExprMVar then
+    return .error m!"the matrix{indentExpr A}\nmust be a closed term"
+  if other.hasFVar || other.hasExprMVar then
+    return .error m!"the bound{indentExpr other}\nmust be a closed term"
+  let some lit ← HexMatrixMathlib.Literal.literal? A |
+    return .error m!"the matrix is not a closed `!![…]`, `Matrix.of ![…]`, `fun i j => …` or `Matrix.ofArray` literal{indentExpr A}"
   unless lit.carrier.isConstOf ``Int do
-    throwError "rank: declined: only integer matrices are supported; the entry type is{indentExpr lit.carrier}"
+    return .error m!"only integer matrices are supported; the entry type is{indentExpr lit.carrier}"
+  return .ok (A, other, rel, reverse, lit)
+
+/-- Evaluate a recognized integer literal. -/
+def evalLiteral (lit : HexMatrixMathlib.Literal.Recognized) : MetaM Literal := do
   let values ← lit.entries.mapM (·.mapM fun e => do
     let q ← HexMatrixMathlib.Literal.evalEntry e
     unless q.den = 1 do
       throwError "rank: declined: the entry is not an integer{indentExpr e}"
     return q.num)
-  return some ⟨lit, values⟩
+  return ⟨lit, values⟩
 
 /-- The witness of a literal, by the compiled producer. -/
 def witness (lit : Literal) : MetaM RankWitness := do
@@ -140,14 +155,8 @@ def diagnose (bound check : Expr) (A ofL : Expr) (e : Exception) : MetaM Excepti
 /-- Prove a rank target, or throw. -/
 def proveGoal (target : Expr) : MetaM Expr := do
   let target ← instantiateMVars target
-  let some (A, other, rel, reverse) := rankTarget? target |
-    throwError "rank: the goal is not `A.rank = r`, `A.rank ≤ r` or `r ≤ A.rank` for a Mathlib matrix `A`"
-  if A.hasFVar || A.hasExprMVar then
-    throwError "rank: declined: the matrix{indentExpr A}\nmust be a closed term"
-  if other.hasFVar || other.hasExprMVar then
-    throwError "rank: declined: the bound{indentExpr other}\nmust be a closed term"
-  let some lit ← literal? A |
-    throwError "rank: declined: the matrix is not a closed `!![…]`, `Matrix.of ![…]`, `fun i j => …` or `Matrix.ofArray` literal{indentExpr A}"
+  let .ok (A, other, rel, reverse, recognized) ← classify target | throwUnsupportedSyntax
+  let lit ← evalLiteral recognized
   let w ← witness lit
   let L ← rowList lit
   let c := toExpr w
@@ -189,10 +198,22 @@ def proveGoal (target : Expr) : MetaM Expr := do
 
 /-- `rank` closes `A.rank = r`, `A.rank ≤ r` and `r ≤ A.rank` for a closed
 integer matrix literal `A`, with the kernel checking a rank certificate.  The
-keyword is non-reserved, so `rank` stays usable as an identifier. -/
+keyword is non-reserved, so `rank` stays usable as an identifier. Extensions
+must use `@[no_fallback]` to preserve their errors and `throwUnsupportedSyntax`
+to delegate outside their fragment. -/
 syntax (name := rankTac) &"rank" : tactic
 
-@[tactic rankTac]
+/-- Registered before the numeric handler because Lean tries equal-priority
+handlers in reverse registration order. Reclassify only to report the reason;
+entry evaluation and certificate production belong to the numeric handler. -/
+@[tactic rankTac, no_fallback]
+def rankFallback : Tactic.Tactic := fun _ => Tactic.withMainContext do
+  match ← classify (← Tactic.getMainTarget) with
+  | .error msg => throwError "rank: not applicable: {msg}"
+  | .ok _ => throwUnsupportedSyntax
+
+-- Ordinary errors commit; unsupported syntax still tries the next handler.
+@[tactic rankTac, no_fallback]
 def evalRankTac : Tactic.Tactic := fun _ => Tactic.withMainContext do
   let proof ← proveGoal (← Tactic.getMainTarget)
   Tactic.closeMainGoal `rank proof

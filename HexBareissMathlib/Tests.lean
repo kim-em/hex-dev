@@ -121,7 +121,7 @@ example : Matrix.det (R := ZMod 7) !![1, 2; 3, 4] = 5 := by
 example : detTestLit.det = 5 := by det
 
 /--
-error: det: declined: the matrix is not a closed `!![…]`, `Matrix.of ![…]`, `fun i j => …` or `Matrix.ofArray` literal
+error: det: not applicable: the matrix is not a closed `!![…]`, `Matrix.of ![…]`, `fun i j => …` or `Matrix.ofArray` literal
   1 * 1
 -/
 #guard_msgs in
@@ -131,7 +131,7 @@ example : Matrix.det ((1 : Matrix (Fin 2) (Fin 2) ℤ) * 1) = 1 := by det
 def detRowFn : Fin 2 → ℤ := fun j => j.val + 3
 
 /--
-error: det: declined: the matrix is not a closed `!![…]`, `Matrix.of ![…]`, `fun i j => …` or `Matrix.ofArray` literal
+error: det: not applicable: the matrix is not a closed `!![…]`, `Matrix.of ![…]`, `fun i j => …` or `Matrix.ofArray` literal
   Matrix.of ![![1, 2], detRowFn]
 -/
 #guard_msgs in
@@ -146,7 +146,7 @@ example : Matrix.det (R := ℤ) !![1, 2; 3, 4] = detTarget := by
   det
   rfl
 
-/-- error: det: the goal is not `A.det = d` for a Mathlib matrix `A` -/
+/-- error: det: not applicable: the goal is not `A.det = d` for a Mathlib matrix `A` -/
 #guard_msgs in
 example : (1 : ℤ) = 1 := by det
 
@@ -164,3 +164,138 @@ theorem dense16_det' : dense16.det = -87982024952196733 := by det
 /-- info: 'dense16_det'' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms dense16_det'
+
+/-! # Handler diagnostics and composition -/
+
+/--
+error: det: not applicable: the matrix
+  A
+must be a closed term
+-/
+#guard_msgs in
+example (A : Matrix (Fin 2) (Fin 2) ℤ) : A.det = 0 := by det
+
+/--
+error: det: not applicable: the matrix
+  A
+must be a closed term
+-/
+#guard_msgs in
+example (A : Matrix (Fin 2) (Fin 2) ℤ) (d : ℤ) : A.det = d := by det
+
+open Lean Elab Tactic
+
+-- Check the shipped order before adding any test handlers.
+run_cmd do
+  let handlers := (tacticElabAttribute.getEntries (← getEnv)
+    ``HexMatrixMathlib.Det.detTac).map (·.declName)
+  unless handlers ==
+      [``HexMatrixMathlib.Det.evalDetTac, ``HexMatrixMathlib.Det.detFallback] do
+    throwError "unexpected shipped det handler order: {handlers}"
+
+/-! Numeric delegation must be tested with the numeric handler first. A stub
+registered later without re-registering the numeric handler would run first. -/
+section Delegation
+
+@[no_fallback]
+private meta def detStub : Tactic := fun _ => do
+  logInfo "det stub"
+  evalTactic (← `(tactic| assumption))
+
+attribute [local tactic HexMatrixMathlib.Det.detTac] detStub
+attribute [local tactic HexMatrixMathlib.Det.detTac] HexMatrixMathlib.Det.evalDetTac
+
+run_cmd do
+  let handlers := (tacticElabAttribute.getEntries (← getEnv)
+    ``HexMatrixMathlib.Det.detTac).map (·.declName)
+  unless handlers ==
+      [``HexMatrixMathlib.Det.evalDetTac, ``detStub,
+        ``HexMatrixMathlib.Det.evalDetTac, ``HexMatrixMathlib.Det.detFallback] do
+    throwError "unexpected det handler order: {handlers}"
+
+/-- info: det stub -/
+#guard_msgs in
+example (a : ℤ) (h : Matrix.det !![a, 1; 1, a] = 2) : Matrix.det !![a, 1; 1, a] = 2 := by det
+
+/-- info: det stub -/
+#guard_msgs in
+example (d : ℤ) (h : Matrix.det (R := ℤ) !![1] = d) : Matrix.det (R := ℤ) !![1] = d := by det
+
+/-- info: det stub -/
+#guard_msgs in
+example (h : Matrix.det (R := ZMod 7) !![1] = 1) : Matrix.det (R := ZMod 7) !![1] = 1 := by det
+
+/-- info: det stub -/
+#guard_msgs in
+example (h : Matrix.det ((1 : Matrix (Fin 2) (Fin 2) ℤ) * 1) = 1) :
+    Matrix.det ((1 : Matrix (Fin 2) (Fin 2) ℤ) * 1) = 1 := by det
+
+/-- info: det stub -/
+#guard_msgs in
+example (h : True) : True := by det
+
+-- The stub could close this goal from its hypothesis if numeric errors fell
+-- through. The numeric error must be preserved, with no stub message.
+/-- error: det: the target is false: the determinant is -2 -/
+#guard_msgs in
+example (h : Matrix.det (R := ℤ) !![1, 2; 3, 4] = 1) :
+    Matrix.det (R := ℤ) !![1, 2; 3, 4] = 1 := by det
+
+-- The stub could solve from the hypothesis, so its message would expose an
+-- incorrect order even on numeric success.
+#guard_msgs in
+example (_h : Matrix.det (R := ℤ) !![1] = 1) :
+    Matrix.det (R := ℤ) !![1] = 1 := by det
+
+-- A closed value that cannot be evaluated uses the numeric handler's simp
+-- fallback, without reaching the stub or losing the remaining goal.
+#guard_msgs in
+example (_h : Matrix.det (R := ℤ) !![1, 2; 3, 4] = detTarget) :
+    Matrix.det (R := ℤ) !![1, 2; 3, 4] = detTarget := by
+  det
+  rfl
+
+end Delegation
+
+/--
+error: det: not applicable: the matrix
+  A
+must be a closed term
+-/
+#guard_msgs in
+example (A : Matrix (Fin 2) (Fin 2) ℤ) : Certified Matrix.det A := det% A
+
+-- Simulate a certificate error raised during simp. Neither the not-applicable
+-- nor the capability-decline path may replace it with a fallback diagnostic.
+section FallbackErrors
+
+@[no_fallback]
+private meta def failSimp : Tactic := fun _ =>
+  throwError "det: test certificate failure"
+
+attribute [local tactic Lean.Parser.Tactic.simp] failSimp
+
+/-- error: det: test certificate failure -/
+#guard_msgs in
+example (d : ℤ) : Matrix.det (R := ℤ) !![1, 2; 3, 4] = d := by det
+
+/-- error: det: test certificate failure -/
+#guard_msgs in
+example : Matrix.det (R := ℤ) !![1, 2; 3, 4] = detTarget := by det
+
+end FallbackErrors
+
+section ExtensionErrors
+
+-- A downstream extension must commit its own in-fragment errors too.
+@[no_fallback]
+private meta def detDecline : Tactic := fun _ =>
+  throwError "det: test capability decline"
+
+attribute [local tactic HexMatrixMathlib.Det.detTac] detDecline
+
+/-- error: det: test capability decline -/
+#guard_msgs in
+example : True := by det
+
+end ExtensionErrors
