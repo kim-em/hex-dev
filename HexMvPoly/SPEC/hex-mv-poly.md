@@ -86,8 +86,8 @@ with the type, so two polynomials with equal key-value sets are
 propositionally equal and the canonical form condition reduces to "no
 zero values". The reference representation remains the
 compiled-computation interface. Kernel certificate replay uses the canonical
-list form specified below; the Phase 4 proof probes guard that separate
-path's reduction budget.
+list form specified below, exercised directly by the closed certificate in
+`KernelTests.lean`. The Phase 4 reference/proxy probes are separate benchmarks.
 
 Reusable map algorithms belong in `HexBasic/ExtTreeMap.lean`, in the
 `Std.ExtTreeMap` namespace, with no Hex-specific types or polynomial
@@ -232,7 +232,8 @@ storage comparator.
 The exposed computational API is structural recursion on `List` or `Nat`:
 
 ```lean
-normalize, add, mul, neg, smul : PolyList κ → ... → PolyList κ
+normalize, add, sub, mul, neg, smul : PolyList κ → ... → PolyList κ
+one : Nat → PolyList κ
 isZero : PolyList κ → Bool
 beq : PolyList κ → PolyList κ → Bool
 evalAt : List κ → PolyList κ → κ
@@ -244,11 +245,20 @@ primitive operations. Thus `Int` replay reduces through `Int.add`, `Int.mul`,
 and `Int.neg`; Lean's `Rat` supplies its reduced numerator-denominator
 representation. A positive-characteristic reflection provider supplies
 canonical `Nat` residues and modulus-parametrised operations before invoking
-this generic list layer.
+this generic list layer. The small rational fixtures establish reduction and
+correctness, not a general rational certificate performance budget; consumers
+that clear denominators can continue replaying entirely over `Int`.
+
+Addition is a linear merge, structurally recursive on a budget equal to the
+sum of the input lengths. Multiplication translates one row per left term
+and combines adjacent rows in balanced merge rounds. The row-count budget
+makes those rounds structurally recursive as well. Both workers have total
+fallbacks with unconditional denotation laws; the public budgets suffice to
+reach the empty or singleton cases without using those fallbacks.
 
 `denote` reads exact-length exponent lists as `Mono n` and sums their
 monomials in the Mathlib-free reference type. The public laws are
-`denote_add`, `denote_mul`, `denote_neg`, `denote_smul`, and
+`denote_one`, `denote_add`, `denote_sub`, `denote_mul`, `denote_neg`, `denote_smul`, and
 `evalAt_denote`. Every arithmetic operation preserves `Canonical`; on
 canonical inputs:
 
@@ -263,16 +273,24 @@ to compare reference trees.
 
 `toList : MvPoly n κ cmp → PolyList κ` is producer-side only. It emits a
 canonical list and satisfies `denote_toList`; conversely `toList_denote`
-recovers every canonical list. A reflected matrix is quoted as nested term
-lists, so the consumer's identification hypothesis is definitionally
+recovers every canonical list. Reversing the reference term stream and
+checking canonicality gives a linear path for the default lexicographic
+comparator; other orders fall back to normalization when necessary.
+`toRows` quotes nested reference polynomial lists, and `denote_toRows`
+proves entrywise denotation recovers those lists. Applied to `rowLists P`,
+it supplies the consumer's matrix identification:
 `L.map (·.map denote) = rowLists P`, in the same way that the shared matrix
 literal layer identifies scalar row lists with `ofLists`. Certificate replay
 uses `L`, never the reference matrix or `toList` computation.
 
 `KernelTests.lean` exercises `Int` and `Rat`, canonicality, zero and equality
-fixtures, evaluation, and a `4 × 4` polynomial adjugate identity. The latter
-retains `trace.profiler` on its `decide +kernel` proof and must elaborate in
-well under one second on the shared host.
+fixtures, evaluation, and a `4 × 4` tridiagonal polynomial adjugate identity.
+The adjugate and determinant are independent coefficient literals, both
+multiplication orders are checked, and a corrupted determinant is rejected.
+The main identity retains a scoped `trace.profiler` on its `decide +kernel`
+proof so builds report its timing. Its kernel check measured 77 ms on the
+shared host; the target is well under one second. This records an observation,
+not an automatically enforced wall-clock limit or a general size-scaling claim.
 
 ## Kernel exposure
 
@@ -342,6 +360,12 @@ constant and shows up in every tree operation.
 | `rename` | rebuild, combining collisions | `O(n · s log s)` |
 | `eval` | Horner over the recursive view, or direct term sum with repeated-squaring powers | `O(s · n · log d)` coefficient operations in the direct form |
 | `toUnivariate` | partition by the main variable's exponent | `O(n · s log s)` |
+| `Kernel.add` | linear merge of descending term lists | `O(n · (s+t))` |
+| `Kernel.mul` | translate rows, then balanced merge rounds | `O(n · s · t · log(s+1))` |
+| `Kernel.neg`, `Kernel.smul` | map coefficients and drop zeros | `O(s)` coefficient operations |
+| `Kernel.normalize` | insert arbitrary terms into descending order | `O(n · s²)` |
+| `Kernel.toList` | check reversed stream, otherwise normalize | `O(n · s)` for `Mono.lex`, `O(n · s²)` worst case |
+| `Kernel.evalAt` | structural linear powers and term sum | `O(s · n · (d+1))` coefficient operations |
 
 Multiplication is the one to fix now rather than defer, per design
 principle 7. The chosen algorithm is the accumulate-into-one-map form
@@ -701,9 +725,9 @@ coefficient type is itself computable. A tactic can therefore restrict
 itself to coefficients it can normalise, or prove
 `p : ℝ[X] = algebraMap ℚ[X] ℝ[X] p'` and compute in the `ℚ` model. The
 Mathlib-free representation and its companion support the second route
-without making the computational library depend on Mathlib. The kernel
-proof probes compare it with the sorted-list alternative before either
-representation is recommended for tactic use.
+without making the computational library depend on Mathlib. The existing
+kernel proof probes compare the reference tree with a sorted-list proxy;
+certificate consumers use the separate `Kernel.PolyList` API specified above.
 
 ## Conformance
 
@@ -805,15 +829,18 @@ their module.
 **Comparators.** CompPoly and the existing sorted-list proxy remain
 informational compiled-throughput comparators. SymPy is not a performance
 comparator. The kernel representation decision is no longer conditional:
-symbolic matrix certificates require the canonical `PolyList` path because
-the reference `Vector`/`Fin` path exceeds the matrix-tactic kernel budget.
-Measurements now guard that chosen path rather than deciding whether it
-exists.
+symbolic matrix certificates require the canonical `PolyList` path under
+`SPEC/matrix-tactics.md`'s prohibition on `Vector`/`Fin` in replay. The
+integer matrix timing cited there motivates this discipline; it is not a
+measurement of reference `MvPoly` arithmetic. `KernelTests.lean` measures
+the actual list-form certificate path on a small closed identity.
 
 The native driver lives at `bench/HexMvPoly/Bench.lean`. Kernel probes
 live below `bench/HexMvPolyMathlib/ProofProbe/`, contain no `main`,
 import no `LeanBench`, and are registered through
-`HexMvPolyMathlib.proof_probes`.
+`HexMvPolyMathlib.proof_probes`. Those probes still measure the reference
+tree and the `Mono`-keyed sorted-list proxy, not `Kernel.PolyList`; they do
+not establish performance or a scaling budget for the new list API.
 
 Because the native registration names two comparators, Phase 4 also
 commits the five required comparator plots under
@@ -857,7 +884,7 @@ HexMvPolyMathlib.lean
           rationale: "CompPoly uses the same ExtTreeMap representation behind a Mathlib-dependent API; the comparison records integration and implementation overhead rather than gating release."
         - tool: "canonical sorted-list MvSparsePoly proxy"
           class: informational
-          rationale: "The pinned Mathlib revision has no MvSparsePoly, so a local canonical sorted-list proxy records compiled throughput for the alternative algorithmic shape. The native comparison is informational; the registered kernel proof probes guard the canonical PolyList certificate path."
+          rationale: "The pinned Mathlib revision has no MvSparsePoly, so a local canonical sorted-list proxy records compiled throughput for the alternative algorithmic shape. The registered kernel proof probes compare that proxy with the reference tree; KernelTests separately checks the actual PolyList certificate path."
       input_families:
         - name: sparse-addition
           description: Disjoint and interleaved sparse supports across lexicographic, graded lexicographic, and graded reverse lexicographic order.

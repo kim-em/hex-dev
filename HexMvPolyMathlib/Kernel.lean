@@ -37,6 +37,15 @@ noncomputable def denote {n : Nat} {R : Type u} [CommSemiring R]
     [Std.LawfulEqCmp cmp] (p : PolyList R) : MvPolynomial (Fin n) R :=
   HexMvPolyMathlib.equiv (cmp := cmp) (Hex.MvPoly.Kernel.denote (cmp := cmp) p)
 
+/-- The list multiplicative identity denotes the Mathlib identity. -/
+theorem denote_one {n : Nat} {R : Type u} [CommSemiring R]
+    [BEq R] [LawfulBEq R] [DecidableEq R]
+    {cmp : Mono n → Mono n → Ordering} [Std.TransCmp cmp]
+    [Std.LawfulEqCmp cmp] :
+    denote (cmp := cmp) (Hex.MvPoly.Kernel.one (κ := R) n) = 1 := by
+  unfold denote
+  rw [Hex.MvPoly.Kernel.denote_one, map_one]
+
 /-- List addition has the same denotation as Mathlib addition. -/
 theorem denote_add {n : Nat} {R : Type u} [CommSemiring R]
     [BEq R] [LawfulBEq R] [DecidableEq R]
@@ -66,6 +75,16 @@ theorem denote_neg {n : Nat} {R : Type u} [CommRing R]
     denote (cmp := cmp) (Hex.MvPoly.Kernel.neg p) = -denote (cmp := cmp) p := by
   unfold denote
   rw [Hex.MvPoly.Kernel.denote_neg, map_neg]
+
+/-- List subtraction has the same denotation as Mathlib subtraction. -/
+theorem denote_sub {n : Nat} {R : Type u} [CommRing R]
+    [BEq R] [LawfulBEq R] [DecidableEq R]
+    {cmp : Mono n → Mono n → Ordering} [Std.TransCmp cmp]
+    [Std.LawfulEqCmp cmp] (p q : PolyList R) :
+    denote (cmp := cmp) (Hex.MvPoly.Kernel.sub p q) =
+      denote (cmp := cmp) p - denote (cmp := cmp) q := by
+  unfold denote
+  rw [Hex.MvPoly.Kernel.denote_sub, map_sub]
 
 /-- List scalar multiplication denotes multiplication by a Mathlib constant. -/
 theorem denote_smul {n : Nat} {R : Type u} [CommSemiring R]

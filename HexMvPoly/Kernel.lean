@@ -16,8 +16,8 @@ set_option backward.proofsInPublic true
 /-!
 Canonical list arithmetic for kernel certificate replay.
 
-Unlike the reference `MvPoly` representation, this module never traverses an
-`Array`, `Vector`, or `Fin` while computing. Exponents are ordinary lists and
+Unlike the reference `MvPoly` representation, certificate arithmetic never
+traverses an `Array`, `Vector`, or `Fin`. Exponents are ordinary lists and
 terms are kept in descending lexicographic order. The coefficient operations
 are deliberately the ordinary operations on the representation type: at
 `Int` they reduce to `Int.add`, `Int.mul`, and `Int.neg`; `Rat` is already a
@@ -82,11 +82,32 @@ def normalize [Zero κ] [Add κ] [DecidableEq κ] :
   | [] => []
   | t :: ts => insert t (normalize ts)
 
-/-- Add canonical term lists. -/
-def add [Zero κ] [Add κ] [DecidableEq κ] :
+/-- Insertion sum, also the total fallback for an undersupplied merge budget. -/
+def insertSum [Zero κ] [Add κ] [DecidableEq κ] :
     PolyList κ → PolyList κ → PolyList κ
   | [], q => q
-  | t :: ts, q => insert t (add ts q)
+  | t :: ts, q => insert t (insertSum ts q)
+
+/-- Linear merge of descending term lists. Recursion is structural on fuel.
+The public caller supplies the sum of the lengths, so its fallback is never
+needed; the fallback keeps the denotation law unconditional. -/
+def merge [Zero κ] [Add κ] [DecidableEq κ] :
+    Nat → PolyList κ → PolyList κ → PolyList κ
+  | _, [], q => q
+  | _, p, [] => p
+  | 0, p, q => insertSum p q
+  | fuel + 1, t :: ts, u :: us =>
+      match expCmp t.1 u.1 with
+      | .gt => t :: merge fuel ts (u :: us)
+      | .lt => u :: merge fuel (t :: ts) us
+      | .eq =>
+          let c := t.2 + u.2
+          if c = 0 then merge fuel ts us
+          else (t.1, c) :: merge fuel ts us
+
+/-- Add canonical term lists in one merge pass. -/
+def add [Zero κ] [Add κ] [DecidableEq κ] (p q : PolyList κ) : PolyList κ :=
+  merge (Nat.add p.length q.length) p q
 
 /-- Map coefficients, filtering zero results without changing exponents. -/
 def mapCoeffs [Zero κ] [DecidableEq κ] (f : κ → κ) :
@@ -101,6 +122,10 @@ def neg [Zero κ] [Neg κ] [DecidableEq κ]
     (p : PolyList κ) : PolyList κ :=
   mapCoeffs Neg.neg p
 
+/-- Subtraction through canonical addition and negation. -/
+def sub [Zero κ] [Add κ] [Neg κ] [DecidableEq κ]
+    (p q : PolyList κ) : PolyList κ := add p (neg q)
+
 /-- Multiply every coefficient by a scalar, filtering zero products. -/
 def smul [Zero κ] [Mul κ] [DecidableEq κ] (a : κ)
     (p : PolyList κ) : PolyList κ :=
@@ -113,12 +138,30 @@ def mulTerm [Zero κ] [Add κ] [Mul κ] [DecidableEq κ]
   | u :: us =>
       insert (addExp t.1 u.1, t.2 * u.2) (mulTerm t us)
 
-/-- Multiply canonical term lists. Every product is accumulated through
-`insert`, so collisions and cancellations are normalized as they arise. -/
-def mul [Zero κ] [Add κ] [Mul κ] [DecidableEq κ] :
-    PolyList κ → PolyList κ → PolyList κ
-  | [], _ => []
-  | t :: ts, q => add (mulTerm t q) (mul ts q)
+/-- Sum rows, used for the total fallback of balanced merging. -/
+def sumRows [Zero κ] [Add κ] [DecidableEq κ] : List (PolyList κ) → PolyList κ
+  | [] => []
+  | p :: ps => add p (sumRows ps)
+
+/-- Merge each adjacent pair of rows. -/
+def mergeRound [Zero κ] [Add κ] [DecidableEq κ] :
+    List (PolyList κ) → List (PolyList κ)
+  | [] => []
+  | [p] => [p]
+  | p :: q :: ps => add p q :: mergeRound ps
+
+/-- Balanced merge rounds, structurally recursive on a row-count budget. -/
+def mergeRows [Zero κ] [Add κ] [DecidableEq κ] :
+    Nat → List (PolyList κ) → PolyList κ
+  | _, [] => []
+  | _, [p] => p
+  | 0, ps => sumRows ps
+  | fuel + 1, ps => mergeRows fuel (mergeRound ps)
+
+/-- Multiply via translated rows and balanced linear merges. -/
+def mul [Zero κ] [Add κ] [Mul κ] [DecidableEq κ]
+    (p q : PolyList κ) : PolyList κ :=
+  mergeRows p.length (p.map fun t => mulTerm t q)
 
 /-- The zero test for a canonical list. -/
 def isZero : PolyList κ → Bool
@@ -388,17 +431,132 @@ theorem normalize_canonical [Zero κ] [Add κ] [DecidableEq κ]
       exact ih fun u hu => h u (List.mem_cons_of_mem _ hu)
 
 /-- Addition preserves canonical form. -/
-theorem add_canonical [Zero κ] [Add κ] [DecidableEq κ]
+theorem insertSum_canonical [Zero κ] [Add κ] [DecidableEq κ]
     {n : Nat} {p q : PolyList κ}
-    (hp : Canonical n p) (hq : Canonical n q) : Canonical n (add p q) := by
+    (hp : Canonical n p) (hq : Canonical n q) : Canonical n (insertSum p q) := by
   induction p with
   | nil => exact hq
   | cons t ts ih =>
-      rw [add]
+      rw [insertSum]
       apply insert_canonical (hp.1 t (List.mem_cons_self ..))
       exact ih ⟨fun u hu => hp.1 u (List.mem_cons_of_mem _ hu),
         (List.pairwise_cons.mp hp.2.1).2,
         fun u hu => hp.2.2 u (List.mem_cons_of_mem _ hu)⟩
+
+private theorem insertSum_exps [Zero κ] [Add κ] [DecidableEq κ]
+    (P : List Nat → Prop) (p q : PolyList κ)
+    (hp : ∀ t ∈ p, P t.1) (hq : ∀ t ∈ q, P t.1) :
+    ∀ t ∈ insertSum p q, P t.1 := by
+  induction p with
+  | nil => exact hq
+  | cons u us ih =>
+      intro t ht
+      rcases exp_mem_insert ht with he | ⟨v, hv, he⟩
+      · rw [he]; exact hp u (by simp)
+      · rw [he]; exact ih (fun v hv => hp v (by simp [hv])) v hv
+
+private theorem merge_exps [Zero κ] [Add κ] [DecidableEq κ]
+    (P : List Nat → Prop) (fuel : Nat) (p q : PolyList κ)
+    (hp : ∀ t ∈ p, P t.1) (hq : ∀ t ∈ q, P t.1) :
+    ∀ t ∈ merge fuel p q, P t.1 := by
+  induction fuel generalizing p q with
+  | zero =>
+      cases p <;> cases q
+      · exact hq
+      · exact hq
+      · exact hp
+      · exact insertSum_exps P _ _ hp hq
+  | succ fuel ih =>
+      cases p with
+      | nil => exact hq
+      | cons t ts =>
+        cases q with
+        | nil => exact hp
+        | cons u us =>
+          have hts : ∀ v ∈ ts, P v.1 := fun v hv => hp v (by simp [hv])
+          have hus : ∀ v ∈ us, P v.1 := fun v hv => hq v (by simp [hv])
+          simp only [merge]
+          split
+          · simpa using And.intro (hp t (by simp)) (ih ts (u :: us) hts hq)
+          · simpa using And.intro (hq u (by simp)) (ih (t :: ts) us hp hus)
+          · split
+            · exact ih ts us hts hus
+            · simpa using And.intro (hp t (by simp)) (ih ts us hts hus)
+
+private theorem canonical_tail [Zero κ] {n : Nat} {t : Term κ}
+    {ts : PolyList κ} (h : Canonical n (t :: ts)) : Canonical n ts :=
+  ⟨fun u hu => h.1 u (by simp [hu]), (List.pairwise_cons.mp h.2.1).2,
+    fun u hu => h.2.2 u (by simp [hu])⟩
+
+private theorem canonical_cons [Zero κ] {n : Nat} {t : Term κ}
+    {ts : PolyList κ} (ht : t.1.length = n) (hz : t.2 ≠ 0)
+    (hs : Canonical n ts) (hb : ∀ u ∈ ts, u.1 < t.1) :
+    Canonical n (t :: ts) :=
+  ⟨by simpa using And.intro ht hs.1,
+    List.pairwise_cons.mpr ⟨hb, hs.2.1⟩,
+    by simpa using And.intro hz hs.2.2⟩
+
+/-- Merging preserves canonical form, including for an undersupplied budget. -/
+theorem merge_canonical [Zero κ] [Add κ] [DecidableEq κ]
+    {n : Nat} (fuel : Nat) {p q : PolyList κ}
+    (hp : Canonical n p) (hq : Canonical n q) :
+    Canonical n (merge fuel p q) := by
+  induction fuel generalizing p q with
+  | zero =>
+      cases p <;> cases q
+      · exact hq
+      · exact hq
+      · exact hp
+      · exact insertSum_canonical hp hq
+  | succ fuel ih =>
+      cases p with
+      | nil => exact hq
+      | cons t ts =>
+        cases q with
+        | nil => exact hp
+        | cons u us =>
+          have hts := canonical_tail hp
+          have hus := canonical_tail hq
+          have htb := (List.pairwise_cons.mp hp.2.1).1
+          have hub := (List.pairwise_cons.mp hq.2.1).1
+          simp only [merge]
+          split
+          next hc =>
+            have htu : u.1 < t.1 := by
+              apply expCmp_eq_lt_iff.mp
+              rw [expCmp_eq_compare]
+              exact Std.OrientedCmp.gt_iff_lt.mp (by simpa [expCmp_eq_compare] using hc)
+            apply canonical_cons (hp.1 t (by simp)) (hp.2.2 t (by simp)) (ih hts hq)
+            refine merge_exps (fun e => e < t.1) fuel ts (u :: us) htb ?_
+            intro v hv
+            rcases List.mem_cons.mp hv with rfl | hv
+            · exact htu
+            · exact List.lt_trans (hub v hv) htu
+          next hc =>
+            have htu := expCmp_eq_lt_iff.mp hc
+            apply canonical_cons (hq.1 u (by simp)) (hq.2.2 u (by simp)) (ih hp hus)
+            apply merge_exps (fun e => e < u.1) fuel (t :: ts) us
+            · intro v hv
+              rcases List.mem_cons.mp hv with rfl | hv
+              · exact htu
+              · exact List.lt_trans (htb v hv) htu
+            · exact hub
+          next hc =>
+            have he : t.1 = u.1 := by
+              simpa [expCmp_eq_compare] using hc
+            split
+            · exact ih hts hus
+            next hz =>
+              apply canonical_cons (t := (t.1, t.2 + u.2))
+                (hp.1 t (by simp)) hz (ih hts hus)
+              refine merge_exps (fun e => e < t.1) fuel ts us htb ?_
+              simpa [he] using hub
+
+/-- Addition preserves canonical form. -/
+theorem add_canonical [Zero κ] [Add κ] [DecidableEq κ]
+    {n : Nat} {p q : PolyList κ}
+    (hp : Canonical n p) (hq : Canonical n q) : Canonical n (add p q) :=
+  merge_canonical _ hp hq
 
 /-- A coefficient map preserves the exponent of every surviving term. -/
 theorem exp_mem_mapCoeffs [Zero κ] [DecidableEq κ] (f : κ → κ)
@@ -455,6 +613,11 @@ theorem neg_canonical [Zero κ] [Neg κ] [DecidableEq κ]
     Canonical n (neg p) := by
   exact mapCoeffs_canonical Neg.neg hp
 
+/-- Subtraction preserves canonical form. -/
+theorem sub_canonical [Zero κ] [Add κ] [Neg κ] [DecidableEq κ]
+    {n : Nat} {p q : PolyList κ} (hp : Canonical n p) (hq : Canonical n q) :
+    Canonical n (sub p q) := add_canonical hp (neg_canonical hq)
+
 /-- Scalar multiplication preserves canonical form. -/
 theorem smul_canonical [Zero κ] [Mul κ] [DecidableEq κ]
     (a : κ) {n : Nat} {p : PolyList κ} (hp : Canonical n p) :
@@ -477,20 +640,53 @@ theorem mulTerm_canonical [Zero κ] [Add κ] [Mul κ] [DecidableEq κ]
           (List.pairwise_cons.mp hp.2.1).2,
           fun v hv => hp.2.2 v (List.mem_cons_of_mem _ hv)⟩
 
+private theorem sumRows_canonical [Zero κ] [Add κ] [DecidableEq κ]
+    {n : Nat} {ps : List (PolyList κ)} (h : ∀ p ∈ ps, Canonical n p) :
+    Canonical n (sumRows ps) := by
+  induction ps with
+  | nil => simp [sumRows, Canonical]
+  | cons p ps ih =>
+      exact add_canonical (h p (by simp)) (ih (fun q hq => h q (by simp [hq])))
+
+private theorem mergeRound_canonical [Zero κ] [Add κ] [DecidableEq κ]
+    {n : Nat} (ps : List (PolyList κ)) (h : ∀ p ∈ ps, Canonical n p) :
+    ∀ p ∈ mergeRound ps, Canonical n p := by
+  induction ps using mergeRound.induct with
+  | case1 => simp [mergeRound]
+  | case2 p => simpa [mergeRound] using h
+  | case3 p q ps ih =>
+      simp only [mergeRound, List.mem_cons, forall_eq_or_imp]
+      exact ⟨add_canonical (h p (by simp)) (h q (by simp)),
+        ih (fun r hr => h r (by simp [hr]))⟩
+
+/-- Balanced merging preserves canonical form. -/
+theorem mergeRows_canonical [Zero κ] [Add κ] [DecidableEq κ]
+    {n : Nat} (fuel : Nat) (ps : List (PolyList κ))
+    (h : ∀ p ∈ ps, Canonical n p) : Canonical n (mergeRows fuel ps) := by
+  induction fuel generalizing ps with
+  | zero =>
+      cases ps with
+      | nil => simp [mergeRows, Canonical]
+      | cons p ps =>
+        cases ps with
+        | nil => exact h p (by simp)
+        | cons q ps => exact sumRows_canonical h
+  | succ fuel ih =>
+      cases ps with
+      | nil => simp [mergeRows, Canonical]
+      | cons p ps =>
+        cases ps with
+        | nil => exact h p (by simp)
+        | cons q ps => exact ih _ (mergeRound_canonical _ h)
+
 /-- Multiplication preserves canonical form. -/
 theorem mul_canonical [Zero κ] [Add κ] [Mul κ] [DecidableEq κ]
     {n : Nat} {p q : PolyList κ}
     (hp : Canonical n p) (hq : Canonical n q) : Canonical n (mul p q) := by
-  induction p with
-  | nil => exact ⟨fun _ h => by contradiction, List.Pairwise.nil,
-      fun _ h => by contradiction⟩
-  | cons t ts ih =>
-      rw [mul]
-      apply add_canonical
-      · exact mulTerm_canonical (hp.1 t (List.mem_cons_self ..)) hq
-      · exact ih ⟨fun u hu => hp.1 u (List.mem_cons_of_mem _ hu),
-          (List.pairwise_cons.mp hp.2.1).2,
-          fun u hu => hp.2.2 u (List.mem_cons_of_mem _ hu)⟩
+  apply mergeRows_canonical
+  intro r hr
+  obtain ⟨t, ht, rfl⟩ := List.mem_map.mp hr
+  exact mulTerm_canonical (hp.1 t ht) hq
 
 /-- Boolean check for the canonical invariant. -/
 def isCanonical [Zero κ] [DecidableEq κ] (n : Nat) :
@@ -570,7 +766,8 @@ def toList {n : Nat} {κ : Type u} [Lean.Grind.Semiring κ] [BEq κ]
     {cmp : Mono n → Mono n → Ordering}
     [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
     (p : MvPoly n κ cmp) : PolyList κ :=
-  normalize (p.termsList.map fun t => (t.1.toList, t.2))
+  let ts := p.termsList.map fun t => (t.1.toList, t.2)
+  if isCanonical n ts.reverse then ts.reverse else normalize ts
 
 /-! # Denotation laws -/
 
@@ -652,17 +849,65 @@ theorem denote_normalize {n : Nat} {κ : Type u} [Lean.Grind.Semiring κ]
       rfl
 
 /-- List addition denotes reference addition. -/
+theorem denote_insertSum {n : Nat} {κ : Type u} [Lean.Grind.Semiring κ]
+    [BEq κ] [LawfulBEq κ] [DecidableEq κ]
+    {cmp : Mono n → Mono n → Ordering}
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] (p q : PolyList κ) :
+    denote (cmp := cmp) (insertSum p q) =
+      denote (cmp := cmp) p + denote (cmp := cmp) q := by
+  induction p with
+  | nil => exact (MvPoly.zero_add (denote q)).symm
+  | cons t ts ih =>
+      rw [insertSum, denote_insert, ih, denote]
+      exact (MvPoly.add_assoc _ _ _).symm
+
+/-- A merge has the denotation of the sum, for any fuel and any input. -/
+theorem denote_merge {n : Nat} {κ : Type u} [Lean.Grind.Semiring κ]
+    [BEq κ] [LawfulBEq κ] [DecidableEq κ]
+    {cmp : Mono n → Mono n → Ordering}
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] (fuel : Nat) (p q : PolyList κ) :
+    denote (cmp := cmp) (merge fuel p q) =
+      denote (cmp := cmp) p + denote (cmp := cmp) q := by
+  induction fuel generalizing p q with
+  | zero =>
+      cases p <;> cases q
+      · exact (MvPoly.zero_add _).symm
+      · exact (MvPoly.zero_add _).symm
+      · exact (MvPoly.add_zero _).symm
+      · exact denote_insertSum _ _
+  | succ fuel ih =>
+      cases p with
+      | nil => exact (MvPoly.zero_add _).symm
+      | cons t ts =>
+        cases q with
+        | nil => exact (MvPoly.add_zero _).symm
+        | cons u us =>
+          simp only [merge]
+          split
+          · simp only [denote, ih, MvPoly.add_assoc]
+          · simp only [denote, ih]
+            grind only [MvPoly.add_comm, MvPoly.add_assoc]
+          next hc =>
+            have he : t.1 = u.1 := by simpa [expCmp_eq_compare] using hc
+            split
+            next hz =>
+              simp only [ih, denote]
+              have hm := monomial_add (cmp := cmp) (mono n t.1) t.2 u.2
+              rw [hz, monomial_zero] at hm
+              simp only [← he]
+              grind only [MvPoly.add_comm, MvPoly.add_assoc, MvPoly.zero_add]
+            · simp only [denote, ih, monomial_add]
+              simp only [← he]
+              grind only [MvPoly.add_comm, MvPoly.add_assoc]
+
+/-- List addition denotes reference addition. -/
 theorem denote_add {n : Nat} {κ : Type u} [Lean.Grind.Semiring κ]
     [BEq κ] [LawfulBEq κ] [DecidableEq κ]
     {cmp : Mono n → Mono n → Ordering}
     [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] (p q : PolyList κ) :
     denote (cmp := cmp) (add p q) =
-      denote (cmp := cmp) p + denote (cmp := cmp) q := by
-  induction p with
-  | nil => exact (MvPoly.zero_add (denote q)).symm
-  | cons t ts ih =>
-      rw [add, denote_insert, ih, denote]
-      exact (MvPoly.add_assoc _ _ _).symm
+      denote (cmp := cmp) p + denote (cmp := cmp) q :=
+  denote_merge _ p q
 
 /-- List negation denotes reference negation. -/
 theorem denote_neg {n : Nat} {κ : Type u} [Lean.Grind.CommRing κ]
@@ -684,6 +929,14 @@ theorem denote_neg {n : Nat} {κ : Type u} [Lean.Grind.CommRing κ]
       all_goals by_cases hm : m = mono n t.1 <;>
         simp [hm, Lean.Grind.AddCommMonoid.zero_add] at * <;>
         grind
+
+/-- List subtraction denotes reference subtraction. -/
+theorem denote_sub {n : Nat} {κ : Type u} [Lean.Grind.CommRing κ]
+    [BEq κ] [LawfulBEq κ] [DecidableEq κ]
+    {cmp : Mono n → Mono n → Ordering}
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] (p q : PolyList κ) :
+    denote (cmp := cmp) (sub p q) = denote (cmp := cmp) p - denote (cmp := cmp) q := by
+  rw [sub, denote_add, denote_neg, MvPoly.sub_eq_add_neg]
 
 /-- List scalar multiplication denotes multiplication by a constant. -/
 theorem denote_smul {n : Nat} {κ : Type u} [Lean.Grind.Semiring κ]
@@ -728,6 +981,32 @@ theorem get_mono (n : Nat) (e : List Nat) (i : Fin n) :
     (mono n e)[i] = e.getD i.val 0 := by
   change (Hex.Vector.ofFn' fun j : Fin n => e.getD j.val 0)[i.val] = _
   rw [Hex.Vector.getElem_ofFn' _ i.val i.isLt]
+
+/-- The zero exponent denotes the reference constant monomial. -/
+theorem mono_zeroExp (n : Nat) : mono n (zeroExp n) = Mono.zero := by
+  have hzero (n i : Nat) : (zeroExp n).getD i 0 = 0 := by
+    induction n generalizing i with
+    | zero => simp [zeroExp]
+    | succ n ih =>
+        cases i with
+        | zero => rfl
+        | succ i => exact ih i
+  apply Vector.ext
+  intro i hi
+  change (mono n (zeroExp n))[(⟨i, hi⟩ : Fin n)] = _
+  rw [get_mono, hzero]
+  simp [Mono.zero]
+
+/-- The list multiplicative identity denotes the reference identity. -/
+theorem denote_one {n : Nat} {κ : Type u} [Lean.Grind.Semiring κ]
+    [BEq κ] [LawfulBEq κ] [DecidableEq κ]
+    {cmp : Mono n → Mono n → Ordering}
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] :
+    denote (cmp := cmp) (one (κ := κ) n) = 1 := by
+  unfold one
+  split <;> apply MvPoly.ext <;> intro m
+  all_goals simp_all [denote, MvPoly.coeff_add, MvPoly.coeff_monomial,
+    MvPoly.coeff_one, mono_zeroExp, Lean.Grind.AddCommMonoid.add_zero]
 
 /-- A pointwise sum has the pointwise sum of `getD` values when both lists
 have the declared arity. -/
@@ -777,6 +1056,42 @@ theorem denote_mulTerm {n : Nat} {κ : Type u} [Lean.Grind.Semiring κ]
         MvPoly.mul_add, MvPoly.monomial_mul_monomial,
         mono_addExp ht (hp u (List.mem_cons_self ..))]
 
+private theorem denote_mergeRound {n : Nat} {κ : Type u} [Lean.Grind.Semiring κ]
+    [BEq κ] [LawfulBEq κ] [DecidableEq κ]
+    {cmp : Mono n → Mono n → Ordering}
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] (ps : List (PolyList κ)) :
+    denote (cmp := cmp) (sumRows (mergeRound ps)) = denote (cmp := cmp) (sumRows ps) := by
+  induction ps using mergeRound.induct with
+  | case1 => rfl
+  | case2 p => rfl
+  | case3 p q ps ih =>
+      simp only [mergeRound, sumRows, denote_add] at ih ⊢
+      rw [ih, MvPoly.add_assoc]
+
+/-- Balanced merging denotes the sum of its rows, independently of fuel. -/
+theorem denote_mergeRows {n : Nat} {κ : Type u} [Lean.Grind.Semiring κ]
+    [BEq κ] [LawfulBEq κ] [DecidableEq κ]
+    {cmp : Mono n → Mono n → Ordering}
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] (fuel : Nat) (ps : List (PolyList κ)) :
+    denote (cmp := cmp) (mergeRows fuel ps) = denote (cmp := cmp) (sumRows ps) := by
+  induction fuel generalizing ps with
+  | zero =>
+      cases ps with
+      | nil => rfl
+      | cons p ps =>
+        cases ps with
+        | nil => simp [mergeRows, sumRows, denote_add, denote, MvPoly.add_zero]
+        | cons q ps => rfl
+  | succ fuel ih =>
+      cases ps with
+      | nil => rfl
+      | cons p ps =>
+        cases ps with
+        | nil => simp [mergeRows, sumRows, denote_add, denote, MvPoly.add_zero]
+        | cons q ps =>
+            change denote (mergeRows fuel (mergeRound (p :: q :: ps))) = _
+            rw [ih, denote_mergeRound]
+
 /-- List multiplication denotes reference multiplication. -/
 theorem denote_mul {n : Nat} {κ : Type u} [Lean.Grind.Semiring κ]
     [BEq κ] [LawfulBEq κ] [DecidableEq κ]
@@ -785,12 +1100,14 @@ theorem denote_mul {n : Nat} {κ : Type u} [Lean.Grind.Semiring κ]
     (hp : ∀ t ∈ p, t.1.length = n) (hq : ∀ t ∈ q, t.1.length = n) :
     denote (cmp := cmp) (mul p q) =
       denote (cmp := cmp) p * denote (cmp := cmp) q := by
+  unfold mul
+  rw [denote_mergeRows]
   induction p with
   | nil =>
-      simp only [mul, denote]
+      simp only [List.map_nil, sumRows, denote]
       exact (MvPoly.zero_mul _).symm
   | cons t ts ih =>
-      rw [mul, denote_add, denote_mulTerm t q
+      rw [List.map_cons, sumRows, denote_add, denote_mulTerm t q
         (hp t (List.mem_cons_self ..)) hq,
         ih (fun u hu => hp u (List.mem_cons_of_mem _ hu)), denote,
         MvPoly.add_mul]
@@ -837,10 +1154,33 @@ theorem toList_canonical {n : Nat} {κ : Type u} [Lean.Grind.Semiring κ]
     [BEq κ] [LawfulBEq κ] [DecidableEq κ]
     {cmp : Mono n → Mono n → Ordering} [Std.TransCmp cmp]
     [Std.LawfulEqCmp cmp] (p : MvPoly n κ cmp) : Canonical n (toList p) := by
-  apply normalize_canonical
-  intro t ht
-  rcases List.mem_map.mp ht with ⟨u, hu, rfl⟩
-  simp
+  simp only [toList]
+  split
+  next h => exact isCanonical_iff.mp h
+  next h =>
+    apply normalize_canonical
+    intro t ht
+    rcases List.mem_map.mp ht with ⟨u, hu, rfl⟩
+    simp
+
+private theorem denote_append {n : Nat} {κ : Type u} [Lean.Grind.Semiring κ]
+    [BEq κ] [LawfulBEq κ] [DecidableEq κ]
+    {cmp : Mono n → Mono n → Ordering} [Std.TransCmp cmp]
+    [Std.LawfulEqCmp cmp] (p q : PolyList κ) :
+    denote (cmp := cmp) (p ++ q) = denote (cmp := cmp) p + denote (cmp := cmp) q := by
+  induction p with
+  | nil => simp [denote, MvPoly.zero_add]
+  | cons t ts ih => simp [denote, ih, MvPoly.add_assoc]
+
+private theorem denote_reverse {n : Nat} {κ : Type u} [Lean.Grind.Semiring κ]
+    [BEq κ] [LawfulBEq κ] [DecidableEq κ]
+    {cmp : Mono n → Mono n → Ordering} [Std.TransCmp cmp]
+    [Std.LawfulEqCmp cmp] (p : PolyList κ) :
+    denote (cmp := cmp) p.reverse = denote (cmp := cmp) p := by
+  induction p with
+  | nil => rfl
+  | cons t ts ih =>
+      simp [List.reverse_cons, denote_append, ih, denote, MvPoly.zero_add, MvPoly.add_comm]
 
 /-- Producer conversion round-trips through denotation. -/
 theorem denote_toList {n : Nat} {κ : Type u} [Lean.Grind.Semiring κ]
@@ -848,7 +1188,13 @@ theorem denote_toList {n : Nat} {κ : Type u} [Lean.Grind.Semiring κ]
     {cmp : Mono n → Mono n → Ordering} [Std.TransCmp cmp]
     [Std.LawfulEqCmp cmp] (p : MvPoly n κ cmp) :
     denote (cmp := cmp) (toList p) = p := by
-  rw [toList, denote_normalize, denote_eq_ofTerms]
+  have hden : denote (cmp := cmp) (toList p) =
+      denote (p.termsList.map fun t => (t.1.toList, t.2)) := by
+    simp only [toList]
+    split
+    · exact denote_reverse _
+    · exact denote_normalize _
+  rw [hden, denote_eq_ofTerms]
   have hmap :
       (p.termsList.map fun t => (mono n t.1.toList, t.2)) = p.termsList := by
     simp [mono_toList]
@@ -859,6 +1205,23 @@ theorem denote_toList {n : Nat} {κ : Type u} [Lean.Grind.Semiring κ]
   apply MvPoly.ext
   intro m
   rw [MvPoly.coeff_ofTerms, MvPoly.coeff_terms]
+
+/-- Producer conversion for nested polynomial lists. A matrix consumer
+passes `rowLists P`; no matrix dependency is needed in this library. -/
+def toRows {n : Nat} {κ : Type u} [Lean.Grind.Semiring κ]
+    [BEq κ] [LawfulBEq κ] [DecidableEq κ]
+    {cmp : Mono n → Mono n → Ordering} [Std.TransCmp cmp]
+    [Std.LawfulEqCmp cmp] (rows : List (List (MvPoly n κ cmp))) :
+    List (List (PolyList κ)) := rows.map (List.map toList)
+
+/-- Entrywise denotation identifies quoted rows with the original rows.
+In particular, instantiate `rows` with `rowLists P` for a reference matrix. -/
+theorem denote_toRows {n : Nat} {κ : Type u} [Lean.Grind.Semiring κ]
+    [BEq κ] [LawfulBEq κ] [DecidableEq κ]
+    {cmp : Mono n → Mono n → Ordering} [Std.TransCmp cmp]
+    [Std.LawfulEqCmp cmp] (rows : List (List (MvPoly n κ cmp))) :
+    (toRows rows).map (List.map (denote (cmp := cmp))) = rows := by
+  simp [toRows, List.map_map, Function.comp_def, denote_toList]
 
 /-! # Evaluation -/
 

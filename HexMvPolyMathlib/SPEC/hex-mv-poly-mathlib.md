@@ -57,7 +57,8 @@ noncomputable def Kernel.denote (p : Hex.MvPoly.Kernel.PolyList R) :
   equiv (Hex.MvPoly.Kernel.denote p)
 ```
 
-It preserves list addition, multiplication, negation, and scalar
+It preserves the list multiplicative identity, addition, subtraction,
+multiplication, negation, and scalar
 multiplication by a constant. Consequently the canonical zero and equality
 theorems proved in `hex-mv-poly` transport to the exact `MvPolynomial`
 statements used by symbolic `rank`, `det`, and `rank_locus` consumers. The

@@ -265,6 +265,21 @@ example : Kernel.evalAt [2, 3] listQ = 11 / 2 := by
 example : Kernel.isCanonical 2 listQ = true := by
   decide +kernel
 
+example : Kernel.beq (Kernel.mul listQ listQ)
+    [([2, 0], 1), ([1, 1], 2), ([1, 0], 1),
+     ([0, 2], 1), ([0, 1], 1), ([0, 0], 1 / 4)] = true := by
+  decide +kernel
+
+example : Kernel.beq (Kernel.smul (1 / 3) listQ)
+    [([1, 0], 1 / 3), ([0, 1], 1 / 3), ([0, 0], 1 / 6)] = true := by
+  decide +kernel
+
+example : Kernel.isZero (Kernel.sub listQ listQ) = true := by
+  decide +kernel
+
+example : Kernel.beq (Kernel.add listQ (Kernel.neg listQ)) [] = true := by
+  decide +kernel
+
 /-- Dot product over canonical polynomial lists. -/
 @[expose] def listDot : List PL → List PL → PL
   | a :: as, b :: bs => Kernel.add (Kernel.mul a b) (listDot as bs)
@@ -294,15 +309,52 @@ example : Kernel.isCanonical 2 listQ = true := by
 @[expose] def listDiag4 (a : PL) : List (List PL) :=
   [[a, [], [], []], [[], a, [], []], [[], [], a, []], [[], [], [], a]]
 
-@[expose] def listP3 : PL := Kernel.mul listP (Kernel.mul listP listP)
-@[expose] def listP4 : PL := Kernel.mul listP listP3
+/- The tridiagonal matrix has diagonal p = x + y + 1 and off-diagonal 1.
+Its adjugate and determinant are independent coefficient literals, so replay
+checks real cross-term cancellation rather than repeating an expression. -/
+@[expose] def listTri4 : List (List PL) :=
+  [[listP, [([0, 0], 1)], [], []],
+   [[([0, 0], 1)], listP, [([0, 0], 1)], []],
+   [[], [([0, 0], 1)], listP, [([0, 0], 1)]],
+   [[], [], [([0, 0], 1)], listP]]
+
+@[expose] def listAdj4 : List (List PL) :=
+  let a : PL :=
+    [([3, 0], 1), ([2, 1], 3), ([2, 0], 3), ([1, 2], 3), ([1, 1], 6),
+     ([1, 0], 1), ([0, 3], 1), ([0, 2], 3), ([0, 1], 1), ([0, 0], -1)]
+  let b : PL :=
+    [([2, 0], -1), ([1, 1], -2), ([1, 0], -2), ([0, 2], -1), ([0, 1], -2)]
+  let c : PL :=
+    [([3, 0], 1), ([2, 1], 3), ([2, 0], 3), ([1, 2], 3), ([1, 1], 6),
+     ([1, 0], 2), ([0, 3], 1), ([0, 2], 3), ([0, 1], 2)]
+  let d : PL :=
+    [([2, 0], -1), ([1, 1], -2), ([1, 0], -2),
+     ([0, 2], -1), ([0, 1], -2), ([0, 0], -1)]
+  let p : PL := [([1, 0], 1), ([0, 1], 1), ([0, 0], 1)]
+  let m : PL := [([0, 0], -1)]
+  [[a, b, p, m], [b, c, d, p], [p, d, c, b], [m, p, b, a]]
+
+@[expose] def listDet4 : PL :=
+  [([4, 0], 1), ([3, 1], 4), ([3, 0], 4), ([2, 2], 6), ([2, 1], 12),
+   ([2, 0], 3), ([1, 3], 4), ([1, 2], 12), ([1, 1], 6), ([1, 0], -2),
+   ([0, 4], 1), ([0, 3], 4), ([0, 2], 3), ([0, 1], -2), ([0, 0], -1)]
+
+example : listAdj4.all (fun row => row.all (Kernel.isCanonical 2)) = true := by
+  decide +kernel
 
 set_option trace.profiler true in
-/-- A `4 × 4` diagonal adjugate identity. Its proof term evaluates only
+/-- A `4 × 4` tridiagonal adjugate identity. Its proof term evaluates only
 `List`, `Nat`, and `Int` primitives on the certificate path. -/
 theorem list_certificate_4x4 :
-    listMatrixBeq (listMatMul 4 (listDiag4 listP) (listDiag4 listP3))
-      (listDiag4 listP4) = true := by
+    listMatrixBeq (listMatMul 4 listTri4 listAdj4) (listDiag4 listDet4) = true := by
+  decide +kernel
+
+example : listMatrixBeq (listMatMul 4 listAdj4 listTri4) (listDiag4 listDet4) = true := by
+  decide +kernel
+
+-- A corrupted certificate must be rejected.
+example : listMatrixBeq (listMatMul 4 listTri4 listAdj4)
+    (listDiag4 (Kernel.add listDet4 (Kernel.one 2))) = false := by
   decide +kernel
 
 example : Kernel.Canonical 2 listP := by
