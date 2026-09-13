@@ -176,6 +176,12 @@ private meta def extensionStub : Tactic := fun _ => do
 attribute [local tactic HexHermiteMathlib.Tactic.hermiteTac] extensionStub
 attribute [local tactic HexHermiteMathlib.Tactic.hermiteTac] HexHermiteMathlib.Tactic.evalHermite
 
+run_cmd do
+  let handlers := (tacticElabAttribute.getEntries (← getEnv) ``HexHermiteMathlib.Tactic.hermiteTac).map (·.declName)
+  unless handlers == [``HexHermiteMathlib.Tactic.evalHermite, ``extensionStub,
+      ``HexHermiteMathlib.Tactic.evalHermite, ``HexHermiteMathlib.Tactic.hermiteFallback] do
+    throwError "unexpected delegation handler order: {handlers}"
+
 /-- info: structural extension -/
 #guard_msgs in
 example (h : True) : True := by hermite
@@ -203,3 +209,17 @@ attribute [local term_elab HexHermiteMathlib.Tactic.hermiteTerm] HexHermiteMathl
 example : (hermite% (2 : ℕ)) = 2 := rfl
 
 end TermDelegation
+
+section ExtensionErrors
+
+@[no_fallback]
+private meta def extensionDecline : Tactic := fun _ =>
+  throwError "hermite: test capability decline"
+
+attribute [local tactic HexHermiteMathlib.Tactic.hermiteTac] extensionDecline
+
+/-- error: hermite: test capability decline -/
+#guard_msgs in
+example : True := by hermite
+
+end ExtensionErrors

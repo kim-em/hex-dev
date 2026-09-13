@@ -1050,7 +1050,7 @@ def build_shared_host_pair(
             measurement_cpu=measurement_cpu,
             monitored_cpus=monitored_cpus,
             sample_observer=sample_observer,
-            **({"retain_compiler_output": True} if retain_compiler_output else {}),
+            retain_compiler_output=retain_compiler_output,
         )
         if cpu_affinity() != [measurement_cpu]:
             raise RuntimeError("shared-host CPU affinity changed during the sweep")
@@ -1914,7 +1914,7 @@ def run_cli(
                     monitored_cpus,
                     sibling_cpus,
                     sample_observer,
-                    **({"retain_compiler_output": True} if spec.retain_compiler_output else {}),
+                    retain_compiler_output=spec.retain_compiler_output,
                 )
                 rows[pair.name].append(row)
             else:
@@ -1932,7 +1932,7 @@ def run_cli(
                         measurement_cpu=None,
                         monitored_cpus=monitored_cpus,
                         sample_observer=sample_observer,
-                        **({"retain_compiler_output": True} if spec.retain_compiler_output else {}),
+                        retain_compiler_output=spec.retain_compiler_output,
                     )
                     validate_axioms(pair.name, role, module, sample)
                     built[role] = sample

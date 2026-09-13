@@ -139,6 +139,12 @@ private meta def extensionStub : Tactic := fun _ => do
 attribute [local tactic HexMinPolyMathlib.Tactic.minPolyTac] extensionStub
 attribute [local tactic HexMinPolyMathlib.Tactic.minPolyTac] HexMinPolyMathlib.Tactic.evalMinPoly
 
+run_cmd do
+  let handlers := (tacticElabAttribute.getEntries (← getEnv) ``HexMinPolyMathlib.Tactic.minPolyTac).map (·.declName)
+  unless handlers == [``HexMinPolyMathlib.Tactic.evalMinPoly, ``extensionStub,
+      ``HexMinPolyMathlib.Tactic.evalMinPoly, ``HexMinPolyMathlib.Tactic.minpolyFallback] do
+    throwError "unexpected delegation handler order: {handlers}"
+
 /-- info: structural extension -/
 #guard_msgs in
 example (h : True) : True := by min_poly
@@ -180,3 +186,23 @@ attribute [local term_elab HexMinPolyMathlib.Tactic.minPolyTerm] HexMinPolyMathl
 example : (min_poly% (2 : ℕ)) = 2 := rfl
 
 end TermDelegation
+
+section ExtensionErrors
+
+@[no_fallback]
+private meta def extensionDecline : Tactic := fun _ =>
+  throwError "min_poly: test capability decline"
+
+attribute [local tactic HexMinPolyMathlib.Tactic.minPolyTac] extensionDecline
+
+/-- error: min_poly: test capability decline -/
+#guard_msgs in
+example : True := by min_poly
+
+end ExtensionErrors
+
+-- The LCM fold still sees the same polynomial sequence; only basis indices change.
+example : Hex.Matrix.checkMinPolyList 3 [[2, 0, 0], [0, 2, 0], [0, 0, 3]]
+    { repeatedOrders with order :=
+      [repeatedOrders.order[1]!, repeatedOrders.order[0]!, repeatedOrders.order[2]!] } = false := by
+  decide +kernel

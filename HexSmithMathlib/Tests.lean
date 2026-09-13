@@ -155,6 +155,12 @@ private meta def extensionStub : Tactic := fun _ => do
 attribute [local tactic HexSmithMathlib.Tactic.smithTac] extensionStub
 attribute [local tactic HexSmithMathlib.Tactic.smithTac] HexSmithMathlib.Tactic.evalSmith
 
+run_cmd do
+  let handlers := (tacticElabAttribute.getEntries (← getEnv) ``HexSmithMathlib.Tactic.smithTac).map (·.declName)
+  unless handlers == [``HexSmithMathlib.Tactic.evalSmith, ``extensionStub,
+      ``HexSmithMathlib.Tactic.evalSmith, ``HexSmithMathlib.Tactic.smithFallback] do
+    throwError "unexpected delegation handler order: {handlers}"
+
 /-- info: structural extension -/
 #guard_msgs in
 example (h : True) : True := by smith
@@ -179,3 +185,17 @@ attribute [local term_elab HexSmithMathlib.Tactic.smithTerm] HexSmithMathlib.Tac
 example : (smith% (2 : ℕ)) = 2 := rfl
 
 end TermDelegation
+
+section ExtensionErrors
+
+@[no_fallback]
+private meta def extensionDecline : Tactic := fun _ =>
+  throwError "smith: test capability decline"
+
+attribute [local tactic HexSmithMathlib.Tactic.smithTac] extensionDecline
+
+/-- error: smith: test capability decline -/
+#guard_msgs in
+example : True := by smith
+
+end ExtensionErrors

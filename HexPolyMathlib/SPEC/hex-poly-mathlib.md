@@ -37,7 +37,9 @@ equivalence and the field codecs requested against
 The initial carrier is `ℚ`; prime residues are a later codec extension.
 `HexPolyMathlib.Literal.recognize` implements this adapter in `Literal.lean`,
 returning ascending rational coefficients and an identification with
-`polynomialOfList`. `LiteralData.lean` supplies the compiled rational coefficient operations.
+`polynomialOfList`. `LiteralData.lean` supplies the compiled rational coefficient operations and
+public correspondence lemmas identifying them with Mathlib polynomial operations.
+The frontend uses the integer-block proof path below.
 `ScaledLiteral.lean` proves that shared integer coefficient blocks agree with
 Mathlib polynomial operations. The identification proof uses those blocks and
 integer cross products; coefficient addition, multiplication and powers do not
