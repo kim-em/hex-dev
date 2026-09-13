@@ -269,7 +269,7 @@ Following `HexRankMathlib/Kernel.lean` and `Tactic.lean`, keep decoding and
 transport in proved lemmas, use the shared literal identification, and check
 all certificate propositions in one synchronous auxiliary theorem. Construct
 the basis/term record from that theorem; do not pass a `Basis` type itself
-to `mkAuxTheorem`. There is no preliminary kernel evaluation of the check.
+to `HexMatrixMathlib.Literal.addClosedProof`. There is no preliminary kernel evaluation of the check.
 
 Use the shared four outcomes: other operations/carriers are `notApplicable`,
 in-fragment capability/budget limits are `declined`, accepted proofs are

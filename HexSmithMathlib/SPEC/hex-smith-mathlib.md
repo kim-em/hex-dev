@@ -244,7 +244,7 @@ Run compiled `snfData` once (the data-producing counterpart of `snf`), form
 `Tactic.lean`, separate list-to-Mathlib soundness, literal identification,
 and frontend assembly. All proof fields use one synchronous auxiliary
 theorem certifying the witness; build the equivalence as data from those
-fields, since `mkAuxTheorem` certifies propositions, not a linear equivalence
+fields, since `HexMatrixMathlib.Literal.addClosedProof` certifies propositions, not a linear equivalence
 itself. Do not kernel pre-check and then check again.
 
 Different operations/carriers are `notApplicable`; an in-fragment missing

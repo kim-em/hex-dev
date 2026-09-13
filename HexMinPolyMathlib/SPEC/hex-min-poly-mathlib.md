@@ -223,7 +223,7 @@ output to the list witness, and re-check it with the compiled list checker
 before quotation. This preserves the roles of `rankWitness`, the literal
 identification, and `rank_eq_of_checkList'` in the rank implementation.
 Build the Boolean proof by kernel reduction and emit the complete goal proof
-as one synchronous `mkAuxTheorem`, with no elaborator kernel pre-check.
+as one synchronous `HexMatrixMathlib.Literal.addClosedProof`, with no elaborator kernel pre-check.
 `!![…]` uses definitional identification; other supported literal routes
 use the shared adapter's single identification proof.
 

@@ -66,7 +66,7 @@ def checkProofs (proofs : Array Expr) : MetaM (Array Expr) := do
   for p in proofs.toList.dropLast.reverse do
     combined ← mkAppM ``And.intro #[p, combined]
   let mut checked ← try
-      withOptions (Lean.Elab.async.set · false) do mkAuxTheorem (← inferType combined) combined
+      addClosedProof (← inferType combined) combined
     catch e => throwError "hermite: failure: the kernel rejected the certificate: {e.toMessageData}"
   let mut result := #[]
   for _ in [:proofs.size - 1] do

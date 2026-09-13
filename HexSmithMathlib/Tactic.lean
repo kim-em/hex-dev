@@ -89,7 +89,7 @@ def checked (A : Expr) (c : Certificate) (targetFactors? : Option (Expr × Vecto
       let hd ← vectorIdentification lit d (toExpr c.witness.diag)
       pure (← mkAppM ``And.intro #[pair, hd], some d)
   let proof ← if freeze then
-      try withOptions (Lean.Elab.async.set · false) do mkAuxTheorem (← inferType proof) proof
+      try addClosedProof (← inferType proof) proof
       catch e => throwError "smith: failure: the kernel rejected the certificate: {e.toMessageData}"
     else pure proof
   match factors? with
@@ -142,7 +142,7 @@ def prove (target : Expr) : MetaM (Outcome Expr) := do
   if wrapped then
     let proof ← mkAppM ``Nonempty.intro #[e]
     let proof ← try
-        withOptions (Lean.Elab.async.set · false) do mkAuxTheorem (← inferType proof) proof
+        addClosedProof (← inferType proof) proof
       catch e => throwError "smith: failure: the kernel rejected the certificate: {e.toMessageData}"
     return .success proof
   return .success e

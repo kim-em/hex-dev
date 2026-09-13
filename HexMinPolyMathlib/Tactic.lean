@@ -73,7 +73,7 @@ def certify (A : Expr) : MetaM (Outcome Certificate) := do
 
 /-- Quote the complete proof and let the kernel check it once. -/
 def checked (proof : Expr) : MetaM Expr := do
-  try withOptions (Lean.Elab.async.set · false) do mkAuxTheorem (← inferType proof) proof
+  try addClosedProof (← inferType proof) proof
   catch e => throwError "min_poly: failure: the kernel rejected the certificate: {e.toMessageData}"
 
 def valueProof (A : Expr) (c : Certificate) : MetaM Expr := do
