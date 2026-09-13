@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import dataclasses
+from contextlib import ExitStack
 import io
 import json
 import os
@@ -1635,6 +1636,40 @@ class HarnessValidationTests(unittest.TestCase):
             ):
                 with self.assertRaisesRegex(RuntimeError, "reaches measured probe"):
                     sweep.validate_spec(spec)
+
+
+class SampleRetentionTests(unittest.TestCase):
+    def setup_capture(self, stack):
+        for name in ("remove_module_outputs", "host_state", "sampled_host_state",
+                     "cpu_ticks", "frequency_residency"):
+            stack.enter_context(mock.patch.object(sweep, name, return_value={}))
+        stack.enter_context(mock.patch.object(sweep, "runner_cpu_seconds", return_value=0.0))
+        events = []
+        return events, lambda module, sample: events.append((module, sample))
+
+    def test_timeout_observer_retains_partial_compiler_output(self):
+        with ExitStack() as stack:
+            events, observer = self.setup_capture(stack)
+            stack.enter_context(mock.patch.object(sweep, "run_timed", side_effect=
+                subprocess.TimeoutExpired(["lake"], 60, output=b"partial certificate trace")))
+            with self.assertRaisesRegex(RuntimeError, "timed out"):
+                sweep.build_sample("Probe.Slow", 60, sample_observer=observer)
+        self.assertEqual(events[0][0], "Probe.Slow")
+        self.assertEqual(events[0][1]["state"], "timeout")
+        self.assertEqual(events[0][1]["compiler_output"], "partial certificate trace")
+
+    def test_failed_build_observer_retains_elapsed_time_and_diagnostics(self):
+        with ExitStack() as stack:
+            events, observer = self.setup_capture(stack)
+            stack.enter_context(mock.patch.object(sweep, "run_timed", return_value=(
+                subprocess.CompletedProcess(["lake"], 1, stdout="certificate data", stderr="error"),
+                123456, {"peak_rss_kb": 42})))
+            stack.enter_context(mock.patch.object(sys, "stderr", io.StringIO()))
+            with self.assertRaisesRegex(RuntimeError, "probe failed"):
+                sweep.build_sample("Probe.Broken", 60, sample_observer=observer)
+        self.assertEqual(events[0][1]["wall_nanos"], 123456)
+        self.assertEqual(events[0][1]["compiler_output"], "certificate dataerror")
+        self.assertEqual(events[0][1]["peak_rss_kb"], 42)
 
 
 if __name__ == "__main__":

@@ -106,6 +106,18 @@ theorem eq_ofLists_of_entriesEq {α : Type*} [Zero α] [DecidableEq α] (n m : N
   have h := List.all_eq_true.mp h j (List.mem_finRange j)
   exact of_decide_eq_true h
 
+/-- Compare a closed vector with the list used by a certificate. -/
+@[expose] def vectorEntriesEq {α : Type*} [Zero α] [DecidableEq α] (n : Nat)
+    (v : Fin n → α) (xs : List α) : Bool :=
+  (List.finRange n).all fun i => decide (v i = vecOfList n xs i)
+
+/-- The entrywise identification route for closed vector functions. -/
+theorem eq_vecOfList_of_entriesEq {α : Type*} [Zero α] [DecidableEq α] (n : Nat)
+    (v : Fin n → α) (xs : List α) (h : vectorEntriesEq n v xs = true) :
+    v = vecOfList n xs := by
+  funext i
+  exact of_decide_eq_true (List.all_eq_true.mp h i (List.mem_finRange i))
+
 /-! # Certified values -/
 
 /-- The record returned by the result-producing term forms (`det% A`): the
@@ -137,6 +149,24 @@ namespace HexMatrixMathlib.Literal
 declare_config_elab elabKernelConfig KernelConfig
 
 open Lean Meta Elab
+
+initialize registerTraceClass `HexMatrix.certificate
+
+/-- Bit length of a signed certificate scalar, excluding its sign. -/
+def integerBits (z : Int) : Nat := if z == 0 then 0 else z.natAbs.log2 + 1
+
+/-- Optional certificate measurements for the external proof-probe runner.
+No clock is read here; kernel time comes from Lean's external profiler. -/
+def reportCertificate (tactic : String) (serialized : String) (integers : List Int)
+    (denominators : List Nat := []) (extra : List (String × Json) := []) : MetaM Unit := do
+  let payload := Json.mkObj (
+    [("tactic", toJson tactic), ("integer_entries", toJson integers.length),
+      ("denominator_entries", toJson denominators.length),
+      ("serialized_bytes", toJson serialized.utf8ByteSize),
+      ("max_numerator_bits", toJson (integers.foldl (fun b z => max b (integerBits z)) 0)),
+      ("max_denominator_bits", toJson (denominators.foldl
+        (fun b d => max b (if d == 0 then 0 else d.log2 + 1)) 0))] ++ extra)
+  trace[HexMatrix.certificate] "{payload.compress}"
 
 /-- How a recognized literal is identified with its row list. -/
 inductive Route where
@@ -299,10 +329,10 @@ def identification (lit : Recognized) (A L : Expr) : MetaM Expr := do
       mkAppM ``HexMatrixMathlib.eq_ofLists_of_entriesEq
         #[mkNatLit lit.n, mkNatLit lit.m, A, L, ← decideProof check]
 
-/-- Elaborate a matrix argument of a term form.  The `!![…]` notations are
-given an integer entry expectation so their numerals do not default to
-`Nat`. -/
-def elabArgument (t : Syntax) : Term.TermElabM Expr := do
+/-- Elaborate a matrix argument with the frontend's carrier expectation.
+Integer frontends use the default; field frontends supply their field so
+unannotated numerals and fractions elaborate in that carrier. -/
+def elabArgument (t : Syntax) (carrier : Expr := mkConst ``Int) : Term.TermElabM Expr := do
   let e ←
     if t.getKind == ``Matrix.matrixNotation ||
         t.getKind == ``Matrix.matrixNotationRx0 ||
@@ -311,11 +341,55 @@ def elabArgument (t : Syntax) : Term.TermElabM Expr := do
       let m ← mkFreshExprMVar (mkConst ``Nat)
       let fin (k : Expr) := mkApp (mkConst ``Fin) k
       let expected := mkApp3 (mkConst ``Matrix [Level.zero, Level.zero, Level.zero])
-        (fin n) (fin m) (mkConst ``Int)
+        (fin n) (fin m) carrier
       Term.elabTerm t (some expected)
     else
       Term.elabTerm t none
   Term.synthesizeSyntheticMVarsNoPostponing
   instantiateMVars e
+
+/-- A closed vector literal, including a stated invariant-factor function. -/
+structure VectorLiteral where
+  size : Nat
+  carrier : Expr
+  entries : Array Expr
+  route : Route
+
+/-- Recognize vector notation or a closed lambda behind bounded unfolding. -/
+partial def matchVector? (n : Nat) (carrier v : Expr)
+    (budget : Nat := unfoldBudget) : MetaM (Option VectorLiteral) := do
+  if v.hasFVar || v.hasMVar then return none
+  let (entries, _, tail) ← Matrix.matchVecConsPrefix (mkNatLit n) v
+  if entries.length == n && tail.getAppFn.isConstOf ``Matrix.vecEmpty then
+    return some ⟨n, carrier, entries.toArray, .chain⟩
+  if v.isLambda then
+    let entries ← (List.range n).toArray.mapM fun i => do
+      return (mkApp v (← finLit n i)).headBeta
+    return some ⟨n, carrier, entries, .entrywise⟩
+  if budget == 0 then return none
+  match ← unfoldDefinition? v with
+  | some v' => matchVector? n carrier v' (budget - 1)
+  | none => return none
+
+/-- Recognize a closed vector from its function type. -/
+def vectorLiteral? (v : Expr) : MetaM (Option VectorLiteral) := do
+  let v ← instantiateMVars v
+  let .forallE _ domain carrier _ := ← whnf (← inferType v) | return none
+  if carrier.hasLooseBVars then return none
+  let_expr Fin n := ← whnfR domain | return none
+  let some n ← (Meta.evalNat n).run | return none
+  matchVector? n (← whnfR carrier) v
+
+/-- Identify a vector with its quoted list along the recognized route. -/
+def vectorIdentification (lit : VectorLiteral) (v xs : Expr) : MetaM Expr := do
+  let n := mkNatLit lit.size
+  match lit.route with
+  | .chain =>
+      let rhs ← mkAppM ``HexMatrixMathlib.vecOfList #[n, xs]
+      mkExpectedTypeHint (← mkEqRefl v) (← mkEq v rhs)
+  | .entrywise =>
+      let check ← mkEq (← mkAppM ``HexMatrixMathlib.vectorEntriesEq #[n, v, xs])
+        (mkConst ``Bool.true)
+      mkAppM ``HexMatrixMathlib.eq_vecOfList_of_entriesEq #[n, v, xs, ← decideProof check]
 
 end HexMatrixMathlib.Literal

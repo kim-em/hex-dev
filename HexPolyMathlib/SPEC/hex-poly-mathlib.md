@@ -35,6 +35,19 @@ identification with their decoded polynomial. Reuse this layer's polynomial
 equivalence and the field codecs requested against
 [hex-matrix-mathlib](../../HexMatrixMathlib/SPEC/hex-matrix-mathlib.md#requests-from-structural-tactic-frontends).
 The initial carrier is `ℚ`; prime residues are a later codec extension.
-This is a requested shared adapter, not an existing API or an alternative
-minimal-polynomial checker. Its elaboration cost belongs in the consuming
-tactic's complete fresh-module probes.
+`HexPolyMathlib.Literal.recognize` implements this adapter in `Literal.lean`,
+returning ascending rational coefficients and an identification with
+`polynomialOfList`. `LiteralData.lean` supplies the compiled rational coefficient operations and
+public correspondence lemmas identifying them with Mathlib polynomial operations.
+The frontend uses the integer-block proof path below.
+`ScaledLiteral.lean` proves that shared integer coefficient blocks agree with
+Mathlib polynomial operations. The identification proof uses those blocks and
+integer cross products; coefficient addition, multiplication and powers do not
+reduce rational normalization in the kernel. Scalar literals still use the
+shared rational codec. The fragment includes
+`C`, `X`, numerals, addition, subtraction, multiplication, negation and closed
+natural powers. Unfolding is bounded at 64, exponents at 256 and coefficient
+lists at 1024. Rational entries reuse `HexMatrixMathlib.Literal.evalEntry`;
+the published dependency includes hex-matrix-mathlib. The consuming tactic
+includes the adapter's proof in its one auxiliary theorem, and its complete
+fresh-module probes include the adapter's elaboration cost.

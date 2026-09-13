@@ -1,10 +1,9 @@
 # hex-smith-mathlib
 
-## Correspondence-only classification
+## Classification
 
-The existing API is a `correspondence-only-layer`; the specified `smith`
-frontend adds conformance and a fresh-module proof-performance track when
-implemented.
+The correspondence API and `smith` frontend share this companion. The
+frontend has its own conformance and fresh-module proof-performance track.
 
 Computational conformance owner: `HexSmith`
 Computational performance owner: `HexSmith`
@@ -70,22 +69,30 @@ declarations are correspondence proofs checked by the kernel in the ordinary
 `HexSmithMathlib` build.
 
 For the correspondence API, `HexSmith` is the computational performance
-owner. The tactic below requires its own proof probes and report when
-implemented, while introducing no Mathlib-importing benchmark executable.
+owner. The tactic has its own build-only proof probes and report; there is
+no Mathlib-importing benchmark executable.
 
 ## Frontend implementation and validation
 
-The tactic contracts below are design requirements. Their kernel-certificate
-subsections specify additions owned by the Mathlib-free algorithm library;
-they do not move that code into this companion. When implementing those
-additions, cross-link the algorithm's kernel-certificate SPEC to this contract.
-Keep existing phase evidence as evidence for the existing correspondence only.
-Before activating the frontend, remove `correspondence_only: true` if present,
-add `proof_probes: [bench/HexSmithMathlib/ProofProbe]`, and reopen the
-library's conformance/performance obligations: cap `done_through` at `2` until
-the new build-only proof tests pass, then at `3` until complete proof evidence
-passes. Do not add an empty reservation while retaining a completed Phase 4.
-This SPEC-only change does not alter the manifest or attest implementation.
+The frontend is implemented in `HexSmithMathlib/Tactic.lean`, with list
+certificates owned by `HexSmith/Kernel.lean`. The soundness theorems accept
+arbitrary checked witnesses. Existing correspondence evidence applies only
+to that API; frontend conformance and performance have separate obligations.
+`libraries.yml` registers `bench/HexSmithMathlib/ProofProbe` and caps
+`done_through` at `3` until complete proof evidence passes (an already lower
+phase remains lower). The ordinary build includes the frontend tests through
+`HexStructuralTacticTests`.
+
+`scripts/bench/structural_tactic_probes.py` generates the complete named ladders
+with seed 10238, plus one 16×16 `Matrix.ofArray` fixture exercising the
+entrywise identification route for this owner. A regression compares every
+committed probe source with the generator. `scripts/bench/structural_tactic_sweep.py` runs six adjacent
+import-baseline/candidate pairs per fixture, rotating pairs and alternating
+arm order on one automatically leased CPU. An external append-only journal
+retains each completed arm and partial timeout output. Certificate sizes,
+entry heights, axiom audits and cumulative kernel profiles are included in
+the measured modules. Comparator status is
+**no-comparable-surface-in-named-comparator**.
 
 Proof tests live in `HexSmithMathlib/Tests.lean`, built with the ordinary
 library; malformed list certificates also belong in the algorithm library's
@@ -107,7 +114,7 @@ a passing verdict. Any budget revision requires an explicit SPEC amendment.
 
 ## The `smith` tactic
 
-This is a required extension following
+The frontend follows
 [the matrix tactic protocol](../../SPEC/matrix-tactics.md) and
 [the `rank` template](../../HexRankMathlib/SPEC/hex-rank-mathlib.md#the-rank-tactic).
 The certificate producer/checker belong to HexSmith; Mathlib transport and
@@ -239,7 +246,7 @@ Run compiled `snfData` once (the data-producing counterpart of `snf`), form
 `Tactic.lean`, separate list-to-Mathlib soundness, literal identification,
 and frontend assembly. All proof fields use one synchronous auxiliary
 theorem certifying the witness; build the equivalence as data from those
-fields, since `mkAuxTheorem` certifies propositions, not a linear equivalence
+fields, since `HexMatrixMathlib.Literal.addClosedProof` certifies propositions, not a linear equivalence
 itself. Do not kernel pre-check and then check again.
 
 Different operations/carriers are `notApplicable`; an in-fragment missing
@@ -259,7 +266,7 @@ a noncanonical but valid transform certificate to ensure soundness does not
 assume producer equality. Audit axioms against `propext`, `Classical.choice`,
 `Quot.sound` only.
 
-On implementation reserve `bench/HexSmithMathlib/ProofProbe`. Named families:
+Proof probes live in `bench/HexSmithMathlib/ProofProbe`. Named families:
 `chain-conjugate` (unimodular transforms of positive divisibility chains),
 `rectangular-presentation` (`n × 2n` and `2n × n`), `rank-deficient`
 (rank `n / 2`), and `large-coefficients`; dimensions `2, 4, 8, 16`, input

@@ -1012,6 +1012,7 @@ lean_exe hex_interval_pnt_fks2_local where
 -- removing them from an umbrella cannot silently remove them from CI.
 lean_lib HexReleaseTests where
   globs := #[`HexMatrixMathlib.Tests,
+    `HexPolyMathlib.LiteralTests,
     `HexBareissMathlib.Tests,
     `HexBerlekamp.FactorTacticTests,
     `HexBerlekampMathlib.FactorPolyTests,
@@ -1050,6 +1051,16 @@ lean_lib HexReleaseTests where
     -- a name array mapped through Glob.one: an array literal this long is
     -- elaborated in chunks, on which the name-to-glob coercion fails
     |>.map Glob.one
+
+-- Build-only regression roots for the three structural matrix frontends.
+@[default_target]
+lean_lib HexStructuralTacticTests where
+  globs := #[`HexMinPolyMathlib.Tests, `HexSmithMathlib.Tests, `HexHermiteMathlib.Tests]
+
+lean_lib HexStructuralTacticProofProbe where
+  srcDir := "bench"
+  globs := #[.submodules `HexMinPolyMathlib.ProofProbe,
+    .submodules `HexSmithMathlib.ProofProbe, .submodules `HexHermiteMathlib.ProofProbe]
 
 -- Verification-only modules for the incubating multivariate factorization
 -- stack. Keep this separate from the released-test target, whose module list

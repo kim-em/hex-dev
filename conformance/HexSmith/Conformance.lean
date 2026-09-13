@@ -316,4 +316,17 @@ example : ¬ ∃ x, vecMul x system = obstructed := by
 example : ∃ x, vecMul x system = zeroTarget :=
   (solvable_iff_dvd (snfData_isSNF system) zeroTarget).2 (by decide)
 
+private def listWitness := smithWitness (#m[2, 0; 0, 6] : Matrix Int 2 2)
+#guard checkSmithList 2 2 [[2, 0], [0, 6]] listWitness
+#guard !checkSmithList 2 2 [[2, 0], [0, 6]] { listWitness with rank := 3 }
+#guard !checkSmithList 2 2 [[2, 0], [0, 6]] { listWitness with diag := [2] }
+#guard !checkSmithList 2 2 [[2, 0], [0, 6]] { listWitness with diag := [-2, 6] }
+#guard !checkSmithList 2 2 [[2, 0], [0, 6]] { listWitness with diag := [0, 6] }
+#guard !checkSmithList 2 2 [[2, 0], [0, 6]] { listWitness with leftInv := [[2, 0], [0, 1]] }
+#guard !checkSmithList 2 2 [[2, 0], [0, 6]] { listWitness with rightInv := [[1, 0], [0, 2]] }
+#guard !checkSmithList 2 2 [[2, 0], [0, 6]] { listWitness with intermediate := [[2, 0], [0, 5]] }
+#guard !checkSmithList 2 2 [[2, 0], [0, 6]] { listWitness with right := [[1, 0]] }
+#guard !checkSmithList 2 2 [[2, 0], [0, 3]]
+  { listWitness with diag := [2, 3], intermediate := [[2, 0], [0, 3]] }
+
 end Hex.Matrix.Smith.Conformance

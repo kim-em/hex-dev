@@ -1035,7 +1035,7 @@ libraries:
 
   # ---------- Mathlib bridges ----------
   HexPolyMathlib:
-    deps: [HexPoly]
+    deps: [HexPoly, HexMatrixMathlib]
     mathlib: true
     done_through: 7
     status: active
@@ -1117,6 +1117,7 @@ libraries:
   HexMinPolyMathlib:
     deps: [HexMinPoly, HexMatrixMathlib, HexPolyMathlib, HexCharPolyMathlib]
     mathlib: true
+    proof_probes: [bench/HexMinPolyMathlib/ProofProbe]
     done_through: 0
     status: active
   HexBareissMathlib:
@@ -1180,14 +1181,14 @@ libraries:
   HexHermiteMathlib:
     deps: [HexHermite, HexRowReduceMathlib]
     mathlib: true
-    correspondence_only: true
+    proof_probes: [bench/HexHermiteMathlib/ProofProbe]
     done_through: 4
     status: active
   HexSmithMathlib:
     deps: [HexSmith, HexHermiteMathlib]
     mathlib: true
-    correspondence_only: true
-    done_through: 7
+    proof_probes: [bench/HexSmithMathlib/ProofProbe]
+    done_through: 4
     status: active
   HexPolyFpMathlib:
     deps: [HexPolyFp, HexPolyMathlib, HexModArithMathlib]

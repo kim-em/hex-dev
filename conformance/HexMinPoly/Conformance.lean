@@ -174,4 +174,36 @@ private def nilpotent2Mod : Matrix (ZMod64 2) 2 2 :=
   (#p[0, 0, 1] : DensePoly (ZMod64 2))
 #guard (Matrix.minPolyCert nilpotent2Mod).check nilpotent2Mod
 
+-- The frontend's structural list path also rejects hostile certificates.
+private def listWitness := Matrix.minPolyWitness (scalar 7)
+#guard Matrix.checkMinPolyList 1 [[7]] listWitness
+#guard !Matrix.checkMinPolyList 1 [[7]] { listWitness with order := [] }
+#guard !Matrix.checkMinPolyList 1 [[7]] { listWitness with steps := [] }
+#guard !Matrix.checkMinPolyList 1 [[7]] { listWitness with input := ⟨0, [[7]]⟩ }
+#guard !Matrix.checkMinPolyList 1 [[7]] { listWitness with input := ⟨1, [[7, 0]]⟩ }
+#guard !Matrix.checkMinPolyList 1 [[7]] { listWitness with poly := ⟨1, [-8, 1]⟩ }
+#guard !Matrix.checkMinPolyList 1 [[7]] { listWitness with poly := ⟨1, [-14, 2]⟩ }
+#guard !Matrix.checkMinPolyList 1 [[7]] { listWitness with poly := ⟨0, [-7, 1]⟩ }
+#guard !Matrix.checkMinPolyList 1 [[7]] { listWitness with poly := ⟨1, [-7, 1, 0]⟩ }
+#guard !Matrix.checkMinPolyList 1 [[7]]
+  { listWitness with order := listWitness.order.map fun o => { o with inv := ⟨1, [[2]]⟩ } }
+#guard !Matrix.checkMinPolyList 1 [[7]]
+  { listWitness with order := listWitness.order.map fun o => { o with inv := ⟨0, [[1]]⟩ } }
+#guard !Matrix.checkMinPolyList 1 [[7]]
+  { listWitness with order := listWitness.order.map fun o => { o with deg := 2 } }
+#guard !Matrix.checkMinPolyList 1 [[7]]
+  { listWitness with steps := listWitness.steps.map fun s => { s with bezoutLeft := ⟨1, []⟩ } }
+#guard !Matrix.checkMinPolyList 1 [[7]]
+  { listWitness with steps := listWitness.steps.map fun s => { s with common := ⟨0, [1]⟩ } }
+
+private def distinctDiagonal : Matrix Rat 2 2 := #m[2, 0; 0, 3]
+private def distinctWitness := Matrix.minPolyWitness distinctDiagonal
+#guard Matrix.checkMinPolyList 2 [[2, 0], [0, 3]] distinctWitness
+#guard !Matrix.checkMinPolyList 2 [[2, 0], [0, 3]]
+  { distinctWitness with order := distinctWitness.order.reverse }
+
+-- This quadratic annihilates 2I but cannot have a Krylov right inverse.
+#guard !Matrix.MinPolyLists.orderCheck 2 0 ⟨1, [[2, 0], [0, 2]]⟩
+  ⟨⟨1, [4, -4, 1]⟩, 2, ⟨1, [[1, 0], [0, 1]]⟩⟩
+
 end Hex.MinPolyConformance

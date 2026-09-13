@@ -9,6 +9,7 @@ module
 public import HexPolyMathlib.PolynomialEquivalence
 public import HexPolyMathlib.Euclid
 public import HexPolyMathlib.GrindTransport
+public import HexPolyMathlib.Literal
 
 public section
 

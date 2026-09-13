@@ -29,28 +29,35 @@ The bridge proves that the executable minimal polynomial:
 
 The characteristic-polynomial consequences depend on
 `hex-char-poly-mathlib`. The executable algorithm and reference certificates belong to `hex-min-poly`.
-The tactic specified below adds a proof-performance surface to this companion.
+The tactic below adds a proof-performance surface to this companion.
 
 ## Performance classification
 
 The existing correspondence is a proof-only Mathlib layer; its computational
-performance owner is `hex-min-poly`. Implementing the tactic below requires
-companion conformance and a `proof_probes` reservation, with fresh-module
-evidence rather than a Mathlib-importing benchmark executable.
+performance owner is `hex-min-poly`. The tactic has
+companion conformance and `proof_probes`, with fresh-module evidence rather than a Mathlib-importing benchmark executable.
 
 ## Frontend implementation and validation
 
-The tactic contracts below are design requirements. Their kernel-certificate
-subsections specify additions owned by the Mathlib-free algorithm library;
-they do not move that code into this companion. When implementing those
-additions, cross-link the algorithm's kernel-certificate SPEC to this contract.
-Keep existing phase evidence as evidence for the existing correspondence only.
-Before activating the frontend, remove `correspondence_only: true` if present,
-add `proof_probes: [bench/HexMinPolyMathlib/ProofProbe]`, and reopen the
-library's conformance/performance obligations: cap `done_through` at `2` until
-the new build-only proof tests pass, then at `3` until complete proof evidence
-passes. Do not add an empty reservation while retaining a completed Phase 4.
-This SPEC-only change does not alter the manifest or attest implementation.
+The frontend is implemented in `HexMinPolyMathlib/Tactic.lean`, with list
+certificates owned by `HexMinPoly/Kernel.lean`. The soundness theorems accept
+arbitrary checked witnesses. Existing correspondence evidence applies only
+to that API; frontend conformance and performance have separate obligations.
+`libraries.yml` registers `bench/HexMinPolyMathlib/ProofProbe` and caps
+`done_through` at `3` until complete proof evidence passes (an already lower
+phase remains lower). The ordinary build includes the frontend tests through
+`HexStructuralTacticTests`.
+
+`scripts/bench/structural_tactic_probes.py` generates the complete named ladders
+with seed 10238, plus one 16×16 `Matrix.ofArray` fixture exercising the
+entrywise identification route for this owner. A regression compares every
+committed probe source with the generator. `scripts/bench/structural_tactic_sweep.py` runs six adjacent
+import-baseline/candidate pairs per fixture, rotating pairs and alternating
+arm order on one automatically leased CPU. An external append-only journal
+retains each completed arm and partial timeout output. Certificate sizes,
+entry heights, axiom audits and cumulative kernel profiles are included in
+the measured modules. Comparator status is
+**no-comparable-surface-in-named-comparator**.
 
 Proof tests live in `HexMinPolyMathlib/Tests.lean`, built with the ordinary
 library; malformed list certificates also belong in the algorithm library's
@@ -72,7 +79,7 @@ a passing verdict. Any budget revision requires an explicit SPEC amendment.
 
 ## The `min_poly` tactic
 
-This section specifies an extension, not an implemented frontend. Follow
+The frontend follows
 [the matrix tactic protocol](../../SPEC/matrix-tactics.md) and
 [hex-rank-mathlib §The `rank` tactic](../../HexRankMathlib/SPEC/hex-rank-mathlib.md#the-rank-tactic).
 New witness/checker/producer declarations belong to `HexMinPoly`; their
@@ -218,7 +225,7 @@ output to the list witness, and re-check it with the compiled list checker
 before quotation. This preserves the roles of `rankWitness`, the literal
 identification, and `rank_eq_of_checkList'` in the rank implementation.
 Build the Boolean proof by kernel reduction and emit the complete goal proof
-as one synchronous `mkAuxTheorem`, with no elaborator kernel pre-check.
+as one synchronous `HexMatrixMathlib.Literal.addClosedProof`, with no elaborator kernel pre-check.
 `!![…]` uses definitional identification; other supported literal routes
 use the shared adapter's single identification proof.
 

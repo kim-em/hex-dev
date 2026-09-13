@@ -9,6 +9,7 @@ module
 
 public import HexHermiteMathlib.Kernel
 public import HexHermiteMathlib.Rank
+public import HexHermiteMathlib.Tactic
 
 public section
 

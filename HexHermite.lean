@@ -9,3 +9,4 @@ module
 public import HexHermite.Cert
 public import HexHermite.Lattice
 public import HexHermite.Unique
+public import HexHermite.Kernel

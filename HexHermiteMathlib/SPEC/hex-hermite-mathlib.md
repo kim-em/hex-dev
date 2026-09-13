@@ -17,8 +17,8 @@ the core library.
 
 ## Scope
 
-The existing layer owns correspondence. The tactic below is a specified
-extension; its producer and list checker remain in HexHermite.
+The layer owns correspondence and the `hermite` frontend; its producer and
+list checker remain in HexHermite.
 
 Its public surface is:
 
@@ -98,22 +98,30 @@ build and by the pair's Mathlib lint regression.
 
 The computational performance owner is `hex-hermite`; its benchmark target
 carries the evidence for HNF, rank, lattice membership and kernel extraction.
-The tactic below adds a proof-performance track when implemented, without a
+The tactic adds a proof-performance track, without a
 Mathlib-importing benchmark executable.
 
 ## Frontend implementation and validation
 
-The tactic contracts below are design requirements. Their kernel-certificate
-subsections specify additions owned by the Mathlib-free algorithm library;
-they do not move that code into this companion. When implementing those
-additions, cross-link the algorithm's kernel-certificate SPEC to this contract.
-Keep existing phase evidence as evidence for the existing correspondence only.
-Before activating the frontend, remove `correspondence_only: true` if present,
-add `proof_probes: [bench/HexHermiteMathlib/ProofProbe]`, and reopen the
-library's conformance/performance obligations: cap `done_through` at `2` until
-the new build-only proof tests pass, then at `3` until complete proof evidence
-passes. Do not add an empty reservation while retaining a completed Phase 4.
-This SPEC-only change does not alter the manifest or attest implementation.
+The frontend is implemented in `HexHermiteMathlib/Tactic.lean`, with list
+certificates owned by `HexHermite/Kernel.lean`. The soundness theorems accept
+arbitrary checked witnesses. Existing correspondence evidence applies only
+to that API; frontend conformance and performance have separate obligations.
+`libraries.yml` registers `bench/HexHermiteMathlib/ProofProbe` and caps
+`done_through` at `3` until complete proof evidence passes (an already lower
+phase remains lower). The ordinary build includes the frontend tests through
+`HexStructuralTacticTests`.
+
+`scripts/bench/structural_tactic_probes.py` generates the complete named ladders
+with seed 10238, plus one 16×16 `Matrix.ofArray` fixture exercising the
+entrywise identification route for this owner. A regression compares every
+committed probe source with the generator. `scripts/bench/structural_tactic_sweep.py` runs six adjacent
+import-baseline/candidate pairs per fixture, rotating pairs and alternating
+arm order on one automatically leased CPU. An external append-only journal
+retains each completed arm and partial timeout output. Certificate sizes,
+entry heights, axiom audits and cumulative kernel profiles are included in
+the measured modules. Comparator status is
+**no-comparable-surface-in-named-comparator**.
 
 Proof tests live in `HexHermiteMathlib/Tests.lean`, built with the ordinary
 library; malformed list certificates also belong in the algorithm library's
@@ -136,7 +144,7 @@ a passing verdict. Any budget revision requires an explicit SPEC amendment.
 
 ## The `hermite` tactic
 
-This required extension follows [the matrix tactic protocol](../../SPEC/matrix-tactics.md)
+The frontend follows [the matrix tactic protocol](../../SPEC/matrix-tactics.md)
 and [the `rank` template](../../HexRankMathlib/SPEC/hex-rank-mathlib.md#the-rank-tactic).
 The list certificate and producer belong to HexHermite, with Mathlib transport
 and the frontend here. The existing `HexHermiteMathlib/Kernel.lean` proves
@@ -224,7 +232,7 @@ structure HermiteWitness where
 def checkHermiteList (n m : Nat) (rows : List (List Int))
     (c : HermiteWitness) : Bool
 
--- HexHermiteMathlib/Kernel.lean, namespace HexHermiteMathlib
+-- HexHermiteMathlib/Certificate.lean (re-exported by Kernel.lean), namespace HexHermiteMathlib
 structure HermiteResult {n m : Nat} (A : Matrix (Fin n) (Fin m) ℤ) where
   rank : Nat
   rank_le : rank ≤ min n m
@@ -263,7 +271,7 @@ Following `HexRankMathlib/Kernel.lean` and `Tactic.lean`, keep decoding and
 transport in proved lemmas, use the shared literal identification, and check
 all certificate propositions in one synchronous auxiliary theorem. Construct
 the basis/term record from that theorem; do not pass a `Basis` type itself
-to `mkAuxTheorem`. There is no preliminary kernel evaluation of the check.
+to `HexMatrixMathlib.Literal.addClosedProof`. There is no preliminary kernel evaluation of the check.
 
 Use the shared four outcomes: other operations/carriers are `notApplicable`,
 in-fragment capability/budget limits are `declined`, accepted proofs are
@@ -284,11 +292,18 @@ identities and residual bounds. Include nonmembership supported in a nonpivot
 column and a valid noncanonical transform. Audit all accepted proof axioms
 against `propext`, `Classical.choice`, `Quot.sound` only.
 
-On implementation reserve `bench/HexHermiteMathlib/ProofProbe`. Named seeded
+`bench/HexHermiteMathlib/ProofProbe` contains the named seeded
 families: `unimodular-conjugate`, `tall-hermite` (`2n × n`),
 `rank-deficient-hermite` (rank `n / 2`), and `membership-residual` (members
 and nonmembers of the same lattice), at `n = 2, 4, 8, 16` and input heights
-`8, 32, 128` bits. Measure basis construction and membership separately.
+`8, 32, 128` bits. The `unimodular-conjugate` generator uses `P D P⁻¹`, with
+`P = I + u vᵀ`, `vᵀu = 0`, and hence `P⁻¹ = I - u vᵀ`; `D` is an even
+positive diagonal chain. The other families use independent signed unit lower-
+and upper-triangular transforms of even diagonal chains, padding by zero rows
+or columns for the stated shapes and ranks. Members are signed sums of
+input rows; nonmembers add one to the final coordinate of a member in this
+even lattice. The input-height parameter bounds entries; actual heights are
+recorded separately. Measure basis construction and membership separately.
 There is no Mathlib tactic comparator. Record absolute fresh-module times
 and medians, baseline deltas and a kernel-only profile per family, using
 six adjacent baseline/probe pairs with alternating orientation per

@@ -96,6 +96,8 @@ UMBRELLA_BUILD_TARGETS = {
     "HexSparsePolyTests",
     "HexTruncatedSeriesTests",
     "HexSmithTests",
+    "HexStructuralTacticTests",
+    "HexStructuralTacticProofProbe",
     "HexLatticeEnumTests",
     "HexDeterminantalIdealTests",
     "HexPermGroupTests",
