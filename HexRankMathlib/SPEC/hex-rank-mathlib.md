@@ -579,6 +579,8 @@ nonblocking placement lease. It compares rational and quadratic full-rank
 8 × 8 and rank-14 16 × 16 matrices to `eval_rank`, and records the absolute
 cost of an 8 × 8 closed-algebraic block fixture. The quadratic comparator
 imports Mathlib's `Echelon.Zsqrtd` registration explicitly.
+The [carrier performance report](../../reports/hex-rank-carriers-performance.md)
+records all six trials and representative kernel-attribution profiles.
 
 Each handler obtains an equality and derives bounds with `Eq.le`, `Eq.ge`
 and transitivity, using a kernel-decided comparison of natural numbers.
