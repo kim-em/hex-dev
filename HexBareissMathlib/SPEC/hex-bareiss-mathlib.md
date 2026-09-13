@@ -696,6 +696,36 @@ within the `120 s` budget. Medians from
 (shared host, one CPU, both arms with the literal's elaboration inside
 the delta):
 
+| family | `eval_det` | `det` | ratio |
+|---|---|---|---|
+| dense `8 × 8`, 8-bit | 0.51 s | 0.16 s | 3.3 |
+| dense `12 × 12`, 8-bit | 3.55 s | 0.30 s | 11.7 |
+| dense `16 × 16`, 8-bit | 18.8 s | 0.52 s | 36 |
+| dense `32 × 32`, 8-bit | over budget, no arm | 3.71 s | |
+| tridiagonal `16 × 16` | 4.40 s | 0.40 s | 10.9 |
+| Vandermonde `8 × 8`, leading zero | 0.40 s | 0.11 s | 3.6 |
+| singular `16 × 16`, rank `15` | 18.8 s | 0.32 s | 59 |
+| dense `8 × 8`, 64-bit | 0.60 s | 0.15 s | 4.0 |
+| dense `4 × 4`, 256-bit | 0.11 s | 0.09 s | 1.2 |
+| rational `8 × 8` | 0.69 s | 0.20 s | 3.5 |
+
+Proof time against dimension, for the dense `8`-bit, singular (rank
+`n − 1`) and dense `64`-bit families up to a ten-second cap per run, is
+recorded by `scripts/bench/det_tactic_size_sweep.py` (profiler totals per
+file, imports excluded, the median of three runs per point with the range
+kept); the current record is
+`reports/bench-results/hex-bareiss-mathlib-tactic-size-753b5dd13f6d-chungus2.json`.
+`eval_det` reaches `n = 14` in every family (6.9, 6.8 and 6.8 s) and `det`
+reaches `n = 48` on the dense family (6.3 s), `n = 48` on the singular
+family (2.5 s) and `n = 24`, the end of its ladder, on the 64-bit family
+(0.8 s); the kernel is most of `det`'s time at those dimensions, the
+literal's elaboration, the entries' evaluation and the compiled producer
+the rest. The record is plotted by
+`scripts/plots/hex-bareiss-mathlib-tactic-size.py` to
+`reports/figures/hex-bareiss-mathlib-tactic-size.svg`.
+
+Median kernel shares recorded by the same size sweep are:
+
 | family | `eval_det` | `det` |
 |---|---|---|
 | dense `8 × 8`, 8-bit | 237 ms | 23 ms |
