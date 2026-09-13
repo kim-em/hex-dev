@@ -238,14 +238,91 @@ theorem pivotRows_getElem (A : List (List Int)) (rows : List Nat) (l : Nat)
     (pivotRows A rows)[l] = A.getD (rows[l]'(by simpa [pivotRows] using hl)) [] := by
   simp only [pivotRows, List.getElem_map, nthRow_eq_getD]
 
+theorem residue_zero (M : Nat) : residue M 0 = 0 := by
+  have h : Int.emod 0 (Int.ofNat M) = 0 := Int.zero_emod _
+  show Int.toNat (Int.emod 0 (Int.ofNat M)) = 0
+  rw [h]
+  rfl
+
+theorem zerosLike_eq (cs : List Nat) : zerosLike cs = cs.map fun _ => 0 := by
+  induction cs with
+  | nil => rfl
+  | cons c cs ih => simp [zerosLike, ih]
+
+theorem strictInc_iff (l : List Nat) : strictInc l = true ↔ l.Pairwise (· < ·) := by
+  induction l with
+  | nil => simp [strictInc]
+  | cons a l ih =>
+    cases l with
+    | nil => simp [strictInc]
+    | cons b l =>
+      rw [List.pairwise_cons, List.pairwise_cons]
+      simp only [strictInc, Bool.and_eq_true, Nat.blt_eq, ih, List.pairwise_cons, List.mem_cons,
+        forall_eq_or_imp]
+      constructor
+      · rintro ⟨hab, hb, hl⟩
+        exact ⟨⟨hab, fun x hx => lt_trans hab (hb x hx)⟩, hb, hl⟩
+      · rintro ⟨⟨hab, _⟩, hb, hl⟩
+        exact ⟨hab, hb, hl⟩
+
+/-- The one-pass read agrees with indexed reads when the positions increase
+and start at or after the head's position `k`. -/
+theorem pickCols_eq (M : Nat) (row : List Int) (cols : List Nat) (k : Nat)
+    (hinc : cols.Pairwise (· < ·)) (hk : ∀ c ∈ cols, k ≤ c) :
+    pickCols M cols k row = cols.map fun j => residue M (row.getD (j - k) 0) := by
+  induction row generalizing cols k with
+  | nil =>
+    cases cols with
+    | nil => rfl
+    | cons c cs => simp [pickCols, zerosLike_eq, residue_zero]
+  | cons a as ih =>
+    cases cols with
+    | nil => rfl
+    | cons c cs =>
+      have hkc : k ≤ c := hk c (List.mem_cons_self ..)
+      have hcs : ∀ d ∈ cs, c < d := (List.pairwise_cons.mp hinc).1
+      have hinc' : cs.Pairwise (· < ·) := (List.pairwise_cons.mp hinc).2
+      by_cases hck : c = k
+      · subst hck
+        have hbeq : Nat.beq c c = true := by
+          cases h : Nat.beq c c with
+          | true => rfl
+          | false => exact absurd rfl (Nat.ne_of_beq_eq_false h)
+        simp only [pickCols, hbeq, Bool.cond_true, List.map_cons, Nat.sub_self,
+          List.getD_cons_zero]
+        rw [ih cs (c + 1) hinc' (fun d hd => hcs d hd)]
+        congr 1
+        apply List.map_congr_left
+        intro j hj
+        have : c + 1 ≤ j := hcs j hj
+        rw [show j - c = (j - (c + 1)) + 1 by omega, List.getD_cons_succ]
+      · have hbeq : Nat.beq c k = false := by
+          cases h : Nat.beq c k with
+          | true => exact absurd (Nat.eq_of_beq_eq_true h) hck
+          | false => rfl
+        simp only [pickCols, hbeq, Bool.cond_false]
+        have hk1 : ∀ d ∈ c :: cs, k + 1 ≤ d := by
+          intro d hd
+          rcases List.mem_cons.mp hd with rfl | hd'
+          · omega
+          · have := hcs d hd'
+            omega
+        rw [ih (c :: cs) (k + 1) hinc hk1]
+        apply List.map_congr_left
+        intro j hj
+        have := hk1 j hj
+        rw [show j - k = (j - (k + 1)) + 1 by omega, List.getD_cons_succ]
+
 theorem block_length (M : Nat) (A : List (List Int)) (rows cols : List Nat) :
     (block M A rows cols).length = rows.length := List.length_map ..
 
-theorem block_getElem (M : Nat) (A : List (List Int)) (rows cols : List Nat) (i : Nat)
-    (hi : i < (block M A rows cols).length) :
+theorem block_getElem (M : Nat) (A : List (List Int)) (rows cols : List Nat)
+    (hinc : cols.Pairwise (· < ·)) (i : Nat) (hi : i < (block M A rows cols).length) :
     (block M A rows cols)[i] =
       cols.map fun j => residue M ((A.getD (rows[i]'(by simpa [block] using hi)) []).getD j 0) := by
-  simp only [block, List.getElem_map, nthRow_eq_getD, nthInt_eq_getD]
+  simp only [block, List.getElem_map, nthRow_eq_getD]
+  rw [pickCols_eq M _ cols 0 hinc (fun _ _ => Nat.zero_le _)]
+  simp
 
 theorem residue_cast (M : Nat) (hM : M ≠ 0) (a : Int) :
     ((residue M a : Nat) : ZMod M) = (a : ZMod M) := by
@@ -278,7 +355,7 @@ theorem rank_eq_of_checkList (n m : Nat) (L : List (List Int)) (c : RankWitness)
     (h : checkRankList n m L c = true) : (ofLists n m L).rank = c.rank := by
   classical
   simp only [checkRankList, Bool.and_eq_true] at h
-  obtain ⟨⟨⟨⟨⟨⟨⟨⟨⟨h1, h2⟩, h3⟩, h4⟩, h5⟩, h6⟩, h7⟩, h8⟩, h9⟩, h10⟩ := h
+  obtain ⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨h1, h2⟩, h3⟩, h4⟩, h5⟩, h6⟩, h7⟩, hinc⟩, h8⟩, h9⟩, h10⟩ := h
   set r := c.rank with hr
   have hLlen : L.length = n := by simpa using h1
   have hLrows : ∀ x ∈ L, x.length = m := (rowsLen_iff m L).mp h2
@@ -287,6 +364,7 @@ theorem rank_eq_of_checkList (n m : Nat) (L : List (List Int)) (c : RankWitness)
   have hcolsLen : c.cols.length = r := by simpa using h5
   have hrowsLt : ∀ i ∈ c.rows, i < n := (allLt_iff _ _).mp h6
   have hcolsLt : ∀ j ∈ c.cols, j < m := (allLt_iff _ _).mp h7
+  have hcolsInc : c.cols.Pairwise (· < ·) := (strictInc_iff _).mp hinc
   have hd : c.denom ≠ 0 := by simpa using h8
   set A := ofLists n m L with hA
   have hentry : ∀ (i : Fin n) (j : Fin m), A i j = (L.getD i []).getD j 0 := ofLists_apply n m L
@@ -311,10 +389,12 @@ theorem rank_eq_of_checkList (n m : Nat) (L : List (List Int)) (c : RankWitness)
     have hmul : ∀ i j : Fin r, (Bz * V) i j =
         ((dotNat ((block M L c.rows c.cols)[i.val]'(by omega)) (c.vt.getD j []) : ℕ) : ZMod M) := by
       intro i j
-      rw [Matrix.mul_apply, dotNat_eq_sum' _ _ r (by rw [block_getElem]; simp [hcolsLen]),
+      rw [Matrix.mul_apply,
+        dotNat_eq_sum' _ _ r (by rw [block_getElem _ _ _ _ hcolsInc]; simp [hcolsLen]),
         Nat.cast_sum]
       refine Finset.sum_congr rfl fun k _ => ?_
-      rw [Nat.cast_mul, block_getElem, getD_eq_getElem' _ _ _ (by simp; omega), List.getElem_map,
+      rw [Nat.cast_mul, block_getElem _ _ _ _ hcolsInc, getD_eq_getElem' _ _ _ (by simp; omega),
+        List.getElem_map,
         residue_cast M hM0]
       simp only [Bz, B, V, Matrix.map_apply, Matrix.submatrix_apply, hentry, rowF, colF]
       rw [getD_eq_getElem' c.cols _ _ (by omega), getD_eq_getElem' c.rows _ _ (by omega)]

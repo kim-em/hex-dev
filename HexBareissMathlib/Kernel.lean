@@ -156,30 +156,61 @@ theorem column_getD (j : Nat) (A : List (List Int)) (k : Nat) :
     | zero => simp [column, nthInt_eq_getD]
     | succ k => simp only [column, List.getD_cons_succ, ih]
 
-theorem columnsFrom_length (A : List (List Int)) (j k : Nat) : (columnsFrom A j k).length = k := by
-  induction k generalizing j with
+theorem emptyCols_length (m : Nat) : (emptyCols m).length = m := by
+  induction m with
   | zero => rfl
-  | succ k ih => simp [columnsFrom, ih]
+  | succ m ih => simp [emptyCols, ih]
 
-theorem columnsFrom_getD (A : List (List Int)) (j k l : Nat) (hl : l < k) :
-    (columnsFrom A j k).getD l [] = column (j + l) A := by
-  induction k generalizing j l with
-  | zero => omega
-  | succ k ih =>
+theorem emptyCols_getD (m l : Nat) : (emptyCols m).getD l [] = [] := by
+  induction m generalizing l with
+  | zero => simp [emptyCols]
+  | succ m ih =>
     cases l with
-    | zero => simp [columnsFrom]
+    | zero => rfl
     | succ l =>
-      simp only [columnsFrom, List.getD_cons_succ]
-      rw [ih (j + 1) l (by omega)]
-      congr 1
-      omega
+      simp only [emptyCols, List.getD_cons_succ]
+      exact ih l
 
-theorem columns_length (m : Nat) (A : List (List Int)) : (columns m A).length = m :=
-  columnsFrom_length A 0 m
+theorem consCols_length (r : List Int) (cs : List (List Int)) :
+    (consCols r cs).length = cs.length := by
+  induction cs generalizing r with
+  | nil => cases r <;> rfl
+  | cons c cs ih => cases r <;> simp [consCols, ih]
+
+theorem consCols_getD (r : List Int) (cs : List (List Int)) (l : Nat) (hl : l < cs.length) :
+    (consCols r cs).getD l [] = r.getD l 0 :: cs.getD l [] := by
+  induction cs generalizing r l with
+  | nil => simp at hl
+  | cons c cs ih =>
+    cases r with
+    | nil =>
+      cases l with
+      | zero => simp [consCols]
+      | succ l =>
+        simp only [consCols, List.getD_cons_succ, List.getD_nil]
+        rw [ih [] l (by simpa using hl)]
+        simp
+    | cons a as =>
+      cases l with
+      | zero => simp [consCols]
+      | succ l =>
+        simp only [consCols, List.getD_cons_succ]
+        exact ih as l (by simpa using hl)
+
+theorem columns_length (m : Nat) (A : List (List Int)) : (columns m A).length = m := by
+  induction A with
+  | nil => exact emptyCols_length m
+  | cons r rs ih => simp [columns, consCols_length, ih]
 
 theorem columns_getD (m : Nat) (A : List (List Int)) (l : Nat) (hl : l < m) :
     (columns m A).getD l [] = column l A := by
-  simpa [columns] using columnsFrom_getD A 0 m l hl
+  induction A with
+  | nil =>
+    simp only [columns, column]
+    exact emptyCols_getD m l
+  | cons r rs ih =>
+    simp only [columns, column]
+    rw [consCols_getD r _ l (by rw [columns_length]; exact hl), ih, nthInt_eq_getD]
 
 theorem zeroDots_iff (t : List Int) (cs : List (List Int)) :
     zeroDots t cs = true ↔ ∀ c ∈ cs, dotInt t c = 0 := by

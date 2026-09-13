@@ -81,7 +81,11 @@ namespace RankWitness
 Structural recursion over lists, `Nat.mul`/`Nat.add`/`Nat.mod` and
 `Int.mul`/`Int.add` called directly, `Nat.beq`/`Nat.blt` for comparisons.
 Nothing here touches `Array`, `Vector`, `Fin` or an instance chain, so the
-kernel reduces each step in a bounded number of unfoldings. -/
+kernel reduces each step in a bounded number of unfoldings.  The pivot
+block is read in one walk of each pivot row against the increasing pivot
+columns (`pickCols`), never by an indexed read per entry: `nthInt` is
+`O(index)`, and reading `r²` entries that way cost as many list steps as
+the arithmetic. -/
 
 /-- Row `i` of a row list, `[]` past the end.  Structural recursion, one step
 per element walked; `List.getD` is specified in terms of it. -/
@@ -108,6 +112,28 @@ per element walked; `List.getD` is specified in terms of it. -/
 @[expose] def allLt (k : Nat) : List Nat → Bool
   | [] => true
   | i :: is => Nat.blt i k && allLt k is
+
+/-- Strictly increasing. -/
+@[expose] def strictInc : List Nat → Bool
+  | [] => true
+  | [_] => true
+  | a :: b :: cs => Nat.blt a b && strictInc (b :: cs)
+
+/-- A zero for every entry. -/
+@[expose] def zerosLike : List Nat → List Nat
+  | [] => []
+  | _ :: cs => 0 :: zerosLike cs
+
+/-- The entries of a row at the strictly increasing positions `cols`, reduced
+modulo `M`, read in one walk of the row: `k` is the position of the row's
+head, and every position in `cols` is at least `k`.  A position past the
+end of the row reads as `0`. -/
+@[expose] def pickCols (M : Nat) : List Nat → Nat → List Int → List Nat
+  | [], _, _ => []
+  | cs, _, [] => zerosLike cs
+  | c :: cs, k, a :: as =>
+      cond (Nat.beq c k) (residue M a :: pickCols M cs (k + 1) as)
+        (pickCols M (c :: cs) (k + 1) as)
 
 /-- Membership by `Nat.beq`. -/
 @[expose] def memNat (i : Nat) : List Nat → Bool
@@ -179,21 +205,23 @@ row `a` consumes the next coefficient row `z` and must satisfy
 @[expose] def pivotRows (A : List (List Int)) (rows : List Nat) : List (List Int) :=
   rows.map fun i => nthRow A i
 
-/-- The pivot block of `A`, reduced modulo `M`. -/
+/-- The pivot block of `A`, reduced modulo `M`: each pivot row walked once
+against the increasing pivot columns. -/
 @[expose] def block (M : Nat) (A : List (List Int)) (rows cols : List Nat) : List (List Nat) :=
-  rows.map fun i => cols.map fun j => residue M (nthInt (nthRow A i) j)
+  rows.map fun i => pickCols M cols 0 (nthRow A i)
 
 end RankWitness
 
 open RankWitness in
 /-- The kernel checker.  `A` is the matrix as a list of `n` rows of length
-`m`.  Checks the shapes and index ranges, `denom ≠ 0`, the modular lower
-bound and the integral upper bound; see the module docstring. -/
+`m`.  Checks the shapes and index ranges, that the pivot columns increase,
+`denom ≠ 0`, the modular lower bound and the integral upper bound; see the
+module docstring. -/
 @[expose] def checkRankList (n m : Nat) (A : List (List Int)) (c : RankWitness) : Bool :=
   Nat.beq A.length n && rowsLen m A &&
   Nat.blt 1 c.modulus &&
   Nat.beq c.rows.length c.rank && Nat.beq c.cols.length c.rank &&
-  allLt n c.rows && allLt m c.cols &&
+  allLt n c.rows && allLt m c.cols && strictInc c.cols &&
   !(decide (c.denom = 0)) &&
   lowerCheck c.modulus (block c.modulus A c.rows c.cols) c.vt &&
   rowsCheck c.denom c.rows (pivotRows A c.rows) m 0 A c.z

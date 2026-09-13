@@ -773,8 +773,8 @@ structure RankWitness where
 **Checks.** `checkRankList n m A c` on the row list `A` of the matrix:
 
 1. shapes and ranges: `A` has `n` rows of length `m`, `rows` and `cols`
-   have length `rank`, their entries are below `n` and `m`, `denom ≠ 0`,
-   `modulus ≥ 2`;
+   have length `rank`, their entries are below `n` and `m`, `cols` is
+   strictly increasing (`strictInc`), `denom ≠ 0`, `modulus ≥ 2`;
 2. the lower bound, modulo `modulus`: with `B` the pivot block reduced to
    residues, for every row `i` and every column `j ≥ i` of `vt`, the
    product `B_i ⬝ vt_j` is `1` modulo `modulus` for `j = i` and `0` for
@@ -812,15 +812,20 @@ then re-checks each modular instantiation and moves to the next modulus of
 definition on the path is `@[expose]`; the arithmetic is `Nat.mul`,
 `Nat.add`, `Nat.mod`, `Int.mul`, `Int.add` called directly; comparisons
 are `Nat.beq` and `Nat.blt`, and integer equality `decide (a = b)`, a
-fixed-cost `Int.decEq`; loops are structural recursion on the lists, and
-entries are read by structural recursion (`nthRow`, `nthInt`); no
+fixed-cost `Int.decEq`; loops are structural recursion on the lists; no
 `Array`, `Vector`, `Fin`, `Finset`, `dite` or well-founded recursion
-appears on the path. `List.ofFn`, `zipWith`, `take`,
+appears on the path. Entries are never read by an indexed access per
+entry: `nthInt` costs `O(index)`, so reading the `rank²` block entries
+that way cost about as many list steps as the multiplications (half the
+kernel time at `n = 40`). The pivot block is read by walking each pivot
+row once against the increasing pivot columns (`pickCols`), `rank · m`
+steps in all, which is why the checker requires `cols` to increase; the
+pivot rows themselves are selected by `nthRow`, one walk per row. `List.ofFn`, `zipWith`, `take`,
 `getD`, `replicate`, `range`, `filter`, `map` and `Int.emod` all reduce
 across a module boundary and may be used freely.
 
 **Cost.** `rank³ / 3` multiplications of numbers below the modulus,
-`rank²` reductions of block entries to residues, plus
+`rank · m` list steps and `rank²` residue reductions to read the block, plus
 `(n − rank) · (rank + 1) · m` integer multiplications for the non-pivot
 rows (`scaleRow` and the combination), against `checkRank`'s
 `n · rank · m + rank² · m + rank³ + n · m` products of minor-sized
