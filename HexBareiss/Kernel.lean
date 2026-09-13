@@ -9,6 +9,7 @@ module
 public import HexBareiss.Bareiss
 public import HexArith.ExactDiv
 public import HexMatrix.Notation
+public import HexMatrix.Packed
 
 public section
 
@@ -72,6 +73,8 @@ inductive DetWitness where
 
 namespace DetWitness
 
+open Packed (dotInt column columns)
+
 /-- The certified value. -/
 @[expose] def value : DetWitness → Int
   | .triangular _ _ d => d
@@ -126,37 +129,6 @@ each step in a bounded number of unfoldings. -/
   | [] => true
   | r :: rs => Nat.beq r.length m && rowsLen m rs
 
-/-- The dot product of two integer lists, stopping at the shorter. -/
-@[expose] def dotInt : List Int → List Int → Int
-  | a :: as, b :: bs => Int.add (Int.mul a b) (dotInt as bs)
-  | _, _ => 0
-
-/-- Column `j` of a row list: the specification of `columns`, not on the
-kernel path. -/
-@[expose] def column (j : Nat) : List (List Int) → List Int
-  | [] => []
-  | r :: rs => nthInt r j :: column j rs
-
-/-- A row prepended entrywise to a list of columns: entry `j` of the row goes
-on top of column `j`; a short row contributes `0`s, and entries past the
-last column are dropped. -/
-@[expose] def consCols : List Int → List (List Int) → List (List Int)
-  | a :: as, c :: cs => (a :: c) :: consCols as cs
-  | [], c :: cs => (0 :: c) :: consCols [] cs
-  | _, [] => []
-
-/-- `m` empty columns. -/
-@[expose] def emptyCols : Nat → List (List Int)
-  | 0 => []
-  | k + 1 => [] :: emptyCols k
-
-/-- The `m` columns of a row list, built in one pass over the rows: `n · m`
-list steps, against the `n · m` indexed reads of `O(index)` each that
-`column` would cost. -/
-@[expose] def columns (m : Nat) : List (List Int) → List (List Int)
-  | [] => emptyCols m
-  | r :: rs => consCols r (columns m rs)
-
 /-- The row is orthogonal to every column in the list. -/
 @[expose] def zeroDots (t : List Int) : List (List Int) → Bool
   | [] => true
@@ -181,6 +153,35 @@ and at the end `pl · d = pu` is required. -/
       Nat.beq t.length (i + 1) && !(decide (l = 0)) && zeroDots t done &&
         triangularCheck d (c :: done) (i + 1) ts cs (Int.mul pl l) (Int.mul pu (dotInt t c))
   | _, _, _, _, _, _ => false
+
+/-! # Packed evaluation
+
+The triangularization's dot products on Kronecker-packed rows
+(`Hex.Matrix.Packed`): a signed row is the pair of its packed nonnegative
+and negated nonpositive parts, and a dot product is four packed products
+combined, one multiplication, shift and mask each in the kernel instead of
+`i` multiply-adds of minor-sized integers.  Exactness needs every entry of
+the transform and of the matrix below `k` in absolute value and
+`n · k² < 2^W`, which `checkDetListPacked` verifies. -/
+
+/-- `zeroDots` on packed pairs. -/
+@[expose] def zeroDotsPacked (W r : Nat) (t : Nat × Nat) : List (Nat × Nat) → Bool
+  | [] => true
+  | c :: cs => decide (Packed.dotIntPacked W r t c = 0) && zeroDotsPacked W r t cs
+
+/-- `triangularCheck` with the dot products on packed pairs: `tps` the packed
+rows of the transform alongside its rows `ts`, `done` and `cs` the packed
+columns. -/
+@[expose] def triangularCheckPacked (W r : Nat) (d : Int) :
+    List (Nat × Nat) → Nat → List (List Int) → List (Nat × Nat) → List (Nat × Nat) → Int → Int →
+      Bool
+  | _, _, [], [], [], pl, pu => decide (Int.mul pl d = pu)
+  | done, i, t :: ts, tp :: tps, c :: cs, pl, pu =>
+      let l := nthInt t i
+      Nat.beq t.length (i + 1) && !(decide (l = 0)) && zeroDotsPacked W r tp done &&
+        triangularCheckPacked W r d (c :: done) (i + 1) ts tps cs (Int.mul pl l)
+          (Int.mul pu (Packed.dotIntPacked W r tp c))
+  | _, _, _, _, _, _, _ => false
 
 /-! # Rational rows
 
@@ -216,10 +217,36 @@ kernel vector; see the module docstring. -/
 @[expose] def checkDetList (n : Nat) (A : List (List Int)) : DetWitness → Bool
   | .triangular swaps T d =>
       Nat.beq A.length n && rowsLen n A && swapsOk n swaps &&
-        triangularCheck d [] 0 T (columns n (applySwaps swaps A)) 1 (signOf swaps)
+        triangularCheck d [] 0 T (Packed.columns n (applySwaps swaps A)) 1 (signOf swaps)
   | .singular v =>
       Nat.beq A.length n && rowsLen n A && Nat.beq v.length n && anyNonzero v &&
-        zeroDots v (columns n A)
+        zeroDots v (Packed.columns n A)
+
+open DetWitness in
+/-- The kernel checker with the triangularization on packed rows, slot width
+`W` and entry bound `k`: `checkDetList` with `triangularCheck` replaced by
+`triangularCheckPacked`, plus the bounds that make the packed dot products
+exact: every entry of the matrix and of the transform below `k` in absolute
+value, `k > 0`, and `n · k² < 2^W`.  The singular branch is unchanged.  A
+passing packed check implies a passing `checkDetList`; see the companion's
+`checkDetList_of_packed`. -/
+@[expose] def checkDetListPacked (W k n : Nat) (A : List (List Int)) : DetWitness → Bool
+  | .triangular swaps T d =>
+      Nat.beq A.length n && rowsLen n A && swapsOk n swaps &&
+        Nat.blt 0 k && Packed.allAbsLtRows k A && Packed.allAbsLtRows k T &&
+        Nat.blt (Nat.mul n (Nat.mul k k)) (Nat.pow 2 W) &&
+        triangularCheckPacked W n d [] 0 T (Packed.packSignedRows W n T)
+          (Packed.packSignedCols W n (Packed.columns n (applySwaps swaps A))) 1 (signOf swaps)
+  | .singular v =>
+      Nat.beq A.length n && rowsLen n A && Nat.beq v.length n && anyNonzero v &&
+        zeroDots v (Packed.columns n A)
+
+open DetWitness in
+/-- `checkDetRat` with the packed integer check. -/
+@[expose] def checkDetRatPacked (W k n : Nat) (A : List (List Rat)) (s : List Nat)
+    (B : List (List Int)) (c : DetWitness) (v : Rat) : Bool :=
+  Nat.beq A.length n && Nat.beq s.length n && scaledRows s A B && checkDetListPacked W k n B c &&
+    decide (Rat.mul v (Rat.ofInt (Int.ofNat (prodNat s))) = Rat.ofInt c.value)
 
 open DetWitness in
 /-- The kernel checker for a rational matrix `A` given as `n` rows: the

@@ -37,6 +37,7 @@ FAMILY_ORDER = ["dense", "singular", "large"]
 STYLE = {
     "eval_det": {"color": "#eb6834", "label": "Mathlib `eval_det`"},
     "det": {"color": "#2a78d6", "label": "hex-bareiss `det`"},
+    "det_plain": {"color": "#2ca02c", "marker": "^", "label": "hex-bareiss `det -packing`"},
 }
 SURFACE = "#fcfcfb"
 INK = "#3a3a38"

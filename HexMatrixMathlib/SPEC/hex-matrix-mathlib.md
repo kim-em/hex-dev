@@ -157,4 +157,12 @@ reversed column is their dot product (`dotNat_eq_conv_reverse`); hence
 `dotPacked_eq`: for lists of length `r` with entries below `M` and
 `r · M² < 2^W`, `dotPacked W r (packRow W b) (packRow W c.reverse) =
 dotNat b c`, and `dotNat_pad` for a column cut or zero-padded to `r`.
-Every packed checker's equality to its plain form reduces to this lemma.
+For signed rows, `dotInt_parts` splits a signed dot product into the four
+dot products of the parts and `dotIntPacked_eq` combines four instances of
+`dotPacked_eq` (with `dotNat_cut` for the row cut or padded to `r`): for a
+column of `r` entries and entries below `k` in absolute value with
+`r · k² < 2^W`, the packed signed dot product is `dotInt`. The transpose
+lemmas `columns_length`, `columns_getD` and `columns_bound` and the sums
+`dotInt_eq_sum` and `dotInt_eq_sum_right` are here as well. Every packed
+checker's equality to or implication of its plain form reduces to these
+lemmas.

@@ -154,18 +154,37 @@ structure Proof where
   /-- The row list the literal is identified with. -/
   rowList : Expr
 
+/-- The entry bound and slot width of the packed check: `k` one more than the
+largest absolute value among the integer rows and the transform, and `W`
+the least positive width with `n · k² < 2^W`. -/
+def packedBounds (c : Cert) : Nat × Nat :=
+  let rowsMax := c.rows.foldl (fun m r => r.foldl (fun m x => max m x.natAbs) m) 0
+  let k := 1 + match c.witness with
+    | .triangular _ T _ => T.foldl (fun m t => t.foldl (fun m x => max m x.natAbs) m) rowsMax
+    | .singular _ => rowsMax
+  (k, Nat.log2 (c.lit.n * (k * k)) + 1)
+
 /-- Build the proof of `Matrix.det A = v` for the certificate's value `v`. -/
-def build (A : Expr) (c : Cert) : MetaM Proof := do
+def build (cfg : HexMatrixMathlib.KernelConfig) (A : Expr) (c : Cert) : MetaM Proof := do
   let nE := mkNatLit c.lit.n
   let w := toExpr c.witness
   let B ← rowList (mkConst ``Int) (c.rows.map (·.map toExpr))
+  let (k, W) := packedBounds c
+  let kE := mkNatLit k
+  let wE := mkNatLit W
   match c.rat with
   | none =>
       let value := toExpr c.witness.value
       let hA ← identification c.lit A B
-      let check ← mkEq (← mkAppM ``Hex.Matrix.checkDetList #[nE, B, w]) (mkConst ``Bool.true)
+      let check ← if cfg.packing then
+          mkEq (← mkAppM ``Hex.Matrix.checkDetListPacked #[wE, kE, nE, B, w]) (mkConst ``Bool.true)
+        else
+          mkEq (← mkAppM ``Hex.Matrix.checkDetList #[nE, B, w]) (mkConst ``Bool.true)
       let hcheck ← decideProof check
-      let eq ← mkAppM ``HexMatrixMathlib.det_eq_of_checkList' #[A, B, w, hA, hcheck]
+      let eq ← if cfg.packing then
+          mkAppM ``HexMatrixMathlib.det_eq_of_checkListPacked' #[A, B, w, wE, kE, hA, hcheck]
+        else
+          mkAppM ``HexMatrixMathlib.det_eq_of_checkList' #[A, B, w, hA, hcheck]
       -- `DetWitness.value w` reduces to the numeral
       let hvalue ← mkExpectedTypeHint (← mkEqRefl value)
         (← mkEq (← mkAppM ``Hex.Matrix.DetWitness.value #[w]) value)
@@ -175,10 +194,17 @@ def build (A : Expr) (c : Cert) : MetaM Proof := do
       let L ← rowList (mkConst ``Rat) (rat.map (·.map toExpr))
       let s ← mkListLit (mkConst ``Nat) (scales.toList.map toExpr)
       let hA ← identification c.lit A L
-      let check ← mkEq (← mkAppM ``Hex.Matrix.checkDetRat #[nE, L, s, B, w, value])
-        (mkConst ``Bool.true)
+      let check ← if cfg.packing then
+          mkEq (← mkAppM ``Hex.Matrix.checkDetRatPacked #[wE, kE, nE, L, s, B, w, value])
+            (mkConst ``Bool.true)
+        else
+          mkEq (← mkAppM ``Hex.Matrix.checkDetRat #[nE, L, s, B, w, value]) (mkConst ``Bool.true)
       let hcheck ← decideProof check
-      let proof ← mkAppM ``HexMatrixMathlib.det_eq_of_checkRat' #[A, L, s, B, w, value, hA, hcheck]
+      let proof ← if cfg.packing then
+          mkAppM ``HexMatrixMathlib.det_eq_of_checkRatPacked'
+            #[A, L, s, B, w, value, wE, kE, hA, hcheck]
+        else
+          mkAppM ``HexMatrixMathlib.det_eq_of_checkRat' #[A, L, s, B, w, value, hA, hcheck]
       return ⟨value, proof, check, L⟩
 
 /-- Diagnose a proof the kernel rejected: evaluate the certificate check with
@@ -221,7 +247,7 @@ def checked (A : Expr) (c : Cert) (p : Proof) (target proof : Expr) : MetaM Expr
     throw (← diagnose A c p e)
 
 /-- Prove a determinant target in either orientation. -/
-def proveGoal (target : Expr) : MetaM (Outcome Expr) := do
+def proveGoal (cfg : HexMatrixMathlib.KernelConfig) (target : Expr) : MetaM (Outcome Expr) := do
   let target ← instantiateMVars target
   let (A, rhs, reverse, lit) ← match ← classify target with
     | .success input => pure input
@@ -236,7 +262,7 @@ def proveGoal (target : Expr) : MetaM (Outcome Expr) := do
     return .declined m!"the value{indentExpr rhs}\nmust be a closed numeral"
   unless v = c.value do
     throwError "det: the target is false: the determinant is {c.value}"
-  let p ← build A c
+  let p ← build cfg A c
   -- the equality with the stated value, decided by the kernel as well
   let hbound ← decideProof (← mkEq p.value rhs)
   let proof ← mkEqTrans p.proof hbound
@@ -245,7 +271,7 @@ def proveGoal (target : Expr) : MetaM (Outcome Expr) := do
 
 /-- The proof of `Matrix.det A = v` for the certified value `v`, checked. -/
 def certifiedProof (A : Expr) (c : Cert) : MetaM Proof := do
-  let p ← build A c
+  let p ← build {} A c
   let target ← mkEq (← mkAppM ``Matrix.det #[A]) p.value
   return { p with proof := ← checked A c p target p.proof }
 
@@ -313,7 +339,7 @@ simp set `hex_norm_det`, whose fallback is Mathlib's `norm_det`. Extensions
 must use `@[no_fallback]` to preserve their errors and `throwUnsupportedSyntax`
 to delegate outside their fragment. The keyword is non-reserved, so `det`
 stays usable as an identifier. -/
-syntax (name := detTac) &"det" : tactic
+syntax (name := detTac) &"det" optConfig : tactic
 
 /-- Try the simp fallback, reporting the classification or capability reason
 only when it makes no progress. Errors from simprocs must propagate unchanged. -/
@@ -339,8 +365,9 @@ def detFallback : Tactic.Tactic := fun _ => Tactic.withMainContext do
 
 -- Ordinary errors commit; unsupported syntax still tries the next handler.
 @[tactic detTac, no_fallback]
-def evalDetTac : Tactic.Tactic := fun _ => Tactic.withMainContext do
-  match ← proveGoal (← Tactic.getMainTarget) with
+def evalDetTac : Tactic.Tactic := fun stx => Tactic.withMainContext do
+  let cfg ← HexMatrixMathlib.Literal.elabKernelConfig stx[1]
+  match ← proveGoal cfg (← Tactic.getMainTarget) with
   | .success proof => Tactic.closeMainGoal `det proof
   | .notApplicable _ => throwUnsupportedSyntax
   | .declined msg =>

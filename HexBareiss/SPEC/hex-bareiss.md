@@ -386,6 +386,37 @@ last entry is a product of pivots. The producer re-checks its own output
 with `checkDetList` and reports a failure as an error rather than
 returning a witness.
 
+### Packed evaluation
+
+`checkDetListPacked W k n A c` is `checkDetList` with the triangularization's
+dot products taken on Kronecker-packed rows, and `checkDetRatPacked` the
+same inside `checkDetRat`; they are the checkers the `det` tactic uses
+unless configured otherwise (`det -packing`). The certificate is unchanged
+and a passing packed check implies a passing plain check (the companion's
+`checkDetList_of_packed`, `checkDetRat_of_packed`), so the plain checkers
+remain the specification. The singular branch is the plain one: a left
+kernel vector against `n` columns gains nothing from packing after the
+one-pass transpose.
+
+The primitives are the shared `Hex.Matrix.Packed`
+([hex-matrix §Kronecker-packed dot products](../../HexMatrix/SPEC/hex-matrix.md#kronecker-packed-dot-products)).
+A signed row is the pair of its nonnegative parts and its negated
+nonpositive parts, each packed into one number with `W`-bit slots, cut or
+zero-padded to `n` entries (`packSignedCut` for the rows of `L`, reversed
+`packSignedCol` for the columns of `σA`), and a signed dot product is the
+four packed products of the parts combined (`dotIntPacked`:
+`t⁺·c⁺ + t⁻·c⁻ − t⁺·c⁻ − t⁻·c⁺`). `triangularCheckPacked` walks the rows of
+`L` as before, reading each row's length and last entry from the row list
+and its dot products from the packed pair, so the check does `n²/2`
+signed packed dot products in place of `n³/3` multiply-adds of
+minor-sized integers. Exactness needs every entry of `A` and of `L` below
+`k` in absolute value, `k > 0`, and `n · k² < 2^W`, which the checker
+verifies (`allAbsLtRows`); the tactic passes `k` one more than the
+largest absolute value it sees and the least positive `W` with
+`n · k² < 2^W`. On the dense `40 × 40` tactic-size bench matrix the kernel
+share of `det` measured `2.6 s` plain and `0.8 s` packed, on the
+`24 × 24` one `0.45 s` and `0.26 s`.
+
 The soundness theorems `det_eq_of_checkList` and `det_eq_of_checkRat`
 (`Matrix.det` of the Mathlib matrix of the row list equals the value) are
 on the forbidden list above and live in

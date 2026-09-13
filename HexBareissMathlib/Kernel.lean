@@ -8,6 +8,7 @@ module
 
 public import HexBareiss.Kernel
 public import HexMatrixMathlib.Literal
+public import HexMatrixMathlib.Packed
 public import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
 public import Mathlib.LinearAlgebra.Matrix.Block
 public import Mathlib.LinearAlgebra.Matrix.ToLinearEquiv
@@ -38,7 +39,7 @@ open Matrix
 
 namespace HexMatrixMathlib
 
-open Hex.Matrix Hex.Matrix.DetWitness
+open Hex.Matrix Hex.Matrix.DetWitness Hex.Matrix.Packed
 
 /-! # The checker's primitives -/
 
@@ -127,90 +128,6 @@ theorem rowsLen_iff (m : Nat) (L : List (List Int)) :
   induction L with
   | nil => simp [rowsLen]
   | cons r L ih => simp [rowsLen, ih]
-
-theorem dotInt_eq_sum (a b : List Int) (r : Nat) (h : a.length ≤ r) :
-    dotInt a b = ∑ k : Fin r, a.getD k 0 * b.getD k 0 := by
-  induction a generalizing b r with
-  | nil => simp [dotInt]
-  | cons x xs ih =>
-    obtain ⟨r, rfl⟩ : ∃ r', r = r' + 1 := ⟨r - 1, by simp at h; omega⟩
-    rw [Fin.sum_univ_succ]
-    simp only [Fin.val_zero, List.getD_cons_zero, Fin.val_succ, List.getD_cons_succ]
-    cases b with
-    | nil => simp [dotInt]
-    | cons y ys =>
-      simp only [dotInt, intAdd_eq, intMul_eq, List.getD_cons_zero, List.getD_cons_succ]
-      rw [ih ys r (by simpa using h)]
-
-theorem column_length (j : Nat) (A : List (List Int)) : (column j A).length = A.length := by
-  induction A with
-  | nil => rfl
-  | cons r rs ih => simp [column, ih]
-
-theorem column_getD (j : Nat) (A : List (List Int)) (k : Nat) :
-    (column j A).getD k 0 = (A.getD k []).getD j 0 := by
-  induction A generalizing k with
-  | nil => simp [column]
-  | cons r rs ih =>
-    cases k with
-    | zero => simp [column, nthInt_eq_getD]
-    | succ k => simp only [column, List.getD_cons_succ, ih]
-
-theorem emptyCols_length (m : Nat) : (emptyCols m).length = m := by
-  induction m with
-  | zero => rfl
-  | succ m ih => simp [emptyCols, ih]
-
-theorem emptyCols_getD (m l : Nat) : (emptyCols m).getD l [] = [] := by
-  induction m generalizing l with
-  | zero => simp [emptyCols]
-  | succ m ih =>
-    cases l with
-    | zero => rfl
-    | succ l =>
-      simp only [emptyCols, List.getD_cons_succ]
-      exact ih l
-
-theorem consCols_length (r : List Int) (cs : List (List Int)) :
-    (consCols r cs).length = cs.length := by
-  induction cs generalizing r with
-  | nil => cases r <;> rfl
-  | cons c cs ih => cases r <;> simp [consCols, ih]
-
-theorem consCols_getD (r : List Int) (cs : List (List Int)) (l : Nat) (hl : l < cs.length) :
-    (consCols r cs).getD l [] = r.getD l 0 :: cs.getD l [] := by
-  induction cs generalizing r l with
-  | nil => simp at hl
-  | cons c cs ih =>
-    cases r with
-    | nil =>
-      cases l with
-      | zero => simp [consCols]
-      | succ l =>
-        simp only [consCols, List.getD_cons_succ, List.getD_nil]
-        rw [ih [] l (by simpa using hl)]
-        simp
-    | cons a as =>
-      cases l with
-      | zero => simp [consCols]
-      | succ l =>
-        simp only [consCols, List.getD_cons_succ]
-        exact ih as l (by simpa using hl)
-
-theorem columns_length (m : Nat) (A : List (List Int)) : (columns m A).length = m := by
-  induction A with
-  | nil => exact emptyCols_length m
-  | cons r rs ih => simp [columns, consCols_length, ih]
-
-theorem columns_getD (m : Nat) (A : List (List Int)) (l : Nat) (hl : l < m) :
-    (columns m A).getD l [] = column l A := by
-  induction A with
-  | nil =>
-    simp only [columns, column]
-    exact emptyCols_getD m l
-  | cons r rs ih =>
-    simp only [columns, column]
-    rw [consCols_getD r _ l (by rw [columns_length]; exact hl), ih, nthInt_eq_getD]
 
 theorem zeroDots_iff (t : List Int) (cs : List (List Int)) :
     zeroDots t cs = true ↔ ∀ c ∈ cs, dotInt t c = 0 := by
@@ -489,5 +406,146 @@ theorem det_eq_of_checkRat' {n : Nat} (A : Matrix (Fin n) (Fin n) ℚ) (L : List
     (s : List Nat) (B : List (List Int)) (c : DetWitness) (v : Rat) (hA : A = ofLists n n L)
     (h : checkDetRat n L s B c v = true) : A.det = v :=
   hA ▸ det_eq_of_checkRat n L s B c v h
+
+
+/-! # Packed evaluation
+
+The packed triangularization agrees with the plain one under the bounds
+the packed checker verifies, through `dotIntPacked_eq` of
+`HexMatrixMathlib.Packed`. -/
+
+theorem mem_nthRow (A : List (List Int)) (i : Nat) : nthRow A i ∈ A ∨ nthRow A i = [] := by
+  rw [nthRow_eq_getD]
+  by_cases h : i < A.length
+  · left
+    rw [getD_eq_getElem' _ _ _ h]
+    exact List.getElem_mem h
+  · right
+    exact getD_eq_default' _ _ _ (not_lt.mp h)
+
+theorem mem_replaceRow (A : List (List Int)) (i : Nat) (r x : List Int)
+    (hx : x ∈ replaceRow A i r) : x ∈ A ∨ x = r := by
+  induction A generalizing i with
+  | nil => simp [replaceRow] at hx
+  | cons a as ih =>
+    cases i with
+    | zero =>
+      simp only [replaceRow, List.mem_cons] at hx
+      rcases hx with rfl | hx
+      · right; rfl
+      · left; exact List.mem_cons_of_mem _ hx
+    | succ i =>
+      simp only [replaceRow, List.mem_cons] at hx
+      rcases hx with rfl | hx
+      · left; simp
+      · rcases ih i hx with h | h
+        · left; exact List.mem_cons_of_mem _ h
+        · right; exact h
+
+theorem mem_swapRows (a b : Nat) (A : List (List Int)) (x : List Int) (hx : x ∈ swapRows a b A) :
+    x ∈ A ∨ x = [] := by
+  unfold swapRows at hx
+  rcases mem_replaceRow _ _ _ _ hx with h | rfl
+  · rcases mem_replaceRow _ _ _ _ h with h' | rfl
+    · left; exact h'
+    · exact mem_nthRow A b
+  · exact mem_nthRow A a
+
+theorem mem_applySwaps (s : List (Nat × Nat)) (A : List (List Int)) (x : List Int)
+    (hx : x ∈ applySwaps s A) : x ∈ A ∨ x = [] := by
+  induction s generalizing A with
+  | nil => left; exact hx
+  | cons p s ih =>
+    obtain ⟨a, b⟩ := p
+    simp only [applySwaps] at hx
+    rcases ih _ hx with h | h
+    · exact mem_swapRows a b A x h
+    · right; exact h
+
+theorem zeroDotsPacked_eq (W r k : Nat) (hW : r * (k * k) < 2 ^ W) (t : List Int)
+    (ht : ∀ x ∈ t, x.natAbs < k) (cs : List (List Int))
+    (hcs : ∀ c ∈ cs, c.length = r ∧ ∀ x ∈ c, x.natAbs < k) :
+    zeroDotsPacked W r (packSignedCut W r t) (packSignedCols W r cs) = zeroDots t cs := by
+  induction cs with
+  | nil => rfl
+  | cons c cs ih =>
+    obtain ⟨hcl, hcb⟩ := hcs c (by simp)
+    simp only [packSignedCols, zeroDotsPacked, zeroDots]
+    rw [dotIntPacked_eq W r k t c hcl ht hcb hW, ih (fun c hc => hcs c (by simp [hc]))]
+
+theorem triangularCheckPacked_eq (W r k : Nat) (hW : r * (k * k) < 2 ^ W) (d : Int) :
+    ∀ (done : List (List Int)) (i : Nat) (ts cs : List (List Int)) (pl pu : Int),
+      (∀ c ∈ done, c.length = r ∧ ∀ x ∈ c, x.natAbs < k) →
+      (∀ t ∈ ts, ∀ x ∈ t, x.natAbs < k) →
+      (∀ c ∈ cs, c.length = r ∧ ∀ x ∈ c, x.natAbs < k) →
+      triangularCheckPacked W r d (packSignedCols W r done) i ts (packSignedRows W r ts)
+        (packSignedCols W r cs) pl pu = triangularCheck d done i ts cs pl pu := by
+  intro done i ts
+  induction ts generalizing done i with
+  | nil =>
+    intro cs pl pu _ _ _
+    cases cs <;> rfl
+  | cons t ts ih =>
+    intro cs pl pu hdone hts hcs
+    cases cs with
+    | nil => rfl
+    | cons c cs =>
+      obtain ⟨hcl, hcb⟩ := hcs c (by simp)
+      have htb := hts t (by simp)
+      simp only [packSignedRows, packSignedCols, triangularCheckPacked, triangularCheck]
+      rw [zeroDotsPacked_eq W r k hW t htb done hdone, dotIntPacked_eq W r k t c hcl htb hcb hW]
+      have := ih (c :: done) (i + 1) cs (Int.mul pl (nthInt t i)) (Int.mul pu (dotInt t c))
+        (fun c' hc' => by
+          rcases List.mem_cons.mp hc' with rfl | hc'
+          · exact ⟨hcl, hcb⟩
+          · exact hdone c' hc')
+        (fun t' ht' => hts t' (by simp [ht'])) (fun c' hc' => hcs c' (by simp [hc']))
+      simp only [packSignedCols] at this
+      rw [this]
+
+/-- A passing packed check is a passing plain check. -/
+theorem checkDetList_of_packed (W k n : Nat) (L : List (List Int)) (c : DetWitness)
+    (h : checkDetListPacked W k n L c = true) : checkDetList n L c = true := by
+  cases c with
+  | triangular swaps T d =>
+    simp only [checkDetListPacked, Bool.and_eq_true] at h
+    obtain ⟨⟨⟨⟨⟨⟨⟨hLlen, hrows⟩, hswaps⟩, hk⟩, hA⟩, hT⟩, hW⟩, htri⟩ := h
+    simp only [checkDetList, Bool.and_eq_true]
+    refine ⟨⟨⟨hLlen, hrows⟩, hswaps⟩, ?_⟩
+    have hk' : 0 < k := by simpa using hk
+    have hW' : n * (k * k) < 2 ^ W := by simpa using hW
+    have hA' := (allAbsLtRows_iff _ _).mp hA
+    have hT' := (allAbsLtRows_iff _ _).mp hT
+    have hLlen' : L.length = n := by simpa using hLlen
+    have hP : ∀ r ∈ applySwaps swaps L, ∀ x ∈ r, x.natAbs < k := by
+      intro r hr x hx
+      rcases mem_applySwaps swaps L r hr with h | rfl
+      · exact hA' r h x hx
+      · simp at hx
+    rw [← triangularCheckPacked_eq W n k hW' d [] 0 T _ 1 (signOf swaps) (by simp) hT'
+      (fun c hc => ⟨by rw [(columns_bound n k hk' _ hP c hc).1, applySwaps_length, hLlen'],
+        (columns_bound n k hk' _ hP c hc).2⟩)]
+    exact htri
+  | singular v =>
+    simp only [checkDetListPacked] at h
+    simpa only [checkDetList] using h
+
+theorem det_eq_of_checkListPacked' {n : Nat} (A : Matrix (Fin n) (Fin n) ℤ) (L : List (List Int))
+    (c : DetWitness) (W k : Nat) (hA : A = ofLists n n L)
+    (h : checkDetListPacked W k n L c = true) : A.det = c.value :=
+  det_eq_of_checkList' A L c hA (checkDetList_of_packed W k n L c h)
+
+theorem checkDetRat_of_packed (W k n : Nat) (A : List (List Rat)) (s : List Nat)
+    (B : List (List Int)) (c : DetWitness) (v : Rat)
+    (h : checkDetRatPacked W k n A s B c v = true) : checkDetRat n A s B c v = true := by
+  simp only [checkDetRatPacked, Bool.and_eq_true] at h
+  obtain ⟨⟨⟨⟨h1, h2⟩, h3⟩, h4⟩, h5⟩ := h
+  simp only [checkDetRat, Bool.and_eq_true]
+  exact ⟨⟨⟨⟨h1, h2⟩, h3⟩, checkDetList_of_packed W k n B c h4⟩, h5⟩
+
+theorem det_eq_of_checkRatPacked' {n : Nat} (A : Matrix (Fin n) (Fin n) ℚ) (L : List (List Rat))
+    (s : List Nat) (B : List (List Int)) (c : DetWitness) (v : Rat) (W k : Nat)
+    (hA : A = ofLists n n L) (h : checkDetRatPacked W k n L s B c v = true) : A.det = v :=
+  det_eq_of_checkRat' A L s B c v hA (checkDetRat_of_packed W k n L s B c v h)
 
 end HexMatrixMathlib

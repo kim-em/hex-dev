@@ -553,7 +553,14 @@ zero-padded to `r` entries and packed in reverse order by a Horner loop of
 `r` steps, `packRevAux`), `packRows`/`packCols`, `slot` (bits
 `W·(r − 1), …, W·r − 1`) and `dotPacked` (slot `r − 1` of the product of a
 packed row and a reverse-packed column, which is their dot product when
-no convolution coefficient reaches `2^W`). Structural recursion and the
+no convolution coefficient reaches `2^W`); for signed rows, `posParts` and
+`negParts` (the nonnegative parts and the negated nonpositive parts),
+`packSignedCut`/`packSignedCol` (a signed row or column packed as the pair
+of its parts) and `dotIntPacked` (the four packed products combined), with
+the bound on absolute values (`allAbsLt`, `allAbsLtRows`); and the plain
+`dotInt` and the one-pass transpose `columns` (with `column` as its
+specification), shared by the rank and determinant checkers. Structural
+recursion and the
 `Nat` primitives `Nat.add`, `Nat.mul`, `Nat.shiftLeft`, `Nat.shiftRight`,
 `Nat.land` and `Nat.pow` only, all GMP-accelerated in the kernel. The
 soundness lemma `dotPacked_eq` is in

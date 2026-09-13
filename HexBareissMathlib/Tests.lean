@@ -285,6 +285,22 @@ example : Matrix.det (R := ℤ) !![1, 2; 3, 4] = detTarget := by det
 
 end FallbackErrors
 
+section Configuration
+
+-- the packed triangularization is the default; `-packing` takes the plain
+-- checker, with the same certificate and outcomes
+example : Matrix.det (R := ℤ) !![1, 2, 3; 4, 5, 6; 7, 8, 10] = -3 := by det -packing
+example : Matrix.det (R := ℤ) !![1, 2, 3; 4, 5, 6; 7, 8, 10] = -3 := by det +packing
+example : Matrix.det (R := ℤ) !![1, 2; 2, 4] = 0 := by det -packing
+example : Matrix.det (R := ℚ) !![1/2, 1; 1, 1] = -1/2 := by det -packing
+example : Matrix.det (R := ℚ) !![1/2, 1; 1, 1] = -1/2 := by det (config := { packing := true })
+
+/-- error: det: the target is false: the determinant is -3 -/
+#guard_msgs in
+example : Matrix.det (R := ℤ) !![1, 2, 3; 4, 5, 6; 7, 8, 10] = 3 := by det -packing
+
+end Configuration
+
 section ExtensionErrors
 
 -- A downstream extension must commit its own in-fragment errors too.

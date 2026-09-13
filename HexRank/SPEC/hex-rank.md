@@ -900,8 +900,8 @@ presentation can cause the untrusted producer to decline.
 
 ### Packed evaluation
 
-`checkRankListPacked W n m A c` is `checkRankList` with the lower bound's
-dot products taken on Kronecker-packed rows, and is the checker the `rank`
+`checkRankListPacked W k n m A c` is `checkRankList` with both bounds' dot
+products taken on Kronecker-packed rows, and is the checker the `rank`
 tactic uses unless configured otherwise (`rank -packing`). The certificate
 is unchanged; only the evaluation strategy differs, and a passing packed
 check implies a passing plain check (the companion's
@@ -935,10 +935,26 @@ On the `40 × 40` full-rank tactic-size bench matrix the kernel share of
 `rank` measured `0.89 s` plain and `0.26 s` packed, and `3.9 s` against
 `0.77 s` at `64 × 64`.
 
+The upper bound is packed with signed entries: a non-pivot row's
+coefficients `z`, cut or zero-padded to the rank, and the columns of the
+pivot rows are each packed as the pair of their nonnegative parts and
+negated nonpositive parts (`packSignedCut`, `packSignedCol`), and
+`rowSpanPacked` compares `denom · aⱼ` with the signed packed dot product
+of `z` and column `j` (`dotIntPacked`, four packed products) for every
+entry of the row, so `rowsCheckPacked` does `(n − rank) · m` packed dot
+products in place of `(n − rank) · rank · m` integer multiply-adds.
+Exactness needs every entry of `A` and of `z` below `k > 0` in absolute
+value and `rank · k² < 2^W`, which the checker verifies (`allAbsLtRows`);
+the tactic passes `k` one more than the largest absolute value it sees
+and `W` the least positive width satisfying both bounds. On the `40 × 40`
+rank-`20` bench matrix the kernel share measured `2.0 s` plain and
+`0.58 s` packed.
+
 The conformance target replays the recorded witnesses through both
 checkers, accepts the composite-modulus witness at slot width `8`
-(`2 · 9² < 2^8`), and refutes the first witness at slot width `8` and a
-witness with a `vt` entry at or above the modulus.
+(`2 · 9² < 2^8` and `2 · 10² < 2^8`), and refutes the first witness at slot
+width `8`, an entry bound below an entry, and a witness with a `vt` entry
+at or above the modulus.
 
 ## Carriers
 
@@ -1068,7 +1084,7 @@ rank:
 | `checkRank` | `n · r · m + r² · m + r³ + n · m` | none | one product dominates; no determinant |
 | `rankWith`, `rankProfileWith` | as `rowReduceWith` | | |
 | `checkRankList` | `r³ / 3` modulo `modulus`, plus `(n − r) · r · m` over `Int` | none | the kernel form; nothing at full rank for the second term |
-| `checkRankListPacked` | `r² / 2` products of `r · W`-bit numbers plus `r²` shift-adds, plus `(n − r) · r · m` over `Int` | none | the packed evaluation of the lower bound, `W` the slot width |
+| `checkRankListPacked` | `r² / 2` products of `r · W`-bit numbers plus `r²` shift-adds, plus `4 · (n − r) · m` such products | none | the packed evaluation of both bounds, `W` the slot width |
 | `rankWitness` | `rankCertWith` plus `O((n − r) · r²)` over `Int` and `O(r³)` modular arithmetic operations | plus `r` modular inverses | one elimination of the pivot block modulo `modulus` and back substitution per column |
 
 **Growth.** The invariant says every stored entry is a minor of `A` (a

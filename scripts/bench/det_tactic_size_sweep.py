@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Proof time against dimension for the `det` tactic and Mathlib's `eval_det`.
 
+Three arms: `eval_det`, `det` (the packed triangularization, the default)
+and `det -packing` (the plain checker on the same certificate).
+
 For each family (dense 8-bit entries, singular of rank ``n - 1``, dense
 64-bit entries) and each dimension, one seeded ``n × n`` integer literal is
 proved by both tactics in a scratch file under ``set_option profiler true``,
@@ -48,6 +51,7 @@ SIZES = {
 TOOLS = {
     "eval_det": ("Mathlib.Tactic.NormDet", "eval_det"),
     "det": ("HexBareissMathlib", "det"),
+    "det_plain": ("HexBareissMathlib", "det -packing"),
 }
 
 

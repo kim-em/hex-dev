@@ -427,9 +427,12 @@ product of two packed lists is `ofDigits` of their convolution
 digits below the base is read off by division and remainder
 (`ofDigits_digit`), and the coefficient `r − 1` of a row against a
 reversed column is their dot product (`dotNat_eq_conv_reverse`); hence
-`dotPacked_eq`, `lowerCheckPacked_eq` and the implication, and
+`dotPacked_eq`, `lowerCheckPacked_eq` and the implication; the upper
+bound's `rowSpanPacked_spec` and `rowsCheckPacked_imp` reduce the packed
+span check to `combo_getD` through `dotIntPacked_eq` and the columns of the
+pivot rows (`columns_bound`, `dotInt_eq_sum_right`); and
 `rank_eq_of_checkListPacked'` with its `≤`/`≥` forms are the plain
-theorems after a rewrite.
+theorems after the implication.
 
 ## The `rank` tactic
 
@@ -459,7 +462,7 @@ The tactic takes the shared configuration structure
 configured in no other way. It evaluates the entries with Mathlib's
 `evalRatEntry`, runs the compiled `Hex.Matrix.rankWitness`, quotes the
 witness with `toExpr`, and builds
-`rank_eq_of_checkListPacked' A L c W rfl (of_decide_eq_true rfl)`, or
+`rank_eq_of_checkListPacked' A L c W k rfl (of_decide_eq_true rfl)`, or
 `rank_eq_of_checkList' A L c rfl (of_decide_eq_true rfl)` with packing
 off, composed
 with a kernel-decided comparison of `c.rank` with `r`; the whole proof is
