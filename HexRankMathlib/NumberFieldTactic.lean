@@ -39,9 +39,12 @@ private def fieldEntry (e : Expr) : MetaM (List Rat) := do
   let e ← Meta.transform e (pre := fun t => do
     if t.isAppOfArity ``HPow.hPow 6 then
       let args := t.getAppArgs
-      if (← whnfR args[0]!).isAppOfArity ``Hex.PolyQuot 2 &&
-          (← isDefEq args[1]! (mkConst ``Nat)) then
-        return .visit (← mkAppM ``Hex.PolyQuot.natPow #[args[4]!, args[5]!])
+      let R ← whnfR args[0]!
+      if R.isAppOfArity ``Hex.PolyQuot 2 || R.isAppOfArity ``Hex.QAdjoin 1 then
+        if ← isDefEq args[1]! (mkConst ``Nat) then
+          return .visit (← mkAppM ``Hex.PolyQuot.natPow #[args[4]!, args[5]!])
+        if ← isDefEq args[1]! (mkConst ``Int) then
+          return .visit (← mkAppM ``Hex.PolyQuot.intPow #[args[4]!, args[5]!])
     return .continue)
   let coeffs ← mkAppM ``Hex.PolyQuot.coeffs #[e]
   let arr ← mkAppM ``Hex.DensePoly.coeffs #[coeffs]

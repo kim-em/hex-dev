@@ -218,7 +218,7 @@ def proveGoal (target : Expr) : MetaM Expr := do
     throw (← diagnose bound check A ofL e)
 
 /-- `rank` closes `A.rank = r`, `A.rank ≤ r` and `r ≤ A.rank` for a closed
-integer matrix literal `A`, with the kernel checking a rank certificate.  The
+integer or rational matrix literal `A`, with the kernel checking a rank certificate.  The
 keyword is non-reserved, so `rank` stays usable as an identifier. Extensions
 must use `@[no_fallback]` to preserve their errors and `throwUnsupportedSyntax`
 to delegate outside their fragment. -/

@@ -60,6 +60,10 @@ private theorem canonicalRank :
 example : (!![β / 2, 1 / 2; 2 / 3, β / 3] :
     _root_.Matrix (Fin 2) (Fin 2) (QAdjoin a)).rank = 1 := by rank
 
+example : (!![β ^ 2 - 2] : _root_.Matrix (Fin 1) (Fin 1) (QAdjoin a)).rank = 0 := by rank
+example : (!![β ^ (-1 : Int), 1; 1, β] :
+    _root_.Matrix (Fin 2) (Fin 2) (QAdjoin a)).rank = 1 := by rank
+
 /-- error: rank: the target is false: the rank is 2 -/
 #guard_msgs in
 example : (!![β, 1; 1, β] : _root_.Matrix (Fin 2) (Fin 2) (QAdjoin a)).rank = 1 := by rank
