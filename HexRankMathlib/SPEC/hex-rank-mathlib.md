@@ -501,8 +501,8 @@ and plotted by `scripts/plots/hex-rank-mathlib-tactic-size.py` to
 Under the ten-second cap
 `eval_rank` reaches `n = 28` at full rank, rank `n − 2` and rank `n / 2`
 (about `9.9 s`) and `n = 24` at rank `2` (`6.7 s`), and `rank` reaches
-`n = 48` at full rank, rank `n − 2` and rank `n / 2` (`4.2 s` each, of
-which the kernel is about `3.1 s`) and `n = 128` at rank `2` (`7.2 s`, of
+`n = 48` at full rank, rank `n − 2` and rank `n / 2` (`4.1` to `4.2 s`,
+of which the kernel is `3.1` to `3.3 s`) and `n = 128` at rank `2` (`7.2 s`, of
 which the kernel is `1.1 s` and the literal's elaboration and the entries'
 evaluation most of the rest).
 
