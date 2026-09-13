@@ -324,9 +324,10 @@ the Mathlib-free library
 recursion and computes each minor by Laplace expansion along the first row
 over the list form of `MvPoly` arithmetic, and `detIdealGensList r L`
 drops zeros and duplicates. The data and their denotations are kept
-apart: `L : List (List Term)` is the batch's matrix as canonical term
-lists, `denote : Term → MvPoly k C cmp` is hex-mv-poly-mathlib's
-denotation, and this library proves
+apart: `L : List (List (PolyList C))` is the batch's matrix as canonical term
+lists, `denote : PolyList C → MvPoly k C cmp` is the Mathlib-free
+`Hex.MvPoly.Kernel.denote` (the companion composes it with `equiv` to obtain
+`MvPolynomial` values), and this library proves
 
 ```lean
 theorem detIdealGensList_denote (L) (P) (hL : L.map (·.map denote) = rowLists P) (r) :

@@ -558,6 +558,42 @@ theorem add_canonical [Zero κ] [Add κ] [DecidableEq κ]
     (hp : Canonical n p) (hq : Canonical n q) : Canonical n (add p q) :=
   merge_canonical _ hp hq
 
+/-- Once the combined input length is covered, extra fuel cannot change a
+merge. In particular the insertion fallback is irrelevant to public addition. -/
+theorem merge_stable [Zero κ] [Add κ] [DecidableEq κ]
+    (fuel extra : Nat) (p q : PolyList κ) (h : p.length + q.length ≤ fuel) :
+    merge (fuel + extra) p q = merge fuel p q := by
+  induction fuel generalizing p q with
+  | zero =>
+      have hp : p = [] := List.eq_nil_of_length_eq_zero (by omega)
+      subst p
+      simp [merge]
+  | succ fuel ih =>
+      cases p with
+      | nil => simp [merge]
+      | cons t ts =>
+        cases q with
+        | nil => simp [merge]
+        | cons u us =>
+          have hts : ts.length + (u :: us).length ≤ fuel := by simp_all; omega
+          have hus : (t :: ts).length + us.length ≤ fuel := by simp_all; omega
+          have hboth : ts.length + us.length ≤ fuel := by simp_all; omega
+          simp only [Nat.succ_add, merge]
+          split
+          · rw [ih ts (u :: us) hts]
+          · rw [ih (t :: ts) us hus]
+          · split <;> rw [ih ts us hboth]
+
+/-- The public addition budget agrees with any larger merge budget. -/
+theorem add_eq_merge [Zero κ] [Add κ] [DecidableEq κ]
+    (p q : PolyList κ) (fuel : Nat) (h : p.length + q.length ≤ fuel) :
+    add p q = merge fuel p q := by
+  have hs := merge_stable (p.length + q.length) (fuel - (p.length + q.length)) p q
+    (Nat.le_refl _)
+  have he : p.length + q.length + (fuel - (p.length + q.length)) = fuel := by omega
+  rw [he] at hs
+  exact hs.symm
+
 /-- A coefficient map preserves the exponent of every surviving term. -/
 theorem exp_mem_mapCoeffs [Zero κ] [DecidableEq κ] (f : κ → κ)
     {u : Term κ} {p : PolyList κ} (hu : u ∈ mapCoeffs f p) :
@@ -767,7 +803,8 @@ def toList {n : Nat} {κ : Type u} [Lean.Grind.Semiring κ] [BEq κ]
     [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
     (p : MvPoly n κ cmp) : PolyList κ :=
   let ts := p.termsList.map fun t => (t.1.toList, t.2)
-  if isCanonical n ts.reverse then ts.reverse else normalize ts
+  let reversed := ts.reverse
+  if isCanonical n reversed then reversed else normalize ts
 
 /-! # Denotation laws -/
 

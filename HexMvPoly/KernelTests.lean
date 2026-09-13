@@ -342,6 +342,12 @@ checks real cross-term cancellation rather than repeating an expression. -/
 example : listAdj4.all (fun row => row.all (Kernel.isCanonical 2)) = true := by
   decide +kernel
 
+example : listTri4.all (fun row => row.all (Kernel.isCanonical 2)) = true := by
+  decide +kernel
+
+example : Kernel.isCanonical 2 listDet4 = true := by
+  decide +kernel
+
 set_option trace.profiler true in
 /-- A `4 × 4` tridiagonal adjugate identity. Its proof term evaluates only
 `List`, `Nat`, and `Int` primitives on the certificate path. -/
@@ -375,6 +381,10 @@ example : Kernel.beq (Kernel.mul listP listP) (Kernel.mul listP listP) = true :=
   Kernel.beq_refl _
 
 /-! # Axiom hygiene -/
+
+/-- info: 'Hex.MvPoly.KernelTests.list_certificate_4x4' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms list_certificate_4x4
 
 /-- info: 'Hex.MvPoly.KernelTests.splitFirst_roundtrip' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

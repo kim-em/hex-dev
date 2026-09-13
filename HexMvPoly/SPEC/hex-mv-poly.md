@@ -276,9 +276,13 @@ canonical list and satisfies `denote_toList`; conversely `toList_denote`
 recovers every canonical list. Reversing the reference term stream and
 checking canonicality gives a linear path for the default lexicographic
 comparator; other orders fall back to normalization when necessary.
+In particular the symbolic-rank consumer's grevlex storage can take the
+quadratic fallback; that sorting is compiled producer work, outside replay.
 `toRows` quotes nested reference polynomial lists, and `denote_toRows`
-proves entrywise denotation recovers those lists. Applied to `rowLists P`,
-it supplies the consumer's matrix identification:
+proves entrywise denotation recovers those lists. The matrix-owning consumer
+defines its polymorphic `rowLists P := P.rows.toList.map Vector.toList`
+(the current Bareiss `rowLists` is specialized to integers). Applying
+`denote_toRows` to those rows supplies the matrix identification:
 `L.map (·.map denote) = rowLists P`, in the same way that the shared matrix
 literal layer identifies scalar row lists with `ofLists`. Certificate replay
 uses `L`, never the reference matrix or `toList` computation.
@@ -347,6 +351,9 @@ Complexity is in terms of the term counts `s = p.termCount` and
 `t = q.termCount`, arity `n`, the maximum exponent `d`, and the cost of
 one coefficient operation. Monomial comparison is `O(n)`, which is not
 constant and shows up in every tree operation.
+The `Kernel` arithmetic bounds below assume canonical input lists; in
+particular translating a canonical product row makes each insertion a
+constant number of comparisons.
 
 | operation | algorithm | cost |
 |---|---|---|
