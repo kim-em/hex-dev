@@ -74,7 +74,8 @@ denominator. Tall inputs are 2n×n and wide inputs are n×2n. Rank and augmented
 rank are checked during preparation, outside the timer. The
 [input metadata](bench-results/hex-row-reduce-field-inputs-bounded.jsonl) contains all
 245 parameter/family combinations, dimensions, rank, input hash, actual
-numerator/denominator/RHS bit heights, and rational-function degrees. The generator reserves coefficient headroom before the dense updates; all
+numerator/denominator/RHS bit heights, and rational-function degrees. The
+generator reserves coefficient headroom before the dense updates; all
 actual matrix and RHS entries meet the requested height bound.
 
 Dimension registrations use mode 1: r proportional to n and fixed aspect ratio
@@ -140,6 +141,12 @@ records each harness verdict, slope, and constant range. It distinguishes
 mode-2 upper-bound assessments from two-sided consistency and retains both
 observations for every unchanged rerun. Inconclusive dimension evidence is
 reported as such.
+
+Of the 85 dimension registrations, 58 are consistent on the primary run and
+two more are consistent on the single unchanged rerun. The remaining 25 are
+inconclusive on both runs. All 34 height registrations are within the declared
+upper bound (observed faster); their two-sided harness verdict is inconclusive.
+Every primary and rerun measurement completed with status `ok`.
 
 The source benchmark is commit `9c14175b0`,
 with benchmark-file SHA-256
