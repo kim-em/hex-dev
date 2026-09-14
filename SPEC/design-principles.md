@@ -201,9 +201,11 @@
 
 ## Lakefile
 
-Use `precompileModules := true` only on libraries that export
-`@[extern]` functions. Don't use it otherwise, and in particular
-libraries importing Mathlib must not use `precompileModules`.
+Use `precompileModules := true` on libraries that export `@[extern]`
+functions or provide computational certificate producers called by elaborators
+(`HexRank`, `HexBareiss`, `HexCharPoly`). These Mathlib-free producers must run
+as native code during elaboration. Libraries importing Mathlib must not use
+`precompileModules`.
 
 ## Fully autonomous execution
 

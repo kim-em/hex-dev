@@ -285,8 +285,6 @@ structure Step where
   column : List Int
   vectors : List (List Int)
   coefficients : List Int
-  /-- Packed block columns, validated once before the moment loop. -/
-  packedColumns : List Int := []
   /-- Full convolution; its initial coefficients are the Toeplitz product. -/
   product : List Int := []
   deriving Repr, Inhabited, DecidableEq
@@ -334,8 +332,7 @@ The rows are packed and their bounds checked once by the enclosing step. -/
       Nat.beq c.column.length (k + 2) &&
       eqList (c.column.take 2) [1, Int.neg a] &&
       boundedRows b cols && rowLengths k cols &&
-      eqList c.packedColumns (packs K cols) &&
-      checkMoments K b k r c.packedColumns (c.column.drop 2) c.vectors (heads rs) &&
+      checkMoments K b k r (packs K cols) (c.column.drop 2) c.vectors (heads rs) &&
       checkProduct K b k prev c.column c.product c.coefficients &&
       checkSteps K b k block cs prev
   | _, _, _, _ => false
@@ -696,8 +693,7 @@ theorem checkSteps_eq {K b n : Nat} (A : Matrix Int n n) (cs : List Step) (resul
     | cons c cs =>
       simp only [checkSteps, toRows_block, toRows_heads, Bool.and_eq_true,
         Nat.beq_eq, eqList_iff] at hc
-      obtain ⟨⟨⟨⟨⟨⟨⟨⟨hresult, hlen⟩, hprefix⟩, hb⟩, _⟩, hpacked⟩, hm⟩, hprod⟩, hr⟩ := hc
-      rw [hpacked] at hm
+      obtain ⟨⟨⟨⟨⟨⟨⟨hresult, hlen⟩, hprefix⟩, hb⟩, _⟩, hm⟩, hprod⟩, hr⟩ := hc
       have hwk : 2 * ((k + 1) * (b * b) + b) < 2 ^ K := by
         have := Nat.mul_le_mul_right (b * b) (show k + 1 ≤ k + 1 + 1 by omega)
         omega
@@ -789,20 +785,13 @@ def addProducts : List Step → List Step
     let prev := match cs with | [] => [1] | d :: _ => d.coefficients
     { c with product := convolution prev c.column } :: addProducts cs
 
-/-- Cache the packed columns after selecting the common width. -/
-def cacheSteps (K : Nat) : List (List Int) → List Step → List Step
-  | _, [] => []
-  | rs, c :: cs =>
-    let block := tails rs.tail
-    { c with packedColumns := packs K (columns block.length block) } :: cacheSteps K block cs
-
 /-- Produce a width sufficient for all carried values and linear combinations. -/
 def produce {n : Nat} (A : Matrix Int n n) : Witness :=
   let steps := addProducts (produceSteps A n (Nat.le_refl n))
   let b := steps.foldl (fun b s => max b (max (maxAbs s.column)
     (max (maxRows s.vectors) (max (maxAbs s.coefficients) (maxAbs s.product))))) (maxRows (toRows A))
   let K := ((n + 1) * (b * b) + b).log2 + 2
-  { bound := b, width := K, steps := cacheSteps K (toRows A) steps }
+  { bound := b, width := K, steps := steps }
 
 
 end Hex.Matrix.CharPolyKernel

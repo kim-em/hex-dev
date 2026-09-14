@@ -87,7 +87,7 @@ determinant dependency.
 `checkCharPolyList`, the producer `produce`, and the core soundness theorem
 `charPoly_eq_of_checkList`. The witness carries each step's Toeplitz column,
 intermediate moment vectors, descending coefficients, full convolution
-products, and cached packed block columns as lists of integers. `produce` obtains these values from the existing
+products as lists of integers. `produce` obtains these values from the existing
 Berkowitz computation; the elaborator rechecks the result with compiled code
 before emitting a proof. The library precompiles its modules so the producer
 runs as native code when the frontend imports it.
@@ -223,3 +223,10 @@ overhead-adjusted ratios in
 `libraries.yml phase4.comparators` and `input_families`, and extends the
 existing single bench script. All result hashes cover the full canonical
 polynomial.
+
+For core `Hex.Matrix` inputs, literal identification retains one kernel check
+of `A.data.toList` against the row-list reconstruction. That boundary still
+reduces `Hex.Matrix`, `Vector` and finite indices; the arithmetic checker does
+not. The measured ladder covers the Mathlib frontend's definitional literal
+route. Core-input boundary optimization and measurements remain outside this
+change's scope.

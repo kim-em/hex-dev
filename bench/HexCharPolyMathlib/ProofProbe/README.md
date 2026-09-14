@@ -79,3 +79,27 @@ Lean's profiler. Each trial runs a packed/scalar pair and a packed/original
 pair at each dimension, reversing the order on alternating trials. A timeout
 censors that arm/dimension and skips its later pairs. The original frontend's
 size-32 timeout supplies an end-to-end bound, not an invented kernel time.
+
+Recompute the table's per-reference medians and median paired ratios from the
+retained samples without rerunning a measurement:
+
+```bash
+python3 bench/HexCharPolyMathlib/ProofProbe/compare.py --summarize bench/HexCharPolyMathlib/ProofProbe/evidence/packed/report.json
+```
+
+The reported sweep records the measured source hashes and snapshots. The
+original packed sweep is retained as `evidence/packed/cached-report.json`; the
+smaller certificate is measured in `evidence/packed/report.json`. The manifest
+references the original frontend's existing size-32 timeout and skips that
+identical censored arm.
+
+The packed-column cache experiment is reproducible with `cache_probe.py`.
+Prepare a cached checkout at `af42387c9` and a checkout of the current smaller
+certificate, build `HexCharPolyMathlib` in both, then run the generator and:
+
+```bash
+python3 bench/HexCharPolyMathlib/ProofProbe/cache_probe.py .cache/char-poly-cache --cached-root /path/to/cached --uncached-root /path/to/current
+```
+
+This diagnostic uses two adjacent AB/BA pairs at sizes 16 and 32, recording
+kernel times, emitted artifact sizes, source snapshots and host load.

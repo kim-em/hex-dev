@@ -13,6 +13,7 @@ import platform
 from pathlib import Path
 import re
 import signal
+import statistics
 import subprocess
 import time
 
@@ -23,11 +24,39 @@ def kernel_seconds(log):
     return sum(float(x) * units[u] for x, u in matches) if matches else None
 
 
+def summarize(report):
+    """Summarize complete adjacent pairs; never assign a kernel time to a timeout."""
+    rows = []
+    for n in report['plan']['dimensions']:
+        for reference in ['Quoted', 'Original']:
+            pairs = []
+            for trial in range(report['plan']['paired_trials']):
+                samples = [s for s in report['samples'] if s['pair'] == f'{trial}-{n}-{reference}']
+                if len(samples) != 2 or any(s['exit'] != 0 for s in samples):
+                    continue
+                packed = next(s for s in samples if s['arm'] == 'Packed')
+                ref = next(s for s in samples if s['arm'] == reference)
+                pairs.append((packed['kernel_s'], ref['kernel_s']))
+            if pairs:
+                rows.append({'n': n, 'reference': reference, 'pairs': len(pairs),
+                    'packed_s': statistics.median(p for p, _ in pairs),
+                    'reference_s': statistics.median(r for _, r in pairs),
+                    'speedup': statistics.median(r / p for p, r in pairs),
+                    'packed_range_s': [min(p for p, _ in pairs), max(p for p, _ in pairs)]})
+    return rows
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('output', type=Path)
-    parser.add_argument('--baseline-root', required=True, type=Path)
+    parser.add_argument('output', type=Path, nargs='?')
+    parser.add_argument('--summarize', type=Path, help='Print paired medians from an existing report')
+    parser.add_argument('--baseline-root', type=Path)
     args = parser.parse_args()
+    if args.summarize:
+        print(json.dumps(summarize(json.loads(args.summarize.read_text())), indent=2))
+        return
+    if args.output is None or args.baseline_root is None:
+        parser.error('output and --baseline-root are required for measurement')
     root = Path(__file__).resolve().parents[3]
     baseline = args.baseline_root.resolve()
     plan = json.loads((Path(__file__).with_name('packed-plan.json')).read_text())
@@ -69,12 +98,19 @@ def main():
         name = f'Dense{n}Original.lean'
         (baseline / probe / name).write_bytes((root / probe / name).read_bytes())
     stopped = set()
+    for censored in plan.get('censored_references', []):
+        prior = json.loads((root / censored['evidence']).read_text())
+        if prior['plan']['baseline_commit'] != baseline_commit or not any(
+                s['n'] == censored['n'] and s['arm'] == censored['arm'] and s['exit'] == 'timeout'
+                for s in prior['samples']):
+            raise ValueError('censoring evidence does not match the frozen baseline timeout')
+        stopped.add((censored['n'], censored['arm']))
     for trial in range(plan['paired_trials']):
         for n in plan['dimensions']:
             for reference in ['Quoted', 'Original']:
                 pair = f'{trial}-{n}-{reference}'
                 if (n, reference) in stopped:
-                    report['skipped'].append({'pair': pair, 'reason': 'reference timed out in an earlier trial'})
+                    report['skipped'].append({'pair': pair, 'reason': 'reference timed out in a retained earlier trial or sweep'})
                     continue
                 arms = ['Packed', reference] if trial % 2 == 0 else [reference, 'Packed']
                 for arm in arms:
@@ -113,7 +149,9 @@ def main():
             reference = next(s for s in samples if s['arm'] != 'Packed')
             report['paired_deltas'].append({'pair': pair,
                 'kernel_reference_minus_packed_s': reference['kernel_s'] - packed['kernel_s'],
-                'wall_reference_minus_packed_s': reference['wall_s'] - packed['wall_s']})
+                'wall_reference_minus_packed_s': reference['wall_s'] - packed['wall_s'],
+                'kernel_speedup': reference['kernel_s'] / packed['kernel_s']})
+    report['summary'] = summarize(report)
     (args.output / 'report.json').write_text(json.dumps(report, indent=2) + '\n')
 
 

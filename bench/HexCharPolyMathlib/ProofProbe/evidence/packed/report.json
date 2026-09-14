@@ -22,14 +22,22 @@
     "schedule": "trial-major, adjacent arm pairs with alternating AB/BA order",
     "policy": "Retain all completed samples and timeouts; unmet targets are documented rather than blocking publication.",
     "timeout_policy": "Record the first timeout for an arm/dimension and skip its later pairs; never discard a completed sample.",
-    "profiling": "All paired samples use Lean profiler; kernel_s is the reported type checking total."
+    "profiling": "All paired samples use Lean profiler; kernel_s is the reported type checking total.",
+    "censored_references": [
+      {
+        "n": 32,
+        "arm": "Original",
+        "evidence": "bench/HexCharPolyMathlib/ProofProbe/evidence/packed/cached-report.json",
+        "reason": "The identical frozen original frontend already reached the 300-second wall timeout; do not repeat the censored arm."
+      }
+    ]
   },
   "host": "chungus2",
-  "cpu": 64,
+  "cpu": 92,
   "initial_load": [
-    4.4521484375,
-    7.8994140625,
-    10.033203125
+    8.24560546875,
+    11.71240234375,
+    11.50390625
   ],
   "samples": [
     {
@@ -38,14 +46,20 @@
       "n": 4,
       "arm": "Packed",
       "exit": 0,
-      "wall_s": 2.82732841395773,
+      "wall_s": 2.774005790008232,
       "load": [
-        4.576171875,
-        7.86767578125,
-        10.01123046875
+        8.54638671875,
+        11.71728515625,
+        11.5068359375
       ],
-      "kernel_s": 0.028100000000000003,
+      "kernel_s": 0.0175,
       "log": "0-4-Quoted-Packed.log",
+      "artifacts_bytes": {
+        ".olean": 28696,
+        ".hash": 16,
+        ".ilean": 1117,
+        ".trace": 4358
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -56,14 +70,20 @@
       "n": 4,
       "arm": "Quoted",
       "exit": 0,
-      "wall_s": 1.1188428750028834,
+      "wall_s": 1.118729644047562,
       "load": [
-        4.576171875,
-        7.86767578125,
-        10.01123046875
+        8.54638671875,
+        11.71728515625,
+        11.5068359375
       ],
-      "kernel_s": 0.008150000000000001,
+      "kernel_s": 0.00808,
       "log": "0-4-Quoted-Quoted.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".ilean": 3133,
+        ".trace": 3720,
+        ".olean": 18624
+      },
       "axioms": [
         "[propext]"
       ]
@@ -74,14 +94,20 @@
       "n": 4,
       "arm": "Packed",
       "exit": 0,
-      "wall_s": 2.9293204359710217,
+      "wall_s": 2.622108470997773,
       "load": [
-        4.52978515625,
-        7.80322265625,
-        9.978515625
+        8.34228515625,
+        11.6220703125,
+        11.47705078125
       ],
-      "kernel_s": 0.027899999999999998,
+      "kernel_s": 0.0152,
       "log": "0-4-Original-Packed.log",
+      "artifacts_bytes": {
+        ".olean": 28696,
+        ".hash": 16,
+        ".ilean": 1117,
+        ".trace": 4361
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -92,14 +118,20 @@
       "n": 4,
       "arm": "Original",
       "exit": 0,
-      "wall_s": 2.97678776999237,
+      "wall_s": 2.723513152974192,
       "load": [
-        4.52978515625,
-        7.80322265625,
-        9.978515625
+        8.34228515625,
+        11.6220703125,
+        11.47705078125
       ],
-      "kernel_s": 0.08170000000000001,
+      "kernel_s": 0.0494,
       "log": "0-4-Original-Original.log",
+      "artifacts_bytes": {
+        ".olean": 138488,
+        ".ilean": 1121,
+        ".hash": 16,
+        ".trace": 4439
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -110,14 +142,20 @@
       "n": 8,
       "arm": "Packed",
       "exit": 0,
-      "wall_s": 2.9725568179856054,
+      "wall_s": 2.7230099079897627,
       "load": [
-        4.56787109375,
-        7.75634765625,
-        9.95166015625
+        8.47509765625,
+        11.5947265625,
+        11.46875
       ],
-      "kernel_s": 0.12,
+      "kernel_s": 0.0695,
       "log": "0-8-Quoted-Packed.log",
+      "artifacts_bytes": {
+        ".trace": 4358,
+        ".olean": 83640,
+        ".ilean": 1117,
+        ".hash": 16
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -128,14 +166,20 @@
       "n": 8,
       "arm": "Quoted",
       "exit": 0,
-      "wall_s": 1.3182057740050368,
+      "wall_s": 1.317922702000942,
       "load": [
-        4.56787109375,
-        7.75634765625,
-        9.95166015625
+        8.47509765625,
+        11.5947265625,
+        11.46875
       ],
-      "kernel_s": 0.1,
+      "kernel_s": 0.0757,
       "log": "0-8-Quoted-Quoted.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".olean": 64584,
+        ".ilean": 8588,
+        ".trace": 3719
+      },
       "axioms": [
         "[propext]"
       ]
@@ -146,14 +190,20 @@
       "n": 8,
       "arm": "Packed",
       "exit": 0,
-      "wall_s": 2.971687078010291,
+      "wall_s": 2.6723829199909233,
       "load": [
-        4.52197265625,
-        7.69384765625,
-        9.91943359375
+        8.27685546875,
+        11.50146484375,
+        11.43896484375
       ],
-      "kernel_s": 0.121,
+      "kernel_s": 0.07440000000000001,
       "log": "0-8-Original-Packed.log",
+      "artifacts_bytes": {
+        ".trace": 4356,
+        ".olean": 83640,
+        ".ilean": 1117,
+        ".hash": 16
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -164,14 +214,20 @@
       "n": 8,
       "arm": "Original",
       "exit": 0,
-      "wall_s": 4.123989178973716,
+      "wall_s": 3.823057861009147,
       "load": [
-        4.560546875,
-        7.64892578125,
-        9.892578125
+        8.27685546875,
+        11.50146484375,
+        11.43896484375
       ],
-      "kernel_s": 0.895,
+      "kernel_s": 0.856,
       "log": "0-8-Original-Original.log",
+      "artifacts_bytes": {
+        ".olean": 1246752,
+        ".ilean": 1121,
+        ".hash": 16,
+        ".trace": 4431
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -182,426 +238,524 @@
       "n": 16,
       "arm": "Packed",
       "exit": 0,
-      "wall_s": 3.7228046269738115,
+      "wall_s": 3.3729673799825832,
       "load": [
-        4.560546875,
-        7.64892578125,
-        9.892578125
+        8.6552734375,
+        11.5263671875,
+        11.44775390625
+      ],
+      "kernel_s": 0.6,
+      "log": "0-16-Quoted-Packed.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".ilean": 1128,
+        ".trace": 4362,
+        ".olean": 445776
+      },
+      "axioms": [
+        "[propext, Classical.choice, Quot.sound]"
+      ]
+    },
+    {
+      "pair": "0-16-Quoted",
+      "trial": 0,
+      "n": 16,
+      "arm": "Quoted",
+      "exit": 0,
+      "wall_s": 4.927911142993253,
+      "load": [
+        8.4423828125,
+        11.4345703125,
+        11.41845703125
+      ],
+      "kernel_s": 1.69,
+      "log": "0-16-Quoted-Quoted.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".olean": 390816,
+        ".ilean": 45353,
+        ".trace": 3718
+      },
+      "axioms": [
+        "[propext]"
+      ]
+    },
+    {
+      "pair": "0-16-Original",
+      "trial": 0,
+      "n": 16,
+      "arm": "Packed",
+      "exit": 0,
+      "wall_s": 3.471553515002597,
+      "load": [
+        8.40673828125,
+        11.37744140625,
+        11.39990234375
+      ],
+      "kernel_s": 0.604,
+      "log": "0-16-Original-Packed.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".ilean": 1128,
+        ".trace": 4364,
+        ".olean": 445776
+      },
+      "axioms": [
+        "[propext, Classical.choice, Quot.sound]"
+      ]
+    },
+    {
+      "pair": "0-16-Original",
+      "trial": 0,
+      "n": 16,
+      "arm": "Original",
+      "exit": 0,
+      "wall_s": 29.673741060018074,
+      "load": [
+        8.29736328125,
+        11.06884765625,
+        11.294921875
+      ],
+      "kernel_s": 20.4,
+      "log": "0-16-Original-Original.log",
+      "artifacts_bytes": {
+        ".olean": 17610392,
+        ".ilean": 1132,
+        ".hash": 16,
+        ".trace": 4431
+      },
+      "axioms": [
+        "[propext, Classical.choice, Quot.sound]"
+      ]
+    },
+    {
+      "pair": "0-32-Quoted",
+      "trial": 0,
+      "n": 32,
+      "arm": "Packed",
+      "exit": 0,
+      "wall_s": 8.988419656991027,
+      "load": [
+        8.11328125,
+        10.984375,
+        11.26611328125
+      ],
+      "kernel_s": 5.35,
+      "log": "0-32-Quoted-Packed.log",
+      "artifacts_bytes": {
+        ".olean": 3150040,
+        ".ilean": 1128,
+        ".hash": 16,
+        ".trace": 4353
+      },
+      "axioms": [
+        "[propext, Classical.choice, Quot.sound]"
+      ]
+    },
+    {
+      "pair": "0-32-Quoted",
+      "trial": 0,
+      "n": 32,
+      "arm": "Quoted",
+      "exit": 0,
+      "wall_s": 66.89795422297902,
+      "load": [
+        8.03076171875,
+        10.39306640625,
+        11.041015625
+      ],
+      "kernel_s": 30.5,
+      "log": "0-32-Quoted-Quoted.log",
+      "artifacts_bytes": {
+        ".ilean": 330445,
+        ".trace": 3714,
+        ".olean": 2989976,
+        ".hash": 16
+      },
+      "axioms": [
+        "[propext]"
+      ]
+    },
+    {
+      "pair": "1-4-Quoted",
+      "trial": 1,
+      "n": 4,
+      "arm": "Quoted",
+      "exit": 0,
+      "wall_s": 1.166146881005261,
+      "load": [
+        8.03076171875,
+        10.39306640625,
+        11.041015625
+      ],
+      "kernel_s": 0.00838,
+      "log": "1-4-Quoted-Quoted.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".ilean": 3133,
+        ".trace": 3721,
+        ".olean": 18624
+      },
+      "axioms": [
+        "[propext]"
+      ]
+    },
+    {
+      "pair": "1-4-Quoted",
+      "trial": 1,
+      "n": 4,
+      "arm": "Packed",
+      "exit": 0,
+      "wall_s": 2.672135200991761,
+      "load": [
+        7.86767578125,
+        10.31982421875,
+        11.013671875
+      ],
+      "kernel_s": 0.0177,
+      "log": "1-4-Quoted-Packed.log",
+      "artifacts_bytes": {
+        ".olean": 28696,
+        ".hash": 16,
+        ".ilean": 1117,
+        ".trace": 4361
+      },
+      "axioms": [
+        "[propext, Classical.choice, Quot.sound]"
+      ]
+    },
+    {
+      "pair": "1-4-Original",
+      "trial": 1,
+      "n": 4,
+      "arm": "Original",
+      "exit": 0,
+      "wall_s": 2.673412575968541,
+      "load": [
+        7.86767578125,
+        10.31982421875,
+        11.013671875
+      ],
+      "kernel_s": 0.0511,
+      "log": "1-4-Original-Original.log",
+      "artifacts_bytes": {
+        ".olean": 138488,
+        ".ilean": 1121,
+        ".hash": 16,
+        ".trace": 4436
+      },
+      "axioms": [
+        "[propext, Classical.choice, Quot.sound]"
+      ]
+    },
+    {
+      "pair": "1-4-Original",
+      "trial": 1,
+      "n": 4,
+      "arm": "Packed",
+      "exit": 0,
+      "wall_s": 2.670350566972047,
+      "load": [
+        8.11865234375,
+        10.33154296875,
+        11.01318359375
+      ],
+      "kernel_s": 0.0172,
+      "log": "1-4-Original-Packed.log",
+      "artifacts_bytes": {
+        ".olean": 28696,
+        ".hash": 16,
+        ".ilean": 1117,
+        ".trace": 4355
+      },
+      "axioms": [
+        "[propext, Classical.choice, Quot.sound]"
+      ]
+    },
+    {
+      "pair": "1-8-Quoted",
+      "trial": 1,
+      "n": 8,
+      "arm": "Quoted",
+      "exit": 0,
+      "wall_s": 1.3686552389990538,
+      "load": [
+        8.11865234375,
+        10.33154296875,
+        11.01318359375
+      ],
+      "kernel_s": 0.0846,
+      "log": "1-8-Quoted-Quoted.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".olean": 64584,
+        ".ilean": 8588,
+        ".trace": 3720
+      },
+      "axioms": [
+        "[propext]"
+      ]
+    },
+    {
+      "pair": "1-8-Quoted",
+      "trial": 1,
+      "n": 8,
+      "arm": "Packed",
+      "exit": 0,
+      "wall_s": 2.7735031319898553,
+      "load": [
+        8.11865234375,
+        10.33154296875,
+        11.01318359375
+      ],
+      "kernel_s": 0.07840000000000001,
+      "log": "1-8-Quoted-Packed.log",
+      "artifacts_bytes": {
+        ".trace": 4354,
+        ".hash": 16,
+        ".ilean": 1117,
+        ".olean": 83640
+      },
+      "axioms": [
+        "[propext, Classical.choice, Quot.sound]"
+      ]
+    },
+    {
+      "pair": "1-8-Original",
+      "trial": 1,
+      "n": 8,
+      "arm": "Original",
+      "exit": 0,
+      "wall_s": 3.8756264289841056,
+      "load": [
+        7.94873046875,
+        10.25927734375,
+        10.98583984375
       ],
       "kernel_s": 0.86,
-      "log": "0-16-Quoted-Packed.log",
+      "log": "1-8-Original-Original.log",
+      "artifacts_bytes": {
+        ".olean": 1246752,
+        ".ilean": 1121,
+        ".hash": 16,
+        ".trace": 4434
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
     },
     {
-      "pair": "0-16-Quoted",
-      "trial": 0,
-      "n": 16,
-      "arm": "Quoted",
-      "exit": 0,
-      "wall_s": 5.024184278969187,
-      "load": [
-        4.515625,
-        7.587890625,
-        9.86083984375
-      ],
-      "kernel_s": 1.82,
-      "log": "0-16-Quoted-Quoted.log",
-      "axioms": [
-        "[propext]"
-      ]
-    },
-    {
-      "pair": "0-16-Original",
-      "trial": 0,
-      "n": 16,
-      "arm": "Packed",
-      "exit": 0,
-      "wall_s": 3.22032110998407,
-      "load": [
-        4.71484375,
-        7.578125,
-        9.84521484375
-      ],
-      "kernel_s": 0.546,
-      "log": "0-16-Original-Packed.log",
-      "axioms": [
-        "[propext, Classical.choice, Quot.sound]"
-      ]
-    },
-    {
-      "pair": "0-16-Original",
-      "trial": 0,
-      "n": 16,
-      "arm": "Original",
-      "exit": 0,
-      "wall_s": 33.18590541899903,
-      "load": [
-        5.55859375,
-        7.4794921875,
-        9.72802734375
-      ],
-      "kernel_s": 24.5,
-      "log": "0-16-Original-Original.log",
-      "axioms": [
-        "[propext, Classical.choice, Quot.sound]"
-      ]
-    },
-    {
-      "pair": "0-32-Quoted",
-      "trial": 0,
-      "n": 32,
-      "arm": "Packed",
-      "exit": 0,
-      "wall_s": 8.533447977970354,
-      "load": [
-        5.43359375,
-        7.42138671875,
-        9.69677734375
-      ],
-      "kernel_s": 5.06,
-      "log": "0-32-Quoted-Packed.log",
-      "axioms": [
-        "[propext, Classical.choice, Quot.sound]"
-      ]
-    },
-    {
-      "pair": "0-32-Quoted",
-      "trial": 0,
-      "n": 32,
-      "arm": "Quoted",
-      "exit": 0,
-      "wall_s": 66.48546914098551,
-      "load": [
-        4.779296875,
-        6.794921875,
-        9.31103515625
-      ],
-      "kernel_s": 32.6,
-      "log": "0-32-Quoted-Quoted.log",
-      "axioms": [
-        "[propext]"
-      ]
-    },
-    {
-      "pair": "0-32-Original",
-      "trial": 0,
-      "n": 32,
-      "arm": "Packed",
-      "exit": 0,
-      "wall_s": 8.231179079040885,
-      "load": [
-        4.716796875,
-        6.748046875,
-        9.2822265625
-      ],
-      "kernel_s": 4.75,
-      "log": "0-32-Original-Packed.log",
-      "axioms": [
-        "[propext, Classical.choice, Quot.sound]"
-      ]
-    },
-    {
-      "pair": "0-32-Original",
-      "trial": 0,
-      "n": 32,
-      "arm": "Original",
-      "exit": "timeout",
-      "wall_s": 300.0552569309948,
-      "load": [
-        5.82666015625,
-        6.2568359375,
-        8.35009765625
-      ],
-      "kernel_s": null,
-      "log": "0-32-Original-Original.log",
-      "axioms": []
-    },
-    {
-      "pair": "1-4-Quoted",
+      "pair": "1-8-Original",
       "trial": 1,
+      "n": 8,
+      "arm": "Packed",
+      "exit": 0,
+      "wall_s": 2.7224409990012646,
+      "load": [
+        7.71240234375,
+        10.171875,
+        10.95361328125
+      ],
+      "kernel_s": 0.0848,
+      "log": "1-8-Original-Packed.log",
+      "artifacts_bytes": {
+        ".trace": 4358,
+        ".hash": 16,
+        ".ilean": 1117,
+        ".olean": 83640
+      },
+      "axioms": [
+        "[propext, Classical.choice, Quot.sound]"
+      ]
+    },
+    {
+      "pair": "1-16-Quoted",
+      "trial": 1,
+      "n": 16,
+      "arm": "Quoted",
+      "exit": 0,
+      "wall_s": 4.726639973989222,
+      "load": [
+        7.5751953125,
+        10.1025390625,
+        10.9267578125
+      ],
+      "kernel_s": 1.66,
+      "log": "1-16-Quoted-Quoted.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".olean": 390816,
+        ".ilean": 45353,
+        ".trace": 3720
+      },
+      "axioms": [
+        "[propext]"
+      ]
+    },
+    {
+      "pair": "1-16-Quoted",
+      "trial": 1,
+      "n": 16,
+      "arm": "Packed",
+      "exit": 0,
+      "wall_s": 3.3716698499629274,
+      "load": [
+        7.5751953125,
+        10.1025390625,
+        10.9267578125
+      ],
+      "kernel_s": 0.579,
+      "log": "1-16-Quoted-Packed.log",
+      "artifacts_bytes": {
+        ".trace": 4361,
+        ".ilean": 1128,
+        ".hash": 16,
+        ".olean": 445776
+      },
+      "axioms": [
+        "[propext, Classical.choice, Quot.sound]"
+      ]
+    },
+    {
+      "pair": "1-16-Original",
+      "trial": 1,
+      "n": 16,
+      "arm": "Original",
+      "exit": 0,
+      "wall_s": 29.876179569982924,
+      "load": [
+        7.1259765625,
+        9.755859375,
+        10.78466796875
+      ],
+      "kernel_s": 20.6,
+      "log": "1-16-Original-Original.log",
+      "artifacts_bytes": {
+        ".olean": 17610392,
+        ".ilean": 1132,
+        ".hash": 16,
+        ".trace": 4432
+      },
+      "axioms": [
+        "[propext, Classical.choice, Quot.sound]"
+      ]
+    },
+    {
+      "pair": "1-16-Original",
+      "trial": 1,
+      "n": 16,
+      "arm": "Packed",
+      "exit": 0,
+      "wall_s": 3.3726246070000343,
+      "load": [
+        7.1962890625,
+        9.7265625,
+        10.76953125
+      ],
+      "kernel_s": 0.629,
+      "log": "1-16-Original-Packed.log",
+      "artifacts_bytes": {
+        ".trace": 4359,
+        ".ilean": 1128,
+        ".hash": 16,
+        ".olean": 445776
+      },
+      "axioms": [
+        "[propext, Classical.choice, Quot.sound]"
+      ]
+    },
+    {
+      "pair": "1-32-Quoted",
+      "trial": 1,
+      "n": 32,
+      "arm": "Quoted",
+      "exit": 0,
+      "wall_s": 66.54851737199351,
+      "load": [
+        7.09912109375,
+        9.20458984375,
+        10.5166015625
+      ],
+      "kernel_s": 30.4,
+      "log": "1-32-Quoted-Quoted.log",
+      "artifacts_bytes": {
+        ".ilean": 330445,
+        ".trace": 3714,
+        ".olean": 2989976,
+        ".hash": 16
+      },
+      "axioms": [
+        "[propext]"
+      ]
+    },
+    {
+      "pair": "1-32-Quoted",
+      "trial": 1,
+      "n": 32,
+      "arm": "Packed",
+      "exit": 0,
+      "wall_s": 9.089735764020588,
+      "load": [
+        7.0771484375,
+        9.13134765625,
+        10.478515625
+      ],
+      "kernel_s": 5.37,
+      "log": "1-32-Quoted-Packed.log",
+      "artifacts_bytes": {
+        ".olean": 3150040,
+        ".ilean": 1128,
+        ".hash": 16,
+        ".trace": 4357
+      },
+      "axioms": [
+        "[propext, Classical.choice, Quot.sound]"
+      ]
+    },
+    {
+      "pair": "2-4-Quoted",
+      "trial": 2,
+      "n": 4,
+      "arm": "Packed",
+      "exit": 0,
+      "wall_s": 2.7201293890248053,
+      "load": [
+        6.99072265625,
+        9.0791015625,
+        10.4541015625
+      ],
+      "kernel_s": 0.016100000000000003,
+      "log": "2-4-Quoted-Packed.log",
+      "artifacts_bytes": {
+        ".ilean": 1117,
+        ".hash": 16,
+        ".olean": 28696,
+        ".trace": 4358
+      },
+      "axioms": [
+        "[propext, Classical.choice, Quot.sound]"
+      ]
+    },
+    {
+      "pair": "2-4-Quoted",
+      "trial": 2,
       "n": 4,
       "arm": "Quoted",
       "exit": 0,
-      "wall_s": 1.2700238790130243,
+      "wall_s": 1.1680150050087832,
       "load": [
-        5.68017578125,
-        6.21923828125,
-        8.32666015625
+        6.99072265625,
+        9.0791015625,
+        10.4541015625
       ],
       "kernel_s": 0.008369999999999999,
-      "log": "1-4-Quoted-Quoted.log",
-      "axioms": [
-        "[propext]"
-      ]
-    },
-    {
-      "pair": "1-4-Quoted",
-      "trial": 1,
-      "n": 4,
-      "arm": "Packed",
-      "exit": 0,
-      "wall_s": 2.7723749229917303,
-      "load": [
-        5.68017578125,
-        6.21923828125,
-        8.32666015625
-      ],
-      "kernel_s": 0.0162,
-      "log": "1-4-Quoted-Packed.log",
-      "axioms": [
-        "[propext, Classical.choice, Quot.sound]"
-      ]
-    },
-    {
-      "pair": "1-4-Original",
-      "trial": 1,
-      "n": 4,
-      "arm": "Original",
-      "exit": 0,
-      "wall_s": 2.6205473780282773,
-      "load": [
-        5.7060546875,
-        6.21533203125,
-        8.31396484375
-      ],
-      "kernel_s": 0.045200000000000004,
-      "log": "1-4-Original-Original.log",
-      "axioms": [
-        "[propext, Classical.choice, Quot.sound]"
-      ]
-    },
-    {
-      "pair": "1-4-Original",
-      "trial": 1,
-      "n": 4,
-      "arm": "Packed",
-      "exit": 0,
-      "wall_s": 2.57009786402341,
-      "load": [
-        5.7060546875,
-        6.21533203125,
-        8.31396484375
-      ],
-      "kernel_s": 0.0157,
-      "log": "1-4-Original-Packed.log",
-      "axioms": [
-        "[propext, Classical.choice, Quot.sound]"
-      ]
-    },
-    {
-      "pair": "1-8-Quoted",
-      "trial": 1,
-      "n": 8,
-      "arm": "Quoted",
-      "exit": 0,
-      "wall_s": 1.3186762660043314,
-      "load": [
-        5.7060546875,
-        6.21533203125,
-        8.31396484375
-      ],
-      "kernel_s": 0.0689,
-      "log": "1-8-Quoted-Quoted.log",
-      "axioms": [
-        "[propext]"
-      ]
-    },
-    {
-      "pair": "1-8-Quoted",
-      "trial": 1,
-      "n": 8,
-      "arm": "Packed",
-      "exit": 0,
-      "wall_s": 2.6208484639646485,
-      "load": [
-        5.81005859375,
-        6.228515625,
-        8.306640625
-      ],
-      "kernel_s": 0.06720000000000001,
-      "log": "1-8-Quoted-Packed.log",
-      "axioms": [
-        "[propext, Classical.choice, Quot.sound]"
-      ]
-    },
-    {
-      "pair": "1-8-Original",
-      "trial": 1,
-      "n": 8,
-      "arm": "Original",
-      "exit": 0,
-      "wall_s": 4.027672031021211,
-      "load": [
-        5.7451171875,
-        6.2080078125,
-        8.28857421875
-      ],
-      "kernel_s": 1.1,
-      "log": "1-8-Original-Original.log",
-      "axioms": [
-        "[propext, Classical.choice, Quot.sound]"
-      ]
-    },
-    {
-      "pair": "1-8-Original",
-      "trial": 1,
-      "n": 8,
-      "arm": "Packed",
-      "exit": 0,
-      "wall_s": 2.670680164999794,
-      "load": [
-        5.7451171875,
-        6.2080078125,
-        8.28857421875
-      ],
-      "kernel_s": 0.084,
-      "log": "1-8-Original-Packed.log",
-      "axioms": [
-        "[propext, Classical.choice, Quot.sound]"
-      ]
-    },
-    {
-      "pair": "1-16-Quoted",
-      "trial": 1,
-      "n": 16,
-      "arm": "Quoted",
-      "exit": 0,
-      "wall_s": 4.725267877976876,
-      "load": [
-        5.765625,
-        6.2041015625,
-        8.27587890625
-      ],
-      "kernel_s": 1.72,
-      "log": "1-16-Quoted-Quoted.log",
-      "axioms": [
-        "[propext]"
-      ]
-    },
-    {
-      "pair": "1-16-Quoted",
-      "trial": 1,
-      "n": 16,
-      "arm": "Packed",
-      "exit": 0,
-      "wall_s": 3.7291242540231906,
-      "load": [
-        5.78466796875,
-        6.20068359375,
-        8.26318359375
-      ],
-      "kernel_s": 0.8210000000000001,
-      "log": "1-16-Quoted-Packed.log",
-      "axioms": [
-        "[propext, Classical.choice, Quot.sound]"
-      ]
-    },
-    {
-      "pair": "1-16-Original",
-      "trial": 1,
-      "n": 16,
-      "arm": "Original",
-      "exit": 0,
-      "wall_s": 35.091666334017646,
-      "load": [
-        5.5087890625,
-        6.09521484375,
-        8.1513671875
-      ],
-      "kernel_s": 25.6,
-      "log": "1-16-Original-Original.log",
-      "axioms": [
-        "[propext, Classical.choice, Quot.sound]"
-      ]
-    },
-    {
-      "pair": "1-16-Original",
-      "trial": 1,
-      "n": 16,
-      "arm": "Packed",
-      "exit": 0,
-      "wall_s": 3.2221478479914367,
-      "load": [
-        5.3876953125,
-        6.06005859375,
-        8.12890625
-      ],
-      "kernel_s": 0.524,
-      "log": "1-16-Original-Packed.log",
-      "axioms": [
-        "[propext, Classical.choice, Quot.sound]"
-      ]
-    },
-    {
-      "pair": "1-32-Quoted",
-      "trial": 1,
-      "n": 32,
-      "arm": "Quoted",
-      "exit": 0,
-      "wall_s": 68.0905260219588,
-      "load": [
-        5.35986328125,
-        5.9013671875,
-        7.93017578125
-      ],
-      "kernel_s": 33.7,
-      "log": "1-32-Quoted-Quoted.log",
-      "axioms": [
-        "[propext]"
-      ]
-    },
-    {
-      "pair": "1-32-Quoted",
-      "trial": 1,
-      "n": 32,
-      "arm": "Packed",
-      "exit": 0,
-      "wall_s": 8.332110424991697,
-      "load": [
-        5.310546875,
-        5.8720703125,
-        7.8984375
-      ],
-      "kernel_s": 4.77,
-      "log": "1-32-Quoted-Packed.log",
-      "axioms": [
-        "[propext, Classical.choice, Quot.sound]"
-      ]
-    },
-    {
-      "pair": "2-4-Quoted",
-      "trial": 2,
-      "n": 4,
-      "arm": "Packed",
-      "exit": 0,
-      "wall_s": 2.623018094978761,
-      "load": [
-        5.310546875,
-        5.8720703125,
-        7.8984375
-      ],
-      "kernel_s": 0.0162,
-      "log": "2-4-Quoted-Packed.log",
-      "axioms": [
-        "[propext, Classical.choice, Quot.sound]"
-      ]
-    },
-    {
-      "pair": "2-4-Quoted",
-      "trial": 2,
-      "n": 4,
-      "arm": "Quoted",
-      "exit": 0,
-      "wall_s": 1.1180555779719725,
-      "load": [
-        5.20556640625,
-        5.8408203125,
-        7.87744140625
-      ],
-      "kernel_s": 0.008220000000000002,
       "log": "2-4-Quoted-Quoted.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".ilean": 3133,
+        ".trace": 3719,
+        ".olean": 18624
+      },
       "axioms": [
         "[propext]"
       ]
@@ -612,14 +766,20 @@
       "n": 4,
       "arm": "Packed",
       "exit": 0,
-      "wall_s": 2.6237517789704725,
+      "wall_s": 2.669990273017902,
       "load": [
-        5.20556640625,
-        5.8408203125,
-        7.87744140625
+        6.99072265625,
+        9.0791015625,
+        10.4541015625
       ],
-      "kernel_s": 0.016,
+      "kernel_s": 0.0152,
       "log": "2-4-Original-Packed.log",
+      "artifacts_bytes": {
+        ".ilean": 1117,
+        ".hash": 16,
+        ".olean": 28696,
+        ".trace": 4356
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -630,248 +790,332 @@
       "n": 4,
       "arm": "Original",
       "exit": 0,
-      "wall_s": 2.6709783200058155,
+      "wall_s": 2.671255580964498,
       "load": [
-        5.18896484375,
-        5.82666015625,
-        7.86181640625
-      ],
-      "kernel_s": 0.044700000000000004,
-      "log": "2-4-Original-Original.log",
-      "axioms": [
-        "[propext, Classical.choice, Quot.sound]"
-      ]
-    },
-    {
-      "pair": "2-8-Quoted",
-      "trial": 2,
-      "n": 8,
-      "arm": "Packed",
-      "exit": 0,
-      "wall_s": 2.6218075070064515,
-      "load": [
-        5.18896484375,
-        5.82666015625,
-        7.86181640625
-      ],
-      "kernel_s": 0.0685,
-      "log": "2-8-Quoted-Packed.log",
-      "axioms": [
-        "[propext, Classical.choice, Quot.sound]"
-      ]
-    },
-    {
-      "pair": "2-8-Quoted",
-      "trial": 2,
-      "n": 8,
-      "arm": "Quoted",
-      "exit": 0,
-      "wall_s": 1.3178937369957566,
-      "load": [
-        5.18896484375,
-        5.82666015625,
-        7.86181640625
-      ],
-      "kernel_s": 0.0658,
-      "log": "2-8-Quoted-Quoted.log",
-      "axioms": [
-        "[propext]"
-      ]
-    },
-    {
-      "pair": "2-8-Original",
-      "trial": 2,
-      "n": 8,
-      "arm": "Packed",
-      "exit": 0,
-      "wall_s": 2.6191515629761852,
-      "load": [
-        5.173828125,
-        5.8125,
-        7.84619140625
-      ],
-      "kernel_s": 0.0664,
-      "log": "2-8-Original-Packed.log",
-      "axioms": [
-        "[propext, Classical.choice, Quot.sound]"
-      ]
-    },
-    {
-      "pair": "2-8-Original",
-      "trial": 2,
-      "n": 8,
-      "arm": "Original",
-      "exit": 0,
-      "wall_s": 3.625242782989517,
-      "load": [
-        5.240234375,
-        5.81591796875,
-        7.8359375
-      ],
-      "kernel_s": 0.722,
-      "log": "2-8-Original-Original.log",
-      "axioms": [
-        "[propext, Classical.choice, Quot.sound]"
-      ]
-    },
-    {
-      "pair": "2-16-Quoted",
-      "trial": 2,
-      "n": 16,
-      "arm": "Packed",
-      "exit": 0,
-      "wall_s": 3.2236250509740785,
-      "load": [
-        5.240234375,
-        5.81591796875,
-        7.8359375
-      ],
-      "kernel_s": 0.528,
-      "log": "2-16-Quoted-Packed.log",
-      "axioms": [
-        "[propext, Classical.choice, Quot.sound]"
-      ]
-    },
-    {
-      "pair": "2-16-Quoted",
-      "trial": 2,
-      "n": 16,
-      "arm": "Quoted",
-      "exit": 0,
-      "wall_s": 4.422801212000195,
-      "load": [
-        5.140625,
-        5.78564453125,
-        7.81494140625
-      ],
-      "kernel_s": 1.49,
-      "log": "2-16-Quoted-Quoted.log",
-      "axioms": [
-        "[propext]"
-      ]
-    },
-    {
-      "pair": "2-16-Original",
-      "trial": 2,
-      "n": 16,
-      "arm": "Packed",
-      "exit": 0,
-      "wall_s": 3.2207024340168573,
-      "load": [
-        5.048828125,
-        5.755859375,
-        7.79443359375
-      ],
-      "kernel_s": 0.526,
-      "log": "2-16-Original-Packed.log",
-      "axioms": [
-        "[propext, Classical.choice, Quot.sound]"
-      ]
-    },
-    {
-      "pair": "2-16-Original",
-      "trial": 2,
-      "n": 16,
-      "arm": "Original",
-      "exit": 0,
-      "wall_s": 31.28071489901049,
-      "load": [
-        4.76611328125,
-        5.61865234375,
-        7.68310546875
-      ],
-      "kernel_s": 22.7,
-      "log": "2-16-Original-Original.log",
-      "axioms": [
-        "[propext, Classical.choice, Quot.sound]"
-      ]
-    },
-    {
-      "pair": "2-32-Quoted",
-      "trial": 2,
-      "n": 32,
-      "arm": "Packed",
-      "exit": 0,
-      "wall_s": 8.281715970020741,
-      "load": [
-        4.728515625,
-        5.5810546875,
-        7.6484375
-      ],
-      "kernel_s": 4.76,
-      "log": "2-32-Quoted-Packed.log",
-      "axioms": [
-        "[propext, Classical.choice, Quot.sound]"
-      ]
-    },
-    {
-      "pair": "2-32-Quoted",
-      "trial": 2,
-      "n": 32,
-      "arm": "Quoted",
-      "exit": 0,
-      "wall_s": 65.07422930700704,
-      "load": [
-        5.09228515625,
-        5.48828125,
-        7.47265625
-      ],
-      "kernel_s": 31.4,
-      "log": "2-32-Quoted-Quoted.log",
-      "axioms": [
-        "[propext]"
-      ]
-    },
-    {
-      "pair": "3-4-Quoted",
-      "trial": 3,
-      "n": 4,
-      "arm": "Quoted",
-      "exit": 0,
-      "wall_s": 1.1181820199708454,
-      "load": [
-        5.09228515625,
-        5.48828125,
-        7.47265625
-      ],
-      "kernel_s": 0.00826,
-      "log": "3-4-Quoted-Quoted.log",
-      "axioms": [
-        "[propext]"
-      ]
-    },
-    {
-      "pair": "3-4-Quoted",
-      "trial": 3,
-      "n": 4,
-      "arm": "Packed",
-      "exit": 0,
-      "wall_s": 2.523405752959661,
-      "load": [
-        5.08447265625,
-        5.47998046875,
-        7.458984375
-      ],
-      "kernel_s": 0.0166,
-      "log": "3-4-Quoted-Packed.log",
-      "axioms": [
-        "[propext, Classical.choice, Quot.sound]"
-      ]
-    },
-    {
-      "pair": "3-4-Original",
-      "trial": 3,
-      "n": 4,
-      "arm": "Original",
-      "exit": 0,
-      "wall_s": 2.6218585569877177,
-      "load": [
-        5.08447265625,
-        5.47998046875,
-        7.458984375
+        7.55224609375,
+        9.1611328125,
+        10.4736328125
       ],
       "kernel_s": 0.045,
+      "log": "2-4-Original-Original.log",
+      "artifacts_bytes": {
+        ".olean": 138488,
+        ".ilean": 1121,
+        ".hash": 16,
+        ".trace": 4434
+      },
+      "axioms": [
+        "[propext, Classical.choice, Quot.sound]"
+      ]
+    },
+    {
+      "pair": "2-8-Quoted",
+      "trial": 2,
+      "n": 8,
+      "arm": "Packed",
+      "exit": 0,
+      "wall_s": 2.7205175569979474,
+      "load": [
+        7.74853515625,
+        9.17529296875,
+        10.470703125
+      ],
+      "kernel_s": 0.067,
+      "log": "2-8-Quoted-Packed.log",
+      "artifacts_bytes": {
+        ".trace": 4357,
+        ".hash": 16,
+        ".ilean": 1117,
+        ".olean": 83640
+      },
+      "axioms": [
+        "[propext, Classical.choice, Quot.sound]"
+      ]
+    },
+    {
+      "pair": "2-8-Quoted",
+      "trial": 2,
+      "n": 8,
+      "arm": "Quoted",
+      "exit": 0,
+      "wall_s": 1.3190683369757608,
+      "load": [
+        7.74853515625,
+        9.17529296875,
+        10.470703125
+      ],
+      "kernel_s": 0.085,
+      "log": "2-8-Quoted-Quoted.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".olean": 64584,
+        ".ilean": 8588,
+        ".trace": 3716
+      },
+      "axioms": [
+        "[propext]"
+      ]
+    },
+    {
+      "pair": "2-8-Original",
+      "trial": 2,
+      "n": 8,
+      "arm": "Packed",
+      "exit": 0,
+      "wall_s": 2.7716419349890202,
+      "load": [
+        7.74853515625,
+        9.17529296875,
+        10.470703125
+      ],
+      "kernel_s": 0.0808,
+      "log": "2-8-Original-Packed.log",
+      "artifacts_bytes": {
+        ".trace": 4358,
+        ".hash": 16,
+        ".ilean": 1117,
+        ".olean": 83640
+      },
+      "axioms": [
+        "[propext, Classical.choice, Quot.sound]"
+      ]
+    },
+    {
+      "pair": "2-8-Original",
+      "trial": 2,
+      "n": 8,
+      "arm": "Original",
+      "exit": 0,
+      "wall_s": 3.877661181963049,
+      "load": [
+        7.84912109375,
+        9.17236328125,
+        10.46240234375
+      ],
+      "kernel_s": 0.863,
+      "log": "2-8-Original-Original.log",
+      "artifacts_bytes": {
+        ".olean": 1246752,
+        ".ilean": 1121,
+        ".hash": 16,
+        ".trace": 4429
+      },
+      "axioms": [
+        "[propext, Classical.choice, Quot.sound]"
+      ]
+    },
+    {
+      "pair": "2-16-Quoted",
+      "trial": 2,
+      "n": 16,
+      "arm": "Packed",
+      "exit": 0,
+      "wall_s": 3.3237799869966693,
+      "load": [
+        7.70068359375,
+        9.11962890625,
+        10.43798828125
+      ],
+      "kernel_s": 0.5680000000000001,
+      "log": "2-16-Quoted-Packed.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".trace": 4363,
+        ".olean": 445776,
+        ".ilean": 1128
+      },
+      "axioms": [
+        "[propext, Classical.choice, Quot.sound]"
+      ]
+    },
+    {
+      "pair": "2-16-Quoted",
+      "trial": 2,
+      "n": 16,
+      "arm": "Quoted",
+      "exit": 0,
+      "wall_s": 4.775351740943734,
+      "load": [
+        7.80517578125,
+        9.1171875,
+        10.43017578125
+      ],
+      "kernel_s": 1.61,
+      "log": "2-16-Quoted-Quoted.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".olean": 390816,
+        ".ilean": 45353,
+        ".trace": 3721
+      },
+      "axioms": [
+        "[propext]"
+      ]
+    },
+    {
+      "pair": "2-16-Original",
+      "trial": 2,
+      "n": 16,
+      "arm": "Packed",
+      "exit": 0,
+      "wall_s": 3.428547860006802,
+      "load": [
+        7.80517578125,
+        9.1171875,
+        10.43017578125
+      ],
+      "kernel_s": 0.635,
+      "log": "2-16-Original-Packed.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".trace": 4364,
+        ".olean": 445776,
+        ".ilean": 1128
+      },
+      "axioms": [
+        "[propext, Classical.choice, Quot.sound]"
+      ]
+    },
+    {
+      "pair": "2-16-Original",
+      "trial": 2,
+      "n": 16,
+      "arm": "Original",
+      "exit": 0,
+      "wall_s": 29.677807185973506,
+      "load": [
+        8.00390625,
+        9.0283203125,
+        10.357421875
+      ],
+      "kernel_s": 20.5,
+      "log": "2-16-Original-Original.log",
+      "artifacts_bytes": {
+        ".olean": 17610392,
+        ".ilean": 1132,
+        ".hash": 16,
+        ".trace": 4431
+      },
+      "axioms": [
+        "[propext, Classical.choice, Quot.sound]"
+      ]
+    },
+    {
+      "pair": "2-32-Quoted",
+      "trial": 2,
+      "n": 32,
+      "arm": "Packed",
+      "exit": 0,
+      "wall_s": 8.941010441980325,
+      "load": [
+        7.76904296875,
+        8.94482421875,
+        10.31591796875
+      ],
+      "kernel_s": 5.32,
+      "log": "2-32-Quoted-Packed.log",
+      "artifacts_bytes": {
+        ".olean": 3150040,
+        ".ilean": 1128,
+        ".hash": 16,
+        ".trace": 4358
+      },
+      "axioms": [
+        "[propext, Classical.choice, Quot.sound]"
+      ]
+    },
+    {
+      "pair": "2-32-Quoted",
+      "trial": 2,
+      "n": 32,
+      "arm": "Quoted",
+      "exit": 0,
+      "wall_s": 66.90542813000502,
+      "load": [
+        6.9208984375,
+        8.46826171875,
+        10.05029296875
+      ],
+      "kernel_s": 30.8,
+      "log": "2-32-Quoted-Quoted.log",
+      "artifacts_bytes": {
+        ".ilean": 330445,
+        ".trace": 3711,
+        ".olean": 2989976,
+        ".hash": 16
+      },
+      "axioms": [
+        "[propext]"
+      ]
+    },
+    {
+      "pair": "3-4-Quoted",
+      "trial": 3,
+      "n": 4,
+      "arm": "Quoted",
+      "exit": 0,
+      "wall_s": 1.1168254219810478,
+      "load": [
+        6.9208984375,
+        8.46826171875,
+        10.05029296875
+      ],
+      "kernel_s": 0.008480000000000001,
+      "log": "3-4-Quoted-Quoted.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".ilean": 3133,
+        ".trace": 3719,
+        ".olean": 18624
+      },
+      "axioms": [
+        "[propext]"
+      ]
+    },
+    {
+      "pair": "3-4-Quoted",
+      "trial": 3,
+      "n": 4,
+      "arm": "Packed",
+      "exit": 0,
+      "wall_s": 2.670398612972349,
+      "load": [
+        6.9208984375,
+        8.46826171875,
+        10.05029296875
+      ],
+      "kernel_s": 0.016399999999999998,
+      "log": "3-4-Quoted-Packed.log",
+      "artifacts_bytes": {
+        ".trace": 4360,
+        ".olean": 28696,
+        ".hash": 16,
+        ".ilean": 1117
+      },
+      "axioms": [
+        "[propext, Classical.choice, Quot.sound]"
+      ]
+    },
+    {
+      "pair": "3-4-Original",
+      "trial": 3,
+      "n": 4,
+      "arm": "Original",
+      "exit": 0,
+      "wall_s": 2.771304477995727,
+      "load": [
+        7.00732421875,
+        8.46044921875,
+        10.0390625
+      ],
+      "kernel_s": 0.052000000000000005,
       "log": "3-4-Original-Original.log",
+      "artifacts_bytes": {
+        ".olean": 138488,
+        ".ilean": 1121,
+        ".hash": 16,
+        ".trace": 4434
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -882,14 +1126,20 @@
       "n": 4,
       "arm": "Packed",
       "exit": 0,
-      "wall_s": 2.519269672979135,
+      "wall_s": 2.670298526005354,
       "load": [
-        5.07763671875,
-        5.4716796875,
-        7.4453125
+        7.00732421875,
+        8.46044921875,
+        10.0390625
       ],
-      "kernel_s": 0.0158,
+      "kernel_s": 0.0178,
       "log": "3-4-Original-Packed.log",
+      "artifacts_bytes": {
+        ".trace": 4360,
+        ".olean": 28696,
+        ".hash": 16,
+        ".ilean": 1117
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -900,14 +1150,20 @@
       "n": 8,
       "arm": "Quoted",
       "exit": 0,
-      "wall_s": 1.3197782679926604,
+      "wall_s": 1.319216889969539,
       "load": [
-        5.07763671875,
-        5.4716796875,
-        7.4453125
+        7.0869140625,
+        8.45263671875,
+        10.02783203125
       ],
-      "kernel_s": 0.06659999999999999,
+      "kernel_s": 0.078,
       "log": "3-8-Quoted-Quoted.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".olean": 64584,
+        ".ilean": 8588,
+        ".trace": 3716
+      },
       "axioms": [
         "[propext]"
       ]
@@ -918,14 +1174,20 @@
       "n": 8,
       "arm": "Packed",
       "exit": 0,
-      "wall_s": 2.671192688983865,
+      "wall_s": 2.722119798010681,
       "load": [
-        5.07763671875,
-        5.4716796875,
-        7.4453125
+        7.0869140625,
+        8.45263671875,
+        10.02783203125
       ],
-      "kernel_s": 0.0678,
+      "kernel_s": 0.0721,
       "log": "3-8-Quoted-Packed.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".trace": 4358,
+        ".ilean": 1117,
+        ".olean": 83640
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -936,14 +1198,20 @@
       "n": 8,
       "arm": "Original",
       "exit": 0,
-      "wall_s": 3.573112535988912,
+      "wall_s": 3.724308523000218,
       "load": [
-        5.15185546875,
-        5.48046875,
-        7.4375
+        6.99951171875,
+        8.41162109375,
+        10.005859375
       ],
-      "kernel_s": 0.72,
+      "kernel_s": 0.779,
       "log": "3-8-Original-Original.log",
+      "artifacts_bytes": {
+        ".ilean": 1121,
+        ".hash": 16,
+        ".olean": 1246752,
+        ".trace": 4430
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -954,14 +1222,20 @@
       "n": 8,
       "arm": "Packed",
       "exit": 0,
-      "wall_s": 2.6187112059560604,
+      "wall_s": 2.772473393997643,
       "load": [
-        5.0595703125,
-        5.45556640625,
-        7.4189453125
+        7.0,
+        8.38818359375,
+        9.9892578125
       ],
-      "kernel_s": 0.06720000000000001,
+      "kernel_s": 0.0669,
       "log": "3-8-Original-Packed.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".trace": 4358,
+        ".ilean": 1117,
+        ".olean": 83640
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -972,14 +1246,20 @@
       "n": 16,
       "arm": "Quoted",
       "exit": 0,
-      "wall_s": 4.424170190002769,
+      "wall_s": 4.724209417006932,
       "load": [
-        5.0595703125,
-        5.45556640625,
-        7.4189453125
+        7.0,
+        8.38818359375,
+        9.9892578125
       ],
-      "kernel_s": 1.46,
+      "kernel_s": 1.65,
       "log": "3-16-Quoted-Quoted.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".olean": 390816,
+        ".ilean": 45353,
+        ".trace": 3717
+      },
       "axioms": [
         "[propext]"
       ]
@@ -990,14 +1270,20 @@
       "n": 16,
       "arm": "Packed",
       "exit": 0,
-      "wall_s": 3.224577177024912,
+      "wall_s": 3.3723493170109577,
       "load": [
-        5.21533203125,
-        5.4814453125,
-        7.41650390625
+        7.3203125,
+        8.431640625,
+        9.9951171875
       ],
-      "kernel_s": 0.523,
+      "kernel_s": 0.611,
       "log": "3-16-Quoted-Packed.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".olean": 445776,
+        ".trace": 4361,
+        ".ilean": 1128
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -1008,14 +1294,20 @@
       "n": 16,
       "arm": "Original",
       "exit": 0,
-      "wall_s": 32.679359336034395,
+      "wall_s": 29.777002301008906,
       "load": [
-        5.09033203125,
-        5.4130859375,
-        7.3212890625
+        8.71435546875,
+        8.66259765625,
+        10.02197265625
       ],
-      "kernel_s": 24.1,
+      "kernel_s": 20.6,
       "log": "3-16-Original-Original.log",
+      "artifacts_bytes": {
+        ".olean": 17610392,
+        ".ilean": 1132,
+        ".hash": 16,
+        ".trace": 4434
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -1026,14 +1318,20 @@
       "n": 16,
       "arm": "Packed",
       "exit": 0,
-      "wall_s": 3.2197155840112828,
+      "wall_s": 3.373898419959005,
       "load": [
-        5.09033203125,
-        5.4130859375,
-        7.3212890625
+        8.57666015625,
+        8.634765625,
+        10.00537109375
       ],
-      "kernel_s": 0.53,
+      "kernel_s": 0.5700000000000001,
       "log": "3-16-Original-Packed.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".olean": 445776,
+        ".trace": 4363,
+        ".ilean": 1128
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -1044,14 +1342,20 @@
       "n": 32,
       "arm": "Quoted",
       "exit": 0,
-      "wall_s": 64.87416819203645,
+      "wall_s": 63.27638317301171,
       "load": [
-        4.72802734375,
-        5.240234375,
-        7.1298828125
+        7.55029296875,
+        8.3330078125,
+        9.814453125
       ],
-      "kernel_s": 30.8,
+      "kernel_s": 28.1,
       "log": "3-32-Quoted-Quoted.log",
+      "artifacts_bytes": {
+        ".ilean": 330445,
+        ".trace": 3713,
+        ".olean": 2989976,
+        ".hash": 16
+      },
       "axioms": [
         "[propext]"
       ]
@@ -1062,14 +1366,20 @@
       "n": 32,
       "arm": "Packed",
       "exit": 0,
-      "wall_s": 8.233136911992915,
+      "wall_s": 8.435239507001825,
       "load": [
-        4.8369140625,
-        5.248046875,
-        7.11181640625
+        7.6865234375,
+        8.337890625,
+        9.80078125
       ],
-      "kernel_s": 4.74,
+      "kernel_s": 4.99,
       "log": "3-32-Quoted-Packed.log",
+      "artifacts_bytes": {
+        ".olean": 3150040,
+        ".ilean": 1128,
+        ".hash": 16,
+        ".trace": 4360
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -1080,14 +1390,20 @@
       "n": 4,
       "arm": "Packed",
       "exit": 0,
-      "wall_s": 2.5207406260306016,
+      "wall_s": 2.5209348250064068,
       "load": [
-        4.8369140625,
-        5.248046875,
-        7.11181640625
+        7.63134765625,
+        8.3154296875,
+        9.78564453125
       ],
-      "kernel_s": 0.0158,
+      "kernel_s": 0.0151,
       "log": "4-4-Quoted-Packed.log",
+      "artifacts_bytes": {
+        ".olean": 28696,
+        ".trace": 4362,
+        ".ilean": 1117,
+        ".hash": 16
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -1098,14 +1414,20 @@
       "n": 4,
       "arm": "Quoted",
       "exit": 0,
-      "wall_s": 1.1179755119956098,
+      "wall_s": 1.117923586978577,
       "load": [
-        4.85009765625,
-        5.24365234375,
-        7.10009765625
+        7.63134765625,
+        8.3154296875,
+        9.78564453125
       ],
-      "kernel_s": 0.00807,
+      "kernel_s": 0.00811,
       "log": "4-4-Quoted-Quoted.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".ilean": 3133,
+        ".trace": 3718,
+        ".olean": 18624
+      },
       "axioms": [
         "[propext]"
       ]
@@ -1116,14 +1438,20 @@
       "n": 4,
       "arm": "Packed",
       "exit": 0,
-      "wall_s": 2.5221050679683685,
+      "wall_s": 2.519829945988022,
       "load": [
-        4.85009765625,
-        5.24365234375,
-        7.10009765625
+        7.63134765625,
+        8.3154296875,
+        9.78564453125
       ],
-      "kernel_s": 0.0157,
+      "kernel_s": 0.016800000000000002,
       "log": "4-4-Original-Packed.log",
+      "artifacts_bytes": {
+        ".olean": 28696,
+        ".trace": 4362,
+        ".ilean": 1117,
+        ".hash": 16
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -1134,14 +1462,20 @@
       "n": 4,
       "arm": "Original",
       "exit": 0,
-      "wall_s": 2.621308500994928,
+      "wall_s": 2.621012281975709,
       "load": [
-        4.8623046875,
-        5.2392578125,
-        7.08837890625
+        7.7412109375,
+        8.3271484375,
+        9.78125
       ],
-      "kernel_s": 0.0455,
+      "kernel_s": 0.0445,
       "log": "4-4-Original-Original.log",
+      "artifacts_bytes": {
+        ".olean": 138488,
+        ".ilean": 1121,
+        ".hash": 16,
+        ".trace": 4436
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -1152,14 +1486,20 @@
       "n": 8,
       "arm": "Packed",
       "exit": 0,
-      "wall_s": 2.6247667289571837,
+      "wall_s": 2.6199316589627415,
       "load": [
-        4.8623046875,
-        5.2392578125,
-        7.08837890625
+        7.7412109375,
+        8.3271484375,
+        9.78125
       ],
-      "kernel_s": 0.06620000000000001,
+      "kernel_s": 0.0655,
       "log": "4-8-Quoted-Packed.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".trace": 4357,
+        ".ilean": 1117,
+        ".olean": 83640
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -1170,14 +1510,20 @@
       "n": 8,
       "arm": "Quoted",
       "exit": 0,
-      "wall_s": 1.3197904250118881,
+      "wall_s": 1.3183789369650185,
       "load": [
-        4.8623046875,
-        5.2392578125,
-        7.08837890625
+        7.521484375,
+        8.271484375,
+        9.75537109375
       ],
-      "kernel_s": 0.06670000000000001,
+      "kernel_s": 0.06540000000000001,
       "log": "4-8-Quoted-Quoted.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".olean": 64584,
+        ".ilean": 8588,
+        ".trace": 3716
+      },
       "axioms": [
         "[propext]"
       ]
@@ -1188,14 +1534,20 @@
       "n": 8,
       "arm": "Packed",
       "exit": 0,
-      "wall_s": 2.621229598997161,
+      "wall_s": 2.6203758089686744,
       "load": [
-        4.79296875,
-        5.21826171875,
-        7.07177734375
+        7.521484375,
+        8.271484375,
+        9.75537109375
       ],
-      "kernel_s": 0.07050000000000001,
+      "kernel_s": 0.06490000000000001,
       "log": "4-8-Original-Packed.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".trace": 4357,
+        ".ilean": 1117,
+        ".olean": 83640
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -1206,14 +1558,20 @@
       "n": 8,
       "arm": "Original",
       "exit": 0,
-      "wall_s": 3.574083403975237,
+      "wall_s": 3.6260270759812556,
       "load": [
-        4.8896484375,
-        5.2314453125,
-        7.06591796875
+        7.72021484375,
+        8.30029296875,
+        9.7568359375
       ],
-      "kernel_s": 0.718,
+      "kernel_s": 0.73,
       "log": "4-8-Original-Original.log",
+      "artifacts_bytes": {
+        ".olean": 1246752,
+        ".ilean": 1121,
+        ".hash": 16,
+        ".trace": 4432
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -1224,14 +1582,20 @@
       "n": 16,
       "arm": "Packed",
       "exit": 0,
-      "wall_s": 3.224738458986394,
+      "wall_s": 3.1238568800035864,
       "load": [
-        4.8896484375,
-        5.2314453125,
-        7.06591796875
+        7.501953125,
+        8.2451171875,
+        9.73095703125
       ],
-      "kernel_s": 0.515,
+      "kernel_s": 0.505,
       "log": "4-16-Quoted-Packed.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".ilean": 1128,
+        ".trace": 4358,
+        ".olean": 445776
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -1242,14 +1606,20 @@
       "n": 16,
       "arm": "Quoted",
       "exit": 0,
-      "wall_s": 4.422011721006129,
+      "wall_s": 4.472475995018613,
       "load": [
-        4.89892578125,
-        5.2275390625,
-        7.0546875
+        7.501953125,
+        8.2451171875,
+        9.73095703125
       ],
       "kernel_s": 1.46,
       "log": "4-16-Quoted-Quoted.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".olean": 390816,
+        ".ilean": 45353,
+        ".trace": 3717
+      },
       "axioms": [
         "[propext]"
       ]
@@ -1260,14 +1630,20 @@
       "n": 16,
       "arm": "Packed",
       "exit": 0,
-      "wall_s": 3.2230572180124,
+      "wall_s": 3.120774448965676,
       "load": [
-        4.9072265625,
-        5.2236328125,
-        7.04345703125
+        7.38134765625,
+        8.20751953125,
+        9.71044921875
       ],
-      "kernel_s": 0.523,
+      "kernel_s": 0.502,
       "log": "4-16-Original-Packed.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".ilean": 1128,
+        ".trace": 4363,
+        ".olean": 445776
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -1278,14 +1654,20 @@
       "n": 16,
       "arm": "Original",
       "exit": 0,
-      "wall_s": 31.17403108003782,
+      "wall_s": 28.571352644998115,
       "load": [
-        4.93115234375,
-        5.20166015625,
-        6.97705078125
+        6.861328125,
+        7.99658203125,
+        9.591796875
       ],
-      "kernel_s": 22.7,
+      "kernel_s": 20.1,
       "log": "4-16-Original-Original.log",
+      "artifacts_bytes": {
+        ".olean": 17610392,
+        ".ilean": 1132,
+        ".hash": 16,
+        ".trace": 4431
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -1296,14 +1678,20 @@
       "n": 32,
       "arm": "Packed",
       "exit": 0,
-      "wall_s": 8.231263905996457,
+      "wall_s": 8.431102945993189,
       "load": [
-        5.5380859375,
-        5.32666015625,
-        6.99853515625
+        6.7119140625,
+        7.94677734375,
+        9.56689453125
       ],
-      "kernel_s": 4.75,
+      "kernel_s": 4.96,
       "log": "4-32-Quoted-Packed.log",
+      "artifacts_bytes": {
+        ".olean": 3150040,
+        ".ilean": 1128,
+        ".hash": 16,
+        ".trace": 4355
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -1314,14 +1702,20 @@
       "n": 32,
       "arm": "Quoted",
       "exit": 0,
-      "wall_s": 65.47928087500622,
+      "wall_s": 63.57970425696112,
       "load": [
-        5.69140625,
-        5.4140625,
-        6.91357421875
+        5.93408203125,
+        7.47412109375,
+        9.29150390625
       ],
-      "kernel_s": 31.3,
+      "kernel_s": 29.1,
       "log": "4-32-Quoted-Quoted.log",
+      "artifacts_bytes": {
+        ".ilean": 330445,
+        ".trace": 3708,
+        ".olean": 2989976,
+        ".hash": 16
+      },
       "axioms": [
         "[propext]"
       ]
@@ -1332,14 +1726,20 @@
       "n": 4,
       "arm": "Quoted",
       "exit": 0,
-      "wall_s": 1.1201083770138212,
+      "wall_s": 1.1187468249700032,
       "load": [
-        5.69140625,
-        5.4140625,
-        6.91357421875
+        5.93408203125,
+        7.47412109375,
+        9.29150390625
       ],
-      "kernel_s": 0.008130000000000002,
+      "kernel_s": 0.0081,
       "log": "5-4-Quoted-Quoted.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".ilean": 3133,
+        ".trace": 3719,
+        ".olean": 18624
+      },
       "axioms": [
         "[propext]"
       ]
@@ -1350,14 +1750,20 @@
       "n": 4,
       "arm": "Packed",
       "exit": 0,
-      "wall_s": 2.5215166389825754,
+      "wall_s": 2.5199328319868073,
       "load": [
-        5.71630859375,
-        5.423828125,
-        6.908203125
+        6.01953125,
+        7.4658203125,
+        9.27880859375
       ],
-      "kernel_s": 0.0158,
+      "kernel_s": 0.0152,
       "log": "5-4-Quoted-Packed.log",
+      "artifacts_bytes": {
+        ".olean": 28696,
+        ".hash": 16,
+        ".ilean": 1117,
+        ".trace": 4361
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -1368,14 +1774,20 @@
       "n": 4,
       "arm": "Original",
       "exit": 0,
-      "wall_s": 2.62099262396805,
+      "wall_s": 2.620529009029269,
       "load": [
-        5.71630859375,
-        5.423828125,
-        6.908203125
+        6.01953125,
+        7.4658203125,
+        9.27880859375
       ],
-      "kernel_s": 0.044700000000000004,
+      "kernel_s": 0.0454,
       "log": "5-4-Original-Original.log",
+      "artifacts_bytes": {
+        ".olean": 138488,
+        ".ilean": 1121,
+        ".hash": 16,
+        ".trace": 4438
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -1386,14 +1798,20 @@
       "n": 4,
       "arm": "Packed",
       "exit": 0,
-      "wall_s": 2.5216806099633686,
+      "wall_s": 2.5188607029849663,
       "load": [
-        5.57861328125,
-        5.39990234375,
-        6.892578125
+        6.49853515625,
+        7.54150390625,
+        9.29345703125
       ],
-      "kernel_s": 0.0158,
+      "kernel_s": 0.0152,
       "log": "5-4-Original-Packed.log",
+      "artifacts_bytes": {
+        ".olean": 28696,
+        ".hash": 16,
+        ".ilean": 1117,
+        ".trace": 4356
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -1404,14 +1822,20 @@
       "n": 8,
       "arm": "Quoted",
       "exit": 0,
-      "wall_s": 1.3204549860092811,
+      "wall_s": 1.3676130090025254,
       "load": [
-        5.57861328125,
-        5.39990234375,
-        6.892578125
+        6.49853515625,
+        7.54150390625,
+        9.29345703125
       ],
-      "kernel_s": 0.06540000000000001,
+      "kernel_s": 0.06559999999999999,
       "log": "5-8-Quoted-Quoted.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".olean": 64584,
+        ".ilean": 8588,
+        ".trace": 3718
+      },
       "axioms": [
         "[propext]"
       ]
@@ -1422,14 +1846,20 @@
       "n": 8,
       "arm": "Packed",
       "exit": 0,
-      "wall_s": 2.6236720450106077,
+      "wall_s": 2.6207803419674747,
       "load": [
-        5.57861328125,
-        5.39990234375,
-        6.892578125
+        6.37841796875,
+        7.4990234375,
+        9.27001953125
       ],
-      "kernel_s": 0.067,
+      "kernel_s": 0.0635,
       "log": "5-8-Quoted-Packed.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".trace": 4358,
+        ".ilean": 1117,
+        ".olean": 83640
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -1440,14 +1870,20 @@
       "n": 8,
       "arm": "Original",
       "exit": 0,
-      "wall_s": 3.575701827008743,
+      "wall_s": 3.621564686007332,
       "load": [
-        5.61279296875,
-        5.41015625,
-        6.8876953125
+        6.37841796875,
+        7.4990234375,
+        9.27001953125
       ],
-      "kernel_s": 0.722,
+      "kernel_s": 0.844,
       "log": "5-8-Original-Original.log",
+      "artifacts_bytes": {
+        ".olean": 1246752,
+        ".ilean": 1121,
+        ".hash": 16,
+        ".trace": 4434
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -1458,14 +1894,20 @@
       "n": 8,
       "arm": "Packed",
       "exit": 0,
-      "wall_s": 2.619735972955823,
+      "wall_s": 2.6207289560115896,
       "load": [
-        5.5634765625,
-        5.4033203125,
-        6.87744140625
+        7.30908203125,
+        7.673828125,
+        9.3173828125
       ],
-      "kernel_s": 0.0668,
+      "kernel_s": 0.064,
       "log": "5-8-Original-Packed.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".trace": 4356,
+        ".ilean": 1117,
+        ".olean": 83640
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -1476,14 +1918,20 @@
       "n": 16,
       "arm": "Quoted",
       "exit": 0,
-      "wall_s": 4.422587501001544,
+      "wall_s": 4.42288417101372,
       "load": [
-        5.5986328125,
-        5.41357421875,
-        6.87255859375
+        7.2041015625,
+        7.64599609375,
+        9.29931640625
       ],
-      "kernel_s": 1.45,
+      "kernel_s": 1.5,
       "log": "5-16-Quoted-Quoted.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".olean": 390816,
+        ".ilean": 45353,
+        ".trace": 3718
+      },
       "axioms": [
         "[propext]"
       ]
@@ -1494,14 +1942,20 @@
       "n": 16,
       "arm": "Packed",
       "exit": 0,
-      "wall_s": 3.22625251498539,
+      "wall_s": 3.1203933199867606,
       "load": [
-        5.5986328125,
-        5.41357421875,
-        6.87255859375
+        7.2041015625,
+        7.64599609375,
+        9.29931640625
       ],
-      "kernel_s": 0.517,
+      "kernel_s": 0.498,
       "log": "5-16-Quoted-Packed.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".ilean": 1128,
+        ".trace": 4362,
+        ".olean": 445776
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -1512,14 +1966,20 @@
       "n": 16,
       "arm": "Original",
       "exit": 0,
-      "wall_s": 32.577587770996615,
+      "wall_s": 28.42137365898816,
       "load": [
-        5.17822265625,
-        5.333984375,
-        6.791015625
+        6.904296875,
+        7.53466796875,
+        9.20849609375
       ],
-      "kernel_s": 23.9,
+      "kernel_s": 19.9,
       "log": "5-16-Original-Original.log",
+      "artifacts_bytes": {
+        ".olean": 17610392,
+        ".ilean": 1132,
+        ".hash": 16,
+        ".trace": 4431
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -1530,14 +1990,20 @@
       "n": 16,
       "arm": "Packed",
       "exit": 0,
-      "wall_s": 3.222977493016515,
+      "wall_s": 3.223566872009542,
       "load": [
-        5.17822265625,
-        5.333984375,
-        6.791015625
+        6.9921875,
+        7.54248046875,
+        9.20166015625
       ],
-      "kernel_s": 0.521,
+      "kernel_s": 0.51,
       "log": "5-16-Original-Packed.log",
+      "artifacts_bytes": {
+        ".hash": 16,
+        ".ilean": 1128,
+        ".trace": 4359,
+        ".olean": 445776
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -1548,14 +2014,20 @@
       "n": 32,
       "arm": "Quoted",
       "exit": 0,
-      "wall_s": 65.78477376303636,
+      "wall_s": 65.52856692997739,
       "load": [
-        5.26171875,
-        5.28662109375,
-        6.6650390625
+        5.89404296875,
+        7.10400390625,
+        8.935546875
       ],
-      "kernel_s": 31.4,
+      "kernel_s": 28.5,
       "log": "5-32-Quoted-Quoted.log",
+      "artifacts_bytes": {
+        ".ilean": 330445,
+        ".trace": 3714,
+        ".olean": 2989976,
+        ".hash": 16
+      },
       "axioms": [
         "[propext]"
       ]
@@ -1566,14 +2038,20 @@
       "n": 32,
       "arm": "Packed",
       "exit": 0,
-      "wall_s": 8.329981861053966,
+      "wall_s": 8.48435130098369,
       "load": [
-        5.3212890625,
-        5.298828125,
-        6.6611328125
+        5.90380859375,
+        7.06689453125,
+        8.9033203125
       ],
-      "kernel_s": 4.79,
+      "kernel_s": 5.02,
       "log": "5-32-Quoted-Packed.log",
+      "artifacts_bytes": {
+        ".olean": 3150040,
+        ".ilean": 1128,
+        ".hash": 16,
+        ".trace": 4356
+      },
       "axioms": [
         "[propext, Classical.choice, Quot.sound]"
       ]
@@ -1581,381 +2059,304 @@
   ],
   "skipped": [
     {
+      "pair": "0-32-Original",
+      "reason": "reference timed out in a retained earlier trial or sweep"
+    },
+    {
       "pair": "1-32-Original",
-      "reason": "reference timed out in an earlier trial"
+      "reason": "reference timed out in a retained earlier trial or sweep"
     },
     {
       "pair": "2-32-Original",
-      "reason": "reference timed out in an earlier trial"
+      "reason": "reference timed out in a retained earlier trial or sweep"
     },
     {
       "pair": "3-32-Original",
-      "reason": "reference timed out in an earlier trial"
+      "reason": "reference timed out in a retained earlier trial or sweep"
     },
     {
       "pair": "4-32-Original",
-      "reason": "reference timed out in an earlier trial"
+      "reason": "reference timed out in a retained earlier trial or sweep"
     },
     {
       "pair": "5-32-Original",
-      "reason": "reference timed out in an earlier trial"
+      "reason": "reference timed out in a retained earlier trial or sweep"
     }
   ],
   "source_sha256": {
     "lakefile.lean": "890cb12bdd68b2116879d4de64af6b27d8c5fa7be2bfa902ab7a61237b584f6d",
-    "HexCharPoly/Kernel.lean": "ffff246df5ffda7a9cea539042654db4d20efba4647b1f2d26ec02d1693cb718",
-    "HexCharPoly/CharPolyElab.lean": "354b06837bafe88bdbce2ea22ebda3f828089f2851f4d3b512a71cac5f1d4718",
+    "HexCharPoly/Kernel.lean": "c863f9b047f0fa4ac6d627160f649192c489408e760cb024f7df00bdecf5c8ae",
+    "HexCharPoly/CharPolyElab.lean": "14492d22f0706cbf03f021e78d7a4850058ebdc9513e87c56696052d0b716c4a",
     "HexCharPolyMathlib/Kernel.lean": "5c6db303d0e071bd3ca7a620a3bc60c4a0ac3076684c4e967bceec520daa9300",
-    "HexCharPolyMathlib/CharPolyElab.lean": "b800887b77d2ba84a54f4ba36ce43f8889e5876defdab8f19f13992d6d122c12",
-    "bench/HexCharPolyMathlib/ProofProbe/Support.lean": "ec1c1f92674a7b88b8fc4fe3f38d578154a34e9cab4721609554e5ea3870eb9b"
+    "HexCharPolyMathlib/CharPolyElab.lean": "c27c1b0af7aacbabe9e69fd41a0fe99289e4e36eac2ec386bff47b354a8b1884",
+    "bench/HexCharPolyMathlib/ProofProbe/Support.lean": "ec1c1f92674a7b88b8fc4fe3f38d578154a34e9cab4721609554e5ea3870eb9b",
+    "bench/HexCharPolyMathlib/ProofProbe/generate.py": "c7c3434a63a2caca08537ba020ddbf0aa4ef12d2502c79ee298cdb9500320db0",
+    "bench/HexCharPolyMathlib/ProofProbe/compare.py": "3f24bb3c2f3bde7401a0a2b314976b9f297976a3b1c9020ed82ffea4b912e405"
   },
-  "provenance": {
-    "commit": "af6711c95e4890bf410c8c036461d800515e74e8",
-    "baseline_commit": "af6711c95e4890bf410c8c036461d800515e74e8",
-    "dirty_state": "M HexCharPoly/CharPolyElab.lean\n M HexCharPoly/CharPolyElabTests.lean\n M HexCharPoly/SPEC/hex-char-poly.md\n M HexCharPolyMathlib/CharPolyElab.lean\n M HexCharPolyMathlib/CharPolyElabTests.lean\n M HexCharPolyMathlib/SPEC/hex-char-poly-mathlib.md\n M SPEC/matrix-tactics.md\n M bench/HexCharPolyMathlib/ProofProbe/README.md\n M bench/HexCharPolyMathlib/ProofProbe/generate.py\n M lakefile.lean\n?? HexCharPoly/Kernel.lean\n?? HexCharPolyMathlib/Kernel.lean\n?? bench/HexCharPolyMathlib/ProofProbe/compare.py\n?? bench/HexCharPolyMathlib/ProofProbe/evidence/packed/\n?? bench/HexCharPolyMathlib/ProofProbe/packed-plan.json",
-    "dirty_state_decision": "Retained as host-specific diagnostic evidence; no release-quality verdict. Implementation sources are hashed and archived.",
-    "toolchain": "leanprover/lean4:v4.34.0-rc2",
-    "os": "Linux-6.12.100-x86_64-with-glibc2.42",
-    "command": "python3 bench/HexCharPolyMathlib/ProofProbe/compare.py .cache/issue-10212/final-comparison --baseline-root /home/kim/worktrees/hex-dev/hex-dev-10212-baseline",
-    "cleanup": "Remove only the measured module artifacts before each build; kill the build process group on timeout.",
-    "release_quality": false,
-    "generated_source_sha256": {
-      "Dense4Original.lean": "4f2a4c0d39e422de7f538c75b128e7be357cf32e3698b350379c332b9c1c7b41",
-      "Dense4Quoted.lean": "e5718638f28e5cb08fc8080151c29e072106d01236d7fb7665ee73cab4c8473a",
-      "Dense4Packed.lean": "4f2a4c0d39e422de7f538c75b128e7be357cf32e3698b350379c332b9c1c7b41",
-      "Dense8Original.lean": "c31dcae495659aca25dca5d4f4f1046b6f81fa13e37ecaec395317f6cf52bc2b",
-      "Dense8Quoted.lean": "510fca302ab499dd9949e52f003ce478b150ed05cd1e0b0f0d64102a69b94a7e",
-      "Dense8Packed.lean": "c31dcae495659aca25dca5d4f4f1046b6f81fa13e37ecaec395317f6cf52bc2b",
-      "Dense16Original.lean": "234b3d5276acb0f0ec6265ad249518f7c3f5ad826dfdadbae8f9ac238b1f5e3f",
-      "Dense16Quoted.lean": "67b4d2427f81cb650bed204f17bd4f53a9de540ba99317979b50c9d91aee186b",
-      "Dense16Packed.lean": "234b3d5276acb0f0ec6265ad249518f7c3f5ad826dfdadbae8f9ac238b1f5e3f",
-      "Dense32Original.lean": "704040b74c83beb0bf4ca91f9be3643e7329a454b85cdc58d11daf546fb87766",
-      "Dense32Quoted.lean": "1414ed3081f4408e3a54dd4650d625cc3802977785bdc1e95c8562e48f3e3b56",
-      "Dense32Packed.lean": "704040b74c83beb0bf4ca91f9be3643e7329a454b85cdc58d11daf546fb87766"
-    }
-  },
-  "artifact_sizes_note": "Final emitted artifacts for each probe; earlier trials are represented by their raw logs.",
-  "artifacts_bytes": {
-    "Dense4Original": {
-      ".olean": 138488,
-      ".ilean": 1121,
-      ".hash": 16,
-      ".trace": 4434
-    },
-    "Dense4Quoted": {
-      ".hash": 16,
-      ".ilean": 3133,
-      ".trace": 3717,
-      ".olean": 18624
-    },
-    "Dense4Packed": {
-      ".ilean": 1117,
-      ".hash": 16,
-      ".trace": 4363,
-      ".olean": 30136
-    },
-    "Dense8Original": {
-      ".olean": 1246752,
-      ".ilean": 1121,
-      ".hash": 16,
-      ".trace": 4434
-    },
-    "Dense8Quoted": {
-      ".hash": 16,
-      ".olean": 64584,
-      ".ilean": 8588,
-      ".trace": 3719
-    },
-    "Dense8Packed": {
-      ".hash": 16,
-      ".trace": 4357,
-      ".ilean": 1117,
-      ".olean": 93520
-    },
-    "Dense16Original": {
-      ".olean": 17610392,
-      ".ilean": 1132,
-      ".hash": 16,
-      ".trace": 4432
-    },
-    "Dense16Quoted": {
-      ".hash": 16,
-      ".olean": 390816,
-      ".ilean": 45353,
-      ".trace": 3718
-    },
-    "Dense16Packed": {
-      ".hash": 16,
-      ".trace": 4361,
-      ".olean": 543296,
-      ".ilean": 1128
-    },
-    "Dense32Original": {},
-    "Dense32Quoted": {
-      ".ilean": 330445,
-      ".trace": 3714,
-      ".olean": 2989976,
-      ".hash": 16
-    },
-    "Dense32Packed": {
-      ".olean": 4566376,
-      ".ilean": 1128,
-      ".hash": 16,
-      ".trace": 4359
-    }
-  },
+  "commit": "af42387c9237c4f7de7798f0c66643347899f1e6",
+  "dirty_state": " M HexCharPoly/CharPolyElab.lean\n M HexCharPoly/CharPolyElabTests.lean\n M HexCharPoly/Kernel.lean\n M HexCharPoly/SPEC/hex-char-poly.md\n M HexCharPolyMathlib/CharPolyElab.lean\n M HexCharPolyMathlib/CharPolyElabTests.lean\n M HexCharPolyMathlib/SPEC/hex-char-poly-mathlib.md\n M HexManual/Chapters/HexCharPoly.lean\n M SPEC/design-principles.md\n M SPEC/matrix-tactics.md\n M bench/HexCharPolyMathlib/ProofProbe/README.md\n M bench/HexCharPolyMathlib/ProofProbe/compare.py\n D bench/HexCharPolyMathlib/ProofProbe/evidence/packed/paired-logs.tar.gz\n D bench/HexCharPolyMathlib/ProofProbe/evidence/packed/report.json\n M bench/HexCharPolyMathlib/ProofProbe/packed-plan.json\n?? bench/HexCharPolyMathlib/ProofProbe/cache_probe.py\n?? bench/HexCharPolyMathlib/ProofProbe/evidence/packed/cache-comparison.json\n?? bench/HexCharPolyMathlib/ProofProbe/evidence/packed/cache-comparison.tar.gz\n?? bench/HexCharPolyMathlib/ProofProbe/evidence/packed/cached-logs.tar.gz\n?? bench/HexCharPolyMathlib/ProofProbe/evidence/packed/cached-report.json\n",
+  "toolchain": "leanprover/lean4:v4.34.0-rc2",
+  "os": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "command": [
+    "lake",
+    "build",
+    "HexCharPolyMathlib.ProofProbe.Dense{n}{arm}:olean"
+  ],
+  "cleanup": "Remove measured module artifacts; kill process group on timeout.",
+  "release_quality": false,
+  "verdict": "Host-specific diagnostic comparison; no release-quality verdict.",
   "paired_deltas": [
     {
       "pair": "0-4-Quoted",
-      "kernel_reference_minus_packed_s": -0.019950000000000002,
-      "wall_reference_minus_packed_s": -1.7084855389548466,
-      "kernel_speedup": 0.2900355871886121
-    },
-    {
-      "pair": "1-4-Quoted",
-      "kernel_reference_minus_packed_s": -0.00783,
-      "wall_reference_minus_packed_s": -1.502351043978706,
-      "kernel_speedup": 0.5166666666666666
-    },
-    {
-      "pair": "2-4-Quoted",
-      "kernel_reference_minus_packed_s": -0.007979999999999998,
-      "wall_reference_minus_packed_s": -1.5049625170067884,
-      "kernel_speedup": 0.5074074074074075
-    },
-    {
-      "pair": "3-4-Quoted",
-      "kernel_reference_minus_packed_s": -0.00834,
-      "wall_reference_minus_packed_s": -1.4052237329888158,
-      "kernel_speedup": 0.4975903614457831
-    },
-    {
-      "pair": "4-4-Quoted",
-      "kernel_reference_minus_packed_s": -0.007730000000000001,
-      "wall_reference_minus_packed_s": -1.4027651140349917,
-      "kernel_speedup": 0.510759493670886
-    },
-    {
-      "pair": "5-4-Quoted",
-      "kernel_reference_minus_packed_s": -0.00767,
-      "wall_reference_minus_packed_s": -1.4014082619687542,
-      "kernel_speedup": 0.5145569620253165
+      "kernel_reference_minus_packed_s": -0.009420000000000001,
+      "wall_reference_minus_packed_s": -1.65527614596067,
+      "kernel_speedup": 0.4617142857142857
     },
     {
       "pair": "0-4-Original",
-      "kernel_reference_minus_packed_s": 0.053800000000000014,
-      "wall_reference_minus_packed_s": 0.047467334021348506,
-      "kernel_speedup": 2.9283154121863806
-    },
-    {
-      "pair": "1-4-Original",
-      "kernel_reference_minus_packed_s": 0.029500000000000005,
-      "wall_reference_minus_packed_s": 0.050449514004867524,
-      "kernel_speedup": 2.878980891719746
-    },
-    {
-      "pair": "2-4-Original",
-      "kernel_reference_minus_packed_s": 0.028700000000000003,
-      "wall_reference_minus_packed_s": 0.04722654103534296,
-      "kernel_speedup": 2.79375
-    },
-    {
-      "pair": "3-4-Original",
-      "kernel_reference_minus_packed_s": 0.029199999999999997,
-      "wall_reference_minus_packed_s": 0.10258888400858268,
-      "kernel_speedup": 2.8481012658227844
-    },
-    {
-      "pair": "4-4-Original",
-      "kernel_reference_minus_packed_s": 0.0298,
-      "wall_reference_minus_packed_s": 0.09920343302655965,
-      "kernel_speedup": 2.8980891719745223
-    },
-    {
-      "pair": "5-4-Original",
-      "kernel_reference_minus_packed_s": 0.028900000000000002,
-      "wall_reference_minus_packed_s": 0.09931201400468126,
-      "kernel_speedup": 2.829113924050633
+      "kernel_reference_minus_packed_s": 0.0342,
+      "wall_reference_minus_packed_s": 0.10140468197641894,
+      "kernel_speedup": 3.25
     },
     {
       "pair": "0-8-Quoted",
-      "kernel_reference_minus_packed_s": -0.01999999999999999,
-      "wall_reference_minus_packed_s": -1.6543510439805686,
-      "kernel_speedup": 0.8333333333333334
-    },
-    {
-      "pair": "1-8-Quoted",
-      "kernel_reference_minus_packed_s": 0.0016999999999999932,
-      "wall_reference_minus_packed_s": -1.3021721979603171,
-      "kernel_speedup": 1.0252976190476188
-    },
-    {
-      "pair": "2-8-Quoted",
-      "kernel_reference_minus_packed_s": -0.002700000000000008,
-      "wall_reference_minus_packed_s": -1.3039137700106949,
-      "kernel_speedup": 0.9605839416058393
-    },
-    {
-      "pair": "3-8-Quoted",
-      "kernel_reference_minus_packed_s": -0.0012000000000000066,
-      "wall_reference_minus_packed_s": -1.3514144209912047,
-      "kernel_speedup": 0.9823008849557521
-    },
-    {
-      "pair": "4-8-Quoted",
-      "kernel_reference_minus_packed_s": 0.0005000000000000004,
-      "wall_reference_minus_packed_s": -1.3049763039452955,
-      "kernel_speedup": 1.0075528700906344
-    },
-    {
-      "pair": "5-8-Quoted",
-      "kernel_reference_minus_packed_s": -0.0015999999999999903,
-      "wall_reference_minus_packed_s": -1.3032170590013266,
-      "kernel_speedup": 0.9761194029850748
+      "kernel_reference_minus_packed_s": 0.006199999999999997,
+      "wall_reference_minus_packed_s": -1.4050872059888206,
+      "kernel_speedup": 1.0892086330935251
     },
     {
       "pair": "0-8-Original",
-      "kernel_reference_minus_packed_s": 0.774,
-      "wall_reference_minus_packed_s": 1.152302100963425,
-      "kernel_speedup": 7.3966942148760335
-    },
-    {
-      "pair": "1-8-Original",
-      "kernel_reference_minus_packed_s": 1.016,
-      "wall_reference_minus_packed_s": 1.356991866021417,
-      "kernel_speedup": 13.095238095238095
-    },
-    {
-      "pair": "2-8-Original",
-      "kernel_reference_minus_packed_s": 0.6556,
-      "wall_reference_minus_packed_s": 1.0060912200133316,
-      "kernel_speedup": 10.873493975903614
-    },
-    {
-      "pair": "3-8-Original",
-      "kernel_reference_minus_packed_s": 0.6527999999999999,
-      "wall_reference_minus_packed_s": 0.9544013300328515,
-      "kernel_speedup": 10.714285714285712
-    },
-    {
-      "pair": "4-8-Original",
-      "kernel_reference_minus_packed_s": 0.6475,
-      "wall_reference_minus_packed_s": 0.9528538049780764,
-      "kernel_speedup": 10.184397163120567
-    },
-    {
-      "pair": "5-8-Original",
-      "kernel_reference_minus_packed_s": 0.6552,
-      "wall_reference_minus_packed_s": 0.9559658540529199,
-      "kernel_speedup": 10.808383233532934
+      "kernel_reference_minus_packed_s": 0.7816,
+      "wall_reference_minus_packed_s": 1.1506749410182238,
+      "kernel_speedup": 11.50537634408602
     },
     {
       "pair": "0-16-Quoted",
-      "kernel_reference_minus_packed_s": 0.9600000000000001,
-      "wall_reference_minus_packed_s": 1.3013796519953758,
-      "kernel_speedup": 2.116279069767442
-    },
-    {
-      "pair": "1-16-Quoted",
-      "kernel_reference_minus_packed_s": 0.8989999999999999,
-      "wall_reference_minus_packed_s": 0.9961436239536852,
-      "kernel_speedup": 2.0950060901339826
-    },
-    {
-      "pair": "2-16-Quoted",
-      "kernel_reference_minus_packed_s": 0.962,
-      "wall_reference_minus_packed_s": 1.1991761610261165,
-      "kernel_speedup": 2.821969696969697
-    },
-    {
-      "pair": "3-16-Quoted",
-      "kernel_reference_minus_packed_s": 0.9369999999999999,
-      "wall_reference_minus_packed_s": 1.1995930129778571,
-      "kernel_speedup": 2.7915869980879537
-    },
-    {
-      "pair": "4-16-Quoted",
-      "kernel_reference_minus_packed_s": 0.945,
-      "wall_reference_minus_packed_s": 1.1972732620197348,
-      "kernel_speedup": 2.8349514563106797
-    },
-    {
-      "pair": "5-16-Quoted",
-      "kernel_reference_minus_packed_s": 0.9329999999999999,
-      "wall_reference_minus_packed_s": 1.1963349860161543,
-      "kernel_speedup": 2.8046421663442938
+      "kernel_reference_minus_packed_s": 1.0899999999999999,
+      "wall_reference_minus_packed_s": 1.5549437630106695,
+      "kernel_speedup": 2.816666666666667
     },
     {
       "pair": "0-16-Original",
-      "kernel_reference_minus_packed_s": 23.954,
-      "wall_reference_minus_packed_s": 29.965584309014957,
-      "kernel_speedup": 44.87179487179487
-    },
-    {
-      "pair": "1-16-Original",
-      "kernel_reference_minus_packed_s": 25.076,
-      "wall_reference_minus_packed_s": 31.86951848602621,
-      "kernel_speedup": 48.85496183206107
-    },
-    {
-      "pair": "2-16-Original",
-      "kernel_reference_minus_packed_s": 22.174,
-      "wall_reference_minus_packed_s": 28.060012464993633,
-      "kernel_speedup": 43.15589353612167
-    },
-    {
-      "pair": "3-16-Original",
-      "kernel_reference_minus_packed_s": 23.57,
-      "wall_reference_minus_packed_s": 29.459643752023112,
-      "kernel_speedup": 45.471698113207545
-    },
-    {
-      "pair": "4-16-Original",
-      "kernel_reference_minus_packed_s": 22.177,
-      "wall_reference_minus_packed_s": 27.95097386202542,
-      "kernel_speedup": 43.40344168260038
-    },
-    {
-      "pair": "5-16-Original",
-      "kernel_reference_minus_packed_s": 23.378999999999998,
-      "wall_reference_minus_packed_s": 29.3546102779801,
-      "kernel_speedup": 45.87332053742802
+      "kernel_reference_minus_packed_s": 19.796,
+      "wall_reference_minus_packed_s": 26.202187545015477,
+      "kernel_speedup": 33.77483443708609
     },
     {
       "pair": "0-32-Quoted",
-      "kernel_reference_minus_packed_s": 27.540000000000003,
-      "wall_reference_minus_packed_s": 57.95202116301516,
-      "kernel_speedup": 6.442687747035574
+      "kernel_reference_minus_packed_s": 25.15,
+      "wall_reference_minus_packed_s": 57.909534565988,
+      "kernel_speedup": 5.700934579439252
+    },
+    {
+      "pair": "1-4-Quoted",
+      "kernel_reference_minus_packed_s": -0.00932,
+      "wall_reference_minus_packed_s": -1.5059883199864998,
+      "kernel_speedup": 0.47344632768361583
+    },
+    {
+      "pair": "1-4-Original",
+      "kernel_reference_minus_packed_s": 0.0339,
+      "wall_reference_minus_packed_s": 0.0030620089964941144,
+      "kernel_speedup": 2.9709302325581395
+    },
+    {
+      "pair": "1-8-Quoted",
+      "kernel_reference_minus_packed_s": 0.006199999999999983,
+      "wall_reference_minus_packed_s": -1.4048478929908015,
+      "kernel_speedup": 1.079081632653061
+    },
+    {
+      "pair": "1-8-Original",
+      "kernel_reference_minus_packed_s": 0.7752,
+      "wall_reference_minus_packed_s": 1.153185429982841,
+      "kernel_speedup": 10.141509433962264
+    },
+    {
+      "pair": "1-16-Quoted",
+      "kernel_reference_minus_packed_s": 1.081,
+      "wall_reference_minus_packed_s": 1.3549701240262948,
+      "kernel_speedup": 2.8670120898100175
+    },
+    {
+      "pair": "1-16-Original",
+      "kernel_reference_minus_packed_s": 19.971,
+      "wall_reference_minus_packed_s": 26.50355496298289,
+      "kernel_speedup": 32.75039745627981
     },
     {
       "pair": "1-32-Quoted",
-      "kernel_reference_minus_packed_s": 28.930000000000003,
-      "wall_reference_minus_packed_s": 59.7584155969671,
-      "kernel_speedup": 7.064989517819708
+      "kernel_reference_minus_packed_s": 25.029999999999998,
+      "wall_reference_minus_packed_s": 57.458781607972924,
+      "kernel_speedup": 5.661080074487895
+    },
+    {
+      "pair": "2-4-Quoted",
+      "kernel_reference_minus_packed_s": -0.007730000000000004,
+      "wall_reference_minus_packed_s": -1.552114384016022,
+      "kernel_speedup": 0.5198757763975154
+    },
+    {
+      "pair": "2-4-Original",
+      "kernel_reference_minus_packed_s": 0.0298,
+      "wall_reference_minus_packed_s": 0.0012653079465962946,
+      "kernel_speedup": 2.9605263157894735
+    },
+    {
+      "pair": "2-8-Quoted",
+      "kernel_reference_minus_packed_s": 0.018000000000000002,
+      "wall_reference_minus_packed_s": -1.4014492200221866,
+      "kernel_speedup": 1.2686567164179106
+    },
+    {
+      "pair": "2-8-Original",
+      "kernel_reference_minus_packed_s": 0.7822,
+      "wall_reference_minus_packed_s": 1.1060192469740286,
+      "kernel_speedup": 10.680693069306932
+    },
+    {
+      "pair": "2-16-Quoted",
+      "kernel_reference_minus_packed_s": 1.042,
+      "wall_reference_minus_packed_s": 1.4515717539470643,
+      "kernel_speedup": 2.834507042253521
+    },
+    {
+      "pair": "2-16-Original",
+      "kernel_reference_minus_packed_s": 19.865,
+      "wall_reference_minus_packed_s": 26.249259325966705,
+      "kernel_speedup": 32.28346456692913
     },
     {
       "pair": "2-32-Quoted",
-      "kernel_reference_minus_packed_s": 26.64,
-      "wall_reference_minus_packed_s": 56.7925133369863,
-      "kernel_speedup": 6.5966386554621845
+      "kernel_reference_minus_packed_s": 25.48,
+      "wall_reference_minus_packed_s": 57.964417688024696,
+      "kernel_speedup": 5.7894736842105265
+    },
+    {
+      "pair": "3-4-Quoted",
+      "kernel_reference_minus_packed_s": -0.007919999999999996,
+      "wall_reference_minus_packed_s": -1.553573190991301,
+      "kernel_speedup": 0.5170731707317074
+    },
+    {
+      "pair": "3-4-Original",
+      "kernel_reference_minus_packed_s": 0.03420000000000001,
+      "wall_reference_minus_packed_s": 0.10100595199037343,
+      "kernel_speedup": 2.921348314606742
+    },
+    {
+      "pair": "3-8-Quoted",
+      "kernel_reference_minus_packed_s": 0.0059000000000000025,
+      "wall_reference_minus_packed_s": -1.402902908041142,
+      "kernel_speedup": 1.0818307905686546
+    },
+    {
+      "pair": "3-8-Original",
+      "kernel_reference_minus_packed_s": 0.7121000000000001,
+      "wall_reference_minus_packed_s": 0.9518351290025748,
+      "kernel_speedup": 11.64424514200299
+    },
+    {
+      "pair": "3-16-Quoted",
+      "kernel_reference_minus_packed_s": 1.039,
+      "wall_reference_minus_packed_s": 1.3518600999959745,
+      "kernel_speedup": 2.7004909983633385
+    },
+    {
+      "pair": "3-16-Original",
+      "kernel_reference_minus_packed_s": 20.03,
+      "wall_reference_minus_packed_s": 26.4031038810499,
+      "kernel_speedup": 36.14035087719298
     },
     {
       "pair": "3-32-Quoted",
-      "kernel_reference_minus_packed_s": 26.060000000000002,
-      "wall_reference_minus_packed_s": 56.641031280043535,
-      "kernel_speedup": 6.4978902953586495
+      "kernel_reference_minus_packed_s": 23.11,
+      "wall_reference_minus_packed_s": 54.841143666009884,
+      "kernel_speedup": 5.6312625250501
+    },
+    {
+      "pair": "4-4-Quoted",
+      "kernel_reference_minus_packed_s": -0.006990000000000001,
+      "wall_reference_minus_packed_s": -1.4030112380278297,
+      "kernel_speedup": 0.5370860927152317
+    },
+    {
+      "pair": "4-4-Original",
+      "kernel_reference_minus_packed_s": 0.027699999999999995,
+      "wall_reference_minus_packed_s": 0.10118233598768711,
+      "kernel_speedup": 2.6488095238095233
+    },
+    {
+      "pair": "4-8-Quoted",
+      "kernel_reference_minus_packed_s": -9.999999999998899e-05,
+      "wall_reference_minus_packed_s": -1.301552721997723,
+      "kernel_speedup": 0.9984732824427482
+    },
+    {
+      "pair": "4-8-Original",
+      "kernel_reference_minus_packed_s": 0.6651,
+      "wall_reference_minus_packed_s": 1.0056512670125812,
+      "kernel_speedup": 11.248073959938365
+    },
+    {
+      "pair": "4-16-Quoted",
+      "kernel_reference_minus_packed_s": 0.955,
+      "wall_reference_minus_packed_s": 1.3486191150150262,
+      "kernel_speedup": 2.891089108910891
+    },
+    {
+      "pair": "4-16-Original",
+      "kernel_reference_minus_packed_s": 19.598000000000003,
+      "wall_reference_minus_packed_s": 25.45057819603244,
+      "kernel_speedup": 40.039840637450204
     },
     {
       "pair": "4-32-Quoted",
-      "kernel_reference_minus_packed_s": 26.55,
-      "wall_reference_minus_packed_s": 57.24801696900977,
-      "kernel_speedup": 6.589473684210526
+      "kernel_reference_minus_packed_s": 24.14,
+      "wall_reference_minus_packed_s": 55.14860131096793,
+      "kernel_speedup": 5.866935483870968
+    },
+    {
+      "pair": "5-4-Quoted",
+      "kernel_reference_minus_packed_s": -0.0071,
+      "wall_reference_minus_packed_s": -1.401186007016804,
+      "kernel_speedup": 0.5328947368421052
+    },
+    {
+      "pair": "5-4-Original",
+      "kernel_reference_minus_packed_s": 0.030200000000000005,
+      "wall_reference_minus_packed_s": 0.10166830604430288,
+      "kernel_speedup": 2.986842105263158
+    },
+    {
+      "pair": "5-8-Quoted",
+      "kernel_reference_minus_packed_s": 0.0020999999999999908,
+      "wall_reference_minus_packed_s": -1.2531673329649493,
+      "kernel_speedup": 1.033070866141732
+    },
+    {
+      "pair": "5-8-Original",
+      "kernel_reference_minus_packed_s": 0.78,
+      "wall_reference_minus_packed_s": 1.0008357299957424,
+      "kernel_speedup": 13.1875
+    },
+    {
+      "pair": "5-16-Quoted",
+      "kernel_reference_minus_packed_s": 1.002,
+      "wall_reference_minus_packed_s": 1.3024908510269597,
+      "kernel_speedup": 3.0120481927710845
+    },
+    {
+      "pair": "5-16-Original",
+      "kernel_reference_minus_packed_s": 19.389999999999997,
+      "wall_reference_minus_packed_s": 25.197806786978617,
+      "kernel_speedup": 39.01960784313725
     },
     {
       "pair": "5-32-Quoted",
-      "kernel_reference_minus_packed_s": 26.61,
-      "wall_reference_minus_packed_s": 57.45479190198239,
-      "kernel_speedup": 6.555323590814196
+      "kernel_reference_minus_packed_s": 23.48,
+      "wall_reference_minus_packed_s": 57.0442156289937,
+      "kernel_speedup": 5.677290836653387
     }
   ],
   "summary": [
@@ -1963,84 +2364,84 @@
       "n": 4,
       "reference": "Quoted",
       "pairs": 6,
-      "packed_s": 0.0162,
-      "reference_s": 0.008185000000000001,
-      "speedup": 0.5090834505391468,
+      "packed_s": 0.01625,
+      "reference_s": 0.008239999999999999,
+      "speedup": 0.5184744735646114,
       "packed_range_s": [
-        0.0158,
-        0.028100000000000003
+        0.0151,
+        0.0177
       ]
     },
     {
       "n": 4,
       "reference": "Original",
       "pairs": 6,
-      "packed_s": 0.0158,
-      "reference_s": 0.0451,
-      "speedup": 2.863541078771265,
+      "packed_s": 0.016,
+      "reference_s": 0.0474,
+      "speedup": 2.9657282741738067,
       "packed_range_s": [
-        0.0157,
-        0.027899999999999998
+        0.0152,
+        0.0178
       ]
     },
     {
       "n": 8,
       "reference": "Quoted",
       "pairs": 6,
-      "packed_s": 0.0675,
-      "reference_s": 0.06665,
-      "speedup": 0.9792101439704135,
+      "packed_s": 0.06825,
+      "reference_s": 0.07685,
+      "speedup": 1.0804562116108578,
       "packed_range_s": [
-        0.06620000000000001,
-        0.12
+        0.0635,
+        0.07840000000000001
       ]
     },
     {
       "n": 8,
       "reference": "Original",
       "pairs": 6,
-      "packed_s": 0.06885000000000001,
-      "reference_s": 0.722,
-      "speedup": 10.761334473909322,
+      "packed_s": 0.07065,
+      "reference_s": 0.85,
+      "speedup": 11.376725152012192,
       "packed_range_s": [
-        0.0664,
-        0.121
+        0.064,
+        0.0848
       ]
     },
     {
       "n": 16,
       "reference": "Quoted",
       "pairs": 6,
-      "packed_s": 0.5255000000000001,
-      "reference_s": 1.475,
-      "speedup": 2.7981145822161237,
+      "packed_s": 0.5735,
+      "reference_s": 1.63,
+      "speedup": 2.850759566031769,
       "packed_range_s": [
-        0.515,
-        0.86
+        0.498,
+        0.611
       ]
     },
     {
       "n": 16,
       "reference": "Original",
       "pairs": 6,
-      "packed_s": 0.525,
-      "reference_s": 24.0,
-      "speedup": 45.17174649250121,
+      "packed_s": 0.587,
+      "reference_s": 20.45,
+      "speedup": 34.957592657139536,
       "packed_range_s": [
-        0.521,
-        0.546
+        0.502,
+        0.635
       ]
     },
     {
       "n": 32,
       "reference": "Quoted",
       "pairs": 6,
-      "packed_s": 4.765,
-      "reference_s": 31.4,
-      "speedup": 6.572398637512361,
+      "packed_s": 5.17,
+      "reference_s": 29.75,
+      "speedup": 5.68911270804632,
       "packed_range_s": [
-        4.74,
-        5.06
+        4.96,
+        5.37
       ]
     }
   ]

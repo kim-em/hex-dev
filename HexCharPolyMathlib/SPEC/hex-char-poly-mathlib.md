@@ -28,7 +28,9 @@ coverage does not wait for that separate bridge. No carrier-specific
 carrier fixtures remain owned by `HexCharPoly`.
 
 Importing the umbrella extends `char_poly` to closed
-`Matrix (Fin n) (Fin n) Int` terms:
+`Matrix (Fin n) (Fin n) Int` literals: `!![…]`, `Matrix.of ![…]`,
+`fun i j => …`, and `Matrix.ofArray`, possibly behind transparent definitions
+within the shared recognizer's eight-unfolding budget:
 
 ```lean
 open Matrix Polynomial
@@ -93,44 +95,56 @@ arm is recorded and its later pairs are skipped. Kernel time is Lean's
 elaboration, and Lake overhead. The targets guide further optimization rather
 than withholding the tactic when a target is missed.
 
-On shared host `chungus2`, leased CPU 64, Lean
+On shared host `chungus2`, leased CPU 92, Lean
 `v4.34.0-rc2`, the kernel measurements are:
 
 | Dimension | Reference | Reference median | Packed median | Median paired speedup |
 |---|---|---:|---:|---:|
-| 4 | Scalar lists | 8.2 ms | 16.2 ms | 0.51× |
-| 4 | Original frontend | 45.1 ms | 15.8 ms | 2.86× |
-| 8 | Scalar lists | 66.7 ms | 67.5 ms | 0.98× |
-| 8 | Original frontend | 722.0 ms | 68.9 ms | 10.76× |
-| 16 | Scalar lists | 1.48 s | 525.5 ms | 2.80× |
-| 16 | Original frontend | 24.00 s | 525.0 ms | 45.17× |
-| 32 | Scalar lists | 31.40 s | 4.76 s | 6.57× |
-| 32 | Original frontend | 300 s wall timeout | 4.75 s (one sample) | unavailable |
+| 4 | Scalar lists | 8.2 ms | 16.2 ms | 0.52× |
+| 4 | Original frontend | 47.4 ms | 16.0 ms | 2.97× |
+| 8 | Scalar lists | 76.9 ms | 68.2 ms | 1.08× |
+| 8 | Original frontend | 850.0 ms | 70.7 ms | 11.38× |
+| 16 | Scalar lists | 1.63 s | 573.5 ms | 2.85× |
+| 16 | Original frontend | 20.45 s | 587.0 ms | 34.96× |
+| 32 | Scalar lists | 29.75 s | 5.17 s | 5.69× |
+| 32 | Original frontend | 300 s wall timeout (retained) | — | unavailable |
 
-Each non-timeout row contains six adjacent pairs; packed medians are specific
+Each completed row contains six adjacent pairs; packed medians are specific
 to that row's reference. Speedup is the median of the six within-pair ratios,
-not the ratio of medians. The original size-32 frontend reached the operational
-wall timeout before reporting a kernel total; its five subsequent pairs were
-skipped. This is an end-to-end timeout, not a kernel lower bound.
+not the ratio of medians. The identical original size-32 frontend reached the
+operational wall timeout before reporting a kernel total in the retained
+cached-certificate sweep. The manifest references that result and skips its
+six subsequent pairs. This is an end-to-end timeout, not a kernel lower bound.
 
 The packed frontend meets both kernel targets and improves on the scalar
 checker at 16 and 32 and the original frontend wherever it completes. At 4,
-the scalar certificate alone is cheaper than the full packed frontend. These
-are host-specific observations from hashed working-tree sources, with no
-release-quality verdict. All 86 samples, paired deltas, source provenance,
-artifact sizes, axiom audits and raw logs are retained in
+the scalar certificate alone is cheaper than the full packed frontend; at 8
+the measured times are comparable. These are host-specific observations from hashed working-tree sources, with no
+release-quality verdict. All 84 completed samples, paired deltas, source
+provenance, artifact sizes, axiom audits and raw logs are retained in
 [`evidence/packed`](../../bench/HexCharPolyMathlib/ProofProbe/evidence/packed).
-The original scalar study and all completed optimization probes are retained
-alongside the final sweep.
+The original scalar study, the 86-sample sweep with cached packed columns,
+and all completed optimization probes are retained alongside the final sweep.
+Two adjacent cache-removal pairs give comparable size-32 kernel times
+(cached 4.82/5.01 s, uncached 4.90/4.75 s), while reducing the `.olean` from
+4,566,376 to 3,150,040 bytes; the smaller certificate is used above.
 
 Packing the Toeplitz product as one full polynomial convolution is material:
 the size-32 diagnostic with a packed linear combination of shifted columns
 takes 28.3 s, whereas the full-convolution diagnostic takes 5.34 s. These are
 unpaired diagnostic observations on their recorded CPUs. The full product
 includes the unused high coefficients; checking their bounds is necessary for
-balanced-digit injectivity. Cached packed block columns avoid repacking the
-same matrix for each moment transition, and the producer materializes entries
-through the shared literal layer before native Berkowitz evaluation.
+balanced-digit injectivity. The checker passes packed block columns to the
+moment loop without carrying a duplicate list of packed integers in the
+witness. The producer materializes entries through the shared literal layer
+before native Berkowitz evaluation.
+
+The certificate currently uses one conservative bound for entries, moment
+vectors, coefficient vectors and full products. Separate bounds for these
+quantities could reduce the packing width; this is a possible further
+optimization, not needed to meet the measured targets. Constructor-form
+integer literals and a producer that retains all intermediate coefficient
+vectors in one recursion are further candidates for measurement.
 
 ## Transported results
 

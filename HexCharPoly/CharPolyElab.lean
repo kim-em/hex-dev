@@ -152,7 +152,7 @@ public meta structure CoreInput where
 evaluation. -/
 public meta def checkClosed (what : String) (e : Expr) : MetaM Unit := do
   if e.hasFVar || e.hasExprMVar then
-    throwError "char_poly: the {what}{indentExpr e}\nmust be a closed term (no local hypotheses or metavariables)"
+    throwError "char_poly declined: the {what}{indentExpr e}\nmust be a closed term (no local hypotheses or metavariables)"
 
 /-- Classify and evaluate an already elaborated `Hex.Matrix Int n n`.  A
 non-Hex type returns `none`, allowing another elaborator for the same syntax
@@ -168,7 +168,7 @@ public meta def coreInput? (e : Expr) : MetaM (Option CoreInput) := do
   let some m ← getNatValue? cols |
     throwError "char_poly declined: the column dimension must reduce to a concrete natural number{indentExpr cols}"
   unless n == m do
-    throwError "char_poly: expected a square matrix, but got dimensions {n} × {m}"
+    throwError "char_poly declined: expected a square matrix, but got dimensions {n} × {m}"
   checkClosed "matrix" e
   match ← evalMatrixCore n ty e with
   | .error msg =>
@@ -203,8 +203,8 @@ public meta def certificateExpr (input : CoreInput) : MetaM CertificateExpr := d
   let descending := (Matrix.berkowitz input.value).toList
   unless Matrix.CharPolyKernel.checkCharPolyList input.n rows w descending do
     throwError "char_poly failure: the producer's packed certificate failed its compiled recheck"
-  let steps := w.steps.map fun c => mkApp5 (mkConst ``Matrix.CharPolyKernel.Step.mk)
-    (toExpr c.column) (toExpr c.vectors) (toExpr c.coefficients) (toExpr c.packedColumns) (toExpr c.product)
+  let steps := w.steps.map fun c => mkApp4 (mkConst ``Matrix.CharPolyKernel.Step.mk)
+    (toExpr c.column) (toExpr c.vectors) (toExpr c.coefficients) (toExpr c.product)
   let witness := mkApp3 (mkConst ``Matrix.CharPolyKernel.Witness.mk)
     (mkNatLit w.bound) (mkNatLit w.width) (listLit (mkConst ``Matrix.CharPolyKernel.Step) steps)
   let rowExpr := toExpr rows
@@ -260,7 +260,7 @@ private meta def checkCoreRhs (computed : DensePoly Int) (rhs : Expr) : MetaM Un
         throwError "char_poly: the supplied polynomial has coefficients {supplied.toArray.toList}, but the computed characteristic polynomial has coefficients {computed.toArray.toList}"
       let literal ← reifyZPoly supplied
       unless ← withTransparency .all <| isDefEq literal rhs do
-        throwError "char_poly: the polynomial{indentExpr rhs}\nevaluates to{indentExpr literal}\nbut is not definitionally transparent enough for kernel replay"
+        throwError "char_poly declined: the polynomial{indentExpr rhs}\nevaluates to{indentExpr literal}\nbut is not definitionally transparent enough for kernel replay"
 
 /-- Emit a proof of a direct core characteristic-polynomial equality. -/
 private meta def proveCoreEquality (input : CoreInput) (rhs : Expr)
@@ -322,7 +322,7 @@ private meta def introResult (e : Expr) : Tactic.TacticM Unit := do
         `HexCharPolyMathlib.CharPolyResult.charPoly_eq)
     else none
   let some (polyName, equalityName) := fields? |
-    throwError "char_poly: internal error: unrecognized result type{indentExpr ty}"
+    throwError "char_poly failure: internal error: unrecognized result type{indentExpr ty}"
   let polyE ← mkAppM polyName #[e]
   let equalityE ← mkAppM equalityName #[e]
   let polyTy ← inferType polyE

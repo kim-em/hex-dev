@@ -86,11 +86,11 @@ private meta def matrixDim? (ty : Expr) : MetaM (Option Nat) := do
   unless (← whnfR coeff).isConstOf ``Int do
     throwError "char_poly declined: unsupported Mathlib matrix coefficient type{indentExpr coeff}\nOnly Int matrices are currently supported"
   let some n ← getNatValue? nRows |
-    throwError "char_poly: the Mathlib matrix dimension must reduce to a concrete natural number{indentExpr nRows}"
+    throwError "char_poly declined: the Mathlib matrix dimension must reduce to a concrete natural number{indentExpr nRows}"
   let some m ← getNatValue? nCols |
-    throwError "char_poly: the Mathlib matrix dimension must reduce to a concrete natural number{indentExpr nCols}"
+    throwError "char_poly declined: the Mathlib matrix dimension must reduce to a concrete natural number{indentExpr nCols}"
   unless n == m do
-    throwError "char_poly: expected equal Mathlib row and column dimensions, but got Fin {n} and Fin {m}"
+    throwError "char_poly declined: expected equal Mathlib row and column dimensions, but got Fin {n} and Fin {m}"
   return some n
 
 private meta def input? (e : Expr) : MetaM (Option MathlibInput) := do
@@ -173,9 +173,9 @@ private meta def getNatLit (e : Expr) : MetaM Nat := do
       | (``OfNat.ofNat, #[_, n, _]) =>
           match ← getNatValue? n with
           | some k => return k
-          | none => throwError "char_poly: polynomial exponents must be natural-number literals{indentExpr e}"
+          | none => throwError "char_poly declined: polynomial exponents must be natural-number literals{indentExpr e}"
       | _ =>
-          throwError "char_poly: polynomial exponents must be natural-number literals{indentExpr e}"
+          throwError "char_poly declined: polynomial exponents must be natural-number literals{indentExpr e}"
 
 private meta def densePolyType : MetaM Expr := do
   let int := mkConst ``Int
@@ -192,45 +192,48 @@ private meta def toPolynomialFn : MetaM Expr := do
 private meta structure ParsedPolynomial where
   value : Hex.DensePoly Int
   literal : Expr
-  proof : Expr
+  /-- Delayed until the requested coefficients have been checked. -/
+  proof : MetaM Expr
 
 private meta def combineBinary (original : Expr) (value : Hex.DensePoly Int)
     (left right : ParsedPolynomial) (transport operation : Name) :
     MetaM ParsedPolynomial := do
   let literal ← Hex.CharPolyTactic.reifyZPoly value
-  let combined ← mkAppM operation #[left.literal, right.literal]
-  let hcheck ← Hex.CharPolyTactic.beqCoeffsProof literal combined
-  let hroot ← mkAppM ``Hex.DensePoly.eq_of_beqCoeffs #[hcheck]
-  let t0 ← mkCongrArg (← toPolynomialFn) hroot
-  let t1 ← mkAppM transport #[left.literal, right.literal]
-  let polyTy ← inferType original
-  let operationFn ← mkAppOptM operation
-    #[some polyTy, some polyTy, some polyTy, none]
-  let t2 ← mkCongr (← mkCongrArg operationFn left.proof) right.proof
-  return ⟨value, literal, ← mkEqTrans t0 (← mkEqTrans t1 t2)⟩
+  return ⟨value, literal, do
+    let combined ← mkAppM operation #[left.literal, right.literal]
+    let hcheck ← Hex.CharPolyTactic.beqCoeffsProof literal combined
+    let hroot ← mkAppM ``Hex.DensePoly.eq_of_beqCoeffs #[hcheck]
+    let t0 ← mkCongrArg (← toPolynomialFn) hroot
+    let t1 ← mkAppM transport #[left.literal, right.literal]
+    let polyTy ← inferType original
+    let operationFn ← mkAppOptM operation
+      #[some polyTy, some polyTy, some polyTy, none]
+    let t2 ← mkCongr (← mkCongrArg operationFn (← left.proof)) (← right.proof)
+    mkEqTrans t0 (← mkEqTrans t1 t2)⟩
 
 private meta def constLeaf (z : Int) (coefficient : Expr)
     (tail? : Option Expr) : MetaM ParsedPolynomial := do
   let value : Hex.DensePoly Int := Hex.DensePoly.C z
   let literal ← Hex.CharPolyTactic.reifyZPoly value
-  let zExpr := toExpr z
-  let constant ← mkAppM ``Hex.DensePoly.C #[zExpr]
-  let hcheck ← Hex.CharPolyTactic.beqCoeffsProof literal constant
-  let hroot ← mkAppM ``Hex.DensePoly.eq_of_beqCoeffs #[hcheck]
-  let t0 ← mkCongrArg (← toPolynomialFn) hroot
-  let t1 ← mkAppM ``HexPolyMathlib.toPolynomial_C #[zExpr]
-  let coefficientEq ← mkEq zExpr coefficient
-  let hCoefficient ← Hex.CharPolyTactic.kernelDecideProof coefficientEq
-  let some (_, _, constantRhs) := (← inferType t1).eq? |
-    throwError "char_poly: internal error while constructing a constant-polynomial proof"
-  let t2 ← mkCongrArg constantRhs.appFn! hCoefficient
-  let mut proof ← mkEqTrans t0 (← mkEqTrans t1 t2)
-  if let some tail := tail? then
-    proof ← mkEqTrans proof tail
-  return ⟨value, literal, proof⟩
+  return ⟨value, literal, do
+    let zExpr := toExpr z
+    let constant ← mkAppM ``Hex.DensePoly.C #[zExpr]
+    let hcheck ← Hex.CharPolyTactic.beqCoeffsProof literal constant
+    let hroot ← mkAppM ``Hex.DensePoly.eq_of_beqCoeffs #[hcheck]
+    let t0 ← mkCongrArg (← toPolynomialFn) hroot
+    let t1 ← mkAppM ``HexPolyMathlib.toPolynomial_C #[zExpr]
+    let coefficientEq ← mkEq zExpr coefficient
+    let hCoefficient ← Hex.CharPolyTactic.kernelDecideProof coefficientEq
+    let some (_, _, constantRhs) := (← inferType t1).eq? |
+      throwError "char_poly failure: internal error while constructing a constant-polynomial proof"
+    let t2 ← mkCongrArg constantRhs.appFn! hCoefficient
+    let mut proof ← mkEqTrans t0 (← mkEqTrans t1 t2)
+    if let some tail := tail? then
+      proof ← mkEqTrans proof tail
+    return proof⟩
 
-/-- Parse an ordinary `Polynomial Int` expression while constructing a proof
-that its flat executable literal transports back to the original expression.
+/-- Parse an ordinary `Polynomial Int` expression, delaying certificate proofs
+until the caller has checked the computed value against the requested target.
 The `seen` list prevents cycles while unfolding named transparent definitions. -/
 private meta partial def parsePolynomial (e : Expr) (seen : List Name := []) :
     MetaM ParsedPolynomial := do
@@ -254,58 +257,64 @@ private meta partial def parsePolynomial (e : Expr) (seen : List Name := []) :
       let child ← parsePolynomial a seen
       let value := -child.value
       let literal ← Hex.CharPolyTactic.reifyZPoly value
-      let negated ← mkAppM ``Neg.neg #[child.literal]
-      let hcheck ← Hex.CharPolyTactic.beqCoeffsProof literal negated
-      let hroot ← mkAppM ``Hex.DensePoly.eq_of_beqCoeffs #[hcheck]
-      let t0 ← mkCongrArg (← toPolynomialFn) hroot
-      let t1 ← mkAppM ``HexPolyMathlib.toPolynomial_neg #[child.literal]
-      let polyTy ← inferType e
-      let negFn ← mkAppOptM ``Neg.neg #[some polyTy, none]
-      let t2 ← mkCongrArg negFn child.proof
-      return ⟨value, literal, ← mkEqTrans t0 (← mkEqTrans t1 t2)⟩
+      return ⟨value, literal, do
+        let negated ← mkAppM ``Neg.neg #[child.literal]
+        let hcheck ← Hex.CharPolyTactic.beqCoeffsProof literal negated
+        let hroot ← mkAppM ``Hex.DensePoly.eq_of_beqCoeffs #[hcheck]
+        let t0 ← mkCongrArg (← toPolynomialFn) hroot
+        let t1 ← mkAppM ``HexPolyMathlib.toPolynomial_neg #[child.literal]
+        let polyTy ← inferType e
+        let negFn ← mkAppOptM ``Neg.neg #[some polyTy, none]
+        let t2 ← mkCongrArg negFn (← child.proof)
+        mkEqTrans t0 (← mkEqTrans t1 t2)⟩
   | (``HPow.hPow, #[_, _, _, _, a, exponent]) => do
       let base ← parsePolynomial a seen
       let n ← getNatLit exponent
-      let denseTy ← densePolyType
-      let oneDense ← mkAppOptM ``One.one #[some denseTy, none]
-      let mut value : Hex.DensePoly Int := 1
-      let mut literal ← Hex.CharPolyTactic.reifyZPoly value
-      let hOneCheck ← Hex.CharPolyTactic.beqCoeffsProof literal oneDense
-      let hOne ← mkAppM ``Hex.DensePoly.eq_of_beqCoeffs #[hOneCheck]
-      let t0 ← mkCongrArg (← toPolynomialFn) hOne
-      let toPoly ← toPolynomialFn
-      let toPolyArgs := toPoly.getAppArgs
-      let t1 := mkApp3
-        (mkConst ``HexPolyMathlib.toPolynomial_one [Level.zero])
-        toPolyArgs[0]! toPolyArgs[1]! toPolyArgs[2]!
-      let mut proof ← mkEqTrans t0
-        (← mkEqTrans t1 (← mkEqSymm (← mkAppM ``pow_zero #[a])))
-      let polyTy ← inferType e
-      let mulFn ← mkAppOptM ``HMul.hMul
-        #[some polyTy, some polyTy, some polyTy, none]
-      for k in [0:n] do
-        let nextValue := value * base.value
-        let nextLiteral ← Hex.CharPolyTactic.reifyZPoly nextValue
-        let product ← mkAppM ``HMul.hMul #[literal, base.literal]
-        let hcheck ← Hex.CharPolyTactic.beqCoeffsProof nextLiteral product
-        let hroot ← mkAppM ``Hex.DensePoly.eq_of_beqCoeffs #[hcheck]
-        let s0 ← mkCongrArg (← toPolynomialFn) hroot
-        let s1 ← mkAppM ``HexPolyMathlib.toPolynomial_mul #[literal, base.literal]
-        let s2 ← mkCongr (← mkCongrArg mulFn proof) base.proof
-        let s3 ← mkEqSymm (← mkAppM ``pow_succ #[a, mkNatLit k])
-        value := nextValue
-        literal := nextLiteral
-        proof ← mkEqTrans s0 (← mkEqTrans s1 (← mkEqTrans s2 s3))
-      return ⟨value, literal, proof⟩
+      let value := (List.range n).foldl (fun v _ => v * base.value) (1 : Hex.DensePoly Int)
+      let literal ← Hex.CharPolyTactic.reifyZPoly value
+      return ⟨value, literal, do
+        let baseProof ← base.proof
+        let denseTy ← densePolyType
+        let oneDense ← mkAppOptM ``One.one #[some denseTy, none]
+        let mut value : Hex.DensePoly Int := 1
+        let mut literal ← Hex.CharPolyTactic.reifyZPoly value
+        let hOneCheck ← Hex.CharPolyTactic.beqCoeffsProof literal oneDense
+        let hOne ← mkAppM ``Hex.DensePoly.eq_of_beqCoeffs #[hOneCheck]
+        let t0 ← mkCongrArg (← toPolynomialFn) hOne
+        let toPoly ← toPolynomialFn
+        let toPolyArgs := toPoly.getAppArgs
+        let t1 := mkApp3
+          (mkConst ``HexPolyMathlib.toPolynomial_one [Level.zero])
+          toPolyArgs[0]! toPolyArgs[1]! toPolyArgs[2]!
+        let mut proof ← mkEqTrans t0
+          (← mkEqTrans t1 (← mkEqSymm (← mkAppM ``pow_zero #[a])))
+        let polyTy ← inferType e
+        let mulFn ← mkAppOptM ``HMul.hMul
+          #[some polyTy, some polyTy, some polyTy, none]
+        for k in [0:n] do
+          let nextValue := value * base.value
+          let nextLiteral ← Hex.CharPolyTactic.reifyZPoly nextValue
+          let product ← mkAppM ``HMul.hMul #[literal, base.literal]
+          let hcheck ← Hex.CharPolyTactic.beqCoeffsProof nextLiteral product
+          let hroot ← mkAppM ``Hex.DensePoly.eq_of_beqCoeffs #[hcheck]
+          let s0 ← mkCongrArg (← toPolynomialFn) hroot
+          let s1 ← mkAppM ``HexPolyMathlib.toPolynomial_mul #[literal, base.literal]
+          let s2 ← mkCongr (← mkCongrArg mulFn proof) baseProof
+          let s3 ← mkEqSymm (← mkAppM ``pow_succ #[a, mkNatLit k])
+          value := nextValue
+          literal := nextLiteral
+          proof ← mkEqTrans s0 (← mkEqTrans s1 (← mkEqTrans s2 s3))
+        return proof⟩
   | (``Polynomial.X, _) => do
       let value : Hex.DensePoly Int := Hex.DensePoly.ofCoeffs #[0, 1]
       let literal ← Hex.CharPolyTactic.reifyZPoly value
-      let canonical ← Hex.CharPolyTactic.reifyZPoly
-        (Hex.DensePoly.ofCoeffs #[(0 : Int), 1])
-      let hcheck ← Hex.CharPolyTactic.beqCoeffsProof literal canonical
-      let hroot ← mkAppM ``Hex.DensePoly.eq_of_beqCoeffs #[hcheck]
-      let t0 ← mkCongrArg (← toPolynomialFn) hroot
-      return ⟨value, literal, ← mkEqTrans t0 (mkConst ``toPolynomial_x)⟩
+      return ⟨value, literal, do
+        let canonical ← Hex.CharPolyTactic.reifyZPoly
+          (Hex.DensePoly.ofCoeffs #[(0 : Int), 1])
+        let hcheck ← Hex.CharPolyTactic.beqCoeffsProof literal canonical
+        let hroot ← mkAppM ``Hex.DensePoly.eq_of_beqCoeffs #[hcheck]
+        let t0 ← mkCongrArg (← toPolynomialFn) hroot
+        mkEqTrans t0 (mkConst ``toPolynomial_x)⟩
   | (``Polynomial.C, #[_, _, coefficient]) =>
       constLeaf (← evalInt coefficient) coefficient none
   | (``DFunLike.coe, args) =>
@@ -336,7 +345,7 @@ private meta partial def parsePolynomial (e : Expr) (seen : List Name := []) :
       let name? := if head.isConst then some head.constName! else none
       if let some name := name? then
         if seen.contains name then
-          throwError "char_poly: recursive or cyclic polynomial definition encountered at `{name}`"
+          throwError "char_poly declined: recursive or cyclic polynomial definition encountered at `{name}`"
       match ← unfoldDefinition? e with
       | some unfolded =>
           if unfolded == e then
@@ -378,7 +387,7 @@ private meta def proveMathlibEquality (input : MathlibInput) (rhs : Expr)
   let equivApply ← mkAppM ``HexPolyMathlib.equiv_apply #[computedLiteral]
   let mapped ← mkCongrArg (← toPolynomialFn) hroot
   let proof ← mkEqTrans canonical
-    (← mkEqTrans equivApply (← mkEqTrans mapped parsed.proof))
+    (← mkEqTrans equivApply (← mkEqTrans mapped (← parsed.proof)))
   if reverse then mkEqSymm proof else return proof
 
 @[term_elab Hex.CharPolyTactic.charPolyTerm]
@@ -401,7 +410,7 @@ public meta def elabCharPolyProofMathlib : Term.TermElab :=
     let some (matrix, rhs, reverse) ← mathlibGoal? target |
       Elab.throwUnsupportedSyntax
     let some input ← input? matrix |
-      throwError "char_poly: Mathlib support requires `Matrix (Fin n) (Fin n) Int`"
+      throwError "char_poly declined: Mathlib support requires `Matrix (Fin n) (Fin n) Int`"
     let proof ← proveMathlibEquality input rhs reverse
     Term.ensureHasType expectedType? proof
 

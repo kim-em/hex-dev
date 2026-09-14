@@ -13,9 +13,8 @@ is retained; none is rejected on account of host load.
 
 The diagnostic variants cover cached packed columns, native module compilation,
 materialization through literal entries, expression sharing, named certificate
-data, shift-based packing, and full convolution. The final checker uses cached
-packed columns, native production from literal entries, shift-based packing,
-and one packed multiplication for each full Toeplitz convolution. Expression
+data, shift-based packing, and full convolution. The final checker uses native production from literal entries, shift-based
+packing, and one packed multiplication for each full Toeplitz convolution. Expression
 sharing and named data did not improve the observed kernel time. The
 `entry-profile` directory records failed builds and is not a timing result.
 The initial `packed-comparison` has an explicitly recorded interrupted sample;
@@ -38,3 +37,13 @@ certificate removes those repeated shifted expressions: its only product check
 is `pack previous * pack column = pack fullProduct`, followed by comparison of
 the required prefix. All coefficients, including the unused high coefficients,
 are bounded and authenticated by the injectivity proof.
+
+`cached-report.json` and `cached-logs.tar.gz` retain the full 86-sample sweep
+with literal packed-column caches. `cache-comparison.json` and
+`cache-comparison.tar.gz` retain two adjacent AB/BA pairs at 16 and 32,
+including exact sources, testing removal of that field. Kernel times were
+comparable (32: cached 4.82/5.01 s, uncached 4.90/4.75 s), while the size-32
+`.olean` shrank from 4,566,376 to 3,150,040 bytes. The smaller certificate is
+used in `report.json` and `paired-logs.tar.gz`. Its manifest carries forward
+the identical original frontend's recorded size-32 timeout, rather than
+repeating a censored arm.

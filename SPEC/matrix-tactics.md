@@ -270,8 +270,10 @@ Shared host, one run each unless stated, kernel "type checking" time of the
 emitted proof; the fresh-module medians are from the paired sweeps where
 they exist.
 
-| design | family | Hex | Mathlib | verdict |
+| design | family | Hex | Comparator | verdict |
 |---|---|---|---|---|
+| `char_poly` by packed list Berkowitz | dense `16 × 16`, 8-bit | 573.5 ms | scalar lists 1.63 s | six paired samples: 2.85x kernel speedup |
+| same | dense `32 × 32`, 8-bit | 5.17 s | scalar lists 29.75 s | six paired samples: 5.69x kernel speedup |
 | `rank` by `checkRankList` (shipped) | dense `16 × 16` | 115 ms | `eval_rank` 864 ms | 7.5x faster; fresh-module 4.5x |
 | `rank` by `checkRankList` (shipped) | `32 × 32`, rank 2 | 116 ms | `eval_rank` 7.3 s | 63x; fresh-module 21.6x |
 | `rank` by `checkRank` on a `RankCert` | dense `16 × 16` | 371 s | `eval_rank` 864 ms | rejected |
