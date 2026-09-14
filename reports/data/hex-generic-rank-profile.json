@@ -1,0 +1,194 @@
+{
+  "cpu": 15,
+  "command": [
+    "taskset",
+    "-c",
+    "15",
+    ".lake/build/bin/hexgenericrank_bench",
+    "profile",
+    "--target-inner-nanos",
+    "1000000000",
+    "--profiler",
+    "perf record --clockid mono -e cpu-clock -F 499 -g --call-graph dwarf -o /tmp/hex-10223-profile.data --",
+    "Hex.GenericRankBench.full.n8.k8.d4.s16.producer"
+  ],
+  "returncode": 0,
+  "samples_parsed": 628,
+  "samples_in_kernel_regions": 609,
+  "regions": [
+    {
+      "kind": "region",
+      "mono_t0_ns": 328387781594233,
+      "mono_t1_ns": 328388017267407,
+      "count": 1,
+      "label": "kernel"
+    },
+    {
+      "kind": "region",
+      "mono_t0_ns": 328388017287426,
+      "mono_t1_ns": 328388265215113,
+      "count": 1,
+      "label": "kernel"
+    },
+    {
+      "kind": "region",
+      "mono_t0_ns": 328388265226500,
+      "mono_t1_ns": 328388513107116,
+      "count": 1,
+      "label": "kernel"
+    },
+    {
+      "kind": "region",
+      "mono_t0_ns": 328388513116881,
+      "mono_t1_ns": 328388760798402,
+      "count": 1,
+      "label": "kernel"
+    },
+    {
+      "kind": "region",
+      "mono_t0_ns": 328388760809318,
+      "mono_t1_ns": 328389004818514,
+      "count": 1,
+      "label": "kernel"
+    }
+  ],
+  "self": [
+    [
+      "mi_free",
+      107
+    ],
+    [
+      "mi_malloc_small",
+      97
+    ],
+    [
+      "lean_dec_ref_cold",
+      78
+    ],
+    [
+      "lean_apply_1",
+      60
+    ],
+    [
+      "lp_Hex_List_foldl___at___00Hex_Mono_degree_spec__0",
+      52
+    ],
+    [
+      "l_Fin_foldr_loop___at___00List_ofFn_spec__0___redArg",
+      47
+    ],
+    [
+      "lean_array_to_list_impl",
+      26
+    ],
+    [
+      "l_List_reverseAux___redArg",
+      25
+    ],
+    [
+      "lp_Hex_List_compareLex___at___00Hex_Mono_revlex_spec__0",
+      23
+    ],
+    [
+      "l_List_finRange___lam__0___boxed",
+      18
+    ],
+    [
+      "l_Std_DTreeMap_Internal_Impl_balance___redArg",
+      11
+    ],
+    [
+      "l_Std_DTreeMap_Internal_Impl_Const_alter___redArg",
+      8
+    ],
+    [
+      "lp_Hex_Hex_Mono_mul___lam__0___boxed",
+      7
+    ],
+    [
+      "lp_Hex_Std_DTreeMap_Internal_Impl_Const_alter___at___00Hex_MvPoly_addMonomial___at___00Hex_MvPoly_mul___at___00Vector_dotProductImpl___at___00Hex_Matrix_mulImpl___at___00Hex_GenericRankBench_input_spec__0_spec__0_spec__1_spec__2_spec__3___redArg",
+      6
+    ],
+    [
+      "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)",
+      6
+    ],
+    [
+      "lean_apply_2",
+      5
+    ],
+    [
+      "lp_Hex_Hex_Mono_grevlex",
+      4
+    ],
+    [
+      "_mi_malloc_generic(mi_theap_s*, unsigned long, unsigned long, unsigned long*)",
+      4
+    ],
+    [
+      "lp_Hex_Std_DTreeMap_Internal_Impl_foldlM___at___00Std_DTreeMap_Internal_Impl_foldl___at___00Hex_MvPoly_mul___at___00Hex_MvPoly_divExactAux___at___00Hex_MvPoly_divExact_x3f___at___00Hex_exactDiv___at___00Hex_GenericRankBench_passSupport_spec__0_spec__0_spec__1_spec__4_spec__13_spec__17",
+      4
+    ],
+    [
+      "l___private_Init_Data_Array_Basic_0__Array_ofFn_go___redArg",
+      3
+    ],
+    [
+      "lean_array_push",
+      2
+    ],
+    [
+      "lean_free_object",
+      2
+    ],
+    [
+      "lp_Hex_Hex_Mono_grevlex___boxed",
+      2
+    ],
+    [
+      "lp_Hex_Hex_Mono_revlex___redArg",
+      2
+    ],
+    [
+      "l_List_reverse___redArg",
+      1
+    ],
+    [
+      "lean_alloc_ctor",
+      1
+    ],
+    [
+      "lp_Hex_Std_DTreeMap_Internal_Impl_foldlM___at___00Std_DTreeMap_Internal_Impl_foldl___at___00Hex_MvPoly_mul___at___00Hex_MvPoly_divExactAux___at___00Hex_MvPoly_divExact_x3f___at___00Hex_exactDiv___at___00Hex_GenericRankBench_passSupport_spec__0_spec__0_spec__1_spec__4_spec__14_spec__19",
+      1
+    ],
+    [
+      "l_Std_DTreeMap_Internal_Impl_foldrM___redArg",
+      1
+    ],
+    [
+      "lean_inc_heartbeat",
+      1
+    ],
+    [
+      "l_Std_DTreeMap_Internal_Impl_foldlM___redArg___lam__1",
+      1
+    ],
+    [
+      "lean_alloc_object",
+      1
+    ],
+    [
+      "lp_Hex_Std_DTreeMap_Internal_Impl_Const_get_x3f___at___00Hex_MvPoly_leadingTerm___at___00Hex_MvPoly_divExactAux___at___00Hex_MvPoly_divExact_x3f___at___00Hex_exactDiv___at___00Hex_GenericRankBench_passSupport_spec__0_spec__0_spec__1_spec__3_spec__10___redArg",
+      1
+    ],
+    [
+      "l_Std_DTreeMap_Internal_Impl_foldl___redArg___lam__0",
+      1
+    ],
+    [
+      "l_Std_DTreeMap_Internal_Impl_foldlM___redArg",
+      1
+    ]
+  ],
+  "raw_sha256": "71f252fe4d480be50118be44c23210b027afd8e0c219b6b31e43514caed7a83f"
+}

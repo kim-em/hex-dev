@@ -16,12 +16,21 @@ is a documented non-test until the shared Nat residue encoding (#10257) lands.
 The field fallback checks balanced integer representatives modulo p with the
 existing polynomial-list arithmetic, without reducing through ZMod64.
 
-The trace records batch reification/conversion, compiled certificate production,
-and synchronous kernel checks separately for the header, pivot-block identity
-and all-column identity. Kernel timings exclude construction of the `decide`
-proof term; total fresh-module wall time includes it and all other elaboration.
-Proof-node counts count distinct expression nodes across the provider's shared
-output proofs; the reflection batch additionally charges its own reconstruction.
+Lean's cumulative profiler records batch reification/conversion, compiled
+certificate production, and synchronous declaration checks separately for the
+header, pivot-block identity and all-column identity. Nested profiler categories
+are disabled inside those three checks so their named categories include the
+kernel's work. Boolean proof-term construction is outside those categories;
+the external full-build time includes it and all other elaboration. No library
+or probe reads an in-process clock. A trace records distinct expression nodes
+across the provider's shared output proofs; the reflection batch additionally
+charges its own reconstruction.
 
 Comparator: **no-comparable-surface-in-named-comparator**. Mathlib's numeric
 `eval_rank` does not provide these symbolic or conditional outputs.
+
+The [diagnostic clock-instrumented sweep](data/hex-generic-rank-diagnostic-clock-probes.json.gz)
+retains all 84 pairs collected before replacing direct clock reads with Lean's
+profiler. Its build and axiom checks passed, but that instrumentation violated
+the build-only probe policy. It is diagnostic evidence only; the accepted
+measurements below use the profiler-based implementation.

@@ -109,18 +109,29 @@ theorem interpret_nil (ι : C →+* F) (v : Fin k → F) :
     HexMvPolyMathlib.eval₂MathlibHom ι v (PolyLists.denote []) = 0 := map_zero _
 
 /-- The term-form result distinguishes the polynomial matrix from its
-specialisation. Its rank proof is explicitly about the polynomial matrix. -/
-structure GenericResult (k : Nat) (C : Type) [CommRing C] [DecidableEq C] [BEq C] [LawfulBEq C]
+specialisation. Its rank proof is explicitly about the polynomial matrix.
+Coefficient instances are stored fields so projections need no global
+instance on the provider's carrier. -/
+structure GenericResult (k : Nat) (C : Type)
     {F : Type u} [CommRing F] {n m : Nat} (A : Matrix (Fin n) (Fin m) F) where
   value : Nat
+  coefficientRing : CommRing C
+  coefficientDecEq : DecidableEq C
+  coefficientBEq : BEq C
+  coefficientLawfulBEq : @LawfulBEq C coefficientBEq
   atoms : Array F
   valuation : Fin k → F
-  coefficientMap : C →+* F
-  polynomial : Hex.Matrix (MvPoly k C Mono.grevlex) n m
-  certificate : Hex.Matrix.RankCert (MvPoly k C Mono.grevlex) n m
-  checked : Hex.Matrix.checkRank polynomial certificate = true
-  proof : (symbolic polynomial).rank = value
-  interpretation : A = (symbolic polynomial).map (MvPolynomial.eval₂Hom coefficientMap valuation)
+  coefficientMap : letI := coefficientRing; C →+* F
+  polynomial : letI := coefficientRing; Hex.Matrix (MvPoly k C Mono.grevlex) n m
+  certificate : letI := coefficientRing; Hex.Matrix.RankCert (MvPoly k C Mono.grevlex) n m
+  checked : letI := coefficientRing; letI := coefficientDecEq; letI := coefficientBEq
+    Hex.Matrix.checkRank polynomial certificate = true
+  proof : letI := coefficientRing; letI := coefficientDecEq; letI := coefficientBEq
+    letI := coefficientLawfulBEq
+    (symbolic polynomial).rank = value
+  interpretation : letI := coefficientRing; letI := coefficientDecEq; letI := coefficientBEq
+    letI := coefficientLawfulBEq
+    A = (symbolic polynomial).map (MvPolynomial.eval₂Hom coefficientMap valuation)
 
 /-- An unconditional rank value and its proof for the user's matrix. -/
 structure RankResult {F : Type u} [CommRing F] {n m : Nat}

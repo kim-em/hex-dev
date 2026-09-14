@@ -32,14 +32,9 @@ structure Config where
   caseSplits : Nat := 0
   conditions : ConditionPolicy := {}
 
-/-- Measurements used by the symbolic proof probes. Kernel fields time the
-synchronous auxiliary-declaration check, excluding Boolean proof construction. -/
+/-- Static proof statistics; timing is supplied by Lean's profiler and the
+external fresh-module runner, never by clocks in the provider. -/
 structure Measurements where
-  batchNs : Nat := 0
-  producerNs : Nat := 0
-  headerKernelNs : Nat := 0
-  pivotKernelNs : Nat := 0
-  upperKernelNs : Nat := 0
   proofNodes : Nat := 0
   deriving ToJson
 
@@ -84,12 +79,14 @@ def checkedProof (proposition : Expr) : MetaM Expr := do
   HexMatrixMathlib.Literal.addClosedProof proposition
     (← HexMatrixMathlib.Literal.decideProof proposition)
 
-/-- Time the kernel declaration check separately from quotation. -/
-def checkedTimed (proposition : Expr) : MetaM (Expr × Nat) := do
+/-- Give each synchronous declaration check its own Lean profiler category.
+Nested profiler categories are disabled so the category includes kernel work;
+construction of the Boolean proof remains outside it. -/
+def checkedProfiled (category : String) (proposition : Expr) : MetaM Expr := do
   let value ← HexMatrixMathlib.Literal.decideProof proposition
-  let start ← IO.monoNanosNow
-  let proof ← HexMatrixMathlib.Literal.addClosedProof proposition value
-  return (proof, (← IO.monoNanosNow) - start)
+  profileitM Exception category (← getOptions) <|
+    withOptions (fun o => o.setBool `profiler false) <|
+      HexMatrixMathlib.Literal.addClosedProof proposition value
 
 /-- Build an equality of lists from the individual equality proofs. -/
 def listEq (type : Expr) : List Expr → MetaM Expr
@@ -214,13 +211,12 @@ def batchResult (A : Expr) (lit : HexMatrixMathlib.Literal.Recognized)
         match modulus with | none => t.2 | some p => balance p t.2)))
   let L : PolyLists.Rows Int := (List.range n).map fun i =>
     (List.range m).map fun j => flat[i * m + j]!
-  let producerStart ← IO.monoNanosNow
-  let c ← match modulus with
+  let c ← profileitM Exception "generic-rank producer" (← getOptions) do
+    match modulus with
     | none => pure (integerWitness k n m L)
     | some p => match residueWitness? p k n m L with
       | some c => pure c
       | none => throwError "rank: invalid residue coefficient evidence"
-  let producerNs := (← IO.monoNanosNow) - producerStart
   let passes := match modulus with
     | none => checkRankPolyList k n m L c
     | some p => Modular.checkRankPolyList p k n m L c
@@ -236,9 +232,9 @@ def batchResult (A : Expr) (lit : HexMatrixMathlib.Literal.Recognized)
       pure (← mkAppM ``Modular.checkRankPolyHeader #[mkNatLit p, kE, nE, mE, LE, cE],
         ← mkAppM ``Modular.pivotCheck #[mkNatLit p, LE, cE],
         ← mkAppM ``Modular.upperCheck #[mkNatLit p, nE, mE, LE, cE])
-  let (hh, headerKernelNs) ← checkedTimed (← mkEq header (mkConst ``Bool.true))
-  let (hp, pivotKernelNs) ← checkedTimed (← mkEq pivot (mkConst ``Bool.true))
-  let (hu, upperKernelNs) ← checkedTimed (← mkEq upper (mkConst ``Bool.true))
+  let hh ← checkedProfiled "generic-rank header kernel" (← mkEq header (mkConst ``Bool.true))
+  let hp ← checkedProfiled "generic-rank pivot kernel" (← mkEq pivot (mkConst ``Bool.true))
+  let hu ← checkedProfiled "generic-rank upper kernel" (← mkEq upper (mkConst ``Bool.true))
   let h ← match modulus with
     | none => mkAppM ``checkRankPolyList_parts #[hh, hp, hu]
     | some _ => mkAppM ``Modular.checkRankPolyList_parts #[hh, hp, hu]
@@ -314,8 +310,14 @@ def batchResult (A : Expr) (lit : HexMatrixMathlib.Literal.Recognized)
   let upper ← mkAppM ``Nat.le_trans #[upper, ← mkAppM ``Eq.le #[genericProof]]
   let upperProof ← mkAppM ``Nat.le_trans #[← mkAppM ``Eq.le #[rankIdentification], upper]
   let atoms ← mkArrayLit lit.carrier batch.sealed.atoms.toList
+  let coeffType := first.conversion.provider.coeffType
+  let coeffRing ← synthInstance (← mkAppM ``CommRing #[coeffType])
+  let coeffDecEq ← synthInstance (← mkAppM ``DecidableEq #[coeffType])
+  let coeffBEq ← synthInstance (← mkAppM ``BEq #[coeffType])
+  let coeffLawfulBEq ← synthInstance (← mkAppOptM ``LawfulBEq #[coeffType, coeffBEq])
   let genericResult ← mkAppM ``GenericResult.mk
-    #[mkNatLit c.rank, atoms, v, ι, polynomial, certificate, checked, genericProof, interpretation]
+    #[mkNatLit c.rank, coeffRing, coeffDecEq, coeffBEq, coeffLawfulBEq,
+      atoms, v, ι, polynomial, certificate, checked, genericProof, interpretation]
   return {
     rank := c.rank
     batch := batch
@@ -329,7 +331,7 @@ def batchResult (A : Expr) (lit : HexMatrixMathlib.Literal.Recognized)
     denominator := denominator
     denominatorEq := denominatorEq
     matrixSize := n * m
-    measurements := { producerNs, headerKernelNs, pivotKernelNs, upperKernelNs }
+    measurements := {}
     conditional := {
       value := mkNatLit c.rank
       proof := conditionalProof
@@ -396,9 +398,9 @@ def rank (A : Expr) (cfg : Config := {}) : MetaM (ProviderOutcome Result) := do
   let mut inputs := lit.entries.flatten
   if inputs.isEmpty then
     inputs := #[← mkAppOptM ``OfNat.ofNat #[carrier, mkNatLit 0, none]]
-  let batchStart ← IO.monoNanosNow
-  let batchOutcome ← reflectRingBatch inputs MonoOrder.grevlex cfg.reflection
-  let batchNs := (← IO.monoNanosNow) - batchStart
+  let batchOutcome ← profileitM Exception "generic-rank batch" (← getOptions) <|
+    withOptions (fun o => o.setBool `profiler false) <|
+      reflectRingBatch inputs MonoOrder.grevlex cfg.reflection
   match batchOutcome with
   | .notApplicable => return .notApplicable
   | .declined d u => return .declined d u
@@ -414,13 +416,17 @@ def rank (A : Expr) (cfg : Config := {}) : MetaM (ProviderOutcome Result) := do
           | return .failure (.invalidProviderEvidence id "nonliteral characteristic")
         pure (some p)
       else return .declined (.missingCapability .gcd provider.coeffType) usage
-    let r ← withEvidence provider.auxInstances.toList do
-      match modulus with
-      | none => batchResult A lit batch
-      | some p =>
-        let charInst ← mkAppOptM ``Modular.residueChar #[mkNatLit p, none]
-        let domainInst ← mkAppOptM ``Modular.residueDomain #[mkNatLit p, none, none]
-        withEvidence [charInst, domainInst] (batchResult A lit batch modulus)
+    let r ← try
+      withEvidence provider.auxInstances.toList do
+        match modulus with
+        | none => batchResult A lit batch
+        | some p =>
+          let charInst ← mkAppOptM ``Modular.residueChar #[mkNatLit p, none]
+          let domainInst ← mkAppOptM ``Modular.residueDomain #[mkNatLit p, none, none]
+          withEvidence [charInst, domainInst] (batchResult A lit batch modulus)
+      catch ex =>
+        if ex.isInterrupt then throw ex
+        return .failure (.internal (← ex.toMessageData.toString))
     let limit := cfg.reflection.budget.proofNodes
     let r := Lean.ShareCommon.shareCommon r
     let nodes := proofNodeCount #[r.genericResult, r.conditional.proof, r.upperProof] (limit + 1)
@@ -430,7 +436,7 @@ def rank (A : Expr) (cfg : Config := {}) : MetaM (ProviderOutcome Result) := do
         limit := limit
         consumed := usage.proofNodes
         requested := nodes }) usage
-    let r := { r with measurements := { r.measurements with batchNs, proofNodes := nodes } }
+    let r := { r with measurements := { r.measurements with proofNodes := nodes } }
     trace[Hex.genericRank] "{(toJson r.measurements).compress}"
     return .success r { usage with proofNodes := usage.proofNodes + nodes }
 

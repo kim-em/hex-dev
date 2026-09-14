@@ -194,3 +194,9 @@ elab "inspect_generic " A:term : tactic => Tactic.withMainContext do
 
 example (x : ℚ) (_hx : x ^ 2 ≠ 0) : True := by
   inspect_generic !![x ^ 2]
+
+-- The characteristic affects the generic rank, even with only 0/1 input coefficients.
+example (x : ZMod 2) : (generic_rank% !![x, x, 0; x, 0, x; 0, x, x]).value = 2 := rfl
+example (x : ZMod 2) (hx : x ^ 2 ≠ 0) :
+    (!![x, x, 0; x, 0, x; 0, x, x]).rank = 2 := by rank
+example (x : ZMod 2) : (generic_rank% !![x + x]).value = 0 := rfl

@@ -7,6 +7,8 @@ AB/BA rounds. There is no symbolic eval_rank comparator surface.
 """
 from __future__ import annotations
 
+import json
+import re
 import sys
 from pathlib import Path
 
@@ -38,7 +40,31 @@ SPEC = SweepSpec(
     retain_compiler_output=True,
 )
 
+PHASES = ("batch", "producer", "header kernel", "pivot kernel", "upper kernel")
+
+
+def compiler_metrics(module, sample):
+    """Retain named Lean-profiler phases alongside each external wall sample."""
+    if module.endswith(".Baseline"):
+        return
+    output = sample.get("compiler_output", "")
+    metrics = {}
+    for phase in PHASES:
+        hits = re.findall(r"^\s*generic-rank " + phase + r" ([0-9.e+-]+)(ms|s)$",
+                          output, re.MULTILINE)
+        if len(hits) != 1:
+            raise RuntimeError(f"{module}: expected one profiler total for {phase}")
+        value, unit = hits[0]
+        metrics[phase] = float(value) * (1 if unit == "ms" else 1000)
+    traces = [json.loads(line[line.index("{"):]) for line in output.splitlines()
+              if "[Hex.genericRank]" in line]
+    if len(traces) != 1:
+        raise RuntimeError(f"{module}: expected one provider trace")
+    sample["phase_profile_ms"] = metrics
+    sample["proof_nodes"] = traces[0]["proofNodes"]
+
+
 if __name__ == "__main__":
     if "--timeout" not in sys.argv:
         sys.argv.extend(["--timeout", "120"])
-    raise SystemExit(run_cli(SPEC, Path(__file__)))
+    raise SystemExit(run_cli(SPEC, Path(__file__), sample_observer=compiler_metrics))
