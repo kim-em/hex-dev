@@ -300,6 +300,7 @@ lean_lib HexGraphIso where
 lean_lib HexGraphIsoMathlib where
 
 lean_lib HexCharPoly where
+  precompileModules := true
 
 lean_lib HexMinPoly where
 
@@ -1713,3 +1714,7 @@ lean_exe hexgraphiso_emit_trace where
 lean_exe hexnumberfield_quadratic where
   srcDir := "bench"
   root := `HexNumberField.Quadratic
+
+lean_lib HexCharPolyMathlibProofProbe where
+  srcDir := "bench"
+  globs := #[.submodules `HexCharPolyMathlib.ProofProbe]

@@ -1,0 +1,798 @@
+{
+  "cached-profile": {
+    "cpu": 79,
+    "host": "chungus2",
+    "load": [
+      7.7900390625,
+      7.548828125,
+      29.24560546875
+    ],
+    "samples": [
+      {
+        "n": 16,
+        "exit": 0,
+        "wall_s": 3.922263072046917,
+        "load": [
+          7.96728515625,
+          7.58984375,
+          29.14208984375
+        ],
+        "kernel": [
+          "1.01s"
+        ]
+      },
+      {
+        "n": 32,
+        "exit": "timeout",
+        "wall_s": 300.0577710249927,
+        "load": [
+          4.74853515625,
+          5.85888671875,
+          22.439453125
+        ],
+        "kernel": []
+      }
+    ],
+    "attribution": "A 10-second perf sample during dense32 showed the IR interpreter, including Fin.induction_go. Native module compilation was absent. This diagnostic sample includes the profiling attachment."
+  },
+  "convolution-profile": {
+    "cpu": 2,
+    "host": "chungus2",
+    "load": [
+      8.4501953125,
+      12.025390625,
+      11.64892578125
+    ],
+    "samples": [
+      {
+        "n": 16,
+        "exit": 0,
+        "wall_s": 3.7258188420091756,
+        "load": [
+          8.173828125,
+          11.90869140625,
+          11.61279296875
+        ],
+        "kernel": [
+          "798ms"
+        ]
+      },
+      {
+        "n": 32,
+        "exit": 0,
+        "wall_s": 8.835492451966275,
+        "load": [
+          7.91943359375,
+          11.7939453125,
+          11.5771484375
+        ],
+        "kernel": [
+          "5.34s"
+        ]
+      }
+    ]
+  },
+  "entries-profile": {
+    "cpu": 29,
+    "host": "chungus2",
+    "load": [
+      3.9677734375,
+      4.5009765625,
+      13.62744140625
+    ],
+    "samples": [
+      {
+        "n": 16,
+        "exit": 0,
+        "wall_s": 3.726239648007322,
+        "load": [
+          3.970703125,
+          4.4921875,
+          13.57568359375
+        ],
+        "kernel": [
+          "1.02s"
+        ]
+      },
+      {
+        "n": 32,
+        "exit": 0,
+        "wall_s": 31.86685807601316,
+        "load": [
+          4.228515625,
+          4.50830078125,
+          13.291015625
+        ],
+        "kernel": [
+          "28.3s"
+        ]
+      }
+    ]
+  },
+  "entry-profile": {
+    "cpu": 79,
+    "host": "chungus2",
+    "load": [
+      3.779296875,
+      4.576171875,
+      14.31298828125
+    ],
+    "samples": [
+      {
+        "n": 16,
+        "exit": 1,
+        "wall_s": 3.0265658639837056,
+        "load": [
+          3.779296875,
+          4.576171875,
+          14.31298828125
+        ],
+        "kernel": []
+      },
+      {
+        "n": 32,
+        "exit": 1,
+        "wall_s": 2.9760641879984178,
+        "load": [
+          3.95751953125,
+          4.60009765625,
+          14.26806640625
+        ],
+        "kernel": []
+      }
+    ]
+  },
+  "named-profile": {
+    "cpu": 60,
+    "host": "chungus2",
+    "load": [
+      5.0654296875,
+      4.7080078125,
+      10.38720703125
+    ],
+    "samples": [
+      {
+        "n": 16,
+        "exit": 0,
+        "wall_s": 3.6736594190006144,
+        "load": [
+          5.30078125,
+          4.7626953125,
+          10.3740234375
+        ],
+        "kernel": [
+          "1.04s"
+        ]
+      },
+      {
+        "n": 32,
+        "exit": 0,
+        "wall_s": 31.9157814400387,
+        "load": [
+          5.232421875,
+          4.80126953125,
+          10.20703125
+        ],
+        "kernel": [
+          "28.5s"
+        ]
+      }
+    ]
+  },
+  "native-comparison": {
+    "plan": {
+      "baseline_commit": "af6711c95e4890bf410c8c036461d800515e74e8",
+      "dimensions": [
+        4,
+        8,
+        16,
+        32
+      ],
+      "generator": "random.Random(10212 + n); randrange(-128, 128)",
+      "arms": [
+        "existing",
+        "scalar",
+        "packed"
+      ],
+      "kernel_targets_seconds": {
+        "16": 1,
+        "32": 10
+      },
+      "operational_timeout_seconds": 300,
+      "paired_trials": 6,
+      "schedule": "trial-major, adjacent arm pairs with alternating AB/BA order",
+      "policy": "Retain all completed samples and timeouts; unmet targets are documented rather than blocking publication.",
+      "timeout_policy": "Record the first timeout for an arm/dimension and skip its later pairs; never discard a completed sample.",
+      "profiling": "All paired samples use Lean profiler; kernel_s is the reported type checking total."
+    },
+    "host": "chungus2",
+    "cpu": 75,
+    "initial_load": [
+      4.37939453125,
+      5.54736328125,
+      20.48095703125
+    ],
+    "samples": [
+      {
+        "pair": "0-4-Quoted",
+        "trial": 0,
+        "n": 4,
+        "arm": "Packed",
+        "exit": 0,
+        "wall_s": 2.571130906988401,
+        "load": [
+          4.37939453125,
+          5.54736328125,
+          20.48095703125
+        ],
+        "kernel_s": 0.0178,
+        "log": "0-4-Quoted-Packed.log"
+      },
+      {
+        "pair": "0-4-Quoted",
+        "trial": 0,
+        "n": 4,
+        "arm": "Quoted",
+        "exit": 0,
+        "wall_s": 1.1179186149965972,
+        "load": [
+          4.37939453125,
+          5.54736328125,
+          20.48095703125
+        ],
+        "kernel_s": 0.008060000000000001,
+        "log": "0-4-Quoted-Quoted.log"
+      },
+      {
+        "pair": "0-4-Original",
+        "trial": 0,
+        "n": 4,
+        "arm": "Packed",
+        "exit": 0,
+        "wall_s": 2.521732076012995,
+        "load": [
+          4.3486328125,
+          5.521484375,
+          20.39208984375
+        ],
+        "kernel_s": 0.0176,
+        "log": "0-4-Original-Packed.log"
+      },
+      {
+        "pair": "0-4-Original",
+        "trial": 0,
+        "n": 4,
+        "arm": "Original",
+        "exit": 0,
+        "wall_s": 2.620626450981945,
+        "load": [
+          4.3486328125,
+          5.521484375,
+          20.39208984375
+        ],
+        "kernel_s": 0.0449,
+        "log": "0-4-Original-Original.log"
+      },
+      {
+        "pair": "0-8-Quoted",
+        "trial": 0,
+        "n": 8,
+        "arm": "Packed",
+        "exit": 0,
+        "wall_s": 2.6184041859814897,
+        "load": [
+          4.40087890625,
+          5.5126953125,
+          20.30908203125
+        ],
+        "kernel_s": 0.0861,
+        "log": "0-8-Quoted-Packed.log"
+      },
+      {
+        "pair": "0-8-Quoted",
+        "trial": 0,
+        "n": 8,
+        "arm": "Quoted",
+        "exit": 0,
+        "wall_s": 1.3173047230229713,
+        "load": [
+          4.40087890625,
+          5.5126953125,
+          20.30908203125
+        ],
+        "kernel_s": 0.0663,
+        "log": "0-8-Quoted-Quoted.log"
+      },
+      {
+        "pair": "0-8-Original",
+        "trial": 0,
+        "n": 8,
+        "arm": "Packed",
+        "exit": 0,
+        "wall_s": 2.670902832003776,
+        "load": [
+          4.36865234375,
+          5.4873046875,
+          20.22119140625
+        ],
+        "kernel_s": 0.0852,
+        "log": "0-8-Original-Packed.log"
+      },
+      {
+        "pair": "0-8-Original",
+        "trial": 0,
+        "n": 8,
+        "arm": "Original",
+        "exit": 0,
+        "wall_s": 3.522619082010351,
+        "load": [
+          4.36865234375,
+          5.4873046875,
+          20.22119140625
+        ],
+        "kernel_s": 0.711,
+        "log": "0-8-Original-Original.log"
+      },
+      {
+        "pair": "0-16-Quoted",
+        "trial": 0,
+        "n": 16,
+        "arm": "Packed",
+        "exit": 0,
+        "wall_s": 3.822541238972917,
+        "load": [
+          4.65966796875,
+          5.529296875,
+          20.1552734375
+        ],
+        "kernel_s": 1.02,
+        "log": "0-16-Quoted-Packed.log"
+      },
+      {
+        "pair": "0-16-Quoted",
+        "trial": 0,
+        "n": 16,
+        "arm": "Quoted",
+        "exit": 0,
+        "wall_s": 4.422554653021507,
+        "load": [
+          4.6064453125,
+          5.50390625,
+          20.068359375
+        ],
+        "kernel_s": 1.45,
+        "log": "0-16-Quoted-Quoted.log"
+      },
+      {
+        "pair": "0-16-Original",
+        "trial": 0,
+        "n": 16,
+        "arm": "Packed",
+        "exit": 0,
+        "wall_s": 3.8217244779807515,
+        "load": [
+          4.71826171875,
+          5.51220703125,
+          19.99267578125
+        ],
+        "kernel_s": 1.02,
+        "log": "0-16-Original-Packed.log"
+      },
+      {
+        "pair": "0-16-Original",
+        "trial": 0,
+        "n": 16,
+        "arm": "Original",
+        "exit": 0,
+        "wall_s": 27.169579670007806,
+        "load": [
+          4.9619140625,
+          5.50439453125,
+          19.60400390625
+        ],
+        "kernel_s": 18.6,
+        "log": "0-16-Original-Original.log"
+      },
+      {
+        "pair": "0-32-Quoted",
+        "trial": 0,
+        "n": 32,
+        "arm": "Packed",
+        "exit": "timeout",
+        "wall_s": 300.0554984320188,
+        "load": [
+          4.591796875,
+          4.9873046875,
+          15.484375
+        ],
+        "kernel_s": null,
+        "log": "0-32-Quoted-Packed.log"
+      }
+    ],
+    "skipped": [],
+    "source_sha256": {
+      "lakefile.lean": "890cb12bdd68b2116879d4de64af6b27d8c5fa7be2bfa902ab7a61237b584f6d",
+      "HexCharPoly/Kernel.lean": "16c2043ae3b19c8570f89c787519211cc90bbf9efe0cb1a5b6f36a6fd1bdea7b",
+      "HexCharPoly/CharPolyElab.lean": "84e7c55ed47b4bb8b8754481974036f9ed983db2cd02d1fa1b7e3b47a2d112d3",
+      "HexCharPolyMathlib/Kernel.lean": "5c6db303d0e071bd3ca7a620a3bc60c4a0ac3076684c4e967bceec520daa9300",
+      "HexCharPolyMathlib/CharPolyElab.lean": "8fb9886452742eee2f342580a476d4121c65e33adfdd4f367a1091fe59d74a4a",
+      "bench/HexCharPolyMathlib/ProofProbe/Support.lean": "ec1c1f92674a7b88b8fc4fe3f38d578154a34e9cab4721609554e5ea3870eb9b"
+    },
+    "attribution": "A 5-second perf sample during dense32 still showed the IR interpreter after enabling native core modules. The frontend materialized the matrix by repeatedly calling an interpreted Mathlib matrix function. The subsequent implementation evaluates recognized entries directly."
+  },
+  "original-profile": {
+    "cpu": 95,
+    "host": "chungus2",
+    "load": [
+      15.384765625,
+      84.13427734375,
+      105.90283203125
+    ],
+    "samples": [
+      {
+        "n": 4,
+        "exit": 0,
+        "wall_s": 15.200901130971033,
+        "load": [
+          13.3916015625,
+          80.3232421875,
+          104.30615234375
+        ],
+        "kernel": [
+          "44.9ms"
+        ]
+      },
+      {
+        "n": 8,
+        "exit": 0,
+        "wall_s": 3.622942076995969,
+        "load": [
+          13.4404296875,
+          79.22216796875,
+          103.82080078125
+        ],
+        "kernel": [
+          "717ms"
+        ]
+      },
+      {
+        "n": 16,
+        "exit": 0,
+        "wall_s": 27.919779992022086,
+        "load": [
+          10.4169921875,
+          72.2060546875,
+          100.703125
+        ],
+        "kernel": [
+          "19.4s"
+        ]
+      },
+      {
+        "n": 32,
+        "exit": "timeout",
+        "wall_s": 300.0615382010001,
+        "load": [
+          7.2431640625,
+          31.13916015625,
+          74.9189453125
+        ],
+        "kernel": []
+      }
+    ]
+  },
+  "packed-comparison": {
+    "plan": {
+      "baseline_commit": "af6711c95e4890bf410c8c036461d800515e74e8",
+      "dimensions": [
+        4,
+        8,
+        16,
+        32
+      ],
+      "generator": "random.Random(10212 + n); randrange(-128, 128)",
+      "arms": [
+        "existing",
+        "scalar",
+        "packed"
+      ],
+      "kernel_targets_seconds": {
+        "16": 1,
+        "32": 10
+      },
+      "operational_timeout_seconds": 300,
+      "paired_trials": 6,
+      "schedule": "trial-major, adjacent arm pairs with alternating AB/BA order",
+      "policy": "Retain all completed samples and timeouts; unmet targets are documented rather than blocking publication.",
+      "timeout_policy": "Record the first timeout for an arm/dimension and skip its later pairs; never discard a completed sample.",
+      "profiling": "All paired samples use Lean profiler; kernel_s is the reported type checking total."
+    },
+    "host": "chungus2",
+    "cpu": 77,
+    "initial_load": [
+      6.2431640625,
+      8.244140625,
+      36.60302734375
+    ],
+    "samples": [
+      {
+        "pair": "0-4-Quoted",
+        "trial": 0,
+        "n": 4,
+        "arm": "Packed",
+        "exit": 0,
+        "wall_s": 2.570594994991552,
+        "load": [
+          6.2431640625,
+          8.244140625,
+          36.60302734375
+        ],
+        "kernel_s": 0.0172,
+        "log": "0-4-Quoted-Packed.log"
+      },
+      {
+        "pair": "0-4-Quoted",
+        "trial": 0,
+        "n": 4,
+        "arm": "Quoted",
+        "exit": 0,
+        "wall_s": 1.1217889749677852,
+        "load": [
+          6.2431640625,
+          8.244140625,
+          36.60302734375
+        ],
+        "kernel_s": 0.00808,
+        "log": "0-4-Quoted-Quoted.log"
+      },
+      {
+        "pair": "0-4-Original",
+        "trial": 0,
+        "n": 4,
+        "arm": "Packed",
+        "exit": 0,
+        "wall_s": 2.6223804139881395,
+        "load": [
+          6.30419921875,
+          8.22314453125,
+          36.44384765625
+        ],
+        "kernel_s": 0.0172,
+        "log": "0-4-Original-Packed.log"
+      },
+      {
+        "pair": "0-4-Original",
+        "trial": 0,
+        "n": 4,
+        "arm": "Original",
+        "exit": 0,
+        "wall_s": 2.669991644041147,
+        "load": [
+          6.30419921875,
+          8.22314453125,
+          36.44384765625
+        ],
+        "kernel_s": 0.0475,
+        "log": "0-4-Original-Original.log"
+      },
+      {
+        "pair": "0-8-Quoted",
+        "trial": 0,
+        "n": 8,
+        "arm": "Packed",
+        "exit": 0,
+        "wall_s": 2.718785588047467,
+        "load": [
+          7.4013671875,
+          8.4189453125,
+          36.35546875
+        ],
+        "kernel_s": 0.0836,
+        "log": "0-8-Quoted-Packed.log"
+      },
+      {
+        "pair": "0-8-Quoted",
+        "trial": 0,
+        "n": 8,
+        "arm": "Quoted",
+        "exit": 0,
+        "wall_s": 1.3674245039583184,
+        "load": [
+          7.4013671875,
+          8.4189453125,
+          36.35546875
+        ],
+        "kernel_s": 0.0663,
+        "log": "0-8-Quoted-Quoted.log"
+      },
+      {
+        "pair": "0-8-Original",
+        "trial": 0,
+        "n": 8,
+        "arm": "Packed",
+        "exit": 0,
+        "wall_s": 2.6704625329584815,
+        "load": [
+          7.12890625,
+          8.34521484375,
+          36.181640625
+        ],
+        "kernel_s": 0.08420000000000001,
+        "log": "0-8-Original-Packed.log"
+      },
+      {
+        "pair": "0-8-Original",
+        "trial": 0,
+        "n": 8,
+        "arm": "Original",
+        "exit": 0,
+        "wall_s": 3.6209375059697777,
+        "load": [
+          6.9580078125,
+          8.28955078125,
+          36.01416015625
+        ],
+        "kernel_s": 0.729,
+        "log": "0-8-Original-Original.log"
+      },
+      {
+        "pair": "0-16-Quoted",
+        "trial": 0,
+        "n": 16,
+        "arm": "Packed",
+        "exit": 0,
+        "wall_s": 3.8719501480227336,
+        "load": [
+          6.9580078125,
+          8.28955078125,
+          36.01416015625
+        ],
+        "kernel_s": 1.01,
+        "log": "0-16-Quoted-Packed.log"
+      },
+      {
+        "pair": "0-16-Quoted",
+        "trial": 0,
+        "n": 16,
+        "arm": "Quoted",
+        "exit": 0,
+        "wall_s": 4.424508945026901,
+        "load": [
+          6.720703125,
+          8.21826171875,
+          35.841796875
+        ],
+        "kernel_s": 1.46,
+        "log": "0-16-Quoted-Quoted.log"
+      },
+      {
+        "pair": "0-16-Original",
+        "trial": 0,
+        "n": 16,
+        "arm": "Packed",
+        "exit": 0,
+        "wall_s": 3.871918510994874,
+        "load": [
+          6.50244140625,
+          8.14794921875,
+          35.67041015625
+        ],
+        "kernel_s": 1.01,
+        "log": "0-16-Original-Packed.log"
+      },
+      {
+        "pair": "0-16-Original",
+        "trial": 0,
+        "n": 16,
+        "arm": "Original",
+        "exit": 0,
+        "wall_s": 27.364994726027362,
+        "load": [
+          7.04296875,
+          8.1240234375,
+          34.9296875
+        ],
+        "kernel_s": 18.9,
+        "log": "0-16-Original-Original.log"
+      },
+      {
+        "pair": "0-32-Quoted",
+        "trial": 0,
+        "n": 32,
+        "arm": "Packed",
+        "exit": -2,
+        "wall_s": 130.5103525100276,
+        "load": [
+          5.587890625,
+          7.34521484375,
+          31.02197265625
+        ],
+        "kernel_s": null,
+        "log": "0-32-Quoted-Packed.log"
+      }
+    ],
+    "skipped": [],
+    "source_sha256": {
+      "HexCharPoly/Kernel.lean": "f605a61fd35ecb0ff62aac42721cc1f58d55325dee87e356dc73a39fd19bb6ee",
+      "HexCharPoly/CharPolyElab.lean": "e25ceed8a169abb51a801937e3685c053eb35d46d62fc709a61348eeef6ebb5f",
+      "HexCharPolyMathlib/Kernel.lean": "5c6db303d0e071bd3ca7a620a3bc60c4a0ac3076684c4e967bceec520daa9300",
+      "HexCharPolyMathlib/CharPolyElab.lean": "8fb9886452742eee2f342580a476d4121c65e33adfdd4f367a1091fe59d74a4a",
+      "bench/HexCharPolyMathlib/ProofProbe/Support.lean": "ec1c1f92674a7b88b8fc4fe3f38d578154a34e9cab4721609554e5ea3870eb9b"
+    },
+    "termination_reason": "Interrupted dense32 at 130.51 seconds to investigate unexpected scaling. Completed samples and the partial log are retained; this is not a completed dense32 kernel measurement."
+  },
+  "sharing-profile": {
+    "cpu": 22,
+    "host": "chungus2",
+    "load": [
+      5.57763671875,
+      4.654296875,
+      11.1982421875
+    ],
+    "samples": [
+      {
+        "n": 16,
+        "exit": 0,
+        "wall_s": 3.722987475048285,
+        "load": [
+          5.69189453125,
+          4.693359375,
+          11.17529296875
+        ],
+        "kernel": [
+          "1.03s"
+        ]
+      },
+      {
+        "n": 32,
+        "exit": 0,
+        "wall_s": 32.170184259011876,
+        "load": [
+          5.591796875,
+          4.7705078125,
+          10.9931640625
+        ],
+        "kernel": [
+          "28.6s"
+        ]
+      }
+    ]
+  },
+  "shift-profile": {
+    "cpu": 13,
+    "host": "chungus2",
+    "load": [
+      3.88232421875,
+      4.24365234375,
+      8.92578125
+    ],
+    "samples": [
+      {
+        "n": 16,
+        "exit": 0,
+        "wall_s": 3.5225752550177276,
+        "load": [
+          3.88232421875,
+          4.24365234375,
+          8.92578125
+        ],
+        "kernel": [
+          "912ms"
+        ]
+      },
+      {
+        "n": 32,
+        "exit": 0,
+        "wall_s": 29.328555435989983,
+        "load": [
+          15.859375,
+          7.1064453125,
+          9.72998046875
+        ],
+        "kernel": [
+          "25.3s"
+        ]
+      }
+    ]
+  }
+}
