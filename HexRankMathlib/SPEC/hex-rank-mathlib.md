@@ -527,7 +527,7 @@ by `scripts/bench/rank_tactic_size_sweep.py` (profiler totals per file,
 imports excluded, the median of three runs per point with the range kept)
 and plotted by `scripts/plots/hex-rank-mathlib-tactic-size.py` to
 `reports/figures/hex-rank-mathlib-tactic-size.svg`. The dimension record is
-`reports/bench-results/hex-rank-mathlib-tactic-size-737b94cf8d16-chungus2.json`.
+`reports/bench-results/hex-rank-mathlib-tactic-size-f9e81ced8335-chungus2.json`.
 It measures the integer-only frontend at that revision, excluding the additional
 carrier handlers and their imports. Full module costs and import baselines for
 the additional carriers are in the
@@ -535,26 +535,27 @@ the additional carriers are in the
 With the ten-second cap (a family stops for an arm after the first
 dimension whose median exceeds the cap, that dimension kept, and the
 ladders end at `n = 48` and, for rank `2`, `n = 128`),
-the pinned Mathlib's `eval_rank` reaches `n = 24` at full rank and rank
-`n − 2` (`6.9` and `8.7 s`), `n = 28` at rank `n / 2` (`10.4 s`) and
-`n = 24` at rank `2` (`6.6 s`); the `eval_rank` of #43438 reaches `n = 48` at full rank, rank
-`n − 2` and rank `n / 2` (`8.0`, `7.4` and `6.7 s`) and `n = 64` at rank `2`
-(`8.2 s`); `rank` reaches `n = 48` at full rank (`1.3 s`, of which the
+the pinned Mathlib's `eval_rank` reaches `n = 28` at full rank and rank
+`n / 2` (`10.7` and `10.8 s`), `n = 20` at rank `n − 2` (`3.8 s`, the
+next dimension timing out) and
+`n = 24` at rank `2` (`6.4 s`); the `eval_rank` of #43438 reaches `n = 48` at full rank, rank
+`n − 2` and rank `n / 2` (`7.3`, `8.2` and `8.0 s`) and `n = 64` at rank `2`
+(`8.1 s`); `rank` reaches `n = 48` at full rank (`1.3 s`, of which the
 kernel is `0.5 s`), rank `n − 2` (`1.7 s`, kernel `0.9 s`) and rank
-`n / 2` (`1.7 s`, kernel `0.9 s`), and `n = 128` at rank `2` (`6.6 s`, of which
+`n / 2` (`2.2 s`, kernel `1.3 s`), and `n = 128` at rank `2` (`6.5 s`, of which
 the kernel is `0.9 s` and the literal's elaboration and the entries'
 evaluation most of the rest); `rank -packing` reaches the same dimensions
-at `2.8`, `2.7`, `4.1` and `6.7 s`.
+at `1.9`, `2.1`, `3.9` and `6.3 s`.
 
 Median kernel shares recorded by the same size sweep are:
 
 | family | `eval_rank` | `eval_rank` at #43438 | `rank` | `rank -packing` |
 |---|---|---|---|---|
-| dense `8 × 8`, rank 8 | 118 ms | 29 ms | 13 ms | 13 ms |
-| dense `16 × 16`, rank 16 | 846 ms | 144 ms | 40 ms | 59 ms |
-| dense `16 × 16`, rank 14 | 948 ms | 160 ms | 71 ms | 84 ms |
-| dense `32 × 32`, rank 32 | not run | 1.14 s | 195 ms | 504 ms |
-| `32 × 32`, rank 2 | timeout | 468 ms | 129 ms | 133 ms |
+| dense `8 × 8`, rank 8 | 138 ms | 32 ms | 14 ms | 14 ms |
+| dense `16 × 16`, rank 16 | 1.24 s | 167 ms | 47 ms | 51 ms |
+| dense `16 × 16`, rank 14 | 1.11 s | 178 ms | 74 ms | 59 ms |
+| dense `32 × 32`, rank 32 | not run | 1.04 s | 194 ms | 315 ms |
+| `32 × 32`, rank 2 | timeout | 459 ms | 130 ms | 166 ms |
 
 A timeout entry has no profiler breakdown because the corresponding proof
 exceeded the sweep's wall limit (the cap plus the import baseline), and a
