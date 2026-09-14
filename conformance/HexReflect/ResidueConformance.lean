@@ -191,8 +191,9 @@ example : Function.Injective (residueHom 3 (MvPolynomial (Fin 1) (ZMod 3))) :=
 
 /-- Check the quoted polynomials, source equations, and injectivity of the
 provider's actual interpretation function in the kernel. -/
-private def checkMatrix (p : Nat) (matrixEntries inputs expectedValues : Array Expr) : MetaM Unit := do
-  let outcome ← reflectRingBatch inputs (cfg := { checkProofs := true })
+private def checkMatrix (p : Nat) (factor : Expr)
+    (matrixEntries sources expectedValues : Array Expr) : MetaM Unit := do
+  let outcome ← reflectRingBatch sources (cfg := { checkProofs := true })
   let .success batch _ := outcome
     | throwError "{outcome.toMessageData (fun _ => "batch")}"
   unless batch.sealed.n == 1 && batch.entries.size == expectedValues.size &&
@@ -210,13 +211,20 @@ private def checkMatrix (p : Nat) (matrixEntries inputs expectedValues : Array E
     let injective ← mkAppOptM ``residueHom_injective #[mkNatLit p, bounds, ty, none, none]
     let injectiveTy ← mkAppM ``Function.Injective #[provider.interp]
     kernelCheck #[] (← mkExpectedTypeHint injective injectiveTy)
+    let some (_, _, rhs) := (← inferType factor).eq? | throwError "expected factorisation"
+    kernelCheck #[] (← mkExpectedTypeHint factor (← mkEq provider.interp rhs))
     checkAux provider.coeffType provider.auxInstances.toList
+
+private theorem mvFactor :
+    (residueHom 3 (MvPolynomial (Fin 1) (ZMod 3)) : ZMod64 3 → _) =
+      (MvPolynomial.C.comp (residueHom 3 (ZMod 3)) : ZMod64 3 → _) :=
+  congrArg DFunLike.coe (residueHom_mvPolynomial 3 (Fin 1) (ZMod 3))
 
 /-- info: MvPolynomial over ZMod 3: residue matrix and injective interpretation, kernel accepted -/
 #guard_msgs in
 run_meta do
   let matrix := mkConst ``mvMatrix
-  let inputs := #[0, 1].map fun j =>
+  let matrixEntries := #[0, 1].map fun j =>
     mkApp2 matrix (toExpr (0 : Fin 1)) (toExpr (j : Fin 2))
   let x := mkConst ``mvX
   let ty ← inferType x
@@ -224,7 +232,7 @@ run_meta do
   let three ← mkAppOptM ``OfNat.ofNat #[ty, mkNatLit 3, none]
   let one ← mkAppOptM ``OfNat.ofNat #[ty, mkNatLit 1, none]
   let second ← mkAppM ``HAdd.hAdd #[← mkAppM ``HMul.hMul #[three, x], one]
-  checkMatrix 3 inputs #[first, second] #[mkConst ``expected, mkConst ``expectedOne]
+  checkMatrix 3 (mkConst ``mvFactor) matrixEntries #[first, second] #[mkConst ``expected, mkConst ``expectedOne]
   logInfo "MvPolynomial over ZMod 3: residue matrix and injective interpretation, kernel accepted"
 
 local instance : ZMod64.Bounds 2 := ⟨by decide, by decide⟩
@@ -240,29 +248,33 @@ private def auditZero : MvPoly 1 (ZMod64 2) Mono.grevlex := 0
 example : Function.Injective (residueHom 2 (Polynomial (ZMod 2))) :=
   residueHom_injective 2 _
 
+private theorem polyFactor :
+    (residueHom 2 (Polynomial (ZMod 2)) : ZMod64 2 → _) =
+      (Polynomial.C.comp (residueHom 2 (ZMod 2)) : ZMod64 2 → _) :=
+  congrArg DFunLike.coe (residueHom_polynomial 2 (ZMod 2))
+
 /-- info: Polynomial over ZMod 2: audit matrix and characteristic-two cancellation, kernel accepted -/
 #guard_msgs in
 run_meta do
   let matrix := mkConst ``auditMatrix
-  let mut inputs := #[]
-  let mut entries := #[]
+  let mut matrixEntries := #[]
+  let mut sources := #[]
   let x := mkConst ``polyX
   let zero ← mkAppOptM ``OfNat.ofNat #[← inferType x, mkNatLit 0, none]
   let mut expectedValues := #[]
   for i in [:3] do
     for j in [:3] do
-      inputs := inputs.push (mkApp2 matrix (toExpr (Fin.ofNat 3 i)) (toExpr (Fin.ofNat 3 j)))
-      entries := entries.push (if i + j == 2 then zero else x)
+      matrixEntries := matrixEntries.push (mkApp2 matrix (toExpr (Fin.ofNat 3 i)) (toExpr (Fin.ofNat 3 j)))
+      sources := sources.push (if i + j == 2 then zero else x)
       expectedValues := expectedValues.push
         (mkConst (if i + j == 2 then ``auditZero else ``auditX))
-  checkMatrix 2 inputs entries expectedValues
-  -- The integer lift has determinant -2 X³; in the quoted coefficient ring
-  -- this is zero. A fallback to integers would fail this equality.
-  let x := mkConst ``auditX
+  -- Reify the determinant expression -2 X³ as well as the matrix entries.
+  -- Integer coefficients would leave a nonzero quoted polynomial here.
   let cube ← mkAppM ``HPow.hPow #[x, mkNatLit 3]
   let twice ← mkAppM ``HAdd.hAdd #[cube, cube]
   let det ← mkAppM ``Neg.neg #[twice]
-  kernelCheck #[] (← mkDecideProof (← mkEq det (mkConst ``auditZero)))
+  checkMatrix 2 (mkConst ``polyFactor) (matrixEntries.push det) (sources.push det)
+    (expectedValues.push (mkConst ``auditZero))
   logInfo "Polynomial over ZMod 2: audit matrix and characteristic-two cancellation, kernel accepted"
 
 end Hex.ReflectResidueConformance
@@ -294,6 +306,39 @@ run_meta do
     addDecl (.thmDecl { name, levelParams := [], type, value })
     logInfo "closed scope: executable coefficient instances, kernel accepted"
 
+local instance : ZMod64.Bounds 7 := ⟨by decide, by decide⟩
+
+/-- info: Grind-only residue carrier: integer fallback, kernel accepted -/
+#guard_msgs in
+run_meta do
+  let ty ← mkAppOptM ``ZMod64 #[mkNatLit 7, none]
+  withLocalDeclD `x ty fun x => do
+    let input ← mkAppM ``HAdd.hAdd #[x, x]
+    let outcome ← reflectRing input (cfg := { checkProofs := true })
+    let .success entry _ := outcome
+      | throwError "{outcome.toMessageData (fun _ => "entry")}"
+    unless entry.reflected.charInst?.map (·.2) == some 7 &&
+        entry.conversion.provider.id == intCoefficientsId do
+      throwError "Grind-only carrier lost integer fallback"
+    Hex.ReflectResidueConformance.kernelCheck #[x] entry.result.proof
+    logInfo "Grind-only residue carrier: integer fallback, kernel accepted"
+
+section
+open scoped Fin.CommRing
+
+/-- info: Fin with a Mathlib ring: ZMod retry supplies domain evidence -/
+#guard_msgs in
+run_meta do
+  let ty := mkApp (mkConst ``Fin) (mkNatLit 3)
+  withLocalDeclD `x ty fun x => do
+    let outcome ← reflectRing x (cfg := { checkProofs := true })
+    let .success entry _ := outcome
+      | throwError "{outcome.toMessageData (fun _ => "entry")}"
+    unless entry.conversion.provider.id == residueCoefficientsId do throwError "wrong provider"
+    logInfo "Fin with a Mathlib ring: ZMod retry supplies domain evidence"
+
+end
+
 -- Even at the largest supported prime, the certificate follows from the
 -- domain characteristic; the kernel does not run trial division.
 example (F : Type u) [CommRing F] [IsDomain F] [CharP F 2147483647] :
@@ -306,6 +351,7 @@ namespace Hex.ReflectResidueDeclineConformance
 
 open Lean Meta Hex.Reflect
 
+-- Pin the literal characteristic so inference need not discover it through Nat.lcm.
 local instance : CharP (ZMod 3 × ZMod 3) 3 := inferInstance
 
 private def probe (ty : Expr) : MetaM Unit :=

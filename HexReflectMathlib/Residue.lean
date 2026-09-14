@@ -87,26 +87,35 @@ def residueCoeffProvider (p : Nat) (ring : CarrierRequest) :
   -- Canonicalization unfolds a concrete `ZMod p` to `Fin p`. Try the
   -- corresponding Mathlib carrier as well, but require definitional equality
   -- of the type and interpretation operations before accepting its evidence.
-  let mut carrier := ring.type
-  let mut commRingInst? ← Sym.synthInstance? (mkApp (mkConst ``CommRing [ring.u]) carrier)
-  if commRingInst?.isNone then
-    let zmod := mkApp (mkConst ``ZMod) pE
-    if ← isDefEq ring.type zmod then
-      carrier := zmod
-      commRingInst? ← Sym.synthInstance? (mkApp (mkConst ``CommRing [ring.u]) carrier)
-  let some commRingInst := commRingInst?
-    | return decline "residue coefficients require Mathlib CommRing evidence"
+  let mut carriers := #[ring.type]
+  let zmod := mkApp (mkConst ``ZMod) pE
+  if ← isDefEq ring.type zmod then
+    carriers := carriers.push zmod
+  let mut evidence? : Option (Expr × Expr × Expr × Expr) := none
+  let mut reason? : Option String := none
+  for carrier in carriers do
+    let some commRingInst ← Sym.synthInstance? (mkApp (mkConst ``CommRing [ring.u]) carrier)
+      | continue
+    let mathlibRingInst ← mkAppOptM ``CommRing.toRing #[carrier, commRingInst]
+    let mathlibSemiring ← mkAppOptM ``Ring.toSemiring #[carrier, mathlibRingInst]
+    let domainType ← mkAppOptM ``IsDomain #[carrier, mathlibSemiring]
+    let some domainInst ← Sym.synthInstance? domainType
+      | reason? := some "residue coefficients require Mathlib IsDomain evidence"
+        continue
+    let addGroup ← mkAppOptM ``Ring.toAddGroupWithOne #[carrier, mathlibRingInst]
+    let castInst ← mkAppOptM ``AddGroupWithOne.toAddMonoidWithOne #[carrier, addGroup]
+    let charType ← mkAppOptM ``CharP #[carrier, castInst, pE]
+    let some charInst ← Sym.synthInstance? charType
+      | reason? := some "residue coefficients require Mathlib CharP evidence"
+        continue
+    evidence? := some (carrier, commRingInst, domainInst, charInst)
+    break
+  let some (carrier, commRingInst, domainInst, charInst) := evidence?
+    | return match reason? with
+      | some reason => decline reason
+      | none => .notApplicable
   let mathlibRingInst ← mkAppOptM ``CommRing.toRing #[carrier, commRingInst]
-  let mathlibSemiring ← mkAppOptM ``Ring.toSemiring #[carrier, mathlibRingInst]
-  let domainType ← mkAppOptM ``IsDomain #[carrier, mathlibSemiring]
-  let some domainInst ← Sym.synthInstance? domainType
-    | return decline "residue coefficients require Mathlib IsDomain evidence"
   let mathlibRing ← mkAppOptM ``Ring.toGrindRing #[carrier, mathlibRingInst]
-  let addGroup ← mkAppOptM ``Ring.toAddGroupWithOne #[carrier, mathlibRingInst]
-  let castInst ← mkAppOptM ``AddGroupWithOne.toAddMonoidWithOne #[carrier, addGroup]
-  let charType ← mkAppOptM ``CharP #[carrier, castInst, pE]
-  let some charInst ← Sym.synthInstance? charType
-    | return decline "residue coefficients require Mathlib CharP evidence"
   let pos ← mkDecideProof (← mkAppM ``LT.lt #[mkNatLit 0, pE])
   let bounds ← mkAppM ``Hex.ZMod64.Bounds.mk #[pos,
     ← mkDecideProof (← mkAppM ``LT.lt #[pE, mkNatLit bound])]

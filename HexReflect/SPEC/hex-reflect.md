@@ -248,9 +248,10 @@ coefficient type.
 
 The residue provider uses `Bounds p` and `PrimeModulus p`, and interprets
 coefficients injectively through `ZMod p`. Recognized composite
-characteristic, out-of-bounds moduli, or missing Mathlib ring, domain, or
-characteristic evidence decline with a provider condition diagnostic. Unknown
-and zero characteristic keep the integer provider. Polynomial rings over
+characteristic, out-of-bounds moduli, or missing domain or characteristic
+evidence for recognized Mathlib rings decline with a provider condition
+diagnostic. Unknown and zero characteristic keep the integer provider, as do
+supported prime-characteristic carriers without Mathlib ring evidence. Polynomial rings over
 finite fields use residue coefficients. See the companion SPEC for the scoped
 ring transport and the factorisation through constant polynomials.
 

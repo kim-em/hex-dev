@@ -69,16 +69,21 @@ install target domain or field instances. Polynomial rings
 `MvPolynomial σ (ZMod p)` and `Polynomial (ZMod p)` are accepted with
 the usual prime-modulus instance: Mathlib supplies their domain and
 characteristic evidence, and recognition survives canonicalization.
-Fields remain supported as domains.
+Fields remain supported as domains. After the prime and word checks, carriers
+without a Mathlib `CommRing` instance remain outside this provider and retain
+the integer fallback, including Hex's executable fields with only Grind
+instances in scope.
 
 A recognized positive characteristic that is composite (or one) declines
 with a prime-characteristic diagnostic. Moduli `p ≥ 2^31` decline with the
-word-bound diagnostic before primality testing. Missing Mathlib ring,
-domain, or characteristic evidence and incompatible interpretation operations
-decline with their reason. In particular, prime-characteristic rings with
+word-bound diagnostic before primality testing. For recognized Mathlib rings,
+missing domain or characteristic evidence and incompatible interpretation
+operations decline with their reason. In particular, prime-characteristic rings with
 zero divisors, or carriers whose domain evidence cannot be synthesized,
 decline with `residue coefficients require Mathlib IsDomain evidence`. These
-declines stop fallback to the integer provider.
+declines stop fallback to the integer provider. For concrete `ZMod p`
+carriers, provide Mathlib's usual `Fact (Nat.Prime p)` instance to supply the
+domain evidence.
 
 The executable carrier uses `Hex.ZMod64.Bounds p` and
 `Hex.ZMod64.PrimeModulus p`; the latter supports downstream `LawfulGcdOps`
@@ -115,7 +120,9 @@ characteristic after this compatibility check succeeds. The runtime
 recognizer uses the existing bounded trial-division test, but the kernel
 does not replay that search to validate the auxiliary prime certificate. In particular, canonicalization can unfold
 `ZMod p` to `Fin p`; the provider also tries the Mathlib `ZMod p` ring
-when its type is definitionally equal to the classified carrier. It never
+when its type is definitionally equal to the classified carrier, even if the
+canonical carrier has a Mathlib ring instance but lacks domain or characteristic
+evidence. It never
 accepts evidence from the type name alone.
 
 The Mathlib `CommRing (Hex.ZMod64 p)` instance lives in
@@ -188,10 +195,13 @@ decline and integer-fallback paths. Polynomial-ring tests reify
 `!![X ^ 3 - X, 3 * X + 1]` over `MvPolynomial (Fin 1) (ZMod 3)` and
 `!![X, X, 0; X, 0, X; 0, X, X]` over `Polynomial (ZMod 2)`. They check
 all quoted entries, their interpretation equations, the injectivity of the
-provider's actual interpretation, and downstream instance synthesis. The
-characteristic-two test also kernel-checks that `−2X³` is zero in the quoted
-residue polynomial ring. Prime-characteristic rings lacking domain evidence,
+provider's actual interpretation and its constant-polynomial factorisation,
+and downstream instance synthesis. The
+characteristic-two test also reifies `−(X³ + X³)` and kernel-checks that the
+quoted residue polynomial is zero. Prime-characteristic rings lacking domain evidence,
 including a product ring with zero divisors, decline with a diagnostic.
+Additional tests cover the `Fin`/`ZMod` retry with a Mathlib ring already in
+scope and integer fallback for a Grind-only `ZMod64` carrier.
 Existing Mathlib-free reflection conformance remains unchanged.
 
 - Every carrier registration includes the exact instance expressions in its
