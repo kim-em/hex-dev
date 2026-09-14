@@ -59,10 +59,10 @@ example : Matrix.det (R := ℚ) !![1 / 2, -1; 3, 5 / 3] = 23 / 6 := by det
 #check (det% !![1, 2; 3, 4]).proof
 -- (det% !![1, 2; 3, 4]).proof : Matrix.det !![1, 2; 3, 4] = -2
 
--- `hex_norm_det` is the same certificate as a simproc, with Mathlib's
+-- `Hex.norm_det` is the same certificate as a simproc, with Mathlib's
 -- `norm_det` as its fallback for symbolic entries.
 example (a b c d : ℤ) : Matrix.det !![a, b; c, d] = a * d - b * c := by
-  simp only [hex_norm_det]
+  simp only [Hex.norm_det]
   ring
 ```
 
@@ -80,7 +80,7 @@ example (a b c d : ℤ) : Matrix.det !![a, b; c, d] = a * d - b * c := by
 - `det_eq_of_checkList` and `det_eq_of_checkRat`: a passing kernel
   determinant certificate of `hex-bareiss` determines Mathlib's `Matrix.det`
   of an integer or rational matrix given as a row list;
-- the `det` tactic, the `det%` term form and the `hex_norm_det` simproc:
+- the `det` tactic, the `det%` term form and the `Hex.norm_det` simproc:
   determinants of closed integer and rational literals (`!![…]`,
   `Matrix.of ![…]`, `fun i j => …`, `Matrix.ofArray`), checked in the
   kernel as a triangularization, faster than Mathlib's `eval_det` on every

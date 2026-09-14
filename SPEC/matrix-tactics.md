@@ -20,10 +20,10 @@ their library structure and their kernel-replay proof strategy do not.
 | tactic | goals | executable side | Mathlib-input tactic and soundness | status |
 |---|---|---|---|---|
 | `rank` | `A.rank = r`, `A.rank ≤ r`, `r ≤ A.rank` | `hex-rank`: `RankWitness`, `checkRankList`, `rankWitness` | `hex-rank-mathlib`: `rank_eq_of_checkList`, `HexRankMathlib/Tactic.lean` | shipped (https://github.com/kim-em/hex-dev/pull/10207) |
-| `det` | `A.det = d` | `hex-bareiss`: `DetWitness`, `checkDetList`, `checkDetRat`, `detWitness` | `hex-bareiss-mathlib`: `det_eq_of_checkList`, `det_eq_of_checkRat`, `HexBareissMathlib/Tactic.lean` (`det`, `det%`, `hex_norm_det`) | shipped (https://github.com/kim-em/hex-dev/pull/10224); see [The determinant certificate](#the-determinant-certificate) |
+| `det` | `A.det = d` | `hex-bareiss`: `DetWitness`, `checkDetList`, `checkDetRat`, `detWitness` | `hex-bareiss-mathlib`: `det_eq_of_checkList`, `det_eq_of_checkRat`, `HexBareissMathlib/Tactic.lean` (`det`, `det%`, `Hex.norm_det`, renamed from `hex_norm_det`) | shipped (https://github.com/kim-em/hex-dev/pull/10224); see [The determinant certificate](#the-determinant-certificate) |
 | `char_poly` | `A.charpoly = p` | `hex-char-poly`: the Berkowitz certificate, in kernel form | `hex-char-poly-mathlib` | packed list certificate and both frontends in `HexCharPoly`/`HexCharPolyMathlib`; measurements in `HexCharPolyMathlib/SPEC/hex-char-poly-mathlib.md` |
 | `rank`, symbolic entries | `A.rank = r` (conditional), `A.rank ≤ r`, generic rank of the reified matrix | `hex-generic-rank`: hex-rank's certificate at `MvPoly` | `hex-generic-rank-mathlib`: a second handler on the `rank` syntax kind; `checkRank_sound_at` | implemented: [hex-generic-rank-mathlib](../HexGenericRankMathlib/SPEC/hex-generic-rank-mathlib.md) |
-| `det`, symbolic entries | `A.det = e`, `e = A.det`, `det% A` (unconditional) | `hex-bareiss`: generic `detWitness`, `checkDetPolyList`, instantiated at polynomials by the companion | `hex-bareiss-mathlib`: `checkDetPolyList_sound`, second handler on the `det` syntax kind | specified: [Symbolic determinant](../HexBareissMathlib/SPEC/hex-bareiss-mathlib.md#symbolic-determinant) |
+| `det`, symbolic entries | `A.det = e`, `e = A.det`, `det% A` (unconditional; any commutative ring; closed forms for `n ≤ 3`) | `hex-bareiss`: generic `detWitness`, `checkDetPolyList`; `hex-poly-det`: the `MvPoly` instantiation | `hex-poly-det-mathlib`: `checkDetPolyList_sound`, second handler on the `det` syntax kind, opt-in `Hex.normPolyDet` | specified: [hex-poly-det-mathlib](Libraries/hex-poly-det-mathlib.md); relocated out of the published hex-bareiss-mathlib |
 | `rank_locus` | `A.rank < r ↔ ⋀ gᵢ = 0` as a hypothesis; `A.rank < r`, `A.rank ≤ r`, `r ≤ A.rank`, `A.rank = r` | `hex-determinantal-ideal`: `detIdealGens`, and its list form `detIdealGensList` | `hex-determinantal-ideal-mathlib`: `gens_vanish_iff_rank_lt`, `HexDeterminantalIdealMathlib/Tactic.lean`; default `r` from a hex-generic-rank-mathlib handler | specified: [hex-determinantal-ideal-mathlib §The `rank_locus` tactic](../HexDeterminantalIdealMathlib/SPEC/hex-determinantal-ideal-mathlib.md#the-rank_locus-tactic) |
 | `min_poly` | `minpoly F A = p` | hex-min-poly: list form of `MinPolyCert` | hex-min-poly-mathlib | implemented in `HexMinPolyMathlib/Tactic.lean`: [companion contract](../HexMinPolyMathlib/SPEC/hex-min-poly-mathlib.md#the-min_poly-tactic) |
 | `smith` | integer row-presentation quotient equivalence | hex-smith: list form of `snfCert` | hex-smith-mathlib; optional polynomial handler in hex-poly-smith-mathlib | implemented in `HexSmithMathlib/Tactic.lean`: [companion contract](../HexSmithMathlib/SPEC/hex-smith-mathlib.md#the-smith-tactic) |
@@ -104,7 +104,7 @@ in-fragment errors, and answer `throwUnsupportedSyntax` outside their
 fragment; otherwise the last diagnostic handler can mask an extension error.
 The diagnostic handler reclassifies and reports `rank: not applicable: …`
 or `det: not applicable: …` when no handler accepts. For determinant
-equations, the last-resort handler first tries `simp only [hex_norm_det]`,
+equations, the last-resort handler first tries `simp only [Hex.norm_det]`,
 preserving Mathlib's symbolic and other-carrier normalization. The numeric
 `det` handler also retains that simp fallback for an in-fragment capability
 decline. Errors raised during simp, including producer failures and rejected
@@ -233,6 +233,13 @@ superior" means both:
 
 - **runtime**: a smaller median on every shared family, reported with the
   ratio and the kernel-only times, not a win on selected rungs;
+  (*opt-in exception*: an arm that does not clear both halves may still
+  ship as an explicitly opt-in tactic form and term form, never in a
+  default simp chain, with its full family table recorded; it enters a
+  default chain only on families where it wins, and the chain dispatches
+  on that regime. The symbolic `det` arm of
+  [hex-poly-det-mathlib](Libraries/hex-poly-det-mathlib.md) is the first
+  use.)
 - **scope**: every input the Mathlib tactic accepts is accepted (or, for
   symbolic entries, delegated to it inside the same tactic), and at least
   one class of input beyond it is accepted: `fun i j => …` and
