@@ -19,8 +19,9 @@ Soundness of the rank checker for `Matrix.rank`.
 
 A checked certificate transports to three identities about the Mathlib matrix
 `matrixEquiv A`, and those identities force `Matrix.rank` to be the certified
-rank over the domain itself (`checkRank_sound`) and after any injective ring
-homomorphism into a domain (`checkRank_sound_map`).
+rank after a ring homomorphism into a domain whenever the denominator survives
+(`checkRank_sound_at`). The domain itself (`checkRank_sound`) and injective
+ring homomorphisms (`checkRank_sound_map`) are corollaries.
 -/
 
 open Matrix

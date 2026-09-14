@@ -204,12 +204,26 @@ example (x : ZMod 2) : (generic_rank% !![x + x]).value = 0 := rfl
 example (x : ℚ) : (!![x, 1; 1, x]).rank ≤ 2 := by rank
 example : (!![(1 : ℚ), 1; 1, 1]).rank = 1 := by rank
 
+/-- info: 'HexGenericRankMathlib.genericCert_check' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms HexGenericRankMathlib.genericCert_check
+/-- info: 'HexGenericRankMathlib.genericRank_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms HexGenericRankMathlib.genericRank_eq
+/-- info: 'HexGenericRankMathlib.genericCert_minor' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms HexGenericRankMathlib.genericCert_minor
+/-- info: 'HexGenericRankMathlib.genericRank_succ_minor' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms HexGenericRankMathlib.genericRank_succ_minor
+/-- info: 'HexGenericRankMathlib.checkRankPolyList_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms HexGenericRankMathlib.checkRankPolyList_sound
+/-- info: 'HexGenericRankMathlib.Modular.checkRankPolyList_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms HexGenericRankMathlib.Modular.checkRankPolyList_sound
+/-- info: 'HexMatrixMathlib.checkRank_sound_at' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms HexMatrixMathlib.checkRank_sound_at
 
 -- Closed numeral conditions may be polymorphic in the carrier and instances.

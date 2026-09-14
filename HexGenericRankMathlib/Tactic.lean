@@ -35,14 +35,19 @@ def result (A : Expr) (cfg : Provider.Config := {}) : MetaM Provider.Result := d
   | .failure f => throwError "rank: failure: {f.toMessageData}"
 
 /-- Reject a comparison the symbolic certificate does not establish. -/
-def checkBound (r : Nat) (other : Expr) (rel : Rel) : MetaM Unit := do
+def checkBound (result : Provider.Result) (other : Expr) (rel : Rel) : MetaM Unit := do
+  let r := result.rank
   let some bound ← (Meta.evalNat other).run | throwUnsupportedSyntax
   let ok := match rel with
     | .eq => r == bound
     | .le => r ≤ bound
     | .ge => bound ≤ r
   unless ok do
-    throwError "rank: declined: generic rank is {r}; the unconditional bound `A.rank ≤ {r}` is provable. The requested comparison is not established; use rank_locus for the rank-drop set."
+    let reason : MessageData := match rel with
+      | .eq => m!"the requested rank differs from the generic rank {r}"
+      | .ge => m!"the unconditional bound `A.rank ≤ {r}` is provable"
+      | .le => m!"the requested upper bound may hold after specialisation, but the generic certificate does not establish it"
+    throwError "rank: declined: {reason}. Generic rank: {r}; certificate condition: {result.conditional.conditions[0]!.proposition}. Interpreted polynomial matrix: {result.interpretation}. Use rank_locus for the rank-drop set."
 
 /-- Recognize a fraction-field scalar extension and retain its rank transport. -/
 def baseMatrix (A : Expr) : MetaM (Expr × Option Expr) := do
@@ -74,7 +79,7 @@ def evalSymbolicRank : Tactic.Tactic := fun stx => Tactic.withMainContext do
     matrixSize := syntaxCfg.matrixSize
     caseSplits := syntaxCfg.caseSplits }
   let r ← result A cfg
-  checkBound r.rank other rel
+  checkBound r other rel
   if let .le := rel then
     let bound ← Provider.checkedProof (← mkAppM ``LE.le #[mkNatLit r.rank, other])
     let proof ← mkAppM ``Nat.le_trans #[r.upperProof, bound]

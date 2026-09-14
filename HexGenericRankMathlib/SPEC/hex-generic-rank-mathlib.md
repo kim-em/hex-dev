@@ -41,7 +41,10 @@ These interfaces are owned by their supplying libraries:
 - **Canonical Nat residue lists**, specified in hex-mv-poly and tracked by
   [#10257](https://github.com/kim-em/hex-dev/issues/10257): the dedicated
   positive-characteristic encoding remains a prerequisite. Its kernel-checked
-  output-1 probe is a documented non-test until this interface lands.
+  output-1 probe is reserved as a documented non-test until this interface lands,
+  as required by the revised #10223 directive. The existing integer-representative
+  fallback can already prove that goal after the domain provider extension;
+  this reservation concerns coverage of the shared Nat representation.
 
 The finite-field conditional example is supported by the integer-representative
 fallback: quote the residue producer's certificate as balanced integer term

@@ -16,7 +16,8 @@ arithmetic. It never evaluates the certificate producer or a Hex.Matrix
 identity. The finite-field fallback checks integer representatives modulo the
 characteristic, using the same integer list arithmetic. The dedicated canonical
 Nat residue encoding is pending #10257; the positive-characteristic output-1
-probe is a documented non-test until that prerequisite lands. No coefficient
+probe is reserved for that representation and remains a documented non-test
+per #10223, although the integer fallback can already prove its goal. No coefficient
 provider is installed by this library.
 
 See [the SPEC](SPEC/hex-generic-rank-mathlib.md), [tests](Tests.lean), and

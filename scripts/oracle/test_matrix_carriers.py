@@ -331,6 +331,12 @@ class GenericRankTest(unittest.TestCase):
             with self.subTest(base=r["base"], arity=r["arity"], case=r["case"]):
                 self.assertEqual(evaluate(r), r["result"])
 
+    def test_large_prime_coverage(self):
+        records = [r for r in self.records if r["modulus"] == 2147483647]
+        self.assertEqual(len(records), 9)
+        self.assertTrue(any(c > 2**30 for r in records for row in r["matrix"]
+                            for poly in row for _, c in poly))
+
     def test_characteristic_changes_rank(self):
         self.assertEqual(evaluate(self.select("ZZ")), 3)
         self.assertEqual(evaluate(self.select("GF", 2)), 2)

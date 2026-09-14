@@ -118,6 +118,9 @@ def residueWitness? (p k n m : Nat) (L : PolyLists.Rows Int) : Option (PolyWitne
       letI : ZMod64.PrimeModulus p := ⟨hp⟩
       let P := PolyLists.matrix (k := k) n m (Modular.castRows (C := ZMod64 p) L)
       let c := GenericRank.genericCert P
+      -- `toList` omits zero residues; balancing a nonzero residue preserves
+      -- nonvanishing modulo p. Thus a nonempty quoted denominator has a
+      -- surviving head coefficient, as required by `Modular.nonzero`.
       let quotePoly (a : MvPoly k (ZMod64 p) Mono.grevlex) : PolyLists.Poly Int :=
         (MvPoly.Kernel.toList a).map fun t => (t.1, balance p (t.2.toNat : Int))
       return {
@@ -174,7 +177,7 @@ def checkSize (cfg : Config) (n m : Nat) : Option Decline :=
   if n * m > cfg.matrixSize then
     some (.providerCondition id s!"budget exhausted in dimension matrix size: limit {cfg.matrixSize}, requested {n * m}")
   else if cfg.caseSplits != 0 then
-    some (.providerCondition id "budget exhausted in dimension caseSplits: the limit is fixed at 0")
+    some (.providerCondition id "unsupported caseSplits configuration: piecewise rank is not implemented; the limit must be 0")
   else none
 
 /-- Assemble function equality using only the closed finite indices and

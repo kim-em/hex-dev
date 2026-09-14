@@ -24,7 +24,9 @@ def reduce (p : Nat) (a : Poly Int) : Poly Int := mapCoeffs (fun c => c % (p : I
 /-- Equality of polynomial coefficients modulo the characteristic. -/
 def equal (p : Nat) (a b : Poly Int) : Bool := beq (reduce p a) (reduce p b)
 
-/-- The leading coefficient of the quoted denominator survives reduction. -/
+/-- Sufficient nonvanishing check for a quoted denominator. The producer's
+`quotePoly` omits zero residues, so its head survives reduction. Arbitrary
+integer lists with a vanishing head can fail this check despite nonzero tails. -/
 def nonzero (p : Nat) : Poly Int → Bool
   | [] => false
   | t :: _ => !(t.2 % (p : Int) == 0)

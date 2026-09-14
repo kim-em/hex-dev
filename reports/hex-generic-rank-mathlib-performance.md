@@ -35,6 +35,16 @@ profiler. Its build and axiom checks passed, but that instrumentation violated
 the build-only probe policy. It is diagnostic evidence only; the accepted
 measurements below use the profiler-based implementation.
 
+The [initial profiler sweep](data/hex-generic-rank-initial-profiler-probes.json.gz)
+and [quoted-list refinement sweep](data/hex-generic-rank-quoted-list-probes.json.gz)
+retain 84 complete pairs each for their recorded source revisions. Their
+measurements precede the final diagnostic and probe-limit refinements; the
+accepted evidence below measures the final implementation.
+
+The profiler and trace options are explicit in the checked-in probe sources,
+so ordinary builds and the sweep use the same instrumentation. Heartbeat limits
+are disabled in the probes; the sweep enforces the registered wall-time ceiling.
+
 ## Accepted fresh-module evidence
 
 The [complete sweep](data/hex-generic-rank-mathlib-probes.json.gz) records all

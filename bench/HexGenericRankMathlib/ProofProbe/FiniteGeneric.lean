@@ -8,9 +8,11 @@ import HexGenericRankMathlib
 import Mathlib.Algebra.Field.ZMod
 
 /-
-Non-test pending the shared residue-list encoding, #10257 (the domain
-coefficient provider, #10255, has merged). Enable this declaration unchanged
-when that kernel representation is available and add it to the sweep manifest.
+Reserved non-test for the shared Nat residue-list encoding, #10257, as required
+by issue #10223. The integer-representative fallback can already prove this
+declaration with the domain provider from #10255; it is not a logical blocker.
+Enable the declaration unchanged against the shared Nat kernel representation
+when available and add it to the sweep manifest.
 
 open Matrix MvPolynomial in
  theorem result : (!![X (0 : Fin 1) ^ 3 - X 0] :

@@ -41,6 +41,10 @@ def emitCase {C : Type} [Lean.Grind.CommRing C] [DecidableEq C]
 
 private instance : ZMod64.Bounds 2 := ⟨by decide, by decide⟩
 private instance : ZMod64.PrimeModulus 2 := ⟨by decide⟩
+set_option maxRecDepth 100000 in
+private instance : ZMod64.PrimeModulus 2147483647 := ⟨by decide⟩
+private instance : ZMod64.Bounds 2147483647 := ⟨by decide, by decide⟩
+
 private instance : ZMod64.Bounds 3 := ⟨by decide, by decide⟩
 private instance : ZMod64.PrimeModulus 3 := ⟨by decide⟩
 
@@ -69,6 +73,9 @@ def emitAll : IO Unit := do
     emitCase "GF" 3 residue c
   emitCase "GF" 3 residue ⟨"frobenius", 1, 1,
     ofRows 1 1 #[#[(MvPoly.X 0 : Poly 1 (ZMod64 3)) ^ 3 - MvPoly.X 0]], 1⟩
+  for c in cases (MvPoly.C 1073741823 * MvPoly.X 0 : Poly 2 (ZMod64 2147483647))
+      (MvPoly.C 2147483646 * MvPoly.X 1) (MvPoly.X 0 + MvPoly.X 1) do
+    emitCase "GF" 2147483647 (fun q : ZMod64 2147483647 => toJson q.toNat) c
   emitCase "ZZ" 0 toJson (cancellation (C := Int) 3)
   emitCase "GF" 2 (fun q : ZMod64 2 => toJson q.toNat) (cancellation 2)
   emitCase "GF" 3 residue (cancellation 3)

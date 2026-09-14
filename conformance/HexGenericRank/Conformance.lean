@@ -32,6 +32,10 @@ private def checked {k : Nat} {C : Type} [Lean.Grind.CommRing C] [DecidableEq C]
 #guard (cases (MvPoly.C (1/2) * MvPoly.X 0 : Poly 3 Rat)
   (MvPoly.C (2/3) * MvPoly.X 1) (MvPoly.X 2)).all checked
 
+set_option maxRecDepth 100000 in
+private instance : ZMod64.PrimeModulus 2147483647 := ⟨by decide⟩
+private instance : ZMod64.Bounds 2147483647 := ⟨by decide, by decide⟩
+
 private instance : ZMod64.Bounds 3 := ⟨by decide, by decide⟩
 private instance : ZMod64.PrimeModulus 3 := ⟨by decide⟩
 #guard (cases (MvPoly.X 0 : Poly 2 (ZMod64 3)) (MvPoly.X 1)
@@ -39,5 +43,8 @@ private instance : ZMod64.PrimeModulus 3 := ⟨by decide⟩
 #guard (cases (MvPoly.X 0 : Poly 3 (ZMod64 3)) (MvPoly.X 1) (MvPoly.X 2)).all checked
 #guard checked (⟨"frobenius", 1, 1,
   ofRows 1 1 #[#[(MvPoly.X 0 : Poly 1 (ZMod64 3)) ^ 3 - MvPoly.X 0]], 1⟩)
+
+#guard (cases (MvPoly.C 1073741823 * MvPoly.X 0 : Poly 2 (ZMod64 2147483647))
+  (MvPoly.C 2147483646 * MvPoly.X 1) (MvPoly.X 0 + MvPoly.X 1)).all checked
 
 end Hex.GenericRank.Conformance
