@@ -53,10 +53,11 @@ theorem denote_terms (f : Int → C) (ts : List (Mono k × Int))
 
 /-- An entry's batch interpretation proof transfers to its canonical term list. -/
 theorem interpret_entry (ι : C →+* F) (v : Fin k → F) (f : Int → C)
-    (ts : List (Mono k × Int)) (L : PolyLists.Poly C)
-    (h : MvPoly.Kernel.normalize (termLists f ts) = L) (a : F)
+    (ts : List (Mono k × Int)) (raw L : PolyLists.Poly C)
+    (hraw : termLists f ts = raw) (h : MvPoly.Kernel.normalize raw = L) (a : F)
     (ha : MvPoly.eval₂ ι v (Hex.Reflect.ofIntTerms (cmp := Mono.grevlex) f ts) = a) :
     HexMvPolyMathlib.eval₂MathlibHom ι v (PolyLists.denote L) = a := by
+  rw [← hraw] at h
   rw [HexMvPolyMathlib.eval₂MathlibHom_apply, denote_terms f ts L h]
   exact ha
 

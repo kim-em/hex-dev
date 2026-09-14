@@ -245,12 +245,13 @@ theorem hom_terms (ts : List (Mono k × Int)) :
 /-- Reflection's residue interpretation transfers to integer coefficient
 representatives using a separate primitive modular equality check. -/
 theorem interpret_entry {F : Type*} [CommRing F] (ι : C →+* F) (v : Fin k → F)
-    (ts : List (Mono k × Int)) (L : Poly Int)
-    (h : equal p (normalize (termLists id ts)) L = true) (a : F)
+    (ts : List (Mono k × Int)) (raw L : Poly Int)
+    (hraw : termLists id ts = raw) (h : equal p (normalize raw) L = true) (a : F)
     (ha : MvPoly.eval₂ ι v
       (Hex.Reflect.ofIntTerms (cmp := Mono.grevlex) (Int.cast : Int → C) ts) = a) :
     HexMvPolyMathlib.eval₂MathlibHom ι v (PolyLists.denote (cast L)) = a := by
   rw [denote_cast]
+  rw [← hraw] at h
   have he := equal_sound (C := C) (k := k) p h
   rw [PolyLists.denote, Hex.MvPoly.Kernel.denote_normalize] at he
   change hom (PolyLists.denote (termLists id ts)) = hom (PolyLists.denote L) at he

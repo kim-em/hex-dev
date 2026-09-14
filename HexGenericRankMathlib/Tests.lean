@@ -211,3 +211,9 @@ example : (!![(1 : ℚ), 1; 1, 1]).rank = 1 := by rank
 #print axioms HexGenericRankMathlib.checkRankPolyList_sound
 #print axioms HexGenericRankMathlib.Modular.checkRankPolyList_sound
 #print axioms HexMatrixMathlib.checkRank_sound_at
+
+-- Closed numeral conditions may be polymorphic in the carrier and instances.
+example {F : Type*} [Field F] [CharZero F] (x : F) : (!![x - x]).rank = 0 := by rank
+example {F : Type*} [Field F] [CharZero F] : (!![(1 : F)]).rank = 1 := by rank
+example {F : Type*} [CommRing F] [IsDomain F] (x : F) :
+    (rank% !![x - x]).value = 0 := rfl

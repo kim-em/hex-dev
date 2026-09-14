@@ -150,9 +150,20 @@ def displayDenominator (d : Expr) : MetaM Simp.Result := do
     (congrTheorems := ← getSimpCongrTheorems)
   return (← simp d ctx).1
 
-/-- The default condition normalizer applies only to closed propositions. -/
+/-- Normalize closed numeral conditions, allowing carrier and instance parameters. -/
 def closedNormNum (p : Expr) : MetaM (Option Expr) := do
-  if p.hasFVar || p.hasMVar then return none
+  if p.hasMVar then return none
+  -- Type and instance parameters do not make a numeral condition symbolic.
+  -- A source value variable still keeps the default normalizer out.
+  for fvar in (collectFVars {} p).fvarIds do
+    let type ← inferType (mkFVar fvar)
+    unless (← whnf type).isSort || (← isClass? type).isSome do return none
+  -- `norm_num`'s simplification step knows this even without CharZero.
+  try
+    let_expr Ne α _ _ := p | return none
+    let proof ← mkAppOptM ``one_ne_zero #[α, none, none, none]
+    if ← isDefEq (← inferType proof) p then return some proof
+  catch _ => pure ()
   try
     let ⟨true, proof⟩ ← Mathlib.Meta.NormNum.deriveBool p | return none
     return some proof
@@ -259,22 +270,21 @@ def batchResult (A : Expr) (lit : HexMatrixMathlib.Literal.Recognized)
   for idx in [:batch.entries.size] do
     let e := batch.entries[idx]?.getD first
     let ts := Hex.Reflect.quoteTerms e.conversion.sealed.n e.conversion.terms
+    let raw := toExpr (e.conversion.terms.map fun t => (t.1.toList, t.2))
+    let rawProof ← mkEqRefl raw
     let proof ← match modulus with
       | none => do
-        let raw ← mkAppM ``termLists #[e.conversion.provider.ofInt, ts]
         let norm ← mkAppM ``MvPoly.Kernel.normalize #[raw]
         let normProof ← checkedProof (← mkEq norm (toExpr flat[idx]!))
         mkAppM ``interpret_entry
-          #[ι, v, e.conversion.provider.ofInt, ts, toExpr flat[idx]!, normProof,
+          #[ι, v, e.conversion.provider.ofInt, ts, raw, toExpr flat[idx]!, rawProof, normProof,
             e.input, e.result.proof]
       | some p => do
-        let intId := mkApp (mkConst ``_root_.id [.succ .zero]) (mkConst ``Int)
-        let raw ← mkAppM ``termLists #[intId, ts]
         let norm ← mkAppM ``MvPoly.Kernel.normalize #[raw]
         let equal ← mkAppM ``Modular.equal #[mkNatLit p, norm, toExpr flat[idx]!]
         let normProof ← checkedProof (← mkEq equal (mkConst ``Bool.true))
         mkAppM ``Modular.interpret_entry
-          #[mkNatLit p, ι, v, ts, toExpr flat[idx]!, normProof, e.input, e.result.proof]
+          #[mkNatLit p, ι, v, ts, raw, toExpr flat[idx]!, rawProof, normProof, e.input, e.result.proof]
     entryProofs := entryProofs.push proof
   let rowProofs ← (List.range n).mapM fun i =>
     listEq lit.carrier ((entryProofs.toList.drop (i * m)).take m)
