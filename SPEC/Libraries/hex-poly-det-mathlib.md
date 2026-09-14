@@ -19,13 +19,11 @@ Dependencies: `HexPolyDet`, `HexBareissMathlib`, `HexReflect`,
 not `correspondence_only`, since it implements a handler and owns proof
 probes.
 
-## Three decisions that differ from the first draft
+## Input and dispatch
 
 - **Any commutative ring as the target.** Determinant transport is
   `RingHom.map_det`, which needs no injectivity, so the user's carrier `F`
-  is any `CommRing`; the `CharZero` requirement of the first draft was
-  copied from the rank arm, where injectivity matters for the generic-rank
-  statement, and is dropped. With integer coefficients the arm is sound
+  is any `CommRing`; `CharZero` is unnecessary for this transport. With integer coefficients the arm is sound
   over every commutative ring and complete over rings without additive
   torsion; in characteristic `p` a true goal can be declined when `d` and
   the target agree only modulo `p`, which the residue provider and the
@@ -374,7 +372,7 @@ Existing declarations used by this design:
 |---|---|
 | `Hex.Matrix.DetWitness`, `checkDetList`, `checkDetRat`, `detWitness` | `HexBareiss/Kernel.lean` (integer witness and producer today) |
 | `HexMatrixMathlib.det_eq_of_checkList`, `det_eq_of_checkRat` | `HexBareissMathlib/Kernel.lean` |
-| `Hex.norm_det` (to be renamed from `hex_norm_det`), `det` and `det%` syntax | `HexBareissMathlib/Tactic.lean` |
+| `Hex.norm_det`, `det` and `det%` syntax | `HexBareissMathlib/Tactic.lean` |
 | `HexMatrixMathlib.Certified` | `HexMatrixMathlib/Literal.lean` |
 | `HexMvPolyMathlib.eval₂MathlibHom`, `eval₂MathlibHom_apply` | `HexMvPolyMathlib/Aeval.lean` |
 | `HexMatrixMathlib.det_eq` | `HexDeterminantMathlib/CoreTransport.lean` |
@@ -390,7 +388,7 @@ The domain proof additionally uses `HexMvPolyMathlib.equiv` and
 
 `checkDetPolyList`, `checkDetPolyList_sound`, the polynomial generalisation
 of `detWitness`, and the canonical list layer's `beq_iff`/denotation API
-are proposed obligations. The checker stays Mathlib-free in hex-bareiss,
+are implemented. The checker stays Mathlib-free in hex-bareiss,
 its `MvPoly` instantiation in hex-poly-det, and its determinant soundness
 in this library.
 
@@ -411,6 +409,135 @@ HexPolyDetMathlib.lean
     deps: [HexPolyDet, HexBareissMathlib, HexReflect, HexReflectMathlib, HexMvPolyMathlib, HexMatrixMathlib]
     mathlib: true
     proof_probes: [bench/HexPolyDetMathlib/ProofProbe]
-    done_through: 0
-    status: planned
+    done_through: 3
+    status: active
 ```
+
+## Implementation and verification
+
+The executable instantiation is `HexPolyDet/Basic.lean`; the companion separates
+`Sound.lean`, `Scaling.lean`, `Normalize.lean`, `Frontend.lean`, `Small.lean`, and
+`Tactic.lean`. Integer polynomial certificates transport to any `CommRing`.
+The proved denominator-normalisation frontend currently operates on `Rat`;
+divisions over other carriers remain eligible atoms. The reduced-Nat residue
+adapter remains a documented non-test pending #10257; `Decode` supplies its
+validity, arithmetic, equality and domain-transport contract.
+
+Producer-side grevlex terms are converted to canonical list order by merge sort.
+Generated value expressions use balanced sums, and entry identification uses
+direct list denotation, avoiding a round trip through the Hex matrix data.
+The term form does not replay a reflexive comparison of its own value list.
+
+Limits are 16 rows, 65,536 certificate terms, 100,000 intermediate terms and
+source nodes, 4,096 coefficient bits, exponent 64, and 1,000,000 proof nodes.
+The manifest preregisters 45-second cleanup/proof ceilings and six samples per
+arm. The main 2/4/8 ladder contains 48 feasible dense combinations and 33
+infeasible combinations; separate 3×3 cases measure the closed-form route.
+Dense rows are scaled copies of seeded integer rows, so entries within one row
+share a polynomial. This correlation is part of the measured input family.
+
+`HexPolyDetMathlib.Tests` includes certificate-only tests beyond the small route,
+nonconstant exact division, rational scaling, singularity, local let bindings,
+composite-characteristic targets, and term forms. Its axiom audits include
+integer, rational, singular and term-form proofs. Heavy fresh-module probes
+belong to the manual sweep; merge-gating CI builds the bounded regression tests.
+The symbolic simproc remains opt-in until the recorded sweep establishes a
+smaller median for a size regime; no default integration is claimed here.
+
+All Hex sweep modules emit the route taken (closed formula, polynomial
+certificate, or fallback), including the reason for a budget decline. The
+conservative preflight bound declines some high-degree, four-variable 8×8
+cases before elimination; their complete composed calls remain in the ladder.
+The sweep reports faster cases separately from the opt-in release decision.
+Its 70 cases include 4×4 function and array literals and a certificate whose
+nonzero polynomial determinant vanishes at a stated atom valuation.
+
+Rational addition, subtraction and row clearing use least common multiples
+of their positive scales. Products and powers multiply scales as required.
+Compiled comparison against integer-list replay catches characteristic-aware
+conversion differences before quoting an entry proof, preserving the decline
+and Mathlib fallback while residue replay is unavailable.
+
+## Recorded measurement outcome
+
+The handler and term form ship through the opt-in exception. The symbolic
+simproc remains outside the default chain. The complete 840-sample schedule
+and 14 profiles, including every failure and timeout, are retained in
+[the report](../../reports/hex-poly-det-mathlib-performance.md) and its linked
+raw data. N-prefixed rows below are the correlated row-scaled family
+(except N2K4D1S1); these ratios do not describe independent dense entries.
+Times are fresh-module, baseline-subtracted medians in milliseconds. All six
+samples are required; ratios use positive medians only.
+
+| Case | Mathlib ms | Hex ms | M/H | Completed M/H | Hex route |
+|---|---:|---:|---:|---:|---|
+| N2K1D1S1 | 41.33 | 89.80 | 0.460 | 6/6 | closed-form |
+| N2K1D2S1 | 3.04 | 110.29 | 0.028 | 6/6 | closed-form |
+| N2K1D4S1 | 74.68 | 102.87 | 0.726 | 6/6 | closed-form |
+| N2K1D4S4 | 187.01 | 256.81 | 0.728 | 6/6 | closed-form |
+| N2K2D1S1 | 90.42 | 103.44 | 0.874 | 6/6 | closed-form |
+| N2K2D2S1 | 92.18 | 106.16 | 0.868 | 6/6 | closed-form |
+| N2K2D2S4 | 112.02 | 188.86 | 0.593 | 6/6 | closed-form |
+| N2K2D4S1 | 89.59 | 100.17 | 0.894 | 6/6 | closed-form |
+| N2K2D4S4 | 198.88 | 286.75 | 0.694 | 6/6 | closed-form |
+| N2K4D1S1 | 44.69 | 65.44 | 0.683 | 6/6 | unobserved |
+| N2K4D1S4 | 101.81 | 157.70 | 0.646 | 6/6 | closed-form |
+| N2K4D2S1 | 74.55 | 98.74 | 0.755 | 6/6 | closed-form |
+| N2K4D2S4 | 190.64 | 197.10 | 0.967 | 6/6 | closed-form |
+| N2K4D4S1 | 92.16 | 104.74 | 0.880 | 6/6 | closed-form |
+| N2K4D4S4 | 188.84 | 197.71 | 0.955 | 6/6 | closed-form |
+| N2K4D4S16 | 2788.30 | 1895.34 | 1.471 | 6/6 | closed-form |
+| N4K1D1S1 | 101.54 | 297.30 | 0.342 | 6/6 | certificate |
+| N4K1D2S1 | 279.68 | 412.29 | 0.678 | 6/6 | certificate |
+| N4K1D4S1 | 240.79 | 406.35 | 0.593 | 6/6 | certificate |
+| N4K1D4S4 | 1191.72 | 2005.28 | 0.594 | 6/6 | certificate |
+| N4K2D1S1 | 103.55 | 293.17 | 0.353 | 6/6 | certificate |
+| N4K2D2S1 | 291.93 | 481.72 | 0.606 | 6/6 | certificate |
+| N4K2D2S4 | 1121.42 | 2293.34 | 0.489 | 6/6 | certificate |
+| N4K2D4S1 | 293.59 | 426.24 | 0.689 | 6/6 | certificate |
+| N4K2D4S4 | 2100.48 | 4077.43 | 0.515 | 6/6 | certificate |
+| N4K4D1S1 | 150.07 | 288.65 | 0.520 | 6/6 | certificate |
+| N4K4D1S4 | 692.92 | 1800.87 | 0.385 | 6/6 | certificate |
+| N4K4D2S1 | 288.94 | 486.34 | 0.594 | 6/6 | certificate |
+| N4K4D2S4 | 2098.92 | 4668.53 | 0.450 | 6/6 | certificate |
+| N4K4D4S1 | 287.76 | 495.23 | 0.581 | 6/6 | certificate |
+| N4K4D4S4 | 2256.02 | 4804.17 | 0.470 | 6/6 | certificate |
+| N4K4D4S16 | — | — | — | 0/0 | unobserved |
+| N8K1D1S1 | 690.61 | 999.66 | 0.691 | 6/6 | certificate |
+| N8K1D2S1 | 2693.22 | 3196.05 | 0.843 | 6/6 | certificate |
+| N8K1D4S1 | 2699.85 | 3146.19 | 0.858 | 6/6 | certificate |
+| N8K1D4S4 | 36220.70 | — | — | 6/4 | fallback |
+| N8K2D1S1 | 1074.74 | 1007.27 | 1.067 | 6/6 | certificate |
+| N8K2D2S1 | 3049.37 | 3190.55 | 0.956 | 6/6 | certificate |
+| N8K2D2S4 | — | — | — | 0/0 | unobserved |
+| N8K2D4S1 | 2993.95 | 3207.48 | 0.933 | 6/6 | certificate |
+| N8K2D4S4 | — | — | — | 0/0 | unobserved |
+| N8K4D1S1 | 2066.74 | 1097.77 | 1.883 | 6/6 | certificate |
+| N8K4D1S4 | — | — | — | 0/0 | unobserved |
+| N8K4D2S1 | 4090.38 | 4253.46 | 0.962 | 6/6 | fallback |
+| N8K4D2S4 | — | — | — | 0/0 | unobserved |
+| N8K4D4S1 | 4010.25 | 4254.07 | 0.943 | 6/6 | fallback |
+| N8K4D4S4 | — | — | — | 0/0 | unobserved |
+| N8K4D4S16 | — | — | — | 0/0 | unobserved |
+| N3K1D1S1 | 86.70 | 194.35 | 0.446 | 6/6 | closed-form |
+| N3K2D2S4 | 392.63 | 595.00 | 0.660 | 6/6 | closed-form |
+| N3K4D4S16 | — | — | — | 0/0 | unobserved |
+| Rational2 | 175.98 | 207.96 | 0.846 | 6/6 | closed-form |
+| Singular2 | 65.41 | 84.25 | 0.776 | 6/6 | closed-form |
+| Algebraic2 | 2.02 | 83.58 | 0.024 | 6/6 | closed-form |
+| Rational3 | 400.42 | 504.31 | 0.794 | 6/6 | closed-form |
+| Singular3 | -0.62 | 191.08 | — | 6/6 | closed-form |
+| Algebraic3 | 1.46 | 106.08 | 0.014 | 6/6 | closed-form |
+| Rational4 | 2191.95 | 2395.61 | 0.915 | 6/6 | certificate |
+| Singular4 | 103.02 | 259.09 | 0.398 | 6/6 | certificate |
+| Algebraic4 | 104.85 | 293.94 | 0.357 | 6/6 | certificate |
+| Rational8 | — | — | — | 0/0 | unobserved |
+| Singular8 | 985.34 | 909.28 | 1.084 | 6/6 | certificate |
+| Algebraic8 | 214.23 | 651.98 | 0.329 | 6/6 | certificate |
+| Swaps | 90.46 | 195.88 | 0.462 | 6/6 | certificate |
+| Tridiagonal | 91.97 | 197.33 | 0.466 | 6/6 | certificate |
+| Function4 | — | 199.96 | — | 0/6 | certificate |
+| Array4 | — | 190.34 | — | 0/6 | certificate |
+| AlgebraicScope | 97.61 | 105.21 | 0.928 | 6/6 | unobserved |
+| Valuation | 38.42 | 86.67 | 0.443 | 6/6 | closed-form |
+| Valuation4 | 47.03 | 197.61 | 0.238 | 6/6 | certificate |

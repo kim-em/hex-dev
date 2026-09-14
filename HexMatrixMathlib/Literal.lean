@@ -253,23 +253,23 @@ def matchOfArray? (n m : Nat) (A : Expr) : MetaM (Option (Array (Array Expr))) :
   return some ((List.range n).toArray.map fun i => (List.range m).toArray.map fun j => es[i * m + j]!)
 
 /-- Find the literal behind `A : Matrix (Fin n) (Fin m) R`, unfolding definitions
-within `unfoldBudget`; an open term is not a literal. -/
-partial def matchLiteral? (n m : Nat) (R : Expr) (A : Expr) (budget : Nat := unfoldBudget) :
+within `unfoldBudget`. Symbolic consumers may enable open entries. -/
+partial def matchLiteral? (n m : Nat) (R : Expr) (A : Expr) (budget : Nat := unfoldBudget) (allowOpen : Bool := false) :
     MetaM (Option Recognized) := do
-  if A.hasFVar || A.hasMVar then return none
+  if (!allowOpen && A.hasFVar) || A.hasMVar then return none
   if let some es ← matchChain? n m A then return some ⟨n, m, R, es, .chain⟩
   if let some es ← matchFn? n m A then return some ⟨n, m, R, es, .entrywise⟩
   if let some es ← matchOfArray? n m A then return some ⟨n, m, R, es, .entrywise⟩
   if budget = 0 then return none
   match ← unfoldDefinition? A with
-  | some A' => matchLiteral? n m R A' (budget - 1)
+  | some A' => matchLiteral? n m R A' (budget - 1) allowOpen
   | none => return none
 
-/-- Recognize a closed matrix literal from its type and its expression. -/
-def literal? (A : Expr) : MetaM (Option Recognized) := do
+/-- Recognize a matrix literal, requiring closed entries unless explicitly enabled. -/
+def literal? (A : Expr) (allowOpen : Bool := false) : MetaM (Option Recognized) := do
   let A ← instantiateMVars A
   let some (n, m, R) ← shape? (← inferType A) | return none
-  matchLiteral? n m (← whnfR R) A
+  matchLiteral? n m (← whnfR R) A (allowOpen := allowOpen)
 
 /-- Evaluate an entry to a rational with `norm_num`; an entry `norm_num` alone
 does not evaluate (the `fun i j => …` form instantiates its body at `Fin`

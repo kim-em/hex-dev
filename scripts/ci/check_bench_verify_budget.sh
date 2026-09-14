@@ -93,8 +93,8 @@ for bench in "${filtered_benches[@]}"; do
   # verification. Local runs keep `lake exe` so stale binaries are rebuilt.
   bench_exe=".lake/build/bin/$bench"
   verify_command=verify
-  if [ "$bench" = "hexcharpoly_bench" ]; then
-    # Carrier SymPy comparisons run only during explicit scheduled measurements.
+  if [ "$bench" = "hexcharpoly_bench" ] || [ "$bench" = "hexpolydet_bench" ]; then
+    # External comparisons and full polynomial-support ladders are manual measurements.
     verify_command=verify-ci
   fi
   if [ "${GITHUB_ACTIONS:-}" = "true" ] && [ -x "$bench_exe" ]; then

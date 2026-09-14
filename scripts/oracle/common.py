@@ -132,6 +132,7 @@ VALID_FIXTURE_KINDS = frozenset(
         "poly",
         "matrix",
         "bareiss_carrier",
+        "poly_det",
         "charpoly_carrier",
         "generic_rank",
         "det",
@@ -444,10 +445,13 @@ def _validate_fixture(record: dict[str, Any]) -> None:
     for key in ("lib", "case"):
         if not isinstance(record.get(key), str):
             raise FixtureError(f"missing/invalid {key!r} in {record!r}")
-    if kind == "bareiss_carrier":
+    if kind in {"bareiss_carrier", "poly_det"}:
         # Complete per-library carrier records embed their canonical answer.
         # Coefficient-domain validation belongs to matrix_carriers.Carrier.
-        _exact_keys(record, {"kind", "lib", "case", "carrier", "n", "arity", "p", "rows", "result"}, kind)
+        expected = {"kind", "lib", "case", "carrier", "n", "arity", "p", "rows", "result"}
+        if kind == "poly_det":
+            expected |= {"checked", "entry_support"}
+        _exact_keys(record, expected, kind)
         if not isinstance(record["carrier"], str) or not _is_nat(record["n"]) or not _is_nat(record["arity"]):
             raise FixtureError("invalid matrix carrier header")
         if not _is_int(record["p"]):

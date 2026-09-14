@@ -14,6 +14,8 @@ public import HexReflect.Proof
 public import HexReflect.State
 public import HexReflect.Session
 
+public import HexReflect.Kernel
+
 public section
 
 /-!

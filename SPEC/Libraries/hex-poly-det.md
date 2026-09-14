@@ -12,7 +12,7 @@ arm live in an unpublished pair above both. The companion
 [hex-poly-det-mathlib](hex-poly-det-mathlib.md) owns the symbolic `det`
 handler, its soundness and its proof probes.
 
-This is a specification. The library adds no algorithm: the witness,
+The library adds no algorithm: the witness,
 producer and checker are hex-bareiss's generic ones
 ([hex-bareiss §Polynomial determinant certificate](../../HexBareiss/SPEC/hex-bareiss.md#polynomial-determinant-certificate)),
 the exact quotient is hex-mv-gcd's, and the list arithmetic is
@@ -51,19 +51,16 @@ variable {k : Nat} {C : Type u} {cmp : Mono k → Mono k → Ordering}
 
 /-- hex-bareiss's generic polynomial witness producer at the multivariate
 polynomial carrier, with hex-mv-gcd's exact quotient. -/
-def polyDetWitness (P : Matrix (MvPoly k C cmp) n n) : Except String (DetWitness (MvPoly k C cmp) n) :=
-  Hex.Matrix.detWitnessWith Hex.exactDiv P
+def polyDetWitness (P : Matrix (MvPoly k C cmp) n n) : Except String (DetWitness (MvPoly k C cmp)) :=
+  Hex.Matrix.detWitnessWith Hex.exactDiv n (check n) (P.rows.toList.map (·.toList))
 
 def polyDet (P : Matrix (MvPoly k C cmp) n n) : MvPoly k C cmp
-def polyDetWitness? (P : Matrix (MvPoly k C cmp) n n) : Option (DetWitness (MvPoly k C cmp) n)
+def polyDetWitness? (P : Matrix (MvPoly k C cmp) n n) : Option (DetWitness (MvPoly k C cmp))
 ```
 
-`Hex.Matrix.detWitnessWith` and the carrier- and dimension-parametric
-`DetWitness R n` are proposed changes to hex-bareiss, part of its
-§Polynomial determinant certificate: today `DetWitness` is the integer
-witness with no parameters and `detWitness` returns `Except String
-DetWitness`. The generalisation keeps that failure behaviour (`Except`
-with the producer's reason) and the integer API as a specialisation.
+`Hex.Matrix.detWitnessWith` is generic over entry arithmetic, with the
+integer API retained as a specialisation. The witness type is `DetWitness R`;
+its matrix dimension and row shapes are checked by the list checker.
 `polyDetWitness?` returns the witness only when the list-form check accepts
 it in compiled code; its kernel encodings are integer and residue
 coefficients, so its initial carriers are `Int` and `ZMod64 p`, and `Rat`
@@ -136,8 +133,8 @@ HexPolyDet.lean
   HexPolyDet:
     deps: [HexBareiss, HexMvGcd, HexDeterminant, HexMatrix, HexBasic]
     mathlib: false
-    done_through: 0
-    status: planned
+    done_through: 3
+    status: active
 ```
 
 ## Consumers
@@ -145,3 +142,16 @@ HexPolyDet.lean
 [hex-poly-det-mathlib](hex-poly-det-mathlib.md), the symbolic `det`
 handler. A later polynomial-matrix library (Popov forms, approximant
 bases) would import this rather than re-instantiate the certificate.
+
+## Executable API
+
+The implementation retains the existing numeric witness API by giving
+`DetWitness` a default entry type, `Int`. Its type is `DetWitness R`;
+the dimension is an explicit checker/producer argument, and every row length
+is checked. `polyDetWitness` returns `Except String (DetWitness (MvPoly k C cmp))`,
+`polyDetWitness?` returns its `Option`, and `polyDet` returns the existing
+row-pivoted Bareiss value. A failed witness check never produces a certified
+result. The companion proves `PolyDet.check_of_ok`: every successful
+`polyDetWitness` return passes the checker. Errors remain possible; the theorem
+does not assert that every input produces a successful result. `PolyDet.toList` performs compiled merge sorting into canonical order;
+the kernel sees and validates only its output.

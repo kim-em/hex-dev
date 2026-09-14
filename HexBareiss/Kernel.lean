@@ -62,13 +62,13 @@ matrix equals the value) is in `HexBareissMathlib`.
 namespace Hex.Matrix
 
 /-- A kernel-checkable determinant certificate.  See the module docstring. -/
-inductive DetWitness where
+inductive DetWitness (R : Type := Int) where
   /-- A triangularization: the row swaps in application order, the rows of the
   lower triangular transform (row `i` holds its `i + 1` leading entries), and
   the value. -/
-  | triangular (swaps : List (Nat × Nat)) (transform : List (List Int)) (value : Int)
+  | triangular (swaps : List (Nat × Nat)) (transform : List (List R)) (value : R)
   /-- A nonzero left kernel vector: the value is `0`. -/
-  | singular (vec : List Int)
+  | singular (vec : List R)
   deriving Repr, Inhabited, DecidableEq
 
 namespace DetWitness
@@ -76,7 +76,7 @@ namespace DetWitness
 open Packed (dotInt column columns)
 
 /-- The certified value. -/
-@[expose] def value : DetWitness → Int
+@[expose] def value [Zero R] : DetWitness R → R
   | .triangular _ _ d => d
   | .singular _ => 0
 
@@ -269,23 +269,24 @@ namespace DetWitness
 /-- The state of the elimination on `[A | I]`: the current left block, the
 current right block, the original index of each current row, the swaps so
 far (reversed), the previous pivot, and the number of pivots found. -/
-private structure Elim where
-  left : Array (Array Int)
-  right : Array (Array Int)
+private structure Elim (R : Type) where
+  left : Array (Array R)
+  right : Array (Array R)
   perm : Array Nat
   swaps : List (Nat × Nat)
-  prev : Int
+  prev : R
   pivots : Nat
 
 /-- The first row at or below `r` with a nonzero entry in column `c`. -/
-private def findPivot (M : Array (Array Int)) (r c : Nat) : Option Nat :=
+private def findPivot [Zero R] [Inhabited R] [DecidableEq R] (M : Array (Array R)) (r c : Nat) : Option Nat :=
   (List.range (M.size - r)).findSome? fun k =>
     let i := r + k
     if M[i]![c]! != 0 then some i else none
 
 /-- One fraction-free step: the pivot in column `c` is moved to row `r` and
 rows below `r` are eliminated in both blocks. -/
-private def step (e : Elim) (c : Nat) : Elim :=
+private def step [Zero R] [Inhabited R] [DecidableEq R] [Sub R] [Mul R]
+    (quot : R → R → R) (e : Elim R) (c : Nat) : Elim R :=
   let r := e.pivots
   match findPivot e.left r c with
   | none => e
@@ -296,18 +297,19 @@ private def step (e : Elim) (c : Nat) : Elim :=
     let p := e.left[r]![c]!
     let pivotL := e.left[r]!
     let pivotR := e.right[r]!
-    let update (M : Array (Array Int)) (pivotRow : Array Int) : Array (Array Int) :=
+    let update (M : Array (Array R)) (pivotRow : Array R) : Array (Array R) :=
       (List.range M.size).foldl (init := M) fun M i =>
         if i ≤ r then M else
           let f := e.left[i]![c]!
-          M.set! i <| (M[i]!).zipWith (fun x y => HexArith.Int.exactDiv (p * x - f * y) e.prev) pivotRow
+          M.set! i <| (M[i]!).zipWith (fun x y => quot (p * x - f * y) e.prev) pivotRow
     { e with left := update e.left pivotL, right := update e.right pivotR, prev := p,
              pivots := r + 1 }
 
 /-- The witness assembled from a finished elimination. -/
-private def assemble (n : Nat) (e : Elim) : DetWitness :=
+private def assemble [Zero R] [One R] [Neg R] [Mul R] [Inhabited R]
+    (n : Nat) (e : Elim R) : DetWitness R :=
   if e.pivots = n then
-    let sign : Int := if e.swaps.length % 2 = 0 then 1 else -1
+    let sign : R := if e.swaps.length % 2 = 0 then 1 else -1
     let transform := (List.range n).map fun i =>
       (List.range (i + 1)).map fun k => e.right[i]![e.perm[k]!]!
     let last := if n = 0 then 1 else e.left[n - 1]![n - 1]!
@@ -318,20 +320,44 @@ private def assemble (n : Nat) (e : Elim) : DetWitness :=
 end DetWitness
 
 open DetWitness in
-/-- The kernel witness of a square integer matrix given as `n` rows of length
-`n`, by fraction-free elimination on `[A | I]`, or the reason its own check
-fails. -/
-def detWitnessOfLists (n : Nat) (A : List (List Int)) : Except String DetWitness := do
+/-- Fraction-free elimination on both blocks of `[A | I]`, retaining the
+transform. The caller supplies exact division and the checker for its entry
+representation; no polynomial provider is imported by this library. -/
+def detWitnessWith [Zero R] [One R] [Neg R] [Sub R] [Mul R]
+    [Inhabited R] [DecidableEq R] (quot : R → R → R) (n : Nat)
+    (check : List (List R) → DetWitness R → Bool)
+    (A : List (List R)) : Except String (DetWitness R) := do
   unless A.length = n ∧ A.all (·.length = n) do
     throw s!"the matrix is not {n} × {n}"
-  let left : Array (Array Int) := (A.map (·.toArray)).toArray
-  let right : Array (Array Int) := (List.range n).toArray.map fun i =>
+  let left : Array (Array R) := (A.map (·.toArray)).toArray
+  let right : Array (Array R) := (List.range n).toArray.map fun i =>
     (List.range n).toArray.map fun j => if i = j then 1 else 0
-  let e : Elim := { left, right, perm := (List.range n).toArray, swaps := [], prev := 1, pivots := 0 }
-  let e := (List.range n).foldl step e
+  let e : Elim R := { left, right, perm := (List.range n).toArray, swaps := [], prev := 1, pivots := 0 }
+  let e := (List.range n).foldl (step quot) e
   let w := assemble n e
-  if checkDetList n A w then pure w
+  if check A w then pure w
   else throw "the witness fails its own check"
+
+/-- Every successful producer return has passed its supplied checker. This
+does not assume the quotient implementation is correct: a rejected witness
+is returned as an error. -/
+theorem detWitnessWith_check {R : Type} [Zero R] [One R] [Neg R] [Sub R] [Mul R]
+    [Inhabited R] [DecidableEq R] (quot : R → R → R) (n : Nat)
+    (check : List (List R) → DetWitness R → Bool) (A : List (List R))
+    (w : DetWitness R) (h : detWitnessWith quot n check A = .ok w) :
+    check A w = true := by
+  unfold detWitnessWith at h
+  split at h
+  · dsimp at h
+    split at h
+    · cases h
+      assumption
+    · contradiction
+  · contradiction
+
+/-- The integer instance of the generic witness producer. -/
+def detWitnessOfLists (n : Nat) (A : List (List Int)) : Except String DetWitness :=
+  detWitnessWith HexArith.Int.exactDiv n (checkDetList n) A
 
 /-- The kernel witness of a square integer matrix. -/
 def detWitness (A : Matrix Int n n) : Except String DetWitness :=

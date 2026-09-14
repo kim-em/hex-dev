@@ -20,7 +20,7 @@ for a closed integer or rational matrix literal `A` in one of the four
 syntaxes of `HexMatrixMathlib.Literal` (`!![…]`, `Matrix.of ![…]`,
 `fun i j => …`, `Matrix.ofArray xs h`), possibly behind definitions; the
 term form `det% A` returns the certified value as a `Certified` record; and
-the simproc `hex_norm_det` rewrites `Matrix.det A` to its value, falling
+the simproc `Hex.norm_det` rewrites `Matrix.det A` to its value, falling
 back to Mathlib's `norm_det` (symbolic entries, other carriers) when the
 Hex frontend declines, so the two are one simp set.
 
@@ -318,15 +318,15 @@ def normDet? (e : Expr) : MetaM (Option Simp.Result) := do
 end HexMatrixMathlib.Det
 
 open Lean Meta in
-/-- The `hex_norm_det` simproc rewrites the determinant of a closed integer or
+/-- The `Hex.norm_det` simproc rewrites the determinant of a closed integer or
 rational matrix literal to its value through the Hex certificate, and falls
 back to Mathlib's `norm_det` when the Hex frontend declines (symbolic
 entries, other carriers); a producer failure or a certificate the kernel
 rejects is an error, not a fallback. -/
-simproc_decl hex_norm_det (Matrix.det _) := fun e => do
+simproc_decl Hex.norm_det (Matrix.det _) := fun e => do
   match ← HexMatrixMathlib.Det.normDet? e with
   | some r => return .done r
-  | none => norm_det e
+  | none => _root_.norm_det e
 
 namespace HexMatrixMathlib.Det
 
@@ -335,7 +335,7 @@ open Lean Elab
 /-- `det` closes `A.det = d` and `d = A.det` for a closed integer or rational
 matrix literal `A`, with the kernel checking a determinant certificate; an
 equation outside that fragment delegates to other handlers and then to the
-simp set `hex_norm_det`, whose fallback is Mathlib's `norm_det`. Extensions
+simp set `Hex.norm_det`, whose fallback is Mathlib's `norm_det`. Extensions
 must use `@[no_fallback]` to preserve their errors and `throwUnsupportedSyntax`
 to delegate outside their fragment. The keyword is non-reserved, so `det`
 stays usable as an identifier. -/
@@ -345,7 +345,7 @@ syntax (name := detTac) &"det" optConfig : tactic
 only when it makes no progress. Errors from simprocs must propagate unchanged. -/
 def simpFallback (msg : MessageData) : Tactic.TacticM Unit := do
   let goals ← Tactic.getGoals
-  Tactic.evalTactic (← `(tactic| simp (config := { failIfUnchanged := false }) only [hex_norm_det]))
+  Tactic.evalTactic (← `(tactic| simp (config := { failIfUnchanged := false }) only [Hex.norm_det]))
   if (← Tactic.getGoals) == goals then
     throwError "{msg}"
 

@@ -1,0 +1,6 @@
+{
+  "path": "HexBareiss/Polynomial.lean",
+  "baseline_blob": null,
+  "current_blob": "73fed11de8bd8a43208cbd6836f087714d568eae",
+  "reason": "Adds the generic polynomial determinant certificate operations and structural list checker used by HexPolyDet and HexPolyDetMathlib. No measured factorization entry calls this new API. It adds no instances or initialization hooks that change existing factorization declarations; adding its umbrella import only exposes independent definitions."
+}
