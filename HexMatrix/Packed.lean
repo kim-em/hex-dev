@@ -37,10 +37,35 @@ primitives; the soundness lemmas are in `HexMatrixMathlib.Packed`.
 
 namespace Hex.Matrix.Packed
 
-/-- The dot product of two natural-number lists, stopping at the shorter. -/
-@[expose] def dotNat : List Nat → List Nat → Nat
-  | a :: as, b :: bs => Nat.add (Nat.mul a b) (dotNat as bs)
+/-- `dotNat` as recursive equations, the compiled implementation. -/
+@[expose] def dotNatImpl : List Nat → List Nat → Nat
+  | a :: as, b :: bs => Nat.add (Nat.mul a b) (dotNatImpl as bs)
   | _, _ => 0
+
+/-- The dot product of two natural-number lists, stopping at the shorter.
+`List.rec` is applied directly instead of recursive equations elaborated
+through `List.brecOn`, whose `below` tuple the kernel would build and
+project at every term; `noncomputable` only suppresses compilation, and
+`dotNat_eq_impl` gives the compiler the equation form. -/
+@[expose] noncomputable def dotNat : List Nat → List Nat → Nat :=
+  fun l₁ => List.rec (motive := fun _ => List Nat → Nat) (fun _ => 0)
+    (fun a _ ih l₂ => match l₂ with
+      | b :: bs => Nat.add (Nat.mul a b) (ih bs)
+      | [] => 0) l₁
+
+@[simp] theorem dotNat_nil (l : List Nat) : dotNat [] l = 0 := rfl
+@[simp] theorem dotNat_cons_nil (a : Nat) (as : List Nat) : dotNat (a :: as) [] = 0 := rfl
+@[simp] theorem dotNat_nil_right (l : List Nat) : dotNat l [] = 0 := by cases l <;> rfl
+@[simp] theorem dotNat_cons_cons (a b : Nat) (as bs : List Nat) :
+    dotNat (a :: as) (b :: bs) = Nat.add (Nat.mul a b) (dotNat as bs) := rfl
+
+@[csimp] theorem dotNat_eq_impl : @dotNat = @dotNatImpl := by
+  funext a b
+  induction a generalizing b with
+  | nil => cases b <;> rfl
+  | cons x xs ih => cases b with
+    | nil => rfl
+    | cons y ys => simp [dotNatImpl, ih]
 
 /-- A row packed into one number with `W`-bit slots: `Σ aₖ · 2^(W·k)`. -/
 @[expose] def packRow (W : Nat) : List Nat → Nat
@@ -77,10 +102,32 @@ order, in `r` steps. -/
 entries. -/
 @[expose] def dotPacked (W r pb pc : Nat) : Nat := slot W r (Nat.mul pb pc)
 
-/-- The dot product of two integer lists, stopping at the shorter. -/
-@[expose] def dotInt : List Int → List Int → Int
-  | a :: as, b :: bs => Int.add (Int.mul a b) (dotInt as bs)
+/-- `dotInt` as recursive equations, the compiled implementation. -/
+@[expose] def dotIntImpl : List Int → List Int → Int
+  | a :: as, b :: bs => Int.add (Int.mul a b) (dotIntImpl as bs)
   | _, _ => 0
+
+/-- The dot product of two integer lists, stopping at the shorter; `List.rec`
+applied directly, as `dotNat`. -/
+@[expose] noncomputable def dotInt : List Int → List Int → Int :=
+  fun l₁ => List.rec (motive := fun _ => List Int → Int) (fun _ => 0)
+    (fun a _ ih l₂ => match l₂ with
+      | b :: bs => Int.add (Int.mul a b) (ih bs)
+      | [] => 0) l₁
+
+@[simp] theorem dotInt_nil (l : List Int) : dotInt [] l = 0 := rfl
+@[simp] theorem dotInt_cons_nil (a : Int) (as : List Int) : dotInt (a :: as) [] = 0 := rfl
+@[simp] theorem dotInt_nil_right (l : List Int) : dotInt l [] = 0 := by cases l <;> rfl
+@[simp] theorem dotInt_cons_cons (a b : Int) (as bs : List Int) :
+    dotInt (a :: as) (b :: bs) = Int.add (Int.mul a b) (dotInt as bs) := rfl
+
+@[csimp] theorem dotInt_eq_impl : @dotInt = @dotIntImpl := by
+  funext a b
+  induction a generalizing b with
+  | nil => cases b <;> rfl
+  | cons x xs ih => cases b with
+    | nil => rfl
+    | cons y ys => simp [dotIntImpl, ih]
 
 /-- Column `j` of a row list: the specification of `columns`, not on the
 kernel path. -/
