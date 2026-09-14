@@ -535,9 +535,10 @@ the additional carriers are in the
 With the ten-second cap (a family stops for an arm after the first
 dimension whose median exceeds the cap, that dimension kept, and the
 ladders end at `n = 48` and, for rank `2`, `n = 128`),
-the pinned Mathlib's `eval_rank` reaches `n = 28` at full rank and rank
-`n / 2` (`10.7` and `10.8 s`), `n = 20` at rank `n − 2` (`3.8 s`, the
-next dimension timing out) and
+the pinned Mathlib's `eval_rank` reaches `n = 24` at full rank and rank
+`n / 2` (`6.5` and `8.4 s`; at `n = 28` two of the three runs complete, in
+`10.7` and `10.8 s`, and the third exceeds the wall limit), `n = 20` at rank `n − 2`
+(`3.8 s`, the next dimension exceeding the wall limit) and
 `n = 24` at rank `2` (`6.4 s`); the `eval_rank` of #43438 reaches `n = 48` at full rank, rank
 `n − 2` and rank `n / 2` (`7.3`, `8.2` and `8.0 s`) and `n = 64` at rank `2`
 (`8.1 s`); `rank` reaches `n = 48` at full rank (`1.3 s`, of which the
@@ -558,7 +559,8 @@ Median kernel shares recorded by the same size sweep are:
 | `32 × 32`, rank 2 | timeout | 459 ms | 130 ms | 166 ms |
 
 A timeout entry has no profiler breakdown because the corresponding proof
-exceeded the sweep's wall limit (the cap plus the import baseline), and a
+exceeded the sweep's wall limit (the import baseline plus the cap plus one
+second), and a
 "not run" entry is a dimension the arm never reached because its family
 had already stopped.
 

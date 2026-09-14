@@ -761,7 +761,8 @@ Median kernel shares recorded by the same size sweep are:
 | dense `24 × 24`, 64-bit | not run | 396 ms | 423 ms |
 
 A timeout entry has no profiler breakdown because the corresponding proof
-exceeded the sweep's ten-second cap, and a "not run" entry is a dimension
+exceeded the sweep's wall limit (the import baseline plus the cap plus one
+second), and a "not run" entry is a dimension
 the arm never reached because its family had already stopped.
 
 Determinants on `Hex.Matrix` inputs, finite and closed algebraic carriers
