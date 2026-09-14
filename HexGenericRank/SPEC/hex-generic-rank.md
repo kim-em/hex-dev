@@ -173,7 +173,7 @@ HexGenericRank.lean
   HexGenericRank:
     deps: [HexRank, HexMvGcd, HexBareiss, HexDeterminant, HexMatrix, HexBasic]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
 ```
 

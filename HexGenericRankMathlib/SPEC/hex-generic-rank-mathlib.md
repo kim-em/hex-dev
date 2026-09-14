@@ -429,7 +429,7 @@ HexGenericRankMathlib.lean
     deps: [HexGenericRank, HexRankMathlib, HexReflect, HexReflectMathlib, HexMvPolyMathlib, HexDeterminantalIdealMathlib, HexMatrixMathlib]
     mathlib: true
     proof_probes: [bench/HexGenericRankMathlib/ProofProbe]
-    done_through: 3
+    done_through: 4
     status: active
 ```
 
