@@ -510,7 +510,8 @@ requires the residue provider and its canonical list operations.
 
 The proposed `checkDetPolyList_sound`, concluding `Hex.Matrix.det P = d`
 through denotation, triangular determinant lemmas and cancellation over the
-polynomial domain, lives exclusively in hex-bareiss-mathlib. The reference
+polynomial domain, lives exclusively in hex-poly-det-mathlib
+([SPEC](../../SPEC/Libraries/hex-poly-det-mathlib.md)). The reference
 Leibniz determinant is a specification in that theorem, never kernel
 computation. This executable library adds no determinant correspondence
 theorem and never uses `bareissWith` or `det` on `Hex.Matrix (MvPoly …)` as

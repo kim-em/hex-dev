@@ -25,10 +25,12 @@ coefficient domain `C` with `LawfulGcdOps C`; the checked `polyDetWitness?`
 that returns the witness only when `checkDetPolyList` accepts it in
 compiled code; the list-form instantiation of the checker with
 hex-mv-poly's canonical arithmetic; conformance fixtures with a SymPy
-oracle; and lean-bench families. The Mathlib-free statement is conditional
-on the check: a passing witness has value `Hex.Matrix.det P` by hex-bareiss's
-generic checker theorem at this carrier; producer correctness (the
-producer's witness passes) is the companion's, as for hex-generic-rank.
+oracle; and lean-bench families. This library supplies executable
+instantiation and checking only. The theorem that a passing check means
+`Hex.Matrix.det P = d` (`checkDetPolyList_sound`) and producer correctness
+(the producer's witness passes) are both the companion's, as for
+hex-generic-rank; hex-bareiss's own SPEC excludes that proof surface from
+the Mathlib-free layer.
 
 Out of scope: reification (hex-reflect), any statement about a specialised
 matrix (the companion), and univariate `F[x]` matrices, whose determinant
@@ -49,12 +51,24 @@ variable {k : Nat} {C : Type u} {cmp : Mono k → Mono k → Ordering}
 
 /-- hex-bareiss's generic polynomial witness producer at the multivariate
 polynomial carrier, with hex-mv-gcd's exact quotient. -/
-def polyDetWitness (P : Matrix (MvPoly k C cmp) n n) : DetWitness (MvPoly k C cmp) n :=
+def polyDetWitness (P : Matrix (MvPoly k C cmp) n n) : Except String (DetWitness (MvPoly k C cmp) n) :=
   Hex.Matrix.detWitnessWith Hex.exactDiv P
 
 def polyDet (P : Matrix (MvPoly k C cmp) n n) : MvPoly k C cmp
 def polyDetWitness? (P : Matrix (MvPoly k C cmp) n n) : Option (DetWitness (MvPoly k C cmp) n)
 ```
+
+`Hex.Matrix.detWitnessWith` and the carrier- and dimension-parametric
+`DetWitness R n` are proposed changes to hex-bareiss, part of its
+§Polynomial determinant certificate: today `DetWitness` is the integer
+witness with no parameters and `detWitness` returns `Except String
+DetWitness`. The generalisation keeps that failure behaviour (`Except`
+with the producer's reason) and the integer API as a specialisation.
+`polyDetWitness?` returns the witness only when the list-form check accepts
+it in compiled code; its kernel encodings are integer and residue
+coefficients, so its initial carriers are `Int` and `ZMod64 p`, and `Rat`
+enters only through the companion's row-scaling arm, which checks integer
+lists.
 
 The exact quotient and its law are `Hex.MvPoly.instDiv` and
 `Hex.MvPoly.instExactDivLaws` from `HexMvGcd/Divide.lean`, under

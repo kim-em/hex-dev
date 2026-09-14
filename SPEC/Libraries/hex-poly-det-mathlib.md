@@ -29,14 +29,27 @@ probes.
   over every commutative ring and complete over rings without additive
   torsion; in characteristic `p` a true goal can be declined when `d` and
   the target agree only modulo `p`, which the residue provider and the
-  residue list form remove. The accepted fragment therefore matches
-  `norm_det`'s (any commutative ring, ring expressions in atoms).
-- **Closed forms first.** For `n ≤ 3` the handler does not reify: it
-  rewrites with Mathlib's `Matrix.det_fin_two_of` / `Matrix.det_fin_three`
-  (and `det_fin_one_of`, `det_fin_zero`) and closes with `ring`. This is
-  where the certificate route pays reification and packing costs it cannot
-  amortise and where the first pilot lost to `norm_det`; the closed forms
-  make those sizes instant and identical in scope to `norm_det`.
+  residue list form remove (for primes below `2^31`, the provider's
+  range). The certificate fragment is: a square literal over any
+  commutative ring whose entries and target are ring expressions in the
+  same atoms, with fixed natural exponents, within the reflection budgets.
+  `norm_det` followed by `ring` also closes targets that mention atoms
+  absent from the matrix (`x + y - y`) and identities with variable
+  exponents (`2 * 2 ^ m`), which this arm declines; those inputs are
+  preserved only through the fallback, which is scope kept, not scope
+  won.
+- **Closed forms first.** For `n ≤ 3` the handler does not reify: for
+  `!![…]` and `Matrix.of ![…]` literals it rewrites with Mathlib's
+  `Matrix.det_fin_two_of` / `Matrix.det_fin_three` (and `det_fin_one_of`,
+  `det_fin_zero`); for `fun i j => …` and `Matrix.ofArray` inputs and
+  unfolded definitions it uses the general `det_fin_two` / `det_fin_one`
+  and reduces the entry accesses explicitly; then it closes with `ring`.
+  The small-size `det%` returns the closed-form value with that proof,
+  since this route has no batch and no polynomial `d`. This is where the
+  certificate route pays reification and packing costs it cannot amortise
+  and where the first pilot lost to `norm_det`; the probes measure the
+  closed-form route on the `2 × 2` and `3 × 3` rungs against `norm_det`
+  rather than assuming it wins.
 - **Opt-in until measured.** The symbolic handler is not placed in the
   default `Hex.norm_det` fallback chain. It ships as the `det` handler and
   `det%` term form for symbolic input, and enters the simp-set chain only
@@ -47,8 +60,9 @@ probes.
 The shared prerequisites are the same as
 [hex-generic-rank-mathlib §Prerequisite changes](hex-generic-rank-mathlib.md#prerequisite-changes-in-other-libraries):
 canonical list arithmetic in hex-mv-poly and its denotation theorem in
-hex-mv-poly-mathlib block the kernel route; the numeric handlers' refactor
-to `throwUnsupportedSyntax` blocks composition; and the residue coefficient
+hex-mv-poly-mathlib block the kernel route (the list form has landed);
+the numeric handlers' `throwUnsupportedSyntax` refactor has landed
+(https://github.com/kim-em/hex-dev/issues/10230); and the residue coefficient
 provider in hex-reflect-mathlib blocks positive characteristic. The
 polynomial producer generalisation belongs to hex-bareiss, its determinant
 soundness to this companion. These are implementation obligations, not
@@ -68,10 +82,18 @@ input outside its fragment.
 
 Input classification is shared with
 [the symbolic `rank` arm](hex-generic-rank-mathlib.md#input-classification).
-The numeric handler runs first, returning `notApplicable` via
-`throwUnsupportedSyntax` outside its fragment. For a square literal of
-dimension at most three the symbolic handler takes the closed-form route
-above and never reifies. Otherwise it reads the square matrix through the
+Handler order is registration order in reverse, so a handler registered by
+this library runs *before* hex-bareiss-mathlib's numeric handler and its
+diagnostic fallback. The symbolic handler therefore begins by classifying
+the numeric fragment itself and throws `throwUnsupportedSyntax` for it, so
+numeric inputs reach the numeric handler with no symbolic work, exactly as
+`HexGenericRankMathlib/Tactic.lean` does for `rank`; it is registered with
+`@[tactic HexMatrixMathlib.Det.detTac, no_fallback]`. The term form has its
+own registration on `HexMatrixMathlib.Det.detTerm` with the same numeric
+guard, since the numeric `det%` elaborator raises an ordinary error on its
+`notApplicable` rather than delegating; the two elaborators never both
+run on one input. For a square literal of dimension at most three the
+symbolic handler takes the closed-form route above and never reifies. Otherwise it reads the square matrix through the
 shared literal layer, including definitions
 unfolded within budget. It canonicalises and reifies all entries with
 `reifyRing?`, with top-level variables enabled, in one hex-reflect batch.
@@ -242,9 +264,12 @@ ordinary polynomial identities in atomised division terms remain sound.
 
 Certify the integer polynomial matrix `B` by `checkDetPolyList`. If
 `D := ∏ sᵢ` and `dB` is its certified determinant, the entry proofs and
-row-scaling theorem give `D * A.det = φ dB`; positivity and the target's
-`CharZero` (required for this rational arm only) prove `(D : F) ≠ 0` for
-cancellation. Apply the same proved pass to
+row-scaling theorem give `D * A.det = φ dB`. This arm requires `[Field F] [CharZero F]` on
+the target, unlike the integer arm: cross-multiplication needs the scales
+`t * D` to be cancellable and the term form needs division, and `CharZero`
+alone does not give cancellation in a commutative ring (in `ℤ × ZMod 2`
+the element `2` kills `(0, 1)`). Positivity and `CharZero` then prove
+`(D : F) ≠ 0`. Apply the same proved pass to
 the target to obtain a positive integer `t` and integer polynomial `qZ`
 with `φ qZ = t * e`. Kernel list equality checks
 `t * dB = D * qZ`, again with nonzero integer scales interpreted in `ℚ`.
@@ -331,11 +356,10 @@ can swell enough to reverse that advantage; small matrices can also be
 dominated by reification and list conversion. Report those losses and
 budget declines rather than extrapolating scalar operation counts to time.
 
-The shipping rule is
-[matrix-tactics §The bar against Mathlib](../matrix-tactics.md#the-bar-against-mathlib)
-read for an arm whose fragment equals `norm_det`'s: the fragment half is
-met by construction (any commutative ring, with the closed forms covering
-`n ≤ 3` identically), so the speed half decides. The handler and term
+The shipping rule is the opt-in exception recorded in
+[matrix-tactics §The bar against Mathlib](../matrix-tactics.md#the-bar-against-mathlib):
+this arm does not clear the strict bar, since its certificate fragment
+is not strictly larger than `norm_det`'s and a shared family may lose. The handler and term
 form ship regardless, as opt-in; the simproc enters the default chain only
 for families where the fresh-module median is smaller than `norm_det`'s,
 and the table records every family either way. Fallback preserves scope

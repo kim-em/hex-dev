@@ -233,6 +233,13 @@ superior" means both:
 
 - **runtime**: a smaller median on every shared family, reported with the
   ratio and the kernel-only times, not a win on selected rungs;
+  (*opt-in exception*: an arm that does not clear both halves may still
+  ship as an explicitly opt-in tactic form and term form, never in a
+  default simp chain, with its full family table recorded; it enters a
+  default chain only on families where it wins, and the chain dispatches
+  on that regime. The symbolic `det` arm of
+  [hex-poly-det-mathlib](Libraries/hex-poly-det-mathlib.md) is the first
+  use.)
 - **scope**: every input the Mathlib tactic accepts is accepted (or, for
   symbolic entries, delegated to it inside the same tactic), and at least
   one class of input beyond it is accepted: `fun i j => …` and

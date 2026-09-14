@@ -299,6 +299,14 @@ for the transposition. For `ℚ`, `scaledRows_spec` gives
 `(∏ s) · det = value`, and the kernel-checked `v · ∏ s = value` cancels the
 nonzero product (`prodNat_cast`).
 
+## Naming note
+
+The simproc is documented below as `Hex.norm_det`; the shipped declaration
+is still the global `hex_norm_det`, and the rename (tactic and simproc
+names carry no `hex_` prefix) is an implementation obligation of
+https://github.com/kim-em/hex-dev/issues/10236, with the tests and README
+updated in the same change.
+
 ## Symbolic determinant
 
 The symbolic arm of `det` (entries that are ring expressions) is specified
