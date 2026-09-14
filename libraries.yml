@@ -1150,6 +1150,17 @@ libraries:
     proof_probes: [bench/HexGenericRankMathlib/ProofProbe]
     done_through: 4
     status: active
+  HexPolyDet:
+    deps: [HexBareiss, HexMvGcd, HexDeterminant, HexMatrix, HexBasic]
+    mathlib: false
+    done_through: 0
+    status: planned
+  HexPolyDetMathlib:
+    deps: [HexPolyDet, HexBareissMathlib, HexReflect, HexReflectMathlib, HexMvPolyMathlib, HexMatrixMathlib]
+    mathlib: true
+    proof_probes: [bench/HexPolyDetMathlib/ProofProbe]
+    done_through: 0
+    status: planned
   HexModArithMathlib:
     deps: [HexModArith]
     mathlib: true

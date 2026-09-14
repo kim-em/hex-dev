@@ -426,9 +426,10 @@ this layer states no equation between the certificate and a determinant.
 ## Polynomial determinant certificate
 
 The symbolic `det` arm specified in
-[hex-bareiss-mathlib §Symbolic determinant](../../HexBareissMathlib/SPEC/hex-bareiss-mathlib.md#symbolic-determinant)
+[hex-poly-det-mathlib](../../SPEC/Libraries/hex-poly-det-mathlib.md)
 uses the same certificate as [§The kernel certificate](#the-kernel-certificate),
-generalised over a coefficient type and instantiated by the companion at
+generalised over a coefficient type and instantiated by
+[hex-poly-det](../../SPEC/Libraries/hex-poly-det.md) at
 `MvPoly k C Hex.Mono.grevlex`. This is a specified extension; `HexBareiss/Kernel.lean` currently provides the integer
 `DetWitness`, `detWitness` and list checkers. Canonical polynomial list
 arithmetic in hex-mv-poly is a prerequisite for the polynomial kernel route.
@@ -439,7 +440,7 @@ The witness and producer in hex-bareiss are generic over ring operations,
 equality and an exact quotient supplied by the caller; they do not import
 `HexMvGcd` or `HexMvPoly`. Likewise `checkDetPolyList` takes the canonical
 term-list operations as parameters, with soundness laws supplied only in
-the companion. The companion instantiates these generic executable definitions
+the companion. hex-poly-det instantiates these generic executable definitions
 with hex-mv-poly's list arithmetic and hex-mv-gcd's polynomial quotient.
 No polynomial-specific public alias or division implementation is added to
 hex-bareiss, and its dependency list does not grow.
