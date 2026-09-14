@@ -187,15 +187,49 @@ the kernel instead of `r` multiply-adds.  Exactness needs entries below
         lowerCheckPacked M W r bs cs
   | _, _ => false
 
-/-- `d • a`. -/
-@[expose] def scaleRow (d : Int) : List Int → List Int
+/-- Structural form of `scaleRow`, the compiled implementation. -/
+@[expose] def scaleRowImpl (d : Int) : List Int → List Int
   | [] => []
-  | a :: as => Int.mul d a :: scaleRow d as
+  | a :: as => Int.mul d a :: scaleRowImpl d as
 
-/-- `z • p + a`, stopping at the shorter list. -/
-@[expose] def addScaled (z : Int) : List Int → List Int → List Int
-  | p :: ps, a :: as => Int.add (Int.mul z p) a :: addScaled z ps as
+/-- `d • a`; `List.rec` directly, as `Packed.dotInt`. -/
+@[expose] noncomputable def scaleRow (d : Int) : List Int → List Int :=
+  List.rec (motive := fun _ => List Int) [] (fun a _ ih => Int.mul d a :: ih)
+
+@[simp] theorem scaleRow_nil (d : Int) : scaleRow d [] = [] := rfl
+@[simp] theorem scaleRow_cons (d a : Int) (as : List Int) :
+    scaleRow d (a :: as) = Int.mul d a :: scaleRow d as := rfl
+
+@[csimp] theorem scaleRow_eq_impl : @scaleRow = @scaleRowImpl := by
+  funext d a
+  induction a with
+  | nil => rfl
+  | cons x xs ih => simp [scaleRowImpl, ih]
+
+/-- Structural form of `addScaled`, the compiled implementation. -/
+@[expose] def addScaledImpl (z : Int) : List Int → List Int → List Int
+  | p :: ps, a :: as => Int.add (Int.mul z p) a :: addScaledImpl z ps as
   | _, _ => []
+
+/-- `z • p + a`, stopping at the shorter list; `List.rec` directly, as `Packed.dotInt`. -/
+@[expose] noncomputable def addScaled (z : Int) : List Int → List Int → List Int :=
+  fun l₁ => List.rec (motive := fun _ => List Int → List Int) (fun _ => [])
+    (fun p _ ih l₂ => match l₂ with
+      | a :: as => Int.add (Int.mul z p) a :: ih as
+      | [] => []) l₁
+
+@[simp] theorem addScaled_nil (z : Int) (l : List Int) : addScaled z [] l = [] := rfl
+@[simp] theorem addScaled_cons_nil (z p : Int) (ps : List Int) : addScaled z (p :: ps) [] = [] := rfl
+@[simp] theorem addScaled_cons_cons (z p a : Int) (ps as : List Int) :
+    addScaled z (p :: ps) (a :: as) = Int.add (Int.mul z p) a :: addScaled z ps as := rfl
+
+@[csimp] theorem addScaled_eq_impl : @addScaled = @addScaledImpl := by
+  funext z a b
+  induction a generalizing b with
+  | nil => cases b <;> rfl
+  | cons x xs ih => cases b with
+    | nil => rfl
+    | cons y ys => simp [addScaledImpl, ih]
 
 /-- The zero row of length `m`. -/
 @[expose] def zeros : Nat → List Int

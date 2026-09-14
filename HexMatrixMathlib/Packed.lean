@@ -33,11 +33,11 @@ open Hex.Matrix.Packed
 theorem dotNat_eq_sum (a b : List Nat) :
     dotNat a b = ∑ i : Fin a.length, a[i] * b.getD i 0 := by
   induction a generalizing b with
-  | nil => simp [dotNat]
+  | nil => simp
   | cons x xs ih =>
     cases b with
-    | nil => simp [dotNat]
-    | cons y ys => simp [dotNat, Fin.sum_univ_succ, ih]
+    | nil => simp
+    | cons y ys => simp [Fin.sum_univ_succ, ih]
 
 theorem dotNat_eq_sum' (a b : List Nat) (r : Nat) (ha : a.length = r) :
     dotNat a b = ∑ i : Fin r, a.getD i 0 * b.getD i 0 := by
@@ -163,7 +163,7 @@ theorem dotNat_eq_conv_reverse (b c : List Nat) (r : Nat) (hb : b.length = r) (h
     dotNat b c = (conv b c.reverse).getD (r - 1) 0 := by
   rcases Nat.eq_zero_or_pos r with rfl | hr
   · cases b with
-    | nil => simp [dotNat, conv]
+    | nil => simp [conv]
     | cons => simp at hb
   · rw [conv_getD, dotNat_eq_sum' b c r hb, Finset.sum_range, Nat.sub_add_cancel hr]
     refine Finset.sum_congr rfl fun i _ => ?_
@@ -224,7 +224,7 @@ theorem dotPacked_eq (M W r : Nat) (b c : List Nat) (hb : b.length = r) (hc : c.
 theorem dotNat_pad (b c : List Nat) (r : Nat) (hb : b.length = r) :
     dotNat b (List.take r c ++ List.replicate (r - c.length) 0) = dotNat b c := by
   induction b generalizing c r with
-  | nil => simp [dotNat]
+  | nil => simp
   | cons x xs ih =>
     cases r with
     | zero => simp at hb
@@ -235,11 +235,11 @@ theorem dotNat_pad (b c : List Nat) (r : Nat) (hb : b.length = r) :
         have := ih [] r hxs
         simp only [List.take_nil, List.length_nil, Nat.sub_zero, List.nil_append] at this ⊢
         rw [List.replicate_succ]
-        simp [dotNat, this]
+        simp [this]
       | cons y ys =>
         have := ih ys r hxs
         simp only [List.take_succ_cons, List.length_cons, Nat.add_sub_add_right, List.cons_append]
-        simp [dotNat, this]
+        simp [this]
 
 theorem padded_length (r : Nat) (c : List Nat) :
     (List.take r c ++ List.replicate (r - c.length) 0).length = r := by
@@ -291,15 +291,15 @@ theorem packCol_eq (W r : Nat) (c : List Nat) :
 theorem dotInt_eq_sum (a b : List Int) (r : Nat) (h : a.length ≤ r) :
     dotInt a b = ∑ k : Fin r, a.getD k 0 * b.getD k 0 := by
   induction a generalizing b r with
-  | nil => simp [dotInt]
+  | nil => simp
   | cons x xs ih =>
     obtain ⟨r, rfl⟩ : ∃ r', r = r' + 1 := ⟨r - 1, by simp at h; omega⟩
     rw [Fin.sum_univ_succ]
     simp only [Fin.val_zero, List.getD_cons_zero, Fin.val_succ, List.getD_cons_succ]
     cases b with
-    | nil => simp [dotInt]
+    | nil => simp
     | cons y ys =>
-      simp only [dotInt, Int.add_def, Int.mul_def, List.getD_cons_zero, List.getD_cons_succ]
+      simp only [dotInt_cons_cons, Int.add_def, Int.mul_def, List.getD_cons_zero, List.getD_cons_succ]
       rw [ih ys r (by simpa using h)]
 
 theorem column_length (j : Nat) (A : List (List Int)) : (column j A).length = A.length := by
@@ -379,7 +379,7 @@ theorem dotNat_comm (a b : List Nat) : dotNat a b = dotNat b a := by
   | cons x xs ih =>
     cases b with
     | nil => rfl
-    | cons y ys => simp [dotNat, ih, Nat.mul_comm]
+    | cons y ys => simp [ih, Nat.mul_comm]
 
 /-- Cutting or zero-padding the first list to the length of the second changes
 nothing. -/
@@ -438,12 +438,12 @@ theorem dotInt_parts (t c : List Int) :
       ((dotNat (posParts t) (posParts c) + dotNat (negParts t) (negParts c) : Nat) : Int) -
         ((dotNat (posParts t) (negParts c) + dotNat (negParts t) (posParts c) : Nat) : Int) := by
   induction t generalizing c with
-  | nil => cases c <;> simp [dotInt, posParts, negParts, dotNat]
+  | nil => cases c <;> simp [posParts, negParts]
   | cons a as ih =>
     cases c with
-    | nil => simp [dotInt, posParts, negParts, dotNat]
+    | nil => simp [posParts, negParts]
     | cons b bs =>
-      simp only [dotInt, posParts, negParts, dotNat, Int.add_def, Int.mul_def, Nat.add_eq, Nat.mul_eq,
+      simp only [dotInt_cons_cons, posParts, negParts, dotNat_cons_cons, Int.add_def, Int.mul_def, Nat.add_eq, Nat.mul_eq,
         ih bs]
       have ha : ((a.toNat : Nat) : Int) - ((Int.neg a).toNat : Int) = a := Int.toNat_sub_toNat_neg a
       have hb : ((b.toNat : Nat) : Int) - ((Int.neg b).toNat : Int) = b := Int.toNat_sub_toNat_neg b
@@ -530,7 +530,7 @@ theorem dotInt_eq_sum_right (a b : List Int) (r : Nat) (hb : b.length = r) :
   induction b generalizing a r with
   | nil =>
     subst hb
-    cases a <;> simp [dotInt]
+    cases a <;> simp
   | cons y ys ih =>
     obtain ⟨r, rfl⟩ : ∃ r', r = r' + 1 := ⟨r - 1, by simp at hb; omega⟩
     rw [Fin.sum_univ_succ]
@@ -541,7 +541,7 @@ theorem dotInt_eq_sum_right (a b : List Int) (r : Nat) (hb : b.length = r) :
       rw [h0]
       simp
     | cons x xs =>
-      simp only [dotInt, Int.add_def, Int.mul_def, List.getD_cons_zero, List.getD_cons_succ]
+      simp only [dotInt_cons_cons, Int.add_def, Int.mul_def, List.getD_cons_zero, List.getD_cons_succ]
       rw [ih xs r (by simpa using hb)]
 
 theorem list_ext_getD (l₁ l₂ : List Int) (hlen : l₁.length = l₂.length)

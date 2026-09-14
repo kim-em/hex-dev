@@ -90,7 +90,7 @@ theorem lowerCheck_spec (M : Nat) (bs cs : List (List Nat)) (h : lowerCheck M bs
         · rw [getD_eq_getElem' _ _ _ hjl]
           exact (zeroRow_iff M b cs).mp hz _ (List.getElem_mem hjl)
         · rw [getD_eq_default' _ _ _ (by omega)]
-          simp [dotNat]
+          simp
       | succ i =>
         obtain ⟨h1, h2⟩ := hrest i (by simpa using hi)
         refine ⟨by simpa using h1, fun j hj => ?_⟩
@@ -100,25 +100,25 @@ theorem lowerCheck_spec (M : Nat) (bs cs : List (List Nat)) (h : lowerCheck M bs
 theorem scaleRow_length (d : Int) (a : List Int) : (scaleRow d a).length = a.length := by
   induction a with
   | nil => rfl
-  | cons x xs ih => simp [scaleRow, ih]
+  | cons x xs ih => simp [ih]
 
 theorem scaleRow_getD (d : Int) (a : List Int) (j : Nat) :
     (scaleRow d a).getD j 0 = d * a.getD j 0 := by
   induction a generalizing j with
-  | nil => simp [scaleRow]
+  | nil => simp
   | cons x xs ih =>
     cases j with
-    | zero => simp only [scaleRow, List.getD_cons_zero, intMul_eq]
-    | succ j => simp only [scaleRow, List.getD_cons_succ, ih]
+    | zero => simp only [scaleRow_cons, List.getD_cons_zero, intMul_eq]
+    | succ j => simp only [scaleRow_cons, List.getD_cons_succ, ih]
 
 theorem addScaled_length (z : Int) (p a : List Int) :
     (addScaled z p a).length = min p.length a.length := by
   induction p generalizing a with
-  | nil => simp [addScaled]
+  | nil => simp
   | cons x xs ih =>
     cases a with
-    | nil => simp [addScaled]
-    | cons y ys => simp [addScaled, ih]
+    | nil => simp
+    | cons y ys => simp [ih]
 
 theorem addScaled_getD (z : Int) (p a : List Int) (j : Nat) (hj : j < p.length)
     (hj' : j < a.length) : (addScaled z p a).getD j 0 = z * p.getD j 0 + a.getD j 0 := by
@@ -129,9 +129,9 @@ theorem addScaled_getD (z : Int) (p a : List Int) (j : Nat) (hj : j < p.length)
     | nil => simp at hj'
     | cons y ys =>
       cases j with
-      | zero => simp only [addScaled, List.getD_cons_zero, intMul_eq, intAdd_eq]
+      | zero => simp only [addScaled_cons_cons, List.getD_cons_zero, intMul_eq, intAdd_eq]
       | succ j =>
-        simp only [addScaled, List.getD_cons_succ]
+        simp only [addScaled_cons_cons, List.getD_cons_succ]
         exact ih _ _ (by simpa using hj) (by simpa using hj')
 
 theorem zeros_length (m : Nat) : (zeros m).length = m := by
