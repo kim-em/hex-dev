@@ -27,14 +27,18 @@ private def triple (es : Array (Array Expr)) (i j a b c d : Nat) : MetaM Expr :=
 reflection batch or a polynomial certificate. -/
 def formula (A : Expr) (lit : Recognized) : MetaM Result := do
   let es ← lit.entries.mapM (fun row => row.mapM reduceIndices)
+  let chain := (← matchChain? lit.n lit.m A).isSome
   let result : Result ← match lit.n with
     | 0 => do
       let proof ← mkAppOptM ``Matrix.det_fin_zero #[some lit.carrier, none, some A]
       let value ← mkNumeral lit.carrier 1
       return ({ proof, value } : Result)
-    | 1 => do return { proof := ← mkAppM ``Matrix.det_fin_one #[A], value := (es[0]!)[0]! }
+    | 1 => do
+      let proof ← if chain then mkAppM ``Matrix.det_fin_one_of #[(es[0]!)[0]!]
+        else mkAppM ``Matrix.det_fin_one #[A]
+      return { proof, value := (es[0]!)[0]! }
     | 2 => do
-      let proof ← if lit.route == .chain then
+      let proof ← if chain then
         mkAppM ``Matrix.det_fin_two_of #[(es[0]!)[0]!, (es[0]!)[1]!, (es[1]!)[0]!, (es[1]!)[1]!]
       else mkAppM ``Matrix.det_fin_two #[A]
       return { proof, value := ← sub (← mul (es[0]!)[0]! (es[1]!)[1]!) (← mul (es[0]!)[1]! (es[1]!)[0]!) }

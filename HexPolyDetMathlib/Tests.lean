@@ -161,6 +161,13 @@ example (x : ZMod 6) :
 example {R : Type} [CommRing R] (x : R) :
     Matrix.det !![x, 1, 0; 1, x, 1; 0, 1, x] = x ^ 3 - 2 * x := by det
 
+-- Definitions discovered within the literal-unfolding budget use the general
+-- closed formulas with the original matrix as argument.
+def symbolicMatrix (x : Int) : Matrix (Fin 2) (Fin 2) Int := !![x, 1; 1, x]
+example (x : Int) : (symbolicMatrix x).det = x ^ 2 - 1 := by det
+example (x : Int) : (symbolicMatrix x).det = (det% (symbolicMatrix x)).value :=
+  (det% (symbolicMatrix x)).proof
+
 -- A new target atom forces a polynomial decline; the composed fallback closes it.
 example (x y : Int) :
     Matrix.det !![x, 1, 0, 0; 1, x, 1, 0; 0, 1, x, 1; 0, 0, 1, x] =
