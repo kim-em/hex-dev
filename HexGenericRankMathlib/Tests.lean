@@ -190,7 +190,7 @@ elab "inspect_generic " A:term : tactic => Tactic.withMainContext do
     | .declined (.budgetExhausted exhausted) _ =>
       unless exhausted.dimension == dim do throwError "wrong exhausted dimension"
     | _ => throwError "zero resource limit did not decline"
+  Tactic.closeMainGoal `inspect_generic (mkConst ``True.intro)
 
-example (x : ℚ) (hx : x ^ 2 ≠ 0) : True := by
+example (x : ℚ) (_hx : x ^ 2 ≠ 0) : True := by
   inspect_generic !![x ^ 2]
-  trivial

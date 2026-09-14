@@ -272,17 +272,6 @@ scoped instance residueChar {p : Nat} [Hex.ZMod64.Bounds p] : CharP (Hex.ZMod64 
   charP_of_injective_ringHom (f := HexModArithMathlib.ZMod64.equiv.symm.toRingHom)
     HexModArithMathlib.ZMod64.equiv.symm.injective p
 
-/-- The residue interpretation into a polynomial ring has constant image. -/
-theorem residue_C (p : Nat) [Hex.ZMod64.Bounds p] {D : Type*}
-    [CommRing D] [CharP D p] {σ : Type*} :
-    HexReflectMathlib.residueHom p (MvPolynomial σ D) =
-      MvPolynomial.C.comp (HexReflectMathlib.residueHom p D) := by
-  ext a
-  have ha : (a.toNat : Hex.ZMod64 p) = a :=
-    (Hex.ZMod64.natCast_op_eq_ofNat _).trans (Hex.ZMod64.ofNat_toNat a)
-  rw [← ha]
-  simp
-
 /-- The residue provider's injective coefficient map and literal variables
 justify generic rank over a prime-characteristic polynomial ring. -/
 theorem rank_variables_residue (p : Nat) [Hex.ZMod64.Bounds p]
@@ -296,6 +285,6 @@ theorem rank_variables_residue (p : Nat) [Hex.ZMod64.Bounds p]
     (hA : A = (symbolic P).map (MvPolynomial.eval₂Hom (HexReflectMathlib.residueHom p _) v)) :
     A.rank = c.rank :=
   rank_variables (HexReflectMathlib.residueHom p _) (HexReflectMathlib.residueHom p D)
-    (HexReflectMathlib.residueHom_injective p D) (residue_C p) v f hf hv h A hA
+    (HexReflectMathlib.residueHom_injective p D) (HexReflectMathlib.residueHom_mvPolynomial p σ D) v f hf hv h A hA
 
 end HexGenericRankMathlib.Modular

@@ -25,35 +25,31 @@ tactic handler and owns proof probes.
 
 ## Prerequisite changes in other libraries
 
-None of these is this library's to write, and each blocks a named part of
-it.
+These interfaces are owned by their supplying libraries:
 
-- **`HexRankMathlib/Tactic.lean` answers `throwUnsupportedSyntax` outside
-  its fragment.** Today the numeric handler throws ordinary errors for a
-  matrix with free variables or a non-integer carrier
-  (`Tactic.lean`, the decline branches), so a second handler on the same
-  syntax kind never runs. The refactor is the one
-  [matrix-tactics §Placement](../../SPEC/matrix-tactics.md#placement) prescribes:
-  the numeric handler classifies, and outside its fragment it throws
-  `throwUnsupportedSyntax` so the next handler is tried. Blocks the
-  tactic; the term forms and the programmatic interface do not need it.
-- **A list form of `MvPoly` arithmetic in hex-mv-poly**, with its
-  denotation theorem in hex-mv-poly-mathlib: canonical term lists
-  (ordered exponent-vector lists with coefficients in the carrier's kernel
-  representation), addition, multiplication, scalar multiplication and
-  equality by structural recursion, and the theorem identifying the list
-  form with `MvPoly`'s reference operations. Blocks the kernel route
-  below. Shared with `rank_locus`.
-- **A residue coefficient provider in hex-reflect-mathlib.** Today
-  `HexReflectMathlib/Carrier.lean` supplies the universal integer
-  interpretation and a `CharP` translation theorem that is deliberately not
-  a global instance; there is no provider whose carrier is a residue ring,
-  and `ZMod64 p` has no global Mathlib `CommRing` instance. Until the
-  provider exists, the positive-characteristic arm is specified but not
-  implementable, and the finite-field example below is a statement of what
-  the provider must deliver. Note that `LawfulGcdOps (ZMod64 p)` needs
-  both `ZMod64.Bounds p` and `ZMod64.PrimeModulus p`
-  (`HexMvGcd/Instances.lean`).
+- **Numeric handler delegation**, supplied by hex-rank-mathlib: the numeric
+  handler answers `throwUnsupportedSyntax` outside its fragment so this
+  library's second handler can run.
+- **Canonical polynomial lists**, supplied by hex-mv-poly and its Mathlib
+  companion: list arithmetic, canonicality and denotation laws. The integer
+  form supports the characteristic-zero kernel route.
+- **Prime-characteristic coefficient interpretation**, supplied by
+  hex-reflect-mathlib: the residue provider recognizes domains with compatible
+  `CommRing`, `IsDomain` and `CharP` evidence and supplies the injective
+  interpretation. `residueHom_mvPolynomial` supplies its factorization through
+  `MvPolynomial.C`. This library registers no coefficient provider.
+- **Canonical Nat residue lists**, specified in hex-mv-poly and tracked by
+  [#10257](https://github.com/kim-em/hex-dev/issues/10257): the dedicated
+  positive-characteristic encoding remains a prerequisite. Its kernel-checked
+  output-1 probe is a documented non-test until this interface lands.
+
+The finite-field conditional example is supported by the integer-representative
+fallback: quote the residue producer's certificate as balanced integer term
+lists, compute the two identities with hex-mv-poly's existing integer list
+arithmetic, and compare canonical coefficients modulo the characteristic.
+Denotation commutes with the coefficient homomorphism. The kernel evaluates
+neither `ZMod64` arithmetic nor a `Hex.Matrix` identity. This fallback does not
+implement or replace the shared Nat residue form required above.
 
 ## Input classification
 
@@ -229,9 +225,8 @@ theorem checkRank_sound_at [CommRing R] [CommRing S] [IsDomain S] [DecidableEq R
 Its proof is that of hex-rank-mathlib's `checkRank_sound_map`, whose
 injectivity hypothesis is used only to obtain `φ c.denom ≠ 0`; the domain
 hypothesis is on the target `S` only, and none is needed on the source.
-hex-rank-mathlib should adopt it as the general form, with
-`checkRank_sound_map` as the corollary, and until then this library proves
-it from hex-rank-mathlib's transport lemmas. It is the statement "rank exactly `r` wherever `denom`
+hex-rank-mathlib exposes it as the general form, with
+`checkRank_sound_map` as the injective-map corollary. It is the statement "rank exactly `r` wherever `denom`
 does not vanish" of hex-rank §Generic rank is not a specialised rank.
 
 The condition is sufficient, not necessary. `d` is a unit multiple of the
@@ -369,11 +364,10 @@ reduces coefficients, not exponents, so `P = [X_0³ − X_0]`, `r = 1`,
 carrier (a prerequisite above): it must supply `LawfulGcdOps C` for the
 producer, which `ZMod64 p` does under `ZMod64.Bounds p` and
 `ZMod64.PrimeModulus p` (`HexMvGcd/Instances.lean`), and for the companion
-a Mathlib `CommRing C` with an injective `C →+* ZMod 3`, which `ZMod64 p`
-does not have today (`HexModArithMathlib.ZMod64.equiv` is the ring
-equivalence, but the global `CommRing` instance is absent, as
-[hex-det-mathlib](../../SPEC/Libraries/hex-det-mathlib.md) records). Until that provider
-exists this example is the statement of what it must deliver, not a test.
+a Mathlib `CommRing C` with an injective `C →+* ZMod 3`, supplied through the provider's local evidence and
+`HexModArithMathlib.ZMod64.equiv`. The conditional example uses the fallback
+above; the generic polynomial-ring probe remains a documented non-test until
+#10257 supplies the dedicated residue-list form.
 
 1. Generic: `S = !![X 0 ^ 3 - X 0]` over `MvPolynomial (Fin 1) (ZMod 3)`
    has rank `1`. This is true and unconditional.

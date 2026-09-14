@@ -193,9 +193,9 @@ HexGenericRank.lean
   list-structured entries. That needs a kernel form of `MvPoly` addition,
   multiplication and equality over canonical term lists, with a denotation
   theorem, which belongs in hex-mv-poly and its companion (as `RankWitness`
-  belongs in hex-rank) and does not exist today. It is a prerequisite of
-  the companion, shared with the `rank_locus` tactic, and is not this
-  library's to write.
+  belongs in hex-rank) and is supplied for integer coefficients. The dedicated canonical Nat
+  residue encoding remains a prerequisite of the positive-characteristic
+  companion (#10257), shared with `rank_locus`; it is not this library's to write.
 - **Univariate specialisation.** At `k = 1` the same certificate competes
   with hex-poly-smith's `snfRank`; whether one routes to the other is
   decided by the benchmark, not here.
