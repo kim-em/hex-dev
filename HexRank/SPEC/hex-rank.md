@@ -818,8 +818,12 @@ is re-checked before it is returned.
 definition on the path is `@[expose]`; the arithmetic is `Nat.mul`,
 `Nat.add`, `Nat.mod`, `Int.mul`, `Int.add` called directly; comparisons
 are `Nat.beq` and `Nat.blt`, and integer equality `decide (a = b)`, a
-fixed-cost `Int.decEq`; loops are structural recursion on the lists; no
-`Array`, `Vector`, `Fin`, `Finset`, `dite` or well-founded recursion
+fixed-cost `Int.decEq`; loops are structural recursion on the lists,
+except that the per-term loops (`Packed.dotNat`, `scaleRow`, `addScaled`)
+apply `List.rec` directly with their structural forms attached by
+`@[csimp]` equations, per
+[matrix-tactics §Kernel discipline](../../SPEC/matrix-tactics.md#kernel-discipline);
+no `Array`, `Vector`, `Fin`, `Finset`, `dite` or well-founded recursion
 appears on the path. Entries are never read by an indexed access per
 entry: `nthInt` costs `O(index)`, so reading the `rank²` block entries
 that way cost about as many list steps as the multiplications (measured

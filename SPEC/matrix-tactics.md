@@ -164,6 +164,19 @@ definitionally (`vecOfList (k + 1) (a :: l)` unfolds to
 `vecCons a (vecOfList k l)`, so `!![…] = ofLists n m L` is `rfl`), never
 by evaluating `A i j` through `Matrix.of` inside the arithmetic.
 
+The loops that run once per multiply-add (the dot products `dotNat` and
+`dotInt` of `Hex.Matrix.Packed`, and `scaleRow` and `addScaled` of the
+rank upper bound) are written with `List.rec` applied directly rather
+than as structural recursions: a structural recursion compiles to
+`brecOn`, and the kernel then builds and projects the `below` tuple at
+every step, which costs about as much as the arithmetic itself on small
+entries (a third of the plain rank check's kernel time at `40 × 40`).
+Such a definition is `noncomputable`, and its structural form is attached
+by a proven `@[csimp]` equation so that the compiled code is the ordinary
+recursion; nothing is trusted (no `implemented_by`). Loops that run once
+per entry or per row stay structural recursions; their overhead is not
+measurable.
+
 Two things a certificate must never ask the kernel to do:
 
 - **Replay the producer.** Evaluating `bareissWith`, `rowReduceWith` or
