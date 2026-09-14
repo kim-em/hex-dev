@@ -4,10 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 import HexPolyDetMathlib.Tactic
+set_option trace.HexMatrix.certificate true
 
 set_option profiler true
 set_option profiler.threshold 0
-set_option trace.HexMatrix.certificate true
 
 theorem result (x : Int) (hx : x = 1) : Matrix.det !![x, 1; 1, x] = 0 := by
   have h : Matrix.det !![x, 1; 1, x] = x ^ 2 - 1 := by

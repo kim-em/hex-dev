@@ -829,6 +829,26 @@
       "samples": 6
     },
     {
+      "family": "literal-function",
+      "dimension": 4,
+      "stem": "Function4",
+      "atoms": 1,
+      "carrier": "Int",
+      "cleanup_timeout_seconds": 45,
+      "proof_build_ceiling_ms": 45000,
+      "samples": 6
+    },
+    {
+      "family": "literal-array",
+      "dimension": 4,
+      "stem": "Array4",
+      "atoms": 1,
+      "carrier": "Int",
+      "cleanup_timeout_seconds": 45,
+      "proof_build_ceiling_ms": 45000,
+      "samples": 6
+    },
+    {
       "stem": "AlgebraicScope",
       "family": "closed-algebraic-scope",
       "dimension": 2,
@@ -842,6 +862,15 @@
       "stem": "Valuation",
       "family": "valuation",
       "dimension": 2,
+      "atoms": 1,
+      "cleanup_timeout_seconds": 45,
+      "proof_build_ceiling_ms": 45000,
+      "samples": 6
+    },
+    {
+      "stem": "Valuation4",
+      "family": "valuation",
+      "dimension": 4,
       "atoms": 1,
       "cleanup_timeout_seconds": 45,
       "proof_build_ceiling_ms": 45000,
@@ -1135,6 +1164,9 @@
     "Swaps",
     "Tridiagonal",
     "Valuation",
+    "Valuation4",
+    "Function4",
+    "Array4",
     "AlgebraicScope"
   ]
 }

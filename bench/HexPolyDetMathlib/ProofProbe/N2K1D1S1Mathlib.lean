@@ -9,7 +9,7 @@ set_option maxHeartbeats 0
 set_option maxRecDepth 100000
 
 -- Computational performance owner: HexPolyDet.
-theorem result (x0 : Int) : Matrix.det (R := Int) !![(2) * (1 * (x0)), (-3) * (1 * (x0)); (-1) * (2 * (x0)), (-2) * (2 * (x0))] = (-7) * (1 * (x0)) * (2 * (x0)) := by
+theorem result (x0 : Int) : Matrix.det (R := Int) (!![(2) * (1 * (x0)), (-3) * (1 * (x0)); (-1) * (2 * (x0)), (-2) * (2 * (x0))]) = (-7) * (1 * (x0)) * (2 * (x0)) := by
   simp only [norm_det] <;> ring
 
 #print axioms result

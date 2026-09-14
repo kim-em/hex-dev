@@ -9,7 +9,7 @@ set_option maxHeartbeats 0
 set_option maxRecDepth 100000
 
 -- Computational performance owner: HexPolyDet.
-theorem result (x0 x1 x2 x3 : Int) : Matrix.det (R := Int) !![x0, x1; x2, x3] = x0 * x3 - x1 * x2 := by
+theorem result (x0 x1 x2 x3 : Int) : Matrix.det (R := Int) (!![x0, x1; x2, x3]) = x0 * x3 - x1 * x2 := by
   simp only [norm_det] <;> ring
 
 #print axioms result

@@ -409,8 +409,8 @@ HexPolyDetMathlib.lean
     deps: [HexPolyDet, HexBareissMathlib, HexReflect, HexReflectMathlib, HexMvPolyMathlib, HexMatrixMathlib]
     mathlib: true
     proof_probes: [bench/HexPolyDetMathlib/ProofProbe]
-    done_through: 0
-    status: planned
+    done_through: 3
+    status: active
 ```
 
 ## Implementation and verification
@@ -443,3 +443,17 @@ integer, rational, singular and term-form proofs. Heavy fresh-module probes
 belong to the manual sweep; merge-gating CI builds the bounded regression tests.
 The symbolic simproc remains opt-in until the recorded sweep establishes a
 smaller median for a size regime; no default integration is claimed here.
+
+All Hex sweep modules emit the route taken (closed formula, polynomial
+certificate, or fallback), including the reason for a budget decline. The
+conservative preflight bound declines some high-degree, four-variable 8×8
+cases before elimination; their complete composed calls remain in the ladder.
+The sweep reports faster cases separately from the opt-in release decision.
+Its 70 cases include 4×4 function and array literals and a certificate whose
+nonzero polynomial determinant vanishes at a stated atom valuation.
+
+Rational addition, subtraction and row clearing use least common multiples
+of their positive scales. Products and powers multiply scales as required.
+Compiled comparison against integer-list replay catches characteristic-aware
+conversion differences before quoting an entry proof, preserving the decline
+and Mathlib fallback while residue replay is unavailable.

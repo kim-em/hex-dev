@@ -76,6 +76,16 @@ def result (a term : Expr) (s : Nat) (proof : Expr) : NormalizeM Result := do
 def unchanged (a : Expr) : NormalizeM Result := do
   result a a 1 (← mkEqSymm (← mkAppM ``one_mul #[a]))
 
+/-- Raise an entry to a common positive scale. The closed multiplication in
+the expected type verifies that the computed quotient is exact. -/
+def rescale (a : Expr) (p : Result) (s : Nat) : NormalizeM Result := do
+  if s == p.scale then return p
+  let t := s / p.scale
+  unless p.scale > 0 && t * p.scale == s do
+    throwThe MessageData m!"invalid rational common scale"
+  let term ← scaled t p.term
+  result a term s (← mkAppM ``Scaling.row #[a, p.term, toExpr p.scale, toExpr t, p.proof])
+
 /-- Clear closed rational coefficients through ring operations. Division by
 an open term remains one atom; no division of symbolic polynomials occurs. -/
 partial def expression (a : Expr) : NormalizeM Result := do
@@ -92,12 +102,17 @@ partial def expression (a : Expr) : NormalizeM Result := do
     let y := args[5]!
     let p ← expression x
     let q ← expression y
-    let isMul := name == some ``HMul.hMul
-    let term ← if isMul then mkAppM ``HMul.hMul #[p.term, q.term]
-      else mkAppM name.get! #[← scaled q.scale p.term, ← scaled p.scale q.term]
-    let theoremName := if isMul then ``Scaling.mul else if name == some ``HAdd.hAdd then ``Scaling.add else ``Scaling.sub
-    let h ← mkAppM theoremName #[x, y, p.term, q.term, toExpr p.scale, toExpr q.scale, p.proof, q.proof]
-    return ← result a term (p.scale * q.scale) h
+    if name == some ``HMul.hMul then
+      let term ← mkAppM ``HMul.hMul #[p.term, q.term]
+      let h ← mkAppM ``Scaling.mul #[x, y, p.term, q.term, toExpr p.scale, toExpr q.scale, p.proof, q.proof]
+      return ← result a term (p.scale * q.scale) h
+    let s := p.scale.lcm q.scale
+    let p ← rescale x p s
+    let q ← rescale y q s
+    let term ← mkAppM name.get! #[p.term, q.term]
+    let theoremName := if name == some ``HAdd.hAdd then ``Scaling.add else ``Scaling.sub
+    let h ← mkAppM theoremName #[x, y, p.term, q.term, toExpr s, p.proof, q.proof]
+    return ← result a term s h
   if name == some ``Neg.neg && args.size == 3 then
     let x := args[2]!
     let p ← expression x
@@ -126,17 +141,13 @@ partial def expression (a : Expr) : NormalizeM Result := do
             toExpr inv.den, p.proof, hb])
   unchanged a
 
-/-- Scale a row by the product of its positive entry scales. -/
+/-- Scale a row by the least common multiple of its positive entry scales. -/
 def row (es : Array Expr) : NormalizeM (Nat × Array Result) := do
   let rs ← es.mapM expression
-  let scale := rs.foldl (fun n r => n * r.scale) 1
+  let scale := rs.foldl (fun n r => n.lcm r.scale) 1
   let mut out := #[]
   for i in [:rs.size] do
-    let p := rs[i]!
-    let t := (rs.zipIdx).foldl (fun n (r, j) => if i == j then n else n * r.scale) 1
-    let term ← scaled t p.term
-    let proof ← mkAppM ``Scaling.row #[es[i]!, p.term, toExpr p.scale, toExpr t, p.proof]
-    out := out.push (← result es[i]! term scale proof)
+    out := out.push (← rescale es[i]! rs[i]! scale)
   return (scale, out)
 
 end HexMatrixMathlib.DetPoly.Normalize

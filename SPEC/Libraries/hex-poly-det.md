@@ -133,8 +133,8 @@ HexPolyDet.lean
   HexPolyDet:
     deps: [HexBareiss, HexMvGcd, HexDeterminant, HexMatrix, HexBasic]
     mathlib: false
-    done_through: 0
-    status: planned
+    done_through: 3
+    status: active
 ```
 
 ## Consumers

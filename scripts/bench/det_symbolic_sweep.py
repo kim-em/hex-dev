@@ -13,6 +13,7 @@ import fcntl
 import json
 import os
 from pathlib import Path
+import re
 import statistics
 import sys
 
@@ -23,6 +24,18 @@ from scripts.bench.det_symbolic_probes import PREFIX
 
 AXIOMS = ('propext', 'Classical.choice', 'Quot.sound')
 MANIFEST = ROOT / 'scripts/bench/det_symbolic_manifest.json'
+
+
+def routes(output):
+    """Keep every emitted route, including attempts that decline or time out."""
+    events = []
+    for line in output.splitlines():
+        match = re.search(r'\[HexMatrix\.certificate\] (\{.*\})$', line)
+        if match:
+            event = json.loads(match[1])
+            if 'route' in event:
+                events.append(event)
+    return events
 
 
 def cpu_lease():
@@ -88,6 +101,7 @@ def main():
                 deltas = [r['delta_ns'] for r in completed]
                 arms[arm] = dict(samples=len(rows), completed=len(completed),
                     median_delta_ns=statistics.median(deltas) if len(deltas) == 6 else None,
+                    routes=sorted({e['route'] for r in rows for e in r.get('routes', [])}),
                     artifacts=sweep.artifact_sizes(f'{PREFIX}.{stem}{arm}', Path('bench')))
             a, b = arms['Mathlib']['median_delta_ns'], arms['Hex']['median_delta_ns']
             summary[stem] = dict(case, arms=arms,
@@ -102,8 +116,10 @@ def main():
                       schedule_complete=len(records) == len(cases) * 12,
                       provenance_issues=provenance_issues,
                       subset=bool(args.case), samples=records, profiles=profiles, summary=summary,
-                      shipping_bar_met=(complete and unchanged and not args.case and
-                                        all(s['hex_faster'] for s in summary.values() if not s.get('scope_probe'))))
+                      release_mode='opt-in', default_simproc_enabled=False,
+                      all_shared_cases_faster=(complete and unchanged and not args.case and
+                                        all(s['hex_faster'] for s in summary.values() if not s.get('scope_probe'))),
+                      faster_cases=[s['stem'] for s in summary.values() if s['hex_faster'] and not s.get('scope_probe')])
         output.write_text(json.dumps(record, indent=2) + '\n')
 
     def build(module, timeout):
@@ -130,6 +146,7 @@ def main():
                 valid = all(r['state'] == 'complete' for r in built.values())
                 records.append(dict(stem=case['stem'], arm=arm, trial=trial + 1,
                     build_order=[r for r, _ in modules], **built,
+                    routes=routes(built['candidate'].get('compiler_output', '')),
                     delta_ns=(built['candidate']['wall_nanos'] - built['reference']['wall_nanos']) if valid else None))
                 save()
     for stem in manifest['profile_cases']:

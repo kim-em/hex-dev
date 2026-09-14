@@ -5,3 +5,4 @@ Authors: Kim Morrison
 -/
 import HexPolyDetMathlib.Tactic
 import HexPolyDetMathlib.ProofProbe.AlgebraicSupport
+set_option trace.HexMatrix.certificate true

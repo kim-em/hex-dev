@@ -6,11 +6,12 @@ Authors: Kim Morrison
 import HexPolyDetMathlib.Tactic
 import HexPolyDetMathlib.ProofProbe.AlgebraicSupport
 
+set_option trace.HexMatrix.certificate true
 set_option maxHeartbeats 0
 set_option maxRecDepth 100000
 
 -- Computational performance owner: HexPolyDet.
-theorem result  : Matrix.det (R := ClosedAlgebraic.K) !![ClosedAlgebraic.α, 1; 2, ClosedAlgebraic.α] = (ClosedAlgebraic.α ^ 2 - 2) ^ 1 := by
+theorem result  : Matrix.det (R := ClosedAlgebraic.K) (!![ClosedAlgebraic.α, 1; 2, ClosedAlgebraic.α]) = (ClosedAlgebraic.α ^ 2 - 2) ^ 1 := by
   det
 
 #print axioms result

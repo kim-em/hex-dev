@@ -15,14 +15,14 @@ namespace HexMatrixMathlib.DetPoly.Scaling
 open scoped HexMvPolyMathlib
 attribute [local instance 2000] Ring.toGrindRing
 
-theorem add (a b p q : Rat) (s t : Nat) (hp : p = s * a) (hq : q = t * b) :
-    (t : Rat) * p + (s : Rat) * q = ((s * t : Nat) : Rat) * (a + b) := by
-  rw [hp, hq, Nat.cast_mul]
+theorem add (a b p q : Rat) (s : Nat) (hp : p = s * a) (hq : q = s * b) :
+    p + q = (s : Rat) * (a + b) := by
+  rw [hp, hq]
   ring
 
-theorem sub (a b p q : Rat) (s t : Nat) (hp : p = s * a) (hq : q = t * b) :
-    (t : Rat) * p - (s : Rat) * q = ((s * t : Nat) : Rat) * (a - b) := by
-  rw [hp, hq, Nat.cast_mul]
+theorem sub (a b p q : Rat) (s : Nat) (hp : p = s * a) (hq : q = s * b) :
+    p - q = (s : Rat) * (a - b) := by
+  rw [hp, hq]
   ring
 
 theorem mul (a b p q : Rat) (s t : Nat) (hp : p = s * a) (hq : q = t * b) :

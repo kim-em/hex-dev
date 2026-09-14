@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 import HexPolyDetMathlib.Tactic
 import HexPolyDetMathlib.ProofProbe.AlgebraicSupport
+set_option trace.HexMatrix.certificate true
 
 theorem result : Matrix.det !![ClosedAlgebraic.α, 1; 2, ClosedAlgebraic.α] = 0 := by
   fail_if_success (solve | det)

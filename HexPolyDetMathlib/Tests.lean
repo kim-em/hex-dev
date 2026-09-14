@@ -33,6 +33,7 @@ example (x : Rat) : Matrix.det (!![x / 2, 1; 1, x / 3] : Matrix (Fin 2) (Fin 2) 
 example (x : Int) : Matrix.det !![x, 1; 1, x] = x ^ 2 - 1 := by
   simp only [Hex.normPolyDet]
   ring
+example : Matrix.det !![(1 : Int), 2; 3, 4] = -2 := by simp only [Hex.normPolyDet]
 
 /-- info: 'symbolicDet' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
@@ -126,6 +127,16 @@ elab "certificate_det" : tactic => withMainContext do
   | .success p => closeMainGoal `certificate_det (← if reverse then mkEqSymm p.proof else pure p.proof)
   | .declined msg | .notApplicable msg => throwError "certificate required: {msg}"
 
+open Lean Elab Tactic Meta in
+elab "certificate_declines " reason:str : tactic => withMainContext do
+  let some (A, rhs, _) := HexMatrixMathlib.Det.detTarget? (← getMainTarget) |
+    throwError "expected a determinant equation"
+  match ← HexMatrixMathlib.DetPoly.Frontend.compute A rhs with
+  | .declined msg =>
+    unless ((← msg.toString).splitOn reason.getString).length > 1 do
+      throwError "unexpected decline: {msg}"
+  | _ => throwError "expected a certificate decline"
+
 -- The target need not be a domain or characteristic zero.
 theorem generic4 {R : Type} [CommRing R] (x : R) :
     Matrix.det !![x, 1, 0, 0; 1, x, 1, 0; 0, 1, x, 1; 0, 0, 1, x] =
@@ -139,6 +150,20 @@ theorem rational4 (x : Rat) :
     Matrix.det !![x / 2, 1, 0, 0; 1, x / 2, 1, 0; 0, 1, x / 2, 1; 0, 0, 1, x / 2] =
       x ^ 4 / 16 - 3 * x ^ 2 / 4 + 1 := by certificate_det
 
+example (x y z : Rat) : True := by
+  run_tac
+    let e ← Lean.Elab.Term.elabTerm
+      (← `($(Lean.mkIdent `x) / 2 + $(Lean.mkIdent `y) / 2 + $(Lean.mkIdent `z) / 2)) none
+    Lean.Elab.Term.synthesizeSyntheticMVarsNoPostponing
+    let e ← Lean.instantiateMVars e
+    let .ok r ← (HexMatrixMathlib.DetPoly.Normalize.expression e).run |
+      throwError "normalization failed"
+    unless r.scale == 2 do throwError "repeated denominators should share one scale"
+    let .ok (s, _) ← (HexMatrixMathlib.DetPoly.Normalize.row #[e, e, e, e]).run |
+      throwError "row normalization failed"
+    unless s == 2 do throwError "row denominators should share one scale"
+  trivial
+
 theorem singular4 (x y : Int) :
     Matrix.det !![x, y, 1, 0; 0, x, y, 1; x, y, 1, 0; 1, 0, x, y] = 0 := by certificate_det
 
@@ -146,6 +171,24 @@ theorem term4 (x : Int) :
     Matrix.det !![x, 1, 0, 0; 1, x, 1, 0; 0, 1, x, 1; 0, 0, 1, x] =
       (det% !![x, 1, 0, 0; 1, x, 1, 0; 0, 1, x, 1; 0, 0, 1, x]).value :=
   (det% !![x, 1, 0, 0; 1, x, 1, 0; 0, 1, x, 1; 0, 0, 1, x]).proof
+
+theorem rationalTerm4 (x : Rat) :
+    Matrix.det !![x / 2, 1, 0, 0; 1, x / 2, 1, 0; 0, 1, x / 2, 1; 0, 0, 1, x / 2] =
+      (det% !![x / 2, 1, 0, 0; 1, x / 2, 1, 0; 0, 1, x / 2, 1; 0, 0, 1, x / 2]).value :=
+  (det% !![x / 2, 1, 0, 0; 1, x / 2, 1, 0; 0, 1, x / 2, 1; 0, 0, 1, x / 2]).proof
+
+example (x : Rat) : (det% !![x, 0, 0, 0; 0, x, 0, 0; 0, 0, x, 0; 0, 0, 0, x]).value =
+    x ^ 4 := by ring
+
+example (x : Int) : Matrix.det (fun i j : Fin 4 => x + if i = j then 1 else 0) =
+    4 * x + 1 := by certificate_det
+
+example (x : Int) : Matrix.det (Matrix.ofArray (m := 4) (n := 4)
+    #[x, 1, 0, 0, 1, x, 1, 0, 0, 1, x, 1, 0, 0, 1, x] rfl) =
+    x ^ 4 - 3 * x ^ 2 + 1 := by certificate_det
+
+example (x : Int) : x ^ 4 - 3 * x ^ 2 + 1 =
+    Matrix.det !![x, 1, 0, 0; 1, x, 1, 0; 0, 1, x, 1; 0, 0, 1, x] := by certificate_det
 
 example (x : Int) : True := by
   let y := x + 1
@@ -156,6 +199,14 @@ example (x : Int) : True := by
 example (x : ZMod 6) :
     Matrix.det !![x, 0, 0, 0; 0, x, 0, 0; 0, 0, x, 0; 0, 0, 0, x] =
       x ^ 4 := by certificate_det
+
+-- Characteristic-aware conversion can disagree with integer replay. It must
+-- decline before proof quotation, allowing the composed tactic to fall back.
+example (x : ZMod 6) :
+    Matrix.det !![x - 1, 0, 0, 0; 0, x, 0, 0; 0, 0, x, 0; 0, 0, 0, x] =
+      (x - 1) * x ^ 3 := by
+  certificate_declines "entry (0, 0)"
+  det
 
 -- Closed formulas do not require CharZero, even for composite characteristic.
 example {R : Type} [CommRing R] (x : R) :
@@ -194,3 +245,4 @@ example (y : Int) (h : y = -2) : Matrix.det !![(1 : Int), 2; 3, 4] = y := by
 end HexPolyDetTests
 
 #print axioms Hex.PolyDet.check_of_ok
+#print axioms HexPolyDetTests.rationalTerm4

@@ -5,11 +5,12 @@ Authors: Kim Morrison
 -/
 import HexPolyDetMathlib.Tactic
 
+set_option trace.HexMatrix.certificate true
 set_option maxHeartbeats 0
 set_option maxRecDepth 100000
 
 -- Computational performance owner: HexPolyDet.
-theorem result (x0 x1 : Int) : Matrix.det (R := Int) !![0, x0, 0, 0; x1, 1, 0, 0; 0, 0, x0, 1; 0, 0, 1, x1] = -x0 * x1 * (x0 * x1 - 1) := by
+theorem result (x0 x1 : Int) : Matrix.det (R := Int) (!![0, x0, 0, 0; x1, 1, 0, 0; 0, 0, x0, 1; 0, 0, 1, x1]) = -x0 * x1 * (x0 * x1 - 1) := by
   det
 
 #print axioms result

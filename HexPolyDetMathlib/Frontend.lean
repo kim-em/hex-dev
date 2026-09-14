@@ -95,8 +95,11 @@ def checked (target proof : Expr) (profileName : String := "det.symbolic.kernel"
   return mkAppN result args
 
 /-- Replay only structural polynomial lists in an entry identification proof. -/
-def entryProof (k : Nat) (ctx : Expr) (r : ReifiedRing) (p : Poly) : ReflectM Expr :=
+def entryProof (k : Nat) (ctx : Expr) (r : ReifiedRing) (p : Poly)
+    (location : String := "target") : ReflectM Expr :=
     profile "det.symbolic.identification" do
+    unless MvPoly.Kernel.beq (Hex.Reflect.Kernel.ringList k r.expr) p do
+      decline m!"{location}: conversion does not agree with integer-list replay; residue list replay is unavailable"
     let hbound ← decideProof (← mkAppM ``LE.le #[toExpr (RingExpr.varBound r.expr), toExpr k])
     let equality ← mkEq (← mkAppM ``MvPoly.Kernel.beq
       #[← mkAppM ``Hex.Reflect.Kernel.ringList #[toExpr k, toExpr r.expr], toExpr p])
@@ -137,15 +140,15 @@ structure Result where
 
 /-- Reduce closed literal-index conditionals without unfolding ring operations
 or the numeral instances returned by their branches. -/
-partial def reduceIndices (e : Expr) : MetaM Expr := do
+def reduceIndices (e : Expr) : MetaM Expr := Meta.transform e (pre := fun e => do
   let args := e.getAppArgs
   if (e.isAppOf ``ite || e.isAppOf ``dite) && args.size == 5 then
     let decision ← whnfD args[2]!
     if decision.isAppOf ``Decidable.isTrue || decision.isAppOf ``Decidable.isFalse then
       let branch := args[if decision.isAppOf ``Decidable.isTrue then 3 else 4]!
-      reduceIndices (if e.isAppOf ``dite then (mkApp branch decision.appArg!).headBeta else branch)
-    else pure e
-  else pure e
+      return .visit (if e.isAppOf ``dite then (mkApp branch decision.appArg!).headBeta else branch)
+    else return .continue
+  else return .continue)
 
 /-- One batch, one elimination and one kernel check for a symbolic determinant.
 The optional target is reified before sealing, and may not allocate new atoms. -/
@@ -238,8 +241,7 @@ def compute (A : Expr) (rhs? : Option Expr := none) : MetaM (Outcome Result) := 
       decline m!"target is not a polynomial identity in the sealed atoms; computed value is{indentExpr value}"
     let rowsE := toExpr (lists.toList.map Array.toList)
     let wE ← quoteWitness w
-    let ops ← mkAppOptM ``Polynomial.ops
-      #[some (mkConst ``Int), none, none, none, some (toExpr k)]
+    let ops ← mkAppM' (mkApp (mkConst ``Polynomial.ops) (mkConst ``Int)) #[toExpr k]
     let check ← mkEq (← mkAppM ``Hex.Matrix.checkDetPolyList #[ops, toExpr lit.n, rowsE, wE])
       (mkConst ``Bool.true)
     let hcheck ← decideProof check
@@ -247,7 +249,7 @@ def compute (A : Expr) (rhs? : Option Expr := none) : MetaM (Outcome Result) := 
     for i in [:lit.n] do
       let mut hs := #[]
       for j in [:lit.n] do
-        let h ← entryProof k ctx (reified[i]!.getD j seed) (lists[i]!)[j]!
+        let h ← entryProof k ctx (reified[i]!.getD j seed) (lists[i]!)[j]! s!"entry ({i}, {j})"
         let h ← match normalized with
           | none => mkEqSymm h
           | some rs => mkEqTrans h (rs[i]!.2[j]!).proof
@@ -302,7 +304,7 @@ def compute (A : Expr) (rhs? : Option Expr := none) : MetaM (Outcome Result) := 
       | .singular v => v
     if ← isTracingEnabledFor `HexMatrix.certificate then
       reportCertificate "det-symbolic" (reprStr w) (witnessEntries.flatMap (List.map Prod.snd)) []
-        [("proof_nodes", toJson proofNodes), ("atoms", toJson k),
+        [("route", toJson "certificate"), ("proof_nodes", toJson proofNodes), ("atoms", toJson k),
          ("max_minor_support", toJson (witnessEntries.foldl (fun n p => max n p.length) 0)),
          ("max_minor_degree", toJson (witnessEntries.foldl (fun n p =>
            p.foldl (fun n (m, _) => max n (m.foldl (· + ·) 0)) n) 0))]

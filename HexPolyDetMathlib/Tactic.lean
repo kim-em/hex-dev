@@ -25,11 +25,14 @@ def compute (A : Expr) (rhs? : Option Expr := none) : MetaM (Outcome Result) := 
   if let some lit ← literal? A (allowOpen := true) then
     if lit.n == lit.m && lit.n ≤ 3 then
       return .success (← profileitM Exception "det.small.formula" (← getOptions) (Small.formula A lit))
+  trace[HexMatrix.certificate] "{(Json.mkObj [("route", toJson "certificate-attempt")]).compress}"
   return ← HexMatrixMathlib.DetPoly.Frontend.compute A rhs?
 
 /-- Preserve the diagnostic if Mathlib cannot close the original goal. The
 symbolic attempt is never repeated through a simproc. -/
 def fallback (msg : MessageData) : Tactic.TacticM Unit := do
+  trace[HexMatrix.certificate] "{(Json.mkObj [("route", toJson "fallback"),
+    ("reason", toJson (← msg.toString))]).compress}"
   Tactic.evalTactic (← `(tactic| simp (config := { failIfUnchanged := false }) only [_root_.norm_det]))
   unless (← Tactic.getGoals).isEmpty do
     try Tactic.evalTactic (← `(tactic| all_goals ring)) catch _ => pure ()
@@ -73,7 +76,7 @@ def evalDet : Tactic.Tactic := fun _ => Tactic.withMainContext do
 @[term_elab HexMatrixMathlib.Det.detTerm]
 def elabDet : Term.TermElab := fun stx expectedType? => do
   let saved ← saveState
-  let A ← try elabArgument stx[1] catch _ => do
+  let A ← try Term.withoutErrToSorry (elabArgument stx[1]) catch _ => do
     saved.restore
     let A ← Term.elabTerm stx[1] none
     Term.synthesizeSyntheticMVarsNoPostponing
@@ -96,6 +99,8 @@ open Lean Meta in
 /-- Opt-in symbolic determinant simplification. The published `Hex.norm_det`
 keeps its numeric path and unmodified Mathlib fallback. -/
 simproc_decl Hex.normPolyDet (Matrix.det _) := fun e => do
+  if let .success _ ← HexMatrixMathlib.Det.recognize e.appArg! then
+    return ← Hex.norm_det e
   match ← HexPolyDetMathlib.compute e.appArg! with
   | .success p => return .done { expr := p.value, proof? := some p.proof }
   | .notApplicable _ | .declined _ => _root_.norm_det e

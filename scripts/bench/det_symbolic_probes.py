@@ -83,14 +83,14 @@ def dense(n, k, degree, support, rational=False):
     return a, rhs
 
 
-def write_case(stem, metadata, a, rhs, k, carrier='Int', support_import=False):
+def write_case(stem, metadata, a, rhs, k, carrier='Int', support_import=False, matrix_expr=None):
     extras = f'import {PREFIX}.AlgebraicSupport\n' if support_import else ''
     params = ' '.join(f'x{i}' for i in range(k))
     binders = f'({params} : {carrier})' if params else ''
-    target = f'Matrix.det (R := {carrier}) {literal(a)} = {rhs}'
+    target = f'Matrix.det (R := {carrier}) ({matrix_expr or literal(a)}) = {rhs}'
     for arm in ['Hex', 'Mathlib']:
         imp = 'HexPolyDetMathlib.Tactic' if arm == 'Hex' else 'Mathlib.Tactic.NormDet'
-        options = ''
+        options = 'set_option trace.HexMatrix.certificate true\n' if arm == 'Hex' else ''
         tactic = 'det' if arm == 'Hex' else 'simp only [norm_det] <;> ring'
         body = f'''{HEADER}import {imp}
 {extras}
@@ -146,6 +146,12 @@ def main():
     cases.append(write_case('Swaps', dict(family='pivot-swap', dimension=4), a, '-x0 * x1 * (x0 * x1 - 1)', 2))
     a = [['x0' if i == j else '1' if abs(i-j) == 1 else '0' for j in range(4)] for i in range(4)]
     cases.append(write_case('Tridiagonal', dict(family='structured', dimension=4), a, 'x0 ^ 4 - 3 * x0 ^ 2 + 1', 1))
+    cases.append(write_case('Function4', dict(family='literal-function', dimension=4), [], '4 * x0 + 1', 1,
+        matrix_expr='fun i j : Fin 4 => x0 + if i = j then 1 else 0'))
+    array = '#[' + ', '.join(e for row in a for e in row) + ']'
+    cases.append(write_case('Array4', dict(family='literal-array', dimension=4), a,
+        'x0 ^ 4 - 3 * x0 ^ 2 + 1', 1,
+        matrix_expr=f'Matrix.ofArray (m := 4) (n := 4) {array} rfl'))
     (DEST / 'AlgebraicSupport.lean').write_text(HEADER + '''import Mathlib.Algebra.QuadraticAlgebra.Basic
 namespace ClosedAlgebraic
 abbrev K := QuadraticAlgebra Rat 2 0
@@ -156,11 +162,12 @@ theorem square : α ^ 2 = 2 := by
 end ClosedAlgebraic
 ''')
     for arm, imp in [('Hex', 'HexPolyDetMathlib.Tactic'), ('Mathlib', 'Mathlib.Tactic.NormDet')]:
-        (DEST / f'{arm}Baseline.lean').write_text(HEADER + f'import {imp}\n')
-        (DEST / f'{arm}AlgebraicBaseline.lean').write_text(HEADER + f'import {imp}\nimport {PREFIX}.AlgebraicSupport\n')
+        options = 'set_option trace.HexMatrix.certificate true\n' if arm == 'Hex' else ''
+        (DEST / f'{arm}Baseline.lean').write_text(HEADER + f'import {imp}\n{options}')
+        (DEST / f'{arm}AlgebraicBaseline.lean').write_text(HEADER + f'import {imp}\nimport {PREFIX}.AlgebraicSupport\n{options}')
     # A scope probe measures the failed composed attempt before using the relation.
     for arm, imp in [('Hex', 'HexPolyDetMathlib.Tactic'), ('Mathlib', 'Mathlib.Tactic.NormDet')]:
-        options = ''
+        options = 'set_option trace.HexMatrix.certificate true\n' if arm == 'Hex' else ''
         attempt = 'det' if arm == 'Hex' else 'simp only [norm_det] <;> ring'
         (DEST / f'AlgebraicScope{arm}.lean').write_text(HEADER + f"""import {imp}
 import {PREFIX}.AlgebraicSupport
@@ -170,6 +177,17 @@ theorem result : Matrix.det !![ClosedAlgebraic.α, 1; 2, ClosedAlgebraic.α] = 0
   rw [Matrix.det_fin_two]
   change ClosedAlgebraic.α * ClosedAlgebraic.α - 1 * 2 = 0
   rw [← pow_two, ClosedAlgebraic.square, one_mul, sub_self]
+#print axioms result
+""")
+        (DEST / f'Valuation4{arm}.lean').write_text(HEADER + f"""import {imp}
+{options}
+theorem result (x : Int) (hx : x = 1) :
+    Matrix.det !![x - 1, 0, 0, 0; 0, x, 0, 0; 0, 0, x, 0; 0, 0, 0, x] = 0 := by
+  have h : Matrix.det !![x - 1, 0, 0, 0; 0, x, 0, 0; 0, 0, x, 0; 0, 0, 0, x] =
+      (x - 1) * x ^ 3 := by
+    {attempt}
+  rw [h, hx]
+  rfl
 #print axioms result
 """)
         (DEST / f'Valuation{arm}.lean').write_text(HEADER + f"""import {imp}
@@ -184,16 +202,18 @@ theorem result (x : Int) (hx : x = 1) : Matrix.det !![x, 1; 1, x] = 0 := by
     cases += [dict(stem='AlgebraicScope', family='closed-algebraic-scope', dimension=2,
                    atoms=1, scope_probe=True, cleanup_timeout_seconds=45, proof_build_ceiling_ms=45000, samples=6),
               dict(stem='Valuation', family='valuation', dimension=2, atoms=1,
+                   cleanup_timeout_seconds=45, proof_build_ceiling_ms=45000, samples=6),
+              dict(stem='Valuation4', family='valuation', dimension=4, atoms=1,
                    cleanup_timeout_seconds=45, proof_build_ceiling_ms=45000, samples=6)]
     manifest = dict(schema='hex-symbolic-det-probes-v1', cases=cases, infeasible=infeasible,
                     description=__doc__, default_simproc_enabled=False, small_formula_dimension=3,
                     limits=dict(dimension=16, certificate_terms=65536, coefficient_bits=4096,
                                 source_nodes=100000, proof_nodes=1000000),
-                    profile_cases=['N2K1D1S1', 'N3K2D2S4', 'N4K2D2S4', 'N8K4D4S16', 'Rational4', 'Singular4', 'Algebraic4', 'Swaps', 'Tridiagonal', 'Valuation', 'AlgebraicScope'])
+                    profile_cases=['N2K1D1S1', 'N3K2D2S4', 'N4K2D2S4', 'N8K4D4S16', 'Rational4', 'Singular4', 'Algebraic4', 'Swaps', 'Tridiagonal', 'Valuation', 'Valuation4', 'Function4', 'Array4', 'AlgebraicScope'])
     for stem in manifest['profile_cases']:
         source = (DEST / f'{stem}Hex.lean').read_text()
         source = source.replace('theorem result',
-            'set_option profiler true\nset_option profiler.threshold 0\nset_option trace.HexMatrix.certificate true\n\ntheorem result')
+            'set_option profiler true\nset_option profiler.threshold 0\n\ntheorem result')
         (DEST / f'{stem}Profile.lean').write_text(source)
     (ROOT / 'scripts/bench/det_symbolic_manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
     print(f'{len(cases)} feasible probes; {len(infeasible)} infeasible parameter combinations')

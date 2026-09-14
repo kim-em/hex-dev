@@ -40,9 +40,9 @@ end Hex.PolyDetFixtures
 
 open Hex.PolyDetFixtures Hex.BareissCarriers in
 def main : IO Unit := do
-  emit "mv_int" Lean.toJson (mvIntCases 2 (by decide))
-  emit "mv_int" Lean.toJson (mvIntCases 3 (by decide))
-  emit "mv_rat" (fun q => Lean.toJson #[Lean.toJson q.num, Lean.toJson q.den]) (mvRatCases 2 (by decide))
-  emit "mv_rat" (fun q => Lean.toJson #[Lean.toJson q.num, Lean.toJson q.den]) (mvRatCases 3 (by decide))
+  emit "mv_int" Lean.toJson (intCases 2 (by decide))
+  emit "mv_int" Lean.toJson (intCases 3 (by decide))
+  emit "mv_rat" (fun q => Lean.toJson #[Lean.toJson q.num, Lean.toJson q.den]) (Hex.PolyDetFixtures.ratCases 2 (by decide))
+  emit "mv_rat" (fun q => Lean.toJson #[Lean.toJson q.num, Lean.toJson q.den]) (Hex.PolyDetFixtures.ratCases 3 (by decide))
   emit "mv_mod" (fun q => Lean.toJson q.toNat) (Hex.PolyDetFixtures.modCases 2 (by decide))
   emit "mv_mod" (fun q => Lean.toJson q.toNat) (Hex.PolyDetFixtures.modCases 3 (by decide))
