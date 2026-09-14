@@ -54,6 +54,10 @@ Every candidate passed its 30 s ceiling and every theorem reported exactly
 `propext`, `Classical.choice` and `Quot.sound`. The slowest full build was
 3.69 s. There were no incomplete pairs, timeouts or provenance failures.
 All completed samples, host activity and signed baseline deltas are retained.
+The subsequent rebase preserved every recorded Lean source and harness hash.
+The only changed recorded path is `lakefile.lean`: the upstream characteristic-
+polynomial update enables its module precompilation and registers its proof
+probes. The generic-rank targets and their import closure are unchanged.
 
 The table gives six-sample medians for each named profiler category; build
 columns include the entire fresh-module process, including startup, elaboration,
