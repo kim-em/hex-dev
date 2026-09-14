@@ -84,7 +84,7 @@ class ClassifyChangedLibrariesTests(unittest.TestCase):
         self.assertEqual(owners["scripts/oracle/roots_flint.py"], {"HexRoots"})
         self.assertEqual(
             owners["scripts/oracle/matrix_carriers.py"],
-            {"HexBareiss", "HexDeterminant", "HexCharPoly", "HexDet"},
+            {"HexBareiss", "HexDeterminant", "HexCharPoly", "HexDet", "HexGenericRank"},
         )
 
 
