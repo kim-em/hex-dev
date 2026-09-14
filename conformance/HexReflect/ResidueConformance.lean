@@ -15,11 +15,12 @@ import Mathlib.LinearAlgebra.Matrix.Notation
 **Oracle:** none.
 **Mode:** `always`.
 **Covered operations:** coefficient selection, matrix-entry reification, and
-kernel checking of the interpretation proof over `ZMod 3`.
+kernel checking over finite fields and their polynomial rings.
 **Covered properties:** residue polynomial equality, retained primality and ring
-instances for downstream gcd operations, injectivity for extension fields,
+instances for downstream gcd operations, injectivity for extension fields
+and polynomial domains,
 and preservation of executable ring operations.
-**Covered edge cases:** composite and oversized characteristic, missing field
+**Covered edge cases:** composite and oversized characteristic, missing domain
 and characteristic evidence, incompatible ring operations, characteristic
 zero, and unknown characteristic.
 -/
@@ -123,7 +124,7 @@ run_meta do
   declineProbe 4294967291 "residue coefficients require characteristic p < 2^31"
   logInfo "composite, modulus one, and oversized characteristic decline with reasons"
 
-/-- info: non-fields, zero and unknown characteristic retain integers -/
+/-- info: zero and unknown characteristic retain integers -/
 #guard_msgs in
 run_meta do
   let ty := mkConst ``Int
@@ -131,8 +132,6 @@ run_meta do
     Hex.Reflect.run do
       let .success r _ ← reifyCommRing x | throwError "reification declined"
       let ring ← ringOf r
-      let .notApplicable ← residueCoeffProvider 3 ring
-        | throwError "non-field should retain integer fallback"
       -- Exercise dispatch's two non-applicable paths independently of the
       -- characteristic instances a particular toolchain provides for Int.
       for charInst? in [none, some (mkConst ``True.intro, 0)] do
@@ -142,7 +141,7 @@ run_meta do
       let some result := entry.entries[0]? | throwError "empty batch"
       unless result.conversion.provider.id == intCoefficientsId do
         throwError "integer fallback changed"
-    logInfo "non-fields, zero and unknown characteristic retain integers"
+    logInfo "zero and unknown characteristic retain integers"
 
 /-- info: arbitrary characteristic-three field: missing CharP declines, supplied CharP reifies -/
 #guard_msgs in
@@ -176,9 +175,107 @@ run_meta do
             let .declined (.providerCondition _ message) _ ← residueCoeffProvider 3 (← ringOf r)
               | throwError "expected incompatible-operation decline"
             unless message ==
-                "the classified ring operations do not agree with the Mathlib field" do
+                "the classified ring operations do not agree with the Mathlib ring" do
               throwError "wrong decline"
     logInfo "arbitrary characteristic-three field: missing CharP declines, supplied CharP reifies"
+
+private noncomputable def mvX : MvPolynomial (Fin 1) (ZMod 3) := MvPolynomial.X 0
+
+private noncomputable def mvMatrix : Matrix (Fin 1) (Fin 2) (MvPolynomial (Fin 1) (ZMod 3)) :=
+  !![mvX ^ 3 - mvX, 3 * mvX + 1]
+
+private def expectedOne : MvPoly 1 (ZMod64 3) Mono.grevlex := 1
+
+example : Function.Injective (residueHom 3 (MvPolynomial (Fin 1) (ZMod 3))) :=
+  residueHom_injective 3 _
+
+/-- Check the quoted polynomials, source equations, and injectivity of the
+provider's actual interpretation function in the kernel. -/
+private def checkMatrix (p : Nat) (factor : Expr)
+    (matrixEntries sources expectedValues : Array Expr) : MetaM Unit := do
+  let outcome ← reflectRingBatch sources (cfg := { checkProofs := true })
+  let .success batch _ := outcome
+    | throwError "{outcome.toMessageData (fun _ => "batch")}"
+  unless batch.sealed.n == 1 && batch.entries.size == expectedValues.size &&
+      batch.entries.size == matrixEntries.size do
+    throwError "wrong matrix shape or atom count: {batch.entries.size}, {batch.sealed.n}"
+  for entry in batch.entries, input in matrixEntries, expectedValue in expectedValues do
+    let provider := entry.conversion.provider
+    unless provider.id == residueCoefficientsId do throwError "wrong coefficient provider"
+    let eq ← mkEq entry.result.value expectedValue
+    kernelCheck #[] (← mkDecideProof eq)
+    let sourceEq ← mkEq entry.result.interpretation input
+    kernelCheck #[] (← mkExpectedTypeHint entry.result.proof sourceEq)
+    let ty ← inferType input
+    let some (bounds : Expr) := provider.auxInstances[0]? | throwError "missing bounds"
+    let injective ← mkAppOptM ``residueHom_injective #[mkNatLit p, bounds, ty, none, none]
+    let injectiveTy ← mkAppM ``Function.Injective #[provider.interp]
+    kernelCheck #[] (← mkExpectedTypeHint injective injectiveTy)
+    let some (_, _, rhs) := (← inferType factor).eq? | throwError "expected factorisation"
+    kernelCheck #[] (← mkExpectedTypeHint factor (← mkEq provider.interp rhs))
+    checkAux provider.coeffType provider.auxInstances.toList
+
+private theorem mvFactor :
+    (residueHom 3 (MvPolynomial (Fin 1) (ZMod 3)) : ZMod64 3 → _) =
+      (MvPolynomial.C.comp (residueHom 3 (ZMod 3)) : ZMod64 3 → _) :=
+  congrArg DFunLike.coe (residueHom_mvPolynomial 3 (Fin 1) (ZMod 3))
+
+/-- info: MvPolynomial over ZMod 3: residue matrix and injective interpretation, kernel accepted -/
+#guard_msgs in
+run_meta do
+  let matrix := mkConst ``mvMatrix
+  let matrixEntries := #[0, 1].map fun j =>
+    mkApp2 matrix (toExpr (0 : Fin 1)) (toExpr (j : Fin 2))
+  let x := mkConst ``mvX
+  let ty ← inferType x
+  let first ← mkAppM ``HSub.hSub #[← mkAppM ``HPow.hPow #[x, mkNatLit 3], x]
+  let three ← mkAppOptM ``OfNat.ofNat #[ty, mkNatLit 3, none]
+  let one ← mkAppOptM ``OfNat.ofNat #[ty, mkNatLit 1, none]
+  let second ← mkAppM ``HAdd.hAdd #[← mkAppM ``HMul.hMul #[three, x], one]
+  checkMatrix 3 (mkConst ``mvFactor) matrixEntries #[first, second] #[mkConst ``expected, mkConst ``expectedOne]
+  logInfo "MvPolynomial over ZMod 3: residue matrix and injective interpretation, kernel accepted"
+
+local instance : ZMod64.Bounds 2 := ⟨by decide, by decide⟩
+
+private noncomputable def polyX : Polynomial (ZMod 2) := Polynomial.X
+
+private noncomputable def auditMatrix : Matrix (Fin 3) (Fin 3) (Polynomial (ZMod 2)) :=
+  !![polyX, polyX, 0; polyX, 0, polyX; 0, polyX, polyX]
+
+private def auditX : MvPoly 1 (ZMod64 2) Mono.grevlex := MvPoly.X 0
+private def auditZero : MvPoly 1 (ZMod64 2) Mono.grevlex := 0
+
+example : Function.Injective (residueHom 2 (Polynomial (ZMod 2))) :=
+  residueHom_injective 2 _
+
+private theorem polyFactor :
+    (residueHom 2 (Polynomial (ZMod 2)) : ZMod64 2 → _) =
+      (Polynomial.C.comp (residueHom 2 (ZMod 2)) : ZMod64 2 → _) :=
+  congrArg DFunLike.coe (residueHom_polynomial 2 (ZMod 2))
+
+/-- info: Polynomial over ZMod 2: audit matrix and characteristic-two cancellation, kernel accepted -/
+#guard_msgs in
+run_meta do
+  let matrix := mkConst ``auditMatrix
+  let mut matrixEntries := #[]
+  let mut sources := #[]
+  let x := mkConst ``polyX
+  let zero ← mkAppOptM ``OfNat.ofNat #[← inferType x, mkNatLit 0, none]
+  let mut expectedValues := #[]
+  for i in [:3] do
+    for j in [:3] do
+      matrixEntries := matrixEntries.push (mkApp2 matrix (toExpr (Fin.ofNat 3 i)) (toExpr (Fin.ofNat 3 j)))
+      sources := sources.push (if i + j == 2 then zero else x)
+      expectedValues := expectedValues.push
+        (mkConst (if i + j == 2 then ``auditZero else ``auditX))
+  -- Reify the determinant expression -2 X³ as well as the matrix entries.
+  -- Integer coefficients would leave a nonzero quoted polynomial here.
+  let cube ← mkAppM ``HPow.hPow #[x, mkNatLit 3]
+  let twice ← mkAppM ``HAdd.hAdd #[cube, cube]
+  let det ← mkAppM ``Neg.neg #[twice]
+  checkMatrix 2 (mkConst ``polyFactor) (matrixEntries.push det) (sources.push det)
+    (expectedValues.push (mkConst ``auditZero))
+  logInfo "Polynomial over ZMod 2: audit matrix and characteristic-two cancellation, kernel accepted"
 
 end Hex.ReflectResidueConformance
 
@@ -209,44 +306,77 @@ run_meta do
     addDecl (.thmDecl { name, levelParams := [], type, value })
     logInfo "closed scope: executable coefficient instances, kernel accepted"
 
--- Even at the largest supported prime, the certificate follows from the
--- field characteristic; the kernel does not run trial division.
-example (F : Type u) [Field F] [CharP F 2147483647] :
-    ZMod64.PrimeModulus 2147483647 :=
-  residuePrime 2147483647 F (by decide)
+local instance : ZMod64.Bounds 7 := ⟨by decide, by decide⟩
 
-end Hex.ReflectResidueClosedConformance
-
-namespace Hex.ReflectResidueFallbackConformance
-
-open Lean Meta Hex.Reflect
-
-private def probe (ty : Expr) (xs : Array Expr) (p : Nat) : MetaM Unit :=
+/-- info: Grind-only residue carrier: integer fallback, kernel accepted -/
+#guard_msgs in
+run_meta do
+  let ty ← mkAppOptM ``ZMod64 #[mkNatLit 7, none]
   withLocalDeclD `x ty fun x => do
     let input ← mkAppM ``HAdd.hAdd #[x, x]
     let outcome ← reflectRing input (cfg := { checkProofs := true })
     let .success entry _ := outcome
       | throwError "{outcome.toMessageData (fun _ => "entry")}"
-    unless entry.reflected.charInst?.map (·.2) == some p do
-      throwError "expected characteristic {p}"
-    unless entry.conversion.provider.id == intCoefficientsId do
-      throwError "non-field lost integer fallback"
-    let name ← mkFreshUserName `Hex.ReflectResidueFallbackConformance.proof
-    let type ← mkForallFVars (xs.push x) (← inferType entry.result.proof)
-    let value ← mkLambdaFVars (xs.push x) entry.result.proof
-    addDecl (.thmDecl { name, levelParams := [], type, value })
+    unless entry.reflected.charInst?.map (·.2) == some 7 &&
+        entry.conversion.provider.id == intCoefficientsId do
+      throwError "Grind-only carrier lost integer fallback"
+    Hex.ReflectResidueConformance.kernelCheck #[x] entry.result.proof
+    logInfo "Grind-only residue carrier: integer fallback, kernel accepted"
 
-/-- info: prime-characteristic rings without field instances: integer fallback, kernel accepted -/
+section
+open scoped Fin.CommRing
+
+/-- info: Fin with a Mathlib ring: ZMod retry supplies domain evidence -/
+#guard_msgs in
+run_meta do
+  let ty := mkApp (mkConst ``Fin) (mkNatLit 3)
+  withLocalDeclD `x ty fun x => do
+    let outcome ← reflectRing x (cfg := { checkProofs := true })
+    let .success entry _ := outcome
+      | throwError "{outcome.toMessageData (fun _ => "entry")}"
+    unless entry.conversion.provider.id == residueCoefficientsId do throwError "wrong provider"
+    logInfo "Fin with a Mathlib ring: ZMod retry supplies domain evidence"
+
+end
+
+-- Even at the largest supported prime, the certificate follows from the
+-- domain characteristic; the kernel does not run trial division.
+example (F : Type u) [CommRing F] [IsDomain F] [CharP F 2147483647] :
+    ZMod64.PrimeModulus 2147483647 :=
+  residuePrime 2147483647 F (by decide)
+
+end Hex.ReflectResidueClosedConformance
+
+namespace Hex.ReflectResidueDeclineConformance
+
+open Lean Meta Hex.Reflect
+
+-- Pin the literal characteristic so inference need not discover it through Nat.lcm.
+local instance : CharP (ZMod 3 × ZMod 3) 3 := inferInstance
+
+private def probe (ty : Expr) : MetaM Unit :=
+  withLocalDeclD `x ty fun x => do
+    let outcome ← reflectRing x
+    let .declined (.providerCondition id message) _ := outcome
+      | throwError "expected missing domain evidence for {ty}: {outcome.toMessageData (fun _ => "entry")}"
+    unless id == HexReflectMathlib.residueCoefficientsId &&
+        message == "residue coefficients require Mathlib IsDomain evidence" do
+      throwError "wrong decline: {message}"
+
+/-- info: prime-characteristic rings without domain evidence decline with a reason -/
 #guard_msgs in
 run_meta do
   -- A concrete prime modulus without Mathlib's `Fact (Nat.Prime 7)`.
-  probe (mkApp (mkConst ``ZMod) (mkNatLit 7)) #[] 7
-  -- An arbitrary characteristic-three commutative ring, with no Field assumption.
+  probe (mkApp (mkConst ``ZMod) (mkNatLit 7))
+  -- A concrete ring with zero divisors.
+  let zmod := mkApp (mkConst ``ZMod) (mkNatLit 3)
+  probe (mkApp2 (mkConst ``Prod [.zero, .zero]) zmod zmod)
+  -- An arbitrary characteristic-three ring, with no domain assumption.
   withLocalDeclD `R (mkSort (.succ .zero)) fun r => do
-  withLocalDecl `ring .instImplicit (mkApp (mkConst ``CommRing [.zero]) r) fun ring => do
+  withLocalDecl `ring .instImplicit (mkApp (mkConst ``CommRing [.zero]) r) fun _ => do
     let charTy ← mkAppOptM ``CharP #[r, none, mkNatLit 3]
-    withLocalDecl `char .instImplicit charTy fun char => do
-      probe r #[r, ring, char] 3
-  logInfo "prime-characteristic rings without field instances: integer fallback, kernel accepted"
+    withLocalDecl `char .instImplicit charTy fun _ => do
+      probe r
+  logInfo "prime-characteristic rings without domain evidence decline with a reason"
 
-end Hex.ReflectResidueFallbackConformance
+end Hex.ReflectResidueDeclineConformance

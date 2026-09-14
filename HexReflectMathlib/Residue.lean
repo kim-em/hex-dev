@@ -8,7 +8,8 @@ module
 
 public import HexReflectMathlib.Carrier
 public import HexModArithMathlib.Ring
-public import Mathlib.Algebra.Field.Defs
+public import Mathlib.Algebra.Polynomial.Coeff
+public import Mathlib.RingTheory.MvPolynomial.Basic
 public meta import HexReflect.Provider
 public meta import HexArith.Nat.Prime
 
@@ -30,17 +31,38 @@ theorem residueHom_injective (p : Nat) [Hex.ZMod64.Bounds p]
     (F : Type u) [CommRing F] [CharP F p] : Function.Injective (residueHom p F) :=
   (ZMod.castHom_injective F (n := p)).comp HexModArithMathlib.ZMod64.equiv.injective
 
+/-- Residue interpretation commutes with ring homomorphisms. -/
+theorem residueHom_comp (p : Nat) [Hex.ZMod64.Bounds p]
+    {D : Type u} {F : Type v} [CommRing D] [CommRing F] [CharP D p] [CharP F p]
+    (f : D →+* F) : f.comp (residueHom p D) = residueHom p F := by
+  unfold residueHom
+  rw [← RingHom.comp_assoc]
+  congr 1
+  exact Subsingleton.elim _ _
+
+/-- In a multivariate polynomial ring, residues are constant polynomials. -/
+theorem residueHom_mvPolynomial (p : Nat) [Hex.ZMod64.Bounds p]
+    (σ : Type v) (D : Type u) [CommRing D] [CharP D p] :
+    residueHom p (MvPolynomial σ D) = MvPolynomial.C.comp (residueHom p D) :=
+  (residueHom_comp p MvPolynomial.C).symm
+
+/-- In a univariate polynomial ring, residues are constant polynomials. -/
+theorem residueHom_polynomial (p : Nat) [Hex.ZMod64.Bounds p]
+    (D : Type u) [CommRing D] [CharP D p] :
+    residueHom p (Polynomial D) = Polynomial.C.comp (residueHom p D) :=
+  (residueHom_comp p Polynomial.C).symm
+
 /-- Residue coefficients satisfy reflection's laws by the ring homomorphism laws. -/
 theorem residueCoeffLaws (p : Nat) [Hex.ZMod64.Bounds p]
     (F : Type u) [CommRing F] [CharP F p] :
     CoeffLaws (C := Hex.ZMod64 p) (α := F) Int.cast (residueHom p F) :=
   coeffLaws_ofRingHom (residueHom p F) Int.cast (fun k => map_intCast _ k)
 
-/-- A nonzero field characteristic supplies the prime-modulus evidence needed
+/-- A nonzero domain characteristic supplies the prime-modulus evidence needed
 by executable coefficient algorithms, without replaying a primality search. -/
-theorem residuePrime (p : Nat) (F : Type u) [Field F] [CharP F p] (hp : 0 < p) :
+theorem residuePrime (p : Nat) (F : Type u) [CommRing F] [IsDomain F] [CharP F p] (hp : 0 < p) :
     Hex.ZMod64.PrimeModulus p := by
-  have prime := CharP.char_prime_of_ne_zero F (Nat.ne_of_gt hp)
+  have prime := (CharP.char_is_prime_or_zero F p).resolve_right (Nat.ne_of_gt hp)
   exact ⟨⟨prime.two_le, fun _ h => (Nat.dvd_prime prime).mp h⟩⟩
 
 meta section
@@ -65,22 +87,35 @@ def residueCoeffProvider (p : Nat) (ring : CarrierRequest) :
   -- Canonicalization unfolds a concrete `ZMod p` to `Fin p`. Try the
   -- corresponding Mathlib carrier as well, but require definitional equality
   -- of the type and interpretation operations before accepting its evidence.
-  let mut carrier := ring.type
-  let mut fieldInst? ← Sym.synthInstance? (mkApp (mkConst ``Field [ring.u]) carrier)
-  if fieldInst?.isNone then
-    let zmod := mkApp (mkConst ``ZMod) pE
-    if ← isDefEq ring.type zmod then
-      carrier := zmod
-      fieldInst? ← Sym.synthInstance? (mkApp (mkConst ``Field [ring.u]) carrier)
-  let some fieldInst := fieldInst? | return .notApplicable
-  let commRingInst ← mkAppOptM ``Field.toCommRing #[carrier, fieldInst]
+  let mut carriers := #[ring.type]
+  let zmod := mkApp (mkConst ``ZMod) pE
+  if ← isDefEq ring.type zmod then
+    carriers := carriers.push zmod
+  let mut evidence? : Option (Expr × Expr × Expr × Expr) := none
+  let mut reason? : Option String := none
+  for carrier in carriers do
+    let some commRingInst ← Sym.synthInstance? (mkApp (mkConst ``CommRing [ring.u]) carrier)
+      | continue
+    let mathlibRingInst ← mkAppOptM ``CommRing.toRing #[carrier, commRingInst]
+    let mathlibSemiring ← mkAppOptM ``Ring.toSemiring #[carrier, mathlibRingInst]
+    let domainType ← mkAppOptM ``IsDomain #[carrier, mathlibSemiring]
+    let some domainInst ← Sym.synthInstance? domainType
+      | reason? := some "residue coefficients require Mathlib IsDomain evidence"
+        continue
+    let addGroup ← mkAppOptM ``Ring.toAddGroupWithOne #[carrier, mathlibRingInst]
+    let castInst ← mkAppOptM ``AddGroupWithOne.toAddMonoidWithOne #[carrier, addGroup]
+    let charType ← mkAppOptM ``CharP #[carrier, castInst, pE]
+    let some charInst ← Sym.synthInstance? charType
+      | reason? := some "residue coefficients require Mathlib CharP evidence"
+        continue
+    evidence? := some (carrier, commRingInst, domainInst, charInst)
+    break
+  let some (carrier, commRingInst, domainInst, charInst) := evidence?
+    | return match reason? with
+      | some reason => decline reason
+      | none => .notApplicable
   let mathlibRingInst ← mkAppOptM ``CommRing.toRing #[carrier, commRingInst]
   let mathlibRing ← mkAppOptM ``Ring.toGrindRing #[carrier, mathlibRingInst]
-  let addGroup ← mkAppOptM ``Ring.toAddGroupWithOne #[carrier, mathlibRingInst]
-  let castInst ← mkAppOptM ``AddGroupWithOne.toAddMonoidWithOne #[carrier, addGroup]
-  let charType ← mkAppOptM ``CharP #[carrier, castInst, pE]
-  let some charInst ← Sym.synthInstance? charType
-    | return decline "residue coefficients require Mathlib CharP evidence"
   let pos ← mkDecideProof (← mkAppM ``LT.lt #[mkNatLit 0, pE])
   let bounds ← mkAppM ``Hex.ZMod64.Bounds.mk #[pos,
     ← mkDecideProof (← mkAppM ``LT.lt #[pE, mkNatLit bound])]
@@ -105,8 +140,8 @@ def residueCoeffProvider (p : Nat) (ring : CarrierRequest) :
       proofs := proofs.push (← mkEqRefl lhs)
     return some (mkAppN bridge proofs)
   let some laws := laws?
-    | return decline "the classified ring operations do not agree with the Mathlib field"
-  let prime ← mkAppOptM ``residuePrime #[pE, carrier, fieldInst, charInst, pos]
+    | return decline "the classified ring operations do not agree with the Mathlib ring"
+  let prime ← mkAppOptM ``residuePrime #[pE, carrier, commRingInst, domainInst, charInst, pos]
   let coeffRing ← mkAppOptM ``HexModArithMathlib.ZMod64.commRing #[pE, bounds]
   return .success {
     id := residueCoefficientsId

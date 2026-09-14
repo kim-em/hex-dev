@@ -56,8 +56,8 @@ lookup and caches never identify them solely from the carrier type.
 
 `residueCoeffProvider p` supplies `Hex.ZMod64 p` coefficients when the
 classified carrier reports positive characteristic `p`, `p` is prime,
-`p < 2^31`, and the target has compatible Mathlib `Field F` and `CharP F p`
-evidence. The registration has priority 5, above the universal integer
+`p < 2^31`, and the target has compatible Mathlib `CommRing F`, `IsDomain F`, and
+`CharP F p` evidence. The registration has priority 5, above the universal integer
 provider. Unknown characteristic and characteristic zero retain integer
 coefficients. Mathlib's `Algebra.CharP.Basic`, imported transitively here,
 provides a global bridge from `CharP` to Grind characteristic evidence for
@@ -65,18 +65,25 @@ cancellative semirings. Recognition is therefore automatic when instance
 search finds that evidence. `isCharP_of_charP` remains a theorem for callers
 that need to supply an exact instance explicitly. A concrete `ZMod p` field
 requires Mathlib's usual `Fact (Nat.Prime p)` instance; the provider does not
-install target field instances. When the modulus passes the prime and word
-checks but no target `Field` instance is available, the provider is not
-applicable and the universal integer provider remains available. This
-includes prime-characteristic rings with zero divisors and concrete `ZMod p`
-carriers lacking a `Fact (Nat.Prime p)` instance.
+install target domain or field instances. Polynomial rings
+`MvPolynomial σ (ZMod p)` and `Polynomial (ZMod p)` are accepted with
+the usual prime-modulus instance: Mathlib supplies their domain and
+characteristic evidence, and recognition survives canonicalization.
+Fields remain supported as domains. After the prime and word checks, carriers
+without a Mathlib `CommRing` instance remain outside this provider and retain
+the integer fallback, including Hex's executable fields with only Grind
+instances in scope.
 
 A recognized positive characteristic that is composite (or one) declines
 with a prime-characteristic diagnostic. Moduli `p ≥ 2^31` decline with the
-word-bound diagnostic before primality testing. For a recognized field,
-missing Mathlib characteristic evidence and incompatible interpretation
-operations decline with their reason. These declines stop fallback to the
-integer provider.
+word-bound diagnostic before primality testing. For recognized Mathlib rings,
+missing domain or characteristic evidence and incompatible interpretation
+operations decline with their reason. In particular, prime-characteristic rings with
+zero divisors, or carriers whose domain evidence cannot be synthesized,
+decline with `residue coefficients require Mathlib IsDomain evidence`. These
+declines stop fallback to the integer provider. For concrete `ZMod p`
+carriers, provide Mathlib's usual `Fact (Nat.Prime p)` instance to supply the
+domain evidence.
 
 The executable carrier uses `Hex.ZMod64.Bounds p` and
 `Hex.ZMod64.PrimeModulus p`; the latter supports downstream `LawfulGcdOps`
@@ -89,18 +96,33 @@ not itself certify a particular downstream capability. Its interpretation is
 `residueHom p F`, the composite of `HexModArithMathlib.ZMod64.equiv` with
 `ZMod.castHom`. `residueHom_injective` proves injectivity into every ring
 of the same characteristic, in particular arbitrary field extensions of
-`ZMod p`. `residueCoeffLaws` follows from `coeffLaws_ofRingHom`.
+`ZMod p` and polynomial rings over them. `residueHom_mvPolynomial` and
+`residueHom_polynomial` prove the factorisations through the constant maps:
+
+```lean
+residueHom p (MvPolynomial σ D) = MvPolynomial.C.comp (residueHom p D)
+residueHom p (Polynomial D) = Polynomial.C.comp (residueHom p D)
+```
+
+These hold for any `[CommRing D] [CharP D p]` and supported modulus bounds;
+no domain assumption is needed for the homomorphisms or their injectivity.
+They let generic-rank consumers identify the coefficient interpretation with
+constant polynomials over the base domain. The general `residueHom_comp`
+lemma states compatibility with any ring homomorphism between rings of the
+same characteristic. `residueCoeffLaws` follows from `coeffLaws_ofRingHom`.
 `CoeffLaws.changeRing` transfers those laws to the classified exact Grind
 ring after checking definitional equality of its integer cast, zero, and
 addition with the Mathlib operations. Other structure fields need not be
 definitionally identical. The quoted coefficient operations are the named
 executable `ZMod64` instances, independent of the caller's instance scope.
-`residuePrime` deduces primality evidence from the field's nonzero
+`residuePrime` deduces primality evidence from the domain's nonzero
 characteristic after this compatibility check succeeds. The runtime
 recognizer uses the existing bounded trial-division test, but the kernel
 does not replay that search to validate the auxiliary prime certificate. In particular, canonicalization can unfold
-`ZMod p` to `Fin p`; the provider also tries the Mathlib `ZMod p` field
-when its type is definitionally equal to the classified carrier. It never
+`ZMod p` to `Fin p`; the provider also tries the Mathlib `ZMod p` ring
+when its type is definitionally equal to the classified carrier, even if the
+canonical carrier has a Mathlib ring instance but lacks domain or characteristic
+evidence. It never
 accepts evidence from the type name alone.
 
 The Mathlib `CommRing (Hex.ZMod64 p)` instance lives in
@@ -169,8 +191,18 @@ and its interpretation equals the matrix entry by a kernel-checked proof.
 The residue provider also works with the coefficient-ring scope closed.
 It also checks an abstract characteristic-three field, downstream instance
 synthesis from the provider's auxiliary evidence at modulus five, and the
-decline and integer-fallback paths. Existing reflection conformance remains
-unchanged.
+decline and integer-fallback paths. Polynomial-ring tests reify
+`!![X ^ 3 - X, 3 * X + 1]` over `MvPolynomial (Fin 1) (ZMod 3)` and
+`!![X, X, 0; X, 0, X; 0, X, X]` over `Polynomial (ZMod 2)`. They check
+all quoted entries, their interpretation equations, the injectivity of the
+provider's actual interpretation and its constant-polynomial factorisation,
+and downstream instance synthesis. The
+characteristic-two test also reifies `−(X³ + X³)` and kernel-checks that the
+quoted residue polynomial is zero. Prime-characteristic rings lacking domain evidence,
+including a product ring with zero divisors, decline with a diagnostic.
+Additional tests cover the `Fin`/`ZMod` retry with a Mathlib ring already in
+scope and integer fallback for a Grind-only `ZMod64` carrier.
+Existing Mathlib-free reflection conformance remains unchanged.
 
 - Every carrier registration includes the exact instance expressions in its
   lookup identity.

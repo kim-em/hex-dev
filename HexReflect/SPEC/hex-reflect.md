@@ -244,14 +244,16 @@ coefficient type.
 | Provider | Owner | Coefficient carrier | Selection |
 | --- | --- | --- | --- |
 | `intCoeffProvider` | `hex-reflect` | `Int` | Universal, priority 0 |
-| `residueCoeffProvider p` | `hex-reflect-mathlib` | `ZMod64 p` | Known prime characteristic `0 < p < 2^31`, compatible Mathlib field and `CharP`; priority 5 |
+| `residueCoeffProvider p` | `hex-reflect-mathlib` | `ZMod64 p` | Known prime characteristic `0 < p < 2^31`, compatible Mathlib `CommRing`, `IsDomain`, and `CharP`; priority 5 |
 
 The residue provider uses `Bounds p` and `PrimeModulus p`, and interprets
 coefficients injectively through `ZMod p`. Recognized composite
-characteristic, out-of-bounds moduli, or missing characteristic evidence for
-a recognized field decline with a provider condition diagnostic. Unknown
-characteristic, zero, and prime-characteristic carriers without a Mathlib
-field instance keep the integer provider. See the companion SPEC for the scoped ring transport.
+characteristic, out-of-bounds moduli, or missing domain or characteristic
+evidence for recognized Mathlib rings decline with a provider condition
+diagnostic. Unknown and zero characteristic keep the integer provider, as do
+supported prime-characteristic carriers without Mathlib ring evidence. Polynomial rings over
+finite fields use residue coefficients. See the companion SPEC for the scoped
+ring transport and the factorisation through constant polynomials.
 
 The pinned ring reifier recognizes nested `BitVec.ofNat` inside its recursive
 worker, but its top-level match has no `BitVec.ofNat` arm. Consequently a
