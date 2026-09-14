@@ -151,5 +151,7 @@ the dimension is an explicit checker/producer argument, and every row length
 is checked. `polyDetWitness` returns `Except String (DetWitness (MvPoly k C cmp))`,
 `polyDetWitness?` returns its `Option`, and `polyDet` returns the existing
 row-pivoted Bareiss value. A failed witness check never produces a certified
-result. `PolyDet.toList` performs compiled merge sorting into canonical order;
+result. The companion proves `PolyDet.check_of_ok`: every successful
+`polyDetWitness` return passes the checker. Errors remain possible; the theorem
+does not assert that every input produces a successful result. `PolyDet.toList` performs compiled merge sorting into canonical order;
 the kernel sees and validates only its output.

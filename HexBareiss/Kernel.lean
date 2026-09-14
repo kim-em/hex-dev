@@ -338,6 +338,23 @@ def detWitnessWith [Zero R] [One R] [Neg R] [Sub R] [Mul R]
   if check A w then pure w
   else throw "the witness fails its own check"
 
+/-- Every successful producer return has passed its supplied checker. This
+does not assume the quotient implementation is correct: a rejected witness
+is returned as an error. -/
+theorem detWitnessWith_check {R : Type} [Zero R] [One R] [Neg R] [Sub R] [Mul R]
+    [Inhabited R] [DecidableEq R] (quot : R → R → R) (n : Nat)
+    (check : List (List R) → DetWitness R → Bool) (A : List (List R))
+    (w : DetWitness R) (h : detWitnessWith quot n check A = .ok w) :
+    check A w = true := by
+  unfold detWitnessWith at h
+  split at h
+  · dsimp at h
+    split at h
+    · cases h
+      assumption
+    · contradiction
+  · contradiction
+
 /-- The integer instance of the generic witness producer. -/
 def detWitnessOfLists (n : Nat) (A : List (List Int)) : Except String DetWitness :=
   detWitnessWith HexArith.Int.exactDiv n (checkDetList n) A

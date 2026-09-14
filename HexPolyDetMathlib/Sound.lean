@@ -16,6 +16,19 @@ public import HexReflectMathlib.Kernel
 
 public section
 
+namespace Hex.PolyDet
+
+/-- The polynomial producer returns only witnesses accepted by the list checker. -/
+theorem check_of_ok {k n : Nat} {C : Type} {cmp : Mono k → Mono k → Ordering}
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Lean.Grind.CommRing C]
+    [DecidableEq C] [BEq C] [LawfulBEq C] [Dvd C] [GcdOps C]
+    [IsMonomialOrder cmp] [LawfulGcdOps C]
+    (P : Matrix (MvPoly k C cmp) n n) (w : Matrix.DetWitness (MvPoly k C cmp))
+    (h : polyDetWitness P = .ok w) : check n (P.rows.toList.map (·.toList)) w = true :=
+  Matrix.detWitnessWith_check Hex.exactDiv n (check n) _ w h
+
+end Hex.PolyDet
+
 namespace HexMatrixMathlib.DetPoly
 
 open Hex.Matrix (DetOps DetWitness checkDetPolyList)

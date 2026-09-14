@@ -192,3 +192,5 @@ example (y : Int) (h : y = -2) : Matrix.det !![(1 : Int), 2; 3, 4] = y := by
 #print axioms term4
 
 end HexPolyDetTests
+
+#print axioms Hex.PolyDet.check_of_ok
