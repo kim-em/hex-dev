@@ -820,8 +820,8 @@ definition on the path is `@[expose]`; the arithmetic is `Nat.mul`,
 are `Nat.beq` and `Nat.blt`, and integer equality `decide (a = b)`, a
 fixed-cost `Int.decEq`; loops are structural recursion on the lists,
 except that the per-term loops (`Packed.dotNat`, `scaleRow`, `addScaled`)
-apply `List.rec` directly with their structural forms attached by
-`@[csimp]` equations, per
+apply `List.rec` directly, their equation forms attached by `@[csimp]`
+theorems for the compiler, per
 [matrix-tactics §Kernel discipline](../../SPEC/matrix-tactics.md#kernel-discipline);
 no `Array`, `Vector`, `Fin`, `Finset`, `dite` or well-founded recursion
 appears on the path. Entries are never read by an indexed access per

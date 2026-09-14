@@ -564,8 +564,8 @@ recursion and the
 `Nat` primitives `Nat.add`, `Nat.mul`, `Nat.shiftLeft`, `Nat.shiftRight`,
 `Nat.land` and `Nat.pow` only, all GMP-accelerated in the kernel; the two
 per-term loops `dotNat` and `dotInt` apply `List.rec` directly, with the
-structural forms `dotNatImpl` and `dotIntImpl` attached by `@[csimp]`
-equations for the compiler, per
+equation forms `dotNatImpl` and `dotIntImpl` attached by `@[csimp]`
+theorems for the compiler, per
 [matrix-tactics §Kernel discipline](../../SPEC/matrix-tactics.md#kernel-discipline). The
 soundness lemma `dotPacked_eq` is in
 [hex-matrix-mathlib](../../HexMatrixMathlib/SPEC/hex-matrix-mathlib.md#kronecker-packed-dot-products).

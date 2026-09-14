@@ -164,18 +164,20 @@ definitionally (`vecOfList (k + 1) (a :: l)` unfolds to
 `vecCons a (vecOfList k l)`, so `!![…] = ofLists n m L` is `rfl`), never
 by evaluating `A i j` through `Matrix.of` inside the arithmetic.
 
-The loops that run once per multiply-add (the dot products `dotNat` and
-`dotInt` of `Hex.Matrix.Packed`, and `scaleRow` and `addScaled` of the
-rank upper bound) are written with `List.rec` applied directly rather
-than as structural recursions: a structural recursion compiles to
-`brecOn`, and the kernel then builds and projects the `below` tuple at
-every step, which costs about as much as the arithmetic itself on small
-entries (a third of the plain rank check's kernel time at `40 × 40`).
-Such a definition is `noncomputable`, and its structural form is attached
-by a proven `@[csimp]` equation so that the compiled code is the ordinary
-recursion; nothing is trusted (no `implemented_by`). Loops that run once
-per entry or per row stay structural recursions; their overhead is not
-measurable.
+The loops that run once per multiply-add in the integer rank and
+determinant checkers (the dot products `dotNat` and `dotInt` of
+`Hex.Matrix.Packed`, and `scaleRow` and `addScaled` of the rank upper
+bound) apply `List.rec` directly instead of recursive equations elaborated
+through `List.brecOn`, whose `below` tuple the kernel builds and projects
+at every step. Such a definition is `noncomputable`, which only suppresses
+its compilation, and its equation form is attached by a proven `@[csimp]`
+theorem so that the compiled code is the ordinary recursion; this adds no
+trusted implementation override (no `implemented_by`). The rewrite
+reduced the plain rank check's kernel time by about a third on the
+`40 × 40` full-rank bench matrix and the plain determinant check's by a
+sixth. Loops that run once per entry or per row, the Hermite and Smith
+list dot product (`HexMatrix/Lists.lean`) and the polynomial coefficient
+loops keep the equation form.
 
 Two things a certificate must never ask the kernel to do:
 
