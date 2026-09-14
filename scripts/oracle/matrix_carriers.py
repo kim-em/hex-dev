@@ -163,7 +163,7 @@ def context(carrier, base, arity, modulus):
     elif carrier == "dense" and arity == 1:
         domain = ground.poly_ring("x")
         ring = domain.ring
-    elif carrier == "mv" and arity in (2, 3) and base in ("ZZ", "QQ"):
+    elif carrier == "mv" and type(arity) is int and arity >= 1 and base in ("ZZ", "QQ", "GF"):
         domain = ground.poly_ring(*(f"x{i}" for i in range(arity)))
         ring = domain.ring
     else:
@@ -362,8 +362,42 @@ def charpoly(record):
             for i in range(n + 1)]
 
 
+def generic_rank(record):
+    """Rank over the exact fraction field, with the signed pivot minor checked independently."""
+    codec = Codec(record)
+    if codec.carrier != "mv":
+        raise ValueError("generic rank requires a multivariate polynomial carrier")
+    n, m = integer(record["n"]), integer(record["m"])
+    rows = record["matrix"]
+    if n < 0 or m < 0 or not isinstance(rows, list) or len(rows) != n or any(
+            not isinstance(row, list) or len(row) != m for row in rows):
+        raise ValueError("matrix shape does not match dimensions")
+    values = [[codec.decode(x) for x in row] for row in rows]
+    support = [[len(x) for x in row] for row in rows]
+    if json.dumps(record["support"]) != json.dumps(support):
+        raise ValueError("incorrect realised support")
+    field = codec.domain.get_field()
+    # Embed the polynomial numerator directly: SymPy 1.14's convert_from path
+    # cannot convert constant FLINT nmod coefficients into a FractionField.
+    matrix = DomainMatrix([[field.field.new(x) for x in row] for row in values], (n, m), field)
+    rank = matrix.rank()
+    pivot_rows, pivot_cols = record["pivot_rows"], record["pivot_cols"]
+    if not isinstance(pivot_rows, list) or not isinstance(pivot_cols, list):
+        raise ValueError("pivot indices must be lists")
+    if len(pivot_rows) != rank or len(pivot_cols) != rank or any(
+            not 0 <= integer(i) < n for i in pivot_rows) or any(
+            not 0 <= integer(j) < m for j in pivot_cols):
+        raise ValueError("pivot indices do not describe a full-rank minor")
+    minor = matrix_det([[values[i][j] for j in pivot_cols] for i in pivot_rows], codec.domain)
+    denominator = codec.decode(record["denom"])
+    if not minor or denominator not in (minor, -minor):
+        raise ValueError("certificate denominator is not the nonzero selected minor up to sign")
+    return rank
+
+
 # Each library uses an independent algorithm and a disjoint record kind.
-HANDLERS = {"det": determinant, "bareiss_carrier": bareiss, "charpoly_carrier": charpoly}
+HANDLERS = {"det": determinant, "bareiss_carrier": bareiss, "charpoly_carrier": charpoly,
+            "generic_rank": generic_rank}
 
 
 def dispatch(record):
@@ -430,6 +464,9 @@ def main():
             expected = record["determinant"]
             Codec(record).decode(expected)
             library = "HexDeterminant"
+        elif record["kind"] == "generic_rank":
+            expected = integer(record["result"])
+            library = "HexGenericRank"
         elif record["kind"] == "charpoly_carrier":
             expected = record["value"]
             scalar, domain = carrier_domain(record)

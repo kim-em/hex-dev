@@ -22,7 +22,7 @@ their library structure and their kernel-replay proof strategy do not.
 | `rank` | `A.rank = r`, `A.rank ≤ r`, `r ≤ A.rank` | `hex-rank`: `RankWitness`, `checkRankList`, `rankWitness` | `hex-rank-mathlib`: `rank_eq_of_checkList`, `HexRankMathlib/Tactic.lean` | shipped (https://github.com/kim-em/hex-dev/pull/10207) |
 | `det` | `A.det = d` | `hex-bareiss`: `DetWitness`, `checkDetList`, `checkDetRat`, `detWitness` | `hex-bareiss-mathlib`: `det_eq_of_checkList`, `det_eq_of_checkRat`, `HexBareissMathlib/Tactic.lean` (`det`, `det%`, `hex_norm_det`) | shipped (https://github.com/kim-em/hex-dev/pull/10224); see [The determinant certificate](#the-determinant-certificate) |
 | `char_poly` | `A.charpoly = p` | `hex-char-poly`: the Berkowitz certificate, in kernel form | `hex-char-poly-mathlib` | packed list certificate and both frontends in `HexCharPoly`/`HexCharPolyMathlib`; measurements in `HexCharPolyMathlib/SPEC/hex-char-poly-mathlib.md` |
-| `rank`, symbolic entries | `A.rank = r` (conditional), `A.rank ≤ r`, generic rank of the reified matrix | `hex-generic-rank`: hex-rank's certificate at `MvPoly` | `hex-generic-rank-mathlib`: a second handler on the `rank` syntax kind; `checkRank_sound_at` | specified: [hex-generic-rank-mathlib](Libraries/hex-generic-rank-mathlib.md) |
+| `rank`, symbolic entries | `A.rank = r` (conditional), `A.rank ≤ r`, generic rank of the reified matrix | `hex-generic-rank`: hex-rank's certificate at `MvPoly` | `hex-generic-rank-mathlib`: a second handler on the `rank` syntax kind; `checkRank_sound_at` | implemented: [hex-generic-rank-mathlib](../HexGenericRankMathlib/SPEC/hex-generic-rank-mathlib.md) |
 | `det`, symbolic entries | `A.det = e`, `e = A.det`, `det% A` (unconditional) | `hex-bareiss`: generic `detWitness`, `checkDetPolyList`, instantiated at polynomials by the companion | `hex-bareiss-mathlib`: `checkDetPolyList_sound`, second handler on the `det` syntax kind | specified: [Symbolic determinant](../HexBareissMathlib/SPEC/hex-bareiss-mathlib.md#symbolic-determinant) |
 | `rank_locus` | `A.rank < r ↔ ⋀ gᵢ = 0` as a hypothesis; `A.rank < r`, `A.rank ≤ r`, `r ≤ A.rank`, `A.rank = r` | `hex-determinantal-ideal`: `detIdealGens`, and its list form `detIdealGensList` | `hex-determinantal-ideal-mathlib`: `gens_vanish_iff_rank_lt`, `HexDeterminantalIdealMathlib/Tactic.lean`; default `r` from a hex-generic-rank-mathlib handler | specified: [hex-determinantal-ideal-mathlib §The `rank_locus` tactic](../HexDeterminantalIdealMathlib/SPEC/hex-determinantal-ideal-mathlib.md#the-rank_locus-tactic) |
 | `min_poly` | `minpoly F A = p` | hex-min-poly: list form of `MinPolyCert` | hex-min-poly-mathlib | implemented in `HexMinPolyMathlib/Tactic.lean`: [companion contract](../HexMinPolyMathlib/SPEC/hex-min-poly-mathlib.md#the-min_poly-tactic) |
@@ -61,7 +61,7 @@ Rules that follow from the table:
 - Symbolic entries are a separate handler on the owner's syntax kind,
   living with the `MvPoly` instantiation of the certificate; a numeric
   handler reports `notApplicable` for them. For `rank` that handler is specified in
-  [hex-generic-rank-mathlib](Libraries/hex-generic-rank-mathlib.md), with
+  [hex-generic-rank-mathlib](../HexGenericRankMathlib/SPEC/hex-generic-rank-mathlib.md), with
   the three outputs (generic, conditional, locus) that a symbolic rank may
   take. Until a symbolic handler exists for an operation, a Mathlib tactic
   that also handles symbolic input (`norm_det`) is composed as the fallback

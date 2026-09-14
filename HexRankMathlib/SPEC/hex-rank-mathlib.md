@@ -95,8 +95,20 @@ The boundary cases need no separate treatment. At `r = 0` the lower bound
 is `0 ≤ rank` and the upper bound is `Matrix.rank_le_card_width` at width
 `0`. At `n = 0` or `m = 0` both `Matrix.rank` and `c.rank` are `0`.
 
-The same argument goes through any injective ring homomorphism into a
-domain, and that form is the one consumers use:
+The same argument goes through a ring homomorphism into a domain whenever
+its image of the certificate denominator is nonzero. The source need only be
+a commutative ring:
+
+```lean
+theorem checkRank_sound_at [CommRing R] [CommRing S] [IsDomain S] [DecidableEq R]
+    (φ : R →+* S) (h : Hex.Matrix.checkRank A c = true) (hd : φ c.denom ≠ 0) :
+    ((e A).map φ).rank = c.rank
+```
+
+`φ.mapMatrix` preserves the two identities. The hypothesis `hd` gives the
+remaining nonvanishing fact, so the two rank bounds apply over `S`. This is
+the form used for polynomial specialisation. Injectivity supplies `hd` as a
+corollary:
 
 ```lean
 theorem checkRank_sound_map [CommRing R] [CommRing S] [IsDomain S] [DecidableEq R]
@@ -105,9 +117,8 @@ theorem checkRank_sound_map [CommRing R] [CommRing S] [IsDomain S] [DecidableEq 
     ((e A).map φ).rank = c.rank
 ```
 
-`φ.mapMatrix` preserves products and scalar multiplication, so the three
-identities hold for `(e A).map φ` with `φ d ≠ 0` by injectivity, and the
-two bounds above apply over `S`. `checkRank_sound` is the case
+`checkRank_sound_map` derives `φ d ≠ 0` by injectivity and applies
+`checkRank_sound_at`. `checkRank_sound` is the case
 `φ = RingHom.id R`. Note the shape `(e A).map φ` rather than
 `e (A.map φ)`: `HexMatrix` has no entrywise map today, and a consumer
 holding a Mathlib matrix rewrites once.

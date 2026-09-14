@@ -175,14 +175,14 @@ to its mathematics. It lives here because the theorem it packages is this
 library's, per [matrix-tactics §Placement](../../SPEC/matrix-tactics.md#placement);
 the default threshold `r`, when the user omits it, is the generic rank of
 `P`, supplied by a handler that
-[hex-generic-rank-mathlib](../../SPEC/Libraries/hex-generic-rank-mathlib.md)
+[hex-generic-rank-mathlib](../../HexGenericRankMathlib/SPEC/hex-generic-rank-mathlib.md)
 attaches to this library's syntax kind, so that this library does not
 depend on hex-rank.
 
 ### Input and fragment
 
 The input is reified exactly as the symbolic arm of `rank` reifies it
-([hex-generic-rank-mathlib §Input classification](../../SPEC/Libraries/hex-generic-rank-mathlib.md#input-classification)):
+([hex-generic-rank-mathlib §Input classification](../../HexGenericRankMathlib/SPEC/hex-generic-rank-mathlib.md#input-classification)):
 one hex-reflect batch over all entries, sealed at `k` atoms, giving
 `P : Hex.Matrix (MvPoly k C cmp) n m`, the atom valuation `v : Fin k → F`,
 the coefficient interpretation `ι : C →+* F`, and the entrywise proofs
@@ -199,7 +199,7 @@ the rank back with hex-rank-mathlib's `rank_map_eq`
 ([hex-rank-mathlib §Scalar extension](../../HexRankMathlib/SPEC/hex-rank-mathlib.md#scalar-extension)),
 and reflecting each generator's vanishing through the injectivity of the
 fraction-ring map; this is the passage the merged
-[hex-generic-rank-mathlib §Output 3](../../SPEC/Libraries/hex-generic-rank-mathlib.md#output-3-rank-locus)
+[hex-generic-rank-mathlib §Output 3](../../HexGenericRankMathlib/SPEC/hex-generic-rank-mathlib.md#output-3-rank-locus)
 assigns to this tactic, and it is why `HexRankMathlib` is a dependency. It
 is also what makes the symbolic-matrix-itself output below reachable,
 since `MvPolynomial σ D` is a domain and not a field.
@@ -259,7 +259,7 @@ the iff; `poly`, the polynomial data (`P`, the sealed environment,
 the later piecewise-rank extension; and `ideal?`, populated only when the
 goal's matrix is the symbolic matrix itself under the atom and coefficient
 conditions of
-[hex-generic-rank-mathlib §Output 1](../../SPEC/Libraries/hex-generic-rank-mathlib.md#output-1-generic-rank),
+[hex-generic-rank-mathlib §Output 1](../../HexGenericRankMathlib/SPEC/hex-generic-rank-mathlib.md#output-1-generic-rank),
 holding `span_gens_map_eq` and `mem_zeroLocus_map_iff_rank_lt` below for
 the generators `G'` mapped into `MvPolynomial σ D`. The programmatic
 interface returns the same record and never creates goals.
@@ -408,7 +408,7 @@ every goal form, the empty and `r = 0` shapes, and the `ℤ` case of
 `bench/HexDeterminantalIdealMathlib/ProofProbe` record, as fresh-module
 evidence with matched baselines, batch reification, compiled enumeration,
 kernel time of `detIdealGensList`, and total elaboration, on the
-`symbolic` family of [hex-generic-rank §Benchmarking](../../SPEC/Libraries/hex-generic-rank.md#benchmarking)
+`symbolic` family of [hex-generic-rank §Benchmarking](../../HexGenericRank/SPEC/hex-generic-rank.md#benchmarking)
 restricted to `r ≤ 3`. There is no Mathlib comparator (no Lean tactic
 states a rank locus), declared as
 **no-comparable-surface-in-named-comparator**; the report is

@@ -586,7 +586,7 @@ reduction, in the style of hex-rank's `RankWitness`:
 The entry arithmetic is abstract over the carrier's list form: for
 `MvPoly` entries it is the list form of `MvPoly` arithmetic that
 hex-mv-poly supplies (a prerequisite of the tactic, recorded in
-[hex-generic-rank-mathlib](../../SPEC/Libraries/hex-generic-rank-mathlib.md#prerequisite-changes-in-other-libraries)),
+[hex-generic-rank-mathlib](../../HexGenericRankMathlib/SPEC/hex-generic-rank-mathlib.md#prerequisite-changes-in-other-libraries)),
 and for integer entries it is `Int`. Every definition is `@[expose]`,
 recurses structurally, and puts no `Array`, `Vector`, `Fin` or `Hex.Matrix`
 on the kernel's path. The Mathlib-free theorems are the enumeration facts

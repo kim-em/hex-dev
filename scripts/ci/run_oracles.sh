@@ -47,6 +47,7 @@ ORACLES=(
   "HexBareiss|hexbareiss_emit_fixtures|scripts/oracle/matrix_flint.py|conformance-fixtures/HexBareiss/bareiss.jsonl"
   "HexModularMatrix|hexmodularmatrix_emit_fixtures|scripts/oracle/modmat_flint.py|conformance-fixtures/HexModularMatrix/modmat.jsonl"
   "HexDet|hexdet_emit_fixtures|scripts/oracle/matrix_flint.py|conformance-fixtures/HexDet/det.jsonl"
+  "HexGenericRank|hexgenericrank_emit_fixtures|scripts/oracle/matrix_carriers.py|conformance-fixtures/HexGenericRank/generic.jsonl"
   "HexRank|hexrank_emit_fixtures|scripts/oracle/rank_carriers.py|conformance-fixtures/HexRank/rank.jsonl"
   "HexHermite|hexhermite_emit_fixtures|scripts/oracle/matrix_flint.py|conformance-fixtures/HexHermite/hermite.jsonl"
   "HexSmith|hexsmith_emit_fixtures|scripts/oracle/matrix_flint.py|conformance-fixtures/HexSmith/smith.jsonl"

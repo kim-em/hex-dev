@@ -312,7 +312,7 @@ symbolic arm, its checker soundness and its proof probes are not yet shipped.
 ### Prerequisites and input classification
 
 The shared prerequisites are the same as
-[hex-generic-rank-mathlib §Prerequisite changes](../../SPEC/Libraries/hex-generic-rank-mathlib.md#prerequisite-changes-in-other-libraries):
+[hex-generic-rank-mathlib §Prerequisite changes](../../HexGenericRankMathlib/SPEC/hex-generic-rank-mathlib.md#prerequisite-changes-in-other-libraries):
 canonical list arithmetic in hex-mv-poly and its denotation theorem in
 hex-mv-poly-mathlib block the kernel route; the numeric handlers' refactor
 to `throwUnsupportedSyntax` blocks composition; and the residue coefficient
@@ -334,7 +334,7 @@ provider. The `det` syntax kind remains owned by `Tactic.lean`; a separate
 symbolic handler module may attach to it without redeclaring the syntax.
 
 Input classification is shared with
-[the symbolic `rank` arm](../../SPEC/Libraries/hex-generic-rank-mathlib.md#input-classification).
+[the symbolic `rank` arm](../../HexGenericRankMathlib/SPEC/hex-generic-rank-mathlib.md#input-classification).
 The numeric handler runs first, returning `notApplicable` via
 `throwUnsupportedSyntax` outside its fragment. The symbolic handler reads a
 square matrix through the shared literal layer, including definitions
