@@ -89,3 +89,23 @@ example : Hex.Matrix.checkDetPolyList (HexMatrixMathlib.DetPoly.Polynomial.ops 1
 example : Hex.Matrix.checkDetPolyList (HexMatrixMathlib.DetPoly.Polynomial.ops 1)
     1 [[[([0], (1 : Int))]]]
     (.singular [[]]) = false := by decide +kernel
+
+-- Closed scalar powers are bounded before the rational evaluator sees them.
+example : True := by
+  run_tac
+    let two ← Lean.Meta.mkNumeral (Lean.mkConst ``Rat) 2
+    let e ← Lean.Meta.mkAppM ``HPow.hPow #[two, Lean.mkNatLit 65]
+    match ← (HexMatrixMathlib.DetPoly.Normalize.scalarBound e).run with
+    | .error _ => pure ()
+    | .ok _ => throwError "expected a scalar exponent budget decline"
+  trivial
+
+example : True := by
+  run_tac
+    let two ← Lean.Meta.mkNumeral (Lean.mkConst ``Rat) 2
+    let e ← Lean.Meta.mkAppM ``HPow.hPow #[two, Lean.mkNatLit 64]
+    let e ← Lean.Meta.mkAppM ``HPow.hPow #[e, Lean.mkNatLit 64]
+    match ← (HexMatrixMathlib.DetPoly.Normalize.scalarBound e).run with
+    | .error _ => pure ()
+    | .ok _ => throwError "expected a scalar coefficient bit budget decline"
+  trivial

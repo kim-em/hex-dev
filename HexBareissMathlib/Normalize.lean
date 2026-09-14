@@ -18,6 +18,40 @@ open Lean Meta HexMatrixMathlib.Literal
 
 abbrev NormalizeM := ExceptT MessageData MetaM
 
+def literalNat? (e : Expr) : Option Nat :=
+  e.rawNatLit? <|> if e.isAppOfArity ``OfNat.ofNat 3 then e.getAppArgs[1]!.rawNatLit? else none
+
+/-- Bound closed scalar arithmetic before asking `norm_num` to evaluate it.
+Opaque operations remain atoms. Numerator and denominator bits are bounded
+ together, so nested closed powers cannot expand before the budget check. -/
+partial def scalarBound (a : Expr) (fuel : Nat := 8) : NormalizeM (Option Nat) := do
+  if a.hasFVar || a.hasMVar then return none
+  let bounded (n : Nat) : NormalizeM (Option Nat) := do
+    if n > 4096 then throwThe MessageData m!"coefficient bit budget exhausted (limit 4096)"
+    return some n
+  if let some n := a.rawNatLit? then return ← bounded (n.log2 + 1)
+  let args := a.getAppArgs
+  if (a.isAppOf ``Nat.cast || a.isAppOf ``Int.cast) && args.size == 3 then
+    return ← scalarBound args[2]! fuel
+  if (a.isAppOf ``Int.ofNat || a.isAppOf ``Int.negSucc) && args.size == 1 then
+    if let some n := literalNat? args[0]! then return ← bounded ((n + 1).log2 + 1)
+  if a.isAppOf ``OfNat.ofNat && args.size == 3 then
+    if let some n := args[1]!.rawNatLit? then return ← bounded (n.log2 + 1)
+  if a.isAppOf ``Neg.neg && args.size == 3 then return ← scalarBound args[2]! fuel
+  if (a.isAppOf ``HAdd.hAdd || a.isAppOf ``HSub.hSub || a.isAppOf ``HMul.hMul ||
+      a.isAppOf ``HDiv.hDiv) && args.size == 6 then
+    let some x ← scalarBound args[4]! fuel | return none
+    let some y ← scalarBound args[5]! fuel | return none
+    return ← bounded (x + y + 1)
+  if a.isAppOf ``HPow.hPow && args.size == 6 then
+    let some n := literalNat? args[5]! | return none
+    if n > 64 then throwThe MessageData m!"exponent budget exhausted (limit 64)"
+    let some x ← scalarBound args[4]! fuel | return none
+    return ← bounded (x * n + 1)
+  if fuel > 0 then
+    if let some b ← unfoldDefinition? a then return ← scalarBound b (fuel - 1)
+  return none
+
 /-- An integer-coefficient expression and a proof of its positive scaling. -/
 structure Result where
   term : Expr
@@ -45,7 +79,7 @@ def unchanged (a : Expr) : NormalizeM Result := do
 /-- Clear closed rational coefficients through ring operations. Division by
 an open term remains one atom; no division of symbolic polynomials occurs. -/
 partial def expression (a : Expr) : NormalizeM Result := do
-  if !a.hasFVar && !a.hasMVar then
+  if (← scalarBound a).isSome then
     if let some q ← ((try some <$> evalEntry a catch _ => pure none) : MetaM (Option Rat)) then
       if q.num.natAbs.log2 + 1 > 4096 then throwThe MessageData m!"coefficient bit budget exhausted (limit 4096)"
       let p ← integer q.num
@@ -80,7 +114,7 @@ partial def expression (a : Expr) : NormalizeM Result := do
   if name == some ``HDiv.hDiv && args.size == 6 then
     let x := args[4]!
     let b := args[5]!
-    if !b.hasFVar && !b.hasMVar then
+    if (← scalarBound b).isSome then
       if let some q ← ((try some <$> evalEntry b catch _ => pure none) : MetaM (Option Rat)) then
         let inv := 1 / q
         let p ← expression x
