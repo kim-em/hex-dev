@@ -48,11 +48,11 @@ are disabled in the probes; the sweep enforces the registered wall-time ceiling.
 ## Accepted fresh-module evidence
 
 The [complete sweep](data/hex-generic-rank-mathlib-probes.json.gz) records all
-84 pairs (168 fresh builds) at commit da49ea72a, pinned to automatically
-selected logical CPU 1 on chungus2, AMD EPYC 9455, Linux, Lean 4.34.0-rc2.
+84 pairs (168 fresh builds) at commit 60668765c, pinned to automatically
+selected logical CPU 7 on chungus2, AMD EPYC 9455, Linux, Lean 4.34.0-rc2.
 Every candidate passed its 30 s ceiling and every theorem reported exactly
 `propext`, `Classical.choice` and `Quot.sound`. The slowest full build was
-6.58 s. There were no incomplete pairs, timeouts or provenance failures.
+3.69 s. There were no incomplete pairs, timeouts or provenance failures.
 All completed samples, host activity and signed baseline deltas are retained.
 
 The table gives six-sample medians for each named profiler category; build
@@ -61,20 +61,20 @@ checking, linting and serialization. They are not isolated tactic timings.
 
 | Case | Full build median/max (s) | Batch (ms) | Producer (ms) | Pivot kernel (ms) | All-column kernel (ms) | Proof nodes | .olean bytes |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| FiniteHypothesis | 3.073 / 3.765 | 27.450 | 0.530 | 2.505 | 4.720 | 1841 | 100776 |
-| FiniteSideGoal | 3.038 / 3.558 | 26.050 | 0.502 | 2.460 | 4.805 | 1841 | 101192 |
-| Full2Generic | 3.203 / 3.740 | 27.300 | 0.905 | 3.875 | 6.395 | 1527 | 64880 |
-| Full2Hypothesis | 3.151 / 3.831 | 6.590 | 0.883 | 4.125 | 6.340 | 1361 | 77616 |
-| Full2SideGoal | 3.017 / 3.853 | 6.045 | 0.863 | 3.700 | 6.395 | 1361 | 78128 |
-| Low2Generic | 3.149 / 4.788 | 29.300 | 0.746 | 1.520 | 4.355 | 1590 | 67128 |
-| Low2Hypothesis | 3.046 / 4.529 | 7.210 | 0.704 | 1.555 | 4.530 | 1396 | 79136 |
-| Low2SideGoal | 3.039 / 6.577 | 7.420 | 0.712 | 1.720 | 4.535 | 1396 | 79648 |
-| QuadraticGeneric | 3.230 / 3.860 | 22.200 | 0.969 | 4.095 | 8.030 | 1633 | 58688 |
-| QuadraticHypothesis | 3.031 / 3.921 | 5.045 | 0.936 | 4.245 | 7.795 | 1519 | 83856 |
-| QuadraticSideGoal | 3.238 / 3.685 | 5.055 | 0.936 | 4.215 | 7.840 | 1519 | 84400 |
-| VariableGeneric | 3.108 / 4.420 | 20.600 | 0.439 | 1.540 | 2.090 | 1285 | 52920 |
-| VariableHypothesis | 2.940 / 3.847 | 4.270 | 0.407 | 1.525 | 2.060 | 1186 | 70024 |
-| VariableSideGoal | 3.038 / 3.746 | 4.095 | 0.418 | 1.495 | 2.085 | 1186 | 70536 |
+| FiniteHypothesis | 2.902 / 3.385 | 25.300 | 0.484 | 2.355 | 4.625 | 1849 | 100728 |
+| FiniteSideGoal | 2.862 / 3.686 | 25.300 | 0.494 | 2.360 | 4.585 | 1849 | 101144 |
+| Full2Generic | 2.898 / 2.954 | 24.900 | 0.833 | 3.635 | 5.740 | 1540 | 64960 |
+| Full2Hypothesis | 2.812 / 3.097 | 5.725 | 0.839 | 3.680 | 5.830 | 1374 | 77696 |
+| Full2SideGoal | 2.802 / 2.831 | 5.790 | 0.831 | 3.645 | 5.690 | 1374 | 78208 |
+| Low2Generic | 2.966 / 3.404 | 28.100 | 0.716 | 1.495 | 4.210 | 1603 | 67208 |
+| Low2Hypothesis | 2.798 / 2.956 | 6.815 | 0.681 | 1.520 | 4.235 | 1409 | 79216 |
+| Low2SideGoal | 2.873 / 3.400 | 6.810 | 0.685 | 1.500 | 4.340 | 1409 | 79728 |
+| QuadraticGeneric | 2.954 / 3.506 | 22.050 | 0.960 | 4.065 | 7.660 | 1640 | 58640 |
+| QuadraticHypothesis | 2.831 / 3.422 | 4.995 | 0.913 | 3.985 | 7.460 | 1526 | 83808 |
+| QuadraticSideGoal | 2.817 / 3.314 | 5.005 | 0.915 | 4.010 | 7.460 | 1526 | 84352 |
+| VariableGeneric | 2.805 / 3.060 | 18.400 | 0.413 | 1.410 | 1.960 | 1289 | 52808 |
+| VariableHypothesis | 2.803 / 3.066 | 3.870 | 0.413 | 1.460 | 2.095 | 1190 | 69912 |
+| VariableSideGoal | 2.811 / 3.202 | 3.910 | 0.407 | 1.425 | 2.040 | 1190 | 70424 |
 
 Header-check medians range from 1.40 to 2.70 ms and are retained separately
 in the [summary](data/hex-generic-rank-mathlib-summary.json) and every raw
