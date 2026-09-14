@@ -190,7 +190,7 @@ run_cmd do
   let handlers := (tacticElabAttribute.getEntries (← getEnv)
     ``HexMatrixMathlib.Det.detTac).map (·.declName)
   unless handlers ==
-      [``HexMatrixMathlib.Det.evalDetTac, ``HexMatrixMathlib.Det.detFallback] do
+      [``HexMatrixMathlib.Det.evalDetTac, ``HexMatrixMathlib.Det.evalSymbolicDet, ``HexMatrixMathlib.Det.detFallback] do
     throwError "unexpected shipped det handler order: {handlers}"
 
 /-! Numeric delegation must be tested with the numeric handler first. A stub
@@ -210,7 +210,7 @@ run_cmd do
     ``HexMatrixMathlib.Det.detTac).map (·.declName)
   unless handlers ==
       [``HexMatrixMathlib.Det.evalDetTac, ``detStub,
-        ``HexMatrixMathlib.Det.evalDetTac, ``HexMatrixMathlib.Det.detFallback] do
+        ``HexMatrixMathlib.Det.evalDetTac, ``HexMatrixMathlib.Det.evalSymbolicDet, ``HexMatrixMathlib.Det.detFallback] do
     throwError "unexpected det handler order: {handlers}"
 
 /-- info: det stub -/

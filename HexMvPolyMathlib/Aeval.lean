@@ -88,7 +88,7 @@ theorem eval₂_toMvPolynomial [CommSemiring R] [DecidableEq R]
 
 This auxiliary homomorphism supplies the laws for the public direct
 evaluator. -/
-def eval₂MathlibHom [CommSemiring R] [DecidableEq R]
+@[expose] def eval₂MathlibHom [CommSemiring R] [DecidableEq R]
     [CommSemiring S] (f : R →+* S) (x : Fin n → S) :
     MvPoly n R cmp →+* S :=
   (MvPolynomial.eval₂Hom f x).comp (equiv (cmp := cmp)).toRingHom

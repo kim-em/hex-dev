@@ -94,6 +94,27 @@ value guards and external oracles. Using the generic correspondence at those
 carriers also requires that separate bridge work; an exact-division law alone
 does not supply the Mathlib ring instance.
 
+# Experimental symbolic determinants
+
+The canonical-list polynomial certificate and its soundness theorem are
+implemented. The symbolic frontend is opt-in while subject to the SPEC's
+strict performance bar:
+
+```lean
+set_option hex.det.symbolic true in
+example (x : ℤ) : Matrix.det !![x, 1; 1, x] = x ^ 2 - 1 := by det
+
+set_option hex.det.symbolic true in
+example (x : ℚ) : Matrix.det !![x / 2, 1; 1, x / 3] = x ^ 2 / 6 - 1 := by det
+```
+
+It supports both equation orientations, the shared literal syntaxes, `det%`,
+and `hex_norm_det`. Atoms are independent: hypotheses such as `x = 0` or an
+algebraic relation such as `α² = 2` require separate rewriting. Rational
+coefficients use proved positive row and target scales. Positive-characteristic
+kernel tests remain deferred until the residue-list bridge of #10257 exists;
+unsupported inputs retain the Mathlib fallback.
+
 # Verification
 
 The correspondence is fully proven over any commutative ring with decidable

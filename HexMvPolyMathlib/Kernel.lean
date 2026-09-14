@@ -31,7 +31,7 @@ abbrev Term := Hex.MvPoly.Kernel.Term
 abbrev PolyList := Hex.MvPoly.Kernel.PolyList
 
 /-- Denote a kernel term list as a Mathlib multivariate polynomial. -/
-noncomputable def denote {n : Nat} {R : Type u} [CommSemiring R]
+@[expose] noncomputable def denote {n : Nat} {R : Type u} [CommSemiring R]
     [BEq R] [LawfulBEq R] [DecidableEq R]
     {cmp : Mono n → Mono n → Ordering} [Std.TransCmp cmp]
     [Std.LawfulEqCmp cmp] (p : PolyList R) : MvPolynomial (Fin n) R :=

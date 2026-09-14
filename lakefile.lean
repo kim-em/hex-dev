@@ -408,7 +408,8 @@ lean_lib HexBareissMathlibProofProbe where
     `HexBareissMathlib.ProofProbe.Large4Bits256Hex,
     `HexBareissMathlib.ProofProbe.Large4Bits256Mathlib,
     `HexBareissMathlib.ProofProbe.Rational8Hex,
-    `HexBareissMathlib.ProofProbe.Rational8Mathlib]
+    `HexBareissMathlib.ProofProbe.Rational8Mathlib,
+    .submodules `HexBareissMathlib.ProofProbe.Symbolic]
 
 
 @[default_target]
@@ -1029,6 +1030,7 @@ lean_lib HexReleaseTests where
   globs := #[`HexMatrixMathlib.Tests,
     `HexPolyMathlib.LiteralTests,
     `HexBareissMathlib.Tests,
+    `HexBareissMathlib.SymbolicTests,
     `HexBerlekamp.FactorTacticTests,
     `HexBerlekampMathlib.FactorPolyTests,
     `HexBerlekampZassenhaus.FactorTacticTests,

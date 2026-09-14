@@ -9,6 +9,7 @@ module
 public import HexBareiss.BorderedMinor
 public import HexBareiss.Bareiss
 public import HexBareiss.Kernel
+public import HexBareiss.Polynomial
 
 public section
 

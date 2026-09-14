@@ -349,8 +349,8 @@ theorem prod_gcd_associated {K : Type*} [Field K] [DecidableEq K]
     (hsquarefree : Squarefree qs.prod) (hdiv : P ∣ qs.prod) :
     Associated ((qs.map fun q => gcd P q).prod) P := by
   have h := (gcd_prod_associated P qs hsquarefree).symm
-  have hgcd : gcd P qs.prod = normalize P :=
-    gcd_eq_normalize (gcd_dvd_left P qs.prod) (dvd_gcd dvd_rfl hdiv)
+  have hgcd : gcd P qs.prod = _root_.normalize P :=
+    _root_.gcd_eq_normalize (gcd_dvd_left P qs.prod) (dvd_gcd dvd_rfl hdiv)
   rw [hgcd] at h
   exact h.trans (associated_normalize P).symm
 

@@ -10,6 +10,8 @@ public import HexBareissMathlib.Bareiss
 public import HexBareissMathlib.Kernel
 public import HexBareissMathlib.Tactic
 
+public import HexBareissMathlib.Polynomial
+
 public section
 
 /-!

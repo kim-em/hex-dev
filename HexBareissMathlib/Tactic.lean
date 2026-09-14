@@ -6,6 +6,8 @@ Authors: Kim Morrison
 
 module
 
+public import HexBareissMathlib.SymbolicCore
+public meta import HexBareissMathlib.SymbolicCore
 public meta import HexBareissMathlib.Kernel
 public import HexBareissMathlib.Kernel
 public meta import Mathlib.Tactic.NormDet
@@ -13,6 +15,11 @@ public import Mathlib.Tactic.NormDet
 public meta import Lean
 
 public meta section
+
+register_option hex.det.symbolic : Bool := {
+  defValue := false
+  descr := "enable the experimental symbolic determinant certificate (subject to the SPEC shipping bar)"
+}
 
 /-!
 The `det` tactic on Mathlib matrices: closes `A.det = d` (and `d = A.det`)
@@ -275,11 +282,25 @@ def certifiedProof (A : Expr) (c : Cert) : MetaM Proof := do
   let target ← mkEq (← mkAppM ``Matrix.det #[A]) p.value
   return { p with proof := ← checked A c p target p.proof }
 
+/-- The symbolic `det%` record, from the same certified computation as the tactic. -/
+def symbolicCertified (A : Expr) : MetaM (Outcome Expr) := do
+  unless hex.det.symbolic.get (← getOptions) do
+    return .notApplicable m!"symbolic determinant is experimental; enable `hex.det.symbolic`"
+  match ← DetPoly.Frontend.compute A with
+  | .notApplicable msg => return .notApplicable msg
+  | .declined msg => return .declined m!"symbolic determinant declined: {msg}"
+  | .success p =>
+    let lhs ← mkAppM ``Matrix.det #[A]
+    return .success (← mkAppOptM ``HexMatrixMathlib.Certified.mk
+      #[none, none, some lhs.appFn!, some A, some p.value, some p.proof])
+
 /-- The `det% A` record: `Certified Matrix.det A`. -/
 def certified (A : Expr) : MetaM (Outcome Expr) := do
   let c ← match ← certify A with
     | .success c => pure c
-    | .notApplicable msg => return .notApplicable msg
+    | .notApplicable msg =>
+      if hex.det.symbolic.get (← getOptions) then return ← symbolicCertified A
+      else return .notApplicable msg
     | .declined msg => return .declined msg
   let p ← certifiedProof A c
   let some (_, lhs, _) := (← inferType p.proof).eq? |
@@ -297,7 +318,13 @@ syntax (name := detTerm) "det%" term:max : term
 def elabDetTerm : Term.TermElab := fun stx expectedType? => do
   match stx with
   | `(det% $t) =>
-      let A ← elabArgument t
+      let saved ← saveState
+      let A ← try elabArgument t catch e => do
+        unless hex.det.symbolic.get (← getOptions) do throw e
+        saved.restore
+        let A ← Term.elabTerm t none
+        Term.synthesizeSyntheticMVarsNoPostponing
+        instantiateMVars A
       match ← certified A with
       | .success r => Term.ensureHasType expectedType? r
       | .notApplicable msg => throwError "det: not applicable: {msg}"
@@ -313,7 +340,11 @@ def normDet? (e : Expr) : MetaM (Option Simp.Result) := do
   | .success c =>
       let p ← certifiedProof e.appArg! c
       return some { expr := p.value, proof? := some p.proof }
-  | .notApplicable _ | .declined _ => return none
+  | .notApplicable _ | .declined _ =>
+    unless hex.det.symbolic.get (← getOptions) do return none
+    match ← DetPoly.Frontend.compute e.appArg! with
+    | .success p => return some { expr := p.value, proof? := some p.proof }
+    | .notApplicable _ | .declined _ => return none
 
 end HexMatrixMathlib.Det
 
@@ -330,7 +361,7 @@ simproc_decl hex_norm_det (Matrix.det _) := fun e => do
 
 namespace HexMatrixMathlib.Det
 
-open Lean Elab
+open Lean Meta Elab
 
 /-- `det` closes `A.det = d` and `d = A.det` for a closed integer or rational
 matrix literal `A`, with the kernel checking a determinant certificate; an
@@ -343,9 +374,12 @@ syntax (name := detTac) &"det" optConfig : tactic
 
 /-- Try the simp fallback, reporting the classification or capability reason
 only when it makes no progress. Errors from simprocs must propagate unchanged. -/
-def simpFallback (msg : MessageData) : Tactic.TacticM Unit := do
+def simpFallback (msg : MessageData) (useHex : Bool := true) : Tactic.TacticM Unit := do
   let goals ← Tactic.getGoals
-  Tactic.evalTactic (← `(tactic| simp (config := { failIfUnchanged := false }) only [hex_norm_det]))
+  if useHex then
+    Tactic.evalTactic (← `(tactic| simp (config := { failIfUnchanged := false }) only [hex_norm_det]))
+  else
+    Tactic.evalTactic (← `(tactic| simp (config := { failIfUnchanged := false }) only [norm_det]))
   if (← Tactic.getGoals) == goals then
     throwError "{msg}"
 
@@ -360,8 +394,27 @@ def detFallback : Tactic.Tactic := fun _ => Tactic.withMainContext do
   | .notApplicable msg =>
       if (detTarget? target).isNone then
         throwError "det: not applicable: {msg}"
-      simpFallback m!"det: not applicable: {msg}"
+      simpFallback m!"det: not applicable: {msg}" false
   | _ => throwUnsupportedSyntax
+
+/-- The symbolic handler is tried after the numeric one. A decline goes directly
+ to Mathlib, retaining its diagnostic and avoiding a repeated symbolic attempt. -/
+@[tactic detTac, no_fallback]
+def evalSymbolicDet : Tactic.Tactic := fun _ => Tactic.withMainContext do
+  unless hex.det.symbolic.get (← getOptions) do throwUnsupportedSyntax
+  let target ← instantiateMVars (← Tactic.getMainTarget)
+  let some (A, rhs, reverse) := detTarget? target | throwUnsupportedSyntax
+  match ← DetPoly.Frontend.compute A rhs with
+  | .notApplicable _ => throwUnsupportedSyntax
+  | .success p =>
+    let proof ← if reverse then mkEqSymm p.proof else pure p.proof
+    Tactic.closeMainGoal `det proof
+  | .declined msg =>
+    Tactic.evalTactic (← `(tactic| simp (config := { failIfUnchanged := false }) only [norm_det]))
+    unless (← Tactic.getGoals).isEmpty do
+      try Tactic.evalTactic (← `(tactic| all_goals ring)) catch _ => pure ()
+    unless (← Tactic.getGoals).isEmpty do
+      throwError "det: symbolic determinant declined: {msg}"
 
 -- Ordinary errors commit; unsupported syntax still tries the next handler.
 @[tactic detTac, no_fallback]
