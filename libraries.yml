@@ -1142,14 +1142,14 @@ libraries:
   HexGenericRank:
     deps: [HexRank, HexMvGcd, HexBareiss, HexDeterminant, HexMatrix, HexBasic]
     mathlib: false
-    done_through: 0
-    status: planned
+    done_through: 3
+    status: active
   HexGenericRankMathlib:
     deps: [HexGenericRank, HexRankMathlib, HexReflect, HexReflectMathlib, HexMvPolyMathlib, HexDeterminantalIdealMathlib, HexMatrixMathlib]
     mathlib: true
     proof_probes: [bench/HexGenericRankMathlib/ProofProbe]
-    done_through: 0
-    status: planned
+    done_through: 3
+    status: active
   HexModArithMathlib:
     deps: [HexModArith]
     mathlib: true

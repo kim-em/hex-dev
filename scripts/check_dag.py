@@ -77,6 +77,8 @@ UMBRELLA_BUILD_TARGETS = {
     "HexBerlekampMathlibProofProbe",
     "HexBerlekampMathlibProofProbeScientific",
     "HexIntervalExperiment",
+    "HexGenericRankTests",
+    "HexGenericRankMathlibProofProbe",
     "HexRankTests",
     "HexRankMathlibProofProbe",
     "HexCharPolyMathlibProofProbe",

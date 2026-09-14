@@ -83,17 +83,16 @@ theorem checkRank_sound [CommRing R] [IsDomain R] [DecidableEq R] {A : Hex.Matri
   obtain ⟨hd, h2, h3⟩ := (checkRank_iff_matrixEquiv A c).mp h
   exact rank_eq_of_cert _ _ _ _ _ hd h2 h3
 
-/-- A checked certificate determines `Matrix.rank` after any injective ring
-homomorphism into a domain. -/
-theorem checkRank_sound_map {S : Type v} [CommRing R] [CommRing S] [IsDomain S] [DecidableEq R]
-    (φ : R →+* S) (hφ : Function.Injective φ) {A : Hex.Matrix R n m}
-    {c : Hex.Matrix.RankCert R n m} (h : Hex.Matrix.checkRank A c = true) :
+/-- A checked certificate determines the specialised rank wherever its
+denominator remains nonzero. The source ring need not be a domain. -/
+theorem checkRank_sound_at {S : Type v} [CommRing R] [CommRing S] [IsDomain S] [DecidableEq R]
+    (φ : R →+* S) {A : Hex.Matrix R n m}
+    {c : Hex.Matrix.RankCert R n m} (h : Hex.Matrix.checkRank A c = true)
+    (hd : φ c.denom ≠ 0) :
     ((matrixEquiv A).map φ).rank = c.rank := by
-  obtain ⟨hd, h2, h3⟩ := (checkRank_iff_matrixEquiv A c).mp h
+  obtain ⟨_, h2, h3⟩ := (checkRank_iff_matrixEquiv A c).mp h
   refine rank_eq_of_cert ((matrixEquiv A).map φ) c.rows.get c.cols.get (φ c.denom)
-    ((matrixEquiv c.adj).map φ) ?_ ?_ ?_
-  · intro h0
-    exact hd (hφ (h0.trans (map_zero φ).symm))
+    ((matrixEquiv c.adj).map φ) hd ?_ ?_
   · have h2' := congrArg (fun M => M.map φ) h2
     simp only [Matrix.map_mul] at h2'
     rw [Matrix.submatrix_map, h2']
@@ -104,5 +103,15 @@ theorem checkRank_sound_map {S : Type v} [CommRing R] [CommRing S] [IsDomain S] 
     rw [Matrix.submatrix_map, Matrix.submatrix_map, ← h3']
     ext i j
     simp
+
+/-- A checked certificate determines `Matrix.rank` after any injective ring
+homomorphism into a domain. -/
+theorem checkRank_sound_map {S : Type v} [CommRing R] [CommRing S] [IsDomain S] [DecidableEq R]
+    (φ : R →+* S) (hφ : Function.Injective φ) {A : Hex.Matrix R n m}
+    {c : Hex.Matrix.RankCert R n m} (h : Hex.Matrix.checkRank A c = true) :
+    ((matrixEquiv A).map φ).rank = c.rank := by
+  apply checkRank_sound_at φ h
+  intro h0
+  exact ((checkRank_iff_matrixEquiv A c).mp h).1 (hφ (h0.trans (map_zero φ).symm))
 
 end HexMatrixMathlib

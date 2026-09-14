@@ -315,5 +315,41 @@ class CharPolyTests(unittest.TestCase):
         self.assertEqual(replies[2], {"ok": True, "result": self.records[0]["value"]})
 
 
+
+class GenericRankTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        path = ROOT / "conformance-fixtures/HexGenericRank/generic.jsonl"
+        cls.records = [json.loads(line) for line in path.read_text().splitlines()]
+
+    def select(self, base, modulus=0, case="characteristic-cancellation"):
+        return copy.deepcopy(next(r for r in self.records if
+            (r["base"], r["modulus"], r["case"]) == (base, modulus, case)))
+
+    def test_fraction_field_ranks(self):
+        for r in self.records:
+            with self.subTest(base=r["base"], arity=r["arity"], case=r["case"]):
+                self.assertEqual(evaluate(r), r["result"])
+
+    def test_characteristic_changes_rank(self):
+        self.assertEqual(evaluate(self.select("ZZ")), 3)
+        self.assertEqual(evaluate(self.select("GF", 2)), 2)
+        self.assertEqual(evaluate(self.select("GF", 3)), 3)
+        self.assertEqual(evaluate(self.select("GF", 3, "frobenius")), 1)
+
+    def test_reject_corrupt_certificate_metadata(self):
+        for key, value in (("denom", []), ("pivot_rows", [0, 0, 0]),
+                           ("pivot_cols", [0, 1, 3]), ("support", []),
+                           ("m", -1), ("n", True)):
+            r = self.select("ZZ")
+            r[key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                evaluate(r)
+
+    def test_denominator_sign_is_immaterial(self):
+        r = self.select("ZZ")
+        r["denom"] = [[exps, -c] for exps, c in r["denom"]]
+        self.assertEqual(evaluate(r), 3)
+
 if __name__ == "__main__":
     unittest.main()

@@ -133,6 +133,7 @@ VALID_FIXTURE_KINDS = frozenset(
         "matrix",
         "bareiss_carrier",
         "charpoly_carrier",
+        "generic_rank",
         "det",
         "ratmatrix",
         "fieldmatrix",
@@ -455,6 +456,26 @@ def _validate_fixture(record: dict[str, Any]) -> None:
         if not isinstance(rows, list) or len(rows) != record["n"] or any(
                 not isinstance(row, list) or len(row) != record["n"] for row in rows):
             raise FixtureError("matrix carrier rows must be square and match n")
+    elif kind == "generic_rank":
+        _exact_keys(record, {"kind", "lib", "case", "carrier", "base", "arity", "modulus",
+                             "n", "m", "matrix", "support", "pivot_rows", "pivot_cols",
+                             "denom", "result"}, kind)
+        if record["carrier"] != "mv" or record["base"] not in {"ZZ", "QQ", "GF"}:
+            raise FixtureError("invalid generic-rank coefficient domain")
+        if any(not _is_nat(record[k]) for k in ("arity", "modulus", "n", "m", "result")):
+            raise FixtureError("invalid generic-rank dimensions or result")
+        if record["arity"] == 0:
+            raise FixtureError("generic-rank arity must be positive")
+        for key in ("matrix", "support"):
+            rows = record[key]
+            if not isinstance(rows, list) or len(rows) != record["n"] or any(
+                    not isinstance(row, list) or len(row) != record["m"] for row in rows):
+                raise FixtureError(f"generic-rank {key} shape does not match dimensions")
+        if any(not _is_nat(x) for row in record["support"] for x in row):
+            raise FixtureError("generic-rank supports must be natural numbers")
+        for key in ("pivot_rows", "pivot_cols"):
+            if not isinstance(record[key], list) or not all(_is_nat(x) for x in record[key]):
+                raise FixtureError("generic-rank pivot indices must be natural-number lists")
     elif kind == "charpoly_carrier":
         if record.get("schema") != 1 or not _is_nat(record.get("n")):
             raise FixtureError("invalid charpoly_carrier schema or dimension")
