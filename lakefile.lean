@@ -300,6 +300,7 @@ lean_lib HexGraphIso where
 lean_lib HexGraphIsoMathlib where
 
 lean_lib HexCharPoly where
+  precompileModules := true
 
 lean_lib HexMinPoly where
 

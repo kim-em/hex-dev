@@ -65,8 +65,8 @@ example : True := by
   trivial
 ```
 
-`char_poly A` computes with compiled code and emits a fine-grained certificate
-that the kernel rechecks.  Bare `char_poly` closes a direct characteristic-
+`char_poly A` computes with compiled code and emits a packed integer-list
+certificate that the kernel checks once.  Bare `char_poly` closes a direct characteristic-
 polynomial equality in either orientation, while the tactic form with an
 argument introduces a `poly` let and `charPoly_eq` hypothesis.  The input,
 dimension, and any polynomial in a direct equality must be closed and
@@ -80,6 +80,45 @@ coefficient, and the closed forms in dimensions zero, one, and two.  The
 determinant correspondence and Cayley--Hamilton live in
 `hex-char-poly-mathlib`; the computational package deliberately has no
 determinant dependency.
+
+## Kernel certificate
+
+`HexCharPoly/Kernel.lean` owns `CharPolyKernel.Witness`,
+`checkCharPolyList`, the producer `produce`, and the core soundness theorem
+`charPoly_eq_of_checkList`. The witness carries each step's Toeplitz column,
+intermediate moment vectors, descending coefficients, full convolution
+products, and cached packed block columns as lists of integers. `produce` obtains these values from the existing
+Berkowitz computation; the elaborator rechecks the result with compiled code
+before emitting a proof. The library precompiles its modules so the producer
+runs as native code when the frontend imports it.
+
+For a block `B` and moment vector `w`, pack each column of `B` in balanced
+base `2^K`. The identity `B * w = next` becomes one dot product of `w` with
+those packed columns, compared with the packed output vector. Each block's
+packed columns are checked once before its moment loop. For the Toeplitz
+step, the witness supplies the full convolution of the previous coefficient
+list with the new column. One packed integer multiplication checks this full
+product, and its first `k + 2` entries are checked against the next coefficient
+list. The unused high coefficients are also bounded and verified; this avoids
+an unchecked truncation or carry assumption. Scalar moments still use list dot
+products. Packing uses structural recursion and `Int.shiftLeft`, whose equality
+to multiplication by `2^K` is proved before applying digit injectivity.
+
+The witness supplies an absolute bound `b` and width `K`. The checker verifies
+all packed operand and output bounds and `2 * ((n + 1) * b^2 + b) < 2^K`.
+`Hex.Internal.packDigits_inj` then recovers each output entry from the packed
+identity: a sum of at most `n + 1` products has absolute value at most
+`(n + 1) * b^2`. Shapes, coefficient lists, and the complete trailing-block
+recursion are checked independently; no unproved property of the producer is
+needed for soundness.
+
+The arithmetic checker uses exposed structural recursion over lists and direct
+integer arithmetic. Matrix interpretation and coefficient reversal occur at
+the soundness boundary. The frontend adds the Boolean proof with synchronous
+`mkAuxLemma`, without an elaborator-side evaluation of that proof, and uses the
+resulting constant thereafter. Missing evaluation capabilities are `declined`;
+a producer recheck or kernel rejection is `failure`. A wrong requested
+polynomial is reported before certificate proofs are built.
 
 ## Supported coefficient carriers
 

@@ -21,7 +21,7 @@ their library structure and their kernel-replay proof strategy do not.
 |---|---|---|---|---|
 | `rank` | `A.rank = r`, `A.rank ≤ r`, `r ≤ A.rank` | `hex-rank`: `RankWitness`, `checkRankList`, `rankWitness` | `hex-rank-mathlib`: `rank_eq_of_checkList`, `HexRankMathlib/Tactic.lean` | shipped (https://github.com/kim-em/hex-dev/pull/10207) |
 | `det` | `A.det = d` | `hex-bareiss`: `DetWitness`, `checkDetList`, `checkDetRat`, `detWitness` | `hex-bareiss-mathlib`: `det_eq_of_checkList`, `det_eq_of_checkRat`, `HexBareissMathlib/Tactic.lean` (`det`, `det%`, `hex_norm_det`) | shipped (https://github.com/kim-em/hex-dev/pull/10224); see [The determinant certificate](#the-determinant-certificate) |
-| `char_poly` | `A.charpoly = p` | `hex-char-poly`: the Berkowitz certificate, in kernel form | `hex-char-poly-mathlib` | frontend exists in `HexCharPoly`/`HexCharPolyMathlib`; kernel form and measurement to do: https://github.com/kim-em/hex-dev/issues/10212 |
+| `char_poly` | `A.charpoly = p` | `hex-char-poly`: the Berkowitz certificate, in kernel form | `hex-char-poly-mathlib` | packed list certificate and both frontends in `HexCharPoly`/`HexCharPolyMathlib`; measurements in `HexCharPolyMathlib/SPEC/hex-char-poly-mathlib.md` |
 | `rank`, symbolic entries | `A.rank = r` (conditional), `A.rank ≤ r`, generic rank of the reified matrix | `hex-generic-rank`: hex-rank's certificate at `MvPoly` | `hex-generic-rank-mathlib`: a second handler on the `rank` syntax kind; `checkRank_sound_at` | specified: [hex-generic-rank-mathlib](Libraries/hex-generic-rank-mathlib.md) |
 | `det`, symbolic entries | `A.det = e`, `e = A.det`, `det% A` (unconditional) | `hex-bareiss`: generic `detWitness`, `checkDetPolyList`, instantiated at polynomials by the companion | `hex-bareiss-mathlib`: `checkDetPolyList_sound`, second handler on the `det` syntax kind | specified: [Symbolic determinant](../HexBareissMathlib/SPEC/hex-bareiss-mathlib.md#symbolic-determinant) |
 | `rank_locus` | `A.rank < r ↔ ⋀ gᵢ = 0` as a hypothesis; `A.rank < r`, `A.rank ≤ r`, `r ≤ A.rank`, `A.rank = r` | `hex-determinantal-ideal`: `detIdealGens`, and its list form `detIdealGensList` | `hex-determinantal-ideal-mathlib`: `gens_vanish_iff_rank_lt`, `HexDeterminantalIdealMathlib/Tactic.lean`; default `r` from a hex-generic-rank-mathlib handler | specified: [hex-determinantal-ideal-mathlib §The `rank_locus` tactic](../HexDeterminantalIdealMathlib/SPEC/hex-determinantal-ideal-mathlib.md#the-rank_locus-tactic) |
@@ -242,11 +242,15 @@ superior" means both:
 The comparators are the unmodified pinned `eval_det`/`norm_det`
 (`Mathlib/Tactic/NormDet.lean`, Bird's algorithm with a certificate chain
 normalized by `ring`) for `det` and `eval_rank`/`norm_rank` for `rank`.
-Mathlib has no characteristic-polynomial tactic; `char_poly`'s bar is an
-absolute one, a kernel time on the `dense` ladder no worse than the shipped
-`rank` at the same size, and a paired comparison against `decide`-free
-elaboration of the same goal by `simp [Matrix.charpoly, …]` on the
-dimensions where that terminates.
+Mathlib has no characteristic-polynomial tactic. For `char_poly`, compare
+against Hex's existing frontend and the scalar list Berkowitz baseline on the
+same `dense` 4, 8, 16, 32 signed 8-bit inputs. The packed certificate should
+beat the existing frontend at each rung and clearly improve on the scalar
+checker at 16 and 32. Preregister external kernel targets (1 second at 16 and
+10 seconds at 32) and record any gap and the next optimization. A missed
+absolute target does not withhold this competitor-free tactic. Rank has a
+different arithmetic cost and is an informational comparator, not a timing
+threshold for characteristic polynomials.
 
 Fixture families (from the withdrawn SPEC, unchanged): `dense` (seeded
 full-rank square integer matrices, dimensions `2, 4, 8, 16, 32`, entry

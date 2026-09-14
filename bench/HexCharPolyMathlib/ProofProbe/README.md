@@ -1,4 +1,13 @@
-The proposed scalar list Berkowitz checker does not meet the issue's rank-relative performance bar in the measured prototype. This is a checker feasibility result, not a completed `char_poly` implementation or a proof that every possible Berkowitz encoding must fail.
+These probes compare the packed `char_poly` frontend with the frozen original
+frontend and the scalar list checker. `generate.py` uses identical signed
+8-bit matrices on the dense 4, 8, 16, 32 ladder. `packed-plan.json` records the
+schedule, kernel targets, baseline commit, and operational timeout;
+`compare.py` retains every completed sample and records timed-out arms.
+The shipping measurements are in `HexCharPolyMathlib/SPEC/hex-char-poly-mathlib.md`.
+
+The scalar study below is retained as baseline evidence. Its rank-relative
+threshold is superseded by comparison with Hex's own characteristic-polynomial
+implementations and explicit kernel targets.
 
 The prototype checks all `B * w = next` moment transitions, all scalar moments, Toeplitz columns and intermediate descending coefficient lists. Its arithmetic path is structural recursion over integer lists with direct `Int.mul`/`Int.add`; certificates contain precomputed literal vectors. It does not run `charPoly`, access `A i j`, or use `Vector`, `Fin`, `Array`, `Hex.Matrix`, or well-founded recursion during arithmetic checking. A single synchronous `mkAuxTheorem` checks each certificate, with no `Kernel.whnf` precheck. All checker proofs audit to `[propext]`. The Python generator's final coefficients agree with SymPy for all four dimensions.
 
@@ -27,7 +36,10 @@ recursion on the moment list.
 
 The scalar operation counts explain the widening gap. At trailing-block size `k`, moment verification costs `k³` multiplications and Toeplitz verification costs `(k+1)(k+4)/2`. Summed over `k=0,...,n-1`, that is 15,352 at n=16 and 252,528 at n=32. The shipped full-rank lower-bound checker performs `sum(j², j=1,...,n)`: 1,496 and 11,440, on small natural-number residues. A literal-layer bridge cannot remove these arithmetic checks.
 
-The correspondence theorem `equiv_charPoly` exists and the requested mathematics is sound; the measured conflict is between the prescribed scalar moment-vector certificate and the required timing bar. Completing frontend and soundness work around this prototype would still fail the acceptance condition. The directive needs to clarify whether it permits a different verification strategy (reducing the arithmetic checked) or intends a different performance threshold. No theorem has been weakened, and no `sorry` or axiom was added.
+The scalar measurements motivate packing the moment and Toeplitz products.
+The rank arm remains useful operation-count context and is not the current
+acceptance threshold. The scalar support sources and their exact measurement
+snapshots remain available for reproduction.
 
 Reproduce from the repository root:
 
@@ -48,3 +60,22 @@ and `Quoted` variants use `Support.lean`; the explicit-block variant uses
 profiles, source hashes, paired samples, and raw logs live in `evidence/`.
 The `.lean.txt` files there are exact snapshots of the measured support sources.
 Reproduction sources prepend copyright headers to those snapshots.
+
+To reproduce the three-arm comparison, prepare a detached checkout of the
+`baseline_commit` in `packed-plan.json`, install its dependencies, and build
+`HexCharPolyMathlib` there. Then, from the implementation checkout:
+
+```bash
+python3 bench/HexCharPolyMathlib/ProofProbe/generate.py
+lake build HexCharPolyMathlib HexCharPolyMathlib.ProofProbe.Support
+python3 bench/HexCharPolyMathlib/ProofProbe/compare.py .cache/char-poly-comparison --baseline-root /path/to/baseline
+```
+
+The runner copies only the generated `Dense*Original.lean` probes into the
+baseline checkout. It removes only the measured module's build artifacts to
+force each sample to be fresh. Both checkouts' imports must be built before
+measurement; the output directory must not already exist. All samples enable
+Lean's profiler. Each trial runs a packed/scalar pair and a packed/original
+pair at each dimension, reversing the order on alternating trials. A timeout
+censors that arm/dimension and skips its later pairs. The original frontend's
+size-32 timeout supplies an end-to-end bound, not an invented kernel time.

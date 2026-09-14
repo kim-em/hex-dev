@@ -42,3 +42,17 @@ example : True := by
 #check_failure char_poly (!![1] : Matrix (Fin 1) (Fin 1) Nat)
 
 end HexCharPolyMathlib.CharPolyElabTests
+
+namespace HexCharPolyMathlib.CharPolyElabTests
+
+theorem frontendAudit : dense.charpoly = Polynomial.X ^ 2 - 5 * Polynomial.X - 2 := by
+  char_poly
+
+noncomputable example : HexCharPolyMathlib.Certified dense := char_poly dense
+
+#print axioms frontendAudit
+#print axioms HexCharPolyMathlib.charpoly_eq_of_checkList
+
+#check_failure (char_poly : dense.charpoly = Polynomial.X ^ 2)
+
+end HexCharPolyMathlib.CharPolyElabTests

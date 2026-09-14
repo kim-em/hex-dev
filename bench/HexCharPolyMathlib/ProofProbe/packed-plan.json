@@ -1,0 +1,25 @@
+{
+  "baseline_commit": "af6711c95e4890bf410c8c036461d800515e74e8",
+  "dimensions": [
+    4,
+    8,
+    16,
+    32
+  ],
+  "generator": "random.Random(10212 + n); randrange(-128, 128)",
+  "arms": [
+    "existing",
+    "scalar",
+    "packed"
+  ],
+  "kernel_targets_seconds": {
+    "16": 1,
+    "32": 10
+  },
+  "operational_timeout_seconds": 300,
+  "paired_trials": 6,
+  "schedule": "trial-major, adjacent arm pairs with alternating AB/BA order",
+  "policy": "Retain all completed samples and timeouts; unmet targets are documented rather than blocking publication.",
+  "timeout_policy": "Record the first timeout for an arm/dimension and skip its later pairs; never discard a completed sample.",
+  "profiling": "All paired samples use Lean profiler; kernel_s is the reported type checking total."
+}

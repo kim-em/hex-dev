@@ -69,6 +69,11 @@ def generate():
                   f'theorem result : Matrix.rank (R := ℤ) {matrix_literal} = {n} := by rank\n'
                   '#print axioms result\n')
         (ROOT / f'Dense{n}Rank.lean').write_text(source)
+        for arm in ['Original', 'Packed']:
+            source = ('import HexCharPolyMathlib\n' + options +
+                      f'noncomputable def result := char_poly ({matrix_literal} : '
+                      f'Matrix (Fin {n}) (Fin {n}) Int)\n#print axioms result\n')
+            (ROOT / f'Dense{n}{arm}.lean').write_text(source)
     for src, dst in [('Dense16Quoted', 'Dense16Candidate'), ('Dense16Rank', 'Dense16Reference')]:
         source = (ROOT / (src + '.lean')).read_text()
         source = ''.join(line for line in source.splitlines(keepends=True)
