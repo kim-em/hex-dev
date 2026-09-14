@@ -19,13 +19,11 @@ Dependencies: `HexPolyDet`, `HexBareissMathlib`, `HexReflect`,
 not `correspondence_only`, since it implements a handler and owns proof
 probes.
 
-## Three decisions that differ from the first draft
+## Input and dispatch
 
 - **Any commutative ring as the target.** Determinant transport is
   `RingHom.map_det`, which needs no injectivity, so the user's carrier `F`
-  is any `CommRing`; the `CharZero` requirement of the first draft was
-  copied from the rank arm, where injectivity matters for the generic-rank
-  statement, and is dropped. With integer coefficients the arm is sound
+  is any `CommRing`; `CharZero` is unnecessary for this transport. With integer coefficients the arm is sound
   over every commutative ring and complete over rings without additive
   torsion; in characteristic `p` a true goal can be declined when `d` and
   the target agree only modulo `p`, which the residue provider and the
@@ -374,7 +372,7 @@ Existing declarations used by this design:
 |---|---|
 | `Hex.Matrix.DetWitness`, `checkDetList`, `checkDetRat`, `detWitness` | `HexBareiss/Kernel.lean` (integer witness and producer today) |
 | `HexMatrixMathlib.det_eq_of_checkList`, `det_eq_of_checkRat` | `HexBareissMathlib/Kernel.lean` |
-| `Hex.norm_det` (to be renamed from `hex_norm_det`), `det` and `det%` syntax | `HexBareissMathlib/Tactic.lean` |
+| `Hex.norm_det`, `det` and `det%` syntax | `HexBareissMathlib/Tactic.lean` |
 | `HexMatrixMathlib.Certified` | `HexMatrixMathlib/Literal.lean` |
 | `HexMvPolyMathlib.eval₂MathlibHom`, `eval₂MathlibHom_apply` | `HexMvPolyMathlib/Aeval.lean` |
 | `HexMatrixMathlib.det_eq` | `HexDeterminantMathlib/CoreTransport.lean` |
@@ -390,7 +388,7 @@ The domain proof additionally uses `HexMvPolyMathlib.equiv` and
 
 `checkDetPolyList`, `checkDetPolyList_sound`, the polynomial generalisation
 of `detWitness`, and the canonical list layer's `beq_iff`/denotation API
-are proposed obligations. The checker stays Mathlib-free in hex-bareiss,
+are implemented. The checker stays Mathlib-free in hex-bareiss,
 its `MvPoly` instantiation in hex-poly-det, and its determinant soundness
 in this library.
 
@@ -414,3 +412,34 @@ HexPolyDetMathlib.lean
     done_through: 0
     status: planned
 ```
+
+## Implementation and verification
+
+The executable instantiation is `HexPolyDet/Basic.lean`; the companion separates
+`Sound.lean`, `Scaling.lean`, `Normalize.lean`, `Frontend.lean`, `Small.lean`, and
+`Tactic.lean`. Integer polynomial certificates transport to any `CommRing`.
+The proved denominator-normalisation frontend currently operates on `Rat`;
+divisions over other carriers remain eligible atoms. The reduced-Nat residue
+adapter remains a documented non-test pending #10257; `Decode` supplies its
+validity, arithmetic, equality and domain-transport contract.
+
+Producer-side grevlex terms are converted to canonical list order by merge sort.
+Generated value expressions use balanced sums, and entry identification uses
+direct list denotation, avoiding a round trip through the Hex matrix data.
+The term form does not replay a reflexive comparison of its own value list.
+
+Limits are 16 rows, 65,536 certificate terms, 100,000 intermediate terms and
+source nodes, 4,096 coefficient bits, exponent 64, and 1,000,000 proof nodes.
+The manifest preregisters 45-second cleanup/proof ceilings and six samples per
+arm. The main 2/4/8 ladder contains 48 feasible dense combinations and 33
+infeasible combinations; separate 3×3 cases measure the closed-form route.
+Dense rows are scaled copies of seeded integer rows, so entries within one row
+share a polynomial. This correlation is part of the measured input family.
+
+`HexPolyDetMathlib.Tests` includes certificate-only tests beyond the small route,
+nonconstant exact division, rational scaling, singularity, local let bindings,
+composite-characteristic targets, and term forms. Its axiom audits include
+integer, rational, singular and term-form proofs. Heavy fresh-module probes
+belong to the manual sweep; merge-gating CI builds the bounded regression tests.
+The symbolic simproc remains opt-in until the recorded sweep establishes a
+smaller median for a size regime; no default integration is claimed here.

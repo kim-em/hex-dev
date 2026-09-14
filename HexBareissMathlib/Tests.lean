@@ -104,10 +104,10 @@ example : (det% (!![1 / 2, -1; 3, 5 / 3] : Matrix (Fin 2) (Fin 2) ℚ)).value = 
 
 -- the simp set; symbolic entries and other carriers go through `norm_det`, which
 -- normalizes the determinant as `eval_det` does and leaves the rest to `ring`
-example : Matrix.det (R := ℤ) !![1, 2; 3, 4] = -2 := by simp only [hex_norm_det]
-example : Matrix.det (R := ℚ) !![1 / 2, -1; 3, 5 / 3] = 23 / 6 := by simp only [hex_norm_det]
+example : Matrix.det (R := ℤ) !![1, 2; 3, 4] = -2 := by simp only [Hex.norm_det]
+example : Matrix.det (R := ℚ) !![1 / 2, -1; 3, 5 / 3] = 23 / 6 := by simp only [Hex.norm_det]
 example (a b c d : ℤ) : Matrix.det !![a, b; c, d] = a * d - b * c := by
-  simp only [hex_norm_det]
+  simp only [Hex.norm_det]
   ring
 example (a b c d : ℤ) : Matrix.det !![a, b; c, d] = a * d - b * c := by
   det
@@ -190,7 +190,7 @@ run_cmd do
   let handlers := (tacticElabAttribute.getEntries (← getEnv)
     ``HexMatrixMathlib.Det.detTac).map (·.declName)
   unless handlers ==
-      [``HexMatrixMathlib.Det.evalDetTac, ``HexMatrixMathlib.Det.evalSymbolicDet, ``HexMatrixMathlib.Det.detFallback] do
+      [``HexMatrixMathlib.Det.evalDetTac, ``HexMatrixMathlib.Det.detFallback] do
     throwError "unexpected shipped det handler order: {handlers}"
 
 /-! Numeric delegation must be tested with the numeric handler first. A stub
@@ -210,7 +210,7 @@ run_cmd do
     ``HexMatrixMathlib.Det.detTac).map (·.declName)
   unless handlers ==
       [``HexMatrixMathlib.Det.evalDetTac, ``detStub,
-        ``HexMatrixMathlib.Det.evalDetTac, ``HexMatrixMathlib.Det.evalSymbolicDet, ``HexMatrixMathlib.Det.detFallback] do
+        ``HexMatrixMathlib.Det.evalDetTac, ``HexMatrixMathlib.Det.detFallback] do
     throwError "unexpected det handler order: {handlers}"
 
 /-- info: det stub -/

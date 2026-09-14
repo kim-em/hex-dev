@@ -15,14 +15,14 @@ from pathlib import Path
 import random
 
 ROOT = Path(__file__).resolve().parents[2]
-DEST = ROOT / 'bench/HexBareissMathlib/ProofProbe/Symbolic'
+DEST = ROOT / 'bench/HexPolyDetMathlib/ProofProbe'
 HEADER = '''/-
 Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 '''
-PREFIX = 'HexBareissMathlib.ProofProbe.Symbolic'
+PREFIX = 'HexPolyDetMathlib.ProofProbe'
 
 
 def determinant(a):
@@ -89,15 +89,15 @@ def write_case(stem, metadata, a, rhs, k, carrier='Int', support_import=False):
     binders = f'({params} : {carrier})' if params else ''
     target = f'Matrix.det (R := {carrier}) {literal(a)} = {rhs}'
     for arm in ['Hex', 'Mathlib']:
-        imp = 'HexBareissMathlib.Tactic' if arm == 'Hex' else 'Mathlib.Tactic.NormDet'
-        options = 'set_option hex.det.symbolic true\n' if arm == 'Hex' else ''
+        imp = 'HexPolyDetMathlib.Tactic' if arm == 'Hex' else 'Mathlib.Tactic.NormDet'
+        options = ''
         tactic = 'det' if arm == 'Hex' else 'simp only [norm_det] <;> ring'
         body = f'''{HEADER}import {imp}
 {extras}
 {options}set_option maxHeartbeats 0
 set_option maxRecDepth 100000
 
--- Computational performance owner: HexBareiss.
+-- Computational performance owner: HexPolyDet.
 theorem result {binders} : {target} := by
   {tactic}
 
@@ -120,16 +120,22 @@ def main():
         a, rhs = dense(n, k, d, s)
         stem = f'N{n}K{k}D{d}S{s}'
         cases.append(write_case(stem, meta, a, rhs, k))
-    for n in [2, 4, 8]:
+    for k, d, support in [(1, 1, 1), (2, 2, 4), (4, 4, 16)]:
+        a, rhs = dense(3, k, d, support)
+        cases.append(write_case(f'N3K{k}D{d}S{support}',
+            dict(family='dense-row-scaled', dimension=3, variables=k, degree=d, support=support), a, rhs, k))
+    for n in [2, 3, 4, 8]:
         a, rhs = dense(n, 2, 2, 4, rational=True)
         cases.append(write_case(f'Rational{n}', dict(family='rational', dimension=n, degree=2, support=4), a, rhs, 2, 'Rat'))
         a, rhs = dense(n, 2, 1, 1)
         a[-1] = a[0][:]
         cases.append(write_case(f'Singular{n}', dict(family='singular', dimension=n, degree=1, support=1), a, '0', 2))
         a = [['0' for _ in range(n)] for _ in range(n)]
-        for i in range(0, n, 2):
+        for i in range(0, n - 1, 2):
             a[i][i:i+2] = ['ClosedAlgebraic.α', '1']
             a[i+1][i:i+2] = ['2', 'ClosedAlgebraic.α']
+        if n % 2:
+            a[-1][-1] = '1'
         cases.append(write_case(f'Algebraic{n}', dict(family='closed-algebraic', dimension=n, degree=1, support=1),
                                 a, f'(ClosedAlgebraic.α ^ 2 - 2) ^ {n // 2}', 0, 'ClosedAlgebraic.K', True))
     a, rhs = dense(4, 2, 2, 4)
@@ -149,12 +155,12 @@ theorem square : α ^ 2 = 2 := by
   rfl
 end ClosedAlgebraic
 ''')
-    for arm, imp in [('Hex', 'HexBareissMathlib.Tactic'), ('Mathlib', 'Mathlib.Tactic.NormDet')]:
+    for arm, imp in [('Hex', 'HexPolyDetMathlib.Tactic'), ('Mathlib', 'Mathlib.Tactic.NormDet')]:
         (DEST / f'{arm}Baseline.lean').write_text(HEADER + f'import {imp}\n')
         (DEST / f'{arm}AlgebraicBaseline.lean').write_text(HEADER + f'import {imp}\nimport {PREFIX}.AlgebraicSupport\n')
     # A scope probe measures the failed composed attempt before using the relation.
-    for arm, imp in [('Hex', 'HexBareissMathlib.Tactic'), ('Mathlib', 'Mathlib.Tactic.NormDet')]:
-        options = 'set_option hex.det.symbolic true\n' if arm == 'Hex' else ''
+    for arm, imp in [('Hex', 'HexPolyDetMathlib.Tactic'), ('Mathlib', 'Mathlib.Tactic.NormDet')]:
+        options = ''
         attempt = 'det' if arm == 'Hex' else 'simp only [norm_det] <;> ring'
         (DEST / f'AlgebraicScope{arm}.lean').write_text(HEADER + f"""import {imp}
 import {PREFIX}.AlgebraicSupport
@@ -180,14 +186,14 @@ theorem result (x : Int) (hx : x = 1) : Matrix.det !![x, 1; 1, x] = 0 := by
               dict(stem='Valuation', family='valuation', dimension=2, atoms=1,
                    cleanup_timeout_seconds=45, proof_build_ceiling_ms=45000, samples=6)]
     manifest = dict(schema='hex-symbolic-det-probes-v1', cases=cases, infeasible=infeasible,
-                    description=__doc__, default_symbolic_enabled=False,
+                    description=__doc__, default_simproc_enabled=False, small_formula_dimension=3,
                     limits=dict(dimension=16, certificate_terms=65536, coefficient_bits=4096,
                                 source_nodes=100000, proof_nodes=1000000),
-                    profile_cases=['N2K1D1S1', 'N4K2D2S4', 'N8K4D4S16', 'Rational4', 'Singular4', 'Algebraic4', 'Swaps', 'Tridiagonal', 'Valuation', 'AlgebraicScope'])
+                    profile_cases=['N2K1D1S1', 'N3K2D2S4', 'N4K2D2S4', 'N8K4D4S16', 'Rational4', 'Singular4', 'Algebraic4', 'Swaps', 'Tridiagonal', 'Valuation', 'AlgebraicScope'])
     for stem in manifest['profile_cases']:
         source = (DEST / f'{stem}Hex.lean').read_text()
-        source = source.replace('set_option hex.det.symbolic true',
-            'set_option hex.det.symbolic true\nset_option profiler true\nset_option profiler.threshold 0\nset_option trace.HexMatrix.certificate true')
+        source = source.replace('theorem result',
+            'set_option profiler true\nset_option profiler.threshold 0\nset_option trace.HexMatrix.certificate true\n\ntheorem result')
         (DEST / f'{stem}Profile.lean').write_text(source)
     (ROOT / 'scripts/bench/det_symbolic_manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
     print(f'{len(cases)} feasible probes; {len(infeasible)} infeasible parameter combinations')

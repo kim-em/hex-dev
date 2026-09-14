@@ -49,9 +49,9 @@ class Carrier:
 
     def __init__(self, record):
         self.name = record["carrier"]
-        if self.name not in {"rat", "mod", "dense_rat", "dense_mod", "zpoly", "mv_int", "mv_rat"}:
+        if self.name not in {"rat", "mod", "dense_rat", "dense_mod", "zpoly", "mv_int", "mv_rat", "mv_mod"}:
             raise ValueError(f"unknown carrier {self.name!r}")
-        self.modular = self.name in {"mod", "dense_mod"}
+        self.modular = self.name in {"mod", "dense_mod", "mv_mod"}
         self.rational = self.name in {"rat", "dense_rat", "mv_rat"}
         self.scalar = self.name in {"rat", "mod"}
         self.dense = self.name in {"dense_rat", "dense_mod", "zpoly"}
@@ -145,6 +145,16 @@ def bareiss(record):
     if carrier.name == "mod":
         return int(nmod_mat(n, n, entries, carrier.p).det())
     return carrier.encode(Matrix(n, n, entries).det(method="berkowitz"))
+
+
+def poly_det(record):
+    if record.get("carrier") not in {"mv_int", "mv_rat", "mv_mod"}:
+        raise ValueError("polynomial determinant requires a polynomial carrier")
+    if record.get("checked") is not True:
+        raise ValueError("producer certificate failed its compiled check")
+    if record.get("entry_support") != [[len(p) for p in row] for row in record["rows"]]:
+        raise ValueError("incorrect realized entry support")
+    return bareiss(record)
 
 
 @lru_cache(None)
@@ -396,7 +406,7 @@ def generic_rank(record):
 
 
 # Each library uses an independent algorithm and a disjoint record kind.
-HANDLERS = {"det": determinant, "bareiss_carrier": bareiss, "charpoly_carrier": charpoly,
+HANDLERS = {"poly_det": poly_det, "det": determinant, "bareiss_carrier": bareiss, "charpoly_carrier": charpoly,
             "generic_rank": generic_rank}
 
 

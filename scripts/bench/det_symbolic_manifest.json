@@ -626,6 +626,45 @@
       "samples": 6
     },
     {
+      "family": "dense-row-scaled",
+      "dimension": 3,
+      "variables": 1,
+      "degree": 1,
+      "support": 1,
+      "stem": "N3K1D1S1",
+      "atoms": 1,
+      "carrier": "Int",
+      "cleanup_timeout_seconds": 45,
+      "proof_build_ceiling_ms": 45000,
+      "samples": 6
+    },
+    {
+      "family": "dense-row-scaled",
+      "dimension": 3,
+      "variables": 2,
+      "degree": 2,
+      "support": 4,
+      "stem": "N3K2D2S4",
+      "atoms": 2,
+      "carrier": "Int",
+      "cleanup_timeout_seconds": 45,
+      "proof_build_ceiling_ms": 45000,
+      "samples": 6
+    },
+    {
+      "family": "dense-row-scaled",
+      "dimension": 3,
+      "variables": 4,
+      "degree": 4,
+      "support": 16,
+      "stem": "N3K4D4S16",
+      "atoms": 4,
+      "carrier": "Int",
+      "cleanup_timeout_seconds": 45,
+      "proof_build_ceiling_ms": 45000,
+      "samples": 6
+    },
+    {
       "family": "rational",
       "dimension": 2,
       "degree": 2,
@@ -655,6 +694,42 @@
       "degree": 1,
       "support": 1,
       "stem": "Algebraic2",
+      "atoms": 1,
+      "carrier": "ClosedAlgebraic.K",
+      "cleanup_timeout_seconds": 45,
+      "proof_build_ceiling_ms": 45000,
+      "samples": 6
+    },
+    {
+      "family": "rational",
+      "dimension": 3,
+      "degree": 2,
+      "support": 4,
+      "stem": "Rational3",
+      "atoms": 2,
+      "carrier": "Rat",
+      "cleanup_timeout_seconds": 45,
+      "proof_build_ceiling_ms": 45000,
+      "samples": 6
+    },
+    {
+      "family": "singular",
+      "dimension": 3,
+      "degree": 1,
+      "support": 1,
+      "stem": "Singular3",
+      "atoms": 2,
+      "carrier": "Int",
+      "cleanup_timeout_seconds": 45,
+      "proof_build_ceiling_ms": 45000,
+      "samples": 6
+    },
+    {
+      "family": "closed-algebraic",
+      "dimension": 3,
+      "degree": 1,
+      "support": 1,
+      "stem": "Algebraic3",
       "atoms": 1,
       "carrier": "ClosedAlgebraic.K",
       "cleanup_timeout_seconds": 45,
@@ -1040,7 +1115,8 @@
     }
   ],
   "description": "Generate the preregistered symbolic determinant ladder and its identical targets.\n\nThe dense ladder scales the rows of seeded dense integer matrices by sparse\npolynomials. This controls entry degree/support without requiring the generator\nto expand determinants. The report must retain this correlation between entries.\nThe 2x2, four-atom, linear monomial case uses four independent entries instead.\n",
-  "default_symbolic_enabled": false,
+  "default_simproc_enabled": false,
+  "small_formula_dimension": 3,
   "limits": {
     "dimension": 16,
     "certificate_terms": 65536,
@@ -1050,6 +1126,7 @@
   },
   "profile_cases": [
     "N2K1D1S1",
+    "N3K2D2S4",
     "N4K2D2S4",
     "N8K4D4S16",
     "Rational4",

@@ -56,12 +56,12 @@ def main():
     manifest = json.loads(MANIFEST.read_text())
     cases = [c for c in manifest['cases'] if not args.case or c['stem'] in args.case]
     probe_pairs = tuple(p for c in cases for p in pairs(c))
-    spec = sweep.SweepSpec(__doc__, probe_pairs, 'HexBareissMathlibProofProbe',
+    spec = sweep.SweepSpec(__doc__, probe_pairs, 'HexPolyDetMathlibProofProbe',
                            'hex-symbolic-det-sweep-v1', 'paired-fresh-module-olean-wall',
                            'hex-symbolic-det', required_samples=6, absolute_only=True,
                            extra_sources=(Path('scripts/bench/det_symbolic_manifest.json'),
                                           Path('scripts/bench/det_symbolic_probes.py'),
-                                          *(Path('bench/HexBareissMathlib/ProofProbe/Symbolic') / f'{s}Profile.lean'
+                                          *(Path('bench/HexPolyDetMathlib/ProofProbe') / f'{s}Profile.lean'
                                             for s in manifest['profile_cases'])))
     sweep.validate_spec(spec)
     cpu, lease = cpu_lease()
@@ -99,6 +99,7 @@ def main():
         record = dict(schema=spec.schema, manifest=manifest, environment=env,
                       cpu=cpu, topology=topology, source_hashes=source_hashes,
                       sources_unchanged=unchanged, measurement_complete=complete,
+                      schedule_complete=len(records) == len(cases) * 12,
                       provenance_issues=provenance_issues,
                       subset=bool(args.case), samples=records, profiles=profiles, summary=summary,
                       shipping_bar_met=(complete and unchanged and not args.case and
