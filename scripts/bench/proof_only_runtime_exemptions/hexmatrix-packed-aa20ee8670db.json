@@ -1,6 +1,6 @@
 {
   "path": "HexMatrix/Packed.lean",
   "baseline_blob": null,
-  "current_blob": "41d6aa89e5cae9f627c37dd2fc2e83db91bc7129",
+  "current_blob": "aa20ee8670db32387ef19fea806e1c1c51e13bdd",
   "reason": "Writes the per-term dot products dotNat and dotInt with List.rec directly, their structural forms attached by csimp equations, for the kernel certificate checkers of the rank and det tactics; nothing on the factorization path imports or calls the module, and no measured operation or branch of the factorization sweep changes."
 }

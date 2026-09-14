@@ -37,14 +37,16 @@ primitives; the soundness lemmas are in `HexMatrixMathlib.Packed`.
 
 namespace Hex.Matrix.Packed
 
-/-- Structural form of `dotNat`, the compiled implementation. -/
+/-- `dotNat` as recursive equations, the compiled implementation. -/
 @[expose] def dotNatImpl : List Nat → List Nat → Nat
   | a :: as, b :: bs => Nat.add (Nat.mul a b) (dotNatImpl as bs)
   | _, _ => 0
 
 /-- The dot product of two natural-number lists, stopping at the shorter.
-Written with `List.rec` directly: the kernel then evaluates one recursor
-step per term instead of the `brecOn` structure of a structural recursion. -/
+`List.rec` is applied directly instead of recursive equations elaborated
+through `List.brecOn`, whose `below` tuple the kernel would build and
+project at every term; `noncomputable` only suppresses compilation, and
+`dotNat_eq_impl` gives the compiler the equation form. -/
 @[expose] noncomputable def dotNat : List Nat → List Nat → Nat :=
   fun l₁ => List.rec (motive := fun _ => List Nat → Nat) (fun _ => 0)
     (fun a _ ih l₂ => match l₂ with
@@ -100,13 +102,13 @@ order, in `r` steps. -/
 entries. -/
 @[expose] def dotPacked (W r pb pc : Nat) : Nat := slot W r (Nat.mul pb pc)
 
-/-- Structural form of `dotInt`, the compiled implementation. -/
+/-- `dotInt` as recursive equations, the compiled implementation. -/
 @[expose] def dotIntImpl : List Int → List Int → Int
   | a :: as, b :: bs => Int.add (Int.mul a b) (dotIntImpl as bs)
   | _, _ => 0
 
 /-- The dot product of two integer lists, stopping at the shorter; `List.rec`
-directly, as `dotNat`. -/
+applied directly, as `dotNat`. -/
 @[expose] noncomputable def dotInt : List Int → List Int → Int :=
   fun l₁ => List.rec (motive := fun _ => List Int → Int) (fun _ => 0)
     (fun a _ ih l₂ => match l₂ with

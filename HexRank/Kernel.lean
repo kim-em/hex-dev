@@ -187,12 +187,12 @@ the kernel instead of `r` multiply-adds.  Exactness needs entries below
         lowerCheckPacked M W r bs cs
   | _, _ => false
 
-/-- Structural form of `scaleRow`, the compiled implementation. -/
+/-- `scaleRow` as recursive equations, the compiled implementation. -/
 @[expose] def scaleRowImpl (d : Int) : List Int → List Int
   | [] => []
   | a :: as => Int.mul d a :: scaleRowImpl d as
 
-/-- `d • a`; `List.rec` directly, as `Packed.dotInt`. -/
+/-- `d • a`; `List.rec` applied directly, as `Packed.dotInt`. -/
 @[expose] noncomputable def scaleRow (d : Int) : List Int → List Int :=
   List.rec (motive := fun _ => List Int) [] (fun a _ ih => Int.mul d a :: ih)
 
@@ -206,12 +206,13 @@ the kernel instead of `r` multiply-adds.  Exactness needs entries below
   | nil => rfl
   | cons x xs ih => simp [scaleRowImpl, ih]
 
-/-- Structural form of `addScaled`, the compiled implementation. -/
+/-- `addScaled` as recursive equations, the compiled implementation. -/
 @[expose] def addScaledImpl (z : Int) : List Int → List Int → List Int
   | p :: ps, a :: as => Int.add (Int.mul z p) a :: addScaledImpl z ps as
   | _, _ => []
 
-/-- `z • p + a`, stopping at the shorter list; `List.rec` directly, as `Packed.dotInt`. -/
+/-- `z • p + a`, stopping at the shorter list; `List.rec` applied directly, as
+`Packed.dotInt`. -/
 @[expose] noncomputable def addScaled (z : Int) : List Int → List Int → List Int :=
   fun l₁ => List.rec (motive := fun _ => List Int → List Int) (fun _ => [])
     (fun p _ ih l₂ => match l₂ with
