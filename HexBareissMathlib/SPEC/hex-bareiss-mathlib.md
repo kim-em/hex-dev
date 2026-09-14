@@ -732,12 +732,12 @@ the same certificate), is
 recorded by `scripts/bench/det_tactic_size_sweep.py` (profiler totals per
 file, imports excluded, the median of three runs per point with the range
 kept); the current record is
-`reports/bench-results/hex-bareiss-mathlib-tactic-size-bc80920326fc-chungus2.json`.
-`eval_det` reaches `n = 14` in every family (8.2, 8.3 and 8.2 s) and `det`
-reaches `n = 48` on the dense family (2.3 s, of which the kernel is
-1.5 s), `n = 48` on the singular family (1.2 s, kernel 0.4 s) and
+`reports/bench-results/hex-bareiss-mathlib-tactic-size-2232712e8c2f-chungus2.json`.
+`eval_det` reaches `n = 14` in every family (7.1, 8.2 and 8.3 s) and `det`
+reaches `n = 48` on the dense family (2.2 s, of which the kernel is
+1.4 s), `n = 48` on the singular family (1.2 s, kernel 0.3 s) and
 `n = 24`, the end of its ladder, on the 64-bit family (0.6 s, kernel
-0.4 s); `det -packing` reaches the same dimensions at 5.2, 1.2 and 0.7 s.
+0.4 s); `det -packing` reaches the same dimensions at 4.4, 1.2 and 0.7 s.
 The record is plotted by
 `scripts/plots/hex-bareiss-mathlib-tactic-size.py` to
 `reports/figures/hex-bareiss-mathlib-tactic-size.svg`.
@@ -746,22 +746,23 @@ Median kernel shares recorded by the same size sweep are:
 
 | family | `eval_det` | `det` | `det -packing` |
 |---|---|---|---|
-| dense `8 × 8`, 8-bit | 281 ms | 27 ms | 22 ms |
-| dense `12 × 12`, 8-bit | 1.77 s | 63 ms | 60 ms |
-| dense `14 × 14`, 8-bit | 3.42 s | 84 ms | 90 ms |
-| dense `16 × 16`, 8-bit | timeout | 109 ms | 138 ms |
-| dense `32 × 32`, 8-bit | timeout | 532 ms | 1.22 s |
-| dense `40 × 40`, 8-bit | timeout | 931 ms | 2.43 s |
-| singular `8 × 8` | 277 ms | 11 ms | 21 ms |
-| singular `16 × 16` | timeout | 34 ms | 34 ms |
-| singular `32 × 32` | timeout | 147 ms | 141 ms |
-| singular `48 × 48` | timeout | 378 ms | 366 ms |
-| dense `8 × 8`, 64-bit | 296 ms | 31 ms | 21 ms |
-| dense `16 × 16`, 64-bit | timeout | 137 ms | 131 ms |
-| dense `24 × 24`, 64-bit | timeout | 390 ms | 508 ms |
+| dense `8 × 8`, 8-bit | 250 ms | 28 ms | 18 ms |
+| dense `12 × 12`, 8-bit | 1.51 s | 54 ms | 44 ms |
+| dense `14 × 14`, 8-bit | 3.26 s | 74 ms | 66 ms |
+| dense `16 × 16`, 8-bit | timeout | 113 ms | 111 ms |
+| dense `32 × 32`, 8-bit | not run | 549 ms | 936 ms |
+| dense `40 × 40`, 8-bit | not run | 845 ms | 2.00 s |
+| singular `8 × 8` | 239 ms | 10 ms | 10 ms |
+| singular `16 × 16` | timeout | 31 ms | 30 ms |
+| singular `32 × 32` | not run | 146 ms | 140 ms |
+| singular `48 × 48` | not run | 335 ms | 333 ms |
+| dense `8 × 8`, 64-bit | 288 ms | 30 ms | 20 ms |
+| dense `16 × 16`, 64-bit | timeout | 133 ms | 124 ms |
+| dense `24 × 24`, 64-bit | not run | 396 ms | 423 ms |
 
-The timeout entries have no profiler breakdown because the corresponding
-proof exceeded the sweep's ten-second cap.
+A timeout entry has no profiler breakdown because the corresponding proof
+exceeded the sweep's ten-second cap, and a "not run" entry is a dimension
+the arm never reached because its family had already stopped.
 
 Determinants on `Hex.Matrix` inputs, finite and closed algebraic carriers
 and symbolic entries are out of scope here
