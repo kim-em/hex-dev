@@ -9,6 +9,14 @@ import HexPrimality.Curve25519Replay
 
 open Hex.Nat
 
+-- Kernel lookup must reject non-represented residues, composites, and primes
+-- outside the table; compiled lookup is separately covered by the same API.
+example : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 25, 57467, 99991, 99999, 100000, 100003].map
+    isTablePrime =
+    [false, false, true, true, false, true, false, true, false, false, true, false,
+      true, true, false, false, false] := by
+  decide +kernel
+
 /-- info: Try this:
   [apply] exact Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.small 7) (by decide +kernel)
 -/
@@ -61,6 +69,9 @@ private def curveInput : Nat := 2^255 - 19
 #guard primesBelow 4 == [2, 3]
 #guard primesBelow 5 == [2, 3]
 #guard primesBelow 6 == [2, 3, 5]
+#guard [0, 1, 63, 64, 65, 127, 128, 129].all fun count =>
+  bitsToListGo (2 ^ 130 - 1) 0 count == (List.range count).map numOfIndex
+#guard bitsToListGo (1 <<< 128) 127 3 == [numOfIndex 128]
 #guard (List.range 200).all fun n =>
   (primesBelow 200).contains n == isPrimeTrial n
 #guard (primesBelow 524288).length == 43390

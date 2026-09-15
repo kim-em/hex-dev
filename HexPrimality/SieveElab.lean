@@ -144,7 +144,12 @@ syntax (name := rebuildPrimeTable) "#rebuild_primeTable" num num num : command
       out := out ++ s!"-- #rebuild_primeTable {bound} {sqrtB} {batches}\n\n"
       let mut idx := 1
       for state in states do
-        out := out ++ s!"private def sieveState{idx} : Nat :=\n  {state}\n\n"
+        if idx == plan.length then
+          out := out ++ "/-- The final verified sieve state underlying the committed prime table. -/\n"
+          out := out ++ s!"@[expose] def primeBits : Nat :=\n  {state}\n\n"
+          out := out ++ s!"private abbrev sieveState{idx} : Nat := primeBits\n\n"
+        else
+          out := out ++ s!"private def sieveState{idx} : Nat :=\n  {state}\n\n"
         idx := idx + 1
       out := out ++ s!"private abbrev sieveStateFinal : Nat := \
         sieveState{plan.length}\n\n"

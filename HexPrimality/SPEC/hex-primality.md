@@ -743,6 +743,23 @@ theorem mem_primeTable_of_prime {n : Nat} (hp : Hex.Nat.Prime n)
 theorem isTablePrime_iff {n : Nat} : isTablePrime n = true ↔ n ∈ primeTable
 ```
 
+Kernel reduction of `isTablePrime` reads the corresponding bit of the
+committed, verified final sieve state, including the exceptional primes 2
+and 3 and a check that the input is represented at that index. This avoids
+reducing array indexing through the table's list representation at every
+small certificate leaf. An equality proved for all inputs supplies a
+`@[csimp]` replacement with the existing binary search at runtime. The
+committed prime table and sieve bound remain unchanged; exposing the final
+state requires no new generated table or primality assumption.
+
+Compiled `bitsToList` readback processes 64 candidate bits per extracted
+word. The structural one-bit scan remains its specification, with a
+`@[csimp]` equality proved for every bitset, starting index, and count. This
+reduces large-integer shifts from one per candidate to one per 64 candidates;
+it preserves the exact list and its order. `primesBelow`, Pollard p-minus-one,
+and ECM consequently retain the same search coverage and deterministic
+attempt schedules. The sieve itself is unchanged by this readback optimization.
+
 `primeTable_sorted` gives distinctness and is what the binary search
 needs; `isTablePrime_iff` is what lets a caller conclude anything from
 a lookup. `PrimeCert.small n` is accepted by `checkPrime` exactly when

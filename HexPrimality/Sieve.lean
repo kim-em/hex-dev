@@ -582,6 +582,90 @@ def bitsToListGo (state : Nat) : Nat → Nat → List Nat
         numOfIndex t :: bitsToListGo state (t + 1) fuel
       else bitsToListGo state (t + 1) fuel
 
+namespace Sieve
+
+/-- Read a bounded word, translating its bit indices to sieve indices. -/
+def readBits (word start : Nat) : Nat → Nat → List Nat
+  | _, 0 => []
+  | bit, fuel + 1 =>
+      if word.testBit bit then
+        numOfIndex (start + bit) :: readBits word start (bit + 1) fuel
+      else readBits word start (bit + 1) fuel
+
+private theorem readBits_eq (state start width : Nat) : ∀ bit fuel,
+    bit + fuel ≤ width →
+    readBits ((state >>> start) % 2 ^ width) start bit fuel =
+      bitsToListGo state (start + bit) fuel := by
+  intro bit fuel
+  induction fuel generalizing bit with
+  | zero => intro _; rfl
+  | succ fuel ih =>
+      intro h
+      have hb : bit < width := by omega
+      simp only [readBits, bitsToListGo, Nat.testBit_mod_two_pow,
+        Nat.testBit_shiftRight, decide_eq_true hb, Bool.true_and]
+      rw [ih (bit + 1) (by omega)]
+      simp only [Nat.add_assoc]
+
+private theorem bitsToListGo_add (state : Nat) : ∀ a start b,
+    bitsToListGo state start (a + b) =
+      bitsToListGo state start a ++ bitsToListGo state (start + a) b := by
+  intro a
+  induction a with
+  | zero => intros; simp [bitsToListGo]
+  | succ a ih =>
+      intro start b
+      rw [show a + 1 + b = (a + b) + 1 by omega]
+      simp only [bitsToListGo]
+      split <;> simp only [ih, List.cons_append, Nat.add_assoc, Nat.add_comm 1 a]
+
+/-- Read at most 64 bits per word. Each large-integer shift supplies a whole
+word, instead of copying the large integer once per candidate bit. -/
+def readChunks (state : Nat) : Nat → Nat → Nat → List Nat
+  | 0, _, _ => []
+  | fuel + 1, start, count =>
+      if count = 0 then [] else
+        let size := min 64 count
+        readBits ((state >>> start) % 2 ^ 64) start 0 size ++
+          readChunks state fuel (start + size) (count - size)
+
+private theorem readChunks_eq (state : Nat) : ∀ fuel start count,
+    count ≤ 64 * fuel → readChunks state fuel start count = bitsToListGo state start count := by
+  intro fuel
+  induction fuel with
+  | zero =>
+      intro start count h
+      have : count = 0 := by omega
+      subst count
+      rfl
+  | succ fuel ih =>
+      intro start count h
+      by_cases hc : count = 0
+      · subst count; simp [readChunks, bitsToListGo]
+      · rw [readChunks, ite_eq_right hc]
+        dsimp only
+        rw [readBits_eq state start 64 0 (min 64 count) (by omega),
+          Nat.add_zero, ih (start + min 64 count) (count - min 64 count) (by
+            rw [Nat.mul_succ] at h
+            omega), ← bitsToListGo_add]
+        congr 1
+        omega
+
+end Sieve
+
+/-- Compiled readback in 64-bit chunks, equal to the structural bit scan at
+every state, starting index, and length. -/
+def bitsToListFast (state start count : Nat) : List Nat :=
+  Sieve.readChunks state (count / 64 + 1) start count
+
+/-- Chunking changes only runtime readback, not its exact list or order. -/
+@[csimp]
+theorem bitsToListGo_eq_fast : @bitsToListGo = @bitsToListFast := by
+  funext state start count
+  symm
+  apply Sieve.readChunks_eq
+  omega
+
 /-- The represented values with set bits below `bound`, ascending,
 starting from index `1` (index `0` names the non-prime `1`). -/
 @[expose]

@@ -283,8 +283,9 @@ tag := "hex-primality-table"
 %%%
 
 A committed table of the 9,592 primes below `10^5` anchors the small
-end: membership is binary search, and both directions of correctness
-are proved against a kernel-replayed sieve run (the batched
+end: compiled membership uses binary search, while kernel replay reads a
+bit from the verified final sieve state. Both lookup paths are proved equal
+at every input. Both directions of correctness are proved against a kernel-replayed sieve run (the batched
 verification is regenerated, never hand-edited, via the
 `#rebuild_primeTable` command).
 
