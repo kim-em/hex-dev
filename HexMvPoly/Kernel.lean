@@ -21,8 +21,8 @@ traverses an `Array`, `Vector`, or `Fin`. Exponents are ordinary lists and
 terms are kept in descending lexicographic order. The coefficient operations
 are deliberately the ordinary operations on the representation type: at
 `Int` they reduce to `Int.add`, `Int.mul`, and `Int.neg`; `Rat` is already a
-reduced numerator--denominator representation; a residue provider may use its
-canonical `Nat` representative.
+reduced numerator--denominator representation. Positive-characteristic replay
+uses the modulus-parametrised natural-residue operations in `KernelResidue`.
 -/
 
 namespace Hex.MvPoly.Kernel

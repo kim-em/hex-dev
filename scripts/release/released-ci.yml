@@ -456,7 +456,7 @@ workflows:
           - name: Build bridge (Mathlib must come from cache, never rebuild)
             run: |
               set -o pipefail
-              lake build HexMvPolyMathlib 2>&1 | tee build.log
+              lake build HexMvPolyMathlib HexMvPolyMathlibTests 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
           - name: Save Lake build outputs
