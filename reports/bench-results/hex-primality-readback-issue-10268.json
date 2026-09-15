@@ -1,0 +1,26 @@
+{
+  "status": "ok",
+  "seconds": 1.8362833239953034,
+  "returncode": 0,
+  "load_before": [
+    58.86865234375,
+    58.4375,
+    50.3681640625
+  ],
+  "load_after": [
+    56.796875,
+    58.01513671875,
+    50.2744140625
+  ],
+  "stdout": "\u2139 [64/64] Built HexPrimality.ProofProbe.Curve25519.Readback (1.2s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Readback.lean:24:0: {\"count\":43388,\"last\":524287,\"nanos\":308009305,\"old\":true}\n{\"count\":43388,\"last\":524287,\"nanos\":67496657,\"old\":false}\n{\"count\":43388,\"last\":524287,\"nanos\":52411230,\"old\":false}\n{\"count\":43388,\"last\":524287,\"nanos\":322971469,\"old\":true}\nBuild completed successfully (64 jobs).\n",
+  "stderr": "",
+  "command": [
+    "lake",
+    "build",
+    "+HexPrimality.ProofProbe.Curve25519.Readback:olean"
+  ],
+  "cpu": 26,
+  "host": "chungus2",
+  "source": "module\npublic import HexPrimality.Sieve\npublic meta import HexPrimality.Sieve\npublic import Lean\npublic section\nnamespace Hex.PrimalityReadbackProbe\ndef oldScan (state : Nat) : Nat \u2192 Nat \u2192 List Nat\n  | _, 0 => []\n  | t, fuel + 1 =>\n      if state.testBit t then Hex.Nat.numOfIndex t :: oldScan state (t+1) fuel\n      else oldScan state (t+1) fuel\n\n@[noinline] def measure (old : Bool) (bound state : Nat) : IO Lean.Json := do\n  let input \u2190 IO.mkRef (bound, state)\n  let (bound, state) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let output \u2190 IO.mkRef (if old then oldScan state 1 (Hex.Nat.indexWidth bound - 1)\n    else Hex.Nat.bitsToList state bound)\n  let output \u2190 output.get\n  let stop \u2190 IO.monoNanosNow\n  return Lean.Json.mkObj [(\"old\", Lean.toJson old), (\"nanos\", Lean.toJson (stop-start)),\n    (\"count\", Lean.toJson output.length), (\"last\", Lean.toJson output.getLast?)]\n\n#eval show IO Unit from do\n  let bound \u2190 IO.mkRef (524289 : Nat)\n  let bound \u2190 bound.get\n  let state \u2190 IO.mkRef (Hex.Nat.sieve bound (bound.sqrt + 1))\n  let state \u2190 state.get\n  for block in [0:2] do\n    for old in (if block == 0 then [true, false] else [false, true]) do\n      let row \u2190 measure old bound state\n      IO.println row.compress\nend Hex.PrimalityReadbackProbe\n",
+  "protocol": "adjacent old/new arms, AB/BA; every completed sample retained"
+}

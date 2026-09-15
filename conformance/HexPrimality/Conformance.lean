@@ -692,8 +692,11 @@ def primeTable : Array Nat :=
 
 -- #rebuild_primeTable 25 5 1
 
-private def sieveState1 : Nat :=
+/-- The final verified sieve state underlying the committed prime table. -/
+@[expose] def primeBits : Nat :=
   254
+
+private abbrev sieveState1 : Nat := primeBits
 
 private abbrev sieveStateFinal : Nat := sieveState1
 

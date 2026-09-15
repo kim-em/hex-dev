@@ -44,7 +44,9 @@ def main() -> None:
         "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
         "diff_sha256": hashlib.sha256(subprocess.check_output(["git", "diff"], cwd=ROOT)).hexdigest(),
         "protocol": "adjacent arms, AB/BA alternating blocks; every completed sample retained",
-        "checker_changed": False,
+        "checker_source_sha256": {
+            name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest()
+            for name in ("HexPrimality/Cert.lean", "HexPrimality/Table.lean")},
         "certificates": {"reference": {"nonleaf_nodes": 5, "entries": 10},
                          "generated": {"nonleaf_nodes": 3, "entries": 8, "attempts": 29}},
         "samples": [],

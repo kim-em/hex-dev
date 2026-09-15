@@ -51,27 +51,27 @@ def main() -> None:
                             label=f'{label} ({len(points)}/{denominator})')
             for rank, (elapsed, name) in enumerate(points, 1):
                 if name == 'Curve25519':
-                    ax.annotate('25519', (rank, elapsed), xytext=(4, 7 if system == 'hex' else -14),
+                    offset = (9 if system == 'hex_complete' else -14) if phase == 'complete' else (7 if system == 'hex' else -14)
+                    ax.annotate('25519', (rank, elapsed), xytext=(4, offset),
                                 textcoords='offset points', fontsize=8, color=line.get_color())
-        if phase == 'kernel':
-            ax.axhline(data['timeout'], color='gray', linestyle=':', label=f"{data['timeout']:g}s process timeout")
         ax.set_yscale('log')
         ax.set_xlim(.5, denominator+.5)
         ax.set_xticks(range(1, denominator+1))
         ax.set_xlabel('Instances solved, sorted independently for each system')
         ax.set_ylabel('Median seconds per instance (log scale)')
         ax.set_title({'native': 'Native exact primality decisions',
-                      'kernel': 'Lean kernel-checked certificate replay (supplied literals)',
+                      'kernel': 'Supplied-certificate replay: fresh Lean builds',
                       'complete': 'Native decision and complete Lean proof'}[phase])
         ax.grid(True, which='both', alpha=.2)
         ax.legend(loc='best', fontsize=9)
         note = {'native': '12 fixed primes; input/imports excluded; two adjacent, reversed trials.',
-                'kernel': '8 fixed primes; fresh Lake builds; Hex Lean 4.34-rc2 / PrimeCert Lean 4.33.0.',
+                'kernel': f"8 fixed primes; {data['timeout']:g}s timeout; Hex Lean 4.34-rc2 / PrimeCert Lean 4.33.0.\n"
+                          'Includes imports, literal elaboration and kernel checking; excludes certificate search.',
                 'complete': '12 fixed primes. Native: no Lean proof or kernel replay; input/imports excluded.\n'
                             'Full proof: fresh Lake build including search, proof emission, imports and kernel replay.'}[phase]
         fig.text(.5, .025, note + '\nShared host; all completed samples retained. Missing/failed certificates are unsolved.',
                  ha='center', fontsize=8)
-        fig.tight_layout(rect=(0, .11 if phase == 'complete' else .075, 1, 1))
+        fig.tight_layout(rect=(0, .11 if phase in ('complete', 'kernel') else .075, 1, 1))
         for ext in ['svg', 'png']:
             output = args.out_dir/f'hex-primality-{phase}-cactus.{ext}'
             fig.savefig(output, dpi=160,

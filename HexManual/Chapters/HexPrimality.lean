@@ -164,11 +164,16 @@ enough factors of predecessors for Pocklington, rather than on bit length
 alone. The ordinary `primality` policy keeps its existing smaller budget.
 
 The Curve25519 result has three non-leaf certificate nodes and eight factor
-entries. The fixed-corpus comparison measured Curve25519 native decision at
-1.25 seconds and a fresh complete `primality?` build at 6.02 seconds, including
-Lake overhead and kernel replay. FLINT and PARI native decisions took
-22.6 and 53.6 milliseconds respectively. Earlier phase-separated samples on
-the shared host took 11–28 seconds for complete builds; all samples are
+entries. Kernel replay reads the already verified sieve bitset for table
+leaves, and compiled prime enumeration reads 64 candidate bits at a time.
+Both changes are proved equal to their original implementations.
+
+The fixed-corpus comparison measured Curve25519 native decision at
+0.64 seconds and a fresh complete `primality?` build from its numeral at
+1.63 seconds, including Lake overhead and kernel replay. Paired runs using
+the original `2 ^ 255 - 19` expression took 2.17–2.29 seconds, compared with
+7.01–10.41 seconds before these optimizations. FLINT and PARI native decisions
+took 20.1 and 44.3 milliseconds respectively. All completed samples are
 retained. These are host-specific observations, not latency guarantees. The
 [measurement report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-construction.md)
 records every sample, certificate sizes, and the comparison with the larger
@@ -285,7 +290,8 @@ tag := "hex-primality-table"
 A committed table of the 9,592 primes below `10^5` anchors the small
 end: compiled membership uses binary search, while kernel replay reads a
 bit from the verified final sieve state. Both lookup paths are proved equal
-at every input. Both directions of correctness are proved against a kernel-replayed sieve run (the batched
+at every input. Both directions of correctness are proved against a
+kernel-replayed sieve run (the batched
 verification is regenerated, never hand-edited, via the
 `#rebuild_primeTable` command).
 

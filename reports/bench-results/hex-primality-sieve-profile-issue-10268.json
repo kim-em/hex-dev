@@ -1,0 +1,25 @@
+{
+  "status": "ok",
+  "seconds": 1.6277909170021303,
+  "returncode": 0,
+  "load_before": [
+    69.61328125,
+    70.54150390625,
+    51.94482421875
+  ],
+  "load_after": [
+    66.52099609375,
+    69.884765625,
+    51.83203125
+  ],
+  "stdout": "\u2139 [64/64] Built HexPrimality.ProofProbe.Curve25519.SieveProfile (1.1s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/SieveProfile.lean:6:0: {\"block\":0,\"nanos\":3745,\"ok\":true,\"phase\":\"sieve\"}\n{\"block\":0,\"nanos\":272669094,\"ok\":true,\"phase\":\"readback\"}\n{\"block\":1,\"nanos\":286450067,\"ok\":true,\"phase\":\"readback\"}\n{\"block\":1,\"nanos\":3916,\"ok\":true,\"phase\":\"sieve\"}\nBuild completed successfully (64 jobs).\n",
+  "stderr": "",
+  "command": [
+    "lake",
+    "build",
+    "+HexPrimality.ProofProbe.Curve25519.SieveProfile:olean"
+  ],
+  "cpu": 28,
+  "source": "module\npublic import HexPrimality.Sieve\npublic meta import HexPrimality.Sieve\npublic import Lean\npublic section\n#eval show IO Unit from do\n  let input \u2190 IO.mkRef (524289 : Nat)\n  let bound \u2190 input.get\n  let state \u2190 IO.mkRef (Hex.Nat.sieve bound (bound.sqrt + 1))\n  let state \u2190 state.get\n  for block in [0:2] do\n    for phase in (if block == 0 then [true, false] else [false, true]) do\n      let start \u2190 IO.monoNanosNow\n      let ok \u2190 if phase then do\n        let output \u2190 IO.mkRef (Hex.Nat.sieve bound (bound.sqrt + 1))\n        let output \u2190 output.get\n        pure (output == state)\n      else do\n        let output \u2190 IO.mkRef (Hex.Nat.bitsToList state bound)\n        let output \u2190 output.get\n        pure (output.length == 43388)\n      let stop \u2190 IO.monoNanosNow\n      IO.println ((Lean.Json.mkObj [(\"block\", Lean.toJson block),\n        (\"phase\", Lean.toJson (if phase then \"sieve\" else \"readback\")),\n        (\"nanos\", Lean.toJson (stop - start)), (\"ok\", Lean.toJson ok)]).compress)\n",
+  "interpretation": "Readback timings are retained. Sieve timing is invalid: the repeated pure sieve expression was shared with the prepared state before the clock. These sieve rows are diagnostic only and are excluded from performance claims."
+}
