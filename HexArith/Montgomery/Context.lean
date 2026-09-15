@@ -1,9 +1,9 @@
 /-
 Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
-Copyright (c) 2022 Bhavik Mehta. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison, Bhavik Mehta
 
+Copyright (c) 2022 Bhavik Mehta. All rights reserved.
 The accumulator loop adapts PrimeCert/PowMod.lean. Its root license notice
 is retained here alongside the original file's Apache 2.0 notice:
 
