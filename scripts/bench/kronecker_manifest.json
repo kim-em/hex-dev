@@ -1,0 +1,946 @@
+{
+  "schema": "hex-kronecker-probes-v1",
+  "trials": 6,
+  "order": "adjacent AB/BA with adjacent import baselines",
+  "cases": [
+    {
+      "stem": "GridK1D2",
+      "family": "reflected-identities",
+      "atoms": 1,
+      "accepted": true,
+      "size": {
+        "degrees": [
+          2
+        ],
+        "strides": [
+          1
+        ],
+        "digits": 3,
+        "coefficientBound": 2,
+        "digitBits": 3,
+        "innerBits": 8,
+        "outerSlotBits": null,
+        "packedBits": 8,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 30,
+      "cleanup_timeout_seconds": 180,
+      "degree": 2
+    },
+    {
+      "stem": "GridK1D4",
+      "family": "reflected-identities",
+      "atoms": 1,
+      "accepted": true,
+      "size": {
+        "degrees": [
+          4
+        ],
+        "strides": [
+          1
+        ],
+        "digits": 5,
+        "coefficientBound": 2,
+        "digitBits": 3,
+        "innerBits": 14,
+        "outerSlotBits": null,
+        "packedBits": 14,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 30,
+      "cleanup_timeout_seconds": 180,
+      "degree": 4
+    },
+    {
+      "stem": "GridK1D8",
+      "family": "reflected-identities",
+      "atoms": 1,
+      "accepted": true,
+      "size": {
+        "degrees": [
+          8
+        ],
+        "strides": [
+          1
+        ],
+        "digits": 9,
+        "coefficientBound": 2,
+        "digitBits": 3,
+        "innerBits": 26,
+        "outerSlotBits": null,
+        "packedBits": 26,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 30,
+      "cleanup_timeout_seconds": 180,
+      "degree": 8
+    },
+    {
+      "stem": "GridK1D16",
+      "family": "reflected-identities",
+      "atoms": 1,
+      "accepted": true,
+      "size": {
+        "degrees": [
+          16
+        ],
+        "strides": [
+          1
+        ],
+        "digits": 17,
+        "coefficientBound": 2,
+        "digitBits": 3,
+        "innerBits": 50,
+        "outerSlotBits": null,
+        "packedBits": 50,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 30,
+      "cleanup_timeout_seconds": 180,
+      "degree": 16
+    },
+    {
+      "stem": "GridK2D2",
+      "family": "reflected-identities",
+      "atoms": 2,
+      "accepted": true,
+      "size": {
+        "degrees": [
+          2,
+          2
+        ],
+        "strides": [
+          1,
+          3
+        ],
+        "digits": 9,
+        "coefficientBound": 8,
+        "digitBits": 5,
+        "innerBits": 44,
+        "outerSlotBits": null,
+        "packedBits": 44,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 30,
+      "cleanup_timeout_seconds": 180,
+      "degree": 2
+    },
+    {
+      "stem": "GridK2D4",
+      "family": "reflected-identities",
+      "atoms": 2,
+      "accepted": true,
+      "size": {
+        "degrees": [
+          4,
+          4
+        ],
+        "strides": [
+          1,
+          5
+        ],
+        "digits": 25,
+        "coefficientBound": 32,
+        "digitBits": 7,
+        "innerBits": 174,
+        "outerSlotBits": null,
+        "packedBits": 174,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 30,
+      "cleanup_timeout_seconds": 180,
+      "degree": 4
+    },
+    {
+      "stem": "GridK2D8",
+      "family": "reflected-identities",
+      "atoms": 2,
+      "accepted": true,
+      "size": {
+        "degrees": [
+          8,
+          8
+        ],
+        "strides": [
+          1,
+          9
+        ],
+        "digits": 81,
+        "coefficientBound": 512,
+        "digitBits": 11,
+        "innerBits": 890,
+        "outerSlotBits": null,
+        "packedBits": 890,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 30,
+      "cleanup_timeout_seconds": 180,
+      "degree": 8
+    },
+    {
+      "stem": "GridK2D16",
+      "family": "reflected-identities",
+      "atoms": 2,
+      "accepted": true,
+      "size": {
+        "degrees": [
+          16,
+          16
+        ],
+        "strides": [
+          1,
+          17
+        ],
+        "digits": 289,
+        "coefficientBound": 131072,
+        "digitBits": 19,
+        "innerBits": 5490,
+        "outerSlotBits": null,
+        "packedBits": 5490,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 30,
+      "cleanup_timeout_seconds": 180,
+      "degree": 16
+    },
+    {
+      "stem": "GridK3D2",
+      "family": "reflected-identities",
+      "atoms": 3,
+      "accepted": true,
+      "size": {
+        "degrees": [
+          2,
+          2,
+          2
+        ],
+        "strides": [
+          1,
+          3,
+          9
+        ],
+        "digits": 27,
+        "coefficientBound": 18,
+        "digitBits": 6,
+        "innerBits": 161,
+        "outerSlotBits": null,
+        "packedBits": 161,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 30,
+      "cleanup_timeout_seconds": 180,
+      "degree": 2
+    },
+    {
+      "stem": "GridK3D4",
+      "family": "reflected-identities",
+      "atoms": 3,
+      "accepted": true,
+      "size": {
+        "degrees": [
+          4,
+          4,
+          4
+        ],
+        "strides": [
+          1,
+          5,
+          25
+        ],
+        "digits": 125,
+        "coefficientBound": 162,
+        "digitBits": 9,
+        "innerBits": 1124,
+        "outerSlotBits": null,
+        "packedBits": 1124,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 30,
+      "cleanup_timeout_seconds": 180,
+      "degree": 4
+    },
+    {
+      "stem": "GridK3D8",
+      "family": "reflected-identities",
+      "atoms": 3,
+      "accepted": true,
+      "size": {
+        "degrees": [
+          8,
+          8,
+          8
+        ],
+        "strides": [
+          1,
+          9,
+          81
+        ],
+        "digits": 729,
+        "coefficientBound": 13122,
+        "digitBits": 15,
+        "innerBits": 10934,
+        "outerSlotBits": null,
+        "packedBits": 10934,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 30,
+      "cleanup_timeout_seconds": 180,
+      "degree": 8
+    },
+    {
+      "stem": "GridK3D16",
+      "family": "reflected-identities",
+      "atoms": 3,
+      "accepted": true,
+      "size": {
+        "degrees": [
+          16,
+          16,
+          16
+        ],
+        "strides": [
+          1,
+          17,
+          289
+        ],
+        "digits": 4913,
+        "coefficientBound": 86093442,
+        "digitBits": 28,
+        "innerBits": 137563,
+        "outerSlotBits": null,
+        "packedBits": 137563,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 30,
+      "cleanup_timeout_seconds": 180,
+      "degree": 16
+    },
+    {
+      "stem": "GridK4D2",
+      "family": "reflected-identities",
+      "atoms": 4,
+      "accepted": true,
+      "size": {
+        "degrees": [
+          2,
+          2,
+          2,
+          2
+        ],
+        "strides": [
+          1,
+          3,
+          9,
+          27
+        ],
+        "digits": 81,
+        "coefficientBound": 32,
+        "digitBits": 7,
+        "innerBits": 566,
+        "outerSlotBits": null,
+        "packedBits": 566,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 30,
+      "cleanup_timeout_seconds": 180,
+      "degree": 2
+    },
+    {
+      "stem": "GridK4D4",
+      "family": "reflected-identities",
+      "atoms": 4,
+      "accepted": true,
+      "size": {
+        "degrees": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "strides": [
+          1,
+          5,
+          25,
+          125
+        ],
+        "digits": 625,
+        "coefficientBound": 512,
+        "digitBits": 11,
+        "innerBits": 6874,
+        "outerSlotBits": null,
+        "packedBits": 6874,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 30,
+      "cleanup_timeout_seconds": 180,
+      "degree": 4
+    },
+    {
+      "stem": "GridK4D8",
+      "family": "reflected-identities",
+      "atoms": 4,
+      "accepted": true,
+      "size": {
+        "degrees": [
+          8,
+          8,
+          8,
+          8
+        ],
+        "strides": [
+          1,
+          9,
+          81,
+          729
+        ],
+        "digits": 6561,
+        "coefficientBound": 131072,
+        "digitBits": 19,
+        "innerBits": 124658,
+        "outerSlotBits": null,
+        "packedBits": 124658,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 30,
+      "cleanup_timeout_seconds": 180,
+      "degree": 8
+    },
+    {
+      "stem": "GridK4D16",
+      "family": "reflected-identities",
+      "atoms": 4,
+      "accepted": false,
+      "size": {
+        "degrees": [
+          16,
+          16,
+          16,
+          16
+        ],
+        "strides": [
+          1,
+          17,
+          289,
+          4913
+        ],
+        "digits": 65537,
+        "coefficientBound": 8589934592,
+        "digitBits": 35,
+        "innerBits": 2923234,
+        "outerSlotBits": null,
+        "packedBits": 2923234,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 30,
+      "cleanup_timeout_seconds": 180,
+      "degree": 16
+    },
+    {
+      "stem": "GridK6D2",
+      "family": "reflected-identities",
+      "atoms": 6,
+      "accepted": true,
+      "size": {
+        "degrees": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        "strides": [
+          1,
+          3,
+          9,
+          27,
+          81,
+          243
+        ],
+        "digits": 729,
+        "coefficientBound": 72,
+        "digitBits": 8,
+        "innerBits": 5831,
+        "outerSlotBits": null,
+        "packedBits": 5831,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 30,
+      "cleanup_timeout_seconds": 180,
+      "degree": 2
+    },
+    {
+      "stem": "GridK6D4",
+      "family": "reflected-identities",
+      "atoms": 6,
+      "accepted": true,
+      "size": {
+        "degrees": [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4
+        ],
+        "strides": [
+          1,
+          5,
+          25,
+          125,
+          625,
+          3125
+        ],
+        "digits": 15625,
+        "coefficientBound": 2592,
+        "digitBits": 13,
+        "innerBits": 203124,
+        "outerSlotBits": null,
+        "packedBits": 203124,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 30,
+      "cleanup_timeout_seconds": 180,
+      "degree": 4
+    },
+    {
+      "stem": "GridK6D8",
+      "family": "reflected-identities",
+      "atoms": 6,
+      "accepted": false,
+      "size": {
+        "degrees": [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
+        ],
+        "strides": [
+          1,
+          9,
+          81,
+          729,
+          6561,
+          59049
+        ],
+        "digits": 65537,
+        "coefficientBound": 3359232,
+        "digitBits": 23,
+        "innerBits": 12223142,
+        "outerSlotBits": null,
+        "packedBits": 12223142,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 30,
+      "cleanup_timeout_seconds": 180,
+      "degree": 8
+    },
+    {
+      "stem": "GridK6D16",
+      "family": "reflected-identities",
+      "atoms": 6,
+      "accepted": false,
+      "size": {
+        "degrees": [
+          16,
+          16,
+          16,
+          16,
+          16,
+          16
+        ],
+        "strides": [
+          1,
+          17,
+          289,
+          4913,
+          83521,
+          1419857
+        ],
+        "digits": 65537,
+        "coefficientBound": 5642219814912,
+        "digitBits": 44,
+        "innerBits": 16777217,
+        "outerSlotBits": null,
+        "packedBits": 16777217,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 30,
+      "cleanup_timeout_seconds": 180,
+      "degree": 16
+    },
+    {
+      "stem": "GridK8D2",
+      "family": "reflected-identities",
+      "atoms": 8,
+      "accepted": true,
+      "size": {
+        "degrees": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        "strides": [
+          1,
+          3,
+          9,
+          27,
+          81,
+          243,
+          729,
+          2187
+        ],
+        "digits": 6561,
+        "coefficientBound": 128,
+        "digitBits": 9,
+        "innerBits": 59048,
+        "outerSlotBits": null,
+        "packedBits": 59048,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 30,
+      "cleanup_timeout_seconds": 180,
+      "degree": 2
+    },
+    {
+      "stem": "GridK8D4",
+      "family": "reflected-identities",
+      "atoms": 8,
+      "accepted": false,
+      "size": {
+        "degrees": [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4
+        ],
+        "strides": [
+          1,
+          5,
+          25,
+          125,
+          625,
+          3125,
+          15625,
+          78125
+        ],
+        "digits": 65537,
+        "coefficientBound": 8192,
+        "digitBits": 15,
+        "innerBits": 5859374,
+        "outerSlotBits": null,
+        "packedBits": 5859374,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 30,
+      "cleanup_timeout_seconds": 180,
+      "degree": 4
+    },
+    {
+      "stem": "GridK8D8",
+      "family": "reflected-identities",
+      "atoms": 8,
+      "accepted": false,
+      "size": {
+        "degrees": [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
+        ],
+        "strides": [
+          1,
+          9,
+          81,
+          729,
+          6561,
+          59049,
+          531441,
+          4782969
+        ],
+        "digits": 65537,
+        "coefficientBound": 33554432,
+        "digitBits": 27,
+        "innerBits": 16777217,
+        "outerSlotBits": null,
+        "packedBits": 16777217,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 30,
+      "cleanup_timeout_seconds": 180,
+      "degree": 8
+    },
+    {
+      "stem": "GridK8D16",
+      "family": "reflected-identities",
+      "atoms": 8,
+      "accepted": false,
+      "size": {
+        "degrees": [
+          16,
+          16,
+          16,
+          16,
+          16,
+          16,
+          16,
+          16
+        ],
+        "strides": [
+          1,
+          17,
+          289,
+          4913,
+          83521,
+          1419857,
+          24137569,
+          410338673
+        ],
+        "digits": 65537,
+        "coefficientBound": 562949953421312,
+        "digitBits": 51,
+        "innerBits": 16777217,
+        "outerSlotBits": null,
+        "packedBits": 16777217,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 30,
+      "cleanup_timeout_seconds": 180,
+      "degree": 16
+    },
+    {
+      "stem": "DetN3K2D1",
+      "family": "determinant-identities",
+      "atoms": 2,
+      "accepted": true,
+      "size": {
+        "degrees": [
+          3,
+          3
+        ],
+        "strides": [
+          1,
+          4
+        ],
+        "digits": 16,
+        "coefficientBound": 898,
+        "digitBits": 11,
+        "innerBits": 176,
+        "outerSlotBits": null,
+        "packedBits": 176,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 60,
+      "cleanup_timeout_seconds": 180,
+      "n": 3,
+      "degree": 1
+    },
+    {
+      "stem": "DetN4K3D1",
+      "family": "determinant-identities",
+      "atoms": 3,
+      "accepted": true,
+      "size": {
+        "degrees": [
+          4,
+          4,
+          4
+        ],
+        "strides": [
+          1,
+          5,
+          25
+        ],
+        "digits": 125,
+        "coefficientBound": 51684,
+        "digitBits": 17,
+        "innerBits": 2125,
+        "outerSlotBits": null,
+        "packedBits": 2125,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 60,
+      "cleanup_timeout_seconds": 180,
+      "n": 4,
+      "degree": 1
+    },
+    {
+      "stem": "DetN3K3D2",
+      "family": "determinant-identities",
+      "atoms": 3,
+      "accepted": true,
+      "size": {
+        "degrees": [
+          6,
+          6,
+          6
+        ],
+        "strides": [
+          1,
+          7,
+          49
+        ],
+        "digits": 343,
+        "coefficientBound": 1750,
+        "digitBits": 12,
+        "innerBits": 4116,
+        "outerSlotBits": null,
+        "packedBits": 4116,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 60,
+      "cleanup_timeout_seconds": 180,
+      "n": 3,
+      "degree": 2
+    },
+    {
+      "stem": "DetN4K2D2",
+      "family": "determinant-identities",
+      "atoms": 2,
+      "accepted": true,
+      "size": {
+        "degrees": [
+          8,
+          8
+        ],
+        "strides": [
+          1,
+          9
+        ],
+        "digits": 81,
+        "coefficientBound": 22970,
+        "digitBits": 16,
+        "innerBits": 1296,
+        "outerSlotBits": null,
+        "packedBits": 1296,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 60,
+      "cleanup_timeout_seconds": 180,
+      "n": 4,
+      "degree": 2
+    },
+    {
+      "stem": "DetN5K3D1",
+      "family": "determinant-identities",
+      "atoms": 3,
+      "accepted": true,
+      "size": {
+        "degrees": [
+          5,
+          5,
+          5
+        ],
+        "strides": [
+          1,
+          6,
+          36
+        ],
+        "digits": 216,
+        "coefficientBound": 2634236,
+        "digitBits": 23,
+        "innerBits": 4968,
+        "outerSlotBits": null,
+        "packedBits": 4968,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 60,
+      "cleanup_timeout_seconds": 180,
+      "n": 5,
+      "degree": 1
+    },
+    {
+      "stem": "IndependentN5",
+      "family": "dense-box-declines",
+      "atoms": 25,
+      "accepted": false,
+      "size": {
+        "degrees": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "strides": [
+          1,
+          2,
+          4,
+          8,
+          16,
+          32,
+          64,
+          128,
+          256,
+          512,
+          1024,
+          2048,
+          4096,
+          8192,
+          16384,
+          32768,
+          65536,
+          131072,
+          262144,
+          524288,
+          1048576,
+          2097152,
+          4194304,
+          8388608,
+          16777216
+        ],
+        "digits": 65537,
+        "coefficientBound": 240,
+        "digitBits": 9,
+        "innerBits": 16777217,
+        "outerSlotBits": null,
+        "packedBits": 16777217,
+        "limitingStage": "Hex.Kronecker.Stage.inner"
+      },
+      "ceiling_seconds": 30,
+      "cleanup_timeout_seconds": 180,
+      "n": 5,
+      "degree": 1
+    }
+  ],
+  "profiles": [
+    "GridK3D8",
+    "DetN4K3D1",
+    "IndependentN5"
+  ]
+}

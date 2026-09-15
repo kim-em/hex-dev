@@ -86,6 +86,8 @@ UMBRELLA_BUILD_TARGETS = {
     "HexCharPolyMathlibProofProbe",
     "HexBareissMathlibProofProbe",
     "HexPolyDetMathlibProofProbe",
+    "HexKroneckerTests",
+    "HexKroneckerMathlibProofProbe",
     "HexIntervalMathlibExperiment",
     "HexIntervalPntFks2Local",
     "HexIntervalPntFks2ConformanceLocal",

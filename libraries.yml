@@ -1081,8 +1081,8 @@ libraries:
   HexKronecker:
     deps: [HexMvPoly, HexMatrix]
     mathlib: false
-    done_through: 0
-    status: planned
+    done_through: 3
+    status: active
     phase4:
       input_families:
         - name: expression-checker
@@ -1093,8 +1093,8 @@ libraries:
     deps: [HexKronecker, HexMvPolyMathlib, HexReflect, HexReflectMathlib, HexMatrixMathlib]
     mathlib: true
     proof_probes: [bench/HexKroneckerMathlib/ProofProbe]
-    done_through: 0
-    status: planned
+    done_through: 3
+    status: active
     phase4:
       input_families:
         - name: reflected-identities

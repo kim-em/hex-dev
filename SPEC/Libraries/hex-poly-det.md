@@ -92,7 +92,7 @@ exists, exponent vectors as `List Nat`. Its soundness is the companion's.
 `Hex.Kronecker.Budget`, `MulMode`, atom count `k`, dimension `n`, canonical
 integer polynomial row lists, and the same `DetWitness (PolyList Int)` as
 `checkDetPolyList`. It replaces only the product identities with
-[`Hex.Kronecker.checkMulTerms`](hex-kronecker.md#kronecker-evaluation).
+[`Hex.Kronecker.checkMulTerms`](../../HexKronecker/SPEC/hex-kronecker.md#kronecker-evaluation).
 Canonicality, exponent arity, matrix and witness shapes, swap validity,
 nonzero transform diagonals or a nonzero singular vector remain checked in
 the kernel. Nonzeroness is a canonical polynomial test, never a test at the
@@ -146,7 +146,7 @@ few-atom input ineligible. Record such cases as expected preflight declines.
 Above either packing limit, the whole certificate uses term lists;
 there is no kernel trial of the packed checker followed by a sparse retry.
 Within the limits, use the measured sparse/packed crossover table required
-by [hex-kronecker §Consumers](hex-kronecker.md#consumers), keyed by
+by [hex-kronecker §Consumers](../../HexKronecker/SPEC/hex-kronecker.md#consumers), keyed by
 `packedBits`, input supports and inner dimension. Require an eligible entry
 for every product; an absent entry selects term lists. Explicit comparison
 probes may force either arm within its budgets to establish that table.

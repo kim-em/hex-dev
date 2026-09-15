@@ -10,7 +10,7 @@ identity test.
 
 The library is unpublished.  It depends on `HexMvPoly` for `PolyList Int` and
 on `HexMatrix` for `Hex.Matrix.Packed`; its import closure contains no Mathlib.
-The companion [hex-kronecker-mathlib](hex-kronecker-mathlib.md) supplies the
+The companion [hex-kronecker-mathlib](../../HexKroneckerMathlib/SPEC/hex-kronecker-mathlib.md) supplies the
 denotation, injectivity and tactic theorems.
 
 Here “Kronecker” always means multivariate identity checking by mixed-radix
@@ -85,8 +85,11 @@ threshold `S` yields either the exact value, when it is below `S`, or exactly
 `S`, which certifies that the exact value is at least `S`.  The ℓ¹ threshold
 is `S_H = 2 ^ maxPackedBits`, applied to every subtree bound and to `H`: a
 saturated side bound `h` has `Nat.log2 h + 2 > maxPackedBits`, so that
-subtree's packed value already exceeds the bit budget; a saturated sum has a
-saturated summand.  The dense threshold is `S_D = maxDenseDigits + 1`.
+subtree's structural packed-bit bound already exceeds the bit budget.  If
+the sum of the two compared side bounds saturates, one side is at least
+`S_H / 2`, which also exceeds the signed bit budget.  For quotient checks,
+the compared sides are `L̃ - R̃` and `p Q`.  The dense threshold is
+`S_D = maxDenseDigits + 1`.
 Square-and-multiply stops as soon as an intermediate saturates.  Rejected
 inputs therefore never construct a coefficient bound beyond the threshold,
 and accepted inputs have exact `H`, `W = Nat.log2 H + 2` and `D`.  No
@@ -228,7 +231,7 @@ There is no `Array`, `Vector`, `Fin`, `Finset`, `UInt64`, `dite`, matrix
 indexing, well-founded recursion, `implemented_by`, `native_decide`, or
 normal-form construction on the kernel path.  Hot list folds are written
 with direct `List.rec` when measurement shows the `List.brecOn` equation form
-is material, following [matrix-tactics §Kernel discipline](../matrix-tactics.md#kernel-discipline).
+is material, following [matrix-tactics §Kernel discipline](../../SPEC/matrix-tactics.md#kernel-discipline).
 
 This Mathlib-free library proves arithmetic identities needed to relate its
 own evaluators and the existing packed primitives, but it does not state the
@@ -275,7 +278,7 @@ each accepted scalar multiplication is a GMP integer multiplication on at
 most `N`-bit values.  A plain outer dot uses `r` inner-sized multiplications;
 a signed-packed outer dot uses four multiplications at its reported outer bit
 size, and the benchmark hash-compares both modes.  Registrations use
-[benchmarking's](../benchmarking.md#choosing-the-complexity-claim) first
+[benchmarking's](../../SPEC/benchmarking.md#choosing-the-complexity-claim) first
 applicable mode.  A two-sided parametric claim is used only where the family
 fixes the operation count and one GMP multiplication regime while varying
 `N`.  A family crossing GMP regimes uses the one-sided quadratic upper bound

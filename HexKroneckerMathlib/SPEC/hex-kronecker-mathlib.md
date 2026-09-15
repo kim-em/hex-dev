@@ -1,7 +1,7 @@
 # hex-kronecker-mathlib
 
 The soundness and tactic companion of
-[hex-kronecker](hex-kronecker.md).  It proves that the deterministic packed
+[hex-kronecker](../../HexKronecker/SPEC/hex-kronecker.md).  It proves that the deterministic packed
 integer checks establish polynomial identities and exposes the `kronecker`
 tactic for every commutative ring.  It is unpublished because
 the frontend depends on `HexReflect` and `HexReflectMathlib`.
@@ -10,7 +10,7 @@ Dependencies are `HexKronecker`, `HexMvPolyMathlib`, `HexReflect`,
 `HexReflectMathlib`, and `HexMatrixMathlib`, plus Mathlib.  The library is not
 `correspondence_only`: it owns a tactic and fresh-module proof probes.  The
 tactic and its soundness theorem live together here, as required by
-[matrix-tactics §Placement](../matrix-tactics.md#placement).
+[matrix-tactics §Placement](../../SPEC/matrix-tactics.md#placement).
 
 ## Denotation and polynomial model
 
@@ -146,7 +146,7 @@ displayed equality.  Both forms share one implementation and configuration;
 neither name carries a `hex_` prefix.  The owning library declares
 `syntax (name := kroneckerTac) &"kronecker" optConfig : tactic` once; the
 term form declares
-`syntax (name := kroneckerTerm) &"kronecker%" "(" term ")" : term`.
+`syntax (name := kroneckerTerm) "kronecker%" "(" term ")" : term`.
 Both elaborators use `@[no_fallback]` and answer `throwUnsupportedSyntax`
 outside their fragment.
 
@@ -186,7 +186,7 @@ equality in every commutative ring of characteristic `p`, including
 
 ## Outcomes and diagnostics
 
-The tactic follows [matrix-tactics' outcome protocol](../matrix-tactics.md#outcome-protocol-and-diagnostics):
+The tactic follows [matrix-tactics' outcome protocol](../../SPEC/matrix-tactics.md#outcome-protocol-and-diagnostics):
 
 - A goal other than equality, different carriers, a missing `CommRing`
   instance, an unresolved carrier metavariable, or syntax outside
@@ -242,7 +242,7 @@ supplies the complexity evidence; these probes measure reification, emitted
 literals, kernel checking, and total tactic cost.
 
 The tactic ships under the opt-in exception of
-[matrix-tactics §The bar against Mathlib](../matrix-tactics.md#the-bar-against-mathlib),
+[matrix-tactics §The bar against Mathlib](../../SPEC/matrix-tactics.md#the-bar-against-mathlib),
 exactly as that exception is written: the tactic and term form ship
 explicitly opt-in once the full family table is recorded and the absolute
 ceilings pass, with every losing family in the table.  Being strictly below

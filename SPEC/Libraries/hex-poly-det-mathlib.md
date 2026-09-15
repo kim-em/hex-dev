@@ -239,7 +239,7 @@ row-prefix product equalities with the adjacent-diagonal/value conditions,
 or a nonzero vector whose product with the matrix is zero. The list checker
 derives these with its arithmetic denotation laws. The packed checker
 derives the same identities with
-[`checkMulTerms_sound`](hex-kronecker-mathlib.md#denotation-and-polynomial-model),
+[`checkMulTerms_sound`](../../HexKroneckerMathlib/SPEC/hex-kronecker-mathlib.md#denotation-and-polynomial-model),
 instantiated in `MvPolynomial (Fin k) Int` at the indeterminates, and the
 existing `HexMvPolyMathlib.equiv` bridge. This shares the permutation,
 triangular determinant, cancellation and singular-vector proof above; it
