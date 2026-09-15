@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Coverage, source synchronization, and parsing for the ring-solver probes."""
 import contextlib
+import hashlib
 import io
+import json
 import unittest
 from unittest.mock import patch
 
@@ -55,6 +57,19 @@ class RingSolverProbesTest(unittest.TestCase):
             runner.print_table(path)
         report = (probes.ROOT / "reports/hex-poly-det-mathlib-performance.md").read_text()
         self.assertIn(output.getvalue().strip(), report)
+
+    def test_recorded_capabilities_match_sources(self):
+        path = probes.ROOT / "reports/bench-results/hex-poly-det-ring-capabilities-f3626cc1352e-chungus2.json"
+        record = json.loads(path.read_text())
+        self.assertTrue(record["complete"])
+        self.assertTrue(record["sources_unchanged"])
+        self.assertFalse(record["environment"]["git_dirty"])
+        self.assertEqual({r["module"] for r in record["results"]},
+                         {m.module for m in runner.CAPABILITIES})
+        for module in runner.CAPABILITIES:
+            source = "bench/" + module.module.replace(".", "/") + ".lean"
+            self.assertEqual(record["source_sha256"][source],
+                             hashlib.sha256((probes.ROOT / source).read_bytes()).hexdigest())
 
 
 if __name__ == "__main__":

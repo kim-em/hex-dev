@@ -90,6 +90,13 @@ atoms outside the fixed-numeral exponent fragment (`Grind.CommRing.Power.k : Nat
 `ring` closes that target, so substituting `grobner` would also lose an existing
 variable-exponent capability. Both boundaries are guarded in compile-time probes
 which CI builds explicitly without building the full symbolic performance ladder.
+Their fresh builds, complete compiler output, exact axiom audits and source
+fingerprints are retained in
+[hex-poly-det-ring-capabilities-f3626cc1352e-chungus2.json](bench-results/hex-poly-det-ring-capabilities-f3626cc1352e-chungus2.json)
+at clean source commit `f3626cc1352e58e149ee79fa4e4224278d0b2e00`.
+`scripts/bench/det_ring_solver_sweep.py --table <timing-record>` regenerates the
+table verbatim; `--capabilities <output.json>` records fresh capability builds
+without rerunning the timing comparison.
 
 The main 2/4/8 ladder has 48 feasible cases and 33 infeasible support requests.
 Three 3×3 cases measure the closed-form route. The remaining cases cover
