@@ -82,6 +82,10 @@ def main() -> None:
     parser.add_argument('--primecert-checkout', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--blocks', type=int, default=2)
+    parser.add_argument('--hex-supplied', action='append', default=[], metavar='CASE=PATH',
+                        help='check a supplied Hex proof instead of the construction corpus source')
+    parser.add_argument('--primecert-supplied', action='append', default=[], metavar='CASE=PATH',
+                        help='check an alternative supplied PrimeCert proof')
     parser.add_argument('--powers', action='store_true',
                         help='isolate modular powering and calibrate the two kernel versions')
     parser.add_argument('--upstream-power', action='store_true',
@@ -110,6 +114,24 @@ def main() -> None:
                          'includes kernel reduction and type checking; imported library proofs '
                          'remain dependencies; separate pinned toolchains',
                   versions={}, cases=[c for c in previous['cases'] if 'primecert' in c], rows=[])
+    supplied = {'hex': {}, 'primecert': {}}
+    for system, entries in [('hex', args.hex_supplied), ('primecert', args.primecert_supplied)]:
+        for entry in entries:
+            name, separator, path = entry.partition('=')
+            if not separator or name not in {c['name'] for c in record['cases']} or name in supplied[system]:
+                parser.error('supplied proofs require a distinct corpus CASE=PATH for each system')
+            source = Path(path).read_text()
+            if not source.startswith('/-') or '\nmodule\n' not in source:
+                parser.error('a supplied proof must have a header and use the module system')
+            # Fixtures import their checker; probes additionally need Lean's
+            # metaprogramming API for the direct kernel timer.
+            probe = source.replace('\nmodule\n', '\nmodule\npublic import Lean\npublic meta import Lean\n', 1)
+            supplied[system][name] = probe
+            record.setdefault(f'supplied_{system}_sources', {})[name] = dict(
+                path=path, source=source, sha256=hashlib.sha256(source.encode()).hexdigest(),
+                origin='supplied certificate; does not establish construction success')
+    if (args.hex_supplied or args.primecert_supplied) and args.powers:
+        parser.error('supplied proofs are for complete certificates, not isolated powers')
     if args.powers:
         from scripts.bench.primality_kernel_diagnostic import RAW
         n = str(2**255 - 19)
@@ -169,6 +191,8 @@ decreasing_by omega
                     sources = [r for r in previous['kernel'] if r['case'] == case['name']
                                and r['system'] == system and r.get('arm') == 'replay'
                                and r['status'] == 'ok']
+                    if case['name'] in supplied[system]:
+                        sources = [{'source': supplied[system][case['name']]}]
                     if args.powers:
                         body = record['power_sources'][case['name']].get(system)
                         sources = [{'source': body}] if body else []

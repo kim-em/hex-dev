@@ -1,0 +1,17 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+module
+public import PrimeCert
+public section
+set_option maxRecDepth 65536
+set_option exponentiation.threshold 512
+namespace PrimeCert.Comparator.Bit511
+theorem result : Nat.Prime
+    6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033 := prime_cert%
+  [small {2},
+   pock (6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033, 3, 2 ^ 504)]
+end PrimeCert.Comparator.Bit511

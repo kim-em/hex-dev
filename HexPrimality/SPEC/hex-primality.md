@@ -359,9 +359,14 @@ arithmetic rejections before recursive certificate replay:
    in strictly ascending order. This canonical order implies pairwise
    distinctness and is checked with one lower-bound comparison per entry
    (the first against `1`, then each later subject against its predecessor).
-3. `F = ∏ q^(e+1)` divides `n - 1`; each power is accumulated by a
-   bounded loop that tests each nonzero step by division, and the whole
-   product aborts before constructing a running value above `n - 1`.
+3. `F = ∏ q^(e+1)` divides `n - 1`. Powers use bounded multiplication,
+   with a checked shift for powers of two. The kernel square-root checker
+   combines exponent-one factors with one multiplication and a bound check,
+   using zero to record overflow. The positive-subject precondition comes
+   from step 2; zero cannot pass the subsequent square-root check. Each such
+   multiplication has at most the sum of its operands’ bit lengths, and
+   an oversized exponent is rejected without constructing its full power.
+   The compiled checker retains its division-before-multiplication loop.
 4. `n < F * F`.
 5. For each `(a, e, child)`, with `q = child.subject`:
    `HexArith.powModNat a (n-1) n = 1 % n` and
@@ -395,8 +400,9 @@ cube-root variant, not to this one.
 Step 2 is at most `k` subject comparisons. Step 3 performs at most
 `O(k log n)` bounded ordinary multiplications even on rejected input:
 because step 2 established `q ≥ 2`, each entry either finishes or exceeds
-the `n - 1` bound within `O(log n)` iterations. Step 5 is two modular
-exponentiations, one division, and one `Nat.gcd` per factor. Thus one level
+the `n - 1` bound within `O(log n)` iterations. Step 5 uses one modular
+exponentiation, one division, and one `Nat.gcd` per factor, plus a Fermat
+exponentiation per group of adjacent equal witness bases. Thus one level
 costs `O(k log n)` modular multiplications, `O(k log n)` bounded ordinary
 multiplications, and `O(k)` subject comparisons, divisions, and gcds. The
 factor list comes from untrusted certificate data; search sorts its candidate
@@ -1197,8 +1203,8 @@ taking a Montgomery path in the good case, so the kernel is sent down
 the `Nat` route instead:
 
 - `HexArith.powModNat` and its raw `Nat.rec`/`Bool.rec` workers are
-  exposed. Fixed windows of four bits through 512-bit moduli and three
-  bits through 1024-bit moduli reduce kernel work. Larger moduli use
+  exposed. Fixed windows of six bits through `2^64`, four bits through
+  `2^512`, and three bits through `2^1024` reduce kernel work. Larger moduli use
   narrower windows for small reduced bases or binary square-and-multiply.
   The exact algorithm and intermediate-size
   bounds belong to the hex-arith SPEC;
@@ -1210,9 +1216,20 @@ the `Nat` route instead:
   runtime twin (principle 11's pattern; the earlier state had
   `powModNat a n 0 = a ^ n`, a full unreduced power).
 
-`boundedPowMul` likewise uses raw recursors in its kernel definition,
-proved equal to its compiled structural loop at every input. It retains
-the same early overflow rejection, zero cases, and accepted results.
+`boundedPowMul` uses a checked shift for base `2`: for positive exponent `e`,
+it compares `acc` with `bound >>> e` before returning `acc <<< e`. Other bases
+use raw recursors. The kernel definition is proved equal to the compiled
+structural loop at every input, including zero exponents, zero accumulators,
+and oversized exponents. It retains the same early overflow rejection and
+accepted results. Table lookup and the arithmetic checks use primitive Nat
+comparisons. Subject ordering uses a direct list fold, and `checkPrime` uses
+the certificate’s structural recursor instead of generated course-of-values
+recursion. `checkWitnesses` shares a Fermat result only after that base passes;
+a changed base starts a new group. Each public checker is proved equal to
+its compiled counterpart for every input. Compiled table lookup still uses
+binary search. The internal `pockProduct` sentinel is proved equivalent to
+`certProduct` for positive subjects; callers establish that precondition
+before using it, and the final arithmetic check rejects the zero sentinel.
 
 `checkPrime` is therefore written against `powModNat`. The bench
 family "kernel replay" below is what confirms the choice was the
@@ -1501,13 +1518,15 @@ Imported library proofs remain dependencies. A negative control must be
 rejected. The retained `hex-primality-direct-kernel-checked-issue-10268.json` uses
 adjacent reversed systems and records every sample, source, and toolchain.
 Its matched-input plot shows growth hidden by fresh-build overhead; cactus
-rank is not a bit-length axis. With windowed arithmetic and raw bounded
-multiplication, the retained `hex-primality-base-aware-combined-kernel.json` measures
-Hex on Lean 4.34.0 at a median 9.65 ms for Curve25519, versus PrimeCert on
-Lean 4.33.0 at 19.16 ms. All four samples per system are retained, including
-a slow run; the report records their ranges. These are supplied-proof replay measurements, not
-a comparison of certificate construction; see the
-[windowed replay report](../../reports/hex-primality-windowed-replay.md).
+rank is not a bit-length axis. The compact-certificate comparison in
+`reports/bench-results/hex-primality-small-replay/hex-compact-primecert-six-bit-kernel.json`
+measures Hex on Lean 4.34.0 at a median 5.18 ms for Curve25519, versus
+PrimeCert on Lean 4.33.0 at 13.98 ms. Both receive supplied Curve448
+certificates, and PrimeCert uses the same selected Pocklington factors as Hex.
+All four samples per system and input are retained. Hex wins all eight inputs;
+the 31-bit margin is only 2% and remains provisional on this shared host.
+These are supplied-proof replay measurements, not a comparison of certificate
+construction; see the [replay report](../../reports/hex-primality-windowed-replay.md).
 
 The fixed construction targets and the adjacent-arm Curve25519 phase and
 replay measurements are recorded in

@@ -438,8 +438,9 @@ of `n`. This is a Phase 1 "wrong-complexity" violation
 proof of `powMod_eq` happens to discharge.
 
 The two forms are a specification/twin pair. `powModNat` uses exposed
-`Nat.rec` and `Bool.rec` loops for kernel reduction: four-bit windows
-for `p ≤ 2^512` and three-bit windows for `p ≤ 2^1024`. Above that,
+`Nat.rec` and `Bool.rec` loops for kernel reduction: six-bit windows
+for `p ≤ 2^64`, four-bit windows for `p ≤ 2^512`, and three-bit windows
+for `p ≤ 2^1024`. Above that,
 reduced bases below `2^64` use two-bit windows through `p ≤ 2^4096`,
 then one-bit windows for exponents at least `2^64`. Other inputs use
 binary square-and-multiply. The policy above `2^1024` follows the
@@ -450,7 +451,7 @@ only reaches 512 bits and does not independently measure these larger branches.
 The runtime worker keeps its existing public name `powModNatGo`; it belongs
 to `powModBits`, whereas `powModNat.go` is the kernel accumulator.
 For positive moduli the respective intermediate
-bounds are `p^31`, `p^15`, `p^4 * 2^192`, `p^2 * 2^64`, and `p^2`.
+bounds are `p^127`, `p^31`, `p^15`, `p^4 * 2^192`, `p^2 * 2^64`, and `p^2`.
 Window selection uses shifts so it also reduces under Meta's default
 exponentiation limit. These fixed windows retain logarithmic recursion
 in the exponent. The runtime fallback `powModBits` retains the original

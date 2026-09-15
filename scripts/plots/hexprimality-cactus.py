@@ -48,10 +48,16 @@ def plot_direct(data: dict, out_dir: Path) -> None:
         ax.grid(True, which='both', alpha=.2)
         ax.legend()
     fig.suptitle('Supplied certificates: actual kernel checking time')
+    supplied = data.get('supplied_hex_sources', {})
+    coverage = (f'{", ".join(supplied)}: supplied certificates in both systems; construction coverage is measured separately.'
+                if supplied else
+                'Curve448: PrimeCert supplied certificate; Hex has no generated certificate in this corpus.')
+    compact = (' PrimeCert uses matching Pocklington factors.'
+               if data.get('supplied_primecert_sources') else '')
     fig.text(.5, .015,
              'Kernel.check of full local proof bodies; auxiliary proofs expanded; imports/elaboration excluded.\n'
-             f'Hex Lean 4.34.0 / PrimeCert Lean 4.33.0. {data["blocks"]} adjacent reversed trials; all samples retained.\n'
-             'Curve448: PrimeCert supplied certificate; Hex has no generated certificate in this corpus.',
+             f'Hex Lean 4.34.0 / PrimeCert Lean 4.33.0. {data["blocks"]} AB/BA pairs; all samples retained.{compact}\n'
+             + coverage,
              ha='center', fontsize=8)
     fig.tight_layout(rect=(0, .12, 1, .96))
     for ext in ['svg', 'png']:

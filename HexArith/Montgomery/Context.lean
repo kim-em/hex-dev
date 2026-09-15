@@ -1142,8 +1142,9 @@ private theorem powModNat.go_eq (m fuel b e acc : Nat) (h : e < fuel) :
         rw [Nat.mul_mod, Nat.mod_mod, ← Nat.pow_mod, ← Nat.pow_two, ← Nat.pow_mul,
           ← Nat.mul_mod, ← Nat.mul_assoc, ← Nat.pow_succ, Nat.succ_eq_add_one, hod']
 
-/-- Kernel-facing modular exponentiation. Four-bit windows through `2^512`
-and three-bit windows through `2^1024` reduce kernel recursion. Above that,
+/-- Kernel-facing modular exponentiation. Six-bit windows through `2^64`,
+four-bit windows through `2^512`, and three-bit windows through `2^1024`
+reduce kernel recursion. Above that,
 a reduced base below `2^64` uses two-bit windows through `2^4096`, then
 one-bit windows for exponents at least `2^64`; other inputs use the binary
 accumulator. Modulus zero returns zero. Compiled evaluation uses `powMod`,
@@ -1162,7 +1163,9 @@ def powModNat (a n p : Nat) : Nat :=
             (powModNat.window (a.mod p) p 4 n.succ n)))
         ((p.ble ((1 : Nat).shiftLeft 512)).rec
           (powModNat.window (a.mod p) p 8 n.succ n)
-          (powModNat.window (a.mod p) p 16 n.succ n)))
+          ((p.ble ((1 : Nat).shiftLeft 64)).rec
+            (powModNat.window (a.mod p) p 16 n.succ n)
+            (powModNat.window (a.mod p) p 64 n.succ n))))
       ((1 : Nat).mod p))
     0
 

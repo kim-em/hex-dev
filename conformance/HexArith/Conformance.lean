@@ -393,3 +393,12 @@ example : let p := ((1 : Nat) <<< 4096) + 1
 set_option maxRecDepth 65536 in
 example : HexArith.powModNat ((1 : Nat) <<< 64) ((1 : Nat) <<< 1100)
     (((1 : Nat) <<< 1024) + 1) = 1 := by decide +kernel
+
+-- The six-bit window cutoff preserves the result on both sides, including
+-- a large reduced base and an exponent spanning multiple window digits.
+example : let p := ((1 : Nat) <<< 64) - 1
+    HexArith.powModNat (p - 1) 65 p = p - 1 := by decide +kernel
+example : let p := ((1 : Nat) <<< 64)
+    HexArith.powModNat (p - 1) 65 p = p - 1 := by decide +kernel
+example : let p := ((1 : Nat) <<< 64) + 1
+    HexArith.powModNat (p - 1) 65 p = p - 1 := by decide +kernel

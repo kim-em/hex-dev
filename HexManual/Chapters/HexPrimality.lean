@@ -199,17 +199,18 @@ proof emission, imports, and kernel checking.
 
 The second plot times kernel checking directly, excluding imports, search,
 and proof elaboration. It checks complete proof bodies, including expanded
-local auxiliary proofs. Curve25519 takes about 9.6 milliseconds for Hex and
-19.2 milliseconds for PrimeCert, an observed 2.0-fold Hex advantage.
-Hex is faster on five of the seven shared inputs. The 31-bit case is
-effectively tied; PrimeCert is faster at 61 bits. The
+local auxiliary proofs. With compact certificates using matching selected
+Pocklington factors, Curve25519 takes about 5.18 milliseconds for Hex and
+13.98 milliseconds for PrimeCert. Hex is faster on all eight supplied inputs
+in this comparison; the 31-bit margin is only 2%, while the other margins
+range from 1.53 to 3.32 times. These are host-specific observations. The
 [replay report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-windowed-replay.md)
-records the windowed arithmetic and bounded-multiplication measurements.
-The measurements use Hex on Lean 4.34.0 and PrimeCert on Lean 4.33.0.
+records every sample and the checker optimizations. Hex uses Lean 4.34.0;
+PrimeCert uses Lean 4.33.0.
 
-The direct comparison shows both matched inputs and independently sorted
-cactus curves. Missing certificates count as unsolved. The corpus is small
-and structured; the report records exact inputs, versions, and every sample.
+The direct comparison shows matched inputs and independently sorted cactus
+curves. Curve448 uses a supplied certificate in both systems; this does not
+change automatic construction coverage. The corpus is small and structured.
 
 ![Direct kernel certificate comparison](https://kim-em.github.io/hex-dev/figures/hex-primality-kernel-direct.svg)
 

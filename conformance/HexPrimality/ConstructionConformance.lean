@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import HexPrimality
 import HexPrimality.Curve25519Replay
+import HexPrimality.Curve448Replay
 
 open Hex.Nat
 
