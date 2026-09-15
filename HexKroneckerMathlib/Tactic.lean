@@ -17,7 +17,8 @@ public section
 
 namespace HexKroneckerMathlib
 
-/-- The two independent preflight limits shared by both frontends. -/
+/-- The two independent preflight limits shared by both frontends.
+The packed-bit limit may be tightened from its default, but not raised. -/
 structure Config extends Hex.Kronecker.Budget
 
 end HexKroneckerMathlib
@@ -28,7 +29,6 @@ namespace HexKroneckerMathlib
 
 open Lean Meta Elab
 
-deriving instance ToExpr for Hex.Kronecker.Expr
 deriving instance ToExpr for Hex.Kronecker.Budget
 
 declare_config_elab elabConfig Config
@@ -54,6 +54,10 @@ def prove (cfg : Config) (target : Lean.Expr) : MetaM Lean.Expr := do
   let u ← getDecLevel carrier
   let some inst ← synthInstance? (mkApp (mkConst ``CommRing [u]) carrier)
     | throwUnsupportedSyntax
+  let budget := cfg.toBudget
+  let supportedBits := ({} : Hex.Kronecker.Budget).maxPackedBits
+  if supportedBits < budget.maxPackedBits then
+    throwError "kronecker failure: maxPackedBits above {supportedBits} is not supported"
   let (k, le, re, ctx) ← Hex.Reflect.run do
     let l ← reflected (← Hex.Reflect.reifyCommRing lhs)
     let r ← reflected (← Hex.Reflect.reifyCommRing rhs)
@@ -62,7 +66,6 @@ def prove (cfg : Config) (target : Lean.Expr) : MetaM Lean.Expr := do
     return (s.n, l.expr, r.expr, ctx)
   let some l := fromGrind? k le | throwError "kronecker failure: variable outside sealed atoms"
   let some r := fromGrind? k re | throwError "kronecker failure: variable outside sealed atoms"
-  let budget := cfg.toBudget
   let .ok size := Hex.Kronecker.sizeExprEq budget k l r
     | throwError "kronecker failure: ill-formed reflected tree"
   unless size.accepts budget do

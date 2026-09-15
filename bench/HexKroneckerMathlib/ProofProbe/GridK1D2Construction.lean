@@ -11,8 +11,8 @@ set_option maxHeartbeats 0
 set_option maxRecDepth 100000
 public section
 namespace KroneckerProbe.GridK1D2
-def lhs (x0 : Int) : Int := (x0 ^ 2)
-def rhs (x0 : Int) : Int := (x0 ^ 2)
-def leftTree : Hex.Kronecker.Expr := (.pow (.atom 0) 2)
-def rightTree : Hex.Kronecker.Expr := (.pow (.atom 0) 2)
+def lhs (x0 : Int) : Int := ((x0 + 1) ^ 2)
+def rhs (x0 : Int) : Int := ((x0 ^ 2) + ((2 * x0) + 1))
+def leftTree : Hex.Kronecker.Expr := (.pow (.add (.atom 0) (.int 1)) 2)
+def rightTree : Hex.Kronecker.Expr := (.add (.pow (.atom 0) 2) (.add (.mul (.int 2) (.atom 0)) (.int 1)))
 end KroneckerProbe.GridK1D2

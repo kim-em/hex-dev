@@ -105,7 +105,11 @@ eligible through `n = 4` by its digit count and declines at `n = 5`, where
 `SizeBound` is the public preflight report.  It contains `degrees`, `strides`,
 `digits := D`, `coefficientBound := H`, `digitBits := W`, `outerSlotBits?`,
 `packedBits`, and `limitingStage` (`inner`, `outerRow`, `outerColumn`, or
-`result`).
+`result`). It also exposes `innerBits`, the signed inner-value bound before
+outer packing. The common outer slot bound makes the full convolution result
+dominate its row and column operands, so the current signed-packed preflight
+selects `inner` or `result`; the row and column stage constructors remain
+available in the report API.
 
 For a polynomial of ℓ¹ bound `h` and largest possible mixed-radix code `c`,
 `c * W + Nat.log2 h + 2` bounds its signed packed value.  Expression reports

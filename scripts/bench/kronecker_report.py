@@ -55,12 +55,21 @@ def main():
     if not profile_data['sources_unchanged'] or len(profile_data['profiles']) != 3 or any(
             p['result']['state'] != 'complete' for p in profile_data['profiles']):
         raise SystemExit('all three required profiles must complete')
+    overlap = data['source_hashes'].keys() & profile_data['source_hashes'].keys()
+    mismatch = [p for p in overlap if data['source_hashes'][p] != profile_data['source_hashes'][p]]
+    if mismatch:
+        raise SystemExit(f'profile and sweep source hashes differ: {sorted(mismatch)}')
     link = 'data/hex-kronecker-mathlib/' + args.input.name
     rows = list(data['summary'].values())
     ceilings = all(s['arms']['Kronecker']['ceiling_pass'] for s in rows if s['accepted'])
     wins = sum(median_faster(s) for s in rows if s['accepted'])
     unresolved = sum(margin_spread(p)[2] for s in rows if s['accepted'] for p in s['paired'].values())
     accepted = sum(s['accepted'] for s in rows)
+    shifted = all(s.get('one_atom_shifted', False) for s in rows
+                  if s['family'] == 'reflected-identities' and s['atoms'] == 1)
+    one_atom = ("The one-atom rows use `(x + 1)^d` so that they also exercise expansion."
+                if shifted else "The one-atom rows are reflexive `x^d = x^d` identities; "
+                "they do not exercise expansion and their small differences can be obscured by import variation.")
     text = f'''# HexKroneckerMathlib performance
 
 ## Result
@@ -78,6 +87,10 @@ measurement resolution**. The numerical median comparison and this description
 of variation are reported separately; no sample is discarded or replaced.
 
 ## Protocol and provenance
+
+The measured checkout is `{data['environment']['git_commit']}`, using
+`{data['environment']['toolchain']}`. The record includes the pinned dependency
+revisions and SHA-256 hashes of the complete measured source closure.
 
 [Raw samples, source hashes, artifacts, and profiles]({link}) retain every
 completed sample. Six adjacent three-arm blocks use Ring/Kronecker/Grobner
@@ -120,9 +133,9 @@ paired-margin signs remain supplementary evidence.
     text += '''
 The grid has atom counts `1, 2, 3, 4, 6, 8` and degrees `2, 4, 8, 16`.
 Accepted powers of sums are compared with independently expanded SymPy
-integer polynomials. At one atom the chosen family degenerates to `x^d = x^d`;
-these four rows are reflexive identities, not informative expansion workloads.
-They remain in the complete grid and in the literal numerical condition.
+integer polynomials. ''' + one_atom + '''
+Historical source states and workloads remain in the retained records;
+no completed sample is discarded.
 The determinant family varies matrix dimension, shared
 atom count, and entry degree; its left side explicitly expands the Leibniz
 formula, and its right side is independently expanded with SymPy.
@@ -191,7 +204,8 @@ and the uniform-ring and characteristic-seven examples.
 
 The accepted-family profiles replay `checkExprEq = true` through
 `decide +kernel`, using the quoted trees from their shared construction
-modules. They exclude reflection and proof production. The decline-family
+modules. They exclude reflection, proof production, and the `fromGrind`
+translation reduced by the actual tactic certificate. The decline-family
 profile evaluates only preflight: it intentionally performs no packed
 certificate check. Raw profiler output is retained in the record.
 
@@ -214,6 +228,19 @@ complexity evidence in the packed bit size, operation profiles and the full
 plain/signed product comparison. These proof probes measure total tactic
 cost, including reflection, emitted literals, and synchronous kernel checking.
 '''
+    text += "\n## Retained source states\n\n"
+    text += ("Every completed sweep is retained. Historical `candidate_faster` fields "
+             "in the older raw records describe paired-margin medians; the verdict "
+             "above is recomputed from per-arm medians. Source archives preserve "
+             "the measured closure, including experimental states.\n\n")
+    text += "| Record | Commit | Completed arm pairs | Source archive |\n| --- | --- | ---: | --- |\n"
+    for path in sorted(args.input.parent.glob('sweep*.json.gz')):
+        record = read_json(path)
+        suffix = path.name.removeprefix('sweep').removesuffix('.json.gz').lstrip('-') or 'baseline'
+        archive = path.with_name('source-' + suffix + '.tar.gz')
+        source = f'[sources](data/hex-kronecker-mathlib/{archive.name})' if archive.exists() else 'See recorded hashes'
+        text += (f"| [{path.name}](data/hex-kronecker-mathlib/{path.name}) | "
+                 f"`{record['environment']['git_commit']}` | {len(record['samples'])} | {source} |\n")
     args.output.write_text(text)
 
 

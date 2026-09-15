@@ -11,8 +11,8 @@ set_option maxHeartbeats 0
 set_option maxRecDepth 100000
 public section
 namespace KroneckerProbe.GridK1D16
-def lhs (x0 : Int) : Int := (x0 ^ 16)
-def rhs (x0 : Int) : Int := (x0 ^ 16)
-def leftTree : Hex.Kronecker.Expr := (.pow (.atom 0) 16)
-def rightTree : Hex.Kronecker.Expr := (.pow (.atom 0) 16)
+def lhs (x0 : Int) : Int := ((x0 + 1) ^ 16)
+def rhs (x0 : Int) : Int := (((((x0 ^ 16) + (16 * (x0 ^ 15))) + ((120 * (x0 ^ 14)) + (560 * (x0 ^ 13)))) + (((1820 * (x0 ^ 12)) + (4368 * (x0 ^ 11))) + ((8008 * (x0 ^ 10)) + (11440 * (x0 ^ 9))))) + ((((12870 * (x0 ^ 8)) + (11440 * (x0 ^ 7))) + ((8008 * (x0 ^ 6)) + (4368 * (x0 ^ 5)))) + (((1820 * (x0 ^ 4)) + (560 * (x0 ^ 3))) + ((120 * (x0 ^ 2)) + ((16 * x0) + 1)))))
+def leftTree : Hex.Kronecker.Expr := (.pow (.add (.atom 0) (.int 1)) 16)
+def rightTree : Hex.Kronecker.Expr := (.add (.add (.add (.add (.pow (.atom 0) 16) (.mul (.int 16) (.pow (.atom 0) 15))) (.add (.mul (.int 120) (.pow (.atom 0) 14)) (.mul (.int 560) (.pow (.atom 0) 13)))) (.add (.add (.mul (.int 1820) (.pow (.atom 0) 12)) (.mul (.int 4368) (.pow (.atom 0) 11))) (.add (.mul (.int 8008) (.pow (.atom 0) 10)) (.mul (.int 11440) (.pow (.atom 0) 9))))) (.add (.add (.add (.mul (.int 12870) (.pow (.atom 0) 8)) (.mul (.int 11440) (.pow (.atom 0) 7))) (.add (.mul (.int 8008) (.pow (.atom 0) 6)) (.mul (.int 4368) (.pow (.atom 0) 5)))) (.add (.add (.mul (.int 1820) (.pow (.atom 0) 4)) (.mul (.int 560) (.pow (.atom 0) 3))) (.add (.mul (.int 120) (.pow (.atom 0) 2)) (.add (.mul (.int 16) (.atom 0)) (.int 1))))))
 end KroneckerProbe.GridK1D16

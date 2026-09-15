@@ -16,16 +16,17 @@
           1
         ],
         "digits": 3,
-        "coefficientBound": 2,
-        "digitBits": 3,
-        "innerBits": 8,
+        "coefficientBound": 8,
+        "digitBits": 5,
+        "innerBits": 14,
         "outerSlotBits": null,
-        "packedBits": 8,
+        "packedBits": 14,
         "limitingStage": "Hex.Kronecker.Stage.inner"
       },
       "ceiling_seconds": 30,
       "cleanup_timeout_seconds": 180,
-      "degree": 2
+      "degree": 2,
+      "one_atom_shifted": true
     },
     {
       "stem": "GridK1D4",
@@ -40,16 +41,17 @@
           1
         ],
         "digits": 5,
-        "coefficientBound": 2,
-        "digitBits": 3,
-        "innerBits": 14,
+        "coefficientBound": 32,
+        "digitBits": 7,
+        "innerBits": 34,
         "outerSlotBits": null,
-        "packedBits": 14,
+        "packedBits": 34,
         "limitingStage": "Hex.Kronecker.Stage.inner"
       },
       "ceiling_seconds": 30,
       "cleanup_timeout_seconds": 180,
-      "degree": 4
+      "degree": 4,
+      "one_atom_shifted": true
     },
     {
       "stem": "GridK1D8",
@@ -64,16 +66,17 @@
           1
         ],
         "digits": 9,
-        "coefficientBound": 2,
-        "digitBits": 3,
-        "innerBits": 26,
+        "coefficientBound": 512,
+        "digitBits": 11,
+        "innerBits": 98,
         "outerSlotBits": null,
-        "packedBits": 26,
+        "packedBits": 98,
         "limitingStage": "Hex.Kronecker.Stage.inner"
       },
       "ceiling_seconds": 30,
       "cleanup_timeout_seconds": 180,
-      "degree": 8
+      "degree": 8,
+      "one_atom_shifted": true
     },
     {
       "stem": "GridK1D16",
@@ -88,16 +91,17 @@
           1
         ],
         "digits": 17,
-        "coefficientBound": 2,
-        "digitBits": 3,
-        "innerBits": 50,
+        "coefficientBound": 131072,
+        "digitBits": 19,
+        "innerBits": 322,
         "outerSlotBits": null,
-        "packedBits": 50,
+        "packedBits": 322,
         "limitingStage": "Hex.Kronecker.Stage.inner"
       },
       "ceiling_seconds": 30,
       "cleanup_timeout_seconds": 180,
-      "degree": 16
+      "degree": 16,
+      "one_atom_shifted": true
     },
     {
       "stem": "GridK2D2",
@@ -123,7 +127,8 @@
       },
       "ceiling_seconds": 30,
       "cleanup_timeout_seconds": 180,
-      "degree": 2
+      "degree": 2,
+      "one_atom_shifted": false
     },
     {
       "stem": "GridK2D4",
@@ -149,7 +154,8 @@
       },
       "ceiling_seconds": 30,
       "cleanup_timeout_seconds": 180,
-      "degree": 4
+      "degree": 4,
+      "one_atom_shifted": false
     },
     {
       "stem": "GridK2D8",
@@ -175,7 +181,8 @@
       },
       "ceiling_seconds": 30,
       "cleanup_timeout_seconds": 180,
-      "degree": 8
+      "degree": 8,
+      "one_atom_shifted": false
     },
     {
       "stem": "GridK2D16",
@@ -201,7 +208,8 @@
       },
       "ceiling_seconds": 30,
       "cleanup_timeout_seconds": 180,
-      "degree": 16
+      "degree": 16,
+      "one_atom_shifted": false
     },
     {
       "stem": "GridK3D2",
@@ -229,7 +237,8 @@
       },
       "ceiling_seconds": 30,
       "cleanup_timeout_seconds": 180,
-      "degree": 2
+      "degree": 2,
+      "one_atom_shifted": false
     },
     {
       "stem": "GridK3D4",
@@ -257,7 +266,8 @@
       },
       "ceiling_seconds": 30,
       "cleanup_timeout_seconds": 180,
-      "degree": 4
+      "degree": 4,
+      "one_atom_shifted": false
     },
     {
       "stem": "GridK3D8",
@@ -285,7 +295,8 @@
       },
       "ceiling_seconds": 30,
       "cleanup_timeout_seconds": 180,
-      "degree": 8
+      "degree": 8,
+      "one_atom_shifted": false
     },
     {
       "stem": "GridK3D16",
@@ -313,7 +324,8 @@
       },
       "ceiling_seconds": 30,
       "cleanup_timeout_seconds": 180,
-      "degree": 16
+      "degree": 16,
+      "one_atom_shifted": false
     },
     {
       "stem": "GridK4D2",
@@ -343,7 +355,8 @@
       },
       "ceiling_seconds": 30,
       "cleanup_timeout_seconds": 180,
-      "degree": 2
+      "degree": 2,
+      "one_atom_shifted": false
     },
     {
       "stem": "GridK4D4",
@@ -373,7 +386,8 @@
       },
       "ceiling_seconds": 30,
       "cleanup_timeout_seconds": 180,
-      "degree": 4
+      "degree": 4,
+      "one_atom_shifted": false
     },
     {
       "stem": "GridK4D8",
@@ -403,7 +417,8 @@
       },
       "ceiling_seconds": 30,
       "cleanup_timeout_seconds": 180,
-      "degree": 8
+      "degree": 8,
+      "one_atom_shifted": false
     },
     {
       "stem": "GridK4D16",
@@ -433,7 +448,8 @@
       },
       "ceiling_seconds": 30,
       "cleanup_timeout_seconds": 180,
-      "degree": 16
+      "degree": 16,
+      "one_atom_shifted": false
     },
     {
       "stem": "GridK6D2",
@@ -467,7 +483,8 @@
       },
       "ceiling_seconds": 30,
       "cleanup_timeout_seconds": 180,
-      "degree": 2
+      "degree": 2,
+      "one_atom_shifted": false
     },
     {
       "stem": "GridK6D4",
@@ -501,7 +518,8 @@
       },
       "ceiling_seconds": 30,
       "cleanup_timeout_seconds": 180,
-      "degree": 4
+      "degree": 4,
+      "one_atom_shifted": false
     },
     {
       "stem": "GridK6D8",
@@ -535,7 +553,8 @@
       },
       "ceiling_seconds": 30,
       "cleanup_timeout_seconds": 180,
-      "degree": 8
+      "degree": 8,
+      "one_atom_shifted": false
     },
     {
       "stem": "GridK6D16",
@@ -569,7 +588,8 @@
       },
       "ceiling_seconds": 30,
       "cleanup_timeout_seconds": 180,
-      "degree": 16
+      "degree": 16,
+      "one_atom_shifted": false
     },
     {
       "stem": "GridK8D2",
@@ -607,7 +627,8 @@
       },
       "ceiling_seconds": 30,
       "cleanup_timeout_seconds": 180,
-      "degree": 2
+      "degree": 2,
+      "one_atom_shifted": false
     },
     {
       "stem": "GridK8D4",
@@ -645,7 +666,8 @@
       },
       "ceiling_seconds": 30,
       "cleanup_timeout_seconds": 180,
-      "degree": 4
+      "degree": 4,
+      "one_atom_shifted": false
     },
     {
       "stem": "GridK8D8",
@@ -683,7 +705,8 @@
       },
       "ceiling_seconds": 30,
       "cleanup_timeout_seconds": 180,
-      "degree": 8
+      "degree": 8,
+      "one_atom_shifted": false
     },
     {
       "stem": "GridK8D16",
@@ -721,7 +744,8 @@
       },
       "ceiling_seconds": 30,
       "cleanup_timeout_seconds": 180,
-      "degree": 16
+      "degree": 16,
+      "one_atom_shifted": false
     },
     {
       "stem": "DetN3K2D1",

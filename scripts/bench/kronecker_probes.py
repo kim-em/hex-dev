@@ -145,11 +145,12 @@ def main():
     for k in [1, 2, 3, 4, 6, 8]:
         xs = sp.symbols(f"x0:{k}")
         for d in [2, 4, 8, 16]:
-            lhs = ["pow", join("add", [["atom", i] for i in range(k)], 0), d]
+            base = ["add", ["atom", 0], ["int", 1]] if k == 1 else join("add", [["atom", i] for i in range(k)], 0)
+            lhs = ["pow", base, d]
             size = preflight(dict(k=k, op="expr", budget=[65536, 16777216], lhs=lhs, rhs=lhs))
             # A declined grid point never requests a sparse expansion either.
-            rhs = polynomial_ast(sum(xs)**d, xs) if size["digits"] <= 65536 and size["packedBits"] <= 16777216 else lhs
-            cases.append(make_case(f"GridK{k}D{d}", "reflected-identities", k, lhs, rhs, degree=d))
+            rhs = polynomial_ast((xs[0] + 1 if k == 1 else sum(xs))**d, xs) if size["digits"] <= 65536 and size["packedBits"] <= 16777216 else lhs
+            cases.append(make_case(f"GridK{k}D{d}", "reflected-identities", k, lhs, rhs, degree=d, one_atom_shifted=k == 1))
     for n, k, d in [(3, 2, 1), (4, 3, 1), (3, 3, 2), (4, 2, 2), (5, 3, 1)]:
         lhs, rhs = determinant(n, k, d)
         cases.append(make_case(f"DetN{n}K{k}D{d}", "determinant-identities", k, lhs, rhs, n=n, degree=d))

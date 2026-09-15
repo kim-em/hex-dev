@@ -29,6 +29,11 @@ example (x : ZMod 7) : x^7 = x := by kronecker
 #guard_msgs in
 example (x : ℤ) : x^2 = x*x := by kronecker (config := { maxDenseDigits := 1 })
 
+/-- error: kronecker failure: maxPackedBits above 16777216 is not supported -/
+#guard_msgs in
+example (x : ℤ) : x = x := by
+  kronecker (config := { maxPackedBits := 5000000000 })
+
 #guard HexKroneckerMathlib.fromGrind? 1 (.var 1) |>.isNone
 #guard HexKroneckerMathlib.fromGrind? 1 (.var 0) |>.isSome
 

@@ -152,7 +152,9 @@ outside their fragment.
 
 `HexKroneckerMathlib.Config` embeds `Hex.Kronecker.Budget`, whose defaults are
 `maxDenseDigits := 65536` and `maxPackedBits := 16777216`; callers may tighten
-either limit.  It is distinct from `HexMatrixMathlib.KernelConfig`, which
+either limit. The frontend rejects `maxPackedBits` above its default before
+reflection or constructing the saturation cap. Programmatic `Budget` values
+remain unrestricted. It is distinct from `HexMatrixMathlib.KernelConfig`, which
 configures only the existing `rank` and `det` frontends.
 
 The implementation opens one hex-reflect session and calls
