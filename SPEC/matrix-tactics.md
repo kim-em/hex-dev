@@ -24,6 +24,7 @@ their library structure and their kernel-replay proof strategy do not.
 | `char_poly` | `A.charpoly = p` | `hex-char-poly`: the Berkowitz certificate, in kernel form | `hex-char-poly-mathlib` | packed list certificate and both frontends in `HexCharPoly`/`HexCharPolyMathlib`; measurements in `HexCharPolyMathlib/SPEC/hex-char-poly-mathlib.md` |
 | `rank`, symbolic entries | `A.rank = r` (conditional), `A.rank ≤ r`, generic rank of the reified matrix | `hex-generic-rank`: hex-rank's certificate at `MvPoly` | `hex-generic-rank-mathlib`: a second handler on the `rank` syntax kind; `checkRank_sound_at` | implemented: [hex-generic-rank-mathlib](../HexGenericRankMathlib/SPEC/hex-generic-rank-mathlib.md) |
 | `det`, symbolic entries | `A.det = e`, `e = A.det`, `det% A` (unconditional; any commutative ring; closed forms for `n ≤ 3`) | `hex-bareiss`: generic `detWitness`, `checkDetPolyList`; `hex-poly-det`: the `MvPoly` instantiation | `hex-poly-det-mathlib`: `checkDetPolyList_sound`, second handler on the `det` syntax kind, opt-in `Hex.normPolyDet` | specified: [hex-poly-det-mathlib](Libraries/hex-poly-det-mathlib.md); relocated out of the published hex-bareiss-mathlib |
+| `kronecker` | `a = b` for characteristic-zero commutative-ring expressions | `hex-kronecker`: `Expr`, `checkExprEq`; quotient-witness checks are programmatic only | `hex-kronecker-mathlib`: `checkExprEq_sound`, `kronecker`, `kronecker%` | planned, explicitly opt-in: [hex-kronecker-mathlib](Libraries/hex-kronecker-mathlib.md) |
 | `rank_locus` | `A.rank < r ↔ ⋀ gᵢ = 0` as a hypothesis; `A.rank < r`, `A.rank ≤ r`, `r ≤ A.rank`, `A.rank = r` | `hex-determinantal-ideal`: `detIdealGens`, and its list form `detIdealGensList` | `hex-determinantal-ideal-mathlib`: `gens_vanish_iff_rank_lt`, `HexDeterminantalIdealMathlib/Tactic.lean`; default `r` from a hex-generic-rank-mathlib handler | specified: [hex-determinantal-ideal-mathlib §The `rank_locus` tactic](../HexDeterminantalIdealMathlib/SPEC/hex-determinantal-ideal-mathlib.md#the-rank_locus-tactic) |
 | `min_poly` | `minpoly F A = p` | hex-min-poly: list form of `MinPolyCert` | hex-min-poly-mathlib | implemented in `HexMinPolyMathlib/Tactic.lean`: [companion contract](../HexMinPolyMathlib/SPEC/hex-min-poly-mathlib.md#the-min_poly-tactic) |
 | `smith` | integer row-presentation quotient equivalence | hex-smith: list form of `snfCert` | hex-smith-mathlib; optional polynomial handler in hex-poly-smith-mathlib | implemented in `HexSmithMathlib/Tactic.lean`: [companion contract](../HexSmithMathlib/SPEC/hex-smith-mathlib.md#the-smith-tactic) |
@@ -163,6 +164,22 @@ or well-founded recursion appears on the path, every definition on it is
 definitionally (`vecOfList (k + 1) (a :: l)` unfolds to
 `vecCons a (vecOfList k l)`, so `!![…] = ofLists n m L` is `rfl`), never
 by evaluating `A i j` through `Matrix.of` inside the arithmetic.
+
+Polynomial certificates have two complementary kernel forms.  The sparse
+form is hex-mv-poly's canonical `PolyList`, with coefficientwise list
+arithmetic.  The dense-box form is
+[hex-kronecker](Libraries/hex-kronecker.md): an unnormalized ring-expression
+tree or a supplied `PolyList Int` is evaluated at mixed-radix powers of one
+power-of-two base, and balanced-digit injectivity turns one packed integer
+comparison back into a polynomial identity.  Polynomial-matrix products use
+the existing direct list dot product by default and may reuse
+`Hex.Matrix.Packed`'s nonnegative/nonpositive signed packing as a separately
+benchmarked outer mode.  Bounds in both dense digits and packed bits are
+checked before packing, so consumers select the dense form only when its box
+is smaller than their budget and retain term lists otherwise.  Characteristic
+`p` never uses base-`p` packed arithmetic: it supplies an integer quotient
+witness for `L̃ - R̃ = p Q`, or falls back to the residue term-list checker.
+Neither form normalizes a reflected tree on the kernel path.
 
 The loops that run once per multiply-add in the integer rank and
 determinant checkers (the dot products `dotNat` and `dotInt` of

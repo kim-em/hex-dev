@@ -1078,6 +1078,31 @@ libraries:
     correspondence_only: true
     done_through: 1
     status: active
+  HexKronecker:
+    deps: [HexMvPoly, HexMatrix]
+    mathlib: false
+    done_through: 0
+    status: planned
+    phase4:
+      input_families:
+        - name: expression-checker
+          description: Unnormalized ring-expression trees across the specified atom-count and per-atom-degree grid, parameterized by the reported packed bit size.
+        - name: term-list-products
+          description: Sparse integer polynomial lists and rectangular row-by-column products across the same grid, including the nested signed-packing size.
+  HexKroneckerMathlib:
+    deps: [HexKronecker, HexMvPolyMathlib, HexReflect, HexReflectMathlib, HexMatrixMathlib]
+    mathlib: true
+    proof_probes: [bench/HexKroneckerMathlib/ProofProbe]
+    done_through: 0
+    status: planned
+    phase4:
+      input_families:
+        - name: reflected-identities
+          description: Fresh-module comparisons with ring and grobner across the specified atom-count and degree grid.
+        - name: determinant-identities
+          description: Expanded determinants over a shared small atom set, varying matrix dimension, atom count, and entry degree.
+        - name: dense-box-declines
+          description: Matrices with independent linear entry atoms whose dense box must be rejected before packing.
   HexSparsePolyMathlib:
     deps: [HexSparsePoly, HexPolyMathlib, HexPoly]
     mathlib: true
