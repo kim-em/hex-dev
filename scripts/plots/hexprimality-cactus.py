@@ -10,7 +10,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
-def plot_direct(data: dict, out_dir: Path) -> None:
+def plot_direct(data: dict, out_dir: Path, record_name: str = "unspecified") -> None:
     """Show kernel growth by input as well as the independently sorted cactus."""
     fig, axes = plt.subplots(1, 2, figsize=(11, 5), sharey=True)
     cases = data['cases']
@@ -54,12 +54,18 @@ def plot_direct(data: dict, out_dir: Path) -> None:
                 'Curve448: PrimeCert supplied certificate; Hex has no generated certificate in this corpus.')
     compact = (' PrimeCert uses matching Pocklington factors.'
                if data.get('supplied_primecert_sources') else '')
-    fig.text(.5, .015,
+    versions = {
+        system: data['versions'][system]['toolchain'].rsplit(':', 1)[-1].removeprefix('v')
+        for system in ('hex', 'primecert')
+    }
+    fig.text(.5, .035,
              'Kernel.check of full local proof bodies; auxiliary proofs expanded; imports/elaboration excluded.\n'
-             f'Hex Lean 4.34.0 / PrimeCert Lean 4.33.0. {data["blocks"]} AB/BA pairs; all samples retained.{compact}\n'
+             f'Hex Lean {versions["hex"]} / PrimeCert Lean {versions["primecert"]}. '
+             f'{data["blocks"]} AB/BA pairs; all samples retained.{compact}\n'
              + coverage,
              ha='center', fontsize=8)
-    fig.tight_layout(rect=(0, .12, 1, .96))
+    fig.text(.5, .008, f'Record: {record_name}', ha='center', fontsize=7)
+    fig.tight_layout(rect=(0, .15, 1, .96))
     for ext in ['svg', 'png']:
         output = out_dir/f'hex-primality-kernel-direct.{ext}'
         fig.savefig(output, dpi=160, metadata={'Date': None} if ext == 'svg' else {})
@@ -80,7 +86,7 @@ def main() -> None:
     args.out_dir.mkdir(parents=True, exist_ok=True)
     plt.rcParams.update({'svg.hashsalt': 'hex-primality-cactus', 'font.size': 10})
     if args.direct_kernel:
-        plot_direct(json.loads(args.direct_kernel.read_text()), args.out_dir)
+        plot_direct(json.loads(args.direct_kernel.read_text()), args.out_dir, args.direct_kernel.name)
     charts = [
         ('native', [('hex', hex_label), ('flint', 'FLINT is_prime'),
                     ('pari', 'PARI isprime')], len(data['cases'])),

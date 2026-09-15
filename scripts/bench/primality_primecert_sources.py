@@ -10,6 +10,8 @@ import re, json, math
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('hex_record', type=Path)
 parser.add_argument('output_dir', type=Path)
+parser.add_argument('--no-sieve', action='store_true',
+                    help='reproduce the earlier comparator using Pocklington for larger leaves')
 args = parser.parse_args()
 record = json.loads(args.hex_record.read_text())
 out = args.output_dir
@@ -57,6 +59,7 @@ for case in record['cases']:
     assert i == len(tokens), (case['name'], tokens[i:])
     nodes = {}
     small = set()
+    sieved = set()
     steps = []
 
     def emit(node):
@@ -69,6 +72,9 @@ for case in record['cases']:
                 small.add(n)
                 return
             assert n < 100000
+            if not args.no_sieve:
+                sieved.add(n)
+                return
             residual = n - 1
             fs = []
             for q in range(2, math.isqrt(n - 1) + 1):
@@ -106,6 +112,11 @@ for case in record['cases']:
     goal = re.search('theorem result : (.*?)\\s*:=\\s*prime_cert%', original, re.S)[1]
     ns = '.'.join(re.findall('^namespace (\\S+)', original, re.M))
     source = '/-\nCopyright (c) 2026 Lean FRO, LLC. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Kim Morrison\n-/\n\nmodule\npublic import PrimeCert\npublic section\nset_option maxRecDepth 65536\nset_option exponentiation.threshold 512\n'
+    if sieved:
+        source = source.replace('public import PrimeCert\n',
+            'public import PrimeCert\npublic import PrimeCert.SieveBase\n'
+            'public meta import PrimeCert.Meta.SieveLookup\n')
+        steps.insert(0, 'sieve {' + '; '.join(map(str, sorted(sieved))) + '}')
     if ns:
         source += f'namespace {ns}\n'
     source += f'theorem result : {goal} := prime_cert%\n  [small {{' + '; '.join(map(str, sorted(small))) + '},\n   ' + ',\n   '.join(steps) + ']\n'

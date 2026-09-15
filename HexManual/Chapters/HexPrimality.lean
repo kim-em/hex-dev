@@ -200,10 +200,10 @@ proof emission, imports, and kernel checking.
 The second plot times kernel checking directly, excluding imports, search,
 and proof elaboration. It checks complete proof bodies, including expanded
 local auxiliary proofs. With compact certificates using matching selected
-Pocklington factors, Curve25519 takes about 5.18 milliseconds for Hex and
-13.98 milliseconds for PrimeCert. Hex is faster on all eight supplied inputs
-in this comparison; the 31-bit margin is only 2%, while the other margins
-range from 1.53 to 3.32 times. These are host-specific observations. The
+Pocklington factors and PrimeCert’s certified sieve for larger table leaves,
+Curve25519 takes about 5.18 milliseconds for Hex and 14.42 milliseconds for
+PrimeCert. Hex is faster on all eight supplied inputs
+in this comparison, with margins from 1.11 to 3.46 times. These are host-specific observations. The
 [replay report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-windowed-replay.md)
 records every sample and the checker optimizations. Hex uses Lean 4.34.0;
 PrimeCert uses Lean 4.33.0.

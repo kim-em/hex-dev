@@ -455,10 +455,8 @@ bounds are `p^127`, `p^31`, `p^15`, `p^4 * 2^192`, `p^2 * 2^64`, and `p^2`.
 Window selection uses shifts so it also reduces under Meta's default
 exponentiation limit. These fixed windows retain logarithmic recursion
 in the exponent. The runtime fallback `powModBits` retains the original
-bit scan and reduces after every multiplication. The `@[implemented_by]`
-annotation permits the raw-recursion definition to use compiled evaluation;
-the proved `@[csimp]` equality establishes its agreement with `powMod`'s
-Montgomery dispatch and this fallback. Both return `0` at
+bit scan and reduces after every multiplication. The kernel specification is `noncomputable`; a proved `@[csimp]` equality
+redirects compiled calls to `powMod`'s Montgomery dispatch and this fallback. Both return `0` at
 `p = 0` (the modulus-zero convention `powMod` always had); the
 agreement at every input is what makes the `@[csimp]` registration
 unconditional. Downstream consumer: hex-primality's `checkPrime`

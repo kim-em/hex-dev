@@ -1149,8 +1149,8 @@ a reduced base below `2^64` uses two-bit windows through `2^4096`, then
 one-bit windows for exponents at least `2^64`; other inputs use the binary
 accumulator. Modulus zero returns zero. Compiled evaluation uses `powMod`,
 with their equality proved below. -/
-@[expose, implemented_by powMod]
-def powModNat (a n p : Nat) : Nat :=
+@[expose]
+noncomputable def powModNat (a n p : Nat) : Nat :=
   (p.beq 0).rec
     ((n.beq 0).rec
       ((p.ble ((1 : Nat).shiftLeft 1024)).rec

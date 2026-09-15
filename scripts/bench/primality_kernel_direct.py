@@ -62,6 +62,31 @@ run_cmd do
   match Lean.Kernel.check env {} corrupt with
   | .error _ => pure ()
   | .ok _ => throwError "kernel accepted the corrupted proof"
+  -- Change only a Hex witness base: subjects, products, and ordering remain
+  -- intact, so this control must reach the witness arithmetic.
+  let corruptWitness := value.replace fun e => Id.run do
+    unless e.isAppOfArity `Hex.Nat.PrimeCert.pock 2 ||
+        e.isAppOfArity `Hex.Nat.PrimeCert.pock3 5 do return none
+    let args := e.getAppArgs
+    let fs := args.back!
+    unless fs.isAppOfArity ``List.cons 3 do return none
+    let fsArgs := fs.getAppArgs
+    let entry := fsArgs[1]!
+    unless entry.isAppOfArity ``Prod.mk 4 do return none
+    let entryArgs := entry.getAppArgs
+    let entry := Lean.mkAppN entry.getAppFn (entryArgs.set! 2 (Lean.mkRawNatLit 0))
+    let fs := Lean.mkAppN fs.getAppFn (fsArgs.set! 1 entry)
+    return some (Lean.mkAppN e.getAppFn (args.set! (args.size - 1) fs))
+  let needsWitness := value.getUsedConstants.any fun name =>
+    name == `Hex.Nat.PrimeCert.pock || name == `Hex.Nat.PrimeCert.pock3
+  if needsWitness && corruptWitness == value then
+    throwError "witness corruption did not change the proof"
+  if corruptWitness != value then
+    let bad := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corruptWitness
+    match Lean.Kernel.check env {} bad with
+    | .error _ => pure ()
+    | .ok _ => throwError "kernel accepted the zero witness base"
+    Lean.logInfo "DIRECT_WITNESS_CONTROL rejected"
   let input ← IO.mkRef (env, proof)
   let (env, proof) ← input.get
   let start ← IO.monoNanosNow

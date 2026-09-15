@@ -1225,8 +1225,8 @@ accepted results. Table lookup and the arithmetic checks use primitive Nat
 comparisons. Subject ordering uses a direct list fold, and `checkPrime` uses
 the certificate’s structural recursor instead of generated course-of-values
 recursion. `checkWitnesses` shares a Fermat result only after that base passes;
-a changed base starts a new group. Each public checker is proved equal to
-its compiled counterpart for every input. Compiled table lookup still uses
+a changed base starts a new group. Each public checker is a `noncomputable` kernel specification with a proved
+`@[csimp]` rewrite to its compiled counterpart for every input. Compiled table lookup still uses
 binary search. The internal `pockProduct` sentinel is proved equivalent to
 `certProduct` for positive subjects; callers establish that precondition
 before using it, and the final arithmetic check rejects the zero sentinel.
@@ -1519,12 +1519,13 @@ rejected. The retained `hex-primality-direct-kernel-checked-issue-10268.json` us
 adjacent reversed systems and records every sample, source, and toolchain.
 Its matched-input plot shows growth hidden by fresh-build overhead; cactus
 rank is not a bit-length axis. The compact-certificate comparison in
-`reports/bench-results/hex-primality-small-replay/hex-compact-primecert-six-bit-kernel.json`
+`reports/bench-results/hex-primality-small-replay/hex-compact-primecert-sieve-kernel.json`
 measures Hex on Lean 4.34.0 at a median 5.18 ms for Curve25519, versus
-PrimeCert on Lean 4.33.0 at 13.98 ms. Both receive supplied Curve448
-certificates, and PrimeCert uses the same selected Pocklington factors as Hex.
+PrimeCert on Lean 4.33.0 at 14.42 ms. Both receive supplied Curve448
+certificates, and PrimeCert uses the same selected Pocklington factors as Hex,
+with its certified sieve for larger table leaves.
 All four samples per system and input are retained. Hex wins all eight inputs;
-the 31-bit margin is only 2% and remains provisional on this shared host.
+the margins range from 1.11× to 3.46× on this shared host.
 These are supplied-proof replay measurements, not a comparison of certificate
 construction; see the [replay report](../../reports/hex-primality-windowed-replay.md).
 

@@ -6,13 +6,14 @@ Authors: Kim Morrison
 
 module
 public import PrimeCert
+public import PrimeCert.SieveBase
+public meta import PrimeCert.Meta.SieveLookup
 public section
 set_option maxRecDepth 65536
 set_option exponentiation.threshold 512
 theorem result : Nat.Prime (2 ^ 255 - 19) := prime_cert%
-  [small {2; 3; 173; 223; 353; 487},
-   pock (57467, 2, 487),
-   pock (4153, 2, 173),
+  [small {2; 3; 223; 353},
+   sieve {4153; 57467},
    pock3 (31757755568855353, 5, 3, 2 ^ 3 * 223 * 4153),
    pock3 (74058212732561358302231226437062788676166966415465897661863160754340907, 2, 3, 2 * 353 * 57467 * 31757755568855353),
    pock (57896044618658097711785492504343953926634992332820282019728792003956564819949, 2, 74058212732561358302231226437062788676166966415465897661863160754340907)]

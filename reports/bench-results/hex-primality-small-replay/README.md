@@ -1,8 +1,8 @@
 # Small-certificate replay experiments
 
-The final package comparison is `hex-compact-primecert-six-bit-kernel.json`:
+The final package comparison is `hex-compact-primecert-sieve-kernel.json`:
 four adjacent AB/BA pairs per input, 64 complete proof checks. It uses compact
-PrimeCert certificates and a supplied Hex Curve448 certificate.
+PrimeCert certificates with certified sieve leaves and a supplied Hex Curve448 certificate.
 
 The other complete comparisons retain intermediate checker implementations.
 The `corrected` record fixes the initial PrimeCert source-generation failure
@@ -40,3 +40,5 @@ implementations are not pooled with the final package comparison.
 | [hex-small-shared-witness-typed-profile.json](hex-small-shared-witness-typed-profile.json) | build exit 0; 720 component checks |
 | [hex-small-window-heldout-profile.json](hex-small-window-heldout-profile.json) | build exit 0; 2400 component checks |
 | [hex-small-window-profile.json](hex-small-window-profile.json) | build exit 0; 2240 component checks |
+| [hex-compact-primecert-sieve-kernel.json](hex-compact-primecert-sieve-kernel.json) | 64 calls; all successful; 32 Hex witness controls rejected |
+| [hex-primecert-sieve-verify.json](hex-primecert-sieve-verify.json) | All eight supplied PrimeCert sources build |

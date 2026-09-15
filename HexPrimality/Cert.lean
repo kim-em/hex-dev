@@ -74,12 +74,12 @@ constructing it. A zero accumulator or base returns zero immediately; otherwise
 the computation aborts as soon as the next product would exceed `bound`, so an
 attacker-chosen enormous power is never constructed. -/
 @[expose]
-def boundedPowMulLoop (bound q : Nat) : Nat → Nat → Option Nat
+def boundedPowMul.native (bound q : Nat) : Nat → Nat → Option Nat
   | acc, 0 => some acc
   | acc, e + 1 =>
       if acc = 0 then some 0
       else if q = 0 then some 0
-      else if acc ≤ bound / q then boundedPowMulLoop bound q (acc * q) e
+      else if acc ≤ bound / q then boundedPowMul.native bound q (acc * q) e
       else none
 
 /-- Kernel reduction uses raw recursors to avoid auxiliary match and
@@ -94,34 +94,34 @@ def boundedPowMulLoop (bound q : Nat) : Nat → Nat → Option Nat
         (some 0)) e acc
 
 private theorem boundedPowMul.go_eq (bound q acc e : Nat) :
-    boundedPowMul.go bound q acc e = boundedPowMulLoop bound q acc e := by
+    boundedPowMul.go bound q acc e = boundedPowMul.native bound q acc e := by
   induction e generalizing acc with
   | zero => rfl
   | succ e ih =>
     change (acc.beq 0).rec
       ((q.beq 0).rec
         ((acc.ble (bound.div q)).rec none (boundedPowMul.go bound q (acc.mul q) e))
-        (some 0)) (some 0) = boundedPowMulLoop bound q acc (e + 1)
-    simp only [Bool.rec_eq, Nat.beq_eq, Nat.ble_eq, ih, boundedPowMulLoop]
+        (some 0)) (some 0) = boundedPowMul.native bound q acc (e + 1)
+    simp only [Bool.rec_eq, Nat.beq_eq, Nat.ble_eq, ih, boundedPowMul.native]
     rfl
 
-private theorem boundedPowMulLoop.closed (bound q acc e : Nat) :
-    boundedPowMulLoop bound q acc e =
+private theorem boundedPowMul.native.closed (bound q acc e : Nat) :
+    boundedPowMul.native bound q acc e =
       if e = 0 ∨ acc * q ^ e ≤ bound then some (acc * q ^ e) else none := by
   induction e generalizing acc with
-  | zero => simp [boundedPowMulLoop]
+  | zero => simp [boundedPowMul.native]
   | succ e ih =>
       by_cases ha : acc = 0
-      · simp [boundedPowMulLoop, ha]
+      · simp [boundedPowMul.native, ha]
       by_cases hq : q = 0
-      · simp [boundedPowMulLoop, hq]
+      · simp [boundedPowMul.native, hq]
       have hqpos : 0 < q := Nat.pos_of_ne_zero hq
       have hmul : (acc * q) * q ^ e = acc * q ^ (e + 1) := by
         simp [Nat.pow_succ, Nat.mul_assoc, Nat.mul_comm, Nat.mul_left_comm]
       have hle : acc * q ≤ acc * q ^ (e + 1) := by
         rw [← hmul]
         exact Nat.le_mul_of_pos_right _ (Nat.pow_pos hqpos)
-      simp only [boundedPowMulLoop, ha, hq, ite_false]
+      simp only [boundedPowMul.native, ha, hq, ite_false]
       by_cases hb : acc ≤ bound / q
       · rw [ite_eq_left hb, ih, hmul]
         have hab : acc * q ≤ bound := (Nat.le_div_iff_mul_le hqpos).mp hb
@@ -137,8 +137,8 @@ private theorem boundedPowMulLoop.closed (bound q acc e : Nat) :
 /-- Powers of two use a checked shift: the right shift checks the final
 product bound before the left shift constructs that product. Other bases use
 bounded multiplication. Compiled evaluation retains the original loop. -/
-@[expose, implemented_by boundedPowMulLoop]
-def boundedPowMul (bound q acc e : Nat) : Option Nat :=
+@[expose]
+noncomputable def boundedPowMul (bound q acc e : Nat) : Option Nat :=
   (e.beq 0).rec
     ((q.beq 2).rec
       (boundedPowMul.go bound q acc e)
@@ -146,7 +146,7 @@ def boundedPowMul (bound q acc e : Nat) : Option Nat :=
     (some acc)
 
 private theorem boundedPowMul.eq_loop (bound q acc e : Nat) :
-    boundedPowMul bound q acc e = boundedPowMulLoop bound q acc e := by
+    boundedPowMul bound q acc e = boundedPowMul.native bound q acc e := by
   simp only [boundedPowMul, Bool.rec_eq, Nat.beq_eq, Nat.ble_eq]
   split
   next he => subst e; rfl
@@ -154,12 +154,17 @@ private theorem boundedPowMul.eq_loop (bound q acc e : Nat) :
     split
     next hq =>
       subst q
-      rw [boundedPowMulLoop.closed]
+      rw [boundedPowMul.native.closed]
       change (if acc ≤ bound >>> e then some (acc <<< e) else none) = _
       simp only [he, false_or, Nat.shiftLeft_eq,
         Nat.shiftRight_eq_div_pow,
         Nat.le_div_iff_mul_le (Nat.two_pow_pos _)]
     next => exact boundedPowMul.go_eq bound q acc e
+
+/-- The compiler uses the verified runtime implementation. -/
+@[csimp] theorem boundedPowMul_eq_native : @boundedPowMul = @boundedPowMul.native := by
+  funext bound q acc e
+  exact boundedPowMul.eq_loop bound q acc e
 
 /-- Exponent zero preserves the accumulator, even when it exceeds the bound. -/
 @[simp] theorem boundedPowMul_zero (bound q acc : Nat) :
@@ -172,7 +177,7 @@ theorem boundedPowMul_succ (bound q acc e : Nat) :
       else if q = 0 then some 0
       else if acc ≤ bound / q then boundedPowMul bound q (acc * q) e
       else none := by
-  simp only [boundedPowMul.eq_loop, boundedPowMulLoop]
+  simp only [boundedPowMul.eq_loop, boundedPowMul.native]
 
 /-- The factored part `F = ∏ qᵢ ^ (eᵢ + 1)` of a factor list, aborting as
 soon as the running product exceeds `bound`. -/
@@ -206,8 +211,8 @@ def subjectsAfter.native (lower : Nat) : List (Nat × Nat × PrimeCert) → Bool
       decide (lower < c.subject) && subjectsAfter.native c.subject rest
 
 /-- Primitive comparisons in a direct list fold for kernel replay. -/
-@[expose, implemented_by subjectsAfter.native]
-def subjectsAfter (lower : Nat) (fs : List (Nat × Nat × PrimeCert)) : Bool :=
+@[expose]
+noncomputable def subjectsAfter (lower : Nat) (fs : List (Nat × Nat × PrimeCert)) : Bool :=
   List.rec (fun _ => true)
     (fun x _ ih lower => (lower.blt x.2.2.subject).and (ih x.2.2.subject)) fs lower
 
@@ -221,6 +226,11 @@ private theorem subjectsAfter.eq_native (lower : Nat) (fs : List (Nat × Nat × 
     rw [ih]
     apply Bool.eq_iff_iff.mpr
     simp [subjectsAfter.native, Nat.blt_eq]
+
+/-- The compiler uses the verified runtime implementation. -/
+@[csimp] theorem subjectsAfter_eq_native : @subjectsAfter = @subjectsAfter.native := by
+  funext lower fs
+  exact subjectsAfter.eq_native lower fs
 
 /-- Structural check on the factor list: every claimed prime is at least
 `2`, and the claimed primes are in strictly ascending order. The canonical
@@ -241,8 +251,8 @@ def checkWitness.native (n q a : Nat) : Bool :=
     Nat.gcd ((HexArith.powModNat a ((n - 1) / q) n + n - 1) % n) n == 1
 
 /-- The witness conditions with primitive Nat comparisons for kernel reduction. -/
-@[expose, implemented_by checkWitness.native]
-def checkWitness (n q a : Nat) : Bool :=
+@[expose]
+noncomputable def checkWitness (n q a : Nat) : Bool :=
   let pred := n.sub 1
   let x := HexArith.powModNat a (pred.div q) n
   (HexArith.powModNat a pred n).beq ((1 : Nat).mod n) &&
@@ -252,6 +262,11 @@ private theorem checkWitness.eq_native (n q a : Nat) :
     checkWitness n q a = checkWitness.native n q a := by
   apply Bool.eq_iff_iff.mpr
   simp [checkWitness, checkWitness.native] <;> rfl
+
+/-- The compiler uses the verified runtime implementation. -/
+@[csimp] theorem checkWitness_eq_native : @checkWitness = @checkWitness.native := by
+  funext n q a
+  exact checkWitness.eq_native n q a
 
 /-- The ordinary per-entry witness traversal used by compiled search. -/
 @[expose]
@@ -270,8 +285,8 @@ that the preceding base passed its Fermat check; the initial state is false. -/
           |>.mod n) n).beq 1).and (ih x.1 true))) fs prev seen
 
 /-- Check every witness, reusing the Fermat leg for adjacent equal bases. -/
-@[expose, implemented_by checkWitnesses.native]
-def checkWitnesses (n : Nat) (fs : List (Nat × Nat × PrimeCert)) : Bool :=
+@[expose]
+noncomputable def checkWitnesses (n : Nat) (fs : List (Nat × Nat × PrimeCert)) : Bool :=
   checkWitnesses.go n fs 0 false
 
 private theorem checkWitnesses.go_eq (n : Nat) (fs : List (Nat × Nat × PrimeCert))
@@ -308,6 +323,11 @@ private theorem checkWitnesses.eq_native (n : Nat) (fs : List (Nat × Nat × Pri
     checkWitnesses n fs = checkWitnesses.native n fs :=
   checkWitnesses.go_eq n fs 0 false (by intro h; cases h)
 
+/-- The compiler uses the verified runtime implementation. -/
+@[csimp] theorem checkWitnesses_eq_native : @checkWitnesses = @checkWitnesses.native := by
+  funext n fs
+  exact checkWitnesses.eq_native n fs
+
 /-- The arithmetic side of the square-root Pocklington node: `n` odd and at
 least `2`, canonical strictly ascending factor subjects, `F ∣ n - 1` with
 `n < F * F`, and every per-entry witness condition. Child certificates are
@@ -323,8 +343,8 @@ def checkPockArith.native (n : Nat) (factors : List (Nat × Nat × PrimeCert)) :
 
 /-- Kernel comparisons use primitive Nat operations; compiled evaluation
 retains the original arithmetic check. -/
-@[expose, implemented_by checkPockArith.native]
-def checkPockArith (n : Nat) (factors : List (Nat × Nat × PrimeCert)) : Bool :=
+@[expose]
+noncomputable def checkPockArith (n : Nat) (factors : List (Nat × Nat × PrimeCert)) : Bool :=
   (2 : Nat).ble n && (n.mod 2).beq 1 && subjectsOk factors &&
     (let F := pockProduct (n.sub 1) factors
      ((n.sub 1).mod F).beq 0 && n.blt (F.mul F) &&
@@ -356,73 +376,6 @@ def checkPock3Arith (n r s w : Nat)
               decide (r * r - 8 * s < (w + 1) * (w + 1)))) &&
           checkWitnesses n factors
 
-mutual
-
-/-- Accept or reject a primality certificate. Pocklington factor lists are
-accepted only in strictly ascending child-subject order. Structurally recursive
-and fully `@[expose]`d, so acceptance replays by kernel reduction alone. -/
-@[expose]
-def checkPrime.native : PrimeCert → Bool
-  | .small n => isTablePrime n
-  | .pock n factors => checkPockArith n factors && checkChildren factors
-  | .pock3 n r s w factors =>
-      checkPock3Arith n r s w factors && checkChildren factors
-
-/-- Accept every child certificate of a factor list. -/
-@[expose]
-def checkChildren : List (Nat × Nat × PrimeCert) → Bool
-  | [] => true
-  | (_, _, c) :: rest => checkPrime.native c && checkChildren rest
-
-end
-
-/-- Direct structural fold for kernel replay. Compiled code retains the
-ordinary mutually recursive traversal. -/
-@[expose, implemented_by checkPrime.native]
-def checkPrime : PrimeCert → Bool :=
-  PrimeCert.rec (motive_1 := fun _ => Bool) (motive_2 := fun _ => Bool)
-    (motive_3 := fun _ => Bool) (motive_4 := fun _ => Bool)
-    isTablePrime (fun n fs ih => (checkPockArith n fs).and ih)
-    (fun n r s w fs ih => (checkPock3Arith n r s w fs).and ih)
-    true (fun _ _ head tail => head.and tail)
-    (fun _ _ ih => ih) (fun _ _ ih => ih)
-
-private theorem checkPrime.pock (n : Nat) (fs : List (Nat × Nat × PrimeCert)) :
-    checkPrime (.pock n fs) = (checkPockArith n fs && fs.all (fun x => checkPrime x.2.2)) := by
-  suffices h : _ = fs.all (fun x => checkPrime x.2.2) by
-    exact congrArg (fun x => checkPockArith n fs && x) h
-  induction fs with
-  | nil => rfl
-  | cons x xs ih =>
-    rcases x with ⟨a, e, c⟩
-    simpa only [checkPrime, List.all_cons, Bool.and] using congrArg (checkPrime c && ·) ih
-
-private theorem checkPrime.pock3 (n r s w : Nat) (fs : List (Nat × Nat × PrimeCert)) :
-    checkPrime (.pock3 n r s w fs) =
-      (checkPock3Arith n r s w fs && fs.all (fun x => checkPrime x.2.2)) := by
-  suffices h : _ = fs.all (fun x => checkPrime x.2.2) by
-    exact congrArg (fun x => checkPock3Arith n r s w fs && x) h
-  induction fs with
-  | nil => rfl
-  | cons x xs ih =>
-    rcases x with ⟨a, e, c⟩
-    simpa only [checkPrime, List.all_cons, Bool.and] using congrArg (checkPrime c && ·) ih
-
-mutual
-private theorem checkPrime.eq_native : ∀ c, checkPrime c = checkPrime.native c
-  | .small _ => rfl
-  | .pock n fs => by rw [checkPrime.pock, checkChildren.eq_all]; rfl
-  | .pock3 n r s w fs => by rw [checkPrime.pock3, checkChildren.eq_all]; rfl
-
-private theorem checkChildren.eq_all : ∀ fs : List (Nat × Nat × PrimeCert),
-    fs.all (fun x => checkPrime x.2.2) = checkChildren fs
-  | [] => rfl
-  | (_, _, c) :: rest => by
-    change (checkPrime c && rest.all (fun x => checkPrime x.2.2)) =
-      (checkPrime.native c && checkChildren rest)
-    rw [checkPrime.eq_native c, checkChildren.eq_all rest]
-end
-
 /-! Accumulator lemmas -/
 
 /-- On success, the bounded accumulator computes the ordinary product. -/
@@ -434,13 +387,13 @@ theorem boundedPowMul_eq {bound q : Nat} :
   induction e with
   | zero =>
       intro acc r h
-      unfold boundedPowMulLoop at h
+      unfold boundedPowMul.native at h
       injection h with h
       subst h
       simp
   | succ e ih =>
       intro acc r h
-      unfold boundedPowMulLoop at h
+      unfold boundedPowMul.native at h
       by_cases ha : acc = 0
       · rw [ite_eq_left ha] at h
         injection h with h
@@ -468,11 +421,11 @@ theorem boundedPowMul_le {bound q acc e r : Nat} (hacc : acc ≤ bound)
   rw [boundedPowMul.eq_loop] at h
   induction e generalizing acc r with
   | zero =>
-      unfold boundedPowMulLoop at h
+      unfold boundedPowMul.native at h
       injection h with h
       simpa [h] using hacc
   | succ e ih =>
-      unfold boundedPowMulLoop at h
+      unfold boundedPowMul.native at h
       by_cases ha : acc = 0
       · rw [ite_eq_left ha] at h
         injection h with h
@@ -586,7 +539,7 @@ private theorem pockProduct.eq_product (bound : Nat)
       simp only [hp, Option.getD_none] at ih
       rw [pockProduct.cons, ih]
       cases e <;>
-        simp [certProduct, hp, boundedPowMul.eq_loop, boundedPowMulLoop.closed] <;>
+        simp [certProduct, hp, boundedPowMul.eq_loop, boundedPowMul.native.closed] <;>
         split <;> rfl
     | some f =>
       have hfp : 0 < f := (certProduct_eq xs f hp) ▸ hf
@@ -597,11 +550,11 @@ private theorem pockProduct.eq_product (bound : Nat)
       by_cases hw : c.subject ^ (e + 1) ≤ bound
       · by_cases hm : c.subject ^ (e + 1) * f ≤ bound <;>
           cases e <;>
-          simp_all [certProduct, boundedPowMul.eq_loop, boundedPowMulLoop.closed,
+          simp_all [certProduct, boundedPowMul.eq_loop, boundedPowMul.native.closed,
             Nat.mul_comm, Nat.add_assoc] <;> grind
       · have hm : ¬ c.subject ^ (e + 1) * f ≤ bound := fun h => hw (Nat.le_trans hle h)
         cases e <;>
-          simp_all [certProduct, boundedPowMul.eq_loop, boundedPowMulLoop.closed,
+          simp_all [certProduct, boundedPowMul.eq_loop, boundedPowMul.native.closed,
             Nat.mul_comm, Nat.add_assoc] <;> grind
 
 
@@ -678,6 +631,84 @@ private theorem checkPockArith.eq_native (n : Nat) (factors : List (Nat × Nat �
       simp [checkPockArith.native, h, hs, Nat.blt_eq] <;> rfl
   · have hf : subjectsOk factors = false := Bool.eq_false_iff.mpr hs
     simp [checkPockArith, checkPockArith.native, hf]
+
+/-- The compiler uses the verified arithmetic implementation. -/
+@[csimp] theorem checkPockArith_eq_native : @checkPockArith = @checkPockArith.native := by
+  funext n fs
+  exact checkPockArith.eq_native n fs
+
+
+mutual
+
+/-- Accept or reject a primality certificate. Pocklington factor lists are
+accepted only in strictly ascending child-subject order. This is the ordinary
+compiled traversal; the public `checkPrime` supplies the kernel fold. -/
+@[expose]
+def checkPrime.native : PrimeCert → Bool
+  | .small n => isTablePrime n
+  | .pock n factors => checkPockArith n factors && checkChildren factors
+  | .pock3 n r s w factors =>
+      checkPock3Arith n r s w factors && checkChildren factors
+
+/-- Accept every child certificate of a factor list. -/
+@[expose]
+def checkChildren : List (Nat × Nat × PrimeCert) → Bool
+  | [] => true
+  | (_, _, c) :: rest => checkPrime.native c && checkChildren rest
+
+end
+
+/-- Direct structural fold for kernel replay. Compiled code retains the
+ordinary mutually recursive traversal. -/
+@[expose]
+noncomputable def checkPrime : PrimeCert → Bool :=
+  PrimeCert.rec (motive_1 := fun _ => Bool) (motive_2 := fun _ => Bool)
+    (motive_3 := fun _ => Bool) (motive_4 := fun _ => Bool)
+    isTablePrime (fun n fs ih => (checkPockArith n fs).and ih)
+    (fun n r s w fs ih => (checkPock3Arith n r s w fs).and ih)
+    true (fun _ _ head tail => head.and tail)
+    (fun _ _ ih => ih) (fun _ _ ih => ih)
+
+private theorem checkPrime.pock (n : Nat) (fs : List (Nat × Nat × PrimeCert)) :
+    checkPrime (.pock n fs) = (checkPockArith n fs && fs.all (fun x => checkPrime x.2.2)) := by
+  suffices h : _ = fs.all (fun x => checkPrime x.2.2) by
+    exact congrArg (fun x => checkPockArith n fs && x) h
+  induction fs with
+  | nil => rfl
+  | cons x xs ih =>
+    rcases x with ⟨a, e, c⟩
+    simpa only [checkPrime, List.all_cons, Bool.and] using congrArg (checkPrime c && ·) ih
+
+private theorem checkPrime.pock3 (n r s w : Nat) (fs : List (Nat × Nat × PrimeCert)) :
+    checkPrime (.pock3 n r s w fs) =
+      (checkPock3Arith n r s w fs && fs.all (fun x => checkPrime x.2.2)) := by
+  suffices h : _ = fs.all (fun x => checkPrime x.2.2) by
+    exact congrArg (fun x => checkPock3Arith n r s w fs && x) h
+  induction fs with
+  | nil => rfl
+  | cons x xs ih =>
+    rcases x with ⟨a, e, c⟩
+    simpa only [checkPrime, List.all_cons, Bool.and] using congrArg (checkPrime c && ·) ih
+
+mutual
+private theorem checkPrime.eq_native : ∀ c, checkPrime c = checkPrime.native c
+  | .small _ => rfl
+  | .pock n fs => by rw [checkPrime.pock, checkChildren.eq_all]; rfl
+  | .pock3 n r s w fs => by rw [checkPrime.pock3, checkChildren.eq_all]; rfl
+
+private theorem checkChildren.eq_all : ∀ fs : List (Nat × Nat × PrimeCert),
+    fs.all (fun x => checkPrime x.2.2) = checkChildren fs
+  | [] => rfl
+  | (_, _, c) :: rest => by
+    change (checkPrime c && rest.all (fun x => checkPrime x.2.2)) =
+      (checkPrime.native c && checkChildren rest)
+    rw [checkPrime.eq_native c, checkChildren.eq_all rest]
+end
+
+/-- The compiler uses the verified recursive implementation. -/
+@[csimp] theorem checkPrime_eq_native : @checkPrime = @checkPrime.native := by
+  funext c
+  exact checkPrime.eq_native c
 
 private theorem dvd_pow_self'' (a : Nat) {k : Nat} (hk : k ≠ 0) : a ∣ a ^ k := by
   cases k with
@@ -1089,7 +1120,7 @@ private def longFactors : List (Nat × Nat × PrimeCert) :=
 #guard boundedPowMul 7 2 3 1 = some 6                        -- rounded bound accepts
 #guard boundedPowMul 7 2 4 1 = none                          -- next product is 8
 #guard checkPrime (.pock 7 [(2, 0, .small (2 ^ 4096))]) = false
-  -- huge child subject is rejected at the first guarded product step
+  -- huge child subject is rejected by the first product bound check
 #guard checkPrime (.pock 97 [(5, 1048576, .small 2)]) = false
   -- huge exponent aborts when its next bounded multiplication would cross 96
 #guard checkPrime (.pock 31 [(3, 0, .small 5), (3, 0, .small 7)]) = false
