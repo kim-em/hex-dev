@@ -279,9 +279,13 @@ checks both conditions. Thus unreduced inputs such as coefficient `3` modulo
 `3` are rejected. The arithmetic dictionaries carry modular operations only;
 no ring-law instance is installed on `Nat`.
 
-`addMod p`, `mulMod p`, `negMod p`, `smulMod p`, and `subMod p` preserve
-`CanonicalMod`. Addition and multiplication reuse the structural merge and
-balanced-row algorithms, reducing collisions and products modulo `p`.
+`oneMod p n` is the multiplicative identity, with the empty list for the
+trivial ring modulo `1`. It is canonical for every modulus, as are the results
+of `addMod p`, `mulMod p`, `negMod p`, `smulMod p`, and `subMod p` on
+canonical inputs. These preservation laws are proved directly on natural
+coefficients and require no machine-word bounds. Addition and multiplication
+reuse the structural merge and balanced-row algorithms, reducing collisions
+and products modulo `p`.
 Negation multiplies by `p - 1`, obtained by a structural split on `p`, and
 filters zero coefficients. Scalar multiplication accepts any natural scalar,
 including an unreduced one. The existing `isZero` and `beq` apply directly.
@@ -290,15 +294,21 @@ number equality; exponent comparison and the residue-bound check use
 `Nat.blt`. The replay path contains no machine-word or dependent residue
 values. All replay definitions are exposed across module boundaries.
 
-The same Mathlib-free library owns both conversions:
+`HexMvPoly/KernelResidue/Denote.lean` owns the producer and semantic
+conversions, importing the residue carrier separately from replay:
 
 - `ofResidues p` reads each producer `ZMod64 p` coefficient through
   `ZMod64.toNat` (`val.toNat`), retaining the support and its order;
 - `toResidues p` interprets natural coefficients using `ZMod64.ofNat`;
 - `denoteMod p` composes `toResidues p` with reference-polynomial denotation.
 
+`CanonicalMod` describes coefficient and exponent shape: for modulus zero,
+only the empty list is canonical. Semantic denotation requires `Bounds p`,
+which separately certifies positivity and the machine-word limit.
+
 These conversions are semantic or producer-side work. The kernel receives
-quoted natural-residue literals. Under `ZMod64.Bounds p`, the laws
+quoted natural-residue literals. Under `ZMod64.Bounds p`, `denoteMod_nil` and
+`denoteMod_oneMod` identify zero and one. The arithmetic laws
 `denoteMod_addMod`, `denoteMod_mulMod`, `denoteMod_negMod`,
 `denoteMod_smulMod`, and `denoteMod_subMod` hold on canonical residue inputs.
 The executable ring needs no primality hypothesis, so composite positive
@@ -307,8 +317,11 @@ moduli are supported too. On canonical inputs, `isZero_mod_iff` and
 `denoteMod`. Producer conversion satisfies the complete round trip
 `denoteMod p (ofResidues p (toList P)) = P`, and its output is canonical.
 `KernelMap.lean` proves that coefficient embeddings commute with the list
-operations; the residue proofs use these laws without requiring ring laws on
-unreduced naturals.
+operations, and that these operations preserve coefficient predicates.
+The residue proofs use these laws without requiring ring laws on unreduced
+naturals. A generic list-matrix checker can install local `Add Nat` and
+`Mul Nat` dictionaries with `residueAdd p` and `residueMul p`; these are the
+same dictionaries used by `addMod p` and `mulMod p`.
 
 `HexMvPolyMathlib/KernelResidue.lean` owns transport to
 `MvPolynomial (Fin n) (ZMod p)`. Its `residueEquiv` composes
@@ -320,6 +333,9 @@ zero, equality, and producer-round-trip laws expose that semantics to tactics.
 tridiagonal polynomial matrix modulo `5`, using independent certificate
 literals and `decide +kernel`. It rejects a corrupted determinant and
 unreduced coefficients, and checks zero-product filtering modulo `4`.
+Concrete applications exercise every arithmetic denotation law, both in this
+module and in `HexMvPolyMathlib/KernelResidueTests.lean`; the latter transports
+a supplied square certificate to a Mathlib polynomial identity.
 
 ### Producer list conversion
 

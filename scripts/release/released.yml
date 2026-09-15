@@ -225,6 +225,7 @@ repos:
 
   - repo: leanprover/hex-mv-poly-mathlib
     lib: HexMvPolyMathlib
+    test_modules: [HexMvPolyMathlib.KernelResidueTests]
     umbrella: true
     spec: hex-mv-poly-mathlib
     pins: [hex-basic, hex-poly, hex-mv-poly, hex-poly-mathlib, hex-matrix, hex-matrix-mathlib, hex-arith, hex-mod-arith, hex-mod-arith-mathlib]

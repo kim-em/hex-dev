@@ -70,10 +70,12 @@ For positive-characteristic certificates, `KernelResidue.lean` supplies
 `Kernel.denoteMod p : PolyList Nat → MvPolynomial (Fin n) (ZMod p)`.
 Its `residueEquiv` composes the polynomial equivalence with the coefficient
 ring equivalence `HexModArithMathlib.ZMod64.equiv`. The modular arithmetic,
-canonical zero/equality, and producer round-trip laws transport through this
+zero and one, canonical equality tests, and producer round-trip laws transport through this
 composition under `Hex.ZMod64.Bounds p`. The natural-residue encoding,
 canonicality check, arithmetic, and producer conversions belong to
 `hex-mv-poly`; this companion owns only their Mathlib interpretation.
+`KernelResidueTests.lean` checks concrete uses of every arithmetic law and
+transports a natural-residue square certificate into a Mathlib identity.
 
 ## Evaluation
 

@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexMvPolyMathlib.Kernel
-public import HexMvPoly.KernelResidue
+public import HexMvPoly.KernelResidue.Denote
 public import HexModArithMathlib.Ring
 public import Mathlib.Algebra.MvPolynomial.Equiv
 
@@ -36,6 +36,17 @@ noncomputable def residueEquiv :
 @[expose] noncomputable def denoteMod (a : PolyList Nat) :
     MvPolynomial (Fin n) (ZMod p) :=
   residueEquiv p (cmp := cmp) (Hex.MvPoly.Kernel.denoteMod p (cmp := cmp) a)
+
+/-- The empty residue list denotes zero in Mathlib. -/
+@[simp] theorem denoteMod_nil : denoteMod p (cmp := cmp) [] = 0 := by
+  exact (congrArg (residueEquiv p (cmp := cmp))
+    (Hex.MvPoly.Kernel.denoteMod_nil p (cmp := cmp))).trans (map_zero _)
+
+/-- The modular identity denotes the Mathlib polynomial identity. -/
+@[simp] theorem denoteMod_oneMod :
+    denoteMod p (cmp := cmp) (Hex.MvPoly.Kernel.oneMod p n) = 1 := by
+  exact (congrArg (residueEquiv p (cmp := cmp))
+    (Hex.MvPoly.Kernel.denoteMod_oneMod p (cmp := cmp))).trans (map_one _)
 
 /-- Modular addition denotes Mathlib polynomial addition. -/
 theorem denoteMod_addMod {a b : PolyList Nat}

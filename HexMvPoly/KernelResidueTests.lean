@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexMvPoly.KernelResidue
+public import HexMvPoly.KernelResidue.Denote
 
 public section
 
@@ -137,6 +137,61 @@ example : Kernel.denoteMod 5 (cmp := Hex.Mono.lex) (n := 2)
 example (a : Hex.MvPoly 2 (Hex.ZMod64 5) Hex.Mono.grevlex) :
     Kernel.denoteMod 5 (Kernel.ofResidues 5 (Kernel.toList a)) = a :=
   Kernel.denoteMod_ofResidues 5 a
+
+example : Kernel.isCanonicalMod 5 2 (Kernel.mulMod 5 listP listP) = true := by
+  decide +kernel
+
+example : Kernel.oneMod 5 2 = [([0, 0], 1)] := by decide +kernel
+example : Kernel.oneMod 1 2 = [] := by decide +kernel
+example : Kernel.isCanonicalMod 0 1 [] = true := by decide +kernel
+example : Kernel.isCanonicalMod 0 1 [([0], 1)] = false := by decide +kernel
+
+private theorem canonicalP : Kernel.CanonicalMod 5 2 listP :=
+  Kernel.isCanonicalMod_iff.mp (by decide +kernel)
+
+example : Kernel.denoteMod 5 (cmp := Hex.Mono.lex) (n := 2) [] = 0 :=
+  Kernel.denoteMod_nil 5
+
+example : Kernel.denoteMod 5 (cmp := Hex.Mono.lex) (n := 2) (Kernel.oneMod 5 2) = 1 :=
+  Kernel.denoteMod_oneMod 5
+
+example : Kernel.denoteMod 5 (cmp := Hex.Mono.lex) (n := 2)
+    (Kernel.addMod 5 listP listP) =
+      Kernel.denoteMod 5 listP + Kernel.denoteMod 5 listP :=
+  Kernel.denoteMod_addMod 5 canonicalP canonicalP
+
+example : Kernel.denoteMod 5 (cmp := Hex.Mono.lex) (n := 2)
+    (Kernel.mulMod 5 listP listP) =
+      Kernel.denoteMod 5 listP * Kernel.denoteMod 5 listP :=
+  Kernel.denoteMod_mulMod 5 canonicalP canonicalP
+
+example : Kernel.denoteMod 5 (cmp := Hex.Mono.lex) (n := 2)
+    (Kernel.subMod 5 listP listP) =
+      Kernel.denoteMod 5 listP - Kernel.denoteMod 5 listP :=
+  Kernel.denoteMod_subMod 5 canonicalP canonicalP
+
+example : Kernel.denoteMod 5 (cmp := Hex.Mono.lex) (n := 2)
+    (Kernel.negMod 5 listP) = -Kernel.denoteMod 5 listP :=
+  Kernel.denoteMod_negMod 5 canonicalP
+
+example : Kernel.denoteMod 5 (cmp := Hex.Mono.lex) (n := 2)
+    (Kernel.smulMod 5 7 listP) = Hex.MvPoly.C (Hex.ZMod64.ofNat 5 7) *
+      Kernel.denoteMod 5 listP :=
+  Kernel.denoteMod_smulMod 5 7 canonicalP
+
+-- Canonicality is also available beyond the executable carrier's word bound.
+example : Kernel.CanonicalMod (2^32) 2
+    (Kernel.mulMod (2^32) listP listP) :=
+  Kernel.mulMod_canonical _
+    (Kernel.isCanonicalMod_iff.mp (by decide +kernel))
+    (Kernel.isCanonicalMod_iff.mp (by decide +kernel))
+
+section Trivial
+local instance : Hex.ZMod64.Bounds 1 := ⟨by decide, by decide⟩
+
+example : Kernel.denoteMod 1 (cmp := Hex.Mono.lex) (n := 2) (Kernel.oneMod 1 2) = 1 :=
+  Kernel.denoteMod_oneMod 1
+end Trivial
 
 /-- info: 'Hex.MvPoly.KernelResidueTests.certificate' depends on axioms: [propext] -/
 #guard_msgs in
