@@ -1,0 +1,53 @@
+{
+  "toolchain": "leanprover/lean4:v4.34.0",
+  "fixtures": [
+    {
+      "case": "Curve25519",
+      "source": "conformance/HexPrimality/Curve25519Replay.lean",
+      "source_bytes": 1318,
+      "source_sha256": "cd1e0cce0343a03403361c42d607e81322c73fdfb57388b78e7d3a9ad1126fb9",
+      "olean_bytes": 15256,
+      "olean_sha256": "81a7fb68f5db49d31503ec8cb3957b0e537552278c1c706cebca1ffbf5e4ffd2",
+      "nonleaf_nodes": 3,
+      "table_leaves": 6,
+      "factor_entries": 8,
+      "olean_components": [
+        {
+          "path": ".lake/build/lib/lean/HexPrimality/Curve25519Replay.olean",
+          "bytes": 15256,
+          "sha256": "81a7fb68f5db49d31503ec8cb3957b0e537552278c1c706cebca1ffbf5e4ffd2"
+        }
+      ],
+      "olean_total_bytes": 15256
+    },
+    {
+      "case": "Curve448",
+      "source": "conformance/HexPrimality/Curve448Replay.lean",
+      "source_bytes": 1845,
+      "source_sha256": "c65e77e757aee2d1e0973706257cfb89fd76006947e539af4574c78d73ea5b46",
+      "olean_bytes": 7976,
+      "olean_sha256": "4437175a9c86b861df6ec48d93ad279445452083f81178e5bc18f09db4411949",
+      "nonleaf_nodes": 4,
+      "table_leaves": 9,
+      "factor_entries": 12,
+      "olean_components": [
+        {
+          "path": ".lake/build/lib/lean/HexPrimality/Curve448Replay.olean",
+          "bytes": 7976,
+          "sha256": "4437175a9c86b861df6ec48d93ad279445452083f81178e5bc18f09db4411949"
+        },
+        {
+          "path": ".lake/build/lib/lean/HexPrimality/Curve448Replay.olean.private",
+          "bytes": 72880,
+          "sha256": "76f2a20d4a8a49b6343b0405b03a66c6885a62ec7d76abd0720432857cdbeead"
+        },
+        {
+          "path": ".lake/build/lib/lean/HexPrimality/Curve448Replay.olean.server",
+          "bytes": 864,
+          "sha256": "29067f38dccac5493ca6ca8dc3030e9f361505bda3bbcdd1f4f5076f2e98f152"
+        }
+      ],
+      "olean_total_bytes": 81720
+    }
+  ]
+}

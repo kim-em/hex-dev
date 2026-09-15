@@ -1,0 +1,926 @@
+{
+  "schema": "hex-primality-direct-kernel/1",
+  "host": "chungus2",
+  "cpu": 1,
+  "blocks": 2,
+  "source_record": "reports/bench-results/hex-primality-cactus-native-executable-issue-10268.json",
+  "script_sha256": "eb4d4e30637217e702a1a81940ec2d77d1ce8464aac1b417e21357be86ba49e2",
+  "protocol": "trial-major adjacent Hex/PrimeCert; reverse systems in odd blocks; one fresh kernel checker per call; all completed samples retained",
+  "timing": "Warm Kernel.check of the complete local proof body against its goal; pending asynchronous checks explicitly drained before timing; excludes imports, proof elaboration, expansion, and negative controls; includes kernel reduction and type checking; imported library proofs remain dependencies; separate pinned toolchains",
+  "versions": {
+    "hex": {
+      "commit": "91220e97a3f0be77e643c2d957e4427f331bb366",
+      "toolchain": "leanprover/lean4:v4.34.0",
+      "diff": "diff --git a/HexArith/Montgomery/Context.lean b/HexArith/Montgomery/Context.lean\nindex 96432dfbf..ebe198a51 100644\n--- a/HexArith/Montgomery/Context.lean\n+++ b/HexArith/Montgomery/Context.lean\n@@ -1,7 +1,7 @@\n /-\n Copyright (c) 2026 Lean FRO, LLC. All rights reserved.\n Released under Apache 2.0 license as described in the file LICENSE.\n-Authors: Kim Morrison\n+Authors: Kim Morrison, Bhavik Mehta\n -/\n \n module\n@@ -690,16 +690,9 @@ def powModNatGo (n p : Nat) : Nat \u2192 Nat \u2192 Nat \u2192 Nat \u2192 Nat\n       let base' := (base * base) % p\n       powModNatGo n p remaining (bit + 1) acc' base'\n \n-/-- Nat-level modular exponentiation by repeated squaring, with the same\n-zero-modulus convention as `powMod`.\n-\n-This is the kernel-facing specification of modular exponentiation: it and its\n-recursion are `@[expose]`, so proof terms that replay it (`decide`-style\n-certificate checkers) reduce in the kernel. `powMod` is its runtime twin via\n-`powModNat_eq_powMod`, so compiled callers of `powModNat` still take the\n-Montgomery path for odd word-sized moduli. -/\n+/-- Compiled Nat fallback, reducing after every multiplication. -/\n @[expose]\n-def powModNat (a n p : Nat) : Nat :=\n+def powModBits (a n p : Nat) : Nat :=\n   if p = 0 then 0 else powModNatGo n p (bitLength n) 0 (1 % p) (a % p)\n \n /-- `pow_sq`: an even power `base ^ (2 * q)` equals the squared base `(base * base) ^ q`. -/\n@@ -799,16 +792,16 @@ private theorem powModNatGo_eq (a n p remaining bit acc base : Nat) (hp : 0 < p)\n         simpa [hbit] using ih (bit + 1) acc ((base * base) % p)\n           htail_bound hacc hinv'\n \n-/-- `powModNat` modulo zero returns zero, matching `powMod`. -/\n+/-- `powModBits` modulo zero returns zero, matching `powMod`. -/\n @[simp, grind =]\n-theorem powModNat_modulus_zero (a n : Nat) :\n-    powModNat a n 0 = 0 := by\n+theorem powModBits_modulus_zero (a n : Nat) :\n+    powModBits a n 0 = 0 := by\n   rfl\n \n-/-- `powModNat_eq`: for a positive modulus, `powModNat a n p` computes `a ^ n % p`. -/\n-theorem powModNat_eq (a n p : Nat) (hp : 0 < p) :\n-    powModNat a n p = a ^ n % p := by\n-  unfold powModNat\n+/-- `powModBits_eq`: for a positive modulus, `powModBits a n p` computes `a ^ n % p`. -/\n+theorem powModBits_eq (a n p : Nat) (hp : 0 < p) :\n+    powModBits a n p = a ^ n % p := by\n+  unfold powModBits\n   rw [ite_eq_right (by omega)]\n   apply powModNatGo_eq a n p (bitLength n) 0 (1 % p) (a % p) hp\n   \u00b7 simpa using lt_two_pow_bitLength n\n@@ -1026,9 +1019,9 @@ def powMod (a n p : Nat) : Nat :=\n       if hodd : p64 % 2 = 1 then\n         powModWordOdd a n p64 hodd\n       else\n-        powModNat a n p\n+        powModBits a n p\n     else\n-      powModNat a n p\n+      powModBits a n p\n \n /-- `powMod` agrees with ordinary modular exponentiation. -/\n @[grind =]\n@@ -1044,14 +1037,14 @@ theorem powMod_eq (a n p : Nat) (hp : p > 0) :\n           Nat.mod_eq_of_lt hfit_lt\n       by_cases hodd : UInt64.ofNat p % 2 = 1\n       \u00b7 simp [hfit, hodd, powModWordOdd_eq a n (UInt64.ofNat p) hodd]\n-      \u00b7 simp [hfit_lt, hodd, powModNat_eq a n p hp]\n+      \u00b7 simp [hfit_lt, hodd, powModBits_eq a n p hp]\n     \u00b7 have hfit : \u00ac (UInt64.ofNat p).toNat = p := by\n         intro h\n         have hmodlt : p % UInt64.size < UInt64.size := Nat.mod_lt _ (by decide)\n         have hpmod : p % UInt64.size = p := by\n           simpa [UInt64.toNat_ofNat] using h\n         exact hfit_lt (by simpa [hpmod] using hmodlt)\n-      simp [hfit_lt, powModNat_eq a n p hp]\n+      simp [hfit_lt, powModBits_eq a n p hp]\n \n /-- Modular exponentiation modulo zero returns zero. -/\n @[simp, grind =]\n@@ -1059,6 +1052,110 @@ theorem powMod_modulus_zero (a n : Nat) :\n     powMod a n 0 = 0 := by\n   rfl\n \n+/-- Kernel reduction loop for `powMod`, with an accumulator and decreasing fuel.\n+`go m fuel b e acc` computes `(b ^ e * acc) % m` when `e < fuel`.\n+`Nat.rec` avoids well-founded recursion, and `Bool.rec` avoids `Decidable` unfolding.\n+Adapted from Bhavik Mehta's `powModK` in PrimeCert (Apache 2.0). -/\n+@[expose] noncomputable def powModNat.go (m : Nat) : Nat \u2192 Nat \u2192 Nat \u2192 Nat \u2192 Nat :=\n+  Nat.rec (fun _ _ _ => 0)\n+    (fun _ rec b e acc =>\n+      (e.beq 0).rec\n+        (((e.mod 2).beq 0).rec\n+          (rec ((b.mul b).mod m) (e.div 2) ((b.mul acc).mod m))\n+          (rec ((b.mul b).mod m) (e.div 2) acc))\n+        (acc.mod m))\n+\n+/-- Fixed-window loop: `window b m k fuel e` computes `b ^ e % m` when\n+`2 \u2264 k` and `e < fuel`. The small powers use the kernel's `Nat.pow` reduction. -/\n+@[expose] noncomputable def powModNat.window (b m k : Nat) : Nat \u2192 Nat \u2192 Nat :=\n+  Nat.rec (fun _ => 0)\n+    (fun _ rec e =>\n+      (e.beq 0).rec\n+        ((((rec (e.div k)).pow k).mul (b.pow (e.mod k))).mod m)\n+        ((1 : Nat).mod m))\n+\n+private theorem powModNat.window_eq (b m k fuel e : Nat) (hk : 2 \u2264 k) (h : e < fuel) :\n+    powModNat.window b m k fuel e = b ^ e % m := by\n+  induction fuel generalizing e with\n+  | zero => omega\n+  | succ fuel ih =>\n+    change (e.beq 0).rec\n+      (((powModNat.window b m k fuel (e / k)) ^ k * b ^ (e % k)) % m)\n+      (1 % m) = b ^ e % m\n+    simp only [Bool.rec_eq, Nat.beq_eq]\n+    split\n+    next he => simp [he]\n+    next he =>\n+      have hdiv : e / k < fuel := Nat.lt_of_lt_of_le\n+        (Nat.div_lt_self (Nat.pos_of_ne_zero he) (by omega)) (by omega)\n+      rw [ih _ hdiv, Nat.mul_mod, \u2190 Nat.pow_mod, \u2190 Nat.pow_mul,\n+        \u2190 Nat.mul_mod, \u2190 Nat.pow_add, Nat.div_add_mod']\n+\n+private theorem powModNat.go_eq (m fuel b e acc : Nat) (h : e < fuel) :\n+    powModNat.go m fuel b e acc = (b ^ e * acc) % m := by\n+  induction fuel generalizing b e acc with\n+  | zero => omega\n+  | succ fuel ih =>\n+    change (e.beq 0).rec\n+      (((e % 2).beq 0).rec\n+        (powModNat.go m fuel (b * b % m) (e / 2) (b * acc % m))\n+        (powModNat.go m fuel (b * b % m) (e / 2) acc))\n+      (acc % m) = (b ^ e * acc) % m\n+    simp only [Bool.rec_eq, Nat.beq_eq]\n+    split\n+    next he => simp [he]\n+    next he =>\n+      split\n+      next hev =>\n+        rw [ih _ _ _ (by omega)]\n+        have hev' : 2 * (e / 2) = e := by omega\n+        rw [Nat.mul_mod, \u2190 Nat.pow_mod, \u2190 Nat.pow_two, \u2190 Nat.pow_mul, hev', \u2190 Nat.mul_mod]\n+      next hod =>\n+        rw [ih _ _ _ (by omega)]\n+        have hod' : 2 * (e / 2) + 1 = e := by omega\n+        rw [Nat.mul_mod, Nat.mod_mod, \u2190 Nat.pow_mod, \u2190 Nat.pow_two, \u2190 Nat.pow_mul,\n+          \u2190 Nat.mul_mod, \u2190 Nat.mul_assoc, \u2190 Nat.pow_succ, Nat.succ_eq_add_one, hod']\n+\n+/-- Kernel-facing modular exponentiation. Four-bit windows through 512-bit\n+moduli and three-bit windows through 1024-bit moduli reduce kernel recursion;\n+larger moduli use square-and-multiply. Modulus zero returns zero.\n+Compiled evaluation uses `powMod`, with their equality proved below. -/\n+@[expose, implemented_by powMod]\n+def powModNat (a n p : Nat) : Nat :=\n+  (p.beq 0).rec\n+    ((n.beq 0).rec\n+      ((p.ble ((1 : Nat).shiftLeft 1024)).rec\n+        (powModNat.go p n.succ (a.mod p) n 1)\n+        ((p.ble ((1 : Nat).shiftLeft 512)).rec\n+          (powModNat.window (a.mod p) p 8 n.succ n)\n+          (powModNat.window (a.mod p) p 16 n.succ n)))\n+      ((1 : Nat).mod p))\n+    0\n+\n+/-- Modular exponentiation modulo zero returns zero. -/\n+@[simp, grind =]\n+theorem powModNat_modulus_zero (a n : Nat) : powModNat a n 0 = 0 := by rfl\n+\n+/-- For a positive modulus, `powModNat` computes `a ^ n % p`. -/\n+theorem powModNat_eq (a n p : Nat) (hp : 0 < p) :\n+    powModNat a n p = a ^ n % p := by\n+  simp only [powModNat, Bool.rec_eq, Nat.beq_eq]\n+  split\n+  next h => omega\n+  next =>\n+    split\n+    next h => subst n; rfl\n+    next =>\n+      split\n+      next =>\n+        split\n+        all_goals\n+          rw [powModNat.window_eq _ _ _ _ _ (by decide) (by omega)]\n+          exact (Nat.pow_mod a n p).symm\n+      next =>\n+        rw [powModNat.go_eq _ _ _ _ _ (by omega), Nat.mul_one]\n+        exact (Nat.pow_mod a n p).symm\n+\n /-- The dispatching `powMod` and the Nat-level `powModNat` agree at every\n input, including modulus zero. -/\n theorem powMod_eq_powModNat (a n p : Nat) :\ndiff --git a/HexArith/SPEC/hex-arith.md b/HexArith/SPEC/hex-arith.md\nindex bbeaa48ed..d6150f55b 100644\n--- a/HexArith/SPEC/hex-arith.md\n+++ b/HexArith/SPEC/hex-arith.md\n@@ -437,11 +437,17 @@ of `n`. This is a Phase 1 \"wrong-complexity\" violation\n ([PLAN/Phase1.md](../../PLAN/Phase1.md)) regardless of how well the\n proof of `powMod_eq` happens to discharge.\n \n-The two forms are a specification/twin pair. `powModNat` and its\n-recursion (`powModNatGo`, `bitLength`) are `@[expose]`, so a\n-certificate checker written against `powModNat` replays by kernel\n-reduction; the `@[csimp]` equality swaps in `powMod`'s Montgomery\n-dispatch when the same checker runs compiled. Both return `0` at\n+The two forms are a specification/twin pair. `powModNat` uses exposed\n+`Nat.rec` and `Bool.rec` loops for kernel reduction: four-bit windows\n+for `p \u2264 2^512`, three-bit windows for `p \u2264 2^1024`, and binary\n+square-and-multiply above that. For positive moduli the intermediate\n+integers are bounded by `p^31`, `p^15`, and `p^2`, respectively;\n+window selection uses shifts so it also reduces under Meta's default\n+exponentiation limit. These fixed windows retain logarithmic recursion\n+in the exponent. The runtime fallback `powModBits` retains the original\n+bit scan and reduces after every multiplication. The `@[implemented_by]`\n+annotation and proved `@[csimp]` equality route compiled evaluation to\n+`powMod`'s Montgomery dispatch and this fallback. Both return `0` at\n `p = 0` (the modulus-zero convention `powMod` always had); the\n agreement at every input is what makes the `@[csimp]` registration\n unconditional. Downstream consumer: hex-primality's `checkPrime`\ndiff --git a/HexPrimality/Cert.lean b/HexPrimality/Cert.lean\nindex 31c146d62..fa7e16f38 100644\n--- a/HexPrimality/Cert.lean\n+++ b/HexPrimality/Cert.lean\n@@ -74,14 +74,38 @@ constructing it. A zero accumulator or base returns zero immediately; otherwise\n the computation aborts as soon as the next product would exceed `bound`, so an\n attacker-chosen enormous power is never constructed. -/\n @[expose]\n-def boundedPowMul (bound q : Nat) : Nat \u2192 Nat \u2192 Option Nat\n+def boundedPowMulLoop (bound q : Nat) : Nat \u2192 Nat \u2192 Option Nat\n   | acc, 0 => some acc\n   | acc, e + 1 =>\n       if acc = 0 then some 0\n       else if q = 0 then some 0\n-      else if acc \u2264 bound / q then boundedPowMul bound q (acc * q) e\n+      else if acc \u2264 bound / q then boundedPowMulLoop bound q (acc * q) e\n       else none\n \n+/-- Kernel reduction uses raw recursors to avoid auxiliary match and\n+`Decidable` reductions at each bounded multiplication. -/\n+@[expose, implemented_by boundedPowMulLoop]\n+def boundedPowMul (bound q acc e : Nat) : Option Nat :=\n+  Nat.rec (fun acc => some acc)\n+    (fun _ rec acc =>\n+      (acc.beq 0).rec\n+        ((q.beq 0).rec\n+          ((acc.ble (bound.div q)).rec none (rec (acc.mul q)))\n+          (some 0))\n+        (some 0)) e acc\n+\n+private theorem boundedPowMul_eq_loop (bound q acc e : Nat) :\n+    boundedPowMul bound q acc e = boundedPowMulLoop bound q acc e := by\n+  induction e generalizing acc with\n+  | zero => rfl\n+  | succ e ih =>\n+    change (acc.beq 0).rec\n+      ((q.beq 0).rec\n+        ((acc.ble (bound.div q)).rec none (boundedPowMul bound q (acc.mul q) e))\n+        (some 0)) (some 0) = boundedPowMulLoop bound q acc (e + 1)\n+    simp only [Bool.rec_eq, Nat.beq_eq, Nat.ble_eq, ih, boundedPowMulLoop]\n+    rfl\n+\n /-- The factored part `F = \u220f q\u1d62 ^ (e\u1d62 + 1)` of a factor list, aborting as\n soon as the running product exceeds `bound`. -/\n @[expose]\n@@ -185,17 +209,18 @@ end\n theorem boundedPowMul_eq {bound q : Nat} :\n     \u2200 (e acc r : Nat), boundedPowMul bound q acc e = some r \u2192\n       r = acc * q ^ e := by\n+  simp only [boundedPowMul_eq_loop]\n   intro e\n   induction e with\n   | zero =>\n       intro acc r h\n-      unfold boundedPowMul at h\n+      unfold boundedPowMulLoop at h\n       injection h with h\n       subst h\n       simp\n   | succ e ih =>\n       intro acc r h\n-      unfold boundedPowMul at h\n+      unfold boundedPowMulLoop at h\n       by_cases ha : acc = 0\n       \u00b7 rw [ite_eq_left ha] at h\n         injection h with h\n@@ -220,13 +245,14 @@ incoming bound is needed only for the zero-exponent case; every positive step\n establishes it before constructing the next accumulator. -/\n theorem boundedPowMul_le {bound q acc e r : Nat} (hacc : acc \u2264 bound)\n     (h : boundedPowMul bound q acc e = some r) : r \u2264 bound := by\n+  rw [boundedPowMul_eq_loop] at h\n   induction e generalizing acc r with\n   | zero =>\n-      unfold boundedPowMul at h\n+      unfold boundedPowMulLoop at h\n       injection h with h\n       simpa [h] using hacc\n   | succ e ih =>\n-      unfold boundedPowMul at h\n+      unfold boundedPowMulLoop at h\n       by_cases ha : acc = 0\n       \u00b7 rw [ite_eq_left ha] at h\n         injection h with h\ndiff --git a/conformance/HexArith/Conformance.lean b/conformance/HexArith/Conformance.lean\nindex b4f14bb01..32c5e84bc 100644\n--- a/conformance/HexArith/Conformance.lean\n+++ b/conformance/HexArith/Conformance.lean\n@@ -335,3 +335,23 @@ example (a b : UInt64) (bin : Bool) :\n #guard HexArith.powMod 42 99 1 = 42 ^ 99 % 1\n \n end HexArith\n+\n+\n+-- Kernel reduction across both window cutoffs, including their exact endpoints.\n+-- Exponent 17 exercises more than one digit in both window sizes. The direct\n+-- power on the right is small enough to serve as an independent arithmetic oracle.\n+example : HexArith.powModNat 1234 17 97 = 1234 ^ 17 % 97 := by decide +kernel\n+example : HexArith.powModNat 1234 17 0 = 0 := by decide +kernel\n+example : HexArith.powModNat 0 0 1 = 0 := by decide +kernel\n+example (a p : Nat) : HexArith.powModNat a 0 p =\n+    if p = 0 then 0 else 1 % p := by\n+  by_cases hp : p = 0\n+  \u00b7 simp [hp]\n+  \u00b7 simp [hp, HexArith.powModNat_eq a 0 p (Nat.pos_of_ne_zero hp)]\n+example : HexArith.powModNat 13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084092 17 13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084095 = 13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433648876943932 := by decide +kernel\n+example : HexArith.powModNat 13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084093 17 13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084096 = 13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433648876943933 := by decide +kernel\n+example : HexArith.powModNat 13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084094 17 13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084097 = 13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433648876943934 := by decide +kernel\n+example : HexArith.powModNat 179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624224137212 17 179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624224137215 = 179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624094997052 := by decide +kernel\n+example : HexArith.powModNat 179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624224137213 17 179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624224137216 = 179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624094997053 := by decide +kernel\n+example : HexArith.powModNat 179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624224137214 17 179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624224137217 = 179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624094997054 := by decide +kernel\n+example : HexArith.powModNat 2 17 1009 = 911 := by decide\n"
+    },
+    "primecert": {
+      "commit": "7d3a2de13bb08f111a95203634f9ea52e50e246e",
+      "toolchain": "leanprover/lean4:v4.33.0",
+      "diff": ""
+    }
+  },
+  "cases": [
+    {
+      "name": "family-31",
+      "n": "2147483647",
+      "bits": 31,
+      "primecert": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit31\n\ntheorem result : Nat.Prime 2147483647 := prime_cert%\n  [small {2; 3; 7; 11; 31; 151; 331},\n   pock (2147483647, 7, 2 * 3 ^ 2 * 7 * 11 * 31 * 151 * 331)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit31\n"
+    },
+    {
+      "name": "family-61",
+      "n": "1945555039024054273",
+      "bits": 61,
+      "primecert": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit61\n\ntheorem result : Nat.Prime 1945555039024054273 := prime_cert%\n  [small {2; 3},\n   pock (1945555039024054273, 5, 2 ^ 56 * 3 ^ 3)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit61\n"
+    },
+    {
+      "name": "family-123",
+      "n": "9304595970494411110326649421962412033",
+      "bits": 123,
+      "primecert": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit123\n\ntheorem result : Nat.Prime 9304595970494411110326649421962412033 := prime_cert%\n  [small {2; 7},\n   pock (9304595970494411110326649421962412033, 3, 2 ^ 120 * 7)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit123\n"
+    },
+    {
+      "name": "family-256",
+      "n": "93628759656736142393278101159368737990730026663232799828780155818898507169793",
+      "bits": 256,
+      "primecert": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit256\n\ntheorem result : Nat.Prime\n    93628759656736142393278101159368737990730026663232799828780155818898507169793 :=\n  prime_cert%\n    [small {2; 3; 23},\n     pock\n       (93628759656736142393278101159368737990730026663232799828780155818898507169793,\n        5, 2 ^ 248 * 3 ^ 2 * 23)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit256\n"
+    },
+    {
+      "name": "family-511",
+      "n": "6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033",
+      "bits": 511,
+      "primecert": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit511\n\ntheorem result : Nat.Prime\n    6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033 :=\n  prime_cert%\n    [small {2; 127},\n     pock\n       (6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033,\n        3, 2 ^ 504 * 127)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit511\n"
+    },
+    {
+      "name": "family-512",
+      "n": "9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177",
+      "bits": 512,
+      "primecert": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit512\n\ntheorem result : Nat.Prime\n    9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177 :=\n  prime_cert%\n    [small {2; 3; 7; 199},\n     pock (100297, 13, 2 ^ 3 * 3 ^ 2 * 7 * 199),\n     pock\n       (9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,\n        3, 2 ^ 146 * 100297 ^ 22)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit512\n"
+    },
+    {
+      "name": "Curve25519",
+      "n": "57896044618658097711785492504343953926634992332820282019728792003956564819949",
+      "bits": 255,
+      "primecert": "module\npublic import PrimeCert\npublic section\nset_option maxRecDepth 2048\nset_option exponentiation.threshold 512\ntheorem result : Nat.Prime (2 ^ 255 - 19) := prime_cert%\n  [small {3; 5; 7; 43},\n   pock3 (1923133, 2, 5, 2 ^ 2 * 3 * 43),\n   pock3 (430751, 17, 7, 2 * 5 ^ 3),\n   pock3 (31757755568855353, 5, 5, 2 ^ 3 * 430751),\n   pock3 (74058212732561358302231226437062788676166966415465897661863160754340907, 2, 5, 2 * 3 * 1923133 * 31757755568855353),\n   pock3 (57896044618658097711785492504343953926634992332820282019728792003956564819949, 2, 0, 2 ^ 2 * 74058212732561358302231226437062788676166966415465897661863160754340907)]\n"
+    },
+    {
+      "name": "Curve448",
+      "n": "726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439",
+      "bits": 448,
+      "primecert": "module\npublic import PrimeCert\npublic section\nset_option maxRecDepth 2048\nset_option exponentiation.threshold 512\ntheorem result : Nat.Prime (2 ^ 448 - 2 ^ 224 - 1) := prime_cert%\n  [small {3; 5; 7; 29; 67; 271; 641},\n   pock3 (411743, 5, 3, 2 * 29),\n   pock3 (1469495262398780123809, 17, 5, 2 ^ 5 * 411743),\n   pock3 (97859369123353, 5, 7, 2 ^ 3 * 67 * 271),\n   pock3 (167773885276849215533569, 17, 0, 2 ^ 9 * 97859369123353),\n   pock3 (726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439, 7, 3, 2 * 641 * 1469495262398780123809 * 167773885276849215533569)]\n"
+    }
+  ],
+  "rows": [
+    {
+      "status": "ok",
+      "seconds": 0.996712090971414,
+      "returncode": 0,
+      "load_before": [
+        3.6240234375,
+        3.64892578125,
+        4.15966796875
+      ],
+      "load_after": [
+        3.6240234375,
+        3.64892578125,
+        4.15966796875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.DirectKernel (569ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/DirectKernel.lean:19:0: DIRECT_KERNEL_NS 1568294\ninfo: bench/HexPrimality/ProofProbe/Curve25519/DirectKernel.lean:19:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.DirectKernel:olean"
+      ],
+      "block": 0,
+      "case": "family-31",
+      "system": "hex",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock 2147483647 [(3, 0, Hex.Nat.PrimeCert.small 151), (3, 0, Hex.Nat.PrimeCert.small 331)]\ntheorem result : Hex.Nat.Prime 2147483647 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 2147483647 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "4e5b8523ea29af4a49edf22d7af964d5fd207e7156e69eadfbdca6e87255412b",
+      "kernel_nanos": 1568294
+    },
+    {
+      "status": "ok",
+      "seconds": 1.492027722997591,
+      "returncode": 0,
+      "load_before": [
+        3.6240234375,
+        3.64892578125,
+        4.15966796875
+      ],
+      "load_after": [
+        3.6240234375,
+        3.64892578125,
+        4.15966796875
+      ],
+      "stdout": "\u2139 [1962/1962] Built PrimeCert.Comparator.DirectKernel (739ms)\ninfo: PrimeCert/Comparator/DirectKernel.lean:13:0: 'PrimeCert.Comparator.Bit31.result' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: PrimeCert/Comparator/DirectKernel.lean:27:0: DIRECT_KERNEL_NS 1528195\ninfo: PrimeCert/Comparator/DirectKernel.lean:27:0: DIRECT_DEPENDENCIES [pocklington_certifyK,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Nat.mul,\n Nat.pow,\n PocklingtonPred.step,\n PrimeCert.prime_331,\n PrimeCert.prime_151,\n PrimeCert.prime_31,\n PrimeCert.prime_11,\n PrimeCert.prime_7,\n PocklingtonPred.step_pow,\n PrimeCert.prime_3,\n PocklingtonPred.base,\n PrimeCert.prime_2,\n Eq.refl,\n Bool,\n Bool.true]\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.DirectKernel:olean"
+      ],
+      "block": 0,
+      "case": "family-31",
+      "system": "primecert",
+      "source": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit31\n\ntheorem result : Nat.Prime 2147483647 := prime_cert%\n  [small {2; 3; 7; 11; 31; 151; 331},\n   pock (2147483647, 7, 2 * 3 ^ 2 * 7 * 11 * 31 * 151 * 331)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit31\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `PrimeCert.Comparator.Bit31.result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 2147483647 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "a22cfce57d5defd0e1f5a46facc9707a7d09c325bc38b40af1b77c5a28313ca8",
+      "kernel_nanos": 1528195
+    },
+    {
+      "status": "ok",
+      "seconds": 1.0002103369915858,
+      "returncode": 0,
+      "load_before": [
+        3.6240234375,
+        3.64892578125,
+        4.15966796875
+      ],
+      "load_after": [
+        3.654296875,
+        3.65478515625,
+        4.15869140625
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.DirectKernel (571ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/DirectKernel.lean:19:0: DIRECT_KERNEL_NS 1320226\ninfo: bench/HexPrimality/ProofProbe/Curve25519/DirectKernel.lean:19:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.DirectKernel:olean"
+      ],
+      "block": 0,
+      "case": "family-61",
+      "system": "hex",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock 1945555039024054273 [(5, 55, Hex.Nat.PrimeCert.small 2)]\ntheorem result : Hex.Nat.Prime 1945555039024054273 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 1945555039024054273 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "5c5f0d2109547fafa0b36838c083cef205c25346669fdaf275ae02cd557f231f",
+      "kernel_nanos": 1320226
+    },
+    {
+      "status": "ok",
+      "seconds": 1.4931230989750475,
+      "returncode": 0,
+      "load_before": [
+        3.654296875,
+        3.65478515625,
+        4.15869140625
+      ],
+      "load_after": [
+        3.654296875,
+        3.65478515625,
+        4.15869140625
+      ],
+      "stdout": "\u2139 [1962/1962] Built PrimeCert.Comparator.DirectKernel (743ms)\ninfo: PrimeCert/Comparator/DirectKernel.lean:13:0: 'PrimeCert.Comparator.Bit61.result' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: PrimeCert/Comparator/DirectKernel.lean:27:0: DIRECT_KERNEL_NS 1116564\ninfo: PrimeCert/Comparator/DirectKernel.lean:27:0: DIRECT_DEPENDENCIES [pocklington_certifyK,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Nat.mul,\n Nat.pow,\n PocklingtonPred.step_pow,\n PrimeCert.prime_3,\n PocklingtonPred.base_pow,\n PrimeCert.prime_2,\n Eq.refl,\n Bool,\n Bool.true]\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.DirectKernel:olean"
+      ],
+      "block": 0,
+      "case": "family-61",
+      "system": "primecert",
+      "source": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit61\n\ntheorem result : Nat.Prime 1945555039024054273 := prime_cert%\n  [small {2; 3},\n   pock (1945555039024054273, 5, 2 ^ 56 * 3 ^ 3)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit61\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `PrimeCert.Comparator.Bit61.result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 1945555039024054273 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "961a8778abbe836ba352f1862c560759e7e539cab8c16b2dc3336a408be3bc05",
+      "kernel_nanos": 1116564
+    },
+    {
+      "status": "ok",
+      "seconds": 1.0019074140000157,
+      "returncode": 0,
+      "load_before": [
+        3.654296875,
+        3.65478515625,
+        4.15869140625
+      ],
+      "load_after": [
+        3.654296875,
+        3.65478515625,
+        4.15869140625
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.DirectKernel (572ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/DirectKernel.lean:19:0: DIRECT_KERNEL_NS 1873927\ninfo: bench/HexPrimality/ProofProbe/Curve25519/DirectKernel.lean:19:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.DirectKernel:olean"
+      ],
+      "block": 0,
+      "case": "family-123",
+      "system": "hex",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock 9304595970494411110326649421962412033 [(3, 119, Hex.Nat.PrimeCert.small 2)]\ntheorem result : Hex.Nat.Prime 9304595970494411110326649421962412033 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 9304595970494411110326649421962412033 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "026d1607b3744e991de777afb721b9eb25ac681acbe247ba7a21c81226f3e2e8",
+      "kernel_nanos": 1873927
+    },
+    {
+      "status": "ok",
+      "seconds": 1.4939990199636668,
+      "returncode": 0,
+      "load_before": [
+        3.654296875,
+        3.65478515625,
+        4.15869140625
+      ],
+      "load_after": [
+        3.654296875,
+        3.65478515625,
+        4.15869140625
+      ],
+      "stdout": "\u26a0 [1962/1962] Built PrimeCert.Comparator.DirectKernel (745ms)\ninfo: PrimeCert/Comparator/DirectKernel.lean:13:0: 'PrimeCert.Comparator.Bit123.result' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: PrimeCert/Comparator/DirectKernel.lean:27:0: DIRECT_KERNEL_NS 2291776\ninfo: PrimeCert/Comparator/DirectKernel.lean:27:0: DIRECT_DEPENDENCIES [pocklington_certifyK,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Nat.mul,\n Nat.pow,\n PocklingtonPred.step,\n PrimeCert.prime_7,\n PocklingtonPred.base_pow,\n PrimeCert.prime_2,\n Eq.refl,\n Bool,\n Bool.true]\nwarning: PrimeCert/Comparator/DirectKernel.lean:50:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.DirectKernel:olean"
+      ],
+      "block": 0,
+      "case": "family-123",
+      "system": "primecert",
+      "source": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit123\n\ntheorem result : Nat.Prime 9304595970494411110326649421962412033 := prime_cert%\n  [small {2; 7},\n   pock (9304595970494411110326649421962412033, 3, 2 ^ 120 * 7)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit123\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `PrimeCert.Comparator.Bit123.result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 9304595970494411110326649421962412033 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "4ea191cdc0a9a6fe81d7081e568570b8eaf51cf14dd80ceb91d1ca0091727de2",
+      "kernel_nanos": 2291776
+    },
+    {
+      "status": "ok",
+      "seconds": 1.0032058989745565,
+      "returncode": 0,
+      "load_before": [
+        3.654296875,
+        3.65478515625,
+        4.15869140625
+      ],
+      "load_after": [
+        3.68212890625,
+        3.66064453125,
+        4.15771484375
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.DirectKernel (576ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/DirectKernel.lean:21:0: DIRECT_KERNEL_NS 3069929\ninfo: bench/HexPrimality/ProofProbe/Curve25519/DirectKernel.lean:21:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.DirectKernel:olean"
+      ],
+      "block": 0,
+      "case": "family-256",
+      "system": "hex",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  93628759656736142393278101159368737990730026663232799828780155818898507169793\n  [(5, 247, Hex.Nat.PrimeCert.small 2)]\ntheorem result : Hex.Nat.Prime 93628759656736142393278101159368737990730026663232799828780155818898507169793 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 93628759656736142393278101159368737990730026663232799828780155818898507169793 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "8cbf2e3dfa14419edbce3d143bfb3af01108baa384c0be45aadc64a1978afac5",
+      "kernel_nanos": 3069929
+    },
+    {
+      "status": "ok",
+      "seconds": 1.5112361259525642,
+      "returncode": 0,
+      "load_before": [
+        3.68212890625,
+        3.66064453125,
+        4.15771484375
+      ],
+      "load_after": [
+        3.68212890625,
+        3.66064453125,
+        4.15771484375
+      ],
+      "stdout": "\u26a0 [1962/1962] Built PrimeCert.Comparator.DirectKernel (769ms)\ninfo: PrimeCert/Comparator/DirectKernel.lean:17:0: 'PrimeCert.Comparator.Bit256.result' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: PrimeCert/Comparator/DirectKernel.lean:31:0: DIRECT_KERNEL_NS 6291413\ninfo: PrimeCert/Comparator/DirectKernel.lean:31:0: DIRECT_DEPENDENCIES [pocklington_certifyK,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Nat.mul,\n Nat.pow,\n PocklingtonPred.step,\n PrimeCert.prime_23,\n PocklingtonPred.step_pow,\n PrimeCert.prime_3,\n PocklingtonPred.base_pow,\n PrimeCert.prime_2,\n Eq.refl,\n Bool,\n Bool.true]\nwarning: PrimeCert/Comparator/DirectKernel.lean:54:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.DirectKernel:olean"
+      ],
+      "block": 0,
+      "case": "family-256",
+      "system": "primecert",
+      "source": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit256\n\ntheorem result : Nat.Prime\n    93628759656736142393278101159368737990730026663232799828780155818898507169793 :=\n  prime_cert%\n    [small {2; 3; 23},\n     pock\n       (93628759656736142393278101159368737990730026663232799828780155818898507169793,\n        5, 2 ^ 248 * 3 ^ 2 * 23)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit256\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `PrimeCert.Comparator.Bit256.result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 93628759656736142393278101159368737990730026663232799828780155818898507169793 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "eec18c4e8507ffbdcb72241be30b92c8457194f3758cfeb5991ec89bf5ecb9b6",
+      "kernel_nanos": 6291413
+    },
+    {
+      "status": "ok",
+      "seconds": 1.1138328950037248,
+      "returncode": 0,
+      "load_before": [
+        3.68212890625,
+        3.66064453125,
+        4.15771484375
+      ],
+      "load_after": [
+        3.68212890625,
+        3.66064453125,
+        4.15771484375
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.DirectKernel (597ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/DirectKernel.lean:21:0: DIRECT_KERNEL_NS 6007582\ninfo: bench/HexPrimality/ProofProbe/Curve25519/DirectKernel.lean:21:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.DirectKernel:olean"
+      ],
+      "block": 0,
+      "case": "family-511",
+      "system": "hex",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033\n  [(3, 503, Hex.Nat.PrimeCert.small 2)]\ntheorem result : Hex.Nat.Prime 6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "127cf83ad9a524dc13828f80a42c6ff9028dfa484a09b5e4e4601910d383243c",
+      "kernel_nanos": 6007582
+    },
+    {
+      "status": "ok",
+      "seconds": 1.60133161599515,
+      "returncode": 0,
+      "load_before": [
+        3.68212890625,
+        3.66064453125,
+        4.15771484375
+      ],
+      "load_after": [
+        3.68212890625,
+        3.66064453125,
+        4.15771484375
+      ],
+      "stdout": "\u26a0 [1962/1962] Built PrimeCert.Comparator.DirectKernel (788ms)\nwarning: PrimeCert/Comparator/DirectKernel.lean:10:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/DirectKernel.lean:14:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\ninfo: PrimeCert/Comparator/DirectKernel.lean:17:0: 'PrimeCert.Comparator.Bit511.result' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: PrimeCert/Comparator/DirectKernel.lean:31:0: DIRECT_KERNEL_NS 10021681\ninfo: PrimeCert/Comparator/DirectKernel.lean:31:0: DIRECT_DEPENDENCIES [pocklington_certifyK,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Nat.mul,\n Nat.pow,\n PocklingtonPred.step,\n PrimeCert.prime_127,\n PocklingtonPred.base_pow,\n PrimeCert.prime_2,\n Eq.refl,\n Bool,\n Bool.true]\nwarning: PrimeCert/Comparator/DirectKernel.lean:54:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.DirectKernel:olean"
+      ],
+      "block": 0,
+      "case": "family-511",
+      "system": "primecert",
+      "source": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit511\n\ntheorem result : Nat.Prime\n    6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033 :=\n  prime_cert%\n    [small {2; 127},\n     pock\n       (6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033,\n        3, 2 ^ 504 * 127)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit511\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `PrimeCert.Comparator.Bit511.result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "8eed7e99efdbf7276df695bbb28eb8df4a3db5c5e64eb79e6cacf0944bda5069",
+      "kernel_nanos": 10021681
+    },
+    {
+      "status": "ok",
+      "seconds": 1.1257461510249414,
+      "returncode": 0,
+      "load_before": [
+        3.68212890625,
+        3.66064453125,
+        4.15771484375
+      ],
+      "load_after": [
+        3.7880859375,
+        3.68310546875,
+        4.16259765625
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.DirectKernel (604ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/DirectKernel.lean:21:0: DIRECT_KERNEL_NS 4515952\ninfo: bench/HexPrimality/ProofProbe/Curve25519/DirectKernel.lean:21:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.DirectKernel:olean"
+      ],
+      "block": 0,
+      "case": "family-512",
+      "system": "hex",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177\n  [(2, 21, Hex.Nat.PrimeCert.pock 100297 [(2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 199)])]\ntheorem result : Hex.Nat.Prime 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "19c074a4f4122e8d7f548b8018aa54c75ccec30c0cd75e3643167202bdfb21ff",
+      "kernel_nanos": 4515952
+    },
+    {
+      "status": "ok",
+      "seconds": 1.6188931440119632,
+      "returncode": 0,
+      "load_before": [
+        3.7880859375,
+        3.68310546875,
+        4.16259765625
+      ],
+      "load_after": [
+        3.7880859375,
+        3.68310546875,
+        4.16259765625
+      ],
+      "stdout": "\u26a0 [1962/1962] Built PrimeCert.Comparator.DirectKernel (810ms)\nwarning: PrimeCert/Comparator/DirectKernel.lean:10:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/DirectKernel.lean:15:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\ninfo: PrimeCert/Comparator/DirectKernel.lean:18:0: 'PrimeCert.Comparator.Bit512.result' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: PrimeCert/Comparator/DirectKernel.lean:32:0: DIRECT_KERNEL_NS 17141982\ninfo: PrimeCert/Comparator/DirectKernel.lean:32:0: DIRECT_DEPENDENCIES [pocklington_certifyK,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Nat.mul,\n Nat.pow,\n PocklingtonPred.step_pow,\n PocklingtonPred.step,\n PrimeCert.prime_199,\n PrimeCert.prime_7,\n PrimeCert.prime_3,\n PocklingtonPred.base_pow,\n PrimeCert.prime_2,\n Eq.refl,\n Bool,\n Bool.true]\nwarning: PrimeCert/Comparator/DirectKernel.lean:55:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.DirectKernel:olean"
+      ],
+      "block": 0,
+      "case": "family-512",
+      "system": "primecert",
+      "source": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit512\n\ntheorem result : Nat.Prime\n    9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177 :=\n  prime_cert%\n    [small {2; 3; 7; 199},\n     pock (100297, 13, 2 ^ 3 * 3 ^ 2 * 7 * 199),\n     pock\n       (9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,\n        3, 2 ^ 146 * 100297 ^ 22)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit512\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `PrimeCert.Comparator.Bit512.result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "b8815b3e8543b5d8d0dd5253173d010cb5db5aee062d4fdd11d94c1df65459f4",
+      "kernel_nanos": 17141982
+    },
+    {
+      "status": "ok",
+      "seconds": 1.1122037050081417,
+      "returncode": 0,
+      "load_before": [
+        3.7880859375,
+        3.68310546875,
+        4.16259765625
+      ],
+      "load_after": [
+        3.7880859375,
+        3.68310546875,
+        4.16259765625
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.DirectKernel (603ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/DirectKernel.lean:40:0: DIRECT_KERNEL_NS 8938616\ninfo: bench/HexPrimality/ProofProbe/Curve25519/DirectKernel.lean:40:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.pock3,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.DirectKernel:olean"
+      ],
+      "block": 0,
+      "case": "Curve25519",
+      "system": "hex",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock3\n      74058212732561358302231226437062788676166966415465897661863160754340907\n      2028478494862525422475607\n      22304740449229861598212\n      2028478494862525422475606\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\n       (2, 0, Hex.Nat.PrimeCert.small 353),\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\n       (2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          31757755568855353\n          4028945\n          289\n          4028944\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 223),\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\ntheorem result : Hex.Nat.Prime 57896044618658097711785492504343953926634992332820282019728792003956564819949 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 57896044618658097711785492504343953926634992332820282019728792003956564819949 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "7afd48bd478908f6c0262d7e266b924c7918b89251ab2c3e572c203d03fb181b",
+      "kernel_nanos": 8938616
+    },
+    {
+      "status": "ok",
+      "seconds": 1.6123393449815921,
+      "returncode": 0,
+      "load_before": [
+        3.7880859375,
+        3.68310546875,
+        4.16259765625
+      ],
+      "load_after": [
+        3.80517578125,
+        3.6884765625,
+        4.16162109375
+      ],
+      "stdout": "\u26a0 [1962/1962] Built PrimeCert.Comparator.DirectKernel (811ms)\nwarning: PrimeCert/Comparator/DirectKernel.lean:11:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/DirectKernel.lean:12:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\ninfo: PrimeCert/Comparator/DirectKernel.lean:24:0: DIRECT_KERNEL_NS 18246919\ninfo: PrimeCert/Comparator/DirectKernel.lean:24:0: DIRECT_DEPENDENCIES [PrimeCert.pocklington3_certK,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n List.cons,\n PrimeCert.PrimePow,\n PrimeCert.PrimePow.mk,\n PrimeCert.prime_5,\n Eq.refl,\n Bool,\n Bool.true,\n List.nil,\n PrimeCert.Pocklington3CertMode.prime,\n PrimeCert.prime_7,\n PrimeCert.prime_43,\n PrimeCert.prime_3,\n PrimeCert.Pocklington3CertMode.zero]\nwarning: PrimeCert/Comparator/DirectKernel.lean:47:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.DirectKernel:olean"
+      ],
+      "block": 0,
+      "case": "Curve25519",
+      "system": "primecert",
+      "source": "module\npublic import PrimeCert\npublic section\nset_option maxRecDepth 2048\nset_option exponentiation.threshold 512\ntheorem result : Nat.Prime (2 ^ 255 - 19) := prime_cert%\n  [small {3; 5; 7; 43},\n   pock3 (1923133, 2, 5, 2 ^ 2 * 3 * 43),\n   pock3 (430751, 17, 7, 2 * 5 ^ 3),\n   pock3 (31757755568855353, 5, 5, 2 ^ 3 * 430751),\n   pock3 (74058212732561358302231226437062788676166966415465897661863160754340907, 2, 5, 2 * 3 * 1923133 * 31757755568855353),\n   pock3 (57896044618658097711785492504343953926634992332820282019728792003956564819949, 2, 0, 2 ^ 2 * 74058212732561358302231226437062788676166966415465897661863160754340907)]\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 57896044618658097711785492504343953926634992332820282019728792003956564819949 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "bbe602b93318812eab790f38c4d52ed5393f5ba25fef48c42726786b9f50c0be",
+      "kernel_nanos": 18246919
+    },
+    {
+      "block": 0,
+      "case": "Curve448",
+      "system": "hex",
+      "status": "no-certificate"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.6214511499856599,
+      "returncode": 0,
+      "load_before": [
+        3.80517578125,
+        3.6884765625,
+        4.16162109375
+      ],
+      "load_after": [
+        3.80517578125,
+        3.6884765625,
+        4.16162109375
+      ],
+      "stdout": "\u26a0 [1962/1962] Built PrimeCert.Comparator.DirectKernel (867ms)\nwarning: PrimeCert/Comparator/DirectKernel.lean:12:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\ninfo: PrimeCert/Comparator/DirectKernel.lean:24:0: DIRECT_KERNEL_NS 34748803\ninfo: PrimeCert/Comparator/DirectKernel.lean:24:0: DIRECT_DEPENDENCIES [PrimeCert.pocklington3_certK,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n List.cons,\n PrimeCert.PrimePow,\n PrimeCert.PrimePow.mk,\n PrimeCert.prime_271,\n Eq.refl,\n Bool,\n Bool.true,\n PrimeCert.prime_67,\n List.nil,\n PrimeCert.Pocklington3CertMode.prime,\n PrimeCert.prime_7,\n PrimeCert.Pocklington3CertMode.zero,\n PrimeCert.prime_29,\n PrimeCert.prime_3,\n PrimeCert.prime_5,\n PrimeCert.prime_641]\nwarning: PrimeCert/Comparator/DirectKernel.lean:47:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.DirectKernel:olean"
+      ],
+      "block": 0,
+      "case": "Curve448",
+      "system": "primecert",
+      "source": "module\npublic import PrimeCert\npublic section\nset_option maxRecDepth 2048\nset_option exponentiation.threshold 512\ntheorem result : Nat.Prime (2 ^ 448 - 2 ^ 224 - 1) := prime_cert%\n  [small {3; 5; 7; 29; 67; 271; 641},\n   pock3 (411743, 5, 3, 2 * 29),\n   pock3 (1469495262398780123809, 17, 5, 2 ^ 5 * 411743),\n   pock3 (97859369123353, 5, 7, 2 ^ 3 * 67 * 271),\n   pock3 (167773885276849215533569, 17, 0, 2 ^ 9 * 97859369123353),\n   pock3 (726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439, 7, 3, 2 * 641 * 1469495262398780123809 * 167773885276849215533569)]\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "568e79317d0020e85cf408f5a4e9a61580262b76f3bd375f975d711bd3ec16c6",
+      "kernel_nanos": 34748803
+    },
+    {
+      "status": "ok",
+      "seconds": 1.5339526809984818,
+      "returncode": 0,
+      "load_before": [
+        3.80517578125,
+        3.6884765625,
+        4.16162109375
+      ],
+      "load_after": [
+        3.80517578125,
+        3.6884765625,
+        4.16162109375
+      ],
+      "stdout": "\u2139 [1962/1962] Built PrimeCert.Comparator.DirectKernel (764ms)\ninfo: PrimeCert/Comparator/DirectKernel.lean:13:0: 'PrimeCert.Comparator.Bit31.result' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: PrimeCert/Comparator/DirectKernel.lean:27:0: DIRECT_KERNEL_NS 1602024\ninfo: PrimeCert/Comparator/DirectKernel.lean:27:0: DIRECT_DEPENDENCIES [pocklington_certifyK,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Nat.mul,\n Nat.pow,\n PocklingtonPred.step,\n PrimeCert.prime_331,\n PrimeCert.prime_151,\n PrimeCert.prime_31,\n PrimeCert.prime_11,\n PrimeCert.prime_7,\n PocklingtonPred.step_pow,\n PrimeCert.prime_3,\n PocklingtonPred.base,\n PrimeCert.prime_2,\n Eq.refl,\n Bool,\n Bool.true]\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.DirectKernel:olean"
+      ],
+      "block": 1,
+      "case": "family-31",
+      "system": "primecert",
+      "source": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit31\n\ntheorem result : Nat.Prime 2147483647 := prime_cert%\n  [small {2; 3; 7; 11; 31; 151; 331},\n   pock (2147483647, 7, 2 * 3 ^ 2 * 7 * 11 * 31 * 151 * 331)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit31\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `PrimeCert.Comparator.Bit31.result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 2147483647 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "a22cfce57d5defd0e1f5a46facc9707a7d09c325bc38b40af1b77c5a28313ca8",
+      "kernel_nanos": 1602024
+    },
+    {
+      "status": "ok",
+      "seconds": 1.0178117539617233,
+      "returncode": 0,
+      "load_before": [
+        3.80517578125,
+        3.6884765625,
+        4.16162109375
+      ],
+      "load_after": [
+        3.80517578125,
+        3.6884765625,
+        4.16162109375
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.DirectKernel (581ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/DirectKernel.lean:19:0: DIRECT_KERNEL_NS 1733138\ninfo: bench/HexPrimality/ProofProbe/Curve25519/DirectKernel.lean:19:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.DirectKernel:olean"
+      ],
+      "block": 1,
+      "case": "family-31",
+      "system": "hex",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock 2147483647 [(3, 0, Hex.Nat.PrimeCert.small 151), (3, 0, Hex.Nat.PrimeCert.small 331)]\ntheorem result : Hex.Nat.Prime 2147483647 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 2147483647 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "4e5b8523ea29af4a49edf22d7af964d5fd207e7156e69eadfbdca6e87255412b",
+      "kernel_nanos": 1733138
+    },
+    {
+      "status": "ok",
+      "seconds": 1.5106697920127772,
+      "returncode": 0,
+      "load_before": [
+        3.80517578125,
+        3.6884765625,
+        4.16162109375
+      ],
+      "load_after": [
+        3.82080078125,
+        3.69384765625,
+        4.16064453125
+      ],
+      "stdout": "\u2139 [1962/1962] Built PrimeCert.Comparator.DirectKernel (757ms)\ninfo: PrimeCert/Comparator/DirectKernel.lean:13:0: 'PrimeCert.Comparator.Bit61.result' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: PrimeCert/Comparator/DirectKernel.lean:27:0: DIRECT_KERNEL_NS 1142794\ninfo: PrimeCert/Comparator/DirectKernel.lean:27:0: DIRECT_DEPENDENCIES [pocklington_certifyK,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Nat.mul,\n Nat.pow,\n PocklingtonPred.step_pow,\n PrimeCert.prime_3,\n PocklingtonPred.base_pow,\n PrimeCert.prime_2,\n Eq.refl,\n Bool,\n Bool.true]\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.DirectKernel:olean"
+      ],
+      "block": 1,
+      "case": "family-61",
+      "system": "primecert",
+      "source": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit61\n\ntheorem result : Nat.Prime 1945555039024054273 := prime_cert%\n  [small {2; 3},\n   pock (1945555039024054273, 5, 2 ^ 56 * 3 ^ 3)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit61\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `PrimeCert.Comparator.Bit61.result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 1945555039024054273 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "961a8778abbe836ba352f1862c560759e7e539cab8c16b2dc3336a408be3bc05",
+      "kernel_nanos": 1142794
+    },
+    {
+      "status": "ok",
+      "seconds": 1.0207597140106373,
+      "returncode": 0,
+      "load_before": [
+        3.82080078125,
+        3.69384765625,
+        4.16064453125
+      ],
+      "load_after": [
+        3.82080078125,
+        3.69384765625,
+        4.16064453125
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.DirectKernel (583ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/DirectKernel.lean:19:0: DIRECT_KERNEL_NS 1319014\ninfo: bench/HexPrimality/ProofProbe/Curve25519/DirectKernel.lean:19:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.DirectKernel:olean"
+      ],
+      "block": 1,
+      "case": "family-61",
+      "system": "hex",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock 1945555039024054273 [(5, 55, Hex.Nat.PrimeCert.small 2)]\ntheorem result : Hex.Nat.Prime 1945555039024054273 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 1945555039024054273 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "5c5f0d2109547fafa0b36838c083cef205c25346669fdaf275ae02cd557f231f",
+      "kernel_nanos": 1319014
+    },
+    {
+      "status": "ok",
+      "seconds": 1.6069848300539888,
+      "returncode": 0,
+      "load_before": [
+        3.82080078125,
+        3.69384765625,
+        4.16064453125
+      ],
+      "load_after": [
+        3.82080078125,
+        3.69384765625,
+        4.16064453125
+      ],
+      "stdout": "\u26a0 [1962/1962] Built PrimeCert.Comparator.DirectKernel (773ms)\ninfo: PrimeCert/Comparator/DirectKernel.lean:13:0: 'PrimeCert.Comparator.Bit123.result' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: PrimeCert/Comparator/DirectKernel.lean:27:0: DIRECT_KERNEL_NS 2446726\ninfo: PrimeCert/Comparator/DirectKernel.lean:27:0: DIRECT_DEPENDENCIES [pocklington_certifyK,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Nat.mul,\n Nat.pow,\n PocklingtonPred.step,\n PrimeCert.prime_7,\n PocklingtonPred.base_pow,\n PrimeCert.prime_2,\n Eq.refl,\n Bool,\n Bool.true]\nwarning: PrimeCert/Comparator/DirectKernel.lean:50:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.DirectKernel:olean"
+      ],
+      "block": 1,
+      "case": "family-123",
+      "system": "primecert",
+      "source": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit123\n\ntheorem result : Nat.Prime 9304595970494411110326649421962412033 := prime_cert%\n  [small {2; 7},\n   pock (9304595970494411110326649421962412033, 3, 2 ^ 120 * 7)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit123\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `PrimeCert.Comparator.Bit123.result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 9304595970494411110326649421962412033 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "4ea191cdc0a9a6fe81d7081e568570b8eaf51cf14dd80ceb91d1ca0091727de2",
+      "kernel_nanos": 2446726
+    },
+    {
+      "status": "ok",
+      "seconds": 1.1152854699757881,
+      "returncode": 0,
+      "load_before": [
+        3.82080078125,
+        3.69384765625,
+        4.16064453125
+      ],
+      "load_after": [
+        3.82080078125,
+        3.69384765625,
+        4.16064453125
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.DirectKernel (594ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/DirectKernel.lean:19:0: DIRECT_KERNEL_NS 1907197\ninfo: bench/HexPrimality/ProofProbe/Curve25519/DirectKernel.lean:19:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.DirectKernel:olean"
+      ],
+      "block": 1,
+      "case": "family-123",
+      "system": "hex",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock 9304595970494411110326649421962412033 [(3, 119, Hex.Nat.PrimeCert.small 2)]\ntheorem result : Hex.Nat.Prime 9304595970494411110326649421962412033 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 9304595970494411110326649421962412033 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "026d1607b3744e991de777afb721b9eb25ac681acbe247ba7a21c81226f3e2e8",
+      "kernel_nanos": 1907197
+    },
+    {
+      "status": "ok",
+      "seconds": 1.6109976699808612,
+      "returncode": 0,
+      "load_before": [
+        3.82080078125,
+        3.69384765625,
+        4.16064453125
+      ],
+      "load_after": [
+        3.91552734375,
+        3.7158203125,
+        4.16552734375
+      ],
+      "stdout": "\u26a0 [1962/1962] Built PrimeCert.Comparator.DirectKernel (778ms)\ninfo: PrimeCert/Comparator/DirectKernel.lean:17:0: 'PrimeCert.Comparator.Bit256.result' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: PrimeCert/Comparator/DirectKernel.lean:31:0: DIRECT_KERNEL_NS 6354687\ninfo: PrimeCert/Comparator/DirectKernel.lean:31:0: DIRECT_DEPENDENCIES [pocklington_certifyK,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Nat.mul,\n Nat.pow,\n PocklingtonPred.step,\n PrimeCert.prime_23,\n PocklingtonPred.step_pow,\n PrimeCert.prime_3,\n PocklingtonPred.base_pow,\n PrimeCert.prime_2,\n Eq.refl,\n Bool,\n Bool.true]\nwarning: PrimeCert/Comparator/DirectKernel.lean:54:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.DirectKernel:olean"
+      ],
+      "block": 1,
+      "case": "family-256",
+      "system": "primecert",
+      "source": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit256\n\ntheorem result : Nat.Prime\n    93628759656736142393278101159368737990730026663232799828780155818898507169793 :=\n  prime_cert%\n    [small {2; 3; 23},\n     pock\n       (93628759656736142393278101159368737990730026663232799828780155818898507169793,\n        5, 2 ^ 248 * 3 ^ 2 * 23)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit256\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `PrimeCert.Comparator.Bit256.result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 93628759656736142393278101159368737990730026663232799828780155818898507169793 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "eec18c4e8507ffbdcb72241be30b92c8457194f3758cfeb5991ec89bf5ecb9b6",
+      "kernel_nanos": 6354687
+    },
+    {
+      "status": "ok",
+      "seconds": 1.0158915339852683,
+      "returncode": 0,
+      "load_before": [
+        3.91552734375,
+        3.7158203125,
+        4.16552734375
+      ],
+      "load_after": [
+        3.91552734375,
+        3.7158203125,
+        4.16552734375
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.DirectKernel (586ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/DirectKernel.lean:21:0: DIRECT_KERNEL_NS 3063960\ninfo: bench/HexPrimality/ProofProbe/Curve25519/DirectKernel.lean:21:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.DirectKernel:olean"
+      ],
+      "block": 1,
+      "case": "family-256",
+      "system": "hex",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  93628759656736142393278101159368737990730026663232799828780155818898507169793\n  [(5, 247, Hex.Nat.PrimeCert.small 2)]\ntheorem result : Hex.Nat.Prime 93628759656736142393278101159368737990730026663232799828780155818898507169793 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 93628759656736142393278101159368737990730026663232799828780155818898507169793 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "8cbf2e3dfa14419edbce3d143bfb3af01108baa384c0be45aadc64a1978afac5",
+      "kernel_nanos": 3063960
+    },
+    {
+      "status": "ok",
+      "seconds": 1.6096072329673916,
+      "returncode": 0,
+      "load_before": [
+        3.91552734375,
+        3.7158203125,
+        4.16552734375
+      ],
+      "load_after": [
+        3.91552734375,
+        3.7158203125,
+        4.16552734375
+      ],
+      "stdout": "\u26a0 [1962/1962] Built PrimeCert.Comparator.DirectKernel (777ms)\nwarning: PrimeCert/Comparator/DirectKernel.lean:10:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/DirectKernel.lean:14:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\ninfo: PrimeCert/Comparator/DirectKernel.lean:17:0: 'PrimeCert.Comparator.Bit511.result' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: PrimeCert/Comparator/DirectKernel.lean:31:0: DIRECT_KERNEL_NS 9972188\ninfo: PrimeCert/Comparator/DirectKernel.lean:31:0: DIRECT_DEPENDENCIES [pocklington_certifyK,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Nat.mul,\n Nat.pow,\n PocklingtonPred.step,\n PrimeCert.prime_127,\n PocklingtonPred.base_pow,\n PrimeCert.prime_2,\n Eq.refl,\n Bool,\n Bool.true]\nwarning: PrimeCert/Comparator/DirectKernel.lean:54:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.DirectKernel:olean"
+      ],
+      "block": 1,
+      "case": "family-511",
+      "system": "primecert",
+      "source": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit511\n\ntheorem result : Nat.Prime\n    6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033 :=\n  prime_cert%\n    [small {2; 127},\n     pock\n       (6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033,\n        3, 2 ^ 504 * 127)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit511\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `PrimeCert.Comparator.Bit511.result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "8eed7e99efdbf7276df695bbb28eb8df4a3db5c5e64eb79e6cacf0944bda5069",
+      "kernel_nanos": 9972188
+    },
+    {
+      "status": "ok",
+      "seconds": 1.1200903650023974,
+      "returncode": 0,
+      "load_before": [
+        3.91552734375,
+        3.7158203125,
+        4.16552734375
+      ],
+      "load_after": [
+        3.91552734375,
+        3.7158203125,
+        4.16552734375
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.DirectKernel (599ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/DirectKernel.lean:21:0: DIRECT_KERNEL_NS 6022725\ninfo: bench/HexPrimality/ProofProbe/Curve25519/DirectKernel.lean:21:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.DirectKernel:olean"
+      ],
+      "block": 1,
+      "case": "family-511",
+      "system": "hex",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033\n  [(3, 503, Hex.Nat.PrimeCert.small 2)]\ntheorem result : Hex.Nat.Prime 6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "127cf83ad9a524dc13828f80a42c6ff9028dfa484a09b5e4e4601910d383243c",
+      "kernel_nanos": 6022725
+    },
+    {
+      "status": "ok",
+      "seconds": 1.6049184380099177,
+      "returncode": 0,
+      "load_before": [
+        3.91552734375,
+        3.7158203125,
+        4.16552734375
+      ],
+      "load_after": [
+        3.92236328125,
+        3.720703125,
+        4.16455078125
+      ],
+      "stdout": "\u26a0 [1962/1962] Built PrimeCert.Comparator.DirectKernel (802ms)\nwarning: PrimeCert/Comparator/DirectKernel.lean:10:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/DirectKernel.lean:15:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\ninfo: PrimeCert/Comparator/DirectKernel.lean:18:0: 'PrimeCert.Comparator.Bit512.result' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: PrimeCert/Comparator/DirectKernel.lean:32:0: DIRECT_KERNEL_NS 17042975\ninfo: PrimeCert/Comparator/DirectKernel.lean:32:0: DIRECT_DEPENDENCIES [pocklington_certifyK,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Nat.mul,\n Nat.pow,\n PocklingtonPred.step_pow,\n PocklingtonPred.step,\n PrimeCert.prime_199,\n PrimeCert.prime_7,\n PrimeCert.prime_3,\n PocklingtonPred.base_pow,\n PrimeCert.prime_2,\n Eq.refl,\n Bool,\n Bool.true]\nwarning: PrimeCert/Comparator/DirectKernel.lean:55:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.DirectKernel:olean"
+      ],
+      "block": 1,
+      "case": "family-512",
+      "system": "primecert",
+      "source": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit512\n\ntheorem result : Nat.Prime\n    9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177 :=\n  prime_cert%\n    [small {2; 3; 7; 199},\n     pock (100297, 13, 2 ^ 3 * 3 ^ 2 * 7 * 199),\n     pock\n       (9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,\n        3, 2 ^ 146 * 100297 ^ 22)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit512\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `PrimeCert.Comparator.Bit512.result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "b8815b3e8543b5d8d0dd5253173d010cb5db5aee062d4fdd11d94c1df65459f4",
+      "kernel_nanos": 17042975
+    },
+    {
+      "status": "ok",
+      "seconds": 1.0029962090193294,
+      "returncode": 0,
+      "load_before": [
+        3.92236328125,
+        3.720703125,
+        4.16455078125
+      ],
+      "load_after": [
+        3.92236328125,
+        3.720703125,
+        4.16455078125
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.DirectKernel (581ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/DirectKernel.lean:21:0: DIRECT_KERNEL_NS 4697731\ninfo: bench/HexPrimality/ProofProbe/Curve25519/DirectKernel.lean:21:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.DirectKernel:olean"
+      ],
+      "block": 1,
+      "case": "family-512",
+      "system": "hex",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177\n  [(2, 21, Hex.Nat.PrimeCert.pock 100297 [(2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 199)])]\ntheorem result : Hex.Nat.Prime 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "19c074a4f4122e8d7f548b8018aa54c75ccec30c0cd75e3643167202bdfb21ff",
+      "kernel_nanos": 4697731
+    },
+    {
+      "status": "ok",
+      "seconds": 1.5912044889992103,
+      "returncode": 0,
+      "load_before": [
+        3.92236328125,
+        3.720703125,
+        4.16455078125
+      ],
+      "load_after": [
+        3.92236328125,
+        3.720703125,
+        4.16455078125
+      ],
+      "stdout": "\u26a0 [1962/1962] Built PrimeCert.Comparator.DirectKernel (794ms)\nwarning: PrimeCert/Comparator/DirectKernel.lean:11:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/DirectKernel.lean:12:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\ninfo: PrimeCert/Comparator/DirectKernel.lean:24:0: DIRECT_KERNEL_NS 18249784\ninfo: PrimeCert/Comparator/DirectKernel.lean:24:0: DIRECT_DEPENDENCIES [PrimeCert.pocklington3_certK,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n List.cons,\n PrimeCert.PrimePow,\n PrimeCert.PrimePow.mk,\n PrimeCert.prime_5,\n Eq.refl,\n Bool,\n Bool.true,\n List.nil,\n PrimeCert.Pocklington3CertMode.prime,\n PrimeCert.prime_7,\n PrimeCert.prime_43,\n PrimeCert.prime_3,\n PrimeCert.Pocklington3CertMode.zero]\nwarning: PrimeCert/Comparator/DirectKernel.lean:47:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.DirectKernel:olean"
+      ],
+      "block": 1,
+      "case": "Curve25519",
+      "system": "primecert",
+      "source": "module\npublic import PrimeCert\npublic section\nset_option maxRecDepth 2048\nset_option exponentiation.threshold 512\ntheorem result : Nat.Prime (2 ^ 255 - 19) := prime_cert%\n  [small {3; 5; 7; 43},\n   pock3 (1923133, 2, 5, 2 ^ 2 * 3 * 43),\n   pock3 (430751, 17, 7, 2 * 5 ^ 3),\n   pock3 (31757755568855353, 5, 5, 2 ^ 3 * 430751),\n   pock3 (74058212732561358302231226437062788676166966415465897661863160754340907, 2, 5, 2 * 3 * 1923133 * 31757755568855353),\n   pock3 (57896044618658097711785492504343953926634992332820282019728792003956564819949, 2, 0, 2 ^ 2 * 74058212732561358302231226437062788676166966415465897661863160754340907)]\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 57896044618658097711785492504343953926634992332820282019728792003956564819949 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "bbe602b93318812eab790f38c4d52ed5393f5ba25fef48c42726786b9f50c0be",
+      "kernel_nanos": 18249784
+    },
+    {
+      "status": "ok",
+      "seconds": 1.1020148340030573,
+      "returncode": 0,
+      "load_before": [
+        3.92236328125,
+        3.720703125,
+        4.16455078125
+      ],
+      "load_after": [
+        3.9287109375,
+        3.7255859375,
+        4.16357421875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.DirectKernel (593ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/DirectKernel.lean:40:0: DIRECT_KERNEL_NS 8800612\ninfo: bench/HexPrimality/ProofProbe/Curve25519/DirectKernel.lean:40:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.pock3,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.DirectKernel:olean"
+      ],
+      "block": 1,
+      "case": "Curve25519",
+      "system": "hex",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock3\n      74058212732561358302231226437062788676166966415465897661863160754340907\n      2028478494862525422475607\n      22304740449229861598212\n      2028478494862525422475606\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\n       (2, 0, Hex.Nat.PrimeCert.small 353),\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\n       (2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          31757755568855353\n          4028945\n          289\n          4028944\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 223),\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\ntheorem result : Hex.Nat.Prime 57896044618658097711785492504343953926634992332820282019728792003956564819949 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 57896044618658097711785492504343953926634992332820282019728792003956564819949 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "7afd48bd478908f6c0262d7e266b924c7918b89251ab2c3e572c203d03fb181b",
+      "kernel_nanos": 8800612
+    },
+    {
+      "status": "ok",
+      "seconds": 1.6001027569873258,
+      "returncode": 0,
+      "load_before": [
+        3.9287109375,
+        3.7255859375,
+        4.16357421875
+      ],
+      "load_after": [
+        3.9287109375,
+        3.7255859375,
+        4.16357421875
+      ],
+      "stdout": "\u26a0 [1962/1962] Built PrimeCert.Comparator.DirectKernel (854ms)\nwarning: PrimeCert/Comparator/DirectKernel.lean:12:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\ninfo: PrimeCert/Comparator/DirectKernel.lean:24:0: DIRECT_KERNEL_NS 34613934\ninfo: PrimeCert/Comparator/DirectKernel.lean:24:0: DIRECT_DEPENDENCIES [PrimeCert.pocklington3_certK,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n List.cons,\n PrimeCert.PrimePow,\n PrimeCert.PrimePow.mk,\n PrimeCert.prime_271,\n Eq.refl,\n Bool,\n Bool.true,\n PrimeCert.prime_67,\n List.nil,\n PrimeCert.Pocklington3CertMode.prime,\n PrimeCert.prime_7,\n PrimeCert.Pocklington3CertMode.zero,\n PrimeCert.prime_29,\n PrimeCert.prime_3,\n PrimeCert.prime_5,\n PrimeCert.prime_641]\nwarning: PrimeCert/Comparator/DirectKernel.lean:47:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.DirectKernel:olean"
+      ],
+      "block": 1,
+      "case": "Curve448",
+      "system": "primecert",
+      "source": "module\npublic import PrimeCert\npublic section\nset_option maxRecDepth 2048\nset_option exponentiation.threshold 512\ntheorem result : Nat.Prime (2 ^ 448 - 2 ^ 224 - 1) := prime_cert%\n  [small {3; 5; 7; 29; 67; 271; 641},\n   pock3 (411743, 5, 3, 2 * 29),\n   pock3 (1469495262398780123809, 17, 5, 2 ^ 5 * 411743),\n   pock3 (97859369123353, 5, 7, 2 ^ 3 * 67 * 271),\n   pock3 (167773885276849215533569, 17, 0, 2 ^ 9 * 97859369123353),\n   pock3 (726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439, 7, 3, 2 * 641 * 1469495262398780123809 * 167773885276849215533569)]\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+      "source_sha256": "568e79317d0020e85cf408f5a4e9a61580262b76f3bd375f975d711bd3ec16c6",
+      "kernel_nanos": 34613934
+    },
+    {
+      "block": 1,
+      "case": "Curve448",
+      "system": "hex",
+      "status": "no-certificate"
+    }
+  ]
+}

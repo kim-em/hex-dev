@@ -1300,15 +1300,29 @@ from the already verified final sieve state; compiled code uses binary search
 through `isTablePrime_eq_tableSearch`. -/
 @[expose]
 def isTablePrime (n : Nat) : Bool :=
-  n == 2 || n == 3 ||
-    (decide (1 ≤ indexOfNum n) && decide (indexOfNum n < indexWidth primeTableBound) &&
-      numOfIndex (indexOfNum n) == n && primeBits.testBit (indexOfNum n))
+  let t := n.div 3
+  n.beq 2 || n.beq 3 ||
+    ((1 : Nat).ble t && t.blt 33333 &&
+      (((3 : Nat).mul t).add 1 |>.add (t.mod 2)).beq n &&
+      (1 : Nat).ble ((1 : Nat).land (primeBits.shiftRight t)))
 
 /-- A lookup succeeds exactly on members of the committed table. -/
 theorem isTablePrime_iff {n : Nat} : isTablePrime n = true ↔ n ∈ primeTable := by
   rw [mem_primeTable_iff_bits, mem_bitsToList (by decide)]
-  simp only [isTablePrime, Bool.or_eq_true, Bool.and_eq_true, beq_iff_eq,
-    decide_eq_true_eq]
+  have hform (n : Nat) : isTablePrime n =
+      (n.beq 2 || n.beq 3 ||
+        ((1 : Nat).ble (indexOfNum n) &&
+          (indexOfNum n).blt (indexWidth primeTableBound) &&
+          (numOfIndex (indexOfNum n)).beq n && primeBits.testBit (indexOfNum n))) := by
+    apply Bool.eq_iff_iff.mpr
+    simp only [isTablePrime, Nat.land_eq, Nat.testBit, Bool.or_eq_true,
+      Bool.and_eq_true, Nat.beq_eq, Nat.ble_eq, Nat.blt_eq,
+      Nat.shiftRight_eq', Nat.mul_eq, Nat.add_eq, bne_iff_ne,
+      ← Nat.pos_iff_ne_zero]
+    rfl
+  rw [hform]
+  simp only [Bool.or_eq_true, Bool.and_eq_true, Nat.beq_eq, Nat.ble_eq,
+    Nat.blt_eq]
   constructor
   · intro h
     rcases h with (h | h) | ⟨⟨⟨ht1, htw⟩, hval⟩, hbit⟩

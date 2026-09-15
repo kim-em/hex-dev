@@ -62,6 +62,31 @@ run_cmd do
   match Lean.Kernel.check env {} corrupt with
   | .error _ => pure ()
   | .ok _ => throwError "kernel accepted the corrupted proof"
+  -- Change only a Hex witness base: subjects, products, and ordering remain
+  -- intact, so this control must reach the witness arithmetic.
+  let corruptWitness := value.replace fun e => Id.run do
+    unless e.isAppOfArity `Hex.Nat.PrimeCert.pock 2 ||
+        e.isAppOfArity `Hex.Nat.PrimeCert.pock3 5 do return none
+    let args := e.getAppArgs
+    let fs := args.back!
+    unless fs.isAppOfArity ``List.cons 3 do return none
+    let fsArgs := fs.getAppArgs
+    let entry := fsArgs[1]!
+    unless entry.isAppOfArity ``Prod.mk 4 do return none
+    let entryArgs := entry.getAppArgs
+    let entry := Lean.mkAppN entry.getAppFn (entryArgs.set! 2 (Lean.mkRawNatLit 0))
+    let fs := Lean.mkAppN fs.getAppFn (fsArgs.set! 1 entry)
+    return some (Lean.mkAppN e.getAppFn (args.set! (args.size - 1) fs))
+  let needsWitness := value.getUsedConstants.any fun name =>
+    name == `Hex.Nat.PrimeCert.pock || name == `Hex.Nat.PrimeCert.pock3
+  if needsWitness && corruptWitness == value then
+    throwError "witness corruption did not change the proof"
+  if corruptWitness != value then
+    let bad := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corruptWitness
+    match Lean.Kernel.check env {} bad with
+    | .error _ => pure ()
+    | .ok _ => throwError "kernel accepted the zero witness base"
+    Lean.logInfo "DIRECT_WITNESS_CONTROL rejected"
   let input ← IO.mkRef (env, proof)
   let (env, proof) ← input.get
   let start ← IO.monoNanosNow
@@ -82,6 +107,10 @@ def main() -> None:
     parser.add_argument('--primecert-checkout', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--blocks', type=int, default=2)
+    parser.add_argument('--hex-supplied', action='append', default=[], metavar='CASE=PATH',
+                        help='check a supplied Hex proof instead of the construction corpus source')
+    parser.add_argument('--primecert-supplied', action='append', default=[], metavar='CASE=PATH',
+                        help='check an alternative supplied PrimeCert proof')
     parser.add_argument('--powers', action='store_true',
                         help='isolate modular powering and calibrate the two kernel versions')
     parser.add_argument('--upstream-power', action='store_true',
@@ -110,6 +139,24 @@ def main() -> None:
                          'includes kernel reduction and type checking; imported library proofs '
                          'remain dependencies; separate pinned toolchains',
                   versions={}, cases=[c for c in previous['cases'] if 'primecert' in c], rows=[])
+    supplied = {'hex': {}, 'primecert': {}}
+    for system, entries in [('hex', args.hex_supplied), ('primecert', args.primecert_supplied)]:
+        for entry in entries:
+            name, separator, path = entry.partition('=')
+            if not separator or name not in {c['name'] for c in record['cases']} or name in supplied[system]:
+                parser.error('supplied proofs require a distinct corpus CASE=PATH for each system')
+            source = Path(path).read_text()
+            if not source.startswith('/-') or '\nmodule\n' not in source:
+                parser.error('a supplied proof must have a header and use the module system')
+            # Fixtures import their checker; probes additionally need Lean's
+            # metaprogramming API for the direct kernel timer.
+            probe = source.replace('\nmodule\n', '\nmodule\npublic import Lean\npublic meta import Lean\n', 1)
+            supplied[system][name] = probe
+            record.setdefault(f'supplied_{system}_sources', {})[name] = dict(
+                path=path, source=source, sha256=hashlib.sha256(source.encode()).hexdigest(),
+                origin='supplied certificate; does not establish construction success')
+    if (args.hex_supplied or args.primecert_supplied) and args.powers:
+        parser.error('supplied proofs are for complete certificates, not isolated powers')
     if args.powers:
         from scripts.bench.primality_kernel_diagnostic import RAW
         n = str(2**255 - 19)
@@ -147,7 +194,8 @@ decreasing_by omega
             record['upstream_power'] = ('Kernel definition only, replayed on Lean 4.34.0; '
                                          'not a native GMP measurement or a Lean 4.35.0 benchmark')
         record['attribution'] = ('powDiv follows PrimeCert/PowMod.lean, Copyright (c) 2022 '
-                                 'Bhavik Mehta, Apache 2.0; source imported from the retained diagnostic.')
+                                 'Bhavik Mehta; file Apache 2.0 notice, root MIT license; full notices in '
+                                 'HexArith/Montgomery/Context.lean; source from the retained diagnostic.')
     for system, (cwd, _, path) in locations.items():
         if path.exists():
             raise RuntimeError(f'refusing to overwrite {path}')
@@ -168,6 +216,8 @@ decreasing_by omega
                     sources = [r for r in previous['kernel'] if r['case'] == case['name']
                                and r['system'] == system and r.get('arm') == 'replay'
                                and r['status'] == 'ok']
+                    if case['name'] in supplied[system]:
+                        sources = [{'source': supplied[system][case['name']]}]
                     if args.powers:
                         body = record['power_sources'][case['name']].get(system)
                         sources = [{'source': body}] if body else []

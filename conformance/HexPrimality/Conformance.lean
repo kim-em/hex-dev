@@ -714,3 +714,37 @@ private theorem primeTable_eq_bits :
 -/
 #guard_msgs in
 #rebuild_primeTable 25 5 1
+
+
+-- Raw kernel bounded multiplication retains overflow rejection and zero cases.
+example : Hex.Nat.boundedPowMul 7 2 4 1048576 = none := by decide +kernel
+example : Hex.Nat.boundedPowMul 7 2 3 1 = some 6 := by decide +kernel
+example : Hex.Nat.boundedPowMul 0 5 0 1048576 = some 0 := by decide +kernel
+example : Hex.Nat.boundedPowMul 0 0 1 1 = some 0 := by decide +kernel
+example : Hex.Nat.boundedPowMul 0 5 17 0 = some 17 := by decide +kernel
+
+-- The base-two path checks the bound before constructing a shifted product.
+example : Hex.Nat.boundedPowMul 7 2 1 3 = none := by decide +kernel
+example : Hex.Nat.boundedPowMul 8 2 1 3 = some 8 := by decide +kernel
+example : Hex.Nat.boundedPowMul 23 2 3 3 = none := by decide +kernel
+example : Hex.Nat.boundedPowMul 24 2 3 3 = some 24 := by decide +kernel
+example : Hex.Nat.boundedPowMul 0 2 0 1048576 = some 0 := by decide +kernel
+example : Hex.Nat.boundedPowMul 8 2 1 1048576 = none := by decide +kernel
+example : Hex.Nat.boundedPowMul 0 2 17 0 = some 17 := by decide +kernel
+
+-- Shared witnesses must compute the initial Fermat leg, reset on a changed
+-- base, and keep the total checker semantics at degenerate inputs.
+example : checkWitnesses 7 [(2, 0, .small 3), (2, 0, .small 3)] = true := by decide +kernel
+example : checkWitnesses 7 [(2, 0, .small 3), (3, 0, .small 3), (2, 0, .small 3)] = true := by decide +kernel
+example : checkWitnesses 7 [(0, 0, .small 3), (0, 0, .small 3)] = false := by decide +kernel
+example : checkWitnesses 7 [(2, 0, .small 3), (6, 0, .small 3)] = false := by decide +kernel
+example : checkWitnesses 0 [(0, 0, .small 0)] = false := by decide +kernel
+example : checkWitnesses 1 [(0, 0, .small 0)] = true := by decide +kernel
+
+-- The positive-subject product uses zero for overflow, including overflow
+-- in a suffix; that sentinel must never make a parent certificate pass.
+example : pockProduct 35 [(0, 0, .small 5), (0, 0, .small 7)] = 35 := by decide +kernel
+example : pockProduct 34 [(0, 0, .small 5), (0, 0, .small 7)] = 0 := by decide +kernel
+example : pockProduct 8 [(0, 0, .small 2), (0, 1, .small 3)] = 0 := by decide +kernel
+example : checkPrime (.pock 31 [(3, 0, .small 5), (3, 0, .small 7)]) = false := by decide +kernel
+example : checkPrime (.pock 7 [(2, 0, .small 0), (2, 0, .small 3)]) = false := by decide +kernel

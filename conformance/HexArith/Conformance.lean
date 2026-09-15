@@ -335,3 +335,70 @@ example (a b : UInt64) (bin : Bool) :
 #guard HexArith.powMod 42 99 1 = 42 ^ 99 % 1
 
 end HexArith
+
+
+-- Kernel reduction across both window cutoffs, including their exact endpoints.
+-- Exponent 17 exercises more than one digit in both window sizes;
+-- (-3)^17 is -129140163 modulo each of these large moduli.
+example : HexArith.powModNat 1234 17 97 = 1234 ^ 17 % 97 := by decide +kernel
+example : HexArith.powModNat 1234 17 0 = 0 := by decide +kernel
+example : HexArith.powModNat 0 0 1 = 0 := by decide +kernel
+example (a p : Nat) : HexArith.powModNat a 0 p =
+    if p = 0 then 0 else 1 % p := by
+  by_cases hp : p = 0
+  · simp [hp]
+  · simp [hp, HexArith.powModNat_eq a 0 p (Nat.pos_of_ne_zero hp)]
+example : let p := ((1 : Nat) <<< 512) - 1
+    HexArith.powModNat (p - 3) 17 p = p - 129140163 := by decide +kernel
+example : let p := ((1 : Nat) <<< 512)
+    HexArith.powModNat (p - 3) 17 p = p - 129140163 := by decide +kernel
+example : let p := ((1 : Nat) <<< 512) + 1
+    HexArith.powModNat (p - 3) 17 p = p - 129140163 := by decide +kernel
+example : let p := ((1 : Nat) <<< 1024) - 1
+    HexArith.powModNat (p - 3) 17 p = p - 129140163 := by decide +kernel
+example : let p := ((1 : Nat) <<< 1024)
+    HexArith.powModNat (p - 3) 17 p = p - 129140163 := by decide +kernel
+example : let p := ((1 : Nat) <<< 1024) + 1
+    HexArith.powModNat (p - 3) 17 p = p - 129140163 := by decide +kernel
+example : HexArith.powModNat 2 17 1009 = 911 := by decide
+
+-- Large exponents also exercise kernel recursion beyond the window cutoffs.
+set_option maxRecDepth 65536 in
+example : HexArith.powModNat 2 ((1 : Nat) <<< 5000) (((1 : Nat) <<< 4096) + 1) = 1 := by
+  decide +kernel
+
+-- Dispatch endpoints for small reduced bases and long exponents.
+example : let p := ((1 : Nat) <<< 4096) + 1
+    HexArith.powModNat 2 ((1 : Nat) <<< 64) p = 1 := by decide +kernel
+example : let p := ((1 : Nat) <<< 4096) + 1
+    HexArith.powModNat 2 (((1 : Nat) <<< 64) - 1) p = ((1 : Nat) <<< 4095) + 1 := by
+  decide +kernel
+example : let p := ((1 : Nat) <<< 4096) - 1
+    HexArith.powModNat 2 ((1 : Nat) <<< 64) p = 1 := by decide +kernel
+example : let p := ((1 : Nat) <<< 4096) - 1
+    HexArith.powModNat 2 (((1 : Nat) <<< 64) - 1) p = (1 : Nat) <<< 4095 := by
+  decide +kernel
+example : let p := (1 : Nat) <<< 4096
+    HexArith.powModNat 2 4096 p = 0 := by decide +kernel
+example : let p := ((1 : Nat) <<< 1024) + 1
+    let a := ((1 : Nat) <<< 64) - 1
+    HexArith.powModNat a 5 p = a ^ 5 % p := by decide +kernel
+example : let p := ((1 : Nat) <<< 1024) + 1
+    let a := (1 : Nat) <<< 64
+    HexArith.powModNat a 5 p = a ^ 5 % p := by decide +kernel
+example : let p := ((1 : Nat) <<< 4096) + 1
+    HexArith.powModNat (p + 17) 5 p = 1419857 := by decide +kernel
+
+-- A large reduced base selects the binary accumulator, also with a long exponent.
+set_option maxRecDepth 65536 in
+example : HexArith.powModNat ((1 : Nat) <<< 64) ((1 : Nat) <<< 1100)
+    (((1 : Nat) <<< 1024) + 1) = 1 := by decide +kernel
+
+-- The six-bit window cutoff preserves the result on both sides, including
+-- a large reduced base and an exponent spanning multiple window digits.
+example : let p := ((1 : Nat) <<< 64) - 1
+    HexArith.powModNat (p - 1) 65 p = p - 1 := by decide +kernel
+example : let p := ((1 : Nat) <<< 64)
+    HexArith.powModNat (p - 1) 65 p = p - 1 := by decide +kernel
+example : let p := ((1 : Nat) <<< 64) + 1
+    HexArith.powModNat (p - 1) 65 p = p - 1 := by decide +kernel

@@ -461,13 +461,13 @@ def reportControls : IO UInt32 := do
 private theorem boundedPowMul_exact (q acc : Nat) (hq : 0 < q)
     (hacc : 0 < acc) : ∀ e : Nat,
     boundedPowMul (acc * q ^ e) q acc e = some (acc * q ^ e)
-  | 0 => by simp [boundedPowMul]
+  | 0 => by simp
   | e + 1 => by
       have hpow : 0 < q ^ e := Nat.pow_pos hq
       have hle : q ≤ q ^ e * q := Nat.le_mul_of_pos_left q hpow
       have hmul : acc * q ≤ acc * q ^ (e + 1) := by
         simpa only [Nat.pow_succ] using Nat.mul_le_mul_left acc hle
-      rw [boundedPowMul, ite_eq_right (Nat.ne_of_gt hacc),
+      rw [boundedPowMul_succ, ite_eq_right (Nat.ne_of_gt hacc),
         ite_eq_right (Nat.ne_of_gt hq),
         ite_eq_left ((Nat.le_div_iff_mul_le hq).2 hmul)]
       simpa only [Nat.pow_succ, Nat.mul_assoc, Nat.mul_comm,
