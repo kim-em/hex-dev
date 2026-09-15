@@ -1,7 +1,33 @@
 /-
 Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Copyright (c) 2022 Bhavik Mehta. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Kim Morrison
+Authors: Kim Morrison, Bhavik Mehta
+
+The accumulator loop adapts PrimeCert/PowMod.lean. Its root license notice
+is retained here alongside the original file's Apache 2.0 notice:
+
+MIT License
+
+Copyright (c) 2026 Bhavik Mehta
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 -/
 
 module
@@ -690,16 +716,9 @@ def powModNatGo (n p : Nat) : Nat → Nat → Nat → Nat → Nat
       let base' := (base * base) % p
       powModNatGo n p remaining (bit + 1) acc' base'
 
-/-- Nat-level modular exponentiation by repeated squaring, with the same
-zero-modulus convention as `powMod`.
-
-This is the kernel-facing specification of modular exponentiation: it and its
-recursion are `@[expose]`, so proof terms that replay it (`decide`-style
-certificate checkers) reduce in the kernel. `powMod` is its runtime twin via
-`powModNat_eq_powMod`, so compiled callers of `powModNat` still take the
-Montgomery path for odd word-sized moduli. -/
+/-- Compiled Nat fallback, reducing after every multiplication. -/
 @[expose]
-def powModNat (a n p : Nat) : Nat :=
+def powModBits (a n p : Nat) : Nat :=
   if p = 0 then 0 else powModNatGo n p (bitLength n) 0 (1 % p) (a % p)
 
 /-- `pow_sq`: an even power `base ^ (2 * q)` equals the squared base `(base * base) ^ q`. -/
@@ -799,16 +818,16 @@ private theorem powModNatGo_eq (a n p remaining bit acc base : Nat) (hp : 0 < p)
         simpa [hbit] using ih (bit + 1) acc ((base * base) % p)
           htail_bound hacc hinv'
 
-/-- `powModNat` modulo zero returns zero, matching `powMod`. -/
+/-- `powModBits` modulo zero returns zero, matching `powMod`. -/
 @[simp, grind =]
-theorem powModNat_modulus_zero (a n : Nat) :
-    powModNat a n 0 = 0 := by
+theorem powModBits_modulus_zero (a n : Nat) :
+    powModBits a n 0 = 0 := by
   rfl
 
-/-- `powModNat_eq`: for a positive modulus, `powModNat a n p` computes `a ^ n % p`. -/
-theorem powModNat_eq (a n p : Nat) (hp : 0 < p) :
-    powModNat a n p = a ^ n % p := by
-  unfold powModNat
+/-- `powModBits_eq`: for a positive modulus, `powModBits a n p` computes `a ^ n % p`. -/
+theorem powModBits_eq (a n p : Nat) (hp : 0 < p) :
+    powModBits a n p = a ^ n % p := by
+  unfold powModBits
   rw [ite_eq_right (by omega)]
   apply powModNatGo_eq a n p (bitLength n) 0 (1 % p) (a % p) hp
   · simpa using lt_two_pow_bitLength n
@@ -1026,9 +1045,9 @@ def powMod (a n p : Nat) : Nat :=
       if hodd : p64 % 2 = 1 then
         powModWordOdd a n p64 hodd
       else
-        powModNat a n p
+        powModBits a n p
     else
-      powModNat a n p
+      powModBits a n p
 
 /-- `powMod` agrees with ordinary modular exponentiation. -/
 @[grind =]
@@ -1044,20 +1063,129 @@ theorem powMod_eq (a n p : Nat) (hp : p > 0) :
           Nat.mod_eq_of_lt hfit_lt
       by_cases hodd : UInt64.ofNat p % 2 = 1
       · simp [hfit, hodd, powModWordOdd_eq a n (UInt64.ofNat p) hodd]
-      · simp [hfit_lt, hodd, powModNat_eq a n p hp]
+      · simp [hfit_lt, hodd, powModBits_eq a n p hp]
     · have hfit : ¬ (UInt64.ofNat p).toNat = p := by
         intro h
         have hmodlt : p % UInt64.size < UInt64.size := Nat.mod_lt _ (by decide)
         have hpmod : p % UInt64.size = p := by
           simpa [UInt64.toNat_ofNat] using h
         exact hfit_lt (by simpa [hpmod] using hmodlt)
-      simp [hfit_lt, powModNat_eq a n p hp]
+      simp [hfit_lt, powModBits_eq a n p hp]
 
 /-- Modular exponentiation modulo zero returns zero. -/
 @[simp, grind =]
 theorem powMod_modulus_zero (a n : Nat) :
     powMod a n 0 = 0 := by
   rfl
+
+/-- Kernel reduction loop for `powModNat`, with an accumulator and decreasing fuel.
+`go m fuel b e acc` computes `(b ^ e * acc) % m` when `e < fuel`.
+`Nat.rec` avoids well-founded recursion, and `Bool.rec` avoids `Decidable` unfolding.
+Adapted from Bhavik Mehta's `powModK` in PrimeCert; see the license notices above. -/
+@[expose] noncomputable def powModNat.go (m : Nat) : Nat → Nat → Nat → Nat → Nat :=
+  Nat.rec (fun _ _ _ => 0)
+    (fun _ rec b e acc =>
+      (e.beq 0).rec
+        (((e.mod 2).beq 0).rec
+          (rec ((b.mul b).mod m) (e.div 2) ((b.mul acc).mod m))
+          (rec ((b.mul b).mod m) (e.div 2) acc))
+        (acc.mod m))
+
+/-- Fixed-window loop: `window b m k fuel e` computes `b ^ e % m` when
+`2 ≤ k` and `e < fuel`. The small powers use the kernel's `Nat.pow` reduction. -/
+@[expose] noncomputable def powModNat.window (b m k : Nat) : Nat → Nat → Nat :=
+  Nat.rec (fun _ => 0)
+    (fun _ rec e =>
+      (e.beq 0).rec
+        ((((rec (e.div k)).pow k).mul (b.pow (e.mod k))).mod m)
+        ((1 : Nat).mod m))
+
+private theorem powModNat.window_eq (b m k fuel e : Nat) (hk : 2 ≤ k) (h : e < fuel) :
+    powModNat.window b m k fuel e = b ^ e % m := by
+  induction fuel generalizing e with
+  | zero => omega
+  | succ fuel ih =>
+    change (e.beq 0).rec
+      (((powModNat.window b m k fuel (e / k)) ^ k * b ^ (e % k)) % m)
+      (1 % m) = b ^ e % m
+    simp only [Bool.rec_eq, Nat.beq_eq]
+    split
+    next he => simp [he]
+    next he =>
+      have hdiv : e / k < fuel := Nat.lt_of_lt_of_le
+        (Nat.div_lt_self (Nat.pos_of_ne_zero he) (by omega)) (by omega)
+      rw [ih _ hdiv, Nat.mul_mod, ← Nat.pow_mod, ← Nat.pow_mul,
+        ← Nat.mul_mod, ← Nat.pow_add, Nat.div_add_mod']
+
+private theorem powModNat.go_eq (m fuel b e acc : Nat) (h : e < fuel) :
+    powModNat.go m fuel b e acc = (b ^ e * acc) % m := by
+  induction fuel generalizing b e acc with
+  | zero => omega
+  | succ fuel ih =>
+    change (e.beq 0).rec
+      (((e % 2).beq 0).rec
+        (powModNat.go m fuel (b * b % m) (e / 2) (b * acc % m))
+        (powModNat.go m fuel (b * b % m) (e / 2) acc))
+      (acc % m) = (b ^ e * acc) % m
+    simp only [Bool.rec_eq, Nat.beq_eq]
+    split
+    next he => simp [he]
+    next he =>
+      split
+      next hev =>
+        rw [ih _ _ _ (by omega)]
+        have hev' : 2 * (e / 2) = e := by omega
+        rw [Nat.mul_mod, ← Nat.pow_mod, ← Nat.pow_two, ← Nat.pow_mul, hev', ← Nat.mul_mod]
+      next hod =>
+        rw [ih _ _ _ (by omega)]
+        have hod' : 2 * (e / 2) + 1 = e := by omega
+        rw [Nat.mul_mod, Nat.mod_mod, ← Nat.pow_mod, ← Nat.pow_two, ← Nat.pow_mul,
+          ← Nat.mul_mod, ← Nat.mul_assoc, ← Nat.pow_succ, Nat.succ_eq_add_one, hod']
+
+/-- Kernel-facing modular exponentiation. Four-bit windows through `2^512`
+and three-bit windows through `2^1024` reduce kernel recursion. Above that,
+a reduced base below `2^64` uses two-bit windows through `2^4096`, then
+one-bit windows for exponents at least `2^64`; other inputs use the binary
+accumulator. Modulus zero returns zero. Compiled evaluation uses `powMod`,
+with their equality proved below. -/
+@[expose, implemented_by powMod]
+def powModNat (a n p : Nat) : Nat :=
+  (p.beq 0).rec
+    ((n.beq 0).rec
+      ((p.ble ((1 : Nat).shiftLeft 1024)).rec
+        (((a.mod p).ble 18446744073709551615).rec
+          (powModNat.go p n.succ (a.mod p) n 1)
+          ((p.ble ((1 : Nat).shiftLeft 4096)).rec
+            ((n.ble 18446744073709551615).rec
+              (powModNat.window (a.mod p) p 2 n.succ n)
+              (powModNat.go p n.succ (a.mod p) n 1))
+            (powModNat.window (a.mod p) p 4 n.succ n)))
+        ((p.ble ((1 : Nat).shiftLeft 512)).rec
+          (powModNat.window (a.mod p) p 8 n.succ n)
+          (powModNat.window (a.mod p) p 16 n.succ n)))
+      ((1 : Nat).mod p))
+    0
+
+/-- Modular exponentiation modulo zero returns zero. -/
+@[simp, grind =]
+theorem powModNat_modulus_zero (a n : Nat) : powModNat a n 0 = 0 := by rfl
+
+/-- For a positive modulus, `powModNat` computes `a ^ n % p`. -/
+theorem powModNat_eq (a n p : Nat) (hp : 0 < p) :
+    powModNat a n p = a ^ n % p := by
+  simp only [powModNat, Bool.rec_eq, Nat.beq_eq]
+  split
+  next h => omega
+  next =>
+    split
+    next h => subst n; rfl
+    next =>
+      repeat' split
+      all_goals first
+        | rw [powModNat.window_eq _ _ _ _ _ (by decide) (by omega)]
+          exact (Nat.pow_mod a n p).symm
+        | rw [powModNat.go_eq _ _ _ _ _ (by omega), Nat.mul_one]
+          exact (Nat.pow_mod a n p).symm
 
 /-- The dispatching `powMod` and the Nat-level `powModNat` agree at every
 input, including modulus zero. -/

@@ -39,7 +39,7 @@ def plot_direct(data: dict, out_dir: Path) -> None:
                        rotation=35, ha='right')
     axes[0].set_xlabel('Input (family labels give bit length)')
     axes[0].set_ylabel('Kernel check, milliseconds (log scale)')
-    axes[0].set_title('Same inputs; dots retain both trials')
+    axes[0].set_title(f'Same inputs; dots retain all {data["blocks"]} trials')
     axes[1].set_xlabel('Instances checked, independently sorted')
     axes[1].set_xticks(range(1, len(cases)+1))
     axes[1].set_title('Direct kernel cactus')
@@ -50,7 +50,7 @@ def plot_direct(data: dict, out_dir: Path) -> None:
     fig.suptitle('Supplied certificates: actual kernel checking time')
     fig.text(.5, .015,
              'Kernel.check of full local proof bodies; auxiliary proofs expanded; imports/elaboration excluded.\n'
-             'Hex Lean 4.34.0 / PrimeCert Lean 4.33.0. Two adjacent reversed trials on one CPU; all samples retained.\n'
+             f'Hex Lean 4.34.0 / PrimeCert Lean 4.33.0. {data["blocks"]} adjacent reversed trials; all samples retained.\n'
              'Curve448: PrimeCert supplied certificate; Hex has no generated certificate in this corpus.',
              ha='center', fontsize=8)
     fig.tight_layout(rect=(0, .12, 1, .96))

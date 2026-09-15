@@ -74,13 +74,50 @@ constructing it. A zero accumulator or base returns zero immediately; otherwise
 the computation aborts as soon as the next product would exceed `bound`, so an
 attacker-chosen enormous power is never constructed. -/
 @[expose]
-def boundedPowMul (bound q : Nat) : Nat → Nat → Option Nat
+def boundedPowMulLoop (bound q : Nat) : Nat → Nat → Option Nat
   | acc, 0 => some acc
   | acc, e + 1 =>
       if acc = 0 then some 0
       else if q = 0 then some 0
-      else if acc ≤ bound / q then boundedPowMul bound q (acc * q) e
+      else if acc ≤ bound / q then boundedPowMulLoop bound q (acc * q) e
       else none
+
+/-- Kernel reduction uses raw recursors to avoid auxiliary match and
+`Decidable` reductions at each bounded multiplication. -/
+@[expose, implemented_by boundedPowMulLoop]
+def boundedPowMul (bound q acc e : Nat) : Option Nat :=
+  Nat.rec (fun acc => some acc)
+    (fun _ rec acc =>
+      (acc.beq 0).rec
+        ((q.beq 0).rec
+          ((acc.ble (bound.div q)).rec none (rec (acc.mul q)))
+          (some 0))
+        (some 0)) e acc
+
+private theorem boundedPowMul_eq_loop (bound q acc e : Nat) :
+    boundedPowMul bound q acc e = boundedPowMulLoop bound q acc e := by
+  induction e generalizing acc with
+  | zero => rfl
+  | succ e ih =>
+    change (acc.beq 0).rec
+      ((q.beq 0).rec
+        ((acc.ble (bound.div q)).rec none (boundedPowMul bound q (acc.mul q) e))
+        (some 0)) (some 0) = boundedPowMulLoop bound q acc (e + 1)
+    simp only [Bool.rec_eq, Nat.beq_eq, Nat.ble_eq, ih, boundedPowMulLoop]
+    rfl
+
+/-- Exponent zero preserves the accumulator, even when it exceeds the bound. -/
+@[simp] theorem boundedPowMul_zero (bound q acc : Nat) :
+    boundedPowMul bound q acc 0 = some acc := rfl
+
+/-- One checked multiplication, as an equation for symbolic proofs. -/
+theorem boundedPowMul_succ (bound q acc e : Nat) :
+    boundedPowMul bound q acc (e + 1) =
+      if acc = 0 then some 0
+      else if q = 0 then some 0
+      else if acc ≤ bound / q then boundedPowMul bound q (acc * q) e
+      else none := by
+  simp only [boundedPowMul_eq_loop, boundedPowMulLoop]
 
 /-- The factored part `F = ∏ qᵢ ^ (eᵢ + 1)` of a factor list, aborting as
 soon as the running product exceeds `bound`. -/
@@ -185,17 +222,18 @@ end
 theorem boundedPowMul_eq {bound q : Nat} :
     ∀ (e acc r : Nat), boundedPowMul bound q acc e = some r →
       r = acc * q ^ e := by
+  simp only [boundedPowMul_eq_loop]
   intro e
   induction e with
   | zero =>
       intro acc r h
-      unfold boundedPowMul at h
+      unfold boundedPowMulLoop at h
       injection h with h
       subst h
       simp
   | succ e ih =>
       intro acc r h
-      unfold boundedPowMul at h
+      unfold boundedPowMulLoop at h
       by_cases ha : acc = 0
       · rw [ite_eq_left ha] at h
         injection h with h
@@ -220,13 +258,14 @@ incoming bound is needed only for the zero-exponent case; every positive step
 establishes it before constructing the next accumulator. -/
 theorem boundedPowMul_le {bound q acc e r : Nat} (hacc : acc ≤ bound)
     (h : boundedPowMul bound q acc e = some r) : r ≤ bound := by
+  rw [boundedPowMul_eq_loop] at h
   induction e generalizing acc r with
   | zero =>
-      unfold boundedPowMul at h
+      unfold boundedPowMulLoop at h
       injection h with h
       simpa [h] using hacc
   | succ e ih =>
-      unfold boundedPowMul at h
+      unfold boundedPowMulLoop at h
       by_cases ha : acc = 0
       · rw [ite_eq_left ha] at h
         injection h with h

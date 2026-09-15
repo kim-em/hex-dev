@@ -314,9 +314,13 @@ Curve448; P-521 exceeds its 512-bit ceiling. FLINT and PARI solve all twelve.
 
 ### Supplied-certificate replay
 
-#### Direct kernel checking
+#### Direct kernel checking before windowed arithmetic
 
-![Direct kernel checking](figures/hex-primality-kernel-direct.svg)
+The measurements in this subsection use the earlier checker. Current results
+and the current comparison plot are in the
+[windowed replay report](hex-primality-windowed-replay.md).
+
+![Earlier direct kernel checking](figures/hex-primality-kernel-direct-before-windows.svg)
 
 | Input | Hex kernel | PrimeCert kernel |
 |---|---:|---:|

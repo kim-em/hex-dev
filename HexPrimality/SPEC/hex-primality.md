@@ -39,7 +39,7 @@ instance, which would have risked instance-selection churn.)
 `HexArith.powMod` (`HexArith/Montgomery/Context.lean:1002`) is modular
 exponentiation by repeated squaring, dispatching to Montgomery
 arithmetic for odd word-sized moduli (`powModWordOdd`) and to
-`HexArith.powModNat` otherwise. That, `Nat.gcd`, and `Nat.sqrt` are
+`HexArith.powModBits` otherwise. That, `Nat.gcd`, and `Nat.sqrt` are
 every arithmetic primitive the checkers below need. Extended GCD is
 search infrastructure rather than a checker primitive: `HexArith.extGcd`
 (`HexArith/ExtGcd.lean:41`) is the pure `Nat` routine and
@@ -71,12 +71,13 @@ overtaken by what the repository contains.
 Checked against a clone of https://github.com/b-mehta/PrimeCert
 (Bhavik Mehta and Kenny Lau) at commit `924f63d9`. Every claim below is
 about that revision, and a later one may differ. The repository's
-`LICENSE` is **MIT**; individual file headers say "Released under
-Apache 2.0 license as described in the file LICENSE", which disagrees
-with it. Anyone reusing code from there should resolve that with the
-authors first, and nothing in this SPEC depends on the answer, since
-what is proposed below is a reimplementation from the published idea
-rather than a copy.
+`LICENSE` is **MIT**; individual file headers carry an Apache 2.0 notice.
+The primality checker is a separate implementation of the published ideas.
+The modular-power accumulator in HexArith adapts PrimeCert's `powModK`;
+`HexArith/Montgomery/Context.lean` preserves both the file's Apache notice
+and the complete root MIT permission notice from the pinned comparator
+revision `7d3a2de`. This attribution does not introduce a PrimeCert or Mathlib
+dependency.
 
 - **It requires Mathlib.** `lakefile.toml` pins
   `leanprover-community/mathlib` at a revision, and the substantive
@@ -1181,8 +1182,8 @@ only in the
 ## Kernel exposure
 
 The replay closure is `checkPrime` and what it calls: a kernel-facing
-modular exponentiation, `Nat.gcd`, `Nat.mod`, and the table's binary
-search. `Nat.sqrt` is deliberately absent: it is well-founded recursion
+modular exponentiation, `Nat.gcd`, `Nat.mod`, and the table's verified
+sieve-bit lookup (binary search remains its compiled implementation). `Nat.sqrt` is deliberately absent: it is well-founded recursion
 and does not kernel-reduce, which is why the square bound is checked as
 `n < F * F` and the cube-root discriminant through the stored witness.
 
@@ -1192,9 +1193,12 @@ branches on whether the modulus fits a `UInt64` and whether it is odd,
 taking a Montgomery path in the good case, so the kernel is sent down
 the `Nat` route instead:
 
-- `HexArith.powModNat`, its worker `powModNatGo`, and `bitLength` are
-  all `@[expose]`, so kernel reduction no longer stalls at the module
-  boundary;
+- `HexArith.powModNat` and its raw `Nat.rec`/`Bool.rec` workers are
+  exposed. Fixed windows of four bits through 512-bit moduli and three
+  bits through 1024-bit moduli reduce kernel work. Larger moduli use
+  narrower windows for small reduced bases or binary square-and-multiply.
+  The exact algorithm and intermediate-size
+  bounds belong to the hex-arith SPEC;
 - `powModNat_eq` is exported (with `0 < p`), alongside
   `powModNat_modulus_zero`;
 - `powModNat` guards `p = 0` to `0`, matching `powMod`, which is what
@@ -1202,6 +1206,10 @@ the `Nat` route instead:
   `powModNat` is the kernel-facing specification and `powMod` the
   runtime twin (principle 11's pattern; the earlier state had
   `powModNat a n 0 = a ^ n`, a full unreduced power).
+
+`boundedPowMul` likewise uses raw recursors in its kernel definition,
+proved equal to its compiled structural loop at every input. It retains
+the same early overflow rejection, zero cases, and accepted results.
 
 `checkPrime` is therefore written against `powModNat`. The bench
 family "kernel replay" below is what confirms the choice was the
@@ -1490,9 +1498,13 @@ Imported library proofs remain dependencies. A negative control must be
 rejected. The retained `hex-primality-direct-kernel-checked-issue-10268.json` uses
 adjacent reversed systems and records every sample, source, and toolchain.
 Its matched-input plot shows growth hidden by fresh-build overhead; cactus
-rank is not a bit-length axis. Hex on Lean 4.34.0 checks Curve25519 in
-128–130 ms, versus PrimeCert on Lean 4.33.0 in 18.5–18.7 ms. This is supplied
-proof replay, not a comparison of certificate construction.
+rank is not a bit-length axis. With windowed arithmetic and raw bounded
+multiplication, the retained `hex-primality-base-aware-combined-kernel.json` measures
+Hex on Lean 4.34.0 at a median 9.65 ms for Curve25519, versus PrimeCert on
+Lean 4.33.0 at 19.16 ms. All four samples per system are retained, including
+a slow run; the report records their ranges. These are supplied-proof replay measurements, not
+a comparison of certificate construction; see the
+[windowed replay report](../../reports/hex-primality-windowed-replay.md).
 
 The fixed construction targets and the adjacent-arm Curve25519 phase and
 replay measurements are recorded in

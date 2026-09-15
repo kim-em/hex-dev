@@ -437,11 +437,20 @@ of `n`. This is a Phase 1 "wrong-complexity" violation
 ([PLAN/Phase1.md](../../PLAN/Phase1.md)) regardless of how well the
 proof of `powMod_eq` happens to discharge.
 
-The two forms are a specification/twin pair. `powModNat` and its
-recursion (`powModNatGo`, `bitLength`) are `@[expose]`, so a
-certificate checker written against `powModNat` replays by kernel
-reduction; the `@[csimp]` equality swaps in `powMod`'s Montgomery
-dispatch when the same checker runs compiled. Both return `0` at
+The two forms are a specification/twin pair. `powModNat` uses exposed
+`Nat.rec` and `Bool.rec` loops for kernel reduction: four-bit windows
+for `p ≤ 2^512` and three-bit windows for `p ≤ 2^1024`. Above that,
+reduced bases below `2^64` use two-bit windows through `p ≤ 2^4096`,
+then one-bit windows for exponents at least `2^64`. Other inputs use
+binary square-and-multiply. For positive moduli the respective intermediate
+bounds are `p^31`, `p^15`, `p^4 * 2^192`, `p^2 * 2^64`, and `p^2`.
+Window selection uses shifts so it also reduces under Meta's default
+exponentiation limit. These fixed windows retain logarithmic recursion
+in the exponent. The runtime fallback `powModBits` retains the original
+bit scan and reduces after every multiplication. The `@[implemented_by]`
+annotation permits the raw-recursion definition to use compiled evaluation;
+the proved `@[csimp]` equality establishes its agreement with `powMod`'s
+Montgomery dispatch and this fallback. Both return `0` at
 `p = 0` (the modulus-zero convention `powMod` always had); the
 agreement at every input is what makes the `@[csimp]` registration
 unconditional. Downstream consumer: hex-primality's `checkPrime`

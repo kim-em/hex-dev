@@ -714,3 +714,11 @@ private theorem primeTable_eq_bits :
 -/
 #guard_msgs in
 #rebuild_primeTable 25 5 1
+
+
+-- Raw kernel bounded multiplication retains overflow rejection and zero cases.
+example : Hex.Nat.boundedPowMul 7 2 4 1048576 = none := by decide +kernel
+example : Hex.Nat.boundedPowMul 7 2 3 1 = some 6 := by decide +kernel
+example : Hex.Nat.boundedPowMul 0 5 0 1048576 = some 0 := by decide +kernel
+example : Hex.Nat.boundedPowMul 0 0 1 1 = some 0 := by decide +kernel
+example : Hex.Nat.boundedPowMul 0 5 17 0 = some 17 := by decide +kernel

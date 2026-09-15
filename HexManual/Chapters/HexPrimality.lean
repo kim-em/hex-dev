@@ -199,8 +199,12 @@ proof emission, imports, and kernel checking.
 
 The second plot times kernel checking directly, excluding imports, search,
 and proof elaboration. It checks complete proof bodies, including expanded
-local auxiliary proofs. Curve25519 takes about 129 milliseconds for Hex and
-19 milliseconds for PrimeCert, an observed 6.9-fold PrimeCert advantage.
+local auxiliary proofs. Curve25519 takes about 9.6 milliseconds for Hex and
+19.2 milliseconds for PrimeCert, an observed 2.0-fold Hex advantage.
+Hex is faster on five of the seven shared inputs; PrimeCert remains faster
+on the 31- and 61-bit cases. The
+[replay report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-windowed-replay.md)
+records the windowed arithmetic and bounded-multiplication measurements.
 The measurements use Hex on Lean 4.34.0 and PrimeCert on Lean 4.33.0.
 
 The direct comparison shows both matched inputs and independently sorted
