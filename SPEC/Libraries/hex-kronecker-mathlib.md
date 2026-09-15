@@ -242,16 +242,21 @@ supplies the complexity evidence; these probes measure reification, emitted
 literals, kernel checking, and total tactic cost.
 
 The tactic ships under the opt-in exception of
-[matrix-tactics §The bar against Mathlib](../matrix-tactics.md#the-bar-against-mathlib).
-Its full family table is recorded, and its fresh-module median must be strictly
-below both `ring` and `grobner` on every shared family in the regime it accepts.
-Dense boxes outside that measured regime decline before proof construction.
-A family accepted by either comparator but outside the Kronecker regime is
-recorded as scope deliberately delegated, not as a packed success.  The tactic
-and term form may ship explicitly opt-in after the runtime and absolute
-ceilings pass.  Entry into any default chain is separately gated, per regime,
-by the measured dispatch table and the full runtime-and-scope bar; no default
-chain changes merely because the opt-in bar passes.
+[matrix-tactics §The bar against Mathlib](../matrix-tactics.md#the-bar-against-mathlib),
+exactly as that exception is written: the tactic and term form ship
+explicitly opt-in once the full family table is recorded and the absolute
+ceilings pass, with every losing family in the table.  Being strictly below
+both `ring` and `grobner` on a family is not a condition for opt-in
+shipping; it is the condition for that family to enter a default chain, and
+the chain then dispatches on the winning regime.  The report names the
+winning regime from the measurements (the determinant-shaped families and
+the larger expansions) and the losing one (small grids, where a fixed
+per-invocation cost dominates), and records the per-family ratios for
+both.  Dense boxes outside the accepted budget decline before proof
+construction.  A family accepted by either comparator but outside the
+Kronecker regime is recorded as scope deliberately delegated, not as a
+packed success.  No default chain changes merely because the opt-in bar
+passes.
 
 ## Placement and consumers
 
