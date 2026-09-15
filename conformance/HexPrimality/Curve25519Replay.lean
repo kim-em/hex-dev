@@ -24,4 +24,8 @@ theorem curve25519 : Hex.Nat.Prime (2 ^ 255 - 19) := by
                       (2, 0, Hex.Nat.PrimeCert.small 4153)])])])
       (by decide +kernel)
 
+/-- info: 'Hex.PrimalityConformance.curve25519' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms curve25519
+
 end Hex.PrimalityConformance

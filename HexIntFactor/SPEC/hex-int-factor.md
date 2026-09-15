@@ -1510,3 +1510,11 @@ attempts, and eight combined smooth attempts; raising the primitive ceiling
 does not change that production allocation or its exact Rand accounting.
 Explicit primality certificate construction is owned by the HexPrimality SPEC
 and uses its separate `FactorSearchBudget` smooth bounds and bases.
+
+
+The primality adapter advertises ABI version 2 as a literal. Its ordinary
+registered allocation has no total attempt limit. When a construction caller
+sets `FactorSearchBudget.attemptLimit`, the adapter declines with no attempts
+or random draws and retains the entire input as residual; it does not claim to
+implement that stronger global allocation. The core construction producer
+implements it directly. This leaves the registered ordinary policy unchanged.

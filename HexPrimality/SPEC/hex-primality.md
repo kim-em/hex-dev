@@ -778,7 +778,9 @@ exceed it: an untruncated round at the 32-round budget would materialise
 numbers of `step · 2^31` bits.)
 
 The mask depth is `max 32 (width.log2 + 1)`, so the masks cover the
-requested width without a fixed enumeration ceiling. `sieve_prime_iff`
+requested width without a fixed enumeration ceiling. The round count remains
+32 at the required 524288 endpoint; the generalization supplies an unrestricted
+correctness theorem, rather than accelerating this endpoint. `sieve_prime_iff`
 requires only `hsqrt`, `ht`, and `hrange`; `sieve_testBit_iff` retains the
 original signature for existing callers. The first 32 rounds remain the
 minimum, preserving table replay at its existing bound.
@@ -1202,7 +1204,7 @@ in the part of a certificate tree replayed before acceptance or rejection.
 | `checkPrime`, full tree | `O(Σᵥ kᵥ bᵥ)` modular and bounded ordinary multiplications; `O(K)` subject comparisons, divisions, and gcds | `kᵥ`, `bᵥ` are the entry count and subject bit bound at each visited node; arithmetic preflight bounds each replayed child's subject below its parent, so the sum is `O(K b)` for root bit length `b` |
 | `primeCert?` | dominated by `partialFactor` | bounded by recursive fuel, one base-2/bound-64 p−1 call per nontrivial partial search, per-node worklist fuel, and `defaultPrimeCertBudget` rho restarts/cycle steps |
 | `primeCertWith? factor` | dominated by `factor` plus the same certificate assembly | one producer invocation per non-table certificate node with explicit recursive, worklist, and rho allocations; the producer must honor the allocation and supplies its remaining cost model |
-| sieve to `N` | `O(√N + π(√N) · max(32, log N))` loop/doubling rounds | each marking round is a bit operation on an `N/3`-bit `Nat` |
+| sieve to `N` | `O(√N · max(32, log N))` loop/doubling rounds | each marking round is a bit operation on an `N/3`-bit `Nat` |
 
 These are operation counts, not bit complexity; subject comparisons,
 divisions, gcds, and both kinds of multiplication operate on big integers,
@@ -1412,21 +1414,32 @@ search, and replay plus the sole Pocklington-3 constructor use mode 3 fixed
 budgets: their structurally distinct single boundary inputs do not admit an
 honest one-parameter family.
 
-**Comparators.** PARI `isprime` via cypari2 is **informational**: PARI
-uses BPSW plus APRCL and a Pocklington-style certificate only on
-request, so it is answering a different question by a different
-method, and a required ratio would compare a checker against a prover.
-PARI is the oracle and python-flint the second opinion; neither is a
-performance comparator. The right benchmarked
-comparison for the kernel side is **PrimeCert itself**, and it is
-`informational` for a reason worth stating: it is the closest prior art
-and the one number a reader will want.  The comparison uses the same six
-certificate witnesses in a pinned separate checkout, rotates tool and arm
-order, and reports absolute fresh replay times because the toolchain pins
-differ (Hex uses Lean 4.34.0-rc2; PrimeCert uses Lean 4.33.0).  It is retained
-as scheduled-host information rather than a CI gate; see
-`reports/hex-primality-performance.md` and the committed raw comparator
-record named there.
+**Comparators.** PARI `isprime` via cypari2 and FLINT `fmpz_is_prime`
+via python-flint are **informational native comparators**. They return proven
+primality decisions but do not produce Lean proof terms; the Hex construction
+route produces and self-checks reusable certificate data. Their different
+outputs and algorithms preclude a required speed ratio. PARI remains the
+conformance oracle and FLINT its independent cross-check.
+
+The kernel comparator is **PrimeCert**, also informational. Fresh-module
+measurements retain imports, literal elaboration, and kernel checking, with
+adjacent baseline modules exposing overhead. The six existing bit-family
+witnesses have supplied certificates in both systems. The construction cactus
+adds Curve25519 and Curve448: Hex uses only certificates found by its declared
+construction profile, while PrimeCert receives its committed certificates.
+Missing certificates and timeouts remain unsolved, including when native
+search returns exhaustion quickly. Native plots additionally contain
+secp256k1 and NIST P-256, P-384, and P-521. These fixed, structured corpora do
+not estimate a success rate on random primes.
+
+The comparison rotates system and baseline/replay arm order and reports
+absolute fresh replay times because the toolchain pins differ (Hex uses Lean
+4.34.0-rc2; PrimeCert uses Lean 4.33.0). All completed samples and explicit
+process timeouts are retained. Source hashes, exact inputs, versions, host
+context, and reproduction commands accompany the plots in the construction
+report. Measurements remain shared-host information rather than a CI gate;
+the earlier six-witness comparison remains in
+`reports/hex-primality-performance.md`.
 
 The fixed construction targets and the adjacent-arm Curve25519 phase and
 replay measurements are recorded in
@@ -1441,11 +1454,16 @@ of ordinary `primality` and its interactive budget. It supports the core
 as `2 ^ 255 - 19` remain the theorem's original subject.
 
 The default `ConstructionBudget` has maximum input size 512 bits, recursion
-depth 32, 1024 factor-worklist entries per node, Pollard p-minus-one bounds
+depth 32, 1024 total semantic attempts across the entire construction,
+1024 factor-worklist entries per node, Pollard p-minus-one bounds
 `[64, 512, 4096, 32768, 262144, 524288]` at bases `[2, 3]`, two rho restarts
 of 32768 steps, and no ECM bounds or curves. Witness search tries
 `[2, 3, 5, 7, 11, 13, 17]` before at most 32 random candidates. It admits at
 most 12 distinct factor candidates and examines at most 4096 subset masks.
+`primality? (maxAttempts := 29)` overrides the total attempt limit; the
+unadorned tactic uses 1024. The remaining allocation is passed to each factor
+producer, recursive child, and witness search, so failed subset choices cannot
+reset it. Inputs over the bit limit have a separate size diagnostic.
 All limits are explicit; exhaustion reports the full profile and exact attempt
 count. Table division, primality screening, and subset enumeration are bounded
 work but are not semantic attempts. Every stage-one call, rho restart, and
@@ -1454,7 +1472,10 @@ choices. Deterministic work leaves `Rand` unchanged. Construction uses no
 external factorizer and no total trial-division fallback.
 
 The factor callback receives smooth bounds and bases through
-`FactorSearchBudget`, along with worklist fuel and the nested prime allocation.
+`FactorSearchBudget`, along with worklist fuel, the nested prime allocation,
+and `attemptLimit : Option Nat`. A producer that cannot honor a requested total
+limit must decline without work; the registered HexIntFactor adapter does so.
+Its ordinary calls have `attemptLimit = none`.
 The ordinary callback and registered HexIntFactor adapter retain their
 established schedules. The construction callback tries its declared smooth
 ladder before rho at each composite worklist entry and retains unsplit parts
@@ -1466,7 +1487,11 @@ cube-root arithmetic criteria and orders them by estimated recursive replay
 cost, then entry count. Table leaves cost zero construction nodes; children
 whose table-factored predecessors already satisfy a criterion cost one;
 remaining children receive a bit-size penalty. Estimates select search order
-only. Each chosen subset is recursively certified and the exact assembled
+only. When a subset cap truncates enumeration, the full factor mask remains
+among the candidates. Successful children are cached within a node's subset
+loop; reusing one consumes no additional attempts or random draws. Failed
+searches are not cached because their random state and remaining budget can
+change. Each chosen subset is recursively certified and the exact assembled
 certificate passes public `checkPrime` before emission. Invalid producer data
 cannot establish a primality verdict.
 

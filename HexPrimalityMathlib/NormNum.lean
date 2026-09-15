@@ -122,20 +122,7 @@ reified certificate, emitted through the `Nat.Prime`-flavoured wrapper. -/
 
 /-- Companion certificate-literal suggestion handler. -/
 @[tactic primalitySuggestTac] meta def evalPrimalitySuggestNat : Tactic.Tactic :=
-  fun stx => do
-    let goal ← Tactic.getMainGoal
-    goal.withContext do
-      let tgt ← instantiateMVars (← goal.getType)
-      unless tgt.getAppFn.isConstOf `Nat.Prime && tgt.getAppNumArgs == 1 do
-        Elab.throwUnsupportedSyntax
-      checkClosed "primality?" tgt.appArg!
-      -- Mathlib supplies additional arithmetic instances. Reduce their closed
-      -- applications before the core numeral reader; the original goal stays
-      -- definitionally equal and the suggestion leaves its subject implicit.
-      let nE ← whnf tgt.appArg!
-      let goal ← goal.change (mkApp (mkConst `Nat.Prime) nE)
-      Tactic.replaceMainGoal [goal]
-      suggestPrime `Nat.Prime ``Hex.Nat.natPrime_of_checkPrimeAt stx
+  suggestPrime `Nat.Prime ``Hex.Nat.natPrime_of_checkPrimeAt
 
 end Hex.PrimalityTactic
 

@@ -1,0 +1,4307 @@
+{
+  "schema": "hex-primality-cactus/1",
+  "host": "chungus2",
+  "cpu": 2,
+  "blocks": 2,
+  "timeout": 60,
+  "hex_commit": "5a7984536b168715e99d454e2d95153f0b3c5d4c",
+  "hex_toolchain": "leanprover/lean4:v4.34.0-rc2",
+  "primecert_commit": "7d3a2de13bb08f111a95203634f9ea52e50e246e",
+  "primecert_toolchain": "leanprover/lean4:v4.33.0",
+  "protocol": "trial-major adjacent systems; reverse systems and baseline/replay arms in odd blocks; all completed samples retained",
+  "cases": [
+    {
+      "name": "family-31",
+      "n": "2147483647",
+      "bits": 31,
+      "primecert": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit31\n\ntheorem result : Nat.Prime 2147483647 := prime_cert%\n  [small {2; 3; 7; 11; 31; 151; 331},\n   pock (2147483647, 7, 2 * 3 ^ 2 * 7 * 11 * 31 * 151 * 331)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit31\n"
+    },
+    {
+      "name": "family-61",
+      "n": "1945555039024054273",
+      "bits": 61,
+      "primecert": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit61\n\ntheorem result : Nat.Prime 1945555039024054273 := prime_cert%\n  [small {2; 3},\n   pock (1945555039024054273, 5, 2 ^ 56 * 3 ^ 3)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit61\n"
+    },
+    {
+      "name": "family-123",
+      "n": "9304595970494411110326649421962412033",
+      "bits": 123,
+      "primecert": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit123\n\ntheorem result : Nat.Prime 9304595970494411110326649421962412033 := prime_cert%\n  [small {2; 7},\n   pock (9304595970494411110326649421962412033, 3, 2 ^ 120 * 7)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit123\n"
+    },
+    {
+      "name": "family-256",
+      "n": "93628759656736142393278101159368737990730026663232799828780155818898507169793",
+      "bits": 256,
+      "primecert": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit256\n\ntheorem result : Nat.Prime\n    93628759656736142393278101159368737990730026663232799828780155818898507169793 :=\n  prime_cert%\n    [small {2; 3; 23},\n     pock\n       (93628759656736142393278101159368737990730026663232799828780155818898507169793,\n        5, 2 ^ 248 * 3 ^ 2 * 23)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit256\n"
+    },
+    {
+      "name": "family-511",
+      "n": "6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033",
+      "bits": 511,
+      "primecert": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit511\n\ntheorem result : Nat.Prime\n    6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033 :=\n  prime_cert%\n    [small {2; 127},\n     pock\n       (6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033,\n        3, 2 ^ 504 * 127)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit511\n"
+    },
+    {
+      "name": "family-512",
+      "n": "9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177",
+      "bits": 512,
+      "primecert": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit512\n\ntheorem result : Nat.Prime\n    9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177 :=\n  prime_cert%\n    [small {2; 3; 7; 199},\n     pock (100297, 13, 2 ^ 3 * 3 ^ 2 * 7 * 199),\n     pock\n       (9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,\n        3, 2 ^ 146 * 100297 ^ 22)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit512\n"
+    },
+    {
+      "name": "Curve25519",
+      "n": "57896044618658097711785492504343953926634992332820282019728792003956564819949",
+      "bits": 255,
+      "primecert": "module\npublic import PrimeCert\npublic section\nset_option maxRecDepth 2048\nset_option exponentiation.threshold 512\ntheorem result : Nat.Prime (2 ^ 255 - 19) := prime_cert%\n  [small {3; 5; 7; 43},\n   pock3 (1923133, 2, 5, 2 ^ 2 * 3 * 43),\n   pock3 (430751, 17, 7, 2 * 5 ^ 3),\n   pock3 (31757755568855353, 5, 5, 2 ^ 3 * 430751),\n   pock3 (74058212732561358302231226437062788676166966415465897661863160754340907, 2, 5, 2 * 3 * 1923133 * 31757755568855353),\n   pock3 (57896044618658097711785492504343953926634992332820282019728792003956564819949, 2, 0, 2 ^ 2 * 74058212732561358302231226437062788676166966415465897661863160754340907)]\n"
+    },
+    {
+      "name": "secp256k1",
+      "n": "115792089237316195423570985008687907853269984665640564039457584007908834671663",
+      "bits": 256
+    },
+    {
+      "name": "P-256",
+      "n": "115792089210356248762697446949407573530086143415290314195533631308867097853951",
+      "bits": 256
+    },
+    {
+      "name": "P-384",
+      "n": "39402006196394479212279040100143613805079739270465446667948293404245721771496870329047266088258938001861606973112319",
+      "bits": 384
+    },
+    {
+      "name": "Curve448",
+      "n": "726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439",
+      "bits": 448,
+      "primecert": "module\npublic import PrimeCert\npublic section\nset_option maxRecDepth 2048\nset_option exponentiation.threshold 512\ntheorem result : Nat.Prime (2 ^ 448 - 2 ^ 224 - 1) := prime_cert%\n  [small {3; 5; 7; 29; 67; 271; 641},\n   pock3 (411743, 5, 3, 2 * 29),\n   pock3 (1469495262398780123809, 17, 5, 2 ^ 5 * 411743),\n   pock3 (97859369123353, 5, 7, 2 ^ 3 * 67 * 271),\n   pock3 (167773885276849215533569, 17, 0, 2 ^ 9 * 97859369123353),\n   pock3 (726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439, 7, 3, 2 * 641 * 1469495262398780123809 * 167773885276849215533569)]\n"
+    },
+    {
+      "name": "P-521",
+      "n": "6864797660130609714981900799081393217269435300143305409394463459185543183397656052122559640661454554977296311391480858037121987999716643812574028291115057151",
+      "bits": 521
+    }
+  ],
+  "native": [
+    {
+      "status": "ok",
+      "seconds": 3.5051166319753975,
+      "returncode": 0,
+      "load_before": [
+        16.66845703125,
+        27.3447265625,
+        56.4365234375
+      ],
+      "load_after": [
+        16.66845703125,
+        27.3447265625,
+        56.4365234375
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Cactus (1.0s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Cactus.lean:6:0: CACTUS {\"attempts\":4,\"certificate\":\"Hex.Nat.PrimeCert.pock 2147483647 [(3, 0, Hex.Nat.PrimeCert.small 151), (3, 0, Hex.Nat.PrimeCert.small 331)]\",\"check_nanos\":13761,\"nanos\":3908107,\"status\":\"ok\"}\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.Cactus"
+      ],
+      "result": {
+        "attempts": 4,
+        "certificate": "Hex.Nat.PrimeCert.pock 2147483647 [(3, 0, Hex.Nat.PrimeCert.small 151), (3, 0, Hex.Nat.PrimeCert.small 331)]",
+        "check_nanos": 13761,
+        "nanos": 3908107,
+        "status": "ok"
+      },
+      "block": 0,
+      "case": "family-31",
+      "system": "hex"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.08345955301774666,
+      "returncode": 0,
+      "load_before": [
+        16.66845703125,
+        27.3447265625,
+        56.4365234375
+      ],
+      "load_after": [
+        17.015625,
+        27.2392578125,
+        56.24609375
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 748371, \"version\": {\"python-flint\": \"0.9.0\", \"flint\": \"3.6.0\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "flint",
+        "--n",
+        "2147483647"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 748371,
+        "version": {
+          "python-flint": "0.9.0",
+          "flint": "3.6.0"
+        }
+      },
+      "block": 0,
+      "case": "family-31",
+      "system": "flint"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.06328915001358837,
+      "returncode": 0,
+      "load_before": [
+        17.015625,
+        27.2392578125,
+        56.24609375
+      ],
+      "load_after": [
+        17.015625,
+        27.2392578125,
+        56.24609375
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 14322, \"version\": {\"pari\": \"[2, 17, 3]\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "pari",
+        "--n",
+        "2147483647"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 14322,
+        "version": {
+          "pari": "[2, 17, 3]"
+        }
+      },
+      "block": 0,
+      "case": "family-31",
+      "system": "pari"
+    },
+    {
+      "status": "ok",
+      "seconds": 3.1261952750501223,
+      "returncode": 0,
+      "load_before": [
+        17.015625,
+        27.2392578125,
+        56.24609375
+      ],
+      "load_after": [
+        17.015625,
+        27.2392578125,
+        56.24609375
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Cactus (1.6s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Cactus.lean:6:0: CACTUS {\"attempts\":3,\"certificate\":\"Hex.Nat.PrimeCert.pock 1945555039024054273 [(5, 55, Hex.Nat.PrimeCert.small 2)]\",\"check_nanos\":23004,\"nanos\":3987135,\"status\":\"ok\"}\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.Cactus"
+      ],
+      "result": {
+        "attempts": 3,
+        "certificate": "Hex.Nat.PrimeCert.pock 1945555039024054273 [(5, 55, Hex.Nat.PrimeCert.small 2)]",
+        "check_nanos": 23004,
+        "nanos": 3987135,
+        "status": "ok"
+      },
+      "block": 0,
+      "case": "family-61",
+      "system": "hex"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.06323066295590252,
+      "returncode": 0,
+      "load_before": [
+        17.015625,
+        27.2392578125,
+        56.24609375
+      ],
+      "load_after": [
+        17.015625,
+        27.2392578125,
+        56.24609375
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 21351, \"version\": {\"python-flint\": \"0.9.0\", \"flint\": \"3.6.0\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "flint",
+        "--n",
+        "1945555039024054273"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 21351,
+        "version": {
+          "python-flint": "0.9.0",
+          "flint": "3.6.0"
+        }
+      },
+      "block": 0,
+      "case": "family-61",
+      "system": "flint"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.05957513896282762,
+      "returncode": 0,
+      "load_before": [
+        17.015625,
+        27.2392578125,
+        56.24609375
+      ],
+      "load_after": [
+        17.015625,
+        27.2392578125,
+        56.24609375
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 58446, \"version\": {\"pari\": \"[2, 17, 3]\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "pari",
+        "--n",
+        "1945555039024054273"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 58446,
+        "version": {
+          "pari": "[2, 17, 3]"
+        }
+      },
+      "block": 0,
+      "case": "family-61",
+      "system": "pari"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.8537087970180437,
+      "returncode": 0,
+      "load_before": [
+        17.015625,
+        27.2392578125,
+        56.24609375
+      ],
+      "load_after": [
+        20.6181640625,
+        27.81640625,
+        56.27734375
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Cactus (1.7s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Cactus.lean:6:0: CACTUS {\"attempts\":2,\"certificate\":\"Hex.Nat.PrimeCert.pock 9304595970494411110326649421962412033 [(3, 119, Hex.Nat.PrimeCert.small 2)]\",\"check_nanos\":92307,\"nanos\":5217230,\"status\":\"ok\"}\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.Cactus"
+      ],
+      "result": {
+        "attempts": 2,
+        "certificate": "Hex.Nat.PrimeCert.pock 9304595970494411110326649421962412033 [(3, 119, Hex.Nat.PrimeCert.small 2)]",
+        "check_nanos": 92307,
+        "nanos": 5217230,
+        "status": "ok"
+      },
+      "block": 0,
+      "case": "family-123",
+      "system": "hex"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.0783725359942764,
+      "returncode": 0,
+      "load_before": [
+        20.6181640625,
+        27.81640625,
+        56.27734375
+      ],
+      "load_after": [
+        20.6181640625,
+        27.81640625,
+        56.27734375
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 901707, \"version\": {\"python-flint\": \"0.9.0\", \"flint\": \"3.6.0\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "flint",
+        "--n",
+        "9304595970494411110326649421962412033"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 901707,
+        "version": {
+          "python-flint": "0.9.0",
+          "flint": "3.6.0"
+        }
+      },
+      "block": 0,
+      "case": "family-123",
+      "system": "flint"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.06475241004955024,
+      "returncode": 0,
+      "load_before": [
+        20.6181640625,
+        27.81640625,
+        56.27734375
+      ],
+      "load_after": [
+        20.6181640625,
+        27.81640625,
+        56.27734375
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 794178, \"version\": {\"pari\": \"[2, 17, 3]\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "pari",
+        "--n",
+        "9304595970494411110326649421962412033"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 794178,
+        "version": {
+          "pari": "[2, 17, 3]"
+        }
+      },
+      "block": 0,
+      "case": "family-123",
+      "system": "pari"
+    },
+    {
+      "status": "ok",
+      "seconds": 3.1196635880041867,
+      "returncode": 0,
+      "load_before": [
+        20.6181640625,
+        27.81640625,
+        56.27734375
+      ],
+      "load_after": [
+        20.6181640625,
+        27.81640625,
+        56.27734375
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Cactus (1.6s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Cactus.lean:6:0: CACTUS {\"attempts\":3,\"certificate\":\"Hex.Nat.PrimeCert.pock\\n  93628759656736142393278101159368737990730026663232799828780155818898507169793\\n  [(5, 247, Hex.Nat.PrimeCert.small 2)]\",\"check_nanos\":206867,\"nanos\":7798399,\"status\":\"ok\"}\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.Cactus"
+      ],
+      "result": {
+        "attempts": 3,
+        "certificate": "Hex.Nat.PrimeCert.pock\n  93628759656736142393278101159368737990730026663232799828780155818898507169793\n  [(5, 247, Hex.Nat.PrimeCert.small 2)]",
+        "check_nanos": 206867,
+        "nanos": 7798399,
+        "status": "ok"
+      },
+      "block": 0,
+      "case": "family-256",
+      "system": "hex"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.07645243697334081,
+      "returncode": 0,
+      "load_before": [
+        20.6181640625,
+        27.81640625,
+        56.27734375
+      ],
+      "load_after": [
+        20.6181640625,
+        27.81640625,
+        56.27734375
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 1951646, \"version\": {\"python-flint\": \"0.9.0\", \"flint\": \"3.6.0\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "flint",
+        "--n",
+        "93628759656736142393278101159368737990730026663232799828780155818898507169793"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 1951646,
+        "version": {
+          "python-flint": "0.9.0",
+          "flint": "3.6.0"
+        }
+      },
+      "block": 0,
+      "case": "family-256",
+      "system": "flint"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.08355251996545121,
+      "returncode": 0,
+      "load_before": [
+        20.6181640625,
+        27.81640625,
+        56.27734375
+      ],
+      "load_after": [
+        20.6181640625,
+        27.81640625,
+        56.27734375
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 293635, \"version\": {\"pari\": \"[2, 17, 3]\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "pari",
+        "--n",
+        "93628759656736142393278101159368737990730026663232799828780155818898507169793"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 293635,
+        "version": {
+          "pari": "[2, 17, 3]"
+        }
+      },
+      "block": 0,
+      "case": "family-256",
+      "system": "pari"
+    },
+    {
+      "status": "ok",
+      "seconds": 3.3248850380186923,
+      "returncode": 0,
+      "load_before": [
+        20.6181640625,
+        27.81640625,
+        56.27734375
+      ],
+      "load_after": [
+        24.01220703125,
+        28.40087890625,
+        56.3134765625
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Cactus (1.9s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Cactus.lean:6:0: CACTUS {\"attempts\":2,\"certificate\":\"Hex.Nat.PrimeCert.pock\\n  6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033\\n  [(3, 503, Hex.Nat.PrimeCert.small 2)]\",\"check_nanos\":783332,\"nanos\":20088381,\"status\":\"ok\"}\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.Cactus"
+      ],
+      "result": {
+        "attempts": 2,
+        "certificate": "Hex.Nat.PrimeCert.pock\n  6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033\n  [(3, 503, Hex.Nat.PrimeCert.small 2)]",
+        "check_nanos": 783332,
+        "nanos": 20088381,
+        "status": "ok"
+      },
+      "block": 0,
+      "case": "family-511",
+      "system": "hex"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.1131919189938344,
+      "returncode": 0,
+      "load_before": [
+        24.01220703125,
+        28.40087890625,
+        56.3134765625
+      ],
+      "load_after": [
+        24.01220703125,
+        28.40087890625,
+        56.3134765625
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 4768343, \"version\": {\"python-flint\": \"0.9.0\", \"flint\": \"3.6.0\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "flint",
+        "--n",
+        "6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 4768343,
+        "version": {
+          "python-flint": "0.9.0",
+          "flint": "3.6.0"
+        }
+      },
+      "block": 0,
+      "case": "family-511",
+      "system": "flint"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.0935900800395757,
+      "returncode": 0,
+      "load_before": [
+        24.01220703125,
+        28.40087890625,
+        56.3134765625
+      ],
+      "load_after": [
+        24.01220703125,
+        28.40087890625,
+        56.3134765625
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 751685, \"version\": {\"pari\": \"[2, 17, 3]\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "pari",
+        "--n",
+        "6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 751685,
+        "version": {
+          "pari": "[2, 17, 3]"
+        }
+      },
+      "block": 0,
+      "case": "family-511",
+      "system": "pari"
+    },
+    {
+      "status": "ok",
+      "seconds": 3.576764893019572,
+      "returncode": 0,
+      "load_before": [
+        24.01220703125,
+        28.40087890625,
+        56.3134765625
+      ],
+      "load_after": [
+        28.73583984375,
+        29.3076171875,
+        56.45703125
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Cactus (1.7s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Cactus.lean:6:0: CACTUS {\"attempts\":66,\"certificate\":\"Hex.Nat.PrimeCert.pock\\n  9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177\\n  [(2, 21, Hex.Nat.PrimeCert.pock 100297 [(2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 199)])]\",\"check_nanos\":392102,\"nanos\":29839707,\"status\":\"ok\"}\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.Cactus"
+      ],
+      "result": {
+        "attempts": 66,
+        "certificate": "Hex.Nat.PrimeCert.pock\n  9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177\n  [(2, 21, Hex.Nat.PrimeCert.pock 100297 [(2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 199)])]",
+        "check_nanos": 392102,
+        "nanos": 29839707,
+        "status": "ok"
+      },
+      "block": 0,
+      "case": "family-512",
+      "system": "hex"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.10715259902644902,
+      "returncode": 0,
+      "load_before": [
+        28.73583984375,
+        29.3076171875,
+        56.45703125
+      ],
+      "load_after": [
+        28.73583984375,
+        29.3076171875,
+        56.45703125
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 5285621, \"version\": {\"python-flint\": \"0.9.0\", \"flint\": \"3.6.0\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "flint",
+        "--n",
+        "9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 5285621,
+        "version": {
+          "python-flint": "0.9.0",
+          "flint": "3.6.0"
+        }
+      },
+      "block": 0,
+      "case": "family-512",
+      "system": "flint"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.10385584796313196,
+      "returncode": 0,
+      "load_before": [
+        28.73583984375,
+        29.3076171875,
+        56.45703125
+      ],
+      "load_after": [
+        28.73583984375,
+        29.3076171875,
+        56.45703125
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 881047, \"version\": {\"pari\": \"[2, 17, 3]\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "pari",
+        "--n",
+        "9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 881047,
+        "version": {
+          "pari": "[2, 17, 3]"
+        }
+      },
+      "block": 0,
+      "case": "family-512",
+      "system": "pari"
+    },
+    {
+      "status": "ok",
+      "seconds": 4.56735489401035,
+      "returncode": 0,
+      "load_before": [
+        28.73583984375,
+        29.3076171875,
+        56.45703125
+      ],
+      "load_after": [
+        30.91943359375,
+        29.7509765625,
+        56.4541015625
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Cactus (2.7s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Cactus.lean:6:0: CACTUS {\"attempts\":29,\"certificate\":\"Hex.Nat.PrimeCert.pock\\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\\n  [(2,\\n    0,\\n    Hex.Nat.PrimeCert.pock3\\n      74058212732561358302231226437062788676166966415465897661863160754340907\\n      2028478494862525422475607\\n      22304740449229861598212\\n      2028478494862525422475606\\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\\n       (2, 0, Hex.Nat.PrimeCert.small 353),\\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\\n       (2,\\n        0,\\n        Hex.Nat.PrimeCert.pock3\\n          31757755568855353\\n          4028945\\n          289\\n          4028944\\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\\n           (2, 0, Hex.Nat.PrimeCert.small 223),\\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\",\"check_nanos\":628382,\"nanos\":1106106365,\"status\":\"ok\"}\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.Cactus"
+      ],
+      "result": {
+        "attempts": 29,
+        "certificate": "Hex.Nat.PrimeCert.pock\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock3\n      74058212732561358302231226437062788676166966415465897661863160754340907\n      2028478494862525422475607\n      22304740449229861598212\n      2028478494862525422475606\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\n       (2, 0, Hex.Nat.PrimeCert.small 353),\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\n       (2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          31757755568855353\n          4028945\n          289\n          4028944\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 223),\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]",
+        "check_nanos": 628382,
+        "nanos": 1106106365,
+        "status": "ok"
+      },
+      "block": 0,
+      "case": "Curve25519",
+      "system": "hex"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.11884244997054338,
+      "returncode": 0,
+      "load_before": [
+        30.91943359375,
+        29.7509765625,
+        56.4541015625
+      ],
+      "load_after": [
+        30.91943359375,
+        29.7509765625,
+        56.4541015625
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 25740886, \"version\": {\"python-flint\": \"0.9.0\", \"flint\": \"3.6.0\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "flint",
+        "--n",
+        "57896044618658097711785492504343953926634992332820282019728792003956564819949"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 25740886,
+        "version": {
+          "python-flint": "0.9.0",
+          "flint": "3.6.0"
+        }
+      },
+      "block": 0,
+      "case": "Curve25519",
+      "system": "flint"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.15920015895972028,
+      "returncode": 0,
+      "load_before": [
+        30.91943359375,
+        29.7509765625,
+        56.4541015625
+      ],
+      "load_after": [
+        30.91943359375,
+        29.7509765625,
+        56.4541015625
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 66722962, \"version\": {\"pari\": \"[2, 17, 3]\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "pari",
+        "--n",
+        "57896044618658097711785492504343953926634992332820282019728792003956564819949"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 66722962,
+        "version": {
+          "pari": "[2, 17, 3]"
+        }
+      },
+      "block": 0,
+      "case": "Curve25519",
+      "system": "pari"
+    },
+    {
+      "status": "exhausted",
+      "seconds": 34.17777261201991,
+      "returncode": 0,
+      "load_before": [
+        30.91943359375,
+        29.7509765625,
+        56.4541015625
+      ],
+      "load_after": [
+        42.04052734375,
+        32.794921875,
+        56.4921875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Cactus (32s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Cactus.lean:6:0: CACTUS {\"attempts\":272,\"nanos\":30391903428,\"status\":\"exhausted\"}\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.Cactus"
+      ],
+      "result": {
+        "attempts": 272,
+        "nanos": 30391903428,
+        "status": "exhausted"
+      },
+      "block": 0,
+      "case": "secp256k1",
+      "system": "hex"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.12121379299787804,
+      "returncode": 0,
+      "load_before": [
+        42.04052734375,
+        32.794921875,
+        56.4921875
+      ],
+      "load_after": [
+        42.04052734375,
+        32.794921875,
+        56.4921875
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 22536291, \"version\": {\"python-flint\": \"0.9.0\", \"flint\": \"3.6.0\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "flint",
+        "--n",
+        "115792089237316195423570985008687907853269984665640564039457584007908834671663"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 22536291,
+        "version": {
+          "python-flint": "0.9.0",
+          "flint": "3.6.0"
+        }
+      },
+      "block": 0,
+      "case": "secp256k1",
+      "system": "flint"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.11157360201468691,
+      "returncode": 0,
+      "load_before": [
+        42.04052734375,
+        32.794921875,
+        56.4921875
+      ],
+      "load_after": [
+        42.04052734375,
+        32.794921875,
+        56.4921875
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 47163103, \"version\": {\"pari\": \"[2, 17, 3]\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "pari",
+        "--n",
+        "115792089237316195423570985008687907853269984665640564039457584007908834671663"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 47163103,
+        "version": {
+          "pari": "[2, 17, 3]"
+        }
+      },
+      "block": 0,
+      "case": "secp256k1",
+      "system": "pari"
+    },
+    {
+      "status": "ok",
+      "seconds": 3.2714974039699882,
+      "returncode": 0,
+      "load_before": [
+        42.04052734375,
+        32.794921875,
+        56.4921875
+      ],
+      "load_after": [
+        42.04052734375,
+        32.794921875,
+        56.4921875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Cactus (1.0s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Cactus.lean:6:0: CACTUS {\"attempts\":18,\"certificate\":\"Hex.Nat.PrimeCert.pock3\\n  115792089210356248762697446949407573530086143415290314195533631308867097853951\\n  128721914928032094605845043\\n  4905315401961533613775432\\n  128721914928032094605845042\\n  [(3, 0, Hex.Nat.PrimeCert.small 2),\\n   (2, 0, Hex.Nat.PrimeCert.small 257),\\n   (2, 0, Hex.Nat.PrimeCert.small 641),\\n   (2, 0, Hex.Nat.PrimeCert.small 1531),\\n   (2, 0, Hex.Nat.PrimeCert.small 65537),\\n   (2, 0, Hex.Nat.PrimeCert.pock 490463 [(2, 0, Hex.Nat.PrimeCert.small 53), (2, 0, Hex.Nat.PrimeCert.small 661)]),\\n   (2, 0, Hex.Nat.PrimeCert.pock 6700417 [(3, 0, Hex.Nat.PrimeCert.small 17449)])]\",\"check_nanos\":954296,\"nanos\":45875002,\"status\":\"ok\"}\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.Cactus"
+      ],
+      "result": {
+        "attempts": 18,
+        "certificate": "Hex.Nat.PrimeCert.pock3\n  115792089210356248762697446949407573530086143415290314195533631308867097853951\n  128721914928032094605845043\n  4905315401961533613775432\n  128721914928032094605845042\n  [(3, 0, Hex.Nat.PrimeCert.small 2),\n   (2, 0, Hex.Nat.PrimeCert.small 257),\n   (2, 0, Hex.Nat.PrimeCert.small 641),\n   (2, 0, Hex.Nat.PrimeCert.small 1531),\n   (2, 0, Hex.Nat.PrimeCert.small 65537),\n   (2, 0, Hex.Nat.PrimeCert.pock 490463 [(2, 0, Hex.Nat.PrimeCert.small 53), (2, 0, Hex.Nat.PrimeCert.small 661)]),\n   (2, 0, Hex.Nat.PrimeCert.pock 6700417 [(3, 0, Hex.Nat.PrimeCert.small 17449)])]",
+        "check_nanos": 954296,
+        "nanos": 45875002,
+        "status": "ok"
+      },
+      "block": 0,
+      "case": "P-256",
+      "system": "hex"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.09638089395593852,
+      "returncode": 0,
+      "load_before": [
+        42.04052734375,
+        32.794921875,
+        56.4921875
+      ],
+      "load_after": [
+        42.04052734375,
+        32.794921875,
+        56.4921875
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 8478337, \"version\": {\"python-flint\": \"0.9.0\", \"flint\": \"3.6.0\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "flint",
+        "--n",
+        "115792089210356248762697446949407573530086143415290314195533631308867097853951"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 8478337,
+        "version": {
+          "python-flint": "0.9.0",
+          "flint": "3.6.0"
+        }
+      },
+      "block": 0,
+      "case": "P-256",
+      "system": "flint"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.11913980497047305,
+      "returncode": 0,
+      "load_before": [
+        42.04052734375,
+        32.794921875,
+        56.4921875
+      ],
+      "load_after": [
+        42.04052734375,
+        32.794921875,
+        56.4921875
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 31126144, \"version\": {\"pari\": \"[2, 17, 3]\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "pari",
+        "--n",
+        "115792089210356248762697446949407573530086143415290314195533631308867097853951"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 31126144,
+        "version": {
+          "pari": "[2, 17, 3]"
+        }
+      },
+      "block": 0,
+      "case": "P-256",
+      "system": "pari"
+    },
+    {
+      "status": "exhausted",
+      "seconds": 5.423994546988979,
+      "returncode": 0,
+      "load_before": [
+        42.04052734375,
+        32.794921875,
+        56.4921875
+      ],
+      "load_after": [
+        43.52099609375,
+        33.42529296875,
+        56.44384765625
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Cactus (3.7s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Cactus.lean:6:0: CACTUS {\"attempts\":14,\"nanos\":2084321013,\"status\":\"exhausted\"}\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.Cactus"
+      ],
+      "result": {
+        "attempts": 14,
+        "nanos": 2084321013,
+        "status": "exhausted"
+      },
+      "block": 0,
+      "case": "P-384",
+      "system": "hex"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.08457920700311661,
+      "returncode": 0,
+      "load_before": [
+        43.52099609375,
+        33.42529296875,
+        56.44384765625
+      ],
+      "load_after": [
+        43.52099609375,
+        33.42529296875,
+        56.44384765625
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 17679636, \"version\": {\"python-flint\": \"0.9.0\", \"flint\": \"3.6.0\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "flint",
+        "--n",
+        "39402006196394479212279040100143613805079739270465446667948293404245721771496870329047266088258938001861606973112319"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 17679636,
+        "version": {
+          "python-flint": "0.9.0",
+          "flint": "3.6.0"
+        }
+      },
+      "block": 0,
+      "case": "P-384",
+      "system": "flint"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.2371572750271298,
+      "returncode": 0,
+      "load_before": [
+        43.52099609375,
+        33.42529296875,
+        56.44384765625
+      ],
+      "load_after": [
+        43.52099609375,
+        33.42529296875,
+        56.44384765625
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 169283229, \"version\": {\"pari\": \"[2, 17, 3]\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "pari",
+        "--n",
+        "39402006196394479212279040100143613805079739270465446667948293404245721771496870329047266088258938001861606973112319"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 169283229,
+        "version": {
+          "pari": "[2, 17, 3]"
+        }
+      },
+      "block": 0,
+      "case": "P-384",
+      "system": "pari"
+    },
+    {
+      "status": "exhausted",
+      "seconds": 8.339559111976996,
+      "returncode": 0,
+      "load_before": [
+        43.52099609375,
+        33.42529296875,
+        56.44384765625
+      ],
+      "load_after": [
+        43.7998046875,
+        33.65087890625,
+        56.39306640625
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Cactus (6.9s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Cactus.lean:6:0: CACTUS {\"attempts\":67,\"nanos\":5271425870,\"status\":\"exhausted\"}\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.Cactus"
+      ],
+      "result": {
+        "attempts": 67,
+        "nanos": 5271425870,
+        "status": "exhausted"
+      },
+      "block": 0,
+      "case": "Curve448",
+      "system": "hex"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.07499793299939483,
+      "returncode": 0,
+      "load_before": [
+        43.7998046875,
+        33.65087890625,
+        56.39306640625
+      ],
+      "load_after": [
+        43.7998046875,
+        33.65087890625,
+        56.39306640625
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 11055230, \"version\": {\"python-flint\": \"0.9.0\", \"flint\": \"3.6.0\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "flint",
+        "--n",
+        "726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 11055230,
+        "version": {
+          "python-flint": "0.9.0",
+          "flint": "3.6.0"
+        }
+      },
+      "block": 0,
+      "case": "Curve448",
+      "system": "flint"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.29647122899768874,
+      "returncode": 0,
+      "load_before": [
+        43.7998046875,
+        33.65087890625,
+        56.39306640625
+      ],
+      "load_after": [
+        43.7998046875,
+        33.65087890625,
+        56.39306640625
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 232612381, \"version\": {\"pari\": \"[2, 17, 3]\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "pari",
+        "--n",
+        "726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 232612381,
+        "version": {
+          "pari": "[2, 17, 3]"
+        }
+      },
+      "block": 0,
+      "case": "Curve448",
+      "system": "pari"
+    },
+    {
+      "status": "exhausted",
+      "seconds": 3.298170251015108,
+      "returncode": 0,
+      "load_before": [
+        43.7998046875,
+        33.65087890625,
+        56.39306640625
+      ],
+      "load_after": [
+        43.4951171875,
+        33.75634765625,
+        56.3046875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Cactus (1.0s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Cactus.lean:6:0: CACTUS {\"attempts\":0,\"nanos\":99037,\"status\":\"exhausted\"}\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.Cactus"
+      ],
+      "result": {
+        "attempts": 0,
+        "nanos": 99037,
+        "status": "exhausted"
+      },
+      "block": 0,
+      "case": "P-521",
+      "system": "hex"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.06805506302043796,
+      "returncode": 0,
+      "load_before": [
+        43.4951171875,
+        33.75634765625,
+        56.3046875
+      ],
+      "load_after": [
+        43.4951171875,
+        33.75634765625,
+        56.3046875
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 7014015, \"version\": {\"python-flint\": \"0.9.0\", \"flint\": \"3.6.0\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "flint",
+        "--n",
+        "6864797660130609714981900799081393217269435300143305409394463459185543183397656052122559640661454554977296311391480858037121987999716643812574028291115057151"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 7014015,
+        "version": {
+          "python-flint": "0.9.0",
+          "flint": "3.6.0"
+        }
+      },
+      "block": 0,
+      "case": "P-521",
+      "system": "flint"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.33188362896908075,
+      "returncode": 0,
+      "load_before": [
+        43.4951171875,
+        33.75634765625,
+        56.3046875
+      ],
+      "load_after": [
+        43.4951171875,
+        33.75634765625,
+        56.3046875
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 270636494, \"version\": {\"pari\": \"[2, 17, 3]\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "pari",
+        "--n",
+        "6864797660130609714981900799081393217269435300143305409394463459185543183397656052122559640661454554977296311391480858037121987999716643812574028291115057151"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 270636494,
+        "version": {
+          "pari": "[2, 17, 3]"
+        }
+      },
+      "block": 0,
+      "case": "P-521",
+      "system": "pari"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.059892024961300194,
+      "returncode": 0,
+      "load_before": [
+        43.4951171875,
+        33.75634765625,
+        56.3046875
+      ],
+      "load_after": [
+        43.4951171875,
+        33.75634765625,
+        56.3046875
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 14271, \"version\": {\"pari\": \"[2, 17, 3]\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "pari",
+        "--n",
+        "2147483647"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 14271,
+        "version": {
+          "pari": "[2, 17, 3]"
+        }
+      },
+      "block": 1,
+      "case": "family-31",
+      "system": "pari"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.06225411797640845,
+      "returncode": 0,
+      "load_before": [
+        43.4951171875,
+        33.75634765625,
+        56.3046875
+      ],
+      "load_after": [
+        43.4951171875,
+        33.75634765625,
+        56.3046875
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 13160, \"version\": {\"python-flint\": \"0.9.0\", \"flint\": \"3.6.0\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "flint",
+        "--n",
+        "2147483647"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 13160,
+        "version": {
+          "python-flint": "0.9.0",
+          "flint": "3.6.0"
+        }
+      },
+      "block": 1,
+      "case": "family-31",
+      "system": "flint"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.4016539590083994,
+      "returncode": 0,
+      "load_before": [
+        43.4951171875,
+        33.75634765625,
+        56.3046875
+      ],
+      "load_after": [
+        42.25390625,
+        33.66064453125,
+        56.15234375
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Cactus (1.3s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Cactus.lean:6:0: CACTUS {\"attempts\":4,\"certificate\":\"Hex.Nat.PrimeCert.pock 2147483647 [(3, 0, Hex.Nat.PrimeCert.small 151), (3, 0, Hex.Nat.PrimeCert.small 331)]\",\"check_nanos\":20721,\"nanos\":3941717,\"status\":\"ok\"}\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.Cactus"
+      ],
+      "result": {
+        "attempts": 4,
+        "certificate": "Hex.Nat.PrimeCert.pock 2147483647 [(3, 0, Hex.Nat.PrimeCert.small 151), (3, 0, Hex.Nat.PrimeCert.small 331)]",
+        "check_nanos": 20721,
+        "nanos": 3941717,
+        "status": "ok"
+      },
+      "block": 1,
+      "case": "family-31",
+      "system": "hex"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.05518479103920981,
+      "returncode": 0,
+      "load_before": [
+        42.25390625,
+        33.66064453125,
+        56.15234375
+      ],
+      "load_after": [
+        42.25390625,
+        33.66064453125,
+        56.15234375
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 17466, \"version\": {\"pari\": \"[2, 17, 3]\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "pari",
+        "--n",
+        "1945555039024054273"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 17466,
+        "version": {
+          "pari": "[2, 17, 3]"
+        }
+      },
+      "block": 1,
+      "case": "family-61",
+      "system": "pari"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.06308823497965932,
+      "returncode": 0,
+      "load_before": [
+        42.25390625,
+        33.66064453125,
+        56.15234375
+      ],
+      "load_after": [
+        42.25390625,
+        33.66064453125,
+        56.15234375
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 22794, \"version\": {\"python-flint\": \"0.9.0\", \"flint\": \"3.6.0\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "flint",
+        "--n",
+        "1945555039024054273"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 22794,
+        "version": {
+          "python-flint": "0.9.0",
+          "flint": "3.6.0"
+        }
+      },
+      "block": 1,
+      "case": "family-61",
+      "system": "flint"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.4323448890354484,
+      "returncode": 0,
+      "load_before": [
+        42.25390625,
+        33.66064453125,
+        56.15234375
+      ],
+      "load_after": [
+        42.25390625,
+        33.66064453125,
+        56.15234375
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Cactus (1.5s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Cactus.lean:6:0: CACTUS {\"attempts\":3,\"certificate\":\"Hex.Nat.PrimeCert.pock 1945555039024054273 [(5, 55, Hex.Nat.PrimeCert.small 2)]\",\"check_nanos\":22403,\"nanos\":4429060,\"status\":\"ok\"}\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.Cactus"
+      ],
+      "result": {
+        "attempts": 3,
+        "certificate": "Hex.Nat.PrimeCert.pock 1945555039024054273 [(5, 55, Hex.Nat.PrimeCert.small 2)]",
+        "check_nanos": 22403,
+        "nanos": 4429060,
+        "status": "ok"
+      },
+      "block": 1,
+      "case": "family-61",
+      "system": "hex"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.06333653297042474,
+      "returncode": 0,
+      "load_before": [
+        42.25390625,
+        33.66064453125,
+        56.15234375
+      ],
+      "load_after": [
+        42.25390625,
+        33.66064453125,
+        56.15234375
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 137153, \"version\": {\"pari\": \"[2, 17, 3]\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "pari",
+        "--n",
+        "9304595970494411110326649421962412033"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 137153,
+        "version": {
+          "pari": "[2, 17, 3]"
+        }
+      },
+      "block": 1,
+      "case": "family-123",
+      "system": "pari"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.05814596399432048,
+      "returncode": 0,
+      "load_before": [
+        42.25390625,
+        33.66064453125,
+        56.15234375
+      ],
+      "load_after": [
+        42.25390625,
+        33.66064453125,
+        56.15234375
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 119116, \"version\": {\"python-flint\": \"0.9.0\", \"flint\": \"3.6.0\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "flint",
+        "--n",
+        "9304595970494411110326649421962412033"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 119116,
+        "version": {
+          "python-flint": "0.9.0",
+          "flint": "3.6.0"
+        }
+      },
+      "block": 1,
+      "case": "family-123",
+      "system": "flint"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.1891086159739643,
+      "returncode": 0,
+      "load_before": [
+        42.25390625,
+        33.66064453125,
+        56.15234375
+      ],
+      "load_after": [
+        41.6728515625,
+        33.68310546875,
+        56.03857421875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Cactus (1.3s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Cactus.lean:6:0: CACTUS {\"attempts\":2,\"certificate\":\"Hex.Nat.PrimeCert.pock 9304595970494411110326649421962412033 [(3, 119, Hex.Nat.PrimeCert.small 2)]\",\"check_nanos\":89513,\"nanos\":4857556,\"status\":\"ok\"}\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.Cactus"
+      ],
+      "result": {
+        "attempts": 2,
+        "certificate": "Hex.Nat.PrimeCert.pock 9304595970494411110326649421962412033 [(3, 119, Hex.Nat.PrimeCert.small 2)]",
+        "check_nanos": 89513,
+        "nanos": 4857556,
+        "status": "ok"
+      },
+      "block": 1,
+      "case": "family-123",
+      "system": "hex"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.05125365901039913,
+      "returncode": 0,
+      "load_before": [
+        41.6728515625,
+        33.68310546875,
+        56.03857421875
+      ],
+      "load_after": [
+        41.6728515625,
+        33.68310546875,
+        56.03857421875
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 281167, \"version\": {\"pari\": \"[2, 17, 3]\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "pari",
+        "--n",
+        "93628759656736142393278101159368737990730026663232799828780155818898507169793"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 281167,
+        "version": {
+          "pari": "[2, 17, 3]"
+        }
+      },
+      "block": 1,
+      "case": "family-256",
+      "system": "pari"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.05713340197689831,
+      "returncode": 0,
+      "load_before": [
+        41.6728515625,
+        33.68310546875,
+        56.03857421875
+      ],
+      "load_after": [
+        41.6728515625,
+        33.68310546875,
+        56.03857421875
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 1221372, \"version\": {\"python-flint\": \"0.9.0\", \"flint\": \"3.6.0\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "flint",
+        "--n",
+        "93628759656736142393278101159368737990730026663232799828780155818898507169793"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 1221372,
+        "version": {
+          "python-flint": "0.9.0",
+          "flint": "3.6.0"
+        }
+      },
+      "block": 1,
+      "case": "family-256",
+      "system": "flint"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.8247487760381773,
+      "returncode": 0,
+      "load_before": [
+        41.6728515625,
+        33.68310546875,
+        56.03857421875
+      ],
+      "load_after": [
+        41.6728515625,
+        33.68310546875,
+        56.03857421875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Cactus (2.1s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Cactus.lean:6:0: CACTUS {\"attempts\":3,\"certificate\":\"Hex.Nat.PrimeCert.pock\\n  93628759656736142393278101159368737990730026663232799828780155818898507169793\\n  [(5, 247, Hex.Nat.PrimeCert.small 2)]\",\"check_nanos\":190072,\"nanos\":6851844,\"status\":\"ok\"}\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.Cactus"
+      ],
+      "result": {
+        "attempts": 3,
+        "certificate": "Hex.Nat.PrimeCert.pock\n  93628759656736142393278101159368737990730026663232799828780155818898507169793\n  [(5, 247, Hex.Nat.PrimeCert.small 2)]",
+        "check_nanos": 190072,
+        "nanos": 6851844,
+        "status": "ok"
+      },
+      "block": 1,
+      "case": "family-256",
+      "system": "hex"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.05349642696091905,
+      "returncode": 0,
+      "load_before": [
+        41.6728515625,
+        33.68310546875,
+        56.03857421875
+      ],
+      "load_after": [
+        41.6728515625,
+        33.68310546875,
+        56.03857421875
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 547573, \"version\": {\"pari\": \"[2, 17, 3]\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "pari",
+        "--n",
+        "6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 547573,
+        "version": {
+          "pari": "[2, 17, 3]"
+        }
+      },
+      "block": 1,
+      "case": "family-511",
+      "system": "pari"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.05449133296497166,
+      "returncode": 0,
+      "load_before": [
+        41.6728515625,
+        33.68310546875,
+        56.03857421875
+      ],
+      "load_after": [
+        41.6728515625,
+        33.68310546875,
+        56.03857421875
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 2917959, \"version\": {\"python-flint\": \"0.9.0\", \"flint\": \"3.6.0\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "flint",
+        "--n",
+        "6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 2917959,
+        "version": {
+          "python-flint": "0.9.0",
+          "flint": "3.6.0"
+        }
+      },
+      "block": 1,
+      "case": "family-511",
+      "system": "flint"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.759198901010677,
+      "returncode": 0,
+      "load_before": [
+        41.6728515625,
+        33.68310546875,
+        56.03857421875
+      ],
+      "load_after": [
+        39.61669921875,
+        33.38916015625,
+        55.8232421875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Cactus (1.9s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Cactus.lean:6:0: CACTUS {\"attempts\":2,\"certificate\":\"Hex.Nat.PrimeCert.pock\\n  6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033\\n  [(3, 503, Hex.Nat.PrimeCert.small 2)]\",\"check_nanos\":465731,\"nanos\":11225892,\"status\":\"ok\"}\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.Cactus"
+      ],
+      "result": {
+        "attempts": 2,
+        "certificate": "Hex.Nat.PrimeCert.pock\n  6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033\n  [(3, 503, Hex.Nat.PrimeCert.small 2)]",
+        "check_nanos": 465731,
+        "nanos": 11225892,
+        "status": "ok"
+      },
+      "block": 1,
+      "case": "family-511",
+      "system": "hex"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.05112989601911977,
+      "returncode": 0,
+      "load_before": [
+        39.61669921875,
+        33.38916015625,
+        55.8232421875
+      ],
+      "load_after": [
+        39.61669921875,
+        33.38916015625,
+        55.8232421875
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 623996, \"version\": {\"pari\": \"[2, 17, 3]\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "pari",
+        "--n",
+        "9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 623996,
+        "version": {
+          "pari": "[2, 17, 3]"
+        }
+      },
+      "block": 1,
+      "case": "family-512",
+      "system": "pari"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.05659529299009591,
+      "returncode": 0,
+      "load_before": [
+        39.61669921875,
+        33.38916015625,
+        55.8232421875
+      ],
+      "load_after": [
+        39.61669921875,
+        33.38916015625,
+        55.8232421875
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 2892941, \"version\": {\"python-flint\": \"0.9.0\", \"flint\": \"3.6.0\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "flint",
+        "--n",
+        "9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 2892941,
+        "version": {
+          "python-flint": "0.9.0",
+          "flint": "3.6.0"
+        }
+      },
+      "block": 1,
+      "case": "family-512",
+      "system": "flint"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.852255409990903,
+      "returncode": 0,
+      "load_before": [
+        39.61669921875,
+        33.38916015625,
+        55.8232421875
+      ],
+      "load_after": [
+        39.61669921875,
+        33.38916015625,
+        55.8232421875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Cactus (1.1s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Cactus.lean:6:0: CACTUS {\"attempts\":66,\"certificate\":\"Hex.Nat.PrimeCert.pock\\n  9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177\\n  [(2, 21, Hex.Nat.PrimeCert.pock 100297 [(2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 199)])]\",\"check_nanos\":350870,\"nanos\":25693744,\"status\":\"ok\"}\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.Cactus"
+      ],
+      "result": {
+        "attempts": 66,
+        "certificate": "Hex.Nat.PrimeCert.pock\n  9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177\n  [(2, 21, Hex.Nat.PrimeCert.pock 100297 [(2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 199)])]",
+        "check_nanos": 350870,
+        "nanos": 25693744,
+        "status": "ok"
+      },
+      "block": 1,
+      "case": "family-512",
+      "system": "hex"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.13060147198848426,
+      "returncode": 0,
+      "load_before": [
+        39.61669921875,
+        33.38916015625,
+        55.8232421875
+      ],
+      "load_after": [
+        39.61669921875,
+        33.38916015625,
+        55.8232421875
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 48076466, \"version\": {\"pari\": \"[2, 17, 3]\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "pari",
+        "--n",
+        "57896044618658097711785492504343953926634992332820282019728792003956564819949"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 48076466,
+        "version": {
+          "pari": "[2, 17, 3]"
+        }
+      },
+      "block": 1,
+      "case": "Curve25519",
+      "system": "pari"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.0684037699829787,
+      "returncode": 0,
+      "load_before": [
+        39.61669921875,
+        33.38916015625,
+        55.8232421875
+      ],
+      "load_after": [
+        39.61669921875,
+        33.38916015625,
+        55.8232421875
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 15694561, \"version\": {\"python-flint\": \"0.9.0\", \"flint\": \"3.6.0\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "flint",
+        "--n",
+        "57896044618658097711785492504343953926634992332820282019728792003956564819949"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 15694561,
+        "version": {
+          "python-flint": "0.9.0",
+          "flint": "3.6.0"
+        }
+      },
+      "block": 1,
+      "case": "Curve25519",
+      "system": "flint"
+    },
+    {
+      "status": "ok",
+      "seconds": 4.5131748340209015,
+      "returncode": 0,
+      "load_before": [
+        39.61669921875,
+        33.38916015625,
+        55.8232421875
+      ],
+      "load_after": [
+        37.88525390625,
+        33.13330078125,
+        55.61962890625
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Cactus (2.9s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Cactus.lean:6:0: CACTUS {\"attempts\":29,\"certificate\":\"Hex.Nat.PrimeCert.pock\\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\\n  [(2,\\n    0,\\n    Hex.Nat.PrimeCert.pock3\\n      74058212732561358302231226437062788676166966415465897661863160754340907\\n      2028478494862525422475607\\n      22304740449229861598212\\n      2028478494862525422475606\\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\\n       (2, 0, Hex.Nat.PrimeCert.small 353),\\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\\n       (2,\\n        0,\\n        Hex.Nat.PrimeCert.pock3\\n          31757755568855353\\n          4028945\\n          289\\n          4028944\\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\\n           (2, 0, Hex.Nat.PrimeCert.small 223),\\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\",\"check_nanos\":575563,\"nanos\":914348171,\"status\":\"ok\"}\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.Cactus"
+      ],
+      "result": {
+        "attempts": 29,
+        "certificate": "Hex.Nat.PrimeCert.pock\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock3\n      74058212732561358302231226437062788676166966415465897661863160754340907\n      2028478494862525422475607\n      22304740449229861598212\n      2028478494862525422475606\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\n       (2, 0, Hex.Nat.PrimeCert.small 353),\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\n       (2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          31757755568855353\n          4028945\n          289\n          4028944\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 223),\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]",
+        "check_nanos": 575563,
+        "nanos": 914348171,
+        "status": "ok"
+      },
+      "block": 1,
+      "case": "Curve25519",
+      "system": "hex"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.11547437304398045,
+      "returncode": 0,
+      "load_before": [
+        37.88525390625,
+        33.13330078125,
+        55.61962890625
+      ],
+      "load_after": [
+        37.88525390625,
+        33.13330078125,
+        55.61962890625
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 38897550, \"version\": {\"pari\": \"[2, 17, 3]\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "pari",
+        "--n",
+        "115792089237316195423570985008687907853269984665640564039457584007908834671663"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 38897550,
+        "version": {
+          "pari": "[2, 17, 3]"
+        }
+      },
+      "block": 1,
+      "case": "secp256k1",
+      "system": "pari"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.0758154729846865,
+      "returncode": 0,
+      "load_before": [
+        37.88525390625,
+        33.13330078125,
+        55.61962890625
+      ],
+      "load_after": [
+        37.88525390625,
+        33.13330078125,
+        55.61962890625
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 20826334, \"version\": {\"python-flint\": \"0.9.0\", \"flint\": \"3.6.0\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "flint",
+        "--n",
+        "115792089237316195423570985008687907853269984665640564039457584007908834671663"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 20826334,
+        "version": {
+          "python-flint": "0.9.0",
+          "flint": "3.6.0"
+        }
+      },
+      "block": 1,
+      "case": "secp256k1",
+      "system": "flint"
+    },
+    {
+      "status": "exhausted",
+      "seconds": 25.708623718994204,
+      "returncode": 0,
+      "load_before": [
+        37.88525390625,
+        33.13330078125,
+        55.61962890625
+      ],
+      "load_after": [
+        31.564453125,
+        32.02880859375,
+        54.65625
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Cactus (24s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Cactus.lean:6:0: CACTUS {\"attempts\":272,\"nanos\":22896139333,\"status\":\"exhausted\"}\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.Cactus"
+      ],
+      "result": {
+        "attempts": 272,
+        "nanos": 22896139333,
+        "status": "exhausted"
+      },
+      "block": 1,
+      "case": "secp256k1",
+      "system": "hex"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.08407448203070089,
+      "returncode": 0,
+      "load_before": [
+        31.564453125,
+        32.02880859375,
+        54.65625
+      ],
+      "load_after": [
+        31.564453125,
+        32.02880859375,
+        54.65625
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 20495492, \"version\": {\"pari\": \"[2, 17, 3]\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "pari",
+        "--n",
+        "115792089210356248762697446949407573530086143415290314195533631308867097853951"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 20495492,
+        "version": {
+          "pari": "[2, 17, 3]"
+        }
+      },
+      "block": 1,
+      "case": "P-256",
+      "system": "pari"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.07664986897725612,
+      "returncode": 0,
+      "load_before": [
+        31.564453125,
+        32.02880859375,
+        54.65625
+      ],
+      "load_after": [
+        31.564453125,
+        32.02880859375,
+        54.65625
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 5501742, \"version\": {\"python-flint\": \"0.9.0\", \"flint\": \"3.6.0\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "flint",
+        "--n",
+        "115792089210356248762697446949407573530086143415290314195533631308867097853951"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 5501742,
+        "version": {
+          "python-flint": "0.9.0",
+          "flint": "3.6.0"
+        }
+      },
+      "block": 1,
+      "case": "P-256",
+      "system": "flint"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.6183733950019814,
+      "returncode": 0,
+      "load_before": [
+        31.564453125,
+        32.02880859375,
+        54.65625
+      ],
+      "load_after": [
+        30.31787109375,
+        31.7626953125,
+        54.4482421875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Cactus (1.6s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Cactus.lean:6:0: CACTUS {\"attempts\":18,\"certificate\":\"Hex.Nat.PrimeCert.pock3\\n  115792089210356248762697446949407573530086143415290314195533631308867097853951\\n  128721914928032094605845043\\n  4905315401961533613775432\\n  128721914928032094605845042\\n  [(3, 0, Hex.Nat.PrimeCert.small 2),\\n   (2, 0, Hex.Nat.PrimeCert.small 257),\\n   (2, 0, Hex.Nat.PrimeCert.small 641),\\n   (2, 0, Hex.Nat.PrimeCert.small 1531),\\n   (2, 0, Hex.Nat.PrimeCert.small 65537),\\n   (2, 0, Hex.Nat.PrimeCert.pock 490463 [(2, 0, Hex.Nat.PrimeCert.small 53), (2, 0, Hex.Nat.PrimeCert.small 661)]),\\n   (2, 0, Hex.Nat.PrimeCert.pock 6700417 [(3, 0, Hex.Nat.PrimeCert.small 17449)])]\",\"check_nanos\":876120,\"nanos\":39710395,\"status\":\"ok\"}\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.Cactus"
+      ],
+      "result": {
+        "attempts": 18,
+        "certificate": "Hex.Nat.PrimeCert.pock3\n  115792089210356248762697446949407573530086143415290314195533631308867097853951\n  128721914928032094605845043\n  4905315401961533613775432\n  128721914928032094605845042\n  [(3, 0, Hex.Nat.PrimeCert.small 2),\n   (2, 0, Hex.Nat.PrimeCert.small 257),\n   (2, 0, Hex.Nat.PrimeCert.small 641),\n   (2, 0, Hex.Nat.PrimeCert.small 1531),\n   (2, 0, Hex.Nat.PrimeCert.small 65537),\n   (2, 0, Hex.Nat.PrimeCert.pock 490463 [(2, 0, Hex.Nat.PrimeCert.small 53), (2, 0, Hex.Nat.PrimeCert.small 661)]),\n   (2, 0, Hex.Nat.PrimeCert.pock 6700417 [(3, 0, Hex.Nat.PrimeCert.small 17449)])]",
+        "check_nanos": 876120,
+        "nanos": 39710395,
+        "status": "ok"
+      },
+      "block": 1,
+      "case": "P-256",
+      "system": "hex"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.22070182795869187,
+      "returncode": 0,
+      "load_before": [
+        30.31787109375,
+        31.7626953125,
+        54.4482421875
+      ],
+      "load_after": [
+        30.31787109375,
+        31.7626953125,
+        54.4482421875
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 141087803, \"version\": {\"pari\": \"[2, 17, 3]\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "pari",
+        "--n",
+        "39402006196394479212279040100143613805079739270465446667948293404245721771496870329047266088258938001861606973112319"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 141087803,
+        "version": {
+          "pari": "[2, 17, 3]"
+        }
+      },
+      "block": 1,
+      "case": "P-384",
+      "system": "pari"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.08342829399043694,
+      "returncode": 0,
+      "load_before": [
+        30.31787109375,
+        31.7626953125,
+        54.4482421875
+      ],
+      "load_after": [
+        30.31787109375,
+        31.7626953125,
+        54.4482421875
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 17212843, \"version\": {\"python-flint\": \"0.9.0\", \"flint\": \"3.6.0\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "flint",
+        "--n",
+        "39402006196394479212279040100143613805079739270465446667948293404245721771496870329047266088258938001861606973112319"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 17212843,
+        "version": {
+          "python-flint": "0.9.0",
+          "flint": "3.6.0"
+        }
+      },
+      "block": 1,
+      "case": "P-384",
+      "system": "flint"
+    },
+    {
+      "status": "exhausted",
+      "seconds": 4.493796203983948,
+      "returncode": 0,
+      "load_before": [
+        30.31787109375,
+        31.7626953125,
+        54.4482421875
+      ],
+      "load_after": [
+        29.8115234375,
+        31.6337890625,
+        54.28466796875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Cactus (3.2s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Cactus.lean:6:0: CACTUS {\"attempts\":14,\"nanos\":1666585517,\"status\":\"exhausted\"}\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.Cactus"
+      ],
+      "result": {
+        "attempts": 14,
+        "nanos": 1666585517,
+        "status": "exhausted"
+      },
+      "block": 1,
+      "case": "P-384",
+      "system": "hex"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.2437211139476858,
+      "returncode": 0,
+      "load_before": [
+        29.8115234375,
+        31.6337890625,
+        54.28466796875
+      ],
+      "load_after": [
+        29.8115234375,
+        31.6337890625,
+        54.28466796875
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 188924961, \"version\": {\"pari\": \"[2, 17, 3]\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "pari",
+        "--n",
+        "726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 188924961,
+        "version": {
+          "pari": "[2, 17, 3]"
+        }
+      },
+      "block": 1,
+      "case": "Curve448",
+      "system": "pari"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.06450876902090386,
+      "returncode": 0,
+      "load_before": [
+        29.8115234375,
+        31.6337890625,
+        54.28466796875
+      ],
+      "load_after": [
+        29.8115234375,
+        31.6337890625,
+        54.28466796875
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 9768480, \"version\": {\"python-flint\": \"0.9.0\", \"flint\": \"3.6.0\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "flint",
+        "--n",
+        "726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 9768480,
+        "version": {
+          "python-flint": "0.9.0",
+          "flint": "3.6.0"
+        }
+      },
+      "block": 1,
+      "case": "Curve448",
+      "system": "flint"
+    },
+    {
+      "status": "exhausted",
+      "seconds": 7.216725385049358,
+      "returncode": 0,
+      "load_before": [
+        29.8115234375,
+        31.6337890625,
+        54.28466796875
+      ],
+      "load_after": [
+        29.185546875,
+        31.4736328125,
+        54.11083984375
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Cactus (5.9s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Cactus.lean:6:0: CACTUS {\"attempts\":67,\"nanos\":4226611503,\"status\":\"exhausted\"}\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.Cactus"
+      ],
+      "result": {
+        "attempts": 67,
+        "nanos": 4226611503,
+        "status": "exhausted"
+      },
+      "block": 1,
+      "case": "Curve448",
+      "system": "hex"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.2900503129931167,
+      "returncode": 0,
+      "load_before": [
+        29.185546875,
+        31.4736328125,
+        54.11083984375
+      ],
+      "load_after": [
+        29.3310546875,
+        31.46533203125,
+        53.986328125
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 232854502, \"version\": {\"pari\": \"[2, 17, 3]\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "pari",
+        "--n",
+        "6864797660130609714981900799081393217269435300143305409394463459185543183397656052122559640661454554977296311391480858037121987999716643812574028291115057151"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 232854502,
+        "version": {
+          "pari": "[2, 17, 3]"
+        }
+      },
+      "block": 1,
+      "case": "P-521",
+      "system": "pari"
+    },
+    {
+      "status": "ok",
+      "seconds": 0.06061787699582055,
+      "returncode": 0,
+      "load_before": [
+        29.3310546875,
+        31.46533203125,
+        53.986328125
+      ],
+      "load_after": [
+        29.3310546875,
+        31.46533203125,
+        53.986328125
+      ],
+      "stdout": "{\"status\": \"ok\", \"nanos\": 6805084, \"version\": {\"python-flint\": \"0.9.0\", \"flint\": \"3.6.0\"}}\n",
+      "stderr": "",
+      "command": [
+        "/nix/store/y4yaf8izx6pb8vqjc6dbfmjxmz5cv883-python3-3.12.13-env/bin/python3",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10268/scripts/bench/primality_cactus.py",
+        "--worker",
+        "flint",
+        "--n",
+        "6864797660130609714981900799081393217269435300143305409394463459185543183397656052122559640661454554977296311391480858037121987999716643812574028291115057151"
+      ],
+      "result": {
+        "status": "ok",
+        "nanos": 6805084,
+        "version": {
+          "python-flint": "0.9.0",
+          "flint": "3.6.0"
+        }
+      },
+      "block": 1,
+      "case": "P-521",
+      "system": "flint"
+    },
+    {
+      "status": "exhausted",
+      "seconds": 2.629268463992048,
+      "returncode": 0,
+      "load_before": [
+        29.3310546875,
+        31.46533203125,
+        53.986328125
+      ],
+      "load_after": [
+        29.3310546875,
+        31.46533203125,
+        53.986328125
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.Cactus (716ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Cactus.lean:6:0: CACTUS {\"attempts\":0,\"nanos\":105807,\"status\":\"exhausted\"}\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "HexPrimality.ProofProbe.Curve25519.Cactus"
+      ],
+      "result": {
+        "attempts": 0,
+        "nanos": 105807,
+        "status": "exhausted"
+      },
+      "block": 1,
+      "case": "P-521",
+      "system": "hex"
+    }
+  ],
+  "kernel": [
+    {
+      "status": "ok",
+      "seconds": 1.13009150599828,
+      "returncode": 0,
+      "load_before": [
+        29.3310546875,
+        31.46533203125,
+        53.986328125
+      ],
+      "load_after": [
+        29.3310546875,
+        31.46533203125,
+        53.986328125
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.CactusReplay (515ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.CactusReplay:olean"
+      ],
+      "block": 0,
+      "case": "family-31",
+      "system": "hex",
+      "arm": "baseline",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock 2147483647 [(3, 0, Hex.Nat.PrimeCert.small 151), (3, 0, Hex.Nat.PrimeCert.small 331)]\n",
+      "source_bytes": 239,
+      "olean_bytes": 3768
+    },
+    {
+      "status": "ok",
+      "seconds": 1.9441609909990802,
+      "returncode": 0,
+      "load_before": [
+        29.3310546875,
+        31.46533203125,
+        53.986328125
+      ],
+      "load_after": [
+        28.82373046875,
+        31.32470703125,
+        53.81982421875
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.CactusReplay (1.4s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.CactusReplay:olean"
+      ],
+      "block": 0,
+      "case": "family-31",
+      "system": "hex",
+      "arm": "replay",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock 2147483647 [(3, 0, Hex.Nat.PrimeCert.small 151), (3, 0, Hex.Nat.PrimeCert.small 331)]\ntheorem result : Hex.Nat.Prime 2147483647 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n",
+      "source_bytes": 355,
+      "olean_bytes": 5376
+    },
+    {
+      "status": "ok",
+      "seconds": 4.756198298011441,
+      "returncode": 0,
+      "load_before": [
+        28.82373046875,
+        31.32470703125,
+        53.81982421875
+      ],
+      "load_after": [
+        27.71630859375,
+        31.05322265625,
+        53.61083984375
+      ],
+      "stdout": "\u2714 [1962/1962] Built PrimeCert.Comparator.Cactus (1.8s)\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 0,
+      "case": "family-31",
+      "system": "primecert",
+      "arm": "baseline",
+      "source": "module\npublic import PrimeCert\n",
+      "source_bytes": 31,
+      "olean_bytes": 1448
+    },
+    {
+      "status": "ok",
+      "seconds": 1.631599577027373,
+      "returncode": 0,
+      "load_before": [
+        27.71630859375,
+        31.05322265625,
+        53.61083984375
+      ],
+      "load_after": [
+        27.71630859375,
+        31.05322265625,
+        53.61083984375
+      ],
+      "stdout": "\u2139 [1962/1962] Built PrimeCert.Comparator.Cactus (769ms)\ninfo: PrimeCert/Comparator/Cactus.lean:13:0: 'PrimeCert.Comparator.Bit31.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 0,
+      "case": "family-31",
+      "system": "primecert",
+      "arm": "replay",
+      "source": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit31\n\ntheorem result : Nat.Prime 2147483647 := prime_cert%\n  [small {2; 3; 7; 11; 31; 151; 331},\n   pock (2147483647, 7, 2 * 3 ^ 2 * 7 * 11 * 31 * 151 * 331)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit31\n",
+      "source_bytes": 294,
+      "olean_bytes": 4248
+    },
+    {
+      "status": "ok",
+      "seconds": 1.0438636610051617,
+      "returncode": 0,
+      "load_before": [
+        27.71630859375,
+        31.05322265625,
+        53.61083984375
+      ],
+      "load_after": [
+        27.71630859375,
+        31.05322265625,
+        53.61083984375
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.CactusReplay (507ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.CactusReplay:olean"
+      ],
+      "block": 0,
+      "case": "family-61",
+      "system": "hex",
+      "arm": "baseline",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock 1945555039024054273 [(5, 55, Hex.Nat.PrimeCert.small 2)]\n",
+      "source_bytes": 210,
+      "olean_bytes": 3768
+    },
+    {
+      "status": "ok",
+      "seconds": 1.8067592319566756,
+      "returncode": 0,
+      "load_before": [
+        27.71630859375,
+        31.05322265625,
+        53.61083984375
+      ],
+      "load_after": [
+        26.29736328125,
+        30.70361328125,
+        53.37646484375
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.CactusReplay (1.3s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.CactusReplay:olean"
+      ],
+      "block": 0,
+      "case": "family-61",
+      "system": "hex",
+      "arm": "replay",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock 1945555039024054273 [(5, 55, Hex.Nat.PrimeCert.small 2)]\ntheorem result : Hex.Nat.Prime 1945555039024054273 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n",
+      "source_bytes": 335,
+      "olean_bytes": 5376
+    },
+    {
+      "status": "ok",
+      "seconds": 1.428897256962955,
+      "returncode": 0,
+      "load_before": [
+        26.29736328125,
+        30.70361328125,
+        53.37646484375
+      ],
+      "load_after": [
+        26.29736328125,
+        30.70361328125,
+        53.37646484375
+      ],
+      "stdout": "\u2714 [1962/1962] Built PrimeCert.Comparator.Cactus (659ms)\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 0,
+      "case": "family-61",
+      "system": "primecert",
+      "arm": "baseline",
+      "source": "module\npublic import PrimeCert\n",
+      "source_bytes": 31,
+      "olean_bytes": 1448
+    },
+    {
+      "status": "ok",
+      "seconds": 1.525274362997152,
+      "returncode": 0,
+      "load_before": [
+        26.29736328125,
+        30.70361328125,
+        53.37646484375
+      ],
+      "load_after": [
+        26.29736328125,
+        30.70361328125,
+        53.37646484375
+      ],
+      "stdout": "\u2139 [1962/1962] Built PrimeCert.Comparator.Cactus (717ms)\ninfo: PrimeCert/Comparator/Cactus.lean:13:0: 'PrimeCert.Comparator.Bit61.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 0,
+      "case": "family-61",
+      "system": "primecert",
+      "arm": "replay",
+      "source": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit61\n\ntheorem result : Nat.Prime 1945555039024054273 := prime_cert%\n  [small {2; 3},\n   pock (1945555039024054273, 5, 2 ^ 56 * 3 ^ 3)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit61\n",
+      "source_bytes": 270,
+      "olean_bytes": 4248
+    },
+    {
+      "status": "ok",
+      "seconds": 1.0366047169663943,
+      "returncode": 0,
+      "load_before": [
+        26.29736328125,
+        30.70361328125,
+        53.37646484375
+      ],
+      "load_after": [
+        26.29736328125,
+        30.70361328125,
+        53.37646484375
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.CactusReplay (524ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.CactusReplay:olean"
+      ],
+      "block": 0,
+      "case": "family-123",
+      "system": "hex",
+      "arm": "baseline",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock 9304595970494411110326649421962412033 [(3, 119, Hex.Nat.PrimeCert.small 2)]\n",
+      "source_bytes": 229,
+      "olean_bytes": 3768
+    },
+    {
+      "status": "ok",
+      "seconds": 1.8770505849970505,
+      "returncode": 0,
+      "load_before": [
+        26.29736328125,
+        30.70361328125,
+        53.37646484375
+      ],
+      "load_after": [
+        26.033203125,
+        30.57568359375,
+        53.212890625
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.CactusReplay (1.3s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.CactusReplay:olean"
+      ],
+      "block": 0,
+      "case": "family-123",
+      "system": "hex",
+      "arm": "replay",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock 9304595970494411110326649421962412033 [(3, 119, Hex.Nat.PrimeCert.small 2)]\ntheorem result : Hex.Nat.Prime 9304595970494411110326649421962412033 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n",
+      "source_bytes": 372,
+      "olean_bytes": 5416
+    },
+    {
+      "status": "ok",
+      "seconds": 1.545229515992105,
+      "returncode": 0,
+      "load_before": [
+        26.033203125,
+        30.57568359375,
+        53.212890625
+      ],
+      "load_after": [
+        26.033203125,
+        30.57568359375,
+        53.212890625
+      ],
+      "stdout": "\u2714 [1962/1962] Built PrimeCert.Comparator.Cactus (700ms)\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 0,
+      "case": "family-123",
+      "system": "primecert",
+      "arm": "baseline",
+      "source": "module\npublic import PrimeCert\n",
+      "source_bytes": 31,
+      "olean_bytes": 1448
+    },
+    {
+      "status": "ok",
+      "seconds": 1.5443710300023668,
+      "returncode": 0,
+      "load_before": [
+        26.033203125,
+        30.57568359375,
+        53.212890625
+      ],
+      "load_after": [
+        26.033203125,
+        30.57568359375,
+        53.212890625
+      ],
+      "stdout": "\u2139 [1962/1962] Built PrimeCert.Comparator.Cactus (743ms)\ninfo: PrimeCert/Comparator/Cactus.lean:13:0: 'PrimeCert.Comparator.Bit123.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 0,
+      "case": "family-123",
+      "system": "primecert",
+      "arm": "replay",
+      "source": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit123\n\ntheorem result : Nat.Prime 9304595970494411110326649421962412033 := prime_cert%\n  [small {2; 7},\n   pock (9304595970494411110326649421962412033, 3, 2 ^ 120 * 7)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit123\n",
+      "source_bytes": 305,
+      "olean_bytes": 4288
+    },
+    {
+      "status": "ok",
+      "seconds": 1.096391983970534,
+      "returncode": 0,
+      "load_before": [
+        26.033203125,
+        30.57568359375,
+        53.212890625
+      ],
+      "load_after": [
+        24.7490234375,
+        30.23388671875,
+        52.98046875
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.CactusReplay (541ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.CactusReplay:olean"
+      ],
+      "block": 0,
+      "case": "family-256",
+      "system": "hex",
+      "arm": "baseline",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  93628759656736142393278101159368737990730026663232799828780155818898507169793\n  [(5, 247, Hex.Nat.PrimeCert.small 2)]\n",
+      "source_bytes": 273,
+      "olean_bytes": 3768
+    },
+    {
+      "status": "ok",
+      "seconds": 2.0900987019995227,
+      "returncode": 0,
+      "load_before": [
+        24.7490234375,
+        30.23388671875,
+        52.98046875
+      ],
+      "load_after": [
+        24.7490234375,
+        30.23388671875,
+        52.98046875
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.CactusReplay (1.5s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.CactusReplay:olean"
+      ],
+      "block": 0,
+      "case": "family-256",
+      "system": "hex",
+      "arm": "replay",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  93628759656736142393278101159368737990730026663232799828780155818898507169793\n  [(5, 247, Hex.Nat.PrimeCert.small 2)]\ntheorem result : Hex.Nat.Prime 93628759656736142393278101159368737990730026663232799828780155818898507169793 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n",
+      "source_bytes": 456,
+      "olean_bytes": 5432
+    },
+    {
+      "status": "ok",
+      "seconds": 1.5206029280088842,
+      "returncode": 0,
+      "load_before": [
+        24.7490234375,
+        30.23388671875,
+        52.98046875
+      ],
+      "load_after": [
+        24.7490234375,
+        30.23388671875,
+        52.98046875
+      ],
+      "stdout": "\u2714 [1962/1962] Built PrimeCert.Comparator.Cactus (716ms)\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 0,
+      "case": "family-256",
+      "system": "primecert",
+      "arm": "baseline",
+      "source": "module\npublic import PrimeCert\n",
+      "source_bytes": 31,
+      "olean_bytes": 1448
+    },
+    {
+      "status": "ok",
+      "seconds": 1.5609575639828108,
+      "returncode": 0,
+      "load_before": [
+        24.7490234375,
+        30.23388671875,
+        52.98046875
+      ],
+      "load_after": [
+        23.40771484375,
+        29.86474609375,
+        52.73876953125
+      ],
+      "stdout": "\u2139 [1962/1962] Built PrimeCert.Comparator.Cactus (729ms)\ninfo: PrimeCert/Comparator/Cactus.lean:17:0: 'PrimeCert.Comparator.Bit256.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 0,
+      "case": "family-256",
+      "system": "primecert",
+      "arm": "replay",
+      "source": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit256\n\ntheorem result : Nat.Prime\n    93628759656736142393278101159368737990730026663232799828780155818898507169793 :=\n  prime_cert%\n    [small {2; 3; 23},\n     pock\n       (93628759656736142393278101159368737990730026663232799828780155818898507169793,\n        5, 2 ^ 248 * 3 ^ 2 * 23)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit256\n",
+      "source_bytes": 423,
+      "olean_bytes": 4304
+    },
+    {
+      "status": "ok",
+      "seconds": 1.0388086239690892,
+      "returncode": 0,
+      "load_before": [
+        23.40771484375,
+        29.86474609375,
+        52.73876953125
+      ],
+      "load_after": [
+        23.40771484375,
+        29.86474609375,
+        52.73876953125
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.CactusReplay (520ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.CactusReplay:olean"
+      ],
+      "block": 0,
+      "case": "family-511",
+      "system": "hex",
+      "arm": "baseline",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033\n  [(3, 503, Hex.Nat.PrimeCert.small 2)]\n",
+      "source_bytes": 350,
+      "olean_bytes": 3768
+    },
+    {
+      "status": "ok",
+      "seconds": 2.1614359639934264,
+      "returncode": 0,
+      "load_before": [
+        23.40771484375,
+        29.86474609375,
+        52.73876953125
+      ],
+      "load_after": [
+        23.40771484375,
+        29.86474609375,
+        52.73876953125
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.CactusReplay (1.7s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.CactusReplay:olean"
+      ],
+      "block": 0,
+      "case": "family-511",
+      "system": "hex",
+      "arm": "replay",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033\n  [(3, 503, Hex.Nat.PrimeCert.small 2)]\ntheorem result : Hex.Nat.Prime 6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n",
+      "source_bytes": 610,
+      "olean_bytes": 5464
+    },
+    {
+      "status": "ok",
+      "seconds": 2.516665261995513,
+      "returncode": 0,
+      "load_before": [
+        23.40771484375,
+        29.86474609375,
+        52.73876953125
+      ],
+      "load_after": [
+        22.173828125,
+        29.50146484375,
+        52.498046875
+      ],
+      "stdout": "\u2714 [1962/1962] Built PrimeCert.Comparator.Cactus (1.7s)\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 0,
+      "case": "family-511",
+      "system": "primecert",
+      "arm": "baseline",
+      "source": "module\npublic import PrimeCert\n",
+      "source_bytes": 31,
+      "olean_bytes": 1448
+    },
+    {
+      "status": "ok",
+      "seconds": 2.8675629930221476,
+      "returncode": 0,
+      "load_before": [
+        22.173828125,
+        29.50146484375,
+        52.498046875
+      ],
+      "load_after": [
+        22.173828125,
+        29.50146484375,
+        52.498046875
+      ],
+      "stdout": "\u26a0 [1962/1962] Built PrimeCert.Comparator.Cactus (1.4s)\nwarning: PrimeCert/Comparator/Cactus.lean:10:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/Cactus.lean:14:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\ninfo: PrimeCert/Comparator/Cactus.lean:17:0: 'PrimeCert.Comparator.Bit511.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 0,
+      "case": "family-511",
+      "system": "primecert",
+      "arm": "replay",
+      "source": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit511\n\ntheorem result : Nat.Prime\n    6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033 :=\n  prime_cert%\n    [small {2; 127},\n     pock\n       (6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033,\n        3, 2 ^ 504 * 127)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit511\n",
+      "source_bytes": 568,
+      "olean_bytes": 5464
+    },
+    {
+      "status": "ok",
+      "seconds": 1.7877341360435821,
+      "returncode": 0,
+      "load_before": [
+        22.173828125,
+        29.50146484375,
+        52.498046875
+      ],
+      "load_after": [
+        21.03857421875,
+        29.14404296875,
+        52.2587890625
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.CactusReplay (999ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.CactusReplay:olean"
+      ],
+      "block": 0,
+      "case": "family-512",
+      "system": "hex",
+      "arm": "baseline",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177\n  [(2, 21, Hex.Nat.PrimeCert.pock 100297 [(2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 199)])]\n",
+      "source_bytes": 426,
+      "olean_bytes": 3768
+    },
+    {
+      "status": "ok",
+      "seconds": 3.431456441991031,
+      "returncode": 0,
+      "load_before": [
+        21.03857421875,
+        29.14404296875,
+        52.2587890625
+      ],
+      "load_after": [
+        21.03857421875,
+        29.14404296875,
+        52.2587890625
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.CactusReplay (2.7s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.CactusReplay:olean"
+      ],
+      "block": 0,
+      "case": "family-512",
+      "system": "hex",
+      "arm": "replay",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177\n  [(2, 21, Hex.Nat.PrimeCert.pock 100297 [(2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 199)])]\ntheorem result : Hex.Nat.Prime 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n",
+      "source_bytes": 686,
+      "olean_bytes": 5464
+    },
+    {
+      "status": "ok",
+      "seconds": 2.5997204919694923,
+      "returncode": 0,
+      "load_before": [
+        21.03857421875,
+        29.14404296875,
+        52.2587890625
+      ],
+      "load_after": [
+        19.994140625,
+        28.79296875,
+        52.02099609375
+      ],
+      "stdout": "\u2714 [1962/1962] Built PrimeCert.Comparator.Cactus (1.4s)\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 0,
+      "case": "family-512",
+      "system": "primecert",
+      "arm": "baseline",
+      "source": "module\npublic import PrimeCert\n",
+      "source_bytes": 31,
+      "olean_bytes": 1448
+    },
+    {
+      "status": "ok",
+      "seconds": 2.735302993969526,
+      "returncode": 0,
+      "load_before": [
+        19.994140625,
+        28.79296875,
+        52.02099609375
+      ],
+      "load_after": [
+        19.994140625,
+        28.79296875,
+        52.02099609375
+      ],
+      "stdout": "\u26a0 [1962/1962] Built PrimeCert.Comparator.Cactus (1.4s)\nwarning: PrimeCert/Comparator/Cactus.lean:10:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/Cactus.lean:15:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\ninfo: PrimeCert/Comparator/Cactus.lean:18:0: 'PrimeCert.Comparator.Bit512.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 0,
+      "case": "family-512",
+      "system": "primecert",
+      "arm": "replay",
+      "source": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit512\n\ntheorem result : Nat.Prime\n    9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177 :=\n  prime_cert%\n    [small {2; 3; 7; 199},\n     pock (100297, 13, 2 ^ 3 * 3 ^ 2 * 7 * 199),\n     pock\n       (9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,\n        3, 2 ^ 146 * 100297 ^ 22)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit512\n",
+      "source_bytes": 631,
+      "olean_bytes": 5464
+    },
+    {
+      "status": "ok",
+      "seconds": 1.678720058989711,
+      "returncode": 0,
+      "load_before": [
+        19.994140625,
+        28.79296875,
+        52.02099609375
+      ],
+      "load_after": [
+        19.033203125,
+        28.44775390625,
+        51.7841796875
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.CactusReplay (845ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.CactusReplay:olean"
+      ],
+      "block": 0,
+      "case": "Curve25519",
+      "system": "hex",
+      "arm": "baseline",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock3\n      74058212732561358302231226437062788676166966415465897661863160754340907\n      2028478494862525422475607\n      22304740449229861598212\n      2028478494862525422475606\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\n       (2, 0, Hex.Nat.PrimeCert.small 353),\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\n       (2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          31757755568855353\n          4028945\n          289\n          4028944\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 223),\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\n",
+      "source_bytes": 858,
+      "olean_bytes": 3768
+    },
+    {
+      "status": "ok",
+      "seconds": 8.373383458005264,
+      "returncode": 0,
+      "load_before": [
+        19.033203125,
+        28.44775390625,
+        51.7841796875
+      ],
+      "load_after": [
+        18.4697265625,
+        28.17431640625,
+        51.5703125
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.CactusReplay (7.7s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.CactusReplay:olean"
+      ],
+      "block": 0,
+      "case": "Curve25519",
+      "system": "hex",
+      "arm": "replay",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock3\n      74058212732561358302231226437062788676166966415465897661863160754340907\n      2028478494862525422475607\n      22304740449229861598212\n      2028478494862525422475606\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\n       (2, 0, Hex.Nat.PrimeCert.small 353),\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\n       (2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          31757755568855353\n          4028945\n          289\n          4028944\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 223),\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\ntheorem result : Hex.Nat.Prime 57896044618658097711785492504343953926634992332820282019728792003956564819949 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n",
+      "source_bytes": 1041,
+      "olean_bytes": 5432
+    },
+    {
+      "status": "ok",
+      "seconds": 1.5143454300123267,
+      "returncode": 0,
+      "load_before": [
+        18.4697265625,
+        28.17431640625,
+        51.5703125
+      ],
+      "load_after": [
+        17.87109375,
+        27.88916015625,
+        51.35205078125
+      ],
+      "stdout": "\u2714 [1962/1962] Built PrimeCert.Comparator.Cactus (722ms)\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 0,
+      "case": "Curve25519",
+      "system": "primecert",
+      "arm": "baseline",
+      "source": "module\npublic import PrimeCert\n",
+      "source_bytes": 31,
+      "olean_bytes": 1448
+    },
+    {
+      "status": "ok",
+      "seconds": 1.6242812830023468,
+      "returncode": 0,
+      "load_before": [
+        17.87109375,
+        27.88916015625,
+        51.35205078125
+      ],
+      "load_after": [
+        17.87109375,
+        27.88916015625,
+        51.35205078125
+      ],
+      "stdout": "\u26a0 [1962/1962] Built PrimeCert.Comparator.Cactus (709ms)\nwarning: PrimeCert/Comparator/Cactus.lean:11:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/Cactus.lean:12:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 0,
+      "case": "Curve25519",
+      "system": "primecert",
+      "arm": "replay",
+      "source": "module\npublic import PrimeCert\npublic section\nset_option maxRecDepth 2048\nset_option exponentiation.threshold 512\ntheorem result : Nat.Prime (2 ^ 255 - 19) := prime_cert%\n  [small {3; 5; 7; 43},\n   pock3 (1923133, 2, 5, 2 ^ 2 * 3 * 43),\n   pock3 (430751, 17, 7, 2 * 5 ^ 3),\n   pock3 (31757755568855353, 5, 5, 2 ^ 3 * 430751),\n   pock3 (74058212732561358302231226437062788676166966415465897661863160754340907, 2, 5, 2 * 3 * 1923133 * 31757755568855353),\n   pock3 (57896044618658097711785492504343953926634992332820282019728792003956564819949, 2, 0, 2 ^ 2 * 74058212732561358302231226437062788676166966415465897661863160754340907)]\n",
+      "source_bytes": 630,
+      "olean_bytes": 7168
+    },
+    {
+      "block": 0,
+      "case": "Curve448",
+      "system": "hex",
+      "status": "no-certificate"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.4276795550249517,
+      "returncode": 0,
+      "load_before": [
+        17.87109375,
+        27.88916015625,
+        51.35205078125
+      ],
+      "load_after": [
+        17.87109375,
+        27.88916015625,
+        51.35205078125
+      ],
+      "stdout": "\u2714 [1962/1962] Built PrimeCert.Comparator.Cactus (628ms)\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 0,
+      "case": "Curve448",
+      "system": "primecert",
+      "arm": "baseline",
+      "source": "module\npublic import PrimeCert\n",
+      "source_bytes": 31,
+      "olean_bytes": 1448
+    },
+    {
+      "status": "ok",
+      "seconds": 1.5024197440361604,
+      "returncode": 0,
+      "load_before": [
+        17.87109375,
+        27.88916015625,
+        51.35205078125
+      ],
+      "load_after": [
+        17.08056640625,
+        27.55859375,
+        51.119140625
+      ],
+      "stdout": "\u26a0 [1962/1962] Built PrimeCert.Comparator.Cactus (703ms)\nwarning: PrimeCert/Comparator/Cactus.lean:12:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 0,
+      "case": "Curve448",
+      "system": "primecert",
+      "arm": "replay",
+      "source": "module\npublic import PrimeCert\npublic section\nset_option maxRecDepth 2048\nset_option exponentiation.threshold 512\ntheorem result : Nat.Prime (2 ^ 448 - 2 ^ 224 - 1) := prime_cert%\n  [small {3; 5; 7; 29; 67; 271; 641},\n   pock3 (411743, 5, 3, 2 * 29),\n   pock3 (1469495262398780123809, 17, 5, 2 ^ 5 * 411743),\n   pock3 (97859369123353, 5, 7, 2 ^ 3 * 67 * 271),\n   pock3 (167773885276849215533569, 17, 0, 2 ^ 9 * 97859369123353),\n   pock3 (726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439, 7, 3, 2 * 641 * 1469495262398780123809 * 167773885276849215533569)]\n",
+      "source_bytes": 643,
+      "olean_bytes": 7208
+    },
+    {
+      "status": "ok",
+      "seconds": 1.4026214639889076,
+      "returncode": 0,
+      "load_before": [
+        17.08056640625,
+        27.55859375,
+        51.119140625
+      ],
+      "load_after": [
+        17.08056640625,
+        27.55859375,
+        51.119140625
+      ],
+      "stdout": "\u2139 [1962/1962] Built PrimeCert.Comparator.Cactus (652ms)\ninfo: PrimeCert/Comparator/Cactus.lean:13:0: 'PrimeCert.Comparator.Bit31.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 1,
+      "case": "family-31",
+      "system": "primecert",
+      "arm": "replay",
+      "source": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit31\n\ntheorem result : Nat.Prime 2147483647 := prime_cert%\n  [small {2; 3; 7; 11; 31; 151; 331},\n   pock (2147483647, 7, 2 * 3 ^ 2 * 7 * 11 * 31 * 151 * 331)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit31\n",
+      "source_bytes": 294,
+      "olean_bytes": 4248
+    },
+    {
+      "status": "ok",
+      "seconds": 1.4067912769969553,
+      "returncode": 0,
+      "load_before": [
+        17.08056640625,
+        27.55859375,
+        51.119140625
+      ],
+      "load_after": [
+        17.08056640625,
+        27.55859375,
+        51.119140625
+      ],
+      "stdout": "\u2714 [1962/1962] Built PrimeCert.Comparator.Cactus (622ms)\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 1,
+      "case": "family-31",
+      "system": "primecert",
+      "arm": "baseline",
+      "source": "module\npublic import PrimeCert\n",
+      "source_bytes": 31,
+      "olean_bytes": 1448
+    },
+    {
+      "status": "ok",
+      "seconds": 1.7202202149783261,
+      "returncode": 0,
+      "load_before": [
+        17.08056640625,
+        27.55859375,
+        51.119140625
+      ],
+      "load_after": [
+        16.35302734375,
+        27.23388671875,
+        50.88720703125
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.CactusReplay (1.2s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.CactusReplay:olean"
+      ],
+      "block": 1,
+      "case": "family-31",
+      "system": "hex",
+      "arm": "replay",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock 2147483647 [(3, 0, Hex.Nat.PrimeCert.small 151), (3, 0, Hex.Nat.PrimeCert.small 331)]\ntheorem result : Hex.Nat.Prime 2147483647 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n",
+      "source_bytes": 355,
+      "olean_bytes": 5376
+    },
+    {
+      "status": "ok",
+      "seconds": 0.909332687035203,
+      "returncode": 0,
+      "load_before": [
+        16.35302734375,
+        27.23388671875,
+        50.88720703125
+      ],
+      "load_after": [
+        16.35302734375,
+        27.23388671875,
+        50.88720703125
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.CactusReplay (474ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.CactusReplay:olean"
+      ],
+      "block": 1,
+      "case": "family-31",
+      "system": "hex",
+      "arm": "baseline",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock 2147483647 [(3, 0, Hex.Nat.PrimeCert.small 151), (3, 0, Hex.Nat.PrimeCert.small 331)]\n",
+      "source_bytes": 239,
+      "olean_bytes": 3768
+    },
+    {
+      "status": "ok",
+      "seconds": 1.4023050980176777,
+      "returncode": 0,
+      "load_before": [
+        16.35302734375,
+        27.23388671875,
+        50.88720703125
+      ],
+      "load_after": [
+        16.35302734375,
+        27.23388671875,
+        50.88720703125
+      ],
+      "stdout": "\u2139 [1962/1962] Built PrimeCert.Comparator.Cactus (650ms)\ninfo: PrimeCert/Comparator/Cactus.lean:13:0: 'PrimeCert.Comparator.Bit61.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 1,
+      "case": "family-61",
+      "system": "primecert",
+      "arm": "replay",
+      "source": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit61\n\ntheorem result : Nat.Prime 1945555039024054273 := prime_cert%\n  [small {2; 3},\n   pock (1945555039024054273, 5, 2 ^ 56 * 3 ^ 3)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit61\n",
+      "source_bytes": 270,
+      "olean_bytes": 4248
+    },
+    {
+      "status": "ok",
+      "seconds": 1.4078772499924526,
+      "returncode": 0,
+      "load_before": [
+        16.35302734375,
+        27.23388671875,
+        50.88720703125
+      ],
+      "load_after": [
+        16.35302734375,
+        27.23388671875,
+        50.88720703125
+      ],
+      "stdout": "\u2714 [1962/1962] Built PrimeCert.Comparator.Cactus (637ms)\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 1,
+      "case": "family-61",
+      "system": "primecert",
+      "arm": "baseline",
+      "source": "module\npublic import PrimeCert\n",
+      "source_bytes": 31,
+      "olean_bytes": 1448
+    },
+    {
+      "status": "ok",
+      "seconds": 1.7171964830486104,
+      "returncode": 0,
+      "load_before": [
+        16.35302734375,
+        27.23388671875,
+        50.88720703125
+      ],
+      "load_after": [
+        15.68408203125,
+        26.91455078125,
+        50.65673828125
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.CactusReplay (1.2s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.CactusReplay:olean"
+      ],
+      "block": 1,
+      "case": "family-61",
+      "system": "hex",
+      "arm": "replay",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock 1945555039024054273 [(5, 55, Hex.Nat.PrimeCert.small 2)]\ntheorem result : Hex.Nat.Prime 1945555039024054273 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n",
+      "source_bytes": 335,
+      "olean_bytes": 5376
+    },
+    {
+      "status": "ok",
+      "seconds": 0.9250937000033446,
+      "returncode": 0,
+      "load_before": [
+        15.68408203125,
+        26.91455078125,
+        50.65673828125
+      ],
+      "load_after": [
+        15.68408203125,
+        26.91455078125,
+        50.65673828125
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.CactusReplay (478ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.CactusReplay:olean"
+      ],
+      "block": 1,
+      "case": "family-61",
+      "system": "hex",
+      "arm": "baseline",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock 1945555039024054273 [(5, 55, Hex.Nat.PrimeCert.small 2)]\n",
+      "source_bytes": 210,
+      "olean_bytes": 3768
+    },
+    {
+      "status": "ok",
+      "seconds": 1.422726521966979,
+      "returncode": 0,
+      "load_before": [
+        15.68408203125,
+        26.91455078125,
+        50.65673828125
+      ],
+      "load_after": [
+        15.68408203125,
+        26.91455078125,
+        50.65673828125
+      ],
+      "stdout": "\u2139 [1962/1962] Built PrimeCert.Comparator.Cactus (669ms)\ninfo: PrimeCert/Comparator/Cactus.lean:13:0: 'PrimeCert.Comparator.Bit123.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 1,
+      "case": "family-123",
+      "system": "primecert",
+      "arm": "replay",
+      "source": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit123\n\ntheorem result : Nat.Prime 9304595970494411110326649421962412033 := prime_cert%\n  [small {2; 7},\n   pock (9304595970494411110326649421962412033, 3, 2 ^ 120 * 7)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit123\n",
+      "source_bytes": 305,
+      "olean_bytes": 4288
+    },
+    {
+      "status": "ok",
+      "seconds": 1.4097140489611775,
+      "returncode": 0,
+      "load_before": [
+        15.68408203125,
+        26.91455078125,
+        50.65673828125
+      ],
+      "load_after": [
+        15.68408203125,
+        26.91455078125,
+        50.65673828125
+      ],
+      "stdout": "\u2714 [1962/1962] Built PrimeCert.Comparator.Cactus (637ms)\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 1,
+      "case": "family-123",
+      "system": "primecert",
+      "arm": "baseline",
+      "source": "module\npublic import PrimeCert\n",
+      "source_bytes": 31,
+      "olean_bytes": 1448
+    },
+    {
+      "status": "ok",
+      "seconds": 1.7208659160532989,
+      "returncode": 0,
+      "load_before": [
+        15.68408203125,
+        26.91455078125,
+        50.65673828125
+      ],
+      "load_after": [
+        15.62890625,
+        26.71630859375,
+        50.46484375
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.CactusReplay (1.2s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.CactusReplay:olean"
+      ],
+      "block": 1,
+      "case": "family-123",
+      "system": "hex",
+      "arm": "replay",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock 9304595970494411110326649421962412033 [(3, 119, Hex.Nat.PrimeCert.small 2)]\ntheorem result : Hex.Nat.Prime 9304595970494411110326649421962412033 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n",
+      "source_bytes": 372,
+      "olean_bytes": 5416
+    },
+    {
+      "status": "ok",
+      "seconds": 0.9105882499716245,
+      "returncode": 0,
+      "load_before": [
+        15.62890625,
+        26.71630859375,
+        50.46484375
+      ],
+      "load_after": [
+        15.62890625,
+        26.71630859375,
+        50.46484375
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.CactusReplay (475ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.CactusReplay:olean"
+      ],
+      "block": 1,
+      "case": "family-123",
+      "system": "hex",
+      "arm": "baseline",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock 9304595970494411110326649421962412033 [(3, 119, Hex.Nat.PrimeCert.small 2)]\n",
+      "source_bytes": 229,
+      "olean_bytes": 3768
+    },
+    {
+      "status": "ok",
+      "seconds": 1.5155136810499243,
+      "returncode": 0,
+      "load_before": [
+        15.62890625,
+        26.71630859375,
+        50.46484375
+      ],
+      "load_after": [
+        15.62890625,
+        26.71630859375,
+        50.46484375
+      ],
+      "stdout": "\u2139 [1962/1962] Built PrimeCert.Comparator.Cactus (698ms)\ninfo: PrimeCert/Comparator/Cactus.lean:17:0: 'PrimeCert.Comparator.Bit256.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 1,
+      "case": "family-256",
+      "system": "primecert",
+      "arm": "replay",
+      "source": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit256\n\ntheorem result : Nat.Prime\n    93628759656736142393278101159368737990730026663232799828780155818898507169793 :=\n  prime_cert%\n    [small {2; 3; 23},\n     pock\n       (93628759656736142393278101159368737990730026663232799828780155818898507169793,\n        5, 2 ^ 248 * 3 ^ 2 * 23)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit256\n",
+      "source_bytes": 423,
+      "olean_bytes": 4304
+    },
+    {
+      "status": "ok",
+      "seconds": 1.4139364949660376,
+      "returncode": 0,
+      "load_before": [
+        15.62890625,
+        26.71630859375,
+        50.46484375
+      ],
+      "load_after": [
+        15.62890625,
+        26.71630859375,
+        50.46484375
+      ],
+      "stdout": "\u2714 [1962/1962] Built PrimeCert.Comparator.Cactus (624ms)\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 1,
+      "case": "family-256",
+      "system": "primecert",
+      "arm": "baseline",
+      "source": "module\npublic import PrimeCert\n",
+      "source_bytes": 31,
+      "olean_bytes": 1448
+    },
+    {
+      "status": "ok",
+      "seconds": 1.8125195449683815,
+      "returncode": 0,
+      "load_before": [
+        15.62890625,
+        26.71630859375,
+        50.46484375
+      ],
+      "load_after": [
+        15.017578125,
+        26.4052734375,
+        50.236328125
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.CactusReplay (1.3s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.CactusReplay:olean"
+      ],
+      "block": 1,
+      "case": "family-256",
+      "system": "hex",
+      "arm": "replay",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  93628759656736142393278101159368737990730026663232799828780155818898507169793\n  [(5, 247, Hex.Nat.PrimeCert.small 2)]\ntheorem result : Hex.Nat.Prime 93628759656736142393278101159368737990730026663232799828780155818898507169793 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n",
+      "source_bytes": 456,
+      "olean_bytes": 5432
+    },
+    {
+      "status": "ok",
+      "seconds": 1.0216338150203228,
+      "returncode": 0,
+      "load_before": [
+        15.017578125,
+        26.4052734375,
+        50.236328125
+      ],
+      "load_after": [
+        15.017578125,
+        26.4052734375,
+        50.236328125
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.CactusReplay (532ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.CactusReplay:olean"
+      ],
+      "block": 1,
+      "case": "family-256",
+      "system": "hex",
+      "arm": "baseline",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  93628759656736142393278101159368737990730026663232799828780155818898507169793\n  [(5, 247, Hex.Nat.PrimeCert.small 2)]\n",
+      "source_bytes": 273,
+      "olean_bytes": 3768
+    },
+    {
+      "status": "ok",
+      "seconds": 1.5242013109964319,
+      "returncode": 0,
+      "load_before": [
+        15.017578125,
+        26.4052734375,
+        50.236328125
+      ],
+      "load_after": [
+        15.017578125,
+        26.4052734375,
+        50.236328125
+      ],
+      "stdout": "\u26a0 [1962/1962] Built PrimeCert.Comparator.Cactus (765ms)\nwarning: PrimeCert/Comparator/Cactus.lean:10:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/Cactus.lean:14:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\ninfo: PrimeCert/Comparator/Cactus.lean:17:0: 'PrimeCert.Comparator.Bit511.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 1,
+      "case": "family-511",
+      "system": "primecert",
+      "arm": "replay",
+      "source": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit511\n\ntheorem result : Nat.Prime\n    6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033 :=\n  prime_cert%\n    [small {2; 127},\n     pock\n       (6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033,\n        3, 2 ^ 504 * 127)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit511\n",
+      "source_bytes": 568,
+      "olean_bytes": 5464
+    },
+    {
+      "status": "ok",
+      "seconds": 1.424549268966075,
+      "returncode": 0,
+      "load_before": [
+        15.017578125,
+        26.4052734375,
+        50.236328125
+      ],
+      "load_after": [
+        15.4169921875,
+        26.298828125,
+        50.07373046875
+      ],
+      "stdout": "\u2714 [1962/1962] Built PrimeCert.Comparator.Cactus (623ms)\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 1,
+      "case": "family-511",
+      "system": "primecert",
+      "arm": "baseline",
+      "source": "module\npublic import PrimeCert\n",
+      "source_bytes": 31,
+      "olean_bytes": 1448
+    },
+    {
+      "status": "ok",
+      "seconds": 1.9449440129683353,
+      "returncode": 0,
+      "load_before": [
+        15.4169921875,
+        26.298828125,
+        50.07373046875
+      ],
+      "load_after": [
+        15.4169921875,
+        26.298828125,
+        50.07373046875
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.CactusReplay (1.5s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.CactusReplay:olean"
+      ],
+      "block": 1,
+      "case": "family-511",
+      "system": "hex",
+      "arm": "replay",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033\n  [(3, 503, Hex.Nat.PrimeCert.small 2)]\ntheorem result : Hex.Nat.Prime 6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n",
+      "source_bytes": 610,
+      "olean_bytes": 5464
+    },
+    {
+      "status": "ok",
+      "seconds": 1.1214851040276699,
+      "returncode": 0,
+      "load_before": [
+        15.4169921875,
+        26.298828125,
+        50.07373046875
+      ],
+      "load_after": [
+        15.4169921875,
+        26.298828125,
+        50.07373046875
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.CactusReplay (650ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.CactusReplay:olean"
+      ],
+      "block": 1,
+      "case": "family-511",
+      "system": "hex",
+      "arm": "baseline",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033\n  [(3, 503, Hex.Nat.PrimeCert.small 2)]\n",
+      "source_bytes": 350,
+      "olean_bytes": 3768
+    },
+    {
+      "status": "ok",
+      "seconds": 1.6892476369976066,
+      "returncode": 0,
+      "load_before": [
+        15.4169921875,
+        26.298828125,
+        50.07373046875
+      ],
+      "load_after": [
+        14.82275390625,
+        25.99462890625,
+        49.84765625
+      ],
+      "stdout": "\u26a0 [1962/1962] Built PrimeCert.Comparator.Cactus (832ms)\nwarning: PrimeCert/Comparator/Cactus.lean:10:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/Cactus.lean:15:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\ninfo: PrimeCert/Comparator/Cactus.lean:18:0: 'PrimeCert.Comparator.Bit512.result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 1,
+      "case": "family-512",
+      "system": "primecert",
+      "arm": "replay",
+      "source": "module\n\npublic import PrimeCert\n\npublic section\n\nnamespace PrimeCert.Comparator.Bit512\n\ntheorem result : Nat.Prime\n    9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177 :=\n  prime_cert%\n    [small {2; 3; 7; 199},\n     pock (100297, 13, 2 ^ 3 * 3 ^ 2 * 7 * 199),\n     pock\n       (9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177,\n        3, 2 ^ 146 * 100297 ^ 22)]\n\n#print axioms result\n\nend PrimeCert.Comparator.Bit512\n",
+      "source_bytes": 631,
+      "olean_bytes": 5464
+    },
+    {
+      "status": "ok",
+      "seconds": 1.7213495899923146,
+      "returncode": 0,
+      "load_before": [
+        14.82275390625,
+        25.99462890625,
+        49.84765625
+      ],
+      "load_after": [
+        14.82275390625,
+        25.99462890625,
+        49.84765625
+      ],
+      "stdout": "\u2714 [1962/1962] Built PrimeCert.Comparator.Cactus (771ms)\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 1,
+      "case": "family-512",
+      "system": "primecert",
+      "arm": "baseline",
+      "source": "module\npublic import PrimeCert\n",
+      "source_bytes": 31,
+      "olean_bytes": 1448
+    },
+    {
+      "status": "ok",
+      "seconds": 2.575278874952346,
+      "returncode": 0,
+      "load_before": [
+        14.82275390625,
+        25.99462890625,
+        49.84765625
+      ],
+      "load_after": [
+        14.82275390625,
+        25.99462890625,
+        49.84765625
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.CactusReplay (1.9s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.CactusReplay:olean"
+      ],
+      "block": 1,
+      "case": "family-512",
+      "system": "hex",
+      "arm": "replay",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177\n  [(2, 21, Hex.Nat.PrimeCert.pock 100297 [(2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 199)])]\ntheorem result : Hex.Nat.Prime 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n",
+      "source_bytes": 686,
+      "olean_bytes": 5464
+    },
+    {
+      "status": "ok",
+      "seconds": 1.3589535109931603,
+      "returncode": 0,
+      "load_before": [
+        14.82275390625,
+        25.99462890625,
+        49.84765625
+      ],
+      "load_after": [
+        14.2763671875,
+        25.69580078125,
+        49.62255859375
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.CactusReplay (738ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.CactusReplay:olean"
+      ],
+      "block": 1,
+      "case": "family-512",
+      "system": "hex",
+      "arm": "baseline",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177\n  [(2, 21, Hex.Nat.PrimeCert.pock 100297 [(2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 199)])]\n",
+      "source_bytes": 426,
+      "olean_bytes": 3768
+    },
+    {
+      "status": "ok",
+      "seconds": 5.095388708054088,
+      "returncode": 0,
+      "load_before": [
+        14.2763671875,
+        25.69580078125,
+        49.62255859375
+      ],
+      "load_after": [
+        13.93359375,
+        25.43505859375,
+        49.40966796875
+      ],
+      "stdout": "\u26a0 [1962/1962] Built PrimeCert.Comparator.Cactus (2.5s)\nwarning: PrimeCert/Comparator/Cactus.lean:11:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/Cactus.lean:12:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 1,
+      "case": "Curve25519",
+      "system": "primecert",
+      "arm": "replay",
+      "source": "module\npublic import PrimeCert\npublic section\nset_option maxRecDepth 2048\nset_option exponentiation.threshold 512\ntheorem result : Nat.Prime (2 ^ 255 - 19) := prime_cert%\n  [small {3; 5; 7; 43},\n   pock3 (1923133, 2, 5, 2 ^ 2 * 3 * 43),\n   pock3 (430751, 17, 7, 2 * 5 ^ 3),\n   pock3 (31757755568855353, 5, 5, 2 ^ 3 * 430751),\n   pock3 (74058212732561358302231226437062788676166966415465897661863160754340907, 2, 5, 2 * 3 * 1923133 * 31757755568855353),\n   pock3 (57896044618658097711785492504343953926634992332820282019728792003956564819949, 2, 0, 2 ^ 2 * 74058212732561358302231226437062788676166966415465897661863160754340907)]\n",
+      "source_bytes": 630,
+      "olean_bytes": 7168
+    },
+    {
+      "status": "ok",
+      "seconds": 1.619938527001068,
+      "returncode": 0,
+      "load_before": [
+        13.93359375,
+        25.43505859375,
+        49.40966796875
+      ],
+      "load_after": [
+        13.93359375,
+        25.43505859375,
+        49.40966796875
+      ],
+      "stdout": "\u2714 [1962/1962] Built PrimeCert.Comparator.Cactus (627ms)\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 1,
+      "case": "Curve25519",
+      "system": "primecert",
+      "arm": "baseline",
+      "source": "module\npublic import PrimeCert\n",
+      "source_bytes": 31,
+      "olean_bytes": 1448
+    },
+    {
+      "status": "ok",
+      "seconds": 5.703261956979986,
+      "returncode": 0,
+      "load_before": [
+        13.93359375,
+        25.43505859375,
+        49.40966796875
+      ],
+      "load_after": [
+        13.2978515625,
+        25.1123046875,
+        49.17626953125
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.CactusReplay (5.1s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.CactusReplay:olean"
+      ],
+      "block": 1,
+      "case": "Curve25519",
+      "system": "hex",
+      "arm": "replay",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock3\n      74058212732561358302231226437062788676166966415465897661863160754340907\n      2028478494862525422475607\n      22304740449229861598212\n      2028478494862525422475606\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\n       (2, 0, Hex.Nat.PrimeCert.small 353),\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\n       (2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          31757755568855353\n          4028945\n          289\n          4028944\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 223),\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\ntheorem result : Hex.Nat.Prime 57896044618658097711785492504343953926634992332820282019728792003956564819949 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n",
+      "source_bytes": 1041,
+      "olean_bytes": 5432
+    },
+    {
+      "status": "ok",
+      "seconds": 0.9069917310262099,
+      "returncode": 0,
+      "load_before": [
+        13.2978515625,
+        25.1123046875,
+        49.17626953125
+      ],
+      "load_after": [
+        13.2978515625,
+        25.1123046875,
+        49.17626953125
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.CactusReplay (467ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.CactusReplay:olean"
+      ],
+      "block": 1,
+      "case": "Curve25519",
+      "system": "hex",
+      "arm": "baseline",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock3\n      74058212732561358302231226437062788676166966415465897661863160754340907\n      2028478494862525422475607\n      22304740449229861598212\n      2028478494862525422475606\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\n       (2, 0, Hex.Nat.PrimeCert.small 353),\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\n       (2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          31757755568855353\n          4028945\n          289\n          4028944\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 223),\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\n",
+      "source_bytes": 858,
+      "olean_bytes": 3768
+    },
+    {
+      "status": "ok",
+      "seconds": 1.510918983956799,
+      "returncode": 0,
+      "load_before": [
+        13.2978515625,
+        25.1123046875,
+        49.17626953125
+      ],
+      "load_after": [
+        12.95361328125,
+        24.8447265625,
+        48.96044921875
+      ],
+      "stdout": "\u26a0 [1962/1962] Built PrimeCert.Comparator.Cactus (695ms)\nwarning: PrimeCert/Comparator/Cactus.lean:12:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 1,
+      "case": "Curve448",
+      "system": "primecert",
+      "arm": "replay",
+      "source": "module\npublic import PrimeCert\npublic section\nset_option maxRecDepth 2048\nset_option exponentiation.threshold 512\ntheorem result : Nat.Prime (2 ^ 448 - 2 ^ 224 - 1) := prime_cert%\n  [small {3; 5; 7; 29; 67; 271; 641},\n   pock3 (411743, 5, 3, 2 * 29),\n   pock3 (1469495262398780123809, 17, 5, 2 ^ 5 * 411743),\n   pock3 (97859369123353, 5, 7, 2 ^ 3 * 67 * 271),\n   pock3 (167773885276849215533569, 17, 0, 2 ^ 9 * 97859369123353),\n   pock3 (726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439, 7, 3, 2 * 641 * 1469495262398780123809 * 167773885276849215533569)]\n",
+      "source_bytes": 643,
+      "olean_bytes": 7208
+    },
+    {
+      "status": "ok",
+      "seconds": 1.4086492230417207,
+      "returncode": 0,
+      "load_before": [
+        12.95361328125,
+        24.8447265625,
+        48.96044921875
+      ],
+      "load_after": [
+        12.95361328125,
+        24.8447265625,
+        48.96044921875
+      ],
+      "stdout": "\u2714 [1962/1962] Built PrimeCert.Comparator.Cactus (618ms)\nBuild completed successfully (1962 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.Cactus:olean"
+      ],
+      "block": 1,
+      "case": "Curve448",
+      "system": "primecert",
+      "arm": "baseline",
+      "source": "module\npublic import PrimeCert\n",
+      "source_bytes": 31,
+      "olean_bytes": 1448
+    },
+    {
+      "block": 1,
+      "case": "Curve448",
+      "system": "hex",
+      "status": "no-certificate"
+    }
+  ],
+  "source_sha256": {
+    "HexPrimality/Cert.lean": "e2fb751d95ac2536fa501b803ad8acb1d59679ee0c22237f1c17c45e96f91b79",
+    "HexPrimality/Cert3.lean": "507ee7a51e9835d58676bbddd2fae134ea7a693132a485ef0a43d4d6ee685103",
+    "HexPrimality/Construction.lean": "b797d726144a6393fc7c46bec913d9d08049ab8445cd9438c818ce4079c8a59b",
+    "HexPrimality/Elab.lean": "1493d3fe52e14a90abae5b83cc7d8eb6ec3de8beed1d234fdc3c16dc363cd090",
+    "HexPrimality/MillerRabin.lean": "c66d3cb56240013088f4b23b061cffa35be205db83b0a0f8a8f14be6efc92a63",
+    "HexPrimality/Order.lean": "0aaea51783853284c1aae8bb301d3ecdb33308c1cfc5630d765cf398e7661654",
+    "HexPrimality/PMinusOne.lean": "7279683d91cd8c777456ecfcbcedb2aff78c207410277f304924aefa97747d79",
+    "HexPrimality/Search.lean": "5dfd721234a2f4e5ec8b165d4327f0c14cd5647ef0383473ce420027761ebd87",
+    "HexPrimality/Sieve.lean": "b90317eda625ac9dc7333505e1756a76a041d4acd34555d4131ec49d0bac1489",
+    "HexPrimality/SieveElab.lean": "ba7f16e6dcaafc6fec19ae795d00ac3dc94e54c31db9a65d2e82e67e20892bd4",
+    "HexPrimality/Table.lean": "420e4a89291b34717aebe1a3cd393e9857ae0309b816e5ba3b2e1b5d7b6bbe27"
+  }
+}

@@ -34,8 +34,10 @@ private def factorPairs (entries : List PrimePower) : List (Nat × Nat) :=
 partial-factor callback. Complete results use residual one; incomplete results
 retain the last checker-accepted snapshot. A rejected internal candidate
 degrades to the checker's trivial saved snapshot; only zero lacks a snapshot
-and returns the honest empty candidate with residual zero. -/
+and returns the honest empty candidate with residual zero. An optional total
+attempt limit is not supported by this adapter: it declines without work. -/
 def intFactorSearch : FactorSearch := fun allocation n r =>
+  if allocation.attemptLimit.isSome then ⟨⟨[], n⟩, r, 0⟩ else
   match Internal.factorCountedWith? allocation.primeBudget
       allocation.primeFuel n r allocation.factorFuel with
   | .ok success =>
@@ -57,7 +59,7 @@ namespace HexIntFactor.PrimalityTactic
 /-- The HexIntFactor search extension, discovered by name from
 `Hex.PrimalityTactic.searchExtensionNames`. -/
 public meta def extension : Hex.PrimalityTactic.SearchExtension where
-  version := Hex.PrimalityTactic.searchExtensionVersion
+  version := 2
   factorName := ``Hex.Nat.intFactorSearch
 
 end HexIntFactor.PrimalityTactic

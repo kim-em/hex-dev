@@ -114,8 +114,18 @@ example : ¬ Nat.Prime 134078079299425970995740249982058461274793658205923933777
 #guard_msgs in
 example : Nat.Prime (2 ^ 5 - 1) := by primality?
 
+/-- info: Try this:
+  [apply] exact Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.small 31) (by decide +kernel)
+-/
+#guard_msgs in
+example : Hex.Nat.Prime (2 ^ 5 - 1) := by primality?
+
 namespace SuggestionContext
 open Hex.Nat
 example : Nat.Prime (2 ^ 5 - 1) := by
   exact Hex.Nat.natPrime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.small 31) (by decide +kernel)
 end SuggestionContext
+
+
+#guard_msgs (drop info) in
+example : Nat.Prime (2 ^ 255 - 19) := by primality?

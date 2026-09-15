@@ -615,6 +615,8 @@ structure FactorSearchBudget where
   smoothBounds : List Nat := []
   /-- Deterministic Pollard p-minus-one bases for certificate construction. -/
   smoothBases : List Nat := []
+  /-- Optional total attempt limit; unsupported producers must decline. -/
+  attemptLimit : Option Nat := none
 deriving Repr, DecidableEq
 
 /-- A bounded, resumable, untrusted partial-factor producer. -/

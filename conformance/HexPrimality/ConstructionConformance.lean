@@ -96,7 +96,7 @@ private def malformed : FactorSearch := fun _ n r =>
   [(5, 2, .small 2), (2, 0, .small 223), (2, 0, .small 4153)])
 
 /--
-error: primality?: certificate construction for 13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084096 exhausted after 0 attempts (seed 13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084096; maximum 512 bits, recursive depth 32, factor fuel 1024, p-minus-one bounds [64, 512, 4096, 32768, 262144, 524288] at bases [2, 3], 2 rho restarts with 32768 steps, ECM bounds [] and 0 curves, witness bases [2, 3, 5, 7, 11, 13, 17] then 32 random candidates, at most 12 factors and 4096 subsets)
+error: primality?: input has 513 bits; construction limit is 512 bits
 -/
 #guard_msgs in
 example : Hex.Nat.Prime 13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084096 := by primality?
@@ -143,3 +143,38 @@ example : _root_.Hex.Nat.Prime 7 := by primality?
 example : _root_.Hex.Nat.Prime 7 := by
   exact _root_.Hex.Nat.prime_of_checkPrimeAt (c := _root_.Hex.Nat.PrimeCert.small 7) (by decide +kernel)
 end Shadow
+
+
+#guard (match Construction.run curveInput (Hex.Rand.ofSeed curveInput)
+    { constructionBudget with maxAttempts := 1 } with
+  | .error f => f.stop == .exhausted && f.attempts == 1 &&
+      f.rand == Hex.Rand.ofSeed curveInput
+  | _ => false)
+
+#guard (match Construction.run curveInput (Hex.Rand.ofSeed curveInput)
+    { constructionBudget with maxAttempts := 29 } with
+  | .ok s => s.attempts == 29 && reprStr s.cert.raw == reprStr expected
+  | _ => false)
+
+#guard (match Construction.run curveInput (Hex.Rand.ofSeed curveInput)
+    { constructionBudget with maxAttempts := 28 } with
+  | .error f => f.stop == .exhausted && f.attempts == 28
+  | _ => false)
+
+#guard (match Construction.run 100003 (Hex.Rand.ofSeed 100003)
+    { constructionBudget with maxSubsets := 1 } with
+  | .ok s => checkPrime s.cert.raw
+  | _ => false)
+
+/--
+error: primality?: certificate construction for 57896044618658097711785492504343953926634992332820282019728792003956564819949 exhausted after 1 attempts (seed 57896044618658097711785492504343953926634992332820282019728792003956564819949; maximum 512 bits, recursive depth 32, total attempts 1, factor fuel 1024, p-minus-one bounds [64, 512, 4096, 32768, 262144, 524288] at bases [2, 3], 2 rho restarts with 32768 steps, ECM bounds [] and 0 curves, witness bases [2, 3, 5, 7, 11, 13, 17] then 32 random candidates, at most 12 factors and 4096 subsets)
+-/
+#guard_msgs in
+example : Hex.Nat.Prime (2 ^ 255 - 19) := by primality? (maxAttempts := 1)
+
+
+#guard (match Construction.run 2147483647 (Hex.Rand.ofSeed 2147483647)
+    { constructionBudget with maxAttempts := 1, witnessBases := [] } with
+  | .error f => f.stop == .exhausted && f.attempts == 1 &&
+      f.rand == (Hex.Rand.ofSeed 2147483647).next.2
+  | _ => false)

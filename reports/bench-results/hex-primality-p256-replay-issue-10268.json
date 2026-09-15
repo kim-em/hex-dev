@@ -1,0 +1,9 @@
+{
+  "case": "P-256",
+  "source": "module\npublic import HexPrimality.Cert\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock3\n  115792089210356248762697446949407573530086143415290314195533631308867097853951\n  128721914928032094605845043\n  4905315401961533613775432\n  128721914928032094605845042\n  [(3, 0, Hex.Nat.PrimeCert.small 2),\n   (2, 0, Hex.Nat.PrimeCert.small 257),\n   (2, 0, Hex.Nat.PrimeCert.small 641),\n   (2, 0, Hex.Nat.PrimeCert.small 1531),\n   (2, 0, Hex.Nat.PrimeCert.small 65537),\n   (2, 0, Hex.Nat.PrimeCert.pock 490463 [(2, 0, Hex.Nat.PrimeCert.small 53), (2, 0, Hex.Nat.PrimeCert.small 661)]),\n   (2, 0, Hex.Nat.PrimeCert.pock 6700417 [(3, 0, Hex.Nat.PrimeCert.small 17449)])]\ntheorem result : Hex.Nat.Prime 115792089210356248762697446949407573530086143415290314195533631308867097853951 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n#print axioms result\n",
+  "returncode": 0,
+  "stdout": "\u2139 [70/70] Built HexPrimality.ProofProbe.Curve25519.Industrial (32s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Industrial.lean:18:0: 'result' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (70 jobs).\n",
+  "stderr": "",
+  "seconds": 34.61368465499254,
+  "purpose": "checker-only standalone proof validation; not a comparative timing sample"
+}

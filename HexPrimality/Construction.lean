@@ -17,6 +17,7 @@ Mathlib-free core route (zero curves and no ECM bounds). -/
 structure ConstructionBudget where
   maxBits : Nat := 512
   maxDepth : Nat := 32
+  maxAttempts : Nat := 1024
   factor : FactorSearchBudget := {
     primeBudget := ⟨2, 32768⟩
     primeFuel := 32
@@ -49,38 +50,41 @@ private def trial (n : Nat) : PartialFactors := Id.run do
       m := rest
   return ⟨factors, m⟩
 
-private def splitSmooth (allocation : FactorSearchBudget) (n : Nat) (r : Hex.Rand) :
+private def splitSmooth (allocation : FactorSearchBudget) (n limit : Nat) (r : Hex.Rand) :
     Option Nat × Nat := Id.run do
   let mut attempts := 0
   for bound in allocation.smoothBounds do
     for base in allocation.smoothBases do
+      if attempts ≥ limit then return (none, attempts)
       let result := pMinusOneStage1Counted n base bound r
       attempts := attempts + result.attempts
       if let .factor d := result.result then
         return (some d, attempts)
   return (none, attempts)
 
-private def factorGo (allocation : FactorSearchBudget) :
+private def factorGo (allocation : FactorSearchBudget) (limit : Nat) :
     Nat → List Nat → List (Nat × Nat) → Nat → Hex.Rand → Nat → FactorSearchResult
   | 0, stack, acc, residual, r, attempts =>
       ⟨⟨acc, stack.foldl (· * ·) residual⟩, r, attempts⟩
   | _ + 1, [], acc, residual, r, attempts => ⟨⟨acc, residual⟩, r, attempts⟩
   | fuel + 1, m :: stack, acc, residual, r, attempts =>
-      if m ≤ 1 then factorGo allocation fuel stack acc residual r attempts
+      if attempts ≥ limit then ⟨⟨acc, (m :: stack).foldl (· * ·) residual⟩, r, attempts⟩
+      else if m ≤ 1 then factorGo allocation limit fuel stack acc residual r attempts
       else if isProbablePrime m then
-        factorGo allocation fuel stack (insert m 1 acc) residual r attempts
+        factorGo allocation limit fuel stack (insert m 1 acc) residual r attempts
       else
-        let (d, work) := splitSmooth allocation m r
+        let (d, work) := splitSmooth allocation m (limit - attempts) r
         match d with
-        | some d => factorGo allocation fuel (d :: m / d :: stack) acc residual r
+        | some d => factorGo allocation limit fuel (d :: m / d :: stack) acc residual r
             (attempts + work)
         | none =>
-            match Internal.rhoFactorCountedWith? m r allocation.primeBudget.rhoRestarts
+            match Internal.rhoFactorCountedWith? m r
+                (min allocation.primeBudget.rhoRestarts (limit - attempts - work))
                 allocation.primeBudget.rhoSteps with
             | .ok success =>
-                factorGo allocation fuel (success.factor :: m / success.factor :: stack)
+                factorGo allocation limit fuel (success.factor :: m / success.factor :: stack)
                   acc residual success.rand (attempts + work + success.attempts)
-            | .error f => factorGo allocation fuel stack acc (residual * m) f.rand
+            | .error f => factorGo allocation limit fuel stack acc (residual * m) f.rand
                 (attempts + work + f.attempts)
 
 /-- Table division followed by the explicitly budgeted smooth/rho worklist.
@@ -88,7 +92,10 @@ Every unresolved component is retained in the residual. -/
 def factorSearch : FactorSearch := fun allocation n r =>
   if n = 0 then ⟨⟨[], 0⟩, r, 0⟩ else
     let initial := trial n
-    factorGo allocation allocation.factorFuel [initial.residual] initial.factors 1 r 0
+    let limit := allocation.attemptLimit.getD
+      (allocation.factorFuel * (allocation.smoothBounds.length *
+        allocation.smoothBases.length + allocation.primeBudget.rhoRestarts))
+    factorGo allocation limit allocation.factorFuel [initial.residual] initial.factors 1 r 0
 
 private def product (n : Nat) (factors : List (Nat × Nat)) : Option Nat := do
   let mut acc := 1
@@ -131,7 +138,10 @@ private def subsets (budget : ConstructionBudget) (n : Nat)
   if (product n factors).isNone then return []
   let costs := factors.map fun (q, _) => childCost q
   let mut choices : List (Nat × List (Nat × Nat)) := []
-  for mask in [:min budget.maxSubsets (2 ^ factors.length)] do
+  let count := 2 ^ factors.length
+  for i in [:min budget.maxSubsets count] do
+    let mask := if count ≤ budget.maxSubsets then i
+      else if i == 0 then count - 1 else i - 1
     let selected := factors.zipIdx |>.filterMap fun (entry, i) =>
       if mask.testBit i then some entry else none
     if let some F := product n selected then
@@ -145,9 +155,11 @@ private def witness (budget : ConstructionBudget) (n q : Nat) (r : Hex.Rand) :
     Except PrimeCertFailure (Nat × Nat × Hex.Rand) := Id.run do
   let mut attempts := 0
   for a in budget.witnessBases do
+    if attempts ≥ budget.maxAttempts then return .error ⟨.exhausted, attempts, r⟩
     attempts := attempts + 1
     if checkWitness n q a then return .ok (a, attempts, r)
-  match Internal.witnessSearchTrace n q r budget.randomWitnesses with
+  match Internal.witnessSearchTrace n q r
+      (min budget.randomWitnesses (budget.maxAttempts - attempts)) with
   | .ok (a, work, r') => return .ok (a, attempts + work, r')
   | .error f => return .error { f with attempts := attempts + f.attempts }
 
@@ -167,9 +179,12 @@ private def generate (budget : ConstructionBudget) (factor : FactorSearch)
   else match fuel with
   | 0 => .error ⟨.exhausted, 0, r⟩
   | fuel + 1 =>
-      let allocation := { budget.factor with primeFuel := fuel }
+      let allocation := { budget.factor with
+        primeFuel := fuel
+        attemptLimit := some budget.maxAttempts }
       let result := factor allocation (n - 1) r
-      if result.raw.factors.length > budget.maxFactors then
+      if result.attempts > budget.maxAttempts ||
+          result.raw.factors.length > budget.maxFactors then
         .error ⟨.exhausted, result.attempts, result.rand⟩
       else match product n result.raw.factors with
       | none => .error ⟨.exhausted, result.attempts, result.rand⟩
@@ -178,37 +193,49 @@ private def generate (budget : ConstructionBudget) (factor : FactorSearch)
               F * result.raw.residual != n - 1 then
             .error ⟨.exhausted, result.attempts, result.rand⟩
           else choose budget factor fuel n (subsets budget n result.raw.factors)
-            result.attempts result.rand
+            [] result.attempts result.rand
 termination_by (fuel, 0, 0)
 
 private def choose (budget : ConstructionBudget) (factor : FactorSearch)
-    (fuel n : Nat) : List (List (Nat × Nat)) → Nat → Hex.Rand →
+    (fuel n : Nat) : List (List (Nat × Nat)) → List PrimeCert → Nat → Hex.Rand →
       Except PrimeCertFailure (PrimeCert × Nat × Hex.Rand)
-  | [], work, r => .error ⟨.exhausted, work, r⟩
-  | selected :: rest, work, r =>
-      match assemble budget factor fuel n selected [] work r with
-      | .error f => choose budget factor fuel n rest f.attempts f.rand
+  | [], _, work, r => .error ⟨.exhausted, work, r⟩
+  | selected :: rest, cache, work, r =>
+      if work ≥ budget.maxAttempts then .error ⟨.exhausted, work, r⟩ else
+      let (result, cache) := assemble budget factor fuel n selected [] cache work r
+      match result with
+      | .error f => choose budget factor fuel n rest cache f.attempts f.rand
       | .ok (entries, work, r) =>
           match certProduct (n - 1) entries with
-          | none => choose budget factor fuel n rest work r
+          | none => choose budget factor fuel n rest cache work r
           | some F =>
               let cert := node n F entries
               if checkPrime cert then .ok (cert, work, r)
-              else choose budget factor fuel n rest work r
+              else choose budget factor fuel n rest cache work r
 termination_by choices => (fuel, choices.length + 1, 0)
 
 private def assemble (budget : ConstructionBudget) (factor : FactorSearch)
-    (fuel n : Nat) : List (Nat × Nat) → List (Nat × Nat × PrimeCert) → Nat →
-      Hex.Rand → Except PrimeCertFailure (List (Nat × Nat × PrimeCert) × Nat × Hex.Rand)
-  | [], acc, work, r => .ok (acc.reverse, work, r)
-  | (q, e) :: rest, acc, work, r =>
-      match generate budget factor fuel q r with
-      | .error f => .error ⟨.exhausted, work + f.attempts, f.rand⟩
+    (fuel n : Nat) : List (Nat × Nat) → List (Nat × Nat × PrimeCert) →
+      List PrimeCert → Nat → Hex.Rand →
+      (Except PrimeCertFailure (List (Nat × Nat × PrimeCert) × Nat × Hex.Rand)) ×
+        List PrimeCert
+  | [], acc, cache, work, r => (.ok (acc.reverse, work, r), cache)
+  | (q, e) :: rest, acc, cache, work, r =>
+      if work ≥ budget.maxAttempts then (.error ⟨.exhausted, work, r⟩, cache) else
+      let child : Except PrimeCertFailure (PrimeCert × Nat × Hex.Rand) :=
+        match cache.find? (fun c => c.subject == q) with
+        | some c => .ok (c, 0, r)
+        | none => generate { budget with maxAttempts := budget.maxAttempts - work }
+            factor fuel q r
+      match child with
+      | .error f => (.error ⟨.exhausted, work + f.attempts, f.rand⟩, cache)
       | .ok (child, childWork, r) =>
-          match witness budget n q r with
-          | .error f => .error ⟨.exhausted, work + childWork + f.attempts, f.rand⟩
+          let cache := if cache.any (fun c => c.subject == q) then cache else child :: cache
+          match witness { budget with maxAttempts := budget.maxAttempts - work - childWork }
+              n q r with
+          | .error f => (.error ⟨.exhausted, work + childWork + f.attempts, f.rand⟩, cache)
           | .ok (a, witnessWork, r) =>
-              assemble budget factor fuel n rest ((a, e - 1, child) :: acc)
+              assemble budget factor fuel n rest ((a, e - 1, child) :: acc) cache
                 (work + childWork + witnessWork) r
 termination_by entries => (fuel, 0, entries.length + 1)
 

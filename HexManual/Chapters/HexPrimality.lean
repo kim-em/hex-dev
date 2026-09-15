@@ -113,6 +113,81 @@ example : Hex.Nat.Prime 561 := primality 561
 primality: 561 is not prime (Miller-Rabin witness 2)
 ```
 
+# Reusable certificates with `primality?`
+%%%
+tag := "hex-primality-construction"
+%%%
+
+The explicitly requested construction tactic `primality?` uses a larger,
+finite search profile. It proves the Curve25519 field prime and offers a
+clickable `Try this:` replacement containing the complete checked certificate.
+This example checks the entire suggestion text, so changes to the generated
+certificate or its formatting are detected:
+
+```lean
+/--
+info: Try this:
+  [apply] exact
+    Hex.Nat.prime_of_checkPrimeAt (c :=
+      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949
+        [(2, 0,
+            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907
+              2028478494862525422475607 22304740449229861598212 2028478494862525422475606
+              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),
+                (2, 0, Hex.Nat.PrimeCert.small 57467),
+                (2, 0,
+                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944
+                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),
+                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])
+      (by decide +kernel)
+-/
+#guard_msgs in
+example : Hex.Nat.Prime (2 ^ 255 - 19) := by
+  primality?
+
+```
+
+Apply the suggestion to keep certificate search out of subsequent builds. The
+replacement uses {name}`Hex.Nat.prime_of_checkPrimeAt` and `decide +kernel`;
+the kernel still replays the certificate. A standalone file containing the
+replacement needs only `import HexPrimality.Cert`. The goal retains the
+expression `2 ^ 255 - 19`. With `HexPrimalityMathlib` imported, `primality?`
+also handles `Nat.Prime` and suggests the corresponding bridge theorem.
+
+Construction supports inputs through 512 bits, recursive depth 32, and a
+shared limit of 1024 attempts. `primality? (maxAttempts := 29)` sets a smaller
+limit; Curve25519 succeeds at 29 and exhausts at 28. It uses
+stage-one Pollard `p - 1` up to 524288, bounded rho work, and deterministic
+small witnesses before random candidates. Every limit is finite; exhaustion
+reports the seed, attempts, and resource profile. Success depends on finding
+enough factors of predecessors for Pocklington, rather than on bit length
+alone. The ordinary `primality` policy keeps its existing smaller budget.
+
+The Curve25519 result has three non-leaf certificate nodes and eight factor
+entries. Shared-host measurements found construction in approximately
+0.7–2.2 seconds, while fresh complete `primality?` builds took approximately
+11–28 seconds, including Lake overhead and kernel replay. These are
+host-specific observations, not latency guarantees. The phase-separated
+[measurement report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-construction.md)
+records every sample, certificate sizes, and the comparison with the larger
+reference certificate.
+
+The fixed comparison corpus also includes standard cryptographic field
+primes. The current construction profile finds P-256 and the structured
+511/512-bit benchmark primes. It exhausts on secp256k1, P-384, and Curve448;
+P-521 exceeds its input ceiling. This is not a general-purpose prover for
+arbitrary cryptographic-size primes.
+
+The following cactus plots sort each implementation's successful cases by
+time. FLINT and PARI return native primality decisions; the kernel comparison
+uses supplied PrimeCert certificates and Hex's generated literals. Missing
+certificates count as unsolved. The corpus is small and structured, and the
+report gives exact inputs, toolchains, all samples, and timing boundaries.
+
+![Native primality comparison](https://kim-em.github.io/hex-dev/figures/hex-primality-native-cactus.svg)
+
+![Kernel certificate replay comparison](https://kim-em.github.io/hex-dev/figures/hex-primality-kernel-cactus.svg)
+
 # The Mathlib correspondence
 %%%
 tag := "hex-primality-mathlib"
@@ -205,8 +280,19 @@ verification is regenerated, never hand-edited, via the
 
 {docstring Hex.Nat.isTablePrime}
 
-Arbitrary initial segments come from trial division, with no upper
-bound tied to the table:
+The verified compiled sieve also provides a list of every prime strictly
+below a requested bound, including the exceptional primes 2 and 3. Its
+membership and strict ordering theorems are independent of the committed
+table. Pollard `p - 1` and ECM use this runtime source for their stage primes:
+
+{docstring Hex.Nat.primesBelow}
+
+{docstring Hex.Nat.mem_primesBelow}
+
+{docstring Hex.Nat.primesBelow_pairwise_lt}
+
+The interval API still uses trial division, with no upper bound tied to the
+table:
 
 ```lean (name := segmentEval)
 #eval Hex.Nat.primesIn 0 100

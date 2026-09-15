@@ -343,12 +343,16 @@ meta def certificateSyntax (cert : Hex.Nat.PrimeCert) : MetaM Term :=
 
 /-- The complete finite construction resource description used in diagnostics. -/
 meta def constructionDescription (b : Hex.Nat.ConstructionBudget) : String :=
-  s!"maximum {b.maxBits} bits, recursive depth {b.maxDepth}, factor fuel \
+  s!"maximum {b.maxBits} bits, recursive depth {b.maxDepth}, total attempts {b.maxAttempts}, factor fuel \
     {b.factor.factorFuel}, p-minus-one bounds {b.factor.smoothBounds} at bases \
     {b.factor.smoothBases}, {b.factor.primeBudget.rhoRestarts} rho restarts with \
     {b.factor.primeBudget.rhoSteps} steps, ECM bounds [] and 0 curves, witness \
     bases {b.witnessBases} then {b.randomWitnesses} random candidates, \
     at most {b.maxFactors} factors and {b.maxSubsets} subsets"
+
+/-- Construct a reusable certificate with an optional total attempt limit. -/
+syntax (name := primalitySuggestTac) "primality?"
+  (" (" &"maxAttempts" " := " num ")")? : tactic
 
 set_option hygiene false in
 /-- Shared goal handler for core and companion `primality?` registrations. -/
@@ -360,12 +364,23 @@ meta def suggestPrime (predicate head : Name) (stx : Syntax) : Tactic.TacticM Un
       Elab.throwUnsupportedSyntax
     let nE := tgt.appArg!
     checkClosed "primality?" nE
-    let some n ← (evalNat nE).run
+    let n? ← (evalNat nE).run
+    -- Imported arithmetic instances may hide the operations from `evalNat`.
+    -- Normalize only that fallback; keep the original expression in the proof.
+    let n? ← match n? with
+      | some n => pure (some n)
+      | none => (evalNat (← whnf nE)).run
+    let some n := n?
       | throwError "primality?: the goal{indentExpr tgt}\n\
           is not about a natural-number numeral"
     unless ← isDefEq nE (mkNatLit n) do
       throwError "primality?: the input must be definitionally transparent"
-    let budget := Hex.Nat.constructionBudget
+    let budget := match stx with
+      | `(tactic| primality? (maxAttempts := $limit:num)) =>
+          { Hex.Nat.constructionBudget with maxAttempts := limit.getNat }
+      | _ => Hex.Nat.constructionBudget
+    if n.log2 + 1 > budget.maxBits then
+      throwError "primality?: input has {n.log2 + 1} bits; construction limit is {budget.maxBits} bits"
     match Hex.Nat.Construction.run n (Hex.Rand.ofSeed n) budget with
     | .error f =>
         if f.stop == .composite then
@@ -386,9 +401,6 @@ meta def suggestPrime (predicate head : Name) (stx : Syntax) : Tactic.TacticM Un
         withOptions (fun _ =>
             Lean.Std.Format.format.width.set (pp.fullNames.set {} true) 100) do
           Meta.Tactic.TryThis.addSuggestion stx replacement
-
-/-- Construct a reusable, kernel-replayed primality certificate explicitly. -/
-syntax (name := primalitySuggestTac) "primality?" : tactic
 
 /-- Core certificate-literal suggestion handler. -/
 @[tactic primalitySuggestTac] meta def evalPrimalitySuggest : Tactic.Tactic :=

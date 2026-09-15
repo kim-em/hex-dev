@@ -26,6 +26,8 @@ theorem result : Hex.Nat.Prime (2 ^ 255 - 19) :=
                   Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944
                     [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),
                       (2, 0, Hex.Nat.PrimeCert.small 4153)])])]) (by decide +kernel)
+/-- info: 'Hex.PrimalityCurveProbe.result' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms result
 
 end Hex.PrimalityCurveProbe
