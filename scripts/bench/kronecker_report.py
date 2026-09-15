@@ -3,6 +3,7 @@
 import argparse
 import gzip
 import json
+import re
 from pathlib import Path
 
 
@@ -10,16 +11,31 @@ def ms(n):
     return f"{n / 1e6:.3f}"
 
 
+def read_json(path):
+    raw = path.read_bytes()
+    return json.loads(gzip.decompress(raw) if path.suffix == '.gz' else raw)
+
+
+def kernel_ms(output):
+    values = re.findall(r"(?m)^\ttype checking ([0-9.eE+-]+)(ms|s|μs|µs|ns)\s*$", output)
+    if not values:
+        raise ValueError('missing aggregate kernel type-checking time')
+    value, unit = values[-1]
+    return float(value) * {'ms': 1, 's': 1000, 'μs': .001, 'µs': .001, 'ns': .000001}[unit]
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('input', type=Path)
     parser.add_argument('output', type=Path)
+    parser.add_argument('--kernel-profiles', type=Path, required=True)
     args = parser.parse_args()
-    raw = args.input.read_bytes()
-    data = json.loads(gzip.decompress(raw) if args.input.suffix == '.gz' else raw)
+    data = read_json(args.input)
+    profile_data = read_json(args.kernel_profiles)
     if not data['measurement_complete'] or not data['sources_unchanged'] or data['subset']:
         raise SystemExit('a complete sweep with unchanged measured sources is required')
-    if len(data['profiles']) != 3 or any(p['result']['state'] != 'complete' for p in data['profiles']):
+    if not profile_data['sources_unchanged'] or len(profile_data['profiles']) != 3 or any(
+            p['result']['state'] != 'complete' for p in profile_data['profiles']):
         raise SystemExit('all three required profiles must complete')
     link = 'data/hex-kronecker-mathlib/' + args.input.name
     rows = list(data['summary'].values())
@@ -131,12 +147,19 @@ modules. They exclude reflection and proof production. The decline-family
 profile evaluates only preflight: it intentionally performs no packed
 certificate check. Raw profiler output is retained in the record.
 
-| Family | Representative | Fresh module wall ms | Axioms |
-| --- | --- | ---: | --- |
+| Family | Representative | Kernel type checking ms | Fresh module wall ms | Axioms |
+| --- | --- | ---: | ---: | --- |
 '''
-    for p in data['profiles']:
-        family = next(s['family'] for s in rows if s['stem']==p['stem'])
-        text += f"| {family} | {p['stem']} | {ms(p['result']['wall_nanos'])} | {', '.join(p['result']['axioms'] or []) or 'no theorem'} |\n"
+    for p in profile_data['profiles']:
+        result = p['result']
+        text += f"| {p['family']} | {p['stem']} | {kernel_ms(result['compiler_output']):.3f} | {ms(result['wall_nanos'])} | {', '.join(result['axioms'])} |\n"
+    text += ('\n[Kernel profiles and their source hashes](data/hex-kronecker-mathlib/'
+             + args.kernel_profiles.name + ') record the dedicated fresh profile runs. '
+             'The kernel column is Lean’s aggregate type-checking timer. The separate '
+             'fresh-module wall time includes imports and compilation. The decline '
+             'profile proves the preflight result using `decide +kernel`; it performs '
+             'no packed evaluation. Earlier compiled-guard diagnostics remain in the '
+             'historical sweep records and are not used as kernel profiles.\n')
     text += '''
 The Mathlib-free [computational report](hex-kronecker-performance.md) supplies
 complexity evidence in the packed bit size, operation profiles and the full
