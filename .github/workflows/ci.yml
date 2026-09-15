@@ -145,6 +145,7 @@ jobs:
           python3 -m unittest scripts/ci/test_check_persistent_flint_warmup.py
           python3 -m unittest scripts/bench/test_fresh_module_sweep.py
           python3 -m unittest scripts/bench/test_structural_tactic_probes.py
+          python3 -m unittest scripts/bench/test_det_ring_solver_probes.py
           python3 -m unittest scripts/bench/test_rationalfn_flint.py
           python3 -m unittest scripts/bench/test_real_roots_mathlib_sweep.py
           python3 -m unittest scripts/bench/test_bz_mathlib_sweep.py
@@ -349,7 +350,10 @@ jobs:
       # mappings can be counted in several processes.
       - name: Build hex libraries + bench exes
         if: steps.classify.outputs.docs_only != 'true'
-        run: lake build ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS} HexTruncatedSeriesTests
+        run: >-
+          lake build ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS} HexTruncatedSeriesTests
+          HexPolyDetMathlib.ProofProbe.RingSolverAlgebraic
+          HexPolyDetMathlib.ProofProbe.RingSolverVariableExponent
       - name: Verify Conway generation and compiled certificates
         if: steps.classify.outputs.docs_only != 'true'
         run: |
