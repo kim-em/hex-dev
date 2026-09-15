@@ -232,15 +232,17 @@ cost, including reflection, emitted literals, and synchronous kernel checking.
     text += ("Every completed sweep is retained. Historical `candidate_faster` fields "
              "in the older raw records describe paired-margin medians; the verdict "
              "above is recomputed from per-arm medians. Source archives preserve "
-             "the measured closure, including experimental states.\n\n")
-    text += "| Record | Commit | Completed arm pairs | Source archive |\n| --- | --- | ---: | --- |\n"
+             "the measured closure, including experimental states. The checkout commit "
+             "is the base revision; recorded working-tree changes are identified by the "
+             "full source hashes and preserved in those archives.\n\n")
+    text += "| Record | Checkout commit | Dirty checkout | Completed arm pairs | Source archive |\n| --- | --- | --- | ---: | --- |\n"
     for path in sorted(args.input.parent.glob('sweep*.json.gz')):
         record = read_json(path)
         suffix = path.name.removeprefix('sweep').removesuffix('.json.gz').lstrip('-') or 'baseline'
         archive = path.with_name('source-' + suffix + '.tar.gz')
         source = f'[sources](data/hex-kronecker-mathlib/{archive.name})' if archive.exists() else 'See recorded hashes'
         text += (f"| [{path.name}](data/hex-kronecker-mathlib/{path.name}) | "
-                 f"`{record['environment']['git_commit']}` | {len(record['samples'])} | {source} |\n")
+                 f"`{record['environment']['git_commit']}` | {record['environment']['git_dirty']} | {len(record['samples'])} | {source} |\n")
     args.output.write_text(text)
 
 
