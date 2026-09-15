@@ -47,6 +47,7 @@ BUILD_ONLY_LIBS = {
     "HexIntervalExperiment",
     "HexGenericRankTests",
     "HexGenericRankMathlibProofProbe",
+    "HexDeterminantalIdealMathlibProofProbe",
     "HexRankTests",
     "HexRankMathlibProofProbe",
     "HexCharPolyMathlibProofProbe",
