@@ -53,6 +53,6 @@ From a clean checkout of the measured source, with the pinned dependencies:
 ```bash
 lake build HexDeterminantalIdealMathlibProofProbe
 python3 scripts/bench/rank_locus_sweep.py --shared-host \
-+  --cpu "$(python3 scripts/bench/idle_core.py)" \
-+  --output /tmp/rank-locus-probes.json
+  --cpu "$(python3 scripts/bench/idle_core.py)" \
+  --output /tmp/rank-locus-probes.json
 ```
