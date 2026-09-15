@@ -4,10 +4,12 @@
 
 The complete sweep contains 23 accepted identities and 7
 preflight declines. 16/23 accepted cases have a smaller per-arm
-baseline-subtracted median than both `ring` and `grobner`. The SPEC’s numerical
-runtime condition is
-**not passed**. The absolute candidate ceilings are
-**passed**. No default tactic chain changes.
+baseline-subtracted median than both `ring` and `grobner`. The comparison across
+all accepted cases is **not passed**.
+The absolute candidate ceilings are **passed**.
+The [opt-in shipping condition](../HexKroneckerMathlib/SPEC/hex-kronecker-mathlib.md#fresh-module-comparisons-and-shipping-bar)
+requires the complete family table and passing absolute ceilings. Its status
+is **passed**. No default tactic chain changes.
 
 20/46 paired comparisons have a median-margin magnitude no
 larger than their median absolute deviation and are **unresolved at this
@@ -19,6 +21,9 @@ of variation are reported separately; no sample is discarded or replaced.
 The measured checkout is `dfc5a2266fda50de82dec94cf07cb6b98a98b07a`, using
 `leanprover/lean4:v4.34.0`. The record includes the pinned dependency
 revisions and SHA-256 hashes of the complete measured source closure.
+The Kronecker implementation, proof probes, and sweep runner match those
+measured sources. The current Lake registration also includes unrelated
+primality targets; the measured Lake file is preserved in the source archive.
 
 [Raw samples, source hashes, artifacts, and profiles](data/hex-kronecker-mathlib/sweep-shipping.json.gz) retain every
 completed sample. Six adjacent three-arm blocks use Ring/Kronecker/Grobner
@@ -42,8 +47,9 @@ per accepted determinant case, and a 180-second cleanup timeout. Ceilings
 apply to raw candidate wall time, including imports. The table reports
 baseline-subtracted per-arm medians in milliseconds. Ratios are Kronecker
 divided by the reference median and are shown only when both are positive.
-The runtime verdict compares these per-arm medians, as required by the SPEC;
-paired-margin signs remain supplementary evidence.
+The numerical comparison uses these per-arm medians; paired-margin signs
+remain supplementary evidence. Losing cases stay in the table and do not
+prevent explicitly opt-in shipping under the SPEC's shared exception.
 
 ## reflected-identities and determinant-identities
 
@@ -72,6 +78,12 @@ paired-margin signs remain supplementary evidence.
 | DetN3K3D2 | 343 | 4116 | 90.542 | 183.618 | 192.447 | 0.493 | 0.470 | pass |
 | DetN4K2D2 | 81 | 1296 | 106.877 | 387.077 | 307.353 | 0.276 | 0.348 | pass |
 | DetN5K3D1 | 216 | 4968 | 279.116 | 9210.743 | 6701.527 | 0.030 | 0.042 | pass |
+
+## Measured regimes
+
+The determinant-shaped group wins 5/5 comparisons against both references. The accepted multivariate expansion grid with degree at least four wins 9/9. These are the measured winning regimes; the full table also shows individual wins outside them.
+
+The losing cases are `GridK1D2`, `GridK1D4`, `GridK1D8`, `GridK2D2`, `GridK3D2`, `GridK4D2`, `GridK6D2`. They lie in the small-grid regime, where fixed invocation work is a large fraction of tactic cost. The resolution table below distinguishes the numerical ordering from shared-host variation. No dispatch threshold or default-chain entry is inferred from small unresolved differences.
 
 The grid has atom counts `1, 2, 3, 4, 6, 8` and degrees `2, 4, 8, 16`.
 Accepted powers of sums are compared with independently expanded SymPy
