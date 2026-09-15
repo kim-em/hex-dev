@@ -103,12 +103,12 @@ python scripts/bench/primality_kernel_direct.py \
 
 ## Validation
 
-- `lake build`: all 14,389 jobs pass, including the manual and downstream libraries.
+- `lake build`: all 14,400 jobs pass, including the manual and downstream libraries.
 - Focused HexArith and HexPrimality conformance: window cutoffs at and around
   `2^512`, `2^1024`, and `2^4096`, reduced-base and exponent cutoffs at
   `2^64`, a 5001-bit exponent, modulus zero/one, Meta reduction, bounded-product overflow
   and zero cases, exact construction suggestions, and standalone literal replay.
 - Existing HexArith, HexPrimality, and HexIntFactor benchmark verification:
-  all pass within the wrapper's time budget (10 seconds on this host).
+  all pass within the wrapper's time budget (9 seconds on this host).
 - Existing HexPrimality oracle script: fresh emission matches committed fixtures;
   PARI/FLINT and the independent certificate checker accept all 64 cases.
