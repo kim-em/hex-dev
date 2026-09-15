@@ -17,7 +17,10 @@ stay in hex-bareiss, and the numeric `det` stays in hex-bareiss-mathlib.
 Dependencies: `HexPolyDet`, `HexBareissMathlib`, `HexReflect`,
 `HexReflectMathlib`, `HexMvPolyMathlib`, `HexMatrixMathlib`, plus Mathlib;
 not `correspondence_only`, since it implements a handler and owns proof
-probes.
+probes. Implementing the packed arm additionally depends on
+`HexKroneckerMathlib` for product-check soundness; register that downward
+dependency when the planned library is implemented. This SPEC-only amendment
+changes neither the library registry nor the released manifest.
 
 ## Input and dispatch
 
@@ -53,6 +56,53 @@ probes.
   `det%` term form for symbolic input, and enters the simp-set chain only
   for the size regime where the sweep below shows a win, if one exists.
 
+### Certificate routes
+
+The packed extension applies after the existing numeric and `n ≤ 3` guards.
+It leaves the closed-form route and its separate
+[small-determinant work](https://github.com/kim-em/hex-dev/issues/10264)
+unchanged. For larger symbolic inputs, retain the same reified matrix,
+canonical lists and `DetWitness` for either checker. After compiled witness
+production, run [the executable preflight](hex-poly-det.md#bounds-and-selection)
+on all witness products before emitting the certificate proof. Existing
+reflection/producer budgets are checked at their earlier boundaries; the
+witness-dependent packing bound cannot be known from matrix entries alone.
+
+| Condition | Route |
+|---|---|
+| Numeric fragment | Delegate to the existing numeric handler |
+| Symbolic `n ≤ 3` | Existing closed form |
+| Malformed supplied certificate, including its quotient payload | `failure` |
+| Symbolic capability or overall budget unavailable | Existing decline and Mathlib fallback |
+| Supported certificate, every packed product within digit/bit limits and covered by the crossover table | `checkDetPolyPacked`, or `checkDetPolyPackedMod` with residue quotients |
+| Packing budget exceeded, crossover absent/selects sparse, or residue quotient payload absent | `checkDetPolyList` with the appropriate integer/residue operations |
+
+The packing configuration embeds `Hex.Kronecker.Budget`, with preregistered
+limits `65536` dense digits and `16777216` packed bits. Its size report and
+mode selection follow hex-poly-det; `signedPacked` requires the independent
+Kronecker product crossover evidence. No second kernel attempt runs after a
+packed rejection. After preflight, the compiled side validates using the
+selected checker on exactly the quoted payload, as specified by hex-poly-det.
+An unexpected `false` is a hard certificate failure before proof emission;
+it is not a budget decline. The optional quotient preparation is compiled,
+budgeted work; inability to afford it selects residue lists before proof emission.
+
+When packing exceeds a limit, use the diagnostic
+`det: packed certificate declined: dense box requires <D> digits and <N> packed bits (limits <Dmax> digits, <Nmax> bits); using term lists`.
+Include the product row, per-atom degrees, and `limitingStage`; saturated
+bounds print `at least <limit + 1>`. Missing crossover coverage or missing
+quotients have distinct reasons (`no measured packed regime` or
+`residue quotient payload unavailable`). These are declines of the packed
+arm, not of the entire symbolic attempt when the list checker succeeds.
+If residue lists are unavailable too, use the existing carrier decline.
+
+The certificate trace records `term-list`, `packed/plain`, or
+`packed/signedPacked`, plus integer/residue encoding, each product's
+`SizeBound`, quotient support where present, and any packing-decline reason.
+Retain the existing `closed-form` and `fallback` routes. Trace the chosen
+checker in tactic, term and simproc forms, including composed fallbacks, so
+the sweep cannot count a sparse or Mathlib success as a packed success.
+
 ## Prerequisites and input classification
 
 The shared prerequisites are the same as
@@ -64,7 +114,9 @@ the numeric handlers' `throwUnsupportedSyntax` refactor has landed
 provider in hex-reflect-mathlib blocks positive characteristic. The
 polynomial producer generalisation belongs to hex-bareiss, its determinant
 soundness to this companion. These are implementation obligations, not
-claims that the proposed declarations already exist.
+claims that the proposed declarations already exist. Both residue checker
+arms also require #10257's canonical residue lists, validity, equality and
+nonzero tests. Supplying quotient polynomials does not remove that dependency.
 
 Two frontend adaptations are also required: a proved pass clearing closed
 rational coefficients, and batch quotation using the canonical list
@@ -144,8 +196,8 @@ a matrix which becomes singular only at some atom valuations still has a
 nonzero polynomial determinant. All witness entries lie in the polynomial
 ring, never in a chosen specialisation or in the fraction field.
 
-The kernel checks `checkDetPolyList` on the row lists of canonical polynomial
-term lists and the witness in the same representation. Coefficients are
+The term-list arm checks `checkDetPolyList` on the row lists of canonical
+polynomial term lists and the witness in the same representation. Coefficients are
 encoded by `Int` for the integer arm and canonical `Nat` residues for the
 residue arm; exponent vectors are lists of `Nat`. Shape, canonicality,
 nonzero diagonals, vanishing products and the determinant value identity
@@ -154,7 +206,7 @@ value check uses `l₀ = 1`, `lᵢ₊₁ = uᵢ` and `d = sign σ * uₙ₋₁`
 (`d = 1` when `n = 0`), without expanding the product of pivot polynomials.
 Polynomial equality uses the list layer's `beq_iff` contract, not evaluation at sample points.
 
-The proposed `checkDetPolyList_sound` in this library identifies a passing
+The existing `checkDetPolyList_sound` in this library identifies a passing
 check with `Hex.Matrix.det P = d`, where `P` and `d` denote the supplied
 lists and `Hex.Matrix.det` is the Leibniz reference. It uses the list
 arithmetic denotation theorem, `HexMatrixMathlib.det_eq`, row permutation
@@ -170,6 +222,48 @@ an expansion of the product by the kernel. The singular branch uses
 `Matrix.exists_vecMul_eq_zero_iff` over that domain to prove determinant zero.
 Neither argument requires the vector or diagonal product to stay nonzero after
 specialisation.
+
+### Packed soundness
+
+`checkDetPolyPacked_sound` has the same conclusion as
+`checkDetPolyList_sound`: a passing check implies `Hex.Matrix.det P = d`
+for the denoted input and witness value (zero for `.singular`). It takes
+the budget and mode as checker parameters, without trusting a producer
+correctness claim or external bound hypothesis. Its integer polynomial
+model is a domain; subsequent evaluation transports the conclusion to
+**any** commutative ring, without `CharZero` or injectivity at the atoms.
+
+Factor the determinant argument into one statement about the witness
+identities: valid shapes and swaps, nonzero transform diagonals and the
+row-prefix product equalities with the adjacent-diagonal/value conditions,
+or a nonzero vector whose product with the matrix is zero. The list checker
+derives these with its arithmetic denotation laws. The packed checker
+derives the same identities with
+[`checkMulTerms_sound`](hex-kronecker-mathlib.md#denotation-and-polynomial-model),
+instantiated in `MvPolynomial (Fin k) Int` at the indeterminates, and the
+existing `HexMvPolyMathlib.equiv` bridge. This shares the permutation,
+triangular determinant, cancellation and singular-vector proof above; it
+neither re-runs `checkDetPolyList` in the kernel nor duplicates determinant
+algebra. Extracting that shared statement from the current `Decode.sound`
+is an implementation obligation.
+
+`checkDetPolyPackedMod_sound` uses `checkMulTermsMod_sound` in the residue
+polynomial model for each supplemental quotient row. It recovers the
+integer identity `M̃ Ã − C̃ = p Q`, then transports to characteristic `p`
+through the residue coefficient laws, including
+`HexReflectMathlib.residueHom` for target evaluation. The determinant
+argument still requires a coefficient domain (prime characteristic for the
+residue producer); the final target only needs `CommRing` and `CharP`.
+Neither nonzero polynomials nor nonzero transform diagonals are assumed to
+remain nonzero after that evaluation. Quotient shape/canonicality/bounds
+and the integer identities are checked premises, not producer assertions.
+
+The rational row-clearing route may use the integer packed checker for the
+scaled matrix `B`. Target comparison remains the existing canonical-list
+comparison (`d = q`, or `t * dB = D * qZ` after scaling), with its existing
+budgets and nonzero-scale proof. The term form still avoids comparing its
+value with itself. Packing changes witness products only; it does not add
+another reification, target normalization or small closed-form solver.
 
 The batch must quote `P` with each entry *defined to be* the canonical
 list layer's denotation applied to its quoted entry list. Thus the batch's
@@ -260,8 +354,8 @@ Until it exists, denominator-clearing requests decline with
 `det: symbolic determinant declined: rational coefficient normalisation unavailable`;
 ordinary polynomial identities in atomised division terms remain sound.
 
-Certify the integer polynomial matrix `B` by `checkDetPolyList`. If
-`D := ∏ sᵢ` and `dB` is its certified determinant, the entry proofs and
+Certify the integer polynomial matrix `B` by the selected list or packed
+checker. If `D := ∏ sᵢ` and `dB` is its certified determinant, the entry proofs and
 row-scaling theorem give `D * A.det = φ dB`. This arm requires `[Field F] [CharZero F]` on
 the target, unlike the integer arm: cross-multiplication needs the scales
 `t * D` to be cancellable and the term form needs division, and `CharZero`
@@ -364,6 +458,57 @@ and the table records every family either way. Fallback preserves scope
 but does not establish a runtime win; a win on selected rungs enables the
 chain on those rungs only.
 
+### Packed-arm comparison
+
+The packed implementation reruns the shared families in
+[the recorded report](../../reports/hex-poly-det-mathlib-performance.md),
+retaining its infeasible cases, failures and declines. For every certificate
+case compare forced term lists and forced packed checking on the same
+witness and proposition. Fix the sparse/packed crossover table from those
+measurements first, with the mode-selection table supplied by Kronecker's
+product benchmark. Then run fresh comparisons of the full automatic dispatch
+using the fixed tables against unmodified `norm_det`. An empty-table dispatch
+run is a sparse-fallback control, not evidence about packed dispatch. Forced
+packing still obeys the hard limits; an ineligible case records a decline, not a packed timing. Keep the `n ≤ 3`
+controls on their existing route. Extend the certificate grid to dimensions
+`4, 8, 16`, atoms `1, 2, 3, 4` and degrees `2, 4, 8, 16`, retaining the
+original support ladder and recording actual per-atom degrees. Add matrices
+with independent atoms to exercise early packing declines, as well as
+prime-residue quotient cases and missing-payload fallback cases. Residue
+comparisons include a small prime and a prime near the provider's `2^31`
+upper bound, with `p` and quotient support recorded alongside packed bits.
+
+Classify the grid by actual product/witness bounds before timing: large
+three- and four-atom identities often exceed the digit envelope stated in
+hex-poly-det. Keep these rows as expected declines, distinct from infeasible
+support requests or timeouts. They measure the preflight and composed fallback,
+not forced packed evaluation. Retain the full shared ladder and report the
+accepted few-atom region explicitly; do not omit losing or declined cells.
+
+Use the existing fresh-module runner with matched import-only baselines,
+six adjacent pairs per comparison and alternating `AB`/`BA` order on one
+automatically selected CPU where supported. Retain every completed run and
+host context, with at most one unchanged rerun if inconclusive. Preregister
+the cases, crossover keys and the existing 45-second cleanup/proof ceilings
+before collecting samples. Time quotient generation, preflight and list
+conversion, repeated inner/outer packing, integer multiplication, kernel
+check, identification, total elaboration and composed fallback separately where applicable; record proof
+nodes, `.olean` size, support, degree bounds, packed bits and route. Collect
+one representative kernel profile per family, not a profile per change.
+
+The implementation updates the report and this SPEC with per-family medians
+for term lists, packed checking, automatic dispatch and Mathlib, plus
+completion counts, ratios and an explicit `default-on` / `opt-in` decision.
+The crossover table is fixed from the preregistered comparisons before
+activation. Reconsider `Hex.normPolyDet` under
+[matrix-tactics §The bar against Mathlib](../matrix-tactics.md#the-bar-against-mathlib):
+only an identifiable family whose full dispatched invocation has a smaller
+median than `norm_det`, including decline/fallback costs, may enter the
+default chain. Every other family remains opt-in. Faster packed kernel work
+alone does not satisfy this rule. The SPEC amendment enables no family by
+default; the existing measurements below contain no packed-arm results and
+cannot establish its wins.
+
 ## Declaration inventory
 
 Existing declarations used by this design:
@@ -388,25 +533,32 @@ The domain proof additionally uses `HexMvPolyMathlib.equiv` and
 
 `checkDetPolyList`, `checkDetPolyList_sound`, the polynomial generalisation
 of `detWitness`, and the canonical list layer's `beq_iff`/denotation API
-are implemented. The checker stays Mathlib-free in hex-bareiss,
-its `MvPoly` instantiation in hex-poly-det, and its determinant soundness
+are implemented. `checkDetPolyPacked` / `checkDetPolyPackedMod` and their
+soundness theorems are planned, with the packed checkers owned by
+hex-poly-det and the proofs here. The generic list checker stays Mathlib-free
+in hex-bareiss, its `MvPoly` instantiation in hex-poly-det, and its determinant soundness
 in this library.
 
 ## File organisation
 
 ```
 HexPolyDetMathlib/
-  Sound.lean        -- checkDetPolyList_sound at MvPoly, transport, rational scaling
+  Sound.lean        -- shared witness identities, list soundness, transport
+  Packed.lean       -- planned checkDetPolyPacked_sound and residue variant
+  Scaling.lean      -- rational scaling transport
+  Normalize.lean    -- proved coefficient normalization
+  Frontend.lean     -- reification and certificate preparation
+  Small.lean        -- closed forms
   Tactic.lean       -- the handler on hex-bareiss-mathlib's `det` syntax kind, det% for symbolic input, Hex.normPolyDet
   Tests.lean
 HexPolyDetMathlib.lean
 ```
 
-`libraries.yml` gains
+When the packed implementation lands, the `libraries.yml` entry becomes
 
 ```yaml
   HexPolyDetMathlib:
-    deps: [HexPolyDet, HexBareissMathlib, HexReflect, HexReflectMathlib, HexMvPolyMathlib, HexMatrixMathlib]
+    deps: [HexPolyDet, HexBareissMathlib, HexReflect, HexReflectMathlib, HexMvPolyMathlib, HexMatrixMathlib, HexKroneckerMathlib]
     mathlib: true
     proof_probes: [bench/HexPolyDetMathlib/ProofProbe]
     done_through: 3
@@ -446,6 +598,7 @@ smaller median for a size regime; no default integration is claimed here.
 
 All Hex sweep modules emit the route taken (closed formula, polynomial
 certificate, or fallback), including the reason for a budget decline. The
+packed implementation extends certificate traces as specified above. The
 conservative preflight bound declines some high-degree, four-variable 8×8
 cases before elimination; their complete composed calls remain in the ladder.
 The sweep reports faster cases separately from the opt-in release decision.
