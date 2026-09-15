@@ -187,7 +187,7 @@ libraries:
     done_through: 4
     status: active
   HexMvPoly:
-    deps: [HexPoly, HexBasic]
+    deps: [HexPoly, HexBasic, HexModArith]
     mathlib: false
     done_through: 4
     status: active
@@ -1046,7 +1046,7 @@ libraries:
         - name: euclidean-bridge-transport
           description: Polynomial Fibonacci quotient-chain fixtures over `Rat` carried through the executable `DensePoly.gcd`/`DensePoly.xgcd` plus the dense-to-Mathlib bridge.
   HexMvPolyMathlib:
-    deps: [HexMvPoly, HexPolyMathlib]
+    deps: [HexMvPoly, HexPolyMathlib, HexModArithMathlib]
     mathlib: true
     done_through: 4
     status: active

@@ -1051,6 +1051,7 @@ lean_lib HexReleaseTests where
     `HexRealRootsMathlib.RealRootCountTests,
     `HexRootsMathlib.Examples,
     `HexMvPoly.KernelTests,
+    `HexMvPoly.KernelResidueTests,
     `HexSparsePoly.KernelTests,
     `HexGraphIso.TestGraphs,
     `HexGraphIso.SparseTests,

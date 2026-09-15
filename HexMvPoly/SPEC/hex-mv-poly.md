@@ -1,4 +1,4 @@
-# hex-mv-poly (computable multivariate polynomials, depends on hex-poly + hex-basic)
+# hex-mv-poly (computable multivariate polynomials, depends on hex-poly + hex-basic + hex-mod-arith)
 
 Multivariate polynomials in a fixed number of variables, with a
 distributed representation keyed on exponent vectors, canonical form,
@@ -243,9 +243,8 @@ Exponent equality and ordering use `Nat.beq` and `Nat.blt`; exponent addition
 uses `Nat.add`. Coefficient computation uses the representation's ordinary
 primitive operations. Thus `Int` replay reduces through `Int.add`, `Int.mul`,
 and `Int.neg`; Lean's `Rat` supplies its reduced numerator-denominator
-representation. A positive-characteristic reflection provider supplies
-canonical `Nat` residues and modulus-parametrised operations before invoking
-this generic list layer. The small rational fixtures establish reduction and
+representation. Positive-characteristic replay uses the separate natural-residue
+form described below. The small rational fixtures establish reduction and
 correctness, not a general rational certificate performance budget; consumers
 that clear denominators can continue replaying entirely over `Int`.
 
@@ -270,6 +269,59 @@ beq p q = true ↔ denote p = denote q
 Structural `beq` is reflexive, symmetric, and transitive. These results make
 dropping zeros and duplicate polynomials transport without asking the kernel
 to compare reference trees.
+
+### Positive-characteristic residue form
+
+`HexMvPoly/KernelResidue.lean` owns the positive-characteristic encoding:
+`PolyList Nat` with an explicit modulus `p`. `CanonicalMod p n` requires
+`Canonical n` and every coefficient strictly below `p`; `isCanonicalMod p n`
+checks both conditions. Thus unreduced inputs such as coefficient `3` modulo
+`3` are rejected. The arithmetic dictionaries carry modular operations only;
+no ring-law instance is installed on `Nat`.
+
+`addMod p`, `mulMod p`, `negMod p`, `smulMod p`, and `subMod p` preserve
+`CanonicalMod`. Addition and multiplication reuse the structural merge and
+balanced-row algorithms, reducing collisions and products modulo `p`.
+Negation multiplies by `p - 1`, obtained by a structural split on `p`, and
+filters zero coefficients. Scalar multiplication accepts any natural scalar,
+including an unreduced one. The existing `isZero` and `beq` apply directly.
+Coefficient computation uses `Nat.add`, `Nat.mul`, `Nat.mod`, and natural
+number equality; exponent comparison and the residue-bound check use
+`Nat.blt`. The replay path contains no machine-word or dependent residue
+values. All replay definitions are exposed across module boundaries.
+
+The same Mathlib-free library owns both conversions:
+
+- `ofResidues p` reads each producer `ZMod64 p` coefficient through
+  `ZMod64.toNat` (`val.toNat`), retaining the support and its order;
+- `toResidues p` interprets natural coefficients using `ZMod64.ofNat`;
+- `denoteMod p` composes `toResidues p` with reference-polynomial denotation.
+
+These conversions are semantic or producer-side work. The kernel receives
+quoted natural-residue literals. Under `ZMod64.Bounds p`, the laws
+`denoteMod_addMod`, `denoteMod_mulMod`, `denoteMod_negMod`,
+`denoteMod_smulMod`, and `denoteMod_subMod` hold on canonical residue inputs.
+The executable ring needs no primality hypothesis, so composite positive
+moduli are supported too. On canonical inputs, `isZero_mod_iff` and
+`beq_mod_iff` identify the structural checks with zero and equality of
+`denoteMod`. Producer conversion satisfies the complete round trip
+`denoteMod p (ofResidues p (toList P)) = P`, and its output is canonical.
+`KernelMap.lean` proves that coefficient embeddings commute with the list
+operations; the residue proofs use these laws without requiring ring laws on
+unreduced naturals.
+
+`HexMvPolyMathlib/KernelResidue.lean` owns transport to
+`MvPolynomial (Fin n) (ZMod p)`. Its `residueEquiv` composes
+`HexMvPolyMathlib.equiv` with coefficient transport through
+`HexModArithMathlib.ZMod64.equiv`. Its `denoteMod` and matching arithmetic,
+zero, equality, and producer-round-trip laws expose that semantics to tactics.
+
+`KernelResidueTests.lean` checks both adjugate identities for a `4 × 4`
+tridiagonal polynomial matrix modulo `5`, using independent certificate
+literals and `decide +kernel`. It rejects a corrupted determinant and
+unreduced coefficients, and checks zero-product filtering modulo `4`.
+
+### Producer list conversion
 
 `toList : MvPoly n κ cmp → PolyList κ` is producer-side only. It emits a
 canonical list and satisfies `denote_toList`; conversely `toList_denote`
@@ -880,7 +932,7 @@ HexMvPolyMathlib.lean
 
 ```yaml
   HexMvPoly:
-    deps: [HexPoly, HexBasic]
+    deps: [HexPoly, HexBasic, HexModArith]
     mathlib: false
     done_through: 7
     status: active
@@ -904,7 +956,7 @@ HexMvPolyMathlib.lean
         - name: sum-of-squares-arithmetic
           description: Representative sum-of-squares-shaped identities measured as compiled Mathlib-free arithmetic.
   HexMvPolyMathlib:
-    deps: [HexMvPoly, HexPolyMathlib]
+    deps: [HexMvPoly, HexPolyMathlib, HexModArithMathlib]
     mathlib: true
     done_through: 7
     status: active

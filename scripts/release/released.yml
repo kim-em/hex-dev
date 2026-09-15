@@ -142,15 +142,6 @@ repos:
     pins: []
     lakefile: toml
 
-  - repo: leanprover/hex-mv-poly
-    component: Sparse multivariate polynomials
-    lib: HexMvPoly
-    test_modules: [HexMvPoly.KernelTests]
-    umbrella: true
-    spec: hex-mv-poly
-    pins: [hex-basic, hex-poly]
-    lakefile: toml
-
   - repo: leanprover/hex-mod-arith
     component: Modular arithmetic
     lib: HexModArith
@@ -159,6 +150,15 @@ repos:
     pins: [hex-arith]
     lakefile: lean
     lake_declarations: [zmod64MulOTarget, hexmodarithffi]
+
+  - repo: leanprover/hex-mv-poly
+    component: Sparse multivariate polynomials
+    lib: HexMvPoly
+    test_modules: [HexMvPoly.KernelTests, HexMvPoly.KernelResidueTests]
+    umbrella: true
+    spec: hex-mv-poly
+    pins: [hex-basic, hex-poly, hex-arith, hex-mod-arith]
+    lakefile: toml
 
   - repo: leanprover/hex-matrix
     component: Matrices
@@ -182,13 +182,6 @@ repos:
     umbrella: true
     spec: hex-poly-mathlib
     pins: [hex-poly, hex-matrix-mathlib, hex-matrix, hex-basic]
-    lakefile: toml
-
-  - repo: leanprover/hex-mv-poly-mathlib
-    lib: HexMvPolyMathlib
-    umbrella: true
-    spec: hex-mv-poly-mathlib
-    pins: [hex-basic, hex-poly, hex-mv-poly, hex-poly-mathlib, hex-matrix, hex-matrix-mathlib]
     lakefile: toml
 
   - repo: leanprover/hex-poly-fp
@@ -228,6 +221,13 @@ repos:
     umbrella: true
     spec: hex-mod-arith-mathlib
     pins: [hex-arith, hex-mod-arith]
+    lakefile: toml
+
+  - repo: leanprover/hex-mv-poly-mathlib
+    lib: HexMvPolyMathlib
+    umbrella: true
+    spec: hex-mv-poly-mathlib
+    pins: [hex-basic, hex-poly, hex-mv-poly, hex-poly-mathlib, hex-matrix, hex-matrix-mathlib, hex-arith, hex-mod-arith, hex-mod-arith-mathlib]
     lakefile: toml
 
   - repo: leanprover/hex-poly-fp-mathlib

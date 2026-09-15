@@ -1,4 +1,4 @@
-# hex-mv-poly-mathlib (depends on hex-mv-poly + hex-poly-mathlib + Mathlib)
+# hex-mv-poly-mathlib (depends on hex-mv-poly + hex-poly-mathlib + hex-mod-arith-mathlib + Mathlib)
 
 The Mathlib bridge for the canonical, Mathlib-free sparse multivariate
 polynomials in `hex-mv-poly`. It identifies
@@ -65,6 +65,15 @@ statements used by symbolic `rank`, `det`, and `rank_locus` consumers. The
 bridge is semantic only: no Mathlib value occurs in the closed Boolean
 certificate check, and matrix entries are related to nested term lists by
 mapping this denotation after replay.
+
+For positive-characteristic certificates, `KernelResidue.lean` supplies
+`Kernel.denoteMod p : PolyList Nat → MvPolynomial (Fin n) (ZMod p)`.
+Its `residueEquiv` composes the polynomial equivalence with the coefficient
+ring equivalence `HexModArithMathlib.ZMod64.equiv`. The modular arithmetic,
+canonical zero/equality, and producer round-trip laws transport through this
+composition under `Hex.ZMod64.Bounds p`. The natural-residue encoding,
+canonicality check, arithmetic, and producer conversions belong to
+`hex-mv-poly`; this companion owns only their Mathlib interpretation.
 
 ## Evaluation
 
