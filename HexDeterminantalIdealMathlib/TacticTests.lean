@@ -169,3 +169,20 @@ example : Hex.Matrix.indexTuples 2 4 = [[0,1], [0,2], [1,2], [0,3], [1,3], [2,3]
 -- The displayed iff is valid without assuming characteristic zero.
 example {F : Type} [Field F] (x : F) : (!![x]).rank < 1 ↔ x = 0 :=
   (rank_locus% !![x] 1).proof
+
+-- Consumers can choose the universe of field-valued points independently.
+universe z
+noncomputable example : HexDeterminantalIdealMathlib.LocusResult.{0, 0, z}
+    (!![MvPolynomial.X (0 : Fin 1)] : Matrix (Fin 1) (Fin 1) (MvPolynomial (Fin 1) ℤ))
+    1 ℤ 1 ℤ (Fin 1) :=
+  rank_locus% (!![MvPolynomial.X (0 : Fin 1)] :
+    Matrix (Fin 1) (Fin 1) (MvPolynomial (Fin 1) ℤ)) 1
+
+example (K : Type z) [Field K] (ψ : ℤ →+* K) (p : Fin 1 → K) : True := by
+  let result : HexDeterminantalIdealMathlib.LocusResult.{0, 0, z}
+      (!![MvPolynomial.X (0 : Fin 1)] : Matrix (Fin 1) (Fin 1) (MvPolynomial (Fin 1) ℤ))
+      1 ℤ 1 ℤ (Fin 1) := rank_locus% (!![MvPolynomial.X (0 : Fin 1)] :
+    Matrix (Fin 1) (Fin 1) (MvPolynomial (Fin 1) ℤ)) 1
+  have locus := (result.ideal?.get (by rfl)).vanishing K ψ p
+  clear locus
+  trivial

@@ -127,7 +127,7 @@ def evalRankLocusClose : Tactic := fun stx => withMainContext do
 syntax (name := rankLocusTerm) "rank_locus% " term:max term:max : term
 
 @[term_elab rankLocusTerm]
-def elabRankLocusTerm : Term.TermElab := fun stx _ => do
+def elabRankLocusTerm : Term.TermElab := fun stx expectedType? => do
   let A ← Term.elabTerm stx[1] none
   let r ← Term.elabTerm stx[2] (some (mkConst ``Nat))
   Term.synthesizeSyntheticMVarsNoPostponing
@@ -135,6 +135,11 @@ def elabRankLocusTerm : Term.TermElab := fun stx _ => do
   if r.hasFVar || r.hasMVar then throwError "rank_locus%: expected a closed natural threshold"
   let some r ← (Meta.evalNat r).run | throwError "rank_locus%: expected a closed natural threshold"
   let p ← Provider.reify (← instantiateMVars A)
-  Provider.result (← Provider.locus p r)
+  let fieldLevel ← match expectedType? with
+    | some type => do
+      let .const ``LocusResult levels := (← whnf type).getAppFn | pure .zero
+      pure (levels[2]?.getD .zero)
+    | none => pure .zero
+  Provider.result (← Provider.locus p r) {} fieldLevel
 
 end HexDeterminantalIdealMathlib

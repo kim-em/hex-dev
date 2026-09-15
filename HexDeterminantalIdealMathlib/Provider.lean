@@ -419,7 +419,7 @@ def lower (p : Reified) (r : Nat) (cfg : Config := {}) : MetaM LowerResult :=
 
 /-- Detect the symbolic-matrix case using the same atom and coefficient
 conditions as generic rank. Return the coefficient and variable types too. -/
-def ideal? (r : Result) : MetaM (Option (Expr × Expr × Expr)) := do
+def ideal? (r : Result) (fieldLevel : Level) : MetaM (Option (Expr × Expr × Expr)) := do
   let p := r.matrix
   let_expr MvPolynomial σ D _ := p.lit.carrier | return none
   match p.data with
@@ -439,7 +439,7 @@ def ideal? (r : Result) : MetaM (Option (Expr × Expr × Expr)) := do
     let x ← mkAppOptM ``MvPolynomial.X #[D, σ, none, mkApp f i]
     mkLambdaFVars #[i] x
   let hv ← finiteEq p.batch.sealed.n p.valuation xf
-  let levels := [← getDecLevel D, ← getDecLevel σ, ← getDecLevel p.lit.carrier]
+  let levels := [← getDecLevel D, ← getDecLevel σ, fieldLevel]
   let args := #[p.valuation, f, hf, hv, p.polynomial, mkNatLit r.threshold]
   let data ← match p.data with
     | .integer _ => mkAppM' (mkConst ``idealData_int levels) args
@@ -447,7 +447,7 @@ def ideal? (r : Result) : MetaM (Option (Expr × Expr × Expr)) := do
   return some (D, σ, data)
 
 /-- Return the fixed record; this interface never creates side goals. -/
-def result (r : Result) (cfg : Config := {}) : MetaM Expr := withEvidence (fun p f => f p) (evidence r.matrix.batch) do
+def result (r : Result) (cfg : Config := {}) (fieldLevel : Level := .zero) : MetaM Expr := withEvidence (fun p f => f p) (evidence r.matrix.batch) do
   let p := r.matrix
   let env ← mkListLit p.lit.carrier p.batch.sealed.atoms.toList
   let len ← mkEqRefl (mkNatLit p.batch.sealed.n)
@@ -465,10 +465,10 @@ def result (r : Result) (cfg : Config := {}) : MetaM Expr := withEvidence (fun p
   let poly ← mkAppM ``PolyData.mk
     #[ring, decEq, beq, lawful, env, len, p.valuation, sealed, p.coefficientMap, p.polynomial,
       values, r.generatorsProof, p.interpretation, r.displayProof]
-  let ideal ← match ← ideal? r with
+  let ideal ← match ← ideal? r fieldLevel with
     | some (_, _, data) => mkAppM ``Option.some #[data]
     | none => do
-      let type ← mkAppM' (mkConst ``IdealData [← getDecLevel p.lit.carrier, .zero, ← getDecLevel p.lit.carrier])
+      let type ← mkAppM' (mkConst ``IdealData [← getDecLevel p.lit.carrier, .zero, fieldLevel])
         #[p.coefficientMap, p.valuation, p.polynomial, mkNatLit r.threshold,
           p.lit.carrier, mkConst ``Empty]
       mkAppOptM ``Option.none #[type]
@@ -477,8 +477,9 @@ def result (r : Result) (cfg : Config := {}) : MetaM Expr := withEvidence (fun p
   return result
 
 /-- Programmatic entry point returning the same checked record as `rank_locus%`.
+`fieldLevel` selects the universe of the ideal payload's field-valued points.
 It never creates goals or changes the source context. -/
-def rankLocus (A : Expr) (r : Nat) (cfg : Config := {}) : MetaM Expr := do
-  result (← locus (← reify A cfg) r cfg) cfg
+def rankLocus (A : Expr) (r : Nat) (cfg : Config := {}) (fieldLevel : Level := .zero) : MetaM Expr := do
+  result (← locus (← reify A cfg) r cfg) cfg fieldLevel
 
 end HexDeterminantalIdealMathlib.Provider
