@@ -314,11 +314,12 @@ Curve448; P-521 exceeds its 512-bit ceiling. FLINT and PARI solve all twelve.
 
 ### Supplied-certificate replay
 
-#### Direct kernel checking before windowed arithmetic
-
-The measurements in this subsection use the earlier checker. Current results
-and the current comparison plot are in the
+All measurements in this section, including arithmetic attribution and fresh
+builds, use the checker before windowed arithmetic. Current complete-proof
+results and the current comparison plot are in the
 [windowed replay report](hex-primality-windowed-replay.md).
+
+#### Direct kernel checking before windowed arithmetic
 
 ![Earlier direct kernel checking](figures/hex-primality-kernel-direct-before-windows.svg)
 
@@ -390,7 +391,7 @@ the same toolchain and compute the same value:
 
 | Kernel powering loop | Mean of two samples |
 |---|---:|
-| Hex `powModNat` | 11.94 ms |
+| Hex bit-scanning `powModNat` (now `powModBits`) | 11.94 ms |
 | Same bit-scanning algorithm, explicit `Nat.rec` / `Bool.rec` | 6.37 ms |
 | PrimeCert-style division loop, explicit recursors | 2.02 ms |
 | Identical division loop on PrimeCert's Lean 4.33.0 | 2.07 ms |
@@ -413,15 +414,16 @@ justify attributing the entire remaining gap to redundant exponentiations.
 
 The eight completed adjacent, reversed samples and exact sources are in
 `hex-primality-kernel-power-comparison-issue-10268.json`. The experimental
-division loop follows PrimeCert's Apache-licensed `powModK`; it is a benchmark
-definition, not a change to the production checker. Reproduce by adding
+division loop follows PrimeCert's `powModK`, whose file carries an Apache 2.0
+notice and whose root license is MIT. The complete notices are retained in
+`HexArith/Montgomery/Context.lean`. This run measured a benchmark definition. Reproduce by adding
 `--powers` to the direct-kernel runner above and choosing a new output path.
 
 The kernel-visible definition from
 [lean4#13490](https://github.com/leanprover/lean4/pull/13490), commit
 `86704eea9a8cf46d7f20f4eb2c293cdaae7ac2d7`, is a separate diagnostic arm.
 Replaying that definition on Lean 4.34.0 takes 15.24 / 15.13 ms for the same
-expression, alongside 11.90 / 11.87 ms for current Hex and 1.98 / 1.98 ms for
+expression, alongside 11.90 / 11.87 ms for the bit-scanning Hex checker and 1.98 / 1.98 ms for
 the explicit division loop. All ten completed samples are in
 `hex-primality-upstream-kernel-power-issue-10268.json`; add `--upstream-power`
 to reproduce. This copies the kernel definition without its extern and does

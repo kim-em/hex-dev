@@ -2,7 +2,8 @@
 """Isolate kernel powering and table lookup costs using adjacent fresh builds.
 
 The powDiv diagnostic follows PrimeCert/PowMod.lean by Bhavik Mehta,
-Copyright (c) 2022 Bhavik Mehta, licensed under Apache 2.0.
+Copyright (c) 2022 Bhavik Mehta. The file carries an Apache 2.0 notice;
+the root license is MIT. Both notices are retained in HexArith/Montgomery/Context.lean.
 """
 import argparse
 import hashlib

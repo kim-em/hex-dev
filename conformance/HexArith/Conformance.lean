@@ -388,3 +388,8 @@ example : let p := ((1 : Nat) <<< 1024) + 1
     HexArith.powModNat a 5 p = a ^ 5 % p := by decide +kernel
 example : let p := ((1 : Nat) <<< 4096) + 1
     HexArith.powModNat (p + 17) 5 p = 1419857 := by decide +kernel
+
+-- A large reduced base selects the binary accumulator, also with a long exponent.
+set_option maxRecDepth 65536 in
+example : HexArith.powModNat ((1 : Nat) <<< 64) ((1 : Nat) <<< 1100)
+    (((1 : Nat) <<< 1024) + 1) = 1 := by decide +kernel

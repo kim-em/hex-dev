@@ -3,8 +3,8 @@
 Hex checks the complete Curve25519 certificate in **9.65 ms**, compared with
 **19.16 ms** for PrimeCert in the adjacent comparison: a **1.99×** advantage.
 Hex is faster on five of the seven inputs with certificates in both systems.
-PrimeCert remains faster on the 31- and 61-bit cases and supplies a Curve448
-certificate that Hex's current construction profile does not find.
+The 31-bit case is effectively tied; PrimeCert is faster at 61 bits and
+supplies a Curve448 certificate that Hex's current construction profile does not find.
 
 ## Implementation
 

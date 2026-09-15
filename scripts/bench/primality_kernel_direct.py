@@ -147,7 +147,8 @@ decreasing_by omega
             record['upstream_power'] = ('Kernel definition only, replayed on Lean 4.34.0; '
                                          'not a native GMP measurement or a Lean 4.35.0 benchmark')
         record['attribution'] = ('powDiv follows PrimeCert/PowMod.lean, Copyright (c) 2022 '
-                                 'Bhavik Mehta, Apache 2.0; source imported from the retained diagnostic.')
+                                 'Bhavik Mehta; file Apache 2.0 notice, root MIT license; full notices in '
+                                 'HexArith/Montgomery/Context.lean; source from the retained diagnostic.')
     for system, (cwd, _, path) in locations.items():
         if path.exists():
             raise RuntimeError(f'refusing to overwrite {path}')

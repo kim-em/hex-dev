@@ -70,10 +70,12 @@ overtaken by what the repository contains.
 
 Checked against a clone of https://github.com/b-mehta/PrimeCert
 (Bhavik Mehta and Kenny Lau) at commit `924f63d9`. Every claim below is
-about that revision, and a later one may differ. The repository's
+about that revision, and a later one may differ. The implementation claims
+below have not been rechecked against the later comparator revision. The repository's
 `LICENSE` is **MIT**; individual file headers carry an Apache 2.0 notice.
 The primality checker is a separate implementation of the published ideas.
-The modular-power accumulator in HexArith adapts PrimeCert's `powModK`;
+The modular-power accumulator in HexArith adapts `powModK` from the later
+PrimeCert revision `7d3a2de`;
 `HexArith/Montgomery/Context.lean` preserves both the file's Apache notice
 and the complete root MIT permission notice from the pinned comparator
 revision `7d3a2de`. This attribution does not introduce a PrimeCert or Mathlib
@@ -1183,7 +1185,8 @@ only in the
 
 The replay closure is `checkPrime` and what it calls: a kernel-facing
 modular exponentiation, `Nat.gcd`, `Nat.mod`, and the table's verified
-sieve-bit lookup (binary search remains its compiled implementation). `Nat.sqrt` is deliberately absent: it is well-founded recursion
+sieve-bit lookup (binary search remains its compiled implementation).
+`Nat.sqrt` is deliberately absent: it is well-founded recursion
 and does not kernel-reduce, which is why the square bound is checked as
 `n < F * F` and the cube-root discriminant through the stored witness.
 
