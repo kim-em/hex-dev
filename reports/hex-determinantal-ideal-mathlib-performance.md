@@ -33,7 +33,6 @@ at most 18,816 units. The next 8×8, support-one rung at `r = 4` requires
 Runtime also includes canonical polynomial operations and duplicate comparisons.
 
 
-
 ## Results
 
 Measured source: `5a18a47eb37fa0b20d4b64786552abeb22a37467`; `leanprover/lean4:v4.34.0`. Host `chungus2`, AMD EPYC 9455 48-Core Processor, CPU 1. The checkout and dependency checkouts were clean and unchanged throughout the sweep.
@@ -55,13 +54,13 @@ Profile columns are medians of Lean profiler totals. The raw record also include
 
 ## Reproduction
 
-The complete sweeps at
-[`7e5dcc687`](data/hex-determinantal-ideal-mathlib-probes.json.gz) and
-[`0ce48bca6`](data/hex-determinantal-ideal-mathlib-probes-0ce48bca6.json.gz)
-are also retained. They measured earlier public result types; the table above
-uses the implementation whose ideal payload supports fields in every universe
-through `IdealData.vanishing`. All three sweeps met their ceilings and axiom
-checks; no completed samples were discarded.
+Additional complete records:
+
+- [`7e5dcc687`](data/hex-determinantal-ideal-mathlib-probes.json.gz)
+- [`0ce48bca6`](data/hex-determinantal-ideal-mathlib-probes-0ce48bca6.json.gz)
+
+All three sweeps met their ceilings and axiom checks. Every completed sample
+is retained in its source-specific record.
 
 From a clean checkout of the measured source, with the pinned dependencies:
 
