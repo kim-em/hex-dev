@@ -23,7 +23,13 @@ The measured checkout is `dfc5a2266fda50de82dec94cf07cb6b98a98b07a`, using
 revisions and SHA-256 hashes of the complete measured source closure.
 The Kronecker implementation, proof probes, and sweep runner match those
 measured sources. The current Lake registration also includes unrelated
-primality targets; the measured Lake file is preserved in the source archive.
+primality and determinantal-ideal targets; the measured Lake file is preserved
+in the source archive. The updated `HexMatrix/Lists.lean` adds `rowLists` and
+three observation lemmas, none used by Kronecker; its existing declarations
+are unchanged. `HexReflect/Session.lean` adds an unused `proofNodeCount`, and
+`HexReflect/Budget.lean` exposes the unchanged default budget definition.
+These four files are the only source-hash differences from the measurement;
+none changes the operations executed by the measured tactic.
 
 [Raw samples, source hashes, artifacts, and profiles](data/hex-kronecker-mathlib/sweep-shipping.json.gz) retain every
 completed sample. Six adjacent three-arm blocks use Ring/Kronecker/Grobner
