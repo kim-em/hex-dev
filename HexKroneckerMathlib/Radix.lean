@@ -112,7 +112,7 @@ theorem box_ofFn {k : Nat} (ds : List Nat) (hd : ds.length = k) (e : Fin k → N
 theorem eval₂_eq_code {k : Nat} (base : Int) (ss : List Nat) (hs : ss.length = k)
     (p : MvPolynomial (Fin k) Int) :
     MvPolynomial.eval₂Hom (RingHom.id Int) (fun i => base ^ ss.getD i.val 0) p =
-      ∑ e ∈ p.support, MvPolynomial.coeff e p * base ^ code ss (List.ofFn fun i => e i) := by
+      ∑ e ∈ p.support, p.coeff e * base ^ code ss (List.ofFn fun i => e i) := by
   classical
   change MvPolynomial.eval₂ _ _ _ = _
   rw [MvPolynomial.eval₂_eq']

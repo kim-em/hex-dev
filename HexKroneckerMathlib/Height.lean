@@ -18,13 +18,13 @@ noncomputable section
 
 /-- The coefficient ℓ¹ norm in the integer polynomial model. -/
 @[expose] def norm₁ {σ : Type*} (p : MvPolynomial σ Int) : Nat :=
-  p.support.sum (fun d => (MvPolynomial.coeff d p).natAbs)
+  p.support.sum (fun d => (p.coeff d).natAbs)
 
 @[simp] theorem norm₁_zero {σ : Type*} : norm₁ (0 : MvPolynomial σ Int) = 0 := by
   simp [norm₁]
 
 theorem norm₁_eq_sum {σ : Type*} (p : MvPolynomial σ Int) (s : Finset (σ →₀ Nat))
-    (hs : p.support ⊆ s) : norm₁ p = ∑ d ∈ s, (MvPolynomial.coeff d p).natAbs := by
+    (hs : p.support ⊆ s) : norm₁ p = ∑ d ∈ s, (p.coeff d).natAbs := by
   classical
   apply Finset.sum_subset hs
   intro d _ hd
@@ -48,11 +48,11 @@ theorem norm₁_add {σ : Type*} (p q : MvPolynomial σ Int) :
     norm₁_eq_sum p (p.support ∪ q.support) Finset.subset_union_left,
     norm₁_eq_sum q (p.support ∪ q.support) Finset.subset_union_right, ← Finset.sum_add_distrib]
   exact Finset.sum_le_sum fun d _ => by
-    simpa only [MvPolynomial.coeff_add] using
-      Int.natAbs_add_le (MvPolynomial.coeff d p) (MvPolynomial.coeff d q)
+    simpa only [AddMonoidAlgebra.coeff_add, Finsupp.add_apply] using
+      Int.natAbs_add_le (p.coeff d) (q.coeff d)
 
 @[simp] theorem norm₁_neg {σ : Type*} (p : MvPolynomial σ Int) : norm₁ (-p) = norm₁ p := by
-  simp [norm₁, MvPolynomial.coeff_neg]
+  simp [norm₁]
 
 theorem norm₁_sub {σ : Type*} (p q : MvPolynomial σ Int) :
     norm₁ (p - q) ≤ norm₁ p + norm₁ q := by
@@ -72,7 +72,7 @@ theorem norm₁_mul {σ : Type*} (p q : MvPolynomial σ Int) :
   classical
   rw [MvPolynomial.mul_def]
   change norm₁ (∑ d ∈ p.support, ∑ e ∈ q.support,
-    MvPolynomial.monomial (d + e) (MvPolynomial.coeff d p * MvPolynomial.coeff e q)) ≤ _
+    MvPolynomial.monomial (d + e) (p.coeff d * q.coeff e)) ≤ _
   apply (norm₁_sum _ _).trans
   apply (Finset.sum_le_sum (fun d _ => norm₁_sum q.support _)).trans
   simp only [norm₁_monomial, Int.natAbs_mul]
@@ -88,10 +88,10 @@ theorem norm₁_pow {σ : Type*} (p : MvPolynomial σ Int) (n : Nat) :
       exact (norm₁_mul _ _).trans (Nat.mul_le_mul_right _ ih)
 
 theorem coeff_le_norm₁ {σ : Type*} (p : MvPolynomial σ Int) (d : σ →₀ Nat) :
-    (MvPolynomial.coeff d p).natAbs ≤ norm₁ p := by
+    (p.coeff d).natAbs ≤ norm₁ p := by
   classical
   by_cases hd : d ∈ p.support
-  · exact Finset.single_le_sum (f := fun d => (MvPolynomial.coeff d p).natAbs)
+  · exact Finset.single_le_sum (f := fun d => (p.coeff d).natAbs)
       (fun _ _ => Nat.zero_le _) hd
   · simp [MvPolynomial.notMem_support_iff.mp hd]
 

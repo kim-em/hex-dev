@@ -24,7 +24,7 @@ noncomputable section
 
 /-- One balanced digit after flattening the exponent box in mixed-radix order. -/
 @[expose] def digit {k : Nat} (ss : List Nat) (p : MvPolynomial (Fin k) Int) (n : Nat) : Int :=
-  ∑ e ∈ p.support, if code ss (List.ofFn fun i => e i) = n then MvPolynomial.coeff e p else 0
+  ∑ e ∈ p.support, if code ss (List.ofFn fun i => e i) = n then p.coeff e else 0
 
 /-- The dense list is a semantic object; the kernel checker never constructs it. -/
 @[expose] def digits {k : Nat} (ds : List Nat) (p : MvPolynomial (Fin k) Int) : List Int :=
@@ -43,7 +43,7 @@ theorem digit_coeff {k : Nat} (ds : List Nat) (p : MvPolynomial (Fin k) Int)
     (hp : InBox ds p) (e : Fin k →₀ Nat)
     (he : List.Forall₂ (· ≤ ·) (List.ofFn fun i => e i) ds) :
     digit (makeStrides 1 ds) p (code (makeStrides 1 ds) (List.ofFn fun i => e i)) =
-      MvPolynomial.coeff e p := by
+      p.coeff e := by
   classical
   unfold digit
   rw [Finset.sum_eq_single e]
