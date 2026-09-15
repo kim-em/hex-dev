@@ -203,7 +203,9 @@ The tactic follows [matrix-tactics' outcome protocol](../../SPEC/matrix-tactics.
 - Unequal packed values are an ordinary false-target failure and report that
   the goal is not a polynomial identity in the sealed atoms.  They are not a
   proof that the equality is false after using hypotheses or relations among
-  atoms.
+  atoms. Because accepted certificates must not be pre-evaluated, this
+  diagnosis follows the kernel rejection; only the rejected case is checked
+  again by compiled code to distinguish a false target from a bad certificate.
 - An ill-formed quoted tree or a kernel-rejected certificate is `failure`,
   never a decline and never a request for another solver.
 

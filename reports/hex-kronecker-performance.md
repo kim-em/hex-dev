@@ -125,3 +125,18 @@ profiles include power construction, copying, and multiplication, covered by
 the two terms of the declared bound. Baseline profiles are retained alongside
 the optimized profiles and explain the saturation optimization: repeated
 operations on the large cap dominated the earlier implementation.
+
+## Retained computational runs
+
+Each export contains all completed trials for its source state. The linked
+profile manifest records full SHA-256 hashes; the table abbreviates the
+`Expr.lean`, `Size.lean`, and benchmark-driver hashes to twelve digits.
+Comparative conclusions use the latest complete family table above.
+
+| Export | Lean | Expr / Size SHA-256 prefixes | Driver SHA-256 prefix | Source manifest | Change |
+| --- | --- | --- | --- | --- | --- |
+| [bench-optimized.json](data/hex-kronecker/bench-optimized.json) | 4.34.0-rc2 | `a540414cc86b` / `f47eadccea6e` | `bc480ecd5d66` | [hashes](data/hex-kronecker/profile-tree-optimized.json.gz) | Small-operand exact saturation |
+| [bench-direct.json](data/hex-kronecker/bench-direct.json) | 4.34.0-rc2 | `7ee6f4ac5e86` / `757c2e036384` | `bc480ecd5d66` | [hashes](data/hex-kronecker/direct-profiles/profile-tree.json.gz) | Primitive recursors |
+| [bench-final.json](data/hex-kronecker/bench-final.json) | 4.34.0-rc2 | `7ee6f4ac5e86` / `eaea75e641d0` | `bc480ecd5d66` | [hashes](data/hex-kronecker/final-profiles/profile-tree.json.gz) | Exact subtree pruning |
+| [bench-integrated.json](data/hex-kronecker/bench-integrated.json) | 4.34.0 | `7ee6f4ac5e86` / `eaea75e641d0` | `bc480ecd5d66` | [hashes](data/hex-kronecker/integrated-profiles/profile-tree.json.gz) | Lean 4.34.0 |
+| [bench-runtime.json](data/hex-kronecker/bench-runtime.json) | 4.34.0 | `7ee6f4ac5e86` / `eaea75e641d0` | `48c991960c1f` | [hashes](data/hex-kronecker/runtime-profiles/profile-tree.json.gz) | Runtime decline inputs |
