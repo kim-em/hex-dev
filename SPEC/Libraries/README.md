@@ -83,7 +83,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-sparse-poly-mathlib**: `SparsePoly R ≃+* Polynomial R`, and the identification of the stored term array with `Polynomial.support`
 - **hex-mv-poly-mathlib**: `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence
 - **hex-reflect-mathlib**: Mathlib carrier translations and the `MvPolynomial` correspondence for reflected batches
-- **hex-kronecker-mathlib** (planned): bounded-box soundness and the characteristic-zero `kronecker` tactic
+- **hex-kronecker-mathlib** (planned): bounded-box soundness and the `kronecker` tactic over any commutative ring
 - **hex-mv-gcd-mathlib**: gcd maximality transported to `MvPolynomial (Fin n) R`, and decidable divisibility and squarefreeness
 - **hex-mv-hensel-mathlib**: the evaluation ideal and its residue ring as Mathlib objects, the lifted identities transported to `MvPolynomial (Fin (n+1)) ℤ`, and the factor-coefficient bound
 - **hex-mv-factor-mathlib**: discharge of the univariate irreducibility obligations, factorization correctness and uniqueness in `MvPolynomial (Fin n) ℤ`, and `Decidable (Irreducible p)`
@@ -743,7 +743,7 @@ for developments whose source-local move has not happened yet.
 - [hex-reflect](../../HexReflect/SPEC/hex-reflect.md): the `Lean.Meta.Sym.Arith` adapter, batch variable sealing, direct `Hex.MvPoly` conversion, provider protocol, conditions and budgets
 - [hex-reflect-mathlib](../../HexReflectMathlib/SPEC/hex-reflect-mathlib.md): Mathlib carrier translations and the `MvPolynomial` correspondence for reflected batches
 - [hex-kronecker](hex-kronecker.md) (planned): deterministic dense-box polynomial identity checks by Kronecker substitution
-- [hex-kronecker-mathlib](hex-kronecker-mathlib.md) (planned): bounded-box soundness and the characteristic-zero `kronecker` tactic
+- [hex-kronecker-mathlib](hex-kronecker-mathlib.md) (planned): bounded-box soundness and the `kronecker` tactic over any commutative ring
 - [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md): multivariate gcd with cofactors, content and primitive part, exact division, squarefree decomposition
 - [hex-mv-hensel.md](../../HexMvHensel/SPEC/hex-mv-hensel.md): multivariate Hensel lifting against an evaluation ideal, its coprimality witness and leading-coefficient contract, reconstruction, and the checked-decomposition certificate (the Mathlib companion is specified in the same file)
 - [hex-mv-factor.md](../../HexMvFactor/SPEC/hex-mv-factor.md): factorization of `Z[x_1, ..., x_n]` by Wang's EEZ algorithm, the evaluation-point and leading-coefficient search, the checked product decomposition, and the separate irreducibility certificate (the Mathlib companion is specified in the same file)
