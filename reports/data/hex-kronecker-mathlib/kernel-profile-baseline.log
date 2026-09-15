@@ -1,0 +1,102 @@
+CPU 86
+WARNING: Kernel address maps (/proc/{kallsyms,modules}) are restricted,
+check /proc/sys/kernel/kptr_restrict and /proc/sys/kernel/perf_event_paranoid.
+
+Samples in kernel functions may not be resolved if a suitable vmlinux
+file is not found in the buildid cache or in the vmlinux path.
+
+Samples in kernel modules won't be resolved at all.
+
+If some relocation was applied (e.g. kexec) symbols may be misresolved
+even with a suitable vmlinux or kallsyms file.
+
+Couldn't record kernel reference relocation symbol
+Symbol resolution may be skewed if relocation was used (e.g. kexec).
+Check /proc/kallsyms permission or run as root.
+⚠ [3271/3293] Replayed HexMatrixMathlib.Packed
+warning: HexMatrixMathlib/Packed.lean:141:10: `if_pos` has been deprecated: Use `ite_eq_left` instead
+warning: HexMatrixMathlib/Packed.lean:149:10: `if_neg` has been deprecated: Use `ite_eq_right` instead
+⚠ [3282/3293] Replayed HexMvPolyMathlib.Aeval
+warning: HexMvPolyMathlib/Aeval.lean:63:0: automatically included section variable(s) unused in theorem `HexMvPolyMathlib.eval₂_toMvPolynomial`:
+  [BEq R]
+  [LawfulBEq R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [BEq R] [LawfulBEq R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+ℹ [3293/3293] Built HexKroneckerMathlib.ProofProbe.GridK3D8Profile (2.1s)
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8Profile.lean:12:0: overlappingInstancesLinter took 0.0831ms
+tacticAnalysis took 0.324ms
+linting took 10.2ms
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8Profile.lean:13:0: elaboration took 0.222ms
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8Profile.lean:13:0: overlappingInstancesLinter took 0.0117ms
+tacticAnalysis took 0.0732ms
+linting took 8.59ms
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8Profile.lean:14:0: attribute application took 0.00591ms
+typeclass inference of EmptyCollection took 0.227ms
+typeclass inference of EmptyCollection took 0.0173ms
+typeclass inference of OfNat took 0.138ms
+instantiate metavars took 0.00314ms
+instantiate metavars took 0.00028ms
+let-to-have transformation took 0.0068ms
+attribute application took 0.00207ms
+attribute application took 0.000641ms
+elaboration took 5.28ms
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8Profile.lean:14:0: typeclass inference of Decidable took 0.172ms
+typeclass inference of Decidable took 0.00381ms
+type checking took 444ms
+tactic execution of Lean.Parser.Tactic.decide took 0.278ms
+tactic execution of Lean.Parser.Tactic.tacticSeq1Indented took 0.0194ms
+tactic execution of Lean.Parser.Tactic.tacticSeq took 0.02ms
+instantiate metavars took 0.00534ms
+instantiate metavars took 0.000241ms
+instantiate metavars took 0.00021ms
+instantiate metavars took 0.00015ms
+instantiate metavars took 0.00014ms
+share common exprs took 0.0198ms
+fix level params took 0.00725ms
+let-to-have transformation took 0.00415ms
+attribute application took 0.00428ms
+attribute application took 0.000761ms
+process pre-definitions took 0.239ms
+elaboration took 3.18ms
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8Profile.lean:14:8: type checking took 0.0606ms
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8Profile.lean:14:0: overlappingInstancesLinter took 0.267ms
+tacticAnalysis took 0.322ms
+linting took 1.4ms
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8Profile.lean:16:0: 'kernelResult' depends on axioms: [propext]
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8Profile.lean:16:0: elaboration took 441ms
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8Profile.lean:16:0: overlappingInstancesLinter took 0.0361ms
+tacticAnalysis took 0.195ms
+linting took 2.31ms
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8Profile.lean:17:0: elaboration took 0.0302ms
+info: bench/HexKroneckerMathlib/ProofProbe/GridK3D8Profile.lean:17:0: overlappingInstancesLinter took 0.0187ms
+tacticAnalysis took 0.107ms
+linting took 0.736ms
+module linting took 0.00157ms
+info: stderr:
+parsing took 0.0263ms
+parsing took 0.143ms
+parsing took 0.0382ms
+parsing took 0.00223ms
+.olean serialization took 53.7ms
+cumulative profiling times:
+	.olean serialization 53.7ms
+	attribute application 0.013ms
+	elaboration 450ms
+	fix level params 0.00716ms
+	instantiate metavars 0.00861ms
+	let-to-have transformation 0.0106ms
+	linting 33.2ms
+	module linting 0.00134ms
+	overlappingInstancesLinter 0.425ms
+	parsing 0.216ms
+	process pre-definitions 0.238ms
+	share common exprs 0.0197ms
+	tactic execution 0.316ms
+	tacticAnalysis 1.09ms
+	type checking 444ms
+	typeclass inference 0.556ms
+Build completed successfully (3293 jobs).
+[ perf record: Woken up 463 times to write data ]
+[ perf record: Captured and wrote 9.757 MB /tmp/hex-kronecker-perf.data (651 samples) ]
