@@ -19,6 +19,11 @@ open scoped HexMvPolyMathlib
 @[expose] noncomputable def termsPolynomial (k : Nat) (ts : PolyList Int) :
     MvPolynomial (Fin k) Int := HexMvPolyMathlib.Kernel.denote (cmp := Hex.Mono.grevlex) ts
 
+/-- Evaluate the existing kernel-list denotation in the chosen commutative ring. -/
+@[expose] noncomputable def denoteTerms {k : Nat} (R : Type u) [CommRing R]
+    (v : Fin k → R) (ts : PolyList Int) : R :=
+  MvPolynomial.eval₂Hom (Int.castRingHom R) v (termsPolynomial k ts)
+
 @[simp] theorem termsPolynomial_nil (k : Nat) : termsPolynomial k [] = 0 := by
   simp [termsPolynomial, HexMvPolyMathlib.Kernel.denote, denote]
 

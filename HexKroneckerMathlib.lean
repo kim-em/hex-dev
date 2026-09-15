@@ -15,6 +15,7 @@ public import HexKroneckerMathlib.Degree
 public import HexKroneckerMathlib.Preflight
 public import HexKroneckerMathlib.ExprSound
 public import HexKroneckerMathlib.ModSound
+public import HexKroneckerMathlib.Residue
 public import HexKroneckerMathlib.MatrixDenote
 public import HexKroneckerMathlib.MulModSound
 public import HexKroneckerMathlib.Tactic

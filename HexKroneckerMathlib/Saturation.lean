@@ -12,24 +12,42 @@ public section
 
 namespace Hex.Kronecker.Saturating
 
+theorem small_mul_lt (cap a b : Nat)
+    (h : (a < 4294967296 && b < 4294967296 && 18446744073709551616 ≤ cap) = true) :
+    a * b < cap := by
+  simp only [Bool.and_eq_true_iff, decide_eq_true_eq] at h
+  have hm := Nat.mul_lt_mul_of_lt_of_lt h.1.1 h.1.2
+  exact hm.trans_le h.2
+
+theorem small_add_lt (cap a b : Nat)
+    (h : (a < 4294967296 && b < 4294967296 && 18446744073709551616 ≤ cap) = true) :
+    a + b < cap := by
+  simp only [Bool.and_eq_true_iff, decide_eq_true_eq] at h
+  omega
+
 theorem add_eq (cap a b : Nat) : add cap a b = min (a + b) cap := by
   unfold add
-  split_ifs <;> omega
+  split_ifs with hf ha hb
+  · exact (min_eq_left (Nat.le_of_lt (small_add_lt cap a b hf))).symm
+  all_goals omega
 
 theorem mul_eq (cap a b : Nat) : mul cap a b = min (a * b) cap := by
-  by_cases ha : a = 0
-  · subst a; simp [mul]
-  by_cases hb : b = 0
-  · subst b; simp [mul]
-  simp only [mul, Bool.or_eq_true, beq_iff_eq, ha, hb, or_self, ↓reduceIte]
-  split_ifs with hc hd
+  unfold mul
+  split_ifs with hf hz hc hd
+  · exact (min_eq_left (Nat.le_of_lt (small_mul_lt cap a b hf))).symm
+  · rcases Bool.or_eq_true_iff.mp hz with ha | hb
+    · simp [eq_of_beq ha]
+    · simp [eq_of_beq hb]
   · apply (min_eq_right _).symm
+    have hb : b ≠ 0 := by intro hb; simp [hb] at hz
     exact hc.trans (Nat.le_mul_of_pos_right _ (by omega))
   · apply (min_eq_right _).symm
+    have ha : a ≠ 0 := by intro ha; simp [ha] at hz
     have := (Nat.div_lt_iff_lt_mul (by omega : 0 < a)).mp hd
     rw [Nat.mul_comm b a] at this
     omega
   · apply (min_eq_left _).symm
+    have ha : a ≠ 0 := by intro ha; simp [ha] at hz
     have := (Nat.le_div_iff_mul_le (by omega : 0 < a)).mp (Nat.le_of_not_gt hd)
     rw [Nat.mul_comm b a] at this
     omega

@@ -29,6 +29,27 @@ inductive Expr where
   | pow (a : Expr) (n : Nat)
   deriving Repr, DecidableEq
 
+/-- Compilable form of the primitive recursor. The equality below is a proved
+compiler rewrite; kernel evaluation uses the primitive recursor directly. -/
+def Expr.recImpl {motive : Expr → Sort u}
+    (int : ∀ z, motive (.int z)) (atom : ∀ i, motive (.atom i))
+    (add : ∀ a b, motive a → motive b → motive (.add a b))
+    (sub : ∀ a b, motive a → motive b → motive (.sub a b))
+    (neg : ∀ a, motive a → motive (.neg a))
+    (mul : ∀ a b, motive a → motive b → motive (.mul a b))
+    (pow : ∀ a n, motive a → motive (.pow a n)) : (e : Expr) → motive e
+  | .int z => int z
+  | .atom i => atom i
+  | .add a b => add a b (recImpl int atom add sub neg mul pow a) (recImpl int atom add sub neg mul pow b)
+  | .sub a b => sub a b (recImpl int atom add sub neg mul pow a) (recImpl int atom add sub neg mul pow b)
+  | .neg a => neg a (recImpl int atom add sub neg mul pow a)
+  | .mul a b => mul a b (recImpl int atom add sub neg mul pow a) (recImpl int atom add sub neg mul pow b)
+  | .pow a n => pow a n (recImpl int atom add sub neg mul pow a)
+
+@[csimp] theorem Expr.rec_eq_impl : @Expr.rec = @Expr.recImpl := by
+  funext motive int atom add sub neg mul pow e
+  induction e <;> simp_all [recImpl]
+
 /-- Limits on dense digits and on the bits of packed operands and intermediates. -/
 structure Budget where
   maxDenseDigits : Nat := 65536
@@ -37,13 +58,17 @@ structure Budget where
 
 namespace Saturating
 
-/-- Addition capped before constructing an oversized sum. -/
+/-- Addition capped before constructing an oversized sum. A bit-length test
+certifies the small case, avoiding subtraction from a large cap. -/
 def add (cap a b : Nat) : Nat :=
-  if cap ≤ a then cap else if cap - a ≤ b then cap else a + b
+  if a < 4294967296 && b < 4294967296 && 18446744073709551616 ≤ cap then a + b
+  else if cap ≤ a then cap else if cap - a ≤ b then cap else a + b
 
-/-- Multiplication capped before constructing an oversized product. -/
+/-- Multiplication capped before constructing an oversized product. The fit test
+only selects exact arithmetic; overflow still uses the exact division guard. -/
 def mul (cap a b : Nat) : Nat :=
-  if a == 0 || b == 0 then 0
+  if a < 4294967296 && b < 4294967296 && 18446744073709551616 ≤ cap then a * b
+  else if a == 0 || b == 0 then 0
   else if cap ≤ a then cap
   else if (cap - 1) / a < b then cap else a * b
 
@@ -97,11 +122,10 @@ def scaleDegrees (n : Nat) : List Nat → List Nat
 namespace Expr
 
 /-- Reject every out-of-range atom, including atoms below a zero power. -/
-@[reducible] def wellFormed (k : Nat) : Expr → Bool
-  | .int _ => true
-  | .atom i => i < k
-  | .add a b | .sub a b | .mul a b => wellFormed k a && wellFormed k b
-  | .neg a | .pow a _ => wellFormed k a
+@[reducible] def wellFormed (k : Nat) (e : Expr) : Bool :=
+  Expr.rec (fun _ => true) (fun i => decide (i < k))
+    (fun _ _ a b => a && b) (fun _ _ a b => a && b)
+    (fun _ a => a) (fun _ _ a b => a && b) (fun _ _ a => a) e
 
 /-- Every occurring atom belongs to the declared arity. -/
 abbrev WellFormed (e : Expr) (k : Nat) : Prop := wellFormed k e = true
@@ -160,14 +184,10 @@ def code : List Nat → List Nat → Nat
   | _, _ => 0
 
 /-- Evaluate the original tree at the Kronecker substitution. -/
-def evalKron (base : Nat) (strides : List Nat) : Expr → Int
-  | .int z => z
-  | .atom i => power (Int.ofNat base) (strides.getD i 0)
-  | .add a b => evalKron base strides a + evalKron base strides b
-  | .sub a b => evalKron base strides a - evalKron base strides b
-  | .neg a => -evalKron base strides a
-  | .mul a b => evalKron base strides a * evalKron base strides b
-  | .pow a n => power (evalKron base strides a) n
+def evalKron (base : Nat) (strides : List Nat) (e : Expr) : Int :=
+  Expr.rec (fun z => z) (fun i => power (Int.ofNat base) (strides.getD i 0))
+    (fun _ _ a b => a + b) (fun _ _ a b => a - b)
+    (fun _ a => -a) (fun _ _ a b => a * b) (fun _ n a => power a n) e
 
 /-- Pack a supplied support directly, without filling the dense box. The public
 checks validate exponent lists before calling this evaluator. -/

@@ -38,30 +38,30 @@ def sup (a b : Bounds) : Bounds :=
 end Bounds
 
 /-- Analyze each subtree once, accumulating its bounds without list append. -/
-def Expr.analyze (cap k : Nat) : Expr → List Bounds → Bounds × List Bounds
-  | .int z, acc =>
-      let b := Bounds.mk (zeroDegrees k) (min z.natAbs cap)
-      (b, b :: acc)
-  | .atom i, acc =>
-      let b := Bounds.mk (atomDegrees k i) (min 1 cap)
-      (b, b :: acc)
-  | .add a b, acc | .sub a b, acc =>
-      let (a, acc) := a.analyze cap k acc
-      let (b, acc) := b.analyze cap k acc
+def Expr.analyze (cap k : Nat) (e : Expr) : List Bounds → Bounds × List Bounds :=
+  Expr.rec
+    (fun z acc => let b := Bounds.mk (zeroDegrees k) (min z.natAbs cap); (b, b :: acc))
+    (fun i acc => let b := Bounds.mk (atomDegrees k i) (min 1 cap); (b, b :: acc))
+    (fun _ _ left right acc =>
+      let (a, acc) := left acc
+      let (b, acc) := right acc
       let c := a.add cap b
-      (c, c :: acc)
-  | .mul a b, acc =>
-      let (a, acc) := a.analyze cap k acc
-      let (b, acc) := b.analyze cap k acc
+      (c, c :: acc))
+    (fun _ _ left right acc =>
+      let (a, acc) := left acc
+      let (b, acc) := right acc
+      let c := a.add cap b
+      (c, c :: acc))
+    (fun _ child acc => let (a, acc) := child acc; (a, a :: acc))
+    (fun _ _ left right acc =>
+      let (a, acc) := left acc
+      let (b, acc) := right acc
       let c := a.mul cap b
-      (c, c :: acc)
-  | .neg a, acc =>
-      let (a, acc) := a.analyze cap k acc
-      (a, a :: acc)
-  | .pow a n, acc =>
-      let (a, acc) := a.analyze cap k acc
+      (c, c :: acc))
+    (fun _ n child acc =>
+      let (a, acc) := child acc
       let c := a.pow cap n
-      (c, c :: acc)
+      (c, c :: acc)) e
 
 /-- Bounds for the supplied support, including zero-coefficient terms. -/
 def termBounds (cap k : Nat) : Hex.MvPoly.Kernel.PolyList Int → Bounds
@@ -93,9 +93,19 @@ def Bounds.bits (strides : List Nat) (width : Nat) (b : Bounds) : Nat :=
   code strides b.degrees * width + b.height.log2 + 2
 
 /-- Maximum over every operand and subtree, including operands multiplied by zero. -/
-def maxBits (strides : List Nat) (width : Nat) : List Bounds → Nat
+noncomputable def maxBits (strides : List Nat) (width : Nat) (bs : List Bounds) : Nat :=
+  List.rec 0 (fun b _ rest => max (b.bits strides width) rest) bs
+
+/-- Compilable equations for the direct list recursor. -/
+def maxBitsImpl (strides : List Nat) (width : Nat) : List Bounds → Nat
   | [] => 0
-  | b :: bs => max (b.bits strides width) (maxBits strides width bs)
+  | b :: bs => max (b.bits strides width) (maxBitsImpl strides width bs)
+
+@[csimp] theorem maxBits_eq_impl : maxBits = maxBitsImpl := by
+  funext ss w bs
+  induction bs with
+  | nil => rfl
+  | cons b bs ih => exact congrArg (max (b.bits ss w)) ih
 
 /-- The ordinary dot product is the default; signed packing is separately budgeted. -/
 inductive MulMode where

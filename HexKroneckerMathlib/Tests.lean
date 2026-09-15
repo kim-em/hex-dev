@@ -53,3 +53,8 @@ theorem frobeniusSeven {R : Type*} [CommRing R] [CharP R 7] (x : R) :
 #print axioms Hex.Kronecker.checkExprEqMod_sound
 #print axioms Hex.Kronecker.checkTermsEqMod_sound
 #print axioms Hex.Kronecker.checkMulTermsMod_sound
+
+-- A huge literal exponent still takes logarithmically many kernel multiplications.
+example : Hex.Kronecker.checkExprEq ⟨65536,16⟩ 0
+    (.pow (.int 1) 1000000000) (.int 1) = true := by
+  decide +kernel
