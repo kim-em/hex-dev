@@ -83,7 +83,6 @@ theorem cols_subset_reduceStep {quot : R → R → R} (S : Hex.Matrix.ReducedFor
   cases hp : Hex.Matrix.findPivotRow? S.matrix S.profile.rows.toList j with
   | none =>
     rw [Hex.Matrix.reduceStep_skip hp]
-    exact List.Subset.refl _
   | some p =>
     rw [Hex.Matrix.reduceStep_pivot_profile hp]
     simp only [Vector.toList_push]

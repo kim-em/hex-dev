@@ -91,7 +91,7 @@ private theorem toPolyℝ_linear : toPolyℝ linear = X - C 5 := by
   match n with
   | 0 => norm_num [Array.getD]
   | 1 => norm_num [Array.getD]
-  | (k + 2) => norm_num [Array.getD]; omega
+  | (k + 2) => norm_num [Array.getD]
 
 private theorem toPolyℝ_quadPair : toPolyℝ quadPair = X ^ 2 - C 1 := by
   apply Polynomial.ext; intro n
@@ -101,7 +101,7 @@ private theorem toPolyℝ_quadPair : toPolyℝ quadPair = X ^ 2 - C 1 := by
   | 0 => norm_num [Array.getD]
   | 1 => norm_num [Array.getD]
   | 2 => norm_num [Array.getD]
-  | (k + 3) => norm_num [Array.getD]; omega
+  | (k + 3) => norm_num [Array.getD]
 
 private theorem toPolyℝ_quadNone : toPolyℝ quadNone = X ^ 2 + C 1 := by
   apply Polynomial.ext; intro n
@@ -111,7 +111,7 @@ private theorem toPolyℝ_quadNone : toPolyℝ quadNone = X ^ 2 + C 1 := by
   | 0 => norm_num [Array.getD]
   | 1 => norm_num [Array.getD]
   | 2 => norm_num [Array.getD]
-  | (k + 3) => norm_num [Array.getD]; omega
+  | (k + 3) => norm_num [Array.getD]
 
 private theorem toPolyℝ_cubicTriple : toPolyℝ cubicTriple = X ^ 3 - X := by
   apply Polynomial.ext; intro n
@@ -122,7 +122,7 @@ private theorem toPolyℝ_cubicTriple : toPolyℝ cubicTriple = X ^ 3 - X := by
   | 1 => norm_num [Array.getD]
   | 2 => norm_num [Array.getD]
   | 3 => norm_num [Array.getD]
-  | (k + 4) => norm_num [Array.getD]; omega
+  | (k + 4) => norm_num [Array.getD]
 
 private theorem toPolyℝ_const7 : toPolyℝ const7 = C 7 := by
   apply Polynomial.ext; intro n
@@ -202,7 +202,7 @@ private theorem toPolyℚ_linear : toPolyℚ linear = X - C 5 := by
   match n with
   | 0 => norm_num [Array.getD]
   | 1 => norm_num [Array.getD]
-  | (k + 2) => norm_num [Array.getD]; omega
+  | (k + 2) => norm_num [Array.getD]
 
 private theorem squareFreeRat_linear : Hex.ZPoly.SquareFreeRat linear := by
   rw [squareFreeRat_iff linear (by decide)]

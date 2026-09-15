@@ -96,7 +96,7 @@ theorem norm_det_le_prod_norm_column (A : Matrix n n 𝕜) :
   -- Cauchy-Schwarz on each diagonal factor.
   have hbound : ‖e.toBasis.det f‖ ≤ ∏ j, ‖f j‖ := by
     rw [hdet, norm_prod]
-    refine Finset.prod_le_prod (fun i _ => norm_nonneg _) (fun i _ => ?_)
+    refine Finset.prod_le_prod₀ (fun i _ => norm_nonneg _) (fun i _ => ?_)
     calc ‖inner 𝕜 (e i) (f i)‖ ≤ ‖e i‖ * ‖f i‖ := norm_inner_le_norm _ _
       _ = ‖f i‖ := by rw [e.orthonormal.norm_eq_one, one_mul]
   calc ‖A.det‖ = ‖e.toBasis.det f‖ := hchange.symm

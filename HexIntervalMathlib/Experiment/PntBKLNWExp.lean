@@ -192,7 +192,6 @@ theorem expSumWithTail {b N : Nat} (atLeast : 64 ≤ N) :
       _ = ((N - 63 : Nat) : ℝ) * upperBaseValue 64 ^ b := by
         congr 2
         norm_num [Nat.card_Icc]
-        omega
   constructor
   · calc
       1 + lowerBand b 63 ≤
