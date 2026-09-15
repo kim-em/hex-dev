@@ -3,7 +3,7 @@
 The soundness and tactic companion of
 [hex-kronecker](hex-kronecker.md).  It proves that the deterministic packed
 integer checks establish polynomial identities and exposes the `kronecker`
-tactic for characteristic-zero commutative rings.  It is unpublished because
+tactic for every commutative ring.  It is unpublished because
 the frontend depends on `HexReflect` and `HexReflectMathlib`.
 
 Dependencies are `HexKronecker`, `HexMvPolyMathlib`, `HexReflect`,
@@ -128,15 +128,15 @@ and would defeat the tree checker's purpose.
 ## The `kronecker` tactic
 
 The tactic closes goals `a = b` when `a` and `b` have the same carrier `R`,
-`[CommRing R] [CharZero R]` is available, and both sides reify in the fixed
+`[CommRing R]` is available, and both sides reify in the fixed
 commutative-ring language.  Examples of the surface are:
 
 ```lean
-example {R : Type*} [CommRing R] [CharZero R] (x y : R) :
+example {R : Type*} [CommRing R] (x y : R) :
     (x + y)^3 = x^3 + 3*x^2*y + 3*x*y^2 + y^3 := by
   kronecker
 
-example {R : Type*} [CommRing R] [CharZero R] (x y : R) :
+example {R : Type*} [CommRing R] (x y : R) :
     (x + y)^2 = x^2 + 2*x*y + y^2 :=
   kronecker% ((x + y)^2 = x^2 + 2*x*y + y^2)
 ```
@@ -169,19 +169,21 @@ elaborator performs no `Kernel.whnf` pre-evaluation and does not ask
 check.  The accepted theorem's axiom audit permits only `propext`,
 `Classical.choice`, and `Quot.sound`.
 
-Although `checkExprEq_sound` maps an established integer polynomial identity
-to every commutative ring, the tactic is intentionally restricted to
-characteristic zero by the revised directive.  Programmatic consumers in
-positive characteristic may provide the quotient witness and apply the
-`...Mod_sound` theorems, but this tactic neither searches for that witness nor
-silently falls back to normalized residue terms.
+`checkExprEq_sound` maps an established integer polynomial identity to every
+commutative ring, so the tactic requires no characteristic hypothesis and
+proves such identities over finite fields as readily as over `ℚ`.  What it
+cannot prove in positive characteristic is an identity that holds only
+modulo `p`, such as `x ^ p = x` over `ZMod p`: that needs the quotient
+witness.  Programmatic consumers may supply one and apply the `...Mod_sound`
+theorems, but this tactic neither searches for that witness nor silently
+falls back to normalized residue terms.
 
 ## Outcomes and diagnostics
 
 The tactic follows [matrix-tactics' outcome protocol](../matrix-tactics.md#outcome-protocol-and-diagnostics):
 
-- A goal other than equality, different carriers, a missing `CommRing` or
-  `CharZero` instance, an unresolved carrier metavariable, or syntax outside
+- A goal other than equality, different carriers, a missing `CommRing`
+  instance, an unresolved carrier metavariable, or syntax outside
   the reflected fixed ring fragment is `notApplicable` and delegates with
   `throwUnsupportedSyntax`.
 - A recognized polynomial identity whose exact preflight exceeds either
