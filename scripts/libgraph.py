@@ -31,6 +31,7 @@ BUILD_ONLY_LIBS = {
     "HexPrimalityKernelProbe",
     "HexPrimalityElabProbe",
     "HexPrimalityElabProbeScientific",
+    "HexPrimalityConstructionProbe",
     "HexPrimalityMathlibProofProbe",
     "HexIntFactorKernelProbe",
     "HexMvGcdKernelProbe",

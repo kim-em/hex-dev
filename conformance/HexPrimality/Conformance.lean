@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexPrimality
+import HexPrimality.ConstructionConformance
 
 /-!
 Core conformance checks for the `hex-primality` decision, certificate, and
@@ -104,9 +105,9 @@ private def pMinusOneWhole :=
 #guard pMinusOneWhole.attempts == 1
 #guard pMinusOneWhole.rand == Hex.Rand.ofSeed 13
 
-#guard smoothBoundCap == 9999
-#guard smoothBoundCap < primeTableBound
-#guard smoothBound (primeTableBound + 1000) == smoothBoundCap
+#guard smoothBoundCap == 524288
+#guard primeTableBound < smoothBoundCap
+#guard smoothBound (smoothBoundCap + 1000) == smoothBoundCap
 
 example {n base bound d : Nat} {r : Hex.Rand}
     (h : (pMinusOneStage1Counted n base bound r).result = .factor d) :

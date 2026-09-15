@@ -116,6 +116,8 @@
 {"kind":"result","lib":"HexPrimality","case":"certcheck/reject/pock3-witness-high","op":"certcheck","value":false}
 {"kind":"certcheck","lib":"HexPrimality","case":"certcheck/reject/pock3-size","n":43,"cert":{"t":"pock3","n":43,"r":1,"s":5,"w":0,"f":[[3,0,{"t":"small","n":2}]]}}
 {"kind":"result","lib":"HexPrimality","case":"certcheck/reject/pock3-size","op":"certcheck","value":false}
+{"kind":"certcheck","lib":"HexPrimality","case":"certcheck/accept/curve25519","n":57896044618658097711785492504343953926634992332820282019728792003956564819949,"cert":{"t":"pock","n":57896044618658097711785492504343953926634992332820282019728792003956564819949,"f":[[2,0,{"t":"pock3","n":74058212732561358302231226437062788676166966415465897661863160754340907,"r":2028478494862525422475607,"s":22304740449229861598212,"w":2028478494862525422475606,"f":[[2,0,{"t":"small","n":2}],[2,0,{"t":"small","n":353}],[2,0,{"t":"small","n":57467}],[2,0,{"t":"pock3","n":31757755568855353,"r":4028945,"s":289,"w":4028944,"f":[[5,2,{"t":"small","n":2}],[2,0,{"t":"small","n":223}],[2,0,{"t":"small","n":4153}]]}]]}]]}}
+{"kind":"result","lib":"HexPrimality","case":"certcheck/accept/curve25519","op":"certcheck","value":true}
 {"kind":"segment","lib":"HexPrimality","case":"segment/edge/empty","lo":10,"hi":10}
 {"kind":"result","lib":"HexPrimality","case":"segment/edge/empty","op":"segment","value":[]}
 {"kind":"segment","lib":"HexPrimality","case":"segment/basic/1-100","lo":1,"hi":101}

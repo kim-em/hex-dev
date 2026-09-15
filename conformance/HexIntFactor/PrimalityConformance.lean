@@ -41,7 +41,7 @@ private def squareFuel : Nat := min (defaultPrimeFuel squarePrime) 512
 private def tacticBudget : PrimeCertBudget := ⟨2, 1 <<< 15⟩
 
 private def squareAllocation (factorFuel : Nat) : FactorSearchBudget :=
-  ⟨tacticBudget, squareFuel - 1, factorFuel⟩
+  { primeBudget := tacticBudget, primeFuel := squareFuel - 1, factorFuel := factorFuel }
 
 private def coreFailure : PrimeCertFailure :=
   match Internal.primeCertCountedWith? tacticBudget squarePrime squareSeed

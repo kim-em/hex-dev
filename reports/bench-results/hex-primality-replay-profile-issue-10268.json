@@ -1,0 +1,267 @@
+{
+  "allocation_share_percent": 62.55,
+  "classified_percent": 83.08,
+  "diagnostics": {
+    "checker_changed": false,
+    "cpu": 23,
+    "raw_sha256": "f719cd8f2a2634dd8edcb459b46ea894ad6da77267fedb5642623c5360012006",
+    "scope": "fresh checker-only literal module; busiest Lean worker, not a compiled checker timing"
+  },
+  "inclusive_hex": [],
+  "leaf_categories": {
+    "allocation": 62.55,
+    "gmp": 0.01,
+    "lean-runtime": 20.52,
+    "other": 16.92
+  },
+  "profile": "/tmp/hex10268-replay-profile.json.gz",
+  "samples": 15588,
+  "symbols": "/tmp/hex10268-replay-profile.json.syms.json",
+  "top_inclusive": [
+    {
+      "function": "lean::type_checker::whnf(lean::expr const&)",
+      "percent": 85.74
+    },
+    {
+      "function": "lean::type_checker::whnf_core(lean::expr const&, bool, bool)",
+      "percent": 85.51
+    },
+    {
+      "function": "lean::type_checker::reduce_nat(lean::expr const&)",
+      "percent": 84.9
+    },
+    {
+      "function": "lean::type_checker::reduce_recursor(lean::expr const&, bool, bool)",
+      "percent": 82.94
+    },
+    {
+      "function": "lean::type_checker::reduce_bin_nat_pred<bool (lean_object*, lean_object*)>(bool ( const&)(lean_object*, lean_object*), lean::expr const&)",
+      "percent": 78.14
+    },
+    {
+      "function": "lean::replace(lean::expr const&, std::__1::function<std::__1::optional<lean::expr>(lean::expr const&, unsigned int)> const&, bool)",
+      "percent": 62.88
+    },
+    {
+      "function": "lean::replace_rec_fn::apply(lean::expr const&, unsigned int)",
+      "percent": 61.76
+    },
+    {
+      "function": "_mi_malloc_generic(mi_theap_s*, unsigned long, unsigned long, unsigned long*)",
+      "percent": 58.58
+    },
+    {
+      "function": "mi_page_queue_find_free_ex(mi_theap_s*, mi_page_queue_s*, bool)",
+      "percent": 58.42
+    },
+    {
+      "function": "mi_page_free_list_extend(mi_page_s*, unsigned long, unsigned long)",
+      "percent": 58.24
+    },
+    {
+      "function": "mi_page_extend_free(mi_theap_s*, mi_page_s*)",
+      "percent": 58.19
+    },
+    {
+      "function": "mi_arenas_page_regular_alloc(mi_theap_s*, unsigned long, unsigned long)",
+      "percent": 55.78
+    },
+    {
+      "function": "Lean.profileitIOUnsafe",
+      "percent": 55.56
+    },
+    {
+      "function": "lean_apply_1",
+      "percent": 55.56
+    },
+    {
+      "function": "lean::environment::add_theorem(lean::declaration const&, bool) const",
+      "percent": 55.56
+    },
+    {
+      "function": "lean_profileit",
+      "percent": 55.54
+    },
+    {
+      "function": "lean::environment::add(lean::declaration const&, bool) const",
+      "percent": 55.54
+    },
+    {
+      "function": "lean::elab_environment::add(lean::declaration const&, bool) const",
+      "percent": 55.54
+    },
+    {
+      "function": "lean_elab_add_decl",
+      "percent": 55.53
+    },
+    {
+      "function": "lean::catch_kernel_exceptions<lean::elab_environment>(std::__1::function<lean::elab_environment()> const&)",
+      "percent": 55.53
+    }
+  ],
+  "top_self": [
+    {
+      "function": "mi_page_free_list_extend(mi_page_s*, unsigned long, unsigned long)",
+      "percent": 58.22
+    },
+    {
+      "function": "lean_dec_ref_cold",
+      "percent": 11.12
+    },
+    {
+      "function": "std::__1::__hash_table<std::__1::__hash_value_type<lean::expr, lean::expr>, std::__1::__unordered_map_hasher<lean::expr, std::__1::pair<lean::expr const, lean::expr>, lean::expr_hash, std::__1::equal_to<lean::expr> >, std::__1::__unordered_map_equal<lean::expr, std::__1::pair<lean::expr const, lean::expr>, std::__1::equal_to<lean::expr>, lean::expr_hash>, mi_stl_allocator<std::__1::pair<lean::expr const, lean::expr> > >::find<lean::expr>(lean::expr const&)",
+      "percent": 5.67
+    },
+    {
+      "function": "ZZNSt3__112__hash_tableINS_17__hash_value_typeINS_4pairIP11lean_objectjEEN4lean4exprEEENS_22__unordered_map_hasherIS5_NS2_IKS5_S7_EENS6_14replace_rec_fn10key_hasherENS_8equal_toIS5_EEEENS_21__unordered_map_equalIS5_SB_SF_SD_EE16mi_stl_allocatorISB_EE16__emplace_uniqueB9nqe220104IJNS2_IS5_S7_EEEEENS2_INS_15__hash_iteratorIPNS_11__hash_nodeIS8_PvEEEEbEEDpOT_ENKUlRSA_OSN_E_clESY_SZ_",
+      "percent": 3.47
+    },
+    {
+      "function": "std::__1::__hash_table<std::__1::__hash_value_type<std::__1::pair<lean_object*, unsigned int>, lean::expr>, std::__1::__unordered_map_hasher<std::__1::pair<lean_object*, unsigned int>, std::__1::pair<std::__1::pair<lean_object*, unsigned int> const, lean::expr>, lean::replace_rec_fn::key_hasher, std::__1::equal_to<std::__1::pair<lean_object*, unsigned int> > >, std::__1::__unordered_map_equal<std::__1::pair<lean_object*, unsigned int>, std::__1::pair<std::__1::pair<lean_object*, unsigned int> const, lean::expr>, std::__1::equal_to<std::__1::pair<lean_object*, unsigned int> >, lean::replace_rec_fn::key_hasher>, mi_stl_allocator<std::__1::pair<std::__1::pair<lean_object*, unsigned int> const, lean::expr> > >::find<std::__1::pair<lean_object*, unsigned int> >(std::__1::pair<lean_object*, unsigned int> const&)",
+      "percent": 1.96
+    },
+    {
+      "function": "mi_free",
+      "percent": 1.9
+    },
+    {
+      "function": "lean::replace_rec_fn::apply(lean::expr const&, unsigned int)",
+      "percent": 1.59
+    },
+    {
+      "function": "std::__1::__hash_table<std::__1::__hash_value_type<lean::expr, lean::expr>, std::__1::__unordered_map_hasher<lean::expr, std::__1::pair<lean::expr const, lean::expr>, lean::expr_hash, std::__1::equal_to<lean::expr> >, std::__1::__unordered_map_equal<lean::expr, std::__1::pair<lean::expr const, lean::expr>, std::__1::equal_to<lean::expr>, lean::expr_hash>, mi_stl_allocator<std::__1::pair<lean::expr const, lean::expr> > >::__do_rehash<true>(unsigned long)",
+      "percent": 1.53
+    },
+    {
+      "function": "std::__1::__hash_table<std::__1::__hash_value_type<lean::expr, lean::expr>, std::__1::__unordered_map_hasher<lean::expr, std::__1::pair<lean::expr const, lean::expr>, lean::expr_hash, std::__1::equal_to<lean::expr> >, std::__1::__unordered_map_equal<lean::expr, std::__1::pair<lean::expr const, lean::expr>, std::__1::equal_to<lean::expr>, lean::expr_hash>, mi_stl_allocator<std::__1::pair<lean::expr const, lean::expr> > >::__deallocate_node[abi:nqe220104](std::__1::__hash_node<std::__1::__hash_value_type<lean::expr, lean::expr>, void*>*)",
+      "percent": 1.37
+    },
+    {
+      "function": "std::__1::__hash_table<std::__1::__hash_value_type<std::__1::pair<lean_object*, unsigned int>, lean::expr>, std::__1::__unordered_map_hasher<std::__1::pair<lean_object*, unsigned int>, std::__1::pair<std::__1::pair<lean_object*, unsigned int> const, lean::expr>, lean::replace_rec_fn::key_hasher, std::__1::equal_to<std::__1::pair<lean_object*, unsigned int> > >, std::__1::__unordered_map_equal<std::__1::pair<lean_object*, unsigned int>, std::__1::pair<std::__1::pair<lean_object*, unsigned int> const, lean::expr>, std::__1::equal_to<std::__1::pair<lean_object*, unsigned int> >, lean::replace_rec_fn::key_hasher>, mi_stl_allocator<std::__1::pair<std::__1::pair<lean_object*, unsigned int> const, lean::expr> > >::__do_rehash<true>(unsigned long)",
+      "percent": 0.97
+    },
+    {
+      "function": "_memset_avx512_unaligned_erms",
+      "percent": 0.86
+    },
+    {
+      "function": "lean::type_checker::whnf_core(lean::expr const&, bool, bool)",
+      "percent": 0.81
+    },
+    {
+      "function": "lean::replace_rec_fn::save_result(lean::expr const&, unsigned int, lean::expr, bool)",
+      "percent": 0.71
+    },
+    {
+      "function": "std::__1::__function::__func<lean::instantiate(lean::expr const&, unsigned int, unsigned int, lean::expr const*)::$_0, std::__1::optional<lean::expr>(lean::expr const&, unsigned int)>::operator()(lean::expr const&, unsigned int&&)",
+      "percent": 0.7
+    },
+    {
+      "function": "lean::type_checker::state::~state()",
+      "percent": 0.67
+    },
+    {
+      "function": "mi_new_n",
+      "percent": 0.66
+    },
+    {
+      "function": "lean::get_app_rev_args(lean::expr const&, lean::buffer<lean::expr, (unsigned long)16>&)",
+      "percent": 0.49
+    },
+    {
+      "function": "lean::environment::is_quot_initialized() const",
+      "percent": 0.44
+    },
+    {
+      "function": "lean::expr_eq_fn<false>::apply(lean::expr const&, lean::expr const&, bool)",
+      "percent": 0.44
+    },
+    {
+      "function": "lean_expr_mk_app_data",
+      "percent": 0.38
+    }
+  ],
+  "top_self_undecorated": [
+    {
+      "percent": 58.22,
+      "symbol": "mi_page_free_list_extend(mi_page_s*, unsigned long, unsigned long)"
+    },
+    {
+      "percent": 11.12,
+      "symbol": "lean_dec_ref_cold"
+    },
+    {
+      "percent": 5.67,
+      "symbol": "std::__1::__hash_table<std::__1::__hash_value_type<lean::expr, lean::expr>, std::__1::__unordered_map_hasher<lean::expr, std::__1::pair<lean::expr const, lean::expr>, lean::expr_hash, std::__1::equal_to<lean::expr> >, std::__1::__unordered_map_equal<lean::expr, std::__1::pair<lean::expr const, lean::expr>, std::__1::equal_to<lean::expr>, lean::expr_hash>, mi_stl_allocator<std::__1::pair<lean::expr const, lean::expr> > >::find<lean::expr>(lean::expr const&)"
+    },
+    {
+      "percent": 3.47,
+      "symbol": "ZZNSt3__112__hash_tableINS_17__hash_value_typeINS_4pairIP11lean_objectjEEN4lean4exprEEENS_22__unordered_map_hasherIS5_NS2_IKS5_S7_EENS6_14replace_rec_fn10key_hasherENS_8equal_toIS5_EEEENS_21__unordered_map_equalIS5_SB_SF_SD_EE16mi_stl_allocatorISB_EE16__emplace_uniqueB9nqe220104IJNS2_IS5_S7_EEEEENS2_INS_15__hash_iteratorIPNS_11__hash_nodeIS8_PvEEEEbEEDpOT_ENKUlRSA_OSN_E_clESY_SZ_"
+    },
+    {
+      "percent": 1.96,
+      "symbol": "std::__1::__hash_table<std::__1::__hash_value_type<std::__1::pair<lean_object*, unsigned int>, lean::expr>, std::__1::__unordered_map_hasher<std::__1::pair<lean_object*, unsigned int>, std::__1::pair<std::__1::pair<lean_object*, unsigned int> const, lean::expr>, lean::replace_rec_fn::key_hasher, std::__1::equal_to<std::__1::pair<lean_object*, unsigned int> > >, std::__1::__unordered_map_equal<std::__1::pair<lean_object*, unsigned int>, std::__1::pair<std::__1::pair<lean_object*, unsigned int> const, lean::expr>, std::__1::equal_to<std::__1::pair<lean_object*, unsigned int> >, lean::replace_rec_fn::key_hasher>, mi_stl_allocator<std::__1::pair<std::__1::pair<lean_object*, unsigned int> const, lean::expr> > >::find<std::__1::pair<lean_object*, unsigned int> >(std::__1::pair<lean_object*, unsigned int> const&)"
+    },
+    {
+      "percent": 1.9,
+      "symbol": "mi_free"
+    },
+    {
+      "percent": 1.59,
+      "symbol": "lean::replace_rec_fn::apply(lean::expr const&, unsigned int)"
+    },
+    {
+      "percent": 1.53,
+      "symbol": "std::__1::__hash_table<std::__1::__hash_value_type<lean::expr, lean::expr>, std::__1::__unordered_map_hasher<lean::expr, std::__1::pair<lean::expr const, lean::expr>, lean::expr_hash, std::__1::equal_to<lean::expr> >, std::__1::__unordered_map_equal<lean::expr, std::__1::pair<lean::expr const, lean::expr>, std::__1::equal_to<lean::expr>, lean::expr_hash>, mi_stl_allocator<std::__1::pair<lean::expr const, lean::expr> > >::__do_rehash<true>(unsigned long)"
+    },
+    {
+      "percent": 1.37,
+      "symbol": "std::__1::__hash_table<std::__1::__hash_value_type<lean::expr, lean::expr>, std::__1::__unordered_map_hasher<lean::expr, std::__1::pair<lean::expr const, lean::expr>, lean::expr_hash, std::__1::equal_to<lean::expr> >, std::__1::__unordered_map_equal<lean::expr, std::__1::pair<lean::expr const, lean::expr>, std::__1::equal_to<lean::expr>, lean::expr_hash>, mi_stl_allocator<std::__1::pair<lean::expr const, lean::expr> > >::__deallocate_node[abi:nqe220104](std::__1::__hash_node<std::__1::__hash_value_type<lean::expr, lean::expr>, void*>*)"
+    },
+    {
+      "percent": 0.97,
+      "symbol": "std::__1::__hash_table<std::__1::__hash_value_type<std::__1::pair<lean_object*, unsigned int>, lean::expr>, std::__1::__unordered_map_hasher<std::__1::pair<lean_object*, unsigned int>, std::__1::pair<std::__1::pair<lean_object*, unsigned int> const, lean::expr>, lean::replace_rec_fn::key_hasher, std::__1::equal_to<std::__1::pair<lean_object*, unsigned int> > >, std::__1::__unordered_map_equal<std::__1::pair<lean_object*, unsigned int>, std::__1::pair<std::__1::pair<lean_object*, unsigned int> const, lean::expr>, std::__1::equal_to<std::__1::pair<lean_object*, unsigned int> >, lean::replace_rec_fn::key_hasher>, mi_stl_allocator<std::__1::pair<std::__1::pair<lean_object*, unsigned int> const, lean::expr> > >::__do_rehash<true>(unsigned long)"
+    },
+    {
+      "percent": 0.86,
+      "symbol": "_memset_avx512_unaligned_erms"
+    },
+    {
+      "percent": 0.81,
+      "symbol": "lean::type_checker::whnf_core(lean::expr const&, bool, bool)"
+    },
+    {
+      "percent": 0.71,
+      "symbol": "lean::replace_rec_fn::save_result(lean::expr const&, unsigned int, lean::expr, bool)"
+    },
+    {
+      "percent": 0.7,
+      "symbol": "std::__1::__function::__func<lean::instantiate(lean::expr const&, unsigned int, unsigned int, lean::expr const*)::$_0, std::__1::optional<lean::expr>(lean::expr const&, unsigned int)>::operator()(lean::expr const&, unsigned int&&)"
+    },
+    {
+      "percent": 0.67,
+      "symbol": "lean::type_checker::state::~state()"
+    },
+    {
+      "percent": 0.66,
+      "symbol": "mi_new_n"
+    },
+    {
+      "percent": 0.49,
+      "symbol": "lean::get_app_rev_args(lean::expr const&, lean::buffer<lean::expr, (unsigned long)16>&)"
+    },
+    {
+      "percent": 0.44,
+      "symbol": "lean::environment::is_quot_initialized() const"
+    },
+    {
+      "percent": 0.44,
+      "symbol": "lean::expr_eq_fn<false>::apply(lean::expr const&, lean::expr const&, bool)"
+    },
+    {
+      "percent": 0.38,
+      "symbol": "lean_expr_mk_app_data"
+    }
+  ],
+  "unresolved_leaf_percent": 0.02
+}

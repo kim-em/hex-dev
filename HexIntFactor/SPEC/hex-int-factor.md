@@ -405,8 +405,7 @@ fall through), `1 < g < n` (a factor), `g = n` (the exponent killed
 every component; retry with a different base or a smaller `B`).
 
 The public bound is explicit rather than aspirational. `smoothBoundCap` is the
-accepted constant `9999`, inside the range where the committed table is
-certified complete but independent of later table growth, and
+accepted constant `524288`, covered by the verified runtime sieve, and
 `smoothBound B = min B smoothBoundCap`. Both the selected primes and their
 prime-power exponents use that same effective bound. In particular a request
 above the cap is not the former hybrid that omitted large primes while still
@@ -437,8 +436,8 @@ below is the one that justifies its place.
 
 At one unresolved dispatcher entry, p−1 receives at most four attempts from
 the combined smooth-route budget. It starts with base `2` and bound `64`.
-A no-factor result multiplies the bound by eight up to `smoothBoundCap`, then
-falls through if the cap made no change. A whole-modulus result lowers the
+A no-factor result multiplies the bound by eight up to the ordinary policy cap
+`9999`, then falls through if the cap made no change. A whole-modulus result lowers the
 bound by a factor of eight (not below `2`) and advances through bases
 `[2, 3, 5, 7]`. A proper factor stops the ladder immediately. These are
 attempts, not hidden retries inside one nominal route call.
@@ -1500,3 +1499,14 @@ state until those entries land.
   and caching" entry describes -- an expensive search run once and
   replayed -- and it should wait for that item rather than inventing a
   format here.
+
+## Runtime smooth prime coverage
+
+Pollard p-minus-one and ECM stage one use HexPrimality's verified
+`primesBelow (effectiveBound + 1)` enumeration. The primitive smoothness cap is
+524288, and every prime at or below that effective bound is included. The
+ordinary factorizer's adaptive ladder retains its 9999 cap, four p-minus-one
+attempts, and eight combined smooth attempts; raising the primitive ceiling
+does not change that production allocation or its exact Rand accounting.
+Explicit primality certificate construction is owned by the HexPrimality SPEC
+and uses its separate `FactorSearchBudget` smooth bounds and bases.

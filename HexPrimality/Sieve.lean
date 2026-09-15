@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexArith.Nat.Prime
+public import Init.Data.Nat.Sqrt
 
 public section
 
@@ -17,18 +18,16 @@ The sieve state is a single `Nat` whose bit `t` names the number
 `numOfIndex t` (`0 ↦ 1, 1 ↦ 5, 2 ↦ 7, 3 ↦ 11, …`). Marking a candidate
 `p = numOfIndex s` clears the union of two arithmetic progressions of
 index step `2p` (the multiples of `p` coprime to `6` step by `6p` in
-value), with each progression's mask built by 32 doubling rounds, so a
-single mask covers `2^32` progression terms and the recursion depth stays
-fixed. Every definition is `@[expose]` and structurally recursive:
+value), with each progression's mask built by at least 32 doubling rounds.
+The depth grows with the logarithm of the width when more coverage is needed.
+The sieve definitions are `@[expose]` and structurally recursive:
 generating and verifying the committed prime table is a kernel
 computation, which is the point of this module (see the SPEC's "Initial
 segments"); `sqrtBound` is data because core `Nat.sqrt` is defined by
 well-founded recursion and does not kernel-reduce.
 
-`sieve_testBit_iff` is the correctness theorem, with the four hypotheses
-the SPEC calls load-bearing: the mask-coverage bound, the square bound
-that makes marking complete, `0 < t` (bit `0` names the non-prime `1`),
-and the representation range.
+`sieve_prime_iff` proves exact primality at represented positive indices.
+The original `sieve_testBit_iff` signature remains available to table clients.
 -/
 
 namespace Hex
@@ -129,10 +128,10 @@ def doubleRounds (step width : Nat) : Nat → Nat → Nat
         else m)
 
 /-- The marking mask: progression start `start`, index step `step`,
-truncated to `width` bits, with `2^32` in-range terms covered. -/
+truncated to `width` bits, with enough rounds to cover that width. -/
 @[expose]
 def markMask (start step width : Nat) : Nat :=
-  doubleRounds step width 32 ((1 <<< start) % 2 ^ width)
+  doubleRounds step width (max 32 (width.log2 + 1)) ((1 <<< start) % 2 ^ width)
 
 private theorem testBit_doubleRounds {step width : Nat} :
     ∀ (r m i : Nat), m < 2 ^ width →
@@ -238,14 +237,16 @@ private theorem testBit_one_shiftLeft {start j : Nat} :
   rw [h, Nat.testBit_two_pow, decide_eq_true_iff]
   omega
 
-/-- The mask covers exactly the in-range progression indices, provided
-the truncation width fits under the `2^32` covered terms. -/
+/-- The mask covers exactly the in-range progression indices. -/
 private theorem testBit_markMask {start step width i : Nat}
-    (hstep : 0 < step) (hwidth : width ≤ 2 ^ 32) :
+    (hstep : 0 < step) :
     (markMask start step width).testBit i = true ↔
       i < width ∧ ∃ k, i = start + step * k := by
   unfold markMask
-  rw [testBit_doubleRounds 32 _ i (Nat.mod_lt _ (Nat.two_pow_pos width))]
+  have hwidth : width ≤ 2 ^ (max 32 (width.log2 + 1)) :=
+    Nat.le_trans (Nat.le_of_lt Nat.lt_log2_self)
+      (Nat.pow_le_pow_right (by decide) (Nat.le_max_right ..))
+  rw [testBit_doubleRounds (max 32 (width.log2 + 1)) _ i (Nat.mod_lt _ (Nat.two_pow_pos width))]
   constructor
   · rintro ⟨hi, k, hk, j, hj, rfl⟩
     rw [Nat.testBit_mod_two_pow, Bool.and_eq_true] at hj
@@ -255,8 +256,8 @@ private theorem testBit_markMask {start step width i : Nat}
     exact ⟨hi, k, rfl⟩
   · rintro ⟨hlt, k, rfl⟩
     refine ⟨hlt, k, ?_, start, ?_, rfl⟩
-    · -- step · k ≤ i < width ≤ 2^32 pins k under the covered range.
-      have hk : step * k < 2 ^ 32 := by omega
+    · -- The width-selected depth covers every in-range progression term.
+      have hk : step * k < 2 ^ (max 32 (width.log2 + 1)) := by omega
       have : k ≤ step * k := Nat.le_mul_of_pos_left k hstep
       omega
     · rw [Nat.testBit_mod_two_pow, Bool.and_eq_true]
@@ -289,7 +290,7 @@ private theorem testBit_clear {width state mask t : Nat} (ht : t < width) :
 /-- One progression pair marks exactly the represented multiples of
 `p = numOfIndex s` at or above `p²`: the bridging lemma between mask
 membership and divisibility. -/
-private theorem mem_markPair_iff {width s t : Nat} (hw : width ≤ 2 ^ 32)
+private theorem mem_markPair_iff {width s t : Nat}
     (ht : t < width) :
     ((markMask (indexOfNum (numOfIndex s * numOfIndex s))
           (2 * numOfIndex s) width |||
@@ -301,8 +302,8 @@ private theorem mem_markPair_iff {width s t : Nat} (hw : width ≤ 2 ^ 32)
     unfold numOfIndex
     omega
   have hstep : 0 < 2 * numOfIndex s := by omega
-  rw [Nat.testBit_or, Bool.or_eq_true, testBit_markMask hstep hw,
-    testBit_markMask hstep hw]
+  rw [Nat.testBit_or, Bool.or_eq_true, testBit_markMask hstep,
+    testBit_markMask hstep]
   -- The generic direction: index of `p · numOfIndex u` for `u = base + 2k`.
   have index_eq : ∀ (base k : Nat),
       indexOfNum (numOfIndex s * numOfIndex base) + 2 * numOfIndex s * k =
@@ -424,7 +425,7 @@ theorem sieveGoRange_add (width s a b state : Nat) :
       rw [ih]
       rfl
 
-private theorem sieveGoRange_testBit {width : Nat} (hw : width ≤ 2 ^ 32) :
+private theorem sieveGoRange_testBit {width : Nat} :
     ∀ (count s0 state t : Nat), t < width →
       ((sieveGoRange width s0 count state).testBit t = true ↔
         state.testBit t = true ∧
@@ -454,7 +455,7 @@ private theorem sieveGoRange_testBit {width : Nat} (hw : width ≤ 2 ^ 32) :
         intro s h1 h2
         rcases Nat.eq_or_lt_of_le h1 with rfl | h1'
         · intro hcontra
-          have hbit := (mem_markPair_iff hw ht).mpr hcontra
+          have hbit := (mem_markPair_iff ht).mpr hcontra
           rw [hbit] at hmark
           cases hmark
         · exact hrest s h1' (by omega)
@@ -470,7 +471,7 @@ private theorem sieveGoRange_testBit {width : Nat} (hw : width ≤ 2 ^ 32) :
           · rfl
           · exfalso
             exact hall s0 (Nat.le_refl _) (by omega)
-              ((mem_markPair_iff hw ht).mp hbit)
+              ((mem_markPair_iff ht).mp hbit)
         · intro s h1 h2
           exact hall s (by omega) (by omega)
 
@@ -499,13 +500,9 @@ private theorem testBit_sieveInit {w t : Nat} (hw : 1 ≤ w) :
       · rw [decide_eq_false hlt, decide_eq_false (show ¬ t + 1 < w by omega)]
         cases decide (0 < t + 1) <;> rfl
 
-/-- Correctness of the sieve: within the represented range and above
-index `0`, a set bit is exactly a prime. All four hypotheses are
-load-bearing: `hmask` is the range the fixed 32 doubling rounds promise,
-`hsqrt` makes the marking loop complete, `ht` excludes the non-prime `1`
-at index `0`, and `hrange` keeps `t` inside the representation. -/
-theorem sieve_testBit_iff {bound sqrtBound t : Nat}
-    (hmask : indexWidth bound ≤ 2 ^ 32)
+/-- Exact sieve correctness within the represented range and above index zero.
+The square bound makes the marking loop complete. -/
+theorem sieve_prime_iff {bound sqrtBound t : Nat}
     (hsqrt : bound ≤ sqrtBound * sqrtBound) (ht : 0 < t)
     (hrange : numOfIndex t < bound) :
     (sieve bound sqrtBound).testBit t = true ↔ Prime (numOfIndex t) := by
@@ -515,7 +512,7 @@ theorem sieve_testBit_iff {bound sqrtBound t : Nat}
     unfold numOfIndex
     omega
   unfold sieve
-  rw [sieveGoRange_testBit hmask _ 1 _ t htw, testBit_sieveInit hw1,
+  rw [sieveGoRange_testBit _ 1 _ t htw, testBit_sieveInit hw1,
     decide_eq_true ht, decide_eq_true htw]
   simp only [Bool.true_and, true_and]
   constructor
@@ -564,6 +561,14 @@ theorem sieve_testBit_iff {bound sqrtBound t : Nat}
       have h5 : numOfIndex t * 5 ≤ numOfIndex t * numOfIndex t := by
         exact Nat.mul_le_mul_left _ (by omega)
       omega
+
+/-- Compatibility form of sieve correctness for the original mask range. -/
+theorem sieve_testBit_iff {bound sqrtBound t : Nat}
+    (_hmask : indexWidth bound ≤ 2 ^ 32)
+    (hsqrt : bound ≤ sqrtBound * sqrtBound) (ht : 0 < t)
+    (hrange : numOfIndex t < bound) :
+    (sieve bound sqrtBound).testBit t = true ↔ Prime (numOfIndex t) :=
+  sieve_prime_iff hsqrt ht hrange
 
 /-! Reading the final state back into a value list. -/
 
@@ -674,6 +679,95 @@ theorem prime_mod_six {n : Nat} (hp : Prime n) (h5 : 5 ≤ n) :
     intro h
     rcases hp.2 3 (Nat.dvd_of_mod_eq_zero h) with h' | h' <;> omega
   omega
+
+/-- All primes strictly below the bound, in ascending order. The compiled
+sieve generates the initial segment at runtime, independently of the table. -/
+def primesBelow (bound : Nat) : List Nat :=
+  if bound ≤ 2 then []
+  else if bound ≤ 3 then [2]
+  else 2 :: 3 :: bitsToList (sieve bound (bound.sqrt + 1)) bound
+
+/-- Exact membership in the runtime prime enumeration. -/
+theorem mem_primesBelow {bound n : Nat} :
+    n ∈ primesBelow bound ↔ n < bound ∧ Prime n := by
+  have htwo : Prime 2 := by decide
+  have hthree : Prime 3 := by decide
+  unfold primesBelow
+  split
+  · rename_i hb
+    simp only [List.not_mem_nil, false_iff, not_and]
+    intro hn hp
+    have := hp.two_le
+    omega
+  · rename_i hb
+    split
+    · rename_i hb3
+      simp only [List.mem_cons, List.not_mem_nil, or_false]
+      constructor
+      · rintro rfl
+        exact ⟨by omega, htwo⟩
+      · rintro ⟨hn, hp⟩
+        have := hp.two_le
+        omega
+    · rename_i hb3
+      have hw : 1 ≤ indexWidth bound := by
+        unfold indexWidth
+        split <;> omega
+      have hs : bound ≤ (bound.sqrt + 1) * (bound.sqrt + 1) :=
+        Nat.le_of_lt (Nat.lt_succ_sqrt bound)
+      simp only [List.mem_cons, mem_bitsToList hw]
+      constructor
+      · rintro (rfl | rfl | ⟨t, ht, hr, hbit, rfl⟩)
+        · exact ⟨by omega, htwo⟩
+        · exact ⟨by omega, hthree⟩
+        · have hlt := numOfIndex_lt_iff.mpr hr
+          exact ⟨hlt, (sieve_prime_iff hs (by omega) hlt).mp hbit⟩
+      · rintro ⟨hn, hp⟩
+        by_cases h2 : n = 2
+        · exact Or.inl h2
+        by_cases h3 : n = 3
+        · exact Or.inr (Or.inl h3)
+        have h5 : 5 ≤ n := by
+          have := hp.two_le
+          have h4 : n ≠ 4 := by
+            intro h
+            subst n
+            exact (by decide : ¬ Prime 4) hp
+          omega
+        have heq := numOfIndex_indexOfNum (prime_mod_six hp h5)
+        have ht : 0 < indexOfNum n := by unfold indexOfNum; omega
+        have hlt : numOfIndex (indexOfNum n) < bound := by omega
+        exact Or.inr (Or.inr ⟨indexOfNum n, ht,
+          numOfIndex_lt_iff.mp hlt,
+          (sieve_prime_iff hs ht hlt).mpr (by simpa only [heq] using hp), heq⟩)
+
+/-- The runtime prime enumeration is strictly ascending. -/
+theorem primesBelow_pairwise_lt (bound : Nat) :
+    (primesBelow bound).Pairwise (· < ·) := by
+  unfold primesBelow
+  split
+  · exact .nil
+  · split
+    · simp
+    · rename_i hb hb3
+      have hw : 1 ≤ indexWidth bound := by unfold indexWidth; split <;> omega
+      have hlarge : ∀ n ∈ bitsToList (sieve bound (bound.sqrt + 1)) bound,
+          3 < n := by
+        intro n hn
+        obtain ⟨t, ht, _, _, rfl⟩ := (mem_bitsToList hw).mp hn
+        unfold numOfIndex
+        omega
+      simp only [List.pairwise_cons, List.mem_cons]
+      refine ⟨?_, hlarge, bitsToList_pairwise_lt ..⟩
+      intro n hn
+      rcases hn with rfl | hn
+      · decide
+      · have := hlarge n hn
+        omega
+
+/-- No prime occurs twice in the runtime enumeration. -/
+theorem primesBelow_nodup (bound : Nat) : (primesBelow bound).Nodup :=
+  List.Pairwise.imp (fun h => Nat.ne_of_lt h) (primesBelow_pairwise_lt bound)
 
 end Nat
 
