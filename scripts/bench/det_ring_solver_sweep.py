@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import fcntl
+import gzip
+import json
 import os
 import re
 import statistics
@@ -85,14 +87,16 @@ def profile_milliseconds(output: str, name: str) -> float:
 
 
 def print_table(path: Path) -> None:
-    import json
-
-    record = json.loads(path.read_text())
+    if path.suffix == ".gz":
+        with gzip.open(path, "rt", encoding="utf-8") as stream:
+            record = json.load(stream)
+    else:
+        record = json.loads(path.read_text(encoding="utf-8"))
     print(
-        "| Case | ring kernel ms | grobner kernel ms | "
-        "ring elaboration ms | grobner elaboration ms |"
+        "| Case | ring wall ms | grobner wall ms | ring kernel ms | "
+        "grobner kernel ms | ring elaboration ms | grobner elaboration ms |"
     )
-    print("|---|---:|---:|---:|---:|")
+    print("|---|---:|---:|---:|---:|---:|---:|")
     for name, result in record["results"].items():
         samples = result["samples"]
         values = {}
@@ -105,7 +109,9 @@ def print_table(path: Path) -> None:
                 for counter in ("type checking", "elaboration")
             }
         print(
-            f"| {name} | {values['reference']['type checking']:.3f} | "
+            f"| {name} | {result['median_reference_wall_nanos'] / 1e6:.2f} | "
+            f"{result['median_candidate_wall_nanos'] / 1e6:.2f} | "
+            f"{values['reference']['type checking']:.3f} | "
             f"{values['candidate']['type checking']:.3f} | "
             f"{values['reference']['elaboration']:.3f} | "
             f"{values['candidate']['elaboration']:.3f} |"

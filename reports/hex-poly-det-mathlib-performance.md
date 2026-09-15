@@ -32,6 +32,55 @@ shown only when both medians are positive; near-zero or negative differences
 are retained as observations, not interpreted as speedups. Tracing is enabled
 on Hex probes and matched Hex baselines; its cost is part of this comparison.
 
+### Closed-form ring solver comparison
+
+The exact core invocation which enables only the commutative-ring solver is
+`grobner`. In the pinned Lean source its elaborator starts from
+`Grind.GrobnerConfig`; that structure extends `Grind.NoopConfig`, whose
+E-matching, splitting, linear arithmetic, AC, order and model-based combination
+facilities are disabled, and re-enables only `ring := true`. Thus the comparison
+uses `ring` against `grobner`, not unrestricted `grind`.
+
+The focused comparison takes the polynomial equality left after the `n ≤ 3`
+closed determinant formula as its target, so it measures the final normalizer
+rather than repeating formula construction. Integer, rational-coefficient and
+fixed-numeral-power families each have `n = 1, 2, 3` representatives. Six
+fresh-module rounds rotate the cases, keep each pair adjacent, alternate
+`ring`/`grobner` as AB/BA, pin one Lean worker to automatically leased CPU 92,
+and retain all completed samples. The complete record is
+[hex-poly-det-ring-solver-cd82ae658-chungus2.json.gz](bench-results/hex-poly-det-ring-solver-cd82ae658-chungus2.json.gz),
+measured on chungus2 at source commit
+`cd82ae658bde34b97dd42ba20189a7d93a90573c`; provenance is clean and all 108
+builds completed. Wall columns are raw fresh-module medians. Kernel and
+elaboration columns are separate medians of Lean's cumulative `type checking`
+and `elaboration` profiler counters, in milliseconds.
+
+| Family / n | ring wall | grobner wall | ring kernel | grobner kernel | ring elaboration | grobner elaboration |
+|---|---:|---:|---:|---:|---:|---:|
+| integer / 1 | 9607.60 | 9053.48 | 1.825 | 1.495 | 75.950 | 66.100 |
+| integer / 2 | 10623.27 | 11417.72 | 12.400 | 26.850 | 54.950 | 84.750 |
+| integer / 3 | 7780.82 | 7126.02 | 4.160 | 13.335 | 45.600 | 33.450 |
+| rational / 1 | 7690.19 | 6531.40 | 3.380 | 24.350 | 56.750 | 53.650 |
+| rational / 2 | 6815.29 | 5880.75 | 13.200 | 11.600 | 128.500 | 29.350 |
+| rational / 3 | 6983.31 | 9328.02 | 12.300 | 80.150 | 62.700 | 141.500 |
+| fixed powers / 1 | 9708.69 | 8330.89 | 26.100 | 25.100 | 61.750 | 54.250 |
+| fixed powers / 2 | 8001.62 | 9162.98 | 5.650 | 21.950 | 59.750 | 45.600 |
+| fixed powers / 3 | 9158.66 | 10470.75 | 8.080 | 7.900 | 92.150 | 46.850 |
+
+The kernel result splits: `grobner` has the smaller median on four of nine
+targets, while `ring` has the smaller median on five, including every
+three-term rational target and two of the three integer targets. It therefore
+does not meet the all-families switching condition, and the production
+closed-form route remains on `ring`.
+
+Two compile-time capability probes delimit this result. With
+`h : α ^ 2 = 2` in the local context, `grobner` closes
+`α * α - 1 * 2 = 0`; no production path or advertised scope is enabled by
+that observation. Conversely, it does not close
+`(x ^ k) * (x ^ k) = x ^ (2 * k)` for variable `k`: those powers are distinct
+atoms outside the fixed-numeral exponent fragment. The probe finishes only
+after explicitly rewriting `two_mul` and `pow_add`.
+
 The main 2/4/8 ladder has 48 feasible cases and 33 infeasible support requests.
 Three 3×3 cases measure the closed-form route. The remaining cases cover
 rational, singular, closed-algebraic, pivot-swap, structured, function/array
