@@ -33,3 +33,19 @@ coefficients to their canonical integer lifts.
 
 See the [SPEC](SPEC/hex-kronecker-mathlib.md) for denotations, the reflection
 boundary, and the performance requirements.
+
+## Development verification
+
+From the monorepo root, build the matched modules with
+`lake build HexKroneckerMathlibProofProbe`. Collect the six paired trials and
+the separate kernel-only profiles with:
+
+```sh
+python3 scripts/bench/kronecker_sweep.py reports/data/hex-kronecker-mathlib/local-sweep.json
+python3 scripts/bench/kronecker_kernel_profile.py reports/data/hex-kronecker-mathlib/local-kernel.json
+```
+
+Both runners lease one CPU automatically and record source hashes and host
+activity. The sweep accepts `--resume` after interruption and retains completed
+samples. `scripts/bench/kronecker_report.py` renders a completed sweep with the
+required `--kernel-profiles` input; both JSON inputs may be gzip-compressed.
