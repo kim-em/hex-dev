@@ -10,6 +10,8 @@ public import HexBareiss.Bareiss
 public import HexArith.ExactDiv
 public import HexMatrix.Notation
 public import HexMatrix.Packed
+public import HexMatrix.Lists
+public meta import HexMatrix.Lists
 
 public section
 
@@ -260,9 +262,6 @@ scales `s` take the rows of `A` to the rows of the integer matrix `B`, which
 /-! # The producer -/
 
 variable {n : Nat}
-
-/-- The rows of a square matrix as lists. -/
-def rowLists (A : Matrix Int n n) : List (List Int) := A.rows.toList.map (·.toList)
 
 namespace DetWitness
 

@@ -1,0 +1,6 @@
+{
+  "path": "HexMatrix/Lists.lean",
+  "baseline_blob": "20a9f21bd8880ad4307e422c362797fe22c5c5b8",
+  "current_blob": "8b8793fc2bb1e1b2ed8f18c9d8d6eca55fc0398f",
+  "reason": "Adds the relocated Hex.Matrix.rowLists observation and three correspondence theorems. All preexisting Hex.Matrix.Lists executable definitions are unchanged. rowLists is used by the determinant certificate producer and matrix denotation proofs, not the ZPoly.factorize path measured by bench/HexBench/FactorService.lean. The new theorems are erased, and no compiler rewrite or instance is added. This exemption covers the existing hex-factor runtime sweep only; the new rank-locus proof path is measured separately."
+}

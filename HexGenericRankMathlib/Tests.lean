@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+import HexGenericRankMathlib.RankLocusTests
 public import HexGenericRankMathlib.Tactic
 import Mathlib.Algebra.Field.ZMod
 public meta import Lean

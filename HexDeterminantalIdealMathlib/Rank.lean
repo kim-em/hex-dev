@@ -41,6 +41,20 @@ theorem rank_lt_iff_minors_map_eq_zero [CommRing R] [Field K] (φ : R →+* K)
   rw [show (Hex.Matrix.rowReduce (A.map φ)).rank = Hex.Matrix.rowReduce_rank (A.map φ) from rfl,
     Hex.Matrix.rank_lt_iff_minors_eq_zero, ← map_minors, List.forall_mem_map]
 
+/-- Removing zero and repeated minors preserves the vanishing condition. -/
+theorem rank_lt_iff_gens_map_zero [CommRing R] [DecidableEq R] [Field K]
+    (φ : R →+* K) (A : Hex.Matrix R n m) (r : Nat) :
+    ((matrixEquiv A).map φ).rank < r ↔
+      ∀ g ∈ Hex.Matrix.detIdealGens r A, φ g = 0 := by
+  rw [rank_lt_iff_minors_map_eq_zero]
+  constructor
+  · intro h g hg
+    exact h g ((Hex.Matrix.mem_detIdealGens_iff A r g).mp hg).1
+  · intro h g hg
+    by_cases hzero : g = 0
+    · simp [hzero]
+    · exact h g ((Hex.Matrix.mem_detIdealGens_iff A r g).mpr ⟨hg, hzero⟩)
+
 /-- `r` is at most the rank under `φ` exactly when `φ` keeps some `r × r`
 minor nonzero. -/
 theorem le_rank_iff_exists_minor_map_ne_zero [CommRing R] [Field K] (φ : R →+* K)

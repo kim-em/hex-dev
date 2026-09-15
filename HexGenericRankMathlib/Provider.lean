@@ -132,45 +132,12 @@ def residueWitness? (p k n m : Nat) (L : PolyLists.Rows Int) : Option (PolyWitne
     else none
   else none
 
-/-- Simplify only the evaluation syntax when displaying a condition. No local
-hypothesis or field-specific identity changes the polynomial denominator. -/
-def displayDenominator (d : Expr) : MetaM Simp.Result := do
-  let mut thms : SimpTheorems := {}
-  for name in #[``interpret_cons, ``interpret_nil, ``Fin.prod_univ_succ,
-      ``Fin.prod_univ_zero, ``Int.cast_zero, ``Int.cast_one, ``Int.cast_neg,
-      ``Int.cast_ofNat, ``one_mul, ``mul_one, ``zero_mul, ``mul_zero,
-      ``zero_add, ``add_zero, ``pow_zero, ``pow_one,
-      ``map_intCast, ``map_natCast, ``map_zero, ``map_one, ``map_neg, ``neg_mul, ``neg_one_mul, ``Fin.val_zero, ``Fin.val_succ, ``List.getD_cons_zero, ``List.getD_cons_succ,
-      ``Int.coe_castRingHom] do
-    thms ← thms.addConst name
-  thms ← thms.addDeclToUnfold ``Modular.cast
-  thms ← thms.addConst ``List.map_cons
-  thms ← thms.addConst ``List.map_nil
-  thms ← thms.addDeclToUnfold ``Hex.Reflect.ctxValuation
-  thms ← thms.addDeclToUnfold ``Lean.RArray.get
-  thms ← thms.addConst ``sub_eq_add_neg (inv := true)
-  let ctx ← Simp.mkContext (simpTheorems := #[thms])
-    (congrTheorems := ← getSimpCongrTheorems)
-  return (← simp d ctx).1
+/-- Display a certificate denominator using the shared polynomial denotation API. -/
+def displayDenominator (d : Expr) : MetaM Simp.Result :=
+  HexReflectMathlib.displayPolynomial d #[``PolyLists.denote, ``Modular.cast]
 
-/-- Normalize closed numeral conditions, allowing carrier and instance parameters. -/
-def closedNormNum (p : Expr) : MetaM (Option Expr) := do
-  if p.hasMVar then return none
-  -- Type and instance parameters do not make a numeral condition symbolic.
-  -- A source value variable still keeps the default normalizer out.
-  for fvar in (collectFVars {} p).fvarIds do
-    let type ← inferType (mkFVar fvar)
-    unless (← whnf type).isSort || (← isClass? type).isSome do return none
-  -- `norm_num`'s simplification step knows this even without CharZero.
-  try
-    let_expr Ne α _ _ := p | return none
-    let proof ← mkAppOptM ``one_ne_zero #[α, none, none, none]
-    if ← isDefEq (← inferType proof) p then return some proof
-  catch _ => pure ()
-  try
-    let ⟨true, proof⟩ ← Mathlib.Meta.NormNum.deriveBool p | return none
-    return some proof
-  catch _ => return none
+/-- The shared closed-numeral condition normalizer. -/
+abbrev closedNormNum := HexReflectMathlib.closedNormNum
 
 /-- Check rank-specific limits before matrix entries are enumerated. -/
 def checkSize (cfg : Config) (n m : Nat) : Option Decline :=
@@ -379,21 +346,8 @@ def withEvidence (evidence : List Expr) (action : MetaM Result) : MetaM Result :
       let r ← withEvidence es action
       return r.mapExpr (fun p => p.replaceFVar x e)
 
-/-- Count distinct nodes of the shared emitted proof expressions. The batch
-has already charged its own reconstruction; shared certificate and instance
-subexpressions are counted once across the three outputs. -/
-def proofNodeCount (expressions : Array Expr) (cap : Nat) : Nat :=
-  ((expressions.forM visit).run ({} : ExprSet)).2.size
-where
-  visit (e : Expr) : StateM ExprSet Unit := do
-    if (← get).size ≥ cap || (← get).contains e then return
-    modify (·.insert e)
-    match e with
-    | .app f a => visit f; visit a
-    | .lam _ t b _ | .forallE _ t b _ => visit t; visit b
-    | .letE _ t v b _ => visit t; visit v; visit b
-    | .mdata _ b | .proj _ _ b => visit b
-    | _ => pure ()
+/-- Count shared proof nodes using the reflection infrastructure. -/
+abbrev proofNodeCount := Hex.Reflect.proofNodeCount
 
 /-- Reflect a whole symbolic matrix and return its checked certificate and
 single conditional rank statement, without creating goals. -/

@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexGenericRankMathlib.RankLocus
 public import HexGenericRankMathlib.Transport
 public import HexGenericRankMathlib.Sound
 public import HexGenericRankMathlib.Tactic

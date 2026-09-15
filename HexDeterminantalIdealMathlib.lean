@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexDeterminantalIdealMathlib.Tactic
 public import HexDeterminantalIdealMathlib.Transport
 public import HexDeterminantalIdealMathlib.Rank
 public import HexDeterminantalIdealMathlib.Locus

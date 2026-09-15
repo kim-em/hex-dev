@@ -435,6 +435,10 @@ lean_lib HexRankTests where
 lean_lib HexGenericRankTests where
   globs := #[`HexGenericRankMathlib.Tests]
 
+lean_lib HexDeterminantalIdealMathlibProofProbe where
+  srcDir := "bench"
+  globs := #[.submodules `HexDeterminantalIdealMathlib.ProofProbe]
+
 lean_lib HexGenericRankMathlibProofProbe where
   srcDir := "bench"
   globs := #[.submodules `HexGenericRankMathlib.ProofProbe]
