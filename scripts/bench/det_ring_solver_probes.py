@@ -39,10 +39,21 @@ CASES = (
      "x ^ 4 * x ^ 3 * x ^ 2 - x ^ 4 * 1 * 1 - 1 * 1 * x ^ 2 + "
      "1 * 1 * 0 + 0 * 1 * 1 - 0 * x ^ 3 * 0 = x ^ 9 - x ^ 4 - x ^ 2"),
 )
+RING_AXIOMS = {
+    "RingSolverInteger1": ("propext",),
+    "RingSolverInteger2": ("propext", "Quot.sound"),
+    "RingSolverInteger3": ("propext",),
+    "RingSolverRational1": ("propext", "Classical.choice", "Quot.sound"),
+    "RingSolverRational2": ("propext", "Classical.choice", "Quot.sound"),
+    "RingSolverRational3": ("propext", "Classical.choice", "Quot.sound"),
+    "RingSolverPower1": ("propext",),
+    "RingSolverPower2": ("propext",),
+    "RingSolverPower3": ("propext",),
+}
 
 
-def main() -> None:
-    DEST.mkdir(parents=True, exist_ok=True)
+def probe_sources() -> dict[str, str]:
+    sources = {}
     for stem, binders, target in CASES:
         for arm, tactic in (("Ring", "ring"), ("Grobner", "grobner")):
             source = HEADER + f"""import Mathlib.Tactic
@@ -55,31 +66,37 @@ theorem result {binders} : {target} := by
 
 #print axioms result
 """
-            (DEST / f"{stem}{arm}.lean").write_text(source, encoding="utf-8")
+            sources[f"{stem}{arm}.lean"] = source
 
-    (DEST / "RingSolverVariableExponent.lean").write_text(
-        HEADER + """import Mathlib.Tactic
+    sources["RingSolverVariableExponent.lean"] = HEADER + """import Mathlib.Tactic
+
+set_option maxHeartbeats 0
 
 theorem result (x : Int) (k : Nat) : (x ^ k) * (x ^ k) = x ^ (2 * k) := by
   fail_if_success grobner
-  rw [two_mul, pow_add]
+  ring
 
 #print axioms result
-""",
-        encoding="utf-8",
-    )
-    (DEST / "RingSolverAlgebraic.lean").write_text(
-        HEADER + f"""import Mathlib.Tactic
+"""
+    sources["RingSolverAlgebraic.lean"] = HEADER + f"""import Mathlib.Tactic
 import {PREFIX}.AlgebraicSupport
+
+set_option maxHeartbeats 0
 
 theorem result (h : ClosedAlgebraic.α ^ 2 = 2) :
     ClosedAlgebraic.α * ClosedAlgebraic.α - 1 * 2 = 0 := by
+  fail_if_success (solve | ring)
   grobner
 
 #print axioms result
-""",
-        encoding="utf-8",
-    )
+"""
+    return sources
+
+
+def main() -> None:
+    DEST.mkdir(parents=True, exist_ok=True)
+    for name, source in probe_sources().items():
+        (DEST / name).write_text(source, encoding="utf-8")
 
 
 if __name__ == "__main__":

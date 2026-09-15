@@ -5,8 +5,10 @@ Authors: Kim Morrison
 -/
 import Mathlib.Tactic
 
+set_option maxHeartbeats 0
+
 theorem result (x : Int) (k : Nat) : (x ^ k) * (x ^ k) = x ^ (2 * k) := by
   fail_if_success grobner
-  rw [two_mul, pow_add]
+  ring
 
 #print axioms result

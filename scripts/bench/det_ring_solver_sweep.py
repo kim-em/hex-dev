@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import fcntl
 import gzip
 import json
@@ -21,18 +22,15 @@ from scripts.bench.fresh_module_sweep import (  # noqa: E402
     SweepSpec,
     run_cli,
 )
-from scripts.bench.det_ring_solver_probes import CASES, PREFIX  # noqa: E402
+from scripts.bench.det_ring_solver_probes import CASES, PREFIX, RING_AXIOMS  # noqa: E402
+from scripts.bench import fresh_module_sweep as sweep  # noqa: E402
 
 
 GRIND_AXIOMS = ("propext", "Classical.choice", "Quot.sound")
-
-
-def ring_axioms(stem: str) -> tuple[str, ...]:
-    if "Rational" in stem:
-        return GRIND_AXIOMS
-    if stem == "RingSolverInteger2":
-        return ("propext", "Quot.sound")
-    return ("propext",)
+CAPABILITIES = (
+    ProbeModule(f"{PREFIX}.RingSolverAlgebraic", GRIND_AXIOMS),
+    ProbeModule(f"{PREFIX}.RingSolverVariableExponent", ("propext",)),
+)
 
 
 def family(stem: str) -> str:
@@ -51,7 +49,7 @@ SPEC = SweepSpec(
     pairs=tuple(
         ProbePair(
             stem,
-            ProbeModule(f"{PREFIX}.{stem}Ring", ring_axioms(stem)),
+            ProbeModule(f"{PREFIX}.{stem}Ring", RING_AXIOMS[stem]),
             ProbeModule(f"{PREFIX}.{stem}Grobner", GRIND_AXIOMS),
             {"family": family(stem), "dimension": dimension(stem)},
         )
@@ -63,11 +61,18 @@ SPEC = SweepSpec(
     output_stem="hex-poly-det-ring-solver",
     required_samples=6,
     retain_compiler_output=True,
-    extra_sources=(Path("scripts/bench/det_ring_solver_probes.py"),),
+    extra_sources=(
+        Path("scripts/bench/det_ring_solver_probes.py"),
+        *(Path("bench/HexPolyDetMathlib/ProofProbe") / f"{name}.lean"
+          for name in ("RingSolverAlgebraic", "RingSolverVariableExponent", "AlgebraicSupport")),
+    ),
 )
 
 
 def profile_milliseconds(output: str, name: str) -> float:
+    if "cumulative profiling times:" not in output:
+        raise ValueError("missing cumulative profiler block")
+    output = output.rsplit("cumulative profiling times:", 1)[1]
     matches = re.findall(
         rf"^\s*{re.escape(name)}\s+([0-9]+(?:\.[0-9]+)?)(ms|s|us|μs|ns)$",
         output,
@@ -93,11 +98,14 @@ def print_table(path: Path) -> None:
     else:
         record = json.loads(path.read_text(encoding="utf-8"))
     print(
-        "| Case | ring wall ms | grobner wall ms | ring kernel ms | "
-        "grobner kernel ms | ring elaboration ms | grobner elaboration ms |"
+        "| Family / n | ring wall | grobner wall | ring kernel | "
+        "grobner kernel | ring elaboration | grobner elaboration |"
     )
     print("|---|---:|---:|---:|---:|---:|---:|")
-    for name, result in record["results"].items():
+    labels = {"integer": "integer", "rational": "rational", "power": "fixed powers"}
+    for result in sorted(record["results"].values(), key=lambda r: (
+        list(labels).index(r["family"]), r["dimension"]
+    )):
         samples = result["samples"]
         values = {}
         for role in ("reference", "candidate"):
@@ -109,7 +117,8 @@ def print_table(path: Path) -> None:
                 for counter in ("type checking", "elaboration")
             }
         print(
-            f"| {name} | {result['median_reference_wall_nanos'] / 1e6:.2f} | "
+            f"| {labels[result['family']]} / {result['dimension']} | "
+            f"{result['median_reference_wall_nanos'] / 1e6:.2f} | "
             f"{result['median_candidate_wall_nanos'] / 1e6:.2f} | "
             f"{values['reference']['type checking']:.3f} | "
             f"{values['candidate']['type checking']:.3f} | "
@@ -118,28 +127,66 @@ def print_table(path: Path) -> None:
         )
 
 
-def main() -> int:
-    if len(sys.argv) == 3 and sys.argv[1] == "--table":
-        print_table(Path(sys.argv[2]))
+def record_capabilities(path: Path) -> int:
+    """Retain fresh capability builds separately from the timing experiment."""
+    env = sweep.environment()
+    dirt = sweep.dirty_issues(dict(env["repository"]), dict(env["dependency_checkouts"]))
+    if dirt:
+        raise RuntimeError("dirty capability environment: " + "; ".join(dirt))
+    hashes = sweep.source_hashes(SPEC, Path(__file__))
+    results = []
+    for module in CAPABILITIES:
+        observed = []
+        try:
+            sample = sweep.build_sample(module.module, 60,
+                sample_observer=lambda _m, r: observed.append(r), retain_compiler_output=True)
+            sweep.validate_axioms(module.module, "capability", module, sample)
+            results.append(dict(module=module.module, state="complete",
+                command=["lake", "build", f"+{module.module}:olean"], **sample))
+        except RuntimeError as exc:
+            results.append(dict(module=module.module, state="failed", error=str(exc),
+                sample=observed[-1] if observed else None))
+    unchanged = hashes == sweep.source_hashes(SPEC, Path(__file__))
+    complete = unchanged and all(r["state"] == "complete" for r in results)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(dict(schema="hex-poly-det-ring-capabilities-v1",
+        environment=env, source_sha256=hashes, sources_unchanged=unchanged,
+        complete=complete, results=results), indent=2, sort_keys=True) + "\n")
+    print(path)
+    return 0 if complete else 2
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__, add_help=False)
+    parser.add_argument("--table", type=Path)
+    parser.add_argument("--capabilities", type=Path)
+    parser.add_argument("--shared-host", action="store_true")
+    parser.add_argument("--cpu", type=int)
+    args, forwarded = parser.parse_known_args(argv)
+    if args.table:
+        print_table(args.table)
         return 0
+    if args.capabilities:
+        return record_capabilities(args.capabilities)
     lease = None
-    if "--shared-host" in sys.argv and not any(
-        arg == "--cpu" or arg.startswith("--cpu=") for arg in sys.argv
-    ):
+    cpu = args.cpu
+    if args.shared_host and cpu is None:
         cpus = sorted(os.sched_getaffinity(0))
         offset = os.getpid() % len(cpus)
         for cpu in cpus[offset:] + cpus[:offset]:
             lease = open(f"/tmp/hex-bench-cpu-{cpu}.lock", "a")
             try:
                 fcntl.flock(lease, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                sys.argv.extend(["--cpu", str(cpu)])
                 break
             except BlockingIOError:
                 lease.close()
         else:
             raise RuntimeError("all measurement CPU leases are held")
     try:
-        return run_cli(SPEC, Path(__file__))
+        options = (["--shared-host"] if args.shared_host else [])
+        if cpu is not None:
+            options.extend(["--cpu", str(cpu)])
+        return run_cli(SPEC, Path(__file__), [*options, *forwarded])
     finally:
         if lease is not None:
             lease.close()

@@ -6,8 +6,11 @@ Authors: Kim Morrison
 import Mathlib.Tactic
 import HexPolyDetMathlib.ProofProbe.AlgebraicSupport
 
+set_option maxHeartbeats 0
+
 theorem result (h : ClosedAlgebraic.α ^ 2 = 2) :
     ClosedAlgebraic.α * ClosedAlgebraic.α - 1 * 2 = 0 := by
+  fail_if_success (solve | ring)
   grobner
 
 #print axioms result

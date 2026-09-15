@@ -42,18 +42,25 @@ facilities are disabled, and re-enables only `ring := true`. Thus the comparison
 uses `ring` against `grobner`, not unrestricted `grind`.
 
 The focused comparison takes the polynomial equality left after the `n ≤ 3`
-closed determinant formula as its target, so it measures the final normalizer
-rather than repeating formula construction. Integer, rational-coefficient and
+closed determinant formula as its target, without repeating formula construction.
+Integer, rational-coefficient and
 fixed-numeral-power families each have `n = 1, 2, 3` representatives. Six
 fresh-module rounds rotate the cases, keep each pair adjacent, alternate
 `ring`/`grobner` as AB/BA, pin one Lean worker to automatically leased CPU 92,
 and retain all completed samples. The complete record is
-[hex-poly-det-ring-solver-cd82ae658-chungus2.json.gz](bench-results/hex-poly-det-ring-solver-cd82ae658-chungus2.json.gz),
+[hex-poly-det-ring-solver-cd82ae658bde-chungus2.json.gz](bench-results/hex-poly-det-ring-solver-cd82ae658bde-chungus2.json.gz),
 measured on chungus2 at source commit
 `cd82ae658bde34b97dd42ba20189a7d93a90573c`; provenance is clean and all 108
-builds completed. Wall columns are raw fresh-module medians. Kernel and
+builds completed. Wall columns are raw, import-dominated fresh-module medians;
+their spread exceeds the normalizer-scale difference and they are not used in
+the switching decision. Kernel and
 elaboration columns are separate medians of Lean's cumulative `type checking`
-and `elaboration` profiler counters, in milliseconds.
+and `elaboration` profiler counters. All table values are milliseconds. These are whole-module
+counters, including statement elaboration and first-use tactic initialization,
+not isolated production `det.small.ring` spans. No common baseline is subtracted.
+The measured theorem statements are unchanged since the recorded commit;
+subsequent harness changes add evidence recording, tests and table rendering,
+without changing the recorded timings.
 
 | Family / n | ring wall | grobner wall | ring kernel | grobner kernel | ring elaboration | grobner elaboration |
 |---|---:|---:|---:|---:|---:|---:|
@@ -68,18 +75,21 @@ and `elaboration` profiler counters, in milliseconds.
 | fixed powers / 3 | 9158.66 | 10470.75 | 8.080 | 7.900 | 92.150 | 46.850 |
 
 The kernel result splits: `grobner` has the smaller median on four of nine
-targets, while `ring` has the smaller median on five, including every
-three-term rational target and two of the three integer targets. It therefore
+targets, while `ring` has the smaller median on five, including the rational
+`n = 3` target and two of the three integer targets. It therefore
 does not meet the all-families switching condition, and the production
 closed-form route remains on `ring`.
 
 Two compile-time capability probes delimit this result. With
 `h : α ^ 2 = 2` in the local context, `grobner` closes
-`α * α - 1 * 2 = 0`; no production path or advertised scope is enabled by
-that observation. Conversely, it does not close
+`α * α - 1 * 2 = 0`, which `ring` alone does not close. This intersects the
+SPEC's stated limitation on using local atom relations, but no production path
+or advertised scope is enabled by that observation. Conversely, `grobner` does not close
 `(x ^ k) * (x ^ k) = x ^ (2 * k)` for variable `k`: those powers are distinct
-atoms outside the fixed-numeral exponent fragment. The probe finishes only
-after explicitly rewriting `two_mul` and `pow_add`.
+atoms outside the fixed-numeral exponent fragment (`Grind.CommRing.Power.k : Nat`).
+`ring` closes that target, so substituting `grobner` would also lose an existing
+variable-exponent capability. Both boundaries are guarded in compile-time probes
+which CI builds explicitly without building the full symbolic performance ladder.
 
 The main 2/4/8 ladder has 48 feasible cases and 33 infeasible support requests.
 Three 3×3 cases measure the closed-form route. The remaining cases cover
