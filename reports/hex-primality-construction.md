@@ -314,6 +314,65 @@ Curve448; P-521 exceeds its 512-bit ceiling. FLINT and PARI solve all twelve.
 
 ### Supplied-certificate replay
 
+#### Direct kernel checking
+
+![Direct kernel checking](figures/hex-primality-kernel-direct.svg)
+
+| Input | Hex kernel | PrimeCert kernel |
+|---|---:|---:|
+| family-31 | 6.37 ms | 1.66 ms |
+| family-61 | 9.34 ms | 1.25 ms |
+| family-123 | 16.96 ms | 2.55 ms |
+| family-256 | 36.61 ms | 7.15 ms |
+| family-511 | 80.21 ms | 10.39 ms |
+| family-512 | 68.16 ms | 18.15 ms |
+| Curve25519 | 130.76 ms | 19.27 ms |
+| Curve448 | no generated certificate | 36.05 ms |
+
+These medians time `Lean.Kernel.check` directly, after imports and proof
+elaboration. Each call checks the full proof body against its declared goal
+using an identity application. Every local definition and auxiliary theorem
+is recursively expanded before the clock starts; the probe refuses to time
+a proof with remaining local dependencies. In particular, Lean extracts
+`decide +kernel` into an auxiliary theorem: timing only the outer proof would
+skip that computation. Imported library theorems remain dependencies in both
+systems. A deliberately false Boolean equality must be rejected by the same
+kernel entry point before each timed call.
+
+The two trial-major blocks use adjacent systems in reversed order on CPU 2.
+Curve25519 takes 126.44 / 135.07 ms for Hex and 19.24 / 19.30 ms for PrimeCert:
+PrimeCert is about 6.8 times faster in this direct replay comparison. Across
+the seven shared inputs, its observed advantage ranges from 3.8 to 7.7 times.
+Hex uses Lean 4.34.0 and PrimeCert uses Lean 4.33.0; these compare the pinned
+implementations, not two checker algorithms on an identical kernel version.
+The certificates also differ. This measurement excludes certificate search
+and does not imply a PrimeCert construction-time comparison.
+
+The kernel cost grows substantially across these inputs. The nearly flat
+complete-build and fresh-replay curves below are dominated by startup and
+imports for the easier certificates; they are not evidence of constant-time
+kernel verification. Cactus ranks also sort each system independently and
+are not input bit lengths. The direct chart therefore includes a panel with
+the same input on each horizontal position.
+
+`scripts/bench/primality_kernel_direct.py` records all 30 completed checks,
+the missing Hex Curve448 certificate, full probe sources, toolchains,
+dependencies, and build output in
+`hex-primality-direct-kernel-issue-10268.json`. The diagnostic record separately
+retains the invalid outer-proof-only pilot and rejected incomplete expansions;
+none enter the comparison. Reproduce with:
+
+```sh
+python3 scripts/bench/primality_kernel_direct.py \
+  reports/bench-results/hex-primality-cactus-native-executable-issue-10268.json \
+  --primecert-checkout /path/to/PrimeCert --output /tmp/direct-kernel.json
+python3 scripts/plots/hexprimality-cactus.py \
+  reports/bench-results/hex-primality-cactus-native-executable-issue-10268.json \
+  --direct-kernel /tmp/direct-kernel.json
+```
+
+#### Fresh builds including imports
+
 ![Supplied-certificate replay](figures/hex-primality-kernel-cactus.svg)
 
 | Input | Hex fresh replay | PrimeCert fresh replay |

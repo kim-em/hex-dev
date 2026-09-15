@@ -10,16 +10,71 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
+def plot_direct(data: dict, out_dir: Path) -> None:
+    """Show kernel growth by input as well as the independently sorted cactus."""
+    fig, axes = plt.subplots(1, 2, figsize=(11, 5), sharey=True)
+    cases = data['cases']
+    for system, label in [('hex', 'Hex'), ('primecert', 'PrimeCert')]:
+        points = []
+        color = None
+        for index, case in enumerate(cases):
+            rows = [r for r in data['rows'] if r['system'] == system and r['case'] == case['name']]
+            if len(rows) != data['blocks'] or any(r['status'] != 'ok' for r in rows):
+                continue
+            values = [r['kernel_nanos']/1e6 for r in rows]
+            points.append((index, statistics.median(values), case['name'], values))
+        line, = axes[0].plot([x for x, _, _, _ in points], [y for _, y, _, _ in points],
+                             marker='o', label=label)
+        color = line.get_color()
+        for x, _, _, values in points:
+            axes[0].scatter([x]*len(values), values, color=color, alpha=.45, s=15)
+        ordered = sorted(points, key=lambda p: p[1])
+        axes[1].plot(range(1, len(ordered)+1), [y for _, y, _, _ in ordered],
+                     marker='o', color=color, label=f'{label} ({len(ordered)}/{len(cases)})')
+        for rank, (_, elapsed, name, _) in enumerate(ordered, 1):
+            if name == 'Curve25519':
+                axes[1].annotate('25519', (rank, elapsed), xytext=(4, 6),
+                                 textcoords='offset points', color=color, fontsize=9)
+    axes[0].set_xticks(range(len(cases)), [c['name'].replace('family-', '') for c in cases],
+                       rotation=35, ha='right')
+    axes[0].set_xlabel('Input (family labels give bit length)')
+    axes[0].set_ylabel('Kernel check, milliseconds (log scale)')
+    axes[0].set_title('Same inputs; dots retain both trials')
+    axes[1].set_xlabel('Instances checked, independently sorted')
+    axes[1].set_xticks(range(1, len(cases)+1))
+    axes[1].set_title('Direct kernel cactus')
+    for ax in axes:
+        ax.set_yscale('log')
+        ax.grid(True, which='both', alpha=.2)
+        ax.legend()
+    fig.suptitle('Supplied certificates: actual kernel checking time')
+    fig.text(.5, .015,
+             'Kernel.check of full local proof bodies; auxiliary proofs expanded; imports/elaboration excluded.\n'
+             'Hex Lean 4.34.0 / PrimeCert Lean 4.33.0. Two adjacent reversed trials on one CPU; all samples retained.\n'
+             'Curve448: PrimeCert supplied certificate; Hex has no generated certificate in this corpus.',
+             ha='center', fontsize=8)
+    fig.tight_layout(rect=(0, .12, 1, .96))
+    for ext in ['svg', 'png']:
+        output = out_dir/f'hex-primality-kernel-direct.{ext}'
+        fig.savefig(output, dpi=160, metadata={'Date': None} if ext == 'svg' else {})
+        if ext == 'svg':
+            output.write_text('\n'.join(line.rstrip() for line in output.read_text().splitlines())+'\n')
+    plt.close(fig)
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('data', type=Path)
     p.add_argument('--out-dir', type=Path, default=Path('reports/figures'))
+    p.add_argument('--direct-kernel', type=Path)
     args = p.parse_args()
     data = json.loads(args.data.read_text())
     interpreted = 'interpreter' in data.get('hex_execution_mode', '')
     hex_label = 'Hex interpreted tactic search' if interpreted else 'Hex native exact decision'
     args.out_dir.mkdir(parents=True, exist_ok=True)
     plt.rcParams.update({'svg.hashsalt': 'hex-primality-cactus', 'font.size': 10})
+    if args.direct_kernel:
+        plot_direct(json.loads(args.direct_kernel.read_text()), args.out_dir)
     charts = [
         ('native', [('hex', hex_label), ('flint', 'FLINT is_prime'),
                     ('pari', 'PARI isprime')], len(data['cases'])),

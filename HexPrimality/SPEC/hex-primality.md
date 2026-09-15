@@ -1482,6 +1482,18 @@ report. Measurements remain shared-host information rather than a CI gate;
 the earlier six-witness comparison remains in
 `reports/hex-primality-performance.md`.
 
+For kernel-only comparisons, `scripts/bench/primality_kernel_direct.py` times
+`Lean.Kernel.check` after imports and elaboration. It recursively expands all
+local proof dependencies, including auxiliary theorems emitted by
+`decide +kernel`, and checks the complete body against its declared goal.
+Imported library proofs remain dependencies. A negative control must be
+rejected. The retained `hex-primality-direct-kernel-issue-10268.json` uses
+adjacent reversed systems and records every sample, source, and toolchain.
+Its matched-input plot shows growth hidden by fresh-build overhead; cactus
+rank is not a bit-length axis. Hex on Lean 4.34.0 checks Curve25519 in
+126–135 ms, versus PrimeCert on Lean 4.33.0 in 19.2–19.3 ms. This is supplied
+proof replay, not a comparison of certificate construction.
+
 The fixed construction targets and the adjacent-arm Curve25519 phase and
 replay measurements are recorded in
 [the construction report](../../reports/hex-primality-construction.md).

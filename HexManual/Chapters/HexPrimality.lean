@@ -197,13 +197,20 @@ proof emission, imports, and kernel checking.
 
 ![Native decision and complete Lean proof](https://kim-em.github.io/hex-dev/figures/hex-primality-complete-cactus.svg)
 
-The second plot measures fresh builds replaying supplied PrimeCert
-certificates and Hex's generated literals; it excludes certificate search.
-Each curve sorts its successful cases independently by time. Missing
-certificates count as unsolved. The corpus is small and structured, and the
-report gives exact inputs, toolchains, all samples, and timing boundaries.
+The second plot times kernel checking directly, excluding imports, search,
+and proof elaboration. It checks complete proof bodies, including expanded
+local auxiliary proofs. Curve25519 takes about 131 milliseconds for Hex and
+19 milliseconds for PrimeCert, an observed 6.8-fold PrimeCert advantage.
+The measurements use Hex on Lean 4.34.0 and PrimeCert on Lean 4.33.0.
 
-![Kernel certificate replay comparison](https://kim-em.github.io/hex-dev/figures/hex-primality-kernel-cactus.svg)
+Kernel checking grows substantially with these certificates. The nearly
+flat full-build curve above reflects startup and import overhead on the
+easier inputs; it does not show constant-time verification. The direct
+comparison shows both matched inputs and independently sorted cactus
+curves. Missing certificates count as unsolved. The corpus is small and
+structured; the report records exact inputs, versions, and every sample.
+
+![Direct kernel certificate comparison](https://kim-em.github.io/hex-dev/figures/hex-primality-kernel-direct.svg)
 
 # The Mathlib correspondence
 %%%
