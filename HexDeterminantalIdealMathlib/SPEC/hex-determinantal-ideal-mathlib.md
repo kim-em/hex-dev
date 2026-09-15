@@ -260,9 +260,16 @@ the later piecewise-rank extension; and `ideal?`, populated only when the
 goal's matrix is the symbolic matrix itself under the atom and coefficient
 conditions of
 [hex-generic-rank-mathlib §Output 1](../../HexGenericRankMathlib/SPEC/hex-generic-rank-mathlib.md#output-1-generic-rank),
-holding `span_gens_map_eq` and `mem_zeroLocus_map_iff_rank_lt` below for
-the generators `G'` mapped into `MvPolynomial σ D`. The programmatic
-interface returns the same record and never creates goals.
+holding `span_gens_map_eq` and `gens_map_vanish_iff_rank_lt` below for
+the generators `G'` mapped into `MvPolynomial σ D`. Both hold for every
+coefficient domain `D` that Output 1 admits, `ℤ` included; the pointwise
+statement quantifies over every field `K` with a ring homomorphism
+`D →+* K`, so it never needs Mathlib's `MvPolynomial.zeroLocus`, which
+requires a field on both sides. The zero-locus reading
+`mem_zeroLocus_map_iff_rank_lt` is a corollary for the case where `D` is a
+field, derivable by a consumer through `MvPolynomial.mem_zeroLocus_iff`;
+it is not part of the record. The programmatic interface returns the same
+record and never creates goals.
 
 ### Theorems
 
@@ -286,6 +293,12 @@ theorem span_gens_map_eq [CommRing C] [CommRing D] [IsDomain D] [DecidableEq C]
         (MvPolynomial.rename f ∘ MvPolynomial.map ι₀ ∘ HexMvPolyMathlib.equiv)).toSet =
       Ideal.map (MvPolynomial.rename f).toRingHom
         (Ideal.map (MvPolynomial.map ι₀) (Ideal.span ((Hex.Matrix.minors r A).map HexMvPolyMathlib.equiv).toSet))
+theorem gens_map_vanish_iff_rank_lt [CommRing C] [CommRing D] [DecidableEq C] [Field K]
+    (ι₀ : C →+* D) (f : Fin k → σ) (A) (r : Nat) (ψ : D →+* K) (p : σ → K) :
+    (∀ g ∈ (Hex.Matrix.detIdealGens r A).map
+        (MvPolynomial.rename f ∘ MvPolynomial.map ι₀ ∘ HexMvPolyMathlib.equiv),
+      MvPolynomial.eval₂ ψ p g = 0) ↔
+      ((matrixEquiv A).map (HexMvPolyMathlib.eval₂MathlibHom (ψ.comp ι₀) (p ∘ f))).rank < r
 theorem mem_zeroLocus_map_iff_rank_lt [CommRing C] [Field D] [DecidableEq C]
     (ι₀ : C →+* D) (f : Fin k → σ) (A) (r : Nat) (p : σ → D) :
     p ∈ MvPolynomial.zeroLocus D (Ideal.span ((Hex.Matrix.detIdealGens r A).map
@@ -304,9 +317,14 @@ coefficients and point) does not cover; the existing theorem is the case
 `algebraMap F (FractionRing F)`, rewrites the rank with hex-rank-mathlib's
 `rank_map_eq`, and reflects zero through `IsFractionRing.injective`.
 `span_gens_map_eq` says the mapped generator list generates the mapped
-determinantal ideal (from `span_detIdealGens_eq` and `Ideal.map_span`),
-and `mem_zeroLocus_map_iff_rank_lt` is the zero-locus reading of it for
-the symbolic-matrix-itself output, where the atoms are `X ∘ f`.
+determinantal ideal (from `span_detIdealGens_eq` and `Ideal.map_span`).
+`gens_map_vanish_iff_rank_lt` is the pointwise reading of it for the
+symbolic-matrix-itself output, where the atoms are `X ∘ f`: it is
+`gens_vanish_iff_rank_lt` at `ι := ψ.comp ι₀` and `v := p ∘ f`, after
+`MvPolynomial.eval₂_rename` and `eval₂_map` collapse the mapped generator
+to the original one. `mem_zeroLocus_map_iff_rank_lt` is its corollary at
+`ψ := RingHom.id D`, `K := D`, through `MvPolynomial.mem_zeroLocus_iff`,
+and needs the field hypothesis only because `MvPolynomial.zeroLocus` does.
 
 The lower-bound row uses `le_rank_iff_exists_minor_map_ne_zero` with the
 single named minor, and needs only that minor's membership in
