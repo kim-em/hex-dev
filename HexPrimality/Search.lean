@@ -611,6 +611,12 @@ structure FactorSearchBudget where
   primeFuel : Nat
   /-- Worklist-entry budget available to the partial-factor producer. -/
   factorFuel : Nat
+  /-- Explicit stage-one bounds for certificate construction. -/
+  smoothBounds : List Nat := []
+  /-- Deterministic Pollard p-minus-one bases for certificate construction. -/
+  smoothBases : List Nat := []
+  /-- Optional total attempt limit; unsupported producers must decline. -/
+  attemptLimit : Option Nat := none
 deriving Repr, DecidableEq
 
 /-- A bounded, resumable, untrusted partial-factor producer. -/
@@ -937,7 +943,7 @@ private def primeCertGo (factor : FactorSearch) (budget : PrimeCertBudget)
         | 0 => .error ⟨.exhausted, 0, r⟩
         | fuel + 1 =>
             let allocation : FactorSearchBudget :=
-              ⟨budget, fuel, 2 * n.log2 + 8⟩
+              { primeBudget := budget, primeFuel := fuel, factorFuel := 2 * n.log2 + 8 }
             let factored := factor allocation (n - 1) r
             match assembleGo factor budget fuel n factored.raw.factors []
                 factored.attempts factored.rand with

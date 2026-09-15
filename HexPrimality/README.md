@@ -27,7 +27,17 @@ import HexPrimality
 #eval Hex.Nat.primesIn 0 30
 
 example : Hex.Nat.Prime 2147483647 := by primality
+
+-- Explicitly construct a certificate and offer its reusable literal.
+example : Hex.Nat.Prime (2 ^ 255 - 19) := by primality?
 ```
+
+# Reusable proofs
+
+`primality?` uses a larger, finite construction profile and offers a clickable
+`Try this:` replacement containing the checked certificate. Applying it removes
+search from subsequent builds; Lean still replays the checker in its kernel.
+The ordinary `primality` tactic retains its interactive budget.
 
 # Functionality
 
@@ -43,6 +53,8 @@ example : Hex.Nat.Prime 2147483647 := by primality
   primality.
 - `rhoFactor?` and `pMinusOneStage1` expose the bounded factor primitives used
   during certificate search. Every returned factor is validated by a theorem.
+- `primesBelow` enumerates an exact ascending initial segment using the verified
+  runtime sieve, independently of the committed table bound.
 - `isTablePrime` queries the proved table of primes below `100000`, while
   `primesIn` enumerates any finite interval by exact trial division.
 - `nextPrime?` performs a bounded least-prime search and `orderOf` computes

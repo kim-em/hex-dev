@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexPrimality
+import Lean.Data.Json
 
 /-!
 A deliberately small native timing probe for the production
@@ -47,9 +48,41 @@ private def parseRoute : String → Option Route
   | _ => none
 
 private def usage : String :=
-  "usage: hexprimality_policy_probe (trial|certificate) N REPEATS"
+  "usage: hexprimality_policy_probe (trial|certificate) N REPEATS; or construction N"
+
+/-- Native construction timing, excluding parsing, process startup, and
+certificate formatting. The public construction route includes its self-check. -/
+private def runConstruction (n : Nat) : IO UInt32 := do
+  let input ← IO.mkRef n
+  let n ← input.get
+  let start ← IO.monoNanosNow
+  let result ← IO.mkRef (Construction.run n (Hex.Rand.ofSeed n))
+  let result ← result.get
+  let stop ← IO.monoNanosNow
+  let fields := [("nanos", Lean.toJson (stop - start))]
+  let fields ← match result with
+    | .error f => pure (fields ++ [("status", Lean.toJson "exhausted"),
+        ("attempts", Lean.toJson f.attempts)])
+    | .ok s => do
+        let cert ← IO.mkRef s.cert.raw
+        let cert ← cert.get
+        let checkStart ← IO.monoNanosNow
+        let checked ← IO.mkRef (checkPrime cert)
+        let checked ← checked.get
+        let checkStop ← IO.monoNanosNow
+        unless checked do throw (IO.userError "invalid certificate")
+        pure (fields ++ [("status", Lean.toJson "ok"),
+          ("attempts", Lean.toJson s.attempts),
+          ("check_nanos", Lean.toJson (checkStop - checkStart)),
+          ("certificate", Lean.toJson (reprStr cert))])
+  IO.println (Lean.Json.mkObj fields).compress
+  return 0
 
 def run (args : List String) : IO UInt32 := do
+  if let ["construction", nArg] := args then
+    let some n := nArg.toNat?
+      | IO.eprintln s!"invalid natural: {nArg}"; return 2
+    return ← runConstruction n
   let [routeArg, nArg, repeatsArg] := args
     | IO.eprintln usage; return 2
   let some route := parseRoute routeArg

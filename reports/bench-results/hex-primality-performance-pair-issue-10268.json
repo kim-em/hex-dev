@@ -1,0 +1,396 @@
+{
+  "cpu": 12,
+  "host": "chungus2",
+  "samples": [
+    {
+      "status": "ok",
+      "seconds": 2.408738682977855,
+      "returncode": 0,
+      "load_before": [
+        16.7607421875,
+        34.88037109375,
+        42.44970703125
+      ],
+      "load_after": [
+        17.5810546875,
+        34.74951171875,
+        42.36669921875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.PerformancePair (1.6s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/PerformancePair.lean:6:0: CACTUS {\"attempts\":29,\"certificate\":\"Hex.Nat.PrimeCert.pock\\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\\n  [(2,\\n    0,\\n    Hex.Nat.PrimeCert.pock3\\n      74058212732561358302231226437062788676166966415465897661863160754340907\\n      2028478494862525422475607\\n      22304740449229861598212\\n      2028478494862525422475606\\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\\n       (2, 0, Hex.Nat.PrimeCert.small 353),\\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\\n       (2,\\n        0,\\n        Hex.Nat.PrimeCert.pock3\\n          31757755568855353\\n          4028945\\n          289\\n          4028944\\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\\n           (2, 0, Hex.Nat.PrimeCert.small 223),\\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\",\"check_nanos\":597867,\"nanos\":953694693,\"status\":\"ok\"}\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.PerformancePair:olean"
+      ],
+      "block": 0,
+      "phase": "native",
+      "arm": "old",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\n\n#eval show IO Unit from do\n  let input \u2190 IO.mkRef (57896044618658097711785492504343953926634992332820282019728792003956564819949 : Nat)\n  let n \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let result \u2190 IO.mkRef (Hex.Nat.Construction.run n (Hex.Rand.ofSeed n))\n  let result \u2190 result.get\n  let stop \u2190 IO.monoNanosNow\n  let fields := [(\"nanos\", Lean.toJson (stop - start))]\n  match result with\n  | .error f => IO.println (\"CACTUS \" ++ (Lean.Json.mkObj\n      (fields ++ [(\"status\", Lean.toJson \"exhausted\"), (\"attempts\", Lean.toJson f.attempts)])).compress)\n  | .ok s =>\n    let cert \u2190 IO.mkRef s.cert.raw\n    let cert \u2190 cert.get\n    let checkStart \u2190 IO.monoNanosNow\n    let checked \u2190 IO.mkRef (Hex.Nat.checkPrime cert)\n    let checked \u2190 checked.get\n    let checkStop \u2190 IO.monoNanosNow\n    unless checked do throw (IO.userError \"invalid certificate\")\n    IO.println (\"CACTUS \" ++ (Lean.Json.mkObj (fields ++\n      [(\"status\", Lean.toJson \"ok\"), (\"attempts\", Lean.toJson s.attempts),\n       (\"check_nanos\", Lean.toJson (checkStop - checkStart)),\n       (\"certificate\", Lean.toJson (reprStr cert))])).compress)\n",
+      "source_bytes": 1220,
+      "olean_bytes": 1592,
+      "result": {
+        "attempts": 29,
+        "certificate": "Hex.Nat.PrimeCert.pock\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock3\n      74058212732561358302231226437062788676166966415465897661863160754340907\n      2028478494862525422475607\n      22304740449229861598212\n      2028478494862525422475606\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\n       (2, 0, Hex.Nat.PrimeCert.small 353),\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\n       (2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          31757755568855353\n          4028945\n          289\n          4028944\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 223),\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]",
+        "check_nanos": 597867,
+        "nanos": 953694693,
+        "status": "ok"
+      }
+    },
+    {
+      "status": "ok",
+      "seconds": 1.7555422619916499,
+      "returncode": 0,
+      "load_before": [
+        17.5810546875,
+        34.74951171875,
+        42.36669921875
+      ],
+      "load_after": [
+        17.5810546875,
+        34.74951171875,
+        42.36669921875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.PerformancePair (1.2s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/PerformancePair.lean:6:0: CACTUS {\"attempts\":29,\"certificate\":\"Hex.Nat.PrimeCert.pock\\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\\n  [(2,\\n    0,\\n    Hex.Nat.PrimeCert.pock3\\n      74058212732561358302231226437062788676166966415465897661863160754340907\\n      2028478494862525422475607\\n      22304740449229861598212\\n      2028478494862525422475606\\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\\n       (2, 0, Hex.Nat.PrimeCert.small 353),\\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\\n       (2,\\n        0,\\n        Hex.Nat.PrimeCert.pock3\\n          31757755568855353\\n          4028945\\n          289\\n          4028944\\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\\n           (2, 0, Hex.Nat.PrimeCert.small 223),\\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\",\"check_nanos\":1168222,\"nanos\":630635561,\"status\":\"ok\"}\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.PerformancePair:olean"
+      ],
+      "block": 0,
+      "phase": "native",
+      "arm": "new",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\n\n#eval show IO Unit from do\n  let input \u2190 IO.mkRef (57896044618658097711785492504343953926634992332820282019728792003956564819949 : Nat)\n  let n \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let result \u2190 IO.mkRef (Hex.Nat.Construction.run n (Hex.Rand.ofSeed n))\n  let result \u2190 result.get\n  let stop \u2190 IO.monoNanosNow\n  let fields := [(\"nanos\", Lean.toJson (stop - start))]\n  match result with\n  | .error f => IO.println (\"CACTUS \" ++ (Lean.Json.mkObj\n      (fields ++ [(\"status\", Lean.toJson \"exhausted\"), (\"attempts\", Lean.toJson f.attempts)])).compress)\n  | .ok s =>\n    let cert \u2190 IO.mkRef s.cert.raw\n    let cert \u2190 cert.get\n    let checkStart \u2190 IO.monoNanosNow\n    let checked \u2190 IO.mkRef (Hex.Nat.checkPrime cert)\n    let checked \u2190 checked.get\n    let checkStop \u2190 IO.monoNanosNow\n    unless checked do throw (IO.userError \"invalid certificate\")\n    IO.println (\"CACTUS \" ++ (Lean.Json.mkObj (fields ++\n      [(\"status\", Lean.toJson \"ok\"), (\"attempts\", Lean.toJson s.attempts),\n       (\"check_nanos\", Lean.toJson (checkStop - checkStart)),\n       (\"certificate\", Lean.toJson (reprStr cert))])).compress)\n",
+      "source_bytes": 1220,
+      "olean_bytes": 1592,
+      "result": {
+        "attempts": 29,
+        "certificate": "Hex.Nat.PrimeCert.pock\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock3\n      74058212732561358302231226437062788676166966415465897661863160754340907\n      2028478494862525422475607\n      22304740449229861598212\n      2028478494862525422475606\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\n       (2, 0, Hex.Nat.PrimeCert.small 353),\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\n       (2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          31757755568855353\n          4028945\n          289\n          4028944\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 223),\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]",
+        "check_nanos": 1168222,
+        "nanos": 630635561,
+        "status": "ok"
+      }
+    },
+    {
+      "status": "ok",
+      "seconds": 6.313450935005676,
+      "returncode": 0,
+      "load_before": [
+        17.5810546875,
+        34.74951171875,
+        42.36669921875
+      ],
+      "load_after": [
+        17.77490234375,
+        34.50439453125,
+        42.24609375
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.PerformancePair (5.7s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.PerformancePair:olean"
+      ],
+      "block": 0,
+      "phase": "replay",
+      "arm": "old",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert :=\n\n  Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\n\ntheorem result : Hex.Nat.Prime (2 ^ 255 - 19) :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n",
+      "source_bytes": 971,
+      "olean_bytes": 7312
+    },
+    {
+      "status": "ok",
+      "seconds": 1.1425811179797165,
+      "returncode": 0,
+      "load_before": [
+        17.77490234375,
+        34.50439453125,
+        42.24609375
+      ],
+      "load_after": [
+        18.11328125,
+        34.29638671875,
+        42.13720703125
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.PerformancePair (644ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.PerformancePair:olean"
+      ],
+      "block": 0,
+      "phase": "replay",
+      "arm": "new",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert :=\n\n  Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\n\ntheorem result : Hex.Nat.Prime (2 ^ 255 - 19) :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n",
+      "source_bytes": 971,
+      "olean_bytes": 7312
+    },
+    {
+      "status": "ok",
+      "seconds": 7.00834738794947,
+      "returncode": 0,
+      "load_before": [
+        18.11328125,
+        34.29638671875,
+        42.13720703125
+      ],
+      "load_after": [
+        19.3857421875,
+        34.291015625,
+        42.09326171875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.PerformancePair (6.5s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/PerformancePair.lean:5:52: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.PerformancePair:olean"
+      ],
+      "block": 0,
+      "phase": "complete",
+      "arm": "old",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ntheorem result : Hex.Nat.Prime (2 ^ 255 - 19) := by primality?\n",
+      "source_bytes": 154,
+      "olean_bytes": 5944
+    },
+    {
+      "status": "ok",
+      "seconds": 2.168464007030707,
+      "returncode": 0,
+      "load_before": [
+        19.3857421875,
+        34.291015625,
+        42.09326171875
+      ],
+      "load_after": [
+        19.3857421875,
+        34.291015625,
+        42.09326171875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.PerformancePair (1.6s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/PerformancePair.lean:5:52: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.PerformancePair:olean"
+      ],
+      "block": 0,
+      "phase": "complete",
+      "arm": "new",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ntheorem result : Hex.Nat.Prime (2 ^ 255 - 19) := by primality?\n",
+      "source_bytes": 154,
+      "olean_bytes": 5944
+    },
+    {
+      "status": "ok",
+      "seconds": 1.7102849300135858,
+      "returncode": 0,
+      "load_before": [
+        19.3857421875,
+        34.291015625,
+        42.09326171875
+      ],
+      "load_after": [
+        20.39599609375,
+        34.2529296875,
+        42.03857421875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.PerformancePair (1.2s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/PerformancePair.lean:6:0: CACTUS {\"attempts\":29,\"certificate\":\"Hex.Nat.PrimeCert.pock\\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\\n  [(2,\\n    0,\\n    Hex.Nat.PrimeCert.pock3\\n      74058212732561358302231226437062788676166966415465897661863160754340907\\n      2028478494862525422475607\\n      22304740449229861598212\\n      2028478494862525422475606\\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\\n       (2, 0, Hex.Nat.PrimeCert.small 353),\\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\\n       (2,\\n        0,\\n        Hex.Nat.PrimeCert.pock3\\n          31757755568855353\\n          4028945\\n          289\\n          4028944\\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\\n           (2, 0, Hex.Nat.PrimeCert.small 223),\\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\",\"check_nanos\":593750,\"nanos\":582218312,\"status\":\"ok\"}\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.PerformancePair:olean"
+      ],
+      "block": 1,
+      "phase": "native",
+      "arm": "new",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\n\n#eval show IO Unit from do\n  let input \u2190 IO.mkRef (57896044618658097711785492504343953926634992332820282019728792003956564819949 : Nat)\n  let n \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let result \u2190 IO.mkRef (Hex.Nat.Construction.run n (Hex.Rand.ofSeed n))\n  let result \u2190 result.get\n  let stop \u2190 IO.monoNanosNow\n  let fields := [(\"nanos\", Lean.toJson (stop - start))]\n  match result with\n  | .error f => IO.println (\"CACTUS \" ++ (Lean.Json.mkObj\n      (fields ++ [(\"status\", Lean.toJson \"exhausted\"), (\"attempts\", Lean.toJson f.attempts)])).compress)\n  | .ok s =>\n    let cert \u2190 IO.mkRef s.cert.raw\n    let cert \u2190 cert.get\n    let checkStart \u2190 IO.monoNanosNow\n    let checked \u2190 IO.mkRef (Hex.Nat.checkPrime cert)\n    let checked \u2190 checked.get\n    let checkStop \u2190 IO.monoNanosNow\n    unless checked do throw (IO.userError \"invalid certificate\")\n    IO.println (\"CACTUS \" ++ (Lean.Json.mkObj (fields ++\n      [(\"status\", Lean.toJson \"ok\"), (\"attempts\", Lean.toJson s.attempts),\n       (\"check_nanos\", Lean.toJson (checkStop - checkStart)),\n       (\"certificate\", Lean.toJson (reprStr cert))])).compress)\n",
+      "source_bytes": 1220,
+      "olean_bytes": 1592,
+      "result": {
+        "attempts": 29,
+        "certificate": "Hex.Nat.PrimeCert.pock\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock3\n      74058212732561358302231226437062788676166966415465897661863160754340907\n      2028478494862525422475607\n      22304740449229861598212\n      2028478494862525422475606\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\n       (2, 0, Hex.Nat.PrimeCert.small 353),\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\n       (2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          31757755568855353\n          4028945\n          289\n          4028944\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 223),\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]",
+        "check_nanos": 593750,
+        "nanos": 582218312,
+        "status": "ok"
+      }
+    },
+    {
+      "status": "ok",
+      "seconds": 2.350533524004277,
+      "returncode": 0,
+      "load_before": [
+        20.39599609375,
+        34.2529296875,
+        42.03857421875
+      ],
+      "load_after": [
+        20.39599609375,
+        34.2529296875,
+        42.03857421875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.PerformancePair (1.9s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/PerformancePair.lean:6:0: CACTUS {\"attempts\":29,\"certificate\":\"Hex.Nat.PrimeCert.pock\\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\\n  [(2,\\n    0,\\n    Hex.Nat.PrimeCert.pock3\\n      74058212732561358302231226437062788676166966415465897661863160754340907\\n      2028478494862525422475607\\n      22304740449229861598212\\n      2028478494862525422475606\\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\\n       (2, 0, Hex.Nat.PrimeCert.small 353),\\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\\n       (2,\\n        0,\\n        Hex.Nat.PrimeCert.pock3\\n          31757755568855353\\n          4028945\\n          289\\n          4028944\\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\\n           (2, 0, Hex.Nat.PrimeCert.small 223),\\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\",\"check_nanos\":1021054,\"nanos\":1343842231,\"status\":\"ok\"}\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.PerformancePair:olean"
+      ],
+      "block": 1,
+      "phase": "native",
+      "arm": "old",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\n\n#eval show IO Unit from do\n  let input \u2190 IO.mkRef (57896044618658097711785492504343953926634992332820282019728792003956564819949 : Nat)\n  let n \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let result \u2190 IO.mkRef (Hex.Nat.Construction.run n (Hex.Rand.ofSeed n))\n  let result \u2190 result.get\n  let stop \u2190 IO.monoNanosNow\n  let fields := [(\"nanos\", Lean.toJson (stop - start))]\n  match result with\n  | .error f => IO.println (\"CACTUS \" ++ (Lean.Json.mkObj\n      (fields ++ [(\"status\", Lean.toJson \"exhausted\"), (\"attempts\", Lean.toJson f.attempts)])).compress)\n  | .ok s =>\n    let cert \u2190 IO.mkRef s.cert.raw\n    let cert \u2190 cert.get\n    let checkStart \u2190 IO.monoNanosNow\n    let checked \u2190 IO.mkRef (Hex.Nat.checkPrime cert)\n    let checked \u2190 checked.get\n    let checkStop \u2190 IO.monoNanosNow\n    unless checked do throw (IO.userError \"invalid certificate\")\n    IO.println (\"CACTUS \" ++ (Lean.Json.mkObj (fields ++\n      [(\"status\", Lean.toJson \"ok\"), (\"attempts\", Lean.toJson s.attempts),\n       (\"check_nanos\", Lean.toJson (checkStop - checkStart)),\n       (\"certificate\", Lean.toJson (reprStr cert))])).compress)\n",
+      "source_bytes": 1220,
+      "olean_bytes": 1592,
+      "result": {
+        "attempts": 29,
+        "certificate": "Hex.Nat.PrimeCert.pock\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock3\n      74058212732561358302231226437062788676166966415465897661863160754340907\n      2028478494862525422475607\n      22304740449229861598212\n      2028478494862525422475606\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\n       (2, 0, Hex.Nat.PrimeCert.small 353),\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\n       (2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          31757755568855353\n          4028945\n          289\n          4028944\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 223),\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]",
+        "check_nanos": 1021054,
+        "nanos": 1343842231,
+        "status": "ok"
+      }
+    },
+    {
+      "status": "ok",
+      "seconds": 1.4043646480422467,
+      "returncode": 0,
+      "load_before": [
+        20.39599609375,
+        34.2529296875,
+        42.03857421875
+      ],
+      "load_after": [
+        20.39599609375,
+        34.2529296875,
+        42.03857421875
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.PerformancePair (747ms)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.PerformancePair:olean"
+      ],
+      "block": 1,
+      "phase": "replay",
+      "arm": "new",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert :=\n\n  Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\n\ntheorem result : Hex.Nat.Prime (2 ^ 255 - 19) :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n",
+      "source_bytes": 971,
+      "olean_bytes": 7312
+    },
+    {
+      "status": "ok",
+      "seconds": 6.7055493899970315,
+      "returncode": 0,
+      "load_before": [
+        20.39599609375,
+        34.2529296875,
+        42.03857421875
+      ],
+      "load_after": [
+        22.40478515625,
+        34.21484375,
+        41.94189453125
+      ],
+      "stdout": "\u2714 [76/76] Built HexPrimality.ProofProbe.Curve25519.PerformancePair (6.1s)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.PerformancePair:olean"
+      ],
+      "block": 1,
+      "phase": "replay",
+      "arm": "old",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert :=\n\n  Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\n\ntheorem result : Hex.Nat.Prime (2 ^ 255 - 19) :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n",
+      "source_bytes": 971,
+      "olean_bytes": 7312
+    },
+    {
+      "status": "ok",
+      "seconds": 2.2917618530336767,
+      "returncode": 0,
+      "load_before": [
+        22.40478515625,
+        34.21484375,
+        41.94189453125
+      ],
+      "load_after": [
+        22.40478515625,
+        34.21484375,
+        41.94189453125
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.PerformancePair (1.5s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/PerformancePair.lean:5:52: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.PerformancePair:olean"
+      ],
+      "block": 1,
+      "phase": "complete",
+      "arm": "new",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ntheorem result : Hex.Nat.Prime (2 ^ 255 - 19) := by primality?\n",
+      "source_bytes": 154,
+      "olean_bytes": 5944
+    },
+    {
+      "status": "ok",
+      "seconds": 10.414451880031265,
+      "returncode": 0,
+      "load_before": [
+        22.40478515625,
+        34.21484375,
+        41.94189453125
+      ],
+      "load_after": [
+        30.41455078125,
+        35.50244140625,
+        42.275390625
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.PerformancePair (9.4s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/PerformancePair.lean:5:52: Try this:\n  [apply] exact\n    Hex.Nat.prime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.PerformancePair:olean"
+      ],
+      "block": 1,
+      "phase": "complete",
+      "arm": "old",
+      "source": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ntheorem result : Hex.Nat.Prime (2 ^ 255 - 19) := by primality?\n",
+      "source_bytes": 154,
+      "olean_bytes": 5944
+    }
+  ],
+  "protocol": "two trial-major blocks, adjacent old/new arms with reversed order; all completed samples retained",
+  "versions": {
+    "old": {
+      "commit": "6bfa5b23230cf64faa5aac77bbd5dd55320a0c7d",
+      "toolchain": "leanprover/lean4:v4.34.0-rc2",
+      "sources": {
+        "HexPrimality/Sieve.lean": "b90317eda625ac9dc7333505e1756a76a041d4acd34555d4131ec49d0bac1489",
+        "HexPrimality/Table.lean": "420e4a89291b34717aebe1a3cd393e9857ae0309b816e5ba3b2e1b5d7b6bbe27",
+        "HexPrimality/Cert.lean": "e2fb751d95ac2536fa501b803ad8acb1d59679ee0c22237f1c17c45e96f91b79"
+      }
+    },
+    "new": {
+      "commit": "756e1aa33e2baf28cc788894a5239b0eadc81e0d",
+      "toolchain": "leanprover/lean4:v4.34.0-rc2",
+      "sources": {
+        "HexPrimality/Sieve.lean": "c6a229a13cc3385f2b12974594b9ecfe22317df0ea485719949becd419e076d9",
+        "HexPrimality/Table.lean": "0ad2ed921318915fb37067b16ee8a27e16da8f9b2c7316247f3bc217e2990d2a",
+        "HexPrimality/Cert.lean": "d3a8ed3ae3d4a59ffec73bc69309be31d22d3364318b535089d19ea22f630f08"
+      }
+    }
+  },
+  "execution_modes": {
+    "native": "Lean #eval interpreter (historical phase name)",
+    "replay": "kernel replay in fresh Lake build",
+    "complete": "primality? with interpreted search and kernel replay"
+  }
+}

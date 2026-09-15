@@ -118,7 +118,7 @@ private def smoothBases : List Nat := [2, 3, 5, 7]
 private def ecmSigmaRange : Nat := 256
 
 private def raiseSmoothBound (bound : Nat) : Nat :=
-  smoothBound (8 * bound)
+  min 9999 (8 * bound)
 
 private def lowerSmoothBound (bound : Nat) : Nat :=
   max 2 (bound / 8)

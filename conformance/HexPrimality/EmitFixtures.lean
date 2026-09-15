@@ -183,6 +183,13 @@ private def emitCase : IO Unit := do
     emitCertificate s!"certcheck/{case}" (Int.ofNat n) (certJson cert)
     emitResult lib s!"certcheck/{case}" "certcheck"
       (boolJson (Hex.Nat.checkPrime cert))
+  let n := 2 ^ 255 - 19
+  match Hex.Nat.Construction.run n (Hex.Rand.ofSeed n) with
+  | .error _ => throw <| IO.userError "Curve25519 certificate construction exhausted"
+  | .ok success =>
+      let case := "certcheck/accept/curve25519"
+      emitCertificate case (Int.ofNat n) (certJson success.cert.raw)
+      emitResult lib case "certcheck" (boolJson (Hex.Nat.checkPrime success.cert.raw))
   for (case, lo, hi) in segmentCases do
     emitSegment s!"segment/{case}" (Int.ofNat lo) (Int.ofNat hi)
     emitResult lib s!"segment/{case}" "segment"

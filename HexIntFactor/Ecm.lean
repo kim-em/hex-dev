@@ -187,7 +187,7 @@ private def classifyGcd (n g : Nat) : EcmResult :=
 
 private def stageGcdNat (n bound curveNum curveDen u3 v3 : Nat) : Nat :=
   let p := stageMultiply n bound curveNum (4 * curveDen % n)
-    primeTable.toList ⟨u3, v3⟩
+    (primesBelow (bound + 1)) ⟨u3, v3⟩
   Nat.gcd p.z n
 
 private def stageGcdWith (backend : EcmBackend)
@@ -201,7 +201,7 @@ private def stageGcdWith (backend : EcmBackend)
           let ctx := MontCtx.mk modulus hodd
           let a24num := ctx.toMont (UInt64.ofNat curveNum)
           let a24den := ctx.toMont (UInt64.ofNat (4 * curveDen % n))
-          let p := stageMultiplyWord ctx bound a24num a24den primeTable.toList
+          let p := stageMultiplyWord ctx bound a24num a24den (primesBelow (bound + 1))
             ⟨ctx.toMont (UInt64.ofNat u3), ctx.toMont (UInt64.ofNat v3)⟩
           (Nat.gcd (ctx.fromMont p.z).toNat n, .word)
         else
@@ -257,11 +257,11 @@ def ecmTrace (n sigma bound : Nat) : EcmTrace :=
 end Internal
 
 /-- One Suyama-parameterized Montgomery ECM stage-1 attempt. Requests beyond
-`smoothBoundCap` are exactly capped to the complete prime-table range. -/
+`smoothBoundCap` are exactly capped to the supported runtime range. -/
 def ecmStage1 (n sigma bound : Nat) : EcmResult :=
   (Internal.ecmTrace n sigma bound).result
 
-/-- Requests beyond the complete prime-table range are exactly capped. -/
+/-- Requests beyond the supported runtime range are exactly capped. -/
 theorem ecmStage1_bound (n sigma bound : Nat) :
     ecmStage1 n sigma bound = ecmStage1 n sigma (smoothBound bound) := by
   simp [ecmStage1, Internal.ecmTrace, Internal.ecmTraceWith]

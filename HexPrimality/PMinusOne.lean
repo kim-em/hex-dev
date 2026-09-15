@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexPrimality.Table
+public import HexPrimality.Sieve
 public import HexArith.Montgomery.Context
 public import HexBasic.Rand
 
@@ -40,12 +41,12 @@ structure PMinusOneAttempt where
   rand : Rand
 deriving Repr, DecidableEq
 
-/-- Accepted stage-1 smoothness cap. It remains inside the complete table range,
-but is independent of later table-policy growth so search cost and retry-ladder
-coverage do not change as a side effect of a larger certification table. -/
-def smoothBoundCap : Nat := 9999
+/-- Maximum supported stage-one bound. Stage primes come from the verified
+runtime sieve, independently of the committed table. Ordinary search policies
+may select smaller bounds. -/
+def smoothBoundCap : Nat := 524288
 
-/-- Clamp a requested stage-1 bound to the complete committed-table range. -/
+/-- Clamp a requested stage-1 bound to the supported runtime range. -/
 def smoothBound (bound : Nat) : Nat := min bound smoothBoundCap
 
 @[simp]
@@ -76,7 +77,7 @@ private def pMinusOneStage1Core (n base bound : Nat) : PMinusOneResult :=
     if 1 < initial then
       if initial < n ∧ n % initial = 0 then .factor initial else .whole
     else
-      let x := raiseSmooth n bound primeTable.toList (base % n)
+      let x := raiseSmooth n bound (primesBelow (bound + 1)) (base % n)
       let g := Nat.gcd ((x + n - 1) % n) n
       if g = 1 then .noFactor
       else if 1 < g ∧ g < n ∧ n % g = 0 then .factor g
@@ -84,8 +85,7 @@ private def pMinusOneStage1Core (n base bound : Nat) : PMinusOneResult :=
 
 /-- One deterministic Pollard `p - 1` stage-1 attempt. Invalid bases or
 moduli return `noFactor`; a gcd equal to the modulus is reported separately
-as `whole`. The effective smoothness bound is `smoothBound bound`, never an
-incomplete extension beyond the committed prime table. -/
+as `whole`. The effective smoothness bound is `smoothBound bound`, with every prime up to that bound included by the runtime sieve. -/
 def pMinusOneStage1 (n base bound : Nat) : PMinusOneResult :=
   pMinusOneStage1Core n base (smoothBound bound)
 
@@ -96,7 +96,7 @@ def pMinusOneStage1Counted (n base bound : Nat) (r : Rand) :
     PMinusOneAttempt :=
   ⟨pMinusOneStage1 n base bound, 1, r⟩
 
-/-- Requests beyond the complete prime-table range are exactly capped. -/
+/-- Requests beyond the supported runtime range are exactly capped. -/
 theorem pMinusOneStage1_bound (n base bound : Nat) :
     pMinusOneStage1 n base bound =
       pMinusOneStage1 n base (smoothBound bound) := by

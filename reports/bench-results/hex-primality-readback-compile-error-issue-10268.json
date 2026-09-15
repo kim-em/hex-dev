@@ -1,0 +1,27 @@
+{
+  "status": "error",
+  "seconds": 1.4154791659675539,
+  "returncode": 1,
+  "load_before": [
+    64.89990234375,
+    59.33251953125,
+    50.46728515625
+  ],
+  "load_after": [
+    67.0703125,
+    59.875,
+    50.6904296875
+  ],
+  "stdout": "\u2716 [64/64] Building HexPrimality.ProofProbe.Curve25519.Readback (696ms)\ntrace: .> LEAN_PATH=/home/kim/hex-dev/.lake/packages/subverso/.lake/build/lib/lean:/home/kim/hex-dev/.lake/packages/MD4Lean/.lake/build/lib/lean:/home/kim/hex-dev/.lake/packages/illuminate/.lake/build/lib/lean:/home/kim/hex-dev/.lake/packages/Cli/.lake/build/lib/lean:/home/kim/hex-dev/.lake/packages/batteries/.lake/build/lib/lean:/home/kim/hex-dev/.lake/packages/Qq/.lake/build/lib/lean:/home/kim/hex-dev/.lake/packages/aesop/.lake/build/lib/lean:/home/kim/hex-dev/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/kim/hex-dev/.lake/packages/importGraph/.lake/build/lib/lean:/home/kim/hex-dev/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/kim/hex-dev/.lake/packages/plausible/.lake/build/lib/lean:/home/kim/hex-dev/.lake/packages/verso/.lake/build/lib/lean:/home/kim/hex-dev/.lake/packages/NautyFFI/.lake/build/lib/lean:/home/kim/hex-dev/.lake/packages/lean-bench/.lake/build/lib/lean:/home/kim/hex-dev/.lake/packages/mathlib/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10268/.lake/build/lib/lean /home/kim/.elan/toolchains/leanprover--lean4---v4.34.0-rc2/bin/lean /home/kim/worktrees/hex-dev/hex-dev-issue-10268/bench/HexPrimality/ProofProbe/Curve25519/Readback.lean -o /home/kim/worktrees/hex-dev/hex-dev-issue-10268/.lake/build/lib/lean/HexPrimality/ProofProbe/Curve25519/Readback.olean -i /home/kim/worktrees/hex-dev/hex-dev-issue-10268/.lake/build/lib/lean/HexPrimality/ProofProbe/Curve25519/Readback.ilean -c /home/kim/worktrees/hex-dev/hex-dev-issue-10268/.lake/build/ir/HexPrimality/ProofProbe/Curve25519/Readback.c --setup /home/kim/worktrees/hex-dev/hex-dev-issue-10268/.lake/build/ir/HexPrimality/ProofProbe/Curve25519/Readback.setup.json --json\nerror: bench/HexPrimality/ProofProbe/Curve25519/Readback.lean:12:16: `measure` has already been declared\nerror: bench/HexPrimality/ProofProbe/Curve25519/Readback.lean:30:24: Application type mismatch: The argument\n  old\nhas type\n  Bool\nbut is expected to have type\n  ?m.54 \u2192 Nat\nin the application\n  measure old\nerror: bench/HexPrimality/ProofProbe/Curve25519/Readback.lean:31:17: Invalid field notation: Type of\n  row\nis not known; cannot resolve field `compress`\n\nHint: Consider replacing the field projection `.compress` with a call to the function `Lean.Json.compress`.\nSome required targets logged failures:\n- HexPrimality.ProofProbe.Curve25519.Readback\n",
+  "stderr": "error: build failed\n",
+  "command": [
+    "lake",
+    "build",
+    "+HexPrimality.ProofProbe.Curve25519.Readback:olean"
+  ],
+  "cpu": 42,
+  "host": "chungus2",
+  "source": "module\npublic import HexPrimality.Sieve\npublic meta import HexPrimality.Sieve\npublic import Lean\npublic section\ndef oldScan (state : Nat) : Nat \u2192 Nat \u2192 List Nat\n  | _, 0 => []\n  | t, fuel + 1 =>\n      if state.testBit t then Hex.Nat.numOfIndex t :: oldScan state (t+1) fuel\n      else oldScan state (t+1) fuel\n\n@[noinline] def measure (old : Bool) (bound state : Nat) : IO Lean.Json := do\n  let input \u2190 IO.mkRef (bound, state)\n  let (bound, state) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let output \u2190 IO.mkRef (if old then oldScan state 1 (Hex.Nat.indexWidth bound - 1)\n    else Hex.Nat.bitsToList state bound)\n  let output \u2190 output.get\n  let stop \u2190 IO.monoNanosNow\n  return Lean.Json.mkObj [(\"old\", Lean.toJson old), (\"nanos\", Lean.toJson (stop-start)),\n    (\"count\", Lean.toJson output.length), (\"last\", Lean.toJson output.getLast?)]\n\n#eval show IO Unit from do\n  let bound \u2190 IO.mkRef (524289 : Nat)\n  let bound \u2190 bound.get\n  let state \u2190 IO.mkRef (Hex.Nat.sieve bound (bound.sqrt + 1))\n  let state \u2190 state.get\n  for block in [0:2] do\n    for old in (if block == 0 then [true, false] else [false, true]) do\n      let row \u2190 measure old bound state\n      IO.println row.compress\n",
+  "protocol": "adjacent old/new arms, AB/BA; every completed sample retained",
+  "interpretation": "Compilation diagnostic only: the local measurement function initially collided with a global Lean name. No successful timing sample; retained for provenance and excluded from every performance claim."
+}

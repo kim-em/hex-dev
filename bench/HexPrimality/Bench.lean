@@ -426,6 +426,56 @@ setup_fixed_benchmark runPock3Checker where {
   expectedHash := some (Hashable.hash (1 : Nat))
 }
 
+private initialize curveRef : IO.Ref Input ← IO.mkRef {
+  n := 2 ^ 255 - 19
+  cert := Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949
+        [(2, 0,
+            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907
+              2028478494862525422475607 22304740449229861598212 2028478494862525422475606
+              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),
+                (2, 0, Hex.Nat.PrimeCert.small 57467),
+                (2, 0,
+                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944
+                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),
+                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])] }
+
+private initialize runtimeBoundRef : IO.Ref Nat ← IO.mkRef 524289
+
+/-- Fixed mode-3 Curve25519 construction, including final compiled self-check. -/
+def runConstruction (_ : Unit) : IO Nat := do
+  let input ← curveRef.get
+  match Construction.run input.n (Hex.Rand.ofSeed input.n) with
+  | .ok s => return s.attempts
+  | .error _ => return 0
+
+/-- Fixed mode-3 compiled replay of the exact Curve25519 suggestion. -/
+def runCurveChecker (_ : Unit) : IO Nat := do
+  return if checkPrime (← curveRef.get).cert then 1 else 0
+
+/-- Fixed mode-3 runtime enumeration through the construction bound. -/
+def runRuntimePrimes (_ : Unit) : IO Nat := do
+  return (primesBelow (← runtimeBoundRef.get)).length
+
+-- These single structural targets do not form a scaling family. Deadlines
+-- are operational limits; absolute timings describe the shared host.
+setup_fixed_benchmark runConstruction where {
+  repeats := 5
+  maxSecondsPerCall := 5.0
+  expectedHash := some (Hashable.hash (29 : Nat))
+}
+
+setup_fixed_benchmark runCurveChecker where {
+  repeats := 5
+  maxSecondsPerCall := 5.0
+  expectedHash := some (Hashable.hash (1 : Nat))
+}
+
+setup_fixed_benchmark runRuntimePrimes where {
+  repeats := 5
+  maxSecondsPerCall := 5.0
+  expectedHash := some (Hashable.hash (43390 : Nat))
+}
+
 end Hex.PrimalityBench
 
 def main (args : List String) : IO UInt32 := LeanBench.Cli.dispatch args

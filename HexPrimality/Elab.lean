@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public meta import HexPrimality.Search
-public import HexPrimality.Search
+public meta import HexPrimality.Construction
+public import HexPrimality.Construction
 public import Lean
 
 public section
@@ -42,7 +42,7 @@ namespace Hex.PrimalityTactic
 open Lean Meta Elab
 
 /-- ABI version of the downstream factor-search registration boundary. -/
-meta def searchExtensionVersion : Nat := 1
+meta def searchExtensionVersion : Nat := 2
 
 /-- One downstream partial-factor producer available to elaboration-time
 certificate search. The version is checked before the function is used. -/
@@ -332,5 +332,78 @@ syntax (name := primalityTac)
           let (_, g) ← (← g.assert h.getId ty proof).intro1P
           return [g]
     | _ => Elab.throwUnsupportedSyntax
+
+/-- Render a literal using the same expression reifier as ordinary proof
+emission. Full names and fixed pretty-printing options make the suggestion
+independent of namespace openings and display settings. -/
+meta def certificateSyntax (cert : Hex.Nat.PrimeCert) : MetaM Term :=
+  withOptions (fun _ =>
+    Lean.Std.Format.format.width.set (pp.fullNames.set {} true) 100) do
+    PrettyPrinter.delab (reifyPrimeCert cert)
+
+/-- The complete finite construction resource description used in diagnostics. -/
+meta def constructionDescription (b : Hex.Nat.ConstructionBudget) : String :=
+  s!"maximum {b.maxBits} bits, recursive depth {b.maxDepth}, total attempts {b.maxAttempts}, factor fuel \
+    {b.factor.factorFuel}, p-minus-one bounds {b.factor.smoothBounds} at bases \
+    {b.factor.smoothBases}, {b.factor.primeBudget.rhoRestarts} rho restarts with \
+    {b.factor.primeBudget.rhoSteps} steps, ECM bounds [] and 0 curves, witness \
+    bases {b.witnessBases} then {b.randomWitnesses} random candidates, \
+    at most {b.maxFactors} factors and {b.maxSubsets} subsets"
+
+/-- Construct a reusable certificate with an optional total attempt limit. -/
+syntax (name := primalitySuggestTac) "primality?"
+  (" (" &"maxAttempts" " := " num ")")? : tactic
+
+set_option hygiene false in
+/-- Shared goal handler for core and companion `primality?` registrations. -/
+meta def suggestPrime (predicate head : Name) (stx : Syntax) : Tactic.TacticM Unit := do
+  let goal ← Tactic.getMainGoal
+  goal.withContext do
+    let tgt ← instantiateMVars (← goal.getType)
+    unless tgt.getAppFn.isConstOf predicate && tgt.getAppNumArgs == 1 do
+      Elab.throwUnsupportedSyntax
+    let nE := tgt.appArg!
+    checkClosed "primality?" nE
+    let n? ← (evalNat nE).run
+    -- Imported arithmetic instances may hide the operations from `evalNat`.
+    -- Normalize only that fallback; keep the original expression in the proof.
+    let n? ← match n? with
+      | some n => pure (some n)
+      | none => (evalNat (← whnf nE)).run
+    let some n := n?
+      | throwError "primality?: the goal{indentExpr tgt}\n\
+          is not about a natural-number numeral"
+    unless ← isDefEq nE (mkNatLit n) do
+      throwError "primality?: the input must be definitionally transparent"
+    let budget := match stx with
+      | `(tactic| primality? (maxAttempts := $limit:num)) =>
+          { Hex.Nat.constructionBudget with maxAttempts := limit.getNat }
+      | _ => Hex.Nat.constructionBudget
+    if n.log2 + 1 > budget.maxBits then
+      throwError "primality?: input has {n.log2 + 1} bits; construction limit is {budget.maxBits} bits"
+    match Hex.Nat.Construction.run n (Hex.Rand.ofSeed n) budget with
+    | .error f =>
+        if f.stop == .composite then
+          throwError "primality?: {n} is not prime"
+        throwError "primality?: certificate construction for {n} exhausted after \
+          {f.attempts} attempts (seed {n}; {constructionDescription budget})"
+    | .ok success =>
+        let cert := success.cert.raw
+        unless cert.subject == n && Hex.Nat.checkPrime cert do
+          throwError "primality?: the constructed certificate failed its check"
+        let proof := mkApp3 (mkConst head) nE (reifyPrimeCert cert) reflTrue
+        let literal ← certificateSyntax cert
+        let name := mkIdent ((← unresolveNameGlobalAvoidingLocals? head
+          (fullNames := true)).getD head)
+        let replacement ← `(tactic| exact $name (c := $literal) (by decide +kernel))
+        goal.assign proof
+        Tactic.replaceMainGoal []
+        withOptions (fun _ =>
+            Lean.Std.Format.format.width.set (pp.fullNames.set {} true) 100) do
+          Meta.Tactic.TryThis.addSuggestion stx replacement
+
+/-- Core certificate-literal suggestion handler. -/
+@[tactic primalitySuggestTac] meta def evalPrimalitySuggest : Tactic.Tactic :=
+  suggestPrime ``Hex.Nat.Prime ``Hex.Nat.prime_of_checkPrimeAt
 
 end Hex.PrimalityTactic

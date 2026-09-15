@@ -336,9 +336,9 @@ private def pMinusOneWhole :=
 #guard ecmBackend (2 ^ 64 - 1) == .word
 #guard ecmBackend (2 ^ 64) == .natural
 
-#guard smoothBoundCap == 9999
-#guard smoothBoundCap < primeTableBound
-#guard smoothBound (primeTableBound + 1000) == smoothBoundCap
+#guard smoothBoundCap == 524288
+#guard primeTableBound < smoothBoundCap
+#guard smoothBound (smoothBoundCap + 1000) == smoothBoundCap
 
 example (n base bound : Nat) :
     pMinusOneStage1 n base bound =
@@ -506,7 +506,7 @@ private def smoothCapTrace : Hex.Nat.Internal.SmoothSearch :=
   .pMinusOne 2 64 .noFactor,
   .pMinusOne 2 512 .noFactor,
   .pMinusOne 2 4096 .noFactor,
-  .pMinusOne 2 smoothBoundCap .noFactor]
+  .pMinusOne 2 9999 .noFactor]
 
 #guard (match rhoSplit? 91 (Rand.ofSeed 1) 16 with
   | .ok (d, _) => decide (1 < d) && decide (d < 91) && 91 % d == 0
@@ -572,7 +572,7 @@ private def starvedInput : Nat := 1000003 * 1000033
 private def retainedCertInput : Nat := starvedInput * 1000037
 
 private def searchAllocation (factorFuel : Nat) : FactorSearchBudget :=
-  ⟨defaultPrimeCertBudget, 16, factorFuel⟩
+  { primeBudget := defaultPrimeCertBudget, primeFuel := 16, factorFuel := factorFuel }
 
 #guard (match factor? retainedCertInput (Rand.ofSeed 3) (fuel := 3) with
   | .error failure =>

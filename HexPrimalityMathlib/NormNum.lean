@@ -120,6 +120,10 @@ reified certificate, emitted through the `Nat.Prime`-flavoured wrapper. -/
           Tactic.replaceMainGoal []
     | _ => Elab.throwUnsupportedSyntax
 
+/-- Companion certificate-literal suggestion handler. -/
+@[tactic primalitySuggestTac] meta def evalPrimalitySuggestNat : Tactic.Tactic :=
+  suggestPrime `Nat.Prime ``Hex.Nat.natPrime_of_checkPrimeAt
+
 end Hex.PrimalityTactic
 
 open Lean Meta Qq Mathlib.Meta.NormNum
