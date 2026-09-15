@@ -84,9 +84,13 @@ def main() -> None:
     parser.add_argument('--blocks', type=int, default=2)
     parser.add_argument('--powers', action='store_true',
                         help='isolate modular powering and calibrate the two kernel versions')
+    parser.add_argument('--upstream-power', action='store_true',
+                        help='include the kernel definition from lean4#13490 in the power comparison')
     args = parser.parse_args()
     if args.output.exists() or args.blocks < 2 or args.blocks % 2:
         parser.error('use a new output path and an even block count >= 2')
+    if args.upstream_power and not args.powers:
+        parser.error('--upstream-power requires --powers')
     previous = json.loads(args.source_record.read_text())
     pc = args.primecert_checkout.resolve()
     cpu = pick()
@@ -122,6 +126,26 @@ def main() -> None:
         record['power_sources']['power-div']['primecert'] = (
             'module\npublic import Lean\npublic meta import Lean\npublic section\n' + raw_div +
             f'\ntheorem result : powDiv 2 {exponent} {n} = 1 := by decide +kernel\n')
+        if args.upstream_power:
+            record['cases'].append(dict(name='power-upstream', n=n))
+            # lean4#13490, commit 86704eea9a8cf46d7f20f4eb2c293cdaae7ac2d7.
+            # Copyright (c) 2026 Lean FRO, LLC; Kim Morrison; Apache 2.0.
+            # Same kernel definition; renamed and without the runtime extern.
+            core = '''
+@[expose, semireducible] def powCore (b e m : @& Nat) : Nat :=
+  if e = 0 then 1 % m
+  else
+    let r := powCore (b * b % m) (e / 2) m
+    if e % 2 = 1 then r * b % m else r
+termination_by e
+decreasing_by omega
+'''
+            record['power_sources']['power-upstream'] = {'hex': (
+                'module\npublic import HexPrimality.Cert\npublic import Lean\n'
+                'public meta import Lean\npublic section\n' + core +
+                f'\ntheorem result : powCore 2 {exponent} {n} = 1 := by decide +kernel\n')}
+            record['upstream_power'] = ('Kernel definition only, replayed on Lean 4.34.0; '
+                                         'not a native GMP measurement or a Lean 4.35.0 benchmark')
         record['attribution'] = ('powDiv follows PrimeCert/PowMod.lean, Copyright (c) 2022 '
                                  'Bhavik Mehta, Apache 2.0; source imported from the retained diagnostic.')
     for system, (cwd, _, path) in locations.items():

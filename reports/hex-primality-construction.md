@@ -413,6 +413,19 @@ division loop follows PrimeCert's Apache-licensed `powModK`; it is a benchmark
 definition, not a change to the production checker. Reproduce by adding
 `--powers` to the direct-kernel runner above and choosing a new output path.
 
+The kernel-visible definition from
+[lean4#13490](https://github.com/leanprover/lean4/pull/13490), commit
+`86704eea9a8cf46d7f20f4eb2c293cdaae7ac2d7`, is a separate diagnostic arm.
+Replaying that definition on Lean 4.34.0 takes 15.24 / 15.13 ms for the same
+expression, alongside 11.90 / 11.87 ms for current Hex and 1.98 / 1.98 ms for
+the explicit division loop. All ten completed samples are in
+`hex-primality-upstream-kernel-power-issue-10268.json`; add `--upstream-power`
+to reproduce. This copies the kernel definition without its extern and does
+not measure Lean 4.35.0 or native `mpz_powm`. The upstream GMP-backed runtime
+operation targets the compiled search bottleneck; kernel replay still reduces
+the Lean definition. An eventual adapter must also preserve Hex's zero-modulus
+result of zero, whereas `Nat.powMod b e 0` returns `b ^ e`.
+
 #### Fresh builds including imports
 
 ![Supplied-certificate replay](figures/hex-primality-kernel-cactus.svg)
