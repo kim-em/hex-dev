@@ -53,6 +53,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("output", type=Path)
     parser.add_argument("--case", action="append", help="diagnostic subset, not a shipping sweep")
+    parser.add_argument("--resume", action="store_true", help="retain completed samples after interruption")
     args = parser.parse_args()
     manifest = json.loads(MANIFEST.read_text())
     cases = [c for c in manifest["cases"] if not args.case or c["stem"] in args.case]
@@ -72,7 +73,20 @@ def main():
     sweep.warm_imports(spec, 1200)
     topology = sweep.cpu_topology(cpu)
     monitored = sweep.parse_cpu_list(topology.get("thread_siblings_list")) or [cpu]
-    samples, profiles = [], []
+    samples, profiles, segments = [], [], []
+    if args.resume:
+        prior = json.loads(args.output.read_text())
+        changed = {p for p in prior["source_hashes"] | hashes
+                   if prior["source_hashes"].get(p) != hashes.get(p)}
+        if changed - {str(Path(__file__).relative_to(ROOT))}:
+            raise RuntimeError(f"measured sources changed: {sorted(changed)}")
+        if prior["subset"] != bool(args.case):
+            raise RuntimeError("cannot change sweep scope on resume")
+        samples, profiles = prior["samples"], prior["profiles"]
+        segments = prior.get("segments", [dict(first_sample=0, environment=prior["environment"],
+            cpu=prior["cpu"], topology=prior["topology"], source_hashes=prior["source_hashes"])])
+    segments.append(dict(first_sample=len(samples), environment=environment, cpu=cpu,
+        topology=topology, source_hashes=hashes))
     args.output.parent.mkdir(parents=True, exist_ok=True)
 
     def save():
@@ -105,7 +119,7 @@ def main():
             sources_unchanged=hashes == sweep.source_hashes(spec, Path(__file__)),
             subset=bool(args.case), schedule_complete=complete,
             measurement_complete=complete and all(r["delta_ns"] is not None for r in samples),
-            samples=samples, profiles=profiles, summary=summaries,
+            samples=samples, profiles=profiles, segments=segments, summary=summaries,
             all_accepted_faster=complete and all(p["candidate_faster"] for s in summaries.values()
                 for p in s["paired"].values()), default_chain_changed=False)
         args.output.write_text(json.dumps(record, indent=2) + "\n")
@@ -129,6 +143,9 @@ def main():
                 blocks.reverse()
             for pair in blocks:
                 arm = pair.metadata["arm"]
+                if any(r["stem"] == case["stem"] and r["arm"] == arm and
+                       r["trial"] == trial+1 for r in samples):
+                    continue
                 print(f"[{trial+1}/6] {case['stem']} {arm}", flush=True)
                 ordered = sweep.ordered_modules(pair, trial)
                 results = {role: build(module.module, 180, role == "candidate" and case["accepted"])
@@ -139,6 +156,8 @@ def main():
                     delta_ns=results["candidate"]["wall_nanos"]-results["reference"]["wall_nanos"] if success else None))
                 save()
     for stem in manifest["profiles"]:
+        if any(p["stem"] == stem for p in profiles):
+            continue
         case = next((c for c in cases if c["stem"] == stem), None)
         if case:
             print(f"[kernel profile] {stem}", flush=True)

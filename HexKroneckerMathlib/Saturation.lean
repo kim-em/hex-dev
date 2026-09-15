@@ -126,9 +126,25 @@ theorem Expr.cappedHeight_eq (cap : Nat) (e : Expr) :
   | pow a n ha =>
       simp only [Expr.cappedHeight, Expr.height, ha, Saturating.pow_eq, Saturating.min_pow]
 
+theorem Expr.analyzeCore_bound (cap k : Nat) (e : Expr) :
+    (e.analyzeCore cap k).1 = ⟨e.degrees k, e.cappedHeight cap⟩ := by
+  induction e <;>
+    simp_all [Expr.analyzeCore, Expr.degrees, Expr.cappedHeight, Bounds.add, Bounds.mul, Bounds.pow]
+
+theorem Expr.scan_eq (cap k : Nat) (e : Expr) :
+    (e.scan cap k).1 = (e.analyzeCore cap k).1 ∧
+      ∀ acc, (e.scan cap k).2 acc = (e.analyzeCore cap k).2 ++ acc := by
+  induction e <;> simp_all [Expr.scan, Expr.analyzeCore, List.append_assoc]
+  all_goals intro acc; split_ifs <;> simp_all [List.append_assoc]
+
+theorem Expr.analyze_eq (cap k : Nat) (e : Expr) (acc : List Bounds) :
+    e.analyze cap k acc =
+      ((e.analyzeCore cap k).1, (e.analyzeCore cap k).1 :: ((e.analyzeCore cap k).2 ++ acc)) := by
+  simp only [Expr.analyze, (e.scan_eq cap k).1, (e.scan_eq cap k).2]
+
 theorem Expr.analyze_bound (cap k : Nat) (e : Expr) (acc : List Bounds) :
     (e.analyze cap k acc).1 = ⟨e.degrees k, e.cappedHeight cap⟩ := by
-  induction e generalizing acc <;>
-    simp_all [Expr.analyze, Expr.degrees, Expr.cappedHeight, Bounds.add, Bounds.mul, Bounds.pow]
+  rw [e.analyze_eq]
+  exact e.analyzeCore_bound cap k
 
 end Hex.Kronecker

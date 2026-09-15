@@ -1,0 +1,20 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+-- Tactic profile for attribution of an unexpected comparison result.
+import HexKroneckerMathlib.ProofProbe.GridK3D8Construction
+
+set_option profiler true
+set_option profiler.threshold 0
+set_option maxHeartbeats 0
+set_option maxRecDepth 100000
+open KroneckerProbe.GridK3D8
+
+namespace KroneckerProbe.GridK3D8.TacticProfile
+theorem result (x0 x1 x2 : Int) : lhs x0 x1 x2 = rhs x0 x1 x2 := by
+  unfold lhs rhs
+  kronecker
+#print axioms result
+end KroneckerProbe.GridK3D8.TacticProfile

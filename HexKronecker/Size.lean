@@ -37,31 +37,40 @@ def sup (a b : Bounds) : Bounds :=
 
 end Bounds
 
-/-- Analyze each subtree once, accumulating its bounds without list append. -/
-def Expr.analyze (cap k : Nat) (e : Expr) : List Bounds → Bounds × List Bounds :=
+/-- Root bounds and the exceptional descendants not dominated by their parents.
+A zero product or zero power retains its operand bounds before evaluation. -/
+def Expr.analyzeCore (cap k : Nat) (e : Expr) : Bounds × List Bounds :=
   Expr.rec
-    (fun z acc => let b := Bounds.mk (zeroDegrees k) (min z.natAbs cap); (b, b :: acc))
-    (fun i acc => let b := Bounds.mk (atomDegrees k i) (min 1 cap); (b, b :: acc))
-    (fun _ _ left right acc =>
-      let (a, acc) := left acc
-      let (b, acc) := right acc
-      let c := a.add cap b
-      (c, c :: acc))
-    (fun _ _ left right acc =>
-      let (a, acc) := left acc
-      let (b, acc) := right acc
-      let c := a.add cap b
-      (c, c :: acc))
-    (fun _ child acc => let (a, acc) := child acc; (a, a :: acc))
-    (fun _ _ left right acc =>
-      let (a, acc) := left acc
-      let (b, acc) := right acc
-      let c := a.mul cap b
-      (c, c :: acc))
-    (fun _ n child acc =>
-      let (a, acc) := child acc
-      let c := a.pow cap n
-      (c, c :: acc)) e
+    (fun z => (Bounds.mk (zeroDegrees k) (min z.natAbs cap), []))
+    (fun i => (Bounds.mk (atomDegrees k i) (min 1 cap), []))
+    (fun _ _ a b => (a.1.add cap b.1, a.2 ++ b.2))
+    (fun _ _ a b => (a.1.add cap b.1, a.2 ++ b.2))
+    (fun _ a => a)
+    (fun _ _ a b =>
+      let bs := a.2 ++ b.2
+      (a.1.mul cap b.1, if a.1.height == 0 || b.1.height == 0 then a.1 :: b.1 :: bs else bs))
+    (fun _ n a => (a.1.pow cap n, if n == 0 then a.1 :: a.2 else a.2)) e
+
+/-- Collect exceptional bounds with a difference list: concatenation composes
+functions, and each retained bound is consed once when the list is requested. -/
+def Expr.scan (cap k : Nat) (e : Expr) : Bounds × (List Bounds → List Bounds) :=
+  Expr.rec
+    (fun z => (Bounds.mk (zeroDegrees k) (min z.natAbs cap), id))
+    (fun i => (Bounds.mk (atomDegrees k i) (min 1 cap), id))
+    (fun _ _ a b => (a.1.add cap b.1, fun acc => a.2 (b.2 acc)))
+    (fun _ _ a b => (a.1.add cap b.1, fun acc => a.2 (b.2 acc)))
+    (fun _ a => a)
+    (fun _ _ a b =>
+      (a.1.mul cap b.1, fun acc =>
+        if a.1.height == 0 || b.1.height == 0 then a.1 :: b.1 :: a.2 (b.2 acc)
+        else a.2 (b.2 acc)))
+    (fun _ n a => (a.1.pow cap n, fun acc => if n == 0 then a.1 :: a.2 acc else a.2 acc)) e
+
+/-- Observe the roots and exceptional descendants. Every omitted subtree is
+bounded by a retained ancestor, so the maximum signed bit bound is unchanged. -/
+def Expr.analyze (cap k : Nat) (e : Expr) (acc : List Bounds) : Bounds × List Bounds :=
+  let (b, bs) := e.scan cap k
+  (b, b :: bs acc)
 
 /-- Bounds for the supplied support, including zero-coefficient terms. -/
 def termBounds (cap k : Nat) : Hex.MvPoly.Kernel.PolyList Int → Bounds

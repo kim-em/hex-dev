@@ -72,14 +72,14 @@ def prove (cfg : Config) (target : Lean.Expr) : MetaM Lean.Expr := do
   let valuation := mkApp2 (mkConst ``Lean.RArray.get [u]) carrier ctx
   let certificate := mkApp2 (mkConst ``Eq.refl [.succ .zero])
     (mkConst ``Bool) (mkConst ``Bool.true)
+  let quotedL := toExpr le
+  let quotedR := toExpr re
+  let translatedL := mkApp (mkConst ``fromGrind) quotedL
+  let translatedR := mkApp (mkConst ``fromGrind) quotedR
   let proof := mkAppN (mkConst ``Hex.Kronecker.checkExprEq_sound [u])
-    #[toExpr budget, mkNatLit k, toExpr l, toExpr r, certificate, carrier, inst, valuation]
+    #[toExpr budget, mkNatLit k, translatedL, translatedR, certificate, carrier, inst, valuation]
   let proof := mkAppN (mkConst ``denote_transport [u])
-    #[carrier, inst, ctx, toExpr le, toExpr re, proof]
-  let some (_, denotedL, denotedR) := (← inferType proof).eq?
-    | throwError "kronecker failure: malformed soundness application"
-  unless (← isDefEq denotedL lhs) && (← isDefEq denotedR rhs) do
-    throwUnsupportedSyntax
+    #[carrier, inst, ctx, quotedL, quotedR, proof]
   try
     withOptions (Elab.async.set · false) do
       mkAuxTheorem target proof (zetaDelta := true) (cache := false)

@@ -18,4 +18,5 @@ public import HexKroneckerMathlib.ModSound
 public import HexKroneckerMathlib.Residue
 public import HexKroneckerMathlib.MatrixDenote
 public import HexKroneckerMathlib.MulModSound
+public import HexKroneckerMathlib.Observation
 public import HexKroneckerMathlib.Tactic

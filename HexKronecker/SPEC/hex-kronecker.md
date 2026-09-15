@@ -230,8 +230,8 @@ including `Nat.pow`, shifts and masks used by the established packing code.
 There is no `Array`, `Vector`, `Fin`, `Finset`, `UInt64`, `dite`, matrix
 indexing, well-founded recursion, `implemented_by`, `native_decide`, or
 normal-form construction on the kernel path.  Hot list folds are written
-with direct `List.rec` when measurement shows the `List.brecOn` equation form
-is material, following [matrix-tactics §Kernel discipline](../../SPEC/matrix-tactics.md#kernel-discipline).
+with direct `List.rec` or `Expr.rec` when measurement shows the corresponding
+`brecOn` equation form is material, following [matrix-tactics §Kernel discipline](../../SPEC/matrix-tactics.md#kernel-discipline).
 
 This Mathlib-free library proves arithmetic identities needed to relate its
 own evaluators and the existing packed primitives, but it does not state the

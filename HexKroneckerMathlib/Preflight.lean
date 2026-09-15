@@ -15,18 +15,12 @@ namespace Hex.Kronecker
 
 theorem Expr.analyze_root (cap k : Nat) (e : Expr) (acc : List Bounds) :
     (e.analyze cap k acc).1 ∈ (e.analyze cap k acc).2 := by
-  cases e <;> simp [Expr.analyze]
+  simp [Expr.analyze_eq]
 
 theorem Expr.analyze_acc (cap k : Nat) (e : Expr) (acc : List Bounds) :
     acc ⊆ (e.analyze cap k acc).2 := by
-  induction e generalizing acc with
-  | int | atom => simp [Expr.analyze]
-  | add a b ha hb | sub a b ha hb | mul a b ha hb =>
-      intro v hv
-      exact List.mem_cons_of_mem _ (hb _ (ha _ hv))
-  | neg a ha | pow a n ha =>
-      intro v hv
-      exact List.mem_cons_of_mem _ (ha _ hv)
+  intro v hv
+  simp [Expr.analyze_eq, hv]
 
 theorem le_maxBits (ss : List Nat) (w : Nat) (bs : List Bounds) (b : Bounds)
     (hb : b ∈ bs) : b.bits ss w ≤ maxBits ss w bs := by
