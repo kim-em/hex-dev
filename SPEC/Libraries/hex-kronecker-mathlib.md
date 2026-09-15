@@ -172,11 +172,17 @@ check.  The accepted theorem's axiom audit permits only `propext`,
 `checkExprEq_sound` maps an established integer polynomial identity to every
 commutative ring, so the tactic requires no characteristic hypothesis and
 proves such identities over finite fields as readily as over `ℚ`.  What it
-cannot prove in positive characteristic is an identity that holds only
-modulo `p`, such as `x ^ p = x` over `ZMod p`: that needs the quotient
-witness.  Programmatic consumers may supply one and apply the `...Mod_sound`
-theorems, but this tactic neither searches for that witness nor silently
-falls back to normalized residue terms.
+cannot prove in positive characteristic is an identity of formal
+polynomials that holds only modulo `p`, such as `(x + 1) ^ p = x ^ p + 1`
+over `ZMod p`: that needs the quotient witness, here
+`Q = ((x + 1) ^ p - x ^ p - 1) / p` with integer coefficients.  Programmatic
+consumers may supply one and apply the `...Mod_sound` theorems, but this
+tactic neither searches for that witness nor silently falls back to
+normalized residue terms.  An identity of polynomial functions that is not
+an identity of formal polynomials, such as `x ^ p = x` over `ZMod p`, has no
+quotient witness and is outside every arm: the `Mod` theorems conclude
+equality in every commutative ring of characteristic `p`, including
+`(ZMod p)[X]`, where `X ^ p ≠ X`.
 
 ## Outcomes and diagnostics
 
