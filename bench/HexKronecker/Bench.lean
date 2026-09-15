@@ -181,13 +181,20 @@ setup_benchmark runPacked i => productWork .signedPacked i with prep := prepPack
   signalFloorMultiplier := 1.0
 }
 
-/-- Protocol anchors: every declined grid point stops in preflight. -/
-@[noinline] def runTreeDeclines (_ : Unit) : UInt64 :=
-  hash (treeDeclined.all fun (k,d) => !fits (treePlan k d))
+initialize treeDeclineInput : IO.Ref (List (Nat × Nat)) ← IO.mkRef treeDeclined
 
-@[noinline] def runProductDeclines (_ : Unit) : UInt64 :=
-  hash ([MulMode.plain,.signedPacked].all fun mode =>
-    (productDeclined mode).all fun (k,d) => !fits (productPlan mode k d))
+initialize productDeclineInput : IO.Ref (List (MulMode × Nat × Nat)) ←
+  IO.mkRef ([MulMode.plain,.signedPacked].flatMap fun mode =>
+    (productDeclined mode).map fun (k,d) => (mode,k,d))
+
+/-- Every declined grid point runs preflight on runtime-supplied input. -/
+@[noinline] def runTreeDeclines (_ : Unit) : IO UInt64 := do
+  let points ← treeDeclineInput.get
+  return hash (points.all fun (k,d) => !fits (treePlan k d))
+
+@[noinline] def runProductDeclines (_ : Unit) : IO UInt64 := do
+  let points ← productDeclineInput.get
+  return hash (points.all fun (mode,k,d) => !fits (productPlan mode k d))
 
 setup_fixed_benchmark runTreeDeclines where { maxSecondsPerCall := 10.0 }
 setup_fixed_benchmark runProductDeclines where { maxSecondsPerCall := 10.0 }

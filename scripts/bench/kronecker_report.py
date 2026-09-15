@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Render the complete retained Kronecker proof sweep without selecting samples."""
 import argparse
+import gzip
 import json
 from pathlib import Path
 
@@ -14,7 +15,8 @@ def main():
     parser.add_argument('input', type=Path)
     parser.add_argument('output', type=Path)
     args = parser.parse_args()
-    data = json.loads(args.input.read_text())
+    raw = args.input.read_bytes()
+    data = json.loads(gzip.decompress(raw) if args.input.suffix == '.gz' else raw)
     if not data['measurement_complete'] or not data['sources_unchanged'] or data['subset']:
         raise SystemExit('a complete sweep with unchanged measured sources is required')
     if len(data['profiles']) != 3 or any(p['result']['state'] != 'complete' for p in data['profiles']):

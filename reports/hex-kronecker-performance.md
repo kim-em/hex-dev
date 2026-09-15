@@ -11,9 +11,9 @@ using both `plain` and `signedPacked` with the same polynomial inputs.
 
 Measurements use lean-bench's six-trial schedule on the shared host, pinned
 to one automatically leased CPU. All completed samples are retained in
-[the raw export](data/hex-kronecker/bench-integrated.json). Environment, result hashes,
+[the raw export](data/hex-kronecker/bench-runtime.json). Environment, result hashes,
 RSS, inner repeats, and every individual duration are included. The
-[run log](data/hex-kronecker/bench-integrated.log) records the selected CPU; the
+[run log](data/hex-kronecker/bench-runtime.log) records the selected CPU; the
 operation profiles below record source SHA-256 hashes. The earlier
 [interrupted run](data/hex-kronecker/bench-interrupted.log) is retained as
 partial evidence; it is not treated as a complete baseline.
@@ -53,9 +53,9 @@ bound (observed faster)**. It is not a two-sided complexity match.
 
 | Registration | Raw verdict | Normalized slope | Upper-bound assessment |
 | --- | --- | ---: | --- |
-| `runTree` | inconclusive | -6.493 | within bound, observed faster |
-| `runPlain` | inconclusive | -5.617 | within bound, observed faster |
-| `runPacked` | inconclusive | -8.601 | within bound, observed faster |
+| `runTree` | inconclusive | -6.498 | within bound, observed faster |
+| `runPlain` | inconclusive | -5.622 | within bound, observed faster |
+| `runPacked` | inconclusive | -8.618 | within bound, observed faster |
 
 ## Complete grid
 
@@ -66,37 +66,42 @@ hash for each point. Times below are medians in milliseconds.
 
 | Atoms | Degree | Tree N | Tree ms | Plain N | Plain ms | Signed N | Signed ms |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | 2 | 8 | 0.114 | 15 | 0.114 | 122 | 0.116 |
-| 1 | 4 | 14 | 0.114 | 25 | 0.115 | 202 | 0.115 |
-| 1 | 8 | 26 | 0.114 | 45 | 0.115 | 362 | 0.117 |
-| 1 | 16 | 50 | 0.120 | 85 | 0.116 | 682 | 0.118 |
-| 2 | 2 | 44 | 0.116 | 54 | 0.116 | 434 | 0.118 |
-| 2 | 4 | 174 | 0.119 | 150 | 0.118 | 1202 | 0.120 |
-| 2 | 8 | 890 | 0.127 | 486 | 0.119 | 3890 | 0.122 |
-| 2 | 16 | 5490 | 0.157 | 1734 | 0.121 | 13874 | 0.127 |
-| 3 | 2 | 161 | 0.122 | 189 | 0.119 | 1514 | 0.121 |
-| 3 | 4 | 1124 | 0.141 | 875 | 0.122 | 7002 | 0.126 |
-| 3 | 8 | 10934 | 0.265 | 5103 | 0.129 | 40826 | 0.141 |
-| 3 | 16 | 137563 | 7.682 | 34391 | 0.206 | 275130 | 0.336 |
-| 4 | 2 | 566 | 0.135 | 647 | 0.124 | 5178 | 0.128 |
-| 4 | 4 | 6874 | 0.230 | 4999 | 0.134 | 39994 | 0.147 |
-| 4 | 8 | 124658 | 5.628 | 52487 | 0.285 | 419898 | 0.580 |
+| 1 | 2 | 8 | 0.113 | 15 | 0.114 | 122 | 0.116 |
+| 1 | 4 | 14 | 0.112 | 25 | 0.113 | 202 | 0.115 |
+| 1 | 8 | 26 | 0.113 | 45 | 0.113 | 362 | 0.117 |
+| 1 | 16 | 50 | 0.113 | 85 | 0.114 | 682 | 0.118 |
+| 2 | 2 | 44 | 0.115 | 54 | 0.114 | 434 | 0.117 |
+| 2 | 4 | 174 | 0.118 | 150 | 0.115 | 1202 | 0.118 |
+| 2 | 8 | 890 | 0.126 | 486 | 0.117 | 3890 | 0.122 |
+| 2 | 16 | 5490 | 0.154 | 1734 | 0.119 | 13874 | 0.125 |
+| 3 | 2 | 161 | 0.120 | 189 | 0.117 | 1514 | 0.120 |
+| 3 | 4 | 1124 | 0.140 | 875 | 0.120 | 7002 | 0.125 |
+| 3 | 8 | 10934 | 0.261 | 5103 | 0.126 | 40826 | 0.140 |
+| 3 | 16 | 137563 | 7.551 | 34391 | 0.203 | 275130 | 0.335 |
+| 4 | 2 | 566 | 0.133 | 647 | 0.122 | 5178 | 0.128 |
+| 4 | 4 | 6874 | 0.227 | 4999 | 0.131 | 39994 | 0.146 |
+| 4 | 8 | 124658 | 5.552 | 52487 | 0.281 | 419898 | 0.568 |
 | 4 | 16 | decline | — | decline | — | decline | — |
-| 6 | 2 | 5831 | 0.209 | 6560 | 0.148 | 52482 | 0.166 |
-| 6 | 4 | 203124 | 6.829 | 140624 | 0.825 | 1124994 | 1.849 |
+| 6 | 2 | 5831 | 0.208 | 6560 | 0.144 | 52482 | 0.165 |
+| 6 | 4 | 203124 | 6.734 | 140624 | 0.812 | 1124994 | 1.778 |
 | 6 | 8 | decline | — | decline | — | decline | — |
 | 6 | 16 | decline | — | decline | — | decline | — |
-| 8 | 2 | 59048 | 0.825 | 65609 | 0.406 | 524874 | 0.823 |
+| 8 | 2 | 59048 | 0.799 | 65609 | 0.397 | 524874 | 0.784 |
 | 8 | 4 | decline | — | decline | — | decline | — |
 | 8 | 8 | decline | — | decline | — | decline | — |
 | 8 | 16 | decline | — | decline | — | decline | — |
 
 Every accepted result hash is `0x1`. The signed arm is slower at every
 registered median, so these data establish no crossover: `plain` remains
-the default. Declines are separate fixed protocol anchors, not complexity
-evidence. Their constant Boolean result can be folded by the compiler;
-the conformance checks and guarded proof probes verify the actual preflight
-behavior, including rejection before packing.
+the default. Declines are separate fixed workloads, outside the complexity
+regressions. Their inputs are read from `IO.Ref`s so the compiler cannot
+precompute the preflight results. Tree declines measure the six declined grid
+points together; product declines measure the six points in both modes.
+
+| Decline workload | Points | Median ms | Result hash |
+| --- | ---: | ---: | --- |
+| Tree | 6 | 4.190 | `0xb` (true) |
+| Products | 12 | 1.912 | `0xb` (true) |
 
 ## Operation profiles and provenance
 
@@ -111,9 +116,9 @@ measured sources, not the archive format.
 
 | Arm | Operation samples | Leading resolved leaf |
 | --- | ---: | --- |
-| [tree](data/hex-kronecker/integrated-profiles/profile-tree.json.gz) | 289 | `__gmpn_addmul_1_x86_64` (43.6%) |
-| [plain](data/hex-kronecker/integrated-profiles/profile-plain.json.gz) | 237 | `__gmpn_copyi_x86_64` (23.2%) |
-| [packed](data/hex-kronecker/integrated-profiles/profile-packed.json.gz) | 218 | `__gmpn_addmul_1_x86_64` (32.6%) |
+| [tree](data/hex-kronecker/runtime-profiles/profile-tree.json.gz) | 281 | `__gmpn_addmul_1_x86_64` (50.9%) |
+| [plain](data/hex-kronecker/runtime-profiles/profile-plain.json.gz) | 239 | `__gmpn_copyi_x86_64` (23.0%) |
+| [packed](data/hex-kronecker/runtime-profiles/profile-packed.json.gz) | 221 | `__gmpn_addmul_1_x86_64` (26.7%) |
 
 The tree profile is dominated by GMP multiply/add-multiply operations. Product
 profiles include power construction, copying, and multiplication, covered by
