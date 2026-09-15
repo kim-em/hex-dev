@@ -733,7 +733,13 @@ checked against one mathematical sieve run through bounded kernel-replayed
 batches; it is not recomputed from the sieve at use time. -/
 def primeTable : Array Nat
 
-/-- Membership, by binary search. -/
+/-- Final verified sieve bitset, indexed by `numOfIndex`. -/
+def primeBits : Nat
+
+/-- Compiled binary-search implementation. -/
+def tableSearch (n : Nat) : Bool
+
+/-- Kernel bit lookup, with an equal compiled binary-search implementation. -/
 def isTablePrime (n : Nat) : Bool
 
 theorem primeTable_sorted : primeTable.toList.Pairwise (· < ·)
@@ -746,19 +752,19 @@ theorem isTablePrime_iff {n : Nat} : isTablePrime n = true ↔ n ∈ primeTable
 Kernel reduction of `isTablePrime` reads the corresponding bit of the
 committed, verified final sieve state, including the exceptional primes 2
 and 3 and a check that the input is represented at that index. This avoids
-reducing array indexing through the table's list representation at every
-small certificate leaf. An equality proved for all inputs supplies a
+forcing the array's list representation when checking small certificate
+leaves. An equality proved for all inputs supplies a
 `@[csimp]` replacement with the existing binary search at runtime. The
 committed prime table and sieve bound remain unchanged; exposing the final
 state requires no new generated table or primality assumption.
 
-Compiled `bitsToList` readback processes 64 candidate bits per extracted
-word. The structural one-bit scan remains its specification, with a
-`@[csimp]` equality proved for every bitset, starting index, and count. This
-reduces large-integer shifts from one per candidate to one per 64 candidates;
-it preserves the exact list and its order. `primesBelow`, Pollard p-minus-one,
-and ECM consequently retain the same search coverage and deterministic
-attempt schedules. The sieve itself is unchanged by this readback optimization.
+The adjacent old/new replay evidence is
+`reports/bench-results/hex-primality-table-replay-issue-10268.json`, reproduced
+by `scripts/bench/primality_table_replay.py --output /tmp/table-replay.json`.
+One old lookup costs about as much as the complete multi-leaf check in these
+samples, consistent with shared array reduction within one kernel replay;
+the evidence does not multiply that cost by the number of leaves. The new
+lookup alone is indistinguishable from fresh-build overhead at this scale.
 
 `primeTable_sorted` gives distinctness and is what the binary search
 needs; `isTablePrime_iff` is what lets a caller conclude anything from
@@ -817,6 +823,17 @@ so every prime up to the effective bound participates in stage one. The
 primitive cap is 524288; ordinary search retains its existing 9999 ladder
 cap. Generated lists are never embedded as proof evidence. `primesIn`
 keeps its current implementation pending comparative segment measurements.
+
+Compiled `bitsToList` readback processes 64 candidate bits per extracted
+word. The structural one-bit scan remains its specification, with a
+`@[csimp]` equality proved for every bitset, starting index, and count. This
+reduces large-integer shifts from one per candidate to one per 64 candidates;
+it preserves the exact list and its order. Pollard p-minus-one and ECM retain
+the same coverage and deterministic attempt schedules. The sieve itself is
+unchanged by this readback optimization. The interpreted `#eval` comparison
+in `reports/bench-results/hex-primality-readback-issue-10268.json`, reproduced
+by `scripts/bench/primality_readback.py --output /tmp/readback.json`, measures
+the regime used by `primality?`; it is not a native-executable benchmark.
 
 The table is a consequence of one sieve run, but not one monolithic
 reduction. A Mathlib-free elaborator computes the bitset with a compiled
@@ -1211,7 +1228,7 @@ in the part of a certificate tree replayed before acceptance or rejection.
 
 | operation | cost | note |
 |---|---|---|
-| `isTablePrime` | `O(log |primeTable|)` | binary search |
+| `isTablePrime` | compiled: `O(log |primeTable|)` comparisons; kernel: a constant number of Nat operations on the input and fixed 33,333-bit state | binary search at runtime, verified bit lookup in the kernel |
 | `isPrimeTrial` | `O(√n)` remainder tests | hex-arith, unchanged |
 | `millerRabin` one base | `O(b)` modular multiplications | |
 | `isProbablePrime` | `O(13 b)` | fixed base list |
@@ -1438,6 +1455,13 @@ route produces and self-checks reusable certificate data. Their different
 outputs and algorithms preclude a required speed ratio. PARI remains the
 conformance oracle and FLINT its independent cross-check.
 
+The native Hex comparator is the lake-built `hexprimality_policy_probe
+construction N` executable. Input parsing, startup, and certificate formatting
+are outside its timer. `#eval` search probes execute through Lean's interpreter
+under the current library configuration and are labeled as tactic-search
+observations, separately from native-executable timings. Full `primality?`
+builds include that search regime, proof emission, and kernel checking.
+
 The kernel comparator is **PrimeCert**, also informational. Fresh-module
 measurements retain imports, literal elaboration, and kernel checking, with
 adjacent baseline modules exposing overhead. The six existing bit-family
@@ -1588,7 +1612,7 @@ boundary because the core consumers live below the companion.
 HexPrimality/
   Sieve.lean        -- the kernel-reducible bitset sieve and its correctness
   SieveElab.lean    -- batched compiled generation and kernel replay
-  Table.lean        -- primeTable, isTablePrime, primesIn, both directions
+  Table.lean        -- primeTable, primeBits, tableSearch, isTablePrime, primesIn
   Order.lean        -- multiplicative order mod n, orderDvd, ord_dvd_pred
   MillerRabin.lean  -- millerRabin, isProbablePrime, the compositeness theorem
   Cert.lean         -- PrimeCert, CheckedPrimeCert, checkPrime, soundness

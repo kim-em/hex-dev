@@ -620,7 +620,9 @@ private theorem bitsToListGo_add (state : Nat) : ∀ a start b,
       split <;> simp only [ih, List.cons_append, Nat.add_assoc, Nat.add_comm 1 a]
 
 /-- Read at most 64 bits per word. Each large-integer shift supplies a whole
-word, instead of copying the large integer once per candidate bit. -/
+word, instead of copying the large integer once per candidate bit.
+Completeness requires `count ≤ 64 * fuel`; less fuel returns only a prefix.
+Use `bitsToListFast` to supply enough fuel automatically. -/
 def readChunks (state : Nat) : Nat → Nat → Nat → List Nat
   | 0, _, _ => []
   | fuel + 1, start, count =>

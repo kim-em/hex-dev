@@ -387,5 +387,10 @@
         "HexPrimality/Cert.lean": "d3a8ed3ae3d4a59ffec73bc69309be31d22d3364318b535089d19ea22f630f08"
       }
     }
+  },
+  "execution_modes": {
+    "native": "Lean #eval interpreter (historical phase name)",
+    "replay": "kernel replay in fresh Lake build",
+    "complete": "primality? with interpreted search and kernel replay"
   }
 }

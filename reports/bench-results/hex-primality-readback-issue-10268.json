@@ -22,5 +22,8 @@
   "cpu": 26,
   "host": "chungus2",
   "source": "module\npublic import HexPrimality.Sieve\npublic meta import HexPrimality.Sieve\npublic import Lean\npublic section\nnamespace Hex.PrimalityReadbackProbe\ndef oldScan (state : Nat) : Nat \u2192 Nat \u2192 List Nat\n  | _, 0 => []\n  | t, fuel + 1 =>\n      if state.testBit t then Hex.Nat.numOfIndex t :: oldScan state (t+1) fuel\n      else oldScan state (t+1) fuel\n\n@[noinline] def measure (old : Bool) (bound state : Nat) : IO Lean.Json := do\n  let input \u2190 IO.mkRef (bound, state)\n  let (bound, state) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let output \u2190 IO.mkRef (if old then oldScan state 1 (Hex.Nat.indexWidth bound - 1)\n    else Hex.Nat.bitsToList state bound)\n  let output \u2190 output.get\n  let stop \u2190 IO.monoNanosNow\n  return Lean.Json.mkObj [(\"old\", Lean.toJson old), (\"nanos\", Lean.toJson (stop-start)),\n    (\"count\", Lean.toJson output.length), (\"last\", Lean.toJson output.getLast?)]\n\n#eval show IO Unit from do\n  let bound \u2190 IO.mkRef (524289 : Nat)\n  let bound \u2190 bound.get\n  let state \u2190 IO.mkRef (Hex.Nat.sieve bound (bound.sqrt + 1))\n  let state \u2190 state.get\n  for block in [0:2] do\n    for old in (if block == 0 then [true, false] else [false, true]) do\n      let row \u2190 measure old bound state\n      IO.println row.compress\nend Hex.PrimalityReadbackProbe\n",
-  "protocol": "adjacent old/new arms, AB/BA; every completed sample retained"
+  "protocol": "adjacent old/new arms, AB/BA; every completed sample retained",
+  "execution_mode": "Lean #eval interpreter; oldScan matches the historical structural scan",
+  "source_reference": "HexPrimality/Sieve.lean at 756e1aa33 (source content reference; HEAD and dirty state were not captured at measurement time)",
+  "sieve_sha256": "c6a229a13cc3385f2b12974594b9ecfe22317df0ea485719949becd419e076d9"
 }

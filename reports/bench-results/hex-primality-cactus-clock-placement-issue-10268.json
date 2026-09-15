@@ -1806,5 +1806,6 @@
     "HexPrimality/SieveElab.lean": "ba7f16e6dcaafc6fec19ae795d00ac3dc94e54c31db9a65d2e82e67e20892bd4",
     "HexPrimality/Table.lean": "420e4a89291b34717aebe1a3cd393e9857ae0309b816e5ba3b2e1b5d7b6bbe27"
   },
-  "measurement_defect": "Hex pure computation was scheduled after the stop clock. Hex inner nanos are invalid; completed samples retained as diagnostics. Corrected runner forces the result through IO.Ref before reading the stop clock."
+  "measurement_defect": "Hex pure computation was scheduled after the stop clock. Hex inner nanos are invalid; completed samples retained as diagnostics. Corrected runner forces the result through IO.Ref before reading the stop clock.",
+  "hex_execution_mode": "Lean #eval interpreter (historical native field); not a native executable"
 }

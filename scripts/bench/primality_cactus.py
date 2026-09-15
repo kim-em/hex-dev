@@ -82,7 +82,7 @@ def run(command: list[str], cwd: Path, timeout: float, cpu: int) -> dict:
             'stderr': stderr, 'command': command}
 
 
-def native_source(n: str) -> str:
+def interpreted_source(n: str) -> str:
     return HEADER + f'''
 #eval show IO Unit from do
   let input ← IO.mkRef ({n} : Nat)
@@ -118,6 +118,8 @@ def main() -> None:
     p.add_argument('--output', type=Path)
     p.add_argument('--blocks', type=int, default=2)
     p.add_argument('--timeout', type=float, default=60)
+    p.add_argument('--reuse-proof-record', type=Path,
+                   help='reuse completed replay/end-to-end rows; verify identical generated certificates')
     args = p.parse_args()
     if args.worker:
         worker(args.worker, args.n)
@@ -125,6 +127,9 @@ def main() -> None:
     if not args.output or not args.primecert_checkout or args.blocks < 2 or args.blocks % 2:
         p.error('provide output, PrimeCert checkout, and an even block count >= 2')
     pc = args.primecert_checkout.resolve()
+    subprocess.run(['lake', 'build', 'hexprimality_policy_probe'], cwd=ROOT, check=True)
+    executable = ROOT/'.lake/build/bin/hexprimality_policy_probe'
+    previous = json.loads(args.reuse_proof_record.read_text()) if args.reuse_proof_record else None
     cases = corpus()
     examples = (pc / 'PrimeCertTest/PrimeListTest.lean').read_text()
     for name, expr in [('Curve25519', '2 ^ 255 - 19'), ('Curve448', '2 ^ 448 - 2 ^ 224 - 1')]:
@@ -139,12 +144,22 @@ def main() -> None:
               'cpu': cpu, 'blocks': args.blocks, 'timeout': args.timeout,
               'hex_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
               'hex_toolchain': (ROOT/'lean-toolchain').read_text().strip(),
+              'hex_execution_mode': 'native executable (lake-built C code)',
+              'hex_executable_sha256': hashlib.sha256(executable.read_bytes()).hexdigest(),
               'primecert_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=pc, text=True).strip(),
               'primecert_toolchain': (pc/'lean-toolchain').read_text().strip(),
               'protocol': 'trial-major adjacent systems; reverse systems and baseline/replay arms in odd blocks; all completed samples retained',
               'cases': cases, 'native': [], 'kernel': [],
               'source_sha256': {str(f.relative_to(ROOT)): hashlib.sha256(f.read_bytes()).hexdigest()
                  for f in sorted((ROOT/'HexPrimality').glob('*.lean'))}}
+    if previous:
+        if previous['cases'] != cases:
+            raise RuntimeError('proof corpus differs')
+        record['proof_source_record'] = str(args.reuse_proof_record)
+        record['kernel'] = previous['kernel']
+        for key in ('end_to_end', 'end_to_end_cpu', 'end_to_end_commit', 'native_source_record'):
+            if key in previous:
+                record[key] = previous[key]
     def save():
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(record, indent=2)+'\n')
@@ -160,14 +175,15 @@ def main() -> None:
             for case in cases:
                 for system in (['hex', 'flint', 'pari'] if block % 2 == 0 else ['pari', 'flint', 'hex']):
                     if system == 'hex':
-                        native_path.write_text(native_source(case['n']))
-                        row = run(['lake', 'build', PREFIX], ROOT, args.timeout, cpu)
-                        matches = re.findall(r'CACTUS (\{.*\})', row['stdout'])
-                        if row['status'] == 'ok' and matches:
-                            row['result'] = json.loads(matches[-1])
+                        row = run([str(executable), 'construction', case['n']], ROOT, args.timeout, cpu)
+                        if row['status'] == 'ok':
+                            row['result'] = json.loads(row['stdout'])
                             row['status'] = row['result']['status']
-                        elif row['status'] == 'ok':
-                            raise RuntimeError('missing Hex measurement')
+                        if previous and row['status'] == 'ok':
+                            prior = [r['result']['certificate'] for r in previous['native']
+                                     if r['case'] == case['name'] and r['system'] == 'hex' and r['status'] == 'ok']
+                            if not prior or any(c != row['result']['certificate'] for c in prior):
+                                raise RuntimeError('native and supplied proof certificates differ')
                     else:
                         row = run([sys.executable, str(Path(__file__).resolve()), '--worker', system,
                                    '--n', case['n']], ROOT, args.timeout, cpu)
@@ -180,6 +196,8 @@ def main() -> None:
                           row.get('result', {}).get('nanos'), flush=True)
                     if row['status'] == 'error':
                         raise RuntimeError(row['stdout']+row['stderr'])
+        if previous:
+            return
         # Replay only predeclared PrimeCert cases; Hex literals come from the
         # measured deterministic generator, without external factor assistance.
         for block in range(args.blocks):

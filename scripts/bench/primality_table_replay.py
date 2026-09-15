@@ -45,6 +45,10 @@ def main():
     output = args.output
     record = {'cpu': cpu, 'host': platform.node(), 'samples': [],
               'commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
+              'diff_sha256': hashlib.sha256(subprocess.check_output(['git', 'diff', 'HEAD'], cwd=ROOT)).hexdigest(),
+              'toolchain': (ROOT/'lean-toolchain').read_text().strip(),
+              'source_sha256': {name: hashlib.sha256((ROOT/name).read_bytes()).hexdigest()
+                                for name in ('HexPrimality/Table.lean', 'HexPrimality/Sieve.lean', 'HexPrimality/Cert.lean')},
               'table_sha256': hashlib.sha256((ROOT/'HexPrimality/Table.lean').read_bytes()).hexdigest(),
               'protocol': 'two trial-major blocks; adjacent old/new arms reversed in second block; all completed samples retained'}
     if source.exists() or output.exists():

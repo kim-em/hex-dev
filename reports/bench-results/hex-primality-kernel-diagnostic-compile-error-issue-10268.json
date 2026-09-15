@@ -27,5 +27,6 @@
       "source": "module\npublic import HexPrimality.Cert\npublic section\nset_option maxRecDepth 100000\n\n@[expose] def powBits (a e n : Nat) : Nat :=\n  Nat.rec (motive := fun _ => Nat \u2192 Nat \u2192 Nat \u2192 Nat)\n    (fun _ acc _ => acc)\n    (fun _ r bit acc base =>\n      (e.testBit bit).rec\n        (r (bit.add 1) acc ((base.mul base).mod n))\n        (r (bit.add 1) ((acc.mul base).mod n) ((base.mul base).mod n)))\n    (HexArith.bitLength e) 0 (1 % n) (a % n)\n\n@[expose] def powDiv (a e n : Nat) : Nat :=\n  Nat.rec (motive := fun _ => Nat \u2192 Nat \u2192 Nat \u2192 Nat)\n    (fun _ _ _ => 0)\n    (fun _ r base exp acc =>\n      (exp.beq 0).rec\n        (((exp.mod 2).beq 0).rec\n          (r ((base.mul base).mod n) (exp.div 2) ((acc.mul base).mod n))\n          (r ((base.mul base).mod n) (exp.div 2) acc))\n        (acc.mod n))\n    e.succ (a % n) e 1\n"
     }
   ],
-  "protocol": "two reversed blocks; all completed samples retained"
+  "protocol": "two reversed blocks; all completed samples retained",
+  "interpretation": "Compilation diagnostic only: Bool.rec diagnostics initially lacked noncomputable annotations. No successful timing sample; retained for provenance and excluded from every performance claim."
 }

@@ -16,15 +16,17 @@ def main() -> None:
     p.add_argument('--out-dir', type=Path, default=Path('reports/figures'))
     args = p.parse_args()
     data = json.loads(args.data.read_text())
+    interpreted = 'interpreter' in data.get('hex_execution_mode', '')
+    hex_label = 'Hex interpreted tactic search' if interpreted else 'Hex native exact decision'
     args.out_dir.mkdir(parents=True, exist_ok=True)
     plt.rcParams.update({'svg.hashsalt': 'hex-primality-cactus', 'font.size': 10})
     charts = [
-        ('native', [('hex', 'Hex native exact decision'), ('flint', 'FLINT is_prime'),
+        ('native', [('hex', hex_label), ('flint', 'FLINT is_prime'),
                     ('pari', 'PARI isprime')], len(data['cases'])),
         ('kernel', [('hex', 'Hex generated certificate'), ('primecert', 'PrimeCert supplied certificate')],
          sum('primecert' in c for c in data['cases']))]
     if 'end_to_end' in data:
-        charts.append(('complete', [('hex', 'Hex native exact decision'),
+        charts.append(('complete', [('hex', hex_label),
                                    ('flint', 'FLINT native is_prime'),
                                    ('pari', 'PARI native isprime'),
                                    ('hex_complete', 'Hex primality?: construct + kernel check')],
@@ -59,7 +61,7 @@ def main() -> None:
         ax.set_xticks(range(1, denominator+1))
         ax.set_xlabel('Instances solved, sorted independently for each system')
         ax.set_ylabel('Median seconds per instance (log scale)')
-        ax.set_title({'native': 'Native exact primality decisions',
+        ax.set_title({'native': 'Exact primality decisions' if interpreted else 'Native exact primality decisions',
                       'kernel': 'Supplied-certificate replay: fresh Lean builds',
                       'complete': 'Native decision and complete Lean proof'}[phase])
         ax.grid(True, which='both', alpha=.2)
@@ -69,6 +71,8 @@ def main() -> None:
                           'Includes imports, literal elaboration and kernel checking; excludes certificate search.',
                 'complete': '12 fixed primes. Native: no Lean proof or kernel replay; input/imports excluded.\n'
                             'Full proof: fresh Lake build including search, proof emission, imports and kernel replay.'}[phase]
+        if interpreted and phase != 'kernel':
+            note += '\nHex search uses the Lean interpreter; FLINT/PARI calls are native.'
         fig.text(.5, .025, note + '\nShared host; all completed samples retained. Missing/failed certificates are unsolved.',
                  ha='center', fontsize=8)
         fig.tight_layout(rect=(0, .11 if phase in ('complete', 'kernel') else .075, 1, 1))

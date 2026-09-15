@@ -169,11 +169,13 @@ leaves, and compiled prime enumeration reads 64 candidate bits at a time.
 Both changes are proved equal to their original implementations.
 
 The fixed-corpus comparison measured Curve25519 native decision at
-0.64 seconds and a fresh complete `primality?` build from its numeral at
+0.57 seconds and a fresh complete `primality?` build from its numeral at
 1.63 seconds, including Lake overhead and kernel replay. Paired runs using
 the original `2 ^ 255 - 19` expression took 2.17–2.29 seconds, compared with
 7.01–10.41 seconds before these optimizations. FLINT and PARI native decisions
-took 20.1 and 44.3 milliseconds respectively. All completed samples are
+took 25.9 and 55.4 milliseconds respectively. The native timings use a
+standalone executable; the full tactic currently runs search through Lean’s
+interpreter before kernel checking. All completed samples are
 retained. These are host-specific observations, not latency guarantees. The
 [measurement report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-construction.md)
 records every sample, certificate sizes, and the comparison with the larger

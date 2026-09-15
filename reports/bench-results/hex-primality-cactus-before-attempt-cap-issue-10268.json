@@ -4303,5 +4303,6 @@
     "HexPrimality/Sieve.lean": "b90317eda625ac9dc7333505e1756a76a041d4acd34555d4131ec49d0bac1489",
     "HexPrimality/SieveElab.lean": "ba7f16e6dcaafc6fec19ae795d00ac3dc94e54c31db9a65d2e82e67e20892bd4",
     "HexPrimality/Table.lean": "420e4a89291b34717aebe1a3cd393e9857ae0309b816e5ba3b2e1b5d7b6bbe27"
-  }
+  },
+  "hex_execution_mode": "Lean #eval interpreter (historical native field); not a native executable"
 }

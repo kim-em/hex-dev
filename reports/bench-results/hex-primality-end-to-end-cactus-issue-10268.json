@@ -5700,5 +5700,6 @@
   ],
   "end_to_end_cpu": 10,
   "end_to_end_commit": "a7eb53342fc52e19842d497e0b15b6940a4571b4",
-  "native_source_record": "reports/bench-results/hex-primality-cactus-issue-10268.json"
+  "native_source_record": "reports/bench-results/hex-primality-cactus-issue-10268.json",
+  "hex_execution_mode": "Lean #eval interpreter (historical native field); not a native executable"
 }

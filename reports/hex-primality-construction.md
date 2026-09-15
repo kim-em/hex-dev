@@ -34,9 +34,18 @@ Every completed sample is in
 
 | Curve25519 operation | Old, block 1 / 2 | New, block 1 / 2 |
 |---|---:|---:|
-| Native construction and self-check | 0.954 / 1.344 s | 0.631 / 0.582 s |
+| Tactic search and self-check (`#eval` interpreter) | 0.954 / 1.344 s | 0.631 / 0.582 s |
 | Supplied-literal replay, fresh build | 6.313 / 6.706 s | 1.143 / 1.404 s |
 | Complete `primality?`, fresh build | 7.008 / 10.414 s | 2.168 / 2.292 s |
+
+A separate native-executable comparison uses the same `PolicyProbe` frontend
+built against the two production-library versions. It measures construction
+and self-check at 706.622 / 691.329 ms before and 414.955 / 419.664 ms after.
+The raw record is `hex-primality-native-performance-pair-issue-10268.json`,
+including source and executable hashes. The baseline checkout has only the
+measurement frontend added; its production code remains at `6bfa5b232`.
+The earlier search row is Lean interpreter execution, which is the tactic's
+current execution regime, not a native-executable measurement.
 
 Both complete builds use the original `2 ^ 255 - 19` goal expression.
 The refreshed twelve-input cactus sweep below uses numerals and includes
@@ -161,7 +170,7 @@ Those records, including experimental raw-recursion alternatives, are in
 falls from 13.446 to 2.542 s and from 9.663 to 1.862 s. Both arms use the same
 certificate and arithmetic, changing only the table-leaf lookup.
 
-The native readback comparison in `hex-primality-readback-issue-10268.json`
+The interpreted readback comparison in `hex-primality-readback-issue-10268.json`
 measures old/new intervals of 308.009 / 67.497 ms and 322.971 / 52.411 ms
 at bound 524289. Both return 43,388 represented primes, ending at 524287;
 `primesBelow` adds 2 and 3. `primality_readback.py` forces the computed list
@@ -200,11 +209,13 @@ supplied-certificate replay corpus uses the six family witnesses plus
 Curve25519 and Curve448, for which the pinned PrimeCert project supplies
 certificates. Hex receives no external factors or certificates.
 
-Native calls are `Construction.run`, FLINT `fmpz.is_prime`, and PARI
+Native calls are `Construction.run` in the lake-built
+`hexprimality_policy_probe construction N` executable, FLINT `fmpz.is_prime`, and PARI
 `isprime`. They attempt exact positive primality decisions, not probable-prime
 screening. The native intervals exclude imports, input conversion, output
 formatting, and process startup. Hex constructs a Pocklington certificate
-internally and includes its final compiled self-check, but emits no Lean
+internally and includes its final compiled self-check. This is machine code,
+not a `#eval` interpreter timing. It emits no Lean
 proof and performs no kernel replay in that interval. FLINT and PARI use
 their native decision algorithms. See the primary API documentation for
 [FLINT](https://flintlib.org/doc/fmpz.html) and
@@ -241,35 +252,45 @@ Inputs are traceable to [RFC 7748](https://www.rfc-editor.org/rfc/rfc7748.html),
 
 | Input | Hex native | FLINT native | PARI native | Hex complete build |
 |---|---:|---:|---:|---:|
-| family-31 | 4.179 ms | 0.387 ms | 0.012 ms | 1.058 s |
-| family-61 | 3.668 ms | 0.020 ms | 0.077 ms | 1.097 s |
-| family-123 | 5.407 ms | 0.622 ms | 0.132 ms | 1.020 s |
-| family-256 | 7.202 ms | 1.598 ms | 0.291 ms | 1.022 s |
-| family-511 | 12.426 ms | 3.120 ms | 0.569 ms | 1.010 s |
-| family-512 | 28.073 ms | 3.271 ms | 0.768 ms | 1.013 s |
-| Curve25519 | 635.622 ms | 20.118 ms | 44.291 ms | 1.628 s |
-| secp256k1 | exhausted | 20.263 ms | 46.521 ms | exhausted |
-| P-256 | 40.142 ms | 5.511 ms | 19.656 ms | 1.399 s |
-| P-384 | exhausted | 20.466 ms | 171.798 ms | exhausted |
-| Curve448 | exhausted | 12.888 ms | 228.987 ms | exhausted |
-| P-521 | above bit limit | 9.771 ms | 250.827 ms | above bit limit |
+| family-31 | 0.165 ms | 0.439 ms | 0.016 ms | 1.058 s |
+| family-61 | 0.230 ms | 0.023 ms | 0.079 ms | 1.097 s |
+| family-123 | 1.176 ms | 0.519 ms | 0.149 ms | 1.020 s |
+| family-256 | 1.938 ms | 2.371 ms | 0.336 ms | 1.022 s |
+| family-511 | 5.358 ms | 3.921 ms | 0.682 ms | 1.010 s |
+| family-512 | 18.550 ms | 4.771 ms | 0.786 ms | 1.013 s |
+| Curve25519 | 572.712 ms | 25.942 ms | 55.404 ms | 1.628 s |
+| secp256k1 | exhausted | 27.786 ms | 50.136 ms | exhausted |
+| P-256 | 14.172 ms | 6.163 ms | 26.703 ms | 1.399 s |
+| P-384 | exhausted | 19.202 ms | 177.670 ms | exhausted |
+| Curve448 | exhausted | 13.488 ms | 234.772 ms | exhausted |
+| P-521 | above bit limit | 8.625 ms | 297.372 ms | above bit limit |
 
-The optimized raw records are
-`reports/bench-results/hex-primality-cactus-optimized-issue-10268.json`
-(72 native and 62 replay/baseline records) and
-`reports/bench-results/hex-primality-end-to-end-optimized-issue-10268.json`
-(the same records plus 48 complete/baseline records). The latter includes
-all baseline times, source text, output, and source/olean sizes. Hex uses
-Lean 4.34.0-rc2 at commit `756e1aa33`, with source hashes also recorded.
-PrimeCert uses Lean 4.33.0 at
-`7d3a2de13bb08f111a95203634f9ea52e50e246e`.
-Native versions are FLINT 3.6.0 / python-flint 0.9.0 and PARI 2.17.3.
-The native/replay sweep uses CPU 14; the complete sweep uses CPU 3.
-Compiled checking of the already generated Curve25519 certificate takes
-0.612 ms median and is distinct from kernel replay. The replay probe source
+The plotted record is
+`reports/bench-results/hex-primality-cactus-native-executable-issue-10268.json`.
+It contains 72 native samples and reuses the 62 kernel/baseline and 48
+complete/baseline records from
+`hex-primality-end-to-end-optimized-issue-10268.json`. Every successful native
+certificate is checked against that record's exact generated certificate
+before proof rows are reused. The production implementation is unchanged
+apart from comments; the native measurement frontend is new. All records
+include probe sources or hashes, output, and source/olean sizes where relevant.
+Hex uses Lean 4.34.0-rc2; the native record includes the executable hash and
+source hashes. The proof rows are from `756e1aa33`. PrimeCert uses Lean 4.33.0
+at `7d3a2de13bb08f111a95203634f9ea52e50e246e`. Native versions are
+FLINT 3.6.0 / python-flint 0.9.0 and PARI 2.17.3.
+The native sweep uses CPU 1, replay uses CPU 14, and complete builds use CPU 3.
+Native checking of the already generated Curve25519 certificate takes
+0.756 ms median and is distinct from kernel replay. The replay probe source
 is 1,041 bytes with a 5,432-byte olean; the complete-tactic probe is 217 bytes
 with a 4,064-byte olean. The emitted certificate literal and suggestion are
-unchanged; the raw records include these sizes for every completed build.
+unchanged; the raw records include sizes for every completed build.
+
+Earlier files with a `native` field generated Hex observations through
+`#eval`; those Hex rows measure the Lean interpreter. Their metadata now
+states this explicitly. They remain useful tactic-search observations but
+are excluded from the native-executable curve. This distinction applies to
+`hex-primality-cactus-optimized-issue-10268.json` and the older cactus files;
+it does not apply to the original standalone mode-3 benchmark executable.
 
 Curve25519 complete builds from the numeral took 1.657 / 1.600 seconds.
 The original expression is measured separately in the paired comparison
@@ -330,6 +351,14 @@ The old/new workflow comparison uses two already built checkouts:
 python3 scripts/bench/primality_performance_pair.py \
   --baseline /path/to/checkout-at-6bfa5b232 \
   --output /tmp/primality-performance-pair.json
+# For native execution, build the same measurement frontend in both checkouts:
+cp bench/HexPrimality/PolicyProbe.lean \
+  /path/to/checkout-at-6bfa5b232/bench/HexPrimality/PolicyProbe.lean
+(cd /path/to/checkout-at-6bfa5b232 && lake build hexprimality_policy_probe)
+lake build hexprimality_policy_probe
+python3 scripts/bench/primality_performance_pair.py --native-only \
+  --baseline /path/to/checkout-at-6bfa5b232 \
+  --output /tmp/primality-native-pair.json
 ```
 
 The drivers create temporary modules in registered probe namespaces, build

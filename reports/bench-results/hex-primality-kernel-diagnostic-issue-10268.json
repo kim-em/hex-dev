@@ -252,5 +252,12 @@
       "source": "module\npublic import HexPrimality.Cert\npublic section\nset_option maxRecDepth 100000\n\n@[expose] noncomputable def powBits (a e n : Nat) : Nat :=\n  Nat.rec (motive := fun _ => Nat \u2192 Nat \u2192 Nat \u2192 Nat)\n    (fun _ acc _ => acc)\n    (fun _ r bit acc base =>\n      (e.testBit bit).rec\n        (r (bit.add 1) acc ((base.mul base).mod n))\n        (r (bit.add 1) ((acc.mul base).mod n) ((base.mul base).mod n)))\n    (HexArith.bitLength e) 0 (1 % n) (a % n)\n\n@[expose] noncomputable def powDiv (a e n : Nat) : Nat :=\n  Nat.rec (motive := fun _ => Nat \u2192 Nat \u2192 Nat \u2192 Nat)\n    (fun _ _ _ => 0)\n    (fun _ r base exp acc =>\n      (exp.beq 0).rec\n        (((exp.mod 2).beq 0).rec\n          (r ((base.mul base).mod n) (exp.div 2) ((acc.mul base).mod n))\n          (r ((base.mul base).mod n) (exp.div 2) acc))\n        (acc.mod n))\n    e.succ (a % n) e 1\n"
     }
   ],
-  "protocol": "two reversed blocks; all completed samples retained"
+  "protocol": "two reversed blocks; all completed samples retained",
+  "execution_mode": "kernel reduction in fresh Lake builds",
+  "source_reference": "production library sources at 6bfa5b232; HEAD/dirty metadata not originally captured; probe source is embedded",
+  "source_sha256": {
+    "HexPrimality/Table.lean": "420e4a89291b34717aebe1a3cd393e9857ae0309b816e5ba3b2e1b5d7b6bbe27",
+    "HexPrimality/Sieve.lean": "b90317eda625ac9dc7333505e1756a76a041d4acd34555d4131ec49d0bac1489",
+    "HexPrimality/Cert.lean": "e2fb751d95ac2536fa501b803ad8acb1d59679ee0c22237f1c17c45e96f91b79"
+  }
 }

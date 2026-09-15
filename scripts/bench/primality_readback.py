@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Adjacent compiled readback measurements, forcing results before the clock."""
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import platform
+import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -60,6 +62,11 @@ def main():
     try:
         row = run(['lake', 'build', '+'+module+':olean'], ROOT, 60, cpu)
         row.update(cpu=cpu, host=platform.node(), source=SOURCE,
+                   execution_mode='Lean #eval interpreter; oldScan is the historical structural bit scan',
+                   commit=subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
+                   diff_sha256=hashlib.sha256(subprocess.check_output(['git', 'diff', 'HEAD'], cwd=ROOT)).hexdigest(),
+                   toolchain=(ROOT/'lean-toolchain').read_text().strip(),
+                   sieve_sha256=hashlib.sha256((ROOT/'HexPrimality/Sieve.lean').read_bytes()).hexdigest(),
                    protocol='adjacent old/new arms, AB/BA; every completed sample retained')
         output.write_text(json.dumps(row, indent=2)+'\n')
         print(row['stdout']); print(row['stderr'])
