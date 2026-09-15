@@ -58,9 +58,9 @@ elaboration columns are separate medians of Lean's cumulative `type checking`
 and `elaboration` profiler counters. All table values are milliseconds. These are whole-module
 counters, including statement elaboration and first-use tactic initialization,
 not isolated production `det.small.ring` spans. No common baseline is subtracted.
-The measured theorem statements are unchanged since the recorded commit;
-subsequent harness changes add evidence recording, tests and table rendering,
-without changing the recorded timings.
+The raw record's source commit and hashes pin the measured harness and theorem
+statements. The table renderer reads those retained samples; capability evidence
+is recorded separately, without modifying the timing data.
 
 | Family / n | ring wall | grobner wall | ring kernel | grobner kernel | ring elaboration | grobner elaboration |
 |---|---:|---:|---:|---:|---:|---:|
