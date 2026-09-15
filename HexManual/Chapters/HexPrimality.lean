@@ -164,10 +164,12 @@ enough factors of predecessors for Pocklington, rather than on bit length
 alone. The ordinary `primality` policy keeps its existing smaller budget.
 
 The Curve25519 result has three non-leaf certificate nodes and eight factor
-entries. Shared-host measurements found construction in approximately
-0.7–2.2 seconds, while fresh complete `primality?` builds took approximately
-11–28 seconds, including Lake overhead and kernel replay. These are
-host-specific observations, not latency guarantees. The phase-separated
+entries. The fixed-corpus comparison measured Curve25519 native decision at
+1.25 seconds and a fresh complete `primality?` build at 6.02 seconds, including
+Lake overhead and kernel replay. FLINT and PARI native decisions took
+22.6 and 53.6 milliseconds respectively. Earlier phase-separated samples on
+the shared host took 11–28 seconds for complete builds; all samples are
+retained. These are host-specific observations, not latency guarantees. The
 [measurement report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-construction.md)
 records every sample, certificate sizes, and the comparison with the larger
 reference certificate.
@@ -178,13 +180,21 @@ primes. The current construction profile finds P-256 and the structured
 P-521 exceeds its input ceiling. This is not a general-purpose prover for
 arbitrary cryptographic-size primes.
 
-The following cactus plots sort each implementation's successful cases by
-time. FLINT and PARI return native primality decisions; the kernel comparison
-uses supplied PrimeCert certificates and Hex's generated literals. Missing
+The first cactus plot compares native exact primality decisions with the
+complete `primality?` build. Native timings exclude Lean proof emission and
+kernel replay, imports, and input conversion. Hex uses certificate
+construction and a compiled self-check internally to decide primality;
+FLINT and PARI return exact decisions through their native algorithms. The
+dashed curve includes the full fresh Lake build: certificate construction,
+proof emission, imports, and kernel checking.
+
+![Native decision and complete Lean proof](https://kim-em.github.io/hex-dev/figures/hex-primality-complete-cactus.svg)
+
+The second plot measures fresh builds replaying supplied PrimeCert
+certificates and Hex's generated literals; it excludes certificate search.
+Each curve sorts its successful cases independently by time. Missing
 certificates count as unsolved. The corpus is small and structured, and the
 report gives exact inputs, toolchains, all samples, and timing boundaries.
-
-![Native primality comparison](https://kim-em.github.io/hex-dev/figures/hex-primality-native-cactus.svg)
 
 ![Kernel certificate replay comparison](https://kim-em.github.io/hex-dev/figures/hex-primality-kernel-cactus.svg)
 

@@ -208,7 +208,57 @@ python-flint 0.9.0 / FLINT 3.6.0 and PARI 2.17.3.
 | Curve448 | exhausted | 14.290 ms | 241.078 ms |
 | P-521 | above bit limit | 9.939 ms | 347.304 ms |
 
-![Native cactus](figures/hex-primality-native-cactus.svg)
+### Native decision versus complete certificate construction and checking
+
+![Native decision and complete Lean proof](figures/hex-primality-complete-cactus.svg)
+
+The solid curves measure native exact decisions without Lean proof emission
+or kernel replay. Hex's construction profile builds and self-checks a
+Pocklington certificate internally; that arithmetic is part of its decision
+algorithm. These are not Miller–Rabin-only screening results. The dashed
+curve measures the complete `primality?` invocation through a fresh Lake
+build, including construction, suggestion rendering, proof emission, import
+and build overhead, and kernel checking. It starts from the input numeral
+and receives no factors or certificate. All four curves use the same twelve
+inputs, independently sorted by each implementation's successful times.
+
+The complete-build record is
+`reports/bench-results/hex-primality-end-to-end-cactus-issue-10268.json`.
+It embeds the original native/replay data and adds 48 complete/baseline
+records on CPU 10 at commit `a7eb53342fc52e19842d497e0b15b6940a4571b4`.
+Two trial-major blocks put each baseline adjacent to its complete build,
+reversing their order in the second block. Native and complete-build samples
+were collected in separate sweeps; their difference is not a paired estimate
+of kernel cost. Every completed sample is retained, including exhaustion.
+The plot uses absolute build times; adjacent input/import baseline times
+are reported separately below. The original phase experiment additionally
+measures the `2 ^ 255 - 19` expression itself.
+
+| Input | Complete Hex `primality?` build | Input/import baseline |
+|---|---:|---:|
+| family-31 | 1.793 s | 0.982 s |
+| family-61 | 1.681 s | 0.994 s |
+| family-123 | 1.780 s | 0.974 s |
+| family-256 | 1.782 s | 0.991 s |
+| family-511 | 1.833 s | 0.975 s |
+| family-512 | 1.884 s | 0.924 s |
+| Curve25519 | 6.022 s | 0.979 s |
+| secp256k1 | exhausted | 0.931 s |
+| P-256 | 6.633 s | 0.922 s |
+| P-384 | exhausted | 0.928 s |
+| Curve448 | exhausted | 0.925 s |
+| P-521 | above bit limit | 0.912 s |
+
+Curve25519 complete builds took 6.028 and 6.016 seconds, median 6.022 seconds.
+The adjacent baseline builds took 1.046 and 0.911 seconds; subtracting them
+leaves 4.982 and 5.105 seconds for the additional tactic/build work. Those
+values include search, emission, and replay together. They are distinct from
+the supplied-certificate replay measurements below and from the earlier
+11–28-second full-build observations on the shared host. The earlier
+completed samples remain in the report; host-specific absolute times vary.
+
+### Supplied-certificate replay
+
 
 | Input | Hex fresh replay | PrimeCert fresh replay |
 |---|---:|---:|
@@ -252,7 +302,9 @@ lake build HexPrimality.Elab
 python3 scripts/bench/primality_cactus.py \
   --primecert-checkout /path/to/PrimeCert --blocks 2 --timeout 60 \
   --output /tmp/primality-cactus.json
-python3 scripts/plots/hexprimality-cactus.py /tmp/primality-cactus.json
+python3 scripts/bench/primality_end_to_end.py /tmp/primality-cactus.json \
+  --output /tmp/primality-end-to-end.json
+python3 scripts/plots/hexprimality-cactus.py /tmp/primality-end-to-end.json
 ```
 
 The driver creates temporary modules in the registered construction-probe
