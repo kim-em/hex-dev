@@ -104,9 +104,9 @@ rather than a copy.
   running 32 doubling rounds, covering `M < 2^{32}` and so `n` up to
   roughly `1.3 · 10^{10}`. `PrimeCertTest/SieveVerify1e8.lean` exercises
   it at `10^8`.
-- **Its toolchain is `leanprover/lean4:v4.33.0`**; hex-dev currently
-  uses `v4.33.0-rc1` with Mathlib pinned to the matching release
-  candidate. Stable and release-candidate Lean packages are not
+- **The measured checkout uses `leanprover/lean4:v4.33.0`**; hex-dev
+  uses `v4.34.0` with Mathlib pinned to a compatible commit.
+  Packages built with different Lean toolchains are not
   interchangeable, so a companion dependency still requires aligned
   pins. The exact gap must be rechecked at implementation time.
 
@@ -1474,8 +1474,8 @@ secp256k1 and NIST P-256, P-384, and P-521. These fixed, structured corpora do
 not estimate a success rate on random primes.
 
 The comparison rotates system and baseline/replay arm order and reports
-absolute fresh replay times because the toolchain pins differ (Hex uses Lean
-4.34.0-rc2; PrimeCert uses Lean 4.33.0). All completed samples and explicit
+absolute fresh replay times because the measured toolchain pins differ (Hex
+used Lean 4.34.0-rc2; PrimeCert used Lean 4.33.0). All completed samples and explicit
 process timeouts are retained. Source hashes, exact inputs, versions, host
 context, and reproduction commands accompany the plots in the construction
 report. Measurements remain shared-host information rather than a CI gate;

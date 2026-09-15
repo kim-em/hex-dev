@@ -102,7 +102,7 @@ prepared beforehand.
 | Component pair | Arm medians | Median adjacent difference |
 |---|---:|---:|
 | Import baseline → input elaboration | 2.756 → 2.493 s | 0.103 s |
-| Input → compiled certificate search | 2.542 → 3.495 s | 0.964 s |
+| Input → interpreted certificate search | 2.542 → 3.495 s | 0.964 s |
 | Input → certificate literal elaboration | 2.938 → 2.845 s | −0.114 s |
 | Literal → literal elaboration and rendering | 3.396 → 3.002 s | −0.141 s |
 | Literal → kernel replay | 3.376 → 16.469 s | 13.092 s |
@@ -183,6 +183,19 @@ before the timer. They support no performance claim.
 Grouped witnesses, cached Fermat legs, and shared power ladders remain
 possible arithmetic improvements. The measured table bottleneck is addressed
 without changing the certificate representation or Pocklington witness checks.
+
+A representative profile of the optimized native executable identifies the
+remaining construction cost. Of 366 samples containing the construction
+entry point, 298 include Pollard `p - 1`'s `raiseSmooth`, and 63 include
+`primesBelow`. Modular exponentiation accounts for 291 samples, with substantial
+allocation, copying, and integer remainder work. These inclusive counts overlap;
+they identify a native search bottleneck rather than kernel replay cost.
+The executable matches the native cactus record exactly. The raw profile,
+symbols, command, and counts are retained in
+`hex-primality-native-profile-issue-10268.json.gz`, its `.syms.json` sidecar,
+and `hex-primality-native-profile-summary-issue-10268.json`. This single profile
+uses inherited affinity and overlaps a local build; it is attribution evidence,
+not another before/after latency comparison.
 
 ## Reproduction
 
