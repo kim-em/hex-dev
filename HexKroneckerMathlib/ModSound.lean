@@ -59,8 +59,7 @@ theorem checkTermsEqMod_polynomial {budget : Budget} {k p : Nat} {lhs rhs q : Po
 theorem checkTermsEqMod_sound {budget : Budget} {k p : Nat} {lhs rhs q : PolyList Int}
     (h : checkTermsEqMod budget k p lhs rhs q = true) :
     ∀ {R : Type u} [CommRing R] [CharP R p] (v : Fin k → R),
-      MvPolynomial.eval₂Hom (Int.castRingHom R) v (termsPolynomial k lhs) =
-      MvPolynomial.eval₂Hom (Int.castRingHom R) v (termsPolynomial k rhs) :=
+      denoteTerms R v lhs = denoteTerms R v rhs :=
   quotient_sound (checkTermsEqMod_polynomial h)
 
 theorem checkExprEqMod_polynomial {budget : Budget} {k p : Nat} {lhs rhs : Expr} {q : PolyList Int}

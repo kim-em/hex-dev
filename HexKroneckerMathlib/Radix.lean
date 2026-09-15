@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexKroneckerMathlib.Denote
+public import Mathlib.Algebra.BigOperators.Fin
 public import Mathlib.Data.List.OfFn
 public import Mathlib.Data.List.GetD
 

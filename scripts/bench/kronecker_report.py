@@ -4,6 +4,7 @@ import argparse
 import gzip
 import json
 import re
+import statistics
 from pathlib import Path
 
 
@@ -24,6 +25,23 @@ def kernel_ms(output):
     return float(value) * {'ms': 1, 's': 1000, 'μs': .001, 'µs': .001, 'ns': .000001}[unit]
 
 
+def median_faster(row):
+    arms = row['arms']
+    return all(arms['Kronecker']['median_delta_ns'] < arms[a]['median_delta_ns']
+               for a in ['Ring', 'Grobner'])
+
+
+def ratio(candidate, reference):
+    return f'{candidate / reference:.3f}' if candidate > 0 and reference > 0 else '—'
+
+
+def margin_spread(pair):
+    values = pair['margins_ns']
+    center = statistics.median(values)
+    mad = statistics.median(abs(v - center) for v in values)
+    return center, mad, abs(center) <= mad
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('input', type=Path)
@@ -40,17 +58,24 @@ def main():
     link = 'data/hex-kronecker-mathlib/' + args.input.name
     rows = list(data['summary'].values())
     ceilings = all(s['arms']['Kronecker']['ceiling_pass'] for s in rows if s['accepted'])
-    wins = sum(all(p['candidate_faster'] for p in s['paired'].values()) for s in rows if s['accepted'])
+    wins = sum(median_faster(s) for s in rows if s['accepted'])
+    unresolved = sum(margin_spread(p)[2] for s in rows if s['accepted'] for p in s['paired'].values())
     accepted = sum(s['accepted'] for s in rows)
     text = f'''# HexKroneckerMathlib performance
 
 ## Result
 
 The complete sweep contains {accepted} accepted identities and {len(rows)-accepted}
-preflight declines. {wins}/{accepted} accepted cases have a positive paired
-median margin against both `ring` and `grobner`. The per-case runtime bar is
+preflight declines. {wins}/{accepted} accepted cases have a smaller per-arm
+baseline-subtracted median than both `ring` and `grobner`. The SPEC’s numerical
+runtime condition is
 **{'passed' if wins == accepted else 'not passed'}**. The absolute candidate ceilings are
 **{'passed' if ceilings else 'not passed'}**. No default tactic chain changes.
+
+{unresolved}/{2*accepted} paired comparisons have a median-margin magnitude no
+larger than their median absolute deviation and are **unresolved at this
+measurement resolution**. The numerical median comparison and this description
+of variation are reported separately; no sample is discarded or replaced.
 
 ## Protocol and provenance
 
@@ -74,11 +99,14 @@ original runner hashes, CPU and environment. This is not an unchanged rerun.
 The preregistered ceilings are 30 seconds per accepted grid case, 60 seconds
 per accepted determinant case, and a 180-second cleanup timeout. Ceilings
 apply to raw candidate wall time, including imports. The table reports
-baseline-subtracted medians in milliseconds, and paired median margins.
+baseline-subtracted per-arm medians in milliseconds. Ratios are Kronecker
+divided by the reference median and are shown only when both are positive.
+The runtime verdict compares these per-arm medians, as required by the SPEC;
+paired-margin signs remain supplementary evidence.
 
 ## reflected-identities and determinant-identities
 
-| Case | D | N | Kronecker ms | ring ms | grobner ms | Margin vs ring ms | Margin vs grobner ms | Ceiling |
+| Case | D | N | Kronecker ms | ring ms | grobner ms | K/ring | K/grobner | Ceiling |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 '''
     for s in rows:
@@ -86,12 +114,16 @@ baseline-subtracted medians in milliseconds, and paired median margins.
             continue
         a = s['arms']; p = s['paired']; size = s['size']
         cells = [ms(a[k]['median_delta_ns']) for k in ['Kronecker', 'Ring', 'Grobner']]
-        cells += [ms(p[k]['median_margin_ns']) for k in ['Ring', 'Grobner']]
+        cells += [ratio(a['Kronecker']['median_delta_ns'], a[k]['median_delta_ns'])
+                  for k in ['Ring', 'Grobner']]
         text += f"| {s['stem']} | {size['digits']} | {size['packedBits']} | " + ' | '.join(cells) + f" | {'pass' if a['Kronecker']['ceiling_pass'] else 'fail'} |\n"
     text += '''
 The grid has atom counts `1, 2, 3, 4, 6, 8` and degrees `2, 4, 8, 16`.
 Accepted powers of sums are compared with independently expanded SymPy
-integer polynomials. The determinant family varies matrix dimension, shared
+integer polynomials. At one atom the chosen family degenerates to `x^d = x^d`;
+these four rows are reflexive identities, not informative expansion workloads.
+They remain in the complete grid and in the literal numerical condition.
+The determinant family varies matrix dimension, shared
 atom count, and entry degree; its left side explicitly expands the Leibniz
 formula, and its right side is independently expanded with SymPy.
 
@@ -127,6 +159,22 @@ and the uniform-ring and characteristic-seven examples.
     for s in rows:
         if s['accepted']:
             text += f"| {s['stem']} | " + ' | '.join(str(s['arms'][a]['artifacts']['olean_bytes']) for a in ['Kronecker','Ring','Grobner']) + ' |\n'
+    text += "\n## Comparison resolution\n\n"
+    text += ("MAD is the median absolute deviation of the six paired margins from "
+             "their median. An ordering is marked unresolved when the magnitude of "
+             "that median does not exceed its MAD. This descriptive comparison "
+             "does not add a sampling filter or change the preregistered numerical bar. "
+             "Small tactic costs can be obscured by variation in the adjacent "
+             "import-dominated builds.\n\n")
+    text += ("| Case | Margin vs ring ms | MAD ms | Margin vs grobner ms | MAD ms | Resolution |\n"
+             "| --- | ---: | ---: | ---: | ---: | --- |\n")
+    for row in rows:
+        if row['accepted']:
+            spreads = [margin_spread(row['paired'][a]) for a in ['Ring', 'Grobner']]
+            cells = [ms(v) for center, mad, _ in spreads for v in [center, mad]]
+            uncertain = [a.lower() for a, v in zip(['Ring', 'Grobner'], spreads) if v[2]]
+            label = 'unresolved: ' + ', '.join(uncertain) if uncertain else 'margin exceeds MAD'
+            text += f"| {row['stem']} | " + ' | '.join(cells) + f" | {label} |\n"
     text += "\n## Paired signs\n\n"
     text += ("Each sign records one completed reference-minus-candidate margin in trial order. "
              "Positive favors Kronecker, negative favors the reference, and zero is a tie. "

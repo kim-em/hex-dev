@@ -126,11 +126,11 @@ theorem matrixScale_entry {k : Nat} (p : Nat) (qs : List (List (MvPolynomial (Fi
   exact hm
 
 /-- Quotient-witness soundness, entrywise in every ring of characteristic `p`. -/
-theorem checkMulTermsMod_sound {budget : Budget} {mode : MulMode} {k n r m p : Nat}
+theorem checkMulTermsMod_entry {budget : Budget} {mode : MulMode} {k n r m p : Nat}
     {a b c q : TermMatrix} (h : checkMulTermsMod budget mode k n r m p a b c q = true) :
     ∀ {R : Type u} [CommRing R] [CharP R p] (v : Fin k → R) (i : Fin n) (j : Fin m),
-      (∑ t : Fin r, denoteMatrix v a i.val t.val * denoteMatrix v b t.val j.val) =
-        denoteMatrix v c i.val j.val := by
+      (∑ t : Fin r, denoteEntry v a i.val t.val * denoteEntry v b t.val j.val) =
+        denoteEntry v c i.val j.val := by
   intro R _ _ v i j
   have hw : (matrixShape k n r a && matrixShape k r m b && matrixShape k n m c && matrixShape k n m q) = true := by
     by_cases hp : (p == 0) = true
@@ -146,6 +146,15 @@ theorem checkMulTermsMod_sound {budget : Budget} {mode : MulMode} {k n r m p : N
   rw [matrixSub_entry hl, matrixScale_entry, product_entry ha hb, matrixPolynomial_getD,
     matrixPolynomial_getD] at he
   have he := quotient_sound he v
-  simpa only [map_sum, map_mul, denoteMatrix] using he
+  simpa only [map_sum, map_mul, denoteEntry] using he
+
+/-- An integer quotient matrix certifies the finite product in characteristic `p`. -/
+theorem checkMulTermsMod_sound {budget : Budget} {mode : MulMode} {k n r m p : Nat}
+    {a b c q : TermMatrix} (h : checkMulTermsMod budget mode k n r m p a b c q = true) :
+    ∀ {R : Type u} [CommRing R] [CharP R p] (v : Fin k → R),
+      denoteMatrix n r R v a * denoteMatrix r m R v b = denoteMatrix n m R v c := by
+  intro R _ _ v
+  funext i j
+  simpa only [_root_.Matrix.mul_apply, denoteMatrix] using checkMulTermsMod_entry h v i j
 
 end Hex.Kronecker

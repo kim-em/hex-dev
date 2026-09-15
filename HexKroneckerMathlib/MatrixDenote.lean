@@ -77,16 +77,22 @@ theorem product_entry {k n r m : Nat} {a b : TermMatrix}
     (by simpa only [matrixPolynomial, List.length_map, matrixShape_rows hb] using t.isLt), matrixPolynomial_getD]
 
 /-- Interpret each supplied entry through the established term-list equivalence. -/
-@[expose] noncomputable def denoteMatrix {R : Type u} [CommRing R] {k : Nat}
+@[expose] noncomputable def denoteEntry {R : Type u} [CommRing R] {k : Nat}
     (v : Fin k → R) (a : TermMatrix) (i j : Nat) : R :=
   MvPolynomial.eval₂Hom (Int.castRingHom R) v (termsPolynomial k ((a.getD i []).getD j []))
 
+/-- Total finite matrix denotation. Successful shape checks ensure that no
+padding entry is used by either soundness theorem. -/
+@[expose] noncomputable def denoteMatrix (n m : Nat) (R : Type u) [CommRing R] {k : Nat}
+    (v : Fin k → R) (a : TermMatrix) : _root_.Matrix (Fin n) (Fin m) R :=
+  fun i j => denoteEntry v a i.val j.val
+
 /-- Entrywise soundness of both the plain and the signed-packed product checks. -/
-theorem checkMulTerms_sound {budget : Budget} {mode : MulMode} {k n r m : Nat}
+theorem checkMulTerms_entry {budget : Budget} {mode : MulMode} {k n r m : Nat}
     {a b c : TermMatrix} (h : checkMulTerms budget mode k n r m a b c = true) :
     ∀ {R : Type u} [CommRing R] (v : Fin k → R) (i : Fin n) (j : Fin m),
-      (∑ t : Fin r, denoteMatrix v a i.val t.val * denoteMatrix v b t.val j.val) =
-        denoteMatrix v c i.val j.val := by
+      (∑ t : Fin r, denoteEntry v a i.val t.val * denoteEntry v b t.val j.val) =
+        denoteEntry v c i.val j.val := by
   intro R _ v i j
   have hw : (matrixShape k n r a && matrixShape k r m b && matrixShape k n m c) = true := by
     by_contra hw
@@ -98,6 +104,15 @@ theorem checkMulTerms_sound {budget : Budget} {mode : MulMode} {k n r m : Nat}
   have he := congrArg (fun rows => (rows.getD i.val []).getD j.val 0) (checkMulTerms_polynomial h)
   rw [product_entry ha hb, matrixPolynomial_getD] at he
   have he := congrArg (MvPolynomial.eval₂Hom (Int.castRingHom R) v) he
-  simpa only [map_sum, map_mul, denoteMatrix] using he
+  simpa only [map_sum, map_mul, denoteEntry] using he
+
+/-- Both multiplication modes certify equality of the finite matrix product. -/
+theorem checkMulTerms_sound {budget : Budget} {mode : MulMode} {k n r m : Nat}
+    {a b c : TermMatrix} (h : checkMulTerms budget mode k n r m a b c = true) :
+    ∀ {R : Type u} [CommRing R] (v : Fin k → R),
+      denoteMatrix n r R v a * denoteMatrix r m R v b = denoteMatrix n m R v c := by
+  intro R _ v
+  funext i j
+  simpa only [_root_.Matrix.mul_apply, denoteMatrix] using checkMulTerms_entry h v i j
 
 end Hex.Kronecker

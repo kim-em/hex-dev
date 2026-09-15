@@ -45,13 +45,29 @@ theorem frobeniusSeven {R : Type*} [CommRing R] [CharP R 7] (x : R) :
   have hs := Hex.Kronecker.checkExprEqMod_sound hc (fun _ => x)
   simpa only [l, r, Hex.Kronecker.Expr.denote, Int.cast_one] using hs
 
+/-- info: '_private.HexKroneckerMathlib.Tests.0.cubeUniform' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms cubeUniform
+/-- info: '_private.HexKroneckerMathlib.Tests.0.frobeniusSeven' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms frobeniusSeven
+/-- info: 'Hex.Kronecker.checkExprEq_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms Hex.Kronecker.checkExprEq_sound
+/-- info: 'Hex.Kronecker.checkTermsEq_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms Hex.Kronecker.checkTermsEq_sound
+/-- info: 'Hex.Kronecker.checkMulTerms_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms Hex.Kronecker.checkMulTerms_sound
+/-- info: 'Hex.Kronecker.checkExprEqMod_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms Hex.Kronecker.checkExprEqMod_sound
+/-- info: 'Hex.Kronecker.checkTermsEqMod_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms Hex.Kronecker.checkTermsEqMod_sound
+/-- info: 'Hex.Kronecker.checkMulTermsMod_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms Hex.Kronecker.checkMulTermsMod_sound
 
 -- A huge literal exponent still takes logarithmically many kernel multiplications.

@@ -111,7 +111,8 @@ def main():
                             margins.append(rows[ref]["delta_ns"] - rows["Kronecker"]["delta_ns"])
                     paired[ref] = dict(margins_ns=margins,
                         median_margin_ns=statistics.median(margins) if len(margins) == 6 else None,
-                        candidate_faster=len(margins) == 6 and statistics.median(margins) > 0)
+                        candidate_faster=len(margins) == 6 and
+                            by_arm["Kronecker"]["median_delta_ns"] < by_arm[ref]["median_delta_ns"])
             summaries[case["stem"]] = dict(case, arms=by_arm, paired=paired)
         complete = len(samples) == 6*sum(len(arms(c)) for c in cases)
         record = dict(schema=spec.schema, manifest=manifest, environment=environment,
@@ -155,14 +156,6 @@ def main():
                     build_order=[r for r, _ in ordered], **results,
                     delta_ns=results["candidate"]["wall_nanos"]-results["reference"]["wall_nanos"] if success else None))
                 save()
-    for stem in manifest["profiles"]:
-        if any(p["stem"] == stem for p in profiles):
-            continue
-        case = next((c for c in cases if c["stem"] == stem), None)
-        if case:
-            print(f"[kernel profile] {stem}", flush=True)
-            profiles.append(dict(stem=stem, result=build(f"{PREFIX}.{stem}Profile", 180, case["accepted"])))
-            save()
     save()
     lease.close()
     return 0

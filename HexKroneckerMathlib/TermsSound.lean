@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexKroneckerMathlib.Bounds
+public import Mathlib.Algebra.CharP.Defs
 
 public section
 
@@ -49,9 +50,9 @@ theorem checkTermsEq_polynomial {budget : Budget} {k : Nat} {lhs rhs : PolyList 
 theorem checkTermsEq_sound {budget : Budget} {k : Nat} {lhs rhs : PolyList Int}
     (h : checkTermsEq budget k lhs rhs = true) :
     ∀ {R : Type u} [CommRing R] (v : Fin k → R),
-      MvPolynomial.eval₂Hom (Int.castRingHom R) v (termsPolynomial k lhs) =
-      MvPolynomial.eval₂Hom (Int.castRingHom R) v (termsPolynomial k rhs) := by
+      denoteTerms R v lhs = denoteTerms R v rhs := by
   intro R _ v
+  unfold denoteTerms
   rw [checkTermsEq_polynomial h]
 
 /-- Map an integer quotient identity into a ring of the stated characteristic. -/

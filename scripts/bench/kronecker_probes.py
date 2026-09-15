@@ -167,6 +167,21 @@ def main():
         else:
             body += f"#guard match Hex.Kronecker.sizeExprEq {{}} {c['atoms']} leftTree rightTree with\n  | .ok s => !s.accepts {{}}\n  | .error _ => false\n"
         write(stem + "Profile", body)
+    write("IndependentN5KernelProfile",
+          f"import {PREFIX}.IndependentN5Construction\n\n" + OPTIONS +
+          "set_option profiler true\nset_option profiler.threshold 0\n"
+          "open KroneckerProbe.IndependentN5\n\n"
+          "theorem declineResult : (match Hex.Kronecker.sizeExprEq {} 25 leftTree rightTree with\n"
+          "    | .ok s => !s.accepts {}\n    | .error _ => false) = true := by\n"
+          "  decide +kernel\n\n#print axioms declineResult\n")
+    write("GridK3D8TacticProfile",
+          f"import {PREFIX}.GridK3D8Construction\n\n" + OPTIONS +
+          "set_option profiler true\nset_option profiler.threshold 0\n"
+          "open KroneckerProbe.GridK3D8\n\n"
+          "namespace KroneckerProbe.GridK3D8.TacticProfile\n"
+          "theorem result (x0 x1 x2 : Int) : lhs x0 x1 x2 = rhs x0 x1 x2 := by\n"
+          "  unfold lhs rhs\n  kronecker\n#print axioms result\n"
+          "end KroneckerProbe.GridK3D8.TacticProfile\n")
     manifest = dict(schema="hex-kronecker-probes-v1", trials=6, order="adjacent AB/BA with adjacent import baselines",
                     cases=cases, profiles=profiles)
     (ROOT / "scripts/bench/kronecker_manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")

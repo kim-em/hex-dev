@@ -9,7 +9,8 @@ module
 public import HexKronecker
 public import HexMvPolyMathlib.Kernel
 public import Mathlib.Algebra.MvPolynomial.Degrees
-public import Mathlib.Tactic
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.SplitIfs
 
 public section
 
