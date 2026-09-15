@@ -1487,11 +1487,11 @@ For kernel-only comparisons, `scripts/bench/primality_kernel_direct.py` times
 local proof dependencies, including auxiliary theorems emitted by
 `decide +kernel`, and checks the complete body against its declared goal.
 Imported library proofs remain dependencies. A negative control must be
-rejected. The retained `hex-primality-direct-kernel-issue-10268.json` uses
+rejected. The retained `hex-primality-direct-kernel-checked-issue-10268.json` uses
 adjacent reversed systems and records every sample, source, and toolchain.
 Its matched-input plot shows growth hidden by fresh-build overhead; cactus
 rank is not a bit-length axis. Hex on Lean 4.34.0 checks Curve25519 in
-126–135 ms, versus PrimeCert on Lean 4.33.0 in 19.2–19.3 ms. This is supplied
+128–130 ms, versus PrimeCert on Lean 4.33.0 in 18.5–18.7 ms. This is supplied
 proof replay, not a comparison of certificate construction.
 
 The fixed construction targets and the adjacent-arm Curve25519 phase and

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Time fresh kernel checks of complete supplied proof bodies after elaboration.
+"""Time warm kernel rechecks of complete supplied proof bodies after elaboration.
 
-Local auxiliary theorems and definitions are recursively expanded before the
-timer. Imported library theorems remain shared dependencies in both systems.
+Local auxiliary theorems and definitions are recursively expanded and pending
+asynchronous checks are drained before the timer. Each call creates a fresh
+checker. Imported library theorems remain dependencies in both systems.
 """
 from __future__ import annotations
 
@@ -41,6 +42,10 @@ run_cmd do
     throwError "unexpanded local proof dependency"
   -- The identity application checks the proof against its declared goal type.
   let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value
+  -- Explicitly finish pending elaboration-time kernel tasks before timing.
+  let ready ← IO.mkRef env.toKernelEnv
+  let ready ← ready.get
+  let env := Lean.Environment.ofKernelEnv ready
   -- An invalid equality must be rejected by this same kernel entry point.
   let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])
     (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)
@@ -49,6 +54,14 @@ run_cmd do
   match Lean.Kernel.check env {} badProof with
   | .error _ => pure ()
   | .ok _ => throwError "kernel accepted the negative control"
+  let corrupt := value.replace fun e => match e with
+    | .lit (.natVal n) => if n == SUBJECT then some (Lean.mkRawNatLit (n + 2)) else none
+    | _ => none
+  if corrupt == value then throwError "subject corruption did not change the proof"
+  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt
+  match Lean.Kernel.check env {} corrupt with
+  | .error _ => pure ()
+  | .ok _ => throwError "kernel accepted the corrupted proof"
   let input ← IO.mkRef (env, proof)
   let (env, proof) ← input.get
   let start ← IO.monoNanosNow
@@ -69,6 +82,8 @@ def main() -> None:
     parser.add_argument('--primecert-checkout', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--blocks', type=int, default=2)
+    parser.add_argument('--powers', action='store_true',
+                        help='isolate modular powering and calibrate the two kernel versions')
     args = parser.parse_args()
     if args.output.exists() or args.blocks < 2 or args.blocks % 2:
         parser.error('use a new output path and an even block count >= 2')
@@ -85,11 +100,30 @@ def main() -> None:
                   script_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
                   protocol='trial-major adjacent Hex/PrimeCert; reverse systems in odd blocks; '
                            'one fresh kernel checker per call; all completed samples retained',
-                  timing='Kernel.check of the complete local proof body against its goal; '
-                         'excludes imports, proof elaboration, expansion, and negative control; '
+                  timing='Warm Kernel.check of the complete local proof body against its goal; '
+                         'pending asynchronous checks explicitly drained before timing; '
+                         'excludes imports, proof elaboration, expansion, and negative controls; '
                          'includes kernel reduction and type checking; imported library proofs '
                          'remain dependencies; separate pinned toolchains',
                   versions={}, cases=[c for c in previous['cases'] if 'primecert' in c], rows=[])
+    if args.powers:
+        from scripts.bench.primality_kernel_diagnostic import RAW
+        n = str(2**255 - 19)
+        exponent = str(2**255 - 20)
+        record['cases'] = [dict(name=name, n=n) for name in ['power-current', 'power-bits', 'power-div']]
+        record['power_sources'] = {}
+        for name, function in [('power-current', 'HexArith.powModNat'),
+                               ('power-bits', 'powBits'), ('power-div', 'powDiv')]:
+            body = 'module\npublic import HexPrimality.Cert\npublic import Lean\npublic meta import Lean\npublic section\n'
+            body += RAW + f'\ntheorem result : {function} 2 {exponent} {n} = 1 := by decide +kernel\n'
+            record['power_sources'][name] = {'hex': body}
+        # The identical raw-div definition under the comparator's pinned kernel.
+        raw_div = RAW[RAW.index('@[expose] noncomputable def powDiv'):]
+        record['power_sources']['power-div']['primecert'] = (
+            'module\npublic import Lean\npublic meta import Lean\npublic section\n' + raw_div +
+            f'\ntheorem result : powDiv 2 {exponent} {n} = 1 := by decide +kernel\n')
+        record['attribution'] = ('powDiv follows PrimeCert/PowMod.lean, Copyright (c) 2022 '
+                                 'Bhavik Mehta, Apache 2.0; source imported from the retained diagnostic.')
     for system, (cwd, _, path) in locations.items():
         if path.exists():
             raise RuntimeError(f'refusing to overwrite {path}')
@@ -110,6 +144,9 @@ def main() -> None:
                     sources = [r for r in previous['kernel'] if r['case'] == case['name']
                                and r['system'] == system and r.get('arm') == 'replay'
                                and r['status'] == 'ok']
+                    if args.powers:
+                        body = record['power_sources'][case['name']].get(system)
+                        sources = [{'source': body}] if body else []
                     if not sources:
                         record['rows'].append(dict(block=block, case=case['name'], system=system,
                                                    status='no-certificate'))
@@ -118,7 +155,7 @@ def main() -> None:
                     source = sources[0]['source']
                     namespaces = re.findall(r'^namespace (\S+)', source, flags=re.M)
                     result_name = '.'.join([*namespaces, 'result'])
-                    source += SUFFIX.replace('RESULT_NAME', result_name)
+                    source += SUFFIX.replace('RESULT_NAME', result_name).replace('SUBJECT', case['n'])
                     cwd, module, path = locations[system]
                     path.write_text(source)
                     artifact = cwd/'.lake/build/lib/lean'/Path(module.replace('.', '/')+'.olean')

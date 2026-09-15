@@ -320,29 +320,34 @@ Curve448; P-521 exceeds its 512-bit ceiling. FLINT and PARI solve all twelve.
 
 | Input | Hex kernel | PrimeCert kernel |
 |---|---:|---:|
-| family-31 | 6.37 ms | 1.66 ms |
-| family-61 | 9.34 ms | 1.25 ms |
-| family-123 | 16.96 ms | 2.55 ms |
-| family-256 | 36.61 ms | 7.15 ms |
-| family-511 | 80.21 ms | 10.39 ms |
-| family-512 | 68.16 ms | 18.15 ms |
-| Curve25519 | 130.76 ms | 19.27 ms |
-| Curve448 | no generated certificate | 36.05 ms |
+| family-31 | 6.23 ms | 1.74 ms |
+| family-61 | 8.35 ms | 1.16 ms |
+| family-123 | 16.63 ms | 2.37 ms |
+| family-256 | 35.10 ms | 7.04 ms |
+| family-511 | 76.86 ms | 11.11 ms |
+| family-512 | 66.47 ms | 17.21 ms |
+| Curve25519 | 128.93 ms | 18.58 ms |
+| Curve448 | no generated certificate | 34.76 ms |
 
-These medians time `Lean.Kernel.check` directly, after imports and proof
-elaboration. Each call checks the full proof body against its declared goal
+These central values are means of two samples (also their medians), timing
+`Lean.Kernel.check` directly after imports and proof elaboration. They measure
+warm in-process rechecks, each with a fresh kernel checker and its own reduction
+caches. Pending asynchronous elaboration-time checks are explicitly drained
+before the timer. Each call checks the full proof body against its declared goal
 using an identity application. Every local definition and auxiliary theorem
 is recursively expanded before the clock starts; the probe refuses to time
 a proof with remaining local dependencies. In particular, Lean extracts
 `decide +kernel` into an auxiliary theorem: timing only the outer proof would
 skip that computation. Imported library theorems remain dependencies in both
 systems. A deliberately false Boolean equality must be rejected by the same
-kernel entry point before each timed call.
+kernel entry point before each timed call. A second control corrupts the
+subject literal in the real proof and requires rejection against the original
+goal. Neither control is included in the measured interval.
 
 The two trial-major blocks use adjacent systems in reversed order on CPU 2.
-Curve25519 takes 126.44 / 135.07 ms for Hex and 19.24 / 19.30 ms for PrimeCert:
-PrimeCert is about 6.8 times faster in this direct replay comparison. Across
-the seven shared inputs, its observed advantage ranges from 3.8 to 7.7 times.
+Curve25519 takes 128.47 / 129.39 ms for Hex and 18.67 / 18.49 ms for PrimeCert:
+PrimeCert is about 6.9 times faster in this direct replay comparison. Across
+the seven shared inputs, its observed advantage ranges from 3.6 to 7.2 times.
 Hex uses Lean 4.34.0 and PrimeCert uses Lean 4.33.0; these compare the pinned
 implementations, not two checker algorithms on an identical kernel version.
 The certificates also differ. This measurement excludes certificate search
@@ -358,7 +363,9 @@ the same input on each horizontal position.
 `scripts/bench/primality_kernel_direct.py` records all 30 completed checks,
 the missing Hex Curve448 certificate, full probe sources, toolchains,
 dependencies, and build output in
-`hex-primality-direct-kernel-issue-10268.json`. The diagnostic record separately
+`hex-primality-direct-kernel-checked-issue-10268.json`. The initial direct run
+remains in `hex-primality-direct-kernel-issue-10268.json`; its Curve25519 means
+were 130.76 / 19.27 ms. The diagnostic record separately
 retains the invalid outer-proof-only pilot and rejected incomplete expansions;
 none enter the comparison. Reproduce with:
 
@@ -370,6 +377,41 @@ python3 scripts/plots/hexprimality-cactus.py \
   reports/bench-results/hex-primality-cactus-native-executable-issue-10268.json \
   --direct-kernel /tmp/direct-kernel.json
 ```
+
+#### Kernel arithmetic attribution
+
+The isolated expression `2^(p-1) mod p`, with `p = 2^255 - 19`, separates
+arithmetic representation from certificate shape. All three Hex arms run in
+the same toolchain and compute the same value:
+
+| Kernel powering loop | Mean of two samples |
+|---|---:|
+| Hex `powModNat` | 11.94 ms |
+| Same bit-scanning algorithm, explicit `Nat.rec` / `Bool.rec` | 6.37 ms |
+| PrimeCert-style division loop, explicit recursors | 2.02 ms |
+| Identical division loop on PrimeCert's Lean 4.33.0 | 2.07 ms |
+
+The ordinary recursive Hex definition introduces reduction overhead beyond
+the arithmetic itself. Explicit recursors remove about half of this test's
+cost; dividing the remaining exponent by two instead of indexing its bits
+reduces it further. Both algorithms perform repeated squaring. The isolated
+5.9-fold improvement is close to the full-proof gap, supporting arithmetic
+encoding as a major cause, without assigning an exact fraction of total
+replay time to it. The identical division loop differs by about 3% between
+the two toolchains in this calibration; that observation does not bound
+every possible difference between kernel versions.
+
+Hex's checker also repeats Fermat checks for factor entries sharing a base,
+whereas PrimeCert groups them at each node. This is another potential cost;
+the arithmetic experiment does not isolate it, and repeated expressions may
+benefit from the kernel's per-checker reduction cache. The results do not
+justify attributing the entire remaining gap to redundant exponentiations.
+
+The eight completed adjacent, reversed samples and exact sources are in
+`hex-primality-kernel-power-comparison-issue-10268.json`. The experimental
+division loop follows PrimeCert's Apache-licensed `powModK`; it is a benchmark
+definition, not a change to the production checker. Reproduce by adding
+`--powers` to the direct-kernel runner above and choosing a new output path.
 
 #### Fresh builds including imports
 
