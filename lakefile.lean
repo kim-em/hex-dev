@@ -149,6 +149,16 @@ lean_lib HexReflect where
 @[default_target]
 lean_lib HexReflectMathlib where
 
+@[default_target]
+lean_lib HexKronecker where
+
+@[default_target]
+lean_lib HexKroneckerMathlib where
+
+@[default_target]
+lean_lib HexKroneckerTests where
+  globs := #[.one `HexKroneckerMathlib.Tests]
+
 lean_lib HexSparsePoly where
 
 lean_lib HexModArith where
@@ -932,6 +942,8 @@ lean_lib HexConformance where
 
     ++ #[`HexReflect.TestProviders, `HexReflect.Conformance, `HexReflect.ScopeConformance, `HexReflect.ResidueConformance].map Glob.one
 
+    ++ #[`HexKronecker.Conformance].map Glob.one
+
     ++ #[`HexSmith.Conformance].map Glob.one
 
     ++ #[`HexMinPoly.Fixtures, `HexMinPoly.Conformance].map Glob.one
@@ -1610,6 +1622,18 @@ lean_exe hexpolyfast_emit_fixtures where
 lean_exe hexpoly_emit_fixtures where
   srcDir := "conformance"
   root := `HexPoly.EmitFixtures
+
+lean_exe hexkronecker_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexKronecker.EmitFixtures
+
+lean_exe hexkronecker_bench where
+  srcDir := "bench"
+  root := `HexKronecker.Bench
+
+lean_lib HexKroneckerMathlibProofProbe where
+  srcDir := "bench"
+  globs := #[.submodules `HexKroneckerMathlib.ProofProbe]
 
 lean_exe hexpolyfp_emit_fixtures where
   srcDir := "conformance"

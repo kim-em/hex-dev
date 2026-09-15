@@ -1,7 +1,7 @@
 # hex-kronecker-mathlib
 
 The soundness and tactic companion of
-[hex-kronecker](hex-kronecker.md).  It proves that the deterministic packed
+[hex-kronecker](../../HexKronecker/SPEC/hex-kronecker.md).  It proves that the deterministic packed
 integer checks establish polynomial identities and exposes the `kronecker`
 tactic for every commutative ring.  It is unpublished because
 the frontend depends on `HexReflect` and `HexReflectMathlib`.
@@ -10,7 +10,7 @@ Dependencies are `HexKronecker`, `HexMvPolyMathlib`, `HexReflect`,
 `HexReflectMathlib`, and `HexMatrixMathlib`, plus Mathlib.  The library is not
 `correspondence_only`: it owns a tactic and fresh-module proof probes.  The
 tactic and its soundness theorem live together here, as required by
-[matrix-tactics §Placement](../matrix-tactics.md#placement).
+[matrix-tactics §Placement](../../SPEC/matrix-tactics.md#placement).
 
 ## Denotation and polynomial model
 
@@ -146,13 +146,15 @@ displayed equality.  Both forms share one implementation and configuration;
 neither name carries a `hex_` prefix.  The owning library declares
 `syntax (name := kroneckerTac) &"kronecker" optConfig : tactic` once; the
 term form declares
-`syntax (name := kroneckerTerm) &"kronecker%" "(" term ")" : term`.
+`syntax (name := kroneckerTerm) "kronecker%" "(" term ")" : term`.
 Both elaborators use `@[no_fallback]` and answer `throwUnsupportedSyntax`
 outside their fragment.
 
 `HexKroneckerMathlib.Config` embeds `Hex.Kronecker.Budget`, whose defaults are
 `maxDenseDigits := 65536` and `maxPackedBits := 16777216`; callers may tighten
-either limit.  It is distinct from `HexMatrixMathlib.KernelConfig`, which
+either limit. The frontend rejects `maxPackedBits` above its default before
+reflection or constructing the saturation cap. Programmatic `Budget` values
+remain unrestricted. It is distinct from `HexMatrixMathlib.KernelConfig`, which
 configures only the existing `rank` and `det` frontends.
 
 The implementation opens one hex-reflect session and calls
@@ -186,7 +188,7 @@ equality in every commutative ring of characteristic `p`, including
 
 ## Outcomes and diagnostics
 
-The tactic follows [matrix-tactics' outcome protocol](../matrix-tactics.md#outcome-protocol-and-diagnostics):
+The tactic follows [matrix-tactics' outcome protocol](../../SPEC/matrix-tactics.md#outcome-protocol-and-diagnostics):
 
 - A goal other than equality, different carriers, a missing `CommRing`
   instance, an unresolved carrier metavariable, or syntax outside
@@ -203,7 +205,9 @@ The tactic follows [matrix-tactics' outcome protocol](../matrix-tactics.md#outco
 - Unequal packed values are an ordinary false-target failure and report that
   the goal is not a polynomial identity in the sealed atoms.  They are not a
   proof that the equality is false after using hypotheses or relations among
-  atoms.
+  atoms. Because accepted certificates must not be pre-evaluated, this
+  diagnosis follows the kernel rejection; only the rejected case is checked
+  again by compiled code to distinguish a false target from a bad certificate.
 - An ill-formed quoted tree or a kernel-rejected certificate is `failure`,
   never a decline and never a request for another solver.
 
@@ -242,7 +246,7 @@ supplies the complexity evidence; these probes measure reification, emitted
 literals, kernel checking, and total tactic cost.
 
 The tactic ships under the opt-in exception of
-[matrix-tactics §The bar against Mathlib](../matrix-tactics.md#the-bar-against-mathlib),
+[matrix-tactics §The bar against Mathlib](../../SPEC/matrix-tactics.md#the-bar-against-mathlib),
 exactly as that exception is written: the tactic and term form ship
 explicitly opt-in once the full family table is recorded and the absolute
 ceilings pass, with every losing family in the table.  Being strictly below

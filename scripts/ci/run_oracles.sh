@@ -59,6 +59,7 @@ ORACLES=(
   "HexRoots|hexroots_emit_fixtures|scripts/oracle/roots_flint.py|conformance-fixtures/HexRoots/roots.jsonl"
   "HexRealAlgebraic|hexrealalgebraic_emit_fixtures|scripts/oracle/real_algebraic_flint.py|conformance-fixtures/HexRealAlgebraic/real_algebraic.jsonl"
   # SymPy backed
+  "HexKronecker|hexkronecker_emit_fixtures|scripts/oracle/kronecker_sympy.py|conformance-fixtures/HexKronecker/identities.jsonl"
   "HexPolyDet|hexpolydet_emit_fixtures|scripts/oracle/matrix_carriers.py|conformance-fixtures/HexPolyDet/det.jsonl"
   "HexBareiss|hexbareiss_emit_carrier_fixtures|scripts/oracle/matrix_carriers.py|conformance-fixtures/HexBareiss/carriers.jsonl"
   "HexDeterminant|hexdeterminant_emit_carrier_fixtures|scripts/oracle/matrix_carriers.py|conformance-fixtures/HexDeterminant/carriers.jsonl"
