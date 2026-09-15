@@ -110,7 +110,6 @@ theorem powSumUpper {M a b : Nat} (hM : 5 ≤ M)
     _ = ((M - 4 : Nat) : ℝ) / (2 : ℝ) ^ b := by
       congr 2
       norm_num [Nat.card_Icc]
-      omega
 
 private theorem alphaRatio :
     (1 + 193571378 / (10 : ℝ) ^ 16) =
@@ -317,7 +316,6 @@ theorem finePowSumUpper {M : Nat} (hM : 21 ≤ M) :
       _ = ((M - 20 : Nat) : ℝ) * baseValue 21 ^ M := by
         congr 2
         norm_num [Nat.card_Icc]
-        omega
 
 private theorem exactBaseRatio (M : Nat) :
     exactBaseSum M =
