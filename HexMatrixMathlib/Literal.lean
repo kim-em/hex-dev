@@ -281,7 +281,7 @@ def evalEntry (e : Expr) : MetaM Rat := do
   catch _ =>
     let ctx ← Simp.mkContext (config := { decide := true })
       (simpTheorems := #[← getSimpTheorems]) (congrTheorems := ← getSimpCongrTheorems)
-    let r ← Mathlib.Meta.NormNum.deriveSimp ctx true e
+    let r ← Mathlib.Meta.NormNum.deriveSimp ctx #[] true e
     Mathlib.Tactic.Echelon.evalRatEntry true r.expr
 
 /-- Evaluate every entry to a rational. -/

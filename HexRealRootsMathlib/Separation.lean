@@ -42,15 +42,11 @@ open Polynomial HexPolyZMathlib
 
 noncomputable section
 
-/-- Real value of a dyadic number, through `Dyadic.toRat`. -/
-def Dyadic.toReal (x : Dyadic) : ℝ := (x.toRat : ℝ)
+/-- Compatibility name for Mathlib’s real value of a dyadic number. -/
+abbrev Dyadic.toReal (x : Dyadic) : ℝ := _root_.Dyadic.toReal x
 
-/-- `Dyadic.toReal` is the rational cast of `toRat`. A plain-import restatement
-of the definition, so downstream modules that do not `import all` this file can
-still bridge `Dyadic.toReal` to the `ℚ`-valued endpoints of an isolation. -/
-@[simp] theorem toReal_eq_cast_toRat (x : Dyadic) : Dyadic.toReal x = (x.toRat : ℝ) := by
-  unfold Dyadic.toReal
-  rfl
+/-- The real value of a dyadic is the cast of its rational value. -/
+@[simp] theorem toReal_eq_cast_toRat (x : Dyadic) : Dyadic.toReal x = (x.toRat : ℝ) := rfl
 
 /-- The real cast of an executable integer polynomial. -/
 abbrev toPolyℝ (p : Hex.ZPoly) : Polynomial ℝ :=
@@ -86,7 +82,7 @@ theorem toRat_shiftRight (x : Dyadic) (i : Int) :
 
 /-- The real value of an integer dyadic is the integer cast. -/
 @[simp] theorem toReal_ofInt (n : Int) : Dyadic.toReal (Dyadic.ofInt n) = (n : ℝ) := by
-  unfold Dyadic.toReal
+  unfold Dyadic.toReal _root_.Dyadic.toReal
   rw [show Dyadic.ofInt n = ((n : Int) : Dyadic) from rfl, Dyadic.toRat_intCast]
   push_cast; ring
 
@@ -94,7 +90,7 @@ theorem toRat_shiftRight (x : Dyadic) (i : Int) :
 @[simp] theorem toReal_twoPow (k : Int) : Dyadic.toReal (Hex.twoPow k) = (2 : ℝ) ^ k := by
   have h1 : (1 : Dyadic).toRat = 1 := by
     rw [show (1 : Dyadic) = ((1 : Int) : Dyadic) from rfl, Dyadic.toRat_intCast]; norm_num
-  unfold Dyadic.toReal Hex.twoPow
+  unfold Dyadic.toReal _root_.Dyadic.toReal Hex.twoPow
   rw [toRat_shiftLeft, h1, one_mul]
   push_cast
   norm_cast
@@ -102,13 +98,13 @@ theorem toRat_shiftRight (x : Dyadic) (i : Int) :
 /-- The real value of a left shift is multiplication by a power of two. -/
 theorem toReal_shiftLeft (x : Dyadic) (i : Int) :
     Dyadic.toReal (x <<< i) = Dyadic.toReal x * (2 : ℝ) ^ i := by
-  unfold Dyadic.toReal
+  unfold Dyadic.toReal _root_.Dyadic.toReal
   rw [toRat_shiftLeft]; push_cast; ring
 
 /-- The real value of a right shift is multiplication by a negative power of two. -/
 theorem toReal_shiftRight (x : Dyadic) (i : Int) :
     Dyadic.toReal (x >>> i) = Dyadic.toReal x * (2 : ℝ) ^ (-i) := by
-  unfold Dyadic.toReal
+  unfold Dyadic.toReal _root_.Dyadic.toReal
   rw [toRat_shiftRight]; push_cast; ring
 
 /-- The real value of the dyadic `n / 2ⁱ` (an integer shifted right by `i` bits). -/

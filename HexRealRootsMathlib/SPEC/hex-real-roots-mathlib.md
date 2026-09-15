@@ -50,7 +50,9 @@ All names checked against the current Mathlib revision:
 
 ## Sturm development (self-contained, upstreamable)
 
-Stated for `Polynomial ℝ`, with no reference to Hex types.
+Stated for `Polynomial ℝ`, with no reference to Hex types. The pointwise and infinity
+counts use Mathlib’s `List.signVariations`, including its zero-skipping and sign-congruence
+API. The bridge proves that the Mathlib-free `Hex.signVar` agrees with this count.
 
 ```lean
 /-- A generalised Sturm chain for `p`: the sign axioms that the

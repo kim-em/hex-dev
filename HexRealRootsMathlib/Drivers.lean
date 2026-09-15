@@ -71,7 +71,7 @@ private theorem dlt_trans {a b c : Dyadic} (h1 : a < b) (h2 : b < c) : a < c := 
 /-- `Dyadic.toReal` is subtractive. -/
 private theorem toReal_sub (a b : Dyadic) :
     Dyadic.toReal (a - b) = Dyadic.toReal a - Dyadic.toReal b := by
-  unfold Dyadic.toReal; rw [Dyadic.toRat_sub]; push_cast; ring
+  unfold Dyadic.toReal _root_.Dyadic.toReal; rw [Dyadic.toRat_sub]; push_cast; ring
 
 /-! # Additivity of the Sturm count across a midpoint -/
 
@@ -226,7 +226,7 @@ theorem refine1_isolates_same (hp : Hex.ZPoly.SquareFreeRat p)
 
 /-- `Dyadic.toReal` is negation-compatible. -/
 private theorem toReal_neg (x : Dyadic) : Dyadic.toReal (-x) = -Dyadic.toReal x := by
-  unfold Dyadic.toReal; rw [Dyadic.toRat_neg]; push_cast; ring
+  unfold Dyadic.toReal _root_.Dyadic.toReal; rw [Dyadic.toRat_neg]; push_cast; ring
 
 /-- The power-of-two root bound has positive real value. -/
 private theorem rootBound_pos (p : Hex.ZPoly) : 0 < Dyadic.toReal (Hex.rootBound p) := by
@@ -279,7 +279,7 @@ private theorem toReal_le_two_pow_ceilLog2Dyadic (x : Dyadic) (hx : 0 < Dyadic.t
   | zero => simp [Dyadic.toReal] at hx
   | ofOdd n k hn =>
     have htr : Dyadic.toReal (Dyadic.ofOdd n k hn) = (n : ℝ) * 2 ^ (-k : Int) := by
-      unfold Dyadic.toReal; rw [Dyadic.toRat_ofOdd_eq_mul_two_pow]; push_cast; ring
+      unfold Dyadic.toReal _root_.Dyadic.toReal; rw [Dyadic.toRat_ofOdd_eq_mul_two_pow]; push_cast; ring
     have h2k : (0 : ℝ) < 2 ^ (-k : Int) := by positivity
     have hn0 : 0 < n := by
       by_contra h

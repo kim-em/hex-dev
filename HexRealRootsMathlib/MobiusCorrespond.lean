@@ -556,124 +556,45 @@ theorem roots_mobiusPoly {a b : ℂ} (hab : a ≠ b) {P : Polynomial ℂ} (hP : 
 
 /-! # The Descartes variation-count bridge
 
-`Hex.descartesVar` counts sign variations of the *ascending* coefficient list via
-`Hex.signVar` (adjacent opposite-sign pairs), while `Polynomial.signVariations`
-counts them on the *descending* `coeffList` via a `destutter`. We bridge the two
-by (i) reversal invariance of the adjacent count and (ii) an
-adjacent-count↔`destutter`-length identity on a zero-free list. -/
+`Hex.descartesVar` and `Polynomial.signVariations` both agree with `List.signVariations`.
+The executable reads coefficients in ascending order, while `Polynomial.coeffList` reads them
+in descending order, so the remaining bridge is reversal invariance. -/
 
-/-- Appending a single entry adds one variation exactly when it is opposite in
-sign to the previous entry. -/
-private theorem countSignChanges_concat : ∀ (l : List ℝ) (x : ℝ),
-    Sturm.countSignChanges (l ++ [x]) =
-      Sturm.countSignChanges l + (l.getLast?).elim 0 (fun y => if y * x < 0 then 1 else 0)
-  | [], x => by simp [Sturm.countSignChanges]
-  | [a], x => by simp [Sturm.countSignChanges]
-  | a :: b :: t, x => by
-      rw [List.cons_append, List.cons_append, Sturm.countSignChanges_cons_cons,
-        ← List.cons_append, countSignChanges_concat (b :: t) x,
-        Sturm.countSignChanges_cons_cons, List.getLast?_cons_cons]
-      ring
+/-- Reading a list forwards or backwards gives the same number of sign variations. -/
+theorem signVariations_reverse {α : Type*} [Zero α] [LinearOrder α] (l : List α) :
+    List.signVariations l.reverse = List.signVariations l := by
+  have h (m : List SignType) :
+      (m.reverse.destutter (· ≠ ·)).length ≤ (m.destutter (· ≠ ·)).length := by
+    have hc : (m.reverse.destutter (· ≠ ·)).reverse.IsChain (· ≠ ·) := by
+      rw [List.isChain_reverse]
+      simpa only [ne_comm] using List.isChain_destutter (· ≠ ·) m.reverse
+    simpa using hc.length_le_length_destutter_ne
+      (by simpa using (List.destutter_sublist (· ≠ ·) m.reverse).reverse)
+  have heq (m : List SignType) :
+      (m.reverse.destutter (· ≠ ·)).length = (m.destutter (· ≠ ·)).length :=
+    Nat.le_antisymm (h m) (by simpa using h m.reverse)
+  simp only [List.signVariations, List.map_reverse, List.filter_reverse, heq]
 
-/-- The adjacent-opposite-sign count is invariant under reversal. -/
-private theorem countSignChanges_reverse : ∀ l : List ℝ,
-    Sturm.countSignChanges l.reverse = Sturm.countSignChanges l
-  | [] => rfl
-  | a :: t => by
-      rw [List.reverse_cons, countSignChanges_concat, countSignChanges_reverse t]
-      cases t with
-      | nil => simp [Sturm.countSignChanges]
-      | cons b t' =>
-          rw [Sturm.countSignChanges_cons_cons, List.getLast?_reverse, List.head?_cons,
-            Option.elim_some, mul_comm b a]
-          ring
-
-/-- `Sturm.signVariations` is invariant under reversal (reading the coefficient
-list forwards or backwards gives the same count). -/
-theorem signVariations_reverse (l : List ℝ) :
-    Sturm.signVariations l.reverse = Sturm.signVariations l := by
-  unfold Sturm.signVariations
-  rw [List.filter_reverse, countSignChanges_reverse]
-
-/-- For nonzero reals, `a * b < 0` iff the two entries have different signs. -/
-private theorem mul_neg_iff_sign_ne {a b : ℝ} (ha : a ≠ 0) (hb : b ≠ 0) :
-    (a * b < 0) ↔ (SignType.sign a ≠ SignType.sign b) := by
-  have hsa : SignType.sign a ≠ 0 := fun h => ha (sign_eq_zero_iff.mp h)
-  have hsb : SignType.sign b ≠ 0 := fun h => hb (sign_eq_zero_iff.mp h)
-  rw [← sign_eq_neg_one_iff, sign_mul]
-  cases ha' : SignType.sign a <;> cases hb' : SignType.sign b <;> simp_all
-
-/-- **Adjacent-count ↔ `destutter'` length.** On a zero-free real tail `m` with
-a nonzero lead `a`, the adjacent-opposite-sign count of `a :: m` equals the
-length of the accumulator-form `destutter'` (seeded with `sign a`) minus one. -/
-private theorem countSignChanges_destutter' : ∀ (m : List ℝ) (a : ℝ), a ≠ 0 →
-    (∀ x ∈ m, x ≠ 0) →
-    Sturm.countSignChanges (a :: m)
-      = ((m.map SignType.sign).destutter' (· ≠ ·) (SignType.sign a)).length - 1
-  | [], a, _, _ => by simp [Sturm.countSignChanges, List.destutter'_nil]
-  | b :: t, a, ha, hm => by
-      have hb : b ≠ 0 := hm b (by simp)
-      have ht : ∀ x ∈ t, x ≠ 0 := fun x hx => hm x (List.mem_cons_of_mem _ hx)
-      have hIH := countSignChanges_destutter' t b hb ht
-      rw [Sturm.countSignChanges_cons_cons, List.map_cons]
-      by_cases hsab : SignType.sign a ≠ SignType.sign b
-      · rw [List.destutter'_cons_pos _ hsab, List.length_cons,
-          ite_eq_left ((mul_neg_iff_sign_ne ha hb).mpr hsab), hIH, Nat.add_sub_cancel]
-        exact Nat.add_sub_cancel'
-          (List.length_pos_of_ne_nil (List.destutter'_ne_nil _ _))
-      · rw [List.destutter'_cons_neg _ hsab,
-          ite_eq_right (fun h => hsab ((mul_neg_iff_sign_ne ha hb).mp h)), Nat.zero_add,
-          not_not.mp hsab]
-        exact hIH
-
-/-- **Adjacent-count ↔ destutter length.** On a zero-free real list, the number
-of adjacent opposite-sign pairs equals the length of the sign-`destutter` minus
-one: `Sturm.countSignChanges` matches Mathlib's `destutter`-based count. -/
-private theorem countSignChanges_eq_destutter (m : List ℝ) (hm : ∀ x ∈ m, x ≠ 0) :
-    Sturm.countSignChanges m = ((m.map SignType.sign).destutter (· ≠ ·)).length - 1 := by
-  cases m with
-  | nil => simp [Sturm.countSignChanges]
-  | cons a t =>
-      have ha : a ≠ 0 := hm a (by simp)
-      have ht : ∀ x ∈ t, x ≠ 0 := fun x hx => hm x (List.mem_cons_of_mem _ hx)
-      rw [List.map_cons, List.destutter_cons', countSignChanges_destutter' t a ha ht]
-
-/-- **Descending-list variation bridge.** For any real polynomial, the abstract
-`Sturm.signVariations` of the ascending coefficient list equals Mathlib's
-`Polynomial.signVariations` (which reads the descending `coeffList`). -/
+/-- Sign variations of the ascending coefficient list equal those of the descending
+`Polynomial.coeffList`. -/
 theorem sturm_signVariations_range_eq (P : Polynomial ℝ) :
-    Sturm.signVariations ((List.range (P.natDegree + 1)).map P.coeff)
+    List.signVariations ((List.range (P.natDegree + 1)).map P.coeff)
       = Polynomial.signVariations P := by
   by_cases hP : P = 0
-  · subst hP
-    simp [Sturm.signVariations]
+  · subst P
+    simp
   have hasc_rev : ((List.range (P.natDegree + 1)).map P.coeff).reverse = P.coeffList := by
     rw [Polynomial.coeffList, Polynomial.withBotSucc_degree_eq_natDegree_add_one hP,
       List.map_reverse]
   rw [← signVariations_reverse ((List.range (P.natDegree + 1)).map P.coeff), hasc_rev]
-  -- Now: Sturm.signVariations (coeffList P) = Polynomial.signVariations P.
-  have hp : ((fun s : SignType => decide (s ≠ 0)) ∘ SignType.sign)
-      = (fun v : ℝ => decide (v ≠ 0)) := by
-    funext v
-    by_cases h : v = 0 <;> simp [Function.comp_apply, h, sign_eq_zero_iff]
-  have hfilters : (P.coeffList.filter (fun v : ℝ => decide (v ≠ 0))).map SignType.sign
-      = (P.coeffList.map SignType.sign).filter (fun s : SignType => decide (s ≠ 0)) := by
-    rw [List.filter_map, hp]
-  simp only [Sturm.signVariations, Polynomial.signVariations]
-  rw [countSignChanges_eq_destutter _ (fun x hx => by simpa using (List.mem_filter.mp hx).2),
-    hfilters]
+  rfl
 
 /-- Casting an integer's sign to `ℝ` preserves `SignType.sign`. -/
 private theorem sign_intCast_sign' (n : Int) :
     SignType.sign ((n.sign : ℝ)) = SignType.sign ((n : ℝ)) := by
-  rcases lt_trichotomy n 0 with h | h | h
-  · rw [Int.sign_eq_neg_one_of_neg h]
-    have h2 : (n : ℝ) < 0 := by exact_mod_cast h
-    rw [show ((-1 : Int) : ℝ) = -1 by norm_num, sign_neg (by norm_num), sign_neg h2]
-  · subst h; simp
-  · rw [Int.sign_eq_one_of_pos h]
-    have h2 : (0 : ℝ) < (n : ℝ) := by exact_mod_cast h
-    rw [show ((1 : Int) : ℝ) = 1 by norm_num, sign_pos (by norm_num), sign_pos h2]
+  simp only [sign_intCast]
+  rw [Int.sign_eq_sign]
+  cases SignType.sign n <;> decide
 
 /-- The stored coefficient list is the range map of the coefficient function. -/
 private theorem toArray_toList_eq_range_map (q : Hex.ZPoly) :
@@ -690,7 +611,7 @@ private theorem toArray_toList_eq_range_map (q : Hex.ZPoly) :
 /-- **Descartes variation bridge.** The executable `Hex.descartesVar q` equals
 Mathlib's `Polynomial.signVariations (toPolyℝ q)`. The executable count is on the
 ascending sign list; the abstract count on the descending `coeffList`; the two
-agree by reversal invariance and the `destutter` identity above. -/
+agree by reversal invariance. -/
 theorem descartesVar_eq_signVariations (q : Hex.ZPoly) :
     Hex.descartesVar q = Polynomial.signVariations (toPolyℝ q) := by
   by_cases hq : q = 0
@@ -714,14 +635,13 @@ theorem descartesVar_eq_signVariations (q : Hex.ZPoly) :
     simp
   show Hex.signVar (q.toArray.toList.map Int.sign) = _
   rw [signVar_eq,
-    show Sturm.signVariations ((q.toArray.toList.map Int.sign).map (Int.cast : ℤ → ℝ))
-        = Sturm.signVariations (q.toArray.toList.map (Int.cast : ℤ → ℝ)) from ?_,
+    show List.signVariations ((q.toArray.toList.map Int.sign).map (Int.cast : ℤ → ℝ))
+        = List.signVariations (q.toArray.toList.map (Int.cast : ℤ → ℝ)) from ?_,
     hlist]
   · exact sturm_signVariations_range_eq (toPolyℝ q)
-  · apply Sturm.signVariations_congr
-    rw [List.map_map, List.forall₂_map_left_iff, List.forall₂_map_right_iff,
-      List.forall₂_same]
-    intro x _
+  · apply List.signVariations_congr
+    simp only [List.map_map]
+    refine List.map_congr_left fun x _ => ?_
     exact sign_intCast_sign' x
 
 /-! # The executable bridge: `Hex.mobiusTransform` is `mobiusPoly` up to `2^{s·n}`
@@ -785,7 +705,7 @@ private theorem toReal_numExp (d : Dyadic) {s : Int} (hks : (numExp d).2 ≤ s) 
       show Dyadic.toReal (.ofOdd n k hn) = ((n * (2 : Int) ^ ((s - k).toNat) : ℤ) : ℝ) * _
       have hks' : k ≤ s := hks
       have htr : Dyadic.toReal (Dyadic.ofOdd n k hn) = (n : ℝ) * 2 ^ (-k) := by
-        unfold Dyadic.toReal
+        unfold Dyadic.toReal _root_.Dyadic.toReal
         rw [Dyadic.toRat_ofOdd_eq_mul_two_pow]
         push_cast
         ring

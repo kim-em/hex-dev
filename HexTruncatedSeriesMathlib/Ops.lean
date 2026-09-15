@@ -115,7 +115,7 @@ derivative wherever both are represented. -/
 theorem coeff_deriv_ofPowerSeries [CommRing R] (f : PowerSeries R)
     (i : Nat) (hi : i < n - 1) :
     (deriv (ofPowerSeries (n := n) f)).coeff i =
-      PowerSeries.coeff i (PowerSeries.derivative R f) := by
+      PowerSeries.coeff i (PowerSeries.derivative f) := by
   rw [Hex.TSeries.coeff_deriv _ i hi,
     coeff_ofPowerSeries f (i + 1) (by omega), PowerSeries.coeff_derivative]
   simp only [Nat.cast_add, Nat.cast_one]
@@ -126,7 +126,7 @@ lost by differentiation. -/
 @[simp]
 theorem deriv_ofPowerSeries [CommRing R] (f : PowerSeries R) :
     (ofPowerSeries (n := n) f).deriv =
-      ofPowerSeries (n := n - 1) (PowerSeries.derivative R f) := by
+      ofPowerSeries (n := n - 1) (PowerSeries.derivative f) := by
   apply Hex.TSeries.ext
   intro i hi
   rw [coeff_ofPowerSeries _ i hi]

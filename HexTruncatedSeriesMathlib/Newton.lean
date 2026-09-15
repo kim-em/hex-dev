@@ -244,15 +244,15 @@ theorem ofPowerSeries_exp [CommRing R] [Algebra ℚ R]
     rw [coeff_ofPowerSeries _ 0 hnpos,
       PowerSeries.coeff_zero_eq_constantCoeff_apply,
       PowerSeries.constantCoeff_exp]
-  have hchain : PowerSeries.derivative R ((PowerSeries.exp R).subst f) =
-      (PowerSeries.exp R).subst f * PowerSeries.derivative R f := by
+  have hchain : PowerSeries.derivative ((PowerSeries.exp R).subst f) =
+      (PowerSeries.exp R).subst f * PowerSeries.derivative f := by
     calc
-      PowerSeries.derivative R ((PowerSeries.exp R).subst f) =
-          (PowerSeries.derivative R (PowerSeries.exp R)).subst f *
-            PowerSeries.derivative R f :=
+      PowerSeries.derivative ((PowerSeries.exp R).subst f) =
+          (PowerSeries.derivative (PowerSeries.exp R)).subst f *
+            PowerSeries.derivative f :=
         PowerSeries.derivative_subst
           (PowerSeries.HasSubst.of_constantCoeff_zero' h)
-      _ = (PowerSeries.exp R).subst f * PowerSeries.derivative R f := by
+      _ = (PowerSeries.exp R).subst f * PowerSeries.derivative f := by
         rw [PowerSeries.derivative_exp]
   have ht := congrArg (ofPowerSeriesHom (R := R) (n := n - 1)) hchain
   simp only [RingHom.map_mul, ofPowerSeriesHom_apply] at ht
@@ -352,17 +352,17 @@ theorem ofPowerSeries_logOf [CommRing R] [Algebra ℚ R]
       _ = 1 := by
         simpa only [PowerSeries.coe_substAlgHom] using
           (map_one (PowerSeries.substAlgHom hqSub))
-  have hchain : PowerSeries.derivative R (PowerSeries.logOf f) =
-      g * PowerSeries.derivative R f := by
+  have hchain : PowerSeries.derivative (PowerSeries.logOf f) =
+      g * PowerSeries.derivative f := by
     rw [PowerSeries.logOf_eq]
     calc
-      PowerSeries.derivative R ((PowerSeries.log R).subst q) =
-          (PowerSeries.derivative R (PowerSeries.log R)).subst q *
-            PowerSeries.derivative R q :=
+      PowerSeries.derivative ((PowerSeries.log R).subst q) =
+          (PowerSeries.derivative (PowerSeries.log R)).subst q *
+            PowerSeries.derivative q :=
         PowerSeries.derivative_subst hqSub
-      _ = g * PowerSeries.derivative R q := by
-        rw [PowerSeries.deriv_log]
-      _ = g * PowerSeries.derivative R f := by
+      _ = g * PowerSeries.derivative q := by
+        simp [PowerSeries.deriv_log, g, geom]
+      _ = g * PowerSeries.derivative f := by
         dsimp only [q]
         simp
   have ha0 : a.coeff 0 = 1 := by

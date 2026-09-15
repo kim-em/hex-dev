@@ -55,7 +55,9 @@ of the chain certifies separability as well as the root count.
 The general Sturm theorems use only Mathlib types. `Sturm.IsSturmChain.sturm_Ioc`
 counts roots on `(a, b]`, including equal endpoints, and `Sturm.IsSturmChain.sturm`
 counts roots on the real line. Their hypothesis is that the multiset of real
-roots has no duplicates.
+roots has no duplicates. The variation counts use Mathlib’s `List.signVariations`;
+`HexRealRootsMathlib.signVar_eq_list` identifies the Mathlib-free executable counter
+with this API.
 
 The corresponding Mathlib sources can be checked with
 `python3 scripts/check_sturm_sync.py /path/to/mathlib` from `hex-dev`.

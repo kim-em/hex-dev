@@ -111,7 +111,7 @@ theorem openPoint_mem {f : ZPoly} {replay : SturmReplay}
     (hstrict : cert.checkStrict replay = true)
     (cut : Fin (cert.intervals.size + 1)) :
     Sem (cert.rootModel hreplay hstrict) (.open cut)
-      (Dyadic.toReal (cert.openPoint cut)) := by
+      (HexRealRootsMathlib.Dyadic.toReal (cert.openPoint cut)) := by
   classical
   by_cases hzero : cert.intervals.size = 0
   · simp [Sem, hzero]
@@ -176,22 +176,22 @@ theorem openPoint_mem {f : ZPoly} {replay : SturmReplay}
     have hmu := toReal_lt_toReal (midpoint_lt_upper gap)
     simp only [Literal.InInterval] at hprev hnext
     have hsem : (cert.rootModel hreplay hstrict).root
-          ⟨cut.val - 1, by omega⟩ < Dyadic.toReal gap.midpoint ∧
-        Dyadic.toReal gap.midpoint <
+          ⟨cut.val - 1, by omega⟩ < HexRealRootsMathlib.Dyadic.toReal gap.midpoint ∧
+        HexRealRootsMathlib.Dyadic.toReal gap.midpoint <
           (cert.rootModel hreplay hstrict).root ⟨cut.val, by omega⟩ :=
       ⟨lt_of_le_of_lt hprev.2 hlm, lt_trans hmu hnext.1⟩
-    have hraw : Dyadic.toReal
+    have hraw : HexRealRootsMathlib.Dyadic.toReal
           (((cert.intervals[cut.val - 1]'(by omega)).upper +
             (cert.intervals[cut.val]'(by omega)).lower) >>> (1 : Int)) =
-        (Dyadic.toReal (cert.intervals[cut.val - 1]'(by omega)).upper +
-          Dyadic.toReal (cert.intervals[cut.val]'(by omega)).lower) / 2 := by
+        (HexRealRootsMathlib.Dyadic.toReal (cert.intervals[cut.val - 1]'(by omega)).upper +
+          HexRealRootsMathlib.Dyadic.toReal (cert.intervals[cut.val]'(by omega)).lower) / 2 := by
       rw [toReal_shiftRight, toReal_add]
       norm_num
       ring
-    have hmid : Dyadic.toReal
+    have hmid : HexRealRootsMathlib.Dyadic.toReal
           (((cert.intervals[cut.val - 1]'(by omega)).upper +
             (cert.intervals[cut.val]'(by omega)).lower) >>> (1 : Int)) =
-        Dyadic.toReal gap.midpoint := by
+        HexRealRootsMathlib.Dyadic.toReal gap.midpoint := by
       rw [hraw, toReal_midpoint]
     rw [← hmid] at hsem
     simpa [Sem, IsolationCert.openPoint, hzero, hleft, hright] using hsem
@@ -493,16 +493,16 @@ theorem holds_of_check {f : ZPoly} {replay : SturmReplay}
     (hcmps : check f replay cert a b cmps = true)
     (i : Fin cert.intervals.size) :
     cmps.lower[i].Holds ((cert.rootModel hreplay hstrict).root i)
-        (Dyadic.toReal a) ∧
+        (HexRealRootsMathlib.Dyadic.toReal a) ∧
       cmps.upper[i].Holds ((cert.rootModel hreplay hstrict).root i)
-        (Dyadic.toReal b) := by
+        (HexRealRootsMathlib.Dyadic.toReal b) := by
   have hmem : i.val ∈ List.range cert.intervals.size := List.mem_range.mpr i.isLt
   have hstep := (List.all_eq_true.mp hcmps) i.val hmem
   simp only [i.isLt, dite_true, Bool.and_eq_true] at hstep
   have cmpHolds (endpoint : Dyadic) (claim : Separation.RootCmp)
       (hclaim : Separation.checkCmp f replay cert.intervals[i] endpoint claim = true) :
       claim.Holds ((cert.rootModel hreplay hstrict).root i)
-        (Dyadic.toReal endpoint) := by
+        (HexRealRootsMathlib.Dyadic.toReal endpoint) := by
     obtain ⟨root, hroot, -⟩ := Separation.checkCmp_sound hreplay
       (IsolationCert.check_of_checkStrict hstrict) i endpoint claim hclaim
     have hrootAt := cert.rootAt_unique hreplay
@@ -542,17 +542,17 @@ private theorem eq_lt_iff {cmp : Separation.RootCmp} {root endpoint : ℝ}
 nonempty half-open interval. -/
 theorem meetsIoc_iff {f : ZPoly} {cert : IsolationCert}
     (M : RootModel f cert) (cmps : IocCmps cert.intervals.size)
-    (a b : Dyadic) (hab : Dyadic.toReal a < Dyadic.toReal b)
+    (a b : Dyadic) (hab : HexRealRootsMathlib.Dyadic.toReal a < HexRealRootsMathlib.Dyadic.toReal b)
     (hlower : ∀ i : Fin cert.intervals.size,
-      Separation.RootCmp.Holds cmps.lower[i] (M.root i) (Dyadic.toReal a))
+      Separation.RootCmp.Holds cmps.lower[i] (M.root i) (HexRealRootsMathlib.Dyadic.toReal a))
     (hupper : ∀ i : Fin cert.intervals.size,
-      Separation.RootCmp.Holds cmps.upper[i] (M.root i) (Dyadic.toReal b))
+      Separation.RootCmp.Holds cmps.upper[i] (M.root i) (HexRealRootsMathlib.Dyadic.toReal b))
     (c : Cell cert.intervals.size) :
     meetsIoc cmps c = true ↔
       ∃ x : ℝ, Sem M c x ∧
-        x ∈ Set.Ioc (Dyadic.toReal a) (Dyadic.toReal b) := by
-  let A := Dyadic.toReal a
-  let B := Dyadic.toReal b
+        x ∈ Set.Ioc (HexRealRootsMathlib.Dyadic.toReal a) (HexRealRootsMathlib.Dyadic.toReal b) := by
+  let A := HexRealRootsMathlib.Dyadic.toReal a
+  let B := HexRealRootsMathlib.Dyadic.toReal b
   change meetsIoc cmps c = true ↔
     ∃ x : ℝ, Sem M c x ∧ x ∈ Set.Ioc A B
   change A < B at hab
@@ -660,11 +660,11 @@ theorem meetsIoc_iff_of_check {f : ZPoly} {replay : SturmReplay}
     (a b : Dyadic) (hreplay : replay.check f = true)
     (hstrict : cert.checkStrict replay = true)
     (hcmps : IocCmps.check f replay cert a b cmps = true)
-    (hab : Dyadic.toReal a < Dyadic.toReal b)
+    (hab : HexRealRootsMathlib.Dyadic.toReal a < HexRealRootsMathlib.Dyadic.toReal b)
     (c : Cell cert.intervals.size) :
     meetsIoc cmps c = true ↔
       ∃ x : ℝ, Sem (cert.rootModel hreplay hstrict) c x ∧
-        x ∈ Set.Ioc (Dyadic.toReal a) (Dyadic.toReal b) := by
+        x ∈ Set.Ioc (HexRealRootsMathlib.Dyadic.toReal a) (HexRealRootsMathlib.Dyadic.toReal b) := by
   apply meetsIoc_iff (cert.rootModel hreplay hstrict) cmps a b hab
   · intro i
     exact (cmps.holds_of_check a b hreplay hstrict hcmps i).1
@@ -680,7 +680,7 @@ theorem meetsIocOn_iff_of_check {f : ZPoly} {replay : SturmReplay}
     (c : Cell cert.intervals.size) :
     meetsIocOn a b cmps c = true ↔
       ∃ x : ℝ, Sem (cert.rootModel hreplay hstrict) c x ∧
-        x ∈ Set.Ioc (Dyadic.toReal a) (Dyadic.toReal b) := by
+        x ∈ Set.Ioc (HexRealRootsMathlib.Dyadic.toReal a) (HexRealRootsMathlib.Dyadic.toReal b) := by
   by_cases hab : a < b
   · simp only [meetsIocOn, hab, decide_true]
     exact meetsIoc_iff_of_check cmps a b hreplay hstrict hcmps
@@ -688,7 +688,7 @@ theorem meetsIocOn_iff_of_check {f : ZPoly} {replay : SturmReplay}
   · constructor
     · simp [meetsIocOn, hab]
     · rintro ⟨x, -, hax, hxb⟩
-      have hreal : ¬Dyadic.toReal a < Dyadic.toReal b := by
+      have hreal : ¬HexRealRootsMathlib.Dyadic.toReal a < HexRealRootsMathlib.Dyadic.toReal b := by
         simpa [toReal_lt_toReal_iff] using hab
       exact (hreal (lt_of_lt_of_le hax hxb)).elim
 
