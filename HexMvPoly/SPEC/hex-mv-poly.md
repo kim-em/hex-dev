@@ -283,7 +283,8 @@ no ring-law instance is installed on `Nat`.
 trivial ring modulo `1`. It is canonical for every modulus, as are the results
 of `addMod p`, `mulMod p`, `negMod p`, `smulMod p`, and `subMod p` on
 canonical inputs. These preservation laws are proved directly on natural
-coefficients and require no machine-word bounds. Addition and multiplication
+coefficients and carry no `Bounds` hypothesis. Denotation through `ZMod64`
+still requires its positive, bounded modulus. Addition and multiplication
 reuse the structural merge and balanced-row algorithms, reducing collisions
 and products modulo `p`.
 Negation multiplies by `p - 1`, obtained by a structural split on `p`, and
@@ -321,7 +322,11 @@ operations, and that these operations preserve coefficient predicates.
 The residue proofs use these laws without requiring ring laws on unreduced
 naturals. A generic list-matrix checker can install local `Add Nat` and
 `Mul Nat` dictionaries with `residueAdd p` and `residueMul p`; these are the
-same dictionaries used by `addMod p` and `mulMod p`.
+same dictionaries used by `addMod p` and `mulMod p`. Such a consumer must
+also validate every entry and certificate scalar polynomial with
+`isCanonicalMod p n`: the generic `isCanonical n` does not establish the
+residue bounds required by the semantic laws. The consumer takes its modulus
+from `Bounds p` or explicitly checks positivity at its Boolean entry point.
 
 `HexMvPolyMathlib/KernelResidue.lean` owns transport to
 `MvPolynomial (Fin n) (ZMod p)`. Its `residueEquiv` composes
