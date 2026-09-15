@@ -705,7 +705,7 @@ private theorem toReal_numExp (d : Dyadic) {s : Int} (hks : (numExp d).2 ≤ s) 
       show Dyadic.toReal (.ofOdd n k hn) = ((n * (2 : Int) ^ ((s - k).toNat) : ℤ) : ℝ) * _
       have hks' : k ≤ s := hks
       have htr : Dyadic.toReal (Dyadic.ofOdd n k hn) = (n : ℝ) * 2 ^ (-k) := by
-        unfold Dyadic.toReal _root_.Dyadic.toReal
+        unfold Dyadic.toReal
         rw [Dyadic.toRat_ofOdd_eq_mul_two_pow]
         push_cast
         ring

@@ -74,12 +74,12 @@ private theorem toReal_le_of_not_le {a b : Dyadic} (h : ¬ a ≤ b) :
     Dyadic.toReal b ≤ Dyadic.toReal a := by
   have h1 : ¬ (a.toRat ≤ b.toRat) := fun hh => h (Dyadic.toRat_le_toRat_iff.mp hh)
   have h2 : b.toRat ≤ a.toRat := (not_le.mp h1).le
-  unfold Dyadic.toReal _root_.Dyadic.toReal; exact_mod_cast h2
+  unfold Dyadic.toReal; exact_mod_cast h2
 
 /-- `Dyadic.toReal` is subtractive. -/
 private theorem toReal_sub (a b : Dyadic) :
     Dyadic.toReal (a - b) = Dyadic.toReal a - Dyadic.toReal b := by
-  unfold Dyadic.toReal _root_.Dyadic.toReal; rw [Dyadic.toRat_sub]; push_cast; ring
+  unfold Dyadic.toReal; rw [Dyadic.toRat_sub]; push_cast; ring
 
 /-- A real root of the real cast is a complex root of the complex cast. -/
 private theorem isRoot_toPolyℂ {r : ℝ} (hr : (toPolyℝ p).IsRoot r) :

@@ -84,16 +84,16 @@ theorem squareFreeRat_iff (f : Hex.ZPoly) (hf : f ≠ 0) :
 /-- `Dyadic.toReal` is additive. -/
 theorem toReal_add (a b : Dyadic) :
     Dyadic.toReal (a + b) = Dyadic.toReal a + Dyadic.toReal b := by
-  unfold Dyadic.toReal _root_.Dyadic.toReal; rw [Dyadic.toRat_add]; push_cast; ring
+  unfold Dyadic.toReal; rw [Dyadic.toRat_add]; push_cast; ring
 
 /-- `Dyadic.toReal` is multiplicative. -/
 theorem toReal_mul (a b : Dyadic) :
     Dyadic.toReal (a * b) = Dyadic.toReal a * Dyadic.toReal b := by
-  unfold Dyadic.toReal _root_.Dyadic.toReal; rw [Dyadic.toRat_mul]; push_cast; ring
+  unfold Dyadic.toReal; rw [Dyadic.toRat_mul]; push_cast; ring
 
 /-- `Dyadic.toReal` sends `0` to `0`. -/
 @[simp] theorem toReal_zero : Dyadic.toReal 0 = 0 := by
-  unfold Dyadic.toReal _root_.Dyadic.toReal; rw [Dyadic.toRat_zero]; norm_num
+  unfold Dyadic.toReal; rw [Dyadic.toRat_zero]; norm_num
 
 /-- The horner polynomial built from a real coefficient list, lowest degree
 first. `hornerPoly (c :: cs) = C c + X * hornerPoly cs`. -/
@@ -166,7 +166,7 @@ theorem sign_dyadicSign (d : Dyadic) :
       have hn0 : n ≠ 0 := by rintro rfl; simp at hn
       have h2 : (0 : ℝ) < 2 ^ (-k) := by positivity
       have htr : Dyadic.toReal (Dyadic.ofOdd n k hn) = (n : ℝ) * 2 ^ (-k) := by
-        unfold Dyadic.toReal _root_.Dyadic.toReal
+        unfold Dyadic.toReal
         rw [Dyadic.toRat_ofOdd_eq_mul_two_pow]; push_cast; ring
       rw [htr, Hex.dyadicSign]
       by_cases hlt : n < 0
@@ -1349,20 +1349,20 @@ private theorem squarefree_toPolyℝ_primitivePart (p : Hex.ZPoly) (hp0 : p ≠ 
 theorem toReal_lt_toReal {a b : Dyadic} (h : a < b) :
     Dyadic.toReal a < Dyadic.toReal b := by
   have h2 : a.toRat < b.toRat := Dyadic.toRat_lt_toRat_iff.mpr h
-  unfold Dyadic.toReal _root_.Dyadic.toReal
+  unfold Dyadic.toReal
   exact_mod_cast h2
 
 /-- Nonstrict dyadic order transfers to the real values. -/
 theorem toReal_le_toReal {a b : Dyadic} (h : a ≤ b) :
     Dyadic.toReal a ≤ Dyadic.toReal b := by
   have h2 : a.toRat ≤ b.toRat := Dyadic.toRat_le_toRat_iff.mpr h
-  unfold Dyadic.toReal _root_.Dyadic.toReal
+  unfold Dyadic.toReal
   exact_mod_cast h2
 
 /-- Dyadic order coincides with the order of the real values. -/
 theorem toReal_lt_toReal_iff {a b : Dyadic} :
     Dyadic.toReal a < Dyadic.toReal b ↔ a < b := by
-  unfold Dyadic.toReal _root_.Dyadic.toReal
+  unfold Dyadic.toReal
   rw [Rat.cast_lt, Dyadic.toRat_lt_toRat_iff]
 
 /-- The real value of an interval's exact dyadic midpoint. -/

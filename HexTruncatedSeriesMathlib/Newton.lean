@@ -361,7 +361,7 @@ theorem ofPowerSeries_logOf [CommRing R] [Algebra ℚ R]
             PowerSeries.derivative q :=
         PowerSeries.derivative_subst hqSub
       _ = g * PowerSeries.derivative q := by
-        simp [PowerSeries.deriv_log, g, geom]
+        simp [PowerSeries.derivative_log, g, geom]
       _ = g * PowerSeries.derivative f := by
         dsimp only [q]
         simp
