@@ -76,15 +76,22 @@ This deliberately conservative formula also covers `H = 0` and gives
 `2 H < B`.  It is one shared base for the complete check, never a base chosen
 from the values obtained after evaluation.
 
-The preflight does not materialize `H` while deciding whether to decline.  It
-first computes a capped upper bound `q` with `H < 2^q`: constants use their
-bit length, atoms use one, addition and subtraction use one plus the maximum,
-multiplication adds bit bounds, and power by `n` multiplies the bound by `n`.
-Every operation saturates at `maxPackedBits + 1`.  The dense product `D`
-similarly saturates at `maxDenseDigits + 1`.  An accepted input then computes
-the exact `H` and the stated `W = Nat.log2 H + 2`; the capped bit recurrence
-predicts that width without first constructing `H`.  Rejected inputs never
-construct an exponentially large coefficient bound.
+The preflight computes the structural bounds exactly, with saturation.
+Every bound operation (the absolute value of a constant, the sums and
+products of the ℓ¹ recurrence, power by square-and-multiply with exponent
+zero giving `1`, and the dense product `∏ᵢ (dᵢ + 1)`) is monotone in its
+arguments, so replacing every intermediate value `v` by `min v S` for a fixed
+threshold `S` yields either the exact value, when it is below `S`, or exactly
+`S`, which certifies that the exact value is at least `S`.  The ℓ¹ threshold
+is `S_H = 2 ^ maxPackedBits`, applied to every subtree bound and to `H`: a
+saturated side bound `h` has `Nat.log2 h + 2 > maxPackedBits`, so that
+subtree's packed value already exceeds the bit budget; a saturated sum has a
+saturated summand.  The dense threshold is `S_D = maxDenseDigits + 1`.
+Square-and-multiply stops as soon as an intermediate saturates.  Rejected
+inputs therefore never construct a coefficient bound beyond the threshold,
+and accepted inputs have exact `H`, `W = Nat.log2 H + 2` and `D`.  No
+bit-length estimate stands in for these values: an estimate is an upper
+bound and cannot justify a decline.
 
 `Hex.Kronecker.Budget` has exactly two fields, `maxDenseDigits` and
 `maxPackedBits`.  Their defaults are `65536` digits and `16777216` bits.  In
@@ -109,9 +116,9 @@ whole check.  Thus both nested packing levels are covered before evaluation.
 `sizeExprEq`, `sizeTermsEq`, `sizeMulTerms`, and their quotient-witness
 variants return this record (or a shape/index error) without computing `B^s`,
 packing a term, or multiplying packed values.  Arithmetic may saturate only
-at the two stated budget limits; a reported accepted bound is exact, while an
-overflow diagnostic says `at least <limit + 1>` rather than presenting the
-saturation value as exact.
+at the two stated thresholds; a reported accepted bound is exact, while an
+overflow diagnostic says `at least <limit + 1>`, which the saturation
+certifies, rather than presenting the saturation value as exact.
 
 ## Kronecker evaluation
 

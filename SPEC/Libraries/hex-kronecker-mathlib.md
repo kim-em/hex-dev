@@ -195,8 +195,9 @@ The tactic follows [matrix-tactics' outcome protocol](../matrix-tactics.md#outco
 - A recognized polynomial identity whose exact preflight exceeds either
   limit is `declined`.  Its stable diagnostic is
   `kronecker declined: dense box requires <D> digits and <N> packed bits
-  (limits <Dmax> digits, <Nmax> bits)`; a saturated value is printed as
-  `at least <limit + 1>`.  The diagnostic also prints the per-atom degree
+  (limits <Dmax> digits, <Nmax> bits)`; a saturated value is a certified
+  lower bound and is printed as `at least <limit + 1>`.  The diagnostic
+  also prints the per-atom degree
   bounds when `D` is the exceeded dimension and `limitingStage` when the bit
   bound comes from an outer matrix packing.
 - Unequal packed values are an ordinary false-target failure and report that
