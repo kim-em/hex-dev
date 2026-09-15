@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import replace
 import fcntl
 import gzip
 import json
@@ -127,18 +128,21 @@ def print_table(path: Path) -> None:
         )
 
 
-def record_capabilities(path: Path) -> int:
+def record_capabilities(path: Path, timeout: float = 60, warm_timeout: float = 600) -> int:
     """Retain fresh capability builds separately from the timing experiment."""
     env = sweep.environment()
     dirt = sweep.dirty_issues(dict(env["repository"]), dict(env["dependency_checkouts"]))
     if dirt:
         raise RuntimeError("dirty capability environment: " + "; ".join(dirt))
     hashes = sweep.source_hashes(SPEC, Path(__file__))
+    warm_spec = replace(SPEC, pairs=(ProbePair("capabilities",
+        CAPABILITIES[0], CAPABILITIES[1], {}),))
+    sweep.warm_imports(warm_spec, warm_timeout)
     results = []
     for module in CAPABILITIES:
         observed = []
         try:
-            sample = sweep.build_sample(module.module, 60,
+            sample = sweep.build_sample(module.module, timeout,
                 sample_observer=lambda _m, r: observed.append(r), retain_compiler_output=True)
             sweep.validate_axioms(module.module, "capability", module, sample)
             results.append(dict(module=module.module, state="complete",
@@ -167,7 +171,8 @@ def main(argv: list[str] | None = None) -> int:
         print_table(args.table)
         return 0
     if args.capabilities:
-        return record_capabilities(args.capabilities)
+        options = sweep.parse_args(__doc__ or "capability probes", forwarded)
+        return record_capabilities(args.capabilities, options.timeout, options.warm_timeout)
     lease = None
     cpu = args.cpu
     if args.shared_host and cpu is None:

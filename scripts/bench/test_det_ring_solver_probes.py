@@ -64,12 +64,19 @@ class RingSolverProbesTest(unittest.TestCase):
         self.assertTrue(record["complete"])
         self.assertTrue(record["sources_unchanged"])
         self.assertFalse(record["environment"]["git_dirty"])
+        self.assertEqual(record["environment"]["git_commit"][:12], path.stem.split("-")[-2])
+        by_module = {r["module"]: r for r in record["results"]}
         self.assertEqual({r["module"] for r in record["results"]},
                          {m.module for m in runner.CAPABILITIES})
         for module in runner.CAPABILITIES:
+            self.assertEqual(by_module[module.module]["state"], "complete")
+            self.assertEqual(by_module[module.module]["axioms"], list(module.expected_axioms))
             source = "bench/" + module.module.replace(".", "/") + ".lean"
             self.assertEqual(record["source_sha256"][source],
                              hashlib.sha256((probes.ROOT / source).read_bytes()).hexdigest())
+        source = "bench/HexPolyDetMathlib/ProofProbe/AlgebraicSupport.lean"
+        self.assertEqual(record["source_sha256"][source],
+                         hashlib.sha256((probes.ROOT / source).read_bytes()).hexdigest())
 
 
 if __name__ == "__main__":
