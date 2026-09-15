@@ -64,12 +64,21 @@ structure IdealData (ι : C →+* F) (v : Fin k → F)
     Ideal.map (MvPolynomial.rename indices).toRingHom
       (Ideal.map (MvPolynomial.map coefficientMap)
         (Ideal.span {g | g ∈ (Hex.Matrix.minors r P).map HexMvPolyMathlib.equiv}))
-  vanishing : ∀ (K : Type z) [Field K] (ψ : D →+* K) (p : σ → K),
-    (∀ g ∈ generators, MvPolynomial.eval₂ ψ p g = 0) ↔
-      ((matrixEquiv P).map (HexMvPolyMathlib.eval₂MathlibHom
-        (ψ.comp coefficientMap) (p ∘ indices))).rank < r
 
-/-- The fixed four-field result shared by the term and programmatic frontends. -/
+/-- The same ideal payload gives the locus over fields in every universe. -/
+theorem IdealData.vanishing {D : Type v} [CommRing D] {σ : Type w}
+    {ι : C →+* F} {v : Fin k → F} {P : Hex.Matrix (MvPoly k C Mono.grevlex) n m}
+    {r : Nat} (d : IdealData ι v P r D σ) (K : Type z) [Field K]
+    (ψ : D →+* K) (p : σ → K) :
+    (∀ g ∈ d.generators, MvPolynomial.eval₂ ψ p g = 0) ↔
+      ((matrixEquiv P).map (HexMvPolyMathlib.eval₂MathlibHom
+        (ψ.comp d.coefficientMap) (p ∘ d.indices))).rank < r := by
+  rw [d.generators_eq]
+  exact gens_map_vanish_iff_rank_lt d.coefficientMap d.indices P r ψ p
+
+/-- The fixed four-field result shared by the term and programmatic frontends.
+For symbolic matrices, `D` and `σ` are their coefficient and variable types.
+Otherwise the provider uses `D := F` and `σ := Empty`, with `ideal? := none`. -/
 structure LocusResult (A : Matrix (Fin n) (Fin m) F) (r : Nat) (C : Type) (k : Nat)
     (D : Type v) [CommRing D] (σ : Type w) where
   gens : List F
@@ -77,7 +86,7 @@ structure LocusResult (A : Matrix (Fin n) (Fin m) F) (r : Nat) (C : Type) (k : N
   poly : PolyData A r gens C k
   ideal? : letI := poly.coefficientRing; letI := poly.coefficientDecEq; letI := poly.coefficientBEq
     letI := poly.coefficientLawfulBEq
-    Option (IdealData.{v, w, z} poly.coefficientMap poly.valuation poly.matrix r D σ)
+    Option (IdealData.{v, w} poly.coefficientMap poly.valuation poly.matrix r D σ)
 
 /-- Construct the optional payload from independent-variable evidence. -/
 noncomputable def idealData {D : Type v} [CommRing D] {σ : Type w}
@@ -85,7 +94,7 @@ noncomputable def idealData {D : Type v} [CommRing D] {σ : Type w}
     (ι₀ : C →+* D) (hι : Function.Injective ι₀) (f : Fin k → σ) (hf : Function.Injective f)
     (hc : HEq ι ((MvPolynomial.C : D →+* MvPolynomial σ D).comp ι₀))
     (hv : HEq v (MvPolynomial.X ∘ f : Fin k → MvPolynomial σ D)) :
-    IdealData.{v, w, z} ι v P r D σ where
+    IdealData.{v, w} ι v P r D σ where
   coefficientMap := ι₀
   coefficient_injective := hι
   indices := f
@@ -96,7 +105,6 @@ noncomputable def idealData {D : Type v} [CommRing D] {σ : Type w}
     (MvPolynomial.rename f ∘ MvPolynomial.map ι₀ ∘ HexMvPolyMathlib.equiv)
   generators_eq := rfl
   span_eq := span_gens_map_eq ι₀ f P r
-  vanishing _K _ ψ p := gens_map_vanish_iff_rank_lt ι₀ f P r ψ p
 
 /-- Integer coefficients give the symbolic payload when the coefficient
 interpretation is injective and the sealed atoms are distinct variables. -/
@@ -104,7 +112,7 @@ noncomputable def idealData_int {D : Type v} [CommRing D] [CharZero D] {σ : Typ
     (v : Fin k → MvPolynomial σ D) (f : Fin k → σ)
     (hf : Function.Injective f) (hv : v = MvPolynomial.X ∘ f)
     (P : Hex.Matrix (MvPoly k Int Mono.grevlex) n m) (r : Nat) :
-    IdealData.{v, w, z} (Int.castRingHom (MvPolynomial σ D)) v P r D σ := by
+    IdealData.{v, w} (Int.castRingHom (MvPolynomial σ D)) v P r D σ := by
   have hc : Int.castRingHom (MvPolynomial σ D) = MvPolynomial.C.comp (Int.castRingHom D) := by
     ext
     simp

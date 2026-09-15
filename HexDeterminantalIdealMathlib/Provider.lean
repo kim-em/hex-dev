@@ -21,7 +21,8 @@ open scoped HexMvPolyMathlib HexModArithMathlib.ZMod64
 structure Config where
   reflection : Hex.Reflect.Config := {}
   matrixSize : Nat := 4096
-  minorWork : Nat := 1000000
+  /-- Bounds factorial Laplace work; the measured 8×8, r=3 probes cost 18,816 units. -/
+  minorWork : Nat := 50000
   conditions : ConditionPolicy := {}
 
 /-- Read a symbolic literal through the numeric frontend's literal parsers. -/
@@ -207,7 +208,7 @@ def reifyBatch (A : Expr) (lit : HexMatrixMathlib.Literal.Recognized)
     | none => mkAppM ``canonical #[mkNatLit k, LE]
     | some p => mkAppM ``Residue.canonical #[mkNatLit p, mkNatLit k, LE]
   let canonicalProof ← checkedProof (← mkEq valid (toExpr true))
-  if batch.entries.all (fun e => e.conversion.terms.all (fun t => t.1.toList.all (· == 0))) then
+  if n * m > 0 && batch.entries.all (fun e => e.conversion.terms.all (fun t => t.1.toList.all (· == 0))) then
     logInfo "rank_locus: the matrix entries are constant polynomials; its generators are constants"
   return {
     A, lit, batch, data, polynomial, valuation := v, coefficientMap := ι
@@ -222,7 +223,10 @@ def reify (A : Expr) (cfg : Config := {}) : MetaM Reified := do
     throwError "rank_locus: declined: matrixSize {n * m} exceeds {cfg.matrixSize}"
   let some lit ← literal? A n m carrier
     | throwError "rank_locus: declined: unsupported matrix literal"
-  let _ ← synthInstance (← mkAppOptM ``IsDomain #[carrier, none])
+  let domain ← try mkAppOptM ``IsDomain #[carrier, none]
+    catch _ => throwError "rank_locus: declined: the matrix carrier must be a commutative domain"
+  let .some _ ← trySynthInstance domain
+    | throwError "rank_locus: declined: the matrix carrier must be a commutative domain"
   let mut inputs := lit.entries.flatten
   if inputs.isEmpty then inputs := #[← mkAppOptM ``OfNat.ofNat #[carrier, mkNatLit 0, none]]
   let batch ← match ← profileitM Exception "rank-locus batch" (← getOptions) <|
@@ -419,7 +423,7 @@ def lower (p : Reified) (r : Nat) (cfg : Config := {}) : MetaM LowerResult :=
 
 /-- Detect the symbolic-matrix case using the same atom and coefficient
 conditions as generic rank. Return the coefficient and variable types too. -/
-def ideal? (r : Result) (fieldLevel : Level) : MetaM (Option (Expr × Expr × Expr)) := do
+def ideal? (r : Result) : MetaM (Option (Expr × Expr × Expr)) := do
   let p := r.matrix
   let_expr MvPolynomial σ D _ := p.lit.carrier | return none
   match p.data with
@@ -439,7 +443,7 @@ def ideal? (r : Result) (fieldLevel : Level) : MetaM (Option (Expr × Expr × Ex
     let x ← mkAppOptM ``MvPolynomial.X #[D, σ, none, mkApp f i]
     mkLambdaFVars #[i] x
   let hv ← finiteEq p.batch.sealed.n p.valuation xf
-  let levels := [← getDecLevel D, ← getDecLevel σ, fieldLevel]
+  let levels := [← getDecLevel D, ← getDecLevel σ]
   let args := #[p.valuation, f, hf, hv, p.polynomial, mkNatLit r.threshold]
   let data ← match p.data with
     | .integer _ => mkAppM' (mkConst ``idealData_int levels) args
@@ -447,7 +451,7 @@ def ideal? (r : Result) (fieldLevel : Level) : MetaM (Option (Expr × Expr × Ex
   return some (D, σ, data)
 
 /-- Return the fixed record; this interface never creates side goals. -/
-def result (r : Result) (cfg : Config := {}) (fieldLevel : Level := .zero) : MetaM Expr := withEvidence (fun p f => f p) (evidence r.matrix.batch) do
+def result (r : Result) (cfg : Config := {}) : MetaM Expr := withEvidence (fun p f => f p) (evidence r.matrix.batch) do
   let p := r.matrix
   let env ← mkListLit p.lit.carrier p.batch.sealed.atoms.toList
   let len ← mkEqRefl (mkNatLit p.batch.sealed.n)
@@ -465,10 +469,10 @@ def result (r : Result) (cfg : Config := {}) (fieldLevel : Level := .zero) : Met
   let poly ← mkAppM ``PolyData.mk
     #[ring, decEq, beq, lawful, env, len, p.valuation, sealed, p.coefficientMap, p.polynomial,
       values, r.generatorsProof, p.interpretation, r.displayProof]
-  let ideal ← match ← ideal? r fieldLevel with
+  let ideal ← match ← ideal? r with
     | some (_, _, data) => mkAppM ``Option.some #[data]
     | none => do
-      let type ← mkAppM' (mkConst ``IdealData [← getDecLevel p.lit.carrier, .zero, fieldLevel])
+      let type ← mkAppM' (mkConst ``IdealData [← getDecLevel p.lit.carrier, .zero])
         #[p.coefficientMap, p.valuation, p.polynomial, mkNatLit r.threshold,
           p.lit.carrier, mkConst ``Empty]
       mkAppOptM ``Option.none #[type]
@@ -477,9 +481,8 @@ def result (r : Result) (cfg : Config := {}) (fieldLevel : Level := .zero) : Met
   return result
 
 /-- Programmatic entry point returning the same checked record as `rank_locus%`.
-`fieldLevel` selects the universe of the ideal payload's field-valued points.
 It never creates goals or changes the source context. -/
-def rankLocus (A : Expr) (r : Nat) (cfg : Config := {}) (fieldLevel : Level := .zero) : MetaM Expr := do
-  result (← locus (← reify A cfg) r cfg) cfg fieldLevel
+def rankLocus (A : Expr) (r : Nat) (cfg : Config := {}) : MetaM Expr := do
+  result (← locus (← reify A cfg) r cfg) cfg
 
 end HexDeterminantalIdealMathlib.Provider

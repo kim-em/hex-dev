@@ -119,7 +119,7 @@ noncomputable def idealData {D : Type u} [CommRing D] [CharP D p] {σ : Type v}
     (v : Fin k → MvPolynomial σ D) (f : Fin k → σ)
     (hf : Function.Injective f) (hv : v = MvPolynomial.X ∘ f)
     (P : Hex.Matrix (MvPoly k (ZMod64 p) Mono.grevlex) n m) (r : Nat) :
-    IdealData.{u, v, w} (HexReflectMathlib.residueHom p (MvPolynomial σ D)) v P r D σ :=
+    IdealData.{u, v} (HexReflectMathlib.residueHom p (MvPolynomial σ D)) v P r D σ :=
   HexDeterminantalIdealMathlib.idealData _ v P r (HexReflectMathlib.residueHom p D)
     (HexReflectMathlib.residueHom_injective p D) f hf
     (heq_of_eq (HexReflectMathlib.residueHom_mvPolynomial p σ D)) (heq_of_eq hv)

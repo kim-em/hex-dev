@@ -170,19 +170,42 @@ example : Hex.Matrix.indexTuples 2 4 = [[0,1], [0,2], [1,2], [0,3], [1,3], [2,3]
 example {F : Type} [Field F] (x : F) : (!![x]).rank < 1 ↔ x = 0 :=
   (rank_locus% !![x] 1).proof
 
--- Consumers can choose the universe of field-valued points independently.
-universe z
-noncomputable example : HexDeterminantalIdealMathlib.LocusResult.{0, 0, z}
-    (!![MvPolynomial.X (0 : Fin 1)] : Matrix (Fin 1) (Fin 1) (MvPolynomial (Fin 1) ℤ))
-    1 ℤ 1 ℤ (Fin 1) :=
-  rank_locus% (!![MvPolynomial.X (0 : Fin 1)] :
-    Matrix (Fin 1) (Fin 1) (MvPolynomial (Fin 1) ℤ)) 1
-
+-- A single payload can be used at independently chosen field-point universes.
+universe u z
 example (K : Type z) [Field K] (ψ : ℤ →+* K) (p : Fin 1 → K) : True := by
-  let result : HexDeterminantalIdealMathlib.LocusResult.{0, 0, z}
-      (!![MvPolynomial.X (0 : Fin 1)] : Matrix (Fin 1) (Fin 1) (MvPolynomial (Fin 1) ℤ))
-      1 ℤ 1 ℤ (Fin 1) := rank_locus% (!![MvPolynomial.X (0 : Fin 1)] :
+  let result := rank_locus% (!![MvPolynomial.X (0 : Fin 1)] :
     Matrix (Fin 1) (Fin 1) (MvPolynomial (Fin 1) ℤ)) 1
   have locus := (result.ideal?.get (by rfl)).vanishing K ψ p
-  clear locus
+  have rationalLocus := (result.ideal?.get (by rfl)).vanishing ℚ (Int.castRingHom ℚ) (fun _ => 0)
+  clear locus rationalLocus
+  trivial
+
+example {F : Type u} [Field F] (x : F) : (!![x]).rank < 1 ↔ x = 0 :=
+  (rank_locus% !![x] 1).proof
+
+example (x : ℚ) : True := by
+  rank_locus !![x, 1; 1, x] 1 with locus
+  have : (!![x, 1; 1, x]).rank < 1 ↔ x = 0 ∧ (1 : ℚ) = 0 := locus
+  trivial
+
+example : (!![(2 : ℚ), 4]).rank = 1 := by rank_locus
+
+example (x : ℚ) : True := by
+  fail_if_success rank_locus (config := {matrixSize := 0}) !![x] 1
+  trivial
+
+open MvPolynomial in
+example (q : MvPolynomial (Fin 1) ℚ) :
+    (rank_locus% !![X (0 : Fin 1) * q] 1).ideal?.isNone = true := rfl
+
+-- The default work limit rejects the next factorial-sized rung before enumeration.
+example (x0 : ℚ) : True := by
+  fail_if_success rank_locus !![x0, 2*x0, 3*x0, 4*x0, 5*x0, x0, 2*x0, 3*x0;
+    0, 1, 0, 0, 0, 0, 0, 0;
+    0, 0, 1, 0, 0, 0, 0, 0;
+    0, 0, 0, 1, 0, 0, 0, 0;
+    0, 0, 0, 0, 1, 0, 0, 0;
+    0, 0, 0, 0, 0, 1, 0, 0;
+    0, 0, 0, 0, 0, 0, 1, 0;
+    0, 0, 0, 0, 0, 0, 0, 1] 4
   trivial

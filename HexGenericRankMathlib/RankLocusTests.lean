@@ -17,3 +17,8 @@ example (x : ZMod 3) : True := by
   rank_locus !![x^3-x]
   have : (!![x^3-x]).rank < 1 ↔ x^3-x = 0 := h
   trivial
+
+example (x : ZMod 3) : True := by
+  rank_locus !![x, 1; 1, x]
+  have : (!![x, 1; 1, x]).rank < 2 ↔ x ^ 2 - 1 = 0 := h
+  trivial

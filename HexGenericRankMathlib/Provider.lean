@@ -174,8 +174,7 @@ def identification (lit : HexMatrixMathlib.Literal.Recognized) (A source : Expr)
 
 /-- Assemble the provider result from one sealed batch and one checked certificate. -/
 def batchResult (A : Expr) (lit : HexMatrixMathlib.Literal.Recognized)
-    (batch : RingBatch) (modulus : Option Nat := none)
-    (entries : Option (Array (PolyLists.Poly Int)) := none) : MetaM Result := do
+    (batch : RingBatch) (modulus : Option Nat := none) : MetaM Result := do
   let k := batch.sealed.n
   let n := lit.n
   let m := lit.m
@@ -191,7 +190,6 @@ def batchResult (A : Expr) (lit : HexMatrixMathlib.Literal.Recognized)
     flat := flat.push (MvPoly.Kernel.normalize
       (e.conversion.terms.map fun t => (t.1.toList,
         match modulus with | none => t.2 | some p => balance p t.2)))
-  if let some entries := entries then flat := entries
   let L : PolyLists.Rows Int := (List.range n).map fun i =>
     (List.range m).map fun j => flat[i * m + j]!
   let c ← profileitM Exception "generic-rank producer" (← getOptions) do

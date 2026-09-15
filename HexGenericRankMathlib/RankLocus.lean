@@ -18,9 +18,9 @@ namespace HexGenericRankMathlib
 
 open Lean Meta Elab Tactic
 
-/-- Supply the generic threshold using the locus request's sealed batch.
-Natural residues are passed as nonnegative integer representatives so both
-providers quote definitionally identical polynomial matrices. -/
+/-- Compute the generic threshold from the same sealed polynomial entry lists.
+The locus theorem holds for every threshold, so no separate generic-rank
+certificate is replayed in the kernel. -/
 @[tactic HexDeterminantalIdealMathlib.rankLocusDefault]
 def evalRankLocusDefault : Tactic := fun stx => withMainContext do
   let cfg := (← HexDeterminantalIdealMathlib.elabLocusConfig stx[1]).provider
@@ -28,21 +28,15 @@ def evalRankLocusDefault : Tactic := fun stx => withMainContext do
   Term.synthesizeSyntheticMVarsNoPostponing
   let A ← instantiateMVars A
   let p ← HexDeterminantalIdealMathlib.Provider.reify A cfg
-  let (modulus, entries) := match p.data with
-    | .integer L => (none, L.flatten.toArray)
-    | .residue q L => (some q, L.flatten.toArray.map (List.map (fun t => (t.1, (t.2 : Int)))))
-  let generic ← Provider.withEvidence (HexDeterminantalIdealMathlib.Provider.evidence p.batch) do
-    match modulus with
-    | none => Provider.batchResult A p.lit p.batch none (some entries)
-    | some q =>
-      let charInst ← mkAppOptM ``Modular.residueChar #[mkNatLit q, none]
-      let domainInst ← mkAppOptM ``Modular.residueDomain #[mkNatLit q, none, none]
-      Provider.withEvidence [charInst, domainInst] do
-        Provider.batchResult A p.lit p.batch (some q) (some entries)
-  unless ← isDefEq p.polynomial generic.polynomial do
-    throwError "rank_locus: the generic threshold did not preserve the reified polynomial matrix"
-  let _ ← HexDeterminantalIdealMathlib.Provider.checkProofBudget p #[generic.genericProof] cfg
-  let result ← HexDeterminantalIdealMathlib.Provider.locus p generic.rank cfg
+  let k := p.batch.sealed.n
+  let r ← match p.data with
+    | .integer L => pure (Provider.integerWitness k p.lit.n p.lit.m L).rank
+    | .residue q L =>
+      let entries := L.map (List.map (List.map (fun t => (t.1, (t.2 : Int)))))
+      let some c := Provider.residueWitness? q k p.lit.n p.lit.m entries
+        | throwError "rank_locus: declined: invalid residue coefficient evidence"
+      pure c.rank
+  let result ← HexDeterminantalIdealMathlib.Provider.locus p r cfg
   let (_, goal) ← (← getMainGoal).note `h result.iffProof (some (← result.proposition))
   replaceMainGoal [goal]
 

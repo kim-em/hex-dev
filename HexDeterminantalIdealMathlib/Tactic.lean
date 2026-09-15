@@ -21,7 +21,7 @@ open Lean Meta Elab Tactic
 structure LocusConfig where
   reflection : Hex.Reflect.Config := {}
   matrixSize : Nat := 4096
-  minorWork : Nat := 1000000
+  minorWork : Nat := 50000
 
 declare_config_elab elabLocusConfig LocusConfig
 
@@ -127,7 +127,7 @@ def evalRankLocusClose : Tactic := fun stx => withMainContext do
 syntax (name := rankLocusTerm) "rank_locus% " term:max term:max : term
 
 @[term_elab rankLocusTerm]
-def elabRankLocusTerm : Term.TermElab := fun stx expectedType? => do
+def elabRankLocusTerm : Term.TermElab := fun stx _ => do
   let A ← Term.elabTerm stx[1] none
   let r ← Term.elabTerm stx[2] (some (mkConst ``Nat))
   Term.synthesizeSyntheticMVarsNoPostponing
@@ -135,11 +135,6 @@ def elabRankLocusTerm : Term.TermElab := fun stx expectedType? => do
   if r.hasFVar || r.hasMVar then throwError "rank_locus%: expected a closed natural threshold"
   let some r ← (Meta.evalNat r).run | throwError "rank_locus%: expected a closed natural threshold"
   let p ← Provider.reify (← instantiateMVars A)
-  let fieldLevel ← match expectedType? with
-    | some type => do
-      let .const ``LocusResult levels := (← whnf type).getAppFn | pure .zero
-      pure (levels[2]?.getD .zero)
-    | none => pure .zero
-  Provider.result (← Provider.locus p r) {} fieldLevel
+  Provider.result (← Provider.locus p r)
 
 end HexDeterminantalIdealMathlib
