@@ -124,26 +124,54 @@ the componentwise maximum of `degree(Mᵢₜ) + degree(Aₜⱼ)` over `t` and
 actual witness, not just the entry degrees or atom count. Use Kronecker's
 `SizeBound`, mixed-radix strides, base and saturating preflight unchanged;
 no dense polynomial expansion or packed integer is built to choose the arm.
+Each `checkMulTerms` call derives its own plan; its interface has no shared
+plan argument. The kernel repacks entries shared by different row-prefix
+products, potentially at different bases and strides. Account for that
+repeated support traversal and packing, rather than assuming cached columns.
 
 The preregistered hard limits are `maxDenseDigits := 65536` and
 `maxPackedBits := 16777216`, with caller tightening allowed. Every product
 must fit both limits. The separate certificate/source/proof budgets still
-apply. Above either packing limit, the whole certificate uses term lists;
+apply. These per-product limits bound operand sizes, not total certificate
+runtime. Runtime eligibility relies on the measured sparse/packed table and
+the full-certificate shipping comparison; fitting the hard limits alone
+promises no win or compliance with a proof-build ceiling.
+
+The digit condition is `∏ⱼ (dⱼ + 1) ≤ 65536`, using the product/witness
+bounds above. For a uniform bound in every atom, the maximal degrees are
+`65535, 255, 39, 15` at arities `1, 2, 3, 4` respectively. These are bounds
+on the checked identities, not on input entries: growing minors can make a
+few-atom input ineligible. Record such cases as expected preflight declines.
+
+Above either packing limit, the whole certificate uses term lists;
 there is no kernel trial of the packed checker followed by a sparse retry.
 Within the limits, use the measured sparse/packed crossover table required
 by [hex-kronecker §Consumers](hex-kronecker.md#consumers), keyed by
 `packedBits`, input supports and inner dimension. Require an eligible entry
 for every product; an absent entry selects term lists. Explicit comparison
 probes may force either arm within its budgets to establish that table.
-The table is fixed before consumer activation.
+The table is fixed before consumer activation. This first interface selects
+one checker for the whole witness, keeping one Bool proof and one trace
+route. It accepts the overhead of small prefixes and measures it in the
+full certificate. Per-product mixing is a separate extension, not an
+assumed source of speedups in the initial comparison.
 
-`MulMode.plain` is the packed default. Only hex-kronecker's term-list-product
-crossover evidence may select `signedPacked`; its preflight includes the
-outer signed-dot operands and intermediates as well as the inner Kronecker
-values. A mode whose bound fails is ineligible; select one mode for the certificate
-that is eligible for every product, otherwise use term lists. Both modes
-denote the same identities. The Bool checker itself revalidates shapes and bounds before
+`MulMode.plain` is the packed default. A separate mode-selection table from
+hex-kronecker's term-list-product benchmark may select `signedPacked`; its
+preflight includes the outer signed-dot operands and intermediates as well as the inner Kronecker
+values. A mode whose bound fails is ineligible; select one mode eligible
+for every product, otherwise use term lists. Both modes denote the same
+identities. The Bool checker itself revalidates shapes and bounds before
 packing, so untrusted dispatch is never a soundness assumption.
+
+After preflight selects a checker, run that same Bool in compiled code on
+the exact lists and payload to be quoted, charging its work to the producer
+budget. A preflight budget decline selects term lists before this step;
+`false` after an accepted preflight is a certificate failure, even if the
+list checker accepted the witness. It exposes a checker/serialization
+inconsistency or a wrong identity rather than hiding it with fallback.
+Only a compiled `true` proceeds to the single kernel check, which remains
+the authority; no compiled result is used as a proof.
 
 ### Positive characteristic
 
@@ -196,8 +224,14 @@ kernel tests comparing both arms on integer witnesses and residue witnesses
 with supplemental quotients. Include triangular and singular branches, the
 empty case, budget boundaries, malformed shapes and corrupted quotients.
 A characteristic-two regression rejects `[1, 1] * [1, 1]ᵀ = [x]` and accepts
-the true zero result with quotient `[1]`; this exercises cross-slot carries
-without putting quotient data in the determinant fixtures.
+the true zero result with quotient `[1]`; this guards against unsound
+base-`p` arithmetic. Also test the determinant payload directly: at `p = 2`,
+use `A = [[1,1],[1,0]]`, swap `(0,1)`, transform `[[1],[1,1]]` and value
+`1`, with quotient rows `[[0],[1,0]]` (each scalar denotes a constant term
+list). The permuted product prefixes are `[1]` and `[2,1]` over integers,
+with residue targets `[1]` and `[0,1]`. Accept this payload and reject a
+corrupted second quotient row. These direct checker tests do not change the
+small-form handler or put quotient data in the determinant fixtures.
 
 ## Complexity and benchmarking
 
@@ -207,7 +241,12 @@ minors, bounded as in
 [hex-bareiss §Symbolic coefficient growth](../../HexBareiss/SPEC/hex-bareiss.md#symbolic-coefficient-growth);
 expression swell is not controlled here. The term-list checker is `n³/3`
 polynomial products (or `n²` for the singular vector) at the witness's realised
-support.
+support. The plain packed mode performs `∑ᵢ₌₁ⁿ i²` integer multiplications
+in the triangular branch and `n²` in the singular branch. Each replaces one
+term-list polynomial product with one GMP multiply; its benefit depends on
+the operand bit sizes and supports. Add the repeated per-call packing cost
+above. The `signedPacked` mode has its independently measured outer packing
+costs and multiplication counts.
 
 The `symbolic` family (dimensions `2, 4, 8`, atoms `1, 2, 4`, degrees
 `1, 2, 4`, supports `1, 4, 16`, with infeasible support requests marked as
@@ -222,8 +261,8 @@ conformance oracle, a Python process); the absence is declared as
 **no-comparable-surface-in-named-comparator**.
 
 The packed comparison uses the same precomputed witnesses and result hashes,
-with bounds/packing and quotient production reported separately. Extend the
-few-atom grid to atoms `1, 2, 3, 4`, degrees `2, 4, 8, 16`, dimensions
+with preflight, support traversal/packing, integer multiplication and
+quotient production reported separately. Extend the few-atom grid to atoms `1, 2, 3, 4`, degrees `2, 4, 8, 16`, dimensions
 `4, 8, 16`, and include many-independent-atom declines. Measure support
 traversal plus big-integer arithmetic against the packed bit size, following
 hex-kronecker's complexity claim; polynomial product counts alone do not
@@ -240,11 +279,11 @@ HexPolyDet/
 HexPolyDet.lean
 ```
 
-`libraries.yml` gains
+When the packed implementation lands, the `libraries.yml` entry becomes
 
 ```yaml
   HexPolyDet:
-    deps: [HexBareiss, HexMvGcd, HexDeterminant, HexMatrix, HexBasic]
+    deps: [HexBareiss, HexMvGcd, HexDeterminant, HexMatrix, HexBasic, HexKronecker]
     mathlib: false
     done_through: 3
     status: active
@@ -270,3 +309,10 @@ result. The companion proves `PolyDet.check_of_ok`: every successful
 `polyDetWitness` return passes the checker. Errors remain possible; the theorem
 does not assert that every input produces a successful result. `PolyDet.toList` performs compiled merge sorting into canonical order;
 the kernel sees and validates only its output.
+
+The planned packed entry points are `checkDetPolyPacked` and
+`checkDetPolyPackedMod` with the argument and payload contracts above.
+Compiled quotient preparation belongs alongside them in `Packed.lean`;
+its budget-decline outcome is distinct from a malformed or incorrect
+certificate. The existing `polyDetWitness?` remains the list-validation API;
+the handler additionally validates with its selected checker before quotation.
