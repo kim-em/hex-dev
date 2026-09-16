@@ -62,4 +62,9 @@ theorem replayPock3 :
       (.pock3 199 9 2 8 [(3, 0, .small 2), (2, 0, .small 3)]) = true := by
   decide +kernel
 
+/-- A pure-power certificate using three divisor exclusions. -/
+theorem replayPock3Sieve :
+    checkPrime (.pock3Sieve 9223372036904058881 47 4194304 0 4
+      [(3, 19, .small 2)]) = true := by decide +kernel
+
 end HexBench.PrimalityKernel

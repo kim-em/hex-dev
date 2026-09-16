@@ -12,6 +12,8 @@ parser.add_argument('hex_record', type=Path)
 parser.add_argument('output_dir', type=Path)
 parser.add_argument('--no-sieve', action='store_true',
                     help='reproduce the earlier comparator using Pocklington for larger leaves')
+parser.add_argument('--interval', action='store_true',
+                    help='emit interval witnesses for PrimeCert #170 and later')
 args = parser.parse_args()
 record = json.loads(args.hex_record.read_text())
 out = args.output_dir
@@ -20,7 +22,7 @@ small_primes = [3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61,
 for case in record['cases']:
     row = next((r for r in record['rows'] if r['case'] == case['name'] and r['system'] == 'hex'))
     literal = row['source'].split('def certificate : Hex.Nat.PrimeCert :=', 1)[1].split('\ntheorem', 1)[0]
-    tokens = re.findall('Hex\\.Nat\\.PrimeCert\\.(?:pock3|pock|small)|\\d+|[()\\[\\],]', literal)
+    tokens = re.findall('Hex\\.Nat\\.PrimeCert\\.(?:pock3Sieve|pock3|pock|small)|\\d+|[()\\[\\],]', literal)
     i = 0
 
     def take(t=None):
@@ -37,8 +39,9 @@ for case in record['cases']:
         node = dict(kind=kind, n=n, fs=[])
         if kind == 'small':
             return node
-        if kind == 'pock3':
+        if kind in ('pock3', 'pock3Sieve'):
             node['r'], node['s'], node['w'] = [int(take()) for _ in range(3)]
+            node['m'] = int(take()) if kind == 'pock3Sieve' else 1
         take('[')
         while tokens[i] != ']':
             take('(')
@@ -102,11 +105,13 @@ for case in record['cases']:
                 mode = '0'
             elif d < 0:
                 mode = '<'
-            else:
+            elif not args.interval:
                 p = next((p for p in small_primes if pow(d % p, (p - 1) // 2, p) == p - 1))
                 small.add(p)
                 mode = str(p)
-            steps.append(f'pock3 ({n}, {a}, {mode}, {factors})')
+            else:
+                mode = f"interval {node['w']}"
+            steps.append(f'pock3 ({n}, {a}, {node["m"]}, {mode}, {factors})')
     emit(root)
     original = case['primecert']
     goal = re.search('theorem result : (.*?)\\s*:=\\s*prime_cert%', original, re.S)[1]

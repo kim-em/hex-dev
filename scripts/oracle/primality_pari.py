@@ -147,7 +147,7 @@ def _check_cert(pari, cert: dict[str, Any]) -> bool:
             return False
     else:
         m = int(cert["m"])
-        if m < 1 or 2 * s + m * m >= (2 * F + r) * m + 2:
+        if not 1 <= m <= 64 or 2 * s + m * m >= (2 * F + r) * m + 2:
             return False
         if any(n % (l * F + 1) == 0 for l in range(1, m)):
             return False

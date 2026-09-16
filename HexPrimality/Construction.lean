@@ -36,6 +36,18 @@ def constructionBudget : ConstructionBudget := {}
 
 namespace Construction
 
+/-- The least positive sieve bound satisfying the cube-root size inequality, or zero.
+This runs only during construction; the checker validates the chosen literal directly. -/
+private def sieveBound (twoF r s : Nat) : Nat :=
+  let b := twoF + r
+  if b * b + 8 ≤ 8 * s then 0
+  else Id.run do
+    let sq := Nat.sqrt (b * b + 8 - 8 * s)
+    let cand := (b - sq) / 2
+    for m in [max 1 (cand - 3) : cand + 4] do
+      if 2 * s + m * m < b * m + 2 then return m
+    return 0
+
 private def insert (q e : Nat) : List (Nat × Nat) → List (Nat × Nat)
   | [] => [(q, e)]
   | (p, k) :: rest =>
@@ -117,9 +129,9 @@ The public checker validates these computations again on the final literal. -/
 private def sufficient (budget : ConstructionBudget) (n F : Nat) : Bool :=
   if n < F * F then true else
     let (r, s, w) := cubeData n F
-    let m := pocklingtonSieveBound (2 * F) r s
+    let m := sieveBound (2 * F) r s
     F % 2 == 0 && (n - 1) / F % 2 == 1 && 1 ≤ r &&
-      1 ≤ m && m ≤ budget.maxSieveBound && checkDivisors n F (m - 1) &&
+      1 ≤ m && m ≤ min budget.maxSieveBound pocklingtonSieveCap && checkDivisors n F (m - 1) &&
       (s == 0 || r * r < 8 * s ||
         (w * w < r * r - 8 * s && r * r - 8 * s < (w + 1) * (w + 1)))
 
@@ -149,7 +161,7 @@ private def subsets (budget : ConstructionBudget) (n : Nat)
     if let some F := product n selected then
       if sufficient budget n F then
         let (r, s, _) := cubeData n F
-        let divisions := if n < F * F then 0 else pocklingtonSieveBound (2 * F) r s - 1
+        let divisions := if n < F * F then 0 else sieveBound (2 * F) r s - 1
         let cost := (costs.zipIdx).foldl (fun acc (cost, i) =>
           if mask.testBit i then acc + (16 * cost + 1) * (n.log2 + 1) else acc) divisions
         choices := (cost, selected) :: choices
@@ -170,7 +182,7 @@ private def witness (budget : ConstructionBudget) (n q : Nat) (r : Hex.Rand) :
 private def node (n F : Nat) (entries : List (Nat × Nat × PrimeCert)) : PrimeCert :=
   if n < F * F then .pock n entries else
     let (r, s, w) := cubeData n F
-    let m := pocklingtonSieveBound (2 * F) r s
+    let m := sieveBound (2 * F) r s
     if m == 1 then .pock3 n r s w entries else .pock3Sieve n r s w m entries
 
 mutual

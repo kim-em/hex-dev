@@ -378,6 +378,10 @@ def checkPock3Arith (n r s w : Nat)
               decide (r * r - 8 * s < (w + 1) * (w + 1)))) &&
           checkWitnesses n factors
 
+/-- Maximum sieve bound in a checked certificate.
+This caps replay work for arbitrary untrusted literals, including rejected inputs. -/
+@[expose] def pocklingtonSieveCap : Nat := 64
+
 /-- Check the first `k` possible divisors `lF+1`. -/
 @[expose]
 def checkDivisors (n F : Nat) : Nat → Bool
@@ -404,9 +408,9 @@ def checkPock3SieveArith (n r s w m : Nat)
     | some F =>
         (n - 1) % F == 0 && F % 2 == 0 && (n - 1) / F % 2 == 1 &&
           (n - 1) / F == 2 * F * s + r &&
-          decide (1 ≤ r) && decide (r < 2 * F) && decide (1 ≤ m) &&
-          checkDivisors n F (m - 1) &&
+          decide (1 ≤ r) && decide (r < 2 * F) && decide (1 ≤ m) && decide (m ≤ pocklingtonSieveCap) &&
           decide (2 * s + m * m < (2 * F + r) * m + 2) &&
+          checkDivisors n F (m - 1) &&
           (s == 0 || decide (r * r < 8 * s) ||
             (decide (w * w < r * r - 8 * s) &&
               decide (r * r - 8 * s < (w + 1) * (w + 1)))) &&
@@ -1050,7 +1054,7 @@ private theorem checkPock3SieveArith_spec {n r s w m : Nat}
   next F hprod =>
     simp only [Bool.and_eq_true, Bool.or_eq_true, decide_eq_true_iff,
       beq_iff_eq, List.all_eq_true] at hm
-    obtain ⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨hdvd, heven⟩, hrodd⟩, hdec⟩, hr1⟩, hr2⟩, hm⟩, hdiv⟩, hbound⟩,
+    obtain ⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨hdvd, heven⟩, hrodd⟩, hdec⟩, hr1⟩, hr2⟩, hm⟩, _hcap⟩, hbound⟩, hdiv⟩,
       hdisc⟩, hall⟩ := hm
     refine ⟨by simpa using h2', by simpa using hodd', hodd,
       F, certProduct_eq _ _ hprod, Nat.dvd_of_mod_eq_zero hdvd,

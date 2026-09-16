@@ -29,18 +29,6 @@ namespace Hex
 
 namespace Nat
 
-/-- The least positive sieve bound satisfying the cube-root size inequality, or zero.
-This runs only during construction; the checker validates the chosen literal directly. -/
-def pocklingtonSieveBound (twoF r s : Nat) : Nat :=
-  let b := twoF + r
-  if b * b + 8 ≤ 8 * s then 0
-  else Id.run do
-    let sq := Nat.sqrt (b * b + 8 - 8 * s)
-    let cand := (b - sq) / 2
-    for m in [max 1 (cand - 3) : cand + 4] do
-      if 2 * s + m * m < b * m + 2 then return m
-    return 0
-
 /-- A number strictly between consecutive squares is not a square: the
 witness form of the discriminant test, which the checker verifies with two
 multiplications instead of a (non-kernel-reducible) `Nat.sqrt` call. -/

@@ -234,3 +234,15 @@ example : Hex.Nat.Prime 9223372037728239617 := prime_of_checkPrimeAt
     { constructionBudget with maxSieveBound := 3 } (factor := decline) with
   | .error f => f.stop == .exhausted && f.attempts == 0 && f.rand == Hex.Rand.ofSeed 17
   | _ => false)
+
+-- Arbitrary large literal bounds are rejected before recursive sieve replay.
+example : checkPrime (.pock3Sieve 197 1 6 0 1000000000 [(2, 1, .small 2)]) = false := by
+  decide +kernel
+#guard !checkPrime (.pock3Sieve 197 1 6 0 1000000000 [(2, 1, .small 2)])
+
+-- Both bounds satisfy the size inequality; only the checker cap rejects 65.
+example : checkPrime (.pock3Sieve 9223372036904058881 47 4194304 0 64
+    [(3, 19, .small 2)]) = true := by decide +kernel
+example : checkPrime (.pock3Sieve 9223372036904058881 47 4194304 0 65
+    [(3, 19, .small 2)]) = false := by decide +kernel
+#guard !checkPrime (.pock3Sieve 9223372036904058881 47 4194304 0 65 [(3, 19, .small 2)])

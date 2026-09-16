@@ -496,9 +496,13 @@ https://www-sop.inria.fr/members/Benjamin.Gregoire/Publi/pock.pdf, and
 in PrimeCert's `Pocklington3.lean`. PrimeCert states the stronger form
 with an extra parameter `m`. The `pock3Sieve n r s w m factors` constructor
 implements that stronger form, proved by the Mathlib-free `pocklington3Sieve`:
-it additionally checks `1 ≤ m`, excludes divisors `lF + 1` for `1 ≤ l < m`,
+it additionally checks `1 ≤ m ≤ pocklingtonSieveCap` (currently 64), excludes
+divisors `lF + 1` for `1 ≤ l < m`,
 and replaces condition 5 by `2s + m² < (2F + r)m + 2`. It retains all other
-arithmetic, child-primality, ordering and witness checks. The original `pock3`
+arithmetic, child-primality, ordering and witness checks. The cap and size bound
+are checked before the sieve; even a rejected untrusted literal performs at
+most 63 divisor tests. Construction uses the smaller of `maxSieveBound` and
+this checker cap. The original `pock3`
 constructor and literal proofs retain their sieve-free behavior. Neither form
 requires an odd prime in the factor product; a power of two alone is valid.
 
@@ -1578,11 +1582,13 @@ ladder before rho at each composite worklist entry and retains unsplit parts
 as the residual.
 
 Construction first tries subsets of the cheap table-division factors. Only if
-those certificates fail does it call the configured factor provider, with the
-remaining attempt budget and advanced random state. Previously tried subsets
-are skipped during that fallback. Before recursive certification, construction
-validates canonical factor data
-and bounded products. It enumerates subsets satisfying square-root or
+those certificates fail does it call the configured factor provider.
+The first successful cheap certificate is used: search favors construction
+latency over comparing it with certificates requiring further factoring.
+The fallback receives the remaining attempt budget and advanced random state.
+Previously tried subsets are skipped during that fallback. Before recursive certification, construction
+validates canonical factor data and bounded products. It enumerates subsets
+satisfying square-root or
 cube-root arithmetic criteria and orders them by estimated recursive replay
 cost. Each entry costs `(16 * childCost + 1) * (n.log2 + 1)`, and the
 `m - 1` divisor exclusions each add one unit. This is a search heuristic,
