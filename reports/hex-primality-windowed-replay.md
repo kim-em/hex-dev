@@ -92,7 +92,7 @@ is a kernel-replay improvement, not a claim of faster native construction.
 
 The kernel policy also uses two-bit windows for all reduced bases through
 `2^2048`, and one-bit windows for small bases above `2^4096` without an
-exponent-length cutoff. This matches the final policy in lean4#15167.
+exponent-length cutoff. This matches the current policy in draft lean4#15167.
 The certificate comparison above only reaches 512 bits, so the larger
 branches have a separate modular-power comparison on Lean 4.34.0:
 
@@ -110,7 +110,7 @@ branches have a separate modular-power comparison on Lean 4.34.0:
 These are medians of four adjacent, alternating-order pairs on the shared
 host. All 64 kernel checks and both arms' incorrect-result controls passed.
 Input construction, references, uniform preparation, and imports are outside
-the timer. The previous policy is copied into a separate namespace and uses
+the timer. The previous policy is copied into a separate definition and uses
 the same verified loop workers as the current implementation. The
 [complete record](bench-results/hex-primality-final-tuning.json) retains every
 sample, the generated source, inputs, source hashes, and host context. To
@@ -119,6 +119,10 @@ reproduce it, write its `source` to the module path in `command`, set
 a CPU automatically as in the other reproduction scripts. An
 [import setup failure](bench-results/hex-primality-final-tuning-setup-failure.json)
 has no completed timing samples and is retained separately.
+
+This Hex comparison does not measure large-base, short-exponent inputs in the
+new two-bit range. The upstream [tuning experiment](https://gist.github.com/kim-em/684d41610eff65c2c3bd410ab89627fc/67c8ba6b1761acd670634f5bf29ecb5964e627e9)
+includes short exponents in its calibration corpus.
 
 The compiled runtime, construction budgets, and Curve25519 suggestion remain
 unchanged. The local kernel loops are scheduled for removal when Hex upgrades

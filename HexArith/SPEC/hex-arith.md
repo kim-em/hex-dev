@@ -451,6 +451,8 @@ On upgrading to Lean `v4.36.0-rc1`, confirm that lean4#15167 is included, then
 replace the local kernel loops and their correctness proofs with upstream
 `Nat.powMod`, retaining the
 modulus-zero wrapper and the compiler rewrite to Hex's runtime implementation.
+Separately compare the compiled implementations before changing that rewrite:
+upstream `Nat.powMod` uses GMP, while Hex also has a word-sized Montgomery path.
 The runtime worker keeps its existing public name `powModNatGo`; it belongs
 to `powModBits`, whereas `powModNat.go` is the kernel accumulator.
 For positive moduli the respective intermediate

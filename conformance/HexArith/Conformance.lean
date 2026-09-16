@@ -386,10 +386,16 @@ example : let p := ((1 : Nat) <<< 4096) - 1
   decide +kernel
 example : let p := (1 : Nat) <<< 4096
     HexArith.powModNat 2 4096 p = 0 := by decide +kernel
-example : let p := ((1 : Nat) <<< 1024) + 1
+example : let p := ((1 : Nat) <<< 2048) + 1
     let a := ((1 : Nat) <<< 64) - 1
     HexArith.powModNat a 5 p = a ^ 5 % p := by decide +kernel
-example : let p := ((1 : Nat) <<< 1024) + 1
+example : let p := ((1 : Nat) <<< 2048) + 1
+    let a := (1 : Nat) <<< 64
+    HexArith.powModNat a 5 p = a ^ 5 % p := by decide +kernel
+example : let p := ((1 : Nat) <<< 4096) + 1
+    let a := ((1 : Nat) <<< 64) - 1
+    HexArith.powModNat a 5 p = a ^ 5 % p := by decide +kernel
+example : let p := ((1 : Nat) <<< 4096) + 1
     let a := (1 : Nat) <<< 64
     HexArith.powModNat a 5 p = a ^ 5 % p := by decide +kernel
 example : let p := ((1 : Nat) <<< 4096) + 1
