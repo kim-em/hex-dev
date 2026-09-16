@@ -1078,6 +1078,10 @@ theorem powMod_modulus_zero (a n : Nat) :
     powMod a n 0 = 0 := by
   rfl
 
+-- TODO(v4.36.0-rc1): replace these kernel powering loops and their correctness
+-- proofs with upstream `Nat.powMod` (lean4#15167) when upgrading the toolchain.
+-- Keep Hex's modulus-zero result and the proved compiler rewrite to `powMod`.
+
 /-- Kernel reduction loop for `powModNat`, with an accumulator and decreasing fuel.
 `go m fuel b e acc` computes `(b ^ e * acc) % m` when `e < fuel`.
 `Nat.rec` avoids well-founded recursion, and `Bool.rec` avoids `Decidable` unfolding.
@@ -1143,10 +1147,10 @@ private theorem powModNat.go_eq (m fuel b e acc : Nat) (h : e < fuel) :
           ← Nat.mul_mod, ← Nat.mul_assoc, ← Nat.pow_succ, Nat.succ_eq_add_one, hod']
 
 /-- Kernel-facing modular exponentiation. Six-bit windows through `2^64`,
-four-bit windows through `2^512`, and three-bit windows through `2^1024`
-reduce kernel recursion. Above that,
+four-bit windows through `2^512`, three-bit windows through `2^1024`, and
+two-bit windows through `2^2048` reduce kernel recursion. Above that,
 a reduced base below `2^64` uses two-bit windows through `2^4096`, then
-one-bit windows for exponents at least `2^64`; other inputs use the binary
+one-bit windows; other inputs use the binary
 accumulator. Modulus zero returns zero. Compiled evaluation uses `powMod`,
 with their equality proved below. -/
 @[expose]
@@ -1154,13 +1158,13 @@ noncomputable def powModNat (a n p : Nat) : Nat :=
   (p.beq 0).rec
     ((n.beq 0).rec
       ((p.ble ((1 : Nat).shiftLeft 1024)).rec
-        (((a.mod p).ble 18446744073709551615).rec
-          (powModNat.go p n.succ (a.mod p) n 1)
-          ((p.ble ((1 : Nat).shiftLeft 4096)).rec
-            ((n.ble 18446744073709551615).rec
+        ((p.ble ((1 : Nat).shiftLeft 2048)).rec
+          (((a.mod p).ble 18446744073709551615).rec
+            (powModNat.go p n.succ (a.mod p) n 1)
+            ((p.ble ((1 : Nat).shiftLeft 4096)).rec
               (powModNat.window (a.mod p) p 2 n.succ n)
-              (powModNat.go p n.succ (a.mod p) n 1))
-            (powModNat.window (a.mod p) p 4 n.succ n)))
+              (powModNat.window (a.mod p) p 4 n.succ n)))
+          (powModNat.window (a.mod p) p 4 n.succ n))
         ((p.ble ((1 : Nat).shiftLeft 512)).rec
           (powModNat.window (a.mod p) p 8 n.succ n)
           ((p.ble ((1 : Nat).shiftLeft 64)).rec

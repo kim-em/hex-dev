@@ -88,6 +88,44 @@ multiplication and certificate traversal keep their original algorithms. Search
 budgets, witnesses, and the exact Curve25519 suggestion remain unchanged. This
 is a kernel-replay improvement, not a claim of faster native construction.
 
+## Large-modulus powering
+
+The kernel policy also uses two-bit windows for all reduced bases through
+`2^2048`, and one-bit windows for small bases above `2^4096` without an
+exponent-length cutoff. This matches the final policy in lean4#15167.
+The certificate comparison above only reaches 512 bits, so the larger
+branches have a separate modular-power comparison on Lean 4.34.0:
+
+| Input | Previous policy (ms) | Current policy (ms) |
+|---|---:|---:|
+| 1536-bit modulus, full-size base, dense exponent | 32.408 | 19.910 |
+| 1536-bit modulus, full-size base, mixed exponent | 29.957 | 16.853 |
+| 2048-bit modulus, full-size base, dense exponent | 49.218 | 33.507 |
+| 2048-bit modulus, full-size base, mixed exponent | 45.190 | 27.605 |
+| 8192-bit modulus, base 2, exponent 17 | 0.174 | 0.122 |
+| 8192-bit modulus, base 2, exponent 65537 | 0.371 | 0.312 |
+| 8192-bit modulus, base 2, exponent `2^63 + 12345` | 1.892 | 1.721 |
+| 512-bit control, unchanged dispatch | 2.084 | 2.019 |
+
+These are medians of four adjacent, alternating-order pairs on the shared
+host. All 64 kernel checks and both arms' incorrect-result controls passed.
+Input construction, references, uniform preparation, and imports are outside
+the timer. The previous policy is copied into a separate namespace and uses
+the same verified loop workers as the current implementation. The
+[complete record](bench-results/hex-primality-final-tuning.json) retains every
+sample, the generated source, inputs, source hashes, and host context. To
+reproduce it, write its `source` to the module path in `command`, set
+`HEX_TUNING_SAMPLES` to a new CSV path, and build that module with Lake; select
+a CPU automatically as in the other reproduction scripts. An
+[import setup failure](bench-results/hex-primality-final-tuning-setup-failure.json)
+has no completed timing samples and is retained separately.
+
+The compiled runtime, construction budgets, and Curve25519 suggestion remain
+unchanged. The local kernel loops are scheduled for removal when Hex upgrades
+to Lean `v4.36.0-rc1`, after confirming that lean4#15167 is included. The
+replacement must retain Hex's modulus-zero result and its compiler rewrite to
+the existing runtime implementation.
+
 ## Supplied certificates and coverage
 
 The [compact PrimeCert sources](bench-results/hex-primality-compact-primecert/)
