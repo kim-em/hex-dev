@@ -123,6 +123,9 @@ meta def reifyPrimeCert : Hex.Nat.PrimeCert → Expr
   | .pock3 n r s w factors =>
       mkApp5 (mkConst ``Hex.Nat.PrimeCert.pock3) (mkNatLit n) (mkNatLit r)
         (mkNatLit s) (mkNatLit w) (reifyFactors factors)
+  | .pock3Sieve n r s w m factors =>
+      mkApp6 (mkConst ``Hex.Nat.PrimeCert.pock3Sieve) (mkNatLit n) (mkNatLit r)
+        (mkNatLit s) (mkNatLit w) (mkNatLit m) (reifyFactors factors)
 
 /-- Reify a factor list. -/
 meta def reifyFactors : List (Nat × Nat × Hex.Nat.PrimeCert) → Expr
@@ -348,7 +351,7 @@ meta def constructionDescription (b : Hex.Nat.ConstructionBudget) : String :=
     {b.factor.smoothBases}, {b.factor.primeBudget.rhoRestarts} rho restarts with \
     {b.factor.primeBudget.rhoSteps} steps, ECM bounds [] and 0 curves, witness \
     bases {b.witnessBases} then {b.randomWitnesses} random candidates, \
-    at most {b.maxFactors} factors and {b.maxSubsets} subsets"
+    at most {b.maxFactors} factors and {b.maxSubsets} subsets, sieve bound at most {b.maxSieveBound}"
 
 /-- Construct a reusable certificate with an optional total attempt limit. -/
 syntax (name := primalitySuggestTac) "primality?"

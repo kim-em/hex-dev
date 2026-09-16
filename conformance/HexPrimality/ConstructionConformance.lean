@@ -99,7 +99,7 @@ private def hardCofactor : Nat :=
 private def malformed : FactorSearch := fun _ n r =>
   ⟨⟨[(0, 1), (n + 1, 2 ^ 100)], 0⟩, r, 7⟩
 
-#guard (match Construction.run 100003 (Hex.Rand.ofSeed 19) (factor := malformed) with
+#guard (match Construction.run curveInput (Hex.Rand.ofSeed 19) (factor := malformed) with
   | .error f => f.stop == .exhausted && f.attempts == 7 && f.rand == Hex.Rand.ofSeed 19
   | _ => false)
 
@@ -114,7 +114,7 @@ error: primality?: input has 513 bits; construction limit is 512 bits
 example : Hex.Nat.Prime 13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084096 := by primality?
 
 private def rejects (raw : PartialFactors) : Bool :=
-  match Construction.run 100003 (Hex.Rand.ofSeed 19)
+  match Construction.run curveInput (Hex.Rand.ofSeed 19)
       (factor := fun _ _ r => ⟨raw, r, 7⟩) with
   | .error f => f.stop == .exhausted && f.attempts == 7 && f.rand == Hex.Rand.ofSeed 19
   | _ => false
@@ -179,7 +179,7 @@ end Shadow
   | _ => false)
 
 /--
-error: primality?: certificate construction for 57896044618658097711785492504343953926634992332820282019728792003956564819949 exhausted after 1 attempts (seed 57896044618658097711785492504343953926634992332820282019728792003956564819949; maximum 512 bits, recursive depth 32, total attempts 1, factor fuel 1024, p-minus-one bounds [64, 512, 4096, 32768, 262144, 524288] at bases [2, 3], 2 rho restarts with 32768 steps, ECM bounds [] and 0 curves, witness bases [2, 3, 5, 7, 11, 13, 17] then 32 random candidates, at most 12 factors and 4096 subsets)
+error: primality?: certificate construction for 57896044618658097711785492504343953926634992332820282019728792003956564819949 exhausted after 1 attempts (seed 57896044618658097711785492504343953926634992332820282019728792003956564819949; maximum 512 bits, recursive depth 32, total attempts 1, factor fuel 1024, p-minus-one bounds [64, 512, 4096, 32768, 262144, 524288] at bases [2, 3], 2 rho restarts with 32768 steps, ECM bounds [] and 0 curves, witness bases [2, 3, 5, 7, 11, 13, 17] then 32 random candidates, at most 12 factors and 4096 subsets, sieve bound at most 64)
 -/
 #guard_msgs in
 example : Hex.Nat.Prime (2 ^ 255 - 19) := by primality? (maxAttempts := 1)
@@ -190,3 +190,59 @@ example : Hex.Nat.Prime (2 ^ 255 - 19) := by primality? (maxAttempts := 1)
   | .error f => f.stop == .exhausted && f.attempts == 1 &&
       f.rand == (Hex.Rand.ofSeed 2147483647).next.2
   | _ => false)
+
+-- General cube-root replay and rejection of omitted or false sieve obligations.
+example : Hex.Nat.Prime 197 := prime_of_checkPrimeAt
+  (c := .pock3Sieve 197 1 6 0 2 [(2, 1, .small 2)]) (by decide +kernel)
+#guard !checkPrime (.pock3Sieve 197 1 6 0 1 [(2, 1, .small 2)])
+#guard !checkPrime (.pock3Sieve 197 1 6 0 0 [(2, 1, .small 2)])
+#guard !checkPrime (.pock3Sieve 205 3 6 0 2 [(32, 1, .small 2)])
+#guard checkWitness 205 2 32
+#guard !checkDivisors 205 4 1
+example : Hex.Nat.Prime 9223372036904058881 := prime_of_checkPrimeAt
+  (c := .pock3Sieve 9223372036904058881 47 4194304 0 4 [(3, 19, .small 2)])
+  (by decide +kernel)
+
+-- An unusable provider proves the cheap partial-factor route never calls it.
+private def noFactors : FactorSearch := fun _ n r => ⟨⟨[], n⟩, r, 1000000⟩
+#guard (match Construction.run 9223372036904058881 (Hex.Rand.ofSeed 17)
+    (factor := noFactors) with
+  | .ok s => checkPrime s.cert.raw && s.attempts < 1000000 && s.rand == Hex.Rand.ofSeed 17
+  | _ => false)
+
+/--
+info: Try this:
+  [apply] exact
+    Hex.Nat.prime_of_checkPrimeAt (c :=
+      Hex.Nat.PrimeCert.pock3Sieve 9223372036904058881 47 4194304 0 4 [(3, 19, Hex.Nat.PrimeCert.small 2)])
+      (by decide +kernel)
+-/
+#guard_msgs in
+example : Hex.Nat.Prime 9223372036904058881 := by primality?
+
+-- Only 2^20 is exposed by table division here. A lower sieve cap must exhaust
+-- when the provider declines further factoring, with no consumed factor attempts.
+private def decline : FactorSearch := fun _ n r => ⟨⟨[], n⟩, r, 0⟩
+example : Hex.Nat.Prime 9223372037728239617 := prime_of_checkPrimeAt
+  (c := .pock3Sieve 9223372037728239617 833 4194304 0 4 [(3, 19, .small 2)])
+  (by decide +kernel)
+#guard (match Construction.run 9223372037728239617 (Hex.Rand.ofSeed 17)
+    { constructionBudget with maxSieveBound := 4 } (factor := decline) with
+  | .ok s => checkPrime s.cert.raw && s.attempts == 2 && s.rand == Hex.Rand.ofSeed 17
+  | _ => false)
+#guard (match Construction.run 9223372037728239617 (Hex.Rand.ofSeed 17)
+    { constructionBudget with maxSieveBound := 3 } (factor := decline) with
+  | .error f => f.stop == .exhausted && f.attempts == 0 && f.rand == Hex.Rand.ofSeed 17
+  | _ => false)
+
+-- Arbitrary large literal bounds are rejected before recursive sieve replay.
+example : checkPrime (.pock3Sieve 197 1 6 0 1000000000 [(2, 1, .small 2)]) = false := by
+  decide +kernel
+#guard !checkPrime (.pock3Sieve 197 1 6 0 1000000000 [(2, 1, .small 2)])
+
+-- Both bounds satisfy the size inequality; only the checker cap rejects 65.
+example : checkPrime (.pock3Sieve 9223372036904058881 47 4194304 0 64
+    [(3, 19, .small 2)]) = true := by decide +kernel
+example : checkPrime (.pock3Sieve 9223372036904058881 47 4194304 0 65
+    [(3, 19, .small 2)]) = false := by decide +kernel
+#guard !checkPrime (.pock3Sieve 9223372036904058881 47 4194304 0 65 [(3, 19, .small 2)])

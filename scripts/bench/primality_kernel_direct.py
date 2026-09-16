@@ -66,7 +66,8 @@ run_cmd do
   -- intact, so this control must reach the witness arithmetic.
   let corruptWitness := value.replace fun e => Id.run do
     unless e.isAppOfArity `Hex.Nat.PrimeCert.pock 2 ||
-        e.isAppOfArity `Hex.Nat.PrimeCert.pock3 5 do return none
+        e.isAppOfArity `Hex.Nat.PrimeCert.pock3 5 ||
+        e.isAppOfArity `Hex.Nat.PrimeCert.pock3Sieve 6 do return none
     let args := e.getAppArgs
     let fs := args.back!
     unless fs.isAppOfArity ``List.cons 3 do return none
@@ -78,7 +79,8 @@ run_cmd do
     let fs := Lean.mkAppN fs.getAppFn (fsArgs.set! 1 entry)
     return some (Lean.mkAppN e.getAppFn (args.set! (args.size - 1) fs))
   let needsWitness := value.getUsedConstants.any fun name =>
-    name == `Hex.Nat.PrimeCert.pock || name == `Hex.Nat.PrimeCert.pock3
+    name == `Hex.Nat.PrimeCert.pock || name == `Hex.Nat.PrimeCert.pock3 ||
+      name == `Hex.Nat.PrimeCert.pock3Sieve
   if needsWitness && corruptWitness == value then
     throwError "witness corruption did not change the proof"
   if corruptWitness != value then

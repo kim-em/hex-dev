@@ -23,6 +23,7 @@ mutual
   | .small n => tableSearch n
   | .pock n fs => checkPockArith n fs && oldChildren fs
   | .pock3 n r s w fs => checkPock3Arith n r s w fs && oldChildren fs
+  | .pock3Sieve n r s w m fs => checkPock3SieveArith n r s w m fs && oldChildren fs
 @[expose] def oldChildren : List (Nat × Nat × PrimeCert) → Bool
   | [] => true
   | (_, _, c) :: cs => oldCheck c && oldChildren cs

@@ -62,12 +62,14 @@ inductive PrimeCert where
   the discriminant test (`Nat.sqrt` is well-founded recursion and does not
   kernel-reduce, so the checker verifies `w` instead of computing a root). -/
   | pock3 (n r s w : Nat) (factors : List (Nat × Nat × PrimeCert))
+  /-- Cube-root Pocklington with divisors `lF+1` excluded for `1 ≤ l < m`. -/
+  | pock3Sieve (n r s w m : Nat) (factors : List (Nat × Nat × PrimeCert))
 deriving Repr
 
 /-- The number a certificate is about. -/
 @[expose]
 def PrimeCert.subject : PrimeCert → Nat
-  | .small n | .pock n _ | .pock3 n _ _ _ _ => n
+  | .small n | .pock n _ | .pock3 n _ _ _ _ | .pock3Sieve n _ _ _ _ _ => n
 
 /-- `acc * q ^ e`, checking each nonzero multiplication by division before
 constructing it. A zero accumulator or base returns zero immediately; otherwise
@@ -376,6 +378,44 @@ def checkPock3Arith (n r s w : Nat)
               decide (r * r - 8 * s < (w + 1) * (w + 1)))) &&
           checkWitnesses n factors
 
+/-- Maximum sieve bound in a checked certificate.
+This caps replay work for arbitrary untrusted literals, including rejected inputs. -/
+@[expose] def pocklingtonSieveCap : Nat := 64
+
+/-- Check the first `k` possible divisors `lF+1`. -/
+@[expose]
+def checkDivisors (n F : Nat) : Nat → Bool
+  | 0 => true
+  | k + 1 => checkDivisors n F k && n % ((k + 1) * F + 1) != 0
+
+private theorem checkDivisors_spec (n F : Nat) : ∀ k,
+    checkDivisors n F k = true → ∀ l, 1 ≤ l → l ≤ k → ¬ l * F + 1 ∣ n
+  | 0, _, _, _, _ => by omega
+  | k + 1, h, l, hl, hk => by
+    simp only [checkDivisors, Bool.and_eq_true, bne_iff_ne] at h
+    by_cases heq : l = k + 1
+    · subst l
+      exact fun hd => h.2 (Nat.mod_eq_zero_of_dvd hd)
+    · exact checkDivisors_spec n F k h.1 l hl (by omega)
+
+/-- The general cube-root arithmetic check; the legacy node retains its sieve-free path. -/
+@[expose]
+def checkPock3SieveArith (n r s w m : Nat)
+    (factors : List (Nat × Nat × PrimeCert)) : Bool :=
+  decide (2 ≤ n) && n % 2 == 1 && subjectsOk factors &&
+    match certProduct (n - 1) factors with
+    | none => false
+    | some F =>
+        (n - 1) % F == 0 && F % 2 == 0 && (n - 1) / F % 2 == 1 &&
+          (n - 1) / F == 2 * F * s + r &&
+          decide (1 ≤ r) && decide (r < 2 * F) && decide (1 ≤ m) && decide (m ≤ pocklingtonSieveCap) &&
+          decide (2 * s + m * m < (2 * F + r) * m + 2) &&
+          checkDivisors n F (m - 1) &&
+          (s == 0 || decide (r * r < 8 * s) ||
+            (decide (w * w < r * r - 8 * s) &&
+              decide (r * r - 8 * s < (w + 1) * (w + 1)))) &&
+          checkWitnesses n factors
+
 /-! Accumulator lemmas -/
 
 /-- On success, the bounded accumulator computes the ordinary product. -/
@@ -649,6 +689,8 @@ def checkPrime.native : PrimeCert → Bool
   | .pock n factors => checkPockArith n factors && checkChildren factors
   | .pock3 n r s w factors =>
       checkPock3Arith n r s w factors && checkChildren factors
+  | .pock3Sieve n r s w m factors =>
+      checkPock3SieveArith n r s w m factors && checkChildren factors
 
 /-- Accept every child certificate of a factor list. -/
 @[expose]
@@ -666,6 +708,7 @@ noncomputable def checkPrime : PrimeCert → Bool :=
     (motive_3 := fun _ => Bool) (motive_4 := fun _ => Bool)
     isTablePrime (fun n fs ih => (checkPockArith n fs).and ih)
     (fun n r s w fs ih => (checkPock3Arith n r s w fs).and ih)
+    (fun n r s w m fs ih => (checkPock3SieveArith n r s w m fs).and ih)
     true (fun _ _ head tail => head.and tail)
     (fun _ _ ih => ih) (fun _ _ ih => ih)
 
@@ -690,11 +733,23 @@ private theorem checkPrime.pock3 (n r s w : Nat) (fs : List (Nat × Nat × Prime
     rcases x with ⟨a, e, c⟩
     simpa only [checkPrime, List.all_cons, Bool.and] using congrArg (checkPrime c && ·) ih
 
+private theorem checkPrime.pock3Sieve (n r s w m : Nat) (fs : List (Nat × Nat × PrimeCert)) :
+    checkPrime (.pock3Sieve n r s w m fs) =
+      (checkPock3SieveArith n r s w m fs && fs.all (fun x => checkPrime x.2.2)) := by
+  suffices h : _ = fs.all (fun x => checkPrime x.2.2) by
+    exact congrArg (fun x => checkPock3SieveArith n r s w m fs && x) h
+  induction fs with
+  | nil => rfl
+  | cons x xs ih =>
+    rcases x with ⟨a, e, c⟩
+    simpa only [checkPrime, List.all_cons, Bool.and] using congrArg (checkPrime c && ·) ih
+
 mutual
 private theorem checkPrime.eq_native : ∀ c, checkPrime c = checkPrime.native c
   | .small _ => rfl
   | .pock n fs => by rw [checkPrime.pock, checkChildren.eq_all]; rfl
   | .pock3 n r s w fs => by rw [checkPrime.pock3, checkChildren.eq_all]; rfl
+  | .pock3Sieve n r s w m fs => by rw [checkPrime.pock3Sieve, checkChildren.eq_all]; rfl
 
 private theorem checkChildren.eq_all : ∀ fs : List (Nat × Nat × PrimeCert),
     fs.all (fun x => checkPrime x.2.2) = checkChildren fs
@@ -977,6 +1032,39 @@ private theorem checkPock3Arith_spec {n r s w : Nat}
     · exact Or.inr (Or.inl hlt)
     · exact Or.inr (Or.inr (not_square_of_sqrt_witness hw1 hw2))
 
+private theorem checkPock3SieveArith_spec {n r s w m : Nat}
+    {factors : List (Nat × Nat × PrimeCert)}
+    (h : checkPock3SieveArith n r s w m factors = true) :
+    2 ≤ n ∧ n % 2 = 1 ∧ subjectsOk factors = true ∧
+      ∃ F, F = certProd factors ∧ F ∣ n - 1 ∧ F % 2 = 0 ∧
+        (n - 1) / F % 2 = 1 ∧ (n - 1) / F = 2 * F * s + r ∧
+        1 ≤ r ∧ r < 2 * F ∧
+        1 ≤ m ∧ (∀ l, 1 ≤ l → l < m → ¬ l * F + 1 ∣ n) ∧
+        2 * s + m * m < (2 * F + r) * m + 2 ∧
+        (s = 0 ∨ r * r < 8 * s ∨ ∀ t, t * t ≠ r * r - 8 * s) ∧
+        ∀ x ∈ factors, checkWitness n x.2.2.subject x.1 = true := by
+  unfold checkPock3SieveArith at h
+  simp only [checkWitnesses.eq_native, checkWitnesses.native] at h
+  rw [Bool.and_eq_true, Bool.and_eq_true] at h
+  obtain ⟨⟨h2, hodd⟩, hm⟩ := h
+  rw [Bool.and_eq_true] at h2
+  obtain ⟨h2', hodd'⟩ := h2
+  split at hm
+  · cases hm
+  next F hprod =>
+    simp only [Bool.and_eq_true, Bool.or_eq_true, decide_eq_true_iff,
+      beq_iff_eq, List.all_eq_true] at hm
+    obtain ⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨hdvd, heven⟩, hrodd⟩, hdec⟩, hr1⟩, hr2⟩, hm⟩, _hcap⟩, hbound⟩, hdiv⟩,
+      hdisc⟩, hall⟩ := hm
+    refine ⟨by simpa using h2', by simpa using hodd', hodd,
+      F, certProduct_eq _ _ hprod, Nat.dvd_of_mod_eq_zero hdvd,
+      heven, hrodd, hdec, hr1, hr2, hm,
+      (fun l hl hb => checkDivisors_spec n F (m - 1) hdiv l hl (by omega)), hbound, ?_, hall⟩
+    rcases hdisc with (hs0 | hlt) | ⟨hw1, hw2⟩
+    · exact Or.inl hs0
+    · exact Or.inr (Or.inl hlt)
+    · exact Or.inr (Or.inr (not_square_of_sqrt_witness hw1 hw2))
+
 /-- Pocklington replay with separately proved child primes. This permits a
 certificate generator to share child proofs across many parent certificates.
 Only each child's subject is used; `checkPockArith` validates the parent
@@ -1056,6 +1144,37 @@ private theorem prime_of_checkPrime_aux :
           exact ih x.2.2.subject hqltm x.2.2 rfl hcheckx
         exact pocklington3 (by omega) hFdvd hFeven hF0 hRodd hdec hr1 hr2
           hbound hdisc
+          (pock_divisor_step (by omega) hFdvd hchildprime hsub hFprod hwit)
+    | pock3Sieve m r s w k factors =>
+        have hm : m = N := hsubj
+        subst hm
+        unfold checkPrime.native at hcheck
+        rw [Bool.and_eq_true] at hcheck
+        obtain ⟨harith, hchildren⟩ := hcheck
+        obtain ⟨h2, hodd, hsub, F, hFprod, hFdvd, hFeven, hRodd, hdec, hr1,
+          hr2, hk, hdiv, hbound, hdisc, hwit⟩ := checkPock3SieveArith_spec harith
+        have hF0 : 0 < F := by
+          rcases Nat.eq_zero_or_pos F with h0 | h
+          · subst h0
+            have := Nat.eq_zero_of_zero_dvd hFdvd
+            omega
+          · exact h
+        have hchildprime : ∀ x ∈ factors, Prime x.2.2.subject := by
+          intro x hx
+          have hcheckx := checkChildren_forall hchildren x hx
+          have hq2 : 2 ≤ x.2.2.subject := subjectsOk_forall hsub x hx
+          have hqltm : x.2.2.subject < m := by
+            have hqdvd : x.2.2.subject ∣ m - 1 := by
+              refine Nat.dvd_trans ?_ hFdvd
+              rw [hFprod]
+              exact Nat.dvd_trans (dvd_pow_self'' _ (by omega))
+                (certProd_mem_dvd hx)
+            have hm3 : 3 ≤ m := by omega
+            have := Nat.le_of_dvd (by omega : 0 < m - 1) hqdvd
+            omega
+          exact ih x.2.2.subject hqltm x.2.2 rfl hcheckx
+        exact pocklington3Sieve (by omega) hFdvd hFeven hF0 hRodd hdec hr1 hr2
+          hk hdiv hbound hdisc
           (pock_divisor_step (by omega) hFdvd hchildprime hsub hFprod hwit)
 
 /-- Checker soundness: an accepted certificate proves its subject prime.

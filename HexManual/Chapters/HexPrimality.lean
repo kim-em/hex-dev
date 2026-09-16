@@ -164,7 +164,11 @@ stage-one Pollard `p - 1` up to 524288, bounded rho work, and deterministic
 small witnesses before random candidates. Every limit is finite; exhaustion
 reports the seed, attempts, and resource profile. Success depends on finding
 enough factors of predecessors for Pocklington, rather than on bit length
-alone. The ordinary `primality` policy keeps its existing smaller budget.
+alone. Construction first tries the factors found by table division before
+running the more expensive factor search. It can use a power of two alone and
+can trade up to 63 small-divisor checks for a smaller factored part of the
+predecessor. These checks are included in the reusable certificate and replayed
+by the kernel. The ordinary `primality` policy keeps its existing smaller budget.
 
 The Curve25519 result has three non-leaf certificate nodes and eight factor
 entries. Kernel replay reads the already verified sieve bitset for table

@@ -134,7 +134,7 @@ def _check_cert(pari, cert: dict[str, Any]) -> bool:
         return False
     if t == "pock":
         return n < F * F
-    if t != "pock3":
+    if t not in ("pock3", "pock3Sieve"):
         raise OracleMismatch(f"unknown certificate node {t!r}")
     r, s, w = int(cert["r"]), int(cert["s"]), int(cert["w"])
     big_r = (n - 1) // F
@@ -142,8 +142,15 @@ def _check_cert(pari, cert: dict[str, Any]) -> bool:
         return False
     if big_r != 2 * F * s + r or not (1 <= r < 2 * F):
         return False
-    if n >= (F + 1) * (2 * F * F + (r - 1) * F + 1):
-        return False
+    if t == "pock3":
+        if n >= (F + 1) * (2 * F * F + (r - 1) * F + 1):
+            return False
+    else:
+        m = int(cert["m"])
+        if not 1 <= m <= 64 or 2 * s + m * m >= (2 * F + r) * m + 2:
+            return False
+        if any(n % (l * F + 1) == 0 for l in range(1, m)):
+            return False
     d = r * r - 8 * s
     return s == 0 or r * r < 8 * s or (w * w < d < (w + 1) * (w + 1))
 

@@ -28,12 +28,25 @@ structure ConstructionBudget where
   randomWitnesses : Nat := 32
   maxFactors : Nat := 12
   maxSubsets : Nat := 4096
+  maxSieveBound : Nat := 64
 deriving Repr, DecidableEq
 
 /-- The reproducible construction profile used by `primality?`. -/
 def constructionBudget : ConstructionBudget := {}
 
 namespace Construction
+
+/-- The least positive sieve bound satisfying the cube-root size inequality, or zero.
+This runs only during construction; the checker validates the chosen literal directly. -/
+private def sieveBound (twoF r s : Nat) : Nat :=
+  let b := twoF + r
+  if b * b + 8 ≤ 8 * s then 0
+  else Id.run do
+    let sq := Nat.sqrt (b * b + 8 - 8 * s)
+    let cand := (b - sq) / 2
+    for m in [max 1 (cand - 3) : cand + 4] do
+      if 2 * s + m * m < b * m + 2 then return m
+    return 0
 
 private def insert (q e : Nat) : List (Nat × Nat) → List (Nat × Nat)
   | [] => [(q, e)]
@@ -113,22 +126,23 @@ private def cubeData (n F : Nat) : Nat × Nat × Nat :=
 
 /-- Cheap size and discriminant screening before any recursive certification.
 The public checker validates these computations again on the final literal. -/
-private def sufficient (n F : Nat) : Bool :=
+private def sufficient (budget : ConstructionBudget) (n F : Nat) : Bool :=
   if n < F * F then true else
     let (r, s, w) := cubeData n F
+    let m := sieveBound (2 * F) r s
     F % 2 == 0 && (n - 1) / F % 2 == 1 && 1 ≤ r &&
-      n < (F + 1) * (2 * F * F + (r - 1) * F + 1) &&
+      1 ≤ m && m ≤ min budget.maxSieveBound pocklingtonSieveCap && checkDivisors n F (m - 1) &&
       (s == 0 || r * r < 8 * s ||
         (w * w < r * r - 8 * s && r * r - 8 * s < (w + 1) * (w + 1)))
 
 /-- Estimate recursive replay work using the table-factored predecessor.
 Table leaves cost no construction nodes; a child already covered by its table
 factors costs one. More expensive children receive a bit-size penalty. -/
-private def childCost (q : Nat) : Nat :=
+private def childCost (budget : ConstructionBudget) (q : Nat) : Nat :=
   if isTablePrime q then 0 else
     let factors := trial (q - 1)
     let F := (q - 1) / factors.residual
-    if sufficient q F then 1 else 2 + q.log2 / 32
+    if sufficient budget q F then 1 else 2 + q.log2 / 32
 
 private def subsets (budget : ConstructionBudget) (n : Nat)
     (factors : List (Nat × Nat)) : List (List (Nat × Nat)) := Id.run do
@@ -136,7 +150,7 @@ private def subsets (budget : ConstructionBudget) (n : Nat)
   let factors := factors.mergeSort (fun x y => x.1 ≤ y.1)
   if !decide ((factors.map Prod.fst).Pairwise (· < ·)) then return []
   if (product n factors).isNone then return []
-  let costs := factors.map fun (q, _) => childCost q
+  let costs := factors.map fun (q, _) => childCost budget q
   let mut choices : List (Nat × List (Nat × Nat)) := []
   let count := 2 ^ factors.length
   for i in [:min budget.maxSubsets count] do
@@ -145,9 +159,11 @@ private def subsets (budget : ConstructionBudget) (n : Nat)
     let selected := factors.zipIdx |>.filterMap fun (entry, i) =>
       if mask.testBit i then some entry else none
     if let some F := product n selected then
-      if sufficient n F then
+      if sufficient budget n F then
+        let (r, s, _) := cubeData n F
+        let divisions := if n < F * F then 0 else sieveBound (2 * F) r s - 1
         let cost := (costs.zipIdx).foldl (fun acc (cost, i) =>
-          if mask.testBit i then acc + 16 * cost + 1 else acc) 0
+          if mask.testBit i then acc + (16 * cost + 1) * (n.log2 + 1) else acc) divisions
         choices := (cost, selected) :: choices
   return (choices.mergeSort fun x y => x.1 ≤ y.1).map Prod.snd
 
@@ -166,7 +182,8 @@ private def witness (budget : ConstructionBudget) (n q : Nat) (r : Hex.Rand) :
 private def node (n F : Nat) (entries : List (Nat × Nat × PrimeCert)) : PrimeCert :=
   if n < F * F then .pock n entries else
     let (r, s, w) := cubeData n F
-    .pock3 n r s w entries
+    let m := sieveBound (2 * F) r s
+    if m == 1 then .pock3 n r s w entries else .pock3Sieve n r s w m entries
 
 mutual
 
@@ -179,21 +196,34 @@ private def generate (budget : ConstructionBudget) (factor : FactorSearch)
   else match fuel with
   | 0 => .error ⟨.exhausted, 0, r⟩
   | fuel + 1 =>
-      let allocation := { budget.factor with
-        primeFuel := fuel
-        attemptLimit := some budget.maxAttempts }
-      let result := factor allocation (n - 1) r
-      if result.attempts > budget.maxAttempts ||
-          result.raw.factors.length > budget.maxFactors then
-        .error ⟨.exhausted, result.attempts, result.rand⟩
-      else match product n result.raw.factors with
-      | none => .error ⟨.exhausted, result.attempts, result.rand⟩
-      | some F =>
-          if result.raw.residual == 0 || result.raw.residual > n - 1 ||
-              F * result.raw.residual != n - 1 then
+      let cheap := subsets budget n (trial (n - 1)).factors
+      match choose budget factor fuel n cheap [] 0 r with
+      | .ok result => .ok result
+      | .error first =>
+        let remaining := { budget with maxAttempts := budget.maxAttempts - first.attempts }
+        let r := first.rand
+        let result : Except PrimeCertFailure (PrimeCert × Nat × Hex.Rand) := Id.run do
+          let allocation := { budget.factor with
+            primeFuel := fuel
+            attemptLimit := some remaining.maxAttempts }
+          let result := factor allocation (n - 1) r
+          return if result.attempts > remaining.maxAttempts ||
+              result.raw.factors.length > budget.maxFactors then
             .error ⟨.exhausted, result.attempts, result.rand⟩
-          else choose budget factor fuel n (subsets budget n result.raw.factors)
-            [] result.attempts result.rand
+          else match product n result.raw.factors with
+          | none => .error ⟨.exhausted, result.attempts, result.rand⟩
+          | some F =>
+              if result.raw.residual == 0 || result.raw.residual > n - 1 ||
+                  F * result.raw.residual != n - 1 then
+                .error ⟨.exhausted, result.attempts, result.rand⟩
+              else
+                let choices := (subsets remaining n result.raw.factors).filter
+                  (fun fs => !cheap.contains fs)
+                choose remaining factor fuel n choices [] result.attempts result.rand
+        match result with
+        | .ok (cert, work, rand) => .ok (cert, first.attempts + work, rand)
+        | .error failure => .error { failure with attempts := first.attempts + failure.attempts }
+
 termination_by (fuel, 0, 0)
 
 private def choose (budget : ConstructionBudget) (factor : FactorSearch)

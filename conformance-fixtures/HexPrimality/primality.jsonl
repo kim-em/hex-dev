@@ -116,6 +116,16 @@
 {"kind":"result","lib":"HexPrimality","case":"certcheck/reject/pock3-witness-high","op":"certcheck","value":false}
 {"kind":"certcheck","lib":"HexPrimality","case":"certcheck/reject/pock3-size","n":43,"cert":{"t":"pock3","n":43,"r":1,"s":5,"w":0,"f":[[3,0,{"t":"small","n":2}]]}}
 {"kind":"result","lib":"HexPrimality","case":"certcheck/reject/pock3-size","op":"certcheck","value":false}
+{"kind":"certcheck","lib":"HexPrimality","case":"certcheck/accept/pock3-sieve","n":197,"cert":{"t":"pock3Sieve","n":197,"r":1,"s":6,"w":0,"m":2,"f":[[2,1,{"t":"small","n":2}]]}}
+{"kind":"result","lib":"HexPrimality","case":"certcheck/accept/pock3-sieve","op":"certcheck","value":true}
+{"kind":"certcheck","lib":"HexPrimality","case":"certcheck/reject/pock3-sieve-divisor","n":205,"cert":{"t":"pock3Sieve","n":205,"r":3,"s":6,"w":0,"m":2,"f":[[32,1,{"t":"small","n":2}]]}}
+{"kind":"result","lib":"HexPrimality","case":"certcheck/reject/pock3-sieve-divisor","op":"certcheck","value":false}
+{"kind":"certcheck","lib":"HexPrimality","case":"certcheck/reject/pock3-sieve-bound","n":197,"cert":{"t":"pock3Sieve","n":197,"r":1,"s":6,"w":0,"m":1,"f":[[2,1,{"t":"small","n":2}]]}}
+{"kind":"result","lib":"HexPrimality","case":"certcheck/reject/pock3-sieve-bound","op":"certcheck","value":false}
+{"kind":"certcheck","lib":"HexPrimality","case":"certcheck/accept/pock3-sieve-cap","n":9223372036904058881,"cert":{"t":"pock3Sieve","n":9223372036904058881,"r":47,"s":4194304,"w":0,"m":64,"f":[[3,19,{"t":"small","n":2}]]}}
+{"kind":"result","lib":"HexPrimality","case":"certcheck/accept/pock3-sieve-cap","op":"certcheck","value":true}
+{"kind":"certcheck","lib":"HexPrimality","case":"certcheck/reject/pock3-sieve-over-cap","n":9223372036904058881,"cert":{"t":"pock3Sieve","n":9223372036904058881,"r":47,"s":4194304,"w":0,"m":65,"f":[[3,19,{"t":"small","n":2}]]}}
+{"kind":"result","lib":"HexPrimality","case":"certcheck/reject/pock3-sieve-over-cap","op":"certcheck","value":false}
 {"kind":"certcheck","lib":"HexPrimality","case":"certcheck/accept/curve25519","n":57896044618658097711785492504343953926634992332820282019728792003956564819949,"cert":{"t":"pock","n":57896044618658097711785492504343953926634992332820282019728792003956564819949,"f":[[2,0,{"t":"pock3","n":74058212732561358302231226437062788676166966415465897661863160754340907,"r":2028478494862525422475607,"s":22304740449229861598212,"w":2028478494862525422475606,"f":[[2,0,{"t":"small","n":2}],[2,0,{"t":"small","n":353}],[2,0,{"t":"small","n":57467}],[2,0,{"t":"pock3","n":31757755568855353,"r":4028945,"s":289,"w":4028944,"f":[[5,2,{"t":"small","n":2}],[2,0,{"t":"small","n":223}],[2,0,{"t":"small","n":4153}]]}]]}]]}}
 {"kind":"result","lib":"HexPrimality","case":"certcheck/accept/curve25519","op":"certcheck","value":true}
 {"kind":"segment","lib":"HexPrimality","case":"segment/edge/empty","lo":10,"hi":10}
