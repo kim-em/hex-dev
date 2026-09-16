@@ -457,8 +457,8 @@ The runtime worker keeps its existing public name `powModNatGo`; it belongs
 to `powModBits`, whereas `powModNat.go` is the kernel accumulator.
 For positive moduli the respective intermediate
 bounds are `p^127`, `p^31`, `p^15`, `p^7`, `p^4 * 2^192`, `p^2 * 2^64`, and `p^2`.
-Window selection uses shifts so it also reduces under Meta's default
-exponentiation limit. These fixed windows retain logarithmic recursion
+Window selection uses kernel-reducible shifts. Kernel-check measurements,
+independent of Meta's exponentiation threshold, determine the policy. These fixed windows retain logarithmic recursion
 in the exponent. The runtime fallback `powModBits` retains the original
 bit scan and reduces after every multiplication. The kernel specification is `noncomputable`; a proved `@[csimp]` equality
 redirects compiled calls to `powMod`'s Montgomery dispatch and this fallback. Both return `0` at

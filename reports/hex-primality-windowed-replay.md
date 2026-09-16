@@ -52,6 +52,13 @@ kernel improvements.
 
 ![Full certificate kernel comparison](figures/hex-primality-kernel-direct.svg)
 
+## Acknowledgements
+
+The kernel accumulator adapts Bhavik Mehta's `powModK` in PrimeCert, developed
+with help from Joachim Breitner. PrimeCert's Pocklington implementation and
+certificate framework also reflect substantial work by Kenny Lau. The
+comparison uses their public implementations and keeps their source notices.
+
 ## Why replay is faster
 
 - `HexArith.powModNat` uses direct recursors and fixed windows: six bits through
