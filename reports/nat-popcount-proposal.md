@@ -8,7 +8,7 @@ proved bit-count equations, and a native runtime implementation. Keep
 Nat operation.
 
 [Draft lean4#15176](https://github.com/leanprover/lean4/pull/15176) implements
-this design. Kernel reduction evaluates proved chunk arithmetic using existing
+this design. Kernel reduction evaluates proved parallel counting using existing
 Nat operations, following the approach of
 [lean4#15167](https://github.com/leanprover/lean4/pull/15167).
 
@@ -31,13 +31,18 @@ popcount (n % 2^k) + popcount (n / 2^k) = popcount n
 popcount n ≤ k, when n < 2^k
 ```
 
-The binary equation uniquely describes the intended count. The split equation
-connects word chunks to the arbitrary-precision operation. The Lean
-implementation processes 248-bit chunks using direct recursors and a proved
-finite fuel bound. This is the largest whole number of bytes whose bit count
-fits in a byte. Reduce each chunk below `2^248` before applying its word theorem.
-Do not generalize its final 8-bit sum to an unbounded integer: that would wrap
-once the count exceeds 255.
+The binary equation uniquely describes the intended count. The implementation
+first replaces every byte of the whole integer by its bit count. Masked shifts
+and additions combine adjacent lanes until the lane base minus one exceeds
+the maximum total count. Taking the remainder modulo that value sums the
+lanes exactly. The proof tracks the original bit width represented by each
+lane, excludes carries between lanes, and preserves the total through pairing.
+
+Inputs up to 248 bits use precomputed byte masks. Specialized paths cover
+256 and 4096 bits with 16-bit lanes, and 65536 bits with 32-bit lanes. A
+structurally recursive fallback doubles the input-width bound and combines
+lanes as necessary. Its fuel bound and correctness theorem cover arbitrary
+natural numbers.
 
 ## Native implementation and kernel reduction
 
@@ -48,18 +53,17 @@ especially on Windows; checked accumulation must preserve its full width.
 Return zero for zero.
 
 The native arithmetic cost is linear in the number of stored limbs. Kernel
-reduction instead processes chunks through Nat shifts, masks and multiplication. Repeated extraction copies successively shorter big integers and
-can accumulate quadratic work. The `@[extern]` implementation accelerates
-compiled calls; the transparent Lean body determines kernel replay performance.
-Its correctness follows from the binary counting equations and the proved
+reduction applies shifts, masks, additions, division and remainder to the
+whole integer. The `@[extern]` implementation accelerates compiled calls;
+the transparent Lean body determines kernel replay performance. Its
+correctness follows from the binary counting equations and the proved
 bytewise algorithm. The kernel's trusted reduction rules remain unchanged.
 
 [Standalone measurements and reproducers](https://gist.github.com/kim-em/c308db93be8966f18bc2b68c1daddecf)
-compare 64-, 128- and 248-bit chunks, a PrimeCert-style 64-bit word reference,
-and the native implementation. Larger performance experiments remain outside
-CI. Balanced chunk splitting or whole-integer masked addition are possible
-future improvements; their mask construction and intermediate sizes must be
-included in comparisons.
+compare a PrimeCert-style 64-bit word reference, the transparent whole-integer
+implementation, and native execution. They include intermediate operand sizes
+and inputs through one million bits. Larger performance experiments remain
+outside CI.
 
 ## BitVec integration
 
@@ -97,7 +101,7 @@ symbolic `bv_decide` examples, not just concrete numerals.
 
 Use an independent bit-by-bit reference for differential tests so the implementation
 does not serve as its own oracle. Require arbitrary-input Lean proofs for the
-chunk algorithm and BitVec bridge. Small correctness cases belong in the existing CI
+parallel counting algorithm and BitVec bridge. Small correctness cases belong in the existing CI
 jobs; the larger performance sweep belongs in a standalone reproducible
 artifact. Numerical performance targets should follow measurement.
 
