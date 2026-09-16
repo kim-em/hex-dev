@@ -65,6 +65,10 @@ specification, and review the correspondence explicitly. No new axiom or
 compiler-trusted proof rule is involved, but the C++ reduction is trusted.
 If maintainers prefer no new kernel primitive, ship the proved word/chunk
 implementation first and measure its remaining overhead.
+Also compare balanced chunk splitting or whole-integer masked addition as
+pure-Lean alternatives. Their mask construction and intermediate sizes belong
+in the measurements; the simple repeated-shift fallback is not necessarily the
+best implementation available without a new primitive.
 
 ## BitVec integration
 
