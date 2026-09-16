@@ -1204,7 +1204,8 @@ the `Nat` route instead:
 
 - `HexArith.powModNat` and its raw `Nat.rec`/`Bool.rec` workers are
   exposed. Fixed windows of six bits through `2^64`, four bits through
-  `2^512`, and three bits through `2^1024` reduce kernel work. Larger moduli use
+  `2^512`, three bits through `2^1024`, and two bits through `2^2048`
+  reduce kernel work. Larger moduli use
   narrower windows for small reduced bases or binary square-and-multiply.
   The exact algorithm and intermediate-size
   bounds belong to the hex-arith SPEC;

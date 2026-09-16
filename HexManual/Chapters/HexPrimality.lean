@@ -37,6 +37,9 @@ project-local {name}`Hex.Nat.Prime` predicate. The companion library
 extends the `primality` tactic to goals stated with it, and registers
 an explicitly opted-in `norm_num` policy.
 
+Import `HexPrimality` for the Mathlib-free API and tactics, or
+`HexPrimalityMathlib` to use them with Mathlib's `Nat.Prime`.
+
 # Deciding primality
 %%%
 tag := "hex-primality-decide"
@@ -84,7 +87,7 @@ tag := "hex-primality-tactic"
 %%%
 
 The bare tactic closes a {name}`Hex.Nat.Prime` goal on a numeral; the
-search runs compiled at elaboration time and the kernel replays only
+search runs during elaboration and the kernel replays only
 the certificate check:
 
 ```lean
