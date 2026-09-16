@@ -326,10 +326,11 @@ inductive PrimeCert where
   and does not kernel-reduce, so the checker verifies `w` with two
   multiplications instead of computing a root. -/
   | pock3 (n r s w : Nat) (factors : List (Nat × Nat × PrimeCert))
+  | pock3Sieve (n r s w m : Nat) (factors : List (Nat × Nat × PrimeCert))
 
 /-- The number a certificate is about. -/
 def PrimeCert.subject : PrimeCert → Nat
-  | .small n | .pock n _ | .pock3 n _ _ _ => n
+  | .small n | .pock n _ | .pock3 n _ _ _ _ | .pock3Sieve n _ _ _ _ _ => n
 
 def checkPrime (c : PrimeCert) : Bool
 
@@ -493,10 +494,13 @@ Grégoire, Théry and Werner, "A Computational Approach to Pocklington
 Certificates in Type Theory",
 https://www-sop.inria.fr/members/Benjamin.Gregoire/Publi/pock.pdf, and
 in PrimeCert's `Pocklington3.lean`. PrimeCert states the stronger form
-with an extra parameter `m`, a check excluding divisors `lF + 1` for
-`1 ≤ l < m`, and the corresponding relaxed bound. A future
-companion-side dependency may instantiate it at `m = 1`; this checker
-does not claim that stronger parameterised interface.
+with an extra parameter `m`. The `pock3Sieve n r s w m factors` constructor
+implements that stronger form, proved by the Mathlib-free `pocklington3Sieve`:
+it additionally checks `1 ≤ m`, excludes divisors `lF + 1` for `1 ≤ l < m`,
+and replaces condition 5 by `2s + m² < (2F + r)m + 2`. It retains all other
+arithmetic, child-primality, ordering and witness checks. The original `pock3`
+constructor and literal proofs retain their sieve-free behavior. Neither form
+requires an odd prime in the factor product; a power of two alone is valid.
 
 ### What an accepted certificate proves, and what it does not
 
@@ -1549,6 +1553,9 @@ depth 32, 1024 total semantic attempts across the entire construction,
 of 32768 steps, and no ECM bounds or curves. Witness search tries
 `[2, 3, 5, 7, 11, 13, 17]` before at most 32 random candidates. It admits at
 most 12 distinct factor candidates and examines at most 4096 subset masks.
+`maxSieveBound = 64` permits at most 63 divisor exclusions per candidate.
+The least admissible bound is computed with an integer square root during
+construction and checked directly during replay.
 `primality? (maxAttempts := 29)` overrides the total attempt limit; the
 unadorned tactic uses 1024. The remaining allocation is passed to each factor
 producer, recursive child, and witness search, so failed subset choices cannot
@@ -1570,10 +1577,16 @@ established schedules. The construction callback tries its declared smooth
 ladder before rho at each composite worklist entry and retains unsplit parts
 as the residual.
 
-Before recursive certification, construction validates canonical factor data
+Construction first tries subsets of the cheap table-division factors. Only if
+those certificates fail does it call the configured factor provider, with the
+remaining attempt budget and advanced random state. Previously tried subsets
+are skipped during that fallback. Before recursive certification, construction
+validates canonical factor data
 and bounded products. It enumerates subsets satisfying square-root or
 cube-root arithmetic criteria and orders them by estimated recursive replay
-cost, then entry count. Table leaves cost zero construction nodes; children
+cost. Each entry costs `(16 * childCost + 1) * (n.log2 + 1)`, and the
+`m - 1` divisor exclusions each add one unit. This is a search heuristic,
+not a measured cost guarantee. Table leaves cost zero construction nodes; children
 whose table-factored predecessors already satisfy a criterion cost one;
 remaining children receive a bit-size penalty. Estimates select search order
 only. When a subset cap truncates enumeration, the full factor mask remains

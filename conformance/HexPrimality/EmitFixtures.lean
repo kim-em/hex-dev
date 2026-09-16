@@ -78,6 +78,10 @@ private partial def certJson : PrimeCert → String
       "{\"t\":\"pock3\",\"n\":" ++ toString n ++ ",\"r\":" ++ toString r ++
         ",\"s\":" ++ toString s ++ ",\"w\":" ++ toString w ++
         ",\"f\":" ++ factorsJson f ++ "}"
+  | .pock3Sieve n r s w m f =>
+      "{\"t\":\"pock3Sieve\",\"n\":" ++ toString n ++ ",\"r\":" ++ toString r ++
+        ",\"s\":" ++ toString s ++ ",\"w\":" ++ toString w ++
+        ",\"m\":" ++ toString m ++ ",\"f\":" ++ factorsJson f ++ "}"
 
 private partial def factorsJson (f : List (Nat × Nat × PrimeCert)) : String :=
   "[" ++ String.intercalate ","
@@ -157,7 +161,10 @@ private def certCases : List (String × Nat × PrimeCert) :=
       .pock3 199 33 0 0 [(3, 0, .small 2), (2, 0, .small 3)]),
     ("reject/pock3-witness-high", 199,
       .pock3 199 9 2 9 [(3, 0, .small 2), (2, 0, .small 3)]),
-    ("reject/pock3-size", 43, .pock3 43 1 5 0 [(3, 0, .small 2)]) ]
+    ("reject/pock3-size", 43, .pock3 43 1 5 0 [(3, 0, .small 2)]),
+    ("accept/pock3-sieve", 197, .pock3Sieve 197 1 6 0 2 [(2, 1, .small 2)]),
+    ("reject/pock3-sieve-divisor", 205, .pock3Sieve 205 3 6 0 2 [(32, 1, .small 2)]),
+    ("reject/pock3-sieve-bound", 197, .pock3Sieve 197 1 6 0 1 [(2, 1, .small 2)]) ]
 
 /-- The `segment` surface: the SPEC's `[1, 100]` and `[1, 10^4]`, plus one
 segment straddling `primeTableBound` to check that the table and fallback
