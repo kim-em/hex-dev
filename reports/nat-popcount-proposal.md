@@ -48,8 +48,7 @@ especially on Windows; checked accumulation must preserve its full width.
 Return zero for zero.
 
 The native arithmetic cost is linear in the number of stored limbs. Kernel
-reduction instead processes chunks through Nat shifts, masks, multiplication
-and division. Repeated extraction copies successively shorter big integers and
+reduction instead processes chunks through Nat shifts, masks and multiplication. Repeated extraction copies successively shorter big integers and
 can accumulate quadratic work. The `@[extern]` implementation accelerates
 compiled calls; the transparent Lean body determines kernel replay performance.
 Its correctness follows from the binary counting equations and the proved
