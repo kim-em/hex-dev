@@ -2,15 +2,14 @@
 
 ## Recommendation
 
-Add a total `Nat.popcount : Nat → Nat`, with a transparent Lean definition and
-proved bit-count equations, plus a native runtime implementation and a kernel
-literal reduction rule. Keep `BitVec.cpop` as the public bitvector operation,
-implemented through the same Nat operation. The API spelling is provisional.
+Add a total `Nat.popcount : Nat → Nat`, with a transparent Lean definition,
+proved bit-count equations, and a native runtime implementation. Keep
+`BitVec.cpop` as the public bitvector operation, implemented through the same
+Nat operation.
 
-This is a proposal, not an implemented primitive or a measured speedup.
-The current Lean source has no Nat popcount primitive. Its `BitVec.cpop`
-uses `cpopNatRec`, visiting every position up to the declared width.
-The inspected source is the tree underlying
+[Draft lean4#15176](https://github.com/leanprover/lean4/pull/15176) implements
+this design. Kernel reduction evaluates proved chunk arithmetic using existing
+Nat operations, following the approach of
 [lean4#15167](https://github.com/leanprover/lean4/pull/15167).
 
 ## Reuse the existing proof work
@@ -33,42 +32,35 @@ popcount n ≤ k, when n < 2^k
 ```
 
 The binary equation uniquely describes the intended count. The split equation
-connects word chunks to the arbitrary-precision operation. A portable Lean
-fallback can process masked 64-bit chunks with `popc64K`, using direct recursors
-and a proved finite fuel bound. Always mask before using the word theorem.
+connects word chunks to the arbitrary-precision operation. The Lean
+implementation processes 248-bit chunks using direct recursors and a proved
+finite fuel bound. This is the largest whole number of bytes whose bit count
+fits in a byte. Reduce each chunk below `2^248` before applying its word theorem.
 Do not generalize its final 8-bit sum to an unbounded integer: that would wrap
 once the count exceeds 255.
 
-## Runtime and kernel implementation
+## Native implementation and kernel reduction
 
-Add the operation to the existing Nat runtime interface and to the unary-literal
-case in `src/kernel/type_checker.cpp`. Reduce only when the argument reduces
-to a Nat numeral; symbolic inputs retain the Lean definition and theorem API.
-A runtime `@[extern]` or compiler rewrite alone does not speed up kernel replay.
+Add the operation to the existing Nat runtime interface. Use a portable word
+popcount for small Nats and a scan of big-integer limbs for large Nats, with
+GMP and non-GMP implementations. Avoid narrowing the result through `unsigned`,
+especially on Windows; checked accumulation must preserve its full width.
+Return zero for zero.
 
-Use a portable word popcount for small Nats and an allocation-free scan of
-big-integer limbs for large Nats. GMP's `mpz_popcount` is a candidate for its
-backend; the non-GMP backend needs the equivalent limb loop. Do not narrow the
-result through `unsigned`, especially on Windows. Use a Nat conversion that
-preserves the backend count's full width, with an explicit bound or checked
-accumulation. Inputs are nonnegative, so GMP's negative-number convention is
-irrelevant. Return zero for zero.
+The native arithmetic cost is linear in the number of stored limbs. Kernel
+reduction instead processes chunks through Nat shifts, masks, multiplication
+and division. Repeated extraction copies successively shorter big integers and
+can accumulate quadratic work. The `@[extern]` implementation accelerates
+compiled calls; the transparent Lean body determines kernel replay performance.
+Its correctness follows from the binary counting equations and the proved
+bytewise algorithm. The kernel's trusted reduction rules remain unchanged.
 
-The intended arithmetic cost is linear in the number of stored limbs. Merely
-shifting a giant Nat right by 64 repeatedly copies successively shorter big
-integers and can accumulate quadratic work. A recursive Lean chunk loop is a
-useful portable fallback and comparison arm, not evidence of limb-linear cost.
-
-This extends the trusted kernel reduction code, just as existing reductions
-for Nat arithmetic do. Keep the extension small, retain the transparent
-specification, and review the correspondence explicitly. No new axiom or
-compiler-trusted proof rule is involved, but the C++ reduction is trusted.
-If maintainers prefer no new kernel primitive, ship the proved word/chunk
-implementation first and measure its remaining overhead.
-Also compare balanced chunk splitting or whole-integer masked addition as
-pure-Lean alternatives. Their mask construction and intermediate sizes belong
-in the measurements; the simple repeated-shift fallback is not necessarily the
-best implementation available without a new primitive.
+[Standalone measurements and reproducers](https://gist.github.com/kim-em/c308db93be8966f18bc2b68c1daddecf)
+compare 64-, 128- and 248-bit chunks, a PrimeCert-style 64-bit word reference,
+and the native implementation. Larger performance experiments remain outside
+CI. Balanced chunk splitting or whole-integer masked addition are possible
+future improvements; their mask construction and intermediate sizes must be
+included in comparisons.
 
 ## BitVec integration
 
@@ -85,35 +77,34 @@ Retain `cpopNatRec` and its public equations as specification lemmas. Establish
 and zero-width behavior. Update proofs that currently unfold the old definition.
 Preserve the existing `bv_decide` cpop reflection and circuit semantics, and
 test the BitVec simplifiers and `grind` propagator as well as kernel reduction.
-No second BitVec kernel primitive should be necessary.
+The same transparent Nat implementation serves BitVec kernel reduction.
 
 ## Evidence and acceptance
 
-Compare the current BitVec recurrence, a proved 64-bit chunk fallback, and the
-new primitive. Measure native execution and direct `Kernel.check` separately;
+Compare the BitVec recurrence, the 64-bit word reference, and the transparent
+Nat implementation. Measure native execution and direct `Kernel.check` separately;
 also measure complete `decide +kernel` proofs. Put imports, input construction,
 and independent reference calculation outside the direct-check timer. Use
 fresh checks, incorrect-result controls, adjacent AB/BA blocks, automatic CPU
 affinity, and retain every completed sample. Plain `decide` is a compatibility
 test, not the performance target.
 
-Test zero; every input below `2^16`; single bits; dense, sparse, and mixed
-inputs; and boundaries around 8, 32, 64, 128, 256, 4096, and 65536 bits.
+Test zero; every native input below `2^16`; single bits; dense, sparse, and mixed
+inputs; and boundaries around 8, 32, 64, 128, 248, 256, 496, 4096, and 65536 bits.
 Include counts above 255 and multiple machine limbs. Exercise tagged-Nat
 boundaries and both GMP/non-GMP backends. Test BitVec widths 0 and 1, non-word
 widths, all-ones vectors, and very wide vectors holding zero or one. Include
 symbolic `bv_decide` examples, not just concrete numerals.
 
-Use an independent bit-by-bit reference for differential tests so the primitive
+Use an independent bit-by-bit reference for differential tests so the implementation
 does not serve as its own oracle. Require arbitrary-input Lean proofs for the
-fallback and BitVec bridge. Small correctness cases belong in the existing CI
+chunk algorithm and BitVec bridge. Small correctness cases belong in the existing CI
 jobs; the larger performance sweep belongs in a standalone reproducible
 artifact. Numerical performance targets should follow measurement.
 
-## Suggested PR sequence
+## Review scope
 
-1. Core Nat API, proofs, and portable fallback, adapting PrimeCert #156.
-2. Runtime and kernel literal reduction, with backend tests and direct timings.
-3. BitVec integration and preservation of `bv_decide`, `simp`, and `grind`.
-
-These can share one design discussion while keeping each code review focused.
+The draft PR includes the Nat API and proofs, native runtime implementation,
+BitVec bridge, and literal evaluation through `simp`, `seval` and `sym`.
+Correctness regressions belong in the existing test harness; performance
+reproducers are attached separately.

@@ -14,6 +14,8 @@ the proposed ports. Its speedups are not predictions for the final combination.
 
 ### 1. Windowed modular exponentiation
 
+[PrimeCert PR #172](https://github.com/b-mehta/PrimeCert/pull/172).
+
 Port the window worker, correctness proof, and measured dispatch into
 `PrimeCert/PowMod.lean`, preserving `powModK_eq` and the existing public API.
 Keep the accumulator helper lemmas for clients that use them. This contribution
@@ -31,6 +33,8 @@ before deciding which remaining checker changes are useful.
 
 ### 2. Optional interval witness for the cube-root criterion
 
+[PrimeCert PR #170](https://github.com/b-mehta/PrimeCert/pull/170).
+
 Hex can establish that a nonnegative discriminant is not a square by checking
 `w*w < D` and `D < (w+1)*(w+1)`, using a supplied integer `w`. PrimeCert's
 `pock3` currently supports zero, negative discriminant, or a prime quadratic
@@ -44,6 +48,8 @@ It may remove a non-residue search and its extra prime proof. It is not
 automatically faster than a small existing non-residue witness: compare both.
 
 ### 3. Bounded Lean certificate construction and reusable suggestions
+
+[PrimeCert PR #171](https://github.com/b-mehta/PrimeCert/pull/171).
 
 Port the useful pieces of `HexPrimality/Construction.lean` and its supporting
 factor search: explicit finite profiles, deterministic seeds, Pollard `p - 1`
@@ -73,6 +79,8 @@ Python producer already selects factors before recursing and tries small roots;
 the new contribution is bounded Lean construction and recursive-cost selection.
 
 ### 4. Share the core instead of maintaining two libraries
+
+Deferred for discussion with Bhavik; this is outside the three PRs above.
 
 Extract the reusable certificate data/checker, soundness proof, verified prime
 enumeration, and finite search into a Mathlib-free package owned by PrimeCert.
