@@ -219,3 +219,18 @@ info: Try this:
 -/
 #guard_msgs in
 example : Hex.Nat.Prime 9223372036904058881 := by primality?
+
+-- Only 2^20 is exposed by table division here. A lower sieve cap must exhaust
+-- when the provider declines further factoring, with no consumed factor attempts.
+private def decline : FactorSearch := fun _ n r => ⟨⟨[], n⟩, r, 0⟩
+example : Hex.Nat.Prime 9223372037728239617 := prime_of_checkPrimeAt
+  (c := .pock3Sieve 9223372037728239617 833 4194304 0 4 [(3, 19, .small 2)])
+  (by decide +kernel)
+#guard (match Construction.run 9223372037728239617 (Hex.Rand.ofSeed 17)
+    { constructionBudget with maxSieveBound := 4 } (factor := decline) with
+  | .ok s => checkPrime s.cert.raw && s.attempts == 2 && s.rand == Hex.Rand.ofSeed 17
+  | _ => false)
+#guard (match Construction.run 9223372037728239617 (Hex.Rand.ofSeed 17)
+    { constructionBudget with maxSieveBound := 3 } (factor := decline) with
+  | .error f => f.stop == .exhausted && f.attempts == 0 && f.rand == Hex.Rand.ofSeed 17
+  | _ => false)
