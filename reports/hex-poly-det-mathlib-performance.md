@@ -31,23 +31,36 @@ passed, and every theorem reports only `propext`, `Classical.choice`, and
 the residue certificate for the other two; a closed formula or fallback cannot
 satisfy the measurement check.
 
-Source commit: `a73104154c6d77e8af813ade9cd7993e0ffa2596`. Host: `chungus2`, AMD EPYC 9455 48-Core Processor,
+Source commit: `6c803e229b1e9a65275714eaf1e279e1a04a9f06`. Host: `chungus2`, AMD EPYC 9455 48-Core Processor,
 leanprover/lean4:v4.34.0. One Lean worker used automatically leased logical CPU
-77. Concurrent compilation and shared-host activity are retained as context.
+50. Concurrent compilation and shared-host activity are retained as context.
 There were no discarded samples, retries, or provenance exceptions.
 
 The kernel column is the median synchronous `det.symbolic.kernel` declaration
 check, including certificate replay and semantic transport. Nested profiling is
 disabled within that check. Full-build columns include all elaboration and proof
-construction, so the larger residue build times are not represented by the
-kernel-check column alone. These absolute observations do not establish a
-performance win or change default simproc dispatch.
+construction. These absolute observations do not establish a performance win
+or change default simproc dispatch.
+
+`Residue.identify` identifies entries through structural list access, avoiding
+definitional reduction of the evaluated residue polynomial matrix. The compiler
+output and `phase_profile_ms` retain separate matrix-identification, entry-replay,
+producer, certificate, and transport timings. The term-form regression test runs
+under Lean's default heartbeat limit.
+
+The [earlier revision](bench-results/hex-det-residue-initial.json.gz) retains
+all 18 completed measurements with the generic identification theorem
+(source `a73104154c6d77e8af813ade9cd7993e0ffa2596`). Its residue full-build
+medians were 8.593 s and 8.774 s. These two revision sweeps are separate
+shared-host observations, not an interleaved before/after comparison.
 
 | Probe | Full build median/max (s) | Kernel check median (ms) | .olean bytes |
 |---|---:|---:|---:|
-| Integer4 | 2.947 / 4.381 | 46.550 | 40400 |
-| Residue4 | 8.593 / 10.456 | 108.500 | 48392 |
-| ResidueFrobenius | 8.774 / 10.580 | 43.450 | 47248 |
+| Integer4 | 4.217 / 8.290 | 61.200 | 40400 |
+| Residue4 | 4.083 / 7.204 | 59.750 | 48072 |
+| ResidueFrobenius | 3.675 / 4.769 | 30.700 | 46928 |
+
+Matrix-identification medians for the residue probes: Residue4 21.800 ms, ResidueFrobenius 19.600 ms.
 
 ## Method
 
