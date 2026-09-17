@@ -42,12 +42,17 @@ theorem image_eq {A : Matrix Int n n} {m : Nat} {r : Vector Int 1}
 
 end DetImage
 
+/-- Reconstruct from a supplied modulus array, examining at most `fuel` entries.
+Sharing the supply lets callers reuse its primality-search work across attempts. -/
+def detCrtWith? (A : Matrix Int n n) (bound fuel : Nat) (moduli : Array Nat) :
+    Option (Modular.CrtVec 1) :=
+  Modular.crtLoop (DetImage.image A)
+    (fun state => if 2 * bound < state.modulus then some state else none) moduli fuel
+
 /-- The accumulated CRT state at the strict determinant bound. Its modulus
 is available to conformance and benchmark clients inspecting reconstruction. -/
 def detCrt? (A : Matrix Int n n) (bound fuel : Nat) : Option (Modular.CrtVec 1) :=
-  Modular.crtLoop (DetImage.image A)
-    (fun state => if 2 * bound < state.modulus then some state else none)
-    ((ZMod64.primesBelow (2 ^ 31 - 1) fuel).map fun p => p.m) fuel
+  detCrtWith? A bound fuel ((ZMod64.primesBelow (2 ^ 31 - 1) fuel).map fun p => p.m)
 
 /-- Reconstruct the determinant once the accumulated modulus exceeds twice
 the caller's bound, or return `none` on exhaustion. -/
@@ -58,23 +63,29 @@ def detBounded? (A : Matrix Int n n) (bound fuel : Nat) : Option Int :=
 def detModular? (A : Matrix Int n n) (fuel : Nat) : Option Int :=
   detBounded? A (hadamardBound A) fuel
 
-/-- A successful bounded reconstruction is correct under the caller's bound. -/
-theorem detBounded?_eq {A : Matrix Int n n} {bound fuel : Nat} {d : Int}
-    (hB : (det A).natAbs ≤ bound) (h : detBounded? A bound fuel = some d) :
-    d = det A := by
-  obtain ⟨result, hresult, hd⟩ := Option.map_eq_some_iff.mp h
-  unfold detCrt? at hresult
-  obtain ⟨consumed, state, _, _, _, trace, haccept⟩ := Modular.crtLoop_trace hresult
+/-- A supplied modulus array gives the same determinant guarantee as the default supply. -/
+theorem detCrtWith?_eq {A : Matrix Int n n} {bound fuel : Nat} {moduli : Array Nat}
+    {result : Modular.CrtVec 1} (hB : (det A).natAbs ≤ bound)
+    (h : detCrtWith? A bound fuel moduli = some result) : result.value[0] = det A := by
+  unfold detCrtWith? at h
+  obtain ⟨consumed, state, _, _, _, trace, haccept⟩ := Modular.crtLoop_trace h
   split at haccept
   · rename_i hbound
     cases haccept
-    rw [← hd]
     apply result.eq_of_congr (0 : Fin 1) (by omega)
     have hc := trace.congr (Vector.replicate 1 (det A)) (by
       intro j hj _ r hr i
       simpa only [Fin.getElem_fin, Vector.getElem_replicate] using DetImage.image_eq hr i)
     simpa only [Fin.getElem_fin, Vector.getElem_replicate] using hc (0 : Fin 1)
   · contradiction
+
+/-- A successful bounded reconstruction is correct under the caller's bound. -/
+theorem detBounded?_eq {A : Matrix Int n n} {bound fuel : Nat} {d : Int}
+    (hB : (det A).natAbs ≤ bound) (h : detBounded? A bound fuel = some d) :
+    d = det A := by
+  obtain ⟨result, hresult, hd⟩ := Option.map_eq_some_iff.mp h
+  rw [← hd]
+  exact detCrtWith?_eq hB hresult
 
 /-- Successful reconstruction at the Hadamard bound is correct whenever that
 bound satisfies Hadamard's determinant inequality. -/

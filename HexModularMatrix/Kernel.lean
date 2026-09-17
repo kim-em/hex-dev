@@ -92,8 +92,8 @@ theorem selectCols_mul (A : Matrix Int n r) (B : Matrix Int r m)
     (col (selectCols B J) j)[(⟨l, hl⟩ : Fin r)]
   rw [getElem_col, getElem_col, getElem_selectCols]
 
-/-- The selected and free coordinate blocks of the integer numerators. -/
-def numerator (A : Matrix Int n m) (c : RankCert Int n m)
+/-- The numerator matrix expressed through coordinate embeddings. -/
+def product (A : Matrix Int n m) (c : RankCert Int n m)
     (F : Vector (Fin m) (m - c.rank)) : Matrix Int m (m - c.rank) :=
   embedding c.cols * selectCols (c.adj * selectRows A c.rows) F -
     scale c.denom (embedding F)
@@ -116,12 +116,12 @@ theorem mul_scale (A : Matrix Int n r) (d : Int) (B : Matrix Int r m) :
   rw [hc, Vector.dotProduct_smul_right]
   rfl
 
-/-- The certificate's upper identity makes every numerator column vanish. -/
-theorem numerator_annihilate {A : Matrix Int n m} {c : RankCert Int n m}
+/-- The certificate's upper identity annihilates the embedded numerator matrix. -/
+theorem product_annihilate {A : Matrix Int n m} {c : RankCert Int n m}
     (h : checkRank A c = true) (F : Vector (Fin m) (m - c.rank)) :
-    A * numerator A c F = Matrix.zero n (m - c.rank) := by
+    A * product A c F = Matrix.zero n (m - c.rank) := by
   obtain ⟨_, _, hu⟩ := (checkRank_iff A c).mp h
-  rw [numerator, mul_sub, ← mul_assoc, mul_embedding, ← selectCols_mul,
+  rw [product, mul_sub, ← mul_assoc, mul_embedding, ← selectCols_mul,
     ← hu, mul_scale, mul_embedding]
   apply ext_getElem
   intro i j
@@ -147,10 +147,10 @@ theorem embedding_row_zero (J : Vector (Fin m) r) (i : Fin m)
   rw [ite_eq_right hn]
 
 /-- A free coordinate reads the negative denominator on its own column. -/
-theorem numerator_free {A : Matrix Int n m} {c : RankCert Int n m}
+theorem product_free {A : Matrix Int n m} {c : RankCert Int n m}
     {F : Vector (Fin m) (m - c.rank)} (hF : F.toList = complement c.cols)
     (i j : Fin (m - c.rank)) :
-    (numerator A c F)[F[i]][j] = if i = j then -c.denom else 0 := by
+    (product A c F)[F[i]][j] = if i = j then -c.denom else 0 := by
   have hmem : F[i] ∈ complement c.cols := by
     rw [← hF]
     exact Vector.mem_toList_iff.mpr (Vector.getElem_mem i.isLt)
@@ -172,7 +172,7 @@ theorem numerator_free {A : Matrix Int n m} {c : RankCert Int n m}
   rw [getElem_row] at he
   have he' : (embedding c.cols * selectCols (c.adj * selectRows A c.rows) F)[F[i]][j] = 0 := by
     simpa only [Fin.getElem_fin, Vector.getElem_zero] using he
-  rw [numerator, getElem_sub, he', scale_eq_smul, smul_getElem,
+  rw [product, getElem_sub, he', scale_eq_smul, smul_getElem,
     embedding, getElem_selectCols, getElem_identity]
   by_cases h : i = j
   · rw [ite_eq_left (hij.mpr h), ite_eq_left h]
@@ -183,10 +183,10 @@ theorem numerator_free {A : Matrix Int n m} {c : RankCert Int n m}
     omega
 
 /-- The pivot-coordinate block is `adj * A[rows, freeCols]`. -/
-theorem numerator_pivot {A : Matrix Int n m} {c : RankCert Int n m}
+theorem product_pivot {A : Matrix Int n m} {c : RankCert Int n m}
     (hc : checkRank A c = true) {F : Vector (Fin m) (m - c.rank)}
     (hF : F.toList = complement c.cols) (i : Fin c.rank) (j : Fin (m - c.rank)) :
-    (numerator A c F)[c.cols[i]][j] = (c.adj * selectRows A c.rows)[i][F[j]] := by
+    (product A c F)[c.cols[i]][j] = (c.adj * selectRows A c.rows)[i][F[j]] := by
   have hr : row (embedding c.cols) c.cols[i] = row (Matrix.identity c.rank) i := by
     apply Vector.ext
     intro l hl
@@ -206,11 +206,62 @@ theorem numerator_pivot {A : Matrix Int n m} {c : RankCert Int n m}
     apply hf
     rw [← h]
     exact Vector.mem_toList_iff.mpr (Vector.getElem_mem i.isLt)
-  rw [numerator, getElem_sub, getElem_mul, hr, ← getElem_mul,
+  rw [product, getElem_sub, getElem_mul, hr, ← getElem_mul,
     identity_mul, getElem_selectCols, scale_eq_smul, smul_getElem,
     embedding, getElem_selectCols, getElem_identity, ite_eq_right he]
   change _ - c.denom * 0 = _
   omega
+
+/-- Scatter pivot rows of the coefficient matrix and the free diagonal into
+original coordinates. Row lookups are computed once, outside the entry loop. -/
+def numerator (A : Matrix Int n m) (c : RankCert Int n m)
+    (F : Vector (Fin m) (m - c.rank)) : Matrix Int m (m - c.rank) :=
+  let positions := Vector.ofFn fun i : Fin m =>
+    (List.finRange c.rank).find? (fun k => decide (c.cols[k] = i))
+  let T := selectCols (c.adj * selectRows A c.rows) F
+  Matrix.ofFn fun i j =>
+    match positions[i] with
+    | some k => T[(k, j)]
+    | none => if i = F[j] then -c.denom else 0
+
+/-- The scatter implements the certificate product identity. -/
+theorem numerator_eq_product {A : Matrix Int n m} {c : RankCert Int n m}
+    (hc : checkRank A c = true) {F : Vector (Fin m) (m - c.rank)}
+    (hF : F.toList = complement c.cols) : numerator A c F = product A c F := by
+  apply ext_getElem
+  intro i j
+  rw [numerator, getElem_ofFn]
+  simp only [Fin.getElem_fin, Vector.getElem_ofFn]
+  split
+  · rename_i k hk
+    have hp := List.find?_some hk
+    have he : c.cols[k] = i := by simpa using hp
+    change (selectCols (c.adj * selectRows A c.rows) F)[(k, j)] = (product A c F)[i][j]
+    subst i
+    rw [product_pivot hc hF, getElem_pair_eq_nested, getElem_selectCols]
+  · rename_i hn
+    have hi : i ∉ c.cols.toList := by
+      intro hm
+      obtain ⟨k, hk, he⟩ := Vector.getElem_of_mem (Vector.mem_toList_iff.mp hm)
+      have hh := List.find?_eq_none.mp hn (⟨k, hk⟩ : Fin c.rank) (List.mem_finRange _)
+      exact hh (by simpa using he)
+    have hz := row_mul_eq_zero (embedding c.cols)
+      (selectCols (c.adj * selectRows A c.rows) F) i
+      (embedding_row_zero c.cols i hi)
+    have he : (embedding c.cols * selectCols (c.adj * selectRows A c.rows) F)[i][j] = 0 := by
+      have hh := congrArg (fun v : Vector Int (m - c.rank) => v[j]) hz
+      rw [getElem_row] at hh
+      simpa only [Fin.getElem_fin, Vector.getElem_zero] using hh
+    change (if i = F[j] then -c.denom else 0) = (product A c F)[i][j]
+    rw [product, getElem_sub, he, scale_eq_smul, smul_getElem,
+      embedding, getElem_selectCols, getElem_identity]
+    by_cases hij : i = F[j]
+    · rw [ite_eq_left hij, ite_eq_left hij]
+      change -c.denom = 0 - c.denom * 1
+      omega
+    · rw [ite_eq_right hij, ite_eq_right hij]
+      change 0 = 0 - c.denom * 0
+      omega
 
 end Kernel
 
@@ -266,7 +317,9 @@ theorem kernel?_annihilate {A : Matrix Int n m} {fuel : Nat} {K : Kernel n m}
   split at h
   · contradiction
   · cases h
-    exact Kernel.numerator_annihilate (rankCert?_check ‹_›) _
+    dsimp only [Kernel.ofCert] at *
+    rw [Kernel.numerator_eq_product (rankCert?_check ‹_›) (by simp)]
+    exact Kernel.product_annihilate (rankCert?_check ‹_›) _
 
 /-- Reading the free coordinates gives a nonzero scalar identity block. -/
 theorem kernel?_free {A : Matrix Int n m} {fuel : Nat} {K : Kernel n m}
@@ -276,7 +329,9 @@ theorem kernel?_free {A : Matrix Int n m} {fuel : Nat} {K : Kernel n m}
   split at h
   · contradiction
   · cases h
-    exact Kernel.numerator_free (by simp [Kernel.ofCert]) i j
+    dsimp only [Kernel.ofCert] at *
+    rw [Kernel.numerator_eq_product (rankCert?_check ‹_›) (by simp)]
+    exact Kernel.product_free (by simp [Kernel.ofCert]) i j
 
 /-- The selected coordinates are given by the certificate's coefficient matrix. -/
 theorem kernel?_pivot {A : Matrix Int n m} {fuel : Nat} {K : Kernel n m}
@@ -286,7 +341,9 @@ theorem kernel?_pivot {A : Matrix Int n m} {fuel : Nat} {K : Kernel n m}
   split at h
   · contradiction
   · cases h
-    exact Kernel.numerator_pivot (rankCert?_check ‹_›) (by simp [Kernel.ofCert]) i j
+    dsimp only [Kernel.ofCert] at *
+    rw [Kernel.numerator_eq_product (rankCert?_check ‹_›) (by simp)]
+    exact Kernel.product_pivot (rankCert?_check ‹_›) (by simp [Kernel.ofCert]) i j
 
 /-- The numerator columns have full column rank over the integers. -/
 theorem kernel?_mulVec_eq_zero {A : Matrix Int n m} {fuel : Nat} {K : Kernel n m}

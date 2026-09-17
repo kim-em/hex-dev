@@ -638,8 +638,9 @@ a speed advantage over Bareiss or FLINT.
 
 ```lean
 /-- The rank of `A` reduced modulo the prime `p`. -/
-def rankModP (A : Matrix (ZMod64 p) n m) [ZMod64.PrimeModulus p] : Nat :=
-  (rowReduce A).rank
+def rankModP (A : Matrix (ZMod64 p) n m)
+    [ZMod64.Bounds p] [ZMod64.PrimeModulus p] : Nat :=
+  (rankProfileWith Hex.exactDiv A).rank
 
 /-- Search for a checked integer rank certificate within the budget. -/
 def rankCert? (A : Matrix Int n m) (fuel : Nat) :
@@ -697,6 +698,8 @@ Call its `decompAt? B p` at the already successful prime, then
 inverse of `B`. Do not call `solve?` independently `r` times or pass the
 rectangular block `C` to a square solver. Obtain `d = det B` from
 `detModular? B fuel`, falling back to `Hex.Matrix.bareiss B` on `none`.
+The implementation shares the already generated prime supply with this
+subcall through `detCrtWith?`, preserving the same image budget and fallback.
 This deterministic subcall does not use the random determinant-divisor
 route. Obtain `adjugate B` by `solveMatWith D (d • identity r)`:
 if it returns `(Y, q)`, require exact division of every entry of `Y` by
