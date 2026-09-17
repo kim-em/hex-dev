@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 import HexKroneckerMathlib
+import HexKroneckerMathlib.KernelTests
 import HexKroneckerMathlib.Residue
 import Mathlib.Data.ZMod.Basic
 

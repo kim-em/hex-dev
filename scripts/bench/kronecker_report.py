@@ -47,6 +47,7 @@ def main():
     parser.add_argument('input', type=Path)
     parser.add_argument('output', type=Path)
     parser.add_argument('--kernel-profiles', type=Path, required=True)
+    parser.add_argument('--before', type=Path, help='retained shipping sweep for per-case before/after values')
     args = parser.parse_args()
     data = read_json(args.input)
     profile_data = read_json(args.kernel_profiles)
@@ -94,8 +95,7 @@ The measured checkout is `{data['environment']['git_commit']}`, using
 `{data['environment']['toolchain']}`. The record includes the pinned dependency
 revisions and SHA-256 hashes of the complete measured source closure.
 The Kronecker implementation, proof probes, and sweep runner match those
-measured sources. The current Lake registration also includes unrelated
-primality targets; the measured Lake file is preserved in the source archive.
+measured sources. The measured Lake file is preserved in the source archive.
 
 [Raw samples, source hashes, artifacts, and profiles]({link}) retain every
 completed sample. Six adjacent three-arm blocks use Ring/Kronecker/Grobner
@@ -136,6 +136,39 @@ prevent explicitly opt-in shipping under the SPEC's shared exception.
         cells += [ratio(a['Kronecker']['median_delta_ns'], a[k]['median_delta_ns'])
                   for k in ['Ring', 'Grobner']]
         text += f"| {s['stem']} | {size['digits']} | {size['packedBits']} | " + ' | '.join(cells) + f" | {'pass' if a['Kronecker']['ceiling_pass'] else 'fail'} |\n"
+    if args.before:
+        before = read_json(args.before)
+        old = before['summary']
+        small = [r for r in rows if r['accepted'] and r['family'] == 'reflected-identities'
+                 and old[r['stem']]['arms']['Kronecker']['median_delta_ns'] >
+                     old[r['stem']]['arms']['Ring']['median_delta_ns']]
+        small_pass = [r for r in small if r['arms']['Kronecker']['median_delta_ns'] <=
+                      r['arms']['Ring']['median_delta_ns']]
+        det_cases = [r for r in rows if r['accepted'] and r['family'] == 'determinant-identities']
+        det_pass = [r for r in det_cases if r['arms']['Kronecker']['median_delta_ns'] <=
+                    old[r['stem']]['arms']['Kronecker']['median_delta_ns']]
+        text += "\n## Per-case before/after\n\n"
+        text += (f"Of the seven grid cases that lost to `ring` in the shipping table, "
+                 f"{len(small_pass)}/{len(small)} are now at or below its median. "
+                 f"{len(det_pass)}/{len(det_cases)} determinant medians are no larger than the "
+                 "shipping values. The numerical optimization bar is **"
+                 + ('passed' if len(small_pass) == len(small) and len(det_pass) == len(det_cases)
+                    else 'not passed') + "**. No default chain changes.\n\n")
+        text += (f"Before values come from the [retained shipping sweep](data/hex-kronecker-mathlib/{args.before.name}); "
+                 "after values come from the complete new sweep above. These historical wall-time "
+                 "columns use different execution segments and are not adjacent before/after pairs. "
+                 "Controlled kernel attribution is reported separately. Every value is retained, "
+                 "including negative baseline-subtracted medians.\n\n")
+        text += "| Case | Before K ms | After K ms | Before ring ms | After ring ms | Before grobner ms | After grobner ms |\n"
+        text += "| --- | ---: | ---: | ---: | ---: | ---: | ---: |\n"
+        for row in rows:
+            if not row['accepted']:
+                continue
+            cells = []
+            for arm in ['Kronecker', 'Ring', 'Grobner']:
+                cells.extend([ms(old[row['stem']]['arms'][arm]['median_delta_ns']),
+                              ms(row['arms'][arm]['median_delta_ns'])])
+            text += f"| {row['stem']} | " + ' | '.join(cells) + " |\n"
     det = [r for r in rows if r['accepted'] and r['family'] == 'determinant-identities']
     large = [r for r in rows if r['accepted'] and r['family'] == 'reflected-identities'
              and r['atoms'] >= 2 and r['degree'] >= 4]
@@ -147,8 +180,8 @@ prevent explicitly opt-in shipping under the SPEC's shared exception.
              "These are the measured winning regimes; the full table also shows individual "
              "wins outside them.\n\n")
     text += ("The losing cases are " + ', '.join('`' + name + '`' for name in losers) +
-             ". They lie in the small-grid regime, where fixed invocation work is a "
-             "large fraction of tactic cost. The resolution table below distinguishes "
+             ". The detailed tables retain their numerical ordering and measurement spread. "
+             "The resolution table below distinguishes "
              "the numerical ordering from shared-host variation. No dispatch threshold "
              "or default-chain entry is inferred from small unresolved differences.\n")
     text += '''
@@ -223,7 +256,7 @@ and the uniform-ring and characteristic-seven examples.
     text += '''
 ## Kernel-only profiles
 
-The accepted-family profiles replay `checkExprEq = true` through
+The accepted-family profiles replay the expression checker through
 `decide +kernel`, using the quoted trees from their shared construction
 modules. They exclude reflection, proof production, and the `fromGrind`
 translation reduced by the actual tactic certificate. The decline-family

@@ -32,12 +32,13 @@ theorem powAux_eq (a : Int) (fuel n : Nat) (hn : n ≤ fuel) :
       have hm := Nat.mod_add_div n 2
       have hr := Nat.mod_lt n (by decide : 0 < 2)
       by_cases he : n % 2 = 0
-      · simp only [powAux, beq_iff_eq, hz, ↓reduceIte, ih _ hd, he]
+      · simp only [powAux, Nat.beq_eq, hz, ↓reduceIte, ih _ hd, he]
         rw [← pow_add]
         congr 1
         omega
       · have ho : n % 2 = 1 := by omega
-        simp only [powAux, beq_iff_eq, hz, ↓reduceIte, ih _ hd, he]
+        simp only [powAux, Nat.beq_eq, hz, ↓reduceIte, ih _ hd, he]
+        change (a ^ (n / 2) * a ^ (n / 2)) * a = a ^ n
         rw [← pow_add, ← pow_succ]
         congr 1
         omega
@@ -61,7 +62,7 @@ namespace Expr
 @[expose] def denoteFin {R : Type u} [CommRing R] {k : Nat} :
     (e : Expr) → e.WellFormed k → (Fin k → R) → R
   | .int z, _, _ => z
-  | .atom i, h, v => v ⟨i, of_decide_eq_true h⟩
+  | .atom i, h, v => v ⟨i, Nat.le_of_ble_eq_true h⟩
   | .add a b, h, v =>
       denoteFin a (Bool.and_eq_true_iff.mp h).1 v + denoteFin b (Bool.and_eq_true_iff.mp h).2 v
   | .sub a b, h, v =>
@@ -108,7 +109,7 @@ theorem denote_eq_eval₂ {R : Type u} [CommRing R] {k : Nat} (e : Expr)
 
 theorem evalKron_eq_denote (base : Nat) (strides : List Nat) (e : Expr) :
     evalKron base strides e = e.denote (fun i => (base : Int) ^ strides.getD i 0) := by
-  induction e <;> simp_all [evalKron, Expr.denote]
+  induction e <;> simp_all [evalKron, Expr.denote] <;> rfl
 
 theorem evalKron_eq_eval₂ {k : Nat} (base : Nat) (strides : List Nat) (e : Expr)
     (h : e.WellFormed k) :

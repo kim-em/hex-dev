@@ -163,9 +163,10 @@ environment.  That session surface performs carrier classification, caching,
 atom allocation and reflection-budget charging and returns
 `ReifiedRing.expr`; its `charInst?` records any discovered characteristic.
 The tactic seals the environment once, translates the two retained trees,
-and runs `sizeExprEq`.  It does not request a `Conversion`.  If the report
+and runs the bit-length implementation `Preflight.exprEq`, proved equal to
+`sizeExprEq` in every report field. It does not request a `Conversion`.  If the report
 fits the configuration, it emits the quoted trees and applies
-`checkExprEq_sound` to `Eq.refl true`.  The
+`Kernel.exprEq_sound` to `Eq.refl true`.  The
 elaborator performs no `Kernel.whnf` pre-evaluation and does not ask
 `Meta.check` to evaluate the proof before the kernel's single synchronous
 check.  The accepted theorem's axiom audit permits only `propext`,
@@ -254,8 +255,8 @@ both `ring` and `grobner` on a family is not a condition for opt-in
 shipping; it is the condition for that family to enter a default chain, and
 the chain then dispatches on the winning regime.  The report names the
 winning regime from the measurements (the determinant-shaped families and
-the larger expansions) and the losing one (small grids, where a fixed
-per-invocation cost dominates), and records the per-family ratios for
+the larger expansions) and the losing one (small grids, where reflection and kernel traversal
+are a substantial fraction of invocation cost), and records the per-family ratios for
 both.  Dense boxes outside the accepted budget decline before proof
 construction.  A family accepted by either comparator but outside the
 Kronecker regime is recorded as scope deliberately delegated, not as a

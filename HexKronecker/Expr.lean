@@ -123,7 +123,7 @@ namespace Expr
 
 /-- Reject every out-of-range atom, including atoms below a zero power. -/
 @[reducible] def wellFormed (k : Nat) (e : Expr) : Bool :=
-  Expr.rec (fun _ => true) (fun i => decide (i < k))
+  Expr.rec (fun _ => true) (fun i => Nat.blt i k)
     (fun _ _ a b => a && b) (fun _ _ a b => a && b)
     (fun _ a => a) (fun _ _ a b => a && b) (fun _ _ a => a) e
 
@@ -131,22 +131,17 @@ namespace Expr
 abbrev WellFormed (e : Expr) (k : Nat) : Prop := wellFormed k e = true
 
 /-- Structural per-atom degree bounds, without using cancellation. -/
-def degrees (k : Nat) : Expr → List Nat
-  | .int _ => zeroDegrees k
-  | .atom i => atomDegrees k i
-  | .add a b | .sub a b => maxDegrees (degrees k a) (degrees k b)
-  | .neg a => degrees k a
-  | .mul a b => addDegrees (degrees k a) (degrees k b)
-  | .pow a n => scaleDegrees n (degrees k a)
+def degrees (k : Nat) (e : Expr) : List Nat :=
+  Expr.rec (fun _ => zeroDegrees k) (atomDegrees k)
+    (fun _ _ a b => maxDegrees a b) (fun _ _ a b => maxDegrees a b)
+    (fun _ a => a) (fun _ _ a b => addDegrees a b)
+    (fun _ n a => scaleDegrees n a) e
 
 /-- Structural coefficient ℓ¹ bound. The preflight uses the capped version. -/
-def height : Expr → Nat
-  | .int z => z.natAbs
-  | .atom _ => 1
-  | .add a b | .sub a b => height a + height b
-  | .neg a => height a
-  | .mul a b => height a * height b
-  | .pow a n => height a ^ n
+def height (e : Expr) : Nat :=
+  Expr.rec Int.natAbs (fun _ => 1)
+    (fun _ _ a b => Nat.add a b) (fun _ _ a b => Nat.add a b)
+    (fun _ a => a) (fun _ _ a b => Nat.mul a b) (fun _ n a => Nat.pow a n) e
 
 /-- Structural coefficient bound computed exactly up to the supplied cap. -/
 def cappedHeight (cap : Nat) : Expr → Nat
@@ -170,29 +165,62 @@ end Expr
 def powAux : Nat → Int → Nat → Int
   | 0, _, _ => 1
   | fuel + 1, a, n =>
-      if n == 0 then 1 else
+      if Nat.beq n 0 then 1 else
         let q := powAux fuel a (n / 2)
         let square := q * q
-        if n % 2 == 0 then square else square * a
+        if Nat.beq (n % 2) 0 then square else Int.mul square a
 
 /-- A literal integer power, with a structural fuel argument hidden from callers. -/
 def power (a : Int) (n : Nat) : Int := powAux n a n
 
 /-- Mixed-radix code of an exponent list. Validated plans ensure equal lengths. -/
-def code : List Nat → List Nat → Nat
-  | s :: ss, e :: es => e * s + code ss es
+noncomputable def code (ss : List Nat) : List Nat → Nat :=
+  List.rec (fun _ => 0) (fun s _ rest es => match es with
+    | [] => 0
+    | e :: es => Nat.add (Nat.mul e s) (rest es)) ss
+
+@[simp] theorem code_nil (es : List Nat) : code [] es = 0 := rfl
+@[simp] theorem code_nil_right (ss : List Nat) : code ss [] = 0 := by cases ss <;> rfl
+@[simp] theorem code_cons_cons (s e : Nat) (ss es : List Nat) :
+    code (s :: ss) (e :: es) = e * s + code ss es := rfl
+
+def codeImpl : List Nat → List Nat → Nat
+  | s :: ss, e :: es => Nat.add (Nat.mul e s) (codeImpl ss es)
   | _, _ => 0
+
+@[csimp] theorem code_eq_impl : code = codeImpl := by
+  funext ss es
+  induction ss generalizing es with
+  | nil => cases es <;> rfl
+  | cons s ss ih => cases es <;> simp_all [code, codeImpl]
 
 /-- Evaluate the original tree at the Kronecker substitution. -/
 def evalKron (base : Nat) (strides : List Nat) (e : Expr) : Int :=
   Expr.rec (fun z => z) (fun i => power (Int.ofNat base) (strides.getD i 0))
-    (fun _ _ a b => a + b) (fun _ _ a b => a - b)
-    (fun _ a => -a) (fun _ _ a b => a * b) (fun _ n a => power a n) e
+    (fun _ _ a b => Int.add a b) (fun _ _ a b => Int.sub a b)
+    (fun _ a => Int.neg a) (fun _ _ a b => Int.mul a b) (fun _ n a => power a n) e
 
 /-- Pack a supplied support directly, without filling the dense box. The public
 checks validate exponent lists before calling this evaluator. -/
-def packTerms (base : Nat) (strides : List Nat) : Hex.MvPoly.Kernel.PolyList Int → Int
+noncomputable def packTerms (base : Nat) (strides : List Nat)
+    (ts : Hex.MvPoly.Kernel.PolyList Int) : Int :=
+  List.rec 0 (fun (e, c) _ rest =>
+    Int.add (Int.mul c (power (Int.ofNat base) (code strides e))) rest) ts
+
+@[simp] theorem packTerms_nil (base : Nat) (ss : List Nat) : packTerms base ss [] = 0 := rfl
+@[simp] theorem packTerms_cons (base : Nat) (ss e : List Nat) (c : Int)
+    (ts : Hex.MvPoly.Kernel.PolyList Int) :
+    packTerms base ss ((e,c)::ts) = c * power (Int.ofNat base) (code ss e) + packTerms base ss ts := rfl
+
+def packTermsImpl (base : Nat) (strides : List Nat) : Hex.MvPoly.Kernel.PolyList Int → Int
   | [] => 0
-  | (e, c) :: ts => c * power (Int.ofNat base) (code strides e) + packTerms base strides ts
+  | (e, c) :: ts => Int.add (Int.mul c (power (Int.ofNat base) (code strides e)))
+      (packTermsImpl base strides ts)
+
+@[csimp] theorem packTerms_eq_impl : packTerms = packTermsImpl := by
+  funext base ss ts
+  induction ts with
+  | nil => rfl
+  | cons t ts ih => cases t; simp_all [packTerms, packTermsImpl]
 
 end Hex.Kronecker

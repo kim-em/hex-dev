@@ -120,11 +120,14 @@ theorem Expr.cappedHeight_eq (cap : Nat) (e : Expr) :
   | int | atom => rfl
   | add a b ha hb | sub a b ha hb =>
       simp only [Expr.cappedHeight, Expr.height, ha, hb, Saturating.add_eq, Saturating.min_add]
+      rfl
   | mul a b ha hb =>
       simp only [Expr.cappedHeight, Expr.height, ha, hb, Saturating.mul_eq, Saturating.min_mul]
+      rfl
   | neg a ha => exact ha
   | pow a n ha =>
       simp only [Expr.cappedHeight, Expr.height, ha, Saturating.pow_eq, Saturating.min_pow]
+      rfl
 
 theorem Expr.analyzeCore_bound (cap k : Nat) (e : Expr) :
     (e.analyzeCore cap k).1 = ⟨e.degrees k, e.cappedHeight cap⟩ := by

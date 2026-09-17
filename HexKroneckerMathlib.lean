@@ -20,3 +20,5 @@ public import HexKroneckerMathlib.MatrixDenote
 public import HexKroneckerMathlib.MulModSound
 public import HexKroneckerMathlib.Observation
 public import HexKroneckerMathlib.Tactic
+public import HexKroneckerMathlib.Kernel
+public import HexKroneckerMathlib.BitPreflight
