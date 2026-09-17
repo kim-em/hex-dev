@@ -14,6 +14,8 @@ public import HexRowReduce.Nullspace
 public import HexRowReduce.Api
 public import HexRowReduce.Inverse
 public import HexRowReduce.Solve
+public import HexRowReduce.Kernel
+public import HexRowReduce.Witness
 
 public section
 

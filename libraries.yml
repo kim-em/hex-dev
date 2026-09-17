@@ -1125,7 +1125,7 @@ libraries:
   HexRowReduceMathlib:
     deps: [HexMatrixMathlib, HexRowReduce]
     mathlib: true
-    correspondence_only: true
+    proof_probes: [bench/HexRowReduceMathlib/ProofProbe]
     done_through: 3
     status: active
   HexDeterminantMathlib:

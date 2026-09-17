@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexRowReduce
+import HexRowReduce.Witness
 import HexRowReduce.FieldFixtures
 
 /-!
@@ -170,3 +171,80 @@ open scoped Hex.RowReduceFixtures in
 
 #guard (Hex.RowReduceFixtures.cases Hex.RowReduceFixtures.rationalFunction).all
   Hex.RowReduceFixtures.check
+
+namespace Matrix.CertificateTests
+
+open Lists
+
+private def inverseInput : ScaledRows := ⟨1, [[1, 2], [2, 4]]⟩
+private def singular : InverseWitness := .singular inverseInput ⟨1, [-2, 1]⟩ 1
+
+#guard checkInverseList 2 [[1, 2], [2, 4]] singular
+#guard !checkInverseList 2 [[1, 2], [2, 4]] (.singular inverseInput ⟨1, [0, 0]⟩ 1)
+#guard !checkInverseList 2 [[1, 2], [2, 4]] (.singular inverseInput ⟨1, [-2, 1]⟩ 2)
+#guard !checkInverseList 2 [[1, 2], [2, 4]] (.singular inverseInput ⟨0, [-2, 1]⟩ 1)
+#guard !checkInverseList 2 [[1, 2], [2, 4]] (.singular inverseInput ⟨1, [-1, 1]⟩ 1)
+#guard !checkInverseList 2 [[1, 2], [2, 4]] (.singular inverseInput ⟨1, [-2]⟩ 0)
+#guard !checkInverseList 1 [[2]] (.invertible ⟨1, [[2]]⟩ ⟨1, [[1]]⟩)
+#guard !checkInverseList 1 [[2]] (.invertible ⟨1, [[2]]⟩ ⟨0, [[1]]⟩)
+#guard !checkInverseList 1 [[2]] (.invertible ⟨0, [[2]]⟩ ⟨2, [[1]]⟩)
+#guard !checkInverseList 1 [[2]] (.invertible ⟨1, [[2]]⟩ ⟨2, [[1, 0]]⟩)
+#guard !checkInverseList 1 [[2, 0]] (.invertible ⟨1, [[2]]⟩ ⟨2, [[1]]⟩)
+
+private def affine : SolveBasis where
+  reduced := ⟨1, [[0, 1, 1]]⟩
+  transform := ⟨1, [[1]]⟩
+  inverse := ⟨1, [[1]]⟩
+  rank := 1
+  pivots := [1]
+  free := [0, 2]
+  value := ⟨1, [0, 2, 0]⟩
+  nullity := 2
+  basis := ⟨1, [[1, 0], [0, -1], [0, 1]]⟩
+
+private def accepts (d : SolveBasis) : Bool :=
+  checkSolveList 1 3 [[0, 1, 1]] [2] (.consistent ⟨1, [[0, 1, 1]]⟩ ⟨1, [2]⟩ d)
+
+#guard accepts affine
+#guard !accepts { affine with basis := ⟨1, [[1], [0], [0]]⟩ }
+#guard !accepts { affine with basis := ⟨1, [[1, 1], [0, 0], [0, 0]]⟩ }
+#guard !accepts { affine with basis := ⟨1, [[0, 0], [0, 0], [0, 0]]⟩ }
+#guard !accepts { affine with nullity := 1, basis := ⟨1, [[1], [0], [0]]⟩ }
+#guard !accepts { affine with free := [0, 0] }
+#guard !accepts { affine with free := [2, 0] }
+#guard !accepts { affine with free := [0, 1] }
+#guard !accepts { affine with pivots := [0] }
+#guard !accepts { affine with pivots := [3] }
+#guard !accepts { affine with rank := 2 }
+#guard !accepts { affine with reduced := ⟨1, [[1, 1, 1]]⟩ }
+#guard !accepts { affine with reduced := ⟨1, [[0, 2, 1]]⟩ }
+#guard !accepts { affine with transform := ⟨1, [[0]]⟩ }
+#guard !accepts { affine with inverse := ⟨1, [[0]]⟩ }
+#guard !accepts { affine with value := ⟨1, [0, 1, 0]⟩ }
+#guard !accepts { affine with value := ⟨1, [3, 2, 0]⟩ }
+#guard !accepts { affine with reduced := { affine.reduced with denom := 0 } }
+#guard !accepts { affine with transform := { affine.transform with denom := 0 } }
+#guard !accepts { affine with inverse := { affine.inverse with denom := 0 } }
+#guard !accepts { affine with basis := { affine.basis with denom := 0 } }
+#guard !accepts { affine with value := { affine.value with denom := 0 } }
+
+#guard checkSolveList 1 1 [[0]] [1] (.inconsistent ⟨1, [[0]]⟩ ⟨1, [1]⟩ ⟨1, [1]⟩)
+#guard !checkSolveList 1 1 [[1]] [1] (.inconsistent ⟨1, [[1]]⟩ ⟨1, [1]⟩ ⟨1, [1]⟩)
+#guard !checkSolveList 1 1 [[0]] [1] (.inconsistent ⟨1, [[0]]⟩ ⟨1, [1]⟩ ⟨1, [0]⟩)
+#guard !checkSolveList 1 1 [[0]] [1] (.inconsistent ⟨1, [[0]]⟩ ⟨0, [1]⟩ ⟨1, [1]⟩)
+#guard !checkSolveList 1 1 [[0]] [1] (.inconsistent ⟨1, [[0]]⟩ ⟨1, [1]⟩ ⟨0, [1]⟩)
+#guard !checkSolutionList 1 2 [[1, 2]] [5] [1]
+#guard !checkSolutionList 1 2 [[1, 2]] [5] [1, 1]
+#guard checkSolutionList 1 3 [[0, 1, 1]] [2] [3, 0, 2]
+
+private def checkCase (c : RowReduceFixtures.Case Rat) : Bool := Id.run do
+  unless checkSolveList c.n c.m (rowLists c.A) c.b.toList (solveWitness id c.A c.b) do
+    return false
+  if h : c.m = c.n then
+    let A : Matrix Rat c.n c.n := h ▸ c.A
+    unless checkInverseList c.n (rowLists A) (inverseWitness id A) do return false
+  return true
+
+#guard (RowReduceFixtures.cases (1 / 2 : Rat)).all checkCase
+
+end Matrix.CertificateTests

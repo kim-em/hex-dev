@@ -1,7 +1,7 @@
 # Matrix tactics
 
 Proof-producing tactics on closed matrices (`rank`, `det`, `char_poly`, and
-later `min_poly`, `smith`, `hermite`, `inverse`, `solve`) are not a library of their own. Each
+`min_poly`, `smith`, `hermite`, `inverse`, `solve`) are not a library of their own. Each
 tactic lives with the algorithm library whose certificate it checks, its
 Mathlib-input form lives in that library's Mathlib companion, and the only
 shared code is the literal layer of `hex-matrix-mathlib`. This note fixes
@@ -29,8 +29,8 @@ their library structure and their kernel-replay proof strategy do not.
 | `min_poly` | `minpoly F A = p` | hex-min-poly: list form of `MinPolyCert` | hex-min-poly-mathlib | implemented in `HexMinPolyMathlib/Tactic.lean`: [companion contract](../HexMinPolyMathlib/SPEC/hex-min-poly-mathlib.md#the-min_poly-tactic) |
 | `smith` | integer row-presentation quotient equivalence | hex-smith: list form of `snfCert` | hex-smith-mathlib; optional polynomial handler in hex-poly-smith-mathlib | implemented in `HexSmithMathlib/Tactic.lean`: [companion contract](../HexSmithMathlib/SPEC/hex-smith-mathlib.md#the-smith-tactic) |
 | `hermite` | integer lattice membership and row-lattice basis | hex-hermite: list form of `hnfCert` and checked remainder | hex-hermite-mathlib | implemented in `HexHermiteMathlib/Tactic.lean`: [companion contract](../HexHermiteMathlib/SPEC/hex-hermite-mathlib.md#the-hermite-tactic) |
-| `inverse` | `A * B = 1`, `A⁻¹ = B` | hex-row-reduce: list products or nonzero kernel vector | hex-row-reduce-mathlib | specified: [companion contract](../HexRowReduceMathlib/SPEC/hex-row-reduce-mathlib.md#the-inverse-tactic) |
-| `solve` | `A.mulVec x = b`, existence or inconsistency | hex-row-reduce: list residual, complete RREF data or separator | hex-row-reduce-mathlib | specified: [companion contract](../HexRowReduceMathlib/SPEC/hex-row-reduce-mathlib.md#the-solve-tactic) |
+| `inverse` | `A * B = 1`, `A⁻¹ = B` | hex-row-reduce: list products or nonzero kernel vector | hex-row-reduce-mathlib | implemented: [companion contract](../HexRowReduceMathlib/SPEC/hex-row-reduce-mathlib.md#the-inverse-tactic) |
+| `solve` | `A.mulVec x = b`, existence or inconsistency | hex-row-reduce: list residual, complete RREF data or separator | hex-row-reduce-mathlib | implemented: [companion contract](../HexRowReduceMathlib/SPEC/hex-row-reduce-mathlib.md#the-solve-tactic) |
 | literal layer | reading `!![…]`, `Matrix.of ![…]`, `fun i j => …`, `Matrix.ofArray xs h` | none | `hex-matrix-mathlib`: `ofLists`, `vecOfList`, `entriesEq`, literal recognition, definitional identification (`HexMatrixMathlib/Literal.lean`) | shipped (https://github.com/kim-em/hex-dev/pull/10218) |
 
 `invariant_factors` is reserved for hex-invariant-factors; it is not an alias

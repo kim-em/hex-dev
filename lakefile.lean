@@ -1100,15 +1100,16 @@ lean_lib HexReleaseTests where
     -- elaborated in chunks, on which the name-to-glob coercion fails
     |>.map Glob.one
 
--- Build-only regression roots for the three structural matrix frontends.
+-- Build-only regression roots for the structural matrix frontends.
 @[default_target]
 lean_lib HexStructuralTacticTests where
-  globs := #[`HexPolyDetMathlib.Tests, `HexMinPolyMathlib.Tests, `HexSmithMathlib.Tests, `HexHermiteMathlib.Tests]
+  globs := #[`HexPolyDetMathlib.Tests, `HexMinPolyMathlib.Tests, `HexSmithMathlib.Tests, `HexHermiteMathlib.Tests, `HexRowReduceMathlib.Tests]
 
 lean_lib HexStructuralTacticProofProbe where
   srcDir := "bench"
   globs := #[.submodules `HexMinPolyMathlib.ProofProbe,
-    .submodules `HexSmithMathlib.ProofProbe, .submodules `HexHermiteMathlib.ProofProbe]
+    .submodules `HexSmithMathlib.ProofProbe, .submodules `HexHermiteMathlib.ProofProbe,
+    .submodules `HexRowReduceMathlib.ProofProbe]
 
 -- Verification-only modules for the incubating multivariate factorization
 -- stack. Keep this separate from the released-test target, whose module list

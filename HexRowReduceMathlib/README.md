@@ -58,6 +58,40 @@ field. `Examples/RowReduce.lean` in hex-dev checks rationals, rational functions
 and entrywise transport from `ZMod64 p` to `ZMod p` without assuming a Mathlib
 field on `ZMod64 p`.
 
+# Inverse and solve tactics
+
+`inverse` and `solve` certify closed rational matrix literals. Each tactic
+accepts either orientation of its equation:
+
+```lean
+example : (!![1, 2; 3, 4] : Matrix (Fin 2) (Fin 2) ℚ)⁻¹ =
+    !![-2, 1; 3 / 2, -1 / 2] := by inverse
+
+example : (!![0, 1, 1] : Matrix (Fin 1) (Fin 3) ℚ).mulVec ![3, 0, 2] =
+    ![2] := by solve
+
+noncomputable def affine :=
+  solve% (!![0, 1, 1] : Matrix (Fin 1) (Fin 3) ℚ) ![2]
+```
+
+`inverse` also proves `A * B = 1`; singular inputs prove `A⁻¹ = 0` and
+decline product goals with a nonzero kernel vector. `inverse% A` returns
+an `InverseResult A`, containing either the literal inverse with both
+product identities, or a nonzero kernel vector with singularity proofs.
+
+`solve` checks any supplied solution, proves `∃ x, A.mulVec x = b`, or
+proves its negation with a separating row. `solve% A b` returns a
+`SolveResult A b`: either a particular solution and literal nullspace basis
+with unique affine coordinates, or a separator with `yᵀA = 0` and
+`yᵀb ≠ 0`. Particular solutions returned by the producer have zero free
+coordinates. Both term forms handle empty shapes.
+
+Arithmetic proof checking uses scaled integer lists and structural recursion.
+`FieldCertificate.inverse_of_checkList`, `solve_of_checkList` and
+`solveResult_of_checkList` prove soundness for arbitrary passing certificates;
+their proofs do not replay elimination. The initial numeric handler accepts
+`ℚ`; other carriers are available to separately registered extensions.
+
 # Functionality
 
 The library transports the executable row-reduction data of an

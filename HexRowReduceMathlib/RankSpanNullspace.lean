@@ -225,7 +225,7 @@ private theorem nullspace_get_free_entry [Field R]
 /-- The computed nullspace basis is linearly independent, read off from the
 Kronecker pattern of `nullspace_get_free_entry`. Supplies the dimension count in
 `rank_eq`. -/
-private theorem nullspace_linearIndependent [Field R]
+theorem nullspace_linearIndependent [Field R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
     (E : Hex.Matrix.IsRowReduced M D) :
     LinearIndependent R (fun k : Fin (m - D.rank) => vectorEquiv (E.nullspace.get k)) := by
