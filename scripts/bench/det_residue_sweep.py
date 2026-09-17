@@ -38,6 +38,11 @@ def compiler_metrics(module, sample):
         raise RuntimeError(f"{module}: expected one synchronous kernel check")
     value, unit = hits[0]
     sample["kernel_ms"] = float(value) * (1 if unit == "ms" else 1000)
+    sample["phase_profile_ms"] = {
+        name: float(value) * (1 if unit == "ms" else 1000)
+        for name, value, unit in re.findall(
+            r"^\s*det.symbolic.(\w+) ([0-9.e+-]+)(ms|s)$", output, re.MULTILINE)
+    }
     route = "certificate" if module.endswith(".Integer4") else "residue-certificate"
     if f'"route":"{route}"' not in output:
         raise RuntimeError(f"{module}: required certificate route absent")

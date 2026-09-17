@@ -149,7 +149,6 @@ example (x : ZMod 3) : Matrix.det
     !![x, 1, 0, 0; 1, x, 1, 0; 0, 1, x, 1; 0, 0, 1, x] = x ^ 4 + 1 := by
   det
 
-set_option maxHeartbeats 800000 in
 example (x : ZMod 3) : Matrix.det !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, x, 1; 0, 0, 1, x] =
     (det% !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, x, 1; 0, 0, 1, x]).value :=
   (det% !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, x, 1; 0, 0, 1, x]).proof
@@ -174,7 +173,11 @@ example : Hex.Matrix.checkDetPolyList (Hex.PolyDet.opsMod 3 1)
 example : Hex.Matrix.checkDetPolyList (Hex.PolyDet.opsMod 3 1)
     1 [[[([1], 1)]]] (.singular [[]]) = false := by decide +kernel
 
+/-- info: 'HexPolyDetTests.residue4' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms residue4
+/-- info: 'HexPolyDetTests.residueFrobenius' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms residueFrobenius
 
 -- The target need not be a domain or characteristic zero.
@@ -239,16 +242,19 @@ example (x : Int) : True := by
 example (x : ZMod 6) :
     Matrix.det !![x, 0, 0, 0; 0, x, 0, 0; 0, 0, x, 0; 0, 0, 0, x] =
       x ^ 4 := by
-  certificate_declines "prime characteristic"
-  det
+  certificate_det
 
--- A composite modulus cannot supply a residue-domain certificate; the
--- composed tactic still has Mathlib's ring-identity fallback.
+-- Integer replay remains available when a residue domain is unavailable.
+-- A characteristic-reduced conversion can still disagree with integer replay.
 example (x : ZMod 6) :
     Matrix.det !![x - 1, 0, 0, 0; 0, x, 0, 0; 0, 0, x, 0; 0, 0, 0, x] =
       (x - 1) * x ^ 3 := by
-  certificate_declines "prime characteristic"
+  certificate_declines "entry (0, 0)"
   det
+
+example {R : Type} [CommRing R] [CharP R 3] (x : R) :
+    Matrix.det !![x, 0, 0, 0; 0, x, 0, 0; 0, 0, x, 0; 0, 0, 0, x] = x ^ 4 := by
+  certificate_det
 
 -- Closed formulas do not require CharZero, even for composite characteristic.
 example {R : Type} [CommRing R] (x : R) :

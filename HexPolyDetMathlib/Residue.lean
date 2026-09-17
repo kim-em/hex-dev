@@ -78,6 +78,30 @@ theorem evaluated_eq (k n : Nat) (rows : List (List (PolyList Nat))) (ctx : Lean
   rw [← map_zero (hom p k ctx), ← List.getD_map _ _ (hom p k ctx), List.map_map]
   simp only [Function.comp_def, eval_denote]
 
+/-- Read an evaluated entry without reducing residue polynomial denotation. -/
+theorem evaluated_apply (k n : Nat) (rows : List (List (PolyList Nat)))
+    (ctx : Lean.RArray F) (i j : Fin n) :
+    evaluated p k n rows ctx i j = HexReflectMathlib.Kernel.homMod p k ctx
+      (Hex.MvPoly.Kernel.denoteMod p (cmp := Mono.grevlex) ((rows.getD i []).getD j [])) := by
+  let f := fun a => HexReflectMathlib.Kernel.homMod p k ctx
+    (Hex.MvPoly.Kernel.denoteMod p (cmp := Mono.grevlex) a)
+  have hz : f [] = 0 := map_zero _
+  simp only [evaluated, ofLists_apply]
+  change ((rows.map (List.map f)).getD i []).getD j 0 = _
+  rw [show (rows.map (List.map f)).getD i [] = (rows.getD i []).map f from List.getD_map rows [] _,
+    ← hz, List.getD_map]
+
+/-- Entry proofs identify the matrix through structural list access only. -/
+theorem identify (k n : Nat) (rows : List (List (PolyList Nat))) (ctx : Lean.RArray F)
+    (A : Matrix (Fin n) (Fin n) F)
+    (h : Polynomial.AllFin n (fun i => Polynomial.AllFin n (fun j =>
+      A i j = HexReflectMathlib.Kernel.homMod p k ctx
+        (Hex.MvPoly.Kernel.denoteMod p (cmp := Mono.grevlex) ((rows.getD i []).getD j []))))) :
+    A = evaluated p k n rows ctx := by
+  ext i j
+  rw [evaluated_apply]
+  exact Polynomial.allFin n _ (Polynomial.allFin n _ h i) j
+
 /-- A passing residue certificate determines the determinant after any valuation. -/
 theorem result [Hex.ZMod64.PrimeModulus p] (k n : Nat) (rows : List (List (PolyList Nat)))
     (w : DetWitness (PolyList Nat)) (ctx : Lean.RArray F)

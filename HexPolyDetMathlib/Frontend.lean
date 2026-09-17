@@ -215,14 +215,16 @@ def computeResidue (p : Nat) (provider : CoeffProvider) (A : Expr)
     withEvidence provider.auxInstances.toList do
   let k := sealed.n
   let convertList (r : ReifiedRing) : ReflectM (MvPoly.Kernel.PolyList Nat) := do
-    let c ← profile "det.symbolic.convert" (do require (← convert r sealed .grevlex))
+    let c ← profile "det.symbolic.convert" (do require (← convert r sealed .grevlex (some provider)))
+    unless c.sealed.n == k do failWith (.internal "batch size changed")
     unless c.provider.id == provider.id do decline m!"mixed coefficient providers in residue batch"
     let some a := residuePoly? p k (c.terms.map fun (m, z) => (m.toList, z))
       | decline m!"unsupported residue modulus"
     return a
   let lists ← reified.mapM fun row => row.mapM convertList
   preflight lit.n k (lists.map fun row => row.map fun a => a.map fun (m, c) => (m, (c : Int)))
-  let some w ← profile "det.symbolic.producer" (pure (residueWitness? p k lit.n (lists.toList.map Array.toList)))
+  let some w := profileit "det.symbolic.producer" (← getOptions) fun _ =>
+      residueWitness? p k lit.n (lists.toList.map Array.toList)
     | failWith (.internal "residue determinant producer failed its own check")
   let d := Residue.value w
   let witnessEntries := match w with
@@ -237,7 +239,7 @@ def computeResidue (p : Nat) (provider : CoeffProvider) (A : Expr)
   let rowsE := toExpr (lists.toList.map Array.toList)
   let wE ← quoteWitness w
   let ops ← mkAppM ``Hex.PolyDet.opsMod #[toExpr p, toExpr k]
-  let hcheck ← decideProof (← mkEq
+  let hcheck ← profile "det.symbolic.certificate" <| decideProof (← mkEq
     (← mkAppM ``Hex.Matrix.checkDetPolyList #[ops, toExpr lit.n, rowsE, wE]) (mkConst ``Bool.true))
   let mut hrows := #[]
   for i in [:lit.n] do
@@ -245,8 +247,8 @@ def computeResidue (p : Nat) (provider : CoeffProvider) (A : Expr)
     for j in [:lit.n] do
       hs := hs.push (← mkEqSymm (← residueEntry p k ctx (reified[i]!.getD j seed) (lists[i]!)[j]!))
     hrows := hrows.push (← conjunction hs)
-  let B ← mkAppM ``Residue.evaluated #[toExpr p, toExpr k, toExpr lit.n, rowsE, ctx]
-  let hA ← mkAppM ``Polynomial.identify #[A, B, ← conjunction hrows]
+  let hA ← profile "det.symbolic.matrix" <| mkAppM ``Residue.identify
+    #[toExpr p, toExpr k, toExpr lit.n, rowsE, ctx, A, ← conjunction hrows]
   let r ← match rhs with
     | some r => pure r
     | none =>
@@ -254,7 +256,8 @@ def computeResidue (p : Nat) (provider : CoeffProvider) (A : Expr)
       let source ← (denoteRingExpr sealed.atoms e : ReaderT Nat ReflectM Expr).run seed.ringId
       pure { seed with expr := e, source }
   let he ← residueEntry p k ctx r q
-  let proof ← match rhs with
+  let proof ← profile "det.symbolic.transport" do
+    match rhs with
     | some _ =>
       let hq ← decideProof (← mkEq (← mkAppM ``MvPoly.Kernel.beq #[toExpr d, toExpr q]) (mkConst ``Bool.true))
       mkAppM ``Residue.target
@@ -312,19 +315,29 @@ def compute (A : Expr) (rhs? : Option Expr := none) : MetaM (Outcome Result) := 
     let k := sealed.n
     let ring ← ringOf seed
     let ctx ← contextExpr ring sealed
-    let coeffs ← require (← convert seed sealed .grevlex)
-    if coeffs.provider.id == HexReflectMathlib.residueCoefficientsId then
-      let_expr Hex.ZMod64 p _ := coeffs.provider.coeffType
+    let selected ← selectProvider .commRingNormalize ring
+    -- Determinants also have universal integer transport. A residue capability
+    -- decline does not remove this independently checked certificate route.
+    let selected ← match selected with
+      | .declined (.providerCondition id _) _ =>
+        if id == HexReflectMathlib.residueCoefficientsId then
+          pure (.success (.coefficients (← intCoeffProvider ring)) Budget.zero)
+        else pure selected
+      | _ => pure selected
+    let .coefficients coeffs ← require selected
+      | failWith (.internal "expected coefficient evidence")
+    if coeffs.id == HexReflectMathlib.residueCoefficientsId then
+      let_expr Hex.ZMod64 p _ := coeffs.coeffType
         | failWith (.internal "invalid residue coefficient type")
       let some p ← (Meta.evalNat p).run | decline m!"nonliteral residue characteristic"
-      return ← computeResidue p coeffs.provider A lit reified seed rhs sealed ctx
+      return ← computeResidue p coeffs A lit reified seed rhs sealed ctx
     let mut rows : List (List (MvPoly k Int Mono.grevlex)) := []
     let mut lists : Array (Array Poly) := #[]
     for row in reified do
       let mut polys := []
       let mut serial := #[]
       for r in row do
-        let c ← profile "det.symbolic.convert" (do require (← convert r sealed .grevlex))
+        let c ← profile "det.symbolic.convert" (do require (← convert r sealed .grevlex (some coeffs)))
         unless c.sealed.n == k do failWith (.internal "batch size changed")
         let ts := c.terms.map fun (m, z) => (m.toArray.toList, z)
         -- Conversion and reconstruction here execute in compiled code only.
@@ -354,7 +367,7 @@ def compute (A : Expr) (rhs? : Option Expr := none) : MetaM (Outcome Result) := 
     checkBudget .proofNodes ((size + lists.flatten.foldl (fun n p => n + p.length) 0) * (4 * k + 24))
     let q ← match rhs with
       | some r =>
-        let c ← profile "det.symbolic.convert" (do require (← convert r sealed .grevlex))
+        let c ← profile "det.symbolic.convert" (do require (← convert r sealed .grevlex (some coeffs)))
         let p := MvPoly.ofTerms (cmp := Mono.grevlex)
           (c.terms.map fun (m, z) => (MvPoly.Kernel.mono k m.toArray.toList, z))
         pure (profileit "det.symbolic.lists" options fun _ => Hex.PolyDet.toList p)

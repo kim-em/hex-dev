@@ -302,7 +302,8 @@ to close the zero target; its final theorem then supplies that relation
 explicitly. It is not an algebraic-number scope win. The canonical Nat residue
 term-list arm has kernel tests and the focused measurements above. Integer
 transport remains sound over arbitrary commutative rings; composite-characteristic
-requests decline the residue certificate and preserve tactic fallback.
+requests use the universal integer certificate when residue capability conditions
+fail, preserving the existing certificate scope.
 
 The [earlier certificate experiment](hex-symbolic-det-experiment.md) retains
 all 732 samples and ten profiles from the implementation before relocation

@@ -613,7 +613,9 @@ Rational addition, subtraction and row clearing use least common multiples
 of their positive scales. Products and powers multiply scales as required.
 Compiled comparison against the selected integer or residue list replay
 checks conversion before quoting an entry proof. Composite-characteristic
-requests decline the residue provider and retain Mathlib fallback.
+requests decline the residue provider and use the universal integer certificate.
+The same route preserves certificates over commutative rings lacking a domain
+instance; it may decline identities that require coefficient reduction.
 
 ## Recorded measurement outcome
 

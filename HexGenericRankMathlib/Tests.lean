@@ -131,7 +131,7 @@ example (x : ℚ) : True := by
   trivial
 
 open MvPolynomial in
-theorem residueGeneric :
+public theorem residueGeneric :
     (!![X (0 : Fin 1) ^ 3 - X 0] : Matrix (Fin 1) (Fin 1) (MvPolynomial (Fin 1) (ZMod 3))).rank = 1 := by
   rank
 
@@ -142,7 +142,7 @@ theorem integerAudit :
   rank
 
 open MvPolynomial in
-theorem residueAudit :
+public theorem residueAudit :
     (!![X 0, X 0, 0; X 0, 0, X 0; 0, X 0, X 0] :
       Matrix (Fin 3) (Fin 3) (MvPolynomial (Fin 1) (ZMod 2))).rank = 2 := by
   rank
@@ -153,13 +153,19 @@ theorem univariateIntegerAudit :
   rank
 
 open Polynomial in
-theorem univariateResidueAudit :
+public theorem univariateResidueAudit :
     (!![X, X, 0; X, 0, X; 0, X, X] : Matrix (Fin 3) (Fin 3) (Polynomial (ZMod 2))).rank = 2 := by
   rank
 
+/-- info: 'univariateResidueAudit' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms univariateResidueAudit
 
+/-- info: 'residueGeneric' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms residueGeneric
+/-- info: 'residueAudit' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms residueAudit
 
 namespace KernelTests

@@ -18,6 +18,10 @@ open Hex.MvPoly.Kernel
 open Hex.Matrix.Lists (all all_iff entry entry_eq_getD)
 open scoped HexMvPolyMathlib HexModArithMathlib.ZMod64 BigOperators
 
+/-! The structural checks mirror `PolyLists`, but arithmetic is explicitly
+modulus-parametrised. This keeps the kernel term on the shared residue operations
+without introducing local arithmetic instances on `Nat`. -/
+
 section
 /-- Sum residue polynomials using the shared modular merge. -/
 def sum (p : Nat) (f : Nat → Poly Nat) : Nat → Poly Nat
