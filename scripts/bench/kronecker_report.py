@@ -343,10 +343,13 @@ and the uniform-ring and characteristic-seven examples.
             signs = [' '.join('+' if n > 0 else '−' if n < 0 else '0'
                      for n in s['paired'][a]['margins_ns']) for a in ['Ring', 'Grobner']]
             text += f"| {s['stem']} | {' | '.join(signs)} |\n"
-    text += '''
+    checker = ('Kernel.exprEq' if all(p.get('module', '').endswith('KernelProfile')
+               for p in profile_data['profiles'] if p['family'] != 'dense-box-declines')
+               else 'checkExprEq')
+    text += f'''
 ## Kernel-only profiles
 
-The accepted-family profiles replay `Kernel.exprEq` through
+The accepted-family profiles replay `{checker}` through
 `decide +kernel`, using the quoted trees from their shared construction
 modules. They exclude reflection, proof production, and the `fromGrind`
 translation reduced by the actual tactic certificate. The decline-family
