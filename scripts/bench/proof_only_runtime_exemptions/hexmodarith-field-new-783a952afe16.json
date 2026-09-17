@@ -1,0 +1,6 @@
+{
+  "path": "HexModArith/Field.lean",
+  "baseline_blob": null,
+  "current_blob": "783a952afe16bfe30297e839b0f2bd3a4f63d597",
+  "reason": "Relocates the scalar Div instance verbatim from HexPolyFp/Field.lean and the integer-power definition, inverse lemmas and zmod64FieldOfPrime verbatim from HexPolyFp/PrimeField.lean. Div still computes ZMod64.mul a (ZMod64.inv b); the integer-power and field-instance declaration bodies are byte-for-byte unchanged. This changes module ownership, not the scalar operations executed by the measured factorization service. The original polynomial modules import this module instead of redeclaring the same operations."
+}
