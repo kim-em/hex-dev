@@ -2,13 +2,13 @@
 
 ## Result
 
-30/46 paired comparisons have a median-margin magnitude no
+26/46 paired comparisons have a median-margin magnitude no
 larger than their median absolute deviation and are **unresolved at this
 measurement resolution**. The numerical median comparison and this description
 of variation are reported separately; no sample is discarded or replaced.
 
 The complete sweep contains 23 accepted identities and 7
-preflight declines. 15/23 accepted cases have a smaller per-arm
+preflight declines. 14/23 accepted cases have a smaller per-arm
 baseline-subtracted median than both `ring` and `grobner`. The comparison across
 all accepted cases is **not passed**.
 The absolute candidate ceilings are **passed**.
@@ -16,7 +16,7 @@ The [opt-in shipping condition](../HexKroneckerMathlib/SPEC/hex-kronecker-mathli
 requires the complete family table and passing absolute ceilings. Its status
 is **passed**. No default tactic chain changes.
 
-Of the seven grid cases that lost to `ring` in the shipping table, 4/7 are now at or below its median. 1/5 determinant medians are no larger than the shipping values. The numerical optimization bar is **not passed**. These are fresh-module comparisons; controlled kernel attribution is reported separately. The previously losing small cases still above `ring` are `GridK1D8`, `GridK2D2`, `GridK4D2`.
+Of the seven grid cases that lost to `ring` in the shipping table, 4/7 are now at or below its median. 3/5 determinant medians are no larger than the shipping values. The numerical optimization bar is **not passed**. These are fresh-module comparisons; controlled kernel attribution is reported separately. The previously losing small cases still above `ring` are `GridK1D2`, `GridK3D2`, `GridK4D2`.
 
 The smallest case's controlled kernel median is 3.715 ms (all six samples
 below 5 ms), and all five determinant kernel medians improve. Reflection
@@ -27,13 +27,13 @@ the fresh-module measurements below determine the numerical bar separately.
 
 ## Protocol and provenance
 
-The measured checkout is `237ad74f70ab885fb4c168a64c948f4d16810196`, using
+The measured checkout is `4b59351263e48e34946af4ce3c757d303408ee3a`, using
 `leanprover/lean4:v4.34.0`. The record includes the pinned dependency
 revisions and SHA-256 hashes of the complete measured source closure.
 The Kronecker implementation, proof probes, and sweep runner match those
 measured sources. The measured Lake file is preserved in the source archive.
 
-[Raw samples, source hashes, artifacts, and profiles](data/hex-kronecker-mathlib/sweep-translation.json.gz) retain every
+[Raw samples, source hashes, artifacts, and profiles](data/hex-kronecker-mathlib/sweep-translation-repeat.json.gz) retain every
 completed sample. Six adjacent three-arm blocks use Ring/Kronecker/Grobner
 order in odd rounds and its reverse in even rounds. The middle candidate is
 adjacent to both references, giving each comparison six alternating AB/BA
@@ -72,34 +72,36 @@ evidence under the shared-host policy.
 
 The shipping sweep recorded median 3 and maximum 16 concurrent Lake/Lean processes.
 
+After 30/46 first-sweep comparisons were unresolved, the identical registered six-pair protocol was repeated once. Local builds and other measurements from this work finished before the repeat; the CPU was automatically leased without an idle-host criterion. The repeat recorded median 6 and maximum 182 concurrent Lake/Lean processes. Both complete sweeps are retained and compared below; no observation is filtered and the numerical bar is unchanged.
+
 
 ## reflected-identities and determinant-identities
 
 | Case | D | N | Kronecker ms | ring ms | grobner ms | K/ring | K/grobner | Ceiling |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| GridK1D2 | 3 | 14 | 56.614 | 91.401 | 84.032 | 0.619 | 0.674 | pass |
-| GridK1D4 | 5 | 34 | 38.117 | 156.907 | 96.305 | 0.243 | 0.396 | pass |
-| GridK1D8 | 9 | 98 | 122.751 | 58.769 | 83.510 | 2.089 | 1.470 | pass |
-| GridK1D16 | 17 | 322 | 210.310 | 67.542 | 93.969 | 3.114 | 2.238 | pass |
-| GridK2D2 | 9 | 44 | 60.329 | 45.293 | 7.464 | 1.332 | 8.083 | pass |
-| GridK2D4 | 25 | 174 | 12.839 | 31.096 | 77.891 | 0.413 | 0.165 | pass |
-| GridK2D8 | 81 | 890 | 33.795 | 93.273 | 128.587 | 0.362 | 0.263 | pass |
-| GridK2D16 | 289 | 5490 | -261.058 | 298.547 | 158.620 | — | — | pass |
-| GridK3D2 | 27 | 161 | 42.896 | 237.485 | 32.825 | 0.181 | 1.307 | pass |
-| GridK3D4 | 125 | 1124 | 261.600 | -66.889 | -20.988 | — | — | pass |
-| GridK3D8 | 729 | 10934 | 40.548 | 146.797 | 546.110 | 0.276 | 0.074 | pass |
-| GridK3D16 | 4913 | 137563 | 278.760 | 3234.030 | 4887.749 | 0.086 | 0.057 | pass |
-| GridK4D2 | 81 | 566 | 757.947 | 153.258 | -126.878 | 4.946 | — | pass |
-| GridK4D4 | 625 | 6874 | 131.443 | 257.721 | 425.958 | 0.510 | 0.309 | pass |
-| GridK4D8 | 6561 | 124658 | 171.904 | 1610.389 | 4477.787 | 0.107 | 0.038 | pass |
-| GridK6D2 | 729 | 5831 | -51.122 | 74.249 | -85.398 | — | — | pass |
-| GridK6D4 | 15625 | 203124 | 360.024 | 478.487 | 2128.336 | 0.752 | 0.169 | pass |
-| GridK8D2 | 6561 | 59048 | -58.112 | 93.207 | 163.884 | — | — | pass |
-| DetN3K2D1 | 16 | 176 | 48.877 | 337.032 | 316.537 | 0.145 | 0.154 | pass |
-| DetN4K3D1 | 125 | 2125 | 10.468 | 917.588 | 736.116 | 0.011 | 0.014 | pass |
-| DetN3K3D2 | 343 | 4116 | 271.796 | 268.518 | 289.564 | 1.012 | 0.939 | pass |
-| DetN4K2D2 | 81 | 1296 | 408.356 | 560.107 | 549.567 | 0.729 | 0.743 | pass |
-| DetN5K3D1 | 216 | 4968 | 357.454 | 17372.332 | 8824.961 | 0.021 | 0.041 | pass |
+| GridK1D2 | 3 | 14 | 79.230 | 67.941 | 62.213 | 1.166 | 1.274 | pass |
+| GridK1D4 | 5 | 34 | 51.245 | 88.912 | 33.737 | 0.576 | 1.519 | pass |
+| GridK1D8 | 9 | 98 | 48.813 | 77.555 | 13.743 | 0.629 | 3.552 | pass |
+| GridK1D16 | 17 | 322 | 86.700 | 25.445 | 319.768 | 3.407 | 0.271 | pass |
+| GridK2D2 | 9 | 44 | 54.872 | 82.237 | 19.141 | 0.667 | 2.867 | pass |
+| GridK2D4 | 25 | 174 | 42.467 | 68.743 | 89.420 | 0.618 | 0.475 | pass |
+| GridK2D8 | 81 | 890 | 82.031 | 75.059 | 66.476 | 1.093 | 1.234 | pass |
+| GridK2D16 | 289 | 5490 | -51.941 | 242.683 | 102.959 | — | — | pass |
+| GridK3D2 | 27 | 161 | 79.304 | 0.698 | 22.822 | 113.583 | 3.475 | pass |
+| GridK3D4 | 125 | 1124 | 39.180 | 154.925 | 111.713 | 0.253 | 0.351 | pass |
+| GridK3D8 | 729 | 10934 | 90.180 | 383.011 | 312.236 | 0.235 | 0.289 | pass |
+| GridK3D16 | 4913 | 137563 | 170.660 | 1437.011 | 3366.664 | 0.119 | 0.051 | pass |
+| GridK4D2 | 81 | 566 | 438.122 | 90.446 | -158.360 | 4.844 | — | pass |
+| GridK4D4 | 625 | 6874 | 141.930 | 126.556 | 232.466 | 1.121 | 0.611 | pass |
+| GridK4D8 | 6561 | 124658 | 303.793 | 2903.742 | 3930.848 | 0.105 | 0.077 | pass |
+| GridK6D2 | 729 | 5831 | 26.580 | 223.472 | 119.990 | 0.119 | 0.222 | pass |
+| GridK6D4 | 15625 | 203124 | 186.543 | 834.609 | 1752.868 | 0.224 | 0.106 | pass |
+| GridK8D2 | 6561 | 59048 | 53.741 | 74.219 | 217.859 | 0.724 | 0.247 | pass |
+| DetN3K2D1 | 16 | 176 | 75.745 | 98.489 | 105.248 | 0.769 | 0.720 | pass |
+| DetN4K3D1 | 125 | 2125 | 150.697 | 690.684 | 748.984 | 0.218 | 0.201 | pass |
+| DetN3K3D2 | 343 | 4116 | 135.755 | 137.549 | 240.285 | 0.987 | 0.565 | pass |
+| DetN4K2D2 | 81 | 1296 | 43.385 | 640.220 | 367.367 | 0.068 | 0.118 | pass |
+| DetN5K3D1 | 216 | 4968 | 199.278 | 12622.661 | 7935.570 | 0.016 | 0.025 | pass |
 
 ## Per-case before/after
 
@@ -107,35 +109,77 @@ Before values come from the [retained shipping sweep](data/hex-kronecker-mathlib
 
 | Case | Before K ms | After K ms | Before ring ms | After ring ms | Before grobner ms | After grobner ms |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| GridK1D2 | 77.508 | 56.614 | 47.322 | 91.401 | 79.267 | 84.032 |
-| GridK1D4 | 76.461 | 38.117 | 73.423 | 156.907 | 90.167 | 96.305 |
-| GridK1D8 | 83.617 | 122.751 | 77.616 | 58.769 | 81.752 | 83.510 |
-| GridK1D16 | 86.323 | 210.310 | 88.315 | 67.542 | 140.768 | 93.969 |
-| GridK2D2 | 35.474 | 60.329 | 4.705 | 45.293 | 82.358 | 7.464 |
-| GridK2D4 | 81.034 | 12.839 | 83.305 | 31.096 | 86.879 | 77.891 |
-| GridK2D8 | 85.279 | 33.795 | 86.260 | 93.273 | 95.422 | 128.587 |
-| GridK2D16 | 86.199 | -261.058 | 110.181 | 298.547 | 175.130 | 158.620 |
-| GridK3D2 | 93.528 | 42.896 | 74.798 | 237.485 | 85.212 | 32.825 |
-| GridK3D4 | 84.871 | 261.600 | 97.783 | -66.889 | 87.148 | -20.988 |
-| GridK3D8 | 101.741 | 40.548 | 194.479 | 146.797 | 320.780 | 546.110 |
-| GridK3D16 | 275.352 | 278.760 | 1392.564 | 3234.030 | 2704.733 | 4887.749 |
-| GridK4D2 | 100.410 | 757.947 | 94.206 | 153.258 | 97.439 | -126.878 |
-| GridK4D4 | 93.211 | 131.443 | 113.287 | 257.721 | 183.785 | 425.958 |
-| GridK4D8 | 285.440 | 171.904 | 894.794 | 1610.389 | 2452.135 | 4477.787 |
-| GridK6D2 | 97.084 | -51.122 | 92.294 | 74.249 | 107.098 | -85.398 |
-| GridK6D4 | 186.995 | 360.024 | 295.516 | 478.487 | 1293.175 | 2128.336 |
-| GridK8D2 | 97.890 | -58.112 | 100.023 | 93.207 | 122.009 | 163.884 |
-| DetN3K2D1 | 46.952 | 48.877 | 102.599 | 337.032 | 110.265 | 316.537 |
-| DetN4K3D1 | 156.469 | 10.468 | 662.976 | 917.588 | 685.631 | 736.116 |
-| DetN3K3D2 | 90.542 | 271.796 | 183.618 | 268.518 | 192.447 | 289.564 |
-| DetN4K2D2 | 106.877 | 408.356 | 387.077 | 560.107 | 307.353 | 549.567 |
-| DetN5K3D1 | 279.116 | 357.454 | 9210.743 | 17372.332 | 6701.527 | 8824.961 |
+| GridK1D2 | 77.508 | 79.230 | 47.322 | 67.941 | 79.267 | 62.213 |
+| GridK1D4 | 76.461 | 51.245 | 73.423 | 88.912 | 90.167 | 33.737 |
+| GridK1D8 | 83.617 | 48.813 | 77.616 | 77.555 | 81.752 | 13.743 |
+| GridK1D16 | 86.323 | 86.700 | 88.315 | 25.445 | 140.768 | 319.768 |
+| GridK2D2 | 35.474 | 54.872 | 4.705 | 82.237 | 82.358 | 19.141 |
+| GridK2D4 | 81.034 | 42.467 | 83.305 | 68.743 | 86.879 | 89.420 |
+| GridK2D8 | 85.279 | 82.031 | 86.260 | 75.059 | 95.422 | 66.476 |
+| GridK2D16 | 86.199 | -51.941 | 110.181 | 242.683 | 175.130 | 102.959 |
+| GridK3D2 | 93.528 | 79.304 | 74.798 | 0.698 | 85.212 | 22.822 |
+| GridK3D4 | 84.871 | 39.180 | 97.783 | 154.925 | 87.148 | 111.713 |
+| GridK3D8 | 101.741 | 90.180 | 194.479 | 383.011 | 320.780 | 312.236 |
+| GridK3D16 | 275.352 | 170.660 | 1392.564 | 1437.011 | 2704.733 | 3366.664 |
+| GridK4D2 | 100.410 | 438.122 | 94.206 | 90.446 | 97.439 | -158.360 |
+| GridK4D4 | 93.211 | 141.930 | 113.287 | 126.556 | 183.785 | 232.466 |
+| GridK4D8 | 285.440 | 303.793 | 894.794 | 2903.742 | 2452.135 | 3930.848 |
+| GridK6D2 | 97.084 | 26.580 | 92.294 | 223.472 | 107.098 | 119.990 |
+| GridK6D4 | 186.995 | 186.543 | 295.516 | 834.609 | 1293.175 | 1752.868 |
+| GridK8D2 | 97.890 | 53.741 | 100.023 | 74.219 | 122.009 | 217.859 |
+| DetN3K2D1 | 46.952 | 75.745 | 102.599 | 98.489 | 110.265 | 105.248 |
+| DetN4K3D1 | 156.469 | 150.697 | 662.976 | 690.684 | 685.631 | 748.984 |
+| DetN3K3D2 | 90.542 | 135.755 | 183.618 | 137.549 | 192.447 | 240.285 |
+| DetN4K2D2 | 106.877 | 43.385 | 387.077 | 640.220 | 307.353 | 367.367 |
+| DetN5K3D1 | 279.116 | 199.278 | 9210.743 | 12622.661 | 6701.527 | 7935.570 |
+
+## Single unchanged repeat
+
+The [first complete sweep](data/hex-kronecker-mathlib/sweep-translation.json.gz) and the repeat have identical measured source hashes. Each column uses all six per-arm baseline-subtracted observations from its own cohort. These cohorts are not adjacent before/after pairs. Negative medians are retained.
+
+The first cohort put 4/7 previously losing small cases at or below `ring` and 1/5 determinant medians at or below the historical shipping values. Its numerical bar and the repeat's numerical bar are kept distinct.
+
+| Case | First K ms | Repeat K ms | First ring ms | Repeat ring ms | First grobner ms | Repeat grobner ms |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| GridK1D2 | 56.614 | 79.230 | 91.401 | 67.941 | 84.032 | 62.213 |
+| GridK1D4 | 38.117 | 51.245 | 156.907 | 88.912 | 96.305 | 33.737 |
+| GridK1D8 | 122.751 | 48.813 | 58.769 | 77.555 | 83.510 | 13.743 |
+| GridK1D16 | 210.310 | 86.700 | 67.542 | 25.445 | 93.969 | 319.768 |
+| GridK2D2 | 60.329 | 54.872 | 45.293 | 82.237 | 7.464 | 19.141 |
+| GridK2D4 | 12.839 | 42.467 | 31.096 | 68.743 | 77.891 | 89.420 |
+| GridK2D8 | 33.795 | 82.031 | 93.273 | 75.059 | 128.587 | 66.476 |
+| GridK2D16 | -261.058 | -51.941 | 298.547 | 242.683 | 158.620 | 102.959 |
+| GridK3D2 | 42.896 | 79.304 | 237.485 | 0.698 | 32.825 | 22.822 |
+| GridK3D4 | 261.600 | 39.180 | -66.889 | 154.925 | -20.988 | 111.713 |
+| GridK3D8 | 40.548 | 90.180 | 146.797 | 383.011 | 546.110 | 312.236 |
+| GridK3D16 | 278.760 | 170.660 | 3234.030 | 1437.011 | 4887.749 | 3366.664 |
+| GridK4D2 | 757.947 | 438.122 | 153.258 | 90.446 | -126.878 | -158.360 |
+| GridK4D4 | 131.443 | 141.930 | 257.721 | 126.556 | 425.958 | 232.466 |
+| GridK4D8 | 171.904 | 303.793 | 1610.389 | 2903.742 | 4477.787 | 3930.848 |
+| GridK6D2 | -51.122 | 26.580 | 74.249 | 223.472 | -85.398 | 119.990 |
+| GridK6D4 | 360.024 | 186.543 | 478.487 | 834.609 | 2128.336 | 1752.868 |
+| GridK8D2 | -58.112 | 53.741 | 93.207 | 74.219 | 163.884 | 217.859 |
+| DetN3K2D1 | 48.877 | 75.745 | 337.032 | 98.489 | 316.537 | 105.248 |
+| DetN4K3D1 | 10.468 | 150.697 | 917.588 | 690.684 | 736.116 | 748.984 |
+| DetN3K3D2 | 271.796 | 135.755 | 268.518 | 137.549 | 289.564 | 240.285 |
+| DetN4K2D2 | 408.356 | 43.385 | 560.107 | 640.220 | 549.567 | 367.367 |
+| DetN5K3D1 | 357.454 | 199.278 | 17372.332 | 12622.661 | 8824.961 | 7935.570 |
+
+| Case | First decline ms | Repeat decline ms |
+| --- | ---: | ---: |
+| GridK4D16 | -230.023 | 2.388 |
+| GridK6D8 | 93.993 | -285.332 |
+| GridK6D16 | 140.452 | 28.573 |
+| GridK8D4 | 266.600 | 37.118 |
+| GridK8D8 | 634.134 | 4.637 |
+| GridK8D16 | -38.302 | -199.226 |
+| IndependentN5 | -22.580 | 43.283 |
 
 ## Measured regimes
 
-The determinant-shaped group wins 4/5 comparisons against both references. The accepted multivariate expansion grid with degree at least four wins 8/9. These are the measured winning regimes; the full table also shows individual wins outside them.
+The determinant-shaped group wins 5/5 comparisons against both references. The accepted multivariate expansion grid with degree at least four wins 7/9. These are the measured winning regimes; the full table also shows individual wins outside them.
 
-The losing cases are `GridK1D8`, `GridK1D16`, `GridK2D2`, `GridK3D2`, `GridK3D4`, `GridK4D2`, `GridK6D2`, `DetN3K3D2`. The detailed tables retain their numerical ordering and measurement spread. The resolution table below distinguishes the numerical ordering from shared-host variation. No dispatch threshold or default-chain entry is inferred from small unresolved differences.
+The losing cases are `GridK1D2`, `GridK1D4`, `GridK1D8`, `GridK1D16`, `GridK2D2`, `GridK2D8`, `GridK3D2`, `GridK4D2`, `GridK4D4`. The detailed tables retain their numerical ordering and measurement spread. The resolution table below distinguishes the numerical ordering from shared-host variation. No dispatch threshold or default-chain entry is inferred from small unresolved differences.
 
 The grid has atom counts `1, 2, 3, 4, 6, 8` and degrees `2, 4, 8, 16`.
 Accepted powers of sums are compared with independently expanded SymPy
@@ -155,13 +199,13 @@ It must report the dense-box decline before any packing.
 
 | Case | Dense digits (saturated) | Packed bits (saturated) | Before decline ms | After decline ms |
 | --- | ---: | ---: | ---: | ---: |
-| GridK4D16 | 65537 | 2923234 | 7.021 | -230.023 |
-| GridK6D8 | 65537 | 12223142 | 44.509 | 93.993 |
-| GridK6D16 | 65537 | 16777217 | 1.648 | 140.452 |
-| GridK8D4 | 65537 | 5859374 | 3.340 | 266.600 |
-| GridK8D8 | 65537 | 16777217 | 1.824 | 634.134 |
-| GridK8D16 | 65537 | 16777217 | 10.342 | -38.302 |
-| IndependentN5 | 65537 | 16777217 | 76.336 | -22.580 |
+| GridK4D16 | 65537 | 2923234 | 7.021 | 2.388 |
+| GridK6D8 | 65537 | 12223142 | 44.509 | -285.332 |
+| GridK6D16 | 65537 | 16777217 | 1.648 | 28.573 |
+| GridK8D4 | 65537 | 5859374 | 3.340 | 37.118 |
+| GridK8D8 | 65537 | 16777217 | 1.824 | 4.637 |
+| GridK8D16 | 65537 | 16777217 | 10.342 | -199.226 |
+| IndependentN5 | 65537 | 16777217 | 76.336 | 43.283 |
 
 A saturated count is a certified lower bound, not an exact size. Scope
 outside the accepted dense-box regime is recorded as delegated scope and is
@@ -207,29 +251,29 @@ MAD is the median absolute deviation of the six paired margins from their median
 
 | Case | Margin vs ring ms | MAD ms | Margin vs grobner ms | MAD ms | Resolution |
 | --- | ---: | ---: | ---: | ---: | --- |
-| GridK1D2 | 13.506 | 61.855 | 43.281 | 88.177 | unresolved: ring, grobner |
-| GridK1D4 | 140.457 | 200.861 | 152.428 | 141.177 | unresolved: ring |
-| GridK1D8 | 1.042 | 225.677 | -14.436 | 83.323 | unresolved: ring, grobner |
-| GridK1D16 | -184.822 | 290.913 | -209.512 | 147.685 | unresolved: ring |
-| GridK2D2 | -22.557 | 75.216 | -5.946 | 374.423 | unresolved: ring, grobner |
-| GridK2D4 | 20.335 | 102.911 | -4.977 | 73.520 | unresolved: ring, grobner |
-| GridK2D8 | 59.478 | 422.590 | 44.588 | 239.440 | unresolved: ring, grobner |
-| GridK2D16 | 559.605 | 718.828 | 476.650 | 376.706 | unresolved: ring |
-| GridK3D2 | -6.290 | 553.434 | 92.339 | 706.362 | unresolved: ring, grobner |
-| GridK3D4 | -511.284 | 624.844 | -40.649 | 186.779 | unresolved: ring, grobner |
-| GridK3D8 | 89.262 | 1591.331 | 583.212 | 129.219 | unresolved: ring |
-| GridK3D16 | 2315.542 | 1450.190 | 4092.328 | 2376.831 | margin exceeds MAD |
-| GridK4D2 | -863.803 | 1974.588 | -1321.177 | 1177.776 | unresolved: ring |
-| GridK4D4 | 113.543 | 113.461 | 283.573 | 375.863 | unresolved: grobner |
-| GridK4D8 | 1553.385 | 753.669 | 4420.783 | 1033.928 | margin exceeds MAD |
-| GridK6D2 | -107.858 | 491.401 | -30.562 | 374.131 | unresolved: ring, grobner |
-| GridK6D4 | 121.628 | 770.637 | 1861.950 | 329.735 | unresolved: ring |
-| GridK8D2 | 353.963 | 1075.383 | 151.685 | 278.714 | unresolved: ring, grobner |
-| DetN3K2D1 | 273.948 | 283.907 | 197.944 | 156.949 | unresolved: ring |
-| DetN4K3D1 | 848.245 | 418.484 | 608.054 | 282.411 | margin exceeds MAD |
-| DetN3K3D2 | 181.491 | 200.743 | 81.753 | 162.355 | unresolved: ring, grobner |
-| DetN4K2D2 | 367.162 | 521.601 | 250.233 | 375.809 | unresolved: ring, grobner |
-| DetN5K3D1 | 16740.797 | 5329.477 | 8514.689 | 322.215 | margin exceeds MAD |
+| GridK1D2 | -13.904 | 47.538 | -28.241 | 350.892 | unresolved: ring, grobner |
+| GridK1D4 | 1.048 | 37.938 | 23.529 | 85.471 | unresolved: ring, grobner |
+| GridK1D8 | 2.188 | 382.594 | -44.175 | 215.890 | unresolved: ring, grobner |
+| GridK1D16 | -43.044 | 123.873 | 138.509 | 169.346 | unresolved: ring, grobner |
+| GridK2D2 | 1.259 | 16.758 | -0.929 | 20.923 | unresolved: ring, grobner |
+| GridK2D4 | 10.796 | 43.355 | 42.855 | 36.733 | unresolved: ring |
+| GridK2D8 | 40.501 | 63.503 | -23.676 | 74.035 | unresolved: ring, grobner |
+| GridK2D16 | 294.624 | 243.760 | 153.777 | 62.725 | margin exceeds MAD |
+| GridK3D2 | -24.568 | 54.033 | -39.491 | 49.523 | unresolved: ring, grobner |
+| GridK3D4 | 12.877 | 50.133 | 66.323 | 154.130 | unresolved: ring, grobner |
+| GridK3D8 | 134.224 | 157.415 | 286.066 | 38.482 | unresolved: ring |
+| GridK3D16 | 1289.785 | 76.392 | 3189.928 | 616.229 | margin exceeds MAD |
+| GridK4D2 | -32.922 | 350.218 | -596.482 | 486.401 | unresolved: ring |
+| GridK4D4 | -382.416 | 288.332 | 107.559 | 70.078 | margin exceeds MAD |
+| GridK4D8 | 2355.676 | 1141.162 | 3627.054 | 1536.209 | margin exceeds MAD |
+| GridK6D2 | 196.892 | 345.972 | 172.537 | 521.023 | unresolved: ring, grobner |
+| GridK6D4 | 403.781 | 250.709 | 1327.441 | 170.803 | margin exceeds MAD |
+| GridK8D2 | 61.216 | 66.391 | 340.577 | 201.512 | unresolved: ring |
+| DetN3K2D1 | 29.211 | 32.497 | 65.029 | 47.507 | unresolved: ring |
+| DetN4K3D1 | 416.726 | 163.592 | 617.804 | 262.834 | margin exceeds MAD |
+| DetN3K3D2 | 5.274 | 78.189 | 133.596 | 72.894 | unresolved: ring |
+| DetN4K2D2 | 394.103 | 640.050 | 305.184 | 486.373 | unresolved: ring, grobner |
+| DetN5K3D1 | 12424.813 | 3014.414 | 7296.462 | 783.856 | margin exceeds MAD |
 
 ## Paired signs
 
@@ -237,28 +281,28 @@ Each sign records one completed reference-minus-candidate margin in trial order.
 
 | Case | vs ring | vs grobner |
 | --- | --- | --- |
-| GridK1D2 | + + − − + − | + + + − − + |
-| GridK1D4 | + + + + + − | + + + + − + |
-| GridK1D8 | − + − + + − | + − + + − − |
-| GridK1D16 | + − − − + + | + − − − − + |
-| GridK2D2 | − − − − + + | − − − + + + |
-| GridK2D4 | + + + + − − | + − + + − − |
-| GridK2D8 | + + − + + − | + − − + + + |
-| GridK2D16 | − + − + + + | − + + + + + |
-| GridK3D2 | + − − + − + | + − + + − + |
-| GridK3D4 | + − − − − − | − + + + − − |
-| GridK3D8 | + + + − + − | + + + + + + |
+| GridK1D2 | − + − − + − | − + − − + − |
+| GridK1D4 | − + − − + + | − − − + + + |
+| GridK1D8 | − − + − + + | − − − − + + |
+| GridK1D16 | − + − − + + | + + + − + + |
+| GridK2D2 | + − − + + − | + + − + − − |
+| GridK2D4 | − − + + + + | − − + + + + |
+| GridK2D8 | + − − + + + | − + − + − − |
+| GridK2D16 | + + + + + + | + + + + + + |
+| GridK3D2 | + + − − − − | − + − − + − |
+| GridK3D4 | + + + + − − | + + + + − − |
+| GridK3D8 | + + + − + + | + + + − + + |
 | GridK3D16 | + + + + + + | + + + + + + |
-| GridK4D2 | + + − − − − | + − − + − − |
-| GridK4D4 | + − + + + − | + + + + − − |
+| GridK4D2 | + + − − + − | − − − − − − |
+| GridK4D4 | − − + + − − | + + + + + − |
 | GridK4D8 | + + + + + + | + + + + + + |
-| GridK6D2 | + − − + − + | + − + − − + |
-| GridK6D4 | + + − − + + | + + + + + + |
-| GridK8D2 | + + + + − − | + + + + − − |
-| DetN3K2D1 | + − + + + + | + + + − + + |
-| DetN4K3D1 | + − + + + + | + + + + − + |
-| DetN3K3D2 | − + − + + + | + + − + + + |
-| DetN4K2D2 | + + − + + − | − + − + + + |
+| GridK6D2 | − − + + + − | − + + + − + |
+| GridK6D4 | + + + + + + | + + + + + + |
+| GridK8D2 | + + + + + − | + + + − + + |
+| DetN3K2D1 | + + + + − + | + + + + − + |
+| DetN4K3D1 | + + + − + + | + + + + + + |
+| DetN3K3D2 | + + + − − + | + − + + + + |
+| DetN4K2D2 | + + + − + + | + + + − + + |
 | DetN5K3D1 | + + + + + + | + + + + + + |
 
 ## Kernel-only profiles
@@ -425,5 +469,6 @@ Every completed sweep is retained. Historical `candidate_faster` fields in the o
 | [sweep-optimized.json.gz](data/hex-kronecker-mathlib/sweep-optimized.json.gz) | `b6cc624916d948df1c1f6e57d385109cb8ad5bea` | True | 456 | [sources](data/hex-kronecker-mathlib/source-optimized.tar.gz) |
 | [sweep-reviewed.json.gz](data/hex-kronecker-mathlib/sweep-reviewed.json.gz) | `dea5fef0ad36b3d0837545d027c76cf575dae642` | False | 456 | [sources](data/hex-kronecker-mathlib/source-reviewed.tar.gz) |
 | [sweep-shipping.json.gz](data/hex-kronecker-mathlib/sweep-shipping.json.gz) | `dfc5a2266fda50de82dec94cf07cb6b98a98b07a` | False | 456 | [sources](data/hex-kronecker-mathlib/source-shipping.tar.gz) |
+| [sweep-translation-repeat.json.gz](data/hex-kronecker-mathlib/sweep-translation-repeat.json.gz) | `4b59351263e48e34946af4ce3c757d303408ee3a` | True | 456 | [sources](data/hex-kronecker-mathlib/source-translation-repeat.tar.gz) |
 | [sweep-translation.json.gz](data/hex-kronecker-mathlib/sweep-translation.json.gz) | `237ad74f70ab885fb4c168a64c948f4d16810196` | True | 456 | [sources](data/hex-kronecker-mathlib/source-translation.tar.gz) |
 | [sweep.json.gz](data/hex-kronecker-mathlib/sweep.json.gz) | `b6cc624916d948df1c1f6e57d385109cb8ad5bea` | True | 456 | [sources](data/hex-kronecker-mathlib/source-baseline.tar.gz) |

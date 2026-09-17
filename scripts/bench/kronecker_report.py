@@ -77,7 +77,7 @@ def main():
     link = 'data/hex-kronecker-mathlib/' + args.input.name
     rows = list(data['summary'].values())
     previous = read_json(args.repeat_of) if args.repeat_of else None
-    if previous and (not previous['measurement_complete'] or not previous['sources_unchanged']
+    if previous and (not previous['measurement_complete'] or not previous['sources_unchanged'] or previous['subset']
                      or previous['source_hashes'] != data['source_hashes']):
         raise SystemExit('the repeated sweep must have identical measured sources')
     ceilings = all(s['arms']['Kronecker']['ceiling_pass'] for s in rows if s['accepted'])
@@ -243,6 +243,15 @@ prevent explicitly opt-in shipping under the SPEC's shared exception.
                  'and the repeat have identical measured source hashes. Each column uses all six '
                  'per-arm baseline-subtracted observations from its own cohort. These cohorts '
                  'are not adjacent before/after pairs. Negative medians are retained.\n\n')
+        if args.before:
+            first_small = sum(previous['summary'][r['stem']]['arms']['Kronecker']['median_delta_ns'] <=
+                              previous['summary'][r['stem']]['arms']['Ring']['median_delta_ns'] for r in small)
+            first_det = sum(previous['summary'][r['stem']]['arms']['Kronecker']['median_delta_ns'] <=
+                            old[r['stem']]['arms']['Kronecker']['median_delta_ns'] for r in det_cases)
+            text += (f'The first cohort put {first_small}/{len(small)} previously losing small cases '
+                     f'at or below `ring` and {first_det}/{len(det_cases)} determinant medians '
+                     'at or below the historical shipping values. Its numerical bar and the '
+                     'repeat\'s numerical bar are kept distinct.\n\n')
         text += '| Case | First K ms | Repeat K ms | First ring ms | Repeat ring ms | First grobner ms | Repeat grobner ms |\n'
         text += '| --- | ---: | ---: | ---: | ---: | ---: | ---: |\n'
         for row in rows:
@@ -371,8 +380,10 @@ certificate check. Raw profiler output is retained in the record.
              'historical sweep records and are not used as kernel profiles.\n')
     if args.previous_kernel_profiles:
         prior_profiles = read_json(args.previous_kernel_profiles)
-        if prior_profiles['source_hashes'] != profile_data['source_hashes']:
-            raise SystemExit('the repeated kernel profiles must have identical sources')
+        if (not prior_profiles['sources_unchanged'] or len(prior_profiles['profiles']) != 3
+                or any(p['result']['state'] != 'complete' for p in prior_profiles['profiles'])
+                or prior_profiles['source_hashes'] != profile_data['source_hashes']):
+            raise SystemExit('the repeated kernel profiles must be complete with identical sources')
         prior = {p['stem']: p for p in prior_profiles['profiles']}
         text += ('\nThe three profiles were repeated once, before the unchanged full sweep. '
                  'The first observations are retained below. These are unpaired single '
