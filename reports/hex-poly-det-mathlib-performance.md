@@ -14,6 +14,41 @@ unchanged; the initial worktree and dependency checkouts were clean. The data
 record every imported repository source hash, the manifest, toolchain, host
 observations, CPU accounting, compiler output, axiom audits and artifact sizes.
 
+## Residue term-list certificates
+
+The [focused residue record](bench-results/hex-det-residue-probes.json.gz)
+measures the integer and residue term-list arms beside one another using
+`scripts/bench/det_residue_sweep.py`. The 4×4 two-variable cases have the same
+block-diagonal matrix and formal determinant `(x² - 1) * (y² - 1)` over `Int`
+and `ZMod 3`. The third case retains the nonzero formal polynomial `X³ − X`
+in a 4×4 determinant over `MvPolynomial (Fin 1) (ZMod 3)`.
+
+Each probe has six trials and an immediately adjacent import-only baseline.
+The fixed trial-major schedule rotates cases and alternates AB/BA order.
+All 18 measured proof builds and 18 baselines completed, all 45-second ceilings
+passed, and every theorem reports only `propext`, `Classical.choice`, and
+`Quot.sound`. Route traces require the integer certificate for `Integer4` and
+the residue certificate for the other two; a closed formula or fallback cannot
+satisfy the measurement check.
+
+Source commit: `a73104154c6d77e8af813ade9cd7993e0ffa2596`. Host: `chungus2`, AMD EPYC 9455 48-Core Processor,
+leanprover/lean4:v4.34.0. One Lean worker used automatically leased logical CPU
+77. Concurrent compilation and shared-host activity are retained as context.
+There were no discarded samples, retries, or provenance exceptions.
+
+The kernel column is the median synchronous `det.symbolic.kernel` declaration
+check, including certificate replay and semantic transport. Nested profiling is
+disabled within that check. Full-build columns include all elaboration and proof
+construction, so the larger residue build times are not represented by the
+kernel-check column alone. These absolute observations do not establish a
+performance win or change default simproc dispatch.
+
+| Probe | Full build median/max (s) | Kernel check median (ms) | .olean bytes |
+|---|---:|---:|---:|
+| Integer4 | 2.947 / 4.381 | 46.550 | 40400 |
+| Residue4 | 8.593 / 10.456 | 108.500 | 48392 |
+| ResidueFrobenius | 8.774 / 10.580 | 43.450 | 47248 |
+
 ## Method
 
 The unmodified pinned Mathlib `norm_det`, followed by residual `ring`, is
@@ -264,10 +299,10 @@ remain missing in the report rather than being inferred from the implementation.
 The closed-algebraic shared targets treat α as an independent atom. The
 separate `AlgebraicScope` probe confirms that neither tactic uses α² = 2
 to close the zero target; its final theorem then supplies that relation
-explicitly. It is not an algebraic-number scope win. Reduced-Nat residue
-kernel tests remain non-tests pending #10257. Integer transport remains sound
-over arbitrary commutative rings; characteristic-aware conversion mismatches
-decline and preserve fallback.
+explicitly. It is not an algebraic-number scope win. The canonical Nat residue
+term-list arm has kernel tests and the focused measurements above. Integer
+transport remains sound over arbitrary commutative rings; composite-characteristic
+requests decline the residue certificate and preserve tactic fallback.
 
 The [earlier certificate experiment](hex-symbolic-det-experiment.md) retains
 all 732 samples and ten profiles from the implementation before relocation
