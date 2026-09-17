@@ -216,6 +216,10 @@ private def accepts (d : SolveBasis) : Bool :=
 #guard !accepts { affine with pivots := [0] }
 #guard !accepts { affine with pivots := [3] }
 #guard !accepts { affine with rank := 2 }
+#guard !accepts { affine with reduced := ⟨1, []⟩ }
+#guard !accepts { affine with reduced := ⟨1, [[0, 1]]⟩ }
+#guard !accepts { affine with transform := ⟨1, [[]]⟩ }
+#guard !accepts { affine with inverse := ⟨1, []⟩ }
 #guard !accepts { affine with reduced := ⟨1, [[1, 1, 1]]⟩ }
 #guard !accepts { affine with reduced := ⟨1, [[0, 2, 1]]⟩ }
 #guard !accepts { affine with transform := ⟨1, [[0]]⟩ }
@@ -227,6 +231,10 @@ private def accepts (d : SolveBasis) : Bool :=
 #guard !accepts { affine with inverse := { affine.inverse with denom := 0 } }
 #guard !accepts { affine with basis := { affine.basis with denom := 0 } }
 #guard !accepts { affine with value := { affine.value with denom := 0 } }
+#guard !checkSolveList 1 3 [[0, 1, 1]] [2]
+  (.consistent ⟨0, [[0, 1, 1]]⟩ ⟨1, [2]⟩ affine)
+#guard !checkSolveList 1 3 [[0, 1, 1]] [2]
+  (.consistent ⟨1, [[0, 1, 1]]⟩ ⟨0, [2]⟩ affine)
 
 #guard checkSolveList 1 1 [[0]] [1] (.inconsistent ⟨1, [[0]]⟩ ⟨1, [1]⟩ ⟨1, [1]⟩)
 #guard !checkSolveList 1 1 [[1]] [1] (.inconsistent ⟨1, [[1]]⟩ ⟨1, [1]⟩ ⟨1, [1]⟩)

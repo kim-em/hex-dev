@@ -53,7 +53,7 @@ def matrixLiteral? (A : Expr) (n m : Nat) : MetaM (Option Recognized) := do
 def readMatrix (A : Expr) : MetaM (Outcome Input) := do
   let some (n, m, carrier) ← shape? (← inferType A) | return .notApplicable
   unless (← whnfR carrier).isConstOf ``_root_.Rat do return .notApplicable
-  if A.hasFVar then return .notApplicable
+  if A.hasFVar || A.hasMVar then return .notApplicable
   if n > 32 || m > 32 then
     return .declined m!"matrix shape {n} × {m} exceeds the dimension budget of 32"
   let some lit ← matrixLiteral? A n m |
@@ -78,7 +78,7 @@ def closedVector? (v : Expr) : MetaM (Option VectorLiteral) := do
     vectorLiteral? (← mkLambdaFVars #[i] (mkApp v i))
 
 def readVector (v : Expr) : MetaM (Outcome VecInput) := do
-  if v.hasFVar then return .notApplicable
+  if v.hasFVar || v.hasMVar then return .notApplicable
   let some lit ← closedVector? v |
     return .declined m!"expected a closed rational vector literal within the unfolding budget of {unfoldBudget}"
   unless lit.carrier.isConstOf ``_root_.Rat do return .notApplicable
@@ -98,7 +98,11 @@ def inputVector (c : VecInput) : Vector ℚ c.literal.size :=
   Vector.ofFn fun i => xs[i.val]!
 
 def truth (check : Expr) : MetaM Expr := do
-  decideProof (← mkEq check (mkConst ``Bool.true))
+  let t := mkConst ``Bool.true
+  let prop ← mkEq check t
+  -- Keep instance synthesis from inspecting the certificate computation.
+  let inst := mkApp2 (mkConst ``Bool.decEq) check t
+  return mkApp3 (mkConst ``of_decide_eq_true) prop inst (← mkEqRefl t)
 
 def positive (n : Nat) : MetaM Expr := do
   decideProof (← mkAppM ``LT.lt #[mkNatLit 0, mkNatLit n])

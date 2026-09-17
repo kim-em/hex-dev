@@ -109,6 +109,24 @@ theorem affine_coordinates (x : Fin 3 → ℚ) :
 
 open Lean Elab Tactic
 
+run_cmd Command.liftTermElabM do
+  let matrixType ← Term.elabType (← `(Matrix (Fin 2) (Fin 2) ℚ))
+  let A ← Meta.mkFreshExprMVar matrixType
+  match ← HexRowReduceMathlib.Tactic.readMatrix A with
+  | .notApplicable => pure ()
+  | _ => throwError "numeric matrix recognition claimed an unresolved metavariable"
+  if ← A.mvarId!.isAssigned then
+    throwError "numeric matrix recognition assigned an unresolved metavariable"
+
+run_cmd Command.liftTermElabM do
+  let vectorType ← Term.elabType (← `(Fin 2 → ℚ))
+  let v ← Meta.mkFreshExprMVar vectorType
+  match ← HexRowReduceMathlib.Tactic.readVector v with
+  | .notApplicable => pure ()
+  | _ => throwError "numeric vector recognition claimed an unresolved metavariable"
+  if ← v.mvarId!.isAssigned then
+    throwError "numeric vector recognition assigned an unresolved metavariable"
+
 run_cmd do
   for name in [``inverse_product, ``inverse_eq, ``inverse_singular, ``inverse_value,
       ``inverse_kernel, ``solve_residual, ``solve_exists, ``solve_inconsistent,
