@@ -255,6 +255,13 @@ supported prime-characteristic carriers without Mathlib ring evidence. Polynomia
 finite fields use residue coefficients. See the companion SPEC for the scoped
 ring transport and the factorisation through constant polynomials.
 
+Consumers with an independent soundness route may pass an explicit coefficient
+provider to `convert`. The session validates its evidence against the classified
+ring and includes its identity and instance expressions in the conversion cache
+key. This does not change registered selection or its cached outcome. The
+determinant consumer uses this facility to retain universal integer transport
+when residue capability conditions fail.
+
 The pinned ring reifier recognizes nested `BitVec.ofNat` inside its recursive
 worker, but its top-level match has no `BitVec.ofNat` arm. Consequently a
 top-level bit-vector numeral is accepted only through the enabled atom case;

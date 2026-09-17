@@ -329,7 +329,7 @@ theorem triangular_spec (d : R) (swaps : List (Nat × Nat))
         linear_combination D.eval prev * hprod
 
 /-- The row-list matrix with its entries interpreted. -/
-def matrix (n : Nat) (A : List (List R)) : Matrix (Fin n) (Fin n) S :=
+@[expose] def matrix (n : Nat) (A : List (List R)) : Matrix (Fin n) (Fin n) S :=
   ofLists n n (A.map (List.map D.eval))
 
 theorem matrix_apply (n : Nat) (A : List (List R)) (i j : Fin n) :

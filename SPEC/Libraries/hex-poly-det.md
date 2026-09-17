@@ -82,9 +82,9 @@ identically zero. No specialisation chooses or certifies the branch.
 
 The kernel form is `checkDetPolyList` instantiated with hex-mv-poly's
 canonical term-list operations: coefficients `Int` for the integer
-carrier, canonical `Nat` residues for the residue carrier once
-[the residue list form](https://github.com/kim-em/hex-dev/issues/10257)
-exists, exponent vectors as `List Nat`. Its soundness is the companion's.
+carrier, canonical `Nat` residues for the residue carrier through
+`Hex.PolyDet.opsMod`, and exponent vectors as `List Nat`. Every modular
+operation comes from `HexMvPoly.KernelResidue`. Its soundness is the companion's.
 
 ## Packed certificate
 

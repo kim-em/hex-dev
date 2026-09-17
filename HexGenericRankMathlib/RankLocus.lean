@@ -33,7 +33,7 @@ def evalRankLocusDefault : Tactic := fun stx => withMainContext do
     | .integer L => pure (Provider.integerWitness k p.lit.n p.lit.m L).rank
     | .residue q L =>
       let entries := L.map (List.map (List.map (fun t => (t.1, (t.2 : Int)))))
-      let some c := Provider.residueWitness? q k p.lit.n p.lit.m entries
+      let some (_, c) := Provider.residueWitness? q k p.lit.n p.lit.m entries
         | throwError "rank_locus: declined: invalid residue coefficient evidence"
       pure c.rank
   let result ← HexDeterminantalIdealMathlib.Provider.locus p r cfg

@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexGenericRankMathlib.Modular
-public meta import HexGenericRankMathlib.Modular
+public import HexGenericRankMathlib.Univariate
+public meta import HexGenericRankMathlib.Univariate
 public meta import HexModArithMathlib.Ring
 public meta import HexArith.Nat.Prime
 public meta import HexGenericRankMathlib.Kernel
@@ -103,38 +103,31 @@ def integerWitness (k n m : Nat) (L : PolyLists.Rows Int) : PolyWitness Int :=
     denom := MvPoly.Kernel.toList c.denom
     adj := c.adj.rows.toList.map fun row => row.toList.map MvPoly.Kernel.toList }
 
-/-- Small signed representatives keep the displayed polynomial readable. -/
-def balance (p : Nat) (a : Int) : Int :=
-  let b := a % (p : Int)
-  if 2 * b > p then b - p else b
-
-/-- Produce over the selected residue carrier and quote only integer lists.
-The runtime checks construct erased instances; the proof uses the coefficient
-provider's bounds and primality evidence. -/
-def residueWitness? (p k n m : Nat) (L : PolyLists.Rows Int) : Option (PolyWitness Int) := do
+/-- Produce over machine residues, then quote through hex-mv-poly's shared encoding. -/
+def residueWitness? (p k n m : Nat) (L : PolyLists.Rows Int) :
+    Option (PolyLists.Rows Nat × PolyWitness Nat) := do
   if hb : 0 < p ∧ p < 2^31 then
     letI : ZMod64.Bounds p := ⟨hb.1, hb.2⟩
     if hp : Hex.Nat.Prime p then
       letI : ZMod64.PrimeModulus p := ⟨hp⟩
-      let P := PolyLists.matrix (k := k) n m (Modular.castRows (C := ZMod64 p) L)
+      let residues := L.map (List.map fun a => MvPoly.Kernel.normalize
+        (a.map fun t => (t.1, (t.2 : ZMod64 p))))
+      let P := PolyLists.matrix (k := k) n m residues
       let c := GenericRank.genericCert P
-      -- `toList` omits zero residues; balancing a nonzero residue preserves
-      -- nonvanishing modulo p. Thus a nonempty quoted denominator has a
-      -- surviving head coefficient, as required by `Modular.nonzero`.
-      let quotePoly (a : MvPoly k (ZMod64 p) Mono.grevlex) : PolyLists.Poly Int :=
-        (MvPoly.Kernel.toList a).map fun t => (t.1, balance p (t.2.toNat : Int))
-      return {
+      let quotePoly (a : MvPoly k (ZMod64 p) Mono.grevlex) :=
+        MvPoly.Kernel.ofResidues p (MvPoly.Kernel.toList a)
+      return (residues.map (List.map (MvPoly.Kernel.ofResidues p)), {
         rank := c.rank
         rows := c.rows.toList.map Fin.val
         cols := c.cols.toList.map Fin.val
         denom := quotePoly c.denom
-        adj := c.adj.rows.toList.map fun row => row.toList.map quotePoly }
+        adj := c.adj.rows.toList.map fun row => row.toList.map quotePoly })
     else none
   else none
 
 /-- Display a certificate denominator using the shared polynomial denotation API. -/
 def displayDenominator (d : Expr) : MetaM Simp.Result :=
-  HexReflectMathlib.displayPolynomial d #[``PolyLists.denote, ``Modular.cast]
+  HexReflectMathlib.displayPolynomial d #[``PolyLists.denote, ``MvPoly.Kernel.toResidues, ``MvPoly.Kernel.CoeffMap.map]
 
 /-- The shared closed-numeral condition normalizer. -/
 abbrev closedNormNum := HexReflectMathlib.closedNormNum
@@ -182,28 +175,27 @@ def batchResult (A : Expr) (lit : HexMatrixMathlib.Literal.Recognized)
   let kE := mkNatLit k
   let nE := mkNatLit n
   let mE := mkNatLit m
-  let C := first.conversion.provider.coeffType
   let mut flat : Array (PolyLists.Poly Int) := #[]
   for e in batch.entries do
     unless e.conversion.provider.id == first.conversion.provider.id do
       throwError "rank: mixed coefficient providers in one batch"
     flat := flat.push (MvPoly.Kernel.normalize
-      (e.conversion.terms.map fun t => (t.1.toList,
-        match modulus with | none => t.2 | some p => balance p t.2)))
+      (e.conversion.terms.map fun t => (t.1.toList, t.2)))
   let L : PolyLists.Rows Int := (List.range n).map fun i =>
     (List.range m).map fun j => flat[i * m + j]!
-  let c ← profileitM Exception "generic-rank producer" (← getOptions) do
+  let (r, LE, cE, residueLists) ← profileitM Exception "generic-rank producer" (← getOptions) do
     match modulus with
-    | none => pure (integerWitness k n m L)
-    | some p => match residueWitness? p k n m L with
-      | some c => pure c
-      | none => throwError "rank: invalid residue coefficient evidence"
-  let passes := match modulus with
-    | none => checkRankPolyList k n m L c
-    | some p => Modular.checkRankPolyList p k n m L c
-  unless passes do throwError "rank: the polynomial certificate failed its list check"
-  let LE := toExpr L
-  let cE := toExpr c
+    | none =>
+      let c := integerWitness k n m L
+      unless checkRankPolyList k n m L c do
+        throwError "rank: the polynomial certificate failed its list check"
+      pure (c.rank, toExpr L, toExpr c, ([] : PolyLists.Rows Nat))
+    | some p =>
+      let some (rows, c) := residueWitness? p k n m L
+        | throwError "rank: invalid residue coefficient evidence"
+      unless Modular.checkRankPolyList p k n m rows c do
+        throwError "rank: the residue certificate failed its list check"
+      pure (c.rank, toExpr rows, toExpr c, rows)
   let (header, pivot, upper) ← match modulus with
     | none => do
       pure (← mkAppM ``checkRankPolyHeader #[kE, nE, mE, LE, cE],
@@ -222,8 +214,7 @@ def batchResult (A : Expr) (lit : HexMatrixMathlib.Literal.Recognized)
   let checked ← match modulus with
     | none => mkAppM ``checkRankPolyList_sound #[h]
     | some p =>
-      mkAppOptM ``Modular.checkRankPolyList_sound
-        #[C, none, none, none, none, mkNatLit p, none, kE, nE, mE, LE, cE, h]
+      mkAppM ``Modular.checkRankPolyList_sound #[mkNatLit p, h]
   let some (_, check, _) := (← inferType checked).eq? | throwError "rank: invalid check theorem"
   let args := check.getAppArgs
   let polynomial := args[args.size - 2]!
@@ -250,11 +241,18 @@ def batchResult (A : Expr) (lit : HexMatrixMathlib.Literal.Recognized)
           #[ι, v, e.conversion.provider.ofInt, ts, raw, toExpr flat[idx]!, rawProof, normProof,
             e.input, e.result.proof]
       | some p => do
-        let norm ← mkAppM ``MvPoly.Kernel.normalize #[raw]
-        let equal ← mkAppM ``Modular.equal #[mkNatLit p, norm, toExpr flat[idx]!]
+        let ctx := v.getAppArgs[v.getAppArgs.size - 2]!
+        let q := toExpr (PolyLists.get residueLists (idx / m) (idx % m))
+        let replay ← mkAppM ``Hex.Reflect.Kernel.ringListMod #[mkNatLit p, kE, toExpr e.reflected.expr]
+        let equal ← mkAppM ``MvPoly.Kernel.beq #[replay, q]
         let normProof ← checkedProof (← mkEq equal (mkConst ``Bool.true))
-        mkAppM ``Modular.interpret_entry
-          #[mkNatLit p, ι, v, ts, raw, toExpr flat[idx]!, rawProof, normProof, e.input, e.result.proof]
+        let hp ← checkedProof (← mkAppM ``LT.lt #[mkNatLit 1, mkNatLit p])
+        let hb ← checkedProof (← mkAppM ``LE.le #[mkNatLit e.reflected.expr.varBound, kE])
+        let proof ← mkAppM ``HexReflectMathlib.Kernel.eval_checkedMod
+          #[mkNatLit p, hp, kE, ctx, toExpr e.reflected.expr, q, hb, normProof]
+        let bridge ← mkAppOptM ``Modular.denote_cast #[mkNatLit p, none, kE, q]
+        let φ ← mkAppM ``HexReflectMathlib.Kernel.homMod #[mkNatLit p, kE, ctx]
+        mkEqTrans (← mkCongrArg (← mkAppM ``DFunLike.coe #[φ]) bridge) proof
     entryProofs := entryProofs.push proof
   let rowProofs ← (List.range n).mapM fun i =>
     listEq lit.carrier ((entryProofs.toList.drop (i * m)).take m)
@@ -264,7 +262,7 @@ def batchResult (A : Expr) (lit : HexMatrixMathlib.Literal.Recognized)
   let hA ← identification lit A source
   let coefficientRows ← match modulus with
     | none => pure LE
-    | some _ => mkAppOptM ``Modular.castRows #[C, none, LE]
+    | some p => mkAppM ``Modular.castRows #[mkNatLit p, LE]
   let interpretation ← mkAppM ``interpret_matrix #[ι, v, coefficientRows, source, A, hL, hA]
   let d ← mkAppM ``Hex.Matrix.RankCert.denom #[certificate]
   let some (_, φ, _) := (← inferType (← mkAppM ``eval₂_comp #[ι, v])).eq?
@@ -277,7 +275,7 @@ def batchResult (A : Expr) (lit : HexMatrixMathlib.Literal.Recognized)
   let proposition ← mkAppM ``Ne #[denominator, zero]
   let condition : Condition := {
     proposition, provider := id.name, source := A, operation := "rank"
-    reason := s!"the certificate denominator is a nonzero signed {c.rank} × {c.rank} minor of the polynomial matrix" }
+    reason := s!"the certificate denominator is a nonzero signed {r} × {r} minor of the polynomial matrix" }
   let rankFn := (← mkAppM ``Matrix.rank #[A]).appFn!
   let rankIdentification ← mkCongrArg rankFn interpretation
   let conditionalProof ← withLocalDeclD `denominator_ne_zero proposition fun hd => do
@@ -296,10 +294,10 @@ def batchResult (A : Expr) (lit : HexMatrixMathlib.Literal.Recognized)
   let coeffBEq ← synthInstance (← mkAppM ``BEq #[coeffType])
   let coeffLawfulBEq ← synthInstance (← mkAppOptM ``LawfulBEq #[coeffType, coeffBEq])
   let genericResult ← mkAppM ``GenericResult.mk
-    #[mkNatLit c.rank, coeffRing, coeffDecEq, coeffBEq, coeffLawfulBEq,
+    #[mkNatLit r, coeffRing, coeffDecEq, coeffBEq, coeffLawfulBEq,
       atoms, v, ι, polynomial, certificate, checked, genericProof, interpretation]
   return {
-    rank := c.rank
+    rank := r
     batch := batch
     polynomial := polynomial
     certificate := certificate
@@ -313,7 +311,7 @@ def batchResult (A : Expr) (lit : HexMatrixMathlib.Literal.Recognized)
     matrixSize := n * m
     measurements := {}
     conditional := {
-      value := mkNatLit c.rank
+      value := mkNatLit r
       proof := conditionalProof
       conditions := #[condition]
       atoms := batch.sealed.atoms } }
@@ -416,12 +414,38 @@ def withProofEvidence (evidence : List Expr) (action : MetaM (Option Expr)) :
     withLetDecl `coefficientInstance (← inferType e) e fun x => do
       return (← withProofEvidence es action).map fun proof => proof.replaceFVar x e
 
+/-- Recognize the single independent variable of a univariate polynomial ring. -/
+def independentUnivariate (A carrier : Expr) (r : Result) : MetaM (Option Expr) := do
+  let_expr Polynomial D _ := carrier | return none
+  unless r.batch.sealed.n == 1 do return none
+  let some atom := r.batch.sealed.atoms[0]? | return none
+  unless atom.isAppOf ``Polynomial.X do return none
+  let some first := r.batch.entries[0]? | return none
+  let provider := first.conversion.provider
+  let modulus ← if provider.id == intCoefficientsId then do
+      let .some _ ← trySynthInstance (← mkAppOptM ``CharZero #[D, none]) | return none
+      pure none
+    else if provider.id == HexReflectMathlib.residueCoefficientsId then do
+      let_expr Hex.ZMod64 p _ := provider.coeffType | return none
+      let .some _ ← trySynthInstance (← mkAppOptM ``CharP #[D, none, p]) | return none
+      pure (some p)
+    else return none
+  let args := first.result.interpretation.getAppArgs
+  let v := args[args.size - 2]!
+  let xv ← withLocalDeclD `i (mkApp (mkConst ``Fin) (mkNatLit 1)) fun i =>
+    mkLambdaFVars #[i] atom
+  let hv ← finiteEq 1 v xv
+  withProofEvidence provider.auxInstances.toList do
+    match modulus with
+    | none => return some (← mkAppM ``rank_univariate_int #[v, hv, r.checked, A, r.interpretation])
+    | some p => return some (← mkAppM ``rank_univariate_residue #[p, v, hv, r.checked, A, r.interpretation])
+
 /-- Recognize precisely independent literal polynomial variables. The
 characteristic-zero hypothesis is synthesized on the coefficient domain,
 never assumed from the integer provider's presence. -/
 def independent (A : Expr) (r : Result) : MetaM (Option Expr) := do
   let some (_, _, carrier) ← HexMatrixMathlib.Literal.shape? (← inferType A) | return none
-  let_expr MvPolynomial σ D _ := carrier | return none
+  let_expr MvPolynomial σ D _ := carrier | return ← independentUnivariate A carrier r
   let some first := r.batch.entries[0]? | return none
   let provider := first.conversion.provider
   let modulus ← if provider.id == intCoefficientsId then do

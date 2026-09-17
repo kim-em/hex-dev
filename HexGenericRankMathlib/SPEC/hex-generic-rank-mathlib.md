@@ -38,21 +38,17 @@ These interfaces are owned by their supplying libraries:
   `CommRing`, `IsDomain` and `CharP` evidence and supplies the injective
   interpretation. `residueHom_mvPolynomial` supplies its factorization through
   `MvPolynomial.C`. This library registers no coefficient provider.
-- **Canonical Nat residue lists**, specified in hex-mv-poly and tracked by
-  [#10257](https://github.com/kim-em/hex-dev/issues/10257): the dedicated
-  positive-characteristic encoding remains a prerequisite. Its kernel-checked
-  output-1 probe is reserved as a documented non-test until this interface lands,
-  as required by the revised #10223 directive. The existing integer-representative
-  fallback can already prove that goal after the domain provider extension;
-  this reservation concerns coverage of the shared Nat representation.
+- **Canonical Nat residue lists**, supplied by hex-mv-poly: the
+  positive-characteristic checker uses `addMod`, `mulMod`, `isCanonicalMod`,
+  structural equality and zero tests. `denoteMod` transports its identities
+  to the residue polynomial ring; `HexReflectMathlib.residueHom` interprets
+  coefficients in the target. Entry replay is shared with symbolic determinant
+  through `HexReflect.Kernel.ringListMod` and its Mathlib denotation theorem.
 
-The finite-field conditional example is supported by the integer-representative
-fallback: quote the residue producer's certificate as balanced integer term
-lists, compute the two identities with hex-mv-poly's existing integer list
-arithmetic, and compare canonical coefficients modulo the characteristic.
-Denotation commutes with the coefficient homomorphism. The kernel evaluates
-neither `ZMod64` arithmetic nor a `Hex.Matrix` identity. This fallback does not
-implement or replace the shared Nat residue form required above.
+Both characteristic-zero and positive-characteristic polynomial-ring goals
+support unconditional generic rank. Literal `Polynomial.X` also supports this
+output through the univariate polynomial equivalence. Residue certificates
+quote only canonical `PolyList Nat`; no integer-representative fallback is used.
 
 ## Input classification
 
@@ -368,9 +364,8 @@ carrier (a prerequisite above): it must supply `LawfulGcdOps C` for the
 producer, which `ZMod64 p` does under `ZMod64.Bounds p` and
 `ZMod64.PrimeModulus p` (`HexMvGcd/Instances.lean`), and for the companion
 a Mathlib `CommRing C` with an injective `C →+* ZMod 3`, supplied through the provider's local evidence and
-`HexModArithMathlib.ZMod64.equiv`. The conditional example uses the fallback
-above; the generic polynomial-ring probe remains a documented non-test until
-#10257 supplies the dedicated residue-list form.
+`HexModArithMathlib.ZMod64.equiv`. Both the conditional example and the generic polynomial-ring probe use the
+shared canonical Nat residue-list form.
 
 1. Generic: `S = !![X 0 ^ 3 - X 0]` over `MvPolynomial (Fin 1) (ZMod 3)`
    has rank `1`. This is true and unconditional.
