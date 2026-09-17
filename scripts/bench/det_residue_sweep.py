@@ -43,9 +43,9 @@ def compiler_metrics(module, sample):
         for name, value, unit in re.findall(
             r"^\s*det.symbolic.(\w+) ([0-9.e+-]+)(ms|s)$", output, re.MULTILINE)
     }
-    route = "certificate" if module.endswith(".Integer4") else "residue-certificate"
-    if f'"route":"{route}"' not in output:
-        raise RuntimeError(f"{module}: required certificate route absent")
+    encoding = "integer" if module.endswith(".Integer4") else "residue"
+    if f'"encoding":"{encoding}"' not in output or '"route":"term-list"' not in output:
+        raise RuntimeError(f"{module}: required term-list certificate route absent")
 
 
 if __name__ == "__main__":
