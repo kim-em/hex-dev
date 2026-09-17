@@ -2639,5 +2639,6 @@
   "stages": [
     "forced term-list versus forced packed on identical witnesses",
     "fixed-table dispatch versus unmodified Mathlib norm_det"
-  ]
+  ],
+  "crossover_rule": "union of keys from eligible witnesses with six complete samples per arm and 0 < packed median < term-list median"
 }
