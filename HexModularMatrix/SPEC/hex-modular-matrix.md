@@ -1008,7 +1008,7 @@ theorem solveMat?_unique (h : solveMat? A C fuel = some (X, d))
 ```
 
 **The laws are fields, not comments.** `inv_mul` is what `lift_spec`
-uses; `detImage_congr`, `detImage_lt` and `detImage_ne_zero` together
+uses; `detImage_congr`, `detImage_le` and `detImage_ne_zero` together
 are what `det_ne_zero` uses (a nonzero integer of absolute value below
 `p / 2` is nonzero modulo `p`, and `det A` is congruent to it; the
 range law is needed, since `detImage ≠ 0` alone does not exclude
