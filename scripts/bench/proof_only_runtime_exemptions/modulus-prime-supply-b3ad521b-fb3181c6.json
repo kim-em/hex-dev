@@ -1,0 +1,6 @@
+{
+  "path": "HexModArith/Modulus.lean",
+  "baseline_blob": "b3ad521be3b86e7f05fd3004c36f2e51af3d9252",
+  "current_blob": "fb3181c6324603a94713301f35402eb64a802894",
+  "reason": "Adds only Prop-valued proofs that primesBelow is strictly decreasing and either fills its requested count or reaches two, with private proof lemmas. Every executable definition, import, instance, compiler attribute, and existing guard is unchanged. These erased theorem additions cannot change the factorization service or its measured prime-supply computation."
+}

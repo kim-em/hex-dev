@@ -23,6 +23,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('output', type=Path)
     parser.add_argument('--mode', choices=['baseline', 'divisor', 'solve', 'repeated'], default='baseline')
+    parser.add_argument('--omit-modular', action='store_true',
+                        help='reuse retained ordinary-CRT measurements when only Dixon code changed')
     parser.add_argument('--start-at', help='start at this exact registration')
     parser.add_argument('--max-seconds-per-call', type=float, help='operational cap override')
     parser.add_argument('--limit', type=int, help='collect only this many comparison points')
@@ -81,7 +83,7 @@ def main():
                           for p in sources},
         'sampling': 'five fixed repeats, 0.2 s floor, discarded outer and inner '
                     'warmups; adjacent comparison arms reverse on alternate rungs',
-        'mode': args.mode, 'runs': [],
+        'mode': args.mode, 'omitted_modular': args.omit_modular, 'runs': [],
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='modmat-flint-') as temporary:
@@ -95,8 +97,12 @@ def main():
                     arms += [arms[0].replace('runModular', 'runBareiss'),
                              arms[0].replace('runModular', 'runFlint')]
                 elif args.mode == 'divisor':
-                    arms += [arms[0].replace('runDivisor', other)
-                             for other in ['runModular', 'runBareiss', 'runFlint']]
+                    if 'Structured' in name:
+                        arms += [arms[0].replace('runDivisor', 'runDispatch')]
+                    others = ['runBareiss', 'runFlint']
+                    if not args.omit_modular:
+                        others.insert(0, 'runModular')
+                    arms += [arms[0].replace('runDivisor', other) for other in others]
                 elif args.mode == 'solve' and 'runSolve' in name:
                     arms += [arms[0].replace('runSolve', 'runFlintSolve')]
                 elif args.mode == 'repeated':

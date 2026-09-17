@@ -174,7 +174,8 @@ def liftSparse (D : Decomp n) (R : Matrix Int n m) (k : Nat) : Matrix Int n m :=
 
 /-- Simultaneous lifting with nonnegative representatives at the requested precision. -/
 def liftMat (D : Decomp n) (R : Matrix Int n m) (k : Nat) : Matrix Int n m :=
-  (liftRaw D R k).mapEntries fun x => x % ((D.p : Int) ^ k)
+  let modulus := (D.p : Int) ^ k
+  (liftRaw D R k).mapEntries fun x => x % modulus
 
 theorem mul_scale (A : Matrix Int n m) (B : Matrix Int m k) (c : Int) :
     A * (c • B) = c • (A * B) := by

@@ -10,7 +10,7 @@ import LeanBench
 
 /-!
 Fixed determinant comparisons for the structured, dense random and unimodular
-families. Matrix construction and FLINT request encoding precede the timed
+families. Matrix construction and FLINT JSON input trees precede the timed
 closures. These are comparator anchors for the bounded modular route; the
 Dixon inverse, lifting and repeated-solve arms report their costs separately.
 -/
@@ -47,6 +47,10 @@ def runDivisor (A : Matrix Int n n) (_ : Unit) : IO Int := do
   let result := ModularMatrix.detWith A (ModularMatrix.defaultFuel A) 10220 true
   if result.rest.isEmpty then return result.value
   throw <| IO.userError "unexpected fallback in divisor benchmark"
+
+/-- The public size dispatcher, measured separately from each forced route. -/
+def runDispatch (A : Matrix Int n n) (_ : Unit) : IO Int :=
+  return ModularMatrix.detViaDivisor A 10220
 
 def runModularAt (family : String) (n bits : Nat) := runModular (input family n bits)
 def runDivisorAt (family : String) (n bits : Nat) := runDivisor (input family n bits)
@@ -267,72 +271,96 @@ private def repeatedN256R1 := Thunk.mk fun _ => rhsInput solveA256.get false 1
 private def repeatedN256R8 := Thunk.mk fun _ => rhsInput solveA256.get false 8
 private def repeatedN256R256 := Thunk.mk fun _ => rhsInput solveA256.get false 256
 
+def runDispatchStructuredN16B8 := runDispatch dataStructuredN16B8.get
+setup_fixed_benchmark runDispatchStructuredN16B8 where compareConfig
 def runModularStructuredN16B8 := runModular dataStructuredN16B8.get
 setup_fixed_benchmark runModularStructuredN16B8 where compareConfig
 def runBareissStructuredN16B8 := runBareiss dataStructuredN16B8.get
 setup_fixed_benchmark runBareissStructuredN16B8 where compareConfig
 def runFlintStructuredN16B8 := runFlint dataStructuredN16B8Json.get
 setup_fixed_benchmark runFlintStructuredN16B8 where compareConfig
+def runDispatchStructuredN24B8 := runDispatch dataStructuredN24B8.get
+setup_fixed_benchmark runDispatchStructuredN24B8 where compareConfig
 def runModularStructuredN24B8 := runModular dataStructuredN24B8.get
 setup_fixed_benchmark runModularStructuredN24B8 where compareConfig
 def runBareissStructuredN24B8 := runBareiss dataStructuredN24B8.get
 setup_fixed_benchmark runBareissStructuredN24B8 where compareConfig
 def runFlintStructuredN24B8 := runFlint dataStructuredN24B8Json.get
 setup_fixed_benchmark runFlintStructuredN24B8 where compareConfig
+def runDispatchStructuredN32B8 := runDispatch dataStructuredN32B8.get
+setup_fixed_benchmark runDispatchStructuredN32B8 where compareConfig
 def runModularStructuredN32B8 := runModular dataStructuredN32B8.get
 setup_fixed_benchmark runModularStructuredN32B8 where compareConfig
 def runBareissStructuredN32B8 := runBareiss dataStructuredN32B8.get
 setup_fixed_benchmark runBareissStructuredN32B8 where compareConfig
 def runFlintStructuredN32B8 := runFlint dataStructuredN32B8Json.get
 setup_fixed_benchmark runFlintStructuredN32B8 where compareConfig
+def runDispatchStructuredN48B8 := runDispatch dataStructuredN48B8.get
+setup_fixed_benchmark runDispatchStructuredN48B8 where compareConfig
 def runModularStructuredN48B8 := runModular dataStructuredN48B8.get
 setup_fixed_benchmark runModularStructuredN48B8 where compareConfig
 def runBareissStructuredN48B8 := runBareiss dataStructuredN48B8.get
 setup_fixed_benchmark runBareissStructuredN48B8 where compareConfig
 def runFlintStructuredN48B8 := runFlint dataStructuredN48B8Json.get
 setup_fixed_benchmark runFlintStructuredN48B8 where compareConfig
+def runDispatchStructuredN64B8 := runDispatch dataStructuredN64B8.get
+setup_fixed_benchmark runDispatchStructuredN64B8 where compareConfig
 def runModularStructuredN64B8 := runModular dataStructuredN64B8.get
 setup_fixed_benchmark runModularStructuredN64B8 where compareConfig
 def runBareissStructuredN64B8 := runBareiss dataStructuredN64B8.get
 setup_fixed_benchmark runBareissStructuredN64B8 where compareConfig
 def runFlintStructuredN64B8 := runFlint dataStructuredN64B8Json.get
 setup_fixed_benchmark runFlintStructuredN64B8 where compareConfig
+def runDispatchStructuredN96B8 := runDispatch dataStructuredN96B8.get
+setup_fixed_benchmark runDispatchStructuredN96B8 where compareConfig
 def runModularStructuredN96B8 := runModular dataStructuredN96B8.get
 setup_fixed_benchmark runModularStructuredN96B8 where compareConfig
 def runBareissStructuredN96B8 := runBareiss dataStructuredN96B8.get
 setup_fixed_benchmark runBareissStructuredN96B8 where compareConfig
 def runFlintStructuredN96B8 := runFlint dataStructuredN96B8Json.get
 setup_fixed_benchmark runFlintStructuredN96B8 where compareConfig
+def runDispatchStructuredN128B8 := runDispatch dataStructuredN128B8.get
+setup_fixed_benchmark runDispatchStructuredN128B8 where compareConfig
 def runModularStructuredN128B8 := runModular dataStructuredN128B8.get
 setup_fixed_benchmark runModularStructuredN128B8 where compareConfig
 def runBareissStructuredN128B8 := runBareiss dataStructuredN128B8.get
 setup_fixed_benchmark runBareissStructuredN128B8 where compareConfig
 def runFlintStructuredN128B8 := runFlint dataStructuredN128B8Json.get
 setup_fixed_benchmark runFlintStructuredN128B8 where compareConfig
+def runDispatchStructuredN192B8 := runDispatch dataStructuredN192B8.get
+setup_fixed_benchmark runDispatchStructuredN192B8 where compareConfig
 def runModularStructuredN192B8 := runModular dataStructuredN192B8.get
 setup_fixed_benchmark runModularStructuredN192B8 where compareConfig
 def runBareissStructuredN192B8 := runBareiss dataStructuredN192B8.get
 setup_fixed_benchmark runBareissStructuredN192B8 where compareConfig
 def runFlintStructuredN192B8 := runFlint dataStructuredN192B8Json.get
 setup_fixed_benchmark runFlintStructuredN192B8 where compareConfig
+def runDispatchStructuredN256B8 := runDispatch dataStructuredN256B8.get
+setup_fixed_benchmark runDispatchStructuredN256B8 where compareConfig
 def runModularStructuredN256B8 := runModular dataStructuredN256B8.get
 setup_fixed_benchmark runModularStructuredN256B8 where compareConfig
 def runBareissStructuredN256B8 := runBareiss dataStructuredN256B8.get
 setup_fixed_benchmark runBareissStructuredN256B8 where compareConfig
 def runFlintStructuredN256B8 := runFlint dataStructuredN256B8Json.get
 setup_fixed_benchmark runFlintStructuredN256B8 where compareConfig
+def runDispatchStructuredN320B8 := runDispatch dataStructuredN320B8.get
+setup_fixed_benchmark runDispatchStructuredN320B8 where compareConfig
 def runModularStructuredN320B8 := runModular dataStructuredN320B8.get
 setup_fixed_benchmark runModularStructuredN320B8 where compareConfig
 def runBareissStructuredN320B8 := runBareiss dataStructuredN320B8.get
 setup_fixed_benchmark runBareissStructuredN320B8 where compareConfig
 def runFlintStructuredN320B8 := runFlint dataStructuredN320B8Json.get
 setup_fixed_benchmark runFlintStructuredN320B8 where compareConfig
+def runDispatchStructuredN384B8 := runDispatch dataStructuredN384B8.get
+setup_fixed_benchmark runDispatchStructuredN384B8 where compareConfig
 def runModularStructuredN384B8 := runModular dataStructuredN384B8.get
 setup_fixed_benchmark runModularStructuredN384B8 where compareConfig
 def runBareissStructuredN384B8 := runBareiss dataStructuredN384B8.get
 setup_fixed_benchmark runBareissStructuredN384B8 where compareConfig
 def runFlintStructuredN384B8 := runFlint dataStructuredN384B8Json.get
 setup_fixed_benchmark runFlintStructuredN384B8 where compareConfig
+def runDispatchStructuredN512B8 := runDispatch dataStructuredN512B8.get
+setup_fixed_benchmark runDispatchStructuredN512B8 where compareConfig
 def runModularStructuredN512B8 := runModular dataStructuredN512B8.get
 setup_fixed_benchmark runModularStructuredN512B8 where compareConfig
 def runBareissStructuredN512B8 := runBareiss dataStructuredN512B8.get

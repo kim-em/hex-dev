@@ -522,13 +522,14 @@ theorem detViaDivisorWith_eq [LawfulDetBound]
 This is the algorithm body behind `Hex.ModularMatrix.detWith` at
 `useDivisor = true`, and `detViaDivisorWith_eq` is the value equation of
 its `divisor` route that "Public names and dispatch integration" asks
-for; `Hex.ModularMatrix.detViaDivisor A seed` is that dispatcher's
-projection and is not a second definition.
+for. `Hex.ModularMatrix.detViaDivisor A seed` uses that dispatcher at or
+above the measured crossover and Bareiss below it.
 
 **The right-hand side.** `b` is drawn from `Hex.Rand`
 (`HexBasic/Rand.lean`), the splitmix64 generator the tree already has,
 under the discipline its module docstring sets: `detViaDivisorWith`
-takes the state as an explicit argument and returns the advanced state,
+takes the state as an explicit argument and returns the advanced state when
+a right-hand side was drawn (otherwise it returns the original state),
 with no monad and no global generator; the dispatcher starts it from
 `Rand.ofSeed seed`, so a run is reproducible from its seed; and the draw
 affects how many moduli the run needs and never what it returns. Each entry is one `Rand.next` word
@@ -627,11 +628,11 @@ default value. At zero fuel the moduli loop inspects nothing and the
 divisor attempt fails, which is the behaviour the dispatcher's zero-fuel
 tests rely on.
 
-This is the entry point a caller should use, and it is what closes the
-measured gap: on typical input `d` is within a few bits of the
-determinant, so the Chinese remaindering runs over a handful of moduli
-instead of hundreds, and the cost becomes the single `O(n³)` inverse plus
-the lifting.
+The reduced denominator can leave only a handful of cofactor images,
+but the inverse and lifting costs still matter. The measured structured
+family benefits above the crossover. Dense and unimodular families must
+be assessed from their own tables; a large divisor alone does not establish
+a speed advantage over Bareiss or FLINT.
 
 ## Rank
 
@@ -959,8 +960,8 @@ def numeratorBound (A : Matrix Int n n) (b : Vector Int n) : Nat
 `2^30` that can divide a determinant within the Hadamard bound. -/
 def solveFuel (A : Matrix Int n n) : Nat := (hadamardBound A).log2 / 30 + 1
 
-/-- The decomposition at one modulus, or `none` if `A` is not invertible
-there. -/
+/-- The decomposition at one modulus, or `none` if unit-pivot elimination
+fails. At a prime, nonsingularity guarantees success. -/
 def decompAt? (A : Matrix Int n n) (p : Nat) [ZMod64.Bounds p] (hp : 1 < p) :
     Option (Decomp n)
 
@@ -1013,8 +1014,8 @@ theorem solveMat?_unique (h : solveMat? A C fuel = some (X, d))
 
 **The laws are fields, not comments.** `inv_mul` is what `lift_spec`
 uses; `detImage_congr`, `detImage_le` and `detImage_ne_zero` together
-are what `det_ne_zero` uses (a nonzero integer of absolute value below
-`p / 2` is nonzero modulo `p`, and `det A` is congruent to it; the
+are what `det_ne_zero` uses (a nonzero integer of absolute value at most
+`p / 2` is strictly smaller than `p` and hence nonzero modulo `p`, and `det A` is congruent to it; the
 range law is needed, since `detImage ≠ 0` alone does not exclude
 `detImage = p`); and `one_lt` is what makes the digit-count search
 terminate; so every theorem above holds for every value of the type,
@@ -1466,22 +1467,20 @@ as they stand:
   at every rung `n ≥ 64`", which guesses the crossover in the same
   document that says it will not guess it.
 - **Against FLINT `fmpz_mat.det`**, on the same fixture and using the
-  same warmed, overhead-adjusted ratio the report defines,
-  `detViaDivisor` should be within `5x` at every eligible rung. At
-  `n = 512` the Bareiss threshold already implies `2.2x`, so the `5x`
-  target binds only at the small rungs, where the modular route pays its
-  fixed costs against a FLINT time of tens of microseconds. `5x` is a
-  plausible constant factor between Lean and tuned C over GMP once the
-  algorithms agree, and it is a target rather than a proved-reachable
-  number: it becomes the required threshold after the first
-  implementation measures it, and until then a miss is a finding to
-  investigate rather than a merge-blocking failure.
+  same warmed, overhead-adjusted ratio the report defines, the public
+  `detViaDivisor` dispatcher must be within `5x` at every eligible rung.
+  A rung is eligible when both the public wrapper and FLINT have five
+  successful repeats and the FLINT median exceeds the empty-protocol
+  median. The public wrapper uses Bareiss below 192 and the divisor route
+  above it; the report also measures the forced divisor at every rung so
+  that this dispatch cannot conceal its fixed costs. The forced small
+  divisor cases miss `5x`, dominated by trial-division prime supply, and
+  remain visible as diagnostic measurements. They are not the route the
+  public wrapper selects at those dimensions.
 
-Stating it that way is deliberate. A required check whose number nobody
-has measured is either vacuous or an accident waiting to block a correct
-implementation, and this SPEC has no prototype behind the FLINT figure.
-Absolute times are host-specific observations. The thresholds are
-ratios within one run.
+The first-implementation measurements establish the crossover and separate
+forced-route cost from the public entry point. Absolute times describe the
+recorded shared host; these thresholds are ratios within the same run.
 
 FLINT's `fmpz_mat.rank` and `fmpq_mat.solve` are `informational`: FLINT's
 solve uses a tuned multi-modular and Dixon hybrid with a different

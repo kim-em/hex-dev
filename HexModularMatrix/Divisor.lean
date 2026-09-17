@@ -120,7 +120,8 @@ theorem cofactorCrtWith_eq {D : Decomp n} {d : Int} {bound fuel : Nat}
   simpa only [Fin.getElem_fin, Vector.getElem_replicate] using hc (0 : Fin 1)
 
 /-- First generate enough primes for the reduced bound; use the full budget
-if skipped moduli prevent reconstruction from that prefix. -/
+if skipped moduli prevent reconstruction from that prefix. The fallback restarts
+CRT, so rejected prefixes repeat their successful images. -/
 def cofactorCrt? (D : Decomp n) (d : Int) (bound fuel : Nat) :
     Option (Modular.CrtVec 1) :=
   match cofactorCrtWith D d bound (min fuel (bound.log2 / 30 + 2)) with
@@ -145,16 +146,26 @@ def draw (n : Nat) (r : Rand) : Vector Int n × Rand :=
     (v.set i.val ((word.toNat % 65536 : Nat) - (32768 : Int)), r))
     (Vector.replicate n 0, r)
 
-/-- Reduce and check a candidate before using its denominator as a divisor. -/
-def cofactorWith (D : Decomp n) (b y : Vector Int n) (d : Int) (fuel : Nat) : Option Int := do
+/-- Reduce and check a candidate, then reconstruct with its actual cofactor bound.
+The returned CRT state exposes the consumed modulus for route conformance. -/
+def cofactorState (D : Decomp n) (b y : Vector Int n) (d : Int) (fuel : Nat) :
+    Option (Int × Modular.CrtVec 1) := do
   let (_, d) ← check D.A b y d
   let state ← cofactorCrt? D d (hadamardBound D.A / d.natAbs) fuel
+  return (d, state)
+
+/-- Reduce and check a candidate before using its denominator as a divisor. -/
+def cofactorWith (D : Decomp n) (b y : Vector Int n) (d : Int) (fuel : Nat) : Option Int := do
+  let (d, state) ← cofactorState D b y d fuel
   return d * state.value[0]
 
 theorem cofactorWith_eq [LawfulDetBound] {D : Decomp n} {b z : Vector Int n}
     {e : Int} {fuel : Nat} {v : Int} (h : cofactorWith D b z e fuel = some v) : v = det D.A := by
-  obtain ⟨⟨y, d⟩, hs, h⟩ := Option.bind_eq_some_iff.mp h
-  obtain ⟨state, hc, h⟩ := Option.bind_eq_some_iff.mp h
+  obtain ⟨⟨d, state⟩, hc, h⟩ := Option.bind_eq_some_iff.mp h
+  cases h
+  unfold cofactorState at hc
+  obtain ⟨⟨y, e⟩, hs, hc⟩ := Option.bind_eq_some_iff.mp hc
+  obtain ⟨state, hc, h⟩ := Option.bind_eq_some_iff.mp hc
   cases h
   obtain ⟨heq, hpos⟩ := check_spec hs
   have hd := dvd_det_of_mulVec D.det_ne_zero heq hpos (check_reduced hs)
@@ -165,7 +176,7 @@ theorem cofactorWith_eq [LawfulDetBound] {D : Decomp n} {b z : Vector Int n}
   exact Int.mul_ediv_cancel' hd
 
 def viaDivisor (D : Decomp n) (b : Vector Int n) (fuel : Nat) : Option Int := do
-  let (y, d) ← solveWith D b
+  let (y, d) ← reconstruct D b
   cofactorWith D b y d fuel
 
 theorem viaDivisor_eq [LawfulDetBound] {D : Decomp n} {b : Vector Int n}
@@ -176,7 +187,8 @@ theorem viaDivisor_eq [LawfulDetBound] {D : Decomp n} {b : Vector Int n}
 end Dixon
 
 /-- Dixon's reduced denominator followed by CRT of the determinant cofactor.
-The returned random state records the draws even when reconstruction exhausts fuel. -/
+The returned state advances only when a right-hand side is drawn, including
+when its subsequent reconstruction exhausts fuel. -/
 def detViaDivisorWith (A : Matrix Int n n) (r : Rand) (fuel : Nat) : Option Int × Rand :=
   if fuel = 0 then (none, r)
   else match decomp? A (solveFuel A) with

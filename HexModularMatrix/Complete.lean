@@ -203,6 +203,6 @@ theorem solveWith_isSome [LawfulDetBound] (D : Decomp n) (b : Vector Int n) :
   have hcheck : Dixon.check D.A b v d = some (v, d) := by
     simp only [Dixon.check, hd, ↓reduceIte, Dixon.normalise_eq hredv, he]
   dsimp [P, Q, k] at hr
-  simp only [solveWith, hr, Option.bind_eq_bind, Option.bind_some, hcheck, Option.isSome_some]
+  simp only [solveWith, Dixon.reconstruct, hr, Option.bind_eq_bind, Option.bind_some, hcheck, Option.isSome_some]
 
 end Hex.Matrix

@@ -32,7 +32,7 @@ def main : IO Unit := do
     emitResult "HexModularMatrix" c.name "det" (toString (ModularMatrix.det c.matrix))
     for seed in [0, 1, 42] do
       emitResult "HexModularMatrix" c.name "det-divisor"
-        (toString (ModularMatrix.detViaDivisor c.matrix seed))
+        (toString (ModularMatrix.detWith c.matrix (ModularMatrix.defaultFuel c.matrix) seed true).value)
     let A := c.matrix
     let b : Vector Int c.n := Vector.ofFn fun i => (i.val + 1 : Nat)
     let fuel := A.solveFuel + 2

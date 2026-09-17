@@ -77,12 +77,16 @@ theorem check_reduced {A : Matrix Int n n} {b y z : Vector Int n} {d e : Int}
 
 end Dixon
 
-/-- Lift through a reusable decomposition, reconstruct, normalise and check. -/
-def solveWith (D : Decomp n) (b : Vector Int n) : Option (Vector Int n × Int) := do
+/-- Lift and reconstruct a candidate; consumers must normalise and check it. -/
+def Dixon.reconstruct (D : Decomp n) (b : Vector Int n) : Option (Vector Int n × Int) :=
   let P := numeratorBound D.A b
   let Q := hadamardBound D.A
   let k := Dixon.digits D P Q
-  let (y, d) ← Modular.ratReconVec? (D.lift b k) (D.p ^ k) P Q
+  Modular.ratReconVec? (D.lift b k) (D.p ^ k) P Q
+
+/-- Lift through a reusable decomposition, reconstruct, normalise and check. -/
+def solveWith (D : Decomp n) (b : Vector Int n) : Option (Vector Int n × Int) := do
+  let (y, d) ← Dixon.reconstruct D b
   Dixon.check D.A b y d
 
 /-- Solve an integer system over the rationals within a prime-search budget. -/

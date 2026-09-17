@@ -123,6 +123,11 @@ local instance : ZMod64.Bounds 6 := ⟨by decide, by decide⟩
 #guard (decompAt? (Matrix.ofFn fun i j : Fin 2 =>
   if i = j then 5 else 0) 6 (by decide)).isSome
 
+-- Over a composite ring, invertibility alone need not provide a unit entry
+-- in the pivot column: det([[2,3],[3,2]]) = -5 is a unit modulo six.
+#guard (decompAt? (Matrix.ofFn fun i j : Fin 2 =>
+  if i = j then 2 else 3) 6 (by decide)).isNone
+
 -- Assert that the optimised elimination routes themselves succeed.
 private def wordA : Matrix (ZMod64 2) 2 2 :=
   Matrix.ofFn fun i j => if i.val = 1 && j.val = 1 then 0 else 1
@@ -143,6 +148,7 @@ private def A : Matrix Int 2 2 := Matrix.ofFn fun i j =>
 #guard solveMat? A (0 : Matrix Int 2 0) 1 == some (0, 1)
 #guard (A.detViaDivisorWith (Rand.ofSeed 1) 1).1 == some 2
 #guard ModularMatrix.detWith A 1 1 true == ⟨2, .divisor, []⟩
+#guard ModularMatrix.detViaDivisor A 1 == 2
 #guard ModularMatrix.detWith A 0 1 true == ⟨2, .divisor, [.modular, .bareiss]⟩
 
 -- Exercise the divisor route with a deliberately non-reduced solution 3/6.
@@ -173,6 +179,14 @@ private def checkSolve (c : ModularMatrixFixtures.Case) : Bool := Id.run do
       | _, _ => return false
     return true
 
+private def checkDivisor (c : ModularMatrixFixtures.Case) : Bool :=
+  let expected := c.matrix.bareiss
+  [0, 42].all fun seed =>
+    let result := ModularMatrix.detWith c.matrix (ModularMatrix.defaultFuel c.matrix) seed true
+    result.value == expected && (expected == 0 || result.rest.isEmpty)
+
+#guard ModularMatrixFixtures.cases.all checkDivisor
+
 #guard ModularMatrixFixtures.cases.all checkSolve
 
 -- The zero-fuel result is resource failure, including for invertible inputs.
@@ -198,9 +212,17 @@ private def checkPrecision : Bool :=
 -- A denominator sharing a factor with the modulus must be skipped.
 #guard ((decomp? A 1).map fun D => (Dixon.cofactorImage D 2 6).isNone) == some true
 #guard ((decomp? A 1).map fun D => (Dixon.cofactorImage D 2 7).isSome) == some true
--- With cofactor one, exactly the decomposition image suffices; zero fuel does not.
+-- A generous budget still stops at the modulus allowed by the production bound.
 #guard ((decomp? A 1).bind fun D =>
-  (Dixon.cofactorCrt? D 2 1 1).map fun s => (s.value[0], s.modulus == D.p)) == some (1, true)
+  (Dixon.cofactorState D #v[0, 1] #v[-3, 2] 2 8).map fun (d, s) =>
+    (d, s.value[0], s.modulus == D.p)) == some (2, 1, true)
+
+private def largeCofactor : Matrix Int 2 2 := Matrix.ofFn fun i j =>
+  if i != j then 0 else if i.val = 0 then 2 else 2 ^ 32
+#guard ((decomp? largeCofactor 1).bind fun D =>
+  (Dixon.cofactorState D #v[1, 0] #v[1, 0] 2 8).map fun (d, s) =>
+    let second := ((ZMod64.primesBelow (2 ^ 31 - 1) 8).map (·.m))[1]!
+    (d, s.value[0], s.modulus == D.p * second)) == some (2, 2 ^ 32, true)
 #guard ((decomp? A 1).map fun D => (Dixon.cofactorCrt? D 2 1 0).isNone) == some true
 
 private def unlucky : Matrix Int 1 1 := Matrix.ofFn fun _ _ =>

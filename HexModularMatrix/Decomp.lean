@@ -205,8 +205,9 @@ def decompFrom? (A : Matrix Int n n) (p : Nat) [ZMod64.Bounds p] (hp : 1 < p)
     else none
   else none
 
-/-- Decompose at one bounded modulus. Try forward/back substitution first;
-if its checked candidate fails, use the complete diagonal Gauss-Jordan pass. -/
+/-- Decompose at one bounded modulus. The forward/back pass is the fast path;
+the baseline pass supplies search completeness. Both use the same unit-pivot
+strategy, so unsuccessful moduli currently pay for both attempts. -/
 def decompAt? (A : Matrix Int n n) (p : Nat) [ZMod64.Bounds p] (hp : 1 < p) :
     Option (Decomp n) :=
   match decompFrom? A p hp (Dixon.fastReduce? (A.mapEntries (ZMod64.intCast p))) with
@@ -222,7 +223,9 @@ def decompSearch (A : Matrix Int n n) (fuel : Nat) : Option (Decomp n) :=
       letI : ZMod64.Bounds q.m := q.bounds
       decompAt? A q.m q.prime.one_lt) none
 
-/-- Probe one prime before materialising the complete fallback supply. -/
+/-- Probe one prime before materialising the complete fallback supply.
+An unsuccessful probe is repeated in that supply; `fuel` selects its distinct
+prime prefix, not a bound on repeated elimination work. -/
 def decomp? (A : Matrix Int n n) (fuel : Nat) : Option (Decomp n) :=
   match decompSearch A (min fuel 1) with
   | some D => some D
