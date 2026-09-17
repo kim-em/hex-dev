@@ -1060,6 +1060,7 @@ lean_lib HexReleaseTests where
   globs := #[`HexMatrixMathlib.Tests,
     `HexPolyMathlib.LiteralTests,
     `HexBareissMathlib.Tests,
+    `HexRowReduceMathlib.Tests,
     `HexBerlekamp.FactorTacticTests,
     `HexBerlekampMathlib.FactorPolyTests,
     `HexBerlekampZassenhaus.FactorTacticTests,

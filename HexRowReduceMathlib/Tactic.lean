@@ -57,7 +57,7 @@ def readMatrix (A : Expr) : MetaM (Outcome Input) := do
   if n > 32 || m > 32 then
     return .declined m!"matrix shape {n} × {m} exceeds the dimension budget of 32"
   let some lit ← matrixLiteral? A n m |
-    return .declined m!"expected a closed rational matrix literal within the unfolding budget of {unfoldBudget}"
+    return .notApplicable
   let mut rows := []
   for i in [:n] do
     let mut row := []
@@ -80,7 +80,7 @@ def closedVector? (v : Expr) : MetaM (Option VectorLiteral) := do
 def readVector (v : Expr) : MetaM (Outcome VecInput) := do
   if v.hasFVar || v.hasMVar then return .notApplicable
   let some lit ← closedVector? v |
-    return .declined m!"expected a closed rational vector literal within the unfolding budget of {unfoldBudget}"
+    return .notApplicable
   unless lit.carrier.isConstOf ``_root_.Rat do return .notApplicable
   let mut entries := []
   for i in [:lit.size] do
@@ -109,6 +109,8 @@ def positive (n : Nat) : MetaM Expr := do
 
 /-- One synchronous kernel declaration, without a preliminary type check. -/
 def checked (operation : String) (target proof : Expr) : MetaM Expr := do
+  if target.hasFVar || target.hasMVar || proof.hasFVar || proof.hasMVar then
+    throwError "{operation}: failure: proof assembly produced an open target or proof"
   try addClosedProof target proof
   catch e => throwError "{operation}: failure: the kernel rejected the certificate: {e.toMessageData}"
 
@@ -230,6 +232,7 @@ def solveResult (A b : Expr) (c : Input) (rhs : VecInput) (w : Hex.Matrix.SolveW
       #[y, ← andLeft facts, ← andLeft (← andRight facts), ← andRight (← andRight facts)]
 
 def inverseGoal (target : Expr) : MetaM (Outcome Expr) := do
+  if target.hasFVar || target.hasMVar then return .notApplicable
   let some (_, lhs, rhs) := target.eq? | return .notApplicable
   let isOperation (e : Expr) := e.getAppFn.isConstOf ``Inv.inv || e.getAppFn.isConstOf ``HMul.hMul
   let (op, other, reversed) ←
@@ -263,7 +266,7 @@ def inverseGoal (target : Expr) : MetaM (Outcome Expr) := do
         | .declined msg => return .declined msg
         | .success b => pure b
       unless scaleRows s.denom targetInput.rows s.nums do
-        throwError "inverse: declined: the stated inverse is false; computed inverse {decodeRows s}"
+        throwError "inverse: the target is false; computed inverse {decodeRows s}"
       let facts ← mkAppM ``FieldCertificate.inverse_literal
         #[← inverseProof A c w, ← identifyMatrix B targetInput s]
       if product then andLeft facts else andRight (← andRight facts)
@@ -278,7 +281,7 @@ def inverseGoal (target : Expr) : MetaM (Outcome Expr) := do
           | .success b => pure b
         let s : ScaledRows := ⟨1, List.replicate c.literal.n (List.replicate c.literal.n 0)⟩
         unless scaleRows 1 targetInput.rows s.nums do
-          throwError "inverse: declined: the stated inverse is false; certified singularity with kernel {decodeList v}, inverse 0"
+          throwError "inverse: the target is false; certified singularity with kernel {decodeList v}, inverse 0"
         mkEqTrans (← identifyMatrix B targetInput s)
           (← mkAppM ``FieldCertificate.zero_matrix #[mkNatLit c.literal.n, mkNatLit c.literal.n])
       let facts ← inverseProof A c w
@@ -360,7 +363,7 @@ def solveGoal (target : Expr) : MetaM (Outcome Expr) := do
       let vector : Vector ℚ c.literal.m := Vector.ofFn fun i => xs[i.val]!
       let actual := ((inputMatrix c) * vector).toList
       let residual := (actual.zip rhs.entries).map (fun (x, y) => x - y)
-      throwError "solve: declined: incorrect candidate; residual {residual}; particular solution {decodeList d.value}"
+      throwError "solve: the target is false; incorrect candidate; residual {residual}; particular solution {decodeList d.value}"
     | .inconsistent _ _ y =>
       let pairing := (decodeList y |>.zip rhs.entries).foldl (fun s (x, b) => s + x * b) 0
       throwError "solve: declined: certified inconsistent system; separator {decodeList y}; yᵀA = 0, yᵀb = {pairing} ≠ 0"
@@ -368,7 +371,7 @@ def solveGoal (target : Expr) : MetaM (Outcome Expr) := do
   let proof ← match w with
     | .consistent _ _ d =>
       if goal.negative then
-        throwError "solve: declined: the system is consistent; particular solution {decodeList d.value}"
+        throwError "solve: the target is false; the system is consistent; particular solution {decodeList d.value}"
       let facts ← solveProof A b c rhs w
       let value ← mkAppM ``FieldCertificate.vector #[mkNatLit c.literal.m, toExpr d.value]
       mkAppOptM ``Exists.intro #[none, some target.appArg!, some value, some (← andLeft facts)]

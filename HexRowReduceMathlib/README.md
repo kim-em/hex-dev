@@ -92,6 +92,13 @@ Arithmetic proof checking uses scaled integer lists and structural recursion.
 their proofs do not replay elimination. The initial numeric handler accepts
 `ℚ`; other carriers are available to separately registered extensions.
 
+For function literals, give the matrix a named `Matrix`-typed definition
+before writing `A⁻¹`: Lean can select pointwise function inversion for a
+bare lambda. The tactic accepts matrix inversion and multiplication.
+The dimension limit is 32 per axis; the measured performance ladder covers
+square matrices through 16 and rectangular solve systems through 32 × 16
+or 16 × 32. The limit is not a runtime guarantee for other inputs.
+
 # Functionality
 
 The library transports the executable row-reduction data of an

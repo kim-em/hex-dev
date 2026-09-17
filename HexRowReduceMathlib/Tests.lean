@@ -109,6 +109,29 @@ theorem affine_coordinates (x : Fin 3 → ℚ) :
 
 open Lean Elab Tactic
 
+opaque hiddenMatrix : Matrix (Fin 1) (Fin 1) ℚ := !![1]
+opaque hiddenVector : Fin 1 → ℚ := ![1]
+
+run_cmd Command.liftTermElabM do
+  match ← HexRowReduceMathlib.Tactic.readMatrix (mkConst ``hiddenMatrix) with
+  | .notApplicable => pure ()
+  | _ => throwError "numeric matrix recognition claimed an opaque constant"
+  match ← HexRowReduceMathlib.Tactic.readVector (mkConst ``hiddenVector) with
+  | .notApplicable => pure ()
+  | _ => throwError "numeric vector recognition claimed an opaque constant"
+
+run_cmd Command.liftTermElabM do
+  for term in [← `((!![1] : Matrix (Fin 1) (Fin 1) ℚ) * !![1]),
+      ← `((!![0] : Matrix (Fin 1) (Fin 1) ℚ)⁻¹)] do
+    let op ← Term.elabTermAndSynthesize term none
+    let unknown ← Meta.mkFreshExprMVar (← Meta.inferType op)
+    for target in [← Meta.mkEq op unknown, ← Meta.mkEq unknown op] do
+      match ← HexRowReduceMathlib.Tactic.inverseGoal target with
+      | .notApplicable => pure ()
+      | _ => throwError "numeric inverse claimed an unresolved target"
+      if ← unknown.mvarId!.isAssigned then
+        throwError "numeric inverse assigned an unresolved target"
+
 run_cmd Command.liftTermElabM do
   let matrixType ← Term.elabType (← `(Matrix (Fin 2) (Fin 2) ℚ))
   let A ← Meta.mkFreshExprMVar matrixType
@@ -144,11 +167,11 @@ run_cmd do
 #guard_msgs in
 example : (!![1, 2; 2, 4] : Matrix (Fin 2) (Fin 2) ℚ) * !![0, 0; 0, 0] = 1 := by inverse
 
-/-- error: inverse: declined: the stated inverse is false; computed inverse [[1/2]] -/
+/-- error: inverse: the target is false; computed inverse [[1/2]] -/
 #guard_msgs in
 example : (!![2] : Matrix (Fin 1) (Fin 1) ℚ)⁻¹ = !![1] := by inverse
 
-/-- error: solve: declined: incorrect candidate; residual [-1]; particular solution [2] -/
+/-- error: solve: the target is false; incorrect candidate; residual [-1]; particular solution [2] -/
 #guard_msgs in
 example : (!![1] : Matrix (Fin 1) (Fin 1) ℚ).mulVec ![1] = ![2] := by solve
 
@@ -156,6 +179,7 @@ example : (!![1] : Matrix (Fin 1) (Fin 1) ℚ).mulVec ![1] = ![2] := by solve
 #guard_msgs in
 example : ∃ x, (!![1, 0, 0; 1, 0, 0] : Matrix (Fin 2) (Fin 3) ℚ).mulVec x = ![0, 1] := by solve
 
+-- This bare lambda selects pointwise Pi.inv; functionMatrix above selects Matrix.inv.
 /-- error: inverse: not applicable: expected A * B = 1 or A⁻¹ = B over ℚ, in either orientation -/
 #guard_msgs in
 example : ((fun i j : Fin 2 => if i = j then (2 : ℚ) else 0) : Matrix (Fin 2) (Fin 2) ℚ)⁻¹ =
@@ -190,7 +214,7 @@ example (h : True) : True := by inverse
 #guard_msgs in
 example (h : True) : True := by solve
 
-/-- error: inverse: declined: the stated inverse is false; computed inverse [[1/2]] -/
+/-- error: inverse: the target is false; computed inverse [[1/2]] -/
 #guard_msgs in
 example (h : (!![2] : Matrix (Fin 1) (Fin 1) ℚ)⁻¹ = !![1]) :
     (!![2] : Matrix (Fin 1) (Fin 1) ℚ)⁻¹ = !![1] := by inverse
