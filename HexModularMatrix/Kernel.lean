@@ -92,7 +92,8 @@ theorem selectCols_mul (A : Matrix Int n r) (B : Matrix Int r m)
     (col (selectCols B J) j)[(⟨l, hl⟩ : Fin r)]
   rw [getElem_col, getElem_col, getElem_selectCols]
 
-/-- The numerator matrix expressed through coordinate embeddings. -/
+/-- Reference formula through coordinate embeddings. `numerator` implements
+the same matrix directly; see `numerator_eq_product`. -/
 def product (A : Matrix Int n m) (c : RankCert Int n m)
     (F : Vector (Fin m) (m - c.rank)) : Matrix Int m (m - c.rank) :=
   embedding c.cols * selectCols (c.adj * selectRows A c.rows) F -
@@ -216,9 +217,10 @@ theorem product_pivot {A : Matrix Int n m} {c : RankCert Int n m}
 original coordinates. Row lookups are computed once, outside the entry loop. -/
 def numerator (A : Matrix Int n m) (c : RankCert Int n m)
     (F : Vector (Fin m) (m - c.rank)) : Matrix Int m (m - c.rank) :=
+  let indices := List.finRange c.rank
   let positions := Vector.ofFn fun i : Fin m =>
-    (List.finRange c.rank).find? (fun k => decide (c.cols[k] = i))
-  let T := selectCols (c.adj * selectRows A c.rows) F
+    indices.find? (fun k => decide (c.cols[k] = i))
+  let T := c.adj * selectCols (selectRows A c.rows) F
   Matrix.ofFn fun i j =>
     match positions[i] with
     | some k => T[(k, j)]
@@ -236,9 +238,9 @@ theorem numerator_eq_product {A : Matrix Int n m} {c : RankCert Int n m}
   · rename_i k hk
     have hp := List.find?_some hk
     have he : c.cols[k] = i := by simpa using hp
-    change (selectCols (c.adj * selectRows A c.rows) F)[(k, j)] = (product A c F)[i][j]
+    change (c.adj * selectCols (selectRows A c.rows) F)[(k, j)] = (product A c F)[i][j]
     subst i
-    rw [product_pivot hc hF, getElem_pair_eq_nested, getElem_selectCols]
+    rw [← selectCols_mul, product_pivot hc hF, getElem_pair_eq_nested, getElem_selectCols]
   · rename_i hn
     have hi : i ∉ c.cols.toList := by
       intro hm
