@@ -790,24 +790,33 @@ wrongly marked:
 3. After `k` steps, `x ≡ Σ xᵢ pⁱ (mod p^k)`, so the solution is known
    modulo `p^k`. This is `Decomp.lift`.
 4. Reconstruct with `ratReconVec?` (`HexModular/Recon.lean`) at bounds
-   `P = max_i hadamardBound (A with column i replaced by b)` and
-   `Q = hadamardBound A`. **The number of steps is set by
-   `p^k > 2 P Q`**, from Cramer's rule: the `i`-th numerator is the
-   determinant of `A` with column `i` replaced by `b`, and the common
-   denominator divides `det A`. The maximum over `i` is not decoration.
-   For `A = [[1, N], [0, 1]]` and `b = (0, 1)` the solution is `(-N, 1)`,
-   while replacing the second column alone gives a bound of `1`, so a
-   `P` read off one replaced column is wrong by a factor of `N`. The
-   maximum is `numeratorBound A b`, and it costs `O(n²)` rather than
-   `O(n³)`: `hadamardBound` is a product of one factor per column, so
-   for `n > 0` and no zero column the maximum over replaced columns is
-   `⌈‖b‖⌉ · hadamardBound A / c_min` with `c_min` the smallest column
-   factor, and at `n = 0` it is `0`. That is cheap beside the lift,
-   which is why the decomposition caches nothing about the bounds. `k`
-   is the least power with `p^k > 2 P Q`, found by repeated
-   multiplication, which terminates because `1 < p`; there is no
-   lifting fuel, because the digit count is determined before the loop
-   starts.
+   `P = numeratorBound A b` and `Q = hadamardBound A`. **The number of
+   steps is set by `p^k > 2 P Q`**, from Cramer's rule: the `i`-th
+   numerator is the determinant of `A` with column `i` replaced by `b`,
+   and the common denominator divides `det A`. Completeness
+   (`solveWith_isSome`) needs only that `P` bounds every such numerator
+   and `Q` bounds `|det A|`, so `P` is an upper bound, not the exact
+   maximum of the replaced-column Hadamard bounds. It must cover every
+   replaced column: for `A = [[1, N], [0, 1]]` and `b = (0, 1)` the
+   solution is `(-N, 1)`, while replacing the second column alone gives
+   a bound of `1`, wrong by a factor of `N`. `numeratorBound A b` is the
+   column-form bound with the smallest column factor replaced by
+   `⌈‖b‖⌉`: with `c_j = ⌈‖column j of A‖⌉` and `c_min` the smallest of
+   them, for `n > 0` and no zero column it is
+   `⌈‖b‖⌉ · (∏_j c_j) / c_min`, and at `n = 0` it is `0`. By the column
+   Hadamard inequality this bounds the determinant of `A` with any one
+   column replaced by `b`, and it costs `O(n²)`. It is computed from the
+   column product itself, never from `hadamardBound A`, which is the
+   smaller of the row and column products: for `A = [[2, 3], [0, 1]]`
+   and `b = (0, 1)`, `hadamardBound A = 4` (the row product) would give
+   `P = 2`, but the reduced solution is `(-3, 2) / 2` and
+   `ratReconVec?` returns `none` at that `P`. The column bound may exceed
+   the exact maximum of the mixed bounds and cost one more digit; that is
+   cheap beside the lift, which is why the decomposition caches nothing
+   about the bounds. `k` is the least power with `p^k > 2 P Q`, found by
+   repeated multiplication, which terminates because `1 < p`; there is
+   no lifting fuel, because the digit count is determined before the
+   loop starts.
 5. Divide `y` and `d` through by their common gcd, then check
    `A y = d b` over `ℤ` and return `none` if it fails.
 
@@ -931,11 +940,15 @@ structure Decomp (n : Nat) where
   /-- `det A mod p`, as a symmetric representative. -/
   detImage : Int
   detImage_congr : (Matrix.det A - detImage) % (p : Int) = 0
-  detImage_lt : 2 * detImage.natAbs < p
+  /-- The symmetric representative's range, `Modular.symMod_le`; at
+  `p = 2` this admits `detImage = 1`, so the identity matrix has a
+  decomposition at every accepted modulus. -/
+  detImage_le : 2 * detImage.natAbs ≤ p
   detImage_ne_zero : detImage ≠ 0
 
-/-- `max_i hadamardBound (A with column i replaced by b)`, the numerator
-bound Cramer's rule gives a solution of `A x = b`. -/
+/-- The column Hadamard product of `A` with its smallest column factor
+replaced by `⌈‖b‖⌉`: a bound on every numerator Cramer's rule gives a
+solution of `A x = b`. -/
 def numeratorBound (A : Matrix Int n n) (b : Vector Int n) : Nat
 
 /-- The default prime budget: one more than the number of primes above
@@ -995,7 +1008,7 @@ theorem solveMat?_unique (h : solveMat? A C fuel = some (X, d))
 ```
 
 **The laws are fields, not comments.** `inv_mul` is what `lift_spec`
-uses; `detImage_congr`, `detImage_lt` and `detImage_ne_zero` together
+uses; `detImage_congr`, `detImage_le` and `detImage_ne_zero` together
 are what `det_ne_zero` uses (a nonzero integer of absolute value below
 `p / 2` is nonzero modulo `p`, and `det A` is congruent to it; the
 range law is needed, since `detImage ≠ 0` alone does not exclude
