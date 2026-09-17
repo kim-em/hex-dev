@@ -8,3 +8,5 @@ module
 
 public import HexPolyDetMathlib.Sound
 public import HexPolyDetMathlib.Tactic
+public import HexPolyDetMathlib.Packed
+public meta import HexPolyDetMathlib.Certificate

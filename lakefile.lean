@@ -1104,7 +1104,7 @@ lean_lib HexReleaseTests where
 -- Build-only regression roots for the structural matrix frontends.
 @[default_target]
 lean_lib HexStructuralTacticTests where
-  globs := #[`HexPolyDetMathlib.Tests, `HexMinPolyMathlib.Tests, `HexSmithMathlib.Tests, `HexHermiteMathlib.Tests, `HexRowReduceMathlib.Tests]
+  globs := #[`HexPolyDet.PackedTests, `HexPolyDetMathlib.PackedTests, `HexPolyDetMathlib.Tests, `HexMinPolyMathlib.Tests, `HexSmithMathlib.Tests, `HexHermiteMathlib.Tests, `HexRowReduceMathlib.Tests]
 
 lean_lib HexStructuralTacticProofProbe where
   srcDir := "bench"
@@ -1795,3 +1795,8 @@ lean_exe hexnumberfield_quadratic where
 lean_lib HexCharPolyMathlibProofProbe where
   srcDir := "bench"
   globs := #[.submodules `HexCharPolyMathlib.ProofProbe]
+
+/-- Manual packed determinant classification and adjacent compiled comparisons. -/
+lean_exe hex_poly_det_packed where
+  srcDir := "bench"
+  root := `HexPolyDet.PackedBench
