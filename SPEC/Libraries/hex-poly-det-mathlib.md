@@ -538,7 +538,7 @@ The domain proof additionally uses `HexMvPolyMathlib.equiv` and
 `checkDetPolyList`, `checkDetPolyList_sound`, the polynomial generalisation
 of `detWitness`, and the canonical list layer's `beq_iff`/denotation API
 are implemented. `checkDetPolyPacked` / `checkDetPolyPackedMod` and their
-soundness theorems are planned, with the packed checkers owned by
+soundness theorems are implemented, with the packed checkers owned by
 hex-poly-det and the proofs here. The generic list checker stays Mathlib-free
 in hex-bareiss, its `MvPoly` instantiation in hex-poly-det, and its determinant soundness
 in this library.
@@ -548,7 +548,8 @@ in this library.
 ```
 HexPolyDetMathlib/
   Sound.lean        -- shared witness identities, list soundness, transport
-  Packed.lean       -- planned checkDetPolyPacked_sound and residue variant
+  Packed.lean       -- checkDetPolyPacked_sound and residue variant
+  Certificate.lean  -- compiled selection, self-check, quotation, and trace
   Scaling.lean      -- rational scaling transport
   Normalize.lean    -- proved coefficient normalization
   Frontend.lean     -- reification and certificate preparation

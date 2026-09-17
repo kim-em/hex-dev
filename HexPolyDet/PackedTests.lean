@@ -87,7 +87,7 @@ open Hex.PolyDet.Packed in
 
 open Hex.PolyDet.Packed in
 #guard (select budget .automatic 1 (products (Hex.PolyDet.ops 1) 1 [[x]]
-  (.triangular [] [[one]] x))).toOption.map (·.reason) == some (some "no measured packed regime")
+  (.triangular [] [[one]] x)) (table := [])).toOption.map (·.reason) == some (some "no measured packed regime")
 open Hex.PolyDet.Packed in
 #guard (select budget .packed 1 (products (Hex.PolyDet.ops 1) 1 [[x]]
   (.triangular [] [[one]] x))).toOption.map (·.packed) == some true
@@ -95,3 +95,14 @@ open Hex.PolyDet.Packed in
 #guard (select budget .packed 1 (products (Hex.PolyDet.ops 1) 1 [[x]]
   (.triangular [] [[one]] x)) (some 2)).toOption.map (·.reason) ==
   some (some "residue quotient payload unavailable")
+
+-- Every product must be covered before automatic selection packs the witness.
+open Hex.PolyDet.Packed in
+#guard Id.run do
+  let ps := products (Hex.PolyDet.ops 1) 2 [[x, []], [[], x]]
+    (.triangular [] [[one], [[], x]] x2)
+  let .ok forced := select budget .packed 1 ps | return false
+  let keys := forced.reports.map (·.key)
+  let .ok covered := select budget .automatic 1 ps (table := keys) | return false
+  let .ok uncovered := select budget .automatic 1 ps (table := keys.take 1) | return false
+  return covered.packed && covered.mode == .plain && !uncovered.packed
