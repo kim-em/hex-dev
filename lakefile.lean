@@ -1072,6 +1072,7 @@ lean_lib HexReleaseTests where
     `HexRealRootsMathlib.SturmTests,
     `HexRealRootsMathlib.RealRootCountTests,
     `HexRootsMathlib.Examples,
+    `HexPrimality.Examples.Curve25519,
     `HexMvPoly.KernelTests,
     `HexMvPoly.KernelResidueTests,
     `HexMvPolyMathlib.KernelResidueTests,
