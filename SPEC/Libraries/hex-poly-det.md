@@ -92,7 +92,7 @@ exists, exponent vectors as `List Nat`. Its soundness is the companion's.
 `Hex.Kronecker.Budget`, `MulMode`, atom count `k`, dimension `n`, canonical
 integer polynomial row lists, and the same `DetWitness (PolyList Int)` as
 `checkDetPolyList`. It replaces only the product identities with
-[`Hex.Kronecker.checkMulTerms`](../../HexKronecker/SPEC/hex-kronecker.md#kronecker-evaluation).
+[`Hex.Kronecker.checkMulTerms`](../../HexKronecker/SPEC/hex-kronecker.md#kernel-evaluation).
 Canonicality, exponent arity, matrix and witness shapes, swap validity,
 nonzero transform diagonals or a nonzero singular vector remain checked in
 the kernel. Nonzeroness is a canonical polynomial test, never a test at the
