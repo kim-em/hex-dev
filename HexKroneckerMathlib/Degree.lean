@@ -31,7 +31,7 @@ namespace Hex.Kronecker
   induction a <;> simp [scaleDegrees, *]
 
 @[simp] theorem Expr.length_degrees (k : Nat) (e : Expr) : (e.degrees k).length = k := by
-  induction e <;> simp [Expr.degrees, *]
+  induction e <;> simp_all [Expr.degrees]
 
 @[simp] theorem getD_zeroDegrees (k i : Nat) : (zeroDegrees k).getD i 0 = 0 := by
   induction k generalizing i <;> cases i <;>
@@ -77,7 +77,7 @@ theorem Expr.degreeOf_le {k : Nat} (e : Expr) (h : e.WellFormed k) (i : Fin k) :
       change MvPolynomial.degreeOf i (MvPolynomial.C z) ≤ (zeroDegrees k).getD i.val 0
       rw [MvPolynomial.degreeOf_C, getD_zeroDegrees]
   | atom j =>
-      change MvPolynomial.degreeOf i (MvPolynomial.X (⟨j, of_decide_eq_true h⟩ : Fin k)) ≤
+      change MvPolynomial.degreeOf i (MvPolynomial.X (⟨j, Nat.le_of_ble_eq_true h⟩ : Fin k)) ≤
         (atomDegrees k j).getD i.val 0
       rw [MvPolynomial.degreeOf_X, getD_atomDegrees k j i.val i.isLt]
       simp only [Fin.ext_iff, le_refl]

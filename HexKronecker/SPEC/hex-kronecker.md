@@ -127,7 +127,7 @@ at the two stated thresholds; a reported accepted bound is exact, while an
 overflow diagnostic says `at least <limit + 1>`, which the saturation
 certifies, rather than presenting the saturation value as exact.
 
-## Kronecker evaluation
+## Kernel evaluation
 
 For a validated plan, `evalKron` maps atom `i` to `B ^ sᵢ`, maps an integer
 constant to itself, and interprets every constructor by the corresponding
@@ -156,8 +156,8 @@ checkMulTerms (budget : Budget) (mode : MulMode) (k n r m : Nat)
     (M A C : List (List (Hex.MvPoly.Kernel.PolyList Int))) : Bool
 ```
 
-Each checker first computes and compares both `digits` and `packedBits` with
-the supplied budget, validates shapes and indices, and returns `false` before
+Each programmatic `check*` function first computes and compares both `digits`
+and `packedBits` with the supplied budget, validates shapes and indices, and returns `false` before
 packing if any check fails.  `checkMulTerms` reads matrices as row lists,
 checks their rectangular dimensions, and checks every row-by-column identity
 of `M * A = C`.  Its coefficient bound for output `(i,j)` is
@@ -196,6 +196,40 @@ All checks return `Bool`.  A false value does not distinguish a malformed
 input, an exhausted budget, or unequal packed integers; programmatic and
 tactic callers run the size/validation preflight first when they need a
 structured decline.
+
+The `Kernel` namespace also supplies `exprEq`, `termsEq`, `mulTerms`,
+and their `Mod` forms for certificate replay after elaborator preflight.
+These forms have no budget argument and no saturation cap. They validate
+indices, shapes and residue/quotient inputs, compute only root degree and
+coefficient bounds, derive the strides and base, and compare packed values.
+They compute no dense digit count, packed-bit report or list of observed
+subtrees. The budget controls elaborator resource use; it is not a soundness
+premise. Mixed-radix injectivity needs the root degree box and `2 H < B`.
+
+`Kernel.exprEqPlan` accepts a degree vector and digit width from the
+elaborator. It checks the vector against the structural root degrees and
+checks `2 H < 2^W` before using them. Both expression forms have independent
+soundness theorems. The other `Kernel.*_sound` theorems keep the
+corresponding universal ring conclusions; the existing programmatic
+`check*_sound` statements are unchanged.
+
+For matrix replay, the root bounds include each row-by-column product's
+added degrees and summed coefficient products. The optional `innerBits`
+and `slotBits` arguments are used only by `signedPacked`: the kernel checks
+the packed operands' absolute bounds and `r K² < 2^V` with the existing
+`dotValid` predicate. Zero defaults suffice for `plain`. The internal
+`Kernel.plan` record uses zero values for unused report fields; it is an
+evaluation plan, not a `SizeBound` resource report for callers to inspect.
+
+`Preflight.exprEq` computes exactly the public `sizeExprEq` report, as
+proved by `Preflight.exprEq_eq`, using bit-length guards for coefficient
+saturation. For a nonzero value, `log2 n < maxPackedBits` tests whether it is
+below the coefficient threshold without constructing that threshold.
+A multiplication may saturate immediately only when the sum of the two
+floor logarithms certifies overflow; otherwise it computes and clips the
+product exactly. The threshold is allocated only when saturation actually
+occurs. Thus small accepted inputs allocate no two-megabyte cap, while all
+accepted reports and certified lower bounds remain unchanged.
 
 ## Positive characteristic
 

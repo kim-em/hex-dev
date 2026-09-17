@@ -19,15 +19,25 @@ open scoped HexMvPolyMathlib
 attribute [local instance 2000] Ring.toGrindRing
 
 /-- Preserve the retained ring tree, including subtraction and powers. -/
-@[expose] def fromGrind : Lean.Grind.CommRing.Expr → Expr
+@[expose] def fromGrindImpl : Lean.Grind.CommRing.Expr → Expr
   | .num z | .intCast z => .int z
   | .natCast n => .int n
   | .var i => .atom i
-  | .add a b => .add (fromGrind a) (fromGrind b)
-  | .sub a b => .sub (fromGrind a) (fromGrind b)
-  | .mul a b => .mul (fromGrind a) (fromGrind b)
-  | .neg a => .neg (fromGrind a)
-  | .pow a n => .pow (fromGrind a) n
+  | .add a b => .add (fromGrindImpl a) (fromGrindImpl b)
+  | .sub a b => .sub (fromGrindImpl a) (fromGrindImpl b)
+  | .mul a b => .mul (fromGrindImpl a) (fromGrindImpl b)
+  | .neg a => .neg (fromGrindImpl a)
+  | .pow a n => .pow (fromGrindImpl a) n
+
+/-- Primitive recursor form used when replaying the reflected syntax in the kernel. -/
+@[expose] noncomputable def fromGrind (e : Lean.Grind.CommRing.Expr) : Expr :=
+  Lean.Grind.CommRing.Expr.rec Expr.int (fun n => .int (Int.ofNat n)) Expr.int Expr.atom
+    (fun _ a => .neg a) (fun _ _ a b => .add a b)
+    (fun _ _ a b => .sub a b) (fun _ _ a b => .mul a b) (fun _ n a => .pow a n) e
+
+@[csimp] theorem fromGrind_eq_impl : fromGrind = fromGrindImpl := by
+  funext e
+  induction e <;> simp_all [fromGrind, fromGrindImpl]
 
 /-- Validate every variable against the sealed atom table. -/
 @[expose] def fromGrind? (k : Nat) (e : Lean.Grind.CommRing.Expr) : Option Expr :=

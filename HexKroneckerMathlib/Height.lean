@@ -102,7 +102,7 @@ theorem Expr.norm₁_le {k : Nat} (e : Expr) (h : e.WellFormed k) :
       change norm₁ (MvPolynomial.C z) ≤ z.natAbs
       exact le_of_eq (norm₁_monomial 0 z)
   | atom i =>
-      change norm₁ (MvPolynomial.X (⟨i, of_decide_eq_true h⟩ : Fin k)) ≤ 1
+      change norm₁ (MvPolynomial.X (⟨i, Nat.le_of_ble_eq_true h⟩ : Fin k)) ≤ 1
       simp [MvPolynomial.X]
   | add a b ha hb =>
       exact (norm₁_add _ _).trans (Nat.add_le_add (ha _) (hb _))

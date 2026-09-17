@@ -46,12 +46,12 @@ theorem packTerms_eq_eval₂ {k : Nat} (base : Nat) (ss : List Nat) (hs : ss.len
     packTerms base ss ts = MvPolynomial.eval₂Hom (RingHom.id Int)
       (fun i : Fin k => (base : Int) ^ ss.getD i.val 0) (termsPolynomial k ts) := by
   induction ts with
-  | nil => simp [packTerms]
+  | nil => simp [packTerms_nil]
   | cons t ts ih =>
       obtain ⟨e,c⟩ := t
       have h := Bool.and_eq_true_iff.mp ht
       have he : e.length = k := eq_of_beq h.1
-      rw [packTerms, termsPolynomial_cons, map_add, ← ih h.2]
+      rw [packTerms_cons, termsPolynomial_cons, map_add, ← ih h.2]
       congr 1
       rw [MvPolynomial.eval₂Hom_monomial]
       simp only [RingHom.id_apply, power_eq]

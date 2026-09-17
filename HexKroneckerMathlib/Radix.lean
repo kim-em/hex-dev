@@ -27,29 +27,29 @@ theorem boxSize_pos (ds : List Nat) : 0 < boxSize ds := by
 
 @[simp] theorem length_makeStrides (s : Nat) (ds : List Nat) :
     (makeStrides s ds).length = ds.length := by
-  induction ds generalizing s <;> simp [makeStrides, *]
+  induction ds generalizing s <;> simp [*]
 
 theorem code_scale (s : Nat) (ds es : List Nat) :
     code (makeStrides s ds) es = s * code (makeStrides 1 ds) es := by
   induction ds generalizing s es with
-  | nil => simp [makeStrides, code]
+  | nil => simp
   | cons d ds ih =>
       cases es with
-      | nil => simp [makeStrides, code]
+      | nil => simp
       | cons e es =>
-          simp only [makeStrides, code, Nat.one_mul]
+          simp only [makeStrides_cons, code_cons_cons, Nat.one_mul]
           rw [ih (s * (d + 1)) es, ih (d + 1) es]
           ring
 
 theorem code_cons (d e : Nat) (ds es : List Nat) :
     code (makeStrides 1 (d :: ds)) (e :: es) = e + (d + 1) * code (makeStrides 1 ds) es := by
-  simp only [makeStrides, code, Nat.one_mul, Nat.mul_one]
+  simp only [makeStrides_cons, code_cons_cons, Nat.one_mul, Nat.mul_one]
   rw [code_scale]
 
 theorem code_lt {ds es : List Nat} (h : List.Forall₂ (· ≤ ·) es ds) :
     code (makeStrides 1 ds) es < boxSize ds := by
   induction h with
-  | nil => simp [makeStrides, code, boxSize]
+  | nil => simp [boxSize]
   | @cons e d es ds he ht ih =>
       rw [code_cons]
       change e + (d + 1) * code (makeStrides 1 ds) es < (d + 1) * boxSize ds
@@ -81,13 +81,13 @@ theorem code_ofFn {k : Nat} (ss : List Nat) (hs : ss.length = k) (e : Fin k → 
   | zero =>
       have : ss = [] := List.length_eq_zero_iff.mp hs
       subst ss
-      simp [code]
+      simp
   | succ k ih =>
       cases ss with
       | nil => simp at hs
       | cons s ss =>
           have ht : ss.length = k := by simpa using hs
-          simp only [List.ofFn_succ, code, Fin.sum_univ_succ, Fin.val_zero,
+          simp only [List.ofFn_succ, code_cons_cons, Fin.sum_univ_succ, Fin.val_zero,
             List.getD_cons_zero, Fin.val_succ, List.getD_cons_succ, ih ss ht]
           rw [Nat.mul_comm]
 

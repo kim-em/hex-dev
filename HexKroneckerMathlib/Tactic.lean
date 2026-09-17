@@ -7,10 +7,13 @@ Authors: Kim Morrison
 module
 
 public import HexKroneckerMathlib.Translate
+public import HexKroneckerMathlib.Kernel
+public import HexKroneckerMathlib.BitPreflight
 public import HexReflect.Session
 public import Lean.Elab.Tactic.Config
 public import Lean.Meta.Closure
 public meta import HexKronecker
+public meta import HexKronecker.Preflight
 public meta import HexKroneckerMathlib.Translate
 
 public section
@@ -58,15 +61,17 @@ def prove (cfg : Config) (target : Lean.Expr) : MetaM Lean.Expr := do
   let supportedBits := ({} : Hex.Kronecker.Budget).maxPackedBits
   if supportedBits < budget.maxPackedBits then
     throwError "kronecker failure: maxPackedBits above {supportedBits} is not supported"
-  let (k, le, re, ctx) ← Hex.Reflect.run do
-    let l ← reflected (← Hex.Reflect.reifyCommRing lhs)
-    let r ← reflected (← Hex.Reflect.reifyCommRing rhs)
+  let opts ← getOptions
+  let (k, le, re, ctx) ← profileitM Exception "kronecker reflection" opts <| Hex.Reflect.run do
+    let l ← reflected (← profileitM Exception "kronecker reify lhs" opts <| Hex.Reflect.reifyCommRing lhs)
+    let r ← reflected (← profileitM Exception "kronecker reify rhs" opts <| Hex.Reflect.reifyCommRing rhs)
     let s ← Hex.Reflect.sealAtoms
-    let ctx ← Hex.Reflect.contextExpr (← Hex.Reflect.ringOf l) s
+    let ctx ← profileitM Exception "kronecker context" opts <|
+      Hex.Reflect.contextExpr (← Hex.Reflect.ringOf l) s
     return (s.n, l.expr, r.expr, ctx)
   let some l := fromGrind? k le | throwError "kronecker failure: variable outside sealed atoms"
   let some r := fromGrind? k re | throwError "kronecker failure: variable outside sealed atoms"
-  let .ok size := Hex.Kronecker.sizeExprEq budget k l r
+  let .ok size := Hex.Kronecker.Preflight.exprEq budget k l r
     | throwError "kronecker failure: ill-formed reflected tree"
   unless size.accepts budget do
     let degrees := if budget.maxDenseDigits < size.digits then
@@ -79,8 +84,8 @@ def prove (cfg : Config) (target : Lean.Expr) : MetaM Lean.Expr := do
   let quotedR := toExpr re
   let translatedL := mkApp (mkConst ``fromGrind) quotedL
   let translatedR := mkApp (mkConst ``fromGrind) quotedR
-  let proof := mkAppN (mkConst ``Hex.Kronecker.checkExprEq_sound [u])
-    #[toExpr budget, mkNatLit k, translatedL, translatedR, certificate, carrier, inst, valuation]
+  let proof := mkAppN (mkConst ``Hex.Kronecker.Kernel.exprEq_sound [u])
+    #[mkNatLit k, translatedL, translatedR, certificate, carrier, inst, valuation]
   let proof := mkAppN (mkConst ``denote_transport [u])
     #[carrier, inst, ctx, quotedL, quotedR, proof]
   try

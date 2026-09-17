@@ -15,12 +15,14 @@ from scripts.bench.kronecker_sweep import ALLOWED, PREFIX, cpu_lease
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('output', type=Path)
+    parser.add_argument("--kernel-forms", action="store_true", help="profile the budget-free replay forms")
     args = parser.parse_args()
-    families = [('reflected-identities', 'GridK3D8', 'Profile'),
-                ('determinant-identities', 'DetN4K3D1', 'Profile'),
+    suffix = 'KernelProfile' if args.kernel_forms else 'Profile'
+    families = [('reflected-identities', 'GridK3D8', suffix),
+                ('determinant-identities', 'DetN4K3D1', suffix),
                 ('dense-box-declines', 'IndependentN5', 'KernelProfile')]
     pairs = tuple(sweep.ProbePair(stem,
-        sweep.ProbeModule(f'{PREFIX}.{stem}{"Decline" if suffix == "KernelProfile" else "Kronecker"}Baseline'),
+        sweep.ProbeModule(f'{PREFIX}.{stem}{"Decline" if stem == "IndependentN5" else "Kronecker"}Baseline'),
         sweep.ProbeModule(f'{PREFIX}.{stem}{suffix}'), {}) for _, stem, suffix in families)
     spec = sweep.SweepSpec(__doc__, pairs, 'HexKroneckerMathlibProofProbe',
         'hex-kronecker-kernel-profile-v1', 'kernel-only', 'hex-kronecker', absolute_only=True,

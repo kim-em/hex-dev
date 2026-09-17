@@ -88,9 +88,22 @@ def termResidues (p : Nat) : Hex.MvPoly.Kernel.PolyList Int → Bool
   | (_, c) :: ts => (0 ≤ c && c < (p : Int)) && termResidues p ts
 
 /-- Exact mixed-radix strides. These are exponents, not the packed powers. -/
-def makeStrides (s : Nat) : List Nat → List Nat
+noncomputable def makeStrides (s : Nat) (ds : List Nat) : List Nat :=
+  List.rec (fun _ => []) (fun d _ rest s => s :: rest (Nat.mul s (Nat.add d 1))) ds s
+
+@[simp] theorem makeStrides_nil (s : Nat) : makeStrides s [] = [] := rfl
+@[simp] theorem makeStrides_cons (s d : Nat) (ds : List Nat) :
+    makeStrides s (d :: ds) = s :: makeStrides (s * (d + 1)) ds := rfl
+
+def makeStridesImpl (s : Nat) : List Nat → List Nat
   | [] => []
-  | d :: ds => s :: makeStrides (s * (d + 1)) ds
+  | d :: ds => s :: makeStridesImpl (Nat.mul s (Nat.add d 1)) ds
+
+@[csimp] theorem makeStrides_eq_impl : makeStrides = makeStridesImpl := by
+  funext s ds
+  induction ds generalizing s with
+  | nil => rfl
+  | cons d ds ih => simp_all [makeStrides, makeStridesImpl]
 
 /-- Dense digit count, saturated at the digit limit plus one. -/
 def denseDigits (cap : Nat) : List Nat → Nat
