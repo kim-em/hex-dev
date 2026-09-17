@@ -1540,8 +1540,8 @@ hex-determinant-mathlib's `det_eq` in
 with `Matrix.det`). `det_eq` is then two cases: the `modular` route is
 `detModular?_eq` under the instance plus that `det_eq`, and the
 `bareiss` route is `HexMatrixMathlib.bareiss_eq_det` from
-hex-bareiss-mathlib. `detWith_eq`, over every route including `divisor`,
-is proved the same way once milestone 4 lands.
+hex-bareiss-mathlib. `detWith_eq` also covers the `divisor` route through
+`detViaDivisorWith_eq` under the same bound instance.
 
 `rank_eq` is exactly `HexRankMathlib.checkRank_sound` at `R = Int`,
 with no new proof of either rank bound. Applying it to `rankCert?_check h`

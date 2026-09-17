@@ -277,8 +277,12 @@ def main():
     lines += ['',
         'Reproduce: `lake build hexmodularmatrix_bench`, then '
         '`HEX_FLINT_BENCH_PYTHON=<python-with-flint> python3 scripts/bench/modmat_flint.py '
-        '<output.json> --mode divisor` (or `solve`, `repeated`). Render selected exports '
-        'with `python3 scripts/bench/modmat_report.py <report.md> <exports...>`.', '',
+        '<output.json> --mode divisor --omit-modular` (or `--mode solve`, `--mode repeated`). '
+        'Omit `--omit-modular` to include ordinary CRT. Render this report with '
+        '`python3 scripts/bench/modmat_report.py reports/hex-modular-matrix-performance.md '
+        'reports/data/hex-modular-matrix-divisor-measured.json '
+        'reports/data/hex-modular-matrix-solve-measured.json '
+        'reports/data/hex-modular-matrix-repeated-measured.json`.', '',
     ]
     args.output.write_text('\n'.join(lines))
 
