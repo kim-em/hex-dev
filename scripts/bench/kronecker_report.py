@@ -5,8 +5,11 @@ import gzip
 import json
 import re
 import statistics
+import sys
 from pathlib import Path
-from kronecker_attribution_report import render as render_attribution
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from scripts.bench.kronecker_attribution_report import render as render_attribution
 
 
 def ms(n):
@@ -43,6 +46,13 @@ def margin_spread(pair):
     return center, mad, abs(center) <= mad
 
 
+def host_counts(data):
+    values = [s[arm][phase]['concurrent_lake_lean_count']
+              for s in data['samples'] for arm in ['candidate', 'reference']
+              for phase in ['host_before', 'host_after']]
+    return statistics.median(values), max(values)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('input', type=Path)
@@ -50,6 +60,8 @@ def main():
     parser.add_argument('--kernel-profiles', type=Path, required=True)
     parser.add_argument('--before', type=Path, help='retained shipping sweep for per-case before/after values')
     parser.add_argument('--attribution', type=Path, help='archive of retained isolated kernel comparisons')
+    parser.add_argument('--repeat-of', type=Path, help='the inconclusive complete sweep repeated once unchanged')
+    parser.add_argument('--previous-kernel-profiles', type=Path, help='retained profiles before their single repeat')
     args = parser.parse_args()
     data = read_json(args.input)
     profile_data = read_json(args.kernel_profiles)
@@ -64,11 +76,17 @@ def main():
         raise SystemExit(f'profile and sweep source hashes differ: {sorted(mismatch)}')
     link = 'data/hex-kronecker-mathlib/' + args.input.name
     rows = list(data['summary'].values())
+    previous = read_json(args.repeat_of) if args.repeat_of else None
+    if previous and (not previous['measurement_complete'] or not previous['sources_unchanged']
+                     or previous['source_hashes'] != data['source_hashes']):
+        raise SystemExit('the repeated sweep must have identical measured sources')
     ceilings = all(s['arms']['Kronecker']['ceiling_pass'] for s in rows if s['accepted'])
     wins = sum(median_faster(s) for s in rows if s['accepted'])
     unresolved = sum(margin_spread(p)[2] for s in rows if s['accepted'] for p in s['paired'].values())
     accepted = sum(s['accepted'] for s in rows)
     optimization = ''
+    kernel_conclusion = ''
+    host_context = ''
     if args.before:
         old = read_json(args.before)['summary']
         small = [r for r in rows if r['accepted'] and r['family'] == 'reflected-identities'
@@ -91,6 +109,40 @@ def main():
         if remaining:
             optimization += (' The previously losing small cases still above `ring` are '
                              + ', '.join(f'`{case}`' for case in remaining) + '.')
+    if args.attribution:
+        kernel_conclusion = '''The smallest case's controlled kernel median is 3.715 ms (all six samples
+below 5 ms), and all five determinant kernel medians improve. Reflection
+still costs about 4 ms in the instrumented smallest-case session, principally
+Sym.Arith canonicalization and instance classification. That remaining work
+can keep the total tactic cost above `ring` even after the kernel improvement;
+the fresh-module measurements below determine the numerical bar separately.'''
+        first = previous or data
+        count_median, count_max = host_counts(first)
+        host_context = f'''## Shared-host execution context
+
+The first sweep of the final implementation overlapped another full sweep and local
+verification builds, including the full proof-probe target. Those builds
+were started as part of this work and contributed concurrent activity.
+The recorded whole-host Lake/Lean process count had median {count_median:g}
+and maximum {count_max}. It includes other work on the shared host, so these
+counts do not identify the origin of every process. All observations remain
+evidence under the shared-host policy.
+'''
+        if args.before:
+            shipping_median, shipping_max = host_counts(read_json(args.before))
+            host_context += (f'\nThe shipping sweep recorded median {shipping_median:g} and maximum '
+                             f'{shipping_max} concurrent Lake/Lean processes.\n')
+        if previous:
+            current_median, current_max = host_counts(data)
+            first_unresolved = sum(margin_spread(p)[2] for s in previous['summary'].values()
+                                   if s['accepted'] for p in s['paired'].values())
+            host_context += (f'\nAfter {first_unresolved}/{2*accepted} first-sweep comparisons were unresolved, '
+                'the identical registered six-pair protocol was repeated once. '
+                'Local builds and other measurements from this work finished before the repeat; '
+                'the CPU was automatically leased without an idle-host criterion. '
+                f'The repeat recorded median {current_median:g} and maximum {current_max} '
+                'concurrent Lake/Lean processes. Both complete sweeps are retained and compared below; '
+                'no observation is filtered and the numerical bar is unchanged.\n')
     shifted = all(s.get('one_atom_shifted', False) for s in rows
                   if s['family'] == 'reflected-identities' and s['atoms'] == 1)
     one_atom = ("The one-atom rows use `(x + 1)^d` so that they also exercise expansion."
@@ -99,6 +151,11 @@ def main():
     text = f'''# HexKroneckerMathlib performance
 
 ## Result
+
+{unresolved}/{2*accepted} paired comparisons have a median-margin magnitude no
+larger than their median absolute deviation and are **unresolved at this
+measurement resolution**. The numerical median comparison and this description
+of variation are reported separately; no sample is discarded or replaced.
 
 The complete sweep contains {accepted} accepted identities and {len(rows)-accepted}
 preflight declines. {wins}/{accepted} accepted cases have a smaller per-arm
@@ -111,10 +168,7 @@ is **{'passed' if ceilings else 'not passed'}**. No default tactic chain changes
 
 {optimization}
 
-{unresolved}/{2*accepted} paired comparisons have a median-margin magnitude no
-larger than their median absolute deviation and are **unresolved at this
-measurement resolution**. The numerical median comparison and this description
-of variation are reported separately; no sample is discarded or replaced.
+{kernel_conclusion}
 
 ## Protocol and provenance
 
@@ -139,7 +193,8 @@ only dependencies. It uses one automatically leased CPU on the shared host.
 Host load, CPU accounting, raw compiler output, RSS and axiom audits are
 recorded per sample. An interrupted schedule resumes missing arm samples
 without replacing any completed sample; execution segments preserve the
-original runner hashes, CPU and environment. This is not an unchanged rerun.
+original runner hashes, CPU and environment. A resumption never replaces
+completed samples.
 
 The preregistered ceilings are 30 seconds per accepted grid case, 60 seconds
 per accepted determinant case, and a 180-second cleanup timeout. Ceilings
@@ -149,6 +204,8 @@ divided by the reference median and are shown only when both are positive.
 The numerical comparison uses these per-arm medians; paired-margin signs
 remain supplementary evidence. Losing cases stay in the table and do not
 prevent explicitly opt-in shipping under the SPEC's shared exception.
+
+{host_context}
 
 ## reflected-identities and determinant-identities
 
@@ -180,6 +237,25 @@ prevent explicitly opt-in shipping under the SPEC's shared exception.
                 cells.extend([ms(old[row['stem']]['arms'][arm]['median_delta_ns']),
                               ms(row['arms'][arm]['median_delta_ns'])])
             text += f"| {row['stem']} | " + ' | '.join(cells) + " |\n"
+    if previous:
+        text += '\n## Single unchanged repeat\n\n'
+        text += (f'The [first complete sweep](data/hex-kronecker-mathlib/{args.repeat_of.name}) '
+                 'and the repeat have identical measured source hashes. Each column uses all six '
+                 'per-arm baseline-subtracted observations from its own cohort. These cohorts '
+                 'are not adjacent before/after pairs. Negative medians are retained.\n\n')
+        text += '| Case | First K ms | Repeat K ms | First ring ms | Repeat ring ms | First grobner ms | Repeat grobner ms |\n'
+        text += '| --- | ---: | ---: | ---: | ---: | ---: | ---: |\n'
+        for row in rows:
+            if row['accepted']:
+                cells = [ms(record['summary'][row['stem']]['arms'][arm]['median_delta_ns'])
+                         for arm in ['Kronecker', 'Ring', 'Grobner'] for record in [previous, data]]
+                text += f"| {row['stem']} | " + ' | '.join(cells) + ' |\n'
+        text += '\n| Case | First decline ms | Repeat decline ms |\n| --- | ---: | ---: |\n'
+        for row in rows:
+            if not row['accepted']:
+                cells = [ms(record['summary'][row['stem']]['arms']['Decline']['median_delta_ns'])
+                         for record in [previous, data]]
+                text += f"| {row['stem']} | " + ' | '.join(cells) + ' |\n'
     det = [r for r in rows if r['accepted'] and r['family'] == 'determinant-identities']
     large = [r for r in rows if r['accepted'] and r['family'] == 'reflected-identities'
              and r['atoms'] >= 2 and r['degree'] >= 4]
@@ -270,7 +346,7 @@ and the uniform-ring and characteristic-seven examples.
     text += '''
 ## Kernel-only profiles
 
-The accepted-family profiles replay the expression checker through
+The accepted-family profiles replay `Kernel.exprEq` through
 `decide +kernel`, using the quoted trees from their shared construction
 modules. They exclude reflection, proof production, and the `fromGrind`
 translation reduced by the actual tactic certificate. The decline-family
@@ -282,7 +358,7 @@ certificate check. Raw profiler output is retained in the record.
 '''
     for p in profile_data['profiles']:
         result = p['result']
-        text += f"| {p['family']} | {p['stem']} | {kernel_ms(result['compiler_output']):.3f} | {ms(result['wall_nanos'])} | {', '.join(result['axioms'])} |\n"
+        text += f"| {p['family']} | {p['stem']} | {kernel_ms(result['compiler_output']):.3f} | {ms(result['wall_nanos'])} | {', '.join(result['axioms']) or 'none'} |\n"
     text += ('\n[Kernel profiles and their source hashes](data/hex-kronecker-mathlib/'
              + args.kernel_profiles.name + ') record the dedicated fresh profile runs. '
              'The kernel column is Lean’s aggregate type-checking timer. The separate '
@@ -290,6 +366,22 @@ certificate check. Raw profiler output is retained in the record.
              'profile proves the preflight result using `decide +kernel`; it performs '
              'no packed evaluation. Earlier compiled-guard diagnostics remain in the '
              'historical sweep records and are not used as kernel profiles.\n')
+    if args.previous_kernel_profiles:
+        prior_profiles = read_json(args.previous_kernel_profiles)
+        if prior_profiles['source_hashes'] != profile_data['source_hashes']:
+            raise SystemExit('the repeated kernel profiles must have identical sources')
+        prior = {p['stem']: p for p in prior_profiles['profiles']}
+        text += ('\nThe three profiles were repeated once, before the unchanged full sweep. '
+                 'The first observations are retained below. These are unpaired single '
+                 'profiles on the shared host, so their differences do not establish an '
+                 'implementation regression. In particular, the unchanged decline checker '
+                 'varies substantially between observations.\n\n')
+        text += '| Case | First kernel ms | Repeated kernel ms |\n| --- | ---: | ---: |\n'
+        for p in profile_data['profiles']:
+            text += (f"| {p['stem']} | {kernel_ms(prior[p['stem']]['result']['compiler_output']):.3f} | "
+                     f"{kernel_ms(p['result']['compiler_output']):.3f} |\n")
+        text += (f'\n[First profiles](data/hex-kronecker-mathlib/{args.previous_kernel_profiles.name}) '
+                 'preserve their full logs and source hashes.\n')
     text += '''
 The Mathlib-free [computational report](hex-kronecker-performance.md) supplies
 complexity evidence in the packed bit size, operation profiles and the full

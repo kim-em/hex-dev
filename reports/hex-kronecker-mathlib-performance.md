@@ -2,6 +2,11 @@
 
 ## Result
 
+30/46 paired comparisons have a median-margin magnitude no
+larger than their median absolute deviation and are **unresolved at this
+measurement resolution**. The numerical median comparison and this description
+of variation are reported separately; no sample is discarded or replaced.
+
 The complete sweep contains 23 accepted identities and 7
 preflight declines. 15/23 accepted cases have a smaller per-arm
 baseline-subtracted median than both `ring` and `grobner`. The comparison across
@@ -13,10 +18,12 @@ is **passed**. No default tactic chain changes.
 
 Of the seven grid cases that lost to `ring` in the shipping table, 4/7 are now at or below its median. 1/5 determinant medians are no larger than the shipping values. The numerical optimization bar is **not passed**. These are fresh-module comparisons; controlled kernel attribution is reported separately. The previously losing small cases still above `ring` are `GridK1D8`, `GridK2D2`, `GridK4D2`.
 
-30/46 paired comparisons have a median-margin magnitude no
-larger than their median absolute deviation and are **unresolved at this
-measurement resolution**. The numerical median comparison and this description
-of variation are reported separately; no sample is discarded or replaced.
+The smallest case's controlled kernel median is 3.715 ms (all six samples
+below 5 ms), and all five determinant kernel medians improve. Reflection
+still costs about 4 ms in the instrumented smallest-case session, principally
+Sym.Arith canonicalization and instance classification. That remaining work
+can keep the total tactic cost above `ring` even after the kernel improvement;
+the fresh-module measurements below determine the numerical bar separately.
 
 ## Protocol and provenance
 
@@ -41,7 +48,8 @@ only dependencies. It uses one automatically leased CPU on the shared host.
 Host load, CPU accounting, raw compiler output, RSS and axiom audits are
 recorded per sample. An interrupted schedule resumes missing arm samples
 without replacing any completed sample; execution segments preserve the
-original runner hashes, CPU and environment. This is not an unchanged rerun.
+original runner hashes, CPU and environment. A resumption never replaces
+completed samples.
 
 The preregistered ceilings are 30 seconds per accepted grid case, 60 seconds
 per accepted determinant case, and a 180-second cleanup timeout. Ceilings
@@ -51,6 +59,19 @@ divided by the reference median and are shown only when both are positive.
 The numerical comparison uses these per-arm medians; paired-margin signs
 remain supplementary evidence. Losing cases stay in the table and do not
 prevent explicitly opt-in shipping under the SPEC's shared exception.
+
+## Shared-host execution context
+
+The first sweep of the final implementation overlapped another full sweep and local
+verification builds, including the full proof-probe target. Those builds
+were started as part of this work and contributed concurrent activity.
+The recorded whole-host Lake/Lean process count had median 14
+and maximum 105. It includes other work on the shared host, so these
+counts do not identify the origin of every process. All observations remain
+evidence under the shared-host policy.
+
+The shipping sweep recorded median 3 and maximum 16 concurrent Lake/Lean processes.
+
 
 ## reflected-identities and determinant-identities
 
@@ -242,7 +263,7 @@ Each sign records one completed reference-minus-candidate margin in trial order.
 
 ## Kernel-only profiles
 
-The accepted-family profiles replay the expression checker through
+The accepted-family profiles replay `Kernel.exprEq` through
 `decide +kernel`, using the quoted trees from their shared construction
 modules. They exclude reflection, proof production, and the `fromGrind`
 translation reduced by the actual tactic certificate. The decline-family
@@ -251,11 +272,21 @@ certificate check. Raw profiler output is retained in the record.
 
 | Family | Representative | Kernel type checking ms | Fresh module wall ms | Axioms |
 | --- | --- | ---: | ---: | --- |
-| reflected-identities | GridK3D8 | 24.400 | 2730.857 | propext |
-| determinant-identities | DetN4K3D1 | 30.100 | 2725.704 | propext |
-| dense-box-declines | IndependentN5 | 485.000 | 3336.161 |  |
+| reflected-identities | GridK3D8 | 29.900 | 7104.342 | propext |
+| determinant-identities | DetN4K3D1 | 44.200 | 3837.659 | propext |
+| dense-box-declines | IndependentN5 | 347.000 | 4100.263 | none |
 
-[Kernel profiles and their source hashes](data/hex-kronecker-mathlib/kernel-profiles-translation.json.gz) record the dedicated fresh profile runs. The kernel column is Lean’s aggregate type-checking timer. The separate fresh-module wall time includes imports and compilation. The decline profile proves the preflight result using `decide +kernel`; it performs no packed evaluation. Earlier compiled-guard diagnostics remain in the historical sweep records and are not used as kernel profiles.
+[Kernel profiles and their source hashes](data/hex-kronecker-mathlib/kernel-profiles-translation-repeat.json.gz) record the dedicated fresh profile runs. The kernel column is Lean’s aggregate type-checking timer. The separate fresh-module wall time includes imports and compilation. The decline profile proves the preflight result using `decide +kernel`; it performs no packed evaluation. Earlier compiled-guard diagnostics remain in the historical sweep records and are not used as kernel profiles.
+
+The three profiles were repeated once, before the unchanged full sweep. The first observations are retained below. These are unpaired single profiles on the shared host, so their differences do not establish an implementation regression. In particular, the unchanged decline checker varies substantially between observations.
+
+| Case | First kernel ms | Repeated kernel ms |
+| --- | ---: | ---: |
+| GridK3D8 | 24.400 | 29.900 |
+| DetN4K3D1 | 30.100 | 44.200 |
+| IndependentN5 | 485.000 | 347.000 |
+
+[First profiles](data/hex-kronecker-mathlib/kernel-profiles-translation.json.gz) preserve their full logs and source hashes.
 
 The Mathlib-free [computational report](hex-kronecker-performance.md) supplies
 complexity evidence in the packed bit size, operation profiles and the full

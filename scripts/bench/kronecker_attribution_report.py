@@ -6,6 +6,11 @@ import tarfile
 from pathlib import Path
 
 
+def sample_ms(sample):
+    value, unit = sample['kernel_timer'][-1]
+    return float(value) * {'ms': 1, 's': 1000, 'μs': .001, 'µs': .001, 'ns': .000001}[unit]
+
+
 def render(path: Path) -> str:
     with tarfile.open(path, 'r:gz') as archive:
         records = {name: json.load(archive.extractfile(name + '/record.json'))
@@ -53,8 +58,7 @@ The final translation comparison changes only `fromGrind` to a direct recursor.
                 samples = [s for s in record['samples'] if s['case'] == case and s['arm'] == arm]
                 if len(samples) != 6 or any(s['returncode'] for s in samples):
                     raise ValueError(f'incomplete comparison: {name} {case} {arm}')
-                arms[arm] = {s['trial']: float(s['kernel_timer'][-1][0]) *
-                             {'ms': 1, 's': 1000}[s['kernel_timer'][-1][1]] for s in samples}
+                arms[arm] = {s['trial']: sample_ms(s) for s in samples}
             gains = [arms['reference'][t] - arms['candidate'][t] for t in range(1, 7)]
             center = statistics.median(gains)
             mad = statistics.median(abs(g - center) for g in gains)
@@ -66,7 +70,7 @@ The final translation comparison changes only `fromGrind` to a direct recursor.
         if name == 'determinant-final':
             determinant_result = f'{improved}/{total}'
     translation = records['attribution-translation-pairs']
-    smallest = [float(s['kernel_timer'][-1][0]) for s in translation['samples']
+    smallest = [sample_ms(s) for s in translation['samples']
                 if s['case'] == 'GridK2D2' and s['arm'] == 'candidate']
     text += (f'The final `GridK2D2` kernel median is **{statistics.median(smallest):.3f} ms** '
              f'(range {min(smallest):.3f}–{max(smallest):.3f} ms). The 5 ms kernel-median target is '
