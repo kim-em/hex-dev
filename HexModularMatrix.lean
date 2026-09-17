@@ -13,5 +13,6 @@ public import HexModularMatrix.Bound
 public import HexModularMatrix.Det
 public import HexModularMatrix.Complete
 public import HexModularMatrix.Search
+public import HexModularMatrix.Kernel
 
-/-! Bounded multi-modular integer determinants and their correctness interface. -/
+/-! Multi-modular integer determinants, Dixon solves, certified rank and rational kernels. -/

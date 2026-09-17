@@ -728,6 +728,295 @@ setup_fixed_benchmark smokeRational where { expectedHash := some 55142488 }
 setup_fixed_benchmark smokeRepeated where { expectedHash := some 1765801 }
 setup_fixed_benchmark smokeIndependent where { expectedHash := some 1765801 }
 
+/-- A checked modular rank; failure invalidates a scientific sample. -/
+def runRankCert (A : Matrix Int n m) (_ : Unit) : IO Int := do
+  let some c := A.rankCert? 3 | throw <| IO.userError "rank certificate search exhausted"
+  return c.rank
+
+def runRankPublic (A : Matrix Int n m) (_ : Unit) : IO Int := return A.rankModular
+
+def runRankDirect (A : Matrix Int n m) (_ : Unit) : IO Int := return A.rank
+
+/-- Informational FLINT integer-rank comparator. -/
+def runRankFlint (rows : Lean.Json) (_ : Unit) : IO Int := do
+  let value ← Hex.BenchOracle.Flint.runOp "fmpz_mat" "rank" #[("rows", rows)]
+  match value.getInt? with
+  | .ok r => return r
+  | .error message => throw <| IO.userError message
+
+private def rankFullN8 := Thunk.mk fun _ => ModularMatrixFixtures.unimodular 8 8
+private def rankFullN8Json := Thunk.mk fun _ => rowsJson rankFullN8.get
+def runRankCertFullN8 := runRankCert rankFullN8.get
+setup_fixed_benchmark runRankCertFullN8 where compareConfig
+def runRankPublicFullN8 := runRankPublic rankFullN8.get
+setup_fixed_benchmark runRankPublicFullN8 where compareConfig
+def runRankDirectFullN8 := runRankDirect rankFullN8.get
+setup_fixed_benchmark runRankDirectFullN8 where compareConfig
+def runRankFlintFullN8 := runRankFlint rankFullN8Json.get
+setup_fixed_benchmark runRankFlintFullN8 where compareConfig
+private def rankNearN8 := Thunk.mk fun _ => ModularMatrixFixtures.rankMatrix 8 12 7 8 false
+private def rankNearN8Json := Thunk.mk fun _ => rowsJson rankNearN8.get
+def runRankCertNearN8 := runRankCert rankNearN8.get
+setup_fixed_benchmark runRankCertNearN8 where compareConfig
+def runRankPublicNearN8 := runRankPublic rankNearN8.get
+setup_fixed_benchmark runRankPublicNearN8 where compareConfig
+def runRankDirectNearN8 := runRankDirect rankNearN8.get
+setup_fixed_benchmark runRankDirectNearN8 where compareConfig
+def runRankFlintNearN8 := runRankFlint rankNearN8Json.get
+setup_fixed_benchmark runRankFlintNearN8 where compareConfig
+private def rankLowN8 := Thunk.mk fun _ => ModularMatrixFixtures.rankMatrix 8 12 4 8 false
+private def rankLowN8Json := Thunk.mk fun _ => rowsJson rankLowN8.get
+def runRankCertLowN8 := runRankCert rankLowN8.get
+setup_fixed_benchmark runRankCertLowN8 where compareConfig
+def runRankPublicLowN8 := runRankPublic rankLowN8.get
+setup_fixed_benchmark runRankPublicLowN8 where compareConfig
+def runRankDirectLowN8 := runRankDirect rankLowN8.get
+setup_fixed_benchmark runRankDirectLowN8 where compareConfig
+def runRankFlintLowN8 := runRankFlint rankLowN8Json.get
+setup_fixed_benchmark runRankFlintLowN8 where compareConfig
+private def rankBadPrimesN8 := Thunk.mk fun _ => ModularMatrixFixtures.rankMatrix 8 12 4 256 true
+private def rankBadPrimesN8Json := Thunk.mk fun _ => rowsJson rankBadPrimesN8.get
+def runRankCertBadPrimesN8 := runRankCert rankBadPrimesN8.get
+setup_fixed_benchmark runRankCertBadPrimesN8 where compareConfig
+def runRankPublicBadPrimesN8 := runRankPublic rankBadPrimesN8.get
+setup_fixed_benchmark runRankPublicBadPrimesN8 where compareConfig
+def runRankDirectBadPrimesN8 := runRankDirect rankBadPrimesN8.get
+setup_fixed_benchmark runRankDirectBadPrimesN8 where compareConfig
+def runRankFlintBadPrimesN8 := runRankFlint rankBadPrimesN8Json.get
+setup_fixed_benchmark runRankFlintBadPrimesN8 where compareConfig
+private def rankFullN16 := Thunk.mk fun _ => ModularMatrixFixtures.unimodular 16 8
+private def rankFullN16Json := Thunk.mk fun _ => rowsJson rankFullN16.get
+def runRankCertFullN16 := runRankCert rankFullN16.get
+setup_fixed_benchmark runRankCertFullN16 where compareConfig
+def runRankPublicFullN16 := runRankPublic rankFullN16.get
+setup_fixed_benchmark runRankPublicFullN16 where compareConfig
+def runRankDirectFullN16 := runRankDirect rankFullN16.get
+setup_fixed_benchmark runRankDirectFullN16 where compareConfig
+def runRankFlintFullN16 := runRankFlint rankFullN16Json.get
+setup_fixed_benchmark runRankFlintFullN16 where compareConfig
+private def rankNearN16 := Thunk.mk fun _ => ModularMatrixFixtures.rankMatrix 16 20 15 8 false
+private def rankNearN16Json := Thunk.mk fun _ => rowsJson rankNearN16.get
+def runRankCertNearN16 := runRankCert rankNearN16.get
+setup_fixed_benchmark runRankCertNearN16 where compareConfig
+def runRankPublicNearN16 := runRankPublic rankNearN16.get
+setup_fixed_benchmark runRankPublicNearN16 where compareConfig
+def runRankDirectNearN16 := runRankDirect rankNearN16.get
+setup_fixed_benchmark runRankDirectNearN16 where compareConfig
+def runRankFlintNearN16 := runRankFlint rankNearN16Json.get
+setup_fixed_benchmark runRankFlintNearN16 where compareConfig
+private def rankLowN16 := Thunk.mk fun _ => ModularMatrixFixtures.rankMatrix 16 20 8 8 false
+private def rankLowN16Json := Thunk.mk fun _ => rowsJson rankLowN16.get
+def runRankCertLowN16 := runRankCert rankLowN16.get
+setup_fixed_benchmark runRankCertLowN16 where compareConfig
+def runRankPublicLowN16 := runRankPublic rankLowN16.get
+setup_fixed_benchmark runRankPublicLowN16 where compareConfig
+def runRankDirectLowN16 := runRankDirect rankLowN16.get
+setup_fixed_benchmark runRankDirectLowN16 where compareConfig
+def runRankFlintLowN16 := runRankFlint rankLowN16Json.get
+setup_fixed_benchmark runRankFlintLowN16 where compareConfig
+private def rankBadPrimesN16 := Thunk.mk fun _ => ModularMatrixFixtures.rankMatrix 16 20 8 256 true
+private def rankBadPrimesN16Json := Thunk.mk fun _ => rowsJson rankBadPrimesN16.get
+def runRankCertBadPrimesN16 := runRankCert rankBadPrimesN16.get
+setup_fixed_benchmark runRankCertBadPrimesN16 where compareConfig
+def runRankPublicBadPrimesN16 := runRankPublic rankBadPrimesN16.get
+setup_fixed_benchmark runRankPublicBadPrimesN16 where compareConfig
+def runRankDirectBadPrimesN16 := runRankDirect rankBadPrimesN16.get
+setup_fixed_benchmark runRankDirectBadPrimesN16 where compareConfig
+def runRankFlintBadPrimesN16 := runRankFlint rankBadPrimesN16Json.get
+setup_fixed_benchmark runRankFlintBadPrimesN16 where compareConfig
+private def rankFullN32 := Thunk.mk fun _ => ModularMatrixFixtures.unimodular 32 8
+private def rankFullN32Json := Thunk.mk fun _ => rowsJson rankFullN32.get
+def runRankCertFullN32 := runRankCert rankFullN32.get
+setup_fixed_benchmark runRankCertFullN32 where compareConfig
+def runRankPublicFullN32 := runRankPublic rankFullN32.get
+setup_fixed_benchmark runRankPublicFullN32 where compareConfig
+def runRankDirectFullN32 := runRankDirect rankFullN32.get
+setup_fixed_benchmark runRankDirectFullN32 where compareConfig
+def runRankFlintFullN32 := runRankFlint rankFullN32Json.get
+setup_fixed_benchmark runRankFlintFullN32 where compareConfig
+private def rankNearN32 := Thunk.mk fun _ => ModularMatrixFixtures.rankMatrix 32 36 31 8 false
+private def rankNearN32Json := Thunk.mk fun _ => rowsJson rankNearN32.get
+def runRankCertNearN32 := runRankCert rankNearN32.get
+setup_fixed_benchmark runRankCertNearN32 where compareConfig
+def runRankPublicNearN32 := runRankPublic rankNearN32.get
+setup_fixed_benchmark runRankPublicNearN32 where compareConfig
+def runRankDirectNearN32 := runRankDirect rankNearN32.get
+setup_fixed_benchmark runRankDirectNearN32 where compareConfig
+def runRankFlintNearN32 := runRankFlint rankNearN32Json.get
+setup_fixed_benchmark runRankFlintNearN32 where compareConfig
+private def rankLowN32 := Thunk.mk fun _ => ModularMatrixFixtures.rankMatrix 32 36 16 8 false
+private def rankLowN32Json := Thunk.mk fun _ => rowsJson rankLowN32.get
+def runRankCertLowN32 := runRankCert rankLowN32.get
+setup_fixed_benchmark runRankCertLowN32 where compareConfig
+def runRankPublicLowN32 := runRankPublic rankLowN32.get
+setup_fixed_benchmark runRankPublicLowN32 where compareConfig
+def runRankDirectLowN32 := runRankDirect rankLowN32.get
+setup_fixed_benchmark runRankDirectLowN32 where compareConfig
+def runRankFlintLowN32 := runRankFlint rankLowN32Json.get
+setup_fixed_benchmark runRankFlintLowN32 where compareConfig
+private def rankBadPrimesN32 := Thunk.mk fun _ => ModularMatrixFixtures.rankMatrix 32 36 16 256 true
+private def rankBadPrimesN32Json := Thunk.mk fun _ => rowsJson rankBadPrimesN32.get
+def runRankCertBadPrimesN32 := runRankCert rankBadPrimesN32.get
+setup_fixed_benchmark runRankCertBadPrimesN32 where compareConfig
+def runRankPublicBadPrimesN32 := runRankPublic rankBadPrimesN32.get
+setup_fixed_benchmark runRankPublicBadPrimesN32 where compareConfig
+def runRankDirectBadPrimesN32 := runRankDirect rankBadPrimesN32.get
+setup_fixed_benchmark runRankDirectBadPrimesN32 where compareConfig
+def runRankFlintBadPrimesN32 := runRankFlint rankBadPrimesN32Json.get
+setup_fixed_benchmark runRankFlintBadPrimesN32 where compareConfig
+
+private def rankFullN64 := Thunk.mk fun _ => ModularMatrixFixtures.unimodular 64 8
+private def rankFullN64Json := Thunk.mk fun _ => rowsJson rankFullN64.get
+def runRankCertFullN64 := runRankCert rankFullN64.get
+setup_fixed_benchmark runRankCertFullN64 where compareConfig
+def runRankPublicFullN64 := runRankPublic rankFullN64.get
+setup_fixed_benchmark runRankPublicFullN64 where compareConfig
+def runRankDirectFullN64 := runRankDirect rankFullN64.get
+setup_fixed_benchmark runRankDirectFullN64 where compareConfig
+def runRankFlintFullN64 := runRankFlint rankFullN64Json.get
+setup_fixed_benchmark runRankFlintFullN64 where compareConfig
+private def rankNearN64 := Thunk.mk fun _ => ModularMatrixFixtures.rankMatrix 64 68 63 8 false
+private def rankNearN64Json := Thunk.mk fun _ => rowsJson rankNearN64.get
+def runRankCertNearN64 := runRankCert rankNearN64.get
+setup_fixed_benchmark runRankCertNearN64 where compareConfig
+def runRankPublicNearN64 := runRankPublic rankNearN64.get
+setup_fixed_benchmark runRankPublicNearN64 where compareConfig
+def runRankDirectNearN64 := runRankDirect rankNearN64.get
+setup_fixed_benchmark runRankDirectNearN64 where compareConfig
+def runRankFlintNearN64 := runRankFlint rankNearN64Json.get
+setup_fixed_benchmark runRankFlintNearN64 where compareConfig
+private def rankLowN64 := Thunk.mk fun _ => ModularMatrixFixtures.rankMatrix 64 68 32 8 false
+private def rankLowN64Json := Thunk.mk fun _ => rowsJson rankLowN64.get
+def runRankCertLowN64 := runRankCert rankLowN64.get
+setup_fixed_benchmark runRankCertLowN64 where compareConfig
+def runRankPublicLowN64 := runRankPublic rankLowN64.get
+setup_fixed_benchmark runRankPublicLowN64 where compareConfig
+def runRankDirectLowN64 := runRankDirect rankLowN64.get
+setup_fixed_benchmark runRankDirectLowN64 where compareConfig
+def runRankFlintLowN64 := runRankFlint rankLowN64Json.get
+setup_fixed_benchmark runRankFlintLowN64 where compareConfig
+private def rankBadPrimesN64 := Thunk.mk fun _ => ModularMatrixFixtures.rankMatrix 64 68 32 256 true
+private def rankBadPrimesN64Json := Thunk.mk fun _ => rowsJson rankBadPrimesN64.get
+def runRankCertBadPrimesN64 := runRankCert rankBadPrimesN64.get
+setup_fixed_benchmark runRankCertBadPrimesN64 where compareConfig
+def runRankPublicBadPrimesN64 := runRankPublic rankBadPrimesN64.get
+setup_fixed_benchmark runRankPublicBadPrimesN64 where compareConfig
+def runRankDirectBadPrimesN64 := runRankDirect rankBadPrimesN64.get
+setup_fixed_benchmark runRankDirectBadPrimesN64 where compareConfig
+def runRankFlintBadPrimesN64 := runRankFlint rankBadPrimesN64Json.get
+setup_fixed_benchmark runRankFlintBadPrimesN64 where compareConfig
+private def rankFullN128 := Thunk.mk fun _ => ModularMatrixFixtures.unimodular 128 8
+private def rankFullN128Json := Thunk.mk fun _ => rowsJson rankFullN128.get
+def runRankCertFullN128 := runRankCert rankFullN128.get
+setup_fixed_benchmark runRankCertFullN128 where compareConfig
+def runRankPublicFullN128 := runRankPublic rankFullN128.get
+setup_fixed_benchmark runRankPublicFullN128 where compareConfig
+def runRankDirectFullN128 := runRankDirect rankFullN128.get
+setup_fixed_benchmark runRankDirectFullN128 where compareConfig
+def runRankFlintFullN128 := runRankFlint rankFullN128Json.get
+setup_fixed_benchmark runRankFlintFullN128 where compareConfig
+private def rankNearN128 := Thunk.mk fun _ => ModularMatrixFixtures.rankMatrix 128 132 127 8 false
+private def rankNearN128Json := Thunk.mk fun _ => rowsJson rankNearN128.get
+def runRankCertNearN128 := runRankCert rankNearN128.get
+setup_fixed_benchmark runRankCertNearN128 where compareConfig
+def runRankPublicNearN128 := runRankPublic rankNearN128.get
+setup_fixed_benchmark runRankPublicNearN128 where compareConfig
+def runRankDirectNearN128 := runRankDirect rankNearN128.get
+setup_fixed_benchmark runRankDirectNearN128 where compareConfig
+def runRankFlintNearN128 := runRankFlint rankNearN128Json.get
+setup_fixed_benchmark runRankFlintNearN128 where compareConfig
+private def rankLowN128 := Thunk.mk fun _ => ModularMatrixFixtures.rankMatrix 128 132 64 8 false
+private def rankLowN128Json := Thunk.mk fun _ => rowsJson rankLowN128.get
+def runRankCertLowN128 := runRankCert rankLowN128.get
+setup_fixed_benchmark runRankCertLowN128 where compareConfig
+def runRankPublicLowN128 := runRankPublic rankLowN128.get
+setup_fixed_benchmark runRankPublicLowN128 where compareConfig
+def runRankDirectLowN128 := runRankDirect rankLowN128.get
+setup_fixed_benchmark runRankDirectLowN128 where compareConfig
+def runRankFlintLowN128 := runRankFlint rankLowN128Json.get
+setup_fixed_benchmark runRankFlintLowN128 where compareConfig
+private def rankBadPrimesN128 := Thunk.mk fun _ => ModularMatrixFixtures.rankMatrix 128 132 64 256 true
+private def rankBadPrimesN128Json := Thunk.mk fun _ => rowsJson rankBadPrimesN128.get
+def runRankCertBadPrimesN128 := runRankCert rankBadPrimesN128.get
+setup_fixed_benchmark runRankCertBadPrimesN128 where compareConfig
+def runRankPublicBadPrimesN128 := runRankPublic rankBadPrimesN128.get
+setup_fixed_benchmark runRankPublicBadPrimesN128 where compareConfig
+def runRankDirectBadPrimesN128 := runRankDirect rankBadPrimesN128.get
+setup_fixed_benchmark runRankDirectBadPrimesN128 where compareConfig
+def runRankFlintBadPrimesN128 := runRankFlint rankBadPrimesN128Json.get
+setup_fixed_benchmark runRankFlintBadPrimesN128 where compareConfig
+private def rankFullN256 := Thunk.mk fun _ => ModularMatrixFixtures.unimodular 256 8
+private def rankFullN256Json := Thunk.mk fun _ => rowsJson rankFullN256.get
+def runRankCertFullN256 := runRankCert rankFullN256.get
+setup_fixed_benchmark runRankCertFullN256 where compareConfig
+def runRankPublicFullN256 := runRankPublic rankFullN256.get
+setup_fixed_benchmark runRankPublicFullN256 where compareConfig
+def runRankDirectFullN256 := runRankDirect rankFullN256.get
+setup_fixed_benchmark runRankDirectFullN256 where compareConfig
+def runRankFlintFullN256 := runRankFlint rankFullN256Json.get
+setup_fixed_benchmark runRankFlintFullN256 where compareConfig
+private def rankNearN256 := Thunk.mk fun _ => ModularMatrixFixtures.rankMatrix 256 260 255 8 false
+private def rankNearN256Json := Thunk.mk fun _ => rowsJson rankNearN256.get
+def runRankCertNearN256 := runRankCert rankNearN256.get
+setup_fixed_benchmark runRankCertNearN256 where compareConfig
+def runRankPublicNearN256 := runRankPublic rankNearN256.get
+setup_fixed_benchmark runRankPublicNearN256 where compareConfig
+def runRankDirectNearN256 := runRankDirect rankNearN256.get
+setup_fixed_benchmark runRankDirectNearN256 where compareConfig
+def runRankFlintNearN256 := runRankFlint rankNearN256Json.get
+setup_fixed_benchmark runRankFlintNearN256 where compareConfig
+private def rankLowN256 := Thunk.mk fun _ => ModularMatrixFixtures.rankMatrix 256 260 128 8 false
+private def rankLowN256Json := Thunk.mk fun _ => rowsJson rankLowN256.get
+def runRankCertLowN256 := runRankCert rankLowN256.get
+setup_fixed_benchmark runRankCertLowN256 where compareConfig
+def runRankPublicLowN256 := runRankPublic rankLowN256.get
+setup_fixed_benchmark runRankPublicLowN256 where compareConfig
+def runRankDirectLowN256 := runRankDirect rankLowN256.get
+setup_fixed_benchmark runRankDirectLowN256 where compareConfig
+def runRankFlintLowN256 := runRankFlint rankLowN256Json.get
+setup_fixed_benchmark runRankFlintLowN256 where compareConfig
+private def rankBadPrimesN256 := Thunk.mk fun _ => ModularMatrixFixtures.rankMatrix 256 260 128 256 true
+private def rankBadPrimesN256Json := Thunk.mk fun _ => rowsJson rankBadPrimesN256.get
+def runRankCertBadPrimesN256 := runRankCert rankBadPrimesN256.get
+setup_fixed_benchmark runRankCertBadPrimesN256 where compareConfig
+def runRankPublicBadPrimesN256 := runRankPublic rankBadPrimesN256.get
+setup_fixed_benchmark runRankPublicBadPrimesN256 where compareConfig
+def runRankDirectBadPrimesN256 := runRankDirect rankBadPrimesN256.get
+setup_fixed_benchmark runRankDirectBadPrimesN256 where compareConfig
+def runRankFlintBadPrimesN256 := runRankFlint rankBadPrimesN256Json.get
+setup_fixed_benchmark runRankFlintBadPrimesN256 where compareConfig
+
+def smokeRank := runRankCert (ModularMatrixFixtures.rankMatrix 4 6 2 8)
+def smokeRankBad := runRankCert (ModularMatrixFixtures.rankMatrix 4 6 2 256 true)
+def smokeRankPublic := runRankPublic (ModularMatrixFixtures.rankMatrix 4 6 2 8)
+setup_fixed_benchmark smokeRank where { expectedHash := some 4 }
+setup_fixed_benchmark smokeRankBad where { expectedHash := some 4 }
+setup_fixed_benchmark smokeRankPublic where { expectedHash := some 4 }
+
+/-- Record the selected block's determinant route outside the timed closures. -/
+def rankDetRoute (family : String) (A : Matrix Int n m) : IO Unit := do
+  let some c := A.rankCert? Matrix.rankFuel | throw <| IO.userError "default rank search failed"
+  let B := Matrix.selectedSubmatrix A c.rows c.cols
+  let qs := ZMod64.primesBelow (2 ^ 31 - 1) Matrix.rankFuel
+  let detFallback := !(Matrix.ModularRank.determinant B Matrix.rankFuel qs).rest.isEmpty
+  IO.println s!"family={family} n={n} rank={c.rank} rank_fallback=false determinant_bareiss={detFallback}"
+
+/-- Check bad-prime rejection and successful default certification outside timing. -/
+def rankRoutes : IO UInt32 := do
+  for n in [8, 16, 32, 64, 128, 256] do
+    let A := ModularMatrixFixtures.rankMatrix n (n + 4) (n / 2) 256 true
+    unless (A.rankCert? 1).isNone && (A.rankCert? 2).isNone do
+      throw <| IO.userError "bad-prime fixture did not reject the first two primes"
+    let some c := A.rankCert? 3 | throw <| IO.userError "bad-prime fixture did not recover"
+    unless c.rank == n / 2 do
+      throw <| IO.userError "incorrect recovered rank"
+    IO.println s!"n={n} rejected_primes=2 successful_certificates=1 rank={c.rank}"
+    rankDetRoute "BadPrimes" A
+    rankDetRoute "Full" (ModularMatrixFixtures.unimodular n 8)
+    rankDetRoute "Near" (ModularMatrixFixtures.rankMatrix n (n + 4) (n - 1) 8 false)
+    rankDetRoute "Low" (ModularMatrixFixtures.rankMatrix n (n + 4) (n / 2) 8 false)
+  return 0
+
 /-- Attribute the structured divisor route, including its lifting and image counts. -/
 def diagnose (n : Nat) : IO UInt32 := do
   let A := input "structured" n 8
@@ -760,7 +1049,8 @@ def verifySmoke : IO UInt32 := do
     `Hex.ModularMatrixBench.smokeDense, `Hex.ModularMatrixBench.smokeUnimodular,
     `Hex.ModularMatrixBench.smokeDivisor, `Hex.ModularMatrixBench.smokeIntegral,
     `Hex.ModularMatrixBench.smokeRational, `Hex.ModularMatrixBench.smokeRepeated,
-    `Hex.ModularMatrixBench.smokeIndependent]
+    `Hex.ModularMatrixBench.smokeIndependent, `Hex.ModularMatrixBench.smokeRank,
+    `Hex.ModularMatrixBench.smokeRankBad, `Hex.ModularMatrixBench.smokeRankPublic]
   IO.println (LeanBench.Format.fmtCombinedVerify reports)
   return if reports.passed then 0 else 1
 
@@ -769,5 +1059,6 @@ end Hex.ModularMatrixBench
 def main (args : List String) : IO UInt32 :=
   match args with
   | ["verify"] => Hex.ModularMatrixBench.verifySmoke
+  | ["rank-routes"] => Hex.ModularMatrixBench.rankRoutes
   | ["diagnose", n] => Hex.ModularMatrixBench.diagnose (n.toNat?.getD 128)
   | _ => LeanBench.Cli.dispatch args

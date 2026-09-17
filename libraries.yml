@@ -537,7 +537,7 @@ libraries:
         - name: failure-cost
           description: Full Euclidean runs whose impossible numerator bound forces reconstruction failure through the final checks.
   HexModularMatrix:
-    deps: [HexModular, HexMatrix, HexDeterminant, HexBareiss, HexModArith, HexArith, HexBasic]
+    deps: [HexModular, HexMatrix, HexDeterminant, HexBareiss, HexModArith, HexArith, HexBasic, HexRank]
     mathlib: false
     done_through: 1
     status: active
@@ -549,6 +549,9 @@ libraries:
         - tool: "FLINT fmpq_mat_solve via python-flint"
           class: informational
           rationale: "FLINT chooses between fraction-free, multi-modular and Dixon solves and does not expose a reusable decomposition."
+        - tool: "FLINT fmpz_mat_rank via python-flint"
+          class: informational
+          rationale: "No shared fixture history; FLINT and Hex use different crossover policies."
       input_families:
         - name: structured-determinant
           description: Shared Bareiss tridiagonal fixture at dimensions 16 through 512.
@@ -560,8 +563,12 @@ libraries:
           description: Integral and large-denominator single RHS systems at dimensions 32 through 256, with decomposition and lifting timed separately.
         - name: repeated-solve
           description: One decomposition and simultaneous solve for r = 1, 8, n versus r independent solves.
+        - name: rank
+          description: Square and rectangular matrices at low, nearly full and full rank, comparing certificate, public and direct integer paths.
+        - name: rank-bad-primes
+          description: Rank-deficient products with large coefficients scaled by two actual supply primes; two skips followed by successful recovery.
   HexModularMatrixMathlib:
-    deps: [HexModularMatrix, HexMatrixMathlib, HexDeterminantMathlib, HexBareissMathlib]
+    deps: [HexModularMatrix, HexMatrixMathlib, HexDeterminantMathlib, HexBareissMathlib, HexRankMathlib]
     mathlib: true
     correspondence_only: true
     done_through: 1

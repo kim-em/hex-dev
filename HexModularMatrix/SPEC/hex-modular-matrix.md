@@ -638,8 +638,9 @@ a speed advantage over Bareiss or FLINT.
 
 ```lean
 /-- The rank of `A` reduced modulo the prime `p`. -/
-def rankModP (A : Matrix (ZMod64 p) n m) [ZMod64.PrimeModulus p] : Nat :=
-  (rowReduce A).rank
+def rankModP (A : Matrix (ZMod64 p) n m)
+    [ZMod64.Bounds p] [ZMod64.PrimeModulus p] : Nat :=
+  (rankProfileWith Hex.exactDiv A).rank
 
 /-- Search for a checked integer rank certificate within the budget. -/
 def rankCert? (A : Matrix Int n m) (fuel : Nat) :
@@ -697,6 +698,8 @@ Call its `decompAt? B p` at the already successful prime, then
 inverse of `B`. Do not call `solve?` independently `r` times or pass the
 rectangular block `C` to a square solver. Obtain `d = det B` from
 `detModular? B fuel`, falling back to `Hex.Matrix.bareiss B` on `none`.
+The implementation shares the already generated prime supply with this
+subcall through `detCrtWith?`, preserving the same image budget and fallback.
 This deterministic subcall does not use the random determinant-divisor
 route. Obtain `adjugate B` by `solveMatWith D (d • identity r)`:
 if it returns `(Y, q)`, require exact division of every entry of `Y` by
@@ -742,7 +745,7 @@ The certificate shape itself is complete: a caller needing a witness
 without modular-search failure can use
 `Hex.Matrix.rankCertWith HexArith.Int.exactDiv A` from hex-rank.
 
-`rankModular` uses a fixed default budget and returns `c.rank` on
+`rankModular` uses the fixed default budget `rankFuel = 8` and returns `c.rank` on
 `some c`; on `none` it returns `Hex.Matrix.rank A`, hex-rank's total
 fraction-free integer algorithm. “Unchecked” means the caller receives
 only a `Nat`, not a certificate; it never means returning the last modular
@@ -1255,9 +1258,10 @@ equal). Both are the vector forms of arguments hex-modular already makes
 for `crt_unique`, and they live in `HexModular/Loop.lean` and
 `HexModular/Crt.lean` beside `crtLoop_trace` and `crt_unique`.
 
-**`zmod64FieldOfPrime` should move to hex-mod-arith.** Set out in
-[hex-modular](../../HexModular/SPEC/hex-modular.md). Without it, `rankModP` forces a dependency
-on hex-poly-fp for one instance about a `ZMod64` type.
+**`zmod64FieldOfPrime` is in hex-mod-arith.** `HexModArith/Field.lean`
+supplies scalar division, integer powers, and the prime-modulus field
+instance. `rankModP` and the modular profile producer import this API without
+a dependency on hex-poly-fp.
 
 **Entrywise conversion is in hex-matrix.** `Matrix.mapEntries` in
 `HexMatrix/Basic.lean` maps the flat buffer and has a `getElem`

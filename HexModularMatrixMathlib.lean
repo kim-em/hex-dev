@@ -10,5 +10,6 @@ public import HexModularMatrixMathlib.Bound
 
 public import HexModularMatrixMathlib.Det
 public import HexModularMatrixMathlib.Solve
+public import HexModularMatrixMathlib.Rank
 
-/-! Bounded multi-modular integer determinants and their correctness interface. -/
+/-! Integer determinant, Dixon solve, rank and rational kernel correspondence. -/

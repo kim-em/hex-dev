@@ -29,7 +29,10 @@ open Hex
 # Functionality
 
 The package includes executable inversion, powers, prime-modulus results, ring
-instances, and hot-loop wrappers. It also ships native modular-arithmetic code;
+instances, and hot-loop wrappers. `HexModArith.Field` also supplies scalar
+division and `Hex.zmod64FieldOfPrime`: a `Lean.Grind.Field (ZMod64 p)`
+instance when `ZMod64.PrimeModulus p` is available, including integer powers.
+It also ships native modular-arithmetic code;
 ordinary Lake builds link it automatically.
 
 # Verification

@@ -1,0 +1,6 @@
+{
+  "path": "HexPolyFp/Field.lean",
+  "baseline_blob": "a357bf3ecbb39d23a097b275754a7cdd5fe475f9",
+  "current_blob": "8c8f6ed49ae8f384970566575cb2510688aa3a2a",
+  "reason": "Imports HexModArith.Field instead of HexModArith.Prime and removes duplicate scalar instances. Div is moved verbatim to HexModArith/Field.lean. The removed Zero, One, Add, Sub and Mul instance bodies already occur verbatim in HexModArith/Residue.lean, which remains imported. DensePoly laws and all polynomial algorithms are unchanged. Every selected scalar operation still calls the same ZMod64 primitive; no factorization runtime algorithm or arithmetic operation changes."
+}

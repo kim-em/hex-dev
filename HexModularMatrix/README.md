@@ -32,7 +32,19 @@ The contract is [hex-modular-matrix](SPEC/hex-modular-matrix.md).
   forces a divisor attempt at any dimension; failures fall through to ordinary CRT
   and then Bareiss. Seed changes cost but never the result.
 
-This implements milestones 1–4. Rank and kernel production remain separate.
+- `A.rankCert? fuel` selects a minor modulo primes, completes its determinant
+  and adjugate through one Dixon decomposition, then uses hex-rank's checker.
+  `fuel` bounds prime attempts and determinant images; lifting uses its own
+  bound-derived precision. Zero fuel and exhausted search return `none`.
+- `A.rankModular` tries eight primes and returns the certified rank, or uses
+  hex-rank's total integer `A.rank` on failure.
+- `A.kernel? fuel` returns integer numerators for a rational kernel basis,
+  with the certificate denominator and free-column indices. Its free block
+  is negative identity after division by the denominator. The core proves
+  annihilation and full column rank; the companion proves independence and
+  spanning of Mathlib's rational kernel. Search failure propagates as `none`.
+
+This implements milestones 1–5.
 The companion proves rational solve/inverse correspondence and nonsingularity
 of returned witnesses. Search and reconstruction completeness use
 `LawfulDetBound`; soundness and reduction do not require it.
@@ -42,10 +54,13 @@ moduli, exact lifting precision, repeated solves, empty right-hand sides,
 unlucky initial primes and forced fallback. FLINT checks full canonical
 solutions and every determinant route. `hexmodularmatrix_bench verify` runs
 small hash anchors; `scripts/bench/modmat_flint.py` collects the determinant,
-solve and repeated-solve comparison ladders on the shared host. Measurements
+solve, repeated-solve and rank (`--mode rank`) comparison ladders on the shared host. Measurements
 and limitations are recorded in the [performance report](../reports/hex-modular-matrix-performance.md).
 
-The default fuel cap is 16384 primes below 2³¹. A Hadamard bound of at least
+The [rank comparison](../reports/hex-modular-matrix-rank-performance.md) records
+all four rank arms and the bad-prime recovery checks.
+
+The default determinant fuel cap is 16384 primes below 2³¹. A Hadamard bound of at least
 2⁵⁰⁷⁹⁰³ therefore cannot be reconstructed within that budget and reaches
 Bareiss fallback. The baseline also includes two evaluations of the Hadamard
 bound in the default route and the relocated square-root routine's conservative
