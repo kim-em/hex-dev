@@ -87,6 +87,10 @@ def main():
             + ('passed' if len(small_pass) == len(small) and len(det_pass) == len(det_cases)
                else 'not passed') + "**. These are fresh-module comparisons; controlled "
             "kernel attribution is reported separately.")
+        remaining = [r['stem'] for r in small if r not in small_pass]
+        if remaining:
+            optimization += (' The previously losing small cases still above `ring` are '
+                             + ', '.join(f'`{case}`' for case in remaining) + '.')
     shifted = all(s.get('one_atom_shifted', False) for s in rows
                   if s['family'] == 'reflected-identities' and s['atoms'] == 1)
     one_atom = ("The one-atom rows use `(x + 1)^d` so that they also exercise expansion."
