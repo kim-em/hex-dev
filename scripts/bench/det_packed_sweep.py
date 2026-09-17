@@ -70,6 +70,7 @@ def main():
     topology = sweep.cpu_topology(cpu)
     monitored = sweep.parse_cpu_list(topology.get('thread_siblings_list')) or [cpu]
     records, profiles, classified = [], [], {}
+    finished = False
     args.output.parent.mkdir(parents=True, exist_ok=True)
     expected = len(cases) if args.stage == 'classify' else len(cases) * 12
 
@@ -89,7 +90,7 @@ def main():
             subset=bool(args.case), environment=env, cpu=cpu, topology=topology,
             provenance_issues=sweep.dirty_issues(dict(env['repository']), dict(env['dependency_checkouts'])),
             source_hashes=hashes, sources_unchanged=hashes == sweep.source_hashes(spec, Path(__file__)),
-            schedule_complete=(len(classified) if args.stage == 'classify' else len(records)) == expected,
+            schedule_complete=finished and (len(classified) if args.stage == 'classify' else len(records)) == expected,
             classification=classified if args.stage == 'classify' else classification['classification'],
             classification_sha256=hashlib.sha256(args.classification.read_bytes()).hexdigest() if args.classification else None,
             forced_sha256=hashlib.sha256(args.forced.read_bytes()).hexdigest() if args.forced else None,
@@ -101,13 +102,14 @@ def main():
 
     def build(module):
         observed = []
+        result = {}
         try:
             result = sweep.build_sample(module.module, 45, cpu, monitored,
                 lambda _m, r: observed.append(r), retain_compiler_output=True)
             sweep.validate_axioms(module.module, 'candidate', module, result)
             return dict(result, state='complete')
         except RuntimeError as e:
-            result = dict(observed[-1]) if observed else {}
+            result = dict(observed[-1]) if observed else dict(result)
             return dict(result, state=result.get('state', 'failed'), error=str(e))
 
     if args.stage == 'classify':
@@ -171,6 +173,7 @@ def main():
                 except subprocess.TimeoutExpired as e:
                     profiles.append(dict(stem=case['stem'], state='timeout', timeout_seconds=45))
                 save()
+    finished = True
     save()
     lease.close()
 
