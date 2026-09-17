@@ -9,5 +9,6 @@ module
 public import HexModularMatrixMathlib.Bound
 
 public import HexModularMatrixMathlib.Det
+public import HexModularMatrixMathlib.Solve
 
 /-! Bounded multi-modular integer determinants and their correctness interface. -/

@@ -1,0 +1,32 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 347  of event 'cpu/cycles/P'
+# Event count (approx.): 4872886765
+#
+# Overhead  Command          Shared Object           Symbol
+# ........  ...............  ......................  ......................................................................................
+#
+    15.51%  hexmodularmatri  hexmodularmatrix_bench  [.] lp_Hex_Hex_Nat_isPrimeTrialAux
+    15.50%  hexmodularmatri  hexmodularmatrix_bench  [.] lean_apply_2
+     8.97%  hexmodularmatri  libc.so.6               [.] cfree@GLIBC_2.2.5
+     7.60%  hexmodularmatri  hexmodularmatrix_bench  [.] l_Fin_foldl_loop___redArg
+     5.17%  hexmodularmatri  [unknown]               [k] 0xffffffffbb6a61b5
+     4.03%  hexmodularmatri  hexmodularmatrix_bench  [.] lp_Hex_Hex_Matrix_rowAdd___redArg___lam__1
+     3.50%  hexmodularmatri  [unknown]               [k] 0xffffffffbc3d39f8
+     3.43%  hexmodularmatri  hexmodularmatrix_bench  [.] lean_dec_ref_cold
+     3.41%  hexmodularmatri  hexmodularmatrix_bench  [.] lp_Hex_Hex_ZMod64_addImpl___boxed
+     2.58%  hexmodularmatri  hexmodularmatrix_bench  [.] lean_apply_1
+     2.56%  hexmodularmatri  hexmodularmatrix_bench  [.] lp_Hex_Hex_Matrix_rowAdd___redArg___lam__0___boxed
+     2.56%  hexmodularmatri  hexmodularmatrix_bench  [.] lp_Hex_Hex_Matrix_ofFn___redArg___lam__0___boxed
+     1.79%  hexmodularmatri  hexmodularmatrix_bench  [.] lp_Hex_Hex_Matrix_rowAdd___redArg___lam__0
+     1.76%  hexmodularmatri  hexmodularmatrix_bench  [.] lp_Hex_Hex_ZMod64_mul___boxed
+     1.74%  hexmodularmatri  hexmodularmatrix_bench  [.] lp_Hex_Hex_Matrix_rowAdd___redArg___lam__1___boxed
+     1.71%  hexmodularmatri  hexmodularmatrix_bench  [.] lp_Hex_Hex_Matrix_deleteRowCol___redArg___lam__0
+
+
+#
+# (Tip: For parallelism histogram, try: perf report --hierarchy --sort latency,parallelism,comm,symbol)
+#
