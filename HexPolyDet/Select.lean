@@ -52,8 +52,61 @@ def support (a : List (PolyList C)) : Nat := a.foldl (fun s p => s + p.length) 0
 def Product.key (a : Product (PolyList Int)) (s : SizeBound) : Key :=
   ⟨s.packedBits, support a.left, support a.right.flatten, support a.result, a.inner⟩
 
-/-- Measured eligible product keys. An empty table is the sparse control. -/
-def crossover : List Key := []
+/-- Product keys from six paired comparisons with a smaller packed median.
+The retained measurements and selection rule are in `reports/bench-results/hex-det-packed/`.
+Uncovered witnesses continue to use term lists. -/
+def crossover : List Key := [
+  ⟨34, 1, 4, 4, 1⟩,
+  ⟨35, 1, 1, 1, 1⟩,
+  ⟨41, 1, 4, 4, 1⟩,
+  ⟨62, 1, 4, 4, 1⟩,
+  ⟨83, 1, 4, 4, 1⟩,
+  ⟨98, 8, 16, 8, 2⟩,
+  ⟨104, 1, 4, 4, 1⟩,
+  ⟨111, 1, 4, 4, 1⟩,
+  ⟨118, 1, 4, 4, 1⟩,
+  ⟨139, 1, 4, 4, 1⟩,
+  ⟨175, 8, 16, 11, 2⟩,
+  ⟨186, 8, 16, 11, 2⟩,
+  ⟨188, 1, 4, 4, 1⟩,
+  ⟨208, 25, 36, 12, 3⟩,
+  ⟨340, 49, 64, 16, 4⟩,
+  ⟨362, 8, 16, 12, 2⟩,
+  ⟨400, 36, 36, 21, 3⟩,
+  ⟨485, 2, 4, 1, 2⟩,
+  ⟨527, 8, 16, 13, 2⟩,
+  ⟨538, 8, 16, 15, 2⟩,
+  ⟨576, 33, 36, 22, 3⟩,
+  ⟨660, 87, 64, 30, 4⟩,
+  ⟨784, 41, 36, 34, 3⟩,
+  ⟨791, 8, 16, 15, 2⟩,
+  ⟨890, 8, 16, 10, 2⟩,
+  ⟨1187, 8, 16, 13, 2⟩,
+  ⟨1280, 86, 64, 36, 4⟩,
+  ⟨1300, 135, 64, 54, 4⟩,
+  ⟨1408, 42, 36, 41, 3⟩,
+  ⟨1451, 8, 16, 15, 2⟩,
+  ⟨1529, 3, 9, 1, 3⟩,
+  ⟨1546, 1, 4, 4, 1⟩,
+  ⟨1979, 8, 16, 15, 2⟩,
+  ⟨2000, 39, 36, 35, 3⟩,
+  ⟨3179, 4, 16, 1, 4⟩,
+  ⟨3600, 151, 64, 88, 4⟩,
+  ⟨3840, 45, 36, 50, 3⟩,
+  ⟨4096, 30, 36, 20, 3⟩,
+  ⟨5040, 126, 64, 66, 4⟩,
+  ⟨5488, 39, 36, 38, 3⟩,
+  ⟨5760, 43, 36, 45, 3⟩,
+  ⟨7655, 8, 16, 15, 2⟩,
+  ⟨11960, 184, 64, 130, 4⟩,
+  ⟨12096, 45, 36, 51, 3⟩,
+  ⟨12500, 80, 64, 35, 4⟩,
+  ⟨12500, 200, 64, 140, 4⟩,
+  ⟨14080, 134, 64, 79, 4⟩,
+  ⟨19840, 43, 36, 47, 3⟩,
+  ⟨47940, 188, 64, 143, 4⟩,
+  ⟨48020, 204, 64, 160, 4⟩
+]
 
 /-- Explicit comparison overrides do not waive either hard packing limit. -/
 inductive Arm where

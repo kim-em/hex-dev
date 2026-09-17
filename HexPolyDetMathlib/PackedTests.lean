@@ -9,9 +9,21 @@ import Mathlib.Algebra.Field.ZMod
 set_option hex.det.checker 2
 set_option trace.HexMatrix.certificate true
 
- theorem packedInteger (x y : Int) :
+theorem packedInteger (x y : Int) :
     Matrix.det !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y] =
       (x ^ 2 - 1) * (y ^ 2 - 1) := by det
+
+set_option hex.det.checker 0 in
+theorem automaticPacked (x y : Int) :
+    let a := x ^ 2 + 2 * x + 3 * y + 1
+    let b := 2 * y ^ 2 + 3 * y + x + 2
+    let c := 3 * x ^ 2 + x + 2 * y + 3 * y ^ 2
+    let d := y ^ 2 + 2 * y + 3 * x + x ^ 2
+    Matrix.det !![-3 * a, -2 * a, -3 * a, 3 * a;
+      -b, b, -3 * b, -b; 3 * c, 3 * c, -2 * c, -c;
+      3 * d, 2 * d, -d, -d] = -26 * a * b * c * d := by
+  dsimp only
+  det
 
  theorem packedResidue (x y : ZMod 3) :
     Matrix.det !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y] =
