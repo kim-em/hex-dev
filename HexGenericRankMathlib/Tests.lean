@@ -130,9 +130,37 @@ example (x : ℚ) : True := by
   fail_if_success have : (!![x]).rank ≤ 1 := by rank (caseSplits := 1)
   trivial
 
--- Output 1 over positive-characteristic polynomial rings is recorded as a
--- non-test in bench/HexGenericRankMathlib/ProofProbe/FiniteGeneric.lean until
--- the shared residue encoding (#10257) lands.
+open MvPolynomial in
+theorem residueGeneric :
+    (!![X (0 : Fin 1) ^ 3 - X 0] : Matrix (Fin 1) (Fin 1) (MvPolynomial (Fin 1) (ZMod 3))).rank = 1 := by
+  rank
+
+open MvPolynomial in
+theorem integerAudit :
+    (!![X 0, X 0, 0; X 0, 0, X 0; 0, X 0, X 0] :
+      Matrix (Fin 3) (Fin 3) (MvPolynomial (Fin 1) ℤ)).rank = 3 := by
+  rank
+
+open MvPolynomial in
+theorem residueAudit :
+    (!![X 0, X 0, 0; X 0, 0, X 0; 0, X 0, X 0] :
+      Matrix (Fin 3) (Fin 3) (MvPolynomial (Fin 1) (ZMod 2))).rank = 2 := by
+  rank
+
+open Polynomial in
+theorem univariateIntegerAudit :
+    (!![X, X, 0; X, 0, X; 0, X, X] : Matrix (Fin 3) (Fin 3) (Polynomial ℤ)).rank = 3 := by
+  rank
+
+open Polynomial in
+theorem univariateResidueAudit :
+    (!![X, X, 0; X, 0, X; 0, X, X] : Matrix (Fin 3) (Fin 3) (Polynomial (ZMod 2))).rank = 2 := by
+  rank
+
+#print axioms univariateResidueAudit
+
+#print axioms residueGeneric
+#print axioms residueAudit
 
 namespace KernelTests
 open HexGenericRankMathlib
@@ -159,11 +187,17 @@ example : checkRankPolyList 1 1 2 [[x, one]] { c with adj := [[one]] } = true :=
 example : checkRankPolyList 1 2 1 [[x], [one]] { c with adj := [[one]] } = true := by decide
 example : checkRankPolyList 1 2 2 [[x, []], [[], one]] c = false := by decide
 
--- Integer representatives may satisfy the residue identities but not the
--- integer identities; denominator reduction must still be nonzero.
-example : Modular.checkRankPolyList 3 1 1 1 [[x]] { c with denom := [([1], 4)] } = true := by decide
-example : Modular.checkRankPolyList 3 1 1 1 [[x]] { c with denom := [([1], 3)] } = false := by decide
-example : checkRankPolyList 1 1 1 [[x]] { c with denom := [([1], 4)] } = false := by decide
+-- Canonical residues are required even when a noncanonical representative
+-- would denote the same polynomial.
+def residueX : PolyLists.Poly Nat := [([1], 1)]
+def residueCert : PolyWitness Nat := ⟨1, [0], [0], residueX, [[[([0], 1)]]]⟩
+example : Modular.checkRankPolyList 3 1 1 1 [[residueX]] residueCert = true := by decide
+example : Modular.checkRankPolyList 3 1 1 1 [[residueX]]
+    { residueCert with denom := [([1], 4)] } = false := by decide
+example : Modular.checkRankPolyList 3 1 1 1 [[residueX]]
+    { residueCert with denom := [([1], 3)] } = false := by decide
+example : Modular.checkRankPolyList 3 1 1 1 [[residueX]]
+    { residueCert with adj := [[[]]] } = false := by decide
 end KernelTests
 
 open Lean Meta Elab Hex.Reflect in

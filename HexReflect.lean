@@ -16,6 +16,8 @@ public import HexReflect.Session
 
 public import HexReflect.Kernel
 
+public import HexReflect.KernelResidue
+
 public section
 
 /-!

@@ -3,17 +3,15 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-
-import HexGenericRankMathlib
-import Mathlib.Algebra.Field.ZMod
+import HexPolyDetMathlib.Tactic
+set_option trace.HexMatrix.certificate true
 
 set_option maxHeartbeats 0
 set_option profiler true
 set_option profiler.threshold 1000000
-set_option trace.Hex.genericRank true
 
-open Matrix MvPolynomial in
-theorem result : (!![X (0 : Fin 1) ^ 3 - X 0] :
-    Matrix (Fin 1) (Fin 1) (MvPolynomial (Fin 1) (ZMod 3))).rank = 1 := by rank
+theorem result (x y : ZMod 3) :
+    Matrix.det !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y] =
+      (x ^ 2 - 1) * (y ^ 2 - 1) := by det
 
 #print axioms result

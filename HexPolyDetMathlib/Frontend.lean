@@ -7,10 +7,16 @@ Authors: Kim Morrison
 module
 
 public import HexPolyDetMathlib.Scaling
+public import HexPolyDetMathlib.Residue
 public meta import HexPolyDetMathlib.Scaling
+public meta import HexPolyDetMathlib.Residue
+public meta import HexReflectMathlib.Display
+public meta import HexArith.Nat.Prime
 public meta import HexPolyDetMathlib.Normalize
 public meta import HexReflect.Session
 public meta import HexPolyDet.Basic
+public meta import HexMvGcd.Instances
+public meta import HexMvGcd.Divide
 public meta import HexMatrixMathlib.Literal
 public meta import Lean
 
@@ -20,6 +26,7 @@ namespace HexMatrixMathlib.DetPoly.Frontend
 
 open Lean Meta Hex Hex.Reflect HexMatrixMathlib.Literal
 open Lean.Meta.Sym.Arith (denoteRingExpr)
+open scoped HexMvPolyMathlib HexModArithMathlib.ZMod64
 
 abbrev Poly := MvPoly.Kernel.PolyList Int
 
@@ -68,8 +75,8 @@ def preflight (n k : Nat) (rows : Array (Array Poly)) : ReflectM Unit := do
   checkBudget .coefficientBits (2 * n * (bits + support.log2 + n.log2 + 2))
 
 /-- Quotations contain only lists, integers and naturals. -/
-def quoteWitness (w : Hex.Matrix.DetWitness Poly) : MetaM Expr := do
-  let ty := toTypeExpr Poly
+def quoteWitness {C : Type} [ToExpr C] (w : Hex.Matrix.DetWitness (MvPoly.Kernel.PolyList C)) : MetaM Expr := do
+  let ty := toTypeExpr (MvPoly.Kernel.PolyList C)
   match w with
   | .triangular s t d =>
     return mkApp4 (mkConst ``Hex.Matrix.DetWitness.triangular) ty (toExpr s) (toExpr t) (toExpr d)
@@ -89,8 +96,9 @@ def checked (target proof : Expr) (profileName : String := "det.symbolic.kernel"
     (generalizeNondepLet := false)
   let proof ← mkLambdaFVars locals proof (usedOnly := false) (usedLetOnly := false)
     (generalizeNondepLet := false)
-  let result ← profileitM Exception profileName (← getOptions) do
-    addClosedProof (← instantiateMVars type) (← instantiateMVars proof)
+  let result ← profileitM Exception profileName (← getOptions) <|
+    withOptions (fun o => o.setBool `profiler false) do
+      addClosedProof (← instantiateMVars type) (← instantiateMVars proof)
   let args ← locals.filterM fun e => return !(← e.fvarId!.getDecl).isLet
   return mkAppN result args
 
@@ -150,6 +158,117 @@ def reduceIndices (e : Expr) : MetaM Expr := Meta.transform e (pre := fun e => d
     else return .continue
   else return .continue)
 
+/-- Use the coefficient provider's exact bounds and characteristic evidence. -/
+def withEvidence (evidence : List Expr) (action : ReflectM Result) : ReflectM Result := do
+  match evidence with
+  | [] => action
+  | e :: es =>
+    withLetDecl `coefficientInstance (← inferType e) e fun x => do
+      let r ← withEvidence es action
+      return { value := r.value.replaceFVar x e, proof := r.proof.replaceFVar x e }
+
+/-- Convert in compiled code, quoting residues through the shared list encoding. -/
+def residuePoly? (p k : Nat) (a : Poly) : Option (MvPoly.Kernel.PolyList Nat) := do
+  if hb : 0 < p ∧ p < 2^31 then
+    letI : ZMod64.Bounds p := ⟨hb.1, hb.2⟩
+    let f := MvPoly.ofTerms (cmp := Mono.grevlex)
+      (a.map fun (m, z) => (MvPoly.Kernel.mono k m, (z : ZMod64 p)))
+    return MvPoly.Kernel.ofResidues p (Hex.PolyDet.toList f)
+  else none
+
+/-- Fraction-free elimination in the selected residue coefficient domain. -/
+def residueWitness? (p k n : Nat) (rows : List (List (MvPoly.Kernel.PolyList Nat))) :
+    Option (Hex.Matrix.DetWitness (MvPoly.Kernel.PolyList Nat)) := do
+  if hb : 0 < p ∧ p < 2^31 then
+    letI : ZMod64.Bounds p := ⟨hb.1, hb.2⟩
+    if hp : Hex.Nat.Prime p then
+      letI : ZMod64.PrimeModulus p := ⟨hp⟩
+      let decode := MvPoly.Kernel.denoteMod p (n := k) (cmp := Mono.grevlex)
+      let quotePoly := fun f => MvPoly.Kernel.ofResidues p (Hex.PolyDet.toList f)
+      let check := fun rs w => Hex.Matrix.checkDetPolyList (Hex.PolyDet.opsMod p k) n
+        (rs.map (List.map quotePoly)) (w.map quotePoly)
+      (Hex.Matrix.detWitnessWith Hex.exactDiv n check (rows.map (List.map decode))).toOption.map
+        (fun w => w.map quotePoly)
+    else none
+  else none
+
+/-- Identify an entry by replaying only natural-residue list arithmetic. -/
+def residueEntry (p k : Nat) (ctx : Expr) (r : ReifiedRing)
+    (a : MvPoly.Kernel.PolyList Nat) : ReflectM Expr := profile "det.symbolic.identification" do
+  unless MvPoly.Kernel.beq (Hex.Reflect.Kernel.ringListMod p k r.expr) a do
+    decline m!"residue conversion does not agree with list replay"
+  let hp ← decideProof (← mkAppM ``LT.lt #[toExpr (1 : Nat), toExpr p])
+  let hb ← decideProof (← mkAppM ``LE.le #[toExpr r.expr.varBound, toExpr k])
+  let replay ← mkAppM ``Hex.Reflect.Kernel.ringListMod #[toExpr p, toExpr k, toExpr r.expr]
+  let he ← decideProof (← mkEq (← mkAppM ``MvPoly.Kernel.beq #[replay, toExpr a]) (mkConst ``Bool.true))
+  let proof ← mkAppM ``HexReflectMathlib.Kernel.eval_checkedMod
+    #[toExpr p, hp, toExpr k, ctx, toExpr r.expr, toExpr a, hb, he]
+  let some (_, lhs, rhs) := (← inferType proof).eq? | throwError "det: malformed residue entry proof"
+  unless ← withTransparency .default (isDefEq rhs r.source) do
+    decline m!"residue entry source instance mismatch"
+  mkExpectedTypeHint proof (← mkEq lhs r.source)
+
+/-- One residue batch, one producer, and one kernel-checked determinant certificate. -/
+def computeResidue (p : Nat) (provider : CoeffProvider) (A : Expr)
+    (lit : Recognized) (reified : Array (Array ReifiedRing)) (seed : ReifiedRing)
+    (rhs : Option ReifiedRing) (sealed : Sealed) (ctx : Expr) : ReflectM Result :=
+    withEvidence provider.auxInstances.toList do
+  let k := sealed.n
+  let convertList (r : ReifiedRing) : ReflectM (MvPoly.Kernel.PolyList Nat) := do
+    let c ← profile "det.symbolic.convert" (do require (← convert r sealed .grevlex))
+    unless c.provider.id == provider.id do decline m!"mixed coefficient providers in residue batch"
+    let some a := residuePoly? p k (c.terms.map fun (m, z) => (m.toList, z))
+      | decline m!"unsupported residue modulus"
+    return a
+  let lists ← reified.mapM fun row => row.mapM convertList
+  preflight lit.n k (lists.map fun row => row.map fun a => a.map fun (m, c) => (m, (c : Int)))
+  let some w ← profile "det.symbolic.producer" (pure (residueWitness? p k lit.n (lists.toList.map Array.toList)))
+    | failWith (.internal "residue determinant producer failed its own check")
+  let d := Residue.value w
+  let witnessEntries := match w with
+    | .triangular _ ts d => d :: ts.flatten
+    | .singular v => v
+  let size := witnessEntries.foldl (fun n a => n + a.length) 0
+  if size > maxCertificateTerms then decline m!"certificate term budget exhausted (limit {maxCertificateTerms})"
+  checkBudget .proofNodes ((size + lists.flatten.foldl (fun n a => n + a.length) 0) * (4 * k + 24))
+  let q ← match rhs with | some r => convertList r | none => pure d
+  unless MvPoly.Kernel.beq d q do
+    decline m!"target is not a polynomial identity in the sealed atoms modulo {p}"
+  let rowsE := toExpr (lists.toList.map Array.toList)
+  let wE ← quoteWitness w
+  let ops ← mkAppM ``Hex.PolyDet.opsMod #[toExpr p, toExpr k]
+  let hcheck ← decideProof (← mkEq
+    (← mkAppM ``Hex.Matrix.checkDetPolyList #[ops, toExpr lit.n, rowsE, wE]) (mkConst ``Bool.true))
+  let mut hrows := #[]
+  for i in [:lit.n] do
+    let mut hs := #[]
+    for j in [:lit.n] do
+      hs := hs.push (← mkEqSymm (← residueEntry p k ctx (reified[i]!.getD j seed) (lists[i]!)[j]!))
+    hrows := hrows.push (← conjunction hs)
+  let B ← mkAppM ``Residue.evaluated #[toExpr p, toExpr k, toExpr lit.n, rowsE, ctx]
+  let hA ← mkAppM ``Polynomial.identify #[A, B, ← conjunction hrows]
+  let r ← match rhs with
+    | some r => pure r
+    | none =>
+      let e := expression (d.map fun (m, c) => (m, HexReflectMathlib.signedResidue p c))
+      let source ← (denoteRingExpr sealed.atoms e : ReaderT Nat ReflectM Expr).run seed.ringId
+      pure { seed with expr := e, source }
+  let he ← residueEntry p k ctx r q
+  let proof ← match rhs with
+    | some _ =>
+      let hq ← decideProof (← mkEq (← mkAppM ``MvPoly.Kernel.beq #[toExpr d, toExpr q]) (mkConst ``Bool.true))
+      mkAppM ``Residue.target
+        #[toExpr p, toExpr k, toExpr lit.n, rowsE, wE, ctx, A, toExpr q, r.source, hcheck, hA, he, hq]
+    | none =>
+      mkAppM ``Residue.result
+        #[toExpr p, toExpr k, toExpr lit.n, rowsE, wE, ctx, A, r.source, hcheck, hA, he]
+  let proofNodes := sourceNodeCount proof 1000001
+  charge .proofNodes proofNodes
+  trace[HexMatrix.certificate] "{(Json.mkObj [("route", toJson "residue-certificate"),
+    ("modulus", toJson p), ("proof_nodes", toJson proofNodes), ("atoms", toJson k)]).compress}"
+  let target ← mkEq (← mkAppM ``Matrix.det #[A]) r.source
+  return { value := r.source, proof := ← checked target proof }
+
 /-- One batch, one elimination and one kernel check for a symbolic determinant.
 The optional target is reified before sealing, and may not allocate new atoms. -/
 def compute (A : Expr) (rhs? : Option Expr := none) : MetaM (Outcome Result) := do
@@ -193,6 +312,12 @@ def compute (A : Expr) (rhs? : Option Expr := none) : MetaM (Outcome Result) := 
     let k := sealed.n
     let ring ← ringOf seed
     let ctx ← contextExpr ring sealed
+    let coeffs ← require (← convert seed sealed .grevlex)
+    if coeffs.provider.id == HexReflectMathlib.residueCoefficientsId then
+      let_expr Hex.ZMod64 p _ := coeffs.provider.coeffType
+        | failWith (.internal "invalid residue coefficient type")
+      let some p ← (Meta.evalNat p).run | decline m!"nonliteral residue characteristic"
+      return ← computeResidue p coeffs.provider A lit reified seed rhs sealed ctx
     let mut rows : List (List (MvPoly k Int Mono.grevlex)) := []
     let mut lists : Array (Array Poly) := #[]
     for row in reified do

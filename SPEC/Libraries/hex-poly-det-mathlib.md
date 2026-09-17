@@ -378,9 +378,13 @@ ring/domain bridge and the lawful exact quotient at `MvPoly`. For `ZMod64 p`, th
 `ZMod64.Bounds p` and `ZMod64.PrimeModulus p`; a composite modulus does not
 satisfy the domain contract. Characteristic-aware conversion reduces
 coefficients, not exponents or polynomial functions: `X³ - X` over
-`ZMod 3` is not the zero polynomial. Until the residue list form exists this arm's kernel tests are documented
-non-tests and the integer arm handles such carriers soundly but
-incompletely, as described above.
+`ZMod 3` is not the zero polynomial. The residue term-list arm is enabled:
+`Hex.PolyDet.opsMod` instantiates `checkDetPolyList`, `Residue.decode` supplies
+its `denoteMod` laws, and `Residue.target` transports the checked determinant
+through `HexReflectMathlib.residueHom`. Entry replay uses the shared
+`HexReflect.Kernel.ringListMod`. Kernel tests cover the formal `X³ - X`,
+4×4 multivariate determinants, singular witnesses, and malformed residues.
+The packed residue arm remains a separate implementation obligation (#10274).
 
 hex-bareiss-mathlib's simproc `Hex.norm_det` (renamed from `hex_norm_det`;
 tactic and simproc names carry no `hex_` prefix, the namespace does the
@@ -571,9 +575,9 @@ The executable instantiation is `HexPolyDet/Basic.lean`; the companion separates
 `Sound.lean`, `Scaling.lean`, `Normalize.lean`, `Frontend.lean`, `Small.lean`, and
 `Tactic.lean`. Integer polynomial certificates transport to any `CommRing`.
 The proved denominator-normalisation frontend currently operates on `Rat`;
-divisions over other carriers remain eligible atoms. The reduced-Nat residue
-adapter remains a documented non-test pending #10257; `Decode` supplies its
-validity, arithmetic, equality and domain-transport contract.
+divisions over other carriers remain eligible atoms. `Residue.lean` instantiates `Decode` with the shared Nat residue operations
+and proves determinant transport. The closed checker contains no `ZMod64`
+arithmetic.
 
 Producer-side grevlex terms are converted to canonical list order by merge sort.
 Generated value expressions use balanced sums, and entry identification uses
@@ -607,9 +611,9 @@ nonzero polynomial determinant vanishes at a stated atom valuation.
 
 Rational addition, subtraction and row clearing use least common multiples
 of their positive scales. Products and powers multiply scales as required.
-Compiled comparison against integer-list replay catches characteristic-aware
-conversion differences before quoting an entry proof, preserving the decline
-and Mathlib fallback while residue replay is unavailable.
+Compiled comparison against the selected integer or residue list replay
+checks conversion before quoting an entry proof. Composite-characteristic
+requests decline the residue provider and retain Mathlib fallback.
 
 ## Recorded measurement outcome
 

@@ -18,8 +18,7 @@ from scripts.bench.fresh_module_sweep import ProbeModule, ProbePair, SweepSpec, 
 
 PREFIX = "HexGenericRankMathlib.ProofProbe"
 AXIOMS = ("propext", "Classical.choice", "Quot.sound")
-MODULES = ('VariableGeneric', 'VariableHypothesis', 'VariableSideGoal', 'QuadraticGeneric', 'QuadraticHypothesis', 'QuadraticSideGoal', 'Full2Generic', 'Full2Hypothesis', 'Full2SideGoal', 'Low2Generic', 'Low2Hypothesis', 'Low2SideGoal', 'FiniteHypothesis', 'FiniteSideGoal')
-# FiniteGeneric is a documented non-test until #10257 provides the residue list form.
+MODULES = ('VariableGeneric', 'VariableHypothesis', 'VariableSideGoal', 'QuadraticGeneric', 'QuadraticHypothesis', 'QuadraticSideGoal', 'Full2Generic', 'Full2Hypothesis', 'Full2SideGoal', 'Low2Generic', 'Low2Hypothesis', 'Low2SideGoal', 'FiniteGeneric', 'FiniteHypothesis', 'FiniteSideGoal')
 SPEC = SweepSpec(
     description=__doc__ or "symbolic rank proof probes",
     pairs=tuple(ProbePair(name, ProbeModule(f"{PREFIX}.Baseline"),

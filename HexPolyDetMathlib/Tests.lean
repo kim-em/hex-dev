@@ -6,7 +6,7 @@ Authors: Kim Morrison
 import HexPolyDetMathlib.Tactic
 import Mathlib.Tactic.NormDet
 import Mathlib.Algebra.QuadraticAlgebra.Basic
-import Mathlib.Data.ZMod.Basic
+import Mathlib.Algebra.Field.ZMod
 
 
 example (x : Int) : Matrix.det !![x, 1; 1, x] = x ^ 2 - 1 := by det
@@ -79,10 +79,6 @@ example : Matrix.det !![α, 1; 2, α] = 0 := by
   rw [polynomial, square, sub_self]
 end ClosedAlgebraic
 
--- Positive-characteristic kernel probes are documented non-tests until both
--- #10255 and #10257 land. In particular X^3-X in characteristic 3 must be
--- treated as a nonzero polynomial, and a composite modulus must decline.
-
 -- Malformed list encodings cannot reach the denotation theorem as certificates.
 example : Hex.Matrix.checkDetPolyList (HexMatrixMathlib.DetPoly.Polynomial.ops 1)
     1 [[[([0], (1 : Int)), ([0], 1)]]]
@@ -136,6 +132,50 @@ elab "certificate_declines " reason:str : tactic => withMainContext do
     unless ((← msg.toString).splitOn reason.getString).length > 1 do
       throwError "unexpected decline: {msg}"
   | _ => throwError "expected a certificate decline"
+
+open MvPolynomial in
+theorem residue4 : Matrix.det
+    (!![X 0, 1, 0, 0; 1, X 0, 0, 0; 0, 0, X 1, 1; 0, 0, 1, X 1] :
+      Matrix (Fin 4) (Fin 4) (MvPolynomial (Fin 2) (ZMod 3))) =
+        (X 0 ^ 2 - 1) * (X 1 ^ 2 - 1) := by certificate_det
+
+open MvPolynomial in
+theorem residueFrobenius : Matrix.det
+    (!![X 0 ^ 3 - X 0, 0, 0, 0; 0, 1, 0, 0; 0, 0, 1, 0; 0, 0, 0, 1] :
+      Matrix (Fin 4) (Fin 4) (MvPolynomial (Fin 1) (ZMod 3))) = X 0 ^ 3 - X 0 := by
+  certificate_det
+
+example (x : ZMod 3) : Matrix.det
+    !![x, 1, 0, 0; 1, x, 1, 0; 0, 1, x, 1; 0, 0, 1, x] = x ^ 4 + 1 := by
+  det
+
+set_option maxHeartbeats 800000 in
+example (x : ZMod 3) : Matrix.det !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, x, 1; 0, 0, 1, x] =
+    (det% !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, x, 1; 0, 0, 1, x]).value :=
+  (det% !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, x, 1; 0, 0, 1, x]).proof
+
+example (x : ZMod 2) : Matrix.det !![x, x, 0; x, 0, x; 0, x, x] = 0 := by
+  certificate_det
+
+example (x : ZMod 3) : Matrix.det !![0, x; x, 1] = -x ^ 2 := by certificate_det
+
+-- Polynomial replay must not replace a formal polynomial by its function on the field.
+example (x : ZMod 3) : True := by
+  fail_if_success have : Matrix.det !![x ^ 3 - x] = 0 := by certificate_det
+  trivial
+
+-- Canonical residue bounds and structural data are checked before denotation.
+example : Hex.Matrix.checkDetPolyList (Hex.PolyDet.opsMod 3 1)
+    1 [[[([1], 1)]]] (.triangular [] [[[([0], 1)]]] [([1], 1)]) = true := by decide +kernel
+example : Hex.Matrix.checkDetPolyList (Hex.PolyDet.opsMod 3 1)
+    1 [[[([1], 4)]]] (.triangular [] [[[([0], 1)]]] [([1], 1)]) = false := by decide +kernel
+example : Hex.Matrix.checkDetPolyList (Hex.PolyDet.opsMod 3 1)
+    1 [[[([1], 1)]]] (.triangular [] [[[([0], 3)]]] [([1], 1)]) = false := by decide +kernel
+example : Hex.Matrix.checkDetPolyList (Hex.PolyDet.opsMod 3 1)
+    1 [[[([1], 1)]]] (.singular [[]]) = false := by decide +kernel
+
+#print axioms residue4
+#print axioms residueFrobenius
 
 -- The target need not be a domain or characteristic zero.
 theorem generic4 {R : Type} [CommRing R] (x : R) :
@@ -198,14 +238,16 @@ example (x : Int) : True := by
 
 example (x : ZMod 6) :
     Matrix.det !![x, 0, 0, 0; 0, x, 0, 0; 0, 0, x, 0; 0, 0, 0, x] =
-      x ^ 4 := by certificate_det
+      x ^ 4 := by
+  certificate_declines "prime characteristic"
+  det
 
--- Characteristic-aware conversion can disagree with integer replay. It must
--- decline before proof quotation, allowing the composed tactic to fall back.
+-- A composite modulus cannot supply a residue-domain certificate; the
+-- composed tactic still has Mathlib's ring-identity fallback.
 example (x : ZMod 6) :
     Matrix.det !![x - 1, 0, 0, 0; 0, x, 0, 0; 0, 0, x, 0; 0, 0, 0, x] =
       (x - 1) * x ^ 3 := by
-  certificate_declines "entry (0, 0)"
+  certificate_declines "prime characteristic"
   det
 
 -- Closed formulas do not require CharZero, even for composite characteristic.
