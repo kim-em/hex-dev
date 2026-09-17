@@ -38,10 +38,8 @@ matrix (the companion), and univariate `F[x]` matrices, whose determinant
 the `DensePoly` carriers of hex-bareiss's carrier table already cover.
 
 Dependencies: `HexBareiss`, `HexMvGcd` (hence `HexMvPoly`, `HexResultant`),
-`HexDeterminant`, `HexMatrix`, `HexBasic`. Implementing the packed arm adds
-`HexKronecker`, downward in the DAG; it remains Mathlib-free and unpublished.
-The SPEC amendment does not change `libraries.yml` or the released manifest;
-register the dependency when the planned Kronecker library is implemented.
+`HexDeterminant`, `HexMatrix`, `HexBasic`, and `HexKronecker`, downward in the
+DAG. The library remains Mathlib-free and unpublished.
 
 ## The instantiation
 
@@ -275,11 +273,12 @@ comparison and default-family decision belong to the companion.
 ```
 HexPolyDet/
   Basic.lean        -- polyDetWitness, polyDet, polyDetWitness?, the instance section
-  Packed.lean       -- planned packed checks, bounds, quotient payload preparation
+  Packed.lean       -- integer and residue packed checks
+  Select.lean       -- compiled bounds, selection, and quotient payload preparation
 HexPolyDet.lean
 ```
 
-When the packed implementation lands, the `libraries.yml` entry becomes
+The `libraries.yml` entry is
 
 ```yaml
   HexPolyDet:
@@ -310,9 +309,9 @@ result. The companion proves `PolyDet.check_of_ok`: every successful
 does not assert that every input produces a successful result. `PolyDet.toList` performs compiled merge sorting into canonical order;
 the kernel sees and validates only its output.
 
-The planned packed entry points are `checkDetPolyPacked` and
+The packed entry points are `checkDetPolyPacked` and
 `checkDetPolyPackedMod` with the argument and payload contracts above.
-Compiled quotient preparation belongs alongside them in `Packed.lean`;
+Compiled quotient preparation and selection are in `Select.lean`;
 its budget-decline outcome is distinct from a malformed or incorrect
 certificate. The existing `polyDetWitness?` remains the list-validation API;
 the handler additionally validates with its selected checker before quotation.
