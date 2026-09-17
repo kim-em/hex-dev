@@ -6,6 +6,7 @@ import json
 import re
 import statistics
 from pathlib import Path
+from kronecker_attribution_report import render as render_attribution
 
 
 def ms(n):
@@ -48,6 +49,7 @@ def main():
     parser.add_argument('output', type=Path)
     parser.add_argument('--kernel-profiles', type=Path, required=True)
     parser.add_argument('--before', type=Path, help='retained shipping sweep for per-case before/after values')
+    parser.add_argument('--attribution', type=Path, help='archive of retained isolated kernel comparisons')
     args = parser.parse_args()
     data = read_json(args.input)
     profile_data = read_json(args.kernel_profiles)
@@ -66,6 +68,25 @@ def main():
     wins = sum(median_faster(s) for s in rows if s['accepted'])
     unresolved = sum(margin_spread(p)[2] for s in rows if s['accepted'] for p in s['paired'].values())
     accepted = sum(s['accepted'] for s in rows)
+    optimization = ''
+    if args.before:
+        old = read_json(args.before)['summary']
+        small = [r for r in rows if r['accepted'] and r['family'] == 'reflected-identities'
+                 and old[r['stem']]['arms']['Kronecker']['median_delta_ns'] >
+                     old[r['stem']]['arms']['Ring']['median_delta_ns']]
+        small_pass = [r for r in small if r['arms']['Kronecker']['median_delta_ns'] <=
+                      r['arms']['Ring']['median_delta_ns']]
+        det_cases = [r for r in rows if r['accepted'] and r['family'] == 'determinant-identities']
+        det_pass = [r for r in det_cases if r['arms']['Kronecker']['median_delta_ns'] <=
+                    old[r['stem']]['arms']['Kronecker']['median_delta_ns']]
+        optimization = (
+            f"Of the seven grid cases that lost to `ring` in the shipping table, "
+            f"{len(small_pass)}/{len(small)} are now at or below its median. "
+            f"{len(det_pass)}/{len(det_cases)} determinant medians are no larger than the "
+            "shipping values. The numerical optimization bar is **"
+            + ('passed' if len(small_pass) == len(small) and len(det_pass) == len(det_cases)
+               else 'not passed') + "**. These are fresh-module comparisons; controlled "
+            "kernel attribution is reported separately.")
     shifted = all(s.get('one_atom_shifted', False) for s in rows
                   if s['family'] == 'reflected-identities' and s['atoms'] == 1)
     one_atom = ("The one-atom rows use `(x + 1)^d` so that they also exercise expansion."
@@ -83,6 +104,8 @@ The absolute candidate ceilings are **{'passed' if ceilings else 'not passed'}**
 The [opt-in shipping condition](../HexKroneckerMathlib/SPEC/hex-kronecker-mathlib.md#fresh-module-comparisons-and-shipping-bar)
 requires the complete family table and passing absolute ceilings. Its status
 is **{'passed' if ceilings else 'not passed'}**. No default tactic chain changes.
+
+{optimization}
 
 {unresolved}/{2*accepted} paired comparisons have a median-margin magnitude no
 larger than their median absolute deviation and are **unresolved at this
@@ -137,23 +160,7 @@ prevent explicitly opt-in shipping under the SPEC's shared exception.
                   for k in ['Ring', 'Grobner']]
         text += f"| {s['stem']} | {size['digits']} | {size['packedBits']} | " + ' | '.join(cells) + f" | {'pass' if a['Kronecker']['ceiling_pass'] else 'fail'} |\n"
     if args.before:
-        before = read_json(args.before)
-        old = before['summary']
-        small = [r for r in rows if r['accepted'] and r['family'] == 'reflected-identities'
-                 and old[r['stem']]['arms']['Kronecker']['median_delta_ns'] >
-                     old[r['stem']]['arms']['Ring']['median_delta_ns']]
-        small_pass = [r for r in small if r['arms']['Kronecker']['median_delta_ns'] <=
-                      r['arms']['Ring']['median_delta_ns']]
-        det_cases = [r for r in rows if r['accepted'] and r['family'] == 'determinant-identities']
-        det_pass = [r for r in det_cases if r['arms']['Kronecker']['median_delta_ns'] <=
-                    old[r['stem']]['arms']['Kronecker']['median_delta_ns']]
         text += "\n## Per-case before/after\n\n"
-        text += (f"Of the seven grid cases that lost to `ring` in the shipping table, "
-                 f"{len(small_pass)}/{len(small)} are now at or below its median. "
-                 f"{len(det_pass)}/{len(det_cases)} determinant medians are no larger than the "
-                 "shipping values. The numerical optimization bar is **"
-                 + ('passed' if len(small_pass) == len(small) and len(det_pass) == len(det_cases)
-                    else 'not passed') + "**. No default chain changes.\n\n")
         text += (f"Before values come from the [retained shipping sweep](data/hex-kronecker-mathlib/{args.before.name}); "
                  "after values come from the complete new sweep above. These historical wall-time "
                  "columns use different execution segments and are not adjacent before/after pairs. "
@@ -201,12 +208,15 @@ an expanded right side. The independent-atom case has 25 linear entry atoms
 in a `5 × 5` determinant and invokes the tactic under a guarded diagnostic.
 It must report the dense-box decline before any packing.
 
-| Case | Dense digits (saturated) | Packed bits (saturated) | Decline median ms |
-| --- | ---: | ---: | ---: |
 '''
+    text += '| Case | Dense digits (saturated) | Packed bits (saturated) | '
+    text += ('Before decline ms | After decline ms |\n| --- | ---: | ---: | ---: | ---: |\n'
+             if args.before else 'Decline median ms |\n| --- | ---: | ---: | ---: |\n')
     for s in rows:
         if not s['accepted']:
-            text += f"| {s['stem']} | {s['size']['digits']} | {s['size']['packedBits']} | {ms(s['arms']['Decline']['median_delta_ns'])} |\n"
+            previous = (ms(old[s['stem']]['arms']['Decline']['median_delta_ns']) + ' | '
+                        if args.before else '')
+            text += f"| {s['stem']} | {s['size']['digits']} | {s['size']['packedBits']} | {previous}{ms(s['arms']['Decline']['median_delta_ns'])} |\n"
     text += '''
 A saturated count is a certified lower bound, not an exact size. Scope
 outside the accepted dense-box regime is recorded as delegated scope and is
@@ -282,6 +292,8 @@ complexity evidence in the packed bit size, operation profiles and the full
 plain/signed product comparison. These proof probes measure total tactic
 cost, including reflection, emitted literals, and synchronous kernel checking.
 '''
+    if args.attribution:
+        text += '\n' + render_attribution(args.attribution)
     text += "\n## Retained source states\n\n"
     text += ("Every completed sweep is retained. Historical `candidate_faster` fields "
              "in the older raw records describe paired-margin medians; the verdict "

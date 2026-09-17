@@ -169,7 +169,9 @@ fits the configuration, it emits the quoted trees and applies
 `Kernel.exprEq_sound` to `Eq.refl true`.  The
 elaborator performs no `Kernel.whnf` pre-evaluation and does not ask
 `Meta.check` to evaluate the proof before the kernel's single synchronous
-check.  The accepted theorem's axiom audit permits only `propext`,
+check. The retained-tree translation and kernel traversals use direct
+recursors, with proved `csimp` equations for native elaborator execution.
+The accepted theorem's axiom audit permits only `propext`,
 `Classical.choice`, and `Quot.sound`.
 
 `checkExprEq_sound` maps an established integer polynomial identity to every
