@@ -2,6 +2,7 @@
 """Render retained packed comparison observations without discarding losing cells."""
 import argparse
 from collections import Counter, defaultdict
+import gzip
 import json
 from pathlib import Path
 import statistics
@@ -15,12 +16,19 @@ def fmt(ns):
     return '—' if ns is None else f'{ns / 1e6:.2f}'
 
 
+def read_record(directory, name):
+    path = directory / (name + '.json.gz')
+    if path.exists():
+        return json.loads(gzip.decompress(path.read_bytes()))
+    return json.loads((directory / (name + '.json')).read_text())
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('directory', type=Path)
     args = parser.parse_args()
-    forced = json.loads((args.directory / 'forced.json').read_text())
-    dispatch = json.loads((args.directory / 'dispatch.json').read_text())
+    forced = read_record(args.directory, 'forced')
+    dispatch = read_record(args.directory, 'dispatch')
     groups = defaultdict(list)
     for c in forced['manifest']['cases']:
         groups[c['family']].append(c['stem'])

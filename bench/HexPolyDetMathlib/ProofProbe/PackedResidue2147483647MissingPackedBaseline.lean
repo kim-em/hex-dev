@@ -5,3 +5,4 @@ Authors: Kim Morrison
 -/
 import HexPolyDetMathlib.Tactic
 import Mathlib.Algebra.Field.ZMod
+import HexPolyDetMathlib.ProofProbe.ResidueSupport

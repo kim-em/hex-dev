@@ -8,10 +8,12 @@ classifies actual witness products before any timed comparisons.
 """
 from __future__ import annotations
 import argparse
+import gzip
 import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import statistics
 import subprocess
 import sys
@@ -23,6 +25,11 @@ from scripts.bench.det_symbolic_sweep import AXIOMS, cpu_lease, routes
 
 PREFIX = 'HexPolyDetMathlib.ProofProbe.Packed'
 MANIFEST = ROOT / 'scripts/bench/det_packed_manifest.json'
+
+
+def read_record(path):
+    raw = path.read_bytes()
+    return json.loads(gzip.decompress(raw) if path.suffix == '.gz' else raw)
 
 
 def pairs(case, arms):
@@ -49,17 +56,18 @@ def main():
         absolute_only=True, extra_sources=(Path('scripts/bench/det_packed_manifest.json'),
         Path('scripts/bench/det_packed_probes.py'), Path('scripts/bench/det_packed_table.py'),
         Path('bench/HexPolyDet/PackedBench.lean'),
+        *(Path('bench/HexPolyDetMathlib/ProofProbe') / f'Packed{s}Profile.lean' for s in manifest['profiles'].values()),
         *(Path('bench/HexPolyDet/packed-inputs') / (c['stem'] + '.json') for c in cases)))
     sweep.validate_spec(spec)
     if args.stage != 'classify' and not args.classification:
         parser.error('timing requires --classification from the completed preflight')
-    classification = json.loads(args.classification.read_text()) if args.classification else None
+    classification = read_record(args.classification) if args.classification else None
     if classification and (not classification['schedule_complete'] or classification['subset'] != bool(args.case)):
         parser.error('classification must be complete and cover the same scope')
     if args.stage == 'dispatch':
         if not args.forced:
             parser.error('dispatch requires the completed --forced comparison')
-        forced = json.loads(args.forced.read_text())
+        forced = read_record(args.forced)
         if not forced['schedule_complete'] or not forced['sources_unchanged']:
             parser.error('forced comparison must finish with unchanged sources before dispatch')
     cpu, lease = cpu_lease()
@@ -147,10 +155,24 @@ def main():
                     else:
                         modules = sweep.ordered_modules(pair, trial)
                         built = {role: build(module) for role, module in modules}
+                        events = routes(built['candidate'].get('compiler_output', ''))
+                        if args.stage == 'forced' and status == 'eligible' and built['candidate']['state'] == 'complete':
+                            wanted = 'packed/plain' if arm == 'Packed' else 'term-list'
+                            hits = [e for e in events if e['route'] == wanted]
+                            error = None
+                            if len(hits) != 1:
+                                error = f'expected exactly one {wanted} certificate, saw {[e["route"] for e in events]}'
+                            elif arm == 'Packed':
+                                actual = [list(map(int, re.findall(r':= (\d+)', p['key']))) for p in hits[0]['products']]
+                                expected_keys = [p['key'] for p in classification['classification'][case['stem']]['selection']['products']]
+                                if actual != expected_keys:
+                                    error = f'quoted witness keys differ from compiled preflight: {actual} != {expected_keys}'
+                            if error:
+                                built['candidate'].update(state='unexpected-route', error=error)
                         valid = all(r['state'] == 'complete' for r in built.values())
                         records.append(dict(stem=case['stem'], arm=arm, trial=trial+1,
                             build_order=[r for r,_ in modules], **built,
-                            routes=routes(built['candidate'].get('compiler_output', '')),
+                            routes=events,
                             delta_ns=(built['candidate']['wall_nanos']-built['reference']['wall_nanos']) if valid else None))
                     save()
         if args.stage == 'dispatch':

@@ -2607,6 +2607,7 @@
       "reason": "support exceeds the number of monomials"
     }
   ],
+  "crossover_rule": "union of keys from eligible witnesses with six complete samples per arm and 0 < packed median < term-list median",
   "crossover_keys": [
     "packedBits",
     "leftSupport",
@@ -2621,15 +2622,15 @@
   },
   "profiles": {
     "dense-row-scaled": "N4K2D2S4",
-    "rational": "Rational2",
-    "singular": "Singular2",
-    "closed-algebraic": "Algebraic2",
+    "rational": "Rational4",
+    "singular": "Singular4",
+    "closed-algebraic": "Algebraic4",
     "pivot-swap": "Swaps",
     "structured": "Tridiagonal",
     "literal-function": "Function4",
     "literal-array": "Array4",
     "closed-algebraic-scope": "AlgebraicScope",
-    "valuation": "Valuation",
+    "valuation": "Valuation4",
     "independent-atoms": "Independent5",
     "block-diagonal": "Block4",
     "residue-quotient": "Residue3",
@@ -2639,6 +2640,5 @@
   "stages": [
     "forced term-list versus forced packed on identical witnesses",
     "fixed-table dispatch versus unmodified Mathlib norm_det"
-  ],
-  "crossover_rule": "union of keys from eligible witnesses with six complete samples per arm and 0 < packed median < term-list median"
+  ]
 }

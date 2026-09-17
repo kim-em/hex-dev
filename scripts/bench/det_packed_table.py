@@ -9,6 +9,7 @@ simproc family. Dispatch is measured only after this table is fixed.
 """
 from __future__ import annotations
 import argparse
+import gzip
 import hashlib
 import json
 from pathlib import Path
@@ -28,6 +29,10 @@ def selected(record):
         lists = case['arms']['Lists']['median_delta_ns']
         packed = case['arms']['Packed']['median_delta_ns']
         if lists is not None and packed is not None and 0 < packed < lists:
+            for arm, route in [('Lists', 'term-list'), ('Packed', 'packed/plain')]:
+                samples = [r for r in record['samples'] if r['stem'] == stem and r['arm'] == arm]
+                if len(samples) != 6 or not all(any(e['route'] == route for e in r.get('routes', [])) for r in samples):
+                    raise ValueError(f'{stem}: six actual {route} certificates required')
             winners.append(stem)
             keys.update(tuple(r['key']) for r in c['selection']['products'])
     return winners, sorted(keys)
@@ -39,7 +44,8 @@ def main():
     parser.add_argument('output', type=Path)
     parser.add_argument('--write', action='store_true')
     args = parser.parse_args()
-    record = json.loads(args.forced.read_text())
+    raw = args.forced.read_bytes()
+    record = json.loads(gzip.decompress(raw) if args.forced.suffix == '.gz' else raw)
     winners, keys = selected(record)
     result = dict(forced_sha256=hashlib.sha256(args.forced.read_bytes()).hexdigest(),
         rule='six completed samples in both arms; 0 < packed median < term-list median',

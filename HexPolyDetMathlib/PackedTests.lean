@@ -17,6 +17,10 @@ set_option trace.HexMatrix.certificate true
     Matrix.det !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y] =
       (x ^ 2 - 1) * (y ^ 2 - 1) := by det
 
+example [Fact (Nat.Prime 2147483647)] (x y : ZMod 2147483647) :
+    Matrix.det !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y] =
+      (x ^ 2 - 1) * (y ^ 2 - 1) := by det
+
 example (x y : Int) : Matrix.det !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y] =
     (det% !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y]).value :=
   (det% !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y]).proof

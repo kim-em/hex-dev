@@ -10,8 +10,10 @@ set_option hex.det.checker 0
 set_option profiler true
 set_option profiler.threshold 0
 
-theorem result (x : Int) (hx : x = 1) : Matrix.det !![x, 1; 1, x] = 0 := by
-  have h : Matrix.det !![x, 1; 1, x] = x ^ 2 - 1 := by
+theorem result (x : Int) (hx : x = 1) :
+    Matrix.det !![x - 1, 0, 0, 0; 0, x, 0, 0; 0, 0, x, 0; 0, 0, 0, x] = 0 := by
+  have h : Matrix.det !![x - 1, 0, 0, 0; 0, x, 0, 0; 0, 0, x, 0; 0, 0, 0, x] =
+      (x - 1) * x ^ 3 := by
     det
   rw [h, hx]
   rfl

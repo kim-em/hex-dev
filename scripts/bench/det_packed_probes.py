@@ -38,6 +38,8 @@ def source_case(case, a, rhs, k, carrier='Int'):
     imports = 'import HexPolyDetMathlib.Tactic\n'
     if carrier.startswith('ZMod'):
         imports += 'import Mathlib.Algebra.Field.ZMod\n'
+    if carrier == 'ZMod 2147483647':
+        imports += 'import HexPolyDetMathlib.ProofProbe.ResidueSupport\n'
     return original.HEADER + imports + f'''set_option maxHeartbeats 0
 set_option maxRecDepth 100000
 
@@ -120,6 +122,9 @@ def main():
     profiles = {}
     for c in cases:
         profiles.setdefault(c['family'], c['stem'])
+    for c in cases:
+        if c['dimension'] >= 4 and next(x for x in cases if x['stem'] == profiles[c['family']])['dimension'] < 4:
+            profiles[c['family']] = c['stem']
     profiles['dense-row-scaled'] = 'N4K2D2S4'
     for family, stem in profiles.items():
         source = (DEST/f'Packed{stem}Dispatch.lean').read_text().replace('profiler.threshold 1000000','profiler.threshold 0')

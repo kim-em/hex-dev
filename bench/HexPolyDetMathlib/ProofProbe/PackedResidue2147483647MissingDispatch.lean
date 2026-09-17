@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 import HexPolyDetMathlib.Tactic
 import Mathlib.Algebra.Field.ZMod
+import HexPolyDetMathlib.ProofProbe.ResidueSupport
 set_option maxHeartbeats 0
 set_option maxRecDepth 100000
 
