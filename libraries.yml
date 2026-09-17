@@ -1126,7 +1126,7 @@ libraries:
     deps: [HexMatrixMathlib, HexRowReduce]
     mathlib: true
     proof_probes: [bench/HexRowReduceMathlib/ProofProbe]
-    done_through: 3
+    done_through: 4
     status: active
   HexDeterminantMathlib:
     deps: [HexBareiss, HexDeterminant, HexMatrixMathlib]

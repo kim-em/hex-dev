@@ -87,7 +87,7 @@ with unique affine coordinates, or a separator with `yᵀA = 0` and
 coordinates. Both term forms handle empty shapes.
 
 Arithmetic proof checking uses scaled integer lists and structural recursion.
-`FieldCertificate.inverse_of_checkList`, `solve_of_checkList` and
+`HexMatrixMathlib.inverse_of_checkList`, `solve_of_checkList` and
 `solveResult_of_checkList` prove soundness for arbitrary passing certificates;
 their proofs do not replay elimination. The initial numeric handler accepts
 `ℚ`; other carriers are available to separately registered extensions.
