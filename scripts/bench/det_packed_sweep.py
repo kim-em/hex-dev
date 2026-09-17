@@ -151,7 +151,7 @@ def main():
                             delta_ns=(built['candidate']['wall_nanos']-built['reference']['wall_nanos']) if valid else None))
                     save()
         if args.stage == 'dispatch':
-            for stem in manifest['profile_cases']:
+            for stem in manifest['profiles'].values():
                 if any(c['stem'] == stem for c in cases):
                     print(f'[profile] {stem}', flush=True)
                     profiles.append(dict(stem=stem, result=build(sweep.ProbeModule(f'{PREFIX}{stem}Profile', AXIOMS))))

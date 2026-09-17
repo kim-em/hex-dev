@@ -247,7 +247,7 @@ def computeResidue (p : Nat) (provider : CoeffProvider) (A : Expr)
   let (hcheck, selection) ← Certificate.residue p k lit.n (lists.toList.map Array.toList) w rowsE wE
     { terms := min maxIntermediateTerms remaining.terms
       coefficientBits := remaining.coefficientBits
-      certificateTerms := maxCertificateTerms - size }
+      certificateTerms := min (maxCertificateTerms - size) (remaining.proofNodes / (4 * k + 24)) }
   charge .terms selection.quotientSupport
   checkBudget .proofNodes (selection.quotientSupport * (4 * k + 24))
   let mut hrows := #[]

@@ -71,7 +71,7 @@ def main():
         a = original_rows(case, source)
         cases.append(case)
         sources[case['stem']] = source
-        (INPUTS / (case['stem'] + '.json')).write_text(json.dumps(dict(n=case['dimension'], k=case['atoms'], rows=rows_json(a, case['atoms']))) + '\n')
+        (INPUTS / (case['stem'] + '.json')).write_text(json.dumps(dict(n=case['dimension'], k=case['atoms'], rows=rows_json(a, case['atoms']), p=0, missing=False)) + '\n')
     stems = {c['stem'] for c in cases}
     for n, k, d, support in itertools.product([4, 8, 16], [1, 2, 3, 4], [2, 4, 8, 16], [1, 4, 16]):
         stem = f'N{n}K{k}D{d}S{support}'
@@ -84,7 +84,7 @@ def main():
         a, rhs = original.dense(n,k,d,support)
         sources[stem] = source_case(case,a,rhs,k)
         cases.append(case)
-        (INPUTS / (stem + '.json')).write_text(json.dumps(dict(n=n,k=k,rows=rows_json(a,k)))+'\n')
+        (INPUTS / (stem + '.json')).write_text(json.dumps(dict(n=n,k=k,rows=rows_json(a,k),p=0,missing=False))+'\n')
     # A dense four-by-four block and an independent final diagonal have 17 atoms.
     # The final prefix exceeds 65536 digits while the term-list witness stays small.
     a = [[f'x{4*i+j}' if i<4 and j<4 else 'x16' if i==j else '0' for j in range(5)] for i in range(5)]
