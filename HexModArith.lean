@@ -17,6 +17,7 @@ public import HexModArith.Ntt.Dft
 public import HexModArith.Ntt.Plan
 public import HexModArith.Ntt.Transform
 public import HexModArith.Prime
+public import HexModArith.Field
 public import HexModArith.Ring
 public import HexModArith.WordMod
 

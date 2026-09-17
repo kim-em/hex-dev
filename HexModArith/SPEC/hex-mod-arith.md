@@ -190,6 +190,16 @@ for `ZMod64`, not for `MontResidue`.
 
 ## Ring instance and properties
 
+`HexModArith/Field.lean` supplies `Div (ZMod64 p)` as multiplication by
+`ZMod64.inv`, and `Hex.zmod64FieldOfPrime` supplies
+`Lean.Grind.Field (ZMod64 p)` under `Bounds p` and `PrimeModulus p`.
+Its integer powers use `ZMod64.intPow`, with inverse powers for negative
+exponents. The scalar zero, one, addition, subtraction, multiplication and
+inverse instances remain in `Residue.lean`; `Ring.lean` supplies the ring
+laws. Field laws follow from `Prime.lean`'s inverse laws. Polynomial
+consumers import this scalar API and supply their own `DensePoly` laws.
+
+
 - `Lean.Grind.CommRing (ZMod64 p)` derived from the operations on
   the canonical representative; associativity and distributivity
   reduce to `Nat.mod` properties on the logical bodies. (The

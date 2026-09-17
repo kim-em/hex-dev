@@ -22,7 +22,7 @@ import time
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('output', type=Path)
-    parser.add_argument('--mode', choices=['baseline', 'divisor', 'solve', 'repeated'], default='baseline')
+    parser.add_argument('--mode', choices=['baseline', 'divisor', 'solve', 'repeated', 'rank'], default='baseline')
     parser.add_argument('--omit-modular', action='store_true',
                         help='reuse retained ordinary-CRT measurements when only Dixon code changed')
     parser.add_argument('--start-at', help='start at this exact registration')
@@ -50,7 +50,7 @@ def main():
     os.environ['PYTHONINTMAXSTRDIGITS'] = '0'
     source = root / 'bench/HexModularMatrix/Bench.lean'
     prefix = dict(baseline='runModular', divisor='runDivisor', solve='run(?:Decomp|Solve)',
-                  repeated='runRepeated')[args.mode]
+                  repeated='runRepeated', rank='runRankCert')[args.mode]
     names = re.findall(r'setup_fixed_benchmark (' + prefix + r'\w+)', source.read_text())
     if args.start_at:
         names = names[names.index(args.start_at):]
@@ -71,6 +71,8 @@ def main():
                'HexModularMatrix/FlatImage.lean', 'HexModularMatrix/Numerator.lean',
                'HexModularMatrix/Normalise.lean', 'HexModularMatrix/Reconstruction.lean',
                'HexModularMatrix/SolveMat.lean', 'HexModularMatrix/Divisor.lean',
+               'HexModularMatrix/Rank.lean', 'HexModularMatrix/Kernel.lean',
+               'HexModArith/Field.lean',
                'Hex/BenchOracle/Flint.lean',
                'scripts/oracle/flint_bench_driver.py', 'scripts/bench/modmat_flint.py']
     data = {
@@ -90,6 +92,9 @@ def main():
         executable = Path(temporary) / 'hexmodularmatrix_bench'
         shutil.copy2(root / '.lake/build/bin/hexmodularmatrix_bench', executable)
         data['executable_sha256'] = hashlib.sha256(executable.read_bytes()).hexdigest()
+        if args.mode == 'rank':
+            data['route_checks'] = subprocess.check_output(
+                [str(executable), 'rank-routes'], cwd=root, text=True)
         for index, name in enumerate(['runFlintOverhead'] + names):
             arms = ['Hex.ModularMatrixBench.' + name]
             if index:
@@ -105,6 +110,9 @@ def main():
                     arms += [arms[0].replace('runDivisor', other) for other in others]
                 elif args.mode == 'solve' and 'runSolve' in name:
                     arms += [arms[0].replace('runSolve', 'runFlintSolve')]
+                elif args.mode == 'rank':
+                    arms += [arms[0].replace('runRankCert', other) for other in
+                             ['runRankPublic', 'runRankDirect', 'runRankFlint']]
                 elif args.mode == 'repeated':
                     arms += [arms[0].replace('runRepeated', 'runIndependent')]
                 if index % 2 == 0:

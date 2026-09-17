@@ -742,7 +742,7 @@ The certificate shape itself is complete: a caller needing a witness
 without modular-search failure can use
 `Hex.Matrix.rankCertWith HexArith.Int.exactDiv A` from hex-rank.
 
-`rankModular` uses a fixed default budget and returns `c.rank` on
+`rankModular` uses the fixed default budget `rankFuel = 8` and returns `c.rank` on
 `some c`; on `none` it returns `Hex.Matrix.rank A`, hex-rank's total
 fraction-free integer algorithm. “Unchecked” means the caller receives
 only a `Nat`, not a certificate; it never means returning the last modular
@@ -1255,9 +1255,10 @@ equal). Both are the vector forms of arguments hex-modular already makes
 for `crt_unique`, and they live in `HexModular/Loop.lean` and
 `HexModular/Crt.lean` beside `crtLoop_trace` and `crt_unique`.
 
-**`zmod64FieldOfPrime` should move to hex-mod-arith.** Set out in
-[hex-modular](../../HexModular/SPEC/hex-modular.md). Without it, `rankModP` forces a dependency
-on hex-poly-fp for one instance about a `ZMod64` type.
+**`zmod64FieldOfPrime` is in hex-mod-arith.** `HexModArith/Field.lean`
+supplies scalar division, integer powers, and the prime-modulus field
+instance. `rankModP` and the modular profile producer import this API without
+a dependency on hex-poly-fp.
 
 **Entrywise conversion is in hex-matrix.** `Matrix.mapEntries` in
 `HexMatrix/Basic.lean` maps the flat buffer and has a `getElem`

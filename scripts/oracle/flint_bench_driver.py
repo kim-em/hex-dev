@@ -137,6 +137,8 @@ Request fields: ``p`` (modulus), ``a``, ``b`` (coefficient lists).
 
 ### `fmpz_mat` (integer matrix)
 
+- `rank`: integer rank through ``flint.fmpz_mat(rows).rank()``.
+
 Request fields: ``rows`` (list of list of int).
 
 * ``det`` — returns the determinant as an integer. Computed via
@@ -756,6 +758,12 @@ def _fmpz_mat_det(req: dict[str, Any]) -> int:
     return int(m.det())
 
 
+def _fmpz_mat_rank(req: dict[str, Any]) -> int:
+    rows = req["rows"]
+    m = flint.fmpz_mat([[int(c) for c in r] for r in rows])
+    return int(m.rank())
+
+
 def _fmpz_mat_charpoly(req: dict[str, Any]) -> list[int]:
     rows = req["rows"]
     m = flint.fmpz_mat([[int(c) for c in r] for r in rows])  # type: ignore[union-attr]
@@ -792,6 +800,7 @@ def _fmpz_mat_snf(req: dict[str, Any]) -> list[int]:
 
 _FMPZ_MAT_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
     "det": _fmpz_mat_det,
+    "rank": _fmpz_mat_rank,
     "charpoly": _fmpz_mat_charpoly,
     "minpoly": _fmpz_mat_minpoly,
     "hnf": _fmpz_mat_hnf,

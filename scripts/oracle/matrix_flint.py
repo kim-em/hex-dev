@@ -595,7 +595,7 @@ def _check_nullspace(
 ) -> None:
     rows = _rows(matrix_record)
     n = len(rows)
-    m = len(rows[0]) if n else 0
+    m = len(rows[0]) if n else int(matrix_record.get("cols", 0))
     oracle_z = _fmpz_mat(rows)
     oracle_rank = int(oracle_z.rank())
     expected_nullity = m - oracle_rank
@@ -620,7 +620,7 @@ def _check_nullspace(
 
     from flint import fmpq, fmpq_mat  # type: ignore[import-not-found]
 
-    M_q = _fmpq_mat_from_int(rows)
+    M_q = _fmpq_mat_from_int(rows) if n else fmpq_mat(0, m)
 
     # (b) Each Lean basis vector is annihilated by M over Q.
     for k, vec in enumerate(lean_value):

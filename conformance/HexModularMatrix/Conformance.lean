@@ -5,11 +5,13 @@ Authors: Kim Morrison
 -/
 
 import HexModularMatrix.Fixtures
+import HexMatrix.Notation
 
 /-!
 Oracle: `scripts/oracle/modmat_flint.py` (FLINT integer determinants).
 Mode: always
-Covered operations: determinant routes, decomposition, lifting, vector/matrix solves, witnesses.
+Covered operations: determinant routes, decomposition, lifting, vector/matrix solves, witnesses,
+modular rank certificates, exact fallback rank and rational kernel bases.
 Covered properties: modular residues, strict-bound reconstruction, bound ordering,
 modular success, recorded Bareiss fallback, reduced checked solutions, decomposition reuse,
 cofactor image counts, nonunit skips, exact digit counts and FLINT agreement.
@@ -232,3 +234,67 @@ private def unlucky : Matrix Int 1 1 := Matrix.ofFn fun _ _ =>
 #guard unlucky.solve? #v[1] 3 == some (#v[1], (2147483647 : Int) * 2147483629)
 
 end Hex.ModularMatrixSolveConformance
+
+namespace Hex.ModularMatrixRankTests
+
+open scoped Hex
+
+private def checkRankCase (c : ModularMatrixFixtures.RankCase) : Bool :=
+  match c.matrix.rankCert? 3, c.matrix.kernel? 3 with
+  | some cert, some K =>
+    cert.rank == c.rank && c.matrix.checkRank cert &&
+    c.matrix.rankModular == c.rank && c.matrix.checkRank K.cert &&
+    K.cert.rank == c.rank &&
+    K.freeCols.toList == Matrix.Kernel.complement K.cert.cols &&
+    c.matrix * K.basis == Matrix.zero c.n (c.m - K.cert.rank) &&
+    (List.finRange (c.m - K.cert.rank)).all (fun i =>
+      (List.finRange (c.m - K.cert.rank)).all (fun j =>
+        K.basis[(K.freeCols[i], j)] == if i = j then -K.cert.denom else 0))
+  | _, _ => false
+
+#guard ModularMatrixFixtures.rankCases.all checkRankCase
+#guard ModularMatrixFixtures.rankCases.all fun c =>
+  (c.matrix.rankCert? 0).isNone && (c.matrix.kernel? 0).isNone
+
+private def bad := ModularMatrixFixtures.rankMatrix 4 6 2 256 true
+#guard (bad.rankCert? 1).isNone
+#guard (bad.rankCert? 2).isNone
+#guard (bad.rankCert? 3).map (·.rank) == some 2
+
+-- Exhaust the complete public budget, forcing the exact integer fallback.
+private def obstructed : Matrix Int 1 1 :=
+  let d := (ZMod64.primesBelow (2 ^ 31 - 1) Matrix.rankFuel).foldl
+    (fun a q => a * (q.m : Int)) 1
+  Matrix.ofFn fun _ _ => d
+#guard (obstructed.rankCert? Matrix.rankFuel).isNone
+#guard obstructed.rankModular == 1
+
+-- Solving against identity gives denominator 2; the certificate must store det = 4.
+private def twiceIdentity : Matrix Int 2 2 := #m[2, 0; 0, 2]
+#guard (twiceIdentity.rankCert? 1).map (·.denom) == some 4
+#guard (twiceIdentity.rankCert? 1).map (fun c => c.adj.rows.toList.map (·.toList)) ==
+  some ([[2, 0], [0, 2]] : List (List Int))
+
+-- The SPEC's noninitial selected column checks placement, signs, and scale.
+private def exampleMatrix : Matrix Int 2 3 := #m[2, 4, 6; 4, 8, 12]
+private def exampleCert : Matrix.RankCert Int 2 3 := ⟨1, #v[1], #v[1], 8, #m[1]⟩
+private theorem exampleCheck : exampleMatrix.checkRank exampleCert = true := by decide +kernel
+private def exampleKernel := Matrix.Kernel.ofCert exampleMatrix exampleCert exampleCheck
+#guard exampleKernel.freeCols == #v[0, 2]
+#guard exampleKernel.basis == #m[-8, 0; 4, 12; 0, -8]
+#guard exampleMatrix * exampleKernel.basis == 0
+
+-- Permuted pivot selections and noncanonical common scale remain valid inputs.
+private def permutedMatrix : Matrix Int 2 3 := #m[1, 0, 3; 0, 1, 5]
+private def permutedCert : Matrix.RankCert Int 2 3 := ⟨2, #v[1, 0], #v[1, 0], -2, #m[-2, 0; 0, -2]⟩
+private theorem permutedCheck : permutedMatrix.checkRank permutedCert = true := by decide +kernel
+private def permutedKernel := Matrix.Kernel.ofCert permutedMatrix permutedCert permutedCheck
+#guard permutedKernel.freeCols == #v[2]
+#guard permutedKernel.basis == #m[-6; -10; 2]
+#guard permutedMatrix * permutedKernel.basis == 0
+
+local instance : ZMod64.Bounds 7 := ⟨by decide, by decide⟩
+local instance : ZMod64.PrimeModulus 7 := ⟨by decide +kernel⟩
+#guard (exampleMatrix.mapEntries (ZMod64.intCast 7)).rankModP == 1
+
+end Hex.ModularMatrixRankTests

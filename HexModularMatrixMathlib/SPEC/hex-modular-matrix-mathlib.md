@@ -1,6 +1,6 @@
 # hex-modular-matrix-mathlib
 
-This correspondence layer supplies the determinant and solve halves of the companion in
+This correspondence layer supplies the determinant, solve and rank parts of the companion in
 [hex-modular-matrix](../../HexModularMatrix/SPEC/hex-modular-matrix.md).
 
 `Bound.lean` constructs `Hex.Matrix.LawfulDetBound` from the real Hadamard
@@ -21,6 +21,12 @@ Mathlib rational `Matrix.mulVec` solutions and the nonsingular inverse.
 gives both the rational equation and nonzero determinant for a returned witness.
 Default-budget existence uses the core completeness theorems and the supplied
 Hadamard instance, with the explicit lower bound on supply primes retained.
+
+`Rank.lean` reuses hex-rank-mathlib's rank soundness and integer fallback
+agreement. `kernel_independent` reads the negative identity free block;
+`kernel_span` combines annihilation, independence and rank-nullity to identify
+the full rational kernel. Rank equality decidability is imported from
+hex-rank-mathlib without a second instance.
 
 ## Validation ownership
 

@@ -46,3 +46,13 @@ def main : IO Unit := do
       let C : Matrix Int c.n cols := Matrix.ofFn fun i j => (i.val + j.val + 1 : Nat)
       let answer := (A.decomp? fuel).bind fun D => Matrix.solveMatWith D C
       emitSolve (c.name ++ "/repeated/" ++ toString cols) A C "dixon-solve" answer
+
+  for c in ModularMatrixFixtures.rankCases do
+    emitLine <| "{\"kind\":\"matrix\",\"lib\":\"HexModularMatrix\",\"case\":" ++
+      toString (repr c.name) ++ ",\"rows\":" ++ rows c.matrix ++
+      ",\"cols\":" ++ toString c.m ++ "}"
+    emitResult "HexModularMatrix" c.name "rank" (toString c.matrix.rankModular)
+    let some K := c.matrix.kernel? 3 | throw <| IO.userError ("kernel search failed: " ++ c.name)
+    let basis := (List.finRange (c.m - K.cert.rank)).map fun j =>
+      (List.finRange c.m).map fun i => [K.basis[(i, j)], K.cert.denom]
+    emitResult "HexModularMatrix" c.name "nullspace" (toString basis)
