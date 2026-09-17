@@ -29,7 +29,7 @@ def pairs(case, arms):
     return [sweep.ProbePair(case['stem'] + arm,
         sweep.ProbeModule(f'{PREFIX}{case["stem"]}{arm}Baseline'),
         sweep.ProbeModule(f'{PREFIX}{case["stem"]}{arm}', AXIOMS),
-        dict(case, arm=arm)) for arm in arms]
+        dict(case, arm=arm, fresh_module_budget_ms=45000)) for arm in arms]
 
 
 def main():
