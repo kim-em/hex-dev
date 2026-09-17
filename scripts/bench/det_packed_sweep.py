@@ -47,7 +47,8 @@ def main():
         'HexPolyDetMathlibProofProbe', 'hex-det-packed-sweep-v1',
         'paired-fresh-module-olean-wall', 'hex-det-packed', required_samples=6,
         absolute_only=True, extra_sources=(Path('scripts/bench/det_packed_manifest.json'),
-        Path('scripts/bench/det_packed_probes.py'), Path('bench/HexPolyDet/PackedBench.lean'),
+        Path('scripts/bench/det_packed_probes.py'), Path('scripts/bench/det_packed_table.py'),
+        Path('bench/HexPolyDet/PackedBench.lean'),
         *(Path('bench/HexPolyDet/packed-inputs') / (c['stem'] + '.json') for c in cases)))
     sweep.validate_spec(spec)
     if args.stage != 'classify' and not args.classification:
