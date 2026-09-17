@@ -1,4 +1,4 @@
-# Modular integer determinants
+# Modular integer determinants and rational solves
 
 Import `HexModularMatrix` for Mathlib-free computation and
 `HexModularMatrixMathlib` for the Hadamard bound instance and total correctness.
@@ -16,19 +16,34 @@ The contract is [hex-modular-matrix](SPEC/hex-modular-matrix.md).
   Bareiss fallback. `Hex.ModularMatrix.det A` chooses capped adaptive fuel
   and returns the integer result. Finite prime supply cannot make it partial.
 
-This implements the one-image and determinant milestones. The seeded divisor
-route, Dixon solves, rank and kernel APIs belong to later milestones. In
-particular, `detWith` currently takes only the matrix and fuel; it has no
-inactive seed or divisor flag.
+- `A.decomp? fuel` finds a reusable modular inverse and nonzero determinant
+  residue; `A.decompAt? p hp` tries one modulus, including composite moduli
+  with unit pivots. `D.lift b k` uses exact residual division to lift through
+  `p^k`. `Matrix.solveWith D b` returns a reduced numerator vector and a
+  positive common denominator, checked against the original integer system.
+- `A.solve? b fuel` includes decomposition; `A.solveWitness? b fuel` also
+  returns the nonzero determinant residue. A `none` result can mean exhausted
+  prime-search resources; it is not a certificate that the system is inconsistent.
+- `Matrix.solveMatWith D C` lifts multiple right-hand sides through the same
+  inverse and reduces one common denominator across the whole matrix.
+- `Hex.ModularMatrix.detViaDivisor A seed` uses a seeded right-hand side to
+  obtain a determinant divisor, then reconstructs its cofactor. It uses Bareiss
+  below dimension 192, the measured structured crossover. `detWith A fuel seed true`
+  forces a divisor attempt at any dimension; failures fall through to ordinary CRT
+  and then Bareiss. Seed changes cost but never the result.
 
-The conformance fixtures cover singular and empty matrices, nonunit pivots,
-bad initial primes, large entries and forced fallback. The benchmark target
-`hexmodularmatrix_bench` compares the bounded modular route, Bareiss and
-FLINT on identical structured, dense random and unimodular inputs. Its
-`verify` command runs three small CI anchors; the full comparator ladder is
-collected by `scripts/bench/modmat_flint.py` on the shared host.
-The [baseline report](../reports/hex-modular-matrix-performance.md) records
-timings, capped calls, comparator errors and the subsequent corrected runs.
+This implements milestones 1–4. Rank and kernel production remain separate.
+The companion proves rational solve/inverse correspondence and nonsingularity
+of returned witnesses. Search and reconstruction completeness use
+`LawfulDetBound`; soundness and reduction do not require it.
+
+The conformance suite includes unreduced divisor candidates, skipped nonunit
+moduli, exact lifting precision, repeated solves, empty right-hand sides,
+unlucky initial primes and forced fallback. FLINT checks full canonical
+solutions and every determinant route. `hexmodularmatrix_bench verify` runs
+small hash anchors; `scripts/bench/modmat_flint.py` collects the determinant,
+solve and repeated-solve comparison ladders on the shared host. Measurements
+and limitations are recorded in the [performance report](../reports/hex-modular-matrix-performance.md).
 
 The default fuel cap is 16384 primes below 2³¹. A Hadamard bound of at least
 2⁵⁰⁷⁹⁰³ therefore cannot be reconstructed within that budget and reaches

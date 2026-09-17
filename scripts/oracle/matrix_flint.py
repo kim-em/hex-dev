@@ -788,6 +788,30 @@ def _check_field(*, case_id, lib, matrix_record, lean_value, failure_dir,
         raise OracleMismatch(str(exc)) from exc
 
 
+def _check_dixon(*, case_id, lib, matrix_record, lean_value, failure_dir,
+                 profile, seed, oracle_version):
+    """Compare the complete common-denominator solution and its reduction."""
+    from flint import fmpq_mat
+    from math import lcm
+    rows, rhs = matrix_record["rows"], matrix_record["rhs"]
+    n, m = len(rows), matrix_record["rhsCols"]
+    a = fmpq_mat(n, n, [int(x) for row in rows for x in row])
+    b = fmpq_mat(n, m, [int(x) for row in rhs for x in row])
+    if a.det() == 0:
+        expected = None
+    else:
+        x = a.solve(b) if n and m else fmpq_mat(n, m)
+        den = 1
+        for i in range(n):
+            for j in range(m):
+                den = lcm(den, int(x[i, j].q))
+        expected = {"num": [[int(x[i, j] * den) for j in range(m)] for i in range(n)],
+                    "den": den}
+    assert_equal(lean_value, expected, library=lib, case_id=f"{case_id}:dixon-solve",
+                 kind="dixon-solve", input_record=matrix_record, oracle_name="python-flint",
+                 oracle_version=oracle_version, failure_dir=failure_dir, profile=profile, seed=seed)
+
+
 def check(
     source: str | Path | None,
     *,
@@ -801,6 +825,8 @@ def check(
     checked = 0
     handlers = {
         "det":       _check_det,
+        "det-divisor": _check_det,
+        "dixon-solve": _check_dixon,
         "det-rat":   _check_det_rat,
         "det-mod":   _check_det_mod,
         "bareiss":   _check_bareiss,

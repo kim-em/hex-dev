@@ -27,9 +27,9 @@ bounds, `detBounded?`, `detModular?`) in `Hex.Matrix`, because the plain
 hex-rank's. "Public names and dispatch integration" below records the
 split.
 
-The implemented milestone-2 dispatcher is `detWith A fuel`. The final
-seeded interface below is the contract for the later divisor milestone;
-the ordinary bounded route has no unused seed or divisor flag.
+The dispatcher is `detWith A fuel (seed := defaultSeed) (useDivisor := false)`.
+The default arguments preserve the ordinary bounded route; `useDivisor = true`
+attempts the seeded Dixon divisor before the existing fallbacks.
 
 ## Why this library exists
 
@@ -218,8 +218,12 @@ At zero fuel no modular or divisor attempt succeeds. Seed affects the
 divisor search only. The methods share the algorithm bodies described below.
 
 `det A` projects the value of `detWith A defaultFuel defaultSeed false`.
-`detViaDivisor A seed` projects `detWith A defaultFuel seed true`. The
-default fuel and seed are recorded implementation parameters. `HexDet`
+`detViaDivisor A seed` uses Bareiss for `n < divisorCrossover = 192`, and
+projects `detWith A defaultFuel seed true` otherwise. The structured comparison
+first favours the divisor at dimension 192; explicit `detWith ... true` remains
+available to force that route at any dimension. This measured dimension rule is
+not a claim that all matrix families have the same crossover. The default fuel
+and seed are recorded implementation parameters. `HexDet`
 calls `detWith` with its own recorded parameters, converts this route to its
 public route type, and never guesses which fallback ran. Zero-fuel tests
 therefore exercise the production branches. The lower library never imports
@@ -1456,7 +1460,9 @@ as they stand:
   `4x`. On the report's host that is `313 ms` against Bareiss's
   `1.252 s`, which is `2.2x` FLINT's `145 ms`. The crossover rung below
   which Bareiss wins is **measured rather than predicted**, then written
-  into the dispatch and into this SPEC. An earlier draft required "faster
+  into the dispatch and into this SPEC. The measured crossover is dimension
+  192; `detViaDivisor` uses Bareiss below it, while `detWith ... true` forces
+  the divisor route for comparison. An earlier draft required "faster
   at every rung `n ≥ 64`", which guesses the crossover in the same
   document that says it will not guess it.
 - **Against FLINT `fmpz_mat.det`**, on the same fixture and using the
@@ -1653,11 +1659,21 @@ operation.
 HexModularMatrix/
   Image.lean        -- detMod?, detMod?_eq, detMod?_reduce
   Bound.lean        -- rowNormBound and its proof, hadamardBound, LawfulDetBound
-  Det.lean          -- detBounded?, detModular?, their theorems, and the Hex.ModularMatrix wrappers
-  Dixon.lean        -- Decomp, decompAt?, decomp?, numeratorBound, solveFuel,
-                    --   Decomp.lift, solveWith, solveMatWith, solve?,
-                    --   solveMat?, solveWitness?
-  Divisor.lean      -- dvd_det_of_mulVec, detViaDivisorWith, detViaDivisorWith_eq
+  Reconstruction.lean -- detBounded?, detModular? and their theorems
+  Det.lean          -- total Hex.ModularMatrix wrappers and route tracing
+  Decomp.lean       -- Decomp, decompAt?, decomp?, solveFuel
+  Search.lean       -- prime-search completeness
+  Lift.lean         -- Decomp.lift and exact residual updates
+  Numerator.lean    -- numeratorBound and its Cramer bound
+  Normalise.lean    -- common-denominator reduction
+  Solve.lean        -- solveWith, solve?, solveWitness? and soundness
+  SolveMat.lean     -- solveMatWith, solveMat? and soundness
+  Complete.lean     -- solveWith/solveMatWith completeness
+  Algebra.lean      -- Cramer identities, uniqueness, dvd_det_of_mulVec
+  Row.lean         -- specialised modular row arithmetic
+  Product.lean     -- cached modular products and sparse integer products
+  FlatImage.lean   -- determinant-only forward elimination
+  Divisor.lean     -- detViaDivisorWith and detViaDivisorWith_eq
   Rank.lean         -- rankModP, rankCert?, rankCert?_check, rankModular (imports HexRank)
   Kernel.lean       -- Kernel, kernel?, annihilation and free-block facts
 HexModularMatrix.lean
@@ -1738,6 +1754,6 @@ draws its right-hand side from.
   result does not supply the selected minor and adjugate required by
   `Hex.Matrix.RankCert Int`; callers needing rank evidence use `rankCert?`
   (or hex-rank's total producer) separately.
-- **The crossover with Bareiss.** The benchmark will show a size below
-  which the fraction-free path is faster, and the dispatch should use it.
-  This SPEC does not guess the number.
+- **Family-specific crossover rules.** The structured comparison gives dimension
+  192, used by `detViaDivisor`; dense and unimodular matrices have different
+  costs. More input-sensitive dispatch requires measurements for those regions.

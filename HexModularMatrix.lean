@@ -11,5 +11,7 @@ public import HexModularMatrix.Image
 public import HexModularMatrix.Bound
 
 public import HexModularMatrix.Det
+public import HexModularMatrix.Complete
+public import HexModularMatrix.Search
 
 /-! Bounded multi-modular integer determinants and their correctness interface. -/

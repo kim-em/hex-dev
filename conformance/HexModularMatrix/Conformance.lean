@@ -9,9 +9,10 @@ import HexModularMatrix.Fixtures
 /-!
 Oracle: `scripts/oracle/modmat_flint.py` (FLINT integer determinants).
 Mode: always
-Covered operations: `detMod?`, `detBounded?`, `detModular?`, `detWith`, `det`.
+Covered operations: determinant routes, decomposition, lifting, vector/matrix solves, witnesses.
 Covered properties: modular residues, strict-bound reconstruction, bound ordering,
-modular success, recorded Bareiss fallback, agreement with the integer oracle.
+modular success, recorded Bareiss fallback, reduced checked solutions, decomposition reuse,
+cofactor image counts, nonunit skips, exact digit counts and FLINT agreement.
 Covered edge cases: empty and singular matrices, row-swap signs, composite units,
 nonzero nonunits, zero pivot columns, zero fuel, bad initial primes, large entries.
 -/
@@ -103,3 +104,109 @@ private def badPrimes : Matrix Int 1 1 := Matrix.ofFn fun _ _ =>
 #guard (0 : Matrix Int 2 2).detBounded? 0 1 == some 0
 
 end Hex.ModularMatrixConformance
+
+namespace Hex.ModularMatrixSolveConformance
+
+open Hex Hex.Matrix
+
+-- The solve/divisor normaliser must remove a constructed common factor.
+#guard Dixon.normalise #v[6, 9] 6 == (#v[2, 3], 2)
+#guard Dixon.normalise #v[0, 0] 6 == (#v[0, 0], 1)
+#guard Dixon.check (Matrix.identity 2) #v[2, 3] #v[6, 9] 3 == some (#v[2, 3], 1)
+
+local instance : ZMod64.Bounds 2 := ⟨by decide, by decide⟩
+local instance : ZMod64.Bounds 6 := ⟨by decide, by decide⟩
+
+#guard (decompAt? (Matrix.identity 2) 2 (by decide)).isSome
+#guard (decompAt? (Matrix.identity 0) 2 (by decide)).isSome
+#guard (decompAt? (0 : Matrix Int 2 2) 2 (by decide)).isNone
+#guard (decompAt? (Matrix.ofFn fun i j : Fin 2 =>
+  if i = j then 5 else 0) 6 (by decide)).isSome
+
+-- Assert that the optimised elimination routes themselves succeed.
+private def wordA : Matrix (ZMod64 2) 2 2 :=
+  Matrix.ofFn fun i j => if i.val = 1 && j.val = 1 then 0 else 1
+#guard ((Dixon.fastReduce? wordA).map (·.echelon)) == some (Matrix.identity 2)
+#guard Dixon.flatDet? wordA == some 1
+
+private def A : Matrix Int 2 2 := Matrix.ofFn fun i j =>
+  if i.val = 0 then (if j.val = 0 then 2 else 3) else if j.val = 0 then 0 else 1
+
+#guard numeratorBound A #v[0, 1] == 4
+#guard solve? A #v[0, 1] 1 == some (#v[-3, 2], 2)
+#guard solve? A #v[0, 0] 1 == some (#v[0, 0], 1)
+#guard solve? (Matrix.identity 0) #v[] 1 == some (#v[], 1)
+#guard (solve? A #v[0, 1] 0).isNone
+#guard solveMat? A (Matrix.identity 2) 1 ==
+  some (Matrix.ofFn (fun i j : Fin 2 =>
+    if i.val = 0 then (if j.val = 0 then 1 else -3) else if j.val = 0 then 0 else 2), 2)
+#guard solveMat? A (0 : Matrix Int 2 0) 1 == some (0, 1)
+#guard (A.detViaDivisorWith (Rand.ofSeed 1) 1).1 == some 2
+#guard ModularMatrix.detWith A 1 1 true == ⟨2, .divisor, []⟩
+#guard ModularMatrix.detWith A 0 1 true == ⟨2, .divisor, [.modular, .bareiss]⟩
+
+-- Exercise the divisor route with a deliberately non-reduced solution 3/6.
+-- Without reduction, 6 does not divide det([2]) and the reconstructed answer is wrong.
+#guard ((decomp? (Matrix.ofFn fun _ _ : Fin 1 => (2 : Int)) 1).bind fun D =>
+  Dixon.cofactorWith D #v[1] #v[3] 6 1) == some 2
+
+
+private def checkSolve (c : ModularMatrixFixtures.Case) : Bool := Id.run do
+  let A := c.matrix
+  let b : Vector Int c.n := Vector.ofFn fun i => (i.val + 1 : Nat)
+  let fuel := A.solveFuel + 2
+  match A.decomp? fuel with
+  | none => return A.bareiss == 0
+  | some D =>
+    for rhs in [b, A.mulVec b, Vector.replicate c.n 0] do
+      match solveWith D rhs, solve? A rhs fuel, solveWitness? A rhs fuel with
+      | some (y, d), some pair, some w =>
+        if pair != (y, d) || w.num != y || w.den != d ||
+            A.mulVec y != d • rhs || d ≤ 0 || Dixon.common y d != 1 then return false
+      | _, _, _ => return false
+    for cols in [0, 1, 3, c.n] do
+      let C : Matrix Int c.n cols := Matrix.ofFn fun i j => (i.val + j.val + 1 : Nat)
+      match solveMatWith D C, solveMat? A C fuel with
+      | some (X, d), some pair =>
+        if pair != (X, d) || A * X != d • C || d ≤ 0 ||
+            Dixon.common (Dixon.flatten X) d != 1 then return false
+      | _, _ => return false
+    return true
+
+#guard ModularMatrixFixtures.cases.all checkSolve
+
+-- The zero-fuel result is resource failure, including for invertible inputs.
+#guard (solveWitness? A #v[0, 1] 0).isNone
+#guard (solveMat? A (Matrix.identity 2) 0).isNone
+
+private def checkPrecision : Bool :=
+  match decompAt? A 2 (by decide) with
+  | some _ => false -- det A is divisible by 2
+  | none =>
+    match decomp? A 1 with
+    | none => false
+    | some D =>
+      let P := numeratorBound A #v[0, 1]
+      let Q := hadamardBound A
+      let k := Dixon.digits D P Q
+      k > 0 && D.p ^ k > 2 * P * Q && D.p ^ (k - 1) ≤ 2 * P * Q &&
+        (List.finRange 2).all (fun i =>
+          ((A.mulVec (D.lift #v[0, 1] k))[i] - (#v[0, 1] : Vector Int 2)[i]) %
+            ((D.p : Int) ^ k) == 0)
+#guard checkPrecision
+
+-- A denominator sharing a factor with the modulus must be skipped.
+#guard ((decomp? A 1).map fun D => (Dixon.cofactorImage D 2 6).isNone) == some true
+#guard ((decomp? A 1).map fun D => (Dixon.cofactorImage D 2 7).isSome) == some true
+-- With cofactor one, exactly the decomposition image suffices; zero fuel does not.
+#guard ((decomp? A 1).bind fun D =>
+  (Dixon.cofactorCrt? D 2 1 1).map fun s => (s.value[0], s.modulus == D.p)) == some (1, true)
+#guard ((decomp? A 1).map fun D => (Dixon.cofactorCrt? D 2 1 0).isNone) == some true
+
+private def unlucky : Matrix Int 1 1 := Matrix.ofFn fun _ _ =>
+  (2147483647 : Int) * 2147483629
+#guard (unlucky.decomp? 2).isNone
+#guard (unlucky.decomp? 3).map (·.p) == some 2147483587
+#guard unlucky.solve? #v[1] 3 == some (#v[1], (2147483647 : Int) * 2147483629)
+
+end Hex.ModularMatrixSolveConformance

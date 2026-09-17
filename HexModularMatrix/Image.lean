@@ -9,6 +9,7 @@ module
 public import HexModArith.Ring
 public import HexDeterminant.Laplace
 public import HexMatrix.ElementaryAlgebra
+public import HexModularMatrix.Row
 
 public section
 
@@ -41,6 +42,15 @@ def pivot? (A : Matrix (ZMod64 m) (n + 1) (n + 1)) : Option (Pivot A) :=
 def clearRow (A : Matrix (ZMod64 m) (n + 1) (n + 1))
     (b : ZMod64 m) (i : Fin n) : Matrix (ZMod64 m) (n + 1) (n + 1) :=
   A.rowAdd 0 i.succ (-A[(i.succ, (0 : Fin (n + 1)))] * b)
+
+/-- Specialised word arithmetic for the compiled row update. -/
+def clearRowFast (A : Matrix (ZMod64 m) (n + 1) (n + 1))
+    (b : ZMod64 m) (i : Fin n) : Matrix (ZMod64 m) (n + 1) (n + 1) :=
+  Word.add A 0 i.succ (-A[(i.succ, (0 : Fin (n + 1)))] * b)
+
+@[csimp] theorem clearRow_eq_fast : @clearRow = @clearRowFast := by
+  funext n m inst A b i
+  exact (Word.add_eq _ _ _ _).symm
 
 /-- Eliminate below the first pivot using a linear fold over the matrix buffer. -/
 @[expose]

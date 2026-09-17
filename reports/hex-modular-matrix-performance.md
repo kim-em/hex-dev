@@ -1,130 +1,131 @@
-# Bounded modular determinant baseline
+# Dixon solve and determinant divisor
 
-This report measures the ordinary bounded CRT determinant from milestones 1–2. It makes no Phase-4 completion or divisor-route speed claim. Across all three families, the modular route is slower than Bareiss at every completed common rung; large modular calls reach the harness cap. Dixon and the determinant-divisor optimization are separate milestones.
+The implementation reuses a checked modular inverse for p-adic lifting, reconstructs and reduces a common-denominator solution, and checks the integer equation. The determinant route reconstructs the cofactor after extracting the reduced denominator as a determinant divisor. The tables below measure that route against ordinary CRT, Bareiss, and FLINT, and attribute single and repeated solves.
 
-These fixed registrations are external-comparator anchors, not an empirical complexity attestation or an absolute-budget gate. Elimination performs cubic word arithmetic per image; reconstruction needs enough images to exceed twice the row/column Hadamard bound.
+The completed dimension-512 comparator run records 0.279 s for the divisor, 1.263 s for Bareiss (4.52× faster), and 0.153 s for FLINT (1.83× slower after protocol adjustment). [Raw comparison](data/hex-modular-matrix-divisor-prefix-512.json). That run includes fixture construction. The prepared-input schedule below isolates algorithm cost and is retained separately. The structured crossover is dimension 192; the total `detViaDivisor` wrapper uses Bareiss below it, while the benchmarks force each route at every rung.
 
-## Inputs and timing protocol
+## Protocol and inputs
 
-- `structured-determinant`: the shared Bareiss salt-71 tridiagonal fixture at 16, 24, 32, 48, 64, 96, 128, 192, 256, 320, 384 and 512.
-- `dense-random-determinant`: splitmix64 seed 10219, dimensions 32, 64, 96, 128, 192 and 256, with centered 8-, 64- and 1024-bit entries.
-- `unimodular-determinant`: dense `I + u vᵀ`, with `u` all ones, `v` alternating ±2⁶⁴, and `vᵀu = 0`, so the determinant is one. Dimensions are 32, 64, 96, 128, 192 and 256. Negative determinant variants are covered by conformance.
+- Structured determinant: the shared salt-71 tridiagonal fixture, dimensions 16, 24, 32, 48, 64, 96, 128, 192, 256, 320, 384, 512.
+- Dense determinant: splitmix64 seed 10219, signed entry widths 8, 64, 1024; dimensions 32, 64, 96, 128, 192, 256.
+- Unimodular determinant: dense `I + u vᵀ`, `u = 1`, alternating `v = ±2⁶⁴`, hence determinant one. This is the divisor’s worst case.
+- Single solve: dense 8-bit seed 10220 matrices at the same six dimensions. Integral RHS is `A C`; rational RHS is `C`, with `C[i,j] = (i + 3j) % 17 - 8`. The inverse is prepared outside the timed `solveWith` call; decomposition has its own arm.
+- Repeated solve: `r = 1, 8, n`. Reused timing includes one decomposition and `solveMatWith`; independent timing includes `r` complete `solve?` calls. Both use the rational RHS and return the same common-denominator checksum.
 
-The three arms receive identical matrices. Matrix construction and FLINT request encoding precede the timed closures. The modular arm includes bound computation, finite prime supply, elimination and CRT, and rejects any Bareiss fallback. The comparator is FLINT fmpz_mat_det via python-flint, using the shared persistent subprocess protocol; JSON parsing and result transport remain included.
+Closed memoised fixture values are forced by discarded warmups. Matrix construction, RHS construction, and FLINT request encoding are outside timed calls. Determinant arms include bound computation, prime search, elimination, and reconstruction; a fallback makes the forced modular/divisor benchmark fail. Seed 10220 selects the divisor RHS. FLINT uses a persistent python-flint process. Its determinant comparator is gating under the SPEC’s first-measurement policy; `fmpq_mat_solve` is informational and includes its own decomposition, unlike the separate Hex lifting arm.
 
-Each arm has a discarded outer warmup, a discarded first invocation inside each child, and five fixed repeats with a 0.2-second auto-tuning floor. Adjacent modular/Bareiss/FLINT arms reverse order on alternate rungs. CPU placement uses a nonblocking lease on the shared host. Every completed export is retained; host load is recorded without filtering. The two structured dimension-16 observations differ by 2.4× in modular time, and their Hex/FLINT ratios differ by 65%. These are host-specific observations; rows in different datasets must not be treated as a controlled comparison, and the small-rung differences do not establish an algorithmic scaling trend. The listed source fingerprints cover selected files; the executable SHA-256 pins the complete compiled implementation, including the Bareiss comparator.
+Each registration has five fixed repeats, a 0.2-second tuning floor, and discarded outer and inner warmups. Adjacent arms reverse order on alternate rungs. Each collector leases an automatically selected CPU and uses two Lean workers pinned there. Host activity is recorded without filtering. Immutable executable copies and source hashes identify each run; different datasets are not a controlled before/after comparison.
 
-The initial run used one Lean worker. A blocking stderr reader prevented the harness timer from running, so its completed timings can exceed the configured ten-second cap. Relinking the executable interrupted the Bareiss and FLINT child launches at dimension 256. The incomplete dimension-320 comparison was stopped before its combined export was written; its partial arm output is unavailable. The resumed run uses two workers on one CPU and an immutable executable copy; it repeats dimension 256 once and completes the remaining schedule. Both datasets are retained. A final collector check verifies per-arm checkpoints, so future interrupted comparisons preserve completed arms. Large determinant replies also exposed Python’s default 4300-digit conversion limit; the large-integers dataset repeats the affected dense 256/64 and 1024-bit range with `PYTHONINTMAXSTRDIGITS=0`. The original errors remain visible.
+Medians are seconds. FLINT ratios subtract the same dataset’s empty-protocol median from the FLINT denominator. `cap` describes a killed child batch, including setup and warmup; it is not a lower bound on one timed call. Ratios require five successful repeats in both arms. These fixed comparator anchors do not attest an empirical complexity fit. The generic algorithm uses cubic modular elimination, quadratic matrix-vector work per lifting digit, and one elimination per cofactor image; zero skipping and sparse residual products benefit the structured fixture.
 
-`Hex / FLINT` means modular median divided by the FLINT median minus that dataset’s empty-protocol median; lower is faster. Raw medians are in seconds. The parameter b is the dense signed-entry width or the unimodular power-of-two exponent; it is unused for the fixed structured fixture. `cap` denotes a killed child batch, including setup and warmup; it is not a lower bound on the timed call alone. Ratios are omitted if an arm lacks all five successful repeats. No partial sample is silently promoted to a complete comparison.
+## hex-modular-matrix-divisor-prepared
 
-## hex-modular-matrix-baseline
+Host `chungus2`, AMD EPYC 9455 48-Core Processor, CPU 20; Lean 4.34.0, python-flint 0.9.0. Protocol median 7.309 µs.
 
-Host `chungus2`, AMD EPYC 9455 48-Core Processor, CPU 40; Lean 4.34.0-rc2, python-flint 0.9.0. Protocol median: 39.508 µs.
+Load before `7.07 6.95 6.87 8/5910 850490`; after `8.89 8.16 7.39 16/5889 866430`. [Raw exports and fingerprints](data/hex-modular-matrix-divisor-prepared.json).
 
-Load before: `419.39 387.89 283.99 425/12297 175448`; after: `314.28 336.21 300.04 267/10890 327491`. [Complete exports and source fingerprints](data/hex-modular-matrix-baseline.json).
+| Family | n | bits | Divisor s | Ordinary CRT s | Bareiss s | FLINT s | Bareiss / divisor | Divisor / FLINT |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| structured | 16 | 8 | 0.006188 | 0.006926 | 2.085e-05 | 5.119e-05 | 0.00× | 141.03× |
+| structured | 24 | 8 | 0.006405 | 0.007203 | 7.648e-05 | 0.0001082 | 0.01× | 63.49× |
+| structured | 32 | 8 | 0.006706 | 0.009466 | 0.0001878 | 0.0001737 | 0.03× | 40.31× |
+| structured | 48 | 8 | 0.007452 | 0.01364 | 0.0007101 | 0.0004122 | 0.10× | 18.40× |
+| structured | 64 | 8 | 0.008447 | 0.02101 | 0.001846 | 0.00102 | 0.22× | 8.34× |
+| structured | 96 | 8 | 0.01152 | 0.04631 | 0.006862 | 0.002426 | 0.60× | 4.76× |
+| structured | 128 | 8 | 0.01969 | 0.109 | 0.01736 | 0.004801 | 0.88× | 4.11× |
+| structured | 192 | 8 | 0.03367 | 0.4364 | 0.06144 | 0.01234 | 1.83× | 2.73× |
+| structured | 256 | 8 | 0.06137 | 1.294 | 0.1476 | 0.02537 | 2.41× | 2.42× |
+| structured | 320 | 8 | 0.09421 | 3.127 | 0.2964 | 0.04281 | 3.15× | 2.20× |
+| structured | 384 | 8 | 0.1472 | — | — | — | — | — |
 
-| Family | n | b | Modular s | Bareiss s | FLINT s | Hex / FLINT |
-|---|---:|---:|---:|---:|---:|---:|
-| structured | 16 | 8 | 0.0341 | 8.27e-05 | 0.000212 | 197.7× |
-| structured | 24 | 8 | 0.0228 | 0.000279 | 0.000449 | 55.6× |
-| structured | 32 | 8 | 0.0259 | 0.00111 | 0.000623 | 44.4× |
-| structured | 48 | 8 | 0.105 | 0.00246 | 0.00158 | 68.1× |
-| structured | 64 | 8 | 0.121 | 0.00678 | 0.00744 | 16.3× |
-| structured | 96 | 8 | 0.311 | 0.0421 | 0.0179 | 17.4× |
-| structured | 128 | 8 | 1.39 | 0.0649 | 0.0171 | 81.1× |
-| structured | 192 | 8 | 6.16 | 0.636 | 0.0553 | 111.4× |
-| structured | 256 | 8 | 15.9 | 0/5 ok | 0/5 ok | — |
+## hex-modular-matrix-solve-prepared
 
-## hex-modular-matrix-baseline-resumed
+Host `chungus2`, AMD EPYC 9455 48-Core Processor, CPU 18; Lean 4.34.0, python-flint 0.9.0. Protocol median 7.306 µs.
 
-Host `chungus2`, AMD EPYC 9455 48-Core Processor, CPU 9; Lean 4.34.0-rc2, python-flint 0.9.0. Protocol median: 15.229 µs.
+Load before `7.07 6.95 6.87 9/5911 850489`; after `9.53 8.14 7.34 10/5885 863923`. [Raw exports and fingerprints](data/hex-modular-matrix-solve-prepared.json).
 
-Load before: `427.75 384.26 327.59 314/12103 404149`; after: `87.02 150.39 207.29 81/6841 925948`. [Complete exports and source fingerprints](data/hex-modular-matrix-baseline-resumed.json).
+| Operation | n | Hex s | FLINT s | Hex / FLINT |
+|---|---:|---:|---:|---:|
+| decomposition | 32 | 0.004331 | — | — |
+| integral | 32 | 0.0003134 | 0.0002991 | 1.07× |
+| rational | 32 | 0.002279 | 0.0004133 | 5.61× |
+| decomposition | 64 | 0.01943 | — | — |
+| integral | 64 | 0.00171 | 0.001176 | 1.46× |
+| rational | 64 | 0.01632 | 0.00175 | 9.36× |
+| decomposition | 96 | 0.0593 | — | — |
+| integral | 96 | 0.004885 | 0.002793 | 1.75× |
+| rational | 96 | 0.05433 | 0.00404 | 13.47× |
+| decomposition | 128 | 0.1339 | — | — |
+| integral | 128 | 0.01098 | 0.005334 | 2.06× |
+| rational | 128 | 0.1299 | 0.007771 | 16.73× |
+| decomposition | 192 | 0.4515 | — | — |
+| integral | 192 | 0.03658 | 0.01284 | 2.85× |
+| rational | 192 | 0.4417 | 0.02223 | 19.87× |
+| decomposition | 256 | 1.096 | — | — |
+| integral | 256 | 0.0857 | 0.02571 | 3.33× |
+| rational | 256 | 1.054 | 0.05515 | 19.11× |
 
-| Family | n | b | Modular s | Bareiss s | FLINT s | Hex / FLINT |
-|---|---:|---:|---:|---:|---:|---:|
-| structured | 256 | 8 | cap (5/5) | 0.46 | 0.0761 | — |
-| structured | 320 | 8 | cap (5/5) | 0.716 | 0.152 | — |
-| structured | 384 | 8 | cap (5/5) | 1.19 | 0.21 | — |
-| structured | 512 | 8 | cap (5/5) | 3.4 | 0.506 | — |
-| dense | 32 | 8 | 0.0865 | 0.00449 | 0.00174 | 50.0× |
-| dense | 64 | 8 | 0.394 | 0.0611 | 0.00669 | 59.0× |
-| dense | 96 | 8 | 1.83 | 0.178 | 0.0145 | 125.9× |
-| dense | 128 | 8 | 4.21 | 0.502 | 0.0267 | 157.8× |
-| dense | 192 | 8 | cap (5/5) | 2.3 | 0.0665 | — |
-| dense | 256 | 8 | cap (5/5) | cap (5/5) | 0.19 | — |
-| dense | 32 | 64 | 0.426 | 0.00817 | 0.00316 | 135.4× |
-| dense | 64 | 64 | 2.13 | 0.122 | 0.0139 | 153.2× |
-| dense | 96 | 64 | cap (5/5) | 0.893 | 0.0361 | — |
-| dense | 128 | 64 | cap (5/5) | 2.89 | 0.0691 | — |
-| dense | 192 | 64 | cap (5/5) | cap (5/5) | 0.183 | — |
-| dense | 256 | 64 | cap (5/5) | cap (5/5) | 0/5 ok | — |
-| dense | 32 | 1024 | cap (5/5) | 0.324 | 0/5 ok | — |
-| dense | 64 | 1024 | cap (5/5) | cap (5/5) | 0/5 ok | — |
-| dense | 96 | 1024 | cap (5/5) | cap (5/5) | 0/5 ok | — |
-| dense | 128 | 1024 | cap (5/5) | cap (5/5) | cap (5/5) | — |
-| dense | 192 | 1024 | cap (5/5) | cap (5/5) | cap (5/5) | — |
-| dense | 256 | 1024 | cap (5/5) | cap (5/5) | cap (5/5) | — |
-| unimodular | 32 | 64 | 0.468 | 0.00527 | 0.00691 | 67.8× |
-| unimodular | 64 | 64 | 2.23 | 0.0471 | 0.032 | 69.8× |
-| unimodular | 96 | 64 | cap (5/5) | 0.142 | 0.11 | — |
-| unimodular | 128 | 64 | cap (5/5) | 0.342 | 0.252 | — |
-| unimodular | 192 | 64 | cap (5/5) | 1.16 | 0.985 | — |
-| unimodular | 256 | 64 | cap (5/5) | 2.51 | 2.54 | — |
+## hex-modular-matrix-repeated-prepared
 
-## hex-modular-matrix-collector-check
+Host `chungus2`, AMD EPYC 9455 48-Core Processor, CPU 22; Lean 4.34.0, python-flint 0.9.0. Protocol median 7.337 µs.
 
-Host `chungus2`, AMD EPYC 9455 48-Core Processor, CPU 50; Lean 4.34.0-rc2, python-flint 0.9.0. Protocol median: 11.074 µs.
+Load before `7.07 6.95 6.87 8/5909 850491`; after `9.13 8.32 7.48 12/5934 869236`. [Raw exports and fingerprints](data/hex-modular-matrix-repeated-prepared.json).
 
-Load before: `94.53 155.06 255.17 88/7483 781804`; after: `93.86 151.94 252.55 90/7483 784256`. [Complete exports and source fingerprints](data/hex-modular-matrix-collector-check.json).
+| n | RHS count | Reused s | Independent s | Independent / reused |
+|---:|---:|---:|---:|---:|
+| 32 | 1 | 0.006567 | 0.006554 | 1.00× |
+| 32 | 8 | 0.02162 | 0.05256 | 2.43× |
+| 32 | 32 | 0.07278 | 0.2099 | 2.88× |
+| 64 | 1 | 0.03598 | 0.03633 | 1.01× |
+| 64 | 8 | 0.1499 | 0.2915 | 1.94× |
+| 64 | 64 | 1.073 | 2.347 | 2.19× |
+| 96 | 1 | 0.1134 | 0.1145 | 1.01× |
+| 96 | 8 | 0.4929 | 0.9246 | 1.88× |
+| 96 | 96 | cap (5/5) | cap (5/5) | — |
+| 128 | 1 | 0.2653 | 0.2647 | 1.00× |
+| 128 | 8 | 1.179 | — | — |
 
-| Family | n | b | Modular s | Bareiss s | FLINT s | Hex / FLINT |
-|---|---:|---:|---:|---:|---:|---:|
-| structured | 16 | 8 | 0.0144 | 5.25e-05 | 0.000132 | 119.6× |
+## Attribution
 
-## hex-modular-matrix-large-integers
+The final dimension-512 diagnostic uses 67 lifting digits. Its reduced denominator has 882 bits, leaving a 143-bit cofactor bound and five 31-bit images (155-bit CRT modulus). Decomposition took 79 ms, solve/reconstruction 92 ms, and cofactor reconstruction 93 ms in that diagnostic. [Stage output and host context](data/hex-modular-matrix-divisor-prepared-stages.json). These separate diagnostic timings do not replace the repeated comparator medians.
 
-Host `chungus2`, AMD EPYC 9455 48-Core Processor, CPU 75; Lean 4.34.0-rc2, python-flint 0.9.0. Protocol median: 6.774 µs.
+A pinned profile of the prepared divisor arm attributes 11.03% of self samples to closure application, 8.81% to reference-count cleanup, 8.07% to modular multiplication, 6.67% to array push, and 5.96% to the modular dot-product loop. It retained 211 samples with none reported lost. [Profile](data/hex-modular-matrix-divisor-prepared-profile.txt), [invocation and host](data/hex-modular-matrix-divisor-profile-host.json), [benchmark export](data/hex-modular-matrix-divisor-prepared-profile.json). The small-rung FLINT 5× target is missed: prime search and checked decomposition impose fixed costs. Under the SPEC’s first-measurement policy this is a recorded finding; it is not hidden by timing Bareiss in the divisor arm.
 
-Load before: `37.96 66.72 52.34 30/6811 2951596`; after: `14.61 26.04 42.62 15/6888 3130637`. [Complete exports and source fingerprints](data/hex-modular-matrix-large-integers.json).
+## Correctness and retained measurements
 
-| Family | n | b | Modular s | Bareiss s | FLINT s | Hex / FLINT |
-|---|---:|---:|---:|---:|---:|---:|
-| dense | 256 | 64 | cap (5/5) | cap (5/5) | 0.2 | — |
-| dense | 32 | 1024 | 4/5 ok | 0.191 | 0.135 | — |
-| dense | 64 | 1024 | cap (5/5) | cap (5/5) | 1.03 | — |
-| dense | 96 | 1024 | cap (5/5) | cap (5/5) | 2.98 | — |
-| dense | 128 | 1024 | cap (5/5) | cap (5/5) | 4.59 | — |
-| dense | 192 | 1024 | cap (5/5) | cap (5/5) | cap (5/5) | — |
-| dense | 256 | 1024 | cap (5/5) | cap (5/5) | cap (5/5) | — |
+The full build and conformance suite verify single and multiple RHS solutions, normalisation, lifting congruences, strict digit bounds, zero-dimensional cases, composite moduli, unlucky initial primes, seeds, and forced exhaustion. FLINT checks 159 complete answers. Eight CI smoke anchors pin output hashes. Every completed common comparator result is checked for hash agreement by this report generator.
 
-## Bound image counts
+The reduction regression supplies `y = 3, d = 6` to the production cofactor route for `A = [2], b = [1]`. It must reduce to denominator two. Removing reduction from that route makes the assertion fail; the mutation was built locally. The prime reuse test checks the resulting CRT modulus, and a modulus sharing a factor with the reduced denominator is rejected before its determinant image is computed.
 
-Conformance recovers each consumed prime-prefix length from the actual CRT modulus and checks that Hadamard uses no more images than the row-norm bound. [Recorded counts](data/hex-modular-matrix-image-counts.json).
+Earlier implementation measurements and profiles are retained below. The initial Gauss–Jordan pass cleared above each pivot immediately, destroying upper-factor sparsity. Forward elimination followed by backward clearing, determinant-only cofactor images, cached inverse rows, sparse integer products, and shorter prime prefixes remove that overhead. These observations motivated changes; their ratios are not controlled before/after evidence.
 
-| Fixture | Row norm | Hadamard |
-|---|---:|---:|
-| empty | 1 | 1 |
-| singleton-negative | 1 | 1 |
-| zero | 1 | 1 |
-| singular | 1 | 1 |
-| swap-sign | 1 | 1 |
-| modulus | 2 | 2 |
-| two-bad-primes | 3 | 3 |
-| large-small-determinant | 133 | 133 |
-| scaled-hadamard | 3 | 3 |
-| structured-determinant/8 | 1 | 1 |
-| dense-random-determinant/8-bit | 2 | 1 |
-| dense-random-determinant/64-bit | 9 | 9 |
-| dense-random-determinant/1024-bit | 100 | 100 |
-| unimodular-determinant/positive | 13 | 13 |
-| unimodular-determinant/negative | 13 | 13 |
+The earlier `divisor-final`, `solve`, and `repeated` datasets used functions whose pure preparation was moved into timed calls by Lean arity expansion. They therefore include fixture construction; `solve` also includes decomposition. They are retained as end-to-end diagnostics, not presented as separate `solveWith` costs. Early stage files’ `bound_ns` and `supply_ns` were similarly affected by code motion and are not used for attribution. The corrected stage diagnostic forces these values before reading the clock.
 
-## Attribution and verification
+- [hex-modular-matrix-baseline-resumed](data/hex-modular-matrix-baseline-resumed.json)
+- [hex-modular-matrix-baseline](data/hex-modular-matrix-baseline.json)
+- [hex-modular-matrix-collector-check](data/hex-modular-matrix-collector-check.json)
+- [hex-modular-matrix-divisor-512](data/hex-modular-matrix-divisor-512.json)
+- [hex-modular-matrix-divisor-cached-stages](data/hex-modular-matrix-divisor-cached-stages.json)
+- [hex-modular-matrix-divisor-fast-stages](data/hex-modular-matrix-divisor-fast-stages.json)
+- [hex-modular-matrix-divisor-final](data/hex-modular-matrix-divisor-final.json)
+- [hex-modular-matrix-divisor-prefix-512](data/hex-modular-matrix-divisor-prefix-512.json)
+- [hex-modular-matrix-divisor-prefix-stages](data/hex-modular-matrix-divisor-prefix-stages.json)
+- [hex-modular-matrix-divisor-prepared-profile](data/hex-modular-matrix-divisor-prepared-profile.json)
+- [hex-modular-matrix-divisor-prepared-stages](data/hex-modular-matrix-divisor-prepared-stages.json)
+- [hex-modular-matrix-divisor-profile-host](data/hex-modular-matrix-divisor-profile-host.json)
+- [hex-modular-matrix-divisor-profile](data/hex-modular-matrix-divisor-profile.json)
+- [hex-modular-matrix-divisor-row-512](data/hex-modular-matrix-divisor-row-512.json)
+- [hex-modular-matrix-divisor-sparse-profile](data/hex-modular-matrix-divisor-sparse-profile.json)
+- [hex-modular-matrix-divisor-sparse-repeat-stages](data/hex-modular-matrix-divisor-sparse-repeat-stages.json)
+- [hex-modular-matrix-divisor-sparse-stages](data/hex-modular-matrix-divisor-sparse-stages.json)
+- [hex-modular-matrix-divisor-stages](data/hex-modular-matrix-divisor-stages.json)
+- [hex-modular-matrix-divisor-supply-stages](data/hex-modular-matrix-divisor-supply-stages.json)
+- [hex-modular-matrix-divisor-word-512](data/hex-modular-matrix-divisor-word-512.json)
+- [hex-modular-matrix-image-counts](data/hex-modular-matrix-image-counts.json)
+- [hex-modular-matrix-large-integers](data/hex-modular-matrix-large-integers.json)
+- [hex-modular-matrix-profile](data/hex-modular-matrix-profile.json)
+- [hex-modular-matrix-repeated](data/hex-modular-matrix-repeated.json)
+- [hex-modular-matrix-smoke](data/hex-modular-matrix-smoke.json)
+- [hex-modular-matrix-solve](data/hex-modular-matrix-solve.json)
 
-A diagnostic `perf` profile at structured dimension 128 attributes 18.75% of self samples to `lean_apply_2`, 8.75% to `lean_apply_1`, 6.26% to the row-add closure and 4.60% to array construction. Allocation, reference counting and submatrix construction are also visible. This supports focusing future optimization on specialization and buffer operations; it does not establish their achievable speedup. The unpinned profile is separate from the comparison. Its output reports 23 lost samples; no recorded samples were filtered.
-
-[Profile summary](data/hex-modular-matrix-profile.txt), [profile invocation export](data/hex-modular-matrix-profile.json), and [small smoke-anchor calibration](data/hex-modular-matrix-smoke.json). The three CI anchors pin the complete determinant-result hashes. All completed common comparator results agree by complete-result hash; small, singular, composite-modulus, bad-prime and forced-fallback cases are also checked by the conformance suite and FLINT fixtures.
-
-Reproduce with `lake build hexmodularmatrix_bench`, then `HEX_FLINT_BENCH_PYTHON=<python-with-flint> python3 scripts/bench/modmat_flint.py <output.json>`. Render retained datasets with `scripts/bench/modmat_report.py`.
+Reproduce: `lake build hexmodularmatrix_bench`, then `HEX_FLINT_BENCH_PYTHON=<python-with-flint> python3 scripts/bench/modmat_flint.py <output.json> --mode divisor` (or `solve`, `repeated`). Render selected exports with `python3 scripts/bench/modmat_report.py <report.md> <exports...>`.

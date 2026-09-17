@@ -1,0 +1,14 @@
+{
+  "cpu": 93,
+  "load_before": "4.78 5.10 6.98 5/5775 801021\n",
+  "exe_sha256": "275aab470b2ca8810a4a644bb8aa91b9d17af15676da64e93eefc73b38b12032",
+  "command": [
+    ".lake/build/bin/hexmodularmatrix_bench",
+    "diagnose",
+    "512"
+  ],
+  "stdout": "decomp_ns=174632081 solve_ns=245885388 cofactor_ns=181816677\nden_bits=882 cofactor_bound_bits=143 modulus_bits=155 digits=67\ndet_hash=2508884057582739668 solution_hash=2489105363670652768\n",
+  "stderr": "",
+  "exit_code": 0,
+  "load_after": "4.78 5.10 6.98 6/5783 801114\n"
+}
