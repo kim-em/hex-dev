@@ -180,7 +180,8 @@ def nullspace [Lean.Grind.Ring R] (E : IsRowReduced M D) :
   let N := E.nullspaceMatrix
   Vector.ofFn fun k => Matrix.col N k
 
-private theorem nullspace_get [Lean.Grind.Ring R] (E : IsRowReduced M D)
+/-- Each nullspace vector is the corresponding column of the basis matrix. -/
+theorem nullspace_get [Lean.Grind.Ring R] (E : IsRowReduced M D)
     (k : Fin (m - D.rank)) :
     E.nullspace.get k = Matrix.col E.nullspaceMatrix k := by
   unfold nullspace

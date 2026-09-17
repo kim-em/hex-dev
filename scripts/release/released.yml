@@ -382,6 +382,7 @@ repos:
 
   - repo: leanprover/hex-row-reduce-mathlib
     lib: HexRowReduceMathlib
+    test_modules: [HexRowReduceMathlib.Tests]
     umbrella: true
     spec: hex-row-reduce-mathlib
     pins: [hex-basic, hex-row-reduce, hex-matrix-mathlib, hex-matrix]

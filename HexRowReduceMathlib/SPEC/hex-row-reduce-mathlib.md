@@ -1,10 +1,10 @@
 # hex-row-reduce-mathlib (depends on hex-row-reduce + hex-matrix-mathlib + Mathlib)
 
-## Correspondence-only classification
+## Ownership
 
-The existing API is a `correspondence-only-layer`. The inverse and solve
-frontends specified below add companion conformance and fresh-module proof
-evidence when implemented; compiled algorithms remain in HexRowReduce.
+The companion owns correspondence proofs, the inverse and solve frontends,
+their conformance, and fresh-module proof evidence. Compiled algorithms and
+list certificate checkers remain in HexRowReduce.
 
 Computational conformance owner: `HexRowReduce`
 Computational performance owner: `HexRowReduce`
@@ -241,7 +241,12 @@ add `proof_probes: [bench/HexRowReduceMathlib/ProofProbe]`, and reopen the
 library's conformance/performance obligations: cap `done_through` at `2` until
 the new build-only proof tests pass, then at `3` until complete proof evidence
 passes. Do not add an empty reservation while retaining a completed Phase 4.
-This SPEC-only change does not alter the manifest or attest implementation.
+
+The implementation is `Kernel.lean` and `Tactic.lean`, with build-only tests
+in `Tests.lean`. The seeded generator and six-round absolute sweep are
+`scripts/bench/row_reduce_tactic_probes.py` and
+`scripts/bench/row_reduce_tactic_sweep.py`; `--normalization` measures the
+informational matched entrywise proofs separately.
 
 Proof tests live in `HexRowReduceMathlib/Tests.lean`, built with the ordinary
 library; malformed list certificates also belong in the algorithm library's
@@ -305,7 +310,7 @@ with `min_poly` and `solve`, not separate local reifiers.
 
 ### Kernel certificate and soundness
 
-The planned `inverse?` returns a matrix, not an independent certificate or
+The executable `inverse?` returns a matrix, not an independent certificate or
 a singularity witness. Its `inverse?_spec` requires the producer equation
 `inverse? A = some B`; the tactic must not discharge that by replaying RREF.
 Require a new list `InverseWitness` and `checkInverseList`. In the invertible
@@ -417,9 +422,8 @@ preregister operational caps. Compiled benchmarks stay in HexRowReduce.
 
 ## The `solve` tactic
 
-This is a required extension conditional on the complete solve algorithm and
-correspondence above, not an assertion that `solve?` and its theorems already
-exist. Follow [the matrix tactic protocol](../../SPEC/matrix-tactics.md) and
+This frontend uses the complete solve algorithm and correspondence above.
+Follow [the matrix tactic protocol](../../SPEC/matrix-tactics.md) and
 [the `rank` template](../../HexRankMathlib/SPEC/hex-rank-mathlib.md#the-rank-tactic).
 It shares HexRowReduce's field certificate primitives with `inverse`.
 
@@ -462,8 +466,8 @@ inherit a frontend merely from their executable field instance.
 
 ### Kernel certificate and soundness
 
-The planned `solve` returns either `SolveData A` or a separating row;
-`solve?` forgets the separator. The planned success/failure theorems have
+The executable `solve` returns either `SolveData A` or a separating row;
+`solve?` forgets the separator. The success/failure theorems have
 producer-equation hypotheses, so their invocation is not a kernel checker.
 Require list `SolveWitness`/`checkSolveList` in HexRowReduce with separate
 checks for a particular residual, complete affine data, and inconsistency.

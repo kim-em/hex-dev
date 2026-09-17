@@ -130,16 +130,20 @@ computed rank of the coefficient matrix. -/
 abbrev SolveData (A : Matrix F n m) :=
   Vector F m × Matrix F m (m - rowReduce_rank A)
 
-/-- Solve a field system completely. An error carries the first separating
-row of the RREF transform; success includes the canonical nullspace basis. -/
-@[expose]
-def solve (A : Matrix F n m) (b : Vector F n) : Except (Vector F n) (SolveData A) :=
-  let D := rowReduce A
-  let E : IsRowReduced A D := rowReduce_isRowReduced A
+/-- Solve using retained reduced-row-echelon data, preserving its basis dimension. -/
+@[expose] def solveFrom {A : Matrix F n m} {D : RowEchelonData F n m}
+    (E : IsRowReduced A D) (b : Vector F n) :
+    Except (Vector F n) (Vector F m × Matrix F m (m - D.rank)) :=
   let c := D.transform * b
   match (List.finRange n).find? (fun i => decide (D.rank ≤ i.val ∧ c[i] ≠ 0)) with
   | some i => .error (row D.transform i)
   | none => .ok (pivotLift D * c, E.nullspaceMatrix)
+
+/-- Solve a field system completely. An error carries the first separating
+row of the RREF transform; success includes the canonical nullspace basis. -/
+@[expose]
+def solve (A : Matrix F n m) (b : Vector F n) : Except (Vector F n) (SolveData A) :=
+  solveFrom (rowReduce_isRowReduced A) b
 
 /-- The option view of `solve`, forgetting only the inconsistency witness. -/
 @[expose]
@@ -159,7 +163,7 @@ private theorem row_vecMul {k : Nat} (T : Matrix F k n) (A : Matrix F n m) (i : 
 theorem solve_error (A : Matrix F n m) (b y : Vector F n) :
     solve A b = .error y → vecMul y A = 0 ∧ Vector.dotProduct y b ≠ 0 := by
   intro h
-  unfold solve at h
+  unfold solve solveFrom at h
   dsimp only at h
   split at h
   next i hi =>
@@ -175,7 +179,7 @@ theorem solve_error (A : Matrix F n m) (b y : Vector F n) :
 
 private theorem solve_ok (A : Matrix F n m) (b : Vector F n) (s : SolveData A)
     (h : solve A b = .ok s) : A * s.1 = b ∧ s.2 = nullspaceBasisMatrix A := by
-  unfold solve at h
+  unfold solve solveFrom at h
   dsimp only at h
   split at h
   next => contradiction
@@ -350,12 +354,12 @@ theorem solve?_unique (A : Matrix F n m) (b : Vector F n) (s : SolveData A)
 theorem solve?_free (A : Matrix F n m) (b : Vector F n) (s : SolveData A)
     (h : solve? A b = some s) (k : Fin (m - rowReduce_rank A)) :
     s.1[(rowReduce_isRowReduced A).freeCols.get k] = 0 := by
-  unfold solve? solve at h
+  unfold solve? solve solveFrom at h
   dsimp only at h
   split at h
   next => simp [Except.toOption] at h
   next =>
-    simp only [Except.toOption, Option.some.injEq] at h
+    simp only [Except.toOption] at h
     cases h
     rw [getElem_mulVec]
     exact (congrArg (fun v : Vector F n => v.dotProduct ((rowReduce A).transform * b))
