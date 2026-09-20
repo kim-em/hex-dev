@@ -12,12 +12,13 @@ or checked Lean declarations. This SPEC registers no target or phase. Its
 companion is assigned by [#10314](https://github.com/kim-em/hex-dev/issues/10314).
 
 `HexSignDet`, in namespace `Hex.SignDet`, depends on `HexSturm`, `HexPoly`,
-`HexMatrix` and `HexRowReduce`. Matrix construction, exact rational solving,
-row selection and integer identity checking reuse the Mathlib-free matrix
-stack; BKR-specific support and descriptor certificates live here.
+`HexMatrix`, `HexRowReduce` and `HexRank`. Matrix construction and exact
+rational solving reuse HexMatrix and HexRowReduce; row selection and rank
+certificates reuse HexRank. BKR-specific support and descriptor certificates
+live here.
 `HexSignDetMathlib` imports this library, `HexSturmMathlib`,
-`HexPolyMathlib`, `HexMatrixMathlib` and `HexRowReduceMathlib`, with Tau Ceti
-foundations imported only in companions. These dependencies are acyclic.
+`HexPolyMathlib`, `HexMatrixMathlib`, `HexRowReduceMathlib` and
+`HexRankMathlib`, with Tau Ceti foundations imported only in companions. These dependencies are acyclic.
 
 [hex-sturm](hex-sturm.md) owns ordered-field Tarski queries, domain guards and
 coefficient-evidence composition over the one shared kernel in hex-real-roots.
@@ -101,10 +102,33 @@ M * c = t.
 ```
 
 Products and their coefficient interpretations are checked, not merely named
-by a hash. Every moment uses hex-sturm's prepared-query API and its literal
-replay, with exactly the same `p`, interval and coefficient context. Common
+by a hash. A reduced moment uses the certified reduction below to establish
+the same signs on roots, rather than claiming literal equality to `Fₑ`.
+Every moment uses hex-sturm's prepared-query API and its literal replay, with exactly the same `p`, interval and coefficient context. Common
 roots with `Fₑ` are allowed and contribute zero. Do not substitute derivative
 root counts for general Tarski queries.
+
+For positive-degree `p`, the producer can reduce each query polynomial and
+subsequent product modulo `p`, keeping moment representatives of degree
+less than `n`. Record each reduction as
+
+```text
+u*(Gprev*H) = B*p + v*Gnext,     u>0, v>0,
+Gnext=0 or degree Gnext<n.
+```
+
+Here `H` is the next query factor (each occurring `eᵢ` times), or its
+previously certified reduction. Start from `Gprev=1`; a query-polynomial
+reduction is the same identity with that initial value. At every root of
+`p`, the signs of `Gnext` and `Gprev*H` agree. Induction therefore identifies
+the final Tarski query with the specified moment, even though positive
+scalings need not preserve the polynomial's value. Exact field remainders
+are the special case `u=v=1`. Positive pseudo-remainders reuse hex-poly's
+fallible routines without forcing inversion or monic normalization. Replay
+checks all intermediate identities, positive scales, degree bounds, factor
+indices and exponents. A negative or unverified scale is not admissible.
+No unreduced product must be expanded to check this chain. Nonzero constant
+`p` uses its certified zero root count instead of degree-`<0` remainders.
 
 For one polynomial, rows `0,1,2` and columns `-1,0,1` give
 
@@ -118,6 +142,13 @@ The full matrix is its tensor power (the empty-list matrix is `[1]`). A square
 system of dimension `r` carries an integer matrix `A` and integer `d≠0` with
 `A*M=d*Id`. Check this equality and literal `M*c=t` by integer arithmetic.
 This establishes uniqueness over the rationals, hence over integer counts.
+Reuse `Hex.Matrix.RankCert` and `checkRank` from
+[hex-rank](../../HexRank/Cert.lean) for row selection and nonsingular minors.
+The existing identity is `B*adj=denom*Id`, a right inverse, and its row/column
+indices may be permuted. The adapter must prove the permutation and
+left-inverse translation to `A*M=d*Id` (or check that identity directly);
+these formats are not literally identical. Rank certificates certify only
+linear algebra, never the completeness of sign support.
 Another witness format needs a proved equivalent checker. Matrix dimensions,
 indices, exponent ranges, distinct columns and exact count casts are checked
 before use. A claimed nonsingular submatrix alone establishes no completeness.
@@ -125,16 +156,20 @@ before use. A claimed nonsingular submatrix alone establishes no completeness.
 The producer uses a balanced binary split of the query list. Each replay node
 binds the exact ordered sublist, root domain and context, and carries:
 
-1. **Leaves:** the full ternary support and three query replays. An empty-list
-   root uses the one-condition system and the query of `1`.
-2. **Combination:** accepted complete child tables. Every realized parent
-   condition restricts to realized child conditions, hence lies in their
+1. **Leaf support:** the full ternary support and three query replays. An
+   empty-list root uses the one-condition system and the query of `1`.
+2. **Internal-node support:** accepted complete child tables. Every realized
+   parent condition restricts to realized child conditions, hence lies in their
    Cartesian product, in concatenation order. Carry the child certificates
-   and verify that the candidate columns are precisely that product.
-3. **Solve:** moment rows, their query replays, `M*c=t`, nonnegative integral
-   counts and the invertibility witness on this complete candidate support.
-4. **Reduction:** remove columns whose counts have just been certified zero.
-   Retain all positive columns. Select independent moment rows on the retained
+   and verify that the candidate columns are precisely that product. Check
+   that the parent's ordered query list is exactly the concatenation of the
+   child lists, and that both children's `p`, interval and coefficient context
+   are identical to the parent's. Duplicate query polynomials remain separate
+   indexed positions; no position may be omitted or reordered.
+3. **Solve (every node):** moment rows, their query replays, `M*c=t`,
+   nonnegative integral counts and the invertibility witness on this complete candidate support.
+4. **Reduction (every node):** remove columns whose counts have just been
+   certified zero. Retain all positive columns. Select independent moment rows on the retained
    columns and certify the resulting square matrix's invertibility for reuse
    by a parent. Row selection does not delete any positive column.
 
@@ -143,9 +178,8 @@ retained exponent rows at combination. Its candidate matrix is the tensor
 product of their invertible matrices, hence is invertible. After zero-column
 removal, the remaining columns are independent, so exact row selection can
 choose a square invertible minor. Query values for retained rows are reused;
-removed zero columns contribute nothing to their equations. Leaf reduction
-uses the same rule. This supplies a complete producer without enumerating
-all `3^s` conditions. It also specifies the row-rank existence obligation.
+removed zero columns contribute nothing to their equations. This supplies a
+complete producer without enumerating all `3^s` conditions. It also specifies the row-rank existence obligation.
 
 Any optimization that prunes *before* this solve must provide certified zero
 counts from an already complete table or a checked instance of a proved
@@ -168,7 +202,9 @@ For `n=degree P>0`, a raw `Descriptor` contains the coefficient context, `p`,
 signs `τ`. `p=0` is implicit at the selected root; it is not a derivative
 slot. A full descriptor uses every index `1,…,n`; a partial descriptor may
 use none. Derivatives mean formal iterated derivatives, without normalization
-or scaling that would change their signs. Validity is exactly
+or scaling that would change their signs. Keep index `n` even though its sign
+is constant across roots: it supplies the last sign used by Thom order.
+Validity is exactly
 
 ```text
 Valid(d) := Domain d.p d.I ∧ wellFormed(d.J,d.τ) ∧
@@ -198,6 +234,13 @@ Equal full encodings denote the same root, including across different valid
 intervals. These conclusions require valid realized encodings. Complete
 partial encodings before applying the rule; never apply lexicographic order
 to derivative arrays.
+
+The direct same-polynomial comparison path requires identical polynomial
+literals in the identical coefficient context. Otherwise use joint
+re-encoding, even if the literals happen to denote equal polynomials. A
+future semantic-equality shortcut must carry coefficientwise equality evidence
+and derivative-sign transport; structural inequality cannot prove semantic
+inequality.
 
 Different defining polynomials require joint re-encoding. For valid
 squarefree `p₁,p₂`, compute `h=p₁*p₂/gcd(p₁,p₂)` by checked exact division,
@@ -278,6 +321,7 @@ above and interpreted, context-valid inputs. They are planned obligations:
 | Statement | Required conclusion |
 | --- | --- |
 | `determine_correct` | `determineWith ... = ok T cert` implies `Domain p I` and `∀ σ, T.count σ = count(σ)`, including omitted conditions; hence nonnegative counts, exact total and complete support. |
+| `determine_invalid` | `determineWith ... = invalid reason` implies a certified invalid input context or, for valid contexts, `¬ Domain p I`. An internal invariant failure is `rejected`, never `invalid`. |
 | `Replay.check_sound` | Accepted replay implies the same semantic result for the bound table or descriptor operation, including recursive support completeness. |
 | `validate_correct` | Successful validation iff validity for the total adapter; bounded success implies validity and bounded invalidity certifies its negation or a malformed context. |
 | `complete_correct` | Completion preserves the unique root and supplies all its derivative signs. |
@@ -285,13 +329,14 @@ above and interpreted, context-valid inputs. They are planned obligations:
 | `signAt_correct`, `compare_correct` | Successful values equal evaluation sign and root comparison in `R`, respectively; `compare=eq` iff the selected roots coincide. |
 | `reencode_correct` | Successful re-encoding preserves the unique root, with target domain and membership established. |
 | `determine_isSome` | For total adapters, success iff `Domain p I` and all input representations are valid; analogous domain-exact theorems for the descriptor operations. |
+| `descriptor_invalid` | Each bounded descriptor operation returning `invalid` establishes its stated invalid-input predicate: malformed/context-incompatible inputs, failed validity, or failed target membership/domain for re-encoding. Exhaustion is not invalidity. |
 | `result_congr` | Successful semantic results are preserved under coefficient/context embeddings and certified polynomial/descriptor transports; transferring success also requires completeness/budget hypotheses. |
 
-The core proves finite matrix identities/uniqueness, literal replay plumbing,
+HexSignDet proves finite matrix identities/uniqueness, literal replay checks,
 structural termination, and support induction conditional on abstract moment,
 query and Thom contracts. The companion discharges these contracts and proves
 the headline root correspondence. Algebraic lemmas needing Mathlib structures
-belong in companions, even when executable arithmetic uses the matrix stack.
+belong in companions, even when executable arithmetic uses HexMatrix or HexRank.
 
 Use the [family's pinned audit and ownership table](../future-work.md#proof-ownership-and-public-surface),
 at Mathlib `1cf325a0cf67aca2b04d76b5380ff6a9e410aefa`:
@@ -302,7 +347,9 @@ at Mathlib `1cf325a0cf67aca2b04d76b5380ff6a9e410aefa`:
 | Shared query algorithm and literal replay | hex-real-roots, with the hex-sturm field frontend; `ZPoly.tarskiQuery`/`TarskiReplay` remain planned declarations, not available implementations. |
 | Abstract polynomial IVT, Rolle and signed-remainder/Cauchy-index identity | Tau Ceti import through hex-real-roots-mathlib, consumed via hex-sturm-mathlib's query/replay soundness. Include infinities, common gcd and zero remainder. Do not duplicate the primitive here. |
 | Moment identity | Tau Ceti to hex-sign-det-mathlib: actual finite root counts satisfy `t=M*c`, including `0^0=1`, empty lists and zero roots. |
-| Recursive BKR support reduction | Tau Ceti to hex-sign-det-mathlib: complete child supports cover the parent Cartesian product; certified reduction preserves every realized condition; independent columns admit a square row basis. Hex connects these abstract statements to the literal recursion, row selection and inverse witnesses. |
+| Recursive BKR support reduction | Tau Ceti to hex-sign-det-mathlib: the family contract for abstract support-preserving reductions, with explicit complete-input-support and reduction premises. Hex proves the elementary child-restriction/Cartesian-product step locally and connects reduction premises to literal evidence. |
+| Row selection and invertibility | Existing HexRank/HexRankMathlib certificates and row/column rank results. HexSignDet proves the permutation and inverse-format adapters. Square row-basis existence is linear algebra, not an additional Tau Ceti real-algebra import. |
+| Reduced moments | HexSignDet proves that the positive reduction identities preserve signs on roots, then hex-sign-det-mathlib applies hex-sturm's query semantics to obtain the specified unreduced moments. |
 | Thom injectivity and order | Tau Ceti to hex-sign-det-mathlib: full derivative encodings at roots are injective and satisfy the largest-differing-index rule above. Hex proves completion, count-one validity, joint re-encoding and comparison correspondence. |
 | Ambient real closed field | Ordered real-closure existence requested from Tau Ceti by the family, consumed by hex-real-closure-mathlib. The pin has neither that theorem nor `IsRealClosed ℝ`; the latter is owned by hex-real-roots-mathlib. Rational-base semantics can use Hex's existing `IsRealClosed RealAlgebraicNumber`. |
 
@@ -320,11 +367,21 @@ After solving, each node retains at most `N` columns and that many adapted
 rows. A combination has at most `N²` candidate columns/rows; a leaf has three.
 No-root evidence permits immediate empty output after input validation.
 Thus `O((s+1)(n+1)²)` distinct query slots suffice without sharing, and each
-moment polynomial has degree at most `2D`. Computing powers/products and
-validating stored coefficients must also be charged: for dense arithmetic a
-conservative per-moment bound is `O((s+1)(D+1)²)` coefficient operations,
-plus the hex-sturm bound for its query and its coefficient evidence. Use
-actual stored lengths for raw arrays with semantic leading zeros.
+unreduced moment polynomial has degree at most `2D`. For dense arithmetic,
+its conservative construction bound is `O((s+1)(D+1)²)` coefficient operations.
+For `n>0`, reduced moments have degree at most `min(2D,n-1)` unless zero.
+Initial exact field reductions of all query polynomials cost at most
+`O(n*(D+s+1))` coefficient operations. A conservative bound for dense
+pseudo-division also charges `O(∑ᵢ (degree Qᵢ+1)²)` for scaling growing
+quotients (zero polynomials contribute constant work). Reuse these reductions
+across moments. Each moment
+then needs at most `2s` reduced multiplications, costing
+`O((s+1)*n²)` coefficient operations, plus the hex-sturm query bound on a
+polynomial of degree `<n`. Include scale/sign evidence and coefficient-oracle
+costs separately. Production should use reduced products when degree growth
+would otherwise dominate; the unreduced method remains a reference and a
+small-input alternative with proved moment agreement. Use actual stored
+lengths for raw arrays with semantic leading zeros and charge validation too.
 
 At a node with candidate dimension `r`, classical exact elimination and
 inverse construction take `O(r³)` rational arithmetic operations. Selection
@@ -333,16 +390,24 @@ fit this bound. Literal inverse checking takes `O(r³)` integer operations,
 `M*c=t` takes `O(r²)`, and constructing entries costs at most `O(s*r²)` sign
 operations. These are arithmetic-operation bounds, not bit-complexity claims:
 report intermediate numerator/denominator bits, witness `A,d` bits, moment
-coefficient sizes and allocations. Descriptor completion uses at most `n`
-derivatives; cross-polynomial comparison uses `degree h≤n₁+n₂` and the extra
-old-constraint/endpoint query columns, with the same bounds. Count gcd,
-exact division, derivatives and target guards separately.
+coefficient sizes and allocations. For full derivative tables, `s=n`,
+`D=n*(n-1)/2` and `N≤n`. Thus the
+unreduced construction bound is `O(n⁵)` per moment, versus `O(n³)` for
+reduced products after preprocessing, with `O(n³)` query slots. For joint
+comparison let `m=n₁+n₂`; `degree h≤m`, `s=O(m)` and `D=O(m²)` including
+both old derivative lists, defining polynomials and at most four endpoint
+polynomials. The analogous bounds are `O(m⁵)` versus `O(m³)` per moment
+and `O(m³)` query slots. These are upper bounds, not tight estimates or a
+promise that matrix work is negligible. Count gcd, exact division,
+derivatives and target guards separately.
 
 Replay verifies only supplied literals and finite evidence; it does not rerun
 query production, gcd search, root isolation, row search or coefficient
 refinement. Reconstruct and check products, derivatives, selected rows,
-transport identities, domain evidence and every recursion edge. Check shape,
-size and reference bounds before allocation or multiplication. Supplied
+transport identities, domain evidence and every recursion edge, including
+parent/child list concatenation and identical domains/contexts. Reduced
+moments replay their finite reduction chains rather than expanded products.
+Check shape, size and reference bounds before allocation or multiplication. Supplied
 rational solutions alone are not certificates; the integer identities and
 support derivation remain necessary.
 
@@ -388,7 +453,9 @@ approximations never certify sign or identity. Required adversarial cases:
   passes both identities and total agreement. Reject its missing support
   evidence. Also mutate child products, zero-pruning counts, selected rows,
   exponents, `0^0`, inverse witnesses, negative/nonintegral counts and empty
-  supports lacking root-zero evidence.
+  supports lacking root-zero evidence. Reject repeated or wrong child sublists,
+  changed domains, bad reduction identities and nonpositive reduction scales;
+  compare reduced and unreduced moment values.
 - A full but unrealized encoding, a partial encoding matching zero or two
   roots, and an empty partial encoding in a certified singleton interval.
   For `p=x³-x`, roots `-1,0` have derivative vectors `(+,-,+)` and `(-,0,+)`:
@@ -398,7 +465,9 @@ approximations never certify sign or identity. Required adversarial cases:
   `x²-2` and `(x²-2)(x-3)` share a root and need gcd removal. Compare different
   partial/full encodings, overlapping intervals for equal roots and disjoint
   intervals for distinct roots, plus intervals whose endpoint is a root only
-  of the other polynomial.
+  of the other polynomial. Include distinct raw literals denoting equal
+  polynomials and nonzero scalar multiples, which must take the joint path
+  and return equal roots when their constraints select the same root.
 - Budget exhaustion in each layer, malformed or oversized literals, cyclic
   references, missing coefficient-sign evidence, foreign or stale contexts,
   and nested valid/rejected replays at several coefficient levels.
@@ -423,8 +492,10 @@ counts, matrix dimensions, peak coefficient/witness bits, certificate bytes,
 DAG edges, allocation and exhausted runs. Measure production and checking
 against the bounds above; successful cheap cases alone are not evidence.
 
-Reduced-versus-full solver correctness is gating; runtime comparison uses
-identical small inputs and separately shows reduced scaling on larger lists.
+Reduced-versus-full solver correctness is a required check. Runtime comparison
+uses identical small inputs and separately shows reduced-matrix scaling on larger
+lists. Compare unreduced and modulo-`p` moment construction on derivative and
+joint-encoding lists, including coefficient sizes and reduction replay costs.
 Z3 and python-flint end-to-end comparisons are informational where an exact
 matching operation is available; root isolation time must not be labelled
 matrix-solving time. No external oracle supplies a comparable Lean proof
@@ -439,6 +510,6 @@ obligations; this library supplies their sign-table/descriptor measurements.
 
 Use the shared host, automatic CPU selection, fixed trial-major schedules and
 adjacent alternating `AB`/`BA` comparisons. Retain every completed sample and
-allow at most one unchanged rerun after an inconclusive result. CI smoke
-verification is not Phase-4 performance evidence. No benchmark result, proof
+allow at most one unchanged rerun after an inconclusive result. The
+`bench verify` fast check is not Phase-4 performance evidence. No benchmark result, proof
 completion or phase advancement is claimed by this planned SPEC.

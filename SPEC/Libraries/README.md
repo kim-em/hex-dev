@@ -48,6 +48,8 @@
 - **hex-cyclotomic**: dense integer cyclotomic polynomials from a checked factorization of the index, the divisor family, and the factorization of `x^n - 1`
 - **hex-roots**: certified complex root isolation for `Z[x]` via dyadic squares, Pellet tests, and speculative Newton iteration
 - **hex-real-roots**: certified real root isolation for `Z[x]`: Sturm-count witnesses, a Descartes bisection search with a proven-complete Sturm fallback
+- **[hex-sturm](hex-sturm.md)** (planned): ordered-field Sturm–Tarski queries, coefficient evidence and root counts
+- **[hex-sign-det](hex-sign-det.md)** (planned): complete BKR sign tables, certified support reduction and Thom root descriptors
 - **hex-interval**: exact open, closed, empty, and unbounded dyadic intervals; a shared expression program; and a budgeted scheduler for propagation, refinement, and subdivision
 - **hex-interval-algebraic**: planned Mathlib-facing integration of interval facts with certified real and complex polynomial root isolation; `mathlib: true`
 - **[hex-real-formula](hex-real-formula.md)** (planned): shared multivariate real-arithmetic syntax, semantics, and reification; companion specified in the same file
@@ -183,6 +185,8 @@ Each library with its immediate dependencies:
 - **hex-cyclotomic**: hex-poly-z, hex-int-factor, hex-poly
 - **hex-roots**: hex-poly-z
 - **hex-real-roots**: hex-poly-z
+- **hex-sturm** (planned): hex-poly, hex-real-roots
+- **hex-sign-det** (planned): hex-sturm, hex-poly, hex-matrix, hex-row-reduce, hex-rank
 - **hex-interval**: (none)
 - **hex-interval-algebraic**: hex-interval-mathlib, hex-real-roots-mathlib, hex-roots-mathlib (mathlib: true)
 - **hex-real-formula** (planned): hex-mv-poly

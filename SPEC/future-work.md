@@ -1180,6 +1180,10 @@ hex-interval ─────────────> hex-ordered-fn   │      
 hex-real-algebraic ────────────────────────────────────────> hex-real-closure
 ```
 
+The additional matrix inputs to hex-sign-det are hex-matrix, hex-row-reduce
+and hex-rank; their companions supply the corresponding linear-algebra
+results. These existing inputs do not depend on the real-closure family.
+
 Each companion imports its computational library and the companions of the
 computational dependencies it uses, plus Mathlib. Only companions may import
 Tau Ceti. There is no reverse dependency from `hex-poly`, `hex-rational-fn`,
