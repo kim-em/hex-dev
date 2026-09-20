@@ -66,8 +66,9 @@ All raw pairs (A = matched baseline; B = candidate):
 | parameterized | 3 | AB | 3746.05 | 3702.38 | -43.67 |
 | parameterized | 4 | BA | 3159.40 | 2467.04 | -692.36 |
 
-The parameterized pair has both negative and positive deltas, so these samples
-do not resolve a stable positive reification overhead. Every pair is retained.
+The adapter deltas change sign, and all parameterized deltas are negative.
+These samples do not resolve a positive overhead for those pairs, and the
+negative deltas are not evidence of a speedup. Every pair is retained.
 
 Every candidate theorem's reported axiom set is exactly
 `[propext, Classical.choice, Quot.sound]`. The raw artifact retains compiler

@@ -109,10 +109,10 @@ private def malformed : FactorSearch := fun _ n r =>
   [(5, 2, .small 2), (2, 0, .small 223), (2, 0, .small 4153)])
 
 /--
-error: primality?: input has 513 bits; construction limit is 512 bits
+error: primality?: input has 522 bits; construction limit is 521 bits
 -/
 #guard_msgs in
-example : Hex.Nat.Prime 13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084096 := by primality?
+example : Hex.Nat.Prime 6864797660130609714981900799081393217269435300143305409394463459185543183397656052122559640661454554977296311391480858037121987999716643812574028291115057152 := by primality?
 
 private def rejects (raw : PartialFactors) : Bool :=
   match Construction.run curveInput (Hex.Rand.ofSeed 19)
@@ -180,7 +180,7 @@ end Shadow
   | _ => false)
 
 /--
-error: primality?: certificate construction for 57896044618658097711785492504343953926634992332820282019728792003956564819949 exhausted after 1 attempts (seed 57896044618658097711785492504343953926634992332820282019728792003956564819949; maximum 512 bits, recursive depth 32, total attempts 1, factor fuel 1024, p-minus-one bounds [64, 512, 4096, 32768, 262144, 524288] at bases [2, 3], 2 rho restarts with 32768 steps, ECM bounds [] and 0 curves, witness bases [2, 3, 5, 7, 11, 13, 17] then 32 random candidates, at most 12 factors and 4096 subsets, sieve bound at most 64)
+error: primality?: certificate construction for 57896044618658097711785492504343953926634992332820282019728792003956564819949 exhausted after 1 attempts (seed 57896044618658097711785492504343953926634992332820282019728792003956564819949; maximum 521 bits, recursive depth 32, total attempts 1, factor fuel 1024, p-minus-one bounds [64, 512, 4096, 32768, 262144, 524288] at bases [2, 3], 2 rho restarts with 32768 steps, ECM bounds [] and 0 curves, witness bases [2, 3, 5, 7, 11, 13, 17] then 32 random candidates, at most 32 factors and 4096 subsets, sieve bound at most 64)
 -/
 #guard_msgs in
 example : Hex.Nat.Prime (2 ^ 255 - 19) := by primality? (maxAttempts := 1)
@@ -366,3 +366,39 @@ but is expected to have type
 -/
 #guard_msgs in
 example : Hex.Nat.Prime 17 := by primality? using (42 : Nat)
+
+-- The 521-bit boundary must reach construction; the next bit remains rejected.
+set_option maxRecDepth 1024 in
+set_option exponentiation.threshold 521 in
+/--
+info: Try this:
+  [apply] exact
+    Hex.Nat.prime_of_checkPrimeAt (c :=
+      Hex.Nat.PrimeCert.pock
+        6864797660130609714981900799081393217269435300143305409394463459185543183397656052122559640661454554977296311391480858037121987999716643812574028291115057151
+        [(3, 0, Hex.Nat.PrimeCert.small 2), (3, 0, Hex.Nat.PrimeCert.small 3), (3, 1, Hex.Nat.PrimeCert.small 5),
+          (3, 0, Hex.Nat.PrimeCert.small 11), (3, 0, Hex.Nat.PrimeCert.small 17), (3, 0, Hex.Nat.PrimeCert.small 31),
+          (3, 0, Hex.Nat.PrimeCert.small 41), (3, 0, Hex.Nat.PrimeCert.small 53), (3, 0, Hex.Nat.PrimeCert.small 131),
+          (3, 0, Hex.Nat.PrimeCert.small 157), (2, 0, Hex.Nat.PrimeCert.small 521),
+          (3, 0, Hex.Nat.PrimeCert.small 1613), (3, 0, Hex.Nat.PrimeCert.small 2731),
+          (3, 0, Hex.Nat.PrimeCert.small 8191), (3, 0, Hex.Nat.PrimeCert.small 42641),
+          (3, 0, Hex.Nat.PrimeCert.small 51481), (3, 0, Hex.Nat.PrimeCert.small 61681),
+          (3, 0, Hex.Nat.PrimeCert.pock 409891 [(3, 0, Hex.Nat.PrimeCert.small 1051)]),
+          (3, 0, Hex.Nat.PrimeCert.pock 858001 [(3, 2, Hex.Nat.PrimeCert.small 5), (2, 0, Hex.Nat.PrimeCert.small 13)]),
+          (3, 0,
+            Hex.Nat.PrimeCert.pock 5746001 [(3, 1, Hex.Nat.PrimeCert.small 13), (3, 0, Hex.Nat.PrimeCert.small 17)]),
+          (3, 0,
+            Hex.Nat.PrimeCert.pock 7623851 [(3, 0, Hex.Nat.PrimeCert.small 37), (3, 0, Hex.Nat.PrimeCert.small 317)]),
+          (3, 0,
+            Hex.Nat.PrimeCert.pock 34110701 [(3, 0, Hex.Nat.PrimeCert.small 19), (3, 0, Hex.Nat.PrimeCert.small 1381)]),
+          (3, 0, Hex.Nat.PrimeCert.pock 308761441 [(3, 0, Hex.Nat.PrimeCert.small 49481)]),
+          (3, 0,
+            Hex.Nat.PrimeCert.pock 2400573761
+              [(3, 0, Hex.Nat.PrimeCert.small 347), (3, 0, Hex.Nat.PrimeCert.small 1663)]),
+          (3, 0,
+            Hex.Nat.PrimeCert.pock 108140989558681
+              [(3, 0, Hex.Nat.PrimeCert.small 1433), (3, 0, Hex.Nat.PrimeCert.small 23609)])])
+      (by decide +kernel)
+-/
+#guard_msgs in
+example : Hex.Nat.Prime (2 ^ 521 - 1) := by primality?
