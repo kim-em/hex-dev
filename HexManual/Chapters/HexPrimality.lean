@@ -357,12 +357,13 @@ tag := "hex-primality-reach"
 What the certificate tier can do depends on how much of `n - 1` the
 untrusted search can factor:
 
-* The supported elaboration ceiling is 512 bits. The release probes include
+* Ordinary `primality` has a 512-bit ceiling; reusable `primality?`
+  construction has a 521-bit ceiling and constructs P-521. The release probes include
   table-smooth certificates from 31 through 511 bits and a 512-bit certificate
   whose search discovers an above-table factor with bounded rho work.
 * The bounded search reports exhaustion rather than claiming compositeness. A
   separate 512-bit probable-prime probe exercises this path, while a 513-bit
-  input is rejected before search begins.
+  input is rejected by ordinary `primality` before search begins.
 * Negative answers are conclusive only when a size check, table lookup, exact
   trial decision, or one of the thirteen fixed Miller-Rabin bases supplies a
   witness. Passing all fixed bases is not itself a primality result.

@@ -331,5 +331,66 @@
   "invalid_proof_probe": {
     "reason": "Rendering command used a reserved identifier; failed build, excluded from performance conclusions",
     "direct_kernel_ns": 154893918
-  }
+  },
+  "predecessor_factor_validation": [
+    {
+      "command": [
+        ".lake/build/bin/hexprimality_field_probe",
+        "validate",
+        "132896956044521568488118",
+        "2",
+        "3",
+        "22149492674086928081353"
+      ],
+      "stdout": "{\"valid_factorization\":true}\n",
+      "returncode": 0
+    },
+    {
+      "command": [
+        ".lake/build/bin/hexprimality_field_probe",
+        "validate",
+        "255515944373312847190720520512484175976",
+        "7240687",
+        "107590001",
+        "327994317642041349809048"
+      ],
+      "stdout": "{\"valid_factorization\":true}\n",
+      "returncode": 0
+    },
+    {
+      "command": [
+        ".lake/build/bin/hexprimality_field_probe",
+        "validate",
+        "807145746438",
+        "2",
+        "3",
+        "47",
+        "2862218959"
+      ],
+      "stdout": "{\"valid_factorization\":true}\n",
+      "returncode": 0
+    },
+    {
+      "command": [
+        ".lake/build/bin/hexprimality_field_probe",
+        "validate",
+        "1469495262398780123808",
+        "3402277943",
+        "431915113056"
+      ],
+      "stdout": "{\"valid_factorization\":true}\n",
+      "returncode": 0
+    },
+    {
+      "command": [
+        ".lake/build/bin/hexprimality_field_probe",
+        "validate",
+        "167773885276849215533568",
+        "97859369123353",
+        "1714438656"
+      ],
+      "stdout": "{\"valid_factorization\":true}\n",
+      "returncode": 0
+    }
+  ]
 }

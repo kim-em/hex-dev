@@ -43,6 +43,14 @@ FACTORIZATIONS = {
     'Curve448': [1469495262398780123809, 167773885276849215533569,
                  596242599987116128415063, 37414057161322375957408148834323969],
 }
+FAILURE = {
+    'name': 'many-factor-exhaustion',
+    'n': '325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771',
+    'bits': 507,
+    'predecessor_factors': [117288381359406970983270,
+        52656145834278593348959013841835216159447547700274555627155501281,
+        52656145834278593348959013841835216159447547700274555627155534071],
+}
 ARMS = {'before': (512, 12, 32768), 'after': (521, 32, 32768)}
 
 
@@ -74,6 +82,8 @@ def main() -> None:
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--blocks', type=int, default=2)
     parser.add_argument('--diagnostics', action='store_true')
+    parser.add_argument('--failure-only', action='store_true',
+                        help='measure the fixed 18-factor truncated-enumeration failure')
     args = parser.parse_args()
     if args.output.exists() or args.blocks < 2 or args.blocks % 2:
         parser.error('use a new output path and an even block count >= 2')
@@ -94,7 +104,7 @@ def main() -> None:
                   timing='native construction includes self-check, excludes formatting; '
                          'render/elaboration excludes proof replay; direct kernel recheck expands '
                          'local dependencies and drains pending checks; see probe sources',
-                  arms=ARMS, cases=corpus(), samples=[])
+                  arms=ARMS, cases=[FAILURE] if args.failure_only else corpus(), samples=[])
     args.output.parent.mkdir(parents=True, exist_ok=True)
 
     def save():
@@ -130,6 +140,14 @@ def main() -> None:
                         if previous != cert:
                             raise RuntimeError('unstable certificate')
                     print(block, name, arm, row['result']['status'], flush=True)
+                before = certs.get((name, 'before'))
+                after = certs.get((name, 'after'))
+                if before is not None and after is not None:
+                    same = before == after
+                    record.setdefault('certificate_agreement', {})[name] = same
+                    save()
+                    if not same:
+                        raise RuntimeError(f'certificate changed across policy arms: {name}')
                 for arm in order:
                     cert = certs.get((name, arm))
                     if cert is None:
@@ -145,6 +163,11 @@ def main() -> None:
                     row['source_bytes'] = len(source.encode())
                     row['olean_bytes'] = artifact.stat().st_size
                     save()
+        if args.failure_only:
+            run([PROBE, 'validate', int(FAILURE['n']) - 1, *FAILURE['predecessor_factors']],
+                phase='factor-validation', case=FAILURE['name'])
+            run([PROBE, 'trace', FAILURE['n'], *ARMS['after']],
+                phase='trace', case=FAILURE['name'], arm='after')
         if args.diagnostics:
             record['diagnostic_factorizations'] = FACTORIZATIONS
             for name, factors in FACTORIZATIONS.items():

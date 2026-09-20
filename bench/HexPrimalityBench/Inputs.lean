@@ -173,4 +173,6 @@ def p521 : Input where
           108140989558681
           [(3, 0, Hex.Nat.PrimeCert.small 1433), (3, 0, Hex.Nat.PrimeCert.small 23609)])]
 
+#guard checkPrime p521.cert && p521.cert.subject == p521.n
+
 end Hex.PrimalityBench

@@ -31,7 +31,12 @@ It retains every completed sample, host load, source hashes, executable hash,
 commands, output, certificates, and generated proof sources. There is no
 activity rejection or unchanged rerun. The before arm explicitly uses
 `(maxBits, maxFactors, rhoSteps) = (512, 12, 32768)`; the after arm uses
-`(521, 32, 32768)` in the same compiled implementation. These two fields are
+`(521, 32, 32768)` in the same compiled implementation. The original record's `commit` identifies the checkout's baseline parent,
+`cc2baf89e`; the measurements were collected with uncommitted source changes.
+Its `source_sha256` fields identify the measured sources, which are preserved
+in commit `58145c768` (including the original sweep driver). Later driver
+changes add cross-arm certificate assertions and the separate failure case;
+they do not change the timed operations. These two budget fields are
 the entire production change, so this also controls compiler/build differences.
 
 Native construction includes its final compiled self-check, but excludes
@@ -205,7 +210,8 @@ inflate the current budgets speculatively.
 
 ## Paired performance results
 
-The table below reports medians of the two retained samples per arm.
+The table below reports means of the two retained samples per arm (also their
+two-sample medians), rounded to three significant figures.
 Construction and replay remain separate observations; the former already
 includes one compiled self-check. Exact samples and source sizes are in the
 linked JSON record. The eight previously constructed certificates are
@@ -213,18 +219,18 @@ identical across policy arms.
 
 | Input | Search before (ms) | Search after (ms) | Render/elab before → after (ms) | Kernel replay before → after (ms) |
 |---|---:|---:|---:|---:|
-| family-31 | 0.182 | 0.179 | 2.358 → 2.140 | 0.796 → 0.805 |
-| family-61 | 0.205 | 0.207 | 1.804 → 1.549 | 0.692 → 0.813 |
-| family-123 | 0.930 | 0.934 | 1.794 → 1.724 | 1.441 → 1.131 |
-| family-256 | 2.268 | 2.320 | 1.833 → 1.885 | 2.119 → 2.098 |
-| family-511 | 5.443 | 5.432 | 2.013 → 1.917 | 4.603 → 4.177 |
-| family-512 | 15.721 | 16.471 | 2.675 → 2.774 | 4.363 → 5.021 |
-| Curve25519 | 581.821 | 592.253 | 7.039 → 6.428 | 13.087 → 8.683 |
-| secp256k1 | 15106.964 (exhausted) | 15250.453 (exhausted) | — → — | — → — |
-| P-256 | 23.795 | 22.464 | 7.361 → 6.174 | 20.484 → 19.072 |
-| P-384 | 1114.066 (exhausted) | 1124.615 (exhausted) | — → — | — → — |
-| Curve448 | 1697.704 (exhausted) | 1336.687 (exhausted) | — → — | — → — |
-| P-521 | bit rejection | 1473.747 | — → 13.856 | — → 53.576 |
+| family-31 | 0.182 | 0.179 | 2.36 → 2.14 | 0.796 → 0.805 |
+| family-61 | 0.205 | 0.207 | 1.8 → 1.55 | 0.692 → 0.813 |
+| family-123 | 0.93 | 0.934 | 1.79 → 1.72 | 1.44 → 1.13 |
+| family-256 | 2.27 | 2.32 | 1.83 → 1.89 | 2.12 → 2.1 |
+| family-511 | 5.44 | 5.43 | 2.01 → 1.92 | 4.6 → 4.18 |
+| family-512 | 15.7 | 16.5 | 2.67 → 2.77 | 4.36 → 5.02 |
+| Curve25519 | 582 | 592 | 7.04 → 6.43 | 13.1 → 8.68 |
+| secp256k1 | 1.51e+04 (exhausted) | 1.53e+04 (exhausted) | — → — | — → — |
+| P-256 | 23.8 | 22.5 | 7.36 → 6.17 | 20.5 → 19.1 |
+| P-384 | 1.11e+03 (exhausted) | 1.12e+03 (exhausted) | — → — | — → — |
+| Curve448 | 1.7e+03 (exhausted) | 1.34e+03 (exhausted) | — → — | — → — |
+| P-521 | bit rejection | 1.47e+03 | — → 13.9 | — → 53.6 |
 
 P-521 construction takes 1566.351 / 1381.142 ms; compiled checker replay
 takes 12.451 / 11.456 ms, rendering/elaboration 14.371 / 13.341 ms, and

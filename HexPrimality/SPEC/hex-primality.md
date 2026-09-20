@@ -2037,7 +2037,8 @@ The 521-bit and 32-factor limits admit P-521 using the existing factoring
 portfolio: its predecessor yields 25 candidates in 94 factor attempts, and
 construction succeeds in 170 total attempts. Enumeration remains capped at
 4096 subsets; when truncated, it includes the full factor mask. These limits
-are a measured policy, not a completeness claim. The 522-bit boundary remains
+are a measured policy, not a completeness claim: 521 is the largest input
+width covered by the accepted construction measurements. The 522-bit boundary remains
 rejected. Writing P-521 as `2 ^ 521 - 1` needs local
 `maxRecDepth = 1024` and `exponentiation.threshold = 521` for Lean to normalize
 the original goal; the numeral and certificate replay use default limits.
@@ -2047,8 +2048,15 @@ in [the standard-field report](../../reports/hex-primality-fields.md).
 
 All limits are explicit; exhaustion reports the full profile and exact attempt
 count. Table division, primality screening, and subset enumeration are bounded
-work but are not semantic attempts. Every stage-one call, enabled stage-two
-continuation, rho restart, and
+work but are not semantic attempts. Each node can enumerate subsets twice
+(cheap table factors, then the provider result). Each pass examines at most
+`maxSubsets` masks, with at most `maxFactors` bounded product multiplications
+and at most `maxSieveBound - 1` divisor checks per mask, plus at most
+`maxFactors` child-cost estimates before enumeration. The estimates use table
+division and one sufficiency check each; they do not recurse. These finite
+costs remain outside `maxAttempts`. The standard-field report includes a
+507-bit exhausted case with 18 factors to measure the truncated scans.
+Every stage-one call, enabled stage-two continuation, rho restart, and
 witness candidate is counted, including work discarded by unsuccessful subset
 choices. Deterministic work leaves `Rand` unchanged. Construction uses no
 external factorizer and no total trial-division fallback.
