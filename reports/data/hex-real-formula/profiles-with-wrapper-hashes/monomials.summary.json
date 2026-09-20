@@ -1,0 +1,348 @@
+{
+  "allocation_share_percent": 1.39,
+  "classified_percent": 100.0,
+  "diagnostics": {
+    "bench_pid": 1855028,
+    "bench_thread_name": "hexrealformula_",
+    "bench_thread_tid": "1855038",
+    "calibration": {
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "boundary_residual_raw_max_ms": null,
+          "boundary_residual_trimmed_max_ms": null,
+          "hit_count": 0,
+          "regions_without_samples": 1,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "boundary_residual_raw_max_ms": 0.3803969621658325,
+          "boundary_residual_trimmed_max_ms": 0.2900969982147217,
+          "hit_count": 360,
+          "regions_without_samples": 0,
+          "within_residual_limit": true
+        }
+      },
+      "configured_max_residual_ms": 5.0,
+      "effective_max_residual_ms": 5.0,
+      "raw_max_residual_ms": 0.3803969621658325,
+      "residual_ms": 0.2900969982147217,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "sample_interval_ms": 1.001001,
+      "selected_mode": "relative-to-meta-start-ms",
+      "within_residual_limit": true
+    },
+    "calibration_max_residual_ms": 5.0,
+    "calibration_residual_ms": 0.2900969982147217,
+    "confidence": "passed",
+    "expected_samples_bench_thread": 719.6,
+    "low_confidence_reasons": [],
+    "minimum_retained_samples": 100,
+    "off_bench_thread_samples_in_window": 0,
+    "regions_total": 1,
+    "rejected_samples_bench_thread": 6,
+    "retained_samples_bench_thread": 360,
+    "samply_interval_ms": 1.001001,
+    "samply_meta_start_time_ms": 1789901007051.1748,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "schema": 2,
+    "sensitivity": {
+      "cases": {
+        "minus": {
+          "retained_samples": 358,
+          "shift_ms": -5.0,
+          "top_leaf_functions": [
+            {
+              "function": 35,
+              "name": "0xba79d0",
+              "samples": 38
+            },
+            {
+              "function": 37,
+              "name": "0x4b08a0f",
+              "samples": 35
+            },
+            {
+              "function": 32,
+              "name": "0xba7a1a",
+              "samples": 20
+            }
+          ]
+        },
+        "nominal": {
+          "retained_samples": 360,
+          "shift_ms": 0.0,
+          "top_leaf_functions": [
+            {
+              "function": 35,
+              "name": "0xba79d0",
+              "samples": 38
+            },
+            {
+              "function": 37,
+              "name": "0x4b08a0f",
+              "samples": 35
+            },
+            {
+              "function": 32,
+              "name": "0xba7a1a",
+              "samples": 20
+            }
+          ]
+        },
+        "plus": {
+          "retained_samples": 357,
+          "shift_ms": 5.0,
+          "top_leaf_functions": [
+            {
+              "function": 35,
+              "name": "0xba79d0",
+              "samples": 38
+            },
+            {
+              "function": 37,
+              "name": "0x4b08a0f",
+              "samples": 35
+            },
+            {
+              "function": 32,
+              "name": "0xba7a1a",
+              "samples": 20
+            }
+          ]
+        }
+      },
+      "comparisons": {
+        "minus": {
+          "comparison_samples": 358,
+          "effective_max_total_variation_distance": 0.1,
+          "exchanged_fraction": 0.00558659217877095,
+          "exchanged_samples": 2,
+          "failure_reasons": [],
+          "leaf_function_support_size": 81,
+          "maximum_sampling_noise_allowance": 0.5,
+          "noise_allowance_discriminating": true,
+          "sample_count_adequate": true,
+          "sampling_noise_allowance": 0.030167597765363128,
+          "total_variation_distance": 0.00555555555555555,
+          "verdict": "passed"
+        },
+        "plus": {
+          "comparison_samples": 357,
+          "effective_max_total_variation_distance": 0.1,
+          "exchanged_fraction": 0.008403361344537815,
+          "exchanged_samples": 3,
+          "failure_reasons": [],
+          "leaf_function_support_size": 81,
+          "maximum_sampling_noise_allowance": 0.5,
+          "noise_allowance_discriminating": true,
+          "sample_count_adequate": true,
+          "sampling_noise_allowance": 0.03705110535302286,
+          "total_variation_distance": 0.007983193277310924,
+          "verdict": "passed"
+        }
+      },
+      "configured_max_total_variation_distance": 0.1,
+      "leaf_function_distributions_stable": true,
+      "maximum_sampling_noise_allowance": 0.5,
+      "minimum_comparison_samples": 100,
+      "reported_top_function_count": 3,
+      "sampling_noise_coefficient": 0.6,
+      "shift_ms": 5.0,
+      "verdict": "passed"
+    },
+    "sidecar_mono_anchor_ns": 872117466692559,
+    "spawn_anchor_mono_ns": 872117193275140,
+    "spawn_anchor_wall_ns": 1789901006991610256,
+    "stage": "complete",
+    "total_timed_ms": 720.305622
+  },
+  "inclusive_hex": [
+    {
+      "function": "Hex.MvPoly.Kernel.insert",
+      "percent": 97.5
+    },
+    {
+      "function": "Hex.MvPoly.Kernel.expCmp",
+      "percent": 39.72
+    },
+    {
+      "function": "Hex.MvPoly.Kernel.normalize",
+      "percent": 2.5
+    },
+    {
+      "function": "Hex.MvPoly.Kernel.denote",
+      "percent": 2.22
+    },
+    {
+      "function": "Hex.Mono.lex",
+      "percent": 0.83
+    }
+  ],
+  "leaf_categories": {
+    "allocation": 1.39,
+    "lean-own-code": 77.5,
+    "lean-runtime": 21.11
+  },
+  "profile": "/tmp/rf-perf-monomials/filtered.json.gz",
+  "samples": 360,
+  "symbols": "/tmp/rf-perf-monomials/symbols.json",
+  "top_inclusive": [
+    {
+      "function": "Hex.MvPoly.Kernel.insert",
+      "percent": 97.5
+    },
+    {
+      "function": "Hex.MvPoly.Kernel.expCmp",
+      "percent": 39.72
+    },
+    {
+      "function": "Nat.blt",
+      "percent": 20.56
+    },
+    {
+      "function": "Hex.MvPoly.Kernel.normalize",
+      "percent": 2.5
+    },
+    {
+      "function": "Hex.MvPoly.Kernel.denote",
+      "percent": 2.22
+    },
+    {
+      "function": "Std.DTreeMap.Internal.Impl.foldlM",
+      "percent": 1.67
+    },
+    {
+      "function": "Std.DTreeMap.Internal.Impl.Const.alter",
+      "percent": 1.67
+    },
+    {
+      "function": "lean_apply_4",
+      "percent": 1.67
+    },
+    {
+      "function": "lean_apply_1",
+      "percent": 1.67
+    },
+    {
+      "function": "lean_apply_3",
+      "percent": 1.67
+    },
+    {
+      "function": "lean_apply_2",
+      "percent": 1.11
+    },
+    {
+      "function": "Hex.Mono.lex",
+      "percent": 0.83
+    },
+    {
+      "function": "lean_dec_ref_cold",
+      "percent": 0.83
+    },
+    {
+      "function": "mi_free",
+      "percent": 0.83
+    },
+    {
+      "function": "mi_malloc_small",
+      "percent": 0.56
+    },
+    {
+      "function": "Std.DTreeMap.Internal.Impl.balance",
+      "percent": 0.56
+    },
+    {
+      "function": "Std.ExtTreeMap.mergeWith?",
+      "percent": 0.28
+    },
+    {
+      "function": "lean_array_to_list_impl",
+      "percent": 0.28
+    },
+    {
+      "function": "lean_alloc_ctor",
+      "percent": 0.28
+    },
+    {
+      "function": "lean-bench.LeanBench.kernelLoop",
+      "percent": 0.28
+    }
+  ],
+  "top_self": [
+    {
+      "function": "Hex.MvPoly.Kernel.insert",
+      "percent": 57.78
+    },
+    {
+      "function": "Nat.blt",
+      "percent": 20.56
+    },
+    {
+      "function": "Hex.MvPoly.Kernel.expCmp",
+      "percent": 19.17
+    },
+    {
+      "function": "mi_free",
+      "percent": 0.83
+    },
+    {
+      "function": "mi_malloc_small",
+      "percent": 0.56
+    },
+    {
+      "function": "Hex.MvPoly.Kernel.denote",
+      "percent": 0.28
+    },
+    {
+      "function": "Hex.Mono.lex",
+      "percent": 0.28
+    },
+    {
+      "function": "lean_dec_ref_cold",
+      "percent": 0.28
+    },
+    {
+      "function": "Std.DTreeMap.Internal.Impl.balance",
+      "percent": 0.28
+    }
+  ],
+  "top_self_undecorated": [
+    {
+      "percent": 57.78,
+      "symbol": "Hex.MvPoly.Kernel.insert_.at_.00Hex.MvPoly.Kernel.normalize_.at_.00Hex.RealFormula.Kernel.Body.decode.spec_1.spec_1"
+    },
+    {
+      "percent": 20.56,
+      "symbol": "Nat.blt"
+    },
+    {
+      "percent": 19.17,
+      "symbol": "Hex.MvPoly.Kernel.expCmp"
+    },
+    {
+      "percent": 0.83,
+      "symbol": "mi_free"
+    },
+    {
+      "percent": 0.56,
+      "symbol": "mi_malloc_small"
+    },
+    {
+      "percent": 0.28,
+      "symbol": "Hex.MvPoly.Kernel.denote_.at_.00Hex.RealFormula.Kernel.Body.decode.spec_2_.redArg"
+    },
+    {
+      "percent": 0.28,
+      "symbol": "Hex.Mono.lex_.boxed"
+    },
+    {
+      "percent": 0.28,
+      "symbol": "lean_dec_ref_cold"
+    },
+    {
+      "percent": 0.28,
+      "symbol": "Std.DTreeMap.Internal.Impl.balance_.redArg"
+    }
+  ],
+  "unresolved_leaf_percent": 0.0
+}

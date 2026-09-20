@@ -1,0 +1,369 @@
+{
+  "family": "arity",
+  "function": "Hex.RealFormula.Bench.evalArity",
+  "parameter": 2048,
+  "cpu": 84,
+  "load": [
+    42.8349609375,
+    49.90283203125,
+    49.05419921875
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "raw": "/tmp/rf-perf-final-arity",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/tmp/hex-real-formula-lean-bench-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "999",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/tmp/rf-perf-final-arity/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/tmp/rf-perf-final-arity/timed-%p.jsonl",
+        "/home/kim/worktrees/hex-dev/hex-dev-hex-real-formula/.lake/build/bin/hexrealformula_bench",
+        "profile",
+        "Hex.RealFormula.Bench.evalArity",
+        "--param",
+        "2048",
+        "--target-inner-nanos",
+        "1000000000",
+        "--profiler",
+        "env"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/tmp/rf-perf-final-arity/samply.json.gz",
+        "/tmp/rf-perf-final-arity/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/tmp/rf-perf-final-arity/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/normalize_perf.py",
+        "--profile",
+        "/tmp/rf-perf-final-arity/samply.json.gz",
+        "--perf-script",
+        "/tmp/rf-perf-final-arity/perf-samples.txt",
+        "--spawn-anchor",
+        "/tmp/rf-perf-final-arity/spawn-anchor.json",
+        "--output",
+        "/tmp/rf-perf-final-arity/normalized.json.gz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "/tmp/hex-real-formula-lean-bench-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/tmp/rf-perf-final-arity/normalized.json.gz",
+        "--sidecar",
+        "/tmp/rf-perf-final-arity/timed-2004552.jsonl",
+        "--spawn-anchor",
+        "/tmp/rf-perf-final-arity/spawn-anchor.json",
+        "--out",
+        "/tmp/rf-perf-final-arity/filtered.json.gz",
+        "--diagnostics",
+        "/tmp/rf-perf-final-arity/diagnostics.json",
+        "--label-filter",
+        "kernel"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/elf_symbols.py",
+        "/tmp/rf-perf-final-arity/filtered.json.gz",
+        "--output",
+        "/tmp/rf-perf-final-arity/symbols.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/summarize_profile.py",
+        "/tmp/rf-perf-final-arity/filtered.json.gz",
+        "--symbols",
+        "/tmp/rf-perf-final-arity/symbols.json",
+        "--diagnostics",
+        "/tmp/rf-perf-final-arity/diagnostics.json",
+        "--thread",
+        "hexrealformula_",
+        "--top",
+        "20",
+        "--output",
+        "reports/data/hex-real-formula/profiles/arity.summary.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "executable_sha256": "a5e0391054a405a58495d6cc1a982df504b2435cbf44d7c6b1c087a23ff57ecc",
+  "commit": "72a5c75ffecdec60d53375c458abcdc59823b571",
+  "dirty": true,
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.1.5",
+  "status": "profiled",
+  "diagnostics": {
+    "schema": 2,
+    "stage": "complete",
+    "confidence": "passed",
+    "low_confidence_reasons": [],
+    "bench_pid": 2004552,
+    "bench_thread_name": "hexrealformula_",
+    "bench_thread_tid": "2004590",
+    "regions_total": 1031,
+    "total_timed_ms": 931.666177,
+    "expected_samples_bench_thread": 930.7,
+    "retained_samples_bench_thread": 933,
+    "rejected_samples_bench_thread": 5,
+    "off_bench_thread_samples_in_window": 0,
+    "samply_interval_ms": 1.001001,
+    "spawn_anchor_wall_ns": 1789901586390146928,
+    "spawn_anchor_mono_ns": 872696591811812,
+    "sidecar_mono_anchor_ns": 872696758116298,
+    "samply_meta_start_time_ms": 1789901586423.7468,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "calibration_residual_ms": 0.9877989292144775,
+    "calibration_max_residual_ms": 5.0,
+    "calibration": {
+      "selected_mode": "relative-to-meta-start-ms",
+      "residual_ms": 0.9877989292144775,
+      "raw_max_residual_ms": 0.9893569946289062,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "configured_max_residual_ms": 5.0,
+      "sample_interval_ms": 1.001001,
+      "effective_max_residual_ms": 5.0,
+      "within_residual_limit": true,
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "hit_count": 0,
+          "regions_without_samples": 1031,
+          "boundary_residual_trimmed_max_ms": null,
+          "boundary_residual_raw_max_ms": null,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "hit_count": 933,
+          "regions_without_samples": 123,
+          "boundary_residual_trimmed_max_ms": 0.9877989292144775,
+          "boundary_residual_raw_max_ms": 0.9893569946289062,
+          "within_residual_limit": true
+        }
+      }
+    },
+    "minimum_retained_samples": 100,
+    "sensitivity": {
+      "shift_ms": 5.0,
+      "reported_top_function_count": 3,
+      "configured_max_total_variation_distance": 0.1,
+      "sampling_noise_coefficient": 0.6,
+      "minimum_comparison_samples": 100,
+      "maximum_sampling_noise_allowance": 0.5,
+      "verdict": "passed",
+      "leaf_function_distributions_stable": true,
+      "comparisons": {
+        "minus": {
+          "total_variation_distance": 0.0073601575852379735,
+          "leaf_function_support_size": 259,
+          "comparison_samples": 925,
+          "exchanged_samples": 8,
+          "exchanged_fraction": 0.008648648648648649,
+          "sampling_noise_allowance": 0.04175604827528064,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        },
+        "plus": {
+          "total_variation_distance": 0.008953050481966736,
+          "leaf_function_support_size": 259,
+          "comparison_samples": 923,
+          "exchanged_samples": 10,
+          "exchanged_fraction": 0.010834236186348862,
+          "sampling_noise_allowance": 0.04678583978014279,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        }
+      },
+      "cases": {
+        "minus": {
+          "shift_ms": -5.0,
+          "retained_samples": 925,
+          "top_leaf_functions": [
+            {
+              "function": 72,
+              "name": "0xaef3c",
+              "samples": 74
+            },
+            {
+              "function": 54,
+              "name": "0xae923",
+              "samples": 40
+            },
+            {
+              "function": 56,
+              "name": "0xae8e9",
+              "samples": 29
+            }
+          ]
+        },
+        "nominal": {
+          "shift_ms": 0.0,
+          "retained_samples": 933,
+          "top_leaf_functions": [
+            {
+              "function": 72,
+              "name": "0xaef3c",
+              "samples": 75
+            },
+            {
+              "function": 54,
+              "name": "0xae923",
+              "samples": 40
+            },
+            {
+              "function": 56,
+              "name": "0xae8e9",
+              "samples": 30
+            }
+          ]
+        },
+        "plus": {
+          "shift_ms": 5.0,
+          "retained_samples": 923,
+          "top_leaf_functions": [
+            {
+              "function": 72,
+              "name": "0xaef3c",
+              "samples": 74
+            },
+            {
+              "function": 54,
+              "name": "0xae923",
+              "samples": 38
+            },
+            {
+              "function": 78,
+              "name": "0xae90c",
+              "samples": 29
+            }
+          ]
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "0.stdout": "07ea3c4c027576e76bdcb385e47031a16ecec65058ac0ed535d0fc619865bef4",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "088efb0367e6e1d0b6991370d5b3f8a15e4fc19be81971a925c8e23735a60700",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "4.stdout": "4dd633ce6dacab59e6b9d42eba3b7e4ae44f9daacce2ec4277cf200279ecbf9f",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "spawn-anchor.json": "868ef1ae7767054ff5c0a9232de5e38b5efd9ef7a3fb81b784d2209b20b414fc",
+    "perf.data": "87df2ed4495f4742a5d7705850c48a99ad0a75a3c946a2ba4d192a1f8d81f675",
+    "timed-2004552.jsonl": "5ff2dd49478abc527ccf2edb4072d15045e29645b9af028dd1fa4691ba7a50b1",
+    "5.stdout": "4fe0e47c9eba27f890f17ce6d489cd333d2e44eff0f74c76b1f5c490dd585cf3",
+    "5.stderr": "2ba3680824591d9c2d8d8b356945c67702af96dbac11a31eb07490708b724535",
+    "samply.json.gz": "52aeb2eaa00e82b14a9f3143e57ae9191e87bde63071281ef5368bef139d1218",
+    "6.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stderr": "408749bae6a05564937893e6350c5abafcefc4232827ec0f02baf03b463543e8",
+    "7.stdout": "93dc83ad6688443f42d8543b7633bcebb942db6f0e58c59da7bd6ddbe672275f",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "93dc83ad6688443f42d8543b7633bcebb942db6f0e58c59da7bd6ddbe672275f",
+    "normalized.json.gz": "35c0f252e1cd716930d667e5f8e2267fde3e605962ad59758a865c4253458782",
+    "8.stdout": "9d31e76a8f6b0a52b2b40dffb17e64502ea2a224f9779f0564d92f14430fe1eb",
+    "8.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "9783df6871d90178132cbf85254d225bb05c47782d1be3879b15a7fdb166e43b",
+    "diagnostics.json": "cc415e632a5f8177410b87ad0c76f17b80226d03c5b8e858c67e2df4fe2b53dc",
+    "9.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "9.stderr": "4a332bd5627d78110175481980491eaf7d04635f617d9e8365d7bfb3ddaab4d1",
+    "symbols.json": "82e78aeca1ad81b110e73906aea65d821b7d6e9233d050ba1da02f2d7a6113af",
+    "10.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "10.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}
