@@ -20,8 +20,8 @@ soundness layer is needed.
 | Subtraction | `sub_mem_subWithin` |
 | Multiplication | `mul_mem_mulWithin` |
 | Regularization | `mem_regularizeWithin` preserves containment on successful outward rounding |
-| Reciprocal | `inv_mem_invWithin`, with nonzero input and successful checked operation |
-| Division | `div_mem_divWithin`, with nonzero denominator and successful checked operation |
+| Reciprocal | `inv_mem_invWithin`, with source membership and successful checked operation (Lean's total reciprocal) |
+| Division | `div_mem_divWithin`, with both source memberships and successful checked operation (Lean's total division) |
 
 The corresponding `contains_*Within` theorems identify the checked computed
 cuts. Success hypotheses matter: resource exhaustion is not an empty interval.
@@ -29,6 +29,10 @@ cuts. Success hypotheses matter: resource exhaustion is not an empty interval.
 a resource-safe constructor. Existing regularization proves containment and
 idempotence, but explicitly does not prove optimal rounding or a width bound.
 The effective provider contract must also control the *amount* of rounding.
+For rational projection, Core already supplies `Rat.toRat_toDyadic_le` and
+`Rat.lt_toRat_toDyadic_add`; the latter bounds the downward error by one grid
+step. Applying the same facts to the negated rational supplies the upward
+error bound. These facts do not require the general optimal-rounding lemmas.
 Horner composition and coefficient refinement remain in HexOrderedFnMathlib.
 
 ## Analytic sources
