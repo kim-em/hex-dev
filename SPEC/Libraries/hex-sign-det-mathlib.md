@@ -57,7 +57,8 @@ polynomials over `R`. Semantic degree evidence, derivative construction,
 products, equality and endpoint comparisons must agree with this map.
 Stored length and structural equality are not semantic degree or equality.
 
-Soundness needs only laws for successful fallible operations and evidence.
+Alongside the imported foundations and query correspondence below, soundness
+needs only laws for successful fallible operations and evidence.
 Totality additionally needs complete executable decisions and evidence
 production on the semantic carrier. The total adapter must identify its
 Lean-core field/order operations with the Mathlib ones. Never install a
@@ -165,17 +166,24 @@ explicit premises and conclusions:
 - The empty-list support is `{()}` and singleton support is all three
   signs. Both cover every root's condition.
 - Complete child supports for ordered sublists `Q₁,Q₂` on the **same**
-  root set give support `S₁×S₂` for their concatenation. Child retained
-  moment matrices are invertible; their tensor product supplies an
-  invertible parent candidate system with concatenated exponent rows.
+  root set give support `S₁×S₂` for their concatenation.
 - Given complete candidate support, actual moments, an injective square
   moment matrix and a solution `v` of `M*v=t`, the solution equals the
   restricted actual counts. Removing exactly its zero columns preserves
-  support. All positive columns remain. Restricting to these columns
-  preserves column independence, and selecting a square row basis
-  preserves injectivity and the corresponding moment equations.
+  support. All positive columns remain.
 - Induction over the finite split tree yields exact counts and complete
   support at every retained node, not only at the root.
+
+Producer completeness additionally uses invertibility of the tensor product
+of the children's retained matrices, giving a parent system with concatenated
+exponent rows. Restricting an invertible matrix to the positive columns
+preserves column independence; a square row basis then exists and retains
+the corresponding moment equations. These existence facts justify production
+of the next certificate. Checker soundness instead uses each supplied
+inverse identity directly. The certificate format requires square matrices
+and validation of the retained row basis even though count uniqueness alone
+needs only a left inverse. A failed retained-basis check is `rejected`; a
+successful check prepares the next node without adding a root-count premise.
 
 These are abstract mathematical premises on finite matrices and counts,
 not assumptions that an untrusted replay satisfies them. Any additional
@@ -219,9 +227,11 @@ hypothesis is needed. The proof must follow this order at each node:
 2. Interpret every moment through hex-sturm-mathlib's
    `Replay.check_sound`/`queryPrepared_sound`. Validate factor indices and
    exponents. For reduced moments, check each identity
-   `u*(Gprev*H)=B*P+v*Gnext`, with `u,v>0` and `Gnext=0` or
-   `degree Gnext<degree P`. At roots, positive scaling preserves signs;
-   induction from `Gprev=1` identifies the final query with `Fₑ`'s moment.
+   `u*(Gprev*F)=B*P+v*Gnext`, with `u,v>0` and `Gnext=0` or
+   `degree Gnext<degree P`, where `F` is the next certified query factor.
+   Consume HexSignDet's conditional positive-scaling sign lemma and
+   discharge its coefficient laws in the ambient field; induction from
+   `Gprev=1` identifies the final query with `Fₑ`'s moment.
    It need not preserve values. Constants use certified zero root count
    rather than a degree-negative remainder. No expanded high-degree
    product is needed to replay a reduction chain.
@@ -248,7 +258,8 @@ No theorem may depend on unfinished computational proofs across the boundary.
 ## Descriptors, completion and changed polynomials
 
 A raw descriptor `d` contains its coefficient context, `p,I`, distinct
-indices `J⊆{1,…,n}` and the corresponding signs `τ`. Define
+indices `J⊆{1,…,n}` and the corresponding signs `τ`, where
+`n=P.natDegree` is the checked semantic degree, not stored array length. Define
 
 ```text
 Selected(d) = {α∈Roots(P;I) | ∀ j∈J, sgn(P⁽ʲ⁾.eval α)=τ[j]},
@@ -277,23 +288,27 @@ For identical polynomial literals in the same context, completed encodings
 compare by the imported rule, even across different valid intervals. For
 other literals, including semantically equal arrays or scalar multiples,
 use checked joint re-encoding. Construct a squarefree union polynomial
-`H=P₁*P₂/gcd(P₁,P₂)`, up to a certified nonzero scalar, and prove its root
+`U=P₁*P₂/gcd(P₁,P₂)`, up to a certified nonzero scalar, and prove its root
 set is the union. Check gcd/exact-division identities and squarefreeness;
 a product with common factors is not an admissible head.
 
-On the whole line determine signs of all derivatives of `H`, both old
+On the whole line determine signs of all derivatives of `U`, both old
 heads, their selected derivatives and `X-a,X-b` for every finite old
 endpoint. Filter for the old head zero, descriptor signs and strict
 endpoint signs. Prove each filtered set is precisely `Selected(dᵢ)`, so
-its unique full `H` encoding denotes the same root. The whole-line domain
+its unique full `U` encoding denotes the same root. The whole-line domain
 avoids an old endpoint being a root of the other head. Comparison of the
 two new encodings then establishes all three order cases.
 
 The separate `reencodeWith d h I'` contract requires a valid target domain
-and proves that the selected source root belongs to `Roots(H;I')`.
-Joint selection can use the squarefree union with the old head and endpoint
-sign constraints for both intervals. On success the new full descriptor
-has the same root and derivative signs of **H**, not reused signs of P.
+and proves that the selected source root belongs to `Roots(H;I')`, where
+`H` interprets the target `h`. Use the source head `P` on its interval
+with queries for its selected derivatives, `H`, all derivatives of `H`
+and target endpoint polynomials. Filter to the source descriptor's count-one
+condition, then check that the target head sign is zero and the finite target
+endpoint signs are strictly inside `I'`. This establishes target membership
+and the full encoding without a union-polynomial gcd. On success the new full descriptor has the same
+root and derivative signs of the target `h`, not reused signs of `P`.
 Failure of target membership is invalid; uncertainty is exhaustion.
 This is the bridge used when a dynamic split changes the defining
 polynomial. Preserving all live tower values under that split remains a
