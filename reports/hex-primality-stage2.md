@@ -280,88 +280,123 @@ The reserved allocation retains bound 9999 and the ECM allocation. Its
 conformance guards pin the factor, full-miss trace, random-state preservation,
 and fuel ceiling.
 
-## Construction with a restricted diagnostic budget
+## Native construction
 
-The following retained collections use 12 factors, a 512-bit ceiling for
-controls and a 1024-bit ceiling for parents. They are diagnostic evidence for
-that allocation, not acceptance evidence for the production budget.
+The [production-budget summary](bench-results/pminusone-construction-production-native-summary.json)
+checks all 960 samples: eight adjacent AB/BA rounds for each of 60 inputs.
+Both arms complete 31 checked certificates, with no gains or losses. The
+[budget record](bench-results/pminusone-construction-budget.json) gives every
+nested construction limit and hashes the constructor, search-budget definitions,
+and shared measurement boundary. The collections record the three admission
+limits directly from their frozen executable. All parent inputs fit 521 bits.
 
-The [native construction summary](bench-results/pminusone-construction-native-summary.json)
-checks all 960 samples: eight adjacent AB/BA blocks for each of 60 inputs.
-Every checked baseline certificate is retained: 30 inputs succeed with each
-policy, with no gains or losses. The extra-prime timing rows include only
-inputs that produce checked certificates in both arms and execute a
-continuation on the intended predecessor cofactor.
-
-| Family | Inputs | Checked, disabled | Checked, enabled | Time ratio |
-|---|---:|---:|---:|---:|
-| 64-bit extra-prime predecessors | 10 | 10 | 10 | 0.981 |
-| 128-bit extra-prime predecessors | 10 | 7 | 7 | 0.510 |
-| 256-bit extra-prime predecessors | 10 | 0 | 0 | — |
-| 512-bit extra-prime predecessors | 10 | 0 | 0 | — |
-| Full continuation misses | 2 | 0 | 0 | 0.999 |
-| Balanced composites | 3 | 0 | 0 | 0.970 |
-| Smooth primes | 6 | 6 | 6 | 1.003 |
-| Table primes | 7 | 7 | 7 | 0.999 |
-
-Within this diagnostic allocation, the successful 128-bit family meets the
-usefulness threshold, and all
-regression families satisfy the 1.10 limit. The full-miss controls are
-secp256k1 and P-384; their enabled traces contain respectively 96 and six
-continuations, all returning `noFactor`. Their times measure exhaustion,
-not certificate production. Balanced inputs measure composite rejection.
-The four-input field corpus produces no certificates in either arm and does
-not establish usefulness. Native construction's verdict is independent of
-the interpreted construction path and ordinary factorization; it alone does
-not enable the construction default.
-
-## Whole-module construction diagnostic
-
-The [unadjusted whole-module summary](bench-results/pminusone-construction-interpreted-summary.json)
-covers all 960 samples in the
-[fresh-module collection](bench-results/pminusone-construction-interpreted.jsonl.gz).
-Its unadjusted wall clock includes the complete `lake build` of the probe module;
-the separately recorded search clock is diagnostic only. The same 30 inputs
-produce checked certificates with both policies, with no gains or losses.
-
-| Family | Checked, disabled | Checked, enabled | Wall-time ratio |
+| Family | Inputs | Checked in each arm | Enabled/disabled time |
 |---|---:|---:|---:|
-| 64-bit extra-prime predecessors | 10 | 10 | 0.997 |
-| 128-bit extra-prime predecessors | 7 | 7 | 1.003 |
-| 256-bit extra-prime predecessors | 0 | 0 | — |
-| 512-bit extra-prime predecessors | 0 | 0 | — |
-| Full continuation misses | 0 | 0 | 1.054 |
-| Balanced composites | 0 | 0 | 1.012 |
-| Smooth primes | 6 | 6 | 1.003 |
-| Table primes | 7 | 7 | 1.007 |
+| 64-bit extra-prime predecessors | 10 | 10 | 0.979 |
+| 128-bit extra-prime predecessors | 10 | 7 | 0.523 |
+| 256-bit extra-prime predecessors | 10 | 0 | — |
+| 512-bit extra-prime predecessors | 10 | 0 | — |
+| Full continuation misses | 2 | 0 | 1.051 |
+| Balanced composites | 3 | 0 | 0.992 |
+| Smooth primes | 6 | 6 | 1.009 |
+| Table primes | 7 | 7 | 1.012 |
 
-Regression limits pass, but neither successful extra-prime family reaches the
-0.90 usefulness threshold and there are no additional checked successes.
-The unadjusted whole-module comparison misses the usefulness threshold; it
-cannot serve as the interpreted search gate. This does not establish that interpreted search
-itself failed to improve. On the seven successful 128-bit inputs, the
-diagnostic search-clock medians are 84.858 ms disabled and 70.435 ms enabled
-(ratio 0.830), while the fresh-module wall medians are 1.443 s and 1.447 s.
-The native search medians on the same inputs are 37.921 ms and 19.356 ms.
-Module-build overhead dominates the interpreted acceptance clock and masks
-the much smaller search saving. These in-process diagnostic clocks are not
-release-quality proof-track evidence under the shared benchmarking contract.
-A matched import-only baseline and compliant fresh-module phase attribution
-are needed to assess the interpreted search improvement independently of that
-fixed overhead; the present collection contains no such baseline.
+Opportunity timings include only inputs that complete checked certificates
+in both arms and execute continuation on the intended predecessor cofactor.
+The successful 128-bit family meets the 0.90 usefulness threshold; every
+regression family meets the 1.10 limit. Full-miss controls are secp256k1 and
+P-384, with 96 and six executed continuations respectively. Their timings
+measure exhaustion. Balanced composites measure rejection. The four-input
+field corpus produces only P-521 in both arms; its mixture of success and
+exhaustion is not an additional successful-certificate timing family.
 
-The retained policy collections use `checked` as the success criterion.
-Their raw `outcome: "exhausted"` is a generic failed-search label, including
-the known balanced composites. Their times are rejection controls, not
-successful-certificate timings. The benchmark diagnostics preserve the
-producer's distinct composite, exhausted, incomplete, zero, and rejected
-outcomes; the retained measurements and their hashes are unchanged.
+## Interpreted construction attribution
+
+The [fresh-module summary](bench-results/pminusone-construction-production-proof-summary.json)
+checks 1,920 fresh builds: disabled/enabled and two matched import-only builds
+per round, for eight rounds over every input. Each input is evaluated exactly
+once in each search build. All samples, compiler diagnostics, incremental
+records, host context, source hashes and logs are retained in the
+[collection directory](bench-results/pminusone-construction-production/proof).
+Every collection uses the same clean source commit. The budget record's
+source hashes match the measured constructor and budget definitions. Native
+and interpreted runs agree on all 120 complete arm results, including attempt
+counts, random states, every route event, and the same 31 checked certificates
+in each arm.
+
+For each input and round, subtract the mean of its two import-only builds.
+Sum these workloads across a family's chosen inputs within the same round,
+then take the median of the eight round sums. The envelope column sums the
+shared runner's per-input baseline-variation envelopes. It describes whether
+the workload rises above baseline variation; it is not a confidence interval
+or evidence that the difference between policies is resolved. Negative
+subtracted costs are retained and make the affected ratio inconclusive.
+
+| Family timed | Inputs timed | Disabled cost (s) | Enabled cost (s) | Baseline envelope (s) | Ratio |
+|---|---:|---:|---:|---:|---:|
+| Successful 64-bit predecessors | 10 | 0.241 | 0.400 | 3.867 | inconclusive |
+| Successful 128-bit predecessors | 7 | 1.642 | 1.569 | 1.442 | 0.955 |
+| Full continuation misses | 2 | 18.169 | 17.994 | 1.445 | 0.990 |
+| Balanced composites | 3 | 0.022 | −0.038 | 2.214 | inconclusive |
+| Smooth primes | 6 | 0.243 | 0.163 | 1.415 | inconclusive |
+| Table primes | 7 | 0.017 | −0.352 | 2.728 | inconclusive |
+
+The 256- and 512-bit predecessor families have no successful certificates,
+so there is no successful-search timing ratio for them. Their complete
+exhaustion measurements remain in the raw collections and per-input summary.
+The observed 128-bit family ratio does not reach 0.90, and the small regression
+workloads cannot be resolved above baseline variation. This attribution does
+not establish the interpreted improvement needed to enable construction by
+default. Native per-input timings provide the compiled gate; the interpreted
+measurements describe search attribution and do not introduce another gate
+based on incomparable null controls. Both consumer switches remain opt-in.
+
+Reproduce individual paired collections with fresh output paths:
+
+```sh
+lake build hexprimality_bench +HexPrimality.ProofProbe.PMinusOne.Support
+python3 scripts/bench/pminusone_stage2_measure.py parents \
+  --case parent-128-8191 --output /tmp/parent-native.jsonl
+python3 scripts/bench/pminusone_proof_sweep.py --case parent-128-8191 \
+  --shared-host --cpu "$(python3 scripts/bench/idle_core.py)" \
+  --timeout 300 --output /tmp/parent-proof.json
+```
+
+The native driver freezes its executable. A multi-input proof collection must
+keep its checkout unchanged until all sweeps finish, build Support before
+concurrent warmups, and assign distinct automatically selected physical CPUs
+to concurrent sweeps. The summarizers require the complete corpus and reject
+mixed provenance; the interpreted summary also requires the explicit budget
+record with matching source hashes. Host activity is recorded without rejecting
+samples or waiting for quiet CPUs. No completed sample is discarded and no
+unchanged rerun is used.
+
+## Additional diagnostic allocations
+
+The [restricted native collection](bench-results/pminusone-construction-native-summary.json)
+and [unadjusted whole-module collection](bench-results/pminusone-construction-interpreted-summary.json)
+use 12 factors, a 512-bit ceiling for controls, and a 1024-bit ceiling for
+parents. They retain 960 samples each and 30 checked certificates in both arms.
+Their successful 128-bit native ratio is 0.510. The whole-module clock includes
+Lake startup and has no matched import baseline; its embedded search clock
+is diagnostic only. Neither collection supplies a production-budget gate.
+The [field-only diagnostic](bench-results/pminusone-stage2-construction-corpus.jsonl.gz)
+uses the 512-bit ceiling and rejects P-521 at admission.
+
+The [restricted-budget family probes](bench-results/pminusone-construction-restricted-proof.json.gz)
+retain eight paired rounds over the same 60 inputs in grouped modules, with
+matched import-only subtraction. Their allocation is also 12 factors with
+the listed diagnostic bit ceilings; the source commit and full compiler output
+identify that allocation independently of the production collections.
 
 ## Validation
 
-The full `lake build` passes. The affected conformance modules and both native
+The full `lake build` passes (14,500 targets). The affected conformance modules and both native
 benchmark executables also build explicitly. The 17 upstream and one downstream
 stage-2 benchmark registrations pass `verify`; the dependency checker passes.
+Whole-library native verification takes 2.365 s for primality and 6.510 s for
+integer factorization on this host. The Python provenance, fresh-module runner
+and probe-lint suites pass all 101 tests.
 The independent arithmetic checker validates 2,925 retained samples covering
 493 distinct deterministic executions. The conformance tests include a complete
 checker-accepted factorization reached through stage 2 with rho disabled, as

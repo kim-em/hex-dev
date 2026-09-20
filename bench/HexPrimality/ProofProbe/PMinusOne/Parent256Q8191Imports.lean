@@ -5,4 +5,3 @@ Authors: Kim Morrison
 -/
 
 import HexPrimality.ProofProbe.PMinusOne.Support
-
