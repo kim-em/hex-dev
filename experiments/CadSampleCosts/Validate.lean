@@ -7,13 +7,21 @@ module
 public import CadSampleCosts.Support
 public meta import CadSampleCosts.Support
 public import CadSampleCosts.Vanishing.Replay
+public import CadSampleCosts.Vanishing.Kernel
 public import CadSampleCosts.Nlsat.Replay
+public import CadSampleCosts.Nlsat.Kernel
 public import CadSampleCosts.CircleParabola.Replay
+public import CadSampleCosts.CircleParabola.Kernel
 public import CadSampleCosts.Circles.Replay
+public import CadSampleCosts.Circles.Kernel
 public import CadSampleCosts.Kahan.Replay
+public import CadSampleCosts.Kahan.Kernel
 public import CadSampleCosts.Sphere.Replay
+public import CadSampleCosts.Sphere.Kernel
 public import CadSampleCosts.Tower4.Replay
+public import CadSampleCosts.Tower4.Kernel
 public import CadSampleCosts.Tower8.Replay
+public import CadSampleCosts.Tower8.Kernel
 
 public section
 namespace CadSampleCosts
@@ -41,5 +49,113 @@ theorem tower4 : ∀ y : ℝ, y^4-2=0 → y>1 → y-y^2<0 :=
 
 theorem tower8 : ∀ y : ℝ, y^8-2=0 → y>1 → y-y^2<0 :=
   (cad_correspondence% (∀ y : ℝ, y^8-2=0 → y>1 → y-y^2<0)).mp Tower8.result
+
+#print axioms CadSampleCosts.nlsatSign
+
+#print axioms CadSampleCosts.circleParabolaSign
+
+#print axioms CadSampleCosts.circlesSign
+
+#print axioms CadSampleCosts.kahanSign
+
+#print axioms CadSampleCosts.sphereCoordinates
+
+#print axioms CadSampleCosts.kahanCoordinates
+
+#print axioms CadSampleCosts.nlsatExists
+
+#print axioms CadSampleCosts.parabolaExists
+
+#print axioms CadSampleCosts.circlesExists
+
+#print axioms CadSampleCosts.kahanExists
+
+#print axioms CadSampleCosts.sphereExists
+
+#print axioms CadSampleCosts.tower4Exists
+
+#print axioms CadSampleCosts.tower8Exists
+
+#print axioms CadSampleCosts.nlsatSampleExists
+
+#print axioms CadSampleCosts.parabolaSampleExists
+
+#print axioms CadSampleCosts.circlesSampleExists
+
+#print axioms CadSampleCosts.sphereSample
+
+#print axioms CadSampleCosts.Vanishing.Kernel.accepted
+
+#print axioms CadSampleCosts.Vanishing.accepted
+
+#print axioms CadSampleCosts.Vanishing.result
+
+#print axioms CadSampleCosts.Vanishing.sign
+
+#print axioms CadSampleCosts.Nlsat.Kernel.accepted
+
+#print axioms CadSampleCosts.Nlsat.accepted
+
+#print axioms CadSampleCosts.Nlsat.result
+
+#print axioms CadSampleCosts.Nlsat.sign
+
+#print axioms CadSampleCosts.Nlsat.sample
+
+#print axioms CadSampleCosts.CircleParabola.Kernel.accepted
+
+#print axioms CadSampleCosts.CircleParabola.accepted
+
+#print axioms CadSampleCosts.CircleParabola.result
+
+#print axioms CadSampleCosts.CircleParabola.sign
+
+#print axioms CadSampleCosts.CircleParabola.sample
+
+#print axioms CadSampleCosts.Circles.Kernel.accepted
+
+#print axioms CadSampleCosts.Circles.accepted
+
+#print axioms CadSampleCosts.Circles.result
+
+#print axioms CadSampleCosts.Circles.sign
+
+#print axioms CadSampleCosts.Circles.sample
+
+#print axioms CadSampleCosts.Kahan.Kernel.accepted
+
+#print axioms CadSampleCosts.Kahan.accepted
+
+#print axioms CadSampleCosts.Kahan.result
+
+#print axioms CadSampleCosts.Kahan.sign
+
+#print axioms CadSampleCosts.Kahan.sample
+
+#print axioms CadSampleCosts.Sphere.Kernel.accepted
+
+#print axioms CadSampleCosts.Sphere.accepted
+
+#print axioms CadSampleCosts.Sphere.result
+
+#print axioms CadSampleCosts.Sphere.sign
+
+#print axioms CadSampleCosts.Sphere.sample
+
+#print axioms CadSampleCosts.Tower4.Kernel.accepted
+
+#print axioms CadSampleCosts.Tower4.accepted
+
+#print axioms CadSampleCosts.Tower4.result
+
+#print axioms CadSampleCosts.Tower4.sign
+
+#print axioms CadSampleCosts.Tower8.Kernel.accepted
+
+#print axioms CadSampleCosts.Tower8.accepted
+
+#print axioms CadSampleCosts.Tower8.result
+
+#print axioms CadSampleCosts.Tower8.sign
 
 end CadSampleCosts

@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 public import CadSampleCosts.Support
 public import Mathlib.Tactic.Linarith
+public import Mathlib.Analysis.Real.Sqrt
 public meta import HexRCF.Tactic
 public section
 
@@ -57,9 +58,36 @@ theorem sphereExists : ∃ t : ℝ, t^4-10*t^2+1=0 ∧ 3<t ∧ t<4 := by rcf
 theorem tower4Exists : ∃ t : ℝ, t^4-2=0 ∧ 1<t ∧ t<2 := by rcf
 theorem tower8Exists : ∃ t : ℝ, t^8-2=0 ∧ 1<t ∧ t<2 := by rcf
 
-#print axioms nlsatSign
-#print axioms circleParabolaSign
-#print axioms circlesSign
-#print axioms kahanSign
-#print axioms sphereCoordinates
+/-- Both chosen NLSAT coordinates exist, with the negative lifted root. -/
+theorem nlsatSampleExists : ∃ a b : ℝ, 16*a^3-8*a^2+a+16=0 ∧
+    -1<a ∧ a<0 ∧ b<0 ∧ a^2+b^2=1 := by
+  obtain ⟨a, ha, hl, hu⟩ := nlsatExists
+  have hsq : 0 < 1-a^2 := by nlinarith
+  refine ⟨a, -Real.sqrt (1-a^2), ha, hl, hu, ?_, ?_⟩
+  · have := Real.sqrt_pos.2 hsq
+    linarith
+  · have := Real.sq_sqrt hsq.le
+    nlinarith
+
+/-- The positive lifted circle root can be chosen to equal the parabola value. -/
+theorem parabolaSampleExists : ∃ a b : ℝ, a^2+b^2=1 ∧ b=a^2 ∧ a>0 ∧ b>0 := by
+  obtain ⟨a, ha, hl, _⟩ := parabolaExists
+  refine ⟨a, a^2, ?_, rfl, hl, sq_pos_of_pos hl⟩
+  nlinarith [ha]
+
+/-- Both circle equations hold at the selected upper intersection. -/
+theorem circlesSampleExists : ∃ a b : ℝ, a^2+b^2=1 ∧ (a-1)^2+b^2=1 ∧ b>0 := by
+  obtain ⟨b, hb, hl, _⟩ := circlesExists
+  exact ⟨1/2, b, by nlinarith, by nlinarith, hl⟩
+
+/-- Join the sphere-section coordinate identities to its sign query. -/
+theorem sphereSample (query : ∀ t : ℝ, t^4-10*t^2+1=0 → 3<t → t<4 →
+    1-((t^3-9*t)/4)^2-((11*t-t^3)/6)^2>0) (t : ℝ)
+    (ht : t^4-10*t^2+1=0) (hl : 3<t) (hu : t<4) :
+    2*((t^3-9*t)/4)^2=1 ∧ 3*((11*t-t^3)/6)^2=1 ∧
+    (t^3-9*t)/4>0 ∧ (11*t-t^3)/6>0 ∧
+    1-((t^3-9*t)/4)^2-((11*t-t^3)/6)^2>0 := by
+  obtain ⟨ha, hb, hap, hbp⟩ := sphereCoordinates t ht hl hu
+  exact ⟨ha, hb, hap, hbp, query t ht hl hu⟩
+
 end CadSampleCosts

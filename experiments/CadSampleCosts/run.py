@@ -7,6 +7,7 @@ The 30 s runtime/solver and 120 s proof limits are operational cutoffs.
 No completed sample is removed, no host-load condition triggers a retry.
 """
 import argparse
+import datetime
 import fcntl
 import gzip
 import hashlib
@@ -38,7 +39,7 @@ def digest(path):
 
 def host():
     return {'load': os.getloadavg(), 'stat': Path('/proc/stat').read_text(),
-            'processes': capture(['ps', '-eo', 'pid,comm,pcpu,psr'])}
+            'process_count': len(capture(['ps', '-e', '-o', 'pid=']).splitlines())}
 
 
 def lease_cpu():
@@ -115,6 +116,24 @@ def parse_trace(text):
     return {'explanations': explanations, 'learned_clauses': learned}
 
 
+def validate_axioms(output):
+    """Check every expected theorem in an untimed, retained validation build."""
+    result = subprocess.run(['lake', 'build', '+CadSampleCosts.Validate:olean'],
+                            cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    with gzip.open(output/'validation.log.gz', 'wt') as out:
+        out.write(result.stdout)
+    if result.returncode:
+        raise RuntimeError('untimed validation build failed; see validation.log.gz')
+    found = dict(re.findall(r"'(CadSampleCosts\..*?)' depends on axioms: \[([^]]*)\]", result.stdout))
+    expected = set(json.loads((HERE/'axiom-names.json').read_text()))
+    if not expected.issubset(found):
+        raise RuntimeError(f'missing axiom reports: {expected - found.keys()}')
+    for name in expected:
+        if set(found[name].split(', ')) - {'propext', 'Classical.choice', 'Quot.sound'}:
+            raise RuntimeError(f'unexpected axioms: {name}: {found[name]}')
+    return len(expected)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('output', type=Path)
@@ -124,15 +143,19 @@ def main():
         raise RuntimeError('commit experimental sources before measuring')
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=False)
+    checked = validate_axioms(output)
+    (output/'kernel-inputs.json').write_bytes((HERE/'kernel-inputs.json').read_bytes())
     cpu, lease = lease_cpu()
     os.environ['LEAN_NUM_THREADS'] = '1'
-    meta = {'commit': capture(['git', 'rev-parse', 'HEAD']), 'tracked_dirty': False,
+    meta = {'collected_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            'checked_theorems': checked, 'commit': capture(['git', 'rev-parse', 'HEAD']), 'tracked_dirty': False,
             'cpu': cpu, 'rounds': 4, 'schedule': 'trial-major; adjacent Literal/Replay AB/BA',
             'toolchain': (ROOT/'lean-toolchain').read_text().strip(),
-            'platform': platform.uname()._asdict(), 'cpuinfo': Path('/proc/cpuinfo').read_text(),
+            'platform': platform.uname()._asdict(), 'cpuinfo': Path('/proc/cpuinfo').read_text().split('\n\n')[0],
             'z3_version': subprocess.check_output([str(args.z3), '-version'], cwd=output, text=True).strip(), 'z3_sha256': digest(args.z3),
             'sources': {str(p.relative_to(ROOT)): digest(p) for p in HERE.rglob('*')
-                        if p.is_file() and '__pycache__' not in p.parts},
+                        if p.is_file() and p.suffix in {'.lean', '.py', '.smt2', '.patch', '.json'}
+                        and '__pycache__' not in p.parts},
             'host_before': host()}
     (output/'.z3-trace').unlink(missing_ok=True)
     (output/'meta.json').write_text(json.dumps(meta, indent=2)+'\n')
@@ -162,10 +185,6 @@ def main():
                     if row['exit_code'] == 0:
                         artifact = ROOT/'.lake/build/lib/lean'/Path(*module.split('.')).with_suffix('.olean')
                         row['olean_bytes'] = artifact.stat().st_size
-                        row['axioms'] = re.findall(r"'CadSampleCosts\..*?' depends on axioms: \[([^]]*)\]", text)
-                        if arm == 'Replay' and (not row['axioms'] or any(
-                            set(a.split(', ')) - {'propext', 'Classical.choice', 'Quot.sound'} for a in row['axioms'])):
-                            row['invalid_axioms'] = True
                     record(row)
         # Counts are deterministic fixed-seed observations, not timing comparisons.
         for name, _ in CASES:

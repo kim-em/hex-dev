@@ -17,7 +17,4 @@ theorem accepted : certificate.check input = true := by decide +kernel
 theorem result : input.toProp := Hex.RCF.check_sound input certificate accepted
 theorem sign : ∀ t : ℝ, t^2-2=0 → 1<t → t<2 → 5*t^2+8*t-60<0 := correspondence.mp result
 theorem sample : ∀ t : ℝ, t^2-2=0 → 1<t → t<2 → ((1+t)/4)^2+(t/8)^2-1<0 := kahanSign sign
-#print axioms sample
-#print axioms sign
-#print axioms result
 end CadSampleCosts.Kahan

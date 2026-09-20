@@ -16,6 +16,5 @@ theorem correspondence : input.toProp ↔ (∀ t : ℝ, t^4-10*t^2+1=0 → 3<t �
 theorem accepted : certificate.check input = true := by decide +kernel
 theorem result : input.toProp := Hex.RCF.check_sound input certificate accepted
 theorem sign : ∀ t : ℝ, t^4-10*t^2+1=0 → 3<t → t<4 → 1-((t^3-9*t)/4)^2-((11*t-t^3)/6)^2>0 := correspondence.mp result
-#print axioms sign
-#print axioms result
+theorem sample : ∀ t : ℝ, t^4-10*t^2+1=0 → 3<t → t<4 → 2*((t^3-9*t)/4)^2=1 ∧ 3*((11*t-t^3)/6)^2=1 ∧ (t^3-9*t)/4>0 ∧ (11*t-t^3)/6>0 ∧ 1-((t^3-9*t)/4)^2-((11*t-t^3)/6)^2>0 := sphereSample sign
 end CadSampleCosts.Sphere

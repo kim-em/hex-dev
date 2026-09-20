@@ -17,7 +17,4 @@ theorem accepted : certificate.check input = true := by decide +kernel
 theorem result : input.toProp := Hex.RCF.check_sound input certificate accepted
 theorem sign : ∀ y : ℝ, 4*y^2-3=0 → y>0 → y-1/2>0 := correspondence.mp result
 theorem sample : ∀ a b : ℝ, a^2+b^2=1 → (a-1)^2+b^2=1 → b>0 → b-a>0 := circlesSign sign
-#print axioms sample
-#print axioms sign
-#print axioms result
 end CadSampleCosts.Circles

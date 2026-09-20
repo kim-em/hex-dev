@@ -16,6 +16,4 @@ theorem correspondence : input.toProp ↔ (∀ y : ℝ, y^8-2=0 → y>1 → y-y^
 theorem accepted : certificate.check input = true := by decide +kernel
 theorem result : input.toProp := Hex.RCF.check_sound input certificate accepted
 theorem sign : ∀ y : ℝ, y^8-2=0 → y>1 → y-y^2<0 := correspondence.mp result
-#print axioms sign
-#print axioms result
 end CadSampleCosts.Tower8

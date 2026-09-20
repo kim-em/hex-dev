@@ -87,3 +87,37 @@ Render the report tables without rerunning measurements:
 ```sh
 python3 experiments/CadSampleCosts/summarize.py reports/bench-results/cad-sample-costs
 ```
+
+Focused checker measurements avoid Lake startup, source transport, and axiom
+traversals. Each `Kernel.lean` enables Lean's exclusive profiler only around
+`accepted` and uses `#count_heartbeats` (synchronous elaboration) for its command.
+The collector records the cumulative `type checking` time and the command's
+heartbeat count. Imported dependencies are warm; only the measured module is
+removed. It runs four fixed trial-major rounds, retaining every outcome:
+
+```sh
+python3 experiments/CadSampleCosts/run_kernel.py reports/bench-results/cad-kernel-costs
+```
+
+Both collectors first check all expected theorem names and their axiom sets in
+an untimed `Validate` build, retained as `validation.log.gz`. That module includes
+sample-existence and coordinate identities as well as replay and focused checker
+theorems. `kernel-inputs.json` is copied into each new observation directory.
+Source hashes refer to the recorded commit, not necessarily the later report
+commit; README wording is excluded from new measurement hashes.
+
+The canonical kernel boundary can be reproduced by temporarily saving this as
+`experiments/CadSampleCosts/Boundary.lean` and running
+`lake build +CadSampleCosts.Boundary:olean`. This diagnostic is expected to fail:
+compiled evaluation prints `1`, whereas the proof reports that its `Decidable`
+instance did not reduce to `isTrue` or `isFalse`. Remove the temporary file after
+observing the diagnostic.
+
+```lean
+module
+import HexRealAlgebraic.Roots
+open Hex
+#eval (#p[-2, 0, 1] : ZPoly).realAlgebraicRoots[1]!.sign
+example : (#p[-2, 0, 1] : ZPoly).realAlgebraicRoots[1]!.sign = 1 := by
+  decide +kernel
+```

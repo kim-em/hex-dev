@@ -16,6 +16,4 @@ theorem correspondence : input.toProp ↔ (∀ x : ℝ, x^4+x^2-1=0 → (x^2)^2+
 theorem accepted : certificate.check input = true := by decide +kernel
 theorem result : input.toProp := Hex.RCF.check_sound input certificate accepted
 theorem sign : ∀ x : ℝ, x^4+x^2-1=0 → (x^2)^2+x^2-1=0 := correspondence.mp result
-#print axioms sign
-#print axioms result
 end CadSampleCosts.Vanishing
