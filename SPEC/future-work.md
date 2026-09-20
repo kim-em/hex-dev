@@ -1427,7 +1427,7 @@ bisection and coefficient-sign termination are separate proof obligations.
 `hex-sign-det` owns single-polynomial root descriptors, their identity, order,
 sign evaluation and replay. `hex-real-closure` owns the tower-level sample
 interface built from these operations. The shared interface for CAD lifting
-and [coverings](#real-arithmetic-satisfiability-by-cylindrical-coverings)
+and [coverings](Libraries/hex-coverings.md)
 exposes opaque contexts, coefficient embeddings, ordered roots with
 multiplicities, root equality/order, polynomial sign at a root, and
 section/sector sample construction with replay evidence. A sector request
@@ -1440,9 +1440,11 @@ infinitesimal base and transporting the selected algebraic roots into its real
 closure, preserving their order. It cannot simply append an out-of-stage
 extension. The simpler dyadic/midpoint backend remains available.
 [#10301](https://github.com/kim-em/hex-dev/issues/10301) measures these
-alternatives and [#10303](https://github.com/kim-em/hex-dev/issues/10303)
-fixes the consumer's representation; this interface does not preempt that
-choice.
+alternatives. The [coverings SPEC](Libraries/hex-coverings.md#literal-samples-and-checked-export)
+fixes a literal integer-polynomial and isolated-parameter replay format,
+with a selected-root coefficient adapter to the shared Sturm interface.
+This family can supply alternate sample producers and root/sign evidence
+through checked export and correspondence to that format.
 
 #### Proof ownership and public surface
 
@@ -1702,54 +1704,14 @@ examples (Collins' circle and parabola pairs, Kahan's ellipse in the unit
 circle, a Davenport–Heintz family for the blowup) to fix the sample
 representation; then the certificate SPEC. Reserve full decompositions for
 quantifier elimination with alternations and for exploration. The tactic case
-(universal goals, and existential goals without alternation) should use the
-covering refutation below, which shares the theorem, the projection
-arithmetic, and the lifting primitive but certifies only the cells a search
-visited.
+(universal goals, and existential goals without alternation) should use
+[covering refutation](Libraries/hex-coverings.md), which shares the theorem,
+projection arithmetic, and lifting primitive but certifies only the cells a
+search visited.
 
 Dependencies: `hex-mv-poly`, `hex-mv-gcd`, `hex-mv-factor`, `hex-resultant`,
 `hex-real-roots`, `hex-real-algebraic`, `hex-number-field`, `hex-reflect`, and
 the shared [real-arithmetic formula language](Libraries/hex-real-formula.md).
-
-### Real-arithmetic satisfiability by cylindrical coverings
-
-The quantifier-free fragment (equivalently, universal goals by refutation and
-existential goals by a model) does not need a full decomposition. NLSAT
-(Jovanović–de Moura) assigns real algebraic values variable by variable and,
-on a conflict, builds a single cell around the current sample from the
-projection of the conflicting polynomials at that sample, learning the clause
-"not in this cell, or not all these literals"; single-cell and levelwise
-constructions shrink the cell. Cylindrical algebraic coverings (Ábrahám,
-Davenport, England, Kremer) instead cover the line at each level by intervals
-each carrying the polynomials that exclude it. Either way, an unsatisfiable
-run is a propositional resolution refutation over the input clauses and the
-learned cell clauses, and a satisfiable run ends with a model.
-
-That is the certificate. The resolution part is checkable with the LRAT
-machinery Lean already trusts for `bv_decide`, or the covering tree replaces
-it. Each cell clause is an instance of the single-cell delineability theorem
-whose side conditions are concrete signs and root orders at an algebraic
-sample. The deep theorem is the one under "Cylindrical algebraic
-decomposition", stated for one cell. The cost is concentrated in the
-per-clause algebraic arithmetic the kernel replays (roots of polynomials with
-algebraic coefficients, signs at algebraic points), so the sample
-representation decision above bounds the reachable size. A model is certified
-by evaluation. The projection operator is part of the trusted statement: the
-side conditions a cell clause carries and the theorem the checker invokes
-differ between Collins' operator and the reduced ones, so the SPEC fixes one
-operator and treats the others as separately certified variants.
-
-Dependencies: the delineability theorem, the projection arithmetic and lifting
-primitive of the decomposition entry, `hex-real-algebraic`, the shared formula
-language, and a CDCL core or an external SAT solver with LRAT output. Before
-the SPEC fixes the certificate type, measure on the nlsat paper's examples the
-lifting cost of `RealAlgebraicPoly.roots` after substituting a two-variable
-sample, the kernel cost of certifying the sign of `p(α, β)` at an algebraic
-sample with the existing replay pieces, and the number of cell clauses an
-existing solver learns; those numbers decide the sample representation and
-the clause granularity, which are type-level choices. Single-cell versus
-levelwise versus covering construction, and the choice of SAT core, affect
-only the untrusted search and can remain open in the SPEC.
 
 ## Cross-cutting infrastructure
 

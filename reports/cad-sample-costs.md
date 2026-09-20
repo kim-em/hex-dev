@@ -15,7 +15,7 @@ interface; it does not establish a solver-scale clause-size distribution or
 justify a fixed maximum clause width.
 
 This is the measurement spike for [#10301](https://github.com/kim-em/hex-dev/issues/10301),
-consumed by [coverings](../SPEC/future-work.md#real-arithmetic-satisfiability-by-cylindrical-coverings)
+consumed by [coverings](../SPEC/Libraries/hex-coverings.md)
 and [CAD](../SPEC/future-work.md#cylindrical-algebraic-decomposition). The
 [alignment analysis](decision-procedures-alignment.md) describes the wider
 algorithm choices. No projection operator, SAT core, or public certificate type
