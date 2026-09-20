@@ -1,0 +1,36 @@
+{
+  "cpu": 5,
+  "host": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "load_before": [
+    18.6982421875,
+    35.4462890625,
+    73.5537109375
+  ],
+  "source_sha256": {
+    "HexInterval/Constants.lean": "5b4e1b3e47e39578f42e1af947586445a11a9849da43c5518447263da7ad791a",
+    "bench/HexInterval/ConstantsBench.lean": "223b50d1532d4a7c8a75b733dee5b8baf11d56743e7564c4e98c80a10fa09bf0",
+    "conformance-fixtures/HexInterval/constants.jsonl": "b7ead341a240ddcccbfa23242668bd0d82bb4bf31e14d54c21ead46acfae2e83"
+  },
+  "purpose": "1000-bit compiled producer/checker acceptance anchors; no Phase-4 complexity claim",
+  "command": [
+    "taskset",
+    "-c",
+    "5",
+    ".lake/build/bin/hexinterval_constants_bench",
+    "run",
+    "Hex.Interval.ConstantsBench.piGenerate",
+    "Hex.Interval.ConstantsBench.piCheck",
+    "Hex.Interval.ConstantsBench.eGenerate",
+    "Hex.Interval.ConstantsBench.eCheck",
+    "--export-file",
+    "reports/bench-results/interval-constants/acceptance.json"
+  ],
+  "exit_code": 0,
+  "load_after": [
+    19.123046875,
+    35.255859375,
+    73.287109375
+  ],
+  "executable_sha256": "1b31497582e483420db9ccc4e59e901672b10faa9b31721a442d6099a5455981"
+}

@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexInterval.Interval
+public import HexInterval.Constants
 public import HexInterval.Multiplication
 public import HexInterval.Action
 public import HexInterval.State

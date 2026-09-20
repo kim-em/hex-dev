@@ -9,6 +9,10 @@ external-tool import (e.g. ``flint`` from ``python-flint``).
 
 JSONL fixture record shape (one record per line):
 
+* ``interval-constant-v1`` — original ``source`` (pi-machin-v1 or
+                     exp-one-taylor-v1), width ``bits``, positive ``order``,
+                     canonical rational pairs ``center``, ``radius``, ``lower``,
+                     ``upper``, and Boolean compiled replay ``accepted``.
 * ``poly``       — ``{"kind": "poly",       "lib": str, "case": str,
                       "coeffs": [int...], "modulus": int|null}``
                      Optional BZ conformance metadata:
@@ -129,6 +133,7 @@ from typing import Any, Iterable, Iterator
 
 VALID_FIXTURE_KINDS = frozenset(
     {
+        "interval-constant-v1",
         "poly",
         "matrix",
         "bareiss_carrier",
@@ -992,6 +997,19 @@ def _validate_fixture(record: dict[str, Any]) -> None:
                 raise FixtureError(f"gfqfield.{key} must be List[int]: {record!r}")
     elif kind == "rcf_sentence":
         _validate_rcf_sentence(record)
+    elif kind == "interval-constant-v1":
+        if record.get("source") not in {"pi-machin-v1", "exp-one-taylor-v1"}:
+            raise FixtureError("unknown named-constant source")
+        if not _is_nat(record.get("bits")) or not _is_nat(record.get("order")) or record["order"] == 0:
+            raise FixtureError("constant bits/order must be Nat with positive order")
+        for key in ("center", "radius", "lower", "upper"):
+            pair = record.get(key)
+            if (not isinstance(pair, list) or len(pair) != 2 or
+                    any(type(x) is not int for x in pair) or pair[1] <= 0 or
+                    math.gcd(pair[0], pair[1]) != 1):
+                raise FixtureError(f"constant {key} must be a canonical rational pair")
+        if type(record.get("accepted")) is not bool:
+            raise FixtureError("constant accepted must be Bool")
     elif kind == "result":
         if not isinstance(record.get("op"), str):
             raise FixtureError(f"result.op must be str: {record!r}")

@@ -1,0 +1,53 @@
+Hex.Interval.ConstantsBench.piGenerate    [fixed] repeats=5
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=2d94116-dirty, 2026-09-20T12:03:50Z, host=chungus2
+  repeat 0  96.602 ms
+  repeat 1  95.950 ms
+  repeat 2  97.172 ms
+  repeat 3  93.918 ms
+  repeat 4  93.244 ms
+  median: 95.950 ms    min: 93.244 ms    max: 97.172 ms
+  hash: all repeats agree
+  observed hash: 0x4fa62339a37b277
+  expected hash: matches
+  peak RSS: 62_608 kB..68_044 kB (across 5 ok repeat(s))
+
+Hex.Interval.ConstantsBench.piCheck    [fixed] repeats=5
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=2d94116-dirty, 2026-09-20T12:03:52Z, host=chungus2
+  repeat 0  93.697 ms
+  repeat 1  95.449 ms
+  repeat 2  96.536 ms
+  repeat 3  95.009 ms
+  repeat 4  94.166 ms
+  median: 95.009 ms    min: 93.697 ms    max: 96.536 ms
+  hash: all repeats agree
+  observed hash: 0x4fa62339a37b277
+  expected hash: matches
+  peak RSS: 62_532 kB..68_684 kB (across 5 ok repeat(s))
+
+Hex.Interval.ConstantsBench.eGenerate    [fixed] repeats=5
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=2d94116-dirty, 2026-09-20T12:03:53Z, host=chungus2
+  repeat 0  2.775 ms
+  repeat 1  2.798 ms
+  repeat 2  3.202 ms
+  repeat 3  2.801 ms
+  repeat 4  2.881 ms
+  median: 2.801 ms    min: 2.775 ms    max: 3.202 ms
+  hash: all repeats agree
+  observed hash: 0xfa5439113a5a403
+  expected hash: matches
+  peak RSS: 62_136 kB..62_864 kB (across 5 ok repeat(s))
+
+Hex.Interval.ConstantsBench.eCheck    [fixed] repeats=5
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=2d94116-dirty, 2026-09-20T12:03:54Z, host=chungus2
+  repeat 0  2.845 ms
+  repeat 1  3.762 ms
+  repeat 2  2.806 ms
+  repeat 3  2.773 ms
+  repeat 4  2.805 ms
+  median: 2.806 ms    min: 2.773 ms    max: 3.762 ms
+  hash: all repeats agree
+  observed hash: 0xfa5439113a5a403
+  expected hash: matches
+  peak RSS: 62_120 kB..68_564 kB (across 5 ok repeat(s))
+
+exported to reports/bench-results/interval-constants/acceptance.json

@@ -31,6 +31,7 @@ trap 'rm -rf -- "$work_dir"' EXIT
 
 # Tuples are encoded as `lib|emit_exe|oracle_script|fixture_path`.
 ORACLES=(
+  "HexInterval|hexinterval_emit_constants|scripts/oracle/interval_constants.py|conformance-fixtures/HexInterval/constants.jsonl"
   # python-flint backed
   "HexPoly|hexpoly_emit_fixtures|scripts/oracle/poly_flint.py|conformance-fixtures/HexPoly/poly.jsonl"
   "HexPolyFast|hexpolyfast_emit_fixtures|scripts/oracle/polyfast_flint.py|conformance-fixtures/HexPolyFast/polyfast.jsonl"
@@ -190,6 +191,13 @@ run_tuple() {
     fi
     if ! python3 -m unittest scripts.oracle.test_real_algebraic_flint; then
       echo "FAIL: $lib :: oracle rejection tests failed"
+      return 1
+    fi
+  fi
+
+  if [ "$oracle" = "scripts/oracle/interval_constants.py" ]; then
+    if ! python3 -m unittest scripts.oracle.test_interval_constants; then
+      echo "FAIL: $lib :: constant oracle rejection checks failed"
       return 1
     fi
   fi
