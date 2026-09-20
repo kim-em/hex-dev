@@ -8,11 +8,13 @@ or a covering tree. Quantifier elimination with alternations belongs to
 [CAD](../future-work.md#cylindrical-algebraic-decomposition).
 
 Status: **planned**. This document also specifies `hex-coverings-mathlib`.
-Neither library becomes active until the delineability theorem is proved in
-Tau Ceti and its actual statement is reconciled with this interface. The
-[request #10300](https://github.com/kim-em/hex-dev/issues/10300) remains open
-for that reconciliation. These are new interfaces, not existing declarations;
-this SPEC adds no implementation, Lake target, or phase registration.
+Activation does not wait for the delineability theorem. `HexCoverings` needs
+no theorem at all, and `HexCoveringsMathlib` carries the theorem as an
+explicit hypothesis until Tau Ceti proves it (see "Fixed projection
+theorem"). The [request #10300](https://github.com/kim-em/hex-dev/issues/10300)
+remains open for reconciling the as-merged statement with this interface.
+These are new interfaces, not existing declarations; this SPEC adds no
+implementation, Lake target, or phase registration.
 
 ## Placement and dependencies
 
@@ -135,11 +137,22 @@ coordinate **zero**; the shared formula language appends a coordinate at
 the end. A proved permutation connects these at each level and is included
 in input normalization. A positional convention alone is not a proof.
 
-When PR 420 merges, a follow-up records the as-merged declaration, module,
-revision, and any changed hypotheses before activation. Import the proved
-Tau Ceti theorem, never the roadmap's `sorry` target. If the statement
-changes, revise the checker contract rather than treating the candidate as
-a permanent upstream API.
+Implementation does not wait for the theorem. `HexCoveringsMathlib` states
+the candidate verbatim as a proposition, `Hex.Coverings.Delineability : Prop`
+(a definition, never an `axiom` and never a `sorry`), and proves
+`cell_sound` and `refute_sound` under the explicit hypothesis
+`(hdel : Delineability)`; `model_sound` needs no such hypothesis. No proof
+of `Delineability` is committed before the Tau Ceti theorem exists, so the
+tactic's refutation path is not exposed until it can discharge that
+hypothesis by import, and its acceptance tests belong to the phase that
+removes the hypothesis; the model path, the compiled `decide` conformance,
+and every checker are unaffected. When PR 420 merges and the theorem is
+proved, a follow-up records the as-merged declaration, module, revision,
+and any changed hypotheses, replaces the hypothesis by the import, and
+re-runs the axiom audit. Import the proved Tau Ceti theorem, never the
+roadmap's `sorry` target. If the statement changes, revise `Delineability`
+and the checker contract rather than treating the candidate as a permanent
+upstream API.
 
 ## Literal samples and checked export
 
