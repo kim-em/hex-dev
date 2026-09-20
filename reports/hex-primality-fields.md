@@ -34,7 +34,8 @@ activity rejection or unchanged rerun. The before arm explicitly uses
 `(521, 32, 32768)` in the same compiled implementation. The original record's `commit` identifies the checkout's baseline parent,
 `cc2baf89e`; the measurements were collected with uncommitted source changes.
 Its `source_sha256` fields identify the measured sources, which are preserved
-in commit `58145c768` (including the original sweep driver). Later driver
+in the initial implementation. The record also embeds the original sweep
+driver verbatim, including its matching hash. Later driver
 changes add cross-arm certificate assertions and the separate failure case;
 they do not change the timed operations. These two budget fields are
 the entire production change, so this also controls compiler/build differences.
@@ -269,7 +270,8 @@ No extra attempt budget or failure cache is introduced.
 
 The exact input, factor validation, trace, commands, hashes, and every sample
 are in [the failure record](bench-results/hex-primality-field-failure-issue-10291.json),
-measured from source commit `88b1c74ee`. Reproduce with:
+measured from pre-rebase source commit `88b1c74ee` (published as `93a5a3a2a`
+after rebasing; all measured source hashes are unchanged). Reproduce with:
 
 ```sh
 python3 scripts/bench/primality_field_sweep.py --failure-only \

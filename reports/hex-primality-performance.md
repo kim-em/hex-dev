@@ -144,7 +144,8 @@ reported expected-hash agreement:
 The raw lean-bench export, complete output, source hashes, command, CPU,
 and host-load observations are retained in
 `reports/bench-results/hex-primality-fixed-fields-issue-10291.json`.
-Its source commit is `88b1c74ee`; the harness's `-dirty` suffix includes the
+Its pre-rebase source commit is `88b1c74ee` (published as `93a5a3a2a`
+after rebasing); the harness's `-dirty` suffix includes the
 untracked measurement outputs. The recorded source hashes identify the
 measured implementation. Reproduce with:
 
