@@ -79,6 +79,16 @@ with that ordinary integer dot product by `HexMatrixMathlib.dotIntPacked_eq`.
 The proof then applies scalar Kronecker injectivity.  Neither
 `Matrix.mul_apply` nor finite indexing is reduced by the Boolean checker.
 
+The mixed list/tree product checker and its kernel form have the analogous
+matrix soundness statement, with the right matrix denoted from expression
+trees. Prove it using `packTerms_eq_eval₂` on the list operands and
+`evalKron_eq_eval₂` on the tree operands, followed by the same bounded-box
+injectivity argument as `checkMulTerms_sound`. Structural tree degrees and
+ℓ¹ bounds supply the right operand's bounds. Mixed tree/list value equality
+uses the same argument. Neither proof normalizes the input trees to term
+lists. The modular variants first recover the integer polynomial identity
+with the checked quotient and then transport it to characteristic `p`.
+
 ## Characteristic `p`
 
 For `0 < p`, a passing quotient-witness check gives
