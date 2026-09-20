@@ -151,6 +151,16 @@ contains zero is not proof of a domain violation: it yields exhaustion.
 Expose `Result.isSome` as true exactly for `ok`; do not erase diagnostic
 failures into an `Option` at the public boundary.
 
+Internally, use hex-poly's common `Hex.PolyOps.Result` and residual `Budget`.
+The public diagnostic sum is a wrapper, with this explicit mapping: preserve
+`ok` and `exhausted`; map `rejected` to `invalid`; map an internal `invalid`
+carrying checked evidence of a mathematical domain violation to `domain`;
+and map malformed or context-invalid inputs to `invalid`. Preserve the
+residual counters on every outcome, including failed child calls. Distinguish
+these cases using structured constructors and typed domain evidence, never by
+parsing a diagnostic string. Only checked outcomes may be wrapped: an untrusted
+producer selecting a domain-failure constructor is not a certified violation.
+
 `Sign` has `negative`, `zero`, `positive`; successful `compare?` returns the
 corresponding ordering of its two operands. Certificates identify the exact
 context, operands, coefficient interpretation, domain obligations and sign.

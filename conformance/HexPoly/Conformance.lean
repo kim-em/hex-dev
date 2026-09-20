@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexPoly.Euclid
+import HexPoly.PolyOps
 
 /-!
 Core conformance checks for `hex-poly`'s dense/basic and Euclidean-operation surface.
@@ -407,3 +408,141 @@ end ProofMode
 end DensePoly
 
 end Hex
+
+/-! Fallible arithmetic conformance: semantic trailing zeros, replay tampering, exhausted
+children, forged domain evidence, and exact quotients. Every failure assertion checks its
+outcome tag; no failure is converted into a default coefficient or polynomial. -/
+namespace Hex.PolyOps.Conformance
+
+private def budget : Budget := (Limits.uniform 10000).budget
+
+private def isRejected : Result α E → Bool
+  | .rejected .. => true
+  | _ => false
+
+private def isExhausted : Result α E → Bool
+  | .exhausted .. => true
+  | _ => false
+
+private def isDomain : Result α E → Bool
+  | .invalid (.domain ..) _ => true
+  | _ => false
+
+-- Redundant representatives (a,b) denote a-b. Structural (5,5) is semantic zero.
+private def difference : Representation (Int × Int) Int where
+  decode a := a.1 - a.2
+  encode a := (a, 0)
+  decode_encode _ := by omega
+
+private def redundant := Total.coeffOps difference
+example : CoefficientLaws redundant difference.model := Total.lawful _
+
+#guard match degreeWith redundant #[(3, 1), (4, 1), (5, 5), (-2, -2)] budget with
+  | .ok e rest => e.degree == some 1 && rest.remaining .decisions == 9996 &&
+      (checkDegree redundant _ e rest).isSome
+  | _ => false
+
+#guard match degreeWith redundant #[(5, 5), (-2, -2)] budget with
+  | .ok e rest => e.degree == none && (checkDegree redundant _ e rest).isSome
+  | _ => false
+
+#guard match degreeWith intOps #[] budget with
+  | .ok e rest => e.degree == none && (checkDegree intOps _ e rest).isSome
+  | _ => false
+
+#guard match degreeWith intOps #[0, -7, 0] budget with
+  | .ok e rest => e.degree == some 1 && (checkDegree intOps _ e rest).isSome
+  | _ => false
+
+#guard match identityWith redundant #[(5, 3), (8, 8)] #[(2, 0)] budget with
+  | .ok e rest => (checkIdentity redundant _ _ e rest).isSome
+  | _ => false
+
+#guard isRejected (identityWith intOps #[2, 0] #[3] budget)
+#guard isExhausted (degreeWith intOps #[1] (Limits.uniform 0).budget)
+#guard isExhausted (degreeWith intOps #[1, 2] ⟨fun r => if r = .decisions then 1 else 100⟩)
+
+-- A child spends resources and then fails. Its exact residual counters must survive.
+private def stopped : CoeffOps Int :=
+  { intOps with zeroTest := fun _ => do
+      charge .steps 7
+      fun b => .exhausted (.unavailable "decision unavailable") b }
+
+#guard match degreeWith stopped #[3] budget with
+  | .exhausted _ rest => rest.remaining .steps == 9992 &&
+      rest.remaining .operations == 9999 && rest.remaining .decisions == 9999
+  | _ => false
+
+private def inflated : CoeffOps Int :=
+  { intOps with zeroTest := fun _ b =>
+      .exhausted (.unavailable "bad child budget") ⟨fun r => b.remaining r + 1⟩ }
+
+#guard match inflated.zeroWith 3 budget with
+  | .rejected .budgetIncrease rest => rest.remaining .operations == 9999 &&
+      rest.remaining .decisions == 9999
+  | _ => false
+
+private def falseZero : CoeffOps Int :=
+  { intOps with zeroTest := fun _ => Total.emit fun _ => ⟨true, ()⟩ }
+
+private def falseAdd : CoeffOps Int :=
+  { intOps with add := fun a b => Total.emit fun _ => ⟨a + b + 1, ()⟩ }
+
+private def falseDomain : CoeffOps Int :=
+  { intOps with add := fun _ _ b => .invalid (.domain "forged zero" ⟨7, ()⟩) b }
+
+#guard isRejected (falseZero.zeroWith 3 budget)
+#guard isRejected (falseAdd.addWith 2 3 budget)
+#guard isRejected (falseDomain.addWith 2 3 budget)
+#guard match intOps.signWith (-7) budget with
+  | .ok r _ => r.1 == .negative
+  | _ => false
+
+-- Claim-indexed unit evidence is rechecked against the new claim, not blindly reused.
+#guard match intOps.check (.add 2 3 6) budget () with
+  | .rejected .. => true
+  | _ => false
+
+#guard match degreeWith intOps #[1, 0] budget with
+  | .ok e rest => isRejected (checkDegree intOps _ { e with degree := none } rest) &&
+      isRejected (checkDegree intOps _ { e with entries := e.entries.pop } rest) &&
+      isRejected (checkDegree intOps _ { e with entries := e.entries.reverse } rest)
+  | _ => false
+
+#guard match identityWith intOps #[1, 2] #[1, 2, 0] budget with
+  | .ok e rest => isRejected (checkIdentity intOps _ _ e.pop rest) &&
+      isRejected (checkIdentity intOps _ _ e.reverse rest)
+  | _ => false
+
+#guard match intExactOps.divWith 12 (-3) budget with
+  | .ok r _ => r.1 == -4
+  | _ => false
+#guard isExhausted (intExactOps.divWith 3 2 budget)
+#guard isDomain (intExactOps.divWith 0 0 budget)
+#guard isDomain (ratOps.invWith 0 budget)
+#guard match ratOps.invWith (2 / 3) budget with
+  | .ok r _ => r.1 * (2 / 3 : Rat) == 1
+  | _ => false
+#guard match ratExactOps.divWith (2 / 3) (-4 / 7) budget with
+  | .ok r _ => (-4 / 7 : Rat) * r.1 == 2 / 3
+  | _ => false
+
+private def falseDivision : ExactOps Int :=
+  { intExactOps with divExact := fun _ _ => Total.emit fun _ => ⟨42, ()⟩ }
+#guard isRejected (falseDivision.divWith 12 3 budget)
+
+-- Each public case preserves residual counters and classifies by its constructor.
+#guard match (ratOps.invWith 0 budget).toPublic with
+  | .domain _ _ rest => rest.remaining .decisions == 9999
+  | _ => false
+#guard match (falseDomain.addWith 2 3 budget).toPublic with
+  | .invalid _ rest => rest.remaining .operations < 10000
+  | _ => false
+#guard match (Result.invalid (.context "domain") budget : Result Nat Unit).toPublic with
+  | .invalid _ rest => rest.remaining .steps == 10000
+  | _ => false
+#guard match (Result.exhausted (.resource .steps) budget : Result Nat Unit).toPublic with
+  | .exhausted (.resource .steps) rest => rest.remaining .steps == 10000
+  | _ => false
+
+end Hex.PolyOps.Conformance
