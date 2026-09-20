@@ -129,3 +129,9 @@ end SuggestionContext
 
 #guard_msgs (drop info) in
 example : Nat.Prime (2 ^ 255 - 19) := by primality?
+
+/-- info: Try this:
+  [apply] exact Hex.Nat.natPrime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.small 7) (by decide +kernel)
+-/
+#guard_msgs in
+example : Nat.Prime 7 := by primality? using Hex.Nat.PrimeCert.small 7

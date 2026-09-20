@@ -38,10 +38,8 @@ matrix (the companion), and univariate `F[x]` matrices, whose determinant
 the `DensePoly` carriers of hex-bareiss's carrier table already cover.
 
 Dependencies: `HexBareiss`, `HexMvGcd` (hence `HexMvPoly`, `HexResultant`),
-`HexDeterminant`, `HexMatrix`, `HexBasic`. Implementing the packed arm adds
-`HexKronecker`, downward in the DAG; it remains Mathlib-free and unpublished.
-The SPEC amendment does not change `libraries.yml` or the released manifest;
-register the dependency when the planned Kronecker library is implemented.
+`HexDeterminant`, `HexMatrix`, `HexBasic`, and `HexKronecker`, downward in the
+DAG. The library remains Mathlib-free and unpublished.
 
 ## The instantiation
 
@@ -59,6 +57,11 @@ def polyDetWitness (P : Matrix (MvPoly k C cmp) n n) : Except String (DetWitness
 
 def polyDet (P : Matrix (MvPoly k C cmp) n n) : MvPoly k C cmp
 def polyDetWitness? (P : Matrix (MvPoly k C cmp) n n) : Option (DetWitness (MvPoly k C cmp))
+
+def produce (budget : DetWitness.Budget) (n : Nat)
+    (check : List (List (MvPoly k C cmp)) → DetWitness (MvPoly k C cmp) → Bool)
+    (rows : List (List (MvPoly k C cmp))) :
+    Except DetWitness.Error (DetWitness (MvPoly k C cmp))
 ```
 
 `Hex.Matrix.detWitnessWith` is generic over entry arithmetic, with the
@@ -69,6 +72,17 @@ it in compiled code; its kernel encodings are integer and residue
 coefficients, so its initial carriers are `Int` and `ZMod64 p`, and `Rat`
 enters only through the companion's row-scaling arm, which checks integer
 lists.
+
+`Hex.PolyDet.produce` in `Basic.lean` instantiates `Hex.Matrix.detWitnessBudgeted` with
+`MvPoly` support cardinality as its size measure, for both integer and
+residue coefficient domains. Its intermediate budget governs round admission
+by term-product counts and the total support of the retained blocks after
+each round, as specified in hex-bareiss. Its certificate budget is checked
+before the compiled self-check. Structured declines preserve the exhausted
+budget name, count reached and limit through the frontend.
+The companion calls this shared wrapper from its integer route and from
+`Frontend.residueWitness?`, supplying the corresponding serialization
+self-check. The unlimited `polyDetWitness` API and its error type stay intact.
 
 The exact quotient and its law are `Hex.MvPoly.instDiv` and
 `Hex.MvPoly.instExactDivLaws` from `HexMvGcd/Divide.lean`, under
@@ -89,10 +103,12 @@ operation comes from `HexMvPoly.KernelResidue`. Its soundness is the companion's
 ## Packed certificate
 
 `Hex.PolyDet.checkDetPolyPacked` returns `Bool` and takes a
-`Hex.Kronecker.Budget`, `MulMode`, atom count `k`, dimension `n`, canonical
+`MulMode`, atom count `k`, dimension `n`, canonical
 integer polynomial row lists, and the same `DetWitness (PolyList Int)` as
 `checkDetPolyList`. It replaces only the product identities with
-[`Hex.Kronecker.checkMulTerms`](../../HexKronecker/SPEC/hex-kronecker.md#kernel-evaluation).
+[`Hex.Kronecker.Kernel.mulTerms`](../../HexKronecker/SPEC/hex-kronecker.md#kernel-evaluation)
+after elaborator preflight; resource reports and budget comparisons are not
+kernel replay. The kernel-facing form has no resource budget argument.
 Canonicality, exponent arity, matrix and witness shapes, swap validity,
 nonzero transform diagonals or a nonzero singular vector remain checked in
 the kernel. Nonzeroness is a canonical polynomial test, never a test at the
@@ -103,7 +119,7 @@ payload. For `.triangular swaps T d`, let `P` be the input rows permuted in
 swap order, and `lᵢ := Tᵢ[i]`. Require exactly `n` transform rows, with row
 `i` of length `i + 1`, each `lᵢ ≠ 0`, and `l₀ = 1` when `n > 0`. For each
 `i < n`, use a `1 × (i + 1)` row `Tᵢ` and the leading
-`(i + 1) × (i + 1)` submatrix of `P` in `checkMulTerms`. Its result row is
+`(i + 1) × (i + 1)` submatrix of `P` in `Kernel.mulTerms`. Its result row is
 `[0, …, 0, uᵢ]`, where `uᵢ := lᵢ₊₁` for `i + 1 < n` and
 `uₙ₋₁ := sign(swaps) * d`. Thus it checks exactly the zero products below
 the diagonal and the adjacent-diagonal identities of
@@ -113,10 +129,29 @@ For `.singular v`, require length `n` and a nonzero entry, and check
 `[v] * A = [0, …, 0]` with dimensions `1 × n`, `n × n`, `1 × n`.
 The singular witness cannot pass at `n = 0`.
 
+`checkDetPolyPackedTree` accepts the same list-valued witness and an input
+matrix of `Hex.Kronecker.Expr` trees. It applies the same swaps and checks
+the same row-prefix or singular-vector identities through the mixed
+list/tree product checker. Entries are evaluated directly at the Kronecker
+point; their bounds are structural tree degrees and ℓ¹ bounds. The common
+plan for each identity includes those bounds and the witness bounds. A
+target tree is compared with the witness value by mixed tree/list equality,
+with both operands included in its plan. The target is never expanded by
+the kernel. Witness lists still require canonicality and the same nonzero
+diagonal or vector checks. Keep `checkDetPolyPacked` and its modular form
+for term-list certificates, including the residue route.
+Its kernel-facing signature is
+`checkDetPolyPackedTree (mode : MulMode) (k n : Nat)
+(rows : List (List Hex.Kronecker.Expr)) (w : DetWitness (PolyList Int)) : Bool`.
+All three kernel-facing determinant entry points, including
+`checkDetPolyPackedMod`, omit the resource `Budget` argument; any outer
+signed-packing widths are validated by the product checker.
+
 ### Bounds and selection
 
 After compiled witness production and canonical list conversion, run
-`sizeMulTerms` on every product above before packing or emitting any kernel
+`sizeMulTerms` (or `sizeMulTree` for tree entries) on every product above before
+packing or emitting any kernel
 proof for the certificate. For each output coordinate the degree bound is
 the componentwise maximum of `degree(Mᵢₜ) + degree(Aₜⱼ)` over `t` and
 `degree(Cᵢⱼ)`; the coefficient bound is
@@ -124,7 +159,7 @@ the componentwise maximum of `degree(Mᵢₜ) + degree(Aₜⱼ)` over `t` and
 actual witness, not just the entry degrees or atom count. Use Kronecker's
 `SizeBound`, mixed-radix strides, base and saturating preflight unchanged;
 no dense polynomial expansion or packed integer is built to choose the arm.
-Each `checkMulTerms` call derives its own plan; its interface has no shared
+Each product check derives its own plan; its interface has no shared
 plan argument. The kernel repacks entries shared by different row-prefix
 products, potentially at different bases and strides. Account for that
 repeated support traversal and packing, rather than assuming cached columns.
@@ -147,7 +182,8 @@ Above either packing limit, the whole certificate uses term lists;
 there is no kernel trial of the packed checker followed by a sparse retry.
 Within the limits, use the measured sparse/packed crossover table required
 by [hex-kronecker §Consumers](../../HexKronecker/SPEC/hex-kronecker.md#consumers), keyed by
-`packedBits`, input supports and inner dimension. Require an eligible entry
+`packedBits`, input supports and inner dimension (with result support as an
+additional conservative equality key). Require an eligible entry
 for every product; an absent entry selects term lists. Explicit comparison
 probes may force either arm within its budgets to establish that table.
 The table is fixed before consumer activation. This first interface selects
@@ -175,7 +211,7 @@ the authority; no compiled result is used as a proof.
 
 ### Positive characteristic
 
-`checkDetPolyPackedMod` uses `checkMulTermsMod` with canonical residue
+`checkDetPolyPackedMod` uses `Kernel.mulTermsMod` with canonical residue
 `PolyList Nat` inputs lifted coefficientwise to integers in `[0,p)`.
 The `DetWitness` is unchanged. A supplemental payload supplies one integer
 quotient term list per output entry of each product above: `n` quotient
@@ -275,11 +311,13 @@ comparison and default-family decision belong to the companion.
 ```
 HexPolyDet/
   Basic.lean        -- polyDetWitness, polyDet, polyDetWitness?, the instance section
-  Packed.lean       -- planned packed checks, bounds, quotient payload preparation
+  Packed.lean       -- integer and residue packed checks
+  PackedTests.lean  -- kernel checker, boundary, quotient, and selection tests
+  Select.lean       -- compiled bounds, selection, and quotient payload preparation
 HexPolyDet.lean
 ```
 
-When the packed implementation lands, the `libraries.yml` entry becomes
+The `libraries.yml` entry is
 
 ```yaml
   HexPolyDet:
@@ -309,10 +347,13 @@ result. The companion proves `PolyDet.check_of_ok`: every successful
 `polyDetWitness` return passes the checker. Errors remain possible; the theorem
 does not assert that every input produces a successful result. `PolyDet.toList` performs compiled merge sorting into canonical order;
 the kernel sees and validates only its output.
+The companion's `produce_check` applies `detWitnessBudgeted_check` to
+establish the same successful-check contract for `produce`; neither contract
+claims that every input succeeds within a resource budget.
 
-The planned packed entry points are `checkDetPolyPacked` and
-`checkDetPolyPackedMod` with the argument and payload contracts above.
-Compiled quotient preparation belongs alongside them in `Packed.lean`;
+The packed entry points are `checkDetPolyPacked`, `checkDetPolyPackedTree`
+and `checkDetPolyPackedMod` with the argument and payload contracts above.
+Compiled quotient preparation and selection are in `Select.lean`;
 its budget-decline outcome is distinct from a malformed or incorrect
 certificate. The existing `polyDetWitness?` remains the list-validation API;
 the handler additionally validates with its selected checker before quotation.

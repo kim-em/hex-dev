@@ -251,13 +251,59 @@ theorem zeroDots_spec (v : List R) (cs : List (List R))
     · exact ((D.beq _ _ (D.valid_dot v _ hv hcs.1) D.valid_zero).mp h.1).trans D.zero
     · exact ih hcs.2 h.2 c' hc'
 
+/-- The witness identities in the polynomial model. This proposition contains
+no Boolean polynomial multiplication or equality test. -/
+@[expose] def Triangular (d : R) (swaps : List (Nat × Nat)) :
+    List (List R) → Nat → List (List R) → List (List R) → R → Prop
+  | _, _, [], [], prev => D.eval d = D.eval (ops.signed swaps prev)
+  | done, i, t :: ts, c :: cs, prev =>
+      t.length = i + 1 ∧ ops.validRow t = true ∧
+      D.eval (ops.entry t i) ≠ 0 ∧ D.eval (ops.entry t i) = D.eval prev ∧
+      (∀ c ∈ done, D.eval (ops.dot t c) = 0) ∧
+      Triangular d swaps (c :: done) (i + 1) ts cs (ops.dot t c)
+  | _, _, _, _, _ => False
+
+/-- Extract the semantic identities from the term-list arithmetic checks. -/
+theorem triangular_identities (d : R) (swaps : List (Nat × Nat))
+    (hd : ops.valid d = true) :
+    ∀ (done : List (List R)) (i : Nat) (ts cs : List (List R)) (prev : R),
+      ops.validRows done = true → ops.validRows cs = true → ops.valid prev = true →
+      ops.triangular d swaps done i ts cs prev = true →
+      D.Triangular d swaps done i ts cs prev := by
+  intro done i ts
+  induction ts generalizing done i with
+  | nil =>
+      intro cs prev _ _ hp h
+      cases cs with
+      | nil => exact (D.beq _ _ hd (D.valid_signed swaps prev hp)).mp h
+      | cons c cs => simp [DetOps.triangular] at h
+  | cons t ts ih =>
+      intro cs prev hdone hcs hp h
+      cases cs with
+      | nil => simp [DetOps.triangular] at h
+      | cons c cs =>
+          simp only [DetOps.validRows, Bool.and_eq_true] at hcs
+          simp only [DetOps.triangular, Bool.and_eq_true, Nat.beq_eq,
+            Bool.not_eq_true'] at h
+          obtain ⟨⟨⟨⟨⟨hlen, ht⟩, hnz⟩, hprev⟩, hz⟩, hrest⟩ := h
+          have hl := D.valid_entry t i ht
+          refine ⟨hlen, ht, ?_, (D.beq _ _ hl hp).mp hprev,
+            D.zeroDots_spec t done ht hdone hz, ?_⟩
+          · intro he
+            have hb := (D.beq _ _ hl D.valid_zero).mpr (he.trans D.zero.symm)
+            rw [hb] at hnz
+            contradiction
+          · exact ih (c :: done) (i + 1) cs (ops.dot t c)
+              (by simp only [DetOps.validRows, Bool.and_eq_true]; exact ⟨hcs.1, hdone⟩)
+              hcs.2 (D.valid_dot t c ht hcs.1) hrest
+
 /-- The checked adjacent diagonal relations imply the determinant product
 identity propositionally, without multiplying pivot polynomials in replay. -/
 theorem triangular_spec (d : R) (swaps : List (Nat × Nat))
     (hd : ops.valid d = true) :
     ∀ (done : List (List R)) (i : Nat) (ts cs : List (List R)) (prev : R),
       ops.validRows done = true → ops.validRows cs = true → ops.valid prev = true →
-      ops.triangular d swaps done i ts cs prev = true →
+      D.Triangular d swaps done i ts cs prev →
       ts.length = cs.length ∧
       (∀ k, k < ts.length →
         (ts.getD k []).length = i + k + 1 ∧
@@ -276,26 +322,17 @@ theorem triangular_spec (d : R) (swaps : List (Nat × Nat))
     intro cs prev hdone hcs hp h
     cases cs with
     | nil =>
-      have he := (D.beq _ _ hd (D.valid_signed swaps prev hp)).mp h
+      have he : D.eval d = D.eval (ops.signed swaps prev) := h
       rw [D.eval_signed swaps prev hp] at he
       simpa using he
-    | cons c cs => simp [DetOps.triangular] at h
+    | cons c cs => simp [Triangular] at h
   | cons t ts ih =>
     intro cs prev hdone hcs hp h
     cases cs with
-    | nil => simp [DetOps.triangular] at h
+    | nil => simp [Triangular] at h
     | cons c cs =>
       simp only [DetOps.validRows, Bool.and_eq_true] at hcs
-      simp only [DetOps.triangular, Bool.and_eq_true, Nat.beq_eq,
-        Bool.not_eq_true'] at h
-      obtain ⟨⟨⟨⟨⟨hlen, ht⟩, hnz⟩, hprev⟩, hz⟩, hrest⟩ := h
-      have hl := D.valid_entry t i ht
-      have hlnz : D.eval (ops.entry t i) ≠ 0 := by
-        intro he
-        have hb := (D.beq _ _ hl D.valid_zero).mpr (he.trans D.zero.symm)
-        rw [hb] at hnz
-        contradiction
-      have heq := (D.beq _ _ hl hp).mp hprev
+      obtain ⟨hlen, ht, hlnz, heq, hz, hrest⟩ := h
       obtain ⟨hcslen, hrows, hprod⟩ := ih (c :: done) (i + 1) cs (ops.dot t c)
         (by simp only [DetOps.validRows, Bool.and_eq_true]; exact ⟨hcs.1, hdone⟩)
         hcs.2 (D.valid_dot t c ht hcs.1) hrest
@@ -304,7 +341,7 @@ theorem triangular_spec (d : R) (swaps : List (Nat × Nat))
         cases k with
         | zero =>
           exact ⟨by simpa using hlen, by simpa using ht, by simpa using hlnz,
-            fun c' hc' => D.zeroDots_spec t done ht hdone hz c' hc',
+            fun c' hc' => hz c' hc',
             fun k' hk' => absurd hk' (Nat.not_lt_zero _)⟩
         | succ k =>
           obtain ⟨h1, h2, h3, h4, h5⟩ := hrows k (by simpa using hk)
@@ -405,17 +442,43 @@ theorem det_permute (n : Nat) (ss : List (Nat × Nat)) (A : List (List R))
       Equiv.Perm.sign_swap (by simpa [Fin.ext_iff] using hab)]
     simp [pow_succ, mul_assoc, mul_left_comm, mul_comm]
 
+/-- The common semantic contract of the two certificate routes. -/
+@[expose] def Identities (n : Nat) (A : List (List R)) : DetWitness R → Prop
+  | .triangular swaps T d =>
+      A.length = n ∧ rowLengths n A = true ∧ ops.validRows A = true ∧
+      swapsOk n swaps = true ∧ ops.valid d = true ∧
+      D.Triangular d swaps [] 0 T (ops.columns (permute swaps A) 0 n) ops.one
+  | .singular v =>
+      A.length = n ∧ rowLengths n A = true ∧ ops.validRows A = true ∧
+      v.length = n ∧ ops.validRow v = true ∧ ops.anyNonzero v = true ∧
+      ∀ c ∈ ops.columns A 0 n, D.eval (ops.dot v c) = 0
+
+/-- List arithmetic establishes the shared witness contract. -/
+theorem identities_of_check (n : Nat) (A : List (List R)) (w : DetWitness R)
+    (h : checkDetPolyList ops n A w = true) : D.Identities n A w := by
+  cases w with
+  | triangular swaps T d =>
+      simp only [checkDetPolyList, Bool.and_eq_true, Nat.beq_eq] at h
+      obtain ⟨⟨⟨⟨⟨hl, hr⟩, ha⟩, hs⟩, hd⟩, ht⟩ := h
+      exact ⟨hl, hr, ha, hs, hd, D.triangular_identities d swaps hd [] 0 T
+        (ops.columns (permute swaps A) 0 n) ops.one rfl
+        (D.valid_columns _ 0 n (D.valid_permute swaps A ha)) D.valid_one ht⟩
+  | singular v =>
+      simp only [checkDetPolyList, Bool.and_eq_true, Nat.beq_eq] at h
+      obtain ⟨⟨⟨⟨⟨⟨hl, hr⟩, ha⟩, hvlen⟩, hv⟩, hnz⟩, hz⟩ := h
+      exact ⟨hl, hr, ha, hvlen, hv, hnz,
+        D.zeroDots_spec v _ hv (D.valid_columns A 0 n ha) hz⟩
+
 /-- A passing generic polynomial certificate determines the determinant in
 any domain interpreting its canonical entry arithmetic. -/
-theorem sound [IsDomain S] (n : Nat) (A : List (List R)) (w : DetWitness R)
-    (h : checkDetPolyList ops n A w = true) :
+theorem identities_sound [IsDomain S] (n : Nat) (A : List (List R)) (w : DetWitness R)
+    (h : D.Identities n A w) :
     (D.matrix n A).det = match w with
       | .triangular _ _ d => D.eval d
       | .singular _ => 0 := by
   cases w with
   | triangular swaps T d =>
-    simp only [checkDetPolyList, Bool.and_eq_true, Nat.beq_eq] at h
-    obtain ⟨⟨⟨⟨⟨hAlen, _⟩, hA⟩, hswaps⟩, hd⟩, htri⟩ := h
+    obtain ⟨hAlen, _, hA, hswaps, hd, htri⟩ := h
     set P := permute swaps A with hP
     have hvalidP : ops.validRows P = true := D.valid_permute swaps A hA
     have hdetP : (D.matrix n P).det = (-1 : S) ^ swaps.length * (D.matrix n A).det :=
@@ -469,8 +532,7 @@ theorem sound [IsDomain S] (n : Nat) (A : List (List R)) (w : DetWitness R)
       linear_combination (∏ i, Lm i i) * (D.matrix T.length A).det * hsign
     exact (mul_left_cancel₀ hl0 key).symm
   | singular v =>
-    simp only [checkDetPolyList, Bool.and_eq_true, Nat.beq_eq] at h
-    obtain ⟨⟨⟨⟨⟨⟨_, _⟩, hA⟩, hvlen⟩, hv⟩, hnz⟩, hz⟩ := h
+    obtain ⟨_, _, hA, hvlen, hv, hnz, hz⟩ := h
     have hnonzero : ∃ a ∈ v, D.eval a ≠ 0 := by
       have any : ∀ xs : List R, ops.validRow xs = true → ops.anyNonzero xs = true →
           ∃ a ∈ xs, D.eval a ≠ 0 := by
@@ -506,10 +568,19 @@ theorem sound [IsDomain S] (n : Nat) (A : List (List R)) (w : DetWitness R)
         rw [← Nat.zero_add j, ← columns_getD A 0 n j j.isLt,
           getD_eq_getElem' _ _ _ (by rw [columns_length]; exact j.isLt)]
         exact List.getElem_mem _
-      have he := D.zeroDots_spec v _ hv (D.valid_columns A 0 n hA) hz _ hmem
+      have he := hz _ hmem
       rw [D.eval_dot v (ops.column j A) n (by omega) hv (D.valid_column A j hA)] at he
       simpa only [column_entry, D.matrix_apply, w] using he
     exact Matrix.exists_vecMul_eq_zero_iff.mp ⟨w, hw, hmul⟩
+
+/-- A passing list certificate supplies the shared determinant identities. -/
+theorem sound [IsDomain S] (n : Nat) (A : List (List R)) (w : DetWitness R)
+    (h : checkDetPolyList ops n A w = true) :
+    (D.matrix n A).det = match w with
+      | .triangular _ _ d => D.eval d
+      | .singular _ => 0 := by
+  have hs := D.identities_sound n A w (D.identities_of_check n A w h)
+  cases w <;> exact hs
 
 /-- Transport for any canonical serialized coefficient representation, including
 modulus-parametrised residue lists once their decoder is supplied. -/
@@ -540,7 +611,7 @@ variable {C : Type} [CommRing C] [BEq C] [LawfulBEq C] [DecidableEq C]
 
 /-- The generic checker interprets polynomial lists in Mathlib's polynomial
 ring, where the coefficient domain supplies the domain instance. -/
-noncomputable def decode (k : Nat) : Decode (ops (C := C) k) (MvPolynomial (Fin k) C) where
+@[expose] noncomputable def decode (k : Nat) : Decode (ops (C := C) k) (MvPolynomial (Fin k) C) where
   eval := HexMvPolyMathlib.Kernel.denote (n := k) (cmp := Mono.grevlex)
   zero := by simp [ops, Hex.PolyDet.ops, HexMvPolyMathlib.Kernel.denote, Hex.MvPoly.Kernel.denote]
   one := HexMvPolyMathlib.Kernel.denote_one
@@ -608,6 +679,20 @@ variable {F : Type u} [CommRing F]
 
 /-- Determinants commute unconditionally with evaluation of polynomial entries,
 including valuations at which a nonzero pivot polynomial vanishes. -/
+theorem transport_det (k n : Nat)
+    (rows : List (List (Hex.MvPoly.Kernel.PolyList C)))
+    (w : DetWitness (Hex.MvPoly.Kernel.PolyList C))
+    (φ : MvPoly k C Mono.grevlex →+* F) (A : Matrix (Fin n) (Fin n) F)
+    (hdet : Hex.Matrix.det (matrix k n rows) =
+      Hex.MvPoly.Kernel.denote (n := k) (cmp := Mono.grevlex) (value w))
+    (hA : A = (HexMatrixMathlib.matrixEquiv (matrix k n rows)).map φ) :
+    A.det = φ (Hex.MvPoly.Kernel.denote (cmp := Mono.grevlex) (value w)) := by
+  rw [hA]
+  change (φ.mapMatrix (HexMatrixMathlib.matrixEquiv (matrix k n rows))).det = _
+  rw [← RingHom.map_det, ← HexMatrixMathlib.det_eq, hdet]
+
+/-- Determinants commute unconditionally with evaluation of polynomial entries,
+including valuations at which a nonzero pivot polynomial vanishes. -/
 theorem transport [IsDomain C] (k n : Nat)
     (rows : List (List (Hex.MvPoly.Kernel.PolyList C)))
     (w : DetWitness (Hex.MvPoly.Kernel.PolyList C))
@@ -634,7 +719,8 @@ theorem evaluated_eq (k n : Nat)
       (HexReflectMathlib.Kernel.hom k ctx) := by
   simp only [evaluated, matrix, Equiv.apply_symm_apply]
 
-/-- Agreement with the target uses the same batch's canonical list comparison. -/
+/-- Retained public term-list API. Agreement with the target uses the same
+batch's canonical list comparison; checker-independent clients use `target_det`. -/
 theorem target (k n : Nat) (rows : List (List (Hex.MvPoly.Kernel.PolyList Int)))
     (w : DetWitness (Hex.MvPoly.Kernel.PolyList Int))
     (ctx : Lean.RArray F) (A : Matrix (Fin n) (Fin n) F)
@@ -648,8 +734,8 @@ theorem target (k n : Nat) (rows : List (List (Hex.MvPoly.Kernel.PolyList Int)))
     Hex.MvPoly.Kernel.beq_eq_true_iff.mp hq]
   exact he
 
-/-- A generated value is already the witness's value; no reflexive list
-comparison is needed for the term form or simproc. -/
+/-- Retained public term-list API; checker-independent clients use `result_det`.
+A generated value is already the witness's value, with no reflexive comparison. -/
 theorem result (k n : Nat) (rows : List (List (Hex.MvPoly.Kernel.PolyList Int)))
     (w : DetWitness (Hex.MvPoly.Kernel.PolyList Int)) (ctx : Lean.RArray F)
     (A : Matrix (Fin n) (Fin n) F) (e : F)
@@ -660,8 +746,8 @@ theorem result (k n : Nat) (rows : List (List (Hex.MvPoly.Kernel.PolyList Int)))
   (transport k n rows w (HexReflectMathlib.Kernel.hom k ctx) A hcheck
     (hA.trans (evaluated_eq k n rows ctx))).trans he
 
-/-- Row scaling transports the polynomial certificate to the original rational
-matrix. Positivity is used only for the final scalar cancellation. -/
+/-- Retained public term-list scaling API; checker-independent clients use
+`scaled_det`. Positivity is used only for the final scalar cancellation. -/
 theorem scaled (k n : Nat) (rows : List (List (Hex.MvPoly.Kernel.PolyList Int)))
     (w : DetWitness (Hex.MvPoly.Kernel.PolyList Int))
     (ctx : Lean.RArray Rat) (A : Matrix (Fin n) (Fin n) Rat) (s : List Nat)
@@ -672,6 +758,53 @@ theorem scaled (k n : Nat) (rows : List (List (Hex.MvPoly.Kernel.PolyList Int)))
     (DetWitness.prodNat s : Rat) * A.det = HexReflectMathlib.Kernel.hom k ctx
       (Hex.MvPoly.Kernel.denote (cmp := Mono.grevlex) (value w)) := by
   have hdet := transport k n rows w (HexReflectMathlib.Kernel.hom k ctx)
+    (Matrix.diagonal (fun i : Fin n => (s.getD i 1 : Rat)) * A) hcheck (hA.symm.trans (evaluated_eq k n rows ctx))
+  rw [Matrix.det_mul, Matrix.det_diagonal] at hdet
+  rw [HexMatrixMathlib.prodNat_cast s n hs]
+  exact hdet
+
+
+/-- Agreement with the target uses the same batch's canonical list comparison. -/
+theorem target_det (k n : Nat) (rows : List (List (Hex.MvPoly.Kernel.PolyList Int)))
+    (w : DetWitness (Hex.MvPoly.Kernel.PolyList Int))
+    (ctx : Lean.RArray F) (A : Matrix (Fin n) (Fin n) F)
+    (q : Hex.MvPoly.Kernel.PolyList Int) (e : F)
+    (hcheck : Hex.Matrix.det (matrix k n rows) =
+      Hex.MvPoly.Kernel.denote (n := k) (cmp := Mono.grevlex) (value w))
+    (hA : A = evaluated k n rows ctx)
+    (he : HexReflectMathlib.Kernel.hom k ctx
+      (Hex.MvPoly.Kernel.denote (cmp := Mono.grevlex) q) = e)
+    (hq : Hex.MvPoly.Kernel.beq (value w) q = true) : A.det = e := by
+  rw [transport_det k n rows w (HexReflectMathlib.Kernel.hom k ctx) A hcheck (hA.trans (evaluated_eq k n rows ctx)),
+    Hex.MvPoly.Kernel.beq_eq_true_iff.mp hq]
+  exact he
+
+/-- A generated value is already the witness's value; no reflexive list
+comparison is needed for the term form or simproc. -/
+theorem result_det (k n : Nat) (rows : List (List (Hex.MvPoly.Kernel.PolyList Int)))
+    (w : DetWitness (Hex.MvPoly.Kernel.PolyList Int)) (ctx : Lean.RArray F)
+    (A : Matrix (Fin n) (Fin n) F) (e : F)
+    (hcheck : Hex.Matrix.det (matrix k n rows) =
+      Hex.MvPoly.Kernel.denote (n := k) (cmp := Mono.grevlex) (value w))
+    (hA : A = evaluated k n rows ctx)
+    (he : HexReflectMathlib.Kernel.hom k ctx
+      (Hex.MvPoly.Kernel.denote (cmp := Mono.grevlex) (value w)) = e) : A.det = e :=
+  (transport_det k n rows w (HexReflectMathlib.Kernel.hom k ctx) A hcheck
+    (hA.trans (evaluated_eq k n rows ctx))).trans he
+
+/-- Row scaling transports the polynomial certificate to the original rational
+matrix. Positivity is used only for the final scalar cancellation. -/
+theorem scaled_det (k n : Nat) (rows : List (List (Hex.MvPoly.Kernel.PolyList Int)))
+    (w : DetWitness (Hex.MvPoly.Kernel.PolyList Int))
+    (ctx : Lean.RArray Rat) (A : Matrix (Fin n) (Fin n) Rat) (s : List Nat)
+    (hcheck : Hex.Matrix.det (matrix k n rows) =
+      Hex.MvPoly.Kernel.denote (n := k) (cmp := Mono.grevlex) (value w))
+    (hA : evaluated k n rows ctx =
+        Matrix.diagonal (fun i : Fin n => (s.getD i 1 : Rat)) * A)
+    (hs : s.length = n) :
+    (DetWitness.prodNat s : Rat) * A.det = HexReflectMathlib.Kernel.hom k ctx
+      (Hex.MvPoly.Kernel.denote (cmp := Mono.grevlex) (value w)) := by
+  have hdet := transport_det k n rows w (HexReflectMathlib.Kernel.hom k ctx)
     (Matrix.diagonal (fun i : Fin n => (s.getD i 1 : Rat)) * A) hcheck (hA.symm.trans (evaluated_eq k n rows ctx))
   rw [Matrix.det_mul, Matrix.det_diagonal] at hdet
   rw [HexMatrixMathlib.prodNat_cast s n hs]

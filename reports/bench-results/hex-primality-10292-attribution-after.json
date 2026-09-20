@@ -1,0 +1,1227 @@
+{
+  "schema": "primality-replay-attribution/1",
+  "host": "chungus2",
+  "cpu": 15,
+  "commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+  "toolchain": "leanprover/lean4:v4.34.0",
+  "diff": "diff --git a/HexPrimality/Cert.lean b/HexPrimality/Cert.lean\nindex 0ae547b9b..ceb984296 100644\n--- a/HexPrimality/Cert.lean\n+++ b/HexPrimality/Cert.lean\n@@ -363,7 +363,7 @@ multiplications. (When `r\u00b2 \u2264 8s` the truncated subtraction makes the\n witness clause `w * w < 0` unsatisfiable, so the disjunct is simply never\n taken; the middle disjunct covers that region.) -/\n @[expose]\n-def checkPock3Arith (n r s w : Nat)\n+def checkPock3Arith.native (n r s w : Nat)\n     (factors : List (Nat \u00d7 Nat \u00d7 PrimeCert)) : Bool :=\n   decide (2 \u2264 n) && n % 2 == 1 && subjectsOk factors &&\n     match certProduct (n - 1) factors with\n@@ -378,6 +378,22 @@ def checkPock3Arith (n r s w : Nat)\n               decide (r * r - 8 * s < (w + 1) * (w + 1)))) &&\n           checkWitnesses n factors\n \n+/-- Kernel replay uses the bounded positive product and primitive comparisons.\n+Compiled checking retains the original arithmetic path. -/\n+@[expose]\n+noncomputable def checkPock3Arith (n r s w : Nat)\n+    (factors : List (Nat \u00d7 Nat \u00d7 PrimeCert)) : Bool :=\n+  (2 : Nat).ble n && (n.mod 2).beq 1 && subjectsOk factors &&\n+    (let F := pockProduct (n.sub 1) factors;\n+        (n - 1) % F == 0 && F % 2 == 0 && (n - 1) / F % 2 == 1 &&\n+          (n - 1) / F == 2 * F * s + r &&\n+          (1 : Nat).ble r && r.blt (2 * F) &&\n+          n.blt ((F + 1) * (2 * F * F + (r - 1) * F + 1)) &&\n+          (s == 0 || (r * r).blt (8 * s) ||\n+            ((w * w).blt (r * r - 8 * s) &&\n+              (r * r - 8 * s).blt ((w + 1) * (w + 1)))) &&\n+          checkWitnesses n factors)\n+\n /-- Maximum sieve bound in a checked certificate.\n This caps replay work for arbitrary untrusted literals, including rejected inputs. -/\n @[expose] def pocklingtonSieveCap : Nat := 64\n@@ -400,7 +416,7 @@ private theorem checkDivisors_spec (n F : Nat) : \u2200 k,\n \n /-- The general cube-root arithmetic check; the legacy node retains its sieve-free path. -/\n @[expose]\n-def checkPock3SieveArith (n r s w m : Nat)\n+def checkPock3SieveArith.native (n r s w m : Nat)\n     (factors : List (Nat \u00d7 Nat \u00d7 PrimeCert)) : Bool :=\n   decide (2 \u2264 n) && n % 2 == 1 && subjectsOk factors &&\n     match certProduct (n - 1) factors with\n@@ -416,6 +432,23 @@ def checkPock3SieveArith (n r s w m : Nat)\n               decide (r * r - 8 * s < (w + 1) * (w + 1)))) &&\n           checkWitnesses n factors\n \n+/-- Kernel replay uses the bounded positive product and primitive comparisons.\n+Compiled checking retains the original arithmetic path. -/\n+@[expose]\n+noncomputable def checkPock3SieveArith (n r s w m : Nat)\n+    (factors : List (Nat \u00d7 Nat \u00d7 PrimeCert)) : Bool :=\n+  (2 : Nat).ble n && (n.mod 2).beq 1 && subjectsOk factors &&\n+    (let F := pockProduct (n.sub 1) factors;\n+        (n - 1) % F == 0 && F % 2 == 0 && (n - 1) / F % 2 == 1 &&\n+          (n - 1) / F == 2 * F * s + r &&\n+          (1 : Nat).ble r && r.blt (2 * F) && (1 : Nat).ble m && m.ble pocklingtonSieveCap &&\n+          (2 * s + m * m).blt ((2 * F + r) * m + 2) &&\n+          checkDivisors n F (m - 1) &&\n+          (s == 0 || (r * r).blt (8 * s) ||\n+            ((w * w).blt (r * r - 8 * s) &&\n+              (r * r - 8 * s).blt ((w + 1) * (w + 1)))) &&\n+          checkWitnesses n factors)\n+\n /-! Accumulator lemmas -/\n \n /-- On success, the bounded accumulator computes the ordinary product. -/\n@@ -677,6 +710,44 @@ private theorem checkPockArith.eq_native (n : Nat) (factors : List (Nat \u00d7 Nat \n   funext n fs\n   exact checkPockArith.eq_native n fs\n \n+private theorem checkPock3Arith.eq_native (n r s w : Nat) (factors : List (Nat \u00d7 Nat \u00d7 PrimeCert)) :\n+    checkPock3Arith n r s w factors = checkPock3Arith.native n r s w factors := by\n+  by_cases hs : subjectsOk factors = true\n+  \u00b7 have hp : \u2200 x \u2208 factors, 0 < x.2.2.subject := by\n+      intro x hx\n+      have := subjectsOk_forall hs x hx\n+      omega\n+    simp only [checkPock3Arith, pockProduct.eq_product _ _ hp]\n+    cases h : certProduct (n - 1) factors <;>\n+      apply Bool.eq_iff_iff.mpr <;>\n+      simp [checkPock3Arith.native, h, hs, Nat.blt_eq] <;> intros <;> rfl\n+  \u00b7 have hf : subjectsOk factors = false := Bool.eq_false_iff.mpr hs\n+    simp [checkPock3Arith, checkPock3Arith.native, hf]\n+\n+/-- The compiler uses the verified runtime implementation. -/\n+@[csimp] theorem checkPock3Arith_eq_native : @checkPock3Arith = @checkPock3Arith.native := by\n+  funext n r s w fs\n+  exact checkPock3Arith.eq_native n r s w fs\n+\n+private theorem checkPock3SieveArith.eq_native (n r s w m : Nat) (factors : List (Nat \u00d7 Nat \u00d7 PrimeCert)) :\n+    checkPock3SieveArith n r s w m factors = checkPock3SieveArith.native n r s w m factors := by\n+  by_cases hs : subjectsOk factors = true\n+  \u00b7 have hp : \u2200 x \u2208 factors, 0 < x.2.2.subject := by\n+      intro x hx\n+      have := subjectsOk_forall hs x hx\n+      omega\n+    simp only [checkPock3SieveArith, pockProduct.eq_product _ _ hp]\n+    cases h : certProduct (n - 1) factors <;>\n+      apply Bool.eq_iff_iff.mpr <;>\n+      simp [checkPock3SieveArith.native, h, hs, Nat.blt_eq] <;> intros <;> rfl\n+  \u00b7 have hf : subjectsOk factors = false := Bool.eq_false_iff.mpr hs\n+    simp [checkPock3SieveArith, checkPock3SieveArith.native, hf]\n+\n+/-- The compiler uses the verified runtime implementation. -/\n+@[csimp] theorem checkPock3SieveArith_eq_native : @checkPock3SieveArith = @checkPock3SieveArith.native := by\n+  funext n r s w m fs\n+  exact checkPock3SieveArith.eq_native n r s w m fs\n+\n \n mutual\n \n@@ -1011,7 +1082,8 @@ private theorem checkPock3Arith_spec {n r s w : Nat}\n         n < (F + 1) * (2 * F * F + (r - 1) * F + 1) \u2227\n         (s = 0 \u2228 r * r < 8 * s \u2228 \u2200 t, t * t \u2260 r * r - 8 * s) \u2227\n         \u2200 x \u2208 factors, checkWitness n x.2.2.subject x.1 = true := by\n-  unfold checkPock3Arith at h\n+  rw [checkPock3Arith.eq_native] at h\n+  unfold checkPock3Arith.native at h\n   simp only [checkWitnesses.eq_native, checkWitnesses.native] at h\n   rw [Bool.and_eq_true, Bool.and_eq_true] at h\n   obtain \u27e8\u27e8h2, hodd\u27e9, hm\u27e9 := h\n@@ -1043,7 +1115,8 @@ private theorem checkPock3SieveArith_spec {n r s w m : Nat}\n         2 * s + m * m < (2 * F + r) * m + 2 \u2227\n         (s = 0 \u2228 r * r < 8 * s \u2228 \u2200 t, t * t \u2260 r * r - 8 * s) \u2227\n         \u2200 x \u2208 factors, checkWitness n x.2.2.subject x.1 = true := by\n-  unfold checkPock3SieveArith at h\n+  rw [checkPock3SieveArith.eq_native] at h\n+  unfold checkPock3SieveArith.native at h\n   simp only [checkWitnesses.eq_native, checkWitnesses.native] at h\n   rw [Bool.and_eq_true, Bool.and_eq_true] at h\n   obtain \u27e8\u27e8h2, hodd\u27e9, hm\u27e9 := h\ndiff --git a/scripts/bench/primality_kernel_direct.py b/scripts/bench/primality_kernel_direct.py\nindex bd173ffb8..292311f6d 100644\n--- a/scripts/bench/primality_kernel_direct.py\n+++ b/scripts/bench/primality_kernel_direct.py\n@@ -104,8 +104,10 @@ run_cmd do\n \n \n def main() -> None:\n+    global ROOT\n     parser = argparse.ArgumentParser(description=__doc__)\n     parser.add_argument('source_record', type=Path)\n+    parser.add_argument('--hex-checkout', type=Path, default=ROOT)\n     parser.add_argument('--primecert-checkout', type=Path, required=True)\n     parser.add_argument('--output', type=Path, required=True)\n     parser.add_argument('--blocks', type=int, default=2)\n@@ -122,6 +124,7 @@ def main() -> None:\n         parser.error('use a new output path and an even block count >= 2')\n     if args.upstream_power and not args.powers:\n         parser.error('--upstream-power requires --powers')\n+    ROOT = args.hex_checkout.resolve()\n     previous = json.loads(args.source_record.read_text())\n     pc = args.primecert_checkout.resolve()\n     cpu = pick()\n",
+  "source": "module\npublic import HexPrimality.Cert\npublic import Lean\npublic meta import Lean\npublic section\nset_option maxRecDepth 100000\ntheorem family_31_full : (Hex.Nat.checkPrime (Hex.Nat.PrimeCert.pock 2147483647 [(3, 0, Hex.Nat.PrimeCert.small 151), (3, 0, Hex.Nat.PrimeCert.small 331)])) = true := by decide +kernel\ntheorem family_31_leaves : ((Hex.Nat.isTablePrime 151) && (Hex.Nat.isTablePrime 331)) = true := by decide +kernel\ntheorem family_31_subjects : ((Hex.Nat.subjectsOk [(3, 0, Hex.Nat.PrimeCert.small 151), (3, 0, Hex.Nat.PrimeCert.small 331)])) = true := by decide +kernel\ntheorem family_31_product : (((Hex.Nat.pockProduct 2147483646 [(3, 0, Hex.Nat.PrimeCert.small 151), (3, 0, Hex.Nat.PrimeCert.small 331)]).beq 49981)) = true := by decide +kernel\ntheorem family_31_witnesses : ((Hex.Nat.checkWitnesses 2147483647 [(3, 0, Hex.Nat.PrimeCert.small 151), (3, 0, Hex.Nat.PrimeCert.small 331)])) = true := by decide +kernel\ntheorem family_31_arithmetic : ((Hex.Nat.checkPockArith 2147483647 [(3, 0, Hex.Nat.PrimeCert.small 151), (3, 0, Hex.Nat.PrimeCert.small 331)])) = true := by decide +kernel\ntheorem family_31_powers : (((HexArith.powModNat 3 14221746 2147483647).beq 556613938) && ((HexArith.powModNat 3 2147483646 2147483647).beq 1) && ((HexArith.powModNat 3 6487866 2147483647).beq 272122089)) = true := by decide +kernel\ntheorem family_61_full : (Hex.Nat.checkPrime (Hex.Nat.PrimeCert.pock 1945555039024054273 [(5, 55, Hex.Nat.PrimeCert.small 2)])) = true := by decide +kernel\ntheorem family_61_leaves : ((Hex.Nat.isTablePrime 2)) = true := by decide +kernel\ntheorem family_61_subjects : ((Hex.Nat.subjectsOk [(5, 55, Hex.Nat.PrimeCert.small 2)])) = true := by decide +kernel\ntheorem family_61_product : (((Hex.Nat.pockProduct 1945555039024054272 [(5, 55, Hex.Nat.PrimeCert.small 2)]).beq 72057594037927936)) = true := by decide +kernel\ntheorem family_61_witnesses : ((Hex.Nat.checkWitnesses 1945555039024054273 [(5, 55, Hex.Nat.PrimeCert.small 2)])) = true := by decide +kernel\ntheorem family_61_arithmetic : ((Hex.Nat.checkPockArith 1945555039024054273 [(5, 55, Hex.Nat.PrimeCert.small 2)])) = true := by decide +kernel\ntheorem family_61_powers : (((HexArith.powModNat 5 972777519512027136 1945555039024054273).beq 1945555039024054272) && ((HexArith.powModNat 5 1945555039024054272 1945555039024054273).beq 1)) = true := by decide +kernel\ntheorem family_123_full : (Hex.Nat.checkPrime (Hex.Nat.PrimeCert.pock 9304595970494411110326649421962412033 [(3, 119, Hex.Nat.PrimeCert.small 2)])) = true := by decide +kernel\ntheorem family_123_leaves : ((Hex.Nat.isTablePrime 2)) = true := by decide +kernel\ntheorem family_123_subjects : ((Hex.Nat.subjectsOk [(3, 119, Hex.Nat.PrimeCert.small 2)])) = true := by decide +kernel\ntheorem family_123_product : (((Hex.Nat.pockProduct 9304595970494411110326649421962412032 [(3, 119, Hex.Nat.PrimeCert.small 2)]).beq 1329227995784915872903807060280344576)) = true := by decide +kernel\ntheorem family_123_witnesses : ((Hex.Nat.checkWitnesses 9304595970494411110326649421962412033 [(3, 119, Hex.Nat.PrimeCert.small 2)])) = true := by decide +kernel\ntheorem family_123_arithmetic : ((Hex.Nat.checkPockArith 9304595970494411110326649421962412033 [(3, 119, Hex.Nat.PrimeCert.small 2)])) = true := by decide +kernel\ntheorem family_123_powers : (((HexArith.powModNat 3 4652297985247205555163324710981206016 9304595970494411110326649421962412033).beq 9304595970494411110326649421962412032) && ((HexArith.powModNat 3 9304595970494411110326649421962412032 9304595970494411110326649421962412033).beq 1)) = true := by decide +kernel\ntheorem family_256_full : (Hex.Nat.checkPrime (Hex.Nat.PrimeCert.pock 93628759656736142393278101159368737990730026663232799828780155818898507169793 [(5, 247, Hex.Nat.PrimeCert.small 2)])) = true := by decide +kernel\ntheorem family_256_leaves : ((Hex.Nat.isTablePrime 2)) = true := by decide +kernel\ntheorem family_256_subjects : ((Hex.Nat.subjectsOk [(5, 247, Hex.Nat.PrimeCert.small 2)])) = true := by decide +kernel\ntheorem family_256_product : (((Hex.Nat.pockProduct 93628759656736142393278101159368737990730026663232799828780155818898507169792 [(5, 247, Hex.Nat.PrimeCert.small 2)]).beq 452312848583266388373324160190187140051835877600158453279131187530910662656)) = true := by decide +kernel\ntheorem family_256_witnesses : ((Hex.Nat.checkWitnesses 93628759656736142393278101159368737990730026663232799828780155818898507169793 [(5, 247, Hex.Nat.PrimeCert.small 2)])) = true := by decide +kernel\ntheorem family_256_arithmetic : ((Hex.Nat.checkPockArith 93628759656736142393278101159368737990730026663232799828780155818898507169793 [(5, 247, Hex.Nat.PrimeCert.small 2)])) = true := by decide +kernel\ntheorem family_256_powers : (((HexArith.powModNat 5 46814379828368071196639050579684368995365013331616399914390077909449253584896 93628759656736142393278101159368737990730026663232799828780155818898507169793).beq 93628759656736142393278101159368737990730026663232799828780155818898507169792) && ((HexArith.powModNat 5 93628759656736142393278101159368737990730026663232799828780155818898507169792 93628759656736142393278101159368737990730026663232799828780155818898507169793).beq 1)) = true := by decide +kernel\ntheorem family_511_full : (Hex.Nat.checkPrime (Hex.Nat.PrimeCert.pock 6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033 [(3, 503, Hex.Nat.PrimeCert.small 2)])) = true := by decide +kernel\ntheorem family_511_leaves : ((Hex.Nat.isTablePrime 2)) = true := by decide +kernel\ntheorem family_511_subjects : ((Hex.Nat.subjectsOk [(3, 503, Hex.Nat.PrimeCert.small 2)])) = true := by decide +kernel\ntheorem family_511_product : (((Hex.Nat.pockProduct 6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612032 [(3, 503, Hex.Nat.PrimeCert.small 2)]).beq 52374249726338269920211035149241586435466272736689036631732661889538140742474792878132321477214466514414186946040961136147476104734166288853256441430016)) = true := by decide +kernel\ntheorem family_511_witnesses : ((Hex.Nat.checkWitnesses 6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033 [(3, 503, Hex.Nat.PrimeCert.small 2)])) = true := by decide +kernel\ntheorem family_511_arithmetic : ((Hex.Nat.checkPockArith 6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033 [(3, 503, Hex.Nat.PrimeCert.small 2)])) = true := by decide +kernel\ntheorem family_511_powers : (((HexArith.powModNat 3 3325764857622480139933400731976840738652108318779753826115024029985671937147149347761402413803118623665300871073601032145364732650619559342181784030806016 6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033).beq 6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612032) && ((HexArith.powModNat 3 6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612032 6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033).beq 1)) = true := by decide +kernel\ntheorem family_512_full : (Hex.Nat.checkPrime (Hex.Nat.PrimeCert.pock 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177 [(2, 21, Hex.Nat.PrimeCert.pock 100297 [(2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 199)])])) = true := by decide +kernel\ntheorem family_512_leaves : ((Hex.Nat.isTablePrime 7) && (Hex.Nat.isTablePrime 199)) = true := by decide +kernel\ntheorem family_512_subjects : ((Hex.Nat.subjectsOk [(2, 21, Hex.Nat.PrimeCert.pock 100297 [(2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 199)])]) && (Hex.Nat.subjectsOk [(2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 199)])) = true := by decide +kernel\ntheorem family_512_product : (((Hex.Nat.pockProduct 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002176 [(2, 21, Hex.Nat.PrimeCert.pock 100297 [(2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 199)])]).beq 106741854823706365519956057596723874340150103732119319019305492880567346619657916733109920836666221837200109809) && ((Hex.Nat.pockProduct 100296 [(2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 199)]).beq 1393)) = true := by decide +kernel\ntheorem family_512_witnesses : ((Hex.Nat.checkWitnesses 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177 [(2, 21, Hex.Nat.PrimeCert.pock 100297 [(2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 199)])]) && (Hex.Nat.checkWitnesses 100297 [(2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 199)])) = true := by decide +kernel\ntheorem family_512_arithmetic : ((Hex.Nat.checkPockArith 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177 [(2, 21, Hex.Nat.PrimeCert.pock 100297 [(2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 199)])]) && (Hex.Nat.checkPockArith 100297 [(2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 199)])) = true := by decide +kernel\ntheorem family_512_powers : (((HexArith.powModNat 2 94934959428179210376027097904841927124576041547500269653296197552847734730424729681629197277367604552754725758352307661991503838963064050915536273408 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177).beq 3158250540157705039251853992090608585283759185810153480001078334414828464349541553017953080385398869120046290692975648439316244613589057633552859312410912) && ((HexArith.powModNat 2 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002176 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177).beq 1) && ((HexArith.powModNat 2 14328 100297).beq 9027) && ((HexArith.powModNat 2 100296 100297).beq 1) && ((HexArith.powModNat 2 504 100297).beq 73487)) = true := by decide +kernel\ntheorem Curve25519_full : (Hex.Nat.checkPrime (Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949 [(2, 0, Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907 2028478494862525422475607 22304740449229861598212 2028478494862525422475606 [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353), (2, 0, Hex.Nat.PrimeCert.small 57467), (2, 0, Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944 [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223), (2, 0, Hex.Nat.PrimeCert.small 4153)])])])) = true := by decide +kernel\ntheorem Curve25519_leaves : ((Hex.Nat.isTablePrime 2) && (Hex.Nat.isTablePrime 353) && (Hex.Nat.isTablePrime 57467) && (Hex.Nat.isTablePrime 2) && (Hex.Nat.isTablePrime 223) && (Hex.Nat.isTablePrime 4153)) = true := by decide +kernel\ntheorem Curve25519_subjects : ((Hex.Nat.subjectsOk [(2, 0, Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907 2028478494862525422475607 22304740449229861598212 2028478494862525422475606 [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353), (2, 0, Hex.Nat.PrimeCert.small 57467), (2, 0, Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944 [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223), (2, 0, Hex.Nat.PrimeCert.small 4153)])])]) && (Hex.Nat.subjectsOk [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353), (2, 0, Hex.Nat.PrimeCert.small 57467), (2, 0, Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944 [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223), (2, 0, Hex.Nat.PrimeCert.small 4153)])]) && (Hex.Nat.subjectsOk [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223), (2, 0, Hex.Nat.PrimeCert.small 4153)])) = true := by decide +kernel\ntheorem Curve25519_product : (((Hex.Nat.pockProduct 57896044618658097711785492504343953926634992332820282019728792003956564819948 [(2, 0, Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907 2028478494862525422475607 22304740449229861598212 2028478494862525422475606 [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353), (2, 0, Hex.Nat.PrimeCert.small 57467), (2, 0, Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944 [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223), (2, 0, Hex.Nat.PrimeCert.small 4153)])])]).beq 74058212732561358302231226437062788676166966415465897661863160754340907) && ((Hex.Nat.pockProduct 74058212732561358302231226437062788676166966415465897661863160754340906 [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353), (2, 0, Hex.Nat.PrimeCert.small 57467), (2, 0, Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944 [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223), (2, 0, Hex.Nat.PrimeCert.small 4153)])]).beq 1288466195128439863020806) && ((Hex.Nat.pockProduct 31757755568855352 [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223), (2, 0, Hex.Nat.PrimeCert.small 4153)]).beq 7408952)) = true := by decide +kernel\ntheorem Curve25519_witnesses : ((Hex.Nat.checkWitnesses 57896044618658097711785492504343953926634992332820282019728792003956564819949 [(2, 0, Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907 2028478494862525422475607 22304740449229861598212 2028478494862525422475606 [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353), (2, 0, Hex.Nat.PrimeCert.small 57467), (2, 0, Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944 [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223), (2, 0, Hex.Nat.PrimeCert.small 4153)])])]) && (Hex.Nat.checkWitnesses 74058212732561358302231226437062788676166966415465897661863160754340907 [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353), (2, 0, Hex.Nat.PrimeCert.small 57467), (2, 0, Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944 [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223), (2, 0, Hex.Nat.PrimeCert.small 4153)])]) && (Hex.Nat.checkWitnesses 31757755568855353 [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223), (2, 0, Hex.Nat.PrimeCert.small 4153)])) = true := by decide +kernel\ntheorem Curve25519_arithmetic : ((Hex.Nat.checkPockArith 57896044618658097711785492504343953926634992332820282019728792003956564819949 [(2, 0, Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907 2028478494862525422475607 22304740449229861598212 2028478494862525422475606 [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353), (2, 0, Hex.Nat.PrimeCert.small 57467), (2, 0, Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944 [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223), (2, 0, Hex.Nat.PrimeCert.small 4153)])])]) && (Hex.Nat.checkPock3Arith 74058212732561358302231226437062788676166966415465897661863160754340907 2028478494862525422475607 22304740449229861598212 2028478494862525422475606 [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353), (2, 0, Hex.Nat.PrimeCert.small 57467), (2, 0, Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944 [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223), (2, 0, Hex.Nat.PrimeCert.small 4153)])]) && (Hex.Nat.checkPock3Arith 31757755568855353 4028945 289 4028944 [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223), (2, 0, Hex.Nat.PrimeCert.small 4153)])) = true := by decide +kernel\ntheorem Curve25519_powers : (((HexArith.powModNat 2 781764 57896044618658097711785492504343953926634992332820282019728792003956564819949).beq 427094198651976259540344842774561673889945192655078505504941250475370961481) && ((HexArith.powModNat 2 57896044618658097711785492504343953926634992332820282019728792003956564819948 57896044618658097711785492504343953926634992332820282019728792003956564819949).beq 1) && ((HexArith.powModNat 2 37029106366280679151115613218531394338083483207732948830931580377170453 74058212732561358302231226437062788676166966415465897661863160754340907).beq 74058212732561358302231226437062788676166966415465897661863160754340906) && ((HexArith.powModNat 2 74058212732561358302231226437062788676166966415465897661863160754340906 74058212732561358302231226437062788676166966415465897661863160754340907).beq 1) && ((HexArith.powModNat 2 209796636636151156663544550813209033076960244803019540118592523383402 74058212732561358302231226437062788676166966415465897661863160754340907).beq 8562916886866218785688304546164188478888058893729309188831496247839076) && ((HexArith.powModNat 2 1288708523719027586305727224964984924846728842909250485702458119518 74058212732561358302231226437062788676166966415465897661863160754340907).beq 34423717228876157273670922671787235583289084632054732964365754153055025) && ((HexArith.powModNat 2 2331972502653487852620185443007392165117953542933313402 74058212732561358302231226437062788676166966415465897661863160754340907).beq 50366660687963342066214195241331738400016478712605795091965648721912165) && ((HexArith.powModNat 5 15878877784427676 31757755568855353).beq 31757755568855352) && ((HexArith.powModNat 5 31757755568855352 31757755568855353).beq 1) && ((HexArith.powModNat 2 142411459950024 31757755568855353).beq 1322958305669317) && ((HexArith.powModNat 2 31757755568855352 31757755568855353).beq 1) && ((HexArith.powModNat 2 7646943310584 31757755568855353).beq 28256283979054930)) = true := by decide +kernel\ntheorem Curve448_full : (Hex.Nat.checkPrime (Hex.Nat.PrimeCert.pock3 726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439 523890102151522916311113076301980070234414163719 3637867751654793328228610486390601899590 523890102151522916311113076301980070234414163718 [(7, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 641), (2, 0, Hex.Nat.PrimeCert.pock 1469495262398780123809 [(2, 0, Hex.Nat.PrimeCert.small 223), (3, 0, Hex.Nat.PrimeCert.pock3 3402277943 2763 380 2762 [(5, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 151)])]), (2, 0, Hex.Nat.PrimeCert.pock3 167773885276849215533569 22486179 20805492 22486175 [(17, 8, Hex.Nat.PrimeCert.small 2), (3, 1, Hex.Nat.PrimeCert.small 7), (3, 0, Hex.Nat.PrimeCert.small 2531)])])) = true := by decide +kernel\ntheorem Curve448_leaves : ((Hex.Nat.isTablePrime 2) && (Hex.Nat.isTablePrime 641) && (Hex.Nat.isTablePrime 223) && (Hex.Nat.isTablePrime 2) && (Hex.Nat.isTablePrime 7) && (Hex.Nat.isTablePrime 151) && (Hex.Nat.isTablePrime 2) && (Hex.Nat.isTablePrime 7) && (Hex.Nat.isTablePrime 2531)) = true := by decide +kernel\ntheorem Curve448_subjects : ((Hex.Nat.subjectsOk [(7, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 641), (2, 0, Hex.Nat.PrimeCert.pock 1469495262398780123809 [(2, 0, Hex.Nat.PrimeCert.small 223), (3, 0, Hex.Nat.PrimeCert.pock3 3402277943 2763 380 2762 [(5, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 151)])]), (2, 0, Hex.Nat.PrimeCert.pock3 167773885276849215533569 22486179 20805492 22486175 [(17, 8, Hex.Nat.PrimeCert.small 2), (3, 1, Hex.Nat.PrimeCert.small 7), (3, 0, Hex.Nat.PrimeCert.small 2531)])]) && (Hex.Nat.subjectsOk [(2, 0, Hex.Nat.PrimeCert.small 223), (3, 0, Hex.Nat.PrimeCert.pock3 3402277943 2763 380 2762 [(5, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 151)])]) && (Hex.Nat.subjectsOk [(5, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 151)]) && (Hex.Nat.subjectsOk [(17, 8, Hex.Nat.PrimeCert.small 2), (3, 1, Hex.Nat.PrimeCert.small 7), (3, 0, Hex.Nat.PrimeCert.small 2531)])) = true := by decide +kernel\ntheorem Curve448_product : (((Hex.Nat.pockProduct 726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365438 [(7, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 641), (2, 0, Hex.Nat.PrimeCert.pock 1469495262398780123809 [(2, 0, Hex.Nat.PrimeCert.small 223), (3, 0, Hex.Nat.PrimeCert.pock3 3402277943 2763 380 2762 [(5, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 151)])]), (2, 0, Hex.Nat.PrimeCert.pock3 167773885276849215533569 22486179 20805492 22486175 [(17, 8, Hex.Nat.PrimeCert.small 2), (3, 1, Hex.Nat.PrimeCert.small 7), (3, 0, Hex.Nat.PrimeCert.small 2531)])]).beq 316068035706902087952262865703057298267656019522) && ((Hex.Nat.pockProduct 1469495262398780123808 [(2, 0, Hex.Nat.PrimeCert.small 223), (3, 0, Hex.Nat.PrimeCert.pock3 3402277943 2763 380 2762 [(5, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 151)])]).beq 758707981289) && ((Hex.Nat.pockProduct 3402277942 [(5, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 151)]).beq 2114) && ((Hex.Nat.pockProduct 167773885276849215533568 [(17, 8, Hex.Nat.PrimeCert.small 2), (3, 1, Hex.Nat.PrimeCert.small 7), (3, 0, Hex.Nat.PrimeCert.small 2531)]).beq 63497728)) = true := by decide +kernel\ntheorem Curve448_witnesses : ((Hex.Nat.checkWitnesses 726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439 [(7, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 641), (2, 0, Hex.Nat.PrimeCert.pock 1469495262398780123809 [(2, 0, Hex.Nat.PrimeCert.small 223), (3, 0, Hex.Nat.PrimeCert.pock3 3402277943 2763 380 2762 [(5, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 151)])]), (2, 0, Hex.Nat.PrimeCert.pock3 167773885276849215533569 22486179 20805492 22486175 [(17, 8, Hex.Nat.PrimeCert.small 2), (3, 1, Hex.Nat.PrimeCert.small 7), (3, 0, Hex.Nat.PrimeCert.small 2531)])]) && (Hex.Nat.checkWitnesses 1469495262398780123809 [(2, 0, Hex.Nat.PrimeCert.small 223), (3, 0, Hex.Nat.PrimeCert.pock3 3402277943 2763 380 2762 [(5, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 151)])]) && (Hex.Nat.checkWitnesses 3402277943 [(5, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 151)]) && (Hex.Nat.checkWitnesses 167773885276849215533569 [(17, 8, Hex.Nat.PrimeCert.small 2), (3, 1, Hex.Nat.PrimeCert.small 7), (3, 0, Hex.Nat.PrimeCert.small 2531)])) = true := by decide +kernel\ntheorem Curve448_arithmetic : ((Hex.Nat.checkPock3Arith 726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439 523890102151522916311113076301980070234414163719 3637867751654793328228610486390601899590 523890102151522916311113076301980070234414163718 [(7, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 641), (2, 0, Hex.Nat.PrimeCert.pock 1469495262398780123809 [(2, 0, Hex.Nat.PrimeCert.small 223), (3, 0, Hex.Nat.PrimeCert.pock3 3402277943 2763 380 2762 [(5, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 151)])]), (2, 0, Hex.Nat.PrimeCert.pock3 167773885276849215533569 22486179 20805492 22486175 [(17, 8, Hex.Nat.PrimeCert.small 2), (3, 1, Hex.Nat.PrimeCert.small 7), (3, 0, Hex.Nat.PrimeCert.small 2531)])]) && (Hex.Nat.checkPockArith 1469495262398780123809 [(2, 0, Hex.Nat.PrimeCert.small 223), (3, 0, Hex.Nat.PrimeCert.pock3 3402277943 2763 380 2762 [(5, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 151)])]) && (Hex.Nat.checkPock3Arith 3402277943 2763 380 2762 [(5, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 151)]) && (Hex.Nat.checkPock3Arith 167773885276849215533569 22486179 20805492 22486175 [(17, 8, Hex.Nat.PrimeCert.small 2), (3, 1, Hex.Nat.PrimeCert.small 7), (3, 0, Hex.Nat.PrimeCert.small 2531)])) = true := by decide +kernel\ntheorem Curve448_powers : (((HexArith.powModNat 7 363419362147803445274661903944002267176820680343659030140745099590306164083365386343198191849338272965044442230921818680526749009182719 726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439).beq 726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365438) && ((HexArith.powModNat 7 726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365438 726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439).beq 1) && ((HexArith.powModNat 2 1133913766451804821449803132430584296963559065034817566741794382497055114144665792022459256940213020171745529581659340656869731697918 726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439).beq 689157212695674661050521785655996876732253991242852851938630933414678025100392345046137573867097379337186160879097380976957669521693688) && ((HexArith.powModNat 2 726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365438 726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439).beq 1) && ((HexArith.powModNat 2 494617943244762286211457392369479896880546645502799257139955500150682109906585900065356395171636845653084938865982 726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439).beq 81501124376859566351098134711786860112316304836191019012966620704189751124065800008903418657997789747112527719342761408154032714287648) && ((HexArith.powModNat 2 6589664853806188896 1469495262398780123809).beq 809912764144619536754) && ((HexArith.powModNat 2 1469495262398780123808 1469495262398780123809).beq 1) && ((HexArith.powModNat 3 431915113056 1469495262398780123809).beq 762455578232727492318) && ((HexArith.powModNat 3 1469495262398780123808 1469495262398780123809).beq 1) && ((HexArith.powModNat 5 1701138971 3402277943).beq 3402277942) && ((HexArith.powModNat 5 3402277942 3402277943).beq 1) && ((HexArith.powModNat 2 486039706 3402277943).beq 2448988788) && ((HexArith.powModNat 2 3402277942 3402277943).beq 1) && ((HexArith.powModNat 2 22531642 3402277943).beq 2597462092) && ((HexArith.powModNat 2 4332251846562570601107677771607432108690526969151039496604611103263655041927879267626101432742043482018000200702 726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439).beq 55525769416912324234359085335631801563531687326947362005607509724730022900672777197089304749607041703088011799398802938442416997100248) && ((HexArith.powModNat 17 83886942638424607766784 167773885276849215533569).beq 167773885276849215533568) && ((HexArith.powModNat 17 167773885276849215533568 167773885276849215533569).beq 1) && ((HexArith.powModNat 3 23967697896692745076224 167773885276849215533569).beq 167773885276844920566273) && ((HexArith.powModNat 3 167773885276849215533568 167773885276849215533569).beq 1) && ((HexArith.powModNat 3 66287588019300361728 167773885276849215533569).beq 161858183701129338507620)) = true := by decide +kernel\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\n\nrun_cmd do\n  let original \u2190 Lean.getEnv\n  let ready \u2190 IO.mkRef original.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  let groups := [[`family_31_full, `family_31_leaves, `family_31_subjects, `family_31_product, `family_31_witnesses, `family_31_arithmetic, `family_31_powers], [`family_61_full, `family_61_leaves, `family_61_subjects, `family_61_product, `family_61_witnesses, `family_61_arithmetic, `family_61_powers], [`family_123_full, `family_123_leaves, `family_123_subjects, `family_123_product, `family_123_witnesses, `family_123_arithmetic, `family_123_powers], [`family_256_full, `family_256_leaves, `family_256_subjects, `family_256_product, `family_256_witnesses, `family_256_arithmetic, `family_256_powers], [`family_511_full, `family_511_leaves, `family_511_subjects, `family_511_product, `family_511_witnesses, `family_511_arithmetic, `family_511_powers], [`family_512_full, `family_512_leaves, `family_512_subjects, `family_512_product, `family_512_witnesses, `family_512_arithmetic, `family_512_powers], [`Curve25519_full, `Curve25519_leaves, `Curve25519_subjects, `Curve25519_product, `Curve25519_witnesses, `Curve25519_arithmetic, `Curve25519_powers], [`Curve448_full, `Curve448_leaves, `Curve448_subjects, `Curve448_product, `Curve448_witnesses, `Curve448_arithmetic, `Curve448_powers]]\n  for block in [0:4] do\n    for group in groups do\n      for name in (if block % 2 == 0 then group else group.reverse) do\n        let some (.thmInfo info) := original.find? name | throwError \"missing theorem\"\n        let value := inlineLocal original info.value\n        let type := inlineLocal original info.type\n        unless (value.getUsedConstants ++ type.getUsedConstants).all original.isImportedConst do\n          throwError \"local dependency escaped expansion\"\n        let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n        let input \u2190 IO.mkRef (env, proof)\n        let (env, proof) \u2190 input.get\n        let start \u2190 IO.monoNanosNow\n        let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n        let checked \u2190 checked.get\n        let stop \u2190 IO.monoNanosNow\n        match checked with\n        | .error _ => throwError \"kernel rejected component\"\n        | .ok _ => pure ()\n        Lean.logInfo m!\"COMPONENT {block} {name} {stop - start}\"\n",
+  "counts": {
+    "family-31": {
+      "nodes": 1,
+      "leaves": 2,
+      "entries": 2,
+      "powers": 3,
+      "repeated_bases": 1,
+      "divisor_tests": 0,
+      "repeated_subjects": 0
+    },
+    "family-61": {
+      "nodes": 1,
+      "leaves": 1,
+      "entries": 1,
+      "powers": 2,
+      "repeated_bases": 0,
+      "divisor_tests": 0,
+      "repeated_subjects": 0
+    },
+    "family-123": {
+      "nodes": 1,
+      "leaves": 1,
+      "entries": 1,
+      "powers": 2,
+      "repeated_bases": 0,
+      "divisor_tests": 0,
+      "repeated_subjects": 0
+    },
+    "family-256": {
+      "nodes": 1,
+      "leaves": 1,
+      "entries": 1,
+      "powers": 2,
+      "repeated_bases": 0,
+      "divisor_tests": 0,
+      "repeated_subjects": 0
+    },
+    "family-511": {
+      "nodes": 1,
+      "leaves": 1,
+      "entries": 1,
+      "powers": 2,
+      "repeated_bases": 0,
+      "divisor_tests": 0,
+      "repeated_subjects": 0
+    },
+    "family-512": {
+      "nodes": 2,
+      "leaves": 2,
+      "entries": 3,
+      "powers": 5,
+      "repeated_bases": 1,
+      "divisor_tests": 0,
+      "repeated_subjects": 0
+    },
+    "Curve25519": {
+      "nodes": 3,
+      "leaves": 6,
+      "entries": 8,
+      "powers": 12,
+      "repeated_bases": 4,
+      "divisor_tests": 0,
+      "repeated_subjects": 1
+    },
+    "Curve448": {
+      "nodes": 4,
+      "leaves": 9,
+      "entries": 12,
+      "powers": 20,
+      "repeated_bases": 4,
+      "divisor_tests": 0,
+      "repeated_subjects": 3
+    }
+  },
+  "result": {
+    "status": "ok",
+    "seconds": 2.0190683850087225,
+    "returncode": 0,
+    "load_before": [
+      10.88916015625,
+      8.51513671875,
+      12.509765625
+    ],
+    "load_after": [
+      10.88916015625,
+      8.51513671875,
+      12.509765625
+    ],
+    "stdout": "\u2139 [70/70] Built HexPrimality.ProofProbe.Curve25519.Attribution (1.4s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_31_full 618367\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_31_leaves 100990\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_31_subjects 135961\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_31_product 144384\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_31_witnesses 288468\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_31_arithmetic 348777\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_31_powers 205515\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_61_full 382667\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_61_leaves 46469\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_61_subjects 88852\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_61_product 123182\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_61_witnesses 261507\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_61_arithmetic 317711\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_61_powers 228929\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_123_full 633439\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_123_leaves 44686\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_123_subjects 84866\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_123_product 124865\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_123_witnesses 510567\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_123_arithmetic 577666\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_123_powers 879664\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_256_full 1154051\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_256_leaves 52237\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_256_subjects 94040\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_256_product 124935\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_256_witnesses 985811\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_256_arithmetic 1072550\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_256_powers 2325718\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_511_full 2553264\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_511_leaves 60679\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_511_subjects 103162\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_511_product 132266\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_511_witnesses 2337315\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_511_arithmetic 2450263\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_511_powers 7528410\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_512_full 7523622\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_512_leaves 117875\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_512_subjects 183463\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_512_product 350990\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_512_witnesses 2515890\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_512_arithmetic 2793861\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 family_512_powers 7148076\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 Curve25519_full 4135119\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 Curve25519_leaves 168810\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 Curve25519_subjects 302619\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 Curve25519_product 354535\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 Curve25519_witnesses 3141096\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 Curve25519_arithmetic 3754915\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 Curve25519_powers 2847761\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 Curve448_full 8662851\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 Curve448_leaves 189241\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 Curve448_subjects 409607\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 Curve448_product 502444\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 Curve448_witnesses 8330598\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 Curve448_arithmetic 8334685\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 0 Curve448_powers 6999386\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_31_powers 226155\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_31_arithmetic 373373\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_31_witnesses 289499\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_31_product 141570\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_31_subjects 113849\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_31_leaves 99547\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_31_full 444579\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_61_powers 223211\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_61_arithmetic 333014\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_61_witnesses 267537\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_61_product 115722\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_61_subjects 83393\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_61_leaves 42273\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_61_full 374695\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_123_powers 830951\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_123_arithmetic 600119\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_123_witnesses 513972\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_123_product 128090\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_123_subjects 87540\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_123_leaves 42413\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_123_full 631877\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_256_powers 2321371\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_256_arithmetic 1114151\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_256_witnesses 1013652\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_256_product 145796\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_256_subjects 94520\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_256_leaves 46640\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_256_full 1134511\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_511_powers 7449062\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_511_arithmetic 2493376\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_511_witnesses 2362982\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_511_product 151775\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_511_subjects 103033\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_511_leaves 47921\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_511_full 2493597\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_512_powers 7211149\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_512_arithmetic 2843234\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_512_witnesses 2501298\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_512_product 356488\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_512_subjects 167157\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_512_leaves 100639\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 family_512_full 2928391\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 Curve25519_powers 2891456\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 Curve25519_arithmetic 3827393\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 Curve25519_witnesses 3139203\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 Curve25519_product 376718\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 Curve25519_subjects 297360\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 Curve25519_leaves 156823\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 Curve25519_full 4267706\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 Curve448_powers 7065424\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 Curve448_arithmetic 8215518\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 Curve448_witnesses 7271960\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 Curve448_product 531748\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 Curve448_subjects 384079\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 Curve448_leaves 199987\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 1 Curve448_full 9274818\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_31_full 518599\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_31_leaves 92827\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_31_subjects 125026\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_31_product 136272\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_31_witnesses 275238\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_31_arithmetic 335367\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_31_powers 203151\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_61_full 374815\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_61_leaves 45457\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_61_subjects 85657\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_61_product 114990\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_61_witnesses 259074\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_61_arithmetic 316719\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_61_powers 216721\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_123_full 628551\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_123_leaves 49032\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_123_subjects 87310\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_123_product 117594\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_123_witnesses 510357\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_123_arithmetic 577826\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_123_powers 830311\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_256_full 1161522\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_256_leaves 54010\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_256_subjects 97054\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_256_product 130193\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_256_witnesses 999953\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_256_arithmetic 1091217\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_256_powers 2321742\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_511_full 2542799\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_511_leaves 60820\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_511_subjects 103304\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_511_product 133458\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_511_witnesses 2343294\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_511_arithmetic 2464183\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_511_powers 7497744\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_512_full 2985196\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_512_leaves 111465\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_512_subjects 172295\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_512_product 347435\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_512_witnesses 2495839\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_512_arithmetic 2814422\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 family_512_powers 7214384\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 Curve25519_full 4137223\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 Curve25519_leaves 164494\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 Curve25519_subjects 301968\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 Curve25519_product 363298\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 Curve25519_witnesses 3146514\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 Curve25519_arithmetic 3803257\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 Curve25519_powers 2858046\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 Curve448_full 8740145\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 Curve448_leaves 200087\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 Curve448_subjects 417369\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 Curve448_product 523345\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 Curve448_witnesses 7375953\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 Curve448_arithmetic 8286383\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 2 Curve448_powers 7050681\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_31_powers 238394\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_31_arithmetic 378632\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_31_witnesses 288748\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_31_product 141930\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_31_subjects 115571\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_31_leaves 125766\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_31_full 452460\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_61_powers 233877\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_61_arithmetic 338001\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_61_witnesses 267035\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_61_product 124866\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_61_subjects 89322\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_61_leaves 45748\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_61_full 379863\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_123_powers 869779\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_123_arithmetic 604736\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_123_witnesses 529816\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_123_product 130013\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_123_subjects 87990\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_123_leaves 43715\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_123_full 635001\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_256_powers 2342031\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_256_arithmetic 1148543\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_256_witnesses 1023147\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_256_product 145746\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_256_subjects 97495\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_256_leaves 47942\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_256_full 1150656\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_511_powers 7560326\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_511_arithmetic 2494187\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_511_witnesses 2361801\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_511_product 174098\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_511_subjects 104355\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_511_leaves 49043\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_511_full 2521377\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_512_powers 7331197\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_512_arithmetic 2839700\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_512_witnesses 2495719\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_512_product 363629\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_512_subjects 169691\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_512_leaves 104515\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 family_512_full 2935501\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 Curve25519_powers 2911466\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 Curve25519_arithmetic 3876466\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 Curve25519_witnesses 3144461\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 Curve25519_product 387514\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 Curve25519_subjects 298532\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 Curve25519_leaves 158685\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 Curve25519_full 4095891\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 Curve448_powers 7048328\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 Curve448_arithmetic 8223249\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 Curve448_witnesses 10290204\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 Curve448_product 552379\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 Curve448_subjects 401064\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 Curve448_leaves 204523\ninfo: bench/HexPrimality/ProofProbe/Curve25519/Attribution.lean:75:0: COMPONENT 3 Curve448_full 8647368\nBuild completed successfully (70 jobs).\n",
+    "stderr": "",
+    "command": [
+      "lake",
+      "build",
+      "+HexPrimality.ProofProbe.Curve25519.Attribution:olean"
+    ]
+  },
+  "rows": [
+    {
+      "block": 0,
+      "component": "family_31_full",
+      "nanoseconds": 618367
+    },
+    {
+      "block": 0,
+      "component": "family_31_leaves",
+      "nanoseconds": 100990
+    },
+    {
+      "block": 0,
+      "component": "family_31_subjects",
+      "nanoseconds": 135961
+    },
+    {
+      "block": 0,
+      "component": "family_31_product",
+      "nanoseconds": 144384
+    },
+    {
+      "block": 0,
+      "component": "family_31_witnesses",
+      "nanoseconds": 288468
+    },
+    {
+      "block": 0,
+      "component": "family_31_arithmetic",
+      "nanoseconds": 348777
+    },
+    {
+      "block": 0,
+      "component": "family_31_powers",
+      "nanoseconds": 205515
+    },
+    {
+      "block": 0,
+      "component": "family_61_full",
+      "nanoseconds": 382667
+    },
+    {
+      "block": 0,
+      "component": "family_61_leaves",
+      "nanoseconds": 46469
+    },
+    {
+      "block": 0,
+      "component": "family_61_subjects",
+      "nanoseconds": 88852
+    },
+    {
+      "block": 0,
+      "component": "family_61_product",
+      "nanoseconds": 123182
+    },
+    {
+      "block": 0,
+      "component": "family_61_witnesses",
+      "nanoseconds": 261507
+    },
+    {
+      "block": 0,
+      "component": "family_61_arithmetic",
+      "nanoseconds": 317711
+    },
+    {
+      "block": 0,
+      "component": "family_61_powers",
+      "nanoseconds": 228929
+    },
+    {
+      "block": 0,
+      "component": "family_123_full",
+      "nanoseconds": 633439
+    },
+    {
+      "block": 0,
+      "component": "family_123_leaves",
+      "nanoseconds": 44686
+    },
+    {
+      "block": 0,
+      "component": "family_123_subjects",
+      "nanoseconds": 84866
+    },
+    {
+      "block": 0,
+      "component": "family_123_product",
+      "nanoseconds": 124865
+    },
+    {
+      "block": 0,
+      "component": "family_123_witnesses",
+      "nanoseconds": 510567
+    },
+    {
+      "block": 0,
+      "component": "family_123_arithmetic",
+      "nanoseconds": 577666
+    },
+    {
+      "block": 0,
+      "component": "family_123_powers",
+      "nanoseconds": 879664
+    },
+    {
+      "block": 0,
+      "component": "family_256_full",
+      "nanoseconds": 1154051
+    },
+    {
+      "block": 0,
+      "component": "family_256_leaves",
+      "nanoseconds": 52237
+    },
+    {
+      "block": 0,
+      "component": "family_256_subjects",
+      "nanoseconds": 94040
+    },
+    {
+      "block": 0,
+      "component": "family_256_product",
+      "nanoseconds": 124935
+    },
+    {
+      "block": 0,
+      "component": "family_256_witnesses",
+      "nanoseconds": 985811
+    },
+    {
+      "block": 0,
+      "component": "family_256_arithmetic",
+      "nanoseconds": 1072550
+    },
+    {
+      "block": 0,
+      "component": "family_256_powers",
+      "nanoseconds": 2325718
+    },
+    {
+      "block": 0,
+      "component": "family_511_full",
+      "nanoseconds": 2553264
+    },
+    {
+      "block": 0,
+      "component": "family_511_leaves",
+      "nanoseconds": 60679
+    },
+    {
+      "block": 0,
+      "component": "family_511_subjects",
+      "nanoseconds": 103162
+    },
+    {
+      "block": 0,
+      "component": "family_511_product",
+      "nanoseconds": 132266
+    },
+    {
+      "block": 0,
+      "component": "family_511_witnesses",
+      "nanoseconds": 2337315
+    },
+    {
+      "block": 0,
+      "component": "family_511_arithmetic",
+      "nanoseconds": 2450263
+    },
+    {
+      "block": 0,
+      "component": "family_511_powers",
+      "nanoseconds": 7528410
+    },
+    {
+      "block": 0,
+      "component": "family_512_full",
+      "nanoseconds": 7523622
+    },
+    {
+      "block": 0,
+      "component": "family_512_leaves",
+      "nanoseconds": 117875
+    },
+    {
+      "block": 0,
+      "component": "family_512_subjects",
+      "nanoseconds": 183463
+    },
+    {
+      "block": 0,
+      "component": "family_512_product",
+      "nanoseconds": 350990
+    },
+    {
+      "block": 0,
+      "component": "family_512_witnesses",
+      "nanoseconds": 2515890
+    },
+    {
+      "block": 0,
+      "component": "family_512_arithmetic",
+      "nanoseconds": 2793861
+    },
+    {
+      "block": 0,
+      "component": "family_512_powers",
+      "nanoseconds": 7148076
+    },
+    {
+      "block": 0,
+      "component": "Curve25519_full",
+      "nanoseconds": 4135119
+    },
+    {
+      "block": 0,
+      "component": "Curve25519_leaves",
+      "nanoseconds": 168810
+    },
+    {
+      "block": 0,
+      "component": "Curve25519_subjects",
+      "nanoseconds": 302619
+    },
+    {
+      "block": 0,
+      "component": "Curve25519_product",
+      "nanoseconds": 354535
+    },
+    {
+      "block": 0,
+      "component": "Curve25519_witnesses",
+      "nanoseconds": 3141096
+    },
+    {
+      "block": 0,
+      "component": "Curve25519_arithmetic",
+      "nanoseconds": 3754915
+    },
+    {
+      "block": 0,
+      "component": "Curve25519_powers",
+      "nanoseconds": 2847761
+    },
+    {
+      "block": 0,
+      "component": "Curve448_full",
+      "nanoseconds": 8662851
+    },
+    {
+      "block": 0,
+      "component": "Curve448_leaves",
+      "nanoseconds": 189241
+    },
+    {
+      "block": 0,
+      "component": "Curve448_subjects",
+      "nanoseconds": 409607
+    },
+    {
+      "block": 0,
+      "component": "Curve448_product",
+      "nanoseconds": 502444
+    },
+    {
+      "block": 0,
+      "component": "Curve448_witnesses",
+      "nanoseconds": 8330598
+    },
+    {
+      "block": 0,
+      "component": "Curve448_arithmetic",
+      "nanoseconds": 8334685
+    },
+    {
+      "block": 0,
+      "component": "Curve448_powers",
+      "nanoseconds": 6999386
+    },
+    {
+      "block": 1,
+      "component": "family_31_powers",
+      "nanoseconds": 226155
+    },
+    {
+      "block": 1,
+      "component": "family_31_arithmetic",
+      "nanoseconds": 373373
+    },
+    {
+      "block": 1,
+      "component": "family_31_witnesses",
+      "nanoseconds": 289499
+    },
+    {
+      "block": 1,
+      "component": "family_31_product",
+      "nanoseconds": 141570
+    },
+    {
+      "block": 1,
+      "component": "family_31_subjects",
+      "nanoseconds": 113849
+    },
+    {
+      "block": 1,
+      "component": "family_31_leaves",
+      "nanoseconds": 99547
+    },
+    {
+      "block": 1,
+      "component": "family_31_full",
+      "nanoseconds": 444579
+    },
+    {
+      "block": 1,
+      "component": "family_61_powers",
+      "nanoseconds": 223211
+    },
+    {
+      "block": 1,
+      "component": "family_61_arithmetic",
+      "nanoseconds": 333014
+    },
+    {
+      "block": 1,
+      "component": "family_61_witnesses",
+      "nanoseconds": 267537
+    },
+    {
+      "block": 1,
+      "component": "family_61_product",
+      "nanoseconds": 115722
+    },
+    {
+      "block": 1,
+      "component": "family_61_subjects",
+      "nanoseconds": 83393
+    },
+    {
+      "block": 1,
+      "component": "family_61_leaves",
+      "nanoseconds": 42273
+    },
+    {
+      "block": 1,
+      "component": "family_61_full",
+      "nanoseconds": 374695
+    },
+    {
+      "block": 1,
+      "component": "family_123_powers",
+      "nanoseconds": 830951
+    },
+    {
+      "block": 1,
+      "component": "family_123_arithmetic",
+      "nanoseconds": 600119
+    },
+    {
+      "block": 1,
+      "component": "family_123_witnesses",
+      "nanoseconds": 513972
+    },
+    {
+      "block": 1,
+      "component": "family_123_product",
+      "nanoseconds": 128090
+    },
+    {
+      "block": 1,
+      "component": "family_123_subjects",
+      "nanoseconds": 87540
+    },
+    {
+      "block": 1,
+      "component": "family_123_leaves",
+      "nanoseconds": 42413
+    },
+    {
+      "block": 1,
+      "component": "family_123_full",
+      "nanoseconds": 631877
+    },
+    {
+      "block": 1,
+      "component": "family_256_powers",
+      "nanoseconds": 2321371
+    },
+    {
+      "block": 1,
+      "component": "family_256_arithmetic",
+      "nanoseconds": 1114151
+    },
+    {
+      "block": 1,
+      "component": "family_256_witnesses",
+      "nanoseconds": 1013652
+    },
+    {
+      "block": 1,
+      "component": "family_256_product",
+      "nanoseconds": 145796
+    },
+    {
+      "block": 1,
+      "component": "family_256_subjects",
+      "nanoseconds": 94520
+    },
+    {
+      "block": 1,
+      "component": "family_256_leaves",
+      "nanoseconds": 46640
+    },
+    {
+      "block": 1,
+      "component": "family_256_full",
+      "nanoseconds": 1134511
+    },
+    {
+      "block": 1,
+      "component": "family_511_powers",
+      "nanoseconds": 7449062
+    },
+    {
+      "block": 1,
+      "component": "family_511_arithmetic",
+      "nanoseconds": 2493376
+    },
+    {
+      "block": 1,
+      "component": "family_511_witnesses",
+      "nanoseconds": 2362982
+    },
+    {
+      "block": 1,
+      "component": "family_511_product",
+      "nanoseconds": 151775
+    },
+    {
+      "block": 1,
+      "component": "family_511_subjects",
+      "nanoseconds": 103033
+    },
+    {
+      "block": 1,
+      "component": "family_511_leaves",
+      "nanoseconds": 47921
+    },
+    {
+      "block": 1,
+      "component": "family_511_full",
+      "nanoseconds": 2493597
+    },
+    {
+      "block": 1,
+      "component": "family_512_powers",
+      "nanoseconds": 7211149
+    },
+    {
+      "block": 1,
+      "component": "family_512_arithmetic",
+      "nanoseconds": 2843234
+    },
+    {
+      "block": 1,
+      "component": "family_512_witnesses",
+      "nanoseconds": 2501298
+    },
+    {
+      "block": 1,
+      "component": "family_512_product",
+      "nanoseconds": 356488
+    },
+    {
+      "block": 1,
+      "component": "family_512_subjects",
+      "nanoseconds": 167157
+    },
+    {
+      "block": 1,
+      "component": "family_512_leaves",
+      "nanoseconds": 100639
+    },
+    {
+      "block": 1,
+      "component": "family_512_full",
+      "nanoseconds": 2928391
+    },
+    {
+      "block": 1,
+      "component": "Curve25519_powers",
+      "nanoseconds": 2891456
+    },
+    {
+      "block": 1,
+      "component": "Curve25519_arithmetic",
+      "nanoseconds": 3827393
+    },
+    {
+      "block": 1,
+      "component": "Curve25519_witnesses",
+      "nanoseconds": 3139203
+    },
+    {
+      "block": 1,
+      "component": "Curve25519_product",
+      "nanoseconds": 376718
+    },
+    {
+      "block": 1,
+      "component": "Curve25519_subjects",
+      "nanoseconds": 297360
+    },
+    {
+      "block": 1,
+      "component": "Curve25519_leaves",
+      "nanoseconds": 156823
+    },
+    {
+      "block": 1,
+      "component": "Curve25519_full",
+      "nanoseconds": 4267706
+    },
+    {
+      "block": 1,
+      "component": "Curve448_powers",
+      "nanoseconds": 7065424
+    },
+    {
+      "block": 1,
+      "component": "Curve448_arithmetic",
+      "nanoseconds": 8215518
+    },
+    {
+      "block": 1,
+      "component": "Curve448_witnesses",
+      "nanoseconds": 7271960
+    },
+    {
+      "block": 1,
+      "component": "Curve448_product",
+      "nanoseconds": 531748
+    },
+    {
+      "block": 1,
+      "component": "Curve448_subjects",
+      "nanoseconds": 384079
+    },
+    {
+      "block": 1,
+      "component": "Curve448_leaves",
+      "nanoseconds": 199987
+    },
+    {
+      "block": 1,
+      "component": "Curve448_full",
+      "nanoseconds": 9274818
+    },
+    {
+      "block": 2,
+      "component": "family_31_full",
+      "nanoseconds": 518599
+    },
+    {
+      "block": 2,
+      "component": "family_31_leaves",
+      "nanoseconds": 92827
+    },
+    {
+      "block": 2,
+      "component": "family_31_subjects",
+      "nanoseconds": 125026
+    },
+    {
+      "block": 2,
+      "component": "family_31_product",
+      "nanoseconds": 136272
+    },
+    {
+      "block": 2,
+      "component": "family_31_witnesses",
+      "nanoseconds": 275238
+    },
+    {
+      "block": 2,
+      "component": "family_31_arithmetic",
+      "nanoseconds": 335367
+    },
+    {
+      "block": 2,
+      "component": "family_31_powers",
+      "nanoseconds": 203151
+    },
+    {
+      "block": 2,
+      "component": "family_61_full",
+      "nanoseconds": 374815
+    },
+    {
+      "block": 2,
+      "component": "family_61_leaves",
+      "nanoseconds": 45457
+    },
+    {
+      "block": 2,
+      "component": "family_61_subjects",
+      "nanoseconds": 85657
+    },
+    {
+      "block": 2,
+      "component": "family_61_product",
+      "nanoseconds": 114990
+    },
+    {
+      "block": 2,
+      "component": "family_61_witnesses",
+      "nanoseconds": 259074
+    },
+    {
+      "block": 2,
+      "component": "family_61_arithmetic",
+      "nanoseconds": 316719
+    },
+    {
+      "block": 2,
+      "component": "family_61_powers",
+      "nanoseconds": 216721
+    },
+    {
+      "block": 2,
+      "component": "family_123_full",
+      "nanoseconds": 628551
+    },
+    {
+      "block": 2,
+      "component": "family_123_leaves",
+      "nanoseconds": 49032
+    },
+    {
+      "block": 2,
+      "component": "family_123_subjects",
+      "nanoseconds": 87310
+    },
+    {
+      "block": 2,
+      "component": "family_123_product",
+      "nanoseconds": 117594
+    },
+    {
+      "block": 2,
+      "component": "family_123_witnesses",
+      "nanoseconds": 510357
+    },
+    {
+      "block": 2,
+      "component": "family_123_arithmetic",
+      "nanoseconds": 577826
+    },
+    {
+      "block": 2,
+      "component": "family_123_powers",
+      "nanoseconds": 830311
+    },
+    {
+      "block": 2,
+      "component": "family_256_full",
+      "nanoseconds": 1161522
+    },
+    {
+      "block": 2,
+      "component": "family_256_leaves",
+      "nanoseconds": 54010
+    },
+    {
+      "block": 2,
+      "component": "family_256_subjects",
+      "nanoseconds": 97054
+    },
+    {
+      "block": 2,
+      "component": "family_256_product",
+      "nanoseconds": 130193
+    },
+    {
+      "block": 2,
+      "component": "family_256_witnesses",
+      "nanoseconds": 999953
+    },
+    {
+      "block": 2,
+      "component": "family_256_arithmetic",
+      "nanoseconds": 1091217
+    },
+    {
+      "block": 2,
+      "component": "family_256_powers",
+      "nanoseconds": 2321742
+    },
+    {
+      "block": 2,
+      "component": "family_511_full",
+      "nanoseconds": 2542799
+    },
+    {
+      "block": 2,
+      "component": "family_511_leaves",
+      "nanoseconds": 60820
+    },
+    {
+      "block": 2,
+      "component": "family_511_subjects",
+      "nanoseconds": 103304
+    },
+    {
+      "block": 2,
+      "component": "family_511_product",
+      "nanoseconds": 133458
+    },
+    {
+      "block": 2,
+      "component": "family_511_witnesses",
+      "nanoseconds": 2343294
+    },
+    {
+      "block": 2,
+      "component": "family_511_arithmetic",
+      "nanoseconds": 2464183
+    },
+    {
+      "block": 2,
+      "component": "family_511_powers",
+      "nanoseconds": 7497744
+    },
+    {
+      "block": 2,
+      "component": "family_512_full",
+      "nanoseconds": 2985196
+    },
+    {
+      "block": 2,
+      "component": "family_512_leaves",
+      "nanoseconds": 111465
+    },
+    {
+      "block": 2,
+      "component": "family_512_subjects",
+      "nanoseconds": 172295
+    },
+    {
+      "block": 2,
+      "component": "family_512_product",
+      "nanoseconds": 347435
+    },
+    {
+      "block": 2,
+      "component": "family_512_witnesses",
+      "nanoseconds": 2495839
+    },
+    {
+      "block": 2,
+      "component": "family_512_arithmetic",
+      "nanoseconds": 2814422
+    },
+    {
+      "block": 2,
+      "component": "family_512_powers",
+      "nanoseconds": 7214384
+    },
+    {
+      "block": 2,
+      "component": "Curve25519_full",
+      "nanoseconds": 4137223
+    },
+    {
+      "block": 2,
+      "component": "Curve25519_leaves",
+      "nanoseconds": 164494
+    },
+    {
+      "block": 2,
+      "component": "Curve25519_subjects",
+      "nanoseconds": 301968
+    },
+    {
+      "block": 2,
+      "component": "Curve25519_product",
+      "nanoseconds": 363298
+    },
+    {
+      "block": 2,
+      "component": "Curve25519_witnesses",
+      "nanoseconds": 3146514
+    },
+    {
+      "block": 2,
+      "component": "Curve25519_arithmetic",
+      "nanoseconds": 3803257
+    },
+    {
+      "block": 2,
+      "component": "Curve25519_powers",
+      "nanoseconds": 2858046
+    },
+    {
+      "block": 2,
+      "component": "Curve448_full",
+      "nanoseconds": 8740145
+    },
+    {
+      "block": 2,
+      "component": "Curve448_leaves",
+      "nanoseconds": 200087
+    },
+    {
+      "block": 2,
+      "component": "Curve448_subjects",
+      "nanoseconds": 417369
+    },
+    {
+      "block": 2,
+      "component": "Curve448_product",
+      "nanoseconds": 523345
+    },
+    {
+      "block": 2,
+      "component": "Curve448_witnesses",
+      "nanoseconds": 7375953
+    },
+    {
+      "block": 2,
+      "component": "Curve448_arithmetic",
+      "nanoseconds": 8286383
+    },
+    {
+      "block": 2,
+      "component": "Curve448_powers",
+      "nanoseconds": 7050681
+    },
+    {
+      "block": 3,
+      "component": "family_31_powers",
+      "nanoseconds": 238394
+    },
+    {
+      "block": 3,
+      "component": "family_31_arithmetic",
+      "nanoseconds": 378632
+    },
+    {
+      "block": 3,
+      "component": "family_31_witnesses",
+      "nanoseconds": 288748
+    },
+    {
+      "block": 3,
+      "component": "family_31_product",
+      "nanoseconds": 141930
+    },
+    {
+      "block": 3,
+      "component": "family_31_subjects",
+      "nanoseconds": 115571
+    },
+    {
+      "block": 3,
+      "component": "family_31_leaves",
+      "nanoseconds": 125766
+    },
+    {
+      "block": 3,
+      "component": "family_31_full",
+      "nanoseconds": 452460
+    },
+    {
+      "block": 3,
+      "component": "family_61_powers",
+      "nanoseconds": 233877
+    },
+    {
+      "block": 3,
+      "component": "family_61_arithmetic",
+      "nanoseconds": 338001
+    },
+    {
+      "block": 3,
+      "component": "family_61_witnesses",
+      "nanoseconds": 267035
+    },
+    {
+      "block": 3,
+      "component": "family_61_product",
+      "nanoseconds": 124866
+    },
+    {
+      "block": 3,
+      "component": "family_61_subjects",
+      "nanoseconds": 89322
+    },
+    {
+      "block": 3,
+      "component": "family_61_leaves",
+      "nanoseconds": 45748
+    },
+    {
+      "block": 3,
+      "component": "family_61_full",
+      "nanoseconds": 379863
+    },
+    {
+      "block": 3,
+      "component": "family_123_powers",
+      "nanoseconds": 869779
+    },
+    {
+      "block": 3,
+      "component": "family_123_arithmetic",
+      "nanoseconds": 604736
+    },
+    {
+      "block": 3,
+      "component": "family_123_witnesses",
+      "nanoseconds": 529816
+    },
+    {
+      "block": 3,
+      "component": "family_123_product",
+      "nanoseconds": 130013
+    },
+    {
+      "block": 3,
+      "component": "family_123_subjects",
+      "nanoseconds": 87990
+    },
+    {
+      "block": 3,
+      "component": "family_123_leaves",
+      "nanoseconds": 43715
+    },
+    {
+      "block": 3,
+      "component": "family_123_full",
+      "nanoseconds": 635001
+    },
+    {
+      "block": 3,
+      "component": "family_256_powers",
+      "nanoseconds": 2342031
+    },
+    {
+      "block": 3,
+      "component": "family_256_arithmetic",
+      "nanoseconds": 1148543
+    },
+    {
+      "block": 3,
+      "component": "family_256_witnesses",
+      "nanoseconds": 1023147
+    },
+    {
+      "block": 3,
+      "component": "family_256_product",
+      "nanoseconds": 145746
+    },
+    {
+      "block": 3,
+      "component": "family_256_subjects",
+      "nanoseconds": 97495
+    },
+    {
+      "block": 3,
+      "component": "family_256_leaves",
+      "nanoseconds": 47942
+    },
+    {
+      "block": 3,
+      "component": "family_256_full",
+      "nanoseconds": 1150656
+    },
+    {
+      "block": 3,
+      "component": "family_511_powers",
+      "nanoseconds": 7560326
+    },
+    {
+      "block": 3,
+      "component": "family_511_arithmetic",
+      "nanoseconds": 2494187
+    },
+    {
+      "block": 3,
+      "component": "family_511_witnesses",
+      "nanoseconds": 2361801
+    },
+    {
+      "block": 3,
+      "component": "family_511_product",
+      "nanoseconds": 174098
+    },
+    {
+      "block": 3,
+      "component": "family_511_subjects",
+      "nanoseconds": 104355
+    },
+    {
+      "block": 3,
+      "component": "family_511_leaves",
+      "nanoseconds": 49043
+    },
+    {
+      "block": 3,
+      "component": "family_511_full",
+      "nanoseconds": 2521377
+    },
+    {
+      "block": 3,
+      "component": "family_512_powers",
+      "nanoseconds": 7331197
+    },
+    {
+      "block": 3,
+      "component": "family_512_arithmetic",
+      "nanoseconds": 2839700
+    },
+    {
+      "block": 3,
+      "component": "family_512_witnesses",
+      "nanoseconds": 2495719
+    },
+    {
+      "block": 3,
+      "component": "family_512_product",
+      "nanoseconds": 363629
+    },
+    {
+      "block": 3,
+      "component": "family_512_subjects",
+      "nanoseconds": 169691
+    },
+    {
+      "block": 3,
+      "component": "family_512_leaves",
+      "nanoseconds": 104515
+    },
+    {
+      "block": 3,
+      "component": "family_512_full",
+      "nanoseconds": 2935501
+    },
+    {
+      "block": 3,
+      "component": "Curve25519_powers",
+      "nanoseconds": 2911466
+    },
+    {
+      "block": 3,
+      "component": "Curve25519_arithmetic",
+      "nanoseconds": 3876466
+    },
+    {
+      "block": 3,
+      "component": "Curve25519_witnesses",
+      "nanoseconds": 3144461
+    },
+    {
+      "block": 3,
+      "component": "Curve25519_product",
+      "nanoseconds": 387514
+    },
+    {
+      "block": 3,
+      "component": "Curve25519_subjects",
+      "nanoseconds": 298532
+    },
+    {
+      "block": 3,
+      "component": "Curve25519_leaves",
+      "nanoseconds": 158685
+    },
+    {
+      "block": 3,
+      "component": "Curve25519_full",
+      "nanoseconds": 4095891
+    },
+    {
+      "block": 3,
+      "component": "Curve448_powers",
+      "nanoseconds": 7048328
+    },
+    {
+      "block": 3,
+      "component": "Curve448_arithmetic",
+      "nanoseconds": 8223249
+    },
+    {
+      "block": 3,
+      "component": "Curve448_witnesses",
+      "nanoseconds": 10290204
+    },
+    {
+      "block": 3,
+      "component": "Curve448_product",
+      "nanoseconds": 552379
+    },
+    {
+      "block": 3,
+      "component": "Curve448_subjects",
+      "nanoseconds": 401064
+    },
+    {
+      "block": 3,
+      "component": "Curve448_leaves",
+      "nanoseconds": 204523
+    },
+    {
+      "block": 3,
+      "component": "Curve448_full",
+      "nanoseconds": 8647368
+    }
+  ]
+}

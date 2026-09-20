@@ -29,3 +29,20 @@ theorem curve25519 : Hex.Nat.Prime (2 ^ 255 - 19) := by
 #print axioms curve25519
 
 end Hex.PrimalityConformance
+
+-- These suggestions come from a separate-module producer and a divisor sieve.
+-- This module deliberately imports neither the producer nor the elaborator.
+example : Hex.Nat.Prime 17 := by
+  exact
+    Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.pock 17 [(3, 3, Hex.Nat.PrimeCert.small 2)])
+      (by decide +kernel)
+
+example : Hex.Nat.Prime 197 := by
+  exact
+    Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.pock3Sieve 197 1 6 0 2 [(2, 1, Hex.Nat.PrimeCert.small 2)])
+      (by decide +kernel)
+
+-- PrimeCert can use a sieve leaf for this prime. Hex uses a short subtree.
+example : Hex.Nat.Prime 100003 :=
+  Hex.Nat.prime_of_checkPrimeAt (c := .pock 100003 [(2, 0, .small 2381)])
+    (by decide +kernel)

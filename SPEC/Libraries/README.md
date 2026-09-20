@@ -6,6 +6,7 @@
 - **hex-int-factor**: integer factorization with complete prime-exponent certificates, the divisor-function API, multiplicative order and primitive roots
 - **hex-poly**: dense `Array`-backed polynomial representation
 - **hex-rational-fn**: canonical univariate rational functions, field arithmetic, partial evaluation, formal differentiation and normalization certificates
+- **[hex-ordered-fn](hex-ordered-fn.md)** (planned): certified bounded real-constant and infinitesimal orders on rational functions, with conditional total field adapters
 - **hex-sparse-poly**: canonical sparse univariate polynomials as a sorted exponent/coefficient term array, with explicit conversions to and from the dense representation
 - **hex-mv-poly**: canonical distributed multivariate polynomials at fixed arity with explicit monomial orders
 - **hex-reflect**: shared `Lean.Meta.Sym.Arith` sessions, batch variable sealing, direct `Hex.MvPoly` conversion, provider results, conditions and budgets
@@ -47,10 +48,13 @@
 - **hex-cyclotomic**: dense integer cyclotomic polynomials from a checked factorization of the index, the divisor family, and the factorization of `x^n - 1`
 - **hex-roots**: certified complex root isolation for `Z[x]` via dyadic squares, Pellet tests, and speculative Newton iteration
 - **hex-real-roots**: certified real root isolation for `Z[x]`: Sturm-count witnesses, a Descartes bisection search with a proven-complete Sturm fallback
+- **[hex-sturm](hex-sturm.md)** (planned): ordered-field Sturm–Tarski queries, coefficient evidence and root counts
+- **[hex-sign-det](hex-sign-det.md)** (planned): complete BKR sign tables, certified support reduction and Thom root descriptors
 - **hex-interval**: exact open, closed, empty, and unbounded dyadic intervals; a shared expression program; and a budgeted scheduler for propagation, refinement, and subdivision
 - **hex-interval-algebraic**: planned Mathlib-facing integration of interval facts with certified real and complex polynomial root isolation; `mathlib: true`
 - **[hex-real-formula](hex-real-formula.md)** (planned): shared multivariate real-arithmetic syntax, semantics, and reification; companion specified in the same file
 - **[hex-virtual-subst](hex-virtual-subst.md)** (planned): quadratic virtual substitution, exact QE and refutation certificates; Mathlib companion and tactic specified in the same file
+- **[hex-coverings](hex-coverings.md)** (planned): real-arithmetic satisfiability by cylindrical cell explanations and checked LRAT or covering refutations; Mathlib/Tau Ceti companion specified in the same file
 - **hex-rcf**: the `rcf` tactic, a complete decision procedure for univariate real-closed-field sentences (Boolean combinations of polynomial inequalities under one `∀`/`∃` over `ℝ`); `mathlib: true`, soundness theorem in the same library
 - **hex-resultant**: polynomial resultant and discriminant via the subresultant pseudo-remainder sequence
 - **hex-number-field**: fixed fields `QAdjoin p x`, factorization-lazy `AlgebraicRoot`, canonical `AlgebraicNumber`, and roots of polynomials with algebraic coefficients
@@ -82,6 +86,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-finite-field-mathlib**: `Fintype K` and `Fintype.card K = card K` for any `LawfulFiniteField`, and `frob = frobenius`
 - **hex-poly-mathlib**: `DensePoly R ≃+* Polynomial R`
 - **hex-rational-fn-mathlib**: equivalence with `RatFunc K`, canonical numerator/denominator agreement and partial-evaluation semantics
+- **[hex-ordered-fn-mathlib](hex-ordered-fn-mathlib.md)** (planned): real evaluation, Hahn-series infinitesimal semantics, fallible-record correspondence and total-order laws
 - **hex-sparse-poly-mathlib**: `SparsePoly R ≃+* Polynomial R`, and the identification of the stored term array with `Polynomial.support`
 - **hex-mv-poly-mathlib**: `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence
 - **hex-reflect-mathlib**: Mathlib carrier translations and the `MvPolynomial` correspondence for reflected batches
@@ -139,6 +144,8 @@ Each library with its immediate dependencies:
 - **hex-int-factor**: hex-primality, hex-arith, hex-basic
 - **hex-poly**: (none)
 - **hex-rational-fn**: hex-poly, hex-poly-fast
+- **hex-ordered-fn** (planned): hex-rational-fn, hex-poly, hex-poly-fast, hex-interval
+- **hex-ordered-fn-mathlib** (planned): hex-ordered-fn, hex-rational-fn-mathlib, hex-poly-mathlib, hex-interval-mathlib, Mathlib
 - **hex-sparse-poly**: hex-poly, hex-basic
 - **hex-mv-poly**: hex-poly, hex-basic
 - **hex-reflect**: hex-mv-poly, hex-basic
@@ -179,6 +186,8 @@ Each library with its immediate dependencies:
 - **hex-cyclotomic**: hex-poly-z, hex-int-factor, hex-poly
 - **hex-roots**: hex-poly-z
 - **hex-real-roots**: hex-poly-z
+- **hex-sturm** (planned): hex-poly, hex-real-roots
+- **hex-sign-det** (planned): hex-sturm, hex-poly, hex-matrix, hex-row-reduce, hex-rank
 - **hex-interval**: (none)
 - **hex-interval-algebraic**: hex-interval-mathlib, hex-real-roots-mathlib, hex-roots-mathlib (mathlib: true)
 - **hex-real-formula** (planned): hex-mv-poly
@@ -745,6 +754,8 @@ for developments whose source-local move has not happened yet.
 - [hex-poly-mathlib](../../HexPolyMathlib/SPEC/hex-poly-mathlib.md): `DensePoly R ≃+* Polynomial R`
 - [hex-rational-fn](../../HexRationalFn/SPEC/hex-rational-fn.md): canonical univariate fractions, cancellation algorithms, evaluation and certificate replay
 - [hex-rational-fn-mathlib](../../HexRationalFnMathlib/SPEC/hex-rational-fn-mathlib.md): equivalence with `RatFunc`, canonical components and operation correspondence
+- [hex-ordered-fn](hex-ordered-fn.md) (planned): shared bounded fraction adapter, certified real enclosures, infinitesimal signs and executable total-search contracts
+- [hex-ordered-fn-mathlib](hex-ordered-fn-mathlib.md) (planned): real and Hahn-model correspondence, enclosure soundness/progress, and erased total-adapter laws
 - [hex-sparse-poly](../../HexSparsePoly/SPEC/hex-sparse-poly.md): canonical sparse univariate polynomials, the operations that keep sparsity, and the dense conversions (the Mathlib companion is specified in the same file)
 - [hex-mv-poly](../../HexMvPoly/SPEC/hex-mv-poly.md): canonical distributed multivariate polynomials with explicit monomial orders
 - [hex-mv-poly-mathlib](../../HexMvPolyMathlib/SPEC/hex-mv-poly-mathlib.md): `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence
@@ -770,6 +781,9 @@ for developments whose source-local move has not happened yet.
 - [hex-roots-mathlib](../../HexRootsMathlib/SPEC/hex-roots-mathlib.md): Pellet's test on circles, the Mahler separation bound, soundness of refinement and `ZPoly.isolateComplexRoots?`
 - [hex-real-roots.md](../../HexRealRoots/SPEC/hex-real-roots.md): certified real root isolation for `Z[x]`, Sturm-count witnesses, Descartes search with Sturm fallback
 - [hex-real-roots-mathlib.md](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md): Sturm's theorem, chain correspondence, soundness and completeness of `ZPoly.isolateRealRoots?`
+- [hex-sturm](hex-sturm.md) (planned): ordered-field Sturm–Tarski frontend, coefficient evidence and root counts using the shared hex-real-roots query/replay kernel
+- [hex-sturm-mathlib](hex-sturm-mathlib.md) (planned): abstract ordered-field query correspondence, endpoint guards and coefficient-evidence composition using shared real-roots-mathlib replay soundness
+- [hex-sign-det](hex-sign-det.md) (planned): complete BKR sign tables, certified support reduction and Thom root descriptors; required companion theorem shapes listed (separate companion SPEC directive [#10314](https://github.com/kim-em/hex-dev/issues/10314))
 - [hex-interval.md](../../HexInterval/SPEC/hex-interval.md): exact interval data, shared programs, and budgeted propagation search
 - [hex-interval-mathlib.md](hex-interval-mathlib.md): real semantics, verified propagators, proof replay, and the `interval` tactic
 - **hex-interval-algebraic** (planned): Mathlib-facing interval providers backed by certified real and complex polynomial root isolation; its provider contract is specified in [hex-interval.md](../../HexInterval/SPEC/hex-interval.md#specialized-algebraic-solvers-before-generic-propagation)

@@ -1,5 +1,9 @@
 # HexPrimality Performance Report
 
+The current supplied-certificate comparison against PrimeCert's fixed-window
+implementation is in [the replay attribution](hex-primality-replay-attribution.md).
+The comparator measurements below use an earlier PrimeCert revision.
+
 ## Bench Targets
 
 The compiled suite owns each executable surface once.  The first six rows use

@@ -260,6 +260,42 @@ and `approx_mem` for the product polynomial: its separated ball centres have
 the order of the two real values. The public mirror-ball geometry helpers
 remain available for compatibility independently of the tag implementation.
 
+## Real comparison correspondence
+
+The [computational sign contract](../../HexNumberField/SPEC/hex-number-field.md#real-sign-and-comparison)
+adds the following proof obligations. These are extensions of the shipped
+surface, not assertions that its current phase attestations cover new APIs.
+The implementation adds the direct `HexRealRootsMathlib` dependency when
+rational Sturm and Tarski correspondence is imported.
+
+| Obligation | Required statement and proof dependencies |
+| --- | --- |
+| `realCompare_eq_exact` | Under reality of both operands, the existing `realCompare_eq` and `realCompareExact_eq` give equality of the two executable orderings |
+| `realInterval_spec` | The interval `re ± 2*halfWidth` strictly encloses the selected real root, has no endpoint roots, and has Sturm count one; use the existing Mahler separation and rational/dyadic count theorems |
+| `compareRat_eq`, `compareDyadic_eq` | The point algorithms return `a.realCompare (ofRat q)`; use exact evaluation and the half-open prefix root count |
+| `ofEliminant_prec` | A successful eliminant constructor retains the `isolateComplexRoots?_prec` lower bound, so its sign guard does not refine again |
+| `signDepth_spec` | At `separationDepth`, a real nonzero root of degree at least two has the strict sign of its centre; prove the height inequality and reciprocal-Cauchy/root-separation alternatives explicitly |
+| `AlgebraicRoot.sign_eq`, `compare_eq` | Sign of a real lazy root and comparison of real lazy operands agree with `realCompare` after exactification; combine degree-one coefficient sign, `signDepth_spec`, existing subtraction and zero-test correctness |
+| `signTarski_eq` | Positive denominator clearing preserves sign; `tarskiQuery_sign` on `realInterval` gives the reference order of the fixed-field value against zero |
+| `signBall_bound`, `signApprox_eq` | Specialize `Disambiguation.evalMajorant` to the direct rational-coefficient Horner evaluator, and prove the finite endpoint succeeds; the existing `PolyQuot.approx`/`approx_radius` baseline satisfies the same reference sign equation |
+| `compareTarski_eq`, `compareApprox_eq` | Reduced fixed-field subtraction and the sign equations give `realCompare` between the materialized operands, without executing those materializations in the fast algorithms |
+| `rootLe_real` | For real canonical operands with the same minimal polynomial, `rootLe` agrees with non-strict `realCompare` order; the common polynomial's separation bound orders their centres |
+
+Reuse the existing lazy reality predicate and
+`HexRootsMathlib.RefinedIsolation.meetsRealAxis_iff`; do not replace its
+rounded-radius test. Prove the computational owner's named `_isSome` lemmas
+for point comparison, lazy sign/comparison and both fixed-field strategies
+under the real-input hypotheses. They discharge exactly the classified panic
+branches. Checked nonreal rejection is a separate outcome, not an unreachable
+branch. All `_eq` statements use the same real hypotheses as those success
+lemmas. In particular, `rootLe_real` has a same-minimal-polynomial hypothesis;
+it supplies no value-order theorem for the raw roots of a reducible polynomial.
+
+These are correspondence proofs, with computation and performance evidence
+owned by `HexNumberField` and the query primitives owned by `HexRealRoots`.
+They introduce no comparison tactic, certificate search or kernel-cost
+surface in this companion.
+
 ## The nearest root
 
 ```lean

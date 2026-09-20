@@ -8,8 +8,10 @@ module
 
 public import HexPolyDetMathlib.Scaling
 public import HexPolyDetMathlib.Residue
+public import HexPolyDetMathlib.Packed
 public meta import HexPolyDetMathlib.Scaling
 public meta import HexPolyDetMathlib.Residue
+public meta import HexPolyDetMathlib.Certificate
 public meta import HexReflectMathlib.Display
 public meta import HexArith.Nat.Prime
 public meta import HexPolyDetMathlib.Normalize
@@ -71,7 +73,10 @@ def preflight (n k : Nat) (rows : Array (Array Poly)) : ReflectM Unit := do
   let bound := min (n.factorial * support ^ n) (monomialBound k (n * degree) maxCertificateTerms)
   if bound * (n * (n + 1) / 2 + 1) > maxCertificateTerms then
     decline m!"certificate term budget exhausted before elimination (limit {maxCertificateTerms})"
-  checkBudget .terms (monomialBound k (2 * n * degree) maxIntermediateTerms)
+  -- Intermediate products multiply two minors; sparse support bounds remain
+  -- useful when many independent atoms make the dense monomial box enormous.
+  checkBudget .terms (min (2 * bound * bound)
+    (monomialBound k (2 * n * degree) maxIntermediateTerms))
   checkBudget .coefficientBits (2 * n * (bits + support.log2 + n.log2 + 2))
 
 /-- Quotations contain only lists, integers and naturals. -/
@@ -238,9 +243,14 @@ def computeResidue (p : Nat) (provider : CoeffProvider) (A : Expr)
     decline m!"target is not a polynomial identity in the sealed atoms modulo {p}"
   let rowsE := toExpr (lists.toList.map Array.toList)
   let wE ← quoteWitness w
-  let ops ← mkAppM ``Hex.PolyDet.opsMod #[toExpr p, toExpr k]
-  let hcheck ← profile "det.symbolic.certificate" <| decideProof (← mkEq
-    (← mkAppM ``Hex.Matrix.checkDetPolyList #[ops, toExpr lit.n, rowsE, wE]) (mkConst ``Bool.true))
+  let remaining := (← getThe Hex.Reflect.State).budget.remaining
+  let (hcheck, selection) ← Certificate.residue p k lit.n (lists.toList.map Array.toList) w rowsE wE
+    { terms := min maxIntermediateTerms remaining.terms
+      coefficientBits := remaining.coefficientBits
+      certificateTerms := min remaining.terms
+        (min (maxCertificateTerms - size) (remaining.proofNodes / (4 * k + 24))) }
+  charge .terms selection.quotientSupport
+  checkBudget .proofNodes (selection.quotientSupport * (4 * k + 24))
   let mut hrows := #[]
   for i in [:lit.n] do
     let mut hs := #[]
@@ -260,15 +270,15 @@ def computeResidue (p : Nat) (provider : CoeffProvider) (A : Expr)
     match rhs with
     | some _ =>
       let hq ← decideProof (← mkEq (← mkAppM ``MvPoly.Kernel.beq #[toExpr d, toExpr q]) (mkConst ``Bool.true))
-      mkAppM ``Residue.target
+      mkAppM ``Residue.target_det
         #[toExpr p, toExpr k, toExpr lit.n, rowsE, wE, ctx, A, toExpr q, r.source, hcheck, hA, he, hq]
     | none =>
-      mkAppM ``Residue.result
+      mkAppM ``Residue.result_det
         #[toExpr p, toExpr k, toExpr lit.n, rowsE, wE, ctx, A, r.source, hcheck, hA, he]
   let proofNodes := sourceNodeCount proof 1000001
   charge .proofNodes proofNodes
-  trace[HexMatrix.certificate] "{(Json.mkObj [("route", toJson "residue-certificate"),
-    ("modulus", toJson p), ("proof_nodes", toJson proofNodes), ("atoms", toJson k)]).compress}"
+  trace[HexMatrix.certificate] "{(Json.mkObj (Certificate.fields selection "residue" ++ [
+    ("modulus", toJson p), ("proof_nodes", toJson proofNodes), ("atoms", toJson k)])).compress}"
   let target ← mkEq (← mkAppM ``Matrix.det #[A]) r.source
   return { value := r.source, proof := ← checked target proof }
 
@@ -379,10 +389,7 @@ def compute (A : Expr) (rhs? : Option Expr := none) : MetaM (Outcome Result) := 
       decline m!"target is not a polynomial identity in the sealed atoms; computed value is{indentExpr value}"
     let rowsE := toExpr (lists.toList.map Array.toList)
     let wE ← quoteWitness w
-    let ops ← mkAppM' (mkApp (mkConst ``Polynomial.ops) (mkConst ``Int)) #[toExpr k]
-    let check ← mkEq (← mkAppM ``Hex.Matrix.checkDetPolyList #[ops, toExpr lit.n, rowsE, wE])
-      (mkConst ``Bool.true)
-    let hcheck ← decideProof check
+    let (hcheck, selection) ← Certificate.integer k lit.n (lists.toList.map Array.toList) w rowsE wE
     let mut hrows := #[]
     for i in [:lit.n] do
       let mut hs := #[]
@@ -408,7 +415,7 @@ def compute (A : Expr) (rhs? : Option Expr := none) : MetaM (Outcome Result) := 
       let sE := toExpr scales.toList
       let hA ← mkAppM ``Scaling.identify #[toExpr lit.n, A, B, sE, ← conjunction hrows]
       let hs ← decideProof (← mkEq (← mkAppM ``List.length #[sE]) (toExpr lit.n))
-      let hdet ← mkAppM ``Polynomial.scaled
+      let hdet ← mkAppM ``Polynomial.scaled_det
         #[toExpr k, toExpr lit.n, rowsE, wE, ctx, A, sE, hcheck, hA, hs]
       let hD ← decideProof (← mkAppM ``LT.lt #[toExpr (0 : Nat), toExpr D])
       match targetNorm with
@@ -428,11 +435,11 @@ def compute (A : Expr) (rhs? : Option Expr := none) : MetaM (Outcome Result) := 
     else do
       let hA ← mkAppM ``Polynomial.identify #[A, B, ← conjunction hrows]
       let proof ← if rhs?.isSome then
-        mkAppM ``Polynomial.target
+        mkAppM ``Polynomial.target_det
           #[toExpr k, toExpr lit.n, rowsE, wE, ctx, A, toExpr q, r.source,
             hcheck, hA, he, ← targetCheck]
       else
-        mkAppM ``Polynomial.result
+        mkAppM ``Polynomial.result_det
           #[toExpr k, toExpr lit.n, rowsE, wE, ctx, A, r.source, hcheck, hA, he]
       pure (r.source, proof)
     let proofNodes := sourceNodeCount proof 1000001
@@ -442,10 +449,10 @@ def compute (A : Expr) (rhs? : Option Expr := none) : MetaM (Outcome Result) := 
       | .singular v => v
     if ← isTracingEnabledFor `HexMatrix.certificate then
       reportCertificate "det-symbolic" (reprStr w) (witnessEntries.flatMap (List.map Prod.snd)) []
-        [("route", toJson "certificate"), ("proof_nodes", toJson proofNodes), ("atoms", toJson k),
+        (Certificate.fields selection "integer" ++ [("proof_nodes", toJson proofNodes), ("atoms", toJson k),
          ("max_minor_support", toJson (witnessEntries.foldl (fun n p => max n p.length) 0)),
          ("max_minor_degree", toJson (witnessEntries.foldl (fun n p =>
-           p.foldl (fun n (m, _) => max n (m.foldl (· + ·) 0)) n) 0))]
+           p.foldl (fun n (m, _) => max n (m.foldl (· + ·) 0)) n) 0))])
     let target ← mkEq (← mkAppM ``Matrix.det #[A]) value
     return { value, proof := ← checked target proof : Result }
   match outcome with
