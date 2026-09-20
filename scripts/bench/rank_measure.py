@@ -29,7 +29,22 @@ PREFIX = 'Hex.RankBench.'
 
 
 def commands(phase, families):
-    if phase == 'integer':
+    if phase == 'quotient':
+        for rank in ('Full', 'Deficient'):
+            for op in ('produce', 'prepare', 'finish', 'check'):
+                case = PREFIX + 'Quotient.' + op + rank
+                yield op + rank, ['run', case]
+    elif phase == 'poly-references':
+        for block in range(6):
+            for carrier in ('RatPoly', 'Mv'):
+                for rank in ('', 'Deficient'):
+                    for size in (4, 8, 12):
+                        for op in ('Second', 'Check'):
+                            native = PREFIX + f'run{carrier}{rank}{op}{size}'
+                            external = PREFIX + f'Comparison.{carrier}.{rank or "Full"}.{op.lower()}{size}'
+                            arms = [native, external] if block % 2 == 0 else [external, native]
+                            yield f'{block}-{carrier}{rank}{op}{size}', ['compare', *arms, '--repeats', '1']
+    elif phase == 'integer':
         for family in families:
             for op in ('RowReduce', 'RankCert', 'CheckRank'):
                 case = PREFIX + 'run' + op + family
@@ -70,6 +85,10 @@ def commands(phase, families):
 def expected_hash(function, param):
     """Independent output contract for the scalar integer schedules."""
     name = function.removeprefix(PREFIX).lower()
+    if name.startswith('quotient.prepare'):
+        return None  # Full prepared-data hash: checked for agreement at each rung.
+    if name.startswith('quotient.'):
+        return '0xb' if '.check' in name else hex(param // 2 if 'deficient' in name else param)
     if name.startswith('runcheckrank'):
         return '0xb'  # Lean's Hashable Bool true.
     if 'lowrank2at' in name:
@@ -106,10 +125,17 @@ def output_errors(export):
                     measurement.get('expected_hash_check', {}).get('status') != 'match'):
                     errors.append('fixed output mismatch: ' + name)
             else:
+                hashes = {}
                 for point in points:
-                    if point['status'] == 'ok' and point['result_hash'] != expected_hash(name, point['param']):
+                    if point['status'] != 'ok':
+                        continue
+                    param, actual = point['param'], point['result_hash']
+                    expected = expected_hash(name, param)
+                    if not actual or (expected is not None and actual != expected) or (
+                            param in hashes and actual != hashes[param]):
                         errors.append('parametric output mismatch: ' + name)
                         break
+                    hashes[param] = actual
     except (OSError, ValueError, KeyError, TypeError) as error:
         errors.append('invalid export: ' + str(error))
     return errors
@@ -117,14 +143,14 @@ def output_errors(export):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('phase', choices=('integer', 'attribution', 'comparisons', 'polynomial', 'protocol'))
+    parser.add_argument('phase', choices=('integer', 'attribution', 'comparisons', 'polynomial', 'protocol', 'quotient', 'poly-references'))
     parser.add_argument('--out', type=Path, required=True)
     parser.add_argument('--bench', type=Path, default=ROOT / '.lake/build/bin/hexrank_bench')
     parser.add_argument('--python', default=sys.executable)
     parser.add_argument('--family', choices=FAMILIES, action='append', help='Subset for an incremental tranche; omitted means every family.')
     parser.add_argument('--case', help='Run only the command containing this exact registered name; retain a separate output directory.')
     args = parser.parse_args()
-    if args.family and args.phase in ('polynomial', 'protocol'):
+    if args.family and args.phase in ('polynomial', 'protocol', 'quotient', 'poly-references'):
         parser.error('--family is only meaningful for integer, attribution and comparisons')
     out = args.out.resolve()
     out.mkdir(parents=True, exist_ok=False)
@@ -138,7 +164,7 @@ def main():
         schedule = [(label, command) for label, command in schedule if args.case in command]
         if not schedule:
             parser.error('case is not in the selected phase/family schedule')
-    sources = ('bench/HexRank/Bench.lean', 'HexRank/Produce.lean',
+    sources = ('bench/HexRank/Bench/Quotient.lean', 'HexRank/PolyProduce.lean', 'bench/HexRank/Bench.lean', 'HexRank/Produce.lean',
                'scripts/oracle/rank_bench.py', 'scripts/oracle/rank_carriers.py',
                'scripts/bench/rank_measure.py', 'lakefile.lean', 'lake-manifest.json', 'lean-toolchain')
     metadata = {'revision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
