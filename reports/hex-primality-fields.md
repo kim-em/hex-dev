@@ -38,9 +38,13 @@ in the initial implementation. The record also embeds the original sweep
 driver verbatim, including its matching hash. Later driver
 changes add cross-arm certificate assertions and the separate failure case;
 they do not change the timed operations. Integration with the explicit-producer
-API changes tactic dispatch in `Elab.lean`, while the timed `Construction.run`,
-`certificateSyntax`, and `checkPrime` definitions remain unchanged. These
-records do not measure the separate `primality? using` route. These two budget fields are
+API changes tactic dispatch in `Elab.lean`, while the timed construction and rendering operations remain unchanged.
+These records do not measure the separate `primality? using` route. Kernel
+samples precede the cube-root optimization in
+[the replay attribution](hex-primality-replay-attribution.md), which supplies
+its own before/after evidence. P-521's tree contains only square-root nodes,
+so that optimization does not change its replay path; compiled checking also
+retains its original arithmetic implementation. These two budget fields are
 the entire production change, so this also controls compiler/build differences.
 
 Native construction includes its final compiled self-check, but excludes
