@@ -144,6 +144,7 @@ jobs:
           python3 -m unittest scripts/ci/test_classify_changed_libraries.py
           python3 -m unittest scripts/ci/test_check_persistent_flint_warmup.py
           python3 -m unittest scripts/bench/test_fresh_module_sweep.py
+          python3 -m unittest scripts/bench/test_pminusone_reports.py
           python3 -m unittest scripts/bench/test_structural_tactic_probes.py
           python3 -m unittest scripts/bench/test_row_reduce_tactic_probes.py
           python3 -m unittest scripts/bench/test_det_ring_solver_probes.py
@@ -356,6 +357,7 @@ jobs:
           lake build ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS} HexTruncatedSeriesTests
           HexPolyDetMathlib.ProofProbe.RingSolverAlgebraic
           HexPolyDetMathlib.ProofProbe.RingSolverVariableExponent
+          HexPrimality.ProofProbe.PMinusOne.Support
       - name: Verify Conway generation and compiled certificates
         if: steps.classify.outputs.docs_only != 'true'
         run: |

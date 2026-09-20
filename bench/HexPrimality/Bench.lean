@@ -536,9 +536,11 @@ def prepare (q : Nat) : Prepared := prepareMiss 64 q
 def runTrace (p : Prepared) : Nat := runPrepared p true
 def runCounters (p : Prepared) : Nat := runPrepared p false
 
--- Fixed operand-size tracks price the executed modular schedule separately
--- from the sieve. Small rungs are setup-amortization data, outside this fit.
-setup_benchmark runTrace q => operations q
+-- Cost model: on this fixed-size full-miss family, 210 baby multiplications,
+-- floor(lastPrime / 210) giant advances and two multiplications per candidate
+-- give operations q. One gcd per 32 candidates and the trace checksum add
+-- linear work in the candidate count. Sieve and stage 1 are prepared outside.
+setup_benchmark runTrace q => Stage2.operations q
   with prep := prepare
   where {
     paramFloor := 2039
@@ -550,7 +552,10 @@ setup_benchmark runTrace q => operations q
     slopeTolerance := 0.5
   }
 
-setup_benchmark runCounters q => operations q
+-- Cost model: the same 210 + floor(lastPrime / 210) + 2 * candidates
+-- modular multiplications and one gcd per 32 candidates; fixed-size counters
+-- add constant work per candidate. Enumeration and stage 1 are prepared outside.
+setup_benchmark runCounters q => Stage2.operations q
   with prep := prepare
   where {
     paramFloor := 2039
@@ -570,9 +575,11 @@ def prepare (q : Nat) : Prepared := prepareMiss 128 q
 def runTrace (p : Prepared) : Nat := runPrepared p true
 def runCounters (p : Prepared) : Nat := runPrepared p false
 
--- Fixed operand-size tracks price the executed modular schedule separately
--- from the sieve. Small rungs are setup-amortization data, outside this fit.
-setup_benchmark runTrace q => operations q
+-- Cost model: on this fixed-size full-miss family, 210 baby multiplications,
+-- floor(lastPrime / 210) giant advances and two multiplications per candidate
+-- give operations q. One gcd per 32 candidates and the trace checksum add
+-- linear work in the candidate count. Sieve and stage 1 are prepared outside.
+setup_benchmark runTrace q => Stage2.operations q
   with prep := prepare
   where {
     paramFloor := 2039
@@ -584,7 +591,10 @@ setup_benchmark runTrace q => operations q
     slopeTolerance := 0.5
   }
 
-setup_benchmark runCounters q => operations q
+-- Cost model: the same 210 + floor(lastPrime / 210) + 2 * candidates
+-- modular multiplications and one gcd per 32 candidates; fixed-size counters
+-- add constant work per candidate. Enumeration and stage 1 are prepared outside.
+setup_benchmark runCounters q => Stage2.operations q
   with prep := prepare
   where {
     paramFloor := 2039
@@ -604,9 +614,11 @@ def prepare (q : Nat) : Prepared := prepareMiss 256 q
 def runTrace (p : Prepared) : Nat := runPrepared p true
 def runCounters (p : Prepared) : Nat := runPrepared p false
 
--- Fixed operand-size tracks price the executed modular schedule separately
--- from the sieve. Small rungs are setup-amortization data, outside this fit.
-setup_benchmark runTrace q => operations q
+-- Cost model: on this fixed-size full-miss family, 210 baby multiplications,
+-- floor(lastPrime / 210) giant advances and two multiplications per candidate
+-- give operations q. One gcd per 32 candidates and the trace checksum add
+-- linear work in the candidate count. Sieve and stage 1 are prepared outside.
+setup_benchmark runTrace q => Stage2.operations q
   with prep := prepare
   where {
     paramFloor := 2039
@@ -618,7 +630,10 @@ setup_benchmark runTrace q => operations q
     slopeTolerance := 0.5
   }
 
-setup_benchmark runCounters q => operations q
+-- Cost model: the same 210 + floor(lastPrime / 210) + 2 * candidates
+-- modular multiplications and one gcd per 32 candidates; fixed-size counters
+-- add constant work per candidate. Enumeration and stage 1 are prepared outside.
+setup_benchmark runCounters q => Stage2.operations q
   with prep := prepare
   where {
     paramFloor := 2039
@@ -638,9 +653,11 @@ def prepare (q : Nat) : Prepared := prepareMiss 512 q
 def runTrace (p : Prepared) : Nat := runPrepared p true
 def runCounters (p : Prepared) : Nat := runPrepared p false
 
--- Fixed operand-size tracks price the executed modular schedule separately
--- from the sieve. Small rungs are setup-amortization data, outside this fit.
-setup_benchmark runTrace q => operations q
+-- Cost model: on this fixed-size full-miss family, 210 baby multiplications,
+-- floor(lastPrime / 210) giant advances and two multiplications per candidate
+-- give operations q. One gcd per 32 candidates and the trace checksum add
+-- linear work in the candidate count. Sieve and stage 1 are prepared outside.
+setup_benchmark runTrace q => Stage2.operations q
   with prep := prepare
   where {
     paramFloor := 2039
@@ -652,7 +669,10 @@ setup_benchmark runTrace q => operations q
     slopeTolerance := 0.5
   }
 
-setup_benchmark runCounters q => operations q
+-- Cost model: the same 210 + floor(lastPrime / 210) + 2 * candidates
+-- modular multiplications and one gcd per 32 candidates; fixed-size counters
+-- add constant work per candidate. Enumeration and stage 1 are prepared outside.
+setup_benchmark runCounters q => Stage2.operations q
   with prep := prepare
   where {
     paramFloor := 2039

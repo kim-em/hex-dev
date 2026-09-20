@@ -550,6 +550,8 @@ private def flush (n product : Nat) (buffer : Array (Nat × Nat)) :
     (r.1, { batch with recovery := r.2 })
   else (checkGcd n g, batch)
 
+-- Keep recursive scans in tail position: cap-sized intervals must not grow
+-- the native call stack with the candidate count.
 private def scan (n h : Nat) (u : Array Nat) (keepBatches : Bool) :
     List Nat → Nat → Nat → Nat → Array (Nat × Nat) → Event → Scan n
   | [], _, _, _, _, event => ⟨miss n, event⟩
@@ -626,7 +628,7 @@ private def stage2Core (n x b₁ b₂ : Nat) (keepBatches : Bool := true) : Scan
     return ⟨second, { event with reason := "residue-minus-one-gcd" }⟩
   if b₂ ≤ b₁ then
     return ⟨miss n, { event with reason := "empty-interval" }⟩
-  let qs := (primesBelow (b₂ + 1)).filter (b₁ < ·)
+  let qs := primes b₁ b₂
   return intervalCore n x qs event keepBatches
 
 /-- Total raw-residue continuation. Every factor exit validates range and

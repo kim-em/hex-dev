@@ -41,7 +41,7 @@ def twelve : CheckedFactorization 12 :=
 - `factor?` searches for a complete checked factorization with explicit
   randomness and a finite fuel budget. `factorPartial?` retains a checked
   residual when complete search exhausts its budget. Both accept
-  `(pMinusOneStage2 := true)` to spend one existing smooth-search attempt on
+  `(pMinusOneStage2 := true)` to enable
   the continuation from bound 64 to 4096; the option defaults to `false`.
   It uses one extra counted attempt when fuel permits, preserving the four
   stage-1 calls (through bound 9999) and the ECM allocation.

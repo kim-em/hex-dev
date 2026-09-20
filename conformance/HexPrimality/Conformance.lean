@@ -868,3 +868,12 @@ example : pockProduct 34 [(0, 0, .small 5), (0, 0, .small 7)] = 0 := by decide +
 example : pockProduct 8 [(0, 0, .small 2), (0, 1, .small 3)] = 0 := by decide +kernel
 example : checkPrime (.pock 31 [(3, 0, .small 5), (3, 0, .small 7)]) = false := by decide +kernel
 example : checkPrime (.pock 7 [(2, 0, .small 0), (2, 0, .small 3)]) = false := by decide +kernel
+
+-- Unsupported policies are declined before trial division or random draws.
+#guard ([{ Hex.Nat.constructionBudget.factor with pMinusOneStage2 := true },
+    { Hex.Nat.constructionBudget.factor with attemptLimit := some 0 },
+    { Hex.Nat.constructionBudget.factor with attemptLimit := some 10 }] : List Hex.Nat.FactorSearchBudget).all (fun budget =>
+  let seed := Hex.Rand.ofSeed 7
+  let result := Hex.Nat.defaultFactorSearch budget 1081 seed
+  result.raw.factors.isEmpty && result.raw.residual == 1081 &&
+    result.attempts == 0 && result.rand == seed && result.events.isEmpty)

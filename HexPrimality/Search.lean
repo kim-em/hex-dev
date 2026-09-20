@@ -736,7 +736,9 @@ private def partialFactor (budget : PrimeCertBudget) (n : Nat) (r : Rand)
     smooth.attempts
   ⟨⟨phase.factors, phase.residual⟩, phase.rand, phase.attempts⟩
 
-/-- The built-in partial-factor producer used by `primeCert?`. -/
+/-- The built-in partial-factor producer used by `primeCert?`. It declines
+requests for stage 2 or a global attempt limit without work: this producer
+implements neither policy. Bounded construction uses its own producer. -/
 def defaultFactorSearch : FactorSearch :=
   fun allocation n r =>
     if allocation.pMinusOneStage2 || allocation.attemptLimit.isSome then

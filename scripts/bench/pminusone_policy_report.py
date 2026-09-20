@@ -36,6 +36,7 @@ def summarize(paths, interpreted=False):
     modes=set()
     complete=True
     sources=[]
+    provenance=None
     root=Path(__file__).resolve().parents[2]
     inputs=[json.loads(l) for l in (root/'conformance-fixtures/HexPrimality/pminusone-stage2.jsonl').read_text().splitlines()]
     subjects={(r['bits'],r['q']):r['n'] for r in inputs if r['family']=='primitive'}
@@ -44,7 +45,16 @@ def summarize(paths, interpreted=False):
         data=gzip.decompress(raw) if path.suffix=='.gz' else raw
         rows=[json.loads(l) for l in data.splitlines()]
         sources.append({'path':str(path),'sha256':hashlib.sha256(data).hexdigest()})
-        modes.add(rows[0]['mode'])
+        metadata=rows[0]
+        current={key:metadata[key] for key in ('source_sha256','executable_sha256')}
+        if provenance is None:
+            provenance=current
+        else:
+            assert current==provenance, 'mixed source or executable versions'
+        for row in rows:
+            if row.get('type')=='resume':
+                assert all(row['metadata'][key]==value for key,value in provenance.items()), 'mixed resume provenance'
+        modes.add(metadata['mode'])
         complete &= rows[-1]['type']=='complete'
         records.extend(r for r in rows if r['type']=='sample' and r.get('exit_code')==0)
     by_case=defaultdict(lambda:defaultdict(list))
@@ -129,7 +139,7 @@ def summarize(paths, interpreted=False):
     regression=any(f['family'].startswith('miss') for f in controls) and all(f['median_ratio'] is not None and f['median_ratio']<=1.1 for f in controls)
     retained=not any(s['loss'] for s in summaries)
     return {'complete':complete,'timing':'fresh-module wall time' if interpreted else 'lean-bench fixed child',
-            'sources':sources,'expected_sample_count':16*len(expected),
+            'sources':sources,'provenance':provenance,'expected_sample_count':16*len(expected),
             'sample_count':len(records),'case_count':len(by_case),'expected_case_count':len(expected),'families':families,'cases':summaries,
             'gate':('pass' if useful and regression and retained else 'fail') if complete else 'incomplete',
             'useful':useful,'regression':regression,'retains_all_checked_successes':retained}
