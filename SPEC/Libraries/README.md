@@ -140,6 +140,7 @@ Each library with its immediate dependencies:
 - **hex-int-factor**: hex-primality, hex-arith, hex-basic
 - **hex-poly**: (none)
 - **hex-rational-fn**: hex-poly, hex-poly-fast
+- **hex-ordered-fn** (planned): hex-rational-fn, hex-poly, hex-poly-fast, hex-interval
 - **hex-sparse-poly**: hex-poly, hex-basic
 - **hex-mv-poly**: hex-poly, hex-basic
 - **hex-reflect**: hex-mv-poly, hex-basic

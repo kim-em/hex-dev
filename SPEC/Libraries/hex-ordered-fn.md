@@ -17,7 +17,7 @@ this SPEC. The companion has its own directive,
 ## Placement and dependencies
 
 Keep the family's four computational libraries and four companions.
-`HexOrderedFn` depends on `HexRationalFn`, `HexPoly` and its fast arithmetic,
+`HexOrderedFn` depends on `HexRationalFn`, `HexPoly`, `HexPolyFast`
 and `HexInterval`. The shared coefficient-operation record and fallible
 polynomial routines belong below the family in `HexPoly`, as specified by
 [the Sturm directive](https://github.com/kim-em/hex-dev/issues/10311).
@@ -47,7 +47,8 @@ The real module requires an ordered embedding into `ℝ`; it cannot accept a
 predecessor field containing a positive infinitesimal over `ℚ`.
 
 `HexOrderedFnMathlib` imports this library, `HexRationalFnMathlib`,
-`HexPolyMathlib`, and `HexIntervalMathlib` where their bridges are used.
+`HexPolyMathlib`, and `HexIntervalMathlib` where their correspondence theorems
+are used.
 Mathlib analysis, `RatFunc`, Hahn-series models and Mathlib field/order
 instances live there. No computational import of Mathlib, Batteries or Tau
 Ceti is allowed. There is no new algebraic typeclass or trusted extern.
@@ -108,8 +109,9 @@ of the interpreted pair, not uniqueness of raw representatives. Equality of
 fractions is certified cross multiplication, using semantic coefficient zero
 tests. A syntactically nonzero coefficient can represent zero.
 
-Reuse the cancellation algorithms in `HexRationalFn` via the shared bounded
-division/gcd/extended-gcd routines: addition cancels denominator gcds,
+Follow the cancellation algorithms of `HexRationalFn`, implementing their
+steps with the shared bounded division/gcd/extended-gcd routines: addition
+cancels denominator gcds,
 multiplication cross-cancels, inversion establishes numerator nonzero, and
 normalization rescales by a certified nonzero leading coefficient. Do not
 hide a call to a total `DensePoly` gcd behind the bounded adapter. Every
@@ -160,6 +162,38 @@ registered enclosure rules. Its acceptance soundness has no convergence or
 transcendence hypothesis. Analytic source facts are supplied by proved
 provider rules in the companion, never by trusting returned endpoints.
 
+Keep the following law packages distinct:
+
+- `CoefficientLaws` relates successful arithmetic, degree, equality and sign
+  checks to the coefficient interpretation. It asserts no eventual success.
+- `EnclosureLaws` establishes containment and subject/provenance authenticity
+  for accepted source facts and interval derivations. It asserts no convergence.
+- `ReplayLaws` requires that each successful lower-level producer supplies a
+  finite certificate accepted by its checker with sufficient resources.
+- `OperationProgress` asserts eventual success of the required coefficient,
+  normalization and replay operations on their valid inputs.
+- `OracleConvergence` supplies the effective approximation schedules, and
+  `CofinalSchedule` states that the chosen resource envelopes eventually
+  admit every finite requirement and retain already admitted work.
+
+The first three suffice for soundness and replay with sufficient resources;
+the remaining packages govern search completeness. The computational
+layer proves `sign_checks`, under the replay laws and a cofinal schedule:
+
+```text
+ReplayLaws ctx ops → CofinalSchedule limits →
+sign? n ctx f = ok s cert
+  → ∃ M, ∀ m ≥ M, (check? (limits m) ctx f s cert).isSome = true.
+```
+
+Provide a computable sufficient replay envelope from the successful run's
+finite certificate and callback replay bounds. Checking consumes the retained
+facts and derivations; it must not start a fresh approximation/sign search.
+This producer/checker contract also applies to normalization and arithmetic
+certificates, following `RationalFn.certify_checks`. Insufficient replay
+resources still return exhaustion. Kernel proof quotation is a companion
+obligation, distinct from the executable checker's acceptance.
+
 `sign? fuel ctx f` is structurally recursive on natural fuel, including
 nested callback invocations and normalization; a public limits record also
 caps input/trace size, coefficient-array work, tower depth, precision,
@@ -204,19 +238,22 @@ No real enclosure or numerical value of `ε` participates in this algorithm.
 
 Required theorem shapes, under the coefficient law package, are:
 
-- `lowest_sound`: every successful scan certifies exactly the stated zeros
-  and first nonzero coefficient, or all-zero polynomial.
-- `sign_sound`: a successful sign equals the sign in the ordered model below;
-  this requires valid fraction/domain evidence but no approximation oracle.
-- `sign_isSome`: valid finite fractions and eventually successful predecessor
-  operations have a sufficiently large resource envelope making every later
+- `lowest_sound` (computational): every successful scan certifies exactly
+  the stated zeros and first nonzero coefficient, or all-zero polynomial.
+- `sign_sound` (companion): a successful sign equals the sign in the ordered
+  model below; this requires valid fraction/domain evidence but no
+  approximation oracle.
+- `sign_isSome` (computational, under predecessor progress laws): valid finite
+  fractions and eventually successful predecessor operations have a sufficiently large resource envelope making every later
   run successful. Total predecessor operations give a finite coefficient
   scan; bounded predecessor exhaustion propagates.
-- `sign_eq_zero`, `sign_mul`, and `sign_add`: zero iff the fraction is zero,
-  multiplication multiplies signs, and a sum of positive fractions is
+- `sign_eq_zero`, `sign_mul`, and `sign_add` (companion model theorems,
+  supplied as erased laws to the computational total adapter): zero iff the
+  fraction is zero, multiplication multiplies signs, and a sum of positive fractions is
   positive, for the total lawful adapter. Also prove compatibility with
   negation and invariance under valid fraction normalization.
-- `C_lt` and `X_lt`: the constant embedding preserves and reflects order,
+- `C_lt` and `X_lt` (companion): the constant embedding preserves and reflects
+  order,
   and `0 < X ∧ ∀ a : K, 0 < a → X < C a`.
 
 Iterate the extension over its immediately preceding ordered field. Thus
@@ -254,8 +291,9 @@ precision while refining only `τ` does not meet the convergence contract.
 
 `Real.sign?` first checks the fraction and all expression domains, certifies
 formal zero when available, and otherwise evaluates numerator and denominator
-by interval Horner arithmetic. A strict positive lower cut or strict negative
-upper cut certifies the corresponding sign; closed endpoints at zero do not.
+by interval Horner arithmetic. A lower endpoint above zero, or an open lower
+cut at zero, certifies positivity; the symmetric upper-cut test certifies negativity. Closed
+endpoints at zero do not certify a nonzero sign.
 Refine both evaluations until separated from zero. A zero numerator sign
 requires formal coefficient-zero/identity evidence or a separately replayed
 exact evaluation-zero certificate; an interval merely containing zero cannot
@@ -272,13 +310,18 @@ Let `Pι(τ)` denote evaluation after mapping every coefficient through `ι`.
 The companion must prove `eval_sound` and `sign_sound` of the following shape:
 
 ```text
-EnclosureLaws ctx ∧ CoefficientLaws ops ∧ ValidDomains ctx f
+EnclosureLaws ctx ∧ CoefficientLaws ops ∧ WellFormed ctx f
   ∧ sign? n ctx f = ok s cert
-  → CheckSound ctx cert ∧ s = sign(Pι(τ) / Qι(τ)).
+  → ValidDomains ctx f ∧ CheckSound ctx cert
+    ∧ s = sign(Pι(τ) / Qι(τ)).
 ```
 
-`ValidDomains` includes `Qι(τ) ≠ 0` and every original source divisor.
-The computational checker proves its conditional replay/composition laws;
+`WellFormed` concerns the representation and context references, not real
+nonvanishing. `ValidDomains` concludes `Qι(τ) ≠ 0` and nonvanishing of every
+original source divisor from the checked evidence. Thus success establishes
+the domains even on the zero-numerator and cancelled-divisor paths; callers
+do not need to prove those facts separately. The computational checker proves
+its conditional replay/composition laws;
 the companion discharges real enclosure semantics. No transcendence,
 convergence or sufficient-fuel premise is allowed in success soundness.
 Under these hypotheses distinct successful runs agree even if they use
@@ -303,10 +346,15 @@ lawful eventually successful coefficient arithmetic/zero tests, normalization
 and replay, require `Real.sign_isSome`:
 
 ```text
+RelativeTranscendence ι τ → EnclosureLaws ctx → CoefficientLaws ops →
+ReplayLaws ctx ops → OracleConvergence ctx → OperationProgress ops →
+CofinalSchedule limits →
 ∀ f, Valid ctx f → ∃ N, ∀ n ≥ N, (sign? n ctx f).isSome = true.
 ```
 
-Here `sign? n` means the deterministic run using a cofinal resource schedule
+Here `Valid` includes well-formedness, valid coefficient inputs and nonzero
+formal denominators for the fraction and all retained source guards.
+`sign? n` means the deterministic run using a cofinal resource schedule
 `limits n`: every finite fuel, precision, input, arithmetic and evidence
 requirement is eventually admitted, and admitted successful finite work
 remains available in later runs. Fixed caller caps do not satisfy this theorem.
@@ -335,6 +383,15 @@ is an accessibility recursion, not selection of a fuel by classical choice:
    validated input under the law package; eliminate them by their proofs.
 4. Start at zero. Prove `search_spec`: the returned sign has an accepted
    certificate from some finite run and agrees with the semantic sign.
+
+Under `SearchLaws` and `Valid ctx f`, the computational statement is
+
+```text
+search ctx f = (s, cert) → ∃ n, sign? n ctx f = ok s cert.
+```
+
+Together with `sign_checks` and the companion's `sign_sound`, this gives
+accepted replay, domain validity and the semantic sign of the total result.
 
 Accessibility proofs erase; runtime computes the increasing search, never an
 arbitrary witness extracted from `Prop`. This gives terminating Lean recursion
@@ -424,8 +481,11 @@ Required cases include:
   enclosures prevent separation even after the new constant is refined.
 - Independent certified bounds for `π` and `e`, including a sign such as
   `π-4 < 0`, without assuming their relative transcendence. A dependent
-  constant such as an oracle for rational `2` tested on `X-2` must exhaust
-  without an exact-zero witness; it must not manufacture a field embedding.
+  constant such as an oracle for rational `2` tested on `X-2`, supplying only
+  nondegenerate zero-containing result enclosures and no identity/equality
+  witness, must exhaust. A second fixture with a certified singleton `[2,2]`
+  may derive an exact-zero certificate and succeed. Neither fixture may
+  manufacture a field embedding.
 - Zero-containing, unbounded, empty, nonconvergent and forged enclosures;
   wrong constant identity, stale version/embedding, malformed replay, and
   mutually inconsistent purported facts. Structural well-formedness alone
@@ -439,6 +499,11 @@ Small literal checks use `decide`/`#guard`; larger fixture campaigns use
 compiled emitters and independent comparisons. `native_decide` is banned.
 Negative certificates must be tested at replay boundaries as well as producer
 entry points. No external test oracle becomes a runtime dependency.
+When implemented, register the new Z3 oracle through
+[the existing oracle script](../testing.md#adding-a-new-oracle), within the
+existing single CI job. Operations without an external analogue, including
+provenance rejection and resource failures, still need direct Lean checks
+and explicit non-coverage tracking under [the testing contract](../testing.md).
 
 ## Phase-4 evidence requirements
 
@@ -464,4 +529,4 @@ pinning where supported, retain every completed shared-host sample, and
 alternate adjacent `AB`/`BA` arms for comparisons. Permit at most one unchanged
 rerun after an inconclusive result. Record host activity as context and supply
 one representative Phase-4 profile to attribute costs. No new CI fan-out or
-quiet-host gate is introduced.
+requirement to wait for an idle host is introduced.

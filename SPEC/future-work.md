@@ -1556,7 +1556,7 @@ the dependency diagram above is the library import contract.
 | --- | --- |
 | [hex-sturm #10311](https://github.com/kim-em/hex-dev/issues/10311) | [hex-sturm-mathlib #10312](https://github.com/kim-em/hex-dev/issues/10312) |
 | [hex-sign-det #10313](https://github.com/kim-em/hex-dev/issues/10313) | [hex-sign-det-mathlib #10314](https://github.com/kim-em/hex-dev/issues/10314) |
-| [hex-ordered-fn SPEC](Libraries/hex-ordered-fn.md) ([#10315](https://github.com/kim-em/hex-dev/issues/10315)) | [hex-ordered-fn-mathlib #10316](https://github.com/kim-em/hex-dev/issues/10316) |
+| [hex-ordered-fn #10315](https://github.com/kim-em/hex-dev/issues/10315) ([SPEC](Libraries/hex-ordered-fn.md)) | [hex-ordered-fn-mathlib #10316](https://github.com/kim-em/hex-dev/issues/10316) |
 | [hex-real-closure #10317](https://github.com/kim-em/hex-dev/issues/10317) | [hex-real-closure-mathlib #10318](https://github.com/kim-em/hex-dev/issues/10318) |
 
 ### Lattice applications beyond factor recombination
