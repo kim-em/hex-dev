@@ -13,7 +13,8 @@ import LeanBench
 These four fixed 1000-bit registrations are compiled acceptance/hash anchors.
 They make no asymptotic or whole-library Phase-4 claim. Generation and replay
 are timed separately; replay inputs are prepared before the timed region.
-Both paths hash the full literal certificate, including its rational witness.
+Both paths hash precision, order, the rational witness and both cuts; each
+registration fixes the source identity.
 The independent Fraction oracle checks the same source/order/precision inputs.
 -/
 

@@ -75,8 +75,9 @@ schemas. The existing CI oracle runner regenerates and diffs the committed
 The four fixed lean-bench registrations are 1000-bit acceptance/hash anchors,
 not Phase-4 complexity registrations or absolute-budget gates. Inputs pass
 through `IO.Ref`; checker inputs are generated before timing. Both operations
-return and hash the complete certificate data. This prevents timing a constant
-load or accepting a result with missing witness work.
+return and hash precision, order, the rational witness and both cuts; each
+registration fixes the source identity. This prevents timing a constant load
+or accepting a result with missing witness work.
 
 | Source | Producer median | Checker median |
 | --- | ---: | ---: |
