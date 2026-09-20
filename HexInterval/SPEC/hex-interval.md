@@ -5587,7 +5587,10 @@ their declared cost inside a scheduler bound.
   public `generate`, `enclose`, and `check` boundaries charge approximation
   order, integer bits/work, allocation, endpoint precision, and replay;
   `check` authenticates the source, requested width, rational approximation,
-  and both outward cuts. Formula helpers are unchecked proof interfaces.
+  and both outward cuts. Formula helpers are unchecked proof interfaces;
+  `project`, `widthWithin`, `buildBounds`, and `finish` are exposed intermediate
+  stages, not complete request-admission boundaries. Their local checks do not
+  replace the entry points' order/work/allocation preflight.
   The [provider contract and evidence](../../reports/hex-interval-constants.md)
   specify the geometric Machin and factorial remainders, deterministic order
   schedule, and actual-width acceptance. Analytic containment and effective

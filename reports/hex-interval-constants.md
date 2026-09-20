@@ -27,8 +27,9 @@ numerator over `n!`; it does not repeatedly recompute factorials.
 
 A `Certificate` contains the source identity, width bits, order, rational
 center/radius, and both closed dyadic cuts. Core theorems authenticate the
-accepted source, precision, positive order, exact approximation, ordered cuts
-and exact interval view, and identify the retained arctangent power. Real containment and effective progress for the full
+accepted source, precision, positive order, exact approximation, ordered cuts,
+requested dyadic width and exact interval view, and identify the retained
+arctangent power. Real containment and effective progress for the full
 schedule belong to [#10342](https://github.com/kim-em/hex-dev/issues/10342).
 The runtime has no Mathlib import, callback assumption, proof placeholder,
 external planner or new trusted primitive. Unchecked formula and projection

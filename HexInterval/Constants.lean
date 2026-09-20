@@ -187,8 +187,9 @@ def smallRat (limit : Nat) (value : Rat) : Bool :=
   EndpointCost.natBits value.num.natAbs ≤ limit &&
     EndpointCost.natBits value.den ≤ limit
 
-/-- Finish an already preflighted exact approximation. This is an unchecked
-internal stage; untrusted requests must use `generate` or `check`. -/
+/-- Finish an already preflighted exact approximation. Checks witness sizes,
+projection resources, endpoint order and actual width, but does not admit the
+series order/work/allocation charges; untrusted requests use `generate` or `check`. -/
 def finish (limits : Limits) (source : Source) (bits order : Nat)
     (approximation : Approximation) : Except Error Certificate := do
   let (b, _, _) := charges order bits
@@ -350,6 +351,90 @@ theorem checked_ordered {limits source bits certificate interval}
     (h : check limits source bits certificate = .ok interval) :
     certificate.lower ≤ certificate.upper :=
   bounds_ordered (checked_bounds h)
+
+/-- Successful finishing retains its actual-width check. -/
+theorem finished_width {limits source bits order approximation certificate}
+    (h : finish limits source bits order approximation = .ok certificate) :
+    widthWithin limits bits certificate.lower certificate.upper = .ok () := by
+  simp [finish, bind, Except.bind, throw, throwThe, MonadExceptOf.throw] at h
+  split at h <;> try simp_all
+  split at h <;> try simp_all
+  split at h <;> try simp_all
+  split at h <;> try simp_all
+  split at h <;> try simp_all
+  simp_all [pure, Except.pure]
+  cases h
+  cases ‹Unit›
+  assumption
+
+/-- Replay retains the width check performed on its authenticated cuts. -/
+theorem checked_widthWithin {limits source bits certificate interval}
+    (h : check limits source bits certificate = .ok interval) :
+    widthWithin limits bits certificate.lower certificate.upper = .ok () := by
+  have hs := checked_source h
+  have hb := checked_bits h
+  have ha := checked_approximation h
+  simp [check, hs, hb, ha, bind, Except.bind, throw, throwThe,
+    MonadExceptOf.throw] at h
+  split at h <;> try simp_all
+  split at h <;> try simp_all
+  split at h <;> try simp_all
+  split at h <;> try simp_all
+  split at h <;> try simp_all
+  split at h <;> try simp_all
+  have hw := finished_width
+    (show finish limits source bits certificate.order
+      (approximate source certificate.order) = .ok _ from by assumption)
+  exact hw
+
+private theorem singleton_view {limit value interval}
+    (h : build (singletonWithin limit value) = .ok interval) :
+    interval.view = .bounds (.finite value false) (.finite value false) := by
+  cases hs : singletonWithin limit value with
+  | ready result =>
+      have hr : result = interval := by simpa [hs, build] using h
+      subst result
+      simpa [Raw.normalizeUnchecked, Raw.consistent] using view_singletonWithin_ready hs
+  | resourceLimit cost => simp [hs, build] at h
+
+private theorem difference_view {limit lower upper a b interval}
+    (ha : a.view = Raw.bounds (.finite lower false) (.finite lower false))
+    (hb : b.view = Raw.bounds (.finite upper false) (.finite upper false))
+    (h : build (subWithin limit b a) = .ok interval) :
+    interval.view = .bounds (.finite (upper - lower) false)
+      (.finite (upper - lower) false) := by
+  cases hs : subWithin limit b a with
+  | ready result =>
+      have hr : result = interval := by simpa [hs, build] using h
+      subst result
+      simpa [ha, hb, Raw.subUnchecked, Raw.subLowerUnchecked, Raw.subUpperUnchecked,
+        Raw.normalizeUnchecked, Raw.consistent] using view_subWithin_ready hs
+  | resourceLimit cost => simp [hs, build] at h
+
+/-- Successful width admission bounds the exact difference of its cuts. -/
+theorem width_le {limits bits lower upper}
+    (h : widthWithin limits bits lower upper = .ok ()) :
+    upper - lower ≤ Dyadic.ofIntWithPrec 1 bits := by
+  simp [widthWithin, bind, Except.bind, throw, throwThe, MonadExceptOf.throw] at h
+  split at h <;> try simp_all
+  split at h <;> try simp_all
+  split at h <;> try simp_all
+  have hlo := singleton_view (show build (singletonWithin limits.arithmetic.endpoint lower)
+    = .ok _ from by assumption)
+  have hhi := singleton_view (show build (singletonWithin limits.arithmetic.endpoint upper)
+    = .ok _ from by assumption)
+  have hd := difference_view hlo hhi
+    (show build (subWithin limits.arithmetic.endpoint _ _) = .ok _ from by assumption)
+  rw [hd] at h
+  split at h <;> simp_all
+  split at h <;> simp_all
+  split at h <;> simp_all
+
+/-- Accepted literal cuts satisfy the caller's requested dyadic width. -/
+theorem checked_width {limits source bits certificate interval}
+    (h : check limits source bits certificate = .ok interval) :
+    certificate.upper - certificate.lower ≤ Dyadic.ofIntWithPrec 1 bits :=
+  width_le (checked_widthWithin h)
 
 /-- Replay returns exactly the certificate's two closed, ordered literal cuts. -/
 theorem checked_view {limits source bits certificate interval}

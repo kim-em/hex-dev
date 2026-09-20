@@ -108,7 +108,7 @@ private def adversarial (source : Source) : Bool :=
   .expOneTaylorV1 8)
 
 -- The default integer/replay caps are exact charges, so one unit less must
--- refuse before approximation; the equality case is exercised by accepted.
+-- refuse; the equality case is exercised by accepted.
 #guard match enclose
     { limitsFor 8 with maxIntegerBits := (limitsFor 8).maxIntegerBits - 1 }
     .piMachinV1 8 with
