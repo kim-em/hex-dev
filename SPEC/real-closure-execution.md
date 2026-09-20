@@ -47,9 +47,11 @@ The polynomial operation instances are ordinary `Zero`, `One`, `Add`, `Sub`,
 `Mul`, `Div` and so on, with the existing structural `DecidableEq`. There is
 no fallible operation record, arithmetic budget or per-operation certificate.
 The existing `DensePoly.divMod`, `gcd` and `xgcd` require operations
-rather than a `Field` instance. `natPow`/its power instance and `monicize`
-also accept ordinary operations; their existing ring/field laws retain their
-hypotheses. On representatives, `monicize` need only be monic under
+rather than a `Field` instance. `natPow` and `monicize` also accept ordinary
+operations; their existing ring/field laws retain their hypotheses. The global
+power-notation instance retains its ring assumption to preserve instance
+selection in existing Mathlib bridges; representations call `natPow` directly.
+On representatives, `monicize` need only be monic under
 interpretation: its leading coefficient need not be structurally `1`. New pseudo-division uses the same separation:
 operation-only computation, with domain hypotheses on correctness theorems.
 Do not duplicate the Tarski kernel for representation coefficients.

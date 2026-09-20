@@ -125,7 +125,7 @@ instance instNSMul [Lean.Grind.CommRing R] [DecidableEq R] :
   ⟨fun n p => (Nat.cast n : DensePoly R) * p⟩
 
 /-- Natural powers of dense polynomials. -/
-instance instNPow [Zero R] [One R] [Add R] [Mul R] [DecidableEq R] :
+instance instNPow [Lean.Grind.CommRing R] [DecidableEq R] :
     HPow (DensePoly R) Nat (DensePoly R) :=
   ⟨natPow⟩
 

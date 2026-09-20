@@ -115,7 +115,7 @@ example : (Hex.DensePoly.xgcd product a).gcd.natDegree = 1 := by decide +kernel
 -- Structural polynomial inequality is NOT a semantic identity test.
 example : a ≠ b := by decide +kernel
 example : a-b = (0 : Poly) := by decide +kernel
-example : (a ^ (2 : Nat)).natDegree = 2 := by decide +kernel
+example : (Hex.DensePoly.natPow a 2).natDegree = 2 := by decide +kernel
 example : (Hex.DensePoly.monicize product).natDegree = 2 := by decide +kernel
 -- Monicity is semantic on this representation, not literal leadingCoeff = 1.
 example : ¬ (Hex.DensePoly.monicize (Hex.DensePoly.C (pack 0 2))).Monic := by
