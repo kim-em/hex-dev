@@ -28,8 +28,15 @@ def treeBounds (cap k : Nat) (a : TreeMatrix) : List (List Bounds) :=
 def treeObserved (cap k : Nat) (a : TreeMatrix) : List Bounds :=
   a.flatten.foldl (fun observed e => (e.analyze cap k observed).2) []
 
+/-- Native natural powers also implement integer powers, with a sign case.
+This is definitionally the usual integer power, avoiding the custom loop. -/
+def Kernel.evalTree (base : Nat) (strides : List Nat) (e : Expr) : Int :=
+  Expr.rec (fun z => z) (fun i => Int.pow (Int.ofNat base) (strides.getD i 0))
+    (fun _ _ a b => Int.add a b) (fun _ _ a b => Int.sub a b)
+    (fun _ a => Int.neg a) (fun _ _ a b => Int.mul a b) (fun _ n a => Int.pow a n) e
+
 def evalTreeMatrix (s : SizeBound) (a : TreeMatrix) : List (List Int) :=
-  a.map (List.map (evalKron (2 ^ s.digitBits) s.strides))
+  a.map (List.map (Kernel.evalTree (2 ^ s.digitBits) s.strides))
 
 /-- Admission includes the trees' subexpressions, even when their roots cancel. -/
 def sizeMulTree (budget : Budget) (mode : MulMode) (k n r m : Nat)
@@ -150,7 +157,7 @@ def mulTreeMod (mode : MulMode) (k n r m p : Nat)
 def treeTermsEq (k : Nat) (lhs : Expr) (rhs : Hex.MvPoly.Kernel.PolyList Int) : Bool :=
   lhs.wellFormed k && termShape k rhs &&
     let s := plan (add ⟨lhs.degrees k, lhs.height⟩ (terms k rhs))
-    Int.beq' (evalKron (2 ^ s.digitBits) s.strides lhs)
+    Int.beq' (evalTree (2 ^ s.digitBits) s.strides lhs)
       (packNat (2 ^ s.digitBits) s.strides rhs)
 
 def treeTermsEqMod (k p : Nat) (lhs : Expr) (rhs q : Hex.MvPoly.Kernel.PolyList Int) : Bool :=
@@ -158,7 +165,7 @@ def treeTermsEqMod (k p : Nat) (lhs : Expr) (rhs q : Hex.MvPoly.Kernel.PolyList 
     lhs.residues p && termResidues p rhs && Hex.MvPoly.Kernel.isCanonical k q &&
     let s := plan (add (add ⟨lhs.degrees k, lhs.height⟩ (terms k rhs))
       (mul ⟨zeroDegrees k, p⟩ (terms k q)))
-    Int.beq' (Int.sub (evalKron (2 ^ s.digitBits) s.strides lhs)
+    Int.beq' (Int.sub (evalTree (2 ^ s.digitBits) s.strides lhs)
       (packNat (2 ^ s.digitBits) s.strides rhs))
       (Int.mul (p : Int) (packNat (2 ^ s.digitBits) s.strides q))
 

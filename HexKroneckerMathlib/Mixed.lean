@@ -15,6 +15,10 @@ model. Tree models require checked atom bounds; malformed atoms get no value. -/
 
 namespace Hex.Kronecker
 
+theorem Kernel.evalTree_eq (base : Nat) (ss : List Nat) (e : Expr) :
+    Kernel.evalTree base ss e = evalKron base ss e := by
+  induction e <;> simp_all [Kernel.evalTree, evalKron, power_eq]
+
 /-- The polynomial model of a row whose atoms have been validated. -/
 noncomputable def rowPolynomial (k : Nat) : (a : List Expr) →
     a.all (Expr.wellFormed k) = true → List (MvPolynomial (Fin k) Int)
@@ -69,6 +73,8 @@ theorem evalTreeMatrix_eval {k : Nat} (s : SizeBound) (a : TreeMatrix)
       (List.map (MvPolynomial.eval₂Hom (RingHom.id Int)
         (fun i : Fin k => ((2 ^ s.digitBits : Nat) : Int) ^ s.strides.getD i.val 0))) := by
   unfold evalTreeMatrix
+  rw [show Kernel.evalTree (2 ^ s.digitBits) s.strides = evalKron (2 ^ s.digitBits) s.strides
+    from funext (Kernel.evalTree_eq _ _)]
   have he : evalKron (2 ^ s.digitBits) s.strides =
       Expr.denote (fun i => ((2 ^ s.digitBits : Nat) : Int) ^ s.strides.getD i 0) := by
     funext e
@@ -247,8 +253,8 @@ theorem treeTermsEq_polynomial {k : Nat} {lhs : Expr} {rhs : Hex.MvPoly.Kernel.P
   have hbr := terms_bound k rhs hr
   have hs : s.strides.length = k := by simp [s, plan, add, hbl.length, hbr.length]
   have he := (Int.beq'_eq _ _).mp he
-  change evalKron (2^s.digitBits) s.strides lhs = packNat (2^s.digitBits) s.strides rhs at he
-  simp only [packNat_eq] at he
+  change evalTree (2^s.digitBits) s.strides lhs = packNat (2^s.digitBits) s.strides rhs at he
+  simp only [packNat_eq, evalTree_eq] at he
   apply pair hbl hbr
   rw [evalKron_eq_eval₂ _ _ lhs hl, packTerms_eq_eval₂ _ _ hs rhs hr] at he
   exact he
@@ -269,9 +275,9 @@ theorem treeTermsEqMod_polynomial {k p : Nat} {lhs : Expr} {rhs q : Hex.MvPoly.K
     change (makeStrides 1 (maxDegrees _ _)).length = k
     rw [length_makeStrides, length_maxDegrees, hd.length, ht.length, Nat.max_self]
   have he := (Int.beq'_eq _ _).mp h.2
-  change evalKron (2^s.digitBits) s.strides lhs - packNat (2^s.digitBits) s.strides rhs =
+  change evalTree (2^s.digitBits) s.strides lhs - packNat (2^s.digitBits) s.strides rhs =
     (p:Int)*packNat (2^s.digitBits) s.strides q at he
-  simp only [packNat_eq] at he
+  simp only [packNat_eq, evalTree_eq] at he
   apply pair hd ht
   rw [evalKron_eq_eval₂ _ _ lhs hl, packTerms_eq_eval₂ _ _ hs rhs hr,
     packTerms_eq_eval₂ _ _ hs q hq] at he

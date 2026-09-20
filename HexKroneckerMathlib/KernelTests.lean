@@ -100,6 +100,10 @@ example : Kernel.mulTree .plain 0 0 0 0 [] [] [] = true := by decide +kernel
 example : Kernel.mulTree .plain 1 1 1 1 [[x]] [[]] [[x2]] = false := by decide +kernel
 example : Kernel.treeTermsEq 1 (.pow (.atom 0) 2) x2 = true := by decide +kernel
 example : Kernel.treeTermsEq 1 (.pow (.atom 0) 2) x = false := by decide +kernel
+-- The Kronecker value of 1-x is negative; odd powers preserve that sign.
+example : Kernel.treeTermsEq 1 (.pow (.sub (.int 1) (.atom 0)) 3)
+    [([3],-1), ([2],3), ([1],-3), ([0],1)] = true := by decide +kernel
+example : Kernel.treeTermsEq 0 (.pow (.int 0) 0) [([],1)] = true := by decide +kernel
 example : Kernel.treeTermsEq 0 (.pow (.atom 0) 0) [([],1)] = false := by decide +kernel
 example : Kernel.treeTermsEq 1 (.int 1) [([],1)] = false := by decide +kernel
 example : Kernel.mulTreeMod .plain 1 1 2 1 2 [[one,one]] [[.int 1],[.int 1]] [[[]]] [[one]] = true := by

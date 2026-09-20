@@ -145,6 +145,32 @@ def applyHint (head proof : Expr) : MetaM Expr := do
     | throwError "det: expected a final proof argument"
   return mkAppN head #[mkExpectedPropHint proof expected]
 
+/-- Build a finite conjunction from its stated predicates, keeping large entry
+expressions out of the repeated implicit arguments to `And.intro`. -/
+partial def allFinHints (expected : Expr) (proofs : List Expr) : MetaM Expr := do
+  match proofs with
+  | [] => return mkExpectedPropHint (mkConst ``True.intro) expected
+  | proof :: proofs =>
+    let type ← withTransparency .default <| whnf expected
+    let some (left, right) := type.and? | throwError "det: expected finite conjunction"
+    let tail ← allFinHints right proofs
+    return mkApp4 (mkConst ``And.intro) left right (mkExpectedPropHint proof left) tail
+
+partial def rowHints (expected : Expr) (rows : List (List Expr)) : MetaM Expr := do
+  match rows with
+  | [] => return mkExpectedPropHint (mkConst ``True.intro) expected
+  | row :: rows =>
+    let type ← withTransparency .default <| whnf expected
+    let some (left, right) := type.and? | throwError "det: expected row conjunction"
+    let proof ← allFinHints left row
+    let tail ← rowHints right rows
+    return mkApp4 (mkConst ``And.intro) left right proof tail
+
+def applyEntryHints (head : Expr) (rows : Array (Array Expr)) : MetaM Expr := do
+  let .forallE _ expected _ _ ← inferType head
+    | throwError "det: expected an entry conjunction argument"
+  return mkAppN head #[mkExpectedPropHint (← rowHints expected (rows.toList.map Array.toList)) expected]
+
 /-- Pair adjacent sums until one balanced expression remains. This bounds
 canonical-list replay of a generated T-term value to O(T log T) merges. -/
 partial def sumTerms (terms : Array RingExpr) : RingExpr := Id.run do
@@ -363,7 +389,7 @@ def computeTree? (A ctx : Expr) (lit : Recognized) (k : Nat) (atoms : Array Expr
               | none => mkEqSymm h
               | some rs => mkEqTrans h (rs[i]!.2[j]!).proof
             hs := hs.push h
-          hrows := hrows.push (← conjunction hs)
+          hrows := hrows.push hs
         let B ← mkAppM ``Tree.evaluated #[toExpr lit.n, treesE, ctx]
         let displayed ← if rhs?.isSome then pure r.source else treeValue lit.carrier atoms d
         let he ← if rhs?.isSome then treeEntry ctx r else do
@@ -371,8 +397,8 @@ def computeTree? (A ctx : Expr) (lit : Recognized) (k : Nat) (atoms : Array Expr
           pure (mkExpectedPropHint (← mkEqRefl displayed) (← mkEq lhs displayed))
         let (value, proof) ← if normalized.isSome then do
             let sE := toExpr scales.toList
-            let hA ← applyHint (← mkAppM ``Scaling.identify #[toExpr lit.n, A, B, sE])
-              (← conjunction hrows)
+            let hA ← applyEntryHints (← mkAppM ``Scaling.identify #[toExpr lit.n, A, B, sE])
+              hrows
             let hs ← decideProof (← mkEq (← mkAppM ``List.length #[sE]) (toExpr lit.n))
             let hdet := mkAppN (← mkAppM ``Tree.scaled_det
               #[toExpr k, toExpr lit.n, treesE, wE, ctx, A, sE]) #[hcheck, hA, hs]
@@ -393,7 +419,7 @@ def computeTree? (A ctx : Expr) (lit : Recognized) (k : Nat) (atoms : Array Expr
               if D == 1 then pure (displayed, ← mkEqTrans proof (← mkAppM ``div_one #[displayed]))
               else pure (← mkAppM ``HDiv.hDiv #[displayed, ← Normalize.natural D], proof)
           else do
-            let hA ← applyHint (← mkAppM ``Polynomial.identify #[A, B]) (← conjunction hrows)
+            let hA ← applyEntryHints (← mkAppM ``Polynomial.identify #[A, B]) hrows
             let proof ← if rhs?.isSome then do
                 pure <| mkAppN (← mkAppM ``Tree.target_det
                   #[toExpr k, toExpr lit.n, treesE, wE, ctx, A, qE, displayed])
