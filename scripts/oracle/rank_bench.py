@@ -85,6 +85,10 @@ def decode_certificate(record, certificate):
 
 
 def second_rank(data):
+    """Time the augmented elimination; rank r is not an independent B-validity test.
+
+    Preparation separately verifies the original rank and certificate identities.
+    """
     from sympy.polys.matrices import DomainMatrix
     A, rows, cols, _, _ = data
     B = A.extract(rows, cols)

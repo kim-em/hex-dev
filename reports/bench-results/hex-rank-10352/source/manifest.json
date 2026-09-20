@@ -1,40 +1,66 @@
 {
-  "published_base": "f5245daad8463449c5542ee0f74785da455a9961",
+  "published_base": "ff87b54e39707af1604f9c27afc983eb313d2b1b",
   "path_scope": [
     "*.lean",
     "lean-toolchain",
     "lake-manifest.json",
     "libraries.yml",
-    "scripts/oracle/rank_bench.py",
-    "scripts/oracle/rank_carriers.py",
-    "scripts/bench/rank_measure.py",
-    "scripts/bench/rank_resume.py"
+    "scripts/bench/rank_*.py",
+    "scripts/bench/idle_core.py",
+    "scripts/oracle/rank_*.py",
+    "scripts/profile/normalize_perf.py",
+    "scripts/profile/elf_symbols.py",
+    "scripts/profile/summarize_profile.py"
   ],
   "snapshots": [
     {
       "revision": "2b0ff6bf5fbd033943c09c1b49893285497f90aa",
       "patch": "2b0ff6bf5.patch.gz",
-      "sha256": "caae28d13366170f32970d2add583dd50b766eb91cc1a7b2d29288123b942a82",
-      "uncompressed_sha256": "944835748b69555b8e6b8c9ea4a08139ab5196ed7a5639ee2fd6bace0d0bd6b9"
+      "sha256": "bb7e2f303e7ee4eb8e504e06248dd70587a45bc12a26bd3de57886536dbccc99",
+      "uncompressed_sha256": "329ee382f971b6157cb61472fa2725c41c1909a7f77523f8f186fa496c70b5c5"
     },
     {
       "revision": "bbedb47226a2dae977434e4ea7da1ffdbaf93b00",
       "patch": "bbedb4722.patch.gz",
-      "sha256": "a7eb09b822e7f1b9bae2f5cd95180bc0ac141e49ef30835c81ade56dad6dd85b",
-      "uncompressed_sha256": "65190bc71dabf8fc7cfbf04839d010e79343c58c57e979880f684c4dcbfeea64"
+      "sha256": "25f89dc36fed43f867da16ba3bec608ff26190f43b97fa58734e4acce84c749b",
+      "uncompressed_sha256": "d3009528be6c234275fc6a1d4fce4e8f3dd49908a4206bec710b9d419a7fcad8"
     },
     {
       "revision": "8a6e0acede303baa0fd4f4ef2a7ea7ee65180180",
       "patch": "8a6e0aced.patch.gz",
-      "sha256": "7fc60a816de46c064fddfb65af24ce9535a0d8e1cd7fa9e7dac45f04109b22de",
-      "uncompressed_sha256": "2071f37c532e0e532848a5f23d1a3655e7962c54cf3d753a90f0cc115b82533f"
+      "sha256": "009bbf0937df45468aedb0d9ee25434232938681be947dcf5b34fd1226646e5b",
+      "uncompressed_sha256": "2f4e90e10d6f69e98c4711619799ad3bf3a7cf069a028ad3cc475386df29ecb1"
     },
     {
       "revision": "a2f2303e1b8e343fe7dfe83520acfaef15957181",
       "patch": "a2f2303e1.patch.gz",
-      "sha256": "585ae12548d9d84a2804dad4beb0f5737bc2886717a2c3f2bb6ae3d481014031",
-      "uncompressed_sha256": "699581e7dd3db63c035d548b8eed5703fdce30b93cad40359fc34c449566c83f"
+      "sha256": "e83f20dd9fbe89a9d6f960c5a62ccaa3c609414ad573bf2cd641538fce32495d",
+      "uncompressed_sha256": "4d3b84d18024e0af987bddda2f03ed3a86be41e72bbf2028312acfbecbf345de"
+    },
+    {
+      "revision": "b3360aca1cc4abd3bd3c4fe6c3409bc51b3c3e9a",
+      "patch": "b3360aca1.patch.gz",
+      "sha256": "bad6ae653bb838186144bc5321e235548691710489b47f7008bccb4695f2d6af",
+      "uncompressed_sha256": "d6f792fa8c110875e9cb037ef2007de61cb1e84a8ca6a2ee6bbfad3fac9d3b6a"
+    },
+    {
+      "revision": "655570d5821b3e0fdd76e391d7435644472ff070",
+      "patch": "655570d58.patch.gz",
+      "sha256": "62707cd8fa3c0129d5cde67012b0b55938b9edb110a16860edcfa3fd204540ad",
+      "uncompressed_sha256": "662f44c402e6cc67ba77e6d11d01517b351ae1731647e38d95648e58f065b351"
+    },
+    {
+      "revision": "01eeb439af779d7d6e3133a3ad1d1fe9b5555f9e",
+      "patch": "01eeb439a.patch.gz",
+      "sha256": "387628db3ff49c873129ba56e386670392ff9a6b479ef615feaa947bbc11b5af",
+      "uncompressed_sha256": "5a4076cfd16e306994aa8e3e9fc022dbd53bf3104b344e95fa898f7fd25266f1"
+    },
+    {
+      "revision": "5e9bc6ab8e4d3c75ae55d07ff4f32f6c664264ce",
+      "patch": "5e9bc6ab8.patch.gz",
+      "sha256": "5962f87af7e3bfe206b6c10bde8ae3f12de17291964d636f74e6b96b69aa0253",
+      "uncompressed_sha256": "870dbba495a6a1b70c6d2f247cfb64df2b648d47a635d8c3675c1d0d8d520552"
     }
   ],
-  "note": "Reconstruct measurement code by checking out the published base and decompressing (gzip -dc) and applying the selected patch. Reports and CI configuration are omitted; all Lean sources and Lake configuration are included. Decompress and apply any per-run source.patch.gz (or plain source.patch) afterward when its metadata records dirty source."
+  "note": "The base is merged on main. Use scripts/bench/rank_reconstruct.py to apply one snapshot and, optionally, a run-specific dirty patch restricted to this source scope. Reports and CI configuration are not needed to reproduce the executable. The two extra 01eeb439a/5e9bc6ab8 snapshots cover the untimed coefficient-input capture base and its capture hook."
 }

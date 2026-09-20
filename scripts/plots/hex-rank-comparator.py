@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Plot committed HexRank comparator curves; never collect measurements."""
 import argparse
+import io
 import json
 from pathlib import Path
 import re
@@ -37,6 +38,7 @@ def main():
     parser.add_argument('--family', choices=PANELS, required=True)
     parser.add_argument('--data', type=Path, default=DATA)
     parser.add_argument('--output', type=Path)
+    parser.add_argument('--check', action='store_true', help='Check the committed SVG without changing it.')
     args = parser.parse_args()
     rows = [json.loads(line) for line in args.data.read_text().splitlines()]
     panels = PANELS[args.family]
@@ -72,9 +74,20 @@ def main():
     fig.tight_layout()
     output = args.output or ROOT / 'reports/figures' / f'hex-rank-comparator-{args.family}.svg'
     output.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(output, metadata={'Date': None, 'Description': str(args.data.relative_to(ROOT)) if args.data.is_relative_to(ROOT) else args.data.name})
+    metadata = {'Date': None, 'Description': str(args.data.relative_to(ROOT)) if args.data.is_relative_to(ROOT) else args.data.name}
     if output.suffix == '.svg':
-        output.write_text('\n'.join(line.rstrip() for line in output.read_text().splitlines()) + '\n')
+        stream = io.StringIO()
+        fig.savefig(stream, format='svg', metadata=metadata)
+        rendered = '\n'.join(line.rstrip() for line in stream.getvalue().splitlines()) + '\n'
+        if args.check:
+            if not output.exists() or output.read_text() != rendered:
+                raise SystemExit('stale rank figure: ' + str(output))
+        else:
+            output.write_text(rendered)
+    else:
+        if args.check:
+            parser.error('--check requires SVG output')
+        fig.savefig(output, metadata=metadata)
     plt.close(fig)
 
 

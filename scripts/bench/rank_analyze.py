@@ -8,6 +8,7 @@ Absolute polynomial budgets follow the independently committed policy.
 import argparse
 from collections import defaultdict
 import json
+import math
 from pathlib import Path
 import re
 from statistics import median
@@ -83,7 +84,7 @@ def curve(directory, overhead):
     return {'curves': curves, 'failed_commands': failures}
 
 
-def budgets(rank_curves, stage_curves, native_directory, policy):
+def budgets(rank_curves, stage_curves, native_directory, policy, frozen=None):
     references = {}
     for row in rank_curves['curves'] + stage_curves['curves']:
         name = row['blocks'][0]['external_case']
@@ -103,12 +104,17 @@ def budgets(rank_curves, stage_curves, native_directory, policy):
         refs = [references.get((carrier, rank or 'Full', stage, int(size)))
                 for stage in policy['operation_reference'][op]]
         complete = all(r is not None and r['complete'] for r in refs)
-        ceiling = policy['margin'] * sum(r['external_ns'] for r in refs) if complete else None
+        reference = policy['margin'] * sum(r['external_ns'] for r in refs) if complete else None
+        ceiling = reference if frozen is None else frozen[measurement['function']]
+        if ceiling is not None and (not math.isfinite(ceiling) or ceiling <= 0):
+            raise ValueError('invalid absolute budget: ' + measurement['function'])
         time = measurement['median_nanos']
         result_ok = (not command['exit_code'] and not command.get('output_errors') and
             measurement['hashes_agree'] and measurement['expected_hash_check']['status'] == 'match')
         results.append({'case': measurement['function'], 'native_ns': time, 'budget_ns': ceiling,
-            'verdict': ('pass' if result_ok and time <= ceiling else 'fail') if complete else 'pending references',
+            'reference_budget_ns': reference,
+            'frozen_budget': frozen is not None,
+            'verdict': ('pass' if result_ok and time <= ceiling else 'fail') if ceiling is not None else 'pending references',
             'hash_agreement': result_ok, 'source': command['label'] + '.json',
             'references': [r['label'] if r else None for r in refs]})
     return results
@@ -137,6 +143,9 @@ def verify(result):
                 errors.append('invalid comparison export: ' + str(path))
     if len(result['polynomial_budgets']) != 60 or any(row['verdict'] != 'pass' for row in result['polynomial_budgets']):
         errors.append('polynomial absolute budgets are incomplete or failing')
+    for row in result['polynomial_budgets']:
+        if row.get('frozen_budget') and row['reference_budget_ns'] != row['budget_ns']:
+            errors.append('frozen budget differs from its recorded references: ' + row['case'])
     return errors
 
 
@@ -148,16 +157,25 @@ def main():
     parser.add_argument('--protocol', type=Path, required=True)
     parser.add_argument('--policy', type=Path, required=True)
     parser.add_argument('--out', type=Path, required=True)
+    parser.add_argument('--budgets', type=Path, help='Use these frozen ceilings; --verify also checks their exact recorded reference derivation.')
+    parser.add_argument('--check', action='store_true', help='Check generated artifacts without changing them.')
     parser.add_argument('--verify', action='store_true', help='Require complete schedules, valid outputs, and all 60 polynomial budgets.')
     parser.add_argument('--curves', type=Path, help='Write the rank-ratio JSONL consumed by the plots.')
     args = parser.parse_args()
     overhead = json.loads((args.protocol / 'overhead.json').read_text())['results'][0]['median_nanos']
     ranks, stages = curve(args.comparisons, overhead), curve(args.stages, overhead)
+    frozen = json.loads(args.budgets.read_text())['budgets'] if args.budgets else None
     result = {'protocol_ns': overhead, 'rank': ranks, 'stages': stages,
-              'polynomial_budgets': budgets(ranks, stages, args.polynomial, json.loads(args.policy.read_text()))}
-    args.out.write_text(json.dumps(result, indent=2) + '\n')
+              'polynomial_budgets': budgets(ranks, stages, args.polynomial, json.loads(args.policy.read_text()), frozen)}
+    outputs = {args.out: json.dumps(result, indent=2) + '\n'}
     if args.curves:
-        args.curves.write_text(''.join(json.dumps(row) + '\n' for row in ranks['curves']))
+        outputs[args.curves] = ''.join(json.dumps(row) + '\n' for row in ranks['curves'])
+    for path, rendered in outputs.items():
+        if args.check:
+            if not path.exists() or path.read_text() != rendered:
+                raise SystemExit('stale rank analysis: ' + str(path))
+        else:
+            path.write_text(rendered)
     if args.verify:
         errors = verify(result)
         if errors:

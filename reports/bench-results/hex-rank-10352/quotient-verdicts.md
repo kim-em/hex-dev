@@ -1,6 +1,6 @@
 # Quotient witness verdicts
 
-The linked exports retain every point. Mode-2 faster results translate the harness’s `inconclusive` result using the declared one-sided bound; they are not two-sided passes. The original resolution failures remain in their original directories.
+All cases use mode 1: both directions gate. The initial 4–64 ladder and both full-checker observations are retained separately.
 
 | Case | Mode | Declared model | β | Eligible rungs | Result |
 | --- | ---: | --- | ---: | ---: | --- |

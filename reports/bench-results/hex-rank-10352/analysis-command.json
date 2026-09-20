@@ -30,5 +30,7 @@
   "--out",
   "reports/bench-results/hex-rank-10352/analysis.json",
   "--curves",
-  "reports/bench-results/hex-rank-10352/comparator-curves.jsonl"
+  "reports/bench-results/hex-rank-10352/comparator-curves.jsonl",
+  "--budgets",
+  "reports/bench-results/hex-rank-10352/polynomial-budgets.json"
 ]

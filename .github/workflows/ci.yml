@@ -202,6 +202,11 @@ jobs:
           python3 -m unittest scripts/bench/test_check_graphiso_sweep_freshness.py
           python3 scripts/bench/check_factor_sweep_freshness.py
           python3 scripts/plots/hexbz-cactus.py --check
+          python3 -c 'import json, subprocess; subprocess.run(json.load(open("reports/bench-results/hex-rank-10352/analysis-command.json")) + ["--verify", "--check"], check=True)'
+          python3 scripts/bench/rank_tables.py --check
+          for family in dense-full-rank low-rank-large-coefficients rank-deficient-by-construction polynomial; do
+            python3 scripts/plots/hex-rank-comparator.py --family "$family" --check
+          done
           python3 scripts/plots/hex-rank-mathlib-tactic-size.py --check
           python3 scripts/plots/hex-bareiss-mathlib-tactic-size.py --check
           python3 scripts/bench/check_graphiso_sweep_freshness.py

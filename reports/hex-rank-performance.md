@@ -102,9 +102,20 @@ Six initial resolution failures have one configuration-adjusted follow-up each:
 rank-2/1024-bit checker at 2 s, `Certify`/`Witness` at 8 s, shifted half-rank
 certificate, rank-(n−1) second pass and half-rank `Certify` at 4 s. Other passing
 cases were not rerun to improve their presentation. These are batch targets,
-not per-call performance budgets.
+not per-call performance budgets. Evidence resolution varies: the original
+rank-8/1024-bit checker has only three of nine eligible rungs and a null fitted
+slope; its consistency verdict comes from the harness's flat-ratio criterion.
+The table exposes this weaker range rather than implying nine resolved rungs.
 
-All **60 polynomial cases** use mode 3. The
+All **60 polynomial cases** use mode 3, giving up asymptotic regression
+detection for these canonical inputs. The dimension-only parametrisation
+was audited on the declared 4/8/12 schedule: fixed input support does not bound
+minor degree, support or coefficient size independently of dimension, as the
+coefficient audit below demonstrates. No tight wall-time law follows from the
+field-operation count. The SPEC supplies no published bit-time upper bound
+covering the profiled exact polynomial division and monomial-order costs;
+a scalar Hadamard bound alone would not cover them. Following its explicit
+mode-3 classification, no parametric timing fit is claimed for these cases. The
 [budget policy](bench-results/hex-rank-10352/polynomial-budget-policy.json)
 was fixed before the matched stage comparisons: twice the sum of the applicable
 SymPy reference medians (`rank`, isolated second pass, checker). Complete
@@ -113,7 +124,7 @@ certificate sums the first two references; `Certify` sums all three. The
 and [analysis](bench-results/hex-rank-10352/analysis.json) retain every exact
 reference. These are fixed absolute ceilings from retained measurements, not
 live ratios or the 60-second child timeout. Later runs must compare against
-these [frozen numeric ceilings](bench-results/hex-rank-10352/polynomial-budgets.json). The reference second pass ranks the selected pivot
+these [frozen numeric ceilings](bench-results/hex-rank-10352/polynomial-budgets.json), read by `rank_analyze.py --budgets`. Verification also checks their exact derivation against the retained reference samples; it never updates a ceiling to accommodate a new native run. The reference second pass ranks the selected pivot
 block augmented by identity; the reference checker verifies the same exact
 matrix identities using the actual native certificate. Building those operands
 is inside the reference timed operation, matching native stage boundaries.
@@ -159,6 +170,21 @@ are consistent. The full checker is inconclusive slower, β=+0.550; its sole
 is also inconclusive slower, β=+0.283. Both retain all 42 completed rows. No model downgrade or Phase-4 pass is
 inferred from that result.
 
+`finishFull` includes a complete `checkRankPoly` call on the same numerical
+witness, after Θ(n²) modular construction. Yet at 1024 its median is 6.740 s,
+against standalone checker medians 21.293 s (original) and 10.199 s (rerun).
+The rerun spans 6.931–22.323 s; the deficient finish/check medians agree within
+about 3% across the ladder. This is evidence of an unresolved measurement/context
+interaction, not evidence establishing a super-cubic algorithmic path.
+The containing operation's β=+0.062 is relevant evidence, but not a per-call
+wall-clock upper bound on a separately scheduled checker: newly constructed
+and cached witnesses can differ in memory layout/ownership, and the host
+conditions differ. The eight original quotient schedules started within nine
+seconds on independently selected CPUs, spanning multiple NUMA nodes. Their
+host activity is retained context; it neither invalidates a completed sample
+nor licenses a replacement checker pass. The standalone declared gate remains
+inconclusive.
+
 Exact scientific commands are recorded in every run's `metadata.json` and
 `commands.jsonl`; these commands reproduce the schedules with a built executable:
 
@@ -173,13 +199,34 @@ python3 scripts/bench/rank_collect.py SOURCE DESTINATION
 
 Recorded measurements use frozen executables. Core source is `2b0ff6bf5`,
 expanded attribution/polynomial source `bbedb4722`, small quotient source
-`8a6e0aced`, large quotient source `a2f2303e1`. The
+`8a6e0aced`, large quotient source `a2f2303e1`. The checker-resolution follow-up
+uses `b3360aca1` plus its retained dirty patch; the `Certify`/`Witness`
+rank-2/1024-bit follow-ups use `655570d58` plus their dirty patches. These two
+additional source snapshots back three of the 48 passing integer rows. The
 [source manifest](bench-results/hex-rank-10352/source/manifest.json) supplies
-compressed patches against the published PR head `f5245daad`, including all
-Lean/Lake source needed to reconstruct these local revisions. Each run records
+compressed patches against merged main commit `ff87b54e3`, including all
+Lean/Lake source needed to reconstruct these local revisions from a fresh clone.
+The reconstruction helper applies only the recorded source scope, so unrelated
+report/CI hunks in a dirty patch are excluded. For example:
+
+```sh
+python3 scripts/bench/rank_reconstruct.py --snapshot b3360aca1 --run reports/bench-results/hex-rank-10352/checker-resolution --destination /tmp/rank-reproduce
+cd /tmp/rank-reproduce
+lake build hexrank_bench
+# Use this rebuilt .lake/build/bin/hexrank_bench with rank_measure.py --bench.
+```
+
+Both missing follow-up snapshots have been reconstructed and checked against
+every recorded source hash. The manifest additionally covers the untimed input
+capture's base `01eeb439a` and the capture hook archived as `5e9bc6ab8`. Each run records
 binary/source hashes, exact command, CPU, host load and dirty patch (`source.patch.gz` when nonempty); child dirty
 flags describe the evolving checkout, not a rebuilt frozen binary.
-`hexrank_attribution_bench` is a renamed byte-identical normal target, SHA-256
+`hexrank_attribution_bench`, `hexrank_quotient_bench` and `hexrank_scale_bench`
+are renamed byte-identical copies of the normal `hexrank_bench` Lake target at
+the corresponding recorded revisions, not extra Lake targets. Rebuild that
+target and pass its path through `--bench`; old absolute scratch paths in raw
+commands need not exist. Each manifest records its frozen executable hash.
+The attribution copy's SHA-256 is
 `499475eb6ee476c23ff9855d422fd9b5fec05576996307d43c9ca01eabc8932f`.
 Each `retention.json` hashes the unmodified exports/journal and losslessly compressed stdout (`.txt.gz`). Environment:
 chungus2, AMD EPYC 9455, 96 logical CPUs, Linux 6.12.100, Lean 4.34.0,
@@ -207,12 +254,12 @@ All comparators remain **informational**.
 python3 scripts/bench/rank_measure.py protocol --out /tmp/rank-protocol --python /tmp/hexvenv/bin/python
 python3 scripts/bench/rank_measure.py comparisons --out /tmp/rank-comparisons --python /tmp/hexvenv/bin/python
 # Reproduce the analysis of the committed exports without rerunning measurements:
-python3 -c 'import json, subprocess; subprocess.run(json.load(open("reports/bench-results/hex-rank-10352/analysis-command.json")) + ["--verify"], check=True)'
-python3 scripts/bench/rank_tables.py
-/tmp/hexvenv/bin/python scripts/plots/hex-rank-comparator.py --family dense-full-rank
-/tmp/hexvenv/bin/python scripts/plots/hex-rank-comparator.py --family low-rank-large-coefficients
-/tmp/hexvenv/bin/python scripts/plots/hex-rank-comparator.py --family rank-deficient-by-construction
-/tmp/hexvenv/bin/python scripts/plots/hex-rank-comparator.py --family polynomial
+python3 -c 'import json, subprocess; subprocess.run(json.load(open("reports/bench-results/hex-rank-10352/analysis-command.json")) + ["--verify", "--check"], check=True)'
+python3 scripts/bench/rank_tables.py --check
+/tmp/hexvenv/bin/python scripts/plots/hex-rank-comparator.py --family dense-full-rank --check
+/tmp/hexvenv/bin/python scripts/plots/hex-rank-comparator.py --family low-rank-large-coefficients --check
+/tmp/hexvenv/bin/python scripts/plots/hex-rank-comparator.py --family rank-deficient-by-construction --check
+/tmp/hexvenv/bin/python scripts/plots/hex-rank-comparator.py --family polynomial --check
 ```
 
 The [full ratio table](bench-results/hex-rank-10352/comparator-ratios.md) and
@@ -364,4 +411,4 @@ witness preparation. Raw capture: `/tmp/hexrank-checker-profile`.
 
 ## Concerns
 
-- [#10352](https://github.com/kim-em/hex-dev/issues/10352): resolve the full-rank quotient checker's slower-than-model result on the 128–1024 ladder. The original measurement (β=+0.550), sole unchanged rerun (β=+0.283), and dot/list-access profile are retained. The cubic model is unchanged; no failing or inconclusive evidence is promoted to a pass.
+- [#10352](https://github.com/kim-em/hex-dev/issues/10352): resolve the full-rank quotient checker's inconclusive 128–1024 result, including its discrepancy with the containing `finishFull` target. The original measurement (β=+0.550), sole unchanged rerun (β=+0.283), and dot/list-access profile are retained. The data do not establish an algorithmic super-cubic path or a wall-time upper bound from separately scheduled `finishFull`. The cubic model is unchanged; no inconclusive evidence is promoted to a pass.

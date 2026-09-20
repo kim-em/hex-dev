@@ -617,9 +617,13 @@ setup_benchmark runCheckRankDeficientHalf n => productBound n
     outerTrials := 6
   }
 
-/-! `polynomial`: fixed registrations (mode 3). Entries have support at most
-two, so the cost of a minor depends on the support and no one-parameter
-model is claimed. -/
+/-! `polynomial`: fixed registrations (mode 3), as specified by HexRank.
+Full-rank entries have degree one and support at most two. The deficient
+products have degree two, with support at most three (Rat) or five (Mv).
+Dimension alone does not control minor support or coefficient bit length;
+no tight wall-time model is claimed for these exact-division paths.
+The operation-specific absolute budgets below give up asymptotic regression
+detection, rather than treating a timeout as a complexity claim. -/
 
 /-- First pass, on a runtime input read from the prepared cache. -/
 def runRatPolyRankAt (k : Nat) (singular := false) : Unit → IO Nat := fun _ => do
@@ -690,8 +694,30 @@ def runMvDeficientCheck4 := runMvCheckAt 4 true
 def runMvDeficientCheck8 := runMvCheckAt 8 true
 def runMvDeficientCheck12 := runMvCheckAt 12 true
 
-/-- Operational timeout only. Operation-specific SymPy-derived absolute
-budgets are recorded separately in the performance report and raw artifacts. -/
+/-- Operational timeout only; the scientific ceilings are separate.
+Canonical inputs: the deterministic generators above at dimensions 4/8/12.
+Absolute budgets (ms, rounded here; exact nanoseconds in
+`reports/bench-results/hex-rank-10352/polynomial-budgets.json`):
+
+carrier rank       n  Rank  Second  Cert  Check  Certify
+RatPoly Full       4  8.170479  31.780128  39.950607  4.365994  44.316601
+RatPoly Full       8  170.195670  570.012225  740.207895  52.992657  793.200552
+RatPoly Full      12  823.390906  3938.039233  4761.430139  310.112770  5071.542909
+RatPoly Deficient  4  8.520291  3.673725  12.194016  2.583800  14.777816
+RatPoly Deficient  8  127.696458  62.037331  189.733789  29.581834  219.315623
+RatPoly Deficient 12  723.186850  384.390410  1107.577260  148.282890  1255.860150
+Mv      Full       4  12.626816  38.454207  51.081023  2.293589  53.374612
+Mv      Full       8  326.878744  2289.756000  2616.634744  40.408428  2657.043172
+Mv      Full      12  4819.874186  39588.956926  44408.831112  325.527219  44734.358331
+Mv      Deficient  4  8.204937  2.880788  11.085725  0.975751  12.061476
+Mv      Deficient  8  284.134366  178.755312  462.889678  28.453816  491.343494
+Mv      Deficient 12  3409.085161  3743.866786  7152.951947  229.560188  7382.512135
+
+Each ceiling is twice the applicable sum of the six paired SymPy reference
+medians: rank, augmented pivot-block rank, and exact certificate identities.
+The margin and reference mapping precede the stage measurements; the report's
+analysis links all raw reference times. Future results use these frozen
+ceilings, independently of the 60-second child safety cap. -/
 def polyConfig : LeanBench.FixedBenchmarkConfig :=
   { repeats := 5, maxSecondsPerCall := 60.0, minTotalSeconds := 0.2, warmupFirstIter := true, tags := #["polynomial"] }
 

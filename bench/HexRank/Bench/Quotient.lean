@@ -22,6 +22,10 @@ its rows supplies deficient inputs with the same bounded coefficients.
 This is the existing Algebraic8Hex proof-probe family, extended in dimension;
 no polynomial-ring rank is substituted for quotient-field rank.
 
+All phases use mode 1 on this fixed block family. Coefficients and
+denominators remain bounded; the cubic counts below do not claim a model
+for arbitrary dense number-field matrices and are not fitted to timings.
+
 The scientific ladder is 128–1024. The retained 4–64 ladder does not resolve
 the cubic model: repeated fixed-degree inversions add a substantial quadratic
 term before the cubic scans dominate. This range extension preserves the
@@ -94,13 +98,8 @@ def prepFull := prep false
 def prepDeficient := prep true
 
 def produceFull := runProduce
-/- Independent mode-1 model for these fixed quadratic blocks: coefficients
-and denominators stay bounded. Elimination on a k×2k block matrix scans
-Θ(k²) cells, and preparing all prefix inverses sums this to Θ(n³).
-The lower-quotient and native verification dot products traverse Θ(n³)
-entries (including zeros). Fixed-modulus reduction is O(n²); duplicated
-rows add Θ(n³) upper-relation work. Thus each registered phase is Θ(n³).
-No claim about generic dense number-field matrices is made. -/
+/- Mode 1, cubic: bounded-coefficient prefix inverses sum Θ(k²) over k,
+and lower-quotient dots traverse Θ(n³) entries. -/
 setup_benchmark produceFull n => n * n * n
   with prep := prepFull
   where {
@@ -113,13 +112,8 @@ setup_benchmark produceFull n => n * n * n
   }
 
 def prepareFull := runPrepare
-/- Independent mode-1 model for these fixed quadratic blocks: coefficients
-and denominators stay bounded. Elimination on a k×2k block matrix scans
-Θ(k²) cells, and preparing all prefix inverses sums this to Θ(n³).
-The lower-quotient and native verification dot products traverse Θ(n³)
-entries (including zeros). Fixed-modulus reduction is O(n²); duplicated
-rows add Θ(n³) upper-relation work. Thus each registered phase is Θ(n³).
-No claim about generic dense number-field matrices is made. -/
+/- Mode 1, cubic: bounded-coefficient prefix inverses sum Θ(k²) over k,
+and lower-quotient dots traverse Θ(n³) entries. -/
 setup_benchmark prepareFull n => n * n * n
   with prep := prepFull
   where {
@@ -132,13 +126,8 @@ setup_benchmark prepareFull n => n * n * n
   }
 
 def finishFull := runFinish
-/- Independent mode-1 model for these fixed quadratic blocks: coefficients
-and denominators stay bounded. Elimination on a k×2k block matrix scans
-Θ(k²) cells, and preparing all prefix inverses sums this to Θ(n³).
-The lower-quotient and native verification dot products traverse Θ(n³)
-entries (including zeros). Fixed-modulus reduction is O(n²); duplicated
-rows add Θ(n³) upper-relation work. Thus each registered phase is Θ(n³).
-No claim about generic dense number-field matrices is made. -/
+/- Mode 1, cubic: Θ(n²) lower/upper relation dots each traverse Θ(n)
+fixed-degree entries; modular construction adds only O(n²). -/
 setup_benchmark finishFull n => n * n * n
   with prep := prepFull
   where {
@@ -151,13 +140,8 @@ setup_benchmark finishFull n => n * n * n
   }
 
 def checkFull := runCheck
-/- Independent mode-1 model for these fixed quadratic blocks: coefficients
-and denominators stay bounded. Elimination on a k×2k block matrix scans
-Θ(k²) cells, and preparing all prefix inverses sums this to Θ(n³).
-The lower-quotient and native verification dot products traverse Θ(n³)
-entries (including zeros). Fixed-modulus reduction is O(n²); duplicated
-rows add Θ(n³) upper-relation work. Thus each registered phase is Θ(n³).
-No claim about generic dense number-field matrices is made. -/
+/- Mode 1, cubic: Θ(n²) checked lower/upper relation dots each traverse
+Θ(n) fixed-degree, bounded-coefficient entries. -/
 setup_benchmark checkFull n => n * n * n
   with prep := prepFull
   where {
@@ -170,13 +154,8 @@ setup_benchmark checkFull n => n * n * n
   }
 
 def produceDeficient := runProduce
-/- Independent mode-1 model for these fixed quadratic blocks: coefficients
-and denominators stay bounded. Elimination on a k×2k block matrix scans
-Θ(k²) cells, and preparing all prefix inverses sums this to Θ(n³).
-The lower-quotient and native verification dot products traverse Θ(n³)
-entries (including zeros). Fixed-modulus reduction is O(n²); duplicated
-rows add Θ(n³) upper-relation work. Thus each registered phase is Θ(n³).
-No claim about generic dense number-field matrices is made. -/
+/- Mode 1, cubic: bounded-coefficient prefix inverses sum Θ(k²) over k,
+and lower-quotient dots traverse Θ(n³) entries. -/
 setup_benchmark produceDeficient n => n * n * n
   with prep := prepDeficient
   where {
@@ -189,13 +168,8 @@ setup_benchmark produceDeficient n => n * n * n
   }
 
 def prepareDeficient := runPrepare
-/- Independent mode-1 model for these fixed quadratic blocks: coefficients
-and denominators stay bounded. Elimination on a k×2k block matrix scans
-Θ(k²) cells, and preparing all prefix inverses sums this to Θ(n³).
-The lower-quotient and native verification dot products traverse Θ(n³)
-entries (including zeros). Fixed-modulus reduction is O(n²); duplicated
-rows add Θ(n³) upper-relation work. Thus each registered phase is Θ(n³).
-No claim about generic dense number-field matrices is made. -/
+/- Mode 1, cubic: bounded-coefficient prefix inverses sum Θ(k²) over k,
+and lower-quotient dots traverse Θ(n³) entries. -/
 setup_benchmark prepareDeficient n => n * n * n
   with prep := prepDeficient
   where {
@@ -208,13 +182,8 @@ setup_benchmark prepareDeficient n => n * n * n
   }
 
 def finishDeficient := runFinish
-/- Independent mode-1 model for these fixed quadratic blocks: coefficients
-and denominators stay bounded. Elimination on a k×2k block matrix scans
-Θ(k²) cells, and preparing all prefix inverses sums this to Θ(n³).
-The lower-quotient and native verification dot products traverse Θ(n³)
-entries (including zeros). Fixed-modulus reduction is O(n²); duplicated
-rows add Θ(n³) upper-relation work. Thus each registered phase is Θ(n³).
-No claim about generic dense number-field matrices is made. -/
+/- Mode 1, cubic: Θ(n²) lower/upper relation dots each traverse Θ(n)
+fixed-degree entries; modular construction adds only O(n²). -/
 setup_benchmark finishDeficient n => n * n * n
   with prep := prepDeficient
   where {
@@ -227,13 +196,8 @@ setup_benchmark finishDeficient n => n * n * n
   }
 
 def checkDeficient := runCheck
-/- Independent mode-1 model for these fixed quadratic blocks: coefficients
-and denominators stay bounded. Elimination on a k×2k block matrix scans
-Θ(k²) cells, and preparing all prefix inverses sums this to Θ(n³).
-The lower-quotient and native verification dot products traverse Θ(n³)
-entries (including zeros). Fixed-modulus reduction is O(n²); duplicated
-rows add Θ(n³) upper-relation work. Thus each registered phase is Θ(n³).
-No claim about generic dense number-field matrices is made. -/
+/- Mode 1, cubic: Θ(n²) checked lower/upper relation dots each traverse
+Θ(n) fixed-degree, bounded-coefficient entries. -/
 setup_benchmark checkDeficient n => n * n * n
   with prep := prepDeficient
   where {

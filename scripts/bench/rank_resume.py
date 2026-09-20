@@ -36,7 +36,16 @@ def main():
     if not handoff.get('controller_stopped'):
         raise ValueError('stop the original controller at a recorded completion boundary first')
     base = json.loads((source / 'metadata.json').read_text())
+    oracle_paths = ('scripts/oracle/rank_bench.py', 'scripts/oracle/rank_carriers.py')
+    def check_oracle():
+        for name in oracle_paths:
+            actual = hashlib.sha256((Path(base['cwd']) / name).read_bytes()).hexdigest()
+            if actual != base['source_sha256'][name]:
+                raise ValueError('the original comparator source has changed: ' + name)
+    check_oracle()
     journal = (source / 'commands.jsonl').read_bytes()
+    if journal and not journal.endswith(b'\n'):
+        raise ValueError('frozen source journal has an incomplete final record; repair the handoff first')
     finished = {json.loads(line)['label'] for line in journal.splitlines()}
     schedule = []
     for label, original in base['schedule']:
@@ -68,6 +77,7 @@ def main():
     failures = []
     with (out / 'commands.jsonl').open('w') as history:
         for label, command in [('overhead', control), *schedule]:
+            check_oracle()
             if (source / 'commands.jsonl').read_bytes() != journal:
                 raise ValueError('the frozen source journal changed')
             started = time.time()

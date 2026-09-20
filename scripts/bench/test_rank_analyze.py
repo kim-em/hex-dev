@@ -50,6 +50,14 @@ class Analysis(unittest.TestCase):
             self.assertEqual(result['verdict'], 'pass')
             stages['curves'][0]['external_ns'] = 10
             self.assertEqual(budgets(refs, stages, root, policy)[0]['verdict'], 'fail')
+            fixed = {'Hex.RankBench.runMvCert4': 120}
+            result = budgets(refs, stages, root, policy, fixed)[0]
+            self.assertEqual(result['budget_ns'], 120)
+            self.assertEqual(result['reference_budget_ns'], 80)
+            self.assertEqual(result['verdict'], 'pass')
+            changed = {'rank': {'curves': []}, 'stages': {'curves': []},
+                       'polynomial_budgets': [result]}
+            self.assertTrue(any('frozen budget differs' in error for error in verify(changed)))
 
     def test_censored_comparator_does_not_excuse_wrong_observed_output(self):
         with tempfile.TemporaryDirectory() as directory:
