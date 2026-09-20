@@ -1,0 +1,14 @@
+Hex.RankBench.runMvDeficientRank12    [fixed] repeats=6
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=bbedb47, 2026-09-20T13:21:25Z, host=chungus2
+  repeat 0  1.370 s
+  repeat 1  1.383 s
+  repeat 2  1.350 s
+  repeat 3  1.364 s
+  repeat 4  1.351 s
+  repeat 5  1.384 s
+  median: 1.370 s    min: 1.350 s    max: 1.384 s
+  hash: all repeats agree
+  observed hash: 0x6
+  expected hash: matches
+  peak RSS: 71_248 kB..74_960 kB (across 6 ok repeat(s))
+exported to /tmp/hexrank-science-polynomial/runMvDeficientRank12.json

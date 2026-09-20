@@ -43,9 +43,11 @@ def main():
             'profiler_revision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=args.profiler_root, text=True).strip(),
             'samply_version': subprocess.check_output(['samply', '--version'], text=True).strip(),
             'perf_version': subprocess.check_output(['perf', '--version'], text=True).strip(),
-            'commands': [], 'failures': []}
+            'commands': [], 'environment_overrides': [], 'failures': []}
     def run(command, env=None):
         meta['commands'].append(command)
+        meta['environment_overrides'].append({key: env[key] for key in
+            ('LEAN_BENCH_PROFILE_KERNEL', 'LEAN_BENCH_TIMED_REGIONS_SIDECAR')} if env else {})
         (out / 'metadata.json').write_text(json.dumps(meta, indent=2) + '\n')
         result = subprocess.run(command, cwd=ROOT, env=env, text=True, capture_output=True)
         with (directory / 'commands.txt').open('a') as log:
@@ -85,6 +87,7 @@ def main():
             meta['failures'].append({'family': family, 'command': error.cmd, 'exit_code': error.returncode})
             print(family, 'failed', error.returncode, flush=True)
         finally:
+            meta['load_after'] = os.getloadavg()
             (out / 'metadata.json').write_text(json.dumps(meta, indent=2) + '\n')
     return bool(meta['failures'])
 

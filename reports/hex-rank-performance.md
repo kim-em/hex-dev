@@ -11,7 +11,11 @@ owns the remaining work. Tactic/kernel proof evidence remains in the separate
 lake build hexrank_bench HexRankMathlib hexrank_emit_fixtures
 lake exe hexrank_bench list
 lake exe hexrank_bench verify
-HEX_RANK_BENCH_PYTHON=/tmp/hexvenv/bin/python lake exe hexrank_bench verify --tag external
+# The retained external verification selects the 16 scalar anchors at n=16
+# and all 12 polynomial anchors; driver/comparators-final.txt lists their names.
+HEX_RANK_BENCH_PYTHON=/tmp/hexvenv/bin/python lake exe hexrank_bench verify $(
+  python3 -c 'import re; from pathlib import Path; print(" ".join(re.findall(r"Hex[.]RankBench[.]Comparison[.][A-Za-z0-9.]+", Path("reports/bench-results/hex-rank-10352/driver/comparators-final.txt").read_text())))'
+)
 ```
 
 The driver has 48 integer parametric registrations, 60 native polynomial fixed
@@ -31,7 +35,7 @@ CI target list and smoke route are unchanged.
 | `checkRank` | Compiled `runCheckRank*` and polynomial `*Check*`; certificate construction is excluded from timing. Integer flattening/reconstruction is included; polynomial inputs are cached actual values. |
 | `certifyRankWith`, `certifyRank` | Compiled complete producer plus checker: `Certify.*` and polynomial `*Certify*`. |
 | `rankWitness`, `rankWitnessWith` | Native integer witness production: `Witness.*`, including the modular inverse and self-check. The fixed-modulus entry point is the constituent attempt inside the retrying producer. |
-| `PolyProduce.produce` | Native polynomial-quotient witness production; separate compiled evidence is still missing. Its inclusion in a tactic build does not discharge that obligation. |
+| `PolyWitness.produce` | Native polynomial-quotient witness production; separate compiled evidence is still missing. Its inclusion in a tactic build does not discharge that obligation. |
 | Kernel replay through `checkRankList`, `checkRankListPacked`, `checkRankPoly`; tactic elaboration and proof construction | Proof track in HexRankMathlib, owned by the existing fresh-module probes and carrier report. No Mathlib import into this executable. |
 | Soundness, completeness and correspondence theorems | Mathematical API; the existing `rankCertWith_check`, `checkRank_sound`, and `rankWith_eq` bridge is retained and builds. |
 
@@ -42,8 +46,13 @@ This repairs the earlier mismatch between direct polynomial first-pass targets
 and the compiled public producer. The one-line import comparison is retained in
 [compiler-route](bench-results/hex-rank-10352/compiler-route/): six adjacent
 alternating AB/BA blocks, `runMvCert12`, one measured repeat per arm. Before and
-after medians were 6.741 s and 7.467 s; this does **not** establish a speedup.
-The repair makes the specified implementation available consistently.
+after medians were 6.741 s and 7.467 s. All six paired after timings were
+higher, with median paired increase 0.456 s. This is a measured slowdown on
+the earlier fixture, not evidence of a speedup. The repair makes the specified
+implementation available consistently; its polynomial cost remains an open
+performance concern. The retained orchestration source states the exact commands.
+Both arms used the earlier `ae2014190` fixture and 30-second operational cap;
+this experiment must not be mixed with the later scientific fixture timings.
 
 Integer schedules are `16,24,32,48,64,96,128,192,256`, with six trial-major
 outer trials. Preparation verifies expected rank and `checkRank`, and verifies
@@ -58,7 +67,8 @@ match the known rank.
   entries, with full rank checked rather than built from unit triangular factors.
 - Low-rank products use ranks 2 and 8 and factor sizes 64 and 1024 bits.
   Factor seeds are `7919*salt + 104729*i + 1299709*j`, salts 3 and 5; the
-  high bit is set and signs alternate with `i+j`. Matrix entries can have
+  high bit is set and signs alternate with `i+j`, so product terms share a
+  sign and do not cancel. This is a structured signed positive product. Matrix entries can have
   `2*bits + ceil(log2 r)` bits. No identity pivot block is inserted.
 - Deficient products use splitmix64 small factors with salts 7 and 11,
   ranks `n-1` and `n/2`, and a shifted `n/2` case whose first `n-r` columns
@@ -100,8 +110,17 @@ binary/source hashes, exact commands, CPU placement and host load are retained
 with the [integer](bench-results/hex-rank-10352/integer/),
 [attribution](bench-results/hex-rank-10352/attribution/) and
 [polynomial](bench-results/hex-rank-10352/polynomial/) raw exports.
-Only targets named in each manifest's `retained_exports` have evidence in this
-report; the declared schedule is also recorded. Every completed row is retained,
+The raw metadata and `source.patch` are copied byte-for-byte. Each separate
+`retention.json` names the completed commands and hashes every retained file;
+reproduce the snapshot with `scripts/bench/rank_collect.py SOURCE DESTINATION`.
+Only those completed commands have evidence here; the declared schedule is also
+recorded. `hexrank_attribution_bench` is a renamed byte-identical copy of the
+normal `hexrank_bench` target, not another Lake target: its SHA-256 is
+`499475eb6ee476c23ff9855d422fd9b5fec05576996307d43c9ca01eabc8932f`.
+The copy freezes the executable while the worktree continues developing.
+Per-child git dirty flags describe that evolving checkout, not a rebuilt binary;
+the outer manifest pins the actual executable. The separate provenance supplement
+records the omitted `lakefile.lean` hashes from the original revision blobs. Every completed row is retained,
 including below-floor rows, timeouts and failures. Environment: AMD EPYC 9455,
 96 logical CPUs, Linux 6.12.100, Lean 4.34.0, lean-bench
 `8a37daf1074c3bdbd0da479b55538bad4a0022db`.
@@ -112,17 +131,29 @@ consistency. The harness still prints `inconclusive` for those faster cases.
 
 | Core case | Mode | β | Result |
 | --- | ---: | ---: | --- |
+| [`runCheckRankDeficientHalf`](bench-results/hex-rank-10352/integer/runCheckRankDeficientHalf.json) | 2 | -2.274 | Within upper bound (observed faster) |
+| [`runCheckRankDeficientHalfShifted`](bench-results/hex-rank-10352/integer/runCheckRankDeficientHalfShifted.json) | 2 | -2.343 | Within upper bound (observed faster) |
+| [`runCheckRankDeficientMinusOne`](bench-results/hex-rank-10352/integer/runCheckRankDeficientMinusOne.json) | 2 | -2.124 | Within upper bound (observed faster) |
 | [`runCheckRankDense`](bench-results/hex-rank-10352/integer/runCheckRankDense.json) | 2 | -2.166 | Within upper bound (observed faster) |
-| [`runCheckRankLowRank2At1024`](bench-results/hex-rank-10352/integer/runCheckRankLowRank2At1024.json) | 1 | — | No verdict: below signal floor |
+| [`runCheckRankLowRank2At1024`](bench-results/hex-rank-10352/integer/runCheckRankLowRank2At1024.json) | 1 | trial summaries only | Inconclusive; resolution needs assessment |
 | [`runCheckRankLowRank2At64`](bench-results/hex-rank-10352/integer/runCheckRankLowRank2At64.json) | 1 | -0.024 | Consistent with `n²` |
+| [`runCheckRankLowRank8At1024`](bench-results/hex-rank-10352/integer/runCheckRankLowRank8At1024.json) | 1 | trial summaries only | Consistent with `n²` |
 | [`runCheckRankLowRank8At64`](bench-results/hex-rank-10352/integer/runCheckRankLowRank8At64.json) | 1 | -0.074 | Consistent with `n²` |
+| [`runRankCertDeficientHalf`](bench-results/hex-rank-10352/integer/runRankCertDeficientHalf.json) | 2 | -1.998 | Within upper bound (observed faster) |
+| [`runRankCertDeficientHalfShifted`](bench-results/hex-rank-10352/integer/runRankCertDeficientHalfShifted.json) | 2 | trial summaries only | Inconclusive; resolution needs assessment |
+| [`runRankCertDeficientMinusOne`](bench-results/hex-rank-10352/integer/runRankCertDeficientMinusOne.json) | 2 | -1.842 | Within upper bound (observed faster) |
 | [`runRankCertDense`](bench-results/hex-rank-10352/integer/runRankCertDense.json) | 2 | -1.988 | Within upper bound (observed faster) |
 | [`runRankCertLowRank2At1024`](bench-results/hex-rank-10352/integer/runRankCertLowRank2At1024.json) | 1 | +0.053 | Consistent with `n²` |
 | [`runRankCertLowRank2At64`](bench-results/hex-rank-10352/integer/runRankCertLowRank2At64.json) | 1 | +0.040 | Consistent with `n²` |
+| [`runRankCertLowRank8At1024`](bench-results/hex-rank-10352/integer/runRankCertLowRank8At1024.json) | 1 | +0.078 | Consistent with `n²` |
 | [`runRankCertLowRank8At64`](bench-results/hex-rank-10352/integer/runRankCertLowRank8At64.json) | 1 | +0.042 | Consistent with `n²` |
+| [`runRowReduceDeficientHalf`](bench-results/hex-rank-10352/integer/runRowReduceDeficientHalf.json) | 2 | -1.952 | Within upper bound (observed faster) |
+| [`runRowReduceDeficientHalfShifted`](bench-results/hex-rank-10352/integer/runRowReduceDeficientHalfShifted.json) | 2 | -2.093 | Within upper bound (observed faster) |
+| [`runRowReduceDeficientMinusOne`](bench-results/hex-rank-10352/integer/runRowReduceDeficientMinusOne.json) | 2 | -1.956 | Within upper bound (observed faster) |
 | [`runRowReduceDense`](bench-results/hex-rank-10352/integer/runRowReduceDense.json) | 2 | -2.002 | Within upper bound (observed faster) |
 | [`runRowReduceLowRank2At1024`](bench-results/hex-rank-10352/integer/runRowReduceLowRank2At1024.json) | 1 | +0.051 | Consistent with `n²` |
 | [`runRowReduceLowRank2At64`](bench-results/hex-rank-10352/integer/runRowReduceLowRank2At64.json) | 1 | +0.037 | Consistent with `n²` |
+| [`runRowReduceLowRank8At1024`](bench-results/hex-rank-10352/integer/runRowReduceLowRank8At1024.json) | 1 | +0.098 | Consistent with `n²` |
 | [`runRowReduceLowRank8At64`](bench-results/hex-rank-10352/integer/runRowReduceLowRank8At64.json) | 1 | +0.095 | Consistent with `n²` |
 
 The dense first pass has 17/54 completed rows below the harness signal floor,
@@ -137,7 +168,9 @@ and source patch. No algorithmic failure is inferred from the resolution failure
 
 At dimension 256, descriptive medians of all completed rows give the following
 producer/checker ratios. These exclude certificate preparation from checker
-timing. A row with unresolved signal-floor evidence does not become a scaling
+timing, but include rebuilding the flattened matrix and certificate; they are
+end-to-end wrapper ratios rather than isolated checker arithmetic ratios.
+A row with unresolved signal-floor evidence does not become a scaling
 pass by appearing in this table.
 
 | Family | First pass ms | Certificate ms | Checker ms | Certificate/checker |
@@ -145,7 +178,21 @@ pass by appearing in this table.
 | `Dense`, n=256 | 2869.249 | 11019.909 | 4270.881 | 2.580 |
 | `LowRank2At64`, n=256 | 29.179 | 30.052 | 22.412 | 1.341 |
 | `LowRank8At64`, n=256 | 182.988 | 185.417 | 79.438 | 2.334 |
-| `LowRank2At1024`, n=256 | 258.125 | 264.393 | 192.786 | 1.371 |
+| [`LowRank2At1024`](bench-results/hex-rank-10352/checker-resolution/runCheckRankLowRank2At1024.json), n=256 | 258.125 | 264.393 | 193.803 | 1.364 |
+
+The rank-2/1024-bit `Certify` and `Witness` original schedules likewise have
+54/54 rows below their signal floors (74.780 ms and 323.468 ms). Their single
+follow-ups use an eight-second batch target, exceeding ten times the measured
+floor even when batch doubling stops at half the target. No algorithm changes
+or sample rejection are involved. Cases with passing verdicts on surviving
+rungs are not rerun merely to improve their presentation.
+
+The retained polynomial medians also cross-check second-pass isolation:
+`RatPoly12` first pass 39.594 ms plus second pass 158.154 ms is close to the
+complete certificate 194.484 ms; certificate plus checker 54.738 ms is close
+to certify 252.413 ms. `Mv8` first pass 51.403 ms plus second 218.223 ms is
+close to certificate 268.537 ms. These separate runs are a descriptive check,
+not a claim of exact additivity or permission to subtract unmatched medians.
 
 Polynomial cases require mode 3 under the SPEC. Their 60-second child timeout
 and expected hashes are operational checks, not meaningful absolute performance
@@ -185,7 +232,9 @@ python scripts/bench/rank_measure.py comparisons --out /tmp/hexrank-science-comp
 
 The comparison runner executes six adjacent AB/BA blocks, alternating which
 arm goes first at every shared rung. Every completed export is retained and
-output status/hash checks are recorded. The common protocol control has median
+output status/hash checks are recorded. Lean and its synchronous Python child
+inherit the same automatically selected CPU, so the protocol control includes
+the corresponding context switches. The common protocol control has median
 6.693 μs (six retained repeats, 6.652–6.720 μs); see
 [protocol](bench-results/hex-rank-10352/protocol/).
 
@@ -262,6 +311,8 @@ comparator report must still check whether its worst-gap family is represented.
 
 ## Concerns
 
+- [#10352](https://github.com/kim-em/hex-dev/issues/10352): account for the measured polynomial slowdown in the import-only compiler-route comparison; consistent array routing alone is not a performance improvement.
+
 - [#10352](https://github.com/kim-em/hex-dev/issues/10352): finish and consolidate all declared integer and attribution verdicts, retain the original checker signal-floor failure alongside its passing follow-up, and complete six-block comparator curves with eligible ranges and overhead-adjusted ratios.
 - [#10352](https://github.com/kim-em/hex-dev/issues/10352): establish and verify operation-specific polynomial absolute budgets. Operational timeouts and hash agreement are insufficient.
-- [#10352](https://github.com/kim-em/hex-dev/issues/10352): supply separate compiled evidence for `PolyProduce.produce`, while retaining the companion's ownership of tactic and kernel-proof builds; close the public-surface and dominant-cost attribution audit before advancing the manifest.
+- [#10352](https://github.com/kim-em/hex-dev/issues/10352): supply separate compiled evidence for `PolyWitness.produce`, while retaining the companion's ownership of tactic and kernel-proof builds; close the public-surface and dominant-cost attribution audit before advancing the manifest.

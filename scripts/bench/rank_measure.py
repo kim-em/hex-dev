@@ -67,6 +67,54 @@ def commands(phase, families):
                 yield f'{block}-{stem}', ['compare', *arms, '--repeats', '1']
 
 
+def expected_hash(function, param):
+    """Independent output contract for the scalar integer schedules."""
+    name = function.removeprefix(PREFIX).lower()
+    if name.startswith('runcheckrank'):
+        return '0xb'  # Lean's Hashable Bool true.
+    if 'lowrank2at' in name:
+        rank = 2
+    elif 'lowrank8at' in name:
+        rank = 8
+    elif 'deficientminusone' in name:
+        rank = param - 1
+    elif 'deficienthalf' in name:
+        rank = param // 2
+    elif 'dense' in name:
+        rank = param
+    else:
+        raise ValueError('unknown parametric output contract: ' + function)
+    return hex(rank)  # These small Nat hashes are the values themselves.
+
+
+def output_errors(export):
+    """Malformed exports are failed observations, never a lost schedule tail."""
+    errors = []
+    try:
+        data = json.loads(export.read_text())
+        if not data['results']:
+            errors.append('empty results')
+        for measurement in data['results']:
+            name = measurement['function']
+            points = measurement['points']
+            if not points:
+                errors.append('empty measurement: ' + name)
+            if any(point['status'] != 'ok' for point in points):
+                errors.append('non-ok sample: ' + name)
+            if measurement['kind'] == 'fixed':
+                if (not measurement.get('hashes_agree') or
+                    measurement.get('expected_hash_check', {}).get('status') != 'match'):
+                    errors.append('fixed output mismatch: ' + name)
+            else:
+                for point in points:
+                    if point['status'] == 'ok' and point['result_hash'] != expected_hash(name, point['param']):
+                        errors.append('parametric output mismatch: ' + name)
+                        break
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        errors.append('invalid export: ' + str(error))
+    return errors
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('phase', choices=('integer', 'attribution', 'comparisons', 'polynomial', 'protocol'))
@@ -76,6 +124,8 @@ def main():
     parser.add_argument('--family', choices=FAMILIES, action='append', help='Subset for an incremental tranche; omitted means every family.')
     parser.add_argument('--case', help='Run only the command containing this exact registered name; retain a separate output directory.')
     args = parser.parse_args()
+    if args.family and args.phase in ('polynomial', 'protocol'):
+        parser.error('--family is only meaningful for integer, attribution and comparisons')
     out = args.out.resolve()
     out.mkdir(parents=True, exist_ok=False)
     bench = args.bench.resolve()
@@ -90,7 +140,7 @@ def main():
             parser.error('case is not in the selected phase/family schedule')
     sources = ('bench/HexRank/Bench.lean', 'HexRank/Produce.lean',
                'scripts/oracle/rank_bench.py', 'scripts/oracle/rank_carriers.py',
-               'scripts/bench/rank_measure.py', 'lake-manifest.json', 'lean-toolchain')
+               'scripts/bench/rank_measure.py', 'lakefile.lean', 'lake-manifest.json', 'lean-toolchain')
     metadata = {'revision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
                 'source_sha256': {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in sources},
                 'binary_sha256': hashlib.sha256(bench.read_bytes()).hexdigest(),
@@ -112,22 +162,7 @@ def main():
             started = time.time()
             with (out / f'{label}.txt').open('w') as log:
                 result = subprocess.run(command, cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT)
-            errors = []
-            export = out / f'{label}.json'
-            if not export.exists():
-                errors.append('missing export')
-            else:
-                data = json.loads(export.read_text())
-                for measurement in data['results']:
-                    if not measurement.get('points'):
-                        errors.append('empty measurement: ' + measurement['function'])
-                    if any(point['status'] != 'ok' for point in measurement['points']):
-                        errors.append('non-ok sample: ' + measurement['function'])
-                    if measurement['kind'] == 'fixed' and (
-                        not measurement.get('hashes_agree') or
-                        measurement.get('expected_hash_check', {}).get('status') != 'match'
-                    ):
-                        errors.append('fixed output mismatch: ' + measurement['function'])
+            errors = output_errors(out / f'{label}.json')
             record = {'output_errors': errors, 'label': label, 'command': command, 'exit_code': result.returncode,
                       'started_epoch': started, 'wall_seconds': time.time() - started, 'load_after': os.getloadavg()}
             history.write(json.dumps(record) + '\n')
@@ -135,6 +170,9 @@ def main():
             print(label, result.returncode, flush=True)
             if result.returncode or errors:
                 failures.append(label)
+    (out / 'completion.json').write_text(json.dumps({
+        'completed': len(schedule), 'scheduled': len(schedule), 'failures': failures,
+        'load_at_end': os.getloadavg()}, indent=2) + '\n')
     return bool(failures)
 
 

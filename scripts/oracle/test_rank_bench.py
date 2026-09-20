@@ -26,6 +26,10 @@ class RankProtocol(unittest.TestCase):
             requests += [{'op': 'prepare', 'record': record}, {'op': 'rank'}, {'op': 'rank'}]
             expected += [{'ok': True, 'result': True}, {'ok': True, 'result': rank}, {'ok': True, 'result': rank}]
         malformed = [
+            {'kind': 'polymatrix', 'field': {'type': 'Fp', 'p': 7}, 'rows': 1, 'cols': 1,
+             'entries': [[[1]]]},
+            {'kind': 'mvpolymatrix', 'arity': 3, 'rows': 1, 'cols': 1,
+             'entries': [[[[[1, 0, 0], 2]]]]},
             {'kind': 'matrix', 'rows': [[1], [2, 3]]},
             {'kind': 'polymatrix', 'field': {'type': 'Rat'}, 'rows': 1, 'cols': 1,
              'entries': [[{'num': [1, 2], 'den': [1]}]]},

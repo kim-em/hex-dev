@@ -286,7 +286,5 @@
       "sympy": "1.14.0",
       "sympy_ground_types": "python"
     }
-  },
-  "retained_exports": [],
-  "retention_note": "The schedule is the declared full schedule. This artifact directory contains exactly the completed exports named in retained_exports; missing targets have no verdict here."
+  }
 }

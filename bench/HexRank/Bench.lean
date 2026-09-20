@@ -111,7 +111,11 @@ def toCertInput {n m : Nat} (M : Matrix Int n m) : CertInput :=
 /-- Rebuild the certificate of a flattened input. Every family has positive
 dimensions; the empty shapes fall back to `none`. -/
 def certOfInput (input : CertInput) : Option (RankCert Int input.mat.n input.mat.m) :=
-  if hn : 0 < input.mat.n then
+  if input.mat.entries.size != input.mat.n * input.mat.m ||
+      input.rows.size != input.rank || input.cols.size != input.rank ||
+      input.adj.size != input.rank * input.rank ||
+      !input.rows.all (· < input.mat.n) || !input.cols.all (· < input.mat.m) then none
+  else if hn : 0 < input.mat.n then
     if hm : 0 < input.mat.m then
       some
         { rank := input.rank
@@ -129,18 +133,20 @@ scientific parameters are unchanged. -/
 
 /-- Fail a benchmark child on a malformed family rather than time the wrong
 rank. This work is forced by the harness before its timed loop. -/
-def checkedInput (expected shift : Nat) (input : MatInput) : MatInput :=
+def checkedCert (expected shift : Nat) (input : MatInput) : CertInput :=
   let A := matrixOfFlat input.n input.m input.entries
   let c := rankCert A
   if c.rank == expected && checkRank A c &&
-      (shift == 0 || c.cols.toArray[0]?.map Fin.val == some shift) then input
+      (shift == 0 || c.cols.toArray[0]?.map Fin.val == some shift) then
+    { mat := input, rank := c.rank, rows := c.rows.toArray.map Fin.val,
+      cols := c.cols.toArray.map Fin.val, denom := c.denom, adj := flatOfMatrix c.adj }
   else panic! s!"integer fixture: expected rank {expected}, first pivot {shift}, got rank {c.rank}"
 
 /-- Dense square matrix with entries in `[-5,5]`. Full rank is checked in prep,
 not obtained by prescribing a unit triangular factorization. -/
-def prepDense (param : Nat) : MatInput :=
+def prepDenseCert (param : Nat) : CertInput :=
   let n := max 16 param
-  checkedInput n 0 <| toMatInput <|
+  checkedCert n 0 <| toMatInput <|
     (Matrix.ofFn fun i j => intEntry 1 i.val j.val : Matrix Int n n)
 
 /-- A dense n by r factor; its product's exact rank is checked in prep. -/
@@ -154,28 +160,23 @@ def rightFactor (r n shift : Nat) (entry : Nat → Nat → Int) : Matrix Int r n
 
 /-- Fixed-rank product. Factors have `bits`-bit entries; matrix entries can
 have up to `2 * bits + ceil(log₂ r)` bits. -/
-def prepLowRank (r bits param : Nat) : MatInput :=
+def prepLowRankCert (r bits param : Nat) : CertInput :=
   let n := max 16 param
-  checkedInput r 0 <| toMatInput
+  checkedCert r 0 <| toMatInput
     (leftFactor n r (bigEntry bits 3) * rightFactor r n 0 (bigEntry bits 5))
 
 /-- Variable-rank product of small factors, with entries bounded by 25r. -/
-def prepDeficient (rankOf : Nat → Nat) (shifted : Bool) (param : Nat) : MatInput :=
+def prepDeficientCert (rankOf : Nat → Nat) (shifted : Bool) (param : Nat) : CertInput :=
   let n := max 16 param
   let r := rankOf n
   let shift := if shifted then n - r else 0
-  checkedInput r shift <| toMatInput
+  checkedCert r shift <| toMatInput
     (leftFactor n r (intEntry 7) * rightFactor r n shift (intEntry 11))
 
-def prepDenseCert (n : Nat) : CertInput :=
-  let input := prepDense n
-  toCertInput (matrixOfFlat input.n input.m input.entries)
-def prepLowRankCert (r bits n : Nat) : CertInput :=
-  let input := prepLowRank r bits n
-  toCertInput (matrixOfFlat input.n input.m input.entries)
-def prepDeficientCert (rankOf : Nat → Nat) (shift : Bool) (n : Nat) : CertInput :=
-  let input := prepDeficient rankOf shift n
-  toCertInput (matrixOfFlat input.n input.m input.entries)
+def prepDense (n : Nat) : MatInput := (prepDenseCert n).mat
+def prepLowRank (r bits n : Nat) : MatInput := (prepLowRankCert r bits n).mat
+def prepDeficient (rankOf : Nat → Nat) (shift : Bool) (n : Nat) : MatInput :=
+  (prepDeficientCert rankOf shift n).mat
 
 def ratPolyEntry (i j : Nat) : DensePoly Rat :=
   DensePoly.ofList [(smallEntry 13 i j : Rat) / (1 + (i + j) % 3 : Nat), (smallEntry 17 i j : Rat)]
@@ -254,8 +255,10 @@ def runRankCert (input : MatInput) : Nat :=
   (rankCert (matrixOfFlat input.n input.m input.entries)).rank
 def runCheckRank (input : CertInput) : Bool :=
   match certOfInput input with
-  | some c => checkRank (matrixOfFlat input.mat.n input.mat.m input.mat.entries) c
-  | none => false
+  | some c =>
+    if checkRank (matrixOfFlat input.mat.n input.mat.m input.mat.entries) c then true
+    else panic! "integer checker rejected its prepared certificate"
+  | none => panic! "malformed flattened integer certificate"
 
 /-! Per-family bindings. -/
 
@@ -939,6 +942,7 @@ setup_benchmark lowRank2At1024 n => n * n
     paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
     maxSecondsPerCall := 120.0
     outerTrials := 6
+    targetInnerNanos := 8000000000
   }
 
 def lowRank8At1024 := runCertify
@@ -1003,8 +1007,9 @@ namespace Witness
 
 def dense := runWitness
 /- The native witness adds O((n-r)r²) integer work and O(r³)
-fixed-modulus arithmetic to certificate production (SPEC Complexity).
-These preserve n² at fixed r/bits and the Hadamard n⁵ upper bound otherwise. -/
+fixed-modulus arithmetic to certificate production (SPEC Complexity), plus
+O(nm) list conversion and O((n-r)rm) work for the native list self-check.
+The retry list of moduli has fixed length. These preserve n² at fixed r/bits and the Hadamard n⁵ upper bound otherwise. -/
 setup_benchmark dense n => hadamardBound n
   with prep := Hex.RankBench.prepDense
   where {
@@ -1017,8 +1022,9 @@ setup_benchmark dense n => hadamardBound n
 
 def lowRank2At64 := runWitness
 /- The native witness adds O((n-r)r²) integer work and O(r³)
-fixed-modulus arithmetic to certificate production (SPEC Complexity).
-These preserve n² at fixed r/bits and the Hadamard n⁵ upper bound otherwise. -/
+fixed-modulus arithmetic to certificate production (SPEC Complexity), plus
+O(nm) list conversion and O((n-r)rm) work for the native list self-check.
+The retry list of moduli has fixed length. These preserve n² at fixed r/bits and the Hadamard n⁵ upper bound otherwise. -/
 setup_benchmark lowRank2At64 n => n * n
   with prep := Hex.RankBench.prepLowRank2At64
   where {
@@ -1031,8 +1037,9 @@ setup_benchmark lowRank2At64 n => n * n
 
 def lowRank8At64 := runWitness
 /- The native witness adds O((n-r)r²) integer work and O(r³)
-fixed-modulus arithmetic to certificate production (SPEC Complexity).
-These preserve n² at fixed r/bits and the Hadamard n⁵ upper bound otherwise. -/
+fixed-modulus arithmetic to certificate production (SPEC Complexity), plus
+O(nm) list conversion and O((n-r)rm) work for the native list self-check.
+The retry list of moduli has fixed length. These preserve n² at fixed r/bits and the Hadamard n⁵ upper bound otherwise. -/
 setup_benchmark lowRank8At64 n => n * n
   with prep := Hex.RankBench.prepLowRank8At64
   where {
@@ -1045,8 +1052,9 @@ setup_benchmark lowRank8At64 n => n * n
 
 def lowRank2At1024 := runWitness
 /- The native witness adds O((n-r)r²) integer work and O(r³)
-fixed-modulus arithmetic to certificate production (SPEC Complexity).
-These preserve n² at fixed r/bits and the Hadamard n⁵ upper bound otherwise. -/
+fixed-modulus arithmetic to certificate production (SPEC Complexity), plus
+O(nm) list conversion and O((n-r)rm) work for the native list self-check.
+The retry list of moduli has fixed length. These preserve n² at fixed r/bits and the Hadamard n⁵ upper bound otherwise. -/
 setup_benchmark lowRank2At1024 n => n * n
   with prep := Hex.RankBench.prepLowRank2At1024
   where {
@@ -1055,12 +1063,14 @@ setup_benchmark lowRank2At1024 n => n * n
     paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
     maxSecondsPerCall := 120.0
     outerTrials := 6
+    targetInnerNanos := 8000000000
   }
 
 def lowRank8At1024 := runWitness
 /- The native witness adds O((n-r)r²) integer work and O(r³)
-fixed-modulus arithmetic to certificate production (SPEC Complexity).
-These preserve n² at fixed r/bits and the Hadamard n⁵ upper bound otherwise. -/
+fixed-modulus arithmetic to certificate production (SPEC Complexity), plus
+O(nm) list conversion and O((n-r)rm) work for the native list self-check.
+The retry list of moduli has fixed length. These preserve n² at fixed r/bits and the Hadamard n⁵ upper bound otherwise. -/
 setup_benchmark lowRank8At1024 n => n * n
   with prep := Hex.RankBench.prepLowRank8At1024
   where {
@@ -1073,8 +1083,9 @@ setup_benchmark lowRank8At1024 n => n * n
 
 def deficientMinusOne := runWitness
 /- The native witness adds O((n-r)r²) integer work and O(r³)
-fixed-modulus arithmetic to certificate production (SPEC Complexity).
-These preserve n² at fixed r/bits and the Hadamard n⁵ upper bound otherwise. -/
+fixed-modulus arithmetic to certificate production (SPEC Complexity), plus
+O(nm) list conversion and O((n-r)rm) work for the native list self-check.
+The retry list of moduli has fixed length. These preserve n² at fixed r/bits and the Hadamard n⁵ upper bound otherwise. -/
 setup_benchmark deficientMinusOne n => productBound n
   with prep := Hex.RankBench.prepDeficientMinusOne
   where {
@@ -1087,8 +1098,9 @@ setup_benchmark deficientMinusOne n => productBound n
 
 def deficientHalf := runWitness
 /- The native witness adds O((n-r)r²) integer work and O(r³)
-fixed-modulus arithmetic to certificate production (SPEC Complexity).
-These preserve n² at fixed r/bits and the Hadamard n⁵ upper bound otherwise. -/
+fixed-modulus arithmetic to certificate production (SPEC Complexity), plus
+O(nm) list conversion and O((n-r)rm) work for the native list self-check.
+The retry list of moduli has fixed length. These preserve n² at fixed r/bits and the Hadamard n⁵ upper bound otherwise. -/
 setup_benchmark deficientHalf n => productBound n
   with prep := Hex.RankBench.prepDeficientHalf
   where {
@@ -1101,8 +1113,9 @@ setup_benchmark deficientHalf n => productBound n
 
 def deficientHalfShifted := runWitness
 /- The native witness adds O((n-r)r²) integer work and O(r³)
-fixed-modulus arithmetic to certificate production (SPEC Complexity).
-These preserve n² at fixed r/bits and the Hadamard n⁵ upper bound otherwise. -/
+fixed-modulus arithmetic to certificate production (SPEC Complexity), plus
+O(nm) list conversion and O((n-r)rm) work for the native list self-check.
+The retry list of moduli has fixed length. These preserve n² at fixed r/bits and the Hadamard n⁵ upper bound otherwise. -/
 setup_benchmark deficientHalfShifted n => productBound n
   with prep := Hex.RankBench.prepDeficientHalfShifted
   where {
@@ -1215,10 +1228,15 @@ def rankRequest (line : String) : IO Lean.Json := do
     | some child => pure child
     | none => do
       let python := (← IO.getEnv "HEX_RANK_BENCH_PYTHON").getD "python3"
-      let script := (← IO.getEnv "HEX_RANK_BENCH_DRIVER").getD "scripts/oracle/rank_bench.py"
+      let script ← match ← IO.getEnv "HEX_RANK_BENCH_DRIVER" with
+        | some path => pure path
+        | none => do
+          let path := "scripts/oracle/rank_bench.py"
+          if ← (System.FilePath.mk path).pathExists then pure path else pure ("../" ++ path)
       let child ← Hex.BenchOracle.Flint.PersistentComparator.spawn python #[script]
       comparator.set (some child)
       pure child
+  -- Stream failure aborts the child; retrying would charge startup to timing.
   let reply ← jsonValue <| Lean.Json.parse (← child.requestLine line)
   unless ← jsonValue (reply.getObjValAs? Bool "ok") do
     throw <| IO.userError s!"rank comparator: {reply.compress}"

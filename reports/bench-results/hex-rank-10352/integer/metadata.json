@@ -286,20 +286,5 @@
       "sympy": "1.14.0",
       "sympy_ground_types": "python"
     }
-  },
-  "retained_exports": [
-    "runRowReduceDense",
-    "runRankCertDense",
-    "runCheckRankDense",
-    "runRowReduceLowRank2At64",
-    "runRankCertLowRank2At64",
-    "runCheckRankLowRank2At64",
-    "runRowReduceLowRank8At64",
-    "runRankCertLowRank8At64",
-    "runCheckRankLowRank8At64",
-    "runRowReduceLowRank2At1024",
-    "runRankCertLowRank2At1024",
-    "runCheckRankLowRank2At1024"
-  ],
-  "retention_note": "The schedule is the declared full schedule. This artifact directory contains exactly the completed exports named in retained_exports; missing targets have no verdict here."
+  }
 }

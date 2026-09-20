@@ -1,0 +1,73 @@
+Hex.RankBench.runRowReduceDeficientHalf    expected complexity: productBound n    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=bbedb47, 2026-09-20T13:46:27Z, host=chungus2
+  param  per-call    repeats  C
+     16  197.812 µs  ×2^11    C=0.001 [trial 1/6] †
+     24  849.666 µs  ×2^9     C=0.001 [trial 1/6]
+     32    2.592 ms  ×2^7     C=0.000 [trial 1/6]
+     48   10.227 ms  ×2^5     C=0.000 [trial 1/6]
+     64   26.019 ms  ×2^4     C=0.000 [trial 1/6]
+     96   92.195 ms  ×2^2     C=0.000 [trial 1/6]
+    128  240.082 ms  ×2^1     C=0.000 [trial 1/6]
+    192    1.059 s   ×2^0     C=0.000 [trial 1/6]
+    256    2.805 s   ×2^0     C=0.000 [trial 1/6]
+     16  206.327 µs  ×2^11    C=0.001 [trial 2/6] †
+     24  981.566 µs  ×2^8     C=0.001 [<floor] [trial 2/6]
+     32    2.632 ms  ×2^7     C=0.000 [trial 2/6]
+     48   10.203 ms  ×2^5     C=0.000 [trial 2/6]
+     64   26.414 ms  ×2^4     C=0.000 [trial 2/6]
+     96   92.041 ms  ×2^2     C=0.000 [trial 2/6]
+    128  241.351 ms  ×2^1     C=0.000 [trial 2/6]
+    192  969.537 ms  ×2^0     C=0.000 [trial 2/6]
+    256    2.903 s   ×2^0     C=0.000 [trial 2/6]
+     16  204.484 µs  ×2^11    C=0.001 [trial 3/6] †
+     24  865.905 µs  ×2^9     C=0.001 [trial 3/6]
+     32    2.609 ms  ×2^7     C=0.000 [trial 3/6]
+     48   10.538 ms  ×2^5     C=0.000 [trial 3/6]
+     64   26.517 ms  ×2^4     C=0.000 [trial 3/6]
+     96  105.252 ms  ×2^2     C=0.000 [trial 3/6]
+    128  387.934 ms  ×2^0     C=0.000 [trial 3/6]
+    192  994.945 ms  ×2^0     C=0.000 [trial 3/6]
+    256    2.991 s   ×2^0     C=0.000 [trial 3/6]
+     16  199.631 µs  ×2^11    C=0.001 [trial 4/6] †
+     24  862.899 µs  ×2^9     C=0.001 [trial 4/6]
+     32    2.675 ms  ×2^7     C=0.000 [trial 4/6]
+     48   10.480 ms  ×2^5     C=0.000 [trial 4/6]
+     64   26.556 ms  ×2^4     C=0.000 [trial 4/6]
+     96   97.917 ms  ×2^2     C=0.000 [trial 4/6]
+    128  236.612 ms  ×2^1     C=0.000 [trial 4/6]
+    192    1.241 s   ×2^0     C=0.000 [trial 4/6]
+    256    3.261 s   ×2^0     C=0.000 [trial 4/6]
+     16  204.704 µs  ×2^11    C=0.001 [trial 5/6] †
+     24  892.827 µs  ×2^9     C=0.001 [trial 5/6]
+     32    2.882 ms  ×2^7     C=0.000 [trial 5/6]
+     48   10.912 ms  ×2^5     C=0.000 [trial 5/6]
+     64   32.679 ms  ×2^4     C=0.000 [trial 5/6]
+     96  100.141 ms  ×2^2     C=0.000 [trial 5/6]
+    128  286.574 ms  ×2^0     C=0.000 [trial 5/6]
+    192    1.349 s   ×2^0     C=0.000 [trial 5/6]
+    256    4.022 s   ×2^0     C=0.000 [trial 5/6]
+     16  205.267 µs  ×2^11    C=0.001 [trial 6/6] †
+     24    1.492 ms  ×2^8     C=0.001 [trial 6/6]
+     32    4.441 ms  ×2^6     C=0.000 [trial 6/6]
+     48   17.360 ms  ×2^4     C=0.000 [<floor] [trial 6/6]
+     64   45.871 ms  ×2^3     C=0.000 [trial 6/6]
+     96  132.824 ms  ×2^1     C=0.000 [<floor] [trial 6/6]
+    128  301.517 ms  ×2^1     C=0.000 [trial 6/6]
+    192    1.487 s   ×2^0     C=0.000 [trial 6/6]
+    256    3.040 s   ×2^0     C=0.000 [trial 6/6]
+  verdict: inconclusive (cMin=0.000, cMax=0.001, β=-1.952, looks faster than declared by ~n^1.952)
+  per-spawn floor (harness self-measurement): 28.138 ms
+  peak RSS: 64_028 kB..102_168 kB (across 54 ok row(s))
+  trial summaries (6 trials per param; spread = (max-min)/median):
+    param  trials  median      min         max         spread 
+       16  6/6     204.594 µs  197.812 µs  206.327 µs  4.162% 
+       24  5/6     865.905 µs  849.666 µs    1.492 ms  74.143%
+       32  6/6       2.654 ms    2.592 ms    4.441 ms  69.696%
+       48  5/6      10.480 ms   10.203 ms   10.912 ms  6.764% 
+       64  6/6      26.536 ms   26.019 ms   45.871 ms  74.809%
+       96  5/6      97.917 ms   92.041 ms  105.252 ms  13.492%
+      128  6/6     263.963 ms  236.612 ms  387.934 ms  57.327%
+      192  6/6       1.150 s   969.537 ms    1.487 s   45.016%
+      256  6/6       3.015 s     2.805 s     4.022 s   40.351%
+  ‼ 3/54 ok rows were below 10.000× the per-spawn floor; those rungs are excluded from the verdict. Drop the smallest params from the declared `paramSchedule := .custom #[...]` array to skip the cold regime if the trimmed warmup isn't enough.
+exported to /tmp/hexrank-science-integer/runRowReduceDeficientHalf.json
