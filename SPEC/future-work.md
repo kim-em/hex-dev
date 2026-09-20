@@ -1435,9 +1435,11 @@ infinitesimal base and transporting the selected algebraic roots into its real
 closure, preserving their order. It cannot simply append an out-of-stage
 extension. The simpler dyadic/midpoint backend remains available.
 [#10301](https://github.com/kim-em/hex-dev/issues/10301) measures these
-alternatives and [#10303](https://github.com/kim-em/hex-dev/issues/10303)
-fixes the consumer's representation; this interface does not preempt that
-choice.
+alternatives. The [coverings SPEC](Libraries/hex-coverings.md#literal-samples-and-checked-export)
+fixes a literal integer-polynomial and isolated-parameter replay format,
+with a selected-root coefficient adapter to the shared Sturm interface.
+This family can supply alternate sample producers and root/sign evidence
+through checked export and correspondence to that format.
 
 #### Proof ownership and public surface
 

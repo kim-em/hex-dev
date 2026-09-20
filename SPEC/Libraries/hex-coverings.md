@@ -19,19 +19,27 @@ this SPEC adds no implementation, Lake target, or phase registration.
 `HexCoverings`, namespace `Hex.Coverings`, is Mathlib-free. It owns search,
 export, literal certificates, and total budgeted checkers. It consumes
 [hex-real-formula](hex-real-formula.md), `HexMvPoly`, `HexMvGcd`,
-`HexMvFactor`, `HexResultant`, `HexRealRoots`, `HexRealAlgebraic`, and
-`HexNumberField` (optionally `HexNumberFieldTower` for search storage).
+`HexMvFactor`, `HexResultant`, `HexRealRoots`, `HexRealAlgebraic`,
+`HexNumberField`, and the planned [HexSturm](hex-sturm.md) coefficient
+interface for sample replay (optionally `HexNumberFieldTower` for search
+storage).
 Projection uses `toUnivariate` and subresultants over multivariate
 coefficients; lifting can use `RealAlgebraicPoly.roots`. Factorization and
 canonical algebraic arithmetic run in the producer, not during replay.
-The propositional adapter uses Lean's verified LRAT checker API; reuse of
-the checker used by `bv_decide` requires a new formula/atom interpretation
-adapter, not invocation of the bitvector tactic on real arithmetic.
+The propositional adapter uses a kernel-reducible LRAT checker and a proved
+formula/atom interpretation. Lean's `bv_decide` tactic uses native proof
+discharge and is not the replay route. Its LRAT string parser is also not
+kernel-reducible. Parse solver output in the untrusted producer and quote
+literal actions and CNF. Reuse `Std.Tactic.BVDecide.LRAT.check` and
+`check_sound` only after a `decide +kernel` reduction probe succeeds on the
+pinned toolchain, including the array/map operations it uses. If that
+fails, `HexCoverings` owns a list-form LRAT checker with its own soundness
+theorem. The covering-tree alternative remains available.
 
-`HexCoveringsMathlib` depends on the core, `HexRealFormulaMathlib`, the
-polynomial, resultant, real-root and algebraic-number correspondence
-libraries, `HexReflectMathlib`, Mathlib, and Tau Ceti. It owns real cell
-semantics, projection correspondence, connectedness, checker soundness,
+`HexCoveringsMathlib` depends on `HexCoverings`, `HexRealFormulaMathlib`,
+`HexSturmMathlib`, the polynomial, resultant, real-root and algebraic-number
+correspondence libraries, `HexReflectMathlib`, Mathlib, and Tau Ceti. It owns
+real cell semantics, projection correspondence, connectedness, checker soundness,
 export correspondence, and tactic proof construction. The orchestration
 adapter may depend on `HexVirtualSubstMathlib` and `HexRCF`; neither shared
 formula library depends on coverings. Existing arithmetic correspondence
@@ -39,7 +47,12 @@ and univariate root theorems are reused. **Delineability is the only new
 imported deep fact** for multivariate cell correctness: no imported CAD
 completeness, single-cell soundness, or solver-correctness theorem replaces
 the Hex proofs below. No new axiom, `native_decide`, or trusted extern is
-permitted; follow [SPEC](../SPEC.md).
+permitted; follow [SPEC](../SPEC.md). Audit the emitted model, cell and
+refutation theorems with `#print axioms`: only `propext`, `Classical.choice`
+and `Quot.sound` are allowed. Reject `Lean.ofReduceBool`, generated
+`*.native_decide.ax_*` declarations and `sorryAx`, including through the
+imported delineability proof. Every acceptance equation is checked by the
+kernel; a compiled Boolean result is not evidence.
 
 ## Formula language and tactic routing
 
@@ -186,17 +199,23 @@ proofs. Budget checks apply before large allocations as well as after them.
 sign query. Its literal payload carries:
 
 1. The input/formula identity, arity and variable permutation; references to
-   the signed literals being explained, their polynomials and comparison
-   tags, and the resulting clause. No fixed width is imposed.
+   the signed literals being explained and the resulting clause. Literals
+   may be input polynomial atoms or certificate root/cell atoms, including
+   atoms introduced by earlier explanations. No fixed width is imposed.
 2. An exported sample prefix and its isolation/substitution certificates.
 3. Level families `P₁,…,Pₖ` of integer polynomials, projection witnesses,
    and a cell path. Each step is a section (equality to a root) or an open
    sector (between adjacent roots, allowing either infinity).
-4. Each finite boundary as `(polynomial ID, distinct-real-root index)` of
+4. Each finite boundary as `(polynomial ID, zero-based distinct-real-root index)` of
    that level's family, its position in the merged stack, and root isolation,
    equality/order, multiplicity and complete root-count evidence at the
    sample prefix. Lower-level families include the projection polynomials
-   required above them; top-level families include the explained atoms.
+   required above them. Each input atom's polynomial belongs to the family
+   at its highest variable level (constants are checked directly). Each
+   root atom's defining polynomial belongs to the family at its comparison
+   level, with its specified distinguished variable. Expanding a cell atom
+   recursively includes the support of all its root predicates. Every
+   lower family supplies the projection obligations of the family above.
 5. Sign evidence for the relevant family at the sample, shared across all
    literal obligations, plus references to any child covering explanations.
 
@@ -205,10 +224,15 @@ over list-form integer multivariate polynomials. Check initialization,
 pseudo-division identities, exact quotient identities, nonzero divisors,
 normalization signs/scales, degree descent, terminal zero and defective
 degree gaps. Hex's public Brown chain omits gap zeros and auxiliary scalars;
-it cannot by itself enumerate the candidate's complete PSC set. The bridge
-must reconstruct all requested PSCs and prove their exact determinant
-normalization, including zero/constant/derivative-zero cases. Determinant
-replay can handle exceptional cases. A recurrence with an unchecked zero
+it cannot by itself enumerate the candidate's complete PSC set. The
+correspondence layer must account for all requested PSCs and their
+determinant normalization, including zero/constant/derivative-zero cases.
+A stored representative `q'` may replace an exact PSC `q` only with a checked
+identity `c*q = q'` for a nonzero integer `c`, including its sign, so sign
+invariance of `q'` entails that of the original `q`. Zero PSCs need a checked
+zero identity. This permits differing minor-order conventions without
+changing the projection set in `hproj`. Determinant replay can handle
+exceptional cases. A recurrence with an unchecked zero
 scaling factor proves nothing and is rejected.
 
 Every member of `projection Pᵢ` must have a lower-level sign-invariance
@@ -228,8 +252,28 @@ root counts between dyadic endpoints and at infinity, and equality/order
 when intervals overlap. Their union supplies every distinct root of every
 nonzero family member, with no duplicates or extras in the merged stack.
 All finite roots have dyadic isolating intervals; a sector sample can be
-rational after refinement. This algebraic-coefficient replay and its
-correspondence are new work, not an already available Hex API.
+rational after refinement.
+
+Implement this as a selected-root coefficient instance of the planned
+`CoeffOps` interface described in [hex-sturm](hex-sturm.md#coefficients-and-evidence),
+whose record is owned by `HexPoly` and whose shared recurrence/replay is
+owned by `HexRealRoots`. HexCoverings owns the literal parameter-context
+adapter and its evidence callbacks; its companion proves their interpretation
+in `ℚ(θ)`. Since `m` need not be irreducible, do not assume that `ℚ[t]/(m)`
+is a field. Use raw rational expressions with checked denominators at the
+selected root. Coefficient evidence is bound to the exact context and
+operands, is finite and acyclic, and reduces to univariate literal checks;
+it cannot recursively justify its own sign. No second Sturm recurrence is
+introduced. This adapter and its correspondence are new implementation
+obligations, not an already available Hex API.
+
+The planned `HexSignDet` root descriptors and `HexRealClosure` sample
+interface may supply alternative producers/evidence through explicit
+adapters, with those libraries becoming dependencies of the adapters.
+They preserve root identity, order and the real sample denotation required
+here. Infinitesimal samples require finite-sign realization at an ordinary
+real tuple before export. They do not enter this literal certificate as
+non-real witnesses.
 
 For sign evaluation, exact univariate replay in `ℚ[t]` is the baseline.
 Interval evaluation may certify a separated strict sign only after checked
@@ -238,7 +282,7 @@ containment excludes zero; an interval containing zero cannot certify zero.
 Thom/sign-determination interfaces in
 [#10311](https://github.com/kim-em/hex-dev/issues/10311) and
 [#10313](https://github.com/kim-em/hex-dev/issues/10313) can replace local
-root/sign evidence once their soundness bridges exist. The current RCF
+root/sign evidence once their soundness correspondences exist. The current RCF
 Sturm checker is derivative-specific, not a general Sturm–Tarski checker.
 
 ## Constructing the theorem's hypotheses
@@ -283,8 +327,11 @@ For a cell `C` and signed literals `L₁,…,Lᵣ`, the checked explanation prov
 `∀ρ, ρ ∈ C → ¬(L₁ ρ ∧ … ∧ Lᵣ ρ)`, using invariant signs and the Boolean
 conflict. The clause is `¬C ∨ ¬L₁ ∨ … ∨ ¬Lᵣ`. Check all polynomial and
 literal IDs against that conclusion; a false literal at the sample is
-insufficient without its invariance on `C`. A prefix cell may exclude all
-extensions only with checked child coverage, not from one failed lift.
+insufficient without its invariance on `C`. Root-literal truth also requires
+the checked root-index correspondence and order invariance for its defining
+polynomial on that cell; cell-literal truth composes those guarded facts.
+A prefix cell may exclude all extensions only with checked child coverage,
+not from one failed lift.
 
 For LRAT, emit checked CNF definitions for cell guards and Tseitin nodes.
 Cell clauses are axioms **of the propositional refutation only**: each
@@ -293,8 +340,12 @@ comes with the theorem above. Coverage clauses such as
 cover every fiber above base `B`, including both unbounded ends and every
 section endpoint. Local sample order is transported over `B` by a common
 Collins delineation; children with different supports require a checked
-common refinement and inclusion proofs. These coverage/definition clauses
-are necessary to relate new cell atoms; LRAT does not discover their real
+common refinement and inclusion proofs. For the union family, re-establish
+all projection obligations at every lower level of `B`'s cell chain. If
+`B` is not invariant for that enlarged projection, subdivide `B` into
+certified base cells and prove they cover `B` before combining their
+fiber covers. Sign invariance for an earlier, smaller family is insufficient.
+These coverage/definition clauses are necessary to relate new cell atoms; LRAT does not discover their real
 meaning. Learned resolvents instead cite LRAT derivations. An external
 solver verdict, trace, or reduced-projection explanation is not such a proof.
 
@@ -419,11 +470,14 @@ Measure per-explanation cost against its sign count and shared-data size;
 contrast interval strict-sign proofs with exact zeros and Thom/Tarski replay
 across degree/height regimes once available. Z3/cvc5 timings are
 informational comparisons of different solvers/proof obligations; no claim
-of parity with an uncertified verdict is an acceptance gate.
+of parity with an uncertified verdict is an acceptance criterion.
 
 Follow [benchmarking](../benchmarking.md) and [Phase 4](../../PLAN/Phase4.md):
 compiled benches remain Mathlib-free, proof probes use fresh `lake build`
 modules with matched imports, and record both kernel work and wall time.
+Include LRAT kernel reduction, literal action/CNF construction, rejected
+proofs, and the emitted theorems' axiom audit in these probes. Report LRAT
+replay independently of algebraic cell checking.
 Use the shared host, one automatically selected CPU where supported, fixed
 trial-major schedules, adjacent alternating AB/BA arms, and retain every
 completed sample. At most one unchanged rerun follows an inconclusive
@@ -439,7 +493,13 @@ disagreement or evidence of unsatisfiability. Use python-flint for rational
 univariate residues, gcds, root counts and signs, and existing canonical
 Hex arithmetic as an additional sample cross-check. External solvers are
 oracles or untrusted producers only. A solver lacking suitable evidence
-cannot bypass replay. The `core` profile uses no external oracle.
+cannot bypass replay. Z3 and cvc5 are `if_available` in `ci`; at least one
+pinned solver is `required` in the `local` acceptance campaign, with the
+chosen solver recorded. Record unavailable optional oracles as skips.
+The `core` profile uses no external oracle. Extend
+`scripts/ci/run_oracles.sh` and the existing install step when implementing
+these tests, following [CI](../CI.md); do not add jobs or a matrix per
+oracle. python-flint uses the existing oracle dependency.
 
 Follow [testing](../testing.md) with typical, edge and adversarial cases per
 operation. Include the corpus above and negative mutations: omitted PSC,
