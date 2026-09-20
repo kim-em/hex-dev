@@ -1,0 +1,8 @@
+Hex.RankBench.runRatPolyCert8    [fixed] repeats=2
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=041918a-dirty, 2026-09-20T12:06:50Z, host=chungus2
+  repeat 0  20.300 ms  (×2^4, total 324.799 ms)
+  repeat 1  20.150 ms  (×2^4, total 322.399 ms)
+  median: 20.300 ms    min: 20.150 ms    max: 20.300 ms
+  hash: all repeats agree
+  observed hash: 0x8
+  peak RSS: 68_404 kB..68_408 kB (across 2 ok repeat(s))
