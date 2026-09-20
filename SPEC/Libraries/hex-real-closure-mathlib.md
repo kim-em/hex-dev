@@ -23,7 +23,7 @@ there is no dependency on `HexInterval` or `HexIntervalMathlib`. Analytic
 constant-provider implementations and proofs are outside this family. Keep
 four computational libraries and four companions. No computational library imports this companion,
 Mathlib or Tau Ceti; no existing input, including hex-real-algebraic, gains
-an import of this family. Generic polynomial algorithms consume the ordinary lawful coefficient field;
+an import of this family. Generic polynomial kernels consume ordinary total representation operations;
 they do not import selected-root implementations.
 
 Planned modules are `Model`, `Correspondence`, `Split`, `Roots`, `Union`,
@@ -47,14 +47,15 @@ For relative semantics fix
 The field hom is injective. No Archimedean, rational separation or ordinary
 topological connectedness hypothesis is implicit. `K` is the semantic
 coefficient field of the current level; `B` below denotes the fixed base
-before any algebraic adjunctions. Executable polynomials are `DensePoly K`
-with exact field equality and `degree?`; identify them with `Polynomial K`
-through HexPolyMathlib and map along `ι`. Match the executable core field/order
-dictionaries with Mathlib structures by their operation laws. Signs are
+before any algebraic adjunctions. Executable polynomials are `DensePoly E`
+for the canonical-zero representation `E`. Interpret coefficients in `K`,
+reflect zero to preserve degree, and map along `ι`. The representation map
+need not be injective. Canonical-field specializations retain the existing
+HexPolyMathlib correspondence. Signs are
 integers in `{-1,0,1}`, translated explicitly to `SignType`.
 
-The predecessor carrier is already a lawful executable ordered field before
-this algebraic level is constructed. A real transcendental predecessor obtains
+The predecessor has executable total operations before this algebraic level
+is constructed; this companion establishes their ordered-field interpretation. A real transcendental predecessor obtains
 its order from the caller's approximation correctness, convergence and relative
 transcendence hypotheses via ordered-fn. Optional bounded expression-level
 sign attempts without those hypotheses do not provide the field `K`. A tactic
@@ -122,29 +123,21 @@ the imported Thom order rule. Different defining polynomials require the
 sign-det common squarefree-product comparison, not comparison of raw sign
 vectors or overlap of isolating intervals.
 
-Prove the computational owner's `Root.Laws d` for every valid descriptor
-using `SignDet.signAt_correct` and its unique selected root. The package
-states sign laws over predecessor polynomials only: constants, negation,
-products, zero/positive addition and vanishing of the defining polynomial.
-It contains no current-level quotient or field assumption. This witness
-instantiates the core's conditional equivalence, quotient descent, executable
-equality and field/order constructions. Keep it distinct from the
-noncomputable ambient interpretation; no runtime choice of representatives
-or inverses is hidden in the witness.
+The computational owner uses canonical-zero representatives `Element ctx`,
+not an already lawful field. Follow the
+[execution contract](../real-closure-execution.md): prove interpretation of
+actual arithmetic and sign, zero reflection, and polynomial degree/operation
+correspondence. The map from representatives need not be injective. These
+proofs do not enter the executable constructors or readers.
 
-The proof proceeds by tower induction. Current-level sign determination
-uses only the predecessor field and its established correspondence. The
-resulting `Root.Laws d` then justifies the next carrier and all its instances.
-A closed tower computation needs this companion witness at elaboration even
-though the compiled runtime erases it. Do not claim that the proof-only
-parameter alone supplies a closed Mathlib-free benchmark or demonstration.
-
-An element is a polynomial representative `q(α)` over the predecessor
-field, recursively interpreted. Degree below `degree p` is not required.
-For valid elements prove that `eval a = eval b` is equivalent to the core
-relation `signAt d (a-b)=0` (`Element.eq_iff`). Reuse the core’s conditional
-equivalence and congruence theorems through that identification; do not
-construct a second quotient. Prove the following interpretation statements:
+Prove this by tower induction. Sign determination at the current root uses
+only predecessor operations and their established interpretation. Define
+`a ≈ b` by equal selected-root denotations and prove equivalence to the
+computational zero-sign-of-difference test (`Element.eq_iff`). A `Root.Laws`
+lemma may organize the proof but is not a core construction requirement.
+Construct `Value ctx` as the semantic quotient, then prove operation descent,
+executable equality and field/order laws. Do not assume a current-level field
+instance to justify the operations used to construct it.
 
 | Planned statement | Required conclusion |
 | --- | --- |
@@ -161,14 +154,16 @@ chosen Lean-core field/order dictionaries with Mathlib through evaluation.
 Build the Mathlib instances with the same executable operations and verify
 `Field.toGrindField` recovers the selected core instance definitionally, as
 `HexRealAlgebraicMathlib.Instances` does; verify order decisions likewise.
+These instances are on the semantic quotient, not the raw representation.
 The total inverse has `0⁻¹=0`; the checked nonzero inverse returns `none` exactly on zero.
 Rational-base ambient existence is discharged by `RealAlgebraicNumber`;
 real-base existence uses the shared `IsRealClosed ℝ` instance. Infinitesimal
 field laws remain relative to a supplied model until Tau Ceti existence lands.
-In every case executable totality uses the predecessor total field/order
-operations, including relative transcendence where real-constant order needs it.
-Semantic maps may be noncomputable; runtime quotient operations use the
-computational sign and split algorithms, with erased termination/law evidence.
+Executable totality uses predecessor representation operations and the
+structural/size bounds in the execution contract. Real-constant search alone
+retains its erased progress premise. Semantic maps may be noncomputable;
+quotient operations lift the same computational sign and split algorithms,
+with their companion descent proofs.
 Prove this construction by tower induction: sign determination at the current
 root uses only predecessor field operations; local inversion uses that sign
 and predecessor gcd/xgcd. No operation invokes an as-yet-unconstructed
@@ -524,25 +519,17 @@ array/matrix dimensions; these are complexity obligations, not an alternative
 fallible arithmetic interface.
 
 Follow [testing](../testing.md) and [benchmarking](../benchmarking.md).
-`HexRealClosure` owns the generic algorithms and core-instantiated conformance.
-This companion owns executable context-construction and reader entry points
-that pass proved root laws to those algorithms. Its dedicated conformance
-target tests closed tower applications using these entry points, so it is not
-`correspondence_only: true`. Wire that target into the existing single CI job.
-No arithmetic, query or isolation algorithm is reimplemented here. Benchmark
-placement is a separate contract; a conformance target does not grant a
-Mathlib-importing computational benchmark an exception to repository policy.
-Build-only proof examples and optional `CrossCheck` modules continue to check
-semantic correspondence separately from runtime fixture comparisons.
+`HexRealClosure` owns executable constructors, readers, algorithms, closed
+tower conformance and Mathlib-free benchmarks. This companion is
+`correspondence_only: true`: it proves their interpretation, semantic quotient
+laws and validity/completeness. Build-only proof examples and optional
+`CrossCheck` modules audit those statements; they do not supply erased law
+arguments merely to run the algebraic algorithms.
 
-The wrappers explicitly apply the universal root-law theorem to each runtime
-descriptor; they do not rely on typeclass search to discover an indexed proof.
-The theorem is relative to the supplied ordered real closed ambient field.
-For infinitesimal bases, complete closed-tower conformance awaits actual Tau
-Ceti existence and univariate-correctness proofs. A Hahn field alone, an open
-roadmap or an unproved law parameter cannot instantiate those tests. Rational
-and real-embedded bases have the stated ambient models, but still require the
-actual imported sign-determination theorems.
+For infinitesimal bases the semantic proofs require actual Tau Ceti ordered
+real-closure existence and univariate correctness. A Hahn field alone or a
+roadmap is not that proof. Core differential tests may run before these
+proofs land; their success must not be reported as proof completion.
 
 Use computational Z3 fixtures (pinned version/command/input/output) for
 infinitesimal signs, selected roots and comparisons, and python-flint plus

@@ -735,8 +735,11 @@ of the new pseudo-division identities, degree descent and fraction-field
 pseudo-gcd guards; the arithmetic owner proves their ordinary core laws.
 `degree? = none` corresponds to zero, and `some d` to a nonzero polynomial
 of degree `d`. There is no fallible-record interpretation or parallel raw
-polynomial representation. Selected-root quotients acquire lawful equality
-and operations in their owning companion before being instantiated here.
+polynomial representation. For canonical-zero representation coefficients,
+use the [execution contract](../../SPEC/real-closure-execution.md): first
+interpret them in `D` with operation/sign preservation and zero reflection.
+That map need not be injective. Prove degree and actual kernel correspondence
+before composing with `j`; quotient laws are not executable prerequisites.
 
 Endpoint representations have a total interpretation in `R` and correct
 comparison/evaluation operations; dyadics need not belong to `D`. Prove exact

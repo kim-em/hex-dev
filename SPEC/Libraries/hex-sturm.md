@@ -34,32 +34,24 @@ Archimedean separation, CAD, coverings, or tactic completeness claim here.
 
 ## Coefficients and evidence
 
-The field frontend uses a lawful executable carrier `K` with
-`[Lean.Grind.Field K] [LE K] [LT K] [Std.IsLinearOrder K]`
-`[Std.LawfulOrderLT K] [Lean.Grind.OrderedRing K] [DecidableEq K]`
-`[DecidableLE K] [DecidableLT K]`. These are Lean core classes, not a new
-ordered-field class. The decisions implement equality/order on that carrier;
-classical noncomputable decisions are not an executable implementation.
-The field need not be real closed or Archimedean.
+Use the shared [execution contract](../real-closure-execution.md).
+The canonical specialization uses the usual Lean-core field/order classes.
+The representation specialization uses ordinary total arithmetic, structural
+`DecidableEq`, canonical zero and an executable sign. Both call the same
+`DensePoly` signed-remainder/query kernel. Representation types receive no
+false field/order instances; lawful-field hypotheses belong to interpretation
+and correctness theorems. The field need not be real closed or Archimedean.
 
-The shared pseudo-remainder kernel needs only a nontrivial ordered
-commutative domain `D`, total ring operations and decidable equality/order.
-State its core domain laws using the available Lean core classes or explicit
-Prop hypotheses; do not require `Field Int`. Field hypotheses are added only
-for the frontend's division-dependent operations. Signs are integers
-`-1,0,1`, obtained by comparison with zero.
+The pseudo-remainder kernel needs no coefficient division: its interpretation
+is a nontrivial ordered commutative domain. Integers are an actual instance;
+no `Field Int` is required. For noncanonical coefficients, semantic polynomial
+identities test zero differences, while structural equality is only a fast
+path. Degree and trailing-zero normalization use the unique stored zero.
+No parallel polynomial AST or second Tarski primitive is introduced.
 
-Polynomials are existing `DensePoly K` (or `DensePoly D` in the kernel).
-Their normalized storage and `degree?` use actual coefficient equality.
-Noncanonical selected-root representatives acquire a lawful executable
-quotient/equality interface in the extension owner before becoming coefficients.
-There is no raw-array polynomial arithmetic parallel to `DensePoly`.
-
-Transcendental coefficients enter through total ordered fields whose sign
-termination is justified by caller-supplied approximation, convergence and
-relative-transcendence hypotheses. An optional bounded sign attempt is not
-an instance of this interface. There is no propagation of oracle exhaustion
-through the polynomial or Sturm algorithms.
+Transcendental coefficients supply total sign with the caller's core-expressible
+progress witness. Optional bounded sign attempts cannot serve as coefficient
+signs. There is no propagation of oracle exhaustion through Sturm arithmetic.
 
 Prove ordinary arithmetic and order correspondence once. A query replay
 carries the polynomial identities and signs needed by the query theorem.

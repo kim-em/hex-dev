@@ -42,6 +42,15 @@ Mathlib's `SignType.sign`, using the integer images of `neg`, `zero`, `pos`.
 In the statements below `sgn` denotes that integer-valued semantic sign.
 Prove the compatibility once and reuse the ordered-field sign laws.
 
+Executable sign/refinement follows the
+[shared execution contract](../real-closure-execution.md). The core takes
+only its rational-bound procedures and core-expressible progress proof.
+This companion derives progress and order laws from containment, convergence
+and relative transcendence, but order laws are not executable arguments.
+Finite checked-success proofs can instantiate individual total searches in
+Mathlib-free benchmarks; they do not replace the universal semantic integration
+fixture or prove a whole constant registration.
+
 ## Inputs and proof ownership
 
 Audit against the [pinned Mathlib](../../lake-manifest.json), revision
@@ -90,13 +99,18 @@ operations, including inverse at zero. Injectivity follows from the field
 hom once denominator nonvanishing has justified its construction. No
 comparison implementation uses real comparison internally.
 
-The caller supplies `approxCoeff : K → Nat → Oracle.Bounds` and
-`approxConst : Nat → Oracle.Bounds`. For a finite closed bound `I`, define
-`Contains I x := (I.lower : ℝ) ≤ x ∧ x ≤ (I.upper : ℝ)`. State correctness
-as containment of `ι a` and `τ` for every precision. State effective
-convergence separately: width is at most `2^(-k)` at requested precision k,
-or after a specified computable rescheduling that gives this property.
-Containment alone suffices for finite successful-sign soundness.
+The caller supplies computational `approxCoeff : K → Rat → Oracle.Bounds`
+and `approxConst : Rat → Oracle.Bounds`, separate rational width proofs,
+and separate containment proofs for the specific `ι,τ`. For a finite closed
+bound `I`, define `Contains I x := (I.lower : ℝ) ≤ x ∧ x ≤ (I.upper : ℝ)`.
+The width theorem states `I.width ≤ δ` for every positive rational request;
+the containment theorem states that the returned interval contains `ι a` or
+`τ` for that same request. Both belong to the verified oracle contract.
+Neither theorem is bundled into each approximation result or executed by the
+bound evaluator. Containment alone suffices for a finite successful sign's
+soundness; adding the width guarantee along `δ=2^(-n)` gives convergence to
+the intended values. Width alone just bounds interval size and proves no
+semantic assertion. Prove all composition against these exact functions.
 
 Prove containment of exact rational singleton, negation, addition,
 four-endpoint-product multiplication and successful intersection. When the
@@ -125,7 +139,7 @@ Horner convergence therefore gives
 
 ```text
 ApproximationCorrect ι τ approxCoeff approxConst →
-ApproximationConverges approxCoeff approxConst →
+ApproximationWidth approxCoeff approxConst →
 RelativeTranscendence ι τ →
 ∀ f : RationalFn K, ∃ N, ∀ n ≥ N, (Real.attempt f n).isSome = true.
 ```
@@ -163,7 +177,7 @@ embedding, containment, convergence and relative-transcendence assumptions:
 | `Real.compare_eq` | Comparing f and g agrees with comparing their images in ℝ. |
 | `Real.eval_lt`, `eval_le` | The executable order is the pullback of real order. |
 | `Real.C_lt` | `C a < C b ↔ a < b`. |
-| `Real.approx_correct` | `Real.approx f k` contains `evalHom f` and has width at most `2^(-k)`. |
+| `Real.approx_correct` | `Real.approx f δ` contains `evalHom f` and has width at most positive `δ`; these are separate theorems about the computational function. |
 
 Use sign under negation/multiplication and positivity of sums to supply the
 core ordered-ring/linear-order laws. Provide compatible Mathlib `Field`,

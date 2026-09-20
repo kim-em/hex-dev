@@ -1093,8 +1093,11 @@ normalization and scope/variable proofs are reused as they stand.
 
 For `q : RealFormula.Poly (m+1)`, group monomials by the last coordinate's
 exponent and evaluate their first `m` coordinates using ordinary arithmetic
-in the lawful coefficient field `K`. Produce `DensePoly K`, with
-`Specialize.eval` proving its real evaluation equals `q.eval (append ρ x)`.
+on the family's executable coefficient representations `E`. Produce
+`DensePoly E`, with `Specialize.eval` proving its interpreted real evaluation
+equals `q.eval (append ρ x)`. Use the
+[shared execution contract](../../SPEC/real-closure-execution.md); the
+interpretation need not be injective but must reflect zero.
 Reuse degree correspondence and retain the original source-domain proofs. The sentence
 remains `Prenex m` interpreted at this **fixed** `ρ`; no new formula AST is
 needed. Formula traversal, comparisons and Boolean folds use shared syntax.
@@ -1227,8 +1230,9 @@ extension performance evidence.
 
 ### Construction, evidence and public API
 
-Use the family's lawful coefficient fields, ordinary roots/selected-root
-operations and section/sector samples. Existing total
+Use the family's ordinary total representation operations, roots/selected-root
+operations and section/sector samples, with their companion interpretation
+proofs at the tactic boundary. Existing total
 [polynomial arithmetic](../../HexPoly/SPEC/hex-poly.md) supplies the coefficient
 computations. No shared fallible coefficient record or arithmetic budget is
 introduced. These shapes describe the tactic integration surface:
@@ -1237,7 +1241,7 @@ introduced. These shapes describe the tactic integration surface:
 | --- | --- |
 | `Coefficients.prepare` | Recognize supported closed syntax and establish its embedding/source identities and original divisor guards. |
 | `Specialize.prepare` | Given the shared sentence and its fixed coefficient values, produce `DensePoly K` atoms and the evaluation correspondence. |
-| `build` | Over an exact lawful coefficient field, construct the verdict and finite complete cell certificate. |
+| `build` | Using total representation operations/sign, construct the verdict and finite complete cell certificate; correctness assumes their lawful semantic interpretation. |
 | `Replay.check` | Validate the supplied certificate against its bound inputs; reject malformed evidence. |
 | `check` | Accept precisely a verified true verdict. An accepted false verdict remains diagnostic. |
 | `check_sound` | Transport accepted evidence to the original real proposition. |
@@ -1523,7 +1527,7 @@ missing algorithm or theorem obligations.
 | [Sturm](../../SPEC/Libraries/hex-sturm.md) and [companion](../../SPEC/Libraries/hex-sturm-mathlib.md) | Domain-checked ordered-field Tarski queries, endpoint adapters, complete root counts and nested coefficient replay/transport soundness. |
 | [Sign-det](../../SPEC/Libraries/hex-sign-det.md) and [companion](../../SPEC/Libraries/hex-sign-det-mathlib.md) | Complete BKR support/counts, Thom existence/uniqueness/order, sign-at-root, common-root re-encoding and their literal correspondence, using the existing matrix/rank companions. |
 | HexRealAlgebraic / HexRealAlgebraicMathlib | Existing `toReal`, exact comparison, `RealAlgebraicPoly.roots` with multiplicities/`all`, and Repr correspondence; new tower conversions and trivial-base agreement must be proved. |
-| [Real-closure](../../SPEC/Libraries/hex-real-closure.md) and [companion](../../SPEC/Libraries/hex-real-closure-mathlib.md) | Implemented contexts and lawful coefficient carriers, selected-root interpretation, splitting/all-live transport, Yun and complete ordered roots, shared samples and real `Sample.realizeReplay` including joint nested constraints. SPEC #10318 is merged; these APIs/proofs are planned. Total quotient/search laws are additional prerequisites for total algebraic APIs. |
+| [Real-closure](../../SPEC/Libraries/hex-real-closure.md) and [companion](../../SPEC/Libraries/hex-real-closure-mathlib.md) | Implemented contexts and total coefficient representations, selected-root interpretation, splitting/all-live transport, Yun and complete ordered roots, shared samples and real `Sample.realizeReplay` including joint nested constraints. SPEC #10318 is merged; these APIs/proofs are planned. Quotient and interpretation laws are proof prerequisites; core algebraic execution is independent of them. Transcendental search retains its caller progress premise. |
 | Tau Ceti through the owning companions | Univariate IVT/Rolle, signed-remainder/Cauchy-index, Thom and BKR foundations from the existing #10300 roadmap work. Ordered algebraic real-closure existence is additionally needed for symbolic infinitesimal ambient models; direct finite replay into ℝ does not need that existence theorem. Continue the existing roadmap PR, never a duplicate. |
 | This optional HexRCF adapter | Coefficient/source authentication, shared-schema abstraction/specialization, generic carrier/cell and half-open correspondence, finite real witness export, quotation, `check_domains`, `check_sound`, construction termination and certificate acceptance, manual examples and both evidence tracks. |
 

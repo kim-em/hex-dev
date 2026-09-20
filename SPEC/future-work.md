@@ -1192,9 +1192,11 @@ Tau Ceti. There is no reverse dependency from `hex-poly`, `hex-rational-fn`,
 `hex-interval` nor `hex-interval-mathlib` is an input to this family.
 CAD, coverings and tactic integration are downstream clients, never imports of
 these computational libraries. Reuse existing total `DensePoly` and
-`RationalFn` arithmetic over lawful coefficient carriers. Ordinary
-ordered-domain pseudo-division is the missing lower arithmetic; approximation
-and selected-root representation laws belong to their extension owners.
+`RationalFn` arithmetic over canonical prealgebraic fields. Algebraic
+coefficients use the [shared execution contract](real-closure-execution.md):
+canonical-zero representations and ordinary total operations reuse `DensePoly`;
+companions prove their noninjective interpretation and semantic field laws.
+Ordinary ordered-domain pseudo-division is the missing lower arithmetic.
 
 #### One Sturm–Tarski primitive
 
@@ -1205,24 +1207,21 @@ below also govern the other family directives. The
 [hex-sturm-mathlib SPEC](Libraries/hex-sturm-mathlib.md) fixes the companion
 statements and the shared theorem contract in hex-real-roots-mathlib.
 
-For total semantic field carriers, use Lean core's `Lean.Grind.Field`,
-`Lean.Grind.OrderedRing`, total-order classes from `Init.Data.Order`, and
-decidable comparison/equality. `OrderedRing` alone does not imply totality. Do
-not put these instances on raw algebraic representatives whose structural
-equality differs from equality at the selected root, or on a bounded sign
-oracle that may exhaust. Exact algebraic field instances require a quotient by
-selected-root equality, with executable operations and a proved equality
-decision; raw syntax remains a separate representation.
+For semantic fields use Lean core's existing field/order classes, with
+compatible Mathlib instances in companions. Do not install them on raw
+selected-root representatives or on a bounded sign attempt.
 
-Use total ring/field operations and executable equality/order throughout the
-polynomial algorithms. `DensePoly` normalization uses equality in the actual
-coefficient carrier; the extension owner proves its executable semantic
-equality before instantiation. No shared fallible coefficient records,
-resource budgets, per-operation evidence or second raw polynomial system are
-required. Ordinary arithmetic has correctness theorems. Tarski/BKR replays
-retain mathematical identities and sign evidence at the query/proof boundary.
-The optional bounded transcendental sign attempt is separate from this exact
-field interface and cannot instantiate it.
+The [execution contract](real-closure-execution.md) separates ordinary total
+representation operations from semantic field laws. Canonical-zero storage
+lets the existing `DensePoly` kernels use honest structural `DecidableEq`;
+nonzero representations need not be canonical. Semantic identities and replay
+use zero differences. Companions prove noninjective interpretation, zero
+reflection and operation/sign preservation, then quotient field laws.
+Algebraic constructors and readers do not require those proofs to execute.
+There is no second Tarski primitive, fallible arithmetic record or benchmark
+import exception. Transcendental refinement keeps an erased caller progress
+premise; finite per-input benchmarks can prove it by a checked successful
+precision without claiming a universal transcendental field registration.
 
 Generalize the arithmetic primitive **in place below the family**: one
 positive-scaled signed-remainder/query-replay kernel in `hex-real-roots`, over
@@ -1345,8 +1344,12 @@ the infinitesimal inequality in Hex. Obtaining a real closed ambient field for
 this model is a separate existence obligation described below; a Hahn field
 with exponent group `ℤ` is not itself real closed.
 
-For a real constant `τ`, the caller supplies a bounded approximation procedure,
-its exact finite-bound evidence and soundness laws, and, for totality, an effective precision schedule with widths tending to zero. Refinement must
+For a real constant `τ`, the caller supplies `approx : Rat → Bounds`,
+plus separate containment and width proof functions. For every positive
+rational request `δ`, the returned interval must contain that specific `τ`
+and have width at most `δ`. Both guarantees are required; approximation
+execution itself calls only the data function. Requesting `δ=2^(-n)` gives
+the effective convergence schedule. Refinement must
 also enclose all preceding real coefficients. Refine numerator and denominator
 until their signs are separated from zero, handling formal zero first. The
 semantic hypothesis is transcendence over the **embedded preceding field**,
@@ -1407,9 +1410,10 @@ descriptor. Elements have polynomial representatives `q(α)` with semantic
 equality at that root. Since `p` need not be irreducible, **do not install a
 field instance on `K[X]/(p)`** or use equality of remainder arrays as field
 equality. Equality of values is the certified zero sign of the difference at
-`α`. The total public field carrier quotients representatives by this
-equivalence, with executable quotient operations and equality proved in the
-extension library. A quotient operation may recompute a split purely; persisting splits
+`α`. Executable elements have canonical zero and ordinary total operations,
+with structural equality kept distinct from semantic equality. The companion
+constructs the semantic quotient field and proves correspondence; executable
+contexts do not take its law proofs. An inverse may recompute a split purely; persisting splits
 is a context optimization whose denotation invariance must be proved.
 
 For inversion, establish `q(α) ≠ 0` first, then compute `g = gcd(p,q)`. If `g`
@@ -1445,9 +1449,10 @@ points are emitted once and excluded from subsequent open intervals. For
 example, at most `2*(deg p+1)` bisection nodes precede the fallback;
 correctness is independent of that policy because the finite BKR fallback
 handles all remaining roots. No user accuracy threshold controls completeness.
-The totality claim uses the lawful total coefficient field. Degree descent,
-the finite BKR recursion, bounded
-bisection and coefficient-sign termination are separate proof obligations.
+The executable uses structural or internally size-bounded recursion. Prove
+adequacy and completeness under the lawful semantic interpretation. Degree
+descent, finite BKR recursion, bounded bisection and coefficient-sign progress
+are separate obligations; see the [execution contract](real-closure-execution.md).
 
 `hex-sign-det` owns single-polynomial root descriptors, their identity, order,
 sign evaluation and replay. `hex-real-closure` owns the tower-level sample
@@ -1479,8 +1484,11 @@ rederive that foundation independently in Hex. The following are mathematical
 statement shapes, not claims that the named Lean declarations already exist.
 Let `R` have `[Field R] [LinearOrder R] [IsStrictOrderedRing R]` and
 `[IsRealClosed R]`, and let `ι : K →+* R` be an order-preserving embedding.
-Use the actual lawful coefficient field `K`, then map `DensePoly K`
-coefficientwise along `ι`, reusing polynomial correspondence.
+Canonical fields retain the existing polynomial correspondence. For
+representation coefficients `E`, first interpret `DensePoly E` in `Polynomial K`
+with operation preservation and zero reflection; that map need not be
+injective. Then map along `ι`. Zero reflection, not representative uniqueness,
+preserves degree.
 
 | Owner/consumer | Imported statement from Tau Ceti | Correspondence proved in Hex |
 | --- | --- | --- |

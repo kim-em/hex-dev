@@ -1,0 +1,35 @@
+name = "rcfRepresentationPrototype"
+version = "0.1.0"
+defaultTargets = ["Prototype"]
+[[lean_lib]]
+name = "HexPoly"
+srcDir = "../.."
+globs = ["HexPoly.*"]
+[[lean_lib]]
+name = "Prototype"
+[[lean_exe]]
+name = "representationPrototype"
+root = "Main"
+
+[[lean_lib]]
+name = "Search"
+
+[[lean_lib]]
+name = "HexRationalFn"
+srcDir = "../.."
+globs = ["HexRationalFn.*"]
+
+[[lean_lib]]
+name = "HexPolyFast"
+srcDir = "../.."
+globs = ["HexPolyFast.*"]
+
+[[lean_lib]]
+name = "HexTruncatedSeries"
+srcDir = "../.."
+globs = ["HexTruncatedSeries.*"]
+
+[[lean_lib]]
+name = "HexBasic"
+srcDir = "../.."
+globs = ["HexBasic.*"]

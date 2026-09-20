@@ -146,14 +146,17 @@ hex-gfq-ring, and hex-berlekamp-mathlib (Berlekamp correctness proof).
 The [ordered-field Sturm contract](../../SPEC/Libraries/hex-sturm.md) uses
 ordinary `DensePoly D` over a nontrivial ordered commutative domain with
 executable equality. Preserve the existing total polynomial operations and
-field algorithms. Coefficient equality is equality in `D`; an extension
-library must establish its lawful carrier and executable equality before
-using it here. Raw selected-root syntax is not that carrier.
+field algorithms. For representation coefficients follow the family
+[execution contract](../../SPEC/real-closure-execution.md): structural equality
+and canonical zero permit the same `DensePoly` storage and kernels, without
+field instances on raw syntax. Correctness uses an operation-preserving
+interpretation which reflects zero; semantic identities test zero differences.
 
 The additional arithmetic needed by signed remainder chains is total
-pseudo-division, with no field division. Over `Lean.Grind.CommRing D` and
-`DecidableEq D`, use the usual leading-coefficient cancellation algorithm;
-its reconstruction and degree laws require the domain laws. Order is needed
+pseudo-division, with no field division. Use ordinary operation instances and `DecidableEq D` for the usual
+leading-coefficient cancellation algorithm. Its reconstruction and degree
+laws require domain laws, or an operation-preserving, zero-reflecting
+interpretation for noncanonical representation coefficients. Order is needed
 only to choose the positive scale required by a signed chain. These are
 ordinary typeclass operations and mathematical hypotheses, not a new
 coefficient-operation record or a resource-budget interface.
@@ -197,7 +200,9 @@ subresultant normalization belongs with its backend and proves the relevant
 positive-scaling identities; it does not make all arithmetic return evidence.
 
 Prove reconstruction, degree decrease, zero cases, divisibility and field
-agreement as ordinary correctness theorems. The Mathlib companion relates
+agreement as ordinary correctness theorems. Also provide companion transfer
+lemmas for operation-preserving, zero-reflecting representation maps; unlike
+the existing canonical polynomial equivalence, these maps need not be injective. The Mathlib companion relates
 these to `Polynomial` and fraction-field arithmetic. Query certificates live
 with the query owner, not on individual coefficient additions/multiplications.
 No `Hex.PolyOps`, fallible arithmetic callbacks, shared limits/budgets or

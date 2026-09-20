@@ -186,9 +186,12 @@ Generalize the signed-remainder/query-replay primitive here, below the family,
 over an ordinary executable ordered commutative domain `D`. Use existing
 `DensePoly D`, total ring operations, decidable equality/order and
 [ordered-domain pseudo-division](../../HexPoly/SPEC/hex-poly.md#ordered-domain-pseudo-division).
-The domain need not be a field: integers are an actual instance. Raw
-selected-root representatives and bounded sign attempts are not coefficient
-carriers; their owners must first supply a lawful exact field interface.
+The domain need not be a field: integers are an actual instance. The same
+operation-only kernel accepts canonical-zero representation coefficients under
+the [execution contract](../../SPEC/real-closure-execution.md); the companion
+proves their interpretation in the ordered domain. No field instance is
+asserted on raw representatives. Bounded sign attempts cannot supply its
+total sign. Replay identities use semantic zero differences.
 
 This owner provides `Endpoint E := negInf | finite E | posInf`, the chain
 producer, zero-skipping variation fold and literal replay. A small endpoint

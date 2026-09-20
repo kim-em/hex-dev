@@ -64,14 +64,16 @@ infinitesimal orders on the same rational-function arithmetic. Do not install
 conflicting global orders on `RationalFn K`. Normal forms, field arithmetic
 and their laws are proved once; individual additions, multiplications or gcd
 steps do not return certificates or consume a common resource budget.
-Polynomial algorithms use the ordinary total ordered-field interface.
+Polynomial algorithms use the ordinary total computational operations/sign,
+with order laws in their interpretation theorems; see the
+[execution contract](../real-closure-execution.md).
 
 Formal zero is an algebraic decision: `f=0` iff its normalized numerator is
 zero. It does not wait for a real approximation. Coefficient equality must
-be genuine equality of the lawful predecessor carrier. Downstream selected-root
-syntax needs its own lawful carrier/equality implementation before being used
-as `K`; this library does not turn noncanonical representatives into a field
-by assuming their syntax is injective.
+be genuine equality of the lawful prealgebraic carrier used by `RationalFn`.
+The stage order places these rational-function extensions before algebraic
+adjunctions; do not instantiate `RationalFn` on raw selected-root syntax.
+Algebraic base enlargement rebuilds and transports the staged context.
 
 ## User approximations and exact finite bounds
 
@@ -85,23 +87,44 @@ this conditional bound operation is separate from total field division. Dyadic i
 optional rational-to-dyadic output must round outwards. No general interval
 solver, propagation engine or floating-point endpoint test is required.
 
-For a predecessor field `K`, the caller supplies ordinary terminating Lean
-functions of these shapes:
+For a predecessor field `K`, the caller supplies computational functions and
+separate proof functions. They are not proof-producing approximation calls:
 
 ```text
-approxCoeff : K → Nat → Oracle.Bounds
-approxConst : Nat → Oracle.Bounds
+approxCoeff : K → Rat → Oracle.Bounds
+approxConst : Rat → Oracle.Bounds
+approxCoeff_width : ∀ a δ, 0 < δ → (approxCoeff a δ).width ≤ δ
+approxConst_width : ∀ δ, 0 < δ → (approxConst δ).width ≤ δ
 ```
 
-The natural argument is requested precision. The semantic companion fixes
-an order-preserving embedding `ι : K →+* ℝ` and a real `τ`; it states
-correctness and convergence of these functions separately from their code.
-For total sign computation require, for every precision `k`, containment of
-`ι a` and `τ` and widths at most `2^(-k)`. A supplier with a different effective
-convergence schedule can compose that computable schedule with its procedure
-to meet this interface. Every call terminates; there is no per-arithmetic-call
-failure protocol or hidden external process. The approximation functions are
-parameters, not new analytic algorithms supplied by Hex.
+The positive rational `δ` is the requested width. Nonpositive requests are
+outside the accuracy contract; the functions themselves are total. Each
+bound has ordered rational endpoints. Width proofs concern rational data and
+are independently usable without Mathlib. They are separate from returned
+intervals and are used only in proofs that need them.
+
+The verified oracle interface also requires validity for the specific values
+being approximated. In a real interpretation with `ι : K →+* ℝ` and `τ : ℝ`,
+the caller supplies separate containment proofs:
+
+```text
+approxCoeff_contains : ∀ a δ, 0 < δ → Contains (approxCoeff a δ) (ι a)
+approxConst_contains : ∀ δ, 0 < δ → Contains (approxConst δ) τ
+```
+
+Here `Contains I x` means `(I.lower : ℝ) ≤ x ∧ x ≤ (I.upper : ℝ)`.
+Width without containment proves neither sign soundness nor convergence to
+these values. Both guarantees are required for the verified oracle contract;
+keeping them separate lets computation call only `approxCoeff`/`approxConst`.
+The companion states the containment contract and proves its composition.
+It does not implement the caller's constant-specific approximation or proofs.
+
+At refinement index `n`, request `δ = 2^(-n)` from every coefficient and the
+constant. The width guarantees give the effective convergence schedule.
+A supplier using another schedule can implement this requested-width adapter.
+Every approximation call terminates; there is no per-arithmetic-call failure
+protocol or hidden external process. The resulting outer search terminates
+under containment, width guarantees and relative transcendence.
 
 Compute a bound for a polynomial by exact Horner arithmetic, using the same
 requested precision for `τ` and every coefficient in that finite polynomial.
@@ -145,13 +168,14 @@ The companion proves the required progress shape:
 
 ```text
 ApproximationCorrect ι τ approxCoeff approxConst →
-ApproximationConverges approxCoeff approxConst →
+ApproximationWidth approxCoeff approxConst →
 RelativeTranscendence ι τ →
 ∀ f : RationalFn K, ∃ N, ∀ n ≥ N, (Real.attempt f n).isSome = true.
 ```
 
-Here correctness is containment for all inputs/precisions, and convergence
-is the effective narrowing contract above. The conclusion follows from
+Here correctness is containment for all inputs and positive requests;
+`ApproximationWidth` is the pair of separate width guarantees above. Their
+composition with `2^(-n)` gives convergence. The conclusion follows from
 Horner convergence and nonzero evaluations, with formal zero handled
 algebraically. Correctness alone does not imply progress.
 
@@ -184,7 +208,13 @@ recursion on `{n : Nat // Acc (Next trial) n}`, with relation
 from `InvImage.accessible Subtype.val` applied to its stored proof. The
 recursive call decreases by `⟨rfl, trial_n_eq_none⟩`; this is well-founded
 recursion, not structural elimination of the `Acc` proof into `Int`.
-Start `Real.sign f` at zero using `next_acc` for `attempt f`.
+Start the per-input total `Real.sign f` at zero using `next_acc` for `attempt f`.
+Also provide `acc_of_success`: a checked `trial N = some s` gives accessibility
+from any `n ≤ N`. Its proof inducts on `N-n`; a failure at `N` contradicts
+the checked success. The executable loop is unchanged, and `N` is an erased
+proof witness, not a runtime bound. A universal oracle registration supplies
+the per-input proof for all queries; finite witnesses supply only their stated
+queries and cannot manufacture a universal field registration.
 Proofs erase: runtime performs the increasing refinement, never classical
 selection of a fuel from an existential proposition. No `partial`, `unsafe`,
 axiom or opaque trusted search callback implements this algorithm.
@@ -199,18 +229,21 @@ accept this finite sign proof instead of requiring kernel evaluation of the
 unbounded search. These are sign-boundary proofs, not certificates for
 individual field operations.
 
-The computational declaration can take the proved eventual-success premise
-as an erased argument. The companion constructs it from the concrete
+The computational declaration takes a core-expressible progress/accessibility
+premise as an erased argument. This is a proof interface for termination under
+the paper's hypotheses, not an additional mathematical termination obstacle. The companion constructs it from the concrete
 approximation and transcendence assumptions, proves sign uniqueness and
 order laws, and supplies the corresponding erased laws to the core instances.
 `Real.compare f g` signs `f-g`. The resulting wrapper has ordinary total
 field arithmetic, executable equality/comparison and ordered-field laws;
-these are the operations that tower polynomial algorithms consume.
+tower polynomial kernels consume the underlying ordinary operations/sign.
+They do not need the order-law proof to execute.
 
 To support successive real-constant extensions, also provide
-`Real.approx f k : Oracle.Bounds` under the same assumptions. Refine numerator
+`Real.approx f δ : Oracle.Bounds` for positive requested width `δ`,
+with the same split between computation and its width/containment theorems. Refine numerator
 and denominator bounds until the denominator excludes zero and their quotient
-bound has width at most `2^(-k)`. The exact quotient-bound formula and
+bound has width at most `δ`. The exact quotient-bound formula and
 continuity away from zero prove eventual success. Use the same accessibility
 construction, now returning a bound. Formal zero has the exact singleton
 bound. This derives the next level's `approxCoeff` from the preceding level,
@@ -341,6 +374,12 @@ transcendental sign/element approximation, Horner bound arithmetic and optional 
 certificate checking. Vary degree, coefficient height, first nonzero index,
 precision needed for separation and tower depth. Count approximation calls,
 visited coefficients, exact-bound operations and intermediate bit sizes.
+For concrete per-input sign/approximation measurements, instantiate the actual
+total search with core-checked finite success witnesses as in the
+[execution contract](../real-closure-execution.md#transcendental-search-is-a-separate-obligation).
+Time the full search, including earlier failures, not the witness endpoint.
+Such measurements do not establish a universal transcendental registration;
+retain the companion integration fixture for that distinct obligation.
 Report caller approximation cost separately; no named-constant generator
 benchmark is required and no precision bound in degree alone is claimed.
 Compare with existing RationalFn arithmetic and measure clean versus eager

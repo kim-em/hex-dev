@@ -37,29 +37,18 @@ analysis tactic, or sector-sampling algorithm is specified here.
 
 ## Coefficients, domains and table semantics
 
-Use `DensePoly K` over an ordinary exact ordered field, with hex-sturm's
-executable hypotheses:
+Use `DensePoly E` and the ordinary total operations/sign of the shared
+[execution contract](../real-closure-execution.md). A canonical ordered field
+is a specialization. Noncanonical selected-root coefficients have structural
+equality and canonical zero, not a fabricated `Field` instance. The companion
+interprets them in the ordered field `K`, preserving operations/sign and
+reflecting zero. This preserves polynomial degree despite noninjectivity.
 
-```text
-[Lean.Grind.Field K] [LE K] [LT K] [Std.IsLinearOrder K]
-[Std.LawfulOrderLT K] [Lean.Grind.OrderedRing K] [DecidableEq K]
-[DecidableLE K] [DecidableLT K].
-```
-
-All coefficient arithmetic, equality and comparison are total. Polynomial
-normalization and `degree?` use that exact equality; array shape never replaces
-polynomial equality. Define signs as integers `-1,0,1` by exact comparison with
-zero. Check that literal sign codes belong to this set. No downstream RCF
-sign type or new coefficient-operation framework is required.
-
-A tower supplies these instances only on its lawful semantic carrier. In
-particular, selected-root values use an executable quotient by equality at the
-selected root, not arbitrary representatives or the ring `K[X]/(p)` for a
-reducible `p`. The quotient construction belongs to hex-real-closure.
-Transcendental coefficient fields require the caller's sound convergent
-approximation procedures and relative-transcendence hypothesis, from which
-hex-ordered-fn constructs total sign. An optional bounded sign attempt is not
-an ordered-field instance and is not an input to these algorithms.
+Signs are integers `-1,0,1`; validate literal codes. Semantic identities in
+replay use zero differences. Structural equality is a sufficient fast path
+only. There is no downstream RCF sign type or coefficient-operation record.
+Transcendental sign requires its caller progress witness; finite attempts
+cannot substitute for a total coefficient sign.
 
 For mathematical statements, fix an ordered real closed field `R` and an
 order-preserving field embedding `ι : K →+* R`. In the companion this means
@@ -325,8 +314,9 @@ there is no generic fallback sign or global resource-budget substitute.
 
 ## Headline theorems and proof ownership
 
-All shapes assume the lawful exact coefficient field and its order-preserving
-embedding. Root statements use the ambient `R,ι` above. They are planned obligations:
+All shapes assume the computational coefficients are interpreted with
+operation/sign preservation and zero reflection in a lawful exact coefficient
+field, followed by its order-preserving embedding. Root statements use the ambient `R,ι` above. They are planned obligations:
 
 | Statement | Required conclusion |
 | --- | --- |

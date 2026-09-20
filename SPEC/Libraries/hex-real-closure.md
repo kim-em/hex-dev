@@ -52,67 +52,33 @@ into an ordered real closed field. In the companion, `R` has
 foundational obligation, not a runtime oracle. Polynomials are `DensePoly K`,
 interpreted coefficientwise through `ι`; their degree is `DensePoly.degree?`.
 
-The executable coefficient interface is the ordinary total one used by sturm:
-`[Lean.Grind.Field K] [LE K] [LT K] [Std.IsLinearOrder K]`
-`[Std.LawfulOrderLT K] [Lean.Grind.OrderedRing K] [DecidableEq K]`
-`[DecidableLE K] [DecidableLT K]`. Signs are integers in `{-1,0,1}`.
-There are no evidence-returning arithmetic callbacks, global resource budgets,
-or field instances on raw representatives. Registered transcendental fields
-must supply the exact total order from hex-ordered-fn, conditional on the
-caller's approximation correctness, convergence and relative-transcendence
-hypotheses. An optional bounded sign attempt cannot supply coefficient order.
+The executable boundary is specified by the shared
+[execution contract](../real-closure-execution.md). `Element ctx` stores
+representatives with a canonical zero and structural decidable equality;
+ordinary arithmetic and sign are total. Existing `DensePoly` kernels operate
+over that storage without requiring a field instance on representatives.
+The companion interprets it in the lawful semantic field `K`, reflecting
+zero and preserving operations/sign. Structural inequality is not mathematical
+inequality. Semantic polynomial identities test coefficient differences.
 
-Construct the tower by induction on its extension list. The predecessor
-already has lawful executable field/order operations before adjoining a root.
-Hex-sign-det over that predecessor supplies total sign at a validated root.
-For its descriptor `d` and defining polynomial `p`, write
-`s(q) = SignDet.signAt d q` on predecessor polynomials. The core declares a
-proof-only `Root.Laws d : Prop` about this function, before constructing the
-new quotient. It requires the ordinary signs of constants, negation and
-products; signs in `{-1,0,1}`; zero sign of `p`; closure of zero-sign
-polynomials under addition; and positivity of a sum of a positive-sign and
-a nonnegative-sign polynomial. These statements mention only the predecessor
-field and the actual sign algorithm, never the field instance they construct.
-The companion proves them from `signAt_correct` and the descriptor's selected
-root interpretation. This is the proof-only law-adapter pattern used by
-[HexRealAlgebraic.Laws](../../HexRealAlgebraic/Laws.lean), with the laws stated
-before quotient construction to avoid circularity.
+Construct contexts by tower induction. Current-level sign determination and
+inversion use only predecessor operations. The executable constructor
+`Context.adjoin ctx d` needs finite stage/descriptor data, not `Root.Laws d`.
+The companion proves selected-root interpretation, validity preservation and
+the field/order laws of the semantic quotient. Root existence and correctness
+are proof obligations; they are not needed to compile algebraic exploration,
+readers, conformance or benchmarks. Do not install a field on raw syntax or on
+`K[X]/(p)` for reducible `p`.
 
-Under `[Root.Laws d]`, the core proves selected-root equivalence, operation
-congruence and sign descent, constructs the quotient, and derives executable
-`DecidableEq`, `DecidableLE`, `DecidableLT` and the ordinary core field/order
-instances. All polynomial and quotient algebra in this implication is proved
-in the core; the semantic witness for `Root.Laws d` belongs to the companion
-and requires the selected-root interpretation in an ordered real closed ambient
-field. Rational and real-embedded bases need no additional ambient-existence
-assumption. Infinitesimal bases require the missing Tau Ceti existence contract;
-the Hahn model alone does not supply it. All cases still require the imported
-sign-determination correctness proofs. Raw inversion uses only predecessor
-gcd/xgcd and root signs.
-Its inverse identity and congruence follow in the constructed quotient ring
-before installing the field instance; inversion does not assume the field law
-it is meant to establish. Only then form `DensePoly` over the new value type.
+Transcendental registration still supplies progress for the actual refinement
+search. This is a termination premise, distinct from field/order laws; the
+companion derives it from caller approximation and relative-transcendence
+hypotheses. Finite sign attempts do not implement a total coefficient sign.
 
-A context carries these erased proofs with its constructed stages.
-`Context.adjoin ctx d (laws : Root.Laws d)` receives the proof explicitly;
-instance search is not expected to manufacture it for a runtime descriptor.
-Root isolation and readers that construct new typed contexts likewise take
-the erased theorem `∀ d, Root.Laws d` for the predecessor field; the companion
-supplies it from the fixed ambient interpretation. The runtime validator
-checks finite descriptors, not infinitely many laws. Consequently a
-closed algebraic-tower application must have those proofs available at
-instantiation: a Mathlib-free declaration parameterized by the laws is not a
-closed Mathlib-free application. Proof erasure preserves executable arithmetic
-but does not remove the elaboration/import requirement. No proof-debt
-assumption is an implementation. Runtime operations cannot choose
-representatives or inverses noncomputably. Every sign needed by a level's
-sign algorithm belongs to a strictly earlier level.
-
-Field operations keep a fixed context. Temporary gcd splitting is local to
+Arithmetic keeps a fixed context. Temporary gcd splitting is local to
 inversion; persistent refinements and base enlargement use explicit embeddings
-and transport. `Context` packages the constructed carrier, its predecessor
-embeddings and stage; this dependent packaging does not replace lawful field
-instances with an alternative coefficient-operation framework.
+and transport. A context packages finite executable representations and stage
+information. No alternative coefficient-operation record is introduced.
 
 ## Staged contexts and selected-root identity
 
@@ -135,31 +101,27 @@ raw derivative vectors from different polynomials do not establish identity.
 Use `SignDet.compare` and its common squarefree-product re-encoding.
 
 An `Element ctx` stores a polynomial representative `q(α)` at the top
-algebraic level, over the predecessor quotient carrier. No bound
-`degree q < degree p` is a representation invariant. Embedded predecessor
-elements are constant polynomials. Equality means equality of denotations,
-computed by the certified zero sign of the difference at the selected root.
-In particular, a reducible `K[X]/(p)` is generally not a field and is not the
-public carrier. For `p=(X-1)(X+1)` selecting `α=1`, `X-1` denotes zero while
-its remainder modulo `p` is nonzero.
+algebraic level over predecessor representations, with the shared canonical-zero
+storage invariant. No bound `degree q < degree p` is imposed. Embedded
+predecessor elements are constant polynomials. `Element.equal` tests the zero
+sign of the difference; the companion proves this is equality of denotations.
+For `p=(X-1)(X+1)` selecting `α=1`, `X-1` is stored as zero although its
+remainder modulo `p` is nonzero. Nonzero representations remain noncanonical.
 
-For a context equipped with these law proofs, define `Value ctx` as the
-quotient of polynomial representatives by selected-root equality. Its semantic
-image is `K(α)` at a single level. The core's equivalence, congruence and
-executable equality theorems are conditional on `Root.Laws d`; the companion
-discharges that premise and transports Mathlib instances along interpretation.
-Use quotient lifting of the actual executable operations, not classical
-selection of representatives or a noncomputable inverse. Inversion of zero
-in this total field is zero. A checked inverse returns `none` exactly on zero.
+`DecidableEq (Element ctx)` means structural equality of stored representations,
+not `Element.equal`. Literal equality is a sufficient fast path; structural
+inequality never implies mathematical inequality. The unique-zero invariant
+makes the existing `DensePoly` zero normalization correct under interpretation.
+Polynomial replay identities use zero differences, not literal equality of
+nonzero coefficients. Hashes alone prove no identity. Count the added semantic
+zero tests in performance evidence and preserve clean representations.
 
-In the lifted equality procedure, first check whether the same-context
-representatives are literally equal; if so, return equality immediately.
-Otherwise compute the zero sign of their difference at the selected root.
-Structural inequality never implies semantic inequality. Prove the optimized
-result equivalent to selected-root equality and invariant under replacement
-of representatives. Nested literal comparisons must imply predecessor value
-equality; hash equality alone is insufficient. This avoids unnecessary BKR
-calls for identical representatives during polynomial normalization.
+The companion defines `Value ctx`, the quotient by equality of denotations,
+and proves the actual operations descend and form an ordered field. It may
+expose lawful core/Mathlib instances there, using the same executable operations.
+The computational `Element` API and nested polynomial algorithms do not depend
+on constructing this quotient. Both APIs use total inverse with zero mapped to
+zero; the optional nonzero inverse returns `none` exactly on zero.
 
 Operations on different contexts require a checked common extension and
 embeddings preserving both selected-root interpretations. Never equate root
@@ -267,7 +229,7 @@ Yun arithmetic does not return a certificate at each operation.
 
 ## Root isolation and termination
 
-`roots (f : DensePoly (Value ctx))` returns a complete `RootSet`: `all` exactly for a
+`roots (f : DensePoly (Element ctx))` returns a complete `RootSet`: `all` exactly for a
 semantically zero polynomial, or a finite strictly increasing list of distinct
 selected roots with positive multiplicities in `F`. Constants other than zero
 give the empty finite list. `all` carries no finite multiplicities and must
@@ -320,20 +282,21 @@ by existence of roots alone. Transcendental coefficient sign uses the separate
 ordered-fn accessibility proof from caller approximation laws. Algebraic
 inversion calls only predecessor arithmetic plus sign determination over the
 predecessor; it never invokes inverse recursively at its own level. Persistent
-splits decrease the stored defining degree. These measures give executable total
-operations without a global fuel search, `partial` or classical runtime choice.
+splits decrease the stored defining degree. These give structural or internally size-bounded executable recursion, with
+adequacy proved under interpretation as in the shared execution contract.
+There is no global fuel search, `partial` or classical runtime choice.
 
 ## Public operations and validity
 
 | Operation | Result |
 | --- | --- |
 | `Context.constant`, `Context.infinitesimal` | Staged extension from a lawful caller oracle registration or an infinitesimal, with predecessor embedding. Stage constraints are typed premises. |
-| `Context.adjoin ctx d laws` | Algebraic context and generator for a validated squarefree selected-root descriptor and explicit `laws : Root.Laws d`. |
-| `Value ctx` | Constructed quotient carrier with total exact field/order instances, executable equality and sign. |
-| `Value.add`, `neg`, `mul`, `inv`, `sign`, `compare` | Ordinary total operations in the fixed context; `inv 0=0`. |
-| `Value.inv?` | Convenience `Option` inverse, `none` exactly when the input is zero. |
+| `Context.adjoin ctx d` | Algebraic context and generator from finite selected-root descriptor data; semantic validity preservation is a companion theorem. |
+| `Element ctx` | Executable representatives with canonical zero, structural equality, ordinary total operations and semantic sign/equality tests. The companion constructs the semantic quotient `Value ctx`. |
+| `Element.add`, `neg`, `mul`, `inv`, `sign`, `compare`, `equal` | Ordinary total operations in the fixed context; `inv 0=0`. |
+| `Element.inv?` | Convenience `Option` inverse, `none` exactly when the input is zero. |
 | `Context.transport`, `enlarge` | New context and explicit embeddings/transports of the requested live DAG; compatible validated input gives a total result. |
-| `Yun.decompose`, `roots` | Total decomposition or complete ordered root set; constructing output contexts additionally takes the erased root-law theorem for their descriptors. |
+| `Yun.decompose`, `roots` | Total decomposition or complete ordered root set, with correctness and validity preservation under interpretation. |
 | `Sample.section`, `sector` | Validated section/sector samples with the finite-sign contract below. |
 | `certify`, `Replay.check` | Result certificates for queries, BKR tables, selected roots, splitting, root lists or samples; Boolean validation of supplied finite data. |
 
@@ -341,15 +304,14 @@ Raw syntax readers and mathematical domain validators may return `Option`:
 invalid descriptors, stage order or incompatible references are rejected. A
 registry lookup retrieves the caller's already supplied oracle and proof
 premises; a reader cannot decide convergence or relative transcendence.
-The core reader requires the erased root-law theorem for every field where it
-adjoins a root; the companion owns a wrapper supplying these theorems.
-Validation of a descriptor alone does not create its law proof.
+Algebraic context reading is computational and does not require quotient-law
+proofs. The companion proves the checks and resulting interpretations sound.
 Compatibility checks concern the declared context embeddings, not arbitrary
 equality of unrelated oracle descriptions. Total
 field operations operate on the validated carrier and do not carry those
 failures. Mathematical invalidity, malformed replay and an optional bounded
 approximation attempt are distinct boundary concerns, not a replacement
-coefficient-result framework. Exact field equality determines all polynomial
+coefficient-result framework. Canonical-zero storage determines polynomial
 zero/degree decisions, including cancellation in different representations.
 
 Certificates are produced for mathematical results needed by consumers.
@@ -512,7 +474,7 @@ Required theorem shapes, with the semantic parameters and coefficient laws above
 | `Replay.check_sound`, `checks` | Accepted result literals imply their claims; certificates produced for valid results pass the checker under the corresponding coefficient-fact proofs. |
 | `Query.specialize`, `Sample.specialize` | Finite replay signs/guards specialize at small positive real parameters; joint tables realize recorded nested constraints. |
 | `Sample.realize` | Finite-sign evidence proves the ordinary-real existential, including parameter realization where needed. |
-| `Value.field`, `Value.ordered`, `Union.realClosed` | Under `Root.Laws` at each selected-root level, quotient descent and executable equality give core field/order laws. The companion supplies those premises, Mathlib instances and real-closedness of the compatible algebraic union. |
+| `Value.field`, `Value.ordered`, `Union.realClosed` | Companion interpretation and zero reflection prove operation descent and field/order laws for the semantic quotient, then real-closedness of the compatible algebraic union. These are not executable-constructor premises. |
 | `Trivial.compare_eq`, `Trivial.roots_eq` | Rational-base comparison, arithmetic, `all`, sorted roots and multiplicities agree with the independent real-algebraic path. |
 
 ## Imported foundations and local correspondence
@@ -600,23 +562,18 @@ This SPEC implements neither a tactic nor multivariate CAD/coverings.
 
 ## Conformance and Phase-4 evidence
 
-Core conformance exercises algorithms at coefficient fields whose instances
-are available in core, including base-field query/descriptor computations.
-Closed `Value ctx` applications, nested root isolation and checked context
-reading require the companion's root-law witnesses. Their executable
-instantiation and conformance entry points belong to the companion and reuse
-the same core algorithms; they do not introduce another arithmetic backend.
-The public `Context` deliberately packages a lawful field from its first
-algebraic level. Law-free single-root descriptor computations remain available
-through hex-sign-det without pretending to construct that field.
+Core conformance owns closed algebraic-tower execution, including nested
+root isolation, checked context reading, exploration and `tower8` over
+infinitesimals. All run on the same ordinary total representation kernels,
+without Mathlib. Companion tests establish their semantic correctness once
+actual Tau Ceti existence and sign-determination theorems are available.
+Computational differential agreement does not discharge those proof gates.
+Keep both kinds of required evidence; neither substitutes for the other.
 
-Closed algebraic-tower fixtures over infinitesimal bases, including `tower8`,
-transported/nested roots and field-valued exploration, are blocked on the
-actual ordered-real-closure existence theorem as well as sign-determination
-correctness. This is a proof delivery gate, not a new hypothesis to postulate
-in tests. Raw descriptor computations over `ℚ(ε)` can run independently once
-the predecessor ordered-field instances exist. Keep every required fixture;
-do not declare family conformance complete while the gated cases are missing.
+For real constants distinguish a caller's universal progress registration
+from finite per-input total-search witnesses, as in the
+[execution contract](../real-closure-execution.md#transcendental-search-is-a-separate-obligation).
+A finite witness cannot instantiate an arbitrary transcendental tower.
 
 Follow [testing](../testing.md) and [benchmarking](../benchmarking.md).
 Pin Z3 and record commit/version, generator command, exact input and output,

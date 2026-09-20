@@ -760,8 +760,8 @@ for developments whose source-local move has not happened yet.
 - [hex-poly-mathlib](../../HexPolyMathlib/SPEC/hex-poly-mathlib.md): `DensePoly R ≃+* Polynomial R`
 - [hex-rational-fn](../../HexRationalFn/SPEC/hex-rational-fn.md): canonical univariate fractions, cancellation algorithms, evaluation and certificate replay
 - [hex-rational-fn-mathlib](../../HexRationalFnMathlib/SPEC/hex-rational-fn-mathlib.md): equivalence with `RatFunc`, canonical components and operation correspondence
-- [hex-ordered-fn](hex-ordered-fn.md) (planned): shared bounded fraction adapter, user-supplied real approximations, infinitesimal signs and executable total-search contracts
-- [hex-ordered-fn-mathlib](hex-ordered-fn-mathlib.md) (planned): real and Hahn-model correspondence, enclosure soundness/progress, and erased total-adapter laws
+- [hex-ordered-fn](hex-ordered-fn.md) (planned): ordinary rational-function arithmetic, caller approximation functions with separate width/containment proofs, infinitesimal signs and total-search contracts
+- [hex-ordered-fn-mathlib](hex-ordered-fn-mathlib.md) (planned): real and Hahn-model correspondence, enclosure soundness/progress and order laws
 - [hex-sparse-poly](../../HexSparsePoly/SPEC/hex-sparse-poly.md): canonical sparse univariate polynomials, the operations that keep sparsity, and the dense conversions (the Mathlib companion is specified in the same file)
 - [hex-mv-poly](../../HexMvPoly/SPEC/hex-mv-poly.md): canonical distributed multivariate polynomials with explicit monomial orders
 - [hex-mv-poly-mathlib](../../HexMvPolyMathlib/SPEC/hex-mv-poly-mathlib.md): `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence

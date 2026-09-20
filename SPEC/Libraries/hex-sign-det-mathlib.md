@@ -46,22 +46,20 @@ connectedness or rational-separation hypothesis is allowed. Existence of
 `R,ι` is a separate family foundation; these statements are conditional on
 that supplied model.
 
-Interpret `DensePoly K` through HexPolyMathlib's polynomial equivalence,
-then map coefficients along `ι`; write `P,Qᵢ,H` for the resulting polynomials
-over `R`. Fix the Lean-core field/order and decidable-equality dictionaries
-used by computation and prove their agreement with the Mathlib structures.
-Degree, derivative, products, equality and endpoint comparison commute with
-this interpretation. Signs are integers in `{-1,0,1}`, with the explicit
-correspondence to `SignType.sign`; no new shared operation-record sign type
-is required.
+Canonical coefficient fields use HexPolyMathlib's polynomial correspondence.
+For canonical-zero representation coefficients use the
+[execution contract](../real-closure-execution.md): interpret `DensePoly E`
+coefficientwise in `K`, preserving operations, degree, semantic equality and
+sign, then map along `ι`. The first map need not be injective. Prove its
+correspondence for the actual shared Sturm/BKR algorithms, not a parallel
+algorithm over the semantic field. Signs are integers in `{-1,0,1}`, translated
+explicitly to `SignType.sign`.
 
-For selected-root coefficients the tower companion must first construct the
-semantic quotient and prove that its executable arithmetic, sign and equality
-descend and form an ordered field. A squarefree reducible `p` does not make
-`K[X]/(p)` a field. This companion consumes that lawful field as `K` and does
-not accept raw representatives with fallible arithmetic as coefficients.
-Transcendental fields likewise supply the total order proved from the caller's
-approximation soundness/convergence and relative-transcendence hypotheses.
+The tower companion supplies selected-root interpretation and zero reflection
+by induction on predecessor levels. A squarefree reducible `p` does not make
+`K[X]/(p)` a field. No field instance on representatives is used. Real-constant
+sign correctness follows from caller approximation laws and relative
+transcendence; its separate progress proof justifies executable search.
 
 Result replay binds coefficient interpretations, embeddings and exact inputs.
 A tactic proves the coefficient identities and signs needed by each Tarski

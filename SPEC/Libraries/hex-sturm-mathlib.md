@@ -52,19 +52,15 @@ ordinary interval-connectedness hypothesis is allowed. Existence of an
 ambient `R,ι` is a separate Tau Ceti obligation consumed by the real-closure
 companion; these theorems are conditional on the supplied model.
 
-Computational coefficients are the lawful executable field `K`, and
-polynomials are `DensePoly K`. Reuse HexPolyMathlib's mapping to `Polynomial K`
-and then map through `ι` into `R`. The Lean-core and Mathlib structures must
-have identical operations/order; unrelated instances on the same type are
-insufficient. Classical decisions may define semantic root sets, never the
-runtime arithmetic.
-
-Reuse addition, multiplication, derivative and evaluation correspondence;
-prove that `degree?=none` means zero and `some d` gives a nonzero polynomial
-of degree `d` after mapping. Injectivity preserves these degree facts.
-The extension companion, not this library, establishes the selected-root
-quotient, executable equality and field laws. Different representatives of
-the same field element must compare equal before `DensePoly` normalization.
+Canonical computational fields use the existing HexPolyMathlib correspondence.
+For noncanonical representation coefficients `E`, follow the
+[execution contract](../real-closure-execution.md): a map `eval : E → K`
+preserves actual operations/sign and reflects zero, without being injective.
+Prove coefficientwise degree, derivative, arithmetic and division correspondence
+for `DensePoly E`, then compose with `ι`. Semantic replay identities use zero
+differences. Classical decisions belong only to semantic proofs. The tower
+companion establishes the interpretation, not an executable-constructor law
+argument. Do not confuse structural equality with equality in `K`.
 
 Use `sgn : R → Int` with values `-1,0,1`. Exact decisions agree with this
 semantic sign. A tactic may supply finite lower-level certificates or proofs
@@ -140,8 +136,8 @@ it cannot establish this signed sum.
 ## Required frontend theorems
 
 Names below live under `Hex.Sturm`, except upstream names explicitly
-identified. Assume the lawful total computational field and compatible
-Mathlib interpretation described above.
+identified. Assume the operation-preserving, zero-reflecting interpretation
+in the lawful semantic field described above.
 
 | Theorem | Hypotheses and conclusion |
 | --- | --- |
