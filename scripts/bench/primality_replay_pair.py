@@ -39,6 +39,10 @@ def main():
     def location(arm):
         if arm == 'primecert':
             return 'PrimeCert.Comparator.ReplayPair', roots[arm]/'PrimeCert/Comparator/ReplayPair.lean'
+        if args.kind == 'phases':
+            # Mathlib proof experiments belong to the bridge library, outside
+            # the Mathlib-free computational benchmark module tree.
+            return 'HexPrimalityMathlib.ReplayPair', roots[arm]/'HexPrimalityMathlib/ReplayPair.lean'
         return module, roots[arm]/'bench'/relative
     paths = [] if args.kind == 'native' else [location(arm)[1] for arm in roots]
     for path in paths: path.parent.mkdir(parents=True,exist_ok=True)
