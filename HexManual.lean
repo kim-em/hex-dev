@@ -63,6 +63,7 @@ import HexManual.Tutorials.AESField
 import HexManual.Tutorials.AESModulus
 import HexManual.Tutorials.PrimeSplitting
 import HexManual.Tutorials.Coppersmith
+import HexManual.Tutorials.FieldPrimes
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -175,6 +176,8 @@ build.
 {include 2 HexManual.Tutorials.PrimeSplitting}
 
 {include 2 HexManual.Tutorials.Coppersmith}
+
+{include 2 HexManual.Tutorials.FieldPrimes}
 
 # Draft sections for unreleased libraries
 %%%

@@ -35,6 +35,11 @@ and on `HexArith` and `HexBasic` for bounded arithmetic and explicit random
 state. The companion `HexIntFactorMathlib` proves correspondence with
 Mathlib's factorization, divisor, squarefree, and `ZMod` order APIs.
 
+The bounded ECM provider also constructs primality certificates for the
+secp256k1, P-384 and Curve448 field primes. See
+{ref "tutorial-field-primes"}[the field-prime tutorial] for the three proofs
+and instructions for saving the generated certificates.
+
 # Complete certificates
 %%%
 tag := "hex-int-factor-certificates"
