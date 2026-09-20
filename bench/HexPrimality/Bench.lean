@@ -898,7 +898,8 @@ def main (args : List String) : IO UInt32 :=
       let b := Hex.Nat.constructionBudget
       IO.println ((Lean.Json.mkObj [("maxBits", Lean.toJson b.maxBits),
         ("maxFactors", Lean.toJson b.maxFactors),
-        ("maxAttempts", Lean.toJson b.maxAttempts)]).compress)
+        ("maxAttempts", Lean.toJson b.maxAttempts),
+        ("definition", Lean.toJson (reprStr b))]).compress)
       return 0
   | "stage2-probe" :: args => Hex.PrimalityBench.Stage2.probe args
   | "stage2-construct" :: args => Hex.PrimalityBench.Stage2.constructProbe args

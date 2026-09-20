@@ -72,10 +72,13 @@ class ProofProvenanceTests(unittest.TestCase):
         record = {'measurement_state': 'complete',
                   'config': {'samples': 8, 'import_baseline_control': 'imports'},
                   'environment': {'git_commit': commit},
-                  'source_sha256': {'Support.lean': digest},
+                  'source_sha256': {'Support.lean': digest, 'HexPrimality/Construction.lean': digest,
+                                    'HexPrimality/Search.lean': digest,
+                                    'bench/HexPrimality/PMinusOneMeasure.lean': digest},
                   'validity': {'release_quality': True},
                   'results': {'imports': {'samples': samples}, name: {
-                      'samples': samples, 'workload_ratio_resolution': 'baseline-limited'}}}
+                      'samples': samples, 'workload_ratio_resolution': 'baseline-limited',
+                      'import_baseline_robust_envelope_nanos': 100}}}
         path = Path(directory) / (name + '.json')
         path.write_text(json.dumps(record))
         return path
@@ -98,12 +101,30 @@ class ProofProvenanceTests(unittest.TestCase):
             with self.assertRaisesRegex(AssertionError, 'mixed source hashes'):
                 proof.summarize(paths)
 
-    def test_unresolved_costs_do_not_pass_gate(self):
+    def budget(self, digest='source'):
+        return {'budget': {'maxBits': 521, 'maxFactors': 32, 'maxAttempts': 1024,
+                           'definition': 'production budget'},
+                'source_sha256': {name: digest for name in ('HexPrimality/Construction.lean',
+                    'HexPrimality/Search.lean', 'bench/HexPrimality/PMinusOneMeasure.lean')}}
+
+    def test_unresolved_costs_have_no_ratio(self):
         with tempfile.TemporaryDirectory() as directory, patch.object(proof, 'EXPECTED', {'table-2'}):
-            result = proof.summarize([self.collection(directory)])
+            result = proof.summarize([self.collection(directory)], self.budget())
             self.assertTrue(result['retains_all_checked_successes'])
-            self.assertFalse(result['families'][0]['resolved'])
-            self.assertEqual(result['gate'], 'not-established')
+            self.assertFalse(result['families'][0]['baseline_resolved'])
+            self.assertIsNone(result['families'][0]['ratio'])
+            self.assertNotIn('gate', result)
+
+    def test_budget_source_mismatch_rejected(self):
+        with tempfile.TemporaryDirectory() as directory, patch.object(proof, 'EXPECTED', {'table-2'}):
+            with self.assertRaisesRegex(AssertionError, 'budget source mismatch'):
+                proof.summarize([self.collection(directory)], self.budget('different'))
+
+    def test_family_cost_sums_each_round(self):
+        with tempfile.TemporaryDirectory() as directory, patch.object(proof, 'EXPECTED', {'table-2', 'table-3'}):
+            paths = [self.collection(directory), self.collection(directory, 'table-3')]
+            result = proof.summarize(paths, self.budget())
+            self.assertEqual(result['families'][0]['disabled_round_workload_s'], [20 / 1e9] * 8)
 
 if __name__ == '__main__':
     unittest.main()

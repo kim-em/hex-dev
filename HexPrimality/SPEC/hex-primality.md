@@ -1090,8 +1090,11 @@ changing only `pMinusOneStage2` between arms and recording the actual limits.
 Interpreted construction uses the shared fresh-module runner with warm imports
 and a same-round import-only baseline. Execute each distinct input once per
 arm in eight paired rounds, with a separate module and baseline for each
-input. Report median baseline-subtracted costs by family, separating checked
-successes from exhaustion. Retain every input, checked outcome and route trace.
+input. Sum baseline-subtracted input costs within each round, then report
+the median family cost over the eight rounds, separating checked successes
+from exhaustion. Report the summed baseline-variation envelope alongside
+these descriptive costs; baseline resolution does not establish that a policy
+difference exceeds shared-host variation. Retain every input, checked outcome and route trace.
 This is construction-search phase attribution, not an asymptotic proof-search
 claim or kernel-replay timing. Tiny regression families whose workload cannot
 be resolved above baseline variation receive an inconclusive timing verdict,

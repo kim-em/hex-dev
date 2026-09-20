@@ -37,6 +37,7 @@ def summarize(paths, interpreted=False):
     complete=True
     sources=[]
     provenance=None
+    construction_budget=None
     root=Path(__file__).resolve().parents[2]
     inputs=[json.loads(l) for l in (root/'conformance-fixtures/HexPrimality/pminusone-stage2.jsonl').read_text().splitlines()]
     subjects={(r['bits'],r['q']):r['n'] for r in inputs if r['family']=='primitive'}
@@ -46,6 +47,9 @@ def summarize(paths, interpreted=False):
         rows=[json.loads(l) for l in data.splitlines()]
         sources.append({'path':str(path),'sha256':hashlib.sha256(data).hexdigest()})
         metadata=rows[0]
+        if construction_budget is None:
+            construction_budget=metadata.get('construction_budget')
+        assert metadata.get('construction_budget')==construction_budget, 'mixed construction budgets'
         current={key:metadata[key] for key in ('source_sha256','executable_sha256')}
         if provenance is None:
             provenance=current
@@ -139,7 +143,7 @@ def summarize(paths, interpreted=False):
     regression=any(f['family'].startswith('miss') for f in controls) and all(f['median_ratio'] is not None and f['median_ratio']<=1.1 for f in controls)
     retained=not any(s['loss'] for s in summaries)
     return {'complete':complete,'timing':'fresh-module wall time' if interpreted else 'lean-bench fixed child',
-            'sources':sources,'provenance':provenance,'expected_sample_count':16*len(expected),
+            'sources':sources,'provenance':provenance,'construction_budget':construction_budget,'expected_sample_count':16*len(expected),
             'sample_count':len(records),'case_count':len(by_case),'expected_case_count':len(expected),'families':families,'cases':summaries,
             'gate':('pass' if useful and regression and retained else 'fail') if complete else 'incomplete',
             'useful':useful,'regression':regression,'retains_all_checked_successes':retained}

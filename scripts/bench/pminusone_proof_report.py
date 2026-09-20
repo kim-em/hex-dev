@@ -19,7 +19,7 @@ EXPECTED = set(re.findall(r'\("([\w-]+)", \d+\)',
 assert len(EXPECTED) == 60
 
 
-def summarize(paths):
+def summarize(paths, budget_record=None):
     sources, cases = [], {}
     hashes, commit = {}, None
     release = True
@@ -85,7 +85,8 @@ def summarize(paths):
                 'all_continuations_miss': bool(events) and all(e['outcome'] == 'noFactor' for e in events),
                 'median_disabled_workload_s': median(timings['reference']) / 1e9,
                 'median_enabled_workload_s': median(timings['candidate']) / 1e9,
-                'resolution': result['workload_ratio_resolution']}
+                'resolution': result['workload_ratio_resolution'],
+                'baseline_envelope_s': result['import_baseline_robust_envelope_nanos'] / 1e9}
         cases[name] = case
         groups[case['family']].append((case, timings))
         if case['all_continuations_miss']:
@@ -95,42 +96,52 @@ def summarize(paths):
     for family, entries in sorted(groups.items()):
         chosen = [(c, t) for c, t in entries if c['checked_disabled'] and c['checked_enabled']
                   and c['opportunity_continuations'] > 0] if family.startswith('opportunity') else entries
-        ref = median(v for _, t in chosen for v in t['reference']) if chosen else None
-        cand = median(v for _, t in chosen for v in t['candidate']) if chosen else None
-        resolved = bool(chosen) and all(c['resolution'] == 'resolved' for c, _ in chosen)
+        # A family traversal executes every chosen input once. Preserve that
+        # cost by summing each round, not by pooling heterogeneous input times.
+        totals = {role: [sum(t[role][i] for _, t in chosen) for i in range(8)]
+                  for role in ('reference', 'candidate')}
+        ref = median(totals['reference']) if chosen else None
+        cand = median(totals['candidate']) if chosen else None
+        envelope = sum(c['baseline_envelope_s'] for c, _ in chosen) * 1e9
+        baseline_resolved = bool(chosen) and min(ref, cand) > envelope
         families.append({'family': family, 'cases': len(entries),
                          'checked_disabled': sum(c['checked_disabled'] for c, _ in entries),
                          'checked_enabled': sum(c['checked_enabled'] for c, _ in entries),
                          'losses': sum(c['loss'] for c, _ in entries),
                          'gains': sum(c['gain'] and c['opportunity_continuations'] > 0 for c, _ in entries),
-                         'timing_cases': len(chosen), 'resolved': resolved,
+                         'timing_cases': len(chosen), 'baseline_resolved': baseline_resolved,
+                         'summed_baseline_envelope_s': envelope / 1e9,
+                         'disabled_round_workload_s': [v / 1e9 for v in totals['reference']],
+                         'enabled_round_workload_s': [v / 1e9 for v in totals['candidate']],
                          'median_disabled_workload_s': ref / 1e9 if ref is not None else None,
                          'median_enabled_workload_s': cand / 1e9 if cand is not None else None,
-                         'ratio': cand / ref if ref and ref > 0 and cand > 0 else None})
+                         'ratio': cand / ref if baseline_resolved else None})
     retained = not any(c['loss'] for c in cases.values())
-    useful = any(f['family'].startswith('opportunity') and (f['gains'] or
-                 (f['resolved'] and f['ratio'] is not None and f['ratio'] <= 0.9)) for f in families)
-    controls = [f for f in families if f['family'].startswith('miss') or
-                f['family'] in ('balanced', 'smooth', 'table')]
-    regression = bool(controls) and any(f['family'].startswith('miss') for f in controls) and all(
-        f['resolved'] and f['ratio'] is not None and f['ratio'] <= 1.1 for f in controls)
+    assert budget_record is not None, 'explicit construction budget record required'
+    budget = budget_record['budget']
+    assert all(key in budget for key in ('maxBits', 'maxFactors', 'maxAttempts', 'definition'))
+    required_sources = {'HexPrimality/Construction.lean', 'HexPrimality/Search.lean',
+                        'bench/HexPrimality/PMinusOneMeasure.lean'}
+    assert required_sources <= set(budget_record['source_sha256'])
+    for name, digest in budget_record['source_sha256'].items():
+        assert hashes.get(name) == digest, f'budget source mismatch: {name}'
     return {'complete': True, 'sources': sources, 'source_commit': commit,
-            'source_sha256': hashes, 'measurement_release_quality': release,
+            'source_sha256': hashes, 'construction_budget': budget_record,
+            'measurement_release_quality': release,
             'fresh_builds': 32 * len(cases), 'checked_disabled': sum(c['checked_disabled'] for c in cases.values()),
             'checked_enabled': sum(c['checked_enabled'] for c in cases.values()),
             'families': families, 'cases': list(cases.values()),
-            'retains_all_checked_successes': retained, 'resolved_usefulness': bool(useful),
-            'resolved_regression_limits': regression,
-            'gate': 'pass' if release and retained and useful and regression else 'not-established',
-            'interpretation': 'Construction-search attribution; unresolved timings cannot pass the default-enable gate.'}
+            'retains_all_checked_successes': retained,
+            'interpretation': 'Descriptive construction-search attribution. Family costs sum inputs within each round; baseline-limited costs have no ratio. Baseline resolution is not evidence of a statistically resolved policy difference. Native per-input timings supply the compiled performance gate.'}
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('files', nargs='+', type=Path)
     parser.add_argument('--output', type=Path)
+    parser.add_argument('--budget', required=True, type=Path)
     args = parser.parse_args()
-    result = json.dumps(summarize(args.files), indent=2) + '\n'
+    result = json.dumps(summarize(args.files, json.loads(args.budget.read_text())), indent=2) + '\n'
     if args.output:
         args.output.write_text(result)
     else:
