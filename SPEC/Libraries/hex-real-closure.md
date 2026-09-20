@@ -31,7 +31,7 @@ The division of responsibility is:
 | [hex-sign-det](hex-sign-det.md) | Complete BKR tables and single-polynomial descriptors: validation, root identity/order, sign at a root and re-encoding. |
 | [hex-ordered-fn](hex-ordered-fn.md) | Guarded fractions, certified real-constant enclosures, infinitesimal orders and proof-founded total coefficient search. |
 | [hex-real-algebraic](hex-real-algebraic.md) | Independent rational-base fast path; exact comparison and sorted roots with multiplicities. |
-| This library | Generic characteristic-zero Yun decomposition, staged contexts, selected-root arithmetic, splitting/transport, root isolation, tower sampling and exploration. |
+| This library | Generic characteristic-zero Yun decomposition, staged contexts, tower coefficient-record adapters, selected-root arithmetic, splitting/transport, root isolation, tower sampling and exploration. |
 
 The [number-field SPEC](../../HexNumberField/SPEC/hex-number-field.md)
 provides precedent for lazy selected roots, but its fixed irreducible,
@@ -66,6 +66,22 @@ alone does not supply a total order. No such instances are installed on raw
 representatives or on bounded approximation callbacks. Successful-result
 soundness needs interpretation and evidence laws; eventual success additionally
 needs progress of every coefficient operation and evidence producer.
+
+This library provides `Context.coeffOps` and `Context.fieldOps` for valid
+`Element ctx` representatives, together with validity, interpretation,
+arithmetic and evidence/replay law packages; progress laws require the stated
+coefficient-completeness hypotheses. The `sign` callback is
+`Element.signWith`; `zeroTest` tests its certified zero case, and checked `inv`
+is `Element.invWith`. Arithmetic and validation recurse over predecessor
+levels; evidence dependencies strictly decrease level when a sign computation
+calls its coefficients. `ExactOps` is an optional adapter obtained by checked
+nonzero inversion and multiplication. Supply the complete record for
+`Value ctx` only after executable quotient descent and total-search laws are
+proved; it succeeds on valid operation inputs, including the nonzero premise
+for checked inversion. Callback results keep one fixed public context: temporary splits can
+remain local, while persistent splits require the explicit transport below.
+These records instantiate hex-sturm and hex-sign-det without either importing
+the tower implementation.
 
 ## Staged contexts and selected-root identity
 
@@ -222,18 +238,26 @@ zero roots by checked powers of `X`, remembering their multiplicity; zero is
 emitted once. For each remaining squarefree factor `p`:
 
 1. Attempt a strict finite dyadic root bound using bounded work. With
-   `n=degree p`, a concrete policy tries `B=2^j` for `0≤j<2*(n+1)`, checking
-   `B>1+max_{i<n}|aᵢ/aₙ|`. Charge each attempt to a separate, capped slice of
-   the parent's resources. If the bound cannot be certified in that slice,
+   `n=degree p`, first allow one candidate from available certified coefficient
+   enclosures/heights, then try `B=2^j` for `1≤j≤2*(n+1)`. Check `B>1` and
+   `|aᵢ| < (B-1)*|aₙ|` for every `i<n`. This is the strict Cauchy inequality
+   without coefficient inversion solely to try a bound. A data-derived
+   candidate lets small-degree, large-height Archimedean inputs use bisection;
+   its construction, including obtaining a lower bound on `|aₙ|`, is capped.
+   Charge all attempts to a separate, capped slice of the parent's resources.
+   If the bound cannot be certified in that slice,
    including unresolved coefficient signs or non-Archimedean coefficients,
    continue with `(-∞,+∞)`. Local bound-search exhaustion is inconclusive,
    not root-search failure; global exhaustion still propagates. No unbounded
    doubling or approximation loop is allowed here.
 2. On a certified `(-B,B)`, use root counts and at most `2*(n+1)` bisection
-   nodes as a fast path. Certify empty intervals or count-one descriptors;
-   retain every unresolved interval. A finite bound does not imply dyadic
-   separation: `X*(X-ε)` has two roots within `(-1,1)` which no rational
-   dyadic cut between them can separate.
+   nodes as a fast path, with a capped bisection resource slice. Certify empty
+   intervals or count-one descriptors; retain every unresolved interval.
+   If a split-point zero test or child root count is undecided within that
+   slice, retain the parent interval unresolved and do not use the unverified
+   endpoint. Only exhaustion of the global budget fails the whole call.
+   A finite bound does not imply dyadic separation: `(X-ε)*(X-2ε)` has two
+   roots within `(0,1)` which no rational dyadic cut between them can separate.
 3. If a split point is a root, emit it once, remove its linear factor with
    exact-division evidence from the active squarefree polynomial, and
    transport pending descriptors/counts to the deflated polynomial. The
@@ -277,6 +301,7 @@ budget through the common `PolyOps.Result`:
 | --- | --- |
 | `Context.constantWith`, `Context.infinitesimalWith` | Staged extension with the ordered-fn oracle registration or infinitesimal order contract and coefficient embedding. |
 | `Context.adjoinWith ctx d` | Algebraic context and generator from a valid squarefree selected-root descriptor. |
+| `Context.coeffOps`, `fieldOps` | Bounded certificate-producing tower coefficient callbacks and their law packages; total record specialization on `Value ctx` requires proved descent/progress. |
 | `Element.addWith`, `negWith`, `mulWith` | Polynomial representatives, with arithmetic/domain evidence; embed compatible operands first. |
 | `Element.invWith` | Checked inverse of a certified nonzero element, with split and transport evidence. |
 | `Element.signWith`, `compareWith` | Certified sign or order at the selected roots, including exact semantic equality. |
@@ -331,12 +356,22 @@ separation requirement.
 An infinitesimal backend may use `r+ε` or `±1/ε`. After algebraics exist,
 `Context.enlargeWith` rebuilds the infinitesimal base before those levels,
 then transports each selected root in order into a compatible real closure
-of the enlarged base. It preserves embeddings, root identity and all previous
-comparisons, and returns a new context; appending an infinitesimal after an
-algebraic level is invalid. Prove that the new infinitesimal is small enough
-relative to the transported finite algebraic extension, using algebraicity
-and positive bounds from the old base. The input stage contract alone about
-the smaller old base is not a runtime certificate for this consequence.
+of the enlarged base. For the companion model, if `R` is the old algebraic
+real closure of `B`, form the ordered rational-function field `R(δ)` with
+`δ` infinitesimal relative to all of `R`, and apply the same ordered
+real-closure existence theorem to obtain `R'`. Old interpretations embed
+literally through `R → R(δ) → R'`; no unlisted uniqueness-of-real-closure
+theorem is assumed. Since `R/B` is algebraic, `R'/B(δ)` is algebraic too.
+Computationally reconstruct the staged base `B(δ)` and revalidate transported
+root descriptors/certificates in predecessor order.
+
+Enlargement preserves embeddings, root identity and all previous comparisons,
+and returns a new context; appending an infinitesimal after an algebraic
+level is invalid. Prove the stage order agrees with this stronger model:
+every positive element of a finite ordered algebraic extension has a smaller
+positive bound from the old base, so being infinitesimal relative to that
+base also makes `δ` smaller than all those algebraic positives. Algebraicity
+and preservation of order are hypotheses; the stage tag alone is no proof.
 
 To export a sample as evidence about ordinary reals, require a separate
 finite-sign realization contract. For a real-embedded coefficient field `K`,
@@ -356,23 +391,66 @@ leading signs and a common real root bound yield a real tail. Include the
 finite boundary inequalities among the obligations. A real midpoint/ray sample
 has direct membership evidence.
 
-For nested algebraic infinitesimal samples, require a finite, recursively
-checked realization of the parameter context as well: the exported real
-parameters, defining equations, selected-root conditions, nonzero guards and
-all signs used by the consumer must be preserved simultaneously. The companion
-owns this stronger finite semialgebraic realization theorem in the supplied
-ambient model, derived using finite sign determination and polynomial IVT/
-Rolle; it is additional proof work, not a consequence of enclosure containment
-or an unspecified transfer principle. Intermediate infinitesimal coefficients
-are not themselves asserted to be real. If this evidence is unavailable,
-bounded export exhausts or the producer chooses the ordinary-point backend;
-a symbolic sample alone can never discharge a real existential.
+Nested algebraic infinitesimal samples require simultaneous realization of
+all parameter equations, selected-root conditions, nonzero guards and signs
+used by the consumer. `HexRealClosureMathlib` owns the following new local
+specialization lemmas, consuming ordered-fn's lowest-coefficient sign rule
+and sturm/sign-det correspondence; no abstract transfer or model-completeness
+theorem is silently imported.
+
+`Query.specialize`: let `F` embed as an ordered subfield of `ℝ`, let `ε` be
+positive infinitesimal over `F`, and let `p,f,I` over `F(ε)` have a valid
+finite Tarski replay `Γ`. Then there exists `η>0` such that, for every real
+`0<t<η`, all denominators and domain guards in `Γ` remain valid on replacing
+`ε` by `t`, and
+
+```text
+TaQ(f_t,p_t;I_t) = TaQ(f,p;I).
+```
+
+Include endpoint order/nonroot, squarefreeness witnesses, nonzero leading
+coefficients and every scale sign in the finite obligations. Prove this by preserving the signs of the
+finitely many nonzero rational functions in the replay, using their lowest
+nonzero coefficients, and then applying shared query soundness. Exact zero
+identities specialize identically; coefficient representation domains are
+retained. The same argument on every query in a finite BKR replay preserves
+its complete table, selected-root counts and Thom conditions.
+
+`Sample.specialize` extends this to a finite selected-root tower and replay
+DAG: after specializing its coefficient obligations, the next algebraic level
+has a real root satisfying the prescribed descriptor and **all** required
+signs, by the preserved joint table's positive count. Choose that root and
+continue in predecessor order. For nested infinitesimals, first collect the
+finite lower-level coefficient-sign obligations recursively. Realize those
+obligations before choosing the next small positive parameter; the permitted
+neighborhood may depend on all earlier choices. If `Φ` is the finite
+conjunction of recorded equations, descriptor constraints, guards, cell
+inequalities and consumer signs over the real-embedded base, the theorem is
+
+```text
+ValidTowerReplay Γ ∧ Realizes model Γ
+  → ∃ (t₁,…,tₙ : ℝ) (α₁,…,αₖ : ℝ),
+      (∀ i, 0<tᵢ) ∧ Φ(t₁,…,tₙ,α₁,…,αₖ).
+```
+
+The hypotheses include the shared interpretation/checker laws and compatible
+ambient embeddings. No claim preserves *all* infinitesimal inequalities at
+once; only the finitely recorded constraints are specialized. This induction
+and joint-table correspondence are local proof deliverables, not consequences
+of IVT alone. If the required evidence is unavailable, bounded export exhausts
+or the producer chooses the ordinary-point backend. A symbolic sample alone
+can never discharge a real existential.
 
 For coverings, implement a checked exporter to the existing
 [literal integer-polynomial and isolated-parameter format](hex-coverings.md#literal-samples-and-checked-export),
-with coefficient-sign replay and correspondence. A richer symbolic context
-is not automatically a certificate in that format. These contracts supply
-producers and proofs, not CAD projection, coverings search or a tactic.
+with coefficient-sign replay and correspondence. Direct denotation-preserving
+export to that format applies to rational-base algebraic samples. A sample
+with an actual transcendental or infinitesimal coordinate has no such export.
+Replacing it by a real algebraic sample requires separate finite-sign
+realization plus checks of that replacement's cell and formula obligations;
+it is not an equality-preserving export. General real-constant contexts need
+a richer downstream certificate interface. These contracts supply producers
+and proofs, not CAD projection, coverings search or a tactic.
 
 ## Compatible towers and headline theorems
 
@@ -404,6 +482,7 @@ Required theorem shapes, with the semantic parameters and adapter laws above:
 | `roots_sound` | Successful `all` iff `F=0`; successful finite result has strictly increasing roots, each root's exact positive multiplicity, and contains every real root in the supplied `R`. For nonzero `F`, membership iff `F(x)=0`. |
 | `roots_isSome` | Valid inputs, complete lawful coefficients/replay, and a cofinal resource schedule imply eventual success at every larger envelope. Total forms return the complete result with no bound/separation hypothesis. |
 | `Replay.check_sound`, `checks` | Accepted literals imply their claimed semantic facts; a successful producer yields a certificate accepted at a computable sufficient replay envelope, under child replay laws. |
+| `Query.specialize`, `Sample.specialize` | Finite replay signs and guards specialize at sufficiently small positive real parameters; joint table counts realize the recorded nested algebraic constraints. |
 | `Sample.realize` | Accepted finite-sign realization evidence implies the ordinary-real existential above, including parameter realization where needed. |
 | `Value.field`, `Value.ordered`, `Union.realClosed` | Quotient descent/equality and progress laws give executable core field/order laws; compatible algebraic union has positive square roots and odd-degree roots. Mathlib correspondence/instances belong in the companion. |
 | `Trivial.compare_eq`, `Trivial.roots_eq` | Interpretation into `RealAlgebraicNumber` preserves comparison, arithmetic, `all`, sorted finite roots and multiplicities on the rational-base fragment. |
@@ -427,7 +506,7 @@ has a name in a SPEC.
 | hex-ordered-fn-mathlib | Real evaluation under relative transcendence, certified-enclosure sign soundness/progress, Hahn-series infinitesimal embedding and ordered-field laws. An integer-exponent Hahn field is not real closed. |
 | hex-real-roots-mathlib | Prove `IsRealClosed ℝ` from pinned real square-root and polynomial IVT/order results. The pin supplies no such instance. |
 | hex-real-algebraic-mathlib | Existing rational-base real closed carrier; compose its arithmetic/order/root correspondence for the trivial path. |
-| hex-real-closure-mathlib | Prove Yun correspondence, selected-root quotient and executable descent/equality, splitting and context transport, termination laws, ordered complete root lists, finite-sign realization and compatible-union real-closedness relative to the supplied ambient model. |
+| hex-real-closure-mathlib | Prove Yun correspondence, selected-root quotient and executable descent/equality, splitting and context transport, termination laws, ordered complete root lists, `Query.specialize`/`Sample.specialize` and finite-sign realization, and compatible-union real-closedness relative to the supplied ambient model. |
 
 Computational proofs cover literal identities, finite control flow, budget and
 degree invariants, checker composition and conditional laws. Companion proofs
@@ -500,7 +579,7 @@ Required fixtures include:
 
 - Zero, nonzero constants, semantic trailing zeros, `X^m`, repeated factors
   with gaps in multiplicities, and mixed zero/nonzero roots. Exercise Yun
-  iterations with unit emitted factor and failed coefficient tests.
+  iterations whose gcd is constant and emit nothing, and failed coefficient tests.
 - The corrected [paper](https://www.cl.cam.ac.uk/~gp351/infinitesimals.pdf)
   example `(εX²-1)(εX³-1)=ε²X⁵-εX³-εX²+1`: roots in order
   `-ε^(-1/2), ε^(-1/3), ε^(-1/2)`. The two positive roots share `(0,+∞)`
