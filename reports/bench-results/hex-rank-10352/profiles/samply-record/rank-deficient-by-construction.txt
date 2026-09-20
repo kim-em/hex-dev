@@ -1,0 +1,59 @@
++ samply record --save-only --no-open -o /tmp/lean-bench-samply-s7vb9pc7/samply.json.gz --rate 999 --unstable-presymbolicate -- /tmp/hexrank-measured-bin/hexrank_bench _child --bench Hex.RankBench.runRankCertDeficientHalfShifted --param 128 --target-nanos 3000000000 --cache-mode warm
+{"schema_version":1,"kind":"parametric","function":"Hex.RankBench.runRankCertDeficientHalfShifted","param":128,"inner_repeats":16,"total_nanos":2921130810,"per_call_nanos":182570675.625000,"cache_mode":"warm","result_hash":"0x40","status":"ok","error":null,"alloc_bytes":null,"peak_rss_kb":78532,"env":{"arch":"x86_64","cpu_cores":96,"cpu_model":"AMD EPYC 9455 48-Core Processor","exe_name":"hexrank_bench","git_commit":"2b0ff6bf5fbd033943c09c1b49893285497f90aa","git_dirty":false,"hostname":"chungus2","lean_bench_version":"0.1.0","lean_toolchain":"leanprover/lean4:4.34.0","lean_version":"4.34.0","os":"linux","platform_target":"x86_64-unknown-linux-gnu","timestamp_iso":"2026-09-20T12:56:13Z","timestamp_unix_ms":1789908973594},"profile_kernel":true}
+error: filter_samply.py exited 2
+diagnostics:      /tmp/hexrank-profiles-10352/rank-deficient-by-construction.json.gz.failed-raw-yhxfjozx/diagnostics.json
+{
+  "schema": 2,
+  "stage": "calibration",
+  "confidence": "low",
+  "low_confidence_reasons": [
+    "no matching candidate samply timestamp calibration: {\"absolute-monotonic-ms\": {\"boundary_residual_raw_max_ms\": null, \"boundary_residual_trimmed_max_ms\": null, \"hit_count\": 0, \"regions_without_samples\": 17, \"within_residual_limit\": false}, \"relative-to-meta-start-ms\": {\"boundary_residual_raw_max_ms\": null, \"boundary_residual_trimmed_max_ms\": null, \"hit_count\": 0, \"regions_without_samples\": 17, \"within_residual_limit\": false}}"
+  ],
+  "bench_pid": 3362741,
+  "bench_thread_name": null,
+  "bench_thread_tid": null,
+  "regions_total": 17,
+  "total_timed_ms": 3096.071459,
+  "expected_samples_bench_thread": null,
+  "retained_samples_bench_thread": null,
+  "rejected_samples_bench_thread": null,
+  "off_bench_thread_samples_in_window": null,
+  "samply_interval_ms": 1.001001,
+  "spawn_anchor_wall_ns": 1789908973427002988,
+  "spawn_anchor_mono_ns": 880083628667091,
+  "sidecar_mono_anchor_ns": 880084058675021,
+  "samply_meta_start_time_ms": 1789908973428.4456,
+  "samply_timestamp_mode": null,
+  "calibration_residual_ms": null,
+  "calibration_max_residual_ms": 5.0,
+  "calibration": {
+    "selected_mode": null,
+    "residual_ms": null,
+    "raw_max_residual_ms": null,
+    "residual_statistic": "one-boundary-trimmed-maximum",
+    "configured_max_residual_ms": 5.0,
+    "sample_interval_ms": 1.001001,
+    "effective_max_residual_ms": 5.0,
+    "within_residual_limit": false,
+    "candidates": {
+      "absolute-monotonic-ms": {
+        "hit_count": 0,
+        "regions_without_samples": 17,
+        "boundary_residual_trimmed_max_ms": null,
+        "boundary_residual_raw_max_ms": null,
+        "within_residual_limit": false
+      },
+      "relative-to-meta-start-ms": {
+        "hit_count": 0,
+        "regions_without_samples": 17,
+        "boundary_residual_trimmed_max_ms": null,
+        "boundary_residual_raw_max_ms": null,
+        "within_residual_limit": false
+      }
+    }
+  },
+  "minimum_retained_samples": 100,
+  "sensitivity": null
+}
+raw artifacts:    /tmp/hexrank-profiles-10352/rank-deficient-by-construction.json.gz.failed-raw-yhxfjozx
+retention:        remove this failed-raw directory after diagnosis

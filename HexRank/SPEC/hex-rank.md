@@ -1329,7 +1329,8 @@ HexRank.lean                     umbrella
 HexRank/
   Cert.lean        RankCert, checkRank
   Check.lean       RankCert.det_ne_zero, RankCert.det_succ_eq_zero, RankCert.matrix_eq_zero
-  Reduce.lean      RankProfile, ReducedForm, rowReduceWith, rowReduceWithImpl, loop-step lemmas
+  Reduce.lean      RankProfile, ReducedForm, rowReduceWith, loop-step lemmas
+  ReduceImpl.lean  rowReduceWithImpl, proved compiler replacement
   Produce.lean     rankProfileWith, rankCertWith, certifyRankWith, rankWith
   Int.lean         rowReduceFF, rankProfile, rankCert, certifyRank, rank
   Kernel.lean      RankWitness, checkRankList, rankWitness, the kernel primitives

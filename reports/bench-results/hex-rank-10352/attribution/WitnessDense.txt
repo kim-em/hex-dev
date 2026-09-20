@@ -1,0 +1,73 @@
+Hex.RankBench.Witness.dense    expected complexity: hadamardBound n    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=bbedb47, 2026-09-20T13:19:45Z, host=chungus2
+  param  per-call    repeats  C
+     16  872.874 µs  ×2^8     C=0.017 [<floor] [trial 1/6]
+     24    3.766 ms  ×2^7     C=0.010 [trial 1/6] †
+     32   10.756 ms  ×2^5     C=0.005 [trial 1/6]
+     48   41.311 ms  ×2^3     C=0.003 [trial 1/6]
+     64  103.282 ms  ×2^2     C=0.001 [trial 1/6]
+     96  381.527 ms  ×2^0     C=0.001 [trial 1/6]
+    128  990.203 ms  ×2^0     C=0.000 [trial 1/6]
+    192    3.951 s   ×2^0     C=0.000 [trial 1/6]
+    256   10.958 s   ×2^0     C=0.000 [trial 1/6]
+     16  859.591 µs  ×2^9     C=0.017 [trial 2/6]
+     24    3.762 ms  ×2^7     C=0.010 [trial 2/6] †
+     32   10.698 ms  ×2^5     C=0.005 [trial 2/6]
+     48   41.176 ms  ×2^3     C=0.003 [trial 2/6]
+     64  102.396 ms  ×2^2     C=0.001 [trial 2/6]
+     96  374.490 ms  ×2^0     C=0.001 [trial 2/6]
+    128  980.786 ms  ×2^0     C=0.000 [trial 2/6]
+    192    4.193 s   ×2^0     C=0.000 [trial 2/6]
+    256   11.465 s   ×2^0     C=0.000 [trial 2/6]
+     16  855.501 µs  ×2^9     C=0.017 [trial 3/6]
+     24    3.751 ms  ×2^7     C=0.010 [trial 3/6] †
+     32   10.649 ms  ×2^5     C=0.005 [trial 3/6]
+     48   40.595 ms  ×2^3     C=0.003 [trial 3/6]
+     64  104.633 ms  ×2^2     C=0.001 [trial 3/6]
+     96  379.352 ms  ×2^0     C=0.001 [trial 3/6]
+    128  972.127 ms  ×2^0     C=0.000 [trial 3/6]
+    192    3.960 s   ×2^0     C=0.000 [trial 3/6]
+    256   11.374 s   ×2^0     C=0.000 [trial 3/6]
+     16  876.353 µs  ×2^9     C=0.017 [trial 4/6]
+     24    3.760 ms  ×2^7     C=0.010 [trial 4/6] †
+     32   10.643 ms  ×2^5     C=0.005 [trial 4/6]
+     48   41.401 ms  ×2^3     C=0.003 [trial 4/6]
+     64  102.639 ms  ×2^2     C=0.001 [trial 4/6]
+     96  401.293 ms  ×2^0     C=0.001 [trial 4/6]
+    128    1.032 s   ×2^0     C=0.000 [trial 4/6]
+    192    3.952 s   ×2^0     C=0.000 [trial 4/6]
+    256   11.372 s   ×2^0     C=0.000 [trial 4/6]
+     16  872.989 µs  ×2^9     C=0.017 [trial 5/6]
+     24    3.830 ms  ×2^7     C=0.010 [trial 5/6] †
+     32   10.727 ms  ×2^5     C=0.005 [trial 5/6]
+     48   41.626 ms  ×2^3     C=0.003 [trial 5/6]
+     64  125.446 ms  ×2^2     C=0.001 [trial 5/6]
+     96  380.890 ms  ×2^0     C=0.001 [trial 5/6]
+    128  986.167 ms  ×2^0     C=0.000 [trial 5/6]
+    192    3.986 s   ×2^0     C=0.000 [trial 5/6]
+    256   11.299 s   ×2^0     C=0.000 [trial 5/6]
+     16  868.629 µs  ×2^9     C=0.017 [trial 6/6]
+     24    3.823 ms  ×2^7     C=0.010 [trial 6/6] †
+     32   10.729 ms  ×2^5     C=0.005 [trial 6/6]
+     48   41.130 ms  ×2^3     C=0.003 [trial 6/6]
+     64  101.746 ms  ×2^2     C=0.001 [trial 6/6]
+     96  376.221 ms  ×2^0     C=0.001 [trial 6/6]
+    128  973.288 ms  ×2^0     C=0.000 [trial 6/6]
+    192    3.918 s   ×2^0     C=0.000 [trial 6/6]
+    256   11.252 s   ×2^0     C=0.000 [trial 6/6]
+  verdict: inconclusive (cMin=0.000, cMax=0.017, β=-1.940, looks faster than declared by ~n^1.940)
+  per-spawn floor (harness self-measurement): 31.127 ms
+  peak RSS: 63_992 kB..101_404 kB (across 54 ok row(s))
+  trial summaries (6 trials per param; spread = (max-min)/median):
+    param  trials  median      min         max         spread 
+       24  6/6       3.764 ms    3.751 ms    3.830 ms  2.085% 
+       32  6/6      10.713 ms   10.643 ms   10.756 ms  1.053% 
+       48  6/6      41.244 ms   40.595 ms   41.626 ms  2.500% 
+       64  6/6     102.960 ms  101.746 ms  125.446 ms  23.018%
+       96  6/6     380.121 ms  374.490 ms  401.293 ms  7.051% 
+      128  6/6     983.477 ms  972.127 ms    1.032 s   6.084% 
+      192  6/6       3.956 s     3.918 s     4.193 s   6.941% 
+      256  6/6      11.335 s    10.958 s    11.465 s   4.471% 
+       16  5/6     868.629 µs  855.501 µs  876.353 µs  2.401% 
+  ‼ 1/54 ok rows were below 10.000× the per-spawn floor; those rungs are excluded from the verdict. Drop the smallest params from the declared `paramSchedule := .custom #[...]` array to skip the cold regime if the trimmed warmup isn't enough.
+exported to /tmp/hexrank-science-attribution/WitnessDense.json

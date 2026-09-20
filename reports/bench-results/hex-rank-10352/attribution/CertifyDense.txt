@@ -1,0 +1,72 @@
+Hex.RankBench.Certify.dense    expected complexity: hadamardBound n    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=bbedb47, 2026-09-20T13:14:39Z, host=chungus2
+  param  per-call    repeats  C
+     16    1.640 ms  ×2^8     C=0.033 [trial 1/6] †
+     24    6.440 ms  ×2^6     C=0.016 [trial 1/6]
+     32   16.791 ms  ×2^5     C=0.008 [trial 1/6]
+     48   73.591 ms  ×2^2     C=0.005 [trial 1/6]
+     64  148.444 ms  ×2^1     C=0.002 [trial 1/6]
+     96  651.226 ms  ×2^0     C=0.001 [trial 1/6]
+    128    1.664 s   ×2^0     C=0.000 [trial 1/6]
+    192    6.655 s   ×2^0     C=0.000 [trial 1/6]
+    256   15.039 s   ×2^0     C=0.000 [trial 1/6]
+     16    1.677 ms  ×2^8     C=0.033 [trial 2/6] †
+     24    6.418 ms  ×2^6     C=0.016 [trial 2/6]
+     32   16.563 ms  ×2^5     C=0.008 [trial 2/6]
+     48   73.669 ms  ×2^2     C=0.005 [trial 2/6]
+     64  148.861 ms  ×2^1     C=0.002 [trial 2/6]
+     96  650.669 ms  ×2^0     C=0.001 [trial 2/6]
+    128    1.693 s   ×2^0     C=0.000 [trial 2/6]
+    192    6.548 s   ×2^0     C=0.000 [trial 2/6]
+    256   14.989 s   ×2^0     C=0.000 [trial 2/6]
+     16    1.662 ms  ×2^8     C=0.033 [trial 3/6] †
+     24    6.365 ms  ×2^6     C=0.016 [trial 3/6]
+     32   16.615 ms  ×2^5     C=0.008 [trial 3/6]
+     48   73.274 ms  ×2^2     C=0.005 [trial 3/6]
+     64  150.914 ms  ×2^1     C=0.002 [trial 3/6]
+     96  649.923 ms  ×2^0     C=0.001 [trial 3/6]
+    128    1.734 s   ×2^0     C=0.000 [trial 3/6]
+    192    6.477 s   ×2^0     C=0.000 [trial 3/6]
+    256   14.911 s   ×2^0     C=0.000 [trial 3/6]
+     16    1.673 ms  ×2^8     C=0.033 [trial 4/6] †
+     24    6.331 ms  ×2^6     C=0.016 [trial 4/6]
+     32   16.530 ms  ×2^5     C=0.008 [trial 4/6]
+     48   73.437 ms  ×2^2     C=0.005 [trial 4/6]
+     64  150.349 ms  ×2^1     C=0.002 [trial 4/6]
+     96  653.017 ms  ×2^0     C=0.001 [trial 4/6]
+    128    1.650 s   ×2^0     C=0.000 [trial 4/6]
+    192    6.586 s   ×2^0     C=0.000 [trial 4/6]
+    256   14.923 s   ×2^0     C=0.000 [trial 4/6]
+     16    1.702 ms  ×2^8     C=0.033 [trial 5/6] †
+     24    6.428 ms  ×2^6     C=0.016 [trial 5/6]
+     32   16.649 ms  ×2^5     C=0.008 [trial 5/6]
+     48   73.991 ms  ×2^2     C=0.005 [trial 5/6]
+     64  149.654 ms  ×2^1     C=0.002 [trial 5/6]
+     96  648.464 ms  ×2^0     C=0.001 [trial 5/6]
+    128    1.716 s   ×2^0     C=0.000 [trial 5/6]
+    192    6.491 s   ×2^0     C=0.000 [trial 5/6]
+    256   15.767 s   ×2^0     C=0.000 [trial 5/6]
+     16    1.672 ms  ×2^8     C=0.033 [trial 6/6] †
+     24    6.452 ms  ×2^6     C=0.016 [trial 6/6]
+     32   16.705 ms  ×2^5     C=0.008 [trial 6/6]
+     48   75.972 ms  ×2^2     C=0.005 [trial 6/6]
+     64  153.199 ms  ×2^1     C=0.002 [trial 6/6]
+     96  677.915 ms  ×2^0     C=0.001 [trial 6/6]
+    128    1.717 s   ×2^0     C=0.000 [trial 6/6]
+    192    6.576 s   ×2^0     C=0.000 [trial 6/6]
+    256   16.070 s   ×2^0     C=0.000 [trial 6/6]
+  verdict: inconclusive (cMin=0.000, cMax=0.016, β=-2.045, looks faster than declared by ~n^2.045)
+  per-spawn floor (harness self-measurement): 24.151 ms
+  peak RSS: 65_264 kB..113_728 kB (across 54 ok row(s))
+  trial summaries (6 trials per param; spread = (max-min)/median):
+    param  trials  median      min         max         spread
+       16  6/6       1.672 ms    1.640 ms    1.702 ms  3.715%
+       24  6/6       6.423 ms    6.331 ms    6.452 ms  1.877%
+       32  6/6      16.632 ms   16.530 ms   16.791 ms  1.572%
+       48  6/6      73.630 ms   73.274 ms   75.972 ms  3.665%
+       64  6/6     150.001 ms  148.444 ms  153.199 ms  3.170%
+       96  6/6     650.947 ms  648.464 ms  677.915 ms  4.524%
+      128  6/6       1.705 s     1.650 s     1.734 s   4.926%
+      192  6/6       6.562 s     6.477 s     6.655 s   2.712%
+      256  6/6      15.014 s    14.911 s    16.070 s   7.715%
+exported to /tmp/hexrank-science-attribution/CertifyDense.json

@@ -1,0 +1,73 @@
+Hex.RankBench.runRankCertDeficientMinusOne    expected complexity: productBound n    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=bbedb47, 2026-09-20T13:28:54Z, host=chungus2
+  param  per-call    repeats  C
+     16    1.097 ms  ×2^8     C=0.006 [trial 1/6] †
+     24    4.551 ms  ×2^6     C=0.003 [trial 1/6]
+     32   11.588 ms  ×2^5     C=0.002 [trial 1/6]
+     48   43.010 ms  ×2^3     C=0.001 [trial 1/6]
+     64  112.777 ms  ×2^2     C=0.000 [trial 1/6]
+     96  442.053 ms  ×2^0     C=0.000 [trial 1/6]
+    128    1.243 s   ×2^0     C=0.000 [trial 1/6]
+    192    6.058 s   ×2^0     C=0.000 [trial 1/6]
+    256   20.354 s   ×2^0     C=0.000 [trial 1/6]
+     16    1.084 ms  ×2^8     C=0.006 [trial 2/6] †
+     24    4.541 ms  ×2^6     C=0.003 [trial 2/6]
+     32   11.553 ms  ×2^5     C=0.002 [trial 2/6]
+     48   43.864 ms  ×2^3     C=0.001 [trial 2/6]
+     64  112.121 ms  ×2^2     C=0.000 [trial 2/6]
+     96  448.951 ms  ×2^0     C=0.000 [trial 2/6]
+    128    1.259 s   ×2^0     C=0.000 [trial 2/6]
+    192    5.991 s   ×2^0     C=0.000 [trial 2/6]
+    256   20.454 s   ×2^0     C=0.000 [trial 2/6]
+     16    1.087 ms  ×2^8     C=0.006 [trial 3/6] †
+     24    4.485 ms  ×2^6     C=0.003 [trial 3/6]
+     32   11.559 ms  ×2^5     C=0.002 [trial 3/6]
+     48   43.325 ms  ×2^3     C=0.001 [trial 3/6]
+     64  112.238 ms  ×2^2     C=0.000 [trial 3/6]
+     96  444.432 ms  ×2^0     C=0.000 [trial 3/6]
+    128    1.287 s   ×2^0     C=0.000 [trial 3/6]
+    192    6.061 s   ×2^0     C=0.000 [trial 3/6]
+    256   20.389 s   ×2^0     C=0.000 [trial 3/6]
+     16    1.078 ms  ×2^8     C=0.006 [<floor] [trial 4/6] †
+     24    4.539 ms  ×2^6     C=0.003 [trial 4/6]
+     32   11.604 ms  ×2^5     C=0.002 [trial 4/6]
+     48   42.767 ms  ×2^3     C=0.001 [trial 4/6]
+     64  111.271 ms  ×2^2     C=0.000 [trial 4/6]
+     96  441.033 ms  ×2^0     C=0.000 [trial 4/6]
+    128    1.262 s   ×2^0     C=0.000 [trial 4/6]
+    192    6.310 s   ×2^0     C=0.000 [trial 4/6]
+    256   20.457 s   ×2^0     C=0.000 [trial 4/6]
+     16    1.083 ms  ×2^8     C=0.006 [trial 5/6] †
+     24    4.559 ms  ×2^6     C=0.003 [trial 5/6]
+     32   11.663 ms  ×2^5     C=0.002 [trial 5/6]
+     48   43.347 ms  ×2^3     C=0.001 [trial 5/6]
+     64  111.374 ms  ×2^2     C=0.000 [trial 5/6]
+     96  443.416 ms  ×2^0     C=0.000 [trial 5/6]
+    128    1.260 s   ×2^0     C=0.000 [trial 5/6]
+    192    5.958 s   ×2^0     C=0.000 [trial 5/6]
+    256   20.622 s   ×2^0     C=0.000 [trial 5/6]
+     16    1.101 ms  ×2^8     C=0.006 [trial 6/6] †
+     24    4.571 ms  ×2^6     C=0.003 [trial 6/6]
+     32   11.631 ms  ×2^5     C=0.002 [trial 6/6]
+     48   43.404 ms  ×2^3     C=0.001 [trial 6/6]
+     64  112.713 ms  ×2^2     C=0.000 [trial 6/6]
+     96  442.530 ms  ×2^0     C=0.000 [trial 6/6]
+    128    1.255 s   ×2^0     C=0.000 [trial 6/6]
+    192    5.990 s   ×2^0     C=0.000 [trial 6/6]
+    256   20.125 s   ×2^0     C=0.000 [trial 6/6]
+  verdict: inconclusive (cMin=0.000, cMax=0.003, β=-1.842, looks faster than declared by ~n^1.842)
+  per-spawn floor (harness self-measurement): 27.712 ms
+  peak RSS: 58_684 kB..121_220 kB (across 54 ok row(s))
+  trial summaries (6 trials per param; spread = (max-min)/median):
+    param  trials  median      min         max         spread
+       16  5/6       1.087 ms    1.083 ms    1.101 ms  1.654%
+       24  6/6       4.546 ms    4.485 ms    4.571 ms  1.882%
+       32  6/6      11.596 ms   11.553 ms   11.663 ms  0.954%
+       48  6/6      43.336 ms   42.767 ms   43.864 ms  2.532%
+       64  6/6     112.180 ms  111.271 ms  112.777 ms  1.343%
+       96  6/6     442.973 ms  441.033 ms  448.951 ms  1.787%
+      128  6/6       1.259 s     1.243 s     1.287 s   3.558%
+      192  6/6       6.025 s     5.958 s     6.310 s   5.848%
+      256  6/6      20.422 s    20.125 s    20.622 s   2.433%
+  ‼ 1/54 ok rows were below 10.000× the per-spawn floor; those rungs are excluded from the verdict. Drop the smallest params from the declared `paramSchedule := .custom #[...]` array to skip the cold regime if the trimmed warmup isn't enough.
+exported to /tmp/hexrank-science-integer/runRankCertDeficientMinusOne.json

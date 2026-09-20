@@ -1,0 +1,290 @@
+{
+  "revision": "bbedb47226a2dae977434e4ea7da1ffdbaf93b00",
+  "source_sha256": {
+    "bench/HexRank/Bench.lean": "40ba96b2909f1e17f42f3ddd37b510ea48f52dce8afa144785773160750f8244",
+    "HexRank/Produce.lean": "47b99cbb5645360c193824e1deb784480df73a5e360b9b94214837190e604798",
+    "scripts/oracle/rank_bench.py": "b612cc893dc0e92021c918b1214238801ae866636d662c45f1206f2119829c17",
+    "scripts/oracle/rank_carriers.py": "cff466577b769810c1ef59ef226143b7bfdf53f0ff08a41e1c9cf2ef35bafc0d",
+    "scripts/bench/rank_measure.py": "db508f32446c831363aae30fbdc4eed29522cb8e858ae105a944ae03e44943aa",
+    "lake-manifest.json": "c02687afbc599908c20739609e4e1c250582dff45405467b28b372cc2113bd8d",
+    "lean-toolchain": "8733782dc070a99b312039cda424f601b80f3be6f6f512627da5ba25adc27632"
+  },
+  "binary_sha256": "499475eb6ee476c23ff9855d422fd9b5fec05576996307d43c9ca01eabc8932f",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "hostname": "chungus2",
+  "cpu_description": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           46 bits physical, 57 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  96\nOn-line CPU(s) list:                     0-95\nVendor ID:                               AuthenticAMD\nModel name:                              AMD EPYC 9455 48-Core Processor\nCPU family:                              26\nModel:                                   2\nThread(s) per core:                      2\nCore(s) per socket:                      48\nSocket(s):                               1\nStepping:                                1\nMicrocode version:                       0xb002162\nFrequency boost:                         enabled\nCPU(s) scaling MHz:                      46%\nCPU max MHz:                             4411.2300\nCPU min MHz:                             1500.0000\nBogoMIPS:                                6290.49\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good amd_lbr_v2 nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba perfmon_v2 ibrs ibpb stibp ibrs_enhanced vmmcall fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk avx_vnni avx512_bf16 clzero irperf xsaveerptr rdpru wbnoinvd amd_ppin cppc arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif x2avic v_spec_ctrl vnmi avx512vbmi umip pku ospke avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq la57 rdpid bus_lock_detect movdiri movdir64b overflow_recov succor smca fsrm avx512_vp2intersect flush_l1d sev sev_es debug_swap amd_lbr_pmc_freeze\nVirtualization:                          AMD-V\nL1d cache:                               2.3 MiB (48 instances)\nL1i cache:                               1.5 MiB (48 instances)\nL2 cache:                                48 MiB (48 instances)\nL3 cache:                                256 MiB (8 instances)\nNUMA node(s):                            4\nNUMA node0 CPU(s):                       0-11,48-59\nNUMA node1 CPU(s):                       12-23,60-71\nNUMA node2 CPU(s):                       24-35,72-83\nNUMA node3 CPU(s):                       36-47,84-95\nVulnerability Gather data sampling:      Not affected\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Not affected\nVulnerability Mds:                       Not affected\nVulnerability Meltdown:                  Not affected\nVulnerability Mmio stale data:           Not affected\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Not affected\nVulnerability Spec rstack overflow:      Mitigation; Reduced Speculation\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; STIBP always-on; PBRSB-eIBRS Not affected; BHI Not affected\nVulnerability Srbds:                     Not affected\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Mitigation; IBPB before exit to userspace\n",
+  "toolchain": "leanprover/lean4:v4.34.0",
+  "harness_revision": "8a37daf1074c3bdbd0da479b55538bad4a0022db",
+  "cpu": 2,
+  "affinity": [
+    2
+  ],
+  "load_at_start": [
+    8.42529296875,
+    11.79296875,
+    34.6904296875
+  ],
+  "command": [
+    "scripts/bench/rank_measure.py",
+    "attribution",
+    "--bench",
+    "/tmp/hexrank-measured-bin/hexrank_attribution_bench",
+    "--out",
+    "/tmp/hexrank-science-attribution",
+    "--python",
+    "/tmp/hexvenv/bin/python"
+  ],
+  "cwd": "/tmp/hexrank-route-10352",
+  "python": "/tmp/hexvenv/bin/python",
+  "schedule": [
+    [
+      "SecondDense",
+      [
+        "/tmp/hexrank-measured-bin/hexrank_attribution_bench",
+        "run",
+        "Hex.RankBench.Second.dense",
+        "--export-file",
+        "/tmp/hexrank-science-attribution/SecondDense.json"
+      ]
+    ],
+    [
+      "CertifyDense",
+      [
+        "/tmp/hexrank-measured-bin/hexrank_attribution_bench",
+        "run",
+        "Hex.RankBench.Certify.dense",
+        "--export-file",
+        "/tmp/hexrank-science-attribution/CertifyDense.json"
+      ]
+    ],
+    [
+      "WitnessDense",
+      [
+        "/tmp/hexrank-measured-bin/hexrank_attribution_bench",
+        "run",
+        "Hex.RankBench.Witness.dense",
+        "--export-file",
+        "/tmp/hexrank-science-attribution/WitnessDense.json"
+      ]
+    ],
+    [
+      "SecondLowRank2At64",
+      [
+        "/tmp/hexrank-measured-bin/hexrank_attribution_bench",
+        "run",
+        "Hex.RankBench.Second.lowRank2At64",
+        "--export-file",
+        "/tmp/hexrank-science-attribution/SecondLowRank2At64.json"
+      ]
+    ],
+    [
+      "CertifyLowRank2At64",
+      [
+        "/tmp/hexrank-measured-bin/hexrank_attribution_bench",
+        "run",
+        "Hex.RankBench.Certify.lowRank2At64",
+        "--export-file",
+        "/tmp/hexrank-science-attribution/CertifyLowRank2At64.json"
+      ]
+    ],
+    [
+      "WitnessLowRank2At64",
+      [
+        "/tmp/hexrank-measured-bin/hexrank_attribution_bench",
+        "run",
+        "Hex.RankBench.Witness.lowRank2At64",
+        "--export-file",
+        "/tmp/hexrank-science-attribution/WitnessLowRank2At64.json"
+      ]
+    ],
+    [
+      "SecondLowRank8At64",
+      [
+        "/tmp/hexrank-measured-bin/hexrank_attribution_bench",
+        "run",
+        "Hex.RankBench.Second.lowRank8At64",
+        "--export-file",
+        "/tmp/hexrank-science-attribution/SecondLowRank8At64.json"
+      ]
+    ],
+    [
+      "CertifyLowRank8At64",
+      [
+        "/tmp/hexrank-measured-bin/hexrank_attribution_bench",
+        "run",
+        "Hex.RankBench.Certify.lowRank8At64",
+        "--export-file",
+        "/tmp/hexrank-science-attribution/CertifyLowRank8At64.json"
+      ]
+    ],
+    [
+      "WitnessLowRank8At64",
+      [
+        "/tmp/hexrank-measured-bin/hexrank_attribution_bench",
+        "run",
+        "Hex.RankBench.Witness.lowRank8At64",
+        "--export-file",
+        "/tmp/hexrank-science-attribution/WitnessLowRank8At64.json"
+      ]
+    ],
+    [
+      "SecondLowRank2At1024",
+      [
+        "/tmp/hexrank-measured-bin/hexrank_attribution_bench",
+        "run",
+        "Hex.RankBench.Second.lowRank2At1024",
+        "--export-file",
+        "/tmp/hexrank-science-attribution/SecondLowRank2At1024.json"
+      ]
+    ],
+    [
+      "CertifyLowRank2At1024",
+      [
+        "/tmp/hexrank-measured-bin/hexrank_attribution_bench",
+        "run",
+        "Hex.RankBench.Certify.lowRank2At1024",
+        "--export-file",
+        "/tmp/hexrank-science-attribution/CertifyLowRank2At1024.json"
+      ]
+    ],
+    [
+      "WitnessLowRank2At1024",
+      [
+        "/tmp/hexrank-measured-bin/hexrank_attribution_bench",
+        "run",
+        "Hex.RankBench.Witness.lowRank2At1024",
+        "--export-file",
+        "/tmp/hexrank-science-attribution/WitnessLowRank2At1024.json"
+      ]
+    ],
+    [
+      "SecondLowRank8At1024",
+      [
+        "/tmp/hexrank-measured-bin/hexrank_attribution_bench",
+        "run",
+        "Hex.RankBench.Second.lowRank8At1024",
+        "--export-file",
+        "/tmp/hexrank-science-attribution/SecondLowRank8At1024.json"
+      ]
+    ],
+    [
+      "CertifyLowRank8At1024",
+      [
+        "/tmp/hexrank-measured-bin/hexrank_attribution_bench",
+        "run",
+        "Hex.RankBench.Certify.lowRank8At1024",
+        "--export-file",
+        "/tmp/hexrank-science-attribution/CertifyLowRank8At1024.json"
+      ]
+    ],
+    [
+      "WitnessLowRank8At1024",
+      [
+        "/tmp/hexrank-measured-bin/hexrank_attribution_bench",
+        "run",
+        "Hex.RankBench.Witness.lowRank8At1024",
+        "--export-file",
+        "/tmp/hexrank-science-attribution/WitnessLowRank8At1024.json"
+      ]
+    ],
+    [
+      "SecondDeficientMinusOne",
+      [
+        "/tmp/hexrank-measured-bin/hexrank_attribution_bench",
+        "run",
+        "Hex.RankBench.Second.deficientMinusOne",
+        "--export-file",
+        "/tmp/hexrank-science-attribution/SecondDeficientMinusOne.json"
+      ]
+    ],
+    [
+      "CertifyDeficientMinusOne",
+      [
+        "/tmp/hexrank-measured-bin/hexrank_attribution_bench",
+        "run",
+        "Hex.RankBench.Certify.deficientMinusOne",
+        "--export-file",
+        "/tmp/hexrank-science-attribution/CertifyDeficientMinusOne.json"
+      ]
+    ],
+    [
+      "WitnessDeficientMinusOne",
+      [
+        "/tmp/hexrank-measured-bin/hexrank_attribution_bench",
+        "run",
+        "Hex.RankBench.Witness.deficientMinusOne",
+        "--export-file",
+        "/tmp/hexrank-science-attribution/WitnessDeficientMinusOne.json"
+      ]
+    ],
+    [
+      "SecondDeficientHalf",
+      [
+        "/tmp/hexrank-measured-bin/hexrank_attribution_bench",
+        "run",
+        "Hex.RankBench.Second.deficientHalf",
+        "--export-file",
+        "/tmp/hexrank-science-attribution/SecondDeficientHalf.json"
+      ]
+    ],
+    [
+      "CertifyDeficientHalf",
+      [
+        "/tmp/hexrank-measured-bin/hexrank_attribution_bench",
+        "run",
+        "Hex.RankBench.Certify.deficientHalf",
+        "--export-file",
+        "/tmp/hexrank-science-attribution/CertifyDeficientHalf.json"
+      ]
+    ],
+    [
+      "WitnessDeficientHalf",
+      [
+        "/tmp/hexrank-measured-bin/hexrank_attribution_bench",
+        "run",
+        "Hex.RankBench.Witness.deficientHalf",
+        "--export-file",
+        "/tmp/hexrank-science-attribution/WitnessDeficientHalf.json"
+      ]
+    ],
+    [
+      "SecondDeficientHalfShifted",
+      [
+        "/tmp/hexrank-measured-bin/hexrank_attribution_bench",
+        "run",
+        "Hex.RankBench.Second.deficientHalfShifted",
+        "--export-file",
+        "/tmp/hexrank-science-attribution/SecondDeficientHalfShifted.json"
+      ]
+    ],
+    [
+      "CertifyDeficientHalfShifted",
+      [
+        "/tmp/hexrank-measured-bin/hexrank_attribution_bench",
+        "run",
+        "Hex.RankBench.Certify.deficientHalfShifted",
+        "--export-file",
+        "/tmp/hexrank-science-attribution/CertifyDeficientHalfShifted.json"
+      ]
+    ],
+    [
+      "WitnessDeficientHalfShifted",
+      [
+        "/tmp/hexrank-measured-bin/hexrank_attribution_bench",
+        "run",
+        "Hex.RankBench.Witness.deficientHalfShifted",
+        "--export-file",
+        "/tmp/hexrank-science-attribution/WitnessDeficientHalfShifted.json"
+      ]
+    ]
+  ],
+  "comparator_versions": {
+    "ok": true,
+    "result": {
+      "python": "3.14.6 (main, Jun 10 2026, 10:03:53) [GCC 15.3.0]",
+      "python_flint": "0.9.0",
+      "sympy": "1.14.0",
+      "sympy_ground_types": "python"
+    }
+  }
+}

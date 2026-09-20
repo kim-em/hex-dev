@@ -528,7 +528,6 @@ _PROBE_FORBIDDEN = (
 )
 
 
-@functools.cache
 def _probe_violations(path: Path) -> list[str]:
     """Return forbidden computational-benchmark features used by one probe."""
     text = _without_comments(path.read_text())

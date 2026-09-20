@@ -1,0 +1,14 @@
+Hex.RankBench.runRatPolyCheck12    [fixed] repeats=6
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=bbedb47, 2026-09-20T13:11:29Z, host=chungus2
+  repeat 0  54.497 ms  (×2^2, total 217.989 ms)
+  repeat 1  54.126 ms  (×2^2, total 216.505 ms)
+  repeat 2  55.262 ms  (×2^2, total 221.049 ms)
+  repeat 3  60.928 ms  (×2^2, total 243.712 ms)
+  repeat 4  54.738 ms  (×2^2, total 218.952 ms)
+  repeat 5  54.331 ms  (×2^2, total 217.323 ms)
+  median: 54.738 ms    min: 54.126 ms    max: 60.928 ms
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 67_236 kB..70_348 kB (across 6 ok repeat(s))
+exported to /tmp/hexrank-science-polynomial/runRatPolyCheck12.json

@@ -1,0 +1,14 @@
+{
+  "integer": {
+    "revision": "2b0ff6bf5fbd033943c09c1b49893285497f90aa",
+    "lakefile_sha256_from_git_blob": "17160b9113e3edb507364018572c2354baabae3f04218658a792235cb4395617"
+  },
+  "attribution": {
+    "revision": "bbedb47226a2dae977434e4ea7da1ffdbaf93b00",
+    "lakefile_sha256_from_git_blob": "17160b9113e3edb507364018572c2354baabae3f04218658a792235cb4395617"
+  },
+  "polynomial": {
+    "revision": "bbedb47226a2dae977434e4ea7da1ffdbaf93b00",
+    "lakefile_sha256_from_git_blob": "17160b9113e3edb507364018572c2354baabae3f04218658a792235cb4395617"
+  }
+}
