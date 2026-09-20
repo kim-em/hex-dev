@@ -5,19 +5,25 @@ Authors: Kim Morrison
 -/
 
 import HexPoly.Euclid
+import HexPoly.PolyOps
 
 /-!
-Core conformance checks for `hex-poly`'s dense/basic and Euclidean-operation surface.
+Core conformance checks for `hex-poly`'s dense/basic, Euclidean-operation, and fallible
+coefficient surfaces.
 
 Oracle: none
 Mode: always
 Covered operations:
+- `PolyOps` sign conversion, coefficient validation/arithmetic, exact division/inversion,
+  semantic degree and coefficientwise identity production/replay, resource and public outcomes
 - dense representation constructors and accessors (`ofCoeffs`, `ofList`, `C`, `monomial`, `size`, `isZero`, `coeff`, `degree?`, `support`, `toArray`)
 - basic executable arithmetic (`scale`, `shift`, `add`, `neg`, `sub`, `mul`, `eval`, `compose`, `derivative`)
 - Euclidean helpers (`leadingCoeff`, `divModMonic`, `divMod`, `/`, `%`, `modByMonic`, `gcd`, `xgcd`, `xgcdLeftMonic`)
 - integer content helpers (`content`, `primitivePart`)
 - polynomial CRT witness construction (`polyCRT`)
 Covered properties:
+- noninjective coefficient interpretation, semantic-degree agreement with total polynomials,
+  checked identity assertions, resource containment, and structured failure preservation
 - normalization removes trailing zeros from committed raw coefficient inputs
 - dense structural equality matches additive identity and commutativity checks on committed fixtures
 - negation is the additive inverse and an involution, and subtraction agrees with adding the negation
@@ -32,6 +38,8 @@ Covered properties:
 - `content` times `primitivePart` reconstructs committed integer polynomials
 - `polyCRT` witnesses reduce to both prescribed residues modulo committed coprime monic factors
 Covered edge cases:
+- semantic trailing zeros, forged claims, replay tampering, failed child budgets, budget
+  inflation, exactness failures, zero divisors, and insufficient retained-literal budgets
 - the zero polynomial encoded with all-zero trailing coefficients, including under negation
 - sparse polynomials with internal zeros and stripped trailing zeros, including under negation
 - shifted and scaled monomials that exercise normalization after arithmetic
@@ -407,3 +415,181 @@ end ProofMode
 end DensePoly
 
 end Hex
+
+/-! Fallible arithmetic conformance: semantic trailing zeros, replay tampering, exhausted
+children, forged domain evidence, and exact quotients. Every failure assertion checks its
+outcome tag; no failure is converted into a default coefficient or polynomial. -/
+namespace Hex.PolyOps.Conformance
+
+private def budget : Budget := (Limits.uniform 10000).budget
+
+private def isRejected : Result α E → Bool
+  | .rejected .. => true
+  | _ => false
+
+private def isExhausted : Result α E → Bool
+  | .exhausted .. => true
+  | _ => false
+
+private def isDomain : Result α E → Bool
+  | .invalid (.domain ..) _ => true
+  | _ => false
+
+-- Redundant representatives (a,b) denote a-b. Structural (5,5) is semantic zero.
+private def difference : Representation (Int × Int) Int where
+  decode a := a.1 - a.2
+  encode a := (a, 0)
+  decode_encode _ := by omega
+
+private def redundant := Total.coeffOps difference (fun a => intBytes a.1 + intBytes a.2)
+example : CoefficientLaws redundant difference.model := Total.lawful _ _
+
+#guard match degreeWith redundant #[(3, 1), (4, 1), (5, 5), (-2, -2)] budget with
+  | .ok e rest => e.degree == some 1 && rest.remaining .decisions == 9996 &&
+      (checkDegree redundant _ e rest).isSome
+  | _ => false
+
+#guard match degreeWith redundant #[(5, 5), (-2, -2)] budget with
+  | .ok e rest => e.degree == none && (checkDegree redundant _ e rest).isSome
+  | _ => false
+
+#guard match degreeWith intOps #[] budget with
+  | .ok e rest => e.degree == none && (checkDegree intOps _ e rest).isSome
+  | _ => false
+
+#guard match degreeWith intOps #[0, -7, 0] budget with
+  | .ok e rest => e.degree == some 1 && (checkDegree intOps _ e rest).isSome
+  | _ => false
+
+#guard match identityWith redundant #[(5, 3), (8, 8)] #[(2, 0)] budget with
+  | .ok e rest => (checkIdentity redundant _ _ e rest).isSome
+  | _ => false
+
+#guard isRejected (identityWith intOps #[2, 0] #[3] budget)
+#guard isExhausted (degreeWith intOps #[1] (Limits.uniform 0).budget)
+#guard isExhausted (degreeWith intOps #[1, 2] (Budget.ofFn fun r => if r = .decisions then 1 else 100))
+
+-- Compare semantic degree with the unchanged total-carrier API across sparse, constant,
+-- zero and negative-leading inputs, then replay each produced certificate.
+#guard (List.range 81).all fun n =>
+  let p : Array Int := (Array.ofFn fun i : Fin 4 =>
+    (Int.ofNat (n / 3 ^ i.val % 3) - 1)).push 0
+  match degreeWith intOps p budget with
+  | .ok e rest => e.degree == (Hex.DensePoly.ofCoeffs p).degree? &&
+      (checkDegree intOps p e rest).isSome
+  | _ => false
+
+-- A child spends resources and then fails. Its exact residual counters must survive.
+private def stopped : CoeffOps Int :=
+  { intOps with zeroTest := fun _ => do
+      charge .steps 7
+      fun b => .exhausted (.unavailable "decision unavailable") b }
+
+#guard match degreeWith stopped #[3] budget with
+  | .exhausted _ rest => rest.remaining .steps == 9992 &&
+      rest.remaining .operations == 9999 && rest.remaining .decisions == 9999
+  | _ => false
+
+private def inflated : CoeffOps Int :=
+  { intOps with zeroTest := fun _ b =>
+      .exhausted (.unavailable "bad child budget") (Budget.ofFn fun r => b.remaining r + 1) }
+
+#guard match inflated.zeroWith 3 budget with
+  | .rejected .budgetIncrease rest => rest.remaining .operations == 9999 &&
+      rest.remaining .decisions == 9999
+  | _ => false
+
+#guard match (inflated.zeroWith 3 budget).toPublic with
+  | .invalid (.rejected .budgetIncrease) _ => true
+  | _ => false
+
+private def falseZero : CoeffOps Int :=
+  { intOps with zeroTest := fun _ => Total.emit fun _ => ⟨true, ()⟩ }
+
+private def falseAdd : CoeffOps Int :=
+  { intOps with add := fun a b => Total.emit fun _ => ⟨a + b + 1, ()⟩ }
+
+private def falseZeroField : FieldOps Rat :=
+  { ratOps with zeroTest := fun _ => Total.emit fun _ => ⟨true, ()⟩ }
+
+-- A forged zero decision cannot become a domain failure for a nonzero divisor.
+#guard isRejected (falseZeroField.invWith 7 budget)
+
+#guard isRejected (falseZero.zeroWith 3 budget)
+#guard isRejected (falseAdd.addWith 2 3 budget)
+#guard match intOps.signWith (-7) budget with
+  | .ok r _ => r.1 == .negative
+  | _ => false
+
+-- Claim-indexed unit evidence is rechecked against the new claim, not blindly reused.
+#guard match intOps.check (.add 2 3 6) budget () with
+  | .rejected .. => true
+  | _ => false
+
+#guard match degreeWith intOps #[1, 0] budget with
+  | .ok e rest => isRejected (checkDegree intOps _ { e with degree := none } rest) &&
+      isRejected (checkDegree intOps _ { e with entries := e.entries.pop } rest) &&
+      isRejected (checkDegree intOps _ { e with entries := e.entries.reverse } rest)
+  | _ => false
+
+#guard match identityWith intOps #[1, 2] #[1, 2, 0] budget with
+  | .ok e rest => isRejected (checkIdentity intOps _ _ e.pop rest) &&
+      isRejected (checkIdentity intOps _ _ e.reverse rest)
+  | _ => false
+
+#guard match intExactOps.divWith 12 (-3) budget with
+  | .ok r _ => r.1 == -4
+  | _ => false
+#guard isExhausted (intExactOps.divWith 3 2 budget)
+#guard isDomain (intExactOps.divWith 0 0 budget)
+#guard isDomain (ratOps.invWith 0 budget)
+#guard isDomain (ratExactOps.divWith 1 0 budget)
+#guard (intOps.validateWith 37 budget).isSome
+#guard match intOps.mulWith (-3) 7 budget with
+  | .ok r _ => r.1 == -21
+  | _ => false
+#guard match intOps.negWith (-3) budget with
+  | .ok r _ => r.1 == 3
+  | _ => false
+#guard [Sign.negative, .zero, .positive].all fun s => Sign.ofInt s.toInt == s
+#guard match ratOps.invWith (2 / 3) budget with
+  | .ok r _ => r.1 * (2 / 3 : Rat) == 1
+  | _ => false
+#guard match ratExactOps.divWith (2 / 3) (-4 / 7) budget with
+  | .ok r _ => (-4 / 7 : Rat) * r.1 == 2 / 3
+  | _ => false
+
+private def falseDivision : ExactOps Int :=
+  { intExactOps with divExact := fun _ _ => Total.emit fun _ => ⟨42, ()⟩ }
+#guard isRejected (falseDivision.divWith 12 3 budget)
+
+-- Retained coefficient literals consume the evidence-byte budget on production and replay.
+#guard isExhausted (equalWith intOps (2 ^ 256) (2 ^ 256)
+  (Budget.ofFn fun r => if r = .evidenceBytes then 8 else 100))
+#guard isExhausted (ratOps.invWith 0
+  (Budget.ofFn fun r => if r = .evidenceBytes then 2 else 100))
+-- Two zero-test bytes, three retained rational-literal bytes, and one domain-record byte.
+#guard match ratOps.invWith 0
+    (Budget.ofFn fun r => if r = .evidenceBytes then 6 else 100) with
+  | .invalid (.domain ..) rest => rest.evidenceBytes == 0
+  | _ => false
+#guard match equalWith intOps (2 ^ 256) (2 ^ 256) budget with
+  | .ok e _ => isExhausted (checkEquality intOps _ _ e
+      (Budget.ofFn fun r => if r = .evidenceBytes then 8 else 100))
+  | _ => false
+
+-- Each public case preserves residual counters and classifies by its constructor.
+#guard match (ratOps.invWith 0 budget).toPublic with
+  | .domain _ _ rest => rest.remaining .decisions == 9999
+  | _ => false
+#guard match (falseZeroField.invWith 7 budget).toPublic with
+  | .invalid _ rest => rest.remaining .operations < 10000
+  | _ => false
+#guard match (Result.invalid (.context "domain") budget : Result Nat Unit).toPublic with
+  | .invalid (.context "domain") rest => rest.remaining .steps == 10000
+  | _ => false
+#guard match (Result.exhausted (.resource .steps) budget : Result Nat Unit).toPublic with
+  | .exhausted (.resource .steps) rest => rest.remaining .steps == 10000
+  | _ => false
+
+end Hex.PolyOps.Conformance
