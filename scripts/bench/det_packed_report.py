@@ -60,9 +60,11 @@ def audit_dispatch(record, table):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('directory', type=Path)
+    parser.add_argument('--before', type=Path, help='retained historical comparison for per-case columns')
     args = parser.parse_args()
     forced = read_record(args.directory, 'forced')
     dispatch = read_record(args.directory, 'dispatch')
+    before = read_record(args.before, 'dispatch') if args.before else None
     audit_dispatch(dispatch, read_record(args.directory, 'crossover'))
     groups = defaultdict(list)
     for c in forced['manifest']['cases']:
@@ -89,8 +91,12 @@ def main():
         print(f'| {family} | '+ ' | '.join(values)+f' | {ratio} | {"/".join(counts)} of {len(stems)} | opt-in |')
     print('\nClassification: '+', '.join(f'{v} {k}' for k,v in Counter(c['classification'] for c in forced['classification'].values()).items())+'.')
     print(f"The manifest also retains {len(forced['manifest']['infeasible'])} infeasible support requests.\n")
-    print('| Case | Classification | Term lists | Packed | Dispatch | Mathlib | Mathlib / dispatch | Observed dispatch |')
-    print('|---|---|---:|---:|---:|---:|---:|---|')
+    if before:
+        print('Before columns are the retained historical medians on their recorded host context;')
+        print('they are not adjacent before/after samples and do not alone establish a speedup.\n')
+    prefix = ' Before dispatch | Before Mathlib |' if before else ''
+    print('| Case | Classification |' + prefix + ' Term lists | Packed | Dispatch | Mathlib | Mathlib / dispatch | Observed dispatch |')
+    print('|---|---|' + ('---:|---:|' if before else '') + '---:|---:|---:|---:|---:|---|')
     for c in forced['manifest']['cases']:
         stem = c['stem']
         vals = [r['summary'][stem]['arms'][a]['median_delta_ns'] for r,a in
@@ -98,8 +104,10 @@ def main():
         ratio = f'{vals[3]/vals[2]:.3f}' if vals[2] is not None and vals[3] is not None and vals[2]>0 else '—'
         routes = dispatch['summary'][stem]['arms']['Dispatch']['routes']
         routes = [r for r in routes if r != 'certificate-attempt']
+        historical = [before['summary'][stem]['arms'][arm]['median_delta_ns']
+            for arm in ['Dispatch', 'Mathlib']] if before else []
         print(f'| {stem} | {forced["classification"][stem]["classification"]} | '+
-              ' | '.join(map(fmt,vals))+f' | {ratio} | {", ".join(routes) or "unobserved"} |')
+              ' | '.join(map(fmt,historical + vals))+f' | {ratio} | {", ".join(routes) or "unobserved"} |')
     print('\nExpected declines have no forced-packed timing. Closed-form rows are controls on')
     print('their unchanged route; their “Lists” and “Packed” column labels denote options,')
     print('not certificate execution. Raw records retain timeouts, errors, host context,')
@@ -143,7 +151,8 @@ def main():
     print('\n### Compiled phases\n')
     print('Milliseconds for representative witnesses, with the large-prime case included.')
     print('Checker columns are medians of six adjacent AB/BA measurements; other phases')
-    print('are single observations. Packing repeats each prefix and includes target and quotient lists.')
+    print('are single observations. These supplemental compiled phases use list-entry checkers;')
+    print('the forced proof timings above exercise each recorded tree/list route.')
     print('All selected products use plain multiplication, so outer signed packing is inapplicable.\n')
     print('| Case | p | Quotient support | Quotients | Preflight | Packing | Multiplication | List Bool | Packed Bool |')
     print('|---|---:|---:|---:|---:|---:|---:|---:|---:|')
