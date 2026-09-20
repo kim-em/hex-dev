@@ -75,3 +75,13 @@ Development happens in the
 [`hex-dev`](https://github.com/kim-em/hex-dev) monorepo, not in this published
 mirror. Contributions are welcome as pull requests to the `SPEC/` directory:
 describe the behavior you want and leave the implementation to the maintainer.
+
+In the `hex-dev` development monorepo, the `HexRCF.RealCoefficients` import exposes
+`Hex.RCF.RealCoefficients.Reify.prepare`. It constructs a shared source schema,
+a fixed closed-coefficient valuation and a kernel-checked equivalence to the
+original goal, retaining all source divisor obligations. Within `hex-dev`, Lake builds it through
+the default `HexRCFRealCoefficients` target; this target is not published to the
+split repository. It registers no solver: coefficient
+authentication, nonzero-guard checking, specialization and real-coefficient replay
+remain separate integration gates. See the
+[SPEC](SPEC/hex-rcf.md#planned-real-coefficient-extension).
