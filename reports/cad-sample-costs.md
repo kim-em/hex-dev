@@ -82,6 +82,13 @@ logs are retained in the same directory. [Experiment instructions](../experiment
 give the build, literal regeneration, pinned traced Z3 build, and collector
 commands. Nothing is added to CI or a released library.
 
+The carrier-input snapshot in that directory was added after collection;
+the summarizer verifies its bytes against the source hash recorded at collection.
+The original 99 observations retain axiom evidence per row and in their logs;
+they predate the separate `validation.log.gz` used by the current collectors.
+Historical paired measurements require the recorded source commit: the current
+Replay and Transport modules have changed, as described below.
+
 ## Canonical lifting
 
 `d/H` means minimal-polynomial degree and maximum absolute integer coefficient
@@ -213,11 +220,14 @@ automatically leased CPU 16, on 2026-09-20. Its
 [metadata](bench-results/cad-kernel-costs/meta.json),
 [32 observations](bench-results/cad-kernel-costs/runs.jsonl), and complete logs
 are retained separately. No sample was dropped or rerun.
+Every focused maximum occurred in round 0; the recorded one-minute load fell
+from 90.3 at the first observation to 57.4 at the last on this 96-logical-CPU
+host. This is shared-host context, not evidence isolating a cause of the spread.
 
 The smallest checker costs a median 81.3 ms and the sphere checker 1335 ms.
-Carrier degree alone still misses coefficient growth: the degree-6 Kahan
-carrier (36-bit chain coefficients) costs 385 ms, versus 232.5 ms for Tower 4
-(also degree 6, 7-bit coefficients). These finite cases establish a practical
+The degree-6 Kahan carrier costs 385 ms, versus 232.5 ms for Tower 4 (also
+degree 6). Atom count, carrier height, and chain coefficient sizes differ,
+so this comparison does not isolate their effects. These finite cases establish a practical
 kernel cost for the supplied replay format; they do not measure general
 primitive-element export, sign transport, or an asymptotic law.
 

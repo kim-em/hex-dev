@@ -100,12 +100,22 @@ removed. It runs four fixed trial-major rounds, retaining every outcome:
 python3 experiments/CadSampleCosts/run_kernel.py reports/bench-results/cad-kernel-costs
 ```
 
-Both collectors first check all expected theorem names and their axiom sets in
+The current collectors first check all expected theorem names and their axiom sets in
 an untimed `Validate` build, retained as `validation.log.gz`. That module includes
 sample-existence and coordinate identities as well as replay and focused checker
 theorems. `kernel-inputs.json` is copied into each new observation directory.
 Source hashes refer to the recorded commit, not necessarily the later report
 commit; README wording is excluded from new measurement hashes.
+
+The retained 99-observation paired corpus predates that validation arrangement:
+its axiom reports are in the individual logs and per-row fields, and it has no
+`validation.log.gz`. Its carrier-input snapshot was added after collection and
+is verified against the recorded source hash by `summarize.py`. Replay and
+Transport sources have since changed. To reproduce that historical experiment,
+use a fresh worktree at its recorded commit
+`756b63dbbcc2f42b2966ca7407235d5d5b8b8d49`, follow the instructions there, and
+choose a new output directory. The focused corpus instead uses
+`a9c62664727e387330288b75325a275f9497042e` and includes untimed validation.
 
 The canonical kernel boundary can be reproduced by temporarily saving this as
 `experiments/CadSampleCosts/Boundary.lean` and running

@@ -125,11 +125,13 @@ def validate_axioms(output):
     if result.returncode:
         raise RuntimeError('untimed validation build failed; see validation.log.gz')
     found = dict(re.findall(r"'(CadSampleCosts\..*?)' depends on axioms: \[([^]]*)\]", result.stdout))
+    found.update((name, '') for name in re.findall(
+        r"'(CadSampleCosts\..*?)' does not depend on any axioms", result.stdout))
     expected = set(json.loads((HERE/'axiom-names.json').read_text()))
     if not expected.issubset(found):
         raise RuntimeError(f'missing axiom reports: {expected - found.keys()}')
     for name in expected:
-        if set(found[name].split(', ')) - {'propext', 'Classical.choice', 'Quot.sound'}:
+        if set(filter(None, found[name].split(', '))) - {'propext', 'Classical.choice', 'Quot.sound'}:
             raise RuntimeError(f'unexpected axioms: {name}: {found[name]}')
     return len(expected)
 
