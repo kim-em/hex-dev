@@ -14,8 +14,10 @@ and rational evaluation of quantifier-free formulas. `HexRealFormulaMathlib`
 depends on it, `HexMvPolyMathlib`, `HexReflectMathlib`, and Mathlib; it owns real
 semantics, normalization proofs, and the shared reifier. Neither library
 depends on an elimination algorithm or on `HexRCF`. Algorithm tactics consume
-the reifier. The RCF adapter belongs in `HexVirtualSubstMathlib`, avoiding a
-cycle and a mandatory RCF dependency for future CAD and covering consumers.
+the reifier. The optional adapter is a new `HexRCF.RealFormula` module owned
+by `HexRCF`, with a dependency on `HexRealFormulaMathlib` when implemented.
+Future CAD and covering tactics can import it without depending on virtual
+substitution; the shared formula libraries remain independent of RCF.
 
 This document specifies new interfaces; it does not register libraries or
 claim implementation phases. The conventions of [SPEC](../SPEC.md),
@@ -35,8 +37,8 @@ Atom n                 := { p : Poly n, cmp : Cmp }
 QF n                   := atom (Atom n) | tt | ff | not (QF n)
                           | and (QF n) (QF n) | or (QF n) (QF n)
 Quantifier             := existsReal | forallReal
-Prenex n               := { prefix : List Quantifier,
-                            matrix : QF (n + prefix.length) }
+Prenex n               := matrix (QF n)
+                          | quant (Quantifier) (Prenex (n+1))
 Sentence               := Prenex 0
 QF.toProp              : QF n → (Fin n → ℝ) → Prop
 Prenex.toProp           : Prenex n → (Fin n → ℝ) → Prop
@@ -48,7 +50,10 @@ order. Interpret a prefix from the front: choose its first real value,
 append it to the parameter valuation, and interpret the remaining prefix.
 Interpret the matrix by the six real comparisons and ordinary propositional
 connectives, evaluating integer coefficients through their cast to `ℝ`.
-No implicit universal closure is part of `toProp`.
+No implicit universal closure is part of `toProp`. This inductive syntax
+allows quantifiers only before the matrix and makes interpretation structural.
+A serialized prefix list and matrix of arity `n + prefix.length` are a checked
+view, with coordinate transports confined to the view conversion.
 
 An innermost elimination consumes `QF (n+1)` and returns `QF n`, appending
 the eliminated value at the last coordinate for its theorem. A checked
@@ -78,9 +83,13 @@ The kernel path uses list arithmetic rather than reducing tree-backed
 `MvPoly` values. Formula certificates also check every node reference and
 input identifier; a hash is a cache lookup key, not an equality proof.
 
-The computational API includes `polys`, `support`, `degree`, `rename`,
-`lift`, `drop`, `nnf`, `toKernel`, `ofKernel?`, and `evalRat`. Degree is the
-maximum exponent of a specified variable after polynomial normalization;
+The `QF` computational API includes `polys`, `support`, `degree`, `rename`,
+`lift`, `drop`, `nnf`, `toKernel`, `ofKernel?`, and `evalRat`. Both formula
+types provide structural equality and `nodeCount`; `Prenex` additionally
+provides its prefix/matrix view, free-coordinate renaming, and checked
+adjacent same-quantifier permutation with matrix renaming. Their kernel forms
+provide decidable equality over validated lists. Degree is the maximum
+exponent of a specified variable after polynomial normalization;
 the zero polynomial has bound zero. `evalRat` interprets a `QF n` at an exact
 rational valuation; it does not interpret real quantifiers using rational
 quantification. In particular, `∃ x : ℝ, x² = 2` cannot be tested by searching
@@ -101,11 +110,16 @@ are valid substitution maps but do not justify exchanging binders. Prenex
 normalization must alpha-rename, shift indices under binders, and establish
 freshness before moving a quantifier past a connective. Its theorem preserves
 `toProp` for every free valuation, not merely the closed truth value.
+Normalize negation on the scoped frontend tree before prenex conversion:
+`¬∃x P` becomes `∀x ¬P`, and `¬∀x P` becomes `∃x ¬P`, with proofs.
+Expand implications first so their antecedents get the right polarity.
+The quantifier-free `nnf` operation alone cannot perform this dualization.
 
 ## Reification contract
 
 The reifier returns a formula, the complete ordered parameter/binder map,
-and a Lean proof relating its `toProp` to the source proposition. It accepts
+and a Lean **equivalence** between its `toProp` and the source proposition
+for every valuation of the declared free parameters. It accepts
 real polynomial expressions with integer and rational literal coefficients,
 literal natural powers, the six comparisons, `True`, `False`, `¬`, `∧`,
 `∨`, `→`, `↔`, and real `∀`/`∃`. Bounded real quantifiers expand to guarded
@@ -151,6 +165,10 @@ output remain `Prenex n` and `QF n`; the tree is frontend bookkeeping.
 
 ## Relation to hex-rcf
 
+The following adapter obligations belong to the planned `HexRCF.RealFormula`
+module, specified here as the language interoperability contract. They add
+no RCF dependency to either shared formula library.
+
 [HexRCF.Syntax](../../HexRCF/Syntax.lean) uses `ZPoly`, six comparisons, and
 Boolean formulas under one real or half-open dyadic quantifier. Its
 [semantics](../../HexRCF/Language.lean) are the one-variable instance of this
@@ -195,9 +213,9 @@ merge terms and requires normalization; rational arithmetic costs are not
 unit cost. NNF is linear in the tree input, while frontend biconditional
 expansion and prenex conversion are output-sensitive and may duplicate
 subformulas. Report expanded tree size separately from shared DAG size.
-The companion's reification, semantic proofs, and RCF adapters use fresh
-module `lake build` probes with matched import baselines per
-[Phase 4](../../PLAN/Phase4.md), not Mathlib-importing LeanBench executables.
+The companion's reification and semantic proofs, and the adapter in RCF, use
+fresh module `lake build` probes in their respective libraries with matched
+import baselines per [Phase 4](../../PLAN/Phase4.md), not Mathlib-importing LeanBench executables.
 
 The manual introduces a parameterized polynomial inequality, shows its
 coordinate map and rational denominator clearing, then uses the same formula

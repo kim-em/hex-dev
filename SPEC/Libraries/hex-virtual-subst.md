@@ -14,9 +14,9 @@ on `HexRealFormula` and `HexMvPoly`. It owns coefficient extraction, guarded
 test points, substitution tables, elimination, and certificate checking.
 `HexVirtualSubstMathlib` depends on that core, `HexRealFormulaMathlib`,
 `HexMvPolyMathlib`, `HexRCF`, and Mathlib. It proves the elimination-set and
-local sign theorems over `ℝ`, connects executable formulas to `toProp`, owns
-the RCF adapter, and implements the tactic. Generalization to an ordered
-field with `IsRealClosed` is a later theorem extension; arbitrary ordered
+local sign theorems over `ℝ`, connects executable formulas to `toProp`, uses
+the shared adapter in `HexRCF.RealFormula`, and implements the tactic.
+Generalization to an ordered field with `IsRealClosed` is a later theorem extension; arbitrary ordered
 fields do not suffice for quadratic root existence.
 
 Ship **exact reflection first**: a total, budgeted eliminator over the kernel
@@ -31,7 +31,10 @@ is part of this design change.
 ## Elimination sets
 
 Use `toUnivariate` in a selected main variable, with a proved coordinate
-permutation and coefficient extraction. After normalization every atom is
+permutation and coefficient extraction. Pass the fixed lexicographic order
+on the remaining coordinates as `toUnivariate`'s coefficient comparator
+`cmp'`, so its coefficients already have the formula library's order.
+After normalization every atom is
 `p(x) = a*x² + b*x + c`, where `a,b,c : Poly n`. The eligibility check bounds
 **each atom's degree in x**, not total degree or the degree of a product of
 atoms. Symbolic leading coefficients must be split by their value at the
@@ -82,8 +85,10 @@ finite sign decomposition proves completeness without computing or sorting
 any roots in the executable algorithm.
 
 The formal precedent is Scharager–Cordwell–Mitsch–Platzer, FM 2021
-([AFP entry](https://isa-afp.org/entries/Virtual_Substitution.html)); the
-Cordwell–Tan–Platzer attribution refers to the separate BKR work. AFP's
+([AFP entry](https://isa-afp.org/entries/Virtual_Substitution.html)). The
+paper credits Katherine Cordwell; the current AFP entry uses her name
+[Katherine Kosaian](https://sites.google.com/view/katherinekosaian/).
+The Cordwell–Tan–Platzer paper is the separate BKR work. AFP's
 [GeneralVSProofs](https://isa-afp.org/browser_info/current/AFP/Virtual_Substitution/GeneralVSProofs.html)
 `gen_qe_eval'` assumes `all_degree_2 var L` and a valuation-prefix length
 condition, proves the existential equivalence for a conjunction of atoms,
@@ -179,19 +184,27 @@ polynomial require no limiting argument.
 
 ## Reflection and certificates
 
-The reflection API `elim : QF (n+1) → Budget → Result (QF n)` returns either
-an exact answer or `unsupported`/`exhausted` with the original input and a
-reason. It validates degree, generates the entire guarded set, substitutes,
-and performs only proved exact local reductions. `elim_sound` states
+The public reflection API `elim : QF (n+1) → Budget → ElimResult n` has
+constructors `success (ψ : QF n)` and `declined (reason : Reason)`. Reasons
+distinguish unsupported input from budget exhaustion; the caller retains
+the original input. It validates degree, generates the entire guarded set,
+substitutes, and performs only proved exact local reductions. `elim_sound` states
 
 ```text
 elim φ budget = success ψ →
 ∀ ρ, ψ.toProp ρ ↔ ∃ x, φ.toProp (append ρ x).
 ```
 
+This public `QF` API is a wrapper: `toKernel` supplies a well-formed list
+input to the private kernel eliminator, and validated decoding reconstructs
+its `QF` output. Prove preservation of arity and canonicality in the private
+algorithm and the conversion round trips, then derive `elim_sound`. A raw
+kernel entry point validates arity, canonicalizes, and rejects malformed
+input before elimination; its soundness theorem refers to the decoded input.
+The wrapper discharges the public theorem's validation obligation.
 The implementation and degree checks reduce over the list kernel form from
-[HexMvPoly.Kernel](../../HexMvPoly/Kernel.lean); conversion correctness connects
-it to `MvPoly`. Kernel reduction uses `decide +kernel`, never `native_decide`.
+[HexMvPoly.Kernel](../../HexMvPoly/Kernel.lean), using `decide +kernel`, never
+`native_decide`. The certificate APIs use the same validated boundary.
 The completeness contract for eligible inputs is successful exact elimination
 given sufficient budget, without claiming a bound independent of output size.
 
@@ -211,24 +224,62 @@ of test points can demonstrate existence but cannot certify elimination or
 refutation. Missing branches, altered comparisons, stale inputs, forged
 coefficients, and unproved guards must be rejected. No hash, external CAS,
 or compiled Boolean enters a theorem hypothesis as trusted evidence.
+Certificates record point keys, per-atom coefficient/identity witnesses,
+guard derivations, proposed output nodes, and rewrite/refutation traces.
+Replay still enumerates the complete set; it replaces search for arithmetic
+expressions and simplifications with identity and rule checking. It makes no
+claim to avoid polynomial arithmetic or exhaustive coverage in the kernel.
 
-For `checkElim`, output is the exact disjunction reconstructed by these rules,
-up to checked structural Boolean identities and constant folding. A proposed
-heuristically simplified output is accepted only if it coincides with that
-result or has both directions established through the permitted rules.
-The reference producer can always emit the unsimplified result. This route
-retains exactness through quantifier alternation.
+For `checkElim`, output is the exact disjunction reconstructed by these rules.
+Its exact rewrite trace permits polynomial normalization, constant folding,
+comparison scaling by a checked nonzero rational (reversing order if negative),
+and guard-local polynomial rewrites `p-q = Σ hᵢ*gᵢ` under explicit equalities
+`gᵢ=0`. The latter are checked polynomial identities, proving equality of
+values and hence equivalence of every comparison under the guard. A guard
+may never be inferred from a sibling disjunct. Prove each rewrite once.
+
+After these rewrites, a budgeted kernel truth-table checker may prove
+propositional equivalence: assign each distinct normalized polynomial one
+of the three signs, interpret all six comparisons by that sign, and check
+both formulas agree for every sign assignment. Real trichotomy proves
+soundness; dependence between distinct polynomials need not be decided.
+This permits absorption and comparison complementation. The test can be
+exponential and has its own node/step accounting. A producer may always
+emit the unchanged exact output, avoiding this test. These are the permitted
+exact rules; there is no generic semantic-equivalence oracle inside
+`checkElim`. This route retains exactness through quantifier alternation.
 
 For `checkRefute`, the only semantic simplification extension is a checked
 **weakening** `D → W` of each disjunct; a refutation of `W` then refutes `D`.
 Permitted traces project conjuncts, fold constants, or replace conjuncts by
-checked consequences. Linear-combination consequences require the exact
-polynomial identity, nonnegative multipliers for inequality premises, and
-the appropriate strictness premise for a strict conclusion; arbitrary
-polynomial multipliers need separately proved signs. Equality premises may
-have arbitrary multipliers. Missing sign evidence is rejection. In a shared
-Boolean DAG, weakening is allowed only at a positive branch occurrence,
-never underneath unchecked negation. Dropping a disjunct is not weakening.
+checked consequences. Normalize inequality premises to `pᵢ≥0` or `pᵢ>0`
+by negating polynomials for the opposite orientation. Check the identity
+`q = Σ λᵢ*pᵢ + Σ μⱼ*eⱼ`, with `eⱼ=0` the equality premises and every
+`λᵢ≥0`. This proves `q≥0`. A strict conclusion additionally requires a
+strict premise with a **strictly positive** multiplier. Equality multipliers
+`μⱼ` are arbitrary; polynomial inequality multipliers need separately
+checked sign evidence under the same branch assumptions. A `≠` premise is
+rejected by this rule; a prior checked split into `<` or `>` may expose
+usable signed premises. Missing orientation or sign evidence is rejection.
+
+The reference refutation checker first computes verified NNF, with negation
+absorbed into comparisons. DAG nodes are immutable: a branch-local rewrite
+copies the affected occurrence and its path, preserving other incoming
+edges. This also applies to guard-local exact rewrites. A global replacement
+requires an unconditional implication valid at every occurrence and, if
+Boolean negations are retained, positive polarity along **every** path to
+the replaced node. Checking only the currently visited path or its local
+assumptions is insufficient. Dropping a disjunct is not weakening.
+
+Core refutation leaves use checked constant contradictions, incompatible
+sign comparisons on the same normalized polynomial, or the preceding
+linear-combination rule deriving a negative constant as nonnegative (or a
+nonpositive constant as strictly positive). Compound branches are checked by
+budgeted propositional decomposition; full coverage is required. Additional
+existential elimination of remaining parameters recurses through the same
+checker, with a decreasing variable count. An unfinished branch rejects the
+certificate. RCF leaf proofs are composed in the Mathlib tactic through the
+adapter, not trusted as an unchecked Boolean in the core `checkRefute`.
 
 Dolzmann–Sturm equivalence-based simplification guides the **untrusted
 search only**. There is no trusted call to that simplifier. Even a
@@ -242,8 +293,10 @@ remaining budget or decline; it is not a `false` verdict.
 
 ## Composition and tactic surface
 
-`qe : Prenex n → Budget → Result (QF n)` recursively eliminates the innermost
-quantifier. Existentials use `elim`; universals use `¬ elim (nnf (¬φ))`.
+`qe : Prenex n → Budget → QeOutcome n` has constructors
+`success (ψ : QF n)` and `residual (p : Prenex n) (reason : Reason)`.
+It recursively eliminates the innermost quantifier. Existentials use `elim`;
+universals use `¬ elim (nnf (¬φ))`.
 Each step is an equivalence for **all** remaining parameter valuations.
 Recompute degrees after every step. Equal adjacent quantifiers may be
 permuted with a proof and explicit coordinate maps; never commute an
@@ -251,9 +304,13 @@ existential across a universal. Compositional rewriting of an innermost
 quantified frontend subformula uses the same exact theorem before global
 prenex conversion, particularly for biconditionals.
 
-A stalled computation returns the residual prefix and matrix, parameter map,
-and a checked equivalence from the input to that residual; it does not label
-it a quantifier-free answer. Degree above two after substitution is expected.
+A stalled computation returns `residual p reason`; if no progress was made,
+`p` is the original input. Both constructors are computational data. The
+companion proves `qe_correct` for success and `qe_residual` for residuals:
+`qe input budget = residual p reason → ∀ρ, p.toProp ρ ↔ input.toProp ρ`.
+The tactic reconstructs this equivalence (from reflection or accepted step
+certificates), retaining the parameter map; it does not label a residual a
+quantifier-free answer. Degree above two after substitution is expected.
 Hand a single remaining quantified coordinate with no symbolic parameters to
 RCF, even above degree two; the adapter and sentence-equivalence obligations
 are specified in [hex-real-formula](hex-real-formula.md#relation-to-hex-rcf).
@@ -286,10 +343,15 @@ Diagnostics name the stage, variable, offending atom and degree, remaining
 prefix, and consumed budget. Stable reasons include `degreeExceeded`,
 `nonPolynomial`, `unsupportedBinder`, `symbolicDenominator`,
 `symbolicResidue`, `nodeBudget`, `termBudget`, `replayBudget`,
-`certificateRejected`, and `backendUnavailable`. A closed computation of
-`false` is diagnostic only, following [hex-rcf](../../HexRCF/SPEC/hex-rcf.md);
-it does not close a goal or expose an automatic proof of its negation.
-Tactic failure leaves the original goal intact.
+`certificateRejected`, and `backendUnavailable`. As a **tactic surface
+policy**, a closed computation of `false` is diagnostic only, following
+[hex-rcf](../../HexRCF/SPEC/hex-rcf.md): neither tactic closes the goal or emits
+an automatic proof of its negation. Unlike RCF's one-sided decision contract,
+the exact QE and reification equivalences here do mathematically support
+transporting a verified false result to a negation proof. That fact is
+available through the equivalence API; it does not change the tactic policy.
+Failure to refute a weakening is unknown, not false. Tactic failure leaves
+the original goal intact.
 
 ## Design sanity checks
 
@@ -307,14 +369,21 @@ rules, not claims of tactic support already present.
    free. The quadratic guard supplies exactly the discriminant condition;
    the linear guard supplies a root regardless of `c`; when `a=b=0`,
    the infinity branch reduces to `c=0`. Root-plus-ε equality contributes
-   no extra nonconstant roots. The resulting equivalence proves the
-   proposition before universally closing parameters. Test both signs of
-   `a`, all three signs of the discriminant, and `a=b=c=0` separately.
+   no extra nonconstant roots. Guard-local identities simplify the linear
+   root value `a*c²` using `a=0`. The exact output is
+   `(a≠0 ∧ D≥0) ∨ (a=0 ∧ b≠0) ∨ (a=0 ∧ b=0 ∧ c=0)`.
+   After rewriting the existential by its equivalence, close the remaining
+   equivalence to the stated right-hand side with the sign truth-table
+   checker (Boolean absorption), then universally close parameters.
+   Test both signs of `a`, all three signs of the discriminant, and
+   `a=b=c=0` separately.
 3. `∀ ε : ℝ, ε>0 → ∃ δ : ℝ, δ>0 ∧ 2*δ<ε`. In `δ`, boundaries are `0`
    and `ε/2`; at `0+ε'` the derivative signs give `δ>0` and `2*δ-ε<0`
-   exactly when `ε>0`. Thus the existential eliminates to `ε>0`, and
-   the implication is true. The formal `ε'` is distinct from the real
-   bound variable `ε`; no fixed rational choice for it is sound.
+   exactly when `ε>0`. Use the quantified-subformula route: the existential
+   alone eliminates to `ε>0`, and the implication is a tautology. A fixture
+   using the global prenex route instead retains the `ε≤0` alternative and
+   eliminates the guarded matrix to `True`. The formal `ε'` is distinct
+   from the real bound variable `ε`; no fixed rational choice for it is sound.
 4. `∀ y : ℝ, ∃ x : ℝ, x³=y`. The innermost atom has degree three in `x`
    with a remaining symbolic parameter `y`. Return `degreeExceeded`
    (`variable=x`, `degree=3`, `bound=2`); the RCF adapter is ineligible.
@@ -374,7 +443,8 @@ trial-major schedule; no quiet-host filtering or retry-until-clean runs.
 
 Use versioned JSONL fixtures with the formula schema from hex-real-formula,
 elimination coordinate, requested route, budgets, expected result kind,
-output formula, and certificate when applicable. Store integers exactly and
+exact output formula for QE or a refutation trace for refutation, and
+certificate data when applicable. Store integers exactly and
 include seed and tool versions. `core` covers every comparison at all three
 point kinds, linear/constant degenerations, both signs of denominators,
 `D<0`, `D=0`, `D>0`, coincident roots, identically zero polynomials, vacuous
@@ -384,9 +454,13 @@ reversed inequality, strengthened disjunct, and changed input digest/data.
 
 The independent oracles are Redlog in open-source REDUCE and AFP's exported
 SML code. Use `load_package redlog; rlset ofsf;` followed by `rlqe` on closed
-fixtures, and on the universal closure of `input ↔ output` for parameterized
-QE fixtures. Pin REDUCE revision and all switches; reject a still-quantified
-or timed-out answer as unsupported/exhausted, never as false. See the
+fixtures, and on the universal closure of `input ↔ output` for **exact**
+parameterized QE fixtures. A parameterized refutation fixture instead checks
+`∀ params, ¬∃x φ`; for a weakening step check `∀ params, D → W` and the
+claimed refutation of `W`. Never demand `D ↔ W`. Replay-budget refusals
+and unsupported inputs are separate outcomes, not oracle truth values.
+Pin REDUCE revision and all switches; reject a still-quantified or timed-out
+answer as unsupported/exhausted, never as false. See the
 [rlqe contract](https://www.redlog.eu/documentation/service.php?key=rlqe).
 
 Build the SML export from a pinned Isabelle/AFP release using
@@ -394,7 +468,7 @@ Build the SML export from a pinned Isabelle/AFP release using
 (`VSGeneral`, `is_quantifier_free`, and exact rational constructors), recording
 the SML compiler and driver revision. Check variable order, comparisons, and
 rational encodings with hand-computed fixtures before cross-checking. Compare
-closed decisions only when the export fully solves the input; for open
+closed decisions only when the export fully solves the input; for open exact
 outputs, compare rational specializations and ask Redlog to decide the
 universally closed equivalence. Different formula text is not a mismatch,
 and finite sampling is not an equivalence proof. The Isabelle export is an
