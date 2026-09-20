@@ -641,7 +641,9 @@ try consecutive Suyama parameters `6..(5+min(curves,64))` for each residual,
 stopping at a proper divisor. Send both parts back through the core provider;
 merge its factors, and process its remaining residuals with ECM. Each callback
 restarts the deterministic curve schedule. The core provider's random state
-is threaded unchanged across deterministic ECM calls.
+is threaded unchanged across deterministic ECM calls. Core diagnostic events
+are retained in execution order; the default allocation leaves Pollard
+continuation disabled.
 
 The provider honors the supplied remaining total attempt limit (1024 if absent),
 charges the actual stage calls, and runs at most `factorFuel` ECM worklist

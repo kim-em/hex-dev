@@ -44,19 +44,23 @@ The [residual and eight-curve construction record](bench-results/hex-primality-e
 and [production 64-curve construction record](bench-results/hex-primality-ecm-paths-issue-10362.json)
 retain every completed call, including failures, complete commands and outputs,
 source and executable hashes, CPU placement, host load, and generated proof
-sources. The initial sweep driver is preserved at commit `e8d7891c4`; the
+sources. The initial sweep driver is preserved at commit
+[`e8d7891c45d5bb59226a59c723852ee3ba5a19d5`](https://github.com/kim-em/hex-dev/commit/e8d7891c45d5bb59226a59c723852ee3ba5a19d5); the
 later driver adds the `--paths-only` and `--curves` controls without changing
 timed operations. The initial record's parent commit predates its uncommitted
 prototype; its measured source hashes identify the implementation in that commit.
 In that prototype, the complete continuation and provider lived inside the hashed
 `bench/HexPrimality/FieldProbe.lean`, before extraction into production modules.
 The `commit` fields preserve the original worktree HEADs, including pre-rebase
-identifiers; the reachable commits above identify the measured file contents.
+identifiers; the published source snapshots identify the measured file contents.
 `completion`, `driver_source`, and `provenance_annotations` were added after the
 runs. The embedded driver text matches the original recorded driver SHA-256;
 termination annotations describe the retained outputs and assertion failures.
 Measured samples, hashes, and original commit fields have not been rewritten.
-The production measurement sources are preserved at `7d1763f16`. Subsequent
+The production measurement sources are preserved at
+[`7d1763f168b307fbecb5d92931046975e95a6ec1`](https://github.com/kim-em/hex-dev/commit/7d1763f168b307fbecb5d92931046975e95a6ec1). Both snapshots can be fetched by full commit hash. They predate the
+Pollard integration; the current provider preserves its core diagnostic events
+and keeps Pollard continuation disabled in its default allocation. Subsequent
 provider hardening also caps the core callback when no attempt limit is supplied;
 these construction measurements always supply the explicit 1024-attempt limit.
 
@@ -208,7 +212,7 @@ single CI job. They test untrusted search; no elliptic-curve success
 or completeness theorem is claimed.
 
 Pollard p−1 stage 2 was unavailable in the ECM measurement checkout.
-Its independent draft implementation is compared separately below at a pinned
+Its independent implementation is compared separately below at a pinned
 revision of [PR #10364](https://github.com/kim-em/hex-dev/pull/10364); it does not
 supply any factor or certificate to the ECM runs.
 
@@ -329,8 +333,9 @@ hashes. P-521 retains its existing fixed registrations. The benchmark runner's
 120-second construction caps apply to measurement, not `verify`; full searches
 are therefore excluded from the routine benchmark smoke gate.
 
-The full tactic-output module took approximately 218–243 seconds in local
-builds. These unpaired build observations include interpreted search and are
+The full tactic-output module took approximately 218–243 seconds in the original
+local builds and 137 seconds in the build after Pollard integration. These
+unpaired build observations include interpreted search and are
 operational context, separate from the paired literal render/elaboration and
 kernel measurements above. CI builds `HexIntFactorFieldConformance` when the
 library filter includes HexIntFactor (or all libraries); ordinary checker
@@ -349,7 +354,7 @@ examples alone.
 
 ## Independent Pollard p−1 comparison
 
-The draft implementation in PR #10364, commit
+The implementation snapshot from PR #10364, commit
 `af894cbb8fa86164ad8da113d9b26c5bc8bff76d`, is tested in a separate checkout.
 The [complete record](bench-results/hex-primality-pminus-fields-issue-10362.json)
 contains 96 residual calls and 16 full construction calls, with two adjacent
@@ -400,7 +405,7 @@ Continuation adds no successful residual split in this schedule. This does
 not rule out other bases or larger allocations, and a split alone does not
 establish a sufficient recursively certified subset.
 
-Full construction toggles only the draft's `pMinusOneStage2` budget switch,
+Full construction toggles only that snapshot's `pMinusOneStage2` budget switch,
 retaining the existing 1024-attempt cap and all other construction settings.
 These calls exercise its production allocation, separately from the cap-sized
 residual diagnostics above.

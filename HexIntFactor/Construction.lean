@@ -27,7 +27,7 @@ The callback honors the remaining total attempt limit and never accepts an
 externally asserted prime. The constructor recursively certifies candidates. -/
 def ecmFactorSearch (b₁ : Nat := 32768) (b₂ : Nat := 524288)
     (curves : Nat := 64) (trace : Bool := false) : FactorSearch := fun allocation n r => Id.run do
-  if n == 0 then return ⟨⟨[], 0⟩, r, 0⟩
+  if n == 0 then return ⟨⟨[], 0⟩, r, 0, []⟩
   let limit := allocation.attemptLimit.getD 1024
   let allocation := { allocation with attemptLimit := some limit }
   let initial := Construction.factorSearch allocation n r
@@ -36,6 +36,7 @@ def ecmFactorSearch (b₁ : Nat := 32768) (b₂ : Nat := 524288)
     return initial
   let mut work := initial.attempts
   let mut rand := initial.rand
+  let mut events := initial.events
   let mut factors := initial.raw.factors
   let mut residual := 1
   let mut stack := [initial.raw.residual]
@@ -60,9 +61,10 @@ def ecmFactorSearch (b₁ : Nat := 32768) (b₂ : Nat := 524288)
         let found := Construction.factorSearch { allocation with attemptLimit := some (limit - work) } part rand
         work := work + found.attempts
         rand := found.rand
+        events := events ++ found.events
         for (p, e) in found.raw.factors do
           factors := insert p e factors
         stack := found.raw.residual :: stack
-  return ⟨⟨factors, stack.foldl (· * ·) residual⟩, rand, work⟩
+  return ⟨⟨factors, stack.foldl (· * ·) residual⟩, rand, work, events⟩
 
 end Hex.Nat

@@ -109,6 +109,14 @@ def run (args : List String) : IO UInt32 := do
         unless result.attempts ≤ allowance &&
             result.raw.factors.foldl (fun acc (q,e) => acc*q^e) result.raw.residual == n do
           throw (IO.userError "provider boundary")
+    let enabled := { constructionBudget.factor with
+      pMinusOneStage2 := true, smoothBounds := [2], smoothBases := [2]
+      primeBudget := ⟨0, 0⟩, primeFuel := 0, attemptLimit := some 32 }
+    let core := Construction.factorSearch enabled 1000036000099 (Hex.Rand.ofSeed 1)
+    let combined := ecmFactorSearch 64 8192 8 false enabled 1000036000099 (Hex.Rand.ofSeed 1)
+    unless !core.events.isEmpty && combined.events.take core.events.length == core.events &&
+        combined.raw.factors.foldl (fun acc (q,e) => acc*q^e) combined.raw.residual == 1000036000099 do
+      throw (IO.userError "core event preservation")
     IO.println "ECM continuation checks passed"
     return 0
   if let ["ecm2", nArg, sigmaArg, b1Arg, b2Arg] := args then
