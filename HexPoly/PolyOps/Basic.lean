@@ -40,8 +40,9 @@ inductive Resource where
   | operations | steps | coefficients | decisions | evidenceNodes | evidenceBytes | replay
   deriving DecidableEq, Repr, Inhabited
 
-/-- Initial allowances. Coefficients count allocated array cells; evidence counts retained
-nodes and serialized bytes separately. Replay counts checked claims. -/
+/-- Initial allowances. Coefficients count allocated array cells. Evidence counters charge
+both retained and replayed nodes/bytes, including a producer's immediate check; they measure
+cumulative work rather than just final certificate size. Replay counts checked claims. -/
 structure Limits where
   allowance : Resource → Nat
 
@@ -125,8 +126,11 @@ inductive Exhaustion where
   deriving DecidableEq, Repr
 
 inductive Rejection where
+  /-- A supplied certificate is malformed or its claim is false. -/
   | evidence (message : String)
+  /-- A callback attempted to replenish a resource counter. -/
   | budgetIncrease
+  /-- An internal assertion or a helper precondition failed on checked data. -/
   | invariant (message : String)
   deriving DecidableEq, Repr
 

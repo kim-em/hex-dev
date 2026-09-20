@@ -567,7 +567,12 @@ private def falseDivision : ExactOps Int :=
 #guard isExhausted (equalWith intOps (2 ^ 256) (2 ^ 256)
   (Budget.ofFn fun r => if r = .evidenceBytes then 8 else 100))
 #guard isExhausted (ratOps.invWith 0
-  (Budget.ofFn fun r => if r = .evidenceBytes then 1 else 100))
+  (Budget.ofFn fun r => if r = .evidenceBytes then 2 else 100))
+-- Two zero-test bytes, three retained rational-literal bytes, and one domain-record byte.
+#guard match ratOps.invWith 0
+    (Budget.ofFn fun r => if r = .evidenceBytes then 6 else 100) with
+  | .invalid (.domain ..) rest => rest.evidenceBytes == 0
+  | _ => false
 #guard match equalWith intOps (2 ^ 256) (2 ^ 256) budget with
   | .ok e _ => isExhausted (checkEquality intOps _ _ e
       (Budget.ofFn fun r => if r = .evidenceBytes then 8 else 100))

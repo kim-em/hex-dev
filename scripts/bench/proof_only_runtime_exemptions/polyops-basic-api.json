@@ -1,6 +1,6 @@
 {
   "path": "HexPoly/PolyOps/Basic.lean",
   "baseline_blob": null,
-  "current_blob": "f807515148066c348d5bf185cdcaf1add1563425",
+  "current_blob": "7c4ef74a7418981ed94b35e90bf0f5087f5c4880",
   "reason": "Adds the explicit fallible coefficient API in Hex.PolyOps. No existing factorization computation calls these definitions, and no existing DensePoly or factorization definition, instance, csimp rule, or measured fixture changes. This exemption concerns only the existing integer-factorization sweep; it makes no performance claim about the new fallible API."
 }

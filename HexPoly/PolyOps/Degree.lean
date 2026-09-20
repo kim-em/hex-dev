@@ -88,7 +88,7 @@ difference; this helper produces evidence specifically for an asserted identity.
     charge .evidenceNodes
     charge .evidenceBytes 1
     return ⟨n.1, d.1, n.2, d.2, h ▸ z.2⟩
-  else fun rest => .rejected (.evidence "unequal coefficients") rest
+  else fun rest => .rejected (.invariant "asserted coefficient equality is false") rest
 
 @[expose] def checkEquality (ops : CoeffOps C) (a b : C) (e : EqualityEvidence ops a b) :
     ops.Run Unit := do
