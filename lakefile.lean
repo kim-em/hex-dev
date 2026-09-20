@@ -832,6 +832,7 @@ lean_lib HexIntervalMathlibExperiment where
 @[default_target]
 lean_lib HexIntervalMathlib where
   globs := #[`HexIntervalMathlib, `HexIntervalMathlib.Interval,
+    `HexIntervalMathlib.Elementary.Constants, `HexIntervalMathlib.Elementary.ExpLog,
     `HexIntervalMathlib.Addition, `HexIntervalMathlib.Subtraction,
     `HexIntervalMathlib.MinMax, `HexIntervalMathlib.Absolute,
     `HexIntervalMathlib.Multiplication,
@@ -860,7 +861,9 @@ lean_lib HexIntervalReplayProbe where
 lean_lib HexIntervalMathlibReplayProbe where
   srcDir := "bench"
   globs := #[`HexIntervalMathlib.CenterBaseline,
-    `HexIntervalMathlib.CenterReflected, `HexIntervalMathlib.CenterDirect]
+    `HexIntervalMathlib.CenterReflected, `HexIntervalMathlib.CenterDirect,
+    `HexIntervalMathlib.Constants.Baseline, `HexIntervalMathlib.Constants.Precision2,
+    `HexIntervalMathlib.Constants.Precision8, `HexIntervalMathlib.Constants.Precision16]
 
 lean_lib HexRealRootsMathlibReplayProbe where
   srcDir := "bench"

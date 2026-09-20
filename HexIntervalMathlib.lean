@@ -8,6 +8,8 @@ module
 
 
 public import HexIntervalMathlib.Interval
+public import HexIntervalMathlib.Elementary.Constants
+public import HexIntervalMathlib.Elementary.ExpLog
 public import HexIntervalMathlib.Addition
 public import HexIntervalMathlib.Subtraction
 public import HexIntervalMathlib.MinMax
