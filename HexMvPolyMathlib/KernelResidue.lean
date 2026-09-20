@@ -88,6 +88,25 @@ theorem residueEquiv_C (c : Hex.ZMod64 p) :
       MvPolynomial.C (HexModArithMathlib.ZMod64.equiv c) := by
   simp [residueEquiv, HexMvPolyMathlib.equiv_apply]
 
+/-- Residue correspondence preserves each serialized monomial. -/
+@[simp] theorem residueEquiv_monomial (m : Mono n) (c : Hex.ZMod64 p) :
+    residueEquiv p (cmp := cmp) (Hex.MvPoly.monomial m c) =
+      MvPolynomial.monomial (HexMvPolyMathlib.monoEquiv m)
+        (HexModArithMathlib.ZMod64.equiv c) := by
+  simp [residueEquiv, HexMvPolyMathlib.equiv_apply]
+
+/-- Interpret a serialized residue term followed by the remaining support. -/
+theorem denoteMod_cons (e : List Nat) (c : Nat) (a : PolyList Nat) :
+    denoteMod p (cmp := cmp) ((e, c) :: a) =
+      MvPolynomial.monomial (HexMvPolyMathlib.monoEquiv (Hex.MvPoly.Kernel.mono n e))
+        (c : ZMod p) + denoteMod p (cmp := cmp) a := by
+  change residueEquiv p (cmp := cmp) (Hex.MvPoly.monomial (Hex.MvPoly.Kernel.mono n e)
+    (Hex.ZMod64.ofNat p c) + Hex.MvPoly.Kernel.denoteMod p a) = _
+  erw [map_add, residueEquiv_monomial]
+  rw [show HexModArithMathlib.ZMod64.equiv (Hex.ZMod64.ofNat p c) = (c : ZMod p)
+    from HexModArithMathlib.ZMod64.toZMod_natCast c]
+  rfl
+
 /-- Modular scaling denotes multiplication by the natural scalar in `ZMod p`. -/
 theorem denoteMod_smulMod (c : Nat) {a : PolyList Nat}
     (ha : Hex.MvPoly.Kernel.CanonicalMod p n a) :

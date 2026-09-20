@@ -19,6 +19,7 @@ KNOWN_EXCEPTIONS = {"Hex", "HexManual", "HexAggregateCheck", "HexGraph"}
 # `bench/` and `conformance/`. They are not project libraries (no libraries.yml
 # entry, no repo-root file); exempt them from the Lake-config alignment check only.
 BUILD_ONLY_LIBS = {
+    "CadSampleCostsExperiment",  # Manual experiments; no released library or CI target.
     "HexPolyFastKernels",
     "HexGraphIsoProofProbe",
     "HexGraphIsoCfiProbe",
@@ -65,6 +66,8 @@ BUILD_ONLY_LIBS = {
     "HexRealRootsMathlibReplayProbeScientific",
     "HexRCFProofProbe",
     "HexRCFProofProbeScientific",
+    "HexRealFormulaProofProbe",
+    "HexRCFRealFormula",
     "HexConformance",
     "HexFactorizationModules",
     "HexMvFactorizationTests",
@@ -752,6 +755,8 @@ def library_owner_for_path(path: Path, libraries: OrderedDict[str, LibraryInfo])
     parts = path.parts
     if not parts:
         return None
+    if parts[0] == "adapters" and len(parts) > 1:
+        return library_owner_for_path(Path(*parts[1:]), libraries)
     first = parts[0]
     if first in libraries or first in KNOWN_EXCEPTIONS:
         return first

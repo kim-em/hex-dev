@@ -519,3 +519,16 @@ no suspicious unregistered dominant cost was observed.
 ## Concerns
 
 `None.`
+
+## Optional shared-formula adapter
+
+`HexRCF.RealFormula` has a separate fresh-module correspondence probe for
+the cubic `x³-x-1=0` under the half-open `(1,2]` existential. Four adjacent
+AB/BA pairs compare `HexRCF.RealFormulaProbe.Adapter` with its matched
+`Baseline`; the imports are warmed and both measured modules rebuilt fresh.
+The [shared-formula proof report](hex-real-formula-mathlib-performance.md)
+records every pair, emitted-theorem axiom checks, clean source provenance,
+and compiler artifacts. This measures use of the correspondence theorem,
+not RCF certificate search or a new decision algorithm. The adapter is an
+explicit development import built by `HexRCFRealFormula`; the released
+RCF umbrella remains independent of the incubating frontend.

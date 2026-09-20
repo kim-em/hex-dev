@@ -203,6 +203,87 @@ The computational layer implements the quotient operations, including
 semantic irreducibility and proves the field laws, following the quotient-field
 pattern of `PolyQuot` and `hex-gfq-field`.
 
+## Real sign and comparison
+
+The following additions implement the tower part of the
+[exact comparison contract](../../SPEC/Libraries/hex-real-algebraic.md#towers-and-arrays).
+They are specified work, not implemented order instances. A real tower means
+that every **selected absolute generator** is real. Its other embeddings may
+be complex. Provide a checked real-tower predicate from the generators' exact
+reality tests and prove `isReal_iff`; do not equate this with being a totally
+real number field. Real elements of a complex tower instead require their own
+reality witness for the fixed embedding.
+
+`NumberTower.sign` returns `-1`, `0` or `1`, and `NumberTower.compare x y`
+returns the ordering determined by `sign (x-y)`. Total entry points take the
+real-tower proof, or (for an individual sign) a checked element-reality proof;
+checked wrappers reject nonreal inputs. There is no unconditional order on
+`Elem T` for arbitrary `T`. Coordinate equality decides zero first, including
+expressions reduced to zero by the tower relations. No numerical zero test
+replaces that field invariant.
+
+For a nonzero element `x`, form the absolute norm polynomial of `S-x` by
+`Norm.iterated`, clearing rational denominators at the end by a positive
+integer. It is a nonzero polynomial `E(S)` of degree at most `T.dim`,
+annihilating the selected evaluation; repeated roots are allowed. This uses
+one bounded norm step per level, no factorization or primitive-element
+flattening. Set `B = E.evalLowerDenom`, which removes all zero roots and
+content before computing the reciprocal-Cauchy bound `|x| ≥ 1/B`.
+Require the new `signEliminant_spec` for this use of the existing norm code;
+a norm-factorization theorem alone is not the selected-value annihilation
+bridge.
+
+Evaluate mixed-radix coordinates recursively at the stored generators. At
+each node, use `Disambiguation.evalMajorant` with the child-coordinate
+magnitude bounds from `RawEvaluation.coordsMajorant` and that node's absolute
+generator polynomial. This gives a computable majorant `C_v ≥ 1`; rational
+leaves use `C_v=1`. Define the evaluator's precision parameter `k` to guarantee
+radius at most `C_v*2^-k`. Refine the node's generator to `k+1`, and evaluate
+each coefficient child `w` at `k + ceilLog2 C_w`, so every coefficient input
+ball has radius at most `2^-k`. Horner's majorant now applies at the parent.
+These shifts are necessary: recursively supplied coefficient errors are not
+all one unit without them. Rational leaves use exact rational-to-dyadic balls.
+Require `signBall_bound` by induction on levels, including sound membership.
+
+For root-node majorant `C`, evaluate on the finite schedule
+`0 .. P`, `P = evalDisambiguationLimit E C`. At most `P+1` evaluations occur;
+at the endpoint the radius is at most `1/(8B)`, so the real centre determines
+the nonzero sign. Earlier exit requires a strict real-interval gap from zero.
+A uniform input bound on generator target precision is
+`P + max_path (sum of ceilLog2 C_w along the path) + 1`; all paths and
+majorants are computed from the finite coordinate tree. Each refinement uses
+`fuelFor` with that generator's polynomial and current precision. Norm
+elimination is structural in the tower length, and evaluation is structural
+in the same length and each stored degree. Thus neither termination argument
+uses the desired sign. The empty tower reduces to rational sign.
+
+This nested ball evaluator and its bounds are new obligations. The existing
+`Evaluation.evalElem?`/`RawEvaluation.evalCoords?` materialize intermediate
+lazy algebraic roots via resultants; citing them alone does not supply a
+cheap recursive ball algorithm or its error bound. They supply the reference
+value `A_T(x)`: exactify the successful evaluation result. Their success and
+semantic bridges already exist in the tower companion. Require `sign_eq`:
+`orderOfSign (sign x) = (A_T(x)).realCompare 0`, and `compare_eq`:
+`compare x y = (A_T(x)).realCompare (A_T(y))`, under the stated reality
+hypotheses. Sign of a real difference supplies comparison inside a real tower.
+
+Provide `sign?_isSome` and `compare?_isSome` for valid real inputs; any total
+wrapper panic fallback is **unreachable-by-pipeline-invariant** by these
+named theorems. Checked nonreal input is rejection, not fallback zero/equality.
+A real element of a complex tower can obtain its reality witness through
+materialization and the exact algebraic reality test; charge that preparation
+separately. The sign bound then uses all chosen complex generator embeddings
+and still applies to the certified real result.
+
+Conformance and Phase-4 sign/compare families, informational python-flint and
+Z3 RCF comparisons, and mode-dependent required ceilings are specified by the
+consumer contract. Include coordinate zero, rational and negative values,
+relations reducing to zero, close nonzero values, multiple choices of real
+generator embedding, and rejection of nonreal elements. Measure norm setup
+and recursive evaluation separately; do not hide materialization or flattening
+in a preconstructed-input timing. This adds no dependency on
+`hex-real-algebraic` to the tower library.
+
 ## Trager factorization
 
 `factor? f` first separates content and runs Yun decomposition over `Elem T`.

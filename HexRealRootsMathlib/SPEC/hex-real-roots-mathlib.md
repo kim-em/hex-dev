@@ -1,4 +1,10 @@
-# hex-real-roots-mathlib (depends on hex-real-roots + hex-poly-z-mathlib + Mathlib)
+# hex-real-roots-mathlib
+
+Dependencies: hex-real-roots, hex-poly-mathlib, hex-poly-z-mathlib and
+Mathlib; the shared abstract Sturm–Tarski foundation adds a planned Tau Ceti
+import. When implemented, the release configuration must carry that pinned
+third-party dependency to the published companion and its downstream consumers.
+This SPEC does not change publication metadata.
 
 Mathlib companion for [hex-real-roots](https://github.com/leanprover/hex-real-roots). Proves
 **soundness** of the certified isolations (a `RealRootIsolation`
@@ -606,10 +612,226 @@ parser-namespace, and documentation-markup translation. Run
 Once the pinned Mathlib release contains the development, these companion
 modules can re-export the corresponding Mathlib modules.
 
+## Sturm-Tarski correspondence
+
+First extend endpoint evaluation to the computational owner's
+`sturmVarAtRat`. Prove `sturmVarAtRat_eq` by positivity of the homogeneous
+denominator factor in each chain entry, `sturmVarAtRat_dyadic` by equality
+of exact signs at a dyadic's rational value, and `sturmCountRat_eq` by the
+existing half-open Sturm theorem at rational endpoints cast to `ℝ`.
+An upper endpoint root contributes one; a lower endpoint root contributes
+zero. This rational-count extension does not require the root-free guards
+of the separate Tarski-query API.
+
+The [Tarski-query primitive](../../HexRealRoots/SPEC/hex-real-roots.md#tarski-queries)
+requires new signed-remainder/Cauchy-index semantics here. Prove
+`tarskiQuery_eq`, identifying the executable variation drop with the sum of
+`sign (f(α))` over the real roots of squarefree nonzero `p` in the interval,
+under its non-root endpoint guards. Prove `tarskiQuery_isSome` for that domain
+and `tarskiQuery_sign` when the interval isolates exactly one root. Zero `f`,
+zero initial remainder, a nonconstant common gcd, negative query values and
+constant `p` are part of the contract.
+
+`TarskiReplay.check_sound` must derive the same signed sum from accepted
+literal data. Transport positive-scaled remainder identities through the
+integer-to-real cast, prove that reducing `f*p'` modulo `p` preserves the
+Cauchy index, and allow termination at a nonconstant gcd. The present
+`Sturm.IsSturmChain` root-flank orientation and root-count conclusion do not
+prove this statement: a root where `f` is negative contributes `-1`, and a
+common root contributes zero. Introduce the signed-query theorem without
+weakening the existing Sturm-count predicate or its theorems.
+
+The abstract foundation is a planned Tau Ceti import through this companion,
+shared by the integer frontend and
+[hex-sturm](../../SPEC/Libraries/hex-sturm.md#required-correspondence-and-specialization-theorems).
+It is not a second proof from the existing derivative-chain theorem.
+The [Sturm–Tarski theorem](https://www.isa-afp.org/entries/Sturm_Tarski.html)
+is prior art, not an existing Lean import. This companion supplies
+the root/sign semantics; `hex-number-field-mathlib` composes them with its
+chosen-real-embedding theorem to prove `QAdjoin.signTarski_eq` against
+`realCompare`. No reverse dependency on number fields is introduced.
+Literal kernel replay belongs to the fresh-module proof evidence track;
+query construction and endpoint evaluation belong to the computational
+owner's ordinary benchmarks. A general comparison elaborator is deferred.
+
+### Shared foundation and proof ownership
+
+The following are planned statement shapes, not available declarations at
+the [Mathlib pin](../../lake-manifest.json)
+`1cf325a0cf67aca2b04d76b5380ff6a9e410aefa`. Import the family foundation
+requested from Tau Ceti by [#10300](https://github.com/kim-em/hex-dev/issues/10300)
+once here: polynomial IVT on `[a,b]`, Rolle between distinct roots, and the
+signed-remainder/Cauchy-index formula. With
+`[Field R] [LinearOrder R] [IsStrictOrderedRing R] [IsRealClosed R]`, that
+formula equates zero-skipping variation drop to
+`∑ α ∈ Roots(P;a,b), sign (F.eval α)` for nonzero squarefree `P`, strictly
+ordered finite or infinite endpoints, and nonvanishing at finite endpoints.
+It includes `F=0`, initial reduction of `F*P'`, zero initial remainder,
+positive-scaled recurrence identities and nonconstant terminal gcd; root
+count is the `F=1` specialization. It must not assume `P,F` are coprime.
+
+### Abstract signed remainders
+
+Use `sgn : R → Int` with values `-1,0,1`, and the finite set
+`Roots(P;a,b)` of **distinct** roots (`P.roots.toFinset` filtered by strict
+endpoint inequalities). Infinite endpoint inequalities impose no bound on
+that side. Require `P≠0`, `Squarefree P`, `a<b` and nonzero evaluations of
+`P` at finite endpoints. For arbitrary `F : Polynomial R`, the planned
+shared theorem `Hex.Query.variation_eq` has the following explicit certificate
+hypotheses (`Hex.Query` is the planned abstract query namespace here):
+
+```text
+S₀ = P
+u*(F*P') = A*P + v*S₁,                       u>0, v>0
+lᵢ*Sᵢ = Qᵢ*Sᵢ₊₁ - rᵢ*Sᵢ₊₂,                lᵢ>0, rᵢ>0
+l*Sₘ₋₁ = Q*Sₘ,                              l>0
+```
+
+Scalars multiply polynomials as constant polynomials. In the non-singleton
+case, all entries are nonzero, `deg S₁<deg P`, and every subsequent degree
+strictly decreases. Here `deg` is `natDegree` of a certified nonzero entry;
+zero is handled separately. The terminal identity is required even when the last
+entry has positive degree. There is no coprimality assumption on `P,F`.
+For the singleton `[P]`, replace the initial identity by
+`u*(F*P')=A*P` with `u>0`; there is no second entry or terminal pair.
+This includes nonzero constant heads and every zero initial remainder.
+All branches retain the domain guards.
+
+For a chain entry at a finite endpoint use its evaluation sign. At `+∞`
+use its leading-coefficient sign; at `−∞` multiply that by `(-1)^natDegree`.
+Delete zeros and count adjacent sign changes to obtain `V`. The conclusion is
+
+```text
+(V(a) : Int) - (V(b) : Int) =
+  ∑ α ∈ Roots(P;a,b), sgn (F.eval α).
+```
+
+Tau Ceti owns the polynomial IVT/Rolle and signed-remainder/Cauchy-index
+foundation over arbitrary ordered real closed `R`. The required IVT shape
+is: `a≤b`, and `t` between `H.eval a` and `H.eval b` in either order, imply
+`∃ c∈[a,b], H.eval c=t`. Rolle is: `a<b` and `H.eval a=H.eval b` imply
+`∃ c∈(a,b), H.derivative.eval c=0`. The signed-index theorem uses the
+convention in which `P'/P` contributes `+1` at a simple root. It must cover
+initial reduction of `F*P'`, arbitrary common factors and infinite endpoints.
+The singleton identity gives zero; common roots of `P,F` contribute zero;
+`F=1` gives the cardinality of the root set. These are required import
+shapes, not existing theorem names. If the imported recurrence is unscaled,
+Hex proves positive-rescaling transport to the displayed identities rather
+than introducing another analytic proof. Polynomial IVT over `R` does not
+assert ordinary topological connectedness of its intervals.
+
+### Representation and replay bridge
+
+Interpret the operation record from hex-poly in a nontrivial ordered
+commutative domain `D`, with an injective order-preserving ring map
+`j : D →+* R`. On the Mathlib side the domain assumptions can be expressed
+as `[CommRing D] [IsDomain D] [LinearOrder D] [IsStrictOrderedRing D]`, with
+`StrictMono j`. A `Field D` hypothesis is forbidden. Valid raw
+representatives denote elements of `D`; this denotation need not be
+injective. Interpret arrays coefficientwise and then map them to `R`.
+Endpoint representations have their own interpretation in `R` and sound
+comparison/evaluation adapters; dyadics are not required to belong to `D`.
+
+Prove operation and pseudo-division interpretation, derivative compatibility,
+semantic polynomial equality and degree correspondence here. This companion
+owns the complete fallible operation-record interpretation needed by the query
+bridge, including the pseudo-gcd guard interpretation; it may reuse existing
+hex-poly-mathlib arithmetic lemmas but does not assume an unspecified new
+correspondence there. Successful degree `none` means zero;
+`some d` means nonzero with `natDegree=d`, a nonzero coefficient at `d` and
+zero coefficients above it. A fallible test that exhausts supplies no such
+fact. Structural trailing zeros are not a substitute. Prove positive
+normalization/rescaling preserves entry signs and variations, with every
+initial/step/terminal identity translated. Negative scaling does not have
+this property. Prove finite Horner and degree-parity infinity sign agreement.
+
+The planned shared `Hex.QueryReplay.check_sound` proves soundness of
+`Hex.QueryReplay.checkWith`, named in the computational owner
+[hex-real-roots](../../HexRealRoots/SPEC/hex-real-roots.md#shared-ordered-domain-kernel).
+It composes accepted coefficient,
+domain, recurrence and endpoint evidence to conclude those domain guards and
+`Query.variation_eq` for the claimed integer. Squarefreeness of a domain
+polynomial means squarefreeness after mapping to its fraction field (and
+hence to `R` in characteristic zero), not squarefreeness in `D[X]`:
+integer `4*X` must be accepted. Guard callbacks must prove that condition;
+raw recurrence identities alone cannot establish it.
+
+Every coefficient checker proves the exact operation/sign/zero claim for
+its context and operands. Validation supplies denotations for raw inputs;
+arithmetic preserves validity, zero decisions agree with semantic zero,
+and accepted sign evidence equals `sgn`. An unknown sign is exhaustion.
+Soundness holds for any finite accepted literal certificate, independently
+of whether a producer can find it. Replay checks all identities, positive
+scales, degree descent, terminal data, finite endpoint guards and variations;
+it never reruns chain generation, gcd search, root isolation or coefficient
+refinement. Child evidence is acyclic, structurally checked and charged to
+one remaining budget; reject malformed sizes before allocating products.
+Producer correspondence is separate and uses the same abstract theorem.
+
+Keep bounded success soundness, invalid-result soundness, termination on all
+raw inputs, and completeness under total coefficient decisions distinct.
+The shared kernel's degree/fuel bounds and literal-size bounds are specified
+in [hex-real-roots](../../HexRealRoots/SPEC/hex-real-roots.md#shared-ordered-domain-kernel).
+Sound evidence that may exhaust cannot prove domain-exact or eventual success
+without an additional completeness and sufficient-budget theorem. A checker
+rejection does not prove that the mathematical query lacks a value.
+
+### Real specialization
+
+The Mathlib audit refers to revision
+`1cf325a0cf67aca2b04d76b5380ff6a9e410aefa` in `lake-manifest.json`.
+`Mathlib.FieldTheory.IsRealClosed.Basic` supplies the class and
+`IsRealClosed.of_linearOrderedField`, but not `IsRealClosed ℝ` or generic
+polynomial IVT/Rolle/Sturm–Tarski. `Mathlib.Analysis.Polynomial.Order`
+states its sign results over `ℝ`; those cannot be cited over arbitrary `R`.
+The existing local `Sturm.IsSturmChain` likewise remains a structure over `ℝ`
+with derivative root flanks and a root-free tail, not this signed theorem.
+
+This companion proves `Real.instIsRealClosed` in `RealClosed.lean` using
+`IsRealClosed.of_linearOrderedField`. Its nonnegative-square obligation is
+supplied by `Real.sqrt` and `Real.sq_sqrt`. The private `real_odd_root`
+proves that every odd-degree polynomial over ℝ has a root: assuming no root
+makes both root-bound hypotheses vacuous, so Mathlib's polynomial order
+lemmas at zero give contradictory signs in odd degree (split on the
+leading-coefficient sign). Those real order lemmas already use continuity/IVT
+internally. This uses existing real analysis, not the generic Tau Ceti IVT
+that already assumes `IsRealClosed`.
+The umbrella exports the instance; the downstream real-algebraic companion
+uses `IsRealClosed.exists_isRoot_of_odd_natDegree`. The lower companion has no
+import of hex-real-algebraic-mathlib, and the odd-root proof has only one copy.
+
+Instantiate the shared domain/replay bridge with `D=ℤ`, `j=Int.castRingHom ℝ`
+and exact dyadic evaluation to prove `ZPoly.tarskiQuery_eq` and
+`TarskiReplay.check_sound` here. Also retain `tarskiQuery_isSome` for exactly
+the nonzero/squarefree/root-free domain and `tarskiQuery_sign` for a singleton
+root set. `DyadicInterval.lt` already supplies endpoint ordering. Optimized
+integer content and dyadic Horner operations must correspond to the shared
+kernel. No generic field frontend is imported to prove these specializations.
+
+[hex-sturm-mathlib](../../SPEC/Libraries/hex-sturm-mathlib.md) consumes these
+shared results for field guards, generic endpoint adapters, coefficient-proof
+composition, positive rational denominator clearing and `rootCount_eq`.
+Real-closure existence for arbitrary ordered fields remains a separate Tau
+Ceti obligation consumed downstream by hex-real-closure-mathlib. All missing
+results above are planned proof obligations, never new axioms, and the
+existing derivative `Sturm.IsSturmChain` development remains unchanged.
+
+Shared replay conformance must include negative sums, common gcds, zero
+initial remainder, constants, semantic degree cancellation and rejected
+scales/terminal data. Integer specialization tests include `4*X` and finite
+root-endpoint rejection. General and non-Archimedean frontend integration
+fixtures are owned by the new companion's
+[conformance contract](../../SPEC/Libraries/hex-sturm-mathlib.md#conformance-and-phase-4-evidence).
+Measure shared literal replay through fresh-module kernel proof probes,
+recording axiom sets and artifact sizes; keep arithmetic producer benchmarks
+in the Mathlib-free owner. Nested evidence size and rejected/exhausted paths
+are explicit proof-probe dimensions, not hidden coefficient-oracle costs.
+
 ## File organisation
 
 ```
 HexRealRootsMathlib/
+  RealClosed.lean      -- Real.instIsRealClosed from real analysis
   SturmChainDefs.lean  -- IsSturmChain, sturmVar over Polynomial ℝ
   SturmTheorem.lean    -- the counting theorem and the line form
   SturmCertificate.lean -- certificates over Mathlib polynomials

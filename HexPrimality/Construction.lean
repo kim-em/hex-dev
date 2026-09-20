@@ -15,7 +15,7 @@ namespace Hex.Nat
 /-- Finite, opt-in certificate construction resources. ECM is disabled on this
 Mathlib-free core route (zero curves and no ECM bounds). -/
 structure ConstructionBudget where
-  maxBits : Nat := 512
+  maxBits : Nat := 521
   maxDepth : Nat := 32
   maxAttempts : Nat := 1024
   factor : FactorSearchBudget := {
@@ -26,7 +26,7 @@ structure ConstructionBudget where
     smoothBases := [2, 3] }
   witnessBases : List Nat := [2, 3, 5, 7, 11, 13, 17]
   randomWitnesses : Nat := 32
-  maxFactors : Nat := 12
+  maxFactors : Nat := 32
   maxSubsets : Nat := 4096
   maxSieveBound : Nat := 64
 deriving Repr, DecidableEq

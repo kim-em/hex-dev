@@ -1,0 +1,330 @@
+{
+  "host": "chungus2",
+  "cpu": 11,
+  "affinity": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63,
+    64,
+    65,
+    66,
+    67,
+    68,
+    69,
+    70,
+    71,
+    72,
+    73,
+    74,
+    75,
+    76,
+    77,
+    78,
+    79,
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    86,
+    87,
+    88,
+    89,
+    90,
+    91,
+    92,
+    93,
+    94,
+    95
+  ],
+  "toolchain": "leanprover/lean4:v4.34.0",
+  "commit": "88b1c74eefb5e53f0e56440b848151003c44ac58",
+  "source_sha256": {
+    "HexPrimality/Construction.lean": "5ef4a354be722ff27e8a7ea5202e99d5bfdadbd88e986cca63a4ee761eb131d4",
+    "HexPrimality/Cert.lean": "9a9be0d357df6feefba6acb5a1a423c0b5202771e7cd97545be0bdeb61c83cdb",
+    "HexPrimality/Elab.lean": "26f0af0481b11ee06ea374dd718706a9468061dff43139d043809fbf7ffe284f",
+    "HexPrimality/Search.lean": "16d703b872e5ad1a5a6715e5f295135c918ab9a86f03422441259914a50c5ae9",
+    "HexPrimality/PMinusOne.lean": "7279683d91cd8c777456ecfcbcedb2aff78c207410277f304924aefa97747d79",
+    "HexIntFactor/Ecm.lean": "b223a2fa6f1b840030c25655005ce7342d5b42be5b353ca1518763d054694113",
+    "bench/HexPrimality/FieldProbe.lean": "881d3476de2b80e19bfe0690dc96d3f95e1e09412102bcfd141be2349cc17849",
+    "scripts/bench/primality_field_sweep.py": "b9c01d68fb81447784e505fc5e590838488d603c8aec169e9a7802106deefe99"
+  },
+  "executable_sha256": "f079bbd347a0ee91c07ccb0424afc9318c821f76f18c8c2ed69ecc2e0eda7058",
+  "protocol": "fixed trial-major adjacent AB/BA; all completed samples retained",
+  "timing": "native construction includes self-check, excludes formatting; render/elaboration excludes proof replay; direct kernel recheck expands local dependencies and drains pending checks; see probe sources",
+  "arms": {
+    "before": [
+      512,
+      12,
+      32768
+    ],
+    "after": [
+      521,
+      32,
+      32768
+    ]
+  },
+  "cases": [
+    {
+      "name": "many-factor-exhaustion",
+      "n": "325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771",
+      "bits": 507,
+      "predecessor_factors": [
+        117288381359406970983270,
+        52656145834278593348959013841835216159447547700274555627155501281,
+        52656145834278593348959013841835216159447547700274555627155534071
+      ]
+    }
+  ],
+  "samples": [
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10291/.lake/build/bin/hexprimality_field_probe",
+        "construction",
+        "325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771",
+        "512",
+        "12",
+        "32768"
+      ],
+      "load_before": [
+        5.80908203125,
+        10.6962890625,
+        30.80810546875
+      ],
+      "phase": "construction",
+      "block": 0,
+      "case": "many-factor-exhaustion",
+      "arm": "before",
+      "stdout": "{\"attempts\":14,\"bits\":507,\"nanos\":877655107,\"over_bit_limit\":false,\"status\":\"Hex.Nat.PrimeCertStop.exhausted\"}\n",
+      "stderr": "",
+      "returncode": 0,
+      "load_after": [
+        5.80908203125,
+        10.6962890625,
+        30.80810546875
+      ],
+      "result": {
+        "attempts": 14,
+        "bits": 507,
+        "nanos": 877655107,
+        "over_bit_limit": false,
+        "status": "Hex.Nat.PrimeCertStop.exhausted"
+      }
+    },
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10291/.lake/build/bin/hexprimality_field_probe",
+        "construction",
+        "325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771",
+        "521",
+        "32",
+        "32768"
+      ],
+      "load_before": [
+        5.80908203125,
+        10.6962890625,
+        30.80810546875
+      ],
+      "phase": "construction",
+      "block": 0,
+      "case": "many-factor-exhaustion",
+      "arm": "after",
+      "stdout": "{\"attempts\":14,\"bits\":507,\"nanos\":895218086,\"over_bit_limit\":false,\"status\":\"Hex.Nat.PrimeCertStop.exhausted\"}\n",
+      "stderr": "",
+      "returncode": 0,
+      "load_after": [
+        5.80908203125,
+        10.6962890625,
+        30.80810546875
+      ],
+      "result": {
+        "attempts": 14,
+        "bits": 507,
+        "nanos": 895218086,
+        "over_bit_limit": false,
+        "status": "Hex.Nat.PrimeCertStop.exhausted"
+      }
+    },
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10291/.lake/build/bin/hexprimality_field_probe",
+        "construction",
+        "325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771",
+        "521",
+        "32",
+        "32768"
+      ],
+      "load_before": [
+        5.80908203125,
+        10.6962890625,
+        30.80810546875
+      ],
+      "phase": "construction",
+      "block": 1,
+      "case": "many-factor-exhaustion",
+      "arm": "after",
+      "stdout": "{\"attempts\":14,\"bits\":507,\"nanos\":880540625,\"over_bit_limit\":false,\"status\":\"Hex.Nat.PrimeCertStop.exhausted\"}\n",
+      "stderr": "",
+      "returncode": 0,
+      "load_after": [
+        5.80908203125,
+        10.6962890625,
+        30.80810546875
+      ],
+      "result": {
+        "attempts": 14,
+        "bits": 507,
+        "nanos": 880540625,
+        "over_bit_limit": false,
+        "status": "Hex.Nat.PrimeCertStop.exhausted"
+      }
+    },
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10291/.lake/build/bin/hexprimality_field_probe",
+        "construction",
+        "325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771",
+        "512",
+        "12",
+        "32768"
+      ],
+      "load_before": [
+        5.80908203125,
+        10.6962890625,
+        30.80810546875
+      ],
+      "phase": "construction",
+      "block": 1,
+      "case": "many-factor-exhaustion",
+      "arm": "before",
+      "stdout": "{\"attempts\":14,\"bits\":507,\"nanos\":866607988,\"over_bit_limit\":false,\"status\":\"Hex.Nat.PrimeCertStop.exhausted\"}\n",
+      "stderr": "",
+      "returncode": 0,
+      "load_after": [
+        5.80908203125,
+        10.6962890625,
+        30.80810546875
+      ],
+      "result": {
+        "attempts": 14,
+        "bits": 507,
+        "nanos": 866607988,
+        "over_bit_limit": false,
+        "status": "Hex.Nat.PrimeCertStop.exhausted"
+      }
+    },
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10291/.lake/build/bin/hexprimality_field_probe",
+        "validate",
+        "325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969770",
+        "117288381359406970983270",
+        "52656145834278593348959013841835216159447547700274555627155501281",
+        "52656145834278593348959013841835216159447547700274555627155534071"
+      ],
+      "load_before": [
+        5.80908203125,
+        10.6962890625,
+        30.80810546875
+      ],
+      "phase": "factor-validation",
+      "case": "many-factor-exhaustion",
+      "stdout": "{\"valid_factorization\":true}\n",
+      "stderr": "",
+      "returncode": 0,
+      "load_after": [
+        5.80908203125,
+        10.6962890625,
+        30.80810546875
+      ]
+    },
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10291/.lake/build/bin/hexprimality_field_probe",
+        "trace",
+        "325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771",
+        "521",
+        "32",
+        "32768"
+      ],
+      "load_before": [
+        5.80908203125,
+        10.6962890625,
+        30.80810546875
+      ],
+      "phase": "trace",
+      "case": "many-factor-exhaustion",
+      "arm": "after",
+      "stdout": "{\"attempts\":14,\"bits\":507,\"nanos\":884309553,\"over_bit_limit\":false,\"status\":\"Hex.Nat.PrimeCertStop.exhausted\"}\n",
+      "stderr": "factor 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969770: { factors := [(61, 1),\n              (59, 1),\n              (53, 1),\n              (47, 1),\n              (43, 1),\n              (41, 1),\n              (37, 1),\n              (31, 1),\n              (29, 1),\n              (23, 1),\n              (19, 1),\n              (17, 1),\n              (13, 1),\n              (11, 1),\n              (7, 1),\n              (5, 1),\n              (3, 1),\n              (2, 1)],\n  residual := 2772669694120814859578414184143083703436437075375816575170482624982348862456778686454318685648997052716809050035111711451279644951 }; attempts 14; allowance (some 1024)\n",
+      "returncode": 0,
+      "load_after": [
+        5.80908203125,
+        10.6962890625,
+        30.80810546875
+      ]
+    }
+  ]
+}

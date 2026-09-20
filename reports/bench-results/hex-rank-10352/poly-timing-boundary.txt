@@ -1,0 +1,39 @@
+run: 1 fixed benchmark(s) failed expectedHash check: Hex.RankBench.runMvCert12
+Hex.RankBench.runRatPolyCheck8    [fixed] repeats=5
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=041918a-dirty, 2026-09-20T12:10:37Z, host=chungus2
+  repeat 0  6.182 ms  (×2^6, total 395.639 ms)
+  repeat 1  6.037 ms  (×2^6, total 386.358 ms)
+  repeat 2  5.915 ms  (×2^6, total 378.549 ms)
+  repeat 3  5.957 ms  (×2^6, total 381.236 ms)
+  repeat 4  6.250 ms  (×2^6, total 399.993 ms)
+  median: 6.037 ms    min: 5.915 ms    max: 6.250 ms
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 65_616 kB..69_048 kB (across 5 ok repeat(s))
+
+Hex.RankBench.runMvCheck12    [fixed] repeats=5
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=041918a-dirty, 2026-09-20T12:10:42Z, host=chungus2
+  repeat 0  333.953 ms
+  repeat 1  335.415 ms
+  repeat 2    —        [killed at cap]
+  repeat 3    —        [killed at cap]
+  repeat 4  337.438 ms
+  median: 335.415 ms    min: 333.953 ms    max: 337.438 ms
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 70_772 kB..73_588 kB (across 3 ok repeat(s))
+
+Hex.RankBench.runMvCert12    [fixed] repeats=5
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=041918a-dirty, 2026-09-20T12:11:18Z, host=chungus2
+  repeat 0  —  [killed at cap]
+  repeat 1  —  [killed at cap]
+  repeat 2  —  [killed at cap]
+  repeat 3  —  [killed at cap]
+  repeat 4  —  [killed at cap]
+  median: — (no successful repeats)
+  hash: all repeats agree
+  expected hash: FAIL — expected 0xc, got no observed hash (no `ok` repeat produced one)
+
+exported to reports/bench-results/hex-rank-10352/poly-timing-boundary.json

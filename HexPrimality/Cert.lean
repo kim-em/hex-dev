@@ -363,7 +363,7 @@ multiplications. (When `r² ≤ 8s` the truncated subtraction makes the
 witness clause `w * w < 0` unsatisfiable, so the disjunct is simply never
 taken; the middle disjunct covers that region.) -/
 @[expose]
-def checkPock3Arith (n r s w : Nat)
+def checkPock3Arith.native (n r s w : Nat)
     (factors : List (Nat × Nat × PrimeCert)) : Bool :=
   decide (2 ≤ n) && n % 2 == 1 && subjectsOk factors &&
     match certProduct (n - 1) factors with
@@ -377,6 +377,22 @@ def checkPock3Arith (n r s w : Nat)
             (decide (w * w < r * r - 8 * s) &&
               decide (r * r - 8 * s < (w + 1) * (w + 1)))) &&
           checkWitnesses n factors
+
+/-- Kernel replay uses the bounded positive product and primitive comparisons.
+Compiled checking retains the original arithmetic path. -/
+@[expose]
+noncomputable def checkPock3Arith (n r s w : Nat)
+    (factors : List (Nat × Nat × PrimeCert)) : Bool :=
+  (2 : Nat).ble n && (n.mod 2).beq 1 && subjectsOk factors &&
+    (let F := pockProduct (n.sub 1) factors;
+        (n - 1) % F == 0 && F % 2 == 0 && (n - 1) / F % 2 == 1 &&
+          (n - 1) / F == 2 * F * s + r &&
+          (1 : Nat).ble r && r.blt (2 * F) &&
+          n.blt ((F + 1) * (2 * F * F + (r - 1) * F + 1)) &&
+          (s == 0 || (r * r).blt (8 * s) ||
+            ((w * w).blt (r * r - 8 * s) &&
+              (r * r - 8 * s).blt ((w + 1) * (w + 1)))) &&
+          checkWitnesses n factors)
 
 /-- Maximum sieve bound in a checked certificate.
 This caps replay work for arbitrary untrusted literals, including rejected inputs. -/
@@ -400,7 +416,7 @@ private theorem checkDivisors_spec (n F : Nat) : ∀ k,
 
 /-- The general cube-root arithmetic check; the legacy node retains its sieve-free path. -/
 @[expose]
-def checkPock3SieveArith (n r s w m : Nat)
+def checkPock3SieveArith.native (n r s w m : Nat)
     (factors : List (Nat × Nat × PrimeCert)) : Bool :=
   decide (2 ≤ n) && n % 2 == 1 && subjectsOk factors &&
     match certProduct (n - 1) factors with
@@ -415,6 +431,23 @@ def checkPock3SieveArith (n r s w m : Nat)
             (decide (w * w < r * r - 8 * s) &&
               decide (r * r - 8 * s < (w + 1) * (w + 1)))) &&
           checkWitnesses n factors
+
+/-- Kernel replay uses the bounded positive product and primitive comparisons.
+Compiled checking retains the original arithmetic path. -/
+@[expose]
+noncomputable def checkPock3SieveArith (n r s w m : Nat)
+    (factors : List (Nat × Nat × PrimeCert)) : Bool :=
+  (2 : Nat).ble n && (n.mod 2).beq 1 && subjectsOk factors &&
+    (let F := pockProduct (n.sub 1) factors;
+        (n - 1) % F == 0 && F % 2 == 0 && (n - 1) / F % 2 == 1 &&
+          (n - 1) / F == 2 * F * s + r &&
+          (1 : Nat).ble r && r.blt (2 * F) && (1 : Nat).ble m && m.ble pocklingtonSieveCap &&
+          (2 * s + m * m).blt ((2 * F + r) * m + 2) &&
+          checkDivisors n F (m - 1) &&
+          (s == 0 || (r * r).blt (8 * s) ||
+            ((w * w).blt (r * r - 8 * s) &&
+              (r * r - 8 * s).blt ((w + 1) * (w + 1)))) &&
+          checkWitnesses n factors)
 
 /-! Accumulator lemmas -/
 
@@ -676,6 +709,44 @@ private theorem checkPockArith.eq_native (n : Nat) (factors : List (Nat × Nat �
 @[csimp] theorem checkPockArith_eq_native : @checkPockArith = @checkPockArith.native := by
   funext n fs
   exact checkPockArith.eq_native n fs
+
+private theorem checkPock3Arith.eq_native (n r s w : Nat) (factors : List (Nat × Nat × PrimeCert)) :
+    checkPock3Arith n r s w factors = checkPock3Arith.native n r s w factors := by
+  by_cases hs : subjectsOk factors = true
+  · have hp : ∀ x ∈ factors, 0 < x.2.2.subject := by
+      intro x hx
+      have := subjectsOk_forall hs x hx
+      omega
+    simp only [checkPock3Arith, pockProduct.eq_product _ _ hp]
+    cases h : certProduct (n - 1) factors <;>
+      apply Bool.eq_iff_iff.mpr <;>
+      simp [checkPock3Arith.native, h, hs, Nat.blt_eq] <;> intros <;> rfl
+  · have hf : subjectsOk factors = false := Bool.eq_false_iff.mpr hs
+    simp [checkPock3Arith, checkPock3Arith.native, hf]
+
+/-- The compiler uses the verified runtime implementation. -/
+@[csimp] theorem checkPock3Arith_eq_native : @checkPock3Arith = @checkPock3Arith.native := by
+  funext n r s w fs
+  exact checkPock3Arith.eq_native n r s w fs
+
+private theorem checkPock3SieveArith.eq_native (n r s w m : Nat) (factors : List (Nat × Nat × PrimeCert)) :
+    checkPock3SieveArith n r s w m factors = checkPock3SieveArith.native n r s w m factors := by
+  by_cases hs : subjectsOk factors = true
+  · have hp : ∀ x ∈ factors, 0 < x.2.2.subject := by
+      intro x hx
+      have := subjectsOk_forall hs x hx
+      omega
+    simp only [checkPock3SieveArith, pockProduct.eq_product _ _ hp]
+    cases h : certProduct (n - 1) factors <;>
+      apply Bool.eq_iff_iff.mpr <;>
+      simp [checkPock3SieveArith.native, h, hs, Nat.blt_eq] <;> intros <;> rfl
+  · have hf : subjectsOk factors = false := Bool.eq_false_iff.mpr hs
+    simp [checkPock3SieveArith, checkPock3SieveArith.native, hf]
+
+/-- The compiler uses the verified runtime implementation. -/
+@[csimp] theorem checkPock3SieveArith_eq_native : @checkPock3SieveArith = @checkPock3SieveArith.native := by
+  funext n r s w m fs
+  exact checkPock3SieveArith.eq_native n r s w m fs
 
 
 mutual
@@ -1011,7 +1082,8 @@ private theorem checkPock3Arith_spec {n r s w : Nat}
         n < (F + 1) * (2 * F * F + (r - 1) * F + 1) ∧
         (s = 0 ∨ r * r < 8 * s ∨ ∀ t, t * t ≠ r * r - 8 * s) ∧
         ∀ x ∈ factors, checkWitness n x.2.2.subject x.1 = true := by
-  unfold checkPock3Arith at h
+  rw [checkPock3Arith.eq_native] at h
+  unfold checkPock3Arith.native at h
   simp only [checkWitnesses.eq_native, checkWitnesses.native] at h
   rw [Bool.and_eq_true, Bool.and_eq_true] at h
   obtain ⟨⟨h2, hodd⟩, hm⟩ := h
@@ -1043,7 +1115,8 @@ private theorem checkPock3SieveArith_spec {n r s w m : Nat}
         2 * s + m * m < (2 * F + r) * m + 2 ∧
         (s = 0 ∨ r * r < 8 * s ∨ ∀ t, t * t ≠ r * r - 8 * s) ∧
         ∀ x ∈ factors, checkWitness n x.2.2.subject x.1 = true := by
-  unfold checkPock3SieveArith at h
+  rw [checkPock3SieveArith.eq_native] at h
+  unfold checkPock3SieveArith.native at h
   simp only [checkWitnesses.eq_native, checkWitnesses.native] at h
   rw [Bool.and_eq_true, Bool.and_eq_true] at h
   obtain ⟨⟨h2, hodd⟩, hm⟩ := h

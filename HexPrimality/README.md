@@ -42,6 +42,19 @@ The ordinary `primality` tactic retains its interactive budget.
 continuations within the same total attempt budget. This option defaults to
 `false`.
 
+Use `primality? using expression` to check and render a certificate supplied by
+another producer. The expression may use named intermediate certificates or
+custom Lean macros; the suggestion contains only ordinary constructor data.
+
+```lean
+example : Hex.Nat.Prime 17 := by
+  primality? using (let two : Hex.Nat.PrimeCert := .small 2;
+    .pock 17 [(3, 3, two)])
+```
+
+Supplied producers are untrusted, explicitly selected computation. They must
+return closed certificate data; the kernel still checks the resulting literal.
+
 # Functionality
 
 - `PrimeCert` represents stored-table leaves and the square-root and cube-root

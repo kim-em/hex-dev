@@ -457,6 +457,37 @@ The producer retains the transform and re-checks its output before returning
 it. Pivot search, polynomial normalisation and exact division are executable
 work, never kernel replay.
 
+`detWitnessBudgeted` in `HexBareiss/Kernel.lean` runs the same elimination
+with a caller-supplied size measure `R → Nat` and a two-field budget
+`DetWitness.Budget { maxIntermediate, maxCertificate : Nat }`. Before each
+column's step, the shared core selects the pivot once and accounts for the row
+swap when computing
+`∑ (size pivot * size x + size factor * size y)` over the entries updated
+in both blocks. A column with no pivot has no update cost. For polynomial
+support this counts the term products of the two multiplications and bounds
+the support of each exact division's dividend. Admit the round only when
+this count fits the remaining intermediate budget. After the round, charge
+the total measure of both current blocks and decline if it exceeds
+`maxIntermediate`; this block support is the meaning of an intermediate.
+The next round uses the budget remaining after that block charge, rather
+than accumulating charges for discarded blocks. This is an admission and
+retained-support policy, not a bound on the number of exact-division steps
+or on temporary supports inside an admitted arithmetic operation.
+
+Before running the final self-check, charge the witness's total measure
+(the transform and value, or the singular vector) against `maxCertificate`.
+Budget exhaustion returns structured data containing the budget name, count
+reached and limit; malformed matrices and rejected self-checks remain
+distinct failures in `DetWitness.Error`. Its exhaustion constructor is
+`exhausted (budget : DetWitness.Limit) (count limit : Nat)`, where `Limit`
+distinguishes `intermediate` and `certificate`. A decline carries no witness.
+`detWitnessBudgeted_check` proves that every `.ok` return passed the supplied
+checker, just as `detWitnessWith_check` does for the unlimited API.
+The unlimited `detWitnessWith` uses the same elimination core, computes no
+size measures, and retains its existing API and checker contract. No polynomial
+arithmetic or polynomial dependency is added to hex-bareiss. Consumers in
+hex-poly-det supply the support measure for integer and residue polynomials.
+
 For a nonsingular polynomial matrix the witness contains the row swaps, the
 `i + 1` leading polynomial entries of each lower triangular transform row,
 and a polynomial value `d = det P`. Here nonsingular means that `det P` is

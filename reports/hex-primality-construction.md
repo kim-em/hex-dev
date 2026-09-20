@@ -1,5 +1,14 @@
 # Reusable Curve25519 certificates
 
+The current standard-field coverage is nine of twelve, including P-521; see
+[the standard-field investigation](hex-primality-fields.md) for its policy,
+failure traces, and paired measurements. The measurements below retain their
+original 512-bit construction policy.
+
+For the current fixed-window PrimeCert comparison and cube-root checker
+measurements, see [the replay attribution](hex-primality-replay-attribution.md).
+The implementation and timing snapshots below document the construction study.
+
 The opt-in construction profile finds a checked certificate for `2^255 - 19`
 with three non-leaf nodes, six table leaves, and eight factor entries. The
 reference certificate in PR #10267 has five non-leaf nodes, six table leaves,

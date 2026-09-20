@@ -1,0 +1,92 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import HexPolyDetMathlib
+import Mathlib.Algebra.Field.ZMod
+
+set_option hex.det.checker 2
+set_option trace.HexMatrix.certificate true
+
+theorem packedInteger (x y : Int) :
+    Matrix.det !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y] =
+      (x ^ 2 - 1) * (y ^ 2 - 1) := by det
+
+set_option hex.det.checker 0 in
+theorem automaticPacked (x y : Int) :
+    let a := x ^ 2 + 2 * x + 3 * y + 1
+    let b := 2 * y ^ 2 + 3 * y + x + 2
+    let c := 3 * x ^ 2 + x + 2 * y + 3 * y ^ 2
+    let d := y ^ 2 + 2 * y + 3 * x + x ^ 2
+    Matrix.det !![-3 * a, -2 * a, -3 * a, 3 * a;
+      -b, b, -3 * b, -b; 3 * c, 3 * c, -2 * c, -c;
+      3 * d, 2 * d, -d, -d] = -26 * a * b * c * d := by
+  dsimp only
+  det
+
+theorem packedResidue (x y : ZMod 3) :
+    Matrix.det !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y] =
+      (x ^ 2 - 1) * (y ^ 2 - 1) := by det
+
+example [Fact (Nat.Prime 2147483647)] (x y : ZMod 2147483647) :
+    Matrix.det !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y] =
+      (x ^ 2 - 1) * (y ^ 2 - 1) := by det
+
+theorem packedTerm (x y : Int) : Matrix.det !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y] =
+    (det% !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y]).value :=
+  (det% !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y]).proof
+
+example (x y : Int) : Matrix.det !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y] =
+    (x ^ 2 - 1) * (y ^ 2 - 1) := by
+  simp only [Hex.normPolyDet]
+  ring
+
+theorem packedRational (x y : Rat) :
+    Matrix.det !![x / 2, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y] =
+      (x ^ 2 / 2 - 1) * (y ^ 2 - 1) := by det
+
+set_option hex.det.checker 3 in
+example (x y : Int) : Matrix.det !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y] =
+    (x ^ 2 - 1) * (y ^ 2 - 1) := by det
+
+set_option hex.det.quotients false in
+example (x y : ZMod 3) : Matrix.det !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y] =
+    (x ^ 2 - 1) * (y ^ 2 - 1) := by det
+
+/-- info: 'packedInteger' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms packedInteger
+/-- info: 'packedResidue' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms packedResidue
+
+/-- info: 'HexMatrixMathlib.DetPoly.Polynomial.checkDetPolyPacked_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms HexMatrixMathlib.DetPoly.Polynomial.checkDetPolyPacked_sound
+/-- info: 'HexMatrixMathlib.DetPoly.Residue.checkDetPolyPackedMod_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms HexMatrixMathlib.DetPoly.Residue.checkDetPolyPackedMod_sound
+
+set_option maxHeartbeats 0 in
+example (x : Fin 17 → Int) : ∃ d : Int, Matrix.det !![x 0, x 1, x 2, x 3, 0; x 4, x 5, x 6, x 7, 0; x 8, x 9, x 10, x 11, 0; x 12, x 13, x 14, x 15, 0; 0, 0, 0, 0, x 16] = d := by
+  exact ⟨_, (det% !![x 0, x 1, x 2, x 3, 0; x 4, x 5, x 6, x 7, 0; x 8, x 9, x 10, x 11, 0; x 12, x 13, x 14, x 15, 0; 0, 0, 0, 0, x 16]).proof⟩
+
+theorem packedSingular (x y : Int) :
+    Matrix.det !![x, 1, y, 0; x, 1, y, 0; 0, y, 1, x; 1, 0, x, y] = 0 := by det
+
+theorem packedSingularMod (x y : ZMod 3) :
+    Matrix.det !![x, 1, y, 0; x, 1, y, 0; 0, y, 1, x; 1, 0, x, y] = 0 := by det
+
+/-- info: 'packedRational' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms packedRational
+/-- info: 'packedTerm' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms packedTerm
+/-- info: 'packedSingular' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms packedSingular
+/-- info: 'packedSingularMod' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms packedSingularMod

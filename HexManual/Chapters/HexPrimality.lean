@@ -157,7 +157,7 @@ replacement needs only `import HexPrimality.Cert`. The goal retains the
 expression `2 ^ 255 - 19`. With `HexPrimalityMathlib` imported, `primality?`
 also handles `Nat.Prime` and suggests the corresponding bridge theorem.
 
-Construction supports inputs through 512 bits, recursive depth 32, and a
+Construction supports inputs through 521 bits, recursive depth 32, and a
 shared limit of 1024 attempts. `primality? (maxAttempts := 29)` sets a smaller
 limit; Curve25519 succeeds at 29 and exhausts at 28. It uses
 stage-one Pollard `p - 1` up to 524288, bounded rho work, and deterministic
@@ -190,8 +190,14 @@ reference certificate.
 
 The fixed comparison corpus also includes standard cryptographic field
 primes. The current construction profile finds P-256 and the structured
-511/512-bit benchmark primes. It exhausts on secp256k1, P-384, and Curve448;
-P-521 exceeds its input ceiling. This is not a general-purpose prover for
+511/512-bit benchmark primes and P-521. It exhausts on secp256k1, P-384,
+and Curve448. P-521 uses 25 factor candidates and 170 attempts; the constructor
+admits at most 32 factors and still examines at most 4096 subsets. For the
+expression `2 ^ 521 - 1`, set local `maxRecDepth` to 1024 and
+`exponentiation.threshold` to 521; its numeral needs neither option.
+The [standard-field report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-fields.md)
+records the remaining factoring barriers and separate construction, rendering,
+and replay measurements. This is not a general-purpose prover for
 arbitrary cryptographic-size primes.
 
 The first cactus plot compares native exact primality decisions with the
@@ -204,22 +210,25 @@ proof emission, imports, and kernel checking.
 
 ![Native decision and complete Lean proof](https://kim-em.github.io/hex-dev/figures/hex-primality-complete-cactus.svg)
 
-The second plot times kernel checking directly, excluding imports, search,
-and proof elaboration. It checks complete proof bodies, including expanded
-local auxiliary proofs. With compact certificates using matching selected
-Pocklington factors and PrimeCert’s certified sieve for larger table leaves,
-Curve25519 takes about 5.18 milliseconds for Hex and 14.42 milliseconds for
-PrimeCert. Hex is faster on all eight supplied inputs
-in this comparison, with margins from 1.11 to 3.46 times. These are host-specific observations. The
-[replay report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-windowed-replay.md)
-records every sample and the checker optimizations. Hex uses Lean 4.34.0;
-PrimeCert uses Lean 4.33.0.
+Direct kernel measurements exclude imports, search, and proof elaboration.
+They check complete proof bodies, including expanded local auxiliary proofs.
+With PrimeCert’s fixed-window powering and the same selected Pocklington
+factors, supplied Curve25519 replay takes about 4.54 milliseconds for Hex
+and 3.54 milliseconds for PrimeCert on the recorded host. Curve448 takes
+9.30 and 6.44 milliseconds. PrimeCert uses common witness bases; a separate
+matched-base experiment distinguishes that certificate choice from checker cost.
 
-The direct comparison shows matched inputs and independently sorted cactus
-curves. Curve448 uses a supplied certificate in both systems; this does not
-change automatic construction coverage. The corpus is small and structured.
-
-![Direct kernel certificate comparison](https://kim-em.github.io/hex-dev/figures/hex-primality-kernel-direct.svg)
+Complete automatic construction is a separate comparison. On the matched
+Curve25519 `Nat.Prime` goal, the repeated fresh-module experiment measures
+about 2.39 seconds for Hex `primality?` and 3.55 seconds for PrimeCert
+`prime_cert?`, including imports, construction, elaboration, and checking.
+These noisy shared-host observations are not portable performance promises.
+The [replay attribution](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-replay-attribution.md)
+records exact revisions, every sample, component costs, negative controls,
+and construction regression checks. Hex uses Lean 4.34.0 and PrimeCert uses
+Lean 4.33.0; identical-code calibration is reported separately.
+Curve448 uses a supplied certificate in both systems and does not change
+automatic construction coverage. The corpus is small and structured.
 
 # The Mathlib correspondence
 %%%
@@ -348,12 +357,13 @@ tag := "hex-primality-reach"
 What the certificate tier can do depends on how much of `n - 1` the
 untrusted search can factor:
 
-* The supported elaboration ceiling is 512 bits. The release probes include
+* Ordinary `primality` has a 512-bit ceiling; reusable `primality?`
+  construction has a 521-bit ceiling and constructs P-521. The release probes include
   table-smooth certificates from 31 through 511 bits and a 512-bit certificate
   whose search discovers an above-table factor with bounded rho work.
 * The bounded search reports exhaustion rather than claiming compositeness. A
   separate 512-bit probable-prime probe exercises this path, while a 513-bit
-  input is rejected before search begins.
+  input is rejected by ordinary `primality` before search begins.
 * Negative answers are conclusive only when a size check, table lookup, exact
   trial decision, or one of the thirteen fixed Miller-Rabin bases supplies a
   witness. Passing all fixed bases is not itself a primality result.

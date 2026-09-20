@@ -1,0 +1,40 @@
+Hex.RankBench.runRatPolyCheck8    [fixed] repeats=5
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=041918a-dirty, 2026-09-20T12:12:39Z, host=chungus2
+  repeat 0  8.533 ms  (×2^5, total 273.057 ms)
+  repeat 1  8.618 ms  (×2^5, total 275.787 ms)
+  repeat 2  8.690 ms  (×2^5, total 278.073 ms)
+  repeat 3  8.528 ms  (×2^5, total 272.910 ms)
+  repeat 4  8.663 ms  (×2^5, total 277.210 ms)
+  median: 8.618 ms    min: 8.528 ms    max: 8.690 ms
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 68_428 kB..68_816 kB (across 5 ok repeat(s))
+
+Hex.RankBench.runMvCheck12    [fixed] repeats=5
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=041918a-dirty, 2026-09-20T12:12:43Z, host=chungus2
+  repeat 0  383.849 ms
+  repeat 1  375.700 ms
+  repeat 2  450.116 ms
+  repeat 3  459.178 ms
+  repeat 4  459.018 ms
+  median: 450.116 ms    min: 375.700 ms    max: 459.178 ms
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 70_608 kB..73_380 kB (across 5 ok repeat(s))
+
+Hex.RankBench.runMvCert12    [fixed] repeats=5
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=041918a-dirty, 2026-09-20T12:13:29Z, host=chungus2
+  repeat 0  7.591 s
+  repeat 1  6.895 s
+  repeat 2  7.355 s
+  repeat 3  5.988 s
+  repeat 4  6.075 s
+  median: 6.895 s    min: 5.988 s    max: 7.591 s
+  hash: all repeats agree
+  observed hash: 0xc
+  expected hash: matches
+  peak RSS: 70_608 kB..73_292 kB (across 5 ok repeat(s))
+
+exported to reports/bench-results/hex-rank-10352/poly-timing-boundary-30s.json

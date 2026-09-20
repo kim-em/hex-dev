@@ -1,0 +1,7 @@
+{
+  "dispatch_sha256": "08d3ac7b0fa966fdc3bdeeebee9ab92646bbcf2983fae371b15a33c94f5bc080",
+  "crossover_sha256": "2f2f43c119a2e4c7a7bcf19081494272bb9882c06b56ed28b726ade2b68053b7",
+  "packed_observations": 84,
+  "covered_witnesses": 14,
+  "route_and_key_audit": "passed"
+}

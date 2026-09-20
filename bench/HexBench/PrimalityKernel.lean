@@ -67,4 +67,27 @@ theorem replayPock3Sieve :
     checkPrime (.pock3Sieve 9223372036904058881 47 4194304 0 4
       [(3, 19, .small 2)]) = true := by decide +kernel
 
+-- The optimized cube-root paths must reject malformed subjects, ordering,
+-- products, interval witnesses, sieve bounds, and witness bases.
+example : checkPrime (.pock3 199 9 2 8
+    [(3, 0, .small 0), (2, 0, .small 3)]) = false := by decide +kernel
+-- Exponent-one factors exercise the direct product's overflow sentinel.
+example : checkPrime (.pock3 199 9 2 8
+    [(3, 0, .small 2), (2, 0, .small 101)]) = false := by decide +kernel
+example : checkPrime (.pock3Sieve 199 9 2 8 4
+    [(3, 0, .small 2), (2, 0, .small 101)]) = false := by decide +kernel
+-- Larger stored exponents exercise boundedPowMul's early rejection.
+example : checkPrime (.pock3 199 9 2 8
+    [(3, 1048576, .small 2), (2, 0, .small 3)]) = false := by decide +kernel
+example : checkPrime (.pock3 199 9 2 8
+    [(2, 0, .small 3), (3, 0, .small 2)]) = false := by decide +kernel
+example : checkPrime (.pock3 199 9 2 7
+    [(3, 0, .small 2), (2, 0, .small 3)]) = false := by decide +kernel
+example : checkPrime (.pock3Sieve 9223372036904058881 47 4194304 0 4
+    [(0, 19, .small 2)]) = false := by decide +kernel
+example : checkPrime (.pock3Sieve 9223372036904058881 47 4194304 0 65
+    [(3, 19, .small 2)]) = false := by decide +kernel
+example : checkPrime (.pock3Sieve 9223372036904058881 47 4194304 0 4
+    [(3, 1048576, .small 2)]) = false := by decide +kernel
+
 end HexBench.PrimalityKernel

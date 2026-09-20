@@ -186,6 +186,29 @@ libraries:
     correspondence_only: true
     done_through: 4
     status: active
+  HexRealFormula:
+    deps: [HexMvPoly]
+    mathlib: false
+    done_through: 1
+    status: active
+    phase4:
+      input_families:
+        - name: syntax
+          description: Expanded Boolean nodes, quantifier prefixes and bounds-checked DAGs, with fixed-size atoms.
+        - name: monomials
+          description: Independent normalized term-count ladders and ascending raw terms for checked decoding.
+        - name: arity
+          description: One monomial across a growing coordinate vector, with bounded coefficients and exponents.
+        - name: coefficient-bits
+          description: One growing odd integer coefficient evaluated at the fixed rational point 3/2.
+        - name: exponents
+          description: Literal-exponent ladders evaluated at one to isolate powering from coefficient growth.
+  HexRealFormulaMathlib:
+    deps: [HexRealFormula, HexMvPolyMathlib, HexReflectMathlib]
+    mathlib: true
+    proof_probes: [bench/HexRealFormulaMathlib/ProofProbe]
+    done_through: 1
+    status: active
   HexMvPoly:
     deps: [HexPoly, HexBasic, HexModArith]
     mathlib: false
@@ -1194,12 +1217,12 @@ libraries:
     done_through: 4
     status: active
   HexPolyDet:
-    deps: [HexBareiss, HexMvGcd, HexDeterminant, HexMatrix, HexBasic]
+    deps: [HexBareiss, HexMvGcd, HexDeterminant, HexMatrix, HexBasic, HexKronecker]
     mathlib: false
     done_through: 3
     status: active
   HexPolyDetMathlib:
-    deps: [HexPolyDet, HexBareissMathlib, HexReflect, HexReflectMathlib, HexMvPolyMathlib, HexMatrixMathlib]
+    deps: [HexPolyDet, HexBareissMathlib, HexReflect, HexReflectMathlib, HexMvPolyMathlib, HexMatrixMathlib, HexKroneckerMathlib]
     mathlib: true
     proof_probes: [bench/HexPolyDetMathlib/ProofProbe]
     done_through: 3
@@ -1473,7 +1496,7 @@ libraries:
     done_through: 1
     status: active
   HexRealAlgebraicMathlib:
-    deps: [HexRealAlgebraic, HexNumberFieldMathlib]
+    deps: [HexRealAlgebraic, HexNumberFieldMathlib, HexRealRootsMathlib]
     mathlib: true
     correspondence_only: true
     done_through: 1
@@ -1529,11 +1552,11 @@ libraries:
     status: active
     proof_probes: [bench/HexRealRootsMathlib/ProofProbe]
   HexRCF:
-    deps: [HexRealRoots, HexRealRootsMathlib, HexPolyZ, HexPolyZMathlib]
+    deps: [HexRealRoots, HexRealRootsMathlib, HexPolyZ, HexPolyZMathlib, HexRealFormulaMathlib]
     mathlib: true
     done_through: 7
     status: active
-    proof_probes: [bench/HexRCF/ProofProbe]
+    proof_probes: [bench/HexRCF/ProofProbe, bench/HexRCF/RealFormulaProbe]
     phase4:
       comparators:
         - tool: "python-flint univariate RCF verdict oracle"
