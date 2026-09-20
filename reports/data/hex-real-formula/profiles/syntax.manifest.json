@@ -1,0 +1,369 @@
+{
+  "family": "syntax",
+  "function": "Hex.RealFormula.Bench.decode",
+  "parameter": 32768,
+  "cpu": 64,
+  "load": [
+    39.96240234375,
+    47.89990234375,
+    48.41552734375
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "raw": "/tmp/rf-perf-final-syntax-decode",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/tmp/hex-real-formula-lean-bench-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "999",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/tmp/rf-perf-final-syntax-decode/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/tmp/rf-perf-final-syntax-decode/timed-%p.jsonl",
+        "/home/kim/worktrees/hex-dev/hex-dev-hex-real-formula/.lake/build/bin/hexrealformula_bench",
+        "profile",
+        "Hex.RealFormula.Bench.decode",
+        "--param",
+        "32768",
+        "--target-inner-nanos",
+        "3000000000",
+        "--profiler",
+        "env"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/tmp/rf-perf-final-syntax-decode/samply.json.gz",
+        "/tmp/rf-perf-final-syntax-decode/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/tmp/rf-perf-final-syntax-decode/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/normalize_perf.py",
+        "--profile",
+        "/tmp/rf-perf-final-syntax-decode/samply.json.gz",
+        "--perf-script",
+        "/tmp/rf-perf-final-syntax-decode/perf-samples.txt",
+        "--spawn-anchor",
+        "/tmp/rf-perf-final-syntax-decode/spawn-anchor.json",
+        "--output",
+        "/tmp/rf-perf-final-syntax-decode/normalized.json.gz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "/tmp/hex-real-formula-lean-bench-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/tmp/rf-perf-final-syntax-decode/normalized.json.gz",
+        "--sidecar",
+        "/tmp/rf-perf-final-syntax-decode/timed-2024233.jsonl",
+        "--spawn-anchor",
+        "/tmp/rf-perf-final-syntax-decode/spawn-anchor.json",
+        "--out",
+        "/tmp/rf-perf-final-syntax-decode/filtered.json.gz",
+        "--diagnostics",
+        "/tmp/rf-perf-final-syntax-decode/diagnostics.json",
+        "--label-filter",
+        "kernel"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/elf_symbols.py",
+        "/tmp/rf-perf-final-syntax-decode/filtered.json.gz",
+        "--output",
+        "/tmp/rf-perf-final-syntax-decode/symbols.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/summarize_profile.py",
+        "/tmp/rf-perf-final-syntax-decode/filtered.json.gz",
+        "--symbols",
+        "/tmp/rf-perf-final-syntax-decode/symbols.json",
+        "--diagnostics",
+        "/tmp/rf-perf-final-syntax-decode/diagnostics.json",
+        "--thread",
+        "hexrealformula_",
+        "--top",
+        "20",
+        "--output",
+        "reports/data/hex-real-formula/profiles/syntax.summary.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "executable_sha256": "a5e0391054a405a58495d6cc1a982df504b2435cbf44d7c6b1c087a23ff57ecc",
+  "commit": "72a5c75ffecdec60d53375c458abcdc59823b571",
+  "dirty": true,
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.1.5",
+  "status": "profiled",
+  "diagnostics": {
+    "schema": 2,
+    "stage": "complete",
+    "confidence": "passed",
+    "low_confidence_reasons": [],
+    "bench_pid": 2024233,
+    "bench_thread_name": "hexrealformula_",
+    "bench_thread_tid": "2024246",
+    "regions_total": 33,
+    "total_timed_ms": 1198.82051,
+    "expected_samples_bench_thread": 1197.6,
+    "retained_samples_bench_thread": 1197,
+    "rejected_samples_bench_thread": 471,
+    "off_bench_thread_samples_in_window": 0,
+    "samply_interval_ms": 1.001001,
+    "spawn_anchor_wall_ns": 1789901644556692842,
+    "spawn_anchor_mono_ns": 872754758357565,
+    "sidecar_mono_anchor_ns": 872754932791122,
+    "samply_meta_start_time_ms": 1789901644589.8525,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "calibration_residual_ms": 0.9741979837417603,
+    "calibration_max_residual_ms": 5.0,
+    "calibration": {
+      "selected_mode": "relative-to-meta-start-ms",
+      "residual_ms": 0.9741979837417603,
+      "raw_max_residual_ms": 0.9875270128250122,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "configured_max_residual_ms": 5.0,
+      "sample_interval_ms": 1.001001,
+      "effective_max_residual_ms": 5.0,
+      "within_residual_limit": true,
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "hit_count": 0,
+          "regions_without_samples": 33,
+          "boundary_residual_trimmed_max_ms": null,
+          "boundary_residual_raw_max_ms": null,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "hit_count": 1197,
+          "regions_without_samples": 0,
+          "boundary_residual_trimmed_max_ms": 0.9741979837417603,
+          "boundary_residual_raw_max_ms": 0.9875270128250122,
+          "within_residual_limit": true
+        }
+      }
+    },
+    "minimum_retained_samples": 100,
+    "sensitivity": {
+      "shift_ms": 5.0,
+      "reported_top_function_count": 3,
+      "configured_max_total_variation_distance": 0.1,
+      "sampling_noise_coefficient": 0.6,
+      "minimum_comparison_samples": 100,
+      "maximum_sampling_noise_allowance": 0.5,
+      "verdict": "passed",
+      "leaf_function_distributions_stable": true,
+      "comparisons": {
+        "minus": {
+          "total_variation_distance": 0.11604871356933827,
+          "leaf_function_support_size": 487,
+          "comparison_samples": 1193,
+          "exchanged_samples": 328,
+          "exchanged_fraction": 0.2749371332774518,
+          "sampling_noise_allowance": 0.28426749797393924,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.28426749797393924,
+          "verdict": "passed",
+          "failure_reasons": []
+        },
+        "plus": {
+          "total_variation_distance": 0.11483240877647395,
+          "leaf_function_support_size": 508,
+          "comparison_samples": 1195,
+          "exchanged_samples": 332,
+          "exchanged_fraction": 0.2778242677824268,
+          "sampling_noise_allowance": 0.2916078701696062,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.2916078701696062,
+          "verdict": "passed",
+          "failure_reasons": []
+        }
+      },
+      "cases": {
+        "minus": {
+          "shift_ms": -5.0,
+          "retained_samples": 1193,
+          "top_leaf_functions": [
+            {
+              "function": 25,
+              "name": "0x4caee69",
+              "samples": 47
+            },
+            {
+              "function": 120,
+              "name": "0x4caee33",
+              "samples": 47
+            },
+            {
+              "function": 135,
+              "name": "0x4cf64bc",
+              "samples": 43
+            }
+          ]
+        },
+        "nominal": {
+          "shift_ms": 0.0,
+          "retained_samples": 1197,
+          "top_leaf_functions": [
+            {
+              "function": 120,
+              "name": "0x4caee33",
+              "samples": 53
+            },
+            {
+              "function": 35,
+              "name": "0x4cf6748",
+              "samples": 42
+            },
+            {
+              "function": 135,
+              "name": "0x4cf64bc",
+              "samples": 42
+            }
+          ]
+        },
+        "plus": {
+          "shift_ms": 5.0,
+          "retained_samples": 1195,
+          "top_leaf_functions": [
+            {
+              "function": 120,
+              "name": "0x4caee33",
+              "samples": 50
+            },
+            {
+              "function": 35,
+              "name": "0x4cf6748",
+              "samples": 44
+            },
+            {
+              "function": 135,
+              "name": "0x4cf64bc",
+              "samples": 37
+            }
+          ]
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "0.stdout": "07ea3c4c027576e76bdcb385e47031a16ecec65058ac0ed535d0fc619865bef4",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "746bab56b0b3bd1851edc59f4d47114fb4727da9cc60610ceb64f72bcc660955",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "4.stdout": "4dd633ce6dacab59e6b9d42eba3b7e4ae44f9daacce2ec4277cf200279ecbf9f",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "spawn-anchor.json": "ae4c117a7d3ea086324556988d31b33c6e7286bfa8ed8eb1539524160693bed8",
+    "perf.data": "66e03984ae7a28b99b28703b315ddf9cc405003c1ffa29b3eb72aae6caf64585",
+    "timed-2024233.jsonl": "2770ce5c8ed0485c7a290262167b2533b41e682b9067dd66d92e27c7a29f4d49",
+    "5.stdout": "900a0d9926a84f2e02c3d6957ea1e2028e3d6483b83d7fca36fbe8dbebe1347f",
+    "5.stderr": "fd770b8037948e2e7e2b39122534dfa30c93bdbad84c933227a7be929e5ee695",
+    "samply.json.gz": "b2370f940f7d8935a7fb3abf1b77f880d568ddea65f9c7beeba5df5602f3241f",
+    "6.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stderr": "408749bae6a05564937893e6350c5abafcefc4232827ec0f02baf03b463543e8",
+    "7.stdout": "70ea6183b1101660d124d6c572623a0819ec33a96122a0ff297606ecd37ed8d5",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "70ea6183b1101660d124d6c572623a0819ec33a96122a0ff297606ecd37ed8d5",
+    "normalized.json.gz": "59f64254361eb447cc4cb165c39ca39f5f866f0c3ed7b90f767192592a12c515",
+    "8.stdout": "34ec4382f95afa9fd45a61e1f9a86a326d87f2d7dad7ec62158890ba605d17ba",
+    "8.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "cb03227149eaf5639f61479c27904b572ba0140d05588bb618fef6f5aef680c2",
+    "diagnostics.json": "9163731bbf5837040206e2a26ae830e7b4a3088743d76df77b05de76258bc693",
+    "9.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "9.stderr": "475f7d752f09d3a930668de7a116c0086d1e56c29eb585d0670ad6d6e6c7fb67",
+    "symbols.json": "37faf732849ca74a141fdce79c606c2adc39fc58132cadc0a397f11e2b4ab4ef",
+    "10.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "10.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

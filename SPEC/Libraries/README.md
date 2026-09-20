@@ -55,10 +55,11 @@
 - **[hex-real-formula](hex-real-formula.md)** (planned): shared multivariate real-arithmetic syntax, semantics, and reification; companion specified in the same file
 - **[hex-virtual-subst](hex-virtual-subst.md)** (planned): quadratic virtual substitution, exact QE and refutation certificates; Mathlib companion and tactic specified in the same file
 - **[hex-coverings](hex-coverings.md)** (planned): real-arithmetic satisfiability by cylindrical cell explanations and checked LRAT or covering refutations; Mathlib/Tau Ceti companion specified in the same file
-- **hex-rcf**: the `rcf` tactic, a complete decision procedure for univariate real-closed-field sentences (Boolean combinations of polynomial inequalities under one `∀`/`∃` over `ℝ`); `mathlib: true`, soundness theorem in the same library
+- **hex-rcf**: the `rcf` tactic for Boolean combinations of univariate polynomial comparisons under one `∀`/`∃` over `ℝ`, with integer/rational coefficients; `mathlib: true`, soundness in the same library. The [planned optional coefficient extension](../../HexRCF/SPEC/hex-rcf.md#planned-real-coefficient-extension) adds fixed real algebraic embeddings and certified named π/e constants, with conditional completeness for constant towers
 - **hex-resultant**: polynomial resultant and discriminant via the subresultant pseudo-remainder sequence
 - **hex-number-field**: fixed fields `QAdjoin p x`, factorization-lazy `AlgebraicRoot`, canonical `AlgebraicNumber`, and roots of polynomials with algebraic coefficients
 - **[hex-real-algebraic](hex-real-algebraic.md)**: the real subtype of canonical algebraic numbers, exact ordered-field arithmetic, real roots, rounding, and dyadic approximation
+- **[hex-real-closure](hex-real-closure.md)** (planned): selected-root algebraic towers, dynamic splitting, complete real roots and shared samples
 - **hex-number-field-tower**: successive number-field extensions, Trager factorization, adjoining roots, splitting fields, and primitive-element flattening
 - **hex-berlekamp**: Berlekamp factoring, distinct-degree and equal-degree factorization (Cantor-Zassenhaus), and the Rabin irreducibility test over any `F_q`; the `factor_poly` / `irreducibility` tactic drivers (native `FpPoly p` arms plus extensions for other input types)
 - **hex-hensel**: Hensel lifting from `mod p` to `mod p^k`
@@ -114,10 +115,12 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-poly-z-mathlib**: `DensePoly Int ≃+* Polynomial ℤ`, Mignotte bound (via Mathlib's Mahler measure)
 - **hex-roots-mathlib**: Pellet's test on circles (built from `circleIntegral`), the Mahler separation bound, soundness of refinement and `ZPoly.isolateComplexRoots?`
 - **hex-real-roots-mathlib**: Sturm's theorem (counting form over `Polynomial ℝ`), chain correspondence, soundness and completeness of `ZPoly.isolateRealRoots?`
+- **[hex-sign-det-mathlib](hex-sign-det-mathlib.md)** (planned): exact sign-table replay, complete support and Thom root identity/order correspondence
 - **hex-interval-mathlib**: real semantics, verified arithmetic and elementary-function propagators, certificate replay, and the `interval` tactic
 - **hex-resultant-mathlib**: executable resultant agreement with `Polynomial.resultant`, specialization, root-product, and discriminant theorems
 - **hex-number-field-mathlib**: fixed-field correspondence, exactification, lazy arithmetic, and algebraic-coefficient root completeness
 - **[hex-real-algebraic-mathlib](hex-real-algebraic.md#companion-and-proof-inventory)**: ordered-field structure, the embedding into the algebraic reals, operation correspondence, and `IsRealClosed`
+- **[hex-real-closure-mathlib](hex-real-closure-mathlib.md)** (planned): selected-root field semantics, splitting transport, complete roots, compatible algebraic union and finite-sign realization
 - **hex-number-field-tower-mathlib**: tower embeddings, Trager correctness, splitting fields, and primitive-element equivalence
 - **hex-poly-fp-mathlib**: `FpPoly p ≃+* Polynomial (ZMod p)`, and transport of coefficients, degree, leading coefficients, ring operations, coefficient-sum evaluation, composition, and divisibility
 - **hex-berlekamp-mathlib**: `Decidable (Irreducible f)` for `Polynomial (ZMod p)`; the `Polynomial (ZMod p)` extension for `factor_poly` / `irreducibility`
@@ -188,14 +191,17 @@ Each library with its immediate dependencies:
 - **hex-real-roots**: hex-poly-z
 - **hex-sturm** (planned): hex-poly, hex-real-roots
 - **hex-sign-det** (planned): hex-sturm, hex-poly, hex-matrix, hex-row-reduce, hex-rank
+- **hex-sign-det-mathlib** (planned): hex-sign-det, hex-sturm-mathlib, hex-poly-mathlib, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-rank-mathlib; Tau Ceti foundations (mathlib: true)
 - **hex-interval**: (none)
 - **hex-interval-algebraic**: hex-interval-mathlib, hex-real-roots-mathlib, hex-roots-mathlib (mathlib: true)
 - **hex-real-formula** (planned): hex-mv-poly
 - **hex-virtual-subst** (planned): hex-real-formula, hex-mv-poly
-- **hex-rcf**: hex-real-roots, hex-real-roots-mathlib, hex-poly-z, hex-poly-z-mathlib (mathlib: true); the planned shared formula adapter additionally depends on hex-real-formula-mathlib
+- **hex-rcf**: hex-real-roots, hex-real-roots-mathlib, hex-poly-z, hex-poly-z-mathlib (mathlib: true); the planned shared formula adapter additionally depends on hex-real-formula-mathlib. The optional real-coefficient adapter also consumes hex-real-closure and its companion (with ordered-fn, sturm, sign-det, interval and real-algebraic evidence transitively); these are planned implementation dependencies, not base imports
 - **hex-resultant**: hex-poly
 - **hex-number-field**: hex-poly-z, hex-roots, hex-resultant, hex-berlekamp-zassenhaus, hex-matrix, hex-row-reduce
 - **hex-real-algebraic**: hex-number-field
+- **hex-real-closure** (planned): hex-poly, hex-sturm, hex-sign-det, hex-ordered-fn, hex-real-algebraic
+- **hex-real-closure-mathlib** (planned): hex-real-closure, hex-poly-mathlib, hex-sturm-mathlib, hex-sign-det-mathlib, hex-ordered-fn-mathlib, hex-real-algebraic-mathlib; Tau Ceti ordered real-closure existence (mathlib: true)
 - **hex-number-field-tower**: hex-number-field, hex-resultant, hex-berlekamp-zassenhaus, hex-row-reduce
 - **hex-berlekamp**: hex-poly-fp, hex-matrix, hex-row-reduce, hex-gfq-ring, hex-basic, hex-finite-field
 - **hex-hensel**: hex-poly-fp, hex-poly-z, hex-basic
@@ -783,18 +789,21 @@ for developments whose source-local move has not happened yet.
 - [hex-real-roots-mathlib.md](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md): Sturm's theorem, chain correspondence, soundness and completeness of `ZPoly.isolateRealRoots?`
 - [hex-sturm](hex-sturm.md) (planned): ordered-field Sturm–Tarski frontend, coefficient evidence and root counts using the shared hex-real-roots query/replay kernel
 - [hex-sturm-mathlib](hex-sturm-mathlib.md) (planned): abstract ordered-field query correspondence, endpoint guards and coefficient-evidence composition using shared real-roots-mathlib replay soundness
-- [hex-sign-det](hex-sign-det.md) (planned): complete BKR sign tables, certified support reduction and Thom root descriptors; required companion theorem shapes listed (separate companion SPEC directive [#10314](https://github.com/kim-em/hex-dev/issues/10314))
+- [hex-sign-det](hex-sign-det.md) (planned): complete BKR sign tables, certified support reduction and Thom root descriptors; companion specified separately below
+- [hex-sign-det-mathlib](hex-sign-det-mathlib.md) (planned): certified exact counts and omitted-condition unrealizability, partial Thom completion, root identity/order and re-encoding correspondence
 - [hex-interval.md](../../HexInterval/SPEC/hex-interval.md): exact interval data, shared programs, and budgeted propagation search
 - [hex-interval-mathlib.md](hex-interval-mathlib.md): real semantics, verified propagators, proof replay, and the `interval` tactic
 - **hex-interval-algebraic** (planned): Mathlib-facing interval providers backed by certified real and complex polynomial root isolation; its provider contract is specified in [hex-interval.md](../../HexInterval/SPEC/hex-interval.md#specialized-algebraic-solvers-before-generic-propagation)
 - [hex-real-formula](hex-real-formula.md) (planned): shared real-arithmetic syntax, semantics, and reifier; Mathlib companion specified in the same file
 - [hex-virtual-subst](hex-virtual-subst.md) (planned): quadratic QE and certificates; Mathlib companion and tactic specified in the same file
-- [hex-rcf.md](../../HexRCF/SPEC/hex-rcf.md): the `rcf` tactic for univariate real-closed-field sentences
+- [hex-rcf.md](../../HexRCF/SPEC/hex-rcf.md): the `rcf` tactic for univariate real-closed-field sentences; [planned real coefficients](../../HexRCF/SPEC/hex-rcf.md#planned-real-coefficient-extension), shared frontend, certified replay and realization contracts
 - [hex-resultant](../../HexResultant/SPEC/hex-resultant.md): polynomial resultant and discriminant via the subresultant pseudo-remainder sequence
 - [hex-resultant-mathlib](../../HexResultantMathlib/SPEC/hex-resultant-mathlib.md): executable resultant agreement, specialization, root-product, and discriminant theorems
 - [hex-number-field](../../HexNumberField/SPEC/hex-number-field.md): `QAdjoin`, factorization-lazy `AlgebraicRoot`, canonical `AlgebraicNumber`, conjugation, principal radicals, common-field coordinates, and algebraic-coefficient roots
 - [hex-number-field-mathlib](../../HexNumberFieldMathlib/SPEC/hex-number-field-mathlib.md): fixed-field correspondence, exactification, complex partial order, principal radicals, and algebraic closedness
 - [hex-real-algebraic](hex-real-algebraic.md): exact ordered real algebraic numbers, real roots, rounding, and approximation (the Mathlib companion is specified in the same file)
+- [hex-real-closure](hex-real-closure.md) (planned): selected-root algebraic towers, splitting and transport, characteristic-zero Yun decomposition, complete root isolation and shared samples
+- [hex-real-closure-mathlib](hex-real-closure-mathlib.md) (planned): selected-root correspondence, complete roots and multiplicities, compatible-union real-closedness, finite-sign realization and reconstruction
 - [hex-number-field-tower](../../HexNumberFieldTower/SPEC/hex-number-field-tower.md): successive extensions, Trager factorization, splitting fields, and flattening
 - [hex-number-field-tower-mathlib.md](../../HexNumberFieldTowerMathlib/SPEC/hex-number-field-tower-mathlib.md): semantic towers, factorization correctness, splitting, and primitive-element equivalence
 - [hex-berlekamp](../../HexBerlekamp/SPEC/hex-berlekamp.md): Berlekamp factoring, Rabin irreducibility test, and the `factor_poly` / `irreducibility` tactic drivers

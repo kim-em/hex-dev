@@ -8,7 +8,7 @@ The comparator measurements below use an earlier PrimeCert revision.
 
 The compiled suite owns each executable surface once.  The first six rows use
 the published schoolbook upper bound; the next seven use two-sided controlled
-families; the last four are canonical fixed boundaries.
+families; the remaining rows are canonical fixed boundaries.
 
 | target | declared complexity or fixed purpose |
 |---|---|
@@ -29,6 +29,11 @@ families; the last four are canonical fixed boundaries.
 | `Hex.PrimalityBench.runCertSearch512` | fixed 512-bit rho-backed search boundary |
 | `Hex.PrimalityBench.runChecker512` | fixed twin of the 512-bit kernel replay |
 | `Hex.PrimalityBench.runPock3Checker` | fixed Pocklington-3 constructor anchor |
+| `Hex.PrimalityBench.runConstruction` | fixed Curve25519 construction |
+| `Hex.PrimalityBench.runCurveChecker` | fixed twin of Curve25519 compiled replay |
+| `Hex.PrimalityBench.runRuntimePrimes` | fixed construction-policy sieve bound 524289 |
+| `Hex.PrimalityBench.runP521Construction` | fixed P-521 construction |
+| `Hex.PrimalityBench.runP521Checker` | fixed twin of P-521 compiled replay |
 
 The proof track has matched fresh modules at 31, 61, 123, 256, 511, and 512
 bits.  For every size it measures import baseline to input construction, input
@@ -120,6 +125,46 @@ one-parameter family, so modes 1 and 2 do not apply.  They use mode 3 absolute
 budgets.  Decision, search, and replay each have a 5 s budget; Pocklington-3
 has a 2 s budget.  Their medians were respectively 13.407 ms, 13.448 ms,
 678.436 us, and 632 ns, with all five samples and expected hashes agreeing.
+
+The construction-policy fixed targets use mode 3: each is one named
+certificate or one policy endpoint, so modes 1 and 2 do not describe this
+fixed comparison. Parametric sieve coverage remains in `runSieve`. All five
+have a 5 s absolute budget. The registered five-repeat run on `chungus2`,
+Lean 4.34.0, automatically selected CPU 12, retained all samples and
+reported expected-hash agreement:
+
+| target | budget | median per call | observed hash | verdict |
+|---|---:|---:|---:|---|
+| `runConstruction` | 5 s | 416 ms | `0x1d` | within budget; expected hash matches |
+| `runCurveChecker` | 5 s | 527 µs | `0x1` | within budget; expected hash matches |
+| `runRuntimePrimes` | 5 s | 52.0 ms | `0xa97e` | within budget; expected hash matches |
+| `runP521Construction` | 5 s | 1.38 s | `0xaa` | within budget; expected hash matches |
+| `runP521Checker` | 5 s | 11.6 ms | `0x1` | within budget; expected hash matches |
+
+The raw lean-bench export, complete output, source hashes, command, CPU,
+and host-load observations are retained in
+`reports/bench-results/hex-primality-fixed-fields-issue-10291.json`.
+Its pre-rebase source commit is `88b1c74ee` (published as `93a5a3a2a`
+after rebasing); the harness's `-dirty` suffix includes the
+untracked measurement outputs. The recorded source hashes identify the
+measured implementation. Reproduce with:
+
+```sh
+lake build hexprimality_bench
+taskset -c "$(python3 scripts/bench/idle_core.py)" \
+  .lake/build/bin/hexprimality_bench run \
+  Hex.PrimalityBench.runConstruction \
+  Hex.PrimalityBench.runCurveChecker \
+  Hex.PrimalityBench.runRuntimePrimes \
+  Hex.PrimalityBench.runP521Construction \
+  Hex.PrimalityBench.runP521Checker \
+  --export-file /tmp/primality-fixed-fields.json
+```
+
+The [standard-field investigation](hex-primality-fields.md) separately measures
+paired policy changes, rendering/elaboration, kernel replay, and a truncated
+subset-enumeration failure. Neither set of fixed targets supports an
+asymptotic claim about arbitrary large primes.
 
 The release-quality proof record is
 `reports/bench-results/hex-primality-core-proof-issue-9762-chungus2.json`

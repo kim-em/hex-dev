@@ -82,6 +82,15 @@ logs are retained in the same directory. [Experiment instructions](../experiment
 give the build, literal regeneration, pinned traced Z3 build, and collector
 commands. Nothing is added to CI or a released library.
 
+The carrier-input snapshot in that directory was added after collection;
+the summarizer verifies its bytes against the source hash recorded at collection.
+The original corpus's 64 proof observations retain axiom evidence per row and in their logs;
+they predate the separate `validation.log.gz` used by the current collectors.
+Historical paired measurements require the recorded source commit: the current
+Replay and Transport modules have changed, as described below. Published tags
+`experiment/cad-sample-costs-source` and `experiment/cad-kernel-costs-source`
+preserve the two recorded commits; the experiment instructions give fetch commands.
+
 ## Canonical lifting
 
 `d/H` means minimal-polynomial degree and maximum absolute integer coefficient
@@ -213,11 +222,15 @@ automatically leased CPU 16, on 2026-09-20. Its
 [metadata](bench-results/cad-kernel-costs/meta.json),
 [32 observations](bench-results/cad-kernel-costs/runs.jsonl), and complete logs
 are retained separately. No sample was dropped or rerun.
+Every focused maximum occurred in round 0. Recorded one-minute load ranged from
+90.3 to 93.6 during that round and was 57.4 after the last observation on this
+96-logical-CPU host. These observations do not isolate load from possible
+first-round warm-up effects or establish a cause of the timing spread.
 
 The smallest checker costs a median 81.3 ms and the sphere checker 1335 ms.
-Carrier degree alone still misses coefficient growth: the degree-6 Kahan
-carrier (36-bit chain coefficients) costs 385 ms, versus 232.5 ms for Tower 4
-(also degree 6, 7-bit coefficients). These finite cases establish a practical
+The degree-6 Kahan carrier costs 385 ms, versus 232.5 ms for Tower 4 (also
+degree 6). Atom count (4 versus 3), carrier height, and chain coefficient sizes differ,
+so this comparison does not isolate their effects. These finite cases establish a practical
 kernel cost for the supplied replay format; they do not measure general
 primitive-element export, sign transport, or an asymptotic law.
 

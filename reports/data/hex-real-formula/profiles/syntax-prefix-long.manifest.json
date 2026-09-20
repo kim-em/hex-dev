@@ -1,0 +1,182 @@
+{
+  "family": "syntax",
+  "function": "Hex.RealFormula.Bench.prefixRename",
+  "parameter": 2048,
+  "cpu": 75,
+  "load": [
+    42.91064453125,
+    58.14208984375,
+    50.2568359375
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "raw": "/tmp/rf-perf-final-syntax-long",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/tmp/hex-real-formula-lean-bench-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "999",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/tmp/rf-perf-final-syntax-long/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/tmp/rf-perf-final-syntax-long/timed-%p.jsonl",
+        "/home/kim/worktrees/hex-dev/hex-dev-hex-real-formula/.lake/build/bin/hexrealformula_bench",
+        "profile",
+        "Hex.RealFormula.Bench.prefixRename",
+        "--param",
+        "2048",
+        "--target-inner-nanos",
+        "10000000000",
+        "--profiler",
+        "env"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/tmp/rf-perf-final-syntax-long/samply.json.gz",
+        "/tmp/rf-perf-final-syntax-long/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/tmp/rf-perf-final-syntax-long/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/normalize_perf.py",
+        "--profile",
+        "/tmp/rf-perf-final-syntax-long/samply.json.gz",
+        "--perf-script",
+        "/tmp/rf-perf-final-syntax-long/perf-samples.txt",
+        "--spawn-anchor",
+        "/tmp/rf-perf-final-syntax-long/spawn-anchor.json",
+        "--output",
+        "/tmp/rf-perf-final-syntax-long/normalized.json.gz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "/tmp/hex-real-formula-lean-bench-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/tmp/rf-perf-final-syntax-long/normalized.json.gz",
+        "--sidecar",
+        "/tmp/rf-perf-final-syntax-long/timed-1901195.jsonl",
+        "--spawn-anchor",
+        "/tmp/rf-perf-final-syntax-long/spawn-anchor.json",
+        "--out",
+        "/tmp/rf-perf-final-syntax-long/filtered.json.gz",
+        "--diagnostics",
+        "/tmp/rf-perf-final-syntax-long/diagnostics.json",
+        "--label-filter",
+        "kernel"
+      ],
+      "exit_code": 2
+    }
+  ],
+  "executable_sha256": "a5e0391054a405a58495d6cc1a982df504b2435cbf44d7c6b1c087a23ff57ecc",
+  "commit": "72a5c75ffecdec60d53375c458abcdc59823b571",
+  "dirty": true,
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.1.5",
+  "status": "failed",
+  "error": "Command '['/run/current-system/sw/bin/python3', '/tmp/hex-real-formula-lean-bench-samply/scripts/filter_samply.py', '--samply-json', '/tmp/rf-perf-final-syntax-long/normalized.json.gz', '--sidecar', '/tmp/rf-perf-final-syntax-long/timed-1901195.jsonl', '--spawn-anchor', '/tmp/rf-perf-final-syntax-long/spawn-anchor.json', '--out', '/tmp/rf-perf-final-syntax-long/filtered.json.gz', '--diagnostics', '/tmp/rf-perf-final-syntax-long/diagnostics.json', '--label-filter', 'kernel']' returned non-zero exit status 2.",
+  "artifacts": {
+    "0.stdout": "07ea3c4c027576e76bdcb385e47031a16ecec65058ac0ed535d0fc619865bef4",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "2438e289ba2d465f706af01f1e403787a73451fe214bf5d965c0c6cf68e1a15f",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "4.stdout": "4dd633ce6dacab59e6b9d42eba3b7e4ae44f9daacce2ec4277cf200279ecbf9f",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "spawn-anchor.json": "0d224072b3fa9f4c3aed606a6e3641db8b3e57df30ed25167e530948c45c6953",
+    "perf.data": "3dcefc229a29679c58a62e3c9d9d6480156d3e1a502b7faee008affe1ee7ed9e",
+    "timed-1901195.jsonl": "8d6b8ca988fbb2f4dc434a41822b9da5a45d5ecad28be1597e7341eea1597b47",
+    "5.stdout": "a27aa120c23106b38e03ffd7d61e5bdb162b89ae0a376bf93460a315042dcc42",
+    "5.stderr": "1f9215e3ac04502bcaf9510135991d2af95a5f848790f6936af94dc989971103",
+    "samply.json.gz": "e63a456db6ba5257c2cdab1f4b99bfaafd530354156af8270a1b0b598b56b3a2",
+    "6.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stderr": "408749bae6a05564937893e6350c5abafcefc4232827ec0f02baf03b463543e8",
+    "7.stdout": "7e59f8feb7d275aed9e33bcf2422303bba34d4436495a7a310dbe9abf3c1b5a6",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "7e59f8feb7d275aed9e33bcf2422303bba34d4436495a7a310dbe9abf3c1b5a6",
+    "normalized.json.gz": "a261fb0d3b4dbaaac3bde4c95bc78b07b81285040917c201636609b7e8b3fa89",
+    "8.stdout": "fd13569faa6938c9757feaa711e772a43063aaed035fa312a34d769a03b2c6b3",
+    "8.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "a0d490d0ce5615685521484dcb7c8723be71cde61394df08e036ce4bbf51b420",
+    "diagnostics.json": "ef3b832a2547b9bc926a5e8aae1288c70b0e5d8635be98578590e71ed893d2a4",
+    "9.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "9.stderr": "22e78135055909079edea921566f74cfcb03931f00d0bddec130dfe3545f5050"
+  }
+}

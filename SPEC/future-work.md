@@ -1162,9 +1162,9 @@ and arithmetic, so they stay in `hex-ordered-fn`, in separate modules.
 | Mathlib-free library | Responsibility | Mathlib companion |
 | --- | --- | --- |
 | [hex-sturm](Libraries/hex-sturm.md) | Ordered-field query frontend, coefficient-operation adapters, generic endpoints and root counts | `hex-sturm-mathlib`: frontend correspondence and replay composition |
-| [hex-sign-det](Libraries/hex-sign-det.md) | BKR sign determination, complete sign tables, Thom root identity and comparison | `hex-sign-det-mathlib`: sign-table correctness, Thom identity and order correspondence |
+| [hex-sign-det](Libraries/hex-sign-det.md) | BKR sign determination, complete sign tables, Thom root identity and comparison | [hex-sign-det-mathlib](Libraries/hex-sign-det-mathlib.md): sign-table correctness, Thom identity and order correspondence |
 | [hex-ordered-fn](Libraries/hex-ordered-fn.md) | Transcendental and infinitesimal orders on `RationalFn`, approximation protocol | [hex-ordered-fn-mathlib](Libraries/hex-ordered-fn-mathlib.md): order laws, real evaluation and infinitesimal model |
-| `hex-real-closure` | Algebraic extension arithmetic, dynamic splitting, root isolation, staged towers and exploration | `hex-real-closure-mathlib`: selected-root semantics, field laws, root completeness and trivial-tower agreement |
+| [hex-real-closure](Libraries/hex-real-closure.md) | Algebraic extension arithmetic, dynamic splitting, root isolation, staged towers and exploration | [hex-real-closure-mathlib](Libraries/hex-real-closure-mathlib.md): selected-root semantics, field laws, root completeness and trivial-tower agreement |
 
 Arrows point from dependencies to consumers. Additional direct imports must
 respect this graph, including the existing transitive dependencies of each
@@ -1314,6 +1314,12 @@ equality. This is the BKR sign-determination library, not a multivariate
 quantifier-elimination algorithm; see the [BKR
 analysis](../reports/decision-procedures-alignment.md#ben-orkozenreif).
 
+The [hex-sign-det-mathlib SPEC](Libraries/hex-sign-det-mathlib.md) fixes the
+imported moment, recursive reduction and Thom theorem shapes, local replay
+correspondence, descriptor completion and changed-polynomial transport. The
+shared support, coefficient and termination contracts here continue to govern
+the downstream tower directives.
+
 #### Ordered rational functions and termination
 
 The individual [hex-ordered-fn SPEC](Libraries/hex-ordered-fn.md) specifies
@@ -1382,6 +1388,14 @@ required signs are separated, and prove formal identities when all original
 denominator nonvanishing obligations are certified.
 
 #### Algebraic towers, normalization and sampling
+
+The [hex-real-closure SPEC](Libraries/hex-real-closure.md) fixes the staged
+context and selected-root APIs, Yun decomposition, splitting/transport, complete
+root isolation, shared samples, failures and evidence requirements. The clauses
+below remain shared contracts for the companion and downstream directives.
+The [hex-real-closure-mathlib SPEC](Libraries/hex-real-closure-mathlib.md)
+fixes relative and ambient-existence semantics, live splitting/enlargement
+transport, compatible-union proofs, finite-sign specialization and replay bounds.
 
 Enforce stages `transcendental ≺ infinitesimal ≺ algebraic` in the tower API.
 Creating a finite tower does not make it real closed; real closure is the
@@ -1518,12 +1532,17 @@ incidental cache state. `π` and `e` have bounded certified modes and
 explicitly conditional total modes as above. Generic infinitesimal examples
 are `#eval` demonstrations, with no nonstandard-analysis tactic claims.
 
-A downstream `rcf` extension handles univariate sentences over `ℝ` with real
-algebraic coefficients and named constants, using the existing kernel
-certificate route extended with certified coefficient signs. This requires new
-integration, not the current integer-only replay unchanged. Without
-transcendence proofs it can certify the fragment where every required nonzero
-sign is separated by enclosures and all zero signs have algebraic/identity
+The downstream [`rcf` coefficient extension](../HexRCF/SPEC/hex-rcf.md#planned-real-coefficient-extension)
+is specified in the owning HexRCF SPEC: univariate sentences over `ℝ` with
+fixed real algebraic embeddings and authenticated named constants, using the
+planned shared RealFormula frontend and kernel certificates with coefficient
+signs.
+Its optional import preserves the integer/rational fast path; the SPEC lists
+the actual implementation and semantic prerequisites without advancing a phase.
+That integration is new work; the integer-only replay cannot consume these
+contexts unchanged. Without transcendence proofs it can certify the fragment
+where every required nonzero sign is separated by enclosures and all zero
+signs have algebraic/identity
 proofs. For example `∀ x : ℝ, x² > π - 4` needs only a certified `π < 4` and
 nonnegativity of squares. No completeness claim covers unresolved relations
 between constants. Infinitesimal search samples require the finite-sign
@@ -1576,9 +1595,9 @@ the dependency diagram above is the library import contract.
 | Computational SPEC | Companion SPEC |
 | --- | --- |
 | [hex-sturm SPEC](Libraries/hex-sturm.md) ([#10311](https://github.com/kim-em/hex-dev/issues/10311)) | [hex-sturm-mathlib SPEC](Libraries/hex-sturm-mathlib.md) ([#10312](https://github.com/kim-em/hex-dev/issues/10312)) |
-| [hex-sign-det SPEC](Libraries/hex-sign-det.md) ([#10313](https://github.com/kim-em/hex-dev/issues/10313)) | [hex-sign-det-mathlib #10314](https://github.com/kim-em/hex-dev/issues/10314) |
+| [hex-sign-det SPEC](Libraries/hex-sign-det.md) ([#10313](https://github.com/kim-em/hex-dev/issues/10313)) | [hex-sign-det-mathlib SPEC](Libraries/hex-sign-det-mathlib.md) ([#10314](https://github.com/kim-em/hex-dev/issues/10314)) |
 | [hex-ordered-fn #10315](https://github.com/kim-em/hex-dev/issues/10315) ([SPEC](Libraries/hex-ordered-fn.md)) | [hex-ordered-fn-mathlib #10316](https://github.com/kim-em/hex-dev/issues/10316) ([SPEC](Libraries/hex-ordered-fn-mathlib.md)) |
-| [hex-real-closure #10317](https://github.com/kim-em/hex-dev/issues/10317) | [hex-real-closure-mathlib #10318](https://github.com/kim-em/hex-dev/issues/10318) |
+| [hex-real-closure SPEC](Libraries/hex-real-closure.md) ([#10317](https://github.com/kim-em/hex-dev/issues/10317)) | [hex-real-closure-mathlib SPEC](Libraries/hex-real-closure-mathlib.md) ([#10318](https://github.com/kim-em/hex-dev/issues/10318)) |
 
 ### Lattice applications beyond factor recombination
 

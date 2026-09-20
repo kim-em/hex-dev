@@ -476,6 +476,31 @@ setup_fixed_benchmark runRuntimePrimes where {
   expectedHash := some (Hashable.hash (43390 : Nat))
 }
 
+private initialize p521Ref : IO.Ref Input ← IO.mkRef p521
+
+/-- Fixed mode-3 P-521 construction, including the final compiled self-check. -/
+def runP521Construction (_ : Unit) : IO Nat := do
+  let input ← p521Ref.get
+  match Construction.run input.n (Hex.Rand.ofSeed input.n) with
+  | .ok s => return s.attempts
+  | .error _ => return 0
+
+/-- Fixed mode-3 compiled replay of the exact P-521 suggestion. -/
+def runP521Checker (_ : Unit) : IO Nat := do
+  return if checkPrime (← p521Ref.get).cert then 1 else 0
+
+setup_fixed_benchmark runP521Construction where {
+  repeats := 5
+  maxSecondsPerCall := 5.0
+  expectedHash := some (Hashable.hash (170 : Nat))
+}
+
+setup_fixed_benchmark runP521Checker where {
+  repeats := 5
+  maxSecondsPerCall := 5.0
+  expectedHash := some (Hashable.hash (1 : Nat))
+}
+
 end Hex.PrimalityBench
 
 def main (args : List String) : IO UInt32 := LeanBench.Cli.dispatch args

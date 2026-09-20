@@ -35,8 +35,10 @@ round trips.
 `ofPolynomial` converts a Mathlib polynomial into the executable representation.
 The root theorems prove completeness, multiplicity agreement, and strict
 ordering. Real-closedness uses the executable root driver to recover witnesses
-for square closure and odd-degree root existence, without assuming an
-`IsRealClosed ℝ` instance.
+for square closure and odd-degree root existence. The real root is supplied by
+Mathlib’s generic odd-root theorem using the shared `Real.instIsRealClosed`
+from `HexRealRootsMathlib`; real-closedness of `RealAlgebraicNumber` is then
+proved from the recovered canonical witnesses.
 
 Build with `lake build HexRealAlgebraicMathlib`. This is a correspondence-only
 layer; executable fixtures and external oracle checks belong to the
