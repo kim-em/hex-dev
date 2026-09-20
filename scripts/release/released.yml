@@ -600,7 +600,7 @@ repos:
     component: Real-closed-field decision (`rcf` tactic)
     mathlib_only: true
     lib: HexRCF
-    test_modules: [HexRCF.LanguageTests, HexRCF.SturmBuilderTests, HexRCF.CarrierTests, HexRCF.IsolationsTests, HexRCF.SeparationTests, HexRCF.CellsTests, HexRCF.CommonRootTests, HexRCF.SignMatrixTests, HexRCF.BuilderTests, HexRCF.CertificateTests, HexRCF.DecisionTests, HexRCF.ReifyTests, HexRCF.LintTests]
+    test_modules: [HexRCF.LanguageTests, HexRCF.SturmBuilderTests, HexRCF.CarrierTests, HexRCF.IsolationsTests, HexRCF.SeparationTests, HexRCF.CellsTests, HexRCF.CommonRootTests, HexRCF.SignMatrixTests, HexRCF.BuilderTests, HexRCF.CertificateTests, HexRCF.DecisionTests, HexRCF.ReifyTests, HexRCF.HandlerTests.Support, HexRCF.HandlerTests, HexRCF.LintTests]
     umbrella: true
     spec: hex-rcf
     # Includes published dependencies of the development-only shared adapter.
