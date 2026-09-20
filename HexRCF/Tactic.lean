@@ -23,6 +23,99 @@ namespace Hex.RCF
 
 open Lean Elab Tactic Meta
 
+/-- An optional handler either declines the source syntax, reports a terminal
+failure (including false verdicts and exhausted/rejected replay), or proposes
+an ordinary proof of the original goal. -/
+meta inductive HandlerResult where
+  /-- This handler does not recognize the source syntax. -/
+  | declined
+  /-- Recognized syntax failed; no subsequent handler may run. -/
+  | failed (message : MessageData)
+  /-- A candidate proof, checked by the base before goal assignment. -/
+  | proved (proof : Expr)
+
+/-- Optional coefficient solvers receive the unchanged source target. -/
+meta abbrev Handler := Expr → MetaM HandlerResult
+
+private meta initialize handlerExt : SimplePersistentEnvExtension Name (Array Name) ←
+  registerSimplePersistentEnvExtension {
+    addImportedFn := fun entries => entries.flatten
+    addEntryFn := fun entries name => entries.push name
+  }
+
+meta initialize registerBuiltinAttribute {
+  name := `rcf_handler
+  descr := "register an optional closed-coefficient handler for rcf"
+  applicationTime := .afterCompilation
+  add := fun decl stx kind => do
+    ensureAttrDeclIsMeta `rcf_handler decl kind
+    Attribute.Builtin.ensureNoArgs stx
+    unless kind == AttributeKind.global do
+      throwAttrMustBeGlobal `rcf_handler kind
+    let info ← getConstInfo decl
+    unless info.levelParams.isEmpty do
+      throwError "rcf_handler: {decl} must be monomorphic"
+    unless ← MetaM.run' <| isDefEq info.type (mkConst ``Handler) do
+      throwAttrDeclNotOfExpectedType `rcf_handler decl info.type (mkConst ``Handler)
+    modifyEnv fun env => handlerExt.addEntry env decl
+}
+
+/-- Registered declaration names, deduplicated and sorted by `Name.lt`.
+Lookup order is independent of attribute and import order. -/
+meta def handlerNames : CoreM (Array Name) := do
+  return (handlerExt.getState (← getEnv)).qsort Name.lt |>.eraseReps
+
+private meta unsafe def evalHandlerUnsafe (name : Name) : MetaM Handler :=
+  evalConst Handler name
+
+@[implemented_by evalHandlerUnsafe]
+private meta opaque evalHandler (name : Name) : MetaM Handler
+
+/-- Optional solvers must remain within the ordinary mathematical kernel
+axioms, including through helper declarations used by a proposed proof. -/
+private meta def checkAxioms (name : Name) (proof : Expr) : MetaM Unit := do
+  for constant in proof.getUsedConstants do
+    for dependency in ← collectAxioms constant do
+      unless [``propext, ``Classical.choice, ``Quot.sound].contains dependency do
+        throwError "rcf: handler {name} proposed a proof using forbidden axiom {dependency} (through {constant})"
+
+/-- Try handlers transactionally. Successful handlers retain auxiliary
+proof declarations but cannot export assignments to the target's metavariables.
+Exceptions and structured failures are terminal; only `declined` continues. -/
+private meta def dispatchHandlers (target : Expr)
+    (reason : Reify.UnsupportedCoefficient) : MetaM Expr := do
+  for name in ← handlerNames do
+    let saved ← saveState
+    let (result, _) ← tryFinally' (do
+        let info ← getConstInfo name
+        unless info.levelParams.isEmpty && (← isDefEq info.type (mkConst ``Handler)) do
+          throwError "rcf: invalid handler signature for {name}"
+        let handler ← evalHandler name
+        match ← handler target with
+        | .proved proof => pure (HandlerResult.proved (← instantiateMVars proof))
+        | .failed message => pure (.failed (← addMessageContext message))
+        | .declined => pure .declined)
+      (fun result => do
+        match result with
+        | some (.proved _) =>
+            modify fun state => { state with
+              mctx := saved.meta.mctx
+              postponed := saved.meta.postponed
+              zetaDeltaFVarIds := saved.meta.zetaDeltaFVarIds }
+        | _ => saved.restore)
+    match result with
+    | .declined => pure ()
+    | .failed message => throwError message
+    | .proved proof =>
+        if proof.hasMVar then
+          throwError "rcf: handler {name} returned an unresolved proof"
+        check proof
+        unless ← withNewMCtxDepth <| isDefEq (← inferType proof) target do
+          throwError "rcf: handler {name} proposed a proof of a different goal"
+        checkAxioms name proof
+        return proof
+  throwError reason.message
+
 /-- Whether a cell participates in the sentence's quantifier fold. -/
 private meta def relevantCell (sentence : Sentence) (data : CellsCert)
     (cell : Cell data.isolations.intervals.size) : Bool :=
@@ -71,8 +164,7 @@ private meta def falseMessage (sentence : Sentence)
 /-- Construct the proof for a supported true sentence. The compiled builder
 selects evidence, while `Certificate.check` and `check_sound` are the only
 certificate trust boundary. -/
-private meta def proveRCFGoal (target : Expr) : MetaM Expr := do
-  let reflected ← Reify.reifySentence target
+private meta def proveRational (target : Expr) (reflected : Reify.SentenceResult) : MetaM Expr := do
   let sentence ← Reify.sentenceExpr reflected.sentence
   unless ← isDefEq sentence reflected.expr do
     throwError "rcf: internal runtime/literal sentence mismatch"
@@ -93,6 +185,20 @@ private meta def proveRCFGoal (target : Expr) : MetaM Expr := do
     throwError "rcf: internal final proof mismatch"
   return proof
 
+/-- Prove a rational goal, or dispatch only a typed closed-coefficient decline.
+Every unsuccessful attempt restores its metavariable state, including runtime
+exceptions. Existing rational search and replay remain terminal. -/
+meta def proveGoal (target : Expr) : MetaM Expr := do
+  let saved ← saveState
+  let (proof, _) ← tryFinally' (do
+    match ← (Reify.recognizeSentence target).run with
+    | .ok reflected => proveRational target reflected
+    | .error reason => do
+        saved.restore
+        dispatchHandlers target reason)
+    (fun result => unless result.isSome do saved.restore)
+  return proof
+
 /-- Decide a supported singly quantified univariate real polynomial goal by
 building and replaying a literal certificate. -/
 syntax (name := rcfTac) "rcf" : tactic
@@ -101,12 +207,15 @@ syntax (name := rcfTac) "rcf" : tactic
 @[tactic rcfTac] meta def evalRCFTac : Tactic := fun stx => do
   match stx with
   | `(tactic| rcf) =>
-      let goal ← getMainGoal
-      goal.withContext do
-        let target ← instantiateMVars (← goal.getType)
-        let proof ← proveRCFGoal target
-        goal.assign proof
-      replaceMainGoal []
+      let saved ← saveState
+      let _ ← tryFinally' (do
+        let goal ← getMainGoal
+        goal.withContext do
+          let target ← instantiateMVars (← goal.getType)
+          let proof ← proveGoal target
+          goal.assign proof
+        replaceMainGoal [])
+        (fun result => unless result.isSome do saved.restore)
   | _ => throwUnsupportedSyntax
 
 end Hex.RCF
