@@ -1,0 +1,24 @@
+{
+  "source_revision": "b3360aca1cc4abd3bd3c4fe6c3409bc51b3c3e9a",
+  "source_sha256": {
+    "bench/HexRank/Bench.lean": "40ba96b2909f1e17f42f3ddd37b510ea48f52dce8afa144785773160750f8244",
+    "HexRank/Produce.lean": "47b99cbb5645360c193824e1deb784480df73a5e360b9b94214837190e604798",
+    "scripts/oracle/rank_bench.py": "b612cc893dc0e92021c918b1214238801ae866636d662c45f1206f2119829c17"
+  },
+  "passed_commands": [
+    "lake build hexrank_bench HexRankMathlib hexrank_emit_fixtures",
+    "hexrank_bench verify (84 registrations)",
+    "hexrank_bench verify --tag attribution (24 polynomial registrations)",
+    "HEX_RANK_BENCH_PYTHON=/tmp/hexvenv/bin/python hexrank_bench verify (28 named external anchors; see comparators-final.txt)",
+    "/tmp/hexvenv/bin/python -m unittest scripts.oracle.test_rank_bench",
+    "hexrank_emit_fixtures > /tmp/hexrank-runtime-fixtures.jsonl",
+    "/tmp/hexvenv/bin/python scripts/oracle/rank_carriers.py /tmp/hexrank-runtime-fixtures.jsonl"
+  ],
+  "fixture_lines": 282,
+  "artifact_sources": {
+    "hexrank-attribution-smoke.txt": "bbedb4722 (driver sources match b3360aca1)",
+    "hexrank-attribution-poly-verify.txt": "bbedb4722 (driver sources match b3360aca1)",
+    "comparators-final.txt": "2b0ff6bf5 (driver sources match 3228b9b4d)",
+    "root_build": "b3360aca1"
+  }
+}

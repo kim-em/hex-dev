@@ -1,0 +1,14 @@
+Hex.RankBench.runMvCertify12    [fixed] repeats=6
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=bbedb47, 2026-09-20T13:18:44Z, host=chungus2
+  repeat 0  5.324 s
+  repeat 1  5.266 s
+  repeat 2  5.287 s
+  repeat 3  5.300 s
+  repeat 4  5.206 s
+  repeat 5  5.234 s
+  median: 5.287 s    min: 5.206 s    max: 5.324 s
+  hash: all repeats agree
+  observed hash: 0xc
+  expected hash: matches
+  peak RSS: 73_924 kB..75_668 kB (across 6 ok repeat(s))
+exported to /tmp/hexrank-science-polynomial/runMvCertify12.json

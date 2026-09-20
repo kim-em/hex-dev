@@ -1,0 +1,86 @@
+verifying 84 benchmark(s)...
+  [ok ] Hex.RankBench.runRowReduceLowRank8At1024
+  [ok ] Hex.RankBench.Witness.lowRank2At64
+  [ok ] Hex.RankBench.Certify.deficientMinusOne
+  [ok ] Hex.RankBench.Witness.lowRank2At1024
+  [ok ] Hex.RankBench.runCheckRankLowRank2At64
+  [ok ] Hex.RankBench.runRankCertDeficientMinusOne
+  [ok ] Hex.RankBench.Second.deficientHalfShifted
+  [ok ] Hex.RankBench.runRowReduceLowRank8At64
+  [ok ] Hex.RankBench.Certify.lowRank8At1024
+  [ok ] Hex.RankBench.runRowReduceDeficientHalf
+  [ok ] Hex.RankBench.Certify.lowRank8At64
+  [ok ] Hex.RankBench.Second.deficientHalf
+  [ok ] Hex.RankBench.Witness.dense
+  [ok ] Hex.RankBench.Second.dense
+  [ok ] Hex.RankBench.runRankCertLowRank2At64
+  [ok ] Hex.RankBench.runRankCertDeficientHalf
+  [ok ] Hex.RankBench.Witness.deficientHalfShifted
+  [ok ] Hex.RankBench.runRankCertLowRank2At1024
+  [ok ] Hex.RankBench.Second.lowRank8At1024
+  [ok ] Hex.RankBench.Certify.deficientHalfShifted
+  [ok ] Hex.RankBench.Certify.lowRank2At64
+  [ok ] Hex.RankBench.Second.lowRank2At64
+  [ok ] Hex.RankBench.Witness.deficientMinusOne
+  [ok ] Hex.RankBench.Second.lowRank2At1024
+  [ok ] Hex.RankBench.Second.deficientMinusOne
+  [ok ] Hex.RankBench.runRankCertLowRank8At64
+  [ok ] Hex.RankBench.runCheckRankLowRank2At1024
+  [ok ] Hex.RankBench.Certify.dense
+  [ok ] Hex.RankBench.runRankCertLowRank8At1024
+  [ok ] Hex.RankBench.runRowReduceDense
+  [ok ] Hex.RankBench.runCheckRankDeficientHalf
+  [ok ] Hex.RankBench.Second.lowRank8At64
+  [ok ] Hex.RankBench.Witness.lowRank8At1024
+  [ok ] Hex.RankBench.runRowReduceLowRank2At64
+  [ok ] Hex.RankBench.runRowReduceLowRank2At1024
+  [ok ] Hex.RankBench.runCheckRankDense
+  [ok ] Hex.RankBench.runRowReduceDeficientHalfShifted
+  [ok ] Hex.RankBench.runCheckRankDeficientMinusOne
+  [ok ] Hex.RankBench.runCheckRankLowRank8At64
+  [ok ] Hex.RankBench.Witness.deficientHalf
+  [ok ] Hex.RankBench.runRankCertDense
+  [ok ] Hex.RankBench.Certify.deficientHalf
+  [ok ] Hex.RankBench.Witness.lowRank8At64
+  [ok ] Hex.RankBench.runRankCertDeficientHalfShifted
+  [ok ] Hex.RankBench.runRowReduceDeficientMinusOne
+  [ok ] Hex.RankBench.runCheckRankDeficientHalfShifted
+  [ok ] Hex.RankBench.runCheckRankLowRank8At1024
+  [ok ] Hex.RankBench.Certify.lowRank2At1024
+  [ok ] Hex.RankBench.runRatPolyDeficientRank4  [fixed]
+  [ok ] Hex.RankBench.runRatPolyCert4  [fixed]
+  [ok ] Hex.RankBench.Comparison.Rat.Dense.native16  [fixed]
+  [ok ] Hex.RankBench.Comparison.Rat.LowRank8At1024.native16  [fixed]
+  [ok ] Hex.RankBench.runRatPolyDeficientSecond4  [fixed]
+  [ok ] Hex.RankBench.runRatPolyCertify4  [fixed]
+  [ok ] Hex.RankBench.runMvCheck4  [fixed]
+  [ok ] Hex.RankBench.runRatPolyDeficientCheck4  [fixed]
+  [ok ] Hex.RankBench.Comparison.Int.LowRank8At1024.native16  [fixed]
+  [ok ] Hex.RankBench.Comparison.Rat.LowRank2At1024.native16  [fixed]
+  [ok ] Hex.RankBench.Comparison.Int.LowRank2At64.native16  [fixed]
+  [ok ] Hex.RankBench.Comparison.Rat.LowRank8At64.native16  [fixed]
+  [ok ] Hex.RankBench.runMvRank4  [fixed]
+  [ok ] Hex.RankBench.Comparison.Rat.LowRank2At64.native16  [fixed]
+  [ok ] Hex.RankBench.runMvCert4  [fixed]
+  [ok ] Hex.RankBench.runRatPolyDeficientCertify4  [fixed]
+  [ok ] Hex.RankBench.runMvDeficientSecond4  [fixed]
+  [ok ] Hex.RankBench.Comparison.Int.LowRank2At1024.native16  [fixed]
+  [ok ] Hex.RankBench.runMvCertify4  [fixed]
+  [ok ] Hex.RankBench.Comparison.Rat.DeficientHalf.native16  [fixed]
+  [ok ] Hex.RankBench.Comparison.Int.LowRank8At64.native16  [fixed]
+  [ok ] Hex.RankBench.Comparison.Rat.DeficientMinusOne.native16  [fixed]
+  [ok ] Hex.RankBench.Comparison.Int.DeficientHalf.native16  [fixed]
+  [ok ] Hex.RankBench.runMvDeficientCertify4  [fixed]
+  [ok ] Hex.RankBench.runMvDeficientCheck4  [fixed]
+  [ok ] Hex.RankBench.runRatPolySecond4  [fixed]
+  [ok ] Hex.RankBench.Comparison.Int.DeficientHalfShifted.native16  [fixed]
+  [ok ] Hex.RankBench.runRatPolyRank4  [fixed]
+  [ok ] Hex.RankBench.runMvDeficientRank4  [fixed]
+  [ok ] Hex.RankBench.runMvSecond4  [fixed]
+  [ok ] Hex.RankBench.Comparison.Int.DeficientMinusOne.native16  [fixed]
+  [ok ] Hex.RankBench.runMvDeficientCert4  [fixed]
+  [ok ] Hex.RankBench.Comparison.Int.Dense.native16  [fixed]
+  [ok ] Hex.RankBench.Comparison.Rat.DeficientHalfShifted.native16  [fixed]
+  [ok ] Hex.RankBench.runRatPolyDeficientCert4  [fixed]
+  [ok ] Hex.RankBench.runRatPolyCheck4  [fixed]
+all 84 benchmark(s) passed

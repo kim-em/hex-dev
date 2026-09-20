@@ -1,0 +1,113 @@
+{
+  "cpu": 8,
+  "load": [
+    12.79931640625,
+    42.53955078125,
+    70.341796875
+  ],
+  "revision": "2b0ff6bf5fbd033943c09c1b49893285497f90aa",
+  "exe": "/tmp/hexrank-measured-bin/hexrank_bench",
+  "exe_sha256": "be174b79514dab0dc15c4261795c868b93b2a13736dab48f965bf8e5b4899cca",
+  "orchestrator_revision": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "samply": "samply 0.13.1",
+  "cases": [
+    [
+      "dense-full-rank",
+      "runRankCertDense",
+      64
+    ],
+    [
+      "low-rank-large-coefficients",
+      "runRankCertLowRank8At1024",
+      128
+    ],
+    [
+      "rank-deficient-by-construction",
+      "runRankCertDeficientHalfShifted",
+      128
+    ],
+    [
+      "polynomial",
+      "runMvCert12",
+      0
+    ]
+  ],
+  "commands": [
+    [
+      "python3",
+      "/tmp/hex10170-lean-bench-samply/scripts/profile_bench.py",
+      "--bench-exe",
+      "/tmp/hexrank-measured-bin/hexrank_bench",
+      "--bench-name",
+      "Hex.RankBench.runRankCertDense",
+      "--param",
+      "64",
+      "--target-nanos",
+      "3000000000",
+      "--out",
+      "/tmp/hexrank-profiles-10352/dense-full-rank.json.gz",
+      "--keep-raw",
+      "--label-filter",
+      "kernel",
+      "--samply-args",
+      "--rate 999 --unstable-presymbolicate"
+    ],
+    [
+      "python3",
+      "/tmp/hex10170-lean-bench-samply/scripts/profile_bench.py",
+      "--bench-exe",
+      "/tmp/hexrank-measured-bin/hexrank_bench",
+      "--bench-name",
+      "Hex.RankBench.runRankCertLowRank8At1024",
+      "--param",
+      "128",
+      "--target-nanos",
+      "3000000000",
+      "--out",
+      "/tmp/hexrank-profiles-10352/low-rank-large-coefficients.json.gz",
+      "--keep-raw",
+      "--label-filter",
+      "kernel",
+      "--samply-args",
+      "--rate 999 --unstable-presymbolicate"
+    ],
+    [
+      "python3",
+      "/tmp/hex10170-lean-bench-samply/scripts/profile_bench.py",
+      "--bench-exe",
+      "/tmp/hexrank-measured-bin/hexrank_bench",
+      "--bench-name",
+      "Hex.RankBench.runRankCertDeficientHalfShifted",
+      "--param",
+      "128",
+      "--target-nanos",
+      "3000000000",
+      "--out",
+      "/tmp/hexrank-profiles-10352/rank-deficient-by-construction.json.gz",
+      "--keep-raw",
+      "--label-filter",
+      "kernel",
+      "--samply-args",
+      "--rate 999 --unstable-presymbolicate"
+    ],
+    [
+      "python3",
+      "/tmp/hex10170-lean-bench-samply/scripts/profile_bench.py",
+      "--bench-exe",
+      "/tmp/hexrank-measured-bin/hexrank_bench",
+      "--bench-name",
+      "Hex.RankBench.runMvCert12",
+      "--param",
+      "0",
+      "--target-nanos",
+      "3000000000",
+      "--out",
+      "/tmp/hexrank-profiles-10352/polynomial.json.gz",
+      "--keep-raw",
+      "--label-filter",
+      "kernel",
+      "--samply-args",
+      "--rate 999 --unstable-presymbolicate"
+    ]
+  ]
+}

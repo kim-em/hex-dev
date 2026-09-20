@@ -6,7 +6,9 @@ Authors: Kim Morrison
 
 module
 
-public import HexRank.Reduce
+-- Import the proved compiler replacement before compiling these entry points.
+-- Importing it only in the umbrella leaves their generated code on Reduce.
+public import HexRank.ReduceImpl
 
 public section
 

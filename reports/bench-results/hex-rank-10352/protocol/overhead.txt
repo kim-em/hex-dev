@@ -1,0 +1,14 @@
+Hex.RankBench.runProtocolOverhead    [fixed] repeats=6
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=2b0ff6b, 2026-09-20T12:56:32Z, host=chungus2
+  repeat 0  6.659 µs  (×2^15, total 218.226 ms)
+  repeat 1  6.720 µs  (×2^15, total 220.233 ms)
+  repeat 2  6.693 µs  (×2^15, total 219.333 ms)
+  repeat 3  6.707 µs  (×2^15, total 219.798 ms)
+  repeat 4  6.663 µs  (×2^15, total 218.353 ms)
+  repeat 5  6.652 µs  (×2^15, total 217.973 ms)
+  median: 6.693 µs    min: 6.652 µs    max: 6.720 µs
+  hash: all repeats agree
+  observed hash: 0x0
+  expected hash: matches
+  peak RSS: 69_428 kB..70_472 kB (across 6 ok repeat(s))
+exported to /tmp/hexrank-science-protocol/overhead.json

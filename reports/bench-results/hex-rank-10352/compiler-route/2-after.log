@@ -1,0 +1,9 @@
+Hex.RankBench.runMvCert12    [fixed] repeats=1
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=ae20141-dirty, 2026-09-20T12:23:21Z, host=chungus2
+  repeat 0  6.861 s
+  median: 6.861 s    min: 6.861 s    max: 6.861 s
+  hash: all repeats agree
+  observed hash: 0xc
+  expected hash: matches
+  peak RSS: 73_036 kB (across 1 ok repeat(s))
+exported to /tmp/hexrank-route-results/2-after.json

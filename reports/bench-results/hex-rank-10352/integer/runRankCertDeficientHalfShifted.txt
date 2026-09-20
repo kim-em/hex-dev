@@ -1,0 +1,67 @@
+Hex.RankBench.runRankCertDeficientHalfShifted    expected complexity: productBound n    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=bbedb47, 2026-09-20T13:53:12Z, host=chungus2
+  param  per-call    repeats  C
+     16  209.377 µs  ×2^11    C=—     [<floor] [trial 1/6]
+     24  937.321 µs  ×2^9     C=—     [<floor] [trial 1/6]
+     32    2.474 ms  ×2^7     C=—     [<floor] [trial 1/6]
+     48   10.640 ms  ×2^5     C=—     [<floor] [trial 1/6]
+     64   23.340 ms  ×2^4     C=—     [<floor] [trial 1/6]
+     96   85.979 ms  ×2^2     C=—     [<floor] [trial 1/6]
+    128  279.328 ms  ×2^0     C=—     [<floor] [trial 1/6]
+    192    1.009 s   ×2^0     C=0.000 [trial 1/6]
+    256    2.462 s   ×2^0     C=0.000 [trial 1/6]
+     16  196.998 µs  ×2^11    C=—     [<floor] [trial 2/6]
+     24  867.141 µs  ×2^9     C=—     [<floor] [trial 2/6]
+     32    2.590 ms  ×2^7     C=—     [<floor] [trial 2/6]
+     48    9.515 ms  ×2^5     C=—     [<floor] [trial 2/6]
+     64   23.329 ms  ×2^4     C=—     [<floor] [trial 2/6]
+     96   86.299 ms  ×2^2     C=—     [<floor] [trial 2/6]
+    128  222.747 ms  ×2^1     C=—     [<floor] [trial 2/6]
+    192  898.820 ms  ×2^0     C=0.000 [trial 2/6]
+    256    2.259 s   ×2^0     C=0.000 [trial 2/6]
+     16  190.961 µs  ×2^11    C=—     [<floor] [trial 3/6]
+     24  869.319 µs  ×2^9     C=—     [<floor] [trial 3/6]
+     32    2.434 ms  ×2^7     C=—     [<floor] [trial 3/6]
+     48    9.304 ms  ×2^5     C=—     [<floor] [trial 3/6]
+     64   24.541 ms  ×2^4     C=—     [<floor] [trial 3/6]
+     96   85.486 ms  ×2^2     C=—     [<floor] [trial 3/6]
+    128  211.491 ms  ×2^1     C=—     [<floor] [trial 3/6]
+    192  818.037 ms  ×2^0     C=0.000 [trial 3/6]
+    256    2.272 s   ×2^0     C=0.000 [trial 3/6]
+     16  191.988 µs  ×2^11    C=—     [<floor] [trial 4/6]
+     24  866.943 µs  ×2^9     C=—     [<floor] [trial 4/6]
+     32    2.469 ms  ×2^7     C=—     [<floor] [trial 4/6]
+     48    9.627 ms  ×2^5     C=—     [<floor] [trial 4/6]
+     64   23.350 ms  ×2^4     C=—     [<floor] [trial 4/6]
+     96   84.775 ms  ×2^2     C=—     [<floor] [trial 4/6]
+    128  216.588 ms  ×2^1     C=—     [<floor] [trial 4/6]
+    192  853.504 ms  ×2^0     C=0.000 [trial 4/6]
+    256    2.858 s   ×2^0     C=0.000 [trial 4/6]
+     16  191.918 µs  ×2^11    C=—     [<floor] [trial 5/6]
+     24  864.277 µs  ×2^9     C=—     [<floor] [trial 5/6]
+     32    2.534 ms  ×2^7     C=—     [<floor] [trial 5/6]
+     48    9.807 ms  ×2^5     C=—     [<floor] [trial 5/6]
+     64   24.270 ms  ×2^4     C=—     [<floor] [trial 5/6]
+     96   86.289 ms  ×2^2     C=—     [<floor] [trial 5/6]
+    128  214.605 ms  ×2^1     C=—     [<floor] [trial 5/6]
+    192  864.549 ms  ×2^0     C=0.000 [trial 5/6]
+    256    2.294 s   ×2^0     C=0.000 [trial 5/6]
+     16  192.030 µs  ×2^11    C=—     [<floor] [trial 6/6]
+     24  877.362 µs  ×2^9     C=—     [<floor] [trial 6/6]
+     32    2.443 ms  ×2^7     C=—     [<floor] [trial 6/6]
+     48   10.211 ms  ×2^5     C=—     [<floor] [trial 6/6]
+     64   23.569 ms  ×2^4     C=—     [<floor] [trial 6/6]
+     96   86.519 ms  ×2^2     C=—     [<floor] [trial 6/6]
+    128  215.484 ms  ×2^1     C=—     [<floor] [trial 6/6]
+    192  840.048 ms  ×2^0     C=0.000 [trial 6/6]
+    256    2.252 s   ×2^0     C=0.000 [trial 6/6]
+  verdict: inconclusive (cMin=—, cMax=—, β=—)
+  per-spawn floor (harness self-measurement): 51.949 ms
+  peak RSS: 63_228 kB..83_304 kB (across 54 ok row(s))
+  trial summaries (6 trials per param; spread = (max-min)/median):
+    param  trials  median      min         max      spread 
+      192  6/6     859.026 ms  818.037 ms  1.009 s  22.244%
+      256  6/6       2.283 s     2.252 s   2.858 s  26.513%
+  ‼ 42/54 ok rows were below 10.000× the per-spawn floor; those rungs are excluded from the verdict. Drop the smallest params from the declared `paramSchedule := .custom #[...]` array to skip the cold regime if the trimmed warmup isn't enough.
+  ‼ only 2 verdict-eligible row(s) survived warmup-trim + signal-floor filter; the verdict is below resolution. Lower `--warmup-fraction`, extend the declared `paramSchedule := .custom #[...]` array with larger params.
+exported to /tmp/hexrank-science-integer/runRankCertDeficientHalfShifted.json

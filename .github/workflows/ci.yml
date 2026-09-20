@@ -192,7 +192,8 @@ jobs:
           python3 -m pip install --user -r scripts/conway/requirements.txt \
             python-flint==0.9.0 sympy==1.14.0 gmpy2 cypari2 conway-polynomials matplotlib==3.11.1
           python3 -m unittest scripts/oracle/test_hermite_bench_drivers.py
-          python3 -m unittest scripts/oracle/test_matrix_carriers.py
+          python3 -m unittest scripts/oracle/test_matrix_carriers.py scripts/oracle/test_rank_bench.py
+          python3 -m unittest scripts/bench/test_rank_measure.py
           python3 -m unittest scripts/oracle/test_row_reduce_fields.py
       - name: Verify performance measurements and figures are current
         if: steps.classify.outputs.docs_only != 'true'
@@ -353,11 +354,12 @@ jobs:
       # mappings can be counted in several processes.
       - name: Build hex libraries + bench exes
         if: steps.classify.outputs.docs_only != 'true'
-        run: >-
-          lake build ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS} HexTruncatedSeriesTests
-          HexPolyDetMathlib.ProofProbe.RingSolverAlgebraic
-          HexPolyDetMathlib.ProofProbe.RingSolverVariableExponent
-          HexPrimality.ProofProbe.PMinusOne.Support
+        run: |
+          lake build ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS} HexTruncatedSeriesTests \
+            HexPolyDetMathlib.ProofProbe.RingSolverAlgebraic \
+            HexPolyDetMathlib.ProofProbe.RingSolverVariableExponent \
+            HexPrimality.ProofProbe.PMinusOne.Support
+          python3 scripts/ci/check_rank_compiler.py
       - name: Verify Conway generation and compiled certificates
         if: steps.classify.outputs.docs_only != 'true'
         run: |
