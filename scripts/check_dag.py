@@ -59,6 +59,7 @@ UMBRELLA_BUILD_TARGETS = {
     "HexPolyFastKernels",
     "HexLLLBenchSupport",
     "HexGF2BenchSupport",
+    "HexRankBenchSupport",
     "HexBerlekampKernelProbe",
     "HexPrimalityKernelProbe",
     "HexPrimalityElabProbe",

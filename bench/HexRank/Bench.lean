@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexRank
+import HexRank.Bench.Quotient
 import HexBasic.Rand
 import Hex.BenchOracle.Flint
 import HexResultant.ExactDiv
@@ -1332,6 +1333,51 @@ def runPolyExternal (mv singular : Bool) (n : Nat) : IO Nat := do
     installMatrix key record.compress expected
   externalRank expected
 
+/-- Serialize the already-produced certificate using the conformance entry
+encoding. Only decoding is outside the reference checker's timed region;
+submatrix selection and all three identities are evaluated on each call. -/
+def jsonCertificate {R : Type} {n m : Nat} (encode : R → Lean.Json) (c : RankCert R n m) : Lean.Json :=
+  Lean.Json.mkObj [("rank", Lean.toJson c.rank),
+    ("rows", Lean.toJson (c.rows.toArray.map Fin.val)),
+    ("cols", Lean.toJson (c.cols.toArray.map Fin.val)),
+    ("denom", encode c.denom), ("adj", jsonMatrix encode c.adj)]
+
+def preparePolyReference (mv singular : Bool) (n : Nat) : IO Unit := do
+  let key := s!"certificate-{mv}-{singular}-{n}"
+  if (← comparatorKey.get) == key then return
+  let fields := [("rows", Lean.toJson n), ("cols", Lean.toJson n)]
+  let (record, certificate) ← if mv then do
+    let input ← prepareMv n singular
+    pure (Lean.Json.mkObj (fields ++ [("kind", Lean.toJson "mvpolymatrix"),
+      ("arity", Lean.toJson (2 : Nat)), ("entries", jsonMatrix encodeMv input.matrix)]),
+      jsonCertificate encodeMv input.cert)
+  else do
+    let input ← prepareRatPoly n singular
+    pure (Lean.Json.mkObj (fields ++ [("kind", Lean.toJson "polymatrix"),
+      ("field", Lean.Json.mkObj [("type", Lean.toJson "Rat")]),
+      ("entries", jsonMatrix encodeRatPoly input.matrix)]),
+      jsonCertificate encodeRatPoly input.cert)
+  let request := Lean.Json.mkObj [("op", Lean.toJson "prepare"),
+    ("record", record), ("certificate", certificate)]
+  let _ ← rankRequest request.compress
+  let _ ← externalRank (if singular then n / 2 else n)
+  let ok ← jsonValue <| Lean.fromJson? (α := Bool) (← rankRequest "{\"op\":\"check\"}")
+  unless ok do throw <| IO.userError "SymPy rejected the prepared polynomial certificate"
+  comparatorKey.set key
+
+def runPolySecondExternal (mv singular : Bool) (n : Nat) : IO Nat := do
+  preparePolyReference mv singular n
+  let result ← jsonValue <| Lean.fromJson? (α := Nat) (← rankRequest "{\"op\":\"second\"}")
+  unless result == (if singular then n / 2 else n) do
+    throw <| IO.userError "SymPy augmented-block rank mismatch"
+  return result
+
+def runPolyCheckExternal (mv singular : Bool) (n : Nat) : IO Bool := do
+  preparePolyReference mv singular n
+  let result ← jsonValue <| Lean.fromJson? (α := Bool) (← rankRequest "{\"op\":\"check\"}")
+  unless result do throw <| IO.userError "SymPy certificate identity mismatch"
+  return result
+
 def runProtocolOverhead : IO Nat := do
   jsonValue <| Lean.fromJson? (α := Nat) (← rankRequest "{\"op\":\"overhead\"}")
 
@@ -2043,6 +2089,74 @@ def external8 := runPolyExternal true true 8
 setup_fixed_benchmark external8 where { comparisonConfig with expectedHash := some (hash (4 : Nat)), tags := #["comparison", "external"] }
 def external12 := runPolyExternal true true 12
 setup_fixed_benchmark external12 where { comparisonConfig with expectedHash := some (hash (6 : Nat)), tags := #["comparison", "external"] }
+
+end Mv.Deficient
+
+namespace RatPoly.Full
+
+def second4 := runPolySecondExternal false false 4
+setup_fixed_benchmark second4 where { comparisonConfig with expectedHash := some (hash (4 : Nat)), tags := #["comparison", "external", "poly-reference"] }
+def second8 := runPolySecondExternal false false 8
+setup_fixed_benchmark second8 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external", "poly-reference"] }
+def second12 := runPolySecondExternal false false 12
+setup_fixed_benchmark second12 where { comparisonConfig with expectedHash := some (hash (12 : Nat)), tags := #["comparison", "external", "poly-reference"] }
+def check4 := runPolyCheckExternal false false 4
+setup_fixed_benchmark check4 where { comparisonConfig with expectedHash := some (hash true), tags := #["comparison", "external", "poly-reference"] }
+def check8 := runPolyCheckExternal false false 8
+setup_fixed_benchmark check8 where { comparisonConfig with expectedHash := some (hash true), tags := #["comparison", "external", "poly-reference"] }
+def check12 := runPolyCheckExternal false false 12
+setup_fixed_benchmark check12 where { comparisonConfig with expectedHash := some (hash true), tags := #["comparison", "external", "poly-reference"] }
+
+end RatPoly.Full
+
+namespace RatPoly.Deficient
+
+def second4 := runPolySecondExternal false true 4
+setup_fixed_benchmark second4 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external", "poly-reference"] }
+def second8 := runPolySecondExternal false true 8
+setup_fixed_benchmark second8 where { comparisonConfig with expectedHash := some (hash (4 : Nat)), tags := #["comparison", "external", "poly-reference"] }
+def second12 := runPolySecondExternal false true 12
+setup_fixed_benchmark second12 where { comparisonConfig with expectedHash := some (hash (6 : Nat)), tags := #["comparison", "external", "poly-reference"] }
+def check4 := runPolyCheckExternal false true 4
+setup_fixed_benchmark check4 where { comparisonConfig with expectedHash := some (hash true), tags := #["comparison", "external", "poly-reference"] }
+def check8 := runPolyCheckExternal false true 8
+setup_fixed_benchmark check8 where { comparisonConfig with expectedHash := some (hash true), tags := #["comparison", "external", "poly-reference"] }
+def check12 := runPolyCheckExternal false true 12
+setup_fixed_benchmark check12 where { comparisonConfig with expectedHash := some (hash true), tags := #["comparison", "external", "poly-reference"] }
+
+end RatPoly.Deficient
+
+namespace Mv.Full
+
+def second4 := runPolySecondExternal true false 4
+setup_fixed_benchmark second4 where { comparisonConfig with expectedHash := some (hash (4 : Nat)), tags := #["comparison", "external", "poly-reference"] }
+def second8 := runPolySecondExternal true false 8
+setup_fixed_benchmark second8 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external", "poly-reference"] }
+def second12 := runPolySecondExternal true false 12
+setup_fixed_benchmark second12 where { comparisonConfig with expectedHash := some (hash (12 : Nat)), tags := #["comparison", "external", "poly-reference"] }
+def check4 := runPolyCheckExternal true false 4
+setup_fixed_benchmark check4 where { comparisonConfig with expectedHash := some (hash true), tags := #["comparison", "external", "poly-reference"] }
+def check8 := runPolyCheckExternal true false 8
+setup_fixed_benchmark check8 where { comparisonConfig with expectedHash := some (hash true), tags := #["comparison", "external", "poly-reference"] }
+def check12 := runPolyCheckExternal true false 12
+setup_fixed_benchmark check12 where { comparisonConfig with expectedHash := some (hash true), tags := #["comparison", "external", "poly-reference"] }
+
+end Mv.Full
+
+namespace Mv.Deficient
+
+def second4 := runPolySecondExternal true true 4
+setup_fixed_benchmark second4 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external", "poly-reference"] }
+def second8 := runPolySecondExternal true true 8
+setup_fixed_benchmark second8 where { comparisonConfig with expectedHash := some (hash (4 : Nat)), tags := #["comparison", "external", "poly-reference"] }
+def second12 := runPolySecondExternal true true 12
+setup_fixed_benchmark second12 where { comparisonConfig with expectedHash := some (hash (6 : Nat)), tags := #["comparison", "external", "poly-reference"] }
+def check4 := runPolyCheckExternal true true 4
+setup_fixed_benchmark check4 where { comparisonConfig with expectedHash := some (hash true), tags := #["comparison", "external", "poly-reference"] }
+def check8 := runPolyCheckExternal true true 8
+setup_fixed_benchmark check8 where { comparisonConfig with expectedHash := some (hash true), tags := #["comparison", "external", "poly-reference"] }
+def check12 := runPolyCheckExternal true true 12
+setup_fixed_benchmark check12 where { comparisonConfig with expectedHash := some (hash true), tags := #["comparison", "external", "poly-reference"] }
 
 end Mv.Deficient
 
