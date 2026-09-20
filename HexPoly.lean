@@ -14,7 +14,6 @@ public import HexPoly.Coprime
 public import HexPoly.Instances
 public import HexPoly.Monic
 public import HexPoly.Operations
-public import HexPoly.PolyOps
 
 public section
 
