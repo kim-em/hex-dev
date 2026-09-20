@@ -1687,6 +1687,12 @@ a changed base starts a new group. Each public checker is a `noncomputable` kern
 binary search. The internal `pockProduct` sentinel is proved equivalent to
 `certProduct` for positive subjects; callers establish that precondition
 before using it, and the final arithmetic check rejects the zero sentinel.
+Both cube-root arithmetic arms use this bounded product and primitive order comparisons,
+just as the square-root arm does. Their unconditional equality theorems retain
+the original compiled arithmetic, including rejection on zero subjects,
+overflowing exponents, invalid ordering, invalid interval witnesses, and sieve
+bounds outside the cap. Optimizing replay must also check complete `primality?`
+and native construction for regressions; a smaller kernel timer alone is insufficient.
 
 `checkPrime` is therefore written against `powModNat`. The bench
 family "kernel replay" below is what confirms the choice was the
@@ -1991,16 +1997,15 @@ Imported library proofs remain dependencies. A negative control must be
 rejected. The retained `hex-primality-direct-kernel-checked-issue-10268.json` uses
 adjacent reversed systems and records every sample, source, and toolchain.
 Its matched-input plot shows growth hidden by fresh-build overhead; cactus
-rank is not a bit-length axis. The compact-certificate comparison in
-`reports/bench-results/hex-primality-small-replay/hex-compact-primecert-sieve-kernel.json`
-measures Hex on Lean 4.34.0 at a median 5.18 ms for Curve25519, versus
-PrimeCert on Lean 4.33.0 at 14.42 ms. Both receive supplied Curve448
-certificates, and PrimeCert uses the same selected Pocklington factors as Hex,
-with its certified sieve for larger table leaves.
-All four samples per system and input are retained. Hex wins all eight inputs;
-the margins range from 1.11× to 3.46× on this shared host.
-These are supplied-proof replay measurements, not a comparison of certificate
-construction; see the [replay report](../../reports/hex-primality-windowed-replay.md).
+rank is not a bit-length axis. Comparisons must identify the PrimeCert revision:
+its fixed-window modular exponentiation changes the replay comparison materially.
+The current [component attribution](../../reports/hex-primality-replay-attribution.md)
+separates supplied-proof kernel replay, fresh-module elaboration, certificate
+search/rendering, complete `Nat.Prime` tactics, and native construction. Match
+factor subsets and witness bases before attributing an implementation difference;
+common-base certificates can require fewer powers than individually selected bases.
+All completed samples remain evidence, with adjacent alternating before/after
+arms. Results describe the recorded shared host, not portable performance promises.
 
 The fixed construction targets and the adjacent-arm Curve25519 phase and
 replay measurements are recorded in

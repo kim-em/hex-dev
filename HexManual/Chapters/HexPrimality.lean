@@ -204,22 +204,25 @@ proof emission, imports, and kernel checking.
 
 ![Native decision and complete Lean proof](https://kim-em.github.io/hex-dev/figures/hex-primality-complete-cactus.svg)
 
-The second plot times kernel checking directly, excluding imports, search,
-and proof elaboration. It checks complete proof bodies, including expanded
-local auxiliary proofs. With compact certificates using matching selected
-Pocklington factors and PrimeCert’s certified sieve for larger table leaves,
-Curve25519 takes about 5.18 milliseconds for Hex and 14.42 milliseconds for
-PrimeCert. Hex is faster on all eight supplied inputs
-in this comparison, with margins from 1.11 to 3.46 times. These are host-specific observations. The
-[replay report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-windowed-replay.md)
-records every sample and the checker optimizations. Hex uses Lean 4.34.0;
-PrimeCert uses Lean 4.33.0.
+Direct kernel measurements exclude imports, search, and proof elaboration.
+They check complete proof bodies, including expanded local auxiliary proofs.
+With PrimeCert’s fixed-window powering and the same selected Pocklington
+factors, supplied Curve25519 replay takes about 4.54 milliseconds for Hex
+and 3.54 milliseconds for PrimeCert on the recorded host. Curve448 takes
+9.30 and 6.44 milliseconds. PrimeCert uses common witness bases; a separate
+matched-base experiment distinguishes that certificate choice from checker cost.
 
-The direct comparison shows matched inputs and independently sorted cactus
-curves. Curve448 uses a supplied certificate in both systems; this does not
-change automatic construction coverage. The corpus is small and structured.
-
-![Direct kernel certificate comparison](https://kim-em.github.io/hex-dev/figures/hex-primality-kernel-direct.svg)
+Complete automatic construction is a separate comparison. On the matched
+Curve25519 `Nat.Prime` goal, the repeated fresh-module experiment measures
+about 2.39 seconds for Hex `primality?` and 3.55 seconds for PrimeCert
+`prime_cert?`, including imports, construction, elaboration, and checking.
+These noisy shared-host observations are not portable performance promises.
+The [replay attribution](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-replay-attribution.md)
+records exact revisions, every sample, component costs, negative controls,
+and construction regression checks. Hex uses Lean 4.34.0 and PrimeCert uses
+Lean 4.33.0; identical-code calibration is reported separately.
+Curve448 uses a supplied certificate in both systems and does not change
+automatic construction coverage. The corpus is small and structured.
 
 # The Mathlib correspondence
 %%%
