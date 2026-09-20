@@ -1109,8 +1109,9 @@ pass. The guard polynomials participate in the atom/carrier list; ordinary
 sign evaluation implements endpoint membership. Checked empty-domain folding
 may avoid cell construction after all source guards have been validated.
 
-The planned optional public import `HexRCF.RealCoefficients` will enable this
-route through the base registration interface in `HexRCF.Tactic`.
+The optional public import `HexRCF.RealCoefficients` supplies source-schema
+preparation. Numerical solving remains planned and will use the base
+registration interface in `HexRCF.Tactic`.
 `@[rcf_handler]` registers a monomorphic meta declaration of type
 `Hex.RCF.Handler` (`Expr → MetaM HandlerResult`). The base checks the signature,
 deduplicates declaration names and tries them in `Name.lt` order, independent
@@ -1170,6 +1171,59 @@ shared formula libraries acquire a reverse dependency on this adapter or the
 towers. Any reusable computational cell assembly needed for the extension
 belongs with the family's shared samples; HexRCF supplies real semantics,
 frontend glue and quotation, not a competing CAD/coverings representation.
+
+### Delivered source-schema preparation
+
+`Hex.RCF.RealCoefficients.Reify.prepare` in the optional
+`HexRCF.RealCoefficients` import builds pending source data using the shared
+reifier. The default Lake target `HexRCFRealCoefficients` checks this module;
+the published base umbrella stays independent. No solver handler is registered.
+
+The result contains the exact original proposition, an ordered array of closed
+coefficient expressions, original divisor obligations after checked alias
+substitution, shared `Prenex` syntax, the fixed coefficient valuation, and an ordinary-kernel proof of
+`Prenex.toProp formula valuation ↔ original`. This equivalence uses Lean's total
+real arithmetic. It does **not** establish the additional nonzero-divisor or
+authenticated-provider conditions required for extension admission.
+
+Input must be synthesized with assigned metavariables instantiated, as in the
+base dispatcher. Preparation recognizes real rational arithmetic and literal casts, `Real.pi`,
+`Real.exp 1`, arithmetic, natural powers and closed division/inversion. Direct
+explicit equalities supply closed aliases through the base checked helper.
+Arbitrary functions, nonstandard real arithmetic instances, parameters without
+those equalities, variable-dependent division and multiple/nested real quantifiers
+are rejected. Ioc endpoints are checked in the original source before alias
+substitution; coefficient aliases do not widen the literal-domain grammar. Selected-root
+reconstructions and sqrt aliases remain gated on their owner's actual APIs.
+
+Before normalization, every original inverse/division obligation is retained,
+including under zero multiplication, leading cancellation and empty domains.
+Rational division inside a cast contributes the corresponding real-cast divisor;
+non-field division inside a cast is rejected. Repeated identical source
+expressions may share an obligation. Pending data for `0/(π-π)` therefore retains
+`π-π`: it is not an accepted extension input, and a later admission checker must
+reject it. No frontend simplification discharges these guards.
+
+Variable-bearing division becomes multiplication by a closed inverse before
+maximal coefficient abstraction; a wholly closed quotient stays one coefficient.
+The shared integer reifier receives fresh ordered real parameters and no
+parameter denominators. Its all-valuation proof is instantiated at the exact
+source expressions and composed with checked alias substitution and division
+normalization. Only one real quantifier and whole-real/literal-dyadic Ioc domains
+are admitted; Ioc membership remains shared guard atoms.
+
+Preparation uses the shared structured errors and reflection budgets. It charges
+source admission before and after alias substitution, literal coefficient and
+exponent work, shared reification, and the final proof. Success restores caller
+metavariables while retaining declarations needed by the emitted proof; errors
+restore the full saved state. Unsupported syntax and budget exhaustion use
+structured errors; unexpected elaboration, kernel and runtime exceptions remain
+terminal exceptions. The source tests check exact equivalences and
+retained guards, including rational casts, aliases, all Boolean/comparison forms,
+equal/reversed Ioc bounds, unsupported inputs and budget exhaustion. Fresh named
+schema theorems audit only `propext`, `Classical.choice` and `Quot.sound`.
+These are frontend regressions, not real-coefficient decision proofs or full
+extension performance evidence.
 
 ### Construction, evidence and public API
 
