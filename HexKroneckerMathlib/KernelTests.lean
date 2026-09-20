@@ -136,3 +136,15 @@ example : checkMulTree { maxPackedBits := 8 } .plain 1 1 1 1 [[one]]
 /-- info: 'Hex.Kronecker.checkTreeTermsEqMod_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.Kronecker.checkTreeTermsEqMod_sound
+
+-- Quoted scalar points must match the structurally derived plan.
+example : Hex.Kronecker.Kernel.treeTermsEqAt 1 (.atom 0) [([1], 1)] 3 [1] = true := by
+  decide +kernel
+example : Hex.Kronecker.Kernel.treeTermsEqAt 1 (.atom 0) [([1], 1)] 2 [1] = false := by
+  decide +kernel
+example : Hex.Kronecker.Kernel.treeTermsEqAt 1 (.atom 0) [([0], 1)] 0 [0] = false := by
+  decide +kernel
+
+/-- info: 'Hex.Kronecker.Kernel.treeTermsEqAt_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.Kronecker.Kernel.treeTermsEqAt_sound

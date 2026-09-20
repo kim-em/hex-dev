@@ -163,6 +163,15 @@ def treeTermsEq (k : Nat) (lhs : Expr) (rhs : Hex.MvPoly.Kernel.PolyList Int) : 
     Int.beq' (evalTree (2 ^ s.digitBits) s.strides lhs)
       (packNat (2 ^ s.digitBits) s.strides rhs)
 
+/-- A quoted Kronecker point is usable only after its parameters match the
+structural plan. This avoids recomputing that plan inside each scalar power. -/
+def treeTermsEqAt (k : Nat) (lhs : Expr) (rhs : Hex.MvPoly.Kernel.PolyList Int)
+    (digitBits : Nat) (strides : List Nat) : Bool :=
+  lhs.wellFormed k && termShape k rhs &&
+    let s := plan (add ⟨lhs.degrees k, lhs.height⟩ (terms k rhs))
+    (digitBits == s.digitBits && strides == s.strides) &&
+      Int.beq' (evalTree (2 ^ digitBits) strides lhs) (packNat (2 ^ digitBits) strides rhs)
+
 def treeTermsEqMod (k p : Nat) (lhs : Expr) (rhs q : Hex.MvPoly.Kernel.PolyList Int) : Bool :=
   !Nat.beq p 0 && lhs.wellFormed k && termShape k rhs &&
     lhs.residues p && termResidues p rhs && Hex.MvPoly.Kernel.isCanonical k q &&

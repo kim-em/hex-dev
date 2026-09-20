@@ -122,6 +122,7 @@ run_meta do
       | throwError "missing generated term proof"
     for used in value.getUsedConstants do
       if used == ``Hex.Kronecker.Kernel.treeTermsEq_sound ||
+          used == ``Hex.Kronecker.Kernel.treeTermsEqAt_sound ||
           used == ``HexReflectMathlib.Kernel.eval_checked then
         throwError "generated term redundantly checks its reconstructed value"
       if (``packedTerm).isPrefixOf used then pending := used :: pending

@@ -116,8 +116,13 @@ def tree? (k n : Nat) (rows : List (List (MvPoly.Kernel.PolyList Int)))
     trace[HexMatrix.certificate] "det tree crossover uncovered; using list entry proofs"
     return none
   let selection : Selection := { mode, packed := true, reports }
+  let targetPlan := if hasTarget then some (Kronecker.Kernel.plan
+    (Kronecker.Kernel.add ⟨target.degrees k, target.height⟩ (Kronecker.Kernel.terms k value))) else none
+  let targetOK := match targetPlan with
+    | none => true
+    | some s => Kronecker.Kernel.treeTermsEqAt k target value s.digitBits s.strides
   unless profileit "det.symbolic.selfcheck" opts (fun _ =>
-      checkDetPolyPackedTree mode k n trees w selection.widths && (!hasTarget || Kronecker.Kernel.treeTermsEq k target value)) do
+      checkDetPolyPackedTree mode k n trees w selection.widths && targetOK) do
     throwError "det: tree certificate failed its compiled check"
   let check ← mkAppM ``checkDetPolyPackedTree
     #[quoteMode mode, toExpr k, toExpr n, rowsE, wE, toExpr selection.widths]
@@ -125,10 +130,12 @@ def tree? (k n : Nat) (rows : List (List (MvPoly.Kernel.PolyList Int)))
     decideProof (← mkEq check (mkConst ``Bool.true))
   let hdet ← mkAppM ``Tree.checkDetPolyPackedTree_sound
     #[quoteMode mode, toExpr k, toExpr n, rowsE, wE, toExpr selection.widths, h]
-  let htarget ← if hasTarget then do
-      let checkTarget ← mkAppM ``Kronecker.Kernel.treeTermsEq #[toExpr k, targetE, valueE]
+  let htarget ← match targetPlan with
+    | some s => do
+      let checkTarget ← mkAppM ``Kronecker.Kernel.treeTermsEqAt
+        #[toExpr k, targetE, valueE, toExpr s.digitBits, toExpr s.strides]
       pure (some (← decideProof (← mkEq checkTarget (mkConst ``Bool.true))))
-    else pure none
+    | none => pure none
   return some (hdet, htarget, selection)
 
 def residue (p k n : Nat) (rows : List (List (MvPoly.Kernel.PolyList Nat)))

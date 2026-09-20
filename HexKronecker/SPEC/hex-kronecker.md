@@ -226,6 +226,9 @@ The `Kernel` namespace also supplies `exprEq`, `termsEq`, `mulTerms`,
 and their `Mod` forms for certificate replay after elaborator preflight.
 The mixed forms `mulTree` and `treeTermsEq`, with their `Mod`
 variants, use the same separation between preflight and kernel replay.
+`treeTermsEqAt` accepts quoted digit bits and strides, checks that they equal
+the structural plan, and then evaluates at that point. Its soundness follows
+from `treeTermsEq`; supplied point parameters never bypass bound validation.
 These forms have no budget argument and no saturation cap. They validate
 indices, shapes and residue/quotient inputs, compute only root degree and
 coefficient bounds, derive the strides and base, and compare packed values.
