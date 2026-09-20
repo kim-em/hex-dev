@@ -500,6 +500,7 @@ setup_benchmark runRankCertDeficientHalfShifted n => productBound n
     paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
     maxSecondsPerCall := 120.0
     outerTrials := 6
+    targetInnerNanos := 4000000000
   }
 -- Cost model: `Θ(r · n · n)` ring operations with `r` proportional to `n`; the
 -- operands are minors of size up to `r`, of `O(n (log n + log B))` bits by
@@ -853,6 +854,7 @@ setup_benchmark deficientMinusOne n => productBound n
     paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
     maxSecondsPerCall := 120.0
     outerTrials := 6
+    targetInnerNanos := 4000000000
   }
 
 def prepDeficientHalf := prepSecond Hex.RankBench.prepDeficientHalf

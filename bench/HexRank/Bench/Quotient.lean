@@ -20,7 +20,14 @@ open Hex Hex.Matrix
 Over Q(√2), each `[[√2,1],[1,√2]]` block has determinant one. Duplicating
 its rows supplies deficient inputs with the same bounded coefficients.
 This is the existing Algebraic8Hex proof-probe family, extended in dimension;
-no polynomial-ring rank is substituted for quotient-field rank. -/
+no polynomial-ring rank is substituted for quotient-field rank.
+
+The scientific ladder is 128–1024. The retained 4–64 ladder does not resolve
+the cubic model: repeated fixed-degree inversions add a substantial quadratic
+term before the cubic scans dominate. This range extension preserves the
+model and fixture. Verification still uses dimension four. The 600-second
+child cap is operational and includes expensive preparation, not a performance
+budget or an excuse to discard completed shared-host samples. -/
 
 namespace Quotient
 
@@ -51,9 +58,11 @@ def prep (deficient : Bool) (param : Nat) : Input :=
   match PolyWitness.prepare n n defining rows with
   | .error error => panic! s!"quotient fixture preparation: {error}"
   | .ok data =>
-    match PolyWitness.produce n n defining rows with
-    | .error error => panic! s!"quotient fixture witness: {error}"
-    | .ok witness =>
+    -- Reuse the prepared rational data when finding the first valid modulus.
+    -- The timed public producer still performs its own complete preparation.
+    match witnessModuli.findSome? (fun M => (PolyWitness.finish n n defining rows data M).toOption) with
+    | none => panic! "quotient fixture: no valid witness modulus"
+    | some witness =>
       if witness.rank == r && checkRankPoly n n defining rows witness then
         let fingerprint := hash (data.rank, data.vt.map (·.map fun f => f.toArray),
           data.lowerQuot.map (·.map fun f => f.toArray), data.z, data.upperQuot)
@@ -95,12 +104,12 @@ No claim about generic dense number-field matrices is made. -/
 setup_benchmark produceFull n => n * n * n
   with prep := prepFull
   where {
-    paramFloor := 4
-    paramCeiling := 64
-    paramSchedule := .custom #[4, 8, 12, 16, 24, 32, 48, 64]
+    paramFloor := 128
+    paramCeiling := 1024
+    paramSchedule := .custom #[128, 192, 256, 384, 512, 768, 1024]
     targetInnerNanos := 2000000000
     outerTrials := 6
-    maxSecondsPerCall := 120.0
+    maxSecondsPerCall := 600.0
   }
 
 def prepareFull := runPrepare
@@ -114,12 +123,12 @@ No claim about generic dense number-field matrices is made. -/
 setup_benchmark prepareFull n => n * n * n
   with prep := prepFull
   where {
-    paramFloor := 4
-    paramCeiling := 64
-    paramSchedule := .custom #[4, 8, 12, 16, 24, 32, 48, 64]
+    paramFloor := 128
+    paramCeiling := 1024
+    paramSchedule := .custom #[128, 192, 256, 384, 512, 768, 1024]
     targetInnerNanos := 2000000000
     outerTrials := 6
-    maxSecondsPerCall := 120.0
+    maxSecondsPerCall := 600.0
   }
 
 def finishFull := runFinish
@@ -133,12 +142,12 @@ No claim about generic dense number-field matrices is made. -/
 setup_benchmark finishFull n => n * n * n
   with prep := prepFull
   where {
-    paramFloor := 4
-    paramCeiling := 64
-    paramSchedule := .custom #[4, 8, 12, 16, 24, 32, 48, 64]
+    paramFloor := 128
+    paramCeiling := 1024
+    paramSchedule := .custom #[128, 192, 256, 384, 512, 768, 1024]
     targetInnerNanos := 2000000000
     outerTrials := 6
-    maxSecondsPerCall := 120.0
+    maxSecondsPerCall := 600.0
   }
 
 def checkFull := runCheck
@@ -152,12 +161,12 @@ No claim about generic dense number-field matrices is made. -/
 setup_benchmark checkFull n => n * n * n
   with prep := prepFull
   where {
-    paramFloor := 4
-    paramCeiling := 64
-    paramSchedule := .custom #[4, 8, 12, 16, 24, 32, 48, 64]
+    paramFloor := 128
+    paramCeiling := 1024
+    paramSchedule := .custom #[128, 192, 256, 384, 512, 768, 1024]
     targetInnerNanos := 2000000000
     outerTrials := 6
-    maxSecondsPerCall := 120.0
+    maxSecondsPerCall := 600.0
   }
 
 def produceDeficient := runProduce
@@ -171,12 +180,12 @@ No claim about generic dense number-field matrices is made. -/
 setup_benchmark produceDeficient n => n * n * n
   with prep := prepDeficient
   where {
-    paramFloor := 4
-    paramCeiling := 64
-    paramSchedule := .custom #[4, 8, 12, 16, 24, 32, 48, 64]
+    paramFloor := 128
+    paramCeiling := 1024
+    paramSchedule := .custom #[128, 192, 256, 384, 512, 768, 1024]
     targetInnerNanos := 2000000000
     outerTrials := 6
-    maxSecondsPerCall := 120.0
+    maxSecondsPerCall := 600.0
   }
 
 def prepareDeficient := runPrepare
@@ -190,12 +199,12 @@ No claim about generic dense number-field matrices is made. -/
 setup_benchmark prepareDeficient n => n * n * n
   with prep := prepDeficient
   where {
-    paramFloor := 4
-    paramCeiling := 64
-    paramSchedule := .custom #[4, 8, 12, 16, 24, 32, 48, 64]
+    paramFloor := 128
+    paramCeiling := 1024
+    paramSchedule := .custom #[128, 192, 256, 384, 512, 768, 1024]
     targetInnerNanos := 2000000000
     outerTrials := 6
-    maxSecondsPerCall := 120.0
+    maxSecondsPerCall := 600.0
   }
 
 def finishDeficient := runFinish
@@ -209,12 +218,12 @@ No claim about generic dense number-field matrices is made. -/
 setup_benchmark finishDeficient n => n * n * n
   with prep := prepDeficient
   where {
-    paramFloor := 4
-    paramCeiling := 64
-    paramSchedule := .custom #[4, 8, 12, 16, 24, 32, 48, 64]
+    paramFloor := 128
+    paramCeiling := 1024
+    paramSchedule := .custom #[128, 192, 256, 384, 512, 768, 1024]
     targetInnerNanos := 2000000000
     outerTrials := 6
-    maxSecondsPerCall := 120.0
+    maxSecondsPerCall := 600.0
   }
 
 def checkDeficient := runCheck
@@ -228,12 +237,12 @@ No claim about generic dense number-field matrices is made. -/
 setup_benchmark checkDeficient n => n * n * n
   with prep := prepDeficient
   where {
-    paramFloor := 4
-    paramCeiling := 64
-    paramSchedule := .custom #[4, 8, 12, 16, 24, 32, 48, 64]
+    paramFloor := 128
+    paramCeiling := 1024
+    paramSchedule := .custom #[128, 192, 256, 384, 512, 768, 1024]
     targetInnerNanos := 2000000000
     outerTrials := 6
-    maxSecondsPerCall := 120.0
+    maxSecondsPerCall := 600.0
   }
 
 end Quotient
