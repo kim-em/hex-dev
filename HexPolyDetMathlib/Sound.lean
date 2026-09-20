@@ -27,6 +27,17 @@ theorem check_of_ok {k n : Nat} {C : Type} {cmp : Mono k → Mono k → Ordering
     (h : polyDetWitness P = .ok w) : check n (P.rows.toList.map (·.toList)) w = true :=
   Matrix.detWitnessWith_check Hex.exactDiv n (check n) _ w h
 
+/-- A budgeted return has passed the caller's compiled serialization checker. -/
+theorem produce_check {k n : Nat} {C : Type} {cmp : Mono k → Mono k → Ordering}
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Lean.Grind.CommRing C]
+    [DecidableEq C] [BEq C] [LawfulBEq C] [Dvd C] [GcdOps C]
+    [IsMonomialOrder cmp] [LawfulGcdOps C]
+    (budget : Matrix.DetWitness.Budget)
+    (check : List (List (MvPoly k C cmp)) → Matrix.DetWitness (MvPoly k C cmp) → Bool)
+    (rows : List (List (MvPoly k C cmp))) (w : Matrix.DetWitness (MvPoly k C cmp))
+    (h : produce budget n check rows = .ok w) : check rows w = true :=
+  Matrix.detWitnessBudgeted_check Hex.exactDiv n MvPoly.termCount budget check rows w h
+
 end Hex.PolyDet
 
 namespace HexMatrixMathlib.DetPoly

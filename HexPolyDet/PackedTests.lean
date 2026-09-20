@@ -10,6 +10,37 @@ open Hex.PolyDet Hex.Matrix Hex.MvPoly.Kernel Hex.Kronecker
 set_option maxRecDepth 8192
 set_option maxHeartbeats 2000000
 
+private def entrySize (z : Int) : Nat := if z == 0 then 0 else 1
+private def bounded (intermediate certificate : Nat) (rows : List (List Int))
+    (check := Hex.Matrix.checkDetList 2) :=
+  Hex.Matrix.detWitnessBudgeted HexArith.Int.exactDiv 2 entrySize
+    ⟨intermediate, certificate⟩ check rows
+
+-- Round admission includes both blocks, and rejects before the final checker.
+#guard match bounded 11 100 [[1, 2], [3, 4]] (fun _ _ => false) with
+  | .error (.exhausted .intermediate 12 11) => true
+  | _ => false
+-- The witness budget is checked before its self-check, at the exact boundary.
+#guard match bounded 12 3 [[1, 2], [3, 4]] (fun _ _ => false) with
+  | .error (.exhausted .certificate 4 3) => true
+  | _ => false
+#guard match bounded 12 4 [[1, 2], [3, 4]] with
+  | .ok w => Hex.Matrix.checkDetList 2 [[1, 2], [3, 4]] w
+  | _ => false
+-- Pivot swaps and singular witnesses use the same production and validation.
+#guard match bounded 7 3 [[0, 2], [3, 4]] with
+  | .ok w => Hex.Matrix.checkDetList 2 [[0, 2], [3, 4]] w
+  | _ => false
+#guard match bounded 100 2 [[1, 2], [1, 2]] with
+  | .ok (.singular v) => Hex.Matrix.checkDetList 2 [[1, 2], [1, 2]] (.singular v)
+  | _ => false
+#guard match bounded 12 4 [[1, 2], [3, 4]] (fun _ _ => false) with
+  | .error .rejected => true
+  | _ => false
+#guard match bounded 100 100 [[1], [2]] with
+  | .error (.malformed 2) => true
+  | _ => false
+
 private def budget : Budget := { maxDenseDigits := 65536, maxPackedBits := 4096 }
 private def one : PolyList Int := [([0], 1)]
 private def x : PolyList Int := [([1], 1)]
