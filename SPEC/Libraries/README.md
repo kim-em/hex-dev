@@ -7,7 +7,6 @@
 - **hex-poly**: dense `Array`-backed polynomial representation
 - **hex-rational-fn**: canonical univariate rational functions, field arithmetic, partial evaluation, formal differentiation and normalization certificates
 - **[hex-ordered-fn](hex-ordered-fn.md)** (planned): certified bounded real-constant and infinitesimal orders on rational functions, with conditional total field adapters
-- **[hex-ordered-fn-mathlib](hex-ordered-fn-mathlib.md)** (planned): real evaluation, Hahn-series infinitesimal semantics, fallible-record correspondence and total-order laws
 - **hex-sparse-poly**: canonical sparse univariate polynomials as a sorted exponent/coefficient term array, with explicit conversions to and from the dense representation
 - **hex-mv-poly**: canonical distributed multivariate polynomials at fixed arity with explicit monomial orders
 - **hex-reflect**: shared `Lean.Meta.Sym.Arith` sessions, batch variable sealing, direct `Hex.MvPoly` conversion, provider results, conditions and budgets
@@ -84,6 +83,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-finite-field-mathlib**: `Fintype K` and `Fintype.card K = card K` for any `LawfulFiniteField`, and `frob = frobenius`
 - **hex-poly-mathlib**: `DensePoly R ≃+* Polynomial R`
 - **hex-rational-fn-mathlib**: equivalence with `RatFunc K`, canonical numerator/denominator agreement and partial-evaluation semantics
+- **[hex-ordered-fn-mathlib](hex-ordered-fn-mathlib.md)** (planned): real evaluation, Hahn-series infinitesimal semantics, fallible-record correspondence and total-order laws
 - **hex-sparse-poly-mathlib**: `SparsePoly R ≃+* Polynomial R`, and the identification of the stored term array with `Polynomial.support`
 - **hex-mv-poly-mathlib**: `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence
 - **hex-reflect-mathlib**: Mathlib carrier translations and the `MvPolynomial` correspondence for reflected batches

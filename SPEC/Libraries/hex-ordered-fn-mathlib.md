@@ -24,17 +24,20 @@ callbacks enter through the shared operation record; they do not induce
 imports of downstream selected-root implementations.
 
 Use the namespace `Hex.OrderedFn` with `Real` and `Infinitesimal` namespaces
-for the two orders. Planned companion modules are `Correspondence` (fraction
-and operation-record interpretation), `Real` (evaluation and enclosures),
+for the two orders, matching the computational API. Qualify Mathlib real
+constants and lemmas with `_root_.Real` inside these namespaces. Planned
+companion modules are `Correspondence` (fraction and operation-record
+interpretation), `Real` (evaluation and enclosures),
 `Infinitesimal` (Hahn embedding and signs), `Total` (law packages and Mathlib
 instances), and build-only `Tests`. Source-local SPEC placement follows
 implementation; the current authoritative design is this file.
 
-For the total carrier, fix `[Field K] [DecidableEq K] [LinearOrder K]
-[IsStrictOrderedRing K]`. Use the lightweight field induced by that exact
-Mathlib field before forming `Hex.RationalFn K`. The entire lightweight
-instance indexes the representation; two dictionaries on the same carrier
-are not interchangeable. Follow
+For the total carrier, fix `[Field K] [LinearOrder K]
+[IsStrictOrderedRing K]`. Choose `Field.toGrindField` and
+`LinearOrder.toDecidableEq` before forming `Hex.RationalFn K`; do not add an
+independent equality-decision binder. Both dictionaries index the
+representation. Keep these choices fixed through each conversion instead of
+relying on later changes to instance priorities. Follow
 [hex-rational-fn-mathlib](../../HexRationalFnMathlib/SPEC/hex-rational-fn-mathlib.md)
 at every nested level. Retain executable arithmetic and comparison; semantic
 maps into `ℝ` or Hahn series may be noncomputable and are never runtime
@@ -45,11 +48,26 @@ infinitesimal orders; do not install conflicting global orders on
 For fallible coefficients, use representatives `A`, a semantic ordered field
 `K`, and an interpretation `v : A → K`, which need not be injective. No field,
 order or semantic equality decision is assumed on `A`. Interpreted coefficient
-arrays define polynomials in `K[X]`; checked semantic degrees establish all
-trailing zeros and a nonzero leading coefficient, or certify the zero
-polynomial. The shared `HexPoly` operation record and fallible degree,
+arrays define polynomials in `K[X]`; checked semantic degrees establish zeros
+above the reported degree and a nonzero leading coefficient, or certify the
+zero polynomial. The shared `HexPoly` operation record and fallible degree,
 division, gcd and extended-gcd routines are planned prerequisites of
 [hex-sturm](hex-sturm.md), not existing capabilities of `DensePoly A`.
+
+The runtime `Sign` has `negative`, `zero`, `positive`. Define an explicit
+`toSignType : Sign ≃ SignType`, sending them to Mathlib's `neg`, `zero`,
+`pos`, and prove compatibility with zero, one, negation and multiplication.
+In statements below, `sign x` means `toSignType.symm (SignType.sign x)` for
+the chosen semantic ordered field. Thus every equality between a checked
+sign and a real/Hahn/coefficient sign has a fixed type.
+
+The runtime context `ctx` carries the chosen coefficient record `ops`; all
+law packages in a statement concern that same record and interpretation.
+Write `sign? L ctx f` for a bounded call with a complete resource envelope
+`L : Limits`, including structural fuel. A schedule `limits : Nat → Limits`
+selects such envelopes. This notation abbreviates the computational API's
+fuel and remaining limit parameters; it does not replace them with a new
+runtime interface.
 
 ## Available inputs and missing bridges
 
@@ -66,6 +84,9 @@ are relative to that package, not proposed Hex modules.
 | Mathlib `RingTheory/HahnSeries/Lex.lean` | Existing `LinearOrder` and `IsStrictOrderedRing` on the lex wrapper, `HahnSeries.lt_iff` and `leadingCoeff_pos_iff` (also negative/nonnegative variants). These concern Hahn series, not Hex's coefficient scan. |
 | Mathlib `RingTheory/HahnSeries/Summable.lean` | Existing `HahnSeries.instField` for ordered abelian exponent groups and field coefficients; `Lex.lean` alone does not supply division. |
 | [HexIntervalMathlib](hex-interval-mathlib.md) | Existing `Hex.Interval.Contains`, cut semantics and outward-arithmetic soundness. Registered source facts, their authentication, effective convergence and the new Horner evaluator's convergence must be connected here; containment alone supplies no progress theorem. |
+| Mathlib `Algebra/Polynomial/Degree/TrailingDegree.lean`, `Algebra/Polynomial/Reverse.lean` | Existing `Polynomial.natTrailingDegree`, `Polynomial.trailingCoeff` and `trailingCoeff_mul`. Relate the checked lowest-index scan to these, then to Hahn order/leading coefficient here. |
+| Mathlib `Basic/Sign/Defs.lean`, `Basic/Sign/Basic.lean` | Existing `SignType`, `SignType.sign`, `SignType.sign_mul` and `SignType.signHom`. Prove the computational `Sign` translation here; reuse these ordered-field sign laws. |
+| Mathlib `RingTheory/HahnSeries/Basic.lean`, `Multiplication.lean` | Existing coefficientwise `HahnSeries.map`, with `map_one` and `map_mul`. Bundling it as a ring hom and proving lexicographic order preservation for an injective strictly monotone coefficient hom are local obligations. Exponent transport via `embDomainRingHom` is a different operation. |
 | `HexOrderedFnMathlib` | New real evaluation/order correspondence, fallible record correspondence, Hahn embedding composition and lowest-coefficient bridge, enclosure convergence, replay quotation and total-search laws. |
 
 No new abstract real-algebra theorem from Tau Ceti is an input to this
@@ -154,6 +175,8 @@ E (toPolynomial f.den) ≠ 0,
 Function.Injective evalHom.
 ```
 
+Injectivity then follows from `RingHom.injective`: relative transcendence
+discharges the denominator nonvanishing needed to construct the hom.
 Prove evaluation of constants is `ι a` and evaluation of `X` is `τ`;
 preserve zero, one, addition, subtraction, negation, multiplication, total
 inverse/division and natural powers. These imply nonzero evaluation of every
@@ -163,7 +186,7 @@ the executable total order with the pullback of real order; in particular
 replacing computational comparison with real comparison.
 
 Without relative transcendence, retain a partial evaluation relation:
-`Evaluates f r` means `E Q ≠ 0`, every retained source divisor evaluates
+`Evaluates ctx f r` means `E Q ≠ 0`, every retained source divisor evaluates
 nonzero, and `r = E P / E Q`, including recursively checked coefficient
 domains. Successful enclosures and signs concern this relation, even when
 `E P = 0` for a nonzero formal polynomial. Mathlib's total `RatFunc.eval`
@@ -187,7 +210,7 @@ For either total coefficients or the operation record, the headline theorem
 
 ```text
 CoefficientLaws ops → EnclosureLaws ctx → WellFormed ctx f →
-Real.sign? n ctx f = ok s cert →
+Real.sign? L ctx f = ok s cert →
 ∃ r, Evaluates ctx f r ∧ CheckSound ctx cert ∧ s = sign r.
 ```
 
@@ -215,7 +238,8 @@ and `embed_X`, using `RatFunc.coe_X` for the exponent-one monomial. Do not
 replace this input with a proposed new RatFunc-to-Hahn embedding. The new
 work is composition with Hex and correspondence with executable operations.
 
-For a nonzero polynomial `P`, let `i` be its lowest nonzero index. Prove its
+For a nonzero polynomial `P`, relate the checked lowest nonzero index `i`
+to `P.natTrailingDegree` and its coefficient to `P.trailingCoeff`. Prove its
 embedded series has order `i` and Hahn leading coefficient `P.coeff i`.
 For `Q ≠ 0` with lowest index `j`, the nonzero fraction has order `i-j`
 and leading coefficient `P.coeff i / Q.coeff j`. Consequently
@@ -250,10 +274,13 @@ negation, inverses of nonzero values, and preservation of predecessor signs.
 
 For successive levels, iterate `H` on the semantic ordered field and embed
 the preceding rational-function carrier coefficientwise into that model.
-Equivalently first model each extension in `H` of its immediate carrier,
-then transport coefficients into the iterated ambient model; prove the
-commuting constant embeddings. Thus `ε₂` is smaller than every positive
-embedded element of `K(ε₁)`, including `ε₁^m` for every positive integer `m`.
+Prove `map_lt`: an injective strictly monotone coefficient hom `φ : A →+* B`
+between ordered fields induces a ring embedding `H(A) →+* H(B)` preserving
+and reflecting order. Bundle the existing coefficientwise `HahnSeries.map`;
+injectivity preserves support and the lowest index, and the leading
+coefficient maps by `φ`. Prove commuting constant embeddings and apply this
+transport to the preceding carrier's model embedding. Thus `ε₂` is smaller
+than every positive embedded element of `K(ε₁)`, including `ε₁^m` for every positive integer `m`.
 Context order is part of the interpretation and cannot be permuted silently.
 
 This field is not real closed: an exponent-one monomial has no square root
@@ -321,10 +348,12 @@ their real nonvanishing; it does not validate a formally zero divisor.
 `limits n` eventually admits every finite requirement and retains already
 admitted work, with fair refinement. Fixed caller caps or arbitrary
 nonconvergent providers do not meet these hypotheses. The corresponding
-`Infinitesimal.sign_isSome` needs coefficient/operation/replay progress and
-a cofinal schedule but no real embedding, oracle convergence or relative
-transcendence: each finite coefficient scan resolves under predecessor
-progress. Bounded predecessor exhaustion must still propagate.
+computational `Infinitesimal.sign_isSome`, owned by `HexOrderedFn`, needs
+coefficient/operation/replay progress and a cofinal schedule but no real
+embedding, oracle convergence or relative transcendence: each finite
+coefficient scan resolves under predecessor progress. This companion supplies
+the model theorems composed with that computational progress theorem. Bounded
+predecessor exhaustion must still propagate.
 
 Construct `SearchLaws : Prop` for the computational total adapter with these
 specific fields, for its chosen executable operations and sign function:
@@ -393,7 +422,7 @@ Required proof examples and adversarial replay cases include:
 - Constants, zero, `X`, nontrivial normalized fractions, both denominator
   signs, common factors, checked versus total zero inversion, and agreement
   of the total-field and fallible-record interpretations.
-- Distinct representatives of a semantic zero, certified trailing zeros,
+- Distinct representatives of a semantic zero, certified zeros above the degree,
   false degree/Bézout/monicity witnesses, and an unresolved earlier
   coefficient before a later nonzero one. No structural equality shortcut.
 - Lowest coefficients at different indices, negative valuation, `1/(X-1)<0`,
@@ -432,8 +461,9 @@ checking; record proof/evidence size, retained cells, dependency sharing and
 lower-level replay composition. Do not rerun normalization or approximation
 search in kernel replay. Show both accepted and rejected/exhausted replay
 remain within their stated resource contracts. Follow
-[benchmarking.md](../benchmarking.md#fresh-module-proof-evidence), with
-Mathlib-free compiled benches and separately reported companion build costs.
+[benchmarking.md](../benchmarking.md#fresh-module-proof-evidence): the
+owner's compiled benches stay Mathlib-free; this companion reports build costs
+and fresh-module proof evidence separately.
 
 The owner's fixed trial-major measurements vary degree, coefficient height,
 lowest nonzero index, separation precision and tower depth. Comparisons use
