@@ -548,7 +548,8 @@ def _probe_closure_violations(
     helper does not evade the build-only probe contract.
     """
     # A main invocation shares this cache across overlapping proof-probe closures.
-    # A standalone call gets a fresh cache, so subsequent runs observe file edits.
+    # Standalone calls rescan forbidden features in reachable file contents;
+    # import traversal retains the separate process-local _parse_imports cache.
     if violations_cache is None:
         violations_cache = {}
     bench_root = repo_root / "bench"
@@ -665,7 +666,9 @@ def main() -> int:
     probe_files = _find_mathlib_probe_files(repo_root, all_probe_roots)
     violations_cache: dict[Path, list[str]] = {}
     for probe in probe_files:
-        for source, violation in _probe_closure_violations(probe, repo_root, violations_cache):
+        for source, violation in _probe_closure_violations(
+            probe, repo_root, violations_cache
+        ):
             failures.append(
                 f"  FORBIDDEN: proof probe {probe.relative_to(repo_root)} "
                 f"reaches {source.relative_to(repo_root)}, which {violation}.\n"
