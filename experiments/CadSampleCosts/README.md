@@ -85,7 +85,8 @@ from this corpus is a portable budget or an asymptotic complexity claim.
 Render the report tables without rerunning measurements:
 
 ```sh
-python3 experiments/CadSampleCosts/summarize.py reports/bench-results/cad-sample-costs
+python3 experiments/CadSampleCosts/summarize.py reports/bench-results/cad-sample-costs \
+  reports/bench-results/cad-kernel-costs
 ```
 
 Focused checker measurements avoid Lake startup, source transport, and axiom

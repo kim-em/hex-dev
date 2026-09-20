@@ -64,7 +64,9 @@ The experiment sources were committed and unchanged when collection started.
 Collection took place on 2026-09-20. Host observations, exact commands, source SHA-256 hashes, and solver
 binary hash are retained in [metadata](bench-results/cad-sample-costs/meta.json).
 
-There are four fixed trial-major rounds. Each fresh-module pair is adjacent;
+The runtime and paired proof measurements have four fixed trial-major rounds.
+Solver counts use one fixed-seed invocation per case (`n=1`); their invocation
+times include process startup and tracing, and are not comparative timings. Each fresh-module pair is adjacent;
 its order alternates Literal/Replay and Replay/Literal. Only that module's
 artifacts are removed, leaving imported dependencies warm. Runtime operations
 use a non-inlined IO wrapper between monotonic clocks; inspection of generated
@@ -84,7 +86,7 @@ commands. Nothing is added to CI or a released library.
 
 `d/H` means minimal-polynomial degree and maximum absolute integer coefficient
 of the primitive, positive-leading-coefficient canonical polynomial. Coefficient
-columns describe the nonconstant specialized coefficient; the other two
+columns describe the specialized constant coefficient; the other two
 coefficients are `0` and `1`, both degree 1 and height 1 as canonical numbers.
 All raw output polynomials, including both signs of a lifted root, are retained.
 Each timing is the median [minimum, maximum] of all four completed observations,
@@ -132,42 +134,92 @@ adjacent open-cell sign. It is not an arbitrary Sturm–Tarski query:
 [`SturmReplay.check`](../HexRCF/SturmCheck.lean) requires
 `F′ = δ·s₁` with `δ>0`.
 
-The paired modules elaborate identical literal certificates and proofs of their
+The original paired modules elaborate identical literal certificates and proofs of their
 correspondence to the source formulas. Replay adds kernel reduction of the
 checker, soundness, the source sign theorem, and the sample transport theorem
-where applicable. The reported difference is **fresh-module wall time**, including
+where applicable. They also run `#print axioms` on the new sign/result/sample
+theorems; these traversals contribute to the difference. Cached dependency
+messages in the raw logs are replayed output, not newly executed checks.
+The reported difference is **fresh-module wall time**, including
 proof construction/checking and ordinary process variation, not isolated kernel
 CPU time. Reusable symbolic transport schemas and non-vacuity proofs are checked
 in the warm dependency [Transport.lean](../experiments/CadSampleCosts/Transport.lean).
-They are not untrusted per-sample data. Every emitted result/sign/sample theorem
-has only `propext`, `Classical.choice`, and `Quot.sound` in its axiom set.
+They are not untrusted per-sample data. All expected theorem names, including
+coordinate identities, sample-existence proofs, and focused checker theorems,
+are covered by the untimed validation module. Its 54 axiom reports contain only
+`propext`, `Classical.choice`, and `Quot.sound` (or a subset).
 
 `H` is the carrier's integer coefficient height; `chain bits` is the bit length
 of the maximum absolute coefficient in its literal Sturm chain. The raw
 [carrier metadata](../experiments/CadSampleCosts/kernel-inputs.json) also retains
-chain length and nonconstant atom occurrence count (including duplicates). A single nominal degree is not a complexity model.
+chain length and nonconstant atom occurrence count (including duplicates).
+The parameter column describes the defining polynomial of the supplied univariate
+parameter `t`, as identified in the parameterizations below. A single nominal
+degree is not a complexity model.
 
 | Example (level 2 sign) | Parameter d/H | Carrier d/H | Chain bits | Literal s | Replay s | Paired difference s |
 |---|---|---|---:|---:|---:|---:|
-| NLSAT | 3/16 | 7/32 | 45 | 7.683 | 8.037 | 0.378 [0.303, 0.696] |
-| Circle/parabola | 4/1 | 6/1 | 7 | 7.533 | 8.138 | 0.352 [-0.202, 0.808] |
-| Two circles | 2/4 | 4/8 | 6 | 7.533 | 7.760 | 0.224 [0.097, 0.260] |
-| Kahan specialization | 2/2 | 6/392 | 36 | 7.734 | 8.058 | 0.324 [-0.510, 0.402] |
-| Sphere section | 4/10 | 11/50096 | 71 | 7.932 | 9.993 | 1.859 [0.956, 2.867] |
-| Tower 4 | 4/2 | 6/2 | 7 | 7.783 | 8.137 | 0.553 [-0.154, 4.048] |
-| Tower 8 | 8/2 | 10/2 | 8 | 8.286 | 8.035 | -0.251 [-4.993, 0.402] |
-| Circle/parabola zero | 4/1 | 4/1 | 2 | 7.605 | 8.312 | 0.609 [0.002, 1.305] |
+| NLSAT | 3/16 | 7/32 | 45 | 7.68 | 8.04 | 0.38 [0.30, 0.70] |
+| Circle/parabola | 4/1 | 6/1 | 7 | 7.53 | 8.14 | 0.35 [-0.20, 0.81] |
+| Two circles | 2/4 | 4/8 | 6 | 7.53 | 7.76 | 0.22 [0.10, 0.26] |
+| Kahan specialization | 2/2 | 6/392 | 36 | 7.73 | 8.06 | 0.32 [-0.51, 0.40] |
+| Sphere section | 4/10 | 11/50096 | 71 | 7.93 | 9.99 | 1.86 [0.96, 2.87] |
+| Tower 4 | 4/2 | 6/2 | 7 | 7.78 | 8.14 | 0.55 [-0.15, 4.05] |
+| Tower 8 | 8/2 | 10/2 | 8 | 8.29 | 8.04 | -0.25 [-4.99, 0.40] |
+| Circle/parabola zero | 4/1 | 4/1 | 2 | 7.61 | 8.31 | 0.61 [0.00, 1.31] |
 
 Arm columns are medians; differences are the median [minimum, maximum] of
 the four **paired** Replay minus Literal observations. They are not the
 difference of arm medians. All 64 fresh-module builds succeeded.
 
-The sphere's paired overhead is 0.956–2.867 seconds, with a degree-11 carrier
+The sphere's paired overhead is 0.96–2.87 seconds, with a degree-11 carrier
 and 71-bit chain coefficients. Several smaller effects are unresolved against
 process variation: the circle/parabola, Kahan and tower ranges cross zero,
 and Tower 8 has a negative median. Negative differences do not mean that
 checking saves work. No sample was removed and no rerun was used; these data
 do not support a replay degree-scaling curve or a portable per-sign budget.
+
+### Focused kernel checking
+
+The whole-process differences above do not isolate a kernel-cost model. The
+focused measurement profiles only the `accepted : certificate.check input = true`
+declaration, with literal inputs already elaborated, synchronous elaboration,
+and Lean's exclusive profiler enabled. Its cumulative `type checking` category
+measures kernel work from `decide +kernel`, including declaration checking.
+The separate heartbeat count covers the whole declaration command, in Lean's
+user-facing units of 1000 internal heartbeats; it is a deterministic work proxy
+for this toolchain, not a time prediction.
+
+Axiom traversals, soundness, source transport and Lake startup are outside this
+profiled region. The current paired modules also move axiom traversals to the
+untimed validator. The original paired observations are retained unchanged and
+refer to their original source commit.
+
+| Example (level 2 sign) | Parameter d/H | Carrier d/H | Chain bits | Kernel type checking ms | Command heartbeats |
+|---|---|---|---:|---:|---:|
+| NLSAT | 3/16 | 7/32 | 45 | 298.5 [280.0, 381.0] | 2943 |
+| Circle/parabola | 4/1 | 6/1 | 7 | 254.0 [253.0, 351.0] | 2722 |
+| Two circles | 2/4 | 4/8 | 6 | 143.0 [138.0, 185.0] | 1583 |
+| Kahan specialization | 2/2 | 6/392 | 36 | 385.0 [354.0, 487.0] | 3483 |
+| Sphere section | 4/10 | 11/50096 | 71 | 1335.0 [1320.0, 1790.0] | 11480 |
+| Tower 4 | 4/2 | 6/2 | 7 | 232.5 [225.0, 303.0] | 2467 |
+| Tower 8 | 8/2 | 10/2 | 8 | 334.5 [330.0, 453.0] | 3588 |
+| Circle/parabola zero | 4/1 | 4/1 | 2 | 81.3 [74.3, 98.1] | 1035 |
+
+Focused timings are median [minimum, maximum] of four completed runs. All
+heartbeat counts agree exactly across rounds. Collection used commit
+`a9c62664727e387330288b75325a275f9497042e` on the same host/toolchain, with
+automatically leased CPU 16, on 2026-09-20. Its
+[metadata](bench-results/cad-kernel-costs/meta.json),
+[32 observations](bench-results/cad-kernel-costs/runs.jsonl), and complete logs
+are retained separately. No sample was dropped or rerun.
+
+The smallest checker costs a median 81.3 ms and the sphere checker 1335 ms.
+Carrier degree alone still misses coefficient growth: the degree-6 Kahan
+carrier (36-bit chain coefficients) costs 385 ms, versus 232.5 ms for Tower 4
+(also degree 6, 7-bit coefficients). These finite cases establish a practical
+kernel cost for the supplied replay format; they do not measure general
+primitive-element export, sign transport, or an asymptotic law.
 
 The non-vacuous parameterizations are:
 
@@ -188,7 +240,8 @@ The non-vacuous parameterizations are:
 The public canonical root pipeline is not a literal kernel certificate:
 `decide +kernel` on the sign of the positive result of
 `ZPoly.realAlgebraicRoots [-2,0,1]` gets stuck, although compiled evaluation
-returns `1`. The canonical constructor is sealed, and the library explicitly
+returns `1`. The [reproducer](../experiments/CadSampleCosts/README.md) gives the exact diagnostic
+command. The canonical constructor is sealed, and the library explicitly
 notes the rational-polynomial gcd reduction boundary in
 [Basic.lean](../HexNumberField/Basic.lean). Timing that compiled sign as “kernel
 replay” would be incorrect.
@@ -213,27 +266,30 @@ by `nlsat`, seed 0, with reordering and variable shuffling disabled and
 `cell_sample=false` (original projection).
 
 A **cell explanation** is one completed theory-explanation call. Its projection
-count is the number of distinct printed nonconstant factors enqueued by
+count is the number of distinct primitive positive-leading nonconstant
+polynomials obtained from factors enqueued by
 `insert_fresh_factors_in_todo` during that call, excluding the original input
-core. Counts retain actual factors and degrees per explanation. A **learned
+core. The retained traces and JSON preserve the original printed factors and
+degrees. The table normalizes their integer content and leading sign, so `x`
+and `−x` count once; the tower counts are 2 instead of 3 printed strings. A **learned
 clause** is an allocation marked `learned` in the solver; it can be a resolvent
 rather than the original theory explanation. The two totals need not agree.
 Neither statistic is the number of cells in a full CAD or the number of clauses
 surviving at solver shutdown. Per-call data and the complete explanation text
 are in the raw observations and `trace-*.log.gz` files.
 
-| Example | Levels | Input d/H | Result | Cell explanations | Projected factors per explanation, in order | Learned clauses | Invocation ms |
+| Example | Levels | Input d/H | Result | Cell explanations | Primitive projected factors per explanation, in order | Learned clauses | Invocation ms |
 |---|---:|---|---|---:|---|---:|---:|
 | NLSAT | 2 | 3/5 | sat | 8 | 3, 2, 0, 2, 5, 0, 0, 5 | 7 | 18.096 |
 | Circle/parabola | 2 | 2/1 | unsat | 3 | 0, 0, 0 | 2 | 8.726 |
 | Two circles | 2 | 2/2 | unsat | 9 | 0, 1, 0, 4, 2, 2, 0, 0, 0 | 6 | 8.586 |
 | Kahan specialization | 2 | 2/64 | unsat | 10 | 2, 2, 0, 0, 0, 2, 0, 0, 0, 0 | 7 | 8.446 |
 | Sphere section | 3 | 2/6 | sat | 0 | — | 0 | 8.402 |
-| Tower 4 | 2 | 2/2 | unsat | 2 | 3, 0 | 1 | 8.348 |
-| Tower 8 | 2 | 4/2 | unsat | 2 | 3, 0 | 1 | 8.339 |
+| Tower 4 | 2 | 2/2 | unsat | 2 | 2, 0 | 1 | 8.348 |
+| Tower 8 | 2 | 4/2 | unsat | 2 | 2, 0 | 1 | 8.339 |
 
 Across these invocations there are 0–10 cell explanations and 0–7 allocated
-learned clauses, with 0–5 newly projected factors per explanation. A zero
+learned clauses, with 0–5 primitive projected factors per explanation. A zero
 projection count does not mean an explanation has no polynomial support: its
 input core is excluded. The sphere finishes without learning, while the NLSAT
 example repeats projection support across explanations. Sharing support is
@@ -262,9 +318,10 @@ still constructs eliminants and isolates roots. This run does not measure a
 lazy lifting replacement or assume that the sign of an isolation's center is
 a valid sign oracle. No canonical-versus-lazy speedup is inferred. For a
 squarefree degree-`d` parameter with **one already isolated root**, recording
-all `d` derivative signs would require at most `d` direct sign/Tarski queries;
-one more query determines the sign of a supplied evaluation polynomial. Thus
-the parameter degrees 2, 3, 4 and 8 suggest at most 3, 4, 5 and 9 queries in
+the signs of `f′, …, f⁽ᵈ⁻¹⁾` requires at most `d−1` direct sign/Tarski
+queries; the sign of `f⁽ᵈ⁾` is known from the leading coefficient. One more
+query determines the sign of a supplied evaluation polynomial. Thus the
+parameter degrees 2, 3, 4 and 8 suggest at most 2, 3, 4 and 8 queries in
 that restricted model. These are query counts, not measured costs or bounds
 for constructing a Thom encoding of an unisolated root set. This tree has no
 general Sturm–Tarski or BKR implementation to time.

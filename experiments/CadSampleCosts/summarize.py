@@ -110,6 +110,31 @@ def tables(directory):
     return {'LIFT_TABLE': '\n'.join(lift), 'KERNEL_TABLE': '\n'.join(kernel), 'SOLVER_TABLE': '\n'.join(solver)}
 
 
+def focused_table(directory):
+    rows = [json.loads(line) for line in (directory / 'runs.jsonl').read_text().splitlines()]
+    assert len(rows) == 32
+    recorded = json.loads((directory / 'meta.json').read_text())
+    snapshot = directory / 'kernel-inputs.json'
+    assert hashlib.sha256(snapshot.read_bytes()).hexdigest() == recorded['sources']['experiments/CadSampleCosts/kernel-inputs.json']
+    meta = json.loads(snapshot.read_text())
+    lines = ['| Example (level 2 sign) | Parameter d/H | Carrier d/H | Chain bits | Kernel type checking ms | Command heartbeats |',
+             '|---|---|---|---:|---:|---:|']
+    for example, (name, module, parameter) in NAMES.items():
+        runs = [r for r in rows if r['example'] == example]
+        assert len(runs) == 4 and {r['round'] for r in runs} == set(range(4))
+        for row in runs:
+            assert row['exit_code'] == 0 and not row['timed_out'] and 'parse_error' not in row
+            assert (directory / row['log']).is_file()
+        beats = {r['heartbeats'] for r in runs}
+        assert len(beats) == 1
+        m = meta[module]
+        lines.append(f'| {name} | {parameter} | {m["carrier_degree"]}/{m["carrier_height"]} | '
+                     f'{m["sturm_max_height"].bit_length()} | {spread([r["kernel_ms"] for r in runs], 1)} | {beats.pop()} |')
+    return '\n'.join(lines)
+
+
 if __name__ == '__main__':
     for label, table in tables(Path(sys.argv[1])).items():
         print(f'<!-- {label} -->\n{table}\n')
+    if len(sys.argv) > 2:
+        print(focused_table(Path(sys.argv[2])))
