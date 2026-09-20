@@ -101,31 +101,6 @@ namespace Kernel
 def treeMatrix (k : Nat) (a : TreeMatrix) : List (List Bounds) :=
   a.map (List.map (fun e => ⟨e.degrees k, e.height⟩))
 
-/-- Only transform and result polynomials are packed from term lists. -/
-def mulTree (mode : MulMode) (k n r m : Nat)
-    (a : TermMatrix) (b : TreeMatrix) (c : TermMatrix)
-    (innerBits slotBits : Nat := 0) : Bool :=
-  (matrixShape k n r a && treeShape k r m b && matrixShape k n m c) &&
-    let products := product k (boundColumns k m (treeMatrix k b)) (matrix k a)
-    let s := plan (common k products.flatten (matrix k c).flatten) innerBits slotBits
-    checkRows mode s r (Hex.Matrix.Packed.columns m (evalTreeMatrix s b))
-      (packMatrix s a) (packMatrix s c)
-
-def mulTreeMod (mode : MulMode) (k n r m p : Nat)
-    (a : TermMatrix) (b : TreeMatrix) (c q : TermMatrix)
-    (innerBits slotBits : Nat := 0) : Bool :=
-  !Nat.beq p 0 &&
-    (matrixShape k n r a && treeShape k r m b && matrixShape k n m c && matrixShape k n m q) &&
-    (a.all (fun row => row.all (termResidues p)) &&
-      b.all (fun row => row.all (Expr.residues p)) && c.all (fun row => row.all (termResidues p))) &&
-    q.all (fun row => row.all (Hex.MvPoly.Kernel.isCanonical k)) &&
-    let products := product k (boundColumns k m (treeMatrix k b)) (matrix k a)
-    let differences := difference products.flatten (matrix k c).flatten
-    let scaled := (matrix k q).flatten.map (mul ⟨zeroDegrees k, p⟩)
-    let s := plan (common k differences scaled) innerBits slotBits
-    checkRowsMod mode s r p (Hex.Matrix.Packed.columns m (evalTreeMatrix s b))
-      (packMatrix s a) (packMatrix s c) (packMatrix s q)
-
 /-- The packing base is natural, so its powers use the kernel's native natural
 arithmetic before the coefficient multiplication in the integers. -/
 noncomputable def packNat (base : Nat) (ss : List Nat)
@@ -142,6 +117,35 @@ def packNatImpl (base : Nat) (ss : List Nat) : Hex.MvPoly.Kernel.PolyList Int �
   induction ts with
   | nil => rfl
   | cons t ts ih => cases t; simp only [packNat, packNatImpl] at *; rw [ih]
+
+/-- Pack witness rows using native natural powers. -/
+def packRows (s : SizeBound) (a : TermMatrix) : List (List Int) :=
+  a.map (List.map (packNat (2 ^ s.digitBits) s.strides))
+
+/-- Only transform and result polynomials are packed from term lists. -/
+def mulTree (mode : MulMode) (k n r m : Nat)
+    (a : TermMatrix) (b : TreeMatrix) (c : TermMatrix)
+    (innerBits slotBits : Nat := 0) : Bool :=
+  (matrixShape k n r a && treeShape k r m b && matrixShape k n m c) &&
+    let products := product k (boundColumns k m (treeMatrix k b)) (matrix k a)
+    let s := plan (common k products.flatten (matrix k c).flatten) innerBits slotBits
+    checkRows mode s r (Hex.Matrix.Packed.columns m (evalTreeMatrix s b))
+      (packRows s a) (packRows s c)
+
+def mulTreeMod (mode : MulMode) (k n r m p : Nat)
+    (a : TermMatrix) (b : TreeMatrix) (c q : TermMatrix)
+    (innerBits slotBits : Nat := 0) : Bool :=
+  !Nat.beq p 0 &&
+    (matrixShape k n r a && treeShape k r m b && matrixShape k n m c && matrixShape k n m q) &&
+    (a.all (fun row => row.all (termResidues p)) &&
+      b.all (fun row => row.all (Expr.residues p)) && c.all (fun row => row.all (termResidues p))) &&
+    q.all (fun row => row.all (Hex.MvPoly.Kernel.isCanonical k)) &&
+    let products := product k (boundColumns k m (treeMatrix k b)) (matrix k a)
+    let differences := difference products.flatten (matrix k c).flatten
+    let scaled := (matrix k q).flatten.map (mul ⟨zeroDegrees k, p⟩)
+    let s := plan (common k differences scaled) innerBits slotBits
+    checkRowsMod mode s r p (Hex.Matrix.Packed.columns m (evalTreeMatrix s b))
+      (packRows s a) (packRows s c) (packRows s q)
 
 def treeTermsEq (k : Nat) (lhs : Expr) (rhs : Hex.MvPoly.Kernel.PolyList Int) : Bool :=
   lhs.wellFormed k && termShape k rhs &&

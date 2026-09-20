@@ -130,6 +130,10 @@ structure Selection where
   quotientSupport : Nat := 0
   deriving Repr
 
+/-- Kernel width hints for signed packing, already admitted by preflight. -/
+def Selection.widths (s : Selection) : List (Nat × Nat) :=
+  s.reports.map fun r => (r.size.innerBits, r.size.outerSlotBits?.getD 0)
+
 def Selection.route (s : Selection) : String :=
   if !s.packed then "term-list" else
     match s.mode with | .plain => "packed/plain" | .signedPacked => "packed/signedPacked"

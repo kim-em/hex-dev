@@ -221,17 +221,17 @@ theorem list_entry (k : Nat) (A : TermMatrix) (i j : Nat) :
   rw [Decode.entry_eq_getD, decode_eval]
   rfl
 
-theorem dot_of_product {budget : Hex.Kronecker.Budget} {mode : MulMode} {k r m : Nat}
+theorem dot_of_product {mode : MulMode} {k r m ib sb : Nat}
     {t c : List (Hex.MvPoly.Kernel.PolyList Int)} {A : TreeMatrix}
     (ht : t.length ≤ r) (j : Nat) (hj : j < m)
-    (h : checkMulTree budget mode k 1 r m [t] A [c] = true) :
+    (h : Kernel.mulTree mode k 1 r m [t] A [c] ib sb = true) :
     (Decode.ringOps Model).dot (t.map (decode k).eval)
       ((Decode.ringOps Model).column j (model A)) =
         (decode k).eval ((Hex.PolyDet.ops k).entry c j) := by
   change (Decode.identity Model).eval _ = _
   rw [(Decode.identity Model).eval_dot _ _ r (by simpa using ht)
     (Decode.ring_validRow _) (Decode.ring_validRow _)]
-  have he := congrFun (congrFun (checkMulTree_sound h (R := Model) MvPolynomial.X) (0 : Fin 1)) ⟨j,hj⟩
+  have he := congrFun (congrFun (Kernel.mulTree_sound h (R := Model) MvPolynomial.X) (0 : Fin 1)) ⟨j,hj⟩
   simp only [_root_.Matrix.mul_apply, denoteMatrix, denoteTreeMatrix, list_entry,
     Fin.val_zero, List.getD_cons_zero] at he
   simpa only [Decode.identity, id_eq, Decode.map_entry, Decode.column_entry, model_entry] using he
@@ -240,10 +240,10 @@ theorem dot_of_product {budget : Hex.Kronecker.Budget} {mode : MulMode} {k r m :
 theorem model_leading (r : Nat) (A : TreeMatrix) : model (leading r A) = leading r (model A) := by
   simp [model, leading, List.map_map, List.map_take, Function.comp_def]
 
-theorem prefix_product {budget : Hex.Kronecker.Budget} {mode : MulMode} {k i : Nat}
+theorem prefix_product {mode : MulMode} {k i ib sb : Nat}
     {t c : List (Hex.MvPoly.Kernel.PolyList Int)} {A : TreeMatrix}
     (ht : t.length = i + 1) (j : Nat) (hj : j < i + 1)
-    (h : checkMulTree budget mode k 1 (i + 1) (i + 1) [t] (leading (i + 1) A) [c] = true) :
+    (h : Kernel.mulTree mode k 1 (i + 1) (i + 1) [t] (leading (i + 1) A) [c] ib sb = true) :
     (Decode.ringOps Model).dot (t.map (decode k).eval)
       ((Decode.ringOps Model).column j (model A)) =
         (decode k).eval ((Hex.PolyDet.ops k).entry c j) := by
@@ -269,9 +269,9 @@ theorem rowLengths_all (n : Nat) (A : List (List R)) :
 
 /-- Tree products supply the common determinant identities in a polynomial
 domain, preserving the original witness, pivots and row permutation. -/
-theorem identities (budget : Hex.Kronecker.Budget) (mode : MulMode) (k n : Nat)
-    (A : TreeMatrix) (w : DetWitness (Hex.MvPoly.Kernel.PolyList Int))
-    (h : Hex.PolyDet.checkDetPolyPackedTree budget mode k n A w = true) :
+theorem identities (mode : MulMode) (k n : Nat)
+    (A : TreeMatrix) (w : DetWitness (Hex.MvPoly.Kernel.PolyList Int)) (widths : List (Nat × Nat))
+    (h : Hex.PolyDet.checkDetPolyPackedTree mode k n A w widths = true) :
     (Decode.identity Model).Identities n (model A) (w.map (decode k).eval) := by
   unfold Hex.PolyDet.checkDetPolyPackedTree at h
   obtain ⟨hA,h⟩ := Bool.and_eq_true_iff.mp h
@@ -334,12 +334,12 @@ theorem identities (budget : Hex.Kronecker.Budget) (mode : MulMode) (k n : Nat)
       exact he.trans (decode k).zero
 
 /-- The certificate determines the determinant without expanding input trees. -/
-theorem checkDetPolyPackedTree_sound (budget : Hex.Kronecker.Budget) (mode : MulMode)
-    (k n : Nat) (A : TreeMatrix) (w : DetWitness (Hex.MvPoly.Kernel.PolyList Int))
-    (h : Hex.PolyDet.checkDetPolyPackedTree budget mode k n A w = true) :
+theorem checkDetPolyPackedTree_sound (mode : MulMode)
+    (k n : Nat) (A : TreeMatrix) (w : DetWitness (Hex.MvPoly.Kernel.PolyList Int)) (widths : List (Nat × Nat))
+    (h : Hex.PolyDet.checkDetPolyPackedTree mode k n A w widths = true) :
     ((Decode.identity Model).matrix n (model A)).det = (decode k).eval (Polynomial.value w) := by
   have hs := (Decode.identity Model).identities_sound n (model A) (w.map (decode k).eval)
-    (identities budget mode k n A w h)
+    (identities mode k n A w widths h)
   have hz : (decode k).eval [] = 0 := (decode k).zero
   cases w <;> simpa only [DetWitness.map, Decode.identity, id_eq, Polynomial.value, hz] using hs
 

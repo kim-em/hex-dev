@@ -7,8 +7,7 @@ module
 
 public import HexPolyDet.Packed
 public import HexPolyDetMathlib.Residue
-public import HexKroneckerMathlib.MatrixDenote
-public import HexKroneckerMathlib.MulModSound
+public import HexKroneckerMathlib.Kernel
 
 public section
 
@@ -196,9 +195,9 @@ private theorem denote_X (k : Nat) (a : PolyList Int) :
   exact MvPolynomial.eval₂_eta (Kronecker.termsPolynomial k a)
 
 /-- Packed products establish the shared identities in the integer polynomial domain. -/
-theorem packed_identities (budget : Kronecker.Budget) (mode : Kronecker.MulMode)
-    (k n : Nat) (A : List (List (PolyList Int))) (w : DetWitness (PolyList Int))
-    (h : PolyDet.checkDetPolyPacked budget mode k n A w = true) :
+theorem packed_identities (mode : Kronecker.MulMode)
+    (k n : Nat) (A : List (List (PolyList Int))) (w : DetWitness (PolyList Int)) (widths : List (Nat × Nat))
+    (h : PolyDet.checkDetPolyPacked mode k n A w widths = true) :
     (decode k).Identities n A w := by
   apply (decode k).packed_identities n A w _ _ _ _ h
   · intro swaps i t c hA _ htlen ht hp j hj
@@ -212,10 +211,11 @@ theorem packed_identities (budget : Kronecker.Budget) (mode : Kronecker.MulMode)
       intro a ha
       exact (Decode.validRow_iff _).mp
         ((Decode.validRows_iff P).mp hP s (List.mem_of_mem_take hs)) a (List.mem_of_mem_take ha)
-    have he := Kronecker.checkMulTerms_entry hp (R := MvPolynomial (Fin k) Int) MvPolynomial.X (0 : Fin 1)
+    have he := congrFun (Kronecker.Kernel.mulTerms_sound hp
+      (R := MvPolynomial (Fin k) Int) MvPolynomial.X) (0 : Fin 1)
     have hd := (decode k).dot_of_product (r := i + 1) (m := i + 1) MvPolynomial.X id (denote_X k) rfl t
       (PolyDet.Packed.leading (i + 1) P) c (by omega) ht hv
-      (by simpa using he) j hj
+      (by simpa [_root_.Matrix.mul_apply, Kronecker.denoteMatrix] using congrFun he) j hj
     rw [(decode k).eval_dot _ _ (i + 1) (by omega) ht
       ((decode k).valid_column _ j hv)] at hd
     rw [(decode k).eval_dot _ _ (i + 1) (by omega) ht
@@ -225,9 +225,10 @@ theorem packed_identities (budget : Kronecker.Budget) (mode : Kronecker.MulMode)
     intro l _
     rw [Decode.column_entry, Decode.column_entry, Decode.leading_entry _ _ l.isLt hj]
   · intro v hA hvlen hv hp j hj
-    have he := Kronecker.checkMulTerms_entry hp (R := MvPolynomial (Fin k) Int) MvPolynomial.X (0 : Fin 1)
+    have he := congrFun (Kronecker.Kernel.mulTerms_sound hp
+      (R := MvPolynomial (Fin k) Int) MvPolynomial.X) (0 : Fin 1)
     have hd := (decode k).dot_of_product (r := n) (m := n) MvPolynomial.X id (denote_X k) rfl v A
-      (List.replicate n []) (by omega) hv hA (by simpa using he) j hj
+      (List.replicate n []) (by omega) hv hA (by simpa [_root_.Matrix.mul_apply, Kronecker.denoteMatrix] using congrFun he) j hj
     have hz : (ops (C := Int) k).entry (List.replicate n []) j = [] := by
       rw [Decode.entry_eq_getD]
       simp [ops, PolyDet.ops]
@@ -235,16 +236,16 @@ theorem packed_identities (budget : Kronecker.Budget) (mode : Kronecker.MulMode)
     exact hd.trans (decode k).zero
 
 /-- A passing packed certificate determines the same polynomial determinant. -/
-theorem checkDetPolyPacked_sound (budget : Kronecker.Budget) (mode : Kronecker.MulMode)
-    (k n : Nat) (A : List (List (PolyList Int))) (w : DetWitness (PolyList Int))
-    (h : PolyDet.checkDetPolyPacked budget mode k n A w = true) :
+theorem checkDetPolyPacked_sound (mode : Kronecker.MulMode)
+    (k n : Nat) (A : List (List (PolyList Int))) (w : DetWitness (PolyList Int)) (widths : List (Nat × Nat))
+    (h : PolyDet.checkDetPolyPacked mode k n A w widths = true) :
     Hex.Matrix.det (matrix k n A) = Hex.MvPoly.Kernel.denote (n := k) (cmp := Mono.grevlex) (value w) := by
   apply (HexMvPolyMathlib.equiv (n := k) (cmp := Mono.grevlex)).injective
   rw [HexMatrixMathlib.det_eq (matrix k n A), RingEquiv.map_det]
   change ((HexMatrixMathlib.matrixEquiv (matrix k n A)).map
     (HexMvPolyMathlib.equiv (n := k) (cmp := Mono.grevlex))).det = _
   rw [← decode_matrix]
-  have hs := (decode k).identities_sound n A w (packed_identities budget mode k n A w h)
+  have hs := (decode k).identities_sound n A w (packed_identities mode k n A w widths h)
   cases w <;> simpa [value, decode, HexMvPolyMathlib.Kernel.denote, Hex.MvPoly.Kernel.denote] using hs
 
 end HexMatrixMathlib.DetPoly.Polynomial
@@ -276,10 +277,10 @@ private theorem denote_lift (k : Nat) (a : PolyList Nat) :
 
 
 /-- Packed products establish the shared identities in the residue polynomial domain. -/
-theorem packed_identities (budget : Kronecker.Budget) (mode : Kronecker.MulMode)
+theorem packed_identities (mode : Kronecker.MulMode)
     (k n : Nat) (A : List (List (PolyList Nat))) (w : DetWitness (PolyList Nat))
-    (qs : List (List (PolyList Int)))
-    (h : PolyDet.checkDetPolyPackedMod budget mode p k n A w qs = true) :
+    (qs : List (List (PolyList Int))) (widths : List (Nat × Nat))
+    (h : PolyDet.checkDetPolyPackedMod mode p k n A w qs widths = true) :
     (decode p k).Identities n A w := by
   have h := (Bool.and_eq_true_iff.mp h).2
   apply (decode p k).packed_identities n A w _ _ _ _ h
@@ -294,10 +295,11 @@ theorem packed_identities (budget : Kronecker.Budget) (mode : Kronecker.MulMode)
       intro a ha
       exact (Decode.validRow_iff _).mp
         ((Decode.validRows_iff P).mp hP s (List.mem_of_mem_take hs)) a (List.mem_of_mem_take ha)
-    have he := Kronecker.checkMulTermsMod_entry hp (R := MvPolynomial (Fin k) (ZMod p)) MvPolynomial.X (0 : Fin 1)
+    have he := congrFun (Kronecker.Kernel.mulTermsMod_sound hp
+      (R := MvPolynomial (Fin k) (ZMod p)) MvPolynomial.X) (0 : Fin 1)
     have hd := (decode p k).dot_of_product (r := i + 1) (m := i + 1) MvPolynomial.X PolyDet.Packed.lift (denote_lift p k) rfl t
       (PolyDet.Packed.leading (i + 1) P) c (by omega) ht hv
-      (by simpa [PolyDet.Packed.lift] using he) j hj
+      (by simpa [_root_.Matrix.mul_apply, Kronecker.denoteMatrix, PolyDet.Packed.lift] using congrFun he) j hj
     rw [(decode p k).eval_dot _ _ (i + 1) (by omega) ht
       ((decode p k).valid_column _ j hv)] at hd
     rw [(decode p k).eval_dot _ _ (i + 1) (by omega) ht
@@ -307,9 +309,10 @@ theorem packed_identities (budget : Kronecker.Budget) (mode : Kronecker.MulMode)
     intro l _
     rw [Decode.column_entry, Decode.column_entry, Decode.leading_entry _ _ l.isLt hj]
   · intro v hA hvlen hv hp j hj
-    have he := Kronecker.checkMulTermsMod_entry hp (R := MvPolynomial (Fin k) (ZMod p)) MvPolynomial.X (0 : Fin 1)
+    have he := congrFun (Kronecker.Kernel.mulTermsMod_sound hp
+      (R := MvPolynomial (Fin k) (ZMod p)) MvPolynomial.X) (0 : Fin 1)
     have hd := (decode p k).dot_of_product (r := n) (m := n) MvPolynomial.X PolyDet.Packed.lift (denote_lift p k) rfl v A
-      (List.replicate n []) (by omega) hv hA (by simpa [PolyDet.Packed.lift] using he) j hj
+      (List.replicate n []) (by omega) hv hA (by simpa [_root_.Matrix.mul_apply, Kronecker.denoteMatrix, PolyDet.Packed.lift] using congrFun he) j hj
     have hz : (PolyDet.opsMod p k).entry (List.replicate n []) j = [] := by
       rw [Decode.entry_eq_getD]
       simp [PolyDet.opsMod]
@@ -319,14 +322,14 @@ theorem packed_identities (budget : Kronecker.Budget) (mode : Kronecker.MulMode)
 /-- Quotient-certified residue products determine the determinant in the residue
 polynomial domain; evaluation requires no domain assumption on the target. -/
 theorem checkDetPolyPackedMod_sound [Hex.ZMod64.PrimeModulus p]
-    (budget : Kronecker.Budget) (mode : Kronecker.MulMode)
+    (mode : Kronecker.MulMode)
     (k n : Nat) (A : List (List (PolyList Nat))) (w : DetWitness (PolyList Nat))
-    (qs : List (List (PolyList Int)))
-    (h : PolyDet.checkDetPolyPackedMod budget mode p k n A w qs = true) :
+    (qs : List (List (PolyList Int))) (widths : List (Nat × Nat))
+    (h : PolyDet.checkDetPolyPackedMod mode p k n A w qs widths = true) :
     ((decode p k).matrix n A).det = HexMvPolyMathlib.Kernel.denoteMod p
       (n := k) (cmp := Mono.grevlex) (value w) := by
   let : Fact (Nat.Prime p) := ⟨Nat.prime_def.mpr Hex.ZMod64.PrimeModulus.prime⟩
-  have hs := (decode p k).identities_sound n A w (packed_identities p budget mode k n A w qs h)
+  have hs := (decode p k).identities_sound n A w (packed_identities p mode k n A w qs widths h)
   cases w <;> simpa [value, decode] using hs
 
 end HexMatrixMathlib.DetPoly.Residue

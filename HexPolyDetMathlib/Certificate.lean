@@ -34,11 +34,8 @@ def arm (o : Options) : Arm :=
   match hex.det.checker.get o with
   | 1 => .lists | 2 => .packed | 3 => .signedPacked | _ => .automatic
 
-/-- Fixed hard limits shared by preparation and the quoted checker. -/
+/-- Fixed hard limits for frontend admission before kernel replay. -/
 def budget : Kronecker.Budget := { maxDenseDigits := 65536, maxPackedBits := 16777216 }
-
-def quoteBudget : MetaM Expr :=
-  mkAppM ``Kronecker.Budget.mk #[toExpr budget.maxDenseDigits, toExpr budget.maxPackedBits]
 
 def quoteMode (m : Kronecker.MulMode) : Expr :=
   mkConst (match m with | .plain => ``Kronecker.MulMode.plain | .signedPacked => ``Kronecker.MulMode.signedPacked)
@@ -68,18 +65,18 @@ def integer (k n : Nat) (rows : List (List (MvPoly.Kernel.PolyList Int)))
   let s ← selectOrFail <| profileit "det.symbolic.preflight" opts fun _ =>
     select budget (arm opts) k (products (ops k) n rows w)
   let ok := profileit "det.symbolic.selfcheck" opts fun _ =>
-    if s.packed then checkDetPolyPacked budget s.mode k n rows w
+    if s.packed then checkDetPolyPacked s.mode k n rows w s.widths
     else Matrix.checkDetPolyList (ops k) n rows w
   unless ok do throwError "det: certificate failure: selected {s.route} checker returned false"
   let check ← if s.packed then
-      mkAppM ``checkDetPolyPacked #[← quoteBudget, quoteMode s.mode, toExpr k, toExpr n, rowsE, wE]
+      mkAppM ``checkDetPolyPacked #[quoteMode s.mode, toExpr k, toExpr n, rowsE, wE, toExpr s.widths]
     else
       mkAppM ``Matrix.checkDetPolyList #[← mkAppM' (mkApp (mkConst ``Polynomial.ops) (mkConst ``Int)) #[toExpr k], toExpr n, rowsE, wE]
   let h ← profileitM Exception "det.symbolic.certificate" opts <|
     decideProof (← mkEq check (mkConst ``Bool.true))
   let hdet ← if s.packed then
       mkAppM ``Polynomial.checkDetPolyPacked_sound
-        #[← quoteBudget, quoteMode s.mode, toExpr k, toExpr n, rowsE, wE, h]
+        #[quoteMode s.mode, toExpr k, toExpr n, rowsE, wE, toExpr s.widths, h]
     else mkAppM ``Polynomial.checkDetPolyList_sound #[toExpr k, toExpr n, rowsE, wE, h]
   return (hdet, s)
 
@@ -117,14 +114,14 @@ def tree? (k n : Nat) (rows : List (List (MvPoly.Kernel.PolyList Int)))
   if arm == .automatic && !reports.all (fun r => crossover.contains r.key) then return none
   let selection : Selection := { mode, packed := true, reports }
   unless profileit "det.symbolic.selfcheck" opts (fun _ =>
-      checkDetPolyPackedTree budget mode k n trees w && Kronecker.checkTreeTermsEq budget k target value) do
+      checkDetPolyPackedTree mode k n trees w selection.widths && Kronecker.Kernel.treeTermsEq k target value) do
     throwError "det: tree certificate failed its compiled check"
   let check ← mkAppM ``checkDetPolyPackedTree
-    #[← quoteBudget, quoteMode mode, toExpr k, toExpr n, rowsE, wE]
+    #[quoteMode mode, toExpr k, toExpr n, rowsE, wE, toExpr selection.widths]
   let h ← profileitM Exception "det.symbolic.certificate" opts <|
     decideProof (← mkEq check (mkConst ``Bool.true))
   let hdet ← mkAppM ``Tree.checkDetPolyPackedTree_sound
-    #[← quoteBudget, quoteMode mode, toExpr k, toExpr n, rowsE, wE, h]
+    #[quoteMode mode, toExpr k, toExpr n, rowsE, wE, toExpr selection.widths, h]
   let checkTarget ← mkAppM ``Kronecker.Kernel.treeTermsEq #[toExpr k, targetE, valueE]
   let htarget ← decideProof (← mkEq checkTarget (mkConst ``Bool.true))
   return some (hdet, htarget, selection)
@@ -149,17 +146,17 @@ def residue (p k n : Nat) (rows : List (List (MvPoly.Kernel.PolyList Nat)))
       | none => throwError "det: certificate failure: selected packed checker without quotient payload"
     else pure []
   let ok := profileit "det.symbolic.selfcheck" opts fun _ =>
-    if s.packed then checkDetPolyPackedMod budget s.mode p k n rows w qs
+    if s.packed then checkDetPolyPackedMod s.mode p k n rows w qs s.widths
     else Matrix.checkDetPolyList (opsMod p k) n rows w
   unless ok do throwError "det: certificate failure: selected {s.route} checker returned false"
   let check ← if s.packed then
-      mkAppM ``checkDetPolyPackedMod #[← quoteBudget, quoteMode s.mode, toExpr p, toExpr k, toExpr n, rowsE, wE, toExpr qs]
+      mkAppM ``checkDetPolyPackedMod #[quoteMode s.mode, toExpr p, toExpr k, toExpr n, rowsE, wE, toExpr qs, toExpr s.widths]
     else mkAppM ``Matrix.checkDetPolyList #[← mkAppM ``opsMod #[toExpr p, toExpr k], toExpr n, rowsE, wE]
   let h ← profileitM Exception "det.symbolic.certificate" opts <|
     decideProof (← mkEq check (mkConst ``Bool.true))
   let hdet ← if s.packed then
       mkAppM ``Residue.checkDetPolyPackedMod_sound
-        #[toExpr p, ← quoteBudget, quoteMode s.mode, toExpr k, toExpr n, rowsE, wE, toExpr qs, h]
+        #[toExpr p, quoteMode s.mode, toExpr k, toExpr n, rowsE, wE, toExpr qs, toExpr s.widths, h]
     else mkAppM ``Residue.checkDetPolyList_sound #[toExpr p, toExpr k, toExpr n, rowsE, wE, h]
   return (hdet, s)
 

@@ -67,28 +67,34 @@ def quotientShape (n : Nat) (w : DetWitness R)
 
 end Packed
 
-/-- Check the polynomial witness with bounded Kronecker row-prefix products. -/
-def checkDetPolyPacked (budget : Kronecker.Budget) (mode : Kronecker.MulMode)
-    (k n : Nat) (a : List (List (PolyList Int))) (w : DetWitness (PolyList Int)) : Bool :=
+/-- Check the witness with kernel Kronecker products; admission belongs to the frontend. -/
+def checkDetPolyPacked (mode : Kronecker.MulMode)
+    (k n : Nat) (a : List (List (PolyList Int))) (w : DetWitness (PolyList Int))
+    (widths : List (Nat × Nat) := []) : Bool :=
   Packed.check (ops k) n a
-    (fun i t b c => Kronecker.checkMulTerms budget mode k 1 (i + 1) (i + 1) [t] b [c])
-    (fun v => Kronecker.checkMulTerms budget mode k 1 n n [v] a [List.replicate n []]) w
+    (fun i t b c => Kronecker.Kernel.mulTerms mode k 1 (i + 1) (i + 1) [t] b [c]
+      (widths.getD i (0, 0)).1 (widths.getD i (0, 0)).2)
+    (fun v => Kronecker.Kernel.mulTerms mode k 1 n n [v] a [List.replicate n []]
+      (widths.getD 0 (0, 0)).1 (widths.getD 0 (0, 0)).2) w
 
 /-- Residue products carry integer quotients; no packed integer is reduced modulo `p`. -/
-def checkDetPolyPackedMod (budget : Kronecker.Budget) (mode : Kronecker.MulMode)
+def checkDetPolyPackedMod (mode : Kronecker.MulMode)
     (p k n : Nat) (a : List (List (PolyList Nat))) (w : DetWitness (PolyList Nat))
-    (qs : List (List (PolyList Int))) : Bool :=
+    (qs : List (List (PolyList Int))) (widths : List (Nat × Nat) := []) : Bool :=
   !Nat.beq p 0 && Packed.quotientShape n w qs &&
   Packed.check (opsMod p k) n a
-    (fun i t b c => Kronecker.checkMulTermsMod budget mode k 1 (i + 1) (i + 1) p
-      [t.map Packed.lift] (b.map (List.map Packed.lift)) [c.map Packed.lift] [qs.getD i []])
-    (fun v => Kronecker.checkMulTermsMod budget mode k 1 n n p
-      [v.map Packed.lift] (a.map (List.map Packed.lift)) [List.replicate n []] qs) w
+    (fun i t b c => Kronecker.Kernel.mulTermsMod mode k 1 (i + 1) (i + 1) p
+      [t.map Packed.lift] (b.map (List.map Packed.lift)) [c.map Packed.lift] [qs.getD i []]
+      (widths.getD i (0, 0)).1 (widths.getD i (0, 0)).2)
+    (fun v => Kronecker.Kernel.mulTermsMod mode k 1 n n p
+      [v.map Packed.lift] (a.map (List.map Packed.lift)) [List.replicate n []] qs
+      (widths.getD 0 (0, 0)).1 (widths.getD 0 (0, 0)).2) w
 
 /-- Tree-valued input entries share the serialized witness and diagonal checks.
 Only witness products are serialized; tree validation replaces list canonicality. -/
-def checkDetPolyPackedTree (budget : Kronecker.Budget) (mode : Kronecker.MulMode)
-    (k n : Nat) (a : Kronecker.TreeMatrix) (w : DetWitness (PolyList Int)) : Bool :=
+def checkDetPolyPackedTree (mode : Kronecker.MulMode)
+    (k n : Nat) (a : Kronecker.TreeMatrix) (w : DetWitness (PolyList Int))
+    (widths : List (Nat × Nat) := []) : Bool :=
   Kronecker.treeShape k n n a &&
     match w with
     | .triangular swaps ts d =>
@@ -96,9 +102,11 @@ def checkDetPolyPackedTree (budget : Kronecker.Budget) (mode : Kronecker.MulMode
       (if n == 0 then (ops k).beq d (ops k).one
        else (ops k).beq ((ops k).entry (row ts 0) 0) (ops k).one) &&
       Packed.rows (ops k) d swaps (permute swaps a)
-        (fun i t b c => Kronecker.checkMulTree budget mode k 1 (i + 1) (i + 1) [t] b [c]) 0 ts
+        (fun i t b c => Kronecker.Kernel.mulTree mode k 1 (i + 1) (i + 1) [t] b [c]
+          (widths.getD i (0, 0)).1 (widths.getD i (0, 0)).2) 0 ts
     | .singular v =>
       Nat.beq v.length n && (ops k).validRow v && (ops k).anyNonzero v &&
-      Kronecker.checkMulTree budget mode k 1 n n [v] a [List.replicate n []]
+      Kronecker.Kernel.mulTree mode k 1 n n [v] a [List.replicate n []]
+        (widths.getD 0 (0, 0)).1 (widths.getD 0 (0, 0)).2
 
 end Hex.PolyDet

@@ -141,6 +141,21 @@ theorem treeColumns_bound (k m : Nat) (a : TreeMatrix) (h : treeValid k a = true
   rw [boundColumns_eq]
   exact columnsWith_rel _ _ (Exact.zero k) m (treeMatrix_bound k a h)
 
+theorem packNat_eq (base : Nat) (ss : List Nat) (ts : Hex.MvPoly.Kernel.PolyList Int) :
+    packNat base ss ts = Hex.Kronecker.packTerms base ss ts := by
+  induction ts with
+  | nil => rfl
+  | cons t ts ih =>
+    obtain ⟨e,c⟩ := t
+    change Int.add (Int.mul c (Int.ofNat (Nat.pow base (code ss e)))) (packNat base ss ts) = _
+    rw [ih, packTerms_cons, power_eq]
+    rfl
+
+theorem packRows_eq (s : SizeBound) (a : TermMatrix) : packRows s a = packMatrix s a := by
+  have h : packNat (2 ^ s.digitBits) s.strides = packTerms (2 ^ s.digitBits) s.strides :=
+    funext (packNat_eq _ _)
+  simp only [packRows, packMatrix, h]
+
 theorem mulTree_polynomial {mode : MulMode} {k n r m ib sb : Nat}
     {a c : TermMatrix} {b : TreeMatrix} (hbv : treeValid k b = true) (h : mulTree mode k n r m a b c ib sb = true) :
     polyProduct (columnsWith 0 m (treePolynomial k b hbv)) (matrixPolynomial k a) = matrixPolynomial k c := by
@@ -157,7 +172,8 @@ theorem mulTree_polynomial {mode : MulMode} {k n r m ib sb : Nat}
   have hlen := common_length k _ _ (lengths hpf) (lengths hcf)
   have hs : s.strides.length = k := by simpa only [s, plan, length_makeStrides] using hlen
   change checkRows mode s r (Hex.Matrix.Packed.columns m (evalTreeMatrix s b))
-    (packMatrix s a) (packMatrix s c) = true at he
+    (packRows s a) (packRows s c) = true at he
+  simp only [packRows_eq] at he
   rw [packMatrix_eval s hs a ha, evalTreeMatrix_eval s b hbv, packMatrix_eval s hs c hc,
     ← columnsWith_int] at he
   let v := fun i : Fin k => ((2^s.digitBits : Nat):Int)^s.strides.getD i.val 0
@@ -199,7 +215,8 @@ theorem mulTreeMod_polynomial {mode : MulMode} {k n r m p ib sb : Nat}
   have hlen := common_length k _ _ (lengths hdb) (lengths hsb)
   have hs : s.strides.length = k := by simpa only [s, plan, length_makeStrides] using hlen
   change checkRowsMod mode s r p (Hex.Matrix.Packed.columns m (evalTreeMatrix s b))
-    (packMatrix s a) (packMatrix s c) (packMatrix s q) = true at he
+    (packRows s a) (packRows s c) (packRows s q) = true at he
+  simp only [packRows_eq] at he
   rw [packMatrix_eval s hs a ha, evalTreeMatrix_eval s b hbv, packMatrix_eval s hs c hc,
     packMatrix_eval s hs q hq, ← columnsWith_int] at he
   let v := fun i : Fin k => ((2^s.digitBits : Nat):Int)^s.strides.getD i.val 0
@@ -220,15 +237,6 @@ theorem mulTreeMod_polynomial {mode : MulMode} {k n r m p ib sb : Nat}
   rw [flatten_zipWith _ he.1, ← List.map_flatten] at hef
   exact hef
 
-theorem packNat_eq (base : Nat) (ss : List Nat) (ts : Hex.MvPoly.Kernel.PolyList Int) :
-    packNat base ss ts = Hex.Kronecker.packTerms base ss ts := by
-  induction ts with
-  | nil => rfl
-  | cons t ts ih =>
-    obtain ⟨e,c⟩ := t
-    change Int.add (Int.mul c (Int.ofNat (Nat.pow base (code ss e)))) (packNat base ss ts) = _
-    rw [ih, packTerms_cons, power_eq]
-    rfl
 
 theorem treeTermsEq_polynomial {k : Nat} {lhs : Expr} {rhs : Hex.MvPoly.Kernel.PolyList Int}
     (hl : lhs.WellFormed k) (h : treeTermsEq k lhs rhs = true) : lhs.toMvPolynomial hl = termsPolynomial k rhs := by

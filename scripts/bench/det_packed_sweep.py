@@ -4,7 +4,8 @@
 All observations, including failures and expected declines, are retained. Each
 proof sample uses the existing fresh-module runner and an adjacent import-only
 baseline; six trial-major rounds alternate the two arms. The compiled driver
-classifies actual witness products before any timed comparisons.
+classifies witness products before any timed comparisons; an untimed forced
+frontend build then records the actual tree or list product bounds.
 """
 from __future__ import annotations
 import argparse
@@ -124,6 +125,7 @@ def main():
             return dict(result, state=result.get('state', 'failed'), error=str(e))
 
     if args.stage == 'classify':
+        sweep.warm_imports(spec, 1200)
         for case in cases:
             stem = case['stem']
             print(f'[classify] {stem}', flush=True)
@@ -140,6 +142,28 @@ def main():
                 except subprocess.TimeoutExpired as e:
                     classified[stem] = dict(classification='producer-timeout', timeout_seconds=45,
                         stdout=str(e.stdout or ''), stderr=str(e.stderr or ''))
+            native = classified[stem]
+            if native['classification'] in ['eligible', 'packed-decline']:
+                # Tree bounds include syntax and the target, which canonical-list
+                # fixtures cannot recover. Classify the exact frontend route too.
+                frontend = build(sweep.ProbeModule(f'{PREFIX}{stem}Packed', AXIOMS))
+                events = routes(frontend.get('compiler_output', ''))
+                certificates = [e for e in events if e['route'].startswith(('packed/', 'term-list'))]
+                classified[stem] = dict(native, native=dict(native), frontend=frontend)
+                result = classified[stem]
+                if frontend['state'] != 'complete':
+                    result.update(classification='frontend-failure')
+                elif len(certificates) == 1:
+                    event = certificates[0]
+                    products = [dict(p, key=list(map(int, re.findall(r':= (\d+)', p['key']))))
+                                for p in event['products']]
+                    result.update(classification='eligible' if event['route'] == 'packed/plain' else 'packed-decline',
+                        selection=dict(native['selection'], products=products, route=event['route']),
+                        entries=event.get('entries', 'list'))
+                elif any(e['route'] == 'fallback' for e in events):
+                    result.update(classification='overall-decline', frontend_routes=events)
+                else:
+                    result.update(classification='frontend-failure', frontend_routes=events)
             save()
     else:
         sweep.warm_imports(spec, 1200)
