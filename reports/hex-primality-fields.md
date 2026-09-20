@@ -232,17 +232,51 @@ identical across policy arms.
 | Curve448 | 1.7e+03 (exhausted) | 1.34e+03 (exhausted) | — → — | — → — |
 | P-521 | bit rejection | 1.47e+03 | — → 13.9 | — → 53.6 |
 
-P-521 construction takes 1566.351 / 1381.142 ms; compiled checker replay
-takes 12.451 / 11.456 ms, rendering/elaboration 14.371 / 13.341 ms, and
-direct kernel replay 57.975 / 49.178 ms. These samples justify admitting the
+P-521 construction takes 1.57 / 1.38 s; compiled checker replay
+takes 12.5 / 11.5 ms, rendering/elaboration 14.4 / 13.3 ms, and
+direct kernel replay 58.0 / 49.2 ms. These samples justify admitting the
 input with the unchanged factoring budgets. The run used `chungus2`, CPU 4,
 Lean 4.34.0. The substantial between-block shifts on unchanged certificates
 show why these are host observations, not precise speedup estimates. In
 particular, the Curve448 timing difference is not an algorithm improvement.
 There is no before-policy P-521 certificate to replay.
 
-The extra ECM root split for P-384 takes 20.525 / 20.249 ms at bound 4096,
-versus 172.869 / 162.687 ms at 32768, returning the same factor. Higher
+The extra ECM root split for P-384 takes 20.5 / 20.2 ms at bound 4096,
+versus 173 / 163 ms at 32768, returning the same factor. Higher
 stage-1 work supplies no further coverage in this diagnostic. Eight failed
 curves at 32768 take about 1.2–1.4 seconds per residual. The report therefore
 keeps the default factoring budgets and downstream ECM placement.
+
+## Truncated-enumeration failure cost
+
+The separate fixed failure probe is a 507-bit screen-passing input whose
+predecessor has 18 table factors, the primes from 2 through 61, with product
+`117288381359406970983270`. Its remaining cofactor is a product of two
+216-bit factors; Hex validates the complete predecessor reconstruction in
+the record. Neither p−1 nor rho splits the residual, and the known product is
+insufficient. Both arms exhaust after 14 attempts. The old cap rejects both
+18-factor candidate lists; the new cap scans 4096 masks on each list without
+finding a sufficient subset.
+
+The two adjacent AB/BA blocks retain before times **878 / 867 ms** and after
+times **895 / 881 ms** (means **872 / 888 ms**). This records the additional
+cost of a failing truncated scan; it is not a worst-case wallclock bound for
+all possible inputs. The SPEC states the independent enumeration limits:
+up to two passes per node, at most 4096 masks per pass, 32 bounded product
+multiplications and 63 divisor checks per mask, plus bounded child-cost
+estimates. This work is finite but outside the semantic attempt counter.
+No extra attempt budget or failure cache is introduced.
+
+The exact input, factor validation, trace, commands, hashes, and every sample
+are in [the failure record](bench-results/hex-primality-field-failure-issue-10291.json),
+measured from source commit `88b1c74ee`. Reproduce with:
+
+```sh
+python3 scripts/bench/primality_field_sweep.py --failure-only \
+  --output /tmp/field-failure.json
+```
+
+The registered five-repeat mode-3 results for construction, checker replay,
+and the policy sieve endpoint are also included in the
+[headline performance report](hex-primality-performance.md), with their
+budgets, observed hashes, and raw lean-bench export.
