@@ -1535,12 +1535,14 @@ are `#eval` demonstrations, with no nonstandard-analysis tactic claims.
 The downstream [`rcf` coefficient extension](../HexRCF/SPEC/hex-rcf.md#planned-real-coefficient-extension)
 is specified in the owning HexRCF SPEC: univariate sentences over `ℝ` with
 fixed real algebraic embeddings and authenticated named constants, using the
-shared RealFormula frontend and kernel certificates with coefficient signs.
+planned shared RealFormula frontend and kernel certificates with coefficient
+signs.
 Its optional import preserves the integer/rational fast path; the SPEC lists
 the actual implementation and semantic prerequisites without advancing a phase.
-This requires new integration, not the current integer-only replay unchanged. Without
-transcendence proofs it can certify the fragment where every required nonzero
-sign is separated by enclosures and all zero signs have algebraic/identity
+That integration is new work; the integer-only replay cannot consume these
+contexts unchanged. Without transcendence proofs it can certify the fragment
+where every required nonzero sign is separated by enclosures and all zero
+signs have algebraic/identity
 proofs. For example `∀ x : ℝ, x² > π - 4` needs only a certified `π < 4` and
 nonnegativity of squares. No completeness claim covers unresolved relations
 between constants. Infinitesimal search samples require the finite-sign
