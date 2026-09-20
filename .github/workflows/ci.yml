@@ -472,6 +472,7 @@ jobs:
             # separate canonical logical policy-comparison canary.
             .lake/build/bin/hexinterval_decision_bench canary
           fi
+          .lake/build/bin/hexprimality_field_probe verify-ecm2
           touch "$RUNNER_TEMP/bench.ok"
       - name: Conformance oracles + BZ gates
         if: steps.classify.outputs.docs_only != 'true'
