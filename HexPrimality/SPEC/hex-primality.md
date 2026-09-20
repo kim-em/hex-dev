@@ -1085,6 +1085,10 @@ must retain every checked success of the disabled policy. Ordinary
 factorization and construction pass independently; #10291's four inputs are
 an additional fixed corpus, not evidence of an extra-prime base order or a promised success family.
 
+The fixed consumer comparison uses `maxAttempts = 1024`, `maxFactors = 12`,
+and `maxBits = 512` (1024 for the prime-parent family) in both arms. Keep these
+explicit across changes to production admission policy; a default-enable claim
+for a different allocation requires measurements of that allocation.
 Interpreted construction uses the shared fresh-module runner with warm imports
 and a same-round import-only baseline. Time each fixed family traversal,
 executing each distinct input once; report median baseline-subtracted family

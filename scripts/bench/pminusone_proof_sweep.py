@@ -27,7 +27,7 @@ SPEC = SweepSpec(
                         'family': family, 'each_distinct_input': 'once',
                         'interpretation': 'phase attribution; no asymptotic verdict'})
              for family in FAMILIES)),
-    probe_target='HexPrimalityPMinusOneProbe',
+    probe_target='HexPrimalityElabProbeScientific',
     schema='hex-pminusone-construction-probes-v1',
     measurement='paired-fresh-module-import-subtracted-wall',
     output_stem='pminusone-construction-proof',

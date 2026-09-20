@@ -210,8 +210,8 @@ same wall-time unit as a word Montgomery multiplication.
 ## Consumer controls
 
 The [fixed field-prime diagnostic corpus](bench-results/pminusone-stage2-construction-corpus.jsonl.gz)
-contains eight adjacent AB/BA blocks with the unchanged construction budget,
-including `maxAttempts = 1024` and `maxBits = 512`. Neither arm constructs any
+contains eight adjacent AB/BA blocks with the fixed comparison allocation,
+including `maxAttempts = 1024`, `maxFactors = 12`, and `maxBits = 512`. Neither arm constructs any
 of the four certificates. P-521 is rejected by the bit ceiling in both arms.
 These records establish checked outcomes and route behavior; their diagnostic
 timers are not used for the native acceptance gate. Native gate timings use
@@ -226,7 +226,10 @@ previously checked child certificates establish primality independently of
 search. The native and interpreted construction comparisons use the same
 1024-attempt budget in both arms. For these parents only, both arms explicitly
 allow 1024 bits so the parent of a 512-bit predecessor can participate. This
-benchmark setting does not change the production 512-bit ceiling. Fixture
+benchmark explicitly fixes `maxFactors = 12` and the listed bit ceilings;
+the production elaborator admits 521 bits and 32 factors. The comparison
+measures these fixed allocations and does not establish a default-enable gate
+for a different allocation. Fixture
 certificates are preparation evidence; they are never supplied to the measured
 constructor as hints.
 
