@@ -93,7 +93,7 @@ def reportJson (s : Selection) : Json := Json.mkObj
    ("products", toJson (s.reports.map fun r => Json.mkObj
      [("row", toJson r.row), ("degrees", toJson r.size.degrees),
       ("digits", toJson r.size.digits), ("packedBits", toJson r.size.packedBits),
-      ("key", toJson [r.key.packedBits, r.key.leftSupport, r.key.rightSupport, r.key.resultSupport, r.key.inner])]))]
+      ("key", toJson [r.key.packedBits, r.key.leftSupport, r.key.rightSize, r.key.resultSupport, r.key.inner])]))]
 
 @[noinline] def force (f : Unit → α) : IO α := pure (f ())
 

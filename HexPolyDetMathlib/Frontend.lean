@@ -122,13 +122,20 @@ def checked (target proof : Expr) (profileName : String := "det.symbolic.kernel"
   let (type, proof, args) ← closeProof target proof
   checkClosed type proof args profileName
 
-/-- Lean's core counter is compiled into the executable. Charge the closed term,
-including let-bound payloads and retained syntax, before kernel admission. -/
+/-- Charge distinct nodes of the closed proof, including retained let payloads.
+The shared compiled counter stops as soon as the remaining budget is exceeded. -/
 def checkedBudgeted (target proof : Expr) : ReflectM (Expr × Nat) := do
   let (type, proof, args) ← closeProof target proof
-  let nodes := profileit "det.symbolic.nodes" (← getOptions) fun _ => proof.sizeWithoutSharing
+  let cap := (← getThe Hex.Reflect.State).budget.remaining.proofNodes + 1
+  let nodes := profileit "det.symbolic.nodes" (← getOptions) fun _ => proofNodeCount #[proof] cap
   charge .proofNodes nodes
   return (← checkClosed type proof args "det.symbolic.kernel", nodes)
+
+/-- Reject an already unaffordable payload before constructing its proofs.
+This is a lower bound from actual syntax, not a per-term size prediction. -/
+def checkPayload (expressions : Array Expr) : ReflectM Unit := do
+  let cap := (← getThe Hex.Reflect.State).budget.remaining.proofNodes + 1
+  checkBudget .proofNodes (proofNodeCount expressions cap)
 
 /-- Replay only structural polynomial lists in an entry identification proof. -/
 def entryProof (k : Nat) (ctx : Expr) (r : ReifiedRing) (p : Poly)
@@ -293,20 +300,18 @@ def computeResidue (p : Nat) (provider : CoeffProvider) (A : Expr)
     | .triangular _ ts d => d :: ts.flatten
     | .singular v => v
   let size := witnessEntries.foldl (fun n a => n + a.length) 0
-  checkBudget .proofNodes ((size + lists.flatten.foldl (fun n a => n + a.length) 0) * (4 * k + 24))
   let q ← match rhs with | some r => convertList r | none => pure d
   unless MvPoly.Kernel.beq d q do
     decline m!"target is not a polynomial identity in the sealed atoms modulo {p}"
   let rowsE := toExpr (lists.toList.map Array.toList)
   let wE ← quoteWitness w
+  checkPayload #[A, rowsE, wE]
   let remaining := (← getThe Hex.Reflect.State).budget.remaining
   let (hcheck, selection) ← Certificate.residue p k lit.n (lists.toList.map Array.toList) w rowsE wE
     { terms := min maxIntermediateTerms remaining.terms
       coefficientBits := remaining.coefficientBits
-      certificateTerms := min remaining.terms
-        (min (maxCertificateTerms - size) (remaining.proofNodes / (4 * k + 24))) }
+      certificateTerms := min remaining.terms (maxCertificateTerms - size) }
   charge .terms selection.quotientSupport
-  checkBudget .proofNodes (selection.quotientSupport * (4 * k + 24))
   let mut hrows := #[]
   for i in [:lit.n] do
     let mut hs := #[]
@@ -372,7 +377,11 @@ def computeTree? (A ctx : Expr) (lit : Recognized) (k : Nat) (atoms : Array Expr
     (normalized : Option (Array (Nat × Array Normalize.Result)))
     (targetNorm : Option Normalize.Result) (scales : Array Nat) (D t : Nat) :
     ReflectM (Option Result) := do
-  if Certificate.arm (← getOptions) == .lists then return none
+  let arm := Certificate.arm (← getOptions)
+  if arm == .lists then return none
+  if arm == .automatic && Hex.PolyDet.Packed.treeCrossover.isEmpty then
+    trace[HexMatrix.certificate] "det tree crossover empty; using list entry proofs"
+    return none
   let trees := reified.toList.map (fun row => row.toList.map (fun r => HexKroneckerMathlib.fromGrind r.expr))
   let treeTy := mkConst ``Hex.Kronecker.Expr
   let quoteTree (r : ReifiedRing) : MetaM Expr :=
@@ -381,6 +390,7 @@ def computeTree? (A ctx : Expr) (lit : Recognized) (k : Nat) (atoms : Array Expr
     mkListLit treeTy (← row.toList.mapM (fun r => do quoteTree r))
   let treesE ← mkListLit (mkApp (mkConst ``List [Level.zero]) treeTy) quoted
   let wE ← quoteWitness w
+  checkPayload #[A, treesE, wE]
   withLetDecl `detTrees (← inferType treesE) treesE fun treesE => do
     withLetDecl `detWitness (← inferType wE) wE fun wE => do
       withLetDecl `detMatrix (← inferType A) A fun A => do
@@ -545,10 +555,6 @@ def compute (A : Expr) (rhs? : Option Expr := none) : MetaM (Outcome Result) := 
     let w ← requireWitness produced
     let w := profileit "det.symbolic.lists" options fun _ => w.map Hex.PolyDet.toList
     let d := Polynomial.value w
-    let size := match w with
-      | .triangular _ ts d => ts.foldl (fun n r => r.foldl (fun n p => n + p.length) n) d.length
-      | .singular v => v.foldl (fun n p => n + p.length) 0
-    checkBudget .proofNodes ((size + lists.flatten.foldl (fun n p => n + p.length) 0) * (4 * k + 24))
     let q ← match rhs with
       | some r =>
         let c ← profile "det.symbolic.convert" (do require (← convert r sealed .grevlex (some coeffs)))
@@ -571,6 +577,7 @@ def compute (A : Expr) (rhs? : Option Expr := none) : MetaM (Outcome Result) := 
         normalized targetNorm scales D t then return result
     let rowsE := toExpr (lists.toList.map Array.toList)
     let wE ← quoteWitness w
+    checkPayload #[A, rowsE, wE]
     let (hcheck, selection) ← Certificate.integer k lit.n (lists.toList.map Array.toList) w rowsE wE
     let mut hrows := #[]
     for i in [:lit.n] do

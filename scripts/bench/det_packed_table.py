@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[2]
 def selected_tables(record):
     if record['stage'] != 'forced' or not record['schedule_complete'] or not record['sources_unchanged'] or record['subset']:
         raise ValueError('requires a complete, unchanged, full forced comparison')
-    winners, tables = [], {"list": set(), "tree": set()}
+    winners, tables = [], {"list": set(map(tuple, record.get("retained_list_keys", []))), "tree": set()}
     for stem, case in record['summary'].items():
         c = record['classification'][stem]
         if c['classification'] != 'eligible':
@@ -44,11 +44,6 @@ def selected_tables(record):
     return winners, {encoding: sorted(keys) for encoding, keys in tables.items()}
 
 
-def selected(record):
-    winners, tables = selected_tables(record)
-    return winners, sorted(set(tables['list']) | set(tables['tree']))
-
-
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('forced', type=Path)
@@ -61,9 +56,13 @@ def main():
     keys = sorted(set(tables["list"]) | set(tables["tree"]))
     result = dict(forced_sha256=hashlib.sha256(args.forced.read_bytes()).hexdigest(),
         rule='six completed samples in both arms; 0 < packed median < term-list median',
-        winning_cases=winners, keys=keys, keys_by_entries=tables, default_simproc_enabled=False)
+        winning_cases=winners, keys=keys, keys_by_entries=tables,
+        retained_list_keys=record.get("retained_list_keys", []),
+        list_table_provenance=record.get("list_table_provenance"), default_simproc_enabled=False)
     args.output.write_text(json.dumps(result, indent=2)+'\n')
     if args.write:
+        if "retained_list_keys" not in record or not record.get("list_table_provenance"):
+            raise ValueError("writing requires explicit provenance for the retained list table")
         path = ROOT / 'HexPolyDet/Select.lean'
         text = path.read_text()
         for encoding, declaration in [('list', 'crossover'), ('tree', 'treeCrossover')]:
@@ -74,7 +73,8 @@ def main():
             if count != 1:
                 raise ValueError(f'{declaration} declaration not found')
         path.write_text(text)
-    print(f'{len(winners)} winning witnesses; {len(keys)} product keys')
+    print(f'{len(winners)} winning witnesses; {len(tables["tree"])} tree keys; '
+          f'{len(tables["list"])} list keys (including {len(record.get("retained_list_keys", []))} retained)')
 
 if __name__ == '__main__':
     main()

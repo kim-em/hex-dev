@@ -24,5 +24,7 @@ its dependency build completes, with unchanged measured sources.
 
 The output field `proof_node_budget` in these older diagnostics is an estimate,
 not a measured proof size. `auxiliary nodes` reports the separate inspection.
-The corrected implementation charges Lean's compiled counter on the closed
-proof, including retained let-bound payloads.
+The corrected implementation charges the shared compiled, capped counter on
+the closed proof, including retained let-bound payloads. It counts distinct
+nodes; the separate unshared `auxiliary nodes` metric remains the issue's
+80,000-node attribution bar.

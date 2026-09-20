@@ -37,15 +37,21 @@ def audit_dispatch(record, table):
             continue
         products = classified['selection']['products']
         entries = classified.get('entries', 'list')
+        if entries not in tables:
+            raise ValueError(f'{stem}: unknown entry encoding {entries!r}')
         covered = classified['classification'] == 'eligible' and all(
             tuple(p['key']) in tables[entries] for p in products)
         certificates = [e for e in sample['routes'] if e['route'].startswith(('packed/', 'term-list'))]
+        # Resource declines may fall back after product admission. A tree-table
+        # miss can also use independently covered list keys; audit its actual encoding.
         if not covered and not certificates and any(e['route'] == 'fallback' for e in sample['routes']):
             continue
         if len(certificates) != 1:
             raise ValueError(f'{stem}: expected one certificate, saw {sample["routes"]}')
         certificate = certificates[0]
         actual_entries = certificate.get('entries', 'list')
+        if actual_entries not in tables:
+            raise ValueError(f'{stem}: unknown dispatched entry encoding {actual_entries!r}')
         if covered and (certificate['route'] != 'packed/plain' or actual_entries != entries):
             raise ValueError(f'{stem}: measured {entries} witness did not use its packed route')
         if certificate['route'].startswith('packed/'):
@@ -104,7 +110,7 @@ def main():
         ratio = f'{vals[3]/vals[2]:.3f}' if vals[2] is not None and vals[3] is not None and vals[2]>0 else '—'
         routes = dispatch['summary'][stem]['arms']['Dispatch']['routes']
         routes = [r for r in routes if r != 'certificate-attempt']
-        historical = [before['summary'][stem]['arms'][arm]['median_delta_ns']
+        historical = [before['summary'].get(stem, {}).get('arms', {}).get(arm, {}).get('median_delta_ns')
             for arm in ['Dispatch', 'Mathlib']] if before else []
         print(f'| {stem} | {forced["classification"][stem]["classification"]} | '+
               ' | '.join(map(fmt,historical + vals))+f' | {ratio} | {", ".join(routes) or "unobserved"} |')

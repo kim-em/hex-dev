@@ -28,6 +28,7 @@ from scripts.bench.det_packed_table import selected_tables
 
 PREFIX = 'HexPolyDetMathlib.ProofProbe.Packed'
 MANIFEST = ROOT / 'scripts/bench/det_packed_manifest.json'
+LIST_TABLE = Path('reports/bench-results/hex-det-packed/crossover.json')
 
 
 def read_record(path):
@@ -51,12 +52,14 @@ def main():
     parser.add_argument('--case', action='append', help='diagnostic subset only')
     args = parser.parse_args()
     manifest = json.loads(MANIFEST.read_text())
+    retained = json.loads((ROOT / LIST_TABLE).read_text())
+    list_provenance = dict(path=str(LIST_TABLE), sha256=hashlib.sha256((ROOT / LIST_TABLE).read_bytes()).hexdigest())
     cases = [c for c in manifest['cases'] if not args.case or c['stem'] in args.case]
     arms = ['Lists', 'Packed'] if args.stage == 'forced' else ['Dispatch', 'Mathlib']
     spec = sweep.SweepSpec(__doc__, tuple(p for c in cases for p in pairs(c, arms)),
         'HexPolyDetMathlibProofProbe', 'hex-det-packed-sweep-v1',
         'paired-fresh-module-olean-wall', 'hex-det-packed', required_samples=6,
-        absolute_only=True, extra_sources=(Path('scripts/bench/det_packed_manifest.json'),
+        absolute_only=True, extra_sources=(LIST_TABLE, Path('scripts/bench/det_packed_manifest.json'),
         Path('scripts/bench/det_packed_probes.py'), Path('scripts/bench/det_packed_table.py'),
         Path('scripts/bench/det_packed_report.py'),
         Path('bench/HexPolyDet/PackedBench.lean'),
@@ -107,6 +110,7 @@ def main():
             classification_sha256=hashlib.sha256(args.classification.read_bytes()).hexdigest() if args.classification else None,
             forced_sha256=hashlib.sha256(args.forced.read_bytes()).hexdigest() if args.forced else None,
             samples=records, profiles=profiles, summary=summary,
+            retained_list_keys=retained['keys'], list_table_provenance=list_provenance,
             default_simproc_enabled=False)
         tmp = args.output.with_suffix('.tmp')
         tmp.write_text(json.dumps(obj, indent=2) + '\n')

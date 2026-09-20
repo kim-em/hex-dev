@@ -303,8 +303,10 @@ shapes and bounds once; it does not replay the resource policy.
 Proof assembly gives the nested conjunction its stated `AllFin` expected
 type and constructs identification and transport applications directly,
 without Meta unification through the literal matrix and quoted payload.
-The frontend uses Lean’s compiled tree-size counter on the closed proof,
-including retained syntax and let-bound payloads, before kernel admission.
+The frontend uses compiled, capped counting of distinct nodes in the closed
+proof, including retained syntax and let-bound payloads, before kernel admission.
+Early admission counts the quoted payload itself; it does not estimate proof
+size by multiplying term counts by a constant.
 Do not traverse the assembled proof with an interpreted node counter.
 
 `checkDetPolyPackedMod_sound` uses `Kernel.mulTermsMod_sound` in the residue
@@ -535,9 +537,15 @@ measurements first, with separate tables for list entries and retained trees.
 Each tree key uses its structural packed bound and retained entry-node count;
 list keys use canonical entry support. Witness support and inner dimension
 remain common coordinates. Evidence never transfers between the two tables.
+The two-arm sweep measures the preferred packed encoding of each witness. It
+fits the tree table from those tree observations and may add measured list
+fallback keys; it does not erase the historical list table without a dedicated
+list-packed comparison. The retained list table and its source hash are named
+in the sweep record and table artifact. Fresh automatic-dispatch measurements
+include the costs of whichever retained route actually runs.
 The forced proof module, not the supplemental list-only compiled driver,
-determines the measured encoding and keys. Use the mode-selection table supplied by Kronecker's
-product benchmark. Then run fresh comparisons of the full automatic dispatch
+determines the measured encoding and keys. Use the mode-selection table
+supplied by Kronecker's product benchmark. Then run fresh comparisons of the full automatic dispatch
 using the fixed tables against unmodified `norm_det`. An empty-table dispatch
 run is a sparse-fallback control, not evidence about packed dispatch. Forced
 packing still obeys the hard limits; an ineligible case records a decline, not a packed timing. Keep the `n ≤ 3`
@@ -656,8 +664,9 @@ and proves determinant transport. The closed checker contains no `ZMod64`
 arithmetic.
 
 Producer-side grevlex terms are converted to canonical list order by merge sort.
-Generated value expressions use balanced sums, and entry identification uses
-direct list denotation, avoiding a round trip through the Hex matrix data.
+Generated value expressions use balanced sums. Tree entry identification uses
+denotation hints; the list fallback uses direct list denotation. Neither route
+makes a round trip through the Hex matrix data.
 The term form does not replay a reflexive comparison of its own value list.
 
 Limits are 16 rows, 65,536 certificate terms, 100,000 intermediate terms and

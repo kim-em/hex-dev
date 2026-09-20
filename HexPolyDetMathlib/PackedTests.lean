@@ -153,3 +153,25 @@ run_meta do
   | .declined (.budgetExhausted e) _ =>
     unless e.dimension == .proofNodes do throwError "wrong budget dimension"
   | _ => throwError "retained proof payload escaped its node budget"
+
+-- Repeated shared syntax must neither inflate the count nor defeat its cap.
+run_meta do
+  let mut e := Lean.mkRawNatLit 0
+  for _ in [:64] do e := Lean.mkApp e e
+  unless Hex.Reflect.proofNodeCount #[e] 32 == 32 do
+    throwError "proof-node counting did not stop at its cap"
+  unless Hex.Reflect.proofNodeCount #[e] 1000 == 65 do
+    throwError "shared syntax count {Hex.Reflect.proofNodeCount #[e] 1000}"
+
+-- Pin the abstract term form to the tree route, not merely to a valid fallback.
+run_meta do
+  let mut pending := [``packedTermUniverse]
+  let mut found := false
+  while let name :: rest := pending do
+    pending := rest
+    let some value := (← Lean.getConstInfo name).value? (allowOpaque := true)
+      | throwError "missing generated abstract-carrier proof"
+    for used in value.getUsedConstants do
+      if used == ``HexMatrixMathlib.DetPoly.Tree.result_det then found := true
+      if (``packedTermUniverse).isPrefixOf used then pending := used :: pending
+  unless found do throwError "abstract term form did not use the tree certificate"

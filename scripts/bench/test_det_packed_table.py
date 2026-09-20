@@ -33,6 +33,14 @@ class EntryEncodingTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             audit_dispatch(record, dict(keys_by_entries=tables))
 
+    def test_unmeasured_list_table_is_preserved(self):
+        record = self.record()
+        legacy = (64, 2, 8, 2, 4)
+        record['retained_list_keys'] = [list(legacy)]
+        _, tables = selected_tables(record)
+        self.assertEqual(tables['list'], [legacy])
+        self.assertNotIn((32, 1, 4, 1, 2), tables['list'])
+
     def test_wrong_encoding_cannot_fit_tree_table(self):
         record = self.record()
         record['samples'][1]['routes'][0]['entries'] = 'list'

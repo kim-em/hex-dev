@@ -22,12 +22,6 @@ def treeValid (k : Nat) (a : TreeMatrix) : Bool :=
 def treeShape (k n m : Nat) (a : TreeMatrix) : Bool :=
   a.length == n && a.all (fun row => row.length == m) && treeValid k a
 
-def treeBounds (cap k : Nat) (a : TreeMatrix) : List (List Bounds) :=
-  a.map (List.map (fun e => (e.analyze cap k []).1))
-
-def treeObserved (cap k : Nat) (a : TreeMatrix) : List Bounds :=
-  a.flatten.foldl (fun observed e => (e.analyze cap k observed).2) []
-
 /-- Collect root and intermediate bounds in one traversal of each tree. -/
 def analyzeTrees (cap k : Nat) (a : TreeMatrix) : List (List Bounds) × List Bounds :=
   let (rows, observed) := a.foldl (fun (rows, observed) row =>
