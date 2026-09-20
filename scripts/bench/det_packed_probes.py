@@ -130,8 +130,8 @@ def main():
         source = (DEST/f'Packed{stem}Dispatch.lean').read_text().replace('profiler.threshold 1000000','profiler.threshold 0')
         (DEST/f'Packed{stem}Profile.lean').write_text(source)
     MANIFEST.write_text(json.dumps(dict(schema='hex-det-packed-v1',cases=cases,infeasible=infeasible,
-        crossover_rule='union of keys from eligible witnesses with six complete samples per arm and 0 < packed median < term-list median',
-        crossover_keys=['packedBits','leftSupport','rightSupport','resultSupport','inner'],
+        crossover_rule='separate list/tree key unions from eligible witnesses with six complete samples per arm and 0 < packed median < term-list median',
+        crossover_keys=['packedBits','leftSupport','rightSize','resultSupport','inner'],
         limits=dict(digits=65536,bits=16777216,seconds=45), profiles=profiles,
         schedule='six adjacent pairs, trial-major rotation, AB/BA, retained failures and declines',
         stages=['forced term-list versus forced packed on identical witnesses','fixed-table dispatch versus unmodified Mathlib norm_det']),indent=2)+'\n')

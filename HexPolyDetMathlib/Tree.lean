@@ -386,21 +386,52 @@ theorem target_det (k n : Nat) (rows : TreeMatrix)
   rw [transport_det k n rows w ctx A hcheck hA,
     ← hq, he]
 
-/-- Reconstruct a witness value by scalar operations, without normalization. -/
-@[expose] def value (k : Nat) (ctx : Lean.RArray F) : Hex.MvPoly.Kernel.PolyList Int → F
-  | [] => 0
-  | (es,c) :: ts => (c : F) * (List.ofFn (fun i : Fin k => ctx.get i.val ^ es.getD i.val 0)).prod +
-      value k ctx ts
+/-- One monomial reconstructed by scalar operations. -/
+@[expose] def termValue (k : Nat) (ctx : Lean.RArray F)
+    (t : List Nat × Int) : F :=
+  (t.2 : F) * (List.ofFn (fun i : Fin k => ctx.get i.val ^ t.1.getD i.val 0)).prod
+
+/-- A balanced sum with a structural fuel bound; only logarithmically many
+recursive calls lie on a branch for a well-sized input. -/
+@[expose] def valueAux (k : Nat) (ctx : Lean.RArray F) :
+    Nat → Hex.MvPoly.Kernel.PolyList Int → F
+  | 0, _ => 0
+  | _ + 1, [] => 0
+  | _ + 1, [t] => termValue k ctx t
+  | fuel + 1, ts@(_ :: _ :: _) =>
+    let half := ts.length / 2
+    valueAux k ctx fuel (ts.take half) + valueAux k ctx fuel (ts.drop half)
+
+/-- Reconstruct a witness value with balanced sums, without normalization. -/
+@[expose] def value (k : Nat) (ctx : Lean.RArray F) (ts : Hex.MvPoly.Kernel.PolyList Int) : F :=
+  valueAux k ctx ts.length ts
+
+private theorem valueAux_eq (k : Nat) (ctx : Lean.RArray F) (fuel : Nat)
+    (ts : Hex.MvPoly.Kernel.PolyList Int) (h : ts.length ≤ fuel) :
+    valueAux k ctx fuel ts = (ts.map (termValue k ctx)).sum := by
+  induction fuel generalizing ts with
+  | zero => have : ts = [] := List.eq_nil_of_length_eq_zero (by omega); subst ts; rfl
+  | succ fuel ih =>
+    cases ts with
+    | nil => rfl
+    | cons t ts =>
+      cases ts with
+      | nil => simp [valueAux]
+      | cons u ts =>
+        rw [valueAux, ih _ (by simp only [List.length_take, List.length_cons] at *; omega),
+          ih _ (by simp only [List.length_drop, List.length_cons] at *; omega)]
+        rw [← List.sum_append, ← List.map_append, List.take_append_drop]
 
 theorem value_eq (k : Nat) (ctx : Lean.RArray F) (ts : Hex.MvPoly.Kernel.PolyList Int) :
     denoteTerms F (fun i : Fin k => ctx.get i.val) ts = value k ctx ts := by
+  rw [value, valueAux_eq k ctx ts.length ts (by rfl)]
   induction ts with
-  | nil => simp [denoteTerms, value]
+  | nil => simp [denoteTerms]
   | cons t ts ih =>
     obtain ⟨es,c⟩ := t
     simp only [denoteTerms, termsPolynomial_cons, map_add, MvPolynomial.eval₂Hom_monomial,
       Finsupp.prod_pow, HexMvPolyMathlib.monoEquiv_apply,
-      Hex.MvPoly.Kernel.get_mono, value, List.prod_ofFn]
+      Hex.MvPoly.Kernel.get_mono, List.map_cons, List.sum_cons, termValue, List.prod_ofFn]
     exact congrArg (_ + ·) ih
 
 /-- The term form identifies its reconstructed value by denotation alone. -/

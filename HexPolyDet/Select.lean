@@ -42,7 +42,8 @@ def Product.map (f : R → S) (a : Product R) : Product S :=
 structure Key where
   packedBits : Nat
   leftSupport : Nat
-  rightSupport : Nat
+  /-- List support or retained tree nodes, according to the selected table. -/
+  rightSize : Nat
   resultSupport : Nat
   inner : Nat
   deriving Repr, BEq, Inhabited
@@ -107,6 +108,21 @@ def crossover : List Key := [
   ⟨47940, 188, 64, 143, 4⟩,
   ⟨48020, 204, 64, 160, 4⟩
 ]
+
+/-- Tree-entry keys are fitted independently from forced tree proof timings. -/
+def treeCrossover : List Key := []
+
+/-- Syntax size of a retained entry, independent of polynomial expansion. -/
+def treeNodes : Hex.Kronecker.Expr → Nat
+  | .int _ | .atom _ => 1
+  | .neg a | .pow a _ => 1 + treeNodes a
+  | .add a b | .sub a b | .mul a b => 1 + treeNodes a + treeNodes b
+
+def Product.treeKey (a : Product (PolyList Int)) (s : SizeBound)
+    (b : TreeMatrix) : Key :=
+  ⟨s.packedBits, support a.left,
+    b.foldl (fun n row => row.foldl (fun n e => n + treeNodes e) n) 0,
+    support a.result, a.inner⟩
 
 /-- Explicit comparison overrides do not waive either hard packing limit. -/
 inductive Arm where

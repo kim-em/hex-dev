@@ -303,9 +303,9 @@ shapes and bounds once; it does not replay the resource policy.
 Proof assembly gives the nested conjunction its stated `AllFin` expected
 type and constructs identification and transport applications directly,
 without Meta unification through the literal matrix and quoted payload.
-Charge the proof-node budget from the serialized payload and retained
-syntax sizes, or use compiled node counting; do not traverse the assembled
-proof with an interpreted node counter.
+The frontend uses Lean’s compiled tree-size counter on the closed proof,
+including retained syntax and let-bound payloads, before kernel admission.
+Do not traverse the assembled proof with an interpreted node counter.
 
 `checkDetPolyPackedMod_sound` uses `Kernel.mulTermsMod_sound` in the residue
 polynomial model for each supplemental quotient row. It recovers the
@@ -531,7 +531,12 @@ The packed implementation reruns the shared families in
 retaining its infeasible cases, failures and declines. For every certificate
 case compare forced term lists and forced packed checking on the same
 witness and proposition. Fix the sparse/packed crossover table from those
-measurements first, with the mode-selection table supplied by Kronecker's
+measurements first, with separate tables for list entries and retained trees.
+Each tree key uses its structural packed bound and retained entry-node count;
+list keys use canonical entry support. Witness support and inner dimension
+remain common coordinates. Evidence never transfers between the two tables.
+The forced proof module, not the supplemental list-only compiled driver,
+determines the measured encoding and keys. Use the mode-selection table supplied by Kronecker's
 product benchmark. Then run fresh comparisons of the full automatic dispatch
 using the fixed tables against unmodified `norm_det`. An empty-table dispatch
 run is a sparse-fallback control, not evidence about packed dispatch. Forced
@@ -779,7 +784,7 @@ samples are required; ratios use positive medians only.
 
 ### Packed comparison outcome
 
-The packed crossover contains 50 exact product keys from 14 witnesses with six
+The pre-tree baseline packed crossover contains 50 exact product keys from 14 witnesses with six
 successful samples in each forced arm and a positive packed median smaller than
 the term-list median. The automatic comparison uses the same fixture population
 as table fitting, with fresh samples: it is an in-sample dispatch comparison,

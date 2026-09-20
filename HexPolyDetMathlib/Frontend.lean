@@ -95,8 +95,8 @@ def quoteWitness {C : Type} [ToExpr C] (w : Hex.Matrix.DetWitness (MvPoly.Kernel
     return mkApp4 (mkConst ``Hex.Matrix.DetWitness.triangular) ty (toExpr s) (toExpr t) (toExpr d)
   | .singular v => return mkApp2 (mkConst ``Hex.Matrix.DetWitness.singular) ty (toExpr v)
 
-/-- Close over the local context before the one synchronous kernel check. -/
-def checked (target proof : Expr) (profileName : String := "det.symbolic.kernel") : MetaM Expr := do
+/-- Close the proof and its type over every retained local declaration. -/
+def closeProof (target proof : Expr) : MetaM (Expr × Expr × Array Expr) := do
   let all := (← getLCtx).getFVars
   let mut needed := collectFVars (collectFVars {} target) proof
   for e in all.reverse do
@@ -109,11 +109,26 @@ def checked (target proof : Expr) (profileName : String := "det.symbolic.kernel"
     (generalizeNondepLet := false)
   let proof ← mkLambdaFVars locals proof (usedOnly := false) (usedLetOnly := false)
     (generalizeNondepLet := false)
-  let result ← profileitM Exception profileName (← getOptions) <|
-    withOptions (fun o => o.setBool `profiler false) do
-      addClosedProof (← instantiateMVars type) (← instantiateMVars proof)
   let args ← locals.filterM fun e => return !(← e.fvarId!.getDecl).isLet
+  return (← instantiateMVars type, ← instantiateMVars proof, args)
+
+private def checkClosed (type proof : Expr) (args : Array Expr) (profileName : String) : MetaM Expr := do
+  let result ← profileitM Exception profileName (← getOptions) <|
+    withOptions (fun o => o.setBool `profiler false) do addClosedProof type proof
   return mkAppN result args
+
+/-- Close over the local context before the one synchronous kernel check. -/
+def checked (target proof : Expr) (profileName : String := "det.symbolic.kernel") : MetaM Expr := do
+  let (type, proof, args) ← closeProof target proof
+  checkClosed type proof args profileName
+
+/-- Lean's core counter is compiled into the executable. Charge the closed term,
+including let-bound payloads and retained syntax, before kernel admission. -/
+def checkedBudgeted (target proof : Expr) : ReflectM (Expr × Nat) := do
+  let (type, proof, args) ← closeProof target proof
+  let nodes := profileit "det.symbolic.nodes" (← getOptions) fun _ => proof.sizeWithoutSharing
+  charge .proofNodes nodes
+  return (← checkClosed type proof args "det.symbolic.kernel", nodes)
 
 /-- Replay only structural polynomial lists in an entry identification proof. -/
 def entryProof (k : Nat) (ctx : Expr) (r : ReifiedRing) (p : Poly)
@@ -271,7 +286,7 @@ def computeResidue (p : Nat) (provider : CoeffProvider) (A : Expr)
   preflight lit.n k (lists.map fun row => row.map fun a => a.map fun (m, c) => (m, (c : Int)))
   let some produced := profileit "det.symbolic.producer" (← getOptions) fun _ =>
       residueWitness? p k lit.n (lists.toList.map Array.toList)
-    | failWith (.internal "residue determinant producer failed its own check")
+    | decline m!"residue modulus must be prime and below 2^31"
   let w ← requireWitness produced
   let d := Residue.value w
   let witnessEntries := match w with
@@ -318,35 +333,40 @@ def computeResidue (p : Nat) (provider : CoeffProvider) (A : Expr)
     | none =>
       return mkAppN (← mkAppM ``Residue.result_det
         #[toExpr p, toExpr k, toExpr lit.n, rowsE, wE, ctx, A, r.source]) #[hcheck, hA, he]
-  let proofNodes := (size + q.length + lists.flatten.foldl (fun n a => n + a.length) 0) * (4 * k + 24)
-  charge .proofNodes proofNodes
+  let target ← mkEq (← mkAppM ``Matrix.det #[A]) r.source
+  let (proof, proofNodes) ← checkedBudgeted target proof
   trace[HexMatrix.certificate] "{(Json.mkObj (Certificate.fields selection "residue" ++ [
     ("modulus", toJson p), ("proof_node_budget", toJson proofNodes), ("atoms", toJson k)])).compress}"
-  let target ← mkEq (← mkAppM ``Matrix.det #[A]) r.source
-  return { value := r.source, proof := ← checked target proof }
+  return { value := r.source, proof }
 
 /-- Tree entry identification uses only the retained expression's denotation. -/
-def treeEntry (ctx : Expr) (r : ReifiedRing) : MetaM Expr := do
+def treeEntry (ctx : Expr) (r : ReifiedRing) : MetaM (Option Expr) := do
   let h ← mkAppM ``HexKroneckerMathlib.fromGrind_denote #[ctx, toExpr r.expr]
-  let some (_, lhs, _) := (← inferType h).eq? | throwError "det: malformed tree denotation proof"
-  mkExpectedTypeHint h (← mkEq lhs r.source)
+  let some (_, lhs, rhs) := (← inferType h).eq? | throwError "det: malformed tree denotation proof"
+  unless ← withTransparency .default (isDefEq rhs r.source) do
+    trace[HexMatrix.certificate] "det tree entry denotation mismatch; using list entry proofs"
+    return none
+  return some (← mkExpectedTypeHint h (← mkEq lhs r.source))
 
 /-- Scalar reconstruction follows `Tree.value` definitionally. No polynomial
 normalization or identity comparison is needed for a generated term value. -/
-def treeValue (carrier : Expr) (atoms : Array Expr) (d : Poly) : MetaM Expr := do
-  let mut value ← mkNumeral carrier 0
-  for (es, c) in d.reverse do
+partial def treeValue (carrier : Expr) (atoms : Array Expr) (d : Poly) : MetaM Expr := do
+  match d with
+  | [] => mkNumeral carrier 0
+  | [(es, c)] =>
     let mut product ← mkNumeral carrier 1
     for i in (List.range atoms.size).reverse do
-      let x := atoms[i]!
-      let power ← mkAppM ``HPow.hPow #[x, toExpr (es.getD i 0)]
+      let power ← mkAppM ``HPow.hPow #[atoms[i]!, toExpr (es.getD i 0)]
       product ← mkAppM ``HMul.hMul #[power, product]
     let coeff ← mkAppOptM ``Int.cast #[some carrier, none, some (toExpr c)]
-    value ← mkAppM ``HAdd.hAdd #[← mkAppM ``HMul.hMul #[coeff, product], value]
-  return value
+    mkAppM ``HMul.hMul #[coeff, product]
+  | _ =>
+    let half := d.length / 2
+    mkAppM ``HAdd.hAdd #[← treeValue carrier atoms (d.take half),
+      ← treeValue carrier atoms (d.drop half)]
 
 /-- Assemble a tree certificate after its product and target preflights pass. -/
-def computeTree? (A ctx : Expr) (lit : Recognized) (k : Nat) (atoms : Array Expr) (size : Nat)
+def computeTree? (A ctx : Expr) (lit : Recognized) (k : Nat) (atoms : Array Expr) (seed : ReifiedRing)
     (reified : Array (Array ReifiedRing)) (lists : Array (Array Poly))
     (w : Hex.Matrix.DetWitness Poly) (r : ReifiedRing) (rhs? : Option Expr)
     (normalized : Option (Array (Nat × Array Normalize.Result)))
@@ -384,7 +404,7 @@ def computeTree? (A ctx : Expr) (lit : Recognized) (k : Nat) (atoms : Array Expr
         for i in [:lit.n] do
           let mut hs := #[]
           for j in [:lit.n] do
-            let h ← treeEntry ctx ((reified[i]!).getD j r)
+            let some h ← treeEntry ctx ((reified[i]!).getD j seed) | return none
             let h ← match normalized with
               | none => mkEqSymm h
               | some rs => mkEqTrans h (rs[i]!.2[j]!).proof
@@ -392,9 +412,14 @@ def computeTree? (A ctx : Expr) (lit : Recognized) (k : Nat) (atoms : Array Expr
           hrows := hrows.push hs
         let B ← mkAppM ``Tree.evaluated #[toExpr lit.n, treesE, ctx]
         let displayed ← if rhs?.isSome then pure r.source else treeValue lit.carrier atoms d
-        let he ← if rhs?.isSome then treeEntry ctx r else do
+        let he? ← if rhs?.isSome then treeEntry ctx r else do
           let lhs ← mkAppM ``Tree.value #[toExpr k, ctx, dE]
-          pure (mkExpectedPropHint (← mkEqRefl displayed) (← mkEq lhs displayed))
+          if ← withTransparency .default (isDefEq lhs displayed) then
+            pure (some (mkExpectedPropHint (← mkEqRefl displayed) (← mkEq lhs displayed)))
+          else
+            trace[HexMatrix.certificate] "det tree value denotation mismatch; using list entry proofs"
+            pure none
+        let some he := he? | return none
         let (value, proof) ← if normalized.isSome then do
             let sE := toExpr scales.toList
             let hA ← applyEntryHints (← mkAppM ``Scaling.identify #[toExpr lit.n, A, B, sE])
@@ -428,12 +453,11 @@ def computeTree? (A ctx : Expr) (lit : Recognized) (k : Nat) (atoms : Array Expr
                 pure <| mkAppN (← mkAppM ``Tree.result_det
                   #[toExpr k, toExpr lit.n, treesE, wE, ctx, A, displayed]) #[hcheck, hA, he]
             pure (displayed, proof)
-        let proofNodes := (size + d.length) * (4 * k + 24)
-        charge .proofNodes proofNodes
+        let target ← mkEq (← mkAppM ``Matrix.det #[A]) value
+        let (proof, proofNodes) ← checkedBudgeted target proof
         trace[HexMatrix.certificate] "{(Json.mkObj (Certificate.fields selection "integer" ++ [
           ("entries", toJson "tree"), ("proof_node_budget", toJson proofNodes), ("atoms", toJson k)])).compress}"
-        let target ← mkEq (← mkAppM ``Matrix.det #[A]) value
-        return some { value, proof := ← checked target proof }
+        return some { value, proof }
 
 /-- One batch, one elimination and one kernel check for a symbolic determinant.
 The optional target is reified before sealing, and may not allocate new atoms. -/
@@ -543,7 +567,7 @@ def compute (A : Expr) (rhs? : Option Expr := none) : MetaM (Outcome Result) := 
         let e := expression d
         let source ← (denoteRingExpr sealed.atoms e : ReaderT Nat ReflectM Expr).run seed.ringId
         pure { seed with expr := e, source }
-    if let some result ← computeTree? A ctx lit k sealed.atoms size reified lists w r rhs?
+    if let some result ← computeTree? A ctx lit k sealed.atoms seed reified lists w r rhs?
         normalized targetNorm scales D t then return result
     let rowsE := toExpr (lists.toList.map Array.toList)
     let wE ← quoteWitness w
@@ -595,8 +619,8 @@ def compute (A : Expr) (rhs? : Option Expr := none) : MetaM (Outcome Result) := 
         pure <| mkAppN (← mkAppM ``Polynomial.result_det
           #[toExpr k, toExpr lit.n, rowsE, wE, ctx, A, r.source]) #[hcheck, hA, he]
       pure (r.source, proof)
-    let proofNodes := (size + q.length + lists.flatten.foldl (fun n a => n + a.length) 0) * (4 * k + 24)
-    charge .proofNodes proofNodes
+    let target ← mkEq (← mkAppM ``Matrix.det #[A]) value
+    let (proof, proofNodes) ← checkedBudgeted target proof
     let witnessEntries := match w with
       | .triangular _ rows d => d :: rows.flatten
       | .singular v => v
@@ -606,8 +630,7 @@ def compute (A : Expr) (rhs? : Option Expr := none) : MetaM (Outcome Result) := 
          ("max_minor_support", toJson (witnessEntries.foldl (fun n p => max n p.length) 0)),
          ("max_minor_degree", toJson (witnessEntries.foldl (fun n p =>
            p.foldl (fun n (m, _) => max n (m.foldl (· + ·) 0)) n) 0))])
-    let target ← mkEq (← mkAppM ``Matrix.det #[A]) value
-    return { value, proof := ← checked target proof : Result }
+    return { value, proof : Result }
   match outcome with
   | .success r _ => return .success r
   | .declined (.providerCondition _ reason) _ => return .declined m!"{reason}"

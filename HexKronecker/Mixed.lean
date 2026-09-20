@@ -28,6 +28,15 @@ def treeBounds (cap k : Nat) (a : TreeMatrix) : List (List Bounds) :=
 def treeObserved (cap k : Nat) (a : TreeMatrix) : List Bounds :=
   a.flatten.foldl (fun observed e => (e.analyze cap k observed).2) []
 
+/-- Collect root and intermediate bounds in one traversal of each tree. -/
+def analyzeTrees (cap k : Nat) (a : TreeMatrix) : List (List Bounds) × List Bounds :=
+  let (rows, observed) := a.foldl (fun (rows, observed) row =>
+    let (bounds, observed) := row.foldl (fun (bounds, observed) e =>
+      let (bound, observed) := e.analyze cap k observed
+      (bound :: bounds, observed)) ([], observed)
+    (bounds.reverse :: rows, observed)) ([], [])
+  (rows.reverse, observed)
+
 /-- Native natural powers also implement integer powers, with a sign case.
 This is definitionally the usual integer power, avoiding the custom loop. -/
 def Kernel.evalTree (base : Nat) (strides : List Nat) (e : Expr) : Int :=
@@ -46,11 +55,11 @@ def sizeMulTree (budget : Budget) (mode : MulMode) (k n r m : Nat)
   else
     let cap := 2 ^ budget.maxPackedBits
     let ab := matrixBounds cap k a
-    let bb := treeBounds cap k b
+    let (bb, treeObserved) := analyzeTrees cap k b
     let cb := matrixBounds cap k c
     let products := productBounds cap k (boundColumns k m bb) ab
     let common := commonBounds cap k products.flatten cb.flatten
-    let observed := ab.flatten ++ treeObserved cap k b ++ cb.flatten ++ products.flatten
+    let observed := ab.flatten ++ treeObserved ++ cb.flatten ++ products.flatten
     .ok ((makeSize budget common observed).withMode budget mode r)
 
 def sizeMulTreeMod (budget : Budget) (mode : MulMode) (k n r m p : Nat)
@@ -65,14 +74,14 @@ def sizeMulTreeMod (budget : Budget) (mode : MulMode) (k n r m p : Nat)
   else
     let cap := 2 ^ budget.maxPackedBits
     let ab := matrixBounds cap k a
-    let bb := treeBounds cap k b
+    let (bb, treeObserved) := analyzeTrees cap k b
     let cb := matrixBounds cap k c
     let qb := matrixBounds cap k q
     let products := productBounds cap k (boundColumns k m bb) ab
     let differences := differenceBounds cap products.flatten cb.flatten
     let scaled := qb.flatten.map ((Bounds.mk (zeroDegrees k) (min p cap)).mul cap)
     let common := commonBounds cap k differences scaled
-    let observed := ab.flatten ++ treeObserved cap k b ++ cb.flatten ++ qb.flatten ++
+    let observed := ab.flatten ++ treeObserved ++ cb.flatten ++ qb.flatten ++
       products.flatten ++ differences ++ scaled
     .ok ((makeSize budget common observed).withMode budget mode r)
 

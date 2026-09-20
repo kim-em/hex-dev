@@ -24,7 +24,7 @@ sys.path.insert(0, str(ROOT))
 from scripts.bench import fresh_module_sweep as sweep
 from scripts.bench.det_symbolic_sweep import AXIOMS, cpu_lease, routes
 from scripts.bench.det_packed_report import audit_dispatch
-from scripts.bench.det_packed_table import selected
+from scripts.bench.det_packed_table import selected_tables
 
 PREFIX = 'HexPolyDetMathlib.ProofProbe.Packed'
 MANIFEST = ROOT / 'scripts/bench/det_packed_manifest.json'
@@ -223,8 +223,8 @@ def main():
                     profiles.append(dict(stem=case['stem'], state='timeout', timeout_seconds=45))
                 save()
     if args.stage == 'dispatch':
-        _, keys = selected(read_record(args.forced))
-        audit_dispatch(dict(samples=records, classification=classification['classification']), dict(keys=keys))
+        _, tables = selected_tables(read_record(args.forced))
+        audit_dispatch(dict(samples=records, classification=classification['classification']), dict(keys_by_entries=tables))
     finished = True
     save()
     lease.close()

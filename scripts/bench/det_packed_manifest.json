@@ -2607,11 +2607,11 @@
       "reason": "support exceeds the number of monomials"
     }
   ],
-  "crossover_rule": "union of keys from eligible witnesses with six complete samples per arm and 0 < packed median < term-list median",
+  "crossover_rule": "separate list/tree key unions from eligible witnesses with six complete samples per arm and 0 < packed median < term-list median",
   "crossover_keys": [
     "packedBits",
     "leftSupport",
-    "rightSupport",
+    "rightSize",
     "resultSupport",
     "inner"
   ],

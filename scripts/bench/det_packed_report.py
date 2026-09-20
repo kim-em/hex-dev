@@ -25,8 +25,9 @@ def read_record(directory, name):
 
 
 def audit_dispatch(record, table):
-    """Check actual routes against the fixed table, including retained records."""
-    keys = {tuple(k) for k in table['keys']}
+    """Validate each packed route against evidence for its actual entry encoding."""
+    tables = table.get('keys_by_entries', {'list': table.get('keys', []), 'tree': []})
+    tables = {encoding: {tuple(k) for k in keys} for encoding, keys in tables.items()}
     for sample in record['samples']:
         if sample['arm'] != 'Dispatch' or sample['candidate']['state'] != 'complete':
             continue
@@ -35,19 +36,25 @@ def audit_dispatch(record, table):
         if classified['classification'] not in ['eligible', 'packed-decline']:
             continue
         products = classified['selection']['products']
-        packed = classified['classification'] == 'eligible' and all(tuple(p['key']) in keys for p in products)
-        expected = 'packed/plain' if packed else 'term-list'
+        entries = classified.get('entries', 'list')
+        covered = classified['classification'] == 'eligible' and all(
+            tuple(p['key']) in tables[entries] for p in products)
         certificates = [e for e in sample['routes'] if e['route'].startswith(('packed/', 'term-list'))]
-        # Proof-node declines can follow product eligibility. They are retained as fallback,
-        # but a covered witness must actually exercise the packed route to validate dispatch.
-        if not packed and not certificates and any(e['route'] == 'fallback' for e in sample['routes']):
+        if not covered and not certificates and any(e['route'] == 'fallback' for e in sample['routes']):
             continue
-        if len(certificates) != 1 or certificates[0]['route'] != expected:
-            raise ValueError(f'{stem}: expected {expected}, saw {sample["routes"]}')
-        if packed:
-            actual = [list(map(int, re.findall(r':= (\d+)', p['key']))) for p in certificates[0]['products']]
-            if actual != [p['key'] for p in products]:
+        if len(certificates) != 1:
+            raise ValueError(f'{stem}: expected one certificate, saw {sample["routes"]}')
+        certificate = certificates[0]
+        actual_entries = certificate.get('entries', 'list')
+        if covered and (certificate['route'] != 'packed/plain' or actual_entries != entries):
+            raise ValueError(f'{stem}: measured {entries} witness did not use its packed route')
+        if certificate['route'].startswith('packed/'):
+            actual = [list(map(int, re.findall(r':= (\d+)', p['key']))) for p in certificate['products']]
+            if not all(tuple(key) in tables[actual_entries] for key in actual):
+                raise ValueError(f'{stem}: packed route used unmeasured {actual_entries} keys')
+            if actual_entries == entries and actual != [p['key'] for p in products]:
                 raise ValueError(f'{stem}: dispatched witness keys differ from preflight')
+
 
 
 def main():

@@ -5,7 +5,7 @@ The symbolic simproc remains opt-in: no default `Hex.norm_det` dispatch is
 enabled. This uses the SPEC’s opt-in exception; fallback preserves scope but
 does not establish a performance win.
 
-## Packed certificate comparison
+## Historical list-entry packed certificate comparison
 
 The packed arm is available through the opt-in symbolic handler. Its fixed
 crossover table contains 50 product keys from 14 witnesses whose packed

@@ -101,7 +101,7 @@ def tree? (k n : Nat) (rows : List (List (MvPoly.Kernel.PolyList Int)))
       | .singular _ => permuted
     let .ok size := Kronecker.sizeMulTree budget mode k 1 p.inner p.width [p.left] b [p.result]
       | throwError "det: malformed tree product at row {p.row}"
-    let report : Report := ⟨p.row, size, p.key size⟩
+    let report : Report := ⟨p.row, size, p.treeKey size b⟩
     if !size.accepts budget then
       trace[HexMatrix.certificate] "det tree preflight: {declineMessage budget report}"
       return none
@@ -112,7 +112,9 @@ def tree? (k n : Nat) (rows : List (List (MvPoly.Kernel.PolyList Int)))
     if !size.accepts budget then
       trace[HexMatrix.certificate] "det tree target preflight exceeds packing budget; using list entry proofs"
       return none
-  if arm == .automatic && !reports.all (fun r => crossover.contains r.key) then return none
+  if arm == .automatic && !reports.all (fun r => treeCrossover.contains r.key) then
+    trace[HexMatrix.certificate] "det tree crossover uncovered; using list entry proofs"
+    return none
   let selection : Selection := { mode, packed := true, reports }
   unless profileit "det.symbolic.selfcheck" opts (fun _ =>
       checkDetPolyPackedTree mode k n trees w selection.widths && (!hasTarget || Kronecker.Kernel.treeTermsEq k target value)) do

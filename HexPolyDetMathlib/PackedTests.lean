@@ -129,3 +129,27 @@ run_meta do
 example (x y : Rat) :
     (det% !![x / 2, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y]).value =
       (x ^ 2 / 2 - 1) * (y ^ 2 - 1) := by ring
+
+-- Generated values also authenticate their instances over abstract carriers.
+set_option hex.det.checker 2 in
+theorem packedTermUniverse {R : Type u} [CommRing R] (x y : R) :
+    Matrix.det !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y] =
+      (det% !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y]).value :=
+  (det% !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y]).proof
+
+/-- info: 'packedTermUniverse' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms packedTermUniverse
+
+-- Let-bound data must count towards admission even when the open proof is tiny.
+run_meta do
+  let outcome ← Hex.Reflect.run (Hex.Reflect.withOutcome do
+    let mut payload := Lean.mkNatLit 0
+    for _ in [:100] do payload := Lean.mkApp (Lean.mkConst ``Nat.succ) payload
+    Lean.Meta.withLetDecl `retained (Lean.mkConst ``Nat) payload fun x => do
+      HexMatrixMathlib.DetPoly.Frontend.checkedBudgeted (← Lean.Meta.mkEq x x)
+        (← Lean.Meta.mkEqRefl x)) { budget := { Hex.Reflect.Budget.default with proofNodes := 100 } }
+  match outcome with
+  | .declined (.budgetExhausted e) _ =>
+    unless e.dimension == .proofNodes do throwError "wrong budget dimension"
+  | _ => throwError "retained proof payload escaped its node budget"
