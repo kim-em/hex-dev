@@ -13,9 +13,12 @@ phase advancement or publication. The companion has its own directive
 [#10318](https://github.com/kim-em/hex-dev/issues/10318).
 
 `HexRealClosure`, namespace `Hex.RealClosure`, consumes `HexPoly`, `HexSturm`,
-`HexSignDet`, `HexOrderedFn` and `HexRealAlgebraic`. Rational-function and
-interval infrastructure is supplied below these inputs. The computational
-library and all its imports remain Mathlib-free. `HexRealClosureMathlib`
+`HexSignDet`, `HexOrderedFn` and `HexRealAlgebraic`. Rational-function
+infrastructure is supplied below these inputs. Real constants use caller-supplied
+approximation procedures and their certified rational bounds through
+hex-ordered-fn's interface. This family does not depend on `HexInterval` or
+`HexIntervalMathlib`, and supplies no built-in analytic constant providers.
+The computational library and all its imports remain Mathlib-free. `HexRealClosureMathlib`
 imports it, the companions of the inputs it uses, Mathlib and the explicitly
 listed Tau Ceti foundations. Mathlib instances and analytic correspondence
 live there. Keep the family's four computational libraries and four companions;
@@ -29,7 +32,7 @@ The division of responsibility is:
 | [hex-poly](../../HexPoly/SPEC/hex-poly.md#fallible-coefficient-operations) | Planned fallible coefficient records, semantic polynomial degree, positive pseudo-division, gcd/xgcd and exact division. Existing `HexPoly.Field` has total field routines, not this adapter or generic Yun decomposition. |
 | [hex-sturm](hex-sturm.md) | Ordered-field Tarski queries, root counts and coefficient evidence, using the shared signed-remainder kernel in hex-real-roots. |
 | [hex-sign-det](hex-sign-det.md) | Complete BKR tables and single-polynomial descriptors: validation, root identity/order, sign at a root and re-encoding. |
-| [hex-ordered-fn](hex-ordered-fn.md) | Guarded fractions, certified real-constant enclosures, infinitesimal orders and proof-founded total coefficient search. |
+| [hex-ordered-fn](hex-ordered-fn.md) | Guarded fractions, caller-supplied certified real-constant approximations, infinitesimal orders and proof-founded total coefficient search. |
 | [hex-real-algebraic](hex-real-algebraic.md) | Independent rational-base fast path; exact comparison and sorted roots with multiplicities. |
 | This library | Generic characteristic-zero Yun decomposition, staged contexts, tower coefficient-record adapters, selected-root arithmetic, splitting/transport, root isolation, tower sampling and exploration. |
 
@@ -503,7 +506,7 @@ has a name in a SPEC.
 | Tau Ceti, consumed by this companion | **Additional requested foundation:** every linearly ordered field `K` has an ordered real closed field `R` and an order-preserving field embedding `ι : K →+* R`, with `R` algebraic over `ι(K)`. Existence is missing on the pin and is explicit work alongside [#10300](https://github.com/kim-em/hex-dev/issues/10300). |
 | Tau Ceti through real-roots/sturm companions | Polynomial IVT and Rolle; signed-remainder/Cauchy-index identity with common factors and infinite endpoints. Consume the shared kernel's soundness; do not reprove a second Sturm–Tarski foundation here. |
 | Tau Ceti through sign-det companion | Thom injectivity/order, sign-count moment identity and correctness of support-preserving BKR reduction. Consume complete descriptor and sign-table correspondence. |
-| hex-ordered-fn-mathlib | Real evaluation under relative transcendence, certified-enclosure sign soundness/progress, Hahn-series infinitesimal embedding and ordered-field laws. An integer-exponent Hahn field is not real closed. |
+| hex-ordered-fn-mathlib | Real evaluation under relative transcendence, sign soundness/progress conditional on caller approximation laws, Hahn-series infinitesimal embedding and ordered-field laws. An integer-exponent Hahn field is not real closed. |
 | hex-real-roots-mathlib | Prove `IsRealClosed ℝ` from pinned real square-root and polynomial IVT/order results. The pin supplies no such instance. |
 | hex-real-algebraic-mathlib | Existing rational-base real closed carrier; compose its arithmetic/order/root correspondence for the trivial path. |
 | hex-real-closure-mathlib | Prove Yun correspondence, selected-root quotient and executable descent/equality, splitting and context transport, termination laws, ordered complete root lists, `Query.specialize`/`Sample.specialize` and finite-sign realization, and compatible-union real-closedness relative to the supplied ambient model. |
@@ -517,15 +520,22 @@ No axiom or new trusted external arithmetic/oracle boundary is introduced.
 
 ## Exploration and downstream integration
 
-Provide staged exploration with registered `π`, `e`, infinitesimals,
-arithmetic, checked inversion, comparison and polynomial `roots`. For example,
-build a bounded real-constant context containing `π,e`, certify `π<4` and
-`e>2` from enclosures, then adjoin `ε` and selected positive roots of
-`X²-ε`. Demonstrate `0<ε<sqrt(ε)<1`, `1/ε>n` for fixed integers, and a second
-infinitesimal smaller than every fixed positive power of the first. Adding
-that second infinitesimal after selecting a square root exercises enlargement
-and root transport. Examples are planned `#eval` demonstrations, not
-nonstandard-analysis tactics.
+Provide staged exploration with caller-registered computable real constants,
+infinitesimals, arithmetic, checked inversion, comparison and polynomial
+`roots`. A constant registration supplies its approximation procedure and
+replayable soundness evidence; total operations additionally require the
+specified effective progress and relative-transcendence laws. No particular
+analytic constant or approximation algorithm is built in.
+
+For example, a caller supplying certified procedures for `π,e` may build a
+bounded context, certify `π<4` and `e>2`, then adjoin `ε` and selected positive
+roots of `X²-ε`. These named-constant demonstrations are conditional examples,
+not provider implementation or proof obligations of this family. The
+infinitesimal examples also run over `ℚ`: demonstrate `0<ε<sqrt(ε)<1`,
+`1/ε>n` for fixed integers, and a second infinitesimal smaller than every fixed
+positive power of the first. Adding it after selecting a square root exercises
+enlargement and root transport. Examples are planned `#eval` demonstrations,
+not nonstandard-analysis tactics.
 
 Total modes for `π` and `e` are explicitly conditional: the pin lacks their
 individual transcendence theorems, and even both separately would not justify
@@ -533,14 +543,17 @@ transcendence of the second over the field generated by the first. Bounded
 certified signs need no algebraic-independence assumption. Retain all original
 divisor guards through cancellation; unresolved relations exhaust rather than
 becoming equality. Named constants and predecessor coefficients both require
-certified enclosures and progress for a total adapter.
+caller-supplied certified enclosures and progress for a total adapter. The
+family proves composition from those contracts; it does not implement or prove
+analytic approximation providers. An adapter to an interval library would be
+separate future work and is not a dependency or deliverable here.
 
 `Repr` emits reconstructible constructor syntax with the context DAG, named
 constant provider/version registrations, infinitesimal order, polynomial
 coefficients, root intervals and indexed Thom signs. The checked reader binds
 all dependencies and rejects changed registrations or stale references.
-`repr_roundtrip` says that re-reading emitted data with the same registry and
-sufficient resources succeeds and preserves denotation/root identity; caches
+`repr_roundtrip` says that re-reading emitted data with the same caller-supplied
+registry and sufficient resources succeeds and preserves denotation/root identity; caches
 need not match. Decimal display is not a reconstruction format. A conditional
 total mode reuses its law package rather than serializing proofs of
 transcendence as runtime data.
@@ -557,7 +570,8 @@ Downstream `rcf` integration still needs real-valued coefficient reification,
 registered constant/domain proofs, nested coefficient-sign replay, kernel
 quotation and the finite-sign realization exporter. Its current integer-only
 replay cannot consume these contexts unchanged. It may certify statements
-such as `∀ x : ℝ, x² > π-4` using `π<4`; no completeness covers unresolved
+such as `∀ x : ℝ, x² > π-4` when the caller supplies a certified `π<4`
+source through its constant registration; no completeness covers unresolved
 constant relations. Emit only evidence required by the final real statement.
 This SPEC implements neither a tactic nor multivariate CAD/coverings.
 
@@ -565,8 +579,11 @@ This SPEC implements neither a tactic nor multivariate CAD/coverings.
 
 Follow [testing](../testing.md) and [benchmarking](../benchmarking.md).
 Pin Z3 and record commit/version, generator command, exact input and output,
-context/order, budgets and fixture provenance for its `MkInfinitesimal`, `Pi`,
-`E`, `MkRoots` and comparisons. Use the
+context/order, budgets and fixture provenance for its `MkInfinitesimal`,
+`MkRoots` and comparisons. Z3 `Pi`/`E` comparisons are optional cases enabled
+only when the caller supplies matching certified approximation procedures;
+their presence in the external API does not require built-in Hex providers. Use
+the
 [Z3 RCF API](https://github.com/Z3Prover/z3/blob/master/src/api/python/z3/z3rcf.py)
 as a differential oracle, not a runtime dependency or proof of transcendence.
 Where its root API omits multiplicities, recover them independently from the
@@ -610,7 +627,10 @@ Required fixtures include:
 
 Reproduce the family's `basic.py`, degree-15 MetiTarski and `y³+x³+1` cases
 from `nlsat.py`, `tower8.py`, and Rioboo/Strzeboński workloads with recorded
-provenance. Cases without an external analogue need direct literal checks
+provenance. A case using a real constant records the caller-supplied
+approximation procedure and its law assumptions; when that input is unavailable,
+record the case as unsupported rather than adding an analytic provider or
+silently substituting a different constant. Cases without an external analogue need direct literal checks
 and explicit non-coverage records. Use small `decide`/`#guard` checks and
 compiled fixture campaigns; `native_decide` is banned. Future oracle
 registration extends the existing single CI job, not new workflows.

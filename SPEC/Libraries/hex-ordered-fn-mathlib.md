@@ -16,7 +16,7 @@ CI workflow, root algorithm, tactic or nonstandard-analysis claim.
 ## Placement and representations
 
 `HexOrderedFnMathlib` imports `HexOrderedFn`, `HexRationalFnMathlib`,
-`HexPolyMathlib`, `HexIntervalMathlib` and Mathlib. Keep the family's four
+`HexPolyMathlib` and Mathlib. Keep the family's four
 computational libraries and four companions. No input library, including
 `HexRealAlgebraic`, acquires a dependency on this family. No computational
 library imports this companion, Mathlib or Tau Ceti. Lower coefficient
@@ -83,7 +83,8 @@ are relative to that package, not proposed Hex modules.
 | Mathlib `RingTheory/LaurentSeries.lean` | Existing `RatFunc.coeToLaurentSeries`, using `algebraMap (RatFunc K) (LaurentSeries K)`, `RatFunc.coe_X`, and `RatFunc.algebraMap_apply_div`. `LaurentSeries K` is `HahnSeries ℤ K`. |
 | Mathlib `RingTheory/HahnSeries/Lex.lean` | Existing `LinearOrder` and `IsStrictOrderedRing` on the lex wrapper, `HahnSeries.lt_iff` and `leadingCoeff_pos_iff` (also negative/nonnegative variants). These concern Hahn series, not Hex's coefficient scan. |
 | Mathlib `RingTheory/HahnSeries/Summable.lean` | Existing `HahnSeries.instField` for ordered abelian exponent groups and field coefficients; `Lex.lean` alone does not supply division. |
-| [HexIntervalMathlib](hex-interval-mathlib.md) | Existing `Hex.Interval.Contains`, cut semantics and outward-arithmetic soundness. Registered source facts, their authentication, effective convergence and the new Horner evaluator's convergence must be connected here; containment alone supplies no progress theorem. |
+| `Hex.OrderedFn.Oracle.Bounds` and core exact arithmetic | The computational owner's finite closed rational bounds and bounded arithmetic. Prove real containment for singleton/intersection/negation/addition/multiplication and checked dyadic conversion here. No HexInterval import is required. |
+| Caller-supplied approximation procedure | Source-bound evidence/checker soundness, subject/context authentication and, for totality, an effective convergence schedule. The generic companion consumes these laws; it owns no named-constant approximation algorithm or analytic provider proof. |
 | Mathlib `Algebra/Polynomial/Degree/TrailingDegree.lean`, `Algebra/Polynomial/Reverse.lean` | Existing `Polynomial.natTrailingDegree`, `Polynomial.trailingCoeff` and `trailingCoeff_mul`. Relate the checked lowest-index scan to these, then to Hahn order/leading coefficient here. |
 | Mathlib `Basic/Sign/Defs.lean`, `Basic/Sign/Basic.lean` | Existing `SignType`, `SignType.sign`, `SignType.sign_mul` and `SignType.signHom`. Prove the computational `Sign` translation here; reuse these ordered-field sign laws. |
 | Mathlib `RingTheory/HahnSeries/Basic.lean`, `Multiplication.lean` | Existing coefficientwise `HahnSeries.map`, with `map_one` and `map_mul`. Bundling it as a ring hom and proving lexicographic order preservation for an injective strictly monotone coefficient hom are local obligations. Exponent transport via `embDomainRingHom` is a different operation. |
@@ -195,15 +196,22 @@ The canonical field element and its guarded source expression have distinct
 contracts: `(X-c)/(X-c)` is formally `1`, but its source expression cannot
 evaluate at `τ = ι c`. The same domain checks precede zero-numerator shortcuts.
 
-Prove `Real.enclose_sound` for each accepted polynomial Horner enclosure and,
-when exposed, fraction enclosure: the interval contains respectively `E P`
-or the value of `Evaluates`. Quotient enclosures require certified denominator
-separation and outward division. Sign checking can instead multiply the
-numerator and denominator signs without interval division. Use
-`Hex.Interval.Contains`, including open/closed cuts: an open lower cut at
-zero certifies positivity, a closed lower cut at zero does not. A
-zero-containing interval is not an equality proof. Zero signs need formal
-coefficient-zero evidence or a separately replayed exact evaluation identity.
+For a local finite closed `Bounds` value `I`, define `Contains I r` by
+`(I.lower : ℝ) ≤ r ∧ r ≤ (I.upper : ℝ)`. Prove the consumer's exact rational
+singleton, intersection, negation, endpoint-addition and four-product
+multiplication formulas preserve containment; retain all raw validation and
+resource conditions. A checked dyadic conversion preserves containment by
+outward rounding. These small arithmetic lemmas live here and use existing
+Mathlib rational/real ordered-field facts, without importing HexIntervalMathlib.
+
+Prove `Real.enclose_sound` for each accepted polynomial Horner enclosure:
+the bound contains `E P`, assuming the caller's accepted coefficient and
+constant facts contain their specified subjects. Signs multiply numerator
+and denominator signs, so fraction enclosure/division is not required.
+A strictly positive lower endpoint proves positivity and a strictly negative
+upper endpoint proves negativity. Closed bounds touching zero do not prove
+a nonzero sign; zero-containing bounds do not prove equality. Zero signs need
+formal coefficient-zero evidence or a separately replayed exact identity.
 
 For either total coefficients or the operation record, the headline theorem
 `Real.sign_sound` has shape
@@ -317,17 +325,18 @@ requires every successful producer to supply finite evidence accepted with
 sufficient replay resources. The computational `sign_checks` supplies an
 eventual replay envelope without starting a fresh approximation search.
 The companion must turn accepted finite evidence into a kernel theorem with
-all registered analytic source facts discharged. Runtime endpoints or a
+all source facts discharged by the caller-supplied evidence/checker laws. Runtime endpoints or a
 Boolean sign alone are not that theorem; a caller that supplies unproved
 source propositions gets only a theorem conditional on them.
 
 For real progress, every coefficient and `τ` must have containing finite
-enclosures with a computable schedule reaching width at most `2^(-k)` for
-each requested `k`. Prove `Real.horner_converges`: for each finite polynomial,
-simultaneous coefficient/argument refinement and vanishing outward-rounding
-error make the output width tend to zero. Continuity of polynomial evaluation
-alone is not a proof that a particular interval algorithm narrows. Use the
-finite Horner recurrence and interval arithmetic error bounds; jointly refine
+enclosures with a caller-supplied computable schedule reaching width at most
+`2^(-k)` for each requested `k`. Prove `Real.horner_converges`: for each finite
+polynomial, simultaneous coefficient/argument refinement makes the exact
+finite-bound Horner output width tend to zero. If optional dyadic conversion
+is used, its outward error must also vanish. Continuity alone does not prove
+this algorithm narrows: use its finite recurrence, bounded source magnitudes
+and elementary addition/product width estimates. Jointly refine
 all coefficient, denominator and retained-domain expressions. For each
 nonzero evaluation, a sufficiently narrow containing interval separates zero.
 Formal-zero inputs use eventual coefficient-zero/normalization evidence.
@@ -391,7 +400,13 @@ No `partial`, `unsafe`, opaque trusted callback or new axiom implements search.
 A certified computable bound is an alternative only if it bounds the entire
 pipeline and proves success there.
 
-## Named constants and limits of completeness
+## User-supplied constants and limits of completeness
+
+The companion proves the generic consumer contract under supplied source
+laws; it does not implement or prove an approximation procedure for any
+named constant. `HexInterval`/`HexIntervalMathlib` are not dependencies.
+A future downstream adapter may connect another enclosure library, without
+creating an obligation to implement or finish it here.
 
 The pin has the analytic part of Lindemann–Weierstrass, not the theorems
 `Transcendental ℚ Real.pi` or `Transcendental ℚ (Real.exp 1)`. Keep these as
@@ -400,9 +415,10 @@ would still not establish relative transcendence of `e` over embedded
 `ℚ(π)`, or joint algebraic independence of `π,e`. No total `ℚ(π,e)` ordering
 is claimed without that additional hypothesis.
 
-Certified bounded enclosures remain useful for both constants together,
-including `π-4 < 0`, and formal identities after all original domains are
-certified. Exact-zero proofs can extend this fragment, but unresolved
+If a caller supplies certified bounds for both constants, bounded examples
+such as `π-4 < 0` and formal identities after all original domains are
+certified remain valid. Such examples require no bundled π/e providers.
+Exact-zero proofs can extend this fragment, but unresolved
 relations exhaust. This is successful-result soundness, not a completeness
 promise. General transcendental reals also need effective certified
 approximation data: transcendence alone does not supply an executable oracle.
@@ -411,9 +427,10 @@ approximation data: transcendence alone does not supply an executable oracle.
 
 This is planned as `correspondence_only: true`, comparator absence class
 **correspondence-only-layer**. Computational conformance and performance owner:
-`HexOrderedFn`. Its SPEC owns the pinned Z3 `MkInfinitesimal`, `Pi`, `E` and
-arithmetic/sign comparisons, rational/python-flint cases and shared-host
-runtime measurements. This companion has no separate compiled benchmark
+`HexOrderedFn`. Its SPEC owns pinned Z3 infinitesimal and applicable
+arithmetic/sign comparisons, rational/python-flint cases, supplied-bound
+consumer tests and shared-host runtime measurements. Named-constant examples
+use caller-provided evidence and are not mandatory provider implementations. This companion has no separate compiled benchmark
 or new user tactic. Its build-only tests must prove the semantic conclusions,
 not merely compare two runtime outputs.
 
@@ -434,8 +451,8 @@ Required proof examples and adversarial replay cases include:
   belong downstream; this companion must not assert their membership in
   `HahnSeries ℤ K`.
 - Real enclosure success without transcendence, tiny nonzero numerator and
-  denominator values, non-dyadic coefficients, open versus closed zero cuts,
-  and joint coefficient/constant refinement. Small singleton rational facts
+  denominator values, non-dyadic rational singleton coefficients, closed
+  bounds touching zero, and joint coefficient/constant refinement. Small singleton rational facts
   can prove exact zero; intervals merely containing zero cannot.
 - `0/0`, a real pole and a cancelled source divisor at its zero, including a
   zero numerator with invalid domain. An oracle for rational `2` on `X-2`
@@ -455,11 +472,12 @@ and reject `sorryAx` or any new axiom; `native_decide` is banned. Imported
 planned foundations must be proved before an implementation claims discharge.
 
 Phase 4 reuses the owner's arithmetic/sign benchmarks and adds fresh-module
-proof evidence for representative real, infinitesimal and nested-record
+proof evidence for representative user-bound, infinitesimal and nested-record
 certificates: separate production, executable replay, elaboration and kernel
 checking; record proof/evidence size, retained cells, dependency sharing and
 lower-level replay composition. Do not rerun normalization or approximation
-search in kernel replay. Show both accepted and rejected/exhausted replay
+search in kernel replay. Named-constant generation and analytic provider
+proof performance are outside this contract. Show both accepted and rejected/exhausted replay
 remain within their stated resource contracts. Follow
 [benchmarking.md](../benchmarking.md#fresh-module-proof-evidence): the
 owner's compiled benches stay Mathlib-free; this companion reports build costs

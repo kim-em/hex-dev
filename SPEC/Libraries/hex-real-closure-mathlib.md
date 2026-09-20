@@ -16,9 +16,12 @@ nonstandard-analysis result is introduced by this SPEC.
 `HexRealClosureMathlib`, namespace `Hex.RealClosure`, imports
 `HexRealClosure`, `HexPolyMathlib`, `HexSturmMathlib`, `HexSignDetMathlib`,
 `HexOrderedFnMathlib`, `HexRealAlgebraicMathlib` and Mathlib, with the explicit
-Tau Ceti foundation below. Shared real-roots and interval correspondence
-comes through the preceding companions. Keep four computational libraries
-and four companions. No computational library imports this companion,
+Tau Ceti foundation below. Shared real-roots correspondence comes through
+the preceding companions. Real-constant approximation procedures and their
+soundness/progress evidence are supplied by callers through hex-ordered-fn;
+there is no dependency on `HexInterval` or `HexIntervalMathlib`. Analytic
+constant-provider implementations and proofs are outside this family. Keep
+four computational libraries and four companions. No computational library imports this companion,
 Mathlib or Tau Ceti; no existing input, including hex-real-algebraic, gains
 an import of this family. Coefficient callbacks are lower-level operation
 records, not reverse imports of selected-root implementations.
@@ -69,7 +72,7 @@ The audit baseline is Mathlib revision
 | Mathlib `FieldTheory/IsRealClosed/Basic.lean` | Existing class and `IsRealClosed.of_linearOrderedField`: nonnegative elements are squares and odd-degree polynomials have roots. This pin does not supply ordered real-closure existence or an `IsRealClosed ℝ` instance. |
 | Tau Ceti through [hex-real-roots-mathlib](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#shared-foundation-and-proof-ownership) and [hex-sturm-mathlib](hex-sturm-mathlib.md) | Planned polynomial IVT/Rolle, signed-remainder/Cauchy-index identity, and their Hex query/replay bridges. Include common gcds, zero query, positive scaling, root-free finite endpoints and infinities. |
 | Tau Ceti through [hex-sign-det-mathlib](hex-sign-det-mathlib.md) | Planned Thom injectivity/order, actual-count moment identity and support-preserving recursive BKR reduction; Hex complete-table, descriptor, comparison and re-encoding correspondence. |
-| [hex-ordered-fn-mathlib](hex-ordered-fn-mathlib.md) | Planned real evaluation under relative transcendence, successful enclosure soundness, progress, rational-function/Hahn embedding and lowest-coefficient sign correspondence. |
+| [hex-ordered-fn-mathlib](hex-ordered-fn-mathlib.md) | Planned real evaluation under relative transcendence, sign soundness/progress conditional on caller-supplied approximation laws, rational-function/Hahn embedding and lowest-coefficient sign correspondence. |
 | hex-real-roots-mathlib | Planned `IsRealClosed ℝ`, proved from existing real square roots and polynomial order/IVT lemmas. Use this shared instance for real transcendental bases. |
 | [hex-real-algebraic-mathlib](../../HexRealAlgebraicMathlib/SPEC/hex-real-algebraic-mathlib.md) | Existing `RealAlgebraicNumber` ordered field and real-closed instance, comparison, root and Repr correspondence; use it for the rational base. |
 | Tau Ceti, consumed here | Additional ordered algebraic real-closure existence statement specified next; needed for unconditional algebraic infinitesimal models. |
@@ -258,11 +261,16 @@ of **all** resource limits require `∃ N, ∀ n≥N, succeeds (limits n)`.
 Executable total search uses the owner's accessibility-based `SearchLaws`
 construction, not classical choice of a successful fuel or a `partial` loop.
 
-At real-constant levels, progress needs certified convergent enclosures and
-transcendence relative to the embedded preceding field. Individual hypotheses
+At real-constant levels, progress needs caller-supplied certified approximations
+with an effective convergence schedule and transcendence relative to the
+embedded preceding field. Individual hypotheses
 for `π` and `e` do not imply the joint condition for `ℚ(π,e)`; those theorems
-are not on the pin. Successful bounded signs need only their validated
-certificates. No total field on raw bounded syntax follows from that soundness.
+are not on the pin. Named `π`/`e` instances and examples require the caller's
+approximation procedures and soundness evidence; total modes also require the
+stated progress and relative-transcendence laws. This companion proves the
+conditional composition, not the analytic provider. Successful bounded signs
+need only their validated certificates. No total field on raw bounded syntax
+follows from that soundness.
 
 ## Compatible algebraic union
 
@@ -439,8 +447,8 @@ integer polynomials. Prove conversion round trips and arithmetic agreement;
 both the delegated backend and generic backend obey these statements.
 Do not copy the zero-polynomial empty-array convention of a convenience API.
 
-`Repr.roundtrip` requires the same authenticated constant registry, context
-DAG, stage order, coefficients, intervals and derivative signs, and a
+`Repr.roundtrip` requires the same authenticated caller-supplied constant
+registry, context DAG, stage order, coefficients, intervals and derivative signs, and a
 sufficient resource envelope. Reading emitted constructor data succeeds and
 preserves denotation and selected-root identity, modulo explicit context
 isomorphisms; incidental caches need not match. Prove reader success and

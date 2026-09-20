@@ -1142,9 +1142,11 @@ multiplicities and fallible coefficient equality.
 integer Sturm chains and the specified, not yet implemented,
 `ZPoly.tarskiQuery` and `TarskiReplay`. Its ordinary root counts and
 `hex-rcf`'s derivative-seeded `SturmReplay` cannot certify general Tarski
-queries. [hex-interval](../HexInterval/SPEC/hex-interval.md) supplies budgeted
-refinement and exact dyadic interval data; certified approximation packages
-still need to be connected to the new sign evaluator.
+queries. Transcendental sign refinement consumes a caller-supplied approximation
+procedure. `hex-ordered-fn` owns the small exact finite-bound representation and
+arithmetic needed for polynomial evaluation; it has no dependency on
+`hex-interval` or its companion. An adapter to another enclosure library is
+separate future work, not a prerequisite or deliverable of this family.
 
 [hex-number-field](../HexNumberField/SPEC/hex-number-field.md) specifies
 fixed-field Tarski and approximation comparisons and fixed-embedding
@@ -1174,7 +1176,6 @@ input library:
 hex-poly ──────────> hex-real-roots ──> hex-sturm ──> hex-sign-det
     │                                      │               │
     └─> hex-rational-fn ──> hex-ordered-fn   │               │
-hex-interval ─────────────> hex-ordered-fn   │               │
                                   │        │               │
                                   └────────┴───────────────> hex-real-closure
 hex-real-algebraic ────────────────────────────────────────> hex-real-closure
@@ -1187,7 +1188,8 @@ results. These existing inputs do not depend on the real-closure family.
 Each companion imports its computational library and the companions of the
 computational dependencies it uses, plus Mathlib. Only companions may import
 Tau Ceti. There is no reverse dependency from `hex-poly`, `hex-rational-fn`,
-`hex-real-roots`, `hex-interval` or `hex-real-algebraic` into this family.
+`hex-real-roots` or `hex-real-algebraic` into this family. Neither
+`hex-interval` nor `hex-interval-mathlib` is an input to this family.
 CAD, coverings and tactic integration are downstream clients, never imports of
 these computational libraries. Explicit coefficient-operation records feed
 generic lower-level algorithms; these interfaces and their fallible polynomial
@@ -1350,14 +1352,22 @@ the infinitesimal inequality in Hex. Obtaining a real closed ambient field for
 this model is a separate existence obligation described below; a Hahn field
 with exponent group `ℤ` is not itself real closed.
 
-For a real constant `τ`, the oracle supplies certified dyadic enclosures and
+For a real constant `τ`, the caller supplies a bounded approximation procedure,
+its exact finite-bound evidence and soundness laws, and
 an effective precision schedule with widths tending to zero. Refinement must
 also enclose all preceding real coefficients. Refine numerator and denominator
 until their signs are separated from zero, handling formal zero first. The
 semantic hypothesis is transcendence over the **embedded preceding field**,
 not merely over `ℚ`. It makes evaluation injective and excludes denominator
 zeros. Store constant identities and oracle provenance, not arbitrary
-callbacks whose outputs the kernel would trust.
+callbacks whose outputs the kernel would trust. The computational interface
+uses exact rational or dyadic finite endpoints with a checked order, and the
+few outward bound operations needed by Horner evaluation. The caller owns
+constant-specific approximation algorithms, containment proofs and effective
+progress; the generic companion proves their composition. No bundled π/e
+producer, interval solver, interval-library admission or analytic-provider
+benchmark is required. A future optional adapter may instantiate the same
+interface without changing the family import graph.
 
 A bounded `sign?` takes structural fuel and returns a sign with its evidence
 or exhaustion. Every successful result is sound under the enclosure and domain
@@ -1521,29 +1531,29 @@ realization claims. Foundation references are [Cohen–Mahboubi, LMCS
 imported assumptions and remain planned where those results are missing;
 writing the SPECs does not wait for their proofs.
 
-The exploration API offers staged constant/infinitesimal construction,
-arithmetic, comparison, polynomial `roots` and a reconstructible `Repr`,
+The exploration API offers caller-registered constants, staged infinitesimal
+construction, arithmetic, comparison, polynomial `roots` and a reconstructible `Repr`,
 modeled on [Z3's Python RCF
 API](https://github.com/Z3Prover/z3/blob/master/src/api/python/z3/z3rcf.py).
 Printed syntax includes the context, named constants, polynomial, interval and
 Thom signs needed to reconstruct a root; a registered oracle name must resolve
 to the same constant. Round trips preserve denotation and root identity, not
-incidental cache state. `π` and `e` have bounded certified modes and
-explicitly conditional total modes as above. Generic infinitesimal examples
+incidental cache state. A caller can register `π` or `e` by supplying the same
+approximation/evidence interface; these are not bundled providers. Any total
+mode remains conditional as above. Generic infinitesimal examples
 are `#eval` demonstrations, with no nonstandard-analysis tactic claims.
 
 The downstream [`rcf` coefficient extension](../HexRCF/SPEC/hex-rcf.md#planned-real-coefficient-extension)
 is specified in the owning HexRCF SPEC: univariate sentences over `ℝ` with
-fixed real algebraic embeddings and authenticated named constants, using the
-planned shared RealFormula frontend and kernel certificates with coefficient
+fixed real algebraic embeddings and authenticated caller-supplied constants,
+using the shared RealFormula frontend and kernel certificates with coefficient
 signs.
 Its optional import preserves the integer/rational fast path; the SPEC lists
 the actual implementation and semantic prerequisites without advancing a phase.
 That integration is new work; the integer-only replay cannot consume these
 contexts unchanged. Without transcendence proofs it can certify the fragment
-where every required nonzero sign is separated by enclosures and all zero
-signs have algebraic/identity
-proofs. For example `∀ x : ℝ, x² > π - 4` needs only a certified `π < 4` and
+where every required nonzero sign is separated by caller-supplied certified
+enclosures and all zero signs have algebraic/identity proofs. For example `∀ x : ℝ, x² > π - 4` needs only a certified `π < 4` and
 nonnegativity of squares. No completeness claim covers unresolved relations
 between constants. Infinitesimal search samples require the finite-sign
 realization bridge before contributing evidence about `ℝ`.
@@ -1561,11 +1571,15 @@ implies `1/ε>n` (the nonpositive case is immediate). Test multiple
 infinitesimal levels, including `ε₂<ε₁^m` for every fixed positive integer
 `m`.
 
-Conformance uses Z3 `MkInfinitesimal`, `Pi`, `E`, `MkRoots` and comparisons,
+Conformance uses Z3 `MkInfinitesimal`, `MkRoots` and comparisons; `Pi`/`E`
+comparisons apply only when a caller-supplied provider is available,
 with a pinned version and recorded fixture provenance. Reproduce the paper's
 `basic.py`, degree-15 MetiTarski and `y³+x³+1` cases from `nlsat.py`,
-`tower8.py`, and Rioboo/Strzeboński examples. Use python-flint and the
-existing `hex-real-algebraic` API for the rational-only cases. Require exact
+`tower8.py`, and Rioboo/Strzeboński examples. Record any constant-provider
+inputs explicitly; their production is outside this family. Generic oracle
+contract tests use small supplied certified bounds and malformed or
+nonprogressing test procedures, not a new analytic library. Use python-flint
+and the existing `hex-real-algebraic` API for the rational-only cases. Require exact
 agreement of signs, sorted roots, multiplicities and arithmetic; printed
 decimals do not establish agreement. Test exhausted or invalid approximation
 inputs, root endpoints, shared gcds, dynamic splits and stale replay

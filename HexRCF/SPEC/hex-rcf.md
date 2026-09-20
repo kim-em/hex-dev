@@ -985,7 +985,11 @@ implementation status, phase, imports or performance claims. The coefficient ada
 and signatures in this section are **planned contracts**, not checked Lean
 declarations. The base handler registration and rational recognition boundary
 described below are implemented independently of that adapter. The family SPECs describe prerequisites, not delivered APIs.
-Implementation is coordinated by [#10331](https://github.com/kim-em/hex-dev/issues/10331).
+Transcendental coefficients use a caller-supplied approximation procedure and
+its authenticated containment evidence; this extension neither supplies π/e
+providers nor depends on HexInterval or HexIntervalMathlib. Constant-specific
+analytic implementation, interval-library admission and their measurement
+work are outside the family. Implementation is coordinated by [#10331](https://github.com/kim-em/hex-dev/issues/10331).
 
 ### Coefficients and supported sentences
 
@@ -996,7 +1000,7 @@ nested quantifiers and multivariate elimination are not added. Constant
 expressions in polynomial atoms may use the following grammar:
 
 ```text
-c ::= rational literal | a.toReal | Real.pi | Real.exp 1
+c ::= rational literal | a.toReal | registered closed real constant
     | -c | c+c | c-c | c*c | c^n | c⁻¹ | c/c       (n : Nat literal)
 ```
 
@@ -1013,11 +1017,22 @@ registration. No numerical approximation is an algebraic constructor.
 
 Allowed variable expressions are polynomials in `x` with these coefficients,
 including division by a closed coefficient. Division by anything depending
-on `x`, `exp x`, `sin x`, arbitrary `exp c`, irrational powers and arbitrary
-free real parameters remain unsupported. Local symbols are accepted only
+on `x`, `exp x`, `sin x`, unregistered closed real expressions, irrational powers of the variable and
+arbitrary free real parameters remain unsupported. A registered closed constant
+may have an analytic source expression, but its numerical procedure and evidence
+are supplied by the caller, not synthesized by this tactic. Local symbols are accepted only
 when an explicit equality identifies them with one of these closed
 coefficients; this substitutes a fixed value, not a symbolic parameter.
 No implicit quantification over coefficients is introduced.
+
+`Real.pi` and `Real.exp 1` are supported registration subjects, not automatically
+available numerical providers. Their use requires a caller registration that
+binds an approximation procedure and kernel evidence to that exact real. A
+missing registration declines with an actionable diagnostic. The generic
+interface can likewise bind another closed computable real expression;
+its source identity and enclosure proofs are explicit. The caller supplies
+convergence/progress laws only when claiming eventual success or total search;
+finite accepted certificates require soundness only.
 
 Every inverse/division retains the original nonzero-divisor obligations,
 including divisions inside coefficients and divisions erased by cancellation
@@ -1042,15 +1057,15 @@ The generalized recurrence does not make that replay a general Tarski
 checker or allow extension coefficients.
 
 Reuse the [shared RealFormula frontend](../../SPEC/Libraries/hex-real-formula.md).
-Its candidate implementation in
-[PR #10338](https://github.com/kim-em/hex-dev/pull/10338), source revision
-`354ffa059e2026574575aab2e891eb0fbbe82a24`, is not a merged prerequisite.
+Its implementation from
+[PR #10338](https://github.com/kim-em/hex-dev/pull/10338), merge revision
+`843102b505b61724a9679d0011afb6d662812b92`, is available.
 `RealFormula.Reify.Result` carries a valuation-parametric equivalence;
-`QF n` and `Prenex n` store integer multivariate polynomials. The candidate
+`QF n` and `Prenex n` store integer multivariate polynomials. The
 `HexRCF.RealFormula` adapter under `adapters/` proves `toSentence_correct`,
 `residue_correct` and `check_sound`, but `univariate?` drops only absent
 parameters. It cannot specialize a coefficient coordinate to an algebraic
-number or π. Reconcile these interfaces with the final merged source before
+number or π. Reconcile these interfaces with the current source before
 implementation; do not fork the formula syntax or the shared reifier.
 
 The planned frontend first collects and certifies the original division
@@ -1059,7 +1074,7 @@ guards, before any cancellation or abstraction. Rewrite each variable-bearing
 closed coefficient subterms, including the whole `c⁻¹` or closed quotient,
 into fresh real parameters. Thus `x/(4-π)` becomes `x*u`, where `u` is bound
 to `(4-π)⁻¹` with its original guard, rather than `x/(4-u)` with `u=π`.
-Likewise `1/(4-π)` is one coefficient. The candidate shared arithmetic reifier
+Likewise `1/(4-π)` is one coefficient. The shared arithmetic reifier
 only clears rational literal denominators: it must never receive division by
 a coefficient parameter. This preprocessing/equivalence bridge belongs here;
 no parameter-denominator case is assumed in the shared reifier. Invoke that
@@ -1134,7 +1149,7 @@ During incubation the new files are
 with module prefix `HexRCF.RealCoefficients` and namespace
 `Hex.RCF.RealCoefficients`. Use a separate **default build target**
 `HexRCFRealCoefficients` with `srcDir := "adapters"`, plus the matching
-`UMBRELLA_BUILD_TARGETS`/library metadata registration, as in the candidate
+`UMBRELLA_BUILD_TARGETS`/library metadata registration, as in the
 `HexRCFRealFormula` target. This makes `lake build` and existing CI check the
 adapter while the published `HexRCF` umbrella does not import it. Optional
 import does not mean optional validation. The owning SPEC and soundness stay
@@ -1147,7 +1162,7 @@ executable replay remain in Mathlib-free family owners, supplied through
 lower-level records. Formula-specific specialization and certificate assembly
 may use Mathlib-free modules of this adapter; semantic bridges and quotation
 import Mathlib. Do not make the family import RealFormula to assemble a tactic
-certificate. Neither `HexPoly`, `HexRealRoots`, `HexRealAlgebraic`, `HexInterval` nor the
+certificate. Neither `HexPoly`, `HexRealRoots`, `HexRealAlgebraic` nor the
 shared formula libraries acquire a reverse dependency on this adapter or the
 towers. Any reusable computational cell assembly needed for the extension
 belongs with the family's shared samples; HexRCF supplies real semantics,
@@ -1195,7 +1210,7 @@ Required coefficient/replay evidence includes:
   inversions and positive scales. Semantic degree supplies either all-zero
   coefficients or a nonzero leading coefficient and zero coefficients above
   it. Array length and syntactic inequality are insufficient.
-- Authenticated π/e enclosures from the actual interval provider rules,
+- Authenticated constant enclosures from the caller-supplied approximation rules,
   including exact subject, source theorem, requested/actual precision,
   outward cuts, remainder and all predecessor enclosures. A callback,
   decimal, display name or unproved containment proposition is not evidence.
@@ -1230,8 +1245,7 @@ check_sound
 ```
 
 `Authenticated env ρ` binds each coordinate to its original supported closed
-expression and selected embedding, the exact provider rules to `Real.pi` or
-`Real.exp 1`, and any supplied proof references to their precise claims.
+expression and selected embedding, the supplied provider rules to their exact registered real subjects, and any supplied proof references to their precise claims.
 `hLaws` is discharged by the family's actual companion theorems for these
 records and the shared real foundations; it is not a runtime assertion that
 callbacks are sound. In bounded constant mode interpret valid raw expressions
@@ -1344,10 +1358,11 @@ procedure or algebraic-independence claim is made.
 
 The future manual must distinguish the optional import, algebraic completeness,
 fixed-budget failures and certified-constant mode. These are required examples,
-not declarations checked by this SPEC change:
+not declarations checked by this SPEC change. The π/e cases are conditional
+on supplied registrations; they do not mandate implementing those providers:
 
 ```lean
--- after the planned optional import HexRCF.RealCoefficients
+-- after HexRCF.RealCoefficients and caller-supplied authenticated π/e registrations
 example : ∀ x : ℝ, x^2 > Real.pi - 4 := by rcf
 example : ∀ x : ℝ, x^2 + Real.exp 1 > 2 := by rcf
 example : ∃ x : ℝ, x = Real.exp 1 ∧ 2 < x ∧ x < 3 := by rcf
@@ -1368,7 +1383,8 @@ accepted false results; examples of `#eval` alone are not proof examples.
 Required tests extend the existing
 [conformance discipline](../../SPEC/testing.md):
 
-- Kernel theorems for these π/e and algebraic examples, constant-only and
+- Kernel theorems for algebraic examples and generic supplied-bound coefficient
+  transport; π/e examples use supplied registrations. Include constant-only and
   zero-polynomial bodies, semantic leading cancellation, all comparisons and
   Boolean forms, and integer/rational fast-path compatibility.
 - Repeated/common roots, including atoms `(x-a.toReal)^2` and
@@ -1385,7 +1401,8 @@ Required tests extend the existing
   relations unresolved at the supplied precision must exhaust. Test
   `π^2-e^3=0` at a deliberately insufficient budget and, at the coefficient
   record boundary, a synthetic nonseparating provider with no exact-zero
-  evidence. These test refusal, not mathematical independence: greater
+  evidence. These tests use supplied procedures/evidence and require no analytic-provider
+  implementation. They test refusal, not mathematical independence: greater
   precision can resolve the former. Exhaustion is never reclassified as zero.
 - Swapped coefficient coordinates, wrong subjects/precision/source rules,
   stale provider versions, changed root/context identity, missing transports,
@@ -1431,8 +1448,8 @@ missing algorithm or theorem obligations.
 | Shared frontend, PR #10338 and consumer #10329 | Merged `QF`/`Prenex`, scope/normalization/valuation proofs and optional integer RCF adapter. Add guarded division preprocessing, maximal closed-coefficient abstraction and `Specialize.eval` here; virtual substitution itself is not a prerequisite and its symbolic parameters are not silently accepted. |
 | HexPoly / HexPolyMathlib | Implemented fallible `CoeffOps`/`FieldOps`, budgets, semantic-degree validation, guarded pseudo-division/gcd/exact-division records and arithmetic/evidence correspondence. Existing total `DensePoly` routines alone do not suffice. |
 | HexRationalFn / HexRationalFnMathlib | Guard-preserving normalization, bounded semantic coefficients, identity/evaluation and replay bridges consumed by ordered-fn; retain every original divisor. |
-| HexInterval #10334 / HexIntervalMathlib #10342 | Actual bounded π/e producers/checkers plus source authentication, real containment, outward rounding and effective precision/resource schedules. Existing interval arithmetic and fixed experimental bounds are not generic providers; local prototypes and unmerged PRs are not available APIs. |
-| [Ordered-fn](../../SPEC/Libraries/hex-ordered-fn.md) and [companion](../../SPEC/Libraries/hex-ordered-fn-mathlib.md) | Registered real constants, guarded evaluation, Horner enclosure composition, nested sign/zero evidence, replay soundness and conditional progress. Successful finite interpretation must not assume faithful specialization. |
+| Caller-supplied approximation procedures | Exact finite bounds bound to the registered real subject, kernel containment evidence and budgeted calls. Effective precision/resource schedules are extra hypotheses for progress. Generic composition belongs to ordered-fn; no HexInterval/HexIntervalMathlib or bundled π/e provider implementation is required. |
+| [Ordered-fn](../../SPEC/Libraries/hex-ordered-fn.md) and [companion](../../SPEC/Libraries/hex-ordered-fn-mathlib.md) | Caller-registered real constants, minimal exact finite-bound arithmetic, guarded evaluation, Horner enclosure composition, nested sign/zero evidence, replay soundness and conditional progress. Successful finite interpretation must not assume faithful specialization. |
 | HexRealRoots / HexRealRootsMathlib | Shared signed-remainder kernel and its positive-scaling/representation bridges, general Cauchy-index/Tarski replay correspondence, and shared `IsRealClosed ℝ`; the existing derivative-seeded integer theorem is insufficient. |
 | [Sturm](../../SPEC/Libraries/hex-sturm.md) and [companion](../../SPEC/Libraries/hex-sturm-mathlib.md) | Domain-checked ordered-field Tarski queries, endpoint adapters, complete root counts and nested coefficient replay/transport soundness. |
 | [Sign-det](../../SPEC/Libraries/hex-sign-det.md) and [companion](../../SPEC/Libraries/hex-sign-det-mathlib.md) | Complete BKR support/counts, Thom existence/uniqueness/order, sign-at-root, common-root re-encoding and their literal correspondence, using the existing matrix/rank companions. |
