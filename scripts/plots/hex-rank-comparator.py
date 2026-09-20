@@ -73,6 +73,8 @@ def main():
     output = args.output or ROOT / 'reports/figures' / f'hex-rank-comparator-{args.family}.svg'
     output.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output, metadata={'Date': None, 'Description': str(args.data.relative_to(ROOT)) if args.data.is_relative_to(ROOT) else args.data.name})
+    if output.suffix == '.svg':
+        output.write_text('\n'.join(line.rstrip() for line in output.read_text().splitlines()) + '\n')
     plt.close(fig)
 
 

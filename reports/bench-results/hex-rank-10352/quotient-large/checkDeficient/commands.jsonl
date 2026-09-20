@@ -1,0 +1,1 @@
+{"output_errors": [], "label": "checkDeficient", "command": ["/tmp/hexrank-measured-bin/hexrank_scale_bench", "run", "Hex.RankBench.Quotient.checkDeficient", "--export-file", "/tmp/hexrank-large-checkDeficient/checkDeficient.json"], "exit_code": 0, "started_epoch": 1789914203.0707378, "wall_seconds": 617.4552981853485, "load_after": [37.9794921875, 43.42431640625, 45.72265625]}

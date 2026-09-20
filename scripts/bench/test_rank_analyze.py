@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
-from scripts.bench.rank_analyze import curve, budgets
+from scripts.bench.rank_analyze import curve, budgets, verify
 
 
 class Analysis(unittest.TestCase):
@@ -50,3 +50,29 @@ class Analysis(unittest.TestCase):
             self.assertEqual(result['verdict'], 'pass')
             stages['curves'][0]['external_ns'] = 10
             self.assertEqual(budgets(refs, stages, root, policy)[0]['verdict'], 'fail')
+
+    def test_censored_comparator_does_not_excuse_wrong_observed_output(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'pair.json'
+            measured = {'median_nanos': 100, 'hashes_agree': True,
+                        'expected_hash_check': {'status': 'match'},
+                        'points': [{'status': 'ok'}]}
+            censored = {'median_nanos': None, 'hashes_agree': False,
+                        'expected_hash_check': {'status': 'missing'},
+                        'points': [{'status': 'killed_at_cap'}]}
+            row = {'attempts_complete': True,
+                   'blocks': [{'source': str(path), 'status': 'failed'}]}
+            result = {'rank': {'curves': [row] * 156},
+                      'stages': {'curves': [row] * 24},
+                      'polynomial_budgets': [{'verdict': 'pass'}] * 60}
+            def write():
+                path.write_text(json.dumps({'results': [measured, censored]}))
+            write()
+            self.assertEqual(verify(result), [])
+            measured['expected_hash_check']['status'] = 'mismatch'
+            write()
+            self.assertTrue(verify(result))
+            measured['expected_hash_check']['status'] = 'match'
+            censored['points'][0]['status'] = 'error'
+            write()
+            self.assertTrue(verify(result))

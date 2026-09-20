@@ -36,7 +36,7 @@ shifted fixtures validate the first pivot after their zero-column prefix.
   including a zero-column prefix variant. Mode 2, `productBound n`,
   accounting for both growing minors and the product entry bound B≤25n.
 * `polynomial`: `DensePoly Rat` and `MvPoly 2 Int` at fixed small support,
-  full rank and deficient. Fixed registrations await comparator budgets.
+  full rank and deficient. Fixed registrations use the recorded comparator-derived absolute budgets.
 
 The external comparators (FLINT `fmpz_mat.rank` and `fmpq_mat.rank`, SymPy
 `DomainMatrix.rank` over the exact polynomial domain) are `informational`
@@ -690,8 +690,8 @@ def runMvDeficientCheck4 := runMvCheckAt 4 true
 def runMvDeficientCheck8 := runMvCheckAt 8 true
 def runMvDeficientCheck12 := runMvCheckAt 12 true
 
-/-- Operational timeout only. These registrations do not yet have the
-operation-specific SymPy-derived budgets required for Phase-4 evidence. -/
+/-- Operational timeout only. Operation-specific SymPy-derived absolute
+budgets are recorded separately in the performance report and raw artifacts. -/
 def polyConfig : LeanBench.FixedBenchmarkConfig :=
   { repeats := 5, maxSecondsPerCall := 60.0, minTotalSeconds := 0.2, warmupFirstIter := true, tags := #["polynomial"] }
 
@@ -987,6 +987,7 @@ setup_benchmark deficientHalf n => productBound n
     paramCeiling := 256
     paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
     maxSecondsPerCall := 120.0
+    targetInnerNanos := 4_000_000_000
     outerTrials := 6
   }
 

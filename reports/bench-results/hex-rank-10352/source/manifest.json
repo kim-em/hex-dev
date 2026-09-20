@@ -1,0 +1,40 @@
+{
+  "published_base": "f5245daad8463449c5542ee0f74785da455a9961",
+  "path_scope": [
+    "*.lean",
+    "lean-toolchain",
+    "lake-manifest.json",
+    "libraries.yml",
+    "scripts/oracle/rank_bench.py",
+    "scripts/oracle/rank_carriers.py",
+    "scripts/bench/rank_measure.py",
+    "scripts/bench/rank_resume.py"
+  ],
+  "snapshots": [
+    {
+      "revision": "2b0ff6bf5fbd033943c09c1b49893285497f90aa",
+      "patch": "2b0ff6bf5.patch.gz",
+      "sha256": "caae28d13366170f32970d2add583dd50b766eb91cc1a7b2d29288123b942a82",
+      "uncompressed_sha256": "944835748b69555b8e6b8c9ea4a08139ab5196ed7a5639ee2fd6bace0d0bd6b9"
+    },
+    {
+      "revision": "bbedb47226a2dae977434e4ea7da1ffdbaf93b00",
+      "patch": "bbedb4722.patch.gz",
+      "sha256": "a7eb09b822e7f1b9bae2f5cd95180bc0ac141e49ef30835c81ade56dad6dd85b",
+      "uncompressed_sha256": "65190bc71dabf8fc7cfbf04839d010e79343c58c57e979880f684c4dcbfeea64"
+    },
+    {
+      "revision": "8a6e0acede303baa0fd4f4ef2a7ea7ee65180180",
+      "patch": "8a6e0aced.patch.gz",
+      "sha256": "7fc60a816de46c064fddfb65af24ce9535a0d8e1cd7fa9e7dac45f04109b22de",
+      "uncompressed_sha256": "2071f37c532e0e532848a5f23d1a3655e7962c54cf3d753a90f0cc115b82533f"
+    },
+    {
+      "revision": "a2f2303e1b8e343fe7dfe83520acfaef15957181",
+      "patch": "a2f2303e1.patch.gz",
+      "sha256": "585ae12548d9d84a2804dad4beb0f5737bc2886717a2c3f2bb6ae3d481014031",
+      "uncompressed_sha256": "699581e7dd3db63c035d548b8eed5703fdce30b93cad40359fc34c449566c83f"
+    }
+  ],
+  "note": "Reconstruct measurement code by checking out the published base and decompressing (gzip -dc) and applying the selected patch. Reports and CI configuration are omitted; all Lean sources and Lake configuration are included. Decompress and apply any per-run source.patch.gz (or plain source.patch) afterward when its metadata records dirty source."
+}

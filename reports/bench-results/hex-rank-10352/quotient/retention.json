@@ -1,0 +1,36 @@
+{
+  "source_directory": "/tmp/hexrank-science-quotient",
+  "source_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "completed_commands": [
+    "produceFull",
+    "prepareFull",
+    "finishFull",
+    "checkFull",
+    "produceDeficient",
+    "prepareDeficient",
+    "finishDeficient",
+    "checkDeficient"
+  ],
+  "sha256": {
+    "metadata.json": "1794655b2d7e2e67ee802f0bf82878ffb7e45455e99eec351db9c9d40c2bb831",
+    "completion.json": "edbd11133b1adf37d8da8452af06eaf50f3267d836a4f995794fbe41eeb7ac85",
+    "produceFull.json": "b869b9f14150a2f63bd575d1bfd53da91a3aad4b839b731959debe6bc36c6d99",
+    "produceFull.txt.gz": "c321c04415b3961de1688a778ecbc764c02e268b8cb9f786682d119cd737dca9",
+    "prepareFull.json": "585f98a01cb224023bc325e9616b683895192c164ad00bade8036c1410ecce02",
+    "prepareFull.txt.gz": "932e4f9ad1056be84559233e29ec90a3bcd7c009627d9d681e6d73e48757403b",
+    "finishFull.json": "0915e8e08f281a81fdd28f623b56adf083003310397d279e3c97198be822040e",
+    "finishFull.txt.gz": "a724f18e49b571ee553909dd5d376e1e06b35905f5b4c3fb22045ce2299413b8",
+    "checkFull.json": "626c75e5c48d1a8a2bd59d9008caa4be4d453785d94e6c2a134317447ef00181",
+    "checkFull.txt.gz": "d0ec45d83da4669c603b89b510335c073dab13565e153f52ee9675081f5bd30e",
+    "produceDeficient.json": "c2fee4c3805c03a90ce51327f52243212d9cfd6329c26c4e7ef1ec58e9133d53",
+    "produceDeficient.txt.gz": "c30cc9d8b2679842da36837b63f84a35745ffb8072e7e3f4bfcff7a3e06ac776",
+    "prepareDeficient.json": "6b4ac3b20fd12e411f2b995405e7b27d916634e95c6e938cd2b591175e397acd",
+    "prepareDeficient.txt.gz": "5c4c2a9d94e2bd7ec6654639e371d2c64404a9dbf66207e99bf71da2e5e5c4d0",
+    "finishDeficient.json": "4ea677840901a6bc63af86db5c224e01e3271ca1f3e4f48de3acf97b5f2b0be0",
+    "finishDeficient.txt.gz": "02232d36ac1dd7c545c30cebb36aed9927efb5a44d33441ece479390f600df92",
+    "checkDeficient.json": "ecbdf099026d9afcd65d0a40cc5584738f6b5dddfef29e0917afe80b4ec512ef",
+    "checkDeficient.txt.gz": "5f97c6a4760a5674a330f5585bb6cbf0d828f8dbd858d1ab413c94b534d86747",
+    "source.patch": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "commands.jsonl": "d2bd9b9c967d4aa103ae48f41f9511f42400d4c5a8f319c7928b5b8c07a8344f"
+  }
+}
