@@ -57,6 +57,11 @@ def polyDetWitness (P : Matrix (MvPoly k C cmp) n n) : Except String (DetWitness
 
 def polyDet (P : Matrix (MvPoly k C cmp) n n) : MvPoly k C cmp
 def polyDetWitness? (P : Matrix (MvPoly k C cmp) n n) : Option (DetWitness (MvPoly k C cmp))
+
+def produce (budget : DetWitness.Budget) (n : Nat)
+    (check : List (List (MvPoly k C cmp)) → DetWitness (MvPoly k C cmp) → Bool)
+    (rows : List (List (MvPoly k C cmp))) :
+    Except DetWitness.Error (DetWitness (MvPoly k C cmp))
 ```
 
 `Hex.Matrix.detWitnessWith` is generic over entry arithmetic, with the
@@ -68,13 +73,16 @@ coefficients, so its initial carriers are `Int` and `ZMod64 p`, and `Rat`
 enters only through the companion's row-scaling arm, which checks integer
 lists.
 
-The budgeted producer instantiates `Hex.Matrix.detWitnessBudgeted` with
+`Hex.PolyDet.produce` in `Basic.lean` instantiates `Hex.Matrix.detWitnessBudgeted` with
 `MvPoly` support cardinality as its size measure, for both integer and
 residue coefficient domains. Its intermediate budget governs round admission
 by term-product counts and the total support of the retained blocks after
 each round, as specified in hex-bareiss. Its certificate budget is checked
 before the compiled self-check. Structured declines preserve the exhausted
 budget name, count reached and limit through the frontend.
+The companion calls this shared wrapper from its integer route and from
+`Frontend.residueWitness?`, supplying the corresponding serialization
+self-check. The unlimited `polyDetWitness` API and its error type stay intact.
 
 The exact quotient and its law are `Hex.MvPoly.instDiv` and
 `Hex.MvPoly.instExactDivLaws` from `HexMvGcd/Divide.lean`, under
@@ -132,11 +140,17 @@ with both operands included in its plan. The target is never expanded by
 the kernel. Witness lists still require canonicality and the same nonzero
 diagonal or vector checks. Keep `checkDetPolyPacked` and its modular form
 for term-list certificates, including the residue route.
+Its kernel-facing signature is
+`checkDetPolyPackedTree (mode : MulMode) (k n : Nat)
+(rows : List (List Hex.Kronecker.Expr)) (w : DetWitness (PolyList Int)) : Bool`.
+All three kernel-facing determinant entry points, including
+`checkDetPolyPackedMod`, omit the resource `Budget` argument; any outer
+signed-packing widths are validated by the product checker.
 
 ### Bounds and selection
 
 After compiled witness production and canonical list conversion, run
-`sizeMulTerms` (or its mixed tree analogue) on every product above before
+`sizeMulTerms` (or `sizeMulTree` for tree entries) on every product above before
 packing or emitting any kernel
 proof for the certificate. For each output coordinate the degree bound is
 the componentwise maximum of `degree(Mᵢₜ) + degree(Aₜⱼ)` over `t` and
@@ -333,6 +347,9 @@ result. The companion proves `PolyDet.check_of_ok`: every successful
 `polyDetWitness` return passes the checker. Errors remain possible; the theorem
 does not assert that every input produces a successful result. `PolyDet.toList` performs compiled merge sorting into canonical order;
 the kernel sees and validates only its output.
+The companion's `produce_check` applies `detWitnessBudgeted_check` to
+establish the same successful-check contract for `produce`; neither contract
+claims that every input succeeds within a resource budget.
 
 The packed entry points are `checkDetPolyPacked`, `checkDetPolyPackedTree`
 and `checkDetPolyPackedMod` with the argument and payload contracts above.

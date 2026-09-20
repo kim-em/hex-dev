@@ -120,7 +120,8 @@ outer signed-dot slot width from the row length and those inner-value bounds,
 and `packedBits` is the maximum bit size of an operand or intermediate in the
 whole check.  Thus both nested packing levels are covered before evaluation.
 
-`sizeExprEq`, `sizeTermsEq`, `sizeMulTerms`, and their quotient-witness
+`sizeExprEq`, `sizeTermsEq`, `sizeMulTerms`, `sizeMulTree`,
+`sizeTreeTermsEq`, and their `Mod` quotient-witness
 variants return this record (or a shape/index error) without computing `B^s`,
 packing a term, or multiplying packed values.  Arithmetic may saturate only
 at the two stated thresholds; a reported accepted bound is exact, while an
@@ -158,6 +159,8 @@ checkMulTree (budget : Budget) (mode : MulMode) (k n r m : Nat)
     (M : List (List (Hex.MvPoly.Kernel.PolyList Int)))
     (A : List (List Expr))
     (C : List (List (Hex.MvPoly.Kernel.PolyList Int))) : Bool
+checkTreeTermsEq (budget : Budget) (k : Nat) (lhs : Expr)
+    (rhs : Hex.MvPoly.Kernel.PolyList Int) : Bool
 ```
 
 Each programmatic `check*` function first computes and compares both `digits`
@@ -182,12 +185,18 @@ tree columns: `∑t packTerms(Mᵢₜ) * evalKron(Aₜⱼ) = packTerms(Cᵢⱼ)`
 Validate rectangular shapes, term exponent arity and every tree's atom
 indices. Use the trees' structural per-atom degrees and ℓ¹ bounds in the
 same common product plan, including the added degrees of each product.
-Preflight includes the structural subtree bounds used by `sizeExprEq`.
+`sizeMulTree` includes the structural subtree bounds used by `sizeExprEq`;
+the same saturation threshold applies to every subtree and product bound.
 No entry tree is expanded to a term list. Its `Mod` form checks
-`M̃ Ã − C̃ = p Q` with canonical residue inputs and canonical integer
-quotient lists; the plan also includes the degree and height of `p Q`.
-Tree-versus-list value equality uses the same mixed representation and
-includes both operands' bounds before evaluating their packed values.
+`M̃ Ã − C̃ = p Q` with canonical residue term lists on the left and result,
+and integer expression trees on the right whose literal leaves satisfy
+`Expr.residues p`, the same contract as `checkExprEqMod`. Negation,
+subtraction and intermediate tree values need not be canonical residues.
+The integer quotient lists are canonical; `sizeMulTreeMod` also includes
+the degree and height of `p Q`. Tree-versus-list value equality is
+`checkTreeTermsEq`, with `sizeTreeTermsEq` including both operands and every
+tree subtree before evaluating their packed values. Their `Mod` forms add
+the same residue-leaf and quotient contracts.
 
 After the inner Kronecker packing, a matrix row and column are lists of signed
 integers.  `MulMode.plain` uses the existing direct-`List.rec`
@@ -215,7 +224,7 @@ structured decline.
 
 The `Kernel` namespace also supplies `exprEq`, `termsEq`, `mulTerms`,
 and their `Mod` forms for certificate replay after elaborator preflight.
-The mixed forms `mulTree` and tree-versus-list equality, with their `Mod`
+The mixed forms `mulTree` and `treeTermsEq`, with their `Mod`
 variants, use the same separation between preflight and kernel replay.
 These forms have no budget argument and no saturation cap. They validate
 indices, shapes and residue/quotient inputs, compute only root degree and
@@ -350,6 +359,9 @@ Atom or degree is never used as a proxy for `N`.
   `Kernel.mulTerms` after this preflight accepts the dense box. Its tree
   certificate uses `Kernel.mulTree` for list transform rows against retained
   input trees, and tree-versus-list equality for the target value.
+  The mixed modular API also accepts caller-supplied residue-leaf trees;
+  the determinant frontend initially retains its existing residue-list
+  route rather than changing residue reification.
 - [hex-poly-det-mathlib's closed forms at `n ≤ 3`](https://github.com/kim-em/hex-dev/issues/10264)
   use the expression checker instead of a final `ring` call.
 - The three identities in hex-generic-rank's `checkRankPolyList` are a later

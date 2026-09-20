@@ -76,6 +76,7 @@ witness-dependent packing bound cannot be known from matrix entries alone.
 | Malformed supplied certificate, including its quotient payload | `failure` |
 | Symbolic capability unavailable | Existing decline and Mathlib fallback |
 | Producer exhausts its intermediate or certificate budget | Structured decline naming the budget, count reached and limit; Mathlib fallback |
+| Tree product or target preflight exceeds a packing limit | Apply the existing packed/list selection to canonical entry lists, restoring list quotation and entry interpretation proofs |
 | Supported certificate, every packed product within digit/bit limits and covered by the crossover table | `checkDetPolyPackedTree` for retained integer trees; `checkDetPolyPacked` or `checkDetPolyPackedMod` for term-list inputs |
 | Packing budget exceeded, crossover absent/selects sparse, or residue quotient payload absent | `checkDetPolyList` with the appropriate integer/residue operations |
 
@@ -90,8 +91,9 @@ it is not a budget decline. The optional quotient preparation is compiled,
 budgeted work; inability to afford it selects residue lists before proof emission.
 
 The determinant producer is `Hex.Matrix.detWitnessBudgeted`, instantiated
-by hex-poly-det with polynomial support as the size measure for integer
-and residue coefficients. Its intermediate and certificate limits are
+through `Hex.PolyDet.produce` in `Basic.lean`, with polynomial support as
+the size measure. The integer frontend and `Frontend.residueWitness?`
+call this wrapper with their respective compiled self-checks. Its limits are
 100,000 and 65,536. It admits each round by the term-product bound of its
 actual operands, checks total block support after the round, and checks
 witness support before the self-check, following the hex-bareiss contract.
@@ -99,6 +101,10 @@ The diagnostic is `det: symbolic determinant declined: <budget> budget
 exhausted (count <count>, limit <limit>)`. The worst-case minor estimate
 `n! * support^n` is diagnostic only; it does not reject a matrix before
 elimination. Reflection budgets still apply at their own boundaries.
+Retain the independent pre-elimination coefficient-bit check
+`2 * n * (entryBits + support.log2 + n.log2 + 2)` against the remaining
+4,096-bit reflection budget. Removing the support estimate as an admission
+guard does not remove this coefficient-growth guard.
 
 When packing exceeds a limit, use the diagnostic
 `det: packed certificate declined: dense box requires <D> digits and <N> packed bits (limits <Dmax> digits, <Nmax> bits); using term lists`.
@@ -274,6 +280,21 @@ proofs on this route. Target equality checks
 does not expand the target in the kernel. The term form reconstructs the
 witness value without a reflexive target comparison.
 
+`Tree.evaluated` denotes the tree matrix in the target carrier. The frontend
+uses the existing finite-extensional `Polynomial.identify` to assemble the
+entry denotation hints against that matrix. `Tree.target_det`,
+`Tree.result_det` and `Tree.scaled_det` transport the polynomial-domain
+determinant identity through `RingHom.map_det`; the scaled form supplies the
+existing rational cancellation layer. These are implementation obligations
+in `HexPolyDetMathlib/Tree.lean`.
+
+Structural tree bounds do not use cancellation and can exceed the bounds
+of canonical entry lists. Both tree products and the target comparison must
+pass preflight before emitting a tree certificate. A tree preflight decline
+falls back to the existing list-based selection before any kernel attempt;
+its entry proofs again use list interpretation. The entry/target performance
+bar therefore applies to probes that select the tree route.
+
 Kernel-facing packed certificates call `Hex.Kronecker.Kernel.mulTerms`
 or the corresponding mixed tree form. Preflight reports and budget
 comparisons remain elaborator work. The kernel validates mathematical
@@ -317,8 +338,10 @@ for the producer, but its tree representation is never quoted as a second
 matrix for the kernel to compare. The denotation lemmas justify list
 arithmetic without reducing reference polynomial operations or rebuilding
 trees; conversion, quotation and identification costs are recorded in the
-proof probes. Every definition on the arithmetic path is `@[expose]`, uses
-structural recursion on lists of `Nat`/`Int`, and obeys
+proof probes.
+
+Every definition on either kernel arithmetic path is `@[expose]`, uses
+structural recursion on lists of `Nat`/`Int` and `Hex.Kronecker.Expr`, and obeys
 [matrix-tactics §Kernel discipline](../matrix-tactics.md#kernel-discipline).
 In particular the kernel never evaluates `bareissWith`, `detWitness`, a
 reference checker, or `Hex.Matrix.det` on `Hex.Matrix (MvPoly …)`. The
@@ -581,12 +604,20 @@ hex-poly-det and the proofs here. The generic list checker stays Mathlib-free
 in hex-bareiss, its `MvPoly` instantiation in hex-poly-det, and its determinant soundness
 in this library.
 
+The tree extension adds `Tree.evaluated`, `Tree.target_det`, `Tree.result_det`
+and `Tree.scaled_det` in `Tree.lean`, reusing `Polynomial.identify` and the
+existing rational cancellation lemmas. `checkDetPolyPackedTree_sound`
+connects the mixed product checker to the shared determinant identities.
+The producer wrapper and its `produce_check` contract remain independent
+of which kernel certificate the frontend selects.
+
 ## File organisation
 
 ```
 HexPolyDetMathlib/
   Sound.lean        -- shared witness identities, list soundness, transport
   Packed.lean       -- checkDetPolyPacked_sound and residue variant
+  Tree.lean         -- tree certificate soundness, denotation, and transport
   Certificate.lean  -- compiled selection, self-check, quotation, and trace
   Scaling.lean      -- rational scaling transport
   Normalize.lean    -- proved coefficient normalization

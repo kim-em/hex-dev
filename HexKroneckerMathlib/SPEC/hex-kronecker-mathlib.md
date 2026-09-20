@@ -88,6 +88,12 @@ injectivity argument as `checkMulTerms_sound`. Structural tree degrees and
 uses the same argument. Neither proof normalizes the input trees to term
 lists. The modular variants first recover the integer polynomial identity
 with the checked quotient and then transport it to characteristic `p`.
+`Kernel.mulTerms_sound` has the same universal matrix conclusion as
+`checkMulTerms_sound`, with a `Kernel.mulTerms` hypothesis instead of the
+budgeted check. `Kernel.mulTermsMod_sound` likewise retains the modular
+matrix conclusion. The corresponding mixed and tree/list equality theorems
+also remove only the resource-policy premises, retaining all shape, atom,
+residue-leaf, quotient and mathematical-bound checks.
 
 ## Characteristic `p`
 

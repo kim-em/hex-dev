@@ -459,8 +459,8 @@ work, never kernel replay.
 
 `detWitnessBudgeted` in `HexBareiss/Kernel.lean` runs the same elimination
 with a caller-supplied size measure `R → Nat` and a two-field budget
-`{ maxIntermediate, maxCertificate : Nat }`. Before each column's step,
-it performs the same pivot selection and accounts for the impending row
+`DetWitness.Budget { maxIntermediate, maxCertificate : Nat }`. Before each
+column's step, the shared core selects the pivot once and accounts for the row
 swap when computing
 `∑ (size pivot * size x + size factor * size y)` over the entries updated
 in both blocks. A column with no pivot has no update cost. For polynomial
@@ -478,8 +478,13 @@ Before running the final self-check, charge the witness's total measure
 (the transform and value, or the singular vector) against `maxCertificate`.
 Budget exhaustion returns structured data containing the budget name, count
 reached and limit; malformed matrices and rejected self-checks remain
-distinct failures. The unlimited `detWitnessWith` uses the same elimination
-core and retains its existing API and checker contract. No polynomial
+distinct failures in `DetWitness.Error`. Its exhaustion constructor is
+`exhausted (budget : DetWitness.Limit) (count limit : Nat)`, where `Limit`
+distinguishes `intermediate` and `certificate`. A decline carries no witness.
+`detWitnessBudgeted_check` proves that every `.ok` return passed the supplied
+checker, just as `detWitnessWith_check` does for the unlimited API.
+The unlimited `detWitnessWith` uses the same elimination core, computes no
+size measures, and retains its existing API and checker contract. No polynomial
 arithmetic or polynomial dependency is added to hex-bareiss. Consumers in
 hex-poly-det supply the support measure for integer and residue polynomials.
 
