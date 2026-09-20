@@ -1162,7 +1162,7 @@ and arithmetic, so they stay in `hex-ordered-fn`, in separate modules.
 | Mathlib-free library | Responsibility | Mathlib companion |
 | --- | --- | --- |
 | [hex-sturm](Libraries/hex-sturm.md) | Ordered-field query frontend, coefficient-operation adapters, generic endpoints and root counts | `hex-sturm-mathlib`: frontend correspondence and replay composition |
-| [hex-sign-det](Libraries/hex-sign-det.md) | BKR sign determination, complete sign tables, Thom root identity and comparison | `hex-sign-det-mathlib`: sign-table correctness, Thom identity and order correspondence |
+| [hex-sign-det](Libraries/hex-sign-det.md) | BKR sign determination, complete sign tables, Thom root identity and comparison | [hex-sign-det-mathlib](Libraries/hex-sign-det-mathlib.md): sign-table correctness, Thom identity and order correspondence |
 | [hex-ordered-fn](Libraries/hex-ordered-fn.md) | Transcendental and infinitesimal orders on `RationalFn`, approximation protocol | [hex-ordered-fn-mathlib](Libraries/hex-ordered-fn-mathlib.md): order laws, real evaluation and infinitesimal model |
 | `hex-real-closure` | Algebraic extension arithmetic, dynamic splitting, root isolation, staged towers and exploration | `hex-real-closure-mathlib`: selected-root semantics, field laws, root completeness and trivial-tower agreement |
 
@@ -1313,6 +1313,12 @@ equivalent certified joint sign determination; matching raw vectors is not
 equality. This is the BKR sign-determination library, not a multivariate
 quantifier-elimination algorithm; see the [BKR
 analysis](../reports/decision-procedures-alignment.md#ben-orkozenreif).
+
+The [hex-sign-det-mathlib SPEC](Libraries/hex-sign-det-mathlib.md) fixes the
+imported moment, recursive reduction and Thom theorem shapes, local replay
+correspondence, descriptor completion and changed-polynomial transport. The
+shared support, coefficient and termination contracts here continue to govern
+the downstream tower directives.
 
 #### Ordered rational functions and termination
 
@@ -1576,7 +1582,7 @@ the dependency diagram above is the library import contract.
 | Computational SPEC | Companion SPEC |
 | --- | --- |
 | [hex-sturm SPEC](Libraries/hex-sturm.md) ([#10311](https://github.com/kim-em/hex-dev/issues/10311)) | [hex-sturm-mathlib SPEC](Libraries/hex-sturm-mathlib.md) ([#10312](https://github.com/kim-em/hex-dev/issues/10312)) |
-| [hex-sign-det SPEC](Libraries/hex-sign-det.md) ([#10313](https://github.com/kim-em/hex-dev/issues/10313)) | [hex-sign-det-mathlib #10314](https://github.com/kim-em/hex-dev/issues/10314) |
+| [hex-sign-det SPEC](Libraries/hex-sign-det.md) ([#10313](https://github.com/kim-em/hex-dev/issues/10313)) | [hex-sign-det-mathlib SPEC](Libraries/hex-sign-det-mathlib.md) ([#10314](https://github.com/kim-em/hex-dev/issues/10314)) |
 | [hex-ordered-fn #10315](https://github.com/kim-em/hex-dev/issues/10315) ([SPEC](Libraries/hex-ordered-fn.md)) | [hex-ordered-fn-mathlib #10316](https://github.com/kim-em/hex-dev/issues/10316) ([SPEC](Libraries/hex-ordered-fn-mathlib.md)) |
 | [hex-real-closure #10317](https://github.com/kim-em/hex-dev/issues/10317) | [hex-real-closure-mathlib #10318](https://github.com/kim-em/hex-dev/issues/10318) |
 

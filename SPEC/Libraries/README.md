@@ -114,6 +114,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-poly-z-mathlib**: `DensePoly Int ≃+* Polynomial ℤ`, Mignotte bound (via Mathlib's Mahler measure)
 - **hex-roots-mathlib**: Pellet's test on circles (built from `circleIntegral`), the Mahler separation bound, soundness of refinement and `ZPoly.isolateComplexRoots?`
 - **hex-real-roots-mathlib**: Sturm's theorem (counting form over `Polynomial ℝ`), chain correspondence, soundness and completeness of `ZPoly.isolateRealRoots?`
+- **[hex-sign-det-mathlib](hex-sign-det-mathlib.md)** (planned): exact sign-table replay, complete support and Thom root identity/order correspondence
 - **hex-interval-mathlib**: real semantics, verified arithmetic and elementary-function propagators, certificate replay, and the `interval` tactic
 - **hex-resultant-mathlib**: executable resultant agreement with `Polynomial.resultant`, specialization, root-product, and discriminant theorems
 - **hex-number-field-mathlib**: fixed-field correspondence, exactification, lazy arithmetic, and algebraic-coefficient root completeness
@@ -188,6 +189,7 @@ Each library with its immediate dependencies:
 - **hex-real-roots**: hex-poly-z
 - **hex-sturm** (planned): hex-poly, hex-real-roots
 - **hex-sign-det** (planned): hex-sturm, hex-poly, hex-matrix, hex-row-reduce, hex-rank
+- **hex-sign-det-mathlib** (planned): hex-sign-det, hex-sturm-mathlib, hex-poly-mathlib, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-rank-mathlib; Tau Ceti foundations (mathlib: true)
 - **hex-interval**: (none)
 - **hex-interval-algebraic**: hex-interval-mathlib, hex-real-roots-mathlib, hex-roots-mathlib (mathlib: true)
 - **hex-real-formula** (planned): hex-mv-poly
@@ -783,7 +785,8 @@ for developments whose source-local move has not happened yet.
 - [hex-real-roots-mathlib.md](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md): Sturm's theorem, chain correspondence, soundness and completeness of `ZPoly.isolateRealRoots?`
 - [hex-sturm](hex-sturm.md) (planned): ordered-field Sturm–Tarski frontend, coefficient evidence and root counts using the shared hex-real-roots query/replay kernel
 - [hex-sturm-mathlib](hex-sturm-mathlib.md) (planned): abstract ordered-field query correspondence, endpoint guards and coefficient-evidence composition using shared real-roots-mathlib replay soundness
-- [hex-sign-det](hex-sign-det.md) (planned): complete BKR sign tables, certified support reduction and Thom root descriptors; required companion theorem shapes listed (separate companion SPEC directive [#10314](https://github.com/kim-em/hex-dev/issues/10314))
+- [hex-sign-det](hex-sign-det.md) (planned): complete BKR sign tables, certified support reduction and Thom root descriptors; companion specified separately below
+- [hex-sign-det-mathlib](hex-sign-det-mathlib.md) (planned): certified exact counts and omitted-condition unrealizability, partial Thom completion, root identity/order and re-encoding correspondence
 - [hex-interval.md](../../HexInterval/SPEC/hex-interval.md): exact interval data, shared programs, and budgeted propagation search
 - [hex-interval-mathlib.md](hex-interval-mathlib.md): real semantics, verified propagators, proof replay, and the `interval` tactic
 - **hex-interval-algebraic** (planned): Mathlib-facing interval providers backed by certified real and complex polynomial root isolation; its provider contract is specified in [hex-interval.md](../../HexInterval/SPEC/hex-interval.md#specialized-algebraic-solvers-before-generic-propagation)
