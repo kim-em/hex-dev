@@ -83,6 +83,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-finite-field-mathlib**: `Fintype K` and `Fintype.card K = card K` for any `LawfulFiniteField`, and `frob = frobenius`
 - **hex-poly-mathlib**: `DensePoly R ≃+* Polynomial R`
 - **hex-rational-fn-mathlib**: equivalence with `RatFunc K`, canonical numerator/denominator agreement and partial-evaluation semantics
+- **[hex-ordered-fn-mathlib](hex-ordered-fn-mathlib.md)** (planned): real evaluation, Hahn-series infinitesimal semantics, fallible-record correspondence and total-order laws
 - **hex-sparse-poly-mathlib**: `SparsePoly R ≃+* Polynomial R`, and the identification of the stored term array with `Polynomial.support`
 - **hex-mv-poly-mathlib**: `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence
 - **hex-reflect-mathlib**: Mathlib carrier translations and the `MvPolynomial` correspondence for reflected batches
@@ -141,6 +142,7 @@ Each library with its immediate dependencies:
 - **hex-poly**: (none)
 - **hex-rational-fn**: hex-poly, hex-poly-fast
 - **hex-ordered-fn** (planned): hex-rational-fn, hex-poly, hex-poly-fast, hex-interval
+- **hex-ordered-fn-mathlib** (planned): hex-ordered-fn, hex-rational-fn-mathlib, hex-poly-mathlib, hex-interval-mathlib, Mathlib
 - **hex-sparse-poly**: hex-poly, hex-basic
 - **hex-mv-poly**: hex-poly, hex-basic
 - **hex-reflect**: hex-mv-poly, hex-basic
@@ -748,6 +750,7 @@ for developments whose source-local move has not happened yet.
 - [hex-rational-fn](../../HexRationalFn/SPEC/hex-rational-fn.md): canonical univariate fractions, cancellation algorithms, evaluation and certificate replay
 - [hex-rational-fn-mathlib](../../HexRationalFnMathlib/SPEC/hex-rational-fn-mathlib.md): equivalence with `RatFunc`, canonical components and operation correspondence
 - [hex-ordered-fn](hex-ordered-fn.md) (planned): shared bounded fraction adapter, certified real enclosures, infinitesimal signs and executable total-search contracts
+- [hex-ordered-fn-mathlib](hex-ordered-fn-mathlib.md) (planned): real and Hahn-model correspondence, enclosure soundness/progress, and erased total-adapter laws
 - [hex-sparse-poly](../../HexSparsePoly/SPEC/hex-sparse-poly.md): canonical sparse univariate polynomials, the operations that keep sparsity, and the dense conversions (the Mathlib companion is specified in the same file)
 - [hex-mv-poly](../../HexMvPoly/SPEC/hex-mv-poly.md): canonical distributed multivariate polynomials with explicit monomial orders
 - [hex-mv-poly-mathlib](../../HexMvPolyMathlib/SPEC/hex-mv-poly-mathlib.md): `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence

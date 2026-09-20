@@ -1163,7 +1163,7 @@ and arithmetic, so they stay in `hex-ordered-fn`, in separate modules.
 | --- | --- | --- |
 | [hex-sturm](Libraries/hex-sturm.md) | Ordered-field query frontend, coefficient-operation adapters, generic endpoints and root counts | `hex-sturm-mathlib`: frontend correspondence and replay composition |
 | `hex-sign-det` | BKR sign determination, complete sign tables, Thom root identity and comparison | `hex-sign-det-mathlib`: sign-table correctness, Thom identity and order correspondence |
-| [hex-ordered-fn](Libraries/hex-ordered-fn.md) | Transcendental and infinitesimal orders on `RationalFn`, approximation protocol | `hex-ordered-fn-mathlib`: order laws, real evaluation and infinitesimal model |
+| [hex-ordered-fn](Libraries/hex-ordered-fn.md) | Transcendental and infinitesimal orders on `RationalFn`, approximation protocol | [hex-ordered-fn-mathlib](Libraries/hex-ordered-fn-mathlib.md): order laws, real evaluation and infinitesimal model |
 | `hex-real-closure` | Algebraic extension arithmetic, dynamic splitting, root isolation, staged towers and exploration | `hex-real-closure-mathlib`: selected-root semantics, field laws, root completeness and trivial-tower agreement |
 
 Arrows point from dependencies to consumers. Additional direct imports must
@@ -1309,8 +1309,11 @@ analysis](../reports/decision-procedures-alignment.md#ben-orkozenreif).
 
 The individual [hex-ordered-fn SPEC](Libraries/hex-ordered-fn.md) specifies
 the bounded fraction adapter, oracle provenance, sign certificates and
-executable total-search construction. The clauses here remain the shared
-contract for its companion and the downstream tower directives.
+executable total-search construction. The companion
+[hex-ordered-fn-mathlib SPEC](Libraries/hex-ordered-fn-mathlib.md) specifies
+real evaluation, the Hahn-series model, fallible-record correspondence and the
+laws supplied to that adapter. The clauses here remain the shared contract
+for both libraries and the downstream tower directives.
 
 For a new infinitesimal, require `0 < ε < a` for every positive `a` in the
 preceding field. The sign of `p(ε)/q(ε)` is the product of the signs of the
@@ -1563,7 +1566,7 @@ the dependency diagram above is the library import contract.
 | --- | --- |
 | [hex-sturm SPEC](Libraries/hex-sturm.md) ([#10311](https://github.com/kim-em/hex-dev/issues/10311)) | [hex-sturm-mathlib SPEC](Libraries/hex-sturm-mathlib.md) ([#10312](https://github.com/kim-em/hex-dev/issues/10312)) |
 | [hex-sign-det #10313](https://github.com/kim-em/hex-dev/issues/10313) | [hex-sign-det-mathlib #10314](https://github.com/kim-em/hex-dev/issues/10314) |
-| [hex-ordered-fn #10315](https://github.com/kim-em/hex-dev/issues/10315) ([SPEC](Libraries/hex-ordered-fn.md)) | [hex-ordered-fn-mathlib #10316](https://github.com/kim-em/hex-dev/issues/10316) |
+| [hex-ordered-fn #10315](https://github.com/kim-em/hex-dev/issues/10315) ([SPEC](Libraries/hex-ordered-fn.md)) | [hex-ordered-fn-mathlib #10316](https://github.com/kim-em/hex-dev/issues/10316) ([SPEC](Libraries/hex-ordered-fn-mathlib.md)) |
 | [hex-real-closure #10317](https://github.com/kim-em/hex-dev/issues/10317) | [hex-real-closure-mathlib #10318](https://github.com/kim-em/hex-dev/issues/10318) |
 
 ### Lattice applications beyond factor recombination
