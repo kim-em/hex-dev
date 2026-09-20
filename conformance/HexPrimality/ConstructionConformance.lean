@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import HexPrimality
 import HexPrimality.Curve25519Replay
 import HexPrimality.Curve448Replay
+import HexPrimality.CertificateProducer
 
 open Hex.Nat
 
@@ -246,3 +247,105 @@ example : checkPrime (.pock3Sieve 9223372036904058881 47 4194304 0 64
 example : checkPrime (.pock3Sieve 9223372036904058881 47 4194304 0 65
     [(3, 19, .small 2)]) = false := by decide +kernel
 #guard !checkPrime (.pock3Sieve 9223372036904058881 47 4194304 0 65 [(3, 19, .small 2)])
+
+/--
+info: Try this:
+  [apply] exact
+    Hex.Nat.prime_of_checkPrimeAt (c :=
+      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949
+        [(2, 0,
+            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907
+              2028478494862525422475607 22304740449229861598212 2028478494862525422475606
+              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),
+                (2, 0, Hex.Nat.PrimeCert.small 57467),
+                (2, 0,
+                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944
+                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),
+                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])
+      (by decide +kernel)
+-/
+#guard_msgs in
+example : Hex.Nat.Prime (2 ^ 255 - 19) := by
+  primality? using Hex.PrimalityProducer.curve
+
+
+/-- info: Try this:
+  [apply] exact
+    Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.pock 17 [(3, 3, Hex.Nat.PrimeCert.small 2)])
+      (by decide +kernel)
+-/
+#guard_msgs in
+example : Hex.Nat.Prime 17 := by primality? using fermat_cert% 2
+
+/-- info: Try this:
+  [apply] exact
+    Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.pock 17 [(3, 3, Hex.Nat.PrimeCert.small 2)])
+      (by decide +kernel)
+-/
+#guard_msgs in
+example : Hex.Nat.Prime 17 := by
+  primality? using (let two : PrimeCert := .small 2; power_cert% 17 from two ^ 4 base 3)
+
+/--
+info: Try this:
+  [apply] exact
+    Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.pock3Sieve 197 1 6 0 2 [(2, 1, Hex.Nat.PrimeCert.small 2)])
+      (by decide +kernel)
+-/
+#guard_msgs in
+example : Hex.Nat.Prime 197 := by
+  primality? using .pock3Sieve 197 1 6 0 2 [(2, 1, .small 2)]
+
+/-- error: primality? using: certificate subject is 7; expected 11 -/
+#guard_msgs in
+example : Hex.Nat.Prime 11 := by primality? using .small 7
+
+/-- error: primality? using: certificate for 4 failed checkPrime -/
+#guard_msgs in
+example : Hex.Nat.Prime 4 := by primality? using .small 4
+
+/-- error: primality? using: certificate for 17 failed checkPrime -/
+#guard_msgs in
+example : Hex.Nat.Prime 17 := by
+  primality? using .pock 17 [(3, 1, .small 2), (3, 1, .small 2)]
+
+/-- error: primality? using: certificate for 197 failed checkPrime -/
+#guard_msgs in
+example : Hex.Nat.Prime 197 := by
+  primality? using .pock3Sieve 197 1 6 0 65 [(2, 1, .small 2)]
+
+/-- error: primality? using: certificate for 17 failed checkPrime -/
+#guard_msgs in
+example : Hex.Nat.Prime 17 := by
+  primality? using .pock 17 [(3, 2 ^ 100, .small 2)]
+
+/-- error: certificate exponent must be positive -/
+#guard_msgs in
+example : Hex.Nat.Prime 17 := by
+  primality? using power_cert% 17 from (.small 2) ^ 0 base 3
+
+/--
+error: primality? using: the argument
+  c
+must not contain free or meta variables
+-/
+#guard_msgs in
+example (c : PrimeCert) : Hex.Nat.Prime 17 := by primality? using c
+
+-- Re-elaborate the pretty printer's output and render it again. This exercises
+-- data round-trip, not just string equality from printing the same expression.
+open Lean Elab Hex.PrimalityTactic in
+run_cmd Command.liftTermElabM do
+  for cert in [Hex.PrimalityProducer.curve, Hex.PrimalityProducer.fermat 2,
+      PrimeCert.pock3Sieve 197 1 6 0 2 [(2, 1, .small 2)]] do
+    let first ← certificateSyntax cert
+    let printed := (← PrettyPrinter.ppTerm first).pretty
+    let parsed ← match Parser.runParserCategory (← getEnv) `term printed with
+      | .ok parsed => pure parsed
+      | .error message => throwError "rendered certificate did not parse: {message}"
+    let roundtrip ← suppliedCertificate ⟨parsed⟩ cert.subject
+    unless reprStr cert == reprStr roundtrip do
+      throwError "certificate data changed during round-trip"
+    let second ← certificateSyntax roundtrip
+    unless (← PrettyPrinter.ppTerm first).pretty == (← PrettyPrinter.ppTerm second).pretty do
+      throwError "certificate rendering is not stable"

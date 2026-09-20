@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexPrimality
+import HexPrimality.ProofProbe.Curve25519.Literal
 import Lean.Data.Json
 
 /-!
@@ -48,7 +49,7 @@ private def parseRoute : String → Option Route
   | _ => none
 
 private def usage : String :=
-  "usage: hexprimality_policy_probe (trial|certificate) N REPEATS; or construction N"
+  "usage: hexprimality_policy_probe (trial|certificate) N REPEATS; or construction N; or curve-supplied"
 
 /-- Native construction timing, excluding parsing, process startup, and
 certificate formatting. The public construction route includes its self-check. -/
@@ -78,7 +79,24 @@ private def runConstruction (n : Nat) : IO UInt32 := do
   IO.println (Lean.Json.mkObj fields).compress
   return 0
 
+/-- Materialize and check supplied data; compare with construction, without
+counting process startup or rendering. The IO ref prevents constant folding. -/
+private def runSupplied : IO UInt32 := do
+  let input ← IO.mkRef (fun (_ : Unit) => Hex.PrimalityCurveProbe.certificate)
+  let producer ← input.get
+  let start ← IO.monoNanosNow
+  let cert ← IO.mkRef (producer ())
+  let cert ← cert.get
+  let checked ← IO.mkRef (checkPrime cert)
+  let checked ← checked.get
+  let stop ← IO.monoNanosNow
+  unless checked do throw (IO.userError "invalid supplied certificate")
+  IO.println (Lean.Json.mkObj [("nanos", Lean.toJson (stop - start)),
+    ("status", Lean.toJson "ok"), ("certificate", Lean.toJson (reprStr cert))]).compress
+  return 0
+
 def run (args : List String) : IO UInt32 := do
+  if args == ["curve-supplied"] then return ← runSupplied
   if let ["construction", nArg] := args then
     let some n := nArg.toNat?
       | IO.eprintln s!"invalid natural: {nArg}"; return 2

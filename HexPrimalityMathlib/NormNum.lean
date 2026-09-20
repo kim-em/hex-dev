@@ -121,7 +121,7 @@ reified certificate, emitted through the `Nat.Prime`-flavoured wrapper. -/
     | _ => Elab.throwUnsupportedSyntax
 
 /-- Companion certificate-literal suggestion handler. -/
-@[tactic primalitySuggestTac] meta def evalPrimalitySuggestNat : Tactic.Tactic :=
+@[tactic primalitySuggestTac, tactic primalitySuggestUsingTac] meta def evalPrimalitySuggestNat : Tactic.Tactic :=
   suggestPrime `Nat.Prime ``Hex.Nat.natPrime_of_checkPrimeAt
 
 end Hex.PrimalityTactic

@@ -353,9 +353,34 @@ meta def constructionDescription (b : Hex.Nat.ConstructionBudget) : String :=
     bases {b.witnessBases} then {b.randomWitnesses} random candidates, \
     at most {b.maxFactors} factors and {b.maxSubsets} subsets, sieve bound at most {b.maxSieveBound}"
 
-/-- Construct a reusable certificate with an optional total attempt limit. -/
+private meta unsafe def evalCertificateUnsafe (e : Expr) : MetaM Hex.Nat.PrimeCert :=
+  evalExpr Hex.Nat.PrimeCert (mkConst ``Hex.Nat.PrimeCert) e
+
+@[implemented_by evalCertificateUnsafe]
+private meta opaque evalCertificate (e : Expr) : MetaM Hex.Nat.PrimeCert
+
+/-- Evaluate an explicitly supplied, closed producer as untrusted code. Only its
+literal result reaches the proof; neither the producer nor its imports are
+needed to replay the suggestion. -/
+meta def suppliedCertificate (stx : Term) (n : Nat) : Term.TermElabM Hex.Nat.PrimeCert := do
+  let e ← Term.elabTermEnsuringType stx (mkConst ``Hex.Nat.PrimeCert)
+  Term.synthesizeSyntheticMVarsNoPostponing
+  let e ← instantiateMVars e
+  checkClosed "primality? using" e
+  let cert ← evalCertificate e
+  unless cert.subject == n do
+    throwError "primality? using: certificate subject is {cert.subject}; expected {n}"
+  unless Hex.Nat.checkPrime cert do
+    throwError "primality? using: certificate for {n} failed checkPrime"
+  return cert
+
+/-- Construct a reusable certificate with an optional total attempt limit, or
+check and render an explicitly supplied certificate expression. -/
 syntax (name := primalitySuggestTac) "primality?"
   (" (" &"maxAttempts" " := " num ")")? : tactic
+
+/-- Check and render an explicitly selected closed certificate producer. -/
+syntax (name := primalitySuggestUsingTac) "primality?" " using " term : tactic
 
 set_option hygiene false in
 /-- Shared goal handler for core and companion `primality?` registrations. -/
@@ -384,29 +409,31 @@ meta def suggestPrime (predicate head : Name) (stx : Syntax) : Tactic.TacticM Un
       | _ => Hex.Nat.constructionBudget
     if n.log2 + 1 > budget.maxBits then
       throwError "primality?: input has {n.log2 + 1} bits; construction limit is {budget.maxBits} bits"
-    match Hex.Nat.Construction.run n (Hex.Rand.ofSeed n) budget with
-    | .error f =>
-        if f.stop == .composite then
-          throwError "primality?: {n} is not prime"
-        throwError "primality?: certificate construction for {n} exhausted after \
-          {f.attempts} attempts (seed {n}; {constructionDescription budget})"
-    | .ok success =>
-        let cert := success.cert.raw
-        unless cert.subject == n && Hex.Nat.checkPrime cert do
-          throwError "primality?: the constructed certificate failed its check"
-        let proof := mkApp3 (mkConst head) nE (reifyPrimeCert cert) reflTrue
-        let literal ← certificateSyntax cert
-        let name := mkIdent ((← unresolveNameGlobalAvoidingLocals? head
-          (fullNames := true)).getD head)
-        let replacement ← `(tactic| exact $name (c := $literal) (by decide +kernel))
-        goal.assign proof
-        Tactic.replaceMainGoal []
-        withOptions (fun _ =>
-            Lean.Std.Format.format.width.set (pp.fullNames.set {} true) 100) do
-          Meta.Tactic.TryThis.addSuggestion stx replacement
+    let cert ← match stx with
+      | `(tactic| primality? using $source:term) => suppliedCertificate source n
+      | _ => do
+        match Hex.Nat.Construction.run n (Hex.Rand.ofSeed n) budget with
+        | .error f =>
+            if f.stop == .composite then
+              throwError "primality?: {n} is not prime"
+            throwError "primality?: certificate construction for {n} exhausted after \
+              {f.attempts} attempts (seed {n}; {constructionDescription budget})"
+        | .ok success => pure success.cert.raw
+    unless cert.subject == n && Hex.Nat.checkPrime cert do
+      throwError "primality?: the constructed certificate failed its check"
+    let proof := mkApp3 (mkConst head) nE (reifyPrimeCert cert) reflTrue
+    let literal ← certificateSyntax cert
+    let name := mkIdent ((← unresolveNameGlobalAvoidingLocals? head
+      (fullNames := true)).getD head)
+    let replacement ← `(tactic| exact $name (c := $literal) (by decide +kernel))
+    goal.assign proof
+    Tactic.replaceMainGoal []
+    withOptions (fun _ =>
+        Lean.Std.Format.format.width.set (pp.fullNames.set {} true) 100) do
+      Meta.Tactic.TryThis.addSuggestion stx replacement
 
 /-- Core certificate-literal suggestion handler. -/
-@[tactic primalitySuggestTac] meta def evalPrimalitySuggest : Tactic.Tactic :=
+@[tactic primalitySuggestTac, tactic primalitySuggestUsingTac] meta def evalPrimalitySuggest : Tactic.Tactic :=
   suggestPrime ``Hex.Nat.Prime ``Hex.Nat.prime_of_checkPrimeAt
 
 end Hex.PrimalityTactic
