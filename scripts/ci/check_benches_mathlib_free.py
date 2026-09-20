@@ -536,7 +536,8 @@ def _probe_violations(path: Path) -> list[str]:
 
 
 def _probe_closure_violations(
-    probe: Path, repo_root: Path
+    probe: Path, repo_root: Path,
+    violations_cache: dict[Path, list[str]] | None = None,
 ) -> list[tuple[Path, str]]:
     """Return forbidden features in a probe's repository-local closure.
 
@@ -546,6 +547,11 @@ def _probe_closure_violations(
     scanned and traversed, so moving LeanBench registration or timing into a
     helper does not evade the build-only probe contract.
     """
+    # A main invocation shares this cache across overlapping proof-probe closures.
+    # Standalone calls rescan forbidden features in reachable file contents;
+    # import traversal retains the separate process-local _parse_imports cache.
+    if violations_cache is None:
+        violations_cache = {}
     bench_root = repo_root / "bench"
     relative = probe.relative_to(bench_root)
     target = _ExeTarget(
@@ -577,7 +583,9 @@ def _probe_closure_violations(
             pass
         else:
             continue
-        for violation in _probe_violations(path):
+        if path not in violations_cache:
+            violations_cache[path] = _probe_violations(path)
+        for violation in violations_cache[path]:
             failures.append((path, violation))
         for imported in _parse_imports(path):
             if imported not in visited:
@@ -656,8 +664,11 @@ def main() -> int:
     # The build-only proof-probe carveout is intentionally not an executable
     # or a second computational benchmark harness.
     probe_files = _find_mathlib_probe_files(repo_root, all_probe_roots)
+    violations_cache: dict[Path, list[str]] = {}
     for probe in probe_files:
-        for source, violation in _probe_closure_violations(probe, repo_root):
+        for source, violation in _probe_closure_violations(
+            probe, repo_root, violations_cache
+        ):
             failures.append(
                 f"  FORBIDDEN: proof probe {probe.relative_to(repo_root)} "
                 f"reaches {source.relative_to(repo_root)}, which {violation}.\n"

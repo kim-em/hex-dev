@@ -1077,12 +1077,29 @@ total time at most 0.90 of disabled on the successful extra-prime family;
 on the full-scan misses and existing balanced/smooth/table regression
 families its median total time must be at most 1.10 of disabled. Compare at
 equal seeds and existing rho/ECM work caps, equal factor-worklist fuel and
-per-cofactor smooth caps for ordinary factorization, and equal global
+base stage-1/ECM caps for ordinary factorization (with the enabled policy
+charging its one additional continuation explicitly), and equal global
 `maxAttempts` for construction. Report success counts separately from timing,
 and never time an exhaustion as a successful result. Across all required families, the enabled policy
 must retain every checked success of the disabled policy. Ordinary
 factorization and construction pass independently; #10291's four inputs are
 an additional fixed corpus, not evidence of an extra-prime base order or a promised success family.
+
+Construction comparisons use the current production `constructionBudget`,
+changing only `pMinusOneStage2` between arms and recording the actual limits.
+Interpreted construction uses the shared fresh-module runner with warm imports
+and a same-round import-only baseline. Execute each distinct input once per
+arm in eight paired rounds, with a separate module and baseline for each
+input. Sum baseline-subtracted input costs within each round, then report
+the median family cost over the eight rounds, separating checked successes
+from exhaustion. Report the summed baseline-variation envelope alongside
+these descriptive costs; baseline resolution does not establish that a policy
+difference exceeds shared-host variation. Retain every input, checked outcome and route trace.
+This is construction-search phase attribution, not an asymptotic proof-search
+claim or kernel-replay timing. Tiny regression families whose workload cannot
+be resolved above baseline variation receive an inconclusive timing verdict,
+not a fabricated ratio. No in-process clocks appear in the probe import
+closure. Native per-input timings remain the compiled performance gate.
 
 The internal comparator is the identical bounded policy with continuation
 disabled. An external p−1 comparator is optional and **informational**, never a
@@ -1583,8 +1600,9 @@ certificate-construction depth. Partial factorization is bounded separately by
 `2 * n.log2 + 8` worklist
 steps at each certificate node and the rho restart/cycle allocation above. The
 fixed witness budget remains 32 candidates per factor entry; the registered
-HexIntFactor producer additionally admits at most eight p−1/ECM attempts within
-each supplied worklist step. The exact attempt counter includes p−1 calls, rho
+HexIntFactor producer additionally admits at most eight stage-1/ECM attempts
+and one enabled stage-2 continuation within each supplied worklist step,
+always bounded by its fuel. The exact attempt counter includes p−1 calls, rho
 restarts, ECM curves, and witness candidates and can therefore exceed the
 recursive fuel used at a node. Inputs above 512 bits are rejected before
 Miller--Rabin or certificate search. Search exhaustion reports the seed,

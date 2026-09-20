@@ -5,6 +5,9 @@ Authors: Kim Morrison
 -/
 
 import HexPrimalityBench.Inputs
+import HexPrimality.PMinusOneFixtures
+import HexPrimality.PMinusOneMeasure
+import HexPrimality.PMinusOneParents
 import LeanBench
 
 /-!
@@ -476,6 +479,392 @@ setup_fixed_benchmark runRuntimePrimes where {
   expectedHash := some (Hashable.hash (43390 : Nat))
 }
 
+
+namespace Stage2
+
+/-- Enumeration and the saved residue are prepared outside the arithmetic timer. -/
+structure Prepared where
+  input : Input
+  upper : Nat
+  primes : List Nat
+
+instance : Inhabited Prepared := ⟨⟨default, 0, []⟩⟩
+instance : Hashable Prepared where
+  hash p := hash (p.input.subject, p.upper)
+
+def prepareMiss (bits q : Nat) : Prepared :=
+  let q := if #[67, 127, 257, 509, 1021, 2039, 4093, 8191, 16381, 32749].contains q
+    then q else 2039
+  let input := (inputs.find? (fun i => i.bits == bits && i.q == q)).getD default
+  ⟨input, q - 1, PMinusOne.primes 64 (q - 1)⟩
+
+/-- Hash actual outcomes and work, including retained batch detail. The trace
+walk adds O(L/32) work on this no-recovery family and cannot change its model. -/
+def checksum (r : PMinusOne.Run) : Nat :=
+  let value := match r.result with | .noFactor => 0 | .whole => 1 | .factor d => d
+  r.events.foldl (fun acc e =>
+    e.batches.foldl (fun acc b =>
+      b.recovery.foldl (· + ·) (acc + b.firstPrime + b.lastPrime + b.length + b.gcd))
+      (acc + e.candidates + e.giantAdvances + e.multiplications +
+        e.setupGcds + e.batchGcds + e.recoveryGcds)) (3 * value + r.attempts)
+
+def runPrepared (p : Prepared) (keepBatches : Bool) : Nat :=
+  checksum (PMinusOne.fromPrepared p.input.subject p.input.x 64 p.upper p.primes
+    (Hex.Rand.ofSeed 0) keepBatches)
+
+/-- Exact multiplication count on a full miss: i₀ = floor(67/210) = 0, so
+binary power costs zero. The fixed 210 babies remain in the model. -/
+def operations (q : Nat) : Nat :=
+  let ps := PMinusOne.primes 64 (q - 1)
+  if ps.isEmpty then 0 else 210 + ps.getLast! / 210 + 2 * ps.length
+
+#guard inputs.all fun input =>
+  let p := prepareMiss input.bits input.q
+  let full := PMinusOne.fromPrepared input.subject input.x 64 p.upper p.primes
+    (Hex.Rand.ofSeed 0)
+  let counters := PMinusOne.fromPrepared input.subject input.x 64 p.upper p.primes
+    (Hex.Rand.ofSeed 0) false
+  full.result == .noFactor && full.attempts == 1 && full.rand == counters.rand &&
+  counters.result == full.result && counters.attempts == full.attempts &&
+  full.events.map (fun e => { e with batches := [] }) == counters.events &&
+  full.events[0]!.multiplications == operations input.q &&
+  full.events[0]!.batchGcds == (p.primes.length + 31) / 32
+
+namespace Bits64
+
+def prepare (q : Nat) : Prepared := prepareMiss 64 q
+def runTrace (p : Prepared) : Nat := runPrepared p true
+def runCounters (p : Prepared) : Nat := runPrepared p false
+
+-- Cost model: on this fixed-size full-miss family, 210 baby multiplications,
+-- floor(lastPrime / 210) giant advances and two multiplications per candidate
+-- give operations q. One gcd per 32 candidates and the trace checksum add
+-- linear work in the candidate count. Sieve and stage 1 are prepared outside.
+setup_benchmark runTrace q => Stage2.operations q
+  with prep := prepare
+  where {
+    paramFloor := 2039
+    paramCeiling := 32749
+    paramSchedule := .custom #[2039, 4093, 8191, 16381, 32749]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    slopeTolerance := 0.5
+  }
+
+-- Cost model: the same 210 + floor(lastPrime / 210) + 2 * candidates
+-- modular multiplications and one gcd per 32 candidates; fixed-size counters
+-- add constant work per candidate. Enumeration and stage 1 are prepared outside.
+setup_benchmark runCounters q => Stage2.operations q
+  with prep := prepare
+  where {
+    paramFloor := 2039
+    paramCeiling := 32749
+    paramSchedule := .custom #[2039, 4093, 8191, 16381, 32749]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    slopeTolerance := 0.5
+  }
+
+end Bits64
+
+namespace Bits128
+
+def prepare (q : Nat) : Prepared := prepareMiss 128 q
+def runTrace (p : Prepared) : Nat := runPrepared p true
+def runCounters (p : Prepared) : Nat := runPrepared p false
+
+-- Cost model: on this fixed-size full-miss family, 210 baby multiplications,
+-- floor(lastPrime / 210) giant advances and two multiplications per candidate
+-- give operations q. One gcd per 32 candidates and the trace checksum add
+-- linear work in the candidate count. Sieve and stage 1 are prepared outside.
+setup_benchmark runTrace q => Stage2.operations q
+  with prep := prepare
+  where {
+    paramFloor := 2039
+    paramCeiling := 32749
+    paramSchedule := .custom #[2039, 4093, 8191, 16381, 32749]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    slopeTolerance := 0.5
+  }
+
+-- Cost model: the same 210 + floor(lastPrime / 210) + 2 * candidates
+-- modular multiplications and one gcd per 32 candidates; fixed-size counters
+-- add constant work per candidate. Enumeration and stage 1 are prepared outside.
+setup_benchmark runCounters q => Stage2.operations q
+  with prep := prepare
+  where {
+    paramFloor := 2039
+    paramCeiling := 32749
+    paramSchedule := .custom #[2039, 4093, 8191, 16381, 32749]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    slopeTolerance := 0.5
+  }
+
+end Bits128
+
+namespace Bits256
+
+def prepare (q : Nat) : Prepared := prepareMiss 256 q
+def runTrace (p : Prepared) : Nat := runPrepared p true
+def runCounters (p : Prepared) : Nat := runPrepared p false
+
+-- Cost model: on this fixed-size full-miss family, 210 baby multiplications,
+-- floor(lastPrime / 210) giant advances and two multiplications per candidate
+-- give operations q. One gcd per 32 candidates and the trace checksum add
+-- linear work in the candidate count. Sieve and stage 1 are prepared outside.
+setup_benchmark runTrace q => Stage2.operations q
+  with prep := prepare
+  where {
+    paramFloor := 2039
+    paramCeiling := 32749
+    paramSchedule := .custom #[2039, 4093, 8191, 16381, 32749]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    slopeTolerance := 0.5
+  }
+
+-- Cost model: the same 210 + floor(lastPrime / 210) + 2 * candidates
+-- modular multiplications and one gcd per 32 candidates; fixed-size counters
+-- add constant work per candidate. Enumeration and stage 1 are prepared outside.
+setup_benchmark runCounters q => Stage2.operations q
+  with prep := prepare
+  where {
+    paramFloor := 2039
+    paramCeiling := 32749
+    paramSchedule := .custom #[2039, 4093, 8191, 16381, 32749]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    slopeTolerance := 0.5
+  }
+
+end Bits256
+
+namespace Bits512
+
+def prepare (q : Nat) : Prepared := prepareMiss 512 q
+def runTrace (p : Prepared) : Nat := runPrepared p true
+def runCounters (p : Prepared) : Nat := runPrepared p false
+
+-- Cost model: on this fixed-size full-miss family, 210 baby multiplications,
+-- floor(lastPrime / 210) giant advances and two multiplications per candidate
+-- give operations q. One gcd per 32 candidates and the trace checksum add
+-- linear work in the candidate count. Sieve and stage 1 are prepared outside.
+setup_benchmark runTrace q => Stage2.operations q
+  with prep := prepare
+  where {
+    paramFloor := 2039
+    paramCeiling := 32749
+    paramSchedule := .custom #[2039, 4093, 8191, 16381, 32749]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    slopeTolerance := 0.5
+  }
+
+-- Cost model: the same 210 + floor(lastPrime / 210) + 2 * candidates
+-- modular multiplications and one gcd per 32 candidates; fixed-size counters
+-- add constant work per candidate. Enumeration and stage 1 are prepared outside.
+setup_benchmark runCounters q => Stage2.operations q
+  with prep := prepare
+  where {
+    paramFloor := 2039
+    paramCeiling := 32749
+    paramSchedule := .custom #[2039, 4093, 8191, 16381, 32749]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    slopeTolerance := 0.5
+  }
+
+end Bits512
+
+/-- The existing modular-power dispatch with its word context prepared once.
+Conversions remain inside each power; large moduli retain the Nat backend. -/
+structure PreparedPower where
+  power : Nat → Nat → Nat
+  checksum : Nat
+deriving Inhabited
+
+@[noinline] def preparePower (n : Nat) : PreparedPower :=
+  if n = 0 then ⟨fun _ _ => 0, 0⟩ else
+    let word := UInt64.ofNat n
+    if word.toNat = n then
+      if odd : word % 2 = 1 then
+        let ctx := MontCtx.mk word odd
+        ⟨fun a e => (ctx.fromMont (HexArith.powMont ctx
+          (ctx.toMont (UInt64.ofNat (a % word.toNat))) e)).toNat,
+          ctx.p'.toNat + ctx.r2.toNat⟩
+      else ⟨fun a e => HexArith.powModBits a e n, 0⟩
+    else ⟨fun a e => HexArith.powModBits a e n, 0⟩
+
+theorem preparePower_eq (n a e : Nat) :
+    (preparePower n).power a e = HexArith.powMod a e n := by
+  unfold preparePower HexArith.powMod
+  split
+  · rfl
+  · dsimp only
+    split
+    · split <;> rfl
+    · rfl
+
+def preparedSmooth (power : PreparedPower) (bound : Nat) : List Nat → Nat → Nat
+  | [], x => x
+  | q :: qs, x =>
+      if q ≤ smoothBound bound then
+        preparedSmooth power bound qs (power.power x (PMinusOne.primePower q bound))
+      else x
+
+theorem preparedSmooth_eq (n bound : Nat) (ps : List Nat) (x : Nat) :
+    preparedSmooth (preparePower n) bound ps x = PMinusOne.smoothPower n x bound ps := by
+  induction ps generalizing x with
+  | nil => rfl
+  | cons q qs ih =>
+    change (if q ≤ smoothBound bound then
+      preparedSmooth (preparePower n) bound qs
+        ((preparePower n).power x (PMinusOne.primePower q bound)) else x) =
+      (if q ≤ smoothBound bound then
+        PMinusOne.smoothPower n (HexArith.powModNat x (PMinusOne.primePower q bound) n)
+          bound qs else x)
+    split
+    · rw [preparePower_eq, HexArith.powMod_eq_powModNat]
+      exact ih _
+    · rfl
+
+-- Match the independently certified saved residues, including word and
+-- arbitrary-precision moduli, before measuring the prepared boundary.
+#guard inputs.all fun input =>
+  preparedSmooth (preparePower input.subject) 64 (primesBelow 65) (2 % input.subject) == input.x
+
+structure PhaseInput where
+  n : Nat
+  x : Nat
+  lower : Nat
+  upper : Nat
+  firstPrimes : List Nat
+  interval : List Nat
+  trace : Bool
+  power : PreparedPower
+deriving Inhabited
+
+@[noinline] def phase (name : String) (p : PhaseInput) : Hex.PMinusOneMeasure.Result :=
+  let r := Hex.Rand.ofSeed 0
+  match name with
+  | "setup" =>
+      { outcome := "setup"
+        value := 2 % p.n + Nat.gcd 2 p.n + (primesBelow (p.lower + 1)).length +
+          (PMinusOne.primes p.lower p.upper).length }
+  | "enumeration" =>
+      { outcome := "enumeration", value := (PMinusOne.primes p.lower p.upper).length }
+  | "stage1" =>
+      let x := PMinusOne.smoothPower p.n (2 % p.n) p.lower p.firstPrimes
+      { outcome := "stage1-gcd", value := Nat.gcd ((x + p.n - 1) % p.n) p.n }
+  | "preparation" =>
+      { outcome := "preparation"
+        value := 2 % p.n + Nat.gcd 2 p.n + (primesBelow (p.lower + 1)).length +
+          (PMinusOne.primes p.lower p.upper).length + (preparePower p.n).checksum }
+  | "prepared-stage1" =>
+      let x := preparedSmooth p.power p.lower p.firstPrimes (2 % p.n)
+      { outcome := "stage1-gcd", value := Nat.gcd ((x + p.n - 1) % p.n) p.n }
+  | "prepared" => Hex.PMinusOneMeasure.fromRun <|
+      PMinusOne.fromPrepared p.n p.x p.lower p.upper p.interval r p.trace
+  | "continuation" => Hex.PMinusOneMeasure.fromRun <|
+      PMinusOne.stage2Counted p.n p.x p.lower p.upper r
+  | _ => Hex.PMinusOneMeasure.fromRun <|
+      PMinusOne.searchCounted p.n 2 p.lower p.upper r
+
+initialize phaseInput : IO.Ref PhaseInput ← IO.mkRef <|
+  let p := prepareMiss 128 32749
+  ⟨p.input.subject, p.input.x, 64, p.upper, primesBelow 65, p.primes, true,
+    preparePower p.input.subject⟩
+
+initialize phaseResult : IO.Ref (Option Hex.PMinusOneMeasure.Result) ← IO.mkRef none
+
+def measurePhase (name : String) : IO Nat := do
+  let result := phase name (← phaseInput.get)
+  phaseResult.set (some result)
+  return result.value + result.attempts + (result.events.foldl (fun n e =>
+    match e with
+    | .pMinusOne e => n + e.candidates + e.multiplications
+    | .route _ _ => n) 0)
+
+def runSetup (_ : Unit) : IO Nat := measurePhase "setup"
+def runEnumeration (_ : Unit) : IO Nat := measurePhase "enumeration"
+def runStage1 (_ : Unit) : IO Nat := measurePhase "stage1"
+def runPreparation (_ : Unit) : IO Nat := measurePhase "preparation"
+def runPreparedStage1 (_ : Unit) : IO Nat := measurePhase "prepared-stage1"
+def runPreparedPhase (_ : Unit) : IO Nat := measurePhase "prepared"
+def runContinuation (_ : Unit) : IO Nat := measurePhase "continuation"
+def runTotal (_ : Unit) : IO Nat := measurePhase "total"
+
+-- Fixed canonical phases expose setup amortization and backend boundaries.
+-- Operand-size scaling belongs to the separate operation-model registrations.
+setup_fixed_benchmark runSetup where { repeats := 3, maxSecondsPerCall := 10.0 }
+setup_fixed_benchmark runEnumeration where { repeats := 3, maxSecondsPerCall := 10.0 }
+setup_fixed_benchmark runStage1 where { repeats := 3, maxSecondsPerCall := 10.0 }
+setup_fixed_benchmark runPreparation where { repeats := 3, maxSecondsPerCall := 10.0 }
+setup_fixed_benchmark runPreparedStage1 where { repeats := 3, maxSecondsPerCall := 10.0 }
+setup_fixed_benchmark runPreparedPhase where { repeats := 3, maxSecondsPerCall := 10.0 }
+setup_fixed_benchmark runContinuation where { repeats := 3, maxSecondsPerCall := 10.0 }
+setup_fixed_benchmark runTotal where { repeats := 3, maxSecondsPerCall := 10.0 }
+
+/-- Diagnostics are serialized after the lean-bench timing boundary. -/
+def emitResult (ref : IO.Ref (Option Hex.PMinusOneMeasure.Result)) : IO Unit := do
+  if let some result ← ref.get then
+    IO.println (Lean.Json.mkObj [("type", Lean.toJson "result"), ("result", result.json)]).compress
+
+def probe (args : List String) : IO UInt32 := do
+  match args with
+  | [name, n, x, lower, upper, minNanos, trace] =>
+      let n := n.toNat!
+      let lower := lower.toNat!
+      let upper := upper.toNat!
+      phaseInput.set (PhaseInput.mk n x.toNat! lower upper
+        (primesBelow (lower + 1)) (PMinusOne.primes lower upper) (trace == "true")
+        (preparePower n))
+      let target := match name with
+        | "setup" => `Hex.PrimalityBench.Stage2.runSetup
+        | "enumeration" => `Hex.PrimalityBench.Stage2.runEnumeration
+        | "stage1" => `Hex.PrimalityBench.Stage2.runStage1
+        | "preparation" => `Hex.PrimalityBench.Stage2.runPreparation
+        | "prepared-stage1" => `Hex.PrimalityBench.Stage2.runPreparedStage1
+        | "prepared" => `Hex.PrimalityBench.Stage2.runPreparedPhase
+        | "continuation" => `Hex.PrimalityBench.Stage2.runContinuation
+        | _ => `Hex.PrimalityBench.Stage2.runTotal
+      let code ← LeanBench.runFixedChildMode target 0 minNanos.toNat!
+      emitResult phaseResult
+      return code
+  | _ => throw (IO.userError "stage2-probe PHASE N X B1 B2 MIN_NANOS TRACE")
+
+initialize constructionInput : IO.Ref (Nat × Nat × Bool × Nat) ← IO.mkRef (97, 0, false, constructionBudget.maxBits)
+initialize constructionResult : IO.Ref (Option Hex.PMinusOneMeasure.Result) ← IO.mkRef none
+
+def runConstruction (_ : Unit) : IO Nat := do
+  let (n, seed, enabled, maxBits) ← constructionInput.get
+  let result := Hex.PMinusOneMeasure.construct n seed enabled maxBits
+  constructionResult.set (some result)
+  return if result.checked then result.value else 0
+
+setup_fixed_benchmark runConstruction where { repeats := 3, maxSecondsPerCall := 600.0 }
+
+def constructProbe (args : List String) : IO UInt32 := do
+  match args with
+  | [n, seed, enabled] | [n, seed, enabled, _] =>
+      let maxBits := (args[3]?.bind String.toNat?).getD constructionBudget.maxBits
+      constructionInput.set (n.toNat!, seed.toNat!, enabled == "true", maxBits)
+      let code ← LeanBench.runFixedChildMode `Hex.PrimalityBench.Stage2.runConstruction 0 0
+      emitResult constructionResult
+      return code
+  | _ => throw (IO.userError "stage2-construct N SEED ENABLED [MAX_BITS]")
+
+end Stage2
 private initialize p521Ref : IO.Ref Input ← IO.mkRef p521
 
 /-- Fixed mode-3 P-521 construction, including the final compiled self-check. -/
@@ -503,4 +892,15 @@ setup_fixed_benchmark runP521Checker where {
 
 end Hex.PrimalityBench
 
-def main (args : List String) : IO UInt32 := LeanBench.Cli.dispatch args
+def main (args : List String) : IO UInt32 :=
+  match args with
+  | ["construction-budget"] => do
+      let b := Hex.Nat.constructionBudget
+      IO.println ((Lean.Json.mkObj [("maxBits", Lean.toJson b.maxBits),
+        ("maxFactors", Lean.toJson b.maxFactors),
+        ("maxAttempts", Lean.toJson b.maxAttempts),
+        ("definition", Lean.toJson (reprStr b))]).compress)
+      return 0
+  | "stage2-probe" :: args => Hex.PrimalityBench.Stage2.probe args
+  | "stage2-construct" :: args => Hex.PrimalityBench.Stage2.constructProbe args
+  | _ => LeanBench.Cli.dispatch args

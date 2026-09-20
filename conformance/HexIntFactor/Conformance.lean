@@ -783,3 +783,64 @@ example : Hex.Nat.Internal.retryPower? 63 rejectedPart 0 = .error rejectedPart :
 #guard (match factor? 0 (Rand.ofSeed 0) with
   | .error f => f.stop == .zero
   | .ok _ => false)
+
+namespace PollardStage2Tests
+
+private def seed := Hex.Rand.ofSeed 7
+private def route (fuel : Nat) := Internal.smoothSearch 1000000007 seed fuel true
+#guard (route 0).attempts == 0 && (route 0).events.isEmpty && (route 0).rand == seed
+#guard (route 1).attempts == 1 && (route 1).rand == seed
+#guard (match (route 1).events with
+  | [.pMinusOneTrace first, .pMinusOneTrace skip] =>
+      first.requestedB1 == 64 && first.reason == "ready-residue" &&
+      skip.reason == "budget" && skip.requestedB2 == some 4096
+  | _ => false)
+#guard (route 8).attempts == 8
+#guard (route 9).attempts == 9
+#guard (match (route 9).events with
+  | .pMinusOneTrace a :: .pMinusOneTrace b :: .pMinusOneTrace c ::
+      .pMinusOneTrace d :: .pMinusOneTrace e :: rest =>
+      a.requestedB1 == 64 && a.base == some 2 &&
+      b.requestedB1 == 64 && b.requestedB2 == some 4096 && b.base.isNone &&
+      c.requestedB1 == 512 && d.requestedB1 == 4096 && e.requestedB1 == 9999 &&
+      rest.length == 4 && rest.all (fun e => match e with | .ecm .. => true | _ => false)
+  | _ => false)
+#guard (route 8).rand == (seed.words 4).2 && (route 9).rand == (seed.words 4).2
+-- A caller with insufficient fuel keeps the entire base allocation.
+#guard (route 8).events.any (fun e => match e with
+  | .pMinusOneTrace p => p.reason == "budget"
+  | _ => false)
+-- The extra-prime factor needs the bound-9999 stage-1 attempt.
+#guard (Internal.smoothSearch 170141183561861700765677798001080840267 seed 9 true).factor ==
+  some 277827051595988963
+#guard (List.range 12).all (fun fuel => (route fuel).attempts ≤ fuel)
+#guard (pMinusOneSearchCounted 1081 2 5 13 seed).result == .factor 23
+#guard (pMinusOneStage2Counted 1219 998 5 13 seed).result == .factor 23
+#guard (pMinusOneStage2Counted 2047 32 5 13 seed).result == .whole
+#guard (Internal.smoothSearch (4175126843 * 4294967291) seed 9 true).attempts == 2
+#guard (Internal.smoothSearch (4175126843 * 4294967291) seed 9 true).factor ==
+  some 4175126843
+
+-- Disable preceding rho explicitly to test the dispatcher boundary rather
+-- than relying on probabilistic exhaustion to reach this route.
+private def factored := Internal.factorCountedWith? ⟨0, 0⟩ 0
+  (4175126843 * 4294967291) seed 128 true
+#guard (match factored with
+  | .ok _ => false
+  | .error f => f.events.any (fun e => match e with
+      | .pMinusOne p => p.requestedB2 == some 4096 && p.outcome == .factor 4175126843
+      | _ => false))
+
+#guard (match Internal.factorCountedWith? ⟨0, 0⟩ 128
+    (4175126843 * 4294967291) seed 128 true with
+  | .ok s => checkFactorization s.factorization.raw &&
+      s.events.any (fun e => match e with
+        | .pMinusOne p => p.requestedB2 == some 4096 && p.outcome == .factor 4175126843
+        | _ => false)
+  | .error _ => false)
+
+#guard (Internal.SmoothEvent.ecm 9 64 .whole).toFactorEvent 1081 ==
+  .route "ecm" [("subject", "1081"), ("sigma", "9"), ("requestedBound", "64"),
+    ("effectiveBound", "64"), ("outcome", "whole"), ("attempts", "1")]
+
+end PollardStage2Tests

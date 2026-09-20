@@ -465,27 +465,26 @@ stage-1 attempt itself, retaining its residue and event; it does not first
 call the residue-discarding `pMinusOneFactorCounted` and then repeat setup.
 With the flag enabled, at most one continuation is eligible per unresolved
 cofactor: after the first base-2/bound-64 stage-1 call, only if it returns a ready residue,
-try `B₁ = 64`, `B₂ = 4096`. Do so only if one p−1 attempt and one combined
-smooth attempt remain. A stage-1 setup factor, stage factor, or `whole`
-does not enter stage 2; a later base/bound pair does not receive a second
-chance at continuation. This deliberately small policy has a separately
-measured allocation; it does not use the primitive ceiling by default.
+try `B₁ = 64`, `B₂ = 4096`. Reserve its slot only when the caller's
+fuel exceeds eight. A stage-1 setup factor, stage factor, or `whole`
+does not enter stage 2; a later base/bound pair does not receive another
+continuation. This small policy has a separately measured allocation; it
+does not use the primitive ceiling by default.
 
-One continuation consumes one of the at-most-four p−1 attempts and one of
-the `min fuel 8` combined smooth attempts. Its batches and recovery consume
-no extra attempts, and its per-attempt work is capped by the shared operation
-bounds with `B₂ = 4096`. On a proper factor stop immediately; on `noFactor`
-or `whole`, resume the stage-1 ladder as after its original no-factor
-result (base 2, next bound 512), with the continuation's charge deducted.
-Thus the all-miss enabled sequence is stage 1 at 64, stage 2 to 4096,
-stage 1 at 512, stage 1 at 4096, then the remaining ECM allocation.
-This displaces the disabled ladder's bound-9999 stage-1 call; the benchmark
-gate must demonstrate that the changed allocation preserves baseline
-successes rather than assuming this displacement is harmless.
-No continuation exhaustion resets fuel, draws a random word, or blocks ECM.
-If the budget cannot admit it, record the skip and continue the existing
-bounded ladder. Other stage-1 whole results retain the smaller-bound,
-next-base policy above.
+The four stage-1 calls and their unused ECM remainder retain the disabled
+policy's `min fuel 8` allocation. Continuation consumes one additional,
+explicitly counted attempt, so an enabled dispatcher uses at most nine
+attempts, always bounded by the caller's fuel. Its batches and recovery
+consume no extra attempts. On a proper factor stop immediately; on `noFactor`
+or `whole`, resume stage 1 at base 2, bound 512 without deducting from its
+four-call allocation. The all-miss sequence is stage 1 at 64, stage 2 to
+4096, stage 1 at 512, 4096, and 9999, then four ECM curves. Both policies
+retain the same rho, stage-1, ECM, and worklist caps; enabled execution pays
+for its extra continuation in both attempt accounting and total timing.
+No continuation exhaustion resets fuel, draws a random word, or displaces
+ECM. If fuel cannot reserve the additional slot, record a zero-attempt skip
+and execute the unchanged stage-1/ECM allocation. Other stage-1 whole results
+retain the smaller-bound, next-base policy above.
 
 Extend `SmoothEvent` with the shared continuation call event, including
 requested/effective bounds, batch outcomes and recovery, plus zero-attempt
@@ -588,9 +587,9 @@ there is no fallback that is correct-but-slow, because trial division
 past `10^{18}` is not slow, it is unavailable.
 
 The p−1 and ECM ladders share `min fuel 8` attempts at each unresolved
-cofactor, with at most four assigned to p−1 and the unused remainder assigned
-to ECM. A stage-2 continuation, when enabled, occupies one of those four
-p−1 slots. Counted attempt fields are summed on factor success and exhaustion
+cofactor, with at most four assigned to stage 1 and the unused remainder assigned
+to ECM. An enabled stage-2 continuation uses one additional attempt only
+when fuel exceeds eight; it cannot consume a stage-1 or ECM slot. Counted attempt fields are summed on factor success and exhaustion
 alike; the event list also includes batch details and zero-attempt skips,
 so its length is not an accounting source. The final `Rand` is
 threaded into every continuation. Checker rejection retains the attempt total
@@ -698,7 +697,8 @@ public meta def HexIntFactor.PrimalityTactic.extension :
 `intFactorSearch allocation n r` runs `factorCountedWith?` with exactly the
 supplied recursive-primality, rho-restart, rho-step, and factor-worklist
 allocations. The dispatcher additionally bounds its p−1/ECM continuation to
-eight attempts per worklist entry. Complete checked factorizations become
+eight base attempts plus at most one enabled continuation per worklist entry,
+within the supplied fuel. Complete checked factorizations become
 factor/exponent pairs with residual one. Incomplete searches expose the last
 checker-accepted snapshot. Checker rejection degrades to the trivial saved
 snapshot, while the zero-input case alone has no snapshot and becomes the
@@ -1210,7 +1210,7 @@ criterion rather than merely normalizing constants.
 ## Conformance
 
 Stage 2 reuses the upstream fixed fixtures (`1081`, `2047`, and `1219`)
-and adds adapter equality, one/two/four/eight-attempt allocation boundaries,
+and adds adapter equality, one/two/four/eight/nine-attempt allocation boundaries,
 zero-fuel skips, exact event ordering, no random draws, and fallthrough to
 ECM after both `noFactor` and `whole`. The enabled all-miss four-attempt
 p−1 sequence must match the dispatch contract above. Check factor-range

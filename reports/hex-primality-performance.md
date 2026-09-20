@@ -346,6 +346,14 @@ python3 scripts/profile/summarize_profile.py \
   --output reports/bench-results/hex-primality-profile-segment-4655d0530-chungus2.json
 ```
 
+## Pollard p−1 continuation
+
+The `p-minus-one-stage2` family is covered by the
+[arithmetic and consumer report](hex-primality-stage2.md), including exact
+extra-prime fixtures, full misses, route accounting, and checked outcomes.
+Continuation remains opt-in; the report separates native and interpreted
+construction evidence and ordinary factorization's allocation.
+
 ## Concerns
 
 None.

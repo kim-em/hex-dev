@@ -98,7 +98,7 @@ private def hardCofactor : Nat :=
   | _ => false)
 
 private def malformed : FactorSearch := fun _ n r =>
-  ⟨⟨[(0, 1), (n + 1, 2 ^ 100)], 0⟩, r, 7⟩
+  ⟨⟨[(0, 1), (n + 1, 2 ^ 100)], 0⟩, r, 7, []⟩
 
 #guard (match Construction.run curveInput (Hex.Rand.ofSeed 19) (factor := malformed) with
   | .error f => f.stop == .exhausted && f.attempts == 7 && f.rand == Hex.Rand.ofSeed 19
@@ -116,7 +116,7 @@ example : Hex.Nat.Prime 68647976601306097149819007990813932172694353001433054093
 
 private def rejects (raw : PartialFactors) : Bool :=
   match Construction.run curveInput (Hex.Rand.ofSeed 19)
-      (factor := fun _ _ r => ⟨raw, r, 7⟩) with
+      (factor := fun _ _ r => ⟨raw, r, 7, []⟩) with
   | .error f => f.stop == .exhausted && f.attempts == 7 && f.rand == Hex.Rand.ofSeed 19
   | _ => false
 
@@ -205,7 +205,7 @@ example : Hex.Nat.Prime 9223372036904058881 := prime_of_checkPrimeAt
   (by decide +kernel)
 
 -- An unusable provider proves the cheap partial-factor route never calls it.
-private def noFactors : FactorSearch := fun _ n r => ⟨⟨[], n⟩, r, 1000000⟩
+private def noFactors : FactorSearch := fun _ n r => ⟨⟨[], n⟩, r, 1000000, []⟩
 #guard (match Construction.run 9223372036904058881 (Hex.Rand.ofSeed 17)
     (factor := noFactors) with
   | .ok s => checkPrime s.cert.raw && s.attempts < 1000000 && s.rand == Hex.Rand.ofSeed 17
@@ -223,7 +223,7 @@ example : Hex.Nat.Prime 9223372036904058881 := by primality?
 
 -- Only 2^20 is exposed by table division here. A lower sieve cap must exhaust
 -- when the provider declines further factoring, with no consumed factor attempts.
-private def decline : FactorSearch := fun _ n r => ⟨⟨[], n⟩, r, 0⟩
+private def decline : FactorSearch := fun _ n r => ⟨⟨[], n⟩, r, 0, []⟩
 example : Hex.Nat.Prime 9223372037728239617 := prime_of_checkPrimeAt
   (c := .pock3Sieve 9223372037728239617 833 4194304 0 4 [(3, 19, .small 2)])
   (by decide +kernel)
@@ -248,6 +248,55 @@ example : checkPrime (.pock3Sieve 9223372036904058881 47 4194304 0 65
     [(3, 19, .small 2)]) = false := by decide +kernel
 #guard !checkPrime (.pock3Sieve 9223372036904058881 47 4194304 0 65 [(3, 19, .small 2)])
 
+-- Stage 2 shares the global attempt limit and preserves ordered diagnostics.
+private def stage2Subject : Nat := 4175126843 * 4294967291
+private def stage2Allocation (limit : Nat) : FactorSearchBudget := {
+  constructionBudget.factor with
+  smoothBounds := [64]
+  smoothBases := [2]
+  primeBudget := ⟨0, 0⟩
+  factorFuel := 8
+  attemptLimit := some limit
+  pMinusOneStage2 := true }
+private def stage2Search (limit : Nat) :=
+  Construction.factorSearch (stage2Allocation limit) stage2Subject (Hex.Rand.ofSeed 5)
+#guard (stage2Search 0).attempts == 0 && (stage2Search 0).events.isEmpty
+#guard (stage2Search 0).rand == Hex.Rand.ofSeed 5
+#guard (stage2Search 1).attempts == 1 && (stage2Search 1).events.length == 2
+#guard (stage2Search 1).raw.residual == stage2Subject
+#guard (match (stage2Search 1).events with
+  | [.pMinusOne first, .pMinusOne skip] =>
+      first.reason == "ready-residue" && skip.reason == "budget" &&
+      skip.requestedB2 == some 512 && skip.candidates == 0 && skip.setupGcds == 0
+  | _ => false)
+#guard (stage2Search 3).attempts == 2 && (stage2Search 3).raw.residual == 1
+#guard (stage2Search 3).rand == Hex.Rand.ofSeed 5
+#guard (match (stage2Search 3).events with
+  | [.pMinusOne first, .pMinusOne next] =>
+      first.reason == "ready-residue" && next.requestedB2 == some 512 &&
+      next.outcome == .factor 4175126843
+  | _ => false)
+#guard (Construction.factorSearch { stage2Allocation 3 with pMinusOneStage2 := false }
+  stage2Subject (Hex.Rand.ofSeed 5)).events.isEmpty
+#guard (match (Construction.factorSearch { stage2Allocation 3 with smoothBounds := [4097] }
+    (3530931683 * 4294967291) (Hex.Rand.ofSeed 5)).events with
+  | [.pMinusOne _, .pMinusOne skip] => skip.reason == "policy-cap"
+  | _ => false)
+#guard (match (Construction.factorSearch { stage2Allocation 3 with smoothBounds := [0] }
+    stage2Subject (Hex.Rand.ofSeed 5)).events with
+  | [.pMinusOne _, .pMinusOne skip] => skip.reason == "empty-interval"
+  | _ => false)
+
+private def diagnosticProducer : FactorSearch := fun _ n r =>
+  ⟨⟨[], n⟩, r, 0, [.route "test" [("subject", toString n)]]⟩
+#guard (match Construction.run curveInput (Hex.Rand.ofSeed 19)
+    (factor := diagnosticProducer) with
+  | .error f => f.events == [.route "test" [("subject", toString (curveInput - 1))]]
+  | _ => false)
+
+-- The option reaches the construction policy; table proofs need no attempts.
+example : Hex.Nat.Prime 23 := by
+  primality? (maxAttempts := 0) (pMinusOneStage2 := true)
 /--
 info: Try this:
   [apply] exact

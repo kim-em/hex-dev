@@ -417,6 +417,13 @@ structure PartialFactors where
   residual : Nat
 deriving Repr
 
+/-- Search diagnostics shared by core and downstream producers. Route fields
+carry downstream data without a dependency on downstream types. -/
+inductive FactorEvent where
+  | pMinusOne (event : PMinusOne.Event)
+  | route (name : String) (fields : List (String × String))
+deriving Repr, DecidableEq
+
 /-- Output of an untrusted partial-factor search used during certificate
 construction. The caller validates only the final `PrimeCert`; these fields
 carry search candidates and resumable resource accounting, not evidence. -/
@@ -427,6 +434,8 @@ structure FactorSearchResult where
   rand : Rand
   /-- Semantic search attempts made by this invocation. -/
   attempts : Nat
+  /-- Events in execution order, including zero-attempt policy skips. -/
+  events : List FactorEvent := []
 deriving Repr
 
 /-- The product `∏ pᵢ ^ eᵢ` of a claimed factor list. -/
@@ -617,6 +626,8 @@ structure FactorSearchBudget where
   smoothBases : List Nat := []
   /-- Optional total attempt limit; unsupported producers must decline. -/
   attemptLimit : Option Nat := none
+  /-- Opt-in continuation; shares the total attempt allocation. -/
+  pMinusOneStage2 : Bool := false
 deriving Repr, DecidableEq
 
 /-- A bounded, resumable, untrusted partial-factor producer. -/
@@ -725,11 +736,16 @@ private def partialFactor (budget : PrimeCertBudget) (n : Nat) (r : Rand)
     smooth.attempts
   ⟨⟨phase.factors, phase.residual⟩, phase.rand, phase.attempts⟩
 
-/-- The built-in partial-factor producer used by `primeCert?`. -/
+/-- The built-in partial-factor producer used by `primeCert?`. It declines
+requests for stage 2 or a global attempt limit without work: this producer
+implements neither policy. Bounded construction uses its own producer. -/
 def defaultFactorSearch : FactorSearch :=
   fun allocation n r =>
+    if allocation.pMinusOneStage2 || allocation.attemptLimit.isSome then
+      ⟨⟨[], n⟩, r, 0, []⟩
+    else
     let result := partialFactor allocation.primeBudget n r allocation.factorFuel
-    ⟨result.raw, result.rand, result.attempts⟩
+    ⟨result.raw, result.rand, result.attempts, []⟩
 
 /-- The product invariant: the claimed powers times the residual recover the
 input exactly. This is the one fact certificate search needs. -/
@@ -812,6 +828,8 @@ structure PrimeCertFailure where
   attempts : Nat
   /-- The advanced generator state. -/
   rand : Rand
+  /-- Ordered factor-search diagnostics retained on exhaustion. -/
+  events : List FactorEvent := []
 deriving Repr
 
 /-- A resumable bounded-decision failure. -/
@@ -851,6 +869,7 @@ private structure Counted (α : Type) where
   value : α
   attempts : Nat
   rand : Rand
+  events : List FactorEvent
 
 /-- Witness-search budget per factor entry. -/
 private def witnessBudget : Nat := 32
@@ -880,14 +899,14 @@ exhaustion counts the in-progress candidate and continues the next candidate
 from that exact state. -/
 private def witnessGo (n q drawFuel : Nat) :
     Nat → Nat → Rand → Except PrimeCertFailure (Counted Nat)
-  | 0, attempts, r => .error ⟨.exhausted, attempts, r⟩
+  | 0, attempts, r => .error ⟨.exhausted, attempts, r, []⟩
   | t + 1, attempts, r =>
       match witnessDraw n r drawFuel with
       | .error e =>
           witnessGo n q drawFuel t (attempts + 1) (randErrorState r e)
       | .ok draw =>
           if checkWitness n q draw.1 then
-            .ok ⟨draw.1, attempts + 1, draw.2⟩
+            .ok ⟨draw.1, attempts + 1, draw.2, []⟩
           else witnessGo n q drawFuel t (attempts + 1) draw.2
 
 namespace Internal
@@ -931,34 +950,34 @@ preprocessing is trusted. -/
 private def primeCertGo (factor : FactorSearch) (budget : PrimeCertBudget)
     (fuel n : Nat) (r : Rand) :
     Except PrimeCertFailure (Counted PrimeCert) :=
-  if n < 2 then .error ⟨.composite, 0, r⟩
+  if n < 2 then .error ⟨.composite, 0, r, []⟩
   else if n < primeTableBound then
-    if isTablePrime n then .ok ⟨.small n, 0, r⟩
-    else .error ⟨.composite, 0, r⟩
+    if isTablePrime n then .ok ⟨.small n, 0, r, []⟩
+    else .error ⟨.composite, 0, r, []⟩
   else
     match defaultBases.find? (fun a => !(millerRabin n a)) with
-    | some _ => .error ⟨.composite, 0, r⟩
+    | some _ => .error ⟨.composite, 0, r, []⟩
     | none =>
         match fuel with
-        | 0 => .error ⟨.exhausted, 0, r⟩
+        | 0 => .error ⟨.exhausted, 0, r, []⟩
         | fuel + 1 =>
             let allocation : FactorSearchBudget :=
               { primeBudget := budget, primeFuel := fuel, factorFuel := 2 * n.log2 + 8 }
             let factored := factor allocation (n - 1) r
             match assembleGo factor budget fuel n factored.raw.factors []
-                factored.attempts factored.rand with
+                factored.attempts factored.rand factored.events with
             | .error f => .error f
             | .ok assembled =>
                 let entries := assembled.value.mergeSort fun x y =>
                   x.2.2.subject ≤ y.2.2.subject
                 match certProduct (n - 1) entries with
-                | none => .error ⟨.exhausted, assembled.attempts, assembled.rand⟩
+                | none => .error ⟨.exhausted, assembled.attempts, assembled.rand, assembled.events⟩
                 | some F =>
                     if n < F * F then
                       .ok ⟨.pock n entries, assembled.attempts,
-                        assembled.rand⟩
+                        assembled.rand, assembled.events⟩
                     else .ok ⟨mkPock3 n F entries, assembled.attempts,
-                      assembled.rand⟩
+                      assembled.rand, assembled.events⟩
 termination_by (fuel, 0)
 
 /-- Certify every claimed factor entry: a recursive child certificate and a
@@ -967,22 +986,23 @@ child's compositeness would only mean the untrusted factorization guessed
 wrong, never that `n` is composite. -/
 private def assembleGo (factor : FactorSearch) (budget : PrimeCertBudget)
     (fuel n : Nat) :
-    List (Nat × Nat) → List (Nat × Nat × PrimeCert) → Nat → Rand →
+    List (Nat × Nat) → List (Nat × Nat × PrimeCert) → Nat → Rand → List FactorEvent →
       Except PrimeCertFailure (Counted (List (Nat × Nat × PrimeCert)))
-  | [], acc, attempts, r => .ok ⟨acc.reverse, attempts, r⟩
-  | (q, e) :: rest, acc, attempts, r =>
-      if e = 0 then assembleGo factor budget fuel n rest acc attempts r
+  | [], acc, attempts, r, events => .ok ⟨acc.reverse, attempts, r, events⟩
+  | (q, e) :: rest, acc, attempts, r, events =>
+      if e = 0 then assembleGo factor budget fuel n rest acc attempts r events
       else
         match primeCertGo factor budget fuel q r with
-        | .error f => .error ⟨.exhausted, attempts + f.attempts, f.rand⟩
+        | .error f => .error ⟨.exhausted, attempts + f.attempts, f.rand, events ++ f.events⟩
         | .ok child =>
             match witnessGo n q Internal.sampleFuel witnessBudget 0 child.rand with
             | .error f =>
-                .error ⟨f.stop, attempts + child.attempts + f.attempts, f.rand⟩
+                .error ⟨f.stop, attempts + child.attempts + f.attempts, f.rand,
+                  events ++ child.events ++ f.events⟩
             | .ok witness =>
                 assembleGo factor budget fuel n rest
                   ((witness.value, e - 1, child.value) :: acc)
-                  (attempts + child.attempts + witness.attempts) witness.rand
+                  (attempts + child.attempts + witness.attempts) witness.rand (events ++ child.events ++ witness.events)
 termination_by l => (fuel, l.length + 1)
 
 end
@@ -998,6 +1018,8 @@ structure PrimeCertSuccess (n : Nat) where
   attempts : Nat
   /-- Generator state after those attempts. -/
   rand : Rand
+  /-- Ordered factor-search diagnostics retained on success. -/
+  events : List FactorEvent := []
 
 /-- Bounded certificate search with an explicit rho allocation, retaining
 exact successful-attempt metering. -/
@@ -1010,9 +1032,9 @@ def primeCertCountedUsing? (factor : FactorSearch) (budget : PrimeCertBudget)
   | .ok result =>
       if hs : result.value.subject = n then
         if hv : checkPrime result.value = true then
-          .ok ⟨⟨result.value, hs, hv⟩, result.attempts, result.rand⟩
-        else .error ⟨.exhausted, result.attempts, result.rand⟩
-      else .error ⟨.exhausted, result.attempts, result.rand⟩
+          .ok ⟨⟨result.value, hs, hv⟩, result.attempts, result.rand, result.events⟩
+        else .error ⟨.exhausted, result.attempts, result.rand, result.events⟩
+      else .error ⟨.exhausted, result.attempts, result.rand, result.events⟩
 
 /-- Bounded certificate search with an explicit rho allocation, retaining
 exact successful-attempt metering and using the built-in factor producer. -/
@@ -1069,20 +1091,20 @@ private theorem witnessGo_error_stop {n q drawFuel : Nat} :
 private theorem assembleGo_error_stop {factor : FactorSearch}
     {budget : PrimeCertBudget} {fuel n : Nat} :
     ∀ (l : List (Nat × Nat)) (acc : List (Nat × Nat × PrimeCert))
-      (attempts : Nat) (r : Rand) {f : PrimeCertFailure},
-      assembleGo factor budget fuel n l acc attempts r = .error f →
+      (attempts : Nat) (r : Rand) (events : List FactorEvent) {f : PrimeCertFailure},
+      assembleGo factor budget fuel n l acc attempts r events = .error f →
         f.stop = .exhausted := by
   intro l
   induction l with
   | nil =>
-      intro acc attempts r f h
+      intro acc attempts r events f h
       simp [assembleGo] at h
   | cons a rest ih =>
-      intro acc attempts r f h
+      intro acc attempts r events f h
       obtain ⟨q, e⟩ := a
       unfold assembleGo at h
       split at h
-      · exact ih _ _ _ h
+      · exact ih _ _ _ _ h
       · split at h
         · injection h with h
           subst h
@@ -1093,7 +1115,7 @@ private theorem assembleGo_error_stop {factor : FactorSearch}
             injection h with h
             cases h
             exact hfstop
-          next => exact ih _ _ _ h
+          next => exact ih _ _ _ _ h
 
 private theorem primeCertGo_composite {factor : FactorSearch}
     {budget : PrimeCertBudget} {fuel n : Nat}
@@ -1133,7 +1155,7 @@ private theorem primeCertGo_composite {factor : FactorSearch}
           · rename_i f' herr
             injection h with h
             subst h
-            rw [assembleGo_error_stop _ _ _ _ herr] at hstop
+            rw [assembleGo_error_stop _ _ _ _ _ herr] at hstop
             cases hstop
           · split at h
             · injection h with h
