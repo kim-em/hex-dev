@@ -107,6 +107,7 @@
     22.470703125,
     56.8037109375
   ],
-  "bench_sha256": "72e338bbaa3b7a78fb523b9df01ec978b0f5daad40e0272f74ee612ed00187a9",
-  "purpose": "Registration validation, not scientific performance verdicts. Baseline diagnostic used default affinity."
+  "purpose": "Registration validation, not scientific performance verdicts. Baseline diagnostic used default affinity.",
+  "thirty_second_driver_sha256": "72e338bbaa3b7a78fb523b9df01ec978b0f5daad40e0272f74ee612ed00187a9",
+  "source_hash_scope": "Only the 30-second timing check. Earlier checks used the six-second cap; list/verify preceded comment cleanup. The 6-second diagnostic selected a CPU automatically but did not record its number."
 }

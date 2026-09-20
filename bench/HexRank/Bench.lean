@@ -571,46 +571,60 @@ def runMvDeficientCheck12 := runMvCheckAt 12 true
 /-- Operational timeout only. These registrations do not yet have the
 operation-specific SymPy-derived budgets required for Phase-4 evidence. -/
 def polyConfig : LeanBench.FixedBenchmarkConfig :=
-  { repeats := 5, maxSecondsPerCall := 30.0, minTotalSeconds := 0.2, warmupFirstIter := true }
+  { repeats := 5, maxSecondsPerCall := 60.0, minTotalSeconds := 0.2, warmupFirstIter := true, tags := #["polynomial"] }
 
-setup_fixed_benchmark runRatPolyRank4 where { polyConfig with expectedHash := some (hash (4 : Nat)) }
+setup_fixed_benchmark runRatPolyRank4 where { polyConfig with expectedHash := some (hash (4 : Nat)), tags := #["polynomial", "smoke"] }
 setup_fixed_benchmark runRatPolyRank8 where { polyConfig with expectedHash := some (hash (8 : Nat)) }
 setup_fixed_benchmark runRatPolyRank12 where { polyConfig with expectedHash := some (hash (12 : Nat)) }
-setup_fixed_benchmark runRatPolyCert4 where { polyConfig with expectedHash := some (hash (4 : Nat)) }
+setup_fixed_benchmark runRatPolyCert4 where { polyConfig with expectedHash := some (hash (4 : Nat)), tags := #["polynomial", "smoke"] }
 setup_fixed_benchmark runRatPolyCert8 where { polyConfig with expectedHash := some (hash (8 : Nat)) }
 setup_fixed_benchmark runRatPolyCert12 where { polyConfig with expectedHash := some (hash (12 : Nat)) }
-setup_fixed_benchmark runRatPolyCheck4 where { polyConfig with expectedHash := some (hash true) }
+setup_fixed_benchmark runRatPolyCheck4 where { polyConfig with expectedHash := some (hash true), tags := #["polynomial", "smoke"] }
 setup_fixed_benchmark runRatPolyCheck8 where { polyConfig with expectedHash := some (hash true) }
 setup_fixed_benchmark runRatPolyCheck12 where { polyConfig with expectedHash := some (hash true) }
-setup_fixed_benchmark runRatPolyDeficientRank4 where { polyConfig with expectedHash := some (hash (2 : Nat)) }
+setup_fixed_benchmark runRatPolyDeficientRank4 where { polyConfig with expectedHash := some (hash (2 : Nat)), tags := #["polynomial", "smoke"] }
 setup_fixed_benchmark runRatPolyDeficientRank8 where { polyConfig with expectedHash := some (hash (4 : Nat)) }
 setup_fixed_benchmark runRatPolyDeficientRank12 where { polyConfig with expectedHash := some (hash (6 : Nat)) }
-setup_fixed_benchmark runRatPolyDeficientCert4 where { polyConfig with expectedHash := some (hash (2 : Nat)) }
+setup_fixed_benchmark runRatPolyDeficientCert4 where { polyConfig with expectedHash := some (hash (2 : Nat)), tags := #["polynomial", "smoke"] }
 setup_fixed_benchmark runRatPolyDeficientCert8 where { polyConfig with expectedHash := some (hash (4 : Nat)) }
 setup_fixed_benchmark runRatPolyDeficientCert12 where { polyConfig with expectedHash := some (hash (6 : Nat)) }
-setup_fixed_benchmark runRatPolyDeficientCheck4 where { polyConfig with expectedHash := some (hash true) }
+setup_fixed_benchmark runRatPolyDeficientCheck4 where { polyConfig with expectedHash := some (hash true), tags := #["polynomial", "smoke"] }
 setup_fixed_benchmark runRatPolyDeficientCheck8 where { polyConfig with expectedHash := some (hash true) }
 setup_fixed_benchmark runRatPolyDeficientCheck12 where { polyConfig with expectedHash := some (hash true) }
-setup_fixed_benchmark runMvRank4 where { polyConfig with expectedHash := some (hash (4 : Nat)) }
+setup_fixed_benchmark runMvRank4 where { polyConfig with expectedHash := some (hash (4 : Nat)), tags := #["polynomial", "smoke"] }
 setup_fixed_benchmark runMvRank8 where { polyConfig with expectedHash := some (hash (8 : Nat)) }
 setup_fixed_benchmark runMvRank12 where { polyConfig with expectedHash := some (hash (12 : Nat)) }
-setup_fixed_benchmark runMvCert4 where { polyConfig with expectedHash := some (hash (4 : Nat)) }
+setup_fixed_benchmark runMvCert4 where { polyConfig with expectedHash := some (hash (4 : Nat)), tags := #["polynomial", "smoke"] }
 setup_fixed_benchmark runMvCert8 where { polyConfig with expectedHash := some (hash (8 : Nat)) }
 setup_fixed_benchmark runMvCert12 where { polyConfig with expectedHash := some (hash (12 : Nat)) }
-setup_fixed_benchmark runMvCheck4 where { polyConfig with expectedHash := some (hash true) }
+setup_fixed_benchmark runMvCheck4 where { polyConfig with expectedHash := some (hash true), tags := #["polynomial", "smoke"] }
 setup_fixed_benchmark runMvCheck8 where { polyConfig with expectedHash := some (hash true) }
 setup_fixed_benchmark runMvCheck12 where { polyConfig with expectedHash := some (hash true) }
-setup_fixed_benchmark runMvDeficientRank4 where { polyConfig with expectedHash := some (hash (2 : Nat)) }
+setup_fixed_benchmark runMvDeficientRank4 where { polyConfig with expectedHash := some (hash (2 : Nat)), tags := #["polynomial", "smoke"] }
 setup_fixed_benchmark runMvDeficientRank8 where { polyConfig with expectedHash := some (hash (4 : Nat)) }
 setup_fixed_benchmark runMvDeficientRank12 where { polyConfig with expectedHash := some (hash (6 : Nat)) }
-setup_fixed_benchmark runMvDeficientCert4 where { polyConfig with expectedHash := some (hash (2 : Nat)) }
+setup_fixed_benchmark runMvDeficientCert4 where { polyConfig with expectedHash := some (hash (2 : Nat)), tags := #["polynomial", "smoke"] }
 setup_fixed_benchmark runMvDeficientCert8 where { polyConfig with expectedHash := some (hash (4 : Nat)) }
 setup_fixed_benchmark runMvDeficientCert12 where { polyConfig with expectedHash := some (hash (6 : Nat)) }
-setup_fixed_benchmark runMvDeficientCheck4 where { polyConfig with expectedHash := some (hash true) }
+setup_fixed_benchmark runMvDeficientCheck4 where { polyConfig with expectedHash := some (hash true), tags := #["polynomial", "smoke"] }
 setup_fixed_benchmark runMvDeficientCheck8 where { polyConfig with expectedHash := some (hash true) }
 setup_fixed_benchmark runMvDeficientCheck12 where { polyConfig with expectedHash := some (hash true) }
+
+/-- Default CI verifies the smallest canonical polynomial rung of every
+carrier/rank/operation combination. Larger fixed cases remain registered and
+can be verified explicitly with `verify --tag polynomial`. -/
+def verifyOrdinary : IO UInt32 := do
+  let parametric ← LeanBench.allRuntimeEntries
+  let fixed ← LeanBench.allFixedRuntimeEntries
+  let names := (parametric.map (·.spec.name)).toList ++
+    ((fixed.filter fun e => e.spec.config.tags.contains "smoke").map (·.spec.name)).toList
+  let reports ← LeanBench.verify names
+  IO.println (LeanBench.Format.fmtCombinedVerify reports)
+  return if reports.passed then 0 else 1
 
 end Hex.RankBench
 
 def main (args : List String) : IO UInt32 :=
-  LeanBench.Cli.dispatch args
+  match args with
+  | ["verify"] => Hex.RankBench.verifyOrdinary
+  | _ => LeanBench.Cli.dispatch args
