@@ -93,6 +93,34 @@ every input explicitly:
 functions. For `deg p ≤ 0` they return the empty chain, `1`, `0`,
 and `depthSlack` respectively, and no theorem reads those values.
 
+## Rational Sturm evaluation
+
+The point-comparison consumer also needs exact rational endpoints:
+
+```lean
+def sturmVarAtRat (chain : Array ZPoly) (x : Rat) : Nat
+def ZPoly.sturmCountRat (p : ZPoly) (lower upper : Rat) : Int
+```
+
+For `x=u/v`, `v>0`, compute the sign of each entry `s` by homogeneous
+integer Horner evaluation of `v^deg(s) * s(u/v)`, then count nonzero sign
+variations. Positive denominator powers preserve signs, including exact zero.
+`sturmCountRat` is the variation difference of the derivative chain at its
+two rational endpoints. It is total; the root-count theorem requires nonzero
+squarefree `p` and `lower < upper`, with the same half-open convention as the
+dyadic count. A root at `upper` is included and one at `lower` is excluded.
+
+Require companion `sturmVarAtRat_eq` identifying the result with real
+polynomial evaluation, `sturmVarAtRat_dyadic` for agreement at `x.toRat`, and
+`sturmCountRat_eq` for the root count in `(lower,upper]`. Point comparison
+builds one shared chain and uses its two variation evaluations directly;
+it need not rebuild a chain for each endpoint. Each evaluation takes one
+finite Horner walk per chain entry, with at most `deg p + 1` entries for a
+derivative chain. Computing denominator powers is bounded exponentiation in
+the entry degrees. This adds no refinement, isolation or factorization.
+Test non-dyadic rational endpoints, exact roots, and agreement with the
+dyadic counts. These primitives belong here, not in the number-field layer.
+
 ## Tarski queries
 
 Add the following computational primitive for the

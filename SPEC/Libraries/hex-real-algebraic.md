@@ -414,9 +414,17 @@ have different dependency contracts; only the companion supplies the latter.
 The additional APIs and theorem names in this section are specification
 obligations, not claims that the declarations already exist. `realCompare`
 remains the reference. For signs, write `orderOfSign s` for `.lt`, `.eq`, or
-`.gt` according as the integer `s` is negative, zero, or positive. All sign
-APIs return only `-1`, `0`, or `1`. Every comparison requires real operands;
-checked entry points reject nonreal values rather than ordering their centres.
+`.gt` according as the integer `s` is negative, zero, or positive. This is
+`Hex.orderOfSign (s : Int) : Ordering := compare s 0`, owned by
+`hex-number-field`. All sign APIs return only `-1`, `0`, or `1`. Every
+comparison requires real operands; checked entry points reject nonreal values rather than ordering their centres.
+
+The new proof inventories live in the
+[number-field companion](../../HexNumberFieldMathlib/SPEC/hex-number-field-mathlib.md#real-comparison-correspondence),
+[tower companion](../../HexNumberFieldTowerMathlib/SPEC/hex-number-field-tower-mathlib.md#real-sign-correspondence),
+and [real companion](../../HexRealAlgebraicMathlib/SPEC/hex-real-algebraic-mathlib.md#array-and-comparison-correspondence).
+They supplement the existing-declaration tables above without asserting that
+new obligations are already proved.
 
 ### Existing canonical comparison
 
@@ -438,8 +446,8 @@ checked entry points reject nonreal values rather than ordering their centres.
    agree.
 
 `realCompare_eq` and `realCompareExact_eq` already identify both results with
-`compare a.toComplex.re b.toComplex.re` under `a.isReal = b.isReal = true`
-(with two separate reality hypotheses). Require the explicit corollary
+`compare a.toComplex.re b.toComplex.re` under `a.isReal = true` and
+`b.isReal = true`. Require the explicit corollary
 `realCompare_eq_exact : a.realCompare b = a.realCompareExact b` under those
 hypotheses. Schedule changes preserve this equation and `realCompare_eq`.
 The outer loop has at most the displayed fuel many rounds. Each refinement
@@ -499,21 +507,38 @@ bound.
 
 `RealAlgebraicNumber`'s `Ord`, `min`, and `max` keep the conventions above.
 Provide `sort : Array RealAlgebraicNumber → Array RealAlgebraicNumber` as a
-stable mergesort: `sort_perm` preserves all entries and multiplicities,
-`sort_sorted` states nondecreasing reference order, and `sort_stable` preserves
-the input order on equal keys. Its comparison count is at most
+stable mergesort: `sort_perm` preserves all entries and multiplicities, and
+`sort_sorted` states nondecreasing reference order. Equal keys are equal
+canonical values, so there is no additional observable stability obligation
+on this untagged carrier; tagged callers may retain indices if needed. Its
+comparison count is at most
 `r * ceilLog2 (max 1 r)` for `r` entries; each call has the canonical bound.
-Provide `min?` and `max?` for arrays, returning `none` on empty input and the
-first extremum on ties, with `min?_eq`/`max?_eq` equating them to folds of the
-reference binary operations. They use at most `r-1` comparisons.
+Use Lean's array `min?` and `max?` with these scalar instances, returning
+`none` on empty input and the first extremum on ties, with
+`min?_eq`/`max?_eq` equating them to folds of the reference binary operations.
+They use at most `r-1` comparisons. Lean's existing `Ord (Array α)` is
+lexicographic: require `compareArray_eq` identifying its result with
+`Array.compareLex` applied to the underlying `realCompare` reference. It
+uses at most `min r s` element comparisons for lengths `r,s`, followed by
+the length comparison if the common prefix is equal. Reuse that instance;
+sorting an array and comparing two arrays are separate operations.
 
-For values supplied with indices in the same `ZPoly.algebraicRoots` array,
-compare the real-root indices instead, proving `compareIndex_eq` against
-`realCompare` from `algebraicRoots` sortedness and distinctness. A filtered
-real-root array is already ordered. A shared enclosing polynomial without
-root indices is not enough: different roots must still be distinguished.
-This shortcut preserves duplicates in general input arrays and introduces no
-ordering by polynomial coefficients or by unrelated isolating centres.
+For values supplied with indices into one certified strictly increasing
+real-root array, compare indices instead. Require `compareIndex_eq` against
+`realCompare`, using the value-sortedness and distinctness witnesses. The
+existing `ZPoly.realAlgebraicRoots` supplies such an array by exact sorting.
+
+Raw `ZPoly.algebraicRoots` indices do not have this guarantee across different
+minimal polynomials: its `rootLe` sort uses canonical centres, as documented
+in the proof inventory above. Reuse that order without an additional sort
+only when the real entries share one minimal polynomial. Require the new
+`rootLe_real` bridge, proving centre order agrees with real order under this
+same-polynomial hypothesis and the stored separation bound. For a general
+reducible input, build the exact-sorted `realAlgebraicRoots` view once and
+retain its indices, charging that initial sort. Neither a shared enclosing
+polynomial nor raw array indices alone license the shortcut. General input
+arrays preserve duplicates and never order values by polynomial coefficients
+or unrelated centres.
 
 ### Certificates and proof boundary
 
@@ -561,11 +586,20 @@ Required boundary fixtures include zero in a fixed field (also expressions
 that reduce to zero), equal canonical numbers built by different routes,
 overlapping isolations of distinct numbers, and lazy differences `(±2^-k)-0`
 and `(a±2^-k)-a` for `a = sqrt(2)` and `k ∈ {20,50,100}`. These last cases must
-return opposite strict orders, even when the difference's centre is zero.
+return opposite strict orders. The rational-input family covers linear
+eliminants with zero centres; the quadratic-input family also exercises the
+higher-degree sign bound.
 Include nonreal-input rejection, Tarski `F=0`, common factors, signed query
 values, and rejection of unsupported endpoint-root inputs to the low-level
 query; the fixed-field wrapper constructs root-free endpoints. Reverse each
 ordering and check antisymmetry; sort fixtures also check permutation and ties.
+
+The coefficient-one family `X^n-(a*X-1)^2` is intentional: for even `n` it
+splits as a difference of squares, so its close roots exercise comparison
+across different minimal polynomials. Retain the existing coefficient-two
+Mignotte fixture below as a complementary case, and register both forms
+separately when measuring common-minimal-polynomial index reuse. Never assume
+raw `algebraicRoots` order for the reducible family.
 
 Preconstructed comparisons and construction-inclusive workloads are separate
 registrations. Repeated comparisons of the same operands measure cache reuse
@@ -602,9 +636,16 @@ use the fixed trial-major schedule and adjacent alternating AB/BA arms where
 applicable, and follow the policy's single unchanged rerun limit.
 
 Implementation-phase work adds the registrations and comparator/input-family
-metadata to the owners' existing bench targets and `libraries.yml`; this SPEC
-change does not assert new Phase-4 completion. Kernel-checking performance uses
-the fresh-module proof track, not a Mathlib-importing benchmark executable.
+metadata to the owners' existing bench targets and `libraries.yml`. It adds
+the direct dependency edges `HexNumberField → HexRealRoots` and
+`HexNumberFieldMathlib → HexRealRootsMathlib` when those imports land, including
+release pins for published libraries. This forward specification leaves the
+current dependency metadata and `done_through` counters unchanged: their
+completion evidence covers the shipped surface, not these unimplemented
+extensions. Implementation work must reconcile the owners' phase status and
+satisfy the new Phase-1 through Phase-4 obligations before claiming completion
+for the extended surface; old attestations alone are insufficient.
+Kernel-checking performance uses the fresh-module proof track, not a Mathlib-importing benchmark executable.
 
 ## Complexity
 
@@ -614,7 +655,7 @@ incurs its separation bound and bounded refinement, with `realCompareExact`
 as fallback. No constant-time bound is claimed for arithmetic on unbounded
 integers. Close roots and large degrees or heights can force high precision.
 Sorting `r` unrelated real values uses `O(r log r)` comparisons; sorting roots
-with retained common-polynomial indices reuses the certified root order.
+with retained indices in a certified value-sorted array reuses that order.
 
 Arithmetic retains the eliminant, factorization, and exactification costs
 of `AlgebraicNumber`, plus one stored-precision reality test per wrapper call.

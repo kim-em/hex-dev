@@ -608,6 +608,15 @@ modules can re-export the corresponding Mathlib modules.
 
 ## Sturm-Tarski correspondence
 
+First extend endpoint evaluation to the computational owner's
+`sturmVarAtRat`. Prove `sturmVarAtRat_eq` by positivity of the homogeneous
+denominator factor in each chain entry, `sturmVarAtRat_dyadic` by equality
+of exact signs at a dyadic's rational value, and `sturmCountRat_eq` by the
+existing half-open Sturm theorem at rational endpoints cast to `ℝ`.
+An upper endpoint root contributes one; a lower endpoint root contributes
+zero. This rational-count extension does not require the root-free guards
+of the separate Tarski-query API.
+
 The [Tarski-query primitive](../../HexRealRoots/SPEC/hex-real-roots.md#tarski-queries)
 requires new signed-remainder/Cauchy-index semantics here. Prove
 `tarskiQuery_eq`, identifying the executable variation drop with the sum of

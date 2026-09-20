@@ -607,21 +607,24 @@ fields or RCF. Reuse RCF's recurrence-checking design without importing
 
 ### Contracts, domains, and finite refinement
 
-Add `AlgebraicRoot.isReal`, testing exactly whether the stored circumscribed
-disc meets the real axis: `im^2 ≤ 2 * halfWidth^2`. Require companion
-`isReal_iff` under the existing `RefinedIsolation` invariant. Distinct conjugate
-roots cannot share such a disc; no factorization is needed. New lazy checked
-`compare?` rejects either nonreal input and returns `none` on certification
+Reuse the existing `AlgebraicRoot.isReal`, defined by the stored square's
+`meetsRealAxis` test in `IntegerRoots.lean`. Its rounded `radiusHi` bound is
+already covered by `HexRootsMathlib.RefinedIsolation.meetsRealAxis_iff` in
+`Conjugate.lean`; do not redefine the predicate or change the orientation tags.
+Distinct conjugate roots cannot pass this test; no factorization is needed.
+New lazy checked `compare?` rejects either nonreal input and returns `none` on certification
 failure. The total `compare` takes proofs that both `isReal` tests are true.
 Its `.eq` panic fallback is **unreachable-by-pipeline-invariant**, discharged
 by `compare?_isSome` for those hypotheses; it must never absorb nonreal input.
-Apply the same checked/total convention to new canonical point and fixed-field
-sign operations, using the canonical generator's `isReal` proof. Name the
-corresponding `_isSome` theorem for each checked implementation:
+Apply the same checked/total convention to lazy sign, canonical point, and
+fixed-field sign operations, using the operand's stored reality proof (the
+canonical generator's proof for fixed-field elements). Name the corresponding `_isSome` theorem for each checked implementation:
 `compareRat?_isSome`, `compareDyadic?_isSome`, `sign?_isSome`,
 `signTarski?_isSome`, `signApprox?_isSome`, `compareTarski?_isSome`, and
 `compareApprox?_isSome`. Successful
-signs are in `{-1,0,1}`; `orderOfSign` converts them to `Ordering`.
+signs are in `{-1,0,1}`. This library owns the Mathlib-free helper
+`Hex.orderOfSign (s : Int) : Ordering := compare s 0`, reused by the real and
+tower consumers.
 
 Every call to `rep.refineTo? t` uses the existing finite budget
 
@@ -662,8 +665,9 @@ endpoint, the same rule works; exact equality is tested only inside the
 selected interval. The sign of `p(q)` alone does not identify which root is
 being compared.
 
-For `q=u/v` with `v>0`, evaluate signs via the integer homogeneous Horner
-value `v^deg(p) * p(u/v)`, and do the same for every chain entry. Dyadic points
+Use `hex-real-roots`' new `sturmVarAtRat` and mixed rational-endpoint count
+correspondence. For `q=u/v` with `v>0`, evaluate signs via the integer
+homogeneous Horner value `v^deg(p) * p(u/v)`, and do the same for every chain entry. Dyadic points
 use `evalDyadic` directly. `compareDyadic` specializes `compareRat` without
 converting an arbitrary rational to an inexact dyadic. One derivative chain
 has at most `deg p + 1` entries, strict-degree pseudo-remainder descent bounds
@@ -698,8 +702,9 @@ bridges with the following new sign proof.
 The required precision is an invariant of the **representative used by the
 sign operation**, not of every arbitrary `AlgebraicRoot`. The public structure
 and `ofRefined` accept `RefinedIsolation`, whose field proves only
-`mahlerPrec p ≤ prec`. `toRoot` can also expose a shallower representative.
-Do not strengthen that type silently or claim every constructor enforces
+`mahlerPrec p ≤ prec`. Canonical `toRoot` retains the canonical constructor's
+stronger depth; the public lazy constructors are the reason for the guard.
+Do not strengthen their type silently or claim every constructor enforces
 `separationDepth`. `ofEliminant?`, used by `sub?`, does request that depth;
 require `ofEliminant_prec` to expose the successful driver's precision
 postcondition. Thus an ordinary subtraction result needs no further
@@ -721,7 +726,9 @@ hypotheses; `!isZero` alone is not a geometric zero-exclusion certificate.
 For a linear polynomial, `mahlerPrec=3` and `separationDepth=12`, independently
 of height. The inputs `±2^-k` at `k=20,50,100` can have centre zero, which is
 why step 2 is mandatory. Subtracting `(a±2^-k)-a` for real quadratic `a`
-exercises the same issue without rational input operands.
+instead exercises the higher-degree sign bound for close operands: its lazy
+eliminant retains conjugate differences and need not be linear. The two
+families test different branches and both must return the strict order.
 
 Cost: one resultant of input degree product at most `deg(r.p)*deg(s.p)`,
 primitive squarefree normalization, one complete isolation of that eliminant,
@@ -740,10 +747,11 @@ alternative, with its extra refinement charged explicitly.
 ### Fixed-field sign
 
 For real canonical `a` and `f : QAdjoin a`, coefficients are already reduced
-modulo the irreducible `p=a.p`. Test coordinate zero first. A nonzero rational
-constant returns the sign of its numerator directly in both strategies. This is exactly
-zero in the field; no nonzero numerical threshold defines equality. All
-strategies work in the chosen embedding of `a`, not across every conjugate.
+modulo the irreducible `p=a.p`. Test coordinate zero first: this is exactly
+zero in the field, and no numerical threshold defines equality. A nonzero
+rational constant returns the sign of its numerator directly in both
+strategies. All strategies work in the chosen embedding of `a`, not across
+every conjugate.
 
 `QAdjoin.signTarski f` clears rational denominators with a positive common
 multiple `D`, obtaining `F=D*f.coeffs : ZPoly`, and calls
@@ -780,7 +788,13 @@ At `P`, the radius is at most `1/(8B)`, strictly below `1/(3B)`; the real
 centre has the correct strict sign for nonzero `f`. Earlier success requires
 an enclosure wholly on one side of zero, never just a nonzero centre.
 The schedule has at most `P+1` evaluations, each using the explicit refinement
-fuel above; a single evaluation at `P` is also a valid benchmark arm.
+fuel above; a single evaluation at `P` is also a valid benchmark arm. The
+existing `PolyQuot.approx` and `approx_radius` provide an alternative baseline:
+request output precision `ceilLog2 (3*B) + 1`, including that API's internal
+`approxGuardBits`. The majorant-first arm is specified to compare the direct
+input-precision budget with those existing guard bits; it is not needed merely
+to obtain a sign algorithm. Phase 4 must count the actual generator precision
+and setup of each arm before claiming the new route saves work.
 `signApprox?_isSome` proves endpoint success. Its cost includes the evaluation
 resultant and all Horner/refinement calls, not merely reading the last centre.
 
