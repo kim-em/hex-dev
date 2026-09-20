@@ -1,5 +1,9 @@
 # Reusable Curve25519 certificates
 
+For the current fixed-window PrimeCert comparison and cube-root checker
+measurements, see [the replay attribution](hex-primality-replay-attribution.md).
+The implementation and timing snapshots below document the construction study.
+
 The opt-in construction profile finds a checked certificate for `2^255 - 19`
 with three non-leaf nodes, six table leaves, and eight factor entries. The
 reference certificate in PR #10267 has five non-leaf nodes, six table leaves,
