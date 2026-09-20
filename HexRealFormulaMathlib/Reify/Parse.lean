@@ -80,6 +80,11 @@ private def comparison? (e : Expr) : Option (Cmp × Expr × Expr × Expr) :=
 /-- Continuation-based collection keeps sibling binders distinct and in scope
 through the single batch call. No local constant is reused across invocations. -/
 partial def collect (source : Expr) (scope : Array Expr) (k : Tree → ReifyM α) : ReifyM α := do
+  let accept (tree : Tree) : ReifyM α := do
+    let size := (← get).formulaSize + 1
+    formulaBudget size
+    modify fun s => { s with formulaSize := size }
+    k tree
   let e := source.consumeMData
   if let some (cmp, ty, a, b) := comparison? e then
     unless ← isDefEq ty (mkConst ``Real) do
@@ -88,14 +93,14 @@ partial def collect (source : Expr) (scope : Array Expr) (k : Tree → ReifyM α
     accountProof view.proof
     let id := (← get).inputs.size
     modify fun s => { s with inputs := s.inputs.push view.numerator }
-    return ← k (.atom source scope cmp view id)
+    return ← accept (.atom source scope cmp view id)
   match e.getAppFnArgs with
-  | (``True, #[]) => k (.truth true scope)
-  | (``False, #[]) => k (.truth false scope)
-  | (``Not, #[p]) => collect p scope fun p => k (.not source p)
-  | (``And, #[p, q]) => collect p scope fun p => collect q scope fun q => k (.binary source .and p q)
-  | (``Or, #[p, q]) => collect p scope fun p => collect q scope fun q => k (.binary source .or p q)
-  | (``Iff, #[p, q]) => collect p scope fun p => collect q scope fun q => k (.binary source .iff p q)
+  | (``True, #[]) => accept (.truth true scope)
+  | (``False, #[]) => accept (.truth false scope)
+  | (``Not, #[p]) => collect p scope fun p => accept (.not source p)
+  | (``And, #[p, q]) => collect p scope fun p => collect q scope fun q => accept (.binary source .and p q)
+  | (``Or, #[p, q]) => collect p scope fun p => collect q scope fun q => accept (.binary source .or p q)
+  | (``Iff, #[p, q]) => collect p scope fun p => collect q scope fun q => accept (.binary source .iff p q)
   | (``Membership.mem, #[_, _, _, set, _]) =>
     if let some name := set.getAppFn.constName? then
       if [``Set.Icc, ``Set.Ico, ``Set.Ioc, ``Set.Ioo, ``Set.Ici, ``Set.Iic,
@@ -111,7 +116,7 @@ partial def collect (source : Expr) (scope : Array Expr) (k : Tree → ReifyM α
     withReal name fun x => do
       let id := (← get).binders.size
       modify fun s => { s with binders := s.binders.push x }
-      collect (body.instantiate1 x) (scope.push x) fun p => k (.quant source .existsReal x id p)
+      collect (body.instantiate1 x) (scope.push x) fun p => accept (.quant source .existsReal x id p)
   | _ =>
     match e with
     | .forallE name domain body _ =>
@@ -119,14 +124,14 @@ partial def collect (source : Expr) (scope : Array Expr) (k : Tree → ReifyM α
         if body.hasLooseBVar 0 then
           abort (.unsupported source "dependent implication is unsupported")
         collect domain scope fun p => collect (body.instantiate1 (mkConst ``True.intro)) scope
-          fun q => k (.binary source .imp p q)
+          fun q => accept (.binary source .imp p q)
       else
         unless ← isDefEq domain (mkConst ``Real) do
           abort (.unsupported source "quantifier domain must be Real; dependent types are unsupported")
         withReal name fun x => do
           let id := (← get).binders.size
           modify fun s => { s with binders := s.binders.push x }
-          collect (body.instantiate1 x) (scope.push x) fun p => k (.quant source .forallReal x id p)
+          collect (body.instantiate1 x) (scope.push x) fun p => accept (.quant source .forallReal x id p)
     | .letE _ _ value body _ => collect (body.instantiate1 value) scope k
     | _ => abort (.unsupported source "unsupported real proposition")
 

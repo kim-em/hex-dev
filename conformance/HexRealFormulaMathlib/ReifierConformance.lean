@@ -91,7 +91,7 @@ run_meta do
     expectUnsupported q(1 / $x = 0) #[x]
     expectUnsupported q($x / 0 = 0) #[x]
     expectUnsupported q($x > 0) -- Undeclared free parameter.
-    expectUnsupported q($x ∈ setOf (fun _ : ℝ => True)) #[x]
+    expectUnsupported q($x ∈ Set.ofPred (fun _ : ℝ => True)) #[x]
     withLocalDeclD `s q(Set ℝ) fun s => do
       let s : Q(Set ℝ) := s
       expectUnsupported q($x ∈ $s) #[x]
@@ -129,6 +129,9 @@ run_meta do
     { ring := { budget := Hex.Reflect.Budget.default.set .exponent 10 } } .exponent
   expectBudget q((1e100 : ℝ) > 0) #[]
     { ring := { budget := Hex.Reflect.Budget.default.set .exponent 10 } } .exponent
+  let .error ⟨_, .formulaBudget 1 2⟩ ←
+      Reify.reify q(let p : Prop := True ∧ True; p ∧ p) #[] #[] { formulaNodes := 1 }
+    | throwError "local definition expansion was not bounded during collection"
   let .error ⟨_, .formulaBudget _ _⟩ ← Reify.reify q(True ∧ False) #[] #[] { formulaNodes := 2 }
     | throwError "formula expansion budget was ignored"
   pure ()

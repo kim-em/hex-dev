@@ -39,6 +39,8 @@ inductive Error where
 structure State where
   config : Config
   budget : Reflect.BudgetState
+  /-- Formula nodes already constructed, including expansion of local definitions. -/
+  formulaSize : Nat := 0
   inputs : Array Expr := #[]
   binders : Array Expr := #[]
 
