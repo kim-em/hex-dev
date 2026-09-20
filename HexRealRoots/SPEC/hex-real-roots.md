@@ -191,6 +191,17 @@ installed on `Int`, raw algebraic representatives or bounded sign oracles.
 The field frontend in hex-sturm supplies domain/squarefreeness checks and
 checked field arithmetic; the integer frontend retains its integer guards.
 
+The planned shared literal checker is `Hex.QueryReplay.checkWith`, taking
+`CoeffOps`, endpoint and guard evidence adapters, one remaining `Budget`,
+literal inputs `p,f,a,b`, the claimed `Int` and a certificate; it returns
+`PolyOps.CheckResult` with residual budget/work accounting. Its Boolean
+`Hex.QueryReplay.check` wrapper is true exactly on acceptance. The integer
+`TarskiReplay.check` and field `Hex.Sturm.Replay.checkWith` specialize/compose
+this checker; the generic checker does not import either frontend. Its
+soundness theorem `Hex.QueryReplay.check_sound` belongs to
+[hex-real-roots-mathlib](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#representation-and-replay-bridge).
+These are planned API names, not existing declarations.
+
 This owner provides the shared `Endpoint E` data (`negInf`, `finite E`,
 `posInf`), chain producer, variation fold and literal replay checks. Endpoint
 adapters supply finite ordering, evaluation signs and their evidence; their

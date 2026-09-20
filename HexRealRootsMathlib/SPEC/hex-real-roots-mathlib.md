@@ -1,4 +1,10 @@
-# hex-real-roots-mathlib (depends on hex-real-roots + hex-poly-z-mathlib + Mathlib)
+# hex-real-roots-mathlib
+
+Dependencies: hex-real-roots, hex-poly-mathlib, hex-poly-z-mathlib and
+Mathlib; the shared abstract Sturm–Tarski foundation adds a planned Tau Ceti
+import. When implemented, the release configuration must carry that pinned
+third-party dependency to the published companion and its downstream consumers.
+This SPEC does not change publication metadata.
 
 Mathlib companion for [hex-real-roots](https://github.com/leanprover/hex-real-roots). Proves
 **soundness** of the certified isolations (a `RealRootIsolation`
@@ -671,7 +677,8 @@ Use `sgn : R → Int` with values `-1,0,1`, and the finite set
 endpoint inequalities). Infinite endpoint inequalities impose no bound on
 that side. Require `P≠0`, `Squarefree P`, `a<b` and nonzero evaluations of
 `P` at finite endpoints. For arbitrary `F : Polynomial R`, the planned
-shared `Query.variation_eq` has the following explicit certificate hypotheses:
+shared theorem `Hex.Query.variation_eq` has the following explicit certificate
+hypotheses (`Hex.Query` is the planned abstract query namespace here):
 
 ```text
 S₀ = P
@@ -682,7 +689,8 @@ l*Sₘ₋₁ = Q*Sₘ,                              l>0
 
 Scalars multiply polynomials as constant polynomials. In the non-singleton
 case, all entries are nonzero, `deg S₁<deg P`, and every subsequent degree
-strictly decreases. The terminal identity is required even when the last
+strictly decreases. Here `deg` is `natDegree` of a certified nonzero entry;
+zero is handled separately. The terminal identity is required even when the last
 entry has positive degree. There is no coprimality assumption on `P,F`.
 For the singleton `[P]`, replace the initial identity by
 `u*(F*P')=A*P` with `u>0`; there is no second entry or terminal pair.
@@ -725,9 +733,11 @@ Endpoint representations have their own interpretation in `R` and sound
 comparison/evaluation adapters; dyadics are not required to belong to `D`.
 
 Prove operation and pseudo-division interpretation, derivative compatibility,
-semantic polynomial equality and degree correspondence here, using the
-reusable arithmetic correspondence from hex-poly-mathlib as needed (a planned
-lower-level companion dependency). Successful degree `none` means zero;
+semantic polynomial equality and degree correspondence here. This companion
+owns the complete fallible operation-record interpretation needed by the query
+bridge, including the pseudo-gcd guard interpretation; it may reuse existing
+hex-poly-mathlib arithmetic lemmas but does not assume an unspecified new
+correspondence there. Successful degree `none` means zero;
 `some d` means nonzero with `natDegree=d`, a nonzero coefficient at `d` and
 zero coefficients above it. A fallible test that exhausts supplies no such
 fact. Structural trailing zeros are not a substitute. Prove positive
@@ -735,7 +745,10 @@ normalization/rescaling preserves entry signs and variations, with every
 initial/step/terminal identity translated. Negative scaling does not have
 this property. Prove finite Horner and degree-parity infinity sign agreement.
 
-The planned shared `QueryReplay.check_sound` composes accepted coefficient,
+The planned shared `Hex.QueryReplay.check_sound` proves soundness of
+`Hex.QueryReplay.checkWith`, named in the computational owner
+[hex-real-roots](../../HexRealRoots/SPEC/hex-real-roots.md#shared-ordered-domain-kernel).
+It composes accepted coefficient,
 domain, recurrence and endpoint evidence to conclude those domain guards and
 `Query.variation_eq` for the claimed integer. Squarefreeness of a domain
 polynomial means squarefreeness after mapping to its fraction field (and
@@ -771,18 +784,24 @@ The Mathlib audit refers to revision
 `IsRealClosed.of_linearOrderedField`, but not `IsRealClosed ℝ` or generic
 polynomial IVT/Rolle/Sturm–Tarski. `Mathlib.Analysis.Polynomial.Order`
 states its sign results over `ℝ`; those cannot be cited over arbitrary `R`.
-The existing local `Sturm.IsSturmChain` likewise remains a theorem over `ℝ`
+The existing local `Sturm.IsSturmChain` likewise remains a structure over `ℝ`
 with derivative root flanks and a root-free tail, not this signed theorem.
 
 This companion proves the planned `Real.instIsRealClosed` using
 `IsRealClosed.of_linearOrderedField`. Its two obligations are
 `∀ x : ℝ, 0≤x → IsSquare x`, supplied by `Real.sqrt` and `Real.sq_sqrt`,
 and `∀ H : Polynomial ℝ, Odd H.natDegree → ∃ x, H.IsRoot x`.
-For the latter use Mathlib's real polynomial eventual-sign/order lemmas
-and continuity/IVT: odd degree gives opposite eventual signs, choose finite
-endpoints and apply `intermediate_value_Icc`. This proof uses existing real
-analysis, not the generic Tau Ceti IVT that already assumes `IsRealClosed`.
-Do not import hex-real-algebraic-mathlib to construct this instance.
+For the latter factor the proof of the existing private `real_odd_root` in
+[HexRealAlgebraicMathlib/RealClosed.lean](../../HexRealAlgebraicMathlib/RealClosed.lean)
+down into this companion: assuming no root makes both root-bound hypotheses
+vacuous, so Mathlib's polynomial order lemmas at zero give contradictory signs
+in odd degree (split on the leading-coefficient sign). Those real order lemmas
+already use continuity/IVT internally. This uses existing real analysis, not
+the generic Tau Ceti IVT that already assumes `IsRealClosed`.
+When the shared instance lands, the downstream real-algebraic companion must
+replace its private proof with `IsRealClosed.exists_isRoot_of_odd_natDegree`.
+Move the proof downward; do not import hex-real-algebraic-mathlib to construct
+this instance or retain a second copy of the proof.
 
 Instantiate the shared domain/replay bridge with `D=ℤ`, `j=Int.castRingHom ℝ`
 and exact dyadic evaluation to prove `ZPoly.tarskiQuery_eq` and

@@ -20,7 +20,10 @@ That companion alone imports the Tau Ceti univariate foundation for these
 queries. It retains the integer/dyadic specialization and proves
 `IsRealClosed ℝ`. This companion proves the field frontend's domain guards,
 endpoint adapters, coefficient-evidence composition and root-count API
-against the shared theorem. Neither proof nor arithmetic kernel is duplicated.
+against the shared theorem, instantiating its domain and embedding as
+`D := K` and `j := ι`. A field is an admissible domain instance; the shared
+theorem does not require every domain to be a field. Neither proof nor
+arithmetic kernel is duplicated.
 
 No computational dependency points back to a companion. In particular,
 hex-real-roots-mathlib does not import HexSturm or HexSturmMathlib, and no
@@ -150,7 +153,7 @@ infinite endpoints and arbitrary common gcd. These are named mathematical
 obligations, not assumed available Lean declarations or new axioms. The
 [owner's audit and real instance contract](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#real-specialization)
 record what the Mathlib pin actually supplies. Ordinary derivative-seeded
-`Sturm.IsSturmChain` has incompatible root-flank and constant-tail conditions;
+`Sturm.IsSturmChain` has incompatible root-flank and root-free-tail conditions;
 it cannot establish this signed sum.
 
 ## Required frontend theorems
@@ -170,6 +173,7 @@ certificate assertion.
 | `Replay.check_sound` | `Replay.checkWith … p f a b q cert = accepted` implies validity, domain and the same query equality, by `QueryReplay.check_sound` in hex-real-roots-mathlib and local endpoint/coefficient-evidence composition. A Boolean `check=true` implies accepted. No producer-success hypothesis is needed. |
 | `query_invalid` | An `invalid` result proves an invalid input context, or, given valid inputs, `¬ Domain(P;a,b)`. Failure of an internal helper on already validated data is `rejected`, never evidence of an invalid domain. |
 | `query_isSome` | For a lawful total adapter with complete decisions and computed fuel, `(query p f a b).isSome ↔ Domain(P;a,b)`. `none` has exactly this domain meaning only for this total interface. |
+| `rootCount_isSome` | Under the same total-adapter hypotheses, `(rootCount p a b).isSome ↔ Domain(P;a,b)`. Query completeness and nonnegativity of the query of `1` make conversion failure unreachable on the domain. |
 | `rootCount_eq` | Successful `rootCountWith … = ok n cert` implies domain and `n = Roots(P;a,b).card`; similarly for `rootCount = some n`. Derive it from query of `1` and the checked conversion to `Nat`. |
 | `query_bound` | Under the domain, `|TaQ(F,P;a,b)| ≤ (Roots(P;a,b).card : Int) ≤ (P.natDegree : Int)`; nonzero constant heads give zero. |
 | `query_sign` | Under the domain and `Roots(P;a,b)={α}`, a successful query equals `sgn (Fᴿ.eval α)`. |
