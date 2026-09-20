@@ -34,11 +34,16 @@ def commands(phase, families):
             for op in ('RowReduce', 'RankCert', 'CheckRank'):
                 case = PREFIX + 'run' + op + family
                 yield case.rsplit('.', 1)[1], ['run', case]
+    elif phase == 'attribution':
+        for family in families:
+            for op in ('Second', 'Certify', 'Witness'):
+                case = PREFIX + op + '.' + family[0].lower() + family[1:]
+                yield op + family, ['run', case]
     elif phase == 'polynomial':
         for carrier in ('RatPoly', 'Mv'):
             for rank in ('', 'Deficient'):
                 for size in (4, 8, 12):
-                    for op in ('Rank', 'Cert', 'Check'):
+                    for op in ('Rank', 'Cert', 'Check', 'Second', 'Certify'):
                         case = PREFIX + f'run{carrier}{rank}{op}{size}'
                         yield case.rsplit('.', 1)[1], ['run', case, '--repeats', '6']
     elif phase == 'protocol':
@@ -64,7 +69,7 @@ def commands(phase, families):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('phase', choices=('integer', 'comparisons', 'polynomial', 'protocol'))
+    parser.add_argument('phase', choices=('integer', 'attribution', 'comparisons', 'polynomial', 'protocol'))
     parser.add_argument('--out', type=Path, required=True)
     parser.add_argument('--bench', type=Path, default=ROOT / '.lake/build/bin/hexrank_bench')
     parser.add_argument('--python', default=sys.executable)

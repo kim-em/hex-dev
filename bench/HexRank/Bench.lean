@@ -726,6 +726,475 @@ setup_fixed_benchmark runMvDeficientCheck8 where { polyConfig with expectedHash 
 setup_fixed_benchmark runMvDeficientCheck12 where { polyConfig with expectedHash := some (hash true) }
 
 
+/-! Separately attributable certificate assembly and end-to-end producers. -/
+
+/-- A matrix and its prepared first pass. Retaining the matrix directly keeps
+reconstruction and elimination out of the second pass's timed region. -/
+structure FirstInput (R : Type) where
+  dim : Nat
+  matrix : Matrix R dim dim
+  first : ReducedForm R dim dim
+
+instance : Hashable (FirstInput Int) where
+  hash input := hash (input.dim, flatOfMatrix input.matrix,
+    input.first.profile.rank, flatOfMatrix input.first.matrix, input.first.denom)
+
+def prepSecond (prep : Nat → MatInput) (n : Nat) : FirstInput Int :=
+  let input := prep n
+  let A := matrixOfFlat input.n input.n input.entries
+  ⟨input.n, A, rowReduceFF A⟩
+
+def runSecond (input : FirstInput Int) : Nat :=
+  (rankCertOf HexArith.Int.exactDiv input.matrix input.first).rank
+
+def runCertify (input : MatInput) : Nat :=
+  match certifyRank (matrixOfFlat input.n input.m input.entries) with
+  | some c => c.rank
+  | none => panic! "certifyRank rejected a validated integer fixture"
+
+def runWitness (input : MatInput) : Nat :=
+  match rankWitness (matrixOfFlat input.n input.m input.entries) with
+  | .ok w => w.rank
+  | .error error => panic! s!"rankWitness: {error}"
+
+namespace Second
+
+def prepDense := prepSecond Hex.RankBench.prepDense
+def dense := runSecond
+/- The prepared first pass leaves an r by r pivot block and its
+augmented reduction. At fixed r and bits this is constant in n; when
+r grows, O(r³) arithmetic on Hadamard-sized minors has the same n⁵ bound. -/
+setup_benchmark dense n => hadamardBound n
+  with prep := prepDense
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+def prepLowRank2At64 := prepSecond Hex.RankBench.prepLowRank2At64
+def lowRank2At64 := runSecond
+/- The prepared first pass leaves an r by r pivot block and its
+augmented reduction. At fixed r and bits this is constant in n; when
+r grows, O(r³) arithmetic on Hadamard-sized minors has the same n⁵ bound. -/
+setup_benchmark lowRank2At64 _n => 1
+  with prep := prepLowRank2At64
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+def prepLowRank8At64 := prepSecond Hex.RankBench.prepLowRank8At64
+def lowRank8At64 := runSecond
+/- The prepared first pass leaves an r by r pivot block and its
+augmented reduction. At fixed r and bits this is constant in n; when
+r grows, O(r³) arithmetic on Hadamard-sized minors has the same n⁵ bound. -/
+setup_benchmark lowRank8At64 _n => 1
+  with prep := prepLowRank8At64
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+def prepLowRank2At1024 := prepSecond Hex.RankBench.prepLowRank2At1024
+def lowRank2At1024 := runSecond
+/- The prepared first pass leaves an r by r pivot block and its
+augmented reduction. At fixed r and bits this is constant in n; when
+r grows, O(r³) arithmetic on Hadamard-sized minors has the same n⁵ bound. -/
+setup_benchmark lowRank2At1024 _n => 1
+  with prep := prepLowRank2At1024
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+def prepLowRank8At1024 := prepSecond Hex.RankBench.prepLowRank8At1024
+def lowRank8At1024 := runSecond
+/- The prepared first pass leaves an r by r pivot block and its
+augmented reduction. At fixed r and bits this is constant in n; when
+r grows, O(r³) arithmetic on Hadamard-sized minors has the same n⁵ bound. -/
+setup_benchmark lowRank8At1024 _n => 1
+  with prep := prepLowRank8At1024
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+def prepDeficientMinusOne := prepSecond Hex.RankBench.prepDeficientMinusOne
+def deficientMinusOne := runSecond
+/- The prepared first pass leaves an r by r pivot block and its
+augmented reduction. At fixed r and bits this is constant in n; when
+r grows, O(r³) arithmetic on Hadamard-sized minors has the same n⁵ bound. -/
+setup_benchmark deficientMinusOne n => productBound n
+  with prep := prepDeficientMinusOne
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+def prepDeficientHalf := prepSecond Hex.RankBench.prepDeficientHalf
+def deficientHalf := runSecond
+/- The prepared first pass leaves an r by r pivot block and its
+augmented reduction. At fixed r and bits this is constant in n; when
+r grows, O(r³) arithmetic on Hadamard-sized minors has the same n⁵ bound. -/
+setup_benchmark deficientHalf n => productBound n
+  with prep := prepDeficientHalf
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+def prepDeficientHalfShifted := prepSecond Hex.RankBench.prepDeficientHalfShifted
+def deficientHalfShifted := runSecond
+/- The prepared first pass leaves an r by r pivot block and its
+augmented reduction. At fixed r and bits this is constant in n; when
+r grows, O(r³) arithmetic on Hadamard-sized minors has the same n⁵ bound. -/
+setup_benchmark deficientHalfShifted n => productBound n
+  with prep := prepDeficientHalfShifted
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+end Second
+
+namespace Certify
+
+def dense := runCertify
+/- Certificate production followed by checking sums the existing
+operation counts: O(n²) at fixed r/bits, and the same Hadamard n⁵ bound
+when r and minor bit lengths grow. No cost model is inferred from timing. -/
+setup_benchmark dense n => hadamardBound n
+  with prep := Hex.RankBench.prepDense
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+def lowRank2At64 := runCertify
+/- Certificate production followed by checking sums the existing
+operation counts: O(n²) at fixed r/bits, and the same Hadamard n⁵ bound
+when r and minor bit lengths grow. No cost model is inferred from timing. -/
+setup_benchmark lowRank2At64 n => n * n
+  with prep := Hex.RankBench.prepLowRank2At64
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+def lowRank8At64 := runCertify
+/- Certificate production followed by checking sums the existing
+operation counts: O(n²) at fixed r/bits, and the same Hadamard n⁵ bound
+when r and minor bit lengths grow. No cost model is inferred from timing. -/
+setup_benchmark lowRank8At64 n => n * n
+  with prep := Hex.RankBench.prepLowRank8At64
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+def lowRank2At1024 := runCertify
+/- Certificate production followed by checking sums the existing
+operation counts: O(n²) at fixed r/bits, and the same Hadamard n⁵ bound
+when r and minor bit lengths grow. No cost model is inferred from timing. -/
+setup_benchmark lowRank2At1024 n => n * n
+  with prep := Hex.RankBench.prepLowRank2At1024
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+def lowRank8At1024 := runCertify
+/- Certificate production followed by checking sums the existing
+operation counts: O(n²) at fixed r/bits, and the same Hadamard n⁵ bound
+when r and minor bit lengths grow. No cost model is inferred from timing. -/
+setup_benchmark lowRank8At1024 n => n * n
+  with prep := Hex.RankBench.prepLowRank8At1024
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+def deficientMinusOne := runCertify
+/- Certificate production followed by checking sums the existing
+operation counts: O(n²) at fixed r/bits, and the same Hadamard n⁵ bound
+when r and minor bit lengths grow. No cost model is inferred from timing. -/
+setup_benchmark deficientMinusOne n => productBound n
+  with prep := Hex.RankBench.prepDeficientMinusOne
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+def deficientHalf := runCertify
+/- Certificate production followed by checking sums the existing
+operation counts: O(n²) at fixed r/bits, and the same Hadamard n⁵ bound
+when r and minor bit lengths grow. No cost model is inferred from timing. -/
+setup_benchmark deficientHalf n => productBound n
+  with prep := Hex.RankBench.prepDeficientHalf
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+def deficientHalfShifted := runCertify
+/- Certificate production followed by checking sums the existing
+operation counts: O(n²) at fixed r/bits, and the same Hadamard n⁵ bound
+when r and minor bit lengths grow. No cost model is inferred from timing. -/
+setup_benchmark deficientHalfShifted n => productBound n
+  with prep := Hex.RankBench.prepDeficientHalfShifted
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+end Certify
+
+namespace Witness
+
+def dense := runWitness
+/- The native witness adds O((n-r)r²) integer work and O(r³)
+fixed-modulus arithmetic to certificate production (SPEC Complexity).
+These preserve n² at fixed r/bits and the Hadamard n⁵ upper bound otherwise. -/
+setup_benchmark dense n => hadamardBound n
+  with prep := Hex.RankBench.prepDense
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+def lowRank2At64 := runWitness
+/- The native witness adds O((n-r)r²) integer work and O(r³)
+fixed-modulus arithmetic to certificate production (SPEC Complexity).
+These preserve n² at fixed r/bits and the Hadamard n⁵ upper bound otherwise. -/
+setup_benchmark lowRank2At64 n => n * n
+  with prep := Hex.RankBench.prepLowRank2At64
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+def lowRank8At64 := runWitness
+/- The native witness adds O((n-r)r²) integer work and O(r³)
+fixed-modulus arithmetic to certificate production (SPEC Complexity).
+These preserve n² at fixed r/bits and the Hadamard n⁵ upper bound otherwise. -/
+setup_benchmark lowRank8At64 n => n * n
+  with prep := Hex.RankBench.prepLowRank8At64
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+def lowRank2At1024 := runWitness
+/- The native witness adds O((n-r)r²) integer work and O(r³)
+fixed-modulus arithmetic to certificate production (SPEC Complexity).
+These preserve n² at fixed r/bits and the Hadamard n⁵ upper bound otherwise. -/
+setup_benchmark lowRank2At1024 n => n * n
+  with prep := Hex.RankBench.prepLowRank2At1024
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+def lowRank8At1024 := runWitness
+/- The native witness adds O((n-r)r²) integer work and O(r³)
+fixed-modulus arithmetic to certificate production (SPEC Complexity).
+These preserve n² at fixed r/bits and the Hadamard n⁵ upper bound otherwise. -/
+setup_benchmark lowRank8At1024 n => n * n
+  with prep := Hex.RankBench.prepLowRank8At1024
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+def deficientMinusOne := runWitness
+/- The native witness adds O((n-r)r²) integer work and O(r³)
+fixed-modulus arithmetic to certificate production (SPEC Complexity).
+These preserve n² at fixed r/bits and the Hadamard n⁵ upper bound otherwise. -/
+setup_benchmark deficientMinusOne n => productBound n
+  with prep := Hex.RankBench.prepDeficientMinusOne
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+def deficientHalf := runWitness
+/- The native witness adds O((n-r)r²) integer work and O(r³)
+fixed-modulus arithmetic to certificate production (SPEC Complexity).
+These preserve n² at fixed r/bits and the Hadamard n⁵ upper bound otherwise. -/
+setup_benchmark deficientHalf n => productBound n
+  with prep := Hex.RankBench.prepDeficientHalf
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+def deficientHalfShifted := runWitness
+/- The native witness adds O((n-r)r²) integer work and O(r³)
+fixed-modulus arithmetic to certificate production (SPEC Complexity).
+These preserve n² at fixed r/bits and the Hadamard n⁵ upper bound otherwise. -/
+setup_benchmark deficientHalfShifted n => productBound n
+  with prep := Hex.RankBench.prepDeficientHalfShifted
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+end Witness
+
+initialize ratFirstInputs : IO.Ref (Array (Nat × Bool × FirstInput (DensePoly Rat))) ← IO.mkRef #[]
+initialize mvFirstInputs : IO.Ref (Array (Nat × Bool × FirstInput (MvPoly 2 Int Mono.lex))) ← IO.mkRef #[]
+
+def prepareFirst [Zero R] [One R] [Sub R] [Mul R] [DecidableEq R]
+    (cache : IO.Ref (Array (Nat × Bool × FirstInput R))) (quot : R → R → R)
+    (prepare : Nat → Bool → IO (PolyInput R)) (n : Nat) (singular : Bool) : IO (FirstInput R) := do
+  if let some (_, _, input) := (← cache.get).find? (fun (k, d, _) => k == n && d == singular) then
+    return input
+  let input ← prepare n singular
+  let first := FirstInput.mk input.dim input.matrix (rowReduceWith quot input.matrix)
+  cache.modify (·.push (n, singular, first))
+  return first
+
+def runRatPolySecondAt (n : Nat) (singular : Bool) : IO Nat := do
+  let input ← prepareFirst ratFirstInputs Hex.exactDiv prepareRatPoly n singular
+  return (rankCertOf Hex.exactDiv input.matrix input.first).rank
+
+def runMvSecondAt (n : Nat) (singular : Bool) : IO Nat := do
+  let input ← prepareFirst mvFirstInputs Hex.exactDiv prepareMv n singular
+  return (rankCertOf Hex.exactDiv input.matrix input.first).rank
+
+def runRatPolyCertifyAt (n : Nat) (singular : Bool) : IO Nat := do
+  let input ← prepareRatPoly n singular
+  let some c := certifyRankWith Hex.exactDiv input.matrix |
+    throw <| IO.userError "certifyRankWith rejected a validated rational polynomial fixture"
+  return c.rank
+
+def runMvCertifyAt (n : Nat) (singular : Bool) : IO Nat := do
+  let input ← prepareMv n singular
+  let some c := certifyRankWith Hex.exactDiv input.matrix |
+    throw <| IO.userError "certifyRankWith rejected a validated multivariate fixture"
+  return c.rank
+
+def runRatPolySecond4 := runRatPolySecondAt 4 false
+setup_fixed_benchmark runRatPolySecond4 where { polyConfig with expectedHash := some (hash (4 : Nat)), tags := #["polynomial", "attribution", "smoke"] }
+def runRatPolySecond8 := runRatPolySecondAt 8 false
+setup_fixed_benchmark runRatPolySecond8 where { polyConfig with expectedHash := some (hash (8 : Nat)), tags := #["polynomial", "attribution"] }
+def runRatPolySecond12 := runRatPolySecondAt 12 false
+setup_fixed_benchmark runRatPolySecond12 where { polyConfig with expectedHash := some (hash (12 : Nat)), tags := #["polynomial", "attribution"] }
+def runRatPolyCertify4 := runRatPolyCertifyAt 4 false
+setup_fixed_benchmark runRatPolyCertify4 where { polyConfig with expectedHash := some (hash (4 : Nat)), tags := #["polynomial", "attribution", "smoke"] }
+def runRatPolyCertify8 := runRatPolyCertifyAt 8 false
+setup_fixed_benchmark runRatPolyCertify8 where { polyConfig with expectedHash := some (hash (8 : Nat)), tags := #["polynomial", "attribution"] }
+def runRatPolyCertify12 := runRatPolyCertifyAt 12 false
+setup_fixed_benchmark runRatPolyCertify12 where { polyConfig with expectedHash := some (hash (12 : Nat)), tags := #["polynomial", "attribution"] }
+def runRatPolyDeficientSecond4 := runRatPolySecondAt 4 true
+setup_fixed_benchmark runRatPolyDeficientSecond4 where { polyConfig with expectedHash := some (hash (2 : Nat)), tags := #["polynomial", "attribution", "smoke"] }
+def runRatPolyDeficientSecond8 := runRatPolySecondAt 8 true
+setup_fixed_benchmark runRatPolyDeficientSecond8 where { polyConfig with expectedHash := some (hash (4 : Nat)), tags := #["polynomial", "attribution"] }
+def runRatPolyDeficientSecond12 := runRatPolySecondAt 12 true
+setup_fixed_benchmark runRatPolyDeficientSecond12 where { polyConfig with expectedHash := some (hash (6 : Nat)), tags := #["polynomial", "attribution"] }
+def runRatPolyDeficientCertify4 := runRatPolyCertifyAt 4 true
+setup_fixed_benchmark runRatPolyDeficientCertify4 where { polyConfig with expectedHash := some (hash (2 : Nat)), tags := #["polynomial", "attribution", "smoke"] }
+def runRatPolyDeficientCertify8 := runRatPolyCertifyAt 8 true
+setup_fixed_benchmark runRatPolyDeficientCertify8 where { polyConfig with expectedHash := some (hash (4 : Nat)), tags := #["polynomial", "attribution"] }
+def runRatPolyDeficientCertify12 := runRatPolyCertifyAt 12 true
+setup_fixed_benchmark runRatPolyDeficientCertify12 where { polyConfig with expectedHash := some (hash (6 : Nat)), tags := #["polynomial", "attribution"] }
+def runMvSecond4 := runMvSecondAt 4 false
+setup_fixed_benchmark runMvSecond4 where { polyConfig with expectedHash := some (hash (4 : Nat)), tags := #["polynomial", "attribution", "smoke"] }
+def runMvSecond8 := runMvSecondAt 8 false
+setup_fixed_benchmark runMvSecond8 where { polyConfig with expectedHash := some (hash (8 : Nat)), tags := #["polynomial", "attribution"] }
+def runMvSecond12 := runMvSecondAt 12 false
+setup_fixed_benchmark runMvSecond12 where { polyConfig with expectedHash := some (hash (12 : Nat)), tags := #["polynomial", "attribution"] }
+def runMvCertify4 := runMvCertifyAt 4 false
+setup_fixed_benchmark runMvCertify4 where { polyConfig with expectedHash := some (hash (4 : Nat)), tags := #["polynomial", "attribution", "smoke"] }
+def runMvCertify8 := runMvCertifyAt 8 false
+setup_fixed_benchmark runMvCertify8 where { polyConfig with expectedHash := some (hash (8 : Nat)), tags := #["polynomial", "attribution"] }
+def runMvCertify12 := runMvCertifyAt 12 false
+setup_fixed_benchmark runMvCertify12 where { polyConfig with expectedHash := some (hash (12 : Nat)), tags := #["polynomial", "attribution"] }
+def runMvDeficientSecond4 := runMvSecondAt 4 true
+setup_fixed_benchmark runMvDeficientSecond4 where { polyConfig with expectedHash := some (hash (2 : Nat)), tags := #["polynomial", "attribution", "smoke"] }
+def runMvDeficientSecond8 := runMvSecondAt 8 true
+setup_fixed_benchmark runMvDeficientSecond8 where { polyConfig with expectedHash := some (hash (4 : Nat)), tags := #["polynomial", "attribution"] }
+def runMvDeficientSecond12 := runMvSecondAt 12 true
+setup_fixed_benchmark runMvDeficientSecond12 where { polyConfig with expectedHash := some (hash (6 : Nat)), tags := #["polynomial", "attribution"] }
+def runMvDeficientCertify4 := runMvCertifyAt 4 true
+setup_fixed_benchmark runMvDeficientCertify4 where { polyConfig with expectedHash := some (hash (2 : Nat)), tags := #["polynomial", "attribution", "smoke"] }
+def runMvDeficientCertify8 := runMvCertifyAt 8 true
+setup_fixed_benchmark runMvDeficientCertify8 where { polyConfig with expectedHash := some (hash (4 : Nat)), tags := #["polynomial", "attribution"] }
+def runMvDeficientCertify12 := runMvCertifyAt 12 true
+setup_fixed_benchmark runMvDeficientCertify12 where { polyConfig with expectedHash := some (hash (6 : Nat)), tags := #["polynomial", "attribution"] }
+
 /-! Persistent exact-domain comparators. A fixed anchor shares an actual Lean
 matrix with the subprocess; serialization, decoding and validation are all in
 warmup. Only a rank request/reply is in each external timed call. -/
