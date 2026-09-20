@@ -16,7 +16,9 @@ needs neither structural equality nor algebraic instances. -/
 namespace Hex.PolyOps
 universe u v w
 
-/-- Claims interpreted in the fixed context of a coefficient record. -/
+/-- Claims interpreted in the fixed context of a coefficient record. A backend without
+inversion or exact division may assign an empty evidence type to those claims and eliminate
+such evidence in its checker; supporting ring operations does not require either capability. -/
 inductive Claim (C : Type u) where
   | valid (a : C)
   | add (a b result : C)
@@ -33,29 +35,34 @@ structure ZeroDivisor {C : Type u} (Evidence : Claim C → Type v) where
   evidence : Evidence (.zero divisor true)
 
 /-- Pure Lean producers and structurally terminating replay. Successful producers propose
-certificates; clients use the checked wrappers below. Each producer must reserve its own
+certificates; clients use the checked wrappers below. Their empty domain-evidence type
+reserves mathematical domain failures for the wrappers' checked guards. Each producer must reserve its own
 allocations and charge any nested work to its incoming budget, including on failure. -/
 structure CoeffOps (C : Type u) where
   Evidence : Claim C → Type v
   zero : C
   one : C
   check : (claim : Claim C) → Budget → Evidence claim → CheckResult
-  validate : (a : C) → Computation (ZeroDivisor Evidence) (Evidence (.valid a))
-  add : (a b : C) → Computation (ZeroDivisor Evidence) ((c : C) × Evidence (.add a b c))
-  mul : (a b : C) → Computation (ZeroDivisor Evidence) ((c : C) × Evidence (.mul a b c))
-  neg : (a : C) → Computation (ZeroDivisor Evidence) ((c : C) × Evidence (.neg a c))
-  zeroTest : (a : C) → Computation (ZeroDivisor Evidence) ((z : Bool) × Evidence (.zero a z))
-  sign : (a : C) → Computation (ZeroDivisor Evidence) ((s : Sign) × Evidence (.sign a s))
+  /-- Reserve the bytes of a coefficient literal before retaining it in evidence. The
+  backend owns its literal encoding and must charge its size computation and nested work. -/
+  retain : C → Computation Empty Unit
+  validate : (a : C) → Computation Empty (Evidence (.valid a))
+  add : (a b : C) → Computation Empty ((c : C) × Evidence (.add a b c))
+  mul : (a b : C) → Computation Empty ((c : C) × Evidence (.mul a b c))
+  neg : (a : C) → Computation Empty ((c : C) × Evidence (.neg a c))
+  zeroTest : (a : C) → Computation Empty ((z : Bool) × Evidence (.zero a z))
+  sign : (a : C) → Computation Empty ((s : Sign) × Evidence (.sign a s))
 
-/-- Inversion is a separate capability; the ring kernel never requests it. -/
+/-- Inversion is a separate capability; the ring kernel never requests it. The checked
+wrapper calls the producer after establishing nonzero and owns the zero-divisor outcome. -/
 structure FieldOps (C : Type u) extends CoeffOps.{u,v} C where
-  inv : (a : C) → Computation (ZeroDivisor Evidence) ((c : C) × Evidence (.inverse a c))
+  inv : (a : C) → Computation Empty ((c : C) × Evidence (.inverse a c))
 
 /-- Optional exact division, independent of field inversion. Failure to find a quotient is
 exhaustion, whereas evidence for a false proposed quotient is rejected. -/
 structure ExactOps (C : Type u) extends CoeffOps.{u,v} C where
   divExact : (a b : C) →
-    Computation (ZeroDivisor Evidence) ((c : C) × Evidence (.division a b c))
+    Computation Empty ((c : C) × Evidence (.division a b c))
 
 namespace CoeffOps
 
@@ -68,14 +75,13 @@ abbrev Run (ops : CoeffOps C) (α : Type w) := Computation ops.Failure α
   charge .replay
   invoke fun b => (ops.check claim b e).result
 
-/-- Check mathematical failure evidence as well as successful evidence. A fabricated domain
-violation cannot reach a public wrapper merely by selecting the invalid constructor. -/
-@[expose] def call (ops : CoeffOps C) (f : ops.Run α) : ops.Run α := fun b =>
-  match invoke f b with
-  | .invalid (.domain message e) rest =>
-    (ops.checkWith (.zero e.divisor true) e.evidence rest).bind fun _ rest' =>
-      .invalid (.domain message e) rest'
-  | r => r
+/-- Raw callbacks cannot construct mathematical domain failures. The checked divisor guards
+below own those failures and bind their evidence to the actual operand. -/
+@[expose] def call (ops : CoeffOps C) (f : Computation Empty α) : ops.Run α := fun b =>
+  (invoke f b).mapDomain Empty.elim
+
+@[expose] def retainWith (ops : CoeffOps C) (a : C) : ops.Run Unit :=
+  ops.call (ops.retain a)
 
 @[expose] def validateWith (ops : CoeffOps C) (a : C) : ops.Run (ops.Evidence (.valid a)) := do
   let e ← ops.call (ops.validate a)
@@ -122,6 +128,9 @@ zero decision propagates exhaustion without ever calling inversion. -/
     ops.toCoeffOps.Run ((c : C) × ops.Evidence (.inverse a c)) := do
   let z ← ops.zeroWith a
   if h : z.1 = true then
+    ops.retainWith a
+    charge .evidenceNodes
+    charge .evidenceBytes 1
     fun b => .invalid (.domain "zero divisor" ⟨a, h ▸ z.2⟩) b
   else
     let r ← ops.call (ops.inv a)
@@ -132,6 +141,9 @@ zero decision propagates exhaustion without ever calling inversion. -/
     ops.toCoeffOps.Run ((c : C) × ops.Evidence (.division a b c)) := do
   let z ← ops.zeroWith b
   if h : z.1 = true then
+    ops.retainWith b
+    charge .evidenceNodes
+    charge .evidenceBytes 1
     fun rest => .invalid (.domain "zero divisor" ⟨b, h ▸ z.2⟩) rest
   else
     let r ← ops.call (ops.divExact a b)

@@ -47,9 +47,33 @@ structure Limits where
 
 /-- Remaining allowances, shared by producers, callbacks and replay. -/
 structure Budget where
-  remaining : Resource → Nat
+  operations : Nat
+  steps : Nat
+  coefficients : Nat
+  decisions : Nat
+  evidenceNodes : Nat
+  evidenceBytes : Nat
+  replay : Nat
+  deriving DecidableEq, Repr
 
-@[expose] def Limits.budget (limits : Limits) : Budget := ⟨limits.allowance⟩
+@[expose] def Budget.remaining (b : Budget) : Resource → Nat
+  | .operations => b.operations
+  | .steps => b.steps
+  | .coefficients => b.coefficients
+  | .decisions => b.decisions
+  | .evidenceNodes => b.evidenceNodes
+  | .evidenceBytes => b.evidenceBytes
+  | .replay => b.replay
+
+/-- Materialize the counters once; spending never retains a chain of earlier budgets. -/
+@[expose] def Budget.ofFn (f : Resource → Nat) : Budget :=
+  ⟨f .operations, f .steps, f .coefficients, f .decisions,
+   f .evidenceNodes, f .evidenceBytes, f .replay⟩
+
+@[simp] theorem Budget.remaining_ofFn (f : Resource → Nat) (r : Resource) :
+    (ofFn f).remaining r = f r := by cases r <;> rfl
+
+@[expose] def Limits.budget (limits : Limits) : Budget := .ofFn limits.allowance
 @[expose] def Limits.uniform (n : Nat) : Limits := ⟨fun _ => n⟩
 
 /-- A child may consume resources but cannot replenish them. -/
@@ -70,12 +94,12 @@ instance (a b : Budget) : Decidable (a.Within b) :=
         · intro h; exact ⟨h _, h _, h _, h _, h _, h _, h _⟩)
 
 @[expose] def Budget.cap (a b : Budget) : Budget :=
-  ⟨fun r => min (a.remaining r) (b.remaining r)⟩
+  .ofFn fun r => min (a.remaining r) (b.remaining r)
 
 /-- Charge before starting work. An unsuccessful reservation consumes no resources. -/
 @[expose] def Budget.spend (b : Budget) (r : Resource) (n : Nat) : Option Budget :=
   if n ≤ b.remaining r then
-    some ⟨fun s => if s = r then b.remaining s - n else b.remaining s⟩
+    some (.ofFn fun s => if s = r then b.remaining s - n else b.remaining s)
   else none
 
 theorem Budget.spend_within {b b' : Budget} {r : Resource} {n : Nat}
@@ -84,7 +108,7 @@ theorem Budget.spend_within {b b' : Budget} {r : Resource} {n : Nat}
   split at h
   · cases h
     intro s
-    dsimp
+    simp only [remaining_ofFn]
     split <;> omega
   · contradiction
 
@@ -139,7 +163,8 @@ theorem Result.constrain_within (r : Result α E) (b : Budget) :
   split
   · assumption
   · intro s
-    exact Nat.min_le_right _ _
+    simpa only [Result.budget, Budget.cap, Budget.remaining_ofFn] using
+      Nat.min_le_right (r.budget.remaining s) (b.remaining s)
 
 theorem Result.bind_ok {r : Result α E} {f : α → Budget → Result β E} {v : β} {b : Budget}
     (h : r.bind f = .ok v b) : ∃ a rest, r = .ok a rest ∧ f a rest = .ok v b := by
@@ -200,12 +225,19 @@ theorem invoke_ok {f : Computation E α} {b b' : Budget} {a : α}
   obtain ⟨_, rest, _, h⟩ := Result.bind_ok h
   exact ⟨rest, Result.constrain_ok h⟩
 
+/-- Structured public invalidity retains the distinction between input and replay failures. -/
+inductive PublicInvalid where
+  | malformed (message : String)
+  | context (message : String)
+  | rejected (reason : Rejection)
+  deriving DecidableEq, Repr
+
 /-- Public wrapper used by ordered-function clients. Its mapping preserves every counter. -/
 inductive PublicResult (α : Type u) (E : Type v) where
   | ok (value : α) (budget : Budget)
   | exhausted (reason : Exhaustion) (budget : Budget)
   | domain (message : String) (evidence : E) (budget : Budget)
-  | invalid (message : String) (budget : Budget)
+  | invalid (reason : PublicInvalid) (budget : Budget)
 
 @[expose] def PublicResult.budget : PublicResult α E → Budget
   | .ok _ b | .exhausted _ b | .domain _ _ b | .invalid _ b => b
@@ -220,8 +252,9 @@ producer output; mathematical failures must first pass through the coefficient c
   | .ok a b => .ok a b
   | .exhausted e b => .exhausted e b
   | .invalid (.domain m e) b => .domain m e b
-  | .invalid (.malformed m) b | .invalid (.context m) b => .invalid m b
-  | .rejected e b => .invalid (reprStr e) b
+  | .invalid (.malformed m) b => .invalid (.malformed m) b
+  | .invalid (.context m) b => .invalid (.context m) b
+  | .rejected e b => .invalid (.rejected e) b
 
 @[simp] theorem Result.toPublic_budget (r : Result α E) : r.toPublic.budget = r.budget := by
   cases r with

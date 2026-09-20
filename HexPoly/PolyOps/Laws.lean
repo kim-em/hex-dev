@@ -39,11 +39,11 @@ structure Interpretation (C : Type u) (D : Type w) where
   | .division a b c => m.valid a ∧ m.valid b ∧ m.valid c ∧
       m.denote b ≠ 0 ∧ m.denote b * m.denote c = m.denote a
 
-/-- A producer may report malformed/context-invalid input only for an invalid operand.
-Mathematical domain violations instead pass through checked zero evidence. -/
+/-- A ring callback may report invalid input only for an invalid operand. Mathematical
+zero-divisor errors belong to guarded inversion/division, not to total ring operations. -/
 @[expose] def FailureSound (m : Interpretation C D) (inputs : List C) (r : Result α E) : Prop :=
   match r with
-  | .invalid (.malformed _) _ | .invalid (.context _) _ => ∃ a ∈ inputs, ¬ m.valid a
+  | .invalid _ _ => ∃ a ∈ inputs, ¬ m.valid a
   | _ => True
 
 /-- Soundness alone asserts no eventual success. In particular a checker that always
@@ -56,6 +56,7 @@ structure CoefficientLaws [Lean.Grind.CommRing D] [LE D] [LT D]
   denote_zero : m.denote ops.zero = 0
   denote_one : m.denote ops.one = 1
   check_sound : ∀ claim b e b', ops.check claim b e = .accepted b' → claim.Holds m
+  retain_failure : ∀ a b, FailureSound m [a] (ops.retain a b)
   validate_failure : ∀ a b, FailureSound m [a] (ops.validate a b)
   add_failure : ∀ a c b, FailureSound m [a, c] (ops.add a c b)
   mul_failure : ∀ a c b, FailureSound m [a, c] (ops.mul a c b)
@@ -82,12 +83,25 @@ def Eventually (f : Computation E α) : Prop :=
   ∃ n, ∀ b, (Limits.uniform n).budget.Within b → (f b).isSome = true
 
 structure OperationProgress (ops : CoeffOps C) (m : Interpretation C D) : Prop where
+  retain : ∀ a, m.valid a → Eventually (ops.retainWith a)
   validate : ∀ a, m.valid a → Eventually (ops.validateWith a)
   add : ∀ a b, m.valid a → m.valid b → Eventually (ops.addWith a b)
   mul : ∀ a b, m.valid a → m.valid b → Eventually (ops.mulWith a b)
   neg : ∀ a, m.valid a → Eventually (ops.negWith a)
   zeroTest : ∀ a, m.valid a → Eventually (ops.zeroWith a)
   sign : ∀ a, m.valid a → Eventually (ops.signWith a)
+
+/-- A backend supplies a computable sufficient replay envelope for each literal certificate.
+The bound governs replay of retained evidence, not a fresh coefficient search. -/
+structure ReplayBound (ops : CoeffOps C) where
+  allowance : (claim : Claim C) → ops.Evidence claim → Nat
+
+/-- Already accepted evidence remains replayable with the backend's sufficient resources.
+This is separate from both checker soundness and operation progress. -/
+structure ReplayLaws (ops : CoeffOps C) (bounds : ReplayBound ops) : Prop where
+  replay : ∀ claim e initial final, ops.check claim initial e = .accepted final →
+    ∀ b, (Limits.uniform (bounds.allowance claim e)).budget.Within b →
+      (ops.checkWith claim e b).isSome = true
 
 /-- Field interpretations add the core field laws on the semantic carrier; no such instance
 is installed on raw representatives. -/

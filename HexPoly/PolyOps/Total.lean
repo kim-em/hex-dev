@@ -31,10 +31,22 @@ namespace Total
 
 variable [Lean.Grind.CommRing D] [LT D] [DecidableEq D] [DecidableLT D]
 
-instance (r : Representation C D) (c : Claim C) : Decidable (c.Holds r.model) := by
-  cases c <;> simp only [Claim.Holds, Representation.model]
-  all_goals try infer_instance
-  case sign a s => cases s <;> simp only [Sign.Holds] <;> infer_instance
+instance (r : Representation C D) (c : Claim C) : Decidable (c.Holds r.model) :=
+  match c with
+  | .valid _ => inferInstanceAs (Decidable True)
+  | .add a b c => inferInstanceAs
+      (Decidable (True ∧ True ∧ True ∧ r.decode c = r.decode a + r.decode b))
+  | .mul a b c => inferInstanceAs
+      (Decidable (True ∧ True ∧ True ∧ r.decode c = r.decode a * r.decode b))
+  | .neg a c => inferInstanceAs (Decidable (True ∧ True ∧ r.decode c = -r.decode a))
+  | .zero a z => inferInstanceAs (Decidable (True ∧ (z = true ↔ r.decode a = 0)))
+  | .sign a .negative => inferInstanceAs (Decidable (True ∧ r.decode a < 0))
+  | .sign a .zero => inferInstanceAs (Decidable (True ∧ r.decode a = 0))
+  | .sign a .positive => inferInstanceAs (Decidable (True ∧ 0 < r.decode a))
+  | .inverse a c => inferInstanceAs
+      (Decidable (True ∧ True ∧ r.decode a ≠ 0 ∧ r.decode a * r.decode c = 1))
+  | .division a b c => inferInstanceAs
+      (Decidable (True ∧ True ∧ True ∧ r.decode b ≠ 0 ∧ r.decode b * r.decode c = r.decode a))
 
 /-- The producer allocates one unit certificate, whose wire representation is one byte.
 The call itself is charged by the checked wrapper; this charge counts local arithmetic. -/
@@ -48,27 +60,36 @@ The call itself is charged by the checked wrapper; this charge counts local arit
     CheckResult :=
   match b.spend .operations 1 with
   | none => .exhausted (.resource .operations) b
-  | some b' => if c.Holds r.model then .accepted b' else .rejected (.evidence "false claim") b'
+  | some b' =>
+    match b'.spend .evidenceNodes 1 with
+    | none => .exhausted (.resource .evidenceNodes) b'
+    | some b'' =>
+      match b''.spend .evidenceBytes 1 with
+      | none => .exhausted (.resource .evidenceBytes) b''
+      | some rest =>
+        if c.Holds r.model then .accepted rest else .rejected (.evidence "false claim") rest
 
 theorem check_sound (r : Representation C D) (c : Claim C) (b b' : Budget) (e : Unit)
     (h : check r c b e = .accepted b') : c.Holds r.model := by
   unfold check at h
+  split at h <;> try contradiction
+  split at h <;> try contradiction
+  split at h <;> try contradiction
   split at h
+  · assumption
   · contradiction
-  · split at h
-    · assumption
-    · contradiction
 
 /-- A successful sign is certified by replay; order laws are required separately for
 completeness of this choice on arbitrary semantic carriers. -/
 @[expose] def sign [Zero D] [LT D] [DecidableLT D] [DecidableEq D] (a : D) : Sign :=
   if a < 0 then .negative else if a = 0 then .zero else .positive
 
-@[expose] def coeffOps (r : Representation C D) : CoeffOps C where
+@[expose] def coeffOps (r : Representation C D) (literalBytes : C → Nat) : CoeffOps C where
   Evidence := fun _ => Unit
   zero := r.encode 0
   one := r.encode 1
   check := check r
+  retain a := charge .evidenceBytes (literalBytes a)
   validate _ := emit fun _ => ()
   add a b := emit fun _ => ⟨r.encode (r.decode a + r.decode b), ()⟩
   mul a b := emit fun _ => ⟨r.encode (r.decode a * r.decode b), ()⟩
@@ -89,12 +110,18 @@ theorem emit_failure (m : Interpretation C D) (inputs : List C) (f : Unit → α
         simp [emit, bind, pure, charge, Result.bind, h₁, h₂, h₃, FailureSound]
 
 theorem lawful [LE D] [Std.IsLinearOrder D] [Std.LawfulOrderLT D]
-    [Lean.Grind.OrderedRing D] (r : Representation C D) : CoefficientLaws (coeffOps r) r.model where
+    [Lean.Grind.OrderedRing D] (r : Representation C D) (literalBytes : C → Nat) :
+    CoefficientLaws (coeffOps r literalBytes) r.model where
   valid_zero := trivial
   valid_one := trivial
   denote_zero := r.decode_encode 0
   denote_one := r.decode_encode 1
   check_sound := fun c b e b' h => check_sound r c b b' e h
+  retain_failure := by
+    intro a b
+    change FailureSound r.model [a] (charge .evidenceBytes (literalBytes a) b)
+    unfold charge
+    split <;> trivial
   validate_failure := by
     intro a b
     change FailureSound r.model [a] (emit (fun _ => ()) b)
@@ -107,12 +134,18 @@ theorem lawful [LE D] [Std.IsLinearOrder D] [Std.LawfulOrderLT D]
 
 end Total
 
+/-- Logical literal size: one sign byte and a base-128 variable-length magnitude. -/
+@[expose] def intBytes (n : Int) : Nat := n.natAbs.log2 / 7 + 2
+
+/-- A rational literal stores its signed numerator and positive denominator payload. -/
+@[expose] def ratBytes (q : Rat) : Nat := intBytes q.num + q.den.log2 / 7 + 1
+
 /-- Exact integer coefficients, with no field instance. -/
-@[expose] def intOps : CoeffOps Int := Total.coeffOps (.id Int)
+@[expose] def intOps : CoeffOps Int := Total.coeffOps (.id Int) intBytes
 
 /-- Exact rational coefficients. -/
 @[expose] def ratOps : FieldOps Rat where
-  toCoeffOps := Total.coeffOps (.id Rat)
+  toCoeffOps := Total.coeffOps (.id Rat) ratBytes
   inv a := Total.emit fun _ => ⟨a⁻¹, ()⟩
 
 /-- Integer exact division proposes a quotient only after the divisibility test succeeds. -/
@@ -130,8 +163,8 @@ end Total
   toCoeffOps := ratOps.toCoeffOps
   divExact a b := Total.emit fun _ => ⟨a / b, ()⟩
 
-theorem intOps_lawful : CoefficientLaws intOps (Representation.id Int).model := Total.lawful _
-theorem ratOps_lawful : CoefficientLaws ratOps.toCoeffOps (Representation.id Rat).model := Total.lawful _
+theorem intOps_lawful : CoefficientLaws intOps (Representation.id Int).model := Total.lawful _ _
+theorem ratOps_lawful : CoefficientLaws ratOps.toCoeffOps (Representation.id Rat).model := Total.lawful _ _
 
 theorem ratOps_fieldLaws : FieldLaws ratOps (Representation.id Rat).model where
   toCoefficientLaws := ratOps_lawful
