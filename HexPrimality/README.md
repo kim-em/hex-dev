@@ -38,6 +38,9 @@ example : Hex.Nat.Prime (2 ^ 255 - 19) := by primality?
 `Try this:` replacement containing the checked certificate. Applying it removes
 search from subsequent builds; Lean still replays the checker in its kernel.
 The ordinary `primality` tactic retains its interactive budget.
+`primality? (pMinusOneStage2 := true)` enables bounded Pollard p−1
+continuations within the same total attempt budget. This option defaults to
+`false`.
 
 # Functionality
 
@@ -53,6 +56,11 @@ The ordinary `primality` tactic retains its interactive budget.
   primality.
 - `rhoFactor?` and `pMinusOneStage1` expose the bounded factor primitives used
   during certificate search. Every returned factor is validated by a theorem.
+- `PMinusOne.start` saves the stage-1 residue; `PMinusOne.stage2` continues it
+  over an exact prime interval. `PMinusOne.search` runs both stages, while
+  the counted forms retain attempts, unchanged random state, and batch diagnostics.
+  For example, `PMinusOne.search 1081 2 5 13` returns `factor 23`.
+  The stage-2 bound is capped at `4194304`; `whole` is a failed split.
 - `primesBelow` enumerates an exact ascending initial segment using the verified
   runtime sieve, independently of the committed table bound.
 - `isTablePrime` queries the proved table of primes below `100000`, while

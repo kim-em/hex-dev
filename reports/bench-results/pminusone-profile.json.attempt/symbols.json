@@ -1,0 +1,724 @@
+{
+  "string_table": [
+    "start_thread",
+    "_int_free_chunk",
+    "_int_malloc",
+    "__libc_malloc2",
+    "_int_realloc",
+    "malloc@@GLIBC_2.2.5",
+    "free@@GLIBC_2.2.5",
+    "realloc@@GLIBC_2.2.5",
+    "__clone3",
+    "__memmove_avx512_unaligned_erms",
+    "lp_Hex_Hex_PrimalityBench_Stage2_prepareMiss",
+    "lp_Hex_List_foldl___at___00Hex_PrimalityBench_Stage2_checksum_spec__1",
+    "lp_Hex_List_foldl___at___00Hex_PrimalityBench_Stage2_checksum_spec__2",
+    "lp_Hex_Hex_PrimalityBench_Stage2_runPrepared",
+    "lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_HexPrimality_Bench_0__Hex_PrimalityBench_Stage2_Bits512_initFn_00___x40_HexPrimality_Bench_1268314827____hygCtx___hyg_33__spec__0___redArg",
+    "lp_Hex___private_HexPrimality_Bench_0__Hex_PrimalityBench_Stage2_Bits512_initFn___lam__0_00___x40_HexPrimality_Bench_1268314827____hygCtx___hyg_33_",
+    "lp_Hex___private_HexPrimality_Bench_0__Hex_PrimalityBench_Stage2_Bits512_initFn___lam__1_00___x40_HexPrimality_Bench_1268314827____hygCtx___hyg_33_",
+    "lp_Hex___private_HexPrimality_Bench_0__Hex_PrimalityBench_Stage2_Bits512_initFn___lam__1_00___x40_HexPrimality_Bench_1268314827____hygCtx___hyg_33____boxed",
+    "lp_Hex_Hex_Nat_doubleRounds",
+    "lp_Hex_Hex_Nat_markCandidate",
+    "lp_Hex_Hex_Nat_sieveGoRange",
+    "lp_Hex_Hex_Nat_sieve",
+    "lp_Hex_Hex_Nat_primesBelow",
+    "lp_Hex_Hex_Nat_PMinusOne_primes",
+    "lp_Hex___private_HexPrimality_PMinusOne_0__Hex_Nat_PMinusOne_babyPowers",
+    "lp_Hex_Hex_Nat_PMinusOne_advance",
+    "lp_Hex_Hex_Nat_PMinusOne_term",
+    "lp_Hex___private_HexPrimality_PMinusOne_0__Hex_Nat_PMinusOne_flush",
+    "lp_Hex___private_HexPrimality_PMinusOne_0__Hex_Nat_PMinusOne_scan",
+    "lp_Hex___private_HexPrimality_PMinusOne_0__Hex_Nat_PMinusOne_intervalCore",
+    "lp_Hex_Hex_Nat_PMinusOne_fromPrepared",
+    "lp_lean_x2dbench___private_LeanBench_RunEnv_0__LeanBench_RunEnv_detectCpuModel",
+    "lp_lean_x2dbench___private_LeanBench_RunEnv_0__LeanBench_RunEnv_detectCpuCores",
+    "lp_lean_x2dbench_LeanBench_RunEnv_capture",
+    "lp_lean_x2dbench_LeanBench_wrapLoopForSidecar",
+    "lp_lean_x2dbench_LeanBench_wrapLoopForSidecar___boxed",
+    "lp_lean_x2dbench___private_Init_While_0__repeatM_erased___at___00LeanBench_autoTune_spec__0___redArg",
+    "lp_lean_x2dbench_LeanBench_autoTune",
+    "lp_lean_x2dbench_LeanBench_runChildMode",
+    "lp_lean_x2dbench_LeanBench_Cli_runChildCmd",
+    "lp_lean_x2dbench_LeanBench_Cli_runChildCmd___boxed",
+    "l_List_isEmpty___redArg",
+    "l_String_splitOnAux",
+    "_ZNSt3__110__function6__funcIZ13lean_run_mainE3$_0FvvEEclEv",
+    "_ZN4lean7lthread3imp5_mainEPv",
+    "_ZN4lean3mpzC2Em",
+    "_ZN4lean3mpzD2Ev",
+    "_ZN4lean3mpzC2ERKS0_",
+    "_ZNK4lean3mpz9is_size_tEv",
+    "_ZN4lean3mpzpLERKS0_",
+    "_ZN4lean3mpzmIERKS0_",
+    "_ZN4lean3mpzmLERKS0_",
+    "_ZN4lean3mpzrMERKS0_",
+    "__gmpn_add_n_x86_64",
+    "__gmpn_copyi_x86_64",
+    "__gmpn_addmul_1_x86_64",
+    "__gmpn_invert_limb",
+    "__gmpn_gcd_11_x86_64",
+    "__gmpn_mul_1_x86_64",
+    "__gmpn_sub_n_x86_64",
+    "__gmpn_submul_1_x86_64",
+    "__gmpn_mul_basecase_fat",
+    "__gmpn_mul_2",
+    "__gmpn_addmul_2_fat",
+    "__gmpn_add_n",
+    "__gmpn_sub_n",
+    "__gmpz_realloc",
+    "__gmp_default_free",
+    "__gmp_default_allocate",
+    "__gmp_default_reallocate",
+    "__gmpn_mul",
+    "__gmpz_init_set_ui",
+    "__gmpz_mul_2exp",
+    "__gmpz_add",
+    "__gmpz_clear",
+    "__gmpz_init_set",
+    "__gmpz_sub",
+    "__gmpz_mul",
+    "__gmpn_tdiv_qr",
+    "__gmpn_sbpi1_div_qr",
+    "__gmpz_tdiv_r",
+    "__gmpz_gcd",
+    "__gmpn_gcd",
+    "div2",
+    "__gmpn_hgcd2",
+    "__gmpn_matrix22_mul1_inverse_vector",
+    "__gmpn_gcd_22",
+    "lean_free_object",
+    "lean_dec_ref_cold",
+    "lean_nat_big_add",
+    "lean_nat_big_sub",
+    "lean_nat_big_mul",
+    "lean_nat_big_mod",
+    "lean_nat_big_lor",
+    "lean_nat_gcd",
+    "lean_string_utf8_get",
+    "_ZN4leanL25lean_string_utf8_get_coreEPKcmmRj",
+    "lean_copy_expand_array",
+    "lean_array_push",
+    "_ZN4leanL19lean_del_core_otherEP11lean_objecthS1_",
+    "lean_apply_2",
+    "lean_inc_heartbeat",
+    "mi_free",
+    "mi_malloc_small",
+    "mi_malloc",
+    "_ZL6mi_binm",
+    "_Z15_mi_page_retireP9mi_page_s",
+    "_Z18_mi_malloc_genericP10mi_theap_smmPm"
+  ],
+  "data": [
+    {
+      "debug_name": "libc.so.6",
+      "symbol_table": [
+        {
+          "rva": 641904,
+          "size": 1280,
+          "symbol": 0
+        },
+        {
+          "rva": 703648,
+          "size": 817,
+          "symbol": 1
+        },
+        {
+          "rva": 706608,
+          "size": 4210,
+          "symbol": 2
+        },
+        {
+          "rva": 710832,
+          "size": 476,
+          "symbol": 3
+        },
+        {
+          "rva": 712480,
+          "size": 731,
+          "symbol": 4
+        },
+        {
+          "rva": 714928,
+          "size": 455,
+          "symbol": 5
+        },
+        {
+          "rva": 716496,
+          "size": 525,
+          "symbol": 6
+        },
+        {
+          "rva": 717584,
+          "size": 1419,
+          "symbol": 7
+        },
+        {
+          "rva": 1196112,
+          "size": 71,
+          "symbol": 8
+        },
+        {
+          "rva": 1670784,
+          "size": 1984,
+          "symbol": 9
+        }
+      ]
+    },
+    {
+      "debug_name": "hexprimality_bench",
+      "symbol_table": [
+        {
+          "rva": 12303616,
+          "size": 701,
+          "symbol": 10
+        },
+        {
+          "rva": 12304560,
+          "size": 652,
+          "symbol": 11
+        },
+        {
+          "rva": 12305216,
+          "size": 932,
+          "symbol": 12
+        },
+        {
+          "rva": 12306416,
+          "size": 417,
+          "symbol": 13
+        },
+        {
+          "rva": 12325984,
+          "size": 563,
+          "symbol": 14
+        },
+        {
+          "rva": 12326560,
+          "size": 1110,
+          "symbol": 15
+        },
+        {
+          "rva": 12327696,
+          "size": 556,
+          "symbol": 16
+        },
+        {
+          "rva": 12328256,
+          "size": 47,
+          "symbol": 17
+        },
+        {
+          "rva": 12387936,
+          "size": 989,
+          "symbol": 18
+        },
+        {
+          "rva": 12389440,
+          "size": 1460,
+          "symbol": 19
+        },
+        {
+          "rva": 12390912,
+          "size": 471,
+          "symbol": 20
+        },
+        {
+          "rva": 12391392,
+          "size": 418,
+          "symbol": 21
+        },
+        {
+          "rva": 12394128,
+          "size": 529,
+          "symbol": 22
+        },
+        {
+          "rva": 12443536,
+          "size": 621,
+          "symbol": 23
+        },
+        {
+          "rva": 12445776,
+          "size": 934,
+          "symbol": 24
+        },
+        {
+          "rva": 12447456,
+          "size": 577,
+          "symbol": 25
+        },
+        {
+          "rva": 12448048,
+          "size": 640,
+          "symbol": 26
+        },
+        {
+          "rva": 12448688,
+          "size": 1017,
+          "symbol": 27
+        },
+        {
+          "rva": 12449712,
+          "size": 4890,
+          "symbol": 28
+        },
+        {
+          "rva": 12454608,
+          "size": 2880,
+          "symbol": 29
+        },
+        {
+          "rva": 12462416,
+          "size": 2219,
+          "symbol": 30
+        },
+        {
+          "rva": 12701472,
+          "size": 960,
+          "symbol": 31
+        },
+        {
+          "rva": 12702816,
+          "size": 1177,
+          "symbol": 32
+        },
+        {
+          "rva": 12709728,
+          "size": 2806,
+          "symbol": 33
+        },
+        {
+          "rva": 12730224,
+          "size": 833,
+          "symbol": 34
+        },
+        {
+          "rva": 12731072,
+          "size": 47,
+          "symbol": 35
+        },
+        {
+          "rva": 12745600,
+          "size": 1626,
+          "symbol": 36
+        },
+        {
+          "rva": 12747408,
+          "size": 3610,
+          "symbol": 37
+        },
+        {
+          "rva": 12759200,
+          "size": 8249,
+          "symbol": 38
+        },
+        {
+          "rva": 13349456,
+          "size": 1933,
+          "symbol": 39
+        },
+        {
+          "rva": 13351392,
+          "size": 42,
+          "symbol": 40
+        },
+        {
+          "rva": 79084560,
+          "size": 25,
+          "symbol": 41
+        },
+        {
+          "rva": 80044800,
+          "size": 940,
+          "symbol": 42
+        },
+        {
+          "rva": 80506800,
+          "size": 32,
+          "symbol": 43
+        },
+        {
+          "rva": 80508448,
+          "size": 160,
+          "symbol": 44
+        },
+        {
+          "rva": 80509120,
+          "size": 132,
+          "symbol": 45
+        },
+        {
+          "rva": 80509264,
+          "size": 16,
+          "symbol": 46
+        },
+        {
+          "rva": 80509424,
+          "size": 5,
+          "symbol": 47
+        },
+        {
+          "rva": 80509584,
+          "size": 8,
+          "symbol": 48
+        },
+        {
+          "rva": 80509808,
+          "size": 20,
+          "symbol": 49
+        },
+        {
+          "rva": 80509920,
+          "size": 20,
+          "symbol": 50
+        },
+        {
+          "rva": 80510032,
+          "size": 20,
+          "symbol": 51
+        },
+        {
+          "rva": 80510512,
+          "size": 20,
+          "symbol": 52
+        },
+        {
+          "rva": 80520896,
+          "size": 213,
+          "symbol": 53
+        },
+        {
+          "rva": 80521158,
+          "size": 93,
+          "symbol": 54
+        },
+        {
+          "rva": 80521264,
+          "size": 266,
+          "symbol": 55
+        },
+        {
+          "rva": 80523408,
+          "size": 138,
+          "symbol": 56
+        },
+        {
+          "rva": 80523584,
+          "size": 61,
+          "symbol": 57
+        },
+        {
+          "rva": 80526294,
+          "size": 275,
+          "symbol": 58
+        },
+        {
+          "rva": 80526976,
+          "size": 213,
+          "symbol": 59
+        },
+        {
+          "rva": 80527200,
+          "size": 266,
+          "symbol": 60
+        },
+        {
+          "rva": 80528832,
+          "size": 334,
+          "symbol": 61
+        },
+        {
+          "rva": 80529184,
+          "size": 336,
+          "symbol": 62
+        },
+        {
+          "rva": 80531776,
+          "size": 81,
+          "symbol": 63
+        },
+        {
+          "rva": 80531872,
+          "size": 9,
+          "symbol": 64
+        },
+        {
+          "rva": 80532416,
+          "size": 13,
+          "symbol": 65
+        },
+        {
+          "rva": 80633472,
+          "size": 153,
+          "symbol": 66
+        },
+        {
+          "rva": 80633632,
+          "size": 5,
+          "symbol": 67
+        },
+        {
+          "rva": 80633648,
+          "size": 53,
+          "symbol": 68
+        },
+        {
+          "rva": 80633712,
+          "size": 72,
+          "symbol": 69
+        },
+        {
+          "rva": 80636480,
+          "size": 3857,
+          "symbol": 70
+        },
+        {
+          "rva": 80725968,
+          "size": 57,
+          "symbol": 71
+        },
+        {
+          "rva": 80726128,
+          "size": 223,
+          "symbol": 72
+        },
+        {
+          "rva": 80726352,
+          "size": 777,
+          "symbol": 73
+        },
+        {
+          "rva": 80727136,
+          "size": 34,
+          "symbol": 74
+        },
+        {
+          "rva": 80727184,
+          "size": 106,
+          "symbol": 75
+        },
+        {
+          "rva": 80729424,
+          "size": 793,
+          "symbol": 76
+        },
+        {
+          "rva": 80730224,
+          "size": 946,
+          "symbol": 77
+        },
+        {
+          "rva": 80741392,
+          "size": 4613,
+          "symbol": 78
+        },
+        {
+          "rva": 80748976,
+          "size": 724,
+          "symbol": 79
+        },
+        {
+          "rva": 80757136,
+          "size": 908,
+          "symbol": 80
+        },
+        {
+          "rva": 80781488,
+          "size": 1411,
+          "symbol": 81
+        },
+        {
+          "rva": 80782960,
+          "size": 1270,
+          "symbol": 82
+        },
+        {
+          "rva": 80791376,
+          "size": 162,
+          "symbol": 83
+        },
+        {
+          "rva": 80791552,
+          "size": 1117,
+          "symbol": 84
+        },
+        {
+          "rva": 80796928,
+          "size": 157,
+          "symbol": 85
+        },
+        {
+          "rva": 80797120,
+          "size": 143,
+          "symbol": 86
+        },
+        {
+          "rva": 80804976,
+          "size": 131,
+          "symbol": 87
+        },
+        {
+          "rva": 80805248,
+          "size": 192,
+          "symbol": 88
+        },
+        {
+          "rva": 80815072,
+          "size": 601,
+          "symbol": 89
+        },
+        {
+          "rva": 80815680,
+          "size": 534,
+          "symbol": 90
+        },
+        {
+          "rva": 80816224,
+          "size": 699,
+          "symbol": 91
+        },
+        {
+          "rva": 80818192,
+          "size": 562,
+          "symbol": 92
+        },
+        {
+          "rva": 80819680,
+          "size": 755,
+          "symbol": 93
+        },
+        {
+          "rva": 80822336,
+          "size": 844,
+          "symbol": 94
+        },
+        {
+          "rva": 80832496,
+          "size": 63,
+          "symbol": 95
+        },
+        {
+          "rva": 80832560,
+          "size": 255,
+          "symbol": 96
+        },
+        {
+          "rva": 80838560,
+          "size": 284,
+          "symbol": 97
+        },
+        {
+          "rva": 80838864,
+          "size": 78,
+          "symbol": 98
+        },
+        {
+          "rva": 80842800,
+          "size": 749,
+          "symbol": 99
+        },
+        {
+          "rva": 80859776,
+          "size": 7242,
+          "symbol": 100
+        },
+        {
+          "rva": 81057344,
+          "size": 10,
+          "symbol": 101
+        },
+        {
+          "rva": 81097744,
+          "size": 112,
+          "symbol": 102
+        },
+        {
+          "rva": 81098400,
+          "size": 65,
+          "symbol": 103
+        },
+        {
+          "rva": 81098720,
+          "size": 74,
+          "symbol": 104
+        },
+        {
+          "rva": 81183904,
+          "size": 94,
+          "symbol": 105
+        },
+        {
+          "rva": 81186224,
+          "size": 302,
+          "symbol": 106
+        },
+        {
+          "rva": 81187376,
+          "size": 935,
+          "symbol": 107
+        }
+      ]
+    }
+  ],
+  "provenance": [
+    {
+      "command": [
+        "nm",
+        "-S",
+        "-n",
+        "--defined-only",
+        "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+      ],
+      "stderr": "",
+      "binary_sha256": "fc8e04292ecf9c1dfe9114c258e913bd4498c4a42e59c72fd62e0a23b71a81b0"
+    },
+    {
+      "command": [
+        "nm",
+        "-D",
+        "-S",
+        "-n",
+        "--defined-only",
+        "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6"
+      ],
+      "stderr": "",
+      "binary_sha256": "fc8e04292ecf9c1dfe9114c258e913bd4498c4a42e59c72fd62e0a23b71a81b0"
+    },
+    {
+      "path": "/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6",
+      "status": "symbolized",
+      "resolved_addresses": 83,
+      "unresolved_addresses": 0
+    },
+    {
+      "command": [
+        "nm",
+        "-S",
+        "-n",
+        "--defined-only",
+        "/home/kim/worktrees/hex-dev/hex-dev-pollard-stage-2/.lake/build/bin/hexprimality_bench"
+      ],
+      "stderr": "",
+      "binary_sha256": "b6b86bc7379d4a3ffd13c429095266fb13cf10af67df57e7709a2abe066569ca"
+    },
+    {
+      "command": [
+        "nm",
+        "-D",
+        "-S",
+        "-n",
+        "--defined-only",
+        "/home/kim/worktrees/hex-dev/hex-dev-pollard-stage-2/.lake/build/bin/hexprimality_bench"
+      ],
+      "stderr": "",
+      "binary_sha256": "b6b86bc7379d4a3ffd13c429095266fb13cf10af67df57e7709a2abe066569ca"
+    },
+    {
+      "path": "/home/kim/worktrees/hex-dev/hex-dev-pollard-stage-2/.lake/build/bin/hexprimality_bench",
+      "status": "symbolized",
+      "resolved_addresses": 963,
+      "unresolved_addresses": 2
+    }
+  ]
+}

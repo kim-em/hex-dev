@@ -1,0 +1,10 @@
+=== lean-bench-samply filter diagnostics ===
+bench thread:       name='hexprimality_be' tid=1130775
+calibration:        mode=relative-to-meta-start-ms, residual = 0.812 ms (effective limit 5 ms)
+regions:            4, total timed = 4919.3 ms
+expected samples:   ~4914 on bench thread
+retained samples:   4909 on bench thread (3 rejected outside windows)
+other-thread noise: 0 samples on non-bench threads within timed windows (informational)
+sensitivity ±5 ms: passed (leaf functions; configured total-variation floor 0.10)
+confidence:         passed
+filtered profile:   /home/kim/worktrees/hex-dev/hex-dev-pollard-stage-2/reports/bench-results/pminusone-profile.json.attempt/filtered.json.gz

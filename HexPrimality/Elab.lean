@@ -42,7 +42,7 @@ namespace Hex.PrimalityTactic
 open Lean Meta Elab
 
 /-- ABI version of the downstream factor-search registration boundary. -/
-meta def searchExtensionVersion : Nat := 2
+meta def searchExtensionVersion : Nat := 3
 
 /-- One downstream partial-factor producer available to elaboration-time
 certificate search. The version is checked before the function is used. -/
@@ -348,14 +348,15 @@ meta def certificateSyntax (cert : Hex.Nat.PrimeCert) : MetaM Term :=
 meta def constructionDescription (b : Hex.Nat.ConstructionBudget) : String :=
   s!"maximum {b.maxBits} bits, recursive depth {b.maxDepth}, total attempts {b.maxAttempts}, factor fuel \
     {b.factor.factorFuel}, p-minus-one bounds {b.factor.smoothBounds} at bases \
-    {b.factor.smoothBases}, {b.factor.primeBudget.rhoRestarts} rho restarts with \
+    {b.factor.smoothBases}, {if b.factor.pMinusOneStage2 then "stage 2 at eight times bounds up to 4096, " else ""}{b.factor.primeBudget.rhoRestarts} rho restarts with \
     {b.factor.primeBudget.rhoSteps} steps, ECM bounds [] and 0 curves, witness \
     bases {b.witnessBases} then {b.randomWitnesses} random candidates, \
     at most {b.maxFactors} factors and {b.maxSubsets} subsets, sieve bound at most {b.maxSieveBound}"
 
 /-- Construct a reusable certificate with an optional total attempt limit. -/
 syntax (name := primalitySuggestTac) "primality?"
-  (" (" &"maxAttempts" " := " num ")")? : tactic
+  (" (" &"maxAttempts" " := " num ")")?
+  (" (" &"pMinusOneStage2" " := " ident ")")? : tactic
 
 set_option hygiene false in
 /-- Shared goal handler for core and companion `primality?` registrations. -/
@@ -378,10 +379,18 @@ meta def suggestPrime (predicate head : Name) (stx : Syntax) : Tactic.TacticM Un
           is not about a natural-number numeral"
     unless ← isDefEq nE (mkNatLit n) do
       throwError "primality?: the input must be definitionally transparent"
-    let budget := match stx with
-      | `(tactic| primality? (maxAttempts := $limit:num)) =>
-          { Hex.Nat.constructionBudget with maxAttempts := limit.getNat }
-      | _ => Hex.Nat.constructionBudget
+    let mut budget := Hex.Nat.constructionBudget
+    match stx with
+    | `(tactic| primality? $[(maxAttempts := $limit:num)]?
+        $[(pMinusOneStage2 := $flag:ident)]?) =>
+      if let some limit := limit then
+        budget := { budget with maxAttempts := limit.getNat }
+      if let some flag := flag then
+        unless flag.getId == `true || flag.getId == `false do
+          throwErrorAt flag "expected true or false"
+        budget := { budget with factor := { budget.factor with
+          pMinusOneStage2 := flag.getId == `true } }
+    | _ => Elab.throwUnsupportedSyntax
     if n.log2 + 1 > budget.maxBits then
       throwError "primality?: input has {n.log2 + 1} bits; construction limit is {budget.maxBits} bits"
     match Hex.Nat.Construction.run n (Hex.Rand.ofSeed n) budget with

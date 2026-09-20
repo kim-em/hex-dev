@@ -61,6 +61,126 @@ Covered edge cases:
 
 open Hex.Nat
 
+namespace PollardStage2Tests
+
+open PMinusOne
+
+private def seed := Hex.Rand.ofSeed 27
+private def run (n : Nat) (b₂ : Nat := 13) := searchCounted n 2 5 b₂ seed
+
+#guard (start 1081 2 5).residue == some 216
+#guard (start 2047 2 5).residue == some 32
+#guard (start 1219 2 5).residue == some 998
+#guard primes 5 13 == [7, 11, 13]
+#guard (run 1081).result == .factor 23
+#guard (run 1081 7).result == .noFactor
+#guard (run 2047).result == .whole
+#guard (run 1219).result == .factor 23
+#guard (run 1081).events[1]!.batches == [⟨7, 13, 3, 23, []⟩]
+#guard (run 2047).events[1]!.batches == [⟨7, 13, 3, 2047, [1, 2047, 1]⟩]
+#guard (run 1219).events[1]!.batches == [⟨7, 13, 3, 1219, [1, 23]⟩]
+#guard recover 1081 [(7, 0), (11, 23)] == (.factor 23, [1081, 23])
+#guard recover 1081 [(7, 0), (11, 1)] == (.whole, [1081, 1])
+#guard (searchCounted 1081 23 5 13 seed).result == .factor 23
+#guard (searchCounted 1081 23 5 13 seed).attempts == 1
+#guard (searchCounted 161 2 5 13 seed).result == .factor 7
+#guard (searchCounted 161 2 5 13 seed).attempts == 1
+#guard (searchCounted 15 2 5 13 seed).result == .whole
+#guard (searchCounted 15 2 5 13 seed).attempts == 1
+#guard [1081, 2047, 1219].all fun n =>
+  (run n).attempts == 2 && (run n).rand == seed && (run n).events.length == 2
+#guard [0, 1, 2, 3].all fun n =>
+  (searchCounted n 2 5 13 seed).attempts == 1 &&
+  (searchCounted n 2 5 13 seed).result == .noFactor &&
+  (stage2Counted n 2 5 13 seed).result == .noFactor
+#guard [0, 1, 1081, 1082].all fun a =>
+  (start 1081 a 5).residue == none && search 1081 a 5 13 == .noFactor
+#guard stage2 1081 0 5 13 == .whole
+#guard stage2 1081 1 5 13 == .whole
+#guard stage2 1081 23 5 13 == .factor 23
+#guard stage2 1081 24 5 13 == .factor 23
+#guard stage2 1081 (1081 * 123 + 216) 5 13 == .factor 23
+#guard (stage2Counted 1081 23 13 5 seed).events[0]!.setupGcds == 1
+#guard (stage2Counted 1081 24 13 5 seed).events[0]!.setupGcds == 2
+#guard [0, 1].all fun b => (start 1081 2 b).residue == some 2
+#guard primes 0 7 == [2, 3, 5, 7]
+#guard primes 1 7 == [2, 3, 5, 7]
+#guard primes 7 7 == []
+#guard primes 13 5 == []
+#guard primes 13 16 == []
+#guard primes 7 11 == [11]
+#guard (searchCounted 1081 2 5 5 seed).attempts == 1
+#guard (stage2Counted 1081 216 5 5 seed).attempts == 1
+#guard (stage2Counted 1081 216 5 5 seed).events[0]!.multiplications == 0
+#guard (stage2Counted 1081 216 13 16 seed).events[0]!.multiplications == 0
+#guard stage2Bound (stage2BoundCap + 1) == 4194304
+#guard stage2Bound 0 == 0
+#guard stage2Bound 1 == 1
+example (n x b₁ b₂ : Nat) :
+    stage2 n x b₁ b₂ = stage2 n x (smoothBound b₁) (stage2Bound b₂) :=
+  stage2_bound ..
+example (n a b₁ b₂ : Nat) :
+    search n a b₁ b₂ = search n a (smoothBound b₁) (stage2Bound b₂) :=
+  search_bound ..
+#guard search 1081 23 (smoothBoundCap + 17) (stage2BoundCap + 17) == .factor 23
+#guard stage2 1081 23 (smoothBoundCap + 17) (stage2BoundCap + 17) == .factor 23
+
+-- Independent powers test the executable baby/giant terms, including small
+-- primes, block boundaries, skipped blocks, and endpoint primes.
+private def terms (n x : Nat) (qs : List Nat) : List Nat := Id.run do
+  let (u, h) := babies n x
+  let mut i := qs.headD 0 / 210
+  let mut v := HexArith.powModBits h i n
+  let mut ts := []
+  for q in qs do
+    v := advance n h (q / 210 - i) v
+    i := q / 210
+    ts := term n v u[q % 210]! :: ts
+  return ts.reverse
+
+#guard terms 1081 216 [7, 11, 13] == [486, 299, 11]
+#guard terms 2047 32 [7, 11, 13] == [3, 0, 1023]
+#guard terms 1219 998 [7, 11, 13] == [969, 989, 954]
+#guard ([486, 299, 11].foldl (fun a t => a * t % 1081) 1) == 736
+#guard [23, 47, 89, 53].map (orderOf 2) == [11, 23, 11, 52]
+#guard [23, 47, 89, 53].all fun p =>
+  (List.range (orderOf 2 p - 1)).all fun i => 2 ^ (i + 1) % p != 1
+#guard [2, 216, 998].all fun x =>
+  let qs := [2, 3, 5, 7, 199, 211, 419, 421, 1009, 2003]
+  terms 1081 x qs == qs.map (fun q => ((x ^ q % 1081) + 1081 - 1) % 1081)
+
+-- A prime with base order 10008 makes these complete scans miss. Flushes
+-- depend on candidate count, not on crossing a giant block.
+private def scanRun (count : Nat) :=
+  let b₂ := (primesBelow 500)[count - 1]!
+  stage2Counted 10009 11 0 b₂ seed
+#guard orderOf 11 10009 == 10008
+#guard [31, 32, 33, 64].all fun count =>
+  let r := scanRun count
+  let e := r.events[0]!
+  r.result == .noFactor && r.attempts == 1 && r.rand == seed &&
+  e.candidates == count && e.setupGcds == 2 &&
+  e.batches.map Batch.length == (if count ≤ 32 then [count]
+    else if count == 33 then [32, 1] else [32, 32]) &&
+  e.multiplications == 210 + e.giantAdvances + 2 * count &&
+  e.batches.all (fun b => b.gcd == 1 && b.recovery.isEmpty)
+
+-- Counter-only measurement mode preserves outcomes, work, and accounting,
+-- including whole-product recovery, while retaining no batch records.
+#guard [1081, 2047, 1219].all fun n =>
+  let x := (start n 2 5).residue.getD 0
+  let qs := primes 5 13
+  let full := fromPrepared n x 5 13 qs seed
+  let counters := fromPrepared n x 5 13 qs seed false
+  full.result == counters.result && full.rand == counters.rand &&
+  full.attempts == counters.attempts &&
+  full.events.map (fun e => { e with batches := [] }) == counters.events &&
+  counters.events[0]!.batches.isEmpty && counters.events[0]!.batchGcds == 1
+#guard (fromPrepared 2047 32 5 13 [7, 11, 13] seed false).events[0]!.recoveryGcds == 3
+#guard (fromPrepared 1219 998 5 13 [7, 11, 13] seed false).events[0]!.recoveryGcds == 2
+
+end PollardStage2Tests
+
 -- Multiplicative order: a typical primitive root, both junk-value edges, and
 -- a base-2 pseudoprime whose proper order catches a Fermat-only implementation.
 #guard orderOf 3 7 == 6
@@ -181,7 +301,7 @@ example {n base bound d : Nat} {r : Hex.Rand}
         | .ok _ => false)
 
 private def emptyFactorSearch : FactorSearch := fun _allocation n r =>
-  ⟨⟨[], n⟩, (r.words 2).2, 2⟩
+  ⟨⟨[], n⟩, (r.words 2).2, 2, []⟩
 
 private def squarePrime : Nat := 1208925821721293454442757
 
@@ -190,7 +310,7 @@ private def squareFactor : Nat := 549755814367
 private def squareFactorSearch : FactorSearch := fun allocation n r =>
   if n = squarePrime - 1 &&
       allocation.factorFuel = 2 * squarePrime.log2 + 8 then
-    ⟨⟨[(2, 2), (squareFactor, 2)], 1⟩, (r.words 3).2, 3⟩
+    ⟨⟨[(2, 2), (squareFactor, 2)], 1⟩, (r.words 3).2, 3, []⟩
   else defaultFactorSearch allocation n r
 
 #guard (match Internal.primeCertCountedUsing? squareFactorSearch

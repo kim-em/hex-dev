@@ -712,6 +712,14 @@ freshness, and proof-sweep tests; the phase, DAG, and Phase-7 checks; the
 Mathlib-free and persistent-comparator lints; and the
 factorization/graph-isomorphism source and figure freshness checks also pass.
 
+## Pollard p−1 continuation
+
+The `p-minus-one-stage2-policy` family is covered by the
+[arithmetic and consumer report](hex-primality-stage2.md), including exact
+extra-prime fixtures, full misses, route accounting, and checked outcomes.
+Continuation remains opt-in; the report separates native and interpreted
+construction evidence and ordinary factorization's allocation.
+
 ## Concerns
 
 None.

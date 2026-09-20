@@ -5,6 +5,8 @@ Authors: Kim Morrison
 -/
 
 import HexIntFactor
+import HexIntFactor.PMinusOneFixtures
+import HexPrimality.PMinusOneMeasure
 import LeanBench
 
 /-! Native benchmark families for integer factorization and replay. -/
@@ -892,6 +894,44 @@ setup_fixed_benchmark runDownstreamOrder where
 setup_fixed_benchmark runDownstreamPrimitiveRoot where
   fixedConfig 0.02 0xf53a7f8b2ec1ebc6
 
+namespace Stage2
+
+@[noinline] def factor (n seed : Nat) (enabled : Bool) : Hex.PMinusOneMeasure.Result :=
+  match Internal.factorCounted? n (Hex.Rand.ofSeed seed) (defaultFuel n) enabled with
+  | .ok r =>
+      { checked := true, outcome := "factorization", value := r.factorization.raw.subject
+        attempts := r.attempts, rand := reprStr r.rand, events := r.events }
+  | .error r =>
+      { outcome := match r.stop with
+          | .zero => "zero"
+          | .incomplete => "incomplete"
+          | .rejected => "rejected"
+        value := r.snapshot.map (fun s => s.raw.residual) |>.getD n
+        attempts := r.attempts, rand := reprStr r.rand, events := r.events }
+
+initialize factorInput : IO.Ref (Nat × Nat × Bool) ← IO.mkRef (97, 0, false)
+initialize factorResult : IO.Ref (Option Hex.PMinusOneMeasure.Result) ← IO.mkRef none
+
+def runPolicy (_ : Unit) : IO Nat := do
+  let (n, seed, enabled) ← factorInput.get
+  let result := factor n seed enabled
+  factorResult.set (some result)
+  return if result.checked then result.value else 0
+
+setup_fixed_benchmark runPolicy where { repeats := 3, maxSecondsPerCall := 600.0 }
+
+def probe (args : List String) : IO UInt32 := do
+  match args with
+  | [n, seed, enabled] =>
+      factorInput.set (n.toNat!, seed.toNat!, enabled == "true")
+      let code ← LeanBench.runFixedChildMode `Hex.IntFactorBench.Stage2.runPolicy 0 0
+      if let some result ← factorResult.get then
+        IO.println (Lean.Json.mkObj [("type", Lean.toJson "result"), ("result", result.json)]).compress
+      return code
+  | _ => throw (IO.userError "stage2-factor N SEED ENABLED")
+
+end Stage2
+
 end Hex.IntFactorBench
 
 /- Attribution-only runners for representative mode-3 families whose
@@ -942,6 +982,7 @@ end Hex.IntFactorProfile
 
 def main (args : List String) : IO UInt32 :=
   match args with
+  | "stage2-factor" :: args => Hex.IntFactorBench.Stage2.probe args
   | ["divisor-audit"] => Hex.IntFactorBench.auditDivisors
   | ["default-fuel"] => Hex.IntFactorBench.reportDefaultFuel
   | ["control-audit"] => Hex.IntFactorBench.reportControls

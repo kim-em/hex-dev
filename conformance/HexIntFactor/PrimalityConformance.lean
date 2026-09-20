@@ -47,7 +47,7 @@ private def coreFailure : PrimeCertFailure :=
   match Internal.primeCertCountedWith? tacticBudget squarePrime squareSeed
       squareFuel with
   | .error failure => failure
-  | .ok _ => ⟨.composite, 0, squareSeed⟩
+  | .ok _ => ⟨.composite, 0, squareSeed, []⟩
 
 -- The ordinary elaborator allocation exhausts on this prime. Its advanced
 -- state is the exact starting point for deterministic extension dispatch.

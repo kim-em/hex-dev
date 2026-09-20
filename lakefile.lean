@@ -514,7 +514,13 @@ lean_lib HexBerlekampKernelProbe where
 
 lean_lib HexPrimalityKernelProbe where
   srcDir := "bench"
-  globs := #[`HexPrimalityBench.Inputs, `HexBench.PrimalityKernel]
+  globs := #[`HexPrimalityBench.Inputs, `HexBench.PrimalityKernel,
+    `HexPrimality.PMinusOneFixtures, `HexIntFactor.PMinusOneFixtures,
+    `HexPrimality.PMinusOneMeasure, `HexPrimality.PMinusOneParents]
+
+lean_lib HexPrimalityPMinusOneProbe where
+  srcDir := "bench"
+  globs := #[.submodules `HexPrimality.ProofProbe.PMinusOne]
 
 lean_lib HexPrimalityElabProbe where
   srcDir := "bench"

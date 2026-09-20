@@ -37,18 +37,18 @@ degrades to the checker's trivial saved snapshot; only zero lacks a snapshot
 and returns the honest empty candidate with residual zero. An optional total
 attempt limit is not supported by this adapter: it declines without work. -/
 def intFactorSearch : FactorSearch := fun allocation n r =>
-  if allocation.attemptLimit.isSome then ⟨⟨[], n⟩, r, 0⟩ else
+  if allocation.attemptLimit.isSome then ⟨⟨[], n⟩, r, 0, []⟩ else
   match Internal.factorCountedWith? allocation.primeBudget
-      allocation.primeFuel n r allocation.factorFuel with
+      allocation.primeFuel n r allocation.factorFuel allocation.pMinusOneStage2 with
   | .ok success =>
       ⟨⟨factorPairs success.factorization.raw.factors, 1⟩,
-        success.rand, success.attempts⟩
+        success.rand, success.attempts, success.events⟩
   | .error failure =>
       match failure.snapshot with
       | some saved =>
           ⟨⟨factorPairs saved.raw.factors, saved.raw.residual⟩,
-            failure.rand, failure.attempts⟩
-      | none => ⟨⟨[], n⟩, failure.rand, failure.attempts⟩
+            failure.rand, failure.attempts, failure.events⟩
+      | none => ⟨⟨[], n⟩, failure.rand, failure.attempts, failure.events⟩
 
 end Nat
 
@@ -59,7 +59,7 @@ namespace HexIntFactor.PrimalityTactic
 /-- The HexIntFactor search extension, discovered by name from
 `Hex.PrimalityTactic.searchExtensionNames`. -/
 public meta def extension : Hex.PrimalityTactic.SearchExtension where
-  version := 2
+  version := 3
   factorName := ``Hex.Nat.intFactorSearch
 
 end HexIntFactor.PrimalityTactic
