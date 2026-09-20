@@ -96,8 +96,9 @@ Pollard `p − 1` stage 2 is specified upstream in
 [hex-primality](../../HexPrimality/SPEC/hex-primality.md#pollard-p-minus-one-stage-2),
 with this library owning its adapter and dispatch policy. Implementation and
 default enablement follow that contract and its benchmark gates. ECM stage 2
-remains out of scope: it needs its own Brent-Suyama layout, cost model, and
-benchmark family; the p−1 contract does not specify an ECM continuation.
+has the separate bounded coordinate-collision contract below.
+It is available through an explicitly selected construction provider; ordinary
+factorization and the registered ordinary primality adapter do not enable it.
 
 ECM stage 1 without stage 2 may not earn its maintenance cost. Milestone
 6 is therefore benchmark-gated: if the specified stage-1 route does not
@@ -567,8 +568,8 @@ word-sized odd moduli use hex-arith's `MontCtx`; larger moduli use direct
 GMP-backed `Nat` multiplication and remainder, `(a * b) % n`. The
 existing Montgomery context is `UInt64`-only and is not claimed to be an
 arbitrary-precision backend. The ECM benchmark family must show that the
-direct-`Nat` route is useful before this milestone is complete. ECM stage 2
-would need a separate arithmetic decision; Pollard p−1 stage 2 uses its own
+direct-`Nat` route is useful before this milestone is complete. The bounded ECM
+stage-2 route below uses direct `Nat` arithmetic; Pollard p−1 stage 2 uses its own
 specified benchmark gate for direct `Nat` versus a prepared big-integer
 context. On the word route, one context is constructed
 after setup, the curve constants and initial point enter Montgomery
@@ -576,6 +577,93 @@ representation once, every stage multiplication stays there, and only the
 final `z` coordinate is decoded for the boundary gcd. Context construction
 or representation conversion inside the scalar-multiplication loop is not
 the word backend specified here.
+
+### 3a. Bounded ECM continuation for explicit certificate construction
+
+`HexIntFactor/EcmStage2.lean` owns the Mathlib-free continuation in namespace
+`Hex.Nat.Ecm`. Diagnostic state, traces and pipeline helpers live under
+`Ecm.Internal`; the validated boundary is `Ecm.search`.
+`Internal.start n sigma B₁` returns the stage-1 result and, only after
+setup and stage gcd one, a saved `State` containing `n`, scaled curve constants,
+and `Q = [M]P`. It uses the existing natural-number Montgomery formulas and
+prime-power ladder, without recomputing stage 1 for continuation. Invalid
+`n < 4`, `sigma < 6`, or `B₁ > 524288` declines with no state.
+
+`Internal.stage2 state B₁ B₂` rejects `n < 4`, `B₁ > 524288`, `B₂ > 4194304`,
+and empty/reversed intervals before enumeration. Enumerate precisely
+`(primesBelow (B₂+1)).filter (B₁ < ·)`. With `D = 210`, cache all `[j]Q`
+for `0 ≤ j < D` and `H = [D]Q`, using independent scalar ladders for
+simplicity. Each curve performs its own prime enumeration; no cross-curve
+sieve or table sharing is included in the measured cost. Advance giants from
+`H`, first by doubling,
+then by differential addition of `iH` and `H` with difference `(i-1)H`.
+Advance through prime-free blocks too. For each prime `q = 210*i+j`, use
+`X(iH)*Z(jQ) - X(jQ)*Z(iH)` modulo `n`; for `i=0`, use `Z([q]Q)`.
+All primes, including interval endpoints and primes dividing 210, are covered.
+The x-coordinate comparison also detects the opposite sign `iD-j`; no exact
+identity with the direct `[q]Q` test or success on degenerate points is claimed.
+No polynomial extension or prepared big-integer modular context is used.
+
+Accumulate 32 terms modulo `n`, then gcd the product; flush the last nonempty
+partial batch once. Gcd one continues, a proper gcd returns, and gcd `n`
+scans retained terms in prime order. Skip individual gcds one and `n`, return
+the first proper factor, or terminate `whole` when recovery fails. Every factor
+exit checks range and exact divisibility. `Trace` records outcome, candidate,
+giant-advance and batch counts, last prime, and executed recovery gcds; optional
+coordinate-oracle checking is for conformance, disabled during search.
+
+`search n sigma B₁ B₂ allowance : EcmResult × Nat` runs this saved-state
+pipeline. Zero allowance or unsupported bounds returns `(noFactor,0)` without
+work. Stage 1 costs one; only a nonempty continuation with a saved state and
+at least one remaining attempt costs another. Stage-1 factors and whole results
+are terminal. The final boundary revalidates factors, with proved
+`Ecm.search_spec : ... = factor d → 1 < d ∧ d < n ∧ d ∣ n`.
+No call draws randomness. Raw stage-state data and traces remain untrusted.
+
+For `c(0)=0`, `c(k)=13*floor(log₂ k)+7` otherwise, stage 1 uses at most
+`Σ c(p^e)` ladder multiplications plus setup. The continuation costs at most
+`Σ_{j=0}^{210} c(j) + 6G + 1 + 3L`, replacing each small-prime contribution
+by `c(q)+1` when `q<210`; omit `6G+1` when `G=0`.
+Here `G=max(0,floor(q_last/210)-1)` and `L` is the interval-prime count.
+The empty interval skips tables. There are at most `ceil(L/32)+32`
+continuation gcds. Working storage is `O(210+32+log B₂)` modulus-sized
+residues, plus the runtime sieve and `O(π(B₂))` prime indices. Counts exclude
+index arithmetic, additions, remainder-only operations and gcd bit complexity;
+all multiplication costs include reduction and depend on modulus size.
+
+`HexIntFactor/Construction.lean` exports
+`ecmFactorSearch (b₁ := 32768) (b₂ := 524288) (curves := 64) (trace := false)`.
+This is an explicit `FactorSearch`, **not** a registration or default portfolio
+change. Zero input returns no factors and residual zero without work; otherwise
+the core provider runs first. If its known factor product squared
+exceeds the certificate subject, retain that result without ECM. Otherwise
+try consecutive Suyama parameters `6..(5+min(curves,64))` for each residual,
+stopping at a proper divisor. Send both parts back through the core provider;
+merge its factors, and process its remaining residuals with ECM. Each callback
+restarts the deterministic curve schedule. The core provider's random state
+is threaded unchanged across deterministic ECM calls. Core diagnostic events
+are retained in execution order; the default allocation leaves Pollard
+continuation disabled.
+
+The provider honors the supplied remaining total attempt limit (1024 if absent),
+charges the actual stage calls, and runs at most `factorFuel` ECM worklist
+entries. Each successful split can invoke the core provider twice, each with
+its own `factorFuel` and the remaining shared attempt allowance. Unprocessed
+entries are multiplied back into the residual. The returned factor powers
+times the residual reconstruct the input, including zero. Thus all work is bounded,
+including core table/screening work outside semantic attempt counts. The
+constructor independently validates products, selects subsets, recursively
+certifies children, and accepts only through the unchanged sound checker.
+
+Use `primality? (factor := Hex.Nat.ecmFactorSearch)` after importing
+`HexIntFactor.Construction` and `HexPrimality.Elab`. The measured named-prime
+successes, exact emitted certificate guards, ordinary replay, and fixed native construction/checker
+benchmarks justify this explicit allocation. Tens-of-seconds search cost on
+these targets does not justify automatic enablement. P-521 keeps its existing
+certificate and attempt total because its core factor subset already suffices.
+The complete retained evidence and multiplication-budget comparison are in
+[the ECM field report](../../reports/hex-primality-ecm-stage2.md).
+
 
 ### 4. Fuel, and what failure means
 
@@ -1155,6 +1243,7 @@ For stage 2, `i₀ = floor(Q.head/210)` and `ell` is binary bit length
 | Pollard `p − 1` stage 1 | `O(B)` modular mults | `log M = Θ(B)`; `ord_p(a) ∣ M` gives gcd divisibility, not necessarily a proper factor |
 | Pollard `p − 1` stage 2 | at most `210 + 2*ell(i₀) + G + 2*L` modular mults and `2 + ceil(L/32) + 32` gcds | `L` interval primes, `G` giant advances; enumeration and storage are additional as specified upstream |
 | ECM stage 1, one curve | `O(B)` mults | scalar bit length is `Θ(B)`; success depends on the bound |
+| ECM stage 2, one curve | `O(210 log 210 + B₂/210 + π(B₂))` modular mults | exact bounds, sieve storage, batching and recovery in §3a |
 | cyclotomic candidate table | `O(m + d²)` index work plus big-integer powers/products | `m` is the largest required index and `d` the number of its divisors; one ascending divisor-closed table is shared by all selected parts |
 | `checkFactorization` | `O(Σ eᵢ)` bounded multiplication/division steps plus `k` primality replays | `boundedPowMul` is linear in the claimed exponent and aborts before constructing a product above the subject |
 | `checkOrder` | `O(k)` modular exponentiations plus `checkFactorization` | includes the order's primality replays |
@@ -1540,6 +1629,8 @@ HexIntFactor/
   Rho.lean          -- adapter from the shared rho primitive to the dispatch
   PMinusOne.lean    -- adapter from the shared p-1 primitive to the dispatch
   Ecm.lean          -- Montgomery-curve ECM stage 1
+  EcmStage2.lean    -- bounded saved-point continuation
+  Construction.lean -- explicit ECM factor provider
   Cyclotomic.lean   -- cyclotomicSplit? and the checked candidate
   Order.lean        -- OrderCert, checkOrder, primitive roots, Carmichael
   Factor.lean       -- the dispatch, factor?, factorPartial?

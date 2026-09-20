@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexIntFactor
+import HexIntFactor.FieldReplay
 
 /-!
 Core conformance for checked integer factorization, arithmetic consumers, and

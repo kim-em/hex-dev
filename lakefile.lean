@@ -631,7 +631,7 @@ lean_lib HexPrimalityElabProbeScientific where
 
 lean_lib HexIntFactorKernelProbe where
   srcDir := "bench"
-  globs := #[`HexBench.IntFactorKernel,
+  globs := #[`HexBench.IntFactorKernel, `HexIntFactor.FieldBench,
     `HexIntFactor.ProofProbe.Support,
     `HexIntFactor.ProofProbe.Baseline,
     `HexIntFactor.ProofProbe.Replay1,
@@ -992,6 +992,7 @@ lean_lib HexConformance where
     ++ #[`HexMvHensel.Conformance, `HexMvFactor.Conformance].map Glob.one
 
     ++ #[`HexIntFactor.Conformance,
+      `HexIntFactor.FieldReplay,
       `HexIntFactor.PrimalityConformance].map Glob.one
 
     ++ #[`HexPolySmith.Conformance].map Glob.one
@@ -1791,6 +1792,15 @@ lean_exe hexprimality_field_probe where
 lean_exe hexprimality_fuel_probe where
   srcDir := "bench"
   root := `HexPrimality.FuelProbe
+
+-- Expensive exact construction guards run only for the owning library in CI.
+lean_lib HexIntFactorFieldConformance where
+  srcDir := "conformance"
+  globs := #[`HexIntFactor.FieldConstruction].map Glob.one
+
+lean_exe hexintfactor_field_bench where
+  srcDir := "bench"
+  root := `HexIntFactor.FieldSearchBench
 
 lean_exe hexintfactor_bench where
   srcDir := "bench"

@@ -2128,6 +2128,34 @@ kernel replay. Exact `#guard_msgs` tests pin the complete Curve25519 output, a
 P-521 output, a small renderer example, and construction exhaustion. Standalone literal replay
 imports the checker-owning module only.
 
+### Explicit factor providers
+
+`primality? (factor := expression)` evaluates a closed expression at
+`FactorSearch` and passes it to the existing `Construction.run` boundary at
+every recursive node. An optional `(maxAttempts := n)` selects the total
+allowance. The expression must contain no free variables, metavariables, or
+unfinished proofs. Default budgets, subset selection, recursive certification,
+final checking, literal rendering, and kernel replay remain unchanged.
+The Mathlib companion delegates this form to the same handler.
+
+Like an explicit certificate producer, arbitrary supplied Lean computation is
+untrusted and may itself be expensive or fail to terminate. A conforming factor
+provider must honor `attemptLimit`; an over-reported attempt count or malformed
+factor product is rejected by construction. No provider data establishes
+primality without the ordinary checker. Exhaustion identifies the explicit
+provider and the core allocation without claiming the core's zero-ECM profile
+for third-party work.
+
+After importing `HexIntFactor.Construction`, the explicit expression
+`Hex.Nat.ecmFactorSearch` selects its bounded 64-curve two-stage ECM provider.
+That downstream module owns the curve bounds, arithmetic, worklist, cost model,
+and proper-divisor theorem, specified in HexIntFactor §3a. This dependency never
+points back upstream. The measured route constructs secp256k1, P-384 and
+Curve448; plain `primality?` still exhausts on those inputs. P-521 remains
+supported by the core route and retains its certificate with the explicit ECM
+provider. See [the per-target evidence](../../reports/hex-primality-ecm-stage2.md).
+No expensive method is enabled merely by importing the downstream module.
+
 ## Certificate language and extension policy
 
 Keep `PrimeCert`, `checkPrime`, and `prime_of_checkPrimeAt` as the standalone

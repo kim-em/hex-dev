@@ -59,6 +59,15 @@ def twelve : CheckedFactorization 12 :=
   ordered p−1 and ECM diagnostics on success and exhaustion.
   `factorPower?` adds a cyclotomic pre-split for `b ^ n ± 1`.
 
+# Certificate construction
+
+For bounded construction of secp256k1, P-384 and Curve448 certificates, import
+`HexIntFactor.Construction` and `HexPrimality.Elab`, then use
+`primality? (factor := Hex.Nat.ecmFactorSearch)` with a local
+`set_option maxHeartbeats 4000000`. This explicit ECM route keeps the default
+primality and factorization portfolios unchanged. Apply its emitted literal
+certificate to avoid repeating search.
+
 # Verification
 
 Every accepted complete certificate has positive subject, canonical positive

@@ -9,6 +9,7 @@ module
 public import HexIntFactor.Cert
 public import HexIntFactor.Cyclotomic
 public import HexIntFactor.Divisors
+public import HexIntFactor.Construction
 public import HexIntFactor.Ecm
 public import HexIntFactor.Partial
 public import HexIntFactor.Small

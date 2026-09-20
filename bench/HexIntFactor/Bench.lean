@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import HexIntFactor
 import HexIntFactor.PMinusOneFixtures
 import HexPrimality.PMinusOneMeasure
+import HexIntFactor.FieldBench
 import LeanBench
 
 /-! Native benchmark families for integer factorization and replay. -/
