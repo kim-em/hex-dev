@@ -104,8 +104,10 @@ run_cmd do
 
 
 def main() -> None:
+    global ROOT
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('source_record', type=Path)
+    parser.add_argument('--hex-checkout', type=Path, default=ROOT)
     parser.add_argument('--primecert-checkout', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--blocks', type=int, default=2)
@@ -122,6 +124,7 @@ def main() -> None:
         parser.error('use a new output path and an even block count >= 2')
     if args.upstream_power and not args.powers:
         parser.error('--upstream-power requires --powers')
+    ROOT = args.hex_checkout.resolve()
     previous = json.loads(args.source_record.read_text())
     pc = args.primecert_checkout.resolve()
     cpu = pick()
@@ -175,6 +178,19 @@ def main() -> None:
         record['power_sources']['power-div']['primecert'] = (
             'module\npublic import Lean\npublic meta import Lean\npublic section\n' + raw_div +
             f'\ntheorem result : powDiv 2 {exponent} {n} = 1 := by decide +kernel\n')
+        # Identical fixed-window code calibrates the kernels used by both packages.
+        record['cases'].append(dict(name='power-window', n=n))
+        window = """
+@[expose] noncomputable def powWindow (b m k : Nat) : Nat → Nat → Nat :=
+  Nat.rec (fun _ => 0)
+    (fun _ rec e =>
+      (e.beq 0).rec
+        ((((rec (e.div k)).pow k).mul (b.pow (e.mod k))).mod m)
+        ((1 : Nat).mod m))
+"""
+        body = ('module\npublic import Lean\npublic meta import Lean\npublic section\n' + window +
+                f'theorem result : powWindow 2 {n} 16 {int(exponent)+1} {exponent} = 1 := by decide +kernel\n')
+        record['power_sources']['power-window'] = dict(hex=body, primecert=body)
         if args.upstream_power:
             record['cases'].append(dict(name='power-upstream', n=n))
             # lean4#13490, commit 86704eea9a8cf46d7f20f4eb2c293cdaae7ac2d7.

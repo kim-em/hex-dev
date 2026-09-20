@@ -1,0 +1,1698 @@
+{
+  "schema": "primality-replay-pair/1",
+  "kind": "kernel",
+  "cpu": 19,
+  "host": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "protocol": "four fixed trial-major blocks, adjacent AB/BA; every completed sample retained",
+  "versions": {
+    "before": {
+      "commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+      "toolchain": "leanprover/lean4:v4.34.0",
+      "diff": "",
+      "checker_sha256": "9a9be0d357df6feefba6acb5a1a423c0b5202771e7cd97545be0bdeb61c83cdb"
+    },
+    "after": {
+      "commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+      "toolchain": "leanprover/lean4:v4.34.0",
+      "diff": "diff --git a/HexPrimality/Cert.lean b/HexPrimality/Cert.lean\nindex 0ae547b9b..ceb984296 100644\n--- a/HexPrimality/Cert.lean\n+++ b/HexPrimality/Cert.lean\n@@ -363,7 +363,7 @@ multiplications. (When `r\u00b2 \u2264 8s` the truncated subtraction makes the\n witness clause `w * w < 0` unsatisfiable, so the disjunct is simply never\n taken; the middle disjunct covers that region.) -/\n @[expose]\n-def checkPock3Arith (n r s w : Nat)\n+def checkPock3Arith.native (n r s w : Nat)\n     (factors : List (Nat \u00d7 Nat \u00d7 PrimeCert)) : Bool :=\n   decide (2 \u2264 n) && n % 2 == 1 && subjectsOk factors &&\n     match certProduct (n - 1) factors with\n@@ -378,6 +378,22 @@ def checkPock3Arith (n r s w : Nat)\n               decide (r * r - 8 * s < (w + 1) * (w + 1)))) &&\n           checkWitnesses n factors\n \n+/-- Kernel replay uses the bounded positive product and primitive comparisons.\n+Compiled checking retains the original arithmetic path. -/\n+@[expose]\n+noncomputable def checkPock3Arith (n r s w : Nat)\n+    (factors : List (Nat \u00d7 Nat \u00d7 PrimeCert)) : Bool :=\n+  (2 : Nat).ble n && (n.mod 2).beq 1 && subjectsOk factors &&\n+    (let F := pockProduct (n.sub 1) factors;\n+        (n - 1) % F == 0 && F % 2 == 0 && (n - 1) / F % 2 == 1 &&\n+          (n - 1) / F == 2 * F * s + r &&\n+          (1 : Nat).ble r && r.blt (2 * F) &&\n+          n.blt ((F + 1) * (2 * F * F + (r - 1) * F + 1)) &&\n+          (s == 0 || (r * r).blt (8 * s) ||\n+            ((w * w).blt (r * r - 8 * s) &&\n+              (r * r - 8 * s).blt ((w + 1) * (w + 1)))) &&\n+          checkWitnesses n factors)\n+\n /-- Maximum sieve bound in a checked certificate.\n This caps replay work for arbitrary untrusted literals, including rejected inputs. -/\n @[expose] def pocklingtonSieveCap : Nat := 64\n@@ -400,7 +416,7 @@ private theorem checkDivisors_spec (n F : Nat) : \u2200 k,\n \n /-- The general cube-root arithmetic check; the legacy node retains its sieve-free path. -/\n @[expose]\n-def checkPock3SieveArith (n r s w m : Nat)\n+def checkPock3SieveArith.native (n r s w m : Nat)\n     (factors : List (Nat \u00d7 Nat \u00d7 PrimeCert)) : Bool :=\n   decide (2 \u2264 n) && n % 2 == 1 && subjectsOk factors &&\n     match certProduct (n - 1) factors with\n@@ -416,6 +432,23 @@ def checkPock3SieveArith (n r s w m : Nat)\n               decide (r * r - 8 * s < (w + 1) * (w + 1)))) &&\n           checkWitnesses n factors\n \n+/-- Kernel replay uses the bounded positive product and primitive comparisons.\n+Compiled checking retains the original arithmetic path. -/\n+@[expose]\n+noncomputable def checkPock3SieveArith (n r s w m : Nat)\n+    (factors : List (Nat \u00d7 Nat \u00d7 PrimeCert)) : Bool :=\n+  (2 : Nat).ble n && (n.mod 2).beq 1 && subjectsOk factors &&\n+    (let F := pockProduct (n.sub 1) factors;\n+        (n - 1) % F == 0 && F % 2 == 0 && (n - 1) / F % 2 == 1 &&\n+          (n - 1) / F == 2 * F * s + r &&\n+          (1 : Nat).ble r && r.blt (2 * F) && (1 : Nat).ble m && m.ble pocklingtonSieveCap &&\n+          (2 * s + m * m).blt ((2 * F + r) * m + 2) &&\n+          checkDivisors n F (m - 1) &&\n+          (s == 0 || (r * r).blt (8 * s) ||\n+            ((w * w).blt (r * r - 8 * s) &&\n+              (r * r - 8 * s).blt ((w + 1) * (w + 1)))) &&\n+          checkWitnesses n factors)\n+\n /-! Accumulator lemmas -/\n \n /-- On success, the bounded accumulator computes the ordinary product. -/\n@@ -677,6 +710,44 @@ private theorem checkPockArith.eq_native (n : Nat) (factors : List (Nat \u00d7 Nat \n   funext n fs\n   exact checkPockArith.eq_native n fs\n \n+private theorem checkPock3Arith.eq_native (n r s w : Nat) (factors : List (Nat \u00d7 Nat \u00d7 PrimeCert)) :\n+    checkPock3Arith n r s w factors = checkPock3Arith.native n r s w factors := by\n+  by_cases hs : subjectsOk factors = true\n+  \u00b7 have hp : \u2200 x \u2208 factors, 0 < x.2.2.subject := by\n+      intro x hx\n+      have := subjectsOk_forall hs x hx\n+      omega\n+    simp only [checkPock3Arith, pockProduct.eq_product _ _ hp]\n+    cases h : certProduct (n - 1) factors <;>\n+      apply Bool.eq_iff_iff.mpr <;>\n+      simp [checkPock3Arith.native, h, hs, Nat.blt_eq] <;> intros <;> rfl\n+  \u00b7 have hf : subjectsOk factors = false := Bool.eq_false_iff.mpr hs\n+    simp [checkPock3Arith, checkPock3Arith.native, hf]\n+\n+/-- The compiler uses the verified runtime implementation. -/\n+@[csimp] theorem checkPock3Arith_eq_native : @checkPock3Arith = @checkPock3Arith.native := by\n+  funext n r s w fs\n+  exact checkPock3Arith.eq_native n r s w fs\n+\n+private theorem checkPock3SieveArith.eq_native (n r s w m : Nat) (factors : List (Nat \u00d7 Nat \u00d7 PrimeCert)) :\n+    checkPock3SieveArith n r s w m factors = checkPock3SieveArith.native n r s w m factors := by\n+  by_cases hs : subjectsOk factors = true\n+  \u00b7 have hp : \u2200 x \u2208 factors, 0 < x.2.2.subject := by\n+      intro x hx\n+      have := subjectsOk_forall hs x hx\n+      omega\n+    simp only [checkPock3SieveArith, pockProduct.eq_product _ _ hp]\n+    cases h : certProduct (n - 1) factors <;>\n+      apply Bool.eq_iff_iff.mpr <;>\n+      simp [checkPock3SieveArith.native, h, hs, Nat.blt_eq] <;> intros <;> rfl\n+  \u00b7 have hf : subjectsOk factors = false := Bool.eq_false_iff.mpr hs\n+    simp [checkPock3SieveArith, checkPock3SieveArith.native, hf]\n+\n+/-- The compiler uses the verified runtime implementation. -/\n+@[csimp] theorem checkPock3SieveArith_eq_native : @checkPock3SieveArith = @checkPock3SieveArith.native := by\n+  funext n r s w m fs\n+  exact checkPock3SieveArith.eq_native n r s w m fs\n+\n \n mutual\n \n@@ -1011,7 +1082,8 @@ private theorem checkPock3Arith_spec {n r s w : Nat}\n         n < (F + 1) * (2 * F * F + (r - 1) * F + 1) \u2227\n         (s = 0 \u2228 r * r < 8 * s \u2228 \u2200 t, t * t \u2260 r * r - 8 * s) \u2227\n         \u2200 x \u2208 factors, checkWitness n x.2.2.subject x.1 = true := by\n-  unfold checkPock3Arith at h\n+  rw [checkPock3Arith.eq_native] at h\n+  unfold checkPock3Arith.native at h\n   simp only [checkWitnesses.eq_native, checkWitnesses.native] at h\n   rw [Bool.and_eq_true, Bool.and_eq_true] at h\n   obtain \u27e8\u27e8h2, hodd\u27e9, hm\u27e9 := h\n@@ -1043,7 +1115,8 @@ private theorem checkPock3SieveArith_spec {n r s w m : Nat}\n         2 * s + m * m < (2 * F + r) * m + 2 \u2227\n         (s = 0 \u2228 r * r < 8 * s \u2228 \u2200 t, t * t \u2260 r * r - 8 * s) \u2227\n         \u2200 x \u2208 factors, checkWitness n x.2.2.subject x.1 = true := by\n-  unfold checkPock3SieveArith at h\n+  rw [checkPock3SieveArith.eq_native] at h\n+  unfold checkPock3SieveArith.native at h\n   simp only [checkWitnesses.eq_native, checkWitnesses.native] at h\n   rw [Bool.and_eq_true, Bool.and_eq_true] at h\n   obtain \u27e8\u27e8h2, hodd\u27e9, hm\u27e9 := h\ndiff --git a/scripts/bench/primality_kernel_direct.py b/scripts/bench/primality_kernel_direct.py\nindex bd173ffb8..292311f6d 100644\n--- a/scripts/bench/primality_kernel_direct.py\n+++ b/scripts/bench/primality_kernel_direct.py\n@@ -104,8 +104,10 @@ run_cmd do\n \n \n def main() -> None:\n+    global ROOT\n     parser = argparse.ArgumentParser(description=__doc__)\n     parser.add_argument('source_record', type=Path)\n+    parser.add_argument('--hex-checkout', type=Path, default=ROOT)\n     parser.add_argument('--primecert-checkout', type=Path, required=True)\n     parser.add_argument('--output', type=Path, required=True)\n     parser.add_argument('--blocks', type=int, default=2)\n@@ -122,6 +124,7 @@ def main() -> None:\n         parser.error('use a new output path and an even block count >= 2')\n     if args.upstream_power and not args.powers:\n         parser.error('--upstream-power requires --powers')\n+    ROOT = args.hex_checkout.resolve()\n     previous = json.loads(args.source_record.read_text())\n     pc = args.primecert_checkout.resolve()\n     cpu = pick()\n",
+      "checker_sha256": "195261b1d13ae7db65d68ebf438f1f72d4e9104609e7533751ad5fe87eaebea2"
+    }
+  },
+  "sources": {
+    "family-31": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock 2147483647 [(3, 0, Hex.Nat.PrimeCert.small 151), (3, 0, Hex.Nat.PrimeCert.small 331)]\ntheorem result : Hex.Nat.Prime 2147483647 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 2147483647 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  -- Change only a Hex witness base: subjects, products, and ordering remain\n  -- intact, so this control must reach the witness arithmetic.\n  let corruptWitness := value.replace fun e => Id.run do\n    unless e.isAppOfArity `Hex.Nat.PrimeCert.pock 2 ||\n        e.isAppOfArity `Hex.Nat.PrimeCert.pock3 5 ||\n        e.isAppOfArity `Hex.Nat.PrimeCert.pock3Sieve 6 do return none\n    let args := e.getAppArgs\n    let fs := args.back!\n    unless fs.isAppOfArity ``List.cons 3 do return none\n    let fsArgs := fs.getAppArgs\n    let entry := fsArgs[1]!\n    unless entry.isAppOfArity ``Prod.mk 4 do return none\n    let entryArgs := entry.getAppArgs\n    let entry := Lean.mkAppN entry.getAppFn (entryArgs.set! 2 (Lean.mkRawNatLit 0))\n    let fs := Lean.mkAppN fs.getAppFn (fsArgs.set! 1 entry)\n    return some (Lean.mkAppN e.getAppFn (args.set! (args.size - 1) fs))\n  let needsWitness := value.getUsedConstants.any fun name =>\n    name == `Hex.Nat.PrimeCert.pock || name == `Hex.Nat.PrimeCert.pock3 ||\n      name == `Hex.Nat.PrimeCert.pock3Sieve\n  if needsWitness && corruptWitness == value then\n    throwError \"witness corruption did not change the proof\"\n  if corruptWitness != value then\n    let bad := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corruptWitness\n    match Lean.Kernel.check env {} bad with\n    | .error _ => pure ()\n    | .ok _ => throwError \"kernel accepted the zero witness base\"\n    Lean.logInfo \"DIRECT_WITNESS_CONTROL rejected\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+    "family-61": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock 1945555039024054273 [(5, 55, Hex.Nat.PrimeCert.small 2)]\ntheorem result : Hex.Nat.Prime 1945555039024054273 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 1945555039024054273 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  -- Change only a Hex witness base: subjects, products, and ordering remain\n  -- intact, so this control must reach the witness arithmetic.\n  let corruptWitness := value.replace fun e => Id.run do\n    unless e.isAppOfArity `Hex.Nat.PrimeCert.pock 2 ||\n        e.isAppOfArity `Hex.Nat.PrimeCert.pock3 5 ||\n        e.isAppOfArity `Hex.Nat.PrimeCert.pock3Sieve 6 do return none\n    let args := e.getAppArgs\n    let fs := args.back!\n    unless fs.isAppOfArity ``List.cons 3 do return none\n    let fsArgs := fs.getAppArgs\n    let entry := fsArgs[1]!\n    unless entry.isAppOfArity ``Prod.mk 4 do return none\n    let entryArgs := entry.getAppArgs\n    let entry := Lean.mkAppN entry.getAppFn (entryArgs.set! 2 (Lean.mkRawNatLit 0))\n    let fs := Lean.mkAppN fs.getAppFn (fsArgs.set! 1 entry)\n    return some (Lean.mkAppN e.getAppFn (args.set! (args.size - 1) fs))\n  let needsWitness := value.getUsedConstants.any fun name =>\n    name == `Hex.Nat.PrimeCert.pock || name == `Hex.Nat.PrimeCert.pock3 ||\n      name == `Hex.Nat.PrimeCert.pock3Sieve\n  if needsWitness && corruptWitness == value then\n    throwError \"witness corruption did not change the proof\"\n  if corruptWitness != value then\n    let bad := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corruptWitness\n    match Lean.Kernel.check env {} bad with\n    | .error _ => pure ()\n    | .ok _ => throwError \"kernel accepted the zero witness base\"\n    Lean.logInfo \"DIRECT_WITNESS_CONTROL rejected\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+    "family-123": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock 9304595970494411110326649421962412033 [(3, 119, Hex.Nat.PrimeCert.small 2)]\ntheorem result : Hex.Nat.Prime 9304595970494411110326649421962412033 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 9304595970494411110326649421962412033 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  -- Change only a Hex witness base: subjects, products, and ordering remain\n  -- intact, so this control must reach the witness arithmetic.\n  let corruptWitness := value.replace fun e => Id.run do\n    unless e.isAppOfArity `Hex.Nat.PrimeCert.pock 2 ||\n        e.isAppOfArity `Hex.Nat.PrimeCert.pock3 5 ||\n        e.isAppOfArity `Hex.Nat.PrimeCert.pock3Sieve 6 do return none\n    let args := e.getAppArgs\n    let fs := args.back!\n    unless fs.isAppOfArity ``List.cons 3 do return none\n    let fsArgs := fs.getAppArgs\n    let entry := fsArgs[1]!\n    unless entry.isAppOfArity ``Prod.mk 4 do return none\n    let entryArgs := entry.getAppArgs\n    let entry := Lean.mkAppN entry.getAppFn (entryArgs.set! 2 (Lean.mkRawNatLit 0))\n    let fs := Lean.mkAppN fs.getAppFn (fsArgs.set! 1 entry)\n    return some (Lean.mkAppN e.getAppFn (args.set! (args.size - 1) fs))\n  let needsWitness := value.getUsedConstants.any fun name =>\n    name == `Hex.Nat.PrimeCert.pock || name == `Hex.Nat.PrimeCert.pock3 ||\n      name == `Hex.Nat.PrimeCert.pock3Sieve\n  if needsWitness && corruptWitness == value then\n    throwError \"witness corruption did not change the proof\"\n  if corruptWitness != value then\n    let bad := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corruptWitness\n    match Lean.Kernel.check env {} bad with\n    | .error _ => pure ()\n    | .ok _ => throwError \"kernel accepted the zero witness base\"\n    Lean.logInfo \"DIRECT_WITNESS_CONTROL rejected\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+    "family-256": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  93628759656736142393278101159368737990730026663232799828780155818898507169793\n  [(5, 247, Hex.Nat.PrimeCert.small 2)]\ntheorem result : Hex.Nat.Prime 93628759656736142393278101159368737990730026663232799828780155818898507169793 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 93628759656736142393278101159368737990730026663232799828780155818898507169793 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  -- Change only a Hex witness base: subjects, products, and ordering remain\n  -- intact, so this control must reach the witness arithmetic.\n  let corruptWitness := value.replace fun e => Id.run do\n    unless e.isAppOfArity `Hex.Nat.PrimeCert.pock 2 ||\n        e.isAppOfArity `Hex.Nat.PrimeCert.pock3 5 ||\n        e.isAppOfArity `Hex.Nat.PrimeCert.pock3Sieve 6 do return none\n    let args := e.getAppArgs\n    let fs := args.back!\n    unless fs.isAppOfArity ``List.cons 3 do return none\n    let fsArgs := fs.getAppArgs\n    let entry := fsArgs[1]!\n    unless entry.isAppOfArity ``Prod.mk 4 do return none\n    let entryArgs := entry.getAppArgs\n    let entry := Lean.mkAppN entry.getAppFn (entryArgs.set! 2 (Lean.mkRawNatLit 0))\n    let fs := Lean.mkAppN fs.getAppFn (fsArgs.set! 1 entry)\n    return some (Lean.mkAppN e.getAppFn (args.set! (args.size - 1) fs))\n  let needsWitness := value.getUsedConstants.any fun name =>\n    name == `Hex.Nat.PrimeCert.pock || name == `Hex.Nat.PrimeCert.pock3 ||\n      name == `Hex.Nat.PrimeCert.pock3Sieve\n  if needsWitness && corruptWitness == value then\n    throwError \"witness corruption did not change the proof\"\n  if corruptWitness != value then\n    let bad := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corruptWitness\n    match Lean.Kernel.check env {} bad with\n    | .error _ => pure ()\n    | .ok _ => throwError \"kernel accepted the zero witness base\"\n    Lean.logInfo \"DIRECT_WITNESS_CONTROL rejected\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+    "family-511": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033\n  [(3, 503, Hex.Nat.PrimeCert.small 2)]\ntheorem result : Hex.Nat.Prime 6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 6651529715244960279866801463953681477304216637559507652230048059971343874294298695522804827606237247330601742147202064290729465301239118684363568061612033 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  -- Change only a Hex witness base: subjects, products, and ordering remain\n  -- intact, so this control must reach the witness arithmetic.\n  let corruptWitness := value.replace fun e => Id.run do\n    unless e.isAppOfArity `Hex.Nat.PrimeCert.pock 2 ||\n        e.isAppOfArity `Hex.Nat.PrimeCert.pock3 5 ||\n        e.isAppOfArity `Hex.Nat.PrimeCert.pock3Sieve 6 do return none\n    let args := e.getAppArgs\n    let fs := args.back!\n    unless fs.isAppOfArity ``List.cons 3 do return none\n    let fsArgs := fs.getAppArgs\n    let entry := fsArgs[1]!\n    unless entry.isAppOfArity ``Prod.mk 4 do return none\n    let entryArgs := entry.getAppArgs\n    let entry := Lean.mkAppN entry.getAppFn (entryArgs.set! 2 (Lean.mkRawNatLit 0))\n    let fs := Lean.mkAppN fs.getAppFn (fsArgs.set! 1 entry)\n    return some (Lean.mkAppN e.getAppFn (args.set! (args.size - 1) fs))\n  let needsWitness := value.getUsedConstants.any fun name =>\n    name == `Hex.Nat.PrimeCert.pock || name == `Hex.Nat.PrimeCert.pock3 ||\n      name == `Hex.Nat.PrimeCert.pock3Sieve\n  if needsWitness && corruptWitness == value then\n    throwError \"witness corruption did not change the proof\"\n  if corruptWitness != value then\n    let bad := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corruptWitness\n    match Lean.Kernel.check env {} bad with\n    | .error _ => pure ()\n    | .ok _ => throwError \"kernel accepted the zero witness base\"\n    Lean.logInfo \"DIRECT_WITNESS_CONTROL rejected\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+    "family-512": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177\n  [(2, 21, Hex.Nat.PrimeCert.pock 100297 [(2, 0, Hex.Nat.PrimeCert.small 7), (2, 0, Hex.Nat.PrimeCert.small 199)])]\ntheorem result : Hex.Nat.Prime 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 9521691625768090263084389838561930764813603239089634545416648725957969250257409112878363599328138633827640729385461401574761860536478435114675541614002177 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  -- Change only a Hex witness base: subjects, products, and ordering remain\n  -- intact, so this control must reach the witness arithmetic.\n  let corruptWitness := value.replace fun e => Id.run do\n    unless e.isAppOfArity `Hex.Nat.PrimeCert.pock 2 ||\n        e.isAppOfArity `Hex.Nat.PrimeCert.pock3 5 ||\n        e.isAppOfArity `Hex.Nat.PrimeCert.pock3Sieve 6 do return none\n    let args := e.getAppArgs\n    let fs := args.back!\n    unless fs.isAppOfArity ``List.cons 3 do return none\n    let fsArgs := fs.getAppArgs\n    let entry := fsArgs[1]!\n    unless entry.isAppOfArity ``Prod.mk 4 do return none\n    let entryArgs := entry.getAppArgs\n    let entry := Lean.mkAppN entry.getAppFn (entryArgs.set! 2 (Lean.mkRawNatLit 0))\n    let fs := Lean.mkAppN fs.getAppFn (fsArgs.set! 1 entry)\n    return some (Lean.mkAppN e.getAppFn (args.set! (args.size - 1) fs))\n  let needsWitness := value.getUsedConstants.any fun name =>\n    name == `Hex.Nat.PrimeCert.pock || name == `Hex.Nat.PrimeCert.pock3 ||\n      name == `Hex.Nat.PrimeCert.pock3Sieve\n  if needsWitness && corruptWitness == value then\n    throwError \"witness corruption did not change the proof\"\n  if corruptWitness != value then\n    let bad := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corruptWitness\n    match Lean.Kernel.check env {} bad with\n    | .error _ => pure ()\n    | .ok _ => throwError \"kernel accepted the zero witness base\"\n    Lean.logInfo \"DIRECT_WITNESS_CONTROL rejected\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+    "Curve25519": "module\npublic import HexPrimality.Elab\npublic meta import HexPrimality.Elab\npublic section\ndef certificate : Hex.Nat.PrimeCert := Hex.Nat.PrimeCert.pock\n  57896044618658097711785492504343953926634992332820282019728792003956564819949\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock3\n      74058212732561358302231226437062788676166966415465897661863160754340907\n      2028478494862525422475607\n      22304740449229861598212\n      2028478494862525422475606\n      [(2, 0, Hex.Nat.PrimeCert.small 2),\n       (2, 0, Hex.Nat.PrimeCert.small 353),\n       (2, 0, Hex.Nat.PrimeCert.small 57467),\n       (2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          31757755568855353\n          4028945\n          289\n          4028944\n          [(5, 2, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 223),\n           (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\ntheorem result : Hex.Nat.Prime 57896044618658097711785492504343953926634992332820282019728792003956564819949 :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 57896044618658097711785492504343953926634992332820282019728792003956564819949 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  -- Change only a Hex witness base: subjects, products, and ordering remain\n  -- intact, so this control must reach the witness arithmetic.\n  let corruptWitness := value.replace fun e => Id.run do\n    unless e.isAppOfArity `Hex.Nat.PrimeCert.pock 2 ||\n        e.isAppOfArity `Hex.Nat.PrimeCert.pock3 5 ||\n        e.isAppOfArity `Hex.Nat.PrimeCert.pock3Sieve 6 do return none\n    let args := e.getAppArgs\n    let fs := args.back!\n    unless fs.isAppOfArity ``List.cons 3 do return none\n    let fsArgs := fs.getAppArgs\n    let entry := fsArgs[1]!\n    unless entry.isAppOfArity ``Prod.mk 4 do return none\n    let entryArgs := entry.getAppArgs\n    let entry := Lean.mkAppN entry.getAppFn (entryArgs.set! 2 (Lean.mkRawNatLit 0))\n    let fs := Lean.mkAppN fs.getAppFn (fsArgs.set! 1 entry)\n    return some (Lean.mkAppN e.getAppFn (args.set! (args.size - 1) fs))\n  let needsWitness := value.getUsedConstants.any fun name =>\n    name == `Hex.Nat.PrimeCert.pock || name == `Hex.Nat.PrimeCert.pock3 ||\n      name == `Hex.Nat.PrimeCert.pock3Sieve\n  if needsWitness && corruptWitness == value then\n    throwError \"witness corruption did not change the proof\"\n  if corruptWitness != value then\n    let bad := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corruptWitness\n    match Lean.Kernel.check env {} bad with\n    | .error _ => pure ()\n    | .ok _ => throwError \"kernel accepted the zero witness base\"\n    Lean.logInfo \"DIRECT_WITNESS_CONTROL rejected\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n",
+    "Curve448": "/-\nCopyright (c) 2026 Lean FRO, LLC. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Kim Morrison\n-/\n\nmodule\npublic import Lean\npublic meta import Lean\npublic import HexPrimality.Cert\npublic section\n\nnamespace Hex.PrimalityConformance.Curve448\n\n-- Supplied root factors come from the pinned PrimeCert comparator. Hex's\n-- bounded constructor checks that data and constructs the child certificates.\n-- This fixture measures supplied-certificate replay, not factor-search coverage.\ndef certificate : Hex.Nat.PrimeCert :=\nHex.Nat.PrimeCert.pock3\n  726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439\n  523890102151522916311113076301980070234414163719\n  3637867751654793328228610486390601899590\n  523890102151522916311113076301980070234414163718\n  [(7, 0, Hex.Nat.PrimeCert.small 2),\n   (2, 0, Hex.Nat.PrimeCert.small 641),\n   (2,\n    0,\n    Hex.Nat.PrimeCert.pock\n      1469495262398780123809\n      [(2, 0, Hex.Nat.PrimeCert.small 223),\n       (3,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          3402277943\n          2763\n          380\n          2762\n          [(5, 0, Hex.Nat.PrimeCert.small 2),\n           (2, 0, Hex.Nat.PrimeCert.small 7),\n           (2, 0, Hex.Nat.PrimeCert.small 151)])]),\n   (2,\n    0,\n    Hex.Nat.PrimeCert.pock3\n      167773885276849215533569\n      22486179\n      20805492\n      22486175\n      [(17, 8, Hex.Nat.PrimeCert.small 2), (3, 1, Hex.Nat.PrimeCert.small 7), (3, 0, Hex.Nat.PrimeCert.small 2531)])]\n\ntheorem result : Hex.Nat.Prime (2 ^ 448 - 2 ^ 224 - 1) :=\n  Hex.Nat.prime_of_checkPrimeAt (c := certificate) (by decide +kernel)\n\n/-- info: 'Hex.PrimalityConformance.Curve448.result' depends on axioms: [propext, Classical.choice, Quot.sound] -/\n#guard_msgs in\n#print axioms result\n\nend Hex.PrimalityConformance.Curve448\n\n\nmeta partial def inlineLocal (env : Lean.Environment) (e : Lean.Expr) : Lean.Expr :=\n  e.replace fun sub => match sub with\n    | .const n levels =>\n      if env.isImportedConst n then none else\n        match env.find? n with\n        | some info => (info.value? (allowOpaque := true)).map fun value =>\n            inlineLocal env (value.instantiateLevelParams info.levelParams levels)\n        | none => none\n    | _ => none\n\nrun_cmd do\n  let env \u2190 Lean.getEnv\n  let some (.thmInfo info) := env.find? `Hex.PrimalityConformance.Curve448.result\n    | throwError \"missing result theorem\"\n  let value := inlineLocal env info.value\n  let type := inlineLocal env info.type\n  unless (value.getUsedConstants ++ type.getUsedConstants).all env.isImportedConst do\n    throwError \"unexpanded local proof dependency\"\n  -- The identity application checks the proof against its declared goal type.\n  let proof := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) value\n  -- Explicitly finish pending elaboration-time kernel tasks before timing.\n  let ready \u2190 IO.mkRef env.toKernelEnv\n  let ready \u2190 ready.get\n  let env := Lean.Environment.ofKernelEnv ready\n  -- An invalid equality must be rejected by this same kernel entry point.\n  let badType := Lean.mkApp3 (Lean.mkConst ``Eq [.succ .zero])\n    (Lean.mkConst ``Bool) (Lean.mkConst ``Bool.true) (Lean.mkConst ``Bool.false)\n  let badProof := Lean.mkApp (Lean.mkLambda `h .default badType (Lean.mkBVar 0))\n    Lean.reflBoolTrue\n  match Lean.Kernel.check env {} badProof with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the negative control\"\n  let corrupt := value.replace fun e => match e with\n    | .lit (.natVal n) => if n == 726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439 then some (Lean.mkRawNatLit (n + 2)) else none\n    | _ => none\n  if corrupt == value then throwError \"subject corruption did not change the proof\"\n  let corrupt := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corrupt\n  match Lean.Kernel.check env {} corrupt with\n  | .error _ => pure ()\n  | .ok _ => throwError \"kernel accepted the corrupted proof\"\n  -- Change only a Hex witness base: subjects, products, and ordering remain\n  -- intact, so this control must reach the witness arithmetic.\n  let corruptWitness := value.replace fun e => Id.run do\n    unless e.isAppOfArity `Hex.Nat.PrimeCert.pock 2 ||\n        e.isAppOfArity `Hex.Nat.PrimeCert.pock3 5 ||\n        e.isAppOfArity `Hex.Nat.PrimeCert.pock3Sieve 6 do return none\n    let args := e.getAppArgs\n    let fs := args.back!\n    unless fs.isAppOfArity ``List.cons 3 do return none\n    let fsArgs := fs.getAppArgs\n    let entry := fsArgs[1]!\n    unless entry.isAppOfArity ``Prod.mk 4 do return none\n    let entryArgs := entry.getAppArgs\n    let entry := Lean.mkAppN entry.getAppFn (entryArgs.set! 2 (Lean.mkRawNatLit 0))\n    let fs := Lean.mkAppN fs.getAppFn (fsArgs.set! 1 entry)\n    return some (Lean.mkAppN e.getAppFn (args.set! (args.size - 1) fs))\n  let needsWitness := value.getUsedConstants.any fun name =>\n    name == `Hex.Nat.PrimeCert.pock || name == `Hex.Nat.PrimeCert.pock3 ||\n      name == `Hex.Nat.PrimeCert.pock3Sieve\n  if needsWitness && corruptWitness == value then\n    throwError \"witness corruption did not change the proof\"\n  if corruptWitness != value then\n    let bad := Lean.mkApp (Lean.mkLambda `h .default type (Lean.mkBVar 0)) corruptWitness\n    match Lean.Kernel.check env {} bad with\n    | .error _ => pure ()\n    | .ok _ => throwError \"kernel accepted the zero witness base\"\n    Lean.logInfo \"DIRECT_WITNESS_CONTROL rejected\"\n  let input \u2190 IO.mkRef (env, proof)\n  let (env, proof) \u2190 input.get\n  let start \u2190 IO.monoNanosNow\n  let checked \u2190 IO.mkRef (Lean.Kernel.check env {} proof)\n  let checked \u2190 checked.get\n  let stop \u2190 IO.monoNanosNow\n  match checked with\n  | .error _ => throwError \"kernel recheck failed\"\n  | .ok _ => pure ()\n  Lean.logInfo m!\"DIRECT_KERNEL_NS {stop - start}\"\n  Lean.logInfo m!\"DIRECT_DEPENDENCIES {value.getUsedConstants}\"\n"
+  },
+  "rows": [
+    {
+      "status": "ok",
+      "seconds": 4.161540344939567,
+      "returncode": 0,
+      "load_before": [
+        99.82421875,
+        34.25634765625,
+        21.03515625
+      ],
+      "load_after": [
+        99.82421875,
+        34.25634765625,
+        21.03515625
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (2.2s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_KERNEL_NS 1192257\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 0,
+      "case": "family-31",
+      "arm": "before",
+      "kernel_nanos": 1192257
+    },
+    {
+      "status": "ok",
+      "seconds": 3.9118533428991213,
+      "returncode": 0,
+      "load_before": [
+        99.82421875,
+        34.25634765625,
+        21.03515625
+      ],
+      "load_after": [
+        102.08056640625,
+        35.81298828125,
+        21.60986328125
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (1.0s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_KERNEL_NS 1196273\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 0,
+      "case": "family-31",
+      "arm": "after",
+      "kernel_nanos": 1196273
+    },
+    {
+      "status": "ok",
+      "seconds": 3.9184161089360714,
+      "returncode": 0,
+      "load_before": [
+        102.08056640625,
+        35.81298828125,
+        21.60986328125
+      ],
+      "load_after": [
+        105.837890625,
+        37.6923828125,
+        22.29443359375
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (2.1s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_KERNEL_NS 1067743\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 0,
+      "case": "family-61",
+      "arm": "before",
+      "kernel_nanos": 1067743
+    },
+    {
+      "status": "ok",
+      "seconds": 3.793493333971128,
+      "returncode": 0,
+      "load_before": [
+        105.837890625,
+        37.6923828125,
+        22.29443359375
+      ],
+      "load_after": [
+        111.21630859375,
+        39.93896484375,
+        23.10400390625
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (1.0s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_KERNEL_NS 660759\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 0,
+      "case": "family-61",
+      "arm": "after",
+      "kernel_nanos": 660759
+    },
+    {
+      "status": "ok",
+      "seconds": 4.325574366026558,
+      "returncode": 0,
+      "load_before": [
+        111.21630859375,
+        39.93896484375,
+        23.10400390625
+      ],
+      "load_after": [
+        113.841796875,
+        41.6669921875,
+        23.75341796875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (2.3s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_KERNEL_NS 1777004\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 0,
+      "case": "family-123",
+      "arm": "before",
+      "kernel_nanos": 1777004
+    },
+    {
+      "status": "ok",
+      "seconds": 3.680646367953159,
+      "returncode": 0,
+      "load_before": [
+        113.841796875,
+        41.6669921875,
+        23.75341796875
+      ],
+      "load_after": [
+        113.841796875,
+        41.6669921875,
+        23.75341796875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (2.1s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_KERNEL_NS 1067222\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 0,
+      "case": "family-123",
+      "arm": "after",
+      "kernel_nanos": 1067222
+    },
+    {
+      "status": "ok",
+      "seconds": 4.1680094540352,
+      "returncode": 0,
+      "load_before": [
+        113.841796875,
+        41.6669921875,
+        23.75341796875
+      ],
+      "load_after": [
+        119.4599609375,
+        44.0302734375,
+        24.6142578125
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (2.4s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_KERNEL_NS 2655827\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 0,
+      "case": "family-256",
+      "arm": "before",
+      "kernel_nanos": 2655827
+    },
+    {
+      "status": "ok",
+      "seconds": 4.105825437000021,
+      "returncode": 0,
+      "load_before": [
+        119.4599609375,
+        44.0302734375,
+        24.6142578125
+      ],
+      "load_after": [
+        123.18701171875,
+        46.05517578125,
+        25.3740234375
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (2.1s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_KERNEL_NS 2826239\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 0,
+      "case": "family-256",
+      "arm": "after",
+      "kernel_nanos": 2826239
+    },
+    {
+      "status": "ok",
+      "seconds": 3.9074439849937335,
+      "returncode": 0,
+      "load_before": [
+        123.18701171875,
+        46.05517578125,
+        25.3740234375
+      ],
+      "load_after": [
+        123.73291015625,
+        47.44921875,
+        25.93603515625
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (2.1s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_KERNEL_NS 19552723\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 0,
+      "case": "family-511",
+      "arm": "before",
+      "kernel_nanos": 19552723
+    },
+    {
+      "status": "ok",
+      "seconds": 3.908478216966614,
+      "returncode": 0,
+      "load_before": [
+        123.73291015625,
+        47.44921875,
+        25.93603515625
+      ],
+      "load_after": [
+        123.99462890625,
+        48.77001953125,
+        26.47900390625
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (2.1s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_KERNEL_NS 5184635\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 0,
+      "case": "family-511",
+      "arm": "after",
+      "kernel_nanos": 5184635
+    },
+    {
+      "status": "ok",
+      "seconds": 2.582467032945715,
+      "returncode": 0,
+      "load_before": [
+        123.99462890625,
+        48.77001953125,
+        26.47900390625
+      ],
+      "load_after": [
+        123.99462890625,
+        48.77001953125,
+        26.47900390625
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (1.0s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_KERNEL_NS 5733428\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 0,
+      "case": "family-512",
+      "arm": "before",
+      "kernel_nanos": 5733428
+    },
+    {
+      "status": "ok",
+      "seconds": 1.4193508690223098,
+      "returncode": 0,
+      "load_before": [
+        123.99462890625,
+        48.77001953125,
+        26.47900390625
+      ],
+      "load_after": [
+        123.99462890625,
+        48.77001953125,
+        26.47900390625
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (733ms)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_KERNEL_NS 3483874\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 0,
+      "case": "family-512",
+      "arm": "after",
+      "kernel_nanos": 3483874
+    },
+    {
+      "status": "ok",
+      "seconds": 2.275639302097261,
+      "returncode": 0,
+      "load_before": [
+        123.99462890625,
+        48.77001953125,
+        26.47900390625
+      ],
+      "load_after": [
+        120.15087890625,
+        49.22216796875,
+        26.7451171875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (1.5s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:41:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:41:0: DIRECT_KERNEL_NS 43579738\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:41:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.pock3,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 0,
+      "case": "Curve25519",
+      "arm": "before",
+      "kernel_nanos": 43579738
+    },
+    {
+      "status": "ok",
+      "seconds": 3.9254605260211974,
+      "returncode": 0,
+      "load_before": [
+        120.15087890625,
+        49.22216796875,
+        26.7451171875
+      ],
+      "load_after": [
+        122.70166015625,
+        50.9287109375,
+        27.41796875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (1.9s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:41:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:41:0: DIRECT_KERNEL_NS 8742739\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:41:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.pock3,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 0,
+      "case": "Curve25519",
+      "arm": "after",
+      "kernel_nanos": 8742739
+    },
+    {
+      "status": "ok",
+      "seconds": 3.8177169259870425,
+      "returncode": 0,
+      "load_before": [
+        122.70166015625,
+        50.9287109375,
+        27.41796875
+      ],
+      "load_after": [
+        122.70166015625,
+        50.9287109375,
+        27.41796875
+      ],
+      "stdout": "\u2139 [70/70] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (2.2s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:70:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:70:0: DIRECT_KERNEL_NS 25855395\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:70:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n HSub.hSub,\n Nat,\n instHSub,\n instSubNat,\n HPow.hPow,\n instHPow,\n instPowNat,\n instNatPowNat,\n OfNat.ofNat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock3,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n Hex.Nat.PrimeCert.pock,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (70 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 0,
+      "case": "Curve448",
+      "arm": "before",
+      "kernel_nanos": 25855395
+    },
+    {
+      "status": "ok",
+      "seconds": 3.9445183109492064,
+      "returncode": 0,
+      "load_before": [
+        122.70166015625,
+        50.9287109375,
+        27.41796875
+      ],
+      "load_after": [
+        123.6865234375,
+        52.32470703125,
+        27.99609375
+      ],
+      "stdout": "\u2139 [70/70] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (1.9s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:70:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:70:0: DIRECT_KERNEL_NS 17514842\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:70:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n HSub.hSub,\n Nat,\n instHSub,\n instSubNat,\n HPow.hPow,\n instHPow,\n instPowNat,\n instNatPowNat,\n OfNat.ofNat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock3,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n Hex.Nat.PrimeCert.pock,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (70 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 0,
+      "case": "Curve448",
+      "arm": "after",
+      "kernel_nanos": 17514842
+    },
+    {
+      "status": "ok",
+      "seconds": 3.2482407609932125,
+      "returncode": 0,
+      "load_before": [
+        123.6865234375,
+        52.32470703125,
+        27.99609375
+      ],
+      "load_after": [
+        121.22900390625,
+        53.0,
+        28.345703125
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (1.7s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_KERNEL_NS 1136604\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 1,
+      "case": "family-31",
+      "arm": "after",
+      "kernel_nanos": 1136604
+    },
+    {
+      "status": "ok",
+      "seconds": 3.450712032034062,
+      "returncode": 0,
+      "load_before": [
+        121.22900390625,
+        53.0,
+        28.345703125
+      ],
+      "load_after": [
+        118.80810546875,
+        53.630859375,
+        28.6826171875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (1.9s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_KERNEL_NS 988135\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 1,
+      "case": "family-31",
+      "arm": "before",
+      "kernel_nanos": 988135
+    },
+    {
+      "status": "ok",
+      "seconds": 4.002103745937347,
+      "returncode": 0,
+      "load_before": [
+        118.80810546875,
+        53.630859375,
+        28.6826171875
+      ],
+      "load_after": [
+        118.80810546875,
+        53.630859375,
+        28.6826171875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (2.2s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_KERNEL_NS 955867\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 1,
+      "case": "family-61",
+      "arm": "after",
+      "kernel_nanos": 955867
+    },
+    {
+      "status": "ok",
+      "seconds": 3.6010520870331675,
+      "returncode": 0,
+      "load_before": [
+        118.80810546875,
+        53.630859375,
+        28.6826171875
+      ],
+      "load_after": [
+        122.42724609375,
+        55.46337890625,
+        29.40966796875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (1.8s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_KERNEL_NS 998079\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 1,
+      "case": "family-61",
+      "arm": "before",
+      "kernel_nanos": 998079
+    },
+    {
+      "status": "ok",
+      "seconds": 3.583944809040986,
+      "returncode": 0,
+      "load_before": [
+        122.42724609375,
+        55.46337890625,
+        29.40966796875
+      ],
+      "load_after": [
+        121.671875,
+        56.4189453125,
+        29.85888671875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (1.8s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_KERNEL_NS 1798406\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 1,
+      "case": "family-123",
+      "arm": "after",
+      "kernel_nanos": 1798406
+    },
+    {
+      "status": "ok",
+      "seconds": 3.0789808029076084,
+      "returncode": 0,
+      "load_before": [
+        121.671875,
+        56.4189453125,
+        29.85888671875
+      ],
+      "load_after": [
+        121.671875,
+        56.4189453125,
+        29.85888671875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (1.5s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_KERNEL_NS 1477200\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 1,
+      "case": "family-123",
+      "arm": "before",
+      "kernel_nanos": 1477200
+    },
+    {
+      "status": "ok",
+      "seconds": 3.754683671053499,
+      "returncode": 0,
+      "load_before": [
+        121.671875,
+        56.4189453125,
+        29.85888671875
+      ],
+      "load_after": [
+        121.37744140625,
+        57.44140625,
+        30.33251953125
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (1.9s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_KERNEL_NS 2462000\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 1,
+      "case": "family-256",
+      "arm": "after",
+      "kernel_nanos": 2462000
+    },
+    {
+      "status": "ok",
+      "seconds": 3.3945127909537405,
+      "returncode": 0,
+      "load_before": [
+        121.37744140625,
+        57.44140625,
+        30.33251953125
+      ],
+      "load_after": [
+        121.66796875,
+        58.56298828125,
+        30.84130859375
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (1.8s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_KERNEL_NS 2785459\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 1,
+      "case": "family-256",
+      "arm": "before",
+      "kernel_nanos": 2785459
+    },
+    {
+      "status": "ok",
+      "seconds": 3.3540147410240024,
+      "returncode": 0,
+      "load_before": [
+        121.66796875,
+        58.56298828125,
+        30.84130859375
+      ],
+      "load_after": [
+        121.66796875,
+        58.56298828125,
+        30.84130859375
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (1.0s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_KERNEL_NS 15848052\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 1,
+      "case": "family-511",
+      "arm": "after",
+      "kernel_nanos": 15848052
+    },
+    {
+      "status": "ok",
+      "seconds": 3.4555856169899926,
+      "returncode": 0,
+      "load_before": [
+        121.66796875,
+        58.56298828125,
+        30.84130859375
+      ],
+      "load_after": [
+        121.2939453125,
+        59.533203125,
+        31.30419921875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (1.8s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_KERNEL_NS 5898143\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 1,
+      "case": "family-511",
+      "arm": "before",
+      "kernel_nanos": 5898143
+    },
+    {
+      "status": "ok",
+      "seconds": 3.226016768021509,
+      "returncode": 0,
+      "load_before": [
+        121.2939453125,
+        59.533203125,
+        31.30419921875
+      ],
+      "load_after": [
+        119.18798828125,
+        60.1220703125,
+        31.646484375
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (1.7s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_KERNEL_NS 7336745\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 1,
+      "case": "family-512",
+      "arm": "after",
+      "kernel_nanos": 7336745
+    },
+    {
+      "status": "ok",
+      "seconds": 3.6897280319826677,
+      "returncode": 0,
+      "load_before": [
+        119.18798828125,
+        60.1220703125,
+        31.646484375
+      ],
+      "load_after": [
+        118.4521484375,
+        60.9501953125,
+        32.0673828125
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (2.2s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_KERNEL_NS 14796673\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 1,
+      "case": "family-512",
+      "arm": "before",
+      "kernel_nanos": 14796673
+    },
+    {
+      "status": "ok",
+      "seconds": 3.2352826399728656,
+      "returncode": 0,
+      "load_before": [
+        118.4521484375,
+        60.9501953125,
+        32.0673828125
+      ],
+      "load_after": [
+        118.4521484375,
+        60.9501953125,
+        32.0673828125
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (1.7s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:41:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:41:0: DIRECT_KERNEL_NS 8515402\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:41:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.pock3,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 1,
+      "case": "Curve25519",
+      "arm": "after",
+      "kernel_nanos": 8515402
+    },
+    {
+      "status": "ok",
+      "seconds": 3.6627283189445734,
+      "returncode": 0,
+      "load_before": [
+        118.4521484375,
+        60.9501953125,
+        32.0673828125
+      ],
+      "load_after": [
+        119.9375,
+        62.212890625,
+        32.63134765625
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (2.1s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:41:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:41:0: DIRECT_KERNEL_NS 22741029\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:41:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.pock3,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 1,
+      "case": "Curve25519",
+      "arm": "before",
+      "kernel_nanos": 22741029
+    },
+    {
+      "status": "ok",
+      "seconds": 3.83149944501929,
+      "returncode": 0,
+      "load_before": [
+        119.9375,
+        62.212890625,
+        32.63134765625
+      ],
+      "load_after": [
+        122.66552734375,
+        63.73681640625,
+        33.28369140625
+      ],
+      "stdout": "\u2139 [70/70] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (2.0s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:70:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:70:0: DIRECT_KERNEL_NS 18795040\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:70:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n HSub.hSub,\n Nat,\n instHSub,\n instSubNat,\n HPow.hPow,\n instHPow,\n instPowNat,\n instNatPowNat,\n OfNat.ofNat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock3,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n Hex.Nat.PrimeCert.pock,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (70 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 1,
+      "case": "Curve448",
+      "arm": "after",
+      "kernel_nanos": 18795040
+    },
+    {
+      "status": "ok",
+      "seconds": 4.031392072094604,
+      "returncode": 0,
+      "load_before": [
+        122.66552734375,
+        63.73681640625,
+        33.28369140625
+      ],
+      "load_after": [
+        122.45166015625,
+        64.6708984375,
+        33.74951171875
+      ],
+      "stdout": "\u2139 [70/70] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (2.4s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:70:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:70:0: DIRECT_KERNEL_NS 44541633\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:70:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n HSub.hSub,\n Nat,\n instHSub,\n instSubNat,\n HPow.hPow,\n instHPow,\n instPowNat,\n instNatPowNat,\n OfNat.ofNat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock3,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n Hex.Nat.PrimeCert.pock,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (70 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 1,
+      "case": "Curve448",
+      "arm": "before",
+      "kernel_nanos": 44541633
+    },
+    {
+      "status": "ok",
+      "seconds": 3.7296210690401495,
+      "returncode": 0,
+      "load_before": [
+        122.45166015625,
+        64.6708984375,
+        33.74951171875
+      ],
+      "load_after": [
+        122.45166015625,
+        64.6708984375,
+        33.74951171875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (2.1s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_KERNEL_NS 788048\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 2,
+      "case": "family-31",
+      "arm": "before",
+      "kernel_nanos": 788048
+    },
+    {
+      "status": "ok",
+      "seconds": 4.031495603034273,
+      "returncode": 0,
+      "load_before": [
+        122.45166015625,
+        64.6708984375,
+        33.74951171875
+      ],
+      "load_after": [
+        123.61669921875,
+        65.8720703125,
+        34.30419921875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (1.0s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_KERNEL_NS 1362340\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 2,
+      "case": "family-31",
+      "arm": "after",
+      "kernel_nanos": 1362340
+    },
+    {
+      "status": "ok",
+      "seconds": 3.8794864600058645,
+      "returncode": 0,
+      "load_before": [
+        123.61669921875,
+        65.8720703125,
+        34.30419921875
+      ],
+      "load_after": [
+        125.5693359375,
+        67.23583984375,
+        34.9150390625
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (1.0s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_KERNEL_NS 1185547\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 2,
+      "case": "family-61",
+      "arm": "before",
+      "kernel_nanos": 1185547
+    },
+    {
+      "status": "ok",
+      "seconds": 3.8253681199857965,
+      "returncode": 0,
+      "load_before": [
+        125.5693359375,
+        67.23583984375,
+        34.9150390625
+      ],
+      "load_after": [
+        128.72705078125,
+        68.85888671875,
+        35.61376953125
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (2.1s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_KERNEL_NS 1034193\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 2,
+      "case": "family-61",
+      "arm": "after",
+      "kernel_nanos": 1034193
+    },
+    {
+      "status": "ok",
+      "seconds": 4.334757259930484,
+      "returncode": 0,
+      "load_before": [
+        128.72705078125,
+        68.85888671875,
+        35.61376953125
+      ],
+      "load_after": [
+        128.72705078125,
+        68.85888671875,
+        35.61376953125
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (2.4s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_KERNEL_NS 1819718\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 2,
+      "case": "family-123",
+      "arm": "before",
+      "kernel_nanos": 1819718
+    },
+    {
+      "status": "ok",
+      "seconds": 4.019374500028789,
+      "returncode": 0,
+      "load_before": [
+        128.72705078125,
+        68.85888671875,
+        35.61376953125
+      ],
+      "load_after": [
+        132.0322265625,
+        70.5380859375,
+        36.3359375
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (2.3s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_KERNEL_NS 1527064\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 2,
+      "case": "family-123",
+      "arm": "after",
+      "kernel_nanos": 1527064
+    },
+    {
+      "status": "ok",
+      "seconds": 3.8595335900317878,
+      "returncode": 0,
+      "load_before": [
+        132.0322265625,
+        70.5380859375,
+        36.3359375
+      ],
+      "load_after": [
+        134.51220703125,
+        72.0732421875,
+        37.0166015625
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (2.1s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_KERNEL_NS 1673100\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 2,
+      "case": "family-256",
+      "arm": "before",
+      "kernel_nanos": 1673100
+    },
+    {
+      "status": "ok",
+      "seconds": 4.121530472999439,
+      "returncode": 0,
+      "load_before": [
+        134.51220703125,
+        72.0732421875,
+        37.0166015625
+      ],
+      "load_after": [
+        136.55322265625,
+        73.533203125,
+        37.67724609375
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (1.0s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_KERNEL_NS 2491944\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 2,
+      "case": "family-256",
+      "arm": "after",
+      "kernel_nanos": 2491944
+    },
+    {
+      "status": "ok",
+      "seconds": 3.7091299439780414,
+      "returncode": 0,
+      "load_before": [
+        136.55322265625,
+        73.533203125,
+        37.67724609375
+      ],
+      "load_after": [
+        135.7080078125,
+        74.404296875,
+        38.15185546875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (1.9s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_KERNEL_NS 5651247\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 2,
+      "case": "family-511",
+      "arm": "before",
+      "kernel_nanos": 5651247
+    },
+    {
+      "status": "ok",
+      "seconds": 4.24710000003688,
+      "returncode": 0,
+      "load_before": [
+        135.7080078125,
+        74.404296875,
+        38.15185546875
+      ],
+      "load_after": [
+        135.7080078125,
+        74.404296875,
+        38.15185546875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (2.3s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_KERNEL_NS 4951940\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 2,
+      "case": "family-511",
+      "arm": "after",
+      "kernel_nanos": 4951940
+    },
+    {
+      "status": "ok",
+      "seconds": 4.17690057202708,
+      "returncode": 0,
+      "load_before": [
+        135.7080078125,
+        74.404296875,
+        38.15185546875
+      ],
+      "load_after": [
+        136.6123046875,
+        75.60986328125,
+        38.73681640625
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (2.4s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_KERNEL_NS 8253444\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 2,
+      "case": "family-512",
+      "arm": "before",
+      "kernel_nanos": 8253444
+    },
+    {
+      "status": "ok",
+      "seconds": 4.45208249904681,
+      "returncode": 0,
+      "load_before": [
+        136.6123046875,
+        75.60986328125,
+        38.73681640625
+      ],
+      "load_after": [
+        137.6044921875,
+        76.82861328125,
+        39.3291015625
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (2.4s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_KERNEL_NS 6369641\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 2,
+      "case": "family-512",
+      "arm": "after",
+      "kernel_nanos": 6369641
+    },
+    {
+      "status": "ok",
+      "seconds": 4.67333892302122,
+      "returncode": 0,
+      "load_before": [
+        137.6044921875,
+        76.82861328125,
+        39.3291015625
+      ],
+      "load_after": [
+        140.91943359375,
+        78.52490234375,
+        40.07958984375
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (2.6s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:41:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:41:0: DIRECT_KERNEL_NS 12581660\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:41:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.pock3,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 2,
+      "case": "Curve25519",
+      "arm": "before",
+      "kernel_nanos": 12581660
+    },
+    {
+      "status": "ok",
+      "seconds": 6.113479829975404,
+      "returncode": 0,
+      "load_before": [
+        140.91943359375,
+        78.52490234375,
+        40.07958984375
+      ],
+      "load_after": [
+        149.49462890625,
+        81.3388671875,
+        41.19677734375
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (4.0s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:41:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:41:0: DIRECT_KERNEL_NS 92880926\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:41:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.pock3,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 2,
+      "case": "Curve25519",
+      "arm": "after",
+      "kernel_nanos": 92880926
+    },
+    {
+      "status": "ok",
+      "seconds": 7.566542315063998,
+      "returncode": 0,
+      "load_before": [
+        149.49462890625,
+        81.3388671875,
+        41.19677734375
+      ],
+      "load_after": [
+        170.98486328125,
+        88.16552734375,
+        43.84716796875
+      ],
+      "stdout": "\u2139 [70/70] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (4.4s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:70:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:70:0: DIRECT_KERNEL_NS 21628931\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:70:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n HSub.hSub,\n Nat,\n instHSub,\n instSubNat,\n HPow.hPow,\n instHPow,\n instPowNat,\n instNatPowNat,\n OfNat.ofNat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock3,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n Hex.Nat.PrimeCert.pock,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (70 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 2,
+      "case": "Curve448",
+      "arm": "before",
+      "kernel_nanos": 21628931
+    },
+    {
+      "status": "ok",
+      "seconds": 6.730250803986564,
+      "returncode": 0,
+      "load_before": [
+        170.98486328125,
+        88.16552734375,
+        43.84716796875
+      ],
+      "load_after": [
+        177.392578125,
+        90.869140625,
+        44.9599609375
+      ],
+      "stdout": "\u2139 [70/70] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (4.1s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:70:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:70:0: DIRECT_KERNEL_NS 46378346\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:70:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n HSub.hSub,\n Nat,\n instHSub,\n instSubNat,\n HPow.hPow,\n instHPow,\n instPowNat,\n instNatPowNat,\n OfNat.ofNat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock3,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n Hex.Nat.PrimeCert.pock,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (70 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 2,
+      "case": "Curve448",
+      "arm": "after",
+      "kernel_nanos": 46378346
+    },
+    {
+      "status": "ok",
+      "seconds": 6.649248740985058,
+      "returncode": 0,
+      "load_before": [
+        177.392578125,
+        90.869140625,
+        44.9599609375
+      ],
+      "load_after": [
+        193.64892578125,
+        97.17041015625,
+        47.5009765625
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (3.6s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_KERNEL_NS 976909\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 3,
+      "case": "family-31",
+      "arm": "after",
+      "kernel_nanos": 976909
+    },
+    {
+      "status": "ok",
+      "seconds": 7.137858806061558,
+      "returncode": 0,
+      "load_before": [
+        193.64892578125,
+        97.17041015625,
+        47.5009765625
+      ],
+      "load_after": [
+        199.68310546875,
+        100.0234375,
+        48.69091796875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (4.3s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_KERNEL_NS 1428117\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 3,
+      "case": "family-31",
+      "arm": "before",
+      "kernel_nanos": 1428117
+    },
+    {
+      "status": "ok",
+      "seconds": 6.750593565986492,
+      "returncode": 0,
+      "load_before": [
+        199.68310546875,
+        100.0234375,
+        48.69091796875
+      ],
+      "load_after": [
+        204.03271484375,
+        102.580078125,
+        49.7939453125
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (3.0s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_KERNEL_NS 952662\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 3,
+      "case": "family-61",
+      "arm": "after",
+      "kernel_nanos": 952662
+    },
+    {
+      "status": "ok",
+      "seconds": 6.865730596939102,
+      "returncode": 0,
+      "load_before": [
+        204.03271484375,
+        102.580078125,
+        49.7939453125
+      ],
+      "load_after": [
+        216.8623046875,
+        108.66943359375,
+        52.34130859375
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (3.8s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_KERNEL_NS 1036897\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 3,
+      "case": "family-61",
+      "arm": "before",
+      "kernel_nanos": 1036897
+    },
+    {
+      "status": "ok",
+      "seconds": 6.400790091021918,
+      "returncode": 0,
+      "load_before": [
+        216.8623046875,
+        108.66943359375,
+        52.34130859375
+      ],
+      "load_after": [
+        217.43408203125,
+        110.58447265625,
+        53.263671875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (3.1s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_KERNEL_NS 3512777\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 3,
+      "case": "family-123",
+      "arm": "after",
+      "kernel_nanos": 3512777
+    },
+    {
+      "status": "ok",
+      "seconds": 5.643303141114302,
+      "returncode": 0,
+      "load_before": [
+        217.43408203125,
+        110.58447265625,
+        53.263671875
+      ],
+      "load_after": [
+        223.4853515625,
+        113.61328125,
+        54.5517578125
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (2.7s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_KERNEL_NS 1548175\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:20:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 3,
+      "case": "family-123",
+      "arm": "before",
+      "kernel_nanos": 1548175
+    },
+    {
+      "status": "ok",
+      "seconds": 6.4274364230223,
+      "returncode": 0,
+      "load_before": [
+        223.4853515625,
+        113.61328125,
+        54.5517578125
+      ],
+      "load_after": [
+        224.56787109375,
+        115.662109375,
+        55.53173828125
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (3.5s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_KERNEL_NS 1574344\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 3,
+      "case": "family-256",
+      "arm": "after",
+      "kernel_nanos": 1574344
+    },
+    {
+      "status": "ok",
+      "seconds": 5.52672140893992,
+      "returncode": 0,
+      "load_before": [
+        224.56787109375,
+        115.662109375,
+        55.53173828125
+      ],
+      "load_after": [
+        226.2041015625,
+        117.8095703125,
+        56.5498046875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (3.2s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_KERNEL_NS 2405666\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 3,
+      "case": "family-256",
+      "arm": "before",
+      "kernel_nanos": 2405666
+    },
+    {
+      "status": "ok",
+      "seconds": 7.045072227017954,
+      "returncode": 0,
+      "load_before": [
+        226.2041015625,
+        117.8095703125,
+        56.5498046875
+      ],
+      "load_after": [
+        229.43701171875,
+        122.05224609375,
+        58.58544921875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (4.1s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_KERNEL_NS 16920601\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 3,
+      "case": "family-511",
+      "arm": "after",
+      "kernel_nanos": 16920601
+    },
+    {
+      "status": "ok",
+      "seconds": 6.593852350022644,
+      "returncode": 0,
+      "load_before": [
+        229.43701171875,
+        122.05224609375,
+        58.58544921875
+      ],
+      "load_after": [
+        233.0859375,
+        124.591796875,
+        59.748046875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (3.4s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_KERNEL_NS 15437313\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 3,
+      "case": "family-511",
+      "arm": "before",
+      "kernel_nanos": 15437313
+    },
+    {
+      "status": "ok",
+      "seconds": 7.056710751960054,
+      "returncode": 0,
+      "load_before": [
+        233.0859375,
+        124.591796875,
+        59.748046875
+      ],
+      "load_after": [
+        239.1552734375,
+        129.462890625,
+        62.02783203125
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (4.1s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_KERNEL_NS 57928026\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 3,
+      "case": "family-512",
+      "arm": "after",
+      "kernel_nanos": 57928026
+    },
+    {
+      "status": "ok",
+      "seconds": 6.880515648983419,
+      "returncode": 0,
+      "load_before": [
+        239.1552734375,
+        129.462890625,
+        62.02783203125
+      ],
+      "load_after": [
+        240.10400390625,
+        131.48095703125,
+        63.04296875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (3.7s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_KERNEL_NS 16950515\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:22:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 3,
+      "case": "family-512",
+      "arm": "before",
+      "kernel_nanos": 16950515
+    },
+    {
+      "status": "ok",
+      "seconds": 8.521549960947596,
+      "returncode": 0,
+      "load_before": [
+        240.10400390625,
+        131.48095703125,
+        63.04296875
+      ],
+      "load_after": [
+        249.2548828125,
+        137.05419921875,
+        65.591796875
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (4.4s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:41:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:41:0: DIRECT_KERNEL_NS 35166467\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:41:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.pock3,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 3,
+      "case": "Curve25519",
+      "arm": "after",
+      "kernel_nanos": 35166467
+    },
+    {
+      "status": "ok",
+      "seconds": 6.910607537953183,
+      "returncode": 0,
+      "load_before": [
+        249.2548828125,
+        137.05419921875,
+        65.591796875
+      ],
+      "load_after": [
+        247.232421875,
+        138.498046875,
+        66.44287109375
+      ],
+      "stdout": "\u2139 [76/76] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (3.5s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:41:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:41:0: DIRECT_KERNEL_NS 94536279\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:41:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n OfNat.ofNat,\n Nat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.pock3,\n Hex.Nat.PrimeCert.small,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (76 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 3,
+      "case": "Curve25519",
+      "arm": "before",
+      "kernel_nanos": 94536279
+    },
+    {
+      "status": "ok",
+      "seconds": 7.316685703000985,
+      "returncode": 0,
+      "load_before": [
+        247.232421875,
+        138.498046875,
+        66.44287109375
+      ],
+      "load_after": [
+        248.18017578125,
+        142.28466796875,
+        68.447265625
+      ],
+      "stdout": "\u2139 [70/70] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (4.4s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:70:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:70:0: DIRECT_KERNEL_NS 132657404\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:70:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n HSub.hSub,\n Nat,\n instHSub,\n instSubNat,\n HPow.hPow,\n instHPow,\n instPowNat,\n instNatPowNat,\n OfNat.ofNat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock3,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n Hex.Nat.PrimeCert.pock,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (70 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 3,
+      "case": "Curve448",
+      "arm": "after",
+      "kernel_nanos": 132657404
+    },
+    {
+      "status": "ok",
+      "seconds": 6.801397650968283,
+      "returncode": 0,
+      "load_before": [
+        248.18017578125,
+        142.28466796875,
+        68.447265625
+      ],
+      "load_after": [
+        250.16796875,
+        144.455078125,
+        69.54638671875
+      ],
+      "stdout": "\u2139 [70/70] Built HexPrimality.ProofProbe.Curve25519.ReplayPair (4.2s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:70:0: DIRECT_WITNESS_CONTROL rejected\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:70:0: DIRECT_KERNEL_NS 42893510\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPair.lean:70:0: DIRECT_DEPENDENCIES [Hex.Nat.prime_of_checkPrimeAt,\n HSub.hSub,\n Nat,\n instHSub,\n instSubNat,\n HPow.hPow,\n instHPow,\n instPowNat,\n instNatPowNat,\n OfNat.ofNat,\n instOfNatNat,\n Hex.Nat.PrimeCert.pock3,\n List.cons,\n Prod,\n Hex.Nat.PrimeCert,\n Prod.mk,\n Hex.Nat.PrimeCert.small,\n Hex.Nat.PrimeCert.pock,\n List.nil,\n of_decide_eq_true,\n Eq,\n Bool,\n Bool.and,\n BEq.beq,\n instBEqOfDecidableEq,\n instDecidableEqNat,\n Hex.Nat.PrimeCert.subject,\n Hex.Nat.checkPrime,\n Bool.true,\n instDecidableEqBool,\n id,\n Decidable.decide,\n Eq.refl]\nBuild completed successfully (70 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPair:olean"
+      ],
+      "block": 3,
+      "case": "Curve448",
+      "arm": "before",
+      "kernel_nanos": 42893510
+    }
+  ]
+}

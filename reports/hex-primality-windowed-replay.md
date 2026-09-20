@@ -1,10 +1,14 @@
 # Primality certificate replay
 
-Hex checks all eight supplied certificates faster than PrimeCert in this
-comparison, including every one of the 32 adjacent pairs. Curve25519 takes
-**5.18 ms versus 14.42 ms**; Curve448 takes **10.17 ms versus 35.21 ms**.
-The margins range from **1.11× to 3.46×**. These are observations on a shared
-host, with a small, structured corpus.
+The comparison below uses PrimeCert's binary modular exponentiation at
+`7d3a2de`. It does not describe PrimeCert's fixed-window implementation.
+See [the current replay attribution](hex-primality-replay-attribution.md) for
+that comparison, matched witness counts, cube-root checker improvements, and
+complete-tactic regression measurements.
+
+In this binary-comparator snapshot, Hex checks all eight supplied certificates
+faster: Curve25519 takes 5.18 ms versus 14.42 ms and Curve448 takes 10.17 ms
+versus 35.21 ms on the recorded shared host.
 
 PrimeCert uses compact certificates with the same selected Pocklington factors
 as Hex, including its certified sieve API for table leaves above 997.
@@ -52,7 +56,7 @@ kernel improvements.
 
 ![Full certificate kernel comparison](figures/hex-primality-kernel-direct.svg)
 
-## Why replay is faster
+## Hex replay design
 
 - `HexArith.powModNat` uses direct recursors and fixed windows: six bits through
   `2^64`, four through `2^512`, three through `2^1024`, and narrower windows or

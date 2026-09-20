@@ -1,0 +1,2047 @@
+{
+  "schema": "primality-replay-pair/1",
+  "kind": "phases",
+  "cpu": 4,
+  "host": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "protocol": "four fixed trial-major blocks, adjacent AB/BA; every completed sample retained",
+  "versions": {
+    "before": {
+      "commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+      "toolchain": "leanprover/lean4:v4.34.0",
+      "diff": "",
+      "checker_sha256": "9a9be0d357df6feefba6acb5a1a423c0b5202771e7cd97545be0bdeb61c83cdb"
+    },
+    "after": {
+      "commit": "cc2baf89ea86df39c9ca1aa909a34728ac5ad3d2",
+      "toolchain": "leanprover/lean4:v4.34.0",
+      "diff": "diff --git a/HexPrimality/Cert.lean b/HexPrimality/Cert.lean\nindex 0ae547b9b..ceb984296 100644\n--- a/HexPrimality/Cert.lean\n+++ b/HexPrimality/Cert.lean\n@@ -363,7 +363,7 @@ multiplications. (When `r\u00b2 \u2264 8s` the truncated subtraction makes the\n witness clause `w * w < 0` unsatisfiable, so the disjunct is simply never\n taken; the middle disjunct covers that region.) -/\n @[expose]\n-def checkPock3Arith (n r s w : Nat)\n+def checkPock3Arith.native (n r s w : Nat)\n     (factors : List (Nat \u00d7 Nat \u00d7 PrimeCert)) : Bool :=\n   decide (2 \u2264 n) && n % 2 == 1 && subjectsOk factors &&\n     match certProduct (n - 1) factors with\n@@ -378,6 +378,22 @@ def checkPock3Arith (n r s w : Nat)\n               decide (r * r - 8 * s < (w + 1) * (w + 1)))) &&\n           checkWitnesses n factors\n \n+/-- Kernel replay uses the bounded positive product and primitive comparisons.\n+Compiled checking retains the original arithmetic path. -/\n+@[expose]\n+noncomputable def checkPock3Arith (n r s w : Nat)\n+    (factors : List (Nat \u00d7 Nat \u00d7 PrimeCert)) : Bool :=\n+  (2 : Nat).ble n && (n.mod 2).beq 1 && subjectsOk factors &&\n+    (let F := pockProduct (n.sub 1) factors;\n+        (n - 1) % F == 0 && F % 2 == 0 && (n - 1) / F % 2 == 1 &&\n+          (n - 1) / F == 2 * F * s + r &&\n+          (1 : Nat).ble r && r.blt (2 * F) &&\n+          n.blt ((F + 1) * (2 * F * F + (r - 1) * F + 1)) &&\n+          (s == 0 || (r * r).blt (8 * s) ||\n+            ((w * w).blt (r * r - 8 * s) &&\n+              (r * r - 8 * s).blt ((w + 1) * (w + 1)))) &&\n+          checkWitnesses n factors)\n+\n /-- Maximum sieve bound in a checked certificate.\n This caps replay work for arbitrary untrusted literals, including rejected inputs. -/\n @[expose] def pocklingtonSieveCap : Nat := 64\n@@ -400,7 +416,7 @@ private theorem checkDivisors_spec (n F : Nat) : \u2200 k,\n \n /-- The general cube-root arithmetic check; the legacy node retains its sieve-free path. -/\n @[expose]\n-def checkPock3SieveArith (n r s w m : Nat)\n+def checkPock3SieveArith.native (n r s w m : Nat)\n     (factors : List (Nat \u00d7 Nat \u00d7 PrimeCert)) : Bool :=\n   decide (2 \u2264 n) && n % 2 == 1 && subjectsOk factors &&\n     match certProduct (n - 1) factors with\n@@ -416,6 +432,23 @@ def checkPock3SieveArith (n r s w m : Nat)\n               decide (r * r - 8 * s < (w + 1) * (w + 1)))) &&\n           checkWitnesses n factors\n \n+/-- Kernel replay uses the bounded positive product and primitive comparisons.\n+Compiled checking retains the original arithmetic path. -/\n+@[expose]\n+noncomputable def checkPock3SieveArith (n r s w m : Nat)\n+    (factors : List (Nat \u00d7 Nat \u00d7 PrimeCert)) : Bool :=\n+  (2 : Nat).ble n && (n.mod 2).beq 1 && subjectsOk factors &&\n+    (let F := pockProduct (n.sub 1) factors;\n+        (n - 1) % F == 0 && F % 2 == 0 && (n - 1) / F % 2 == 1 &&\n+          (n - 1) / F == 2 * F * s + r &&\n+          (1 : Nat).ble r && r.blt (2 * F) && (1 : Nat).ble m && m.ble pocklingtonSieveCap &&\n+          (2 * s + m * m).blt ((2 * F + r) * m + 2) &&\n+          checkDivisors n F (m - 1) &&\n+          (s == 0 || (r * r).blt (8 * s) ||\n+            ((w * w).blt (r * r - 8 * s) &&\n+              (r * r - 8 * s).blt ((w + 1) * (w + 1)))) &&\n+          checkWitnesses n factors)\n+\n /-! Accumulator lemmas -/\n \n /-- On success, the bounded accumulator computes the ordinary product. -/\n@@ -677,6 +710,44 @@ private theorem checkPockArith.eq_native (n : Nat) (factors : List (Nat \u00d7 Nat \n   funext n fs\n   exact checkPockArith.eq_native n fs\n \n+private theorem checkPock3Arith.eq_native (n r s w : Nat) (factors : List (Nat \u00d7 Nat \u00d7 PrimeCert)) :\n+    checkPock3Arith n r s w factors = checkPock3Arith.native n r s w factors := by\n+  by_cases hs : subjectsOk factors = true\n+  \u00b7 have hp : \u2200 x \u2208 factors, 0 < x.2.2.subject := by\n+      intro x hx\n+      have := subjectsOk_forall hs x hx\n+      omega\n+    simp only [checkPock3Arith, pockProduct.eq_product _ _ hp]\n+    cases h : certProduct (n - 1) factors <;>\n+      apply Bool.eq_iff_iff.mpr <;>\n+      simp [checkPock3Arith.native, h, hs, Nat.blt_eq] <;> intros <;> rfl\n+  \u00b7 have hf : subjectsOk factors = false := Bool.eq_false_iff.mpr hs\n+    simp [checkPock3Arith, checkPock3Arith.native, hf]\n+\n+/-- The compiler uses the verified runtime implementation. -/\n+@[csimp] theorem checkPock3Arith_eq_native : @checkPock3Arith = @checkPock3Arith.native := by\n+  funext n r s w fs\n+  exact checkPock3Arith.eq_native n r s w fs\n+\n+private theorem checkPock3SieveArith.eq_native (n r s w m : Nat) (factors : List (Nat \u00d7 Nat \u00d7 PrimeCert)) :\n+    checkPock3SieveArith n r s w m factors = checkPock3SieveArith.native n r s w m factors := by\n+  by_cases hs : subjectsOk factors = true\n+  \u00b7 have hp : \u2200 x \u2208 factors, 0 < x.2.2.subject := by\n+      intro x hx\n+      have := subjectsOk_forall hs x hx\n+      omega\n+    simp only [checkPock3SieveArith, pockProduct.eq_product _ _ hp]\n+    cases h : certProduct (n - 1) factors <;>\n+      apply Bool.eq_iff_iff.mpr <;>\n+      simp [checkPock3SieveArith.native, h, hs, Nat.blt_eq] <;> intros <;> rfl\n+  \u00b7 have hf : subjectsOk factors = false := Bool.eq_false_iff.mpr hs\n+    simp [checkPock3SieveArith, checkPock3SieveArith.native, hf]\n+\n+/-- The compiler uses the verified runtime implementation. -/\n+@[csimp] theorem checkPock3SieveArith_eq_native : @checkPock3SieveArith = @checkPock3SieveArith.native := by\n+  funext n r s w m fs\n+  exact checkPock3SieveArith.eq_native n r s w m fs\n+\n \n mutual\n \n@@ -1011,7 +1082,8 @@ private theorem checkPock3Arith_spec {n r s w : Nat}\n         n < (F + 1) * (2 * F * F + (r - 1) * F + 1) \u2227\n         (s = 0 \u2228 r * r < 8 * s \u2228 \u2200 t, t * t \u2260 r * r - 8 * s) \u2227\n         \u2200 x \u2208 factors, checkWitness n x.2.2.subject x.1 = true := by\n-  unfold checkPock3Arith at h\n+  rw [checkPock3Arith.eq_native] at h\n+  unfold checkPock3Arith.native at h\n   simp only [checkWitnesses.eq_native, checkWitnesses.native] at h\n   rw [Bool.and_eq_true, Bool.and_eq_true] at h\n   obtain \u27e8\u27e8h2, hodd\u27e9, hm\u27e9 := h\n@@ -1043,7 +1115,8 @@ private theorem checkPock3SieveArith_spec {n r s w m : Nat}\n         2 * s + m * m < (2 * F + r) * m + 2 \u2227\n         (s = 0 \u2228 r * r < 8 * s \u2228 \u2200 t, t * t \u2260 r * r - 8 * s) \u2227\n         \u2200 x \u2208 factors, checkWitness n x.2.2.subject x.1 = true := by\n-  unfold checkPock3SieveArith at h\n+  rw [checkPock3SieveArith.eq_native] at h\n+  unfold checkPock3SieveArith.native at h\n   simp only [checkWitnesses.eq_native, checkWitnesses.native] at h\n   rw [Bool.and_eq_true, Bool.and_eq_true] at h\n   obtain \u27e8\u27e8h2, hodd\u27e9, hm\u27e9 := h\ndiff --git a/HexPrimality/SPEC/hex-primality.md b/HexPrimality/SPEC/hex-primality.md\nindex 4b04287f7..046a13a0a 100644\n--- a/HexPrimality/SPEC/hex-primality.md\n+++ b/HexPrimality/SPEC/hex-primality.md\n@@ -1239,6 +1239,12 @@ a changed base starts a new group. Each public checker is a `noncomputable` kern\n binary search. The internal `pockProduct` sentinel is proved equivalent to\n `certProduct` for positive subjects; callers establish that precondition\n before using it, and the final arithmetic check rejects the zero sentinel.\n+Both cube-root arithmetic arms use this bounded product and primitive comparisons,\n+just as the square-root arm does. Their unconditional equality theorems retain\n+the original compiled arithmetic, including rejection on zero subjects,\n+overflowing exponents, invalid ordering, invalid interval witnesses, and sieve\n+bounds outside the cap. Optimizing replay must also check complete `primality?`\n+and native construction for regressions; a smaller kernel timer alone is insufficient.\n \n `checkPrime` is therefore written against `powModNat`. The bench\n family \"kernel replay\" below is what confirms the choice was the\n@@ -1527,16 +1533,15 @@ Imported library proofs remain dependencies. A negative control must be\n rejected. The retained `hex-primality-direct-kernel-checked-issue-10268.json` uses\n adjacent reversed systems and records every sample, source, and toolchain.\n Its matched-input plot shows growth hidden by fresh-build overhead; cactus\n-rank is not a bit-length axis. The compact-certificate comparison in\n-`reports/bench-results/hex-primality-small-replay/hex-compact-primecert-sieve-kernel.json`\n-measures Hex on Lean 4.34.0 at a median 5.18 ms for Curve25519, versus\n-PrimeCert on Lean 4.33.0 at 14.42 ms. Both receive supplied Curve448\n-certificates, and PrimeCert uses the same selected Pocklington factors as Hex,\n-with its certified sieve for larger table leaves.\n-All four samples per system and input are retained. Hex wins all eight inputs;\n-the margins range from 1.11\u00d7 to 3.46\u00d7 on this shared host.\n-These are supplied-proof replay measurements, not a comparison of certificate\n-construction; see the [replay report](../../reports/hex-primality-windowed-replay.md).\n+rank is not a bit-length axis. Comparisons must identify the PrimeCert revision:\n+its fixed-window modular exponentiation changes the replay comparison materially.\n+The current [component attribution](../../reports/hex-primality-replay-attribution.md)\n+separates supplied-proof kernel replay, fresh-module elaboration, certificate\n+search/rendering, complete `Nat.Prime` tactics, and native construction. Match\n+factor subsets and witness bases before attributing an implementation difference;\n+common-base certificates can require fewer powers than individually selected bases.\n+All completed samples remain evidence, with adjacent alternating before/after\n+arms. Results describe the recorded shared host, not portable performance promises.\n \n The fixed construction targets and the adjacent-arm Curve25519 phase and\n replay measurements are recorded in\ndiff --git a/bench/HexBench/PrimalityKernel.lean b/bench/HexBench/PrimalityKernel.lean\nindex 2ee8df412..75b7fe493 100644\n--- a/bench/HexBench/PrimalityKernel.lean\n+++ b/bench/HexBench/PrimalityKernel.lean\n@@ -67,4 +67,21 @@ theorem replayPock3Sieve :\n     checkPrime (.pock3Sieve 9223372036904058881 47 4194304 0 4\n       [(3, 19, .small 2)]) = true := by decide +kernel\n \n+-- The optimized cube-root paths must reject malformed products before witness\n+-- arithmetic, including bounds whose powers would be infeasible to construct.\n+example : checkPrime (.pock3 199 9 2 8\n+    [(3, 0, .small 0), (2, 0, .small 3)]) = false := by decide +kernel\n+example : checkPrime (.pock3 199 9 2 8\n+    [(3, 1048576, .small 2), (2, 0, .small 3)]) = false := by decide +kernel\n+example : checkPrime (.pock3 199 9 2 8\n+    [(2, 0, .small 3), (3, 0, .small 2)]) = false := by decide +kernel\n+example : checkPrime (.pock3 199 9 2 7\n+    [(3, 0, .small 2), (2, 0, .small 3)]) = false := by decide +kernel\n+example : checkPrime (.pock3Sieve 9223372036904058881 47 4194304 0 4\n+    [(0, 19, .small 2)]) = false := by decide +kernel\n+example : checkPrime (.pock3Sieve 9223372036904058881 47 4194304 0 65\n+    [(3, 19, .small 2)]) = false := by decide +kernel\n+example : checkPrime (.pock3Sieve 9223372036904058881 47 4194304 0 4\n+    [(3, 1048576, .small 2)]) = false := by decide +kernel\n+\n end HexBench.PrimalityKernel\ndiff --git a/reports/hex-primality-performance.md b/reports/hex-primality-performance.md\nindex 2ff3adeca..d9d873d8d 100644\n--- a/reports/hex-primality-performance.md\n+++ b/reports/hex-primality-performance.md\n@@ -1,5 +1,9 @@\n # HexPrimality Performance Report\n \n+The current supplied-certificate comparison against PrimeCert's fixed-window\n+implementation is in [the replay attribution](hex-primality-replay-attribution.md).\n+The comparator measurements below use an earlier PrimeCert revision.\n+\n ## Bench Targets\n \n The compiled suite owns each executable surface once.  The first six rows use\ndiff --git a/reports/hex-primality-windowed-replay.md b/reports/hex-primality-windowed-replay.md\nindex d8591f762..807bccad2 100644\n--- a/reports/hex-primality-windowed-replay.md\n+++ b/reports/hex-primality-windowed-replay.md\n@@ -1,10 +1,14 @@\n # Primality certificate replay\n \n-Hex checks all eight supplied certificates faster than PrimeCert in this\n-comparison, including every one of the 32 adjacent pairs. Curve25519 takes\n-**5.18 ms versus 14.42 ms**; Curve448 takes **10.17 ms versus 35.21 ms**.\n-The margins range from **1.11\u00d7 to 3.46\u00d7**. These are observations on a shared\n-host, with a small, structured corpus.\n+The comparison below uses PrimeCert's binary modular exponentiation at\n+`7d3a2de`. It does not describe PrimeCert's fixed-window implementation.\n+See [the current replay attribution](hex-primality-replay-attribution.md) for\n+that comparison, matched witness counts, cube-root checker improvements, and\n+complete-tactic regression measurements.\n+\n+In this binary-comparator snapshot, Hex checks all eight supplied certificates\n+faster: Curve25519 takes 5.18 ms versus 14.42 ms and Curve448 takes 10.17 ms\n+versus 35.21 ms on the recorded shared host.\n \n PrimeCert uses compact certificates with the same selected Pocklington factors\n as Hex, including its certified sieve API for table leaves above 997.\n@@ -52,7 +56,7 @@ kernel improvements.\n \n ![Full certificate kernel comparison](figures/hex-primality-kernel-direct.svg)\n \n-## Why replay is faster\n+## Hex replay design\n \n - `HexArith.powModNat` uses direct recursors and fixed windows: six bits through\n   `2^64`, four through `2^512`, three through `2^1024`, and narrower windows or\ndiff --git a/scripts/bench/primality_kernel_direct.py b/scripts/bench/primality_kernel_direct.py\nindex bd173ffb8..9a39f564f 100644\n--- a/scripts/bench/primality_kernel_direct.py\n+++ b/scripts/bench/primality_kernel_direct.py\n@@ -104,8 +104,10 @@ run_cmd do\n \n \n def main() -> None:\n+    global ROOT\n     parser = argparse.ArgumentParser(description=__doc__)\n     parser.add_argument('source_record', type=Path)\n+    parser.add_argument('--hex-checkout', type=Path, default=ROOT)\n     parser.add_argument('--primecert-checkout', type=Path, required=True)\n     parser.add_argument('--output', type=Path, required=True)\n     parser.add_argument('--blocks', type=int, default=2)\n@@ -122,6 +124,7 @@ def main() -> None:\n         parser.error('use a new output path and an even block count >= 2')\n     if args.upstream_power and not args.powers:\n         parser.error('--upstream-power requires --powers')\n+    ROOT = args.hex_checkout.resolve()\n     previous = json.loads(args.source_record.read_text())\n     pc = args.primecert_checkout.resolve()\n     cpu = pick()\n@@ -175,6 +178,19 @@ def main() -> None:\n         record['power_sources']['power-div']['primecert'] = (\n             'module\\npublic import Lean\\npublic meta import Lean\\npublic section\\n' + raw_div +\n             f'\\ntheorem result : powDiv 2 {exponent} {n} = 1 := by decide +kernel\\n')\n+        # Identical fixed-window code calibrates the kernels used by both packages.\n+        record['cases'].append(dict(name='power-window', n=n))\n+        window = \"\"\"\n+@[expose] noncomputable def powWindow (b m k : Nat) : Nat \u2192 Nat \u2192 Nat :=\n+  Nat.rec (fun _ => 0)\n+    (fun _ rec e =>\n+      (e.beq 0).rec\n+        ((((rec (e.div k)).pow k).mul (b.pow (e.mod k))).mod m)\n+        ((1 : Nat).mod m))\n+\"\"\"\n+        body = ('module\\npublic import Lean\\npublic meta import Lean\\npublic section\\n' + window +\n+                f'theorem result : powWindow 2 {n} 16 {int(exponent)+1} {exponent} = 1 := by decide +kernel\\n')\n+        record['power_sources']['power-window'] = dict(hex=body, primecert=body)\n         if args.upstream_power:\n             record['cases'].append(dict(name='power-upstream', n=n))\n             # lean4#13490, commit 86704eea9a8cf46d7f20f4eb2c293cdaae7ac2d7.\n",
+      "checker_sha256": "195261b1d13ae7db65d68ebf438f1f72d4e9104609e7533751ad5fe87eaebea2"
+    },
+    "primecert": {
+      "commit": "9527ee7bbb1dd6e84bcb65efc7daccced4cdd751",
+      "toolchain": "leanprover/lean4:v4.33.0",
+      "diff": "",
+      "checker_sha256": "1bd8b01d36fbee166d613185f8aadbeb7e388322d9bd3d633f04a43d7c508329"
+    }
+  },
+  "sources": {
+    "imports": "module\npublic import HexPrimalityMathlib\npublic meta import HexPrimality.Elab\npublic section\nset_option maxRecDepth 100000\n",
+    "input": "module\npublic import HexPrimalityMathlib\npublic meta import HexPrimality.Elab\npublic section\nset_option maxRecDepth 100000\ndef input : Nat := 57896044618658097711785492504343953926634992332820282019728792003956564819949\n",
+    "literal": "module\npublic import HexPrimalityMathlib\npublic meta import HexPrimality.Elab\npublic section\nset_option maxRecDepth 100000\nnamespace Hex.PrimalityCurveProbe\n\ndef input : Nat := 2 ^ 255 - 19\n\ndef certificate : Hex.Nat.PrimeCert :=\n  Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])]\n\nend Hex.PrimalityCurveProbe\n",
+    "render": "module\npublic import HexPrimalityMathlib\npublic meta import HexPrimality.Elab\npublic section\nset_option maxRecDepth 100000\nnamespace Hex.PrimalityCurveProbe\n\ndef input : Nat := 2 ^ 255 - 19\n\nopen Lean Elab Hex.PrimalityTactic in\nrun_cmd Lean.Elab.Command.liftTermElabM do\n  let _ \u2190 certificateSyntax (Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n  pure ()\n\nend Hex.PrimalityCurveProbe\n",
+    "search": "module\npublic import HexPrimalityMathlib\npublic meta import HexPrimality.Elab\npublic section\nset_option maxRecDepth 100000\nnamespace Hex.PrimalityCurveProbe\n\ndef input : Nat := 2 ^ 255 - 19\n\n#eval match Hex.Nat.Construction.run input (Hex.Rand.ofSeed input) with\n  | .ok s => s.attempts\n  | .error _ => panic! \"construction exhausted\"\n\nend Hex.PrimalityCurveProbe\n",
+    "replay": "module\npublic import HexPrimalityMathlib\npublic meta import HexPrimality.Elab\npublic section\nset_option maxRecDepth 100000\nnamespace Hex.PrimalityCurveProbe\n\ndef input : Nat := 2 ^ 255 - 19\n\ntheorem result : _root_.Nat.Prime (2 ^ 255 - 19) :=\n  Hex.Nat.natPrime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])]) (by decide +kernel)\n/-- info: 'Hex.PrimalityCurveProbe.result' depends on axioms: [propext, Classical.choice, Quot.sound] -/\n#guard_msgs in\n#print axioms result\n\nend Hex.PrimalityCurveProbe\n",
+    "complete": "module\npublic import HexPrimalityMathlib\npublic meta import HexPrimality.Elab\npublic section\nset_option maxRecDepth 100000\ntheorem result : Nat.Prime 57896044618658097711785492504343953926634992332820282019728792003956564819949 := by primality?\n"
+  },
+  "primecert_sources": {
+    "imports": "module\npublic import PrimeCert\npublic import PrimeCert.SieveBase\npublic meta import PrimeCert.Meta.Construction\npublic section\nset_option maxRecDepth 100000\n",
+    "input": "module\npublic import PrimeCert\npublic import PrimeCert.SieveBase\npublic meta import PrimeCert.Meta.Construction\npublic section\nset_option maxRecDepth 100000\ndef input : Nat := 57896044618658097711785492504343953926634992332820282019728792003956564819949\n",
+    "complete": "module\npublic import PrimeCert\npublic import PrimeCert.SieveBase\npublic meta import PrimeCert.Meta.Construction\npublic section\nset_option maxRecDepth 100000\ntheorem result : Nat.Prime 57896044618658097711785492504343953926634992332820282019728792003956564819949 := by prime_cert?\n",
+    "replay": "/-\nCopyright (c) 2026 Lean FRO, LLC. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Kim Morrison\n-/\n\nmodule\npublic import PrimeCert\npublic import PrimeCert.SieveBase\npublic meta import PrimeCert.Meta.SieveLookup\npublic section\nset_option maxRecDepth 65536\nset_option exponentiation.threshold 512\ntheorem result : Nat.Prime (2 ^ 255 - 19) := prime_cert%\n  [small {2; 223; 353},\n   sieve {4153; 57467},\n   pock3 (31757755568855353, 5, 1, interval 4028944, 2 ^ 3 * 223 * 4153),\n   pock3 (74058212732561358302231226437062788676166966415465897661863160754340907, 2, 1, interval 2028478494862525422475606, 2 * 353 * 57467 * 31757755568855353),\n   pock (57896044618658097711785492504343953926634992332820282019728792003956564819949, 2, 74058212732561358302231226437062788676166966415465897661863160754340907)]\n",
+    "search": "module\npublic import PrimeCert\npublic import PrimeCert.SieveBase\npublic meta import PrimeCert.Meta.Construction\npublic section\nset_option maxRecDepth 100000\nopen Lean Elab in\nrun_cmd Lean.Elab.Command.liftTermElabM do\n  let budget : PrimeCert.Construction.Budget := {}\n  let primes \u2190 PrimeCert.Meta.constructionPrimes (budget.smoothBounds.foldl max (max 31 budget.trialBound))\n  let (ok, state) := PrimeCert.Construction.run budget primes 57896044618658097711785492504343953926634992332820282019728792003956564819949\n  unless ok do throwError \"construction exhausted\"\n  logInfo m!\"attempts {state.attempts}\"\n",
+    "render": "module\npublic import PrimeCert\npublic import PrimeCert.SieveBase\npublic meta import PrimeCert.Meta.Construction\npublic section\nset_option maxRecDepth 100000\nopen Lean Elab in\nrun_cmd Lean.Elab.Command.liftTermElabM do\n  let budget : PrimeCert.Construction.Budget := {}\n  let primes \u2190 PrimeCert.Meta.constructionPrimes (budget.smoothBounds.foldl max (max 31 budget.trialBound))\n  let (ok, state) := PrimeCert.Construction.run budget primes 57896044618658097711785492504343953926634992332820282019728792003956564819949\n  unless ok do throwError \"construction exhausted\"\n  logInfo (PrimeCert.Meta.constructionSource 57896044618658097711785492504343953926634992332820282019728792003956564819949 state)\n"
+  },
+  "rows": [
+    {
+      "status": "ok",
+      "seconds": 1.4425699400017038,
+      "returncode": 0,
+      "load_before": [
+        58.45166015625,
+        101.01904296875,
+        80.48583984375
+      ],
+      "load_after": [
+        54.4912109375,
+        99.4912109375,
+        80.1015625
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (688ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 0,
+      "case": "imports",
+      "arm": "before"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.3255712469108403,
+      "returncode": 0,
+      "load_before": [
+        54.4912109375,
+        99.4912109375,
+        80.1015625
+      ],
+      "load_after": [
+        54.4912109375,
+        99.4912109375,
+        80.1015625
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (671ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 0,
+      "case": "imports",
+      "arm": "after"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.4156290460377932,
+      "returncode": 0,
+      "load_before": [
+        54.4912109375,
+        99.4912109375,
+        80.1015625
+      ],
+      "load_after": [
+        54.4912109375,
+        99.4912109375,
+        80.1015625
+      ],
+      "stdout": "\u2714 [1317/1317] Built PrimeCert.Comparator.ReplayPair (748ms)\nBuild completed successfully (1317 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.ReplayPair:olean"
+      ],
+      "block": 0,
+      "case": "imports",
+      "arm": "primecert"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.463991250959225,
+      "returncode": 0,
+      "load_before": [
+        54.4912109375,
+        99.4912109375,
+        80.1015625
+      ],
+      "load_after": [
+        51.16845703125,
+        98.05517578125,
+        79.74072265625
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (727ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 0,
+      "case": "input",
+      "arm": "before"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.5180936619872227,
+      "returncode": 0,
+      "load_before": [
+        51.16845703125,
+        98.05517578125,
+        79.74072265625
+      ],
+      "load_after": [
+        51.16845703125,
+        98.05517578125,
+        79.74072265625
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (1.6s)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 0,
+      "case": "input",
+      "arm": "after"
+    },
+    {
+      "status": "ok",
+      "seconds": 4.015455576009117,
+      "returncode": 0,
+      "load_before": [
+        51.16845703125,
+        98.05517578125,
+        79.74072265625
+      ],
+      "load_after": [
+        51.15478515625,
+        97.27392578125,
+        79.5859375
+      ],
+      "stdout": "\u2714 [1317/1317] Built PrimeCert.Comparator.ReplayPair (2.4s)\nBuild completed successfully (1317 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.ReplayPair:olean"
+      ],
+      "block": 0,
+      "case": "input",
+      "arm": "primecert"
+    },
+    {
+      "status": "ok",
+      "seconds": 4.428288110066205,
+      "returncode": 0,
+      "load_before": [
+        51.15478515625,
+        97.27392578125,
+        79.5859375
+      ],
+      "load_after": [
+        52.744140625,
+        96.83740234375,
+        79.53955078125
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (2.3s)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 0,
+      "case": "literal",
+      "arm": "before"
+    },
+    {
+      "status": "ok",
+      "seconds": 3.7376221460290253,
+      "returncode": 0,
+      "load_before": [
+        52.744140625,
+        96.83740234375,
+        79.53955078125
+      ],
+      "load_after": [
+        52.744140625,
+        96.83740234375,
+        79.53955078125
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (1.9s)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 0,
+      "case": "literal",
+      "arm": "after"
+    },
+    {
+      "status": "ok",
+      "seconds": 3.7285142249893397,
+      "returncode": 0,
+      "load_before": [
+        52.744140625,
+        96.83740234375,
+        79.53955078125
+      ],
+      "load_after": [
+        53.0849609375,
+        96.17578125,
+        79.41845703125
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (2.1s)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 0,
+      "case": "render",
+      "arm": "before"
+    },
+    {
+      "status": "ok",
+      "seconds": 3.54981699900236,
+      "returncode": 0,
+      "load_before": [
+        53.0849609375,
+        96.17578125,
+        79.41845703125
+      ],
+      "load_after": [
+        52.4375,
+        95.326171875,
+        79.2333984375
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (1.8s)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 0,
+      "case": "render",
+      "arm": "after"
+    },
+    {
+      "status": "ok",
+      "seconds": 5.91945826401934,
+      "returncode": 0,
+      "load_before": [
+        52.4375,
+        95.326171875,
+        79.2333984375
+      ],
+      "load_after": [
+        51.841796875,
+        94.490234375,
+        79.04931640625
+      ],
+      "stdout": "\u26a0 [1317/1317] Built PrimeCert.Comparator.ReplayPair (4.6s)\ninfo: PrimeCert/Comparator/ReplayPair.lean:8:0: exact prime_cert%\n  [sieve {2; 223; 4153; 57467; 132049},\n   pock3 (31757755568855353, 5, 1, interval 4028944, 2 ^ 3 * 223 * 4153),\n   pock3 (74058212732561358302231226437062788676166966415465897661863160754340907, 2, 1, interval 786343672787837091059418602, 2 * 57467 * 132049 * 31757755568855353),\n   pock (57896044618658097711785492504343953926634992332820282019728792003956564819949, 2, 74058212732561358302231226437062788676166966415465897661863160754340907)]\nwarning: PrimeCert/Comparator/ReplayPair.lean:10:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/ReplayPair.lean:11:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/ReplayPair.lean:13:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1317 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.ReplayPair:olean"
+      ],
+      "block": 0,
+      "case": "render",
+      "arm": "primecert"
+    },
+    {
+      "status": "ok",
+      "seconds": 4.637643676018342,
+      "returncode": 0,
+      "load_before": [
+        51.841796875,
+        94.490234375,
+        79.04931640625
+      ],
+      "load_after": [
+        59.2216796875,
+        95.3125,
+        79.3984375
+      ],
+      "stdout": "\u2139 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (2.9s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPairPhases.lean:10:0: 29\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 0,
+      "case": "search",
+      "arm": "before"
+    },
+    {
+      "status": "ok",
+      "seconds": 4.5024002300342545,
+      "returncode": 0,
+      "load_before": [
+        59.2216796875,
+        95.3125,
+        79.3984375
+      ],
+      "load_after": [
+        58.40283203125,
+        94.54345703125,
+        79.23486328125
+      ],
+      "stdout": "\u2139 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (2.7s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPairPhases.lean:10:0: 29\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 0,
+      "case": "search",
+      "arm": "after"
+    },
+    {
+      "status": "ok",
+      "seconds": 6.581134894047864,
+      "returncode": 0,
+      "load_before": [
+        58.40283203125,
+        94.54345703125,
+        79.23486328125
+      ],
+      "load_after": [
+        57.0888671875,
+        93.6708984375,
+        79.03466796875
+      ],
+      "stdout": "\u26a0 [1317/1317] Built PrimeCert.Comparator.ReplayPair (4.0s)\ninfo: PrimeCert/Comparator/ReplayPair.lean:8:0: attempts 44\nwarning: PrimeCert/Comparator/ReplayPair.lean:10:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/ReplayPair.lean:11:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1317 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.ReplayPair:olean"
+      ],
+      "block": 0,
+      "case": "search",
+      "arm": "primecert"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.9385467380052432,
+      "returncode": 0,
+      "load_before": [
+        57.0888671875,
+        93.6708984375,
+        79.03466796875
+      ],
+      "load_after": [
+        55.47998046875,
+        92.72998046875,
+        78.80859375
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (1.1s)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 0,
+      "case": "replay",
+      "arm": "before"
+    },
+    {
+      "status": "ok",
+      "seconds": 3.338996206992306,
+      "returncode": 0,
+      "load_before": [
+        55.47998046875,
+        92.72998046875,
+        78.80859375
+      ],
+      "load_after": [
+        55.47998046875,
+        92.72998046875,
+        78.80859375
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (1.9s)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 0,
+      "case": "replay",
+      "arm": "after"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.8831530900206417,
+      "returncode": 0,
+      "load_before": [
+        55.47998046875,
+        92.72998046875,
+        78.80859375
+      ],
+      "load_after": [
+        53.83984375,
+        91.771484375,
+        78.5732421875
+      ],
+      "stdout": "\u26a0 [1315/1315] Built PrimeCert.Comparator.ReplayPair (1.7s)\nwarning: PrimeCert/Comparator/ReplayPair.lean:18:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/ReplayPair.lean:19:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1315 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.ReplayPair:olean"
+      ],
+      "block": 0,
+      "case": "replay",
+      "arm": "primecert"
+    },
+    {
+      "status": "ok",
+      "seconds": 3.2948719220003113,
+      "returncode": 0,
+      "load_before": [
+        53.83984375,
+        91.771484375,
+        78.5732421875
+      ],
+      "load_after": [
+        51.4501953125,
+        90.64599609375,
+        78.27978515625
+      ],
+      "stdout": "\u2139 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (2.1s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPairPhases.lean:6:111: Try this:\n  [apply] exact\n    Hex.Nat.natPrime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 0,
+      "case": "complete",
+      "arm": "before"
+    },
+    {
+      "status": "ok",
+      "seconds": 3.3086527889827266,
+      "returncode": 0,
+      "load_before": [
+        51.4501953125,
+        90.64599609375,
+        78.27978515625
+      ],
+      "load_after": [
+        51.4501953125,
+        90.64599609375,
+        78.27978515625
+      ],
+      "stdout": "\u2139 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (1.6s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPairPhases.lean:6:111: Try this:\n  [apply] exact\n    Hex.Nat.natPrime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 0,
+      "case": "complete",
+      "arm": "after"
+    },
+    {
+      "status": "ok",
+      "seconds": 4.117708816076629,
+      "returncode": 0,
+      "load_before": [
+        51.4501953125,
+        90.64599609375,
+        78.27978515625
+      ],
+      "load_after": [
+        49.412109375,
+        89.57275390625,
+        77.99853515625
+      ],
+      "stdout": "\u26a0 [1317/1317] Built PrimeCert.Comparator.ReplayPair (3.3s)\ninfo: PrimeCert/Comparator/ReplayPair.lean:7:111: Try this:\n  [apply] exact prime_cert%\n    [sieve {2; 223; 4153; 57467; 132049},\n     pock3 (31757755568855353, 5, 1, interval 4028944, 2 ^ 3 * 223 * 4153),\n     pock3 (74058212732561358302231226437062788676166966415465897661863160754340907, 2, 1, interval 786343672787837091059418602, 2 * 57467 * 132049 * 31757755568855353),\n     pock (57896044618658097711785492504343953926634992332820282019728792003956564819949, 2, 74058212732561358302231226437062788676166966415465897661863160754340907)]\nwarning: PrimeCert/Comparator/ReplayPair.lean:7:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1317 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.ReplayPair:olean"
+      ],
+      "block": 0,
+      "case": "complete",
+      "arm": "primecert"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.177374455030076,
+      "returncode": 0,
+      "load_before": [
+        49.412109375,
+        89.57275390625,
+        77.99853515625
+      ],
+      "load_after": [
+        47.376953125,
+        88.48388671875,
+        77.70849609375
+      ],
+      "stdout": "\u2714 [1317/1317] Built PrimeCert.Comparator.ReplayPair (1.3s)\nBuild completed successfully (1317 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.ReplayPair:olean"
+      ],
+      "block": 1,
+      "case": "imports",
+      "arm": "primecert"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.2837906499626115,
+      "returncode": 0,
+      "load_before": [
+        47.376953125,
+        88.48388671875,
+        77.70849609375
+      ],
+      "load_after": [
+        47.376953125,
+        88.48388671875,
+        77.70849609375
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (1.3s)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 1,
+      "case": "imports",
+      "arm": "after"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.5855807249899954,
+      "returncode": 0,
+      "load_before": [
+        47.376953125,
+        88.48388671875,
+        77.70849609375
+      ],
+      "load_after": [
+        47.376953125,
+        88.48388671875,
+        77.70849609375
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (794ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 1,
+      "case": "imports",
+      "arm": "before"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.960130863939412,
+      "returncode": 0,
+      "load_before": [
+        47.376953125,
+        88.48388671875,
+        77.70849609375
+      ],
+      "load_after": [
+        44.8642578125,
+        87.2802734375,
+        77.376953125
+      ],
+      "stdout": "\u2714 [1317/1317] Built PrimeCert.Comparator.ReplayPair (1.1s)\nBuild completed successfully (1317 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.ReplayPair:olean"
+      ],
+      "block": 1,
+      "case": "input",
+      "arm": "primecert"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.2569490149617195,
+      "returncode": 0,
+      "load_before": [
+        44.8642578125,
+        87.2802734375,
+        77.376953125
+      ],
+      "load_after": [
+        44.8642578125,
+        87.2802734375,
+        77.376953125
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (1.3s)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 1,
+      "case": "input",
+      "arm": "after"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.922642696998082,
+      "returncode": 0,
+      "load_before": [
+        44.8642578125,
+        87.2802734375,
+        77.376953125
+      ],
+      "load_after": [
+        43.033203125,
+        86.1962890625,
+        77.0791015625
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (1.1s)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 1,
+      "case": "input",
+      "arm": "before"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.030433470965363,
+      "returncode": 0,
+      "load_before": [
+        43.033203125,
+        86.1962890625,
+        77.0791015625
+      ],
+      "load_after": [
+        43.033203125,
+        86.1962890625,
+        77.0791015625
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (769ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 1,
+      "case": "literal",
+      "arm": "after"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.5298584009287879,
+      "returncode": 0,
+      "load_before": [
+        43.033203125,
+        86.1962890625,
+        77.0791015625
+      ],
+      "load_after": [
+        43.033203125,
+        86.1962890625,
+        77.0791015625
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (768ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 1,
+      "case": "literal",
+      "arm": "before"
+    },
+    {
+      "status": "ok",
+      "seconds": 3.359733051038347,
+      "returncode": 0,
+      "load_before": [
+        43.033203125,
+        86.1962890625,
+        77.0791015625
+      ],
+      "load_after": [
+        41.1884765625,
+        85.09716796875,
+        76.7724609375
+      ],
+      "stdout": "\u26a0 [1317/1317] Built PrimeCert.Comparator.ReplayPair (2.6s)\ninfo: PrimeCert/Comparator/ReplayPair.lean:8:0: exact prime_cert%\n  [sieve {2; 223; 4153; 57467; 132049},\n   pock3 (31757755568855353, 5, 1, interval 4028944, 2 ^ 3 * 223 * 4153),\n   pock3 (74058212732561358302231226437062788676166966415465897661863160754340907, 2, 1, interval 786343672787837091059418602, 2 * 57467 * 132049 * 31757755568855353),\n   pock (57896044618658097711785492504343953926634992332820282019728792003956564819949, 2, 74058212732561358302231226437062788676166966415465897661863160754340907)]\nwarning: PrimeCert/Comparator/ReplayPair.lean:10:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/ReplayPair.lean:11:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/ReplayPair.lean:13:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1317 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.ReplayPair:olean"
+      ],
+      "block": 1,
+      "case": "render",
+      "arm": "primecert"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.8960243809269741,
+      "returncode": 0,
+      "load_before": [
+        41.1884765625,
+        85.09716796875,
+        76.7724609375
+      ],
+      "load_after": [
+        41.1884765625,
+        85.09716796875,
+        76.7724609375
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (808ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 1,
+      "case": "render",
+      "arm": "after"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.4566067319829017,
+      "returncode": 0,
+      "load_before": [
+        41.1884765625,
+        85.09716796875,
+        76.7724609375
+      ],
+      "load_after": [
+        39.25146484375,
+        83.96630859375,
+        76.451171875
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (751ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 1,
+      "case": "render",
+      "arm": "before"
+    },
+    {
+      "status": "ok",
+      "seconds": 3.227482181042433,
+      "returncode": 0,
+      "load_before": [
+        39.25146484375,
+        83.96630859375,
+        76.451171875
+      ],
+      "load_after": [
+        39.25146484375,
+        83.96630859375,
+        76.451171875
+      ],
+      "stdout": "\u26a0 [1317/1317] Built PrimeCert.Comparator.ReplayPair (2.6s)\ninfo: PrimeCert/Comparator/ReplayPair.lean:8:0: attempts 44\nwarning: PrimeCert/Comparator/ReplayPair.lean:10:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/ReplayPair.lean:11:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1317 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.ReplayPair:olean"
+      ],
+      "block": 1,
+      "case": "search",
+      "arm": "primecert"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.296518746064976,
+      "returncode": 0,
+      "load_before": [
+        39.25146484375,
+        83.96630859375,
+        76.451171875
+      ],
+      "load_after": [
+        37.30908203125,
+        82.8212890625,
+        76.12109375
+      ],
+      "stdout": "\u2139 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (1.4s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPairPhases.lean:10:0: 29\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 1,
+      "case": "search",
+      "arm": "after"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.1809324169298634,
+      "returncode": 0,
+      "load_before": [
+        37.30908203125,
+        82.8212890625,
+        76.12109375
+      ],
+      "load_after": [
+        37.30908203125,
+        82.8212890625,
+        76.12109375
+      ],
+      "stdout": "\u2139 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (1.5s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPairPhases.lean:10:0: 29\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 1,
+      "case": "search",
+      "arm": "before"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.4048829140374437,
+      "returncode": 0,
+      "load_before": [
+        37.30908203125,
+        82.8212890625,
+        76.12109375
+      ],
+      "load_after": [
+        35.6826171875,
+        81.728515625,
+        75.80322265625
+      ],
+      "stdout": "\u26a0 [1315/1315] Built PrimeCert.Comparator.ReplayPair (774ms)\nwarning: PrimeCert/Comparator/ReplayPair.lean:18:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/ReplayPair.lean:19:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1315 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.ReplayPair:olean"
+      ],
+      "block": 1,
+      "case": "replay",
+      "arm": "primecert"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.4886911299545318,
+      "returncode": 0,
+      "load_before": [
+        35.6826171875,
+        81.728515625,
+        75.80322265625
+      ],
+      "load_after": [
+        35.6826171875,
+        81.728515625,
+        75.80322265625
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (760ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 1,
+      "case": "replay",
+      "arm": "after"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.9390666000545025,
+      "returncode": 0,
+      "load_before": [
+        35.6826171875,
+        81.728515625,
+        75.80322265625
+      ],
+      "load_after": [
+        35.6826171875,
+        81.728515625,
+        75.80322265625
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (900ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 1,
+      "case": "replay",
+      "arm": "before"
+    },
+    {
+      "status": "ok",
+      "seconds": 3.216520242043771,
+      "returncode": 0,
+      "load_before": [
+        35.6826171875,
+        81.728515625,
+        75.80322265625
+      ],
+      "load_after": [
+        34.4267578125,
+        80.70361328125,
+        75.50341796875
+      ],
+      "stdout": "\u26a0 [1317/1317] Built PrimeCert.Comparator.ReplayPair (2.5s)\ninfo: PrimeCert/Comparator/ReplayPair.lean:7:111: Try this:\n  [apply] exact prime_cert%\n    [sieve {2; 223; 4153; 57467; 132049},\n     pock3 (31757755568855353, 5, 1, interval 4028944, 2 ^ 3 * 223 * 4153),\n     pock3 (74058212732561358302231226437062788676166966415465897661863160754340907, 2, 1, interval 786343672787837091059418602, 2 * 57467 * 132049 * 31757755568855353),\n     pock (57896044618658097711785492504343953926634992332820282019728792003956564819949, 2, 74058212732561358302231226437062788676166966415465897661863160754340907)]\nwarning: PrimeCert/Comparator/ReplayPair.lean:7:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1317 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.ReplayPair:olean"
+      ],
+      "block": 1,
+      "case": "complete",
+      "arm": "primecert"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.617559500038624,
+      "returncode": 0,
+      "load_before": [
+        34.4267578125,
+        80.70361328125,
+        75.50341796875
+      ],
+      "load_after": [
+        34.4267578125,
+        80.70361328125,
+        75.50341796875
+      ],
+      "stdout": "\u2139 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (1.8s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPairPhases.lean:6:111: Try this:\n  [apply] exact\n    Hex.Nat.natPrime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 1,
+      "case": "complete",
+      "arm": "after"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.146692825946957,
+      "returncode": 0,
+      "load_before": [
+        34.4267578125,
+        80.70361328125,
+        75.50341796875
+      ],
+      "load_after": [
+        33.271484375,
+        79.69580078125,
+        75.205078125
+      ],
+      "stdout": "\u2139 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (1.4s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPairPhases.lean:6:111: Try this:\n  [apply] exact\n    Hex.Nat.natPrime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 1,
+      "case": "complete",
+      "arm": "before"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.7143363420618698,
+      "returncode": 0,
+      "load_before": [
+        33.271484375,
+        79.69580078125,
+        75.205078125
+      ],
+      "load_after": [
+        33.271484375,
+        79.69580078125,
+        75.205078125
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (945ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 2,
+      "case": "imports",
+      "arm": "before"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.5479453479638323,
+      "returncode": 0,
+      "load_before": [
+        33.271484375,
+        79.69580078125,
+        75.205078125
+      ],
+      "load_after": [
+        33.271484375,
+        79.69580078125,
+        75.205078125
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (757ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 2,
+      "case": "imports",
+      "arm": "after"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.8473960909759626,
+      "returncode": 0,
+      "load_before": [
+        33.271484375,
+        79.69580078125,
+        75.205078125
+      ],
+      "load_after": [
+        31.96826171875,
+        78.65478515625,
+        74.89208984375
+      ],
+      "stdout": "\u2714 [1317/1317] Built PrimeCert.Comparator.ReplayPair (1.1s)\nBuild completed successfully (1317 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.ReplayPair:olean"
+      ],
+      "block": 2,
+      "case": "imports",
+      "arm": "primecert"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.441619175951928,
+      "returncode": 0,
+      "load_before": [
+        31.96826171875,
+        78.65478515625,
+        74.89208984375
+      ],
+      "load_after": [
+        31.96826171875,
+        78.65478515625,
+        74.89208984375
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (715ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 2,
+      "case": "input",
+      "arm": "before"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.76644988800399,
+      "returncode": 0,
+      "load_before": [
+        31.96826171875,
+        78.65478515625,
+        74.89208984375
+      ],
+      "load_after": [
+        31.96826171875,
+        78.65478515625,
+        74.89208984375
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (987ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 2,
+      "case": "input",
+      "arm": "after"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.4237193940207362,
+      "returncode": 0,
+      "load_before": [
+        31.96826171875,
+        78.65478515625,
+        74.89208984375
+      ],
+      "load_after": [
+        30.76953125,
+        77.630859375,
+        74.5810546875
+      ],
+      "stdout": "\u2714 [1317/1317] Built PrimeCert.Comparator.ReplayPair (764ms)\nBuild completed successfully (1317 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.ReplayPair:olean"
+      ],
+      "block": 2,
+      "case": "input",
+      "arm": "primecert"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.6854008819209412,
+      "returncode": 0,
+      "load_before": [
+        30.76953125,
+        77.630859375,
+        74.5810546875
+      ],
+      "load_after": [
+        30.76953125,
+        77.630859375,
+        74.5810546875
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (736ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 2,
+      "case": "literal",
+      "arm": "before"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.4390074349939823,
+      "returncode": 0,
+      "load_before": [
+        30.76953125,
+        77.630859375,
+        74.5810546875
+      ],
+      "load_after": [
+        30.76953125,
+        77.630859375,
+        74.5810546875
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (735ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 2,
+      "case": "literal",
+      "arm": "after"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.6750751370564103,
+      "returncode": 0,
+      "load_before": [
+        30.76953125,
+        77.630859375,
+        74.5810546875
+      ],
+      "load_after": [
+        29.58642578125,
+        76.607421875,
+        74.26611328125
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (888ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 2,
+      "case": "render",
+      "arm": "before"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.4646222519222647,
+      "returncode": 0,
+      "load_before": [
+        29.58642578125,
+        76.607421875,
+        74.26611328125
+      ],
+      "load_after": [
+        29.58642578125,
+        76.607421875,
+        74.26611328125
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (753ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 2,
+      "case": "render",
+      "arm": "after"
+    },
+    {
+      "status": "ok",
+      "seconds": 3.641310837934725,
+      "returncode": 0,
+      "load_before": [
+        29.58642578125,
+        76.607421875,
+        74.26611328125
+      ],
+      "load_after": [
+        28.73828125,
+        75.65087890625,
+        73.96923828125
+      ],
+      "stdout": "\u26a0 [1317/1317] Built PrimeCert.Comparator.ReplayPair (2.9s)\ninfo: PrimeCert/Comparator/ReplayPair.lean:8:0: exact prime_cert%\n  [sieve {2; 223; 4153; 57467; 132049},\n   pock3 (31757755568855353, 5, 1, interval 4028944, 2 ^ 3 * 223 * 4153),\n   pock3 (74058212732561358302231226437062788676166966415465897661863160754340907, 2, 1, interval 786343672787837091059418602, 2 * 57467 * 132049 * 31757755568855353),\n   pock (57896044618658097711785492504343953926634992332820282019728792003956564819949, 2, 74058212732561358302231226437062788676166966415465897661863160754340907)]\nwarning: PrimeCert/Comparator/ReplayPair.lean:10:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/ReplayPair.lean:11:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/ReplayPair.lean:13:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1317 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.ReplayPair:olean"
+      ],
+      "block": 2,
+      "case": "render",
+      "arm": "primecert"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.7727650520391762,
+      "returncode": 0,
+      "load_before": [
+        28.73828125,
+        75.65087890625,
+        73.96923828125
+      ],
+      "load_after": [
+        28.73828125,
+        75.65087890625,
+        73.96923828125
+      ],
+      "stdout": "\u2139 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (1.9s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPairPhases.lean:10:0: 29\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 2,
+      "case": "search",
+      "arm": "before"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.778272475930862,
+      "returncode": 0,
+      "load_before": [
+        28.73828125,
+        75.65087890625,
+        73.96923828125
+      ],
+      "load_after": [
+        28.1181640625,
+        74.7431640625,
+        73.6845703125
+      ],
+      "stdout": "\u2139 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (1.0s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPairPhases.lean:10:0: 29\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 2,
+      "case": "search",
+      "arm": "after"
+    },
+    {
+      "status": "ok",
+      "seconds": 3.5662887159269303,
+      "returncode": 0,
+      "load_before": [
+        28.1181640625,
+        74.7431640625,
+        73.6845703125
+      ],
+      "load_after": [
+        27.2275390625,
+        73.7841796875,
+        73.3798828125
+      ],
+      "stdout": "\u26a0 [1317/1317] Built PrimeCert.Comparator.ReplayPair (2.6s)\ninfo: PrimeCert/Comparator/ReplayPair.lean:8:0: attempts 44\nwarning: PrimeCert/Comparator/ReplayPair.lean:10:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/ReplayPair.lean:11:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1317 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.ReplayPair:olean"
+      ],
+      "block": 2,
+      "case": "search",
+      "arm": "primecert"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.327778437989764,
+      "returncode": 0,
+      "load_before": [
+        27.2275390625,
+        73.7841796875,
+        73.3798828125
+      ],
+      "load_after": [
+        27.2275390625,
+        73.7841796875,
+        73.3798828125
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (1.5s)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 2,
+      "case": "replay",
+      "arm": "before"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.5915949270129204,
+      "returncode": 0,
+      "load_before": [
+        27.2275390625,
+        73.7841796875,
+        73.3798828125
+      ],
+      "load_after": [
+        27.2275390625,
+        73.7841796875,
+        73.3798828125
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (789ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 2,
+      "case": "replay",
+      "arm": "after"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.6395930530270562,
+      "returncode": 0,
+      "load_before": [
+        27.2275390625,
+        73.7841796875,
+        73.3798828125
+      ],
+      "load_after": [
+        26.6484375,
+        72.89111328125,
+        73.0927734375
+      ],
+      "stdout": "\u26a0 [1315/1315] Built PrimeCert.Comparator.ReplayPair (909ms)\nwarning: PrimeCert/Comparator/ReplayPair.lean:18:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/ReplayPair.lean:19:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1315 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.ReplayPair:olean"
+      ],
+      "block": 2,
+      "case": "replay",
+      "arm": "primecert"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.140550579992123,
+      "returncode": 0,
+      "load_before": [
+        26.6484375,
+        72.89111328125,
+        73.0927734375
+      ],
+      "load_after": [
+        26.6484375,
+        72.89111328125,
+        73.0927734375
+      ],
+      "stdout": "\u2139 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (1.3s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPairPhases.lean:6:111: Try this:\n  [apply] exact\n    Hex.Nat.natPrime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 2,
+      "case": "complete",
+      "arm": "before"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.061775834998116,
+      "returncode": 0,
+      "load_before": [
+        26.6484375,
+        72.89111328125,
+        73.0927734375
+      ],
+      "load_after": [
+        26.11572265625,
+        72.0126953125,
+        72.80712890625
+      ],
+      "stdout": "\u2139 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (1.4s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPairPhases.lean:6:111: Try this:\n  [apply] exact\n    Hex.Nat.natPrime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 2,
+      "case": "complete",
+      "arm": "after"
+    },
+    {
+      "status": "ok",
+      "seconds": 3.848704637028277,
+      "returncode": 0,
+      "load_before": [
+        26.11572265625,
+        72.0126953125,
+        72.80712890625
+      ],
+      "load_after": [
+        26.11572265625,
+        72.0126953125,
+        72.80712890625
+      ],
+      "stdout": "\u26a0 [1317/1317] Built PrimeCert.Comparator.ReplayPair (3.2s)\ninfo: PrimeCert/Comparator/ReplayPair.lean:7:111: Try this:\n  [apply] exact prime_cert%\n    [sieve {2; 223; 4153; 57467; 132049},\n     pock3 (31757755568855353, 5, 1, interval 4028944, 2 ^ 3 * 223 * 4153),\n     pock3 (74058212732561358302231226437062788676166966415465897661863160754340907, 2, 1, interval 786343672787837091059418602, 2 * 57467 * 132049 * 31757755568855353),\n     pock (57896044618658097711785492504343953926634992332820282019728792003956564819949, 2, 74058212732561358302231226437062788676166966415465897661863160754340907)]\nwarning: PrimeCert/Comparator/ReplayPair.lean:7:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1317 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.ReplayPair:olean"
+      ],
+      "block": 2,
+      "case": "complete",
+      "arm": "primecert"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.4298274170141667,
+      "returncode": 0,
+      "load_before": [
+        26.11572265625,
+        72.0126953125,
+        72.80712890625
+      ],
+      "load_after": [
+        25.3857421875,
+        71.09912109375,
+        72.50732421875
+      ],
+      "stdout": "\u2714 [1317/1317] Built PrimeCert.Comparator.ReplayPair (776ms)\nBuild completed successfully (1317 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.ReplayPair:olean"
+      ],
+      "block": 3,
+      "case": "imports",
+      "arm": "primecert"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.5104509009979665,
+      "returncode": 0,
+      "load_before": [
+        25.3857421875,
+        71.09912109375,
+        72.50732421875
+      ],
+      "load_after": [
+        25.3857421875,
+        71.09912109375,
+        72.50732421875
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (700ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 3,
+      "case": "imports",
+      "arm": "after"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.4808723280439153,
+      "returncode": 0,
+      "load_before": [
+        25.3857421875,
+        71.09912109375,
+        72.50732421875
+      ],
+      "load_after": [
+        25.3857421875,
+        71.09912109375,
+        72.50732421875
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (733ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 3,
+      "case": "imports",
+      "arm": "before"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.5326256289845333,
+      "returncode": 0,
+      "load_before": [
+        25.3857421875,
+        71.09912109375,
+        72.50732421875
+      ],
+      "load_after": [
+        25.3857421875,
+        71.09912109375,
+        72.50732421875
+      ],
+      "stdout": "\u2714 [1317/1317] Built PrimeCert.Comparator.ReplayPair (786ms)\nBuild completed successfully (1317 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.ReplayPair:olean"
+      ],
+      "block": 3,
+      "case": "input",
+      "arm": "primecert"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.431699390988797,
+      "returncode": 0,
+      "load_before": [
+        25.3857421875,
+        71.09912109375,
+        72.50732421875
+      ],
+      "load_after": [
+        24.7939453125,
+        70.21728515625,
+        72.21435546875
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (696ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 3,
+      "case": "input",
+      "arm": "after"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.4275693390518427,
+      "returncode": 0,
+      "load_before": [
+        24.7939453125,
+        70.21728515625,
+        72.21435546875
+      ],
+      "load_after": [
+        24.7939453125,
+        70.21728515625,
+        72.21435546875
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (738ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 3,
+      "case": "input",
+      "arm": "before"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.472091353032738,
+      "returncode": 0,
+      "load_before": [
+        24.7939453125,
+        70.21728515625,
+        72.21435546875
+      ],
+      "load_after": [
+        24.7939453125,
+        70.21728515625,
+        72.21435546875
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (759ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 3,
+      "case": "literal",
+      "arm": "after"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.462038520956412,
+      "returncode": 0,
+      "load_before": [
+        24.7939453125,
+        70.21728515625,
+        72.21435546875
+      ],
+      "load_after": [
+        24.16943359375,
+        69.33349609375,
+        71.91748046875
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (748ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 3,
+      "case": "literal",
+      "arm": "before"
+    },
+    {
+      "status": "ok",
+      "seconds": 3.235966361942701,
+      "returncode": 0,
+      "load_before": [
+        24.16943359375,
+        69.33349609375,
+        71.91748046875
+      ],
+      "load_after": [
+        24.16943359375,
+        69.33349609375,
+        71.91748046875
+      ],
+      "stdout": "\u26a0 [1317/1317] Built PrimeCert.Comparator.ReplayPair (2.5s)\ninfo: PrimeCert/Comparator/ReplayPair.lean:8:0: exact prime_cert%\n  [sieve {2; 223; 4153; 57467; 132049},\n   pock3 (31757755568855353, 5, 1, interval 4028944, 2 ^ 3 * 223 * 4153),\n   pock3 (74058212732561358302231226437062788676166966415465897661863160754340907, 2, 1, interval 786343672787837091059418602, 2 * 57467 * 132049 * 31757755568855353),\n   pock (57896044618658097711785492504343953926634992332820282019728792003956564819949, 2, 74058212732561358302231226437062788676166966415465897661863160754340907)]\nwarning: PrimeCert/Comparator/ReplayPair.lean:10:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/ReplayPair.lean:11:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/ReplayPair.lean:13:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1317 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.ReplayPair:olean"
+      ],
+      "block": 3,
+      "case": "render",
+      "arm": "primecert"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.4445698180934414,
+      "returncode": 0,
+      "load_before": [
+        24.16943359375,
+        69.33349609375,
+        71.91748046875
+      ],
+      "load_after": [
+        23.35498046875,
+        68.41455078125,
+        71.60595703125
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (744ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 3,
+      "case": "render",
+      "arm": "after"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.4913705489598215,
+      "returncode": 0,
+      "load_before": [
+        23.35498046875,
+        68.41455078125,
+        71.60595703125
+      ],
+      "load_after": [
+        23.35498046875,
+        68.41455078125,
+        71.60595703125
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (776ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 3,
+      "case": "render",
+      "arm": "before"
+    },
+    {
+      "status": "ok",
+      "seconds": 3.2560637110145763,
+      "returncode": 0,
+      "load_before": [
+        23.35498046875,
+        68.41455078125,
+        71.60595703125
+      ],
+      "load_after": [
+        22.525390625,
+        67.494140625,
+        71.291015625
+      ],
+      "stdout": "\u26a0 [1317/1317] Built PrimeCert.Comparator.ReplayPair (2.5s)\ninfo: PrimeCert/Comparator/ReplayPair.lean:8:0: attempts 44\nwarning: PrimeCert/Comparator/ReplayPair.lean:10:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/ReplayPair.lean:11:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1317 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.ReplayPair:olean"
+      ],
+      "block": 3,
+      "case": "search",
+      "arm": "primecert"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.1352517140330747,
+      "returncode": 0,
+      "load_before": [
+        22.525390625,
+        67.494140625,
+        71.291015625
+      ],
+      "load_after": [
+        22.525390625,
+        67.494140625,
+        71.291015625
+      ],
+      "stdout": "\u2139 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (1.3s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPairPhases.lean:10:0: 29\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 3,
+      "case": "search",
+      "arm": "after"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.0959125630324706,
+      "returncode": 0,
+      "load_before": [
+        22.525390625,
+        67.494140625,
+        71.291015625
+      ],
+      "load_after": [
+        22.525390625,
+        67.494140625,
+        71.291015625
+      ],
+      "stdout": "\u2139 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (1.4s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPairPhases.lean:10:0: 29\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 3,
+      "case": "search",
+      "arm": "before"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.5100076540838927,
+      "returncode": 0,
+      "load_before": [
+        22.525390625,
+        67.494140625,
+        71.291015625
+      ],
+      "load_after": [
+        22.16259765625,
+        66.67236328125,
+        71.00439453125
+      ],
+      "stdout": "\u26a0 [1315/1315] Built PrimeCert.Comparator.ReplayPair (807ms)\nwarning: PrimeCert/Comparator/ReplayPair.lean:18:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nwarning: PrimeCert/Comparator/ReplayPair.lean:19:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1315 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.ReplayPair:olean"
+      ],
+      "block": 3,
+      "case": "replay",
+      "arm": "primecert"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.4823605041019619,
+      "returncode": 0,
+      "load_before": [
+        22.16259765625,
+        66.67236328125,
+        71.00439453125
+      ],
+      "load_after": [
+        22.16259765625,
+        66.67236328125,
+        71.00439453125
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (730ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 3,
+      "case": "replay",
+      "arm": "after"
+    },
+    {
+      "status": "ok",
+      "seconds": 1.4902511490508914,
+      "returncode": 0,
+      "load_before": [
+        22.16259765625,
+        66.67236328125,
+        71.00439453125
+      ],
+      "load_after": [
+        22.16259765625,
+        66.67236328125,
+        71.00439453125
+      ],
+      "stdout": "\u2714 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (768ms)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 3,
+      "case": "replay",
+      "arm": "before"
+    },
+    {
+      "status": "ok",
+      "seconds": 3.245067561045289,
+      "returncode": 0,
+      "load_before": [
+        22.16259765625,
+        66.67236328125,
+        71.00439453125
+      ],
+      "load_after": [
+        20.9482421875,
+        65.681640625,
+        70.66015625
+      ],
+      "stdout": "\u26a0 [1317/1317] Built PrimeCert.Comparator.ReplayPair (2.6s)\ninfo: PrimeCert/Comparator/ReplayPair.lean:7:111: Try this:\n  [apply] exact prime_cert%\n    [sieve {2; 223; 4153; 57467; 132049},\n     pock3 (31757755568855353, 5, 1, interval 4028944, 2 ^ 3 * 223 * 4153),\n     pock3 (74058212732561358302231226437062788676166966415465897661863160754340907, 2, 1, interval 786343672787837091059418602, 2 * 57467 * 132049 * 31757755568855353),\n     pock (57896044618658097711785492504343953926634992332820282019728792003956564819949, 2, 74058212732561358302231226437062788676166966415465897661863160754340907)]\nwarning: PrimeCert/Comparator/ReplayPair.lean:7:100: This line exceeds the 100 character limit, please shorten it!\n\nNote: This linter can be disabled with `set_option linter.style.longLine false`\nBuild completed successfully (1317 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+PrimeCert.Comparator.ReplayPair:olean"
+      ],
+      "block": 3,
+      "case": "complete",
+      "arm": "primecert"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.158816713024862,
+      "returncode": 0,
+      "load_before": [
+        20.9482421875,
+        65.681640625,
+        70.66015625
+      ],
+      "load_after": [
+        20.9482421875,
+        65.681640625,
+        70.66015625
+      ],
+      "stdout": "\u2139 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (1.4s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPairPhases.lean:6:111: Try this:\n  [apply] exact\n    Hex.Nat.natPrime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 3,
+      "case": "complete",
+      "arm": "after"
+    },
+    {
+      "status": "ok",
+      "seconds": 2.715410014963709,
+      "returncode": 0,
+      "load_before": [
+        20.9482421875,
+        65.681640625,
+        70.66015625
+      ],
+      "load_after": [
+        20.6318359375,
+        64.873046875,
+        70.37158203125
+      ],
+      "stdout": "\u2139 [796/796] Built HexPrimality.ProofProbe.Curve25519.ReplayPairPhases (1.9s)\ninfo: bench/HexPrimality/ProofProbe/Curve25519/ReplayPairPhases.lean:6:111: Try this:\n  [apply] exact\n    Hex.Nat.natPrime_of_checkPrimeAt (c :=\n      Hex.Nat.PrimeCert.pock 57896044618658097711785492504343953926634992332820282019728792003956564819949\n        [(2, 0,\n            Hex.Nat.PrimeCert.pock3 74058212732561358302231226437062788676166966415465897661863160754340907\n              2028478494862525422475607 22304740449229861598212 2028478494862525422475606\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 353),\n                (2, 0, Hex.Nat.PrimeCert.small 57467),\n                (2, 0,\n                  Hex.Nat.PrimeCert.pock3 31757755568855353 4028945 289 4028944\n                    [(5, 2, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 223),\n                      (2, 0, Hex.Nat.PrimeCert.small 4153)])])])\n      (by decide +kernel)\nBuild completed successfully (796 jobs).\n",
+      "stderr": "",
+      "command": [
+        "lake",
+        "build",
+        "+HexPrimality.ProofProbe.Curve25519.ReplayPairPhases:olean"
+      ],
+      "block": 3,
+      "case": "complete",
+      "arm": "before"
+    }
+  ]
+}
