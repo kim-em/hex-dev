@@ -1195,7 +1195,9 @@ typeclass-based `HexPoly` routines.
 The [hex-sturm SPEC](Libraries/hex-sturm.md) fixes the frontend API, failure
 and termination contracts, replay and evidence requirements, and coordinated
 prerequisite contracts in hex-poly and hex-real-roots. The shared clauses
-below also govern the other family directives.
+below also govern the other family directives. The
+[hex-sturm-mathlib SPEC](Libraries/hex-sturm-mathlib.md) fixes the companion
+statements and the shared theorem contract in hex-real-roots-mathlib.
 
 For total semantic field carriers, use Lean core's `Lean.Grind.Field`,
 `Lean.Grind.OrderedRing`, total-order classes from `Init.Data.Order`, and
@@ -1559,7 +1561,7 @@ the dependency diagram above is the library import contract.
 
 | Computational SPEC | Companion SPEC |
 | --- | --- |
-| [hex-sturm SPEC](Libraries/hex-sturm.md) ([#10311](https://github.com/kim-em/hex-dev/issues/10311)) | [hex-sturm-mathlib #10312](https://github.com/kim-em/hex-dev/issues/10312) |
+| [hex-sturm SPEC](Libraries/hex-sturm.md) ([#10311](https://github.com/kim-em/hex-dev/issues/10311)) | [hex-sturm-mathlib SPEC](Libraries/hex-sturm-mathlib.md) ([#10312](https://github.com/kim-em/hex-dev/issues/10312)) |
 | [hex-sign-det #10313](https://github.com/kim-em/hex-dev/issues/10313) | [hex-sign-det-mathlib #10314](https://github.com/kim-em/hex-dev/issues/10314) |
 | [hex-ordered-fn #10315](https://github.com/kim-em/hex-dev/issues/10315) ([SPEC](Libraries/hex-ordered-fn.md)) | [hex-ordered-fn-mathlib #10316](https://github.com/kim-em/hex-dev/issues/10316) |
 | [hex-real-closure #10317](https://github.com/kim-em/hex-dev/issues/10317) | [hex-real-closure-mathlib #10318](https://github.com/kim-em/hex-dev/issues/10318) |

@@ -9,8 +9,8 @@ This is a planned computational library in the
 [real-closure family](../future-work.md#real-closures-of-ordered-fields).
 All declarations below are required API or mathematical statement shapes,
 not existing or checked Lean declarations. No source target or phase is
-registered by this SPEC. The companion has its own directive,
-[#10312](https://github.com/kim-em/hex-dev/issues/10312).
+registered by this SPEC. The companion has its own
+[SPEC](hex-sturm-mathlib.md) ([#10312](https://github.com/kim-em/hex-dev/issues/10312)).
 
 `HexSturm` depends on `HexPoly` and `HexRealRoots`, with no Mathlib or
 Batteries import. Its namespace is `Hex.Sturm`. Its substantive work is
