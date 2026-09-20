@@ -88,3 +88,10 @@ Development happens in the
 [`hex-dev`](https://github.com/kim-em/hex-dev) monorepo, not in this published
 mirror. Contributions are welcome as pull requests to the `SPEC/` directory:
 describe the behavior you want and leave the implementation to the maintainer.
+
+For bounded construction of secp256k1, P-384 and Curve448 certificates, import
+`HexIntFactor.Construction` and use
+`primality? (factor := Hex.Nat.ecmFactorSearch)` with a local
+`set_option maxHeartbeats 4000000`. This explicit ECM route keeps the default
+primality and factorization portfolios unchanged. Apply its emitted literal
+certificate to avoid repeating search.

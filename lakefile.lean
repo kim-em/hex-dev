@@ -631,7 +631,7 @@ lean_lib HexPrimalityElabProbeScientific where
 
 lean_lib HexIntFactorKernelProbe where
   srcDir := "bench"
-  globs := #[`HexBench.IntFactorKernel,
+  globs := #[`HexBench.IntFactorKernel, `HexIntFactor.FieldBench,
     `HexIntFactor.ProofProbe.Support,
     `HexIntFactor.ProofProbe.Baseline,
     `HexIntFactor.ProofProbe.Replay1,
@@ -991,7 +991,8 @@ lean_lib HexConformance where
 
     ++ #[`HexMvHensel.Conformance, `HexMvFactor.Conformance].map Glob.one
 
-    ++ #[`HexIntFactor.Conformance,
+    ++ #[`HexIntFactor.Conformance, `HexIntFactor.FieldConstruction,
+      `HexIntFactor.FieldReplay,
       `HexIntFactor.PrimalityConformance].map Glob.one
 
     ++ #[`HexPolySmith.Conformance].map Glob.one

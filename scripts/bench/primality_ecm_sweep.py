@@ -73,13 +73,21 @@ def work_bound(b1, b2):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--paths-only', action='store_true',
+                        help='reuse the residual evidence; measure full construction and traces only')
+    parser.add_argument('--curves', type=int, default=CONSTRUCTION[2])
     args = parser.parse_args()
+    if not 0 <= args.curves <= 64:
+        parser.error('curves must be in [0,64]')
+    construction = (*CONSTRUCTION[:2], args.curves)
+    tiers = [] if args.paths_only else TIERS
     if args.output.exists() or SOURCE.exists():
         parser.error('output and temporary proof module must not already exist')
     subprocess.run(['lake', 'build', 'hexprimality_field_probe'], cwd=ROOT, check=True)
     cpu = pick()
     sources = ['bench/HexPrimality/FieldProbe.lean',
                'scripts/bench/primality_ecm_sweep.py', 'HexIntFactor/Ecm.lean',
+               'HexIntFactor/EcmStage2.lean', 'HexIntFactor/Construction.lean',
                'HexPrimality/Construction.lean', 'HexPrimality/Search.lean',
                'HexPrimality/PMinusOne.lean', 'HexPrimality/Cert.lean',
                'HexPrimality/Elab.lean', 'scripts/bench/primality_field_sweep.py',
@@ -90,7 +98,7 @@ def main():
                   source_sha256={p: hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in sources},
                   executable_sha256=hashlib.sha256(PROBE.read_bytes()).hexdigest(),
                   protocol='two fixed trial-major blocks, adjacent AB/BA; no rejected samples',
-                  tiers=TIERS, construction=CONSTRUCTION, samples=[],
+                  tiers=tiers, construction=construction, samples=[],
                   p_minus_one_stage2='SPEC contract exists; implementation absent in measured sources',
                   diagnostic_factorizations=FACTORIZATIONS, work_allocations=[])
     args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -120,7 +128,7 @@ def main():
         run([PROBE, 'validate', RESIDUALS[name], *factors], phase='diagnostic-validation', case=name)
     # Run every scheduled curve even after a success, so the full distribution
     # and all-miss counts do not depend on an early-stop reporting convention.
-    for b1, b2, curves in TIERS:
+    for b1, b2, curves in tiers:
         two_work, one_work = work_bound(b1, b2), work_bound(b1, b1)
         total = curves * two_work
         one_curves = total // one_work
@@ -145,7 +153,7 @@ def main():
                 name, n = case['name'], case['n']
                 for arm in order:
                     command = ([PROBE, 'construction', n, 521, 32, 32768] if arm == 'baseline'
-                               else [PROBE, 'construction2', n, *CONSTRUCTION])
+                               else [PROBE, 'construction2', n, *construction])
                     row = run(command, phase='construction', block=block, case=name, arm=arm)
                     result = row['result']
                     if result['status'] == 'ok':
@@ -173,7 +181,7 @@ def main():
         for case in cases:
             for arm in ['baseline', 'ecm2']:
                 command = ([PROBE, 'trace', case['n'], 521, 32, 32768] if arm == 'baseline'
-                           else [PROBE, 'trace2', case['n'], *CONSTRUCTION])
+                           else [PROBE, 'trace2', case['n'], *construction])
                 run(command, phase='trace', case=case['name'], arm=arm)
         children = dict(CHILDREN)
         for name in ['secp256k1', 'P-384-child', 'Curve448']:
@@ -181,7 +189,7 @@ def main():
                 children[f'{name}-factor-{index}'] = n
         # These are independent diagnostic subjects, never inputs to root factor search.
         for name, n in children.items():
-            run([PROBE, 'trace2', n, *CONSTRUCTION], phase='child-trace', case=name, n=str(n))
+            run([PROBE, 'trace2', n, *construction], phase='child-trace', case=name, n=str(n))
             print('child', name, flush=True)
     finally:
         SOURCE.unlink(missing_ok=True)

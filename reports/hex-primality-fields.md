@@ -7,6 +7,10 @@ divisor-sieve cap, and factoring budgets are unchanged. This brings the fixed
 corpus to **nine of twelve** constructed inputs. secp256k1, P-384, and Curve448
 still exhaust; this report does not claim constructor support for them.
 
+The follow-up [ECM stage-2 investigation](hex-primality-ecm-stage2.md) supplies
+an explicitly selected downstream factor provider that constructs the remaining
+three primes. Plain `primality?` retains the policy and coverage described here.
+
 The change is confined to untrusted search policy. The checker, certificate
 language, soundness theorems, ordinary `primality` policy, and HexIntFactor
 portfolio are unchanged. No production tactic invokes an external factorizer.

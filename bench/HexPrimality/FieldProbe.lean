@@ -7,8 +7,7 @@ Authors: Kim Morrison
 module
 
 import HexPrimality
-import all HexPrimality.Construction
-import all HexIntFactor.Ecm
+import HexIntFactor.Construction
 import Lean.Data.Json
 
 /-! Offline standard-field investigation. Explicit budgets let the runner compare
@@ -17,150 +16,7 @@ this executable is never invoked by certificate construction. -/
 
 namespace Hex.PrimalityFieldProbe
 open Hex.Nat
-/-! Bounded offline ECM continuation. `import all` deliberately reuses the exact
-stage-1 arithmetic without exporting a production API or changing dependencies. -/
-namespace Ecm
 
-structure State where
-  n : Nat
-  num : Nat
-  den : Nat
-  point : EcmPoint
-
--- Setup and stage 1 match the natural-number production backend exactly.
-def start (n sigma b₁ : Nat) : EcmResult × Option State := Id.run do
-  if n < 4 || sigma < 6 then return (.noFactor, none)
-  let u := (sigma * sigma + n - 5) % n
-  let v := 4 * sigma % n
-  let u3 := u * u % n * u % n
-  let v3 := v * v % n * v % n
-  let vu := (v + n - u) % n
-  let num := vu * vu % n * vu % n * ((3 * u + v) % n) % n
-  let den := 4 * u3 % n * v % n
-  let setup := classifyGcd n (Nat.gcd den n)
-  if setup != .noFactor then return (setup, none)
-  let den := 4 * den % n
-  let point := stageMultiply n b₁ num den (primesBelow (b₁ + 1)) ⟨u3, v3⟩
-  let result := classifyGcd n (Nat.gcd point.z n)
-  return (result, if result == .noFactor then some ⟨n, num, den, point⟩ else none)
-
-structure Trace where
-  result : EcmResult := .noFactor
-  candidates : Nat := 0
-  advances : Nat := 0
-  batches : Nat := 0
-  recovery : List Nat := []
-  lastPrime : Nat := 0
-  oracleMismatch : Bool := false
-  deriving Repr
-
--- A whole leaf does not mask a later proper leaf.
-def flush (n product : Nat) (terms : Array Nat) : EcmResult × List Nat := Id.run do
-  let result := classifyGcd n (Nat.gcd product n)
-  if result != .whole then return (result, [])
-  let mut recovery := []
-  for t in terms do
-    let g := Nat.gcd t n
-    recovery := recovery ++ [g]
-    if let .factor d := classifyGcd n g then return (.factor d, recovery)
-  return (.whole, recovery)
-
-/- Every prime in `(b₁,b₂]` is mapped to q = 210*i+j. Cross differences also
-admit the opposite sign, but all exits still validate a proper divisor. For
-small q (i=0), use `[q]Q.z` directly to avoid the point at infinity. -/
-def stage2 (s : State) (b₁ b₂ : Nat) (checkGiants : Bool := false) : Trace := Id.run do
-  if b₂ ≤ b₁ then return {}
-  let primes := (primesBelow (b₂ + 1)).filter (b₁ < ·)
-  if primes.isEmpty then return {}
-  let mul := scalarMul s.n s.num s.den s.point
-  let babies := (List.range 210).toArray.map mul
-  let step := mul 210
-  let mut previous : EcmPoint := ⟨1, 0⟩
-  let mut giant := step
-  let mut index := 1
-  let mut terms := #[]
-  let mut product := 1
-  let mut trace : Trace := {}
-  for q in primes do
-    let i := q / 210
-    let j := q % 210
-    while index < i do
-      let next := if index == 1 then xDouble s.n s.num s.den giant
-        else xAdd s.n giant step previous
-      previous := giant
-      giant := next
-      index := index + 1
-      trace := { trace with advances := trace.advances + 1 }
-    if checkGiants && i > 0 then
-      let direct := mul (210 * i)
-      if (direct.x * giant.z) % s.n != (giant.x * direct.z) % s.n then
-        trace := { trace with oracleMismatch := true }
-    let t := if i == 0 then (mul q).z else
-      let baby := babies[j]' (by simp [babies, j]; omega)
-      (giant.x * baby.z % s.n + s.n - baby.x * giant.z % s.n) % s.n
-    product := product * t % s.n
-    terms := terms.push t
-    trace := { trace with candidates := trace.candidates + 1, lastPrime := q }
-    if terms.size == 32 then
-      let (result, recovery) := flush s.n product terms
-      trace := { trace with batches := trace.batches + 1, result, recovery }
-      if result != .noFactor then return trace
-      terms := #[]
-      product := 1
-  if !terms.isEmpty then
-    let (result, recovery) := flush s.n product terms
-    trace := { trace with batches := trace.batches + 1, result, recovery }
-  return trace
-
--- Requests are rejected rather than silently changed. Stage one has its existing cap.
-def validBounds (b₁ b₂ : Nat) : Bool := b₁ ≤ 524288 && b₂ ≤ 4194304
-
-def search (n sigma b₁ b₂ allowance : Nat) : EcmResult × Nat :=
-  if allowance == 0 || !validBounds b₁ b₂ then (.noFactor, 0) else
-  let (result, saved) := start n sigma b₁
-  match saved with
-  | some s => if b₂ > b₁ && allowance > 1 then ((stage2 s b₁ b₂).result, 2)
-      else (result, 1)
-  | none => (result, 1)
-
--- The experimental provider first uses the unchanged core portfolio, then
--- splits its residual with bounded ECM. Successful splits return to that same
--- core portfolio to discover prime candidates; it never consumes known factors.
-def provider (b₁ b₂ curves : Nat) (trace : Bool) : FactorSearch := fun allocation n r => Id.run do
-  let initial := Construction.factorSearch allocation n r
-  let limit := allocation.attemptLimit.getD 1024
-  let mut work := initial.attempts
-  let mut rand := initial.rand
-  let mut factors := initial.raw.factors
-  let mut residual := 1
-  let mut stack := [initial.raw.residual]
-  for _ in [:allocation.factorFuel] do
-    let m :: rest := stack | break
-    stack := rest
-    if m ≤ 1 then continue
-    let mut divisor := 0
-    for curve in [:min curves 64] do
-      if work ≥ limit then break
-      let (result, used) := search m (6 + curve) b₁ b₂ (limit - work)
-      work := work + used
-      if trace then
-        dbg_trace "ecm {m}: sigma {6+curve}; bounds {b₁}/{b₂}; {repr result}; attempts {used}"
-      if let .factor d := result then
-        if 1 < d && d < m && m % d == 0 then
-          divisor := d
-          break
-    if divisor == 0 then residual := residual * m
-    else
-      for part in [divisor, m / divisor] do
-        let found := Construction.factorSearch { allocation with attemptLimit := some (limit - work) } part rand
-        work := work + found.attempts
-        rand := found.rand
-        for (p, e) in found.raw.factors do
-          factors := Construction.insert p e factors
-        stack := found.raw.residual :: stack
-  return ⟨⟨factors, stack.foldl (· * ·) residual⟩, rand, work⟩
-
-end Ecm
 
 /-- Native construction timing, excluding parsing, process startup, and
 certificate formatting. The public construction route includes its self-check. -/
@@ -238,7 +94,7 @@ def run (args : List String) : IO UInt32 := do
       throw (IO.userError "attempt allowance")
     for allowance in [0, 1, 2, 3, 8, 32] do
       let a := { constructionBudget.factor with attemptLimit := some allowance }
-      let result := Ecm.provider 16 1024 8 false a 1022117 (Hex.Rand.ofSeed 1)
+      let result := ecmFactorSearch 16 1024 8 false a 1022117 (Hex.Rand.ofSeed 1)
       unless result.attempts ≤ allowance &&
           result.raw.factors.foldl (fun acc (q,e) => acc*q^e) result.raw.residual == 1022117 do
         throw (IO.userError "provider boundary")
@@ -271,7 +127,7 @@ def run (args : List String) : IO UInt32 := do
       let some [n, b₁, b₂, curves] := [nArg, b1Arg, b2Arg, curvesArg].mapM String.toNat? | return 2
       unless Ecm.validBounds b₁ b₂ && curves ≤ 64 do return 2
       return ← runConstruction n 521 32 32768 (mode == "trace2")
-        (Ecm.provider b₁ b₂ curves (mode == "trace2"))
+        (ecmFactorSearch b₁ b₂ curves (mode == "trace2"))
   if let "validate" :: nArg :: factorArgs := args then
     let some n := nArg.toNat? | return 2
     let some factors := factorArgs.mapM String.toNat? | return 2

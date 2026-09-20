@@ -377,6 +377,26 @@ meta def suppliedCertificate (stx : Term) (n : Nat) : Term.TermElabM Hex.Nat.Pri
     throwError "primality? using: certificate for {n} failed checkPrime"
   return cert
 
+private meta unsafe def evalProducerUnsafe (e : Expr) : MetaM Hex.Nat.FactorSearch :=
+  evalExpr Hex.Nat.FactorSearch (mkConst ``Hex.Nat.FactorSearch) e
+
+@[implemented_by evalProducerUnsafe]
+private meta opaque evalProducer (e : Expr) : MetaM Hex.Nat.FactorSearch
+
+private meta def suppliedFactor (stx : Term) : Term.TermElabM Hex.Nat.FactorSearch := do
+  let e ← Term.withoutErrToSorry do
+    Term.elabTermEnsuringType stx (mkConst ``Hex.Nat.FactorSearch)
+  Term.synthesizeSyntheticMVarsNoPostponing
+  let e ← instantiateMVars e
+  checkClosed "primality? factor" e
+  if e.hasSorry then
+    throwError "primality? factor: the supplied expression contains an unfinished proof"
+  evalProducer e
+
+/-- Explicitly select an untrusted factor provider for bounded construction. -/
+syntax (name := primalitySuggestFactorTac) "primality?"
+  " (" &"factor" " := " term ")" (" (" &"maxAttempts" " := " num ")")? : tactic
+
 /-- Construct a reusable certificate with an optional total attempt limit. -/
 syntax (name := primalitySuggestTac) "primality?"
   (" (" &"maxAttempts" " := " num ")")?
@@ -417,6 +437,9 @@ meta def suggestPrime (predicate head : Name) (stx : Syntax) : Tactic.TacticM Un
           throwErrorAt flag "expected true or false"
         budget := { budget with factor := { budget.factor with
           pMinusOneStage2 := flag.getId == `true } }
+    | `(tactic| primality? (factor := $_:term) $[(maxAttempts := $limit:num)]?) =>
+      if let some limit := limit then
+        budget := { budget with maxAttempts := limit.getNat }
     | `(tactic| primality? using $_:term) => pure ()
     | _ => Elab.throwUnsupportedSyntax
     if n.log2 + 1 > budget.maxBits then
@@ -424,12 +447,21 @@ meta def suggestPrime (predicate head : Name) (stx : Syntax) : Tactic.TacticM Un
     let cert ← match stx with
       | `(tactic| primality? using $source:term) => suppliedCertificate source n
       | _ => do
-        match Hex.Nat.Construction.run n (Hex.Rand.ofSeed n) budget with
+        let factor ← match stx with
+          | `(tactic| primality? (factor := $source:term)) => suppliedFactor source
+          | `(tactic| primality? (factor := $source:term) (maxAttempts := $_:num)) =>
+              suppliedFactor source
+          | _ => pure Hex.Nat.Construction.factorSearch
+        let description := if stx.getKind == ``primalitySuggestFactorTac then
+            (constructionDescription budget).replace "ECM bounds [] and 0 curves"
+              "explicit factor provider (its per-attempt bounds apply)"
+          else constructionDescription budget
+        match Hex.Nat.Construction.run n (Hex.Rand.ofSeed n) budget factor with
         | .error f =>
             if f.stop == .composite then
               throwError "primality?: {n} is not prime"
             throwError "primality?: certificate construction for {n} exhausted after \
-              {f.attempts} attempts (seed {n}; {constructionDescription budget})"
+              {f.attempts} attempts (seed {n}; {description})"
         | .ok success =>
             let cert := success.cert.raw
             unless cert.subject == n && Hex.Nat.checkPrime cert do
@@ -447,7 +479,7 @@ meta def suggestPrime (predicate head : Name) (stx : Syntax) : Tactic.TacticM Un
       Meta.Tactic.TryThis.addSuggestion stx replacement
 
 /-- Core certificate-literal suggestion handler. -/
-@[tactic primalitySuggestTac, tactic primalitySuggestUsingTac] meta def evalPrimalitySuggest : Tactic.Tactic :=
+@[tactic primalitySuggestTac, tactic primalitySuggestUsingTac, tactic primalitySuggestFactorTac] meta def evalPrimalitySuggest : Tactic.Tactic :=
   suggestPrime ``Hex.Nat.Prime ``Hex.Nat.prime_of_checkPrimeAt
 
 end Hex.PrimalityTactic
