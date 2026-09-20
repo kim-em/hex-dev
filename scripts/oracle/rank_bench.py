@@ -115,9 +115,15 @@ def main():
                 matrix = None
                 certificate = None
                 prepared = decode(request["record"])
+                prepared_certificate = None
                 if "certificate" in request:
-                    certificate = decode_certificate(request["record"], request["certificate"])
+                    prepared_certificate = decode_certificate(request["record"], request["certificate"])
+                # Optional untimed fixture capture for coefficient-growth audits.
+                if capture := os.environ.get("HEX_RANK_BENCH_CAPTURE"):
+                    with open(capture, "a") as output:
+                        output.write(json.dumps(request, separators=(",", ":")) + "\n")
                 matrix = prepared
+                certificate = prepared_certificate
                 result = True
             elif op == "rank":
                 if matrix is None:
@@ -134,7 +140,7 @@ def main():
             elif op == "overhead":
                 result = 0
             elif op == "versions":
-                result = {"python": sys.version, "python_flint": flint.__version__, "sympy": sympy.__version__, "sympy_ground_types": os.environ["SYMPY_GROUND_TYPES"]}
+                result = {"python": sys.version, "python_flint": flint.__version__, "flint": flint.__FLINT_VERSION__, "sympy": sympy.__version__, "sympy_ground_types": os.environ["SYMPY_GROUND_TYPES"]}
             else:
                 raise ValueError(f"unknown operation: {op}")
             reply = {"ok": True, "result": result}

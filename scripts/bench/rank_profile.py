@@ -33,7 +33,12 @@ def main():
     parser.add_argument('--bench', type=Path, default=ROOT / '.lake/build/bin/hexrank_bench')
     parser.add_argument('--quotient', action='store_true', help='Profile the separate native quotient producer at dimension 32.')
     parser.add_argument('--worst-gap', action='store_true', help='Profile the eligible rational dense comparison at dimension 128.')
+    parser.add_argument('--case', help='One Hex.RankBench-relative case, for an unexpected result.')
+    parser.add_argument('--param', type=int, default=0)
+    parser.add_argument('--label', default='diagnostic')
     args = parser.parse_args()
+    if args.case and (args.quotient or args.worst_gap):
+        parser.error('select one profile subset')
     if args.worst_gap and args.quotient:
         parser.error('select one profile subset')
     out = args.out.resolve()
@@ -61,6 +66,8 @@ def main():
     cases = (('quotient-witness', 'Quotient.produceFull', 32),) if args.quotient else CASES
     if args.worst_gap:
         cases = (('rational-dense', 'Comparison.Rat.Dense.native128', 0),)
+    if args.case:
+        cases = ((args.label, args.case, args.param),)
     for family, name, param in cases:
         directory = out / family
         directory.mkdir()

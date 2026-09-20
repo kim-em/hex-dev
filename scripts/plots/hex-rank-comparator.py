@@ -45,13 +45,17 @@ def main():
     plt.rcParams.update({'svg.hashsalt': 'hex-rank', 'font.size': 10})
     fig, axes = plt.subplots(height, cols, figsize=(6 * cols, 4 * height), squeeze=False)
     for axis, panel in zip(axes.flat, panels):
-        selected = [(row, coordinates(row)) for row in rows
-                    if coordinates(row)[0] == panel and row['eligible']]
+        panel_rows = [(row, coordinates(row)) for row in rows if coordinates(row)[0] == panel]
+        expected = 3 if args.family == 'polynomial' else 18
+        if len(panel_rows) != expected or any(not row['attempts_complete'] for row, _ in panel_rows):
+            raise ValueError('unfinished declared schedule: ' + panel)
+        selected = [(row, coordinate) for row, coordinate in panel_rows if row['eligible']]
         if any(not row['complete'] for row, _ in selected):
             raise ValueError('unfinished six-block curve: ' + panel)
         carriers = sorted({coordinate[1] for _, coordinate in selected})
-        if not carriers:
-            raise ValueError('no eligible data for ' + panel)
+        expected_carriers = ({'RatPoly'} if panel.startswith('RatPoly') else {'Mv'}) if args.family == 'polynomial' else {'Int', 'Rat'}
+        if set(carriers) != expected_carriers:
+            raise ValueError('missing eligible comparator for ' + panel)
         for carrier in carriers:
             points = sorted((coordinate[2], row) for row, coordinate in selected if coordinate[1] == carrier)
             if len(points) < 2:
@@ -68,7 +72,7 @@ def main():
     fig.tight_layout()
     output = args.output or ROOT / 'reports/figures' / f'hex-rank-comparator-{args.family}.svg'
     output.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(output, metadata={'Date': None, 'Description': str(args.data)})
+    fig.savefig(output, metadata={'Date': None, 'Description': str(args.data.relative_to(ROOT)) if args.data.is_relative_to(ROOT) else args.data.name})
     plt.close(fig)
 
 
