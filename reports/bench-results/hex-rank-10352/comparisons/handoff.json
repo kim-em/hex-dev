@@ -1,0 +1,22 @@
+{
+  "parent_pid": 3368040,
+  "child_pid": 91722,
+  "command": [
+    "/tmp/hexrank-measured-bin/hexrank_bench",
+    "compare",
+    "Hex.RankBench.Comparison.Rat.DeficientHalf.external192",
+    "Hex.RankBench.Comparison.Rat.DeficientHalf.native192",
+    "--repeats",
+    "1",
+    "--export-file",
+    "/tmp/hexrank-science-comparisons/1-compareRatDeficientHalf192.json"
+  ],
+  "pause_epoch": 1789914519.1944249,
+  "reason": "Partition pending independent comparison cases; keep every completed pair and the original AB/BA order.",
+  "child_proc_stat": "91722 (hexrank_bench) Z 3368040 3367100 3367100 0 -1 4227084 3147 49259 0 0 5 3 5246 26 20 0 1 0 88561861 0 0 18446744073709551615 0 0 0 0 0 0 0 4096 1088 1 0 0 17 1 0 0 0 0 0 0 0 0 0 0 0 0 0\n",
+  "wait_status": 0,
+  "exit_code": 0,
+  "completed_label": "1-compareRatDeficientHalf192",
+  "completion_epoch": 1789914616.2773252,
+  "controller_stopped": true
+}

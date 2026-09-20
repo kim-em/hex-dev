@@ -1,0 +1,15 @@
+{
+  "source_directory": "/tmp/hexrank-science-certify-resolution",
+  "source_patch_sha256": "eeaf3233846a942ce96e948190c50c70091604746b55922d5e4c1526b06d6a06",
+  "completed_commands": [
+    "CertifyLowRank2At1024"
+  ],
+  "sha256": {
+    "metadata.json": "90676b117fed61f4ddcd5a6a96ee5fb99fad0886ed4a51b4331f28db70f5e722",
+    "completion.json": "94a70d7b187fa8f85ce4b2e5c3a84c6a169b421ad2b5821f2c6e2985d2ed59c9",
+    "CertifyLowRank2At1024.json": "c3dd63e3e0dfd73db3d122daa9bf2b00161f30f3b958b9e41a9c6a62698dd5f8",
+    "CertifyLowRank2At1024.txt.gz": "338199749c3824b45cb8cadabc81e1f89985b16d1724a22b2d5209516c7447f8",
+    "source.patch.gz": "ffeaa000bf17dd1fa3277d91acd61258fcbc0bdcc554b0ea99e26b26afbef09c",
+    "commands.jsonl": "07804a68952be78a4d730aea03585cee991a5ef89aea97944229a07ded28293c"
+  }
+}

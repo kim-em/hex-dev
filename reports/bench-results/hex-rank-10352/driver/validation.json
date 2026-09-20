@@ -19,6 +19,36 @@
     "hexrank-attribution-smoke.txt": "bbedb4722 (driver sources match b3360aca1)",
     "hexrank-attribution-poly-verify.txt": "bbedb4722 (driver sources match b3360aca1)",
     "comparators-final.txt": "2b0ff6bf5 (driver sources match 3228b9b4d)",
-    "root_build": "b3360aca1"
+    "root_build": "b3360aca1",
+    "tranche3-list.txt": {
+      "source_revision": "bfd04f57cff6e1f207199f68db34d50cf92be97d",
+      "binary_sha256": null,
+      "note": "Original correctness-only output; binary hash was not recorded at invocation. Superseded for count/provenance claims by verification.json and verified-* artifacts."
+    },
+    "tranche3-verify.txt": {
+      "source_revision": "bfd04f57cff6e1f207199f68db34d50cf92be97d",
+      "binary_sha256": null,
+      "note": "Original correctness-only output; binary hash was not recorded at invocation. Superseded for count/provenance claims by verification.json and verified-* artifacts."
+    },
+    "tranche3-external-verify.txt": {
+      "source_revision": "bfd04f57cff6e1f207199f68db34d50cf92be97d",
+      "binary_sha256": null,
+      "note": "Original correctness-only output; binary hash was not recorded at invocation. Superseded for count/provenance claims by verification.json and verified-* artifacts."
+    },
+    "verified-list.txt": {
+      "source_revision": "eed641caf0b9ba4e14d79ffcde69389fb7bb9e6e",
+      "binary_sha256": "8869976bfbdf280f8c2fd224ed814281f372017376ad0e47ce60058ffb6e79d9",
+      "provenance": "verification.json"
+    },
+    "verified-smoke.txt": {
+      "source_revision": "eed641caf0b9ba4e14d79ffcde69389fb7bb9e6e",
+      "binary_sha256": "8869976bfbdf280f8c2fd224ed814281f372017376ad0e47ce60058ffb6e79d9",
+      "provenance": "verification.json"
+    },
+    "verified-stages.txt": {
+      "source_revision": "eed641caf0b9ba4e14d79ffcde69389fb7bb9e6e",
+      "binary_sha256": "8869976bfbdf280f8c2fd224ed814281f372017376ad0e47ce60058ffb6e79d9",
+      "provenance": "verification.json"
+    }
   }
 }

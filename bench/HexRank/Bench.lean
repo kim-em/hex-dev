@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexRank
+import HexRank.Bench.Quotient
 import HexBasic.Rand
 import Hex.BenchOracle.Flint
 import HexResultant.ExactDiv
@@ -35,7 +36,7 @@ shifted fixtures validate the first pivot after their zero-column prefix.
   including a zero-column prefix variant. Mode 2, `productBound n`,
   accounting for both growing minors and the product entry bound B≤25n.
 * `polynomial`: `DensePoly Rat` and `MvPoly 2 Int` at fixed small support,
-  full rank and deficient. Fixed registrations await comparator budgets.
+  full rank and deficient. Fixed registrations use the recorded comparator-derived absolute budgets.
 
 The external comparators (FLINT `fmpz_mat.rank` and `fmpq_mat.rank`, SymPy
 `DomainMatrix.rank` over the exact polynomial domain) are `informational`
@@ -499,6 +500,7 @@ setup_benchmark runRankCertDeficientHalfShifted n => productBound n
     paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
     maxSecondsPerCall := 120.0
     outerTrials := 6
+    targetInnerNanos := 4000000000
   }
 -- Cost model: `Θ(r · n · n)` ring operations with `r` proportional to `n`; the
 -- operands are minors of size up to `r`, of `O(n (log n + log B))` bits by
@@ -615,9 +617,13 @@ setup_benchmark runCheckRankDeficientHalf n => productBound n
     outerTrials := 6
   }
 
-/-! `polynomial`: fixed registrations (mode 3). Entries have support at most
-two, so the cost of a minor depends on the support and no one-parameter
-model is claimed. -/
+/-! `polynomial`: fixed registrations (mode 3), as specified by HexRank.
+Full-rank entries have degree one and support at most two. The deficient
+products have degree two, with support at most three (Rat) or five (Mv).
+Dimension alone does not control minor support or coefficient bit length;
+no tight wall-time model is claimed for these exact-division paths.
+The operation-specific absolute budgets below give up asymptotic regression
+detection, rather than treating a timeout as a complexity claim. -/
 
 /-- First pass, on a runtime input read from the prepared cache. -/
 def runRatPolyRankAt (k : Nat) (singular := false) : Unit → IO Nat := fun _ => do
@@ -688,8 +694,30 @@ def runMvDeficientCheck4 := runMvCheckAt 4 true
 def runMvDeficientCheck8 := runMvCheckAt 8 true
 def runMvDeficientCheck12 := runMvCheckAt 12 true
 
-/-- Operational timeout only. These registrations do not yet have the
-operation-specific SymPy-derived budgets required for Phase-4 evidence. -/
+/-- Operational timeout only; the scientific ceilings are separate.
+Canonical inputs: the deterministic generators above at dimensions 4/8/12.
+Absolute budgets (ms, rounded here; exact nanoseconds in
+`reports/bench-results/hex-rank-10352/polynomial-budgets.json`):
+
+carrier rank       n  Rank  Second  Cert  Check  Certify
+RatPoly Full       4  8.170479  31.780128  39.950607  4.365994  44.316601
+RatPoly Full       8  170.195670  570.012225  740.207895  52.992657  793.200552
+RatPoly Full      12  823.390906  3938.039233  4761.430139  310.112770  5071.542909
+RatPoly Deficient  4  8.520291  3.673725  12.194016  2.583800  14.777816
+RatPoly Deficient  8  127.696458  62.037331  189.733789  29.581834  219.315623
+RatPoly Deficient 12  723.186850  384.390410  1107.577260  148.282890  1255.860150
+Mv      Full       4  12.626816  38.454207  51.081023  2.293589  53.374612
+Mv      Full       8  326.878744  2289.756000  2616.634744  40.408428  2657.043172
+Mv      Full      12  4819.874186  39588.956926  44408.831112  325.527219  44734.358331
+Mv      Deficient  4  8.204937  2.880788  11.085725  0.975751  12.061476
+Mv      Deficient  8  284.134366  178.755312  462.889678  28.453816  491.343494
+Mv      Deficient 12  3409.085161  3743.866786  7152.951947  229.560188  7382.512135
+
+Each ceiling is twice the applicable sum of the six paired SymPy reference
+medians: rank, augmented pivot-block rank, and exact certificate identities.
+The margin and reference mapping precede the stage measurements; the report's
+analysis links all raw reference times. Future results use these frozen
+ceilings, independently of the 60-second child safety cap. -/
 def polyConfig : LeanBench.FixedBenchmarkConfig :=
   { repeats := 5, maxSecondsPerCall := 60.0, minTotalSeconds := 0.2, warmupFirstIter := true, tags := #["polynomial"] }
 
@@ -852,6 +880,7 @@ setup_benchmark deficientMinusOne n => productBound n
     paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
     maxSecondsPerCall := 120.0
     outerTrials := 6
+    targetInnerNanos := 4000000000
   }
 
 def prepDeficientHalf := prepSecond Hex.RankBench.prepDeficientHalf
@@ -984,6 +1013,7 @@ setup_benchmark deficientHalf n => productBound n
     paramCeiling := 256
     paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
     maxSecondsPerCall := 120.0
+    targetInnerNanos := 4_000_000_000
     outerTrials := 6
   }
 
@@ -1331,6 +1361,51 @@ def runPolyExternal (mv singular : Bool) (n : Nat) : IO Nat := do
         ("field", Lean.Json.mkObj [("type", Lean.toJson "Rat")]), ("entries", jsonMatrix encodeRatPoly input.matrix)])
     installMatrix key record.compress expected
   externalRank expected
+
+/-- Serialize the already-produced certificate using the conformance entry
+encoding. Only decoding is outside the reference checker's timed region;
+submatrix selection and all three identities are evaluated on each call. -/
+def jsonCertificate {R : Type} {n m : Nat} (encode : R → Lean.Json) (c : RankCert R n m) : Lean.Json :=
+  Lean.Json.mkObj [("rank", Lean.toJson c.rank),
+    ("rows", Lean.toJson (c.rows.toArray.map Fin.val)),
+    ("cols", Lean.toJson (c.cols.toArray.map Fin.val)),
+    ("denom", encode c.denom), ("adj", jsonMatrix encode c.adj)]
+
+def preparePolyReference (mv singular : Bool) (n : Nat) : IO Unit := do
+  let key := s!"certificate-{mv}-{singular}-{n}"
+  if (← comparatorKey.get) == key then return
+  let fields := [("rows", Lean.toJson n), ("cols", Lean.toJson n)]
+  let (record, certificate) ← if mv then do
+    let input ← prepareMv n singular
+    pure (Lean.Json.mkObj (fields ++ [("kind", Lean.toJson "mvpolymatrix"),
+      ("arity", Lean.toJson (2 : Nat)), ("entries", jsonMatrix encodeMv input.matrix)]),
+      jsonCertificate encodeMv input.cert)
+  else do
+    let input ← prepareRatPoly n singular
+    pure (Lean.Json.mkObj (fields ++ [("kind", Lean.toJson "polymatrix"),
+      ("field", Lean.Json.mkObj [("type", Lean.toJson "Rat")]),
+      ("entries", jsonMatrix encodeRatPoly input.matrix)]),
+      jsonCertificate encodeRatPoly input.cert)
+  let request := Lean.Json.mkObj [("op", Lean.toJson "prepare"),
+    ("record", record), ("certificate", certificate)]
+  let _ ← rankRequest request.compress
+  let _ ← externalRank (if singular then n / 2 else n)
+  let ok ← jsonValue <| Lean.fromJson? (α := Bool) (← rankRequest "{\"op\":\"check\"}")
+  unless ok do throw <| IO.userError "SymPy rejected the prepared polynomial certificate"
+  comparatorKey.set key
+
+def runPolySecondExternal (mv singular : Bool) (n : Nat) : IO Nat := do
+  preparePolyReference mv singular n
+  let result ← jsonValue <| Lean.fromJson? (α := Nat) (← rankRequest "{\"op\":\"second\"}")
+  unless result == (if singular then n / 2 else n) do
+    throw <| IO.userError "SymPy augmented-block rank mismatch"
+  return result
+
+def runPolyCheckExternal (mv singular : Bool) (n : Nat) : IO Bool := do
+  preparePolyReference mv singular n
+  let result ← jsonValue <| Lean.fromJson? (α := Bool) (← rankRequest "{\"op\":\"check\"}")
+  unless result do throw <| IO.userError "SymPy certificate identity mismatch"
+  return result
 
 def runProtocolOverhead : IO Nat := do
   jsonValue <| Lean.fromJson? (α := Nat) (← rankRequest "{\"op\":\"overhead\"}")
@@ -2043,6 +2118,74 @@ def external8 := runPolyExternal true true 8
 setup_fixed_benchmark external8 where { comparisonConfig with expectedHash := some (hash (4 : Nat)), tags := #["comparison", "external"] }
 def external12 := runPolyExternal true true 12
 setup_fixed_benchmark external12 where { comparisonConfig with expectedHash := some (hash (6 : Nat)), tags := #["comparison", "external"] }
+
+end Mv.Deficient
+
+namespace RatPoly.Full
+
+def second4 := runPolySecondExternal false false 4
+setup_fixed_benchmark second4 where { comparisonConfig with expectedHash := some (hash (4 : Nat)), tags := #["comparison", "external", "poly-reference"] }
+def second8 := runPolySecondExternal false false 8
+setup_fixed_benchmark second8 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external", "poly-reference"] }
+def second12 := runPolySecondExternal false false 12
+setup_fixed_benchmark second12 where { comparisonConfig with expectedHash := some (hash (12 : Nat)), tags := #["comparison", "external", "poly-reference"] }
+def check4 := runPolyCheckExternal false false 4
+setup_fixed_benchmark check4 where { comparisonConfig with expectedHash := some (hash true), tags := #["comparison", "external", "poly-reference"] }
+def check8 := runPolyCheckExternal false false 8
+setup_fixed_benchmark check8 where { comparisonConfig with expectedHash := some (hash true), tags := #["comparison", "external", "poly-reference"] }
+def check12 := runPolyCheckExternal false false 12
+setup_fixed_benchmark check12 where { comparisonConfig with expectedHash := some (hash true), tags := #["comparison", "external", "poly-reference"] }
+
+end RatPoly.Full
+
+namespace RatPoly.Deficient
+
+def second4 := runPolySecondExternal false true 4
+setup_fixed_benchmark second4 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external", "poly-reference"] }
+def second8 := runPolySecondExternal false true 8
+setup_fixed_benchmark second8 where { comparisonConfig with expectedHash := some (hash (4 : Nat)), tags := #["comparison", "external", "poly-reference"] }
+def second12 := runPolySecondExternal false true 12
+setup_fixed_benchmark second12 where { comparisonConfig with expectedHash := some (hash (6 : Nat)), tags := #["comparison", "external", "poly-reference"] }
+def check4 := runPolyCheckExternal false true 4
+setup_fixed_benchmark check4 where { comparisonConfig with expectedHash := some (hash true), tags := #["comparison", "external", "poly-reference"] }
+def check8 := runPolyCheckExternal false true 8
+setup_fixed_benchmark check8 where { comparisonConfig with expectedHash := some (hash true), tags := #["comparison", "external", "poly-reference"] }
+def check12 := runPolyCheckExternal false true 12
+setup_fixed_benchmark check12 where { comparisonConfig with expectedHash := some (hash true), tags := #["comparison", "external", "poly-reference"] }
+
+end RatPoly.Deficient
+
+namespace Mv.Full
+
+def second4 := runPolySecondExternal true false 4
+setup_fixed_benchmark second4 where { comparisonConfig with expectedHash := some (hash (4 : Nat)), tags := #["comparison", "external", "poly-reference"] }
+def second8 := runPolySecondExternal true false 8
+setup_fixed_benchmark second8 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external", "poly-reference"] }
+def second12 := runPolySecondExternal true false 12
+setup_fixed_benchmark second12 where { comparisonConfig with expectedHash := some (hash (12 : Nat)), tags := #["comparison", "external", "poly-reference"] }
+def check4 := runPolyCheckExternal true false 4
+setup_fixed_benchmark check4 where { comparisonConfig with expectedHash := some (hash true), tags := #["comparison", "external", "poly-reference"] }
+def check8 := runPolyCheckExternal true false 8
+setup_fixed_benchmark check8 where { comparisonConfig with expectedHash := some (hash true), tags := #["comparison", "external", "poly-reference"] }
+def check12 := runPolyCheckExternal true false 12
+setup_fixed_benchmark check12 where { comparisonConfig with expectedHash := some (hash true), tags := #["comparison", "external", "poly-reference"] }
+
+end Mv.Full
+
+namespace Mv.Deficient
+
+def second4 := runPolySecondExternal true true 4
+setup_fixed_benchmark second4 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external", "poly-reference"] }
+def second8 := runPolySecondExternal true true 8
+setup_fixed_benchmark second8 where { comparisonConfig with expectedHash := some (hash (4 : Nat)), tags := #["comparison", "external", "poly-reference"] }
+def second12 := runPolySecondExternal true true 12
+setup_fixed_benchmark second12 where { comparisonConfig with expectedHash := some (hash (6 : Nat)), tags := #["comparison", "external", "poly-reference"] }
+def check4 := runPolyCheckExternal true true 4
+setup_fixed_benchmark check4 where { comparisonConfig with expectedHash := some (hash true), tags := #["comparison", "external", "poly-reference"] }
+def check8 := runPolyCheckExternal true true 8
+setup_fixed_benchmark check8 where { comparisonConfig with expectedHash := some (hash true), tags := #["comparison", "external", "poly-reference"] }
+def check12 := runPolyCheckExternal true true 12
+setup_fixed_benchmark check12 where { comparisonConfig with expectedHash := some (hash true), tags := #["comparison", "external", "poly-reference"] }
 
 end Mv.Deficient
 

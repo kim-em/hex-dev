@@ -1,0 +1,128 @@
+{
+  "revision": "40874aabcdc893ac9fbf383f544d4da946a48e64",
+  "cpu": 13,
+  "load": [
+    52.9619140625,
+    48.0986328125,
+    46.521484375
+  ],
+  "binary": "/tmp/hexrank-quotient-10352/.lake/build/bin/hexrank_bench",
+  "binary_sha256": "042f9585b8be8abdafa289468840c455391f0afef40d5b0e604369d9cbdfb543",
+  "profiler_revision": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.1.5",
+  "commands": [
+    [
+      "perf",
+      "record",
+      "--clockid",
+      "mono",
+      "-e",
+      "cycles:u",
+      "-F",
+      "999",
+      "--call-graph",
+      "dwarf",
+      "-o",
+      "/tmp/hexrank-rational-profile/rational-dense/perf.data",
+      "--",
+      "/tmp/hexrank-quotient-10352/.lake/build/bin/hexrank_bench",
+      "_child",
+      "--bench",
+      "Hex.RankBench.Comparison.Rat.Dense.native128",
+      "--param",
+      "0",
+      "--target-nanos",
+      "3000000000",
+      "--cache-mode",
+      "warm"
+    ],
+    [
+      "samply",
+      "import",
+      "--save-only",
+      "--no-open",
+      "--unstable-presymbolicate",
+      "-o",
+      "/tmp/hexrank-rational-profile/rational-dense/samply.json.gz",
+      "/tmp/hexrank-rational-profile/rational-dense/perf.data"
+    ],
+    [
+      "perf",
+      "script",
+      "--ns",
+      "-F",
+      "pid,tid,time,event",
+      "-i",
+      "/tmp/hexrank-rational-profile/rational-dense/perf.data"
+    ],
+    [
+      "/run/current-system/sw/bin/python3",
+      "/tmp/hexrank-quotient-10352/scripts/profile/normalize_perf.py",
+      "--profile",
+      "/tmp/hexrank-rational-profile/rational-dense/samply.json.gz",
+      "--perf-script",
+      "/tmp/hexrank-rational-profile/rational-dense/perf-samples.txt",
+      "--spawn-anchor",
+      "/tmp/hexrank-rational-profile/rational-dense/spawn-anchor.json",
+      "--output",
+      "/tmp/hexrank-rational-profile/rational-dense/normalized.json.gz"
+    ],
+    [
+      "/run/current-system/sw/bin/python3",
+      "/tmp/hex10170-lean-bench-samply/scripts/filter_samply.py",
+      "--samply-json",
+      "/tmp/hexrank-rational-profile/rational-dense/normalized.json.gz",
+      "--sidecar",
+      "/tmp/hexrank-rational-profile/rational-dense/timed.jsonl",
+      "--spawn-anchor",
+      "/tmp/hexrank-rational-profile/rational-dense/spawn-anchor.json",
+      "--out",
+      "/tmp/hexrank-rational-profile/rational-dense/filtered.json.gz",
+      "--diagnostics",
+      "/tmp/hexrank-rational-profile/rational-dense/diagnostics.json",
+      "--label-filter",
+      "kernel"
+    ],
+    [
+      "/run/current-system/sw/bin/python3",
+      "/tmp/hexrank-quotient-10352/scripts/profile/elf_symbols.py",
+      "/tmp/hexrank-rational-profile/rational-dense/filtered.json.gz",
+      "--output",
+      "/tmp/hexrank-rational-profile/rational-dense/symbols.json"
+    ],
+    [
+      "/run/current-system/sw/bin/python3",
+      "/tmp/hexrank-quotient-10352/scripts/profile/summarize_profile.py",
+      "/tmp/hexrank-rational-profile/rational-dense/filtered.json.gz",
+      "--symbols",
+      "/tmp/hexrank-rational-profile/rational-dense/symbols.json",
+      "--diagnostics",
+      "/tmp/hexrank-rational-profile/rational-dense/diagnostics.json",
+      "--thread",
+      "hexrank_bench",
+      "--top",
+      "25",
+      "--output",
+      "/tmp/hexrank-rational-profile/rational-dense/summary.json"
+    ]
+  ],
+  "environment_overrides": [
+    {
+      "LEAN_BENCH_PROFILE_KERNEL": "1",
+      "LEAN_BENCH_TIMED_REGIONS_SIDECAR": "/tmp/hexrank-rational-profile/rational-dense/timed.jsonl"
+    },
+    {},
+    {},
+    {},
+    {},
+    {},
+    {}
+  ],
+  "failures": [],
+  "load_after": [
+    53.5244140625,
+    48.46875,
+    46.66845703125
+  ]
+}

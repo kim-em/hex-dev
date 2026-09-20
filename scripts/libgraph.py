@@ -28,6 +28,7 @@ BUILD_ONLY_LIBS = {
     "HexGraphIsoMathlibProofProbe",
     "HexLLLBenchSupport",
     "HexGF2BenchSupport",
+    "HexRankBenchSupport",
     "HexBerlekampKernelProbe",
     "HexPrimalityKernelProbe",
     "HexPrimalityElabProbe",

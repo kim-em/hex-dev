@@ -1,0 +1,94 @@
+[
+  {
+    "carrier": "RatPoly",
+    "dimension": 12,
+    "rank": 12,
+    "input": {
+      "max_degree": 1,
+      "max_support": 2,
+      "max_numerator_bits": 3,
+      "max_denominator_bits": 2
+    },
+    "denominator": {
+      "max_degree": 12,
+      "max_support": 13,
+      "max_numerator_bits": 45,
+      "max_denominator_bits": 18
+    },
+    "adjugate": {
+      "max_degree": 11,
+      "max_support": 12,
+      "max_numerator_bits": 45,
+      "max_denominator_bits": 19
+    }
+  },
+  {
+    "carrier": "RatPoly",
+    "dimension": 12,
+    "rank": 6,
+    "input": {
+      "max_degree": 2,
+      "max_support": 3,
+      "max_numerator_bits": 10,
+      "max_denominator_bits": 6
+    },
+    "denominator": {
+      "max_degree": 12,
+      "max_support": 13,
+      "max_numerator_bits": 38,
+      "max_denominator_bits": 13
+    },
+    "adjugate": {
+      "max_degree": 10,
+      "max_support": 11,
+      "max_numerator_bits": 37,
+      "max_denominator_bits": 14
+    }
+  },
+  {
+    "carrier": "Mv",
+    "dimension": 12,
+    "rank": 12,
+    "input": {
+      "max_degree": 1,
+      "max_support": 2,
+      "max_numerator_bits": 3,
+      "max_denominator_bits": 1
+    },
+    "denominator": {
+      "max_degree": 12,
+      "max_support": 85,
+      "max_numerator_bits": 39,
+      "max_denominator_bits": 1
+    },
+    "adjugate": {
+      "max_degree": 11,
+      "max_support": 72,
+      "max_numerator_bits": 36,
+      "max_denominator_bits": 1
+    }
+  },
+  {
+    "carrier": "Mv",
+    "dimension": 12,
+    "rank": 6,
+    "input": {
+      "max_degree": 2,
+      "max_support": 5,
+      "max_numerator_bits": 7,
+      "max_denominator_bits": 1
+    },
+    "denominator": {
+      "max_degree": 12,
+      "max_support": 85,
+      "max_numerator_bits": 35,
+      "max_denominator_bits": 1
+    },
+    "adjugate": {
+      "max_degree": 10,
+      "max_support": 61,
+      "max_numerator_bits": 30,
+      "max_denominator_bits": 1
+    }
+  }
+]

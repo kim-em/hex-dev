@@ -22,6 +22,18 @@ import sympy
 from scripts.oracle.rank_carriers import PolyCarrier, MvPolyCarrier
 
 
+def validate_entry(kind, entry):
+    if kind == "polymatrix":
+        if len(entry["num"]) != len(entry["den"]):
+            raise ValueError("polynomial coefficient/denominator length mismatch")
+        if any(int(den) == 0 for den in entry["den"]):
+            raise ValueError("zero polynomial coefficient denominator")
+    else:
+        for exponents, _ in entry:
+            if len(exponents) != 2 or any(int(e) < 0 for e in exponents):
+                raise ValueError("invalid polynomial exponents")
+
+
 def decode(record):
     kind = record["kind"]
     if kind in {"matrix", "ratmatrix"}:
@@ -44,36 +56,95 @@ def decode(record):
         raise ValueError("polynomial matrix shape mismatch")
     for row in record["entries"]:
         for entry in row:
-            if kind == "polymatrix":
-                if len(entry["num"]) != len(entry["den"]):
-                    raise ValueError("polynomial coefficient/denominator length mismatch")
-                if any(int(den) == 0 for den in entry["den"]):
-                    raise ValueError("zero polynomial coefficient denominator")
-            else:
-                for exponents, _ in entry:
-                    if len(exponents) != 2 or any(int(e) < 0 for e in exponents):
-                        raise ValueError("invalid polynomial exponents")
+            validate_entry(kind, entry)
     return (PolyCarrier(record) if kind == "polymatrix" else MvPolyCarrier(record)).A
+
+
+
+def decode_certificate(record, certificate):
+    """Prepare the exact ring identities, excluding all decoding from timing."""
+    from sympy.polys.matrices import DomainMatrix
+    kind = record["kind"]
+    if kind not in {"polymatrix", "mvpolymatrix"}:
+        raise ValueError("certificate comparisons use polynomial carriers")
+    carrier = PolyCarrier(record) if kind == "polymatrix" else MvPolyCarrier(record)
+    A = carrier.A
+    n, m = A.shape
+    r = int(certificate["rank"])
+    rows, cols = certificate["rows"], certificate["cols"]
+    adj = certificate["adj"]
+    if (r < 0 or len(rows) != r or len(cols) != r or len(set(rows)) != r or len(set(cols)) != r
+            or any(i < 0 or i >= n for i in rows) or any(j < 0 or j >= m for j in cols)
+            or len(adj) != r or any(len(row) != r for row in adj)):
+        raise ValueError("invalid certificate shape or pivot indices")
+    for entry in [certificate["denom"], *(x for row in adj for x in row)]:
+        validate_entry(kind, entry)
+    D = DomainMatrix([[carrier.entry(x) for x in row] for row in adj], (r, r), A.domain)
+    denom = carrier.entry(certificate["denom"])
+    return (A, rows, cols, D, denom)
+
+
+def second_rank(data):
+    """Time the augmented elimination; rank r is not an independent B-validity test.
+
+    Preparation separately verifies the original rank and certificate identities.
+    """
+    from sympy.polys.matrices import DomainMatrix
+    A, rows, cols, _, _ = data
+    B = A.extract(rows, cols)
+    augmented = B.hstack(DomainMatrix.eye(B.shape, A.domain).to_dense())
+    return int(augmented.rank())
+
+
+def check_certificate(data):
+    from sympy.polys.matrices import DomainMatrix
+    A, rows, cols, adj, denom = data
+    n, m = A.shape
+    B = A.extract(rows, cols)
+    C = A.extract(list(range(n)), cols)
+    R = A.extract(rows, list(range(m)))
+    identity = DomainMatrix.eye(B.shape, A.domain).to_dense()
+    return bool(denom and B.matmul(adj) == identity.scalarmul(denom)
+                and A.scalarmul(denom) == C.matmul(adj.matmul(R)))
 
 
 def main():
     matrix = None
+    certificate = None
     for line in sys.stdin:
         try:
             request = json.loads(line)
             op = request["op"]
             if op == "prepare":
                 matrix = None
-                matrix = decode(request["record"])
+                certificate = None
+                prepared = decode(request["record"])
+                prepared_certificate = None
+                if "certificate" in request:
+                    prepared_certificate = decode_certificate(request["record"], request["certificate"])
+                # Optional untimed fixture capture for coefficient-growth audits.
+                if capture := os.environ.get("HEX_RANK_BENCH_CAPTURE"):
+                    with open(capture, "a") as output:
+                        output.write(json.dumps(request, separators=(",", ":")) + "\n")
+                matrix = prepared
+                certificate = prepared_certificate
                 result = True
             elif op == "rank":
                 if matrix is None:
                     raise ValueError("rank requested before successful prepare")
                 result = int(matrix.rank())
+            elif op == "second":
+                if certificate is None:
+                    raise ValueError("second pass requested before certificate preparation")
+                result = second_rank(certificate)
+            elif op == "check":
+                if certificate is None:
+                    raise ValueError("check requested before certificate preparation")
+                result = check_certificate(certificate)
             elif op == "overhead":
                 result = 0
             elif op == "versions":
-                result = {"python": sys.version, "python_flint": flint.__version__, "sympy": sympy.__version__, "sympy_ground_types": os.environ["SYMPY_GROUND_TYPES"]}
+                result = {"python": sys.version, "python_flint": flint.__version__, "flint": flint.__FLINT_VERSION__, "sympy": sympy.__version__, "sympy_ground_types": os.environ["SYMPY_GROUND_TYPES"]}
             else:
                 raise ValueError(f"unknown operation: {op}")
             reply = {"ok": True, "result": result}

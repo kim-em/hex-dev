@@ -192,8 +192,8 @@ jobs:
           python3 -m pip install --user -r scripts/conway/requirements.txt \
             python-flint==0.9.0 sympy==1.14.0 gmpy2 cypari2 conway-polynomials matplotlib==3.11.1
           python3 -m unittest scripts/oracle/test_hermite_bench_drivers.py
-          python3 -m unittest scripts/oracle/test_matrix_carriers.py scripts/oracle/test_rank_bench.py
-          python3 -m unittest scripts/bench/test_rank_measure.py
+          python3 -m unittest scripts/oracle/test_matrix_carriers.py scripts/oracle/test_rank_bench.py scripts/oracle/test_rank_stages.py
+          python3 -m unittest scripts/bench/test_rank_measure.py scripts/bench/test_rank_analyze.py
           python3 -m unittest scripts/oracle/test_row_reduce_fields.py
       - name: Verify performance measurements and figures are current
         if: steps.classify.outputs.docs_only != 'true'
@@ -203,6 +203,11 @@ jobs:
           python3 -m unittest scripts/bench/test_check_graphiso_sweep_freshness.py
           python3 scripts/bench/check_factor_sweep_freshness.py
           python3 scripts/plots/hexbz-cactus.py --check
+          python3 -c 'import json, subprocess; subprocess.run(json.load(open("reports/bench-results/hex-rank-10352/analysis-command.json")) + ["--verify", "--check"], check=True)'
+          python3 scripts/bench/rank_tables.py --check
+          for family in dense-full-rank low-rank-large-coefficients rank-deficient-by-construction polynomial; do
+            python3 scripts/plots/hex-rank-comparator.py --family "$family" --check
+          done
           python3 scripts/plots/hex-rank-mathlib-tactic-size.py --check
           python3 scripts/plots/hex-bareiss-mathlib-tactic-size.py --check
           python3 scripts/bench/check_graphiso_sweep_freshness.py

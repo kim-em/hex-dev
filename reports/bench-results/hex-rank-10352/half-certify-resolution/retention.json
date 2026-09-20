@@ -1,0 +1,15 @@
+{
+  "source_directory": "/tmp/hexrank-science-half-certify-resolution",
+  "source_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "completed_commands": [
+    "CertifyDeficientHalf"
+  ],
+  "sha256": {
+    "metadata.json": "c14aac068ae42d6393fcebd25f08dd80b85e543d6ab2656ab1ad7859557e6693",
+    "completion.json": "7e0a1c879c37d37e3702f2a477ccc62de899faca16d60e78373d587c7177c178",
+    "CertifyDeficientHalf.json": "3aac83b1a18aff95bcbd154ba6e8bfc155fd5e79cbb75149c594af83c36e956d",
+    "CertifyDeficientHalf.txt.gz": "baa9749ad54e38e15f3c1d34ac3c19e3d4b122e27154a4bbe115687de71ce992",
+    "source.patch": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "commands.jsonl": "823dc64a8e95bc6117a3121cf107fdd52b085f187bef46dcc4f37d90fb67c861"
+  }
+}

@@ -521,6 +521,10 @@ lean_lib HexLLLBenchSupport where
   srcDir := "bench"
   globs := #[`HexLLLBench, `HexLLLBench.Inputs, `HexLLLBench.Targets]
 
+lean_lib HexRankBenchSupport where
+  srcDir := "bench"
+  globs := #[`HexRank.Bench.Quotient]
+
 lean_lib HexGF2BenchSupport where
   srcDir := "bench"
   globs := #[`HexGF2.Bench]

@@ -1,0 +1,15 @@
+{
+  "source_directory": "/tmp/hexrank-science-second-resolution",
+  "source_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "completed_commands": [
+    "SecondDeficientMinusOne"
+  ],
+  "sha256": {
+    "metadata.json": "dd592ffe04c031dd2231462db75db34606ac6e91fb273bf7b3dc01d4b9c4461a",
+    "completion.json": "7918789ce3b6d16810a74e7e4e29e345d9d737815100daba880aea7b4ace38cb",
+    "SecondDeficientMinusOne.json": "81a05f648cabfabd353c6405274c146f7200a7a2a9c5f859f0268eedfeda9ad5",
+    "SecondDeficientMinusOne.txt.gz": "bf5eeb09528d7bb5386f8268dc5b6777d56de0c7a95e336492dbd0a600a8578b",
+    "source.patch": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "commands.jsonl": "8d084b9ba6f6c36f5d9d81737f052c1de4ae5e20a8cc8bd852f2c31b40258700"
+  }
+}

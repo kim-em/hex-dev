@@ -1,13 +1,14 @@
 {
   "source_directory": "/tmp/hexrank-science-protocol",
+  "source_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "completed_commands": [
     "overhead"
   ],
   "sha256": {
     "metadata.json": "1555b80540340ed854205be58ac4ecbd8691560292ea64ee544c8f8a9bf005fa",
-    "source.patch": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "overhead.json": "b44b41acbabd8c707a310aefd9fb5c809aa35ec870a04eeda753ccddaf464a92",
-    "overhead.txt": "3b74c85b9c47c85c523caac31ff90d6258705483e901dfc7c2c4c6b8e7b715dc",
+    "overhead.txt.gz": "62c0fb009a4efd32ea7e2bbfcc96c8b7f0ce859594bafc509ef2d4a7694d078c",
+    "source.patch": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "commands.jsonl": "32260f7ee0486f4890a333f74734630f628e336e16348268b9d779e886870cf2"
   }
 }

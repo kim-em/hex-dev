@@ -7,6 +7,7 @@ boundary. Repeating collection only adds completed commands and refreshes that
 manifest. Every sample in each export is retained, including failures.
 """
 import argparse
+import gzip
 import hashlib
 import json
 from pathlib import Path
@@ -24,17 +25,36 @@ def main():
     journal = (source / 'commands.jsonl').read_bytes()
     journal = journal[:journal.rfind(b'\n') + 1]
     records = [json.loads(line) for line in journal.splitlines()]
-    names = ['metadata.json', 'source.patch']
-    if (source / 'completion.json').exists():
-        names.append('completion.json')
+    names = ['metadata.json']
+    patch = (source / 'source.patch').read_bytes()
+    patch_name = 'source.patch.gz' if patch else 'source.patch'
+    for optional in ('completion.json', 'handoff.json'):
+        if (source / optional).exists():
+            names.append(optional)
     for row in records:
         names.extend(row['label'] + suffix for suffix in ('.json', '.txt')
                      if (source / (row['label'] + suffix)).exists())
+    retained = []
     for name in names:
-        shutil.copy2(source / name, destination / name)
+        if name.endswith('.txt'):
+            compressed = name + '.gz'
+            (destination / compressed).write_bytes(gzip.compress((source / name).read_bytes(), mtime=0))
+            if (destination / name).exists():
+                (destination / name).unlink()
+            retained.append(compressed)
+        else:
+            shutil.copy2(source / name, destination / name)
+            retained.append(name)
+    names = retained
+    (destination / patch_name).write_bytes(gzip.compress(patch, mtime=0) if patch else patch)
+    other_patch = destination / ('source.patch' if patch else 'source.patch.gz')
+    if other_patch.exists():
+        other_patch.unlink()
+    names.append(patch_name)
     (destination / 'commands.jsonl').write_bytes(journal)
     (destination / 'retention.json').write_text(json.dumps({
         'source_directory': str(source),
+        'source_patch_sha256': hashlib.sha256(patch).hexdigest(),
         'completed_commands': [row['label'] for row in records],
         'sha256': {name: hashlib.sha256((destination / name).read_bytes()).hexdigest()
                    for name in names + ['commands.jsonl']},

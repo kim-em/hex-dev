@@ -1,0 +1,17 @@
+{
+  "reference": "Six adjacent alternating AB/BA blocks, SymPy DomainMatrix on the identical exact polynomial matrix and certificate",
+  "statistic": "Median per-call reference time over all six blocks, including protocol overhead",
+  "margin": 2,
+  "margin_rationale": "A factor-two absolute ceiling relative to the independently implemented exact operation allows implementation and shared-host variation; it is fixed before the new stage measurements and is not fitted to native times.",
+  "operation_reference": {
+    "Rank": ["rank"],
+    "Second": ["second"],
+    "Check": ["check"],
+    "Cert": ["rank", "second"],
+    "Certify": ["rank", "second", "check"]
+  },
+  "rule": "Freeze each absolute ceiling as margin times the sum of its reference medians; require the native six-repeat median not to exceed it. Retain every sample and every failure. Live comparator ratios remain informational.",
+  "scope": "RatPoly and Mv, full and half rank, dimensions 4, 8, 12",
+  "operational_timeout_seconds": 60,
+  "timeout_note": "The process timeout is independent of this per-operation scientific ceiling."
+}

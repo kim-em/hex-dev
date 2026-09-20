@@ -1,0 +1,15 @@
+{
+  "source_directory": "/tmp/hexrank-science-witness-resolution",
+  "source_patch_sha256": "eeaf3233846a942ce96e948190c50c70091604746b55922d5e4c1526b06d6a06",
+  "completed_commands": [
+    "WitnessLowRank2At1024"
+  ],
+  "sha256": {
+    "metadata.json": "c5e33a616d15e322f1f5d2b07416996d96417aadceef30b8a813132deec05d62",
+    "completion.json": "e274239d213e7019df850ab73313eb233ff444c23c350749ee3cbc1b580cfedd",
+    "WitnessLowRank2At1024.json": "c8af2fab3dc390ffc4084f7f776727cb92e9f5656f39bdfe6787267aeb900acd",
+    "WitnessLowRank2At1024.txt.gz": "8271edc9a87589b1c35801eff278d60d42b206341f86ddc15f0ba0573d54a41f",
+    "source.patch.gz": "ffeaa000bf17dd1fa3277d91acd61258fcbc0bdcc554b0ea99e26b26afbef09c",
+    "commands.jsonl": "f9ed3784e7fc4a394ebae7f07b53f69ca11708f6fe759a35d3de27b3d662638f"
+  }
+}
