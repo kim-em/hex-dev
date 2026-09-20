@@ -1,0 +1,37 @@
+{
+  "cpu": 32,
+  "host": "chungus2",
+  "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+  "commit": "8759539a04fde73e04acaf5e39c131b4a4d187ae",
+  "load_before": [
+    50.36181640625,
+    89.18017578125,
+    96.0732421875
+  ],
+  "source_sha256": {
+    "HexInterval/Constants.lean": "a584969670000ee9f68cdbaecba831ba3bd4e670e53ff4dc6f15c2d1b0b4ed46",
+    "bench/HexInterval/ConstantsBench.lean": "223b50d1532d4a7c8a75b733dee5b8baf11d56743e7564c4e98c80a10fa09bf0",
+    "conformance-fixtures/HexInterval/constants.jsonl": "b7ead341a240ddcccbfa23242668bd0d82bb4bf31e14d54c21ead46acfae2e83"
+  },
+  "executable_sha256": "4cb2a207d6c80e03fbc6c1e36533b11e3377bf57a9efdf8187f76e36bf5840b8",
+  "command": [
+    "taskset",
+    "-c",
+    "32",
+    ".lake/build/bin/hexinterval_constants_bench",
+    "run",
+    "Hex.Interval.ConstantsBench.piGenerate",
+    "Hex.Interval.ConstantsBench.piCheck",
+    "Hex.Interval.ConstantsBench.eGenerate",
+    "Hex.Interval.ConstantsBench.eCheck",
+    "--export-file",
+    "reports/bench-results/interval-constants/ordered/acceptance.json"
+  ],
+  "purpose": "1000-bit acceptance with computed witness-size and ordered-cut checks; no paired performance comparison",
+  "exit_code": 0,
+  "load_after": [
+    47.28955078125,
+    87.8984375,
+    95.62158203125
+  ]
+}

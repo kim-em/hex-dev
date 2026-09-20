@@ -79,20 +79,26 @@ load or accepting a result with missing witness work.
 
 | Source | Producer median | Checker median |
 | --- | ---: | ---: |
-| π, Machin v1 | 95.950 ms | 95.009 ms |
-| exp(1), Taylor v1 | 2.801 ms | 2.806 ms |
+| π, Machin v1 | 93.419 ms | 93.084 ms |
+| exp(1), Taylor v1 | 2.716 ms | 2.703 ms |
 
 Each median has five completed samples. All hashes match the independently
 checked fixture values. Measurements use one automatically selected logical
 CPU on the shared host; every completed sample is retained. These absolute
-values describe that host. The [raw export](bench-results/interval-constants/acceptance.json),
-[console output](bench-results/interval-constants/acceptance.log), and
-[context](bench-results/interval-constants/context.json) retain individual
+values describe that host. The [raw export](bench-results/interval-constants/ordered/acceptance.json),
+[console output](bench-results/interval-constants/ordered/acceptance.log), and
+[context](bench-results/interval-constants/ordered/context.json) retain individual
 samples, CPU, host/load, exact command, source hashes and executable digest.
-The context records a commit and [reconstruction patch](bench-results/interval-constants/measured-source.patch)
-for the exact measured source hash. This removes only an erased theorem;
-the measured executable definitions are unchanged. Source hashes identify the
-measured working tree independently of the export's base-commit label.
+The context names the exact source commit with both witness-size and ordered-cut
+checks enabled; generated output artifacts account for the export's dirty label.
+
+The [initial samples](bench-results/interval-constants/acceptance.json) and
+[their context](bench-results/interval-constants/context.json) are also retained.
+They predate those two checks. Their context records a commit and
+[reconstruction patch](bench-results/interval-constants/measured-source.patch)
+for the exact initial measured source hash, removing only an erased theorem
+from that commit. These are separate acceptance runs, not a paired performance
+comparison; no improvement claim is inferred from their timings.
 
 ## Remaining obligations
 
