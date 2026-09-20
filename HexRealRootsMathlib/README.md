@@ -11,6 +11,9 @@ This package proves the half-open form of Sturm's theorem, connects the
 executable signed-remainder chain to `Polynomial ℝ`, proves soundness and
 completeness of the isolator, transports through squarefree cores, and presents
 the result as ordinary rational intervals with proof fields.
+It also exports `Real.instIsRealClosed`, constructed from real square roots
+and odd-degree polynomial root existence, through `HexRealRootsMathlib.RealClosed`
+and the umbrella import.
 
 # Quickstart
 

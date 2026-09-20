@@ -2019,13 +2019,13 @@ of ordinary `primality` and its interactive budget. It supports the core
 `Nat.Prime` and emits its checker bridge. Closed transparent expressions such
 as `2 ^ 255 - 19` remain the theorem's original subject.
 
-The default `ConstructionBudget` has maximum input size 512 bits, recursion
+The default `ConstructionBudget` has maximum input size 521 bits, recursion
 depth 32, 1024 total semantic attempts across the entire construction,
 1024 factor-worklist entries per node, Pollard p-minus-one bounds
 `[64, 512, 4096, 32768, 262144, 524288]` at bases `[2, 3]`, two rho restarts
 of 32768 steps, and no ECM bounds or curves. Witness search tries
 `[2, 3, 5, 7, 11, 13, 17]` before at most 32 random candidates. It admits at
-most 12 distinct factor candidates and examines at most 4096 subset masks.
+most 32 distinct factor candidates and examines at most 4096 subset masks.
 `maxSieveBound = 64` permits at most 63 divisor exclusions per candidate.
 The least admissible bound is computed with an integer square root during
 construction and checked directly during replay.
@@ -2033,10 +2033,30 @@ construction and checked directly during replay.
 unadorned tactic uses 1024. The remaining allocation is passed to each factor
 producer, recursive child, and witness search, so failed subset choices cannot
 reset it. Inputs over the bit limit have a separate size diagnostic.
+The 521-bit and 32-factor limits admit P-521 using the existing factoring
+portfolio: its predecessor yields 25 candidates in 94 factor attempts, and
+construction succeeds in 170 total attempts. Enumeration remains capped at
+4096 subsets; when truncated, it includes the full factor mask. These limits
+are a measured policy, not a completeness claim: 521 is the largest input
+width covered by the accepted construction measurements. The 522-bit boundary remains
+rejected. Writing P-521 as `2 ^ 521 - 1` needs local
+`maxRecDepth = 1024` and `exponentiation.threshold = 521` for Lean to normalize
+the original goal; the numeral and certificate replay use default limits.
+The fixed mode-3 targets `runP521Construction` and `runP521Checker`, exact
+suggestion guard, per-target traces, and paired phase measurements are described
+in [the standard-field report](../../reports/hex-primality-fields.md).
+
 All limits are explicit; exhaustion reports the full profile and exact attempt
 count. Table division, primality screening, and subset enumeration are bounded
-work but are not semantic attempts. Every stage-one call, enabled stage-two
-continuation, rho restart, and
+work but are not semantic attempts. Each node can enumerate subsets twice
+(cheap table factors, then the provider result). Each pass examines at most
+`maxSubsets` masks, with at most `maxFactors` bounded product multiplications
+and at most `maxSieveBound - 1` divisor checks per mask, plus at most
+`maxFactors` child-cost estimates before enumeration. The estimates use table
+division and one sufficiency check each; they do not recurse. These finite
+costs remain outside `maxAttempts`. The standard-field report includes a
+507-bit exhausted case with 18 factors to measure the truncated scans.
+Every stage-one call, enabled stage-two continuation, rho restart, and
 witness candidate is counted, including work discarded by unsuccessful subset
 choices. Deterministic work leaves `Rand` unchanged. Construction uses no
 external factorizer and no total trial-division fallback.
@@ -2087,7 +2107,7 @@ ordinary proof emission. The replacement contains the complete certificate
 literal and `prime_of_checkPrimeAt` (or its companion bridge), discharged by
 `decide +kernel`. Applying it removes search from future builds while retaining
 kernel replay. Exact `#guard_msgs` tests pin the complete Curve25519 output, a
-small renderer example, and construction exhaustion. Standalone literal replay
+P-521 output, a small renderer example, and construction exhaustion. Standalone literal replay
 imports the checker-owning module only.
 
 ## Certificate language and extension policy
@@ -2195,7 +2215,7 @@ subject and `checkPrime`. The companion only transports that result. It is
 not possible for a registered producer to add an unchecked opcode, proof slot,
 or alternative success predicate to the checker.
 
-The existing 512-bit goal policy applies before producer evaluation. Arbitrary
+The 521-bit construction goal policy applies before producer evaluation. Arbitrary
 user-selected computation is not covered by `ConstructionBudget`: a supplied
 producer may be expensive or fail to terminate, just as other explicitly run
 Lean metaprograms may. This interface guarantees validation of its result,

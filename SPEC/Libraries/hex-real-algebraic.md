@@ -22,6 +22,7 @@ The dependency arrows below point from a library to its dependencies:
 hex-real-algebraic         -> hex-number-field
 hex-real-algebraic-mathlib -> hex-real-algebraic
                           -> hex-number-field-mathlib -> hex-number-field
+                          -> hex-real-roots-mathlib
                           -> Mathlib
 ```
 
@@ -338,24 +339,25 @@ range exactly when it is algebraic over `ℚ`. Clear denominators of a nonzero
 rational annihilator, use `ZPoly.mem_algebraicRoots_iff`, and package the real
 root with `isReal_iff` for surjectivity onto that range.
 
-The [pinned Mathlib source](https://github.com/leanprover-community/mathlib4/blob/85e3a25e006c35636f0e53b0e9296caca2685bc0/Mathlib/FieldTheory/IsRealClosed/Basic.lean)
+The [pinned Mathlib source](https://github.com/leanprover-community/mathlib4/blob/1cf325a0cf67aca2b04d76b5380ff6a9e410aefa/Mathlib/FieldTheory/IsRealClosed/Basic.lean)
 contains `IsRealClosed` and `IsRealClosed.of_linearOrderedField`. Require an
 `IsRealClosed RealAlgebraicNumber` instance now. The constructor takes
 nonnegative-square closure and odd-degree-root existence in a `Field` with
 `LinearOrder` and `IsStrictOrderedRing`; it also discharges the semireal
-condition. Its source still lists a real-number instance as a TODO, so do
-not assume `[IsRealClosed ℝ]` is available.
+condition. The shared `Real.instIsRealClosed` is supplied by
+[hex-real-roots-mathlib](../../HexRealRootsMathlib/RealClosed.lean), independently
+of this companion.
 
 Prove square closure using real square-root existence and the complete
 algebraic-coefficient root driver to recover a canonical real witness.
 For any Mathlib polynomial over this field of odd natural degree, convert
 its finite coefficient support to `RealAlgebraicPoly`, preserving evaluation
-and degree. Its image in `ℝ[X]` has a real root by the intermediate value
-theorem. `AlgebraicPoly.contains_roots_iff` supplies a lazy algebraic witness
-for that complex value; exactification and `isReal_iff` retain it in the
-real-root list. This proves odd-degree-root existence without assuming
-real-closedness to justify the algorithm. Export both closure theorems as
-well as the instance.
+and degree. Apply `IsRealClosed.exists_isRoot_of_odd_natDegree` to its image
+in `ℝ[X]`, using the shared real instance. `RealAlgebraicPoly.contains_roots_iff`
+then recovers a canonical witness from the executable real-root list. This
+proves odd-degree-root existence without assuming
+`IsRealClosed RealAlgebraicNumber` to justify the algorithm. Export both
+closure theorems as well as the instance.
 
 The following are existing dependencies, with their actual source locations:
 
