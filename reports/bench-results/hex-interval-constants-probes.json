@@ -1,0 +1,3447 @@
+{
+  "config": {
+    "absolute_only": true,
+    "accounting_quantization_ticks": 3,
+    "allow_dirty": false,
+    "command_template": "lake build +<module>:olean",
+    "core_interference_accounting": "measurement-cpu-foreign-plus-all-SMT-sibling-busy",
+    "cpu_affinity": [
+      82
+    ],
+    "cpu_topology": {
+      "core_id": "60",
+      "logical_cpu": 82,
+      "physical_package_id": "0",
+      "scaling_cur_freq_khz": "4233284",
+      "scaling_governor": "schedutil",
+      "thread_siblings_list": "34,82"
+    },
+    "frequency_measurement": "cpufreq-time-in-state-arm-mean",
+    "import_baseline_control": null,
+    "lean_num_threads": "1",
+    "measurement_cpu_foreign_accounting": "busy-minus-child-minus-runner-minus-irq-softirq",
+    "null_magnitude_factor": 3.0,
+    "order": [
+      "precision-2",
+      "precision-8",
+      "precision-16"
+    ],
+    "pairing": "adjacent measured reference and candidate fresh modules; every completed pair retained",
+    "requested_cpu": 82,
+    "retain_compiler_output": true,
+    "rotation": "pairs left by round index; pair orientation alternates",
+    "samples": 4,
+    "shared_host": true,
+    "timeout_seconds": 60.0,
+    "warm_command_template": "lake build +<module>:deps",
+    "warm_timeout_seconds": 600.0
+  },
+  "context": {
+    "shared_host": {
+      "accounting_notes": [],
+      "accounting_quantization_ticks": 3,
+      "expected_frequency_observations": 24,
+      "frequency_spread_ratio": 0.0,
+      "max_aggregate_core_interference_ratio": 0.08817599560898337,
+      "max_arm_mean_frequency_khz": 3150000.0,
+      "max_concurrent_lake_lean_count": 22,
+      "max_cpu_pressure_some_delta_us": 606732,
+      "max_load_1m_per_cpu": 0.411163330078125,
+      "max_measurement_cpu_foreign_ratio": 0.002763714580721967,
+      "max_measurement_cpu_interrupt_ratio": 0.0051933923364668585,
+      "max_smt_sibling_busy_ratio": 0.0876574955190497,
+      "measurement_cpu": 82,
+      "min_arm_mean_frequency_khz": 3150000.0,
+      "observed_frequency_observations": 24,
+      "smt_sibling_cpus": [
+        34
+      ]
+    }
+  },
+  "environment": {
+    "architecture": "x86_64",
+    "cpu_model": "AMD EPYC 9455 48-Core Processor",
+    "dependency_checkouts": {
+      "Cli": {
+        "dirty": false,
+        "head": "e92c9f15fdfacc8536f31cfb3b7ad26c3c8cd204",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10342/.lake/packages/Cli",
+        "state_sha256": "363428c20b198a12b0cac8cdcadfac33f34c22d6f9c4fcf90ebf3541937680d6",
+        "status": "",
+        "tree": "6357519cce94feba4126121f34ea73cfdefc9b72"
+      },
+      "LeanSearchClient": {
+        "dirty": false,
+        "head": "ddf04cf3949fa556442341e87d47f9f6e6074707",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10342/.lake/packages/LeanSearchClient",
+        "state_sha256": "1427071031dff8d058ecb2362c2ee7d6f7a63a84a6aee792ea5385e40957eee4",
+        "status": "",
+        "tree": "04caafd1f6cc74938c7ad7d67a718c5104d5c95a"
+      },
+      "MD4Lean": {
+        "dirty": false,
+        "head": "31907cc18f48a95384f99cee5582c00fb39e0f67",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10342/.lake/packages/MD4Lean",
+        "state_sha256": "371e7dd0e12c88d3bf727066e87ba96e0b3630c1b381e30f80bb86d2d3d98b01",
+        "status": "",
+        "tree": "968ae7de50111d78c47ecf0682e9de2dfd257f67"
+      },
+      "NautyFFI": {
+        "dirty": false,
+        "head": "ec8597014d0ae82490a616b855d59a35e6bfa21f",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10342/.lake/packages/NautyFFI",
+        "state_sha256": "bca51e477dfef5b153a0aaf22ac2678f00e7014efec406dcfb0d4764fc1ab146",
+        "status": "",
+        "tree": "e53fc2638b2e834a84d2520dd471541d5384b73c"
+      },
+      "Qq": {
+        "dirty": false,
+        "head": "6a489d9af5d0c47e5b259e2e8bcdfc1811b5a259",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10342/.lake/packages/Qq",
+        "state_sha256": "5451975774acd46d5ed2ba8ab012804bc00e32a34a30926ad524ece84af93033",
+        "status": "",
+        "tree": "c43f2cecf2a68cb6ef836660ec4d276ab5f9dcb4"
+      },
+      "aesop": {
+        "dirty": false,
+        "head": "355695d523e41d0554926416cba2a2b3544fbbc9",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10342/.lake/packages/aesop",
+        "state_sha256": "17c653e3b3f6977c3d6fdd3681c9b7d3d7a1db503f72a6ca6c6f620db2ec8d50",
+        "status": "",
+        "tree": "141698829a678f60c8a7fd0e54f9493ad05b986c"
+      },
+      "batteries": {
+        "dirty": false,
+        "head": "f2effa3d803fda822b1f97b806c47cf2adfbcbc2",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10342/.lake/packages/batteries",
+        "state_sha256": "1a7e3e536e0e1292e00ee09ec5f1f379252893f59c4756d94c1725ae92555436",
+        "status": "",
+        "tree": "d6c196fbbaafd91f64547af4d95a36bd17d50c38"
+      },
+      "illuminate": {
+        "dirty": false,
+        "head": "a1a61c9678da010e958ed24cdfa6f635b85f172a",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10342/.lake/packages/illuminate",
+        "state_sha256": "42b9408ec221312307dccc53efcfbe61b317da353a167cf46434c80d931638e2",
+        "status": "",
+        "tree": "4c1b8d2f97f249398925639d8ac4ba2dd4126dbe"
+      },
+      "importGraph": {
+        "dirty": false,
+        "head": "e928b72544873815af278d38681b31c0293588e3",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10342/.lake/packages/importGraph",
+        "state_sha256": "7352ff17ab15825c275a9faee43a5f0145b078db749bfe9fd77cfc3826a29161",
+        "status": "",
+        "tree": "92d47162cff41653a118b5fe376ab1428bd2e623"
+      },
+      "lean-bench": {
+        "dirty": false,
+        "head": "8a37daf1074c3bdbd0da479b55538bad4a0022db",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10342/.lake/packages/lean-bench",
+        "state_sha256": "4c44f3c8372259d84ef2174b7aef15ad74fe909203189836813a3696142e4aa3",
+        "status": "",
+        "tree": "3b7df283ef106f78f4d002262976e7e954275b6f"
+      },
+      "mathlib": {
+        "dirty": false,
+        "head": "1cf325a0cf67aca2b04d76b5380ff6a9e410aefa",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10342/.lake/packages/mathlib",
+        "state_sha256": "671a2d7df7867b998e12c905bfd65c1bff1a150e16c632c4f001762b47111002",
+        "status": "",
+        "tree": "ac4413c8b8d78043b3f286b49f2b03b367244eec"
+      },
+      "plausible": {
+        "dirty": false,
+        "head": "118aa17ee84656b8bd727fef7c458ee8c833385c",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10342/.lake/packages/plausible",
+        "state_sha256": "810c2a7d28c075ed630f48d0232bb9361a0e1bca47d74ce885ec0f8b7f35c874",
+        "status": "",
+        "tree": "65aa28b2b3ba59d49736535935e4190f835b6ebc"
+      },
+      "proofwidgets": {
+        "dirty": false,
+        "head": "106ff4fafc74ef4ac99d81dbf3ab399118f497a5",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10342/.lake/packages/proofwidgets",
+        "state_sha256": "ea17cd88cdf64787051528e00b40d6b4b4d0293f28edfa03379aa64785834813",
+        "status": "",
+        "tree": "1a37533eb21ffa2595b3b782cd3a4909110a872c"
+      },
+      "subverso": {
+        "dirty": false,
+        "head": "9b90b7f938d6169246325df002351014f49945ef",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10342/.lake/packages/subverso",
+        "state_sha256": "3c6e4199460b750f38d7a64e3f92707767b1a043481eb6fc5b171ecb006c14a2",
+        "status": "",
+        "tree": "4344159a4a360ababb1cfed3070ffa24247c6dc0"
+      },
+      "verso": {
+        "dirty": false,
+        "head": "cad4b633e75ea769b851f12f9ca3b4f0dfcc625f",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10342/.lake/packages/verso",
+        "state_sha256": "8737ec82ce1154de4dd2a6de42db0de81b06749a117a2bbb844e43cd4b986c57",
+        "status": "",
+        "tree": "65892ae9f3c8485217f24c6cd62c592c7351531b"
+      }
+    },
+    "git_commit": "0dd499e610140c568d917ae9ee19b0de3c43ccc3",
+    "git_dirty": false,
+    "gnu_time": "/run/current-system/sw/bin/time",
+    "host_after": {
+      "affinity_cpu_frequency_khz": "4308703",
+      "available_logical_cpus": 1,
+      "concurrent_lake_lean": [
+        {
+          "command": "lean",
+          "pid": 1221577
+        },
+        {
+          "command": "lean",
+          "pid": 1221647
+        },
+        {
+          "command": "lake",
+          "pid": 1790957
+        },
+        {
+          "command": "lean",
+          "pid": 1792688
+        },
+        {
+          "command": "lean",
+          "pid": 1792724
+        },
+        {
+          "command": "lake",
+          "pid": 2743031
+        },
+        {
+          "command": "lake",
+          "pid": 2743047
+        },
+        {
+          "command": "lake",
+          "pid": 2763671
+        },
+        {
+          "command": "lake",
+          "pid": 2763741
+        },
+        {
+          "command": "lake",
+          "pid": 2777627
+        },
+        {
+          "command": "lean",
+          "pid": 2787306
+        },
+        {
+          "command": "lean",
+          "pid": 2787322
+        },
+        {
+          "command": "lean",
+          "pid": 2787643
+        },
+        {
+          "command": "lean",
+          "pid": 2787769
+        }
+      ],
+      "cpu_affinity": [
+        82
+      ],
+      "cpu_pressure": "some avg10=1.78 avg60=1.87 avg300=12.20 total=43645797412\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+      "cpu_pressure_some_total_us": 43645797412,
+      "load_1m_per_available_cpu": 23.56005859375,
+      "load_1m_per_cpu": 0.24541727701822916,
+      "load_average": [
+        23.56005859375,
+        79.4541015625,
+        101.23974609375
+      ],
+      "logical_cpus": 96,
+      "runnable_tasks": "16/11459"
+    },
+    "host_before": {
+      "affinity_cpu_frequency_khz": "4258118",
+      "available_logical_cpus": 1,
+      "concurrent_lake_lean": [
+        {
+          "command": "lean",
+          "pid": 1221577
+        },
+        {
+          "command": "lean",
+          "pid": 1221647
+        },
+        {
+          "command": "lake",
+          "pid": 1790957
+        },
+        {
+          "command": "lean",
+          "pid": 1792688
+        },
+        {
+          "command": "lean",
+          "pid": 1792724
+        },
+        {
+          "command": "lake",
+          "pid": 2463894
+        },
+        {
+          "command": "lake",
+          "pid": 2478605
+        },
+        {
+          "command": "lake",
+          "pid": 2732855
+        },
+        {
+          "command": "lake",
+          "pid": 2732882
+        },
+        {
+          "command": "lake",
+          "pid": 2743031
+        },
+        {
+          "command": "lake",
+          "pid": 2743047
+        },
+        {
+          "command": "lake",
+          "pid": 2743613
+        },
+        {
+          "command": "lake",
+          "pid": 2743614
+        },
+        {
+          "command": "lean",
+          "pid": 2743792
+        },
+        {
+          "command": "lake",
+          "pid": 2746740
+        },
+        {
+          "command": "lean",
+          "pid": 2746841
+        },
+        {
+          "command": "lean",
+          "pid": 2746983
+        },
+        {
+          "command": "lean",
+          "pid": 2746991
+        }
+      ],
+      "cpu_affinity": [
+        82
+      ],
+      "cpu_pressure": "some avg10=0.00 avg60=2.90 avg300=21.97 total=43640662826\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+      "cpu_pressure_some_total_us": 43640662826,
+      "load_1m_per_available_cpu": 41.1669921875,
+      "load_1m_per_cpu": 0.4288228352864583,
+      "load_average": [
+        41.1669921875,
+        135.26416015625,
+        120.626953125
+      ],
+      "logical_cpus": 96,
+      "runnable_tasks": "19/12741"
+    },
+    "hostname": "chungus2",
+    "machine_id": "8be29815875342aeaae06e62d60f6b03",
+    "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+    "python": "3.14.6",
+    "repository": {
+      "dirty": false,
+      "head": "0dd499e610140c568d917ae9ee19b0de3c43ccc3",
+      "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10342",
+      "state_sha256": "155a5d5130da2a2304a041bdea9f281255bd2cad11dc989f65ec40a441b841e8",
+      "status": "",
+      "tree": "63754cbe3468f7d0ee2fd5c92b8ab4d980aa6d75"
+    },
+    "toolchain": "leanprover/lean4:v4.34.0"
+  },
+  "measurement": "paired-fresh-module-olean-wall-robust-null-v2",
+  "measurement_state": "complete",
+  "partial_samples": null,
+  "results": {
+    "precision-16": {
+      "build_magnitude_wall_nanos": 8556147774,
+      "candidate": {
+        "artifacts": {
+          "ilean_bytes": 5239,
+          "olean_bytes": 21312,
+          "olean_private_bytes": 346248,
+          "olean_server_bytes": 2528,
+          "source_bytes": 3340
+        },
+        "expected_axioms": [
+          "propext",
+          "Classical.choice",
+          "Quot.sound"
+        ],
+        "module": "HexIntervalMathlib.Constants.Precision16"
+      },
+      "cleanup_timeout_seconds": 120,
+      "comparable_control": null,
+      "comparable_null_envelope_nanos": null,
+      "comparable_null_raw_envelope_nanos": null,
+      "comparable_null_raw_spread_nanos": null,
+      "comparable_null_spread_nanos": null,
+      "control_interpolation_weight": null,
+      "control_magnitude_ratio": null,
+      "control_scale_factor": null,
+      "exp_order": 12,
+      "fresh_module_budget_ms": 60000,
+      "fresh_module_budget_nanos": 60000000000,
+      "fresh_module_budget_status": "passed",
+      "max_candidate_wall_nanos": 8754619053,
+      "median_candidate_peak_rss_kb": 3248948,
+      "median_candidate_wall_nanos": 8556147774,
+      "median_reference_peak_rss_kb": 3207202,
+      "median_reference_wall_nanos": 7715690114,
+      "median_signed_wall_delta_nanos": 676137502,
+      "null_control": false,
+      "pi_order": 8,
+      "precision": 16,
+      "reference": {
+        "artifacts": {
+          "ilean_bytes": 148,
+          "olean_bytes": 1496,
+          "olean_private_bytes": 808,
+          "olean_server_bytes": 904,
+          "source_bytes": 288
+        },
+        "expected_axioms": null,
+        "module": "HexIntervalMathlib.Constants.Baseline"
+      },
+      "resolution": "no-comparable-control",
+      "samples": [
+        {
+          "build_order": [
+            "reference",
+            "candidate"
+          ],
+          "candidate": {
+            "axioms": [
+              "propext",
+              "Classical.choice",
+              "Quot.sound"
+            ],
+            "compiler_output": "\u26a0 [860/980] Replayed HexIntervalMathlib.Interval\nwarning: HexIntervalMathlib/Interval.lean:10:0: 'Mathlib.Data.Real.Basic' has been deprecated: please replace this import by\n\nimport Mathlib.Basic.Real.Basic\n\u2139 [8965/8965] Built HexIntervalMathlib.Constants.Precision16 (3.6s)\ninfo: bench/HexIntervalMathlib/Constants/Precision16.lean:61:0: 'Hex.Interval.ConstantsProbe16.pi_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: bench/HexIntervalMathlib/Constants/Precision16.lean:62:0: 'Hex.Interval.ConstantsProbe16.exp_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (8965 jobs).\n__HEX_MAX_RSS_KB__=3234920\n__HEX_USER_SECONDS__=6.58\n__HEX_SYSTEM_SECONDS__=2.12\n__HEX_CPU_PERCENT__=99%\n__HEX_INVOLUNTARY_CONTEXT__=28075\n__HEX_VOLUNTARY_CONTEXT__=42591\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.07788500000000112,
+              "child_cpu_seconds": 8.710994999999999,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 875
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.00788500000000112,
+              "measurement_cpu_interrupt_seconds": 0.04,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.00788500000000112,
+              "measurement_cpu_residual_seconds": 0.04788500000000112,
+              "per_cpu": {
+                "34": {
+                  "busy_seconds": 0.07,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 867,
+                    "iowait": 0,
+                    "irq": 0,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 6,
+                    "user": 1
+                  }
+                },
+                "82": {
+                  "busy_seconds": 8.76,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 0,
+                    "irq": 3,
+                    "nice": 0,
+                    "softirq": 1,
+                    "steal": 0,
+                    "system": 213,
+                    "user": 659
+                  }
+                }
+              },
+              "pressure_some_delta_us": 176052,
+              "runner_cpu_seconds": 0.0011199999999999544
+            },
+            "cpu_percent": 99.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4294181",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 20,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.22 avg60=2.15 avg300=18.54 total=43641919744\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43641919744,
+              "load_1m_per_available_cpu": 28.1162109375,
+              "load_1m_per_cpu": 0.292877197265625,
+              "load_average": [
+                28.1162109375,
+                115.74609375,
+                114.7890625
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "19/12581"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4253437",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 21,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.52 avg60=2.33 avg300=19.15 total=43641743692\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43641743692,
+              "load_1m_per_available_cpu": 29.15576171875,
+              "load_1m_per_cpu": 0.3037058512369792,
+              "load_average": [
+                29.15576171875,
+                118.92236328125,
+                115.7890625
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "20/12472"
+            },
+            "involuntary_context_switches": 28075,
+            "peak_rss_kb": 3234920,
+            "precise_child_system_seconds": 2.122985999999999,
+            "precise_child_user_seconds": 6.588009,
+            "system_seconds": 2.12,
+            "user_seconds": 6.58,
+            "voluntary_context_switches": 42591,
+            "wall_nanos": 8754619053
+          },
+          "context_issues": [],
+          "host_before_pair": {
+            "affinity_cpu_frequency_khz": "4340088",
+            "available_logical_cpus": 1,
+            "concurrent_lake_lean_count": 14,
+            "cpu_affinity": [
+              82
+            ],
+            "cpu_pressure": "some avg10=1.70 avg60=2.45 avg300=19.64 total=43641601098\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+            "cpu_pressure_some_total_us": 43641601098,
+            "load_1m_per_available_cpu": 30.81201171875,
+            "load_1m_per_cpu": 0.3209584554036458,
+            "load_average": [
+              30.81201171875,
+              122.29052734375,
+              116.8271484375
+            ],
+            "logical_cpus": 96,
+            "runnable_tasks": "16/12405"
+          },
+          "pair": "precision-16",
+          "reference": {
+            "axioms": null,
+            "compiler_output": "\u26a0 [860/997] Replayed HexIntervalMathlib.Interval\nwarning: HexIntervalMathlib/Interval.lean:10:0: 'Mathlib.Data.Real.Basic' has been deprecated: please replace this import by\n\nimport Mathlib.Basic.Real.Basic\n\u2714 [8965/8965] Built HexIntervalMathlib.Constants.Baseline (2.8s)\nBuild completed successfully (8965 jobs).\n__HEX_MAX_RSS_KB__=3197292\n__HEX_USER_SECONDS__=6.31\n__HEX_SYSTEM_SECONDS__=1.95\n__HEX_CPU_PERCENT__=99%\n__HEX_INVOLUNTARY_CONTEXT__=28494\n__HEX_VOLUNTARY_CONTEXT__=42663\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.7343180000000037,
+              "child_cpu_seconds": 8.274624999999997,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 833
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.0043180000000037355,
+              "measurement_cpu_interrupt_seconds": 0.03,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.0043180000000037355,
+              "measurement_cpu_residual_seconds": 0.034318000000003734,
+              "per_cpu": {
+                "34": {
+                  "busy_seconds": 0.73,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 761,
+                    "iowait": 0,
+                    "irq": 1,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 9,
+                    "user": 63
+                  }
+                },
+                "82": {
+                  "busy_seconds": 8.31,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 0,
+                    "irq": 3,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 196,
+                    "user": 632
+                  }
+                }
+              },
+              "pressure_some_delta_us": 142354,
+              "runner_cpu_seconds": 0.0010569999999999746
+            },
+            "cpu_percent": 99.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4262550",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 21,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.52 avg60=2.33 avg300=19.15 total=43641743612\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43641743612,
+              "load_1m_per_available_cpu": 29.15576171875,
+              "load_1m_per_cpu": 0.3037058512369792,
+              "load_average": [
+                29.15576171875,
+                118.92236328125,
+                115.7890625
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "21/12459"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4359943",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 14,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.70 avg60=2.45 avg300=19.64 total=43641601258\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43641601258,
+              "load_1m_per_available_cpu": 30.81201171875,
+              "load_1m_per_cpu": 0.3209584554036458,
+              "load_average": [
+                30.81201171875,
+                122.29052734375,
+                116.8271484375
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "16/12404"
+            },
+            "involuntary_context_switches": 28494,
+            "peak_rss_kb": 3197292,
+            "precise_child_system_seconds": 1.958913,
+            "precise_child_user_seconds": 6.315711999999998,
+            "system_seconds": 1.95,
+            "user_seconds": 6.31,
+            "voluntary_context_switches": 42663,
+            "wall_nanos": 8327867408
+          },
+          "round": 1,
+          "signed_wall_delta_nanos": 426751645,
+          "slot_index": 2
+        },
+        {
+          "build_order": [
+            "candidate",
+            "reference"
+          ],
+          "candidate": {
+            "axioms": [
+              "propext",
+              "Classical.choice",
+              "Quot.sound"
+            ],
+            "compiler_output": "\u26a0 [860/1035] Replayed HexIntervalMathlib.Interval\nwarning: HexIntervalMathlib/Interval.lean:10:0: 'Mathlib.Data.Real.Basic' has been deprecated: please replace this import by\n\nimport Mathlib.Basic.Real.Basic\n\u2139 [8965/8965] Built HexIntervalMathlib.Constants.Precision16 (2.8s)\ninfo: bench/HexIntervalMathlib/Constants/Precision16.lean:61:0: 'Hex.Interval.ConstantsProbe16.pi_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: bench/HexIntervalMathlib/Constants/Precision16.lean:62:0: 'Hex.Interval.ConstantsProbe16.exp_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (8965 jobs).\n__HEX_MAX_RSS_KB__=3257576\n__HEX_USER_SECONDS__=6.29\n__HEX_SYSTEM_SECONDS__=1.38\n__HEX_CPU_PERCENT__=99%\n__HEX_INVOLUNTARY_CONTEXT__=29564\n__HEX_VOLUNTARY_CONTEXT__=43991\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.017461999999998506,
+              "child_cpu_seconds": 7.681471000000002,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 772
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.0074619999999985046,
+              "measurement_cpu_interrupt_seconds": 0.04,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.0074619999999985046,
+              "measurement_cpu_residual_seconds": 0.047461999999998505,
+              "per_cpu": {
+                "34": {
+                  "busy_seconds": 0.01,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 770,
+                    "iowait": 0,
+                    "irq": 1,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 0,
+                    "user": 0
+                  }
+                },
+                "82": {
+                  "busy_seconds": 7.73,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 0,
+                    "irq": 3,
+                    "nice": 0,
+                    "softirq": 1,
+                    "steal": 0,
+                    "system": 139,
+                    "user": 630
+                  }
+                }
+              },
+              "pressure_some_delta_us": 606732,
+              "runner_cpu_seconds": 0.0010669999999999846
+            },
+            "cpu_percent": 99.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4404963",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 12,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=5.70 avg60=3.00 avg300=17.53 total=43643093692\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43643093692,
+              "load_1m_per_available_cpu": 24.61279296875,
+              "load_1m_per_cpu": 0.2563832600911458,
+              "load_average": [
+                24.61279296875,
+                107.8935546875,
+                112.2158203125
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "15/12408"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4381243",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 18,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=2.52 avg60=2.25 avg300=17.79 total=43642486960\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43642486960,
+              "load_1m_per_available_cpu": 25.92431640625,
+              "load_1m_per_cpu": 0.2700449625651042,
+              "load_average": [
+                25.92431640625,
+                110.97265625,
+                113.2421875
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "18/12421"
+            },
+            "involuntary_context_switches": 29564,
+            "peak_rss_kb": 3257576,
+            "precise_child_system_seconds": 1.3886690000000002,
+            "precise_child_user_seconds": 6.292802000000002,
+            "system_seconds": 1.38,
+            "user_seconds": 6.29,
+            "voluntary_context_switches": 43991,
+            "wall_nanos": 7719920988
+          },
+          "context_issues": [],
+          "host_before_pair": {
+            "affinity_cpu_frequency_khz": "4400497",
+            "available_logical_cpus": 1,
+            "concurrent_lake_lean_count": 18,
+            "cpu_affinity": [
+              82
+            ],
+            "cpu_pressure": "some avg10=2.52 avg60=2.25 avg300=17.79 total=43642481746\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+            "cpu_pressure_some_total_us": 43642481746,
+            "load_1m_per_available_cpu": 25.92431640625,
+            "load_1m_per_cpu": 0.2700449625651042,
+            "load_average": [
+              25.92431640625,
+              110.97265625,
+              113.2421875
+            ],
+            "logical_cpus": 96,
+            "runnable_tasks": "19/12421"
+          },
+          "pair": "precision-16",
+          "reference": {
+            "axioms": null,
+            "compiler_output": "\u26a0 [860/1033] Replayed HexIntervalMathlib.Interval\nwarning: HexIntervalMathlib/Interval.lean:10:0: 'Mathlib.Data.Real.Basic' has been deprecated: please replace this import by\n\nimport Mathlib.Basic.Real.Basic\n\u2714 [8965/8965] Built HexIntervalMathlib.Constants.Baseline (2.3s)\nBuild completed successfully (8965 jobs).\n__HEX_MAX_RSS_KB__=3214496\n__HEX_USER_SECONDS__=5.84\n__HEX_SYSTEM_SECONDS__=1.19\n__HEX_CPU_PERCENT__=99%\n__HEX_INVOLUNTARY_CONTEXT__=26842\n__HEX_VOLUNTARY_CONTEXT__=41230\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.04194099999999822,
+              "child_cpu_seconds": 7.046984000000002,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 709
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.001940999999998222,
+              "measurement_cpu_interrupt_seconds": 0.03,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.001940999999998222,
+              "measurement_cpu_residual_seconds": 0.03194099999999822,
+              "per_cpu": {
+                "34": {
+                  "busy_seconds": 0.04,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 706,
+                    "iowait": 0,
+                    "irq": 0,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 2,
+                    "user": 2
+                  }
+                },
+                "82": {
+                  "busy_seconds": 7.08,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 0,
+                    "irq": 3,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 120,
+                    "user": 585
+                  }
+                }
+              },
+              "pressure_some_delta_us": 222919,
+              "runner_cpu_seconds": 0.0010749999999999371
+            },
+            "cpu_percent": 99.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4289778",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 15,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=3.86 avg60=2.93 avg300=17.12 total=43643316668\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43643316668,
+              "load_1m_per_available_cpu": 24.0830078125,
+              "load_1m_per_cpu": 0.2508646647135417,
+              "load_average": [
+                24.0830078125,
+                106.40087890625,
+                111.70947265625
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "20/12510"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4378277",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 12,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=5.70 avg60=3.00 avg300=17.53 total=43643093749\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43643093749,
+              "load_1m_per_available_cpu": 24.61279296875,
+              "load_1m_per_cpu": 0.2563832600911458,
+              "load_average": [
+                24.61279296875,
+                107.8935546875,
+                112.2158203125
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "15/12406"
+            },
+            "involuntary_context_switches": 26842,
+            "peak_rss_kb": 3214496,
+            "precise_child_system_seconds": 1.1990320000000025,
+            "precise_child_user_seconds": 5.847951999999999,
+            "system_seconds": 1.19,
+            "user_seconds": 5.84,
+            "voluntary_context_switches": 41230,
+            "wall_nanos": 7085374607
+          },
+          "round": 2,
+          "signed_wall_delta_nanos": 634546381,
+          "slot_index": 1
+        },
+        {
+          "build_order": [
+            "reference",
+            "candidate"
+          ],
+          "candidate": {
+            "axioms": [
+              "propext",
+              "Classical.choice",
+              "Quot.sound"
+            ],
+            "compiler_output": "\u26a0 [860/997] Replayed HexIntervalMathlib.Interval\nwarning: HexIntervalMathlib/Interval.lean:10:0: 'Mathlib.Data.Real.Basic' has been deprecated: please replace this import by\n\nimport Mathlib.Basic.Real.Basic\n\u2139 [8965/8965] Built HexIntervalMathlib.Constants.Precision16 (3.4s)\ninfo: bench/HexIntervalMathlib/Constants/Precision16.lean:61:0: 'Hex.Interval.ConstantsProbe16.pi_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: bench/HexIntervalMathlib/Constants/Precision16.lean:62:0: 'Hex.Interval.ConstantsProbe16.exp_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (8965 jobs).\n__HEX_MAX_RSS_KB__=3251816\n__HEX_USER_SECONDS__=6.76\n__HEX_SYSTEM_SECONDS__=1.84\n__HEX_CPU_PERCENT__=99%\n__HEX_INVOLUNTARY_CONTEXT__=28912\n__HEX_VOLUNTARY_CONTEXT__=43356\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.4245800000000147,
+              "child_cpu_seconds": 8.604311999999986,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 865
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.004580000000014711,
+              "measurement_cpu_interrupt_seconds": 0.03,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.004580000000014711,
+              "measurement_cpu_residual_seconds": 0.03458000000001471,
+              "per_cpu": {
+                "34": {
+                  "busy_seconds": 0.42,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 823,
+                    "iowait": 0,
+                    "irq": 1,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 3,
+                    "user": 38
+                  }
+                },
+                "82": {
+                  "busy_seconds": 8.64,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 0,
+                    "irq": 3,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 184,
+                    "user": 677
+                  }
+                }
+              },
+              "pressure_some_delta_us": 173083,
+              "runner_cpu_seconds": 0.0011079999999998869
+            },
+            "cpu_percent": 99.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4375186",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 14,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.62 avg60=2.51 avg300=15.55 total=43644108616\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43644108616,
+              "load_1m_per_available_cpu": 22.43505859375,
+              "load_1m_per_cpu": 0.23369852701822916,
+              "load_average": [
+                22.43505859375,
+                98.11474609375,
+                108.78173828125
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "19/12369"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4236530",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 13,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.92 avg60=2.66 avg300=15.94 total=43643935533\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43643935533,
+              "load_1m_per_available_cpu": 22.3857421875,
+              "load_1m_per_cpu": 0.233184814453125,
+              "load_average": [
+                22.3857421875,
+                99.38330078125,
+                109.2451171875
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "25/12413"
+            },
+            "involuntary_context_switches": 28912,
+            "peak_rss_kb": 3251816,
+            "precise_child_system_seconds": 1.8416939999999968,
+            "precise_child_user_seconds": 6.762617999999989,
+            "system_seconds": 1.84,
+            "user_seconds": 6.76,
+            "voluntary_context_switches": 43356,
+            "wall_nanos": 8655209104
+          },
+          "context_issues": [],
+          "host_before_pair": {
+            "affinity_cpu_frequency_khz": "4294779",
+            "available_logical_cpus": 1,
+            "concurrent_lake_lean_count": 18,
+            "cpu_affinity": [
+              82
+            ],
+            "cpu_pressure": "some avg10=2.58 avg60=2.82 avg300=16.34 total=43643779103\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+            "cpu_pressure_some_total_us": 43643779103,
+            "load_1m_per_available_cpu": 22.5810546875,
+            "load_1m_per_cpu": 0.23521931966145834,
+            "load_average": [
+              22.5810546875,
+              102.037109375,
+              110.1962890625
+            ],
+            "logical_cpus": 96,
+            "runnable_tasks": "21/12579"
+          },
+          "pair": "precision-16",
+          "reference": {
+            "axioms": null,
+            "compiler_output": "\u26a0 [860/907] Replayed HexIntervalMathlib.Interval\nwarning: HexIntervalMathlib/Interval.lean:10:0: 'Mathlib.Data.Real.Basic' has been deprecated: please replace this import by\n\nimport Mathlib.Basic.Real.Basic\n\u2714 [8965/8965] Built HexIntervalMathlib.Constants.Baseline (2.6s)\nBuild completed successfully (8965 jobs).\n__HEX_MAX_RSS_KB__=3208544\n__HEX_USER_SECONDS__=6.30\n__HEX_SYSTEM_SECONDS__=1.58\n__HEX_CPU_PERCENT__=99%\n__HEX_INVOLUNTARY_CONTEXT__=28751\n__HEX_VOLUNTARY_CONTEXT__=42928\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.6061969999999992,
+              "child_cpu_seconds": 7.892672000000001,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 794
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.006196999999999266,
+              "measurement_cpu_interrupt_seconds": 0.04,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.006196999999999266,
+              "measurement_cpu_residual_seconds": 0.046196999999999266,
+              "per_cpu": {
+                "34": {
+                  "busy_seconds": 0.6,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 731,
+                    "iowait": 0,
+                    "irq": 0,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 4,
+                    "user": 56
+                  }
+                },
+                "82": {
+                  "busy_seconds": 7.94,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 1,
+                    "iowait": 0,
+                    "irq": 3,
+                    "nice": 0,
+                    "softirq": 1,
+                    "steal": 0,
+                    "system": 159,
+                    "user": 631
+                  }
+                }
+              },
+              "pressure_some_delta_us": 156171,
+              "runner_cpu_seconds": 0.0011310000000001041
+            },
+            "cpu_percent": 99.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4280521",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 15,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.92 avg60=2.66 avg300=15.94 total=43643935437\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43643935437,
+              "load_1m_per_available_cpu": 22.3857421875,
+              "load_1m_per_cpu": 0.233184814453125,
+              "load_average": [
+                22.3857421875,
+                99.38330078125,
+                109.2451171875
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "34/12440"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4240234",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 19,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=2.58 avg60=2.82 avg300=16.34 total=43643779266\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43643779266,
+              "load_1m_per_available_cpu": 22.5810546875,
+              "load_1m_per_cpu": 0.23521931966145834,
+              "load_average": [
+                22.5810546875,
+                102.037109375,
+                110.1962890625
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "23/12571"
+            },
+            "involuntary_context_switches": 28751,
+            "peak_rss_kb": 3208544,
+            "precise_child_system_seconds": 1.5880240000000008,
+            "precise_child_user_seconds": 6.304648,
+            "system_seconds": 1.58,
+            "user_seconds": 6.3,
+            "voluntary_context_switches": 42928,
+            "wall_nanos": 7937480481
+          },
+          "round": 3,
+          "signed_wall_delta_nanos": 717728623,
+          "slot_index": 0
+        },
+        {
+          "build_order": [
+            "candidate",
+            "reference"
+          ],
+          "candidate": {
+            "axioms": [
+              "propext",
+              "Classical.choice",
+              "Quot.sound"
+            ],
+            "compiler_output": "\u26a0 [860/1009] Replayed HexIntervalMathlib.Interval\nwarning: HexIntervalMathlib/Interval.lean:10:0: 'Mathlib.Data.Real.Basic' has been deprecated: please replace this import by\n\nimport Mathlib.Basic.Real.Basic\n\u2139 [8965/8965] Built HexIntervalMathlib.Constants.Precision16 (3.4s)\ninfo: bench/HexIntervalMathlib/Constants/Precision16.lean:61:0: 'Hex.Interval.ConstantsProbe16.pi_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: bench/HexIntervalMathlib/Constants/Precision16.lean:62:0: 'Hex.Interval.ConstantsProbe16.exp_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (8965 jobs).\n__HEX_MAX_RSS_KB__=3246080\n__HEX_USER_SECONDS__=6.54\n__HEX_SYSTEM_SECONDS__=1.85\n__HEX_CPU_PERCENT__=99%\n__HEX_INVOLUNTARY_CONTEXT__=27330\n__HEX_VOLUNTARY_CONTEXT__=41739\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.13440400000000388,
+              "child_cpu_seconds": 8.404480999999997,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 846
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.014404000000003893,
+              "measurement_cpu_interrupt_seconds": 0.04,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.014404000000003893,
+              "measurement_cpu_residual_seconds": 0.054404000000003894,
+              "per_cpu": {
+                "34": {
+                  "busy_seconds": 0.12,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 833,
+                    "iowait": 0,
+                    "irq": 0,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 10,
+                    "user": 2
+                  }
+                },
+                "82": {
+                  "busy_seconds": 8.46,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 1,
+                    "iowait": 1,
+                    "irq": 3,
+                    "nice": 0,
+                    "softirq": 1,
+                    "steal": 0,
+                    "system": 186,
+                    "user": 656
+                  }
+                }
+              },
+              "pressure_some_delta_us": 190338,
+              "runner_cpu_seconds": 0.0011149999999999771
+            },
+            "cpu_percent": 99.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4281910",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 16,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.60 avg60=1.86 avg300=12.48 total=43645614770\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43645614770,
+              "load_1m_per_available_cpu": 21.76123046875,
+              "load_1m_per_cpu": 0.22667948404947916,
+              "load_average": [
+                21.76123046875,
+                81.033203125,
+                101.97900390625
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "17/11596"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4284845",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 13,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.50 avg60=1.87 avg300=12.78 total=43645424432\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43645424432,
+              "load_1m_per_available_cpu": 21.6953125,
+              "load_1m_per_cpu": 0.22599283854166666,
+              "load_average": [
+                21.6953125,
+                83.04296875,
+                102.845703125
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "17/11466"
+            },
+            "involuntary_context_switches": 27330,
+            "peak_rss_kb": 3246080,
+            "precise_child_system_seconds": 1.8538110000000003,
+            "precise_child_user_seconds": 6.550669999999997,
+            "system_seconds": 1.85,
+            "user_seconds": 6.54,
+            "voluntary_context_switches": 41739,
+            "wall_nanos": 8457086445
+          },
+          "context_issues": [],
+          "host_before_pair": {
+            "affinity_cpu_frequency_khz": "4333038",
+            "available_logical_cpus": 1,
+            "concurrent_lake_lean_count": 14,
+            "cpu_affinity": [
+              82
+            ],
+            "cpu_pressure": "some avg10=1.50 avg60=1.87 avg300=12.78 total=43645424237\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+            "cpu_pressure_some_total_us": 43645424237,
+            "load_1m_per_available_cpu": 21.6953125,
+            "load_1m_per_cpu": 0.22599283854166666,
+            "load_average": [
+              21.6953125,
+              83.04296875,
+              102.845703125
+            ],
+            "logical_cpus": 96,
+            "runnable_tasks": "20/11667"
+          },
+          "pair": "precision-16",
+          "reference": {
+            "axioms": null,
+            "compiler_output": "\u26a0 [860/1017] Replayed HexIntervalMathlib.Interval\nwarning: HexIntervalMathlib/Interval.lean:10:0: 'Mathlib.Data.Real.Basic' has been deprecated: please replace this import by\n\nimport Mathlib.Basic.Real.Basic\n\u2714 [8965/8965] Built HexIntervalMathlib.Constants.Baseline (2.5s)\nBuild completed successfully (8965 jobs).\n__HEX_MAX_RSS_KB__=3205860\n__HEX_USER_SECONDS__=5.90\n__HEX_SYSTEM_SECONDS__=1.54\n__HEX_CPU_PERCENT__=99%\n__HEX_INVOLUNTARY_CONTEXT__=26894\n__HEX_VOLUNTARY_CONTEXT__=41326\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.06071100000001627,
+              "child_cpu_seconds": 7.448166999999984,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 750
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.020711000000016272,
+              "measurement_cpu_interrupt_seconds": 0.03,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.020711000000016272,
+              "measurement_cpu_residual_seconds": 0.05071100000001627,
+              "per_cpu": {
+                "34": {
+                  "busy_seconds": 0.04,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 747,
+                    "iowait": 0,
+                    "irq": 1,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 1,
+                    "user": 2
+                  }
+                },
+                "82": {
+                  "busy_seconds": 7.5,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 0,
+                    "irq": 3,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 156,
+                    "user": 591
+                  }
+                }
+              },
+              "pressure_some_delta_us": 178624,
+              "runner_cpu_seconds": 0.0011219999999999564
+            },
+            "cpu_percent": 99.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4346071",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 14,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.78 avg60=1.87 avg300=12.20 total=43645793619\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43645793619,
+              "load_1m_per_available_cpu": 21.78076171875,
+              "load_1m_per_cpu": 0.2268829345703125,
+              "load_average": [
+                21.78076171875,
+                80.052734375,
+                101.54931640625
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "16/11415"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4322754",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 14,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.49 avg60=1.83 avg300=12.40 total=43645614995\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43645614995,
+              "load_1m_per_available_cpu": 21.76123046875,
+              "load_1m_per_cpu": 0.22667948404947916,
+              "load_average": [
+                21.76123046875,
+                81.033203125,
+                101.97900390625
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "21/11629"
+            },
+            "involuntary_context_switches": 26894,
+            "peak_rss_kb": 3205860,
+            "precise_child_system_seconds": 1.5456340000000068,
+            "precise_child_user_seconds": 5.902532999999977,
+            "system_seconds": 1.54,
+            "user_seconds": 5.9,
+            "voluntary_context_switches": 41326,
+            "wall_nanos": 7493899748
+          },
+          "round": 4,
+          "signed_wall_delta_nanos": 963186697,
+          "slot_index": 2
+        }
+      ],
+      "signed_wall_delta_nanos": [
+        426751645,
+        634546381,
+        717728623,
+        963186697
+      ]
+    },
+    "precision-2": {
+      "build_magnitude_wall_nanos": 8077241119,
+      "candidate": {
+        "artifacts": {
+          "ilean_bytes": 4772,
+          "olean_bytes": 21032,
+          "olean_private_bytes": 221112,
+          "olean_server_bytes": 2216,
+          "source_bytes": 2221
+        },
+        "expected_axioms": [
+          "propext",
+          "Classical.choice",
+          "Quot.sound"
+        ],
+        "module": "HexIntervalMathlib.Constants.Precision2"
+      },
+      "cleanup_timeout_seconds": 120,
+      "comparable_control": null,
+      "comparable_null_envelope_nanos": null,
+      "comparable_null_raw_envelope_nanos": null,
+      "comparable_null_raw_spread_nanos": null,
+      "comparable_null_spread_nanos": null,
+      "control_interpolation_weight": null,
+      "control_magnitude_ratio": null,
+      "control_scale_factor": null,
+      "exp_order": 4,
+      "fresh_module_budget_ms": 60000,
+      "fresh_module_budget_nanos": 60000000000,
+      "fresh_module_budget_status": "passed",
+      "max_candidate_wall_nanos": 8269402858,
+      "median_candidate_peak_rss_kb": 3249460,
+      "median_candidate_wall_nanos": 8077241119,
+      "median_reference_peak_rss_kb": 3210714,
+      "median_reference_wall_nanos": 7540034472,
+      "median_signed_wall_delta_nanos": 585822869,
+      "null_control": false,
+      "pi_order": 2,
+      "precision": 2,
+      "reference": {
+        "artifacts": {
+          "ilean_bytes": 148,
+          "olean_bytes": 1496,
+          "olean_private_bytes": 808,
+          "olean_server_bytes": 904,
+          "source_bytes": 288
+        },
+        "expected_axioms": null,
+        "module": "HexIntervalMathlib.Constants.Baseline"
+      },
+      "resolution": "no-comparable-control",
+      "samples": [
+        {
+          "build_order": [
+            "reference",
+            "candidate"
+          ],
+          "candidate": {
+            "axioms": [
+              "propext",
+              "Classical.choice",
+              "Quot.sound"
+            ],
+            "compiler_output": "\u26a0 [860/1019] Replayed HexIntervalMathlib.Interval\nwarning: HexIntervalMathlib/Interval.lean:10:0: 'Mathlib.Data.Real.Basic' has been deprecated: please replace this import by\n\nimport Mathlib.Basic.Real.Basic\n\u2139 [8965/8965] Built HexIntervalMathlib.Constants.Precision2 (3.2s)\ninfo: bench/HexIntervalMathlib/Constants/Precision2.lean:67:0: 'Hex.Interval.ConstantsProbe2.pi_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: bench/HexIntervalMathlib/Constants/Precision2.lean:68:0: 'Hex.Interval.ConstantsProbe2.exp_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (8965 jobs).\n__HEX_MAX_RSS_KB__=3236356\n__HEX_USER_SECONDS__=6.36\n__HEX_SYSTEM_SECONDS__=1.70\n__HEX_CPU_PERCENT__=99%\n__HEX_INVOLUNTARY_CONTEXT__=27165\n__HEX_VOLUNTARY_CONTEXT__=41802\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.01589600000000193,
+              "child_cpu_seconds": 8.073048999999997,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 811
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.0058960000000019275,
+              "measurement_cpu_interrupt_seconds": 0.03,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.0058960000000019275,
+              "measurement_cpu_residual_seconds": 0.035896000000001926,
+              "per_cpu": {
+                "34": {
+                  "busy_seconds": 0.01,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 810,
+                    "iowait": 0,
+                    "irq": 0,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 0,
+                    "user": 1
+                  }
+                },
+                "82": {
+                  "busy_seconds": 8.11,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 0,
+                    "irq": 3,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 171,
+                    "user": 637
+                  }
+                }
+              },
+              "pressure_some_delta_us": 199830,
+              "runner_cpu_seconds": 0.0010550000000000281
+            },
+            "cpu_percent": 99.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4327213",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 15,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.51 avg60=2.63 avg300=20.65 total=43641207995\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43641207995,
+              "load_1m_per_available_cpu": 34.837890625,
+              "load_1m_per_cpu": 0.3628946940104167,
+              "load_average": [
+                34.837890625,
+                127.7314453125,
+                118.4599609375
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "17/12542"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4355153",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 14,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.41 avg60=2.76 avg300=21.17 total=43641008165\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43641008165,
+              "load_1m_per_available_cpu": 36.39111328125,
+              "load_1m_per_cpu": 0.3790740966796875,
+              "load_average": [
+                36.39111328125,
+                129.60107421875,
+                119.00830078125
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "17/12523"
+            },
+            "involuntary_context_switches": 27165,
+            "peak_rss_kb": 3236356,
+            "precise_child_system_seconds": 1.7067289999999997,
+            "precise_child_user_seconds": 6.366319999999998,
+            "system_seconds": 1.7,
+            "user_seconds": 6.36,
+            "voluntary_context_switches": 41802,
+            "wall_nanos": 8110403524
+          },
+          "context_issues": [],
+          "host_before_pair": {
+            "affinity_cpu_frequency_khz": "4233284",
+            "available_logical_cpus": 1,
+            "concurrent_lake_lean_count": 18,
+            "cpu_affinity": [
+              82
+            ],
+            "cpu_pressure": "some avg10=0.84 avg60=2.87 avg300=21.71 total=43640823537\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+            "cpu_pressure_some_total_us": 43640823537,
+            "load_1m_per_available_cpu": 39.4716796875,
+            "load_1m_per_cpu": 0.411163330078125,
+            "load_average": [
+              39.4716796875,
+              133.3505859375,
+              120.08642578125
+            ],
+            "logical_cpus": 96,
+            "runnable_tasks": "20/12705"
+          },
+          "pair": "precision-2",
+          "reference": {
+            "axioms": null,
+            "compiler_output": "\u26a0 [860/1009] Replayed HexIntervalMathlib.Interval\nwarning: HexIntervalMathlib/Interval.lean:10:0: 'Mathlib.Data.Real.Basic' has been deprecated: please replace this import by\n\nimport Mathlib.Basic.Real.Basic\n\u2714 [8965/8965] Built HexIntervalMathlib.Constants.Baseline (2.1s)\nBuild completed successfully (8965 jobs).\n__HEX_MAX_RSS_KB__=3214080\n__HEX_USER_SECONDS__=5.74\n__HEX_SYSTEM_SECONDS__=1.18\n__HEX_CPU_PERCENT__=99%\n__HEX_INVOLUNTARY_CONTEXT__=25921\n__HEX_VOLUNTARY_CONTEXT__=40357\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.01173299999999993,
+              "child_cpu_seconds": 6.927181,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 696
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.001732999999999929,
+              "measurement_cpu_interrupt_seconds": 0.03,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.001732999999999929,
+              "measurement_cpu_residual_seconds": 0.03173299999999993,
+              "per_cpu": {
+                "34": {
+                  "busy_seconds": 0.01,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 694,
+                    "iowait": 0,
+                    "irq": 0,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 1,
+                    "user": 0
+                  }
+                },
+                "82": {
+                  "busy_seconds": 6.96,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 0,
+                    "irq": 2,
+                    "nice": 0,
+                    "softirq": 1,
+                    "steal": 0,
+                    "system": 118,
+                    "user": 575
+                  }
+                }
+              },
+              "pressure_some_delta_us": 184418,
+              "runner_cpu_seconds": 0.0010860000000000036
+            },
+            "cpu_percent": 99.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4349734",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 14,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.41 avg60=2.76 avg300=21.17 total=43641008096\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43641008096,
+              "load_1m_per_available_cpu": 36.39111328125,
+              "load_1m_per_cpu": 0.3790740966796875,
+              "load_average": [
+                36.39111328125,
+                129.60107421875,
+                119.00830078125
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "17/12523"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4281739",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 18,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=0.84 avg60=2.87 avg300=21.71 total=43640823678\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43640823678,
+              "load_1m_per_available_cpu": 39.4716796875,
+              "load_1m_per_cpu": 0.411163330078125,
+              "load_average": [
+                39.4716796875,
+                133.3505859375,
+                120.08642578125
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "18/12702"
+            },
+            "involuntary_context_switches": 25921,
+            "peak_rss_kb": 3214080,
+            "precise_child_system_seconds": 1.181984,
+            "precise_child_user_seconds": 5.745197,
+            "system_seconds": 1.18,
+            "user_seconds": 5.74,
+            "voluntary_context_switches": 40357,
+            "wall_nanos": 6962807174
+          },
+          "round": 1,
+          "signed_wall_delta_nanos": 1147596350,
+          "slot_index": 0
+        },
+        {
+          "build_order": [
+            "candidate",
+            "reference"
+          ],
+          "candidate": {
+            "axioms": [
+              "propext",
+              "Classical.choice",
+              "Quot.sound"
+            ],
+            "compiler_output": "\u26a0 [860/1029] Replayed HexIntervalMathlib.Interval\nwarning: HexIntervalMathlib/Interval.lean:10:0: 'Mathlib.Data.Real.Basic' has been deprecated: please replace this import by\n\nimport Mathlib.Basic.Real.Basic\n\u2139 [8965/8965] Built HexIntervalMathlib.Constants.Precision2 (2.6s)\ninfo: bench/HexIntervalMathlib/Constants/Precision2.lean:67:0: 'Hex.Interval.ConstantsProbe2.pi_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: bench/HexIntervalMathlib/Constants/Precision2.lean:68:0: 'Hex.Interval.ConstantsProbe2.exp_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (8965 jobs).\n__HEX_MAX_RSS_KB__=3253760\n__HEX_USER_SECONDS__=6.26\n__HEX_SYSTEM_SECONDS__=1.20\n__HEX_CPU_PERCENT__=99%\n__HEX_INVOLUNTARY_CONTEXT__=27933\n__HEX_VOLUNTARY_CONTEXT__=42302\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.04541600000000844,
+              "child_cpu_seconds": 7.463491999999992,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 751
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.005416000000008442,
+              "measurement_cpu_interrupt_seconds": 0.03,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.005416000000008442,
+              "measurement_cpu_residual_seconds": 0.03541600000000844,
+              "per_cpu": {
+                "34": {
+                  "busy_seconds": 0.04,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 746,
+                    "iowait": 0,
+                    "irq": 0,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 1,
+                    "user": 3
+                  }
+                },
+                "82": {
+                  "busy_seconds": 7.5,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 0,
+                    "irq": 2,
+                    "nice": 0,
+                    "softirq": 1,
+                    "steal": 0,
+                    "system": 120,
+                    "user": 627
+                  }
+                }
+              },
+              "pressure_some_delta_us": 234224,
+              "runner_cpu_seconds": 0.0010919999999999819
+            },
+            "cpu_percent": 99.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4420939",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 12,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=3.06 avg60=2.88 avg300=16.73 total=43643552700\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43643552700,
+              "load_1m_per_available_cpu": 23.0673828125,
+              "load_1m_per_cpu": 0.24028523763020834,
+              "load_average": [
+                23.0673828125,
+                103.47314453125,
+                110.69970703125
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "15/12517"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4295660",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 16,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=3.86 avg60=2.93 avg300=17.12 total=43643318476\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43643318476,
+              "load_1m_per_available_cpu": 24.0830078125,
+              "load_1m_per_cpu": 0.2508646647135417,
+              "load_average": [
+                24.0830078125,
+                106.40087890625,
+                111.70947265625
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "19/12512"
+            },
+            "involuntary_context_switches": 27933,
+            "peak_rss_kb": 3253760,
+            "precise_child_system_seconds": 1.2014219999999973,
+            "precise_child_user_seconds": 6.262069999999994,
+            "system_seconds": 1.2,
+            "user_seconds": 6.26,
+            "voluntary_context_switches": 42302,
+            "wall_nanos": 7503993993
+          },
+          "context_issues": [],
+          "host_before_pair": {
+            "affinity_cpu_frequency_khz": "4279236",
+            "available_logical_cpus": 1,
+            "concurrent_lake_lean_count": 16,
+            "cpu_affinity": [
+              82
+            ],
+            "cpu_pressure": "some avg10=3.86 avg60=2.93 avg300=17.12 total=43643317605\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+            "cpu_pressure_some_total_us": 43643317605,
+            "load_1m_per_available_cpu": 24.0830078125,
+            "load_1m_per_cpu": 0.2508646647135417,
+            "load_average": [
+              24.0830078125,
+              106.40087890625,
+              111.70947265625
+            ],
+            "logical_cpus": 96,
+            "runnable_tasks": "20/12507"
+          },
+          "pair": "precision-2",
+          "reference": {
+            "axioms": null,
+            "compiler_output": "\u26a0 [860/1025] Replayed HexIntervalMathlib.Interval\nwarning: HexIntervalMathlib/Interval.lean:10:0: 'Mathlib.Data.Real.Basic' has been deprecated: please replace this import by\n\nimport Mathlib.Basic.Real.Basic\n\u2714 [8965/8965] Built HexIntervalMathlib.Constants.Baseline (2.8s)\nBuild completed successfully (8965 jobs).\n__HEX_MAX_RSS_KB__=3205400\n__HEX_USER_SECONDS__=5.96\n__HEX_SYSTEM_SECONDS__=1.62\n__HEX_CPU_PERCENT__=99%\n__HEX_INVOLUNTARY_CONTEXT__=26546\n__HEX_VOLUNTARY_CONTEXT__=40786\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.046388000000002975,
+              "child_cpu_seconds": 7.592564999999997,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 764
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.006388000000002975,
+              "measurement_cpu_interrupt_seconds": 0.03,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.006388000000002975,
+              "measurement_cpu_residual_seconds": 0.036388000000002974,
+              "per_cpu": {
+                "34": {
+                  "busy_seconds": 0.04,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 760,
+                    "iowait": 0,
+                    "irq": 1,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 0,
+                    "user": 3
+                  }
+                },
+                "82": {
+                  "busy_seconds": 7.63,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 1,
+                    "irq": 3,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 163,
+                    "user": 597
+                  }
+                }
+              },
+              "pressure_some_delta_us": 226224,
+              "runner_cpu_seconds": 0.0010470000000000201
+            },
+            "cpu_percent": 99.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4309114",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 19,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=2.58 avg60=2.82 avg300=16.34 total=43643779013\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43643779013,
+              "load_1m_per_available_cpu": 22.5810546875,
+              "load_1m_per_cpu": 0.23521931966145834,
+              "load_average": [
+                22.5810546875,
+                102.037109375,
+                110.1962890625
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "23/12573"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4428200",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 12,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=3.06 avg60=2.88 avg300=16.73 total=43643552789\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43643552789,
+              "load_1m_per_available_cpu": 23.0673828125,
+              "load_1m_per_cpu": 0.24028523763020834,
+              "load_average": [
+                23.0673828125,
+                103.47314453125,
+                110.69970703125
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "15/12516"
+            },
+            "involuntary_context_switches": 26546,
+            "peak_rss_kb": 3205400,
+            "precise_child_system_seconds": 1.6230379999999975,
+            "precise_child_user_seconds": 5.969526999999999,
+            "system_seconds": 1.62,
+            "user_seconds": 5.96,
+            "voluntary_context_switches": 40786,
+            "wall_nanos": 7640327891
+          },
+          "round": 2,
+          "signed_wall_delta_nanos": -136333898,
+          "slot_index": 2
+        },
+        {
+          "build_order": [
+            "reference",
+            "candidate"
+          ],
+          "candidate": {
+            "axioms": [
+              "propext",
+              "Classical.choice",
+              "Quot.sound"
+            ],
+            "compiler_output": "\u26a0 [860/913] Replayed HexIntervalMathlib.Interval\nwarning: HexIntervalMathlib/Interval.lean:10:0: 'Mathlib.Data.Real.Basic' has been deprecated: please replace this import by\n\nimport Mathlib.Basic.Real.Basic\n\u2139 [8965/8965] Built HexIntervalMathlib.Constants.Precision2 (2.9s)\ninfo: bench/HexIntervalMathlib/Constants/Precision2.lean:67:0: 'Hex.Interval.ConstantsProbe2.pi_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: bench/HexIntervalMathlib/Constants/Precision2.lean:68:0: 'Hex.Interval.ConstantsProbe2.exp_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (8965 jobs).\n__HEX_MAX_RSS_KB__=3247464\n__HEX_USER_SECONDS__=6.52\n__HEX_SYSTEM_SECONDS__=1.70\n__HEX_CPU_PERCENT__=99%\n__HEX_INVOLUNTARY_CONTEXT__=31625\n__HEX_VOLUNTARY_CONTEXT__=45640\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.21411699999999828,
+              "child_cpu_seconds": 8.224772000000002,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 827
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.004116999999998289,
+              "measurement_cpu_interrupt_seconds": 0.03,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.004116999999998289,
+              "measurement_cpu_residual_seconds": 0.03411699999999829,
+              "per_cpu": {
+                "34": {
+                  "busy_seconds": 0.21,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 807,
+                    "iowait": 0,
+                    "irq": 1,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 2,
+                    "user": 18
+                  }
+                },
+                "82": {
+                  "busy_seconds": 8.26,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 0,
+                    "irq": 3,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 171,
+                    "user": 652
+                  }
+                }
+              },
+              "pressure_some_delta_us": 173544,
+              "runner_cpu_seconds": 0.0011109999999999731
+            },
+            "cpu_percent": 99.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4280717",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 15,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.54 avg60=2.30 avg300=14.80 total=43644437689\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43644437689,
+              "load_1m_per_available_cpu": 21.6298828125,
+              "load_1m_per_cpu": 0.225311279296875,
+              "load_average": [
+                21.6298828125,
+                93.0234375,
+                106.87841796875
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "23/12305"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4304222",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 15,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.63 avg60=2.41 avg300=15.17 total=43644264145\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43644264145,
+              "load_1m_per_available_cpu": 21.83935546875,
+              "load_1m_per_cpu": 0.2274932861328125,
+              "load_average": [
+                21.83935546875,
+                95.4931640625,
+                107.81396484375
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "19/12396"
+            },
+            "involuntary_context_switches": 31625,
+            "peak_rss_kb": 3247464,
+            "precise_child_system_seconds": 1.7015829999999994,
+            "precise_child_user_seconds": 6.523189000000002,
+            "system_seconds": 1.7,
+            "user_seconds": 6.52,
+            "voluntary_context_switches": 45640,
+            "wall_nanos": 8269402858
+          },
+          "context_issues": [],
+          "host_before_pair": {
+            "affinity_cpu_frequency_khz": "4374696",
+            "available_logical_cpus": 1,
+            "concurrent_lake_lean_count": 16,
+            "cpu_affinity": [
+              82
+            ],
+            "cpu_pressure": "some avg10=1.62 avg60=2.51 avg300=15.55 total=43644108720\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+            "cpu_pressure_some_total_us": 43644108720,
+            "load_1m_per_available_cpu": 21.99951171875,
+            "load_1m_per_cpu": 0.22916158040364584,
+            "load_average": [
+              21.99951171875,
+              96.76806640625,
+              108.28857421875
+            ],
+            "logical_cpus": 96,
+            "runnable_tasks": "17/12363"
+          },
+          "pair": "precision-2",
+          "reference": {
+            "axioms": null,
+            "compiler_output": "\u26a0 [860/996] Replayed HexIntervalMathlib.Interval\nwarning: HexIntervalMathlib/Interval.lean:10:0: 'Mathlib.Data.Real.Basic' has been deprecated: please replace this import by\n\nimport Mathlib.Basic.Real.Basic\n\u2714 [8965/8965] Built HexIntervalMathlib.Constants.Baseline (2.6s)\nBuild completed successfully (8965 jobs).\n__HEX_MAX_RSS_KB__=3208804\n__HEX_USER_SECONDS__=5.96\n__HEX_SYSTEM_SECONDS__=1.68\n__HEX_CPU_PERCENT__=99%\n__HEX_INVOLUNTARY_CONTEXT__=27534\n__HEX_VOLUNTARY_CONTEXT__=41728\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.04959400000000436,
+              "child_cpu_seconds": 7.659255999999996,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 770
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.009594000000004356,
+              "measurement_cpu_interrupt_seconds": 0.04,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.009594000000004356,
+              "measurement_cpu_residual_seconds": 0.04959400000000436,
+              "per_cpu": {
+                "34": {
+                  "busy_seconds": 0.04,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 766,
+                    "iowait": 0,
+                    "irq": 0,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 1,
+                    "user": 3
+                  }
+                },
+                "82": {
+                  "busy_seconds": 7.71,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 0,
+                    "irq": 3,
+                    "nice": 0,
+                    "softirq": 1,
+                    "steal": 0,
+                    "system": 169,
+                    "user": 598
+                  }
+                }
+              },
+              "pressure_some_delta_us": 155123,
+              "runner_cpu_seconds": 0.0011499999999999844
+            },
+            "cpu_percent": 99.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4301046",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 16,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.63 avg60=2.41 avg300=15.17 total=43644264066\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43644264066,
+              "load_1m_per_available_cpu": 21.83935546875,
+              "load_1m_per_cpu": 0.2274932861328125,
+              "load_average": [
+                21.83935546875,
+                95.4931640625,
+                107.81396484375
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "18/12396"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4351677",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 16,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.62 avg60=2.51 avg300=15.55 total=43644108943\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43644108943,
+              "load_1m_per_available_cpu": 21.99951171875,
+              "load_1m_per_cpu": 0.22916158040364584,
+              "load_average": [
+                21.99951171875,
+                96.76806640625,
+                108.28857421875
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "21/12381"
+            },
+            "involuntary_context_switches": 27534,
+            "peak_rss_kb": 3208804,
+            "precise_child_system_seconds": 1.6892430000000012,
+            "precise_child_user_seconds": 5.9700129999999945,
+            "system_seconds": 1.68,
+            "user_seconds": 5.96,
+            "voluntary_context_switches": 41728,
+            "wall_nanos": 7702094779
+          },
+          "round": 3,
+          "signed_wall_delta_nanos": 567308079,
+          "slot_index": 1
+        },
+        {
+          "build_order": [
+            "candidate",
+            "reference"
+          ],
+          "candidate": {
+            "axioms": [
+              "propext",
+              "Classical.choice",
+              "Quot.sound"
+            ],
+            "compiler_output": "\u26a0 [860/997] Replayed HexIntervalMathlib.Interval\nwarning: HexIntervalMathlib/Interval.lean:10:0: 'Mathlib.Data.Real.Basic' has been deprecated: please replace this import by\n\nimport Mathlib.Basic.Real.Basic\n\u2139 [8965/8965] Built HexIntervalMathlib.Constants.Precision2 (2.9s)\ninfo: bench/HexIntervalMathlib/Constants/Precision2.lean:67:0: 'Hex.Interval.ConstantsProbe2.pi_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: bench/HexIntervalMathlib/Constants/Precision2.lean:68:0: 'Hex.Interval.ConstantsProbe2.exp_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (8965 jobs).\n__HEX_MAX_RSS_KB__=3251456\n__HEX_USER_SECONDS__=6.39\n__HEX_SYSTEM_SECONDS__=1.60\n__HEX_CPU_PERCENT__=99%\n__HEX_INVOLUNTARY_CONTEXT__=27123\n__HEX_VOLUNTARY_CONTEXT__=41646\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.05678000000000115,
+              "child_cpu_seconds": 8.002088999999998,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 805
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.006780000000001146,
+              "measurement_cpu_interrupt_seconds": 0.03,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.006780000000001146,
+              "measurement_cpu_residual_seconds": 0.036780000000001145,
+              "per_cpu": {
+                "34": {
+                  "busy_seconds": 0.05,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 800,
+                    "iowait": 0,
+                    "irq": 0,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 1,
+                    "user": 4
+                  }
+                },
+                "82": {
+                  "busy_seconds": 8.04,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 0,
+                    "irq": 3,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 160,
+                    "user": 641
+                  }
+                }
+              },
+              "pressure_some_delta_us": 175034,
+              "runner_cpu_seconds": 0.0011309999999999931
+            },
+            "cpu_percent": 99.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4259352",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 13,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.52 avg60=2.06 avg300=13.75 total=43644939380\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43644939380,
+              "load_1m_per_available_cpu": 21.5537109375,
+              "load_1m_per_cpu": 0.224517822265625,
+              "load_average": [
+                21.5537109375,
+                87.27099609375,
+                104.6064453125
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "28/12411"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4318587",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 13,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.59 avg60=2.14 avg300=14.10 total=43644764346\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43644764346,
+              "load_1m_per_available_cpu": 21.46533203125,
+              "load_1m_per_cpu": 0.22359720865885416,
+              "load_average": [
+                21.46533203125,
+                89.49365234375,
+                105.50146484375
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "18/12178"
+            },
+            "involuntary_context_switches": 27123,
+            "peak_rss_kb": 3251456,
+            "precise_child_system_seconds": 1.6024069999999995,
+            "precise_child_user_seconds": 6.3996819999999985,
+            "system_seconds": 1.6,
+            "user_seconds": 6.39,
+            "voluntary_context_switches": 41646,
+            "wall_nanos": 8044078714
+          },
+          "context_issues": [],
+          "host_before_pair": {
+            "affinity_cpu_frequency_khz": "4295648",
+            "available_logical_cpus": 1,
+            "concurrent_lake_lean_count": 13,
+            "cpu_affinity": [
+              82
+            ],
+            "cpu_pressure": "some avg10=1.59 avg60=2.14 avg300=14.10 total=43644763111\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+            "cpu_pressure_some_total_us": 43644763111,
+            "load_1m_per_available_cpu": 21.46533203125,
+            "load_1m_per_cpu": 0.22359720865885416,
+            "load_average": [
+              21.46533203125,
+              89.49365234375,
+              105.50146484375
+            ],
+            "logical_cpus": 96,
+            "runnable_tasks": "17/12175"
+          },
+          "pair": "precision-2",
+          "reference": {
+            "axioms": null,
+            "compiler_output": "\u26a0 [860/971] Replayed HexIntervalMathlib.Interval\nwarning: HexIntervalMathlib/Interval.lean:10:0: 'Mathlib.Data.Real.Basic' has been deprecated: please replace this import by\n\nimport Mathlib.Basic.Real.Basic\n\u2714 [8965/8965] Built HexIntervalMathlib.Constants.Baseline (2.2s)\nBuild completed successfully (8965 jobs).\n__HEX_MAX_RSS_KB__=3212624\n__HEX_USER_SECONDS__=6.11\n__HEX_SYSTEM_SECONDS__=1.28\n__HEX_CPU_PERCENT__=99%\n__HEX_INVOLUNTARY_CONTEXT__=27417\n__HEX_VOLUNTARY_CONTEXT__=41705\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.36891699999999816,
+              "child_cpu_seconds": 7.399931000000002,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 744
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.008916999999998204,
+              "measurement_cpu_interrupt_seconds": 0.03,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.008916999999998204,
+              "measurement_cpu_residual_seconds": 0.0389169999999982,
+              "per_cpu": {
+                "34": {
+                  "busy_seconds": 0.36,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 707,
+                    "iowait": 0,
+                    "irq": 0,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 0,
+                    "user": 36
+                  }
+                },
+                "82": {
+                  "busy_seconds": 7.44,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 0,
+                    "irq": 3,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 129,
+                    "user": 612
+                  }
+                }
+              },
+              "pressure_some_delta_us": 152389,
+              "runner_cpu_seconds": 0.0011519999999999309
+            },
+            "cpu_percent": 99.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4262668",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 13,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.49 avg60=1.99 avg300=13.42 total=43645091858\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43645091858,
+              "load_1m_per_available_cpu": 21.75,
+              "load_1m_per_cpu": 0.2265625,
+              "load_average": [
+                21.75,
+                86.22021484375,
+                104.17333984375
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "24/11793"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4229807",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 13,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.52 avg60=2.06 avg300=13.75 total=43644939469\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43644939469,
+              "load_1m_per_available_cpu": 21.5537109375,
+              "load_1m_per_cpu": 0.224517822265625,
+              "load_average": [
+                21.5537109375,
+                87.27099609375,
+                104.6064453125
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "31/12411"
+            },
+            "involuntary_context_switches": 27417,
+            "peak_rss_kb": 3212624,
+            "precise_child_system_seconds": 1.287585,
+            "precise_child_user_seconds": 6.112346000000002,
+            "system_seconds": 1.28,
+            "user_seconds": 6.11,
+            "voluntary_context_switches": 41705,
+            "wall_nanos": 7439741054
+          },
+          "round": 4,
+          "signed_wall_delta_nanos": 604337660,
+          "slot_index": 0
+        }
+      ],
+      "signed_wall_delta_nanos": [
+        1147596350,
+        -136333898,
+        567308079,
+        604337660
+      ]
+    },
+    "precision-8": {
+      "build_magnitude_wall_nanos": 7752995284,
+      "candidate": {
+        "artifacts": {
+          "ilean_bytes": 4175,
+          "olean_bytes": 21344,
+          "olean_private_bytes": 277648,
+          "olean_server_bytes": 2216,
+          "source_bytes": 1937
+        },
+        "expected_axioms": [
+          "propext",
+          "Classical.choice",
+          "Quot.sound"
+        ],
+        "module": "HexIntervalMathlib.Constants.Precision8"
+      },
+      "cleanup_timeout_seconds": 120,
+      "comparable_control": null,
+      "comparable_null_envelope_nanos": null,
+      "comparable_null_raw_envelope_nanos": null,
+      "comparable_null_raw_spread_nanos": null,
+      "comparable_null_spread_nanos": null,
+      "control_interpolation_weight": null,
+      "control_magnitude_ratio": null,
+      "control_scale_factor": null,
+      "exp_order": 8,
+      "fresh_module_budget_ms": 60000,
+      "fresh_module_budget_nanos": 60000000000,
+      "fresh_module_budget_status": "passed",
+      "max_candidate_wall_nanos": 8071794308,
+      "median_candidate_peak_rss_kb": 3253092,
+      "median_candidate_wall_nanos": 7752995284,
+      "median_reference_peak_rss_kb": 3213700,
+      "median_reference_wall_nanos": 7303511028,
+      "median_signed_wall_delta_nanos": 597925075,
+      "null_control": false,
+      "pi_order": 4,
+      "precision": 8,
+      "reference": {
+        "artifacts": {
+          "ilean_bytes": 148,
+          "olean_bytes": 1496,
+          "olean_private_bytes": 808,
+          "olean_server_bytes": 904,
+          "source_bytes": 288
+        },
+        "expected_axioms": null,
+        "module": "HexIntervalMathlib.Constants.Baseline"
+      },
+      "resolution": "no-comparable-control",
+      "samples": [
+        {
+          "build_order": [
+            "reference",
+            "candidate"
+          ],
+          "candidate": {
+            "axioms": [
+              "propext",
+              "Classical.choice",
+              "Quot.sound"
+            ],
+            "compiler_output": "\u26a0 [860/1018] Replayed HexIntervalMathlib.Interval\nwarning: HexIntervalMathlib/Interval.lean:10:0: 'Mathlib.Data.Real.Basic' has been deprecated: please replace this import by\n\nimport Mathlib.Basic.Real.Basic\n\u2139 [8965/8965] Built HexIntervalMathlib.Constants.Precision8 (2.6s)\ninfo: bench/HexIntervalMathlib/Constants/Precision8.lean:61:0: 'Hex.Interval.ConstantsProbe8.pi_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: bench/HexIntervalMathlib/Constants/Precision8.lean:62:0: 'Hex.Interval.ConstantsProbe8.exp_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (8965 jobs).\n__HEX_MAX_RSS_KB__=3251772\n__HEX_USER_SECONDS__=6.26\n__HEX_SYSTEM_SECONDS__=1.20\n__HEX_CPU_PERCENT__=99%\n__HEX_INVOLUNTARY_CONTEXT__=27146\n__HEX_VOLUNTARY_CONTEXT__=41686\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.02,
+              "child_cpu_seconds": 7.469222,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 750
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.0,
+              "measurement_cpu_interrupt_seconds": 0.03,
+              "measurement_cpu_noninterrupt_residual_seconds": -0.0002990000000002435,
+              "measurement_cpu_residual_seconds": 0.029700999999999755,
+              "per_cpu": {
+                "34": {
+                  "busy_seconds": 0.02,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 750,
+                    "iowait": 0,
+                    "irq": 0,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 1,
+                    "user": 1
+                  }
+                },
+                "82": {
+                  "busy_seconds": 7.5,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 0,
+                    "irq": 2,
+                    "nice": 0,
+                    "softirq": 1,
+                    "steal": 0,
+                    "system": 121,
+                    "user": 626
+                  }
+                }
+              },
+              "pressure_some_delta_us": 197702,
+              "runner_cpu_seconds": 0.0010769999999999946
+            },
+            "cpu_percent": 99.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4357972",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 14,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.70 avg60=2.45 avg300=19.64 total=43641601049\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43641601049,
+              "load_1m_per_available_cpu": 30.81201171875,
+              "load_1m_per_cpu": 0.3209584554036458,
+              "load_average": [
+                30.81201171875,
+                122.29052734375,
+                116.8271484375
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "17/12407"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4298351",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 14,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.71 avg60=2.55 avg300=20.14 total=43641403347\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43641403347,
+              "load_1m_per_available_cpu": 32.0146484375,
+              "load_1m_per_cpu": 0.3334859212239583,
+              "load_average": [
+                32.0146484375,
+                124.068359375,
+                117.36669921875
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "17/12429"
+            },
+            "involuntary_context_switches": 27146,
+            "peak_rss_kb": 3251772,
+            "precise_child_system_seconds": 1.2082899999999999,
+            "precise_child_user_seconds": 6.260932,
+            "system_seconds": 1.2,
+            "user_seconds": 6.26,
+            "voluntary_context_switches": 41686,
+            "wall_nanos": 7504732155
+          },
+          "context_issues": [],
+          "host_before_pair": {
+            "affinity_cpu_frequency_khz": "4346051",
+            "available_logical_cpus": 1,
+            "concurrent_lake_lean_count": 15,
+            "cpu_affinity": [
+              82
+            ],
+            "cpu_pressure": "some avg10=1.51 avg60=2.63 avg300=20.65 total=43641208051\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+            "cpu_pressure_some_total_us": 43641208051,
+            "load_1m_per_available_cpu": 34.837890625,
+            "load_1m_per_cpu": 0.3628946940104167,
+            "load_average": [
+              34.837890625,
+              127.7314453125,
+              118.4599609375
+            ],
+            "logical_cpus": 96,
+            "runnable_tasks": "17/12542"
+          },
+          "pair": "precision-8",
+          "reference": {
+            "axioms": null,
+            "compiler_output": "\u26a0 [860/939] Replayed HexIntervalMathlib.Interval\nwarning: HexIntervalMathlib/Interval.lean:10:0: 'Mathlib.Data.Real.Basic' has been deprecated: please replace this import by\n\nimport Mathlib.Basic.Real.Basic\n\u2714 [8965/8965] Built HexIntervalMathlib.Constants.Baseline (2.9s)\nBuild completed successfully (8965 jobs).\n__HEX_MAX_RSS_KB__=3190312\n__HEX_USER_SECONDS__=5.82\n__HEX_SYSTEM_SECONDS__=2.14\n__HEX_CPU_PERCENT__=99%\n__HEX_INVOLUNTARY_CONTEXT__=28609\n__HEX_VOLUNTARY_CONTEXT__=43364\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.017771999999999753,
+              "child_cpu_seconds": 7.971108,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 805
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.007771999999999751,
+              "measurement_cpu_interrupt_seconds": 0.03,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.007771999999999751,
+              "measurement_cpu_residual_seconds": 0.03777199999999975,
+              "per_cpu": {
+                "34": {
+                  "busy_seconds": 0.01,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 803,
+                    "iowait": 0,
+                    "irq": 0,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 0,
+                    "user": 1
+                  }
+                },
+                "82": {
+                  "busy_seconds": 8.01,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 4,
+                    "irq": 3,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 215,
+                    "user": 583
+                  }
+                }
+              },
+              "pressure_some_delta_us": 195100,
+              "runner_cpu_seconds": 0.0011199999999999544
+            },
+            "cpu_percent": 99.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4315173",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 14,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.71 avg60=2.55 avg300=20.14 total=43641403295\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43641403295,
+              "load_1m_per_available_cpu": 32.0146484375,
+              "load_1m_per_cpu": 0.3334859212239583,
+              "load_average": [
+                32.0146484375,
+                124.068359375,
+                117.36669921875
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "16/12430"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4297043",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 15,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.51 avg60=2.63 avg300=20.65 total=43641208195\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43641208195,
+              "load_1m_per_available_cpu": 34.837890625,
+              "load_1m_per_cpu": 0.3628946940104167,
+              "load_average": [
+                34.837890625,
+                127.7314453125,
+                118.4599609375
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "19/12548"
+            },
+            "involuntary_context_switches": 28609,
+            "peak_rss_kb": 3190312,
+            "precise_child_system_seconds": 2.143961,
+            "precise_child_user_seconds": 5.827147,
+            "system_seconds": 2.14,
+            "user_seconds": 5.82,
+            "voluntary_context_switches": 43364,
+            "wall_nanos": 8048739512
+          },
+          "round": 1,
+          "signed_wall_delta_nanos": -544007357,
+          "slot_index": 1
+        },
+        {
+          "build_order": [
+            "candidate",
+            "reference"
+          ],
+          "candidate": {
+            "axioms": [
+              "propext",
+              "Classical.choice",
+              "Quot.sound"
+            ],
+            "compiler_output": "\u26a0 [860/1003] Replayed HexIntervalMathlib.Interval\nwarning: HexIntervalMathlib/Interval.lean:10:0: 'Mathlib.Data.Real.Basic' has been deprecated: please replace this import by\n\nimport Mathlib.Basic.Real.Basic\n\u2139 [8965/8965] Built HexIntervalMathlib.Constants.Precision8 (2.7s)\ninfo: bench/HexIntervalMathlib/Constants/Precision8.lean:61:0: 'Hex.Interval.ConstantsProbe8.pi_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: bench/HexIntervalMathlib/Constants/Precision8.lean:62:0: 'Hex.Interval.ConstantsProbe8.exp_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (8965 jobs).\n__HEX_MAX_RSS_KB__=3257392\n__HEX_USER_SECONDS__=6.37\n__HEX_SYSTEM_SECONDS__=1.17\n__HEX_CPU_PERCENT__=99%\n__HEX_INVOLUNTARY_CONTEXT__=27686\n__HEX_VOLUNTARY_CONTEXT__=42307\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.01817299999999778,
+              "child_cpu_seconds": 7.550710000000002,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 759
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.008172999999997783,
+              "measurement_cpu_interrupt_seconds": 0.02,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.008172999999997783,
+              "measurement_cpu_residual_seconds": 0.028172999999997783,
+              "per_cpu": {
+                "34": {
+                  "busy_seconds": 0.01,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 757,
+                    "iowait": 0,
+                    "irq": 0,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 0,
+                    "user": 1
+                  }
+                },
+                "82": {
+                  "busy_seconds": 7.58,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 0,
+                    "irq": 2,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 118,
+                    "user": 638
+                  }
+                }
+              },
+              "pressure_some_delta_us": 186164,
+              "runner_cpu_seconds": 0.0011170000000000346
+            },
+            "cpu_percent": 99.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4362737",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 15,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.43 avg60=2.10 avg300=18.09 total=43642106097\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43642106097,
+              "load_1m_per_available_cpu": 27.5458984375,
+              "load_1m_per_cpu": 0.2869364420572917,
+              "load_average": [
+                27.5458984375,
+                114.1728515625,
+                114.28515625
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "18/12435"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4236381",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 22,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.22 avg60=2.15 avg300=18.54 total=43641919933\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43641919933,
+              "load_1m_per_available_cpu": 28.1162109375,
+              "load_1m_per_cpu": 0.292877197265625,
+              "load_average": [
+                28.1162109375,
+                115.74609375,
+                114.7890625
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "22/12583"
+            },
+            "involuntary_context_switches": 27686,
+            "peak_rss_kb": 3257392,
+            "precise_child_system_seconds": 1.1730739999999997,
+            "precise_child_user_seconds": 6.3776360000000025,
+            "system_seconds": 1.17,
+            "user_seconds": 6.37,
+            "voluntary_context_switches": 42307,
+            "wall_nanos": 7592073919
+          },
+          "context_issues": [],
+          "host_before_pair": {
+            "affinity_cpu_frequency_khz": "4267944",
+            "available_logical_cpus": 1,
+            "concurrent_lake_lean_count": 22,
+            "cpu_affinity": [
+              82
+            ],
+            "cpu_pressure": "some avg10=1.22 avg60=2.15 avg300=18.54 total=43641919805\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+            "cpu_pressure_some_total_us": 43641919805,
+            "load_1m_per_available_cpu": 28.1162109375,
+            "load_1m_per_cpu": 0.292877197265625,
+            "load_average": [
+              28.1162109375,
+              115.74609375,
+              114.7890625
+            ],
+            "logical_cpus": 96,
+            "runnable_tasks": "19/12581"
+          },
+          "pair": "precision-8",
+          "reference": {
+            "axioms": null,
+            "compiler_output": "\u26a0 [860/1013] Replayed HexIntervalMathlib.Interval\nwarning: HexIntervalMathlib/Interval.lean:10:0: 'Mathlib.Data.Real.Basic' has been deprecated: please replace this import by\n\nimport Mathlib.Basic.Real.Basic\n\u2714 [8965/8965] Built HexIntervalMathlib.Constants.Baseline (2.2s)\nBuild completed successfully (8965 jobs).\n__HEX_MAX_RSS_KB__=3214372\n__HEX_USER_SECONDS__=5.75\n__HEX_SYSTEM_SECONDS__=1.26\n__HEX_CPU_PERCENT__=99%\n__HEX_INVOLUNTARY_CONTEXT__=27211\n__HEX_VOLUNTARY_CONTEXT__=41487\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.036232999999997795,
+              "child_cpu_seconds": 7.022729000000002,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 706
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.016232999999997794,
+              "measurement_cpu_interrupt_seconds": 0.02,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.016232999999997794,
+              "measurement_cpu_residual_seconds": 0.036232999999997795,
+              "per_cpu": {
+                "34": {
+                  "busy_seconds": 0.02,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 704,
+                    "iowait": 0,
+                    "irq": 0,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 1,
+                    "user": 1
+                  }
+                },
+                "82": {
+                  "busy_seconds": 7.06,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 0,
+                    "irq": 2,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 127,
+                    "user": 577
+                  }
+                }
+              },
+              "pressure_some_delta_us": 370249,
+              "runner_cpu_seconds": 0.0010380000000000389
+            },
+            "cpu_percent": 99.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4412283",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 18,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=2.52 avg60=2.25 avg300=17.79 total=43642476419\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43642476419,
+              "load_1m_per_available_cpu": 25.92431640625,
+              "load_1m_per_cpu": 0.2700449625651042,
+              "load_average": [
+                25.92431640625,
+                110.97265625,
+                113.2421875
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "17/12421"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4332808",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 15,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.43 avg60=2.10 avg300=18.09 total=43642106170\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43642106170,
+              "load_1m_per_available_cpu": 27.5458984375,
+              "load_1m_per_cpu": 0.2869364420572917,
+              "load_average": [
+                27.5458984375,
+                114.1728515625,
+                114.28515625
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "16/12435"
+            },
+            "involuntary_context_switches": 27211,
+            "peak_rss_kb": 3214372,
+            "precise_child_system_seconds": 1.267002999999999,
+            "precise_child_user_seconds": 5.755726000000003,
+            "system_seconds": 1.26,
+            "user_seconds": 5.75,
+            "voluntary_context_switches": 41487,
+            "wall_nanos": 7057212659
+          },
+          "round": 2,
+          "signed_wall_delta_nanos": 534861260,
+          "slot_index": 0
+        },
+        {
+          "build_order": [
+            "reference",
+            "candidate"
+          ],
+          "candidate": {
+            "axioms": [
+              "propext",
+              "Classical.choice",
+              "Quot.sound"
+            ],
+            "compiler_output": "\u26a0 [860/1009] Replayed HexIntervalMathlib.Interval\nwarning: HexIntervalMathlib/Interval.lean:10:0: 'Mathlib.Data.Real.Basic' has been deprecated: please replace this import by\n\nimport Mathlib.Basic.Real.Basic\n\u2139 [8965/8965] Built HexIntervalMathlib.Constants.Precision8 (2.9s)\ninfo: bench/HexIntervalMathlib/Constants/Precision8.lean:61:0: 'Hex.Interval.ConstantsProbe8.pi_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: bench/HexIntervalMathlib/Constants/Precision8.lean:62:0: 'Hex.Interval.ConstantsProbe8.exp_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (8965 jobs).\n__HEX_MAX_RSS_KB__=3254412\n__HEX_USER_SECONDS__=6.52\n__HEX_SYSTEM_SECONDS__=1.34\n__HEX_CPU_PERCENT__=99%\n__HEX_INVOLUNTARY_CONTEXT__=27268\n__HEX_VOLUNTARY_CONTEXT__=41733\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.3977329999999902,
+              "child_cpu_seconds": 7.87111800000001,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 792
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.007732999999990144,
+              "measurement_cpu_interrupt_seconds": 0.04,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.007732999999990144,
+              "measurement_cpu_residual_seconds": 0.047732999999990144,
+              "per_cpu": {
+                "34": {
+                  "busy_seconds": 0.39,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 751,
+                    "iowait": 0,
+                    "irq": 1,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 6,
+                    "user": 32
+                  }
+                },
+                "82": {
+                  "busy_seconds": 7.92,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 0,
+                    "irq": 3,
+                    "nice": 0,
+                    "softirq": 1,
+                    "steal": 0,
+                    "system": 135,
+                    "user": 653
+                  }
+                }
+              },
+              "pressure_some_delta_us": 179550,
+              "runner_cpu_seconds": 0.0011489999999999556
+            },
+            "cpu_percent": 99.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4241559",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 12,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.59 avg60=2.14 avg300=14.10 total=43644762920\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43644762920,
+              "load_1m_per_available_cpu": 21.46533203125,
+              "load_1m_per_cpu": 0.22359720865885416,
+              "load_average": [
+                21.46533203125,
+                89.49365234375,
+                105.50146484375
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "19/12218"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4366493",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 14,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.48 avg60=2.19 avg300=14.44 total=43644583370\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43644583370,
+              "load_1m_per_available_cpu": 21.73974609375,
+              "load_1m_per_cpu": 0.2264556884765625,
+              "load_average": [
+                21.73974609375,
+                91.86083984375,
+                106.427734375
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "16/12257"
+            },
+            "involuntary_context_switches": 27268,
+            "peak_rss_kb": 3254412,
+            "precise_child_system_seconds": 1.3506119999999981,
+            "precise_child_user_seconds": 6.520506000000012,
+            "system_seconds": 1.34,
+            "user_seconds": 6.52,
+            "voluntary_context_switches": 41733,
+            "wall_nanos": 7913916649
+          },
+          "context_issues": [],
+          "host_before_pair": {
+            "affinity_cpu_frequency_khz": "4175825",
+            "available_logical_cpus": 1,
+            "concurrent_lake_lean_count": 15,
+            "cpu_affinity": [
+              82
+            ],
+            "cpu_pressure": "some avg10=1.44 avg60=2.25 avg300=14.71 total=43644437810\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+            "cpu_pressure_some_total_us": 43644437810,
+            "load_1m_per_available_cpu": 21.6298828125,
+            "load_1m_per_cpu": 0.225311279296875,
+            "load_average": [
+              21.6298828125,
+              93.0234375,
+              106.87841796875
+            ],
+            "logical_cpus": 96,
+            "runnable_tasks": "53/12321"
+          },
+          "pair": "precision-8",
+          "reference": {
+            "axioms": null,
+            "compiler_output": "\u26a0 [860/1002] Replayed HexIntervalMathlib.Interval\nwarning: HexIntervalMathlib/Interval.lean:10:0: 'Mathlib.Data.Real.Basic' has been deprecated: please replace this import by\n\nimport Mathlib.Basic.Real.Basic\n\u2714 [8965/8965] Built HexIntervalMathlib.Constants.Baseline (2.3s)\nBuild completed successfully (8965 jobs).\n__HEX_MAX_RSS_KB__=3214696\n__HEX_USER_SECONDS__=5.93\n__HEX_SYSTEM_SECONDS__=1.22\n__HEX_CPU_PERCENT__=99%\n__HEX_INVOLUNTARY_CONTEXT__=27137\n__HEX_VOLUNTARY_CONTEXT__=41653\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.08,
+              "child_cpu_seconds": 7.160247999999985,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 720
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.0,
+              "measurement_cpu_interrupt_seconds": 0.02,
+              "measurement_cpu_noninterrupt_residual_seconds": -0.0013189999999853978,
+              "measurement_cpu_residual_seconds": 0.018681000000014603,
+              "per_cpu": {
+                "34": {
+                  "busy_seconds": 0.08,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 710,
+                    "iowait": 0,
+                    "irq": 0,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 0,
+                    "user": 8
+                  }
+                },
+                "82": {
+                  "busy_seconds": 7.18,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 0,
+                    "irq": 2,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 122,
+                    "user": 594
+                  }
+                }
+              },
+              "pressure_some_delta_us": 145326,
+              "runner_cpu_seconds": 0.0010710000000000441
+            },
+            "cpu_percent": 99.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4330168",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 14,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.48 avg60=2.19 avg300=14.44 total=43644583304\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43644583304,
+              "load_1m_per_available_cpu": 21.73974609375,
+              "load_1m_per_cpu": 0.2264556884765625,
+              "load_average": [
+                21.73974609375,
+                91.86083984375,
+                106.427734375
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "19/12257"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4183776",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 14,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.44 avg60=2.25 avg300=14.71 total=43644437978\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43644437978,
+              "load_1m_per_available_cpu": 21.6298828125,
+              "load_1m_per_cpu": 0.225311279296875,
+              "load_average": [
+                21.6298828125,
+                93.0234375,
+                106.87841796875
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "23/12324"
+            },
+            "involuntary_context_switches": 27137,
+            "peak_rss_kb": 3214696,
+            "precise_child_system_seconds": 1.223952999999998,
+            "precise_child_user_seconds": 5.936294999999987,
+            "system_seconds": 1.22,
+            "user_seconds": 5.93,
+            "voluntary_context_switches": 41653,
+            "wall_nanos": 7196216640
+          },
+          "round": 3,
+          "signed_wall_delta_nanos": 717700009,
+          "slot_index": 2
+        },
+        {
+          "build_order": [
+            "candidate",
+            "reference"
+          ],
+          "candidate": {
+            "axioms": [
+              "propext",
+              "Classical.choice",
+              "Quot.sound"
+            ],
+            "compiler_output": "\u26a0 [860/887] Replayed HexIntervalMathlib.Interval\nwarning: HexIntervalMathlib/Interval.lean:10:0: 'Mathlib.Data.Real.Basic' has been deprecated: please replace this import by\n\nimport Mathlib.Basic.Real.Basic\n\u2139 [8965/8965] Built HexIntervalMathlib.Constants.Precision8 (2.9s)\ninfo: bench/HexIntervalMathlib/Constants/Precision8.lean:61:0: 'Hex.Interval.ConstantsProbe8.pi_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: bench/HexIntervalMathlib/Constants/Precision8.lean:62:0: 'Hex.Interval.ConstantsProbe8.exp_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (8965 jobs).\n__HEX_MAX_RSS_KB__=3248376\n__HEX_USER_SECONDS__=6.57\n__HEX_SYSTEM_SECONDS__=1.45\n__HEX_CPU_PERCENT__=99%\n__HEX_INVOLUNTARY_CONTEXT__=29206\n__HEX_VOLUNTARY_CONTEXT__=43481\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.21159999999999876,
+              "child_cpu_seconds": 8.027270000000001,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 807
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.01159999999999875,
+              "measurement_cpu_interrupt_seconds": 0.03,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.01159999999999875,
+              "measurement_cpu_residual_seconds": 0.04159999999999875,
+              "per_cpu": {
+                "34": {
+                  "busy_seconds": 0.2,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 788,
+                    "iowait": 0,
+                    "irq": 1,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 1,
+                    "user": 18
+                  }
+                },
+                "82": {
+                  "busy_seconds": 8.07,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 0,
+                    "irq": 3,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 146,
+                    "user": 658
+                  }
+                }
+              },
+              "pressure_some_delta_us": 165461,
+              "runner_cpu_seconds": 0.0011300000000000754
+            },
+            "cpu_percent": 99.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4349652",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 14,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.33 avg60=1.89 avg300=13.09 total=43645257578\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43645257578,
+              "load_1m_per_available_cpu": 21.4072265625,
+              "load_1m_per_cpu": 0.222991943359375,
+              "load_average": [
+                21.4072265625,
+                84.02294921875,
+                103.26611328125
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "20/11597"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4225966",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 13,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.49 avg60=1.99 avg300=13.42 total=43645092117\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43645092117,
+              "load_1m_per_available_cpu": 21.75,
+              "load_1m_per_cpu": 0.2265625,
+              "load_average": [
+                21.75,
+                86.22021484375,
+                104.17333984375
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "29/11798"
+            },
+            "involuntary_context_switches": 29206,
+            "peak_rss_kb": 3248376,
+            "precise_child_system_seconds": 1.4533789999999982,
+            "precise_child_user_seconds": 6.573891000000003,
+            "system_seconds": 1.45,
+            "user_seconds": 6.57,
+            "voluntary_context_switches": 43481,
+            "wall_nanos": 8071794308
+          },
+          "context_issues": [],
+          "host_before_pair": {
+            "affinity_cpu_frequency_khz": "4264449",
+            "available_logical_cpus": 1,
+            "concurrent_lake_lean_count": 13,
+            "cpu_affinity": [
+              82
+            ],
+            "cpu_pressure": "some avg10=1.49 avg60=1.99 avg300=13.42 total=43645091976\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+            "cpu_pressure_some_total_us": 43645091976,
+            "load_1m_per_available_cpu": 21.75,
+            "load_1m_per_cpu": 0.2265625,
+            "load_average": [
+              21.75,
+              86.22021484375,
+              104.17333984375
+            ],
+            "logical_cpus": 96,
+            "runnable_tasks": "24/11793"
+          },
+          "pair": "precision-8",
+          "reference": {
+            "axioms": null,
+            "compiler_output": "\u26a0 [860/1022] Replayed HexIntervalMathlib.Interval\nwarning: HexIntervalMathlib/Interval.lean:10:0: 'Mathlib.Data.Real.Basic' has been deprecated: please replace this import by\n\nimport Mathlib.Basic.Real.Basic\n\u2714 [8965/8965] Built HexIntervalMathlib.Constants.Baseline (2.3s)\nBuild completed successfully (8965 jobs).\n__HEX_MAX_RSS_KB__=3213028\n__HEX_USER_SECONDS__=5.95\n__HEX_SYSTEM_SECONDS__=1.41\n__HEX_CPU_PERCENT__=99%\n__HEX_INVOLUNTARY_CONTEXT__=27805\n__HEX_VOLUNTARY_CONTEXT__=42015\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.05879499999997681,
+              "child_cpu_seconds": 7.370105000000024,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 741
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.008794999999976811,
+              "measurement_cpu_interrupt_seconds": 0.02,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.008794999999976811,
+              "measurement_cpu_residual_seconds": 0.02879499999997681,
+              "per_cpu": {
+                "34": {
+                  "busy_seconds": 0.05,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 735,
+                    "iowait": 0,
+                    "irq": 0,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 1,
+                    "user": 4
+                  }
+                },
+                "82": {
+                  "busy_seconds": 7.4,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 0,
+                    "irq": 2,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 142,
+                    "user": 596
+                  }
+                }
+              },
+              "pressure_some_delta_us": 166423,
+              "runner_cpu_seconds": 0.0010999999999998789
+            },
+            "cpu_percent": 99.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4324714",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 14,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.50 avg60=1.87 avg300=12.78 total=43645424138\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43645424138,
+              "load_1m_per_available_cpu": 21.6953125,
+              "load_1m_per_cpu": 0.22599283854166666,
+              "load_average": [
+                21.6953125,
+                83.04296875,
+                102.845703125
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "26/11668"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4316850",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 14,
+              "cpu_affinity": [
+                82
+              ],
+              "cpu_pressure": "some avg10=1.33 avg60=1.89 avg300=13.09 total=43645257715\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 43645257715,
+              "load_1m_per_available_cpu": 21.4072265625,
+              "load_1m_per_cpu": 0.222991943359375,
+              "load_average": [
+                21.4072265625,
+                84.02294921875,
+                103.26611328125
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "16/11625"
+            },
+            "involuntary_context_switches": 27805,
+            "peak_rss_kb": 3213028,
+            "precise_child_system_seconds": 1.4162570000000017,
+            "precise_child_user_seconds": 5.953848000000022,
+            "system_seconds": 1.41,
+            "user_seconds": 5.95,
+            "voluntary_context_switches": 42015,
+            "wall_nanos": 7410805417
+          },
+          "round": 4,
+          "signed_wall_delta_nanos": 660988891,
+          "slot_index": 1
+        }
+      ],
+      "signed_wall_delta_nanos": [
+        -544007357,
+        534861260,
+        717700009,
+        660988891
+      ]
+    }
+  },
+  "schema": "hex-interval-constants-probes-v1",
+  "source_sha256": {
+    "HexInterval/Action.lean": "6b17a9f28a01b597ea309fcbf324943729884718b6e9d20065e7d4c86efab1a0",
+    "HexInterval/Arithmetic.lean": "c372ce21d0d84bbc8ceb7ef5288fc597dbd5190e8135e68fd28b29d33a7b2f78",
+    "HexInterval/Basic.lean": "48ee7967e265beba21c355b5ac2657321637794ce322c9ad7f2880c853ecd850",
+    "HexInterval/Canonical.lean": "051272219152c0418f6489da24a9b16b0562299427f7bd5f7fbad57444e2ddb7",
+    "HexInterval/Executable.lean": "7aa08daad6ce08500a837101476de347a14e478605bdd8e706739a35792e21f6",
+    "HexInterval/Fact.lean": "9ad46435e1d5758117c7e2ab133dd7f5d78b7f5e0eb34c6705f22b63c364514e",
+    "HexInterval/Interval.lean": "76dc1758cdec00f38d152be4f937b4211c2b8c749bbeab37f90ce7311a986b1b",
+    "HexInterval/Multiplication.lean": "07d14020d8ce85ef6c1885f56f3cf97ef585cffb9ed07ba5aaca281ffbb89a3c",
+    "HexInterval/Policy.lean": "7fdd2b12bcaa538788cb36909ed610469168c9a93ba6cead001f1e2f8ee0f5b5",
+    "HexInterval/Program.lean": "d9e4ee2ac21c435c628fd687ca86cc2c564693314e1e588707aca0e40686b101",
+    "HexInterval/Runtime.lean": "429bf8210538c0584a621058b7cffc27b4792a60bf253901214c50abdc441fe2",
+    "HexInterval/RuntimeController.lean": "599b199844bcd2e300014e735c21de0c62fafed4a7eaa6dea3c1ce820110ad43",
+    "HexInterval/Search.lean": "395a958d1cfdf267baf319716149b37937a024958eb614d0da06144bcce0955e",
+    "HexInterval/State.lean": "c248d6b3ed199e9d7af99a3465d946983bcf6cc18b0b88a5d912ea3c8ff4ca54",
+    "HexInterval/Trace.lean": "db07032e1e46737280b2db5ae292a21c46435a904a6abbd42e56add8e3574ad5",
+    "HexIntervalMathlib.lean": "902e1b38264e0013382a84cccd58c67898fd6c3de2b7734dcb970e35a02b41e9",
+    "HexIntervalMathlib/Absolute.lean": "2ca9fdae5c72e821fb444405524d4d01ee98c787d91732dd7aed7ecc42d0685a",
+    "HexIntervalMathlib/Addition.lean": "01b8c2150b805a28e0f9df080b8360dc25c5d4faf0d331c74358ac5d2c924c0e",
+    "HexIntervalMathlib/Controller.lean": "7b821bd9e28f7e0332bbab6ae46ea2d2b0377922decb5d87bfff3455b2ed8347",
+    "HexIntervalMathlib/Division.lean": "126f017e5e7897601fd65dc427db858617a8b2005e8e5c1fb9035b34299e3127",
+    "HexIntervalMathlib/Driver.lean": "bd3458ec029049853fb465046a9d7a0455b40e73af98eff16a7afe7e021a7d19",
+    "HexIntervalMathlib/Elementary/Constants.lean": "d1a919a46455386f0afacb1813b233cb821cfa0335fe6612767bd85da7f70d40",
+    "HexIntervalMathlib/Elementary/ExpLog.lean": "6b888bf106329b8499c7728c68db206a3f748e3cba892be846880a6e397fb2cd",
+    "HexIntervalMathlib/Frontend.lean": "759b6f7bf15bf53e303969a2422109288dad1063382b7f794ae278649bef0f89",
+    "HexIntervalMathlib/Interval.lean": "b5d9be010776a889812d56dc3243fa0d8ba818e4089215d93fd64b0be5a77782",
+    "HexIntervalMathlib/Inverse.lean": "250f67e1a8fa2b774868c4bbc3d03aca844eeac2c62d801eb04c0785fc714d34",
+    "HexIntervalMathlib/MinMax.lean": "31114a2f4ce548f5f9b47fb67843a9e2d8d9746243bfa54bb2b624e32b489471",
+    "HexIntervalMathlib/Multiplication.lean": "eb5bf807d664ca89f873417fcafff8bca6e551e6698076934d569e25424169e9",
+    "HexIntervalMathlib/Power.lean": "827b3477b0451a0424397a665eb827ede58447cd7b53a78828389cfeaa8850bb",
+    "HexIntervalMathlib/Program.lean": "da45e8de5ef7030cb4a0700e127a2025a7650bbfe53f7fb3048f8a45ab8583fa",
+    "HexIntervalMathlib/Proof.lean": "830a0f0b3c9e474a7ad659202f7fc728da863980f6aeb0ed740cbe8e1ac5efe9",
+    "HexIntervalMathlib/Regularize.lean": "ed27c642871ff6b48137f670ccfe0f3565cc24d65bf26e17a1cf2437094ba197",
+    "HexIntervalMathlib/Rule.lean": "8548651ead1fe64c2f312209f3f216150a67b24d5445f03afefca9297b280fe7",
+    "HexIntervalMathlib/RuntimeEmit.lean": "5bfa3baa6b3e51638020ebe04b8d8fc20a76dc6601305c898158edf36a2ea834",
+    "HexIntervalMathlib/RuntimeProof.lean": "108024d3451fac9e6af4357b5464a865eddb73acd5863f8dda48dbc4d135356b",
+    "HexIntervalMathlib/RuntimeRule.lean": "bf94a718a6c899099b7dc1156deca1d96e681bf08abb9ee612436d70f7ead757",
+    "HexIntervalMathlib/RuntimeRuleEmit.lean": "38a99563b3be1fb1c727683189c55c4842b20764130edbff26a7a5c11ee87752",
+    "HexIntervalMathlib/RuntimeTerminal.lean": "254510af3fbc34aaf166fcce0dcd2520b36c0303caebcf317be634d183113880",
+    "HexIntervalMathlib/Split.lean": "2ea98912e0d56f9aa20d71fabb6424fa6b8b29cd0a2a45d7a399ed887536f76e",
+    "HexIntervalMathlib/Subtraction.lean": "c0d597b26f9ef3b8f0cc3c94343836d1b2574fba5351c29b555834ca1a3a9a41",
+    "HexIntervalMathlib/Tactic.lean": "d64a7bb8f5294d45811333cad440398fdc7d71548b5939435893c58923de3e03",
+    "bench/HexIntervalMathlib/Constants/Baseline.lean": "89afc2413c3b5bff180fe15c3139d3cab8cb64ea456f223079723f8e32f85673",
+    "bench/HexIntervalMathlib/Constants/Precision16.lean": "2e341675a6e8a7cc2a4594d2b69fab98172d7df13da08c004dd6c81a0ec8da8a",
+    "bench/HexIntervalMathlib/Constants/Precision2.lean": "5062f6b3794ffad5631f45ca8af9ed3b25e8957a9bd59252a1225ca2f09e9a9d",
+    "bench/HexIntervalMathlib/Constants/Precision8.lean": "6fa5bca80b0c8259848d22197167ba9417fc063a89f5b6b978bc30d676fcad6e",
+    "lake-manifest.json": "c02687afbc599908c20739609e4e1c250582dff45405467b28b372cc2113bd8d",
+    "lakefile.lean": "2d3698efca3309b82f565afd730f1a3a99dbc6083efb28b42def8152b1621c2f",
+    "lean-toolchain": "8733782dc070a99b312039cda424f601b80f3be6f6f512627da5ba25adc27632",
+    "scripts/bench/fresh_module_sweep.py": "25aa48fb1a09351c465c7f28630a301ffe681f270de19ec75f7b28c077007282",
+    "scripts/bench/interval_constants_sweep.py": "ed5a6d541fc8e8dcce0cc0c5b285779e0c55f8d236d59bed3be2d9654d287f43",
+    "scripts/ci/check_benches_mathlib_free.py": "ff78b27c08ac6a50c5c305a9e418c64efe43c322edeea037a651597bb31c52ae"
+  },
+  "validity": {
+    "exceptions": [],
+    "host_protocol": "shared-host-context-v1",
+    "release_quality": true
+  }
+}

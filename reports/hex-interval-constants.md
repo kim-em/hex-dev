@@ -156,3 +156,24 @@ ceiling is an operational host-specific bound. There is no compiled producer
 or executable checker in this analytic slice to time; those evidence tracks
 remain assigned to the #10334 runtime tranche. No performance claim about a
 complete provider follows from these source-proof measurements.
+
+The retained run at implementation commit `0dd499e610140c568d917ae9ee19b0de3c43ccc3`
+completed all 24 fresh builds with `release_quality: true`, no exceptions,
+and every absolute ceiling passed. Raw paired samples, compiler output,
+artifact sizes and provenance are in
+[hex-interval-constants-probes.json](bench-results/hex-interval-constants-probes.json).
+The separate [Arb record](bench-results/hex-interval-constants-arb.json) retains
+all six exact cuts, source hashes and independent balls.
+
+| Precision | Import median (s) | Proof median (s) | Proof maximum (s) | Public/private olean bytes |
+| --- | --- | --- | --- | --- |
+| 2 | 7.540 | 8.077 | 8.269 | 21032 / 221112 |
+| 8 | 7.304 | 7.753 | 8.072 | 21344 / 277648 |
+| 16 | 7.716 | 8.556 | 8.755 | 21312 / 346248 |
+
+The measurement CPU was 82 on the shared host; observed concurrent Lake/Lean
+processes reached 22. Every completed sample is retained. The table reports
+whole fresh builds, including public imports and exact cut proof construction,
+not isolated kernel time or an asymptotic provider claim. Runtime production,
+executable certificate checking and emitted-literal replay need their own
+separate measurements once those implementations exist.

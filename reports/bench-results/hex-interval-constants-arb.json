@@ -1,0 +1,66 @@
+{
+  "python_flint": "0.9.0",
+  "arb_precision": 256,
+  "fixtures": [
+    {
+      "source": "bench/HexIntervalMathlib/Constants/Precision16.lean",
+      "sha256": "2e341675a6e8a7cc2a4594d2b69fab98172d7df13da08c004dd6c81a0ec8da8a",
+      "subject": "Real.pi",
+      "precision": 16,
+      "lower": "205887/65536",
+      "upper": "3217/1024",
+      "arb": "[3.141592653589793238462643383279502884197169399375105820974944592307816406286 +/- 2.16e-76]",
+      "accepted": true
+    },
+    {
+      "source": "bench/HexIntervalMathlib/Constants/Precision16.lean",
+      "sha256": "2e341675a6e8a7cc2a4594d2b69fab98172d7df13da08c004dd6c81a0ec8da8a",
+      "subject": "Real.exp 1",
+      "precision": 16,
+      "lower": "178145/65536",
+      "upper": "89073/32768",
+      "arb": "[2.718281828459045235360287471352662497757247093699959574966967627724076630354 +/- 5.15e-76]",
+      "accepted": true
+    },
+    {
+      "source": "bench/HexIntervalMathlib/Constants/Precision2.lean",
+      "sha256": "5062f6b3794ffad5631f45ca8af9ed3b25e8957a9bd59252a1225ca2f09e9a9d",
+      "subject": "Real.pi",
+      "precision": 2,
+      "lower": "3",
+      "upper": "13/4",
+      "arb": "[3.141592653589793238462643383279502884197169399375105820974944592307816406286 +/- 2.16e-76]",
+      "accepted": true
+    },
+    {
+      "source": "bench/HexIntervalMathlib/Constants/Precision2.lean",
+      "sha256": "5062f6b3794ffad5631f45ca8af9ed3b25e8957a9bd59252a1225ca2f09e9a9d",
+      "subject": "Real.exp 1",
+      "precision": 2,
+      "lower": "5/2",
+      "upper": "11/4",
+      "arb": "[2.718281828459045235360287471352662497757247093699959574966967627724076630354 +/- 5.15e-76]",
+      "accepted": true
+    },
+    {
+      "source": "bench/HexIntervalMathlib/Constants/Precision8.lean",
+      "sha256": "6fa5bca80b0c8259848d22197167ba9417fc063a89f5b6b978bc30d676fcad6e",
+      "subject": "Real.pi",
+      "precision": 8,
+      "lower": "201/64",
+      "upper": "805/256",
+      "arb": "[3.141592653589793238462643383279502884197169399375105820974944592307816406286 +/- 2.16e-76]",
+      "accepted": true
+    },
+    {
+      "source": "bench/HexIntervalMathlib/Constants/Precision8.lean",
+      "sha256": "6fa5bca80b0c8259848d22197167ba9417fc063a89f5b6b978bc30d676fcad6e",
+      "subject": "Real.exp 1",
+      "precision": 8,
+      "lower": "695/256",
+      "upper": "87/32",
+      "arb": "[2.718281828459045235360287471352662497757247093699959574966967627724076630354 +/- 5.15e-76]",
+      "accepted": true
+    }
+  ]
+}
