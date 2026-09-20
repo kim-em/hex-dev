@@ -6,7 +6,9 @@ Authors: Kim Morrison
 module
 
 public import HexPolyDetMathlib.Packed
+public import HexPolyDetMathlib.Tree
 public meta import HexPolyDetMathlib.Packed
+public meta import HexPolyDetMathlib.Tree
 public meta import HexPolyDet.Select
 public meta import HexReflect.Session
 public meta import HexMatrixMathlib.Literal
@@ -80,6 +82,52 @@ def integer (k n : Nat) (rows : List (List (MvPoly.Kernel.PolyList Int)))
         #[← quoteBudget, quoteMode s.mode, toExpr k, toExpr n, rowsE, wE, h]
     else mkAppM ``Polynomial.checkDetPolyList_sound #[toExpr k, toExpr n, rowsE, wE, h]
   return (hdet, s)
+
+/-- Admit every tree product and the target before quoting a tree certificate.
+Structural bounds may exceed list bounds, in which case the existing route runs. -/
+def tree? (k n : Nat) (rows : List (List (MvPoly.Kernel.PolyList Int)))
+    (trees : Kronecker.TreeMatrix) (w : Matrix.DetWitness (MvPoly.Kernel.PolyList Int))
+    (target : Kronecker.Expr) (value : MvPoly.Kernel.PolyList Int)
+    (rowsE wE targetE valueE : Expr) : MetaM (Option (Expr × Expr × Selection)) := do
+  let opts ← getOptions
+  let arm := arm opts
+  if arm == .lists then return none
+  let mode := if arm == .signedPacked then Kronecker.MulMode.signedPacked else .plain
+  let ps := products (ops k) n rows w
+  let permuted := match w with
+    | .triangular swaps _ _ => Matrix.DetWitness.permute swaps trees
+    | .singular _ => trees
+  let mut reports := []
+  for p in ps do
+    let b := match w with
+      | .triangular .. => leading p.inner permuted
+      | .singular _ => permuted
+    let .ok size := Kronecker.sizeMulTree budget mode k 1 p.inner p.width [p.left] b [p.result]
+      | throwError "det: malformed tree product at row {p.row}"
+    let report : Report := ⟨p.row, size, p.key size⟩
+    if !size.accepts budget then
+      trace[HexMatrix.certificate] "det tree preflight: {declineMessage budget report}"
+      return none
+    reports := reports ++ [report]
+  let .ok size := Kronecker.sizeTreeTermsEq budget k target value
+    | throwError "det: malformed tree target"
+  if !size.accepts budget then
+    trace[HexMatrix.certificate] "det tree target preflight exceeds packing budget; using list entry proofs"
+    return none
+  if arm == .automatic && !reports.all (fun r => crossover.contains r.key) then return none
+  let selection : Selection := { mode, packed := true, reports }
+  unless profileit "det.symbolic.selfcheck" opts (fun _ =>
+      checkDetPolyPackedTree budget mode k n trees w && Kronecker.checkTreeTermsEq budget k target value) do
+    throwError "det: tree certificate failed its compiled check"
+  let check ← mkAppM ``checkDetPolyPackedTree
+    #[← quoteBudget, quoteMode mode, toExpr k, toExpr n, rowsE, wE]
+  let h ← profileitM Exception "det.symbolic.certificate" opts <|
+    decideProof (← mkEq check (mkConst ``Bool.true))
+  let hdet ← mkAppM ``Tree.checkDetPolyPackedTree_sound
+    #[← quoteBudget, quoteMode mode, toExpr k, toExpr n, rowsE, wE, h]
+  let checkTarget ← mkAppM ``Kronecker.Kernel.treeTermsEq #[toExpr k, targetE, valueE]
+  let htarget ← decideProof (← mkEq checkTarget (mkConst ``Bool.true))
+  return some (hdet, htarget, selection)
 
 def residue (p k n : Nat) (rows : List (List (MvPoly.Kernel.PolyList Nat)))
     (w : Matrix.DetWitness (MvPoly.Kernel.PolyList Nat)) (rowsE wE : Expr)

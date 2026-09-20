@@ -90,3 +90,25 @@ theorem packedSingularMod (x y : ZMod 3) :
 /-- info: 'packedSingularMod' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms packedSingularMod
+
+universe u
+
+-- Tree transport supports carriers in arbitrary universes, with no domain premise.
+set_option hex.det.checker 2 in
+theorem packedUniverse {R : Type u} [CommRing R] (x y : R) :
+    Matrix.det !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y] =
+      (x * x - 1) * (y * y - 1) := by det
+
+-- A target may fail structural preflight although all witness products fit.
+-- The canonical-list route still certifies the cancellation in that target.
+set_option hex.det.checker 2 in
+example (x y z w : Int) : Matrix.det !![x, 0, 0, 0; 0, y, 0, 0; 0, 0, z, 0; 0, 0, 0, w] =
+    x * y * z * w + (x ^ 64 * y ^ 64 * z ^ 64 * w ^ 64 - x ^ 64 * y ^ 64 * z ^ 64 * w ^ 64) := by
+  det
+
+/-- info: 'HexMatrixMathlib.DetPoly.Tree.checkDetPolyPackedTree_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms HexMatrixMathlib.DetPoly.Tree.checkDetPolyPackedTree_sound
+/-- info: 'packedUniverse' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms packedUniverse

@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexPolyDet.Basic
-public import HexKronecker.Check
+public import HexKronecker.Mixed
 
 @[expose] public section
 
@@ -30,7 +30,7 @@ def next (ops : DetOps R) (swaps : List (Nat × Nat)) (d : R)
 
 /-- Structural checks shared by the integer and residue packed checkers. -/
 def rows (ops : DetOps R) (d : R) (swaps : List (Nat × Nat))
-    (a : List (List R)) (product : Nat → List R → List (List R) → List R → Bool) :
+    (a : List (List I)) (product : Nat → List R → List (List I) → List R → Bool) :
     Nat → List (List R) → Bool
   | _, [] => true
   | i, t :: ts =>
@@ -84,5 +84,21 @@ def checkDetPolyPackedMod (budget : Kronecker.Budget) (mode : Kronecker.MulMode)
       [t.map Packed.lift] (b.map (List.map Packed.lift)) [c.map Packed.lift] [qs.getD i []])
     (fun v => Kronecker.checkMulTermsMod budget mode k 1 n n p
       [v.map Packed.lift] (a.map (List.map Packed.lift)) [List.replicate n []] qs) w
+
+/-- Tree-valued input entries share the serialized witness and diagonal checks.
+Only witness products are serialized; tree validation replaces list canonicality. -/
+def checkDetPolyPackedTree (budget : Kronecker.Budget) (mode : Kronecker.MulMode)
+    (k n : Nat) (a : Kronecker.TreeMatrix) (w : DetWitness (PolyList Int)) : Bool :=
+  Kronecker.treeShape k n n a &&
+    match w with
+    | .triangular swaps ts d =>
+      swapsOk n swaps && (ops k).valid d && Nat.beq ts.length n &&
+      (if n == 0 then (ops k).beq d (ops k).one
+       else (ops k).beq ((ops k).entry (row ts 0) 0) (ops k).one) &&
+      Packed.rows (ops k) d swaps (permute swaps a)
+        (fun i t b c => Kronecker.checkMulTree budget mode k 1 (i + 1) (i + 1) [t] b [c]) 0 ts
+    | .singular v =>
+      Nat.beq v.length n && (ops k).validRow v && (ops k).anyNonzero v &&
+      Kronecker.checkMulTree budget mode k 1 n n [v] a [List.replicate n []]
 
 end Hex.PolyDet

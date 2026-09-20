@@ -299,6 +299,96 @@ def computeResidue (p : Nat) (provider : CoeffProvider) (A : Expr)
   let target ← mkEq (← mkAppM ``Matrix.det #[A]) r.source
   return { value := r.source, proof := ← checked target proof }
 
+/-- Tree entry identification uses only the retained expression's denotation. -/
+def treeEntry (ctx : Expr) (r : ReifiedRing) : MetaM Expr := do
+  let h ← mkAppM ``HexKroneckerMathlib.fromGrind_denote #[ctx, toExpr r.expr]
+  let some (_, lhs, _) := (← inferType h).eq? | throwError "det: malformed tree denotation proof"
+  mkExpectedTypeHint h (← mkEq lhs r.source)
+
+/-- Assemble a tree certificate after its product and target preflights pass. -/
+def computeTree? (A ctx : Expr) (lit : Recognized) (k size : Nat)
+    (reified : Array (Array ReifiedRing)) (lists : Array (Array Poly))
+    (w : Hex.Matrix.DetWitness Poly) (r : ReifiedRing) (rhs? : Option Expr)
+    (normalized : Option (Array (Nat × Array Normalize.Result)))
+    (targetNorm : Option Normalize.Result) (scales : Array Nat) (D t : Nat) :
+    ReflectM (Option Result) := do
+  if Certificate.arm (← getOptions) == .lists then return none
+  let trees := reified.toList.map (fun row => row.toList.map (fun r => HexKroneckerMathlib.fromGrind r.expr))
+  let treeTy := mkConst ``Hex.Kronecker.Expr
+  let quoteTree (r : ReifiedRing) : MetaM Expr :=
+    mkAppM ``HexKroneckerMathlib.fromGrind #[toExpr r.expr]
+  let quoted ← reified.toList.mapM fun row => do
+    mkListLit treeTy (← row.toList.mapM (fun r => do quoteTree r))
+  let treesE ← mkListLit (mkApp (mkConst ``List [Level.zero]) treeTy) quoted
+  let wE ← quoteWitness w
+  withLetDecl `detTrees (← inferType treesE) treesE fun treesE => do
+    withLetDecl `detWitness (← inferType wE) wE fun wE => do
+      withLetDecl `detMatrix (← inferType A) A fun A => do
+        let qE ← quoteTree r
+        let q := HexKroneckerMathlib.fromGrind r.expr
+        let d := Polynomial.value w
+        let (target, value, targetE) ← if targetNorm.isSome then do
+            pure (Hex.Kronecker.Expr.mul (.int D) q, MvPoly.Kernel.smul (Int.ofNat t) d,
+              mkApp2 (mkConst ``Hex.Kronecker.Expr.mul)
+                (mkApp (mkConst ``Hex.Kronecker.Expr.int) (toExpr (Int.ofNat D))) qE)
+          else pure (q, d, qE)
+        let dE ← mkAppM ``Polynomial.value #[wE]
+        let valueE ← if targetNorm.isSome then
+            mkAppM ``MvPoly.Kernel.smul #[toExpr (Int.ofNat t), dE]
+          else pure dE
+        let some (hcheck, hq, selection) ← Certificate.tree? k lit.n (lists.toList.map Array.toList)
+            trees w target value treesE wE targetE valueE | return none
+        let hq ← mkAppM ``Hex.Kronecker.Kernel.treeTermsEq_sound
+          #[hq, ← mkAppM ``Lean.RArray.get #[ctx]]
+        let mut hrows := #[]
+        for i in [:lit.n] do
+          let mut hs := #[]
+          for j in [:lit.n] do
+            let h ← treeEntry ctx ((reified[i]!).getD j r)
+            let h ← match normalized with
+              | none => mkEqSymm h
+              | some rs => mkEqTrans h (rs[i]!.2[j]!).proof
+            hs := hs.push h
+          hrows := hrows.push (← conjunction hs)
+        let B ← mkAppM ``Tree.evaluated #[toExpr lit.n, treesE, ctx]
+        let he ← treeEntry ctx r
+        let (value, proof) ← if normalized.isSome then do
+            let sE := toExpr scales.toList
+            let hA ← applyHint (← mkAppM ``Scaling.identify #[toExpr lit.n, A, B, sE])
+              (← conjunction hrows)
+            let hs ← decideProof (← mkEq (← mkAppM ``List.length #[sE]) (toExpr lit.n))
+            let hdet := mkAppN (← mkAppM ``Tree.scaled_det
+              #[toExpr k, toExpr lit.n, treesE, wE, ctx, A, sE]) #[hcheck, hA, hs]
+            let hD ← decideProof (← mkAppM ``LT.lt #[toExpr (0 : Nat), toExpr D])
+            match targetNorm with
+            | some qnorm =>
+              let he ← mkEqTrans he qnorm.proof
+              let ht ← decideProof (← mkAppM ``LT.lt #[toExpr (0 : Nat), toExpr t])
+              let proof := mkAppN (← mkAppM ``Tree.scaled_target
+                #[toExpr k, dE, ctx, toExpr D, toExpr t,
+                  ← mkAppM ``Matrix.det #[A], rhs?.get!, qE]) #[hdet, ht, hD, he, hq]
+              pure (rhs?.get!, proof)
+            | none =>
+              let he := mkAppN (← mkAppM ``Tree.value_eq
+                #[toExpr k, ctx, qE, dE, r.source]) #[he, hq]
+              let h ← mkEqTrans hdet he
+              let proof ← mkAppM ``Scaling.value #[toExpr D, ← mkAppM ``Matrix.det #[A], r.source, hD, h]
+              if D == 1 then pure (r.source, ← mkEqTrans proof (← mkAppM ``div_one #[r.source]))
+              else pure (← mkAppM ``HDiv.hDiv #[r.source, ← Normalize.natural D], proof)
+          else do
+            let hA ← applyHint (← mkAppM ``Polynomial.identify #[A, B]) (← conjunction hrows)
+            let head := if rhs?.isSome then ``Tree.target_det else ``Tree.result_det
+            let proof := mkAppN (← mkAppM head
+              #[toExpr k, toExpr lit.n, treesE, wE, ctx, A, qE, r.source])
+              #[hcheck, hA, he, hq]
+            pure (r.source, proof)
+        let proofNodes := (size + d.length) * (4 * k + 24)
+        charge .proofNodes proofNodes
+        trace[HexMatrix.certificate] "{(Json.mkObj (Certificate.fields selection "integer" ++ [
+          ("entries", toJson "tree"), ("proof_node_budget", toJson proofNodes), ("atoms", toJson k)])).compress}"
+        let target ← mkEq (← mkAppM ``Matrix.det #[A]) value
+        return some { value, proof := ← checked target proof }
+
 /-- One batch, one elimination and one kernel check for a symbolic determinant.
 The optional target is reified before sealing, and may not allocate new atoms. -/
 def compute (A : Expr) (rhs? : Option Expr := none) : MetaM (Outcome Result) := do
@@ -401,6 +491,14 @@ def compute (A : Expr) (rhs? : Option Expr := none) : MetaM (Outcome Result) := 
     unless MvPoly.Kernel.beq left right do
       let value ← (denoteRingExpr sealed.atoms (expression d) : ReaderT Nat ReflectM Expr).run seed.ringId
       decline m!"target is not a polynomial identity in the sealed atoms; computed value is{indentExpr value}"
+    let r ← match rhs with
+      | some r => pure r
+      | none =>
+        let e := expression d
+        let source ← (denoteRingExpr sealed.atoms e : ReaderT Nat ReflectM Expr).run seed.ringId
+        pure { seed with expr := e, source }
+    if let some result ← computeTree? A ctx lit k size reified lists w r rhs?
+        normalized targetNorm scales D t then return result
     let rowsE := toExpr (lists.toList.map Array.toList)
     let wE ← quoteWitness w
     let (hcheck, selection) ← Certificate.integer k lit.n (lists.toList.map Array.toList) w rowsE wE
@@ -415,12 +513,6 @@ def compute (A : Expr) (rhs? : Option Expr := none) : MetaM (Outcome Result) := 
         hs := hs.push h
       hrows := hrows.push (← conjunction hs)
     let B ← mkAppM ``Polynomial.evaluated #[toExpr k, toExpr lit.n, rowsE, ctx]
-    let r ← match rhs with
-      | some r => pure r
-      | none =>
-        let e := expression d
-        let source ← (denoteRingExpr sealed.atoms e : ReaderT Nat ReflectM Expr).run seed.ringId
-        pure { seed with expr := e, source }
     let he ← entryProof k ctx r q
     let targetCheck : ReflectM Expr := do
       decideProof (← mkEq (← mkAppM ``MvPoly.Kernel.beq #[toExpr left, toExpr right])
