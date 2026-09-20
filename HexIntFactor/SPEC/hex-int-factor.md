@@ -85,19 +85,19 @@ unfactored".
 
 In scope: the factorization certificate and its checker; perfect-power
 detection; trial division against hex-primality's table; reuse of
-hex-primality's Brent-rho and Pollard `p − 1` stage-1 primitives; ECM
+hex-primality's Brent-rho and Pollard `p − 1` stage-1 and stage-2 primitives; ECM
 stage 1 with Montgomery curves; the divisor-function API
 (`divisors`, `sigma`, `totient`, `radical`, `squarefreePart`,
 `isSquarefree`); the multiplicative-order and primitive-root
 certificates; and the cyclotomic pre-split for numbers of the form
 `b^n ± 1`.
 
-Pollard `p − 1` stage 2 and ECM stage 2 are not in scope. Real
-continuations need specified baby-step/giant-step and Brent-Suyama
-layouts respectively, an arbitrary-precision modular-arithmetic cost
-model, and their own benchmark families; "the standard continuation"
-is not an implementable contract. Each stage 1 is independently useful
-and is the largest surface specified here.
+Pollard `p − 1` stage 2 is specified upstream in
+[hex-primality](../../HexPrimality/SPEC/hex-primality.md#pollard-p-minus-one-stage-2),
+with this library owning its adapter and dispatch policy. Implementation and
+default enablement follow that contract and its benchmark gates. ECM stage 2
+remains out of scope: it needs its own Brent-Suyama layout, cost model, and
+benchmark family; the p−1 contract does not specify an ECM continuation.
 
 ECM stage 1 without stage 2 may not earn its maintenance cost. Milestone
 6 is therefore benchmark-gated: if the specified stage-1 route does not
@@ -368,7 +368,7 @@ restarts before those routes can run.
 
 ### 2. Pollard `p − 1`
 
-Like rho, stage 1 is sited upstream: hex-primality owns it beside
+Like rho, both stages are sited upstream: hex-primality owns them beside
 `rhoFactor?`, under the same dynamically validated proper-factor
 contract, and this library reuses it. What follows specifies the
 algorithm both consumers get.
@@ -412,20 +412,22 @@ above the cap is not the former hybrid that omitted large primes while still
 raising table primes to powers derived from the larger request. The theorem
 `pMinusOneStage1_bound` states exact equality with the capped call.
 
-The success condition is about the **order of `a` modulo `p`**, not
-about `p − 1`: stage 1 finds `p` when `ord_p(a) ∣ M`. That is implied
-by `p − 1` being `B`-smooth and is strictly weaker than it, so an
-earlier draft's "succeeds iff `p − 1` is `B`-smooth" was wrong in both
-directions -- it can succeed on a non-smooth `p − 1` when the base has
-small order, and it can fail on a smooth one by returning `n`.
+The success condition concerns the **order of `a` modulo a prime `p ∣ n`**:
+`ord_p(a) ∣ M` makes `p` divide the stage-1 gcd, without guaranteeing that
+the gcd is proper. The stronger condition `p − 1 ∣ M` suffices for that
+divisibility; ordinary `B`-smoothness alone does not bound the prime-power
+exponents. A small base order can also expose a prime whose `p − 1` does
+not divide `M`, and several components can give the whole modulus.
 
-A future stage 2 may allow one prime factor of `ord_p(a)` between `B₁`
-and `B₂`, but a difference table is an idea rather than an algorithm.
-Before it enters scope it needs an exact baby-step/giant-step layout over
-the interval primes, a batched-gcd schedule, and a benchmark family.
-Montgomery and Kruppa's treatment,
-https://antsmath.org/ANTSVIII/files/kruppa.pdf, is the starting reference
-for that separate specification.
+Stage 2 tests primes `B₁ < q ≤ B₂` for `ord_p(a) ∣ M*q`, using the saved
+stage-1 residue. The normative bounds, complete runtime enumeration,
+210-step baby/giant index map, 32-candidate batches, whole-batch recovery,
+conditional success lemmas, and counted standalone/continuation APIs are in
+[hex-primality's stage-2 contract](../../HexPrimality/SPEC/hex-primality.md#pollard-p-minus-one-stage-2).
+This adapter must consume that implementation, not duplicate it. In
+particular `whole` is a failed split even when a mathematical opportunity
+exists. The separate primitive stage-2 ceiling is 4194304, independent of
+both the stage-1 ceiling 524288 and the ordinary policy ceiling 9999.
 
 It is cheap, it fails on most inputs, and it succeeds instantly on the
 inputs this tree actually produces. `p^n − 1` is a difference of
@@ -441,6 +443,60 @@ A no-factor result multiplies the bound by eight up to the ordinary policy cap
 bound by a factor of eight (not below `2`) and advances through bases
 `[2, 3, 5, 7]`. A proper factor stops the ladder immediately. These are
 attempts, not hidden retries inside one nominal route call.
+
+#### Stage-2 adapter and dispatch
+
+The stage-1 ladder above is the production policy with continuation disabled.
+The new adapter in `HexIntFactor/PMinusOne.lean` exposes
+`pMinusOneContinueCounted n x B₁ B₂ r`, delegating to
+`PMinusOne.continueCounted`, and `pMinusOneSearchCounted n a B₁ B₂ r`,
+delegating to `PMinusOne.searchCounted`. Both return the shared `Run` and
+have a theorem that a `.factor d` result implies `1 < d ∧ d < n ∧ d ∣ n`.
+Use the continuation adapter after an already charged `PMinusOne.start`;
+use the standalone adapter only when stage 1 has not run. Preserve the
+residue on stage-1 gcd 1 and never run stage 1 again to obtain it.
+
+An explicit `pMinusOneStage2` policy switch is initially false. With it
+enabled, at most one continuation is eligible per unresolved cofactor: after
+the first base-2/bound-64 stage-1 call, only if it returns a ready residue,
+try `B₁ = 64`, `B₂ = 4096`. Do so only if one p−1 attempt and one combined
+smooth attempt remain. A stage-1 setup factor, stage factor, or `whole`
+does not enter stage 2; a later base/bound pair does not receive a second
+chance at continuation. This deliberately small policy has a separately
+measured allocation; it does not use the primitive ceiling by default.
+
+One continuation consumes one of the at-most-four p−1 attempts and one of
+the `min fuel 8` combined smooth attempts. Its batches and recovery consume
+no extra attempts, and its per-attempt work is capped by the shared operation
+bounds with `B₂ = 4096`. On a proper factor stop immediately; on `noFactor`
+or `whole`, resume the stage-1 ladder as after its original no-factor
+result (base 2, next bound 512), with the continuation's charge deducted.
+Thus the all-miss enabled sequence is stage 1 at 64, stage 2 to 4096,
+stage 1 at 512, stage 1 at 4096, then the remaining ECM allocation.
+No continuation exhaustion resets fuel, draws a random word, or blocks ECM.
+If the budget cannot admit it, record the skip and continue the existing
+bounded ladder. Other stage-1 whole results retain the smaller-bound,
+next-base policy above.
+
+Extend `SmoothEvent` with the shared continuation call event, including
+requested/effective bounds, batch outcomes and recovery, plus zero-attempt
+skip diagnostics. Preserve these events in order on success, exhaustion,
+and checker rejection. Sum counted attempt fields; event-list length is
+no longer an attempt count. The shared trace distinguishes a recovered
+factor from an unrecoverable whole batch. Downstream primality registration
+threads the flag and events through the version-3 search boundary specified
+upstream; an unsupported requested policy is declined without work.
+
+Ordinary factorization enables this switch by default only after the native
+route-usefulness gate in the shared contract passes, with a reviewed report
+including setup and complete checked-factorization time. Until then it is
+an explicit experimental allocation. Construction via `primality?` has its
+own upstream schedule, global attempt limit, interpreted measurements, and
+independent enablement gate; importing this library does not enable it.
+Neither route presumes the four inputs in #10291 have the required orders.
+Search data remain untrusted: only a dynamically checked proper divisor
+enters certificate construction, and checked factorization still replays
+its existing checker.
 
 ### 3. The elliptic curve method
 
@@ -501,9 +557,10 @@ word-sized odd moduli use hex-arith's `MontCtx`; larger moduli use direct
 GMP-backed `Nat` multiplication and remainder, `(a * b) % n`. The
 existing Montgomery context is `UInt64`-only and is not claimed to be an
 arbitrary-precision backend. The ECM benchmark family must show that the
-direct-`Nat` route is useful before this milestone is complete; a future
-stage 2 or a failed benchmark is the point at which to specify a separate
-big-integer modular context. On the word route, one context is constructed
+direct-`Nat` route is useful before this milestone is complete. ECM stage 2
+would need a separate arithmetic decision; Pollard p−1 stage 2 uses its own
+specified benchmark gate for direct `Nat` versus a prepared big-integer
+context. On the word route, one context is constructed
 after setup, the curve constants and initial point enter Montgomery
 representation once, every stage multiplication stays there, and only the
 final `z` coordinate is decoded for the boundary gcd. Context construction
@@ -521,8 +578,10 @@ past `10^{18}` is not slow, it is unavailable.
 
 The p−1 and ECM ladders share `min fuel 8` attempts at each unresolved
 cofactor, with at most four assigned to p−1 and the unused remainder assigned
-to ECM. Their execution-order event list is the accounting source: its length
-is added on factor success and exhaustion alike, and its final `Rand` is
+to ECM. A stage-2 continuation, when enabled, occupies one of those four
+p−1 slots. Counted attempt fields are summed on factor success and exhaustion
+alike; the event list also includes batch details and zero-attempt skips,
+so its length is not an accounting source. The final `Rand` is
 threaded into every continuation. Checker rejection retains the attempt total
 already accumulated by the producing search; it does not replay a curve or
 replace the advanced state.
@@ -606,8 +665,9 @@ failure case explicit. At `n = 0` no object satisfying `0 < subject` and
 returning checked data about another number. A generic-search failure retains
 its advanced state and exact attempt count. The dispatcher's attempt unit is
 one Brent-rho restart, one primality-certificate witness candidate, one p−1
-base/bound call, or one ECM curve, including the successful attempt in each
-route. Certificate search also accumulates its internal rho restarts and
+base/bound call, one enabled stage-2 continuation, or one ECM curve,
+including the successful attempt in each route. Certificate search also
+accumulates its internal rho restarts and
 recursive child witnesses. Structural reductions, table lookup,
 Miller--Rabin filtering, and checker replay are deterministic work rather than
 search attempts. Counted internal success shapes preserve these totals across
@@ -1079,7 +1139,8 @@ the number of distinct primes, `B` a smoothness bound.
 | perfect-power test | `O(b²)` bounded multiplication/division steps | the committed prime exponents plus only prime candidates above the table; a `k`th-root search has `O(b/k)` probes of a linear, early-aborting power loop |
 | trial division to `T` | `O(π(T))` divisions | `π(10^4) = 1229` |
 | Pollard rho | `O(√p)` iterations expected and one routine gcd per 32-step batch | `O(n^{1/4})` for a semiprime; cycle boundaries can flush shorter batches |
-| Pollard `p − 1` stage 1 | `O(B)` modular mults | `log M = Θ(B)`; smooth `p − 1` is sufficient but not decisive |
+| Pollard `p − 1` stage 1 | `O(B)` modular mults | `log M = Θ(B)`; `ord_p(a) ∣ M` gives gcd divisibility, not necessarily a proper factor |
+| Pollard `p − 1` stage 2 | at most `210 + 2*ell(i₀) + G + 2*L` modular mults and `2 + ceil(L/32) + 32` gcds | `L` interval primes, `G` giant advances; enumeration and storage are additional as specified upstream |
 | ECM stage 1, one curve | `O(B)` mults | scalar bit length is `Θ(B)`; success depends on the bound |
 | cyclotomic candidate table | `O(m + d²)` index work plus big-integer powers/products | `m` is the largest required index and `d` the number of its divisors; one ascending divisor-closed table is shared by all selected parts |
 | `checkFactorization` | `O(Σ eᵢ)` bounded multiplication/division steps plus `k` primality replays | `boundedPowMul` is linear in the claimed exponent and aborts before constructing a product above the subject |
@@ -1134,6 +1195,13 @@ non-minimal order witness, ensuring the tests exercise the final prime-divisor
 criterion rather than merely normalizing constants.
 
 ## Conformance
+
+Stage 2 reuses the upstream fixed fixtures (`1081`, `2047`, and `1219`)
+and adds adapter equality, one/two/four/eight-attempt allocation boundaries,
+zero-fuel skips, exact event ordering, no random draws, and fallthrough to
+ECM after both `noFactor` and `whole`. The enabled all-miss four-attempt
+p−1 sequence must match the dispatch contract above. Check factor-range
+and divisibility at every adapter exit, including whole-batch recovery.
 
 Per [SPEC/testing.md](../../SPEC/testing.md). A driver at
 `conformance/HexIntFactor/EmitFixtures.lean` exposed as
@@ -1241,6 +1309,13 @@ Families:
   `full / (rho + completion)` are explanatory decompositions rather than
   acceptance thresholds. Rho-first dispatch and rho-first dispatch with its
   smooth fallback disabled are not distinct algorithms and are not compared.
+- **Stage-2 extra-prime orders**, using the shared upstream family and
+  separate setup/stage-1/stage-2/total targets. Compare the specified enabled
+  and disabled dispatches at equal attempt limits and fixed seeds, including
+  their eventual ECM paths and complete checker results. Apply the upstream
+  native usefulness gate before ordinary default enablement; record direct
+  `Nat` versus prepared-context decisions with setup included. Existing
+  stage-1 or ECM measurements do not discharge this gate.
 - **Smooth `p − 1` semiprimes** at the same sizes. Route 2; the base is
   fixed so the benchmark measures the specified stage-1 success case.
 - **`b^n ± 1`**, with and without the cyclotomic split, on identical
@@ -1427,6 +1502,13 @@ by `coprime_of_checkOrder`, so the caller passes nothing extra.
    order transports follow milestones 2 and 3 while later search routes
    proceed independently.
 
+8. **Pollard p−1 stage-2 integration.** Consume hex-primality milestone 6,
+   add the continuation/standalone adapters, exact bounded dispatch and trace,
+   and version-3 search registration. Preserve checked-factorization and
+   certificate boundaries. The shared conformance family and native
+   usefulness gate determine default enablement independently of the
+   upstream construction gate.
+
 ## File organisation
 
 ```
@@ -1506,13 +1588,15 @@ Pollard p-minus-one and ECM stage one use HexPrimality's verified
 `primesBelow (effectiveBound + 1)` enumeration. The primitive smoothness cap is
 524288, and every prime at or below that effective bound is included. The
 ordinary factorizer's adaptive ladder retains its 9999 cap, four p-minus-one
-attempts, and eight combined smooth attempts; raising the primitive ceiling
+attempt slots (stage 1 or an enabled continuation), and eight combined
+smooth attempts; raising the primitive ceiling
 does not change that production allocation or its exact Rand accounting.
 Explicit primality certificate construction is owned by the HexPrimality SPEC
 and uses its separate `FactorSearchBudget` smooth bounds and bases.
 
 
-The primality adapter advertises ABI version 2 as a literal. Its ordinary
+The current primality adapter advertises ABI version 2 as a literal;
+stage-2 budget/trace integration advances it to 3 as specified above. Its ordinary
 registered allocation has no total attempt limit. When a construction caller
 sets `FactorSearchBudget.attemptLimit`, the adapter declines with no attempts
 or random draws and retains the entire input as residual; it does not claim to
