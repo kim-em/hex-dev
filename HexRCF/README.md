@@ -48,6 +48,14 @@ over `ℝ`.
   but never proves a negation. Builder failure is a separate error channel
   and is never reported as `false`.
 
+Optional coefficient solvers can register a monomorphic meta declaration of
+type `Hex.RCF.Handler` with `@[rcf_handler]`. The base tries registered names
+in `Lean.Name.lt` order only when rational reification encounters unsupported
+closed coefficient syntax. A handler explicitly declines, reports a terminal
+failure, or returns a proof checked against the original goal. Rational solver
+failures never dispatch to another handler. This interface does not itself
+provide real algebraic or named-constant coefficient support.
+
 # Verification
 
 Every `true` verdict is kernel-checked. The headline theorem

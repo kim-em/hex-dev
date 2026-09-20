@@ -122,15 +122,43 @@ private meta structure FormulaResult where
   expr : Expr
   proof : Expr
 
-/-- Exact rational value of a closed real expression. -/
-private meta def scalarRat (e : Expr) : MetaM Rat := do
-  let eQ : Q(ℝ) := e
-  try
-    let ⟨value, _num, _den, _proof⟩ ←
-      Mathlib.Meta.NormNum.deriveRat eQ (_inst := q(inferInstance))
-    return value
-  catch _ =>
+/-- Rational recognition stopped at closed coefficient syntax. This is the only
+reification outcome that permits an optional coefficient handler. -/
+meta structure UnsupportedCoefficient where
+  /-- The closed expression that rational normalization did not recognize. -/
+  expr : Expr
+
+/-- Preserve the rational frontend's diagnostic when no handler accepts. -/
+meta def UnsupportedCoefficient.message (reason : UnsupportedCoefficient) : MessageData :=
+  m!"rcf: symbolic or non-rational coefficient{indentExpr reason.expr}"
+
+private meta abbrev RecognitionM := ExceptT UnsupportedCoefficient MetaM
+
+/-- Exact rational recognition. Only failure of the scalar recognizer becomes
+an unsupported-coefficient result; kernel transport and solver failures never
+do. Lean's ordinary exception handler propagates heartbeat/depth exhaustion
+and interrupts. Scalar probing leaves no metavariable assignments behind. -/
+private meta def scalarRat (e : Expr) : RecognitionM Rat := do
+  let value? ← (do
+    let saved ← saveState
+    try
+      let eQ : Q(ℝ) := e
+      let ⟨value, _num, _den, _proof⟩ ←
+        Mathlib.Meta.NormNum.deriveRat eQ (_inst := q(inferInstance))
+      return some value
+    catch _ => return none
+    finally saved.restore : MetaM (Option Rat))
+  if let some value := value? then return value
+  if e.hasFVar || e.hasMVar || e.hasLooseBVars then
     throwError "rcf: symbolic or non-rational coefficient{indentExpr e}"
+  throwThe UnsupportedCoefficient { expr := e }
+
+/-- Interval endpoints stay in the rational frontend, even when optional
+coefficient handlers are installed. -/
+private meta def endpointRat (e : Expr) : MetaM Rat := do
+  match ← (scalarRat e).run with
+  | .ok value => return value
+  | .error reason => throwError reason.message
 
 /-- Natural exponentiation for runtime rational polynomials. -/
 private meta def powRatPoly (base : DensePoly Rat) (power : Nat) : DensePoly Rat :=
@@ -142,7 +170,7 @@ private meta def powRatPoly (base : DensePoly Rat) (power : Nat) : DensePoly Rat
 /-- Parse one real polynomial expression relative to its sole permitted free
 variable. Closed subexpressions are normalized exactly by `norm_num`. -/
 private meta partial def parsePoly (x : Expr) (fuel : Nat)
-    (input : Expr) : MetaM (DensePoly Rat) := do
+    (input : Expr) : RecognitionM (DensePoly Rat) := do
   let input := input.consumeMData
   if input == x then
     return DensePoly.ofCoeffs #[(0 : Rat), 1]
@@ -373,7 +401,7 @@ private meta def proveRing (type : Expr) : MetaM Expr := do
 
 /-- Reify one comparison atom and certify its scaled evaluation identity. -/
 private meta def reifyAtom (x source : Expr) (cmp : Cmp)
-    (lhs rhs : Expr) : MetaM FormulaResult := do
+    (lhs rhs : Expr) : RecognitionM FormulaResult := do
   let realType := mkConst ``Real
   unless ← isDefEq (← inferType lhs) realType do
     throwError "rcf: comparison operand is not real{indentExpr lhs}"
@@ -404,7 +432,7 @@ private meta def reifyAtom (x source : Expr) (cmp : Cmp)
   return { formula := .atom atom, expr := formulaE, proof := proof }
 
 /-- Reify a Boolean formula under one real bound variable. -/
-private meta partial def reifyFormula (x source : Expr) : MetaM FormulaResult := do
+private meta partial def reifyFormula (x source : Expr) : RecognitionM FormulaResult := do
   if let some (cmp, lhs, rhs) := comparison? source then
     return ← reifyAtom x source cmp lhs rhs
   let source := source.consumeMData
@@ -536,18 +564,18 @@ private meta def finishSentence (source : Expr) (sentence : Sentence)
 
 /-- Reify a universal sentence, preferring the exact `Set.Ioc` shape before
 treating implication as an ordinary Boolean connective. -/
-private meta def reifyForall (source domain body : Expr) : MetaM SentenceResult := do
+private meta def reifyForall (source domain body : Expr) : RecognitionM SentenceResult := do
   unless ← isDefEq domain (mkConst ``Real) do
     throwError "rcf: the quantified variable must have type Real"
-  withLocalDeclD `x domain fun x => do
+  ExceptT.mk <| withLocalDeclD `x domain fun x => ExceptT.run do
     let instantiated := body.instantiate1 x
     if let .forallE _ membership consequent _ := instantiated.consumeMData then
       if !consequent.hasLooseBVar 0 then
         if let some (kind, aSource, bSource) := intervalMembership? x membership then
           unless kind == ``Set.Ioc do
             return ← rejectInterval kind true
-          let aValue ← ratDyadic (← scalarRat aSource)
-          let bValue ← ratDyadic (← scalarRat bSource)
+          let aValue ← ratDyadic (← endpointRat aSource)
+          let bValue ← ratDyadic (← endpointRat bSource)
           let aExpr ← dyadicExpr aValue
           let bExpr ← dyadicExpr bValue
           let formula ← reifyFormula x consequent
@@ -568,26 +596,26 @@ private meta def reifyForall (source domain body : Expr) : MetaM SentenceResult 
     let predicate ← mkLambdaFVars #[x] instantiated
     let proof := mkAppN (mkConst ``Sentence.forallReal_iff)
       #[formula.expr, predicate, formulaProof]
-    finishSentence source sentence expr proof
+    return ← finishSentence source sentence expr proof
 
 /-- Reify an existential sentence, recognizing an `Ioc` membership conjunct
 before the quantifier-free body. -/
-private meta def reifyExists (source domain predicate : Expr) : MetaM SentenceResult := do
+private meta def reifyExists (source domain predicate : Expr) : RecognitionM SentenceResult := do
   unless ← isDefEq domain (mkConst ``Real) do
     throwError "rcf: the quantified variable must have type Real"
   let .lam _ binderType body _ := predicate.consumeMData
     | throwError "rcf: malformed existential predicate"
   unless ← isDefEq binderType domain do
     throwError "rcf: malformed existential binder"
-  withLocalDeclD `x domain fun x => do
+  ExceptT.mk <| withLocalDeclD `x domain fun x => ExceptT.run do
     let instantiated := body.instantiate1 x
     if let (``And, #[membership, consequent]) :=
         instantiated.consumeMData.getAppFnArgs then
       if let some (kind, aSource, bSource) := intervalMembership? x membership then
         unless kind == ``Set.Ioc do
           return ← rejectInterval kind false
-        let aValue ← ratDyadic (← scalarRat aSource)
-        let bValue ← ratDyadic (← scalarRat bSource)
+        let aValue ← ratDyadic (← endpointRat aSource)
+        let bValue ← ratDyadic (← endpointRat bSource)
         let aExpr ← dyadicExpr aValue
         let bExpr ← dyadicExpr bValue
         let formula ← reifyFormula x consequent
@@ -608,10 +636,11 @@ private meta def reifyExists (source domain predicate : Expr) : MetaM SentenceRe
     let predicateExpr ← mkLambdaFVars #[x] instantiated
     let proof := mkAppN (mkConst ``Sentence.existsReal_iff)
       #[formula.expr, predicateExpr, formulaProof]
-    finishSentence source sentence expr proof
+    return ← finishSentence source sentence expr proof
 
-/-- Reify one supported, singly quantified real sentence. -/
-meta def reifySentence (source : Expr) : MetaM SentenceResult := do
+/-- Reify one singly quantified real sentence, distinguishing unsupported
+closed coefficients from terminal syntax, proof and resource errors. -/
+meta def recognizeSentence (source : Expr) : ExceptT UnsupportedCoefficient MetaM SentenceResult := do
   let source := source.consumeMData
   match source with
   | .forallE _ domain body _ => reifyForall source domain body
@@ -619,6 +648,13 @@ meta def reifySentence (source : Expr) : MetaM SentenceResult := do
       match source.getAppFnArgs with
       | (``Exists, #[domain, predicate]) => reifyExists source domain predicate
       | _ => throwError "rcf: expected one universal or existential real quantifier"
+
+/-- Reify a rational sentence, reporting unsupported coefficients as diagnostics
+for callers that do not participate in optional handler dispatch. -/
+meta def reifySentence (source : Expr) : MetaM SentenceResult := do
+  match ← (recognizeSentence source).run with
+  | .ok result => return result
+  | .error reason => throwError reason.message
 
 end Reify
 

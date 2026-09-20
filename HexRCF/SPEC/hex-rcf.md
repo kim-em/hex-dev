@@ -981,9 +981,10 @@ interactive-latency claims. Artifact metadata distinguishes the two kinds.
 This section owns the downstream integration promised by the
 [real-closure family](../../SPEC/future-work.md#real-closures-of-ordered-fields).
 It extends the integer/rational contract above; it does not change its
-implementation status, phase, imports or performance claims. All new names
+implementation status, phase, imports or performance claims. The coefficient adapter names
 and signatures in this section are **planned contracts**, not checked Lean
-declarations. The family SPECs describe prerequisites, not delivered APIs.
+declarations. The base handler registration and rational recognition boundary
+described below are implemented independently of that adapter. The family SPECs describe prerequisites, not delivered APIs.
 Implementation is coordinated by [#10331](https://github.com/kim-em/hex-dev/issues/10331).
 
 ### Coefficients and supported sentences
@@ -1089,18 +1090,31 @@ pass. The guard polynomials participate in the atom/carrier list; ordinary
 sign evaluation implements endpoint membership. Checked empty-domain folding
 may avoid cell construction after all source guards have been validated.
 
-Optional public import `HexRCF.RealCoefficients` enables this route through a
-new registration interface in `HexRCF.Tactic`. The current `evalRCFTac` calls
-one hard-coded `proveRCFGoal`; it has no such interface. Add a base-owned
-registry of handler declaration names, with a checked meta signature from
-source `Expr` to a structured decline/failure or proposed proof `Expr`.
-Try registered handlers deterministically only after rational reification
-reports unsupported **closed coefficient syntax**. False verdicts, replay
-failures and resource exhaustion are terminal for that attempt; do not route
-all exceptions indiscriminately. Restore goal/metavariable state on decline
-or failure, and check the proposed proof against the original target before
-assignment. The optional module registers its handler; the base imports no
-family module. Existing rational goals take the original path.
+The planned optional public import `HexRCF.RealCoefficients` will enable this
+route through the base registration interface in `HexRCF.Tactic`.
+`@[rcf_handler]` registers a monomorphic meta declaration of type
+`Hex.RCF.Handler` (`Expr → MetaM HandlerResult`). The base checks the signature,
+deduplicates declaration names and tries them in `Name.lt` order, independent
+of attribute/import order. `HandlerResult` distinguishes `declined`, terminal
+`failed message`, and `proved proof`.
+
+`Reify.recognizeSentence` reports unsupported **closed coefficient syntax**
+through `ExceptT UnsupportedCoefficient MetaM`. Only that result enters
+handler dispatch. Symbolic parameters, unsupported polynomial syntax and
+non-rational interval endpoints remain frontend errors. False rational
+verdicts, replay failures and resource exhaustion remain terminal; diagnostics
+are never parsed to choose a solver. Scalar recognition retains `norm_num`'s
+exact rational normalization and propagates Lean's runtime exceptions.
+
+Each handler receives the original target. Its metavariable assignments are
+restored on every result, including success; only a fully instantiated proof
+can escape. The base type-checks that proof and compares its type with the
+original target without assigning existing metavariables. Decline tries the
+next name; failure or an exception stops dispatch. Failed tactic attempts
+restore the goal list and metavariable state, including on resource exhaustion.
+The base imports no family module, and existing rational goals take the
+original certificate path. Registration alone supplies no real-coefficient
+solver. The optional adapter will register its own handler.
 
 During incubation the new files are
 `adapters/HexRCF/RealCoefficients.lean` and
@@ -1417,8 +1431,8 @@ missing algorithm or theorem obligations.
 
 Transcendence over predecessor fields and effective convergence are explicit
 hypotheses of any future total named-constant mode, not missing axioms to add
-to successful bounded checking. No Lean implementation or phase advancement
-is part of this design.
+to successful bounded checking. The base registry does not advance the library phase or satisfy the
+coefficient adapter implementation gates.
 
 ## References
 
