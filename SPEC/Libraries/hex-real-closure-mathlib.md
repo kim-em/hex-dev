@@ -482,9 +482,11 @@ separates them. No extra negative cubic root is present.
 proofs. Replay validates polynomial identities, query chains, matrix equations,
 support and selected-root evidence; it never reruns root isolation or BKR
 production. These are result certificates, not proof-returning field operations.
-A total checker can decide coefficient facts using the ordinary exact field;
-a tactic may instead supply kernel proofs of those same facts, composed from
-child queries and finite caller approximation evidence, to avoid repeating
+A compiled total checker can decide coefficient facts using the ordinary exact
+field. Kernel replay must support supplied proofs of those exact facts, composed
+from child queries and finite caller approximation evidence: proof-founded
+transcendental sign may contain opaque accessibility evidence and need not
+reduce in the kernel. For reducible coefficient domains the same path can avoid repeating
 expensive sign search. State and prove both checker interpretations agree.
 Structural checks reject cycles and forward/missing references.
 

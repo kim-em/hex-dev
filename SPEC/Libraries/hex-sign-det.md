@@ -289,8 +289,11 @@ arithmetic operation. Result certificates retain query replays, matrix
 identities and support completeness for independent verification. A tactic
 can discharge coefficient identities/signs by ordinary kernel computation or
 by supplied proofs bound to those exact facts, including lower-level selected
-root queries and caller-supplied real bounds. The compilation of a coefficient
-sign search is not itself proof evidence. These are proof-boundary obligations,
+root queries and caller-supplied real bounds. For transcendental coefficients, proof-founded refinement may depend on an
+opaque accessibility proof, so direct kernel reduction of total sign is not
+a supported replay assumption. The supplied-proof path must handle these
+facts using finite approximation evidence and the sign correctness theorem.
+The compilation of a coefficient sign search is not itself proof evidence. These are proof-boundary obligations,
 not an evidence-returning field interface.
 
 Different tower contexts must first be mapped into one compatible coefficient

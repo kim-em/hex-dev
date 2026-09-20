@@ -189,6 +189,16 @@ Proofs erase: runtime performs the increasing refinement, never classical
 selection of a fuel from an existential proposition. No `partial`, `unsafe`,
 axiom or opaque trusted search callback implements this algorithm.
 
+Compiled execution erases the accessibility proof; kernel reduction does
+not. An opaque eventual-success theorem can prevent `firstSome` from
+reducing, so `by decide` is not a promised proof route for total real signs.
+Provide ordinary equation/specification lemmas and a supplied-proof route:
+finite certified bounds prove the successful attempt's sign, and uniqueness
+with `firstSome_spec` identifies it with the total result. Tactic replay must
+accept this finite sign proof instead of requiring kernel evaluation of the
+unbounded search. These are sign-boundary proofs, not certificates for
+individual field operations.
+
 The computational declaration can take the proved eventual-success premise
 as an erased argument. The companion constructs it from the concrete
 approximation and transcendence assumptions, proves sign uniqueness and
@@ -316,8 +326,15 @@ Required checks include:
 Prove total-search correctness/progress generically under its real hypotheses;
 concrete algebraic test subjects cannot discharge relative transcendence.
 Use a terminating synthetic trial to test the executable `firstSome` helper.
-Fixtures use small `decide`/`#guard` checks and compiled independent comparisons;
-`native_decide` is banned. Extend the existing single CI job.
+The [companion](hex-ordered-fn-mathlib.md#conformance-and-phase-4-evidence)
+must also supply a test-only Liouville-number fixture exercising the actual
+approximation, Horner bounds, attempt, total sign, order and derived
+approximation together. This is a required integration test, not a bundled
+constant provider or a Mathlib dependency of this library. Fixtures use
+small `decide` checks where kernel reduction is available, ordinary proofs
+for total signs with opaque progress premises, and `#guard`/compiled
+independent comparisons for execution; `native_decide` is banned. Extend the
+existing single CI job.
 
 Phase 4 separates ordinary fraction arithmetic, infinitesimal scans,
 transcendental sign/element approximation, Horner bound arithmetic and optional boundary

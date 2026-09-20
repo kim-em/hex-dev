@@ -143,6 +143,16 @@ it does not extract an arbitrary natural number from `Prop`, use classical
 choice as a runtime procedure, or return a default sign. The companion does
 not replace this computation with `SignType.sign` on real numbers.
 
+Proof erasure makes this search executable but does not guarantee kernel
+reduction: an opaque eventual-success theorem can block reduction of the
+accessibility recursion. Provide a finite supplied-proof route as well as
+the general correspondence theorem. Correct source bounds and exact Horner
+arithmetic establish a successful attempt's sign; sign uniqueness and
+`firstSome_spec` then prove the total sign has that value. Ordinary theorem
+application checks this argument without reducing the unbounded search.
+Tactic clients must support this route rather than rely on `by decide` for
+the total sign. No coefficient-operation certificates are needed.
+
 Prove the following headline statements, under the fixed dictionary,
 embedding, containment, convergence and relative-transcendence assumptions:
 
@@ -285,8 +295,35 @@ benchmarks. Here use build-only proof tests of semantic conclusions:
   exhaustion, formal zero without approximation calls and a synthetic
   eventually successful trial for the executable accessibility search.
 
-Total real sign/order theorems are tested under explicit hypotheses, not a
-false concrete transcendence instance. Inspect public axiom dependencies;
+Also implement a required test-only caller oracle for `liouvilleNumber 2`.
+The pinned Mathlib's
+`Mathlib.NumberTheory.Transcendental.Liouville.LiouvilleNumber` provides
+`transcendental_liouvilleNumber` over ℤ; transfer this to ℚ using
+`IsFractionRing.isAlgebraic_iff ℤ ℚ ℝ` from
+`Mathlib.RingTheory.Localization.Integral`. Define executable rational
+partial sums `q_n = ∑ i ∈ range (n+1), 1 / 2^(i!)` and return
+`[q_n, q_n + 2 / 2^((n+1)!)]`. Identify the cast partial sum with
+`LiouvilleNumber.partialSum`; its `remainder_pos`,
+`partialSum_add_remainder` and `remainder_lt'` prove containment.
+`Nat.self_le_factorial` gives width at most `2^(-n)`. Rational coefficient
+bounds are exact singletons. These are test-local definitions and proofs,
+not a public analytic-provider implementation obligation.
+
+Instantiate the actual total real-extension interface with this oracle and
+the proved hypotheses. Exercise its composed approximation/Horner/attempt/
+total-sign path on `X-5/4` (positive), `X-2` (negative), and
+`(X-5/4)/(X-2)` (negative), together with formal `X-X=0`, ordinary field
+arithmetic, the resulting order, and containment/width of `Real.approx`.
+Check finite successful attempts computationally, prove their agreement
+with the total sign by the supplied-proof route, and include compiled
+evaluation of the total sign so a replacement by an unrelated finite
+checker cannot satisfy the test. The fixture belongs to the companion's
+integration tests; it introduces no Mathlib import into the computational
+library and no HexInterval dependency. The sqrt(2) and synthetic-search
+tests do not substitute for this genuine transcendental instance.
+
+Test generic total real sign/order theorems under their explicit hypotheses
+and the concrete fixture under its proved premises. Inspect public axiom dependencies;
 reject `sorryAx`, invented axioms and `native_decide`. Independent review
 checks that actual executable sign/equality supplies the ordinary field/order
 instances and that the termination proof applies to that same function.

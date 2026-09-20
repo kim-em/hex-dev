@@ -607,8 +607,12 @@ provenance. A case using a real constant records the caller-supplied
 approximation procedure and its law assumptions; when that input is unavailable,
 record the case as unsupported rather than adding an analytic provider or
 silently substituting a different constant. Cases without an external analogue need direct literal checks
-and explicit non-coverage records. Use small `decide`/`#guard` checks and
-compiled fixture campaigns; `native_decide` is banned. Future oracle
+and explicit non-coverage records. Use small `decide` checks only for
+kernel-reducible operations; total transcendental sign may use opaque
+accessibility evidence and cannot rely on that route. Use ordinary theorem
+proofs from finite sign evidence for such cases, alongside `#guard` checks
+and compiled fixture campaigns. Evaluation checks are not kernel proofs;
+`native_decide` is banned. Future oracle
 registration extends the existing single CI job, not new workflows.
 
 Phase 4 must report `tower8` isolation and an adjacent clean-versus-eager
