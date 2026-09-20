@@ -1795,3 +1795,10 @@ lean_exe hexnumberfield_quadratic where
 lean_lib HexCharPolyMathlibProofProbe where
   srcDir := "bench"
   globs := #[.submodules `HexCharPolyMathlib.ProofProbe]
+
+-- Manual issue-10301 experiments; neither target belongs to the default build or CI.
+lean_lib CadSampleCostsExperiment where
+  globs := #[.submodules `HexIntervalAlgebraic.Experiment.CadSampleCosts]
+
+lean_exe cad_sample_costs where
+  root := `HexIntervalAlgebraic.Experiment.CadSampleCosts.Runtime
