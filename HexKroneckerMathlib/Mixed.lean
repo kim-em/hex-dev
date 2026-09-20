@@ -259,18 +259,6 @@ theorem treeTermsEq_polynomial {k : Nat} {lhs : Expr} {rhs : Hex.MvPoly.Kernel.P
   rw [evalKron_eq_eval₂ _ _ lhs hl, packTerms_eq_eval₂ _ _ hs rhs hr] at he
   exact he
 
-theorem treeTermsEqAt_check {k : Nat} {lhs : Expr} {rhs : Hex.MvPoly.Kernel.PolyList Int}
-    {bits : Nat} {strides : List Nat} (h : treeTermsEqAt k lhs rhs bits strides = true) :
-    treeTermsEq k lhs rhs = true := by
-  obtain ⟨hw, h⟩ := Bool.and_eq_true_iff.mp h
-  obtain ⟨hp, he⟩ := Bool.and_eq_true_iff.mp h
-  obtain ⟨hb, hs⟩ := Bool.and_eq_true_iff.mp hp
-  have hb := eq_of_beq hb
-  have hs := eq_of_beq hs
-  subst bits
-  subst strides
-  exact Bool.and_eq_true_iff.mpr ⟨hw, he⟩
-
 theorem treeTermsEqMod_polynomial {k p : Nat} {lhs : Expr} {rhs q : Hex.MvPoly.Kernel.PolyList Int}
     (hl : lhs.WellFormed k) (h : treeTermsEqMod k p lhs rhs q = true) :
     lhs.toMvPolynomial hl - termsPolynomial k rhs = MvPolynomial.C (p : Int) * termsPolynomial k q := by
@@ -358,12 +346,6 @@ theorem treeTermsEq_sound {k : Nat} {lhs : Expr} {rhs : Hex.MvPoly.Kernel.PolyLi
   intro R _ v
   have hl := (Bool.and_eq_true_iff.mp (Bool.and_eq_true_iff.mp h).1).1
   rw [← lhs.denoteFin_eq hl v, denote_eq_eval₂, denoteTerms, treeTermsEq_polynomial hl h]
-
-theorem treeTermsEqAt_sound {k : Nat} {lhs : Expr} {rhs : Hex.MvPoly.Kernel.PolyList Int}
-    {bits : Nat} {strides : List Nat} (h : treeTermsEqAt k lhs rhs bits strides = true) :
-    ∀ {R : Type u} [CommRing R] (v : Nat → R),
-      lhs.denote v = denoteTerms R (fun i : Fin k => v i.val) rhs :=
-  treeTermsEq_sound (treeTermsEqAt_check h)
 
 theorem treeTermsEqMod_sound {k p : Nat} {lhs : Expr} {rhs q : Hex.MvPoly.Kernel.PolyList Int}
     (h : treeTermsEqMod k p lhs rhs q = true) :

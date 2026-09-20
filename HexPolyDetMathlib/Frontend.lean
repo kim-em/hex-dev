@@ -409,7 +409,7 @@ def computeTree? (A ctx : Expr) (lit : Recognized) (k : Nat) (atoms : Array Expr
         let some (hcheck, hq, selection) ← Certificate.tree? k lit.n (lists.toList.map Array.toList)
             trees w target value treesE wE targetE valueE rhs?.isSome | return none
         let hq ← hq.mapM fun hq => do
-          mkAppM ``Hex.Kronecker.Kernel.treeTermsEqAt_sound #[hq, ← mkAppM ``Lean.RArray.get #[ctx]]
+          mkAppM ``Hex.Kronecker.Kernel.treeTermsEq_sound #[hq, ← mkAppM ``Lean.RArray.get #[ctx]]
         let mut hrows := #[]
         for i in [:lit.n] do
           let mut hs := #[]
