@@ -1,0 +1,72 @@
+Hex.RankBench.runRankCertLowRank8At64    expected complexity: n * n    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=2b0ff6b-dirty, 2026-09-20T13:08:40Z, host=chungus2
+  param  per-call    repeats  C
+     16  708.618 µs  ×2^9     C=2773.083 [trial 1/6] †
+     24    1.497 ms  ×2^8     C=2598.337 [trial 1/6]
+     32    2.634 ms  ×2^7     C=2569.445 [trial 1/6]
+     48    6.080 ms  ×2^6     C=2625.222 [trial 1/6]
+     64   10.920 ms  ×2^5     C=2642.690 [trial 1/6]
+     96   25.412 ms  ×2^4     C=2733.544 [trial 1/6]
+    128   45.356 ms  ×2^3     C=2760.747 [trial 1/6]
+    192  103.390 ms  ×2^2     C=2790.713 [trial 1/6]
+    256  185.639 ms  ×2^1     C=2829.242 [trial 1/6]
+     16  710.671 µs  ×2^9     C=2773.083 [trial 2/6] †
+     24    1.490 ms  ×2^8     C=2598.337 [trial 2/6]
+     32    2.650 ms  ×2^7     C=2569.445 [trial 2/6]
+     48    6.063 ms  ×2^6     C=2625.222 [trial 2/6]
+     64   10.881 ms  ×2^5     C=2642.690 [trial 2/6]
+     96   25.135 ms  ×2^4     C=2733.544 [trial 2/6]
+    128   45.034 ms  ×2^3     C=2760.747 [trial 2/6]
+    192  102.920 ms  ×2^2     C=2790.713 [trial 2/6]
+    256  184.910 ms  ×2^1     C=2829.242 [trial 2/6]
+     16  709.571 µs  ×2^9     C=2773.083 [trial 3/6] †
+     24    1.499 ms  ×2^8     C=2598.337 [trial 3/6]
+     32    2.629 ms  ×2^7     C=2569.445 [trial 3/6]
+     48    5.985 ms  ×2^6     C=2625.222 [trial 3/6]
+     64   10.822 ms  ×2^5     C=2642.690 [trial 3/6]
+     96   25.204 ms  ×2^4     C=2733.544 [trial 3/6]
+    128   45.352 ms  ×2^3     C=2760.747 [trial 3/6]
+    192  102.829 ms  ×2^2     C=2790.713 [trial 3/6]
+    256  185.195 ms  ×2^1     C=2829.242 [trial 3/6]
+     16  710.246 µs  ×2^9     C=2773.083 [trial 4/6] †
+     24    1.502 ms  ×2^8     C=2598.337 [trial 4/6]
+     32    2.620 ms  ×2^7     C=2569.445 [trial 4/6]
+     48    6.040 ms  ×2^6     C=2625.222 [trial 4/6]
+     64   10.820 ms  ×2^5     C=2642.690 [trial 4/6]
+     96   25.181 ms  ×2^4     C=2733.544 [trial 4/6]
+    128   44.756 ms  ×2^3     C=2760.747 [trial 4/6]
+    192  102.106 ms  ×2^2     C=2790.713 [trial 4/6]
+    256  184.900 ms  ×2^1     C=2829.242 [trial 4/6]
+     16  710.619 µs  ×2^9     C=2773.083 [trial 5/6] †
+     24    1.496 ms  ×2^8     C=2598.337 [trial 5/6]
+     32    2.627 ms  ×2^7     C=2569.445 [trial 5/6]
+     48    6.040 ms  ×2^6     C=2625.222 [trial 5/6]
+     64   10.795 ms  ×2^5     C=2642.690 [trial 5/6]
+     96   25.260 ms  ×2^4     C=2733.544 [trial 5/6]
+    128   45.112 ms  ×2^3     C=2760.747 [trial 5/6]
+    192  102.834 ms  ×2^2     C=2790.713 [trial 5/6]
+    256  189.119 ms  ×2^1     C=2829.242 [trial 5/6]
+     16  704.093 µs  ×2^9     C=2773.083 [trial 6/6] †
+     24    1.496 ms  ×2^8     C=2598.337 [trial 6/6]
+     32    2.642 ms  ×2^7     C=2569.445 [trial 6/6]
+     48    6.057 ms  ×2^6     C=2625.222 [trial 6/6]
+     64   10.827 ms  ×2^5     C=2642.690 [trial 6/6]
+     96   25.066 ms  ×2^4     C=2733.544 [trial 6/6]
+    128   45.506 ms  ×2^3     C=2760.747 [trial 6/6]
+    192  104.382 ms  ×2^2     C=2790.713 [trial 6/6]
+    256  188.901 ms  ×2^1     C=2829.242 [trial 6/6]
+  verdict: consistent with declared complexity (cMin=2569.445, cMax=2829.242, β=+0.042)
+  per-spawn floor (harness self-measurement): 23.699 ms
+  peak RSS: 68_192 kB..105_060 kB (across 54 ok row(s))
+  trial summaries (6 trials per param; spread = (max-min)/median):
+    param  trials  median      min         max         spread
+       16  6/6     709.909 µs  704.093 µs  710.671 µs  0.927%
+       24  6/6       1.497 ms    1.490 ms    1.502 ms  0.809%
+       32  6/6       2.631 ms    2.620 ms    2.650 ms  1.113%
+       48  6/6       6.049 ms    5.985 ms    6.080 ms  1.575%
+       64  6/6      10.824 ms   10.795 ms   10.920 ms  1.153%
+       96  6/6      25.192 ms   25.066 ms   25.412 ms  1.373%
+      128  6/6      45.232 ms   44.756 ms   45.506 ms  1.658%
+      192  6/6     102.877 ms  102.106 ms  104.382 ms  2.212%
+      256  6/6     185.417 ms  184.900 ms  189.119 ms  2.275%
+exported to /tmp/hexrank-science-integer/runRankCertLowRank8At64.json

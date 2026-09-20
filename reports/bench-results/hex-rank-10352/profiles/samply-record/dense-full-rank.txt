@@ -1,0 +1,59 @@
++ samply record --save-only --no-open -o /tmp/lean-bench-samply-hdtef9jv/samply.json.gz --rate 999 --unstable-presymbolicate -- /tmp/hexrank-measured-bin/hexrank_bench _child --bench Hex.RankBench.runRankCertDense --param 64 --target-nanos 3000000000 --cache-mode warm
+{"schema_version":1,"kind":"parametric","function":"Hex.RankBench.runRankCertDense","param":64,"inner_repeats":32,"total_nanos":3116135187,"per_call_nanos":97379224.593750,"cache_mode":"warm","result_hash":"0x40","status":"ok","error":null,"alloc_bytes":null,"peak_rss_kb":75968,"env":{"arch":"x86_64","cpu_cores":96,"cpu_model":"AMD EPYC 9455 48-Core Processor","exe_name":"hexrank_bench","git_commit":"2b0ff6bf5fbd033943c09c1b49893285497f90aa","git_dirty":false,"hostname":"chungus2","lean_bench_version":"0.1.0","lean_toolchain":"leanprover/lean4:4.34.0","lean_version":"4.34.0","os":"linux","platform_target":"x86_64-unknown-linux-gnu","timestamp_iso":"2026-09-20T12:56:04Z","timestamp_unix_ms":1789908964804},"profile_kernel":true}
+error: filter_samply.py exited 2
+diagnostics:      /tmp/hexrank-profiles-10352/dense-full-rank.json.gz.failed-raw-tmwkkngv/diagnostics.json
+{
+  "schema": 2,
+  "stage": "calibration",
+  "confidence": "low",
+  "low_confidence_reasons": [
+    "no matching candidate samply timestamp calibration: {\"absolute-monotonic-ms\": {\"boundary_residual_raw_max_ms\": null, \"boundary_residual_trimmed_max_ms\": null, \"hit_count\": 0, \"regions_without_samples\": 33, \"within_residual_limit\": false}, \"relative-to-meta-start-ms\": {\"boundary_residual_raw_max_ms\": null, \"boundary_residual_trimmed_max_ms\": null, \"hit_count\": 0, \"regions_without_samples\": 33, \"within_residual_limit\": false}}"
+  ],
+  "bench_pid": 3360404,
+  "bench_thread_name": null,
+  "bench_thread_tid": null,
+  "regions_total": 33,
+  "total_timed_ms": 3212.275463,
+  "expected_samples_bench_thread": null,
+  "retained_samples_bench_thread": null,
+  "rejected_samples_bench_thread": null,
+  "off_bench_thread_samples_in_window": null,
+  "samply_interval_ms": 1.001001,
+  "spawn_anchor_wall_ns": 1789908964618348079,
+  "spawn_anchor_mono_ns": 880074820011981,
+  "sidecar_mono_anchor_ns": 880075155097590,
+  "samply_meta_start_time_ms": 1789908964619.553,
+  "samply_timestamp_mode": null,
+  "calibration_residual_ms": null,
+  "calibration_max_residual_ms": 5.0,
+  "calibration": {
+    "selected_mode": null,
+    "residual_ms": null,
+    "raw_max_residual_ms": null,
+    "residual_statistic": "one-boundary-trimmed-maximum",
+    "configured_max_residual_ms": 5.0,
+    "sample_interval_ms": 1.001001,
+    "effective_max_residual_ms": 5.0,
+    "within_residual_limit": false,
+    "candidates": {
+      "absolute-monotonic-ms": {
+        "hit_count": 0,
+        "regions_without_samples": 33,
+        "boundary_residual_trimmed_max_ms": null,
+        "boundary_residual_raw_max_ms": null,
+        "within_residual_limit": false
+      },
+      "relative-to-meta-start-ms": {
+        "hit_count": 0,
+        "regions_without_samples": 33,
+        "boundary_residual_trimmed_max_ms": null,
+        "boundary_residual_raw_max_ms": null,
+        "within_residual_limit": false
+      }
+    }
+  },
+  "minimum_retained_samples": 100,
+  "sensitivity": null
+}
+raw artifacts:    /tmp/hexrank-profiles-10352/dense-full-rank.json.gz.failed-raw-tmwkkngv
+retention:        remove this failed-raw directory after diagnosis

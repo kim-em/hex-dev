@@ -580,6 +580,8 @@ setup_benchmark runCheckRankLowRank2At1024 n => n * n
     paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
     maxSecondsPerCall := 120.0
     outerTrials := 6
+    -- The 0.5 s batch target was below the measured 10× spawn floor.
+    targetInnerNanos := 2000000000
   }
 
 def prepDeficientHalfCert := prepDeficientCert (fun n => n / 2) false

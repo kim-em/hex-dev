@@ -74,6 +74,7 @@ def main():
     parser.add_argument('--bench', type=Path, default=ROOT / '.lake/build/bin/hexrank_bench')
     parser.add_argument('--python', default=sys.executable)
     parser.add_argument('--family', choices=FAMILIES, action='append', help='Subset for an incremental tranche; omitted means every family.')
+    parser.add_argument('--case', help='Run only the command containing this exact registered name; retain a separate output directory.')
     args = parser.parse_args()
     out = args.out.resolve()
     out.mkdir(parents=True, exist_ok=False)
@@ -83,6 +84,10 @@ def main():
     env = dict(os.environ, HEX_RANK_BENCH_PYTHON=args.python)
     schedule = [(label, [str(bench), *command, '--export-file', str(out / f'{label}.json')])
                 for label, command in commands(args.phase, args.family or FAMILIES)]
+    if args.case:
+        schedule = [(label, command) for label, command in schedule if args.case in command]
+        if not schedule:
+            parser.error('case is not in the selected phase/family schedule')
     sources = ('bench/HexRank/Bench.lean', 'HexRank/Produce.lean',
                'scripts/oracle/rank_bench.py', 'scripts/oracle/rank_carriers.py',
                'scripts/bench/rank_measure.py', 'lake-manifest.json', 'lean-toolchain')

@@ -1,0 +1,14 @@
+Hex.RankBench.runMvCert8    [fixed] repeats=6
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=bbedb47, 2026-09-20T13:13:20Z, host=chungus2
+  repeat 0  268.461 ms
+  repeat 1  268.537 ms
+  repeat 2  269.351 ms
+  repeat 3  267.333 ms
+  repeat 4  268.707 ms
+  repeat 5  265.782 ms
+  median: 268.537 ms    min: 265.782 ms    max: 269.351 ms
+  hash: all repeats agree
+  observed hash: 0x8
+  expected hash: matches
+  peak RSS: 69_888 kB..70_420 kB (across 6 ok repeat(s))
+exported to /tmp/hexrank-science-polynomial/runMvCert8.json

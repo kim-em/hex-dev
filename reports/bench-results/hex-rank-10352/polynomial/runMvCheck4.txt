@@ -1,0 +1,14 @@
+Hex.RankBench.runMvCheck4    [fixed] repeats=6
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=bbedb47, 2026-09-20T13:13:00Z, host=chungus2
+  repeat 0  675.589 µs  (×2^9, total 345.902 ms)
+  repeat 1  667.471 µs  (×2^9, total 341.746 ms)
+  repeat 2  660.018 µs  (×2^9, total 337.930 ms)
+  repeat 3  660.784 µs  (×2^9, total 338.321 ms)
+  repeat 4  657.190 µs  (×2^9, total 336.482 ms)
+  repeat 5  656.452 µs  (×2^9, total 336.104 ms)
+  median: 660.784 µs    min: 656.452 µs    max: 675.589 µs
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 69_704 kB..70_544 kB (across 6 ok repeat(s))
+exported to /tmp/hexrank-science-polynomial/runMvCheck4.json
