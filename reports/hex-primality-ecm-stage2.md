@@ -36,8 +36,7 @@ lake build HexPrimality.Conformance hexprimality_bench hexprimality_field_probe
 .lake/build/bin/hexprimality_bench verify
 ```
 
-The [residual and eight-curve construction record](bench-results/hex-primality-ecm-stage2-issue-10362.json)
-, [initial 64-curve record](bench-results/hex-primality-ecm-prototype-paths-issue-10362.json),
+The [residual and eight-curve construction record](bench-results/hex-primality-ecm-stage2-issue-10362.json), [initial 64-curve record](bench-results/hex-primality-ecm-prototype-paths-issue-10362.json),
 and [production 64-curve construction record](bench-results/hex-primality-ecm-paths-issue-10362.json)
 retain every completed call, including failures, complete commands and outputs,
 source and executable hashes, CPU placement, host load, and generated proof
@@ -45,6 +44,9 @@ sources. The initial sweep driver is preserved at commit `6142fc62d`; the
 later driver adds the `--paths-only` and `--curves` controls without changing
 timed operations. The initial record's parent commit predates its uncommitted
 prototype; its measured source hashes identify the implementation in that commit.
+The production measurement sources are preserved at `29be9fb45`. Subsequent
+provider hardening also caps the core callback when no attempt limit is supplied;
+these construction measurements always supply the explicit 1024-attempt limit.
 
 The two prototype runs retain their completed residual and construction samples
 and terminate on the P-521 certificate-agreement assertion: doing unnecessary
@@ -120,8 +122,8 @@ coordinates and does not implement polynomial multipoint evaluation.
 
 Standalone residual schedules use consecutive parameters `6,7,...` and run
 **all** declared curves, even after a successful split. The construction
-provider first retains any core result already sufficient for the square-root
-criterion. Otherwise it runs the unchanged p−1/rho portfolio first, then tries parameters
+provider runs the unchanged p−1/rho portfolio first, retains its result when
+already sufficient for the square-root criterion, and otherwise tries parameters
 `6..13` or `6..69` on its residual, stopping at the first proper divisor.
 Each successful split returns both sides to the core factor search; remaining
 composite parts enter the bounded ECM worklist. The same provider is passed to

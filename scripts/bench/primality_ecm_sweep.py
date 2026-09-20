@@ -99,6 +99,7 @@ def main():
                   executable_sha256=hashlib.sha256(PROBE.read_bytes()).hexdigest(),
                   protocol='two fixed trial-major blocks, adjacent AB/BA; no rejected samples',
                   tiers=tiers, construction=construction, samples=[],
+                  completion={'status': 'running'}, driver_source=Path(__file__).read_text(),
                   p_minus_one_stage2='SPEC contract exists; implementation absent in measured sources',
                   diagnostic_factorizations=FACTORIZATIONS, work_allocations=[])
     args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -116,6 +117,8 @@ def main():
         record['samples'].append(row)
         save()  # Persist failures before parsing or raising.
         if result.returncode:
+            record['completion'] = {'status': 'failed', 'reason': 'subprocess failed'}
+            save()
             raise RuntimeError(f'probe failed: {row}')
         if result.stdout.startswith('{'):
             row['result'] = json.loads(result.stdout)
@@ -193,6 +196,10 @@ def main():
             print('child', name, flush=True)
     finally:
         SOURCE.unlink(missing_ok=True)
+        if sys.exc_info()[0] is not None:
+            record['completion'] = {'status': 'failed', 'reason': str(sys.exc_info()[1])}
+            save()
+    record['completion'] = {'status': 'complete'}
     save()
 
 
