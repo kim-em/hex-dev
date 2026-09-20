@@ -157,7 +157,7 @@ replacement needs only `import HexPrimality.Cert`. The goal retains the
 expression `2 ^ 255 - 19`. With `HexPrimalityMathlib` imported, `primality?`
 also handles `Nat.Prime` and suggests the corresponding bridge theorem.
 
-Construction supports inputs through 512 bits, recursive depth 32, and a
+Construction supports inputs through 521 bits, recursive depth 32, and a
 shared limit of 1024 attempts. `primality? (maxAttempts := 29)` sets a smaller
 limit; Curve25519 succeeds at 29 and exhausts at 28. It uses
 stage-one Pollard `p - 1` up to 524288, bounded rho work, and deterministic
@@ -190,8 +190,14 @@ reference certificate.
 
 The fixed comparison corpus also includes standard cryptographic field
 primes. The current construction profile finds P-256 and the structured
-511/512-bit benchmark primes. It exhausts on secp256k1, P-384, and Curve448;
-P-521 exceeds its input ceiling. This is not a general-purpose prover for
+511/512-bit benchmark primes and P-521. It exhausts on secp256k1, P-384,
+and Curve448. P-521 uses 25 factor candidates and 170 attempts; the constructor
+admits at most 32 factors and still examines at most 4096 subsets. For the
+expression `2 ^ 521 - 1`, set local `maxRecDepth` to 1024 and
+`exponentiation.threshold` to 521; its numeral needs neither option.
+The [standard-field report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-fields.md)
+records the remaining factoring barriers and separate construction, rendering,
+and replay measurements. This is not a general-purpose prover for
 arbitrary cryptographic-size primes.
 
 The first cactus plot compares native exact primality decisions with the
