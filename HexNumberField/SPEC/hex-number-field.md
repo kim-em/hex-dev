@@ -593,6 +593,207 @@ the reference centre comparison at `separationPrec (a.p * b.p)`.
 The companion proves every successful interval decision and the complete
 operation agree with the order of the real parts. Canonical data is unchanged.
 
+## Real sign and comparison
+
+These new operations serve the
+[real-algebraic comparison contract](../../SPEC/Libraries/hex-real-algebraic.md#exact-comparison-strategies).
+`realCompare` and `realCompareExact` retain their existing definitions and
+correctness theorems. The declarations below are design obligations; they do
+not assert that the new sign algorithms or their proofs are implemented.
+They depend downward on `hex-real-roots` for Sturm/Tarski computation and on
+`hex-real-roots-mathlib` for its proofs. Neither dependency imports number
+fields or RCF. Reuse RCF's recurrence-checking design without importing
+`HexRCF` into a computational library.
+
+### Contracts, domains, and finite refinement
+
+Add `AlgebraicRoot.isReal`, testing exactly whether the stored circumscribed
+disc meets the real axis: `im^2 ≤ 2 * halfWidth^2`. Require companion
+`isReal_iff` under the existing `RefinedIsolation` invariant. Distinct conjugate
+roots cannot share such a disc; no factorization is needed. New lazy checked
+`compare?` rejects either nonreal input and returns `none` on certification
+failure. The total `compare` takes proofs that both `isReal` tests are true.
+Its `.eq` panic fallback is **unreachable-by-pipeline-invariant**, discharged
+by `compare?_isSome` for those hypotheses; it must never absorb nonreal input.
+Apply the same checked/total convention to new canonical point and fixed-field
+sign operations, using the canonical generator's `isReal` proof. Name the
+corresponding `_isSome` theorem for each checked implementation:
+`compareRat?_isSome`, `compareDyadic?_isSome`, `sign?_isSome`,
+`signTarski?_isSome`, `signApprox?_isSome`, `compareTarski?_isSome`, and
+`compareApprox?_isSome`. Successful
+signs are in `{-1,0,1}`; `orderOfSign` converts them to `Ordering`.
+
+Every call to `rep.refineTo? t` uses the existing finite budget
+
+```text
+stopDepth p t = max t (separationDepth p) + 8
+fuelFor p t start = (stopDepth p t - start).toNat
+                 + (stopDepth p t - t).toNat + 1.
+```
+
+These are loop bounds, not bit-complexity claims. Root isolation uses this
+same budget from the Cauchy worklist's computable starting precision.
+Polynomial arithmetic, pseudo-division, coefficient folds and resultant
+construction have finite degree/array bounds; coefficient bit lengths still
+contribute to their cost. No sign API waits for a semantic inequality to make
+an unbounded refinement loop terminate.
+
+### Real isolating intervals and point comparison
+
+A refined complex disc containing a real selected root supplies a real
+isolating interval without refinement. For its square set `h = 2^(-prec)`
+and use `I = (re - 2*h, re + 2*h]`. The selected root is strictly inside
+because its coordinate error is at most `sqrt(2)*h`. Any other root in `I`
+would be within `(2+sqrt(2))*h` of it, contradicting the existing Mahler
+separation `> 4*sqrt(2)*h`. In particular neither endpoint is a root.
+Require `realInterval_spec` proving these statements, including the
+`sturmCount = 1` bridge to `RealRootIsolation`; this bridge is new, not an
+assumed coercion from complex discs. The interval is disposable query data,
+not a change to the stored representative. It also supplies the root-free
+endpoints required by the Tarski query below.
+
+`AlgebraicNumber.compareRat a q` compares the selected real root to a rational
+point. Reuse the derivative Sturm chain of `a.p`. If `q ≤ I.lower`, return
+`.gt`; if `I.upper < q`, return `.lt`. Otherwise form the single prefix count
+`N = V(I.lower) - V(q)` on `(I.lower,q]`. If `N=0`, return `.gt`. If `N=1`,
+return `.eq` exactly when `a.p(q)=0`, and `.lt` otherwise. Other counts are
+certification failure, excluded by `realInterval_spec`. At the included upper
+endpoint, the same rule works; exact equality is tested only inside the
+selected interval. The sign of `p(q)` alone does not identify which root is
+being compared.
+
+For `q=u/v` with `v>0`, evaluate signs via the integer homogeneous Horner
+value `v^deg(p) * p(u/v)`, and do the same for every chain entry. Dyadic points
+use `evalDyadic` directly. `compareDyadic` specializes `compareRat` without
+converting an arbitrary rational to an inexact dyadic. One derivative chain
+has at most `deg p + 1` entries, strict-degree pseudo-remainder descent bounds
+its construction, and the prefix count uses two finite chain evaluations
+(the lower variation may be cached). There is no root refinement or
+factorization. This extracts the algorithm of
+[RCF endpoint classification](../../HexRCF/SeparationCheck.lean).
+
+The companion proves `compareRat_eq` and `compareDyadic_eq`, respectively
+`a.compareRat q = a.realCompare (ofRat q)` and
+`a.compareDyadic q = a.realCompare (ofRat q.toRat)`, with the reality proof
+arguments understood. Exact rational roots, including zero, return `.eq`.
+
+### Lazy comparison and the precision invariant
+
+`AlgebraicRoot.compare r s` computes the lazy difference `d` through `sub?`,
+then its sign, never exactifying either operand. `AlgebraicRoot.sign_eq`
+states `orderOfSign (sign d) = d.exact.realCompare 0`; `compare_eq` states
+`r.compare s = r.exact.realCompare s.exact`, with real-input hypotheses.
+Both compose the existing subtraction, exactification and zero-test semantic
+bridges with the following new sign proof.
+
+1. If `d.isZero`, return zero. This handles equal values represented by
+   different squarefree polynomials and different isolation widths.
+2. For `p=d.p` of degree one, return the sign of `-p.coeff 0`. Its leading
+   coefficient is positive, so this is exact even if the disc centre is zero.
+3. Otherwise ensure `rep.square.prec ≥ separationDepth p`, using at most one
+   `refineTo?` call if necessary and retaining its same-root proof. Read the
+   strict sign of the real centre only after establishing `signDepth_spec`
+   below. A zero centre in this branch is a failed invariant, not equality.
+
+The required precision is an invariant of the **representative used by the
+sign operation**, not of every arbitrary `AlgebraicRoot`. The public structure
+and `ofRefined` accept `RefinedIsolation`, whose field proves only
+`mahlerPrec p ≤ prec`. `toRoot` can also expose a shallower representative.
+Do not strengthen that type silently or claim every constructor enforces
+`separationDepth`. `ofEliminant?`, used by `sub?`, does request that depth;
+require `ofEliminant_prec` to expose the successful driver's precision
+postcondition. Thus an ordinary subtraction result needs no further
+refinement, while a general public `sign` call performs the bounded guard in
+step 3. Negation preserves the polynomial's separation depth and precision.
+
+`signDepth_spec` must prove, for a real nonzero selected root at this depth,
+that its real centre is nonzero and has its sign. For `n=deg p ≥ 2`,
+`H=coeffAbsMax p ≥ 1` and `L=ceilLog2 H`, the formula gives
+`separationDepth p ≥ L+12`. If `p(0) ≠ 0`, reciprocal Cauchy gives
+`|d| ≥ 1/(1+H) ≥ 2^(-(L+1))`; the disc radius is less than
+`2^(1-prec)`, which is strictly smaller than this lower bound. If `p(0)=0`,
+zero is a distinct root, and separation exceeds four disc radii; hence a real
+centre of the wrong sign would put `|d|` within one radius of zero, a
+contradiction. Equivalently the reciprocal bound can be applied after removing
+all powers of `X`. The proof must carry the selected-root reality and nonzero
+hypotheses; `!isZero` alone is not a geometric zero-exclusion certificate.
+
+For a linear polynomial, `mahlerPrec=3` and `separationDepth=12`, independently
+of height. The inputs `±2^-k` at `k=20,50,100` can have centre zero, which is
+why step 2 is mandatory. Subtracting `(a±2^-k)-a` for real quadratic `a`
+exercises the same issue without rational input operands.
+
+Cost: one resultant of input degree product at most `deg(r.p)*deg(s.p)`,
+primitive squarefree normalization, one complete isolation of that eliminant,
+operand refinement to the operation-ball precision, and a constant number of
+coefficient/disc sign tests. The subtraction evaluator requests
+`separationDepth p + 4` on each operand. The general sign guard adds at most
+one bounded refinement; the `sub?` postcondition eliminates that cost here.
+This avoids two Berlekamp–Zassenhaus factorizations, and is a candidate win for
+one-off comparisons with costly irrelevant factors. Large degree products and
+repeated queries against already exactified operands can reverse the tradeoff;
+the comparison benchmarks decide it. Degree-one coefficient sign and the
+certified higher-degree centre rule preserve the one-resultant/one-isolation
+claim. A uniform reciprocal-Cauchy refinement strategy is an optional measured
+alternative, with its extra refinement charged explicitly.
+
+### Fixed-field sign
+
+For real canonical `a` and `f : QAdjoin a`, coefficients are already reduced
+modulo the irreducible `p=a.p`. Test coordinate zero first. A nonzero rational
+constant returns the sign of its numerator directly in both strategies. This is exactly
+zero in the field; no nonzero numerical threshold defines equality. All
+strategies work in the chosen embedding of `a`, not across every conjugate.
+
+`QAdjoin.signTarski f` clears rational denominators with a positive common
+multiple `D`, obtaining `F=D*f.coeffs : ZPoly`, and calls
+`ZPoly.tarskiQuery p F I` on the root-free `realInterval` above. Its result is
+in `{-1,0,1}` because `I` contains exactly one root; the positive scale means
+it is the sign of `f(a)`. The low-level query and new generalized replay are
+specified by [hex-real-roots](../../HexRealRoots/SPEC/hex-real-roots.md#tarski-queries).
+There is no resultant, factorization or refinement in this strategy: one
+signed pseudo-remainder chain and two exact endpoint evaluations suffice.
+The query also handles zero `F` directly, so correctness does not depend on
+keeping the early coordinate-zero optimization.
+
+`QAdjoin.signApprox f` uses the nonzero evaluation eliminant
+`E(T) = Res_X(p(X), D*T-F(X))`. This contains the values `f(α)` at every
+conjugate `α` of `a`; normalization must not scale the **value** by `D`.
+Set `E₀ = E.normalizeEval` (remove powers of `X` and content) and
+`B = 1 + coeffAbsMax E₀`. Every nonzero evaluation has absolute value at
+least `1/B`. The eliminant is nonzero even for the zero element; the early
+coordinate test handles that case before removing zero roots.
+
+Set `C = Disambiguation.evalMajorant f.coeffs PolyQuot.ratAbsCeil p`.
+At input precision `k`, refine the generator to `k+1`, round each rational
+coefficient to a dyadic ball of radius at most `2^-k`, and use `evalRatBall`
+with Horner ball arithmetic. Require `signBall_bound`: the ball contains the
+selected real value and has radius at most `C*2^-k`. The generic majorant
+recurrence is existing code; its specialization to this sign evaluator is a
+new theorem. Use the finite schedule `0 .. P`, where
+
+```text
+P = evalDisambiguationLimit E C = ceilLog2 (2 * B * max 1 C) + 2.
+```
+
+At `P`, the radius is at most `1/(8B)`, strictly below `1/(3B)`; the real
+centre has the correct strict sign for nonzero `f`. Earlier success requires
+an enclosure wholly on one side of zero, never just a nonzero centre.
+The schedule has at most `P+1` evaluations, each using the explicit refinement
+fuel above; a single evaluation at `P` is also a valid benchmark arm.
+`signApprox?_isSome` proves endpoint success. Its cost includes the evaluation
+resultant and all Horner/refinement calls, not merely reading the last centre.
+
+Require `signTarski_eq` and `signApprox_eq`:
+`orderOfSign (signStrategy f) = f.toAlgebraicNumber.realCompare 0`.
+Also require `compareTarski_eq` and `compareApprox_eq` for sign of the reduced
+difference `f-g`, equating each result with
+`f.toAlgebraicNumber.realCompare g.toAlgebraicNumber`. The right-hand
+conversions are reference semantics, not part of the executable strategies.
+Expose both strategies; select defaults only from the consumer SPEC's
+Phase-4 degree/height evidence. Reduced coordinate zero, rational constants,
+and equal fixed-field operands require no refinement in either strategy.
+
 ## The nearest root
 
 ```lean

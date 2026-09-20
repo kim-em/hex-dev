@@ -36,10 +36,11 @@ transitive Mathlib import. Companion proofs never flow back into that graph.
 The public surface includes construction, arithmetic, comparison, `min`, `max`,
 `sign`, `abs`, nonnegative square roots, polynomial real roots, `floor`, `ceil`,
 dyadic approximation, and rational recognition. Comparison has the semantics
-of `AlgebraicNumber.realCompare`. Refine-on-overlap fast paths, lazy
-`AlgebraicRoot` comparison, Tarski queries, and quantifier elimination are
-separate work; replacement comparison algorithms must prove agreement with
-this reference and preserve the public theorems.
+of `AlgebraicNumber.realCompare`. The exact-comparison contracts below specify
+its existing fast path and the additional lazy, point, and fixed-field
+strategies. Quantifier elimination is separate work. New computational
+primitives belong to their owning libraries, with correspondence proofs in
+their companions; the real subtype consumes them without changing semantics.
 
 ## Carrier, construction, and closure
 
@@ -129,9 +130,10 @@ representation and avoids a new serialization format or trusted proof path.
 ## Order and core instances
 
 `compare a b` is `a.toAlgebraic.realCompare b.toAlgebraic`. The comparison first
-uses canonical equality; if unequal, it compares real ball centres at
-`AlgebraicNumber.separationPrec (a.p * b.p)`. Merely comparing the stored
-centres of two independently canonicalized numbers is insufficient.
+uses canonical equality, then disjoint stored real-coordinate intervals, then
+bounded refinement on overlap. Its fallback `realCompareExact` compares real
+ball centres at `AlgebraicNumber.separationPrec (a.p * b.p)`. Merely comparing
+stored centres of two independently canonicalized numbers is insufficient.
 
 Define the operations with these exact conventions:
 
@@ -407,14 +409,212 @@ The Mathlib-free conditional adapters and the real `Repr` wrapper remain in
 the computational library. A conditional adapter and a concrete law witness
 have different dependency contracts; only the companion supplies the latter.
 
+## Exact comparison strategies
+
+The additional APIs and theorem names in this section are specification
+obligations, not claims that the declarations already exist. `realCompare`
+remains the reference. For signs, write `orderOfSign s` for `.lt`, `.eq`, or
+`.gt` according as the integer `s` is negative, zero, or positive. All sign
+APIs return only `-1`, `0`, or `1`. Every comparison requires real operands;
+checked entry points reject nonreal values rather than ordering their centres.
+
+### Existing canonical comparison
+
+[Nearest](../../HexNumberField/Nearest.lean) implements the following path:
+
+1. Canonical equality returns `.eq` without refinement. This is the existing
+   polynomial/disc equality test, not equality of arbitrary lazy polynomials.
+2. `Interval.realOrder?` compares the closed coordinate enclosures
+   `re ± radiusHi`. A strict gap decides the order; touching is inconclusive.
+3. On overlap, set `cap = separationPrec (a.p * b.p) + 1` and
+   `start = max 1 (min a.rep.square.prec b.rep.square.prec)`. The geometric
+   schedule repeatedly takes `min cap (max (start + 1) (2 * start))`, with
+   structural fuel `(cap - start).toNat + 1`. Thread both refined
+   representatives and stop at the first strict gap.
+4. Exhaustion or a failed checked refinement calls `realCompareExact` at
+   `separationPrec (a.p * b.p)`. This is an exact fallback, never `.eq` for
+   distinct real inputs. The product can have repeated roots; the bound used
+   here separates its distinct roots, including when both minimal polynomials
+   agree.
+
+`realCompare_eq` and `realCompareExact_eq` already identify both results with
+`compare a.toComplex.re b.toComplex.re` under `a.isReal = b.isReal = true`
+(with two separate reality hypotheses). Require the explicit corollary
+`realCompare_eq_exact : a.realCompare b = a.realCompareExact b` under those
+hypotheses. Schedule changes preserve this equation and `realCompare_eq`.
+The outer loop has at most the displayed fuel many rounds. Each refinement
+has the input-computable `Hex.fuelFor` bound described in the owner SPEC;
+the exact fallback makes two bounded `approx` calls. Correctness is not the
+termination argument.
+
+### Point, lazy, and fixed-field comparison
+
+The [number-field comparison contract](../../HexNumberField/SPEC/hex-number-field.md#real-sign-and-comparison)
+owns the new operations, their real-input guards, and the following equations.
+Here `A(f)` abbreviates the existing `QAdjoin.toAlgebraicNumber f` and `a,b`
+are canonical real numbers unless a row explicitly says otherwise.
+
+| Strategy and required theorem | Equality to the reference | Finite work bound |
+| --- | --- | --- |
+| `compareRat_eq` | `a.compareRat q = a.realCompare (ofRat q)` | One derivative Sturm chain, one prefix count, exact evaluation at `q`; degree descent and finite Horner loops, no refinement or factorization |
+| `compareDyadic_eq` | `a.compareDyadic q = a.realCompare (ofRat q.toRat)` | Same chain/count bound, dyadic integer arithmetic |
+| `AlgebraicRoot.compare_eq` | `r.compare s = r.exact.realCompare s.exact` for real lazy roots | One subtraction resultant and one isolation at its computable separation depth, followed by zero and certified sign; a supplied shallower representative is refined once to that depth |
+| `QAdjoin.signTarski_eq` | `orderOfSign (signTarski f) = A(f).realCompare 0` for a real generator | One query on `(p, F*p')`, where `F` clears the positive denominators of `f`; at most `deg p + 1` chain entries after the initial reduction |
+| `QAdjoin.signApprox_eq` | `orderOfSign (signApprox f) = A(f).realCompare 0` | One evaluation resultant; at most `P + 1` ball evaluations, `P = evalDisambiguationLimit E C` from the eliminant and Horner majorant |
+| `QAdjoin.compareTarski_eq`, `compareApprox_eq` | `compareTarski f g = A(f).realCompare A(g)` and likewise for approximation | Sign of the reduced fixed-field difference `f-g`, with the respective sign bound |
+
+Reality hypotheses and checked/total wrappers are specified by the owner;
+proof arguments are suppressed in this table. Exactification on the right
+side specifies meaning and is not executed by these strategies. Point tests
+first check interval membership: evaluating the polynomial to zero outside
+the selected root's interval must not return equality with a different root.
+
+The lazy sign rule tests exact zero first, reads `-p.coeff 0` at degree one,
+and justifies a centre sign at higher degree by the stated reciprocal-Cauchy
+or root-separation bound. A negative `isZero` test alone does not certify a
+centre sign. Equal lazy values may have different enclosing polynomials;
+subtraction and `isZero` settle them without exactifying either operand.
+
+The two fixed-field sign strategies are both required. Tarski uses exact
+integer arithmetic and no interval refinement; approximation uses a finite
+precision bound, never an open-ended search for a nonzero centre. Phase 4
+chooses dispatch by degree and coefficient height. Until that evidence exists,
+expose the explicit strategies without claiming a winning threshold or
+replacing the canonical reference with an unmeasured policy.
+
+### Towers and arrays
+
+The [tower sign contract](../../HexNumberFieldTower/SPEC/hex-number-field-tower.md#real-sign-and-comparison)
+owns `NumberTower.sign` and `NumberTower.compare`. Let `A_T(x)` be the
+canonical exactification of the existing fixed-embedding `Evaluation.evalElem?`
+result, whose success is proved by the tower companion. Require
+`sign_eq : orderOfSign (sign x) = (A_T(x)).realCompare 0` and
+`compare_eq : compare x y = (A_T(x)).realCompare (A_T(y))` for a tower whose
+selected generators are real. These equations do not flatten or exactify
+operands at runtime. The finite bound is one norm elimination per level,
+followed by the majorant's finite precision schedule and structurally recursive
+mixed-radix evaluation. A complex tower has no ambient `Ord` instance; a real
+element in it needs its own checked reality witness and the same evaluation
+bound.
+
+`RealAlgebraicNumber`'s `Ord`, `min`, and `max` keep the conventions above.
+Provide `sort : Array RealAlgebraicNumber → Array RealAlgebraicNumber` as a
+stable mergesort: `sort_perm` preserves all entries and multiplicities,
+`sort_sorted` states nondecreasing reference order, and `sort_stable` preserves
+the input order on equal keys. Its comparison count is at most
+`r * ceilLog2 (max 1 r)` for `r` entries; each call has the canonical bound.
+Provide `min?` and `max?` for arrays, returning `none` on empty input and the
+first extremum on ties, with `min?_eq`/`max?_eq` equating them to folds of the
+reference binary operations. They use at most `r-1` comparisons.
+
+For values supplied with indices in the same `ZPoly.algebraicRoots` array,
+compare the real-root indices instead, proving `compareIndex_eq` against
+`realCompare` from `algebraicRoots` sortedness and distinctness. A filtered
+real-root array is already ordered. A shared enclosing polynomial without
+root indices is not enough: different roots must still be distinguished.
+This shortcut preserves duplicates in general input arrays and introduces no
+ordering by polynomial coefficients or by unrelated isolating centres.
+
+### Certificates and proof boundary
+
+All these exact algorithms have Lean definitions and semantic correspondence
+proofs. Ordinary `decide` can in principle reduce transparent closed instances;
+this does not make running resultants, factorization, or isolation in the
+kernel a practical public proof API. No `native_decide` is permitted.
+
+Expose the small literal checker for Tarski queries in `hex-real-roots` and
+its soundness theorem in `hex-real-roots-mathlib`. The checker verifies initial
+reduction, positive signed-remainder identities, termination, endpoint signs,
+and the claimed variation drop. The existing RCF replay checks only derivative
+chains ending at a constant; arbitrary Tarski queries require the extension
+specified by the owner and a new Sturm–Tarski theorem. They are kernel-checkable
+once that extension lands, not already certified by `SturmReplay.check`.
+
+Point comparisons can similarly replay an ordinary derivative chain and exact
+point evaluation. Interval comparisons can replay certified isolations and a
+strict rational gap. Lazy and approximation comparisons also require certified
+eliminant/evaluation relations and the separation or error bounds; a list of
+centres and signs is not a certificate. Defer a general `by algebraic_compare`
+or other decide-style comparison elaborator until its representation,
+certificate size, and fresh-module kernel-build costs have Phase-4 evidence.
+The computational strategies and their correspondence theorems do not depend
+on that future elaborator.
+
+### Comparison conformance and Phase-4 evidence
+
+Extend the existing python-flint order fixtures and profile modes below.
+Expected signs/orderings come from exact `qqbar` comparisons, not decimal
+approximations, cypari2, or Sage `AA`. Serialize defining polynomials,
+root-selection data, and rational coefficients so the oracle reconstructs the
+selected values independently. All strategy groups share result hashes.
+
+| Family | Parameters and required cases | Arms and measurements |
+| --- | --- | --- |
+| Well-separated real pairs | Positive root of `X^n-2` against the negative root of `X^n-3`; sweep even `n` with bounded defining-coefficient height | Stored-interval path, fixed-precision reference, lazy comparison, exactify-then-compare; count product construction and refinement calls |
+| Close real pairs | Mignotte `X^n-(a*X-1)^2`, fixed even `n ≥ 4`, integer `a ≥ 4`; sweep bit length of `a`, select the two roots bracketing `1/a` by exact root counts | Same arms; record root gap, isolation widths, achieved precision, and overlap rounds; include cross-polynomial close pairs |
+| Equal lazy values | The same selected root of `p` and squarefree `p*q` with coprime factors; sweep the number/degree and height of irrelevant factors independently | Lazy zero detection versus two exactifications, including repeated comparisons with exactifications cached |
+| Point comparisons | Real roots against dyadic and general rational points inside/outside their intervals, near the root, at an interval endpoint, and exactly equal to a rational root | Sturm endpoint test versus `realCompare` with a prebuilt rational; sweep rational bit length separately from polynomial degree |
+| Fixed-field signs | Fixed real generator, reduced coordinates of growing numerator/denominator bit length, cancellation such as `u-v*sqrt(2)`, positive/negative constants and zero | Tarski versus bounded approximation, plus materialize-then-compare; vary degree separately and include chain/eliminant setup costs |
+| Tower signs and arrays | Real towers with independent sweeps of depth, dimension, and coordinate height; shuffled real-root arrays, unrelated values and duplicates | Recursive evaluation versus materialization; index reuse versus generic sort; empty/singleton arrays and first-on-tie extrema |
+
+Required boundary fixtures include zero in a fixed field (also expressions
+that reduce to zero), equal canonical numbers built by different routes,
+overlapping isolations of distinct numbers, and lazy differences `(±2^-k)-0`
+and `(a±2^-k)-a` for `a = sqrt(2)` and `k ∈ {20,50,100}`. These last cases must
+return opposite strict orders, even when the difference's centre is zero.
+Include nonreal-input rejection, Tarski `F=0`, common factors, signed query
+values, and rejection of unsupported endpoint-root inputs to the low-level
+query; the fixed-field wrapper constructs root-free endpoints. Reverse each
+ordering and check antisymmetry; sort fixtures also check permutation and ties.
+
+Preconstructed comparisons and construction-inclusive workloads are separate
+registrations. Repeated comparisons of the same operands measure cache reuse
+separately. Attribute resultant construction, squarefree normalization,
+isolation/refinement, Tarski chain construction, endpoint evaluation, Horner
+balls, and exactification whenever they are separable. In particular, a lazy
+comparison includes its subtraction resultant and isolation; timing only the
+final sign test is not evidence that it beats exactifying. Repeated fixed-field
+queries may amortize the generator's derivative chain and isolation, but each
+new `F` changes the Tarski chain. Degree and height regimes must report this
+amortization explicitly.
+
+External timing comparators are **informational**: python-flint's
+[`qqbar` generic-ring interface](https://python-flint.readthedocs.io/en/latest/_gr.html)
+and Z3's [`z3.z3rcf` Python binding](https://github.com/Z3Prover/z3/blob/master/src/api/python/z3/z3rcf.py)
+(`RCFNum`, `MkRoots`, exact relational operators). Restrict Z3 to algebraic
+inputs and exact root selection; use neither SMT solver timing nor its
+transcendental/infinitesimal extensions. Pin and capability-probe both bindings,
+record versions and setup separately, and report unavailable scheduled-only
+comparators explicitly. Informational timing status does not weaken
+python-flint's conformance obligations.
+
+Follow [the benchmark mode rules](../benchmarking.md#choosing-the-complexity-claim):
+use an independently derived two-sided family model first; a published
+one-sided bound only when its conditions and attribution hold; a fixed absolute
+ceiling only after explaining why both stronger modes fail. That ceiling must
+be justified by a comparator, a requirement, or a measured baseline plus stated
+margin. It is not the generic harness timeout. No timing ratio to an
+informational comparator is a universal merge gate. Mode failures, required
+budget failures, and unequal result hashes block acceptance. The report records
+per-regime dispatch decisions and inconclusive results rather than inventing
+thresholds in this SPEC. Shared-host trials retain every completed sample,
+use the fixed trial-major schedule and adjacent alternating AB/BA arms where
+applicable, and follow the policy's single unchanged rerun limit.
+
+Implementation-phase work adds the registrations and comparator/input-family
+metadata to the owners' existing bench targets and `libraries.yml`; this SPEC
+change does not assert new Phase-4 completion. Kernel-checking performance uses
+the fresh-module proof track, not a Mathlib-importing benchmark executable.
+
 ## Complexity
 
-Canonical equality uses the underlying polynomial/disc test. Each unequal
-comparison forms `a.p * b.p`, computes its separation precision, and refines
-both operands to that precision. If `C(a,b)` denotes this cost, no constant-time
-comparison bound is claimed. Close roots and large degrees or coefficient
-heights can force high precision. Sorting `r` real roots uses `O(r log r)`
-comparisons, in addition to the existing root driver and exactification costs.
+Canonical equality uses the underlying polynomial/disc test. Disjoint stored
+intervals decide unequal comparisons before constructing `a.p * b.p`. Overlap
+incurs its separation bound and bounded refinement, with `realCompareExact`
+as fallback. No constant-time bound is claimed for arithmetic on unbounded
+integers. Close roots and large degrees or heights can force high precision.
+Sorting `r` unrelated real values uses `O(r log r)` comparisons; sorting roots
+with retained common-polynomial indices reuses the certified root order.
 
 Arithmetic retains the eliminant, factorization, and exactification costs
 of `AlgebraicNumber`, plus one stored-precision reality test per wrapper call.
