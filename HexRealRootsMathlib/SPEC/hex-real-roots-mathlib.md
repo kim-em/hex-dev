@@ -787,21 +787,18 @@ states its sign results over `ℝ`; those cannot be cited over arbitrary `R`.
 The existing local `Sturm.IsSturmChain` likewise remains a structure over `ℝ`
 with derivative root flanks and a root-free tail, not this signed theorem.
 
-This companion proves the planned `Real.instIsRealClosed` using
-`IsRealClosed.of_linearOrderedField`. Its two obligations are
-`∀ x : ℝ, 0≤x → IsSquare x`, supplied by `Real.sqrt` and `Real.sq_sqrt`,
-and `∀ H : Polynomial ℝ, Odd H.natDegree → ∃ x, H.IsRoot x`.
-For the latter factor the proof of the existing private `real_odd_root` in
-[HexRealAlgebraicMathlib/RealClosed.lean](../../HexRealAlgebraicMathlib/RealClosed.lean)
-down into this companion: assuming no root makes both root-bound hypotheses
-vacuous, so Mathlib's polynomial order lemmas at zero give contradictory signs
-in odd degree (split on the leading-coefficient sign). Those real order lemmas
-already use continuity/IVT internally. This uses existing real analysis, not
-the generic Tau Ceti IVT that already assumes `IsRealClosed`.
-When the shared instance lands, the downstream real-algebraic companion must
-replace its private proof with `IsRealClosed.exists_isRoot_of_odd_natDegree`.
-Move the proof downward; do not import hex-real-algebraic-mathlib to construct
-this instance or retain a second copy of the proof.
+This companion proves `Real.instIsRealClosed` in `RealClosed.lean` using
+`IsRealClosed.of_linearOrderedField`. Its nonnegative-square obligation is
+supplied by `Real.sqrt` and `Real.sq_sqrt`. The private `real_odd_root`
+proves that every odd-degree polynomial over ℝ has a root: assuming no root
+makes both root-bound hypotheses vacuous, so Mathlib's polynomial order
+lemmas at zero give contradictory signs in odd degree (split on the
+leading-coefficient sign). Those real order lemmas already use continuity/IVT
+internally. This uses existing real analysis, not the generic Tau Ceti IVT
+that already assumes `IsRealClosed`.
+The umbrella exports the instance; the downstream real-algebraic companion
+uses `IsRealClosed.exists_isRoot_of_odd_natDegree`. The lower companion has no
+import of hex-real-algebraic-mathlib, and the odd-root proof has only one copy.
 
 Instantiate the shared domain/replay bridge with `D=ℤ`, `j=Int.castRingHom ℝ`
 and exact dyadic evaluation to prove `ZPoly.tarskiQuery_eq` and
@@ -834,6 +831,7 @@ are explicit proof-probe dimensions, not hidden coefficient-oracle costs.
 
 ```
 HexRealRootsMathlib/
+  RealClosed.lean      -- Real.instIsRealClosed from real analysis
   SturmChainDefs.lean  -- IsSturmChain, sturmVar over Polynomial ℝ
   SturmTheorem.lean    -- the counting theorem and the line form
   SturmCertificate.lean -- certificates over Mathlib polynomials

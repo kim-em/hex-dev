@@ -1469,7 +1469,7 @@ libraries:
     done_through: 1
     status: active
   HexRealAlgebraicMathlib:
-    deps: [HexRealAlgebraic, HexNumberFieldMathlib]
+    deps: [HexRealAlgebraic, HexNumberFieldMathlib, HexRealRootsMathlib]
     mathlib: true
     correspondence_only: true
     done_through: 1
