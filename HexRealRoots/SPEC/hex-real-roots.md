@@ -123,7 +123,12 @@ dyadic counts. These primitives belong here, not in the number-field layer.
 
 ## Tarski queries
 
-Add the following computational primitive for the
+The query and replay declarations in this section are planned. They share the
+ordered-domain kernel below with the
+[ordered-field frontend](../../SPEC/Libraries/hex-sturm.md); they are not a
+second integer-only implementation.
+
+Preserve the following public integer/dyadic frontend for the
 [fixed-field sign consumer](../../HexNumberField/SPEC/hex-number-field.md#fixed-field-sign):
 
 ```lean
@@ -165,14 +170,85 @@ a signed sum rather than a nonnegative root count. There is no isolation,
 refinement, factorization or floating-point operation inside `tarskiQuery`.
 After the initial reduction there are at most `deg p + 1` nonzero entries,
 and at most `deg p` Euclidean remainder steps including termination. The
-initial pseudo-division takes at most
-`max 0 (deg(f*p') - deg p + 1)` leading-term cancellations; each subsequent
-one has the same degree-difference bound. Polynomial products and exact Horner
+initial pseudo-division takes
+zero leading-term cancellations if `f*p'=0` or `deg(f*p') < deg p`, and
+at most `deg(f*p') - deg p + 1` otherwise; each subsequent division has
+the same conditional degree-difference bound. Polynomial products and exact Horner
 folds have their array-length bounds. With classical dense arithmetic a
 conservative bound is `O((deg f + 1)*deg p + (deg p)^3)` integer-ring
 operations, excluding the separately bounded squarefreeness check; this is
 not a unit-cost bit bound on growing coefficients. Phase 4 measures their
 bit lengths as well as degrees.
+
+### Shared ordered-domain kernel
+
+Generalize the signed-remainder/query-replay primitive here, below the family,
+over the explicit [hex-poly operation record](../../HexPoly/SPEC/hex-poly.md#fallible-coefficient-operations).
+The coefficient interpretation is an ordered commutative domain, not
+necessarily a field. Use its fallible semantic degree, pseudo-division and
+coefficient-evidence interfaces. No typeclass field or decidable order is
+installed on `Int`, raw algebraic representatives or bounded sign oracles.
+The field frontend in hex-sturm supplies domain/squarefreeness checks and
+checked field arithmetic; the integer frontend retains its integer guards.
+
+This owner provides the shared `Endpoint E` data (`negInf`, `finite E`,
+`posInf`), chain producer, variation fold and literal replay checks. Endpoint
+adapters supply finite ordering, evaluation signs and their evidence; their
+semantic laws may interpret endpoints in an ordered extension of the
+coefficient domain. In particular, `E=Dyadic` need not be an integer for
+integer coefficients. This does not add division to the ring kernel.
+Infinity signs use the certified leading coefficient and semantic degree
+parity. The integer public `DyadicInterval` interface remains unchanged.
+
+The kernel uses the positive-scaled initial reduction, three-term recurrence
+and terminal zero identity specified below, including singleton/constant
+branches. The head is the input `p`; if a backend removes positive content
+from it, record the scale to that input and transport the initial identity.
+Backends may use hex-poly's optional exact-division/normalization adapters
+for primitive or signed subresultant remainders, proving equality of query
+values through these same identities. Negative subresultant factors require
+sign correction of the affected entries and identities before recording
+positive scale factors; taking absolute values alone is not sound.
+Every later nonzero degree strictly decreases. Its query value is the
+`Int` variation drop. The frontend must supply checked nonzero input that is
+squarefree over the fraction field of the coefficient domain (not necessarily
+in the domain's polynomial ring), strictly ordered endpoints and non-root
+finite endpoints before a
+successful value, even if `f=0` or the head is constant. For example `4*x`
+is admissible over integer coefficients: integer content does not create
+repeated roots. The shared replay interface composes that guard evidence with the ring identities and signs;
+its raw arithmetic checks alone are not a root-query theorem.
+
+The kernel uses hex-poly's `PolyOps.Limits`, `Budget`, `Result` and
+`CheckResult`; caller limits seed the single budget threaded across library
+boundaries. Callbacks propagate exhausted and rejected results explicitly.
+A user-facing invalid result must prove a failed input/context guard; an
+internal helper-precondition failure on already validated inputs is instead
+rejected as an implementation error.
+Unknown zero/sign tests cannot act as structural zero tests or permit a
+shortcut. Loops decrease arithmetic fuel or literal length and every nested
+coefficient checker consumes the same parent budget; no coefficient search
+runs in replay. Bounds above refer to semantic degrees, and raw inputs also
+pay for scanning their stored lengths. Total adapters prove the chosen fuel
+suffices; bounded adapters promise only successful-result soundness unless
+coefficient completeness and sufficient budgets are supplied.
+
+`ZPoly.tarskiQuery` instantiates this kernel with exact integer operations,
+positive content normalization and exact dyadic Horner signs. Optimized
+integer arithmetic must prove backend equality at query values and transport
+its certificate through positive scale identities. The generic field adapter
+invokes the same recurrence and initial reduction. Integer guards and total
+callbacks retain `none` exactly for invalid input, not exhaustion. Positive
+clearing of rational `p,f` separately must preserve guards and query results
+and admit replay translation, as specified in hex-sturm. No upstream module
+imports hex-sturm to obtain those generic helpers.
+
+Keep the existing derivative `sturmChain`, half-open `sturmCount`, RCF replay
+and `Polynomial ℝ` proofs intact. This generalization is of the planned
+Tarski primitive; refactoring those existing proofs is not a prerequisite.
+The shared abstract soundness theorem and integer specialization live in
+hex-real-roots-mathlib; frontend/evidence composition lives in
+hex-sturm-mathlib. BKR matrices remain downstream in hex-sign-det.
 
 ### Literal query certificates
 

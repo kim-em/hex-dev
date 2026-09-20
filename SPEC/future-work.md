@@ -1161,7 +1161,7 @@ and arithmetic, so they stay in `hex-ordered-fn`, in separate modules.
 
 | Mathlib-free library | Responsibility | Mathlib companion |
 | --- | --- | --- |
-| `hex-sturm` | Ordered-field query frontend, coefficient-operation adapters, generic endpoints and root counts | `hex-sturm-mathlib`: frontend correspondence and replay composition |
+| [hex-sturm](Libraries/hex-sturm.md) | Ordered-field query frontend, coefficient-operation adapters, generic endpoints and root counts | `hex-sturm-mathlib`: frontend correspondence and replay composition |
 | `hex-sign-det` | BKR sign determination, complete sign tables, Thom root identity and comparison | `hex-sign-det-mathlib`: sign-table correctness, Thom identity and order correspondence |
 | [hex-ordered-fn](Libraries/hex-ordered-fn.md) | Transcendental and infinitesimal orders on `RationalFn`, approximation protocol | `hex-ordered-fn-mathlib`: order laws, real evaluation and infinitesimal model |
 | `hex-real-closure` | Algebraic extension arithmetic, dynamic splitting, root isolation, staged towers and exploration | `hex-real-closure-mathlib`: selected-root semantics, field laws, root completeness and trivial-tower agreement |
@@ -1191,6 +1191,11 @@ routines are new infrastructure, not capabilities of the existing
 typeclass-based `HexPoly` routines.
 
 #### One Sturm–Tarski primitive
+
+The [hex-sturm SPEC](Libraries/hex-sturm.md) fixes the frontend API, failure
+and termination contracts, replay and evidence requirements, and coordinated
+prerequisite contracts in hex-poly and hex-real-roots. The shared clauses
+below also govern the other family directives.
 
 For total semantic field carriers, use Lean core's `Lean.Grind.Field`,
 `Lean.Grind.OrderedRing`, total-order classes from `Init.Data.Order`, and
@@ -1554,7 +1559,7 @@ the dependency diagram above is the library import contract.
 
 | Computational SPEC | Companion SPEC |
 | --- | --- |
-| [hex-sturm #10311](https://github.com/kim-em/hex-dev/issues/10311) | [hex-sturm-mathlib #10312](https://github.com/kim-em/hex-dev/issues/10312) |
+| [hex-sturm SPEC](Libraries/hex-sturm.md) ([#10311](https://github.com/kim-em/hex-dev/issues/10311)) | [hex-sturm-mathlib #10312](https://github.com/kim-em/hex-dev/issues/10312) |
 | [hex-sign-det #10313](https://github.com/kim-em/hex-dev/issues/10313) | [hex-sign-det-mathlib #10314](https://github.com/kim-em/hex-dev/issues/10314) |
 | [hex-ordered-fn #10315](https://github.com/kim-em/hex-dev/issues/10315) ([SPEC](Libraries/hex-ordered-fn.md)) | [hex-ordered-fn-mathlib #10316](https://github.com/kim-em/hex-dev/issues/10316) |
 | [hex-real-closure #10317](https://github.com/kim-em/hex-dev/issues/10317) | [hex-real-closure-mathlib #10318](https://github.com/kim-em/hex-dev/issues/10318) |
