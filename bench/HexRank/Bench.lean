@@ -22,10 +22,11 @@ targets, so that the ratio between producer and checker is a recorded number.
 Scientific registrations and declared models:
 
 * `dense-full-rank`: square matrices of small random entries, rank `n`.
-  Mode 2, one-sided upper bound `n^5`: the operation count is `Θ(n^3)` and
+  Mode 2, one-sided upper bound `n^5 (log n + 3)^2`: the operation count is `Θ(n^3)` and
   every operand is a minor of size up to `n`, whose bit length grows
-  linearly in `n` by Hadamard's bound, so the schoolbook cost of one
-  operation is bounded by a further `n^2`.
+  as `O(n (log n + log B))` by Hadamard's bound. Here the input
+  is a triangular product with `B ≤ 25n`, rather than entrywise bounded
+  random data. The family/model audit is recorded in the report.
 * `low-rank-large-coefficients`: products of `n × r` and `r × n` matrices at
   fixed `r ∈ {2, 8}` with 64- and 1024-bit entries. Mode 1, `n^2`: the count
   is `Θ(r · n · n)` and every operand is a minor of size at most `r` of a
@@ -33,7 +34,9 @@ Scientific registrations and declared models:
 * `rank-deficient-by-construction`: square products of rank `n - 1` and
   `n / 2` with small entries, including a variant whose pivot columns are
   not the leading columns, so that the skip path is on the measured route.
-  Mode 1, `n^3`: the count is `Θ(r · n · n)` with `r` proportional to `n`.
+  The existing registrations use the one-sided Hadamard bound (mode 2);
+  their identity pivot blocks need a separate strongest-mode audit before
+  they can supply Phase-4 evidence.
 * `polynomial`: `DensePoly Rat` and `MvPoly 2 Int` matrices of small fixed
   support, full rank and rank deficient. Mode 3, fixed registrations.
 
@@ -169,7 +172,9 @@ def prepDeficientCert (rankOf : Nat → Nat) (shift : Bool) (n : Nat) : CertInpu
   toCertInput (matrixOfFlat input.n input.m input.entries)
 
 /-- The mode-2 upper bound `n^5 (log n + log B)^2` of the dense and
-rank-deficient families, with `log B ≤ 3` for the small entries used. -/
+rank-deficient families. Product entries satisfy `B ≤ 25n`, so
+`log n + log B = O(log n + 3)`; the expression is an asymptotic bound,
+not a literal Hadamard bit ceiling. -/
 def hadamardBound (n : Nat) : Nat :=
   n * n * n * n * n * (Nat.log2 n + 3) * (Nat.log2 n + 3)
 
@@ -222,8 +227,8 @@ bits, so the declared one-sided upper bound is `n^5 (log n + log B)^2`
 (mode 2). -/
 -- Cost model: `Θ(n^3)` ring operations, each on operands of `O(n (log n + log B))`
 -- bits by Hadamard's bound, at schoolbook cost quadratic in the bit size, so the
--- declared one-sided upper bound is `n^5 (log n + log B)^2` (mode 2); `B ≤ 8`
--- here, so `log B ≤ 3`.
+-- declared one-sided upper bound is `O(n^5 (log n + 3)^2)` (mode 2):
+-- product entries satisfy `B ≤ 25n`, so `log n + log B = O(log n + 3)`.
 setup_benchmark runRowReduceDense n => hadamardBound n
   with prep := prepDense
   where {
@@ -234,8 +239,8 @@ setup_benchmark runRowReduceDense n => hadamardBound n
   }
 -- Cost model: `Θ(n^3)` ring operations, each on operands of `O(n (log n + log B))`
 -- bits by Hadamard's bound, at schoolbook cost quadratic in the bit size, so the
--- declared one-sided upper bound is `n^5 (log n + log B)^2` (mode 2); `B ≤ 8`
--- here, so `log B ≤ 3`.
+-- declared one-sided upper bound is `O(n^5 (log n + 3)^2)` (mode 2):
+-- product entries satisfy `B ≤ 25n`, so `log n + log B = O(log n + 3)`.
 setup_benchmark runRankCertDense n => hadamardBound n
   with prep := prepDense
   where {
@@ -246,8 +251,8 @@ setup_benchmark runRankCertDense n => hadamardBound n
   }
 -- Cost model: `Θ(n^3)` ring operations, each on operands of `O(n (log n + log B))`
 -- bits by Hadamard's bound, at schoolbook cost quadratic in the bit size, so the
--- declared one-sided upper bound is `n^5 (log n + log B)^2` (mode 2); `B ≤ 8`
--- here, so `log B ≤ 3`.
+-- declared one-sided upper bound is `O(n^5 (log n + 3)^2)` (mode 2):
+-- product entries satisfy `B ≤ 25n`, so `log n + log B = O(log n + 3)`.
 setup_benchmark runCheckRankDense n => hadamardBound n
   with prep := prepDenseCert
   where {
@@ -463,61 +468,147 @@ def mvDeficient (k : Nat) : Matrix (MvPoly 2 Int Mono.lex) k k :=
     Matrix.ofFn fun i j => mvEntry (i.val + 2) j.val
   L * Rm
 
-def runRatPolyRankAt (k : Nat) : Unit → IO Nat :=
-  let A := ratPolyMatrix k
-  fun _ => return rankWith Hex.exactDiv A
-def runRatPolyDeficientRankAt (k : Nat) : Unit → IO Nat :=
-  let A := ratPolyDeficient k
-  fun _ => return rankWith Hex.exactDiv A
-def runRatPolyCertAt (k : Nat) : Unit → IO Nat :=
-  let A := ratPolyMatrix k
-  fun _ => return (rankCertWith Hex.exactDiv A).rank
-/-- The checker alone: the certificate is built in the closure's preparation. -/
-def runRatPolyCheckAt (k : Nat) : Unit → IO Bool :=
-  let A := ratPolyMatrix k
-  let c := rankCertWith Hex.exactDiv A
-  fun _ => return checkRank A c
-def runMvRankAt (k : Nat) : Unit → IO Nat :=
-  let A := mvMatrix k
-  fun _ => return rankWith Hex.exactDiv A
-def runMvDeficientRankAt (k : Nat) : Unit → IO Nat :=
-  let A := mvDeficient k
-  fun _ => return rankWith Hex.exactDiv A
-def runMvCertAt (k : Nat) : Unit → IO Nat :=
-  let A := mvMatrix k
-  fun _ => return (rankCertWith Hex.exactDiv A).rank
-/-- The checker alone: the certificate is built in the closure's preparation. -/
-def runMvCheckAt (k : Nat) : Unit → IO Bool :=
-  let A := mvMatrix k
-  let c := rankCertWith Hex.exactDiv A
-  fun _ => return checkRank A c
+/-- A checked canonical polynomial input. Construction and validation run once
+per child, in the fixed runner's `warmupFirstIter` call, before timing. -/
+structure PolyInput (R : Type) where
+  dim : Nat
+  matrix : Matrix R dim dim
+  cert : RankCert R dim dim
 
-def runRatPolyRank4 := runRatPolyRankAt 4
-def runRatPolyRank8 := runRatPolyRankAt 8
-def runRatPolyRank12 := runRatPolyRankAt 12
+initialize ratPolyInputs : IO.Ref (Array (Nat × Bool × PolyInput (DensePoly Rat))) ← IO.mkRef #[]
+initialize mvInputs : IO.Ref (Array (Nat × Bool × PolyInput (MvPoly 2 Int Mono.lex))) ← IO.mkRef #[]
+
+/-- Cache the actual matrix and certificate, rather than a closure whose pure
+captures the compiler can move into each invocation. A bad fixture fails the
+child before any sample is accepted. -/
+def preparePoly [Lean.Grind.CommRing R] [DecidableEq R]
+    (cache : IO.Ref (Array (Nat × Bool × PolyInput R)))
+    (quot : R → R → R) (full deficient : (k : Nat) → Matrix R k k)
+    (k : Nat) (singular : Bool) : IO (PolyInput R) := do
+  if let some (_, _, input) := (← cache.get).find? (fun (n, d, _) => n == k && d == singular) then
+    return input
+  let A := if singular then deficient k else full k
+  let c := rankCertWith quot A
+  let expected := if singular then k / 2 else k
+  unless c.rank == expected && checkRank A c do
+    throw <| IO.userError s!"polynomial fixture: dimension {k}, deficient {singular}, expected rank {expected}, got {c.rank}"
+  let input := PolyInput.mk k A c
+  cache.modify (·.push (k, singular, input))
+  return input
+
+def prepareRatPoly := preparePoly ratPolyInputs Hex.exactDiv ratPolyMatrix ratPolyDeficient
+def prepareMv := preparePoly mvInputs Hex.exactDiv mvMatrix mvDeficient
+
+/-- First pass, on a runtime input read from the prepared cache. -/
+def runRatPolyRankAt (k : Nat) (singular := false) : Unit → IO Nat := fun _ => do
+  let input ← prepareRatPoly k singular
+  return (rowReduceWith Hex.exactDiv input.matrix).profile.rank
+
+def runRatPolyDeficientRankAt (k : Nat) := runRatPolyRankAt k true
+
+def runRatPolyCertAt (k : Nat) (singular := false) : Unit → IO Nat := fun _ => do
+  let input ← prepareRatPoly k singular
+  return (rankCertWith Hex.exactDiv input.matrix).rank
+
+/-- Checker only. The cached certificate is produced and validated before the
+runner's timed region, and is never reconstructed inside it. -/
+def runRatPolyCheckAt (k : Nat) (singular := false) : Unit → IO Bool := fun _ => do
+  let input ← prepareRatPoly k singular
+  return checkRank input.matrix input.cert
+
+def runMvRankAt (k : Nat) (singular := false) : Unit → IO Nat := fun _ => do
+  let input ← prepareMv k singular
+  return (rowReduceWith Hex.exactDiv input.matrix).profile.rank
+
+def runMvDeficientRankAt (k : Nat) := runMvRankAt k true
+
+def runMvCertAt (k : Nat) (singular := false) : Unit → IO Nat := fun _ => do
+  let input ← prepareMv k singular
+  return (rankCertWith Hex.exactDiv input.matrix).rank
+
+def runMvCheckAt (k : Nat) (singular := false) : Unit → IO Bool := fun _ => do
+  let input ← prepareMv k singular
+  return checkRank input.matrix input.cert
+
+def runRatPolyRank4 := runRatPolyRankAt 4 false
+def runRatPolyRank8 := runRatPolyRankAt 8 false
+def runRatPolyRank12 := runRatPolyRankAt 12 false
 def runRatPolyDeficientRank8 := runRatPolyDeficientRankAt 8
-def runRatPolyCert8 := runRatPolyCertAt 8
-def runRatPolyCheck8 := runRatPolyCheckAt 8
-def runMvRank4 := runMvRankAt 4
-def runMvRank8 := runMvRankAt 8
+def runRatPolyCert8 := runRatPolyCertAt 8 false
+def runRatPolyCheck8 := runRatPolyCheckAt 8 false
+def runMvRank4 := runMvRankAt 4 false
+def runMvRank8 := runMvRankAt 8 false
 def runMvDeficientRank8 := runMvDeficientRankAt 8
-def runMvCert4 := runMvCertAt 4
-def runMvCheck4 := runMvCheckAt 4
+def runMvCert4 := runMvCertAt 4 false
+def runMvCheck4 := runMvCheckAt 4 false
 
+def runRatPolyCert4 := runRatPolyCertAt 4 false
+def runRatPolyCert12 := runRatPolyCertAt 12 false
+def runRatPolyCheck4 := runRatPolyCheckAt 4 false
+def runRatPolyCheck12 := runRatPolyCheckAt 12 false
+def runRatPolyDeficientRank4 := runRatPolyRankAt 4 true
+def runRatPolyDeficientRank12 := runRatPolyRankAt 12 true
+def runRatPolyDeficientCert4 := runRatPolyCertAt 4 true
+def runRatPolyDeficientCert8 := runRatPolyCertAt 8 true
+def runRatPolyDeficientCert12 := runRatPolyCertAt 12 true
+def runRatPolyDeficientCheck4 := runRatPolyCheckAt 4 true
+def runRatPolyDeficientCheck8 := runRatPolyCheckAt 8 true
+def runRatPolyDeficientCheck12 := runRatPolyCheckAt 12 true
+def runMvRank12 := runMvRankAt 12 false
+def runMvCert8 := runMvCertAt 8 false
+def runMvCert12 := runMvCertAt 12 false
+def runMvCheck8 := runMvCheckAt 8 false
+def runMvCheck12 := runMvCheckAt 12 false
+def runMvDeficientRank4 := runMvRankAt 4 true
+def runMvDeficientRank12 := runMvRankAt 12 true
+def runMvDeficientCert4 := runMvCertAt 4 true
+def runMvDeficientCert8 := runMvCertAt 8 true
+def runMvDeficientCert12 := runMvCertAt 12 true
+def runMvDeficientCheck4 := runMvCheckAt 4 true
+def runMvDeficientCheck8 := runMvCheckAt 8 true
+def runMvDeficientCheck12 := runMvCheckAt 12 true
+
+/-- Operational timeout only. These registrations do not yet have the
+operation-specific SymPy-derived budgets required for Phase-4 evidence. -/
 def polyConfig : LeanBench.FixedBenchmarkConfig :=
-  { repeats := 5, maxSecondsPerCall := 6.0, minTotalSeconds := 0.2, warmupFirstIter := true }
+  { repeats := 5, maxSecondsPerCall := 30.0, minTotalSeconds := 0.2, warmupFirstIter := true }
 
-setup_fixed_benchmark runRatPolyRank4 where polyConfig
-setup_fixed_benchmark runRatPolyRank8 where polyConfig
-setup_fixed_benchmark runRatPolyRank12 where polyConfig
-setup_fixed_benchmark runRatPolyDeficientRank8 where polyConfig
-setup_fixed_benchmark runRatPolyCert8 where polyConfig
-setup_fixed_benchmark runRatPolyCheck8 where polyConfig
-setup_fixed_benchmark runMvRank4 where polyConfig
-setup_fixed_benchmark runMvRank8 where polyConfig
-setup_fixed_benchmark runMvDeficientRank8 where polyConfig
-setup_fixed_benchmark runMvCert4 where polyConfig
-setup_fixed_benchmark runMvCheck4 where polyConfig
+setup_fixed_benchmark runRatPolyRank4 where { polyConfig with expectedHash := some (hash (4 : Nat)) }
+setup_fixed_benchmark runRatPolyRank8 where { polyConfig with expectedHash := some (hash (8 : Nat)) }
+setup_fixed_benchmark runRatPolyRank12 where { polyConfig with expectedHash := some (hash (12 : Nat)) }
+setup_fixed_benchmark runRatPolyCert4 where { polyConfig with expectedHash := some (hash (4 : Nat)) }
+setup_fixed_benchmark runRatPolyCert8 where { polyConfig with expectedHash := some (hash (8 : Nat)) }
+setup_fixed_benchmark runRatPolyCert12 where { polyConfig with expectedHash := some (hash (12 : Nat)) }
+setup_fixed_benchmark runRatPolyCheck4 where { polyConfig with expectedHash := some (hash true) }
+setup_fixed_benchmark runRatPolyCheck8 where { polyConfig with expectedHash := some (hash true) }
+setup_fixed_benchmark runRatPolyCheck12 where { polyConfig with expectedHash := some (hash true) }
+setup_fixed_benchmark runRatPolyDeficientRank4 where { polyConfig with expectedHash := some (hash (2 : Nat)) }
+setup_fixed_benchmark runRatPolyDeficientRank8 where { polyConfig with expectedHash := some (hash (4 : Nat)) }
+setup_fixed_benchmark runRatPolyDeficientRank12 where { polyConfig with expectedHash := some (hash (6 : Nat)) }
+setup_fixed_benchmark runRatPolyDeficientCert4 where { polyConfig with expectedHash := some (hash (2 : Nat)) }
+setup_fixed_benchmark runRatPolyDeficientCert8 where { polyConfig with expectedHash := some (hash (4 : Nat)) }
+setup_fixed_benchmark runRatPolyDeficientCert12 where { polyConfig with expectedHash := some (hash (6 : Nat)) }
+setup_fixed_benchmark runRatPolyDeficientCheck4 where { polyConfig with expectedHash := some (hash true) }
+setup_fixed_benchmark runRatPolyDeficientCheck8 where { polyConfig with expectedHash := some (hash true) }
+setup_fixed_benchmark runRatPolyDeficientCheck12 where { polyConfig with expectedHash := some (hash true) }
+setup_fixed_benchmark runMvRank4 where { polyConfig with expectedHash := some (hash (4 : Nat)) }
+setup_fixed_benchmark runMvRank8 where { polyConfig with expectedHash := some (hash (8 : Nat)) }
+setup_fixed_benchmark runMvRank12 where { polyConfig with expectedHash := some (hash (12 : Nat)) }
+setup_fixed_benchmark runMvCert4 where { polyConfig with expectedHash := some (hash (4 : Nat)) }
+setup_fixed_benchmark runMvCert8 where { polyConfig with expectedHash := some (hash (8 : Nat)) }
+setup_fixed_benchmark runMvCert12 where { polyConfig with expectedHash := some (hash (12 : Nat)) }
+setup_fixed_benchmark runMvCheck4 where { polyConfig with expectedHash := some (hash true) }
+setup_fixed_benchmark runMvCheck8 where { polyConfig with expectedHash := some (hash true) }
+setup_fixed_benchmark runMvCheck12 where { polyConfig with expectedHash := some (hash true) }
+setup_fixed_benchmark runMvDeficientRank4 where { polyConfig with expectedHash := some (hash (2 : Nat)) }
+setup_fixed_benchmark runMvDeficientRank8 where { polyConfig with expectedHash := some (hash (4 : Nat)) }
+setup_fixed_benchmark runMvDeficientRank12 where { polyConfig with expectedHash := some (hash (6 : Nat)) }
+setup_fixed_benchmark runMvDeficientCert4 where { polyConfig with expectedHash := some (hash (2 : Nat)) }
+setup_fixed_benchmark runMvDeficientCert8 where { polyConfig with expectedHash := some (hash (4 : Nat)) }
+setup_fixed_benchmark runMvDeficientCert12 where { polyConfig with expectedHash := some (hash (6 : Nat)) }
+setup_fixed_benchmark runMvDeficientCheck4 where { polyConfig with expectedHash := some (hash true) }
+setup_fixed_benchmark runMvDeficientCheck8 where { polyConfig with expectedHash := some (hash true) }
+setup_fixed_benchmark runMvDeficientCheck12 where { polyConfig with expectedHash := some (hash true) }
 
 end Hex.RankBench
 
