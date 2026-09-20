@@ -587,8 +587,7 @@ lean_lib HexPrimalityConstructionProbe where
 
 lean_lib HexPrimalityElabProbeScientific where
   srcDir := "bench"
-  globs := #[.submodules `HexPrimality.ProofProbe.PMinusOne,
-    `HexPrimalityBench.Inputs, `HexPrimality.ProofProbe.Support,
+  globs := #[`HexPrimalityBench.Inputs, `HexPrimality.ProofProbe.Support,
     `HexPrimality.ProofProbe.CoreBaseline,
     `HexPrimality.ProofProbe.Bit31.Input,
     `HexPrimality.ProofProbe.Bit31.Search,
@@ -619,7 +618,7 @@ lean_lib HexPrimalityElabProbeScientific where
     `HexPrimality.ProofProbe.Bit512.Search,
     `HexPrimality.ProofProbe.Bit512.Literal,
     `HexPrimality.ProofProbe.Bit512.Replay,
-    `HexPrimality.ProofProbe.Bit512.Tactic].map Glob.one
+    `HexPrimality.ProofProbe.Bit512.Tactic].map Glob.one ++ #[.submodules `HexPrimality.ProofProbe.PMinusOne]
 
 lean_lib HexIntFactorKernelProbe where
   srcDir := "bench"
