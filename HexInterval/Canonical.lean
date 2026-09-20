@@ -173,6 +173,15 @@ def betweenWithin (limit : EndpointLimit)
   ofRawWithin limit
     (.bounds (.finite lower lowerStrict) (.finite upper upperStrict))
 
+/-- A successful finite constructor exposes the normalized exact input cuts. -/
+theorem view_betweenWithin_ready {limit : EndpointLimit} {lower upper : Dyadic}
+    {lowerStrict upperStrict : Bool} {interval : Hex.Interval}
+    (h : betweenWithin limit lower lowerStrict upper upperStrict = .ready interval) :
+    interval.view =
+      (Raw.bounds (.finite lower lowerStrict) (.finite upper upperStrict)).normalizeUnchecked := by
+  unfold betweenWithin at h
+  exact view_ofRawWithin_ready h
+
 /-- A successful checked closed finite constructor agrees with the unchecked
 trusted-decoder construction on the same independently proved order. -/
 theorem eq_ordered_of_betweenWithin {limit : EndpointLimit} {lower upper : Dyadic}

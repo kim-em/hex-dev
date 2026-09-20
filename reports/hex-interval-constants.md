@@ -27,8 +27,8 @@ numerator over `n!`; it does not repeatedly recompute factorials.
 
 A `Certificate` contains the source identity, width bits, order, rational
 center/radius, and both closed dyadic cuts. Core theorems authenticate the
-accepted source, precision and exact approximation, and identify the retained
-arctangent power. Real containment and effective progress for the full
+accepted source, precision, positive order, exact approximation and normalized
+interval view, and identify the retained arctangent power. Real containment and effective progress for the full
 schedule belong to [#10342](https://github.com/kim-em/hex-dev/issues/10342).
 The runtime has no Mathlib import, callback assumption, proof placeholder,
 external planner or new trusted primitive. Unchecked formula and projection
@@ -84,7 +84,7 @@ CPU on the shared host; every completed sample is retained. These absolute
 values describe that host. The [raw export](bench-results/interval-constants/acceptance.json),
 [console output](bench-results/interval-constants/acceptance.log), and
 [context](bench-results/interval-constants/context.json) retain individual
-samples, CPU, host/load, exact command and source hashes. Source hashes identify
+samples, CPU, host/load, exact command, source hashes and executable digest. Source hashes identify
 the measured working tree independently of the export's base-commit label.
 
 ## Remaining obligations

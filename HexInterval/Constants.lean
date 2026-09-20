@@ -287,4 +287,36 @@ theorem checked_order {limits source bits certificate interval}
   · omega
 
 
+/-- A successful finite builder exposes the normalized exact input cuts. -/
+theorem build_view {limit lower upper interval}
+    (h : build (betweenWithin limit lower false upper false) = .ok interval) :
+    interval.view =
+      (Raw.bounds (.finite lower false) (.finite upper false)).normalizeUnchecked := by
+  cases hb : betweenWithin limit lower false upper false with
+  | ready value =>
+      have hv : value = interval := by simpa [hb, build] using h
+      subst value
+      exact view_betweenWithin_ready hb
+  | resourceLimit cost => simp [hb, build] at h
+
+/-- Replay returns the normalization of the certificate's two literal cuts. -/
+theorem checked_view {limits source bits certificate interval}
+    (h : check limits source bits certificate = .ok interval) :
+    interval.view =
+      (Raw.bounds (.finite certificate.lower false)
+        (.finite certificate.upper false)).normalizeUnchecked := by
+  apply build_view (limit := limits.arithmetic.endpoint)
+  have hs := checked_source h
+  have hb := checked_bits h
+  have ha := checked_approximation h
+  simp [check, hs, hb, ha, bind, Except.bind, throw, throwThe,
+    MonadExceptOf.throw] at h
+  split at h <;> try simp_all
+  split at h <;> try simp_all
+  split at h <;> try simp_all
+  split at h <;> try simp_all
+  split at h <;> try simp_all
+  split at h <;> try simp_all
+
+
 end Hex.Interval.Constants
