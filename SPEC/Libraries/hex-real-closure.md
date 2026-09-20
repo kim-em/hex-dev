@@ -65,16 +65,39 @@ hypotheses. An optional bounded sign attempt cannot supply coefficient order.
 Construct the tower by induction on its extension list. The predecessor
 already has lawful executable field/order operations before adjoining a root.
 Hex-sign-det over that predecessor supplies total sign at a validated root.
-At this level construct the selected-root equivalence on `DensePoly K`, prove
-its decision procedure and operation congruence, and lift the actual algorithms
-to the quotient `Value ctx`. Only then install its field/order instances and
-use it as coefficients at the next level. The core law statements are
-Mathlib-free; the companion proves their semantic premises from the selected
-root interpretation and imported correspondence. No proof-debt assumption is
-an implementation of this construction. Erased proofs may justify quotient
-lifting and termination; runtime operations cannot choose representatives or
-inverses noncomputably. Every coefficient sign needed by a level's sign
-algorithm belongs to a strictly earlier level.
+For its descriptor `d` and defining polynomial `p`, write
+`s(q) = SignDet.signAt d q` on predecessor polynomials. The core declares a
+proof-only `Root.Laws d : Prop` about this function, before constructing the
+new quotient. It requires the ordinary signs of constants, negation and
+products; signs in `{-1,0,1}`; zero sign of `p`; closure of zero-sign
+polynomials under addition; and positivity of a sum of a positive-sign and
+a nonnegative-sign polynomial. These statements mention only the predecessor
+field and the actual sign algorithm, never the field instance they construct.
+The companion proves them from `signAt_correct` and the descriptor's selected
+root interpretation. This is the proof-only law-adapter pattern used by
+[HexRealAlgebraic.Laws](../../HexRealAlgebraic/Laws.lean), with the laws stated
+before quotient construction to avoid circularity.
+
+Under `[Root.Laws d]`, the core proves selected-root equivalence, operation
+congruence and sign descent, constructs the quotient, and derives executable
+`DecidableEq`, `DecidableLE`, `DecidableLT` and the ordinary core field/order
+instances. All polynomial and quotient algebra in this implication is proved
+in the core; the unconditional semantic witness for `Root.Laws d` belongs to
+the companion. Raw inversion uses only predecessor gcd/xgcd and root signs.
+Its inverse identity and congruence follow in the constructed quotient ring
+before installing the field instance; inversion does not assume the field law
+it is meant to establish. Only then form `DensePoly` over the new value type.
+
+A context carries these erased proofs with its constructed stages. The
+companion supplies a universal law theorem for valid descriptors, rather than
+asking a runtime validator to check infinitely many laws. Consequently a
+closed algebraic-tower application must have those proofs available at
+instantiation: a Mathlib-free declaration parameterized by the laws is not a
+closed Mathlib-free application. Proof erasure preserves executable arithmetic
+but does not remove the elaboration/import requirement. No proof-debt
+assumption is an implementation. Runtime operations cannot choose
+representatives or inverses noncomputably. Every sign needed by a level's
+sign algorithm belongs to a strictly earlier level.
 
 Field operations keep a fixed context. Temporary gcd splitting is local to
 inversion; persistent refinements and base enlargement use explicit embeddings
@@ -111,15 +134,23 @@ In particular, a reducible `K[X]/(p)` is generally not a field and is not the
 public carrier. For `p=(X-1)(X+1)` selecting `α=1`, `X-1` denotes zero while
 its remainder modulo `p` is nonzero.
 
-Define `Value ctx` as the quotient of polynomial representatives by selected-root equality. Its semantic
-image is `K(α)` at a single level. Prove the relation is an equivalence,
-operations respect it, and the executable sign/equality test descends and
-decides quotient equality. Use quotient lifting of the actual executable
-operations, not classical selection of representatives or a noncomputable
-inverse. The computational law package supplies the erased premises for core
-field/order instances; the companion proves it and transports Mathlib
-instances along the interpretation. Inversion of zero in this total field is
-zero. A convenience checked inverse returns `none` exactly on zero.
+For a context equipped with these law proofs, define `Value ctx` as the
+quotient of polynomial representatives by selected-root equality. Its semantic
+image is `K(α)` at a single level. The core's equivalence, congruence and
+executable equality theorems are conditional on `Root.Laws d`; the companion
+discharges that premise and transports Mathlib instances along interpretation.
+Use quotient lifting of the actual executable operations, not classical
+selection of representatives or a noncomputable inverse. Inversion of zero
+in this total field is zero. A checked inverse returns `none` exactly on zero.
+
+In the lifted equality procedure, first check whether the same-context
+representatives are literally equal; if so, return equality immediately.
+Otherwise compute the zero sign of their difference at the selected root.
+Structural inequality never implies semantic inequality. Prove the optimized
+result equivalent to selected-root equality and invariant under replacement
+of representatives. Nested literal comparisons must imply predecessor value
+equality; hash equality alone is insufficient. This avoids unnecessary BKR
+calls for identical representatives during polynomial normalization.
 
 Operations on different contexts require a checked common extension and
 embeddings preserving both selected-root interpretations. Never equate root
@@ -465,7 +496,7 @@ Required theorem shapes, with the semantic parameters and coefficient laws above
 | `Replay.check_sound`, `checks` | Accepted result literals imply their claims; certificates produced for valid results pass the checker under the corresponding coefficient-fact proofs. |
 | `Query.specialize`, `Sample.specialize` | Finite replay signs/guards specialize at small positive real parameters; joint tables realize recorded nested constraints. |
 | `Sample.realize` | Finite-sign evidence proves the ordinary-real existential, including parameter realization where needed. |
-| `Value.field`, `Value.ordered`, `Union.realClosed` | Quotient descent and executable equality give core field/order laws; the compatible algebraic union is real closed. Mathlib instances belong in the companion. |
+| `Value.field`, `Value.ordered`, `Union.realClosed` | Under `Root.Laws` at each selected-root level, quotient descent and executable equality give core field/order laws. The companion supplies those premises, Mathlib instances and real-closedness of the compatible algebraic union. |
 | `Trivial.compare_eq`, `Trivial.roots_eq` | Rational-base comparison, arithmetic, `all`, sorted roots and multiplicities agree with the independent real-algebraic path. |
 
 ## Imported foundations and local correspondence

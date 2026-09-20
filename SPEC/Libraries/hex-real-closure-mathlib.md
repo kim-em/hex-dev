@@ -122,6 +122,23 @@ the imported Thom order rule. Different defining polynomials require the
 sign-det common squarefree-product comparison, not comparison of raw sign
 vectors or overlap of isolating intervals.
 
+Prove the computational owner's `Root.Laws d` for every valid descriptor
+using `SignDet.signAt_correct` and its unique selected root. The package
+states sign laws over predecessor polynomials only: constants, negation,
+products, zero/positive addition and vanishing of the defining polynomial.
+It contains no current-level quotient or field assumption. This witness
+instantiates the core's conditional equivalence, quotient descent, executable
+equality and field/order constructions. Keep it distinct from the
+noncomputable ambient interpretation; no runtime choice of representatives
+or inverses is hidden in the witness.
+
+The proof proceeds by tower induction. Current-level sign determination
+uses only the predecessor field and its established correspondence. The
+resulting `Root.Laws d` then justifies the next carrier and all its instances.
+A closed tower computation needs this companion witness at elaboration even
+though the compiled runtime erases it. Do not claim that the proof-only
+parameter alone supplies a closed Mathlib-free benchmark or demonstration.
+
 An element is a polynomial representative `q(α)` over the predecessor
 field, recursively interpreted. Degree below `degree p` is not required.
 For valid elements set `a ≈ b` iff `eval a = eval b`. Prove equivalence,
