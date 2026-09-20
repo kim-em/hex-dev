@@ -25,8 +25,9 @@ def main():
     journal = journal[:journal.rfind(b'\n') + 1]
     records = [json.loads(line) for line in journal.splitlines()]
     names = ['metadata.json', 'source.patch']
-    if (source / 'completion.json').exists():
-        names.append('completion.json')
+    for optional in ('completion.json', 'handoff.json'):
+        if (source / optional).exists():
+            names.append(optional)
     for row in records:
         names.extend(row['label'] + suffix for suffix in ('.json', '.txt')
                      if (source / (row['label'] + suffix)).exists())
