@@ -44,7 +44,7 @@ The [residual and eight-curve construction record](bench-results/hex-primality-e
 and [production 64-curve construction record](bench-results/hex-primality-ecm-paths-issue-10362.json)
 retain every completed call, including failures, complete commands and outputs,
 source and executable hashes, CPU placement, host load, and generated proof
-sources. The initial sweep driver is preserved at commit `686926a74`; the
+sources. The initial sweep driver is preserved at commit `e8d7891c4`; the
 later driver adds the `--paths-only` and `--curves` controls without changing
 timed operations. The initial record's parent commit predates its uncommitted
 prototype; its measured source hashes identify the implementation in that commit.
@@ -56,7 +56,7 @@ identifiers; the reachable commits above identify the measured file contents.
 runs. The embedded driver text matches the original recorded driver SHA-256;
 termination annotations describe the retained outputs and assertion failures.
 Measured samples, hashes, and original commit fields have not been rewritten.
-The production measurement sources are preserved at `a8505c266`. Subsequent
+The production measurement sources are preserved at `7d1763f16`. Subsequent
 provider hardening also caps the core callback when no attempt limit is supplied;
 these construction measurements always supply the explicit 1024-attempt limit.
 

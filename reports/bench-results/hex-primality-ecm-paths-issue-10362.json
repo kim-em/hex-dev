@@ -1686,6 +1686,6 @@
     ],
     "driver_source": "Embedded after the run; SHA-256 matches the originally recorded source_sha256 entry.",
     "prototype_layout": "The prototype continuation and provider lived in the hashed bench/HexPrimality/FieldProbe.lean; production modules were extracted later.",
-    "measured_lean_sources_commit": "a8505c266"
+    "measured_lean_sources_commit": "7d1763f16"
   }
 }
