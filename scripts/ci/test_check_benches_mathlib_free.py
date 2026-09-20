@@ -6,6 +6,7 @@ from __future__ import annotations
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -32,6 +33,29 @@ class BenchLintTests(unittest.TestCase):
     def manifest(self, root: Path, entries: str) -> tuple[Path, ...]:
         self.write(root, "libraries.yml", "libraries:\n" + entries)
         return lint._mathlib_probe_roots(root)
+
+    def test_shared_probe_sources_are_scanned_once_per_run(self) -> None:
+        tmp, root = self.make_repo()
+        with tmp:
+            self.write(root, "lakefile.lean", "")
+            self.write(root, "Helper.lean", "def main : IO Unit := pure ()\n")
+            for name in ("A", "B"):
+                self.write(root, f"bench/Probe/{name}.lean", "import Helper\n")
+            helper = root / "Helper.lean"
+            probes = [root / f"bench/Probe/{name}.lean" for name in ("A", "B")]
+            cache: dict[Path, list[str]] = {}
+            with mock.patch.object(lint, "_probe_violations", wraps=lint._probe_violations) as scan:
+                for probe in probes:
+                    self.assertEqual(
+                        lint._probe_closure_violations(probe, root, cache),
+                        [(helper, "defines main")],
+                    )
+                self.assertEqual(
+                    sum(call.args[0] == helper for call in scan.call_args_list), 1
+                )
+            # A new invocation must see an edit instead of reusing the old result.
+            helper.write_text("def ordinary : Nat := 1\n")
+            self.assertEqual(lint._probe_closure_violations(probes[0], root), [])
 
     def test_src_dir_and_module_import_modifiers_reach_mathlib(self) -> None:
         for import_line in (
