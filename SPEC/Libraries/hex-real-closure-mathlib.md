@@ -433,7 +433,7 @@ calls, decoding, coefficient proof arithmetic and allocation to one parent
 budget; check claimed sizes before expanding data.
 
 Make composition costs explicit. If level `d` has local replay cost `L_d`,
-`m_d` coefficient-proof references and lower bound `T_(d-1)`, an unshared
+`m_d` coefficient-proof references and lower-level upper bound `T_(d-1)`, an unshared
 upper bound is `T_d ≤ L_d + m_d*T_(d-1)` (use the sum of actual child costs
 for unequal children). Serialized evidence satisfies the analogous recurrence.
 A checked DAG may share identical bound claims, but report both unique node
