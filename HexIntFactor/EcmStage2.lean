@@ -17,6 +17,8 @@ and reports/hex-primality-ecm-stage2.md for the interval and work contracts. -/
 
 namespace Hex.Nat.Ecm
 
+namespace Internal
+
 structure State where
   n : Nat
   num : Nat
@@ -108,14 +110,16 @@ def stage2 (s : State) (b₁ b₂ : Nat) (checkGiants : Bool := false) : Trace :
     trace := { trace with batches := trace.batches + 1, result, recovery }
   return trace
 
+end Internal
+
 -- Requests are rejected rather than silently changed. Stage one has its existing cap.
 def validBounds (b₁ b₂ : Nat) : Bool := b₁ ≤ 524288 && b₂ ≤ 4194304
 
 private def searchCore (n sigma b₁ b₂ allowance : Nat) : EcmResult × Nat :=
   if allowance == 0 || !validBounds b₁ b₂ then (.noFactor, 0) else
-  let (result, saved) := start n sigma b₁
+  let (result, saved) := Internal.start n sigma b₁
   match saved with
-  | some s => if b₂ > b₁ && allowance > 1 then ((stage2 s b₁ b₂).result, 2)
+  | some s => if b₂ > b₁ && allowance > 1 then ((Internal.stage2 s b₁ b₂).result, 2)
       else (result, 1)
   | none => (result, 1)
 

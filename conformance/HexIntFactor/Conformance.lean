@@ -5,7 +5,6 @@ Authors: Kim Morrison
 -/
 
 import HexIntFactor
-import HexIntFactor.FieldConstruction
 import HexIntFactor.FieldReplay
 
 /-!

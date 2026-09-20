@@ -345,11 +345,15 @@ meta def certificateSyntax (cert : Hex.Nat.PrimeCert) : MetaM Term :=
     PrettyPrinter.delab (reifyPrimeCert cert)
 
 /-- The complete finite construction resource description used in diagnostics. -/
-meta def constructionDescription (b : Hex.Nat.ConstructionBudget) : String :=
+meta def constructionDescription (b : Hex.Nat.ConstructionBudget)
+    (provider : Option String := none) : String :=
+  let factoring := match provider with
+    | some name => s!"explicit factor provider {name} (its per-attempt bounds apply)"
+    | none => s!"p-minus-one bounds {b.factor.smoothBounds} at bases \
+        {b.factor.smoothBases}, {if b.factor.pMinusOneStage2 then "stage 2 at eight times bounds up to 4096, " else ""}{b.factor.primeBudget.rhoRestarts} rho restarts with \
+        {b.factor.primeBudget.rhoSteps} steps, ECM bounds [] and 0 curves"
   s!"maximum {b.maxBits} bits, recursive depth {b.maxDepth}, total attempts {b.maxAttempts}, factor fuel \
-    {b.factor.factorFuel}, p-minus-one bounds {b.factor.smoothBounds} at bases \
-    {b.factor.smoothBases}, {if b.factor.pMinusOneStage2 then "stage 2 at eight times bounds up to 4096, " else ""}{b.factor.primeBudget.rhoRestarts} rho restarts with \
-    {b.factor.primeBudget.rhoSteps} steps, ECM bounds [] and 0 curves, witness \
+    {b.factor.factorFuel}, {factoring}, witness \
     bases {b.witnessBases} then {b.randomWitnesses} random candidates, \
     at most {b.maxFactors} factors and {b.maxSubsets} subsets, sieve bound at most {b.maxSieveBound}"
 
@@ -452,10 +456,12 @@ meta def suggestPrime (predicate head : Name) (stx : Syntax) : Tactic.TacticM Un
           | `(tactic| primality? (factor := $source:term) (maxAttempts := $_:num)) =>
               suppliedFactor source
           | _ => pure Hex.Nat.Construction.factorSearch
-        let description := if stx.getKind == ``primalitySuggestFactorTac then
-            (constructionDescription budget).replace "ECM bounds [] and 0 curves"
-              "explicit factor provider (its per-attempt bounds apply)"
-          else constructionDescription budget
+        let provider := match stx with
+          | `(tactic| primality? (factor := $source:term)) => some source.raw.prettyPrint.pretty
+          | `(tactic| primality? (factor := $source:term) (maxAttempts := $_:num)) =>
+              some source.raw.prettyPrint.pretty
+          | _ => none
+        let description := constructionDescription budget provider
         match Hex.Nat.Construction.run n (Hex.Rand.ofSeed n) budget factor with
         | .error f =>
             if f.stop == .composite then

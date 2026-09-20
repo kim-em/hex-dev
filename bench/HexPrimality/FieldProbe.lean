@@ -64,25 +64,25 @@ def run (args : List String) : IO UInt32 := do
     for n in [4, 15, 1009, 1022117, 1000036000099, 2^127 - 1] do
       for sigma in [5:14] do
         for b in [0, 1, 16, 64, 256] do
-          unless (Ecm.start n sigma b).1 == ecmStage1 n sigma b do
+          unless (Ecm.Internal.start n sigma b).1 == ecmStage1 n sigma b do
             throw (IO.userError "stage-1 mismatch")
-    unless Ecm.flush 1081 0 #[0, 23] == (.factor 23, [1081, 23]) do
+    unless Ecm.Internal.flush 1081 0 #[0, 23] == (.factor 23, [1081, 23]) do
       throw (IO.userError "whole-leaf recovery")
-    unless Ecm.flush 1081 0 #[0] == (.whole, [1081]) do
+    unless Ecm.Internal.flush 1081 0 #[0] == (.whole, [1081]) do
       throw (IO.userError "unrecoverable whole")
     for (n, b₁, b₂, expected) in [
         (1022117, 16, 16, EcmResult.noFactor),
         (1022117, 16, 1024, .factor 1013),
         (1009, 16, 1024, .whole),
         (1000036000099, 64, 8192, .factor 1000033)] do
-      let some saved := (Ecm.start n 6 b₁).2 | throw (IO.userError "missing state")
-      let result := Ecm.stage2 saved b₁ b₂ true
+      let some saved := (Ecm.Internal.start n 6 b₁).2 | throw (IO.userError "missing state")
+      let result := Ecm.Internal.stage2 saved b₁ b₂ true
       unless result.result == expected && !result.oracleMismatch do
         throw (IO.userError s!"continuation fixture {n}: {repr result}")
     -- A prime modulus with a large surviving order reaches every requested prime.
-    let some saved := (Ecm.start (2^127 - 1) 6 64).2 | throw (IO.userError "missing prime state")
-    for endpoint in [67, 199, 211, 419, 1021, 8191] do
-      let result := Ecm.stage2 saved 64 endpoint true
+    let some saved := (Ecm.Internal.start (2^127 - 1) 6 64).2 | throw (IO.userError "missing prime state")
+    for endpoint in [67, 199, 211, 227, 229, 233, 419, 421, 431, 1021, 8191] do
+      let result := Ecm.Internal.stage2 saved 64 endpoint true
       let primes := (primesBelow (endpoint + 1)).filter (64 < ·)
       unless result.result == .noFactor && !result.oracleMismatch &&
           result.candidates == primes.length && result.lastPrime == endpoint &&
@@ -92,12 +92,23 @@ def run (args : List String) : IO UInt32 := do
         Ecm.search 1022117 6 16 1024 1 == (.noFactor, 1) &&
         Ecm.search 1022117 6 16 1024 2 == (.factor 1013, 2) do
       throw (IO.userError "attempt allowance")
-    for allowance in [0, 1, 2, 3, 8, 32] do
-      let a := { constructionBudget.factor with attemptLimit := some allowance }
-      let result := ecmFactorSearch 16 1024 8 false a 1022117 (Hex.Rand.ofSeed 1)
-      unless result.attempts ≤ allowance &&
-          result.raw.factors.foldl (fun acc (q,e) => acc*q^e) result.raw.residual == 1022117 do
-        throw (IO.userError "provider boundary")
+    unless (Ecm.Internal.start (2^127 - 1) 6 32768).1 ==
+        ecmStage1 (2^127 - 1) 6 32768 do
+      throw (IO.userError "shipped stage-1 bound")
+    unless (Ecm.Internal.start 15 6 524288).1 == ecmStage1 15 6 524288 &&
+        (Ecm.Internal.start 15 6 524289).1 == .noFactor &&
+        Ecm.validBounds 524288 4194304 && !Ecm.validBounds 524289 4194304 &&
+        !Ecm.validBounds 524288 4194305 &&
+        Ecm.search 15 6 524289 4194304 2 == (.noFactor, 0) &&
+        Ecm.search 15 6 524288 4194305 2 == (.noFactor, 0) do
+      throw (IO.userError "bound caps")
+    for n in [0, 1, 2, 1022117] do
+      for allowance in [0, 1, 2, 3, 8, 32] do
+        let a := { constructionBudget.factor with attemptLimit := some allowance }
+        let result := ecmFactorSearch 16 1024 8 false a n (Hex.Rand.ofSeed 1)
+        unless result.attempts ≤ allowance &&
+            result.raw.factors.foldl (fun acc (q,e) => acc*q^e) result.raw.residual == n do
+          throw (IO.userError "provider boundary")
     IO.println "ECM continuation checks passed"
     return 0
   if let ["ecm2", nArg, sigmaArg, b1Arg, b2Arg] := args then
@@ -106,10 +117,10 @@ def run (args : List String) : IO UInt32 := do
     let input ← IO.mkRef (n, sigma, b₁, b₂)
     let (n, sigma, b₁, b₂) ← input.get
     let begin ← IO.monoNanosNow
-    let saved ← IO.mkRef (Ecm.start n sigma b₁)
+    let saved ← IO.mkRef (Ecm.Internal.start n sigma b₁)
     let (first, saved) ← saved.get
     let middle ← IO.monoNanosNow
-    let second ← IO.mkRef (saved.map fun s => Ecm.stage2 s b₁ b₂)
+    let second ← IO.mkRef (saved.map fun s => Ecm.Internal.stage2 s b₁ b₂)
     let second ← second.get
     let endTime ← IO.monoNanosNow
     IO.println (Lean.Json.mkObj [

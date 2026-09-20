@@ -27,6 +27,7 @@ The callback honors the remaining total attempt limit and never accepts an
 externally asserted prime. The constructor recursively certifies candidates. -/
 def ecmFactorSearch (b₁ : Nat := 32768) (b₂ : Nat := 524288)
     (curves : Nat := 64) (trace : Bool := false) : FactorSearch := fun allocation n r => Id.run do
+  if n == 0 then return ⟨⟨[], 0⟩, r, 0⟩
   let limit := allocation.attemptLimit.getD 1024
   let allocation := { allocation with attemptLimit := some limit }
   let initial := Construction.factorSearch allocation n r

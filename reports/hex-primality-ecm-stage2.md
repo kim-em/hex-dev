@@ -32,10 +32,12 @@ python3 scripts/bench/primality_ecm_sweep.py \
 python3 scripts/bench/primality_ecm_sweep.py --paths-only --curves 64 \
   --output /tmp/ecm-paths.json
 lake build HexPrimality.Conformance HexIntFactor.Conformance \
-  hexprimality_bench hexintfactor_bench hexprimality_field_probe
+  HexIntFactorFieldConformance hexprimality_bench hexintfactor_bench \
+  hexintfactor_field_bench hexprimality_field_probe
 .lake/build/bin/hexprimality_field_probe verify-ecm2
 .lake/build/bin/hexprimality_bench verify
 .lake/build/bin/hexintfactor_bench verify
+.lake/build/bin/hexintfactor_field_bench verify
 ```
 
 The [residual and eight-curve construction record](bench-results/hex-primality-ecm-stage2-issue-10362.json), [initial 64-curve record](bench-results/hex-primality-ecm-prototype-paths-issue-10362.json),
@@ -46,6 +48,14 @@ sources. The initial sweep driver is preserved at commit `686926a74`; the
 later driver adds the `--paths-only` and `--curves` controls without changing
 timed operations. The initial record's parent commit predates its uncommitted
 prototype; its measured source hashes identify the implementation in that commit.
+In that prototype, the complete continuation and provider lived inside the hashed
+`bench/HexPrimality/FieldProbe.lean`, before extraction into production modules.
+The `commit` fields preserve the original worktree HEADs, including pre-rebase
+identifiers; the reachable commits above identify the measured file contents.
+`completion`, `driver_source`, and `provenance_annotations` were added after the
+runs. The embedded driver text matches the original recorded driver SHA-256;
+termination annotations describe the retained outputs and assertion failures.
+Measured samples, hashes, and original commit fields have not been rewritten.
 The production measurement sources are preserved at `a8505c266`. Subsequent
 provider hardening also caps the core callback when no attempt limit is supplied;
 these construction measurements always supply the explicit 1024-attempt limit.
@@ -61,7 +71,8 @@ AB block only and are not presented as a completed paired comparison.
 Each run automatically chooses one CPU and pins all measured subprocesses.
 Two trial-major blocks alternate adjacent AB/BA arms. No completed observation
 is rejected for host activity. Repeated deterministic schedules are timing
-replicates, not independent random trials. The 64-curve path experiment extends
+replicates, not independent random trials. The two secp256k1 successes repeat
+the single successful parameter sigma 67; they are not two distinct curves. The 64-curve path experiment extends
 the declared allocation; it is not a discarded/replaced eight-curve run.
 
 Native construction timing excludes parsing, startup, trace I/O, and formatting,
@@ -158,6 +169,12 @@ one accumulation). Small primes instead cost `c(q)+1`. These are conservative
 full-interval budgets; early factor/whole exits can use less. Ordinary stage 2
 uses at most `ceil(L/32)+32` gcds, with two additional stage-1/setup gcds.
 
+Each curve enumerates its own stage-1 and stage-2 primes. All 210 baby points
+and the step use independent scalar ladders, including residues not coprime to
+210. This deliberately simple implementation is what the operation counts and
+timings measure; shared prime tables and a reduced baby table are possible
+future optimizations, not assumed savings in these results.
+
 Working residues comprise 210 baby points, the step, adjacent giants, scalar
 ladder temporaries, a 32-term buffer, and one accumulator: `O(210+32+log B₂)`
 residues of modulus size. Enumeration additionally retains `O(B₂)` sieve bits
@@ -213,7 +230,9 @@ cell, including successful early exits; they exclude subprocess startup.
 
 Thus stage 2 adds successful curves at a comparable declared multiplication
 allocation, including the secp256k1 split absent from the stage-1 arm. It does
-not uniformly reduce elapsed time. The larger stage-1 schedule also finds
+not uniformly reduce elapsed time. The two-stage sigma range is a subset of
+the stage-1 range, and continues the identical stage-1 operation after gcd one;
+the arms are nested deterministic schedules, not independent samples. The larger stage-1 schedule also finds
 useful P-384 and Curve448 factors; this evidence does not establish that stage 2
 is necessary for every target. Nor do repeated fixed curves estimate a general
 success probability. The eight-curve construction profile exhausts on all three
@@ -301,10 +320,20 @@ certificate illustrates the shared-host variation; no P-521 speedup is claimed.
 
 `HexIntFactor.FieldConstruction` pins the three complete `Try this:` messages.
 `HexIntFactor.FieldReplay` imports only the checker and proves each target
-with ordinary `decide +kernel`. Six fixed native registrations in
-`HexIntFactor.FieldBench` test construction attempt hashes and checker results;
-P-521 retains its existing fixed registrations. The 120-second construction
-caps are operational safeguards, not scientific latency claims.
+with ordinary `decide +kernel`. Three fixed native checker registrations in
+`HexIntFactor.FieldBench` run in the ordinary smoke gate. The separate manual
+`hexintfactor_field_bench` target adds three fixed native construction attempt
+hashes. P-521 retains its existing fixed registrations. The benchmark runner's
+120-second construction caps apply to measurement, not `verify`; full searches
+are therefore excluded from the routine benchmark smoke gate.
+
+The full tactic-output module took approximately 218–243 seconds in local
+builds. These unpaired build observations include interpreted search and are
+operational context, separate from the paired literal render/elaboration and
+kernel measurements above. CI builds `HexIntFactorFieldConformance` when the
+library filter includes HexIntFactor (or all libraries); ordinary checker
+replay remains in unfiltered conformance. This retains the exact emitted-output
+guards without charging unrelated PRs for all three full searches.
 
 This evidence supports a bounded explicit route with direct `Nat` arithmetic;
 it does not justify replacing the default portfolio or raising other budgets.

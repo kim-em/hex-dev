@@ -83,11 +83,14 @@ example : Hex.Nat.Prime 72683872429560689054932380788800453435364136068731806028
   primality? (factor := Hex.Nat.ecmFactorSearch)
 
 -- An open provider expression is rejected before even a table-prime search.
-example (factor : Hex.Nat.FactorSearch) : Hex.Nat.Prime 7 := by
-  fail_if_success primality? (factor := factor)
+example (_factor : Hex.Nat.FactorSearch) : Hex.Nat.Prime 7 := by
+  fail_if_success primality? (factor := _factor)
   primality
 
 -- The explicit route honors an exhausted total allowance.
+/--
+error: primality?: certificate construction for 100003 exhausted after 0 attempts (seed 100003; maximum 521 bits, recursive depth 32, total attempts 0, factor fuel 1024, explicit factor provider Hex.Nat.ecmFactorSearch (its per-attempt bounds apply), witness bases [2, 3, 5, 7, 11, 13, 17] then 32 random candidates, at most 32 factors and 4096 subsets, sieve bound at most 64)
+-/
+#guard_msgs in
 example : Hex.Nat.Prime 100003 := by
-  fail_if_success primality? (factor := Hex.Nat.ecmFactorSearch) (maxAttempts := 0)
-  primality
+  primality? (factor := Hex.Nat.ecmFactorSearch) (maxAttempts := 0)

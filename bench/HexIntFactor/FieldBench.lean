@@ -37,21 +37,6 @@ def runSecpChecker (_ : Unit) : IO Nat := replay secpRef
 def runP384Checker (_ : Unit) : IO Nat := replay p384Ref
 def runCurve448Checker (_ : Unit) : IO Nat := replay curveRef
 
-setup_fixed_benchmark runSecpConstruction where {
-  repeats := 5
-  maxSecondsPerCall := 120.0
-  expectedHash := some (Hashable.hash (145 : Nat))
-}
-setup_fixed_benchmark runP384Construction where {
-  repeats := 5
-  maxSecondsPerCall := 120.0
-  expectedHash := some (Hashable.hash (290 : Nat))
-}
-setup_fixed_benchmark runCurve448Construction where {
-  repeats := 5
-  maxSecondsPerCall := 120.0
-  expectedHash := some (Hashable.hash (259 : Nat))
-}
 setup_fixed_benchmark runSecpChecker where {
   repeats := 5
   maxSecondsPerCall := 5.0
