@@ -73,6 +73,10 @@ order premise is essential; the formula at zero is not a valid remainder.
 `ExpOne.error_le` uses `Nat.factorial_mul_pow_le_factorial` to prove
 `E_(n+1) ≤ 2/2^n`. `ExpOne.width_le` proves that order `k+4` gives analytic
 width at most `2^(-(k+1))`, reserving half the requested width for rounding.
+These linear schedules are sufficient termination witnesses, not required
+planner orders. A bounded planner can choose the least positive order whose
+exact radius meets its error budget, with `k+4` as a proved upper bound. The
+source theorems accept every valid order; the probes use smaller ones.
 
 The existing `Experiment/PntExpPoint.lean` and `PntExpNegative.lean` already
 use exponential remainders plus `Real.exp_nat_mul` for fixed source families.
@@ -101,7 +105,11 @@ certificate must establish:
 2. Positive exp order; valid exact arithmetic denominators and recomputed
    centers/remainders.
 3. Both exact outward inequalities `lower ≤ P_n-E_n` and
-   `P_n+E_n ≤ upper`, plus `upper-lower ≤ 2^(-k)`.
+   `P_n+E_n ≤ upper`, plus `upper-lower ≤ 2^(-k)`. The proposed producer
+   uses endpoint grid `p = k+2`, while `k` is the requested width bound.
+   Authenticate this grid claim separately: a canonical dyadic can have
+   stored precision below `p` and still belong to that grid. The literal
+   proof probes instead use the coarser grid `p = k` for their six cuts.
 4. Finite admitted endpoints and successful checked interval construction.
 5. Preflighted approximation order, integer work/size, allocation, endpoint
    height/alignment/precision, and literal replay limits on arbitrary inputs.
@@ -119,7 +127,10 @@ The analytic width estimate is not the full effective provider contract.
 That contract must prove a computable resource envelope makes production and
 literal replay succeed for each `k`, including integer intermediate sizes and
 endpoint limits. Rounding on the `2^(-(k+2))` grid contributes at most two
-grid units, provided its per-cut rounding error is proved. Generic rejection
+grid units, provided its per-cut rounding error is proved. Core uses the
+positive precision argument `p = k+2`: `Dyadic.ofIntWithPrec i p` represents
+`i * 2^(-p)`. The minus sign belongs to the grid exponent, not the precision
+argument. Generic rejection
 of insufficient resources must remain distinct from mathematical failure.
 
 The next runtime-dependent tranche is the cast/rounding bridge and soundness
@@ -139,12 +150,19 @@ fixture has width exactly `2^(-k)`, proves `π-4<0` and `2<exp(1)<3`, and
 checks the theorem axiom sets against `{propext, Classical.choice, Quot.sound}`.
 The smallest probe also demonstrates why the exp theorem must reject order
 zero: its formal zero-order cuts would be `[0,0]`. The largest probe audits
-every public source theorem, including the two width schedules.
+every public source theorem, including the two width schedules. The sweep
+parser records the first unguarded axiom line (`pi_bounds`); the unguarded
+`exp_bounds` line remains in the raw compiler log. The guarded checks, not
+that single parsed line, enforce every theorem's complete axiom set.
 
 `scripts/oracle/interval_constants_arb.py` reads the exact cuts from these
 Lean declarations and checks that independently computed 256-bit Arb balls
 lie strictly inside them. It checks each fixture's requested width separately.
 CI uses the existing python-flint 0.9.0 pin and existing conformance job.
+The source-proof entry in `scripts/ci/run_oracles.sh` has no compiled emitter;
+its registry ownership makes oracle-only edits select HexIntervalMathlib.
+Classification and runner tests cover selection, the absence of a Lake build,
+and propagation of oracle failure.
 These checks validate numerical source fixtures, not a generated runtime
 certificate or its resource behavior.
 

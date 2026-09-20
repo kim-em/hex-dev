@@ -30,7 +30,11 @@ work_dir="$(mktemp -d "${TMPDIR:-/tmp}/hex-oracles.XXXXXX")"
 trap 'rm -rf -- "$work_dir"' EXIT
 
 # Tuples are encoded as `lib|emit_exe|oracle_script|fixture_path`.
+# A source-proof oracle reads its checked Lean fixtures directly and has no
+# compiled producer: both emit_exe and fixture_path are `-` in that case.
 ORACLES=(
+  # Analytic source proofs, independently checked with Arb.
+  "HexIntervalMathlib|-|scripts/oracle/interval_constants_arb.py|-"
   # python-flint backed
   "HexPoly|hexpoly_emit_fixtures|scripts/oracle/poly_flint.py|conformance-fixtures/HexPoly/poly.jsonl"
   "HexPolyFast|hexpolyfast_emit_fixtures|scripts/oracle/polyfast_flint.py|conformance-fixtures/HexPolyFast/polyfast.jsonl"
@@ -152,7 +156,9 @@ failed=0
 emits=()
 for entry in "${FILTERED_ORACLES[@]}"; do
   IFS='|' read -r _ emit _ _ <<<"$entry"
-  emits+=("$emit")
+  if [ "$emit" != "-" ]; then
+    emits+=("$emit")
+  fi
 done
 if [ "${#emits[@]}" -gt 0 ] && ! lake build "${emits[@]}"; then
   echo "FAIL: building emit executables" >&2
@@ -170,6 +176,19 @@ run_tuple() {
   echo "=========================================================="
   echo ">>> $lib :: emit=$emit oracle=$oracle"
   echo "=========================================================="
+
+  if [ "$emit" = "-" ]; then
+    if [ "$fixture" != "-" ]; then
+      echo "FAIL: $lib :: source-proof oracle must read its own fixtures"
+      return 1
+    fi
+    if ! python3 "$oracle"; then
+      echo "FAIL: $lib :: source-proof oracle $oracle reported a divergence"
+      return 1
+    fi
+    echo "OK: $lib"
+    return 0
+  fi
 
   if ! ".lake/build/bin/$emit" >"$fresh"; then
     echo "FAIL: $lib :: $emit exited non-zero"

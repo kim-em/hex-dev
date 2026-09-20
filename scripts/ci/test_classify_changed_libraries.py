@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import os
+import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -86,6 +89,42 @@ class ClassifyChangedLibrariesTests(unittest.TestCase):
             owners["scripts/oracle/matrix_carriers.py"],
             {"HexBareiss", "HexDeterminant", "HexCharPoly", "HexDet", "HexGenericRank", "HexPolyDet"},
         )
+
+    def test_source_proof_oracle_selects_companion(self) -> None:
+        result = classify_paths(
+            ["scripts/oracle/interval_constants_arb.py"], oracle_owners=load_oracle_owners()
+        )
+        self.assertFalse(result.all_libraries)
+        self.assertEqual(result.libraries, ("HexIntervalMathlib",))
+
+    def test_source_proof_oracle_runner(self) -> None:
+        # Exercise the live registry and runner without requiring Arb here.
+        # There must be no Lake build; a failed oracle must fail the runner.
+        root = Path(__file__).resolve().parents[2]
+        for oracle_status in (0, 7):
+            with self.subTest(oracle_status=oracle_status), tempfile.TemporaryDirectory() as tmp:
+                directory = Path(tmp)
+                for name, body in {
+                    "lake": 'exit 99\n',
+                    "python3": 'printf "%s\\n" "$*" > "$ORACLE_CALL"\n'
+                               f'exit {oracle_status}\n',
+                }.items():
+                    script = directory / name
+                    script.write_text("#!/bin/sh\n" + body)
+                    script.chmod(0o755)
+                call = directory / "call"
+                result = subprocess.run(
+                    ["bash", "scripts/ci/run_oracles.sh"], cwd=root,
+                    env={**os.environ, "PATH": f"{tmp}:{os.environ['PATH']}",
+                         "HEX_LIBRARY_FILTER": "HexIntervalMathlib",
+                         "HEX_REQUIRE_ORACLES": "0", "HEX_ORACLE_JOBS": "1",
+                         "ORACLE_CALL": str(call)},
+                    capture_output=True, text=True,
+                )
+                self.assertEqual(result.returncode == 0, oracle_status == 0,
+                                 result.stdout + result.stderr)
+                self.assertEqual(call.read_text().strip(),
+                                 "scripts/oracle/interval_constants_arb.py")
 
 
 if __name__ == "__main__":

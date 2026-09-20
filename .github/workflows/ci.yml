@@ -497,11 +497,6 @@ jobs:
               "$PWD/.lake/build/bin/hexnumberfield_quadratic" regression 20
           fi
           bash scripts/ci/run_oracles.sh
-          # These source-proof fixtures have no compiled producer. Read the
-          # exact dyadic cuts from the checked Lean probes for the Arb cross-check.
-          if selected HexIntervalMathlib; then
-            python3 scripts/oracle/interval_constants_arb.py
-          fi
           # Deterministic anti-regression gate: a recombination blow-up,
           # unexpected method downgrade, or unexpected decline/fallback fails the
           # merge even though it would still factor correctly.
