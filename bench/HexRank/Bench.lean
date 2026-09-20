@@ -5,6 +5,8 @@ Authors: Kim Morrison
 -/
 
 import HexRank
+import HexBasic.Rand
+import Hex.BenchOracle.Flint
 import HexResultant.ExactDiv
 import HexMvGcd
 import Lean.Data.Json
@@ -19,30 +21,26 @@ seeded and deterministic. Every family registers the producer's first pass
 (`checkRank`, with certificate construction hoisted into `prep`) as separate
 targets, so that the ratio between producer and checker is a recorded number.
 
-Scientific registrations and declared models:
+Scientific integer parameters are 16, 24, 32, 48, 64, 96, 128, 192, 256,
+with six trial-major outer trials. Preparation validates rank and certificates;
+shifted fixtures validate the first pivot after their zero-column prefix.
 
-* `dense-full-rank`: square matrices of small random entries, rank `n`.
-  Mode 2, one-sided upper bound `n^5 (log n + 3)^2`: the operation count is `Θ(n^3)` and
-  every operand is a minor of size up to `n`, whose bit length grows
-  as `O(n (log n + log B))` by Hadamard's bound. Here the input
-  is a triangular product with `B ≤ 25n`, rather than entrywise bounded
-  random data. The family/model audit is recorded in the report.
-* `low-rank-large-coefficients`: products of `n × r` and `r × n` matrices at
-  fixed `r ∈ {2, 8}` with 64- and 1024-bit entries. Mode 1, `n^2`: the count
-  is `Θ(r · n · n)` and every operand is a minor of size at most `r` of a
-  matrix with entries of fixed bit size.
-* `rank-deficient-by-construction`: square products of rank `n - 1` and
-  `n / 2` with small entries, including a variant whose pivot columns are
-  not the leading columns, so that the skip path is on the measured route.
-  The existing registrations use the one-sided Hadamard bound (mode 2);
-  their identity pivot blocks need a separate strongest-mode audit before
-  they can supply Phase-4 evidence.
-* `polynomial`: `DensePoly Rat` and `MvPoly 2 Int` matrices of small fixed
-  support, full rank and rank deficient. Mode 3, fixed registrations.
+* `dense-full-rank`: splitmix64 entries in `[-5,5]`, checked full rank.
+  Mode 2, `hadamardBound n`: arbitrary growing minors and GMP's changing
+  arithmetic regimes prevent a tight family-specific time power law.
+* `low-rank-large-coefficients`: products of dense factors with fixed
+  `r ∈ {2,8}` and factor bit sizes 64 or 1024. Mode 1, `n * n`: both
+  operand sizes and r are independent of n.
+* `rank-deficient-by-construction`: dense products with r=n-1 or n/2,
+  including a zero-column prefix variant. Mode 2, `productBound n`,
+  accounting for both growing minors and the product entry bound B≤25n.
+* `polynomial`: `DensePoly Rat` and `MvPoly 2 Int` at fixed small support,
+  full rank and deficient. Fixed registrations await comparator budgets.
 
 The external comparators (FLINT `fmpz_mat.rank` and `fmpq_mat.rank`, SymPy
 `DomainMatrix.rank` over the exact polynomial domain) are `informational`
-per the SPEC and are not yet wired; the Phase 4 report will add them.
+per the SPEC. Their fixed shared-input anchors are tagged `comparison`;
+external anchors are scheduled-only and excluded from default verification.
 -/
 
 namespace Hex.RankBench
@@ -58,13 +56,18 @@ def lcg (x : Nat) : Nat := (x * 6364136223846793005 + 1442695040888963407) % 2 ^
 def smallEntry (salt i j : Nat) : Int :=
   ((lcg (salt * 1000003 + i * 1009 + j) / 2 ^ 20) % 11 : Nat) - 5
 
-/-- An entry of about `bits` bits, assembled from 60-bit chunks. -/
+/-- Small integer entries use splitmix64, independently of the polynomial
+fixtures' retained LCG. The seed and coordinates determine every entry. -/
+def intEntry (salt i j : Nat) : Int :=
+  (((Rand.ofSeed (salt * 1000003 + i * 1009 + j)).next.1.toNat % 11 : Nat) : Int) - 5
+
+/-- Signed large entries from splitmix64 words, with exactly `bits` bits in
+absolute value when `bits > 0`. Factor size is independent of the dimension. -/
 def bigEntry (bits salt i j : Nat) : Int :=
-  let chunks := bits / 60 + 1
-  let value := (List.range chunks).foldl
-    (fun acc k => acc * 2 ^ 60 + lcg (salt * 7919 + i * 104729 + j * 1299709 + k) / 2 ^ 4) 0
-  let value := value % 2 ^ bits
-  if (i + j) % 2 = 0 then value else -value
+  let words := (Rand.ofSeed (salt * 7919 + i * 104729 + j * 1299709)).words ((bits + 63) / 64)
+  let value := words.1 % 2 ^ bits
+  let value := if bits == 0 then 0 else value ||| (1 <<< (bits - 1))
+  if (i + j) % 2 = 0 then (value : Int) else -(value : Int)
 
 /-! Inputs. Matrices are flattened row-major so the input types derive the
 instances the bench harness needs; the matrix is rebuilt inside the timed
@@ -75,7 +78,7 @@ structure MatInput where
   n : Nat
   m : Nat
   entries : Array Int
-  deriving Repr, BEq, Hashable
+  deriving Repr, BEq, Hashable, Inhabited
 
 /-- A flattened integer certificate, for the checker targets. -/
 structure CertInput where
@@ -85,7 +88,7 @@ structure CertInput where
   cols : Array Nat
   denom : Int
   adj : Array Int
-  deriving Repr, BEq, Hashable
+  deriving Repr, BEq, Hashable, Inhabited
 
 def matrixOfFlat (n m : Nat) (entries : Array Int) : Matrix Int n m :=
   Matrix.ofFn fun i j => entries.getD (i.val * m + j.val) 0
@@ -119,47 +122,50 @@ def certOfInput (input : CertInput) : Option (RankCert Int input.mat.n input.mat
     else none
   else none
 
-/-! Families. Every generator fixes the rank by construction: a product of
-unit triangular factors has determinant `1`, and a product `L * Rm` of an
-`n × r` factor whose first `r` rows are the identity and an `r × n` factor
-carrying an identity block has rank exactly `r`. Random products only bound
-the rank from above. -/
+/-! Integer scientific fixtures. Preparation checks the expected rank and
+certificate. The shifted family also checks that the first pivot follows the
+prescribed zero-column prefix. Verification's parameters 0 and 1 use n=16;
+scientific parameters are unchanged. -/
 
-/-- `dense-full-rank`: an `n × n` product of a unit lower and a unit upper
-triangular matrix of small random entries, so `det = 1` and the rank is `n`. -/
-def prepDense (n : Nat) : MatInput :=
-  let L : Matrix Int n n := Matrix.ofFn fun i j =>
-    if i = j then 1 else if j.val < i.val then smallEntry 1 i.val j.val else 0
-  let U : Matrix Int n n := Matrix.ofFn fun i j =>
-    if i = j then 1 else if i.val < j.val then smallEntry 2 i.val j.val else 0
-  toMatInput (L * U)
+/-- Fail a benchmark child on a malformed family rather than time the wrong
+rank. This work is forced by the harness before its timed loop. -/
+def checkedInput (expected shift : Nat) (input : MatInput) : MatInput :=
+  let A := matrixOfFlat input.n input.m input.entries
+  let c := rankCert A
+  if c.rank == expected && checkRank A c &&
+      (shift == 0 || c.cols.toArray[0]?.map Fin.val == some shift) then input
+  else panic! s!"integer fixture: expected rank {expected}, first pivot {shift}, got rank {c.rank}"
 
-/-- An `n × r` factor of rank `r`: the identity in its first `r` rows, `entry`
-below. -/
+/-- Dense square matrix with entries in `[-5,5]`. Full rank is checked in prep,
+not obtained by prescribing a unit triangular factorization. -/
+def prepDense (param : Nat) : MatInput :=
+  let n := max 16 param
+  checkedInput n 0 <| toMatInput <|
+    (Matrix.ofFn fun i j => intEntry 1 i.val j.val : Matrix Int n n)
+
+/-- A dense n by r factor; its product's exact rank is checked in prep. -/
 def leftFactor (n r : Nat) (entry : Nat → Nat → Int) : Matrix Int n r :=
-  Matrix.ofFn fun i j => if i.val < r then (if i.val = j.val then 1 else 0) else entry i.val j.val
+  Matrix.ofFn fun i j => entry i.val j.val
 
-/-- An `r × n` factor of rank `r`: zero in the first `shift` columns, the
-identity in the next `r`, `entry` after them. With `shift > 0` the pivot
-columns of the product are not its leading columns. -/
+/-- A dense r by n factor with a prescribed zero-column prefix. No identity
+pivot block is inserted: the elimination must compute nontrivial minors. -/
 def rightFactor (r n shift : Nat) (entry : Nat → Nat → Int) : Matrix Int r n :=
-  Matrix.ofFn fun i j =>
-    if j.val < shift then 0
-    else if j.val < shift + r then (if i.val + shift = j.val then 1 else 0)
-    else entry i.val j.val
+  Matrix.ofFn fun i j => if j.val < shift then 0 else entry i.val j.val
 
-/-- `low-rank-large-coefficients`: an `n × n` product of rank `r` with entries
-of `bits` bits. -/
-def prepLowRank (r bits n : Nat) : MatInput :=
-  toMatInput (leftFactor n r (bigEntry bits 3) * rightFactor r n 0 (bigEntry bits 5))
+/-- Fixed-rank product. Factors have `bits`-bit entries; matrix entries can
+have up to `2 * bits + ceil(log₂ r)` bits. -/
+def prepLowRank (r bits param : Nat) : MatInput :=
+  let n := max 16 param
+  checkedInput r 0 <| toMatInput
+    (leftFactor n r (bigEntry bits 3) * rightFactor r n 0 (bigEntry bits 5))
 
-/-- `rank-deficient-by-construction`: an `n × n` product of rank `rankOf n`
-with small entries; `shift` moves the pivot columns off the leading columns,
-so that the skip path runs first. -/
-def prepDeficient (rankOf : Nat → Nat) (shift : Bool) (n : Nat) : MatInput :=
+/-- Variable-rank product of small factors, with entries bounded by 25r. -/
+def prepDeficient (rankOf : Nat → Nat) (shifted : Bool) (param : Nat) : MatInput :=
+  let n := max 16 param
   let r := rankOf n
-  toMatInput
-    (leftFactor n r (smallEntry 7) * rightFactor r n (if shift then n - r else 0) (smallEntry 11))
+  let shift := if shifted then n - r else 0
+  checkedInput r shift <| toMatInput
+    (leftFactor n r (intEntry 7) * rightFactor r n shift (intEntry 11))
 
 def prepDenseCert (n : Nat) : CertInput :=
   let input := prepDense n
@@ -170,279 +176,6 @@ def prepLowRankCert (r bits n : Nat) : CertInput :=
 def prepDeficientCert (rankOf : Nat → Nat) (shift : Bool) (n : Nat) : CertInput :=
   let input := prepDeficient rankOf shift n
   toCertInput (matrixOfFlat input.n input.m input.entries)
-
-/-- The mode-2 upper bound `n^5 (log n + log B)^2` of the dense and
-rank-deficient families. Product entries satisfy `B ≤ 25n`, so
-`log n + log B = O(log n + 3)`; the expression is an asymptotic bound,
-not a literal Hadamard bit ceiling. -/
-def hadamardBound (n : Nat) : Nat :=
-  n * n * n * n * n * (Nat.log2 n + 3) * (Nat.log2 n + 3)
-
-/-! Targets. -/
-
-def runRowReduce (input : MatInput) : Nat :=
-  (rowReduceFF (matrixOfFlat input.n input.m input.entries)).profile.rank
-def runRankCert (input : MatInput) : Nat :=
-  (rankCert (matrixOfFlat input.n input.m input.entries)).rank
-def runCheckRank (input : CertInput) : Bool :=
-  match certOfInput input with
-  | some c => checkRank (matrixOfFlat input.mat.n input.mat.m input.mat.entries) c
-  | none => false
-
-/-! Per-family bindings. -/
-
-def prepLowRank2At64 := prepLowRank 2 64
-def prepLowRank8At64 := prepLowRank 8 64
-def prepLowRank2At1024 := prepLowRank 2 1024
-def prepLowRank8At1024 := prepLowRank 8 1024
-def prepLowRank2At64Cert := prepLowRankCert 2 64
-def prepLowRank8At1024Cert := prepLowRankCert 8 1024
-def prepDeficientMinusOne := prepDeficient (fun n => n - 1) false
-def prepDeficientHalf := prepDeficient (fun n => n / 2) false
-def prepDeficientHalfShifted := prepDeficient (fun n => n / 2) true
-def prepDeficientMinusOneCert := prepDeficientCert (fun n => n - 1) false
-def prepDeficientHalfShiftedCert := prepDeficientCert (fun n => n / 2) true
-
-def runRowReduceDense := runRowReduce
-def runRankCertDense := runRankCert
-def runCheckRankDense := runCheckRank
-def runRowReduceLowRank2At64 := runRowReduce
-def runRowReduceLowRank8At64 := runRowReduce
-def runRowReduceLowRank2At1024 := runRowReduce
-def runRowReduceLowRank8At1024 := runRowReduce
-def runRankCertLowRank2At64 := runRankCert
-def runRankCertLowRank8At1024 := runRankCert
-def runCheckRankLowRank2At64 := runCheckRank
-def runCheckRankLowRank8At1024 := runCheckRank
-def runRowReduceDeficientMinusOne := runRowReduce
-def runRowReduceDeficientHalf := runRowReduce
-def runRowReduceDeficientHalfShifted := runRowReduce
-def runRankCertDeficientMinusOne := runRankCert
-def runRankCertDeficientHalfShifted := runRankCert
-def runCheckRankDeficientMinusOne := runCheckRank
-def runCheckRankDeficientHalfShifted := runCheckRank
-
-/-! `dense-full-rank`: `Θ(n^3)` operations on operands of `O(n (log n + log B))`
-bits, so the declared one-sided upper bound is `n^5 (log n + log B)^2`
-(mode 2). -/
--- Cost model: `Θ(n^3)` ring operations, each on operands of `O(n (log n + log B))`
--- bits by Hadamard's bound, at schoolbook cost quadratic in the bit size, so the
--- declared one-sided upper bound is `O(n^5 (log n + 3)^2)` (mode 2):
--- product entries satisfy `B ≤ 25n`, so `log n + log B = O(log n + 3)`.
-setup_benchmark runRowReduceDense n => hadamardBound n
-  with prep := prepDense
-  where {
-    paramFloor := 16
-    paramCeiling := 64
-    paramSchedule := .custom #[16, 32, 64]
-    maxSecondsPerCall := 3.0
-  }
--- Cost model: `Θ(n^3)` ring operations, each on operands of `O(n (log n + log B))`
--- bits by Hadamard's bound, at schoolbook cost quadratic in the bit size, so the
--- declared one-sided upper bound is `O(n^5 (log n + 3)^2)` (mode 2):
--- product entries satisfy `B ≤ 25n`, so `log n + log B = O(log n + 3)`.
-setup_benchmark runRankCertDense n => hadamardBound n
-  with prep := prepDense
-  where {
-    paramFloor := 16
-    paramCeiling := 64
-    paramSchedule := .custom #[16, 32, 64]
-    maxSecondsPerCall := 3.0
-  }
--- Cost model: `Θ(n^3)` ring operations, each on operands of `O(n (log n + log B))`
--- bits by Hadamard's bound, at schoolbook cost quadratic in the bit size, so the
--- declared one-sided upper bound is `O(n^5 (log n + 3)^2)` (mode 2):
--- product entries satisfy `B ≤ 25n`, so `log n + log B = O(log n + 3)`.
-setup_benchmark runCheckRankDense n => hadamardBound n
-  with prep := prepDenseCert
-  where {
-    paramFloor := 16
-    paramCeiling := 64
-    paramSchedule := .custom #[16, 32, 64]
-    maxSecondsPerCall := 3.0
-  }
-
-/-! `low-rank-large-coefficients`: `Θ(r · n · n)` operations at fixed `r` on
-operands of fixed bit size, so the declared model is `n^2` (mode 1). -/
--- Cost model: `Θ(r · n · n)` ring operations at fixed `r` on operands whose
--- size is bounded independently of `n`, so the declared model is `n^2` (mode 1).
-setup_benchmark runRowReduceLowRank2At64 n => n * n
-  with prep := prepLowRank2At64
-  where {
-    paramFloor := 16
-    paramCeiling := 128
-    paramSchedule := .custom #[16, 32, 64, 128]
-    maxSecondsPerCall := 3.0
-  }
--- Cost model: `Θ(r · n · n)` ring operations at fixed `r` on operands whose
--- size is bounded independently of `n`, so the declared model is `n^2` (mode 1).
-setup_benchmark runRowReduceLowRank8At64 n => n * n
-  with prep := prepLowRank8At64
-  where {
-    paramFloor := 16
-    paramCeiling := 128
-    paramSchedule := .custom #[16, 32, 64, 128]
-    maxSecondsPerCall := 3.0
-  }
--- Cost model: `Θ(r · n · n)` ring operations at fixed `r` on operands whose
--- size is bounded independently of `n`, so the declared model is `n^2` (mode 1).
-setup_benchmark runRowReduceLowRank2At1024 n => n * n
-  with prep := prepLowRank2At1024
-  where {
-    paramFloor := 16
-    paramCeiling := 128
-    paramSchedule := .custom #[16, 32, 64, 128]
-    maxSecondsPerCall := 3.0
-  }
--- Cost model: `Θ(r · n · n)` ring operations at fixed `r` on operands whose
--- size is bounded independently of `n`, so the declared model is `n^2` (mode 1).
-setup_benchmark runRowReduceLowRank8At1024 n => n * n
-  with prep := prepLowRank8At1024
-  where {
-    paramFloor := 16
-    paramCeiling := 128
-    paramSchedule := .custom #[16, 32, 64, 128]
-    maxSecondsPerCall := 3.0
-  }
--- Cost model: `Θ(r · n · n)` ring operations at fixed `r` on operands whose
--- size is bounded independently of `n`, so the declared model is `n^2` (mode 1).
-setup_benchmark runRankCertLowRank2At64 n => n * n
-  with prep := prepLowRank2At64
-  where {
-    paramFloor := 16
-    paramCeiling := 128
-    paramSchedule := .custom #[16, 32, 64, 128]
-    maxSecondsPerCall := 3.0
-  }
--- Cost model: `Θ(r · n · n)` ring operations at fixed `r` on operands whose
--- size is bounded independently of `n`, so the declared model is `n^2` (mode 1).
-setup_benchmark runRankCertLowRank8At1024 n => n * n
-  with prep := prepLowRank8At1024
-  where {
-    paramFloor := 16
-    paramCeiling := 128
-    paramSchedule := .custom #[16, 32, 64, 128]
-    maxSecondsPerCall := 3.0
-  }
--- Cost model: `Θ(r · n · n)` ring operations at fixed `r` on operands whose
--- size is bounded independently of `n`, so the declared model is `n^2` (mode 1).
-setup_benchmark runCheckRankLowRank2At64 n => n * n
-  with prep := prepLowRank2At64Cert
-  where {
-    paramFloor := 16
-    paramCeiling := 128
-    paramSchedule := .custom #[16, 32, 64, 128]
-    maxSecondsPerCall := 3.0
-  }
--- Cost model: `Θ(r · n · n)` ring operations at fixed `r` on operands whose
--- size is bounded independently of `n`, so the declared model is `n^2` (mode 1).
-setup_benchmark runCheckRankLowRank8At1024 n => n * n
-  with prep := prepLowRank8At1024Cert
-  where {
-    paramFloor := 16
-    paramCeiling := 128
-    paramSchedule := .custom #[16, 32, 64, 128]
-    maxSecondsPerCall := 3.0
-  }
-
-/-! `rank-deficient-by-construction`: `Θ(r · n · n)` operations with `r`
-proportional to `n`, on minors whose bit size grows linearly in `n`, so the
-declared one-sided upper bound is `n^5 (log n + log B)^2` (mode 2). -/
--- Cost model: `Θ(r · n · n)` ring operations with `r` proportional to `n`; the
--- operands are minors of size up to `r`, of `O(n (log n + log B))` bits by
--- Hadamard's bound, so the declared one-sided upper bound is
--- `n^5 (log n + log B)^2` (mode 2), as for the dense family; input entries are
--- small but the intermediate minors are not.
-setup_benchmark runRowReduceDeficientMinusOne n => hadamardBound n
-  with prep := prepDeficientMinusOne
-  where {
-    paramFloor := 16
-    paramCeiling := 64
-    paramSchedule := .custom #[16, 32, 64]
-    maxSecondsPerCall := 3.0
-  }
--- Cost model: `Θ(r · n · n)` ring operations with `r` proportional to `n`; the
--- operands are minors of size up to `r`, of `O(n (log n + log B))` bits by
--- Hadamard's bound, so the declared one-sided upper bound is
--- `n^5 (log n + log B)^2` (mode 2), as for the dense family; input entries are
--- small but the intermediate minors are not.
-setup_benchmark runRowReduceDeficientHalf n => hadamardBound n
-  with prep := prepDeficientHalf
-  where {
-    paramFloor := 16
-    paramCeiling := 64
-    paramSchedule := .custom #[16, 32, 64]
-    maxSecondsPerCall := 3.0
-  }
--- Cost model: `Θ(r · n · n)` ring operations with `r` proportional to `n`; the
--- operands are minors of size up to `r`, of `O(n (log n + log B))` bits by
--- Hadamard's bound, so the declared one-sided upper bound is
--- `n^5 (log n + log B)^2` (mode 2), as for the dense family; input entries are
--- small but the intermediate minors are not.
-setup_benchmark runRowReduceDeficientHalfShifted n => hadamardBound n
-  with prep := prepDeficientHalfShifted
-  where {
-    paramFloor := 16
-    paramCeiling := 64
-    paramSchedule := .custom #[16, 32, 64]
-    maxSecondsPerCall := 3.0
-  }
--- Cost model: `Θ(r · n · n)` ring operations with `r` proportional to `n`; the
--- operands are minors of size up to `r`, of `O(n (log n + log B))` bits by
--- Hadamard's bound, so the declared one-sided upper bound is
--- `n^5 (log n + log B)^2` (mode 2), as for the dense family; input entries are
--- small but the intermediate minors are not.
-setup_benchmark runRankCertDeficientMinusOne n => hadamardBound n
-  with prep := prepDeficientMinusOne
-  where {
-    paramFloor := 16
-    paramCeiling := 64
-    paramSchedule := .custom #[16, 32, 64]
-    maxSecondsPerCall := 3.0
-  }
--- Cost model: `Θ(r · n · n)` ring operations with `r` proportional to `n`; the
--- operands are minors of size up to `r`, of `O(n (log n + log B))` bits by
--- Hadamard's bound, so the declared one-sided upper bound is
--- `n^5 (log n + log B)^2` (mode 2), as for the dense family; input entries are
--- small but the intermediate minors are not.
-setup_benchmark runRankCertDeficientHalfShifted n => hadamardBound n
-  with prep := prepDeficientHalfShifted
-  where {
-    paramFloor := 16
-    paramCeiling := 64
-    paramSchedule := .custom #[16, 32, 64]
-    maxSecondsPerCall := 3.0
-  }
--- Cost model: `Θ(r · n · n)` ring operations with `r` proportional to `n`; the
--- operands are minors of size up to `r`, of `O(n (log n + log B))` bits by
--- Hadamard's bound, so the declared one-sided upper bound is
--- `n^5 (log n + log B)^2` (mode 2), as for the dense family; input entries are
--- small but the intermediate minors are not.
-setup_benchmark runCheckRankDeficientMinusOne n => hadamardBound n
-  with prep := prepDeficientMinusOneCert
-  where {
-    paramFloor := 16
-    paramCeiling := 64
-    paramSchedule := .custom #[16, 32, 64]
-    maxSecondsPerCall := 3.0
-  }
--- Cost model: `Θ(r · n · n)` ring operations with `r` proportional to `n`; the
--- operands are minors of size up to `r`, of `O(n (log n + log B))` bits by
--- Hadamard's bound, so the declared one-sided upper bound is
--- `n^5 (log n + log B)^2` (mode 2), as for the dense family; input entries are
--- small but the intermediate minors are not.
-setup_benchmark runCheckRankDeficientHalfShifted n => hadamardBound n
-  with prep := prepDeficientHalfShiftedCert
-  where {
-    paramFloor := 16
-    paramCeiling := 64
-    paramSchedule := .custom #[16, 32, 64]
-    maxSecondsPerCall := 3.0
-  }
-
-/-! `polynomial`: fixed registrations (mode 3). Entries have support at most
-two, so the cost of a minor depends on the support and no one-parameter
-model is claimed. -/
 
 def ratPolyEntry (i j : Nat) : DensePoly Rat :=
   DensePoly.ofList [(smallEntry 13 i j : Rat) / (1 + (i + j) % 3 : Nat), (smallEntry 17 i j : Rat)]
@@ -498,6 +231,388 @@ def preparePoly [Lean.Grind.CommRing R] [DecidableEq R]
 
 def prepareRatPoly := preparePoly ratPolyInputs Hex.exactDiv ratPolyMatrix ratPolyDeficient
 def prepareMv := preparePoly mvInputs Hex.exactDiv mvMatrix mvDeficient
+
+
+
+/-- Hadamard (Bareiss 1968, SPEC Complexity): n³ operations on
+O(n(log n + log B))-bit integers, with schoolbook quadratic arithmetic.
+For dense entries B ≤ 5, this gives O(n⁵(log n + 3)²). -/
+def hadamardBound (n : Nat) : Nat :=
+  n * n * n * n * n * (Nat.log2 n + 3) * (Nat.log2 n + 3)
+
+/-- Product entries satisfy B ≤ 25r ≤ 25n, so the same published bound
+has log n + log B = O(2 log n + 5). The random pivot blocks have growing
+minors; a tight bit-cost power law is not assumed for GMP. -/
+def productBound (n : Nat) : Nat :=
+  n * n * n * n * n * (2 * Nat.log2 n + 5) * (2 * Nat.log2 n + 5)
+
+/-! Targets. -/
+
+def runRowReduce (input : MatInput) : Nat :=
+  (rowReduceFF (matrixOfFlat input.n input.m input.entries)).profile.rank
+def runRankCert (input : MatInput) : Nat :=
+  (rankCert (matrixOfFlat input.n input.m input.entries)).rank
+def runCheckRank (input : CertInput) : Bool :=
+  match certOfInput input with
+  | some c => checkRank (matrixOfFlat input.mat.n input.mat.m input.mat.entries) c
+  | none => false
+
+/-! Per-family bindings. -/
+
+def prepLowRank2At64 := prepLowRank 2 64
+def prepLowRank8At64 := prepLowRank 8 64
+def prepLowRank2At1024 := prepLowRank 2 1024
+def prepLowRank8At1024 := prepLowRank 8 1024
+def prepLowRank2At64Cert := prepLowRankCert 2 64
+def prepLowRank8At1024Cert := prepLowRankCert 8 1024
+def prepDeficientMinusOne := prepDeficient (fun n => n - 1) false
+def prepDeficientHalf := prepDeficient (fun n => n / 2) false
+def prepDeficientHalfShifted := prepDeficient (fun n => n / 2) true
+def prepDeficientMinusOneCert := prepDeficientCert (fun n => n - 1) false
+def prepDeficientHalfShiftedCert := prepDeficientCert (fun n => n / 2) true
+
+def runRowReduceDense := runRowReduce
+def runRankCertDense := runRankCert
+def runCheckRankDense := runCheckRank
+def runRowReduceLowRank2At64 := runRowReduce
+def runRowReduceLowRank8At64 := runRowReduce
+def runRowReduceLowRank2At1024 := runRowReduce
+def runRowReduceLowRank8At1024 := runRowReduce
+def runRankCertLowRank2At64 := runRankCert
+def runRankCertLowRank8At1024 := runRankCert
+def runCheckRankLowRank2At64 := runCheckRank
+def runCheckRankLowRank8At1024 := runCheckRank
+def runRowReduceDeficientMinusOne := runRowReduce
+def runRowReduceDeficientHalf := runRowReduce
+def runRowReduceDeficientHalfShifted := runRowReduce
+def runRankCertDeficientMinusOne := runRankCert
+def runRankCertDeficientHalfShifted := runRankCert
+def runCheckRankDeficientMinusOne := runCheckRank
+def runCheckRankDeficientHalfShifted := runCheckRank
+
+/-! `dense-full-rank`: `Θ(n^3)` operations on operands of `O(n (log n + log B))`
+bits, so the declared one-sided upper bound is `n^5 (log n + log B)^2`
+(mode 2). -/
+-- Cost model: `Θ(n^3)` ring operations, each on operands of `O(n (log n + log B))`
+-- bits by Hadamard's bound, at schoolbook cost quadratic in the bit size, so the
+-- declared one-sided upper bound is `O(n^5 (log n + 3)^2)` (mode 2):
+-- dense entries satisfy `B ≤ 5`, independently of n.
+setup_benchmark runRowReduceDense n => hadamardBound n
+  with prep := prepDense
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+-- Cost model: `Θ(n^3)` ring operations, each on operands of `O(n (log n + log B))`
+-- bits by Hadamard's bound, at schoolbook cost quadratic in the bit size, so the
+-- declared one-sided upper bound is `O(n^5 (log n + 3)^2)` (mode 2):
+-- dense entries satisfy `B ≤ 5`, independently of n.
+setup_benchmark runRankCertDense n => hadamardBound n
+  with prep := prepDense
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+-- Cost model: `Θ(n^3)` ring operations, each on operands of `O(n (log n + log B))`
+-- bits by Hadamard's bound, at schoolbook cost quadratic in the bit size, so the
+-- declared one-sided upper bound is `O(n^5 (log n + 3)^2)` (mode 2):
+-- dense entries satisfy `B ≤ 5`, independently of n.
+setup_benchmark runCheckRankDense n => hadamardBound n
+  with prep := prepDenseCert
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+/-! `low-rank-large-coefficients`: `Θ(r · n · n)` operations at fixed `r` on
+operands of fixed bit size, so the declared model is `n^2` (mode 1). -/
+-- Cost model: `Θ(r · n · n)` ring operations at fixed `r` on operands whose
+-- size is bounded independently of `n`, so the declared model is `n^2` (mode 1).
+setup_benchmark runRowReduceLowRank2At64 n => n * n
+  with prep := prepLowRank2At64
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+-- Cost model: `Θ(r · n · n)` ring operations at fixed `r` on operands whose
+-- size is bounded independently of `n`, so the declared model is `n^2` (mode 1).
+setup_benchmark runRowReduceLowRank8At64 n => n * n
+  with prep := prepLowRank8At64
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+-- Cost model: `Θ(r · n · n)` ring operations at fixed `r` on operands whose
+-- size is bounded independently of `n`, so the declared model is `n^2` (mode 1).
+setup_benchmark runRowReduceLowRank2At1024 n => n * n
+  with prep := prepLowRank2At1024
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+-- Cost model: `Θ(r · n · n)` ring operations at fixed `r` on operands whose
+-- size is bounded independently of `n`, so the declared model is `n^2` (mode 1).
+setup_benchmark runRowReduceLowRank8At1024 n => n * n
+  with prep := prepLowRank8At1024
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+-- Cost model: `Θ(r · n · n)` ring operations at fixed `r` on operands whose
+-- size is bounded independently of `n`, so the declared model is `n^2` (mode 1).
+setup_benchmark runRankCertLowRank2At64 n => n * n
+  with prep := prepLowRank2At64
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+-- Cost model: `Θ(r · n · n)` ring operations at fixed `r` on operands whose
+-- size is bounded independently of `n`, so the declared model is `n^2` (mode 1).
+setup_benchmark runRankCertLowRank8At1024 n => n * n
+  with prep := prepLowRank8At1024
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+-- Cost model: `Θ(r · n · n)` ring operations at fixed `r` on operands whose
+-- size is bounded independently of `n`, so the declared model is `n^2` (mode 1).
+setup_benchmark runCheckRankLowRank2At64 n => n * n
+  with prep := prepLowRank2At64Cert
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+-- Cost model: `Θ(r · n · n)` ring operations at fixed `r` on operands whose
+-- size is bounded independently of `n`, so the declared model is `n^2` (mode 1).
+setup_benchmark runCheckRankLowRank8At1024 n => n * n
+  with prep := prepLowRank8At1024Cert
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+/-! `rank-deficient-by-construction`: `Θ(r · n · n)` operations with `r`
+proportional to `n`, on minors whose bit size grows linearly in `n`, so the
+declared one-sided upper bound is `n^5 (log n + log B)^2` (mode 2). -/
+-- Cost model: `Θ(r · n · n)` ring operations with `r` proportional to `n`; the
+-- operands are minors of size up to `r`, of `O(n (log n + log B))` bits by
+-- Hadamard's bound, so the declared one-sided upper bound is
+-- `n^5 (log n + log B)^2` (mode 2), as for the dense family; input entries are
+-- small but the intermediate minors are not.
+setup_benchmark runRowReduceDeficientMinusOne n => productBound n
+  with prep := prepDeficientMinusOne
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+-- Cost model: `Θ(r · n · n)` ring operations with `r` proportional to `n`; the
+-- operands are minors of size up to `r`, of `O(n (log n + log B))` bits by
+-- Hadamard's bound, so the declared one-sided upper bound is
+-- `n^5 (log n + log B)^2` (mode 2), as for the dense family; input entries are
+-- small but the intermediate minors are not.
+setup_benchmark runRowReduceDeficientHalf n => productBound n
+  with prep := prepDeficientHalf
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+-- Cost model: `Θ(r · n · n)` ring operations with `r` proportional to `n`; the
+-- operands are minors of size up to `r`, of `O(n (log n + log B))` bits by
+-- Hadamard's bound, so the declared one-sided upper bound is
+-- `n^5 (log n + log B)^2` (mode 2), as for the dense family; input entries are
+-- small but the intermediate minors are not.
+setup_benchmark runRowReduceDeficientHalfShifted n => productBound n
+  with prep := prepDeficientHalfShifted
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+-- Cost model: `Θ(r · n · n)` ring operations with `r` proportional to `n`; the
+-- operands are minors of size up to `r`, of `O(n (log n + log B))` bits by
+-- Hadamard's bound, so the declared one-sided upper bound is
+-- `n^5 (log n + log B)^2` (mode 2), as for the dense family; input entries are
+-- small but the intermediate minors are not.
+setup_benchmark runRankCertDeficientMinusOne n => productBound n
+  with prep := prepDeficientMinusOne
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+-- Cost model: `Θ(r · n · n)` ring operations with `r` proportional to `n`; the
+-- operands are minors of size up to `r`, of `O(n (log n + log B))` bits by
+-- Hadamard's bound, so the declared one-sided upper bound is
+-- `n^5 (log n + log B)^2` (mode 2), as for the dense family; input entries are
+-- small but the intermediate minors are not.
+setup_benchmark runRankCertDeficientHalfShifted n => productBound n
+  with prep := prepDeficientHalfShifted
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+-- Cost model: `Θ(r · n · n)` ring operations with `r` proportional to `n`; the
+-- operands are minors of size up to `r`, of `O(n (log n + log B))` bits by
+-- Hadamard's bound, so the declared one-sided upper bound is
+-- `n^5 (log n + log B)^2` (mode 2), as for the dense family; input entries are
+-- small but the intermediate minors are not.
+setup_benchmark runCheckRankDeficientMinusOne n => productBound n
+  with prep := prepDeficientMinusOneCert
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+-- Cost model: `Θ(r · n · n)` ring operations with `r` proportional to `n`; the
+-- operands are minors of size up to `r`, of `O(n (log n + log B))` bits by
+-- Hadamard's bound, so the declared one-sided upper bound is
+-- `n^5 (log n + log B)^2` (mode 2), as for the dense family; input entries are
+-- small but the intermediate minors are not.
+setup_benchmark runCheckRankDeficientHalfShifted n => productBound n
+  with prep := prepDeficientHalfShiftedCert
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+def prepLowRank8At64Cert := prepLowRankCert 8 64
+
+def runRankCertLowRank8At64 := runRankCert
+
+-- Cost model: Fixed r and factor bit size bound every minor independently of n; Θ(n²) operations.
+setup_benchmark runRankCertLowRank8At64 n => n * n
+  with prep := prepLowRank8At64
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+def runCheckRankLowRank8At64 := runCheckRank
+
+-- Cost model: Fixed r and factor bit size bound every minor independently of n; Θ(n²) operations.
+setup_benchmark runCheckRankLowRank8At64 n => n * n
+  with prep := prepLowRank8At64Cert
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+def prepLowRank2At1024Cert := prepLowRankCert 2 1024
+
+def runRankCertLowRank2At1024 := runRankCert
+
+-- Cost model: Fixed r and factor bit size bound every minor independently of n; Θ(n²) operations.
+setup_benchmark runRankCertLowRank2At1024 n => n * n
+  with prep := prepLowRank2At1024
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+def runCheckRankLowRank2At1024 := runCheckRank
+
+-- Cost model: Fixed r and factor bit size bound every minor independently of n; Θ(n²) operations.
+setup_benchmark runCheckRankLowRank2At1024 n => n * n
+  with prep := prepLowRank2At1024Cert
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+def prepDeficientHalfCert := prepDeficientCert (fun n => n / 2) false
+
+def runRankCertDeficientHalf := runRankCert
+
+-- Cost model: Variable r=Θ(n), B≤25n: n³ operations at the Hadamard schoolbook bit bound (mode 2).
+setup_benchmark runRankCertDeficientHalf n => productBound n
+  with prep := prepDeficientHalf
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+def runCheckRankDeficientHalf := runCheckRank
+
+-- Cost model: Variable r=Θ(n), B≤25n: n³ operations at the Hadamard schoolbook bit bound (mode 2).
+setup_benchmark runCheckRankDeficientHalf n => productBound n
+  with prep := prepDeficientHalfCert
+  where {
+    paramFloor := 16
+    paramCeiling := 256
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256]
+    maxSecondsPerCall := 120.0
+    outerTrials := 6
+  }
+
+/-! `polynomial`: fixed registrations (mode 3). Entries have support at most
+two, so the cost of a minor depends on the support and no one-parameter
+model is claimed. -/
 
 /-- First pass, on a runtime input read from the prepared cache. -/
 def runRatPolyRankAt (k : Nat) (singular := false) : Unit → IO Nat := fun _ => do
@@ -610,6 +725,840 @@ setup_fixed_benchmark runMvDeficientCheck4 where { polyConfig with expectedHash 
 setup_fixed_benchmark runMvDeficientCheck8 where { polyConfig with expectedHash := some (hash true) }
 setup_fixed_benchmark runMvDeficientCheck12 where { polyConfig with expectedHash := some (hash true) }
 
+
+/-! Persistent exact-domain comparators. A fixed anchor shares an actual Lean
+matrix with the subprocess; serialization, decoding and validation are all in
+warmup. Only a rank request/reply is in each external timed call. -/
+
+open Lean in
+def jsonValue (result : Except String α) : IO α :=
+  match result with
+  | .ok value => pure value
+  | .error error => throw <| IO.userError error
+
+initialize comparator : IO.Ref (Option Hex.BenchOracle.Flint.PersistentComparator) ← IO.mkRef none
+initialize comparatorKey : IO.Ref String ← IO.mkRef ""
+
+def rankRequest (line : String) : IO Lean.Json := do
+  let child ← match ← comparator.get with
+    | some child => pure child
+    | none => do
+      let python := (← IO.getEnv "HEX_RANK_BENCH_PYTHON").getD "python3"
+      let script := (← IO.getEnv "HEX_RANK_BENCH_DRIVER").getD "scripts/oracle/rank_bench.py"
+      let child ← Hex.BenchOracle.Flint.PersistentComparator.spawn python #[script]
+      comparator.set (some child)
+      pure child
+  let reply ← jsonValue <| Lean.Json.parse (← child.requestLine line)
+  unless ← jsonValue (reply.getObjValAs? Bool "ok") do
+    throw <| IO.userError s!"rank comparator: {reply.compress}"
+  jsonValue (reply.getObjVal? "result")
+
+def externalRank (expected : Nat) : IO Nat := do
+  let result ← jsonValue <| Lean.fromJson? (α := Nat) (← rankRequest "{\"op\":\"rank\"}")
+  unless result == expected do
+    throw <| IO.userError s!"rank comparator: expected {expected}, got {result}"
+  return result
+
+def installMatrix (key record : String) (expected : Nat) : IO Unit := do
+  let _ ← rankRequest ("{\"op\":\"prepare\",\"record\":" ++ record ++ "}")
+  let _ ← externalRank expected
+  comparatorKey.set key
+
+def jsonMatrix {R : Type} {n m : Nat} (encode : R → Lean.Json) (A : Matrix R n m) : Lean.Json :=
+  .arr <| A.rows.toArray.map fun row => .arr (row.toArray.map encode)
+
+def scalarFixture (family n : Nat) : MatInput :=
+  match family with
+  | 0 => prepDense n
+  | 1 => prepLowRank 2 64 n
+  | 2 => prepLowRank 8 64 n
+  | 3 => prepLowRank 2 1024 n
+  | 4 => prepLowRank 8 1024 n
+  | 5 => prepDeficientMinusOne n
+  | 6 => prepDeficientHalf n
+  | _ => prepDeficientHalfShifted n
+
+def scalarRank (family n : Nat) : Nat :=
+  match family with
+  | 0 => n
+  | 1 | 3 => 2
+  | 2 | 4 => 8
+  | 5 => n - 1
+  | _ => n / 2
+
+structure ScalarInput where
+  family : Nat
+  dim : Nat
+  integer : Matrix Int dim dim
+  rational : Matrix Rat dim dim
+
+initialize scalarInputs : IO.Ref (Array ScalarInput) ← IO.mkRef #[]
+
+def prepareScalar (family n : Nat) : IO ScalarInput := do
+  if let some input := (← scalarInputs.get).find? (fun input => input.family == family && input.dim == n) then
+    return input
+  let flat := scalarFixture family n
+  let A := matrixOfFlat n n flat.entries
+  -- Nonzero row scaling preserves rank, while exercising genuine denominators.
+  let Q : Matrix Rat n n := Matrix.ofFn fun i j => (A[(i, j)] : Rat) / (1 + i.val % 7 : Nat)
+  let input := ScalarInput.mk family n A Q
+  scalarInputs.modify (·.push input)
+  return input
+
+def runScalarNative (family n : Nat) (rational : Bool) : IO Nat := do
+  let input ← prepareScalar family n
+  return if rational then rankWith Hex.exactDiv input.rational else rank input.integer
+
+def runScalarExternal (family n : Nat) (rational : Bool) : IO Nat := do
+  let expected := scalarRank family n
+  let key := s!"scalar-{family}-{n}-{rational}"
+  if (← comparatorKey.get) != key then
+    let input ← prepareScalar family n
+    let rows := if rational then jsonMatrix (fun q => Lean.toJson (q.num, q.den)) input.rational
+      else jsonMatrix Lean.toJson input.integer
+    let record := Lean.Json.mkObj [("kind", Lean.toJson (if rational then "ratmatrix" else "matrix")), ("rows", rows)]
+    installMatrix key record.compress expected
+  externalRank expected
+
+def encodeRatPoly (f : DensePoly Rat) : Lean.Json :=
+  Lean.Json.mkObj [("num", Lean.toJson (f.toArray.map (·.num))),
+    ("den", Lean.toJson (f.toArray.map (·.den)))]
+
+def encodeMv (f : MvPoly 2 Int Mono.lex) : Lean.Json :=
+  Lean.toJson (f.termsList.map fun (mono, coeff) => (mono.toList, coeff))
+
+def runPolyExternal (mv singular : Bool) (n : Nat) : IO Nat := do
+  let expected := if singular then n / 2 else n
+  let key := s!"poly-{mv}-{singular}-{n}"
+  if (← comparatorKey.get) != key then
+    let fields := [("rows", Lean.toJson n), ("cols", Lean.toJson n)]
+    let record ← if mv then do
+      let input ← prepareMv n singular
+      pure <| Lean.Json.mkObj (fields ++ [("kind", Lean.toJson "mvpolymatrix"),
+        ("arity", Lean.toJson (2 : Nat)), ("entries", jsonMatrix encodeMv input.matrix)])
+    else do
+      let input ← prepareRatPoly n singular
+      pure <| Lean.Json.mkObj (fields ++ [("kind", Lean.toJson "polymatrix"),
+        ("field", Lean.Json.mkObj [("type", Lean.toJson "Rat")]), ("entries", jsonMatrix encodeRatPoly input.matrix)])
+    installMatrix key record.compress expected
+  externalRank expected
+
+def runProtocolOverhead : IO Nat := do
+  jsonValue <| Lean.fromJson? (α := Nat) (← rankRequest "{\"op\":\"overhead\"}")
+
+/-- Comparison anchors do not assert a fixed performance budget. External
+calls include protocol cost, which has its own matched control. -/
+def comparisonConfig : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 6, maxSecondsPerCall := 120.0, minTotalSeconds := 0.2,
+    warmupFirstIter := true, tags := #["comparison"] }
+
+setup_fixed_benchmark runProtocolOverhead where
+  { comparisonConfig with expectedHash := some (hash (0 : Nat)), tags := #["comparison", "external"] }
+
+namespace Comparison
+
+namespace Int.Dense
+
+def native16 := runScalarNative 0 16 false
+setup_fixed_benchmark native16 where { comparisonConfig with expectedHash := some (hash (16 : Nat)), tags := #["comparison", "native", "smoke"] }
+def external16 := runScalarExternal 0 16 false
+setup_fixed_benchmark external16 where { comparisonConfig with expectedHash := some (hash (16 : Nat)), tags := #["comparison", "external"] }
+def native24 := runScalarNative 0 24 false
+setup_fixed_benchmark native24 where { comparisonConfig with expectedHash := some (hash (24 : Nat)), tags := #["comparison", "native"] }
+def external24 := runScalarExternal 0 24 false
+setup_fixed_benchmark external24 where { comparisonConfig with expectedHash := some (hash (24 : Nat)), tags := #["comparison", "external"] }
+def native32 := runScalarNative 0 32 false
+setup_fixed_benchmark native32 where { comparisonConfig with expectedHash := some (hash (32 : Nat)), tags := #["comparison", "native"] }
+def external32 := runScalarExternal 0 32 false
+setup_fixed_benchmark external32 where { comparisonConfig with expectedHash := some (hash (32 : Nat)), tags := #["comparison", "external"] }
+def native48 := runScalarNative 0 48 false
+setup_fixed_benchmark native48 where { comparisonConfig with expectedHash := some (hash (48 : Nat)), tags := #["comparison", "native"] }
+def external48 := runScalarExternal 0 48 false
+setup_fixed_benchmark external48 where { comparisonConfig with expectedHash := some (hash (48 : Nat)), tags := #["comparison", "external"] }
+def native64 := runScalarNative 0 64 false
+setup_fixed_benchmark native64 where { comparisonConfig with expectedHash := some (hash (64 : Nat)), tags := #["comparison", "native"] }
+def external64 := runScalarExternal 0 64 false
+setup_fixed_benchmark external64 where { comparisonConfig with expectedHash := some (hash (64 : Nat)), tags := #["comparison", "external"] }
+def native96 := runScalarNative 0 96 false
+setup_fixed_benchmark native96 where { comparisonConfig with expectedHash := some (hash (96 : Nat)), tags := #["comparison", "native"] }
+def external96 := runScalarExternal 0 96 false
+setup_fixed_benchmark external96 where { comparisonConfig with expectedHash := some (hash (96 : Nat)), tags := #["comparison", "external"] }
+def native128 := runScalarNative 0 128 false
+setup_fixed_benchmark native128 where { comparisonConfig with expectedHash := some (hash (128 : Nat)), tags := #["comparison", "native"] }
+def external128 := runScalarExternal 0 128 false
+setup_fixed_benchmark external128 where { comparisonConfig with expectedHash := some (hash (128 : Nat)), tags := #["comparison", "external"] }
+def native192 := runScalarNative 0 192 false
+setup_fixed_benchmark native192 where { comparisonConfig with expectedHash := some (hash (192 : Nat)), tags := #["comparison", "native"] }
+def external192 := runScalarExternal 0 192 false
+setup_fixed_benchmark external192 where { comparisonConfig with expectedHash := some (hash (192 : Nat)), tags := #["comparison", "external"] }
+def native256 := runScalarNative 0 256 false
+setup_fixed_benchmark native256 where { comparisonConfig with expectedHash := some (hash (256 : Nat)), tags := #["comparison", "native"] }
+def external256 := runScalarExternal 0 256 false
+setup_fixed_benchmark external256 where { comparisonConfig with expectedHash := some (hash (256 : Nat)), tags := #["comparison", "external"] }
+
+end Int.Dense
+
+namespace Int.LowRank2At64
+
+def native16 := runScalarNative 1 16 false
+setup_fixed_benchmark native16 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native", "smoke"] }
+def external16 := runScalarExternal 1 16 false
+setup_fixed_benchmark external16 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native24 := runScalarNative 1 24 false
+setup_fixed_benchmark native24 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external24 := runScalarExternal 1 24 false
+setup_fixed_benchmark external24 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native32 := runScalarNative 1 32 false
+setup_fixed_benchmark native32 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external32 := runScalarExternal 1 32 false
+setup_fixed_benchmark external32 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native48 := runScalarNative 1 48 false
+setup_fixed_benchmark native48 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external48 := runScalarExternal 1 48 false
+setup_fixed_benchmark external48 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native64 := runScalarNative 1 64 false
+setup_fixed_benchmark native64 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external64 := runScalarExternal 1 64 false
+setup_fixed_benchmark external64 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native96 := runScalarNative 1 96 false
+setup_fixed_benchmark native96 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external96 := runScalarExternal 1 96 false
+setup_fixed_benchmark external96 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native128 := runScalarNative 1 128 false
+setup_fixed_benchmark native128 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external128 := runScalarExternal 1 128 false
+setup_fixed_benchmark external128 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native192 := runScalarNative 1 192 false
+setup_fixed_benchmark native192 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external192 := runScalarExternal 1 192 false
+setup_fixed_benchmark external192 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native256 := runScalarNative 1 256 false
+setup_fixed_benchmark native256 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external256 := runScalarExternal 1 256 false
+setup_fixed_benchmark external256 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+
+end Int.LowRank2At64
+
+namespace Int.LowRank8At64
+
+def native16 := runScalarNative 2 16 false
+setup_fixed_benchmark native16 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native", "smoke"] }
+def external16 := runScalarExternal 2 16 false
+setup_fixed_benchmark external16 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native24 := runScalarNative 2 24 false
+setup_fixed_benchmark native24 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external24 := runScalarExternal 2 24 false
+setup_fixed_benchmark external24 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native32 := runScalarNative 2 32 false
+setup_fixed_benchmark native32 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external32 := runScalarExternal 2 32 false
+setup_fixed_benchmark external32 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native48 := runScalarNative 2 48 false
+setup_fixed_benchmark native48 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external48 := runScalarExternal 2 48 false
+setup_fixed_benchmark external48 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native64 := runScalarNative 2 64 false
+setup_fixed_benchmark native64 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external64 := runScalarExternal 2 64 false
+setup_fixed_benchmark external64 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native96 := runScalarNative 2 96 false
+setup_fixed_benchmark native96 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external96 := runScalarExternal 2 96 false
+setup_fixed_benchmark external96 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native128 := runScalarNative 2 128 false
+setup_fixed_benchmark native128 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external128 := runScalarExternal 2 128 false
+setup_fixed_benchmark external128 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native192 := runScalarNative 2 192 false
+setup_fixed_benchmark native192 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external192 := runScalarExternal 2 192 false
+setup_fixed_benchmark external192 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native256 := runScalarNative 2 256 false
+setup_fixed_benchmark native256 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external256 := runScalarExternal 2 256 false
+setup_fixed_benchmark external256 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+
+end Int.LowRank8At64
+
+namespace Int.LowRank2At1024
+
+def native16 := runScalarNative 3 16 false
+setup_fixed_benchmark native16 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native", "smoke"] }
+def external16 := runScalarExternal 3 16 false
+setup_fixed_benchmark external16 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native24 := runScalarNative 3 24 false
+setup_fixed_benchmark native24 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external24 := runScalarExternal 3 24 false
+setup_fixed_benchmark external24 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native32 := runScalarNative 3 32 false
+setup_fixed_benchmark native32 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external32 := runScalarExternal 3 32 false
+setup_fixed_benchmark external32 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native48 := runScalarNative 3 48 false
+setup_fixed_benchmark native48 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external48 := runScalarExternal 3 48 false
+setup_fixed_benchmark external48 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native64 := runScalarNative 3 64 false
+setup_fixed_benchmark native64 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external64 := runScalarExternal 3 64 false
+setup_fixed_benchmark external64 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native96 := runScalarNative 3 96 false
+setup_fixed_benchmark native96 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external96 := runScalarExternal 3 96 false
+setup_fixed_benchmark external96 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native128 := runScalarNative 3 128 false
+setup_fixed_benchmark native128 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external128 := runScalarExternal 3 128 false
+setup_fixed_benchmark external128 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native192 := runScalarNative 3 192 false
+setup_fixed_benchmark native192 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external192 := runScalarExternal 3 192 false
+setup_fixed_benchmark external192 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native256 := runScalarNative 3 256 false
+setup_fixed_benchmark native256 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external256 := runScalarExternal 3 256 false
+setup_fixed_benchmark external256 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+
+end Int.LowRank2At1024
+
+namespace Int.LowRank8At1024
+
+def native16 := runScalarNative 4 16 false
+setup_fixed_benchmark native16 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native", "smoke"] }
+def external16 := runScalarExternal 4 16 false
+setup_fixed_benchmark external16 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native24 := runScalarNative 4 24 false
+setup_fixed_benchmark native24 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external24 := runScalarExternal 4 24 false
+setup_fixed_benchmark external24 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native32 := runScalarNative 4 32 false
+setup_fixed_benchmark native32 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external32 := runScalarExternal 4 32 false
+setup_fixed_benchmark external32 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native48 := runScalarNative 4 48 false
+setup_fixed_benchmark native48 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external48 := runScalarExternal 4 48 false
+setup_fixed_benchmark external48 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native64 := runScalarNative 4 64 false
+setup_fixed_benchmark native64 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external64 := runScalarExternal 4 64 false
+setup_fixed_benchmark external64 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native96 := runScalarNative 4 96 false
+setup_fixed_benchmark native96 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external96 := runScalarExternal 4 96 false
+setup_fixed_benchmark external96 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native128 := runScalarNative 4 128 false
+setup_fixed_benchmark native128 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external128 := runScalarExternal 4 128 false
+setup_fixed_benchmark external128 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native192 := runScalarNative 4 192 false
+setup_fixed_benchmark native192 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external192 := runScalarExternal 4 192 false
+setup_fixed_benchmark external192 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native256 := runScalarNative 4 256 false
+setup_fixed_benchmark native256 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external256 := runScalarExternal 4 256 false
+setup_fixed_benchmark external256 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+
+end Int.LowRank8At1024
+
+namespace Int.DeficientMinusOne
+
+def native16 := runScalarNative 5 16 false
+setup_fixed_benchmark native16 where { comparisonConfig with expectedHash := some (hash (15 : Nat)), tags := #["comparison", "native", "smoke"] }
+def external16 := runScalarExternal 5 16 false
+setup_fixed_benchmark external16 where { comparisonConfig with expectedHash := some (hash (15 : Nat)), tags := #["comparison", "external"] }
+def native24 := runScalarNative 5 24 false
+setup_fixed_benchmark native24 where { comparisonConfig with expectedHash := some (hash (23 : Nat)), tags := #["comparison", "native"] }
+def external24 := runScalarExternal 5 24 false
+setup_fixed_benchmark external24 where { comparisonConfig with expectedHash := some (hash (23 : Nat)), tags := #["comparison", "external"] }
+def native32 := runScalarNative 5 32 false
+setup_fixed_benchmark native32 where { comparisonConfig with expectedHash := some (hash (31 : Nat)), tags := #["comparison", "native"] }
+def external32 := runScalarExternal 5 32 false
+setup_fixed_benchmark external32 where { comparisonConfig with expectedHash := some (hash (31 : Nat)), tags := #["comparison", "external"] }
+def native48 := runScalarNative 5 48 false
+setup_fixed_benchmark native48 where { comparisonConfig with expectedHash := some (hash (47 : Nat)), tags := #["comparison", "native"] }
+def external48 := runScalarExternal 5 48 false
+setup_fixed_benchmark external48 where { comparisonConfig with expectedHash := some (hash (47 : Nat)), tags := #["comparison", "external"] }
+def native64 := runScalarNative 5 64 false
+setup_fixed_benchmark native64 where { comparisonConfig with expectedHash := some (hash (63 : Nat)), tags := #["comparison", "native"] }
+def external64 := runScalarExternal 5 64 false
+setup_fixed_benchmark external64 where { comparisonConfig with expectedHash := some (hash (63 : Nat)), tags := #["comparison", "external"] }
+def native96 := runScalarNative 5 96 false
+setup_fixed_benchmark native96 where { comparisonConfig with expectedHash := some (hash (95 : Nat)), tags := #["comparison", "native"] }
+def external96 := runScalarExternal 5 96 false
+setup_fixed_benchmark external96 where { comparisonConfig with expectedHash := some (hash (95 : Nat)), tags := #["comparison", "external"] }
+def native128 := runScalarNative 5 128 false
+setup_fixed_benchmark native128 where { comparisonConfig with expectedHash := some (hash (127 : Nat)), tags := #["comparison", "native"] }
+def external128 := runScalarExternal 5 128 false
+setup_fixed_benchmark external128 where { comparisonConfig with expectedHash := some (hash (127 : Nat)), tags := #["comparison", "external"] }
+def native192 := runScalarNative 5 192 false
+setup_fixed_benchmark native192 where { comparisonConfig with expectedHash := some (hash (191 : Nat)), tags := #["comparison", "native"] }
+def external192 := runScalarExternal 5 192 false
+setup_fixed_benchmark external192 where { comparisonConfig with expectedHash := some (hash (191 : Nat)), tags := #["comparison", "external"] }
+def native256 := runScalarNative 5 256 false
+setup_fixed_benchmark native256 where { comparisonConfig with expectedHash := some (hash (255 : Nat)), tags := #["comparison", "native"] }
+def external256 := runScalarExternal 5 256 false
+setup_fixed_benchmark external256 where { comparisonConfig with expectedHash := some (hash (255 : Nat)), tags := #["comparison", "external"] }
+
+end Int.DeficientMinusOne
+
+namespace Int.DeficientHalf
+
+def native16 := runScalarNative 6 16 false
+setup_fixed_benchmark native16 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native", "smoke"] }
+def external16 := runScalarExternal 6 16 false
+setup_fixed_benchmark external16 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native24 := runScalarNative 6 24 false
+setup_fixed_benchmark native24 where { comparisonConfig with expectedHash := some (hash (12 : Nat)), tags := #["comparison", "native"] }
+def external24 := runScalarExternal 6 24 false
+setup_fixed_benchmark external24 where { comparisonConfig with expectedHash := some (hash (12 : Nat)), tags := #["comparison", "external"] }
+def native32 := runScalarNative 6 32 false
+setup_fixed_benchmark native32 where { comparisonConfig with expectedHash := some (hash (16 : Nat)), tags := #["comparison", "native"] }
+def external32 := runScalarExternal 6 32 false
+setup_fixed_benchmark external32 where { comparisonConfig with expectedHash := some (hash (16 : Nat)), tags := #["comparison", "external"] }
+def native48 := runScalarNative 6 48 false
+setup_fixed_benchmark native48 where { comparisonConfig with expectedHash := some (hash (24 : Nat)), tags := #["comparison", "native"] }
+def external48 := runScalarExternal 6 48 false
+setup_fixed_benchmark external48 where { comparisonConfig with expectedHash := some (hash (24 : Nat)), tags := #["comparison", "external"] }
+def native64 := runScalarNative 6 64 false
+setup_fixed_benchmark native64 where { comparisonConfig with expectedHash := some (hash (32 : Nat)), tags := #["comparison", "native"] }
+def external64 := runScalarExternal 6 64 false
+setup_fixed_benchmark external64 where { comparisonConfig with expectedHash := some (hash (32 : Nat)), tags := #["comparison", "external"] }
+def native96 := runScalarNative 6 96 false
+setup_fixed_benchmark native96 where { comparisonConfig with expectedHash := some (hash (48 : Nat)), tags := #["comparison", "native"] }
+def external96 := runScalarExternal 6 96 false
+setup_fixed_benchmark external96 where { comparisonConfig with expectedHash := some (hash (48 : Nat)), tags := #["comparison", "external"] }
+def native128 := runScalarNative 6 128 false
+setup_fixed_benchmark native128 where { comparisonConfig with expectedHash := some (hash (64 : Nat)), tags := #["comparison", "native"] }
+def external128 := runScalarExternal 6 128 false
+setup_fixed_benchmark external128 where { comparisonConfig with expectedHash := some (hash (64 : Nat)), tags := #["comparison", "external"] }
+def native192 := runScalarNative 6 192 false
+setup_fixed_benchmark native192 where { comparisonConfig with expectedHash := some (hash (96 : Nat)), tags := #["comparison", "native"] }
+def external192 := runScalarExternal 6 192 false
+setup_fixed_benchmark external192 where { comparisonConfig with expectedHash := some (hash (96 : Nat)), tags := #["comparison", "external"] }
+def native256 := runScalarNative 6 256 false
+setup_fixed_benchmark native256 where { comparisonConfig with expectedHash := some (hash (128 : Nat)), tags := #["comparison", "native"] }
+def external256 := runScalarExternal 6 256 false
+setup_fixed_benchmark external256 where { comparisonConfig with expectedHash := some (hash (128 : Nat)), tags := #["comparison", "external"] }
+
+end Int.DeficientHalf
+
+namespace Int.DeficientHalfShifted
+
+def native16 := runScalarNative 7 16 false
+setup_fixed_benchmark native16 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native", "smoke"] }
+def external16 := runScalarExternal 7 16 false
+setup_fixed_benchmark external16 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native24 := runScalarNative 7 24 false
+setup_fixed_benchmark native24 where { comparisonConfig with expectedHash := some (hash (12 : Nat)), tags := #["comparison", "native"] }
+def external24 := runScalarExternal 7 24 false
+setup_fixed_benchmark external24 where { comparisonConfig with expectedHash := some (hash (12 : Nat)), tags := #["comparison", "external"] }
+def native32 := runScalarNative 7 32 false
+setup_fixed_benchmark native32 where { comparisonConfig with expectedHash := some (hash (16 : Nat)), tags := #["comparison", "native"] }
+def external32 := runScalarExternal 7 32 false
+setup_fixed_benchmark external32 where { comparisonConfig with expectedHash := some (hash (16 : Nat)), tags := #["comparison", "external"] }
+def native48 := runScalarNative 7 48 false
+setup_fixed_benchmark native48 where { comparisonConfig with expectedHash := some (hash (24 : Nat)), tags := #["comparison", "native"] }
+def external48 := runScalarExternal 7 48 false
+setup_fixed_benchmark external48 where { comparisonConfig with expectedHash := some (hash (24 : Nat)), tags := #["comparison", "external"] }
+def native64 := runScalarNative 7 64 false
+setup_fixed_benchmark native64 where { comparisonConfig with expectedHash := some (hash (32 : Nat)), tags := #["comparison", "native"] }
+def external64 := runScalarExternal 7 64 false
+setup_fixed_benchmark external64 where { comparisonConfig with expectedHash := some (hash (32 : Nat)), tags := #["comparison", "external"] }
+def native96 := runScalarNative 7 96 false
+setup_fixed_benchmark native96 where { comparisonConfig with expectedHash := some (hash (48 : Nat)), tags := #["comparison", "native"] }
+def external96 := runScalarExternal 7 96 false
+setup_fixed_benchmark external96 where { comparisonConfig with expectedHash := some (hash (48 : Nat)), tags := #["comparison", "external"] }
+def native128 := runScalarNative 7 128 false
+setup_fixed_benchmark native128 where { comparisonConfig with expectedHash := some (hash (64 : Nat)), tags := #["comparison", "native"] }
+def external128 := runScalarExternal 7 128 false
+setup_fixed_benchmark external128 where { comparisonConfig with expectedHash := some (hash (64 : Nat)), tags := #["comparison", "external"] }
+def native192 := runScalarNative 7 192 false
+setup_fixed_benchmark native192 where { comparisonConfig with expectedHash := some (hash (96 : Nat)), tags := #["comparison", "native"] }
+def external192 := runScalarExternal 7 192 false
+setup_fixed_benchmark external192 where { comparisonConfig with expectedHash := some (hash (96 : Nat)), tags := #["comparison", "external"] }
+def native256 := runScalarNative 7 256 false
+setup_fixed_benchmark native256 where { comparisonConfig with expectedHash := some (hash (128 : Nat)), tags := #["comparison", "native"] }
+def external256 := runScalarExternal 7 256 false
+setup_fixed_benchmark external256 where { comparisonConfig with expectedHash := some (hash (128 : Nat)), tags := #["comparison", "external"] }
+
+end Int.DeficientHalfShifted
+
+namespace Rat.Dense
+
+def native16 := runScalarNative 0 16 true
+setup_fixed_benchmark native16 where { comparisonConfig with expectedHash := some (hash (16 : Nat)), tags := #["comparison", "native", "smoke"] }
+def external16 := runScalarExternal 0 16 true
+setup_fixed_benchmark external16 where { comparisonConfig with expectedHash := some (hash (16 : Nat)), tags := #["comparison", "external"] }
+def native24 := runScalarNative 0 24 true
+setup_fixed_benchmark native24 where { comparisonConfig with expectedHash := some (hash (24 : Nat)), tags := #["comparison", "native"] }
+def external24 := runScalarExternal 0 24 true
+setup_fixed_benchmark external24 where { comparisonConfig with expectedHash := some (hash (24 : Nat)), tags := #["comparison", "external"] }
+def native32 := runScalarNative 0 32 true
+setup_fixed_benchmark native32 where { comparisonConfig with expectedHash := some (hash (32 : Nat)), tags := #["comparison", "native"] }
+def external32 := runScalarExternal 0 32 true
+setup_fixed_benchmark external32 where { comparisonConfig with expectedHash := some (hash (32 : Nat)), tags := #["comparison", "external"] }
+def native48 := runScalarNative 0 48 true
+setup_fixed_benchmark native48 where { comparisonConfig with expectedHash := some (hash (48 : Nat)), tags := #["comparison", "native"] }
+def external48 := runScalarExternal 0 48 true
+setup_fixed_benchmark external48 where { comparisonConfig with expectedHash := some (hash (48 : Nat)), tags := #["comparison", "external"] }
+def native64 := runScalarNative 0 64 true
+setup_fixed_benchmark native64 where { comparisonConfig with expectedHash := some (hash (64 : Nat)), tags := #["comparison", "native"] }
+def external64 := runScalarExternal 0 64 true
+setup_fixed_benchmark external64 where { comparisonConfig with expectedHash := some (hash (64 : Nat)), tags := #["comparison", "external"] }
+def native96 := runScalarNative 0 96 true
+setup_fixed_benchmark native96 where { comparisonConfig with expectedHash := some (hash (96 : Nat)), tags := #["comparison", "native"] }
+def external96 := runScalarExternal 0 96 true
+setup_fixed_benchmark external96 where { comparisonConfig with expectedHash := some (hash (96 : Nat)), tags := #["comparison", "external"] }
+def native128 := runScalarNative 0 128 true
+setup_fixed_benchmark native128 where { comparisonConfig with expectedHash := some (hash (128 : Nat)), tags := #["comparison", "native"] }
+def external128 := runScalarExternal 0 128 true
+setup_fixed_benchmark external128 where { comparisonConfig with expectedHash := some (hash (128 : Nat)), tags := #["comparison", "external"] }
+def native192 := runScalarNative 0 192 true
+setup_fixed_benchmark native192 where { comparisonConfig with expectedHash := some (hash (192 : Nat)), tags := #["comparison", "native"] }
+def external192 := runScalarExternal 0 192 true
+setup_fixed_benchmark external192 where { comparisonConfig with expectedHash := some (hash (192 : Nat)), tags := #["comparison", "external"] }
+def native256 := runScalarNative 0 256 true
+setup_fixed_benchmark native256 where { comparisonConfig with expectedHash := some (hash (256 : Nat)), tags := #["comparison", "native"] }
+def external256 := runScalarExternal 0 256 true
+setup_fixed_benchmark external256 where { comparisonConfig with expectedHash := some (hash (256 : Nat)), tags := #["comparison", "external"] }
+
+end Rat.Dense
+
+namespace Rat.LowRank2At64
+
+def native16 := runScalarNative 1 16 true
+setup_fixed_benchmark native16 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native", "smoke"] }
+def external16 := runScalarExternal 1 16 true
+setup_fixed_benchmark external16 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native24 := runScalarNative 1 24 true
+setup_fixed_benchmark native24 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external24 := runScalarExternal 1 24 true
+setup_fixed_benchmark external24 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native32 := runScalarNative 1 32 true
+setup_fixed_benchmark native32 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external32 := runScalarExternal 1 32 true
+setup_fixed_benchmark external32 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native48 := runScalarNative 1 48 true
+setup_fixed_benchmark native48 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external48 := runScalarExternal 1 48 true
+setup_fixed_benchmark external48 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native64 := runScalarNative 1 64 true
+setup_fixed_benchmark native64 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external64 := runScalarExternal 1 64 true
+setup_fixed_benchmark external64 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native96 := runScalarNative 1 96 true
+setup_fixed_benchmark native96 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external96 := runScalarExternal 1 96 true
+setup_fixed_benchmark external96 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native128 := runScalarNative 1 128 true
+setup_fixed_benchmark native128 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external128 := runScalarExternal 1 128 true
+setup_fixed_benchmark external128 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native192 := runScalarNative 1 192 true
+setup_fixed_benchmark native192 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external192 := runScalarExternal 1 192 true
+setup_fixed_benchmark external192 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native256 := runScalarNative 1 256 true
+setup_fixed_benchmark native256 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external256 := runScalarExternal 1 256 true
+setup_fixed_benchmark external256 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+
+end Rat.LowRank2At64
+
+namespace Rat.LowRank8At64
+
+def native16 := runScalarNative 2 16 true
+setup_fixed_benchmark native16 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native", "smoke"] }
+def external16 := runScalarExternal 2 16 true
+setup_fixed_benchmark external16 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native24 := runScalarNative 2 24 true
+setup_fixed_benchmark native24 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external24 := runScalarExternal 2 24 true
+setup_fixed_benchmark external24 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native32 := runScalarNative 2 32 true
+setup_fixed_benchmark native32 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external32 := runScalarExternal 2 32 true
+setup_fixed_benchmark external32 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native48 := runScalarNative 2 48 true
+setup_fixed_benchmark native48 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external48 := runScalarExternal 2 48 true
+setup_fixed_benchmark external48 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native64 := runScalarNative 2 64 true
+setup_fixed_benchmark native64 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external64 := runScalarExternal 2 64 true
+setup_fixed_benchmark external64 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native96 := runScalarNative 2 96 true
+setup_fixed_benchmark native96 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external96 := runScalarExternal 2 96 true
+setup_fixed_benchmark external96 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native128 := runScalarNative 2 128 true
+setup_fixed_benchmark native128 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external128 := runScalarExternal 2 128 true
+setup_fixed_benchmark external128 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native192 := runScalarNative 2 192 true
+setup_fixed_benchmark native192 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external192 := runScalarExternal 2 192 true
+setup_fixed_benchmark external192 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native256 := runScalarNative 2 256 true
+setup_fixed_benchmark native256 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external256 := runScalarExternal 2 256 true
+setup_fixed_benchmark external256 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+
+end Rat.LowRank8At64
+
+namespace Rat.LowRank2At1024
+
+def native16 := runScalarNative 3 16 true
+setup_fixed_benchmark native16 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native", "smoke"] }
+def external16 := runScalarExternal 3 16 true
+setup_fixed_benchmark external16 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native24 := runScalarNative 3 24 true
+setup_fixed_benchmark native24 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external24 := runScalarExternal 3 24 true
+setup_fixed_benchmark external24 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native32 := runScalarNative 3 32 true
+setup_fixed_benchmark native32 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external32 := runScalarExternal 3 32 true
+setup_fixed_benchmark external32 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native48 := runScalarNative 3 48 true
+setup_fixed_benchmark native48 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external48 := runScalarExternal 3 48 true
+setup_fixed_benchmark external48 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native64 := runScalarNative 3 64 true
+setup_fixed_benchmark native64 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external64 := runScalarExternal 3 64 true
+setup_fixed_benchmark external64 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native96 := runScalarNative 3 96 true
+setup_fixed_benchmark native96 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external96 := runScalarExternal 3 96 true
+setup_fixed_benchmark external96 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native128 := runScalarNative 3 128 true
+setup_fixed_benchmark native128 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external128 := runScalarExternal 3 128 true
+setup_fixed_benchmark external128 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native192 := runScalarNative 3 192 true
+setup_fixed_benchmark native192 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external192 := runScalarExternal 3 192 true
+setup_fixed_benchmark external192 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def native256 := runScalarNative 3 256 true
+setup_fixed_benchmark native256 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "native"] }
+def external256 := runScalarExternal 3 256 true
+setup_fixed_benchmark external256 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+
+end Rat.LowRank2At1024
+
+namespace Rat.LowRank8At1024
+
+def native16 := runScalarNative 4 16 true
+setup_fixed_benchmark native16 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native", "smoke"] }
+def external16 := runScalarExternal 4 16 true
+setup_fixed_benchmark external16 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native24 := runScalarNative 4 24 true
+setup_fixed_benchmark native24 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external24 := runScalarExternal 4 24 true
+setup_fixed_benchmark external24 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native32 := runScalarNative 4 32 true
+setup_fixed_benchmark native32 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external32 := runScalarExternal 4 32 true
+setup_fixed_benchmark external32 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native48 := runScalarNative 4 48 true
+setup_fixed_benchmark native48 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external48 := runScalarExternal 4 48 true
+setup_fixed_benchmark external48 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native64 := runScalarNative 4 64 true
+setup_fixed_benchmark native64 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external64 := runScalarExternal 4 64 true
+setup_fixed_benchmark external64 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native96 := runScalarNative 4 96 true
+setup_fixed_benchmark native96 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external96 := runScalarExternal 4 96 true
+setup_fixed_benchmark external96 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native128 := runScalarNative 4 128 true
+setup_fixed_benchmark native128 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external128 := runScalarExternal 4 128 true
+setup_fixed_benchmark external128 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native192 := runScalarNative 4 192 true
+setup_fixed_benchmark native192 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external192 := runScalarExternal 4 192 true
+setup_fixed_benchmark external192 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native256 := runScalarNative 4 256 true
+setup_fixed_benchmark native256 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native"] }
+def external256 := runScalarExternal 4 256 true
+setup_fixed_benchmark external256 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+
+end Rat.LowRank8At1024
+
+namespace Rat.DeficientMinusOne
+
+def native16 := runScalarNative 5 16 true
+setup_fixed_benchmark native16 where { comparisonConfig with expectedHash := some (hash (15 : Nat)), tags := #["comparison", "native", "smoke"] }
+def external16 := runScalarExternal 5 16 true
+setup_fixed_benchmark external16 where { comparisonConfig with expectedHash := some (hash (15 : Nat)), tags := #["comparison", "external"] }
+def native24 := runScalarNative 5 24 true
+setup_fixed_benchmark native24 where { comparisonConfig with expectedHash := some (hash (23 : Nat)), tags := #["comparison", "native"] }
+def external24 := runScalarExternal 5 24 true
+setup_fixed_benchmark external24 where { comparisonConfig with expectedHash := some (hash (23 : Nat)), tags := #["comparison", "external"] }
+def native32 := runScalarNative 5 32 true
+setup_fixed_benchmark native32 where { comparisonConfig with expectedHash := some (hash (31 : Nat)), tags := #["comparison", "native"] }
+def external32 := runScalarExternal 5 32 true
+setup_fixed_benchmark external32 where { comparisonConfig with expectedHash := some (hash (31 : Nat)), tags := #["comparison", "external"] }
+def native48 := runScalarNative 5 48 true
+setup_fixed_benchmark native48 where { comparisonConfig with expectedHash := some (hash (47 : Nat)), tags := #["comparison", "native"] }
+def external48 := runScalarExternal 5 48 true
+setup_fixed_benchmark external48 where { comparisonConfig with expectedHash := some (hash (47 : Nat)), tags := #["comparison", "external"] }
+def native64 := runScalarNative 5 64 true
+setup_fixed_benchmark native64 where { comparisonConfig with expectedHash := some (hash (63 : Nat)), tags := #["comparison", "native"] }
+def external64 := runScalarExternal 5 64 true
+setup_fixed_benchmark external64 where { comparisonConfig with expectedHash := some (hash (63 : Nat)), tags := #["comparison", "external"] }
+def native96 := runScalarNative 5 96 true
+setup_fixed_benchmark native96 where { comparisonConfig with expectedHash := some (hash (95 : Nat)), tags := #["comparison", "native"] }
+def external96 := runScalarExternal 5 96 true
+setup_fixed_benchmark external96 where { comparisonConfig with expectedHash := some (hash (95 : Nat)), tags := #["comparison", "external"] }
+def native128 := runScalarNative 5 128 true
+setup_fixed_benchmark native128 where { comparisonConfig with expectedHash := some (hash (127 : Nat)), tags := #["comparison", "native"] }
+def external128 := runScalarExternal 5 128 true
+setup_fixed_benchmark external128 where { comparisonConfig with expectedHash := some (hash (127 : Nat)), tags := #["comparison", "external"] }
+def native192 := runScalarNative 5 192 true
+setup_fixed_benchmark native192 where { comparisonConfig with expectedHash := some (hash (191 : Nat)), tags := #["comparison", "native"] }
+def external192 := runScalarExternal 5 192 true
+setup_fixed_benchmark external192 where { comparisonConfig with expectedHash := some (hash (191 : Nat)), tags := #["comparison", "external"] }
+def native256 := runScalarNative 5 256 true
+setup_fixed_benchmark native256 where { comparisonConfig with expectedHash := some (hash (255 : Nat)), tags := #["comparison", "native"] }
+def external256 := runScalarExternal 5 256 true
+setup_fixed_benchmark external256 where { comparisonConfig with expectedHash := some (hash (255 : Nat)), tags := #["comparison", "external"] }
+
+end Rat.DeficientMinusOne
+
+namespace Rat.DeficientHalf
+
+def native16 := runScalarNative 6 16 true
+setup_fixed_benchmark native16 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native", "smoke"] }
+def external16 := runScalarExternal 6 16 true
+setup_fixed_benchmark external16 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native24 := runScalarNative 6 24 true
+setup_fixed_benchmark native24 where { comparisonConfig with expectedHash := some (hash (12 : Nat)), tags := #["comparison", "native"] }
+def external24 := runScalarExternal 6 24 true
+setup_fixed_benchmark external24 where { comparisonConfig with expectedHash := some (hash (12 : Nat)), tags := #["comparison", "external"] }
+def native32 := runScalarNative 6 32 true
+setup_fixed_benchmark native32 where { comparisonConfig with expectedHash := some (hash (16 : Nat)), tags := #["comparison", "native"] }
+def external32 := runScalarExternal 6 32 true
+setup_fixed_benchmark external32 where { comparisonConfig with expectedHash := some (hash (16 : Nat)), tags := #["comparison", "external"] }
+def native48 := runScalarNative 6 48 true
+setup_fixed_benchmark native48 where { comparisonConfig with expectedHash := some (hash (24 : Nat)), tags := #["comparison", "native"] }
+def external48 := runScalarExternal 6 48 true
+setup_fixed_benchmark external48 where { comparisonConfig with expectedHash := some (hash (24 : Nat)), tags := #["comparison", "external"] }
+def native64 := runScalarNative 6 64 true
+setup_fixed_benchmark native64 where { comparisonConfig with expectedHash := some (hash (32 : Nat)), tags := #["comparison", "native"] }
+def external64 := runScalarExternal 6 64 true
+setup_fixed_benchmark external64 where { comparisonConfig with expectedHash := some (hash (32 : Nat)), tags := #["comparison", "external"] }
+def native96 := runScalarNative 6 96 true
+setup_fixed_benchmark native96 where { comparisonConfig with expectedHash := some (hash (48 : Nat)), tags := #["comparison", "native"] }
+def external96 := runScalarExternal 6 96 true
+setup_fixed_benchmark external96 where { comparisonConfig with expectedHash := some (hash (48 : Nat)), tags := #["comparison", "external"] }
+def native128 := runScalarNative 6 128 true
+setup_fixed_benchmark native128 where { comparisonConfig with expectedHash := some (hash (64 : Nat)), tags := #["comparison", "native"] }
+def external128 := runScalarExternal 6 128 true
+setup_fixed_benchmark external128 where { comparisonConfig with expectedHash := some (hash (64 : Nat)), tags := #["comparison", "external"] }
+def native192 := runScalarNative 6 192 true
+setup_fixed_benchmark native192 where { comparisonConfig with expectedHash := some (hash (96 : Nat)), tags := #["comparison", "native"] }
+def external192 := runScalarExternal 6 192 true
+setup_fixed_benchmark external192 where { comparisonConfig with expectedHash := some (hash (96 : Nat)), tags := #["comparison", "external"] }
+def native256 := runScalarNative 6 256 true
+setup_fixed_benchmark native256 where { comparisonConfig with expectedHash := some (hash (128 : Nat)), tags := #["comparison", "native"] }
+def external256 := runScalarExternal 6 256 true
+setup_fixed_benchmark external256 where { comparisonConfig with expectedHash := some (hash (128 : Nat)), tags := #["comparison", "external"] }
+
+end Rat.DeficientHalf
+
+namespace Rat.DeficientHalfShifted
+
+def native16 := runScalarNative 7 16 true
+setup_fixed_benchmark native16 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "native", "smoke"] }
+def external16 := runScalarExternal 7 16 true
+setup_fixed_benchmark external16 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def native24 := runScalarNative 7 24 true
+setup_fixed_benchmark native24 where { comparisonConfig with expectedHash := some (hash (12 : Nat)), tags := #["comparison", "native"] }
+def external24 := runScalarExternal 7 24 true
+setup_fixed_benchmark external24 where { comparisonConfig with expectedHash := some (hash (12 : Nat)), tags := #["comparison", "external"] }
+def native32 := runScalarNative 7 32 true
+setup_fixed_benchmark native32 where { comparisonConfig with expectedHash := some (hash (16 : Nat)), tags := #["comparison", "native"] }
+def external32 := runScalarExternal 7 32 true
+setup_fixed_benchmark external32 where { comparisonConfig with expectedHash := some (hash (16 : Nat)), tags := #["comparison", "external"] }
+def native48 := runScalarNative 7 48 true
+setup_fixed_benchmark native48 where { comparisonConfig with expectedHash := some (hash (24 : Nat)), tags := #["comparison", "native"] }
+def external48 := runScalarExternal 7 48 true
+setup_fixed_benchmark external48 where { comparisonConfig with expectedHash := some (hash (24 : Nat)), tags := #["comparison", "external"] }
+def native64 := runScalarNative 7 64 true
+setup_fixed_benchmark native64 where { comparisonConfig with expectedHash := some (hash (32 : Nat)), tags := #["comparison", "native"] }
+def external64 := runScalarExternal 7 64 true
+setup_fixed_benchmark external64 where { comparisonConfig with expectedHash := some (hash (32 : Nat)), tags := #["comparison", "external"] }
+def native96 := runScalarNative 7 96 true
+setup_fixed_benchmark native96 where { comparisonConfig with expectedHash := some (hash (48 : Nat)), tags := #["comparison", "native"] }
+def external96 := runScalarExternal 7 96 true
+setup_fixed_benchmark external96 where { comparisonConfig with expectedHash := some (hash (48 : Nat)), tags := #["comparison", "external"] }
+def native128 := runScalarNative 7 128 true
+setup_fixed_benchmark native128 where { comparisonConfig with expectedHash := some (hash (64 : Nat)), tags := #["comparison", "native"] }
+def external128 := runScalarExternal 7 128 true
+setup_fixed_benchmark external128 where { comparisonConfig with expectedHash := some (hash (64 : Nat)), tags := #["comparison", "external"] }
+def native192 := runScalarNative 7 192 true
+setup_fixed_benchmark native192 where { comparisonConfig with expectedHash := some (hash (96 : Nat)), tags := #["comparison", "native"] }
+def external192 := runScalarExternal 7 192 true
+setup_fixed_benchmark external192 where { comparisonConfig with expectedHash := some (hash (96 : Nat)), tags := #["comparison", "external"] }
+def native256 := runScalarNative 7 256 true
+setup_fixed_benchmark native256 where { comparisonConfig with expectedHash := some (hash (128 : Nat)), tags := #["comparison", "native"] }
+def external256 := runScalarExternal 7 256 true
+setup_fixed_benchmark external256 where { comparisonConfig with expectedHash := some (hash (128 : Nat)), tags := #["comparison", "external"] }
+
+end Rat.DeficientHalfShifted
+
+namespace RatPoly.Full
+
+def external4 := runPolyExternal false false 4
+setup_fixed_benchmark external4 where { comparisonConfig with expectedHash := some (hash (4 : Nat)), tags := #["comparison", "external"] }
+def external8 := runPolyExternal false false 8
+setup_fixed_benchmark external8 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def external12 := runPolyExternal false false 12
+setup_fixed_benchmark external12 where { comparisonConfig with expectedHash := some (hash (12 : Nat)), tags := #["comparison", "external"] }
+
+end RatPoly.Full
+
+namespace RatPoly.Deficient
+
+def external4 := runPolyExternal false true 4
+setup_fixed_benchmark external4 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def external8 := runPolyExternal false true 8
+setup_fixed_benchmark external8 where { comparisonConfig with expectedHash := some (hash (4 : Nat)), tags := #["comparison", "external"] }
+def external12 := runPolyExternal false true 12
+setup_fixed_benchmark external12 where { comparisonConfig with expectedHash := some (hash (6 : Nat)), tags := #["comparison", "external"] }
+
+end RatPoly.Deficient
+
+namespace Mv.Full
+
+def external4 := runPolyExternal true false 4
+setup_fixed_benchmark external4 where { comparisonConfig with expectedHash := some (hash (4 : Nat)), tags := #["comparison", "external"] }
+def external8 := runPolyExternal true false 8
+setup_fixed_benchmark external8 where { comparisonConfig with expectedHash := some (hash (8 : Nat)), tags := #["comparison", "external"] }
+def external12 := runPolyExternal true false 12
+setup_fixed_benchmark external12 where { comparisonConfig with expectedHash := some (hash (12 : Nat)), tags := #["comparison", "external"] }
+
+end Mv.Full
+
+namespace Mv.Deficient
+
+def external4 := runPolyExternal true true 4
+setup_fixed_benchmark external4 where { comparisonConfig with expectedHash := some (hash (2 : Nat)), tags := #["comparison", "external"] }
+def external8 := runPolyExternal true true 8
+setup_fixed_benchmark external8 where { comparisonConfig with expectedHash := some (hash (4 : Nat)), tags := #["comparison", "external"] }
+def external12 := runPolyExternal true true 12
+setup_fixed_benchmark external12 where { comparisonConfig with expectedHash := some (hash (6 : Nat)), tags := #["comparison", "external"] }
+
+end Mv.Deficient
+
+end Comparison
+
 /-- Default CI verifies the smallest canonical polynomial rung of every
 carrier/rank/operation combination. Larger fixed cases remain registered and
 can be verified explicitly with `verify --tag polynomial`. -/
@@ -624,7 +1573,14 @@ def verifyOrdinary : IO UInt32 := do
 
 end Hex.RankBench
 
-def main (args : List String) : IO UInt32 :=
+/-- Runtime panic policy, matching Lean's own command-line driver. -/
+@[extern "lean_internal_set_exit_on_panic"]
+private opaque exitOnPanic (enabled : Bool) : BaseIO Unit
+
+def main (args : List String) : IO UInt32 := do
+  -- Pure parametric prep uses panic! on invalid fixtures; fail closed rather
+  -- than allowing Lean's default panic value to become a timing sample.
+  exitOnPanic true
   match args with
   | ["verify"] => Hex.RankBench.verifyOrdinary
   | _ => LeanBench.Cli.dispatch args
