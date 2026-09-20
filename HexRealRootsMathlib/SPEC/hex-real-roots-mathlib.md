@@ -606,6 +606,45 @@ parser-namespace, and documentation-markup translation. Run
 Once the pinned Mathlib release contains the development, these companion
 modules can re-export the corresponding Mathlib modules.
 
+## Sturm-Tarski correspondence
+
+First extend endpoint evaluation to the computational owner's
+`sturmVarAtRat`. Prove `sturmVarAtRat_eq` by positivity of the homogeneous
+denominator factor in each chain entry, `sturmVarAtRat_dyadic` by equality
+of exact signs at a dyadic's rational value, and `sturmCountRat_eq` by the
+existing half-open Sturm theorem at rational endpoints cast to `ℝ`.
+An upper endpoint root contributes one; a lower endpoint root contributes
+zero. This rational-count extension does not require the root-free guards
+of the separate Tarski-query API.
+
+The [Tarski-query primitive](../../HexRealRoots/SPEC/hex-real-roots.md#tarski-queries)
+requires new signed-remainder/Cauchy-index semantics here. Prove
+`tarskiQuery_eq`, identifying the executable variation drop with the sum of
+`sign (f(α))` over the real roots of squarefree nonzero `p` in the interval,
+under its non-root endpoint guards. Prove `tarskiQuery_isSome` for that domain
+and `tarskiQuery_sign` when the interval isolates exactly one root. Zero `f`,
+zero initial remainder, a nonconstant common gcd, negative query values and
+constant `p` are part of the contract.
+
+`TarskiReplay.check_sound` must derive the same signed sum from accepted
+literal data. Transport positive-scaled remainder identities through the
+integer-to-real cast, prove that reducing `f*p'` modulo `p` preserves the
+Cauchy index, and allow termination at a nonconstant gcd. The present
+`Sturm.IsSturmChain` root-flank orientation and root-count conclusion do not
+prove this statement: a root where `f` is negative contributes `-1`, and a
+common root contributes zero. Introduce the signed-query theorem without
+weakening the existing Sturm-count predicate or its theorems.
+
+The proof obligation follows the
+[Sturm–Tarski theorem](https://www.isa-afp.org/entries/Sturm_Tarski.html).
+It is new work, not existing RCF replay coverage. This companion supplies
+the root/sign semantics; `hex-number-field-mathlib` composes them with its
+chosen-real-embedding theorem to prove `QAdjoin.signTarski_eq` against
+`realCompare`. No reverse dependency on number fields is introduced.
+Literal kernel replay belongs to the fresh-module proof evidence track;
+query construction and endpoint evaluation belong to the computational
+owner's ordinary benchmarks. A general comparison elaborator is deferred.
+
 ## File organisation
 
 ```
