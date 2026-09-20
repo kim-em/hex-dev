@@ -27,16 +27,17 @@ namespace Hex.RCF.RealCoefficients.Reify
 open Lean Meta Qq
 
 /-- A shared schema specialized at the exact source coefficients. Guards are
-original closed real divisor expressions (with rational divisors cast to ℝ),
-retained before normalization. This is pending frontend data, not an authenticated
+original divisor expressions after checked alias substitution (with rational
+divisors cast to ℝ), retained before normalization. This is pending frontend data, not an authenticated
 coefficient environment or an accepted solver certificate. -/
 structure Source where
-  /-- Original goal, before division preprocessing or coefficient abstraction. -/
+  /-- Fully instantiated original goal, before division preprocessing or
+  coefficient abstraction. -/
   original : Expr
   /-- Closed real coefficient expressions in first-occurrence order. -/
   coefficients : Array Expr
-  /-- Original closed divisors; each must separately be proved nonzero.
-  Repeated source occurrences may share the same obligation. -/
+  /-- Original divisors after checked alias substitution; each must separately
+  be proved nonzero. Repeated source occurrences may share the same obligation. -/
   divisors : Array Expr
   /-- Shared `Prenex coefficients.size` syntax. -/
   formula : Expr
@@ -283,7 +284,15 @@ private def prepareCore (original : Expr) (config : Hex.RealFormula.Reify.Config
 Retain all original divisor obligations, including those beneath cancellation
 and zero multiplication. This is frontend preparation only: guard discharge,
 authenticated coefficient interpretation and decision replay are still required.
-No optional tactic handler is installed by this module. Unsupported syntax and
+No optional tactic handler is installed by this module. Callers must synthesize
+and instantiate source metavariables first (as the base tactic does).
+
+Additive budgets bound cumulative charged work: original, alias-substituted and
+shared-reifier source views are charged separately, as are the shared proof and
+the final composed proof. They are not just bounds on the initial input size.
+Exponent and coefficient-bit limits retain the shared maximum-limit semantics.
+
+Unsupported syntax and
 budget limits return structured errors. Unexpected elaboration/kernel errors and
 Lean runtime failures remain terminal exceptions, with state restored; callers
 must not reclassify them as solver declines. -/
