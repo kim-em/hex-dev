@@ -1798,7 +1798,9 @@ lean_lib HexCharPolyMathlibProofProbe where
 
 -- Manual issue-10301 experiments; neither target belongs to the default build or CI.
 lean_lib CadSampleCostsExperiment where
-  globs := #[.submodules `HexIntervalAlgebraic.Experiment.CadSampleCosts]
+  srcDir := "experiments"
+  globs := #[.submodules `CadSampleCosts]
 
 lean_exe cad_sample_costs where
-  root := `HexIntervalAlgebraic.Experiment.CadSampleCosts.Runtime
+  srcDir := "experiments"
+  root := `CadSampleCosts.Runtime
