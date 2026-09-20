@@ -344,29 +344,14 @@ def computeResidue (p : Nat) (provider : CoeffProvider) (A : Expr)
     ("modulus", toJson p), ("proof_node_budget", toJson proofNodes), ("atoms", toJson k)])).compress}"
   return { value := r.source, proof }
 
-/-- Quote translated trees directly; the checker never replays the translation. -/
-def quoteTree : Hex.Kronecker.Expr → Expr
-  | .int z => mkApp (mkConst ``Hex.Kronecker.Expr.int) (toExpr z)
-  | .atom i => mkApp (mkConst ``Hex.Kronecker.Expr.atom) (toExpr i)
-  | .add a b => mkApp2 (mkConst ``Hex.Kronecker.Expr.add) (quoteTree a) (quoteTree b)
-  | .sub a b => mkApp2 (mkConst ``Hex.Kronecker.Expr.sub) (quoteTree a) (quoteTree b)
-  | .neg a => mkApp (mkConst ``Hex.Kronecker.Expr.neg) (quoteTree a)
-  | .mul a b => mkApp2 (mkConst ``Hex.Kronecker.Expr.mul) (quoteTree a) (quoteTree b)
-  | .pow a n => mkApp2 (mkConst ``Hex.Kronecker.Expr.pow) (quoteTree a) (toExpr n)
-
 /-- Tree entry identification uses only the retained expression's denotation. -/
 def treeEntry (ctx : Expr) (r : ReifiedRing) : MetaM (Option Expr) := do
-  let tree := quoteTree (HexKroneckerMathlib.fromGrind r.expr)
-  let denoted ← mkAppM ``Hex.Kronecker.Expr.denote #[← mkAppM ``Lean.RArray.get #[ctx], tree]
-  let expected ← mkEq denoted r.source
-  if ← withTransparency .default (isDefEq denoted r.source) then
-    return some (mkExpectedPropHint (← mkEqRefl r.source) expected)
   let h ← mkAppM ``HexKroneckerMathlib.fromGrind_denote #[ctx, toExpr r.expr]
-  let some (_, _, rhs) := (← inferType h).eq? | throwError "det: malformed tree denotation proof"
+  let some (_, lhs, rhs) := (← inferType h).eq? | throwError "det: malformed tree denotation proof"
   unless ← withTransparency .default (isDefEq rhs r.source) do
     trace[HexMatrix.certificate] "det tree entry denotation mismatch; using list entry proofs"
     return none
-  return some (← mkExpectedTypeHint h expected)
+  return some (← mkExpectedTypeHint h (← mkEq lhs r.source))
 
 /-- Scalar reconstruction follows `Tree.value` definitionally. No polynomial
 normalization or identity comparison is needed for a generated term value. -/
@@ -399,15 +384,18 @@ def computeTree? (A ctx : Expr) (lit : Recognized) (k : Nat) (atoms : Array Expr
     return none
   let trees := reified.toList.map (fun row => row.toList.map (fun r => HexKroneckerMathlib.fromGrind r.expr))
   let treeTy := mkConst ``Hex.Kronecker.Expr
-  let quoted ← trees.mapM fun row => mkListLit treeTy (row.map quoteTree)
+  let quoteTree (r : ReifiedRing) : MetaM Expr :=
+    mkAppM ``HexKroneckerMathlib.fromGrind #[toExpr r.expr]
+  let quoted ← reified.toList.mapM fun row => do
+    mkListLit treeTy (← row.toList.mapM (fun r => do quoteTree r))
   let treesE ← mkListLit (mkApp (mkConst ``List [Level.zero]) treeTy) quoted
   let wE ← quoteWitness w
   checkPayload #[A, treesE, wE]
   withLetDecl `detTrees (← inferType treesE) treesE fun treesE => do
     withLetDecl `detWitness (← inferType wE) wE fun wE => do
       withLetDecl `detMatrix (← inferType A) A fun A => do
+        let qE ← quoteTree r
         let q := HexKroneckerMathlib.fromGrind r.expr
-        let qE := quoteTree q
         let d := Polynomial.value w
         let (target, value, targetE) ← if targetNorm.isSome then do
             pure (Hex.Kronecker.Expr.mul (.int D) q, MvPoly.Kernel.smul (Int.ofNat t) d,
