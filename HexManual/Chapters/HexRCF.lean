@@ -447,6 +447,25 @@ theorem rcf_square_nonnegative : ∀ x : ℝ, x ^ 2 ≥ 0 := by
 'rcf_square_nonnegative' depends on axioms: [propext, Classical.choice, Quot.sound]
 ```
 
+# Optional coefficient source schemas
+%%%
+tag := "hex-rcf-coefficient-schemas"
+%%%
+
+In the development monorepo, the separate import `HexRCF.RealCoefficients`
+provides `Hex.RCF.RealCoefficients.Reify.prepare` for adapter authors. It
+abstracts closed rational/π/e expressions into a shared formula and proves that
+the formula at the fixed source valuation is equivalent to the original goal.
+Explicit local equality aliases are transported by checked proofs. Original
+divisor obligations are retained before normalization, including those hidden
+under zero multiplication. Half-open Ioc domains remain formula guard atoms.
+
+This entry point returns pending source data. It does not authenticate named
+coefficients, prove divisor nonzeroness, or run a real-coefficient decision
+procedure. The ordinary `rcf` import retains its rational behavior. The optional
+source module is checked by the default Lake target `HexRCFRealCoefficients`;
+it is not part of the published base umbrella.
+
 # Cross-references
 %%%
 tag := "hex-rcf-cross-references"
