@@ -1164,7 +1164,7 @@ and arithmetic, so they stay in `hex-ordered-fn`, in separate modules.
 | [hex-sturm](Libraries/hex-sturm.md) | Ordered-field query frontend, coefficient-operation adapters, generic endpoints and root counts | `hex-sturm-mathlib`: frontend correspondence and replay composition |
 | [hex-sign-det](Libraries/hex-sign-det.md) | BKR sign determination, complete sign tables, Thom root identity and comparison | [hex-sign-det-mathlib](Libraries/hex-sign-det-mathlib.md): sign-table correctness, Thom identity and order correspondence |
 | [hex-ordered-fn](Libraries/hex-ordered-fn.md) | Transcendental and infinitesimal orders on `RationalFn`, approximation protocol | [hex-ordered-fn-mathlib](Libraries/hex-ordered-fn-mathlib.md): order laws, real evaluation and infinitesimal model |
-| `hex-real-closure` | Algebraic extension arithmetic, dynamic splitting, root isolation, staged towers and exploration | `hex-real-closure-mathlib`: selected-root semantics, field laws, root completeness and trivial-tower agreement |
+| [hex-real-closure](Libraries/hex-real-closure.md) | Algebraic extension arithmetic, dynamic splitting, root isolation, staged towers and exploration | `hex-real-closure-mathlib`: selected-root semantics, field laws, root completeness and trivial-tower agreement |
 
 Arrows point from dependencies to consumers. Additional direct imports must
 respect this graph, including the existing transitive dependencies of each
@@ -1389,6 +1389,11 @@ denominator nonvanishing obligations are certified.
 
 #### Algebraic towers, normalization and sampling
 
+The [hex-real-closure SPEC](Libraries/hex-real-closure.md) fixes the staged
+context and selected-root APIs, Yun decomposition, splitting/transport, complete
+root isolation, shared samples, failures and evidence requirements. The clauses
+below remain shared contracts for the companion and downstream directives.
+
 Enforce stages `transcendental ≺ infinitesimal ≺ algebraic` in the tower API.
 Creating a finite tower does not make it real closed; real closure is the
 union of finite compatible algebraic extensions, with new roots adjoined on
@@ -1584,7 +1589,7 @@ the dependency diagram above is the library import contract.
 | [hex-sturm SPEC](Libraries/hex-sturm.md) ([#10311](https://github.com/kim-em/hex-dev/issues/10311)) | [hex-sturm-mathlib SPEC](Libraries/hex-sturm-mathlib.md) ([#10312](https://github.com/kim-em/hex-dev/issues/10312)) |
 | [hex-sign-det SPEC](Libraries/hex-sign-det.md) ([#10313](https://github.com/kim-em/hex-dev/issues/10313)) | [hex-sign-det-mathlib SPEC](Libraries/hex-sign-det-mathlib.md) ([#10314](https://github.com/kim-em/hex-dev/issues/10314)) |
 | [hex-ordered-fn #10315](https://github.com/kim-em/hex-dev/issues/10315) ([SPEC](Libraries/hex-ordered-fn.md)) | [hex-ordered-fn-mathlib #10316](https://github.com/kim-em/hex-dev/issues/10316) ([SPEC](Libraries/hex-ordered-fn-mathlib.md)) |
-| [hex-real-closure #10317](https://github.com/kim-em/hex-dev/issues/10317) | [hex-real-closure-mathlib #10318](https://github.com/kim-em/hex-dev/issues/10318) |
+| [hex-real-closure SPEC](Libraries/hex-real-closure.md) ([#10317](https://github.com/kim-em/hex-dev/issues/10317)) | [hex-real-closure-mathlib #10318](https://github.com/kim-em/hex-dev/issues/10318) |
 
 ### Lattice applications beyond factor recombination
 
