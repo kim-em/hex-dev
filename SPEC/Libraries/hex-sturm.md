@@ -1,0 +1,346 @@
+# hex-sturm
+
+Ordered-field Sturm–Tarski queries and root counts, using the shared signed
+pseudo-remainder and literal replay kernel in `hex-real-roots`.
+
+## Status, scope and placement
+
+This is a planned computational library in the
+[real-closure family](../future-work.md#real-closures-of-ordered-fields).
+All declarations below are required API or mathematical statement shapes,
+not existing or checked Lean declarations. No source target or phase is
+registered by this SPEC. The companion has its own directive,
+[#10312](https://github.com/kim-em/hex-dev/issues/10312).
+
+`HexSturm` depends on `HexPoly` and `HexRealRoots`, with no Mathlib or
+Batteries import. Its namespace is `Hex.Sturm`. Its substantive work is
+field-domain and squarefreeness validation, finite and infinite endpoint
+adapters, composition of coefficient evidence, and root counts. Reusable
+fallible polynomial arithmetic lives in
+[hex-poly](../../HexPoly/SPEC/hex-poly.md#fallible-coefficient-operations);
+the ring-only query/replay algorithm lives in
+[hex-real-roots](../../HexRealRoots/SPEC/hex-real-roots.md#shared-ordered-domain-kernel).
+Both integer and field frontends invoke that algorithm. No upstream input
+library imports this family. In particular `hex-real-algebraic` remains an
+independent rational-base implementation.
+
+`HexSturmMathlib` imports this library, `HexPolyMathlib` and
+`HexRealRootsMathlib`, and consumes the shared abstract theorem through the
+last of these. Only companions import Mathlib or Tau Ceti. BKR matrices,
+complete sign tables and Thom encodings belong in `hex-sign-det`; extension
+construction and isolation in `hex-real-closure`; coefficient orders and
+approximation protocols in `hex-ordered-fn`. There is no root-search,
+Archimedean separation, CAD, coverings, or tactic completeness claim here.
+
+## Coefficients and evidence
+
+There are two coefficient interfaces, sharing one arithmetic algorithm.
+For a total semantic carrier `K`, the Lean-core adapter requires
+`[Lean.Grind.Field K] [LE K] [LT K] [Std.IsLinearOrder K]`
+`[Std.LawfulOrderLT K] [Lean.Grind.OrderedRing K] [DecidableEq K]`
+`[DecidableLE K] [DecidableLT K]`. The order classes come from
+`Init.Data.Order`; the separate linear-order and lawful-`<` assumptions are
+necessary. These are executable decisions and laws for the actual carrier,
+not a classical noncomputable decision installed to run an algorithm.
+The ordered-field laws imply characteristic zero; `K` need not be real closed.
+
+For raw or bounded coefficients `C`, pass the explicit `CoeffOps C` record
+specified in hex-poly. Its ring operations, fallible semantic zero/sign
+queries, representation validation and evidence callbacks are interpreted by
+a separate law package in an ordered commutative domain `D`. Neither `C` nor
+`D` needs a `Field` instance for the shared kernel. The field frontend adds
+checked inversion and an interpretation in an ordered field `K`. Inversion
+of a certified zero is invalid; inability to establish nonzero is exhaustion.
+Total field carriers instantiate this record with always-successful lawful
+operations and complete decisions; raw selected-root representatives do not
+inherit those instances. A quotient by selected-root equality needs its own
+proved executable equality and field laws before it is a total adapter.
+
+A raw polynomial is a finite coefficient array with checked semantic degree:
+`none` means every interpreted coefficient is zero; `some d` means coefficient
+`d` is nonzero and all higher stored coefficients are zero. The scan is bounded
+by the stored length and propagates undecided coefficients. `DensePoly C`'s
+structural trimming cannot replace it. All degree bounds below use this
+semantic degree; zero is handled separately, never as a positive-degree
+polynomial with `natDegree = 0`.
+
+Coefficient evidence binds the operation, operands, result, sign or zero
+claim, and the coefficient context (selected root, embedding, constant/oracle
+identity and tower level where applicable). Arithmetic outputs must preserve
+the context. A replay checker accepts a coefficient claim only through a
+kernel-reducible checker and its soundness theorem, or an explicitly supplied
+proof of that exact claim. Runtime comparison alone is not evidence.
+Noninjective interpretation is allowed; polynomial identities are semantic
+coefficient equalities. Structural equality may be a sufficient fast path
+only when its soundness is proved.
+
+Lower-level certificates may be composed through callbacks. The record and
+checker interfaces live below the family; implementations for extension
+coefficients live with the extension owner. Cached evidence must identify the
+same context and operands. After a dynamic split, old evidence needs an
+explicit transport proof before reuse. Nested replays must be finite,
+acyclic and budgeted; they may not recursively certify their own sign claim.
+
+## Endpoints, domain and public operations
+
+Use `Endpoint E := negInf | finite E | posInf`, with the common data type in
+hex-real-roots. The field adapter takes `E = C` (or `K` for the total adapter);
+the integer frontend keeps `E = Dyadic`. Infinity ordering is structural;
+finite comparison is the certified sign of a difference. The interval input
+is an ordered pair, not a claimed proof that a partial comparison succeeded.
+Every entry point establishes `a < b` in the extended order. Thus equal or
+reversed endpoints, including equal infinities, are invalid.
+
+Write `P,F` for interpreted polynomials. `Domain p a b` means `P ≠ 0`, `P`
+is squarefree over `K`, `a < b`, and `P(a), P(b)` are nonzero wherever the
+endpoints are finite. Nonzero constants are squarefree. Establish the domain
+before shortcuts for constants, `f=0`, or a zero initial remainder. In
+particular, reject nonsquarefree `p`; do not silently replace it by its
+squarefree part or count multiplicities. A caller may explicitly perform
+squarefree decomposition in its owning library.
+
+Planned public operations (each returns its residual budget and work counters
+in bounded mode) are:
+
+| Operation | Result and responsibility |
+| --- | --- |
+| `prepareWith ops limits p a b` | Validate context, semantic degree, interval, squarefreeness and finite endpoint nonvanishing; return a prepared domain and replayable guard evidence. |
+| `queryWith ops limits p f a b` | Prepare, invoke the shared kernel, and return an `Int` query with its literal certificate. |
+| `queryPreparedWith ops limits domain f` | Reuse guards for exactly the same polynomial, endpoints and context; validate `f` and produce its query certificate. |
+| `rootCountWith ops limits p a b` | Query `f=1`, check nonnegativity, return the corresponding `Nat` and evidence. |
+| `query`, `rootCount` | Total-coefficient, degree-fueled adapters returning `Option Int` / `Option Nat`; `none` exactly on domain failure. |
+| `Replay.checkWith` | Bounded validation of supplied literals and coefficient evidence, returning accepted, rejected, or exhausted. A Boolean `check` wrapper is true only on accepted. |
+
+The total forms use computed arithmetic bounds, not a hidden user budget.
+Their completeness requires the total adapter's complete coefficient checks;
+bounded entry points have no such unconditional completeness claim. A
+prepared object is opaque; serialization passes through the same checker.
+Squarefreeness uses plain field gcd of `P,P'`, normalized to a nonzero constant,
+without computing extended-gcd coefficients at runtime unless requested for
+a certificate. A replay can instead carry `A*P+B*P'=1` and coefficient
+identity evidence; in characteristic zero and with `P ≠ 0`, that proves the
+same guard, including nonzero constants. This certificate does not force the
+gcd-value algorithm to become xgcd.
+
+The query semantics are in any ordered real closed extension `R` with an
+order-preserving field embedding `ι : K →+* R`. Let `Roots(P;a,b)` be the
+finite set of distinct roots of `P.map ι` strictly between the interpreted
+endpoints. Then
+
+```text
+TaQ(F,P;a,b) = ∑ α ∈ Roots(P;a,b), sign ((F.map ι).eval α) : Int.
+```
+
+Roots need not lie in `K`. Nonzero constant `p` gives zero. Negative query
+values are valid. The query of `1` counts distinct roots; it is nonnegative
+and at most `degree P`, and `|TaQ| ≤ rootCount ≤ degree P`. For an interval
+with exactly one root `α`, the query is precisely the sign of `F(α)`.
+Finite-endpoint queries are open intervals. Today's `ZPoly.sturmCount`
+counts `(a,b]` and admits an upper root; preserve that separate API. Agreement
+with it requires both endpoints root-free. Keep the existing
+`Polynomial ℝ` `Sturm.IsSturmChain` proofs and derivative replay intact.
+
+## Signed remainders and literal replay
+
+The shared kernel begins with `s₀=P`. It reduces `F*P'` before starting the
+chain and records
+
+```text
+u*(F*P') = A*P + v*s₁,       u>0, v>0,
+s₁=0 or degree s₁ < degree P.
+```
+
+For a zero remainder use `[P]` and the identity `u*(F*P')=A*P`; the result
+is zero. A nonzero constant head also uses this branch, after the guards.
+Otherwise each three-term step and final division satisfy
+
+```text
+lᵢ*sᵢ = Qᵢ*sᵢ₊₁ - rᵢ*sᵢ₊₂,       lᵢ>0, rᵢ>0,
+l*sₘ₋₁ = Q*sₘ,                         l>0.
+```
+
+All displayed equations are polynomial identities under interpretation.
+Entries are nonzero, degrees strictly decrease, and the terminal gcd may be
+nonconstant. Common roots of `P,F` contribute zero, not an error. Only
+positive rescaling/content removal preserves this certificate convention;
+independently making every entry positive-leading is unsound.
+
+At a finite endpoint, evaluate each entry by exact Horner arithmetic through
+the adapter. At `+∞` its sign is the sign of its leading coefficient; at
+`−∞` multiply that sign by `(-1)^degree`. Delete zero signs and count adjacent
+sign changes as a `Nat`; subtract endpoint variations after casting to `Int`.
+Zeros in intermediate entries at finite endpoints are valid. The head's
+nonvanishing is a separate domain guard.
+
+Replay contains literal inputs/context, guarded domain evidence, the chain,
+initial quotient/scales, every step quotient/scale, terminal identity,
+semantic degree evidence, endpoint signs and claimed variations/value.
+Check every identity coefficientwise, positive scale, nonzero entry, array
+length and degree bound. In the singleton branch there is no fictitious
+second entry or terminal pair; the initial zero identity is required.
+Acceptance also checks the guards and variations. No producer, gcd search,
+coefficient refinement, root isolation, or factorization runs during replay.
+Coefficient subcertificates check only the supplied finite evidence.
+
+For `n=degree P`, accepted chains have at most `n+1` nonzero entries. The
+checker bounds supplied array/evidence sizes before multiplication and
+allocation, rejects extraneous/missing steps and oversized chains, and charges
+nested evidence against one remaining budget. A malformed certificate may be
+rejected before domain validation; no such path returns a query value.
+
+## Failure, termination and completeness
+
+`Limits` bounds coefficient-operation calls, polynomial cancellations/steps,
+stored coefficients allocated, sign/zero work and literal evidence nodes/bytes.
+An adapter must state its charging units, including child oracle work. Limits
+are executable counters, distinct from the mathematical degree bounds.
+
+Bounded arithmetic uses explicit outcomes, propagated without default values:
+
+| Outcome | Meaning |
+| --- | --- |
+| `ok value evidence` | All operations and guards used to produce the value succeeded. Soundness is conditional on the adapter laws and, for mathematical root semantics, the companion theorem. |
+| `invalid reason` | Checked invalid coefficient context, zero/nonsquarefree `p`, unordered interval, root endpoint, or a zero argument supplied as a polynomial divisor or inversion operand. |
+| `exhausted reason` | Insufficient arithmetic, sign/zero, allocation or evidence budget; this includes unresolved coefficient equality. It asserts neither invalidity nor a root count. |
+| `rejected reason` | Malformed or false supplied evidence. A producer's own certificate failing replay is an implementation error, not mathematical absence. |
+
+An invalid domain may yield exhaustion while being tested, but cannot succeed.
+Missing evidence never supplies an assumed sign. Constants skip irrelevant
+query arithmetic only after the domain and coefficient context checks.
+All raw input paths, including invalid ones, terminate: loops scan finite
+arrays or decrease explicit fuel, and every callback has its own structural
+termination/budget contract. One parent budget accounts for child work; no
+nested sign call resets it. There is no retry-until-separated loop here.
+
+A nonzero-divisor pseudo-division of `A` by `B` needs at most
+`max(0, degree A - degree B + 1)` leading cancellations (zero `A` uses zero).
+Each cancellation certifies a semantic degree drop. Starting after the
+initial reduction, at most `n` further divisions, including terminal zero,
+suffice; `n=0` has no such divisions. Squarefreeness has a separate Euclidean
+degree bound. A fuel-zero branch may succeed only if the stopping condition
+has already been checked; otherwise it returns exhaustion, never a truncated
+chain or gcd. Replay terminates by literal length and its recursive evidence
+measure, even on bad inputs.
+
+Separate three required claims: successful-result soundness for any lawful
+fallible adapter; domain-exact success for a total adapter with computed fuel;
+and eventual bounded success on valid inputs only when all required coefficient
+operations and evidence producers have proved completeness with sufficient
+budgets. Coefficient refinements over transcendental constants without zero
+evidence do not satisfy that third hypothesis. Increasing a budget by itself
+does not prove success. No Archimedean or root-separation bound is used.
+
+## Required correspondence and specialization theorems
+
+The following are statement shapes. `Laws ops denote` relates raw operations
+to the ordered field `K`; `ι : K →+* R` is order-preserving, with
+`[Field R] [LinearOrder R] [IsStrictOrderedRing R] [IsRealClosed R]` on the
+Mathlib side. All raw polynomials and endpoints must have valid interpretations.
+
+| Statement | Required conclusion / owner |
+| --- | --- |
+| `query_sound` | `queryWith ... = ok q cert` implies `Domain p a b` and `q = TaQ(F,P;a,b)`; `hex-sturm-mathlib`. |
+| `Replay.check_sound` | Accepted replay implies the same domain and query equality, using coefficient-check soundness; `hex-sturm-mathlib`, by the shared replay theorem. |
+| `query_isSome` | For the total adapter, `(query p f a b).isSome ↔ Domain p a b`; field algorithm/guard proof here, semantic interpretation in the companion. |
+| `rootCount_eq`, `query_sign` | Count equals `Roots.card` and is bounded by `degree P`; a singleton root set gives its evaluation sign; companion. |
+| `query_congr` | Context transports preserving coefficient/endpoint denotations preserve successful query values; completeness assumptions are needed to transfer success, not just values. |
+| `query_backend_eq` | Lawful optimized backends agree on completed query values and, for total adapters, the whole `Option` result. Bounded success/failure equality additionally requires a proved budget-accounting relation; differing normalizations require positive-rescaling correspondence and replay translation, not literal array equality. |
+| `query_rat_eq` | Positive denominator clearing at rational coefficients and dyadic endpoints agrees, including `none`, with `ZPoly.tarskiQuery`; companion. |
+
+For the last theorem choose positive integers `dP,dF` separately so that
+`Pz=dP*P` and `Fz=dF*F` have integer coefficients. Nonzero roots,
+squarefreeness, endpoint guards and evaluation signs are preserved. Moreover
+`Fz*Pz' = dF*dP*(F*P')`, a positive scaling. Clear intermediate coefficient
+and quotient denominators with positive multipliers, translate every initial,
+three-term and terminal identity, and translate the guard and sign evidence.
+Require both frontends' replay soundness and accepted-certificate transport;
+identical producer certificates are not required. Zero polynomials can use
+clearing factor one. A negative clearing factor is not an admissible adapter.
+The integer frontend retains its public type, integer content removal and
+exact dyadic Horner optimizations; it does not acquire a `Field Int` instance.
+
+The foundation is imported once, through
+[hex-real-roots-mathlib](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#sturm-tarski-correspondence).
+The family audit at Mathlib revision
+`1cf325a0cf67aca2b04d76b5380ff6a9e410aefa` does not supply the required generic
+real-closed-field foundation or `IsRealClosed ℝ`. Required Tau Ceti imports
+are polynomial IVT on `[a,b]`, Rolle between distinct roots, and the signed
+remainder/Cauchy-index identity equating variation drop to the above finite
+sum, including infinite endpoints, common factors and zero initial remainder;
+root counting is its `F=1` specialization. These are planned imports requested
+by [#10300](https://github.com/kim-em/hex-dev/issues/10300), not available
+Lean theorem names or assumptions silently installed as axioms.
+
+Hex locally proves operation-record interpretation, pseudo-division and
+positive-scaling correspondence, literal replay soundness and integer
+specialization in real-roots and its companion. That companion also proves
+`IsRealClosed ℝ` from Mathlib's real square-root and polynomial order/IVT
+results. HexSturm proves frontend guards, generic endpoint and denominator
+adapters, and coefficient-evidence composition. Ambient real-closure existence
+for arbitrary `K` is a separate Tau Ceti obligation consumed by
+`hex-real-closure-mathlib`; this API's semantics are conditional on a supplied
+`R,ι` until that obligation is discharged. It does not construct that field.
+
+## Conformance and Phase-4 evidence
+
+Follow [testing.md](../testing.md): every operation has typical, edge and
+adversarial cases, with serialized coefficient contexts, seeds and expected
+exact results. Integer/rational fixtures compare both frontends and
+python-flint exact selected-root signs. Pin oracle versions and provenance;
+never use printed decimals as expected signs. Lower-level pseudo-division,
+gcd/xgcd identities and total-adapter agreement also have fixtures in hex-poly;
+shared recurrence/replay cases live in hex-real-roots.
+
+Required cases include:
+
+- `P=x²-1` on `(-∞,+∞)`: queries of `1,-1,0,x,x-1` give `2,-2,0,0,-1`.
+  The last has a proper common factor and a nonconstant terminal gcd.
+- `F` divisible by `P`, high-degree `F` requiring initial reduction, and
+  negative leading coefficients; leading-term cancellation at a raw algebraic
+  coefficient whose representation is not structurally zero.
+- Nonzero constant, zero and nonsquarefree `P`, each also with `F=0`;
+  equal/reversed intervals, all permitted infinity combinations, finite root
+  endpoints, and a root only at the half-open API's upper endpoint.
+- Zero intermediate endpoint signs, wrong initial products, nonpositive
+  scales, altered quotients/parities/degree evidence, omitted terminal steps,
+  oversized arrays, false squarefreeness witnesses and false coefficient signs.
+- Budget exhaustion at each callback/guard/replay stage, unresolved zero,
+  foreign-context/stale evidence, and positive versus negative denominator
+  clearing. Reject cyclic certificate references at decoding.
+
+When extension adapters exist, require downstream integration fixtures for the
+corrected [de Moura–Passmore example](https://www.cl.cam.ac.uk/~gp351/infinitesimals.pdf)
+`P=(εx²−1)(εx³−1)`: counts on the whole line and `(0,+∞)` are `3` and `2`;
+the query of `P'''` on `(0,+∞)` is `0`, with opposite signs at the two
+positive roots. This tests non-Archimedean queries without claiming that a
+rational isolating interval can separate those roots. Include multiple
+infinitesimal levels and nested coefficient certificates, supplied downstream
+without a reverse import. Pin Z3's RCF API for these differential fixtures;
+BKR/Thom reconstruction and the family's full `tower8` isolation benchmark
+remain their owners' obligations.
+
+Phase 4 measures domain/squarefree checks, initial reduction, subsequent chain
+production, endpoint evaluation, coefficient signs and literal replay
+separately. Sweep `degree P`, `degree F`, coefficient bit size, endpoint size,
+chain length, extension depth and nested evidence size. With classical dense
+arithmetic a conservative query bound after validation is
+`O((degree F+1)*degree P + (degree P)^3)` ring operations for positive-degree
+`P`, excluding coefficient-oracle cost; finite endpoint work is bounded by
+the sum of chain lengths. This is not a bit-complexity promise. Record peak
+coefficient sizes, gcd work, coefficient calls and certificate bytes; use the
+actual stored lengths and evidence sizes for raw inputs and replay bounds.
+
+Compare the total rational adapter with the optimized integer/dyadic backend
+on identical queries; correctness agreement is gating. Pinned python-flint
+and Z3 end-to-end comparisons are informational where they expose comparable
+queries; record any lack of a matching query surface rather than timing root
+isolation as if it were query evaluation. No external system supplies a
+comparable Lean kernel proof surface. Replay uses the companion's
+[fresh-module proof evidence](../benchmarking.md#fresh-module-proof-evidence)
+track, with ordinary kernel checking and axiom inspection; executable benches
+remain Mathlib-free. Include valid and rejected nested replay probes and one
+representative profile attributing arithmetic versus coefficient-sign cost.
+Follow the shared-host fixed trial-major and adjacent alternating `AB`/`BA`
+schedules, retain every completed sample, and allow at most one unchanged
+rerun of an inconclusive result. No performance measurements or phase
+advancement are claimed by this design document.

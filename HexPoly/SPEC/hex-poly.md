@@ -141,6 +141,117 @@ Given coprime `a, b` with Bezout coefficients `s, t`, constructs `h`
 with `h ≡ u (mod a)` and `h ≡ v (mod b)`. Used by hex-hensel,
 hex-gfq-ring, and hex-berlekamp-mathlib (Berlekamp correctness proof).
 
+## Fallible coefficient operations
+
+The [ordered-field Sturm contract](../../SPEC/Libraries/hex-sturm.md) requires
+new reusable polynomial routines below the real-closure family. This section
+is planned infrastructure, not a description of capabilities already provided
+by `HexPoly.Field`. Preserve the current total `DensePoly` APIs.
+
+Use an explicit operation record, not new instances on raw representatives.
+The following signatures are design shapes; `Result` distinguishes success,
+invalid input, exhaustion and rejected evidence, and successful calls return
+the residual budget. `C` is a representation type with a fixed context.
+
+```text
+CoeffOps C:
+  zero, one : C
+  validate : Budget → C → Result ValidityEvidence
+  add, mul : Budget → C → C → Result (C × ArithmeticEvidence)
+  neg      : Budget → C → Result (C × ArithmeticEvidence)
+  zeroTest : Budget → C → Result (Bool × ZeroEvidence)
+  sign     : Budget → C → Result (Sign × SignEvidence)
+  checkArithmetic, checkZero, checkSign : Budget → Claim → Evidence → CheckResult
+FieldOps C extends CoeffOps C:
+  inv      : Budget → C → Result (C × InverseEvidence)
+```
+
+`Sign` has exactly negative, zero and positive values. Claims include the
+context, operation and all operands/results; evidence cannot be reused for
+another claim. Each checker is structurally terminating and kernel-reducible;
+`CheckResult` distinguishes accepted, rejected and exhausted. Sign can supply
+a zero decision, but an independent zero test must agree with it whenever
+both succeed. Unknown is exhaustion, never zero or false. Equality is the
+zero test of a difference; no structural `DecidableEq C` is required.
+All callbacks, including arithmetic and validation, must terminate on invalid
+inputs. Check allocation/work limits before allocating or invoking children,
+and charge nested work to the parent budget without resetting it.
+
+A separate Prop law package supplies a validity predicate and an
+interpretation of valid representatives in a nontrivial ordered commutative
+domain `D`, preservation of validity, ring-operation correspondence, and
+soundness of accepted arithmetic/zero/sign evidence. It need not make the
+interpretation injective or impose algebraic instances on `C`. Core
+`Lean.Grind.CommRing`, `LE`, `LT`, `Std.IsLinearOrder`,
+`Std.LawfulOrderLT`, and `Lean.Grind.OrderedRing` on the semantic carrier,
+with the domain laws, suffice; alternatively package these laws explicitly.
+No semantic decision procedure is needed to state successful-result
+soundness. `FieldOps` adds a field interpretation and the inverse law for
+certified nonzero inputs. Certified zero inversion is invalid, and an
+undecided zero test propagates exhaustion.
+
+Raw polynomial storage is an array of `C`, separate from `DensePoly C`.
+`degreeWith` scans at most the stored length and returns `none` precisely
+when every coefficient is semantically zero, or `some d` with a nonzero
+coefficient at `d` and zero evidence above it. These are success values;
+failure is carried by the outer result. All arithmetic, leading-coefficient
+selection, remainder and stopping tests use this semantic degree. Trailing
+structural nonzeros may denote zero. Polynomial identities use bounded
+coefficientwise semantic equality, with corresponding evidence in replay.
+
+Required routines and postconditions, interpreted coefficientwise, are:
+
+| Routine | Successful result |
+| --- | --- |
+| `pseudoDivWith A B` | For `B ≠ 0`, return `u,Q,R` with `u>0`, `u*A=Q*B+R`, and `R=0` or `degree R < degree B`. |
+| `pseudoGcdWith A B` | Return the last nonzero pseudo-remainder, a gcd representative **over the fraction field of D**, with the reduction identities; return zero on `(0,0)`. |
+| `pseudoXgcdWith A B` | Additionally return `S,T,c` with `c ≠ 0` and `S*A+T*B=c*G`, where `G` has the fraction-field gcd property. Track scale changes explicitly. |
+| `divModWith A B` | With `FieldOps` and `B ≠ 0`, return `Q,R` with `A=Q*B+R` and the same remainder bound. |
+| `gcdWith A B` | With `FieldOps`, return a monic gcd (zero on `(0,0)`), dividing both inputs and divisible by every common divisor. |
+| `xgcdWith A B` | With `FieldOps`, return `G,S,T` with the same monic gcd and `S*A+T*B=G`; choose all zero on `(0,0)`. |
+
+The fraction-field assertion means that after the canonical embedding into
+any fraction field, `G` divides both inputs and every common divisor divides
+`G`. It does **not** assert a gcd or an unscaled Bézout identity in `D[x]`:
+for example the fraction-field gcd of `2` and `x` is a unit, but
+`2*S+x*T=1` is impossible in `ℤ[x]`. No fraction-field arithmetic or
+`Field Int` instance is required at runtime. With one zero input the pseudo
+gcd is the other input up to its recorded nonzero scale; for `(0,0)` the
+pseudo-xgcd chooses `S=T=G=0,c=1`.
+
+Pseudo-division uses positive leading-coefficient multipliers, for example
+`abs(lc B)`, and tracks the quotient. For constant nonzero `B` it must still
+produce the reconstruction identity, not merely return a zero remainder.
+Zero `B` is invalid even when `A=0`; adapters check this before invoking the
+existing total `DensePoly.divMod` convention. For nonzero `A,B` the bound is
+`max(0, degree A - degree B + 1)` leading cancellations; zero `A` needs none.
+Each cancellation checks strict semantic degree descent. A gcd loop swaps
+inputs as needed and decreases the nonzero remainder degree; stored lengths
+give conservative outer fuel even before normalization. At fuel zero check
+for genuine termination or return exhaustion; never return a partial gcd.
+The xgcd loop maintains the displayed linear-combination identities at each
+step. Plain gcd must not compute growing Bézout accumulators.
+
+Prove degree/reconstruction, gcd divisibility over the stated field,
+Bézout, checker soundness, and success under complete callbacks with sufficient
+fuel as distinct obligations. For a total lawful field carrier,
+`DensePoly.divMod`, `gcd`, `xgcd` and `xgcdLeftMonic` in
+[`Field.lean`](../Field.lean) are fast adapters. Prove field division equality
+and gcd/xgcd agreement after the same monic normalization; Bézout coefficients
+need not be equal for two valid extended-gcd algorithms. Exact-output equality
+is required when the optimized adapter claims to implement the same chosen
+algorithm. The current gcd need not be monic. Integer-specialized content
+removal stays in its owning downstream backend and must supply its scale
+identity; hex-poly gains no dependency on hex-real-roots or the family.
+
+Conformance includes semantically zero trailing coefficients, constant and
+zero divisors, gcd/xgcd zero cases, negative leading coefficients, the
+`(2,x)` domain-versus-fraction-field distinction, failed coefficient decisions,
+exhaustion and malformed scale/evidence data. Phase 4 separates remainder,
+plain gcd, extended gcd, semantic-degree/sign work and evidence production;
+record coefficient growth and verify the total adapter against existing
+DensePoly routines under the shared benchmarking policy.
+
 ## External comparators
 
 | Comparator | Class | Scope |

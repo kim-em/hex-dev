@@ -635,15 +635,57 @@ prove this statement: a root where `f` is negative contributes `-1`, and a
 common root contributes zero. Introduce the signed-query theorem without
 weakening the existing Sturm-count predicate or its theorems.
 
-The proof obligation follows the
-[Sturm–Tarski theorem](https://www.isa-afp.org/entries/Sturm_Tarski.html).
-It is new work, not existing RCF replay coverage. This companion supplies
+The abstract foundation is a planned Tau Ceti import through this companion,
+shared by the integer frontend and
+[hex-sturm](../../SPEC/Libraries/hex-sturm.md#required-correspondence-and-specialization-theorems).
+It is not a second proof from the existing derivative-chain theorem.
+The [Sturm–Tarski theorem](https://www.isa-afp.org/entries/Sturm_Tarski.html)
+is prior art, not an existing Lean import. This companion supplies
 the root/sign semantics; `hex-number-field-mathlib` composes them with its
 chosen-real-embedding theorem to prove `QAdjoin.signTarski_eq` against
 `realCompare`. No reverse dependency on number fields is introduced.
 Literal kernel replay belongs to the fresh-module proof evidence track;
 query construction and endpoint evaluation belong to the computational
 owner's ordinary benchmarks. A general comparison elaborator is deferred.
+
+### Shared foundation and proof ownership
+
+The following are planned statement shapes, not available declarations at
+the [Mathlib pin](../../lake-manifest.json)
+`1cf325a0cf67aca2b04d76b5380ff6a9e410aefa`. Import the family foundation
+requested from Tau Ceti by [#10300](https://github.com/kim-em/hex-dev/issues/10300)
+once here: polynomial IVT on `[a,b]`, Rolle between distinct roots, and the
+signed-remainder/Cauchy-index formula. With
+`[Field R] [LinearOrder R] [IsStrictOrderedRing R] [IsRealClosed R]`, that
+formula equates zero-skipping variation drop to
+`∑ α ∈ Roots(P;a,b), sign (F.eval α)` for nonzero squarefree `P`, strictly
+ordered finite or infinite endpoints, and nonvanishing at finite endpoints.
+It includes `F=0`, initial reduction of `F*P'`, zero initial remainder,
+positive-scaled recurrence identities and nonconstant terminal gcd; root
+count is the `F=1` specialization. It must not assume `P,F` are coprime.
+
+Here prove the local bridge from the operation-record laws in an ordered
+commutative domain `D`, an order-preserving embedding `D →+* R`, and accepted
+literal domain/chain/sign evidence to that abstract formula. This shared
+`QueryReplay.check_sound` shape implies both the domain guards and the signed
+sum. Prove pseudo-division interpretation, preservation by positive scaling,
+finite endpoint evaluation and degree-parity infinity signs. Instantiate at
+integers and dyadics for `ZPoly.tarskiQuery_eq` and
+`TarskiReplay.check_sound`, retaining their public conclusions. A `Field D`
+hypothesis is not permitted on this shared bridge. Denotation of raw
+coefficients need not be injective.
+
+This companion owns the missing `IsRealClosed ℝ` proof from real square
+roots and polynomial order/IVT results in Mathlib; do not assume the pinned
+library supplies an instance. Until supplied, the generic theorem is
+conditional on `R` and the embedding. Real-closure existence for arbitrary
+ordered fields is a separate Tau Ceti requirement consumed downstream by
+hex-real-closure-mathlib. `hex-sturm-mathlib` consumes the shared theorem to
+prove field-domain validation, endpoint adapters, positive rational
+denominator clearing, total-adapter specialization, coefficient-certificate
+composition and `rootCount_eq`. It does not import a second abstract
+Sturm–Tarski proof. No reverse family dependency is introduced here, and the
+existing `Sturm.IsSturmChain` development over `Polynomial ℝ` is unchanged.
 
 ## File organisation
 
