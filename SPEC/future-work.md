@@ -247,23 +247,40 @@ decomposition from irreducible factorization.
 
 ### Gröbner bases
 
-`hex-groebner` should start with Buchberger's algorithm and the
-Gebauer-Möller pair criteria. Add F4 only if benchmarks justify it.
-Applications include ideal membership,
-intersection, quotient, elimination, implicitization, and radical membership
-through the Rabinowitsch trick.
+A Hex Gröbner engine is justified only at the performance of the open-source
+industrial engines. Lean's `grind` already contains a Gröbner-basis-based
+commutative-ring solver for small ideal-membership goals, exposed as the
+`grobner` tactic, and `linear_combination` checks any externally produced
+cofactor certificate (`polyrith`'s external service has been shut down), so a
+Buchberger implementation with pair criteria adds nothing that is not already
+available. The sources to
+follow are msolve (F4 over prime fields with a tracer and multi-modular
+reconstruction over `ℚ`, plus a signature-based variant), giac's modular F4,
+Singular's `std`, `slimgb`, and `sba`, GBLA for the specialized F4 linear
+algebra, and the Eder–Faugère survey of signature-based algorithms.
+
+That engine needs its own substrate: packed-exponent sparse polynomials over
+word-size prime fields, Macaulay-matrix construction with hybrid sparse and
+dense row reduction over `𝔽ₚ`, and a tracer-driven multi-modular lift.
+`hex-mv-poly`'s tree-map representation remains the certificate and kernel
+form, not the engine. Applications include ideal membership, intersection,
+quotient, elimination, implicitization, and radical membership through the
+Rabinowitsch trick.
 
 Ideal membership has a compact trusted boundary: return cofactors witnessing
-`p = sum_i h_i * g_i`. Non-membership requires more. A nonzero remainder is
+`p = sum_i h_i * g_i`, an identity `hex-kronecker` and `hex-reflect` already
+check in the kernel. Non-membership requires more. A nonzero remainder is
 conclusive only after the divisor set is certified to be a Gröbner basis and
-connected to the original generators, including the required S-pair
-criterion. Treat positive and negative decisions as separate certificate
-types with separate budgets.
+connected to the original generators: two-way cofactor identities, a
+reduction-to-zero trace for every S-pair, and the Buchberger criterion proved
+once. The pinned Mathlib has the multivariate division algorithm with respect
+to a monomial order and not the criterion. Treat positive and negative
+decisions as separate certificate types with separate budgets.
 
-The computational layer depends on `hex-mv-poly`; coefficient-domain
-hypotheses and monomial order must be explicit. Zero-dimensional solving and
-root reconstruction are downstream work rather than part of the first basis
-library.
+The computational layer depends on `hex-mv-poly` for the certificate form;
+coefficient-domain hypotheses and monomial order must be explicit.
+Zero-dimensional solving and root reconstruction are downstream work rather
+than part of the first basis library.
 
 ### Boolean polynomial systems
 
@@ -1162,21 +1179,196 @@ lattices by their certified short-vector data and compute the automorphisms of
 one of them. Named lattices such as `E_8` may be used when the exposition and
 Lean code are independently written.
 
+### Real-arithmetic formula language
+
+The multivariate real-arithmetic procedures below (virtual substitution,
+cylindrical algebraic decomposition, and cylindrical coverings) share one
+reflected language: prenex formulas over atoms `p ⊳ 0` with
+`p : MvPoly n Int`, a quantifier prefix, and `toProp` over `ℝⁿ`. Specify it
+once, with a reifier built on `hex-reflect` for the ring layer plus the
+comparison and Boolean layer that `HexRCF/Reify.lean` currently does by hand
+for one variable, and quantifier-free output formulas for quantifier
+elimination. `hex-rcf`'s `Sentence` is the one-variable instance and remains
+the fast path for univariate residues. The SPEC decides whether the language
+is its own library or the first module of the virtual-substitution library;
+three consumers argue for its own.
+
+### Virtual substitution
+
+Weispfenning's quantifier elimination for variables of low degree. For a
+quantified variable of degree at most two in every atom, `∃x φ` over a real
+closed field is equivalent to a finite disjunction of `φ` at the test points
+`−∞`, the formal roots of each atom polynomial with their guards (the
+quadratic roots `(−b ± √(b² − 4ac)) / 2a` under `a ≠ 0 ∧ b² − 4ac ≥ 0`, the
+linear root `−c/b` under `a = 0 ∧ b ≠ 0`, and the constant case), and each
+root plus an infinitesimal `ε`; a fixed rule set rewrites each atom under each
+test point into a quantifier-free formula in the remaining variables, so no
+square root, reciprocal, or infinitesimal survives. With `m` atoms the set
+has at most `4m + 1` points. The linear and quadratic cases are
+Loos–Weispfenning and Weispfenning (1997); the cubic case is Weispfenning
+(1994) and Košta's thesis. Redlog inside REDUCE is the reference open-source
+implementation; the Isabelle development of Scharager, Kosaian, Mitsch, and
+Platzer (FM 2021) is the formal precedent, with exported executable code.
+
+Everything is `MvPoly` arithmetic and formula manipulation: `toUnivariate` in
+the quantified variable, degree case splits on symbolic leading coefficients,
+and the substitution rules. There are no algebraic numbers, no root isolation,
+and no resultants beyond the discriminant. The correctness content is the
+elimination-set theorem for each test-point kind and the derivative rule for
+`ε`, proved once over `ℝ` or any real closed field. The procedure composes
+with `hex-rcf`: eliminate the inner quantified variables that are at most
+quadratic, then hand a univariate residue to `rcf` or evaluate a closed
+residue over `ℚ` in the kernel. Degrees grow under substitution, so a later
+elimination may exceed the bound; at that point the decomposition-based
+procedures take over.
+
+Two proof routes are available, and the SPEC should support both. Reflection
+runs a verified eliminator in the kernel on the reflected formula, using
+`hex-mv-poly`'s kernel form, at the cost of kernel polynomial arithmetic on a
+formula that grows by the elimination-set size, times the substitution
+blowup, per eliminated variable. A certificate keeps the elimination set
+fixed by the formula and the once-proved completeness theorem, while the
+compiled side chooses only the simplifications; the kernel checks each
+virtual substitution as a polynomial identity and each simplification step
+against its proof. The two uses need different certificates. Refutation of a
+universal goal needs implications only: every disjunct must be refuted, and a
+disjunct may be replaced by any checked weakening of it (dropping conjuncts,
+constant folding, linear-combination consequences). Quantifier elimination
+returning a formula needs equivalences at every step, including under
+negation and quantifier alternation, so there only checked
+equivalence-preserving simplifications apply; Dolzmann–Sturm simplification
+by equivalences is admissible whenever its steps are checked and otherwise
+guides the untrusted search.
+
+Dependencies: `hex-mv-poly`, `hex-reflect`, the shared formula language, and
+`hex-rcf` for univariate residues. Oracle: Redlog's `rlqe` and the exported
+Isabelle code for the quadratic case. This is the first multivariate
+real-arithmetic tactic to build: it has no dependency on the decomposition
+theorem below and covers the linear and quadratic goals that dominate tactic
+use.
+
 ### Cylindrical algebraic decomposition
 
-Extend the univariate real-closed-field decision procedure to quantifier
-elimination in a small number of variables. The intended components include a
-projection operator, multivariate subresultant chains in a distinguished
-variable, exact algebraic sample points, and sign determination for
-polynomials with algebraic coefficients.
+Extend the univariate decision procedure of `hex-rcf` to sentences and
+quantifier elimination in a small number of variables. The compiled pipeline
+decomposes into components that largely exist:
 
-Dependencies include `hex-mv-poly`, `hex-mv-factor`, `hex-resultant`,
-`hex-real-roots`, `hex-real-algebraic`, `hex-number-field`, and
-`hex-number-field-tower`. Scope the
-first version to two or three variables. Before fixing a public API, prototype
-the projection phase and a certificate that carries a complete cell
-decomposition with the sign-invariance evidence needed for a negative as well
-as a positive decision.
+- Projection. View a level-`k+1` polynomial as univariate in its main variable
+  over `MvPoly k` (`toUnivariate`). Collins' operator takes, for every
+  reductum `r` of every polynomial `p` (truncations of `p` by successive
+  leading terms, which cover the degree drops when leading coefficients
+  vanish), the coefficients of `r`, the principal subresultant coefficients of
+  `(r, r')`, and the principal subresultant coefficients of `(r, s)` for
+  reducta `s` of the other polynomials; the chains come from `hex-resultant`
+  over `MvPoly` coefficients (`hex-mv-gcd` supplies the exact-division law
+  and already runs that chain), after squarefree and irreducible basis
+  reduction from `hex-mv-gcd` and `hex-mv-factor`. Use Collins' operator
+  first. McCallum, Brown, and Lazard shrink the projection set but change the
+  theorem, its side conditions, and (for Lazard) the lifting step, so each is
+  a separately certified variant rather than a search-time option.
+- Base phase. `ZPoly.realAlgebraicRoots` and dyadic samples between roots.
+- Lifting. Substitute a sample point into each next-level polynomial to obtain
+  a `RealAlgebraicPoly`, take `RealAlgebraicPoly.roots`, and choose samples
+  between roots. Canonical `AlgebraicNumber` coordinates re-canonicalize at
+  every substitution, which is the known performance cliff; lazy
+  `AlgebraicRoot`s, `NumberTower` coordinates, and Thom encodings are the
+  alternatives. That choice is shared with
+  [#10142](https://github.com/kim-em/hex-dev/issues/10142) and
+  [#10143](https://github.com/kim-em/hex-dev/issues/10143) and should be made
+  once.
+- Sign evaluation at samples. Exact `RealAlgebraicNumber` arithmetic.
+- Cell semantics, sign rows, Boolean and quantifier folds. `hex-rcf`'s, by
+  induction on levels; cylindricity carries the fold across a quantifier
+  block boundary.
+
+Correctness has one deep theorem and a large amount of replayable arithmetic.
+The theorem is delineability: over a connected cell on which the projection
+set is sign-invariant, each level polynomial either vanishes identically on
+the cylinder over the cell or has real roots given by finitely many
+continuous functions of constant multiplicity that never cross. For Collins'
+operator it needs continuity of the complex roots of a polynomial in its
+coefficients (the pinned Mathlib has the monic equal-degree case,
+`Polynomial.exists_roots_norm_sub_lt_of_norm_coeff_sub_lt`; multiplicity
+control, root functions, and the degree-drop cases remain), the relation
+between the first nonvanishing principal subresultant coefficient and the
+degree of the gcd (`hex-resultant-mathlib` has the resultant-zero and
+specialization facts only), and connectedness of sections and sectors over
+connected cells. Over `ℝ` that connectedness is topological; over an
+arbitrary real closed field intervals are not connected and the statement
+must use semialgebraic connectedness, so the first target is `ℝ`. Vermande's
+Rocq/MathComp proof (CPP 2026), the first formal correctness proof of CAD, is
+the reference for the statement shapes. The theorem is independent of every
+implementation choice and is the long pole; it belongs in a Tau Ceti roadmap,
+and the Hex companion that consumes it will import Tau Ceti. Nothing in this
+entry can be certified without it.
+
+The certificate must convince the kernel that the sample points meet every
+sign-invariant cell of the atom polynomials and that the atom signs at the
+samples are as claimed. Sign claims replay per sample. Completeness is the
+delineability theorem applied to literal polynomials that the kernel has
+checked are the required subresultant coefficients and leading coefficients:
+replay the subresultant chains with their multiplication-only recurrence
+witnesses level by level, as `hex-rcf` replays Sturm chains. Root isolation
+at each level over algebraic coefficients is then a Sturm replay over `ℚ(α)`,
+or a Thom-encoding replay with Tarski queries; this component has no Hex
+precedent and is the likely limit on replay cost. `hex-rcf`'s univariate
+replay already costs seconds per goal, and a multivariate design budgets from
+that baseline.
+
+Sequencing: first the delineability theorem; in parallel an unverified
+compiled prototype of projection and lifting, measured on the standard small
+examples (Collins' circle and parabola pairs, Kahan's ellipse in the unit
+circle, a Davenport–Heintz family for the blowup) to fix the sample
+representation; then the certificate SPEC. Reserve full decompositions for
+quantifier elimination with alternations and for exploration. The tactic case
+(universal goals, and existential goals without alternation) should use the
+covering refutation below, which shares the theorem, the projection
+arithmetic, and the lifting primitive but certifies only the cells a search
+visited.
+
+Dependencies: `hex-mv-poly`, `hex-mv-gcd`, `hex-mv-factor`, `hex-resultant`,
+`hex-real-roots`, `hex-real-algebraic`, `hex-number-field`, `hex-reflect`, and
+the shared formula language.
+
+### Real-arithmetic satisfiability by cylindrical coverings
+
+The quantifier-free fragment (equivalently, universal goals by refutation and
+existential goals by a model) does not need a full decomposition. NLSAT
+(Jovanović–de Moura) assigns real algebraic values variable by variable and,
+on a conflict, builds a single cell around the current sample from the
+projection of the conflicting polynomials at that sample, learning the clause
+"not in this cell, or not all these literals"; single-cell and levelwise
+constructions shrink the cell. Cylindrical algebraic coverings (Ábrahám,
+Davenport, England, Kremer) instead cover the line at each level by intervals
+each carrying the polynomials that exclude it. Either way, an unsatisfiable
+run is a propositional resolution refutation over the input clauses and the
+learned cell clauses, and a satisfiable run ends with a model.
+
+That is the certificate. The resolution part is checkable with the LRAT
+machinery Lean already trusts for `bv_decide`, or the covering tree replaces
+it. Each cell clause is an instance of the single-cell delineability theorem
+whose side conditions are concrete signs and root orders at an algebraic
+sample. The deep theorem is the one under "Cylindrical algebraic
+decomposition", stated for one cell. The cost is concentrated in the
+per-clause algebraic arithmetic the kernel replays (roots of polynomials with
+algebraic coefficients, signs at algebraic points), so the sample
+representation decision above bounds the reachable size. A model is certified
+by evaluation. The projection operator is part of the trusted statement: the
+side conditions a cell clause carries and the theorem the checker invokes
+differ between Collins' operator and the reduced ones, so the SPEC fixes one
+operator and treats the others as separately certified variants.
+
+Dependencies: the delineability theorem, the projection arithmetic and lifting
+primitive of the decomposition entry, `hex-real-algebraic`, the shared formula
+language, and a CDCL core or an external SAT solver with LRAT output. Before
+the SPEC fixes the certificate type, measure on the nlsat paper's examples the
+lifting cost of `RealAlgebraicPoly.roots` after substituting a two-variable
+sample, the kernel cost of certifying the sign of `p(α, β)` at an algebraic
+sample with the existing replay pieces, and the number of cell clauses an
+existing solver learns; those numbers decide the sample representation and
+the clause granularity, which are type-level choices. Single-cell versus
+levelwise versus covering construction, and the choice of SAT core, affect
+only the untrusted search and can remain open in the SPEC.
 
 ## Cross-cutting infrastructure
 
