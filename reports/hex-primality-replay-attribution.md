@@ -11,7 +11,7 @@ On the retained four-block repeat, the change reduces Curve25519 supplied-proof
 replay from 5.601 to 4.532 ms and Curve448 from 10.357 to 9.240 ms.
 
 Hex's cube-root arithmetic checkers now use the same bounded positive product
-and primitive comparisons as its square-root checker. Unconditional equalities
+and primitive order comparisons as its square-root checker. Unconditional equalities
 with the original definitions preserve every accepted and rejected input;
 compiler simplification retains the original native implementations. The
 Boolean checker, soundness theorem, search budgets, factor subsets, and
@@ -44,7 +44,10 @@ is retained in full. It includes broad host timing variation and overlap with
 a repository build. The [one unchanged repeat](bench-results/hex-primality-10292-kernel-repeat.json)
 uses the same four-block schedule; the table reports its medians, without
 pooling or removing samples from either run. Curve25519 improves in all four
-repeat pairs and Curve448 in three of four. The unchanged square-root inputs
+repeat pairs and Curve448 in three of four. The primary run improves in three
+of four Curve25519 pairs and two of four Curve448 pairs. The repeat also has
+large block-3 excursions (25.81 ms for Curve25519 before and 35.45 ms for
+Curve448 after); these remain in its medians and pair counts. The unchanged square-root inputs
 are controls, not evidence of improvements to those paths.
 
 The [PrimeCert comparison](bench-results/hex-primality-10292-primecert.json)
@@ -128,6 +131,13 @@ The separate [matched package run](bench-results/hex-primality-10292-matched-ker
 retains all 64 checks and negative controls. It is noisy, including a reversal
 on the unchanged family-511 control; its timings are not pooled with the
 original-base package run or used to estimate the benefit of changing bases.
+The magnitude matters: its Hex curve medians (12.518 and 23.730 ms) are roughly
+three times the common-base Boolean checks in the adjacent base-pair experiment
+(4.393 and 7.661 ms), with individual complete-proof samples reaching 96.5 ms.
+The proofs have different outer statements, and the runs have different host
+conditions. Comparing this table with the earlier package table would therefore
+be misleading as an estimate of changing bases; use the adjacent base-pair
+experiment for that question.
 
 | Matched input | Hex after (ms) | PrimeCert (ms) |
 |---|---:|---:|
@@ -149,7 +159,13 @@ zero bases, invalid intervals, oversized products, and a sieve bound above 64.
 Repeated prime powers remain one factor entry with a bounded exponent, not
 repeated primality proofs.
 
-The remaining gap has two concrete sources. The Boolean interface checks
+PrimeCert's internal components were not timed separately. For orientation,
+Hex's after-change witness probes alone take 3.143 and 7.853 ms on the curves,
+while PrimeCert's complete proofs in the package run take 3.537 and 6.436 ms.
+These scopes, bases, and runs differ, so they establish neither arithmetic
+parity nor a subtractable remainder. The common window loops, Hex component
+probes, and matched-base experiment support the following structural explanation
+without quantifying a PrimeCert component split. The Boolean interface checks
 canonical ordering, bounds attacker-supplied products, and recursively checks
 the data it receives. A specialized proof has no corresponding first-class
 certificate preflight or traversal, though its premises still need checking.
@@ -214,11 +230,18 @@ samples are not pooled with the corrected run.
 The [native regression record](bench-results/hex-primality-10292-native.json)
 uses lean-bench's existing fixed `runConstruction` and `runCurveChecker`
 registrations, including their autotuning, five repeats per invocation, and
-expected hashes. Four adjacent alternating old/new invocations retain all
+expected hashes. Each export retains `expected_hash_check.status = "match"`;
+the expected values are defined in the
+[benchmark registrations](../bench/HexPrimality/Bench.lean). Four adjacent alternating old/new invocations retain all
 20 measured samples per arm. Construction medians are **812.405 ms before and
 766.422 ms after**; compiled checking is **1.075 ms before and 1.014 ms after**.
-These observations show no construction regression; they are not claims of a
-native algorithm improvement. Every construction returns the same 29-attempt
+The two arms are independently built executables in different checkouts, so
+binary layout and host timing can differ. The unchanged compiled checker is an
+empirical null control: it shifts about 5.7%, as does construction. Thus the
+timings alone cannot exclude a construction regression of roughly that size;
+the common shift is a resolution warning, not a statistical error bound.
+There is no observed native regression, but also no claim of a native algorithm
+improvement. Every construction returns the same 29-attempt
 certificate. The compiled algorithms are retained by proved `@[csimp]` equalities.
 
 ## Versions and reproduction
@@ -247,6 +270,17 @@ Create an isolated Hex baseline checkout and build `HexPrimalityMathlib` and
 measuring. All runners refuse existing output paths and retain completed
 samples, including errors, without load-based selection. Use a fresh output
 path for each command; the one permitted unchanged repeat also gets a new path.
+
+The retained phase runs used the temporary bench-tree modules
+`HexPrimality.ProofProbe.Curve25519.ReplayPair` and `ReplayPairPhases`, as recorded
+in each row's `command`. The current runner places those same phase sources in
+`HexPrimalityMathlib.ReplayPair`, outside the computational bench tree. That
+location builds successfully but has not been re-measured: Lake dependency
+traversal and module startup can differ, so the table describes the recorded
+configuration, not a measurement of the relocated runner. To reproduce the
+original configuration exactly, write the retained `sources` under their
+recorded module names and replay the recorded commands/order, removing the
+temporary files afterward. The commands below use the current location.
 
 ```sh
 record=reports/bench-results/hex-primality-small-replay/hex-primitive-all-certificate-kernel.json

@@ -1239,7 +1239,7 @@ a changed base starts a new group. Each public checker is a `noncomputable` kern
 binary search. The internal `pockProduct` sentinel is proved equivalent to
 `certProduct` for positive subjects; callers establish that precondition
 before using it, and the final arithmetic check rejects the zero sentinel.
-Both cube-root arithmetic arms use this bounded product and primitive comparisons,
+Both cube-root arithmetic arms use this bounded product and primitive order comparisons,
 just as the square-root arm does. Their unconditional equality theorems retain
 the original compiled arithmetic, including rejection on zero subjects,
 overflowing exponents, invalid ordering, invalid interval witnesses, and sieve

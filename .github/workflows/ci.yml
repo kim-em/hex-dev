@@ -153,6 +153,7 @@ jobs:
           python3 -m unittest scripts/bench/test_berlekamp_mathlib_sweep.py
           python3 -m unittest scripts/bench/test_hexrcf_proof_sweep.py
           python3 -m unittest scripts/bench/test_primality_policy_sweeps.py
+          python3 -m unittest scripts/bench/test_primality_replay_attribution.py
           python3 -m unittest scripts/bench/test_primality_negative_sweep.py
           python3 -m unittest scripts/bench/test_primality_mathlib_proof_sweep.py
           python3 -m unittest scripts/bench/test_intfactor_phase4.py
