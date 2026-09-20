@@ -509,9 +509,8 @@ activation. Reconsider `Hex.normPolyDet` under
 only an identifiable family whose full dispatched invocation has a smaller
 median than `norm_det`, including decline/fallback costs, may enter the
 default chain. Every other family remains opt-in. Faster packed kernel work
-alone does not satisfy this rule. The SPEC amendment enables no family by
-default; the existing measurements below contain no packed-arm results and
-cannot establish its wins.
+alone does not satisfy this rule. No family is enabled by default; the packed comparison outcome below records
+the complete forced and automatic measurements and their opt-in decisions.
 
 ## Declaration inventory
 
@@ -538,7 +537,7 @@ The domain proof additionally uses `HexMvPolyMathlib.equiv` and
 `checkDetPolyList`, `checkDetPolyList_sound`, the polynomial generalisation
 of `detWitness`, and the canonical list layer's `beq_iff`/denotation API
 are implemented. `checkDetPolyPacked` / `checkDetPolyPackedMod` and their
-soundness theorems are planned, with the packed checkers owned by
+soundness theorems are implemented, with the packed checkers owned by
 hex-poly-det and the proofs here. The generic list checker stays Mathlib-free
 in hex-bareiss, its `MvPoly` instantiation in hex-poly-det, and its determinant soundness
 in this library.
@@ -548,17 +547,19 @@ in this library.
 ```
 HexPolyDetMathlib/
   Sound.lean        -- shared witness identities, list soundness, transport
-  Packed.lean       -- planned checkDetPolyPacked_sound and residue variant
+  Packed.lean       -- checkDetPolyPacked_sound and residue variant
+  Certificate.lean  -- compiled selection, self-check, quotation, and trace
   Scaling.lean      -- rational scaling transport
   Normalize.lean    -- proved coefficient normalization
   Frontend.lean     -- reification and certificate preparation
   Small.lean        -- closed forms
   Tactic.lean       -- the handler on hex-bareiss-mathlib's `det` syntax kind, det% for symbolic input, Hex.normPolyDet
   Tests.lean
+  PackedTests.lean  -- packed routes, singularity, transport, and axiom audits
 HexPolyDetMathlib.lean
 ```
 
-When the packed implementation lands, the `libraries.yml` entry becomes
+The `libraries.yml` entry is
 
 ```yaml
   HexPolyDetMathlib:
@@ -586,6 +587,12 @@ The term form does not replay a reflexive comparison of its own value list.
 
 Limits are 16 rows, 65,536 certificate terms, 100,000 intermediate terms and
 source nodes, 4,096 coefficient bits, exponent 64, and 1,000,000 proof nodes.
+For entry support at most `s`, let `B` be the smaller of `n! * s^n` and the
+capped monomial-count bound for a minor. Intermediate support is bounded by
+the smaller of `2 * B^2` and the degree-based monomial count: a Bareiss
+numerator subtracts two products of minors. This bound applies before checker
+selection, including term-list checking, and admits sparse independent-atom
+matrices whose dense monomial count alone would exceed the budget.
 The manifest preregisters 45-second cleanup/proof ceilings and six samples per
 arm. The main 2/4/8 ladder contains 48 feasible dense combinations and 33
 infeasible combinations; separate 3×3 cases measure the closed-form route.
@@ -700,3 +707,82 @@ samples are required; ratios use positive medians only.
 | AlgebraicScope | 97.61 | 105.21 | 0.928 | 6/6 | unobserved |
 | Valuation | 38.42 | 86.67 | 0.443 | 6/6 | closed-form |
 | Valuation4 | 47.03 | 197.61 | 0.238 | 6/6 | certificate |
+
+
+### Packed comparison outcome
+
+The packed crossover contains 50 exact product keys from 14 witnesses with six
+successful samples in each forced arm and a positive packed median smaller than
+the term-list median. The automatic comparison uses the same fixture population
+as table fitting, with fresh samples: it is an in-sample dispatch comparison,
+not evidence of generalisation to unseen matrices. Exact product keys are a
+conservative selection heuristic, not a per-product performance theorem.
+The table is fixed before the automatic comparison. No effect-size threshold
+was preregistered; small median differences and their spreads are reported
+without treating them as robust wins. Both
+full 2,064-observation schedules and all 14 family profiles are retained in the
+[packed report](../../reports/hex-poly-det-mathlib-performance.md#packed-certificate-comparison).
+The report includes the complete 172-case ladder, 57 infeasible support requests,
+quotient generation, preflight, conversion, packing, multiplication, synchronous
+kernel checks, identification, elaboration and composed fallback costs. All
+selected modes are plain; outer signed packing is inapplicable.
+
+Every family remains **opt-in**. Family-wide wins against unmodified `norm_det`
+are not established, including fallback costs; `Hex.normPolyDet` stays outside
+the default chain. Faster individual rungs, including Rational4, do not change
+this decision. N-prefixed cases retain correlated row-scaled entries. Family
+medians aggregate the completed cases in each column, while M/D uses only
+matched cases with positive complete medians; differing completion sets do not
+establish a speedup. The small closed-form controls preserve their old route.
+
+Times are medians in milliseconds of six-sample, import-baseline-subtracted
+fresh-module medians. Counts show cases with all six successful samples;
+incomplete cases remain in the denominator and in the full ladder below.
+
+| Family | Term lists | Packed | Dispatch | Mathlib | Median M/D | Complete cases L/P/D/M | Decision |
+|---|---:|---:|---:|---:|---:|---|---|
+| dense-row-scaled | 793.99 | 499.86 | 773.59 | 549.42 | 0.884 | 72/59/72/72 of 147 | opt-in |
+| rational | 501.03 | 507.54 | 501.05 | 400.14 | 0.976 | 3/3/3/3 of 4 | opt-in |
+| singular | 241.04 | 227.83 | 189.51 | 98.63 | 0.823 | 4/4/4/4 of 4 | opt-in |
+| closed-algebraic | 194.56 | 202.79 | 199.18 | 77.04 | 0.397 | 4/4/4/4 of 4 | opt-in |
+| pivot-swap | 191.71 | 202.95 | 201.68 | 89.84 | 0.445 | 1/1/1/1 of 1 | opt-in |
+| structured | 196.11 | 203.21 | 199.65 | 100.70 | 0.504 | 1/1/1/1 of 1 | opt-in |
+| literal-function | 198.35 | 223.25 | 202.60 | — | — | 1/1/1/0 of 1 | opt-in |
+| literal-array | 197.10 | 199.40 | 203.18 | — | — | 1/1/1/0 of 1 | opt-in |
+| closed-algebraic-scope | 110.74 | 99.50 | 100.33 | 98.64 | 0.983 | 1/1/1/1 of 1 | opt-in |
+| valuation | 144.58 | 151.45 | 146.10 | 95.79 | 0.760 | 2/2/2/2 of 2 | opt-in |
+| independent-atoms | 837.97 | — | 806.64 | 304.22 | 0.377 | 1/0/1/1 of 1 | opt-in |
+| block-diagonal | 199.38 | 211.82 | 198.08 | 98.59 | 0.498 | 1/1/1/1 of 1 | opt-in |
+| residue-quotient | 200.83 | 290.73 | 194.31 | 100.49 | 0.518 | 2/2/2/2 of 2 | opt-in |
+| residue-missing | 200.44 | — | 202.25 | 98.25 | 0.486 | 2/0/2/2 of 2 | opt-in |
+
+Classification: 27 closed-form, 74 eligible, 66 overall-decline, 4 packed-decline, 1 producer-timeout.
+The manifest also retains 57 infeasible support requests.
+
+Representative automatic profiles (milliseconds) record the kernel and frontend
+phases separately. Nested phases are not additive. AlgebraicScope is the small
+relation-supplied control, not a symbolic certificate.
+
+
+One automatic-dispatch profile per family; milliseconds, with no baseline subtraction.
+Kernel is the synchronous declaration check, including certificate replay and transport.
+For the closed-form AlgebraicScope control it is Lean’s final type-checking time.
+Identification includes the residue matrix-identification phase. Elaboration includes
+the whole module. Nested phases are not additive. A dash means not applicable.
+
+| Case | Conversion | Lists | Quotients | Preflight | Identification | Kernel | Elaboration |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| N4K2D2S4 | 1.860 | 0.476 | — | 5.240 | 50.900 | 681.000 | 1800.000 |
+| Rational4 | 1.960 | 0.481 | — | 5.200 | 60.700 | 831.000 | 1980.000 |
+| Singular4 | 1.390 | 0.078 | — | 1.190 | 10.000 | 39.900 | 194.000 |
+| Algebraic4 | 1.720 | 0.098 | — | 1.930 | 6.300 | 42.100 | 196.000 |
+| Swaps | 1.210 | 0.091 | — | 1.960 | 5.360 | 35.100 | 121.000 |
+| Tridiagonal | 1.230 | 0.099 | — | 1.920 | 5.790 | 39.800 | 136.000 |
+| Function4 | 1.190 | 0.103 | — | 1.910 | 8.210 | 39.700 | 149.000 |
+| Array4 | 1.200 | 0.096 | — | 1.730 | 6.030 | 42.700 | 136.000 |
+| AlgebraicScope | — | — | — | — | — | 2.360 | 63.200 |
+| Valuation4 | 1.230 | 0.091 | — | 1.930 | 5.050 | 37.100 | 125.000 |
+| Independent5 | 3.300 | 0.418 | — | 3.260 | 18.600 | 477.000 | 724.000 |
+| Block4 | 1.250 | 0.099 | — | 1.720 | 5.670 | 40.100 | 133.000 |
+| Residue3 | 24.700 | — | 0.222 | 1.660 | 21.570 | 28.400 | 144.000 |
+| Residue3Missing | 24.700 | — | — | 1.560 | 21.640 | 28.200 | 142.000 |

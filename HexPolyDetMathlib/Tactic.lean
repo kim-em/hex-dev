@@ -103,4 +103,7 @@ simproc_decl Hex.normPolyDet (Matrix.det _) := fun e => do
     return ← Hex.norm_det e
   match ← HexPolyDetMathlib.compute e.appArg! with
   | .success p => return .done { expr := p.value, proof? := some p.proof }
-  | .notApplicable _ | .declined _ => _root_.norm_det e
+  | .notApplicable msg | .declined msg =>
+    trace[HexMatrix.certificate] "{(Json.mkObj [("route", toJson "fallback"),
+      ("reason", toJson (← msg.toString))]).compress}"
+    _root_.norm_det e

@@ -21,7 +21,7 @@ open scoped HexMvPolyMathlib HexModArithMathlib.ZMod64
 variable (p : Nat) [Hex.ZMod64.Bounds p]
 
 /-- Interpret the shared residue operations in Mathlib's polynomial ring. -/
-noncomputable def decode (k : Nat) :
+@[expose] noncomputable def decode (k : Nat) :
     Decode (Hex.PolyDet.opsMod p k) (MvPolynomial (Fin k) (ZMod p)) where
   eval := denoteMod p (n := k) (cmp := Mono.grevlex)
   zero := HexMvPolyMathlib.Kernel.denoteMod_nil p
@@ -45,6 +45,16 @@ noncomputable def decode (k : Nat) :
 @[expose] def value : DetWitness (PolyList Nat) → PolyList Nat
   | .triangular _ _ d => d
   | .singular _ => []
+
+/-- The residue list route also exposes its polynomial determinant before transport. -/
+theorem checkDetPolyList_sound [Hex.ZMod64.PrimeModulus p] (k n : Nat)
+    (rows : List (List (PolyList Nat))) (w : DetWitness (PolyList Nat))
+    (h : checkDetPolyList (Hex.PolyDet.opsMod p k) n rows w = true) :
+    ((decode p k).matrix n rows).det = HexMvPolyMathlib.Kernel.denoteMod p
+      (n := k) (cmp := Mono.grevlex) (value w) := by
+  let : Fact (Nat.Prime p) := ⟨Nat.prime_def.mpr Hex.ZMod64.PrimeModulus.prime⟩
+  have hs := (decode p k).sound n rows w h
+  cases w <;> simpa [value, decode] using hs
 
 variable {F : Type u} [CommRing F] [CharP F p]
 
@@ -103,6 +113,21 @@ theorem identify (k n : Nat) (rows : List (List (PolyList Nat))) (ctx : Lean.RAr
   exact Polynomial.allFin n _ (Polynomial.allFin n _ h i) j
 
 /-- A passing residue certificate determines the determinant after any valuation. -/
+theorem result_det (k n : Nat) (rows : List (List (PolyList Nat)))
+    (w : DetWitness (PolyList Nat)) (ctx : Lean.RArray F)
+    (A : Matrix (Fin n) (Fin n) F) (e : F)
+    (hcheck : ((decode p k).matrix n rows).det = HexMvPolyMathlib.Kernel.denoteMod p
+      (n := k) (cmp := Mono.grevlex) (value w))
+    (hA : A = evaluated p k n rows ctx)
+    (he : HexReflectMathlib.Kernel.homMod p k ctx
+      (Hex.MvPoly.Kernel.denoteMod p (cmp := Mono.grevlex) (value w)) = e) : A.det = e := by
+  rw [hA, evaluated_eq]
+  change ((hom p k ctx).mapMatrix ((decode p k).matrix n rows)).det = e
+  rw [← RingHom.map_det, hcheck, eval_denote]
+  exact he
+
+/-- Retained public term-list API; checker-independent clients use `result_det`.
+A passing residue certificate determines the determinant after any valuation. -/
 theorem result [Hex.ZMod64.PrimeModulus p] (k n : Nat) (rows : List (List (PolyList Nat)))
     (w : DetWitness (PolyList Nat)) (ctx : Lean.RArray F)
     (A : Matrix (Fin n) (Fin n) F) (e : F)
@@ -117,7 +142,8 @@ theorem result [Hex.ZMod64.PrimeModulus p] (k n : Nat) (rows : List (List (PolyL
   | triangular s t d => exact hs.trans ((eval_denote p k ctx d).trans he)
   | singular v => simpa [value] using hs.trans (by simpa [value] using he)
 
-/-- Target agreement is structural equality of canonical natural-residue lists. -/
+/-- Retained public term-list API; checker-independent clients use `target_det`.
+Target agreement is structural equality of canonical natural-residue lists. -/
 theorem target [Hex.ZMod64.PrimeModulus p] (k n : Nat) (rows : List (List (PolyList Nat)))
     (w : DetWitness (PolyList Nat)) (ctx : Lean.RArray F)
     (A : Matrix (Fin n) (Fin n) F) (q : PolyList Nat) (e : F)
@@ -127,6 +153,18 @@ theorem target [Hex.ZMod64.PrimeModulus p] (k n : Nat) (rows : List (List (PolyL
       (Hex.MvPoly.Kernel.denoteMod p (cmp := Mono.grevlex) q) = e)
     (hq : beq (value w) q = true) : A.det = e := by
   apply result p k n rows w ctx A e hcheck hA
+  rwa [beq_eq_true_iff.mp hq]
+/-- Target agreement is structural equality of canonical natural-residue lists. -/
+theorem target_det (k n : Nat) (rows : List (List (PolyList Nat)))
+    (w : DetWitness (PolyList Nat)) (ctx : Lean.RArray F)
+    (A : Matrix (Fin n) (Fin n) F) (q : PolyList Nat) (e : F)
+    (hcheck : ((decode p k).matrix n rows).det = HexMvPolyMathlib.Kernel.denoteMod p
+      (n := k) (cmp := Mono.grevlex) (value w))
+    (hA : A = evaluated p k n rows ctx)
+    (he : HexReflectMathlib.Kernel.homMod p k ctx
+      (Hex.MvPoly.Kernel.denoteMod p (cmp := Mono.grevlex) q) = e)
+    (hq : beq (value w) q = true) : A.det = e := by
+  apply result_det p k n rows w ctx A e hcheck hA
   rwa [beq_eq_true_iff.mp hq]
 
 end HexMatrixMathlib.DetPoly.Residue

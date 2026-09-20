@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 import HexPolyDetMathlib.Tactic
 set_option trace.HexMatrix.certificate true
+set_option hex.det.checker 1
 
 set_option maxHeartbeats 0
 set_option profiler true
