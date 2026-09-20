@@ -719,7 +719,8 @@ theorem evaluated_eq (k n : Nat)
       (HexReflectMathlib.Kernel.hom k ctx) := by
   simp only [evaluated, matrix, Equiv.apply_symm_apply]
 
-/-- Agreement with the target uses the same batch's canonical list comparison. -/
+/-- Retained public term-list API. Agreement with the target uses the same
+batch's canonical list comparison; checker-independent clients use `target_det`. -/
 theorem target (k n : Nat) (rows : List (List (Hex.MvPoly.Kernel.PolyList Int)))
     (w : DetWitness (Hex.MvPoly.Kernel.PolyList Int))
     (ctx : Lean.RArray F) (A : Matrix (Fin n) (Fin n) F)
@@ -733,8 +734,8 @@ theorem target (k n : Nat) (rows : List (List (Hex.MvPoly.Kernel.PolyList Int)))
     Hex.MvPoly.Kernel.beq_eq_true_iff.mp hq]
   exact he
 
-/-- A generated value is already the witness's value; no reflexive list
-comparison is needed for the term form or simproc. -/
+/-- Retained public term-list API; checker-independent clients use `result_det`.
+A generated value is already the witness's value, with no reflexive comparison. -/
 theorem result (k n : Nat) (rows : List (List (Hex.MvPoly.Kernel.PolyList Int)))
     (w : DetWitness (Hex.MvPoly.Kernel.PolyList Int)) (ctx : Lean.RArray F)
     (A : Matrix (Fin n) (Fin n) F) (e : F)
@@ -745,8 +746,8 @@ theorem result (k n : Nat) (rows : List (List (Hex.MvPoly.Kernel.PolyList Int)))
   (transport k n rows w (HexReflectMathlib.Kernel.hom k ctx) A hcheck
     (hA.trans (evaluated_eq k n rows ctx))).trans he
 
-/-- Row scaling transports the polynomial certificate to the original rational
-matrix. Positivity is used only for the final scalar cancellation. -/
+/-- Retained public term-list scaling API; checker-independent clients use
+`scaled_det`. Positivity is used only for the final scalar cancellation. -/
 theorem scaled (k n : Nat) (rows : List (List (Hex.MvPoly.Kernel.PolyList Int)))
     (w : DetWitness (Hex.MvPoly.Kernel.PolyList Int))
     (ctx : Lean.RArray Rat) (A : Matrix (Fin n) (Fin n) Rat) (s : List Nat)

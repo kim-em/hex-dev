@@ -25,7 +25,7 @@ theorem automaticPacked (x y : Int) :
   dsimp only
   det
 
- theorem packedResidue (x y : ZMod 3) :
+theorem packedResidue (x y : ZMod 3) :
     Matrix.det !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y] =
       (x ^ 2 - 1) * (y ^ 2 - 1) := by det
 
@@ -33,7 +33,7 @@ example [Fact (Nat.Prime 2147483647)] (x y : ZMod 2147483647) :
     Matrix.det !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y] =
       (x ^ 2 - 1) * (y ^ 2 - 1) := by det
 
-example (x y : Int) : Matrix.det !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y] =
+theorem packedTerm (x y : Int) : Matrix.det !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y] =
     (det% !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y]).value :=
   (det% !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y]).proof
 
@@ -42,7 +42,7 @@ example (x y : Int) : Matrix.det !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1,
   simp only [Hex.normPolyDet]
   ring
 
-example (x y : Rat) :
+theorem packedRational (x y : Rat) :
     Matrix.det !![x / 2, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y] =
       (x ^ 2 / 2 - 1) * (y ^ 2 - 1) := by det
 
@@ -71,3 +71,22 @@ example (x y : ZMod 3) : Matrix.det !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0,
 set_option maxHeartbeats 0 in
 example (x : Fin 17 → Int) : ∃ d : Int, Matrix.det !![x 0, x 1, x 2, x 3, 0; x 4, x 5, x 6, x 7, 0; x 8, x 9, x 10, x 11, 0; x 12, x 13, x 14, x 15, 0; 0, 0, 0, 0, x 16] = d := by
   exact ⟨_, (det% !![x 0, x 1, x 2, x 3, 0; x 4, x 5, x 6, x 7, 0; x 8, x 9, x 10, x 11, 0; x 12, x 13, x 14, x 15, 0; 0, 0, 0, 0, x 16]).proof⟩
+
+theorem packedSingular (x y : Int) :
+    Matrix.det !![x, 1, y, 0; x, 1, y, 0; 0, y, 1, x; 1, 0, x, y] = 0 := by det
+
+theorem packedSingularMod (x y : ZMod 3) :
+    Matrix.det !![x, 1, y, 0; x, 1, y, 0; 0, y, 1, x; 1, 0, x, y] = 0 := by det
+
+/-- info: 'packedRational' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms packedRational
+/-- info: 'packedTerm' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms packedTerm
+/-- info: 'packedSingular' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms packedSingular
+/-- info: 'packedSingularMod' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms packedSingularMod

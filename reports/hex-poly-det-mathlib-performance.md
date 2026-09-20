@@ -25,9 +25,19 @@ activity, routes, bounds, proof nodes, artifacts and complete compiler output.
 Each timing schedule contains 2,064 observations (172 cases, two arms, six
 trial-major rounds), with adjacent arms alternating AB/BA on an automatically
 leased CPU. Cleanup and proof ceilings are 45 seconds. Classification precedes
-timing; forced packing never runs for a known ineligible witness. The table is
+timing; forced packing never runs for a known ineligible witness. The dispatch comparison uses the same fixture population as table fitting,
+with fresh samples; it is in-sample and does not establish generalisation to
+unseen matrices. Product keys are a conservative heuristic, not independent
+per-product speed guarantees. The table is
 fixed from the forced run before dispatch is measured against unmodified
 `norm_det`, followed by the same residual `ring` normalization.
+
+Forced residue term-list samples omit quotient preparation; their archived
+`decline_reason` is `residue quotient payload unavailable`, while their
+verified certificate route is `term-list`. Bounds recorded without a quotient
+payload are preliminary integer-product bounds, not acceptance evidence for
+modular packing. They can only cause a decline; acceptance recomputes the full
+modular bound with the actual quotient.
 
 Forced outcomes are 1,060 complete, 571 timeout, 426 expected-decline and seven
 unexpected-route observations. Those seven are frontend proof-node budget
@@ -35,7 +45,9 @@ declines after an eligible product preflight, with successful Mathlib fallback;
 they receive no forced-certificate timing or crossover credit. Dispatch has
 583 complete and 449 timeout observations; Mathlib has 573 complete, 447 timeout
 and 12 failed observations. The failures are its two literal scope cases in
-all six rounds. All 14 representative kernel profiles completed. Of 78 compiled
+all six rounds. The [route audit](bench-results/hex-det-packed/dispatch-audit.json) verifies all
+84 packed observations against the fixed product keys, and checks completed
+term-list selections. All 14 representative kernel profiles completed. Of 78 compiled
 phase runs, 76 completed and two timed out. No observations are discarded.
 
 The grid preserves all 70 original cases and extends dimensions to 4, 8, 16,
@@ -56,6 +68,14 @@ faster rungs do not define a validated family-wide default regime. Function
 and array literals establish additional scope but have no successful Mathlib
 comparator. Residue packing loses on these small witnesses, so automatic
 selection retains term lists and records `no measured packed regime`.
+
+The preregistered rule has no effect-size floor. `N4K2D8S1` gains only about
+0.6% in its six-sample median, which is not evidence of a robust speedup.
+Per-winner ranges below expose this uncertainty. Residue quotient preparation
+runs within explicit term, coefficient and certificate budgets before selection;
+the measured 4×4 costs do not establish its cost at dimensions eight or sixteen.
+The product classifier approximates frontend preparation budgets; final proof-node
+checks still decide whether the full certificate is affordable.
 
 Family columns below aggregate completed case medians independently; different
 completion counts mean they must not be divided to claim a speedup. Median M/D
@@ -88,185 +108,208 @@ incomplete cases remain in the denominator and in the full ladder below.
 Classification: 27 closed-form, 74 eligible, 66 overall-decline, 4 packed-decline, 1 producer-timeout.
 The manifest also retains 57 infeasible support requests.
 
-| Case | Classification | Term lists | Packed | Dispatch | Mathlib | Mathlib / dispatch |
-|---|---|---:|---:|---:|---:|---:|
-| N2K1D1S1 | closed-form | 89.54 | 98.30 | 101.45 | 95.94 | 0.946 |
-| N2K1D2S1 | closed-form | 108.45 | 107.64 | 101.49 | 101.30 | 0.998 |
-| N2K1D4S1 | closed-form | 100.88 | 96.88 | 104.16 | 103.27 | 0.991 |
-| N2K1D4S4 | closed-form | 275.59 | 280.99 | 266.78 | 201.08 | 0.754 |
-| N2K2D1S1 | closed-form | 92.23 | 96.73 | 95.24 | 90.80 | 0.953 |
-| N2K2D2S1 | closed-form | 115.38 | 105.19 | 105.88 | 98.47 | 0.930 |
-| N2K2D2S4 | closed-form | 189.76 | 188.61 | 199.28 | 197.03 | 0.989 |
-| N2K2D4S1 | closed-form | 104.57 | 105.19 | 96.35 | 98.88 | 1.026 |
-| N2K2D4S4 | closed-form | 291.93 | 295.91 | 296.71 | 199.89 | 0.674 |
-| N2K4D1S1 | closed-form | 94.73 | 94.12 | 86.22 | 90.05 | 1.044 |
-| N2K4D1S4 | closed-form | 196.92 | 209.56 | 158.47 | 100.98 | 0.637 |
-| N2K4D2S1 | closed-form | 109.29 | 92.02 | 87.69 | 95.27 | 1.086 |
-| N2K4D2S4 | closed-form | 204.72 | 203.93 | 212.57 | 199.29 | 0.938 |
-| N2K4D4S1 | closed-form | 117.40 | 109.31 | 102.81 | 92.41 | 0.899 |
-| N2K4D4S4 | closed-form | 209.79 | 207.37 | 199.13 | 199.63 | 1.003 |
-| N2K4D4S16 | closed-form | 1981.49 | 1991.50 | 1990.37 | 2805.10 | 1.409 |
-| N4K1D1S1 | eligible | 288.92 | 296.89 | 259.96 | 100.62 | 0.387 |
-| N4K1D2S1 | eligible | 456.38 | 497.74 | 426.42 | 294.67 | 0.691 |
-| N4K1D4S1 | eligible | 486.39 | 492.29 | 439.97 | 295.26 | 0.671 |
-| N4K1D4S4 | eligible | 2054.73 | 1664.57 | 1679.27 | 1202.46 | 0.716 |
-| N4K2D1S1 | eligible | 286.57 | 297.89 | 253.41 | 105.64 | 0.417 |
-| N4K2D2S1 | eligible | 492.21 | 501.33 | 448.74 | 293.05 | 0.653 |
-| N4K2D2S4 | eligible | 2385.82 | 1500.38 | 1497.36 | 1103.35 | 0.737 |
-| N4K2D4S1 | eligible | 485.70 | 498.76 | 452.31 | 292.25 | 0.646 |
-| N4K2D4S4 | eligible | 4202.67 | 2292.82 | 2292.49 | 2101.50 | 0.917 |
-| N4K4D1S1 | eligible | 303.43 | 316.83 | 298.34 | 111.50 | 0.374 |
-| N4K4D1S4 | eligible | 1930.89 | 1176.78 | 1115.67 | 700.46 | 0.628 |
-| N4K4D2S1 | eligible | 496.82 | 499.86 | 498.90 | 294.00 | 0.589 |
-| N4K4D2S4 | eligible | 4952.69 | 2386.36 | 2413.11 | 2192.17 | 0.908 |
-| N4K4D4S1 | eligible | 471.30 | 504.07 | 500.27 | 283.45 | 0.567 |
-| N4K4D4S4 | eligible | 5105.21 | 2529.04 | 2579.20 | 2304.29 | 0.893 |
-| N4K4D4S16 | eligible | — | — | — | — | — |
-| N8K1D1S1 | eligible | 1001.14 | 1122.55 | 998.04 | 704.58 | 0.706 |
-| N8K1D2S1 | eligible | 3222.61 | 3324.93 | 3214.57 | 2700.83 | 0.840 |
-| N8K1D4S1 | eligible | 3216.36 | 3379.61 | 3247.87 | 2701.85 | 0.832 |
-| N8K1D4S4 | eligible | — | — | — | — | — |
-| N8K2D1S1 | eligible | 1077.77 | 1202.91 | 1085.80 | 1106.14 | 1.019 |
-| N8K2D2S1 | eligible | 3291.14 | 3416.79 | 3296.52 | 3101.52 | 0.941 |
-| N8K2D2S4 | eligible | — | — | — | — | — |
-| N8K2D4S1 | eligible | 3273.69 | 3453.77 | 3439.98 | 3254.99 | 0.946 |
-| N8K2D4S4 | eligible | — | — | — | — | — |
-| N8K4D1S1 | eligible | 1103.88 | 1304.48 | 1101.60 | 2115.95 | 1.921 |
-| N8K4D1S4 | eligible | — | — | — | — | — |
-| N8K4D2S1 | overall-decline | 4440.69 | — | 4341.36 | 4154.86 | 0.957 |
-| N8K4D2S4 | overall-decline | — | — | — | — | — |
-| N8K4D4S1 | overall-decline | 4561.12 | — | 4262.51 | 4154.46 | 0.975 |
-| N8K4D4S4 | overall-decline | — | — | — | — | — |
-| N8K4D4S16 | overall-decline | — | — | — | — | — |
-| N3K1D1S1 | closed-form | 195.50 | 185.64 | 191.79 | 100.82 | 0.526 |
-| N3K2D2S4 | closed-form | 586.84 | 590.76 | 549.13 | 398.38 | 0.725 |
-| N3K4D4S16 | closed-form | — | — | — | — | — |
-| Rational2 | closed-form | 211.56 | 203.68 | 203.93 | 199.01 | 0.976 |
-| Singular2 | closed-form | 93.13 | 98.60 | 94.63 | 97.96 | 1.035 |
-| Algebraic2 | closed-form | 98.86 | 98.96 | 96.15 | 18.76 | 0.195 |
-| Rational3 | closed-form | 501.03 | 507.54 | 501.05 | 400.14 | 0.799 |
-| Singular3 | closed-form | 197.21 | 167.04 | 156.43 | 95.45 | 0.610 |
-| Algebraic3 | closed-form | 108.61 | 110.51 | 102.21 | 55.64 | 0.544 |
-| Rational4 | eligible | 2499.83 | 1610.07 | 1604.88 | 2208.19 | 1.376 |
-| Singular4 | eligible | 284.88 | 288.62 | 222.59 | 99.30 | 0.446 |
-| Algebraic4 | eligible | 280.52 | 295.08 | 296.15 | 98.44 | 0.332 |
-| Rational8 | eligible | — | — | — | — | — |
-| Singular8 | eligible | 970.79 | 985.45 | 918.82 | 1004.75 | 1.094 |
-| Algebraic8 | eligible | 655.62 | 795.82 | 653.12 | 301.50 | 0.462 |
-| Swaps | eligible | 191.71 | 202.95 | 201.68 | 89.84 | 0.445 |
-| Tridiagonal | eligible | 196.11 | 203.21 | 199.65 | 100.70 | 0.504 |
-| Function4 | eligible | 198.35 | 223.25 | 202.60 | — | — |
-| Array4 | eligible | 197.10 | 199.40 | 203.18 | — | — |
-| AlgebraicScope | closed-form | 110.74 | 99.50 | 100.33 | 98.64 | 0.983 |
-| Valuation | closed-form | 96.07 | 98.86 | 93.53 | 98.26 | 1.050 |
-| Valuation4 | eligible | 193.08 | 204.04 | 198.67 | 93.33 | 0.470 |
-| N4K1D8S1 | eligible | 451.38 | 493.47 | 462.49 | 297.50 | 0.643 |
-| N4K1D8S4 | eligible | 2801.96 | 1939.62 | 1920.49 | 1600.16 | 0.833 |
-| N4K1D16S1 | eligible | 457.43 | 492.57 | 448.12 | 297.22 | 0.663 |
-| N4K1D16S4 | eligible | 4001.84 | 2402.75 | 2404.42 | 2104.63 | 0.875 |
-| N4K1D16S16 | eligible | — | 33001.54 | — | — | — |
-| N4K2D8S1 | eligible | 502.57 | 499.36 | 499.67 | 302.11 | 0.605 |
-| N4K2D8S4 | eligible | 4892.50 | 2660.65 | 2683.76 | 2696.86 | 1.005 |
-| N4K2D8S16 | eligible | — | — | — | — | — |
-| N4K2D16S1 | eligible | 473.81 | 494.06 | 484.66 | 294.18 | 0.607 |
-| N4K2D16S4 | eligible | 5351.70 | 3162.28 | 3056.01 | 3011.73 | 0.986 |
-| N4K2D16S16 | eligible | — | — | — | — | — |
-| N4K3D2S1 | eligible | 491.96 | 495.73 | 464.12 | 298.10 | 0.642 |
-| N4K3D2S4 | eligible | 3074.86 | 1612.68 | 1648.91 | 1299.90 | 0.788 |
-| N4K3D4S1 | eligible | 490.44 | 492.44 | 493.54 | 300.11 | 0.608 |
-| N4K3D4S4 | eligible | 3305.13 | 1716.64 | 1726.70 | 1364.68 | 0.790 |
-| N4K3D4S16 | eligible | — | — | — | — | — |
-| N4K3D8S1 | eligible | 488.11 | 495.73 | 499.00 | 297.47 | 0.596 |
-| N4K3D8S4 | overall-decline | 1483.84 | — | 1461.30 | 1401.64 | 0.959 |
-| N4K3D8S16 | overall-decline | — | — | — | — | — |
-| N4K3D16S1 | eligible | 500.36 | 512.21 | 490.11 | 301.05 | 0.614 |
-| N4K3D16S4 | overall-decline | 1405.33 | — | 1413.36 | 1391.28 | 0.984 |
-| N4K3D16S16 | overall-decline | — | — | — | — | — |
-| N4K4D8S1 | eligible | 495.97 | 507.40 | 520.71 | 294.64 | 0.566 |
-| N4K4D8S4 | overall-decline | 2388.62 | — | 2502.54 | 2450.16 | 0.979 |
-| N4K4D8S16 | overall-decline | — | — | — | — | — |
-| N4K4D16S1 | packed-decline | 496.24 | — | 499.58 | 296.64 | 0.594 |
-| N4K4D16S4 | overall-decline | 2386.50 | — | 2401.13 | 2300.41 | 0.958 |
-| N4K4D16S16 | overall-decline | — | — | — | — | — |
-| N8K1D8S1 | eligible | 3199.69 | 3352.88 | 3214.04 | 2697.37 | 0.839 |
-| N8K1D8S4 | eligible | — | — | — | — | — |
-| N8K1D16S1 | eligible | 3203.59 | 3396.34 | 3206.20 | 2704.82 | 0.844 |
-| N8K1D16S4 | eligible | — | — | — | — | — |
-| N8K1D16S16 | eligible | — | — | — | — | — |
-| N8K2D8S1 | overall-decline | 3352.32 | — | 3290.33 | 3103.14 | 0.943 |
-| N8K2D8S4 | overall-decline | — | — | — | — | — |
-| N8K2D8S16 | overall-decline | — | — | — | — | — |
-| N8K2D16S1 | overall-decline | 3321.35 | — | 3300.08 | 3101.84 | 0.940 |
-| N8K2D16S4 | overall-decline | — | — | — | — | — |
-| N8K2D16S16 | overall-decline | — | — | — | — | — |
-| N8K3D2S1 | eligible | 3291.19 | 3406.09 | 3236.90 | 3596.45 | 1.111 |
-| N8K3D2S4 | eligible | — | — | — | — | — |
-| N8K3D4S1 | overall-decline | 3810.18 | — | 3798.95 | 3597.19 | 0.947 |
-| N8K3D4S4 | overall-decline | — | — | — | — | — |
-| N8K3D4S16 | overall-decline | — | — | — | — | — |
-| N8K3D8S1 | overall-decline | 3903.20 | — | 3851.21 | 3639.56 | 0.945 |
-| N8K3D8S4 | overall-decline | — | — | — | — | — |
-| N8K3D8S16 | overall-decline | — | — | — | — | — |
-| N8K3D16S1 | overall-decline | 3916.00 | — | 3771.33 | 3608.43 | 0.957 |
-| N8K3D16S4 | overall-decline | — | — | — | — | — |
-| N8K3D16S16 | overall-decline | — | — | — | — | — |
-| N8K4D8S1 | overall-decline | 4394.64 | — | 4456.98 | 4157.59 | 0.933 |
-| N8K4D8S4 | overall-decline | — | — | — | — | — |
-| N8K4D8S16 | overall-decline | — | — | — | — | — |
-| N8K4D16S1 | overall-decline | 4452.30 | — | 4491.92 | 4157.92 | 0.926 |
-| N8K4D16S4 | overall-decline | — | — | — | — | — |
-| N8K4D16S16 | overall-decline | — | — | — | — | — |
-| N16K1D2S1 | eligible | — | — | — | — | — |
-| N16K1D4S1 | eligible | — | — | — | — | — |
-| N16K1D4S4 | eligible | — | — | — | — | — |
-| N16K1D8S1 | eligible | — | — | — | — | — |
-| N16K1D8S4 | eligible | — | — | — | — | — |
-| N16K1D16S1 | eligible | — | — | — | — | — |
-| N16K1D16S4 | eligible | — | — | — | — | — |
-| N16K1D16S16 | producer-timeout | — | — | — | — | — |
-| N16K2D2S1 | overall-decline | — | — | — | — | — |
-| N16K2D2S4 | overall-decline | — | — | — | — | — |
-| N16K2D4S1 | overall-decline | — | — | — | — | — |
-| N16K2D4S4 | overall-decline | — | — | — | — | — |
-| N16K2D8S1 | overall-decline | — | — | — | — | — |
-| N16K2D8S4 | overall-decline | — | — | — | — | — |
-| N16K2D8S16 | overall-decline | — | — | — | — | — |
-| N16K2D16S1 | overall-decline | — | — | — | — | — |
-| N16K2D16S4 | overall-decline | — | — | — | — | — |
-| N16K2D16S16 | overall-decline | — | — | — | — | — |
-| N16K3D2S1 | overall-decline | — | — | — | — | — |
-| N16K3D2S4 | overall-decline | — | — | — | — | — |
-| N16K3D4S1 | overall-decline | — | — | — | — | — |
-| N16K3D4S4 | overall-decline | — | — | — | — | — |
-| N16K3D4S16 | overall-decline | — | — | — | — | — |
-| N16K3D8S1 | overall-decline | — | — | — | — | — |
-| N16K3D8S4 | overall-decline | — | — | — | — | — |
-| N16K3D8S16 | overall-decline | — | — | — | — | — |
-| N16K3D16S1 | overall-decline | — | — | — | — | — |
-| N16K3D16S4 | overall-decline | — | — | — | — | — |
-| N16K3D16S16 | overall-decline | — | — | — | — | — |
-| N16K4D2S1 | overall-decline | — | — | — | — | — |
-| N16K4D2S4 | overall-decline | — | — | — | — | — |
-| N16K4D4S1 | overall-decline | — | — | — | — | — |
-| N16K4D4S4 | overall-decline | — | — | — | — | — |
-| N16K4D4S16 | overall-decline | — | — | — | — | — |
-| N16K4D8S1 | overall-decline | — | — | — | — | — |
-| N16K4D8S4 | overall-decline | — | — | — | — | — |
-| N16K4D8S16 | overall-decline | — | — | — | — | — |
-| N16K4D16S1 | overall-decline | — | — | — | — | — |
-| N16K4D16S4 | overall-decline | — | — | — | — | — |
-| N16K4D16S16 | overall-decline | — | — | — | — | — |
-| Independent5 | packed-decline | 837.97 | — | 806.64 | 304.22 | 0.377 |
-| Block4 | eligible | 199.38 | 211.82 | 198.08 | 98.59 | 0.498 |
-| Residue3 | eligible | 200.34 | 300.53 | 202.22 | 102.20 | 0.505 |
-| Residue3Missing | packed-decline | 200.75 | — | 201.84 | 97.81 | 0.485 |
-| Residue2147483647 | eligible | 201.31 | 280.93 | 186.39 | 98.77 | 0.530 |
-| Residue2147483647Missing | packed-decline | 200.13 | — | 202.65 | 98.69 | 0.487 |
+| Case | Classification | Term lists | Packed | Dispatch | Mathlib | Mathlib / dispatch | Observed dispatch |
+|---|---|---:|---:|---:|---:|---:|---|
+| N2K1D1S1 | closed-form | 89.54 | 98.30 | 101.45 | 95.94 | 0.946 | closed-form-ring |
+| N2K1D2S1 | closed-form | 108.45 | 107.64 | 101.49 | 101.30 | 0.998 | closed-form-ring |
+| N2K1D4S1 | closed-form | 100.88 | 96.88 | 104.16 | 103.27 | 0.991 | closed-form-ring |
+| N2K1D4S4 | closed-form | 275.59 | 280.99 | 266.78 | 201.08 | 0.754 | closed-form-ring |
+| N2K2D1S1 | closed-form | 92.23 | 96.73 | 95.24 | 90.80 | 0.953 | closed-form-ring |
+| N2K2D2S1 | closed-form | 115.38 | 105.19 | 105.88 | 98.47 | 0.930 | closed-form-ring |
+| N2K2D2S4 | closed-form | 189.76 | 188.61 | 199.28 | 197.03 | 0.989 | closed-form-ring |
+| N2K2D4S1 | closed-form | 104.57 | 105.19 | 96.35 | 98.88 | 1.026 | closed-form-ring |
+| N2K2D4S4 | closed-form | 291.93 | 295.91 | 296.71 | 199.89 | 0.674 | closed-form-ring |
+| N2K4D1S1 | closed-form | 94.73 | 94.12 | 86.22 | 90.05 | 1.044 | unobserved |
+| N2K4D1S4 | closed-form | 196.92 | 209.56 | 158.47 | 100.98 | 0.637 | closed-form-ring |
+| N2K4D2S1 | closed-form | 109.29 | 92.02 | 87.69 | 95.27 | 1.086 | closed-form-ring |
+| N2K4D2S4 | closed-form | 204.72 | 203.93 | 212.57 | 199.29 | 0.938 | closed-form-ring |
+| N2K4D4S1 | closed-form | 117.40 | 109.31 | 102.81 | 92.41 | 0.899 | closed-form-ring |
+| N2K4D4S4 | closed-form | 209.79 | 207.37 | 199.13 | 199.63 | 1.003 | closed-form-ring |
+| N2K4D4S16 | closed-form | 1981.49 | 1991.50 | 1990.37 | 2805.10 | 1.409 | closed-form-ring |
+| N4K1D1S1 | eligible | 288.92 | 296.89 | 259.96 | 100.62 | 0.387 | term-list |
+| N4K1D2S1 | eligible | 456.38 | 497.74 | 426.42 | 294.67 | 0.691 | term-list |
+| N4K1D4S1 | eligible | 486.39 | 492.29 | 439.97 | 295.26 | 0.671 | term-list |
+| N4K1D4S4 | eligible | 2054.73 | 1664.57 | 1679.27 | 1202.46 | 0.716 | packed/plain |
+| N4K2D1S1 | eligible | 286.57 | 297.89 | 253.41 | 105.64 | 0.417 | term-list |
+| N4K2D2S1 | eligible | 492.21 | 501.33 | 448.74 | 293.05 | 0.653 | term-list |
+| N4K2D2S4 | eligible | 2385.82 | 1500.38 | 1497.36 | 1103.35 | 0.737 | packed/plain |
+| N4K2D4S1 | eligible | 485.70 | 498.76 | 452.31 | 292.25 | 0.646 | term-list |
+| N4K2D4S4 | eligible | 4202.67 | 2292.82 | 2292.49 | 2101.50 | 0.917 | packed/plain |
+| N4K4D1S1 | eligible | 303.43 | 316.83 | 298.34 | 111.50 | 0.374 | term-list |
+| N4K4D1S4 | eligible | 1930.89 | 1176.78 | 1115.67 | 700.46 | 0.628 | packed/plain |
+| N4K4D2S1 | eligible | 496.82 | 499.86 | 498.90 | 294.00 | 0.589 | term-list |
+| N4K4D2S4 | eligible | 4952.69 | 2386.36 | 2413.11 | 2192.17 | 0.908 | packed/plain |
+| N4K4D4S1 | eligible | 471.30 | 504.07 | 500.27 | 283.45 | 0.567 | term-list |
+| N4K4D4S4 | eligible | 5105.21 | 2529.04 | 2579.20 | 2304.29 | 0.893 | packed/plain |
+| N4K4D4S16 | eligible | — | — | — | — | — | unobserved |
+| N8K1D1S1 | eligible | 1001.14 | 1122.55 | 998.04 | 704.58 | 0.706 | term-list |
+| N8K1D2S1 | eligible | 3222.61 | 3324.93 | 3214.57 | 2700.83 | 0.840 | term-list |
+| N8K1D4S1 | eligible | 3216.36 | 3379.61 | 3247.87 | 2701.85 | 0.832 | term-list |
+| N8K1D4S4 | eligible | — | — | — | — | — | fallback |
+| N8K2D1S1 | eligible | 1077.77 | 1202.91 | 1085.80 | 1106.14 | 1.019 | term-list |
+| N8K2D2S1 | eligible | 3291.14 | 3416.79 | 3296.52 | 3101.52 | 0.941 | term-list |
+| N8K2D2S4 | eligible | — | — | — | — | — | unobserved |
+| N8K2D4S1 | eligible | 3273.69 | 3453.77 | 3439.98 | 3254.99 | 0.946 | term-list |
+| N8K2D4S4 | eligible | — | — | — | — | — | unobserved |
+| N8K4D1S1 | eligible | 1103.88 | 1304.48 | 1101.60 | 2115.95 | 1.921 | term-list |
+| N8K4D1S4 | eligible | — | — | — | — | — | unobserved |
+| N8K4D2S1 | overall-decline | 4440.69 | — | 4341.36 | 4154.86 | 0.957 | fallback |
+| N8K4D2S4 | overall-decline | — | — | — | — | — | unobserved |
+| N8K4D4S1 | overall-decline | 4561.12 | — | 4262.51 | 4154.46 | 0.975 | fallback |
+| N8K4D4S4 | overall-decline | — | — | — | — | — | unobserved |
+| N8K4D4S16 | overall-decline | — | — | — | — | — | unobserved |
+| N3K1D1S1 | closed-form | 195.50 | 185.64 | 191.79 | 100.82 | 0.526 | closed-form-ring |
+| N3K2D2S4 | closed-form | 586.84 | 590.76 | 549.13 | 398.38 | 0.725 | closed-form-ring |
+| N3K4D4S16 | closed-form | — | — | — | — | — | unobserved |
+| Rational2 | closed-form | 211.56 | 203.68 | 203.93 | 199.01 | 0.976 | closed-form-ring |
+| Singular2 | closed-form | 93.13 | 98.60 | 94.63 | 97.96 | 1.035 | closed-form-ring |
+| Algebraic2 | closed-form | 98.86 | 98.96 | 96.15 | 18.76 | 0.195 | closed-form-ring |
+| Rational3 | closed-form | 501.03 | 507.54 | 501.05 | 400.14 | 0.799 | closed-form-ring |
+| Singular3 | closed-form | 197.21 | 167.04 | 156.43 | 95.45 | 0.610 | closed-form-ring |
+| Algebraic3 | closed-form | 108.61 | 110.51 | 102.21 | 55.64 | 0.544 | closed-form-ring |
+| Rational4 | eligible | 2499.83 | 1610.07 | 1604.88 | 2208.19 | 1.376 | packed/plain |
+| Singular4 | eligible | 284.88 | 288.62 | 222.59 | 99.30 | 0.446 | term-list |
+| Algebraic4 | eligible | 280.52 | 295.08 | 296.15 | 98.44 | 0.332 | term-list |
+| Rational8 | eligible | — | — | — | — | — | unobserved |
+| Singular8 | eligible | 970.79 | 985.45 | 918.82 | 1004.75 | 1.094 | term-list |
+| Algebraic8 | eligible | 655.62 | 795.82 | 653.12 | 301.50 | 0.462 | term-list |
+| Swaps | eligible | 191.71 | 202.95 | 201.68 | 89.84 | 0.445 | term-list |
+| Tridiagonal | eligible | 196.11 | 203.21 | 199.65 | 100.70 | 0.504 | term-list |
+| Function4 | eligible | 198.35 | 223.25 | 202.60 | — | — | term-list |
+| Array4 | eligible | 197.10 | 199.40 | 203.18 | — | — | term-list |
+| AlgebraicScope | closed-form | 110.74 | 99.50 | 100.33 | 98.64 | 0.983 | unobserved |
+| Valuation | closed-form | 96.07 | 98.86 | 93.53 | 98.26 | 1.050 | closed-form-ring |
+| Valuation4 | eligible | 193.08 | 204.04 | 198.67 | 93.33 | 0.470 | term-list |
+| N4K1D8S1 | eligible | 451.38 | 493.47 | 462.49 | 297.50 | 0.643 | term-list |
+| N4K1D8S4 | eligible | 2801.96 | 1939.62 | 1920.49 | 1600.16 | 0.833 | packed/plain |
+| N4K1D16S1 | eligible | 457.43 | 492.57 | 448.12 | 297.22 | 0.663 | term-list |
+| N4K1D16S4 | eligible | 4001.84 | 2402.75 | 2404.42 | 2104.63 | 0.875 | packed/plain |
+| N4K1D16S16 | eligible | — | 33001.54 | — | — | — | term-list |
+| N4K2D8S1 | eligible | 502.57 | 499.36 | 499.67 | 302.11 | 0.605 | packed/plain |
+| N4K2D8S4 | eligible | 4892.50 | 2660.65 | 2683.76 | 2696.86 | 1.005 | packed/plain |
+| N4K2D8S16 | eligible | — | — | — | — | — | unobserved |
+| N4K2D16S1 | eligible | 473.81 | 494.06 | 484.66 | 294.18 | 0.607 | term-list |
+| N4K2D16S4 | eligible | 5351.70 | 3162.28 | 3056.01 | 3011.73 | 0.986 | packed/plain |
+| N4K2D16S16 | eligible | — | — | — | — | — | unobserved |
+| N4K3D2S1 | eligible | 491.96 | 495.73 | 464.12 | 298.10 | 0.642 | term-list |
+| N4K3D2S4 | eligible | 3074.86 | 1612.68 | 1648.91 | 1299.90 | 0.788 | packed/plain |
+| N4K3D4S1 | eligible | 490.44 | 492.44 | 493.54 | 300.11 | 0.608 | term-list |
+| N4K3D4S4 | eligible | 3305.13 | 1716.64 | 1726.70 | 1364.68 | 0.790 | packed/plain |
+| N4K3D4S16 | eligible | — | — | — | — | — | unobserved |
+| N4K3D8S1 | eligible | 488.11 | 495.73 | 499.00 | 297.47 | 0.596 | term-list |
+| N4K3D8S4 | overall-decline | 1483.84 | — | 1461.30 | 1401.64 | 0.959 | fallback |
+| N4K3D8S16 | overall-decline | — | — | — | — | — | unobserved |
+| N4K3D16S1 | eligible | 500.36 | 512.21 | 490.11 | 301.05 | 0.614 | term-list |
+| N4K3D16S4 | overall-decline | 1405.33 | — | 1413.36 | 1391.28 | 0.984 | fallback |
+| N4K3D16S16 | overall-decline | — | — | — | — | — | unobserved |
+| N4K4D8S1 | eligible | 495.97 | 507.40 | 520.71 | 294.64 | 0.566 | term-list |
+| N4K4D8S4 | overall-decline | 2388.62 | — | 2502.54 | 2450.16 | 0.979 | fallback |
+| N4K4D8S16 | overall-decline | — | — | — | — | — | unobserved |
+| N4K4D16S1 | packed-decline | 496.24 | — | 499.58 | 296.64 | 0.594 | term-list |
+| N4K4D16S4 | overall-decline | 2386.50 | — | 2401.13 | 2300.41 | 0.958 | fallback |
+| N4K4D16S16 | overall-decline | — | — | — | — | — | unobserved |
+| N8K1D8S1 | eligible | 3199.69 | 3352.88 | 3214.04 | 2697.37 | 0.839 | term-list |
+| N8K1D8S4 | eligible | — | — | — | — | — | unobserved |
+| N8K1D16S1 | eligible | 3203.59 | 3396.34 | 3206.20 | 2704.82 | 0.844 | term-list |
+| N8K1D16S4 | eligible | — | — | — | — | — | unobserved |
+| N8K1D16S16 | eligible | — | — | — | — | — | unobserved |
+| N8K2D8S1 | overall-decline | 3352.32 | — | 3290.33 | 3103.14 | 0.943 | fallback |
+| N8K2D8S4 | overall-decline | — | — | — | — | — | unobserved |
+| N8K2D8S16 | overall-decline | — | — | — | — | — | unobserved |
+| N8K2D16S1 | overall-decline | 3321.35 | — | 3300.08 | 3101.84 | 0.940 | fallback |
+| N8K2D16S4 | overall-decline | — | — | — | — | — | unobserved |
+| N8K2D16S16 | overall-decline | — | — | — | — | — | unobserved |
+| N8K3D2S1 | eligible | 3291.19 | 3406.09 | 3236.90 | 3596.45 | 1.111 | term-list |
+| N8K3D2S4 | eligible | — | — | — | — | — | unobserved |
+| N8K3D4S1 | overall-decline | 3810.18 | — | 3798.95 | 3597.19 | 0.947 | fallback |
+| N8K3D4S4 | overall-decline | — | — | — | — | — | unobserved |
+| N8K3D4S16 | overall-decline | — | — | — | — | — | unobserved |
+| N8K3D8S1 | overall-decline | 3903.20 | — | 3851.21 | 3639.56 | 0.945 | fallback |
+| N8K3D8S4 | overall-decline | — | — | — | — | — | unobserved |
+| N8K3D8S16 | overall-decline | — | — | — | — | — | unobserved |
+| N8K3D16S1 | overall-decline | 3916.00 | — | 3771.33 | 3608.43 | 0.957 | fallback |
+| N8K3D16S4 | overall-decline | — | — | — | — | — | unobserved |
+| N8K3D16S16 | overall-decline | — | — | — | — | — | unobserved |
+| N8K4D8S1 | overall-decline | 4394.64 | — | 4456.98 | 4157.59 | 0.933 | fallback |
+| N8K4D8S4 | overall-decline | — | — | — | — | — | unobserved |
+| N8K4D8S16 | overall-decline | — | — | — | — | — | unobserved |
+| N8K4D16S1 | overall-decline | 4452.30 | — | 4491.92 | 4157.92 | 0.926 | fallback |
+| N8K4D16S4 | overall-decline | — | — | — | — | — | unobserved |
+| N8K4D16S16 | overall-decline | — | — | — | — | — | unobserved |
+| N16K1D2S1 | eligible | — | — | — | — | — | unobserved |
+| N16K1D4S1 | eligible | — | — | — | — | — | unobserved |
+| N16K1D4S4 | eligible | — | — | — | — | — | unobserved |
+| N16K1D8S1 | eligible | — | — | — | — | — | unobserved |
+| N16K1D8S4 | eligible | — | — | — | — | — | unobserved |
+| N16K1D16S1 | eligible | — | — | — | — | — | unobserved |
+| N16K1D16S4 | eligible | — | — | — | — | — | unobserved |
+| N16K1D16S16 | producer-timeout | — | — | — | — | — | unobserved |
+| N16K2D2S1 | overall-decline | — | — | — | — | — | unobserved |
+| N16K2D2S4 | overall-decline | — | — | — | — | — | unobserved |
+| N16K2D4S1 | overall-decline | — | — | — | — | — | unobserved |
+| N16K2D4S4 | overall-decline | — | — | — | — | — | unobserved |
+| N16K2D8S1 | overall-decline | — | — | — | — | — | unobserved |
+| N16K2D8S4 | overall-decline | — | — | — | — | — | unobserved |
+| N16K2D8S16 | overall-decline | — | — | — | — | — | unobserved |
+| N16K2D16S1 | overall-decline | — | — | — | — | — | unobserved |
+| N16K2D16S4 | overall-decline | — | — | — | — | — | unobserved |
+| N16K2D16S16 | overall-decline | — | — | — | — | — | unobserved |
+| N16K3D2S1 | overall-decline | — | — | — | — | — | unobserved |
+| N16K3D2S4 | overall-decline | — | — | — | — | — | unobserved |
+| N16K3D4S1 | overall-decline | — | — | — | — | — | unobserved |
+| N16K3D4S4 | overall-decline | — | — | — | — | — | unobserved |
+| N16K3D4S16 | overall-decline | — | — | — | — | — | unobserved |
+| N16K3D8S1 | overall-decline | — | — | — | — | — | unobserved |
+| N16K3D8S4 | overall-decline | — | — | — | — | — | unobserved |
+| N16K3D8S16 | overall-decline | — | — | — | — | — | unobserved |
+| N16K3D16S1 | overall-decline | — | — | — | — | — | unobserved |
+| N16K3D16S4 | overall-decline | — | — | — | — | — | unobserved |
+| N16K3D16S16 | overall-decline | — | — | — | — | — | unobserved |
+| N16K4D2S1 | overall-decline | — | — | — | — | — | unobserved |
+| N16K4D2S4 | overall-decline | — | — | — | — | — | unobserved |
+| N16K4D4S1 | overall-decline | — | — | — | — | — | unobserved |
+| N16K4D4S4 | overall-decline | — | — | — | — | — | unobserved |
+| N16K4D4S16 | overall-decline | — | — | — | — | — | unobserved |
+| N16K4D8S1 | overall-decline | — | — | — | — | — | unobserved |
+| N16K4D8S4 | overall-decline | — | — | — | — | — | unobserved |
+| N16K4D8S16 | overall-decline | — | — | — | — | — | unobserved |
+| N16K4D16S1 | overall-decline | — | — | — | — | — | unobserved |
+| N16K4D16S4 | overall-decline | — | — | — | — | — | unobserved |
+| N16K4D16S16 | overall-decline | — | — | — | — | — | unobserved |
+| Independent5 | packed-decline | 837.97 | — | 806.64 | 304.22 | 0.377 | term-list |
+| Block4 | eligible | 199.38 | 211.82 | 198.08 | 98.59 | 0.498 | term-list |
+| Residue3 | eligible | 200.34 | 300.53 | 202.22 | 102.20 | 0.505 | term-list |
+| Residue3Missing | packed-decline | 200.75 | — | 201.84 | 97.81 | 0.485 | term-list |
+| Residue2147483647 | eligible | 201.31 | 280.93 | 186.39 | 98.77 | 0.530 | term-list |
+| Residue2147483647Missing | packed-decline | 200.13 | — | 202.65 | 98.69 | 0.487 | term-list |
 
 Expected declines have no forced-packed timing. Closed-form rows are controls on
 their unchanged route; their “Lists” and “Packed” column labels denote options,
 not certificate execution. Raw records retain timeouts, errors, host context,
 compiler output, routes, proof nodes, bounds, and artifact sizes.
+
+### Crossover margins and spread
+
+Median and minimum–maximum of six baseline-subtracted samples, milliseconds.
+The preregistered admission rule has no effect-size floor; overlapping ranges
+and very small median differences do not establish a robust speed advantage.
+
+| Witness | List median | List range | Packed median | Packed range | Median reduction |
+|---|---:|---|---:|---|---:|
+| N4K1D4S4 | 2054.73 | 1997.97–2102.90 | 1664.57 | 1606.20–1697.36 | 18.99% |
+| N4K2D2S4 | 2385.82 | 2330.29–2424.78 | 1500.38 | 1442.37–1563.23 | 37.11% |
+| N4K2D4S4 | 4202.67 | 4093.83–4502.78 | 2292.82 | 2209.39–2301.16 | 45.44% |
+| N4K4D1S4 | 1930.89 | 1806.31–1979.92 | 1176.78 | 1119.69–1205.68 | 39.05% |
+| N4K4D2S4 | 4952.69 | 4794.16–5109.91 | 2386.36 | 2374.28–2412.49 | 51.82% |
+| N4K4D4S4 | 5105.21 | 4899.13–5181.47 | 2529.04 | 2491.56–2647.18 | 50.46% |
+| Rational4 | 2499.83 | 2495.97–2657.08 | 1610.07 | 1600.79–1676.82 | 35.59% |
+| N4K1D8S4 | 2801.96 | 2705.17–3087.80 | 1939.62 | 1895.82–2002.22 | 30.78% |
+| N4K1D16S4 | 4001.84 | 3814.34–4387.24 | 2402.75 | 2393.05–2502.05 | 39.96% |
+| N4K2D8S1 | 502.57 | 483.12–515.53 | 499.36 | 480.13–510.13 | 0.64% |
+| N4K2D8S4 | 4892.50 | 4805.24–5604.22 | 2660.65 | 2593.68–2802.00 | 45.62% |
+| N4K2D16S4 | 5351.70 | 5196.52–5969.89 | 3162.28 | 3023.00–3419.36 | 40.91% |
+| N4K3D2S4 | 3074.86 | 2927.73–3498.52 | 1612.68 | 1600.34–1703.63 | 47.55% |
+| N4K3D4S4 | 3305.13 | 3206.66–3695.56 | 1716.64 | 1682.29–1884.91 | 48.06% |
 
 ### Representative profiles
 
@@ -357,6 +400,12 @@ dirty-checkout provenance. They remain available for inspection and are not
 combined with the complete accepted schedules.
 
 ## Term-list comparison record
+
+This retained comparison uses the earlier dense monomial-count preflight.
+The packed comparison above uses the minimum of that count and the sparse
+`2 * B^2` intermediate bound, with `B ≤ n! * s^n` for entry support `s`.
+It therefore measures some certificates that the earlier estimator declined;
+the two records are not a paired before/after comparison.
 
 The fixed schedule completed all 840 arm samples (70 cases × two arms × six
 trials) and 14 attribution profiles. All failures and timeouts remain in the

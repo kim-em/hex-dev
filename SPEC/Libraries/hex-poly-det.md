@@ -145,7 +145,8 @@ Above either packing limit, the whole certificate uses term lists;
 there is no kernel trial of the packed checker followed by a sparse retry.
 Within the limits, use the measured sparse/packed crossover table required
 by [hex-kronecker §Consumers](../../HexKronecker/SPEC/hex-kronecker.md#consumers), keyed by
-`packedBits`, input supports and inner dimension. Require an eligible entry
+`packedBits`, input supports and inner dimension (with result support as an
+additional conservative equality key). Require an eligible entry
 for every product; an absent entry selects term lists. Explicit comparison
 probes may force either arm within its budgets to establish that table.
 The table is fixed before consumer activation. This first interface selects
@@ -274,6 +275,7 @@ comparison and default-family decision belong to the companion.
 HexPolyDet/
   Basic.lean        -- polyDetWitness, polyDet, polyDetWitness?, the instance section
   Packed.lean       -- integer and residue packed checks
+  PackedTests.lean  -- kernel checker, boundary, quotient, and selection tests
   Select.lean       -- compiled bounds, selection, and quotient payload preparation
 HexPolyDet.lean
 ```

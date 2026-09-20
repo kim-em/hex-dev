@@ -22,6 +22,8 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from scripts.bench import fresh_module_sweep as sweep
 from scripts.bench.det_symbolic_sweep import AXIOMS, cpu_lease, routes
+from scripts.bench.det_packed_report import audit_dispatch
+from scripts.bench.det_packed_table import selected
 
 PREFIX = 'HexPolyDetMathlib.ProofProbe.Packed'
 MANIFEST = ROOT / 'scripts/bench/det_packed_manifest.json'
@@ -55,6 +57,7 @@ def main():
         'paired-fresh-module-olean-wall', 'hex-det-packed', required_samples=6,
         absolute_only=True, extra_sources=(Path('scripts/bench/det_packed_manifest.json'),
         Path('scripts/bench/det_packed_probes.py'), Path('scripts/bench/det_packed_table.py'),
+        Path('scripts/bench/det_packed_report.py'),
         Path('bench/HexPolyDet/PackedBench.lean'),
         *(Path('bench/HexPolyDetMathlib/ProofProbe') / f'Packed{s}Profile.lean' for s in manifest['profiles'].values()),
         *(Path('bench/HexPolyDet/packed-inputs') / (c['stem'] + '.json') for c in cases)))
@@ -195,6 +198,9 @@ def main():
                 except subprocess.TimeoutExpired as e:
                     profiles.append(dict(stem=case['stem'], state='timeout', timeout_seconds=45))
                 save()
+    if args.stage == 'dispatch':
+        _, keys = selected(read_record(args.forced))
+        audit_dispatch(dict(samples=records, classification=classification['classification']), dict(keys=keys))
     finished = True
     save()
     lease.close()

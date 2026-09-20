@@ -24,12 +24,39 @@ def read_record(directory, name):
     return json.loads((directory / (name + '.json')).read_text())
 
 
+def audit_dispatch(record, table):
+    """Check actual routes against the fixed table, including retained records."""
+    keys = {tuple(k) for k in table['keys']}
+    for sample in record['samples']:
+        if sample['arm'] != 'Dispatch' or sample['candidate']['state'] != 'complete':
+            continue
+        stem = sample['stem']
+        classified = record['classification'][stem]
+        if classified['classification'] not in ['eligible', 'packed-decline']:
+            continue
+        products = classified['selection']['products']
+        packed = classified['classification'] == 'eligible' and all(tuple(p['key']) in keys for p in products)
+        expected = 'packed/plain' if packed else 'term-list'
+        certificates = [e for e in sample['routes'] if e['route'].startswith(('packed/', 'term-list'))]
+        # Proof-node declines can follow product eligibility. They are retained as fallback,
+        # but a covered witness must actually exercise the packed route to validate dispatch.
+        if not packed and not certificates and any(e['route'] == 'fallback' for e in sample['routes']):
+            continue
+        if len(certificates) != 1 or certificates[0]['route'] != expected:
+            raise ValueError(f'{stem}: expected {expected}, saw {sample["routes"]}')
+        if packed:
+            actual = [list(map(int, re.findall(r':= (\d+)', p['key']))) for p in certificates[0]['products']]
+            if actual != [p['key'] for p in products]:
+                raise ValueError(f'{stem}: dispatched witness keys differ from preflight')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('directory', type=Path)
     args = parser.parse_args()
     forced = read_record(args.directory, 'forced')
     dispatch = read_record(args.directory, 'dispatch')
+    audit_dispatch(dispatch, read_record(args.directory, 'crossover'))
     groups = defaultdict(list)
     for c in forced['manifest']['cases']:
         groups[c['family']].append(c['stem'])
@@ -55,19 +82,34 @@ def main():
         print(f'| {family} | '+ ' | '.join(values)+f' | {ratio} | {"/".join(counts)} of {len(stems)} | opt-in |')
     print('\nClassification: '+', '.join(f'{v} {k}' for k,v in Counter(c['classification'] for c in forced['classification'].values()).items())+'.')
     print(f"The manifest also retains {len(forced['manifest']['infeasible'])} infeasible support requests.\n")
-    print('| Case | Classification | Term lists | Packed | Dispatch | Mathlib | Mathlib / dispatch |')
-    print('|---|---|---:|---:|---:|---:|---:|')
+    print('| Case | Classification | Term lists | Packed | Dispatch | Mathlib | Mathlib / dispatch | Observed dispatch |')
+    print('|---|---|---:|---:|---:|---:|---:|---|')
     for c in forced['manifest']['cases']:
         stem = c['stem']
         vals = [r['summary'][stem]['arms'][a]['median_delta_ns'] for r,a in
                 [(forced,'Lists'),(forced,'Packed'),(dispatch,'Dispatch'),(dispatch,'Mathlib')]]
         ratio = f'{vals[3]/vals[2]:.3f}' if vals[2] is not None and vals[3] is not None and vals[2]>0 else '—'
+        routes = dispatch['summary'][stem]['arms']['Dispatch']['routes']
+        routes = [r for r in routes if r != 'certificate-attempt']
         print(f'| {stem} | {forced["classification"][stem]["classification"]} | '+
-              ' | '.join(map(fmt,vals))+f' | {ratio} |')
+              ' | '.join(map(fmt,vals))+f' | {ratio} | {", ".join(routes) or "unobserved"} |')
     print('\nExpected declines have no forced-packed timing. Closed-form rows are controls on')
     print('their unchanged route; their “Lists” and “Packed” column labels denote options,')
     print('not certificate execution. Raw records retain timeouts, errors, host context,')
     print('compiler output, routes, proof nodes, bounds, and artifact sizes.')
+
+    print('\n### Crossover margins and spread\n')
+    print('Median and minimum–maximum of six baseline-subtracted samples, milliseconds.')
+    print('The preregistered admission rule has no effect-size floor; overlapping ranges')
+    print('and very small median differences do not establish a robust speed advantage.\n')
+    print('| Witness | List median | List range | Packed median | Packed range | Median reduction |')
+    print('|---|---:|---|---:|---|---:|')
+    for stem in read_record(args.directory, 'crossover')['winning_cases']:
+        arms = [[s['delta_ns'] for s in forced['samples'] if s['stem'] == stem and s['arm'] == arm]
+                for arm in ['Lists', 'Packed']]
+        l, p = map(median, arms)
+        print(f'| {stem} | {fmt(l)} | {fmt(min(arms[0]))}–{fmt(max(arms[0]))} | '+
+              f'{fmt(p)} | {fmt(min(arms[1]))}–{fmt(max(arms[1]))} | {100 * (1-p/l):.2f}% |')
 
     print('\n### Representative profiles\n')
     print('One automatic-dispatch profile per family; milliseconds, with no baseline subtraction.')

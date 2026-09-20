@@ -41,6 +41,10 @@ def binomialBound (k degree cap : Nat) : Nat := Id.run do
     if count > cap then return cap + 1
   return count
 
+/-- Conservative producer-term filter matching the frontend's support estimator.
+This is not full frontend admission: reification and final proof-node charges
+can still decline an eligible product witness. Actual product bounds are measured
+by `select`; forced-route validation rejects a successful fallback as evidence. -/
 def initialDecline (a : Input) : Option String := Id.run do
   let degree := a.rows.flatten.foldl (fun d p => p.foldl (fun d (m, _) => max d (m.foldl (· + ·) 0)) d) 0
   let supp := a.rows.flatten.foldl (fun s p => max s p.length) 1

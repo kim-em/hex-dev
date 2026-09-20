@@ -126,7 +126,8 @@ theorem result_det (k n : Nat) (rows : List (List (PolyList Nat)))
   rw [← RingHom.map_det, hcheck, eval_denote]
   exact he
 
-/-- A passing residue certificate determines the determinant after any valuation. -/
+/-- Retained public term-list API; checker-independent clients use `result_det`.
+A passing residue certificate determines the determinant after any valuation. -/
 theorem result [Hex.ZMod64.PrimeModulus p] (k n : Nat) (rows : List (List (PolyList Nat)))
     (w : DetWitness (PolyList Nat)) (ctx : Lean.RArray F)
     (A : Matrix (Fin n) (Fin n) F) (e : F)
@@ -141,7 +142,8 @@ theorem result [Hex.ZMod64.PrimeModulus p] (k n : Nat) (rows : List (List (PolyL
   | triangular s t d => exact hs.trans ((eval_denote p k ctx d).trans he)
   | singular v => simpa [value] using hs.trans (by simpa [value] using he)
 
-/-- Target agreement is structural equality of canonical natural-residue lists. -/
+/-- Retained public term-list API; checker-independent clients use `target_det`.
+Target agreement is structural equality of canonical natural-residue lists. -/
 theorem target [Hex.ZMod64.PrimeModulus p] (k n : Nat) (rows : List (List (PolyList Nat)))
     (w : DetWitness (PolyList Nat)) (ctx : Lean.RArray F)
     (A : Matrix (Fin n) (Fin n) F) (q : PolyList Nat) (e : F)

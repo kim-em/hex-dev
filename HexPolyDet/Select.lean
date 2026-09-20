@@ -148,6 +148,8 @@ def select (budget : Budget) (arm : Arm) (k : Nat)
   let mode := if arm == .signedPacked then MulMode.signedPacked else .plain
   let mut reports := []
   for a in ps do
+    -- Without a quotient payload these are preliminary integer-product bounds.
+    -- They can reject packing, but never establish modular packing eligibility.
     let sized := match modulus, quotients with
       | some p, some qs => sizeMulTermsMod budget mode k 1 a.inner a.width p
           [a.left] a.right [a.result] [qs.getD a.row []]
@@ -157,9 +159,9 @@ def select (budget : Budget) (arm : Arm) (k : Nat)
   let base : Selection := { mode, reports, quotientSupport := quotients.map (support ∘ List.flatten) |>.getD 0 }
   if let some r := reports.find? (fun r => !r.size.accepts budget) then
     return { base with reason := some (declineMessage budget r) }
+  if arm == .lists then return { base with reason := some "forced term lists" }
   if modulus.isSome && quotients.isNone then
     return { base with reason := some "residue quotient payload unavailable" }
-  if arm == .lists then return { base with reason := some "forced term lists" }
   if arm == .automatic && !reports.all (fun r => table.contains r.key) then
     return { base with reason := some "no measured packed regime" }
   return { base with packed := true }
@@ -172,6 +174,7 @@ structure QuotientBudget where
   deriving Repr
 
 inductive QuotientError where
+  | invalidModulus
   | unavailable
   | indivisible (row column : Nat)
   deriving Repr, BEq
@@ -185,7 +188,7 @@ def within (budget : QuotientBudget) (a : PolyList Int) : Bool :=
 /-- Compute each integer quotient coefficient exactly in compiled code. -/
 def prepareQuotients (budget : QuotientBudget) (p : Nat)
     (ps : List (Product (PolyList Int))) : Except QuotientError (List (List (PolyList Int))) := do
-  if p == 0 then throw (.indivisible 0 0)
+  if p == 0 then throw .invalidModulus
   let mut qs := []
   let mut count := 0
   for a in ps do

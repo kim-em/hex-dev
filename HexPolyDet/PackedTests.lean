@@ -111,3 +111,40 @@ open Hex.PolyDet.Packed in
   let .ok covered := select budget .automatic 1 ps (table := keys) | return false
   let .ok uncovered := select budget .automatic 1 ps (table := keys.take 1) | return false
   return covered.packed && covered.mode == .plain && !uncovered.packed
+
+-- A measured witness must select packing with the shipped table, without an override.
+private def measuredRows : List (List (PolyList Int)) :=
+  [[[([2, 0], -3), ([1, 0], -6), ([0, 1], -9), ([0, 0], -3)],
+    [([2, 0], -2), ([1, 0], -4), ([0, 1], -6), ([0, 0], -2)],
+    [([2, 0], -3), ([1, 0], -6), ([0, 1], -9), ([0, 0], -3)],
+    [([2, 0], 3), ([1, 0], 6), ([0, 1], 9), ([0, 0], 3)]],
+   [[([1, 0], -1), ([0, 2], -2), ([0, 1], -3), ([0, 0], -2)],
+    [([1, 0], 1), ([0, 2], 2), ([0, 1], 3), ([0, 0], 2)],
+    [([1, 0], -3), ([0, 2], -6), ([0, 1], -9), ([0, 0], -6)],
+    [([1, 0], -1), ([0, 2], -2), ([0, 1], -3), ([0, 0], -2)]],
+   [[([2, 0], 9), ([1, 0], 3), ([0, 2], 9), ([0, 1], 6)],
+    [([2, 0], 9), ([1, 0], 3), ([0, 2], 9), ([0, 1], 6)],
+    [([2, 0], -6), ([1, 0], -2), ([0, 2], -6), ([0, 1], -4)],
+    [([2, 0], -3), ([1, 0], -1), ([0, 2], -3), ([0, 1], -2)]],
+   [[([2, 0], 3), ([1, 0], 9), ([0, 2], 3), ([0, 1], 6)],
+    [([2, 0], 2), ([1, 0], 6), ([0, 2], 2), ([0, 1], 4)],
+    [([2, 0], -1), ([1, 0], -3), ([0, 2], -1), ([0, 1], -2)],
+    [([2, 0], -1), ([1, 0], -3), ([0, 2], -1), ([0, 1], -2)]]]
+
+open Hex.PolyDet.Packed in
+#guard Id.run do
+  let a := measuredRows
+  let decode := Hex.MvPoly.Kernel.denote (n := 2) (cmp := Hex.Mono.grevlex)
+  let .ok w := detWitnessWith Hex.exactDiv 4 (Hex.PolyDet.check 4)
+    (a.map (List.map decode)) | return false
+  let w := w.map Hex.PolyDet.toList
+  let .ok s := select {} .automatic 2 (products (Hex.PolyDet.ops 2) 4 a w) | return false
+  return s.packed && s.mode == .plain
+
+open Hex.PolyDet.Packed in
+#guard (match prepareQuotients {} 0 [] with
+  | .error e => e == .invalidModulus | .ok _ => false)
+open Hex.PolyDet.Packed in
+#guard (select budget .lists 1 (products (Hex.PolyDet.ops 1) 1 [[x]]
+  (.triangular [] [[one]] x)) (some 2)).toOption.map (·.reason) ==
+  some (some "forced term lists")

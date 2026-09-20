@@ -90,22 +90,28 @@ def residue (p k n : Nat) (rows : List (List (MvPoly.Kernel.PolyList Nat)))
       match profileit "det.symbolic.quotients" opts fun _ => prepareQuotients remaining p ps with
       | .ok qs => pure (some qs)
       | .error .unavailable => pure none
+      | .error .invalidModulus => throwError "det: certificate failure: zero residue modulus"
       | .error (.indivisible i j) => throwError "det: certificate failure: residue product ({i}, {j}) is not divisible by {p}"
     else pure none
   let s ← selectOrFail <| profileit "det.symbolic.preflight" opts fun _ =>
     select budget (arm opts) k ps (some p) qs
+  let qs ← if s.packed then
+      match qs with
+      | some qs => pure qs
+      | none => throwError "det: certificate failure: selected packed checker without quotient payload"
+    else pure []
   let ok := profileit "det.symbolic.selfcheck" opts fun _ =>
-    if s.packed then checkDetPolyPackedMod budget s.mode p k n rows w qs.get!
+    if s.packed then checkDetPolyPackedMod budget s.mode p k n rows w qs
     else Matrix.checkDetPolyList (opsMod p k) n rows w
   unless ok do throwError "det: certificate failure: selected {s.route} checker returned false"
   let check ← if s.packed then
-      mkAppM ``checkDetPolyPackedMod #[← quoteBudget, quoteMode s.mode, toExpr p, toExpr k, toExpr n, rowsE, wE, toExpr qs.get!]
+      mkAppM ``checkDetPolyPackedMod #[← quoteBudget, quoteMode s.mode, toExpr p, toExpr k, toExpr n, rowsE, wE, toExpr qs]
     else mkAppM ``Matrix.checkDetPolyList #[← mkAppM ``opsMod #[toExpr p, toExpr k], toExpr n, rowsE, wE]
   let h ← profileitM Exception "det.symbolic.certificate" opts <|
     decideProof (← mkEq check (mkConst ``Bool.true))
   let hdet ← if s.packed then
       mkAppM ``Residue.checkDetPolyPackedMod_sound
-        #[toExpr p, ← quoteBudget, quoteMode s.mode, toExpr k, toExpr n, rowsE, wE, toExpr qs.get!, h]
+        #[toExpr p, ← quoteBudget, quoteMode s.mode, toExpr k, toExpr n, rowsE, wE, toExpr qs, h]
     else mkAppM ``Residue.checkDetPolyList_sound #[toExpr p, toExpr k, toExpr n, rowsE, wE, h]
   return (hdet, s)
 

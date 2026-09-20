@@ -555,6 +555,7 @@ HexPolyDetMathlib/
   Small.lean        -- closed forms
   Tactic.lean       -- the handler on hex-bareiss-mathlib's `det` syntax kind, det% for symbolic input, Hex.normPolyDet
   Tests.lean
+  PackedTests.lean  -- packed routes, singularity, transport, and axiom audits
 HexPolyDetMathlib.lean
 ```
 
@@ -586,6 +587,12 @@ The term form does not replay a reflexive comparison of its own value list.
 
 Limits are 16 rows, 65,536 certificate terms, 100,000 intermediate terms and
 source nodes, 4,096 coefficient bits, exponent 64, and 1,000,000 proof nodes.
+For entry support at most `s`, let `B` be the smaller of `n! * s^n` and the
+capped monomial-count bound for a minor. Intermediate support is bounded by
+the smaller of `2 * B^2` and the degree-based monomial count: a Bareiss
+numerator subtracts two products of minors. This bound applies before checker
+selection, including term-list checking, and admits sparse independent-atom
+matrices whose dense monomial count alone would exceed the budget.
 The manifest preregisters 45-second cleanup/proof ceilings and six samples per
 arm. The main 2/4/8 ladder contains 48 feasible dense combinations and 33
 infeasible combinations; separate 3×3 cases measure the closed-form route.
@@ -706,7 +713,13 @@ samples are required; ratios use positive medians only.
 
 The packed crossover contains 50 exact product keys from 14 witnesses with six
 successful samples in each forced arm and a positive packed median smaller than
-the term-list median. The table is fixed before the automatic comparison. Both
+the term-list median. The automatic comparison uses the same fixture population
+as table fitting, with fresh samples: it is an in-sample dispatch comparison,
+not evidence of generalisation to unseen matrices. Exact product keys are a
+conservative selection heuristic, not a per-product performance theorem.
+The table is fixed before the automatic comparison. No effect-size threshold
+was preregistered; small median differences and their spreads are reported
+without treating them as robust wins. Both
 full 2,064-observation schedules and all 14 family profiles are retained in the
 [packed report](../../reports/hex-poly-det-mathlib-performance.md#packed-certificate-comparison).
 The report includes the complete 172-case ladder, 57 infeasible support requests,
