@@ -155,7 +155,8 @@ model/fixture was extended to `128,192,256,384,512,768,1024`, 2-second batch
 target, six trial-major trials, 600-second operational cap including prep.
 Seven of eight [large-ladder verdicts](bench-results/hex-rank-10352/quotient-verdicts.md)
 are consistent. The full checker is inconclusive slower, β=+0.550; its sole
-unchanged rerun is running and will be retained separately. No model downgrade or Phase-4 pass is
+[unchanged rerun](bench-results/hex-rank-10352/quotient-check-rerun/checkFull.json)
+is also inconclusive slower, β=+0.283. Both retain all 42 completed rows. No model downgrade or Phase-4 pass is
 inferred from that result.
 
 Exact scientific commands are recorded in every run's `metadata.json` and
@@ -363,4 +364,4 @@ witness preparation. Raw capture: `/tmp/hexrank-checker-profile`.
 
 ## Concerns
 
-- [#10352](https://github.com/kim-em/hex-dev/issues/10352): resolve the full-rank quotient checker's slower-than-model result on the 128–1024 ladder. The original measurement and the dot/list-access profile are retained; its sole unchanged rerun is running. The cubic model is unchanged; no failing or inconclusive evidence is promoted to a pass.
+- [#10352](https://github.com/kim-em/hex-dev/issues/10352): resolve the full-rank quotient checker's slower-than-model result on the 128–1024 ladder. The original measurement (β=+0.550), sole unchanged rerun (β=+0.283), and dot/list-access profile are retained. The cubic model is unchanged; no failing or inconclusive evidence is promoted to a pass.
