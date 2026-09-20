@@ -363,10 +363,13 @@ private meta opaque evalCertificate (e : Expr) : MetaM Hex.Nat.PrimeCert
 literal result reaches the proof; neither the producer nor its imports are
 needed to replay the suggestion. -/
 meta def suppliedCertificate (stx : Term) (n : Nat) : Term.TermElabM Hex.Nat.PrimeCert := do
-  let e ← Term.elabTermEnsuringType stx (mkConst ``Hex.Nat.PrimeCert)
+  let e ← Term.withoutErrToSorry do
+    Term.elabTermEnsuringType stx (mkConst ``Hex.Nat.PrimeCert)
   Term.synthesizeSyntheticMVarsNoPostponing
   let e ← instantiateMVars e
   checkClosed "primality? using" e
+  if e.hasSorry then
+    throwError "primality? using: the supplied expression contains an unfinished proof"
   let cert ← evalCertificate e
   unless cert.subject == n do
     throwError "primality? using: certificate subject is {cert.subject}; expected {n}"
@@ -374,8 +377,7 @@ meta def suppliedCertificate (stx : Term) (n : Nat) : Term.TermElabM Hex.Nat.Pri
     throwError "primality? using: certificate for {n} failed checkPrime"
   return cert
 
-/-- Construct a reusable certificate with an optional total attempt limit, or
-check and render an explicitly supplied certificate expression. -/
+/-- Construct a reusable certificate with an optional total attempt limit. -/
 syntax (name := primalitySuggestTac) "primality?"
   (" (" &"maxAttempts" " := " num ")")? : tactic
 
@@ -418,9 +420,11 @@ meta def suggestPrime (predicate head : Name) (stx : Syntax) : Tactic.TacticM Un
               throwError "primality?: {n} is not prime"
             throwError "primality?: certificate construction for {n} exhausted after \
               {f.attempts} attempts (seed {n}; {constructionDescription budget})"
-        | .ok success => pure success.cert.raw
-    unless cert.subject == n && Hex.Nat.checkPrime cert do
-      throwError "primality?: the constructed certificate failed its check"
+        | .ok success =>
+            let cert := success.cert.raw
+            unless cert.subject == n && Hex.Nat.checkPrime cert do
+              throwError "primality?: the constructed certificate failed its check"
+            pure cert
     let proof := mkApp3 (mkConst head) nE (reifyPrimeCert cert) reflTrue
     let literal ← certificateSyntax cert
     let name := mkIdent ((← unresolveNameGlobalAvoidingLocals? head

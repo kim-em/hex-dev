@@ -14,15 +14,17 @@ namespace Hex.PrimalityProducer
 
 /-- A separate-module producer: no new semantics in the checker. -/
 def fermat (k : Nat) : Hex.Nat.PrimeCert :=
-  .pock (2 ^ (2 ^ k) + 1) [(3, 2 ^ k - 1, .small 2)]
+  if k == 0 then .small 3
+  else .pock (2 ^ (2 ^ k) + 1) [(3, 2 ^ k - 1, .small 2)]
 
 /-- Registration uses Lean's existing macro registry, with an explicit call site.
-For composite Fermat numbers the resulting certificate fails the checker. -/
+This produces candidates; acceptance is determined by the checker. -/
 macro "fermat_cert% " k:num : term => `(fermat $k)
 
-/-- A surface-language prototype with natural (positive) exponents and named
-intermediate certificates. Factor ordering remains explicit in the source. -/
-macro "power_cert% " n:num " from " q:term:max " ^ " e:num &"base" a:num : term => do
+/-- A syntax prototype for a single Pocklington prime power, with a positive
+exponent. The operand is a named certificate; its subject is raised to that
+power. General factorizations use ordinary factor lists. -/
+macro "pock_power% " n:num " from " q:term:max " ^ " e:num &"base" a:num : term => do
   if e.getNat == 0 then Lean.Macro.throwErrorAt e "certificate exponent must be positive"
   let pred := Lean.Syntax.mkNumLit (toString (e.getNat - 1))
   `(Hex.Nat.PrimeCert.pock $n [($a, $pred, $q)])

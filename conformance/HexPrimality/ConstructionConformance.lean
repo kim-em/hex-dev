@@ -265,8 +265,14 @@ info: Try this:
       (by decide +kernel)
 -/
 #guard_msgs in
-example : Hex.Nat.Prime (2 ^ 255 - 19) := by
+theorem curveSupplied : Hex.Nat.Prime (2 ^ 255 - 19) := by
   primality? using Hex.PrimalityProducer.curve
+
+/-- info: 'curveSupplied' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms curveSupplied
+
+#guard checkPrime (Hex.PrimalityProducer.fermat 0)
 
 
 /-- info: Try this:
@@ -284,7 +290,7 @@ example : Hex.Nat.Prime 17 := by primality? using fermat_cert% 2
 -/
 #guard_msgs in
 example : Hex.Nat.Prime 17 := by
-  primality? using (let two : PrimeCert := .small 2; power_cert% 17 from two ^ 4 base 3)
+  primality? using (let two : PrimeCert := .small 2; pock_power% 17 from two ^ 4 base 3)
 
 /--
 info: Try this:
@@ -322,7 +328,7 @@ example : Hex.Nat.Prime 17 := by
 /-- error: certificate exponent must be positive -/
 #guard_msgs in
 example : Hex.Nat.Prime 17 := by
-  primality? using power_cert% 17 from (.small 2) ^ 0 base 3
+  primality? using pock_power% 17 from (.small 2) ^ 0 base 3
 
 /--
 error: primality? using: the argument
@@ -349,3 +355,14 @@ run_cmd Command.liftTermElabM do
     let second ← certificateSyntax roundtrip
     unless (← PrettyPrinter.ppTerm first).pretty == (← PrettyPrinter.ppTerm second).pretty do
       throwError "certificate rendering is not stable"
+
+/--
+error: Type mismatch
+  42
+has type
+  Nat
+but is expected to have type
+  PrimeCert
+-/
+#guard_msgs in
+example : Hex.Nat.Prime 17 := by primality? using (42 : Nat)

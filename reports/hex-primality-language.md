@@ -66,12 +66,18 @@ native samples, sources, toolchains, output sizes, and host-load observations
 are retained in
 [`hex-primality-language.json`](bench-results/hex-primality-language.json).
 The runner is `scripts/bench/primality_language.py`. Four trial-major blocks
-reverse adjacent arms in alternate blocks, on automatically selected CPU 21.
-No completed sample was discarded or repeated. The first blocks overlapped a
-large monorepo build; recorded one-minute host load ranged from 72 to 249.
-These are observations on this host, not stable absolute costs or a claim of
-an elaboration speedup. Separate Lean versions further limit cross-system
-comparisons.
+reverse adjacent arms in alternate blocks, on automatically selected CPU 4.
+No completed sample was discarded or repeated. Recorded one-minute host load
+ranged from 10 to 12, including an overlapping incremental monorepo build.
+These are observations on this host, not stable absolute costs or evidence for
+an ordering of fresh-build times for any case. Separate Lean versions further
+limit cross-system comparisons.
+
+The [double-check variant](bench-results/hex-primality-language-double-check.json)
+retains another complete 40/40/eight-sample record for the variant with two
+compiled preflights on supplied data. Its heavier overlapping host activity
+makes its fresh times unsuitable for attributing the cost of that extra check.
+It is not pooled with the single-check implementation measured in this table.
 
 Fresh time is a Lake build of a fresh proof module, including imports and
 elaboration. Kernel time is a separate warm `Lean.Kernel.check` of the complete
@@ -85,16 +91,16 @@ fresh times do not measure their minimum possible import cost.
 
 | Case / source route | Fresh build median (s) | Kernel median (ms) | Proof source (bytes) | Module olean (bytes) |
 |---|---:|---:|---:|---:|
-| Curve25519, `primality?` search | 4.061 | 9.445 | 13 | 4096 |
-| Curve25519, existing literal | 2.815 | 12.164 | 773 | 4096 |
-| Curve25519, `using` named data | 2.586 | 9.830 | 490 | 4096 |
-| Curve25519, PrimeCert ladder | 4.885 | 28.092 | 410 | 5536 |
-| 17, existing literal | 2.994 | 0.556 | 101 | 4040 |
-| 17, `using` named data | 2.767 | 0.413 | 89 | 4040 |
-| 17, PrimeCert ladder | 3.912 | 0.246 | 42 | 4160 |
-| 197, existing literal | 1.917 | 0.900 | 116 | 4040 |
-| 197, `using` named data | 3.044 | 1.062 | 100 | 4040 |
-| 197, PrimeCert theorem | 4.034 | 0.424 | 65 | 4160 |
+| Curve25519, `primality?` search | 1.628 | 5.557 | 13 | 4096 |
+| Curve25519, existing literal | 1.046 | 5.461 | 773 | 4096 |
+| Curve25519, `using` named data | 1.042 | 5.288 | 490 | 4096 |
+| Curve25519, PrimeCert ladder | 1.572 | 14.478 | 410 | 5536 |
+| 17, existing literal | 1.030 | 0.364 | 101 | 4040 |
+| 17, `using` named data | 1.067 | 0.311 | 89 | 4040 |
+| 17, PrimeCert ladder | 1.577 | 0.186 | 42 | 4160 |
+| 197, existing literal | 1.058 | 0.910 | 116 | 4040 |
+| 197, `using` named data | 1.028 | 0.806 | 100 | 4040 |
+| 197, PrimeCert theorem | 1.586 | 0.371 | 65 | 4160 |
 
 Source bytes count the proof expression, including its formatting, but exclude
 the theorem header and imports. The 13-byte search invocation contains no
@@ -102,9 +108,9 @@ certificate. Olean sizes are whole-module artifacts, not serialized proof or
 certificate sizes. Within each Hex case the supplied data is the same data as
 the literal arm; search also finds that exact Curve25519 certificate. Different
 source routes produce equivalent checker obligations, and no checker algorithm
-or representation changed. Noise accounts for variation in the identical
-Curve25519 obligations; in particular, these results do not establish a kernel
-speedup from adding `using`.
+or representation changed. Noise accounts for variation in identical
+checker obligations. These results do not establish a kernel speedup from
+adding `using`, or support any per-arm fresh-build ordering for any case.
 
 The native executable uses an IO reference around the input and result to keep
 the compiler from removing measured calls. Construction includes search and
@@ -115,8 +121,8 @@ from a serialized stream. Both arms return exactly the same certificate.
 
 | Native Curve25519 operation | Samples (ms) | Median (ms) |
 |---|---|---:|
-| Existing bounded construction | 1064.583, 445.577, 417.849, 417.692 | 431.713 |
-| Retrieve and check supplied data | 1.054, 0.604, 0.551, 0.552 | 0.578 |
+| Existing bounded construction | 413.855, 415.607, 414.467, 444.967 | 415.037 |
+| Retrieve and check supplied data | 0.553, 0.552, 0.557, 0.655 | 0.555 |
 
 This quantifies the work avoided by providing already constructed data. The
 ordinary construction algorithm has not become faster. The result supports an

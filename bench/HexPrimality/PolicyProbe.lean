@@ -79,8 +79,9 @@ private def runConstruction (n : Nat) : IO UInt32 := do
   IO.println (Lean.Json.mkObj fields).compress
   return 0
 
-/-- Materialize and check supplied data; compare with construction, without
-counting process startup or rendering. The IO ref prevents constant folding. -/
+/-- Retrieve and check the precompiled literal; compare with construction,
+excluding initialization, process startup, and rendering. The IO references
+keep the checker input and result in the timed IO computation. -/
 private def runSupplied : IO UInt32 := do
   let input ← IO.mkRef (fun (_ : Unit) => Hex.PrimalityCurveProbe.certificate)
   let producer ← input.get
