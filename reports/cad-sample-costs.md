@@ -95,20 +95,20 @@ at later levels it describes the algebraic constant coefficient.
 
 | Example | Level | Input/coefficient d/H | Root d/H | Substitution ms | Root enumeration ms |
 |---|---:|---|---|---:|---:|
-| NLSAT | 1 | 3/16 | 3/16 | — | 10.187 [9.974, 11.934] |
+| NLSAT | 1 | 3/16 | 3/16 | n/a | 10.187 [9.974, 11.934] |
 | NLSAT | 2 | 3/961 | 3/49 | 35.672 [35.470, 36.334] | 5541.300 [5511.650, 5566.284] |
-| Circle/parabola | 1 | 4/1 | 4/1 | — | 22.373 [22.271, 22.456] |
+| Circle/parabola | 1 | 4/1 | 4/1 | n/a | 22.373 [22.271, 22.456] |
 | Circle/parabola | 2 | 2/3 | 2/1 | 23.170 [22.993, 23.356] | 20.384 [20.366, 20.487] |
-| Two circles | 1 | 1/2 | 1/2 | — | 0.368 [0.362, 0.382] |
+| Two circles | 1 | 1/2 | 1/2 | n/a | 0.368 [0.362, 0.382] |
 | Two circles | 2 | 1/4 | 2/4 | 1.785 [1.779, 1.797] | 3.490 [3.473, 3.503] |
-| Kahan specialization | 1 | 2/16 | 2/16 | — | 2.314 [2.295, 2.386] |
+| Kahan specialization | 1 | 2/16 | 2/16 | n/a | 2.314 [2.295, 2.386] |
 | Kahan specialization | 2 | 1/32 | 2/32 | 11.955 [11.881, 12.151] | 3.378 [3.352, 3.403] |
-| Sphere section | 1 | 2/2 | 2/2 | — | 2.330 [2.318, 2.377] |
+| Sphere section | 1 | 2/2 | 2/2 | n/a | 2.330 [2.318, 2.377] |
 | Sphere section | 2 | 1/3 | 2/3 | 3.172 [3.140, 3.213] | 3.503 [3.490, 3.741] |
 | Sphere section | 3 | 1/6 | 2/6 | 5.575 [5.532, 5.633] | 3.456 [3.446, 3.480] |
-| Tower 4 | 1 | 2/2 | 2/2 | — | 2.372 [2.367, 2.467] |
+| Tower 4 | 1 | 2/2 | 2/2 | n/a | 2.372 [2.367, 2.467] |
 | Tower 4 | 2 | 2/2 | 4/2 | 0.950 [0.948, 0.959] | 26.661 [26.452, 26.770] |
-| Tower 8 | 1 | 4/2 | 4/2 | — | 29.530 [29.256, 29.860] |
+| Tower 8 | 1 | 4/2 | 4/2 | n/a | 29.530 [29.256, 29.860] |
 | Tower 8 | 2 | 4/2 | 8/2 | 6.599 [6.557, 6.625] | 507.909 [504.204, 510.838] |
 
 The base-root operation is `ZPoly.realAlgebraicRoots`. Substitution separately
@@ -284,7 +284,7 @@ are in the raw observations and `trace-*.log.gz` files.
 | Circle/parabola | 2 | 2/1 | unsat | 3 | 0, 0, 0 | 2 | 8.726 |
 | Two circles | 2 | 2/2 | unsat | 9 | 0, 1, 0, 4, 2, 2, 0, 0, 0 | 6 | 8.586 |
 | Kahan specialization | 2 | 2/64 | unsat | 10 | 2, 2, 0, 0, 0, 2, 0, 0, 0, 0 | 7 | 8.446 |
-| Sphere section | 3 | 2/6 | sat | 0 | — | 0 | 8.402 |
+| Sphere section | 3 | 2/6 | sat | 0 | n/a | 0 | 8.402 |
 | Tower 4 | 2 | 2/2 | unsat | 2 | 2, 0 | 1 | 8.348 |
 | Tower 8 | 2 | 4/2 | unsat | 2 | 2, 0 | 1 | 8.339 |
 
@@ -347,6 +347,6 @@ interface:
    and variable-order sensitivity. The fixed ellipse and rationally simplifying
    sphere section are not coverage of those cases.
 
-The SPEC should fix the semantic obligations now—correct root identity,
-substitution, signs and cell coverage—without fixing a canonical-number payload
+The SPEC should fix the semantic obligations now (correct root identity,
+substitution, signs and cell coverage) without fixing a canonical-number payload
 or claiming that the costs of the missing general conversion have been measured.
