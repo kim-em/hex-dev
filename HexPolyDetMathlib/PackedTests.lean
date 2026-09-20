@@ -112,3 +112,20 @@ example (x y z w : Int) : Matrix.det !![x, 0, 0, 0; 0, y, 0, 0; 0, 0, z, 0; 0, 0
 /-- info: 'packedUniverse' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms packedUniverse
+
+-- Generated values are identified structurally, without a target certificate.
+run_meta do
+  let mut pending := [``packedTerm]
+  while let name :: rest := pending do
+    pending := rest
+    let some value := (← Lean.getConstInfo name).value? (allowOpaque := true)
+      | throwError "missing generated term proof"
+    for used in value.getUsedConstants do
+      if used == ``Hex.Kronecker.Kernel.treeTermsEq_sound ||
+          used == ``HexReflectMathlib.Kernel.eval_checked then
+        throwError "generated term redundantly checks its reconstructed value"
+      if (``packedTerm).isPrefixOf used then pending := used :: pending
+
+example (x y : Rat) :
+    (det% !![x / 2, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y]).value =
+      (x ^ 2 / 2 - 1) * (y ^ 2 - 1) := by ring

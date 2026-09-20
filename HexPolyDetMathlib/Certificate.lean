@@ -85,7 +85,7 @@ Structural bounds may exceed list bounds, in which case the existing route runs.
 def tree? (k n : Nat) (rows : List (List (MvPoly.Kernel.PolyList Int)))
     (trees : Kronecker.TreeMatrix) (w : Matrix.DetWitness (MvPoly.Kernel.PolyList Int))
     (target : Kronecker.Expr) (value : MvPoly.Kernel.PolyList Int)
-    (rowsE wE targetE valueE : Expr) : MetaM (Option (Expr × Expr × Selection)) := do
+    (rowsE wE targetE valueE : Expr) (hasTarget : Bool) : MetaM (Option (Expr × Option Expr × Selection)) := do
   let opts ← getOptions
   let arm := arm opts
   if arm == .lists then return none
@@ -106,15 +106,16 @@ def tree? (k n : Nat) (rows : List (List (MvPoly.Kernel.PolyList Int)))
       trace[HexMatrix.certificate] "det tree preflight: {declineMessage budget report}"
       return none
     reports := reports ++ [report]
-  let .ok size := Kronecker.sizeTreeTermsEq budget k target value
-    | throwError "det: malformed tree target"
-  if !size.accepts budget then
-    trace[HexMatrix.certificate] "det tree target preflight exceeds packing budget; using list entry proofs"
-    return none
+  if hasTarget then
+    let .ok size := Kronecker.sizeTreeTermsEq budget k target value
+      | throwError "det: malformed tree target"
+    if !size.accepts budget then
+      trace[HexMatrix.certificate] "det tree target preflight exceeds packing budget; using list entry proofs"
+      return none
   if arm == .automatic && !reports.all (fun r => crossover.contains r.key) then return none
   let selection : Selection := { mode, packed := true, reports }
   unless profileit "det.symbolic.selfcheck" opts (fun _ =>
-      checkDetPolyPackedTree mode k n trees w selection.widths && Kronecker.Kernel.treeTermsEq k target value) do
+      checkDetPolyPackedTree mode k n trees w selection.widths && (!hasTarget || Kronecker.Kernel.treeTermsEq k target value)) do
     throwError "det: tree certificate failed its compiled check"
   let check ← mkAppM ``checkDetPolyPackedTree
     #[quoteMode mode, toExpr k, toExpr n, rowsE, wE, toExpr selection.widths]
@@ -122,8 +123,10 @@ def tree? (k n : Nat) (rows : List (List (MvPoly.Kernel.PolyList Int)))
     decideProof (← mkEq check (mkConst ``Bool.true))
   let hdet ← mkAppM ``Tree.checkDetPolyPackedTree_sound
     #[quoteMode mode, toExpr k, toExpr n, rowsE, wE, toExpr selection.widths, h]
-  let checkTarget ← mkAppM ``Kronecker.Kernel.treeTermsEq #[toExpr k, targetE, valueE]
-  let htarget ← decideProof (← mkEq checkTarget (mkConst ``Bool.true))
+  let htarget ← if hasTarget then do
+      let checkTarget ← mkAppM ``Kronecker.Kernel.treeTermsEq #[toExpr k, targetE, valueE]
+      pure (some (← decideProof (← mkEq checkTarget (mkConst ``Bool.true))))
+    else pure none
   return some (hdet, htarget, selection)
 
 def residue (p k n : Nat) (rows : List (List (MvPoly.Kernel.PolyList Nat)))

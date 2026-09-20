@@ -305,8 +305,22 @@ def treeEntry (ctx : Expr) (r : ReifiedRing) : MetaM Expr := do
   let some (_, lhs, _) := (← inferType h).eq? | throwError "det: malformed tree denotation proof"
   mkExpectedTypeHint h (← mkEq lhs r.source)
 
+/-- Scalar reconstruction follows `Tree.value` definitionally. No polynomial
+normalization or identity comparison is needed for a generated term value. -/
+def treeValue (carrier : Expr) (atoms : Array Expr) (d : Poly) : MetaM Expr := do
+  let mut value ← mkNumeral carrier 0
+  for (es, c) in d.reverse do
+    let mut product ← mkNumeral carrier 1
+    for i in (List.range atoms.size).reverse do
+      let x := atoms[i]!
+      let power ← mkAppM ``HPow.hPow #[x, toExpr (es.getD i 0)]
+      product ← mkAppM ``HMul.hMul #[power, product]
+    let coeff ← mkAppOptM ``Int.cast #[some carrier, none, some (toExpr c)]
+    value ← mkAppM ``HAdd.hAdd #[← mkAppM ``HMul.hMul #[coeff, product], value]
+  return value
+
 /-- Assemble a tree certificate after its product and target preflights pass. -/
-def computeTree? (A ctx : Expr) (lit : Recognized) (k size : Nat)
+def computeTree? (A ctx : Expr) (lit : Recognized) (k : Nat) (atoms : Array Expr) (size : Nat)
     (reified : Array (Array ReifiedRing)) (lists : Array (Array Poly))
     (w : Hex.Matrix.DetWitness Poly) (r : ReifiedRing) (rhs? : Option Expr)
     (normalized : Option (Array (Nat × Array Normalize.Result)))
@@ -337,9 +351,9 @@ def computeTree? (A ctx : Expr) (lit : Recognized) (k size : Nat)
             mkAppM ``MvPoly.Kernel.smul #[toExpr (Int.ofNat t), dE]
           else pure dE
         let some (hcheck, hq, selection) ← Certificate.tree? k lit.n (lists.toList.map Array.toList)
-            trees w target value treesE wE targetE valueE | return none
-        let hq ← mkAppM ``Hex.Kronecker.Kernel.treeTermsEq_sound
-          #[hq, ← mkAppM ``Lean.RArray.get #[ctx]]
+            trees w target value treesE wE targetE valueE rhs?.isSome | return none
+        let hq ← hq.mapM fun hq => do
+          mkAppM ``Hex.Kronecker.Kernel.treeTermsEq_sound #[hq, ← mkAppM ``Lean.RArray.get #[ctx]]
         let mut hrows := #[]
         for i in [:lit.n] do
           let mut hs := #[]
@@ -351,7 +365,10 @@ def computeTree? (A ctx : Expr) (lit : Recognized) (k size : Nat)
             hs := hs.push h
           hrows := hrows.push (← conjunction hs)
         let B ← mkAppM ``Tree.evaluated #[toExpr lit.n, treesE, ctx]
-        let he ← treeEntry ctx r
+        let displayed ← if rhs?.isSome then pure r.source else treeValue lit.carrier atoms d
+        let he ← if rhs?.isSome then treeEntry ctx r else do
+          let lhs ← mkAppM ``Tree.value #[toExpr k, ctx, dE]
+          pure (mkExpectedPropHint (← mkEqRefl displayed) (← mkEq lhs displayed))
         let (value, proof) ← if normalized.isSome then do
             let sE := toExpr scales.toList
             let hA ← applyHint (← mkAppM ``Scaling.identify #[toExpr lit.n, A, B, sE])
@@ -366,22 +383,25 @@ def computeTree? (A ctx : Expr) (lit : Recognized) (k size : Nat)
               let ht ← decideProof (← mkAppM ``LT.lt #[toExpr (0 : Nat), toExpr t])
               let proof := mkAppN (← mkAppM ``Tree.scaled_target
                 #[toExpr k, dE, ctx, toExpr D, toExpr t,
-                  ← mkAppM ``Matrix.det #[A], rhs?.get!, qE]) #[hdet, ht, hD, he, hq]
+                  ← mkAppM ``Matrix.det #[A], rhs?.get!, qE]) #[hdet, ht, hD, he, hq.get!]
               pure (rhs?.get!, proof)
             | none =>
-              let he := mkAppN (← mkAppM ``Tree.value_eq
-                #[toExpr k, ctx, qE, dE, r.source]) #[he, hq]
-              let h ← mkEqTrans hdet he
-              let proof ← mkAppM ``Scaling.value #[toExpr D, ← mkAppM ``Matrix.det #[A], r.source, hD, h]
-              if D == 1 then pure (r.source, ← mkEqTrans proof (← mkAppM ``div_one #[r.source]))
-              else pure (← mkAppM ``HDiv.hDiv #[r.source, ← Normalize.natural D], proof)
+              let hv ← mkEqTrans (← mkAppM ``Tree.value_eq #[toExpr k, ctx, dE]) he
+              let h ← mkEqTrans hdet hv
+              let proof := mkAppN (← mkAppM ``Scaling.value
+                #[toExpr D, ← mkAppM ``Matrix.det #[A], displayed]) #[hD, h]
+              if D == 1 then pure (displayed, ← mkEqTrans proof (← mkAppM ``div_one #[displayed]))
+              else pure (← mkAppM ``HDiv.hDiv #[displayed, ← Normalize.natural D], proof)
           else do
             let hA ← applyHint (← mkAppM ``Polynomial.identify #[A, B]) (← conjunction hrows)
-            let head := if rhs?.isSome then ``Tree.target_det else ``Tree.result_det
-            let proof := mkAppN (← mkAppM head
-              #[toExpr k, toExpr lit.n, treesE, wE, ctx, A, qE, r.source])
-              #[hcheck, hA, he, hq]
-            pure (r.source, proof)
+            let proof ← if rhs?.isSome then do
+                pure <| mkAppN (← mkAppM ``Tree.target_det
+                  #[toExpr k, toExpr lit.n, treesE, wE, ctx, A, qE, displayed])
+                  #[hcheck, hA, he, hq.get!]
+              else do
+                pure <| mkAppN (← mkAppM ``Tree.result_det
+                  #[toExpr k, toExpr lit.n, treesE, wE, ctx, A, displayed]) #[hcheck, hA, he]
+            pure (displayed, proof)
         let proofNodes := (size + d.length) * (4 * k + 24)
         charge .proofNodes proofNodes
         trace[HexMatrix.certificate] "{(Json.mkObj (Certificate.fields selection "integer" ++ [
@@ -497,7 +517,7 @@ def compute (A : Expr) (rhs? : Option Expr := none) : MetaM (Outcome Result) := 
         let e := expression d
         let source ← (denoteRingExpr sealed.atoms e : ReaderT Nat ReflectM Expr).run seed.ringId
         pure { seed with expr := e, source }
-    if let some result ← computeTree? A ctx lit k size reified lists w r rhs?
+    if let some result ← computeTree? A ctx lit k sealed.atoms size reified lists w r rhs?
         normalized targetNorm scales D t then return result
     let rowsE := toExpr (lists.toList.map Array.toList)
     let wE ← quoteWitness w

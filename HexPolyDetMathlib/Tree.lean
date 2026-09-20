@@ -386,14 +386,30 @@ theorem target_det (k n : Nat) (rows : TreeMatrix)
   rw [transport_det k n rows w ctx A hcheck hA,
     ← hq, he]
 
-/-- The generated expression uses the same tree comparison as an explicit target. -/
+/-- Reconstruct a witness value by scalar operations, without normalization. -/
+@[expose] def value (k : Nat) (ctx : Lean.RArray F) : Hex.MvPoly.Kernel.PolyList Int → F
+  | [] => 0
+  | (es,c) :: ts => (c : F) * (List.ofFn (fun i : Fin k => ctx.get i.val ^ es.getD i.val 0)).prod +
+      value k ctx ts
+
+theorem value_eq (k : Nat) (ctx : Lean.RArray F) (ts : Hex.MvPoly.Kernel.PolyList Int) :
+    denoteTerms F (fun i : Fin k => ctx.get i.val) ts = value k ctx ts := by
+  induction ts with
+  | nil => simp [denoteTerms, value]
+  | cons t ts ih =>
+    obtain ⟨es,c⟩ := t
+    simp only [denoteTerms, termsPolynomial_cons, map_add, MvPolynomial.eval₂Hom_monomial,
+      Finsupp.prod_pow, HexMvPolyMathlib.monoEquiv_apply,
+      Hex.MvPoly.Kernel.get_mono, value, List.prod_ofFn]
+    exact congrArg (_ + ·) ih
+
+/-- The term form identifies its reconstructed value by denotation alone. -/
 theorem result_det (k n : Nat) (rows : TreeMatrix)
     (w : DetWitness (Hex.MvPoly.Kernel.PolyList Int)) (ctx : Lean.RArray F)
-    (A : _root_.Matrix (Fin n) (Fin n) F) (q : Expr) (e : F)
+    (A : _root_.Matrix (Fin n) (Fin n) F) (e : F)
     (hcheck : ((Decode.identity Model).matrix n (model rows)).det = (decode k).eval (Polynomial.value w))
-    (hA : A = evaluated n rows ctx) (he : q.denote ctx.get = e)
-    (hq : q.denote ctx.get = denoteTerms F (fun i : Fin k => ctx.get i.val) (Polynomial.value w)) : A.det = e :=
-  target_det k n rows w ctx A q e hcheck hA he hq
+    (hA : A = evaluated n rows ctx) (he : value k ctx (Polynomial.value w) = e) : A.det = e := by
+  rw [transport_det k n rows w ctx A hcheck hA, value_eq, he]
 
 /-- Rational row scaling uses the same tree certificate and positive-scale cancellation. -/
 theorem scaled_det (k n : Nat) (rows : TreeMatrix)
@@ -429,11 +445,5 @@ theorem scaled_target (k : Nat)
   simpa only [Int.cast_natCast] using h.symm
 
 
-/-- Identify a displayed value through the same bounded tree comparison. -/
-theorem value_eq (k : Nat) (ctx : Lean.RArray F)
-    (q : Expr) (d : Hex.MvPoly.Kernel.PolyList Int) (e : F)
-    (he : q.denote ctx.get = e) (hq : q.denote ctx.get = denoteTerms F (fun i : Fin k => ctx.get i.val) d) :
-    denoteTerms F (fun i : Fin k => ctx.get i.val) d = e :=
-  hq.symm.trans he
 
 end HexMatrixMathlib.DetPoly.Tree
