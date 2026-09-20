@@ -99,7 +99,9 @@ Until that import exists, statements with a supplied `R,ι` remain relative.
 infinitesimal, not its algebraic real closure: the exponent-one monomial has
 no square root in that integer-exponent field. Apply the existence contract
 to the ordered infinitesimal base when an ambient algebraic model is needed.
-The real Taylor-sign fragment below has no such prerequisite.
+The real Taylor-sign fragment and the finite literal replay realization route
+below have no such prerequisite. They establish finite real conclusions, not
+an ambient infinitesimal model or unconditional symbolic field instances.
 
 ## Selected roots and the semantic field
 
@@ -137,6 +139,11 @@ A reducible `K[X]/(p)` is not this field. At `p=(X-1)(X+1)`, `α=1`,
 lifting, equality and progress before installing total instances. Align the
 chosen Lean-core field/order dictionaries with Mathlib through evaluation.
 The total inverse has `0⁻¹=0`; the checked nonzero inverse rejects zero.
+Rational-base ambient existence is discharged by `RealAlgebraicNumber`;
+real-base existence uses the shared `IsRealClosed ℝ` instance. Infinitesimal
+field laws remain relative to a supplied model until Tau Ceti existence lands.
+In every case executable totality separately requires the coefficient progress
+laws, including relative transcendence where the real adapter needs it.
 Semantic maps may be noncomputable; runtime quotient operations use the
 computational search and split, with erased termination/law evidence.
 
@@ -175,8 +182,10 @@ persistent splits. Sum those bounds over a fixed tower; this is not a bound
 on future adjunctions or the cost of repeatedly recomputing a local split.
 
 For base enlargement, let `R/B` be the supplied ordered algebraic real
-closure. Form ordered `R(δ)` with `δ` positive infinitesimal over **all** of
-`R`, and apply the same existence contract to obtain `R'`. The composite
+closure. If the initial ambient field was merely real closed (for example
+`ℝ` over a real transcendental base), first replace it by its algebraic
+subfield `U` from `Union.realClosed` below and call that field `R`. Form
+ordered `R(δ)` with `δ` positive infinitesimal over **all** of `R`, and apply the same existence contract to obtain `R'`. The composite
 `R → R(δ) → R'` preserves previous selected roots and their order literally.
 Prove `R'/B(δ)` algebraic using algebraicity of `R/B` and transitivity.
 Rebuild computational stages as `B(δ)` followed by transported algebraic
@@ -192,8 +201,8 @@ the union construction below.
 
 ## Complete roots, failures and termination
 
-Prove the computational owner's new characteristic-zero Yun recurrence
-correct using derivative, gcd and exact-division correspondence. Successful
+`Yun.decompose_sound` proves the computational owner's new characteristic-zero
+Yun recurrence correct using derivative, gcd and exact-division correspondence. Successful
 nonzero output has `F=u*∏ fᵢ^mᵢ`, `u≠0`, positive distinct multiplicities,
 nonconstant squarefree pairwise coprime factors, and
 `degree F=∑ mᵢ*degree fᵢ`. Zero is a separate result; constants have no
@@ -292,6 +301,12 @@ Boundary elements must belong to a specified compatible real algebraic
 extension of `F` or be supplied as real coefficients with their embedding
 laws. A symbolic model extends the same ordered coefficient/boundary field;
 its infinitesimals and algebraic choices have compatible ambient embeddings.
+For bounded real constants without relative transcendence, take `F=ℝ` with
+the identity embedding (or the actual generated real subfield), and supply
+certified evaluation of the finitely used coefficients and original domain
+guards. This is proof-level coefficient interpretation, not an executable
+field of all reals or a faithful embedding of formal constant syntax. Finite
+realization soundness thus needs no relative-transcendence hypothesis.
 There is no embedding of its full non-Archimedean field into `ℝ`.
 
 A sector certificate includes boundary order and completeness/adjacency:
@@ -316,7 +331,8 @@ for all sufficiently small positive real `t`, the sign is `sign cₖ` by
 continuity of the remaining factor. Identically zero polynomials stay zero.
 The ordered-fn lowest-coefficient rule gives the same symbolic sign. Intersect
 finitely many neighborhoods and include `t<b-r` when the upper boundary is
-finite; left samples include the parity factor from `t↦-t`. This proof uses
+finite; for a left sample `r-ε`, require `t<r-a` at a finite lower boundary
+and include the parity factor from `t↦-t`. This proof uses
 real continuity and finite coefficients without constructing a real closure
 of a Hahn field. For `±1/ε`, use leading-coefficient signs and degree parity,
 a common real tail bound and finite boundary inequalities. Ordinary midpoint,
@@ -325,49 +341,81 @@ ray and whole-line samples have direct membership proofs.
 Nested algebraic samples require the following **local** specialization
 lemmas, not an unlisted model-completeness or transfer theorem.
 
+`Query.transport`: a real interpretation of the finite guarded coefficient
+and endpoint data which preserves the recorded arithmetic identities,
+equalities, signs and nonzero guards transports an accepted query replay to
+a valid real query with its claimed integer `Γ.count`. This is a finite-data
+lemma; no field hom on all raw expressions is required. Include every leading
+coefficient, positive scale, endpoint order/nonroot and squarefreeness witness.
+It applies both to small-parameter specialization and to evaluation of
+polynomial representatives at an already realized selected algebraic root.
+In the latter case zero identities hold at that root, not necessarily as
+literal identities over a rational-function field.
+
 `Query.specialize`: for a finite accepted Tarski replay `Γ` over `F(ε)`,
-where `F` is ordered-embedded in `ℝ` and `ε` is positive infinitesimal over
-`F`, there exists `η>0` such that every real `0<t<η` preserves all of `Γ`'s
-denominator/domain guards and
+with `F` ordered-embedded in `ℝ` and signs certified by the lowest-coefficient
+rule, there exists `η>0` such that every real `0<t<η` preserves its guards and
 
 ```text
-TaQ(f_t,p_t;I_t) = TaQ(f,p;I).
+TaQ(f_t,p_t;I_t) = Γ.count.
 ```
 
-Collect every nonzero rational-function sign used in the replay, including
-leading coefficients, positive scales, endpoint order/nonroots and witnesses
-of squarefreeness. Their lowest nonzero coefficients give one finite real
-neighborhood. Polynomial identities specialize identically after denominator
-guards; apply the shared query soundness on both sides. Specialization is
-only on this finite guarded data, not a field hom `F(ε) → ℝ`. Applying this
-to each query in a BKR replay preserves its full table and support, not merely
-its chosen row or an invertible submatrix.
+Collect every nonzero rational-function sign used in the replay. Their lowest
+nonzero coefficients give one finite real neighborhood. Polynomial identities
+specialize identically after denominator guards; apply `Query.transport`.
+This specialization is only on the finite guarded data, not a field hom
+`F(ε) → ℝ`. In a supplied symbolic ambient model, query soundness also gives
+`Γ.count=TaQ(f,p;I)`, recovering the computational SPEC's relative
+`Query.specialize` contract. Applying transport to every query in a BKR replay
+preserves its full table and support, not merely an invertible submatrix.
 
 `Sample.specialize`: for a finite acyclic tower replay, collect lower-level
-coefficient obligations recursively. At each algebraic adjunction use a
-preserved **joint** sign table for the defining polynomial, descriptor,
-and every consumer constraint. Its positive count supplies a real root
-satisfying all those constraints together; separate existential roots for
-individual signs are insufficient. Transported equal roots, nonzero guards,
-parameter equations and cell boundaries belong to that same finite evidence.
-For multiple infinitesimals, specialize earlier levels first, then choose
-the next sufficiently small positive parameter; its neighborhood may depend
-on all earlier choices. This yields the planned statement
+coefficient obligations recursively. At each algebraic adjunction preserve
+the joint selected condition: the defining polynomial, descriptor and every
+consumer constraint must hold at **one** real root. A single joint table
+with a positive filtered count suffices. Alternatively, transport tables
+sharing the same descriptor's count-one filter at the same parameter choices;
+uniqueness identifies their roots and combines their sign claims. Different
+descriptors require checked re-encoding/root equality before this combination.
+Thus already certified `signAt` tables can supply joint evidence without
+rerunning sign determination. Separate existential roots for individual
+signs without a common unique selection are insufficient.
+
+Transported equal roots, nonzero guards, parameter equations and cell
+boundaries belong to that same finite evidence. For multiple infinitesimals,
+specialize earlier levels first, then choose the next sufficiently small
+positive parameter; its neighborhood may depend on all earlier choices.
+For algebraic levels evaluate representatives at the selected real root and
+apply `Query.transport` to the next level's query identities and zero/sign
+certificates. This yields the relative contract from the computational SPEC:
 
 ```text
 ValidTowerReplay Γ ∧ Realizes model Γ →
   ∃ (t₁,…,tₙ : ℝ) (α₁,…,αₖ : ℝ),
-    (∀ i, 0<tᵢ) ∧ Φ(t₁,…,tₙ,α₁,…,αₖ),
+    (∀ i, 0<tᵢ) ∧ Φ(t₁,…,tₙ,α₁,…,αₖ).
 ```
 
-where `Φ` is exactly the finite recorded conjunction of equations, guards,
+Here `Φ` is exactly the finite recorded conjunction of equations, guards,
 selected-root conditions, cell inequalities and requested signs over the
-fixed real-embedded base. All input interpretation, lower checker and ambient
-compatibility laws are hypotheses. Prove this induction locally using query
-specialization and complete-table correspondence. It preserves finitely many
-infinitesimal inequalities, never their universal scheme simultaneously.
-If required evidence is unavailable, bounded export exhausts or uses an
-ordinary-point backend.
+fixed real-embedded base. `Realizes model Γ` means the supplied compatible
+ambient embeddings interpret each context and every recorded claim correctly.
+Input interpretation and lower checker laws are explicit hypotheses.
+
+Also prove `Sample.realizeReplay`: acceptance of this finite syntactic replay
+and its authenticated real base-coefficient evidence implies the same real
+existential **without** `Realizes model Γ`. Interpret the replay directly in
+`ℝ`, using `Query.transport`, small-parameter specialization and complete
+count-one table correspondence inductively. This stronger literal-evidence
+route needs the shared `IsRealClosed ℝ` instance and univariate query/Thom/BKR
+foundations, but not ordered real-closure existence for an infinitesimal
+field. It supplies the real-valued consumer contract without constructing or
+quoting an unused symbolic ambient model. The relative corollary additionally
+identifies the realized signs with the symbolic denotations.
+
+These induction and transport lemmas are local proof deliverables. They
+preserve finitely many infinitesimal inequalities, never their universal
+scheme simultaneously. If the requisite finite evidence is unavailable,
+bounded export exhausts or uses an ordinary-point backend.
 
 The [coverings literal format](hex-coverings.md#literal-samples-and-checked-export)
 can receive denotation-preserving exports of rational-base algebraic samples.
@@ -433,8 +481,8 @@ calls, decoding, coefficient proof arithmetic and allocation to one parent
 budget; check claimed sizes before expanding data.
 
 Make composition costs explicit. If level `d` has local replay cost `L_d`,
-`m_d` coefficient-proof references and lower-level upper bound `T_(d-1)`, an unshared
-upper bound is `T_d ≤ L_d + m_d*T_(d-1)` (use the sum of actual child costs
+`m_d` coefficient-proof references and lower-level upper bound `T_(d-1)`,
+an unshared upper bound is `T_d ≤ L_d + m_d*T_(d-1)` (use the sum of actual child costs
 for unequal children). Serialized evidence satisfies the analogous recurrence.
 A checked DAG may share identical bound claims, but report both unique node
 count and expanded reference work; kernel quotation must also preserve or
@@ -444,6 +492,12 @@ bit lengths, array/matrix dimensions and cumulative arithmetic fuel; resource
 exhaustion is explicit and cannot accept partial evidence.
 
 Follow [testing](../testing.md) and [benchmarking](../benchmarking.md).
+This companion is planned as `correspondence_only: true`, comparator absence
+class **correspondence-only-layer**. `HexRealClosure` owns computational
+conformance, pinned fixtures and runtime measurements; this companion has no
+core `Conformance.lean` or separate compiled runtime benchmark. Build-only
+proof examples check semantic conclusions; bulk correspondence sweeps belong
+in the conformance tree's optional `CrossCheck` module.
 Use computational Z3 fixtures (pinned version/command/input/output) for
 infinitesimal signs, selected roots and comparisons, and python-flint plus
 Hex's independent real-algebraic path on rational cases. A differential oracle
@@ -466,7 +520,8 @@ instances and negative checker regressions for:
   complete fallback; omitted realizable BKR rows and incompatible root choices.
 - All section/sector types, enlargement after algebraics, joint nested
   realization, missing denominator/boundary/consumer constraints, and rejection
-  of a symbolic infinitesimal offered directly as a real witness.
+  of a symbolic infinitesimal offered directly as a real witness (`invalid`
+  for an unsupported raw export; `rejected` for fabricated real-witness evidence).
 - Trivial backend agreement, Repr round trips, forged/nonconvergent enclosures,
   unresolved constant relations, invalid stages, cyclic DAGs and nested exhaustion.
 
