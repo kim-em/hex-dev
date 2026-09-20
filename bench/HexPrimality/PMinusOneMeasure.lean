@@ -58,13 +58,11 @@ def fromRun (r : PMinusOne.Run) : Result := {
   attempts := r.attempts, rand := reprStr r.rand
   events := r.events.map .pMinusOne }
 
-/-- A single native/interpreted boundary used by both policy arms. The fixed
-comparison allocation has 12 factors and 1024 attempts; explicit bit limits
-keep this corpus independent of changes to elaborator admission policy. -/
-@[noinline] def construct (n seed : Nat) (enabled : Bool) (maxBits : Nat := 512) : Result :=
+/-- The production constructor, with only the continuation flag changed
+between policy arms. An explicit bit limit is available for diagnostics. -/
+@[noinline] def construct (n seed : Nat) (enabled : Bool) (maxBits : Nat := constructionBudget.maxBits) : Result :=
   let budget := { constructionBudget with
     maxBits := maxBits
-    maxFactors := 12
     factor := { constructionBudget.factor with pMinusOneStage2 := enabled } }
   match Construction.run n (Hex.Rand.ofSeed seed) budget with
   | .ok r =>

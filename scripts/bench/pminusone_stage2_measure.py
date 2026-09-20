@@ -33,19 +33,21 @@ def main() -> None:
     parser.add_argument('--output', required=True, type=Path)
     parser.add_argument('--resume-from', action='append', type=Path, help='retain complete pairs from an interrupted collection')
     parser.add_argument('--seed', type=int, choices=range(5), help='one independent factor seed')
-    parser.add_argument('--case', help='one independent factor fixture')
+    parser.add_argument('--case', help='one independent consumer fixture')
     parser.add_argument('--controls', action='store_true', help='factor table/balanced/smooth controls only')
-    parser.add_argument('--partition', default='0/1', help='independent factor fixture group INDEX/COUNT')
+    parser.add_argument('--partition', default='0/1', help='independent consumer fixture group INDEX/COUNT')
     args = parser.parse_args()
     if args.output.exists() or Path(str(args.output)+'.gz').exists():
         parser.error('output already exists, possibly compressed; choose a fresh path')
     if args.resume_from and args.mode not in ('factor',):
         parser.error('--resume-from applies to policy comparisons')
     part, parts = map(int,args.partition.split('/'))
-    if not 0 <= part < parts or (parts != 1 and args.mode != 'factor'):
+    if not 0 <= part < parts or (parts != 1 and args.mode not in ('factor', 'parents')):
         parser.error('invalid factor partition')
-    if (args.case or args.controls or args.seed is not None) and args.mode != 'factor':
-        parser.error('fixture selection applies only to factor comparisons')
+    if args.case and args.mode not in ('factor', 'parents'):
+        parser.error('--case applies only to factor or parent comparisons')
+    if (args.controls or args.seed is not None) and args.mode != 'factor':
+        parser.error('--controls and --seed apply only to factor comparisons')
     def assigned(name):
         if args.case:
             return name==args.case
@@ -73,6 +75,8 @@ def main() -> None:
                    'scripts/bench/pminusone_stage2_measure.py',
                    'conformance-fixtures/HexPrimality/pminusone-stage2.jsonl',
                    'lean-toolchain', 'lake-manifest.json']
+        budget = json.loads(subprocess.check_output(
+            [str(frozen / PRIMALITY.name), 'construction-budget'], text=True))
         metadata = {'type': 'metadata', 'mode': args.mode, 'partition':args.partition, 'case':args.case, 'controls':args.controls, 'seed':args.seed, 'cpu': cpu, 'host': platform.node(),
               'load': os.getloadavg(), 'platform': platform.platform(),
               'source_sha256': {p: hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in sources},
@@ -82,7 +86,7 @@ def main() -> None:
               'pair_schedule': 'eight adjacent blocks, alternating disabled/enabled and enabled/disabled',
               'timing_provider': 'lean-bench fixed child',
               'ordinary_budget': 'identical rho/ECM and worklist caps; eight base smooth attempts plus at most one counted continuation from spare fuel',
-              'construction_budget': 'maxAttempts=1024, maxFactors=12, maxBits=512 (1024 for parents) in both arms',
+              'construction_budget': budget,
               'stage1_backend': 'existing powMod word-Montgomery dispatch; per-power context construction included in stage1',
               'prepared_stage1_backend': 'identical powers and conversions with one word context prepared per modulus; Nat fallback unchanged',
               'stage2_backend': 'direct Nat multiplication and remainder',
@@ -212,13 +216,11 @@ def main() -> None:
             cases = [('secp256k1',2**256-2**32-977),
                      ('P384',2**384-2**128-2**96+2**32-1),
                      ('Curve448',2**448-2**224-1),('P521',2**521-1)]
-            limits = {name: 512 for name, _ in cases}
             if args.mode in ('parents'):
                 import pminusone_stage2_parents as parents
                 parent_rows = [json.loads(l) for l in parents.PATH.read_text().splitlines()]
                 parents.verify(parent_rows, small)
                 cases += [(f"parent-{r['bits']}-{r['q']}",r['n']) for r in parent_rows]
-                limits.update({f"parent-{r['bits']}-{r['q']}": 1024 for r in parent_rows})
                 source = (ROOT/'bench/HexPrimalityBench/Inputs.lean').read_text()
                 cases += [(f'smooth-{bits}',int(n)) for bits,n in re.findall(
                     r'`\(primalityInput(\d+)\) => `\(\s*(\d+)\)',source)]
@@ -228,13 +230,14 @@ def main() -> None:
                     (64553*66553,1047587*1049599,16776217*16778227))]
             for block in range(8):
                 for name,n in cases:
+                    if not assigned(name):
+                        continue
                     if (block,name,0) in completed_pairs:
                         continue
                     for enabled in ([False,True] if block%2==0 else [True,False]):
-                        max_bits = limits.get(name,512)
                         info = {'block':block,'case':name,'n':n,'seed':0,'enabled':enabled,
-                                'maxBits':max_bits}
-                        run(PRIMALITY,['stage2-construct',n,0,str(enabled).lower(),max_bits],info)
+                                'maxBits':budget['maxBits']}
+                        run(PRIMALITY,['stage2-construct',n,0,str(enabled).lower()],info)
                     print(f'construction block {block} {name} retained',flush=True)
         emit({'type':'complete','load':os.getloadavg()})
 

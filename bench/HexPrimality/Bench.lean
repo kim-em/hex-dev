@@ -843,7 +843,7 @@ def probe (args : List String) : IO UInt32 := do
       return code
   | _ => throw (IO.userError "stage2-probe PHASE N X B1 B2 MIN_NANOS TRACE")
 
-initialize constructionInput : IO.Ref (Nat × Nat × Bool × Nat) ← IO.mkRef (97, 0, false, 512)
+initialize constructionInput : IO.Ref (Nat × Nat × Bool × Nat) ← IO.mkRef (97, 0, false, constructionBudget.maxBits)
 initialize constructionResult : IO.Ref (Option Hex.PMinusOneMeasure.Result) ← IO.mkRef none
 
 def runConstruction (_ : Unit) : IO Nat := do
@@ -857,7 +857,7 @@ setup_fixed_benchmark runConstruction where { repeats := 3, maxSecondsPerCall :=
 def constructProbe (args : List String) : IO UInt32 := do
   match args with
   | [n, seed, enabled] | [n, seed, enabled, _] =>
-      let maxBits := (args[3]?.bind String.toNat?).getD 512
+      let maxBits := (args[3]?.bind String.toNat?).getD constructionBudget.maxBits
       constructionInput.set (n.toNat!, seed.toNat!, enabled == "true", maxBits)
       let code ← LeanBench.runFixedChildMode `Hex.PrimalityBench.Stage2.runConstruction 0 0
       emitResult constructionResult
@@ -894,6 +894,12 @@ end Hex.PrimalityBench
 
 def main (args : List String) : IO UInt32 :=
   match args with
+  | ["construction-budget"] => do
+      let b := Hex.Nat.constructionBudget
+      IO.println ((Lean.Json.mkObj [("maxBits", Lean.toJson b.maxBits),
+        ("maxFactors", Lean.toJson b.maxFactors),
+        ("maxAttempts", Lean.toJson b.maxAttempts)]).compress)
+      return 0
   | "stage2-probe" :: args => Hex.PrimalityBench.Stage2.probe args
   | "stage2-construct" :: args => Hex.PrimalityBench.Stage2.constructProbe args
   | _ => LeanBench.Cli.dispatch args

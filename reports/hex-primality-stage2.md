@@ -209,39 +209,24 @@ same wall-time unit as a word Montgomery multiplication.
 
 ## Consumer controls
 
-The [fixed field-prime diagnostic corpus](bench-results/pminusone-stage2-construction-corpus.jsonl.gz)
-contains eight adjacent AB/BA blocks with the fixed comparison allocation,
-including `maxAttempts = 1024`, `maxFactors = 12`, and `maxBits = 512`. Neither arm constructs any
-of the four certificates. P-521 is rejected by the bit ceiling in both arms.
-These records establish checked outcomes and route behavior; their diagnostic
-timers are not used for the native acceptance gate. Native gate timings use
-the lean-bench registrations and the
-[construction collection](bench-results/pminusone-construction-native.jsonl.gz).
-Exhaustion timings are never counted as successful-certificate timings.
-
 The [prime-parent fixtures](../conformance-fixtures/HexPrimality/pminusone-stage2-parents.jsonl)
 make each small-factor semiprime `p*r` a predecessor obligation of an exactly
-certified prime `N = 2*k*p*r+1`. Their two Pocklington witnesses and the
-previously checked child certificates establish primality independently of
-search. The native and interpreted construction comparisons use the same
-1024-attempt budget in both arms. For these parents only, both arms explicitly
-allow 1024 bits so the parent of a 512-bit predecessor can participate. This
-benchmark explicitly fixes `maxFactors = 12` and the listed bit ceilings;
-the production elaborator admits 521 bits and 32 factors. The comparison
-measures these fixed allocations and does not establish a default-enable gate
-for a different allocation. Fixture
-certificates are preparation evidence; they are never supplied to the measured
-constructor as hints.
+certified prime `N = 2*k*p*r+1`. Their Pocklington witnesses and child
+certificates establish primality independently of search. Fixture certificates
+are preparation evidence and are never supplied to the measured constructor.
+The construction comparison uses the production `constructionBudget` in both
+arms, changing only the continuation flag. Its 521-bit ceiling admits every
+parent in this corpus, with 32 factors and 1024 total semantic attempts.
 
 The interpreted probes live in
 [`ProofProbe/PMinusOne`](../bench/HexPrimality/ProofProbe/PMinusOne/Support.lean).
-They execute each distinct corpus input once, through fresh-module `#eval`,
-without an embedded timer. The [shared-runner manifest](../scripts/bench/pminusone_proof_sweep.py)
-compares disabled/enabled family modules in eight adjacent, alternating rounds
-and subtracts the same-round import-only baseline. All 60 inputs participate;
-the seven successful 128-bit parents are separated from the three exhausted
-parents before measurement. This is search phase attribution, not kernel
-replay. Native construction retains per-input LeanBench timings.
+They execute each distinct input once through fresh-module `#eval`, without
+an embedded timer. The [shared runner](../scripts/bench/pminusone_proof_sweep.py)
+compares disabled/enabled input modules in eight adjacent, alternating rounds
+and subtracts a same-round import-only baseline. Separate module names keep
+independent input collections from deleting each other's build artifacts.
+All 60 inputs participate. Checked outcomes separate certificate timings from
+exhaustion; this is search phase attribution, not kernel replay.
 
 Ordinary factorization uses the larger-factor table and seeds 0 through 4.
 Both arms retain the production rho, stage-1, ECM, and worklist allocations.
@@ -250,59 +235,56 @@ fuel, for at most nine smooth attempts rather than eight. Every total timing
 includes this extra work. If fuel is at most eight, continuation is skipped
 and the original routes receive their complete allocation.
 
+## Ordinary factorization
+
+The [reserved-continuation summary](bench-results/pminusone-factor-reserved-summary.json)
+checks all 4,880 samples over 61 inputs, five seeds, and eight adjacent AB/BA
+rounds. Both policies complete 205 checked input/seed pairs, with no losses
+or gains. Every collection has matching source and executable provenance.
+The five 128-bit `q = 8191` successes are retained by preserving bound 9999.
+
+| Family | Input/seed pairs | Checked in each arm | Enabled/disabled time |
+|---|---:|---:|---:|
+| 128-bit extra-prime opportunities | 35 | 35 | 1.002 |
+| 256-bit extra-prime opportunities | 35 | 10 | 0.992 |
+| 512-bit extra-prime opportunities | 35 | 0 | — |
+| 128-bit continuation misses | 15 | 5 | 1.014 |
+| 256-bit continuation misses | 15 | 0 | 0.918 |
+| 512-bit continuation misses | 15 | 0 | 0.940 |
+| Balanced | 35 | 35 | 1.011 |
+| Smooth | 40 | 40 | 0.990 |
+| Table | 80 | 80 | 1.003 |
+
+Opportunity timings include only checked successes in both arms. Miss timings
+measure the entire attempt, including exhaustion. All regression families
+meet the 1.10 limit, but neither successful opportunity family meets the 0.90
+usefulness threshold. The ordinary flag therefore remains opt-in.
+
 ## Four-slot ordinary allocation diagnostic
 
-The four-slot allocation, which charges continuation against the stage-1
-budget, is recorded in the [factorization summary](bench-results/pminusone-factor-summary.json)
-accounts for all 4,880 samples: 61 inputs, five fixed seeds, and eight adjacent
-AB/BA blocks. It lists the 31 contributing collections and their hashes.
-The disabled policy completes 205 checked input/seed pairs; the enabled policy
-completes 200, with no gains and five losses.
+Charging continuation against four p−1 calls removes the bound-9999 stage-1
+attempt. The [four-slot collection summary](bench-results/pminusone-factor-summary.json)
+retains 4,880 samples over 61 inputs and five seeds. It records 205 checked
+input/seed pairs disabled and 200 enabled, with five losses and no gains.
+These collections resume records from different collector-source hashes,
+although their measured executable hashes agree. The strict provenance
+checker rejects that mixture; neither these timings nor this allocation
+serve as acceptance evidence for the separately reserved continuation slot.
 
-The [ordinary regression controls](bench-results/pminusone-factor-controls.jsonl.gz)
-contain eight adjacent AB/BA blocks for each input and seed, with all 2,480
-samples retained. All 155 checked baseline successes are retained. Ratios
-compare enabled and disabled median total times within each family.
+The loss has an arithmetic counterexample independent of timing:
+`170141183561861700765677798001080840267`, the 128-bit `q = 8191` fixture.
+Base 2 at stage-1 bound 9999 finds `277827051595988963`; continuation from
+64 to 4096 misses all 546 interval primes. Spending the fourth stage-1 slot
+on that continuation makes all five seeds exhaust instead of completing.
+The reserved allocation retains bound 9999 and the ECM allocation. Its
+conformance guards pin the factor, full-miss trace, random-state preservation,
+and fuel ceiling.
 
-| Family | Input/seed pairs | Checked, disabled | Checked, enabled | Time ratio |
-|---|---:|---:|---:|---:|
-| Balanced | 35 | 35 | 35 | 0.969 |
-| Smooth | 40 | 40 | 40 | 0.987 |
-| Table | 80 | 80 | 80 | 1.004 |
+## Construction with a restricted diagnostic budget
 
-The extra-prime families use the prescribed larger factors. Successful-family
-timings require checker acceptance in both arms and an actual continuation on
-the target cofactor. The 512-bit opportunity family has no checked completions,
-so it has no successful-factorization timing ratio.
-
-| Family | Input/seed pairs | Checked, disabled | Checked, enabled | Time ratio |
-|---|---:|---:|---:|---:|
-| 128-bit opportunities | 35 | 35 | 35 | 1.008 |
-| 256-bit opportunities | 35 | 10 | 10 | 1.014 |
-| 512-bit opportunities | 35 | 0 | 0 | — |
-| 128-bit full continuation misses | 15 | 5 | 0 | 0.999 |
-| 256-bit full continuation misses | 15 | 0 | 0 | 0.623 |
-| 512-bit full continuation misses | 15 | 0 | 0 | 0.782 |
-
-The miss-control ratios include exhaustion times and do not establish
-successful-factorization speedups. Regression timing limits pass, but no
-successful opportunity family reaches the 0.90 usefulness threshold.
-
-The ordinary retention gate has a concrete counterexample independent of
-wall-clock noise: the 128-bit `q = 8191` fixture
-`170141183561861700765677798001080840267`. All five fixed seeds complete a
-checked factorization with the disabled policy and exhaust with the enabled
-policy. The disabled trace reaches base 2 at stage-1 bound 9999 and finds
-`277827051595988963`. The enabled trace instead spends that slot on the
-`(64,4096)` continuation, evaluates all 546 interval primes without a factor,
-and exhausts four ECM curves at bounds 64, 512, 4096, and 9999. The seed-0
-attempt totals are 52 for checked completion and 16 for exhaustion. This is a
-budget-allocation loss, not evidence that a different modular backend would
-restore the displaced stage-1 call. The production opt-in allocation preserves that bound-9999 call and the
-ECM allocation, using a separate continuation slot. Conformance pins the
-counterexample, full-miss trace, random-state preservation, and fuel ceiling.
-
-## Native construction
+The following retained collections use 12 factors, a 512-bit ceiling for
+controls and a 1024-bit ceiling for parents. They are diagnostic evidence for
+that allocation, not acceptance evidence for the production budget.
 
 The [native construction summary](bench-results/pminusone-construction-native-summary.json)
 checks all 960 samples: eight adjacent AB/BA blocks for each of 60 inputs.
@@ -322,7 +304,8 @@ continuation on the intended predecessor cofactor.
 | Smooth primes | 6 | 6 | 6 | 1.003 |
 | Table primes | 7 | 7 | 7 | 0.999 |
 
-The native usefulness gate passes on the successful 128-bit family, and all
+Within this diagnostic allocation, the successful 128-bit family meets the
+usefulness threshold, and all
 regression families satisfy the 1.10 limit. The full-miss controls are
 secp256k1 and P-384; their enabled traces contain respectively 96 and six
 continuations, all returning `noFactor`. Their times measure exhaustion,
@@ -334,7 +317,7 @@ not enable the construction default.
 
 ## Whole-module construction diagnostic
 
-The [interpreted summary](bench-results/pminusone-construction-interpreted-summary.json)
+The [unadjusted whole-module summary](bench-results/pminusone-construction-interpreted-summary.json)
 covers all 960 samples in the
 [fresh-module collection](bench-results/pminusone-construction-interpreted.jsonl.gz).
 Its unadjusted wall clock includes the complete `lake build` of the probe module;

@@ -1085,16 +1085,13 @@ must retain every checked success of the disabled policy. Ordinary
 factorization and construction pass independently; #10291's four inputs are
 an additional fixed corpus, not evidence of an extra-prime base order or a promised success family.
 
-The fixed consumer comparison uses `maxAttempts = 1024`, `maxFactors = 12`,
-and `maxBits = 512` (1024 for the prime-parent family) in both arms. Keep these
-explicit across changes to production admission policy; a default-enable claim
-for a different allocation requires measurements of that allocation.
+Construction comparisons use the current production `constructionBudget`,
+changing only `pMinusOneStage2` between arms and recording the actual limits.
 Interpreted construction uses the shared fresh-module runner with warm imports
-and a same-round import-only baseline. Time each fixed family traversal,
-executing each distinct input once; report median baseline-subtracted family
-wall time over the eight paired rounds. Separate the known successful parent
-inputs from exhausted parents before collection, preserving every input in
-one of the two groups. Retain per-input checked outcomes and route traces.
+and a same-round import-only baseline. Execute each distinct input once per
+arm in eight paired rounds, with a separate module and baseline for each
+input. Report median baseline-subtracted costs by family, separating checked
+successes from exhaustion. Retain every input, checked outcome and route trace.
 This is construction-search phase attribution, not an asymptotic proof-search
 claim or kernel-replay timing. Tiny regression families whose workload cannot
 be resolved above baseline variation receive an inconclusive timing verdict,

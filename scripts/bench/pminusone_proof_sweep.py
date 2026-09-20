@@ -5,6 +5,8 @@ import sys
 import json
 import tempfile
 import shutil
+import argparse
+import re
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -14,34 +16,46 @@ from scripts.bench.fresh_module_sweep import (
 )
 
 PREFIX = 'HexPrimality.ProofProbe.PMinusOne'
-FAMILIES = ('Parents64', 'Parents128', 'Exhausted128', 'Parents256', 'Parents512',
-            'FullMiss', 'Fields', 'Smooth', 'Table', 'Balanced')
-BASELINE = ProbeModule(f'{PREFIX}.Baseline')
-SPEC = SweepSpec(
-    description=__doc__,
-    pairs=(ProbePair('imports', BASELINE, BASELINE,
-                     {'component': 'import-only-baseline'}, null_control=True),
-           *(ProbePair(family, ProbeModule(f'{PREFIX}.{family}Disabled'),
-                       ProbeModule(f'{PREFIX}.{family}Enabled'),
-                       {'component': 'construction-search-attribution',
-                        'family': family, 'each_distinct_input': 'once',
-                        'interpretation': 'phase attribution; no asymptotic verdict'})
-             for family in FAMILIES)),
-    probe_target='HexPrimalityElabProbeScientific',
-    schema='hex-pminusone-construction-probes-v1',
-    measurement='paired-fresh-module-import-subtracted-wall',
-    output_stem='pminusone-construction-proof',
-    extra_sources=(Path('HexPrimality/SPEC/hex-primality.md'),
-                   Path('conformance-fixtures/HexPrimality/pminusone-stage2-parents.jsonl')),
-    required_samples=8,
-    import_baseline_control='imports',
-    retain_compiler_output=True,
-)
+SUPPORT = ROOT / 'bench/HexPrimality/ProofProbe/PMinusOne/Support.lean'
+CASES = tuple(re.findall(r'\("([\w-]+)", \d+\)', SUPPORT.read_text()))
+assert len(CASES) == 60 and len(set(CASES)) == 60
+
+def module_name(name):
+    parts = name.split('-')
+    return ('Parent' + parts[1] + 'Q' + parts[2] if parts[0] == 'parent'
+            else ''.join(p[0].upper() + p[1:] for p in parts))
+
+def specification(name):
+    module = f'{PREFIX}.{module_name(name)}'
+    baseline = ProbeModule(module + 'Imports')
+    return SweepSpec(
+        description=__doc__,
+        pairs=(ProbePair('imports', baseline, baseline,
+                         {'component': 'import-only-baseline'}, null_control=True),
+               ProbePair(name, ProbeModule(module + 'Disabled'),
+                         ProbeModule(module + 'Enabled'),
+                         {'component': 'construction-search-attribution',
+                          'case': name, 'each_distinct_input': 'once',
+                          'interpretation': 'phase attribution; no asymptotic verdict'})),
+        probe_target='HexPrimalityElabProbeScientific',
+        schema='hex-pminusone-construction-probes-v1',
+        measurement='paired-fresh-module-import-subtracted-wall',
+        output_stem='pminusone-construction-proof-' + name,
+        extra_sources=(Path('HexPrimality/SPEC/hex-primality.md'),
+                       Path('conformance-fixtures/HexPrimality/pminusone-stage2-parents.jsonl')),
+        required_samples=8,
+        import_baseline_control='imports',
+        retain_compiler_output=True,
+    )
 
 def main():
-    args = parse_args(SPEC.description, default_samples=8)
+    selector = argparse.ArgumentParser(add_help=False)
+    selector.add_argument('--case', required=True, choices=CASES)
+    selection, argv = selector.parse_known_args()
+    spec = specification(selection.case)
+    args = parse_args(spec.description, argv, default_samples=8)
     env = environment()
-    output = args.output or default_output(env, SPEC.output_stem)
+    output = args.output or default_output(env, spec.output_stem)
     if not output.is_absolute():
         output = ROOT / output
     sidecar = Path(str(output) + '.samples.jsonl')
@@ -54,13 +68,13 @@ def main():
         retained = Path(log.name)
         print(f'Incremental samples: {retained}', flush=True)
         log.write(json.dumps({'type': 'metadata', 'environment': env,
-                              'source_sha256': source_hashes(SPEC, Path(__file__))}) + '\n')
+                              'source_sha256': source_hashes(spec, Path(__file__))}) + '\n')
         log.flush()
         def observe(module, sample):
             log.write(json.dumps({'type': 'sample', 'module': module, **sample}) + '\n')
             log.flush()
         try:
-            code = run_cli(SPEC, Path(__file__), sample_observer=observe)
+            code = run_cli(spec, Path(__file__), argv, sample_observer=observe)
         except BaseException:
             print(f'Retained partial samples: {retained}', file=sys.stderr)
             raise
