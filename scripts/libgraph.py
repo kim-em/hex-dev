@@ -755,6 +755,8 @@ def library_owner_for_path(path: Path, libraries: OrderedDict[str, LibraryInfo])
     parts = path.parts
     if not parts:
         return None
+    if parts[0] == "adapters" and len(parts) > 1:
+        return library_owner_for_path(Path(*parts[1:]), libraries)
     first = parts[0]
     if first in libraries or first in KNOWN_EXCEPTIONS:
         return first

@@ -16,7 +16,16 @@ from check_dag import (
     parse_imports,
 )
 from check_phase4 import check_headline_reports
-from libgraph import LibraryInfo, load_libraries
+from libgraph import LibraryInfo, load_libraries, library_owner_for_path
+
+
+class AdapterOwnershipTest(unittest.TestCase):
+    def test_development_adapter_keeps_library_owner(self) -> None:
+        libraries = load_libraries()
+        self.assertEqual(
+            library_owner_for_path(Path("adapters/HexRCF/RealFormula.lean"), libraries),
+            "HexRCF",
+        )
 
 
 class MetaImportTest(unittest.TestCase):

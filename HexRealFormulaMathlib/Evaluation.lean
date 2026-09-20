@@ -85,6 +85,43 @@ theorem evalPoly_denote (p : MvPoly.Kernel.PolyList Int) (ρ : List ℝ)
   | .and p q => p.toProp ρ ∧ q.toProp ρ
   | .or p q => p.toProp ρ ∨ q.toProp ρ
 
+private theorem pow_ratCast (x : ℚ) (e : Nat) :
+    ((MvPoly.Kernel.pow x e : ℚ) : ℝ) = MvPoly.Kernel.pow (x : ℝ) e := by
+  induction e with
+  | zero => simp [MvPoly.Kernel.pow]
+  | succ e ih => simp [MvPoly.Kernel.pow, ih]
+
+private theorem evalMono_ratCast (q : List ℚ) (m : List Nat) :
+    ((MvPoly.Kernel.evalMono q m : ℚ) : ℝ) =
+      MvPoly.Kernel.evalMono (q.map fun x => (x : ℝ)) m := by
+  induction q generalizing m with
+  | nil => simp [MvPoly.Kernel.evalMono]
+  | cons x xs ih =>
+    cases m <;> simp [MvPoly.Kernel.evalMono, pow_ratCast, ih]
+
+private theorem evalPoly_ratCast (p : MvPoly.Kernel.PolyList Int) (q : List ℚ) :
+    ((MvPoly.Kernel.evalAt q (p.map fun t => (t.1, (t.2 : ℚ))) : ℚ) : ℝ) =
+      evalPoly (q.map fun x => (x : ℝ)) p := by
+  induction p with
+  | nil => simp [MvPoly.Kernel.evalAt, evalPoly]
+  | cons t ts ih => simp [MvPoly.Kernel.evalAt, evalPoly, evalMono_ratCast, ih]
+
+/-- Exact list evaluation agrees with real interpretation at rational points. -/
+theorem Body.evalRat_correct (p : Body) (q : Fin n → ℚ) :
+    p.evalRat (List.ofFn q) = true ↔ p.toProp (fun i => (q i : ℝ)) := by
+  induction p with
+  | atom p c =>
+    simp only [evalRat, toProp, Cmp.evalRat_correct, evalPoly_ratCast]
+    simp [← List.map_eq_flatMap, List.map_ofFn, Function.comp_def]
+  | tt | ff => simp [evalRat, toProp]
+  | not p ih => simp [evalRat, toProp, Bool.eq_false_iff, ih]
+  | and p q ihp ihq | or p q ihp ihq => simp [evalRat, toProp, ihp, ihq]
+
+/-- A validated formula can be evaluated without decoding tree-backed polynomials. -/
+theorem Validated.evalRat_correct (p : Validated n) (q : Fin n → ℚ) :
+    p.evalRat q = true ↔ p.body.toProp (fun i => (q i : ℝ)) :=
+  p.body.evalRat_correct q
+
 /-- Successful decoding preserves raw list semantics. -/
 theorem Body.decode_correct (p : Body) (φ : RealFormula.QF n) (ρ : Fin n → ℝ)
     (h : p.decode n = some φ) : p.toProp ρ ↔ φ.toProp ρ := by

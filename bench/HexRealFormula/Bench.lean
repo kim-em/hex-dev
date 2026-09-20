@@ -133,7 +133,7 @@ def prepDag (n : Nat) : Kernel.Dag :=
 def dag (p : Kernel.Dag) := (p.decode #[]).map QF.toKernel
 
 /- There are 4*n+1 syntax nodes and fixed-size atom polynomials. Traversal and the complete result checksum are linear in n; Boolean evaluation visits every conjunct. -/
-setup_benchmark nodes n => n with prep := prepTree
+setup_benchmark nodes conjuncts => conjuncts with prep := prepTree
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000
@@ -143,7 +143,7 @@ setup_benchmark nodes n => n with prep := prepTree
   }
 
 /- There are 4*n+1 syntax nodes and fixed-size atom polynomials. Traversal and the complete result checksum are linear in n; Boolean evaluation visits every conjunct. -/
-setup_benchmark polys n => n with prep := prepTree
+setup_benchmark polys conjuncts => conjuncts with prep := prepTree
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000
@@ -153,7 +153,7 @@ setup_benchmark polys n => n with prep := prepTree
   }
 
 /- There are 4*n+1 syntax nodes and fixed-size atom polynomials. Traversal and the complete result checksum are linear in n; Boolean evaluation visits every conjunct. -/
-setup_benchmark support n => n with prep := prepTree
+setup_benchmark support conjuncts => conjuncts with prep := prepTree
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000
@@ -163,7 +163,7 @@ setup_benchmark support n => n with prep := prepTree
   }
 
 /- There are 4*n+1 syntax nodes and fixed-size atom polynomials. Traversal and the complete result checksum are linear in n; Boolean evaluation visits every conjunct. -/
-setup_benchmark degree n => n with prep := prepTree
+setup_benchmark degree conjuncts => conjuncts with prep := prepTree
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000
@@ -173,7 +173,7 @@ setup_benchmark degree n => n with prep := prepTree
   }
 
 /- There are 4*n+1 syntax nodes and fixed-size atom polynomials. Traversal and the complete result checksum are linear in n; Boolean evaluation visits every conjunct. -/
-setup_benchmark nnf n => n with prep := prepTree
+setup_benchmark nnf conjuncts => conjuncts with prep := prepTree
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000
@@ -183,7 +183,7 @@ setup_benchmark nnf n => n with prep := prepTree
   }
 
 /- There are 4*n+1 syntax nodes and fixed-size atom polynomials. Traversal and the complete result checksum are linear in n; Boolean evaluation visits every conjunct. -/
-setup_benchmark rename n => n with prep := prepTree
+setup_benchmark rename conjuncts => conjuncts with prep := prepTree
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000
@@ -193,7 +193,7 @@ setup_benchmark rename n => n with prep := prepTree
   }
 
 /- There are 4*n+1 syntax nodes and fixed-size atom polynomials. Traversal and the complete result checksum are linear in n; Boolean evaluation visits every conjunct. -/
-setup_benchmark lift n => n with prep := prepTree
+setup_benchmark lift conjuncts => conjuncts with prep := prepTree
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000
@@ -203,7 +203,7 @@ setup_benchmark lift n => n with prep := prepTree
   }
 
 /- There are 4*n+1 syntax nodes and fixed-size atom polynomials. Traversal and the complete result checksum are linear in n; Boolean evaluation visits every conjunct. -/
-setup_benchmark move n => n with prep := prepTree
+setup_benchmark move conjuncts => conjuncts with prep := prepTree
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000
@@ -213,7 +213,7 @@ setup_benchmark move n => n with prep := prepTree
   }
 
 /- There are 4*n+1 syntax nodes and fixed-size atom polynomials. Traversal and the complete result checksum are linear in n; Boolean evaluation visits every conjunct. -/
-setup_benchmark encode n => n with prep := prepTree
+setup_benchmark encode conjuncts => conjuncts with prep := prepTree
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000
@@ -223,7 +223,7 @@ setup_benchmark encode n => n with prep := prepTree
   }
 
 /- There are 4*n+1 syntax nodes and fixed-size atom polynomials. Traversal and the complete result checksum are linear in n; Boolean evaluation visits every conjunct. -/
-setup_benchmark evaluate n => n with prep := prepTree
+setup_benchmark evaluate conjuncts => conjuncts with prep := prepTree
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000
@@ -233,7 +233,7 @@ setup_benchmark evaluate n => n with prep := prepTree
   }
 
 /- There are 4*n+1 syntax nodes and fixed-size atom polynomials. Traversal and the complete result checksum are linear in n; Boolean evaluation visits every conjunct. -/
-setup_benchmark implication n => n with prep := prepTree
+setup_benchmark implication conjuncts => conjuncts with prep := prepTree
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000
@@ -243,7 +243,7 @@ setup_benchmark implication n => n with prep := prepTree
   }
 
 /- There are 4*n+1 syntax nodes and fixed-size atom polynomials. Traversal and the complete result checksum are linear in n; Boolean evaluation visits every conjunct. -/
-setup_benchmark biconditional n => n with prep := prepTree
+setup_benchmark biconditional conjuncts => conjuncts with prep := prepTree
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000
@@ -253,7 +253,7 @@ setup_benchmark biconditional n => n with prep := prepTree
   }
 
 /- Each of n syntax steps has constant arity and bounded polynomial work. Equality differs at the deepest leaf; checked decode visits all nodes. Result consumption adds at most one linear traversal. -/
-setup_benchmark drop n => n with prep := prepDrop
+setup_benchmark drop conjuncts => conjuncts with prep := prepDrop
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000
@@ -263,7 +263,7 @@ setup_benchmark drop n => n with prep := prepDrop
   }
 
 /- Each of n syntax steps has constant arity and bounded polynomial work. Equality differs at the deepest leaf; checked decode visits all nodes. Result consumption adds at most one linear traversal. -/
-setup_benchmark decode n => n with prep := prepKernel
+setup_benchmark decode conjuncts => conjuncts with prep := prepKernel
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000
@@ -273,7 +273,7 @@ setup_benchmark decode n => n with prep := prepKernel
   }
 
 /- Each of n syntax steps has constant arity and bounded polynomial work. Equality differs at the deepest leaf; checked decode visits all nodes. Result consumption adds at most one linear traversal. -/
-setup_benchmark evaluateKernel n => n with prep := prepKernel
+setup_benchmark evaluateKernel conjuncts => conjuncts with prep := prepKernel
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000
@@ -283,7 +283,7 @@ setup_benchmark evaluateKernel n => n with prep := prepKernel
   }
 
 /- Each of n syntax steps has constant arity and bounded polynomial work. Equality differs at the deepest leaf; checked decode visits all nodes. Result consumption adds at most one linear traversal. -/
-setup_benchmark equality n => n with prep := prepEquality
+setup_benchmark equality nodes => nodes with prep := prepEquality
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000
@@ -293,7 +293,7 @@ setup_benchmark equality n => n with prep := prepEquality
   }
 
 /- There are n quantifiers and one constant atom whose exponent vector has length n+1. Prefix traversal, coordinate transport and complete result hashing take linear work. -/
-setup_benchmark prefixNodes n => n with prep := prepPrefix
+setup_benchmark prefixNodes binders => binders with prep := prepPrefix
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000
@@ -303,7 +303,7 @@ setup_benchmark prefixNodes n => n with prep := prepPrefix
   }
 
 /- There are n quantifiers and one constant atom whose exponent vector has length n+1. Prefix traversal, coordinate transport and complete result hashing take linear work. -/
-setup_benchmark view n => n with prep := prepPrefix
+setup_benchmark view binders => binders with prep := prepPrefix
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000
@@ -313,7 +313,7 @@ setup_benchmark view n => n with prep := prepPrefix
   }
 
 /- There are n quantifiers and one constant atom whose exponent vector has length n+1. Prefix traversal, coordinate transport and complete result hashing take linear work. -/
-setup_benchmark ofView n => n with prep := prepView
+setup_benchmark ofView binders => binders with prep := prepView
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000
@@ -323,7 +323,7 @@ setup_benchmark ofView n => n with prep := prepView
   }
 
 /- There are n quantifiers and one constant atom whose exponent vector has length n+1. Prefix traversal, coordinate transport and complete result hashing take linear work. -/
-setup_benchmark prefixRename n => n with prep := prepPrefix
+setup_benchmark prefixRename binders => binders with prep := prepPrefix
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000
@@ -333,7 +333,7 @@ setup_benchmark prefixRename n => n with prep := prepPrefix
   }
 
 /- There are n quantifiers and one constant atom whose exponent vector has length n+1. Prefix traversal, coordinate transport and complete result hashing take linear work. -/
-setup_benchmark swap n => n with prep := prepPrefix
+setup_benchmark swap binders => binders with prep := prepPrefix
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000
@@ -343,7 +343,7 @@ setup_benchmark swap n => n with prep := prepPrefix
   }
 
 /- There are n quantifiers and one constant atom whose exponent vector has length n+1. Prefix traversal, coordinate transport and complete result hashing take linear work. -/
-setup_benchmark prefixEncode n => n with prep := prepPrefix
+setup_benchmark prefixEncode binders => binders with prep := prepPrefix
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000
@@ -353,7 +353,7 @@ setup_benchmark prefixEncode n => n with prep := prepPrefix
   }
 
 /- There are n quantifiers and one constant atom whose exponent vector has length n+1. Prefix traversal, coordinate transport and complete result hashing take linear work. -/
-setup_benchmark prefixDecode n => n with prep := prepPrefixKernel
+setup_benchmark prefixDecode binders => binders with prep := prepPrefixKernel
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000
@@ -363,7 +363,7 @@ setup_benchmark prefixDecode n => n with prep := prepPrefixKernel
   }
 
 /- The atom contains n distinct terms in a fixed two-coordinate grid. Exponents are bounded by 31, and evaluation at (1,1) keeps every intermediate integer within one word. Thus evaluation visits n bounded-cost terms. -/
-setup_benchmark evalTerms n => n with prep := prepTerms
+setup_benchmark evalTerms terms => terms with prep := prepTerms
   where {
     paramSchedule := .custom #[32, 64, 128, 256, 512, 1024]
     targetInnerNanos := 100000000
@@ -373,7 +373,7 @@ setup_benchmark evalTerms n => n with prep := prepTerms
   }
 
 /- A coordinate permutation preserves n distinct terms of bounded exponent and coefficient size. Each term is inserted into a balanced map in logarithmic time; hashing the output is linear. -/
-setup_benchmark renameTerms n => n * Nat.log2 (n + 1) with prep := prepTerms
+setup_benchmark renameTerms terms => terms * Nat.log2 (terms + 1) with prep := prepTerms
   where {
     paramSchedule := .custom #[32, 64, 128, 256, 512, 1024]
     targetInnerNanos := 100000000
@@ -383,7 +383,7 @@ setup_benchmark renameTerms n => n * Nat.log2 (n + 1) with prep := prepTerms
   }
 
 /- The raw grid has bounded exponents (at most 127) and fixed coefficients. Ascending raw terms force insertion normalization to traverse every existing suffix. This is quadratic in n; subsequent balanced-tree reconstruction and output hashing cost O(n log n) and O(n). -/
-setup_benchmark decodeTerms n => n * n with prep := prepRawTerms
+setup_benchmark decodeTerms terms => terms * terms with prep := prepRawTerms
   where {
     paramSchedule := .custom #[256, 512, 1024, 2048, 4096, 8192]
     targetInnerNanos := 100000000
@@ -393,7 +393,7 @@ setup_benchmark decodeTerms n => n * n with prep := prepRawTerms
   }
 
 /- One monomial has n coordinates of exponent one. At the all-one valuation, rational intermediates have bounded size and the monomial product visits every coordinate. -/
-setup_benchmark evalArity n => n with prep := prepArity
+setup_benchmark evalArity arity => arity with prep := prepArity
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000
@@ -403,7 +403,7 @@ setup_benchmark evalArity n => n with prep := prepArity
   }
 
 /- The single-term atom has every coordinate present. Each degree query reads one vector entry; producing and hashing the n-element support takes linear work. -/
-setup_benchmark supportArity n => n with prep := prepArity
+setup_benchmark supportArity arity => arity with prep := prepArity
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000
@@ -413,7 +413,7 @@ setup_benchmark supportArity n => n with prep := prepArity
   }
 
 /- All n source coordinates map to one target coordinate. Accumulating n unit exponents is linear and normalization inserts just one term. The result checksum is constant-size. -/
-setup_benchmark renameArity n => n with prep := prepArity
+setup_benchmark renameArity arity => arity with prep := prepArity
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000
@@ -423,7 +423,7 @@ setup_benchmark renameArity n => n with prep := prepArity
   }
 
 /- A single n-bit odd coefficient is multiplied by the fixed rational 3/2. Small-integer multiplication and denominator handling traverse a linear number of limbs; comparison does not require a growing result checksum. -/
-setup_benchmark evalBits n => n with prep := prepBits
+setup_benchmark evalBits bits => bits with prep := prepBits
   where {
     paramSchedule := .custom #[65536, 131072, 262144, 524288, 1048576, 2097152]
     targetInnerNanos := 100000000
@@ -433,7 +433,7 @@ setup_benchmark evalBits n => n with prep := prepBits
   }
 
 /- Binary powering at the exact rational point 1 performs logarithmically many constant-size rational multiplications. This isolates exponent traversal; the coefficient-bit ladder separately tests growing arithmetic operands. -/
-setup_benchmark evalExponent n => Nat.log2 (n + 1) with prep := prepExponent
+setup_benchmark evalExponent exponent => Nat.log2 (exponent + 1) with prep := prepExponent
   where {
     paramSchedule := .custom #[256, 65536, 16777216, 4294967296, 1099511627776, 281474976710656]
     targetInnerNanos := 100000000
@@ -443,7 +443,7 @@ setup_benchmark evalExponent n => Nat.log2 (n + 1) with prep := prepExponent
   }
 
 /- The DAG has n+1 nodes, and its expanded tree has 2*n+1 nodes. Decode checks every reference and constructs one syntax node per DAG node; complete expanded-tree hashing remains linear. -/
-setup_benchmark dag n => n with prep := prepDag
+setup_benchmark dag nodes => nodes with prep := prepDag
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000
@@ -454,7 +454,7 @@ setup_benchmark dag n => n with prep := prepDag
 
 /- Every raw syntax node and exponent-vector length is checked, including
 unused branches. The fixed-arity, fixed-term family makes this linear. -/
-setup_benchmark validate n => n with prep := prepKernel
+setup_benchmark validate conjuncts => conjuncts with prep := prepKernel
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000
@@ -464,8 +464,8 @@ setup_benchmark validate n => n with prep := prepKernel
   }
 
 /- Two prefixes differ only at the final matrix truth value, forcing all n
-binder comparisons. The output is one Boolean. -/
-setup_benchmark prefixEquality n => n with prep := prepPrefixEquality
+binder comparisons, so the cost is linear. The output is one Boolean. -/
+setup_benchmark prefixEquality binders => binders with prep := prepPrefixEquality
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
     targetInnerNanos := 100000000

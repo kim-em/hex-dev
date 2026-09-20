@@ -91,9 +91,16 @@ run_meta do
     expectUnsupported q(1 / $x = 0) #[x]
     expectUnsupported q($x / 0 = 0) #[x]
     expectUnsupported q($x > 0) -- Undeclared free parameter.
+    expectUnsupported q($x ∈ setOf (fun _ : ℝ => True)) #[x]
+    withLocalDeclD `s q(Set ℝ) fun s => do
+      let s : Q(Set ℝ) := s
+      expectUnsupported q($x ∈ $s) #[x]
     withLocalDeclD `k q(ℕ) fun k => do
       let k : Q(ℕ) := k
       expectUnsupported q($x ^ $k = 0) #[x]
+  withLetDecl `a q(ℝ) q((1 : ℝ)) fun a => do
+    let a : Q(ℝ) := a
+    expectUnsupported q($a = 1) #[a]
   withLocalDeclD `P q(ℝ → Prop) fun p => do
     let p : Q(ℝ → Prop) := p
     expectUnsupported q(∃ x : ℝ, $p x)
@@ -109,6 +116,8 @@ private meta def expectBudget (source : Expr) (params : Array Expr) (cfg : Reify
   | .ok _ => throwError "budget-exceeding input was accepted"
 
 run_meta do
+  let _ ← Reify.reify! q(True) #[] #[]
+    { ring := { budget := Hex.Reflect.Budget.default.set .sourceNodes 1 } }
   expectBudget q(True) #[] { ring := { budget := Hex.Reflect.Budget.default.set .sourceNodes 0 } } .sourceNodes
   expectBudget q(True) #[] { ring := { budget := Hex.Reflect.Budget.default.set .proofNodes 0 } } .proofNodes
   expectBudget q((12345 : ℝ) < 0) #[] { ring := { budget := Hex.Reflect.Budget.default.set .coefficientBits 4 } } .coefficientBits

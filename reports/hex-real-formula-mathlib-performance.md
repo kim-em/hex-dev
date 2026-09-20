@@ -115,3 +115,12 @@ review and dependency gates remain separate from the measurements; the new
 libraries' phase prefix is 1, including the currently Phase-1 HexReflect
 prerequisites. No unfulfilled implementation proof obligation is hidden by
 that phase status.
+
+The atom-coordinate proofs enumerate the entire sealed variable map for each
+atom; these small probes do not establish scaling for many atoms and variables.
+The public reifier checks its returned proof, and declaring it as a theorem
+checks it again. Returned formulas also contain tree-backed polynomial
+projection expressions. The conformance suite composes a returned formula with
+`toSentence?` and `decide_sound` in the kernel, but replay of that conversion may
+be expensive for large inputs. The validated list evaluator has a direct
+correctness theorem; a list-only reifier-to-RCF replay path is not provided.

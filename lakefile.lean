@@ -502,6 +502,7 @@ lean_lib HexRCF where
 -- Optional development adapter: its shared frontend is not yet published.
 @[default_target]
 lean_lib HexRCFRealFormula where
+  srcDir := "adapters"
   globs := #[`HexRCF.RealFormula]
 
 lean_exe hexlll_external_reduction where

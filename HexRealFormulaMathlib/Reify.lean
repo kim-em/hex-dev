@@ -152,6 +152,8 @@ def reify (source : Expr) (parameters : Array Expr := #[]) (assumptions : Array 
       let p := parameters[i]!
       unless p.isFVar && !(parameters.extract 0 i).contains p do
         abort (.unsupported p "parameters must be distinct declared real local constants")
+      if (← p.fvarId!.getDecl).isLet then
+        abort (.unsupported p "parameters must be local constants, not local definitions")
       unless ← isDefEq (← inferType p) (mkConst ``Real) do
         abort (.unsupported p "parameters must have type Real")
     let mut proposition := source

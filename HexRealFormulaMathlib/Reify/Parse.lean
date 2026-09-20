@@ -80,7 +80,6 @@ private def comparison? (e : Expr) : Option (Cmp × Expr × Expr × Expr) :=
 /-- Continuation-based collection keeps sibling binders distinct and in scope
 through the single batch call. No local constant is reused across invocations. -/
 partial def collect (source : Expr) (scope : Array Expr) (k : Tree → ReifyM α) : ReifyM α := do
-  charge .sourceNodes 1
   let e := source.consumeMData
   if let some (cmp, ty, a, b) := comparison? e then
     unless ← isDefEq ty (mkConst ``Real) do
@@ -98,9 +97,11 @@ partial def collect (source : Expr) (scope : Array Expr) (k : Tree → ReifyM α
   | (``Or, #[p, q]) => collect p scope fun p => collect q scope fun q => k (.binary source .or p q)
   | (``Iff, #[p, q]) => collect p scope fun p => collect q scope fun q => k (.binary source .iff p q)
   | (``Membership.mem, #[_, _, _, set, _]) =>
-    if [``Set.Icc, ``Set.Ico, ``Set.Ioc, ``Set.Ioo, ``Set.Ici, ``Set.Iic,
-        ``Set.Ioi, ``Set.Iio].contains set.getAppFn.constName! then
-      collect (← whnf e) scope k
+    if let some name := set.getAppFn.constName? then
+      if [``Set.Icc, ``Set.Ico, ``Set.Ioc, ``Set.Ioo, ``Set.Ici, ``Set.Iic,
+          ``Set.Ioi, ``Set.Iio].contains name then
+        collect (← whnf e) scope k
+      else abort (.unsupported source "only polynomial interval bounds are supported")
     else abort (.unsupported source "only polynomial interval bounds are supported")
   | (``Exists, #[ty, predicate]) =>
     unless ← isDefEq ty (mkConst ``Real) do

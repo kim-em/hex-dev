@@ -5,6 +5,8 @@ Authors: Kim Morrison
 -/
 
 import HexRCF.RealFormula
+import HexRealFormulaMathlib.Reify
+import Lean.Elab.Tactic
 
 /-!
 Oracle: none. Mode: always.
@@ -20,7 +22,7 @@ degree-three residues, and rejection of zero or multiple remaining quantifiers.
 
 namespace Hex.RCF.RealFormulaConformance
 
-open Hex.RealFormula Hex.RCF.RealFormula
+open Hex.RealFormula Hex.RCF.RealFormula Qq
 
 private def cubic : ZPoly := DensePoly.ofCoeffs #[(-1 : Int), -1, 0, 1]
 private def sparse : Poly 1 := MvPoly.X 0 ^ 7 - MvPoly.C 3 * MvPoly.X 0 + MvPoly.C 2
@@ -85,5 +87,20 @@ private def specialized : QF 2 := inequality.map (MvPoly.subst fun i =>
 example (ρ : Fin 0 → ℝ) :
     (ofSentence (.forallReal .tt)).toProp ρ :=
   RealFormula.check_sound (t := .forallReal .tt) (by decide) .constants (by decide) ρ
+
+/-- Exercise the emitted syntax all the way through checked RCF decision. -/
+example : ∃ x : ℝ, x / 2 = 1 := by
+  run_tac
+    let goal ← Lean.Elab.Tactic.getMainGoal
+    let r ← Reify.reify! (← goal.getType)
+    let s : Q(Hex.RealFormula.Sentence) := r.formula
+    let decision ← Lean.Meta.mkFreshExprMVar q(Hex.RCF.RealFormula.decide? $s = some true)
+    let remaining ← Lean.Elab.runTactic' decision.mvarId! (← `(tactic| decide +kernel))
+    unless remaining.isEmpty do throwError "RCF decision left open goals"
+    let h ← Lean.Meta.mkAppM ``Hex.RCF.RealFormula.decide_sound
+      #[← Lean.instantiateMVars decision, q(Fin.elim0 : Fin 0 → ℝ)]
+    let proof ← Lean.Meta.mkAppM ``Iff.mp
+      #[Lean.mkApp r.proof q(Fin.elim0 : Fin 0 → ℝ), h]
+    goal.assign proof
 
 end Hex.RCF.RealFormulaConformance
