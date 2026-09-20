@@ -40,34 +40,34 @@ no host-load filter or retry-until-clean rule is used.
 
 | Pair | Baseline median ms | Candidate median ms | Median paired delta ms | Paired delta range ms |
 | --- | ---: | ---: | ---: | --- |
-| adapter | 7570.43 | 7745.72 | 129.62 | -559.94–271.96 |
-| alternation | 2043.57 | 2246.85 | 204.99 | 195.60–317.14 |
-| normalization | 2033.35 | 2142.14 | 111.72 | 105.00–116.05 |
-| parameterized | 2051.49 | 2244.44 | 192.95 | 115.66–209.29 |
+| adapter | 10238.17 | 11304.18 | 1978.65 | -1437.02–3604.20 |
+| alternation | 3145.96 | 3823.01 | 935.64 | 412.64–1330.44 |
+| normalization | 2622.88 | 3300.04 | 687.82 | 48.66–2316.06 |
+| parameterized | 3474.69 | 3295.94 | -445.53 | -692.36–-43.67 |
 
 All raw pairs (A = matched baseline; B = candidate):
 
 | Pair | Round | Order | A ms | B ms | B−A ms |
 | --- | ---: | --- | ---: | ---: | ---: |
-| adapter | 1 | AB | 8279.78 | 7719.84 | -559.94 |
-| adapter | 2 | BA | 7631.74 | 7771.61 | 139.87 |
-| adapter | 3 | AB | 7509.12 | 7781.08 | 271.96 |
-| adapter | 4 | BA | 7495.36 | 7614.73 | 119.37 |
-| alternation | 1 | AB | 2053.43 | 2264.39 | 210.96 |
-| alternation | 2 | BA | 2029.66 | 2228.68 | 199.02 |
-| alternation | 3 | AB | 2078.10 | 2395.24 | 317.14 |
-| alternation | 4 | BA | 2033.72 | 2229.31 | 195.60 |
-| normalization | 1 | AB | 2034.08 | 2139.08 | 105.00 |
-| normalization | 2 | BA | 2025.88 | 2137.81 | 111.93 |
-| normalization | 3 | AB | 2033.01 | 2149.06 | 116.05 |
-| normalization | 4 | BA | 2033.69 | 2145.21 | 111.52 |
-| parameterized | 1 | AB | 2045.60 | 2245.30 | 199.70 |
-| parameterized | 2 | BA | 2036.91 | 2152.58 | 115.66 |
-| parameterized | 3 | AB | 2067.51 | 2276.80 | 209.29 |
-| parameterized | 4 | BA | 2057.38 | 2243.59 | 186.21 |
+| adapter | 1 | AB | 15353.04 | 18957.25 | 3604.20 |
+| adapter | 2 | BA | 10747.59 | 9310.57 | -1437.02 |
+| adapter | 3 | AB | 9728.74 | 11466.33 | 1737.59 |
+| adapter | 4 | BA | 8922.32 | 11142.03 | 2219.71 |
+| alternation | 1 | AB | 3397.89 | 3810.54 | 412.64 |
+| alternation | 2 | BA | 6183.68 | 7113.51 | 929.83 |
+| alternation | 3 | AB | 2894.03 | 3835.48 | 941.45 |
+| alternation | 4 | BA | 2273.96 | 3604.40 | 1330.44 |
+| normalization | 1 | AB | 3131.83 | 3516.16 | 384.33 |
+| normalization | 2 | BA | 2695.41 | 5011.47 | 2316.06 |
+| normalization | 3 | AB | 2092.60 | 3083.92 | 991.32 |
+| normalization | 4 | BA | 2550.36 | 2599.02 | 48.66 |
+| parameterized | 1 | AB | 4325.07 | 3747.83 | -577.24 |
+| parameterized | 2 | BA | 3203.33 | 2889.51 | -313.82 |
+| parameterized | 3 | AB | 3746.05 | 3702.38 | -43.67 |
+| parameterized | 4 | BA | 3159.40 | 2467.04 | -692.36 |
 
-The adapter delta changes sign across pairs, so these samples do not resolve
-a stable positive adapter overhead. Every pair remains in the report.
+The parameterized pair has both negative and positive deltas, so these samples
+do not resolve a stable positive reification overhead. Every pair is retained.
 
 Every candidate theorem's reported axiom set is exactly
 `[propext, Classical.choice, Quot.sound]`. The raw artifact retains compiler
@@ -84,13 +84,13 @@ claims. No external performance comparator is specified for this frontend.
 ## Profile and provenance
 
 Timed-region sampling does not apply to proof-track builds. The substitute is
-[the complete fresh-module artifact](data/hex-real-formula/proofs.json), with
+[the complete fresh-module artifact](data/hex-real-formula/proofs-final.json), with
 repository/dependency revisions and cleanliness, exact source hashes, commands,
 compiler evidence and host context. The compiled core's five sampled families
 are in the [core report](hex-real-formula-performance.md).
 
 The measurement uses the clean implementation commit
-`34271e57d8971f9cd07474568f144e9258d30f9f`, Lean 4.34.0, and the shared host
+`74b02514d3e6fa41140171d242fe06ee8e253273`, Lean 4.34.0, and the shared host
 `chungus2` (AMD EPYC 9455, x86-64 Linux). An automatically leased CPU is pinned
 for the run; its identity and sibling activity are recorded in the artifact.
 Each round rotates pair order; adjacent arm order alternates AB/BA. All four
@@ -124,3 +124,5 @@ projection expressions. The conformance suite composes a returned formula with
 `toSentence?` and `decide_sound` in the kernel, but replay of that conversion may
 be expensive for large inputs. The validated list evaluator has a direct
 correctness theorem; a list-only reifier-to-RCF replay path is not provided.
+
+[The earlier completed run](data/hex-real-formula/proofs.json) is retained with its own source provenance.
