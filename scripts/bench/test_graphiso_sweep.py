@@ -28,7 +28,9 @@ class SweepTest(unittest.TestCase):
         pid = int(caught.exception.stdout.strip())
         stat = Path(f"/proc/{pid}/stat")
         try:
-            self.assertEqual(stat.read_text().split()[2], "Z")
+            # Both zombie and dead tasks have terminated; procfs may expose
+            # the transient X state before the task entry disappears.
+            self.assertIn(stat.read_text().split()[2], ("Z", "X"))
         except (FileNotFoundError, ProcessLookupError):
             with self.assertRaises(ProcessLookupError):
                 os.kill(pid, 0)
