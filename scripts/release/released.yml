@@ -603,7 +603,7 @@ repos:
     test_modules: [HexRCF.LanguageTests, HexRCF.SturmBuilderTests, HexRCF.CarrierTests, HexRCF.IsolationsTests, HexRCF.SeparationTests, HexRCF.CellsTests, HexRCF.CommonRootTests, HexRCF.SignMatrixTests, HexRCF.BuilderTests, HexRCF.CertificateTests, HexRCF.DecisionTests, HexRCF.ReifyTests, HexRCF.LintTests]
     umbrella: true
     spec: hex-rcf
-    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-hensel, hex-poly-z-mathlib, hex-real-roots, hex-real-roots-mathlib, hex-matrix, hex-matrix-mathlib]
+    pins: [hex-basic, hex-arith, hex-mv-poly, hex-mv-poly-mathlib, hex-poly, hex-mod-arith, hex-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-hensel, hex-poly-z-mathlib, hex-real-roots, hex-real-roots-mathlib, hex-matrix, hex-matrix-mathlib]
     lakefile: toml
 
   # Aggregate: re-pinned only, never regenerated from managed source (its

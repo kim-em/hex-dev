@@ -97,6 +97,8 @@ UMBRELLA_BUILD_TARGETS = {
     "HexRealRootsMathlibReplayProbeScientific",
     "HexRCFProofProbe",
     "HexRCFProofProbeScientific",
+    "HexRealFormulaProofProbe",
+    "HexRCFRealFormula",
     "HexConformance",
     "HexFactorizationModules",
     "HexMvFactorizationTests",
