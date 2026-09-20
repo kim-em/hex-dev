@@ -82,15 +82,24 @@ Under `[Root.Laws d]`, the core proves selected-root equivalence, operation
 congruence and sign descent, constructs the quotient, and derives executable
 `DecidableEq`, `DecidableLE`, `DecidableLT` and the ordinary core field/order
 instances. All polynomial and quotient algebra in this implication is proved
-in the core; the unconditional semantic witness for `Root.Laws d` belongs to
-the companion. Raw inversion uses only predecessor gcd/xgcd and root signs.
+in the core; the semantic witness for `Root.Laws d` belongs to the companion
+and requires the selected-root interpretation in an ordered real closed ambient
+field. Rational and real-embedded bases need no additional ambient-existence
+assumption. Infinitesimal bases require the missing Tau Ceti existence contract;
+the Hahn model alone does not supply it. All cases still require the imported
+sign-determination correctness proofs. Raw inversion uses only predecessor
+gcd/xgcd and root signs.
 Its inverse identity and congruence follow in the constructed quotient ring
 before installing the field instance; inversion does not assume the field law
 it is meant to establish. Only then form `DensePoly` over the new value type.
 
-A context carries these erased proofs with its constructed stages. The
-companion supplies a universal law theorem for valid descriptors, rather than
-asking a runtime validator to check infinitely many laws. Consequently a
+A context carries these erased proofs with its constructed stages.
+`Context.adjoin ctx d (laws : Root.Laws d)` receives the proof explicitly;
+instance search is not expected to manufacture it for a runtime descriptor.
+Root isolation and readers that construct new typed contexts likewise take
+the erased theorem `∀ d, Root.Laws d` for the predecessor field; the companion
+supplies it from the fixed ambient interpretation. The runtime validator
+checks finite descriptors, not infinitely many laws. Consequently a
 closed algebraic-tower application must have those proofs available at
 instantiation: a Mathlib-free declaration parameterized by the laws is not a
 closed Mathlib-free application. Proof erasure preserves executable arithmetic
@@ -188,7 +197,11 @@ For a checked inverse of `q(α)`:
 2. Compute `g=gcd(p,q)` using the predecessor field operations. Since `g | q`,
    `g(α) ≠ 0`. If `degree g>0`, set `h=p/g` by exact division, retain
    `p=g*h`, and prove `h(α)=0`, `h` squarefree and `gcd(h,q)=1`. Squarefreeness
-   of `p` is essential to the last claim. With constant gcd keep `h=p`.
+   of `p` is essential to the last claim. Consume the validated descriptor’s
+   executable witness that the monic gcd of `p` and `p.derivative` is one;
+   core derivative/divisibility identities derive coprimality of `h` and `q`
+   from it. A semantic squarefree assertion without this bridge is insufficient.
+   With constant gcd keep `h=p`.
 3. Re-encode the same root for `h` using **derivatives of h** via
    `SignDet.reencode`. Retain the old descriptor and joint selection
    evidence; copying the old Thom vector is invalid. A root-free old interval
@@ -315,12 +328,12 @@ operations without a global fuel search, `partial` or classical runtime choice.
 | Operation | Result |
 | --- | --- |
 | `Context.constant`, `Context.infinitesimal` | Staged extension from a lawful caller oracle registration or an infinitesimal, with predecessor embedding. Stage constraints are typed premises. |
-| `Context.adjoin ctx d` | Algebraic context and generator for a validated squarefree selected-root descriptor. |
+| `Context.adjoin ctx d laws` | Algebraic context and generator for a validated squarefree selected-root descriptor and explicit `laws : Root.Laws d`. |
 | `Value ctx` | Constructed quotient carrier with total exact field/order instances, executable equality and sign. |
 | `Value.add`, `neg`, `mul`, `inv`, `sign`, `compare` | Ordinary total operations in the fixed context; `inv 0=0`. |
 | `Value.inv?` | Convenience `Option` inverse, `none` exactly when the input is zero. |
 | `Context.transport`, `enlarge` | New context and explicit embeddings/transports of the requested live DAG; compatible validated input gives a total result. |
-| `Yun.decompose`, `roots` | Total decomposition or complete ordered root set. |
+| `Yun.decompose`, `roots` | Total decomposition or complete ordered root set; constructing output contexts additionally takes the erased root-law theorem for their descriptors. |
 | `Sample.section`, `sector` | Validated section/sector samples with the finite-sign contract below. |
 | `certify`, `Replay.check` | Result certificates for queries, BKR tables, selected roots, splitting, root lists or samples; Boolean validation of supplied finite data. |
 
@@ -328,6 +341,9 @@ Raw syntax readers and mathematical domain validators may return `Option`:
 invalid descriptors, stage order or incompatible references are rejected. A
 registry lookup retrieves the caller's already supplied oracle and proof
 premises; a reader cannot decide convergence or relative transcendence.
+The core reader requires the erased root-law theorem for every field where it
+adjoins a root; the companion owns a wrapper supplying these theorems.
+Validation of a descriptor alone does not create its law proof.
 Compatibility checks concern the declared context embeddings, not arbitrary
 equality of unrelated oracle descriptions. Total
 field operations operate on the validated carrier and do not carry those
@@ -583,6 +599,24 @@ constant relations. Emit only evidence required by the final real statement.
 This SPEC implements neither a tactic nor multivariate CAD/coverings.
 
 ## Conformance and Phase-4 evidence
+
+Core conformance exercises algorithms at coefficient fields whose instances
+are available in core, including base-field query/descriptor computations.
+Closed `Value ctx` applications, nested root isolation and checked context
+reading require the companion's root-law witnesses. Their executable
+instantiation and conformance entry points belong to the companion and reuse
+the same core algorithms; they do not introduce another arithmetic backend.
+The public `Context` deliberately packages a lawful field from its first
+algebraic level. Law-free single-root descriptor computations remain available
+through hex-sign-det without pretending to construct that field.
+
+Closed algebraic-tower fixtures over infinitesimal bases, including `tower8`,
+transported/nested roots and field-valued exploration, are blocked on the
+actual ordered-real-closure existence theorem as well as sign-determination
+correctness. This is a proof delivery gate, not a new hypothesis to postulate
+in tests. Raw descriptor computations over `ℚ(ε)` can run independently once
+the predecessor ordered-field instances exist. Keep every required fixture;
+do not declare family conformance complete while the gated cases are missing.
 
 Follow [testing](../testing.md) and [benchmarking](../benchmarking.md).
 Pin Z3 and record commit/version, generator command, exact input and output,

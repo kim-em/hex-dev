@@ -141,8 +141,10 @@ parameter alone supplies a closed Mathlib-free benchmark or demonstration.
 
 An element is a polynomial representative `q(α)` over the predecessor
 field, recursively interpreted. Degree below `degree p` is not required.
-For valid elements set `a ≈ b` iff `eval a = eval b`. Prove equivalence,
-congruence of the actual executable operations, and the following statements:
+For valid elements prove that `eval a = eval b` is equivalent to the core
+relation `signAt d (a-b)=0` (`Element.eq_iff`). Reuse the core’s conditional
+equivalence and congruence theorems through that identification; do not
+construct a second quotient. Prove the following interpretation statements:
 
 | Planned statement | Required conclusion |
 | --- | --- |
@@ -156,6 +158,9 @@ A reducible `K[X]/(p)` is not this field. At `p=(X-1)(X+1)`, `α=1`,
 `X-1` denotes zero despite its nonzero remainder. Prove executable quotient
 lifting, equality and the termination measures before installing total instances. Align the
 chosen Lean-core field/order dictionaries with Mathlib through evaluation.
+Build the Mathlib instances with the same executable operations and verify
+`Field.toGrindField` recovers the selected core instance definitionally, as
+`HexRealAlgebraicMathlib.Instances` does; verify order decisions likewise.
 The total inverse has `0⁻¹=0`; the checked nonzero inverse returns `none` exactly on zero.
 Rational-base ambient existence is discharged by `RealAlgebraicNumber`;
 real-base existence uses the shared `IsRealClosed ℝ` instance. Infinitesimal
@@ -519,12 +524,26 @@ array/matrix dimensions; these are complexity obligations, not an alternative
 fallible arithmetic interface.
 
 Follow [testing](../testing.md) and [benchmarking](../benchmarking.md).
-This companion is planned as `correspondence_only: true`, comparator absence
-class **correspondence-only-layer**. `HexRealClosure` owns computational
-conformance, pinned fixtures and runtime measurements; this companion has no
-core `Conformance.lean` or separate compiled runtime benchmark. Build-only
-proof examples check semantic conclusions; bulk correspondence sweeps belong
-in the conformance tree's optional `CrossCheck` module.
+`HexRealClosure` owns the generic algorithms and core-instantiated conformance.
+This companion owns executable context-construction and reader entry points
+that pass proved root laws to those algorithms. Its dedicated conformance
+target tests closed tower applications using these entry points, so it is not
+`correspondence_only: true`. Wire that target into the existing single CI job.
+No arithmetic, query or isolation algorithm is reimplemented here. Benchmark
+placement is a separate contract; a conformance target does not grant a
+Mathlib-importing computational benchmark an exception to repository policy.
+Build-only proof examples and optional `CrossCheck` modules continue to check
+semantic correspondence separately from runtime fixture comparisons.
+
+The wrappers explicitly apply the universal root-law theorem to each runtime
+descriptor; they do not rely on typeclass search to discover an indexed proof.
+The theorem is relative to the supplied ordered real closed ambient field.
+For infinitesimal bases, complete closed-tower conformance awaits actual Tau
+Ceti existence and univariate-correctness proofs. A Hahn field alone, an open
+roadmap or an unproved law parameter cannot instantiate those tests. Rational
+and real-embedded bases have the stated ambient models, but still require the
+actual imported sign-determination theorems.
+
 Use computational Z3 fixtures (pinned version/command/input/output) for
 infinitesimal signs, selected roots and comparisons, and python-flint plus
 Hex's independent real-algebraic path on rational cases. A differential oracle
