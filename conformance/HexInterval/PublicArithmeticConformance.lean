@@ -11,17 +11,21 @@ import HexInterval
 
 Oracle: exact rational arithmetic in Lean core; no external oracle.
 Mode: always.
-Covered operations: checked construction, singleton division, intersection,
-addition, multiplication, regularization, and zero-cut classification.
-Covered properties: rational containment and dyadic-grid width, Horner
-containment, exact cancellation, intersection openness, and outward rounding.
-Covered edge cases: negative/zero coefficients, open zero, zero-containing
-intervals, empty intersections, huge precision/alignment, and product growth.
+Covered operations:
+- checked construction, singleton division, intersection and addition;
+- multiplication, regularization, and zero-cut classification.
+Covered properties:
+- rational containment and dyadic-grid width;
+- Horner containment and independently calculated cuts;
+- exact cancellation, intersection openness, and outward rounding.
+Covered edge cases:
+- negative/zero coefficients, open zero and zero-containing intervals;
+- empty intersections, huge precision, endpoint/alignment and product growth.
 Only the ordinary public umbrella is imported. These checks exercise the
 consumer composition without defining a second interval or Horner API.
 -/
 
-namespace Hex.Interval.PublicArithmetic
+namespace Hex.Interval.PublicArithmeticConformance
 
 private def limits : Arithmetic.PrecisionLimits :=
   { endpoint := ⟨4096, 2048⟩
@@ -69,8 +73,18 @@ private def enclosure (n : Int) (d : Nat) (p : Nat) : Bool :=
 #guard [0, 1, 8, 32, 128].all fun p =>
   [(-7, 3), (-1, 2), (0, 3), (1, 3), (8, 4), (17, 7)].all fun (n, d) =>
     enclosure n d p
-#guard (coefficient 1 0 8).isNone
-#guard (coefficient 1 3 1000000000).isNone
+#guard (do
+  let one ← singleton 1
+  let zero ← singleton 0
+  let quotient ← computed (divWithin limits 8 one zero)
+  pure (quotient == zero)) == some true
+
+#guard (do
+  let one ← singleton 1
+  let three ← singleton 3
+  pure (match divWithin limits 1000000000 one three with
+    | .resourceLimit (.precision _) => true
+    | _ => false)) == some true
 
 private def interval (lo : Int) (ls : Bool) (hi : Int) (hs : Bool) :
     Option Hex.Interval :=
@@ -88,9 +102,12 @@ private def interval (lo : Int) (ls : Bool) (hi : Int) (hs : Bool) :
   let c ← built (intersectWithin limits.endpoint a b)
   pure (c.view == .empty)) == some true
 
--- (x / 3 - 1/2) * x + 1/4 on [0,1], sampled at exact rationals.
+-- (x / 3 - 1/2) * x + 1/4 on [1,2]. The coefficient cuts are
+-- 21845/65536 and 21846/65536. Interval Horner therefore gives lower
+-- 2*(21845/65536 - 1/2) + 1/4 = -5462/65536 and upper
+-- 2*(2*21846/65536 - 1/2) + 1/4 = 38232/65536.
 #guard (do
-  let x ← interval 0 false 1 false
+  let x ← interval 1 false 2 false
   let a ← coefficient 1 3 16
   let b ← coefficient (-1) 2 16
   let c ← coefficient 1 4 16
@@ -98,9 +115,12 @@ private def interval (lo : Int) (ls : Bool) (hi : Int) (hs : Bool) :
   let axb ← built (addWithin limits.endpoint ax b)
   let axbx ← computed (mulWithin limits.endpoint axb x)
   let result ← built (addWithin limits.endpoint axbx c)
-  pure ([0, 1, 2, 3, 4].all fun n =>
-    let q := mkRat n 4
-    contains result ((q / 3 - mkRat 1 2) * q + mkRat 1 4))) == some true
+  pure (result.view == .bounds
+    (.finite (Dyadic.ofIntWithPrec (-5462) 16) false)
+    (.finite (Dyadic.ofIntWithPrec 38232 16) false) &&
+    [4, 5, 6, 7, 8].all fun n =>
+      let q := mkRat n 4
+      contains result ((q / 3 - mkRat 1 2) * q + mkRat 1 4))) == some true
 
 #guard (do
   let a ← singleton 7
@@ -113,6 +133,14 @@ private def interval (lo : Int) (ls : Bool) (hi : Int) (hs : Bool) :
   let z ← singleton 0
   let c ← computed (mulWithin limits.endpoint a z)
   pure (c.view == .bounds (.finite 0 false) (.finite 0 false))) == some true
+
+#guard (do
+  let positive ← interval 0 true 1 false
+  let negative ← interval (-1) false 0 true
+  match positive.view, negative.view with
+  | .bounds lo _, .bounds _ hi =>
+      pure (Raw.strictlyPositive lo && Raw.strictlyNegative hi)
+  | _, _ => none) == some true
 
 #guard Raw.strictlyPositive (.finite 0 true)
 #guard !Raw.strictlyPositive (.finite 0 false)
@@ -133,7 +161,14 @@ private def interval (lo : Int) (ls : Bool) (hi : Int) (hs : Bool) :
 
 private def far : Dyadic := .ofOdd 1 1000000000 (by decide)
 #guard match betweenWithin limits.endpoint 1 false far false with
-  | .resourceLimit cost => cost.alignmentShift == 1000000000
+  | .resourceLimit cost => !cost.lower.allowed limits.endpoint || !cost.upper.allowed limits.endpoint
+  | _ => false
+
+-- Both endpoint heights pass; this failure is specifically alignment.
+#guard match betweenWithin limits.endpoint 1 false
+    (Dyadic.ofIntWithPrec 1 3000) false with
+  | .resourceLimit cost => cost.lower.allowed limits.endpoint &&
+      cost.upper.allowed limits.endpoint && cost.alignmentShift == 3000
   | _ => false
 
 #guard (do
@@ -142,4 +177,4 @@ private def far : Dyadic := .ofOdd 1 1000000000 (by decide)
     | .resourceLimit (.growth _) => true
     | _ => false)) == some true
 
-end Hex.Interval.PublicArithmetic
+end Hex.Interval.PublicArithmeticConformance
