@@ -1800,3 +1800,10 @@ lean_lib HexCharPolyMathlibProofProbe where
 lean_exe hex_poly_det_packed where
   srcDir := "bench"
   root := `HexPolyDet.PackedBench
+
+-- Manual issue-10301 experiments; neither target belongs to the default build or CI.
+lean_lib CadSampleCostsExperiment where
+  globs := #[.submodules `HexIntervalAlgebraic.Experiment.CadSampleCosts]
+
+lean_exe cad_sample_costs where
+  root := `HexIntervalAlgebraic.Experiment.CadSampleCosts.Runtime
