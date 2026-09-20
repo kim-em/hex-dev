@@ -31,6 +31,7 @@ def main():
     parser.add_argument('--out', type=Path, required=True)
     parser.add_argument('--profiler-root', type=Path, required=True)
     parser.add_argument('--bench', type=Path, default=ROOT / '.lake/build/bin/hexrank_bench')
+    parser.add_argument('--quotient', action='store_true', help='Profile the separate native quotient producer at dimension 32.')
     args = parser.parse_args()
     out = args.out.resolve()
     out.mkdir(parents=True, exist_ok=False)
@@ -54,7 +55,8 @@ def main():
             log.write(json.dumps(command) + '\n' + result.stdout + result.stderr + '\n')
         result.check_returncode()
         return result.stdout
-    for family, name, param in CASES:
+    cases = (('quotient-witness', 'Quotient.produceFull', 32),) if args.quotient else CASES
+    for family, name, param in cases:
         directory = out / family
         directory.mkdir()
         try:
