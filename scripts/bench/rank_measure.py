@@ -148,10 +148,13 @@ def main():
     parser.add_argument('--bench', type=Path, default=ROOT / '.lake/build/bin/hexrank_bench')
     parser.add_argument('--python', default=sys.executable)
     parser.add_argument('--family', choices=FAMILIES, action='append', help='Subset for an incremental tranche; omitted means every family.')
+    parser.add_argument('--target-inner-nanos', type=int, help='Explicit parametric batch-resolution override, recorded in every command.')
     parser.add_argument('--case', help='Run only the command containing this exact registered name; retain a separate output directory.')
     args = parser.parse_args()
     if args.family and args.phase in ('polynomial', 'protocol', 'quotient', 'poly-references'):
         parser.error('--family is only meaningful for integer, attribution and comparisons')
+    if args.target_inner_nanos is not None and (args.target_inner_nanos <= 0 or args.phase not in ('integer', 'attribution', 'quotient')):
+        parser.error('--target-inner-nanos requires a positive duration and a parametric phase')
     out = args.out.resolve()
     out.mkdir(parents=True, exist_ok=False)
     bench = args.bench.resolve()
@@ -160,6 +163,9 @@ def main():
     env = dict(os.environ, HEX_RANK_BENCH_PYTHON=args.python)
     schedule = [(label, [str(bench), *command, '--export-file', str(out / f'{label}.json')])
                 for label, command in commands(args.phase, args.family or FAMILIES)]
+    if args.target_inner_nanos is not None:
+        for _, command in schedule:
+            command += ['--target-inner-nanos', str(args.target_inner_nanos)]
     if args.case:
         schedule = [(label, command) for label, command in schedule if args.case in command]
         if not schedule:
