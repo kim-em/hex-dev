@@ -37,7 +37,10 @@ Its `source_sha256` fields identify the measured sources, which are preserved
 in the initial implementation. The record also embeds the original sweep
 driver verbatim, including its matching hash. Later driver
 changes add cross-arm certificate assertions and the separate failure case;
-they do not change the timed operations. These two budget fields are
+they do not change the timed operations. Integration with the explicit-producer
+API changes tactic dispatch in `Elab.lean`, while the timed `Construction.run`,
+`certificateSyntax`, and `checkPrime` definitions remain unchanged. These
+records do not measure the separate `primality? using` route. These two budget fields are
 the entire production change, so this also controls compiler/build differences.
 
 Native construction includes its final compiled self-check, but excludes

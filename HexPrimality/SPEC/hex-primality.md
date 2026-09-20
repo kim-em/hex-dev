@@ -2215,7 +2215,7 @@ subject and `checkPrime`. The companion only transports that result. It is
 not possible for a registered producer to add an unchecked opcode, proof slot,
 or alternative success predicate to the checker.
 
-The existing 512-bit goal policy applies before producer evaluation. Arbitrary
+The 521-bit construction goal policy applies before producer evaluation. Arbitrary
 user-selected computation is not covered by `ConstructionBudget`: a supplied
 producer may be expensive or fail to terminate, just as other explicitly run
 Lean metaprograms may. This interface guarantees validation of its result,
