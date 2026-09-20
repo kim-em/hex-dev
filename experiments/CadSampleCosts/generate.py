@@ -74,7 +74,7 @@ def generate(log):
         (folder / 'Replay.lean').write_text(body + f'end CadSampleCosts.{case}\n')
         validate += f'\ntheorem {case[0].lower()+case[1:]} : {goal} :=\n'
         validate += f'  (cad_correspondence% ({goal})).mp {case}.result\n'
-    (ROOT / 'Fixtures.lean').write_text(fixtures)
+    (ROOT / 'Fixtures.lean').write_text(fixtures.rstrip() + '\n')
     (ROOT / 'Validate.lean').write_text(validate + '\nend CadSampleCosts\n')
 
 

@@ -2,7 +2,7 @@ diff --git a/src/nlsat/nlsat_explain.cpp b/src/nlsat/nlsat_explain.cpp
 index 83c5f31..310e833 100644
 --- a/src/nlsat/nlsat_explain.cpp
 +++ b/src/nlsat/nlsat_explain.cpp
-@@ -610,11 +610,13 @@ namespace nlsat {
+@@ -610,10 +610,12 @@ namespace nlsat {
                      if (!is_const(f)) {
                          TRACE(nlsat_explain, tout << "adding factor:\n"; display(tout, f); tout << "\n";);
                          m_todo.insert(f);
@@ -15,8 +15,7 @@ index 83c5f31..310e833 100644
 +                TRACE(nlsat_explain, tout << "CAD_PROJ " << m_pm.total_degree(p) << " "; display(tout, p); tout << "\n";);
              }
          }
- 
-@@ -1748,11 +1750,13 @@ namespace nlsat {
+@@ -1748,10 +1750,12 @@ namespace nlsat {
                    display(tout, num, ls) << "\n";
                    m_solver.display_assignment(tout);
                    );
@@ -29,7 +28,6 @@ index 83c5f31..310e833 100644
 +            TRACE(nlsat_explain, tout << "CAD_END " << result.size() << "\n"; display(tout, result); tout << "\n";);
              CASSERT("nlsat", check_already_added());
          }
- 
 diff --git a/src/nlsat/nlsat_solver.cpp b/src/nlsat/nlsat_solver.cpp
 index 97cac90..c8aa297 100644
 --- a/src/nlsat/nlsat_solver.cpp

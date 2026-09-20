@@ -639,4 +639,3 @@ macro_rules
                     derivScale := 1,
                     steps := #[{ leftScale := 4, quotient := Hex.DensePoly.ofCoeffs #[-1, 2], rightScale := 1 }] } }] },
     iocCmps := Option.none })
-
