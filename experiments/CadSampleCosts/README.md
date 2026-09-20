@@ -81,3 +81,9 @@ source hashes, and the traced solver binary hash. Compressed logs contain the
 full command output, including diagnostics and the theorem axiom lists. Raw
 traces retain the explanation bodies and projection polynomials. No timing
 from this corpus is a portable budget or an asymptotic complexity claim.
+
+Render the report tables without rerunning measurements:
+
+```sh
+python3 experiments/CadSampleCosts/summarize.py reports/bench-results/cad-sample-costs
+```
