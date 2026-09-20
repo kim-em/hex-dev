@@ -25,7 +25,7 @@ references, and one protocol control. The existing CI smoke route checks 92
 native cases at the smallest smoke input; the quotient smoke dimension is four,
 not its scientific floor 128. External anchors are scheduled-only. The
 [driver artifacts](bench-results/hex-rank-10352/driver/) retain the list and
-both native and external verification outputs. CI adds tests inside its existing
+both native and external verification outputs. The [recorded verification](bench-results/hex-rank-10352/driver/verification.json) pins the binary/source hashes and all commands; the 92-case native smoke took 1.437 s on its automatically selected CPU. This is an operational observation, not a scientific performance budget. CI adds tests inside its existing
 job and preserves its existing bench list/verify route.
 
 | Public surface | Evidence track and measured path |
@@ -216,8 +216,8 @@ lake build hexrank_bench
 # Use this rebuilt .lake/build/bin/hexrank_bench with rank_measure.py --bench.
 ```
 
-Both missing follow-up snapshots have been reconstructed and checked against
-every recorded source hash. The manifest additionally covers the untimed input
+Snapshot reconstruction checks every recorded source hash for the checker
+and Certify/Witness follow-ups. The manifest additionally covers the untimed input
 capture's base `01eeb439a` and the capture hook archived as `5e9bc6ab8`. Each run records
 binary/source hashes, exact command, CPU, host load and dirty patch (`source.patch.gz` when nonempty); child dirty
 flags describe the evolving checkout, not a rebuilt frozen binary.
