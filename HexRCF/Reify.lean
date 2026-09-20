@@ -122,11 +122,62 @@ private meta structure FormulaResult where
   expr : Expr
   proof : Expr
 
+/-- A coefficient expression and an ordinary proof that it equals a closed
+real value. This is syntax authentication, not a sign or domain decision. -/
+meta structure ClosedCoefficient where
+  /-- A real expression with no free variables or metavariables. -/
+  value : Expr
+  /-- Equality of the original expression with `value`. -/
+  proof : Expr
+
+/-- Find a direct, explicitly assumed equality in either orientation. Chained,
+nonclosed and cyclic bindings are not searched. -/
+private meta def alias? (symbol : Expr) : MetaM (Option ClosedCoefficient) := do
+  unless ← isDefEq (← inferType symbol) (mkConst ``Real) do return none
+  for decl in ← getLCtx do
+    let some (type, lhs, rhs) := decl.type.eq? | continue
+    unless ← isDefEq type (mkConst ``Real) do continue
+    let (value, reverse) ←
+      if lhs == symbol then pure (rhs, false)
+      else if rhs == symbol then pure (lhs, true)
+      else continue
+    if value.hasFVar || value.hasMVar || value.hasLooseBVars then continue
+    let proof ← if reverse then mkEqSymm decl.toExpr else pure decl.toExpr
+    check proof
+    unless ← isDefEq (← inferType proof) (← mkEq symbol value) do continue
+    return some { value, proof }
+  return none
+
+/-- Close a real coefficient using only explicit local equalities to closed
+values. Every free symbol needs its own direct witness. Substitution preserves
+all arithmetic syntax, including original divisors and zero multiplication. -/
+meta def closeCoefficient? (source : Expr) : MetaM (Option ClosedCoefficient) := do
+  if source.hasMVar || source.hasLooseBVars then return none
+  withNewMCtxDepth do
+    unless ← isDefEq (← inferType source) (mkConst ``Real) do return none
+    let mut value := source
+    let mut proof ← mkEqRefl source
+    for id in (collectFVars {} source).fvarIds do
+      let symbol := mkFVar id
+      let some replacement ← alias? symbol | return none
+      let function ← mkLambdaFVars #[symbol] value
+      let step ← mkAppM ``congrArg #[function, replacement.proof]
+      proof ← mkEqTrans proof step
+      value := value.replaceFVar symbol replacement.value
+    if value.hasFVar || value.hasMVar || value.hasLooseBVars then return none
+    proof ← instantiateMVars proof
+    checkWithKernel proof
+    unless ← isDefEq (← inferType proof) (← mkEq source value) do
+      throwError "rcf: internal closed-coefficient equality mismatch"
+    return some { value, proof }
+
 /-- Rational recognition stopped at closed coefficient syntax. This is the only
 reification outcome that permits an optional coefficient handler. -/
 meta structure UnsupportedCoefficient where
-  /-- The closed expression that rational normalization did not recognize. -/
+  /-- The source coefficient that rational normalization did not recognize. -/
   expr : Expr
+  /-- The checked closed value, including explicit local-equality witnesses. -/
+  closed : ClosedCoefficient
 
 /-- Preserve the rational frontend's diagnostic when no handler accepts. -/
 meta def UnsupportedCoefficient.message (reason : UnsupportedCoefficient) : MessageData :=
@@ -149,9 +200,9 @@ private meta def scalarRat (e : Expr) : RecognitionM Rat := do
     catch _ => return none
     finally saved.restore : MetaM (Option Rat))
   if let some value := value? then return value
-  if e.hasFVar || e.hasMVar || e.hasLooseBVars then
-    throwError "rcf: symbolic or non-rational coefficient{indentExpr e}"
-  throwThe UnsupportedCoefficient { expr := e }
+  let some closed ← closeCoefficient? e
+    | throwError "rcf: symbolic or non-rational coefficient{indentExpr e}"
+  throwThe UnsupportedCoefficient { expr := e, closed }
 
 /-- Interval endpoints stay in the rational frontend, even when optional
 coefficient handlers are installed. -/

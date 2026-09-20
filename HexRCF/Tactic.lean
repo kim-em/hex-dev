@@ -53,8 +53,9 @@ meta initialize registerBuiltinAttribute {
     unless kind == AttributeKind.global do
       throwAttrMustBeGlobal `rcf_handler kind
     let info ← getConstInfo decl
-    unless info.levelParams.isEmpty &&
-        (← MetaM.run' <| isDefEq info.type (mkConst ``Handler)) do
+    unless info.levelParams.isEmpty do
+      throwError "rcf_handler: {decl} must be monomorphic"
+    unless ← MetaM.run' <| isDefEq info.type (mkConst ``Handler) do
       throwAttrDeclNotOfExpectedType `rcf_handler decl info.type (mkConst ``Handler)
     modifyEnv fun env => handlerExt.addEntry env decl
 }
@@ -62,9 +63,7 @@ meta initialize registerBuiltinAttribute {
 /-- Registered declaration names, deduplicated and sorted by `Name.lt`.
 Lookup order is independent of attribute and import order. -/
 meta def handlerNames : CoreM (Array Name) := do
-  let names := (handlerExt.getState (← getEnv)).qsort Name.lt
-  return names.foldl (fun acc name =>
-    if acc.back? == some name then acc else acc.push name) #[]
+  return (handlerExt.getState (← getEnv)).qsort Name.lt |>.eraseReps
 
 private meta unsafe def evalHandlerUnsafe (name : Name) : MetaM Handler :=
   evalConst Handler name
@@ -72,20 +71,38 @@ private meta unsafe def evalHandlerUnsafe (name : Name) : MetaM Handler :=
 @[implemented_by evalHandlerUnsafe]
 private meta opaque evalHandler (name : Name) : MetaM Handler
 
-/-- Try handlers transactionally. Even successful handlers export only their
-fully instantiated proof, not assignments to metavariables in the target.
+/-- Optional solvers must remain within the ordinary mathematical kernel
+axioms, including through helper declarations used by a proposed proof. -/
+private meta def checkAxioms (name : Name) (proof : Expr) : MetaM Unit := do
+  for constant in proof.getUsedConstants do
+    for dependency in ← collectAxioms constant do
+      unless [``propext, ``Classical.choice, ``Quot.sound].contains dependency do
+        throwError "rcf: handler {name} proposed a proof using forbidden axiom {dependency}"
+
+/-- Try handlers transactionally. Successful handlers retain auxiliary
+proof declarations but cannot export assignments to the target's metavariables.
 Exceptions and structured failures are terminal; only `declined` continues. -/
 private meta def dispatchHandlers (target : Expr)
     (reason : Reify.UnsupportedCoefficient) : MetaM Expr := do
   for name in ← handlerNames do
     let saved ← saveState
-    let result : HandlerResult ← try
+    let (result, _) ← tryFinally' (do
+        let info ← getConstInfo name
+        unless info.levelParams.isEmpty && (← isDefEq info.type (mkConst ``Handler)) do
+          throwError "rcf: invalid handler signature for {name}"
         let handler ← evalHandler name
         match ← handler target with
-        | .proved proof => pure (.proved (← instantiateMVars proof))
+        | .proved proof => pure (HandlerResult.proved (← instantiateMVars proof))
         | .failed message => pure (.failed (← addMessageContext message))
-        | .declined => pure .declined
-      finally saved.restore
+        | .declined => pure .declined)
+      (fun result => do
+        match result with
+        | some (.proved _) =>
+            modify fun state => { state with
+              mctx := saved.meta.mctx
+              postponed := saved.meta.postponed
+              zetaDeltaFVarIds := saved.meta.zetaDeltaFVarIds }
+        | _ => saved.restore)
     match result with
     | .declined => pure ()
     | .failed message => throwError message
@@ -95,6 +112,7 @@ private meta def dispatchHandlers (target : Expr)
         check proof
         unless ← withNewMCtxDepth <| isDefEq (← inferType proof) target do
           throwError "rcf: handler {name} proposed a proof of a different goal"
+        checkAxioms name proof
         return proof
   throwError reason.message
 

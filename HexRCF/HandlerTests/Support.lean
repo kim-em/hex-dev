@@ -66,6 +66,7 @@ meta def assertRestored : MetaM Unit := do
         let some (_, lhs, _) := body.eq? | throwError "expected equality"
         mkLambdaFVars xs (← mkEqRefl lhs)
       let candidate ← mkFreshExprMVar target
+      let proof ← mkAuxTheorem target proof (cache := false)
       candidate.mvarId!.assign proof
       return .proved candidate
   | 1 => return .proved (mkConst ``True.intro)
@@ -92,6 +93,20 @@ meta def assertRestored : MetaM Unit := do
         let some (_, lhs, _) := body.eq? | throwError "expected equality"
         mkLambdaFVars xs (← mkEqRefl lhs)
       return .proved proof
+  | 11 => return .proved (← mkSorry target false)
+  | 12 =>
+      -- Exercise existential and bounded goals through actual tactic quotation.
+      let candidate ← mkFreshExprMVar target
+      let goals ← Lean.Elab.runTactic' candidate.mvarId!
+        (← `(tactic| first | exact ⟨0, rfl⟩ | exact fun _ _ => rfl))
+      unless goals.isEmpty do throwError "synthetic handler left goals"
+      return .proved candidate
+  | 13 =>
+      let candidate ← mkFreshExprMVar target
+      let goals ← Lean.Elab.runTactic' candidate.mvarId!
+        (← `(tactic| intro x; simp_all only))
+      unless goals.isEmpty do throwError "alias handler left goals"
+      return .proved candidate
   | _ => throwError "unknown test case"
 
 @[rcf_handler] meta def aDecline : Handler := fun _ => do

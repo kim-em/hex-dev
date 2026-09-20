@@ -16,6 +16,8 @@ open Lean Meta Elab Tactic
 
 -- These tactics intentionally observe restored state without changing the goal.
 set_option linter.unusedTactic false
+-- The observational IO references are shared across test declarations.
+set_option Elab.async false
 
 -- Repeated registration must not duplicate an attempt.
 attribute [rcf_handler] aDecline
@@ -75,7 +77,14 @@ example : ∀ x : ℝ, x + Real.pi = x + Real.pi := by
   run_tac runCase 7 (some "")
   run_tac runCase 8 (some "symbolic or non-rational coefficient")
   run_tac runCase 9 (some "Application type mismatch")
+  run_tac runCase 11 (some "forbidden axiom sorryAx")
   exact fun _ => rfl
+
+example : ∃ x : ℝ, x + Real.pi = x + Real.pi := by
+  run_tac runCase 12 none
+
+example : ∀ x : ℝ, x ∈ Set.Ioc (0 : ℝ) 1 → x + Real.pi = x + Real.pi := by
+  run_tac runCase 12 none
 
 /-- Assert that rational success and terminal frontend/solver errors do not
 consult any optional handler. -/
@@ -147,6 +156,48 @@ run_elab do
   if ← unknown.mvarId!.isAssigned then throwError "changed target leaked"
   unless (← calls.get) == #[1, 2] do throwError "incorrect attempts"
 
+/-- Explicit local equalities permit dispatch, with the original goal intact. -/
+theorem aliasForward (a : ℝ) (h : a = Real.pi) : ∀ x : ℝ, x + a = x + Real.pi := by
+  run_tac runCase 13 none
+
+example (a : ℝ) (h : Real.pi = a) : ∀ x : ℝ, x + a = x + Real.pi := by
+  run_tac runCase 13 none
+
+example (a b : ℝ) (ha : a = Real.pi) (hb : Real.exp 1 = b) :
+    ∀ x : ℝ, x + a * b = x + Real.pi * Real.exp 1 := by
+  run_tac runCase 1 (some "proposed a proof of a different goal")
+  run_tac runCase 4 (some "coefficient budget exhausted")
+  run_tac runCase 13 none
+
+example (a b : ℝ) (_h : a = b) : ∀ x : ℝ, x + a = x + a := by
+  run_tac noDispatch false
+  exact fun _ => rfl
+
+example (a b : ℝ) (_ha : a = b) (_hb : b = a) : ∀ x : ℝ, x + a = x + a := by
+  run_tac noDispatch false
+  exact fun _ => rfl
+
+example (a b : ℝ) (_h : a = Real.pi + b) : ∀ x : ℝ, x + a = x + a := by
+  run_tac noDispatch false
+  exact fun _ => rfl
+
+example (a : ℝ) (_h : a = Real.pi - Real.pi) : True := by
+  run_tac do
+    let a ← getFVarFromUserName `a
+    let zero ← Term.elabTerm (← `(term| (0 : ℝ))) none
+    let source ← mkAppM ``HDiv.hDiv #[zero, a]
+    let source ← instantiateMVars source
+    let some closed ← Reify.closeCoefficient? source | throwError "alias not recognized"
+    unless closed.value.isAppOfArity ``HDiv.hDiv 6 &&
+        closed.value.appArg!.isAppOfArity ``HSub.hSub 6 do
+      throwError "division syntax was changed"
+    checkWithKernel closed.proof
+  trivial
+
+/-- info: 'Hex.RCF.HandlerTests.aliasForward' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms aliasForward
+
 /-- error: Cannot add attribute `[rcf_handler]`: Declaration `badSignature` has type
   ℕ
 but `[rcf_handler]` can only be added to declarations of type
@@ -160,5 +211,17 @@ but `[rcf_handler]` can only be added to declarations of type
   Handler -/
 #guard_msgs in
 @[rcf_handler] meta def badArity : Nat → Handler := fun _ _ => return .declined
+
+/-- error: Cannot add attribute `[rcf_handler]`: Declaration `nonMeta` must be marked as `meta` -/
+#guard_msgs in
+@[rcf_handler] def nonMeta : Nat := 0
+
+/-- error: Invalid attribute scope: Attribute `[rcf_handler]` must be global, not `local` -/
+#guard_msgs in
+attribute [local rcf_handler] aDecline
+
+/-- error: rcf_handler: Hex.RCF.HandlerTests.polymorphic must be monomorphic -/
+#guard_msgs in
+@[rcf_handler] meta def polymorphic.{u} : (α : Type u) → Handler := fun _ _ => return .declined
 
 end Hex.RCF.HandlerTests

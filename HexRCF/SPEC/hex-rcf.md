@@ -1100,16 +1100,26 @@ of attribute/import order. `HandlerResult` distinguishes `declined`, terminal
 
 `Reify.recognizeSentence` reports unsupported **closed coefficient syntax**
 through `ExceptT UnsupportedCoefficient MetaM`. Only that result enters
-handler dispatch. Symbolic parameters, unsupported polynomial syntax and
-non-rational interval endpoints remain frontend errors. False rational
+handler dispatch. `Reify.closeCoefficient?` also recognizes local real symbols
+with direct explicit equalities to closed real expressions, in either
+orientation. It substitutes every symbol of a compound coefficient and retains
+a kernel-checked equality with the original expression. It does not chase
+nonclosed or cyclic bindings, simplify arithmetic or cancel source divisors.
+Unaccounted-for symbolic parameters, unsupported polynomial syntax and
+non-rational interval endpoints remain frontend errors. The optional adapter
+must still validate the closed grammar and transport its result to the original
+target; equality recognition alone does not discharge source divisor guards. False rational
 verdicts, replay failures and resource exhaustion remain terminal; diagnostics
 are never parsed to choose a solver. Scalar recognition retains `norm_num`'s
 exact rational normalization and propagates Lean's runtime exceptions.
 
 Each handler receives the original target. Its metavariable assignments are
-restored on every result, including success; only a fully instantiated proof
-can escape. The base type-checks that proof and compares its type with the
-original target without assigning existing metavariables. Decline tries the
+restored on every result, including success. Successful auxiliary proof
+declarations remain available for the fully instantiated returned proof;
+declined and failed attempts roll back environment changes too. The base
+type-checks the proof, compares its type with the original target without
+assigning existing metavariables, and rejects transitive axiom dependencies
+outside `propext`, `Classical.choice`, and `Quot.sound`. Decline tries the
 next name; failure or an exception stops dispatch. Failed tactic attempts
 restore the goal list and metavariable state, including on resource exhaustion.
 The base imports no family module, and existing rational goals take the
