@@ -93,38 +93,48 @@ Phase numbers are `done_through` in `libraries.yml` (7 = fully done).
   pruning heuristic for any of the searches below; not a decision procedure.
 - **Pinned Mathlib.** `IsRealClosed` exists
   (`Mathlib/FieldTheory/IsRealClosed/Basic.lean`, one file: squares, odd
-  roots, `nonneg_iff_isSquare`); no Sturm, no Thom's lemma, no continuity of
-  roots in the coefficients, no CAD-related topology. Gröbner:
+  roots, `nonneg_iff_isSquare`); no Sturm, no Thom's lemma, no CAD-related
+  topology. Continuity of roots exists in the monic equal-degree form
+  (`Polynomial.exists_roots_norm_sub_lt_of_norm_coeff_sub_lt` in
+  `Mathlib/Analysis/Normed/Field/Approximation.lean`); multiplicity control,
+  root functions, and the degree-drop cases do not. Gröbner:
   `Mathlib/RingTheory/MvPolynomial/Groebner.lean` has only the multivariate
   division algorithm with respect to a `MonomialOrder`; no Buchberger
-  criterion.
-- **Planning already on file.**
-  - `SPEC/future-work.md` § "Cylindrical algebraic decomposition": two or
-    three variables, projection operator, multivariate subresultants, exact
-    algebraic sample points, sign determination with algebraic coefficients;
-    prototype projection and the certificate before fixing an API.
-  - [#10143](https://github.com/kim-em/hex-dev/issues/10143) (open umbrella)
-    "real closures of ordered fields with infinitesimals and transcendentals",
-    after de Moura–Passmore (CADE 2013, Z3's `RCF` module). It proposes
-    `hex-sturm` (Tarski queries over an ordered field), `hex-sign-det`
-    (BKR sign determination and Thom encodings), `hex-ordered-fn`
-    (infinitesimals and transcendentals), `hex-real-closure`. That issue is
-    where the survey's "BKR" belongs; see below.
-  - `SPEC/future-work.md` § "Gröbner bases": Buchberger with Gebauer–Möller,
-    "F4 only if benchmarks justify it". This conflicts with the stated bar
-    (industrial or nothing) and should be rewritten or parked.
-  - No entry anywhere for virtual substitution, for a shared multivariate
-    formula language, or for an NLSAT-style search.
+  criterion. `polyrith` is retired (its external service was shut down) and
+  its documentation points to `grobner`, the front end of `grind`'s
+  Gröbner-basis module.
+- **Planning on file.** PR
+  [#10299](https://github.com/kim-em/hex-dev/pull/10299) rewrote the
+  `SPEC/future-work.md` entry "Cylindrical algebraic decomposition" along the
+  lines of this report, added the entries "Real-arithmetic formula language",
+  "Virtual substitution", and "Real-arithmetic satisfiability by cylindrical
+  coverings", and re-scoped "Gröbner bases" to the industrial bar.
+  [#10143](https://github.com/kim-em/hex-dev/issues/10143) (open umbrella)
+  "real closures of ordered fields with infinitesimals and transcendentals",
+  after de Moura–Passmore (CADE 2013, Z3's `RCF` module), proposes
+  `hex-sturm` (Tarski queries over an ordered field), `hex-sign-det` (BKR
+  sign determination and Thom encodings), `hex-ordered-fn`, and
+  `hex-real-closure`; that issue is where the survey's "BKR" belongs. The
+  directives filed from this report are
+  [#10300](https://github.com/kim-em/hex-dev/issues/10300) (Tau Ceti roadmap
+  for the delineability theorem),
+  [#10301](https://github.com/kim-em/hex-dev/issues/10301) (sample-cost
+  spike), [#10302](https://github.com/kim-em/hex-dev/issues/10302) (virtual
+  substitution SPEC), and
+  [#10303](https://github.com/kim-em/hex-dev/issues/10303) (coverings SPEC).
 
 ## Cylindrical algebraic decomposition
 
 ### What the survey gets right and wrong
 
 Right: full first-order QE, doubly exponential, no succinct certificate for a
-general QE answer, and every existing formal development stops short.
-Mahboubi implemented CAD inside Coq (MSCS 2007) but the correctness proof
-was never completed; the Cohen–Mahboubi QE (LMCS 2012) that *was* verified is
-a projection-free, sign-determination-based Tarski-style algorithm, not CAD.
+general QE answer. Out of date on the formal record: Mahboubi implemented CAD
+inside Coq (MSCS 2007) without completing the correctness proof, and the
+Cohen–Mahboubi QE (LMCS 2012) that was verified is a projection-free,
+sign-determination-based Tarski-style algorithm rather than CAD, but Vermande
+(CPP 2026, Rocq/MathComp) has since given the first formal correctness proof
+of CAD. Nothing comparable exists in Lean, and Vermande's development is the
+reference for the statement shapes the roadmap below asks for.
 
 Wrong or misleading: "the most viable path is fully formally verifying the
 algorithm itself". For Hex's architecture that is the wrong dichotomy. CAD has
@@ -207,20 +217,27 @@ only, at the price of more Tarski queries.
 
 Delineability for Collins' operator needs, in Mathlib terms:
 
-- continuity of the complex roots of a polynomial in its coefficients
-  (multiset form, or the "roots stay in small discs" form): not in Mathlib;
+- continuity of the complex roots of a polynomial in its coefficients: the
+  pinned Mathlib has the monic equal-degree "every root of `f` has a root of
+  `g` nearby" form; the multiplicity-sensitive version and the degree-drop
+  cases (handled by Collins through the reducta) are missing;
 - the subresultant theory: the number of distinct common roots, and the
   degree of the gcd, read off from the first nonvanishing psc; hex-resultant
   has the resultant-zero-iff-common-root and specialization results but not
   the psc/gcd-degree statement;
 - connectedness arguments over cells, where cells are graphs and bands of
-  continuous root functions over lower cells; the topology is elementary but
-  the bookkeeping is heavy;
+  continuous root functions over lower cells; over `ℝ` the topology is
+  elementary but the bookkeeping is heavy, and over an arbitrary real closed
+  field intervals are not topologically connected, so a general statement
+  needs semialgebraic connectedness (the first target should be `ℝ`);
+- the identically-zero alternative in the conclusion: over a cell a level
+  polynomial may vanish on the whole cylinder, and the theorem must say so
+  rather than promise root functions;
 - for QE with alternations, the cylindricity argument.
 
 This is the long pole, and it is independent of every implementation
-choice. Basu–Pollack–Roy chapter 11 is the reference; Mahboubi's thesis is
-the closest formal attempt and it stopped exactly here.
+choice. Basu–Pollack–Roy chapter 11 is the textbook reference and Vermande's
+Rocq/MathComp proof (CPP 2026) the formal one.
 
 ### Recommendation
 
@@ -257,9 +274,10 @@ Three different things carry the name:
    system; BKR's contribution is a divide-and-conquer that keeps only the
    realizable conditions (Basu–Pollack–Roy Algorithm 10.11).
 2. **The multivariate "parallel" QE algorithm** of the 1986 paper, which
-   applies (1) with parametric coefficients recursively. It gave the first
-   single-exponential space bound and was improved by Canny and Renegar. It
-   is not used by any practical system; the practical single-exponential
+   applies (1) with parametric coefficients recursively. Its multivariate
+   complexity analysis was later found to be flawed (Canny), and the
+   single-exponential results that stand are Renegar's and Canny's
+   corrected variants. It is not used by any practical system; the practical single-exponential
    line is the critical-point method (Basu–Pollack–Roy chapters 13–14, RAGlib),
    which is a different algorithm and also unimplemented in any prover.
 3. **Thom encodings** (Coste–Roy 1988), which identify a root of `p` by the
@@ -278,13 +296,21 @@ certificate story is good, not bad:
 
 - A Tarski query value is certified by a Sturm–Tarski chain replay: the same
   literal three-term recurrence hex-rcf already checks by multiplication,
-  with the seed `s₁ = p'·q` (up to a positive scale) instead of `s₁ = p'`,
-  plus sign-variation counts at `±∞` or at dyadic endpoints.
+  seeded by `p'·q` (up to a positive scale) instead of `p'`, plus
+  sign-variation counts at `±∞` or at dyadic endpoints. Two things change
+  beyond the seed: `p'·q` may have degree at least `deg p`, so the chain
+  starts with a reduction step, and when `p` and `q` share roots the chain
+  ends at a nonconstant gcd, which the counting theorem must accommodate
+  (`IsSturmChain` currently requires a root-free last entry).
 - The sign-determination step is a linear identity `M · c = t` between the
   claimed count vector `c`, the Tarski query vector `t`, and a matrix `M`
-  that is a tensor power of one fixed `3×3` matrix (or a certified
-  invertible submatrix of it, with its inverse supplied). The kernel checks
-  it by integer multiplication.
+  that is a tensor power of one fixed `3×3` matrix. With the full ternary
+  matrix the identity plus invertibility determines `c`. BKR's reduced
+  matrices keep only realizable sign conditions, and then the certificate
+  must also justify that the dropped conditions are unrealizable (the
+  support-completeness invariant of the recursive combination step);
+  invertibility of a submatrix alone proves nothing about omitted columns.
+  The kernel checks the identities by integer multiplication.
 - Thom-encoding comparison of two roots is a finite case analysis on sign
   vectors, kernel-decidable once the encodings are certified.
 
@@ -297,8 +323,11 @@ methods, because no dyadic approximation or separation bound is involved.
   root flank of `(p, p'q)` counts `+1` where `q > 0` and `−1` where `q < 0`;
   the proof is the existing local-crossing induction with a signed increment.
 - Executable Tarski queries: hex-rcf's `SturmBuilder` instruments the
-  pseudo-remainder loop for an arbitrary chain; only its check that the second
-  entry is the derivative needs to accept `derivative p * q`.
+  pseudo-remainder loop, but it checks that the second entry is the
+  derivative, requires strictly decreasing degrees, and rejects a zero
+  remainder before a constant; a Tarski-query builder needs the reduction
+  step for `p'·q`, termination at a nonconstant gcd, and the matching
+  generalized count theorem.
 - Sign determination with the BKR divide-and-conquer and the matrix
   certificate; hex-row-reduce/hex-modular-matrix supply the linear algebra.
 - Thom encodings, Thom's lemma (Rolle-based induction; Mathlib has Rolle),
@@ -406,12 +435,15 @@ common-root packages, all of which exist to make numeric samples work.
    the next quantifier. The *outermost* variable can use `rcf`'s numeric
    route instead of the symbolic one; that is the one place where the
    existing pipeline plugs in directly.
-7. **Pruning is not free.** Dropping a leaf whose hypothesis is
-   unsatisfiable is a negative claim and needs its own proof, obtained only
-   by running the procedure on the hypothesis set. Untrusted heuristics
-   (hex-interval, rational sample evaluation) can *order* the work but
-   cannot remove leaves from a universal goal's obligation. This is the
-   structural reason CAD scales better: its samples make every cell
+7. **Pruning needs a checked contradiction.** Dropping a leaf whose
+   hypothesis is unsatisfiable is a negative claim and needs its own proof.
+   Often that proof is short (contradictory sign assumptions on the same
+   polynomial, an impossible sign matrix, a linear-combination refutation),
+   and McLaughlin–Harrison handle such branches locally; in general it means
+   running a certified procedure on the hypothesis set. Untrusted heuristics
+   (hex-interval, rational sample evaluation) can order the work but cannot
+   by themselves remove leaves from a universal goal's obligation. This is
+   the structural reason CAD scales better: its samples make every cell
    manifestly nonempty.
 8. **Testing.** Oracle: Harrison's OCaml `real.ml` from the Handbook (open
    source, exactly this algorithm) for verdicts and output formulas; QEPCAD B
@@ -424,7 +456,8 @@ fold, and certificate layers and adds the parametric sign-matrix engine
 with an elementary soundness theorem. It needs no delineability theorem and
 no algebraic numbers, which makes it the cheapest route to a *complete*
 multivariate procedure with a kernel certificate. Its scale is toy: two or
-three variables, low degree, exponentially many leaves with no sound pruning.
+three variables, low degree, exponentially many leaves pruned only by checked
+contradictions.
 If the goal is a complete QE in Lean at any cost, this is the shortest path;
 if the goal is a usable multivariate tactic, virtual substitution first and
 then the NLSAT/covering route on the CAD theorem dominate it. Scope any first
@@ -435,12 +468,13 @@ delegated to `rcf`.
 
 ### What it is
 
-For a quantified variable of degree at most 2 in every atom, `∃x φ` is
-equivalent to a finite disjunction `⋁_{t ∈ E} φ[x // t]` where `E` is the
-elimination set: `−∞`, each real root of each atom's polynomial (as a
-formal expression `(−b ± √(b²−4ac)) / 2a` with guards `a ≠ 0`,
-`b² − 4ac ≥ 0`, plus the linear case), and each root plus an infinitesimal
-`ε`. The substitution is *virtual*: `√·`, `1/a`, `ε`, `∞` never appear in the
+For a quantified variable of degree at most 2 in every atom, `∃x φ` over a
+real closed field is equivalent to a finite disjunction `⋁_{t ∈ E} φ[x // t]`
+where `E` is the elimination set: `−∞`, each real root of each atom's
+polynomial (as a formal expression `(−b ± √(b²−4ac)) / 2a` with guards
+`a ≠ 0`, `b² − 4ac ≥ 0`, the linear root `−c/b` under `a = 0 ∧ b ≠ 0`, and
+the constant case), and each root plus an infinitesimal `ε`; at most
+`4m + 1` points for `m` atoms. The substitution is *virtual*: `√·`, `1/a`, `ε`, `∞` never appear in the
 result; a fixed rule set rewrites `p(x) ⊳ 0` under each test point into a
 quantifier-free formula in the remaining variables (for `r + ε`, by the signs
 of successive derivatives; for `−∞`, by leading-coefficient signs). Linear
@@ -448,17 +482,17 @@ and quadratic: Loos–Weispfenning 1993, Weispfenning 1997; cubic: Weispfenning
 1994 and Košta's 2016 thesis (the accessible full treatment, with clustering).
 Industrial implementations: Redlog inside REDUCE (open source since 2008),
 SMT-RAT, and preprocessors in Z3 and Mathematica. Formal prior art:
-Nipkow's verified linear QE (Isabelle, 2008/2010) and Cordwell–Tan–Platzer's
-verified quadratic virtual substitution (Isabelle, FM 2021, AFP
-`Virtual_Substitution`, with exported executable code).
+Nipkow's verified linear QE (Isabelle, 2008/2010) and the verified quadratic
+virtual substitution of Scharager, Kosaian, Mitsch, and Platzer (Isabelle,
+FM 2021, AFP `Virtual_Substitution`, with exported executable code).
 
 ### Why it fits Hex now
 
 Everything is polynomial arithmetic over `MvPoly` plus formula
 manipulation. No algebraic numbers, no root isolation, no resultants beyond
 the discriminant. The correctness content is one theorem per test-point
-kind (the elimination-set theorem), proved once over an ordered field, plus
-the derivative rule for `ε`. It composes with `rcf`: eliminate inner
+kind (the elimination-set theorem), proved once over a real closed field
+(it fails over `ℚ`: `∃x, x² = 2`), plus the derivative rule for `ε`. It composes with `rcf`: eliminate inner
 quantified variables that are at most quadratic, then hand a univariate
 residue to `rcf`, or evaluate a closed formula over `ℚ` in the kernel.
 Degrees grow under substitution, so the second elimination often exceeds the
@@ -468,20 +502,24 @@ degree bound; Redlog falls back to CAD at that point, and so would Hex.
 
 - *Reflection*: run a verified `vs : Formula → Formula` in the kernel on the
   reflected formula. hex-mv-poly's kernel form was designed for this. Cost
-  is kernel polynomial arithmetic on a formula of size roughly
-  `(2·atoms + 1)` per eliminated variable, multiplicatively. Fine for a
-  handful of atoms and two or three variables; this is what the Isabelle
-  work does.
-- *Certificate*: the compiled side chooses the test points and the
-  simplified result; the kernel checks each virtual substitution as a
+  is kernel polynomial arithmetic on a formula that grows by the
+  elimination-set size (up to `4m + 1`) times the substitution blowup per
+  eliminated variable. Plausible for a handful of atoms and two or three
+  variables. The Isabelle work runs its eliminator as exported SML, which
+  says nothing about kernel-reduction cost.
+- *Certificate*: the elimination set is fixed by the formula and the
+  once-proved completeness theorem; the compiled side chooses only the
+  simplifications. The kernel checks each virtual substitution as a
   polynomial identity (`p[x // (a + b√d)/c]` clears to `A + B√d` over
-  `cᵏ`, an identity between `MvPoly`s) and applies the once-proved rules.
-  Simplification is the delicate part: for a universal goal every disjunct
-  must be refuted, so a simplifier may only *weaken* a disjunct (drop
-  conjuncts, constant-fold, take `linear_combination`-style consequences),
-  each step a checkable implication. Full Dolzmann–Sturm simplification
-  (which uses equivalences) is not available to the trusted side, but it can
-  guide the untrusted search.
+  `cᵏ`, an identity between `MvPoly`s) and each simplification step against
+  its proof. Refutation and quantifier elimination need different
+  certificates. To refute a universal goal every disjunct must be refuted,
+  so a disjunct may be replaced by any checked weakening (drop conjuncts,
+  constant-fold, take `linear_combination`-style consequences). To return a
+  quantifier-free formula, every step must be an equivalence, including
+  under negation and alternation, so only checked equivalence-preserving
+  simplifications apply; Dolzmann–Sturm simplification is admissible
+  whenever its steps are checked and otherwise guides the untrusted search.
 
 ### Work items
 
@@ -546,7 +584,13 @@ an algebraic tuple checked by evaluation.
 Same theorem, same projection arithmetic, same lifting primitive, minus the
 full decomposition and cylindricity, minus quantifier alternation, plus a
 CDCL core (or an external SAT solver with LRAT output) and the
-single-cell/covering construction. Only the cells the search visited are
+single-cell/covering construction. The projection operator is part of the
+trusted statement, not a search-time option: the side conditions a cell
+clause carries and the theorem the checker invokes differ between Collins'
+operator and the reduced ones (Lazard's also changes lifting), and LRAT
+checks only the propositional part once every cell clause is justified. The
+levelwise paper's explicit proof-rule system is the model for a fixed
+certified rule interface. Only the cells the search visited are
 certified, typically a tiny fraction of the full decomposition. The
 scepticism in the prompt is right about the ceiling, not the shape: replay
 of algebraic sample data is what bounds the reachable size, and `rcf`'s
@@ -585,14 +629,16 @@ a new executable substrate; hex-mv-poly stays the certificate/kernel form.
 
 Certificates are the easy part and mostly exist: ideal membership and the
 Nullstellensatz are cofactor identities, which hex-kronecker and hex-reflect
-already check in the kernel (and which `polyrith`/`linear_combination` cover
-today with Sage as the oracle). Negative claims (non-membership, dimension,
+already check in the kernel and which `linear_combination` checks from any
+external cofactor source (`polyrith` itself is retired; its service was shut
+down). Negative claims (non-membership, dimension,
 elimination ideals) need the basis `G`, two-way cofactor identities between
 `G` and the generators, a reduction-to-zero trace for every S-pair, and the
 Buchberger criterion proved once; Mathlib has only the division algorithm.
 Note also that Lean core's `grind` already contains a Gröbner-basis-based
-commutative-ring solver for small goals, so a Hex engine is justified only
-at msolve scale.
+commutative-ring solver for small goals, exposed as the `grobner` tactic, so a
+Hex engine is justified only at msolve scale; the industrial threshold is a
+project policy, not a consequence of what other tactics can do.
 
 Recommendation: rewrite the future-work entry to state the bar and the
 msolve-shaped design, or park it. "Buchberger first, F4 if benchmarks
@@ -652,29 +698,25 @@ repository. Whether it belongs in `lp` as a fourth backend with an
 incremental interface, or in `grind`, is a `leanprover` question. Nothing in
 it touches Hex.
 
-## Proposed repository changes
+## Repository changes
 
-1. `SPEC/future-work.md` § "Cylindrical algebraic decomposition": replace
-   with the component/theorem/certificate breakdown above; name Collins'
-   operator as the default and the delineability theorem as the first
-   milestone; add the covering/NLSAT refutation as the tactic-facing variant;
-   cross-reference #10142 and #10143 for the sample representation.
-2. `SPEC/future-work.md`: new entry "Virtual substitution" (linear and
-   quadratic first, cubic later), with the composition with `rcf`.
-3. `SPEC/future-work.md`: new entry "Real-arithmetic formula language", the
-   shared prenex `MvPoly` language and hex-reflect-based reifier that
-   virtual substitution, Cohen–Hörmander, and CAD all need.
-4. `SPEC/future-work.md` § "Gröbner bases": re-scope per the bar or park.
-5. `HexRCF/SPEC/hex-rcf.md` § "What `rcf` does not decide": replace "needs
-   cylindrical algebraic decomposition" with a pointer to the three routes
-   (virtual substitution, Cohen–Hörmander, CAD/covering).
-6. `SPEC/prior-art.md`: add the real-algebra prior art (Isabelle: BKR,
-   quadratic virtual substitution, complete QE; Coq: Cohen–Mahboubi QE,
-   Mahboubi's unfinished CAD; HOL Light: McLaughlin–Harrison; Z3: nlsat and
-   the `RCF` module).
-7. #10143: no change needed; it already owns Tarski queries, BKR sign
-   determination, and Thom encodings. Its CAD paragraph should gain the
-   remark that CAD lifting may consume Thom-encoded samples.
+Made in [#10299](https://github.com/kim-em/hex-dev/pull/10299):
+`SPEC/future-work.md` § "Cylindrical algebraic decomposition" rewritten
+around the components, the delineability theorem, and the certificate; new
+entries "Real-arithmetic formula language", "Virtual substitution", and
+"Real-arithmetic satisfiability by cylindrical coverings"; § "Gröbner bases"
+re-scoped to the industrial bar; `SPEC/prior-art.md` extended with the real
+algebra prior art. Filed as directives: #10300 (Tau Ceti roadmap), #10301
+(sample-cost spike), #10302 (virtual substitution SPEC), #10303 (coverings
+SPEC, blocked on the first two).
+
+Remaining: `HexRCF/SPEC/hex-rcf.md` § "What `rcf` does not decide" still
+says the multivariate case "needs cylindrical algebraic decomposition"; it
+should point to the three routes (virtual substitution, Cohen–Hörmander,
+decomposition or coverings). #10143 needs no structural change; its CAD
+paragraph should gain the remark that decomposition lifting may consume
+Thom-encoded samples, and its Tarski-query home should be reconciled with
+#10142.
 
 ## References
 
@@ -703,11 +745,14 @@ it touches Hex.
 - Cohen, Mahboubi. "Formal proofs in real algebraic geometry: from ordered
   fields to quantifier elimination." LMCS 2012. Mahboubi, "Implementing the
   cylindrical algebraic decomposition within the Coq system." MSCS 2007.
+  Vermande, "Cylindrical algebraic decomposition in Coq/Rocq." CPP 2026.
 - Cordwell, Tan, Platzer. "A verified decision procedure for univariate real
-  arithmetic with the BKR algorithm." ITP 2021; "Verified quadratic virtual
-  substitution for real arithmetic." FM 2021. Kosaian, Tan, Platzer, "A
-  first complete algorithm for real quantifier elimination in Isabelle/HOL."
-  CPP 2023. Nipkow, "Linear quantifier elimination." JAR 2010. Li, Passmore,
+  arithmetic with the BKR algorithm." ITP 2021. Scharager, Kosaian, Mitsch,
+  Platzer, "Verified quadratic virtual substitution for real arithmetic." FM
+  2021. Kosaian, Tan, Platzer, "A first complete algorithm for real
+  quantifier elimination in Isabelle/HOL." CPP 2023. Canny, "Improved
+  algorithms for sign determination and existential quantifier
+  elimination." Computer Journal 1993. Nipkow, "Linear quantifier elimination." JAR 2010. Li, Passmore,
   Paulson, "Deciding univariate polynomial problems using untrusted
   certificates in Isabelle/HOL." JAR 2019.
 - Berthomieu, Eder, Safey El Din. "msolve: a library for solving polynomial

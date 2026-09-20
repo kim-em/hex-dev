@@ -42,21 +42,23 @@ list is not part of that roadmap.
 
 **Real algebra and quantifier elimination**: The univariate decision
 procedure `rcf` follows Tarski's one-variable case with numeric root
-isolation; the closest artifacts are Li–Paulson's Isabelle univariate
-procedure (CPP 2016) and Li–Passmore–Paulson's untrusted-certificate version
-(JAR 2019), and McLaughlin–Harrison's proof-producing Cohen–Hörmander in HOL
-Light (CADE 2005). Cordwell, Tan, and Platzer verified univariate
-Ben-Or–Kozen–Reif sign determination in Isabelle (ITP 2021) and quadratic
-virtual substitution (FM 2021, AFP `Virtual_Substitution`, with exported
-code); Kosaian, Tan, and Platzer extended the former to a complete but
-impractical multivariate quantifier elimination (CPP 2023). Nipkow's verified
-linear quantifier elimination (JAR 2010) is the linear precedent.
-Cohen–Mahboubi's Coq development (LMCS 2012) proves quantifier elimination for
-real closed fields by a projection-free sign-determination algorithm following
-Basu–Pollack–Roy, not by cylindrical algebraic decomposition; Mahboubi's
-earlier Coq implementation of CAD (MSCS 2007) was never proved correct, and no
-proof assistant has a verified CAD or a proof of any projection operator's
-delineability theorem. On the solver side, Z3's `nlsat` (Jovanović–de Moura,
+isolation; the closest artifacts are Li–Passmore–Paulson's
+untrusted-certificate univariate procedure in Isabelle (JAR 2019), built on
+Li–Paulson's executable real algebraic numbers (CPP 2016), and
+McLaughlin–Harrison's proof-producing Cohen–Hörmander in HOL Light (CADE
+2005). Cordwell, Tan, and Platzer verified univariate Ben-Or–Kozen–Reif sign
+determination in Isabelle (ITP 2021); Scharager, Kosaian, Mitsch, and Platzer
+verified quadratic virtual substitution (FM 2021, AFP `Virtual_Substitution`,
+with exported code); Kosaian, Tan, and Platzer extended the BKR work to a
+complete but impractical multivariate quantifier elimination (CPP 2023).
+Nipkow's verified linear quantifier elimination (JAR 2010) is the linear
+precedent. Cohen–Mahboubi's Coq development (LMCS 2012) proves quantifier
+elimination for real closed fields by a projection-free sign-determination
+algorithm following Basu–Pollack–Roy, not by cylindrical algebraic
+decomposition; Mahboubi's earlier Coq implementation of CAD (MSCS 2007) was
+never proved correct; Vermande's Rocq/MathComp development (CPP 2026) is the
+first formal correctness proof of CAD and the reference for the shape of the
+delineability statements. Nothing of this exists in Lean. On the solver side, Z3's `nlsat` (Jovanović–de Moura,
 IJCAR 2012) and its `RCF` module (de Moura–Passmore, CADE 2013) are the
 reference designs for model-constructing search and for real closures with
 infinitesimals; QEPCAD B and Redlog (open source inside REDUCE) are the
