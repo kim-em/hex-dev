@@ -37,7 +37,7 @@ fails, `HexCoverings` owns a list-form LRAT checker with its own soundness
 theorem. The covering-tree alternative remains available.
 
 `HexCoveringsMathlib` depends on `HexCoverings`, `HexRealFormulaMathlib`,
-`HexSturmMathlib`, the polynomial, resultant, real-root and algebraic-number
+the polynomial, resultant, real-root and algebraic-number
 correspondence libraries, `HexReflectMathlib`, Mathlib, and Tau Ceti. It owns
 real cell semantics, projection correspondence, connectedness, checker soundness,
 export correspondence, and tactic proof construction. The orchestration
@@ -266,6 +266,14 @@ operands, is finite and acyclic, and reduces to univariate literal checks;
 it cannot recursively justify its own sign. No second Sturm recurrence is
 introduced. This adapter and its correspondence are new implementation
 obligations, not an already available Hex API.
+
+The baseline uses derivative Sturm root counts interpreted in `ℝ`, proved
+from the existing real Sturm theory and coefficient correspondence. Reusing
+the computational interface does not import the pending generic
+Sturm–Tarski/Cauchy-index foundation of `HexSturmMathlib`. That companion
+and general Tarski queries are optional later adapters; they must preserve
+the baseline's stated theorem dependencies. No second unproved Tau Ceti
+target becomes an assumption of `refute_sound` through sample replay.
 
 The planned `HexSignDet` root descriptors and `HexRealClosure` sample
 interface may supply alternative producers/evidence through explicit
