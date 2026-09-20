@@ -35,8 +35,8 @@ and on `HexArith` and `HexBasic` for bounded arithmetic and explicit random
 state. The companion `HexIntFactorMathlib` proves correspondence with
 Mathlib's factorization, divisor, squarefree, and `ZMod` order APIs.
 
-The bounded ECM provider also constructs primality certificates for the
-secp256k1, P-384 and Curve448 field primes. See
+The bounded ECM provider {name}`Hex.Nat.ecmFactorSearch` constructs primality
+certificates for the secp256k1, P-384 and Curve448 field primes. See
 {ref "tutorial-field-primes"}[the field-prime tutorial] for the three proofs
 and instructions for saving the generated certificates.
 
@@ -153,6 +153,22 @@ random draw explicit. The default fuel scales with bit length but does not
 claim to make a partial search total.
 
 {docstring Hex.Nat.defaultFuel}
+
+For `primality?`, the explicit provider
+{name}`Hex.Nat.ecmFactorSearch` tries the ordinary construction search before
+bounded ECM stages 1 and 2:
+
+{docstring Hex.Nat.ecmFactorSearch}
+
+Its defaults are `b₁ = 32768`, `b₂ = 524288`, and `curves = 64`.
+ECM attempts with stage bounds above 524288 and 4194304 respectively decline
+without work, and the curve count is capped at 64. Set `trace := true` to display curve
+outcomes. The tactic's `maxAttempts` allowance is shared across factor search,
+recursive certificates and witnesses. A stage-1 attempt and a stage-2
+continuation each consume one attempt. For example,
+`primality? (factor := Hex.Nat.ecmFactorSearch (curves := 16))`
+uses fewer curves, which may exhaust on inputs supported by the default
+64-curve provider.
 
 The {name}`Hex.Nat.FactorStop` cases distinguish zero, ordinary exhaustion,
 and rejection of a producer's output by a checker. A

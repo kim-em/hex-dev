@@ -166,8 +166,8 @@ tag := "tutorials"
 The reference chapters above document each library on its own terms. The
 tutorials here are application-first: each leads with a problem a reader
 already cares about and shows the libraries carrying a recognizable
-end-to-end workflow, with every code snippet checked as part of this
-build.
+end-to-end workflow. Lean examples are checked by the manual build or their
+linked conformance targets.
 
 {include 2 HexManual.Tutorials.AESField}
 

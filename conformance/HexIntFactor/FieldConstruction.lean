@@ -9,6 +9,8 @@ import HexPrimality.Elab
 
 -- The explicit provider is bounded independently of elaborator heartbeats.
 set_option maxHeartbeats 4000000
+set_option maxRecDepth 1024
+set_option exponentiation.threshold 448
 
 /-- info: Try this:
   [apply] exact Hex.Nat.prime_of_checkPrimeAt (c := Hex.Nat.PrimeCert.small 7) (by decide +kernel)
@@ -32,7 +34,7 @@ info: Try this:
       (by decide +kernel)
 -/
 #guard_msgs in
-example : Hex.Nat.Prime 115792089237316195423570985008687907853269984665640564039457584007908834671663 := by
+example : Hex.Nat.Prime (2 ^ 256 - 2 ^ 32 - 977) := by
   primality? (factor := Hex.Nat.ecmFactorSearch)
 
 /--
@@ -55,7 +57,8 @@ info: Try this:
       (by decide +kernel)
 -/
 #guard_msgs in
-example : Hex.Nat.Prime 39402006196394479212279040100143613805079739270465446667948293404245721771496870329047266088258938001861606973112319 := by
+example : Hex.Nat.Prime
+    (2 ^ 384 - 2 ^ 128 - 2 ^ 96 + 2 ^ 32 - 1) := by
   primality? (factor := Hex.Nat.ecmFactorSearch)
 
 /--
@@ -79,7 +82,7 @@ info: Try this:
       (by decide +kernel)
 -/
 #guard_msgs in
-example : Hex.Nat.Prime 726838724295606890549323807888004534353641360687318060281490199180612328166730772686396383698676545930088884461843637361053498018365439 := by
+example : Hex.Nat.Prime (2 ^ 448 - 2 ^ 224 - 1) := by
   primality? (factor := Hex.Nat.ecmFactorSearch)
 
 -- An open provider expression is rejected before even a table-prime search.

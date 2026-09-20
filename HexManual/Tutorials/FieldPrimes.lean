@@ -13,6 +13,7 @@ open Verso.Genre.Manual.InlineLean
 
 -- The complete certificate contains indivisible numerals of up to 78 digits.
 set_option verso.code.warnLineLength 100
+set_option pp.rawOnError true
 
 #doc (Manual) "Proving the secp256k1, P-384 and Curve448 field primes" =>
 %%%
@@ -34,7 +35,7 @@ Use a checkout of the
 part of `HexIntFactor`, which is not yet included in the published split
 libraries. Start a Lean file with these imports:
 
-```
+```imports
 import HexIntFactor.Construction
 import HexPrimality.Elab
 ```
@@ -63,14 +64,14 @@ tag := "tutorial-field-primes-proofs"
 
 The secp256k1 field prime is `2^256 - 2^32 - 977`:
 
-```lean
+```
 example : Hex.Nat.Prime (2 ^ 256 - 2 ^ 32 - 977) := by
   primality? (factor := Hex.Nat.ecmFactorSearch)
 ```
 
 The P-384 field prime is `2^384 - 2^128 - 2^96 + 2^32 - 1`:
 
-```lean
+```
 example : Hex.Nat.Prime
     (2 ^ 384 - 2 ^ 128 - 2 ^ 96 + 2 ^ 32 - 1) := by
   primality? (factor := Hex.Nat.ecmFactorSearch)
@@ -78,7 +79,7 @@ example : Hex.Nat.Prime
 
 The Curve448 field prime is `2^448 - 2^224 - 1`:
 
-```lean
+```
 example : Hex.Nat.Prime (2 ^ 448 - 2 ^ 224 - 1) := by
   primality? (factor := Hex.Nat.ecmFactorSearch)
 ```
@@ -99,13 +100,25 @@ required for these three primes. Plain `primality?` supports P-521 but
 exhausts on these three inputs. You do not need to supply factors, curve
 parameters, seeds or certificates for the examples above.
 
+If Lean reports a heartbeat or recursion-depth limit, include the local
+options from the setup. A message saying that certificate construction
+exhausted its attempts instead refers to the factor search budget.
+The {ref "hex-int-factor-search"}[factor-search reference] describes the
+optional bounds, curve count and tracing arguments.
+
+Build note: the three construction examples and their exact `Try this:`
+suggestions are checked in
+[the field construction tests](https://github.com/kim-em/hex-dev/blob/main/conformance/HexIntFactor/FieldConstruction.lean).
+Run `lake build HexIntFactorFieldConformance` to check them together.
+The manual build checks the saved proof below without repeating the searches.
+
 # What the saved proof looks like
 %%%
 tag := "tutorial-field-primes-replay"
 %%%
 
-For secp256k1, the resulting certificate is small enough to show in full.
-This standalone proof needs only `import HexPrimality.Cert` and uses the
+Here is a saved secp256k1 certificate in full, with abbreviated constructor
+names. This standalone proof needs only `import HexPrimality.Cert` and uses the
 numeral to avoid the options for normalizing powers:
 
 ```lean
@@ -135,7 +148,7 @@ also include P-384 and Curve448.
 tag := "tutorial-field-primes-cost"
 %%%
 
-Allow several minutes to try all three searches in Lean. The tactic runs
+Allow a few minutes to try all three searches in Lean. The tactic runs
 search through Lean's interpreter, so compiled search timings alone do not
 predict the time spent in the editor.
 

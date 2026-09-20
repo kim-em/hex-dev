@@ -229,7 +229,7 @@ The [replay attribution](https://github.com/kim-em/hex-dev/blob/main/reports/hex
 records exact revisions, every sample, component costs, negative controls,
 and construction regression checks. Hex uses Lean 4.34.0 and PrimeCert uses
 Lean 4.33.0; identical-code calibration is reported separately.
-That comparison uses a supplied Curve448 certificate in both systems.
+The kernel replay comparison uses a supplied Curve448 certificate in both systems.
 The explicit ECM route in {ref "tutorial-field-primes"}[the field-prime tutorial]
 constructs its own certificate. The corpus is small and structured.
 
