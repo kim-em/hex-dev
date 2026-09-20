@@ -1103,7 +1103,9 @@ through `ExceptT UnsupportedCoefficient MetaM`. Only that result enters
 handler dispatch. `Reify.closeCoefficient?` also recognizes local real symbols
 with direct explicit equalities to closed real expressions, in either
 orientation. It substitutes every symbol of a compound coefficient and retains
-a kernel-checked equality with the original expression. It does not chase
+a kernel-checked equality with the original expression. Handlers can reuse the public
+`closeCoefficient?` helper while scanning the full original target; the first
+recognition failure is not a complete coefficient/guard inventory. It does not chase
 nonclosed or cyclic bindings, simplify arithmetic or cancel source divisors.
 Unaccounted-for symbolic parameters, unsupported polynomial syntax and
 non-rational interval endpoints remain frontend errors. The optional adapter
@@ -1114,9 +1116,9 @@ are never parsed to choose a solver. Scalar recognition retains `norm_num`'s
 exact rational normalization and propagates Lean's runtime exceptions.
 
 Each handler receives the original target. Its metavariable assignments are
-restored on every result, including success. Successful auxiliary proof
-declarations remain available for the fully instantiated returned proof;
-declined and failed attempts roll back environment changes too. The base
+restored on every result, including success. All environment, message-log, elaboration-info and pending kernel-check
+changes from successful handlers survive, including auxiliary proof declarations.
+Declined and failed attempts roll these changes back. The base
 type-checks the proof, compares its type with the original target without
 assigning existing metavariables, and rejects transitive axiom dependencies
 outside `propext`, `Classical.choice`, and `Quot.sound`. Decline tries the

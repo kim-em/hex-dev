@@ -107,6 +107,18 @@ meta def assertRestored : MetaM Unit := do
         (← `(tactic| intro x; simp_all only))
       unless goals.isEmpty do throwError "alias handler left goals"
       return .proved candidate
+  | 14 =>
+      -- Hide the rejected candidate behind an auxiliary theorem to exercise
+      -- the transitive dependency walk and failed-environment rollback.
+      return .proved (← mkAuxTheorem target (← mkSorry target false) (cache := false))
+  | 15 =>
+      let proof ← forallTelescope target fun xs body => do
+        let some (_, lhs, _) := body.eq? | throwError "expected equality"
+        mkLambdaFVars xs (← mkEqRefl lhs)
+      -- Mention the compiler-trusting axiom as an unapplied argument. This
+      -- tests rejection without running any native proof computation.
+      let forbidden := mkConst ``Lean.ofReduceBool
+      return .proved (mkApp (mkLambda `unused .default (← inferType forbidden) proof) forbidden)
   | _ => throwError "unknown test case"
 
 @[rcf_handler] meta def aDecline : Handler := fun _ => do

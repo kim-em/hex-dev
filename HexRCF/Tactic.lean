@@ -77,7 +77,7 @@ private meta def checkAxioms (name : Name) (proof : Expr) : MetaM Unit := do
   for constant in proof.getUsedConstants do
     for dependency in ← collectAxioms constant do
       unless [``propext, ``Classical.choice, ``Quot.sound].contains dependency do
-        throwError "rcf: handler {name} proposed a proof using forbidden axiom {dependency}"
+        throwError "rcf: handler {name} proposed a proof using forbidden axiom {dependency} (through {constant})"
 
 /-- Try handlers transactionally. Successful handlers retain auxiliary
 proof declarations but cannot export assignments to the target's metavariables.

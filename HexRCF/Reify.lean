@@ -160,7 +160,7 @@ meta def closeCoefficient? (source : Expr) : MetaM (Option ClosedCoefficient) :=
     for id in (collectFVars {} source).fvarIds do
       let symbol := mkFVar id
       let some replacement ← alias? symbol | return none
-      let function ← mkLambdaFVars #[symbol] value
+      let function := mkLambda `coefficient .default (mkConst ``Real) (value.abstract #[symbol])
       let step ← mkAppM ``congrArg #[function, replacement.proof]
       proof ← mkEqTrans proof step
       value := value.replaceFVar symbol replacement.value

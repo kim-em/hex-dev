@@ -78,6 +78,8 @@ example : ∀ x : ℝ, x + Real.pi = x + Real.pi := by
   run_tac runCase 8 (some "symbolic or non-rational coefficient")
   run_tac runCase 9 (some "Application type mismatch")
   run_tac runCase 11 (some "forbidden axiom sorryAx")
+  run_tac runCase 14 (some "forbidden axiom sorryAx")
+  run_tac runCase 15 (some "forbidden axiom Lean.")
   exact fun _ => rfl
 
 example : ∃ x : ℝ, x + Real.pi = x + Real.pi := by
@@ -133,6 +135,16 @@ example : ∀ x : ℝ, x / x = x / x := by
 example : ∀ x : ℝ, x ∈ Set.Ioc Real.pi 4 → x ≤ 4 := by
   run_tac noDispatch false
   exact fun _ h => h.2
+
+example (a : ℝ) (_h : a = Real.pi) : ∀ x ∈ Set.Ioc a 4, x ≤ 4 := by
+  run_tac noDispatch false
+  exact fun _ h => h.2
+
+run_elab do
+  withLetDecl `a (mkConst ``Real) (mkConst ``Real.pi) fun a => do
+    withLocalDeclD `h (← mkEq a (mkConst ``Real.pi)) fun _ => do
+      let some closed ← Reify.closeCoefficient? a | throwError "let alias not recognized"
+      checkWithKernel closed.proof
 
 example : ∀ x : ℝ, x + budgetCoefficient = x + budgetCoefficient := by
   run_tac noDispatch false true
