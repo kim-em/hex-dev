@@ -2085,6 +2085,139 @@ kernel replay. Exact `#guard_msgs` tests pin the complete Curve25519 output, a
 small renderer example, and construction exhaustion. Standalone literal replay
 imports the checker-owning module only.
 
+## Certificate language and extension policy
+
+Keep `PrimeCert`, `checkPrime`, and `prime_of_checkPrimeAt` as the standalone
+data boundary. The source language is Lean: closed certificate expressions,
+ordinary named definitions, local `let` bindings, and explicitly invoked
+producer functions or macros. `primality? using expression` evaluates such an
+expression at type `PrimeCert`, validates its subject and `checkPrime`, and
+renders the existing fully qualified constructor literal. It also works through
+the companion's `Nat.Prime` handler. Plain `primality?` and its `maxAttempts`
+form keep their construction policy and output. The `using` form does not run
+that search and cannot be combined with `maxAttempts`.
+
+This chooses an explicit producer interface over a second global method
+registry. A producer can be supplied from another module without changing Hex;
+Lean's existing macro registration supplies optional domain syntax. The
+separate-module `CertificateProducer` conformance fixture demonstrates a
+Fermat-number candidate producer and a positive-exponent syntax prototype.
+Neither changes which data the checker accepts. The syntax prototype is an
+example for downstream authors, not an additional supported Hex grammar.
+
+### Comparison with PrimeCert
+
+The language comparison is pinned to PrimeCert commit
+[`0803c2f6bd289c09704c7d352bb8fcf770cbb9b2`](https://github.com/b-mehta/PrimeCert/tree/0803c2f6bd289c09704c7d352bb8fcf770cbb9b2),
+on Lean 4.33.0. This comparison is distinct from the earlier algorithm survey
+and performance pins above. Relevant sources are `Meta/PrimeCert.lean`,
+`Meta/Pocklington.lean`, `Meta/Pocklington3.lean`, `Meta/SieveLookup.lean`,
+`Pocklington.lean`, and `Pocklington3.lean`. Executable examples and the exact
+comparison sources live under `scripts/bench/certificate_language/`.
+
+`@[prime_cert key]` registers a syntax category and a metaprogram producing a
+primality proof. A `PrimeDict` maps natural numbers to proof expressions, and
+later steps can reuse those expressions. The final term is a composition of
+method-specific theorems, not an interpreter invocation on a common data type.
+Registration adds ergonomic composition **and** permits new mathematical
+criteria when their proofs are supplied. The metaprogram's quoted result type
+is not itself a trust guarantee: Lean's kernel must check the emitted term
+against the requested theorem. A bad expression cannot prove primality, but
+can fail late with a kernel application-type error. The retained malformed
+Pocklington example exhibits that diagnostic.
+
+| PrimeCert feature | Hex correspondence and limit |
+|---|---|
+| `small`, `sieve` | `small` uses Hex's proved table below 100000. PrimeCert's imported sieve cache reaches 1000000 and `run_sieve` can extend it. A larger sieve leaf is not the same Hex certificate; use a Pocklington subtree instead. |
+| `pock` | `pock` stores each positive exponent minus one and a witness base per factor. PrimeCert's group uses one base and permits repeated factors and zero powers; Hex requires sorted, distinct subjects and positive powers. Normalize the factorization before constructing Hex data. |
+| `pock3` | `pock3` and `pock3Sieve` use the same cofactor decomposition and divisor exclusions. Convert a successful nonresidue non-square witness to `w = floor(sqrt(r² - 8s))` during construction; the Hex checker checks the interval, not the square-root algorithm. |
+| Divisor bounds | Hex deliberately caps `m` at 64 before its exclusion loop. PrimeCert's theorem has no corresponding cap. The prototype at 9223372036904058881 accepts `m = 65` there and rejects that data here, although `m = 4` already suffices for this number. |
+| Pure power of two in the cube-root path | Hex accepts the 197 certificate with `F = 4`. The pinned PrimeCert `pock3` grammar requires a factor tail; its underlying `pocklington3_certK` accepts the same case with an empty odd-factor list. |
+| Named intermediate primes | Lean definitions/lets name Hex data; PrimeCert's dictionary names facts by subject. Reification expands Hex data to a tree, while PrimeCert can reuse proof expressions. |
+| New proved criterion | PrimeCert can register a theorem-producing method. Such a proof cannot be placed in the current proof-free Hex data. A new producer must translate it into existing data, or use a separately identified theorem API outside the data checker. |
+
+These are correspondences between particular proof methods and witnesses, not
+a proof that the certificate languages or their searches are complete. The
+representative Curve25519 factorization translates in both directions; repeated
+powers and intermediate names do not require new checker constructors. The
+counterexamples above disprove a blanket claim of interchangeable syntax or
+accepted witnesses. They do not show that either system cannot prove the
+*primality statement* by another certificate. No existing arbitrary-method
+PrimeCert proof is claimed to have a general efficient Hex translation.
+
+Hex additionally provides inspectable, serializable proof-free data, explicit
+canonical-order rejection, bounded products and divisor exclusions, per-factor
+bases, native finite construction with resumable budgets, and a Mathlib-free
+checker with a thin correspondence bridge. PrimeCert's registry does not by
+itself supply those data contracts. Its proof-carrying `PrimePow` structure is
+not a replacement for them.
+
+### Alternatives and sharing
+
+1. **Surface syntax over current data: selected through ordinary Lean.**
+   The positive-exponent macro and named Curve25519 prototype reduce source
+   repetition. `using` flattens them into portable data; no custom parser or
+   elaborator becomes a replay dependency.
+2. **An implicit producer registry: not selected.** It adds ordering, duplicate
+   registration, import-dependent selection, ABI, and resource-accounting
+   policy without adding accepted certificates. Explicit function selection
+   supplies the needed extension point. Existing bounded factor callbacks and
+   their versioned downstream registration keep their separate search role.
+3. **A versioned step interpreter or DAG: deferred.** None of these examples
+   needs a new criterion or shows unacceptable tree expansion. A DAG could
+   matter for many parents sharing a large child: naming a value saves source
+   but does not memoize `checkPrime`. Hex already offers `prime_of_pocklington`
+   with separately proved child primes for proof-library sharing, outside the
+   standalone raw-data route. A new interpreter would need checked reference
+   bounds, acyclicity/order, subject consistency, and its own soundness proof.
+   The current evidence does not justify that additional checker surface.
+4. **Adopt PrimeCert directly: not selected.** Its theorem-producing language
+   needs Mathlib/Qq and a different toolchain pin, returns proofs rather than
+   standalone certificates, and moves acceptance to each method's theorem
+   application. This can be useful in a Mathlib proof library, but cannot
+   replace the required core data boundary. A companion-only producer remains
+   possible if it emits current Hex data and its toolchain dependencies align.
+
+### Trust, resources, and compatibility
+
+The `using` term must elaborate at `PrimeCert` with no free variables or
+unresolved metavariables. Imported compiled definitions need not expose their
+bodies to the kernel: only their resulting constructor data is reified.
+Compilation, evaluation, macros, producer code, and the preliminary compiled
+check are all untrusted. The emitted proof applies `prime_of_checkPrimeAt` to
+the *literal* and an equality slot; kernel reduction checks both the requested
+subject and `checkPrime`. The companion only transports that result. It is
+not possible for a registered producer to add an unchecked opcode, proof slot,
+or alternative success predicate to the checker.
+
+The existing 512-bit goal policy applies before producer evaluation. Arbitrary
+user-selected computation is not covered by `ConstructionBudget`: a supplied
+producer may be expensive or fail to terminate, just as other explicitly run
+Lean metaprograms may. This interface guarantees validation of its result,
+not bounded construction for third-party code. Checker rejection rules are
+unchanged; neither malformed data nor duplicate/unsorted factors are silently
+repaired. No end-to-end constant resource bound is asserted for arbitrary
+certificate trees.
+
+Current constructor names, fields, exponent encoding, acceptance, and literal
+rendering are unchanged. Existing generated certificates require **no
+migration**. Producer names and private macro grammars belong to their owning
+modules; applying the suggestion removes those dependencies. If a future
+criterion needs new data, introduce an explicitly versioned representation and
+proved checker, retaining the old checker API or providing a mechanical,
+acceptance-preserving conversion. Do not reinterpret old fields or accept
+unknown step tags through extension registration.
+
+The conformance suite pins exact suggestions for ordinary and supplied
+Curve25519, repeated factors, the divisor sieve, and the Mathlib bridge. It
+checks the renderer's output by elaborating it back to data and rendering it
+again. Checker-only replay modules import neither producers nor tactic code.
+Malformed subjects, composite children, duplicate factors, enormous exponents,
+out-of-range sieve bounds, and open producer expressions remain rejected.
+Source-size, native construction, fresh elaboration, and direct kernel replay
+measurements are recorded in the
+[certificate-language report](../../reports/hex-primality-language.md).
+
 ## The Mathlib layer
 
 The Mathlib-facing layer has its own

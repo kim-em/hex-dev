@@ -148,6 +148,17 @@ and normative owner; their current values and evidence are specified in
 [the core tactic contract](../../HexPrimality/SPEC/hex-primality.md#the-tactic).
 The bridge must not copy those constants or silently widen them.
 
+### Reusable certificate suggestions
+
+The companion registers both `primality?` and `primality? using expression` for
+`Nat.Prime`, delegating to the core's shared `suggestPrime` handler. It emits
+`Hex.Nat.natPrime_of_checkPrimeAt` and the same literal data and kernel check
+as the core route. Construction policy, explicit producer evaluation, rejection,
+and source-language compatibility belong to the
+[core certificate-language contract](../../HexPrimality/SPEC/hex-primality.md#certificate-language-and-extension-policy).
+The companion adds no producer registry or checker semantics. Exact suggestion
+coverage lives in `HexPrimalityMathlibConformance.OptIn`.
+
 ### Default and opt-in `norm_num`
 
 An ordinary import retains pinned Mathlib's registered `Nat.Prime` extension,
