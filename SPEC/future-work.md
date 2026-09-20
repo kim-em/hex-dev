@@ -1179,74 +1179,6 @@ lattices by their certified short-vector data and compute the automorphisms of
 one of them. Named lattices such as `E_8` may be used when the exposition and
 Lean code are independently written.
 
-### Real-arithmetic formula language
-
-The multivariate real-arithmetic procedures below (virtual substitution,
-cylindrical algebraic decomposition, and cylindrical coverings) share one
-reflected language: prenex formulas over atoms `p ⊳ 0` with
-`p : MvPoly n Int`, a quantifier prefix, and `toProp` over `ℝⁿ`. Specify it
-once, with a reifier built on `hex-reflect` for the ring layer plus the
-comparison and Boolean layer that `HexRCF/Reify.lean` currently does by hand
-for one variable, and quantifier-free output formulas for quantifier
-elimination. `hex-rcf`'s `Sentence` is the one-variable instance and remains
-the fast path for univariate residues. The SPEC decides whether the language
-is its own library or the first module of the virtual-substitution library;
-three consumers argue for its own.
-
-### Virtual substitution
-
-Weispfenning's quantifier elimination for variables of low degree. For a
-quantified variable of degree at most two in every atom, `∃x φ` over a real
-closed field is equivalent to a finite disjunction of `φ` at the test points
-`−∞`, the formal roots of each atom polynomial with their guards (the
-quadratic roots `(−b ± √(b² − 4ac)) / 2a` under `a ≠ 0 ∧ b² − 4ac ≥ 0`, the
-linear root `−c/b` under `a = 0 ∧ b ≠ 0`, and the constant case), and each
-root plus an infinitesimal `ε`; a fixed rule set rewrites each atom under each
-test point into a quantifier-free formula in the remaining variables, so no
-square root, reciprocal, or infinitesimal survives. With `m` atoms the set
-has at most `4m + 1` points. The linear and quadratic cases are
-Loos–Weispfenning and Weispfenning (1997); the cubic case is Weispfenning
-(1994) and Košta's thesis. Redlog inside REDUCE is the reference open-source
-implementation; the Isabelle development of Scharager, Kosaian, Mitsch, and
-Platzer (FM 2021) is the formal precedent, with exported executable code.
-
-Everything is `MvPoly` arithmetic and formula manipulation: `toUnivariate` in
-the quantified variable, degree case splits on symbolic leading coefficients,
-and the substitution rules. There are no algebraic numbers, no root isolation,
-and no resultants beyond the discriminant. The correctness content is the
-elimination-set theorem for each test-point kind and the derivative rule for
-`ε`, proved once over `ℝ` or any real closed field. The procedure composes
-with `hex-rcf`: eliminate the inner quantified variables that are at most
-quadratic, then hand a univariate residue to `rcf` or evaluate a closed
-residue over `ℚ` in the kernel. Degrees grow under substitution, so a later
-elimination may exceed the bound; at that point the decomposition-based
-procedures take over.
-
-Two proof routes are available, and the SPEC should support both. Reflection
-runs a verified eliminator in the kernel on the reflected formula, using
-`hex-mv-poly`'s kernel form, at the cost of kernel polynomial arithmetic on a
-formula that grows by the elimination-set size, times the substitution
-blowup, per eliminated variable. A certificate keeps the elimination set
-fixed by the formula and the once-proved completeness theorem, while the
-compiled side chooses only the simplifications; the kernel checks each
-virtual substitution as a polynomial identity and each simplification step
-against its proof. The two uses need different certificates. Refutation of a
-universal goal needs implications only: every disjunct must be refuted, and a
-disjunct may be replaced by any checked weakening of it (dropping conjuncts,
-constant folding, linear-combination consequences). Quantifier elimination
-returning a formula needs equivalences at every step, including under
-negation and quantifier alternation, so there only checked
-equivalence-preserving simplifications apply; Dolzmann–Sturm simplification
-by equivalences is admissible whenever its steps are checked and otherwise
-guides the untrusted search.
-
-Dependencies: `hex-mv-poly`, `hex-reflect`, the shared formula language, and
-`hex-rcf` for univariate residues. Oracle: Redlog's `rlqe` and the exported
-Isabelle code for the quadratic case. This is the first multivariate
-real-arithmetic tactic to build: it has no dependency on the decomposition
-theorem below and covers the linear and quadratic goals that dominate tactic
-use.
-
 ### Cylindrical algebraic decomposition
 
 Extend the univariate decision procedure of `hex-rcf` to sentences and
@@ -1328,7 +1260,7 @@ visited.
 
 Dependencies: `hex-mv-poly`, `hex-mv-gcd`, `hex-mv-factor`, `hex-resultant`,
 `hex-real-roots`, `hex-real-algebraic`, `hex-number-field`, `hex-reflect`, and
-the shared formula language.
+the shared [real-arithmetic formula language](Libraries/hex-real-formula.md).
 
 ### Real-arithmetic satisfiability by cylindrical coverings
 

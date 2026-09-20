@@ -49,6 +49,8 @@
 - **hex-real-roots**: certified real root isolation for `Z[x]`: Sturm-count witnesses, a Descartes bisection search with a proven-complete Sturm fallback
 - **hex-interval**: exact open, closed, empty, and unbounded dyadic intervals; a shared expression program; and a budgeted scheduler for propagation, refinement, and subdivision
 - **hex-interval-algebraic**: planned Mathlib-facing integration of interval facts with certified real and complex polynomial root isolation; `mathlib: true`
+- **[hex-real-formula](hex-real-formula.md)** (planned): shared multivariate real-arithmetic syntax, semantics, and reification; companion specified in the same file
+- **[hex-virtual-subst](hex-virtual-subst.md)** (planned): quadratic virtual substitution, exact QE and refutation certificates; Mathlib companion and tactic specified in the same file
 - **hex-rcf**: the `rcf` tactic, a complete decision procedure for univariate real-closed-field sentences (Boolean combinations of polynomial inequalities under one `∀`/`∃` over `ℝ`); `mathlib: true`, soundness theorem in the same library
 - **hex-resultant**: polynomial resultant and discriminant via the subresultant pseudo-remainder sequence
 - **hex-number-field**: fixed fields `QAdjoin p x`, factorization-lazy `AlgebraicRoot`, canonical `AlgebraicNumber`, and roots of polynomials with algebraic coefficients
@@ -124,6 +126,8 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-summation-mathlib**: `Finset.sum` semantics over characteristic-zero fields, the `Nat.choose` / `Nat.factorial` / `ascPochhammer` ratio kit, the summand recognizer, and the `gosper`, `zeilberger`, and `hyper` tactics
 - **hex-graph-iso-mathlib**: correspondence with finite `SimpleGraph`, ordered-colour isomorphisms, and the `SimpleGraph` extension of `graph_iso`
 - **hex-perm-group-mathlib** (planned): correspondence for permutation groups, finite actions, subgroup search, block systems, normal structure, sampling and products
+- **[hex-real-formula-mathlib](hex-real-formula.md)** (planned): real semantics, formula normalization, and shared reification
+- **[hex-virtual-subst-mathlib](hex-virtual-subst.md)** (planned): elimination-set and substitution proofs, certificate soundness, and the `virtual_subst` tactic
 
 ## Implementation dependencies
 
@@ -177,7 +181,9 @@ Each library with its immediate dependencies:
 - **hex-real-roots**: hex-poly-z
 - **hex-interval**: (none)
 - **hex-interval-algebraic**: hex-interval-mathlib, hex-real-roots-mathlib, hex-roots-mathlib (mathlib: true)
-- **hex-rcf**: hex-real-roots, hex-real-roots-mathlib, hex-poly-z, hex-poly-z-mathlib (mathlib: true)
+- **hex-real-formula** (planned): hex-mv-poly
+- **hex-virtual-subst** (planned): hex-real-formula, hex-mv-poly
+- **hex-rcf**: hex-real-roots, hex-real-roots-mathlib, hex-poly-z, hex-poly-z-mathlib (mathlib: true); the planned shared formula adapter additionally depends on hex-real-formula-mathlib
 - **hex-resultant**: hex-poly
 - **hex-number-field**: hex-poly-z, hex-roots, hex-resultant, hex-berlekamp-zassenhaus, hex-matrix, hex-row-reduce
 - **hex-real-algebraic**: hex-number-field
@@ -195,6 +201,8 @@ Each library with its immediate dependencies:
 
 Mathlib companion libraries (each also depends on Mathlib):
 
+- **hex-real-formula-mathlib** (planned): hex-real-formula, hex-mv-poly-mathlib, hex-reflect-mathlib
+- **hex-virtual-subst-mathlib** (planned): hex-virtual-subst, hex-real-formula-mathlib, hex-mv-poly-mathlib, hex-rcf
 - **hex-mod-arith-mathlib**: hex-mod-arith
 - **hex-modular-mathlib**: hex-modular, hex-mod-arith-mathlib
 - **hex-padics-mathlib**: hex-padics, hex-primality-mathlib
@@ -765,6 +773,8 @@ for developments whose source-local move has not happened yet.
 - [hex-interval.md](../../HexInterval/SPEC/hex-interval.md): exact interval data, shared programs, and budgeted propagation search
 - [hex-interval-mathlib.md](hex-interval-mathlib.md): real semantics, verified propagators, proof replay, and the `interval` tactic
 - **hex-interval-algebraic** (planned): Mathlib-facing interval providers backed by certified real and complex polynomial root isolation; its provider contract is specified in [hex-interval.md](../../HexInterval/SPEC/hex-interval.md#specialized-algebraic-solvers-before-generic-propagation)
+- [hex-real-formula](hex-real-formula.md) (planned): shared real-arithmetic syntax, semantics, and reifier; Mathlib companion specified in the same file
+- [hex-virtual-subst](hex-virtual-subst.md) (planned): quadratic QE and certificates; Mathlib companion and tactic specified in the same file
 - [hex-rcf.md](../../HexRCF/SPEC/hex-rcf.md): the `rcf` tactic for univariate real-closed-field sentences
 - [hex-resultant](../../HexResultant/SPEC/hex-resultant.md): polynomial resultant and discriminant via the subresultant pseudo-remainder sequence
 - [hex-resultant-mathlib](../../HexResultantMathlib/SPEC/hex-resultant-mathlib.md): executable resultant agreement, specialization, root-product, and discriminant theorems
