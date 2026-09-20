@@ -151,7 +151,10 @@ by `HexPoly.Field`. Preserve the current total `DensePoly` APIs.
 Use an explicit operation record, not new instances on raw representatives.
 The following signatures are design shapes; `Result` distinguishes success,
 invalid input, exhaustion and rejected evidence, and successful calls return
-the residual budget. `C` is a representation type with a fixed context.
+the residual budget. Hex-poly owns the common `Limits`, `Budget`,
+`Result` and `CheckResult` types in namespace `Hex.PolyOps`. `Limits` seeds
+the remaining `Budget`, and all higher layers thread that same budget and outcome representation. `C` is
+a representation type with a fixed context.
 
 ```text
 CoeffOps C:
@@ -161,13 +164,22 @@ CoeffOps C:
   neg      : Budget → C → Result (C × ArithmeticEvidence)
   zeroTest : Budget → C → Result (Bool × ZeroEvidence)
   sign     : Budget → C → Result (Sign × SignEvidence)
-  checkArithmetic, checkZero, checkSign : Budget → Claim → Evidence → CheckResult
+  checkValidity, checkArithmetic, checkZero, checkSign :
+               Budget → Claim → Evidence → CheckResult
 FieldOps C extends CoeffOps C:
   inv      : Budget → C → Result (C × InverseEvidence)
+  checkInverse : Budget → Claim → InverseEvidence → CheckResult
+ExactOps C extends CoeffOps C:                 -- optional capability
+  divExact : Budget → C → C → Result (C × DivEvidence)
+  checkDivision : Budget → Claim → DivEvidence → CheckResult
 ```
 
-`Sign` has exactly negative, zero and positive values. Claims include the
-context, operation and all operands/results; evidence cannot be reused for
+`PolyOps.Sign` has exactly negative, zero and positive values, with a canonical
+conversion to `Int` taking values `-1,0,1`. The shared variation fold uses
+this type; the integer backend converts its existing exact signs, proving
+round-trip agreement on those three values. It coexists with `Hex.RCF.Sign`;
+any conversion to that downstream type lives in RCF, without a reverse import.
+Claims include the context, operation and all operands/results; evidence cannot be reused for
 another claim. Each checker is structurally terminating and kernel-reducible;
 `CheckResult` distinguishes accepted, rejected and exhausted. Sign can supply
 a zero decision, but an independent zero test must agree with it whenever
@@ -189,6 +201,19 @@ No semantic decision procedure is needed to state successful-result
 soundness. `FieldOps` adds a field interpretation and the inverse law for
 certified nonzero inputs. Certified zero inversion is invalid, and an
 undecided zero test propagates exhaustion.
+
+`ExactOps` is optional: the ring kernel does not require division. A successful
+`divExact a b` returns `q` and evidence that `b ≠ 0` and `b*q=a`. A zero
+divisor is invalid; inability to produce an exact quotient is exhaustion,
+not a claim of nondivisibility. False proposed quotient evidence is rejected.
+`FieldOps` can implement this capability by checked inversion. Ring backends
+may use exact division to remove content or subresultant factors without
+pretending to be fields. A polynomial normalization adapter returns `P',c`
+with `c>0` and `P=c*P'`, plus bounded evidence; the identity adapter `P,1`
+is always available when its operations fit the budget. Content search and
+its evidence production have explicit bounds. Backend laws must prove
+normalization preserves denotation up to the recorded scale; this permits
+coefficient-growth control without adding an upstream dependency.
 
 Raw polynomial storage is an array of `C`, separate from `DensePoly C`.
 `degreeWith` scans at most the stored length and returns `none` precisely
@@ -224,7 +249,8 @@ Pseudo-division uses positive leading-coefficient multipliers, for example
 produce the reconstruction identity, not merely return a zero remainder.
 Zero `B` is invalid even when `A=0`; adapters check this before invoking the
 existing total `DensePoly.divMod` convention. For nonzero `A,B` the bound is
-`max(0, degree A - degree B + 1)` leading cancellations; zero `A` needs none.
+zero leading cancellations if `degree A < degree B`, and at most
+`degree A - degree B + 1` otherwise; zero `A` also needs none.
 Each cancellation checks strict semantic degree descent. A gcd loop swaps
 inputs as needed and decreases the nonzero remainder degree; stored lengths
 give conservative outer fuel even before normalization. At fuel zero check
@@ -233,7 +259,8 @@ The xgcd loop maintains the displayed linear-combination identities at each
 step. Plain gcd must not compute growing Bézout accumulators.
 
 Prove degree/reconstruction, gcd divisibility over the stated field,
-Bézout, checker soundness, and success under complete callbacks with sufficient
+Bézout, checker soundness, invalid-result soundness (the stated helper
+precondition fails), and success under complete callbacks with sufficient
 fuel as distinct obligations. For a total lawful field carrier,
 `DensePoly.divMod`, `gcd`, `xgcd` and `xgcdLeftMonic` in
 [`Field.lean`](../Field.lean) are fast adapters. Prove field division equality
@@ -241,13 +268,17 @@ and gcd/xgcd agreement after the same monic normalization; Bézout coefficients
 need not be equal for two valid extended-gcd algorithms. Exact-output equality
 is required when the optimized adapter claims to implement the same chosen
 algorithm. The current gcd need not be monic. Integer-specialized content
-removal stays in its owning downstream backend and must supply its scale
-identity; hex-poly gains no dependency on hex-real-roots or the family.
+removal stays in its owning downstream backend, as do other specialized
+normalizers, and must supply its scale identity; hex-poly gains no dependency
+on hex-real-roots or the family.
 
 Conformance includes semantically zero trailing coefficients, constant and
 zero divisors, gcd/xgcd zero cases, negative leading coefficients, the
 `(2,x)` domain-versus-fraction-field distinction, failed coefficient decisions,
-exhaustion and malformed scale/evidence data. Phase 4 separates remainder,
+exhaustion and malformed scale/evidence data. Exact-division and normalization
+cases include integer/rational successful quotients, zero divisors, unavailable
+quotients, false quotient evidence and negative subresultant factors with the
+required sign corrections. Phase 4 separates remainder,
 plain gcd, extended gcd, semantic-degree/sign work and evidence production;
 record coefficient growth and verify the total adapter against existing
 DensePoly routines under the shared benchmarking policy.

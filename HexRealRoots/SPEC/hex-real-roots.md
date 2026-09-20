@@ -170,9 +170,10 @@ a signed sum rather than a nonnegative root count. There is no isolation,
 refinement, factorization or floating-point operation inside `tarskiQuery`.
 After the initial reduction there are at most `deg p + 1` nonzero entries,
 and at most `deg p` Euclidean remainder steps including termination. The
-initial pseudo-division takes at most
-`max 0 (deg(f*p') - deg p + 1)` leading-term cancellations; each subsequent
-one has the same degree-difference bound. Polynomial products and exact Horner
+initial pseudo-division takes
+zero leading-term cancellations if `f*p'=0` or `deg(f*p') < deg p`, and
+at most `deg(f*p') - deg p + 1` otherwise; each subsequent division has
+the same conditional degree-difference bound. Polynomial products and exact Horner
 folds have their array-length bounds. With classical dense arithmetic a
 conservative bound is `O((deg f + 1)*deg p + (deg p)^3)` integer-ring
 operations, excluding the separately bounded squarefreeness check; this is
@@ -203,14 +204,27 @@ The kernel uses the positive-scaled initial reduction, three-term recurrence
 and terminal zero identity specified below, including singleton/constant
 branches. The head is the input `p`; if a backend removes positive content
 from it, record the scale to that input and transport the initial identity.
+Backends may use hex-poly's optional exact-division/normalization adapters
+for primitive or signed subresultant remainders, proving equality of query
+values through these same identities. Negative subresultant factors require
+sign correction of the affected entries and identities before recording
+positive scale factors; taking absolute values alone is not sound.
 Every later nonzero degree strictly decreases. Its query value is the
-`Int` variation drop. The frontend must supply checked nonzero/squarefree
-input, strictly ordered endpoints and non-root finite endpoints before a
-successful value, even if `f=0` or the head is constant. The shared replay
-interface composes that guard evidence with the ring identities and signs;
+`Int` variation drop. The frontend must supply checked nonzero input that is
+squarefree over the fraction field of the coefficient domain (not necessarily
+in the domain's polynomial ring), strictly ordered endpoints and non-root
+finite endpoints before a
+successful value, even if `f=0` or the head is constant. For example `4*x`
+is admissible over integer coefficients: integer content does not create
+repeated roots. The shared replay interface composes that guard evidence with the ring identities and signs;
 its raw arithmetic checks alone are not a root-query theorem.
 
-Callbacks propagate invalid, exhausted and rejected results explicitly.
+The kernel uses hex-poly's `PolyOps.Limits`, `Budget`, `Result` and
+`CheckResult`; caller limits seed the single budget threaded across library
+boundaries. Callbacks propagate exhausted and rejected results explicitly.
+A user-facing invalid result must prove a failed input/context guard; an
+internal helper-precondition failure on already validated inputs is instead
+rejected as an implementation error.
 Unknown zero/sign tests cannot act as structural zero tests or permit a
 shortcut. Loops decrease arithmetic fuel or literal length and every nested
 coefficient checker consumes the same parent budget; no coefficient search

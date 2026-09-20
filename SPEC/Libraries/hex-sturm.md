@@ -85,8 +85,11 @@ acyclic and budgeted; they may not recursively certify their own sign claim.
 
 Use `Endpoint E := negInf | finite E | posInf`, with the common data type in
 hex-real-roots. The field adapter takes `E = C` (or `K` for the total adapter);
-the integer frontend keeps `E = Dyadic`. Infinity ordering is structural;
-finite comparison is the certified sign of a difference. The interval input
+the integer kernel adapter keeps `E = Dyadic`. The preserved public
+`ZPoly.tarskiQuery` takes only a finite `DyadicInterval`. Integer-coefficient
+queries at infinity use this field frontend after embedding coefficients in
+`Rat`; no `Field Int` instance or new public integer entry point is required.
+Infinity ordering is structural; finite comparison is the certified sign of a difference. The interval input
 is an ordered pair, not a claimed proof that a partial comparison succeeded.
 Every entry point establishes `a < b` in the extended order. Thus equal or
 reversed endpoints, including equal infinities, are invalid.
@@ -107,7 +110,7 @@ in bounded mode) are:
 | `prepareWith ops limits p a b` | Validate context, semantic degree, interval, squarefreeness and finite endpoint nonvanishing; return a prepared domain and replayable guard evidence. |
 | `queryWith ops limits p f a b` | Prepare, invoke the shared kernel, and return an `Int` query with its literal certificate. |
 | `queryPreparedWith ops limits domain f` | Reuse guards for exactly the same polynomial, endpoints and context; validate `f` and produce its query certificate. |
-| `rootCountWith ops limits p a b` | Query `f=1`, check nonnegativity, return the corresponding `Nat` and evidence. |
+| `rootCountWith ops limits p a b` | Query `f=1`, check nonnegativity, return the corresponding `Nat` and evidence; a negative result is `rejected` as an implementation error, never clamped to zero or classified as invalid input. |
 | `query`, `rootCount` | Total-coefficient, degree-fueled adapters returning `Option Int` / `Option Nat`; `none` exactly on domain failure. |
 | `Replay.checkWith` | Bounded validation of supplied literals and coefficient evidence, returning accepted, rejected, or exhausted. A Boolean `check` wrapper is true only on accepted. |
 
@@ -115,9 +118,12 @@ The total forms use computed arithmetic bounds, not a hidden user budget.
 Their completeness requires the total adapter's complete coefficient checks;
 bounded entry points have no such unconditional completeness claim. A
 prepared object is opaque; serialization passes through the same checker.
-Squarefreeness uses plain field gcd of `P,P'`, normalized to a nonzero constant,
-without computing extended-gcd coefficients at runtime unless requested for
-a certificate. A replay can instead carry `A*P+B*P'=1` and coefficient
+Squarefreeness uses plain field gcd of `P,P'`, normalized to a nonzero
+constant, or `pseudoGcdWith` with a certified degree-zero terminal remainder.
+The latter establishes squarefreeness over the fraction field without
+inversion and can avoid a dynamic split in extension coefficients. Neither
+route computes extended-gcd coefficients unless requested for a certificate.
+A replay can instead carry `A*P+B*P'=1` and coefficient
 identity evidence; in characteristic zero and with `P ≠ 0`, that proves the
 same guard, including nonzero constants. This certificate does not force the
 gcd-value algorithm to become xgcd.
@@ -131,8 +137,9 @@ endpoints. Then
 TaQ(F,P;a,b) = ∑ α ∈ Roots(P;a,b), sign ((F.map ι).eval α) : Int.
 ```
 
-Roots need not lie in `K`. Nonzero constant `p` gives zero. Negative query
-values are valid. The query of `1` counts distinct roots; it is nonnegative
+Roots need not lie in `K`. Universal quantification over `R,ι` makes the
+query independent of the chosen ordered real closed extension. Nonzero
+constant `p` gives zero. Negative query values are valid. The query of `1` counts distinct roots; it is nonnegative
 and at most `degree P`, and `|TaQ| ≤ rootCount ≤ degree P`. For an interval
 with exactly one root `α`, the query is precisely the sign of `F(α)`.
 Finite-endpoint queries are open intervals. Today's `ZPoly.sturmCount`
@@ -165,10 +172,21 @@ nonconstant. Common roots of `P,F` contribute zero, not an error. Only
 positive rescaling/content removal preserves this certificate convention;
 independently making every entry positive-leading is unsound.
 
+Backends may supply the optional hex-poly exact-division and polynomial
+normalization adapters to control coefficient growth, including primitive or
+signed subresultant remainder sequences. Field backends can divide by checked
+nonzero coefficients using inversion. These are optimized realizations of the
+same kernel, requiring backend equality and the same positive identities.
+If a subresultant factor is negative, the backend must correct the affected
+entry's sign and all associated identities, recording positive absolute scale
+factors; merely replacing a negative factor by its absolute value is invalid.
+Replay checks the resulting identities without rerunning normalization.
+
 At a finite endpoint, evaluate each entry by exact Horner arithmetic through
 the adapter. At `+∞` its sign is the sign of its leading coefficient; at
 `−∞` multiply that sign by `(-1)^degree`. Delete zero signs and count adjacent
-sign changes as a `Nat`; subtract endpoint variations after casting to `Int`.
+sign changes as a `Nat`; the query is explicitly
+`(V(a) : Int) - (V(b) : Int)`.
 Zeros in intermediate entries at finite endpoints are valid. The head's
 nonvanishing is a separate domain guard.
 
@@ -190,8 +208,12 @@ rejected before domain validation; no such path returns a query value.
 
 ## Failure, termination and completeness
 
-`Limits` bounds coefficient-operation calls, polynomial cancellations/steps,
-stored coefficients allocated, sign/zero work and literal evidence nodes/bytes.
+Use hex-poly's common `PolyOps.Limits`, `Budget`, `Result` and `CheckResult`,
+including in the shared real-roots kernel. The caller's `Limits` seeds one
+`Budget` threaded through callbacks, preparation, query and replay; the
+frontend does not collapse child failures to values or reset counters at a library
+boundary. `Limits` bounds coefficient-operation calls, polynomial
+cancellations/steps, stored coefficients allocated, sign/zero work and literal evidence nodes/bytes.
 An adapter must state its charging units, including child oracle work. Limits
 are executable counters, distinct from the mathematical degree bounds.
 
@@ -200,9 +222,16 @@ Bounded arithmetic uses explicit outcomes, propagated without default values:
 | Outcome | Meaning |
 | --- | --- |
 | `ok value evidence` | All operations and guards used to produce the value succeeded. Soundness is conditional on the adapter laws and, for mathematical root semantics, the companion theorem. |
-| `invalid reason` | Checked invalid coefficient context, zero/nonsquarefree `p`, unordered interval, root endpoint, or a zero argument supplied as a polynomial divisor or inversion operand. |
+| `invalid reason` | Checked invalid coefficient context, zero/nonsquarefree `p`, unordered interval or root endpoint. Helper-level zero-division errors have the separate hex-poly contract. |
 | `exhausted reason` | Insufficient arithmetic, sign/zero, allocation or evidence budget; this includes unresolved coefficient equality. It asserts neither invalidity nor a root count. |
 | `rejected reason` | Malformed or false supplied evidence. A producer's own certificate failing replay is an implementation error, not mathematical absence. |
+
+The four outcome tags are stable API; `reason` is diagnostic detail, not a
+stable enumeration or message. Conformance asserts the tag and mathematical
+claim, not wording or the first reason found among multiple failures. An
+internal helper-precondition failure on already checked data is reported as
+`rejected` (an implementation error), not as proof that the user's domain is
+invalid.
 
 An invalid domain may yield exhaustion while being tested, but cannot succeed.
 Missing evidence never supplies an assumed sign. Constants skip irrelevant
@@ -212,8 +241,9 @@ arrays or decrease explicit fuel, and every callback has its own structural
 termination/budget contract. One parent budget accounts for child work; no
 nested sign call resets it. There is no retry-until-separated loop here.
 
-A nonzero-divisor pseudo-division of `A` by `B` needs at most
-`max(0, degree A - degree B + 1)` leading cancellations (zero `A` uses zero).
+A pseudo-division of `A` by nonzero `B` needs
+zero leading cancellations if `A=0` or `degree A < degree B`; otherwise
+at most `degree A - degree B + 1`.
 Each cancellation certifies a semantic degree drop. Starting after the
 initial reduction, at most `n` further divisions, including terminal zero,
 suffice; `n=0` has no such divisions. Squarefreeness has a separate Euclidean
@@ -222,12 +252,13 @@ has already been checked; otherwise it returns exhaustion, never a truncated
 chain or gcd. Replay terminates by literal length and its recursive evidence
 measure, even on bad inputs.
 
-Separate three required claims: successful-result soundness for any lawful
-fallible adapter; domain-exact success for a total adapter with computed fuel;
-and eventual bounded success on valid inputs only when all required coefficient
-operations and evidence producers have proved completeness with sufficient
+Separate four required claims: successful-result soundness for any lawful
+fallible adapter; invalid-result soundness establishing a failed domain or
+coefficient-context condition; domain-exact success for a total adapter with
+computed fuel; and eventual bounded success on valid inputs only when all
+required coefficient operations and evidence producers have proved completeness with sufficient
 budgets. Coefficient refinements over transcendental constants without zero
-evidence do not satisfy that third hypothesis. Increasing a budget by itself
+evidence do not satisfy that completeness hypothesis. Increasing a budget by itself
 does not prove success. No Archimedean or root-separation bound is used.
 
 ## Required correspondence and specialization theorems
@@ -240,6 +271,7 @@ Mathlib side. All raw polynomials and endpoints must have valid interpretations.
 | Statement | Required conclusion / owner |
 | --- | --- |
 | `query_sound` | `queryWith ... = ok q cert` implies `Domain p a b` and `q = TaQ(F,P;a,b)`; `hex-sturm-mathlib`. |
+| `query_invalid` | `queryWith ... = invalid reason` implies a certified invalid input context, or (for valid input contexts) `¬ Domain p a b`, under the adapter laws. Internal arithmetic precondition failures on validated data are implementation errors; field guard proof here, semantic interpretation in the companion. |
 | `Replay.check_sound` | Accepted replay implies the same domain and query equality, using coefficient-check soundness; `hex-sturm-mathlib`, by the shared replay theorem. |
 | `query_isSome` | For the total adapter, `(query p f a b).isSome ↔ Domain p a b`; field algorithm/guard proof here, semantic interpretation in the companion. |
 | `rootCount_eq`, `query_sign` | Count equals `Roots.card` and is bounded by `degree P`; a singleton root set gives its evaluation sign; companion. |
@@ -298,7 +330,8 @@ Required cases include:
 - `F` divisible by `P`, high-degree `F` requiring initial reduction, and
   negative leading coefficients; leading-term cancellation at a raw algebraic
   coefficient whose representation is not structurally zero.
-- Nonzero constant, zero and nonsquarefree `P`, each also with `F=0`;
+- Nonzero constant, zero and nonsquarefree `P`, each also with `F=0`, and
+  integer `P=4*x`, which is squarefree over `ℚ` despite its content;
   equal/reversed intervals, all permitted infinity combinations, finite root
   endpoints, and a root only at the half-open API's upper endpoint.
 - Zero intermediate endpoint signs, wrong initial products, nonpositive
