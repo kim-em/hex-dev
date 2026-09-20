@@ -1137,7 +1137,7 @@ does not register or implement these libraries.
 `Lean.Grind.Field` with decidable equality. `HexPoly.Field` supplies division,
 gcd and extended gcd. Generic characteristic-zero Yun decomposition over
 `DensePoly K` is missing; `hex-real-closure` owns its specification, including
-multiplicities and fallible coefficient equality.
+multiplicities over lawful exact coefficient fields.
 [hex-real-roots](../HexRealRoots/SPEC/hex-real-roots.md#tarski-queries) owns
 integer Sturm chains and the specified, not yet implemented,
 `ZPoly.tarskiQuery` and `TarskiReplay`. Its ordinary root counts and
@@ -1191,10 +1191,10 @@ Tau Ceti. There is no reverse dependency from `hex-poly`, `hex-rational-fn`,
 `hex-real-roots` or `hex-real-algebraic` into this family. Neither
 `hex-interval` nor `hex-interval-mathlib` is an input to this family.
 CAD, coverings and tactic integration are downstream clients, never imports of
-these computational libraries. Explicit coefficient-operation records feed
-generic lower-level algorithms; these interfaces and their fallible polynomial
-routines are new infrastructure, not capabilities of the existing
-typeclass-based `HexPoly` routines.
+these computational libraries. Reuse existing total `DensePoly` and
+`RationalFn` arithmetic over lawful coefficient carriers. Ordinary
+ordered-domain pseudo-division is the missing lower arithmetic; approximation
+and selected-root representation laws belong to their extension owners.
 
 #### One Sturm–Tarski primitive
 
@@ -1214,26 +1214,19 @@ oracle that may exhaust. Exact algebraic field instances require a quotient by
 selected-root equality, with executable operations and a proved equality
 decision; raw syntax remains a separate representation.
 
-The shared algorithm accepts an explicit **operation record**, not a new
-algebraic typeclass: coefficient representatives, ring operations,
-structurally fueled sign/zero tests and certificate production, with
-exhaustion propagated. Its law package relates successful operations to an
-interpretation in an ordered commutative domain. An additional checked
-inversion operation and field interpretation are required only by field
-algorithms. Polynomial storage is a coefficient array with checked semantic
-degree; structural trimming or equality of raw `DensePoly` arrays is not a
-semantic zero test. The `hex-sturm` directive specifies reusable fallible
-pseudo-division, gcd and extended-gcd adapters in `hex-poly`, including their
-degree and fuel invariants. Existing total `DensePoly K` routines remain the
-fast adapter when lawful field instances are available. Total core-class
-operations instantiate the record with always-successful callbacks; tower
-callbacks can recurse to lower-level sign certificates without any reverse
-module import. This is how bounded mode reaches root isolation without
-pretending to supply a `Decidable (a < b)` instance.
+Use total ring/field operations and executable equality/order throughout the
+polynomial algorithms. `DensePoly` normalization uses equality in the actual
+coefficient carrier; the extension owner proves its executable semantic
+equality before instantiation. No shared fallible coefficient records,
+resource budgets, per-operation evidence or second raw polynomial system are
+required. Ordinary arithmetic has correctness theorems. Tarski/BKR replays
+retain mathematical identities and sign evidence at the query/proof boundary.
+The optional bounded transcendental sign attempt is separate from this exact
+field interface and cannot instantiate it.
 
 Generalize the arithmetic primitive **in place below the family**: one
 positive-scaled signed-remainder/query-replay kernel in `hex-real-roots`, over
-the ring-operation record. It does not require division or a field, so integer
+an ordinary ordered commutative domain. It does not require division or a field, so integer
 arithmetic is an actual instance. `hex-sturm` owns the general ordered-field
 frontend: domain checks, squarefreeness, finite `K` and infinite endpoint
 adapters, coefficient evidence composition and root-count APIs.
@@ -1325,10 +1318,10 @@ the downstream tower directives.
 #### Ordered rational functions and termination
 
 The individual [hex-ordered-fn SPEC](Libraries/hex-ordered-fn.md) specifies
-the bounded fraction adapter, oracle provenance, sign certificates and
+ordinary exact fraction arithmetic, user approximation laws, sign proofs and
 executable total-search construction. The companion
 [hex-ordered-fn-mathlib SPEC](Libraries/hex-ordered-fn-mathlib.md) specifies
-real evaluation, the Hahn-series model, fallible-record correspondence and the
+real evaluation, the Hahn-series model, arithmetic correspondence and the
 laws supplied to that adapter. The clauses here remain the shared contract
 for both libraries and the downstream tower directives.
 
@@ -1353,8 +1346,7 @@ this model is a separate existence obligation described below; a Hahn field
 with exponent group `ℤ` is not itself real closed.
 
 For a real constant `τ`, the caller supplies a bounded approximation procedure,
-its exact finite-bound evidence and soundness laws, and
-an effective precision schedule with widths tending to zero. Refinement must
+its exact finite-bound evidence and soundness laws, and, for totality, an effective precision schedule with widths tending to zero. Refinement must
 also enclose all preceding real coefficients. Refine numerator and denominator
 until their signs are separated from zero, handling formal zero first. The
 semantic hypothesis is transcendence over the **embedded preceding field**,
@@ -1362,31 +1354,31 @@ not merely over `ℚ`. It makes evaluation injective and excludes denominator
 zeros. Store constant identities and oracle provenance, not arbitrary
 callbacks whose outputs the kernel would trust. The computational interface
 uses exact rational or dyadic finite endpoints with a checked order, and the
-few outward bound operations needed by Horner evaluation. The caller owns
+few exact bound operations needed by Horner evaluation. The caller owns
 constant-specific approximation algorithms, containment proofs and effective
 progress; the generic companion proves their composition. No bundled π/e
 producer, interval solver, interval-library admission or analytic-provider
 benchmark is required. A future optional adapter may instantiate the same
 interface without changing the family import graph.
 
-A bounded `sign?` takes structural fuel and returns a sign with its evidence
-or exhaustion. Every successful result is sound under the enclosure and domain
-certificates, without a transcendence assumption. Under valid enclosures,
-convergence and relative transcendence, require an eventual-success theorem of
-shape `∃ N, ∀ n ≥ N, (sign? n a).isSome`. This is not a promise that an
-arbitrary caller's fuel suffices. A total ordered-field adapter must use a
-proof-founded search whose termination follows from that theorem (passed as a
-Prop law package in the Mathlib-free layer), or a certified computable
-separation bound. A bare approximation callback is not enough to construct a
-total ordered-field instance. When these hypotheses are unavailable, propagate
-exhaustion/domain failure through comparisons and root search; never turn it
-into equality or a default sign. At bounded or noncanonical algebraic levels,
-rational-function arithmetic also needs an operation-record adapter with
-semantic coprimality/normalization certificates; the existing `RationalFn K`
-implementation can be used directly only over lawful total field carriers.
-This adapter belongs to `hex-ordered-fn`; it does not assume a `DecidableEq`
-instance on raw algebraic syntax. The individual SPEC must give the Lean
-termination construction and its `_isSome` contract before implementation.
+The ordinary ordered-field sign operation searches for separation of a
+formally nonzero rational function. Algebraic equality detects formal zero
+before refinement. Correct enclosures, effective convergence and relative
+transcendence prove eventual separation. The computational library accepts
+the corresponding Prop termination law; the companion derives it from those
+semantic hypotheses. A well-founded search on this proof gives an executable
+total sign without a user threshold or guessed separation bound. The erased
+termination proof is not an oracle supplying a numerical answer.
+
+An optional finite `sign?` attempt reports a sign or `none`; its successful
+nonzero claims need containment, not transcendence. Exact evaluation
+identities, including a certified singleton `[0,0]`, may prove zero. This
+interface neither supplies a total field comparison nor propagates budgets
+through polynomial arithmetic. Without the hypotheses for an exact ordered
+field, clients can check finite enclosure/identity certificates but cannot
+invoke the generic tower decision procedure as if that field were available.
+`RationalFn K` retains its ordinary exact arithmetic over a lawful base `K`;
+there is no bounded rational-function arithmetic implementation.
 
 The pin contains only the analytic part of Lindemann–Weierstrass, not proofs
 of `Transcendental ℚ Real.pi` or `Transcendental ℚ (Real.exp 1)`. Treat those
@@ -1416,8 +1408,8 @@ equality at that root. Since `p` need not be irreducible, **do not install a
 field instance on `K[X]/(p)`** or use equality of remainder arrays as field
 equality. Equality of values is the certified zero sign of the difference at
 `α`. The total public field carrier quotients representatives by this
-equivalence; a bounded evaluator instead returns evidence or exhaustion on raw
-syntax. A quotient operation may recompute a split purely; persisting splits
+equivalence, with executable quotient operations and equality proved in the
+extension library. A quotient operation may recompute a split purely; persisting splits
 is a context optimization whose denotation invariance must be proved.
 
 For inversion, establish `q(α) ≠ 0` first, then compute `g = gcd(p,q)`. If `g`
@@ -1450,11 +1442,11 @@ interval. Bound estimation is itself bounded work: infinite, unavailable or
 unresolved dyadic bounds go directly to sign determination; no search for a
 finite bound may delay the fallback indefinitely. Roots encountered at split
 points are emitted once and excluded from subsequent open intervals. For
-example, a default work budget `2*(deg p+1)` bounds bisection nodes;
+example, at most `2*(deg p+1)` bisection nodes precede the fallback;
 correctness is independent of that policy because the finite BKR fallback
 handles all remaining roots. No user accuracy threshold controls completeness.
-The totality claim assumes total coefficient signs; the bounded oracle form
-propagates exhaustion. Degree descent, the finite BKR recursion, bounded
+The totality claim uses the lawful total coefficient field. Degree descent,
+the finite BKR recursion, bounded
 bisection and coefficient-sign termination are separate proof obligations.
 
 `hex-sign-det` owns single-polynomial root descriptors, their identity, order,
@@ -1487,12 +1479,12 @@ rederive that foundation independently in Hex. The following are mathematical
 statement shapes, not claims that the named Lean declarations already exist.
 Let `R` have `[Field R] [LinearOrder R] [IsStrictOrderedRing R]` and
 `[IsRealClosed R]`, and let `ι : K →+* R` be an order-preserving embedding.
-Interpret coefficient representatives in `K` using the operation-record law
-package, then map the resulting polynomials coefficientwise along `ι`.
+Use the actual lawful coefficient field `K`, then map `DensePoly K`
+coefficientwise along `ι`, reusing polynomial correspondence.
 
 | Owner/consumer | Imported statement from Tau Ceti | Correspondence proved in Hex |
 | --- | --- | --- |
-| Shared foundation in `hex-real-roots-mathlib`, consumed by `hex-sturm-mathlib` | Polynomial IVT on `[a,b]` and Rolle between distinct roots; signed-remainder/Cauchy-index identity equating variation drop to `∑ sign(f(α))` on root-free `(a,b)`, also at infinities and with a common gcd; root count as `f=1` | In real-roots: record interpretation, positive pseudo-remainder/replay soundness, integer specialization and `IsRealClosed ℝ`. In sturm: field frontend, endpoint semantics and coefficient-certificate composition |
+| Shared foundation in `hex-real-roots-mathlib`, consumed by `hex-sturm-mathlib` | Polynomial IVT on `[a,b]` and Rolle between distinct roots; signed-remainder/Cauchy-index identity equating variation drop to `∑ sign(f(α))` on root-free `(a,b)`, also at infinities and with a common gcd; root count as `f=1` | In real-roots: ordinary polynomial correspondence, positive pseudo-remainder/replay soundness, integer specialization and `IsRealClosed ℝ`. In sturm: field frontend, endpoint semantics and coefficient-certificate composition |
 | `hex-sign-det-mathlib` | Thom injectivity and root-order rule; for finite `Q`, the moment identity `t=M*c` for actual sign counts and correctness of the recursive support-preserving BKR reduction | Literal matrix/replay checks imply exact counts and complete support; validity and comparison of partial descriptors, including different polynomials |
 | `hex-ordered-fn-mathlib` | No additional abstract real-closed-field theorem: uses Mathlib rational functions, real analysis and Hahn series | Real evaluation under relative transcendence; enclosure soundness and eventual success; Hahn embedding, sign rule and ordered-field laws |
 | `hex-real-closure-mathlib` | Existence of an algebraic real closed ordered extension of every ordered field (an explicit additional foundation requested alongside #10300); polynomial IVT/Rolle and Thom/sign determination through the preceding companions | Selected-root arithmetic and splitting transport, termination, ordered complete root lists, compatible-tower semantics and real-closedness of their algebraic union, trivial-tower agreement, finite-sign sector realization |
@@ -1501,9 +1493,9 @@ The companion semantics are conditional on this ambient field and embedding
 until their existence is discharged. The pin has neither real-closure
 existence nor an `IsRealClosed ℝ` instance. Make these obligations explicit:
 use Hex's existing `IsRealClosed RealAlgebraicNumber` for the rational base;
-prove `IsRealClosed ℝ` in `hex-real-roots-mathlib` from Mathlib's real square
-roots and polynomial order/IVT lemmas, serving both integer specialization and
-the real transcendental base; consume the ordered real-closure existence
+use the implemented `Real.instIsRealClosed` in `hex-real-roots-mathlib`,
+proved from Mathlib real square roots and polynomial order/IVT lemmas, for
+both integer specialization and the real transcendental base; consume the ordered real-closure existence
 theorem from Tau Ceti for infinitesimal bases. The required existence shape
 is: for every linearly ordered field `K`, there exist an ordered real closed
 field `R` and order-preserving field embedding `ι : K →+* R` with `R`

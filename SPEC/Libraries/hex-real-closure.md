@@ -29,12 +29,12 @@ The division of responsibility is:
 
 | Input/owner | Contract used here |
 | --- | --- |
-| [hex-poly](../../HexPoly/SPEC/hex-poly.md#fallible-coefficient-operations) | Planned fallible coefficient records, semantic polynomial degree, positive pseudo-division, gcd/xgcd and exact division. Existing `HexPoly.Field` has total field routines, not this adapter or generic Yun decomposition. |
-| [hex-sturm](hex-sturm.md) | Ordered-field Tarski queries, root counts and coefficient evidence, using the shared signed-remainder kernel in hex-real-roots. |
+| [hex-poly](../../HexPoly/SPEC/hex-poly.md) | Exact `DensePoly K` arithmetic, degree, derivative, division and gcd/xgcd over lawful fields. Generic characteristic-zero Yun decomposition is owned here. |
+| [hex-sturm](hex-sturm.md) | Ordered-field Tarski queries, root counts and Tarski replays, using the shared signed-remainder kernel in hex-real-roots. |
 | [hex-sign-det](hex-sign-det.md) | Complete BKR tables and single-polynomial descriptors: validation, root identity/order, sign at a root and re-encoding. |
-| [hex-ordered-fn](hex-ordered-fn.md) | Guarded fractions, caller-supplied certified real-constant approximations, infinitesimal orders and proof-founded total coefficient search. |
+| [hex-ordered-fn](hex-ordered-fn.md) | Exact rational-function fields, caller-supplied certified real-constant approximations, infinitesimal orders and proof-founded total coefficient search. |
 | [hex-real-algebraic](hex-real-algebraic.md) | Independent rational-base fast path; exact comparison and sorted roots with multiplicities. |
-| This library | Generic characteristic-zero Yun decomposition, staged contexts, tower coefficient-record adapters, selected-root arithmetic, splitting/transport, root isolation, tower sampling and exploration. |
+| This library | Generic characteristic-zero Yun decomposition, staged contexts, executable ordered-field carriers, selected-root arithmetic, splitting/transport, root isolation, tower sampling and exploration. |
 
 The [number-field SPEC](../../HexNumberField/SPEC/hex-number-field.md)
 provides precedent for lazy selected roots, but its fixed irreducible,
@@ -43,48 +43,44 @@ complex-embedded fields are not the generic tower representation.
 polynomials and a rational separation bound; interval overlap there cannot
 be transplanted to infinitesimal towers.
 
-## Semantic parameters and executable records
+## Semantic parameters and executable fields
 
-Fix an ordered field `K` of characteristic zero and an order-preserving field
-embedding `ι : K →+* R` into an ordered real closed field. In the companion,
-`R` has `[Field R] [LinearOrder R] [IsStrictOrderedRing R] [IsRealClosed R]`;
-`K` has the first three structures. A coefficient law package interprets valid
-raw representatives in `K`. All polynomials in semantic statements are mapped
-coefficientwise through this interpretation and `ι`. Ambient existence is an
-explicit foundational obligation, not a runtime oracle or an instance assumed
-available on the pin.
+Fix an ordered field `K` and an order-preserving field embedding `ι : K →+* R`
+into an ordered real closed field. In the companion, `R` has
+`[Field R] [LinearOrder R] [IsStrictOrderedRing R] [IsRealClosed R]`;
+`K` has the first three structures. Ambient existence is an explicit
+foundational obligation, not a runtime oracle. Polynomials are `DensePoly K`,
+interpreted coefficientwise through `ι`; their degree is `DensePoly.degree?`.
 
-Use `Hex.PolyOps.CoeffOps`, `FieldOps`, `Limits`, `Budget`, `Result` and
-`CheckResult`. Polynomial storage over raw coefficients is a finite array
-with checked semantic degree, separate from `DensePoly C`. Structural zeros,
-array length and equality of syntax do not decide semantic degree or equality.
-Every arithmetic/sign/zero/inversion callback terminates with evidence or a
-failure; one parent budget pays for nested calls, validation and replay.
-
-A total semantic carrier may use
+The executable coefficient interface is the ordinary total one used by sturm:
 `[Lean.Grind.Field K] [LE K] [LT K] [Std.IsLinearOrder K]`
 `[Std.LawfulOrderLT K] [Lean.Grind.OrderedRing K] [DecidableEq K]`
-`[DecidableLE K] [DecidableLT K]`, exactly as in hex-sturm. An ordered ring
-alone does not supply a total order. No such instances are installed on raw
-representatives or on bounded approximation callbacks. Successful-result
-soundness needs interpretation and evidence laws; eventual success additionally
-needs progress of every coefficient operation and evidence producer.
+`[DecidableLE K] [DecidableLT K]`. Signs are integers in `{-1,0,1}`.
+There are no evidence-returning arithmetic callbacks, global resource budgets,
+or field instances on raw representatives. Registered transcendental fields
+must supply the exact total order from hex-ordered-fn, conditional on the
+caller's approximation correctness, convergence and relative-transcendence
+hypotheses. An optional bounded sign attempt cannot supply coefficient order.
 
-This library provides `Context.coeffOps` and `Context.fieldOps` for valid
-`Element ctx` representatives, together with validity, interpretation,
-arithmetic and evidence/replay law packages; progress laws require the stated
-coefficient-completeness hypotheses. The `sign` callback is
-`Element.signWith`; `zeroTest` tests its certified zero case, and checked `inv`
-is `Element.invWith`. Arithmetic and validation recurse over predecessor
-levels; evidence dependencies strictly decrease level when a sign computation
-calls its coefficients. `ExactOps` is an optional adapter obtained by checked
-nonzero inversion and multiplication. Supply the complete record for
-`Value ctx` only after executable quotient descent and total-search laws are
-proved; it succeeds on valid operation inputs, including the nonzero premise
-for checked inversion. Callback results keep one fixed public context: temporary splits can
-remain local, while persistent splits require the explicit transport below.
-These records instantiate hex-sturm and hex-sign-det without either importing
-the tower implementation.
+Construct the tower by induction on its extension list. The predecessor
+already has lawful executable field/order operations before adjoining a root.
+Hex-sign-det over that predecessor supplies total sign at a validated root.
+At this level construct the selected-root equivalence on `DensePoly K`, prove
+its decision procedure and operation congruence, and lift the actual algorithms
+to the quotient `Value ctx`. Only then install its field/order instances and
+use it as coefficients at the next level. The core law statements are
+Mathlib-free; the companion proves their semantic premises from the selected
+root interpretation and imported correspondence. No proof-debt assumption is
+an implementation of this construction. Erased proofs may justify quotient
+lifting and termination; runtime operations cannot choose representatives or
+inverses noncomputably. Every coefficient sign needed by a level's sign
+algorithm belongs to a strictly earlier level.
+
+Field operations keep a fixed context. Temporary gcd splitting is local to
+inversion; persistent refinements and base enlargement use explicit embeddings
+and transport. `Context` packages the constructed carrier, its predecessor
+embeddings and stage; this dependent packaging does not replace lawful field
+instances with an alternative coefficient-operation framework.
 
 ## Staged contexts and selected-root identity
 
@@ -104,10 +100,10 @@ signs. Its constraint selects exactly one root `α` in `R`. Finite endpoints
 are not roots of `p`. A partial Thom encoding requires count-one evidence;
 a full encoding still requires existence. Overlapping intervals or matching
 raw derivative vectors from different polynomials do not establish identity.
-Use `SignDet.compareWith` and its common squarefree-product re-encoding.
+Use `SignDet.compare` and its common squarefree-product re-encoding.
 
 An `Element ctx` stores a polynomial representative `q(α)` at the top
-algebraic level, recursively over predecessor representatives. No bound
+algebraic level, over the predecessor quotient carrier. No bound
 `degree q < degree p` is a representation invariant. Embedded predecessor
 elements are constant polynomials. Equality means equality of denotations,
 computed by the certified zero sign of the difference at the selected root.
@@ -115,8 +111,7 @@ In particular, a reducible `K[X]/(p)` is generally not a field and is not the
 public carrier. For `p=(X-1)(X+1)` selecting `α=1`, `X-1` denotes zero while
 its remainder modulo `p` is nonzero.
 
-For total coefficients and proved search laws, define `Value ctx` as the
-quotient of valid representatives by selected-root equality. Its semantic
+Define `Value ctx` as the quotient of polynomial representatives by selected-root equality. Its semantic
 image is `K(α)` at a single level. Prove the relation is an equivalence,
 operations respect it, and the executable sign/equality test descends and
 decides quotient equality. Use quotient lifting of the actual executable
@@ -124,7 +119,7 @@ operations, not classical selection of representatives or a noncomputable
 inverse. The computational law package supplies the erased premises for core
 field/order instances; the companion proves it and transports Mathlib
 instances along the interpretation. Inversion of zero in this total field is
-zero. The raw checked nonzero inverse instead rejects a certified zero.
+zero. A convenience checked inverse returns `none` exactly on zero.
 
 Operations on different contexts require a checked common extension and
 embeddings preserving both selected-root interpretations. Never equate root
@@ -147,9 +142,8 @@ Use signed pseudo-remainders with checked positive scaling and the shared
 kernel's sign conventions. Reduction by a monic clean defining polynomial is
 permitted when useful. Do not eagerly divide by a non-monic defining
 polynomial or make it monic merely to store every element below its degree.
-Local gcd/field computations may invert coefficients when required; record
-those operations and do not replace persistent clean definitions with their
-monic versions. Clear denominators for root/query work with nonvanishing and
+Local gcd/field computations may invert coefficients when required; do not
+replace persistent clean definitions with their monic versions. Clear denominators for root/query work with nonvanishing and
 sign evidence. A root-set-preserving negative scalar still changes query or
 derivative signs and needs the corresponding correction. Positive-scaled
 pseudo-remainders preserve signs at roots, not literal values; arithmetic
@@ -157,23 +151,23 @@ transport must carry the full identity including the scale.
 
 For a checked inverse of `q(α)`:
 
-1. Certify `q(α) ≠ 0` by sign determination. An unresolved sign exhausts; a
-   certified zero is invalid for this operation, even if some other root of
-   `p` makes `q` nonzero.
-2. Compute `g=gcd(p,q)` with divisibility and gcd evidence. Since `g | q`,
-   `g(α) ≠ 0`. If `degree g>0`, set `h=p/g` by checked exact division, retain
+1. Decide `q(α) ≠ 0` by total sign determination. For the total field inverse,
+   return zero when this test is false; the checked nonzero inverse returns
+   `none`. Some other root of `p` making `q` nonzero is irrelevant.
+2. Compute `g=gcd(p,q)` using the predecessor field operations. Since `g | q`,
+   `g(α) ≠ 0`. If `degree g>0`, set `h=p/g` by exact division, retain
    `p=g*h`, and prove `h(α)=0`, `h` squarefree and `gcd(h,q)=1`. Squarefreeness
    of `p` is essential to the last claim. With constant gcd keep `h=p`.
 3. Re-encode the same root for `h` using **derivatives of h** via
-   `SignDet.reencodeWith`. Retain the old descriptor and joint selection
+   `SignDet.reencode`. Retain the old descriptor and joint selection
    evidence; copying the old Thom vector is invalid. A root-free old interval
    remains root-free for the factor, or the whole line can be used.
 4. Transport every live element, coefficient, descriptor and downstream
    algebraic level, including cached signs and domain guards, in predecessor
    order. Prove embeddings commute with interpretation and preserve root
-   identity, equality and order. Changed literals require checked evidence
-   transport or recomputation. Commit a persistent context update only after
-   this entire operation succeeds; failure leaves the old context usable.
+   identity, equality and order. Changed literals require certificate transport or recomputation. Construct
+   the new immutable context and all requested transports together; old
+   handles remain valid in their original context.
 5. Compute extended gcd `A*q+B*h=1` and return `A(α)`. A pseudo-xgcd result
    `A*q+B*h=c`, `c≠0`, instead gives `A(α)/c` after checked scalar inversion.
    Certify the product with the original operand is one.
@@ -190,13 +184,11 @@ prerequisite for field laws.
 
 ## Characteristic-zero Yun decomposition
 
-`Yun.decomposeWith ops limits f` is new infrastructure owned here. The generic
-`HexPoly.Field` routines supply neither this routine nor fallible semantic
-coefficient equality. Use the shared fallible gcd, derivative and exact-division
-adapters; specialize to existing total `DensePoly` routines only with lawful
-total coefficient instances and correspondence.
+`Yun.decompose (f : DensePoly K)` is total new infrastructure owned here.
+Use the existing exact field gcd, derivative and division routines; prove each
+claimed exact division from the recurrence invariants.
 
-Successful output is either `zero`, exactly when `F=0`, or a nonzero scalar
+Its output is either `zero`, exactly when `F=0`, or a nonzero scalar
 `u` and factors `(fᵢ,mᵢ)` with distinct positive multiplicities, nonconstant
 squarefree factors, pairwise coprimality, and
 
@@ -212,7 +204,7 @@ identity and never force stored tower definitions monic.
 One required algorithm is Yun's recurrence. For positive-degree `F`, set
 `a=gcd(F,F')`, `v=F/a`, `w=F'/a`, `i=1`. While `v` is nonconstant, compute
 `t=w-v'`, the monic `z=gcd(v,t)`, emit `(z,i)` when nonconstant, and set
-`v=v/z`, `w=t/z`, `i=i+1`. All divisions are exact with certificates. Units
+`v=v/z`, `w=t/z`, `i=i+1`. All divisions are exact by the invariants. Units
 are accumulated into `u`; using the monic `z` convention gives `u=lc(F)`.
 The invariant identifies the remaining factors of multiplicity at least `i`;
 in characteristic zero the loop finishes within `degree F` iterations, even
@@ -221,14 +213,14 @@ remaining-multiplicity weight supplies the proof; gcd subloops separately
 use semantic degree descent. Do not claim strict degree descent of `v` on
 every iteration. Positive characteristic is outside this contract.
 
-The checker verifies product, multiplicities, scalar, degrees, squarefreeness
-and pairwise gcd evidence. Product equality alone cannot certify multiplicities
-or completeness. Valid raw input whose degree/zero tests exhaust has no
-factorization result. False exact-division or gcd witnesses are rejected.
+An optional result replay verifies product, multiplicities, scalar, degrees,
+squarefreeness and pairwise gcd witnesses. Product equality alone cannot
+certify multiplicities or completeness. False identities are rejected; ordinary
+Yun arithmetic does not return a certificate at each operation.
 
 ## Root isolation and termination
 
-`rootsWith ctx limits f` returns a checked `RootSet`: `all` exactly for a
+`roots (f : DensePoly (Value ctx))` returns a complete `RootSet`: `all` exactly for a
 semantically zero polynomial, or a finite strictly increasing list of distinct
 selected roots with positive multiplicities in `F`. Constants other than zero
 give the empty finite list. `all` carries no finite multiplicities and must
@@ -236,39 +228,31 @@ never be converted silently to an empty list. A root entry carries its
 extension context and embedding of the input coefficients. List comparisons
 use compatible extensions; callers can request one common context.
 
-Validate contexts and semantic degree, then use Yun decomposition. Remove
+Use exact degree/equality and Yun decomposition. Remove
 zero roots by checked powers of `X`, remembering their multiplicity; zero is
 emitted once. For each remaining squarefree factor `p`:
 
-1. Attempt a strict finite dyadic root bound using bounded work. With
-   `n=degree p`, first allow one candidate from available certified coefficient
-   enclosures/heights, then try `B=2^j` for `1≤j≤2*(n+1)`. Check `B>1` and
-   `|aᵢ| < (B-1)*|aₙ|` for every `i<n`. This is the strict Cauchy inequality
-   without coefficient inversion solely to try a bound. A data-derived
-   candidate lets small-degree, large-height Archimedean inputs use bisection;
-   its construction, including obtaining a lower bound on `|aₙ|`, is capped.
-   Charge all attempts to a separate, capped slice of the parent's resources.
-   If the bound cannot be certified in that slice,
-   including unresolved coefficient signs or non-Archimedean coefficients,
-   continue with `(-∞,+∞)`. Local bound-search exhaustion is inconclusive,
-   not root-search failure; global exhaustion still propagates. No unbounded
-   doubling or approximation loop is allowed here.
-2. On a certified `(-B,B)`, use root counts and at most `2*(n+1)` bisection
-   nodes as a fast path, with a capped bisection resource slice. Certify empty
-   intervals or count-one descriptors; retain every unresolved interval.
-   If a split-point zero test or child root count is undecided within that
-   slice, retain the parent interval unresolved and do not use the unverified
-   endpoint. Only exhaustion of the global budget fails the whole call.
+1. Try a finite list of strict dyadic root bounds. With `n=degree p`,
+   try `B=2^j` for `1≤j≤2*(n+1)`. An optional total height estimator may
+   supply one additional candidate. Check `B>1` and
+   `|aᵢ| < (B-1)*|aₙ|` for every `i<n` using exact coefficient order.
+   This strict Cauchy test avoids coefficient inversion solely for the bound.
+   If no candidate passes, continue on `(-∞,+∞)`. Each comparison is total;
+   no search for a finite Archimedean bound is required.
+2. On a certified `(-B,B)`, use root counts for at most `2*(n+1)` bisection
+   nodes as an internal fast-path policy. Keep count-one descriptors and
+   retain every interval still containing multiple roots for fallback.
    A finite bound does not imply dyadic separation: `(X-ε)*(X-2ε)` has two
-   roots within `(0,1)` which no rational dyadic cut between them can separate.
+   roots within `(0,1)` which no rational dyadic cut between them separates.
 3. If a split point is a root, emit it once, remove its linear factor with
    exact-division evidence from the active squarefree polynomial, and
    transport pending descriptors/counts to the deflated polynomial. The
    remaining open subinterval endpoints are then root-free. Previously
    emitted roots are excluded explicitly; their original multiplicities
    are retained. Never pass a root endpoint to the open Sturm query.
-4. Run `SignDet.rootsWith` with **all derivatives** on every unresolved
-   interval, regardless of whether a finite bound was obtained. With no
+4. Run `SignDet.roots` with **all derivatives** on every unresolved
+   interval, using the proved root-domain invariant to eliminate its `Option`
+   guard. This applies regardless of whether a finite bound was obtained. With no
    bound, run it on the whole line. Complete BKR support and Thom injectivity
    give one descriptor per root without a rational separator.
 5. Merge factor lists using certified joint descriptor comparison, restore
@@ -276,65 +260,56 @@ emitted once. For each remaining squarefree factor `p`:
    Pairwise coprimality prevents factor lists from sharing roots; a duplicate
    after certified decomposition indicates failed producer evidence.
 
-These numerical policies may be replaced by other deterministic bounded
-policies with the same fallback and coverage invariant. No accuracy threshold,
-maximum refinement depth or caller preference can make a successful result
-incomplete. A bounded call may exhaust, but cannot return a partial list as a
-complete `RootSet`. An optional diagnostic prefix must have a separate type.
-Isolation of roots of a polynomial over a finite tower may extend that tower;
-it does not assert all roots already lie in the coefficient field.
+These internal finite policies may be replaced with equivalent deterministic
+ones preserving coverage. They do not expose a user threshold and cannot
+return a partial list. BKR completes every remaining interval, including the
+whole line when a finite rational bound is unavailable. Root isolation may
+extend the coefficient tower; it does not assert all roots lie in that field.
 
-Termination has separate measures: finite tower depth for coefficient
-callbacks; semantic degree for Euclidean loops; remaining multiplicity for
-Yun; capped bound attempts and bisection nodes; finite derivative/BKR recursion;
-and literal size for replay. Total coefficient forms use structural finite
-work and, when necessary, the accessibility-based search construction from
-hex-ordered-fn with an erased `SearchLaws : Prop` package. Eventual success
-under a cofinal schedule covers arithmetic, signs, context transport and
-certificate production, not just outer fuel. It supplies accessibility of
-successive exhausted attempts; no `partial`, classical choice of a runtime
-fuel, or trusted opaque search is allowed.
+Termination is proved by tower induction for coefficient decisions, degree
+for Euclidean loops, remaining multiplicity for Yun, the explicit finite
+bound/bisection counts, and finite derivative/BKR recursion. It is not justified
+by existence of roots alone. Transcendental coefficient sign uses the separate
+ordered-fn accessibility proof from caller approximation laws. Algebraic
+inversion calls only predecessor arithmetic plus sign determination over the
+predecessor; it never invokes inverse recursively at its own level. Persistent
+splits decrease the stored defining degree. These measures give executable total
+operations without a global fuel search, `partial` or classical runtime choice.
 
-## Public operations and failures
+## Public operations and validity
 
-The following bounded operation shapes all return evidence and residual
-budget through the common `PolyOps.Result`:
-
-| Operation | Successful result |
+| Operation | Result |
 | --- | --- |
-| `Context.constantWith`, `Context.infinitesimalWith` | Staged extension with the ordered-fn oracle registration or infinitesimal order contract and coefficient embedding. |
-| `Context.adjoinWith ctx d` | Algebraic context and generator from a valid squarefree selected-root descriptor. |
-| `Context.coeffOps`, `fieldOps` | Bounded certificate-producing tower coefficient callbacks and their law packages; total record specialization on `Value ctx` requires proved descent/progress. |
-| `Element.addWith`, `negWith`, `mulWith` | Polynomial representatives, with arithmetic/domain evidence; embed compatible operands first. |
-| `Element.invWith` | Checked inverse of a certified nonzero element, with split and transport evidence. |
-| `Element.signWith`, `compareWith` | Certified sign or order at the selected roots, including exact semantic equality. |
-| `Context.transportWith`, `enlargeWith` | New context, explicit embeddings and transports for every requested live handle. |
-| `Yun.decomposeWith`, `rootsWith` | Decomposition or complete ordered root set under the contracts above. |
-| `Sample.sectionWith`, `sectorWith` | Selected section or sector sample and the finite-sign evidence described below. |
-| `Replay.checkWith` | Accepted, rejected or exhausted replay; acceptance alone makes Boolean `check` true. |
+| `Context.constant`, `Context.infinitesimal` | Staged extension from a lawful caller oracle registration or an infinitesimal, with predecessor embedding. Stage constraints are typed premises. |
+| `Context.adjoin ctx d` | Algebraic context and generator for a validated squarefree selected-root descriptor. |
+| `Value ctx` | Constructed quotient carrier with total exact field/order instances, executable equality and sign. |
+| `Value.add`, `neg`, `mul`, `inv`, `sign`, `compare` | Ordinary total operations in the fixed context; `inv 0=0`. |
+| `Value.inv?` | Convenience `Option` inverse, `none` exactly when the input is zero. |
+| `Context.transport`, `enlarge` | New context and explicit embeddings/transports of the requested live DAG; compatible validated input gives a total result. |
+| `Yun.decompose`, `roots` | Total decomposition or complete ordered root set. |
+| `Sample.section`, `sector` | Validated section/sector samples with the finite-sign contract below. |
+| `certify`, `Replay.check` | Result certificates for queries, BKR tables, selected roots, splitting, root lists or samples; Boolean validation of supplied finite data. |
 
-Use `invalid` for a certified domain/precondition violation (including zero
-checked inversion, invalid stage, invalid descriptor or incompatible context),
-`exhausted` for insufficient work or an unresolved coefficient decision, and
-`rejected` for false/malformed evidence or an internal producer invariant
-failure. Invalid input may exhaust during validation, but must not succeed.
-Wrong certificate context/version is rejected; a raw stale handle is invalid
-unless explicit transport is requested. `ok` never hides a failed domain
-check, even for a zero numerator or constant polynomial.
+Raw syntax readers and mathematical domain validators may return `Option`:
+invalid descriptors, stage order or incompatible references are rejected. A
+registry lookup retrieves the caller's already supplied oracle and proof
+premises; a reader cannot decide convergence or relative transcendence.
+Compatibility checks concern the declared context embeddings, not arbitrary
+equality of unrelated oracle descriptions. Total
+field operations operate on the validated carrier and do not carry those
+failures. Mathematical invalidity, malformed replay and an optional bounded
+approximation attempt are distinct boundary concerns, not a replacement
+coefficient-result framework. Exact field equality determines all polynomial
+zero/degree decisions, including cancellation in different representations.
 
-The ordered-fn frontend has its own `domain`/`invalid` diagnostics. Its adapter
-maps a certified `domain` failure to shared `invalid`, malformed or failed
-replay to shared `rejected`, and exhaustion unchanged, retaining the original
-reason and evidence. Checked invalid context/stage failures remain `invalid`.
-This translation is explicit; downstream callers do not mistake unknown
-signs or authentication failures for mathematical zero.
-
-Every bounded path, including malformed inputs and zero fuel, terminates.
-Validate references and allocation bounds before traversing or expanding
-untrusted data. The total API is on validated semantic values with proved
-progress laws; it supplies total field inverse with `inv 0=0`, exact compare,
-and complete roots. Raw constructors keep their failure results. Field division
-at zero and checked division are distinct entry points.
+Certificates are produced for mathematical results needed by consumers.
+Replay checks their polynomial identities, scales, endpoint and coefficient
+sign facts, and table/selection equations. It does not rerun root isolation or
+BKR production. Coefficient facts can be checked using the ordinary exact
+operations or, at the tactic boundary, discharged by supplied kernel proofs
+from child queries and caller approximation evidence. No arithmetic operation
+must return a proof trace. Nested proof dependencies are child-before-parent;
+finite DAG checks reject cycles, stale references and malformed encodings.
 
 ## Shared samples and base enlargement
 
@@ -357,7 +332,7 @@ line. Dyadic samples are an optional Archimedean backend, not a generic
 separation requirement.
 
 An infinitesimal backend may use `r+ε` or `±1/ε`. After algebraics exist,
-`Context.enlargeWith` rebuilds the infinitesimal base before those levels,
+`Context.enlarge` rebuilds the infinitesimal base before those levels,
 then transports each selected root in order into a compatible real closure
 of the enlarged base. For the companion model, if `R` is the old algebraic
 real closure of `B`, form the ordered rational-function field `R(δ)` with
@@ -440,8 +415,8 @@ The hypotheses include the shared interpretation/checker laws and compatible
 ambient embeddings. No claim preserves *all* infinitesimal inequalities at
 once; only the finitely recorded constraints are specialized. This induction
 and joint-table correspondence are local proof deliverables, not consequences
-of IVT alone. If the required evidence is unavailable, bounded export exhausts
-or the producer chooses the ordinary-point backend. A symbolic sample alone
+of IVT alone. The exporter must construct this finite evidence, or use the ordinary-point
+backend with its direct membership and sign proof. A symbolic sample alone
 can never discharge a real existential.
 
 For coverings, implement a checked exporter to the existing
@@ -473,26 +448,22 @@ real closed and algebraic over the base. A single finite tower need not be
 real closed. Enlarging the infinitesimal base changes this fixed-base union
 and requires the explicit embeddings above.
 
-Required theorem shapes, with the semantic parameters and adapter laws above:
+Required theorem shapes, with the semantic parameters and coefficient laws above:
 
 | Planned statement | Hypotheses and conclusion |
 | --- | --- |
-| `Element.eval_add`, `eval_mul`, `sign_sound` | Valid operands and successful bounded operations imply arithmetic/sign agreement with interpretation. No oracle convergence is needed for success soundness. |
-| `Element.eq_iff` | Under total sign/equality laws, the executable zero sign of `a-b` iff their denotations agree; lifted equality iff equality in `Value ctx`. |
-| `Element.inv_sound` | Valid selected squarefree root, certified `q(α)≠0`, and accepted split/Bézout evidence imply `eval(inv q)*eval(q)=1`. |
-| `Context.transport_sound` | Accepted refinement/enlargement and valid live handles imply commuting interpretations, preserved root identity/order and compositional transport. |
-| `Yun.decompose_sound` | Accepted result has the exact zero case or product, unit, degree, squarefree and coprime properties stated above, in characteristic zero. |
-| `roots_sound` | Successful `all` iff `F=0`; successful finite result has strictly increasing roots, each root's exact positive multiplicity, and contains every real root in the supplied `R`. For nonzero `F`, membership iff `F(x)=0`. |
-| `roots_isSome` | Valid inputs, complete lawful coefficients/replay, and a cofinal resource schedule imply eventual success at every larger envelope. Total forms return the complete result with no bound/separation hypothesis. |
-| `Replay.check_sound`, `checks` | Accepted literals imply their claimed semantic facts; a successful producer yields a certificate accepted at a computable sufficient replay envelope, under child replay laws. |
-| `Query.specialize`, `Sample.specialize` | Finite replay signs and guards specialize at sufficiently small positive real parameters; joint table counts realize the recorded nested algebraic constraints. |
-| `Sample.realize` | Accepted finite-sign realization evidence implies the ordinary-real existential above, including parameter realization where needed. |
-| `Value.field`, `Value.ordered`, `Union.realClosed` | Quotient descent/equality and progress laws give executable core field/order laws; compatible algebraic union has positive square roots and odd-degree roots. Mathlib correspondence/instances belong in the companion. |
-| `Trivial.compare_eq`, `Trivial.roots_eq` | Interpretation into `RealAlgebraicNumber` preserves comparison, arithmetic, `all`, sorted finite roots and multiplicities on the rational-base fragment. |
-
-Root completeness here is the postcondition of **successful** bounded output;
-it does not assert every bounded call succeeds. Prove termination, successful
-soundness, invalid-result soundness and eventual success separately.
+| `Element.eval_add`, `eval_mul`, `sign_sound` | Executable arithmetic/sign agrees with selected-root interpretation for every valid operand. |
+| `Element.eq_iff` | Executable zero sign of `a-b` iff denotations agree; lifted equality iff equality in `Value ctx`. |
+| `Element.inv_sound` | Selected squarefree root and nonzero `q(α)` give `eval(inv q)*eval(q)=1`; total inversion maps zero to zero. |
+| `Context.transport_sound` | Refinement/enlargement preserves interpretations, selected roots, order and compositional transport for all live handles. |
+| `Yun.decompose_sound` | Exact zero case or the stated product, unit, degree, squarefree and coprime properties. |
+| `roots_sound` | `all` iff `F=0`; finite results are strictly increasing, contain exactly all real roots in `R` and carry each root's exact positive multiplicity. |
+| `terminates` | The explicit recursive measures justify the total algorithms on lawful fields; no finite-bound or rational-separation hypothesis is needed. |
+| `Replay.check_sound`, `checks` | Accepted result literals imply their claims; certificates produced for valid results pass the checker under the corresponding coefficient-fact proofs. |
+| `Query.specialize`, `Sample.specialize` | Finite replay signs/guards specialize at small positive real parameters; joint tables realize recorded nested constraints. |
+| `Sample.realize` | Finite-sign evidence proves the ordinary-real existential, including parameter realization where needed. |
+| `Value.field`, `Value.ordered`, `Union.realClosed` | Quotient descent and executable equality give core field/order laws; the compatible algebraic union is real closed. Mathlib instances belong in the companion. |
+| `Trivial.compare_eq`, `Trivial.roots_eq` | Rational-base comparison, arithmetic, `all`, sorted roots and multiplicities agree with the independent real-algebraic path. |
 
 ## Imported foundations and local correspondence
 
@@ -511,7 +482,7 @@ has a name in a SPEC.
 | hex-real-algebraic-mathlib | Existing rational-base real closed carrier; compose its arithmetic/order/root correspondence for the trivial path. |
 | hex-real-closure-mathlib | Prove Yun correspondence, selected-root quotient and executable descent/equality, splitting and context transport, termination laws, ordered complete root lists, `Query.specialize`/`Sample.specialize` and finite-sign realization, and compatible-union real-closedness relative to the supplied ambient model. |
 
-Computational proofs cover literal identities, finite control flow, budget and
+Computational proofs cover literal identities, finite control flow and
 degree invariants, checker composition and conditional laws. Companion proofs
 connect these to mathematical roots and discharge the semantic law packages.
 No unproved core theorem is imported across the boundary as a proof; follow
@@ -527,8 +498,9 @@ replayable soundness evidence; total operations additionally require the
 specified effective progress and relative-transcendence laws. No particular
 analytic constant or approximation algorithm is built in.
 
-For example, a caller supplying certified procedures for `π,e` may build a
-bounded context, certify `π<4` and `e>2`, then adjoin `ε` and selected positive
+For example, a caller supplying certified procedures for `π,e` may make
+bounded sign attempts on registered expressions and certify `π<4` and `e>2`.
+With the total-field hypotheses they may adjoin `ε` and selected positive
 roots of `X²-ε`. These named-constant demonstrations are conditional examples,
 not provider implementation or proof obligations of this family. The
 infinitesimal examples also run over `ℚ`: demonstrate `0<ε<sqrt(ε)<1`,
@@ -541,9 +513,10 @@ Total modes for `π` and `e` are explicitly conditional: the pin lacks their
 individual transcendence theorems, and even both separately would not justify
 transcendence of the second over the field generated by the first. Bounded
 certified signs need no algebraic-independence assumption. Retain all original
-divisor guards through cancellation; unresolved relations exhaust rather than
-becoming equality. Named constants and predecessor coefficients both require
-caller-supplied certified enclosures and progress for a total adapter. The
+divisor guards in optional expression-level attempts; an unresolved relation
+returns no sign. These attempts cannot be used as a tower coefficient field.
+The caller supplies the new constant approximation and laws; ordered-fn derives
+the coefficient approximation procedure for subsequent real extensions. The
 family proves composition from those contracts; it does not implement or prove
 analytic approximation providers. An adapter to an interval library would be
 separate future work and is not a dependency or deliverable here.
@@ -553,7 +526,7 @@ constant provider/version registrations, infinitesimal order, polynomial
 coefficients, root intervals and indexed Thom signs. The checked reader binds
 all dependencies and rejects changed registrations or stale references.
 `repr_roundtrip` says that re-reading emitted data with the same caller-supplied
-registry and sufficient resources succeeds and preserves denotation/root identity; caches
+registry succeeds and preserves denotation/root identity; caches
 need not match. Decimal display is not a reconstruction format. A conditional
 total mode reuses its law package rather than serializing proofs of
 transcendence as runtime data.
@@ -579,7 +552,7 @@ This SPEC implements neither a tactic nor multivariate CAD/coverings.
 
 Follow [testing](../testing.md) and [benchmarking](../benchmarking.md).
 Pin Z3 and record commit/version, generator command, exact input and output,
-context/order, budgets and fixture provenance for its `MkInfinitesimal`,
+context/order and fixture provenance for its `MkInfinitesimal`,
 `MkRoots` and comparisons. Z3 `Pi`/`E` comparisons are optional cases enabled
 only when the caller supplies matching certified approximation procedures;
 their presence in the external API does not require built-in Hex providers. Use
@@ -596,15 +569,15 @@ Required fixtures include:
 
 - Zero, nonzero constants, semantic trailing zeros, `X^m`, repeated factors
   with gaps in multiplicities, and mixed zero/nonzero roots. Exercise Yun
-  iterations whose gcd is constant and emit nothing, and failed coefficient tests.
+  iterations whose gcd is constant and emit nothing, and exact cancellation across different polynomial representatives.
 - The corrected [paper](https://www.cl.cam.ac.uk/~gp351/infinitesimals.pdf)
   example `(εX²-1)(εX³-1)=ε²X⁵-εX³-εX²+1`: roots in order
   `-ε^(-1/2), ε^(-1/3), ε^(-1/2)`. The two positive roots share `(0,+∞)`
   but have negative and positive third-derivative signs respectively.
 - Infinite roots relative to the rationals, finite bounds with inseparable
-  dyadic root pairs, failed bound attempts, roots at split points and zero
-  bisection budget with complete fallback. Vary work policies and require the
-  same complete result on success.
+  dyadic root pairs, failed bound attempts, roots at split points and a policy omitting
+  bisection with complete fallback. Vary internal policies and require the
+  same complete result.
 - Reducible `p=(X-1)(X+1)` at `α=1`: semantic zero of `X-1`, checked inverse
   failure for it, and successful inverse of `X+1` after replacing `p` by
   `X-1`. Also split `p=(X²-2)(X²-3)` at `sqrt(2)` when inverting `X²-3`;
@@ -617,10 +590,10 @@ Required fixtures include:
   section/sector types, non-adjacent boundary rejection and finite-sign
   realization at real points. Reject an infinitesimal literal offered as a
   real witness, incomplete parameter transport or a missing sign constraint.
-- Exhausted, nonconvergent or forged constant enclosures, missing original
-  divisor guards, unresolved equality, zero work at nested calls, malformed
-  DAGs, false Bézout/Yun certificates and a sign table omitting a realizable
-  condition. Test producer and replay failures separately.
+- Rejection of forged constant evidence, missing expression divisor guards,
+  malformed DAGs, false Bézout/Yun certificates and a sign table omitting a
+  realizable condition. Optional bounded sign attempts remain outside field
+  arithmetic; nonconvergent oracles cannot supply its law premises.
 - Reconstructible `Repr`, changed oracle registration, partial descriptors,
   differing polynomials naming the same root, and rational trivial-route
   agreement including `all` and multiplicities.
@@ -654,9 +627,10 @@ child certificates, report the unshared recurrence
 Certificates are finite DAGs with earlier-node references only and strictly
 lower-level coefficient dependencies. Shared checking charges each distinct
 node plus every edge, binding exact contexts and literals; unshared checking
-charges every occurrence. Replay checks supplied evidence without fresh root
-isolation or approximation search. Budget bytes, nodes, arithmetic and operand
-sizes globally, and reject cycles/forward references before expansion.
+charges every occurrence. Replay checks supplied result evidence without fresh root isolation or BKR
+production. Tactic clients can provide coefficient-sign proofs to avoid fresh
+approximation search. Measure bytes, nodes, arithmetic and operand sizes, and
+reject cycles/forward references before expansion.
 
 Keep bench imports Mathlib-free and replay measurements separate. Use
 lean-bench's fixed trial-major schedule, automatic CPU selection where

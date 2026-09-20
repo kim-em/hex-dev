@@ -1,273 +1,244 @@
 # hex-ordered-fn-mathlib
 
-Planned semantic companion for [hex-ordered-fn](hex-ordered-fn.md): real
-evaluation, certified enclosure semantics and the positive infinitesimal order
-on rational functions. It supplies the erased laws for the computational
-library's executable total adapters and proves correspondence for its fallible
-operation-record adapter. This is the individual design for
-[#10316](https://github.com/kim-em/hex-dev/issues/10316), under the
-[ordered-field family](../future-work.md#real-closures-of-ordered-fields).
+Semantic companion for [hex-ordered-fn](hex-ordered-fn.md): exact rational
+functions ordered by a computable transcendental real or by a positive
+infinitesimal. It proves the two interpretations, ordinary field/order
+correspondence and termination of real sign search from user-supplied correct
+convergent approximations. The new declaration shapes below are required
+contracts, not claims of existing checked implementations.
 
-New names and statements below are planned contracts, not existing Lean
-declarations or checked Lean prototypes. Existing inputs are identified
-separately. This SPEC adds no implementation, phase advancement, publication,
-CI workflow, root algorithm, tactic or nonstandard-analysis claim.
-
-## Placement and representations
+## Placement and executable carriers
 
 `HexOrderedFnMathlib` imports `HexOrderedFn`, `HexRationalFnMathlib`,
-`HexPolyMathlib` and Mathlib. Keep the family's four
-computational libraries and four companions. No input library, including
-`HexRealAlgebraic`, acquires a dependency on this family. No computational
-library imports this companion, Mathlib or Tau Ceti. Lower coefficient
-callbacks enter through the shared operation record; they do not induce
-imports of downstream selected-root implementations.
+`HexPolyMathlib` and Mathlib. No computational library imports this companion;
+no existing input acquires a family dependency. `HexInterval` and
+`HexIntervalMathlib` are not inputs. A future downstream adapter may connect
+a separate enclosure library without becoming a prerequisite here.
 
-Use the namespace `Hex.OrderedFn` with `Real` and `Infinitesimal` namespaces
-for the two orders, matching the computational API. Qualify Mathlib real
-constants and lemmas with `_root_.Real` inside these namespaces. Planned
-companion modules are `Correspondence` (fraction and operation-record
-interpretation), `Real` (evaluation and enclosures),
-`Infinitesimal` (Hahn embedding and signs), `Total` (law packages and Mathlib
-instances), and build-only `Tests`. Source-local SPEC placement follows
-implementation; the current authoritative design is this file.
+Use namespace `Hex.OrderedFn`, with `Real` and `Infinitesimal` namespaces
+matching the computational API. Modules are `Correspondence`, `Real`,
+`Infinitesimal` and build-only `Tests`. The companion owns semantic proofs;
+it supplies no approximation generator or analytic provider proof for named
+constants such as π or e.
 
-For the total carrier, fix `[Field K] [LinearOrder K]
-[IsStrictOrderedRing K]`. Choose `Field.toGrindField` and
-`LinearOrder.toDecidableEq` before forming `Hex.RationalFn K`; do not add an
-independent equality-decision binder. Both dictionaries index the
-representation. Keep these choices fixed through each conversion instead of
-relying on later changes to instance priorities. Follow
-[hex-rational-fn-mathlib](../../HexRationalFnMathlib/SPEC/hex-rational-fn-mathlib.md)
-at every nested level. Retain executable arithmetic and comparison; semantic
-maps into `ℝ` or Hahn series may be noncomputable and are never runtime
-implementations. Separate opt-in wrappers/scopes carry the real and
-infinitesimal orders; do not install conflicting global orders on
-`RationalFn K`.
+Fix `[Field K] [LinearOrder K] [IsStrictOrderedRing K]`. Choose
+`Field.toGrindField` and `LinearOrder.toDecidableEq` before forming
+`Hex.RationalFn K`, following
+[hex-rational-fn-mathlib](../../HexRationalFnMathlib/SPEC/hex-rational-fn-mathlib.md).
+Those dictionaries index the representation; keep them fixed through
+conversions. Require actual executable coefficient arithmetic and decisions.
+A noncomputable Mathlib order can model the semantics but cannot substitute
+for a compiled coefficient comparison.
 
-For fallible coefficients, use representatives `A`, a semantic ordered field
-`K`, and an interpretation `v : A → K`, which need not be injective. No field,
-order or semantic equality decision is assumed on `A`. Interpreted coefficient
-arrays define polynomials in `K[X]`; checked semantic degrees establish zeros
-above the reported degree and a nonzero leading coefficient, or certify the
-zero polynomial. The shared `HexPoly` operation record and fallible degree,
-division, gcd and extended-gcd routines are planned prerequisites of
-[hex-sturm](hex-sturm.md), not existing capabilities of `DensePoly A`.
+Both extensions reuse total RationalFn arithmetic and equality. Separate
+opt-in wrappers/scopes carry their orders. Interpretations into ℝ or Hahn
+series may be noncomputable; the runtime never evaluates those maps. The
+existing representation and arithmetic correspondence are proved once and
+reused. There are no raw coefficient operation records, per-operation
+certificates or resource budgets to interpret.
 
-The runtime `Sign` has `negative`, `zero`, `positive`. Define an explicit
-`toSignType : Sign ≃ SignType`, sending them to Mathlib's `neg`, `zero`,
-`pos`, and prove compatibility with zero, one, negation and multiplication.
-In statements below, `sign x` means `toSignType.symm (SignType.sign x)` for
-the chosen semantic ordered field. Thus every equality between a checked
-sign and a real/Hahn/coefficient sign has a fixed type.
+The computational sign is an `Int` in `{-1,0,1}`. Relate it explicitly to
+Mathlib's `SignType.sign`, using the integer images of `neg`, `zero`, `pos`.
+In the statements below `sgn` denotes that integer-valued semantic sign.
+Prove the compatibility once and reuse the ordered-field sign laws.
 
-The runtime context `ctx` carries the chosen coefficient record `ops`; all
-law packages in a statement concern that same record and interpretation.
-Write `sign? L ctx f` for a bounded call with a complete resource envelope
-`L : Limits`, including structural fuel. A schedule `limits : Nat → Limits`
-selects such envelopes. This notation abbreviates the computational API's
-fuel and remaining limit parameters; it does not replace them with a new
-runtime interface.
+## Inputs and proof ownership
 
-## Available inputs and missing bridges
+Audit against the [pinned Mathlib](../../lake-manifest.json), revision
+`1cf325a0cf67aca2b04d76b5380ff6a9e410aefa` for the declarations listed here.
+Mathlib paths are package-relative.
 
-Audit against [lake-manifest.json](../../lake-manifest.json), Mathlib revision
-`1cf325a0cf67aca2b04d76b5380ff6a9e410aefa`. Paths in the Mathlib rows below
-are relative to that package, not proposed Hex modules.
-
-| Input / owner | Available declaration or planned obligation |
+| Input | Available result or local obligation |
 | --- | --- |
-| [HexRationalFnMathlib/Correspondence.lean](../../HexRationalFnMathlib/Correspondence.lean) | Existing `equiv`, `algEquiv`, `toRatFunc_injective`, `num_toRatFunc`, `den_toRatFunc`, `toRatFunc_C`, `toRatFunc_X`, operation correspondence, `normalize_spec` and `check_sound`. |
-| [HexRationalFnMathlib/Eval.lean](../../HexRationalFnMathlib/Eval.lean) | Existing `eval_toRatFunc`, `eval?_eq_some`, `eval?_eq_none` and `eval?_normalize`, for evaluation back into `K`. Evaluation along a chosen `K →+* ℝ` needs the bridge specified here. |
-| Mathlib `FieldTheory/RatFunc/AsPolynomial.lean` | Existing `RatFunc.eval`, conditional `eval_add`/`eval_mul`, `liftRingHom_C`/`liftRingHom_X`, and `algEquivOfTranscendental` with its evaluation and `X` equations. Use the fraction-field lift or the latter equivalence into the simple intermediate field; prove agreement with Hex here. |
-| Mathlib `RingTheory/LaurentSeries.lean` | Existing `RatFunc.coeToLaurentSeries`, using `algebraMap (RatFunc K) (LaurentSeries K)`, `RatFunc.coe_X`, and `RatFunc.algebraMap_apply_div`. `LaurentSeries K` is `HahnSeries ℤ K`. |
-| Mathlib `RingTheory/HahnSeries/Lex.lean` | Existing `LinearOrder` and `IsStrictOrderedRing` on the lex wrapper, `HahnSeries.lt_iff` and `leadingCoeff_pos_iff` (also negative/nonnegative variants). These concern Hahn series, not Hex's coefficient scan. |
-| Mathlib `RingTheory/HahnSeries/Summable.lean` | Existing `HahnSeries.instField` for ordered abelian exponent groups and field coefficients; `Lex.lean` alone does not supply division. |
-| `Hex.OrderedFn.Oracle.Bounds` and core exact arithmetic | The computational owner's finite closed rational bounds and bounded arithmetic. Prove real containment for singleton/intersection/negation/addition/multiplication and checked dyadic conversion here. No HexInterval import is required. |
-| Caller-supplied approximation procedure | Source-bound evidence/checker soundness, subject/context authentication and, for totality, an effective convergence schedule. The generic companion consumes these laws; it owns no named-constant approximation algorithm or analytic provider proof. |
-| Mathlib `Algebra/Polynomial/Degree/TrailingDegree.lean`, `Algebra/Polynomial/Reverse.lean` | Existing `Polynomial.natTrailingDegree`, `Polynomial.trailingCoeff` and `trailingCoeff_mul`. Relate the checked lowest-index scan to these, then to Hahn order/leading coefficient here. |
-| Mathlib `Basic/Sign/Defs.lean`, `Basic/Sign/Basic.lean` | Existing `SignType`, `SignType.sign`, `SignType.sign_mul` and `SignType.signHom`. Prove the computational `Sign` translation here; reuse these ordered-field sign laws. |
-| Mathlib `RingTheory/HahnSeries/Basic.lean`, `Multiplication.lean` | Existing coefficientwise `HahnSeries.map`, with `map_one` and `map_mul`. Bundling it as a ring hom and proving lexicographic order preservation for an injective strictly monotone coefficient hom are local obligations. Exponent transport via `embDomainRingHom` is a different operation. |
-| `HexOrderedFnMathlib` | New real evaluation/order correspondence, fallible record correspondence, Hahn embedding composition and lowest-coefficient bridge, enclosure convergence, replay quotation and total-search laws. |
+| [HexRationalFnMathlib/Correspondence.lean](../../HexRationalFnMathlib/Correspondence.lean) | Existing `equiv`, `algEquiv`, `toRatFunc_injective`, canonical numerator/denominator and arithmetic correspondence. Compose these maps; do not create another normalization representation. |
+| Mathlib `FieldTheory/RatFunc/AsPolynomial.lean` | Fraction-field evaluation and `algEquivOfTranscendental`; construct evaluation into the simple intermediate field or ℝ under relative transcendence and prove agreement with Hex. |
+| Mathlib `RingTheory/LaurentSeries.lean` | Existing `RatFunc.coeToLaurentSeries`, `RatFunc.coe_X` and `RatFunc.algebraMap_apply_div`. Laurent series are `HahnSeries ℤ K`. |
+| Mathlib `RingTheory/HahnSeries/Lex.lean`, `Summable.lean` | Lexicographic order and Hahn field structure. Prove correspondence with the executable lowest-coefficient scan here. |
+| Mathlib trailing-degree and sign lemmas | `Polynomial.natTrailingDegree`, `Polynomial.trailingCoeff`, `trailingCoeff_mul` and `SignType` laws support the coefficient and sign bridges. |
+| Caller approximation functions | Total Lean functions returning finite rational bounds, plus containment and effective convergence premises. These are explicit hypotheses, not analytic implementations supplied here. |
+| This companion | Exact bound containment/Horner convergence, injective real evaluation, Hahn sign correspondence, total sign-search progress and field/order laws. |
 
-No new abstract real-algebra theorem from Tau Ceti is an input to this
-companion. The shared `hex-real-roots-mathlib` foundation owns the planned
-`IsRealClosed ℝ` proof from real square roots and polynomial order/IVT lemmas;
-this pin has no such instance. Real evaluation here needs only the ordinary
-real ordered field. The existing
-[IsRealClosed RealAlgebraicNumber](../../HexRealAlgebraicMathlib/RealClosed.lean)
-serves the trivial tower downstream.
+No Tau Ceti real-algebra theorem is needed for these simple ordered
+rational-function extensions. Ordered real-closure existence, IVT/Rolle,
+Sturm–Tarski and Thom/BKR foundations retain their owners in the
+[family proof table](../future-work.md#proof-ownership-and-public-surface).
+An integer-exponent Hahn field is not claimed to be real closed.
 
-`hex-real-closure-mathlib` separately consumes the planned Tau Ceti existence
-contract: every ordered field `K` embeds order-preservingly in an ordered
-real closed field algebraic over the image of `K`. This is needed for an
-algebraic infinitesimal ambient model, not for signs of rational functions.
-Neither that theorem nor the bridges in this SPEC are assumed already
-available; [#10300](https://github.com/kim-em/hex-dev/issues/10300) concerns
-foundation delivery. IVT/Rolle, Cauchy indices, Thom signs and BKR completeness
-remain with their owners in the family's
-[proof-ownership table](../future-work.md#proof-ownership-and-public-surface).
+## Real evaluation and exact bounds
 
-## Fraction and operation-record correspondence
-
-Write `P` and `Q` for the semantic numerator and denominator of an input.
-A valid formal fraction has `Q ≠ 0`; denote it by `⟦P/Q⟧ : RatFunc K`.
-Original expression-domain guards are additional data, not part of fraction
-identity. Formal normalization does not discard them.
-
-Under `CoefficientLaws`, accepted normalization/replay must imply
+Fix an order-preserving field embedding `ι : K →+* ℝ` and a real `τ`.
+Write `E P := P.eval₂ ι τ`. Relative transcendence is
 
 ```text
-Q ≠ 0, B.Monic, A*Q = P*B, S*A + T*B = 1,
-⟦A/B⟧ = ⟦P/Q⟧,
-A = RatFunc.num ⟦P/Q⟧, B = RatFunc.denom ⟦P/Q⟧.
+∀ P : K[X], P ≠ 0 → E P ≠ 0.
 ```
 
-Here `A,B,S,T` in the equations denote interpreted output/Bézout polynomials,
-not raw coefficient representatives. Monicity ensures `B ≠ 0`; the Bézout
-identity ensures coprimality. The zero result has semantic pair `(0,1)`.
-Prove `normalize_sound`, `check_sound` and uniqueness of this interpreted
-pair. Never conclude equality of raw arrays from equal interpretations.
-
-Prove `operation_sound` for successful `add?`, `sub?`, `neg`, `mul?`, `inv?`,
-`div?` and `pow?`: interpretation equals the corresponding `RatFunc K`
-operation, with certified nonzero operands for checked inverse/division.
-Successful equality is cross multiplication in `K[X]`; successful comparison
-is the sign of the interpreted difference in the selected ordered model.
-Certified zero inversion/division yields `domain`, whereas the total field
-operation has `0⁻¹ = 0`. Agreement on nonzero inputs is required.
-
-Specializing the record to a lawful total coefficient field must recover
-`HexRationalFnMathlib.equiv`, its canonical components, operations and
-`RationalFn.Cert.check` soundness. These are extensional agreements on
-successful values and evidence; identical resource costs or identical failure
-budgets are not required. On general representatives, lift the same semantic
-fraction through the real or Hahn maps below. Soundness needs no injectivity
-of `v`. A total field on those representatives requires a semantic quotient
-or a faithful canonical carrier and executable lifted operations first;
-this companion does not manufacture a `DecidableEq A` from interpretation.
-
-## Real evaluation and enclosure soundness
-
-Fix `ι : K →+* ℝ` and `StrictMono ι`, together with a named constant `τ : ℝ`.
-Thus `ι` is an order-preserving field embedding. The context binds its exact
-predecessor, constant identity, provider/version and interpretation to these
-semantic parameters. A display name, hash or matching decimal is not proof
-that two contexts or constants agree. Retained facts and reconstructed
-certificates must resolve to the same registration and operands.
-
-For `p : K[X]`, write `E p = p.eval₂ ι τ`. Define relative transcendence by
+This is transcendence over the embedded predecessor field, not merely over
+ℚ. Under this hypothesis construct
+`Real.evalHom : Hex.RationalFn K →+* ℝ`, with
 
 ```text
-RelativeTranscendence ι τ := ∀ p : K[X], p ≠ 0 → E p ≠ 0.
-```
-
-With the `K`-algebra structure on `ℝ` induced by `ι`, this is the usual
-`Transcendental K τ` condition. It is relative to the embedded preceding
-field, not just to `ℚ`. Under this hypothesis construct `Real.evalHom` of
-shape `Hex.RationalFn K →+* ℝ`, composing the existing Hex equivalence with
-Mathlib's fraction-field evaluation. Required `eval_spec`, `den_ne_zero`
-and `eval_injective` statements are
-
-```text
-evalHom f = E (toPolynomial f.num) / E (toPolynomial f.den)
-         = RatFunc.eval ι τ (HexRationalFnMathlib.toRatFunc f),
+evalHom f = E (toPolynomial f.num) / E (toPolynomial f.den),
 E (toPolynomial f.den) ≠ 0,
-Function.Injective evalHom.
+Function.Injective evalHom,
+evalHom (C a) = ι a,     evalHom X = τ.
 ```
 
-Injectivity then follows from `RingHom.injective`: relative transcendence
-discharges the denominator nonvanishing needed to construct the hom.
-Prove evaluation of constants is `ι a` and evaluation of `X` is `τ`;
-preserve zero, one, addition, subtraction, negation, multiplication, total
-inverse/division and natural powers. These imply nonzero evaluation of every
-nonzero formal fraction. The companion's `eval_lt` and `eval_le` identify
-the executable total order with the pullback of real order; in particular
-`C a < C b ↔ a < b`. Prove linear-order and ordered-ring laws without
-replacing computational comparison with real comparison.
+Compose the existing Hex equivalence with fraction-field evaluation. Prove
+agreement with `RatFunc.eval ι τ` under these hypotheses and ordinary field
+operations, including inverse at zero. Injectivity follows from the field
+hom once denominator nonvanishing has justified its construction. No
+comparison implementation uses real comparison internally.
 
-Without relative transcendence, retain a partial evaluation relation:
-`Evaluates ctx f r` means `E Q ≠ 0`, every retained source divisor evaluates
-nonzero, and `r = E P / E Q`, including recursively checked coefficient
-domains. Successful enclosures and signs concern this relation, even when
-`E P = 0` for a nonzero formal polynomial. Mathlib's total `RatFunc.eval`
-returns zero at a pole; that convention is not a successful evaluation here.
-The canonical field element and its guarded source expression have distinct
-contracts: `(X-c)/(X-c)` is formally `1`, but its source expression cannot
-evaluate at `τ = ι c`. The same domain checks precede zero-numerator shortcuts.
+The caller supplies `approxCoeff : K → Nat → Oracle.Bounds` and
+`approxConst : Nat → Oracle.Bounds`. For a finite closed bound `I`, define
+`Contains I x := (I.lower : ℝ) ≤ x ∧ x ≤ (I.upper : ℝ)`. State correctness
+as containment of `ι a` and `τ` for every precision. State effective
+convergence separately: width is at most `2^(-k)` at requested precision k,
+or after a specified computable rescheduling that gives this property.
+Containment alone suffices for finite successful-sign soundness.
 
-For a local finite closed `Bounds` value `I`, define `Contains I r` by
-`(I.lower : ℝ) ≤ r ∧ r ≤ (I.upper : ℝ)`. Prove the consumer's exact rational
-singleton, intersection, negation, endpoint-addition and four-product
-multiplication formulas preserve containment; retain all raw validation and
-resource conditions. A checked dyadic conversion preserves containment by
-outward rounding. These small arithmetic lemmas live here and use existing
-Mathlib rational/real ordered-field facts, without importing HexIntervalMathlib.
+Prove containment of exact rational singleton, negation, addition,
+four-endpoint-product multiplication and successful intersection. When the
+denominator bound excludes zero, prove containment of the minimum/maximum
+of the four exact endpoint quotients. Dyadic to
+rational conversion is exact; any rational-to-dyadic conversion must preserve
+containment by outward rounding. These are elementary ordered-field lemmas
+in this companion, using the small local bound type rather than an interval
+library.
 
-Prove `Real.enclose_sound` for each accepted polynomial Horner enclosure:
-the bound contains `E P`, assuming the caller's accepted coefficient and
-constant facts contain their specified subjects. Signs multiply numerator
-and denominator signs, so fraction enclosure/division is not required.
-A strictly positive lower endpoint proves positivity and a strictly negative
-upper endpoint proves negativity. Closed bounds touching zero do not prove
-a nonzero sign; zero-containing bounds do not prove equality. Zero signs need
-formal coefficient-zero evidence or a separately replayed exact identity.
+Define the interpreted Horner bound of each fixed polynomial from those
+operations. Prove `Real.enclose_sound` from source containment and
+`Real.horner_converges` from simultaneous coefficient/argument convergence.
+Use the finite Horner recurrence, bounds on the source magnitudes and explicit
+sum/product width estimates; polynomial continuity by itself does not prove
+the bound algorithm narrows. If outward conversion is used, include its
+vanishing rounding error. No fresh analytic theorem about τ is required.
 
-For either total coefficients or the operation record, the headline theorem
-`Real.sign_sound` has shape
+## Sign search and the total ordered-field instance
+
+`Real.attempt f n` first decides formal zero by the exact normalized numerator.
+Otherwise it evaluates numerator and denominator bounds at precision n,
+returning a sign when both are separated from zero. Under relative
+transcendence, every nonzero polynomial encountered has nonzero evaluation.
+Horner convergence therefore gives
 
 ```text
-CoefficientLaws ops → EnclosureLaws ctx → WellFormed ctx f →
-Real.sign? L ctx f = ok s cert →
-∃ r, Evaluates ctx f r ∧ CheckSound ctx cert ∧ s = sign r.
+ApproximationCorrect ι τ approxCoeff approxConst →
+ApproximationConverges approxCoeff approxConst →
+RelativeTranscendence ι τ →
+∀ f : RationalFn K, ∃ N, ∀ n ≥ N, (Real.attempt f n).isSome = true.
 ```
 
-`WellFormed` asserts representation/context validity, not denominator
-nonvanishing: success must establish all domains. `Real.check_sound` proves
-the same semantic conclusion from accepted checker evidence, independently
-of the producer. Successful comparison certifies the ordering of the two
-valid operand values; different successful budgets/providers for the same
-authenticated subjects agree. No transcendence, convergence or sufficient-fuel
-hypothesis belongs in these success-soundness theorems.
+The formal-zero branch terminates algebraically without an approximation
+call. For nonzero f the sign is the product of numerator and denominator
+signs. Prove uniqueness and correctness of every successful attempt under
+these hypotheses, then compose with the computational `firstSome_spec`.
+
+The computational library proves accessibility of
+`Next trial m n := m=n+1 ∧ trial n=none` from eventual success. This companion
+supplies that premise for the actual `attempt` function. The resulting
+`Real.sign` executes successive attempts under an erased accessibility proof;
+it does not extract an arbitrary natural number from `Prop`, use classical
+choice as a runtime procedure, or return a default sign. The companion does
+not replace this computation with `SignType.sign` on real numbers.
+
+Prove the following headline statements, under the fixed dictionary,
+embedding, containment, convergence and relative-transcendence assumptions:
+
+| Statement | Conclusion |
+| --- | --- |
+| `Real.sign_eq` | `Real.sign f = sgn (evalHom f)`. |
+| `Real.sign_zero` | `Real.sign f = 0 ↔ f = 0`. |
+| `Real.compare_eq` | Comparing f and g agrees with comparing their images in ℝ. |
+| `Real.eval_lt`, `eval_le` | The executable order is the pullback of real order. |
+| `Real.C_lt` | `C a < C b ↔ a < b`. |
+| `Real.approx_correct` | `Real.approx f k` contains `evalHom f` and has width at most `2^(-k)`. |
+
+Use sign under negation/multiplication and positivity of sums to supply the
+core ordered-ring/linear-order laws. Provide compatible Mathlib `Field`,
+`LinearOrder` and `IsStrictOrderedRing` instances on the opt-in carrier, with
+proved agreement with its executable core dictionaries. Field arithmetic
+continues to be the existing total RationalFn arithmetic. No optional fueled
+comparison becomes a coefficient operation for polynomial or tower algorithms.
+
+Prove the total `Real.approx` used for successive extensions: numerator and
+denominator bounds jointly converge, the denominator eventually excludes
+zero, and the exact quotient bounds shrink to their real quotient. A finite
+width test at the requested precision therefore succeeds eventually. The
+same accessibility argument constructs the executable bound-returning search.
+The formal zero case uses its exact singleton. Its containment/width theorem
+supplies `approxCoeff` at the next real-constant level; over ℚ use singleton
+bounds. Iteration requires relative transcendence over the complete current
+field at every new constant, not just separate rational transcendence.
+
+## Finite comparisons and boundary evidence
+
+The separate `Real.sign? fuel` consumer may accept correct source bounds
+without convergence or relative transcendence. It establishes nonzero
+evaluation of the supplied normalized denominator before returning a sign.
+Its success theorem concerns this fraction's evaluated value, not an
+injective field embedding. Formal zero or a proved exact evaluation identity
+can supply the numerator's zero sign once the denominator condition holds.
+A singleton `[0,0]` gives such an identity by containment; a nondegenerate
+zero-containing bound does not. Fuel exhaustion and a pole return no sign.
+
+This distinction matters at a dependent subject. Evaluating the normalized
+formal fraction `(X-c)/(X-c)=1` at c does not justify rewriting the original
+real expression by cancellation there. A tactic or expression conversion
+retains every nonzero source-divisor hypothesis used by its rewrite and
+proves the original goal. Ordinary field arithmetic remains total and has
+no per-operation guard protocol. The existing total `RatFunc.eval` convention
+at poles is not a successful nonzero-denominator finite evaluation.
+
+At a tactic or deserialization boundary, accepted source bounds must bind
+the exact subject, predecessor embedding, registration identity/version,
+endpoints and precision claim. The caller provides a proof of containment or
+a finite checker with its soundness theorem. The generic companion composes
+these facts with the already-proved bound/Horner/sign lemmas. It does not
+require literal evidence for every coefficient addition or multiplication.
+Wrong-subject or fabricated endpoint data cannot authenticate themselves.
+Successful finite certificates are checked without executing an unbounded
+approximation search in the kernel; source proof production remains the
+caller's responsibility.
+
+User-provided π/e examples are optional. The pinned audit does not provide
+the individual transcendence theorems; even separate rational transcendence
+would not prove the second constant transcendental over the first extension.
+Finite supplied bounds can establish useful signs without these hypotheses,
+while total field use retains all relative-transcendence and convergence
+premises. This library supplies neither named-constant algorithms nor their
+analytic proofs.
 
 ## Positive infinitesimal model
 
-Set `H(K) = Lex (HahnSeries ℤ K)`, with the field from `Summable.lean` and
-order from `Lex.lean`. Constants are `toLex (HahnSeries.single 0 a)` and
-`ε = toLex (HahnSeries.single 1 1)`. Construct the ring embedding
+Set `H(K) := Lex (HahnSeries ℤ K)`, using the field structure from
+`Summable.lean` and order from `Lex.lean`. Compose the ring embeddings
 
 ```text
 Hex.RationalFn K ≃+* RatFunc K →+* LaurentSeries K →+* H(K).
 ```
 
-The middle arrow is Mathlib's existing `algebraMap`; the final arrow wraps
-the same series in `Lex`. Prove `Infinitesimal.embed_injective`, `embed_C`
-and `embed_X`, using `RatFunc.coe_X` for the exponent-one monomial. Do not
-replace this input with a proposed new RatFunc-to-Hahn embedding. The new
-work is composition with Hex and correspondence with executable operations.
+The middle map already exists in Mathlib; the final map wraps the same series
+in `Lex`. Prove `Infinitesimal.embed_injective`, `embed_C` and `embed_X`, with
+constants at exponent zero and X at exponent one.
 
-For a nonzero polynomial `P`, relate the checked lowest nonzero index `i`
-to `P.natTrailingDegree` and its coefficient to `P.trailingCoeff`. Prove its
-embedded series has order `i` and Hahn leading coefficient `P.coeff i`.
-For `Q ≠ 0` with lowest index `j`, the nonzero fraction has order `i-j`
-and leading coefficient `P.coeff i / Q.coeff j`. Consequently
-`Infinitesimal.sign_sound` and its checker form state
+For a nonzero polynomial P, prove the first nonzero index found by the exact
+scan is `P.natTrailingDegree` and its coefficient is `P.trailingCoeff`.
+The embedded series has that order and leading coefficient. Thus a nonzero
+fraction P/Q has order i−j and leading coefficient `P.coeff i / Q.coeff j`.
+Using Hahn leading-coefficient order and field sign laws, prove
 
 ```text
-sign(embed(P/Q)) = 0                                      if P = 0,
-sign(embed(P/Q)) = sign(P.coeff i) * sign(Q.coeff j)         otherwise.
+Infinitesimal.sign f = sgn (embed f),
+Infinitesimal.sign (P/Q) = sgn(P.coeff i) * sgn(Q.coeff j)  when P≠0,
+Infinitesimal.sign 0 = 0.
 ```
 
-Interpret `embed(P/Q)` through `RatFunc K` for the operation-record adapter.
-An accepted lowest-index certificate proves all earlier coefficients zero
-and the selected coefficient nonzero; raw array positions are not enough.
-Prove the polynomial coefficient bridge locally, then use Mathlib's
-`leadingCoeff_pos_iff` and field laws for the quotient sign. Denominator
-monicity does not imply positive sign: `1/(X-1) < 0` in this order.
-Establish invariance under all valid normalization and common-factor
-cancellation, including the zero numerator case.
-
-Prove `Infinitesimal.C_lt`, `X_lt`, `embed_lt` and `embed_le`:
+The denominator sign is essential, even when Q is monic. Establish agreement
+with existing RationalFn normalization and cancellation, then prove the
+ordered-field laws and comparison by the sign of subtraction. Required
+correspondences include
 
 ```text
 C a < C b ↔ a < b,
@@ -275,221 +246,64 @@ C a < C b ↔ a < b,
 f < g ↔ embed f < embed g,     f ≤ g ↔ embed f ≤ embed g.
 ```
 
-The computational order is the sign of subtraction. These correspondences
-supply totality, antisymmetry, translation invariance and positive-product
-laws; the Hahn comparison itself is not executed. Prove compatibility with
-negation, inverses of nonzero values, and preservation of predecessor signs.
+For successive levels, iterate H and transport the preceding field's model
+embedding coefficientwise. Bundle `HahnSeries.map` for an injective strictly
+monotone coefficient hom and prove its embedding preserves and reflects
+order: support and lowest index are preserved, and leading coefficients
+map by that hom. Prove commuting constant embeddings. Consequently ε₂ is
+smaller than every positive element of K(ε₁), including ε₁^m for positive m.
 
-For successive levels, iterate `H` on the semantic ordered field and embed
-the preceding rational-function carrier coefficientwise into that model.
-Prove `map_lt`: an injective strictly monotone coefficient hom `φ : A →+* B`
-between ordered fields induces a ring embedding `H(A) →+* H(B)` preserving
-and reflecting order. Bundle the existing coefficientwise `HahnSeries.map`;
-injectivity preserves support and the lowest index, and the leading
-coefficient maps by `φ`. Prove commuting constant embeddings and apply this
-transport to the preceding carrier's model embedding. Thus `ε₂` is smaller
-than every positive embedded element of `K(ε₁)`, including `ε₁^m` for every positive integer `m`.
-Context order is part of the interpretation and cannot be permuted silently.
-
-This field is not real closed: an exponent-one monomial has no square root
-in the integer-exponent Hahn field. No order-preserving embedding of it into
-`ℝ` exists. Algebraic infinitesimal roots require the separate downstream
-real-closure existence contract. A real-evaluation context cannot follow a
-positive infinitesimal over `ℚ`; the family retains its stage restriction
+The formal indeterminate is transcendental by construction. The
+integer-exponent Hahn field is not real closed: its exponent-one monomial
+has no square root. Algebraic roots and the compatible real-closure model
+are downstream obligations. The real-constant interface cannot follow a
+positive infinitesimal over ℚ; the family's stages remain
 `transcendental ≺ infinitesimal ≺ algebraic`.
-
-## Failure, progress and the total law package
-
-The bounded API and checker keep the computational diagnostic sum:
-
-| Result | Semantic contract |
-| --- | --- |
-| `ok value evidence` | All input/context/domain obligations for this operation are checked; correspondence and replay soundness apply. |
-| `exhausted reason` | Insufficient fuel/resources, unresolved coefficient/domain/sign or missing usable enclosure; no sign, equality or invalidity follows. |
-| `domain reason evidence` | A checked mathematical violation, such as a zero original divisor or zero denominator; does not mean merely containing zero. |
-| `invalid reason` | Rejected malformed input, mismatched context/provenance or refuted replay; not a theorem about the represented value. |
-
-Fuel zero exhausts before callbacks. With positive fuel, bounded preflight
-precedes domains and arithmetic, propagating the first failure with its
-operation path. Unread input after exhaustion is not certified well-formed.
-Every producer, callback and checker terminates on arbitrary inputs under
-structural fuel and the finite size, precision, endpoint and evidence limits;
-recursive coefficient calls also descend the tower. No result discards an
-original domain guard or substitutes a default value for failure.
-
-Keep `CoefficientLaws`, `EnclosureLaws` and `ReplayLaws` separate from
-`OperationProgress`, `OracleConvergence` and `CofinalSchedule`, with the exact
-meanings in the [computational SPEC](hex-ordered-fn.md#bounded-results-evidence-and-resources).
-This companion proves model soundness from the first two. `ReplayLaws` also
-requires every successful producer to supply finite evidence accepted with
-sufficient replay resources. The computational `sign_checks` supplies an
-eventual replay envelope without starting a fresh approximation search.
-The companion must turn accepted finite evidence into a kernel theorem with
-all source facts discharged by the caller-supplied evidence/checker laws. Runtime endpoints or a
-Boolean sign alone are not that theorem; a caller that supplies unproved
-source propositions gets only a theorem conditional on them.
-
-For real progress, every coefficient and `τ` must have containing finite
-enclosures with a caller-supplied computable schedule reaching width at most
-`2^(-k)` for each requested `k`. Prove `Real.horner_converges`: for each finite
-polynomial, simultaneous coefficient/argument refinement makes the exact
-finite-bound Horner output width tend to zero. If optional dyadic conversion
-is used, its outward error must also vanish. Continuity alone does not prove
-this algorithm narrows: use its finite recurrence, bounded source magnitudes
-and elementary addition/product width estimates. Jointly refine
-all coefficient, denominator and retained-domain expressions. For each
-nonzero evaluation, a sufficiently narrow containing interval separates zero.
-Formal-zero inputs use eventual coefficient-zero/normalization evidence.
-
-Under these conditions require the companion's `Real.sign_isSome`:
-
-```text
-RelativeTranscendence ι τ → CoefficientLaws ops → EnclosureLaws ctx →
-ReplayLaws ctx ops → OperationProgress ops → OracleConvergence ctx →
-CofinalSchedule limits →
-∀ f, Valid ctx f → ∃ N, ∀ n ≥ N,
-  (Real.sign? (limits n) ctx f).isSome = true.
-```
-
-`Valid` includes valid coefficients, well-formed finite context and nonzero
-formal denominators and original divisors. Relative transcendence supplies
-their real nonvanishing; it does not validate a formally zero divisor.
-`limits n` eventually admits every finite requirement and retains already
-admitted work, with fair refinement. Fixed caller caps or arbitrary
-nonconvergent providers do not meet these hypotheses. The corresponding
-computational `Infinitesimal.sign_isSome`, owned by `HexOrderedFn`, needs
-coefficient/operation/replay progress and a cofinal schedule but no real
-embedding, oracle convergence or relative transcendence: each finite
-coefficient scan resolves under predecessor progress. This companion supplies
-the model theorems composed with that computational progress theorem. Bounded
-predecessor exhaustion must still propagate.
-
-Construct `SearchLaws : Prop` for the computational total adapter with these
-specific fields, for its chosen executable operations and sign function:
-
-- Preservation of the validated carrier/domain invariants by every operation;
-  agreement with field arithmetic, including total inverse at zero and
-  checked inverse/division on nonzero inputs.
-- Exclusion of `domain` and `invalid` on validated inputs under the lawful
-  provider/record contracts; all remaining failures are exhaustion.
-- Eventual success for every validated operation needed by the adapter,
-  including sign/comparison, normalization and replay, along the chosen
-  cofinal schedule; successful certificates satisfy the replay contract.
-- Uniqueness of successful signs; `sign_eq_zero` (`s(f)=0 ↔ f=0`),
-  `sign_one`, `sign_neg`, `sign_mul`, and `sign_add`
-  (`s(f)=+1 ∧ s(g)=+1 → s(f+g)=+1`), where `s` is the checked total sign.
-  Signs take exactly the three values `-1,0,+1`. Arithmetic laws and these
-  sign laws establish the order defined by signing subtraction.
-
-`Real.searchLaws` discharges this package using injective real evaluation
-and the progress theorem. `Infinitesimal.searchLaws` uses the Hahn embedding
-and finite scans. The computational accessibility recursion follows
-`Step m n := m = n+1 ∧ run n is exhausted`. Eventual success gives
-`Acc Step n`; recursion runs increasing budgets and returns the first
-success, eliminating impossible domain/invalid branches by the laws.
-Prove `search_spec` gives an actual finite successful run, then compose with
-`sign_checks` and `sign_sound`. The existential threshold is used only in
-the accessibility proof, never extracted by classical choice as runtime fuel.
-
-The total API exposes core `LE`, `LT`, decidable comparison,
-`Std.IsLinearOrder`, `Std.LawfulOrderLT` and `Lean.Grind.OrderedRing` alongside
-`Lean.Grind.Field`. Here supply compatible Mathlib `Field`, `LinearOrder`
-and `IsStrictOrderedRing` instances on the opt-in carriers, proving agreement
-with those executable dictionaries. `OrderedRing` alone is not totality.
-No `partial`, `unsafe`, opaque trusted callback or new axiom implements search.
-A certified computable bound is an alternative only if it bounds the entire
-pipeline and proves success there.
-
-## User-supplied constants and limits of completeness
-
-The companion proves the generic consumer contract under supplied source
-laws; it does not implement or prove an approximation procedure for any
-named constant. `HexInterval`/`HexIntervalMathlib` are not dependencies.
-A future downstream adapter may connect another enclosure library, without
-creating an obligation to implement or finish it here.
-
-The pin has the analytic part of Lindemann–Weierstrass, not the theorems
-`Transcendental ℚ Real.pi` or `Transcendental ℚ (Real.exp 1)`. Keep these as
-explicit hypotheses for corresponding total modes. Separate proofs of both
-would still not establish relative transcendence of `e` over embedded
-`ℚ(π)`, or joint algebraic independence of `π,e`. No total `ℚ(π,e)` ordering
-is claimed without that additional hypothesis.
-
-If a caller supplies certified bounds for both constants, bounded examples
-such as `π-4 < 0` and formal identities after all original domains are
-certified remain valid. Such examples require no bundled π/e providers.
-Exact-zero proofs can extend this fragment, but unresolved
-relations exhaust. This is successful-result soundness, not a completeness
-promise. General transcendental reals also need effective certified
-approximation data: transcendence alone does not supply an executable oracle.
 
 ## Conformance and Phase-4 evidence
 
-This is planned as `correspondence_only: true`, comparator absence class
-**correspondence-only-layer**. Computational conformance and performance owner:
-`HexOrderedFn`. Its SPEC owns pinned Z3 infinitesimal and applicable
-arithmetic/sign comparisons, rational/python-flint cases, supplied-bound
-consumer tests and shared-host runtime measurements. Named-constant examples
-use caller-provided evidence and are not mandatory provider implementations. This companion has no separate compiled benchmark
-or new user tactic. Its build-only tests must prove the semantic conclusions,
-not merely compare two runtime outputs.
+This is `correspondence_only: true`, comparator absence class
+**correspondence-only-layer**. HexOrderedFn owns runtime conformance and
+benchmarks. Here use build-only proof tests of semantic conclusions:
 
-Required proof examples and adversarial replay cases include:
+- Existing RationalFn representation/arithmetic correspondence, inverse zero,
+  cancellation, denominator signs and normalization invariance.
+- Lowest-index scans, negative valuations, `1/(X-1)<0`, `0<ε<1/n` for positive
+  integers n, `1/ε>n`, and successive infinitesimal inequalities.
+- The corrected paper identity `(εx²−1)(εx³−1)=ε²x⁵−εx³−εx²+1`; do not
+  assert its algebraic roots lie in the integer-exponent Hahn field.
+- Exact rational source bounds and required finite comparisons at sqrt(2),
+  using test-only rational bounds and a genuine proof of containment.
+  Sqrt(2) is algebraic: it never instantiates relative transcendence or the
+  total real-extension field. An unresolved `X²−2` test returns no sign
+  unless separately justified exact-zero evidence is available.
+- A subject 2 with narrowing nondegenerate bounds on `X−2`, contrasted with
+  a certified singleton `[2,2]` giving an exact evaluation identity.
+- Joint coefficient/constant refinement, small nonzero evaluations, closed
+  bounds touching zero, poles and preserved source-divisor premises.
+- Wrong subject/registration/endpoint evidence at the boundary, finite-fuel
+  exhaustion, formal zero without approximation calls and a synthetic
+  eventually successful trial for the executable accessibility search.
 
-- Constants, zero, `X`, nontrivial normalized fractions, both denominator
-  signs, common factors, checked versus total zero inversion, and agreement
-  of the total-field and fallible-record interpretations.
-- Distinct representatives of a semantic zero, certified zeros above the degree,
-  false degree/Bézout/monicity witnesses, and an unresolved earlier
-  coefficient before a later nonzero one. No structural equality shortcut.
-- Lowest coefficients at different indices, negative valuation, `1/(X-1)<0`,
-  `0<ε<1/n` for positive integers `n`, `1/ε>n`, and two/three nested levels
-  with `ε₂<ε₁^m` for fixed positive `m`.
-- The corrected paper identity
-  `(εx²−1)(εx³−1) = ε²x⁵−εx³−εx²+1`, as polynomial arithmetic over this
-  ordered coefficient field. Its algebraic roots and derivative/Thom signs
-  belong downstream; this companion must not assert their membership in
-  `HahnSeries ℤ K`.
-- Real enclosure success without transcendence, tiny nonzero numerator and
-  denominator values, non-dyadic rational singleton coefficients, closed
-  bounds touching zero, and joint coefficient/constant refinement. Small singleton rational facts
-  can prove exact zero; intervals merely containing zero cannot.
-- `0/0`, a real pole and a cancelled source divisor at its zero, including a
-  zero numerator with invalid domain. An oracle for rational `2` on `X-2`
-  with only nondegenerate zero-containing enclosures and no equality witness
-  exhausts; an authenticated exact-zero witness can succeed. Neither case
-  provides a field embedding.
-- Wrong subjects, forged source bounds, stale providers/contexts, inconsistent
-  purported enclosures, malformed certificates and zero/insufficient budgets
-  at every nested producer/checker boundary. Legitimate fixed caps may keep
-  exhausting; progress tests use the specified cofinal schedule.
+Total real sign/order theorems are tested under explicit hypotheses, not a
+false concrete transcendence instance. Inspect public axiom dependencies;
+reject `sorryAx`, invented axioms and `native_decide`. Independent review
+checks that actual executable sign/equality supplies the ordinary field/order
+instances and that the termination proof applies to that same function.
 
-Test `Real.sign_sound` without a transcendence hypothesis and instantiate
-`Real.searchLaws` only under an explicit relative-transcendence assumption.
-Do not invent a concrete unconditional total `π,e` instance for tests.
-For each public bridge and law-package constructor, inspect axiom dependencies
-and reject `sorryAx` or any new axiom; `native_decide` is banned. Imported
-planned foundations must be proved before an implementation claims discharge.
+Phase 4 adds [fresh-module proof evidence](../benchmarking.md#fresh-module-proof-evidence)
+for representative model/order laws and optional real-sign boundary
+certificates. Separate runtime approximation, finite proof generation,
+elaboration and kernel checking. Prove and reuse arithmetic/Horner lemmas;
+do not introduce per-operation coefficient certificate benchmarks or rerun
+unbounded sign refinement in the kernel. Named-constant generation/analytic
+provider performance is outside this contract.
 
-Phase 4 reuses the owner's arithmetic/sign benchmarks and adds fresh-module
-proof evidence for representative user-bound, infinitesimal and nested-record
-certificates: separate production, executable replay, elaboration and kernel
-checking; record proof/evidence size, retained cells, dependency sharing and
-lower-level replay composition. Do not rerun normalization or approximation
-search in kernel replay. Named-constant generation and analytic provider
-proof performance are outside this contract. Show both accepted and rejected/exhausted replay
-remain within their stated resource contracts. Follow
-[benchmarking.md](../benchmarking.md#fresh-module-proof-evidence): the
-owner's compiled benches stay Mathlib-free; this companion reports build costs
-and fresh-module proof evidence separately.
-
-The owner's fixed trial-major measurements vary degree, coefficient height,
-lowest nonzero index, separation precision and tower depth. Comparisons use
-adjacent alternating `AB`/`BA` arms, automatic CPU selection where supported,
-all completed shared-host samples, at most one unchanged inconclusive rerun,
-and one representative profile for attribution. Host activity is context,
-not a reason to discard runs or wait for an idle core. Family `tower8`,
-MetiTarski and root workloads supply downstream integration evidence; this
-companion claims only their coefficient arithmetic/sign/replay contribution.
-The [paper](https://www.cl.cam.ac.uk/~gp351/infinitesimals.pdf)'s historical
-runtimes are not acceptance thresholds. No CI fan-out is introduced.
+The owner varies degree, coefficient height, lowest index, separation
+precision and tower depth, with caller approximation cost attributed
+separately. Use fixed trial-major shared-host schedules, automatic CPU
+selection where supported, adjacent alternating comparisons, all completed
+samples and at most one unchanged inconclusive rerun. Family tower8 and
+other root workloads supply integration evidence; this companion contributes
+coefficient model/sign correctness and boundary proof costs. No CI fan-out or
+historical-paper timing threshold is introduced.
