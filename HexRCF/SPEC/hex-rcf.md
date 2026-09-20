@@ -1376,9 +1376,15 @@ create a provider implementation obligation:
 ```lean
 -- after HexRCF.RealCoefficients and caller-supplied authenticated π/e registrations
 example : ∀ x : ℝ, x^2 > Real.pi - 4 := by rcf
+example : ∀ x : ℝ, x^2 + 1 / (4 - Real.pi) > 0 := by rcf
 example : ∀ x : ℝ, x^2 + Real.exp 1 > 2 := by rcf
 example : ∃ x : ℝ, x = Real.exp 1 ∧ 2 < x ∧ x < 3 := by rcf
 ```
+
+The division example must replay the original guard `4 - Real.pi ≠ 0`,
+justified by the supplied upper bound on `Real.pi`, before coefficient
+normalization. Include a generic supplied-bound variant independently of
+whether a π registration is available.
 
 For the API examples, construct `a` as the selected positive root of `X²-2`
 and `b` as its other real root `-a`, with reconstruction/equality proofs.
@@ -1395,7 +1401,7 @@ Required tests extend the existing
 [conformance discipline](../../SPEC/testing.md):
 
 - Kernel theorems for algebraic examples and generic supplied-bound coefficient
-  transport; π/e examples use supplied registrations. Include constant-only and
+  transport; optional π/e examples use supplied registrations. Include constant-only and
   zero-polynomial bodies, semantic leading cancellation, all comparisons and
   Boolean forms, and integer/rational fast-path compatibility.
 - Repeated/common roots, including atoms `(x-a.toReal)^2` and

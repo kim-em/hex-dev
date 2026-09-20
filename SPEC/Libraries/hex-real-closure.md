@@ -184,8 +184,11 @@ prerequisite for field laws.
 
 ## Characteristic-zero Yun decomposition
 
-`Yun.decompose (f : DensePoly K)` is total new infrastructure owned here.
-Use the existing exact field gcd, derivative and division routines; prove each
+`Yun.decompose (f : DensePoly K)` is total new infrastructure owned here,
+under the ordinary ordered-field hypotheses above (hence characteristic zero).
+Both its termination and correctness require this hypothesis; a bare
+`Lean.Grind.Field K` is insufficient. Use the existing exact field gcd,
+derivative and division routines; prove each
 claimed exact division from the recurrence invariants.
 
 Its output is either `zero`, exactly when `F=0`, or a nonzero scalar
@@ -478,7 +481,7 @@ has a name in a SPEC.
 | Tau Ceti through real-roots/sturm companions | Polynomial IVT and Rolle; signed-remainder/Cauchy-index identity with common factors and infinite endpoints. Consume the shared kernel's soundness; do not reprove a second Sturm–Tarski foundation here. |
 | Tau Ceti through sign-det companion | Thom injectivity/order, sign-count moment identity and correctness of support-preserving BKR reduction. Consume complete descriptor and sign-table correspondence. |
 | hex-ordered-fn-mathlib | Real evaluation under relative transcendence, sign soundness/progress conditional on caller approximation laws, Hahn-series infinitesimal embedding and ordered-field laws. An integer-exponent Hahn field is not real closed. |
-| hex-real-roots-mathlib | Prove `IsRealClosed ℝ` from pinned real square-root and polynomial IVT/order results. The pin supplies no such instance. |
+| hex-real-roots-mathlib | Reuse the implemented `Real.instIsRealClosed` from `HexRealRootsMathlib.RealClosed`; the shared companion supplies the instance missing from the pinned Mathlib. |
 | hex-real-algebraic-mathlib | Existing rational-base real closed carrier; compose its arithmetic/order/root correspondence for the trivial path. |
 | hex-real-closure-mathlib | Prove Yun correspondence, selected-root quotient and executable descent/equality, splitting and context transport, termination laws, ordered complete root lists, `Query.specialize`/`Sample.specialize` and finite-sign realization, and compatible-union real-closedness relative to the supplied ambient model. |
 

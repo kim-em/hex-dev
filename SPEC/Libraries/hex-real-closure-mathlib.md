@@ -209,6 +209,9 @@ the union construction below.
 
 `Yun.decompose_sound` proves the computational owner's new characteristic-zero
 Yun recurrence correct using derivative, gcd and exact-division correspondence.
+Its executable termination premise and this theorem both require the ordered
+coefficient field (or an explicit characteristic-zero field hypothesis); the
+contract does not extend to arbitrary positive-characteristic fields.
 Nonzero output has `F=u*∏ fᵢ^mᵢ`, `u≠0`, positive distinct multiplicities,
 nonconstant squarefree pairwise coprime factors, and
 `degree F=∑ mᵢ*degree fᵢ`. Zero is a separate result; constants have no
