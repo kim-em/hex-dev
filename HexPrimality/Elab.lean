@@ -417,6 +417,7 @@ meta def suggestPrime (predicate head : Name) (stx : Syntax) : Tactic.TacticM Un
           throwErrorAt flag "expected true or false"
         budget := { budget with factor := { budget.factor with
           pMinusOneStage2 := flag.getId == `true } }
+    | `(tactic| primality? using $_:term) => pure ()
     | _ => Elab.throwUnsupportedSyntax
     if n.log2 + 1 > budget.maxBits then
       throwError "primality?: input has {n.log2 + 1} bits; construction limit is {budget.maxBits} bits"

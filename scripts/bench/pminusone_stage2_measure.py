@@ -73,7 +73,7 @@ def main() -> None:
                    'scripts/bench/pminusone_stage2_measure.py',
                    'conformance-fixtures/HexPrimality/pminusone-stage2.jsonl',
                    'lean-toolchain', 'lake-manifest.json']
-        emit({'type': 'metadata', 'mode': args.mode, 'partition':args.partition, 'case':args.case, 'controls':args.controls, 'seed':args.seed, 'cpu': cpu, 'host': platform.node(),
+        metadata = {'type': 'metadata', 'mode': args.mode, 'partition':args.partition, 'case':args.case, 'controls':args.controls, 'seed':args.seed, 'cpu': cpu, 'host': platform.node(),
               'load': os.getloadavg(), 'platform': platform.platform(),
               'source_sha256': {p: hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in sources},
               'executable_sha256': {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in (PRIMALITY, FACTOR)},
@@ -82,11 +82,12 @@ def main() -> None:
               'pair_schedule': 'eight adjacent blocks, alternating disabled/enabled and enabled/disabled',
               'timing_provider': 'lean-bench fixed child',
               'ordinary_budget': 'identical rho/ECM and worklist caps; eight base smooth attempts plus at most one counted continuation from spare fuel',
-              'construction_budget': 'constructionBudget, maxAttempts=1024, maxBits=512 in both arms',
+              'construction_budget': 'maxAttempts=1024, maxFactors=12, maxBits=512 (1024 for parents) in both arms',
               'stage1_backend': 'existing powMod word-Montgomery dispatch; per-power context construction included in stage1',
               'prepared_stage1_backend': 'identical powers and conversions with one word context prepared per modulus; Nat fallback unchanged',
               'stage2_backend': 'direct Nat multiplication and remainder',
-              'working_residue_bound': 252})
+              'working_residue_bound': 252}
+        emit(metadata)
         completed_pairs = set()
         if args.resume_from:
             samples=[]
@@ -95,6 +96,8 @@ def main() -> None:
                 data = gzip.decompress(raw) if source.suffix=='.gz' else raw
                 prior = [json.loads(line) for line in data.splitlines()]
                 assert prior[0]['mode'] == args.mode
+                assert prior[0]['source_sha256'] == metadata['source_sha256'], 'resume source mismatch'
+                assert prior[0]['executable_sha256'] == metadata['executable_sha256'], 'resume executable mismatch'
                 if args.mode=='factor':
                     assert prior[0].get('timing_provider')=='lean-bench fixed child'
                 emit({'type':'resume', 'path':str(source),
@@ -111,7 +114,8 @@ def main() -> None:
                 if set(pair)=={False,True}:
                     completed_pairs.add(key)
             for row in samples:
-                if (row['block'],row['case'],row['seed']) in completed_pairs and assigned(row['case']):
+                if ((row['block'],row['case'],row['seed']) in completed_pairs and assigned(row['case'])
+                        and (args.seed is None or row['seed']==args.seed)):
                     emit(row)
         def run(exe, command, info):
             before = time.monotonic()
