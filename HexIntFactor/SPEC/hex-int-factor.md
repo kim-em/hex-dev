@@ -414,8 +414,8 @@ raising table primes to powers derived from the larger request. The theorem
 
 The success condition concerns the **order of `a` modulo a prime `p ∣ n`**:
 `ord_p(a) ∣ M` makes `p` divide the stage-1 gcd, without guaranteeing that
-the gcd is proper. The stronger condition `p − 1 ∣ M` suffices for that
-divisibility; ordinary `B`-smoothness alone does not bound the prime-power
+the gcd is proper. The stronger condition `p − 1 ∣ M` suffices for
+`ord_p(a) ∣ M`; ordinary `B`-smoothness alone does not bound the prime-power
 exponents. A small base order can also expose a prime whose `p − 1` does
 not divide `M`, and several components can give the whole modulus.
 
@@ -448,17 +448,23 @@ attempts, not hidden retries inside one nominal route call.
 
 The stage-1 ladder above is the production policy with continuation disabled.
 The new adapter in `HexIntFactor/PMinusOne.lean` exposes
-`pMinusOneContinueCounted n x B₁ B₂ r`, delegating to
-`PMinusOne.continueCounted`, and `pMinusOneSearchCounted n a B₁ B₂ r`,
+`pMinusOneStage2Counted n x B₁ B₂ r`, delegating to
+`PMinusOne.stage2Counted`, and `pMinusOneSearchCounted n a B₁ B₂ r`,
 delegating to `PMinusOne.searchCounted`. Both return the shared `Run` and
 have a theorem that a `.factor d` result implies `1 < d ∧ d < n ∧ d ∣ n`.
 Use the continuation adapter after an already charged `PMinusOne.start`;
 use the standalone adapter only when stage 1 has not run. Preserve the
 residue on stage-1 gcd 1 and never run stage 1 again to obtain it.
 
-An explicit `pMinusOneStage2` policy switch is initially false. With it
-enabled, at most one continuation is eligible per unresolved cofactor: after
-the first base-2/bound-64 stage-1 call, only if it returns a ready residue,
+Append an optional named `pMinusOneStage2 : Bool := false` parameter to
+`factor?` and `factorPartial?`, threading it through their counted internal
+entry points and recursive worklists. The registered adapter obtains this
+flag from `FactorSearchBudget`; direct callers use the parameter.
+The dispatcher calls `PMinusOne.start` directly and charges exactly one
+stage-1 attempt itself, retaining its residue and event; it does not first
+call the residue-discarding `pMinusOneFactorCounted` and then repeat setup.
+With the flag enabled, at most one continuation is eligible per unresolved
+cofactor: after the first base-2/bound-64 stage-1 call, only if it returns a ready residue,
 try `B₁ = 64`, `B₂ = 4096`. Do so only if one p−1 attempt and one combined
 smooth attempt remain. A stage-1 setup factor, stage factor, or `whole`
 does not enter stage 2; a later base/bound pair does not receive a second
@@ -473,6 +479,9 @@ or `whole`, resume the stage-1 ladder as after its original no-factor
 result (base 2, next bound 512), with the continuation's charge deducted.
 Thus the all-miss enabled sequence is stage 1 at 64, stage 2 to 4096,
 stage 1 at 512, stage 1 at 4096, then the remaining ECM allocation.
+This displaces the disabled ladder's bound-9999 stage-1 call; the benchmark
+gate must demonstrate that the changed allocation preserves baseline
+successes rather than assuming this displacement is harmless.
 No continuation exhaustion resets fuel, draws a random word, or blocks ECM.
 If the budget cannot admit it, record the skip and continue the existing
 bounded ladder. Other stage-1 whole results retain the smaller-bound,
@@ -480,7 +489,9 @@ next-base policy above.
 
 Extend `SmoothEvent` with the shared continuation call event, including
 requested/effective bounds, batch outcomes and recovery, plus zero-attempt
-skip diagnostics. Preserve these events in order on success, exhaustion,
+skip diagnostics only within an enabled policy. Disabled-policy traces
+remain unchanged, including the existing one-event-per-attempt conformance
+guards. Preserve these events in order on success, exhaustion,
 and checker rejection. Sum counted attempt fields; event-list length is
 no longer an attempt count. The shared trace distinguishes a recovered
 factor from an unrecoverable whole batch. Downstream primality registration
@@ -1132,6 +1143,8 @@ does not enumerate residues below the subject.
 
 `n` the input, `b = log₂ n`, `p` the smallest nontrivial factor, `k`
 the number of distinct primes, `B` a smoothness bound.
+For stage 2, `i₀ = floor(Q.head/210)` and `ell` is binary bit length
+(`ell(0) = 0`); the empty interval skips all residue-table work.
 
 | operation | cost | note |
 |---|---|---|
@@ -1316,6 +1329,12 @@ Families:
   native usefulness gate before ordinary default enablement; record direct
   `Nat` versus prepared-context decisions with setup included. Existing
   stage-1 or ECM measurements do not discharge this gate.
+  The ordinary-dispatch arm uses the larger-factor table and recorded route
+  participation, because rho normally splits the smaller table first.
+  This family becomes required at milestone 8: add its
+  `phase4.input_families` entry and revalidate the new performance surface
+  with that implementation. Existing attestations cover the implemented
+  stage-1 surface, not this specified extension.
 - **Smooth `p − 1` semiprimes** at the same sizes. Route 2; the base is
   fixed so the benchmark measures the specified stage-1 success case.
 - **`b^n ± 1`**, with and without the cyclotomic split, on identical

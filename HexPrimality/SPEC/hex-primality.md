@@ -718,7 +718,8 @@ their polynomial multipoint extension.
 For natural-number requests `B₁, B₂`, set
 `b₁ = smoothBound B₁ = min B₁ 524288` and
 `b₂ = stage2Bound B₂ = min B₂ 4194304`. The separate
-`stage2BoundCap = 4194304` is independent of `smoothBoundCap`, the ordinary
+`Hex.Nat.PMinusOne.stage2BoundCap = 4194304` (with `stage2Bound` in the
+same namespace) is independent of `smoothBoundCap`, the ordinary
 9999 policy cap, and the size of `primeTable`. It is a work ceiling, not a
 claim of usefulness at that ceiling. Never raise either requested bound.
 When `b₂ ≤ b₁`, the interval is empty; do not swap bounds or increase `b₂`.
@@ -742,15 +743,18 @@ at this boundary: no consumer may recompute `a^M` to start stage 2. Stage-1
 `whole` cannot be repaired by further exponentiation of that residue.
 
 Use the following new API in namespace `Hex.Nat.PMinusOne` (the existing
-`Hex.Nat.pMinusOneStage1` names and their counted contracts stay available):
+`Hex.Nat.pMinusOneStage1` names and their counted contracts stay available).
+The excerpt assumes `Event` and its nested batch record, whose data schema
+is specified below, are declared first:
 
 ```lean
 structure Stage1 where
   result : PMinusOneResult
   residue : Option Nat
+  event : Event
 
 def start (n a B₁ : Nat) : Stage1
-def continue (n x B₁ B₂ : Nat) : PMinusOneResult
+def stage2 (n x B₁ B₂ : Nat) : PMinusOneResult
 def search (n a B₁ B₂ : Nat) : PMinusOneResult
 
 structure Run where
@@ -759,10 +763,10 @@ structure Run where
   rand : Rand
   events : List Event
 
-def continueCounted (n x B₁ B₂ : Nat) (r : Rand) : Run
+def stage2Counted (n x B₁ B₂ : Nat) (r : Rand) : Run
 def searchCounted (n a B₁ B₂ : Nat) (r : Rand) : Run
 
-theorem continue_spec (h : continue n x B₁ B₂ = .factor d) :
+theorem stage2_spec (h : stage2 n x B₁ B₂ = .factor d) :
     1 < d ∧ d < n ∧ d ∣ n
 theorem search_spec (h : search n a B₁ B₂ = .factor d) :
     1 < d ∧ d < n ∧ d ∣ n
@@ -771,16 +775,18 @@ theorem search_spec (h : search n a B₁ B₂ = .factor d) :
 `start.result = pMinusOneStage1 n a B₁` exactly. Its residue is `some x`
 exactly on valid input with both setup gcd and `g₁` equal to 1; in that case
 prove `x < n`, `x = a^M % n`, and `gcd(x,n) = gcd((x+n-1)%n,n) = 1`.
-Invalid-input `noFactor` has no residue. `search` runs `start` once and, if
-there is a residue and `b₂ > b₁`, runs `continue`; otherwise it returns the
+Invalid-input `noFactor` has no residue. Its event records the branch and
+work performed by this execution, without re-running setup to reconstruct
+that diagnostic. `search` runs `start` once and, if
+there is a residue and `b₂ > b₁`, runs `stage2`; otherwise it returns the
 stage-1 result. An interval containing no primes returns `noFactor`.
 
-The public raw-residue `continue` is total and does not trust provenance:
+The public raw-residue `stage2` is total and does not trust provenance:
 `n < 4` returns `noFactor`; otherwise normalize `x % n`, then check
 `gcd(x,n)` and `gcd((x+n-1)%n,n)`, in that order. Return a proper factor
 from either check, or `whole` on gcd `n`, before enumerating candidates.
 Only two gcds equal to 1 enter the interval algorithm. Thus an arbitrary
-residue cannot invalidate `continue_spec`; only the success lemma referring
+residue cannot invalidate `stage2_spec`; only the success lemma referring
 to the original base requires `x = a^M % n`. The continuation receives no
 base and performs no stage-1 exponentiation. Internal reuse of already
 established gcd checks is permitted only with an equality to this public
@@ -793,12 +799,12 @@ Prove equality of results when replacing both bounds by `(b₁,b₂)`; traces
 retain requested as well as effective bounds, so do not assert equality of
 whole traces under capping. Prove idempotence of each bound function.
 
-One executed `continueCounted` costs exactly one semantic attempt on every
+One executed `stage2Counted` costs exactly one semantic attempt on every
 outcome, including invalid or empty input. Batches and recovery add no
 attempt units. `searchCounted` costs one for stage 1 plus one if it invokes
 the continuation; an invalid standalone call still costs one, matching the
 existing counted convention. A caller that already charged `start` must
-charge only `continueCounted`, not call `searchCounted` again. Each returned
+charge only `stage2Counted`, not call `searchCounted` again. Each returned
 `rand` equals its input, on success and failure alike.
 
 #### Enumeration, layout, and gcd schedule
@@ -859,11 +865,15 @@ A continuation event also contains the number of candidates evaluated,
 giant advances, modular multiplications, and actual setup gcd count. Nested
 batch records contain first/last prime, length, batch gcd, and the ordered
 recovery gcds actually taken. Stage-1 events distinguish setup-factor,
-stage-factor, stage-whole, and ready-residue outcomes. Skipping a continuation
-for budget or policy emits a zero-attempt diagnostic with the reason and
-intended bounds. Attempt totals come from counted results, not trace length;
+stage-factor, stage-whole, and ready-residue outcomes. Within an enabled policy, skipping an eligible continuation
+for budget or policy-cap reasons emits a zero-attempt diagnostic with the
+reason and intended bounds. A disabled policy emits no new events; its
+existing trace remains unchanged. Attempt totals come from counted results, not trace length;
 diagnostics and nested batch records are not attempts. Traces are untrusted
-data, never checker evidence.
+data, never checker evidence. Define the nested batch record and `Event`
+before `Run`; both are ordinary data types deriving `Repr, DecidableEq`,
+as do `Stage1` and `Run`. The event fields and early-return reasons above
+are the required data schema, not proof fields.
 
 #### Conditional success
 
@@ -925,8 +935,14 @@ of at most `bitLength(n)` bits. Benchmarks report trace-enabled overhead
 separately; counters may replace retained batch detail only in an explicitly
 selected trace-disabled mode with identical results and accounting.
 
-The reference implementation uses direct GMP-backed `Nat` multiplication
-and remainder. Existing `MontCtx` is word-sized and must not be called an
+The stage-2 reference implementation uses direct `Nat` multiplication
+and remainder on every modulus size (GMP-backed for large naturals).
+Stage 1 retains its existing word-Montgomery `powMod` dispatch. The 64-bit
+track therefore compares their actual implementations, not the abstract
+cost of equal modular operations. Label that backend difference in the
+report; no claim that all-`Nat` is optimal on words follows from this choice.
+A word-`MontCtx` stage-2 variant may be compared in adjacent paired runs
+with setup and conversions included and the same residue/gcd semantics. Existing `MontCtx` is word-sized and must not be called an
 arbitrary-precision modular context. A prepared big-integer context is not
 assumed to exist. Before default enablement, apply the benchmark decision
 below to direct `Nat`: if it passes the route-usefulness gate, retain it;
@@ -956,7 +972,10 @@ Also require setup `search 1081 23 5 13 = factor 23`, stage-1 factor
 invalid bases/moduli, raw nonunit residues, empty/reversed intervals, bounds
 0 and 1, the primes dividing 210, prime endpoints, multiple giant blocks
 and gaps, lengths 31/32/33/64, cap equality, exact attempt totals,
-deterministic state, and budget skips. Test the recovery helper separately
+deterministic state, and budget skips. CI checks cap arithmetic and the
+proved result equalities (also using early-exit inputs), not a full scan at
+4194304; endpoint-scale performance runs belong to the manual benchmark
+suite. Test the recovery helper separately
 on a synthetic buffer with a whole leaf before a proper leaf (for example
 terms `[0,23]` modulo 1081); this is not claimed to arise from the prime
 sequence of a valid continuation.
@@ -964,20 +983,73 @@ Cross-check candidate terms against independent modular powers; this slow
 oracle is for tests, not the executable route. Check the fixture orders by
 minimality, not just by a single power returning 1.
 
-The route benchmark family fixes `b₁ = 64`, base 2, and extra primes
-`q ∈ [67,127,257,509,1021,2039,4093,8191,16381,32749]`, with `b₂ = q`
-and a second track `b₂ = 2*q`. For each `q`, prepare and commit a prime
-`p = k*q+1` with `k ∣ lcm(1..64)` and
-`ord_p(2)/gcd(ord_p(2),M) = q`. Choose distinct prime cofactors `r`
+The route benchmark family fixes `b₁ = 64`, base 2, and the following
+extra primes and factors, with `b₂ = q` and a second track `b₂ = 2*q`:
+
+| `q` | prime `p = k*q+1` | `k` |
+|---|---|---|
+| 67 | 4175126843 | 62315326 |
+| 127 | 1245980999 | 9810874 |
+| 257 | 2889804119 | 11244374 |
+| 509 | 4034518259 | 7926362 |
+| 1021 | 1984454399 | 1943638 |
+| 2039 | 3821489723 | 1874198 |
+| 4093 | 1266840803 | 309514 |
+| 8191 | 2407646159 | 293938 |
+| 16381 | 3346015823 | 204262 |
+| 32749 | 3530931683 | 107818 |
+
+Each row has `k ∣ M = lcm(1..64)`, `2^M mod p ≠ 1`, and
+`2^(M*q) mod p = 1`, so `ord_p(2)/gcd(ord_p(2),M) = q`.
+Choose and commit distinct prime cofactors `r`
 giving total sizes 64, 128, 256, and 512 bits, with stage-1 gcd 1 and
 `ord_r(2) ∤ M*s` for every interval prime `s`; publish factor/order
 witnesses and reject unsuitable fixtures during preparation, outside timing.
-Choose enough factors above the trial-division table for integration tests
-to reach this route. The same prepared family with `b₂ = q-1` provides
-full-scan misses; add fixed whole/recovery controls from the table above.
+These factors exceed the trial-division table. Integration measurements
+must additionally show from events that the continuation actually executes;
+successes entirely due to preceding rho are not stage-2 usefulness evidence.
+The same prepared family with `b₂ = q-1`, for `q ≥ 127`, provides
+full-scan misses. The empty interval at `q = 67, b₂ = 66` is a separate
+early-exit control and carries no scaling evidence; add fixed whole/recovery
+controls from the table above.
 
-Register separate measurements for (1) setup: normalization, enumeration,
-and any modular-context construction; (2) stage-1 exponentiation and gcd
+Ordinary factorization runs rho before p−1, so the small-factor table alone
+cannot justify its dispatch. Its integration arm instead uses the following
+larger factors at total sizes 128, 256, and 512 bits, with the same cofactor
+conditions and the actual policy bounds `(64,4096)`: rows with `q ≤ 4093`
+are opportunities, and the last three rows are full-scan miss controls.
+Construction and
+primitive measurements retain the smaller table. All five fixed seeds
+`[0,1,2,3,4]` participate, including trials where rho succeeds first; only
+trials whose events show stage 2 executing can establish its usefulness.
+Do not infer route participation from factor size alone. If no trial reaches
+it, the integration evidence is inconclusive and defaults remain disabled.
+
+| `q` | prime `p = k*q+1` | `k` | primality witness `w` |
+|---|---|---|---|
+| 67 | 640593315381498719 | 9561094259425354 | 14 |
+| 127 | 989082332266914563 | 7788049860369406 | 5 |
+| 257 | 109241628152434139 | 425064700982234 | 2 |
+| 509 | 152168461520334179 | 298955720079242 | 2 |
+| 1021 | 525357598587673739 | 514552006452178 | 2 |
+| 2039 | 73929628837078823 | 36257787561098 | 5 |
+| 4093 | 100085828142782543 | 24452926494694 | 5 |
+| 8191 | 277827051595988963 | 33918575460382 | 2 |
+| 16381 | 369205211213026103 | 22538624700142 | 5 |
+| 32749 | 738117420304950359 | 22538624700142 | 7 |
+
+Here again `k ∣ M`, `2^M mod p ≠ 1`, and `2^(M*q) mod p = 1`.
+The additional witness satisfies `w^(p-1) mod p = 1` and
+`gcd(w^((p-1)/ℓ)-1,p) = 1` for every prime `ℓ ∣ p-1`. The complete
+factorization of `p-1` is obtained by trial-dividing `k` by the primes at
+most 64 and adjoining `q`; the full-order criterion therefore verifies
+primality without a probable-prime assumption. Retain these witnesses in
+the committed implementation fixtures. The ordinary-policy miss controls
+must run the actual `(64,4096)` allocation, not the varying standalone bounds.
+
+Register separate measurements for (1) setup: normalization, base gcd,
+enumeration for both stages, and any modular-context construction;
+(2) stage-1 exponentiation and final gcd
 on prepared primes/context; (3) stage-2 babies, giants, products, and gcds
 from a saved stage-1 residue and prepared interval; (4) total standalone
 stage 1 plus continuation, including all setup. Also measure continuation
@@ -985,7 +1057,12 @@ including its interval enumeration to expose the actual adapter cost.
 Do not bill stage-1 exponentiation twice or omit setup from total time.
 Record executed bounds, outcome, attempts, operation counts, peak storage,
 trace mode, and all timings. Use the full-scan miss track for the
-`D+log(b₁+1)+(b₂-b₁)/D+L` modular-operation model at fixed modulus size;
+`D + 2*ell(i₀) + G + 2*L` modular-operation upper-bound model at fixed
+modulus size, retaining the fixed baby-table cost. Use the nonempty rungs
+`q ≥ 2039` for the scaling fit; smaller rungs measure setup amortization.
+For the reference binary-power schedule, also record the exact power cost
+(the bit/popcount count, zero at `i₀ = 0`) so the expected timing model
+tracks executed operations rather than fitting an asymptotic bound alone;
 measure enumeration separately under the sieve model. Compare varying
 modulus sizes as fixed operand-size tracks, not as unit-cost arithmetic.
 
@@ -999,42 +1076,67 @@ factorization/certificate that the disabled policy exhausts on, or has median
 total time at most 0.90 of disabled on the successful extra-prime family;
 on the full-scan misses and existing balanced/smooth/table regression
 families its median total time must be at most 1.10 of disabled. Compare at
-equal total semantic-attempt limits, seeds, and existing rho/ECM work caps;
-report success counts separately from timing, and never time an exhaustion
-as a successful result. Ordinary factorization and construction pass
-independently; #10291's four inputs are an additional fixed corpus, not
-evidence of an extra-prime base order or a promised success family.
+equal seeds and existing rho/ECM work caps, equal factor-worklist fuel and
+per-cofactor smooth caps for ordinary factorization, and equal global
+`maxAttempts` for construction. Report success counts separately from timing,
+and never time an exhaustion as a successful result. Across all required families, the enabled policy
+must retain every checked success of the disabled policy. Ordinary
+factorization and construction pass independently; #10291's four inputs are
+an additional fixed corpus, not evidence of an extra-prime base order or a promised success family.
 
 The internal comparator is the identical bounded policy with continuation
-disabled. An external p−1 comparator is optional; if added, pin its version,
-base, both stage bounds, and one persistent subprocess protocol, and record
+disabled. An external p−1 comparator is optional and **informational**, never a
+Phase-4 gate; if added, pin its version, base, both stage bounds, and one
+persistent subprocess protocol, and record
 protocol overhead under the repository comparator rules. A default-bound
 `factor` subprocess is not a stage-2 comparison. These registrations extend
 the existing bench/conformance targets and single CI job, never a new job
 or matrix. The fixtures above are SPEC evidence; benchmarks and default
 enablement are implementation acceptance gates, not completed measurements.
+The new families become required Phase-4 evidence when primality milestone 6
+or int-factor milestone 8 exposes the corresponding implementation. At that
+point add their `phase4.input_families` entries in `libraries.yml` and
+revalidate the affected performance surface before claiming it complete.
+The existing `done_through` attestations concern the implemented stage-1
+surface; this SPEC-only extension does not attest stage 2 or invalidate
+those measurements.
 
 #### Certificate-search allocation
 
-Add `pMinusOneStage2 : Bool := false` to `FactorSearchBudget` and
-`ConstructionBudget`, threaded by `primality? (pMinusOneStage2 := true)`
-for explicit bounded experiments. The ordinary `primality`/`primeCert?`
+Add `pMinusOneStage2 : Bool := false` to `FactorSearchBudget`.
+`ConstructionBudget` carries it through its existing `factor` field;
+do not add a second flag with competing precedence. The tactic option
+`primality? (pMinusOneStage2 := true)` sets that nested field for explicit
+bounded experiments. The ordinary `primality`/`primeCert?`
 core keeps its one base-2/bound-64 stage-1 call and no continuation.
 For construction, after each configured stage-1 call returning a residue,
 the enabled policy tries at most one continuation with
-`b₂ = min 4194304 (8*b₁)`, before advancing to the next base/bound pair.
-Skip if `b₂ ≤ b₁` or no total attempt remains. `factor` splits as usual;
+`b₂ = 8*b₁` only when `b₁ ≤ 4096`, before advancing to the next
+base/bound pair. This construction policy caps stage 2 at 32768, independently
+of the primitive ceiling; the default two-base ladder can execute at most
+six continuations per worklist entry. Skip larger stage-1 bounds, `b₂ ≤ b₁`,
+or a depleted total attempt allocation. No batch is charged as a separate
+attempt: the interval cap supplies the per-attempt work bound. `factor`
+splits as usual;
 `noFactor` and `whole` both advance to the next pair, then bounded rho,
 then retain an unresolved residual. There is no retry inside a continuation.
 Charge each continuation immediately against the same global `maxAttempts`
 as stage 1, rho, recursive construction, and witness candidates. Zero
 remaining attempts performs no stage arithmetic, sieve, or random draw.
 
-The factor-result boundary gains an execution-order event list retained in
-construction diagnostics on both success and exhaustion; it includes the
-shared p−1 call events and skip reasons above. When implementing these budget
-and result extensions, advance `SearchExtension` ABI from 2 to 3 and update
-registrations together; reject incompatible registrations before execution.
+The factor-result boundary gains `events : List FactorEvent`, retained
+in construction diagnostics on both success and exhaustion. Define this
+Mathlib-free upstream diagnostic type with a `pMinusOne` case containing
+the shared `PMinusOne.Event`, and a `route` case containing a route name
+and a list of string key/value fields. The latter carries downstream
+diagnostics without an upstream dependency on downstream types. The
+HexIntFactor adapter serializes every ECM event as route `ecm`, with fields
+`subject`, `sigma`, requested/effective bound, `outcome` (`noFactor`,
+`factor`, or `whole`), `factor` when present, and `attempts = 1`. Preserve
+event order and p−1 skip reasons; do not drop ECM events. These fields
+are diagnostics only; counted results remain the accounting source. When
+implementing these budget and result extensions, advance `SearchExtension`
+ABI from 2 to 3 and update registrations together; reject incompatible registrations before execution.
 A producer unable to honor a requested policy or total attempt limit declines
 without work, retaining the input residual and state. The current downstream
 adapter's refusal of a total-limit construction allocation remains valid.
@@ -1608,6 +1710,8 @@ hex-arith's kernel-reducible `isPrimeTrial`.
 `n` the input, `b = log₂ n` its bit length, `k` the number of factor
 entries at one certificate node, and `K` the total number of factor entries
 in the part of a certificate tree replayed before acceptance or rejection.
+For stage 2, `i₀ = floor(Q.head/210)` and `ell` is binary bit length
+(`ell(0) = 0`); the empty interval skips all residue-table work.
 
 | operation | cost | note |
 |---|---|---|
