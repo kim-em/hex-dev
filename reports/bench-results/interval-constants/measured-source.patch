@@ -1,0 +1,19 @@
+--- a/HexInterval/Constants.lean
++++ b/HexInterval/Constants.lean
+@@ -275,16 +275,4 @@
+     split at h <;> simp_all
+ 
+ 
+-/-- Zero order cannot cross the replay boundary. -/
+-theorem checked_order {limits source bits certificate interval}
+-    (h : check limits source bits certificate = .ok interval) :
+-    0 < certificate.order := by
+-  have hs := checked_source h
+-  have hb := checked_bits h
+-  by_cases hn : certificate.order = 0
+-  · simp [check, hs, hb, preflight, hn, bind, Except.bind, throw,
+-      throwThe, MonadExceptOf.throw] at h
+-  · omega
+-
+-
+ end Hex.Interval.Constants

@@ -27,8 +27,8 @@ numerator over `n!`; it does not repeatedly recompute factorials.
 
 A `Certificate` contains the source identity, width bits, order, rational
 center/radius, and both closed dyadic cuts. Core theorems authenticate the
-accepted source, precision, positive order, exact approximation and normalized
-interval view, and identify the retained arctangent power. Real containment and effective progress for the full
+accepted source, precision, positive order, exact approximation, ordered cuts
+and exact interval view, and identify the retained arctangent power. Real containment and effective progress for the full
 schedule belong to [#10342](https://github.com/kim-em/hex-dev/issues/10342).
 The runtime has no Mathlib import, callback assumption, proof placeholder,
 external planner or new trusted primitive. Unchecked formula and projection
@@ -37,15 +37,19 @@ helpers are exposed for companion proofs; only `generate`, `enclose` and
 
 ## Resources
 
-The public limits independently cap order, peak integer bits, accumulated
-integer work, accumulated allocation, replay work, and the existing endpoint /
-precision / rational-quotient resources. The polynomial bit bound accounts
+The public limits separately cap order, conservative integer-bit, work,
+allocation and replay charges, and the existing endpoint / precision /
+rational-quotient resources. The four series charges are predetermined functions
+of order and requested precision, not counters of realized work. The polynomial bit bound accounts
 for even unreduced accumulation of every arctangent fraction. Gcd reduction
 can only shrink that bound. Cubic bit-work and quadratic cumulative-bit
 allocation charges per primitive cover classical integer arithmetic and
 normalization. These intentionally conservative logical charges do not
-predict wall time or heap bytes. `limitsFor bits` supplies an explicit generous
-schedule; finite tests do not replace the companion's effective-progress proof.
+predict wall time or heap bytes. Computed rational witnesses are additionally
+checked against the bit charge, and reversed cuts are rejected explicitly.
+`limitsFor bits` supplies a generous request-scaled schedule; it is not a
+sanitizer. Untrusted requests require independently chosen caller caps.
+Finite tests do not replace the companion's effective-progress proof.
 
 ## Conformance
 
@@ -84,14 +88,20 @@ CPU on the shared host; every completed sample is retained. These absolute
 values describe that host. The [raw export](bench-results/interval-constants/acceptance.json),
 [console output](bench-results/interval-constants/acceptance.log), and
 [context](bench-results/interval-constants/context.json) retain individual
-samples, CPU, host/load, exact command, source hashes and executable digest. Source hashes identify
-the measured working tree independently of the export's base-commit label.
+samples, CPU, host/load, exact command, source hashes and executable digest.
+The context records a commit and [reconstruction patch](bench-results/interval-constants/measured-source.patch)
+for the exact measured source hash. This removes only an erased theorem;
+the measured executable definitions are unchanged. Source hashes identify the
+measured working tree independently of the export's base-commit label.
 
 ## Remaining obligations
 
 [#10334](https://github.com/kim-em/hex-dev/issues/10334) remains open for
-provider review findings, formal core resource/rounding contracts, applicable
+formal core resource/rounding contracts, applicable
 whole-library phase gates, and Phase-4 complexity/comparator/attribution evidence.
+In particular, core theorems still need to connect accepted literal cuts to
+`center - radius` and `center + radius` through the executed checked quotient;
+the exposed ordered view alone does not establish outward containment.
 The fixed acceptance anchors do not discharge those performance requirements.
 The companion separately owns real soundness, effective convergence and
 ordinary-kernel reconstruction measurements; conformance and compiled replay

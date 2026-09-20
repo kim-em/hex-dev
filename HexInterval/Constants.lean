@@ -152,6 +152,13 @@ def compute : Arithmetic.Result → Except Error Hex.Interval
   | .ready value => .ok value
   | .resourceLimit cost => .error (.arithmetic cost)
 
+/-- Construct closed, ordered cuts after admitting their comparison. -/
+def buildBounds (limits : Limits) (lo hi : Dyadic) : Except Error Hex.Interval := do
+  let cost := CompareCost.ofDyadic lo hi
+  if !cost.allowed limits.arithmetic.endpoint then throw (.construction cost)
+  if !(lo ≤ hi) then throw .endpoints
+  build (betweenWithin limits.arithmetic.endpoint lo false hi false)
+
 /-- Outward rational projection via the existing checked singleton quotient.
 The admitted series bit bound applies before the integer singleton conversion. -/
 def project (limits : Limits) (precision : Int) (value : Rat) :
@@ -176,13 +183,20 @@ def widthWithin (limits : Limits) (bits : Nat) (lo hi : Dyadic) :
       if width ≤ target then pure () else throw .width
   | _ => throw .endpoints
 
+def smallRat (limit : Nat) (value : Rat) : Bool :=
+  EndpointCost.natBits value.num.natAbs ≤ limit &&
+    EndpointCost.natBits value.den ≤ limit
+
 /-- Finish an already preflighted exact approximation. This is an unchecked
 internal stage; untrusted requests must use `generate` or `check`. -/
 def finish (limits : Limits) (source : Source) (bits order : Nat)
     (approximation : Approximation) : Except Error Certificate := do
+  let (b, _, _) := charges order bits
+  if !smallRat b approximation.center || !smallRat b approximation.radius then
+    throw .integerBits
   let (lo, _) ← project limits (bits + 2) (approximation.center - approximation.radius)
   let (_, hi) ← project limits (bits + 2) (approximation.center + approximation.radius)
-  let _ ← build (betweenWithin limits.arithmetic.endpoint lo false hi false)
+  let _ ← buildBounds limits lo hi
   widthWithin limits bits lo hi
   pure ⟨source, bits, order, approximation, lo, hi⟩
 
@@ -197,10 +211,6 @@ def generate (limits : Limits) (source : Source) (bits order : Nat) :
 an order or silently raise any caller budget. -/
 def enclose (limits : Limits) (source : Source) (bits : Nat) : Except Error Certificate :=
   generate limits source bits (bits + 4)
-
-def smallRat (limit : Nat) (value : Rat) : Bool :=
-  EndpointCost.natBits value.num.natAbs ≤ limit &&
-    EndpointCost.natBits value.den ≤ limit
 
 /-- Replay binds the expected subject and precision, admits all literal fields,
 recomputes the exact source/remainder and outward cuts, and checks actual width.
@@ -225,10 +235,11 @@ def check (limits : Limits) (source : Source) (bits : Nat) (certificate : Certif
   let expected ← finish limits source bits certificate.order approximation
   if certificate.lower != expected.lower || certificate.upper != expected.upper then
     throw .endpoints
-  build (betweenWithin limits.arithmetic.endpoint certificate.lower false certificate.upper false)
+  buildBounds limits certificate.lower certificate.upper
 
 /-- Explicit conservative budgets for the `bits + 4` order schedule.
-Callers may use smaller independent caps and receive a resource refusal. -/
+This convenience scales every cap with the request; it is not an input
+sanitizer. Untrusted requests require independently chosen caller caps. -/
 def limitsFor (bits : Nat) : Limits :=
   let (b, work, allocation) := charges (bits + 4) bits
   { arithmetic :=
@@ -299,13 +310,29 @@ theorem build_view {limit lower upper interval}
       exact view_betweenWithin_ready hb
   | resourceLimit cost => simp [hb, build] at h
 
-/-- Replay returns the normalization of the certificate's two literal cuts. -/
-theorem checked_view {limits source bits certificate interval}
-    (h : check limits source bits certificate = .ok interval) :
+/-- Successful construction refuses reversed cuts. -/
+theorem bounds_ordered {limits lower upper interval}
+    (h : buildBounds limits lower upper = .ok interval) : lower ≤ upper := by
+  by_cases ho : lower ≤ upper
+  · exact ho
+  · simp [buildBounds, ho, bind, Except.bind, throw, throwThe,
+      MonadExceptOf.throw] at h
+    split at h <;> simp_all
+
+/-- The ordered builder preserves its literal cuts under normalization. -/
+theorem bounds_view {limits lower upper interval}
+    (h : buildBounds limits lower upper = .ok interval) :
     interval.view =
-      (Raw.bounds (.finite certificate.lower false)
-        (.finite certificate.upper false)).normalizeUnchecked := by
+      (Raw.bounds (.finite lower false) (.finite upper false)).normalizeUnchecked := by
   apply build_view (limit := limits.arithmetic.endpoint)
+  simp [buildBounds, bind, Except.bind, throw, throwThe, MonadExceptOf.throw] at h
+  split at h <;> try simp_all
+  split at h <;> try simp_all
+
+/-- Accepted replay retains the checked ordered builder result. -/
+theorem checked_bounds {limits source bits certificate interval}
+    (h : check limits source bits certificate = .ok interval) :
+    buildBounds limits certificate.lower certificate.upper = .ok interval := by
   have hs := checked_source h
   have hb := checked_bits h
   have ha := checked_approximation h
@@ -317,6 +344,26 @@ theorem checked_view {limits source bits certificate interval}
   split at h <;> try simp_all
   split at h <;> try simp_all
   split at h <;> try simp_all
+
+/-- Accepted replay has ordered literal cuts. -/
+theorem checked_ordered {limits source bits certificate interval}
+    (h : check limits source bits certificate = .ok interval) :
+    certificate.lower ≤ certificate.upper :=
+  bounds_ordered (checked_bounds h)
+
+/-- Replay returns exactly the certificate's two closed, ordered literal cuts. -/
+theorem checked_view {limits source bits certificate interval}
+    (h : check limits source bits certificate = .ok interval) :
+    interval.view = .bounds (.finite certificate.lower false)
+      (.finite certificate.upper false) := by
+  rw [bounds_view (checked_bounds h)]
+  apply Raw.normalizeUnchecked_eq_self
+  have ho := checked_ordered h
+  by_cases hl : certificate.lower < certificate.upper
+  · simp [Raw.CutConsistent, Raw.consistent, hl]
+  · have he : certificate.lower = certificate.upper :=
+      Dyadic.le_antisymm ho (Dyadic.not_le.mp hl)
+    simp [Raw.CutConsistent, Raw.consistent, he]
 
 
 end Hex.Interval.Constants

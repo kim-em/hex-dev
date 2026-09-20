@@ -83,6 +83,15 @@ private def adversarial (source : Source) : Bool :=
 
 #guard [.piMachinV1, .expOneTaylorV1].all adversarial
 
+-- Unchecked formula helpers do not make negative radii acceptable at the
+-- finishing boundary, and computed witnesses must obey the bit charge.
+#guard match finish (limitsFor 8) .piMachinV1 8 12 ⟨3, -1⟩ with
+  | .error .endpoints => true
+  | _ => false
+#guard match finish (limitsFor 0) .piMachinV1 0 0 ⟨(2 : Rat) ^ 300, 0⟩ with
+  | .error .integerBits => true
+  | _ => false
+
 #guard match enclose { limitsFor 8 with maxIntegerBits := 0 } .piMachinV1 8 with
   | .error .integerBits => true
   | _ => false
@@ -97,5 +106,30 @@ private def adversarial (source : Source) : Bool :=
   .expOneTaylorV1 8)
 #guard refused (enclose { limitsFor 8 with arithmetic.maxPrecisionMagnitude := 0 }
   .expOneTaylorV1 8)
+
+-- The default integer/replay caps are exact charges, so one unit less must
+-- refuse before approximation; the equality case is exercised by accepted.
+#guard match enclose
+    { limitsFor 8 with maxIntegerBits := (limitsFor 8).maxIntegerBits - 1 }
+    .piMachinV1 8 with
+  | .error .integerBits => true
+  | _ => false
+#guard match enclose
+    { limitsFor 8 with maxIntegerWork := (limitsFor 8).maxIntegerWork - 1 }
+    .piMachinV1 8 with
+  | .error .integerWork => true
+  | _ => false
+#guard match enclose
+    { limitsFor 8 with maxAllocation := (limitsFor 8).maxAllocation - 1 }
+    .expOneTaylorV1 8 with
+  | .error .allocation => true
+  | _ => false
+#guard match enclose (limitsFor 8) .expOneTaylorV1 8 with
+  | .error _ => false
+  | .ok c => match check
+      { limitsFor 8 with maxReplayWork := (limitsFor 8).maxReplayWork - 1 }
+      .expOneTaylorV1 8 c with
+    | .error .replay => true
+    | _ => false
 
 end Hex.Interval.ConstantsConformance

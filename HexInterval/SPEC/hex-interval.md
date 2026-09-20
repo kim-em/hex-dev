@@ -5582,6 +5582,16 @@ their declared cost inside a scheduler bound.
   helpers, including the power, regularization, split, reciprocal, and division
   cut selectors, are decoder-level counterparts of checked operations. Useful
   bounded nonsingleton division remains future work.
+- `HexInterval/Constants.lean`: bounded exact point generators and literal
+  replay for the versioned `piMachinV1` and `expOneTaylorV1` sources. The
+  public `generate`, `enclose`, and `check` boundaries charge approximation
+  order, integer bits/work, allocation, endpoint precision, and replay;
+  `check` authenticates the source, requested width, rational approximation,
+  and both outward cuts. Formula helpers are unchecked proof interfaces.
+  The [provider contract and evidence](../../reports/hex-interval-constants.md)
+  specify the geometric Machin and factorial remainders, deterministic order
+  schedule, and actual-width acceptance. Analytic containment and effective
+  convergence belong to the Mathlib companion.
 - `HexIntervalMathlib/Interval.lean`: real-set semantics for the supported
   public construction, intersection, hull, and negation operations.
 - `HexIntervalMathlib/Addition.lean`: exact summed-cut semantics and the

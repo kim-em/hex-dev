@@ -32,5 +32,10 @@
     35.255859375,
     73.287109375
   ],
-  "executable_sha256": "1b31497582e483420db9ccc4e59e901672b10faa9b31721a442d6099a5455981"
+  "executable_sha256": "1b31497582e483420db9ccc4e59e901672b10faa9b31721a442d6099a5455981",
+  "source_reconstruction": {
+    "base_commit": "98ce185dc4ab454cd35e31b816e4be249d52ab5f",
+    "patch": "measured-source.patch",
+    "note": "Apply this patch to the base commit to recover the exact measured source hash; only the erased checked_order theorem is removed."
+  }
 }

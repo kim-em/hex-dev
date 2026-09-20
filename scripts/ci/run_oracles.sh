@@ -31,7 +31,6 @@ trap 'rm -rf -- "$work_dir"' EXIT
 
 # Tuples are encoded as `lib|emit_exe|oracle_script|fixture_path`.
 ORACLES=(
-  "HexInterval|hexinterval_emit_constants|scripts/oracle/interval_constants.py|conformance-fixtures/HexInterval/constants.jsonl"
   # python-flint backed
   "HexPoly|hexpoly_emit_fixtures|scripts/oracle/poly_flint.py|conformance-fixtures/HexPoly/poly.jsonl"
   "HexPolyFast|hexpolyfast_emit_fixtures|scripts/oracle/polyfast_flint.py|conformance-fixtures/HexPolyFast/polyfast.jsonl"
@@ -86,6 +85,7 @@ ORACLES=(
   "HexNumberField|hexnumberfield_emit_fixtures|scripts/oracle/number_field_flint_pari.py|conformance-fixtures/HexNumberField/number_field.jsonl"
   "HexNumberFieldTower|hexnumberfieldtower_emit_fixtures|scripts/oracle/number_field_tower_pari.py|conformance-fixtures/HexNumberFieldTower/number_field_tower.jsonl"
   # Exact Python integer/Fraction Cartesian enumeration
+  "HexInterval|hexinterval_emit_constants|scripts/oracle/interval_constants.py|conformance-fixtures/HexInterval/constants.jsonl"
   "HexLatticeEnum|hexlatticeenum_emit_fixtures|scripts/oracle/lattice_enum.py|conformance-fixtures/HexLatticeEnum/latticeenum.jsonl"
   # Conway tables backed
   "HexConway|hexconway_emit_fixtures|scripts/oracle/conway_luebeck.py|conformance-fixtures/HexConway/conway.jsonl"
