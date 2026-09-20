@@ -44,6 +44,16 @@ class ProvenanceTests(unittest.TestCase):
             with self.assertRaisesRegex(AssertionError,'mixed source or executable'):
                 report.summarize([before,after])
 
+    def test_missing_budget_cannot_mix_with_declared_budget(self):
+        with tempfile.TemporaryDirectory() as directory:
+            before = self.collection(directory, 'missing.jsonl')
+            after = self.collection(directory, 'declared.jsonl')
+            rows = [json.loads(line) for line in after.read_text().splitlines()]
+            rows[0]['construction_budget'] = {'maxFactors': 32}
+            after.write_text(''.join(json.dumps(row) + '\n' for row in rows))
+            with self.assertRaisesRegex(AssertionError, 'mixed construction budgets'):
+                report.summarize([before, after])
+
     def test_mixed_resume_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             path=self.collection(directory,'resumed.jsonl',resume={
@@ -76,7 +86,9 @@ class ProofProvenanceTests(unittest.TestCase):
                                     'HexPrimality/Search.lean': digest,
                                     'bench/HexPrimality/PMinusOneMeasure.lean': digest},
                   'validity': {'release_quality': True},
-                  'results': {'imports': {'samples': samples}, name: {
+                  'results': {'imports': {'samples': [
+                      {'round': i, 'reference': {'wall_nanos': 100},
+                       'candidate': {'wall_nanos': 100}} for i in range(1, 9)]}, name: {
                       'samples': samples, 'workload_ratio_resolution': 'baseline-limited',
                       'import_baseline_robust_envelope_nanos': 100}}}
         path = Path(directory) / (name + '.json')
@@ -119,6 +131,15 @@ class ProofProvenanceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory, patch.object(proof, 'EXPECTED', {'table-2'}):
             with self.assertRaisesRegex(AssertionError, 'budget source mismatch'):
                 proof.summarize([self.collection(directory)], self.budget('different'))
+
+    def test_baseline_mismatch_rejected(self):
+        with tempfile.TemporaryDirectory() as directory, patch.object(proof, 'EXPECTED', {'table-2'}):
+            path = self.collection(directory)
+            data = json.loads(path.read_text())
+            data['results']['imports']['samples'][0]['reference']['wall_nanos'] = 120
+            path.write_text(json.dumps(data))
+            with self.assertRaisesRegex(AssertionError, 'baseline mismatch'):
+                proof.summarize([path], self.budget())
 
     def test_family_cost_sums_each_round(self):
         with tempfile.TemporaryDirectory() as directory, patch.object(proof, 'EXPECTED', {'table-2', 'table-3'}):

@@ -52,8 +52,12 @@ def summarize(paths, budget_record=None):
         samples = result['samples']
         assert {sample['round'] for sample in samples} == set(range(1, 9))
         assert len(samples) == len(results['imports']['samples']) == 8
+        baselines = {s['round']: (s['reference']['wall_nanos'] +
+                     s['candidate']['wall_nanos']) // 2 for s in results['imports']['samples']}
+        assert set(baselines) == set(range(1, 9))
         outcomes = {}
         for sample in samples:
+            assert sample['import_baseline_wall_nanos'] == baselines[sample['round']], 'baseline mismatch'
             assert sample['build_order'] == (['reference', 'candidate'] if sample['round'] % 2
                                               else ['candidate', 'reference'])
             for role, enabled in [('reference', False), ('candidate', True)]:

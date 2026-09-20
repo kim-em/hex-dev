@@ -47,7 +47,7 @@ def summarize(paths, interpreted=False):
         rows=[json.loads(l) for l in data.splitlines()]
         sources.append({'path':str(path),'sha256':hashlib.sha256(data).hexdigest()})
         metadata=rows[0]
-        if construction_budget is None:
+        if provenance is None:
             construction_budget=metadata.get('construction_budget')
         assert metadata.get('construction_budget')==construction_budget, 'mixed construction budgets'
         current={key:metadata[key] for key in ('source_sha256','executable_sha256')}
