@@ -5,5 +5,9 @@
     ".lake/build/bin/hexsturm_bench",
     "diagnostics"
   ],
-  "timed": false
+  "timed": false,
+  "source_sha256": "288a18b8887639ab16d6f3aef5f65da055c19599f3cd90062f7ce7447c84e9bc",
+  "collection_time_utc": null,
+  "timestamp_status": "not recorded at collection",
+  "separate_from_timing_binary": true
 }

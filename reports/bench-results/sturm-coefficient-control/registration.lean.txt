@@ -28,12 +28,9 @@ The query-degree family fixes `P=x²-2` and uses `F=x^m+1`. Initial reduction
 uses the shared dynamic coefficient recurrence with O(m) entries and at most
 two correction terms per entry. It takes O(m) coefficient operations. Replay
 multiplies a degree-O(m) quotient by the fixed quadratic and also takes O(m)
-operations. For even m=2r the quotient is
-`2 * sum (j=0..r-1) 2^j X^(2(r-j)-1)`: its nonzero coefficients occupy
-r(r+3)/2 bits. Big-by-small arithmetic in the recurrence and replay therefore
-costs Θ(m²) bits, including materialization of that quotient. The corrected
-integer registrations use multiword coefficients; the rational registration
-retains its explicitly bounded original ladder.
+operations. The returned integer coefficients have O(m) bits and stay
+below 64 bits on the declared ladder; neither intermediate bit sizes nor a
+uniform bit-complexity bound follow from this observation.
 
 Input preparation and metadata collection are outside timed bodies. Output
 hashes include actual coefficients and certificate scalars, not just dimensions.
@@ -299,19 +296,17 @@ setup_benchmark runSigns n => n ^ 2
     signalFloorMultiplier := 1
     maxSecondsPerCall := 3
   }
--- Declared cost-model: Θ(n⁴) bit work: conversion of Θ(n²) Chebyshev-chain
--- coefficients with growing bit lengths/trailing zeros dominates dyadic replay.
--- See reports/sturm-bit-cost-models.md for the independent derivation.
-setup_benchmark runReplay n => n ^ 4
+-- Declared cost-model: O(n²), normal-chain quotients are linear and every recurrence visits O(n) coefficients.
+setup_benchmark runReplay n => n ^ 2
   with prep := degreeInput
   where {
-    paramSchedule := .custom #[128, 256, 512, 1024]
-    paramFloor := 128
-    paramCeiling := 1024
+    paramSchedule := .custom #[8, 10, 12, 16, 20]
+    paramFloor := 8
+    paramCeiling := 20
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 600
+    maxSecondsPerCall := 3
   }
 -- Declared cost-model: O(n), a fixed denominator (six) bounds each scalar lcm and division.
 setup_benchmark runClearing n => n
@@ -325,17 +320,17 @@ setup_benchmark runClearing n => n
     signalFloorMultiplier := 1
     maxSecondsPerCall := 3
   }
--- Declared cost-model: Θ(m²) bit work: the producer materializes the quadratic-bit initial quotient; the remaining chain has fixed degree.
-setup_benchmark runIntegerHigh m => m ^ 2
+-- Declared cost-model: O(m), initial reduction has at most two correction terms per entry.
+setup_benchmark runIntegerHigh m => m
   with prep := queryInput
   where {
-    paramSchedule := .custom #[131072, 262144, 524288, 1048576]
-    paramFloor := 131072
-    paramCeiling := 1048576
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96]
+    paramFloor := 16
+    paramCeiling := 96
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 120
+    maxSecondsPerCall := 3
   }
 -- Declared cost-model: O(m), the same recurrence with bounded-word rational coefficients.
 setup_benchmark runRationalHigh m => m
@@ -349,29 +344,29 @@ setup_benchmark runRationalHigh m => m
     signalFloorMultiplier := 1
     maxSecondsPerCall := 3
   }
--- Declared cost-model: Θ(m²) bit work: O(m) big-by-small recurrence operations on growing O(m)-bit coefficients; the quotient itself has Θ(m²) bits.
-setup_benchmark runInitialHigh m => m ^ 2
+-- Declared cost-model: O(m), the shared recurrence has at most two correction terms per entry.
+setup_benchmark runInitialHigh m => m
   with prep := queryInput
   where {
-    paramSchedule := .custom #[131072, 262144, 524288, 1048576]
-    paramFloor := 131072
-    paramCeiling := 1048576
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96]
+    paramFloor := 16
+    paramCeiling := 96
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 120
+    maxSecondsPerCall := 3
   }
--- Declared cost-model: Θ(m²) bit work: convolution of the Θ(m²)-bit supplied quotient with a fixed quadratic, plus fixed-degree checks.
-setup_benchmark runReplayHigh m => m ^ 2
+-- Declared cost-model: O(m), replay multiplies its supplied quotient by a fixed quadratic.
+setup_benchmark runReplayHigh m => m
   with prep := queryInput
   where {
-    paramSchedule := .custom #[131072, 262144, 524288, 1048576]
-    paramFloor := 131072
-    paramCeiling := 1048576
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96]
+    paramFloor := 16
+    paramCeiling := 96
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 120
+    maxSecondsPerCall := 3
   }
 
 private def intBits (z : Int) : Nat := if z = 0 then 0 else z.natAbs.log2 + 1

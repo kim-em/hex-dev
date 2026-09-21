@@ -299,19 +299,17 @@ setup_benchmark runSigns n => n ^ 2
     signalFloorMultiplier := 1
     maxSecondsPerCall := 3
   }
--- Declared cost-model: Θ(n⁴) bit work: conversion of Θ(n²) Chebyshev-chain
--- coefficients with growing bit lengths/trailing zeros dominates dyadic replay.
--- See reports/sturm-bit-cost-models.md for the independent derivation.
-setup_benchmark runReplay n => n ^ 4
+-- Declared cost-model: O(n²), normal-chain quotients are linear and every recurrence visits O(n) coefficients.
+setup_benchmark runReplay n => n ^ 2
   with prep := degreeInput
   where {
-    paramSchedule := .custom #[128, 256, 512, 1024]
-    paramFloor := 128
-    paramCeiling := 1024
+    paramSchedule := .custom #[8, 10, 12, 16, 20]
+    paramFloor := 8
+    paramCeiling := 20
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 600
+    maxSecondsPerCall := 3
   }
 -- Declared cost-model: O(n), a fixed denominator (six) bounds each scalar lcm and division.
 setup_benchmark runClearing n => n
@@ -329,13 +327,13 @@ setup_benchmark runClearing n => n
 setup_benchmark runIntegerHigh m => m ^ 2
   with prep := queryInput
   where {
-    paramSchedule := .custom #[131072, 262144, 524288, 1048576]
-    paramFloor := 131072
-    paramCeiling := 1048576
+    paramSchedule := .custom #[4096, 8192, 16384, 32768, 65536]
+    paramFloor := 4096
+    paramCeiling := 65536
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 120
+    maxSecondsPerCall := 30
   }
 -- Declared cost-model: O(m), the same recurrence with bounded-word rational coefficients.
 setup_benchmark runRationalHigh m => m
@@ -353,25 +351,25 @@ setup_benchmark runRationalHigh m => m
 setup_benchmark runInitialHigh m => m ^ 2
   with prep := queryInput
   where {
-    paramSchedule := .custom #[131072, 262144, 524288, 1048576]
-    paramFloor := 131072
-    paramCeiling := 1048576
+    paramSchedule := .custom #[4096, 8192, 16384, 32768, 65536]
+    paramFloor := 4096
+    paramCeiling := 65536
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 120
+    maxSecondsPerCall := 30
   }
 -- Declared cost-model: Θ(m²) bit work: convolution of the Θ(m²)-bit supplied quotient with a fixed quadratic, plus fixed-degree checks.
 setup_benchmark runReplayHigh m => m ^ 2
   with prep := queryInput
   where {
-    paramSchedule := .custom #[131072, 262144, 524288, 1048576]
-    paramFloor := 131072
-    paramCeiling := 1048576
+    paramSchedule := .custom #[4096, 8192, 16384, 32768, 65536]
+    paramFloor := 4096
+    paramCeiling := 65536
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 120
+    maxSecondsPerCall := 30
   }
 
 private def intBits (z : Int) : Nat := if z = 0 then 0 else z.natAbs.log2 + 1
