@@ -109,6 +109,11 @@ Its [retained exact counts](bench-results/sturm-bit-cost-formulas/costs.jsonl)
 record total division bit volumes 13,331,767; 216,024,695; 3,477,325,117;
 and 55,798,834,691 at head degrees 128,256,512,1024. These are mathematical
 work counts, not timing observations or a wall-time consistency verdict.
+The [degree-2048 extension](bench-results/sturm-bit-cost-formulas-2048/costs.jsonl)
+checks contents through degree 2047 and records 1,426,150,547 stored bits,
+719,498,752 normalization iterations and 894,038,477,175 division-bit volume.
+From 1024 to 2048 the iteration count increases by 7.97 times and the bit
+volume by 16.02 times, independently confirming the two distinct source costs.
 
 ## Finite-regime replay timing hypothesis
 
