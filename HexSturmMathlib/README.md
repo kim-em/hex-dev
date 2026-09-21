@@ -24,8 +24,11 @@ evidence over the integers; `IntCast.certificate_checks` embeds integer evidence
 and its endpoints into the rational frontend. These translations retain the
 full context and value and do not rerun the polynomial producer.
 
-The signed root-sum theorem, semantic replay soundness, root-count and singleton
-results, and remaining Phase-4 evidence are still required. The shared IVT/Rolle and
+The integer query-one count follows from the existing real Sturm theorem;
+`query_rat_count` and `query_rat_nonneg` transport it to rational polynomials
+on dyadic intervals. The generic signed root-sum theorem, semantic replay
+soundness, arbitrary ordered-field count and singleton results, and remaining
+Phase-4 evidence are still required. The shared IVT/Rolle and
 signed-remainder/Cauchy-index foundation is an explicit gate for root-sum
 semantics and their consequences. See [the specification](SPEC/hex-sturm-mathlib.md).
 

@@ -221,6 +221,16 @@ or a non-Archimedean coefficient interpretation. The new generic backend
 congruence theorem requires a common interpreted field; it does not manufacture
 an embedding of an arbitrary ordered field into `ℝ`.
 
+The effective specializations are proved now in `TarskiCount.lean`:
+`integer_sturmChain` connects the checked recurrence to the existing real Sturm
+theorem (strict derivative degree removes the initial quotient);
+`integer_check_count` and `integer_check_total` prove finite-interval and whole-line
+counts for arbitrary accepted integer query-one certificates;
+`integer_query_count` and `integer_query_nonneg` apply to the actual integer
+producer. `query_rat_count` and `query_rat_nonneg` in `Rational.lean` transport
+finite dyadic-interval counts to the rational frontend after positive clearing.
+These use the existing real foundation, not a new analytic proof.
+
 Thus the remaining arbitrary-field nonnegativity lemma and its dependent
 `Option Nat` wrapper belong to #10389. The implementation does not use
 `Int.toNat` to clamp negative answers, invent a new failure case, or ask callers

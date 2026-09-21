@@ -8,6 +8,7 @@ module
 public import HexSturmMathlib.Domain
 public import HexRealRootsMathlib.TarskiDomain
 public import HexRealRootsMathlib.TarskiSigns
+public import HexRealRootsMathlib.TarskiCount
 
 public section
 
@@ -163,5 +164,28 @@ theorem query_rat_eq (p g : DensePoly Rat) (I : DyadicInterval) :
           (fun x => (orderSign_spec x).2.2.2) () p g
           (.finite I.lower.toRat) (.finite I.upper.toRat) cert hc
       · exact (Tarski.integer_certify_checks _ _ I cert' hd).1
+
+/-- The rational frontend's query of `1` counts the roots at dyadic endpoints,
+using the existing real Sturm theorem through positive denominator clearing. -/
+theorem query_rat_count (p : DensePoly Rat) (I : DyadicInterval) (value : Int)
+    (h : Sturm.query Sturm.orderSign p 1 (.finite I.lower.toRat) (.finite I.upper.toRat) = some value) :
+    value = (HexRealRootsMathlib.Literal.rootsIn
+      (HexPolyMathlib.Interpret.interpret (fun q : Rat => (q : ℝ)) (fun _ => Rat.cast_eq_zero) p) I).card := by
+  rw [query_rat_eq] at h
+  have hc : (ZPoly.clearDenominators (1 : DensePoly Rat)).2 = (1 : ZPoly) := by
+    rw [ZPoly.clearDenominators_one]
+  rw [hc] at h
+  have he := HexRealRootsMathlib.Tarski.integer_query_count _ I value h
+  rw [HexRealRootsMathlib.Literal.rootsIn, toPolyℝ_clearDenominators,
+    Polynomial.roots_C_mul _ (by exact_mod_cast ne_of_gt (ZPoly.clearDenominators_pos p))] at he
+  exact he
+
+/-- Rational query-one nonnegativity is available without the abstract
+real-closed-field signed-index foundation. -/
+theorem query_rat_nonneg (p : DensePoly Rat) (I : DyadicInterval) (value : Int)
+    (h : Sturm.query Sturm.orderSign p 1 (.finite I.lower.toRat) (.finite I.upper.toRat) = some value) :
+    0 ≤ value := by
+  rw [query_rat_count p I value h]
+  exact Int.natCast_nonneg _
 
 end HexSturmMathlib

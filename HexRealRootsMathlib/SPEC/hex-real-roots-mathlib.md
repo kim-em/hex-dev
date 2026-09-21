@@ -681,7 +681,11 @@ with singleton evaluation, query-one cardinality, zero and divisible queries,
 constant heads, and cardinality/degree bounds. It uses existing algebra and
 has no real-closedness hypothesis. `Tarski.check_singleton` and
 `Tarski.check_constant` prove the corresponding zero-value facts directly
-from accepted literal data. The shared variation/root-sum identity and its
+from accepted literal data. `TarskiCount.lean` proves that accepted integer
+query-one certificates count real roots on finite dyadic intervals and on the
+whole line, by reusing the existing derivative Sturm theorem. It also proves
+count correctness and nonnegativity for the actual integer query producer.
+The shared abstract variation/root-sum identity and its
 executable semantic consequences belong to #10389; effective implementation,
 algebraic correspondence and independent evidence belong to #10375.
 

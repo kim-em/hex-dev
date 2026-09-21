@@ -25,23 +25,23 @@ def InInterval (a b : Endpoint R) (x : R) : Prop :=
 
 /-- The distinct roots in the open interval. This is a semantic finite set,
 not an executable root enumeration. -/
-noncomputable def roots (p : Polynomial R) (a b : Endpoint R) : Finset R := by
+noncomputable def rootsIn (p : Polynomial R) (a b : Endpoint R) : Finset R := by
   classical
   exact p.roots.toFinset.filter (InInterval a b)
 
 /-- The mathematical Sturm–Tarski sum. Relating it to the executable query
 requires the separately owned signed-remainder theorem. -/
 noncomputable def rootSum (p f : Polynomial R) (a b : Endpoint R) : Int :=
-  ∑ x ∈ roots p a b, (SignType.sign (f.eval x) : Int)
+  ∑ x ∈ rootsIn p a b, (SignType.sign (f.eval x) : Int)
 
 @[simp] theorem rootSum_zero (p : Polynomial R) (a b : Endpoint R) :
     rootSum p 0 a b = 0 := by simp [rootSum]
 
 @[simp] theorem rootSum_one [IsStrictOrderedRing R] (p : Polynomial R) (a b : Endpoint R) :
-    rootSum p 1 a b = (roots p a b).card := by simp [rootSum]
+    rootSum p 1 a b = (rootsIn p a b).card := by simp [rootSum]
 
 theorem rootSum_singleton (p f : Polynomial R) (a b : Endpoint R) (x : R)
-    (h : roots p a b = {x}) : rootSum p f a b = (SignType.sign (f.eval x) : Int) := by
+    (h : rootsIn p a b = {x}) : rootSum p f a b = (SignType.sign (f.eval x) : Int) := by
   simp [rootSum, h]
 
 /-- A common root contributes zero to the signed sum. -/
@@ -50,7 +50,7 @@ theorem contribution_zero (f : Polynomial R) (x : R) (h : f.IsRoot x) :
 
 /-- Restricting to nonzero query evaluations removes only zero contributions. -/
 theorem rootSum_filter (p f : Polynomial R) (a b : Endpoint R) :
-    rootSum p f a b = ∑ x ∈ (roots p a b).filter (fun x => f.eval x ≠ 0),
+    rootSum p f a b = ∑ x ∈ (rootsIn p a b).filter (fun x => f.eval x ≠ 0),
       (SignType.sign (f.eval x) : Int) := by
   classical
   symm
@@ -60,7 +60,7 @@ theorem rootSum_filter (p f : Polynomial R) (a b : Endpoint R) :
   simp [hx]
 
 theorem rootSum_eq_zero (p f : Polynomial R) (a b : Endpoint R)
-    (h : ∀ x ∈ roots p a b, f.eval x = 0) : rootSum p f a b = 0 := by
+    (h : ∀ x ∈ rootsIn p a b, f.eval x = 0) : rootSum p f a b = 0 := by
   apply Finset.sum_eq_zero
   intro x hx
   simp [h x hx]
@@ -75,19 +75,19 @@ theorem rootSum_of_dvd (p f : Polynomial R) (a b : Endpoint R) (h : p ∣ f) :
   obtain ⟨q, rfl⟩ := h
   simp [Polynomial.eval_mul, (Polynomial.isRoot_of_mem_roots hx').eq_zero]
 
-theorem roots_card_le (p : Polynomial R) (a b : Endpoint R) :
-    (roots p a b).card ≤ p.natDegree := by
+theorem rootsIn_card_le (p : Polynomial R) (a b : Endpoint R) :
+    (rootsIn p a b).card ≤ p.natDegree := by
   classical
   exact (Finset.card_filter_le _ _).trans
     ((Multiset.toFinset_card_le _).trans (Polynomial.card_roots' p))
 
 theorem abs_rootSum_le (p f : Polynomial R) (a b : Endpoint R) :
-    |rootSum p f a b| ≤ (roots p a b).card := by
+    |rootSum p f a b| ≤ (rootsIn p a b).card := by
   unfold rootSum
   calc
-    |∑ x ∈ roots p a b, (SignType.sign (f.eval x) : Int)| ≤
-        ∑ x ∈ roots p a b, |(SignType.sign (f.eval x) : Int)| := Finset.abs_sum_le_sum_abs _ _
-    _ ≤ ∑ _x ∈ roots p a b, (1 : Int) := by
+    |∑ x ∈ rootsIn p a b, (SignType.sign (f.eval x) : Int)| ≤
+        ∑ x ∈ rootsIn p a b, |(SignType.sign (f.eval x) : Int)| := Finset.abs_sum_le_sum_abs _ _
+    _ ≤ ∑ _x ∈ rootsIn p a b, (1 : Int) := by
       apply Finset.sum_le_sum
       intro x _
       cases SignType.sign (f.eval x) <;> norm_num [SignType.cast]
@@ -95,11 +95,11 @@ theorem abs_rootSum_le (p f : Polynomial R) (a b : Endpoint R) :
 
 theorem abs_rootSum_le_degree (p f : Polynomial R) (a b : Endpoint R) :
     |rootSum p f a b| ≤ p.natDegree :=
-  (abs_rootSum_le p f a b).trans (by exact_mod_cast roots_card_le p a b)
+  (abs_rootSum_le p f a b).trans (by exact_mod_cast rootsIn_card_le p a b)
 
-@[simp] theorem roots_const (c : R) (a b : Endpoint R) : roots (C c) a b = ∅ := by
+@[simp] theorem rootsIn_const (c : R) (a b : Endpoint R) : rootsIn (C c) a b = ∅ := by
   classical
-  simp [roots]
+  simp [rootsIn]
 
 @[simp] theorem rootSum_const (c : R) (f : Polynomial R) (a b : Endpoint R) :
     rootSum (C c) f a b = 0 := by simp [rootSum]
