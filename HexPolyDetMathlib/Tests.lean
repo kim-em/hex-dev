@@ -432,7 +432,6 @@ run_meta do
 end RowFactorTests
 
 namespace StructuralTests
-set_option maxHeartbeats 800000
 
 theorem diagonal {R : Type u} [CommRing R] (a b : R) :
     Matrix.det !![a, 0; 0, b] = a*b := by det
@@ -480,6 +479,31 @@ theorem term (a b : Int) :
 theorem simplified (a b : Rat) :
     Matrix.det !![a, 0; 0, b] = a*b := by simp only [Hex.normPolyDet]
 
+theorem rationalReverse (a b : Rat) :
+    a*b/6 = Matrix.det !![a/2, 3*a/2; b/3, 4*b/3] := by det
+
+-- Two nonzero cofactors and two levels of reindexing, at the default heartbeat limit.
+theorem sparseDeep (a b c d : Int) :
+    5*(a*d-b*c) = Matrix.det !![2,1,1,1,0,0; 1,2,1,1,0,0;
+      1,1,2,1,0,0; 1,1,1,2,0,0; 0,0,0,0,a,b; 0,0,0,0,c,d] := by det
+
+theorem sparseTerm (a b c d : Int) :
+    Matrix.det !![2,1,1,1,0,0; 1,2,1,1,0,0;
+      1,1,2,1,0,0; 1,1,1,2,0,0; 0,0,0,0,a,b; 0,0,0,0,c,d] =
+    (det% !![2,1,1,1,0,0; 1,2,1,1,0,0;
+      1,1,2,1,0,0; 1,1,1,2,0,0; 0,0,0,0,a,b; 0,0,0,0,c,d]).value :=
+  (det% !![2,1,1,1,0,0; 1,2,1,1,0,0;
+      1,1,2,1,0,0; 1,1,1,2,0,0; 0,0,0,0,a,b; 0,0,0,0,c,d]).proof
+
+theorem sparseSimp (a b c d : Int) :
+    Matrix.det !![2,1,1,1,0,0; 1,2,1,1,0,0;
+      1,1,2,1,0,0; 1,1,1,2,0,0; 0,0,0,0,a,b; 0,0,0,0,c,d] = 5*(a*d-b*c) := by
+  simp only [Hex.normPolyDet]
+  ring
+
+theorem residueFallback (a b : ZMod 3) :
+    Matrix.det !![a, 0; 0, b] = a*b + 3*a*b := by det
+
 run_meta do
   for (root, route) in [( ``diagonal, ``HexPolyDetMathlib.Structural.triangular),
       (``upper, ``HexPolyDetMathlib.Structural.triangular),
@@ -488,7 +512,12 @@ run_meta do
       (``rational, ``HexPolyDetMathlib.RatFactor.det),
       (``rationalChanged, ``HexPolyDetMathlib.RatFactor.det),
       (``sparse, ``HexPolyDetMathlib.Structural.cofactor),
-      (``sparseColumn, ``HexPolyDetMathlib.Structural.cofactor)] do
+      (``sparseColumn, ``HexPolyDetMathlib.Structural.cofactor),
+      (``sparseDeep, ``HexPolyDetMathlib.Structural.cofactor),
+      (``sparseTerm, ``HexPolyDetMathlib.Structural.cofactor),
+      (``sparseSimp, ``HexPolyDetMathlib.Structural.cofactor),
+      (``rationalReverse, ``HexPolyDetMathlib.RatFactor.det),
+      (``residueFallback, ``HexMatrixMathlib.DetPoly.Residue.target_det)] do
     let mut pending := [root]
     let mut found := false
     while let name :: rest := pending do
@@ -592,6 +621,34 @@ example (x : Nat) : True := by
     let some lit ← literal? a (allowOpen := true) | throwError "missing literal"
     if (← HexPolyDetMathlib.RatFactor.compute? a lit none).isSome then
       throwError "accepted a factor of the wrong type"
+  trivial
+
+-- The mixed division does not provide an HMul Rat Nat Rat instance.
+example (x : Nat) : True := by
+  letI : HDiv Nat Rat Rat := ⟨fun x q => (x : Rat) + q⟩
+  let A : Matrix (Fin 2) (Fin 2) Rat := !![x/(2:Rat), x/(3:Rat); x/(4:Rat), x/(5:Rat)]
+  run_tac Lean.Elab.Tactic.withMainContext do
+    let a ← getFVarFromUserName `A
+    let some a := (← a.fvarId!.getDecl).value? | throwError "missing matrix"
+    let some lit ← literal? a (allowOpen := true) | throwError "missing literal"
+    if (← HexPolyDetMathlib.RatFactor.compute? a lit none).isSome then
+      throwError "accepted mixed-type division"
+  trivial
+
+-- Finalization and assembly must both decline at a deliberately small node budget.
+example (a b : Int) : True := by
+  let A : Matrix (Fin 2) (Fin 2) Int := !![a,0;0,b]
+  let B : Matrix (Fin 5) (Fin 5) Int := !![a,1,1,1,0;1,a,1,1,0;
+    1,1,a,1,0;1,1,1,a,0;0,0,0,0,b]
+  run_tac Lean.Elab.Tactic.withMainContext do
+    let config : Hex.Reflect.Config := {budget := {Hex.Reflect.Budget.default with proofNodes := 1}}
+    for (name, direct) in [(`A, true), (`B, false)] do
+      let matrix ← getFVarFromUserName name
+      let some matrix := (← matrix.fvarId!.getDecl).value? | throwError "missing matrix"
+      let some lit ← literal? matrix (allowOpen := true) | throwError "missing literal"
+      let result ← if direct then HexPolyDetMathlib.Structural.direct? matrix lit config
+        else HexPolyDetMathlib.Structural.sparse? matrix lit config
+      if result.isSome then throwError "ignored structural proof-node budget"
   trivial
 
 end StructuralBudgetTests

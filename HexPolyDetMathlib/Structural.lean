@@ -122,10 +122,10 @@ private def zeros (carrier : Expr) (es : Array (Array Expr)) : MetaM (Array (Arr
   let zero ← mkNumeral carrier 0
   es.mapM fun row => row.mapM fun e => withTransparency .reducible (isDefEq e zero)
 
-private def finalize? (A : Expr) (r : Result) (route : String) : MetaM (Option Result) := do
+private def finalize? (A : Expr) (r : Result) (route : String) (cfg : Hex.Reflect.Config) : MetaM (Option Result) := do
   let target ← mkEq (← mkAppM ``Matrix.det #[A]) r.value
-  let out ← Hex.Reflect.run <| Hex.Reflect.withOutcome do
-    checkedBudgeted target (mkExpectedPropHint r.proof target)
+  let out ← Hex.Reflect.run (Hex.Reflect.withOutcome do
+    checkedBudgeted target (mkExpectedPropHint r.proof target)) cfg
   match out with
   | .success (proof, nodes) _ =>
     trace[HexMatrix.certificate] "{(Json.mkObj [("route", toJson route),
@@ -149,10 +149,11 @@ private def admitted (A : Expr) (lit : Recognized) : MetaM Bool := do
       withTransparency .default (isDefEq actual expected)
 
 /-- Direct triangular and zero identities, without polynomial normalization. -/
-def direct? (A : Expr) (lit : Recognized) : MetaM (Option Result) := do
+def direct? (A : Expr) (lit : Recognized) (cfg : Hex.Reflect.Config := {}) : MetaM (Option Result) := do
   unless ← admitted A lit do return none
   if lit.n == 0 then return none
-  withLetDecl `detInput (← inferType A) A fun A => do
+  let saved ← saveState
+  let result ← withLetDecl `detInput (← inferType A) A fun A => do
     let es ← lit.entries.mapM (·.mapM reduceIndices)
     let zs ← zeros lit.carrier es
     let some u := (← getLevel lit.carrier).dec | return none
@@ -165,7 +166,7 @@ def direct? (A : Expr) (lit : Recognized) : MetaM (Option Result) := do
           let .forallE _ expected _ _ ← inferType head | return none
           let hints ← (List.range lit.n).mapM fun j => mkEqRefl (if column then (es[j]!)[i]! else (es[i]!)[j]!)
           let proof := mkApp head (← allFinHints expected hints)
-          return ← finalize? A (← resultOf proof) "zero"
+          return ← finalize? A (← resultOf proof) "zero" cfg
     for upper in [true, false] do
       let triangularShape :=  (List.range lit.n).all fun i => (List.range lit.n).all fun j =>
         !(if upper then j < i else i < j) || (zs[i]!)[j]!
@@ -184,8 +185,10 @@ def direct? (A : Expr) (lit : Recognized) : MetaM (Option Result) := do
         -- Quote a left-associated diagonal product, omitting a leading one.
         let mut value := diagonal[0]!
         for e in diagonal[1:] do value ← mkAppM ``HMul.hMul #[value, e]
-        return ← finalize? A {value, proof} "triangular"
+        return ← finalize? A {value, proof} "triangular" cfg
     return none
+  if result.isNone then saved.restore
+  return result
 
 /-- A preflight tree contains only the minors actually chosen for expansion. -/
 inductive Expansion where
@@ -250,7 +253,7 @@ private initialize budgetException : InternalExceptionId ←
   registerInternalExceptionId `HexPolyDetMathlib.Structural.budget
 
 private partial def assemble (carrier : Expr) (es : Array (Array Expr))
-    (tree : Expansion) : MetaM Result := do
+    (tree : Expansion) (cfg : Hex.Reflect.Config) : MetaM Result := do
   let n := es.size
   let A ← matrixExpr carrier es
   let result ← match tree with
@@ -277,7 +280,7 @@ private partial def assemble (carrier : Expr) (es : Array (Array Expr))
         values := values.push (← mkNumeral carrier 0)
         proofs := proofs.push h
       | some child =>
-        let r ← assemble carrier ((rows.eraseIdxIfInBounds i).map (·.eraseIdxIfInBounds j)) child
+        let r ← assemble carrier ((rows.eraseIdxIfInBounds i).map (·.eraseIdxIfInBounds j)) child cfg
         let minorEntries := (rows.eraseIdxIfInBounds i).map (·.eraseIdxIfInBounds j)
         let C ← matrixExpr carrier minorEntries
         let hd ← transport minor (← identify minor C minorEntries) r.proof
@@ -296,24 +299,24 @@ private partial def assemble (carrier : Expr) (es : Array (Array Expr))
       else pure proof
     let value ← values.foldrM (fun a b => mkAppM ``HAdd.hAdd #[a, b]) (← mkNumeral carrier 0)
     return {value, proof}
-  let limit := Hex.Reflect.Budget.default.proofNodes
+  let limit := cfg.budget.proofNodes
   if Hex.Reflect.proofNodeCount #[result.proof] (limit+1) > limit then
     throw (.internal budgetException)
   return result
 
 /-- A bounded cofactor proof, selected only after an actual sparse step. -/
-def sparse? (A : Expr) (lit : Recognized) : MetaM (Option Result) := do
+def sparse? (A : Expr) (lit : Recognized) (cfg : Hex.Reflect.Config := {}) : MetaM (Option Result) := do
   unless ← admitted A lit do return none
   if lit.n ≤ 3 then return none
   withLetDecl `detInput (← inferType A) A fun A => do
     let es ← lit.entries.mapM (·.mapM reduceIndices)
     let some (tree, _) := plan? (← zeros lit.carrier es) false 64 | return none
     let saved ← saveState
-    let result ← try some <$> assemble lit.carrier es tree catch e =>
+    let result ← try some <$> assemble lit.carrier es tree cfg catch e =>
       match e with
       | .internal id _ =>
         if id == budgetException then
-          trace[HexMatrix.certificate] "sparse proof node budget exhausted (limit {Hex.Reflect.Budget.default.proofNodes})"
+          trace[HexMatrix.certificate] "sparse proof node budget exhausted (limit {cfg.budget.proofNodes})"
           pure none
         else throw e
       | _ => throw e
@@ -322,6 +325,8 @@ def sparse? (A : Expr) (lit : Recognized) : MetaM (Option Result) := do
     | some r =>
       let B ← matrixExpr lit.carrier es
       let proof ← transport A (← identify A B es) r.proof
-      finalize? A {r with proof} "sparse-cofactor"
+      let result ← finalize? A {r with proof} "sparse-cofactor" cfg
+      if result.isNone then saved.restore
+      return result
 
 end HexPolyDetMathlib.Structural

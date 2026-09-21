@@ -17,6 +17,8 @@ open HexMatrixMathlib
     (f : List Rat) : Matrix (Fin n) (Fin n) Rat :=
   fun i j => C i j * vecOfList n f i
 
+@[expose] def scalarOps (a b : Rat) : List Rat := [-a, a*b, a/b]
+
 /-- The numeric matrix is arbitrary; row expressions are not normalized. -/
 theorem det (n : Nat) (C : Matrix (Fin n) (Fin n) Rat) (f : List Rat)
     (d : Rat) (hlen : f.length = n) (hdet : C.det = d) :
@@ -73,14 +75,19 @@ private partial def split? (e : Expr) (fuel : Nat := 16) : MetaM (Option (Rat ×
   if let some q ← scalar? e then return some (q, none)
   let e := e.consumeMData
   match e.getAppFnArgs with
-  | (``Neg.neg, #[_, _, a]) =>
+  | (``Neg.neg, #[α, _, a]) =>
+    unless ← withTransparency .reducible (isDefEq α (mkConst ``Rat)) do return none
     let some (q, f) ← split? a (fuel-1) | return none
     return some (-q, f)
-  | (``HDiv.hDiv, #[_, _, _, _, a, b]) =>
+  | (``HDiv.hDiv, #[α, β, γ, _, a, b]) =>
+    unless ← withTransparency .reducible
+        (isDefEq α (mkConst ``Rat) <&&> isDefEq β (mkConst ``Rat) <&&> isDefEq γ (mkConst ``Rat)) do return none
     if let some q ← scalar? b then
       let some (c, f) ← split? a (fuel-1) | return none
       return some (c/q, f)
-  | (``HMul.hMul, #[_, _, _, _, a, b]) =>
+  | (``HMul.hMul, #[α, β, γ, _, a, b]) =>
+    unless ← withTransparency .reducible
+        (isDefEq α (mkConst ``Rat) <&&> isDefEq β (mkConst ``Rat) <&&> isDefEq γ (mkConst ``Rat)) do return none
     if let some q ← scalar? a then
       let some (c, f) ← split? b (fuel-1) | return none
       return some (q*c, f)
@@ -109,6 +116,11 @@ def compute? (A : Expr) (lit : Recognized) (rhs? : Option Expr) : MetaM (Option 
   if A.hasExprMVar || rhs?.any (·.hasExprMVar) || lit.n == 0 || lit.n > maxDimension then return none
   if HexMatrixMathlib.DetPoly.Certificate.arm (← getOptions) != .automatic then return none
   if Hex.Reflect.proofNodeCount (#[A] ++ rhs?.toArray) 100001 > 100000 then return none
+  let canonical ← withLocalDeclD `a lit.carrier fun a => withLocalDeclD `b lit.carrier fun b => do
+    let actual ← mkListLit lit.carrier [← mkAppM ``Neg.neg #[a],
+      ← mkAppM ``HMul.hMul #[a,b], ← mkAppM ``HDiv.hDiv #[a,b]]
+    withTransparency .default (isDefEq actual (mkApp2 (mkConst ``scalarOps) a b))
+  unless canonical do return none
   withLetDecl `detInput (← inferType A) A fun A => do
     let saved ← saveState
     let attempt : MetaM (Option Result) := do
