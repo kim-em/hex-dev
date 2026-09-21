@@ -11,7 +11,8 @@ prepared domain, finite/infinite endpoint guards, and ordinary/prepared
 certificate acceptance. These results apply to noninjective coefficient
 interpretations without field or order instances on representation storage.
 `HexSturmMathlib/Rational.lean` proves whole-`Option` equality of the rational and
-integer/dyadic queries after positive denominator clearing. The domain proof
+integer/dyadic queries on finite ordered dyadic intervals after positive
+denominator clearing. The domain proof
 covers zero/repeated-root heads and finite endpoint roots for ordered dyadic
 intervals. The value proof compares arbitrary accepted remainder chains by
 positive scaling, including singleton chains and nonconstant terminal gcds;

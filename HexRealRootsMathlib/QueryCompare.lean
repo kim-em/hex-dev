@@ -29,12 +29,11 @@ private theorem mod_scale (c : K) (hc : c ≠ 0) (p q : Polynomial K) :
         (C c * C c⁻¹) * (q * C q.leadingCoeff⁻¹) := by ring
     _ = q * C q.leadingCoeff⁻¹ := by rw [← C_mul, mul_inv_cancel₀ hc, C_1, one_mul]
 
-/-- Positive changes of scale in the dividend and divisor preserve the
-remainder up to the dividend's scale. This is independent of root semantics. -/
-theorem remainder_scale [LinearOrder K] [IsStrictOrderedRing K]
-    (a b : K) (hb : 0 < b) (p q : Polynomial K) :
+/-- Rescaling the dividend and rescaling the divisor by a nonzero scalar
+rescales the remainder by the dividend's scalar. -/
+theorem remainder_scale (a b : K) (hb : b ≠ 0) (p q : Polynomial K) :
     (C a * p) % (C b * q) = C a * (p % q) := by
-  rw [mod_scale b (ne_of_gt hb), scale_mod]
+  rw [mod_scale b hb, scale_mod]
 
 private theorem remainder_eq {p q r a : Polynomial K} {l s : K}
     (hs : s ≠ 0) (hq : q ≠ 0) (hr : r = 0 ∨ r.natDegree < q.natDegree)
@@ -80,7 +79,7 @@ private theorem compare_entries [LinearOrder K] [IsStrictOrderedRing K]
         obtain ⟨c, hc, hpc⟩ := hP i hpi
         obtain ⟨d, hd, hqd⟩ := hQ i hqi
         refine ⟨d * a / c, div_pos (mul_pos hd ha) hc, ?_⟩
-        rw [hqd, hi, hi1, remainder_scale a b hb, hpc, ← mul_neg]
+        rw [hqd, hi, hi1, remainder_scale a b (ne_of_gt hb), hpc, ← mul_neg]
         have hs : (d * a / c) * c = d * a := div_mul_cancel₀ _ (ne_of_gt hc)
         simp only [← mul_assoc, ← C_mul, hs]
       · refine ⟨1, zero_lt_one, ?_⟩
@@ -234,7 +233,7 @@ theorem check_compare {E : Type w} [Zero E] [DecidableEq E] [Add E] [Sub E] [Mul
         C (b * a) * (interpret f hz g * (interpret f hz p).derivative) := by
       rw [C_mul]
       ring
-    rw [hprod, remainder_scale (b * a) a ha', he]
+    rw [hprod, remainder_scale (b * a) a (ne_of_gt ha'), he]
     have hc' : d * b * a / c * c = d * b * a := div_mul_cancel₀ _ (ne_of_gt hc)
     simp only [← mul_assoc, ← C_mul, hc']
   · exact check_next_rem f hz ha hs hm sign hpos p g cert h

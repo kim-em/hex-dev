@@ -28,8 +28,9 @@ theorem check_value {D : Type v} {A : Type w} {Ctx : Type u}
   obtain ⟨_, _, _, _, _, _, _, _, _, hr, hl, hu, _, _, hvl, hvu, hv⟩ := h
   exact ⟨hr, by simpa only [hvl, hvu, hl, hu] using hv⟩
 
-variable {K : Type u} [Field K] [LinearOrder K] [IsStrictOrderedRing K]
+variable {K : Type u} [Field K] [DecidableEq K] [LinearOrder K] [IsStrictOrderedRing K]
 
+omit [DecidableEq K] in
 /-- Exact three-valued signs agree when their arguments differ by a positive
 factor. Zero evaluations are included. -/
 theorem signs_scale (s t : Int) (x y c : K) (hc : 0 < c) (he : y = c * x)
