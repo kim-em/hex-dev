@@ -12,7 +12,8 @@ certificate acceptance. These results apply to noninjective coefficient
 interpretations without field or order instances on representation storage.
 `HexSturmMathlib/Rational.lean` proves universal equality of the rational and
 integer/dyadic `isSome` results after positive denominator clearing. This covers
-all invalid domains; equality of successful query values is still required.
+zero/repeated-root heads and finite endpoint roots for ordered dyadic intervals;
+equality of successful query values is still required.
 Conformance instantiates the generic theorems on canonical rationals and noncanonical
 representatives and inspects their axioms.
 

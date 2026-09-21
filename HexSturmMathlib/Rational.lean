@@ -16,7 +16,7 @@ open Hex HexPolyMathlib.Interpret HexRealRootsMathlib
 
 /-- Positive denominator clearing has the same real interpretation as the
 existing integer and rational polynomial correspondence. -/
-theorem clear_real (p : DensePoly Rat) :
+private theorem toPolyℝ_clearDenominators (p : DensePoly Rat) :
     toPolyℝ (ZPoly.clearDenominators p).2 =
       Polynomial.C ((ZPoly.clearDenominators p).1 : ℝ) *
         interpret (fun x : Rat => (x : ℝ)) (fun _ => Rat.cast_eq_zero) p := by
@@ -27,8 +27,10 @@ theorem clear_real (p : DensePoly Rat) :
   exact_mod_cast h
 
 /-- The rational and integer/dyadic frontends reject exactly the same domains
-after positive denominator clearing. This establishes the invalid `none` cases;
-it does not assert equality of successful query values. -/
+after positive denominator clearing, on finite ordered dyadic intervals. This
+establishes the invalid `none` cases on that domain, not successful-value equality.
+Validity is independent of the query polynomial; clearing `g` is unconstrained
+by this domain theorem. -/
 theorem query_rat_domain (p g : DensePoly Rat) (I : DyadicInterval) :
     (Sturm.query Sturm.orderSign p g (.finite I.lower.toRat) (.finite I.upper.toRat)).isSome =
       (ZPoly.tarskiQuery (ZPoly.clearDenominators p).2 (ZPoly.clearDenominators g).2 I).isSome := by
@@ -54,7 +56,7 @@ theorem query_rat_domain (p g : DensePoly Rat) (I : DyadicInterval) :
       toPolyℝ (ZPoly.clearDenominators p).2 ≠ 0 :=
     not_congr toPolyℝ_eq_zero_iff.symm
   apply Bool.eq_iff_iff.mpr
-  rw [hfield, Query.integer_domain, hnz, clear_real]
+  rw [hfield, Query.integer_domain, hnz, toPolyℝ_clearDenominators]
   simp only [Domain, EndpointLt, Nonvanishing, horder, true_and, hsf,
     mul_ne_zero_iff, Polynomial.eval_mul, Polynomial.eval_C, toReal_eq_cast_toRat]
   constructor

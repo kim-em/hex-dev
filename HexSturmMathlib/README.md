@@ -10,8 +10,8 @@ exactly. `prepare_sound` proves exact input bindings; `prepared_domain` proves
 validity for every prepared object. `certify_checks` and `certifyPrepared_checks`
 prove acceptance of produced literal certificates, and `check_domain` extracts
 the mathematical domain from accepted replay. `query_rat_domain` proves that
-positive denominator clearing preserves the complete failure domain between the
-rational and integer/dyadic frontends; equality of successful values remains open.
+positive denominator clearing preserves the failure domain between the rational and integer/dyadic frontends
+on finite ordered dyadic intervals; equality of successful values remains open.
 The theorems permit noninjective coefficient interpretations and require no
 field instance on noncanonical representatives.
 

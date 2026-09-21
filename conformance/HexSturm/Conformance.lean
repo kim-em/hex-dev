@@ -147,4 +147,14 @@ theorem stale_rejected : Replay.check orderSign 8 p 1 (.finite (-2)) (.finite 2)
 #guard_msgs in
 #print axioms Hex.Sturm.Replay.check_bindings
 
+/-- info: 'Hex.Sturm.query_prepared' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Hex.Sturm.query_prepared
+/-- info: 'Hex.Sturm.certify_prepared' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Hex.Sturm.certify_prepared
+/-- info: 'Hex.Sturm.prepare_isSome' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Hex.Sturm.prepare_isSome
+
 end Hex.Sturm.Conformance

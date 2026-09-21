@@ -167,8 +167,8 @@ pairs per case on automatically selected CPU 3. The runner is
 Every candidate rebuild printed only `propext`, `Classical.choice` and
 `Quot.sound`; compiler output and artifact sizes are retained. The source hashes
 remained unchanged during that run. The later shared-fixture and axiom-guard
-changes are measured separately below. All completed samples, including concurrent host activity,
-are included.
+changes are measured separately below. All completed samples, including
+concurrent host activity, are included.
 
 The acceptance/domain module's median fresh build was 5282.507 ms against
 4547.418 ms for its import-only baseline; the median paired difference was
@@ -188,9 +188,13 @@ CPU 29, from a clean checkout. Acceptance medians were 1928.923 ms candidate,
 1928.106 ms, 1801.859 ms and 121.284 ms. Every sample and compiler output is
 retained, with the same standard axiom set and `no-comparable-control` result.
 The source and dependency hashes identify the measured revision; subsequent
-rational-domain correspondence additions are not part of this measured import
-graph. These two runs are separate source snapshots, not a controlled performance
-comparison or a claim of improvement.
+rational-domain correspondence and frontend value/binding theorems are not part
+of this measured import graph. The current companion umbrella reaches `Mathlib` through the pre-existing
+`HexRealRootsMathlib.ChainCorrespond` import. Neither retained run measures that
+expanded import closure: both report 1984 build jobs. Equal job counts do not
+identify identical source graphs or isolate timing causes. These are separate
+source snapshots without a controlled comparison; the absolute timing difference
+is not attributed to a source change or claimed as an improvement.
 
 ## Remaining validation gates
 
