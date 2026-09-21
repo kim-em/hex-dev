@@ -1,0 +1,29 @@
+Hex.SturmBench.runReplay    expected complexity: n ^ 4    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=0c4c946-dirty, 2026-09-21T22:34:57Z, host=chungus2
+  param  per-call    repeats  C
+    256   30.357 ms  ×2^1     C=0.007 [trial 1/4]
+    512  135.552 ms  ×2^0     C=0.002 [trial 1/4]
+  1_024  777.488 ms  ×2^0     C=0.001 [trial 1/4]
+  2_048    5.368 s   ×2^0     C=0.000 [trial 1/4]
+    256   30.123 ms  ×2^1     C=0.007 [trial 2/4]
+    512  134.752 ms  ×2^0     C=0.002 [trial 2/4]
+  1_024  774.290 ms  ×2^0     C=0.001 [trial 2/4]
+  2_048    5.354 s   ×2^0     C=0.000 [trial 2/4]
+    256   30.291 ms  ×2^1     C=0.007 [trial 3/4]
+    512  136.156 ms  ×2^0     C=0.002 [trial 3/4]
+  1_024  772.601 ms  ×2^0     C=0.001 [trial 3/4]
+  2_048    8.598 s   ×2^0     C=0.000 [trial 3/4]
+    256   50.269 ms  ×2^1     C=0.007 [trial 4/4]
+    512  224.448 ms  ×2^0     C=0.002 [trial 4/4]
+  1_024    1.229 s   ×2^0     C=0.001 [trial 4/4]
+  2_048    8.518 s   ×2^0     C=0.000 [trial 4/4]
+  verdict: inconclusive (cMin=0.000, cMax=0.007, β=-1.397, looks faster than declared by ~n^1.397)
+  per-spawn floor (harness self-measurement): 21.492 ms
+  peak RSS: 71_576 kB..580_624 kB (across 16 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+    param  trials  median      min         max         spread 
+      256  4/4      30.324 ms   30.123 ms   50.269 ms  66.435%
+      512  4/4     135.854 ms  134.752 ms  224.448 ms  66.024%
+    1_024  4/4     775.889 ms  772.601 ms    1.229 s   58.881%
+    2_048  4/4       6.943 s     5.354 s     8.598 s   46.715%
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-replay-deferred/replay-bits.json

@@ -1,0 +1,160 @@
+{
+  "cpu": 13,
+  "host": "chungus2",
+  "start": "2026-09-21T22:35:35.501130+00:00",
+  "load_start": [
+    5.45556640625,
+    4.77880859375,
+    4.42529296875
+  ],
+  "git_head": "0c4c946da64ff8513e0c0468d03eb8081114132f",
+  "binary_sha256": {
+    "A": "3df63e1ae623321601611c53448c154f1a19e8f3f94643c86f20a3c035b8b814",
+    "B": "02c4f8475b064569d242ef341f92ef4bcb6da8b2fe9991667d092893cb4f58f7"
+  },
+  "protocol": "four adjacent AB/BA blocks, degree 1024, warm 100ms target, all children retained",
+  "commands": [
+    {
+      "block": 0,
+      "arm": "A",
+      "argv": [
+        "/tmp/hexsturm-replay-cap1800",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runReplay",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "exit_code": 0
+    },
+    {
+      "block": 0,
+      "arm": "B",
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runReplay",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "exit_code": 0
+    },
+    {
+      "block": 1,
+      "arm": "B",
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runReplay",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "exit_code": 0
+    },
+    {
+      "block": 1,
+      "arm": "A",
+      "argv": [
+        "/tmp/hexsturm-replay-cap1800",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runReplay",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "exit_code": 0
+    },
+    {
+      "block": 2,
+      "arm": "A",
+      "argv": [
+        "/tmp/hexsturm-replay-cap1800",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runReplay",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "exit_code": 0
+    },
+    {
+      "block": 2,
+      "arm": "B",
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runReplay",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "exit_code": 0
+    },
+    {
+      "block": 3,
+      "arm": "B",
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runReplay",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "exit_code": 0
+    },
+    {
+      "block": 3,
+      "arm": "A",
+      "argv": [
+        "/tmp/hexsturm-replay-cap1800",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runReplay",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "end": "2026-09-21T22:40:56.571310+00:00",
+  "load_end": [
+    4.6396484375,
+    5.0517578125,
+    4.6962890625
+  ]
+}

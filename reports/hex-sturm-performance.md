@@ -1,12 +1,14 @@
 # Shared Sturm–Tarski computation measurements
 
 The corrected quadratic query-degree models pass for initial reduction,
-integer and rational queries, and replay. Head-degree replay has cubic
-normalization-iteration work and quartic binary work; its bounded cubic
-wall-time hypothesis passes at degrees 128–1024 but fails the discriminating
-extension through degree 2048. The quartic wall-time hypothesis also failed
-and remains recorded. Replay therefore retains an open performance finding. [The derivations](sturm-bit-cost-models.md)
-keep these claims separate.
+integer and rational queries, and replay. Head-degree replay now defers dyadic
+normalization to the end of each Horner evaluation, with proved equality to
+its former result. Its predeclared **mode-2 O(n⁴) upper bound passes (observed
+faster)** through degree 2048. This is explicitly weaker than two-sided
+consistency: GMP multiplication crossovers prevent a justified tight monomial
+claim on this ladder. The earlier cubic and quartic two-sided failures remain
+recorded below. [The derivations](sturm-bit-cost-models.md) distinguish the
+former repeated-normalization cost from the implemented recurrence products.
 
 All earlier declarations, failures and samples are retained. These observations
 cover effective query/checker paths. They do not complete the companions'
@@ -450,8 +452,9 @@ IVT/Rolle and signed-remainder/Cauchy-index foundation is delivered.
 
 The independent size sweeps and operation/normalization diagnostics above are
 available. The query-degree findings have corrected quadratic characterizations.
-The wider head-degree replay test fails its cubic characterization; the
-replay performance finding remains open on #10375. Concrete
+The earlier head-degree replay test failed its cubic characterization. The
+deferred-normalization implementation and its predeclared mode-2 validation
+below resolve that performance finding, subject to implementation review. Concrete
 extension-depth and nested-evidence probes belong downstream under #10376/#10378;
 general root-sum/replay soundness and its executable singleton/sign/bound
 consequences belong to #10389. The integer query-one finite/whole-line counts
@@ -462,10 +465,89 @@ the companion; these timing observations do not discharge those proofs.
 The [recorded finding](https://github.com/kim-em/hex-dev/issues/10375#issuecomment-5757400442)
 also records the original polynomial pseudo-gcd finding; its wider-ladder
 resolution is documented in the polynomial report.
-Nothing in these measurements advances the library phase or closes #10375.
+These measurements do not advance any library phase. Closure of #10375 also
+requires the implementation PR, independent review and CI.
 
 The exact benchmark fixtures can be checked again with the pinned oracle
 environment using `python scripts/bench/check_sturm_fixtures.py` followed by
 the corresponding `fixtures.jsonl` paths above. Query checks include every
 serialized chain identity and endpoint sign. Deliberately corrupted query
 identities/signs and polynomial multipliers/quotients/gcds are rejected.
+
+## Deferred-normalization validation
+
+The executable `ZPoly.evalDyadic` retains its array fold and exact canonical
+result. The numerator/precision fold normalizes once; zero coefficients retain
+signed exponents and zero accumulators reset unused precision. This avoids
+materializing enormous powers of two for constants or sparse monomials.
+`HexRealRootsMathlib.evalDyadic_eq_fold` proves equality with the former
+operation at every polynomial and dyadic point. The existing evaluation,
+Sturm and Tarski correspondence proofs build through that equality.
+
+The [declaration](sturm-bit-cost-models.md#deferred-normalization-replay-upper-bound)
+selects mode 2 before scientific collection, citing GMP's published schoolbook
+upper bound and explaining why neither cubic traversal nor schoolbook
+multiplication is assumed to dominate. It applies that bound to the actual
+O(n²) products on O(n)-bit recurrence scalars and coefficients. The
+[untimed calculation](bench-results/sturm-replay-deferred-costs/) verifies all
+retained production step formulas, distinguishes Horner volume from recurrence
+products, and counts a schoolbook upper bound rather than GMP instructions.
+
+The [operation-only profile](bench-results/sturm-replay-deferred-profile/)
+at degree 1024 identifies `__gmpn_addmul_1_x86_64` (17.01%), copying (9.94% in
+`__gmpn_copyi_x86_64`), and `__gmpn_mul_2` (4.57%) among the leading exclusive
+samples. This covers the growing coefficient-product phase addressed by the
+published bound. Allocation/copy samples are not assigned to a caller:
+DWARF unwinding recovered no usable kernel call chains, as the retained
+`phases.json` records. The 0.784 s profiled operation is attribution only,
+not a scientific baseline or a speedup measurement.
+
+The [scientific run](bench-results/sturm-replay-deferred/) retains all sixteen
+successful samples on the declared four-trial schedule:
+
+| Degree | Median replay | Minimum | Maximum |
+| --- | ---: | ---: | ---: |
+| 256 | 30.324 ms | 30.123 ms | 50.269 ms |
+| 512 | 135.854 ms | 134.752 ms | 224.448 ms |
+| 1024 | 775.889 ms | 772.601 ms | 1.229 s |
+| 2048 | 6.943 s | 5.354 s | 8.598 s |
+
+The unchanged two-sided harness emits `inconclusive`, residual −1.396940,
+**faster** than `n⁴`. Under the mode-2 contract this is **within declared
+upper bound (observed faster)**, not a two-sided consistency verdict. No rows
+were dropped or timed out; peak RSS was 580624 KiB. The large spreads (47–66%)
+remain visible; no sample was rejected because of shared-host activity and no
+rerun was used. This result does not assert unbounded cubic timing or turn the
+old failed runs into passes.
+
+The preregistration commit's message was amended solely to include the cost
+model derivation required by the structural checker. Recorded head
+`0c4c946da` and amended head `f8abcce93` have identical tree
+`b546b17ae4755b0a4d40a28adf4ce4c2421d9dd8`. The binary, registration and
+derivation hashes in each collection identify the measured code; no executable
+change accompanied that metadata amendment.
+
+The aggregate library/manual/conformance build passed (14716 jobs), as did
+all 13 benchmark smoke checks. New ordinary-kernel examples cover enormous
+positive/negative exponents, sparse monomials, constants and cancellation;
+567 rational differential cases cover small signed coefficients/endpoints.
+The exact-equivalence theorem's axiom audit contains only `propext`,
+`Classical.choice`, and `Quot.sound`. All [23 newly emitted axis/control
+fixtures](bench-results/sturm-replay-deferred-oracles/) are literally identical
+to the retained outputs and pass the independent pinned FLINT/qqbar oracle.
+These checks are correctness evidence, separate from the timing verdict.
+
+The [adjacent before/after run](bench-results/sturm-replay-deferred-pairs/)
+uses four AB/BA blocks at degree 1024 on one automatically leased CPU. Median
+replay time is 37.955 s before and 0.774 s after; the median paired speedup is
+49.092× (individual pairs 48.420–49.417×). All eight children completed and
+returned the same `0xb` result hash. The before binary hash equals the retained
+cap1800 binary; the after hash equals the new scientific-run binary. Per-row
+checkout names can change during collection, so the fixed binary hashes and
+source snapshots identify the two arms.
+
+A fresh-module proof-cost attempt aborted after its final checkout-state check
+because repository metadata and report artifacts changed during collection.
+Its [failure log](bench-results/sturm-replay-deferred-proof-aborted.log) is
+retained. The runner emitted no result artifact, so no timing values from that
+attempt are claimed or used; the replacement collection uses a fixed checkout.

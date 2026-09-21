@@ -1,0 +1,11 @@
+{
+  "git_head": "0c4c946da64ff8513e0c0468d03eb8081114132f",
+  "command": [
+    "python3",
+    "scripts/bench/sturm_replay_costs.py"
+  ],
+  "source_sha256": "5fb8794c4f5825990b41db04de569819aa231a84b5582fcf5666cefffc144c06",
+  "dependency_sha256": "0d7d2f2d5c49cc7b3d44198c8dce65106bb107a4ad267a480d437b9bca6fed5f",
+  "completed": "2026-09-21T22:42:07.307115+00:00",
+  "scope": "untimed formula calculation for one remainders chain; tail Horner excludes T_n; recurrence includes actual first T_n identity; initial and terminal checks excluded; squarefreeness chain differs by a fixed multiplicity"
+}
