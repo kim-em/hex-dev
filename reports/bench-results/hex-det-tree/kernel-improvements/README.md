@@ -3,13 +3,15 @@
 `final/results.json.gz` and `final/observations.jsonl.gz` retain the quiet
 six-pair comparison, including separate route/axiom audits and per-arm import
 baselines. `before`, `components`, `recursors`, `sharing` and `list_recursors`
-retain two-pair diagnostic stages. `diagnosis` contains the extra first-use
+retain two-pair diagnostic stages. `review_fixes` retains the two-pair recheck
+after shared-budget and metavariable-closure fixes; its first pairs overlap
+the downstream validation build. `diagnosis` contains the extra first-use
 component check. No completed sample is filtered out.
 
 All times are shared-host observations. Proof-work diagnostics exclude imports,
 statement elaboration, serialization and Lake overhead. Quiet build deltas use
 fresh module builds and import-only controls. The two metrics are not pooled.
-The aggregate measurement time is about 8.3 minutes; setup/rebuilds are separate.
+The aggregate measurement time is about 9.1 minutes; setup/rebuilds are separate.
 Each measured build has a 60-second limit. All measurements are serial and
 there is no memory cap. The final campaign aborts on a timeout or error.
 

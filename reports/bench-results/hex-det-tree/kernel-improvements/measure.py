@@ -7,7 +7,7 @@ from scripts.bench.det_bench_limits import supervise
 stage=sys.argv[1];pairs=int(sys.argv[2]) if len(sys.argv)>2 else 2
 out=Path('/tmp/issue-10320-kernel')/stage;out.mkdir(exist_ok=False)
 probes=Path('bench/HexPolyDetMathlib/ProofProbe');prefix='HexPolyDetMathlib.ProofProbe.';records=[]
-(out/'sources.json').write_text(json.dumps({str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in [Path('HexPolyDetMathlib/Frontend.lean'),Path('HexMvPoly/Kernel.lean')]},indent=2))
+(out/'sources.json').write_text(json.dumps({str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in [Path('HexPolyDetMathlib/Frontend.lean'),Path('HexMvPoly/Kernel.lean'),Path('HexReflect/Session.lean')]},indent=2))
 def run(deadline):
  cpu,lease=cpu_lease();os.sched_setaffinity(0,{cpu});os.environ['LEAN_NUM_THREADS']='1';topology=sweep.cpu_topology(cpu);monitored=sweep.parse_cpu_list(topology.get('thread_siblings_list')) or [cpu];environment=sweep.environment()
  def observe(module,result):

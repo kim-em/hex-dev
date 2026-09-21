@@ -97,13 +97,15 @@ def quoteWitness {C : Type} [ToExpr C] (w : Hex.Matrix.DetWitness (MvPoly.Kernel
 
 /-- Close the proof and its type over every retained local declaration. -/
 def closeProof (target proof : Expr) : MetaM (Expr × Expr × Array Expr) := do
+  let target ← instantiateMVars target
+  let proof ← instantiateMVars proof
   let all := (← getLCtx).getFVars
   let mut needed := collectFVars (collectFVars {} target) proof
   for e in all.reverse do
     if needed.fvarSet.contains e.fvarId! then
       let decl ← e.fvarId!.getDecl
-      needed := collectFVars needed decl.type
-      if let some v := decl.value? then needed := collectFVars needed v
+      needed := collectFVars needed (← instantiateMVars decl.type)
+      if let some v := decl.value? then needed := collectFVars needed (← instantiateMVars v)
   let locals := all.filter fun e => needed.fvarSet.contains e.fvarId!
   let type ← mkForallFVars locals target (usedOnly := false) (usedLetOnly := false)
     (generalizeNondepLet := false)
@@ -125,28 +127,29 @@ def checked (target proof : Expr) (profileName : String := "det.symbolic.kernel"
 
 /-- Charge distinct nodes of the closed proof, including retained let payloads.
 The shared compiled counter stops as soon as the remaining budget is exceeded. -/
-private def checkPiece (target proof : Expr) : ReflectM (Expr × Nat) := do
+private def checkPiece (target proof : Expr) (seen : ExprSet) : ReflectM (Expr × ExprSet) := do
   let (type, proof, args) ← closeProof target proof
-  let cap := (← getThe Hex.Reflect.State).budget.remaining.proofNodes + 1
-  let nodes := profileit "det.symbolic.nodes" (← getOptions) fun _ => proofNodeCount #[proof] cap
-  charge .proofNodes nodes
+  let cap := seen.size + (← getThe Hex.Reflect.State).budget.remaining.proofNodes + 1
+  let nodes := profileit "det.symbolic.nodes" (← getOptions) fun _ => proofNodes #[proof] cap seen
+  charge .proofNodes (nodes.size - seen.size)
   return (← checkClosed type proof args "det.symbolic.kernel", nodes)
 
 /-- Check the outer application's proof arguments behind opaque boundaries.
 Each closed component and the final composition consume the same node budget.
-The returned count includes all auxiliary proofs, not just the composition. -/
+The returned count includes distinct nodes across all auxiliary proofs and the
+composition; a payload shared between components is charged only once. -/
 def checkedBudgeted (target proof : Expr) : ReflectM (Expr × Nat) := do
   let mut assembled := proof.getAppFn
-  let mut nodes := 0
+  let mut seen : ExprSet := {}
   for arg in proof.getAppArgs do
     if !arg.isConst && !arg.isFVar && (← isProof arg) then
-      let (arg, count) ← checkPiece (← inferType arg) arg
+      let (arg, nodes) ← checkPiece (← inferType arg) arg seen
       assembled := mkApp assembled arg
-      nodes := nodes + count
+      seen := nodes
     else
       assembled := mkApp assembled arg
-  let (proof, count) ← checkPiece target assembled
-  return (proof, nodes + count)
+  let (proof, nodes) ← checkPiece target assembled seen
+  return (proof, nodes.size)
 
 /-- Reject an already unaffordable payload before constructing its proofs.
 This is a lower bound from actual syntax, not a per-term size prediction. -/

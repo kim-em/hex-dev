@@ -619,10 +619,10 @@ def failures : m (Array Failure) :=
 
 end Ops
 
-/-- Count distinct nodes across emitted proofs, stopping at the supplied cap.
-Shared certificate and instance subexpressions are counted once. -/
-def proofNodeCount (expressions : Array Expr) (cap : Nat) : Nat :=
-  ((expressions.forM visit).run ({} : ExprSet)).2.size
+/-- Extend the set of distinct proof nodes, stopping at the total cap.
+A set reaching the cap may be truncated and must not be reused. -/
+def proofNodes (expressions : Array Expr) (cap : Nat) (seen : ExprSet := {}) : ExprSet :=
+  ((expressions.forM visit).run seen).2
 where
   visit (e : Expr) : StateM ExprSet Unit := do
     if (← get).size ≥ cap || (← get).contains e then return
@@ -633,6 +633,11 @@ where
     | .letE _ t v b _ => visit t; visit v; visit b
     | .mdata _ b | .proj _ _ b => visit b
     | _ => pure ()
+
+/-- Count distinct nodes across emitted proofs, stopping at the supplied cap.
+Shared certificate and instance subexpressions are counted once. -/
+def proofNodeCount (expressions : Array Expr) (cap : Nat) : Nat :=
+  (proofNodes expressions cap).size
 
 /-- Cheap normalizers a frontend configures for discharging conditions. Each
 returns a proof of the proposition or `none`. -/

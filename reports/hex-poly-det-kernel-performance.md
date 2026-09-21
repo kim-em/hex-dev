@@ -9,10 +9,18 @@ No matrix-specific route is added and the default-on policy is unchanged.
 The final theorem application's non-atomic proof arguments are closed over
 needed locals and checked as opaque auxiliary lemmas. The final application is
 checked separately. Every component is charged to the same proof-node budget
-before admission, including retained let payloads, and the reported count sums
-all components and the final application. Tests cover universe-polymorphic
-locals, retained lets, exact budget admission and exhaustion after component
-admission. No component's kernel check is skipped.
+before admission, including retained let payloads. The reported count is the
+number of distinct nodes across all components and the final application;
+shared payload is charged only once. Tests cover universe-polymorphic locals,
+retained lets, assigned metavariables, shared payload accounting, exact budget
+admission and exhaustion after component admission. No component's kernel check
+is skipped.
+
+Splitting examines only the outer application: a rational-value proof wrapped
+in a transitivity or scaling application may retain its certificate in one
+component. The kernel still checks payload types in each auxiliary declaration.
+The measurements below cover small inputs; they do not establish a benefit for
+large payloads with cheap certificate replay.
 
 The closed type and proof use Lean's common-expression sharing operation before
 auxiliary declaration admission, matching ordinary theorem elaboration.
@@ -55,6 +63,11 @@ checking the original whole proof. Every retained fresh measurement here
 includes the first check. The exact cause of that ordering sensitivity has not
 been isolated.
 
+A two-pair recheck after the shared-budget and metavariable-closure fixes gives
+308.7, 896.7 and 602.4 ms respectively. Its first pairs overlap a downstream
+validation build on the shared host; all samples are retained. This is a
+robustness recheck, not an additional speedup claim.
+
 ## Quiet six-pair comparison
 
 | Input | Mathlib + ring, ms | Hex, ms | Mathlib wins |
@@ -62,6 +75,9 @@ been isolated.
 | Dense 4×4, independent variables | 236.5 | 399.4 | 6/6 |
 | Dense 4×4, quadratic entries | 676.7 | 934.4 | 6/6 |
 | 6×6, two dense diagonal blocks | 511.5 | 695.8 | 6/6 |
+
+These six-pair results use commit `8fcf1625402a6a2e928d2f630a9c691fb1456b6e`,
+before the shared-budget accounting and assigned-metavariable closure fixes.
 
 This uses the existing fresh-module runner and automatic CPU lease. Each case
 has six adjacent Mathlib/Hex pairs in alternating AB/BA order, fresh module
@@ -76,12 +92,12 @@ a claim that Hex now beats Mathlib.
 
 All measurements are serial, each build has a 60-second ceiling, and no memory
 cap is imposed. A timeout aborts the small campaign rather than scheduling a
-larger case. The completed diagnostic and quiet campaigns together take 8 minutes 20 seconds;
+larger case. The completed diagnostic and quiet campaigns, including the review recheck, together take 9 minutes 4 seconds;
 setup and dependency rebuilds are separate.
 
 ## Validation
 
-- `lake build`: 14,548 jobs, successful.
+- `lake build`: 14,548 jobs, successful, including a full rerun after review fixes.
 - `HexMvPoly.KernelTests`, `HexMvPoly.KernelResidueTests`,
   `HexMvPolyMathlib.KernelResidueTests`, and `HexPolyDetMathlib.Tests`: successful.
 - Both affected computational conformance modules build. Regenerated fixtures

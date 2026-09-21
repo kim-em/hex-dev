@@ -340,7 +340,8 @@ the auxiliary theorem, as in Lean's ordinary declaration elaboration.
 The outer application's proof arguments may be closed and checked as opaque
 auxiliary lemmas before checking their composition. Every component and the
 composition are charged to the same proof-node budget before their respective
-kernel checks; the reported count is their sum. Component checks are not omitted
+kernel checks; distinct nodes are counted across the entire batch, so shared
+payload is charged only once. Component checks are not omitted
 from performance measurements. This proof organization applies independently
 of matrix shape and does not change certificate selection or soundness.
 Early admission counts the quoted payload itself; it does not estimate proof
