@@ -86,8 +86,11 @@ is added once. These diagnostic samples are not the six-pair medians above.
 The [raw archive](bench-results/hex-det-tree/structural/) contains all completed
 and interrupted observations, compiler output, source snapshots, host context,
 and run status. The measured production implementation is commit
-`49d235714`; its source hashes are retained. Subsequent regression-test and
-harness/report edits do not change those production sources.
+`49d235714`. Its source-hash manifest was recorded separately from the
+runner and matches that commit. Each retained directory includes the actual
+script used there; the current runner writes the manifest itself before a run.
+The final validation below records the additional operation admission checks
+and configurable structural proof budget in commit `a3772fce9`.
 
 The initial audit parser required a multiline-output fix before any paired
 measurement. In the main run, the first large sparse candidate received
@@ -97,8 +100,8 @@ bounded recovery reused source-verified audits and collected six fresh adjacent
 pairs. The orphan Mathlib sample remains in the archive but is not paired with
 a later Hex sample across the interruption. No completed pair was replaced.
 
-The aggregate measurement time, including setup, recovery, and profiles, was
-**21.24 minutes** against the 30-minute ceiling. Builds were serial,
+The aggregate measurement time, including setup, recovery, profiles, and final checks, was
+**25.95 minutes** against the 30-minute ceiling. Builds were serial,
 limited to 60 seconds each, without memory caps. These are manual Mathlib-facing
 proof probes; no Mathlib-importing executable benchmark was registered.
 
@@ -112,3 +115,28 @@ The original general tree-certificate assembly, entry/target kernel-time,
 and proof-size targets in issue #10320 remain separate obligations. This
 focused structural evidence does not establish those targets or justify
 changing the family-wide opt-in decision.
+
+A failed structural target comparison can be more expensive than a successful
+one: it then attempts the polynomial certificate and Mathlib fallback. The
+60-second probe ceiling is an external operational limit, not a new tactic
+heartbeat policy. All structural regression examples, including two cofactor
+branches and two expansion levels in dimension six, compile under Lean's
+default heartbeat limit.
+
+## Final admission and budget checks
+
+Commit `a3772fce9` authenticates rational operation instances and operand types
+before numeric certification and threads the shared proof budget through the
+structural route. A final six-pair comparison covers one input per changed
+family, with fresh route/axiom audits and the same quiet protocol.
+
+| Input | Mathlib seconds | `det` seconds | Hex pair wins |
+|---|---:|---:|---:|
+| `Triangular3` | 0.026 | 0.019 | 4/6 |
+| `RationalOne` | 1.619 | 0.600 | 6/6 |
+| `SparseOne` | 2.305 | 0.832 | 6/6 |
+
+The tiny triangular comparison remains inconclusive. Both larger comparisons
+still favor Hex in all six pairs. The initial nine-case table remains intact;
+these changed-code observations do not replace any earlier samples. The final
+runner itself records the source manifest before measurement.
