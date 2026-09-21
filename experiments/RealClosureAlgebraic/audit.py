@@ -13,6 +13,14 @@ args=parser.parse_args()
 HERE=Path(__file__).resolve().parent
 ROOT=HERE.parents[1]
 roots=[HERE, ROOT, ROOT/'.lake/packages/lean-bench', ROOT/'.lake/packages/Cli']
+# Run before Lake commands: a stale shared-package manifest can change checkouts.
+root_revs={p['name']:p.get('rev') for p in json.loads((ROOT/'lake-manifest.json').read_text())['packages'] if p['type']=='git'}
+for experiment in ['RealClosureAlgebraic','RealClosureRepresentation']:
+    manifest=ROOT/'experiments'/experiment/'lake-manifest.json'
+    if manifest.exists():
+        revs={p['name']:p.get('rev') for p in json.loads(manifest.read_text())['packages'] if p['type']=='git'}
+        assert revs==root_revs, f"stale {manifest}; refresh with MATHLIB_NO_CACHE_ON_UPDATE=1 lake -d experiments/{experiment} update Hex before building"
+
 def uncomment(source):
     out=[]
     depth=0
@@ -60,6 +68,9 @@ if not args.live:
     for name in ['Algebraic.lean','Policy.lean','PolicyBench.lean']:
         file=HERE/name
         assert hashlib.sha256(file.read_bytes()).hexdigest()==policy['hashes'][str(file.relative_to(ROOT))],file
+    trace=json.loads((HERE/'results/policy/summary.json').read_text())
+    assert hashlib.sha256((HERE/'PolicyTrace.lean').read_bytes()).hexdigest()==trace['trace_source_sha256']
+    assert hashlib.sha256((HERE/'results/policy/trace.log').read_bytes()).hexdigest()==trace['trace_sha256']
 for file in HERE.glob('*.lean'):
     assert not re.search(r'\b(?:sorry|axiom|native_decide)\b',file.read_text()),file
 for file in [HERE/'README.md',HERE/'PROTOCOL.md',ROOT/'reports/real-closure-algebraic-experiment.md']:

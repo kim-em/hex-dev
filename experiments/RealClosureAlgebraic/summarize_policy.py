@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Check and summarize all retained policy measurements and actual callback traces."""
+import hashlib
 import json
 from pathlib import Path
 from statistics import median
@@ -34,7 +35,9 @@ for case in range(10):
         ratios=[a/b for a,b in zip(*times)]
         rows.append(dict(case=case,pair=pair,a_ms=median(times[0]),b_ms=median(times[1]),
                          ratio=median(ratios),low=min(ratios),high=max(ratios)))
-(OUT/'summary.json').write_text(json.dumps({'comparisons':rows,'zero_tests':[
+(OUT/'summary.json').write_text(json.dumps({'trace_source_sha256':hashlib.sha256((HERE/'PolicyTrace.lean').read_bytes()).hexdigest(),
+    'trace_sha256':hashlib.sha256((OUT/'trace.log').read_bytes()).hexdigest(),
+    'comparisons':rows,'zero_tests':[
     dict(policy=k[0],case=k[1],**v) for k,v in sorted(traces.items())]},indent=2)+'\n')
 print('| Field / length / operation | Retain remainder (0/1) | Smaller descriptor (1/2) | Irreducible fast path (2/3) |')
 print('|---|---:|---:|---:|')

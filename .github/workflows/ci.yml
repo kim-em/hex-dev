@@ -422,6 +422,7 @@ jobs:
         env:
           MATHLIB_NO_CACHE_ON_UPDATE: "1"
         run: |
+          python3 experiments/RealClosureAlgebraic/audit.py --live
           lake -d experiments/RealClosureRepresentation build representationPrototype HexRationalFn.Field
           lake -d experiments/RealClosureAlgebraic build \
             Tests Transfer algebraicCheck algebraicBench policyCheck policyBench policyTrace refinementCheck

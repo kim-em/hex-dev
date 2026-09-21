@@ -54,3 +54,9 @@ The [family execution contract](../../SPEC/real-closure-execution.md) records
 the remaining interpretation, recursion and performance obligations. This
 experiment does not establish the cost of canonical-zero normalization in
 deep towers, and makes no Phase-4 claim.
+
+This workspace reuses the root package artifacts and dependency checkouts.
+Before invoking Lake, run `python3 experiments/RealClosureAlgebraic/audit.py
+--live` from the repository root. If it reports a stale local manifest after
+a root dependency change, refresh that manifest with
+`MATHLIB_NO_CACHE_ON_UPDATE=1 lake -d experiments/RealClosureRepresentation update Hex`.

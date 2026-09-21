@@ -22,6 +22,7 @@ its zero test calls existing rational polynomial gcd and integer Sturm code.
 From the repository root, with its pinned lean-bench dependency available:
 
 ```sh
+python3 experiments/RealClosureAlgebraic/audit.py --live
 lake -d experiments/RealClosureAlgebraic build Tests Transfer algebraicCheck algebraicBench
 experiments/RealClosureAlgebraic/.lake/build/bin/algebraicCheck > /tmp/algebraic-checks.jsonl
 python3 experiments/RealClosureAlgebraic/verify.py < /tmp/algebraic-checks.jsonl
@@ -68,6 +69,7 @@ controls only the fixed AB/BA schedule and retains all harness results;
 [storage/refinement report](../../reports/real-closure-storage-experiments.md).
 
 ```sh
+python3 experiments/RealClosureAlgebraic/audit.py --live
 lake -d experiments/RealClosureAlgebraic build policyCheck policyBench policyTrace refinementCheck
 python3 experiments/RealClosureAlgebraic/verify_policy.py
 python3 experiments/RealClosureAlgebraic/summarize_policy.py
@@ -85,3 +87,11 @@ compiled library artifacts. CI runs `audit.py --live` for current import,
 proof-hole and link checks. Run `audit.py` without that flag to additionally
 check the retained timing source identities; historical measurements stay
 bound to their measured sources and do not prevent later API maintenance.
+
+Run the live audit before invoking Lake in either experiment workspace: it
+rejects stale local manifests whose dependency revisions differ from the root,
+before Lake can move a shared checkout. After a root dependency update, refresh
+each stale manifest with `MATHLIB_NO_CACHE_ON_UPDATE=1 lake -d experiments/NAME
+update Hex`, replacing NAME with the experiment directory, then repeat the
+audit. The policy summary binds the regenerated trace and its trace-driver
+source by SHA-256; the historical audit checks both.
