@@ -3,9 +3,9 @@
 The corrected quadratic query-degree models pass for initial reduction,
 integer and rational queries, and replay. Head-degree replay has cubic
 normalization-iteration work and quartic binary work; its bounded cubic
-wall-time hypothesis passes at degrees 128–1024, and a discriminating
-extension to degree 2048 is in progress. The quartic wall-time hypothesis
-failed and remains recorded. [The derivations](sturm-bit-cost-models.md)
+wall-time hypothesis passes at degrees 128–1024 but fails the discriminating
+extension through degree 2048. The quartic wall-time hypothesis also failed
+and remains recorded. Replay therefore retains an open performance finding. [The derivations](sturm-bit-cost-models.md)
 keep these claims separate.
 
 All earlier declarations, failures and samples are retained. These observations
@@ -399,6 +399,17 @@ replay. A fresh fixed schedule with the same model, degrees and four trials
 uses an 1800-second operational cap, declared before collection. Every timeout
 and every completed lower-rung measurement from the first attempt is retained.
 
+The [complete larger-cap extension](bench-results/sturm-replay-iterations-cap1800/)
+finishes all sixteen measurements. Its cubic verdict is **inconclusive**,
+with residual +0.168613, outside the 0.15 tolerance. Median times at degrees
+256,512,1024,2048 are 502.692 ms, 4.078 s, 36.651 s and 365.525 s;
+all four degree-2048 times lie between 363.935 s and 367.265 s. The narrower
+cubic pass does not extend to this ladder. This result is compatible with the
+source-derived growing limb work, but it supplies no fitted mixed-cost model
+and no passing quartic wall-time characterization. The remaining finding is
+the repeated coefficient normalization in `ZPoly.evalDyadic`, not a failure
+of the checked polynomial identities or query results.
+
 The [rational query run](bench-results/sturm-rational-bit-cost/) also passes
 its independently derived quadratic model (residual −0.068144). At degrees
 131072,262144,524288,1048576 its median times are 1.729 s, 6.255 s, 23.915 s
@@ -429,7 +440,8 @@ IVT/Rolle and signed-remainder/Cauchy-index foundation is delivered.
 
 The independent size sweeps and operation/normalization diagnostics above are
 available. The query-degree findings have corrected quadratic characterizations.
-The wider head-degree replay test is still pending. Concrete
+The wider head-degree replay test fails its cubic characterization; the
+normalization performance finding remains open on #10375. Concrete
 extension-depth and nested-evidence probes belong downstream under #10376/#10378;
 general root-sum/replay soundness and its executable singleton/sign/bound
 consequences belong to #10389. The integer query-one finite/whole-line counts
