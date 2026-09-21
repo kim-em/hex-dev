@@ -17,7 +17,8 @@ Covered operations:
 - dense representation constructors and accessors (`ofCoeffs`, `ofList`, `C`, `monomial`, `size`, `isZero`, `coeff`, `degree?`, `support`, `toArray`)
 - basic executable arithmetic (`scale`, `shift`, `add`, `neg`, `sub`, `mul`, `eval`, `compose`, `derivative`)
 - Euclidean helpers (`leadingCoeff`, `divModMonic`, `divMod`, `/`, `%`, `modByMonic`, `gcd`, `xgcd`, `xgcdLeftMonic`)
-- fraction-free division and plain gcd (`pseudoDiv`, `positivePseudoDiv`, `pseudoGcd`)
+- fraction-free division and plain gcd (`pseudoDiv`, `positivePseudoDiv`, `pseudoGcd`);
+  independent FLINT coverage is emitted by `EmitFixtures.lean`
 - integer content helpers (`content`, `primitivePart`)
 - polynomial CRT witness construction (`polyCRT`)
 Covered properties:

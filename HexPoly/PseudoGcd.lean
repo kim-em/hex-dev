@@ -43,10 +43,12 @@ theorem pseudoDiv_of_size_lt (p q : DensePoly R) (h : p.size < q.size) :
     pseudoDivMod_of_size_lt p q h]
 
 /-- Choose a positive multiplier by negating all three outputs together when
-necessary. The supplied sign must interpret the actual coefficient arithmetic. -/
+necessary. The leading-coefficient sign and exponent parity determine the
+correction, avoiding a sign query on the larger computed power. -/
 @[expose] def positivePseudoDiv [Neg R] (sign : R → Int) (p q : DensePoly R) : PseudoResult R :=
   let r := pseudoDiv p q
-  if sign r.multiplier < 0 then ⟨-r.multiplier, -r.quotient, -r.remainder⟩ else r
+  if pseudoExponent p q % 2 = 1 ∧ sign q.leadingCoeff < 0 then
+    ⟨-r.multiplier, -r.quotient, -r.remainder⟩ else r
 
 omit [One R] [Add R] [Mul R] in
 private theorem size_neg_le (p : DensePoly R) : (-p).size ≤ p.size := by

@@ -172,7 +172,8 @@ theorem map_positivePseudoDiv [Neg E] [Neg F]
        quotient := map f hz (positivePseudoDiv signE p q).quotient,
        remainder := map f hz (positivePseudoDiv signE p q).remainder } : PseudoResult F) =
       positivePseudoDiv signF (map f hz p) (map f hz q) := by
-  simp only [positivePseudoDiv, ← map_pseudoDiv f hz h1 ha hs hm p q, hsign]
+  simp only [positivePseudoDiv, ← map_pseudoDiv f hz h1 ha hs hm p q,
+    map_pseudoExponent, map_leading, hsign]
   split
   · simp only [hn, map_neg f hz hs]
   · rfl
