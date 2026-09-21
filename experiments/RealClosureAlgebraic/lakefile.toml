@@ -31,3 +31,22 @@ root = "Bench"
 
 [[lean_lib]]
 name = "Nested"
+
+[[lean_lib]]
+name = "Policy"
+
+[[lean_exe]]
+name = "policyCheck"
+root = "PolicyCheck"
+
+[[lean_exe]]
+name = "refinementCheck"
+root = "Refinement"
+
+[[lean_exe]]
+name = "policyBench"
+root = "PolicyBench"
+
+[[lean_exe]]
+name = "policyTrace"
+root = "PolicyTrace"

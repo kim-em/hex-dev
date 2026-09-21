@@ -102,7 +102,8 @@ Use `SignDet.compare` and its common squarefree-product re-encoding.
 
 An `Element ctx` stores a polynomial representative `q(α)` at the top
 algebraic level over predecessor representations, with the shared canonical-zero
-storage invariant. No bound `degree q < degree p` is imposed. Embedded
+storage invariant. No unconditional bound `degree q < degree p` is imposed; the monic clean
+retention path has that bound, while general representatives need not. Embedded
 predecessor elements are constant polynomials. `Element.equal` tests the zero
 sign of the difference; the companion proves this is equality of denotations.
 For `p=(X-1)(X+1)` selecting `α=1`, `X-1` is stored as zero although its
@@ -130,6 +131,50 @@ full context version and operands; hashes may index caches but cannot replace
 literal identity/equality checks. A context owns an immutable predecessor DAG.
 Splitting or enlargement returns a new context plus explicit transport;
 old handles remain valid only in their old context.
+
+## Validated construction, packing and persistent refinement
+
+`Context.adjoin` accepts an opaque descriptor validated in its exact
+predecessor context. Untrusted descriptor readers run that validation before
+construction. A successful check establishes the finite executable invariant;
+its semantic soundness follows in the companion under the predecessor's
+interpretation hypotheses. Neither a public unchecked validity flag nor a
+`Root.Laws` argument is the constructor interface.
+
+Use the [shared storage policy](../real-closure-execution.md#storage-policy-and-context-refinement).
+Retain the remainder already computed during zero testing for a monic clean
+definition, with a sufficient literal-monicity/cleanliness guard. Otherwise
+retain the raw representative without forced monicization. The general
+selected-root zero test remains gcd plus root selection even for a nonzero
+remainder; a reducible polynomial is not a minimal polynomial. Remainder-only
+zero testing requires separately verified irreducibility of that exact
+definition in that exact predecessor context. Do not demand factorization to
+construct an ordinary squarefree extension.
+
+The implementation must account for repeated zero testing and stored growth,
+including nested predecessor operations. Batching inside ring-operation buffers
+is permitted only with interpretation agreement and packing at output
+boundaries; division cannot postpone leading-zero decisions. Existing shared
+polynomial algorithms are reused. The performance evidence must distinguish
+storage policy, a smaller defining polynomial after a split, and an
+irreducibility fast path, rather than attributing all three to one change.
+
+A persistent split rebuilds the full requested dependency closure in
+predecessor order. Transport each later defining polynomial, interval endpoint,
+selected-root descriptor and live value; re-encode root signs for the new
+polynomial and context. Preserve the chosen root, not just the equation it
+satisfies. The new immutable context and transports are returned together.
+Old contexts and values keep their meaning. Reject an old certificate/cache
+binding in the new context even when its operand literal is unchanged;
+checked transport or recomputation creates the new evidence.
+
+The first implementation slice is rational selected-root arithmetic/sign,
+inversion and transport as specified in
+[the execution contract](../real-closure-execution.md#first-proved-algebraic-slice).
+It uses the existing real-roots infrastructure and tests agreement with
+hex-real-algebraic. It neither duplicates that fast path nor makes it depend
+on this family. The later arbitrary-field slice consumes the shared generic
+Sturm/BKR interfaces; rational interval refinement is not its sign algorithm.
 
 ## Clean arithmetic and splitting
 
@@ -160,7 +205,8 @@ For a checked inverse of `q(α)`:
    `g(α) ≠ 0`. If `degree g>0`, set `h=p/g` by exact division, retain
    `p=g*h`, and prove `h(α)=0`, `h` squarefree and `gcd(h,q)=1`. Squarefreeness
    of `p` is essential to the last claim. Consume the validated descriptor’s
-   executable witness that the monic gcd of `p` and `p.derivative` is one;
+   executable witness that their computed gcd is a nonzero constant
+   (or that its monic associate equals one under interpretation);
    core derivative/divisibility identities derive coprimality of `h` and `q`
    from it. A semantic squarefree assertion without this bridge is insufficient.
    With constant gcd keep `h=p`.

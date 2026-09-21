@@ -22,7 +22,8 @@ algebra; their computational libraries remain Mathlib-free.
 No computational library imports a companion or Tau Ceti. Existing
 polynomial, rational-function, real-root and real-algebraic
 libraries remain inputs with no reverse family dependency. Exact coefficient
-carriers supply their ordinary field and order instances;
+carriers supply ordinary operations and total sign; field/order instances
+belong to their canonical or semantic interpretations;
 this companion does not import tower implementations. Tower field laws,
 dynamic splitting of all live elements, multiplicities, real-closure
 existence and sector realization belong to hex-real-closure-mathlib.
@@ -69,6 +70,14 @@ every arithmetic operation used by the producer. Nested query/sign proofs
 are finite and acyclic, with lower-level facts established before use.
 Changing a defining polynomial or coefficient context requires denotation-
 preserving transport, including selected-root and user-oracle identities.
+
+The interpretation preserves natural casts as well as arithmetic and the
+explicit executable sign. Establish semantic polynomial identities via zero
+reflection; do not infer semantic inequality from distinct representatives.
+This does not weaken the integer matrix identity `M*c=t` or the requirement
+that the reduced candidate support contain every realizable condition.
+Transport proves both the selected root/sign-table meaning and the new
+context binding, including when the raw query polynomial is unchanged.
 
 ## Domains, counts and literal data
 

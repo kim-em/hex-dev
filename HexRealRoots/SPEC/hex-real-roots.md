@@ -180,6 +180,16 @@ operations, excluding the separately bounded squarefreeness check; this is
 not a unit-cost bit bound on growing coefficients. Phase 4 measures their
 bit lengths as well as degrees.
 
+The implementation and its generic extension use one owned primitive;
+these Tarski declarations remain unimplemented until that work lands.
+Squarefree guards on representation coefficients test a semantically nonzero
+constant gcd, or a Bézout identity by zero differences. Monicization does not
+make structural equality to `1` a valid semantic guard. The explicit total
+sign and natural-cast interface is the shared execution contract. Literal
+context/operand checks remain exact binding checks, separate from these
+semantic polynomial equations.
+
+
 ### Shared ordered-domain kernel
 
 Generalize the signed-remainder/query-replay primitive here, below the family,

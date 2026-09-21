@@ -1198,6 +1198,32 @@ canonical-zero representations and ordinary total operations reuse `DensePoly`;
 companions prove their noninjective interpretation and semantic field laws.
 Ordinary ordered-domain pseudo-division is the missing lower arithmetic.
 
+#### Execution policy and implementation boundary
+
+The [shared execution contract](real-closure-execution.md) fixes ordinary
+operation instances including natural casts, an explicit total sign, unique
+stored zero, and semantic polynomial equality through zero differences.
+For monic clean algebraic definitions retain the remainder already computed
+during zero testing; general non-monic definitions retain raw representatives.
+A checked irreducibility fact permits a remainder-only fast path but is never
+a requirement to factor every defining polynomial. Batch only inside justified
+ring-operation buffers; leading-zero tests in division remain mandatory.
+
+Persistent refinement creates a new immutable context and transports the
+requested dependency closure in predecessor order: later polynomials,
+endpoints, selected roots, values and evidence. Old contexts stay valid.
+Reject stale context bindings in the new context, including unchanged
+operand literals, unless explicit checked transport or recomputation is supplied.
+
+Experiments provide design evidence; the owning SPECs define APIs, proof
+hypotheses and acceptance criteria; production implementation follows those
+revised contracts. The initial rational selected-root arithmetic/sign and
+transport slice uses existing ℝ Sturm results, with no reverse import from
+hex-real-algebraic. It does not discharge abstract-field Sturm/BKR, general
+tower transport, or real-closure semantics. Implementation directives should
+bundle coherent computational/companion outcomes and preserve these proof
+gates; closing a SPEC or an experiment does not close its implementation.
+
 #### One Sturm–Tarski primitive
 
 The [hex-sturm SPEC](Libraries/hex-sturm.md) fixes the frontend API, failure

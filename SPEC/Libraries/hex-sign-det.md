@@ -86,6 +86,15 @@ root, not removed here. Zero or nonsquarefree `p`, reversed/equal endpoints
 and finite root endpoints are invalid even when `Q` is empty or zero. Check
 the domain before taking these shortcuts.
 
+Natural casts, powers, derivative coefficients and finite comparisons use
+the shared operation/sign interface explicitly. Monicity, coprimality and
+polynomial replay equations are statements under interpretation; a computed
+gcd need not be literally the polynomial one. The matrix entries and counts
+are ordinary integers/rationals, so their matrix identities retain literal
+exact equality. Context refinement changes the binding of root descriptors
+and child queries even when their serialized polynomial operands coincide.
+Re-encode/transport with checked evidence; do not reuse a stale support table.
+
 ## Moments and complete support certificates
 
 Fix the row/column orders explicitly in every certificate. For exponent

@@ -71,6 +71,14 @@ kernel checking. They form a finite acyclic derivation, with no self-dependent
 query claims. This is a proof boundary; ordinary coefficient arithmetic
 returns values, not evidence or residual resources.
 
+The coefficient interpretation also preserves `NatCast`; the computational
+sign parameter is explicitly related to semantic sign. Prove that a computed
+nonzero constant gcd is equivalent to the squarefree guard under these
+hypotheses. Do not require its normalized representative to be literally one.
+New shared pseudo-remainder correspondence belongs to the upstream owner;
+this companion composes it with the frontend proof. Literal context bindings
+and semantic polynomial identities have distinct soundness obligations.
+
 ## Endpoints and query semantics
 
 The shared `Endpoint E` has `negInf`, `finite E`, `posInf`. Here finite

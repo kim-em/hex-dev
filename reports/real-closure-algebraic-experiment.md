@@ -168,8 +168,9 @@ completed, revised owning SPECs and identify its actual prerequisites.
 
 ### A. Experiments — resolve the remaining design questions
 
-The selected-root experiment reported above is complete. Two bounded follow-ups
-supply the evidence needed to finish the design:
+The selected-root experiment and the two bounded follow-ups have
+[retained results](real-closure-storage-experiments.md). Their roles and
+acceptance criteria are:
 
 | Experiment | Question | Deliverable and exit criterion |
 |---|---|---|
@@ -256,7 +257,7 @@ error: stop the affected directive and revise that SPEC, rather than silently
 changing its contract in code. Neither a successful experiment nor an executable
 without its required proofs establishes completion of a verified library phase.
 
-**Immediate next work:** E1 and E2, followed by finalizing and landing S1/S2;
-then start the unblocked I-series directives. Family monitors and worker queues
+**Next work:** finalize and land S1/S2 using the completed E1/E2 evidence;
+then create the consolidated implementation directives from those contracts. Family monitors and worker queues
 remain stopped. The current report proposes this sequence and does not itself
 revise the owning SPECs or launch any implementation work.

@@ -63,10 +63,20 @@ precede parent query proofs; a query cannot certify its own assumptions.
 Cached facts transported across a split require a denotation-preservation
 proof.
 
+The shared operation list explicitly includes natural casts for derivatives,
+and ordered entry points receive `sign : E → Int`; no field/order instance
+is inferred on representation coefficients. A normalized gcd is compared
+with one semantically, never by structural equality of noncanonical leading
+coefficients. The simpler squarefree guard tests a nonzero constant gcd.
+Replay polynomial identities use zero differences; only provenance and
+input/operand bindings use literal equality. Persistent context refinement
+requires fresh bindings even when operand literals remain unchanged.
+
 ## Endpoints, domain and public operations
 
 Use `Endpoint E := negInf | finite E | posInf`, with the common data type in
-hex-real-roots. The field adapter takes `E = K`;
+hex-real-roots. The canonical field adapter takes `E = K`; a representation adapter uses
+its coefficient type `E` and the explicit sign interface;
 the integer kernel adapter keeps `E = Dyadic`. The preserved public
 `ZPoly.tarskiQuery` takes only a finite `DyadicInterval`. Integer-coefficient
 queries at infinity use this field frontend after embedding coefficients in
@@ -88,7 +98,7 @@ Planned public operations use the same shared arithmetic kernel:
 
 | Operation | Result and responsibility |
 | --- | --- |
-| `prepare p a b` | Validate the mathematical domain and return `Option (Prepared K)`. The prepared object binds the head and endpoints. |
+| `prepare p a b` | Validate the mathematical domain and return `Option (Prepared E)`. The prepared object binds the head and endpoints. |
 | `query p f a b` | Return `Option Int`; `none` exactly when the domain fails. |
 | `queryPrepared domain f` | Return the query for an already validated domain. |
 | `rootCount p a b` | Query `f=1`, returning `Option Nat` with the same domain. Prove nonnegativity before conversion; never clamp an unexpected negative value. |
@@ -96,7 +106,7 @@ Planned public operations use the same shared arithmetic kernel:
 | `Replay.check` | Check a supplied finite certificate; return `Bool`, false on malformed or incorrect data. |
 
 No operation takes a caller resource budget. Squarefreeness uses the existing
-plain field gcd of `P,P'`, testing its monic associate against one, or a plain
+plain field gcd of `P,P'`, testing that it is a nonzero constant, or a plain
 pseudo-gcd with nonzero constant terminal remainder. Neither route computes
 Bézout accumulators when only a gcd is needed. A replay can carry
 `A*P+B*P'=1` instead; this is a query-level guard witness, not a requirement

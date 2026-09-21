@@ -45,6 +45,37 @@ examples, not proved universally. The transfer theorems themselves have no
 proof holes and use only `propext` and `Quot.sound`.
 
 No Mathlib, hex-interval, transcendental provider, universal tower construction,
-BKR, infinite-endpoint root isolation, production caching, or CI integration is
-introduced by this experiment. Dyadic isolating intervals here belong to the
+BKR, infinite-endpoint root isolation, or production caching is introduced
+by this experiment. The existing CI job builds the experiments and runs the
+independent finite checks; scientific timing remains a local shared-host run. Dyadic isolating intervals here belong to the
 existing real-root code; they do not require hex-interval.
+
+## Storage policy and context refinement
+
+[Policy protocol](POLICY-PROTOCOL.md) fixes E1/E2 and their acceptance checks.
+`Policy.lean` compares unreduced storage, monic remainder retention, smaller
+definitions, and a fixture-specific irreducibility fast path. `PolicyCheck.lean`
+and `verify_policy.py` cross-check complete results in FLINT's Q[X]/(X⁴−2).
+`Refinement.lean` transports a genuinely changed upper defining coefficient,
+live values and context bindings after a lower-level split.
+
+`PolicyBench.lean` measures division/gcd at both levels with prepared inputs.
+`PolicyTrace.lean` enables untimed callbacks to count actual zero tests at each
+level; their hashes are checked against the timed outputs. `measure_policy.py`
+controls only the fixed AB/BA schedule and retains all harness results;
+`summarize_policy.py` checks every sample and trace hash. Results live in
+[results/policy](results/policy), with interpretation in the
+[storage/refinement report](../../reports/real-closure-storage-experiments.md).
+
+```sh
+lake -d experiments/RealClosureAlgebraic build policyCheck policyBench policyTrace refinementCheck
+python3 experiments/RealClosureAlgebraic/verify_policy.py
+python3 experiments/RealClosureAlgebraic/summarize_policy.py
+```
+
+The verifier defaults to retained results; `--results DIR` checks newly emitted
+`checks.jsonl` and `refinement.jsonl`, as CI does. Policy elements enforce
+literal nonzero storage, while semantic zero correctness remains a tested
+fixture property, not a new universal Lean theorem. Their experimental
+constructors are not the production opaque validated API. Refinement tickets
+test full context/operand binding, not a general certificate checker.

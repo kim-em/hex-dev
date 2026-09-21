@@ -741,6 +741,14 @@ interpret them in `D` with operation/sign preservation and zero reflection.
 That map need not be injective. Prove degree and actual kernel correspondence
 before composing with `j`; quotient laws are not executable prerequisites.
 
+The scalar interpretation preserves natural casts and the explicit executable
+sign, as well as the arithmetic used by the shared kernel. Prove squarefree
+guards via a semantically nonzero constant gcd or a checked Bézout identity;
+a normalized noncanonical coefficient need not be structurally one. Replay
+polynomial equations use zero differences. Literal context/operand bindings
+remain separate exact-data checks and must be renewed after refinement, even
+when an operand literal is unchanged.
+
 Endpoint representations have a total interpretation in `R` and correct
 comparison/evaluation operations; dyadics need not belong to `D`. Prove exact
 Horner and degree-parity infinity sign agreement. Positive rescaling

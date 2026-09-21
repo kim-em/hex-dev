@@ -51,6 +51,20 @@ Finite checked-success proofs can instantiate individual total searches in
 Mathlib-free benchmarks; they do not replace the universal semantic integration
 fixture or prove a whole constant registration.
 
+Prove natural-cast and explicit-sign correspondence for the opt-in wrappers
+alongside their arithmetic correspondence. Their underlying canonical
+rational-function field instances remain the existing ones; selected-root
+representations belong to the real-closure owner. Order-law proofs justify
+the wrapper order and theorem applications, not the execution of an individual
+sign or polynomial kernel. The required progress proof still governs total
+transcendental search.
+
+For transported real-source evidence, require preservation of the actual
+semantic subject and embedding, not only endpoint or expression equality.
+Width and containment hypotheses refer to the same approximation functions
+and requested precision. An old certificate's context/provider binding does
+not become valid merely because a rebuilt expression has the same literal.
+
 ## Inputs and proof ownership
 
 Audit against the [pinned Mathlib](../../lake-manifest.json), revision

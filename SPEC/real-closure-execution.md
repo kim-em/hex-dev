@@ -43,8 +43,15 @@ must use the appropriate relation. Squarefreeness can test whether a computed
 gcd is a nonzero constant; it need not compare its representation with `1`.
 Hash identity alone establishes neither structural nor semantic equality.
 
-The polynomial operation instances are ordinary `Zero`, `One`, `Add`, `Sub`,
-`Mul`, `Div` and so on, with the existing structural `DecidableEq`. There is
+The executable scalar interface uses the ordinary `Zero`, `One`, `NatCast`,
+`Add`, `Neg`, `Sub`, `Mul`, `Inv` and `Div` instances, with structural
+`DecidableEq`. Each kernel requires only the operations it actually uses.
+Ordered kernels take an explicit `sign : E → Int`, whose values are `-1,0,1`;
+comparisons sign a difference. There is no new order/sign typeclass or
+coefficient-operation record. The companion proves sign correctness and
+`eval (n : E) = (n : K)`, in addition to preservation of arithmetic and zero
+reflection. These are semantic hypotheses, not field/order instances on `E`.
+There is
 no fallible operation record, arithmetic budget or per-operation certificate.
 The existing `DensePoly.divMod`, `gcd` and `xgcd` require operations
 rather than a `Field` instance. `natPow` and `monicize` also accept ordinary
@@ -63,6 +70,54 @@ zero/sign tests, retain their cost in tower8 and clean/eager measurements,
 and use proved structural fast paths and context-bound caches. No performance
 claim follows from the representation alone. A later optimization must retain
 the same zero/interpretation contract and shared polynomial algorithms.
+
+## Storage policy and context refinement
+
+The default packing policy keeps the unique stored zero and retains a
+computed remainder when the stored defining polynomial is monic and clean.
+A sufficient executable guard is a literal leading coefficient `1` and clean
+predecessor coefficients; the companion proves the resulting remainder
+preserves interpretation and cleanliness. Semantic monicity with a different
+leading representative needs a justified conversion or its own preservation
+proof, not an unchecked structural-one test. The zero procedure should return
+its already-computed remainder with its answer so retention does not repeat
+division. Retention requires the exact value identity `q = A*p + r` under
+interpretation; a positively scaled pseudo-remainder used only for sign
+determination is not a value-preserving replacement without restoring its
+scale. For non-monic or non-clean definitions retain the raw
+representative without forced reduction, preserving cleanliness when present; never monicize a defining polynomial merely to enforce a
+storage degree bound. A global degree bound on all algebraic representatives
+is not part of the contract.
+
+A verified irreducibility fact allows remainder-only zero testing. It is an
+optional fast path with checked provenance for the exact defining polynomial
+and context, never an unvalidated flag or a requirement to factor every
+squarefree definition. The general gcd/selected-root zero test remains total
+without it. State correctness for both paths and agreement of their results.
+
+Batching may postpone zero packing inside addition/multiplication buffers,
+provided the completed coefficient is packed before it becomes a `DensePoly E`
+coefficient. Use the existing polynomial kernels on raw coefficient data and
+prove interpretation agreement; do not expose those buffers as canonical-zero
+`E`. Division/gcd still inspect semantic leading zeros at each cancellation
+step. No multiplication measurement licenses dropping those decisions or
+assuming predecessor-level packing costs disappear in a nested tower.
+
+Contexts are immutable, with opaque validated constructors. Persistent
+refinement returns a new context and explicit maps for requested live values
+and their dependency closure. Rebuild dependent defining polynomials,
+endpoints and root selections in predecessor order, checking that each
+selected root is preserved; transport of the top value alone is insufficient.
+Old handles remain valid in their old contexts. No heterogeneous operation
+silently accepts them in the new context. Local inverse splitting keeps the
+original context and returns an equivalent representative there.
+
+Certificate/cache bindings include full literal context identity and operands.
+A persistent refinement invalidates reuse under the new binding even if an
+operand's literal is unchanged. Reuse needs explicit checked transport or
+recomputation; hashes and copied derivative signs are insufficient. Semantic
+identities compare zero differences, while context/operand binding compares
+literal data. These are different checks.
 
 ## Interpretation and semantic fields
 
@@ -128,6 +183,30 @@ gcd/xgcd and predecessor sign determination, never its own inverse. Persistent
 splitting decreases defining degree. Each library must make these recursion
 arguments explicit in its implementation and prove adequacy separately.
 
+## First proved algebraic slice
+
+The first selected-root slice belongs to hex-real-closure and its companion,
+using rational coefficients and finite root-free isolating endpoints. It
+reuses the existing real-roots arithmetic/Sturm development and compares with
+the independent real-algebraic fast path; no reverse import is added.
+
+For `valid d = true` and its selected real root `α`, prove the executable zero
+test is true exactly when the representative evaluates to zero, packing and
+arithmetic preserve evaluation, and general rational-algebraic sign is correct.
+Use `HexRealRootsMathlib.sturmCount_eq_card_roots` with its positive-degree and
+rational-squarefreeness hypotheses, plus primitive-part and squarefree-divisor
+bridges. A rational isolating interval can be refined for sign in this slice;
+that argument does not extend to infinitesimal coefficients. The general
+family sign remains BKR/Tarski-based.
+
+Then prove inversion after splitting, selected-root-preserving transport,
+and noninjective correspondence for the existing polynomial algorithms.
+These are separately verifiable implementation/proof obligations after the
+owning SPECs land. The conditional transfer statements may be proved before
+this slice; instantiating their zero-reflection and preservation hypotheses
+requires its scalar proofs. A checked descriptor's executable validity is
+separate from the companion theorem that the check implies semantic validity.
+
 ## Transcendental search is a separate obligation
 
 The caller supplies a total computational function `approx : Rat → Bounds`
@@ -176,4 +255,9 @@ polynomial kernels, proves a generic remainder-degree statement for its
 selected-root example, and compiles a real-constant refinement example with
 a finite termination witness. It establishes the interface mechanism, not
 the full tower implementation, BKR correctness or Phase-4 performance.
+The [genuine algebraic experiment](../experiments/RealClosureAlgebraic/README.md)
+adds reducible sqrt(2), a second algebraic level, conditional division/gcd
+transfer proofs, and storage/refinement experiments. These validate concrete
+fixtures and generic conditional lemmas, not universal selected-root semantics.
+Production implementations and companion proofs remain required.
 All existing Mathlib-free benchmark import rules remain unchanged.

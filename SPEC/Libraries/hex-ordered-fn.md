@@ -75,6 +75,21 @@ The stage order places these rational-function extensions before algebraic
 adjunctions; do not instantiate `RationalFn` on raw selected-root syntax.
 Algebraic base enlargement rebuilds and transports the staged context.
 
+The lawful prealgebraic carrier provides ordinary natural casts; ordered
+consumers may take its total `sign : K → Int` explicitly rather than
+requiring order-law dictionaries to execute. The core rational-function field
+laws are reused. Companion proofs establish the proposed order from the
+caller hypotheses. This does not allow noncanonical algebraic representatives
+as `RationalFn` coefficients: their structural equality is not semantic field
+equality, and the stage discipline keeps that case out of this library.
+
+A refinement or staged-base rebuild changes oracle/cache provenance. Bounds
+and finite sign evidence bind the exact subject, embedding, provider and
+context; unchanged endpoint literals alone do not justify reuse. The
+real-closure owner transports such evidence explicitly when rebuilding a
+dependent context. Containment and requested-width proofs remain separate
+from approximation computation, and no interval-library dependency is added.
+
 ## User approximations and exact finite bounds
 
 `Oracle.Bounds` contains rational endpoints `lower, upper : Rat` and a proof

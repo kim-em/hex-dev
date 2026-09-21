@@ -9,8 +9,12 @@ structure DensePoly (R : Type*) [Zero R] [DecidableEq R] where
   normalized : coeffs.size = 0 ∨ coeffs.back! ≠ 0
 ```
 
-The normalization invariant (no trailing zeros) ensures structural equality
-= semantic equality. Every operation maintains this invariant.
+The normalization invariant removes trailing stored zeros. For canonical
+coefficients, structural polynomial equality agrees with coefficientwise
+mathematical equality. For noncanonical representations with a zero-reflecting
+interpretation, it preserves semantic degree, but distinct nonzero stored
+polynomials may have the same interpretation. Every operation maintains the
+storage invariant; semantic identities then test zero coefficient differences.
 
 The polynomial literal `#p[a₀, a₁, ...]` abbreviates
 `DensePoly.ofCoeffs #[a₀, a₁, ...]`. Coefficients are listed in ascending
@@ -20,7 +24,8 @@ so a printed value can be pasted back.
 
 - Index = degree, `coeffs[i]` is coefficient of `x^i`
 - Normalization invariant: no trailing zeros
-- Structural equality = semantic equality
+- Structural equality is semantic equality for canonical coefficients;
+  noncanonical interpretations use zero differences
 - O(1) degree, O(1) coefficient access
 
 **Degree.** `degree?` returns `none` for the zero polynomial and otherwise the
@@ -214,6 +219,25 @@ strict remainder degree. Compare the field specialization with existing
 field division and gcd up to the recorded scale. Benchmark pseudo-division,
 plain gcd and any required extended variant separately, recording coefficient
 growth and verifying that plain gcd does not compute Bézout accumulators.
+
+## Noninjective polynomial correspondence
+
+Generic operation-only transfer lemmas belong here; Mathlib `Polynomial`
+interpretation belongs in hex-poly-mathlib. For `eval : E → K`, assume zero
+reflection and preservation of each scalar operation used by a kernel,
+including natural casts where derivatives/powers need them. Do not assume
+`eval` injective or ring/field laws on `E`. Prove coefficientwise interpretation
+commutes with the actual division/gcd/xgcd algorithms, their size-derived
+bounds, derivative, Horner evaluation and required pseudo-remainders. Compose
+with the existing lawful-target theorems. Gcd results are up to a nonzero
+scalar unless explicitly normalized, and monicization means leading value
+one, not necessarily literal leading representative one.
+
+Keep structural equality for array/context identity. Scalar and polynomial
+semantic identities are checked by zero differences. No family implementation
+or semantic-quotient construction becomes an import of hex-poly. In particular,
+selected-root zero testing, storage retention and context refinement stay with
+the extension owner.
 
 ## External comparators
 

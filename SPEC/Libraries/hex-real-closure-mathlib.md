@@ -177,6 +177,37 @@ preserve the needed signs, while value transport retains the scalar identity.
 No proof may assume monic defining polynomials or eager reduction of all
 representatives. A negative scalar requires explicit sign correction.
 
+## Packing and the rational selected-root slice
+
+For the computational descriptor check `valid d`, quantify every scalar
+correspondence theorem over `valid d = true` and the interpreted predecessor
+context. Prove check soundness and existence/uniqueness of the selected root;
+do not infer these from the raw data type. The rational finite-interval slice
+uses `HexRealRootsMathlib.sturmCount_eq_card_roots`, with positive degree and
+rational squarefreeness. Supply primitive-part root preservation and
+squarefreeness of gcd divisors before using it for zero testing. Interval
+refinement gives general rational-algebraic sign here; generic infinitesimal
+semantics requires the abstract-field sign-determination development.
+
+Required packing statements are `pack_sound` (evaluation is unchanged),
+`pack_zero` (stored zero iff selected-root evaluation is zero), and
+`pack_clean` (clean inputs remain clean under the specified policy). Prove
+monic-clean remainder retention satisfies these statements and its degree
+bound; general non-monic storage has no such bound. Prove the checked
+irreducibility fast path agrees with general selected-root zero testing.
+Do not turn an optimization's precondition into a restriction on all valid
+squarefree descriptors. Any batched ring-operation implementation proves the
+same interpreted result as the ordinary scalar-packing implementation.
+
+Scalar zero/arithmetic/sign correspondence, inversion/splitting/transport,
+and instantiation of shared polynomial correspondence are separately
+verifiable proof obligations. The generic division/gcd transfer lemmas need
+no injectivity; this companion discharges their zero-reflection and operation
+preservation premises. xgcd, derivative and Horner bridges must concern the
+existing algorithms. The rational slice can be proved in ℝ independently of
+the not-yet-available arbitrary-real-closed-field foundation, but cannot
+substitute for that foundation in the general tower theorems.
+
 ## Splitting, transport and enlargement
 
 `Element.inv_sound` follows the actual inversion algorithm. For selected
@@ -196,7 +227,10 @@ commute with denotation, and embeddings preserve equality and strict order.
 Prove identity/composition of transport extensionally. Bind evidence to full
 context versions and literal operands; a hash or a copied derivative vector
 is not evidence. Persistent refinements return the new immutable context together with all
-requested transports; old contexts remain valid. Old handles cannot be used in
+requested transports; old contexts remain valid. Prove denotation preservation for dependent
+polynomials, endpoints, re-encoded roots and live values, as well as identity
+and composition of the transport maps. A stale literal binding remains
+invalid even for an operand whose serialization did not change. Old handles cannot be used in
 new contexts without transport. Pure local inversion and a persisted split
 must give equal quotient values.
 

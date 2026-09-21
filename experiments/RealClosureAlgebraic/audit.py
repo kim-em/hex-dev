@@ -30,7 +30,7 @@ def uncomment(source):
     return ''.join(out)
 
 seen={}
-pending=['Bench','Check','Tests','Transfer']
+pending=['Bench','Check','Tests','Transfer','PolicyBench','PolicyCheck','PolicyTrace','Refinement']
 while pending:
     module=pending.pop()
     assert not module.startswith(('Mathlib','HexInterval')), module
@@ -46,7 +46,15 @@ while pending:
 meta=json.loads((HERE/'results/timing/metadata.json').read_text())
 for name in ['Algebraic.lean','Bench.lean']:
     file=HERE/name
-    assert hashlib.sha256(file.read_bytes()).hexdigest() == meta['hashes'][str(file.relative_to(ROOT))]
+    expected=meta['hashes'][str(file.relative_to(ROOT))]
+    source=file.read_bytes()
+    header=b'/-\nCopyright (c) 2026 Lean FRO, LLC. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Kim Morrison\n-/\n\n'
+    assert hashlib.sha256(source).hexdigest()==expected or (source.startswith(header) and
+        hashlib.sha256(source[len(header):]).hexdigest()==expected), file
+policy=json.loads((HERE/'results/policy/timing/metadata.json').read_text())
+for name in ['Algebraic.lean','Policy.lean','PolicyBench.lean']:
+    file=HERE/name
+    assert hashlib.sha256(file.read_bytes()).hexdigest()==policy['hashes'][str(file.relative_to(ROOT))],file
 for file in HERE.glob('*.lean'):
     assert not re.search(r'\b(?:sorry|axiom|native_decide)\b',file.read_text()),file
 for file in [HERE/'README.md',HERE/'PROTOCOL.md',ROOT/'reports/real-closure-algebraic-experiment.md']:
