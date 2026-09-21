@@ -18,8 +18,10 @@ Reported `git_dirty` includes newly written evidence and subsequently added
 proof-probe sources; neither changed the measured executable. Its hash is
 recorded independently. The benchmark commit was subsequently reworded to
 include the source's cost derivation; `1b7b331f322acccd0376156b47b00a2ba32f47f8`
-has exactly the same tree as the measured commit. No absolute timing is a
-portable budget.
+has exactly the same tree as the measured commit. The exact measured
+registration source is also retained as `registration.lean.txt`, whose SHA256
+matches the metadata, so subsequent rebases do not obscure the protocol.
+No absolute timing is a portable budget.
 
 Each complexity registration used its declared custom ladder, four trial-major
 outer trials, a 100 ms tuning target and a three-second operational cap. All
