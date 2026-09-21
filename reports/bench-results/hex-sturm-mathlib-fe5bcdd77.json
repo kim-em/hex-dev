@@ -1,0 +1,2501 @@
+{
+  "config": {
+    "absolute_only": false,
+    "accounting_quantization_ticks": 3,
+    "allow_dirty": false,
+    "command_template": "lake build +<module>:olean",
+    "core_interference_accounting": "measurement-cpu-foreign-plus-all-SMT-sibling-busy",
+    "cpu_affinity": [
+      3
+    ],
+    "cpu_topology": {
+      "core_id": "3",
+      "logical_cpu": 3,
+      "physical_package_id": "0",
+      "scaling_cur_freq_khz": "4439987",
+      "scaling_governor": "schedutil",
+      "thread_siblings_list": "3,51"
+    },
+    "frequency_measurement": "cpufreq-time-in-state-arm-mean",
+    "import_baseline_control": null,
+    "lean_num_threads": "1",
+    "measurement_cpu_foreign_accounting": "busy-minus-child-minus-runner-minus-irq-softirq",
+    "null_magnitude_factor": 3.0,
+    "order": [
+      "accepted",
+      "rejected"
+    ],
+    "pairing": "adjacent measured reference and candidate fresh modules; every completed pair retained",
+    "requested_cpu": 3,
+    "retain_compiler_output": true,
+    "rotation": "pairs left by round index; pair orientation alternates",
+    "samples": 4,
+    "shared_host": true,
+    "timeout_seconds": 60.0,
+    "warm_command_template": "lake build +<module>:deps",
+    "warm_timeout_seconds": 600.0
+  },
+  "context": {
+    "shared_host": {
+      "accounting_notes": [],
+      "accounting_quantization_ticks": 3,
+      "expected_frequency_observations": 16,
+      "frequency_spread_ratio": 0.0,
+      "max_aggregate_core_interference_ratio": 0.9661137629382635,
+      "max_arm_mean_frequency_khz": 3150000.0,
+      "max_concurrent_lake_lean_count": 73,
+      "max_cpu_pressure_some_delta_us": 1416416,
+      "max_load_1m_per_cpu": 0.748291015625,
+      "max_measurement_cpu_foreign_ratio": 0.0828043424306032,
+      "max_measurement_cpu_interrupt_ratio": 0.009487490802120784,
+      "max_smt_sibling_busy_ratio": 0.8833094205076603,
+      "measurement_cpu": 3,
+      "min_arm_mean_frequency_khz": 3150000.0,
+      "observed_frequency_observations": 16,
+      "smt_sibling_cpus": [
+        51
+      ]
+    }
+  },
+  "environment": {
+    "architecture": "x86_64",
+    "cpu_model": "AMD EPYC 9455 48-Core Processor",
+    "dependency_checkouts": {
+      "Cli": {
+        "dirty": false,
+        "head": "e92c9f15fdfacc8536f31cfb3b7ad26c3c8cd204",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/packages/Cli",
+        "state_sha256": "363428c20b198a12b0cac8cdcadfac33f34c22d6f9c4fcf90ebf3541937680d6",
+        "status": "",
+        "tree": "6357519cce94feba4126121f34ea73cfdefc9b72"
+      },
+      "LeanSearchClient": {
+        "dirty": false,
+        "head": "ddf04cf3949fa556442341e87d47f9f6e6074707",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/packages/LeanSearchClient",
+        "state_sha256": "1427071031dff8d058ecb2362c2ee7d6f7a63a84a6aee792ea5385e40957eee4",
+        "status": "",
+        "tree": "04caafd1f6cc74938c7ad7d67a718c5104d5c95a"
+      },
+      "MD4Lean": {
+        "dirty": false,
+        "head": "31907cc18f48a95384f99cee5582c00fb39e0f67",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/packages/MD4Lean",
+        "state_sha256": "371e7dd0e12c88d3bf727066e87ba96e0b3630c1b381e30f80bb86d2d3d98b01",
+        "status": "",
+        "tree": "968ae7de50111d78c47ecf0682e9de2dfd257f67"
+      },
+      "NautyFFI": {
+        "dirty": false,
+        "head": "ec8597014d0ae82490a616b855d59a35e6bfa21f",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/packages/NautyFFI",
+        "state_sha256": "bca51e477dfef5b153a0aaf22ac2678f00e7014efec406dcfb0d4764fc1ab146",
+        "status": "",
+        "tree": "e53fc2638b2e834a84d2520dd471541d5384b73c"
+      },
+      "Qq": {
+        "dirty": false,
+        "head": "6a489d9af5d0c47e5b259e2e8bcdfc1811b5a259",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/packages/Qq",
+        "state_sha256": "5451975774acd46d5ed2ba8ab012804bc00e32a34a30926ad524ece84af93033",
+        "status": "",
+        "tree": "c43f2cecf2a68cb6ef836660ec4d276ab5f9dcb4"
+      },
+      "aesop": {
+        "dirty": false,
+        "head": "355695d523e41d0554926416cba2a2b3544fbbc9",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/packages/aesop",
+        "state_sha256": "17c653e3b3f6977c3d6fdd3681c9b7d3d7a1db503f72a6ca6c6f620db2ec8d50",
+        "status": "",
+        "tree": "141698829a678f60c8a7fd0e54f9493ad05b986c"
+      },
+      "batteries": {
+        "dirty": false,
+        "head": "f2effa3d803fda822b1f97b806c47cf2adfbcbc2",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/packages/batteries",
+        "state_sha256": "1a7e3e536e0e1292e00ee09ec5f1f379252893f59c4756d94c1725ae92555436",
+        "status": "",
+        "tree": "d6c196fbbaafd91f64547af4d95a36bd17d50c38"
+      },
+      "illuminate": {
+        "dirty": false,
+        "head": "a1a61c9678da010e958ed24cdfa6f635b85f172a",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/packages/illuminate",
+        "state_sha256": "42b9408ec221312307dccc53efcfbe61b317da353a167cf46434c80d931638e2",
+        "status": "",
+        "tree": "4c1b8d2f97f249398925639d8ac4ba2dd4126dbe"
+      },
+      "importGraph": {
+        "dirty": false,
+        "head": "e928b72544873815af278d38681b31c0293588e3",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/packages/importGraph",
+        "state_sha256": "7352ff17ab15825c275a9faee43a5f0145b078db749bfe9fd77cfc3826a29161",
+        "status": "",
+        "tree": "92d47162cff41653a118b5fe376ab1428bd2e623"
+      },
+      "lean-bench": {
+        "dirty": false,
+        "head": "8a37daf1074c3bdbd0da479b55538bad4a0022db",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/packages/lean-bench",
+        "state_sha256": "4c44f3c8372259d84ef2174b7aef15ad74fe909203189836813a3696142e4aa3",
+        "status": "",
+        "tree": "3b7df283ef106f78f4d002262976e7e954275b6f"
+      },
+      "mathlib": {
+        "dirty": false,
+        "head": "1cf325a0cf67aca2b04d76b5380ff6a9e410aefa",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/packages/mathlib",
+        "state_sha256": "671a2d7df7867b998e12c905bfd65c1bff1a150e16c632c4f001762b47111002",
+        "status": "",
+        "tree": "ac4413c8b8d78043b3f286b49f2b03b367244eec"
+      },
+      "plausible": {
+        "dirty": false,
+        "head": "118aa17ee84656b8bd727fef7c458ee8c833385c",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/packages/plausible",
+        "state_sha256": "810c2a7d28c075ed630f48d0232bb9361a0e1bca47d74ce885ec0f8b7f35c874",
+        "status": "",
+        "tree": "65aa28b2b3ba59d49736535935e4190f835b6ebc"
+      },
+      "proofwidgets": {
+        "dirty": false,
+        "head": "106ff4fafc74ef4ac99d81dbf3ab399118f497a5",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/packages/proofwidgets",
+        "state_sha256": "ea17cd88cdf64787051528e00b40d6b4b4d0293f28edfa03379aa64785834813",
+        "status": "",
+        "tree": "1a37533eb21ffa2595b3b782cd3a4909110a872c"
+      },
+      "subverso": {
+        "dirty": false,
+        "head": "9b90b7f938d6169246325df002351014f49945ef",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/packages/subverso",
+        "state_sha256": "3c6e4199460b750f38d7a64e3f92707767b1a043481eb6fc5b171ecb006c14a2",
+        "status": "",
+        "tree": "4344159a4a360ababb1cfed3070ffa24247c6dc0"
+      },
+      "verso": {
+        "dirty": false,
+        "head": "cad4b633e75ea769b851f12f9ca3b4f0dfcc625f",
+        "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/packages/verso",
+        "state_sha256": "8737ec82ce1154de4dd2a6de42db0de81b06749a117a2bbb844e43cd4b986c57",
+        "status": "",
+        "tree": "65892ae9f3c8485217f24c6cd62c592c7351531b"
+      }
+    },
+    "git_commit": "fe5bcdd7794427789d97d69e612175c973d92a21",
+    "git_dirty": false,
+    "gnu_time": "/run/current-system/sw/bin/time",
+    "host_after": {
+      "affinity_cpu_frequency_khz": "4070544",
+      "available_logical_cpus": 1,
+      "concurrent_lake_lean": [
+        {
+          "command": "lake",
+          "pid": 8877
+        },
+        {
+          "command": "lake",
+          "pid": 15217
+        },
+        {
+          "command": "lake",
+          "pid": 15228
+        },
+        {
+          "command": "lean",
+          "pid": 33458
+        },
+        {
+          "command": "lean",
+          "pid": 33514
+        },
+        {
+          "command": "lean",
+          "pid": 33726
+        },
+        {
+          "command": "lean",
+          "pid": 33920
+        },
+        {
+          "command": "lean",
+          "pid": 34051
+        },
+        {
+          "command": "lean",
+          "pid": 34315
+        },
+        {
+          "command": "lean",
+          "pid": 34428
+        },
+        {
+          "command": "lake",
+          "pid": 34558
+        },
+        {
+          "command": "lake",
+          "pid": 34559
+        },
+        {
+          "command": "lean",
+          "pid": 34959
+        },
+        {
+          "command": "lean",
+          "pid": 35227
+        },
+        {
+          "command": "lean",
+          "pid": 35368
+        },
+        {
+          "command": "lean",
+          "pid": 35518
+        },
+        {
+          "command": "lean",
+          "pid": 35534
+        },
+        {
+          "command": "lean",
+          "pid": 35557
+        },
+        {
+          "command": "lean",
+          "pid": 35565
+        },
+        {
+          "command": "lean",
+          "pid": 35639
+        },
+        {
+          "command": "lean",
+          "pid": 35678
+        },
+        {
+          "command": "lean",
+          "pid": 35710
+        },
+        {
+          "command": "lean",
+          "pid": 35790
+        },
+        {
+          "command": "lean",
+          "pid": 35793
+        },
+        {
+          "command": "lean",
+          "pid": 35794
+        },
+        {
+          "command": "lean",
+          "pid": 35801
+        },
+        {
+          "command": "lean",
+          "pid": 35803
+        },
+        {
+          "command": "lean",
+          "pid": 35813
+        },
+        {
+          "command": "lean",
+          "pid": 35818
+        },
+        {
+          "command": "lean",
+          "pid": 35829
+        },
+        {
+          "command": "lean",
+          "pid": 35844
+        },
+        {
+          "command": "lean",
+          "pid": 35870
+        },
+        {
+          "command": "lean",
+          "pid": 35979
+        },
+        {
+          "command": "lean",
+          "pid": 35997
+        },
+        {
+          "command": "lean",
+          "pid": 36018
+        },
+        {
+          "command": "lean",
+          "pid": 36051
+        },
+        {
+          "command": "lean",
+          "pid": 36113
+        },
+        {
+          "command": "lean",
+          "pid": 36121
+        },
+        {
+          "command": "lean",
+          "pid": 36127
+        },
+        {
+          "command": "lean",
+          "pid": 36168
+        },
+        {
+          "command": "lean",
+          "pid": 36172
+        },
+        {
+          "command": "lean",
+          "pid": 36174
+        },
+        {
+          "command": "lean",
+          "pid": 36176
+        },
+        {
+          "command": "lean",
+          "pid": 36199
+        },
+        {
+          "command": "lean",
+          "pid": 36202
+        },
+        {
+          "command": "lean",
+          "pid": 36209
+        },
+        {
+          "command": "lean",
+          "pid": 36365
+        },
+        {
+          "command": "lean",
+          "pid": 36518
+        }
+      ],
+      "cpu_affinity": [
+        3
+      ],
+      "cpu_pressure": "some avg10=7.36 avg60=7.46 avg300=3.40 total=46589774039\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+      "cpu_pressure_some_total_us": 46589774039,
+      "load_1m_per_available_cpu": 71.8359375,
+      "load_1m_per_cpu": 0.748291015625,
+      "load_average": [
+        71.8359375,
+        25.3125,
+        11.75146484375
+      ],
+      "logical_cpus": 96,
+      "runnable_tasks": "69/8659"
+    },
+    "host_before": {
+      "affinity_cpu_frequency_khz": "4436827",
+      "available_logical_cpus": 1,
+      "concurrent_lake_lean": [
+        {
+          "command": "lake",
+          "pid": 8323
+        },
+        {
+          "command": "lake",
+          "pid": 8324
+        }
+      ],
+      "cpu_affinity": [
+        3
+      ],
+      "cpu_pressure": "some avg10=5.09 avg60=2.24 avg300=1.70 total=46582480284\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+      "cpu_pressure_some_total_us": 46582480284,
+      "load_1m_per_available_cpu": 5.654296875,
+      "load_1m_per_cpu": 0.05889892578125,
+      "load_average": [
+        5.654296875,
+        5.9248046875,
+        4.978515625
+      ],
+      "logical_cpus": 96,
+      "runnable_tasks": "8/8038"
+    },
+    "hostname": "chungus2",
+    "machine_id": "8be29815875342aeaae06e62d60f6b03",
+    "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+    "python": "3.14.6",
+    "repository": {
+      "dirty": false,
+      "head": "fe5bcdd7794427789d97d69e612175c973d92a21",
+      "path": "/home/kim/worktrees/hex-dev/hex-dev-issue-10375",
+      "state_sha256": "4f59caa9bad268226fcf878a96b8f5fb61a9d37deec240931a57a146fea43022",
+      "status": "",
+      "tree": "1070bc5f81108f3cbfcccbe43f0875a0621bf365"
+    },
+    "toolchain": "leanprover/lean4:v4.34.0"
+  },
+  "measurement": "paired-fresh-module-olean-wall",
+  "measurement_state": "complete",
+  "partial_samples": null,
+  "results": {
+    "accepted": {
+      "build_magnitude_wall_nanos": 5282506803,
+      "candidate": {
+        "artifacts": {
+          "ilean_bytes": 4674,
+          "olean_bytes": 34520,
+          "olean_private_bytes": 74496,
+          "olean_server_bytes": 1504,
+          "source_bytes": 1111
+        },
+        "expected_axioms": [
+          "propext",
+          "Classical.choice",
+          "Quot.sound"
+        ],
+        "module": "HexSturmMathlib.Replay.Accepted"
+      },
+      "comparable_control": null,
+      "comparable_null_envelope_nanos": null,
+      "comparable_null_raw_envelope_nanos": null,
+      "comparable_null_raw_spread_nanos": null,
+      "comparable_null_spread_nanos": null,
+      "control_interpolation_weight": null,
+      "control_magnitude_ratio": null,
+      "control_scale_factor": null,
+      "degree": 2,
+      "family": "literal-rational-query",
+      "median_candidate_peak_rss_kb": 1322250,
+      "median_candidate_wall_nanos": 5282506803,
+      "median_reference_peak_rss_kb": 1304504,
+      "median_reference_wall_nanos": 4547417542,
+      "median_signed_wall_delta_nanos": 707062451,
+      "null_control": false,
+      "reference": {
+        "artifacts": {
+          "ilean_bytes": 154,
+          "olean_bytes": 1632,
+          "olean_private_bytes": 96,
+          "olean_server_bytes": 96,
+          "source_bytes": 310
+        },
+        "expected_axioms": null,
+        "module": "HexSturmMathlib.Replay.Baseline"
+      },
+      "resolution": "no-comparable-control",
+      "samples": [
+        {
+          "build_order": [
+            "reference",
+            "candidate"
+          ],
+          "candidate": {
+            "axioms": [
+              "propext",
+              "Classical.choice",
+              "Quot.sound"
+            ],
+            "compiler_output": "\u2139 [1984/1984] Built HexSturmMathlib.Replay.Accepted (1.4s)\ninfo: conformance/HexSturmMathlib/Replay/Accepted.lean:26:0: 'HexSturmMathlib.ReplayTests.accepted' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: conformance/HexSturmMathlib/Replay/Accepted.lean:27:0: 'HexSturmMathlib.ReplayTests.domain' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (1984 jobs).\n__HEX_MAX_RSS_KB__=1327944\n__HEX_USER_SECONDS__=1.59\n__HEX_SYSTEM_SECONDS__=1.06\n__HEX_CPU_PERCENT__=98%\n__HEX_INVOLUNTARY_CONTEXT__=6724\n__HEX_VOLUNTARY_CONTEXT__=9978\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.15247199999999966,
+              "child_cpu_seconds": 2.6667430000000003,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 269
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.012471999999999659,
+              "measurement_cpu_interrupt_seconds": 0.01,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.012471999999999659,
+              "measurement_cpu_residual_seconds": 0.02247199999999966,
+              "per_cpu": {
+                "3": {
+                  "busy_seconds": 2.69,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 1,
+                    "irq": 1,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 107,
+                    "user": 161
+                  }
+                },
+                "51": {
+                  "busy_seconds": 0.14,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 255,
+                    "iowait": 0,
+                    "irq": 0,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 3,
+                    "user": 11
+                  }
+                }
+              },
+              "pressure_some_delta_us": 84783,
+              "runner_cpu_seconds": 0.0007849999999999802
+            },
+            "cpu_percent": 98.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4432904",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 10,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=6.06 avg60=2.72 avg300=1.81 total=46582940759\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46582940759,
+              "load_1m_per_available_cpu": 5.84228515625,
+              "load_1m_per_cpu": 0.060857137044270836,
+              "load_average": [
+                5.84228515625,
+                5.95947265625,
+                4.9951171875
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "18/8129"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4434426",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 6,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=6.29 avg60=2.64 avg300=1.79 total=46582855976\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46582855976,
+              "load_1m_per_available_cpu": 5.84228515625,
+              "load_1m_per_cpu": 0.060857137044270836,
+              "load_average": [
+                5.84228515625,
+                5.95947265625,
+                4.9951171875
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "11/8078"
+            },
+            "involuntary_context_switches": 6724,
+            "peak_rss_kb": 1327944,
+            "precise_child_system_seconds": 1.0674540000000001,
+            "precise_child_user_seconds": 1.5992890000000002,
+            "system_seconds": 1.06,
+            "user_seconds": 1.59,
+            "voluntary_context_switches": 9978,
+            "wall_nanos": 2697982053
+          },
+          "context_issues": [],
+          "host_before_pair": {
+            "affinity_cpu_frequency_khz": "4439987",
+            "available_logical_cpus": 1,
+            "concurrent_lake_lean_count": 3,
+            "cpu_affinity": [
+              3
+            ],
+            "cpu_pressure": "some avg10=5.25 avg60=2.36 avg300=1.73 total=46582708897\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+            "cpu_pressure_some_total_us": 46582708897,
+            "load_1m_per_available_cpu": 5.654296875,
+            "load_1m_per_cpu": 0.05889892578125,
+            "load_average": [
+              5.654296875,
+              5.9248046875,
+              4.978515625
+            ],
+            "logical_cpus": 96,
+            "runnable_tasks": "5/8042"
+          },
+          "pair": "accepted",
+          "reference": {
+            "axioms": null,
+            "compiler_output": "\u2714 [1984/1984] Built HexSturmMathlib.Replay.Baseline (865ms)\nBuild completed successfully (1984 jobs).\n__HEX_MAX_RSS_KB__=1312540\n__HEX_USER_SECONDS__=1.34\n__HEX_SYSTEM_SECONDS__=0.55\n__HEX_CPU_PERCENT__=99%\n__HEX_INVOLUNTARY_CONTEXT__=5587\n__HEX_VOLUNTARY_CONTEXT__=8652\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.0,
+              "child_cpu_seconds": 1.9023999999999999,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 191
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.0,
+              "measurement_cpu_interrupt_seconds": 0.01,
+              "measurement_cpu_noninterrupt_residual_seconds": -0.0032799999999999687,
+              "measurement_cpu_residual_seconds": 0.0067200000000000315,
+              "per_cpu": {
+                "3": {
+                  "busy_seconds": 1.91,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 0,
+                    "irq": 1,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 56,
+                    "user": 134
+                  }
+                },
+                "51": {
+                  "busy_seconds": 0.0,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 191,
+                    "iowait": 0,
+                    "irq": 0,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 0,
+                    "user": 0
+                  }
+                }
+              },
+              "pressure_some_delta_us": 142055,
+              "runner_cpu_seconds": 0.0008800000000000197
+            },
+            "cpu_percent": 99.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4434380",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 6,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=6.29 avg60=2.64 avg300=1.79 total=46582851101\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46582851101,
+              "load_1m_per_available_cpu": 5.84228515625,
+              "load_1m_per_cpu": 0.060857137044270836,
+              "load_average": [
+                5.84228515625,
+                5.95947265625,
+                4.9951171875
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "11/8078"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4436522",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 3,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=5.25 avg60=2.36 avg300=1.73 total=46582709046\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46582709046,
+              "load_1m_per_available_cpu": 5.654296875,
+              "load_1m_per_cpu": 0.05889892578125,
+              "load_average": [
+                5.654296875,
+                5.9248046875,
+                4.978515625
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "6/8042"
+            },
+            "involuntary_context_switches": 5587,
+            "peak_rss_kb": 1312540,
+            "precise_child_system_seconds": 0.558208,
+            "precise_child_user_seconds": 1.3441919999999998,
+            "system_seconds": 0.55,
+            "user_seconds": 1.34,
+            "voluntary_context_switches": 8652,
+            "wall_nanos": 1912805473
+          },
+          "round": 1,
+          "signed_wall_delta_nanos": 785176580,
+          "slot_index": 0
+        },
+        {
+          "build_order": [
+            "candidate",
+            "reference"
+          ],
+          "candidate": {
+            "axioms": [
+              "propext",
+              "Classical.choice",
+              "Quot.sound"
+            ],
+            "compiler_output": "\u2139 [1984/1984] Built HexSturmMathlib.Replay.Accepted (2.1s)\ninfo: conformance/HexSturmMathlib/Replay/Accepted.lean:26:0: 'HexSturmMathlib.ReplayTests.accepted' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: conformance/HexSturmMathlib/Replay/Accepted.lean:27:0: 'HexSturmMathlib.ReplayTests.domain' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (1984 jobs).\n__HEX_MAX_RSS_KB__=1323648\n__HEX_USER_SECONDS__=2.07\n__HEX_SYSTEM_SECONDS__=1.99\n__HEX_CPU_PERCENT__=96%\n__HEX_INVOLUNTARY_CONTEXT__=7757\n__HEX_VOLUNTARY_CONTEXT__=11465\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 1.5074400000000003,
+              "child_cpu_seconds": 4.071415,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 424
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.007440000000000252,
+              "measurement_cpu_interrupt_seconds": 0.03,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.007440000000000252,
+              "measurement_cpu_residual_seconds": 0.03744000000000025,
+              "per_cpu": {
+                "3": {
+                  "busy_seconds": 4.11,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 4,
+                    "iowait": 7,
+                    "irq": 2,
+                    "nice": 0,
+                    "softirq": 1,
+                    "steal": 0,
+                    "system": 200,
+                    "user": 208
+                  }
+                },
+                "51": {
+                  "busy_seconds": 1.5,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 265,
+                    "iowait": 5,
+                    "irq": 1,
+                    "nice": 0,
+                    "softirq": 1,
+                    "steal": 0,
+                    "system": 37,
+                    "user": 111
+                  }
+                }
+              },
+              "pressure_some_delta_us": 56257,
+              "runner_cpu_seconds": 0.0011450000000000626
+            },
+            "cpu_percent": 96.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4056476",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 34,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=1.81 avg60=2.32 avg300=1.77 total=46583221445\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46583221445,
+              "load_1m_per_available_cpu": 15.11572265625,
+              "load_1m_per_cpu": 0.1574554443359375,
+              "load_average": [
+                15.11572265625,
+                8.00341796875,
+                5.685546875
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "42/8205"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4206813",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 28,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=2.43 avg60=2.44 avg300=1.79 total=46583165188\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46583165188,
+              "load_1m_per_available_cpu": 11.73046875,
+              "load_1m_per_cpu": 0.1221923828125,
+              "load_average": [
+                11.73046875,
+                7.2265625,
+                5.42431640625
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "39/8170"
+            },
+            "involuntary_context_switches": 7757,
+            "peak_rss_kb": 1323648,
+            "precise_child_system_seconds": 1.9994779999999999,
+            "precise_child_user_seconds": 2.071937,
+            "system_seconds": 1.99,
+            "user_seconds": 2.07,
+            "voluntary_context_switches": 11465,
+            "wall_nanos": 4240896804
+          },
+          "context_issues": [],
+          "host_before_pair": {
+            "affinity_cpu_frequency_khz": "4224818",
+            "available_logical_cpus": 1,
+            "concurrent_lake_lean_count": 28,
+            "cpu_affinity": [
+              3
+            ],
+            "cpu_pressure": "some avg10=2.43 avg60=2.44 avg300=1.79 total=46583165017\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+            "cpu_pressure_some_total_us": 46583165017,
+            "load_1m_per_available_cpu": 11.73046875,
+            "load_1m_per_cpu": 0.1221923828125,
+            "load_average": [
+              11.73046875,
+              7.2265625,
+              5.42431640625
+            ],
+            "logical_cpus": 96,
+            "runnable_tasks": "39/8173"
+          },
+          "pair": "accepted",
+          "reference": {
+            "axioms": null,
+            "compiler_output": "\u2714 [1984/1984] Built HexSturmMathlib.Replay.Baseline (1.8s)\nBuild completed successfully (1984 jobs).\n__HEX_MAX_RSS_KB__=1302868\n__HEX_USER_SECONDS__=1.81\n__HEX_SYSTEM_SECONDS__=1.85\n__HEX_CPU_PERCENT__=97%\n__HEX_INVOLUNTARY_CONTEXT__=7283\n__HEX_VOLUNTARY_CONTEXT__=10523\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 1.1346869999999998,
+              "child_cpu_seconds": 3.674398,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 378
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.004686999999999858,
+              "measurement_cpu_interrupt_seconds": 0.03,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.004686999999999858,
+              "measurement_cpu_residual_seconds": 0.03468699999999986,
+              "per_cpu": {
+                "3": {
+                  "busy_seconds": 3.71,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 7,
+                    "irq": 3,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 186,
+                    "user": 182
+                  }
+                },
+                "51": {
+                  "busy_seconds": 1.13,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 261,
+                    "iowait": 4,
+                    "irq": 2,
+                    "nice": 0,
+                    "softirq": 1,
+                    "steal": 0,
+                    "system": 29,
+                    "user": 81
+                  }
+                }
+              },
+              "pressure_some_delta_us": 41435,
+              "runner_cpu_seconds": 0.0009150000000000547
+            },
+            "cpu_percent": 97.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "3963330",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 33,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=1.39 avg60=2.20 avg300=1.76 total=46583263019\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46583263019,
+              "load_1m_per_available_cpu": 17.98974609375,
+              "load_1m_per_cpu": 0.1873931884765625,
+              "load_average": [
+                17.98974609375,
+                8.71728515625,
+                5.92919921875
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "65/8327"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4088531",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 33,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=1.81 avg60=2.32 avg300=1.77 total=46583221584\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46583221584,
+              "load_1m_per_available_cpu": 15.11572265625,
+              "load_1m_per_cpu": 0.1574554443359375,
+              "load_average": [
+                15.11572265625,
+                8.00341796875,
+                5.685546875
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "50/8204"
+            },
+            "involuntary_context_switches": 7283,
+            "peak_rss_kb": 1302868,
+            "precise_child_system_seconds": 1.8551859999999998,
+            "precise_child_user_seconds": 1.8192120000000003,
+            "system_seconds": 1.85,
+            "user_seconds": 1.81,
+            "voluntary_context_switches": 10523,
+            "wall_nanos": 3776756288
+          },
+          "round": 2,
+          "signed_wall_delta_nanos": 464140516,
+          "slot_index": 1
+        },
+        {
+          "build_order": [
+            "reference",
+            "candidate"
+          ],
+          "candidate": {
+            "axioms": [
+              "propext",
+              "Classical.choice",
+              "Quot.sound"
+            ],
+            "compiler_output": "\u2139 [1984/1984] Built HexSturmMathlib.Replay.Accepted (3.4s)\ninfo: conformance/HexSturmMathlib/Replay/Accepted.lean:26:0: 'HexSturmMathlib.ReplayTests.accepted' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: conformance/HexSturmMathlib/Replay/Accepted.lean:27:0: 'HexSturmMathlib.ReplayTests.domain' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (1984 jobs).\n__HEX_MAX_RSS_KB__=1317564\n__HEX_USER_SECONDS__=2.76\n__HEX_SYSTEM_SECONDS__=3.23\n__HEX_CPU_PERCENT__=91%\n__HEX_INVOLUNTARY_CONTEXT__=10067\n__HEX_VOLUNTARY_CONTEXT__=12894\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 6.114119000000001,
+              "child_cpu_seconds": 5.994129999999998,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 658
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.3741190000000013,
+              "measurement_cpu_interrupt_seconds": 0.06,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.3741190000000013,
+              "measurement_cpu_residual_seconds": 0.4341190000000013,
+              "per_cpu": {
+                "3": {
+                  "busy_seconds": 6.43,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 13,
+                    "irq": 5,
+                    "nice": 0,
+                    "softirq": 1,
+                    "steal": 0,
+                    "system": 334,
+                    "user": 303
+                  }
+                },
+                "51": {
+                  "busy_seconds": 5.74,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 62,
+                    "iowait": 21,
+                    "irq": 4,
+                    "nice": 0,
+                    "softirq": 2,
+                    "steal": 0,
+                    "system": 240,
+                    "user": 328
+                  }
+                }
+              },
+              "pressure_some_delta_us": 977422,
+              "runner_cpu_seconds": 0.0017510000000000026
+            },
+            "cpu_percent": 91.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "3780116",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 68,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=7.34 avg60=3.36 avg300=2.02 total=46584584967\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46584584967,
+              "load_1m_per_available_cpu": 35.03466796875,
+              "load_1m_per_cpu": 0.3649444580078125,
+              "load_average": [
+                35.03466796875,
+                12.6904296875,
+                7.2529296875
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "103/8970"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "3873856",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 66,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=3.21 avg60=2.44 avg300=1.82 total=46583607545\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46583607545,
+              "load_1m_per_available_cpu": 28.16064453125,
+              "load_1m_per_cpu": 0.2933400472005208,
+              "load_average": [
+                28.16064453125,
+                10.97998046875,
+                6.67626953125
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "92/8720"
+            },
+            "involuntary_context_switches": 10067,
+            "peak_rss_kb": 1317564,
+            "precise_child_system_seconds": 3.232548999999999,
+            "precise_child_user_seconds": 2.7615809999999996,
+            "system_seconds": 3.23,
+            "user_seconds": 2.76,
+            "voluntary_context_switches": 12894,
+            "wall_nanos": 6575851179
+          },
+          "context_issues": [],
+          "host_before_pair": {
+            "affinity_cpu_frequency_khz": "3908832",
+            "available_logical_cpus": 1,
+            "concurrent_lake_lean_count": 30,
+            "cpu_affinity": [
+              3
+            ],
+            "cpu_pressure": "some avg10=1.39 avg60=2.20 avg300=1.76 total=46583264781\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+            "cpu_pressure_some_total_us": 46583264781,
+            "load_1m_per_available_cpu": 17.98974609375,
+            "load_1m_per_cpu": 0.1873931884765625,
+            "load_average": [
+              17.98974609375,
+              8.71728515625,
+              5.92919921875
+            ],
+            "logical_cpus": 96,
+            "runnable_tasks": "53/8322"
+          },
+          "pair": "accepted",
+          "reference": {
+            "axioms": null,
+            "compiler_output": "\u2714 [1984/1984] Built HexSturmMathlib.Replay.Baseline (2.7s)\nBuild completed successfully (1984 jobs).\n__HEX_MAX_RSS_KB__=1301684\n__HEX_USER_SECONDS__=2.31\n__HEX_SYSTEM_SECONDS__=2.71\n__HEX_CPU_PERCENT__=94%\n__HEX_INVOLUNTARY_CONTEXT__=7307\n__HEX_VOLUNTARY_CONTEXT__=10454\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 4.105623999999998,
+              "child_cpu_seconds": 5.033115000000002,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 532
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.08562399999999795,
+              "measurement_cpu_interrupt_seconds": 0.04,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.08562399999999795,
+              "measurement_cpu_residual_seconds": 0.12562399999999796,
+              "per_cpu": {
+                "3": {
+                  "busy_seconds": 5.16,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 1,
+                    "iowait": 12,
+                    "irq": 3,
+                    "nice": 0,
+                    "softirq": 1,
+                    "steal": 0,
+                    "system": 274,
+                    "user": 238
+                  }
+                },
+                "51": {
+                  "busy_seconds": 4.02,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 111,
+                    "iowait": 15,
+                    "irq": 3,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 123,
+                    "user": 276
+                  }
+                }
+              },
+              "pressure_some_delta_us": 336939,
+              "runner_cpu_seconds": 0.0012609999999999566
+            },
+            "cpu_percent": 94.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4070784",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 63,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=3.21 avg60=2.44 avg300=1.82 total=46583603472\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46583603472,
+              "load_1m_per_available_cpu": 28.16064453125,
+              "load_1m_per_cpu": 0.2933400472005208,
+              "load_average": [
+                28.16064453125,
+                10.97998046875,
+                6.67626953125
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "54/8699"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4106213",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 29,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=1.39 avg60=2.20 avg300=1.76 total=46583266533\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46583266533,
+              "load_1m_per_available_cpu": 17.98974609375,
+              "load_1m_per_cpu": 0.1873931884765625,
+              "load_average": [
+                17.98974609375,
+                8.71728515625,
+                5.92919921875
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "46/8284"
+            },
+            "involuntary_context_switches": 7307,
+            "peak_rss_kb": 1301684,
+            "precise_child_system_seconds": 2.7191790000000005,
+            "precise_child_user_seconds": 2.3139360000000018,
+            "system_seconds": 2.71,
+            "user_seconds": 2.31,
+            "voluntary_context_switches": 10454,
+            "wall_nanos": 5318078797
+          },
+          "round": 3,
+          "signed_wall_delta_nanos": 1257772382,
+          "slot_index": 0
+        },
+        {
+          "build_order": [
+            "candidate",
+            "reference"
+          ],
+          "candidate": {
+            "axioms": [
+              "propext",
+              "Classical.choice",
+              "Quot.sound"
+            ],
+            "compiler_output": "\u2139 [1984/1984] Built HexSturmMathlib.Replay.Accepted (3.0s)\ninfo: conformance/HexSturmMathlib/Replay/Accepted.lean:26:0: 'HexSturmMathlib.ReplayTests.accepted' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: conformance/HexSturmMathlib/Replay/Accepted.lean:27:0: 'HexSturmMathlib.ReplayTests.domain' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (1984 jobs).\n__HEX_MAX_RSS_KB__=1320852\n__HEX_USER_SECONDS__=2.64\n__HEX_SYSTEM_SECONDS__=3.28\n__HEX_CPU_PERCENT__=93%\n__HEX_INVOLUNTARY_CONTEXT__=11011\n__HEX_VOLUNTARY_CONTEXT__=13976\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 5.22585,
+              "child_cpu_seconds": 5.93225,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 632
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.22585,
+              "measurement_cpu_interrupt_seconds": 0.06,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.22585,
+              "measurement_cpu_residual_seconds": 0.28585,
+              "per_cpu": {
+                "3": {
+                  "busy_seconds": 6.22,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 10,
+                    "irq": 5,
+                    "nice": 0,
+                    "softirq": 1,
+                    "steal": 0,
+                    "system": 334,
+                    "user": 282
+                  }
+                },
+                "51": {
+                  "busy_seconds": 5.0,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 120,
+                    "iowait": 9,
+                    "irq": 4,
+                    "nice": 0,
+                    "softirq": 1,
+                    "steal": 0,
+                    "system": 208,
+                    "user": 287
+                  }
+                }
+              },
+              "pressure_some_delta_us": 593732,
+              "runner_cpu_seconds": 0.0018999999999999573
+            },
+            "cpu_percent": 93.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "3898519",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 53,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=9.80 avg60=7.76 avg300=3.37 total=46589475735\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46589475735,
+              "load_1m_per_available_cpu": 67.72998046875,
+              "load_1m_per_cpu": 0.7055206298828125,
+              "load_average": [
+                67.72998046875,
+                23.73046875,
+                11.171875
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "101/8731"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "3966724",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 61,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=11.98 avg60=7.78 avg300=3.28 total=46588882003\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46588882003,
+              "load_1m_per_available_cpu": 67.7060546875,
+              "load_1m_per_cpu": 0.7052714029947916,
+              "load_average": [
+                67.7060546875,
+                22.98291015625,
+                10.86474609375
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "116/8862"
+            },
+            "involuntary_context_switches": 11011,
+            "peak_rss_kb": 1320852,
+            "precise_child_system_seconds": 3.2845319999999987,
+            "precise_child_user_seconds": 2.647718000000001,
+            "system_seconds": 3.28,
+            "user_seconds": 2.64,
+            "voluntary_context_switches": 13976,
+            "wall_nanos": 6324116803
+          },
+          "context_issues": [],
+          "host_before_pair": {
+            "affinity_cpu_frequency_khz": "3962260",
+            "available_logical_cpus": 1,
+            "concurrent_lake_lean_count": 62,
+            "cpu_affinity": [
+              3
+            ],
+            "cpu_pressure": "some avg10=11.98 avg60=7.78 avg300=3.28 total=46588874648\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+            "cpu_pressure_some_total_us": 46588874648,
+            "load_1m_per_available_cpu": 67.7060546875,
+            "load_1m_per_cpu": 0.7052714029947916,
+            "load_average": [
+              67.7060546875,
+              22.98291015625,
+              10.86474609375
+            ],
+            "logical_cpus": 96,
+            "runnable_tasks": "103/8860"
+          },
+          "pair": "accepted",
+          "reference": {
+            "axioms": null,
+            "compiler_output": "\u2714 [1984/1984] Built HexSturmMathlib.Replay.Baseline (2.5s)\nBuild completed successfully (1984 jobs).\n__HEX_MAX_RSS_KB__=1306140\n__HEX_USER_SECONDS__=2.26\n__HEX_SYSTEM_SECONDS__=3.09\n__HEX_CPU_PERCENT__=94%\n__HEX_INVOLUNTARY_CONTEXT__=10708\n__HEX_VOLUNTARY_CONTEXT__=13799\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 4.089308000000004,
+              "child_cpu_seconds": 5.368871999999996,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 570
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.14930800000000416,
+              "measurement_cpu_interrupt_seconds": 0.05,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.14930800000000416,
+              "measurement_cpu_residual_seconds": 0.19930800000000415,
+              "per_cpu": {
+                "3": {
+                  "busy_seconds": 5.57,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 3,
+                    "iowait": 12,
+                    "irq": 4,
+                    "nice": 0,
+                    "softirq": 1,
+                    "steal": 0,
+                    "system": 316,
+                    "user": 236
+                  }
+                },
+                "51": {
+                  "busy_seconds": 3.94,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 164,
+                    "iowait": 8,
+                    "irq": 3,
+                    "nice": 0,
+                    "softirq": 1,
+                    "steal": 0,
+                    "system": 131,
+                    "user": 259
+                  }
+                }
+              },
+              "pressure_some_delta_us": 287765,
+              "runner_cpu_seconds": 0.0018200000000000438
+            },
+            "cpu_percent": 94.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4066573",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 50,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=7.36 avg60=7.46 avg300=3.40 total=46589770184\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46589770184,
+              "load_1m_per_available_cpu": 71.8359375,
+              "load_1m_per_cpu": 0.748291015625,
+              "load_average": [
+                71.8359375,
+                25.3125,
+                11.75146484375
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "60/8648"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "3923313",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 51,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=9.80 avg60=7.76 avg300=3.37 total=46589482419\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46589482419,
+              "load_1m_per_available_cpu": 67.72998046875,
+              "load_1m_per_cpu": 0.7055206298828125,
+              "load_average": [
+                67.72998046875,
+                23.73046875,
+                11.171875
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "86/8694"
+            },
+            "involuntary_context_switches": 10708,
+            "peak_rss_kb": 1306140,
+            "precise_child_system_seconds": 3.0999959999999973,
+            "precise_child_user_seconds": 2.268875999999999,
+            "system_seconds": 3.09,
+            "user_seconds": 2.26,
+            "voluntary_context_switches": 13799,
+            "wall_nanos": 5695168481
+          },
+          "round": 4,
+          "signed_wall_delta_nanos": 628948322,
+          "slot_index": 1
+        }
+      ],
+      "scope": "checker and domain; no root-sum theorem",
+      "signed_wall_delta_nanos": [
+        785176580,
+        464140516,
+        1257772382,
+        628948322
+      ]
+    },
+    "rejected": {
+      "build_magnitude_wall_nanos": 5252537191,
+      "candidate": {
+        "artifacts": {
+          "ilean_bytes": 3502,
+          "olean_bytes": 40720,
+          "olean_private_bytes": 75640,
+          "olean_server_bytes": 1504,
+          "source_bytes": 938
+        },
+        "expected_axioms": [
+          "propext",
+          "Classical.choice",
+          "Quot.sound"
+        ],
+        "module": "HexSturmMathlib.Replay.Rejected"
+      },
+      "comparable_control": null,
+      "comparable_null_envelope_nanos": null,
+      "comparable_null_raw_envelope_nanos": null,
+      "comparable_null_raw_spread_nanos": null,
+      "comparable_null_spread_nanos": null,
+      "control_interpolation_weight": null,
+      "control_magnitude_ratio": null,
+      "control_scale_factor": null,
+      "degree": 2,
+      "family": "literal-rational-query",
+      "median_candidate_peak_rss_kb": 1327024,
+      "median_candidate_wall_nanos": 5252537191,
+      "median_reference_peak_rss_kb": 1304472,
+      "median_reference_wall_nanos": 5030121037,
+      "median_signed_wall_delta_nanos": 696987843,
+      "null_control": false,
+      "reference": {
+        "artifacts": {
+          "ilean_bytes": 154,
+          "olean_bytes": 1632,
+          "olean_private_bytes": 96,
+          "olean_server_bytes": 96,
+          "source_bytes": 310
+        },
+        "expected_axioms": null,
+        "module": "HexSturmMathlib.Replay.Baseline"
+      },
+      "resolution": "no-comparable-control",
+      "samples": [
+        {
+          "build_order": [
+            "reference",
+            "candidate"
+          ],
+          "candidate": {
+            "axioms": [
+              "propext",
+              "Classical.choice",
+              "Quot.sound"
+            ],
+            "compiler_output": "\u2139 [1984/1984] Built HexSturmMathlib.Replay.Rejected (1.6s)\ninfo: conformance/HexSturmMathlib/Replay/Rejected.lean:24:0: 'HexSturmMathlib.ReplayTests.rejected' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: conformance/HexSturmMathlib/Replay/Rejected.lean:25:0: 'HexSturmMathlib.ReplayTests.stale' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (1984 jobs).\n__HEX_MAX_RSS_KB__=1328068\n__HEX_USER_SECONDS__=1.69\n__HEX_SYSTEM_SECONDS__=1.44\n__HEX_CPU_PERCENT__=97%\n__HEX_INVOLUNTARY_CONTEXT__=6582\n__HEX_VOLUNTARY_CONTEXT__=10293\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.3812190000000001,
+              "child_cpu_seconds": 3.138163,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 322
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.0012190000000000985,
+              "measurement_cpu_interrupt_seconds": 0.02,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.0012190000000000985,
+              "measurement_cpu_residual_seconds": 0.0212190000000001,
+              "per_cpu": {
+                "3": {
+                  "busy_seconds": 3.16,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 2,
+                    "iowait": 3,
+                    "irq": 2,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 145,
+                    "user": 169
+                  }
+                },
+                "51": {
+                  "busy_seconds": 0.38,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 281,
+                    "iowait": 0,
+                    "irq": 0,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 12,
+                    "user": 26
+                  }
+                }
+              },
+              "pressure_some_delta_us": 55426,
+              "runner_cpu_seconds": 0.0006180000000000074
+            },
+            "cpu_percent": 97.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4348221",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 13,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=4.19 avg60=2.65 avg300=1.82 total=46583075921\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46583075921,
+              "load_1m_per_available_cpu": 8.5732421875,
+              "load_1m_per_cpu": 0.08930460611979167,
+              "load_average": [
+                8.5732421875,
+                6.5380859375,
+                5.1943359375
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "44/8070"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4430205",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 15,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=4.90 avg60=2.70 avg300=1.82 total=46583020495\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46583020495,
+              "load_1m_per_available_cpu": 7.05615234375,
+              "load_1m_per_cpu": 0.0735015869140625,
+              "load_average": [
+                7.05615234375,
+                6.20947265625,
+                5.08154296875
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "23/8169"
+            },
+            "involuntary_context_switches": 6582,
+            "peak_rss_kb": 1328068,
+            "precise_child_system_seconds": 1.444607,
+            "precise_child_user_seconds": 1.693556,
+            "system_seconds": 1.44,
+            "user_seconds": 1.69,
+            "voluntary_context_switches": 10293,
+            "wall_nanos": 3222304455
+          },
+          "context_issues": [],
+          "host_before_pair": {
+            "affinity_cpu_frequency_khz": "4433646",
+            "available_logical_cpus": 1,
+            "concurrent_lake_lean_count": 10,
+            "cpu_affinity": [
+              3
+            ],
+            "cpu_pressure": "some avg10=6.06 avg60=2.72 avg300=1.81 total=46582943253\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+            "cpu_pressure_some_total_us": 46582943253,
+            "load_1m_per_available_cpu": 5.84228515625,
+            "load_1m_per_cpu": 0.060857137044270836,
+            "load_average": [
+              5.84228515625,
+              5.95947265625,
+              4.9951171875
+            ],
+            "logical_cpus": 96,
+            "runnable_tasks": "13/8125"
+          },
+          "pair": "rejected",
+          "reference": {
+            "axioms": null,
+            "compiler_output": "\u2714 [1984/1984] Built HexSturmMathlib.Replay.Baseline (1.1s)\nBuild completed successfully (1984 jobs).\n__HEX_MAX_RSS_KB__=1308128\n__HEX_USER_SECONDS__=1.42\n__HEX_SYSTEM_SECONDS__=1.02\n__HEX_CPU_PERCENT__=98%\n__HEX_INVOLUNTARY_CONTEXT__=7232\n__HEX_VOLUNTARY_CONTEXT__=10505\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.049008000000000024,
+              "child_cpu_seconds": 2.449965,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 248
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.009008000000000025,
+              "measurement_cpu_interrupt_seconds": 0.01,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.009008000000000025,
+              "measurement_cpu_residual_seconds": 0.019008000000000025,
+              "per_cpu": {
+                "3": {
+                  "busy_seconds": 2.47,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 1,
+                    "irq": 1,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 103,
+                    "user": 143
+                  }
+                },
+                "51": {
+                  "busy_seconds": 0.04,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 245,
+                    "iowait": 0,
+                    "irq": 0,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 0,
+                    "user": 4
+                  }
+                }
+              },
+              "pressure_some_delta_us": 73184,
+              "runner_cpu_seconds": 0.0010270000000000001
+            },
+            "cpu_percent": 98.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4434156",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 15,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=4.90 avg60=2.70 avg300=1.82 total=46583018845\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46583018845,
+              "load_1m_per_available_cpu": 7.05615234375,
+              "load_1m_per_cpu": 0.0735015869140625,
+              "load_average": [
+                7.05615234375,
+                6.20947265625,
+                5.08154296875
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "29/8166"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4431677",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 9,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=6.06 avg60=2.72 avg300=1.81 total=46582945661\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46582945661,
+              "load_1m_per_available_cpu": 5.84228515625,
+              "load_1m_per_cpu": 0.060857137044270836,
+              "load_average": [
+                5.84228515625,
+                5.95947265625,
+                4.9951171875
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "25/8126"
+            },
+            "involuntary_context_switches": 7232,
+            "peak_rss_kb": 1308128,
+            "precise_child_system_seconds": 1.026532,
+            "precise_child_user_seconds": 1.4234330000000002,
+            "system_seconds": 1.02,
+            "user_seconds": 1.42,
+            "voluntary_context_switches": 10505,
+            "wall_nanos": 2479957749
+          },
+          "round": 1,
+          "signed_wall_delta_nanos": 742346706,
+          "slot_index": 1
+        },
+        {
+          "build_order": [
+            "candidate",
+            "reference"
+          ],
+          "candidate": {
+            "axioms": [
+              "propext",
+              "Classical.choice",
+              "Quot.sound"
+            ],
+            "compiler_output": "\u2139 [1984/1984] Built HexSturmMathlib.Replay.Rejected (2.0s)\ninfo: conformance/HexSturmMathlib/Replay/Rejected.lean:24:0: 'HexSturmMathlib.ReplayTests.rejected' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: conformance/HexSturmMathlib/Replay/Rejected.lean:25:0: 'HexSturmMathlib.ReplayTests.stale' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (1984 jobs).\n__HEX_MAX_RSS_KB__=1325980\n__HEX_USER_SECONDS__=1.88\n__HEX_SYSTEM_SECONDS__=1.71\n__HEX_CPU_PERCENT__=97%\n__HEX_INVOLUNTARY_CONTEXT__=7419\n__HEX_VOLUNTARY_CONTEXT__=11660\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.7387279999999999,
+              "child_cpu_seconds": 3.600633,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 370
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.028727999999999976,
+              "measurement_cpu_interrupt_seconds": 0.03,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.028727999999999976,
+              "measurement_cpu_residual_seconds": 0.058727999999999975,
+              "per_cpu": {
+                "3": {
+                  "busy_seconds": 3.66,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 1,
+                    "iowait": 6,
+                    "irq": 2,
+                    "nice": 0,
+                    "softirq": 1,
+                    "steal": 0,
+                    "system": 173,
+                    "user": 190
+                  }
+                },
+                "51": {
+                  "busy_seconds": 0.71,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 295,
+                    "iowait": 1,
+                    "irq": 1,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 19,
+                    "user": 51
+                  }
+                }
+              },
+              "pressure_some_delta_us": 48328,
+              "runner_cpu_seconds": 0.0006389999999999729
+            },
+            "cpu_percent": 97.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4209835",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 30,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=3.14 avg60=2.54 avg300=1.80 total=46583124687\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46583124687,
+              "load_1m_per_available_cpu": 8.5732421875,
+              "load_1m_per_cpu": 0.08930460611979167,
+              "load_average": [
+                8.5732421875,
+                6.5380859375,
+                5.1943359375
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "51/8230"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4373126",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 12,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=4.19 avg60=2.65 avg300=1.82 total=46583076359\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46583076359,
+              "load_1m_per_available_cpu": 8.5732421875,
+              "load_1m_per_cpu": 0.08930460611979167,
+              "load_average": [
+                8.5732421875,
+                6.5380859375,
+                5.1943359375
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "18/8052"
+            },
+            "involuntary_context_switches": 7419,
+            "peak_rss_kb": 1325980,
+            "precise_child_system_seconds": 1.7139179999999996,
+            "precise_child_user_seconds": 1.8867150000000006,
+            "system_seconds": 1.71,
+            "user_seconds": 1.88,
+            "voluntary_context_switches": 11660,
+            "wall_nanos": 3697662960
+          },
+          "context_issues": [],
+          "host_before_pair": {
+            "affinity_cpu_frequency_khz": "4356504",
+            "available_logical_cpus": 1,
+            "concurrent_lake_lean_count": 12,
+            "cpu_affinity": [
+              3
+            ],
+            "cpu_pressure": "some avg10=4.19 avg60=2.65 avg300=1.82 total=46583076081\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+            "cpu_pressure_some_total_us": 46583076081,
+            "load_1m_per_available_cpu": 8.5732421875,
+            "load_1m_per_cpu": 0.08930460611979167,
+            "load_average": [
+              8.5732421875,
+              6.5380859375,
+              5.1943359375
+            ],
+            "logical_cpus": 96,
+            "runnable_tasks": "28/8078"
+          },
+          "pair": "rejected",
+          "reference": {
+            "axioms": null,
+            "compiler_output": "\u2714 [1984/1984] Built HexSturmMathlib.Replay.Baseline (1.9s)\nBuild completed successfully (1984 jobs).\n__HEX_MAX_RSS_KB__=1304556\n__HEX_USER_SECONDS__=1.77\n__HEX_SYSTEM_SECONDS__=2.00\n__HEX_CPU_PERCENT__=96%\n__HEX_INVOLUNTARY_CONTEXT__=6813\n__HEX_VOLUNTARY_CONTEXT__=10342\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 0.955994999999999,
+              "child_cpu_seconds": 3.7832820000000007,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 391
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.005994999999999112,
+              "measurement_cpu_interrupt_seconds": 0.03,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.005994999999999112,
+              "measurement_cpu_residual_seconds": 0.03599499999999911,
+              "per_cpu": {
+                "3": {
+                  "busy_seconds": 3.82,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 8,
+                    "irq": 3,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 201,
+                    "user": 178
+                  }
+                },
+                "51": {
+                  "busy_seconds": 0.95,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 290,
+                    "iowait": 3,
+                    "irq": 2,
+                    "nice": 0,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 18,
+                    "user": 75
+                  }
+                }
+              },
+              "pressure_some_delta_us": 39034,
+              "runner_cpu_seconds": 0.0007230000000000292
+            },
+            "cpu_percent": 96.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4130562",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 29,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=2.43 avg60=2.44 avg300=1.79 total=46583164865\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46583164865,
+              "load_1m_per_available_cpu": 11.73046875,
+              "load_1m_per_cpu": 0.1221923828125,
+              "load_average": [
+                11.73046875,
+                7.2265625,
+                5.42431640625
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "38/8202"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4091247",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 32,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=3.14 avg60=2.54 avg300=1.80 total=46583125831\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46583125831,
+              "load_1m_per_available_cpu": 8.5732421875,
+              "load_1m_per_cpu": 0.08930460611979167,
+              "load_average": [
+                8.5732421875,
+                6.5380859375,
+                5.1943359375
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "56/8204"
+            },
+            "involuntary_context_switches": 6813,
+            "peak_rss_kb": 1304556,
+            "precise_child_system_seconds": 2.0036960000000006,
+            "precise_child_user_seconds": 1.7795860000000001,
+            "system_seconds": 2.0,
+            "user_seconds": 1.77,
+            "voluntary_context_switches": 10342,
+            "wall_nanos": 3904459633
+          },
+          "round": 2,
+          "signed_wall_delta_nanos": -206796673,
+          "slot_index": 0
+        },
+        {
+          "build_order": [
+            "reference",
+            "candidate"
+          ],
+          "candidate": {
+            "axioms": [
+              "propext",
+              "Classical.choice",
+              "Quot.sound"
+            ],
+            "compiler_output": "\u2139 [1984/1984] Built HexSturmMathlib.Replay.Rejected (3.6s)\ninfo: conformance/HexSturmMathlib/Replay/Rejected.lean:24:0: 'HexSturmMathlib.ReplayTests.rejected' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: conformance/HexSturmMathlib/Replay/Rejected.lean:25:0: 'HexSturmMathlib.ReplayTests.stale' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (1984 jobs).\n__HEX_MAX_RSS_KB__=1328460\n__HEX_USER_SECONDS__=2.77\n__HEX_SYSTEM_SECONDS__=3.52\n__HEX_CPU_PERCENT__=89%\n__HEX_INVOLUNTARY_CONTEXT__=12243\n__HEX_VOLUNTARY_CONTEXT__=15193\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 6.7504849999999985,
+              "child_cpu_seconds": 6.297878000000001,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 707
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.5704849999999988,
+              "measurement_cpu_interrupt_seconds": 0.06,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.5704849999999988,
+              "measurement_cpu_residual_seconds": 0.6304849999999989,
+              "per_cpu": {
+                "3": {
+                  "busy_seconds": 6.93,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 12,
+                    "irq": 5,
+                    "nice": 0,
+                    "softirq": 1,
+                    "steal": 0,
+                    "system": 367,
+                    "user": 320
+                  }
+                },
+                "51": {
+                  "busy_seconds": 6.18,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 60,
+                    "iowait": 24,
+                    "irq": 5,
+                    "nice": 0,
+                    "softirq": 1,
+                    "steal": 0,
+                    "system": 226,
+                    "user": 386
+                  }
+                }
+              },
+              "pressure_some_delta_us": 1289192,
+              "runner_cpu_seconds": 0.001637000000000055
+            },
+            "cpu_percent": 89.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4057122",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 72,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=16.95 avg60=6.87 avg300=2.88 total=46587334183\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46587334183,
+              "load_1m_per_available_cpu": 57.8271484375,
+              "load_1m_per_cpu": 0.6023661295572916,
+              "load_average": [
+                57.8271484375,
+                18.88037109375,
+                9.369140625
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "121/8896"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "3822693",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 70,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=15.56 avg60=5.63 avg300=2.55 total=46586044991\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46586044991,
+              "load_1m_per_available_cpu": 52.501953125,
+              "load_1m_per_cpu": 0.5468953450520834,
+              "load_average": [
+                52.501953125,
+                17.18994140625,
+                8.77685546875
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "129/8956"
+            },
+            "involuntary_context_switches": 12243,
+            "peak_rss_kb": 1328460,
+            "precise_child_system_seconds": 3.522842999999998,
+            "precise_child_user_seconds": 2.7750350000000026,
+            "system_seconds": 3.52,
+            "user_seconds": 2.77,
+            "voluntary_context_switches": 15193,
+            "wall_nanos": 7068314281
+          },
+          "context_issues": [],
+          "host_before_pair": {
+            "affinity_cpu_frequency_khz": "3943183",
+            "available_logical_cpus": 1,
+            "concurrent_lake_lean_count": 70,
+            "cpu_affinity": [
+              3
+            ],
+            "cpu_pressure": "some avg10=9.27 avg60=3.84 avg300=2.13 total=46584599030\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+            "cpu_pressure_some_total_us": 46584599030,
+            "load_1m_per_available_cpu": 35.03466796875,
+            "load_1m_per_cpu": 0.3649444580078125,
+            "load_average": [
+              35.03466796875,
+              12.6904296875,
+              7.2529296875
+            ],
+            "logical_cpus": 96,
+            "runnable_tasks": "122/8957"
+          },
+          "pair": "rejected",
+          "reference": {
+            "axioms": null,
+            "compiler_output": "\u2714 [1984/1984] Built HexSturmMathlib.Replay.Baseline (2.7s)\nBuild completed successfully (1984 jobs).\n__HEX_MAX_RSS_KB__=1302432\n__HEX_USER_SECONDS__=2.51\n__HEX_SYSTEM_SECONDS__=2.95\n__HEX_CPU_PERCENT__=88%\n__HEX_INVOLUNTARY_CONTEXT__=10338\n__HEX_VOLUNTARY_CONTEXT__=12645\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 5.960901000000004,
+              "child_cpu_seconds": 5.477866999999996,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 618
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.5109010000000037,
+              "measurement_cpu_interrupt_seconds": 0.05,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.5109010000000037,
+              "measurement_cpu_residual_seconds": 0.5609010000000038,
+              "per_cpu": {
+                "3": {
+                  "busy_seconds": 6.04,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 12,
+                    "irq": 4,
+                    "nice": 0,
+                    "softirq": 1,
+                    "steal": 0,
+                    "system": 307,
+                    "user": 292
+                  }
+                },
+                "51": {
+                  "busy_seconds": 5.45,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 50,
+                    "iowait": 20,
+                    "irq": 5,
+                    "nice": 0,
+                    "softirq": 2,
+                    "steal": 0,
+                    "system": 208,
+                    "user": 330
+                  }
+                }
+              },
+              "pressure_some_delta_us": 1416416,
+              "runner_cpu_seconds": 0.0012320000000000109
+            },
+            "cpu_percent": 88.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "3893499",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 72,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=15.56 avg60=5.63 avg300=2.55 total=46586026032\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46586026032,
+              "load_1m_per_available_cpu": 45.8427734375,
+              "load_1m_per_cpu": 0.4775288899739583,
+              "load_average": [
+                45.8427734375,
+                15.30224609375,
+                8.12744140625
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "108/8951"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "4008698",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 73,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=9.27 avg60=3.84 avg300=2.13 total=46584609616\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46584609616,
+              "load_1m_per_available_cpu": 35.03466796875,
+              "load_1m_per_cpu": 0.3649444580078125,
+              "load_average": [
+                35.03466796875,
+                12.6904296875,
+                7.2529296875
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "119/8965"
+            },
+            "involuntary_context_switches": 10338,
+            "peak_rss_kb": 1302432,
+            "precise_child_system_seconds": 2.9583259999999996,
+            "precise_child_user_seconds": 2.5195409999999967,
+            "system_seconds": 2.95,
+            "user_seconds": 2.51,
+            "voluntary_context_switches": 12645,
+            "wall_nanos": 6169978349
+          },
+          "round": 3,
+          "signed_wall_delta_nanos": 898335932,
+          "slot_index": 1
+        },
+        {
+          "build_order": [
+            "candidate",
+            "reference"
+          ],
+          "candidate": {
+            "axioms": [
+              "propext",
+              "Classical.choice",
+              "Quot.sound"
+            ],
+            "compiler_output": "\u2139 [1984/1984] Built HexSturmMathlib.Replay.Rejected (3.2s)\ninfo: conformance/HexSturmMathlib/Replay/Rejected.lean:24:0: 'HexSturmMathlib.ReplayTests.rejected' depends on axioms: [propext, Classical.choice, Quot.sound]\ninfo: conformance/HexSturmMathlib/Replay/Rejected.lean:25:0: 'HexSturmMathlib.ReplayTests.stale' depends on axioms: [propext, Classical.choice, Quot.sound]\nBuild completed successfully (1984 jobs).\n__HEX_MAX_RSS_KB__=1322292\n__HEX_USER_SECONDS__=2.67\n__HEX_SYSTEM_SECONDS__=3.45\n__HEX_CPU_PERCENT__=90%\n__HEX_INVOLUNTARY_CONTEXT__=10797\n__HEX_VOLUNTARY_CONTEXT__=13992\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 6.513274000000002,
+              "child_cpu_seconds": 6.135552999999998,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 681
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.5232740000000018,
+              "measurement_cpu_interrupt_seconds": 0.06,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.5232740000000018,
+              "measurement_cpu_residual_seconds": 0.5832740000000017,
+              "per_cpu": {
+                "3": {
+                  "busy_seconds": 6.72,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 1,
+                    "iowait": 9,
+                    "irq": 5,
+                    "nice": 0,
+                    "softirq": 1,
+                    "steal": 0,
+                    "system": 365,
+                    "user": 301
+                  }
+                },
+                "51": {
+                  "busy_seconds": 5.99,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 62,
+                    "iowait": 18,
+                    "irq": 5,
+                    "nice": 0,
+                    "softirq": 1,
+                    "steal": 0,
+                    "system": 174,
+                    "user": 419
+                  }
+                }
+              },
+              "pressure_some_delta_us": 936395,
+              "runner_cpu_seconds": 0.0011729999999999796
+            },
+            "cpu_percent": 90.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "3865119",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 55,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=14.82 avg60=7.69 avg300=3.17 total=46588287692\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46588287692,
+              "load_1m_per_available_cpu": 61.92529296875,
+              "load_1m_per_cpu": 0.6450551350911459,
+              "load_average": [
+                61.92529296875,
+                20.376953125,
+                9.904296875
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "101/8726"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "3995623",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 73,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=16.95 avg60=6.87 avg300=2.88 total=46587351297\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46587351297,
+              "load_1m_per_available_cpu": 57.8271484375,
+              "load_1m_per_cpu": 0.6023661295572916,
+              "load_average": [
+                57.8271484375,
+                18.88037109375,
+                9.369140625
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "92/8899"
+            },
+            "involuntary_context_switches": 10797,
+            "peak_rss_kb": 1322292,
+            "precise_child_system_seconds": 3.460884,
+            "precise_child_user_seconds": 2.674668999999998,
+            "system_seconds": 3.45,
+            "user_seconds": 2.67,
+            "voluntary_context_switches": 13992,
+            "wall_nanos": 6807411422
+          },
+          "context_issues": [],
+          "host_before_pair": {
+            "affinity_cpu_frequency_khz": "3921566",
+            "available_logical_cpus": 1,
+            "concurrent_lake_lean_count": 72,
+            "cpu_affinity": [
+              3
+            ],
+            "cpu_pressure": "some avg10=16.95 avg60=6.87 avg300=2.88 total=46587344659\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+            "cpu_pressure_some_total_us": 46587344659,
+            "load_1m_per_available_cpu": 57.8271484375,
+            "load_1m_per_cpu": 0.6023661295572916,
+            "load_average": [
+              57.8271484375,
+              18.88037109375,
+              9.369140625
+            ],
+            "logical_cpus": 96,
+            "runnable_tasks": "62/8883"
+          },
+          "pair": "rejected",
+          "reference": {
+            "axioms": null,
+            "compiler_output": "\u2714 [1984/1984] Built HexSturmMathlib.Replay.Baseline (2.9s)\nBuild completed successfully (1984 jobs).\n__HEX_MAX_RSS_KB__=1304388\n__HEX_USER_SECONDS__=2.49\n__HEX_SYSTEM_SECONDS__=3.22\n__HEX_CPU_PERCENT__=93%\n__HEX_INVOLUNTARY_CONTEXT__=11040\n__HEX_VOLUNTARY_CONTEXT__=13612\n",
+            "cpu_accounting": {
+              "aggregate_core_interference_seconds": 5.6106260000000026,
+              "child_cpu_seconds": 5.727628999999997,
+              "child_cpu_source": "getrusage-reaped-children",
+              "clock_ticks_per_second": 100,
+              "frequency_time_in_state_ticks": {
+                "1500000": 0,
+                "2300000": 0,
+                "3150000": 615
+              },
+              "mean_frequency_khz": 3150000.0,
+              "measurement_cpu_foreign_seconds": 0.24062600000000284,
+              "measurement_cpu_interrupt_seconds": 0.05,
+              "measurement_cpu_noninterrupt_residual_seconds": 0.24062600000000284,
+              "measurement_cpu_residual_seconds": 0.2906260000000028,
+              "per_cpu": {
+                "3": {
+                  "busy_seconds": 6.02,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 0,
+                    "iowait": 10,
+                    "irq": 4,
+                    "nice": 0,
+                    "softirq": 1,
+                    "steal": 0,
+                    "system": 327,
+                    "user": 270
+                  }
+                },
+                "51": {
+                  "busy_seconds": 5.37,
+                  "ticks": {
+                    "guest": 0,
+                    "guest_nice": 0,
+                    "idle": 61,
+                    "iowait": 13,
+                    "irq": 4,
+                    "nice": 0,
+                    "softirq": 2,
+                    "steal": 0,
+                    "system": 183,
+                    "user": 348
+                  }
+                }
+              },
+              "pressure_some_delta_us": 573251,
+              "runner_cpu_seconds": 0.0017449999999999966
+            },
+            "cpu_percent": 93.0,
+            "host_after": {
+              "affinity_cpu_frequency_khz": "4054925",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 60,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=11.98 avg60=7.78 avg300=3.28 total=46588867901\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46588867901,
+              "load_1m_per_available_cpu": 67.7060546875,
+              "load_1m_per_cpu": 0.7052714029947916,
+              "load_average": [
+                67.7060546875,
+                22.98291015625,
+                10.86474609375
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "108/8841"
+            },
+            "host_before": {
+              "affinity_cpu_frequency_khz": "3876997",
+              "available_logical_cpus": 1,
+              "concurrent_lake_lean_count": 55,
+              "cpu_affinity": [
+                3
+              ],
+              "cpu_pressure": "some avg10=14.82 avg60=7.69 avg300=3.17 total=46588294650\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+              "cpu_pressure_some_total_us": 46588294650,
+              "load_1m_per_available_cpu": 61.92529296875,
+              "load_1m_per_cpu": 0.6450551350911459,
+              "load_average": [
+                61.92529296875,
+                20.376953125,
+                9.904296875
+              ],
+              "logical_cpus": 96,
+              "runnable_tasks": "70/8744"
+            },
+            "involuntary_context_switches": 11040,
+            "peak_rss_kb": 1304388,
+            "precise_child_system_seconds": 3.228640999999996,
+            "precise_child_user_seconds": 2.4989880000000007,
+            "system_seconds": 3.22,
+            "user_seconds": 2.49,
+            "voluntary_context_switches": 13612,
+            "wall_nanos": 6155782442
+          },
+          "round": 4,
+          "signed_wall_delta_nanos": 651628980,
+          "slot_index": 0
+        }
+      ],
+      "scope": "checker and domain; no root-sum theorem",
+      "signed_wall_delta_nanos": [
+        742346706,
+        -206796673,
+        898335932,
+        651628980
+      ]
+    }
+  },
+  "schema": "hex-sturm-mathlib-literal-probes-v1",
+  "source_sha256": {
+    "HexBasic/ArrayDecEq.lean": "6ebc4dcb2e7f26ff9731b83cf9b0d16b6b293f1f44558ba516726ccdb3820af9",
+    "HexBasic/OfFn.lean": "63cd87f7e128845c403e44d17b97a26c504637fda9ce34839b1f0ea4148ac7eb",
+    "HexPoly.lean": "7d54a680162588de4016e70d8e6558caa9b295529d35c9ec88d03bd794799f9a",
+    "HexPoly/Coprime.lean": "474bd098214ed1c9ef5538b77e8d1a5a1b0b8e286392c0b5d5111913cfca5e29",
+    "HexPoly/Dense.lean": "7c358928a9151b55a854809295512857c7944f6ffb5372d7f26b115a7fc622c5",
+    "HexPoly/Euclid.lean": "9464b8af020de02dfef2d58331c9141d0462a0ce86d9c9420479d9604fb55799",
+    "HexPoly/Euclid/Content.lean": "7d9d7260e745447e55e8b353aaebe29ed0bff4fb95896451d148d34b4d05a4fa",
+    "HexPoly/Euclid/DivGcd.lean": "d56dbe5cf69e9abe58436486e4b3870afe1a07650d62aa2a36af0e528b73f149",
+    "HexPoly/Euclid/EvalMul.lean": "5d3d3298f143257ee49b6c4c99afeb8c70c6231840b937f70e267fd6cba969b5",
+    "HexPoly/Euclid/MonicUnique.lean": "b459d3db21dd6eeae12b34cd0e44fc609f77881d51960a1f2fd19f401001459b",
+    "HexPoly/Euclid/MulRing.lean": "4e6e7bf52fca3a5b9f5ebc703c6f8a6923b3628759653797f8bf9ca92b68a744",
+    "HexPoly/Euclid/Reconstruction.lean": "528737ffe53931f488d3381b0fc7ac32aeac9533f777e2a33f7d1f77074624fc",
+    "HexPoly/Field.lean": "92fb1c28ac3a90db2b295e687743b5f57e88b677bf53c14a29104d5bd3b9a650",
+    "HexPoly/Instances.lean": "bab233dd7885b965f8bcfd14de738c520a2a737859a2c148e1e6a66a3bf59f82",
+    "HexPoly/Interpret.lean": "56293a9d697e099874731ccd62dc92db2a03e1244976e2a6c56c1fff848e4392",
+    "HexPoly/Lcm.lean": "7a4df92652d683ce4e2213cc6949a5954de3a10f0623895fa171941fe7b3956a",
+    "HexPoly/Monic.lean": "d9f715b41e79f963c9d8195b610336196ca2a5d679be83c5c664b2875c5bc231",
+    "HexPoly/Operations.lean": "4341cbad08c47a1cc5fbc28df296a07a7f220266b1526e369a96e71e9f416e1d",
+    "HexPoly/PseudoDiv.lean": "379f8cd699847db6e9648e5341be10f23a315ed83b733d33e192029e6f574a6e",
+    "HexPoly/PseudoGcd.lean": "56583fa5dacfb5235b0de78f497a06f82e65c15740269e7b66506b16e7f87ea2",
+    "HexPoly/PseudoInterpret.lean": "0a7f26680ef0cfa75bb4978d1a9210afb26970adfedb6063c00bb3f2f8272355",
+    "HexPolyMathlib/Euclid.lean": "dae927eca1dba5875e0803e9f1bdc4e41220a6fca8c1641966077a8a7548e36a",
+    "HexPolyMathlib/Interpret.lean": "55d9c8d36838c7fb17a09193e8e45fe7ab26d54b3550153e5b120edcba9d2f59",
+    "HexPolyMathlib/PolynomialEquivalence.lean": "ed066fffbb7551d6e9348df0c04a7bd52516a46ba08bd711739e9f23a76bbd41",
+    "HexPolyMathlib/Pseudo.lean": "48706549c6171efb84784bcf2949c6d5880d397cc5895abfa9dcb8728657d034",
+    "HexPolyZ/IntegerPolynomial.lean": "42c011a225801f8e6d585cc9ae801feaeea5cff28277df29030caec15b386333",
+    "HexRealRoots/Basic.lean": "6a798a253aa91eb8b589f5398e66a613a98b5d81b5b45debcecb1e1275e9cb35",
+    "HexRealRoots/Chain.lean": "9e3ef4fa97c23eac4cc0359ace74add48fc3306830543e0ca9c2f1b79e31fc61",
+    "HexRealRoots/Query.lean": "f59b21594199ed7de2b9813fe574866d6e97b5650f8f9190acf9411400097aa4",
+    "HexRealRoots/QueryChain.lean": "5552126ad752791a1831ac02822ab45065a0c7a743f8c300ce5246b4f3bce778",
+    "HexRealRoots/QueryProofs.lean": "bc3622ae361fd86c3d0bcb0887088bd739de27f161e1ff5f304276d990705a79",
+    "HexRealRoots/Var.lean": "a2b7cec06a3670ba860f4ce7b6cdbde0b94e1822f305c65edc635bd9f7188ec6",
+    "HexRealRootsMathlib/QueryGcd.lean": "1912179b6124ccdc1442dc6a198f7f8c896a9391d557d8979e2ed9f0acdf3423",
+    "HexRealRootsMathlib/QueryInterpret.lean": "9fa5b7288474ad8112a7781ff75d05381f7b7d0451d5016ea0825aee9ee9efcc",
+    "HexSturm.lean": "26cee68fec6f127263e4323ddbc3a819543288cc263b6e889d384cda4fc5ee12",
+    "HexSturm/Basic.lean": "f1eb348bdecbff3929d874987afe3541b671fec7b6458cc3986cce849812ecfe",
+    "HexSturmMathlib.lean": "ba44ff228d0055fd6a24ccffee9b2cafdd73d85b1842d172c6c598b0429bd4be",
+    "HexSturmMathlib/Domain.lean": "d25fcfdc29e408e71170143943577c0fcc6e1d5df9e9606ba220e63192d6feb9",
+    "conformance/HexSturmMathlib/Replay/Accepted.lean": "28650683e880bc32e5c30cf3ca8a9eb5642b230863b0d0e51ef0779b34d7453d",
+    "conformance/HexSturmMathlib/Replay/Baseline.lean": "aa4b434651f281c38c475faaaf3784a9c343415fd3e6b4dd3fd6d32628fb0299",
+    "conformance/HexSturmMathlib/Replay/Rejected.lean": "c93d2d73de2ed1f397d2fcda1ceff382f3379110c23751184ddf3cfc2aceda8a",
+    "conformance/HexSturmMathlib/Replay/Support.lean": "fa5fd174a8fcf3a82fb31137495827a541d310fd3a9a59a93561a89c3c104f12",
+    "lake-manifest.json": "c02687afbc599908c20739609e4e1c250582dff45405467b28b372cc2113bd8d",
+    "lakefile.lean": "496e8ca8283653fc26da1d1d668874fbb0434f30d0f8735ad0a5336453d4e208",
+    "lean-toolchain": "8733782dc070a99b312039cda424f601b80f3be6f6f512627da5ba25adc27632",
+    "scripts/bench/fresh_module_sweep.py": "25aa48fb1a09351c465c7f28630a301ffe681f270de19ec75f7b28c077007282",
+    "scripts/bench/sturm_mathlib_sweep.py": "d8ebfc272eb498ac71cdbe965ae804916c7aa202643a6f7abf846c8e07b61f08",
+    "scripts/ci/check_benches_mathlib_free.py": "3b5b49820b5677918a3521246359e38cd88be664561a94afb522f33653ece126"
+  },
+  "validity": {
+    "exceptions": [],
+    "host_protocol": "shared-host-context-v1",
+    "release_quality": true
+  }
+}

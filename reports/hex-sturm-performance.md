@@ -119,6 +119,26 @@ sign evaluation. These stage observations are not additive decomposition of
 the full query: preparation, repeated squarefree/query chains, hashing and
 allocation differ. Expensive extension sign-oracle attribution is still absent.
 
+## Fresh conformance-module evidence
+
+[The retained fresh-module run](bench-results/hex-sturm-mathlib-fe5bcdd77.json)
+uses the existing `HexConformance` target and four adjacent, alternating AB/BA
+pairs per case on automatically selected CPU 3. The runner is
+`scripts/bench/sturm_mathlib_sweep.py --shared-host --cpu 3 --samples 4`.
+Every candidate rebuild printed only `propext`, `Classical.choice` and
+`Quot.sound`; compiler output and artifact sizes are retained. The source hashes
+remained unchanged. All completed samples, including concurrent host activity,
+are included.
+
+The acceptance/domain module's median fresh build was 5282.507 ms against
+4547.418 ms for its import-only baseline; the median paired difference was
+707.062 ms. The rejection/stale-context module's corresponding values were
+5252.537 ms, 5030.121 ms and 696.988 ms. These are whole fresh-build observations,
+not isolated kernel instruction timings or an absolute performance budget.
+The harness labels the differences `no-comparable-control`; no statistically
+resolved incremental-cost claim follows. No mandatory null-control protocol or
+retry was added.
+
 ## Remaining validation gates
 
 The separate fresh-module proof track checks literal acceptance, rejection of a
