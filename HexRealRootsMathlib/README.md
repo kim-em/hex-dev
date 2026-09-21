@@ -91,6 +91,23 @@ The interval vector is literal data, so endpoint extraction is often `rfl` and
 the semantic fields can be consumed directly by `simp`, `grind`, or ordinary
 proof terms.
 
+# Signed-query correspondence
+
+`QueryInterpret` transports the shared producer and literal checker through
+zero-reflecting, possibly noninjective coefficient interpretations. It proves
+positive signed identities, degree bounds, sufficiency of the internal bound
+and acceptance of produced chains. `QueryInteger.integer_certify_checks`
+proves acceptance and value agreement for produced integer/dyadic certificates.
+`QueryGcd` identifies the terminal gcd and proves that the constant-tail check
+is equivalent to squarefreeness. Query production succeeds exactly when that
+condition and the executable endpoint guards hold.
+
+The signed-remainder/Cauchy-index theorem and its polynomial IVT/Rolle
+foundation remain required for root-sum semantics, singleton-sign/count bounds
+and frontend backend agreement. The complete endpoint interpretation is also
+still required. These algebraic
+replay results do not assert those outstanding semantic theorems.
+
 # Verification
 
 The elaborator runs compiled search, reifies the Sturm chain and intervals, and

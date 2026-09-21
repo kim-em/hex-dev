@@ -280,7 +280,7 @@ repos:
   - repo: leanprover/hex-real-roots
     component: Real root isolation
     lib: HexRealRoots
-    test_modules: [HexRealRoots.ReplayTest]
+    test_modules: [HexRealRoots.ReplayTest, HexRealRoots.QueryTests]
     umbrella: true
     spec: hex-real-roots
     pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z]
@@ -296,7 +296,7 @@ repos:
 
   - repo: leanprover/hex-real-roots-mathlib
     lib: HexRealRootsMathlib
-    test_modules: [HexRealRootsMathlib.IsolateRootsTests, HexRealRootsMathlib.IsolateRootsElabTests, HexRealRootsMathlib.SturmTests, HexRealRootsMathlib.RealRootCountTests]
+    test_modules: [HexRealRootsMathlib.IsolateRootsTests, HexRealRootsMathlib.IsolateRootsElabTests, HexRealRootsMathlib.SturmTests, HexRealRootsMathlib.RealRootCountTests, HexRealRootsMathlib.QueryTests]
     umbrella: true
     spec: hex-real-roots-mathlib
     pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-z-mathlib, hex-real-roots, hex-matrix, hex-matrix-mathlib]

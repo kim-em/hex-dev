@@ -9,7 +9,7 @@ python-flint's ``fmpz_poly``.  It never calls the Lean isolator: the
 expected values come from FLINT/Arb, not from re-running the operation
 under test.
 
-Two tiers, all endpoint arithmetic in exact ``fractions.Fraction``:
+Isolation uses two tiers, with endpoint arithmetic in exact ``fractions.Fraction``:
 
 * **exact tier** — ``fmpz_poly.factor()`` yields the rational roots
   (the linear factors).  Every rational root must lie in exactly one
@@ -25,7 +25,11 @@ Two tiers, all endpoint arithmetic in exact ``fractions.Fraction``:
   strictly inside exactly one Lean interval, giving the interval ↔ real
   root bijection.
 
-Checks, per square-free fixture:
+Tarski fixtures use the pinned FLINT ``qqbar`` adapter for exact evaluation
+and signs at every real root, including irrational and common-factor roots.
+The domain guards are independently checked over ``fmpq_poly``.
+
+Checks, per square-free isolation fixture:
 
   (i)   ``root_count`` == ``len(isolations)`` == number of real roots;
   (ii)  bijection: each Lean interval holds exactly one real root and
@@ -237,6 +241,43 @@ def _match_intervals(
             )
 
 
+def _tarski_expected(coeffs: list[int], query: list[int], endpoints: list[list[int]]) -> int | None:
+    """Sum exact signs at independent FLINT qqbar roots, with exact domain guards."""
+    from scripts.oracle.real_algebraic_qqbar import QQBar
+
+    if len(endpoints) != 2 or any(len(row) != 2 for row in endpoints):
+        raise OracleMismatch("Tarski endpoints must be two dyadic pairs")
+    lower, upper = map(_dyadic_value, endpoints)
+
+    def evaluate(x: Fraction) -> Fraction:
+        value = Fraction(0)
+        for c in reversed(coeffs):
+            value = value * x + c
+        return value
+
+    if (_is_zero_poly(coeffs) or _nonsquarefree(coeffs) or not lower < upper
+            or evaluate(lower) == 0 or evaluate(upper) == 0):
+        return None
+    try:
+        with QQBar() as q:
+            lo, hi, zero = q.number(lower), q.number(upper), q.number(0)
+            roots = q.roots([q.number(c, q.integer) for c in coeffs], integer=True)
+            coefficients = [q.number(c) for c in reversed(query)]
+            total = 0
+            for root, multiplicity in roots:
+                if multiplicity != 1:
+                    raise OracleMismatch("squarefree qqbar root has unexpected multiplicity")
+                if q.compare(lo, root) < 0 and q.compare(root, hi) < 0:
+                    value = zero
+                    for c in coefficients:
+                        value = q.binary("add", q.binary("mul", value, root), c)
+                    sign = q.compare(value, zero)
+                    total += (sign > 0) - (sign < 0)
+            return total
+    except (ArithmeticError, RuntimeError, ValueError) as exc:
+        raise OracleMismatch(f"exact qqbar Tarski oracle failed: {exc}") from exc
+
+
 def check(
     source: str | Path | None,
     *,
@@ -247,7 +288,7 @@ def check(
     cases, results = split_fixtures_results(read_fixtures(source))
     oracle_version = _flint_version()
     failures = 0
-    checked = {"exact": 0, "ball": 0, "reject": 0}
+    checked = {"exact": 0, "ball": 0, "reject": 0, "tarski": 0}
 
     # Group results by case so we see root_count, isolations, and
     # isolate_none together.
@@ -265,6 +306,20 @@ def check(
             continue
         coeffs = list(record["coeffs"])
         try:
+            if "tarski" in ops:
+                query = cases.get((lib, case_id + "/query"))
+                endpoints = cases.get((lib, case_id + "/endpoints"))
+                if (query is None or query["kind"] != "poly" or endpoints is None
+                        or endpoints["kind"] != "matrix"):
+                    raise OracleMismatch("missing Tarski query polynomial or endpoints")
+                expected = _tarski_expected(coeffs, list(query["coeffs"]), endpoints["rows"])
+                actual = ops["tarski"]
+                if actual is not None and type(actual) is not int:
+                    raise OracleMismatch(f"Tarski result must be an integer or null: {actual!r}")
+                if actual != expected:
+                    raise OracleMismatch(f"Tarski query mismatch: Lean={actual}, qqbar={expected}")
+                checked["tarski"] += 1
+                continue
             if "isolate_none" in ops:
                 # (iv) rejection: genuinely rejectable and Lean said none.
                 if ops["isolate_none"] is not True:
@@ -345,7 +400,7 @@ def check(
     print(
         f"realroots_flint.py: checked {checked['ball']} isolation case(s) "
         f"({checked['exact']} with rational roots), {checked['reject']} rejection "
-        f"case(s), {failures} failure(s)",
+        f"case(s), {checked['tarski']} exact Tarski case(s), {failures} failure(s)",
         file=sys.stderr,
     )
     return 1 if failures else 0
