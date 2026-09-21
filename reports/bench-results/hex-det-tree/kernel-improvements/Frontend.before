@@ -113,7 +113,6 @@ def closeProof (target proof : Expr) : MetaM (Expr × Expr × Array Expr) := do
   return (← instantiateMVars type, ← instantiateMVars proof, args)
 
 private def checkClosed (type proof : Expr) (args : Array Expr) (profileName : String) : MetaM Expr := do
-  let (type, proof) := _root_.ShareCommon.shareCommon' (type, proof)
   let result ← profileitM Exception profileName (← getOptions) <|
     withOptions (fun o => o.setBool `profiler false) do addClosedProof type proof
   return mkAppN result args
@@ -125,28 +124,12 @@ def checked (target proof : Expr) (profileName : String := "det.symbolic.kernel"
 
 /-- Charge distinct nodes of the closed proof, including retained let payloads.
 The shared compiled counter stops as soon as the remaining budget is exceeded. -/
-private def checkPiece (target proof : Expr) : ReflectM (Expr × Nat) := do
+def checkedBudgeted (target proof : Expr) : ReflectM (Expr × Nat) := do
   let (type, proof, args) ← closeProof target proof
   let cap := (← getThe Hex.Reflect.State).budget.remaining.proofNodes + 1
   let nodes := profileit "det.symbolic.nodes" (← getOptions) fun _ => proofNodeCount #[proof] cap
   charge .proofNodes nodes
   return (← checkClosed type proof args "det.symbolic.kernel", nodes)
-
-/-- Check the outer application's proof arguments behind opaque boundaries.
-Each closed component and the final composition consume the same node budget.
-The returned count includes all auxiliary proofs, not just the composition. -/
-def checkedBudgeted (target proof : Expr) : ReflectM (Expr × Nat) := do
-  let mut assembled := proof.getAppFn
-  let mut nodes := 0
-  for arg in proof.getAppArgs do
-    if !arg.isConst && !arg.isFVar && (← isProof arg) then
-      let (arg, count) ← checkPiece (← inferType arg) arg
-      assembled := mkApp assembled arg
-      nodes := nodes + count
-    else
-      assembled := mkApp assembled arg
-  let (proof, count) ← checkPiece target assembled
-  return (proof, nodes + count)
 
 /-- Reject an already unaffordable payload before constructing its proofs.
 This is a lower bound from actual syntax, not a per-term size prediction. -/

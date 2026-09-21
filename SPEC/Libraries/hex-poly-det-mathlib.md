@@ -335,6 +335,14 @@ type and constructs identification and transport applications directly,
 without Meta unification through the literal matrix and quoted payload.
 The frontend uses compiled, capped counting of distinct nodes in the closed
 proof, including retained syntax and let-bound payloads, before kernel admission.
+Repeated subexpressions of the closed type and proof are shared before adding
+the auxiliary theorem, as in Lean's ordinary declaration elaboration.
+The outer application's proof arguments may be closed and checked as opaque
+auxiliary lemmas before checking their composition. Every component and the
+composition are charged to the same proof-node budget before their respective
+kernel checks; the reported count is their sum. Component checks are not omitted
+from performance measurements. This proof organization applies independently
+of matrix shape and does not change certificate selection or soundness.
 Early admission counts the quoted payload itself; it does not estimate proof
 size by multiplying term counts by a constant.
 Do not traverse the assembled proof with an interpreted node counter.

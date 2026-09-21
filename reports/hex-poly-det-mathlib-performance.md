@@ -861,3 +861,11 @@ one of six adjacent AB/BA pairs; the three smallest comparisons are
 inconclusive. Quiet measurements and route/axiom audits are separate. These
 focused results retain the opt-in decision and do not establish the general
 tree-certificate attribution targets above.
+
+## General kernel replay
+
+The [shared replay comparison](hex-poly-det-kernel-performance.md) measures
+opaque proof components and simpler list recursors on three inputs that use
+the general polynomial certificate. Diagnostic proof work improves by about
+8–23%, but the quiet six-pair comparisons still favor `norm_det` followed by
+`ring`. These changes add no matrix-specific routes and retain the opt-in policy.

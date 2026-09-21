@@ -41,90 +41,27 @@ abbrev PolyList (κ : Type u) := List (Term κ)
 /-! # Kernel primitives -/
 
 /-- Equality of exponent lists, using only `Nat.beq` and structural recursion. -/
-def expBeqImpl : List Nat → List Nat → Bool
+def expBeq : List Nat → List Nat → Bool
   | [], [] => true
-  | a :: as, b :: bs => Nat.beq a b && expBeqImpl as bs
+  | a :: as, b :: bs => Nat.beq a b && expBeq as bs
   | _, _ => false
 
-/-- Kernel equality through a simple recursor; compiled calls use `expBeqImpl`. -/
-noncomputable def expBeq (a b : List Nat) : Bool :=
-  List.rec (motive := fun _ => List Nat → Bool)
-    (fun b => match b with | [] => true | _ :: _ => false)
-    (fun x _ next b => match b with
-      | [] => false
-      | y :: ys => Nat.beq x y && next ys) a b
-
 /-- Lexicographic comparison of exponent lists, using only `Nat.blt`. -/
-def expCmpImpl : List Nat → List Nat → Ordering
+def expCmp : List Nat → List Nat → Ordering
   | [], [] => .eq
   | [], _ :: _ => .lt
   | _ :: _, [] => .gt
   | a :: as, b :: bs =>
       if Nat.blt a b then .lt
       else if Nat.blt b a then .gt
-      else expCmpImpl as bs
-
-/-- Kernel comparison through a simple recursor; compiled calls use `expCmpImpl`. -/
-noncomputable def expCmp (a b : List Nat) : Ordering :=
-  List.rec (motive := fun _ => List Nat → Ordering)
-    (fun b => match b with | [] => .eq | _ :: _ => .lt)
-    (fun x _ next b => match b with
-      | [] => .gt
-      | y :: ys =>
-          if Nat.blt x y then .lt
-          else if Nat.blt y x then .gt
-          else next ys) a b
+      else expCmp as bs
 
 /-- Pointwise addition of exponent lists. Canonical inputs have equal length;
 the trailing clauses make the operation total on untrusted data. -/
-def addExpImpl : List Nat → List Nat → List Nat
+def addExp : List Nat → List Nat → List Nat
   | [], bs => bs
   | as, [] => as
-  | a :: as, b :: bs => Nat.add a b :: addExpImpl as bs
-
-/-- Kernel exponent addition through a simple recursor; compiled calls use `addExpImpl`. -/
-noncomputable def addExp (a b : List Nat) : List Nat :=
-  List.rec (motive := fun _ => List Nat → List Nat)
-    (fun b => b)
-    (fun x xs next b => match b with
-      | [] => x :: xs
-      | y :: ys => Nat.add x y :: next ys) a b
-
-@[simp] theorem expBeq_nil (b : List Nat) :
-    expBeq [] b = (match b with | [] => true | _ :: _ => false) := rfl
-@[simp] theorem expBeq_cons_nil (x : Nat) (xs : List Nat) : expBeq (x :: xs) [] = false := rfl
-@[simp] theorem expBeq_cons_cons (x y : Nat) (xs ys : List Nat) :
-    expBeq (x :: xs) (y :: ys) = (Nat.beq x y && expBeq xs ys) := rfl
-
-@[simp] theorem expCmp_nil (b : List Nat) :
-    expCmp [] b = (match b with | [] => .eq | _ :: _ => .lt) := rfl
-@[simp] theorem expCmp_cons_nil (x : Nat) (xs : List Nat) : expCmp (x :: xs) [] = .gt := rfl
-@[simp] theorem expCmp_cons_cons (x y : Nat) (xs ys : List Nat) :
-    expCmp (x :: xs) (y :: ys) =
-      (if Nat.blt x y then .lt else if Nat.blt y x then .gt else expCmp xs ys) := rfl
-
-@[simp] theorem addExp_nil (b : List Nat) : addExp [] b = b := rfl
-@[simp] theorem addExp_cons_nil (x : Nat) (xs : List Nat) : addExp (x :: xs) [] = x :: xs := rfl
-@[simp] theorem addExp_cons_cons (x y : Nat) (xs ys : List Nat) :
-    addExp (x :: xs) (y :: ys) = Nat.add x y :: addExp xs ys := rfl
-
-@[csimp] theorem expBeq_eq_impl : expBeq = expBeqImpl := by
-  funext a b
-  induction a generalizing b with
-  | nil => cases b <;> rfl
-  | cons x xs ih => cases b <;> simp [expBeqImpl, ih]
-
-@[csimp] theorem expCmp_eq_impl : expCmp = expCmpImpl := by
-  funext a b
-  induction a generalizing b with
-  | nil => cases b <;> rfl
-  | cons x xs ih => cases b <;> simp [expCmpImpl, ih]
-
-@[csimp] theorem addExp_eq_impl : addExp = addExpImpl := by
-  funext a b
-  induction a generalizing b with
-  | nil => cases b <;> rfl
-  | cons x xs ih => cases b <;> simp [addExpImpl, ih]
+  | a :: as, b :: bs => Nat.add a b :: addExp as bs
 
 /-- Insert one term into descending lexicographic order, adding coefficients
 on a collision and dropping a zero coefficient. -/
@@ -195,29 +132,11 @@ def smul [Zero κ] [Mul κ] [DecidableEq κ] (a : κ)
   mapCoeffs (fun c => a * c) p
 
 /-- Multiply one term by every term of a polynomial, canonicalizing the row. -/
-def mulTermImpl [Zero κ] [Add κ] [Mul κ] [DecidableEq κ]
+def mulTerm [Zero κ] [Add κ] [Mul κ] [DecidableEq κ]
     (t : Term κ) : PolyList κ → PolyList κ
   | [] => []
   | u :: us =>
-      insert (addExp t.1 u.1, t.2 * u.2) (mulTermImpl t us)
-
-/-- Kernel row multiplication; compilation uses the equation implementation. -/
-noncomputable def mulTerm [Zero κ] [Add κ] [Mul κ] [DecidableEq κ]
-    (t : Term κ) (p : PolyList κ) : PolyList κ :=
-  List.rec (motive := fun _ => PolyList κ) []
-    (fun u _ next => insert (addExp t.1 u.1, t.2 * u.2) next) p
-
-@[simp] theorem mulTerm_nil [Zero κ] [Add κ] [Mul κ] [DecidableEq κ] (t : Term κ) :
-    mulTerm t [] = [] := rfl
-@[simp] theorem mulTerm_cons [Zero κ] [Add κ] [Mul κ] [DecidableEq κ]
-    (t u : Term κ) (us : PolyList κ) :
-    mulTerm t (u :: us) = insert (addExp t.1 u.1, t.2 * u.2) (mulTerm t us) := rfl
-
-@[csimp] theorem mulTerm_eq_impl : @mulTerm = @mulTermImpl := by
-  funext κ _ _ _ _ t p
-  induction p with
-  | nil => rfl
-  | cons u us ih => simp [mulTermImpl, ih]
+      insert (addExp t.1 u.1, t.2 * u.2) (mulTerm t us)
 
 /-- Sum rows, used for the total fallback of balanced merging. -/
 def sumRows [Zero κ] [Add κ] [DecidableEq κ] : List (PolyList κ) → PolyList κ
@@ -250,32 +169,11 @@ def isZero : PolyList κ → Bool
   | _ :: _ => false
 
 /-- Structural equality of term lists, with explicit exponent comparison. -/
-def beqImpl [DecidableEq κ] : PolyList κ → PolyList κ → Bool
+def beq [DecidableEq κ] : PolyList κ → PolyList κ → Bool
   | [], [] => true
   | t :: ts, u :: us =>
-      expBeq t.1 u.1 && decide (t.2 = u.2) && beqImpl ts us
+      expBeq t.1 u.1 && decide (t.2 = u.2) && beq ts us
   | _, _ => false
-
-/-- Kernel list equality; compilation uses the equation implementation. -/
-noncomputable def beq [DecidableEq κ] (p q : PolyList κ) : Bool :=
-  List.rec (motive := fun _ => PolyList κ → Bool)
-    (fun q => match q with | [] => true | _ :: _ => false)
-    (fun t _ next q => match q with
-      | [] => false
-      | u :: us => expBeq t.1 u.1 && decide (t.2 = u.2) && next us) p q
-
-@[simp] theorem beq_nil [DecidableEq κ] (q : PolyList κ) :
-    beq [] q = (match q with | [] => true | _ :: _ => false) := rfl
-@[simp] theorem beq_cons_nil [DecidableEq κ] (t : Term κ) (ts : PolyList κ) :
-    beq (t :: ts) [] = false := rfl
-@[simp] theorem beq_cons_cons [DecidableEq κ] (t u : Term κ) (ts us : PolyList κ) :
-    beq (t :: ts) (u :: us) = (expBeq t.1 u.1 && decide (t.2 = u.2) && beq ts us) := rfl
-
-@[csimp] theorem beq_eq_impl : @beq = @beqImpl := by
-  funext κ _ p q
-  induction p generalizing q with
-  | nil => cases q <;> rfl
-  | cons t ts ih => cases q <;> simp [beqImpl, ih]
 
 /-- Linear-time exponentiation used by `evalAt`; unlike the reference
 repeated-squaring helper this is visibly structural recursion on `Nat`. -/
@@ -336,7 +234,7 @@ theorem expBeq_iff {a b : List Nat} : expBeq a b = true ↔ a = b := by
   | cons x xs ih =>
       cases b with
       | nil => simp [expBeq]
-      | cons y ys => simp [ih]
+      | cons y ys => simp [expBeq, ih]
 
 /-- The explicit kernel comparator is the standard lexicographic list
 comparison. -/
@@ -348,31 +246,31 @@ theorem expCmp_eq_compare (a b : List Nat) : expCmp a b = compare a b := by
       | nil => rfl
       | cons y ys =>
           by_cases hxy : x < y
-          · simp [Nat.blt_eq.mpr hxy, Nat.compare_eq_lt.mpr hxy]
+          · simp [expCmp, Nat.blt_eq.mpr hxy, Nat.compare_eq_lt.mpr hxy]
           · by_cases hyx : y < x
-            · simp [Nat.blt_eq, hxy, hyx, Nat.compare_eq_gt.mpr hyx]
+            · simp [expCmp, Nat.blt_eq, hxy, hyx, Nat.compare_eq_gt.mpr hyx]
             · have h : x = y := Nat.le_antisymm (Nat.le_of_not_gt hyx)
                 (Nat.le_of_not_gt hxy)
               subst y
-              simp [ih]
+              simp [expCmp, ih]
 
 /-- The result `.lt` of the explicit comparator is lexicographic `<`. -/
 theorem expCmp_eq_lt_iff {a b : List Nat} : expCmp a b = .lt ↔ a < b := by
   induction a generalizing b with
-  | nil => cases b <;> simp
+  | nil => cases b <;> simp [expCmp]
   | cons x xs ih =>
       cases b with
-      | nil => simp
+      | nil => simp [expCmp]
       | cons y ys =>
           by_cases hxy : x < y
-          · simp [Nat.blt_eq.mpr hxy, List.cons_lt_cons_iff, hxy]
+          · simp [expCmp, Nat.blt_eq.mpr hxy, List.cons_lt_cons_iff, hxy]
           · by_cases hyx : y < x
             · have hne : x ≠ y := Nat.ne_of_gt hyx
-              simp [Nat.blt_eq, hxy, hyx, hne, List.cons_lt_cons_iff]
+              simp [expCmp, Nat.blt_eq, hxy, hyx, hne, List.cons_lt_cons_iff]
             · have heq : x = y := Nat.le_antisymm (Nat.le_of_not_gt hyx)
                 (Nat.le_of_not_gt hxy)
               subst y
-              simp [ih]
+              simp [expCmp, ih]
 
 /-- Pointwise exponent addition preserves a common arity. -/
 theorem length_addExp {a b : List Nat} {n : Nat}
@@ -387,7 +285,7 @@ theorem length_addExp {a b : List Nat} {n : Nat}
           simp only [List.length_cons] at ha hb
           have hxs : xs.length = ys.length := by omega
           have hi := ih (b := ys) (n := xs.length) rfl hxs.symm
-          simp only [addExp_cons_cons, List.length_cons]
+          simp only [addExp, List.length_cons]
           rw [hi]
           omega
 
@@ -771,7 +669,7 @@ theorem mulTerm_canonical [Zero κ] [Add κ] [Mul κ] [DecidableEq κ]
   | nil => exact ⟨fun _ h => by contradiction, List.Pairwise.nil,
       fun _ h => by contradiction⟩
   | cons u us ih =>
-      rw [mulTerm_cons]
+      rw [mulTerm]
       apply insert_canonical
       · exact length_addExp ht (hp.1 u (List.mem_cons_self ..))
       · exact ih ⟨fun v hv => hp.1 v (List.mem_cons_of_mem _ hv),
@@ -1173,7 +1071,7 @@ theorem getD_addExp {a b : List Nat} {n i : Nat}
           | zero => simp [addExp]
           | succ i =>
               simp only [List.length_cons] at ha hb
-              simp only [addExp_cons_cons, List.getD_cons_succ]
+              simp only [addExp, List.getD_cons_succ]
               exact ih (n := xs.length) (i := i) rfl (by omega) (by omega)
 
 /-- List exponent addition denotes monomial multiplication. -/
@@ -1198,10 +1096,10 @@ theorem denote_mulTerm {n : Nat} {κ : Type u} [Lean.Grind.Semiring κ]
       MvPoly.monomial (mono n t.1) t.2 * denote (cmp := cmp) p := by
   induction p with
   | nil =>
-      simp only [mulTerm_nil, denote]
+      simp only [mulTerm, denote]
       exact (MvPoly.mul_zero _).symm
   | cons u us ih =>
-      rw [mulTerm_cons, denote_insert, ih
+      rw [mulTerm, denote_insert, ih
         (fun v hv => hp v (List.mem_cons_of_mem _ hv)), denote,
         MvPoly.mul_add, MvPoly.monomial_mul_monomial,
         mono_addExp ht (hp u (List.mem_cons_self ..))]
@@ -1684,7 +1582,7 @@ theorem beq_eq_true_iff [DecidableEq κ] {p q : PolyList κ} :
       cases q with
       | nil => simp [beq]
       | cons u us =>
-          simp only [beq_cons_cons, Bool.and_eq_true, decide_eq_true_eq, ih, expBeq_iff]
+          simp only [beq, Bool.and_eq_true, decide_eq_true_eq, ih, expBeq_iff]
           constructor
           · rintro ⟨⟨he, hc⟩, htail⟩
             have htu : t = u := Prod.ext he hc

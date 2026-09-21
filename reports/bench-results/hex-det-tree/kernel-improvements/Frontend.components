@@ -113,7 +113,6 @@ def closeProof (target proof : Expr) : MetaM (Expr × Expr × Array Expr) := do
   return (← instantiateMVars type, ← instantiateMVars proof, args)
 
 private def checkClosed (type proof : Expr) (args : Array Expr) (profileName : String) : MetaM Expr := do
-  let (type, proof) := _root_.ShareCommon.shareCommon' (type, proof)
   let result ← profileitM Exception profileName (← getOptions) <|
     withOptions (fun o => o.setBool `profiler false) do addClosedProof type proof
   return mkAppN result args

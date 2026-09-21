@@ -652,3 +652,39 @@ example (a b : Int) : True := by
   trivial
 
 end StructuralBudgetTests
+
+namespace ComponentTests
+open Lean Meta Elab Tactic HexMatrixMathlib.DetPoly.Frontend
+
+-- Both auxiliary lemmas must close over a retained let and universe parameter.
+theorem closedComponents {α : Type u} (x : α) : x = x ∧ x = x := by
+  let y := x
+  run_tac withMainContext do
+    let y ← getFVarFromUserName `y
+    let h ← mkEqRefl y
+    let proof ← mkAppM ``And.intro #[h, h]
+    let target ← getMainTarget
+    let .success (checked, count) usage ← Hex.Reflect.run <| Hex.Reflect.withOutcome <|
+        checkedBudgeted target proof | throwError "component check failed"
+    unless count == usage.proofNodes do throwError "component accounting omitted nodes"
+    -- A budget one node short must decline after checking the components,
+    -- rather than resetting the budget for the final composition.
+    let config : Hex.Reflect.Config :=
+      { budget := { Hex.Reflect.Budget.default with proofNodes := count - 1 } }
+    let .declined (.budgetExhausted exhausted) partialUsage ← Hex.Reflect.run
+        (Hex.Reflect.withOutcome <| checkedBudgeted target proof) config
+      | throwError "component checks escaped the shared budget"
+    unless exhausted.dimension == .proofNodes && partialUsage.proofNodes > 0 do
+      throwError "expected exhaustion after component admission"
+    let config := { config with budget.proofNodes := count }
+    let .success (_, exactCount) _ ← Hex.Reflect.run
+        (Hex.Reflect.withOutcome <| checkedBudgeted target proof) config
+      | throwError "exact component budget was rejected"
+    unless exactCount == count do throwError "component count changed"
+    closeMainGoal `det checked
+
+/-- info: 'ComponentTests.closedComponents' does not depend on any axioms -/
+#guard_msgs in
+#print axioms closedComponents
+
+end ComponentTests

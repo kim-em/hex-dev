@@ -98,7 +98,7 @@ theorem map_mulTerm (t : Term α) (p : PolyList α) :
     map f (mulTerm t p) = mulTerm (t.1, f t.2) (map f p) := by
   induction p with
   | nil => rfl
-  | cons u us ih => simp [mulTerm, map_insert f hz ha, hm, ih]
+  | cons u us ih => simp [map_insert f hz ha, hm, ih]
 
 omit hm [Mul α] [Mul β] in
 theorem map_sumRows (ps : List (PolyList α)) :
