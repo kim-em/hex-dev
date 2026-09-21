@@ -1,5 +1,10 @@
 # HexPoly Performance Report
 
+The new shared pseudo-gcd scaling check is inconclusive. [#10375](https://github.com/kim-em/hex-dev/issues/10375#issuecomment-5757400442)
+records the retained measurements and remaining investigation. Phase 4 is
+therefore incomplete; the measurements below cover the previously implemented
+operations.
+
 ## Bench Targets
 
 - `Hex.PolyBench.runAddChecksum`: `n`

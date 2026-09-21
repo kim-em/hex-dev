@@ -1,5 +1,10 @@
 # HexRealRootsMathlib Performance Report
 
+The new shared query path lacks its required root-sum and semantic replay
+theorems under [#10375](https://github.com/kim-em/hex-dev/issues/10375#issuecomment-5757400442); actual foundation delivery is a Phase-3 gate.
+The library is recorded through Phase 2. The earlier proof measurements below
+do not discharge the new correspondence obligation.
+
 ## Bench Targets
 
 `HexRealRootsMathlib` is proof-only: it has no LeanBench executable or compiled runtime benchmark surface. These build-only fresh-module probes replace a compiled complexity registration for `isolate_roots` elaboration, proof emission, certificate replay, and ordinary kernel checking.

@@ -1,5 +1,10 @@
 # HexRealRoots Performance Report
 
+The shared Sturm–Tarski additions still require root-sum/replay correspondence
+and complete performance validation under [#10375](https://github.com/kim-em/hex-dev/issues/10375#issuecomment-5757400442). The library is
+recorded through Phase 2. The existing isolation and derivative-Sturm evidence
+below remains available for re-attestation after those gates are resolved.
+
 ## Bench Targets
 
 Declared complexities copied verbatim from the `setup_benchmark` registration
