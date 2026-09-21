@@ -1,0 +1,329 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+Warning:
+Kernel address maps (/proc/{kallsyms,modules}) were restricted.
+
+Check /proc/sys/kernel/kptr_restrict before running 'perf record'.
+
+As no suitable kallsyms nor vmlinux was found, kernel samples
+can't be resolved.
+
+Samples in kernel modules can't be resolved as well.
+
+#
+# Total Lost Samples: 0
+#
+# Samples: 325  of event 'cpu/cycles/P'
+# Event count (approx.): 1495898814
+#
+# Overhead  Command         Shared Object         Symbol                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+# ........  ..............  ....................  .........................................................................................................................................................................................................................................................................................................................................................................................................................................................
+#
+     8.60%  hexsturm_bench  hexsturm_bench        [.] l_Int_trailingZeros_aux___redArg
+     5.81%  hexsturm_bench  libc.so.6             [.] cfree@GLIBC_2.2.5
+     4.68%  hexsturm_bench  libc.so.6             [.] malloc
+     3.79%  hexsturm_bench  hexsturm_bench        [.] __gmpz_add
+     3.78%  hexsturm_bench  hexsturm_bench        [.] lean_nat_gcd
+     3.30%  hexsturm_bench  hexsturm_bench        [.] __gmpz_mul_2exp
+     2.80%  hexsturm_bench  hexsturm_bench        [.] lean_apply_1
+            |          
+             --0.82%--lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       lean_apply_1
+                       lean_apply_1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       lean_apply_1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+                       lean_apply_1
+                       l_Lean_Parser_andthenInfo___lam__1
+
+     2.69%  hexsturm_bench  hexsturm_bench        [.] lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)
+            |          
+             --0.93%--lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)
+                       lean_dec_ref_cold
+                       0xfffffffe
+
+     2.66%  hexsturm_bench  hexsturm_bench        [.] __gmpz_init_set_ui
+     2.65%  hexsturm_bench  hexsturm_bench        [.] __gmpz_realloc
+     2.61%  hexsturm_bench  hexsturm_bench        [.] __gmpz_init_set
+     2.57%  hexsturm_bench  hexsturm_bench        [.] lp_Hex___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Hex_DensePoly_contentNatImpl_spec__0
+     2.31%  hexsturm_bench  libc.so.6             [.] realloc
+     1.88%  hexsturm_bench  hexsturm_bench        [.] lp_Hex___private_Init_Data_Array_Basic_0__Array_mapMUnsafe_map___at___00Hex_DensePoly_negImpl___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__11_spec__19_spec__28
+     1.74%  hexsturm_bench  hexsturm_bench        [.] lean_dec_ref_cold
+     1.73%  hexsturm_bench  hexsturm_bench        [.] __gmpz_clear
+     1.72%  hexsturm_bench  hexsturm_bench        [.] lean::mpz::get_size_t() const
+     1.71%  hexsturm_bench  hexsturm_bench        [.] l___private_Init_Data_Array_Basic_0__Array_ofFn_go___redArg
+     1.70%  hexsturm_bench  hexsturm_bench        [.] __gmp_default_allocate
+     1.46%  hexsturm_bench  hexsturm_bench        [.] lean::mpz::~mpz()
+     1.45%  hexsturm_bench  hexsturm_bench        [.] lean::mpz::mpz(unsigned long)
+     1.41%  hexsturm_bench  hexsturm_bench        [.] lp_Hex___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00__private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Hex_DensePoly_pseudoDivMod___at___00Hex_DensePoly_pseudoDiv___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__11_spec__16_spec__23_spec__31_spec__36
+     1.38%  hexsturm_bench  hexsturm_bench        [.] mi_free
+            |          
+             --1.08%--mi_free
+
+     1.20%  hexsturm_bench  hexsturm_bench        [.] __gmp_default_reallocate
+     1.19%  hexsturm_bench  hexsturm_bench        [.] l_Dyadic_mul
+     1.18%  hexsturm_bench  hexsturm_bench        [.] l_Int_shiftLeft
+     1.17%  hexsturm_bench  hexsturm_bench        [.] lp_Hex_Hex_DensePoly_pseudoDivMod___at___00Hex_DensePoly_pseudoDiv___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__11_spec__16_spec__23
+     1.14%  hexsturm_bench  hexsturm_bench        [.] lp_Hex___private_Init_Data_Array_Basic_0__Array_mapMUnsafe_map___at___00Hex_DensePoly_primitivePartImpl_spec__0
+     1.14%  hexsturm_bench  hexsturm_bench        [.] free@plt
+     1.13%  hexsturm_bench  hexsturm_bench        [.] l_Int_shiftRight
+     1.13%  hexsturm_bench  hexsturm_bench        [.] lp_Hex___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Hex_DensePoly_pseudoDivMod___at___00Hex_DensePoly_pseudoDiv___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__11_spec__16_spec__23_spec__30
+     0.90%  git             libc.so.6             [.] __strcmp_evex
+            |
+            ---__strcmp_evex
+               git_status_config
+               configset_iter
+               status_init_config
+               cmd_status
+               handle_builtin
+               cmd_main
+               main
+               __libc_start_call_main
+               __libc_start_main@@GLIBC_2.34
+               _start
+
+     0.90%  git             [unknown]             [k] 0xffffffffbba72620
+            |
+            ---0xffffffffc0d32aec
+               0xffffffffc0d33878
+               0xffffffffbba72206
+               0xffffffffbba72e16
+               0xffffffffbc3be27e
+               0xffffffffbc400130
+               __GI___getdents64
+               __GI___readdir64
+               readdir_skip_dot_and_dotdot
+               read_directory_recursive
+               read_directory_recursive
+               read_directory_recursive
+               read_directory
+               fill_directory
+               wt_status_collect_untracked
+               wt_status_collect
+               cmd_status
+               handle_builtin
+               cmd_main
+               main
+               __libc_start_call_main
+               __libc_start_main@@GLIBC_2.34
+               _start
+
+     0.90%  hexsturm_bench  hexsturm_bench        [.] lean::validate_utf8(unsigned char const*, unsigned long, unsigned long&, unsigned long&)
+     0.89%  hexsturm_bench  hexsturm_bench        [.] lean::mpz::mpz(long)
+     0.86%  hexsturm_bench  hexsturm_bench        [.] lean_big_int_to_nat
+     0.85%  hexsturm_bench  libc.so.6             [.] _int_free_chunk
+     0.70%  git             git                   [.] get_next_char
+            |
+            ---get_next_char
+               do_config_from
+               git_config_from_file_with_options
+               read_repository_format
+               check_repository_format_gently
+               setup_git_directory_gently
+               cmd_rev_parse
+               handle_builtin
+               cmd_main
+               main
+               __libc_start_call_main
+               __libc_start_main@@GLIBC_2.34
+               _start
+
+     0.68%  git             git                   [.] memihash
+            |
+            ---memihash
+
+     0.67%  git             [unknown]             [k] 0xffffffffbba5b3e4
+            |
+            ---0xffffffffc0d49fa7
+               0xffffffffbba5be63
+               0xffffffffbba5c0cd
+               0xffffffffbba5c44d
+               0xffffffffbba5c82d
+               0xffffffffbc3be27e
+               0xffffffffbc400130
+
+     0.65%  hexsturm_bench  hexsturm_bench        [.] lean_copy_expand_array
+            |
+            ---lean_copy_expand_array
+               l_Lean_SMap_insert___at___00__private_Lean_KeyedDeclsAttribute_0__Lean_KeyedDeclsAttribute_Table_insert_spec__1___redArg
+
+     0.63%  hexsturm_bench  hexsturm_bench        [.] _init_l_Std_Packages_PreorderOfLEArgs_decidableLT___autoParam___closed__4
+            |
+            ---_init_l_Std_Packages_PreorderOfLEArgs_decidableLT___autoParam___closed__4
+               0xe765b
+
+     0.59%  hexsturm_bench  hexsturm_bench        [.] lean_alloc_object
+     0.59%  hexsturm_bench  hexsturm_bench        [.] __gmpz_add_ui
+     0.59%  hexsturm_bench  hexsturm_bench        [.] __gmpn_gcd_11_x86_64
+     0.59%  hexsturm_bench  hexsturm_bench        [.] lean::mpz::is_size_t() const
+     0.59%  hexsturm_bench  hexsturm_bench        [.] lp_Hex_Hex_DensePoly_pseudoDiv___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__11_spec__16
+     0.59%  hexsturm_bench  hexsturm_bench        [.] __gmpz_gcd
+     0.59%  hexsturm_bench  hexsturm_bench        [.] lp_Hex___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Hex_DensePoly_pseudoDivMod___at___00Hex_DensePoly_pseudoDiv___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__11_spec__16_spec__23_spec__33
+     0.58%  hexsturm_bench  hexsturm_bench        [.] lean_nat_shiftl
+     0.58%  hexsturm_bench  hexsturm_bench        [.] lp_Hex___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Hex_DensePoly_pseudoDivMod___at___00Hex_DensePoly_pseudoDiv___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__11_spec__16_spec__23_spec__32
+     0.58%  hexsturm_bench  hexsturm_bench        [.] l_Dyadic_ofIntWithPrec
+     0.58%  hexsturm_bench  hexsturm_bench        [.] lean::mpz::ediv(lean::mpz const&, lean::mpz const&)
+     0.57%  hexsturm_bench  hexsturm_bench        [.] lean_int_big_ediv
+     0.57%  hexsturm_bench  hexsturm_bench        [.] lp_Hex___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Hex_DensePoly_pseudoDivMod___at___00Hex_DensePoly_pseudoDiv___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__11_spec__16_spec__23_spec__29
+     0.57%  hexsturm_bench  hexsturm_bench        [.] lean::mpz_to_int(lean::mpz const&)
+     0.57%  hexsturm_bench  hexsturm_bench        [.] l_Dyadic_add
+     0.56%  hexsturm_bench  hexsturm_bench        [.] l_Std_DTreeMap_Internal_Impl_insert___at___00Lean_NameMap_insert_spec__0___redArg
+            |
+            ---l_Std_DTreeMap_Internal_Impl_insert___at___00Lean_NameMap_insert_spec__0___redArg
+               lean_register_option
+
+     0.55%  git             [unknown]             [k] 0xffffffffbc3c528f
+            |
+            ---0xffffffffbbd3b165
+               0xffffffffbba64660
+               0xffffffffbba4f726
+               0xffffffffbba4fbf2
+               0xffffffffbc3be27e
+               0xffffffffbc400130
+               __syscall_cancel_arch_end
+               __internal_syscall_cancel
+               __syscall_cancel
+               __GI___libc_open
+               add_patterns
+               prep_exclude
+               last_matching_pattern
+               is_excluded
+               treat_path
+               read_directory_recursive
+               read_directory_recursive
+               read_directory
+               fill_directory
+               wt_status_collect_untracked
+               wt_status_collect
+               cmd_status
+               handle_builtin
+               cmd_main
+               main
+               __libc_start_call_main
+               __libc_start_main@@GLIBC_2.34
+               _start
+
+
+
+#
+# (Tip: To see call chains by final symbol taking CPU time (bottom up) use perf report -G)
+#

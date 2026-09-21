@@ -1,0 +1,40 @@
+{
+  "cpu": 1,
+  "load": [
+    5.705078125,
+    4.45361328125,
+    4.1533203125
+  ],
+  "commands": [
+    {
+      "argv": [
+        ".lake/build/bin/hexsturm_bench",
+        "profile",
+        "Hex.SturmBench.runInteger",
+        "--param",
+        "20",
+        "--target-inner-nanos",
+        "500000000",
+        "--profiler",
+        "perf record --clockid mono -F 1999 -g --call-graph dwarf -o /tmp/issue-10375-integer-20-regions.perf --"
+      ],
+      "exit_code": 0,
+      "sidecar": "reports/bench-results/sturm-ec8f7c14f914/integer-20-regions.jsonl"
+    },
+    {
+      "argv": [
+        ".lake/build/bin/hexsturm_bench",
+        "profile",
+        "Hex.SturmBench.runInitialHigh",
+        "--param",
+        "96",
+        "--target-inner-nanos",
+        "500000000",
+        "--profiler",
+        "perf record --clockid mono -F 1999 -g --call-graph dwarf -o /tmp/issue-10375-initial-96-regions.perf --"
+      ],
+      "exit_code": 0,
+      "sidecar": "reports/bench-results/sturm-ec8f7c14f914/initial-96-regions.jsonl"
+    }
+  ]
+}

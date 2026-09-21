@@ -1579,6 +1579,10 @@ lean_exe hexgramschmidt_bench where
   srcDir := "bench"
   root := `HexGramSchmidt.Bench
 
+lean_lib HexSturmMathlibReplayProbe where
+  srcDir := "bench"
+  globs := #[.submodules `HexSturmMathlib.ProofProbe]
+
 lean_exe hexsturm_bench where
   srcDir := "bench"
   root := `HexSturm.Bench

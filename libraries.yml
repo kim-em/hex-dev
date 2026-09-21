@@ -1572,6 +1572,7 @@ libraries:
     mathlib: true
     done_through: 0
     status: active
+    proof_probes: [bench/HexSturmMathlib/ProofProbe]
   HexRCF:
     deps: [HexRealRoots, HexRealRootsMathlib, HexPolyZ, HexPolyZMathlib, HexRealFormulaMathlib]
     mathlib: true

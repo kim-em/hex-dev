@@ -1,0 +1,99 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+Warning:
+Kernel address maps (/proc/{kallsyms,modules}) were restricted.
+
+Check /proc/sys/kernel/kptr_restrict before running 'perf record'.
+
+As no suitable kallsyms nor vmlinux was found, kernel samples
+can't be resolved.
+
+Samples in kernel modules can't be resolved as well.
+
+#
+# Total Lost Samples: 0
+#
+# Samples: 483  of event 'cpu/cycles/P'
+# Event count (approx.): 2160559159
+#
+# Overhead  Command         Shared Object         Symbol                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+# ........  ..............  ....................  ......................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................
+#
+     7.16%  hexsturm_bench  hexsturm_bench        [.] lp_Hex___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Hex_DensePoly_pseudoDivMod___at___00Hex_DensePoly_pseudoDiv___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__11_spec__16_spec__23_spec__29
+     6.56%  hexsturm_bench  hexsturm_bench        [.] lean_dec_ref_cold
+     5.90%  hexsturm_bench  hexsturm_bench        [.] l___private_Init_Data_Array_Basic_0__Array_ofFn_go___redArg
+     5.08%  hexsturm_bench  hexsturm_bench        [.] lp_Hex_List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__10_spec__13
+     4.71%  hexsturm_bench  hexsturm_bench        [.] lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)
+     4.29%  hexsturm_bench  libc.so.6             [.] cfree@GLIBC_2.2.5
+     4.25%  hexsturm_bench  hexsturm_bench        [.] lean_apply_1
+     3.67%  hexsturm_bench  hexsturm_bench        [.] l_List_range_loop
+     3.44%  hexsturm_bench  hexsturm_bench        [.] lp_Hex___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00__private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Hex_DensePoly_pseudoDivMod___at___00Hex_DensePoly_pseudoDiv___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__11_spec__16_spec__23_spec__33_spec__39
+     3.23%  hexsturm_bench  hexsturm_bench        [.] __gmpz_init_set
+     3.06%  hexsturm_bench  libc.so.6             [.] malloc
+     2.83%  hexsturm_bench  hexsturm_bench        [.] lean::mpz_to_int(lean::mpz const&)
+     2.66%  hexsturm_bench  hexsturm_bench        [.] mi_free
+     2.45%  hexsturm_bench  hexsturm_bench        [.] mi_malloc_small
+     2.05%  hexsturm_bench  hexsturm_bench        [.] lean::mpz::~mpz()
+     2.04%  hexsturm_bench  hexsturm_bench        [.] lean_array_push
+     1.63%  hexsturm_bench  hexsturm_bench        [.] lean_int_big_mul
+     1.63%  hexsturm_bench  hexsturm_bench        [.] __gmpn_copyi_x86_64
+     1.63%  hexsturm_bench  hexsturm_bench        [.] __gmpz_realloc
+     1.42%  hexsturm_bench  hexsturm_bench        [.] lp_Hex_List_foldl___at___00List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__10_spec__14_spec__20
+     1.23%  hexsturm_bench  hexsturm_bench        [.] lp_Hex___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Hex_SturmBench_chainHash_spec__0
+     1.23%  hexsturm_bench  libc.so.6             [.] _int_malloc
+     1.21%  hexsturm_bench  hexsturm_bench        [.] __gmpz_clear
+     1.02%  hexsturm_bench  hexsturm_bench        [.] __gmpz_cmp_si
+     1.02%  hexsturm_bench  hexsturm_bench        [.] __gmp_default_allocate
+     1.02%  hexsturm_bench  libc.so.6             [.] _int_free_chunk
+     1.01%  hexsturm_bench  hexsturm_bench        [.] lp_Hex___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Hex_DensePoly_pseudoDivMod___at___00Hex_DensePoly_pseudoDiv___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__11_spec__16_spec__23_spec__32
+     1.00%  hexsturm_bench  hexsturm_bench        [.] lp_Hex___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Hex_DensePoly_pseudoDivMod___at___00Hex_DensePoly_pseudoDiv___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__11_spec__16_spec__23_spec__34___redArg
+     0.86%  hexsturm_bench  hexsturm_bench        [.] lean_copy_expand_array
+            |
+            ---lean_copy_expand_array
+
+     0.84%  hexsturm_bench  hexsturm_bench        [.] lean_string_utf8_get
+     0.82%  hexsturm_bench  hexsturm_bench        [.] __gmpz_add_ui
+     0.82%  hexsturm_bench  hexsturm_bench        [.] lp_Hex_npowRec___at___00Hex_DensePoly_pseudoDiv___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__11_spec__16_spec__24
+     0.82%  hexsturm_bench  hexsturm_bench        [.] lean_int_big_add
+     0.82%  hexsturm_bench  libc.so.6             [.] realloc
+     0.82%  hexsturm_bench  hexsturm_bench        [.] __gmpz_mul_si
+     0.80%  hexsturm_bench  hexsturm_bench        [.] lean_alloc_object
+     0.79%  hexsturm_bench  hexsturm_bench        [.] l_Array_range
+     0.76%  hexsturm_bench  hexsturm_bench        [.] l___private_Lean_Parser_Extension_0__Lean_Parser_addTokenConfig
+            |
+            ---l___private_Lean_Parser_Extension_0__Lean_Parser_addTokenConfig
+               l_List_foldlM___at___00Lean_Parser_addParserTokens_spec__0
+               initialize_Lean_Parser
+               main
+               _GLOBAL_OFFSET_TABLE_
+
+     0.61%  hexsturm_bench  hexsturm_bench        [.] lp_Hex___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Hex_DensePoly_pseudoDivMod___at___00Hex_DensePoly_pseudoDiv___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__11_spec__16_spec__23_spec__30
+     0.61%  hexsturm_bench  hexsturm_bench        [.] l_List_range
+     0.61%  hexsturm_bench  hexsturm_bench        [.] l_Array_range___lam__0___boxed
+     0.60%  hexsturm_bench  hexsturm_bench        [.] lean::mpz::operator+=(int)
+     0.59%  hexsturm_bench  hexsturm_bench        [.] lean::mpz::operator*=(int)
+     0.57%  git             git                   [.] repo_config_values
+            |
+            ---repo_config_values
+               cmd_rev_parse
+               handle_builtin
+               cmd_main
+               main
+               __libc_start_call_main
+               __libc_start_main@@GLIBC_2.34
+               _start
+
+     0.54%  hexsturm_bench  hexsturm_bench        [.] lean_mark_mt
+            |
+            ---lean_mark_mt
+
+     0.53%  hexsturm_bench  hexsturm_bench        [.] lean_mark_persistent
+            |
+            ---lean_mark_persistent
+               std::__1::__poll_with_backoff_results std::__1::__libcpp_thread_poll_with_backoff[abi:nqe220104]<std::__1::__atomic_wait_unless[abi:nqe220104]<std::__1::__atomic_base<int, false>, std::__1::__atomic_wait[abi:nqe220104]<std::__1::__atomic_base<int, false> const, int>(std::__1::__atomic_base<int, false> const&, int, std::__1::memory_order)::{lambda(int const&)#1}>(std::__1::__atomic_base<int, false> const&, std::__1::memory_order, std::__1::__atomic_wait[abi:nqe220104]<std::__1::__atomic_base<int, false> const, int>(std::__1::__atomic_base<int, false> const&, int, std::__1::memory_order)::{lambda(int const&)#1}&&)::{lambda()#1}, std::__1::__atomic_wait_backoff_impl<std::__1::__atomic_base<int, false>, std::__1::__atomic_wait[abi:nqe220104]<std::__1::__atomic_base<int, false> const, int>(std::__1::__atomic_base<int, false> const&, int, std::__1::memory_order)::{lambda(int const&)#1}>&>(std::__1::__atomic_base<int, false> const&&, std::__1::__atomic_wait[abi:nqe220104]<std::__1::__atomic_base<int, false> const, 
+
+
+
+#
+# (Tip: To not record events from perf itself add --exclude-perf)
+#

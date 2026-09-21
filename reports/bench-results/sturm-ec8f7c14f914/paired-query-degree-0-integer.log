@@ -1,0 +1,13 @@
+Hex.SturmBench.runIntegerHigh    expected complexity: m    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=ec8f7c1-dirty, 2026-09-21T07:43:05Z, host=chungus2
+  param  per-call   repeats  C
+     16   4.139 µs  ×2^14    C=258.689 †
+     24   4.713 µs  ×2^14    C=196.380
+     32   5.316 µs  ×2^14    C=166.146
+     48   6.348 µs  ×2^14    C=132.270
+     64   8.300 µs  ×2^13    C=129.691
+     96  15.539 µs  ×2^12    C=161.868
+  verdict: inconclusive (cMin=129.691, cMax=196.380, β=-0.177, looks faster than declared by ~n^0.177)
+  per-spawn floor (harness self-measurement): 21.286 ms
+  peak RSS: 67_720 kB..68_260 kB (across 6 ok row(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-ec8f7c14f914/paired-query-degree-0-integer.json

@@ -17,16 +17,18 @@ chain is normal, with one degree lost per step. A division between consecutive
 degrees makes two cancellations, each visiting O(n) stored coefficients; the
 whole chain and both endpoint Horner passes therefore take O(n²) coefficient
 operations. This is a family-specific bound within the SPEC's conservative
-O(n³) query bound. The small scientific ladder keeps the integer coefficients
-and positive division scales in the small-integer regime; `inspect` records
-the actual certificate sizes and coefficient bit lengths.
+O(n³) query bound. `inspect` records stored certificate sizes and coefficient
+bit lengths. Its 60-bit bound does not bound intermediate arithmetic or imply
+that Lean stores every coefficient unboxed; wall-time consistency with the
+coefficient-operation model must be checked separately.
 
 The query-degree family fixes `P=x²-2` and uses `F=x^m+1`. Initial reduction
 uses the shared dynamic coefficient recurrence with O(m) entries and at most
 two correction terms per entry. It takes O(m) coefficient operations. Replay
 multiplies a degree-O(m) quotient by the fixed quadratic and also takes O(m)
 operations. The returned integer coefficients have O(m) bits and stay
-below 64 bits on the declared ladder; this is not a uniform bit-complexity claim.
+below 64 bits on the declared ladder; neither intermediate bit sizes nor a
+uniform bit-complexity bound follow from this observation.
 
 Input preparation and metadata collection are outside timed bodies. Output
 hashes include actual coefficients and certificate scalars, not just dimensions.

@@ -1,0 +1,12 @@
+Hex.SturmBench.runInteger    expected complexity: n ^ 2    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=ec8f7c1-dirty, 2026-09-21T07:43:02Z, host=chungus2
+  param  per-call    repeats  C
+      8   19.222 µs  ×2^12    C=300.354 †
+     10   28.151 µs  ×2^11    C=281.520
+     12   39.402 µs  ×2^11    C=273.626
+     16   82.477 µs  ×2^10    C=322.177
+     20  152.717 µs  ×2^9     C=381.794
+  verdict: consistent with declared complexity (cMin=273.626, cMax=381.794, β=—)
+  per-spawn floor (harness self-measurement): 21.539 ms
+  peak RSS: 68_112 kB..68_484 kB (across 5 ok row(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-ec8f7c14f914/paired-degree-1-integer.json

@@ -1,0 +1,14 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+module
+
+public import HexSturmMathlib.ProofProbe.Support
+
+public section
+namespace HexSturmMathlib.ProofProbe
+open Hex DensePoly
+
+end HexSturmMathlib.ProofProbe
