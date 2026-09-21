@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import HexPoly.Euclid
 import HexPoly.PseudoGcd
 import HexPoly.Lcm
+import HexPoly.InterpretTests
 
 /-!
 Core conformance checks for `hex-poly`'s dense/basic and Euclidean-operation surface.
@@ -14,6 +15,8 @@ Core conformance checks for `hex-poly`'s dense/basic and Euclidean-operation sur
 Oracle: none
 Mode: always
 Covered operations:
+- the zero-reflecting coefficient map and transfer of existing arithmetic,
+  division, gcd and xgcd on noncanonical coefficients (`HexPoly.InterpretTests`)
 - dense representation constructors and accessors (`ofCoeffs`, `ofList`, `C`, `monomial`, `size`, `isZero`, `coeff`, `degree?`, `support`, `toArray`)
 - basic executable arithmetic (`scale`, `shift`, `add`, `neg`, `sub`, `mul`, `eval`, `compose`, `derivative`)
 - Euclidean helpers (`leadingCoeff`, `divModMonic`, `divMod`, `/`, `%`, `modByMonic`, `gcd`, `xgcd`, `xgcdLeftMonic`)

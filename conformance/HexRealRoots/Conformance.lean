@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexRealRoots
+import HexRealRoots.QueryTests
 
 /-!
 Core conformance checks for `HexRealRoots`.
@@ -16,6 +17,8 @@ uses `python-flint` (`fmpz_poly` real-root isolation) via
 Mode: always for core, `if_available` for the `python-flint` oracle profile.
 
 Covered operations:
+- `Hex.ZPoly.tarskiQuery`, `Hex.TarskiReplay.certify`, `Hex.TarskiReplay.check`
+  and the generic endpoint/query replay APIs, through `HexRealRoots.QueryTests`.
 - `Hex.ZPoly.evalDyadic`
 - `Hex.dyadicSign`
 - `Hex.signVar`
@@ -33,6 +36,10 @@ Covered operations:
 - `Hex.ZPoly.squareFreeCore` (the non-square-free fallback the drivers document)
 
 Covered properties:
+- Signed queries and literal replay cover zero queries, common factors,
+  nonconstant terminal gcds, infinities, noncanonical coefficients and exact
+  context binding. Corrupted scales, terminal identities and signs are rejected.
+  The independent FLINT query oracle is wired through `EmitFixtures.lean`.
 - `evalDyadic` is exact: the sign at a dyadic point matches the hand-computed
   value, hitting `0` exactly at a rational root.
 - `signVar` skips zeros: the variation count of `(+, 0, −)` is `1`.
