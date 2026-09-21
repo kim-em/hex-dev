@@ -9,9 +9,13 @@ module
 public import HexBareissMathlib.Tactic
 public import HexPolyDetMathlib.Small
 public import HexPolyDetMathlib.RowFactor
+public import HexPolyDetMathlib.RatFactor
+public import HexPolyDetMathlib.Structural
 public meta import HexBareissMathlib.Tactic
 public meta import HexPolyDetMathlib.Small
 public meta import HexPolyDetMathlib.RowFactor
+public meta import HexPolyDetMathlib.RatFactor
+public meta import HexPolyDetMathlib.Structural
 public meta import Mathlib.Tactic.Ring
 public meta import Lean
 
@@ -22,16 +26,20 @@ namespace HexPolyDetMathlib
 open Lean Meta Elab HexMatrixMathlib.Literal
 open HexMatrixMathlib.DetPoly.Frontend (Outcome Result)
 
-/-- Closed forms and common row factors precede polynomial reification. -/
+/-- Structural identities and closed forms precede polynomial reification. -/
 def compute (A : Expr) (rhs? : Option Expr := none) : MetaM (Outcome Result) := do
   let mut recognized? := none
   if let some (n, m, _) ← shape? (← inferType A) then
     if n == m && n ≤ HexMatrixMathlib.DetPoly.Frontend.maxDimension then
       if let some lit ← literal? A (allowOpen := true) then
-        if n ≤ 3 then
-          return .success (← profileitM Exception "det.small.formula" (← getOptions) (Small.formula A lit))
+        if let some result ← Structural.direct? A lit then return .success result
         if let some result ← profileitM Exception "det.rowFactor" (← getOptions)
             (RowFactor.compute? A lit rhs?) then return .success result
+        if let some result ← profileitM Exception "det.ratFactor" (← getOptions)
+            (RatFactor.compute? A lit rhs?) then return .success result
+        if n ≤ 3 then
+          return .success (← profileitM Exception "det.small.formula" (← getOptions) (Small.formula A lit))
+        if let some result ← Structural.sparse? A lit then return .success result
         recognized? := some lit
   trace[HexMatrix.certificate] "{(Json.mkObj [("route", toJson "certificate-attempt")]).compress}"
   return ← HexMatrixMathlib.DetPoly.Frontend.compute A rhs? recognized?
@@ -62,22 +70,33 @@ def evalDet : Tactic.Tactic := fun _ => Tactic.withMainContext do
       let proof ← if reverse then mkEqSymm p.proof else pure p.proof
       Tactic.closeMainGoal `det proof
     else
-      -- Only the small path leaves ring normalization: the certificate path
+      -- Structural and small formulas leave ring normalization: the certificate path
       -- already checks agreement with the requested target in its one batch.
-      let goal ← Tactic.getMainGoal
-      let r ← goal.rewrite target p.proof
-      let goal ← goal.replaceTargetEq r.eNew r.eqProof
-      let reduced ← if reverse then mkEq rhs p.value else mkEq p.value rhs
-      let goal ← goal.change reduced
-      Tactic.setGoals [goal]
-      profileitM Exception "det.small.ring" (← getOptions) do
-        Tactic.evalTactic (← `(tactic| ring))
-      unless (← Tactic.getGoals).isEmpty do
-        throwError "det: symbolic determinant declined: target is not a polynomial identity in the matrix entries: {← Tactic.getMainTarget}"
-      if ← isTracingEnabledFor `HexMatrix.certificate then
-        let proof ← instantiateMVars (mkMVar goal)
-        trace[HexMatrix.certificate] "{(Json.mkObj [("route", toJson "closed-form-ring"),
-          ("ring_proof_nodes", toJson (Hex.Reflect.sourceNodeCount proof 1000001))]).compress}"
+      let saved ← Tactic.saveState
+      try
+        let goal ← Tactic.getMainGoal
+        let r ← goal.rewrite target p.proof
+        let goal ← goal.replaceTargetEq r.eNew r.eqProof
+        let reduced ← if reverse then mkEq rhs p.value else mkEq p.value rhs
+        let goal ← goal.change reduced
+        Tactic.setGoals [goal]
+        profileitM Exception "det.structural.ring" (← getOptions) do
+          Tactic.evalTactic (← `(tactic| ring))
+        unless (← Tactic.getGoals).isEmpty do
+          throwError "det: symbolic determinant declined: target is not a polynomial identity in the matrix entries: {← Tactic.getMainTarget}"
+        if ← isTracingEnabledFor `HexMatrix.certificate then
+          let proof ← instantiateMVars (mkMVar goal)
+          trace[HexMatrix.certificate] "{(Json.mkObj [("route", toJson "closed-form-ring"),
+            ("ring_proof_distinct_nodes", toJson (Hex.Reflect.proofNodeCount #[proof] 1000001))]).compress}"
+      catch e =>
+        saved.restore
+        trace[HexMatrix.certificate] "structural target comparison declined: {e.toMessageData}"
+        match ← HexMatrixMathlib.DetPoly.Frontend.compute A rhs with
+        | .success p =>
+          let proof ← if reverse then mkEqSymm p.proof else pure p.proof
+          Tactic.closeMainGoal `det proof
+        | .notApplicable _ | .declined _ =>
+          fallback m!"structural formula did not close the target: {e.toMessageData}"
 
 /-- The symbolic term form uses the existing syntax kind and result record. -/
 @[term_elab HexMatrixMathlib.Det.detTerm]

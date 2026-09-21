@@ -1,0 +1,2 @@
+import HexPolyDetMathlib.ProofProbe.StructuralSparseOneMathlib
+#print axioms HexPolyDetMathlib.ProofProbe.StructuralSparseOneMathlib.result
