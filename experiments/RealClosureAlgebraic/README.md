@@ -79,3 +79,9 @@ literal nonzero storage, while semantic zero correctness remains a tested
 fixture property, not a new universal Lean theorem. Their experimental
 constructors are not the production opaque validated API. Refinement tickets
 test full context/operand binding, not a general certificate checker.
+
+Both experiment workspaces require the root Hex package by path, reusing its
+compiled library artifacts. CI runs `audit.py --live` for current import,
+proof-hole and link checks. Run `audit.py` without that flag to additionally
+check the retained timing source identities; historical measurements stay
+bound to their measured sources and do not prevent later API maintenance.

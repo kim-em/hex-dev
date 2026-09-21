@@ -16,6 +16,9 @@ def main : IO Unit := do
       if case < 6 then
         let a := input mode n 0
         let b := input mode (n-1) 1
+        let literal := fun (p : DensePoly (Elem (base mode))) =>
+          p.toArray.map (fun x => (raw (base mode) x).toArray)
+        IO.eprintln s!"PREP,{hash (literal a,literal b)}"
         IO.eprintln s!"BEGIN,{policy},{case}"
         let (q,r) := if case%2 == 0 then DensePoly.divMod a b
           else (DensePoly.monicize (DensePoly.gcd a b),0)
@@ -23,6 +26,10 @@ def main : IO Unit := do
       else
         let a := nestedInput mode n 0
         let b := nestedInput mode (n-1) 1
+        let literal := fun (p : DensePoly (Elem (upper mode))) =>
+          p.toArray.map (fun x => (raw (upper mode) x).toArray.map
+            (fun y => (raw (base mode) y).toArray))
+        IO.eprintln s!"PREP,{hash (literal a,literal b)}"
         IO.eprintln s!"BEGIN,{policy},{case}"
         let (q,r) := if case%2 == 0 then DensePoly.divMod a b
           else (DensePoly.monicize (DensePoly.gcd a b),0)

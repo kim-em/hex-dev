@@ -1,21 +1,10 @@
 name = "rcfAlgebraicExperiment"
 version = "0.1.0"
+packagesDir = "../../.lake/packages"
 defaultTargets = ["Tests", "Transfer"]
 [[require]]
-name = "lean-bench"
-path = "../../.lake/packages/lean-bench"
-[[lean_lib]]
-name = "HexPoly"
-srcDir = "../.."
-[[lean_lib]]
-name = "HexPolyZ"
-srcDir = "../.."
-[[lean_lib]]
-name = "HexRealRoots"
-srcDir = "../.."
-[[lean_lib]]
-name = "HexBasic"
-srcDir = "../.."
+name = "Hex"
+path = "../.."
 [[lean_lib]]
 name = "Algebraic"
 [[lean_lib]]

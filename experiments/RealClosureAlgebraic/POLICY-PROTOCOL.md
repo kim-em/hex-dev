@@ -27,10 +27,14 @@ are retained, with no rerun or activity-based filtering. This is an
 informational policy comparison, not Phase-4 complexity evidence.
 
 Preparation is outside timing; semantic output hashing is inside in all arms.
+The digest cost can depend on the policy’s output representation; these timings
+measure operation plus digest, not isolated division/gcd. The fixed generator
+produces one- or two-cancellation division cases and one- or two-step gcd loops.
 Pin to one automatically leased CPU and record source hashes, versions and
 load. Untimed modes 4–7 execute the same policies with callback tracing,
 counting actual zero tests at each level, including hashing. Their output
-hashes must match the timed arms. Record output representative degrees and
+hashes must match the timed arms. An input structural hash is printed before
+each BEGIN so preparation is forced outside the trace region. Record output representative degrees and
 repeated-squaring growth separately; these are not peak intermediate sizes.
 
 E2 splits the lower reducible descriptor to `X²−2`, explicitly transports the

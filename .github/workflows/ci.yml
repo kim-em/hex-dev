@@ -419,6 +419,8 @@ jobs:
           fi
       - name: Check real-closure architecture experiments
         if: steps.classify.outputs.docs_only != 'true'
+        env:
+          MATHLIB_NO_CACHE_ON_UPDATE: "1"
         run: |
           lake -d experiments/RealClosureRepresentation build representationPrototype HexRationalFn.Field
           lake -d experiments/RealClosureAlgebraic build \
@@ -430,7 +432,7 @@ jobs:
           experiments/RealClosureAlgebraic/.lake/build/bin/policyCheck > "$probe_dir/checks.jsonl"
           experiments/RealClosureAlgebraic/.lake/build/bin/refinementCheck > "$probe_dir/refinement.jsonl"
           python3 experiments/RealClosureAlgebraic/verify_policy.py --results "$probe_dir"
-          python3 experiments/RealClosureAlgebraic/audit.py
+          python3 experiments/RealClosureAlgebraic/audit.py --live
       - name: Build HexManual
         if: steps.classify.outputs.build_manual == 'true'
         run: lake build HexManual

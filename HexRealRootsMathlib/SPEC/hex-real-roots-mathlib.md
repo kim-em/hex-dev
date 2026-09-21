@@ -191,12 +191,13 @@ executable structures it is meant to abstract over.
 ### Consequences for the executable counts
 
 ```lean
-theorem sturmCount_eq_card_roots (p : ZPoly) (hp : SquareFreeRat p)
-    (I : DyadicInterval) :
+theorem sturmCount_eq_card_roots (p : ZPoly) (hp : 1 ≤ p.natDegree)
+    (hsq : SquareFreeRat p) (I : DyadicInterval) :
     Hex.ZPoly.sturmCount p I =
       ((toPolyℝ p).roots.filter (fun r => I.lower < r ∧ r ≤ I.upper)).card
 
-theorem rootCount_eq_card_roots (p : ZPoly) (hp : SquareFreeRat p) :
+theorem rootCount_eq_card_roots (p : ZPoly) (hp : 1 ≤ p.natDegree)
+    (hsq : SquareFreeRat p) :
     Hex.ZPoly.rootCount p = (toPolyℝ p).roots.card
 ```
 

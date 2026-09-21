@@ -1,11 +1,12 @@
 # Real-closure storage and context experiments
 
-## Decisions supported by the experiments
+## Storage decision and its limits
 
-Retain a value-preserving remainder already computed during zero testing when
-the defining polynomial is monic and clean. Keep the general unreduced path
-for non-monic or non-clean definitions; do not monicize them to impose a storage
-degree bound. An available verified irreducibility fact can skip gcd/root
+The tested monic fixtures support retaining a value-preserving remainder
+already computed during zero testing. The design retains the general unreduced
+path for non-monic or non-clean definitions to preserve the paper’s clean
+representation discipline; that path is not measured here. Do not monicize
+definitions merely to impose a storage degree bound. An available verified irreducibility fact can skip gcd/root
 selection, but finding such a fact is not a prerequisite for using squarefree
 definitions. The generic zero test remains required.
 
@@ -47,7 +48,14 @@ All output hashes agree between policies and between timed and traced execution.
 Ten cases, three adjacent policy pairs and six AB/BA blocks yielded all 360
 retained arm samples, with no rerun or activity-based exclusions. lean-bench
 owns warmup and adaptive repeats with a 50ms floor. Preparation is outside
-timing; full semantic hashing is included in every arm. These fixed comparisons
+timing; full semantic hashing is included in every arm. The divisions take
+only one or two cancellation steps and the gcd loops take one or two: coefficient
+residues in this generator are partly proportional. These are short
+coefficient-inversion/zero-test workloads, not substantial division workloads.
+The digest cost is also policy-dependent: nested semantic hashing itself
+reduces representatives by the upper defining polynomial. Thus the reported
+ratios combine the operation and its canonical digest; they do not isolate
+division/gcd speedup or quantify the digest contribution. These fixed comparisons
 are not Phase-4 complexity evidence, and output degrees are not peak
 intermediate sizes.
 
@@ -70,17 +78,19 @@ its degree; it must not be attributed to storage alone.
 | nested / 3 / division | 3.22× (3.18–3.26) | 3.91× (3.86–3.96) | 1.96× (1.94–1.98) |
 | nested / 3 / gcd | 2.72× (2.71–2.75) | 3.44× (3.36–3.49) | 1.86× (1.83–1.91) |
 
-Retaining remainders improves the base cases by 1.15–1.34× and nested cases
+Retaining remainders improves the measured operation-plus-digest base cases by 1.15–1.34× and nested cases
 by 2.45–3.22×. A smaller descriptor adds 2.72–4.19× in these fixtures; this does
 not include the one-time cost of discovering or transporting a persistent
 split. The irreducibility fast path adds 1.33–1.96×, with its fixture fact
 already available. None of these ratios is a claim about arbitrary towers.
 
 The actual zero-test callbacks are traced separately, outside timing.
-At nested length 3, division makes 11 upper-level tests in both policies 0/1,
-but lower-level calls fall from 227 to 135. Gcd retains 21 upper calls while
-lower calls fall from 602 to 450. At the base, counts are unchanged by retention:
-11–29 calls over the registered cases. Retention therefore changes operand
+A structural hash printed before each BEGIN forces input preparation before
+counting starts. Counts include the operation and semantic digest.
+At nested length 3, division makes 6 upper-level tests in both policies 0/1,
+but lower-level calls fall from 211 to 119. Gcd retains 16 upper calls while
+lower calls fall from 586 to 434. At the base, counts are unchanged by retention:
+6–22 calls over the registered cases. Retention therefore changes operand
 sizes and predecessor work, not the need for leading-zero decisions. Modes
 4–7 are the diagnostic counterparts of 0–3, and every trace result hash agrees
 with the corresponding timed result.

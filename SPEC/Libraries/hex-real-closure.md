@@ -14,7 +14,9 @@ phase advancement or publication. The companion has its own directive
 
 `HexRealClosure`, namespace `Hex.RealClosure`, consumes `HexPoly`, `HexSturm`,
 `HexSignDet`, `HexOrderedFn` and `HexRealAlgebraic`. Rational-function
-infrastructure is supplied below these inputs. Real constants use caller-supplied
+infrastructure is supplied below these inputs. The first rational slice may
+start with the available `HexPoly`, `HexRealRoots` and `HexRealAlgebraic` subset;
+add the planned family imports as their consumed APIs land. Real constants use caller-supplied
 approximation procedures and their certified rational bounds through
 hex-ordered-fn's interface. This family does not depend on `HexInterval` or
 `HexIntervalMathlib`, and supplies no built-in analytic constant providers.

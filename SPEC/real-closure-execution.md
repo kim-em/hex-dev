@@ -79,7 +79,9 @@ A sufficient executable guard is a literal leading coefficient `1` and clean
 predecessor coefficients; the companion proves the resulting remainder
 preserves interpretation and cleanliness. Semantic monicity with a different
 leading representative needs a justified conversion or its own preservation
-proof, not an unchecked structural-one test. The zero procedure should return
+proof, not an unchecked structural-one test. A validated constructor may replace
+a leading coefficient proved semantically equal to one by literal `1`, with
+its own value-preservation theorem. The zero procedure should return
 its already-computed remainder with its answer so retention does not repeat
 division. Retention requires the exact value identity `q = A*p + r` under
 interpretation; a positively scaled pseudo-remainder used only for sign

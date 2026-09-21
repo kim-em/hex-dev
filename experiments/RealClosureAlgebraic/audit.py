@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 """Check local experiment boundaries and retained measurement source identities."""
+import argparse
 import hashlib
 import json
 from pathlib import Path
 import re
 import subprocess
 
+parser=argparse.ArgumentParser()
+parser.add_argument("--live", action="store_true", help="check current code without historical timing fingerprints")
+args=parser.parse_args()
 HERE=Path(__file__).resolve().parent
 ROOT=HERE.parents[1]
-roots=[HERE, ROOT, ROOT/'.lake/packages/lean-bench', HERE/'.lake/packages/Cli']
+roots=[HERE, ROOT, ROOT/'.lake/packages/lean-bench', ROOT/'.lake/packages/Cli']
 def uncomment(source):
     out=[]
     depth=0
@@ -43,18 +47,19 @@ while pending:
     for line in uncomment(file.read_text()).splitlines():
         match=re.match(r'^\s*(?:public\s+|private\s+)?(?:meta\s+)?import\s+(?:all\s+)?([\w.]+)',line)
         if match: pending.append(match[1])
-meta=json.loads((HERE/'results/timing/metadata.json').read_text())
-for name in ['Algebraic.lean','Bench.lean']:
-    file=HERE/name
-    expected=meta['hashes'][str(file.relative_to(ROOT))]
-    source=file.read_bytes()
-    header=b'/-\nCopyright (c) 2026 Lean FRO, LLC. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Kim Morrison\n-/\n\n'
-    assert hashlib.sha256(source).hexdigest()==expected or (source.startswith(header) and
-        hashlib.sha256(source[len(header):]).hexdigest()==expected), file
-policy=json.loads((HERE/'results/policy/timing/metadata.json').read_text())
-for name in ['Algebraic.lean','Policy.lean','PolicyBench.lean']:
-    file=HERE/name
-    assert hashlib.sha256(file.read_bytes()).hexdigest()==policy['hashes'][str(file.relative_to(ROOT))],file
+if not args.live:
+    meta=json.loads((HERE/'results/timing/metadata.json').read_text())
+    for name in ['Algebraic.lean','Bench.lean']:
+        file=HERE/name
+        expected=meta['hashes'][str(file.relative_to(ROOT))]
+        source=file.read_bytes()
+        header=b'/-\nCopyright (c) 2026 Lean FRO, LLC. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Kim Morrison\n-/\n\n'
+        assert hashlib.sha256(source).hexdigest()==expected or (source.startswith(header) and
+            hashlib.sha256(source[len(header):]).hexdigest()==expected), file
+    policy=json.loads((HERE/'results/policy/timing/metadata.json').read_text())
+    for name in ['Algebraic.lean','Policy.lean','PolicyBench.lean']:
+        file=HERE/name
+        assert hashlib.sha256(file.read_bytes()).hexdigest()==policy['hashes'][str(file.relative_to(ROOT))],file
 for file in HERE.glob('*.lean'):
     assert not re.search(r'\b(?:sorry|axiom|native_decide)\b',file.read_text()),file
 for file in [HERE/'README.md',HERE/'PROTOCOL.md',ROOT/'reports/real-closure-algebraic-experiment.md']:
@@ -63,4 +68,4 @@ for file in [HERE/'README.md',HERE/'PROTOCOL.md',ROOT/'reports/real-closure-alge
             assert (file.parent/link.split('#')[0]).exists(),(file,link)
 subprocess.run(['git','diff','--check'],cwd=ROOT,check=True)
 print(json.dumps({'mathlib_free_noncore_imports':sorted(seen),
-                  'timed_sources_match':True,'no_proof_holes':True,'relative_links_resolve':True},indent=2))
+                  'timed_sources_match':None if args.live else True,'no_proof_holes':True,'relative_links_resolve':True},indent=2))
