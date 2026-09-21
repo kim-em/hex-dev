@@ -18,9 +18,11 @@ integer backend retains its content normalization.
 The [companion](../../HexSturmMathlib/SPEC/hex-sturm-mathlib.md) proves exact
 semantic domain equivalence, produced-certificate acceptance, prepared-query
 agreement and whole-`Option` rational/integer agreement on finite ordered dyadic
-intervals after positive denominator clearing. Root-sum/replay semantics,
-`rootCount`, singleton/sign bounds, general backend correspondence, literal
-certificate translation and remaining Phase-4 evidence are still required.
+intervals after positive denominator clearing. It also proves whole-`Option`
+congruence across field representations, with finite or infinite endpoints,
+and acceptance of literal certificate translations by denominator clearing
+and integer-to-rational embedding. Root-sum/replay semantics, `rootCount`,
+singleton/sign bounds and remaining Phase-4 evidence are still required.
 No release or phase completion is claimed.
 
 `HexSturm` depends on `HexPoly` and `HexRealRoots`, with no Mathlib or
@@ -243,7 +245,7 @@ and `[IsRealClosed R]` on the Mathlib side.
 | `certify_checks` | Certificates produced on the domain pass replay and carry the same value as `query`. |
 | `rootCount_eq`, `query_sign` | Count equals `Roots.card`; a singleton root set gives the evaluation sign; companion. |
 | `query_congr` | Order-preserving field maps and transported endpoints preserve query results, including domain validity. |
-| `query_backend_eq` | Optimized total backends agree on the whole `Option`; positive-rescaling correspondence translates certificates without requiring literal array equality. |
+| `query_congr` | Optimized total backends agree on the whole `Option`; positive-rescaling correspondence translates certificates without requiring literal array equality. |
 | `query_rat_eq` | Positive denominator clearing at rational coefficients and dyadic endpoints agrees, including `none`, with `ZPoly.tarskiQuery`; companion. |
 
 For the last theorem choose positive integers `dP,dF` separately so that

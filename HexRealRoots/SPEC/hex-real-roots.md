@@ -214,6 +214,14 @@ of `D`: `E=Dyadic` need not be an integer when `D=Int`. This is an endpoint
 interface, not an evidence-returning coefficient-arithmetic framework.
 Infinity signs use leading coefficient and degree parity.
 
+`SignedRemainderChain.map` and `TarskiCertificate.map` transport supplied literal
+evidence through zero-reflecting coefficient maps. Preservation of scalar
+operations, natural casts, coefficient signs, endpoint comparison and evaluation
+signs proves checker acceptance after transport. The context and value are
+retained exactly; polynomial and endpoint bindings are mapped explicitly.
+This does not require injectivity, field instances on stored representatives,
+or rerunning the producer.
+
 The producer uses the positive-scaled initial reduction, three-term
 recurrence and terminal zero identity specified below, including singleton
 and constant branches. The head is the input `p`. Removing positive content
