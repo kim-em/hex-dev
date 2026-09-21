@@ -190,13 +190,15 @@ reference certificate.
 
 The fixed comparison corpus also includes standard cryptographic field
 primes. The current construction profile finds P-256 and the structured
-511/512-bit benchmark primes and P-521. It exhausts on secp256k1, P-384,
-and Curve448. P-521 uses 25 factor candidates and 170 attempts; the constructor
+511/512-bit benchmark primes and P-521. The default profile exhausts on
+secp256k1, P-384 and Curve448. The explicit ECM provider constructs all three:
+see {ref "tutorial-field-primes"}[the field-prime tutorial] for complete
+examples and reusable proofs. P-521 uses 25 factor candidates and 170 attempts; the constructor
 admits at most 32 factors and still examines at most 4096 subsets. For the
 expression `2 ^ 521 - 1`, set local `maxRecDepth` to 1024 and
 `exponentiation.threshold` to 521; its numeral needs neither option.
 The [standard-field report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-primality-fields.md)
-records the remaining factoring barriers and separate construction, rendering,
+records the default profile's factoring barriers and separate construction, rendering,
 and replay measurements. This is not a general-purpose prover for
 arbitrary cryptographic-size primes.
 
@@ -227,8 +229,9 @@ The [replay attribution](https://github.com/kim-em/hex-dev/blob/main/reports/hex
 records exact revisions, every sample, component costs, negative controls,
 and construction regression checks. Hex uses Lean 4.34.0 and PrimeCert uses
 Lean 4.33.0; identical-code calibration is reported separately.
-Curve448 uses a supplied certificate in both systems and does not change
-automatic construction coverage. The corpus is small and structured.
+The kernel replay comparison uses a supplied Curve448 certificate in both systems.
+The explicit ECM route in {ref "tutorial-field-primes"}[the field-prime tutorial]
+constructs its own certificate. The corpus is small and structured.
 
 # The Mathlib correspondence
 %%%
