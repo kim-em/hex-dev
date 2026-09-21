@@ -11,3 +11,4 @@ public import HexKronecker.Size
 public import HexKronecker.Check
 public import HexKronecker.Kernel
 public import HexKronecker.Preflight
+public import HexKronecker.Mixed

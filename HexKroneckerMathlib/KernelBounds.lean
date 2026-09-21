@@ -186,7 +186,7 @@ theorem common_spec (k : Nat) (as bs : List Bounds) (hl : as.length = bs.length)
           have ht := ih bs (by simpa using hl) (fun a h => ha a (by simp [h]))
             (fun b h => hb b (by simp [h]))
           constructor
-          · simp [common, Bounds.sup, add, ha a (by simp), hb b (by simp), ht.1]
+          · simp [common_cons, Bounds.sup, add, ha a (by simp), hb b (by simp), ht.1]
           · intro c hc
             have hleft := Bounds.sup_left (add a b) (common k as bs)
             have hright := Bounds.sup_right (add a b) (common k as bs)
@@ -207,7 +207,7 @@ theorem common_length (k : Nat) (as bs : List Bounds)
       cases bs with
       | nil => simp [common, Bounds.zero]
       | cons b bs =>
-          simp only [common, Bounds.sup, add, length_maxDegrees,
+          simp only [common_cons, Bounds.sup, add, length_maxDegrees,
             ha a (by simp), hb b (by simp),
             ih bs (fun a h => ha a (by simp [h])) (fun b h => hb b (by simp [h])), Nat.max_self]
 

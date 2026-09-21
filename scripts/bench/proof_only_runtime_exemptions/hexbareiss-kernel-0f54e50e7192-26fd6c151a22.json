@@ -1,0 +1,6 @@
+{
+  "path": "HexBareiss/Kernel.lean",
+  "baseline_blob": "0f54e50e7192f5005537fcab7e3d4ba2ba2045cb",
+  "current_blob": "26fd6c151a22dbe6b883a6d3d709241b86f78624",
+  "reason": "The changes add structured budgets to determinant witness production and refactor detWitnessWith through the same optional-budget implementation. The earlier rowLists relocation retains its body. These determinant certificate producers and checkers are not called by ZPoly.factorize or the factorization service measured by the hex-factor sweep: the factorization, Hensel, Berlekamp, polynomial and LLL sources contain no detWitness, DetWitness or checkDet calls. The ordinary Bareiss elimination and factorization runtime definitions are unchanged. This exemption applies to the retained factorization measurement only; determinant production is separately remeasured by the poly-det sweep."
+}

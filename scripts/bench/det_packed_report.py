@@ -25,37 +25,58 @@ def read_record(directory, name):
 
 
 def audit_dispatch(record, table):
-    """Check actual routes against the fixed table, including retained records."""
-    keys = {tuple(k) for k in table['keys']}
+    """Validate each packed route against evidence for its actual entry encoding."""
+    tables = table.get('keys_by_entries', {'list': table.get('keys', []), 'tree': []})
+    tables = {encoding: {tuple(k) for k in keys} for encoding, keys in tables.items()}
     for sample in record['samples']:
         if sample['arm'] != 'Dispatch' or sample['candidate']['state'] != 'complete':
             continue
         stem = sample['stem']
+        if any(e['route'] == 'row-factor' for e in sample['routes']):
+            # Numeric row-factor certificates precede polynomial selection and
+            # provide no evidence for either polynomial crossover table.
+            if len(sample['routes']) != 1:
+                raise ValueError(f'{stem}: row-factor route mixed with another route')
+            continue
         classified = record['classification'][stem]
         if classified['classification'] not in ['eligible', 'packed-decline']:
             continue
         products = classified['selection']['products']
-        packed = classified['classification'] == 'eligible' and all(tuple(p['key']) in keys for p in products)
-        expected = 'packed/plain' if packed else 'term-list'
+        entries = classified.get('entries', 'list')
+        if entries not in tables:
+            raise ValueError(f'{stem}: unknown entry encoding {entries!r}')
+        covered = classified['classification'] == 'eligible' and all(
+            tuple(p['key']) in tables[entries] for p in products)
         certificates = [e for e in sample['routes'] if e['route'].startswith(('packed/', 'term-list'))]
-        # Proof-node declines can follow product eligibility. They are retained as fallback,
-        # but a covered witness must actually exercise the packed route to validate dispatch.
-        if not packed and not certificates and any(e['route'] == 'fallback' for e in sample['routes']):
+        # Resource declines may fall back after product admission. A tree-table
+        # miss can also use independently covered list keys; audit its actual encoding.
+        if not covered and not certificates and any(e['route'] == 'fallback' for e in sample['routes']):
             continue
-        if len(certificates) != 1 or certificates[0]['route'] != expected:
-            raise ValueError(f'{stem}: expected {expected}, saw {sample["routes"]}')
-        if packed:
-            actual = [list(map(int, re.findall(r':= (\d+)', p['key']))) for p in certificates[0]['products']]
-            if actual != [p['key'] for p in products]:
+        if len(certificates) != 1:
+            raise ValueError(f'{stem}: expected one certificate, saw {sample["routes"]}')
+        certificate = certificates[0]
+        actual_entries = certificate.get('entries', 'list')
+        if actual_entries not in tables:
+            raise ValueError(f'{stem}: unknown dispatched entry encoding {actual_entries!r}')
+        if covered and (certificate['route'] != 'packed/plain' or actual_entries != entries):
+            raise ValueError(f'{stem}: measured {entries} witness did not use its packed route')
+        if certificate['route'].startswith('packed/'):
+            actual = [list(map(int, re.findall(r':= (\d+)', p['key']))) for p in certificate['products']]
+            if not all(tuple(key) in tables[actual_entries] for key in actual):
+                raise ValueError(f'{stem}: packed route used unmeasured {actual_entries} keys')
+            if actual_entries == entries and actual != [p['key'] for p in products]:
                 raise ValueError(f'{stem}: dispatched witness keys differ from preflight')
+
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('directory', type=Path)
+    parser.add_argument('--before', type=Path, help='retained historical comparison for per-case columns')
     args = parser.parse_args()
     forced = read_record(args.directory, 'forced')
     dispatch = read_record(args.directory, 'dispatch')
+    before = read_record(args.before, 'dispatch') if args.before else None
     audit_dispatch(dispatch, read_record(args.directory, 'crossover'))
     groups = defaultdict(list)
     for c in forced['manifest']['cases']:
@@ -82,8 +103,12 @@ def main():
         print(f'| {family} | '+ ' | '.join(values)+f' | {ratio} | {"/".join(counts)} of {len(stems)} | opt-in |')
     print('\nClassification: '+', '.join(f'{v} {k}' for k,v in Counter(c['classification'] for c in forced['classification'].values()).items())+'.')
     print(f"The manifest also retains {len(forced['manifest']['infeasible'])} infeasible support requests.\n")
-    print('| Case | Classification | Term lists | Packed | Dispatch | Mathlib | Mathlib / dispatch | Observed dispatch |')
-    print('|---|---|---:|---:|---:|---:|---:|---|')
+    if before:
+        print('Before columns are the retained historical medians on their recorded host context;')
+        print('they are not adjacent before/after samples and do not alone establish a speedup.\n')
+    prefix = ' Before dispatch | Before Mathlib |' if before else ''
+    print('| Case | Classification |' + prefix + ' Term lists | Packed | Dispatch | Mathlib | Mathlib / dispatch | Observed dispatch |')
+    print('|---|---|' + ('---:|---:|' if before else '') + '---:|---:|---:|---:|---:|---|')
     for c in forced['manifest']['cases']:
         stem = c['stem']
         vals = [r['summary'][stem]['arms'][a]['median_delta_ns'] for r,a in
@@ -91,8 +116,10 @@ def main():
         ratio = f'{vals[3]/vals[2]:.3f}' if vals[2] is not None and vals[3] is not None and vals[2]>0 else '—'
         routes = dispatch['summary'][stem]['arms']['Dispatch']['routes']
         routes = [r for r in routes if r != 'certificate-attempt']
+        historical = [before['summary'].get(stem, {}).get('arms', {}).get(arm, {}).get('median_delta_ns')
+            for arm in ['Dispatch', 'Mathlib']] if before else []
         print(f'| {stem} | {forced["classification"][stem]["classification"]} | '+
-              ' | '.join(map(fmt,vals))+f' | {ratio} | {", ".join(routes) or "unobserved"} |')
+              ' | '.join(map(fmt,historical + vals))+f' | {ratio} | {", ".join(routes) or "unobserved"} |')
     print('\nExpected declines have no forced-packed timing. Closed-form rows are controls on')
     print('their unchanged route; their “Lists” and “Packed” column labels denote options,')
     print('not certificate execution. Raw records retain timeouts, errors, host context,')
@@ -136,7 +163,8 @@ def main():
     print('\n### Compiled phases\n')
     print('Milliseconds for representative witnesses, with the large-prime case included.')
     print('Checker columns are medians of six adjacent AB/BA measurements; other phases')
-    print('are single observations. Packing repeats each prefix and includes target and quotient lists.')
+    print('are single observations. These supplemental compiled phases use list-entry checkers;')
+    print('the forced proof timings above exercise each recorded tree/list route.')
     print('All selected products use plain multiplication, so outer signed packing is inapplicable.\n')
     print('| Case | p | Quotient support | Quotients | Preflight | Packing | Multiplication | List Bool | Packed Bool |')
     print('|---|---:|---:|---:|---:|---:|---:|---:|---:|')

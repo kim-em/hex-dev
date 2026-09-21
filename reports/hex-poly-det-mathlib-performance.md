@@ -5,7 +5,132 @@ The symbolic simproc remains opt-in: no default `Hex.norm_det` dispatch is
 enabled. This uses the SPEC’s opt-in exception; fallback preserves scope but
 does not establish a performance win.
 
-## Packed certificate comparison
+## Common row factors
+
+Automatic dispatch recognizes entries `(cᵢⱼ : R) * fᵢ` with integer
+coefficients and a syntactically shared factor per row. It certifies the
+integer coefficient matrix and applies the row-scaling determinant identity.
+It does not reify or expand the factors. Forced polynomial checker arms
+bypass this shortcut, so the tree/list comparison still measures those
+certificates.
+
+Six adjacent AB/BA pairs on each of three unchanged fixtures, with import-only
+baselines and the original `norm_det` followed by `ring` comparator, give:
+
+| Matrix and entries | Earlier tree dispatch ms | Current det ms | norm_det + ring ms | Mathlib / Hex |
+|---|---:|---:|---:|---:|
+| 4×4, one variable, linear monomials (`N4K1D1S1`) | 194.15 | 99.74 | 103.60 | 1.04 |
+| 4×4, two variables, quadratics, four terms (`N4K2D2S4`) | 669.59 | 518.75 | 1106.86 | 2.13 |
+| 8×8, four variables, linear monomials (`N8K4D1S1`) | — | 219.22 | 2062.71 | 9.41 |
+
+Hex is faster in all six pairs for each case. The simple 4×4 margin is small.
+The earlier column is the retained two-pair tree dispatch experiment below,
+not an adjacent old/new comparison; the old 8×8 baseline-subtracted observations
+include a negative value and supply no meaningful speedup ratio. The original
+list-entry main-probe dispatch median was 1500.38 ms. These separate experiments
+are not pooled.
+
+The [simple-case record](bench-results/hex-det-tree/row-factor/row-factor-refined-comparison.json.gz)
+and [main and 8×8 record](bench-results/hex-det-tree/row-factor/row-factor-acceptance-comparison.json.gz)
+come from clean commit `2646dd6ee`, with source hashes, host context, an automatically
+leased CPU, and all compiler output retained. They use the existing fresh-module
+runner and pairing protocol. Their wall times were 59.64 and 142.89 seconds.
+The [initial implementation comparison](bench-results/hex-det-tree/row-factor/row-factor-comparison.json.gz)
+is retained separately: simple 4×4 lost at 109.81 versus 98.62 ms, while the main
+probe won at 547.22 versus 1112.84 ms. That result prompted explicit theorem
+applications, direct denotation hints and sharing of matrix/factor payloads.
+Its 134.99 seconds brings these three bounded runs to 5 minutes 38 seconds.
+No completed observations, including negative baseline-subtracted values, were
+dropped. Every adapter stops the entire comparison on its first build failure
+or timeout; none runs the full grid.
+
+The main proof has 1,160 distinct nodes charged to its budget and 27,816 unshared
+nodes. Six component checks report entry identification at 9.05–9.58 ms and
+numeric certificate/transport at 7.31–7.85 ms, totaling less than 20 ms each time.
+There is no expanded target certificate. The representative full auxiliary
+kernel check is 40.5 ms. These component rechecks are order-sensitive diagnostics,
+not additional fresh timing samples; the
+[complete record](bench-results/hex-det-tree/row-factor/row-factor-components-final.json.gz)
+preserves the inspector and output.
+
+The required 8×8 quadratic and degree-eight probes also pass on this route.
+Tests cover arbitrary-universe commutative rings, rational factors, finite
+characteristic, swaps, singularity, expanded-target fallback, simproc output,
+and rejection of non-ring or heterogeneous multiplication and unresolved targets.
+
+Every family remains opt-in. The shortcut applies to explicit common row
+factors with a matching factored target. These correlated fixtures establish
+wins for that structure; they do not establish superiority for arbitrary
+polynomial matrices, rational matrices, residue matrices, or larger unmeasured
+cases. Forced tree/list arms continue to measure the general certificates.
+
+## General tree certificate attribution
+
+The general tree route remains available when common row factoring does not
+apply. It uses explicit proof heads, denotation hints, mixed list/tree products,
+structural bounds and kernel-only checks. Bounds dot products and common-box
+folds now use primitive recursion; proved compiler rewrites preserve the native
+implementations. The emitted proof has 47,746 unshared nodes and proof assembly
+is below 1 ms on the main probe.
+
+The [forced-tree diagnostic](bench-results/hex-det-tree/row-factor/kernel-folds.json.gz)
+checks the old budgeted list-entry and new tree-entry certificate on the same
+witness in six alternating orders. Median certificate checks are 146.50 and
+80.26 ms, respectively. Entry-plus-target checks have a 21.87 ms median
+(range 19.88–41.86 ms), and the full auxiliary check is 185 ms. These in-module
+checks are order-sensitive. They do **not** establish the original strict
+20 ms entry/target ceiling or a factor-of-two certificate improvement for the
+general tree route. The full dispatched wins above use row factoring and must
+not be substituted for those general-checker claims. Those two attribution
+bars remain open; no family is enabled by default.
+
+## Preliminary tree-entry dispatch comparison before row factoring
+
+Before the row-factor shortcut, the main requested example won but simple
+4×4 cases still lost. These retained observations describe that earlier implementation.
+Probe names `NnKkDdSs` mean an n×n matrix, k variables, degree-d entries,
+and s terms per entry. These N-prefixed fixtures have correlated row-scaled
+entries; they are not arbitrary dense polynomial matrices.
+
+The interrupted dispatch run provides early evidence for the issue’s main
+probe: `N4K2D2S4` takes 0.67 s with `det` versus 1.14 s with unmodified
+`norm_det` followed by `ring`, approximately 41% less time. Hex wins both
+retained pairs. This is a preliminary two-pair observation, not the six-pair
+acceptance result. Simple linear 4×4 cases still lose.
+
+The [retained partial run](bench-results/hex-det-tree/diagnostics/dispatch-interrupted.json.gz)
+contains all 627 recorded observations, including timeouts and failures.
+The sources were unchanged. Values below are medians of two adjacent AB/BA
+pairs after subtracting their import-only baselines; no additional run was
+used to select these examples.
+
+| Case | Pairs | det ms | norm_det + ring ms | Reduction |
+|---|---:|---:|---:|---:|
+| N4K2D2S4 | 2 | 669.59 | 1142.82 | 41.4% |
+| N8K2D1S1 | 2 | 364.28 | 1104.79 | 67.0% |
+| N8K4D2S1 | 2 | 2467.78 | 4153.37 | 40.6% |
+| N8K2D8S1 | 2 | 2520.55 | 3001.61 | 16.0% |
+| N4K1D1S1 | 2 | 194.15 | 115.71 | -67.8% |
+| N4K2D1S1 | 2 | 180.67 | 100.26 | -80.2% |
+| N4K4D1S1 | 2 | 162.15 | 98.27 | -65.0% |
+
+`N8K4D1S1` also completed both pairs, but one baseline-subtracted Hex
+observation is negative. Its two-pair speedup ratio is not meaningful,
+so no numeric speedup is claimed for it here.
+
+All 19 monomial 8×8 cases reached the producer during classification.
+The full forced comparison completed before dispatch and fitted 238 tree
+keys and 54 list keys (including 50 retained historical keys). The fitted
+route remains opt-in. The incomplete dispatch run does not establish
+family-wide superiority or satisfy the six-pair shipping comparison.
+
+The old exhaustive dispatch record spent 11.2 of 14.3 build-hours on 896
+45-second timeouts. The manual runner now skips the same and coordinatewise
+larger cases after an arm-specific timeout and limits classification, forced
+comparison and dispatch together to one hour. Skips are retained without
+invented timing values or crossover credit.
+
+## Historical list-entry packed certificate comparison
 
 The packed arm is available through the opt-in symbolic handler. Its fixed
 crossover table contains 50 product keys from 14 witnesses whose packed

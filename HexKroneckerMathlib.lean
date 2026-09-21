@@ -22,3 +22,4 @@ public import HexKroneckerMathlib.Observation
 public import HexKroneckerMathlib.Tactic
 public import HexKroneckerMathlib.Kernel
 public import HexKroneckerMathlib.BitPreflight
+public import HexKroneckerMathlib.Mixed

@@ -285,9 +285,9 @@ private def findPivot [Zero R] [Inhabited R] [DecidableEq R] (M : Array (Array R
 /-- One fraction-free step: the pivot in column `c` is moved to row `r` and
 rows below `r` are eliminated in both blocks. -/
 private def step [Zero R] [Inhabited R] [DecidableEq R] [Sub R] [Mul R]
-    (quot : R → R → R) (e : Elim R) (c : Nat) : Elim R :=
+    (quot : R → R → R) (e : Elim R) (c : Nat) (pivot : Option Nat) : Elim R :=
   let r := e.pivots
-  match findPivot e.left r c with
+  match pivot with
   | none => e
   | some i =>
     let e := if i = r then e else
@@ -318,24 +318,125 @@ private def assemble [Zero R] [One R] [Neg R] [Mul R] [Inhabited R]
 
 end DetWitness
 
-open DetWitness in
-/-- Fraction-free elimination on both blocks of `[A | I]`, retaining the
-transform. The caller supplies exact division and the checker for its entry
-representation; no polynomial provider is imported by this library. -/
-def detWitnessWith [Zero R] [One R] [Neg R] [Sub R] [Mul R]
+namespace DetWitness
+
+/-- Independent limits on current elimination blocks and the emitted witness. -/
+structure Budget where
+  maxIntermediate : Nat
+  maxCertificate : Nat
+  deriving Repr, BEq
+
+inductive Limit where
+  | intermediate
+  | certificate
+  deriving Repr, BEq
+
+/-- Resource declines remain distinct from malformed input or a rejected witness. -/
+inductive Error where
+  | exhausted (budget : Limit) (count limit : Nat)
+  | malformed (dimension : Nat)
+  | rejected
+  deriving Repr, BEq
+
+def Error.message : Error → String
+  | .exhausted budget count limit =>
+    let name := match budget with | .intermediate => "intermediate" | .certificate => "certificate"
+    s!"{name} budget exhausted (count {count}, limit {limit})"
+  | .malformed n => s!"the matrix is not {n} × {n}"
+  | .rejected => "the witness fails its own check"
+
+private def blockSize (size : R → Nat) (e : Elim R) : Nat :=
+  (e.left ++ e.right).foldl (fun total row => row.foldl (fun total x => total + size x) total) 0
+
+/-- Count the two products in every update, after the same swap as `step`. -/
+private def roundWork [Zero R] [Inhabited R] [DecidableEq R]
+    (size : R → Nat) (e : Elim R) (c : Nat) (pivot : Option Nat) : Nat := Id.run do
+  let r := e.pivots
+  let some i := pivot | return 0
+  let left := e.left.swapIfInBounds r i
+  let right := e.right.swapIfInBounds r i
+  let p := size left[r]![c]!
+  let mut count := 0
+  for j in [r + 1:left.size] do
+    let f := size left[j]![c]!
+    for (x, y) in left[j]!.zip left[r]! do
+      count := count + p * size x + f * size y
+    for (x, y) in right[j]!.zip right[r]! do
+      count := count + p * size x + f * size y
+  return count
+
+/-- Total serialized support, including the value in the triangular case. -/
+def measure (size : R → Nat) : DetWitness R → Nat
+  | .triangular _ rows d => rows.foldl (fun total row =>
+      row.foldl (fun total x => total + size x) total) (size d)
+  | .singular v => v.foldl (fun total x => total + size x) 0
+
+private def produce [Zero R] [One R] [Neg R] [Sub R] [Mul R]
     [Inhabited R] [DecidableEq R] (quot : R → R → R) (n : Nat)
-    (check : List (List R) → DetWitness R → Bool)
-    (A : List (List R)) : Except String (DetWitness R) := do
+    (size : R → Nat) (budget : Option Budget)
+    (A : List (List R)) : Except Error (DetWitness R) := do
   unless A.length = n ∧ A.all (·.length = n) do
-    throw s!"the matrix is not {n} × {n}"
+    throw (.malformed n)
   let left : Array (Array R) := (A.map (·.toArray)).toArray
   let right : Array (Array R) := (List.range n).toArray.map fun i =>
     (List.range n).toArray.map fun j => if i = j then 1 else 0
-  let e : Elim R := { left, right, perm := (List.range n).toArray, swaps := [], prev := 1, pivots := 0 }
-  let e := (List.range n).foldl (step quot) e
+  let mut e : Elim R := { left, right, perm := (List.range n).toArray, swaps := [], prev := 1, pivots := 0 }
+  for c in [:n] do
+    let pivot := findPivot e.left e.pivots c
+    if let some b := budget then
+      let count := blockSize size e + roundWork size e c pivot
+      if count > b.maxIntermediate then throw (.exhausted .intermediate count b.maxIntermediate)
+    e := step quot e c pivot
+    if let some b := budget then
+      let count := blockSize size e
+      if count > b.maxIntermediate then throw (.exhausted .intermediate count b.maxIntermediate)
   let w := assemble n e
-  if check A w then pure w
-  else throw "the witness fails its own check"
+  if let some b := budget then
+    let count := w.measure size
+    if count > b.maxCertificate then throw (.exhausted .certificate count b.maxCertificate)
+  return w
+
+private def validate (check : DetWitness R → Bool)
+    (candidate : Except Error (DetWitness R)) : Except Error (DetWitness R) := do
+  let w ← candidate
+  if check w then return w else throw .rejected
+
+private theorem validate_check (check : DetWitness R → Bool)
+    (candidate : Except Error (DetWitness R)) (w : DetWitness R)
+    (h : validate check candidate = .ok w) : check w = true := by
+  cases candidate with
+  | error e => simp [validate, bind, Except.bind] at h
+  | ok v =>
+    simp only [validate, bind, Except.bind] at h
+    split at h
+    · cases h; assumption
+    · contradiction
+
+end DetWitness
+
+/-- Fraction-free production with operand admission, block support and witness
+limits. The final self-check runs only after the witness fits its budget. -/
+def detWitnessBudgeted [Zero R] [One R] [Neg R] [Sub R] [Mul R]
+    [Inhabited R] [DecidableEq R] (quot : R → R → R) (n : Nat)
+    (size : R → Nat) (budget : DetWitness.Budget)
+    (check : List (List R) → DetWitness R → Bool) (A : List (List R)) :
+    Except DetWitness.Error (DetWitness R) :=
+  DetWitness.validate (check A) (DetWitness.produce quot n size (some budget) A)
+
+theorem detWitnessBudgeted_check [Zero R] [One R] [Neg R] [Sub R] [Mul R]
+    [Inhabited R] [DecidableEq R] (quot : R → R → R) (n : Nat)
+    (size : R → Nat) (budget : DetWitness.Budget)
+    (check : List (List R) → DetWitness R → Bool) (A : List (List R))
+    (w : DetWitness R) (h : detWitnessBudgeted quot n size budget check A = .ok w) :
+    check A w = true := DetWitness.validate_check _ _ _ h
+
+/-- The unlimited instance of the same producer, retaining the integer API. -/
+def detWitnessWith [Zero R] [One R] [Neg R] [Sub R] [Mul R]
+    [Inhabited R] [DecidableEq R] (quot : R → R → R) (n : Nat)
+    (check : List (List R) → DetWitness R → Bool)
+    (A : List (List R)) : Except String (DetWitness R) :=
+  (DetWitness.validate (check A) (DetWitness.produce quot n (fun _ => 0) none A)).mapError
+    DetWitness.Error.message
 
 /-- Every successful producer return has passed its supplied checker. This
 does not assume the quotient implementation is correct: a rejected witness
@@ -346,13 +447,13 @@ theorem detWitnessWith_check {R : Type} [Zero R] [One R] [Neg R] [Sub R] [Mul R]
     (w : DetWitness R) (h : detWitnessWith quot n check A = .ok w) :
     check A w = true := by
   unfold detWitnessWith at h
-  split at h
-  · dsimp at h
-    split at h
-    · cases h
-      assumption
-    · contradiction
-  · contradiction
+  generalize he : DetWitness.validate (check A)
+    (DetWitness.produce quot n (fun _ => 0) none A) = result at h
+  cases result with
+  | error e => contradiction
+  | ok v =>
+    cases h
+    exact DetWitness.validate_check _ _ _ he
 
 /-- The integer instance of the generic witness producer. -/
 def detWitnessOfLists (n : Nat) (A : List (List Int)) : Except String DetWitness :=

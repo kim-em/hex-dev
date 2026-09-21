@@ -8,8 +8,10 @@ module
 
 public import HexBareissMathlib.Tactic
 public import HexPolyDetMathlib.Small
+public import HexPolyDetMathlib.RowFactor
 public meta import HexBareissMathlib.Tactic
 public meta import HexPolyDetMathlib.Small
+public meta import HexPolyDetMathlib.RowFactor
 public meta import Mathlib.Tactic.Ring
 public meta import Lean
 
@@ -20,13 +22,19 @@ namespace HexPolyDetMathlib
 open Lean Meta Elab HexMatrixMathlib.Literal
 open HexMatrixMathlib.DetPoly.Frontend (Outcome Result)
 
-/-- The small formula path precedes polynomial reification. -/
+/-- Closed forms and common row factors precede polynomial reification. -/
 def compute (A : Expr) (rhs? : Option Expr := none) : MetaM (Outcome Result) := do
-  if let some lit ← literal? A (allowOpen := true) then
-    if lit.n == lit.m && lit.n ≤ 3 then
-      return .success (← profileitM Exception "det.small.formula" (← getOptions) (Small.formula A lit))
+  let mut recognized? := none
+  if let some (n, m, _) ← shape? (← inferType A) then
+    if n == m && n ≤ HexMatrixMathlib.DetPoly.Frontend.maxDimension then
+      if let some lit ← literal? A (allowOpen := true) then
+        if n ≤ 3 then
+          return .success (← profileitM Exception "det.small.formula" (← getOptions) (Small.formula A lit))
+        if let some result ← profileitM Exception "det.rowFactor" (← getOptions)
+            (RowFactor.compute? A lit rhs?) then return .success result
+        recognized? := some lit
   trace[HexMatrix.certificate] "{(Json.mkObj [("route", toJson "certificate-attempt")]).compress}"
-  return ← HexMatrixMathlib.DetPoly.Frontend.compute A rhs?
+  return ← HexMatrixMathlib.DetPoly.Frontend.compute A rhs? recognized?
 
 /-- Preserve the diagnostic if Mathlib cannot close the original goal. The
 symbolic attempt is never repeated through a simproc. -/
@@ -44,7 +52,6 @@ before any symbolic reification; Lean tries this later registration first. -/
 @[tactic HexMatrixMathlib.Det.detTac, no_fallback]
 def evalDet : Tactic.Tactic := fun _ => Tactic.withMainContext do
   let target ← instantiateMVars (← Tactic.getMainTarget)
-  if let .success _ ← HexMatrixMathlib.Det.classify target then throwUnsupportedSyntax
   let some (A, rhs, reverse) := HexMatrixMathlib.Det.detTarget? target | throwUnsupportedSyntax
   if let .success _ ← HexMatrixMathlib.Det.recognize A then throwUnsupportedSyntax
   match ← compute A rhs with

@@ -58,6 +58,13 @@ def check (n : Nat) (rows : List (List (MvPoly k C cmp)))
 
 variable [Dvd C] [GcdOps C] [IsMonomialOrder cmp] [LawfulGcdOps C]
 
+/-- Budget the shared elimination by nonzero polynomial support. The caller's
+compiled checker validates the exact integer or residue serialization. -/
+def produce (budget : DetWitness.Budget) (n : Nat)
+    (check : List (List (MvPoly k C cmp)) → DetWitness (MvPoly k C cmp) → Bool)
+    (rows : List (List (MvPoly k C cmp))) : Except DetWitness.Error (DetWitness (MvPoly k C cmp)) :=
+  detWitnessBudgeted Hex.exactDiv n MvPoly.termCount budget check rows
+
 /-- Fraction-free elimination with polynomial exact division and a retained
 transform, accepting the witness only after the compiled list check. -/
 def polyDetWitness (P : Matrix (MvPoly k C cmp) n n) :

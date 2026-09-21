@@ -18,10 +18,10 @@ import re
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def selected(record):
+def selected_tables(record):
     if record['stage'] != 'forced' or not record['schedule_complete'] or not record['sources_unchanged'] or record['subset']:
         raise ValueError('requires a complete, unchanged, full forced comparison')
-    winners, keys = [], set()
+    winners, tables = [], {"list": set(map(tuple, record.get("retained_list_keys", []))), "tree": set()}
     for stem, case in record['summary'].items():
         c = record['classification'][stem]
         if c['classification'] != 'eligible':
@@ -33,9 +33,15 @@ def selected(record):
                 samples = [r for r in record['samples'] if r['stem'] == stem and r['arm'] == arm]
                 if len(samples) != 6 or not all(any(e['route'] == route for e in r.get('routes', [])) for r in samples):
                     raise ValueError(f'{stem}: six actual {route} certificates required')
+            entries = c.get('entries', 'list')
+            for sample in record['samples']:
+                if sample['stem'] == stem and sample['arm'] == 'Packed':
+                    actual = next(e for e in sample['routes'] if e['route'] == 'packed/plain')
+                    if actual.get('entries', 'list') != entries:
+                        raise ValueError(f'{stem}: entry encoding differs from classification')
             winners.append(stem)
-            keys.update(tuple(r['key']) for r in c['selection']['products'])
-    return winners, sorted(keys)
+            tables[entries].update(tuple(r['key']) for r in c['selection']['products'])
+    return winners, {encoding: sorted(keys) for encoding, keys in tables.items()}
 
 
 def main():
@@ -46,20 +52,29 @@ def main():
     args = parser.parse_args()
     raw = args.forced.read_bytes()
     record = json.loads(gzip.decompress(raw) if args.forced.suffix == '.gz' else raw)
-    winners, keys = selected(record)
+    winners, tables = selected_tables(record)
+    keys = sorted(set(tables["list"]) | set(tables["tree"]))
     result = dict(forced_sha256=hashlib.sha256(args.forced.read_bytes()).hexdigest(),
         rule='six completed samples in both arms; 0 < packed median < term-list median',
-        winning_cases=winners, keys=keys, default_simproc_enabled=False)
+        winning_cases=winners, keys=keys, keys_by_entries=tables,
+        retained_list_keys=record.get("retained_list_keys", []),
+        list_table_provenance=record.get("list_table_provenance"), default_simproc_enabled=False)
     args.output.write_text(json.dumps(result, indent=2)+'\n')
     if args.write:
+        if "retained_list_keys" not in record or not record.get("list_table_provenance"):
+            raise ValueError("writing requires explicit provenance for the retained list table")
         path = ROOT / 'HexPolyDet/Select.lean'
         text = path.read_text()
-        table = '[\n' + ',\n'.join('  ⟨' + ', '.join(map(str,k)) + '⟩' for k in keys) + '\n]' if keys else '[]'
-        text, count = re.subn(r'def crossover : List Key := \[[\s\S]*?\]', 'def crossover : List Key := '+table, text, count=1)
-        if count != 1:
-            raise ValueError('crossover declaration not found')
+        for encoding, declaration in [('list', 'crossover'), ('tree', 'treeCrossover')]:
+            entries = tables[encoding]
+            table = '[\n' + ',\n'.join('  ⟨' + ', '.join(map(str,k)) + '⟩' for k in entries) + '\n]' if entries else '[]'
+            text, count = re.subn(r'def ' + declaration + r' : List Key := \[[\s\S]*?\]',
+                lambda _: 'def ' + declaration + ' : List Key := ' + table, text, count=1)
+            if count != 1:
+                raise ValueError(f'{declaration} declaration not found')
         path.write_text(text)
-    print(f'{len(winners)} winning witnesses; {len(keys)} product keys')
+    print(f'{len(winners)} winning witnesses; {len(tables["tree"])} tree keys; '
+          f'{len(tables["list"])} list keys (including {len(record.get("retained_list_keys", []))} retained)')
 
 if __name__ == '__main__':
     main()

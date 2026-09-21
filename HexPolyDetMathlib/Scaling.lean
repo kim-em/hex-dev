@@ -49,6 +49,14 @@ theorem row (a p : Rat) (s t : Nat) (hp : p = (s : Rat) * a) :
     (t : Rat) * p = ((t * s : Nat) : Rat) * a := by
   rw [hp, Nat.cast_mul, mul_assoc]
 
+/-- Cancel positive row and target scales from a cross-multiplied identity. -/
+theorem cancel (s t : Nat) (a e : Rat) (hs : 0 < s) (ht : 0 < t)
+    (h : (t : Rat) * ((s : Rat) * a) = (s : Rat) * ((t : Rat) * e)) : a = e := by
+  have ht0 : (t : Rat) ≠ 0 := by exact_mod_cast ht.ne'
+  have hs0 : (s : Rat) ≠ 0 := by exact_mod_cast hs.ne'
+  apply mul_left_cancel₀ (mul_ne_zero ht0 hs0)
+  simpa only [mul_assoc, mul_left_comm] using h
+
 /-- Cancel the positive row and target scales after comparing the integer
 polynomial lists by cross multiplication. -/
 theorem target (k n : Nat)
@@ -69,10 +77,8 @@ theorem target (k n : Nat)
     (Hex.MvPoly.Kernel.denote (cmp := Hex.Mono.grevlex) p))
       (Hex.MvPoly.Kernel.beq_eq_true_iff.mp hq)
   rw [HexReflectMathlib.Kernel.eval_smul, HexReflectMathlib.Kernel.eval_smul, he, ← hdet] at h
-  have ht0 : (t : Rat) ≠ 0 := by exact_mod_cast ht.ne'
-  have hs0 : (Hex.Matrix.DetWitness.prodNat s : Rat) ≠ 0 := by exact_mod_cast hs.ne'
-  apply mul_left_cancel₀ (mul_ne_zero ht0 hs0)
-  simpa only [Int.ofNat_eq_natCast, Int.cast_natCast, mul_assoc, mul_left_comm] using h
+  apply cancel (Hex.Matrix.DetWitness.prodNat s) t A.det e hs ht
+  simpa only [Int.ofNat_eq_natCast, Int.cast_natCast] using h
 
 
 /-- Identification of the row-scaled symbolic literal. -/

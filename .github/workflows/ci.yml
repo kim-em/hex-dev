@@ -148,6 +148,7 @@ jobs:
           python3 -m unittest scripts/bench/test_structural_tactic_probes.py
           python3 -m unittest scripts/bench/test_row_reduce_tactic_probes.py
           python3 -m unittest scripts/bench/test_det_ring_solver_probes.py
+          python3 -m unittest scripts/bench/test_det_packed_table.py scripts/bench/test_det_bench_limits.py
           python3 -m unittest scripts/bench/test_rationalfn_flint.py
           python3 -m unittest scripts/bench/test_real_roots_mathlib_sweep.py
           python3 -m unittest scripts/bench/test_bz_mathlib_sweep.py

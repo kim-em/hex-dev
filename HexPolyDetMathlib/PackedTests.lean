@@ -90,3 +90,88 @@ theorem packedSingularMod (x y : ZMod 3) :
 /-- info: 'packedSingularMod' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms packedSingularMod
+
+universe u
+
+-- Tree transport supports carriers in arbitrary universes, with no domain premise.
+set_option hex.det.checker 2 in
+theorem packedUniverse {R : Type u} [CommRing R] (x y : R) :
+    Matrix.det !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y] =
+      (x * x - 1) * (y * y - 1) := by det
+
+-- A target may fail structural preflight although all witness products fit.
+-- The canonical-list route still certifies the cancellation in that target.
+set_option hex.det.checker 2 in
+example (x y z w : Int) : Matrix.det !![x, 0, 0, 0; 0, y, 0, 0; 0, 0, z, 0; 0, 0, 0, w] =
+    x * y * z * w + (x ^ 64 * y ^ 64 * z ^ 64 * w ^ 64 - x ^ 64 * y ^ 64 * z ^ 64 * w ^ 64) := by
+  det
+
+/-- info: 'HexMatrixMathlib.DetPoly.Tree.checkDetPolyPackedTree_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms HexMatrixMathlib.DetPoly.Tree.checkDetPolyPackedTree_sound
+/-- info: 'packedUniverse' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms packedUniverse
+
+-- Generated values are identified structurally, without a target certificate.
+run_meta do
+  let mut pending := [``packedTerm]
+  while let name :: rest := pending do
+    pending := rest
+    let some value := (← Lean.getConstInfo name).value? (allowOpaque := true)
+      | throwError "missing generated term proof"
+    for used in value.getUsedConstants do
+      if used == ``Hex.Kronecker.Kernel.treeTermsEq_sound ||
+          used == ``HexReflectMathlib.Kernel.eval_checked then
+        throwError "generated term redundantly checks its reconstructed value"
+      if (``packedTerm).isPrefixOf used then pending := used :: pending
+
+example (x y : Rat) :
+    (det% !![x / 2, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y]).value =
+      (x ^ 2 / 2 - 1) * (y ^ 2 - 1) := by ring
+
+-- Generated values also authenticate their instances over abstract carriers.
+set_option hex.det.checker 2 in
+theorem packedTermUniverse {R : Type u} [CommRing R] (x y : R) :
+    Matrix.det !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y] =
+      (det% !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y]).value :=
+  (det% !![x, 1, 0, 0; 1, x, 0, 0; 0, 0, y, 1; 0, 0, 1, y]).proof
+
+/-- info: 'packedTermUniverse' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms packedTermUniverse
+
+-- Let-bound data must count towards admission even when the open proof is tiny.
+run_meta do
+  let outcome ← Hex.Reflect.run (Hex.Reflect.withOutcome do
+    let mut payload := Lean.mkNatLit 0
+    for _ in [:100] do payload := Lean.mkApp (Lean.mkConst ``Nat.succ) payload
+    Lean.Meta.withLetDecl `retained (Lean.mkConst ``Nat) payload fun x => do
+      HexMatrixMathlib.DetPoly.Frontend.checkedBudgeted (← Lean.Meta.mkEq x x)
+        (← Lean.Meta.mkEqRefl x)) { budget := { Hex.Reflect.Budget.default with proofNodes := 100 } }
+  match outcome with
+  | .declined (.budgetExhausted e) _ =>
+    unless e.dimension == .proofNodes do throwError "wrong budget dimension"
+  | _ => throwError "retained proof payload escaped its node budget"
+
+-- Repeated shared syntax must neither inflate the count nor defeat its cap.
+run_meta do
+  let mut e := Lean.mkRawNatLit 0
+  for _ in [:64] do e := Lean.mkApp e e
+  unless Hex.Reflect.proofNodeCount #[e] 32 == 32 do
+    throwError "proof-node counting did not stop at its cap"
+  unless Hex.Reflect.proofNodeCount #[e] 1000 == 65 do
+    throwError "shared syntax count {Hex.Reflect.proofNodeCount #[e] 1000}"
+
+-- Pin the abstract term form to the tree route, not merely to a valid fallback.
+run_meta do
+  let mut pending := [``packedTermUniverse]
+  let mut found := false
+  while let name :: rest := pending do
+    pending := rest
+    let some value := (← Lean.getConstInfo name).value? (allowOpaque := true)
+      | throwError "missing generated abstract-carrier proof"
+    for used in value.getUsedConstants do
+      if used == ``HexMatrixMathlib.DetPoly.Tree.result_det then found := true
+      if (``packedTermUniverse).isPrefixOf used then pending := used :: pending
+  unless found do throwError "abstract term form did not use the tree certificate"

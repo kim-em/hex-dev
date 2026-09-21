@@ -51,6 +51,17 @@ changes neither the library registry nor the released manifest.
   and where the first pilot lost to `norm_det`; the probes measure the
   closed-form route on the `2 × 2` and `3 × 3` rungs against `norm_det`
   rather than assuming it wins.
+- **Common row factors.** Before polynomial reification, a literal whose
+  entries have the form `(cᵢⱼ : R) * fᵢ`, with integer literals `cᵢⱼ`
+  and one syntactically shared expression `fᵢ` per row, can use the numeric
+  determinant certificate for `(cᵢⱼ)`. The row-scaling identity and
+  `RingHom.map_det` transport this certificate over any commutative ring.
+  The result retains the row factors, multiplied in row order; their
+  internal polynomials are never expanded. Entry identifications must
+  check the actual operation and numeral instances. This route does not
+  claim a performance result for unstructured polynomial matrices. A
+  target not definitionally equal to the factored result uses the regular
+  polynomial frontend. Forced polynomial checker arms bypass this shortcut.
 - **Opt-in until measured.** The symbolic handler is not placed in the
   default `Hex.norm_det` fallback chain. It ships as the `det` handler and
   `det%` term form for symbolic input, and enters the simp-set chain only
@@ -303,9 +314,11 @@ shapes and bounds once; it does not replay the resource policy.
 Proof assembly gives the nested conjunction its stated `AllFin` expected
 type and constructs identification and transport applications directly,
 without Meta unification through the literal matrix and quoted payload.
-Charge the proof-node budget from the serialized payload and retained
-syntax sizes, or use compiled node counting; do not traverse the assembled
-proof with an interpreted node counter.
+The frontend uses compiled, capped counting of distinct nodes in the closed
+proof, including retained syntax and let-bound payloads, before kernel admission.
+Early admission counts the quoted payload itself; it does not estimate proof
+size by multiplying term counts by a constant.
+Do not traverse the assembled proof with an interpreted node counter.
 
 `checkDetPolyPackedMod_sound` uses `Kernel.mulTermsMod_sound` in the residue
 polynomial model for each supplemental quotient row. It recovers the
@@ -531,8 +544,19 @@ The packed implementation reruns the shared families in
 retaining its infeasible cases, failures and declines. For every certificate
 case compare forced term lists and forced packed checking on the same
 witness and proposition. Fix the sparse/packed crossover table from those
-measurements first, with the mode-selection table supplied by Kronecker's
-product benchmark. Then run fresh comparisons of the full automatic dispatch
+measurements first, with separate tables for list entries and retained trees.
+Each tree key uses its structural packed bound and retained entry-node count;
+list keys use canonical entry support. Witness support and inner dimension
+remain common coordinates. Evidence never transfers between the two tables.
+The two-arm sweep measures the preferred packed encoding of each witness. It
+fits the tree table from those tree observations and may add measured list
+fallback keys; it does not erase the historical list table without a dedicated
+list-packed comparison. The retained list table and its source hash are named
+in the sweep record and table artifact. Fresh automatic-dispatch measurements
+include the costs of whichever retained route actually runs.
+The forced proof module, not the supplemental list-only compiled driver,
+determines the measured encoding and keys. Use the mode-selection table
+supplied by Kronecker's product benchmark. Then run fresh comparisons of the full automatic dispatch
 using the fixed tables against unmodified `norm_det`. An empty-table dispatch
 run is a sparse-fallback control, not evidence about packed dispatch. Forced
 packing still obeys the hard limits; an ineligible case records a decline, not a packed timing. Keep the `n ≤ 3`
@@ -561,6 +585,35 @@ conversion, repeated inner/outer packing, integer multiplication, kernel
 check, identification, total elaboration and composed fallback separately where applicable; record proof
 nodes, `.olean` size, support, degree bounds, packed bits and route. Collect
 one representative kernel profile per family, not a profile per change.
+
+Start performance investigation with a small representative subset: the main
+4×4 quadratic probe, a simple 4×4 control and the named monomial 8×8 probes.
+Report the observed wins and losses before considering broader coverage.
+Use the runner's `--case` selections and label the result as a subset; subset
+evidence cannot fit the shipping crossover table or establish family-wide wins.
+The maximum allowance is a backstop, not a target duration.
+
+The complete manual determinant measurement workflow has a hard one-hour
+wall-time allowance, including import warmup and attribution: at most ten
+minutes for classification, twenty for forced comparison and thirty for
+automatic dispatch. A persistent shared budget ledger reserves each stage
+before launching it; an interrupted stage does not obtain a fresh allowance
+on an implicit retry. The parent runner terminates the stage and its descendants
+at the deadline, including builds that start separate process sessions.
+This is an operational ceiling, not a performance claim about a tactic.
+
+After a timeout, do not repeat that case or attempt a coordinatewise larger
+case in the same arm, mathematical family and carrier. Compare dimension,
+atom count, degree and support; increasing one coordinate while decreasing
+another is incomparable. Modulus, quotient availability and scope mode must
+also agree. Preserve the timeout and record each skipped case with its blocking
+case and arm. Carry this evidence into later stages for the same arm only.
+A Hex timeout does not censor Mathlib measurements. Deadline skips are recorded
+separately. Neither kind of skip is a measured timeout or a successful sample;
+it supplies no median or crossover evidence. A complete schedule accounts for
+all rows, including skips, and does not imply complete measurement coverage.
+Only six successful observations per arm support the final paired medians.
+Preliminary results from fewer pairs must state their sample counts.
 
 The implementation updates the report and this SPEC with per-family medians
 for term lists, packed checking, automatic dispatch and Mathlib, plus
@@ -623,6 +676,7 @@ HexPolyDetMathlib/
   Normalize.lean    -- proved coefficient normalization
   Frontend.lean     -- reification and certificate preparation
   Small.lean        -- closed forms
+  RowFactor.lean    -- common row factors and numeric determinant transport
   Tactic.lean       -- the handler on hex-bareiss-mathlib's `det` syntax kind, det% for symbolic input, Hex.normPolyDet
   Tests.lean
   PackedTests.lean  -- packed routes, singularity, transport, and axiom audits
@@ -651,8 +705,9 @@ and proves determinant transport. The closed checker contains no `ZMod64`
 arithmetic.
 
 Producer-side grevlex terms are converted to canonical list order by merge sort.
-Generated value expressions use balanced sums, and entry identification uses
-direct list denotation, avoiding a round trip through the Hex matrix data.
+Generated value expressions use balanced sums. Tree entry identification uses
+denotation hints; the list fallback uses direct list denotation. Neither route
+makes a round trip through the Hex matrix data.
 The term form does not replay a reflexive comparison of its own value list.
 
 Limits are 16 rows, 65,536 certificate terms, 100,000 intermediate terms and
@@ -779,7 +834,7 @@ samples are required; ratios use positive medians only.
 
 ### Packed comparison outcome
 
-The packed crossover contains 50 exact product keys from 14 witnesses with six
+The pre-tree baseline packed crossover contains 50 exact product keys from 14 witnesses with six
 successful samples in each forced arm and a positive packed median smaller than
 the term-list median. The automatic comparison uses the same fixture population
 as table fitting, with fresh samples: it is an in-sample dispatch comparison,
@@ -789,7 +844,7 @@ The table is fixed before the automatic comparison. No effect-size threshold
 was preregistered; small median differences and their spreads are reported
 without treating them as robust wins. Both
 full 2,064-observation schedules and all 14 family profiles are retained in the
-[packed report](../../reports/hex-poly-det-mathlib-performance.md#packed-certificate-comparison).
+[packed report](../../reports/hex-poly-det-mathlib-performance.md#historical-list-entry-packed-certificate-comparison).
 The report includes the complete 172-case ladder, 57 infeasible support requests,
 quotient generation, preflight, conversion, packing, multiplication, synchronous
 kernel checks, identification, elaboration and composed fallback costs. All

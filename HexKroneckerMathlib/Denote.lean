@@ -58,6 +58,12 @@ namespace Expr
   | .mul a b => denote v a * denote v b
   | .pow a n => denote v a ^ n
 
+/-- Evaluation of the retained syntax commutes with ring maps. -/
+theorem map_denote {R : Type u} {S : Type v} [CommRing R] [CommRing S]
+    (f : R →+* S) (e : Expr) (v : Nat → R) :
+    f (e.denote v) = e.denote (fun i => f (v i)) := by
+  induction e <;> simp_all [denote]
+
 /-- Interpret a validated expression using a finite atom assignment. -/
 @[expose] def denoteFin {R : Type u} [CommRing R] {k : Nat} :
     (e : Expr) → e.WellFormed k → (Fin k → R) → R
