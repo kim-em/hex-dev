@@ -408,3 +408,33 @@ unattributable to a registered bench target, so no audit-found follow-up
 was filed from this rerun.
 
 ## Concerns
+
+The shared pseudo-division/plain pseudo-gcd additions have separate evidence
+under [#10375](https://github.com/kim-em/hex-dev/issues/10375#issuecomment-5757400442).
+Their results do not inherit the completion claim for the earlier operations.
+
+The fixed-field scientific run at `f6da5442ea8f` reuses the existing `F7`
+division and Fibonacci quotient-chain fixtures, with four trial-major outer
+trials and 100 ms tuning targets. Exact commands, automatically selected CPU,
+host observations, source/executable hashes and all samples are retained in
+[poly-pseudo-f6da5442ea8f](bench-results/poly-pseudo-f6da5442ea8f/), including the
+measured registration source. Eleven serialized fixtures agree independently
+with pinned python-flint 0.9.0 / FLINT 3.6.0 `nmod_poly`: multiplier, quotient,
+remainder and gcd are all checked.
+
+Both declarations use mode 1 (two-sided parametric). With dividend/divisor
+lengths `2n/n`, pseudo-division's dynamic recurrence has quadratic coefficient
+work. For consecutive polynomial Fibonacci inputs, plain pseudo-gcd has
+linearly many degree-one quotient steps, each linear in the current degree,
+so its total coefficient work is quadratic. F7 keeps scalar sizes fixed.
+
+| Operation | Parameters | Verdict | Residual slope | Final-rung median |
+| --- | --- | --- | --- | --- |
+| `runPseudoDiv` | 64,96,128,192,256,384,512 | consistent | −0.038 | 2689.273 µs |
+| `runPseudoGcd` | 16,24,32,48,64,96 | inconclusive | −0.223 | 171.916 µs |
+
+The faster-than-declared pseudo-gcd observation is an unresolved
+characterization, not a pass. Lower-order allocation/loop costs on this small
+ladder are a hypothesis requiring investigation. Every completed sample is
+retained; no rerun or timing-driven change to the registrations was made.
+[#10375 records the required phase rollback and remaining work](https://github.com/kim-em/hex-dev/issues/10375#issuecomment-5757400442).

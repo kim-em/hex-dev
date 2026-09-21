@@ -153,4 +153,6 @@ chain length, peak intermediate sizes, gcd work and coefficient-operation call
 counts remain required. Extension-depth and nested-evidence probes require the
 downstream adapters. Root-sum/replay soundness, count/singleton/sign/bound
 consequences and whole-Option backend correspondence remain proof gates.
+The [recorded finding](https://github.com/kim-em/hex-dev/issues/10375#issuecomment-5757400442)
+also covers the owning polynomial library's separate pseudo-gcd scaling gap.
 Nothing in these measurements advances the library phase or closes #10375.
