@@ -50,6 +50,15 @@ def approxAttempt (a : Approximation K) (f : RationalFn K) (δ : Rat) (n : Nat) 
 /-- Nonpositive requests ask for a coarse width-one enclosure. -/
 def requestWidth (δ : Rat) : Rat := if 0 < δ then δ else 1
 
+@[simp] theorem requestWidth_of_pos {δ : Rat} (h : 0 < δ) : requestWidth δ = δ :=
+  ite_eq_left h
+
+theorem requestWidth_pos (δ : Rat) : 0 < requestWidth δ := by
+  unfold requestWidth
+  split
+  · assumption
+  · decide +kernel
+
 /-- Derived approximation for one query. Nonpositive requests run the same
 refinement at width one, so every result still encloses the queried value. -/
 def approx (a : Approximation K) (f : RationalFn K) (δ : Rat)
@@ -97,13 +106,18 @@ theorem approxAttempt_width (a : Approximation K) (f : RationalFn K)
       exact hb.2 ▸ hb.1
 
 /-- Width is a rational property of the actual search, separate from containment. -/
+theorem approx_width_le (a : Approximation K) (f : RationalFn K) (δ : Rat)
+    (h : Acc (Next (approxAttempt a f (requestWidth δ))) 0) :
+    (approx a f δ h).width ≤ requestWidth δ := by
+  obtain ⟨n, _, hn⟩ := firstSome_spec (approxAttempt a f (requestWidth δ)) 0 h
+  exact approxAttempt_width a f (requestWidth δ) n hn
+
+/-- Positive requests retain their specified width. -/
 theorem approx_width (a : Approximation K) (f : RationalFn K) (δ : Rat)
     (h : Acc (Next (approxAttempt a f (requestWidth δ))) 0) (hδ : 0 < δ) :
     (approx a f δ h).width ≤ δ := by
-  obtain ⟨n, _, hn⟩ := firstSome_spec (approxAttempt a f (requestWidth δ)) 0 h
-  have hw := approxAttempt_width a f (requestWidth δ) n hn
   calc
-    (approx a f δ h).width ≤ requestWidth δ := hw
-    _ = δ := by simp [requestWidth, hδ]
+    (approx a f δ h).width ≤ requestWidth δ := approx_width_le a f δ h
+    _ = δ := requestWidth_of_pos hδ
 
 end Hex.OrderedFn.Real

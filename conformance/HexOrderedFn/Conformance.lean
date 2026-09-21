@@ -66,6 +66,8 @@ private def productsAgree : Bool := Id.run do
           if let some quotient := a.div? b then
             if t == 0 then return false
             if !(quotient.lower ≤ s / t && s / t ≤ quotient.upper) then return false
+          else
+            if !(low ≤ 0 && 0 ≤ high) then return false
   return true
 
 #guard productsAgree

@@ -64,12 +64,14 @@ theorem narrow : Real.approxAttempt (source 2) (linear 1) (1/16) 4 =
 
 def totalApprox : Bounds := Real.approx (source 2) (linear 1) (1/16)
   (by
-    rw [Real.requestWidth, ite_eq_left (show (0 : Rat) < 1/16 from by decide +kernel)]
+    rw [Real.requestWidth_of_pos (δ := 1/16) (by decide +kernel)]
     exact acc_of_success _ 4 _ narrow 0 (by decide))
+
+def coarseBounds : Bounds := ⟨1/2, 3/2, by decide +kernel⟩
 
 -- Out-of-contract requests still produce a valid coarse enclosure of this value.
 def coarseApprox : Bounds := Real.approx (source 2) (linear 1) 0
-  (acc_of_success _ 0 ⟨1/2, 3/2, by decide +kernel⟩ (by decide +kernel) 0 (by decide))
+  (acc_of_success _ 0 coarseBounds (by decide +kernel) 0 (by decide))
 
 
 -- Algebraic subjects use only finite evaluation, never a universal registration.

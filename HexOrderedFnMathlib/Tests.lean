@@ -34,8 +34,11 @@ theorem narrow : Real.approxAttempt (source 2) (linear 1) (1/16) 4 =
 
 def totalApprox : Bounds := Real.approx (source 2) (linear 1) (1/16)
   (by
-    rw [Real.requestWidth, ite_eq_left (show (0 : Rat) < 1/16 from by decide +kernel)]
+    rw [Real.requestWidth_of_pos (δ := 1/16) (by decide +kernel)]
     exact acc_of_success _ 4 _ narrow 0 (by decide))
+
+def coarseApprox : Bounds := Real.approx (source 2) (linear 1) 0
+  (acc_of_success _ 0 Tests.coarseBounds (by decide +kernel) 0 (by decide))
 
 theorem window_contains (q δ : Rat) : Contains (window q δ) (q : ℝ) := by
   unfold window
@@ -63,6 +66,11 @@ example : Contains totalApprox (Real.eval (Rat.castHom ℝ) 2 (linear 1)) :=
   Real.approx_contains (source_correct 2) _ _ _
 
 example : totalApprox.width ≤ 1/16 := Real.approx_width _ _ _ _ (by decide +kernel)
+
+example : Contains coarseApprox (Real.eval (Rat.castHom ℝ) 2 (linear 1)) :=
+  Real.approx_contains (source_correct 2) _ _ _
+
+example : coarseApprox.width ≤ 1 := Real.approx_width_le _ _ _ _
 
 -- Containment cannot be reused for a different semantic subject.
 example : ¬Contains (Bounds.singleton 2) (3 : ℝ) := by norm_num [Contains, Bounds.singleton]
