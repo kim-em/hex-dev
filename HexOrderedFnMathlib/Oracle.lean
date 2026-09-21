@@ -32,9 +32,19 @@ structure ApproximationCorrect {K : Type u} [Semiring K]
   coeff : ∀ x δ, 0 < δ → Contains (a.coeff x δ) (ι x)
   constant : ∀ δ, 0 < δ → Contains (a.constant δ) τ
 
+/-- Exact rational coefficients require only the constant's containment proof. -/
+theorem ApproximationCorrect.ofConstant (constant : Rat → Bounds) (τ : ℝ)
+    (h : ∀ δ, 0 < δ → Contains (constant δ) τ) :
+    ApproximationCorrect (Rat.castHom ℝ) τ (.ofConstant constant) where
+  coeff _ _ _ := ⟨le_rfl, le_rfl⟩
+  constant := h
+
 namespace Contains
 
 @[simp] theorem singleton (q : Rat) : Contains (.singleton q) (q : ℝ) := ⟨le_rfl, le_rfl⟩
+
+/-- Dyadic conversion preserves its exact rational value. -/
+theorem ofDyadic (x : Dyadic) : Contains (.ofDyadic x) (x.toRat : ℝ) := singleton x.toRat
 
 theorem neg {a : Bounds} {x : ℝ} (h : Contains a x) : Contains a.neg (-x) := by
   simpa [Contains, Bounds.neg] using And.intro (neg_le_neg h.2) (neg_le_neg h.1)

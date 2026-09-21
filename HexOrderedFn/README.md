@@ -6,7 +6,8 @@ It imports neither Mathlib nor an interval library. The full contract is in
 [hex-ordered-fn](../SPEC/Libraries/hex-ordered-fn.md).
 
 `Oracle.Approximation` contains only computational coefficient and constant
-providers. `Oracle.ApproximationWidth` states their requested-width guarantees
+providers. `Approximation.ofConstant` starts over rational coefficients with
+exact singleton bounds. `Oracle.ApproximationWidth` states their requested-width guarantees
 separately; the companion's `ApproximationCorrect` states containment for the
 same providers, embedding, subject and requests.
 
@@ -23,8 +24,8 @@ numerator and denominator bounds; formal zero returns immediately.
 
 `Real.sign` and `Real.approx` execute these trials from precision zero under an
 erased accessibility proof. Positive requests to `approx` have separate width
-and containment theorems; nonpositive requests return the singleton zero and
-have no accuracy contract. `Real.sign?` is a separate finite consumer that
+and containment theorems; nonpositive requests execute the same search with
+requested width one. Containment therefore holds for every returned bound. `Real.sign?` is a separate finite consumer that
 checks denominator regularity and can recognize an exact-zero numerator.
 It is never registered as a field operation.
 

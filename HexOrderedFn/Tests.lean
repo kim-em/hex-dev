@@ -19,12 +19,14 @@ def window (q δ : Rat) : Bounds :=
   if h : 0 < δ then ⟨q - δ / 2, q + δ / 2, by grind⟩ else .singleton q
 
 def source (q : Rat) : Approximation Rat :=
-  ⟨fun c _ => .singleton c, window q⟩
+  .ofConstant (window q)
 
 def exact (q : Rat) : Approximation Rat :=
-  ⟨fun c _ => .singleton c, fun _ => .singleton q⟩
+  .ofConstant (fun _ => .singleton q)
 
-def linear (q : Rat) : RationalFn Rat := RationalFn.ofPoly (DensePoly.ofList [-q, 1])
+def linearPoly (q : Rat) : DensePoly Rat := DensePoly.ofList [-q, 1]
+
+def linear (q : Rat) : RationalFn Rat := RationalFn.ofPoly (linearPoly q)
 
 def pole : RationalFn Rat := RationalFn.ofCoprime 1 (DensePoly.ofList [-2, 1])
   (by change (DensePoly.ofList [-2, 1] : DensePoly Rat).leadingCoeff = 1; decide +kernel)
@@ -34,6 +36,8 @@ def a : Bounds := ⟨-2, 3, by decide +kernel⟩
 def b : Bounds := ⟨-5, -1, by decide +kernel⟩
 
 example : a.mul b = ⟨-15, 10, by decide +kernel⟩ := by decide +kernel
+example : a.neg = ⟨-3, 2, by decide +kernel⟩ := by decide +kernel
+example : Bounds.ofDyadic (.ofIntWithPrec (-3) 2) = .singleton (-3/4) := by decide +kernel
 example : a.div? b = some ⟨-3, 2, by decide +kernel⟩ := by decide +kernel
 example : b.div? a = none := by decide +kernel
 example : a.inter b = some ⟨-2, -1, by decide +kernel⟩ := by decide +kernel
@@ -59,7 +63,13 @@ theorem narrow : Real.approxAttempt (source 2) (linear 1) (1/16) 4 =
     some ⟨31/32, 33/32, by decide +kernel⟩ := by decide +kernel
 
 def totalApprox : Bounds := Real.approx (source 2) (linear 1) (1/16)
-  (fun _ => acc_of_success _ 4 _ narrow 0 (by decide))
+  (by
+    rw [Real.requestWidth, ite_eq_left (show (0 : Rat) < 1/16 from by decide +kernel)]
+    exact acc_of_success _ 4 _ narrow 0 (by decide))
+
+-- Out-of-contract requests still produce a valid coarse enclosure of this value.
+def coarseApprox : Bounds := Real.approx (source 2) (linear 1) 0
+  (acc_of_success _ 0 ⟨1/2, 3/2, by decide +kernel⟩ (by decide +kernel) 0 (by decide))
 
 
 -- Algebraic subjects use only finite evaluation, never a universal registration.

@@ -11,7 +11,8 @@ public import HexOrderedFn.Tests
 public import Mathlib.Analysis.SpecialFunctions.Sqrt
 public import Mathlib.Tactic.Linarith
 
-open Hex Hex.OrderedFn Hex.OrderedFn.Oracle Hex.OrderedFn.Tests
+open Hex Hex.OrderedFn Hex.OrderedFn.Oracle
+open Hex.OrderedFn.Tests (source window)
 
 public section
 
@@ -19,7 +20,9 @@ namespace Hex.OrderedFn.SemanticTests
 
 attribute [local instance 2000] Field.toGrindField
 
-def linear (q : Rat) : RationalFn Rat := RationalFn.ofPoly (DensePoly.ofList [-q, 1])
+-- Share the computational polynomial input, but form a separate fraction under
+-- the companion's fixed field dictionary. The core fractions have a different type.
+def linear (q : Rat) : RationalFn Rat := RationalFn.ofPoly (Tests.linearPoly q)
 
 theorem separated : Real.attempt (source 2) (linear (31/16)) 4 = some 1 := by decide +kernel
 
@@ -30,7 +33,9 @@ theorem narrow : Real.approxAttempt (source 2) (linear 1) (1/16) 4 =
     some ⟨31/32, 33/32, by norm_num⟩ := by decide +kernel
 
 def totalApprox : Bounds := Real.approx (source 2) (linear 1) (1/16)
-  (fun _ => acc_of_success _ 4 _ narrow 0 (by decide))
+  (by
+    rw [Real.requestWidth, ite_eq_left (show (0 : Rat) < 1/16 from by decide +kernel)]
+    exact acc_of_success _ 4 _ narrow 0 (by decide))
 
 theorem window_contains (q δ : Rat) : Contains (window q δ) (q : ℝ) := by
   unfold window
@@ -41,23 +46,21 @@ theorem window_contains (q δ : Rat) : Contains (window q δ) (q : ℝ) := by
     constructor <;> linarith
   next h => exact Contains.singleton q
 
-theorem source_correct (q : Rat) : ApproximationCorrect (Rat.castHom ℝ) (q : ℝ) (source q) where
-  coeff c _ _ := Contains.singleton c
-  constant δ _ := window_contains q δ
+theorem source_correct (q : Rat) : ApproximationCorrect (Rat.castHom ℝ) (q : ℝ) (source q) :=
+  .ofConstant _ _ (fun δ _ => window_contains q δ)
 
-theorem source_width (q : Rat) : ApproximationWidth (source q) where
-  coeff c δ hδ := by simpa [source] using hδ.le
-  constant δ hδ := by
-    change (window q δ).width ≤ δ
+theorem source_width (q : Rat) : ApproximationWidth (source q) :=
+  .ofConstant _ (by
+    intro δ hδ
     simp only [window, dite_eq_left hδ, Bounds.width]
-    linarith
+    linarith)
 
 -- Ordinary theorem application checks a sign whose progress theorem is opaque.
 theorem totalSign_correct : totalSign = 1 :=
   Real.sign_of_attempt (source_correct 2) _ _ separated
 
 example : Contains totalApprox (Real.eval (Rat.castHom ℝ) 2 (linear 1)) :=
-  Real.approx_contains (source_correct 2) _ _ _ (by norm_num)
+  Real.approx_contains (source_correct 2) _ _ _
 
 example : totalApprox.width ≤ 1/16 := Real.approx_width _ _ _ _ (by decide +kernel)
 
@@ -65,7 +68,7 @@ example : totalApprox.width ≤ 1/16 := Real.approx_width _ _ _ _ (by decide +ke
 example : ¬Contains (Bounds.singleton 2) (3 : ℝ) := by norm_num [Contains, Bounds.singleton]
 
 def sqrtSource : Approximation Rat :=
-  ⟨fun c _ => .singleton c, fun _ => ⟨7/5, 3/2, by norm_num⟩⟩
+  .ofConstant (fun _ => ⟨7/5, 3/2, by norm_num⟩)
 
 theorem sqrt_correct : ApproximationCorrect (Rat.castHom ℝ) (Real.sqrt 2) sqrtSource where
   coeff c _ _ := Contains.singleton c
@@ -99,6 +102,9 @@ example : (Real.sqrt 2 - Real.sqrt 2) / (Real.sqrt 2 - Real.sqrt 2) ≠ (1 : ℝ
 /-- info: 'Hex.OrderedFn.Real.approx_contains' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Real.approx_contains
+/-- info: 'Hex.OrderedFn.Real.sign?_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Real.sign?_sound
 /-- info: 'Hex.OrderedFn.SemanticTests.totalSign_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms totalSign_correct

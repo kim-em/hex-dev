@@ -103,11 +103,10 @@ theorem approxAttempt_contains (ha : ApproximationCorrect ι τ a) (f : Rational
 
 /-- Containment is separate from the computational rational width theorem. -/
 theorem approx_contains (ha : ApproximationCorrect ι τ a) (f : RationalFn K)
-    (δ : Rat) (h : 0 < δ → Acc (Next (approxAttempt a f δ)) 0) (hδ : 0 < δ) :
+    (δ : Rat) (h : Acc (Next (approxAttempt a f (requestWidth δ))) 0) :
     Contains (approx a f δ h) (eval ι τ f) := by
-  simp only [approx, dite_eq_left hδ]
-  obtain ⟨n, _, hn⟩ := firstSome_spec (approxAttempt a f δ) 0 (h hδ)
-  exact approxAttempt_contains ha f δ n hn
+  obtain ⟨n, _, hn⟩ := firstSome_spec (approxAttempt a f (requestWidth δ)) 0 h
+  exact approxAttempt_contains ha f (requestWidth δ) n hn
 
 /-- Finite success proves both the sign and regularity of the stored denominator.
 Source-expression divisor guards remain the responsibility of expression consumers. -/

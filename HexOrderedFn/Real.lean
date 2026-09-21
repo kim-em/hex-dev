@@ -47,11 +47,14 @@ def approxAttempt (a : Approximation K) (f : RationalFn K) (δ : Rat) (n : Nat) 
     let b ← (enclose a f.num (precision n)).div? (enclose a f.den (precision n))
     if b.width ≤ δ then some b else none
 
-/-- Derived approximation for one query. Nonpositive requests return `[0,0]`;
-only positive requests carry an accuracy contract and execute refinement. -/
+/-- Nonpositive requests ask for a coarse width-one enclosure. -/
+def requestWidth (δ : Rat) : Rat := if 0 < δ then δ else 1
+
+/-- Derived approximation for one query. Nonpositive requests run the same
+refinement at width one, so every result still encloses the queried value. -/
 def approx (a : Approximation K) (f : RationalFn K) (δ : Rat)
-    (h : 0 < δ → Acc (Next (approxAttempt a f δ)) 0) : Bounds :=
-  if hδ : 0 < δ then firstSome (approxAttempt a f δ) 0 (h hδ) else .singleton 0
+    (h : Acc (Next (approxAttempt a f (requestWidth δ))) 0) : Bounds :=
+  firstSome (approxAttempt a f (requestWidth δ)) 0 h
 
 /-- Finite evaluation requires a separated denominator even without transcendence.
 An exact singleton numerator may certify zero; a zero-containing bound cannot. -/
@@ -95,10 +98,12 @@ theorem approxAttempt_width (a : Approximation K) (f : RationalFn K)
 
 /-- Width is a rational property of the actual search, separate from containment. -/
 theorem approx_width (a : Approximation K) (f : RationalFn K) (δ : Rat)
-    (h : 0 < δ → Acc (Next (approxAttempt a f δ)) 0) (hδ : 0 < δ) :
+    (h : Acc (Next (approxAttempt a f (requestWidth δ))) 0) (hδ : 0 < δ) :
     (approx a f δ h).width ≤ δ := by
-  simp only [approx, dite_eq_left hδ]
-  obtain ⟨n, _, hn⟩ := firstSome_spec (approxAttempt a f δ) 0 (h hδ)
-  exact approxAttempt_width a f δ n hn
+  obtain ⟨n, _, hn⟩ := firstSome_spec (approxAttempt a f (requestWidth δ)) 0 h
+  have hw := approxAttempt_width a f (requestWidth δ) n hn
+  calc
+    (approx a f δ h).width ≤ requestWidth δ := hw
+    _ = δ := by simp [requestWidth, hδ]
 
 end Hex.OrderedFn.Real

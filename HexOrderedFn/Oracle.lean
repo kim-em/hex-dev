@@ -87,10 +87,22 @@ structure Approximation (K : Type u) where
   coeff : K → Rat → Bounds
   constant : Rat → Bounds
 
+/-- Start a real extension over the rationals with exact coefficient bounds. -/
+def Approximation.ofConstant (constant : Rat → Bounds) : Approximation Rat :=
+  ⟨fun c _ => .singleton c, constant⟩
+
 /-- Requested-width guarantees for precisely these two procedures.
 No guarantees are imposed on nonpositive requests. -/
 structure ApproximationWidth {K : Type u} (a : Approximation K) : Prop where
   coeff : ∀ x δ, 0 < δ → (a.coeff x δ).width ≤ δ
   constant : ∀ δ, 0 < δ → (a.constant δ).width ≤ δ
+
+theorem ApproximationWidth.ofConstant (constant : Rat → Bounds)
+    (h : ∀ δ, 0 < δ → (constant δ).width ≤ δ) :
+    ApproximationWidth (.ofConstant constant) where
+  coeff c δ hδ := by
+    change (Bounds.singleton c).width ≤ δ
+    simpa using Std.le_of_lt hδ
+  constant := h
 
 end Hex.OrderedFn.Oracle

@@ -6,15 +6,23 @@ Authors: Kim Morrison
 
 module
 
-import HexOrderedFn.Tests
-meta import HexOrderedFn.Tests
-meta import HexOrderedFn
+public import HexOrderedFn.Tests
+public meta import HexOrderedFn.Tests
+public meta import HexOrderedFn
+
+public section
 
 /-!
-Exact rational regression checks for the bounds/search foundation.
-These compare finite signs with direct rational evaluation and exercise the
-total searches with erased finite-success proofs. Full Z3 and external exact
-conformance for ordered extensions remains a separate phase obligation.
+Oracle: direct exact rational evaluation and literal expected bounds.
+Mode: always; deterministic regression checks for the bounds/search foundation.
+Covered operations: bound multiplication/division, finite signs and total refinement.
+Covered properties: finite signs agree with rational evaluation; bounds contain
+endpoint and midpoint results; erased success witnesses do not bypass refinement.
+Covered edge cases: zero, negative and zero-crossing bounds, nonpositive width
+requests, earlier failed trials and nonmonotone success.
+
+Full Z3 and external exact conformance for ordered extensions remains a separate
+phase obligation.
 -/
 
 open Hex Hex.OrderedFn Hex.OrderedFn.Oracle Hex.OrderedFn.Tests
@@ -22,6 +30,7 @@ open Hex Hex.OrderedFn Hex.OrderedFn.Oracle Hex.OrderedFn.Tests
 -- The sign needs five attempts; the approximation needs five refinements.
 #guard totalSign == 1
 #guard totalApprox = ⟨31/32, 33/32, by decide +kernel⟩
+#guard coarseApprox = ⟨1/2, 3/2, by decide +kernel⟩
 -- A later successful witness does not bypass an earlier successful attempt.
 #guard first == -1
 
@@ -50,11 +59,13 @@ private def productsAgree : Bool := Id.run do
       let b : Bounds := ⟨low, high, by dsimp [high]; grind⟩
       let x := (lo + hi) / 2
       let y := (low + high) / 2
-      let product := a.mul b
-      if !(product.lower ≤ x * y && x * y ≤ product.upper) then return false
-      if let some quotient := a.div? b then
-        if y == 0 then return false
-        if !(quotient.lower ≤ x / y && x / y ≤ quotient.upper) then return false
+      for s in [lo, x, hi] do
+        for t in [low, y, high] do
+          let product := a.mul b
+          if !(product.lower ≤ s * t && s * t ≤ product.upper) then return false
+          if let some quotient := a.div? b then
+            if t == 0 then return false
+            if !(quotient.lower ≤ s / t && s / t ≤ quotient.upper) then return false
   return true
 
 #guard productsAgree
