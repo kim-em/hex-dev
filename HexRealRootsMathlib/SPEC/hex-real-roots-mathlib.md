@@ -626,6 +626,14 @@ endpoint correspondence, exact mathematical domain equivalence and domain
 soundness of accepted replay. Root-sum and semantic replay soundness,
 singleton-sign and count/bound results below remain proof gates.
 
+`QueryCompare.lean` proves that arbitrary accepted chains for positively
+scaled inputs have equal lengths and entrywise positive scaling under their
+coefficient interpretations. It extracts the field remainder equations from
+the actual initial, step and terminal checks, including singleton chains and
+nonconstant terminal gcds. `QuerySigns.lean` turns that comparison into finite
+endpoint sign-array equality and extracts the checked variation value.
+These algebraic proofs do not assume the signed-remainder/root-sum theorem.
+
 First extend endpoint evaluation to the computational owner's
 `sturmVarAtRat`. Prove `sturmVarAtRat_eq` by positivity of the homogeneous
 denominator factor in each chain entry, `sturmVarAtRat_dyadic` by equality

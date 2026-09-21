@@ -75,4 +75,14 @@ theorem noncanonical_domain (p g : Poly) (a b : Endpoint Rep) :
 #guard_msgs in
 #print axioms HexSturmMathlib.query_rat_domain
 
+/-- info: 'HexSturmMathlib.query_rat_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms HexSturmMathlib.query_rat_eq
+/-- info: 'HexSturmMathlib.replay_rat_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms HexSturmMathlib.replay_rat_value
+/-- info: 'HexRealRootsMathlib.Query.check_compare' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms HexRealRootsMathlib.Query.check_compare
+
 end HexSturmMathlib.Conformance

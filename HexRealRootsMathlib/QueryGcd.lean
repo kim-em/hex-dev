@@ -52,14 +52,16 @@ variable (hm : ∀ a b, f (a * b) = f a * f b)
 variable (hn : ∀ n : Nat, f (n : D) = (n : K))
 variable (sign : D → Int) (hpos : ∀ a, sign a = 1 ↔ 0 < f a)
 
-private theorem head_eq (p g : DensePoly D) (cert : QueryChain D)
+/-- Accepted replay retains the exact input head. -/
+theorem check_head (p g : DensePoly D) (cert : QueryChain D)
     (h : QueryChain.check sign p g cert = true) : cert.chain.getD 0 0 = p := by
   simp only [QueryChain.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
   obtain ⟨_, _, _, hhead, _⟩ := h
   rw [Array.getD_eq_getD_getElem?, hhead]
   rfl
 
-private theorem tail_shape (p g : DensePoly D) (cert : QueryChain D)
+/-- A nonsingleton accepted chain has all steps and a terminal identity. -/
+theorem check_tail (p g : DensePoly D) (cert : QueryChain D)
     (h : QueryChain.check sign p g cert = true) (hn : cert.chain.size ≠ 1) :
     cert.steps.size + 2 = cert.chain.size ∧ ∃ u q, cert.terminal = some (u, q) := by
   simp only [QueryChain.check, hn, ↓reduceIte, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
@@ -78,13 +80,13 @@ theorem check_dvd_last (p g : DensePoly D) (cert : QueryChain D)
       d ∣ interpret f hz (cert.chain.getD (cert.chain.size - 1) 0) := by
   obtain ⟨hl, hr, hi⟩ := check_initial f hz ha hs hm hn sign hpos p g cert h
   have hfirst := dvd_initial (ne_of_gt hl) (ne_of_gt hr) hi d
-  have hhead := head_eq sign p g cert h
+  have hhead := check_head sign p g cert h
   by_cases hsingle : cert.chain.size = 1
   · have hsecond : cert.chain.getD 1 0 = 0 := by
       rw [Array.getD_eq_getD_getElem?, Array.getElem?_eq_none (by omega)]
       rfl
     simpa only [hsingle, Nat.sub_self, hhead, hsecond, interpret_zero, dvd_zero, and_true] using hfirst
-  · obtain ⟨hsize, u, q, ht⟩ := tail_shape sign p g cert h hsingle
+  · obtain ⟨hsize, u, q, ht⟩ := check_tail sign p g cert h hsingle
     obtain ⟨hu, hterminal⟩ := check_terminal f hz ha hs hm sign hpos p g cert h hsingle u q ht
     have htail : ∀ (k i : Nat) (_ : i + k + 2 = cert.chain.size),
         (d ∣ interpret f hz (cert.chain.getD i 0) ∧

@@ -9,6 +9,8 @@ module
 public import HexRealRootsMathlib.RealClosed
 public import HexRealRootsMathlib.QueryInterpret
 public import HexRealRootsMathlib.QueryGcd
+public import HexRealRootsMathlib.QueryCompare
+public import HexRealRootsMathlib.QuerySigns
 public import HexRealRootsMathlib.QueryInteger
 public import HexRealRootsMathlib.QueryDomain
 public import HexRealRootsMathlib.SturmChainDefs

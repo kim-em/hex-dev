@@ -10,18 +10,23 @@ for `query` and `prepare`, exact prepared input bindings, validity of every
 prepared domain, finite/infinite endpoint guards, and ordinary/prepared
 certificate acceptance. These results apply to noninjective coefficient
 interpretations without field or order instances on representation storage.
-`HexSturmMathlib/Rational.lean` proves universal equality of the rational and
-integer/dyadic `isSome` results after positive denominator clearing. This covers
-zero/repeated-root heads and finite endpoint roots for ordered dyadic intervals;
-equality of successful query values is still required.
+`HexSturmMathlib/Rational.lean` proves whole-`Option` equality of the rational and
+integer/dyadic queries after positive denominator clearing. The domain proof
+covers zero/repeated-root heads and finite endpoint roots for ordered dyadic
+intervals. The value proof compares arbitrary accepted remainder chains by
+positive scaling, including singleton chains and nonconstant terminal gcds;
+it does not require a root-sum theorem. `replay_rat_value` proves equality of
+values for arbitrary accepted certificates on the corresponding inputs.
 Conformance instantiates the generic theorems on canonical rationals and noncanonical
 representatives and inspects their axioms.
 
-The root-sum/replay semantics, root-count and singleton-sign theorems,
-whole-Option denominator-clearing/backend agreement and Phase-4 proof evidence
-below remain required. Their foundation must be delivered through
-hex-real-roots-mathlib; no axioms or conditional stand-ins supply the missing
-Sturm–Tarski theorem. No release or phase completion is claimed.
+The root-sum/replay semantics, root-count and singleton-sign theorems still
+require the foundation delivered through hex-real-roots-mathlib. General
+backend agreement, literal certificate translation in both directions, and
+the remaining Phase-4 evidence below are additional obligations; equality of
+accepted values does not construct a translated certificate. No axioms or
+conditional stand-ins supply the missing Sturm–Tarski theorem. No release or
+phase completion is claimed.
 
 `HexSturmMathlib` imports `HexSturm`, `HexPolyMathlib` and
 `HexRealRootsMathlib`. The shared signed-remainder theorem, representation and
