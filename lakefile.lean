@@ -1091,7 +1091,9 @@ lean_exe hex_interval_pnt_fks2_local where
 -- examples and regression tests are compiled through this separate target so
 -- removing them from an umbrella cannot silently remove them from CI.
 lean_lib HexReleaseTests where
-  globs := #[`HexMatrixMathlib.Tests,
+  globs := #[`HexPoly.InterpretTests,
+    `HexPolyMathlib.InterpretTests,
+    `HexMatrixMathlib.Tests,
     `HexPolyMathlib.LiteralTests,
     `HexBareissMathlib.Tests,
     `HexRowReduceMathlib.Tests,

@@ -29,6 +29,15 @@ import HexPolyMathlib
 The package exposes the dense-polynomial conversions, their inverse laws, and
 the ring and Euclidean-operation correspondence used by downstream proofs.
 
+`HexPolyMathlib.Interpret.interpret` also supports noncanonical executable
+coefficients through an operation-preserving, zero-reflecting map into a
+field. It preserves degree, arithmetic, derivatives and Horner evaluation;
+both division outputs agree with Mathlib. The raw gcd is associated to
+Mathlib's normalized gcd, and interpreted xgcd coefficients satisfy the
+Bézout identity. `Interpret.sub_isZero` identifies zero-difference checks
+with semantic polynomial equality without assuming an injective coefficient
+map.
+
 # Verification
 
 Runtime-only clients should depend on `hex-poly`. This package is for theorem

@@ -28,9 +28,17 @@ open Hex
 # Functionality
 
 All public operations return normalized polynomials. Algorithms may use mutable
-arrays internally, but the public representation and its equality are
-canonical. For interoperability with Mathlib's `Polynomial`, use
+arrays internally. Trailing stored zeros are removed; nonzero coefficients
+need not have canonical representatives. For interoperability with Mathlib's
+`Polynomial`, use
 [`hex-poly-mathlib`](https://github.com/leanprover/hex-poly-mathlib).
+
+`Hex.DensePoly.Interpret.map` transports polynomials through a zero-reflecting
+coefficient map. Its lemmas cover arithmetic, derivative, Horner evaluation,
+division, gcd, extended gcd, powers and monicization without ring or field
+instances on the source. Scalar operation preservation is an explicit
+hypothesis. Structural equality remains distinct from equality after
+interpretation.
 
 # Verification
 
