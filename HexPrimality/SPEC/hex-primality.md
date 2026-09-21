@@ -2148,54 +2148,50 @@ After importing `HexIntFactor.Construction`, the explicit expression
 `Hex.Nat.ecmFactorSearch` selects its bounded 64-curve two-stage ECM provider.
 That downstream module owns the curve bounds, arithmetic, worklist, cost model,
 and proper-divisor theorem, specified in HexIntFactor §3a. This dependency never
-points back upstream. The measured route constructs secp256k1, P-384 and
-Curve448; plain `primality?` still exhausts on those inputs. P-521 remains
-supported by the core route and retains its certificate with the explicit ECM
-provider. See [the per-target evidence](../../reports/hex-primality-ecm-stage2.md).
-The current implementation enables no expensive method merely by importing
-the downstream module. The following section specifies the pending automatic
-construction policy.
+points back upstream. The provider must support complete recursive certificate
+construction for secp256k1, P-384 and Curve448. P-521 is a regression target
+whose certificate and attempt total must agree with the HexPrimality route.
+Measurements belong in [the field report](../../reports/hex-primality-ecm-stage2.md).
 
 ### Automatic construction fallback and caller resources
 
-This is a pending implementation contract. The intended standard import is
-`HexIntFactor`, with `HexPrimalityMathlib` added for `Nat.Prime`. With these
-imports, plain `primality?` must discover and recursively certify secp256k1,
-P-384 and Curve448 without a `factor :=` argument. User-supplied Lean resource
-options may still be necessary. Importing only HexPrimality retains its current
-factoring methods. No upstream library imports HexIntFactor or Mathlib.
+The standard import is `HexIntFactor`, with `HexPrimalityMathlib` added for
+`Nat.Prime`. With these imports, plain `primality?` must discover and recursively
+certify secp256k1, P-384 and Curve448 without a `factor :=` argument.
+User-supplied Lean resource options may still be necessary. Importing only
+HexPrimality selects its own factoring methods. No upstream library imports
+HexIntFactor or Mathlib.
 
-Run the existing construction first, with its existing budget and seed.
-Return its first success unchanged, including its certificate and attempt
-count. Only an exhausted construction with a nonzero remaining attempt
+Run `Construction.run` with `Construction.factorSearch` first, using
+`constructionBudget` and `Rand.ofSeed n`. Apply explicit budget options before
+search. Return its first success unchanged, including its certificate and
+attempt count. Only an exhausted construction with a nonzero remaining attempt
 allowance may try registered construction providers. A composite verdict,
 invalid input, explicit `factor :=` override, or `using` certificate does not
 activate automatic fallback. Importing a provider must not add its search cost
 to already successful construction. Ordinary `primality`, ordinary integer
-factorization, and the default Pollard continuation policy retain their
-existing allocations.
+factorization, and Pollard continuation use their separately specified policies.
 
 Construction registration is separate from the ordinary adapter's capability:
 `intFactorSearch` declines total-limit allocations and cannot be reused as if
 it implemented this contract. Use a versioned, type-checked declaration
 boundary with deterministic discovery order and compiled provider declarations.
-Absence is allowed. Malformed registrations receive a precise diagnostic.
-The downstream registration supplies the existing bounded `ecmFactorSearch`
-schedule, rather than target-specific factors or certificates. The explicit
-provider syntax remains available and bypasses automatic selection.
+Absence is allowed. Malformed registrations receive a precise diagnostic
+when fallback dispatch examines them. The downstream registration supplies the
+bounded `ecmFactorSearch` schedule specified in HexIntFactor §3a. It must not
+supply target-specific factors or certificates. The explicit provider syntax
+bypasses automatic selection.
 
-For the initial implementation, retry the complete construction at most once
-per registered provider, passing the previous failure's advanced `Rand` and
-subtracting all previous attempts from the original allowance. Failed
-attempts, repeated factoring, recursive certification and witnesses all count.
-Keep events in execution order and report the combined attempt total and
-actual provider allocations. Do not increase the default 1024 attempts,
-521-bit limit, recursive depth or per-provider work bounds to obtain a named
-success. If retry cannot certify a target within this allocation, report the
-obligation and revise the design before implementation proceeds. A resumable
-constructor and cross-attempt certificate cache are deferred unless these
-measurements establish that they are needed. A failed child is not reusable
-independently of its random state and remaining budget.
+Retry the complete construction at most once per registered provider, passing
+the previous failure's advanced `Rand` and subtracting all previous attempts
+from the original allowance. Failed attempts, repeated factoring, recursive
+certification and witnesses all count. Keep events in execution order and
+report the combined attempt total and actual provider allocations. The default
+allowance is 1024 attempts, with the 521-bit limit, depth 32 and per-provider
+work bounds specified above. A named input does not authorize a larger
+allocation. Search exhaustion identifies the unresolved obligation rather
+than silently increasing bounds. A retry starts at the root and does not
+reuse a failed child independently of its random state and remaining budget.
 
 Semantic search bounds and Lean's heartbeat limit are independent limits.
 Production tactics and providers must not raise or disable `maxHeartbeats`,
@@ -2207,32 +2203,27 @@ set a larger finite `maxHeartbeats`. Document that requirement whenever the
 default fails, and distinguish the failure from semantic-attempt exhaustion.
 The same limits apply to fallback as to the first route.
 
-Lean 4.34.0 defaults `exponentiation.threshold` to 256. Its `evalNat` warning
-above this exponent is distinct from failure to normalize the expression:
-the tactic's definitional-reduction fallback can still succeed. Do not silently
-raise this option or suppress its warning to make examples appear to use
-defaults. Keep any upstream threshold change separate from search policy.
-Test numeral and power-expression goals separately. Keep necessary options
-local in documentation and remove options demonstrated to be unnecessary.
-In particular, the three ECM field construction fixtures pass without
-`maxRecDepth 1024` when retaining their heartbeat and exponent settings.
-Construction at the default heartbeat limit fails on all three, while their
-saved certificates replay at default limits. Four million heartbeats is a
-tested allowance, not an established minimum.
+An `evalNat` exponent-threshold warning is distinct from failure to normalize
+an expression: the tactic's definitional-reduction fallback can still succeed.
+Do not silently raise `exponentiation.threshold` or suppress its warning to
+make examples appear to use defaults. The toolchain's threshold and the
+semantic search budget are independent. Test numeral and power-expression
+goals separately. Keep necessary options local in documentation and remove
+options demonstrated to be unnecessary. A tested allowance must not be
+presented as the minimum unless the evidence establishes that claim.
 
 ### Experiments and acceptance for automatic construction
 
-Before implementing the dispatch change, use a bounded prototype to record
-the existing route followed by ECM with the remaining allowance and advanced
-random state. Test the complete recursive paths for the three fields, P-521,
-Curve25519, the existing 507-bit exhausted fixture, and the small and composite
-conformance inputs. Record success or first unresolved obligation, attempts,
-events, certificate and actual seed transitions. A root split alone is not
-success. No new residual-factorization campaign is required.
+Validate the HexPrimality route followed by ECM with the remaining allowance
+and advanced random state. Test the complete recursive paths for the three
+fields, P-521, Curve25519, the 507-bit exhausted fixture from the standard-field
+report, and the small and composite conformance inputs. Record success or
+first unresolved obligation, attempts, events, certificate and actual seed
+transitions. A root split alone is not success.
 
 Compare explicit ECM with automatic fallback on the same goals to measure
-the retry cost. Compare the old plain route with the new one on already
-supported and exhausted inputs. Use four fixed trial-major blocks with
+retry cost. Compare construction without registration with registered fallback
+on supported and exhausted inputs. Use four fixed trial-major blocks with
 adjacent arms in alternating AB/BA order, following
 [the shared-host protocol](../../SPEC/benchmarking.md#shared-host-measurement-policy).
 Retain every completed sample, including failures. Keep native search,
@@ -2244,14 +2235,14 @@ timing comparisons, and do not claim a minimum without measuring it.
 
 Acceptance includes exact `#guard_msgs` suggestions for all three automatic
 field constructions, fixed native construction/checker benchmarks, ordinary
-checker replay, and Mathlib companion goal coverage. Existing cheap successes,
-especially P-521, keep their certificates and attempt totals. Test absent and
-malformed registrations, explicit override precedence, zero and nearly exhausted
-shared allowances, composite inputs, recursive failures, and rejection of
-invalid factor data. No default success may depend on external factorization
-or a change to the sound checker. Update the manual to show the standard
-import and plain tactic, with honest local resource settings. Link complete
-retained measurements and clearly state any remaining unsupported inputs.
+checker replay, and Mathlib companion goal coverage. Inputs certified by the
+first route, especially P-521, keep their certificates and attempt totals.
+Test absent and malformed registrations, explicit override precedence, zero
+and nearly exhausted shared allowances, composite inputs, recursive failures,
+and rejection of invalid factor data. No default success may depend on
+external factorization or a change to the sound checker. The manual must show
+the standard import and plain tactic, with honest local resource settings.
+Link complete retained measurements and state any unsupported inputs.
 
 ## Certificate language and extension policy
 

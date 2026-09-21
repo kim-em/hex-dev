@@ -6,6 +6,16 @@ Lean. Write for them: plain, literal, and accurate. When a sentence is
 awkward, the fix is almost always to say the ordinary thing directly, not
 to reach for a fancier word.
 
+## Timeless SPECs
+
+SPECs state contracts, algorithms, invariants, resource policies and validation
+requirements. They must not contain implementation-status notes or war stories:
+research chronology, review history, abandoned approaches or accounts of how
+the design was reached. Avoid phrases such as "the current implementation" and
+"this is a pending implementation contract". Put scheduling and implementation
+status in issues, and experimental observations in reports. State the required
+behavior directly, whether or not its implementation is complete.
+
 The test for every sentence: read each verb with its object. If the pair
 is not something an ordinary English speaker would say about that kind of
 thing, rewrite it.
