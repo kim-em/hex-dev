@@ -744,12 +744,14 @@ setup_benchmark runGcdChecksum n => n * n
 
 -- Cost-model derivation: the same normal Fibonacci chain has n linear-cost
 -- pseudo-divisions, hence O(n²) coefficient work over the fixed field F7.
+-- The ladder retains small-degree overhead observations and extends through
+-- 1024; coefficients stay in F7, so widening it adds no coefficient-bit axis.
 setup_benchmark runPseudoGcd n => n * n
   with prep := prepEuclidWorstInput
   where {
-    paramSchedule := .custom #[16, 24, 32, 48, 64, 96]
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 768, 1024]
     paramFloor := 16
-    paramCeiling := 96
+    paramCeiling := 1024
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
