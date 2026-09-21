@@ -1,0 +1,15 @@
+name = "rcfRepresentationPrototype"
+version = "0.1.0"
+packagesDir = "../../.lake/packages"
+defaultTargets = ["Prototype"]
+[[require]]
+name = "Hex"
+path = "../.."
+[[lean_lib]]
+name = "Prototype"
+[[lean_exe]]
+name = "representationPrototype"
+root = "Main"
+
+[[lean_lib]]
+name = "Search"

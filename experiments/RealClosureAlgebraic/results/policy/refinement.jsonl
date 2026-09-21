@@ -1,0 +1,5 @@
+{"after":[[],["1"]],"before":[[],["1"]],"oldStillValid":true,"staleRejected":true}
+{"after":[["0","1"]],"before":[["0","1"]],"oldStillValid":true,"staleRejected":true}
+{"after":[["0","1"],["1"]],"before":[["0","1"],["1"]],"oldStillValid":true,"staleRejected":true}
+{"after":[[],["0","1"]],"before":[[],["0","1"]],"oldStillValid":true,"staleRejected":true}
+{"after":[["1","1"],["-1","-1/2"]],"before":[["1","1"],["-1","-1/2"]],"oldStillValid":true,"staleRejected":true}

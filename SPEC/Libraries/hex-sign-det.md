@@ -21,9 +21,9 @@ live here.
 `HexRankMathlib`, with Tau Ceti foundations imported only in companions. These dependencies are acyclic.
 
 [hex-sturm](hex-sturm.md) owns ordered-field Tarski queries, domain guards and
-coefficient-evidence composition over the one shared kernel in hex-real-roots.
+exact coefficient arithmetic over the one shared kernel in hex-real-roots.
 It has consumers needing no sign matrix, and must not import this library.
-Existing polynomial, rational-function, interval and real-algebraic libraries
+Existing polynomial, rational-function and real-algebraic libraries
 remain inputs with no reverse family imports. In particular this design does
 not change `hex-real-algebraic` into a generic tower implementation.
 
@@ -37,32 +37,29 @@ analysis tactic, or sector-sampling algorithm is specified here.
 
 ## Coefficients, domains and table semantics
 
-Use the shared [fallible coefficient operations](../../HexPoly/SPEC/hex-poly.md#fallible-coefficient-operations)
-`CoeffOps C`, `PolyOps.Limits`, `Budget`, `Result` and `CheckResult` with the
-field interpretation and inversion adapter required by hex-sturm. Raw finite
-coefficient arrays have checked semantic degrees. Neither structural equality
-nor stored array length supplies a semantic zero or leading-coefficient test.
-All calls use one threaded budget, including coefficient callbacks, polynomial
-arithmetic, Tarski queries, matrices and nested evidence. Runtime arithmetic
-and sign decisions are separate from the evidence establishing their claims.
+Use `DensePoly E` and the ordinary total operations/sign of the shared
+[execution contract](../real-closure-execution.md). A canonical ordered field
+is a specialization. Noncanonical selected-root coefficients have structural
+equality and canonical zero, not a fabricated `Field` instance. The companion
+interprets them in the ordered field `K`, preserving operations/sign and
+reflecting zero. This preserves polynomial degree despite noninjectivity.
 
-The total semantic carrier adapter has exactly hex-sturm's executable
-hypotheses: `[Lean.Grind.Field K] [LE K] [LT K] [Std.IsLinearOrder K]`
-`[Std.LawfulOrderLT K] [Lean.Grind.OrderedRing K] [DecidableEq K]`
-`[DecidableLE K] [DecidableLT K]`. The bounded adapter instead has a law package
-relating successful operations on `C` to an ordered field `K`. It does not
-install a field, total order or decidable semantic equality on raw syntax.
+Signs are integers `-1,0,1`; validate literal codes. Semantic identities in
+replay use zero differences. Structural equality is a sufficient fast path
+only. There is no downstream RCF sign type or coefficient-operation record.
+Transcendental sign requires its caller progress witness; finite attempts
+cannot substitute for a total coefficient sign.
 
 For mathematical statements, fix an ordered real closed field `R` and an
 order-preserving field embedding `ι : K →+* R`. In the companion this means
 `[Field R] [LinearOrder R] [IsStrictOrderedRing R] [IsRealClosed R]`.
-Write `P,Qᵢ` for interpreted polynomials mapped to `R`. The statements are
+Write `P,Qᵢ` for polynomials mapped coefficientwise to `R`. The statements are
 universal in `R,ι`; existence of such an extension is a separate family
 foundation, not an executable assumption or an available instance on the pin.
 
 `Domain p I` is hex-sturm's prepared domain: `p` is semantically nonzero and
 squarefree, `I=(a,b)` has `a<b`, and finite endpoints are not roots of `p`.
-Endpoints are coefficient representatives or `±∞`. Let `Z` be the finite set
+Endpoints are elements of `K` or `±∞`. Let `Z` be the finite set
 of distinct roots of `P` in this open interval. The query list `Q` is ordered
 and has length `s`; duplicate, constant and zero polynomials are allowed.
 A sign condition is a length-`s` vector in `Sign={-1,0,1}`. Define
@@ -87,7 +84,16 @@ one empty condition, with count `#Z`; the sparse output contains it exactly
 when `#Z>0`. Its moment product is `1`. A root at zero is an ordinary distinct
 root, not removed here. Zero or nonsquarefree `p`, reversed/equal endpoints
 and finite root endpoints are invalid even when `Q` is empty or zero. Check
-the domain and all input coefficient contexts before taking these shortcuts.
+the domain before taking these shortcuts.
+
+Natural casts, powers, derivative coefficients and finite comparisons use
+the shared operation/sign interface explicitly. Monicity, coprimality and
+polynomial replay equations are statements under interpretation; a computed
+gcd need not be literally the polynomial one. The matrix entries and counts
+are ordinary integers/rationals, so their matrix identities retain literal
+exact equality. Context refinement changes the binding of root descriptors
+and child queries even when their serialized polynomial operands coincide.
+Re-encode/transport with checked evidence; do not reuse a stale support table.
 
 ## Moments and complete support certificates
 
@@ -104,7 +110,9 @@ M * c = t.
 Products and their coefficient interpretations are checked, not merely named
 by a hash. A reduced moment uses the certified reduction below to establish
 the same signs on roots, rather than claiming literal equality to `Fₑ`.
-Every moment uses hex-sturm's prepared-query API and its literal replay, with exactly the same `p`, interval and coefficient context. Common
+Every moment uses hex-sturm's prepared-query API with exactly the same `p`,
+interval and coefficient field. A requested BKR certificate includes its
+Tarski result replays; ordinary arithmetic does not return evidence records. Common
 roots with `Fₑ` are allowed and contribute zero. Do not substitute derivative
 root counts for general Tarski queries.
 
@@ -123,8 +131,8 @@ reduction is the same identity with that initial value. At every root of
 `p`, the signs of `Gnext` and `Gprev*H` agree. Induction therefore identifies
 the final Tarski query with the specified moment, even though positive
 scalings need not preserve the polynomial's value. Exact field remainders
-are the special case `u=v=1`. Positive pseudo-remainders reuse hex-poly's
-fallible routines without forcing inversion or monic normalization. Replay
+are the special case `u=v=1`. Positive pseudo-remainders reuse the shared
+ordered-domain routines without forcing inversion or monic normalization. Replay
 checks all intermediate identities, positive scales, degree bounds, factor
 indices and exponents. A negative or unverified scale is not admissible.
 No unreduced product must be expanded to check this chain. Nonzero constant
@@ -219,10 +227,10 @@ No matching root and more than one matching root are both invalid descriptors,
 with different diagnostic reasons. Constants have no valid descriptor.
 Repeated/out-of-range indices or mismatched sign lengths are malformed.
 
-`completeWith` computes a table on all derivatives, filters by the partial
+`complete` computes a table on all derivatives, filters by the partial
 constraints and uses validity to obtain exactly one full encoding with count
 one. It returns that encoding and identity-preserving evidence. It never
-fills an unknown sign with zero. `rootsWith` uses all derivative signs to
+fills an unknown sign with zero. `roots` uses all derivative signs to
 produce one full descriptor per root, each of count one by Thom injectivity,
 and sorts them by the following rule. No dyadic separation is required.
 
@@ -235,12 +243,12 @@ intervals. These conclusions require valid realized encodings. Complete
 partial encodings before applying the rule; never apply lexicographic order
 to derivative arrays.
 
-The direct same-polynomial comparison path requires identical polynomial
-literals in the identical coefficient context. Otherwise use joint
-re-encoding, even if the literals happen to denote equal polynomials. A
-future semantic-equality shortcut must carry coefficientwise equality evidence
-and derivative-sign transport; structural inequality cannot prove semantic
-inequality.
+For the same polynomial over the same exact coefficient field, completed
+encodings compare directly. Decide polynomial equality with the lawful
+`DensePoly K` equality; equal values may have different internal selected-root
+representatives. Different polynomials use joint re-encoding. In serialized
+replay, bind the declared coefficient interpretation and prove any literal
+identification used by this shortcut.
 
 Different defining polynomials require joint re-encoding. For valid
 squarefree `p₁,p₂`, compute `h=p₁*p₂/gcd(p₁,p₂)` by checked exact division,
@@ -256,81 +264,80 @@ a forbidden root endpoint for the other polynomial. An equivalent joint
 procedure needs the same root-identity and completeness theorem. Identical
 raw derivative vectors from different polynomials do not establish equality.
 
-Planned bounded operations return evidence, remaining budget and counters:
+The public API separates mathematical validity checks from ordinary total
+operations. `Descriptor K` is the validated subtype of a raw descriptor;
+validation is decidable by complete sign determination. `PreparedDomain K`
+retains a nonzero squarefree head and ordered root-free endpoints. Its
+validation predicate and descriptor count-one predicate are executable;
+the companion proves their semantic meanings.
 
-| Operation | Successful result |
+| Operation | Result |
 | --- | --- |
-| `determineWith ops limits p I Q` | Complete sparse sign table and recursive replay. |
-| `validateWith ops limits d` | Opaque valid descriptor and count-one replay. |
-| `completeWith ops limits d` | Valid full descriptor of the same selected root. |
-| `rootsWith ops limits p I` | Complete strictly increasing list of valid full descriptors, each root once. Nonzero constants give an empty list; no multiplicity API here. |
-| `signAtWith ops limits d q` | `sign(q(α))` with evidence at the selected root. Joint sign determination on descriptor derivatives and `q` filters to count one; use a singleton-interval Tarski shortcut only when the interval itself has one root. |
-| `compareWith ops limits d₁ d₂` | `Ordering` matching the selected roots; equality is its `eq` case. Validate, complete and jointly re-encode as needed. |
-| `reencodeWith ops limits d h I'` | Descriptor of the same root on a supplied squarefree target `h,I'`; checked joint selection must show it is a root of `h` inside `I'`. Otherwise invalid. |
-| `Replay.checkWith` | Accepted, rejected or exhausted validation of supplied table/descriptor/operation evidence. Boolean `check` is true only on acceptance. |
+| `determine p I Q` | `Option SignTable`, with `none` exactly for an invalid root domain. `determinePrepared` is total on a prepared domain. |
+| `validate raw` | `Option (Descriptor K)`, with success exactly for a uniquely realized well-formed descriptor. |
+| `complete d` | Full descriptor of the same root, total on `Descriptor K`. |
+| `roots p I` | Complete strictly increasing descriptor list, or `none` for an invalid domain. Constants give an empty list; multiplicities belong downstream. |
+| `signAt d q` | Total integer sign of `q` at the selected root. Joint sign determination filters to count one; the singleton-interval shortcut additionally needs one root in the interval. |
+| `compare d₁ d₂` | Total `Ordering` of roots over the same coefficient field, using completion and joint re-encoding where necessary. |
+| `reencode d h I'` | `Option (Descriptor K)`; succeeds exactly when the target domain is valid and the selected root belongs to it. |
+| `certify` / `Replay.check` | Produce and check Tarski/BKR result certificates for tables or descriptor conclusions. Checking returns `Bool`; malformed or false certificates return `false`. |
 
-Raw arguments to each operation are validated; opaque checked arguments may
-reuse evidence only for the same context and literals. Context changes require
-explicit denotation-preserving transport. The operation interface can be
-instantiated by tower callbacks without importing their implementation.
-Re-encoding after a dynamic split belongs to this interface; proving that the
-split preserves all live tower elements belongs to hex-real-closure.
+The total computations do not require certificate production at every
+arithmetic operation. Result certificates retain query replays, matrix
+identities and support completeness for independent verification. A tactic
+can discharge coefficient identities/signs by ordinary kernel computation or
+by supplied proofs bound to those exact facts, including lower-level selected
+root queries and caller-supplied real bounds. For transcendental coefficients, proof-founded refinement may depend on an
+opaque accessibility proof, so direct kernel reduction of total sign is not
+a supported replay assumption. The supplied-proof path must handle these
+facts using finite approximation evidence and the sign correctness theorem.
+The compilation of a coefficient sign search is not itself proof evidence. These are proof-boundary obligations,
+not an evidence-returning field interface.
 
-## Failure and termination contracts
+Different tower contexts must first be mapped into one compatible coefficient
+field by the tower owner. Re-encoding after a dynamic split is supported here;
+transporting all live tower values remains a hex-real-closure obligation.
 
-Use the shared outcomes without fallback values:
+## Validity and termination
 
-| Outcome | Contract |
-| --- | --- |
-| `ok value evidence` | All relevant guards and evidence checks succeeded; the mathematical postcondition holds under adapter laws and companion correspondence. |
-| `invalid reason` | A certified invalid coefficient context/domain, malformed descriptor, descriptor count other than one, incompatible input contexts without transport, or failed target membership in re-encoding. |
-| `exhausted reason` | Arithmetic, sign/zero, matrix, allocation or evidence budget exhausted, including unresolved coefficient equality. No count, order or invalidity is asserted. |
-| `rejected reason` | Malformed/false supplied certificate, or a producer invariant/check failure. Nonintegral or negative solved counts and a singular candidate matrix on already validated data are implementation errors, not mathematical absence. |
+`Option` is used only for the mathematical input conditions above, not for
+resource exhaustion or ordinary coefficient arithmetic. A malformed certificate
+fails `Replay.check`; that failure does not prove the requested mathematical
+result false. Negative/nonintegral counts or a singular selected matrix on a
+valid domain cannot occur for the specified producer. Prove these exclusions;
+do not convert an internal invariant gap into `none` or a default table.
 
-Tags are stable; reason wording and the first error chosen are diagnostic.
-Invalid inputs may exhaust while their invalidity is being tested, but cannot
-succeed. Missing evidence never implies a zero sign, empty root list or equal
-roots. A descriptor with several matching roots is not silently narrowed.
-For malformed certificates, rejection may precede semantic guard checks.
+Recursion splits finite query lists strictly; empty and singleton lists are
+explicit bases. Products, derivative lists, row selection and sorting have
+finite bounds. Polynomial division/gcd use exact `DensePoly K` degree descent;
+Tarski queries use the shared terminating ordered-field algorithm. No loop
+waits for a rational separator. The retained-row-basis existence theorem and
+tensor-product invertibility prove that the finite producer always completes.
 
-Recursion splits a finite query list into strictly smaller nonempty lists;
-empty and singleton lists are explicit bases. Loops over products, row
-selection, derivatives and comparisons have finite array/degree bounds.
-The polynomial gcd/exact-division and Tarski work inherit hex-poly/hex-sturm's
-semantic-degree descent and fueled callback contracts. No loop waits for a
-rational separator. All bounded paths terminate, including malformed input,
-zero budget, invalid domains and undecided coefficients. A zero remaining
-budget permits success only if all required checks have already completed.
-
-Total-coefficient forms `determine`, `validate`, `complete`, `roots`, `signAt`,
-`compare` and `reencode` use computed finite work bounds and return `Option`:
-`none` exactly on their respective invalid-input predicates. Their completeness
-requires total lawful coefficient operations and complete evidence production
-where a replay is requested. Bounded success has soundness without those
-completeness assumptions. Eventual bounded success on valid input requires
-proof that *every* needed child operation and certificate producer succeeds
-with sufficient budgets; simply increasing a budget for an unresolved
-transcendental zero test is not such a proof.
+Consequently prepared-domain operations and valid-descriptor operations are
+total. Prove domain-exact `_isSome` theorems for raw-input `Option` APIs. This
+requires lawful total coefficient decisions, including the proved sign search
+of a transcendental coefficient field when used. A caller lacking its required
+convergence or relative-transcendence hypotheses has not supplied such a field;
+there is no generic fallback sign or global resource-budget substitute.
 
 ## Headline theorems and proof ownership
 
-All shapes assume lawful interpretation of successful coefficient operations
-and sound checkers for their evidence. Root statements use the ambient `R,ι`
-above and interpreted, context-valid inputs. They are planned obligations:
+All shapes assume the computational coefficients are interpreted with
+operation/sign preservation and zero reflection in a lawful exact coefficient
+field, followed by its order-preserving embedding. Root statements use the ambient `R,ι` above. They are planned obligations:
 
 | Statement | Required conclusion |
 | --- | --- |
-| `determine_correct` | `determineWith ... = ok T cert` implies `Domain p I` and `∀ σ, T.count σ = count(σ)`, including omitted conditions; hence nonnegative counts, exact total and complete support. |
-| `determine_invalid` | `determineWith ... = invalid reason` implies a certified invalid input context or, for valid contexts, `¬ Domain p I`. An internal invariant failure is `rejected`, never `invalid`. |
-| `Replay.check_sound` | Accepted replay implies the same semantic result for the bound table or descriptor operation, including recursive support completeness. |
-| `validate_correct` | Successful validation iff validity for the total adapter; bounded success implies validity and bounded invalidity certifies its negation or a malformed context. |
-| `complete_correct` | Completion preserves the unique root and supplies all its derivative signs. |
-| `roots_correct` | Returned descriptors are valid, strictly ordered and in bijection with `Roots(P;I)`. |
-| `signAt_correct`, `compare_correct` | Successful values equal evaluation sign and root comparison in `R`, respectively; `compare=eq` iff the selected roots coincide. |
-| `reencode_correct` | Successful re-encoding preserves the unique root, with target domain and membership established. |
-| `determine_isSome` | For total adapters, success iff `Domain p I` and all input representations are valid; analogous domain-exact theorems for the descriptor operations. |
-| `descriptor_invalid` | Each bounded descriptor operation returning `invalid` establishes its stated invalid-input predicate: malformed/context-incompatible inputs, failed validity, or failed target membership/domain for re-encoding. Exhaustion is not invalidity. |
-| `result_congr` | Successful semantic results are preserved under coefficient/context embeddings and certified polynomial/descriptor transports; transferring success also requires completeness/budget hypotheses. |
+| `determine_correct` | `determine p I Q = some T` implies `Domain p I` and `∀ σ, T.count σ = count(σ)`, including omitted conditions. |
+| `Replay.check_sound` | `Replay.check cert = true` implies its table/descriptor conclusion, including recursive support completeness, under sound interpretation of its coefficient facts. |
+| `validate_correct` | Validation succeeds iff the raw descriptor is well formed and uniquely realized. |
+| `complete_correct` | Completion preserves the unique root and supplies all derivative signs. |
+| `roots_correct` | On a valid domain, descriptors are valid, strictly ordered and in bijection with `Roots(P;I)`. |
+| `signAt_correct`, `compare_correct` | Values equal evaluation sign and root comparison in `R`; `compare=eq` iff the roots coincide. |
+| `reencode_correct` | Success preserves the root and establishes the target domain and membership. |
+| `determine_isSome`, `roots_isSome` | Success iff `Domain p I`; descriptor validation/re-encoding have their exact stated validity predicates. |
+| `result_congr` | Order-preserving coefficient embeddings and root-preserving descriptor transports preserve results and their validity. |
 
 HexSignDet proves finite matrix identities/uniqueness, literal replay checks,
 structural termination, and support induction conditional on abstract moment,
@@ -343,7 +350,7 @@ at Mathlib `1cf325a0cf67aca2b04d76b5380ff6a9e410aefa`:
 
 | Foundation / missing infrastructure | Owner and statement shape |
 | --- | --- |
-| Fallible coefficient/polynomial operations and semantic degree | hex-poly; not supplied by today's total `HexPoly.Field` routines on arbitrary raw coefficients. |
+| Exact polynomial arithmetic | Existing `DensePoly K` operations, field division/gcd/xgcd and correspondence in hex-poly/hex-poly-mathlib; positive signed pseudo-remainders belong to the shared ordered-domain query kernel. |
 | Shared query algorithm and literal replay | hex-real-roots, with the hex-sturm field frontend; `ZPoly.tarskiQuery`/`TarskiReplay` remain planned declarations, not available implementations. |
 | Abstract polynomial IVT, Rolle and signed-remainder/Cauchy-index identity | Tau Ceti import through hex-real-roots-mathlib, consumed via hex-sturm-mathlib's query/replay soundness. Include infinities, common gcd and zero remainder. Do not duplicate the primitive here. |
 | Moment identity | Tau Ceti to hex-sign-det-mathlib: actual finite root counts satisfy `t=M*c`, including `0^0=1`, empty lists and zero roots. |
@@ -377,11 +384,11 @@ quotients (zero polynomials contribute constant work). Reuse these reductions
 across moments. Each moment
 then needs at most `2s` reduced multiplications, costing
 `O((s+1)*n²)` coefficient operations, plus the hex-sturm query bound on a
-polynomial of degree `<n`. Include scale/sign evidence and coefficient-oracle
-costs separately. Production should use reduced products when degree growth
+polynomial of degree `<n`. Include reduction-certificate size and actual
+coefficient arithmetic/sign costs separately. Production should use reduced products when degree growth
 would otherwise dominate; the unreduced method remains a reference and a
-small-input alternative with proved moment agreement. Use actual stored
-lengths for raw arrays with semantic leading zeros and charge validation too.
+small-input alternative with proved moment agreement. Account for exact
+coefficient normalization and polynomial input validation as well.
 
 At a node with candidate dimension `r`, classical exact elimination and
 inverse construction take `O(r³)` rational arithmetic operations. Selection
@@ -407,7 +414,7 @@ refinement. Reconstruct and check products, derivatives, selected rows,
 transport identities, domain evidence and every recursion edge, including
 parent/child list concatenation and identical domains/contexts. Reduced
 moments replay their finite reduction chains rather than expanded products.
-Check shape, size and reference bounds before allocation or multiplication. Supplied
+Check dimensions, indices and references before using supplied data. Supplied
 rational solutions alone are not certificates; the integer identities and
 support derivation remain necessary.
 
@@ -416,26 +423,28 @@ to earlier nodes only. A coefficient-sign dependency at level `ℓ` refers to
 strictly lower levels; same-level table recursion separately decreases query
 list length. Context identifiers include selected roots/embeddings and bind
 operands and results; stale evidence needs explicit transport. Decoding rejects
-cycles, forward references and mismatched contexts. Budget nodes, edges,
-bytes, arithmetic calls and operand bit sizes globally, not afresh per level.
+cycles, forward references and mismatched contexts. Report nodes, edges,
+bytes, arithmetic calls and operand bit sizes; these are cost measurements,
+not an additional operation-result protocol.
 
 If a level-`ℓ` certificate requires at most `bℓ` lower-level subcertificates,
 its unshared size and checking cost satisfy
 `Sℓ ≤ Sℓ,local + bℓ*max Sℓ₋₁` and
 `Tℓ ≤ Tℓ,local + bℓ*max Tℓ₋₁`, respectively (local cost includes edge checks).
-The base uses its certified coefficient checker. With deduplication, charge
+Base coefficient facts are discharged by exact computation or supplied proofs.
+With deduplication, charge
 each distinct checked node once plus all reference validations; acceptance
 caches bind exact literals and context. Without sharing, charge every replay
 occurrence. State this potentially multiplicative depth dependence; a bound
 only on the top matrix is insufficient. Producers obey the corresponding
-child-work accounting as well. A budget-limited checker can exhaust on a valid
-certificate; it may never accept a truncated dependency graph.
+child-work accounting as well. A truncated dependency graph is rejected;
+no theorem may rely on a missing child fact.
 
 ## Conformance and Phase-4 evidence
 
 Follow [testing](../testing.md) and [benchmarking](../benchmarking.md).
 Fixtures record exact polynomials, coefficient contexts, endpoints, tables,
-derivative signs, ordered root identities, certificates and outcome tags.
+derivative signs, ordered root identities, certificates and validity results.
 Pin external oracle versions and provenance. For rational cases compare exact
 root/sign data from python-flint and the existing hex-real-algebraic API,
 and compare reduced BKR with the full ternary solver on small lists. For
@@ -447,7 +456,7 @@ approximations never certify sign or identity. Required adversarial cases:
   with its root zero; nonzero constant and root-free `p=x²+1`.
 - Every invalid domain, including zero/nonsquarefree `p` with an empty list,
   finite root endpoints and equal/reversed intervals. Test all infinity
-  combinations allowed by hex-sturm and unresolved semantic leading zeros.
+  combinations allowed by hex-sturm and exact cancellation of leading coefficients.
 - Omitted realized support despite matching total: for `p=x²-1`, `Q=[x]`,
   the candidate `{+1}`, row `{0}`, count `2`, moment `2`, `M=A=[1]`, `d=1`
   passes both identities and total agreement. Reject its missing support
@@ -465,12 +474,13 @@ approximations never certify sign or identity. Required adversarial cases:
   `x²-2` and `(x²-2)(x-3)` share a root and need gcd removal. Compare different
   partial/full encodings, overlapping intervals for equal roots and disjoint
   intervals for distinct roots, plus intervals whose endpoint is a root only
-  of the other polynomial. Include distinct raw literals denoting equal
-  polynomials and nonzero scalar multiples, which must take the joint path
-  and return equal roots when their constraints select the same root.
-- Budget exhaustion in each layer, malformed or oversized literals, cyclic
-  references, missing coefficient-sign evidence, foreign or stale contexts,
-  and nested valid/rejected replays at several coefficient levels.
+  of the other polynomial. Include equal polynomial values represented by
+  different coefficient expressions and nonzero scalar multiples; equality
+  and joint re-encoding must return equal roots when the selections coincide.
+- Malformed/truncated literals, cyclic references, missing coefficient-sign
+  proofs, foreign or stale contexts, and nested valid/rejected result replays
+  at several coefficient levels. Optional bounded oracle attempts are tested
+  in hex-ordered-fn; they are not substituted for this API's total field.
 
 Downstream integration must include the corrected
 [de Moura–Passmore example](https://www.cl.cam.ac.uk/~gp351/infinitesimals.pdf)
@@ -489,7 +499,7 @@ coefficient bit size, witness size, extension depth and nested evidence size.
 Include lists with many unrealized conditions, maximal realized support,
 shared roots/zero signs, and expensive joint re-encoding. Record query and gcd
 counts, matrix dimensions, peak coefficient/witness bits, certificate bytes,
-DAG edges, allocation and exhausted runs. Measure production and checking
+DAG edges and allocation. Measure production and checking
 against the bounds above; successful cheap cases alone are not evidence.
 
 Reduced-versus-full solver correctness is a required check. Runtime comparison

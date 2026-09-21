@@ -417,6 +417,23 @@ jobs:
           if [ -z "$HEX_LIBRARY_FILTER" ] || [[ " $HEX_LIBRARY_FILTER " == *" HexIntFactor "* ]]; then
             lake build HexIntFactorFieldConformance
           fi
+      - name: Check real-closure architecture experiments
+        if: steps.classify.outputs.docs_only != 'true'
+        env:
+          MATHLIB_NO_CACHE_ON_UPDATE: "1"
+        run: |
+          python3 experiments/RealClosureAlgebraic/audit.py --live
+          lake -d experiments/RealClosureRepresentation build representationPrototype HexRationalFn.Field
+          lake -d experiments/RealClosureAlgebraic build \
+            Tests Transfer algebraicCheck algebraicBench policyCheck policyBench policyTrace refinementCheck
+          experiments/RealClosureRepresentation/.lake/build/bin/representationPrototype
+          probe_dir=$(mktemp -d)
+          experiments/RealClosureAlgebraic/.lake/build/bin/algebraicCheck > "$probe_dir/algebraic.jsonl"
+          python3 experiments/RealClosureAlgebraic/verify.py < "$probe_dir/algebraic.jsonl"
+          experiments/RealClosureAlgebraic/.lake/build/bin/policyCheck > "$probe_dir/checks.jsonl"
+          experiments/RealClosureAlgebraic/.lake/build/bin/refinementCheck > "$probe_dir/refinement.jsonl"
+          python3 experiments/RealClosureAlgebraic/verify_policy.py --results "$probe_dir"
+          python3 experiments/RealClosureAlgebraic/audit.py --live
       - name: Build HexManual
         if: steps.classify.outputs.build_manual == 'true'
         run: lake build HexManual

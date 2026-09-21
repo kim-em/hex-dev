@@ -985,7 +985,11 @@ implementation status, phase, imports or performance claims. The coefficient ada
 and signatures in this section are **planned contracts**, not checked Lean
 declarations. The base handler registration and rational recognition boundary
 described below are implemented independently of that adapter. The family SPECs describe prerequisites, not delivered APIs.
-Implementation is coordinated by [#10331](https://github.com/kim-em/hex-dev/issues/10331).
+Transcendental coefficients use a caller-supplied approximation procedure and
+its authenticated containment evidence; this extension neither supplies π/e
+providers nor depends on HexInterval or HexIntervalMathlib. Constant-specific
+analytic implementation, interval-library admission and their measurement
+work are outside the family. Implementation is coordinated by [#10331](https://github.com/kim-em/hex-dev/issues/10331).
 
 ### Coefficients and supported sentences
 
@@ -996,7 +1000,7 @@ nested quantifiers and multivariate elimination are not added. Constant
 expressions in polynomial atoms may use the following grammar:
 
 ```text
-c ::= rational literal | a.toReal | Real.pi | Real.exp 1
+c ::= rational literal | a.toReal | registered closed real constant
     | -c | c+c | c-c | c*c | c^n | c⁻¹ | c/c       (n : Nat literal)
 ```
 
@@ -1013,11 +1017,26 @@ registration. No numerical approximation is an algebraic constructor.
 
 Allowed variable expressions are polynomials in `x` with these coefficients,
 including division by a closed coefficient. Division by anything depending
-on `x`, `exp x`, `sin x`, arbitrary `exp c`, irrational powers and arbitrary
-free real parameters remain unsupported. Local symbols are accepted only
+on `x`, `exp x`, `sin x`, unregistered closed real expressions, irrational powers of the variable and
+arbitrary free real parameters remain unsupported. A registered closed constant
+may have an analytic source expression, but its numerical procedure and evidence
+are supplied by the caller, not synthesized by this tactic. Local symbols are accepted only
 when an explicit equality identifies them with one of these closed
 coefficients; this substitutes a fixed value, not a symbolic parameter.
 No implicit quantification over coefficients is introduced.
+
+`Real.pi` and `Real.exp 1` are supported registration subjects, not automatically
+available numerical providers. Their use requires a caller registration that
+binds an approximation procedure and kernel evidence to that exact real. A
+missing registration declines with an actionable diagnostic. The generic
+interface can likewise bind another closed computable real expression;
+its source identity and enclosure proofs are explicit. The caller supplies
+convergence/progress laws only when claiming eventual success or total search;
+finite accepted certificates require soundness only. Registrations match
+closed subjects by a fixed normalization and definitional-equality policy,
+with duplicate matches rejected. Try a registered whole subject before
+recursively recognizing its grammar constituents; maximal closed-subterm
+abstraction does not change this deterministic policy.
 
 Every inverse/division retains the original nonzero-divisor obligations,
 including divisions inside coefficients and divisions erased by cancellation
@@ -1042,15 +1061,15 @@ The generalized recurrence does not make that replay a general Tarski
 checker or allow extension coefficients.
 
 Reuse the [shared RealFormula frontend](../../SPEC/Libraries/hex-real-formula.md).
-Its candidate implementation in
-[PR #10338](https://github.com/kim-em/hex-dev/pull/10338), source revision
-`354ffa059e2026574575aab2e891eb0fbbe82a24`, is not a merged prerequisite.
+Its implementation from
+[PR #10338](https://github.com/kim-em/hex-dev/pull/10338), merge revision
+`843102b505b61724a9679d0011afb6d662812b92`, is available.
 `RealFormula.Reify.Result` carries a valuation-parametric equivalence;
-`QF n` and `Prenex n` store integer multivariate polynomials. The candidate
+`QF n` and `Prenex n` store integer multivariate polynomials. The
 `HexRCF.RealFormula` adapter under `adapters/` proves `toSentence_correct`,
 `residue_correct` and `check_sound`, but `univariate?` drops only absent
 parameters. It cannot specialize a coefficient coordinate to an algebraic
-number or π. Reconcile these interfaces with the final merged source before
+number or π. Reconcile these interfaces with the current source before
 implementation; do not fork the formula syntax or the shared reifier.
 
 The planned frontend first collects and certifies the original division
@@ -1059,7 +1078,7 @@ guards, before any cancellation or abstraction. Rewrite each variable-bearing
 closed coefficient subterms, including the whole `c⁻¹` or closed quotient,
 into fresh real parameters. Thus `x/(4-π)` becomes `x*u`, where `u` is bound
 to `(4-π)⁻¹` with its original guard, rather than `x/(4-u)` with `u=π`.
-Likewise `1/(4-π)` is one coefficient. The candidate shared arithmetic reifier
+Likewise `1/(4-π)` is one coefficient. The shared arithmetic reifier
 only clears rational literal denominators: it must never receive division by
 a coefficient parameter. This preprocessing/equivalence bridge belongs here;
 no parameter-denominator case is assumed in the shared reifier. Invoke that
@@ -1073,10 +1092,13 @@ coefficient recognition and domain evidence are new HexRCF bridges. Shared
 normalization and scope/variable proofs are reused as they stand.
 
 For `q : RealFormula.Poly (m+1)`, group monomials by the last coordinate's
-exponent and evaluate their first `m` coordinates through the tower's
-`CoeffOps`/`FieldOps`. Produce a raw univariate coefficient array, with
-`Specialize.eval` proving its real evaluation equals `q.eval (append ρ x)`.
-Prove semantic degree and retain normalization/domain evidence. The sentence
+exponent and evaluate their first `m` coordinates using ordinary arithmetic
+on the family's executable coefficient representations `E`. Produce
+`DensePoly E`, with `Specialize.eval` proving its interpreted real evaluation
+equals `q.eval (append ρ x)`. Use the
+[shared execution contract](../../SPEC/real-closure-execution.md); the
+interpretation need not be injective but must reflect zero.
+Reuse degree correspondence and retain the original source-domain proofs. The sentence
 remains `Prenex m` interpreted at this **fixed** `ρ`; no new formula AST is
 needed. Formula traversal, comparisons and Boolean folds use shared syntax.
 The integer adapter applies directly only when no coefficient parameters
@@ -1090,8 +1112,9 @@ pass. The guard polynomials participate in the atom/carrier list; ordinary
 sign evaluation implements endpoint membership. Checked empty-domain folding
 may avoid cell construction after all source guards have been validated.
 
-The planned optional public import `HexRCF.RealCoefficients` will enable this
-route through the base registration interface in `HexRCF.Tactic`.
+The optional public import `HexRCF.RealCoefficients` supplies source-schema
+preparation. Numerical solving remains planned and will use the base
+registration interface in `HexRCF.Tactic`.
 `@[rcf_handler]` registers a monomorphic meta declaration of type
 `Hex.RCF.Handler` (`Expr → MetaM HandlerResult`). The base checks the signature,
 deduplicates declaration names and tries them in `Name.lt` order, independent
@@ -1134,7 +1157,7 @@ During incubation the new files are
 with module prefix `HexRCF.RealCoefficients` and namespace
 `Hex.RCF.RealCoefficients`. Use a separate **default build target**
 `HexRCFRealCoefficients` with `srcDir := "adapters"`, plus the matching
-`UMBRELLA_BUILD_TARGETS`/library metadata registration, as in the candidate
+`UMBRELLA_BUILD_TARGETS`/library metadata registration, as in the
 `HexRCFRealFormula` target. This makes `lake build` and existing CI check the
 adapter while the published `HexRCF` umbrella does not import it. Optional
 import does not mean optional validation. The owning SPEC and soundness stay
@@ -1143,33 +1166,96 @@ wiring is separate work.
 
 The optional adapter imports the shared frontend and the family computational
 libraries/companions. Reusable arithmetic, root/sign production and their
-executable replay remain in Mathlib-free family owners, supplied through
-lower-level records. Formula-specific specialization and certificate assembly
+executable replay remain in Mathlib-free family owners, using ordinary exact field and polynomial APIs. Formula-specific specialization and certificate assembly
 may use Mathlib-free modules of this adapter; semantic bridges and quotation
 import Mathlib. Do not make the family import RealFormula to assemble a tactic
-certificate. Neither `HexPoly`, `HexRealRoots`, `HexRealAlgebraic`, `HexInterval` nor the
+certificate. Neither `HexPoly`, `HexRealRoots`, `HexRealAlgebraic` nor the
 shared formula libraries acquire a reverse dependency on this adapter or the
 towers. Any reusable computational cell assembly needed for the extension
 belongs with the family's shared samples; HexRCF supplies real semantics,
 frontend glue and quotation, not a competing CAD/coverings representation.
 
+### Delivered source-schema preparation
+
+`Hex.RCF.RealCoefficients.Reify.prepare` in the optional
+`HexRCF.RealCoefficients` import builds pending source data using the shared
+reifier. The default Lake target `HexRCFRealCoefficients` checks this module;
+the published base umbrella stays independent. No solver handler is registered.
+
+The result contains the exact original proposition, an ordered array of closed
+coefficient expressions, original divisor obligations after checked alias
+substitution, shared `Prenex` syntax, the fixed coefficient valuation, and an ordinary-kernel proof of
+`Prenex.toProp formula valuation ↔ original`. This equivalence uses Lean's total
+real arithmetic. It does **not** establish the additional nonzero-divisor or
+authenticated-provider conditions required for extension admission.
+
+Input must be synthesized with assigned metavariables instantiated, as in the
+base dispatcher. Preparation recognizes real rational arithmetic and literal casts, `Real.pi`,
+`Real.exp 1`, arithmetic, natural powers and closed division/inversion. Direct
+explicit equalities supply closed aliases through the base checked helper.
+Arbitrary functions, nonstandard real arithmetic instances, parameters without
+those equalities, variable-dependent division and multiple/nested real quantifiers
+are rejected. Ioc endpoints are checked in the original source before alias
+substitution; coefficient aliases do not widen the literal-domain grammar. Selected-root
+reconstructions and sqrt aliases remain gated on their owner's actual APIs.
+
+Before normalization, every original inverse/division obligation is retained,
+including under zero multiplication, leading cancellation and empty domains.
+Rational division inside a cast contributes the corresponding real-cast divisor;
+non-field division inside a cast is rejected. Repeated identical source
+expressions may share an obligation. Pending data for `0/(π-π)` therefore retains
+`π-π`: it is not an accepted extension input, and a later admission checker must
+reject it. No frontend simplification discharges these guards.
+
+Variable-bearing division becomes multiplication by a closed inverse before
+maximal coefficient abstraction; a wholly closed quotient stays one coefficient.
+The shared integer reifier receives fresh ordered real parameters and no
+parameter denominators. Its all-valuation proof is instantiated at the exact
+source expressions and composed with checked alias substitution and division
+normalization. Only one real quantifier and whole-real/literal-dyadic Ioc domains
+are admitted; Ioc membership remains shared guard atoms.
+
+Preparation uses the shared structured errors and reflection budgets. It charges
+source admission before and after alias substitution, literal coefficient and
+exponent work, shared reification, and the final proof. Success restores caller
+metavariables while retaining declarations needed by the emitted proof; errors
+restore the full saved state. Unsupported syntax and budget exhaustion use
+structured errors; unexpected elaboration, kernel and runtime exceptions remain
+terminal exceptions. The source tests check exact equivalences and
+retained guards, including rational casts, aliases, all Boolean/comparison forms,
+equal/reversed Ioc bounds, unsupported inputs and budget exhaustion. Fresh named
+schema theorems audit only `propext`, `Classical.choice` and `Quot.sound`.
+These are frontend regressions, not real-coefficient decision proofs or full
+extension performance evidence.
+
 ### Construction, evidence and public API
 
-Use the family's `Context.coeffOps`, `fieldOps`, `rootsWith`, selected-root
-operations and `Sample.sectionWith`/`sectorWith`, with the shared
-[fallible polynomial records](../../HexPoly/SPEC/hex-poly.md#fallible-coefficient-operations).
-The following shapes name the integration surface; `Result`, `Limits` and
-`Budget` are the shared bounded interfaces, not fresh copies:
+Use the family's ordinary total representation operations, roots/selected-root
+operations and section/sector samples, with their companion interpretation
+proofs at the tactic boundary. Existing total
+[polynomial arithmetic](../../HexPoly/SPEC/hex-poly.md) supplies the coefficient
+computations. No shared fallible coefficient record or arithmetic budget is
+introduced. These shapes describe the tactic integration surface:
 
 | Planned operation | Contract |
 | --- | --- |
-| `Coefficients.prepareWith` | Recognize the supported closed syntax; return runtime handles, bound context, source identities and replayable arithmetic/domain evidence. Companion interpretation/quotation identifies their real values; executable data do not contain `ℝ` computations. |
-| `Specialize.prepareWith` | Given `Prenex m` with one quantifier and `m` coefficient handles, produce the ordered atom arrays and the specialization evidence. |
-| `buildWith` | Compiled construction returns a verdict and complete certificate, or a shared failure, with residual budget and work counters. |
-| `Replay.checkWith` | Validate the supplied input, context and all required evidence, returning an accepted diagnostic verdict, rejection or exhaustion. |
-| `check` | Boolean wrapper, true exactly when replay accepts verdict `true`; rejected/exhausted and accepted-false are distinct in the underlying result. |
-| `check_sound` | Kernel theorem transporting accepted replay to the original real proposition under the hypotheses below. |
-| `build_checks` | Successful construction has a computable sufficient replay envelope under the child producer/replay laws. |
+| `Coefficients.prepare` | Recognize supported closed syntax and establish its embedding/source identities and original divisor guards. |
+| `Specialize.prepare` | Given the shared sentence and its fixed coefficient values, produce `DensePoly K` atoms and the evaluation correspondence. |
+| `build` | Using total representation operations/sign, construct the verdict and finite complete cell certificate; correctness assumes their lawful semantic interpretation. |
+| `Replay.check` | Validate the supplied certificate against its bound inputs; reject malformed evidence. |
+| `check` | Accept precisely a verified true verdict. An accepted false verdict remains diagnostic. |
+| `check_sound` | Transport accepted evidence to the original real proposition. |
+| `build_checks` | On the valid exact-field fragment, produced certificates pass replay and carry the correct verdict. |
+
+The tactic retains its existing source/reflection execution limits and
+structured diagnostics; these do not become the signatures of arithmetic
+operations. Where no exact ordered-field interface is supplied, a separate
+finite-certificate path can use caller-provided containment/identity proofs
+or direct enclosure arguments. It does not run the generic root algorithm
+over a partially decidable coefficient field or claim completeness for it.
+For example `π<4`, together with nonnegativity of squares, certifies the
+promised `∀ x : ℝ, x² > π-4` example without constructing `ℚ(π)` as an
+executable ordered field.
 
 Certificates bind the exact shared sentence, coefficient order, original
 source guards, registry/provider versions, full context DAG, operand literals
@@ -1195,14 +1281,16 @@ Required coefficient/replay evidence includes:
   inversions and positive scales. Semantic degree supplies either all-zero
   coefficients or a nonzero leading coefficient and zero coefficients above
   it. Array length and syntactic inequality are insufficient.
-- Authenticated π/e enclosures from the actual interval provider rules,
-  including exact subject, source theorem, requested/actual precision,
-  outward cuts, remainder and all predecessor enclosures. A callback,
+- Authenticated constant enclosures from the caller-supplied approximation rules,
+  including exact subject, source theorem, finite rational endpoints,
+  requested/actual precision and any predecessor enclosures. A callback,
   decimal, display name or unproved containment proposition is not evidence.
-- Positive/negative signs separated from zero by certified cuts. Exact zero
+- Positive/negative signs established by strictly positive lower or
+  strictly negative upper bounds. Exact zero
   requires coefficient identities, algebraic selected-root replay or an
-  explicitly supplied proof of that exact evaluation-zero claim. Narrowing
-  intervals containing zero never establishes equality.
+  explicitly supplied proof of that exact evaluation-zero claim. A nondegenerate
+  enclosure containing zero does not establish equality; certified `[0,0]`
+  is itself an exact evaluation-zero identity.
 - Nested coefficient sign/zero certificates and general Sturm–Tarski/BKR
   replay with domain, squarefreeness, degree, scale and endpoint guards.
   Dependencies are finite and acyclic, with predecessor signs established
@@ -1222,19 +1310,18 @@ Here is the headline theorem's mathematical shape, not Lean source:
 ```text
 check_sound
   (s : RealFormula.Prenex m) (ρ : Fin m → ℝ) (goal : Prop)
-  (env : coefficient/source registry) (cert : Certificate) (limits : Limits)
-  (hLaws : interpretation and accepted-evidence laws for the fixed records)
+  (env : coefficient/source registry) (cert : Certificate)
+  (hLaws : the actual arithmetic, sign and cell correspondence theorems)
   (hEnv : Authenticated env ρ)
   (hReify : RealFormula.Prenex.toProp s ρ ↔ goal)
-  (hCheck : check limits env s cert = true) : goal
+  (hCheck : check env s cert = true) : goal
 ```
 
 `Authenticated env ρ` binds each coordinate to its original supported closed
-expression and selected embedding, the exact provider rules to `Real.pi` or
-`Real.exp 1`, and any supplied proof references to their precise claims.
+expression and selected embedding, the supplied provider rules to their exact registered real subjects, and any supplied proof references to their precise claims.
 `hLaws` is discharged by the family's actual companion theorems for these
-records and the shared real foundations; it is not a runtime assertion that
-callbacks are sound. In bounded constant mode interpret valid raw expressions
+exact fields and the shared real foundations; it is not a runtime assertion
+that callbacks are sound. In finite-certificate mode interpret closed expressions
 in `ℝ` (or the actual generated real subfield), without asserting injectivity
 of formal rational-function syntax. `hReify` includes coefficient abstraction,
 normalization and substitution correctness; if it needs original domain
@@ -1263,8 +1350,8 @@ roots, so signs are constant throughout the open interval. Ordinary real
 samples always suffice for these one-dimensional cells when the boundaries
 have compatible real interpretations: a midpoint for a bounded sector,
 `a+1` or `b-1` on a ray, and `0` for the whole line. Their representation and
-membership still require checked arithmetic and root transport; if that
-backend exhausts it does not return an unchecked midpoint. Dyadic separation
+membership still require the arithmetic correctness and root transport
+proofs; total field operations compute these points. Dyadic separation
 is optional, not a requirement over generic coefficient fields.
 
 The bounded-domain contract is proved through the two guard atoms, not a
@@ -1292,66 +1379,70 @@ chosen witnesses for different atoms. Specialize earlier infinitesimals
 before later ones and retain their dependent neighborhoods and guards.
 There is no substitution `ε : ℝ` satisfying infinitesimal axioms and no
 embedding of the whole non-Archimedean field into `ℝ`. Missing realization
-evidence exhausts or selects the ordinary-point backend. Replay can use the
+evidence makes this tactic attempt decline or select the ordinary-point backend. Replay can use the
 companion's direct finite-evidence real theorem without an infinitesimal
 ambient model; a symbolic-model backend separately needs the companion's
 ordered algebraic real-closure existence foundation.
 
 ### Termination, completeness and refusal
 
-All public bounded calls, including malformed inputs, terminate by structural
-fuel, finite arrays/DAGs, decreasing tower levels and the semantic-degree
-measures required by the family. Charge all nested arithmetic, refinement,
-decoding and replay to one parent budget. Bound source/proof nodes, tower
-depth, total evidence bytes/nodes, integer bit lengths, precision, endpoint
-alignment, polynomial degree and matrix dimensions before allocation or
-expansion. Expose the failing operation path and consumed resources.
+Exact-field construction terminates by finite formula traversal, polynomial
+degree descent, the family's total root isolation and total coefficient
+operations. Supply the corresponding correctness and termination proofs.
+No general nested arithmetic/resource-budget protocol is required. Replay
+terminates by finite certificate structure, composing ordinary arithmetic
+and finite sign proofs without repeating root or approximation search.
 
-Use shared `invalid` for a certified domain/precondition violation, `rejected`
-for malformed/stale evidence or failed producer invariants, and `exhausted`
-for insufficient resources or unresolved coefficient signs. Preserve the
-ordered-fn `domain` reason when adapting it to `invalid`. Unsupported syntax
-is a frontend decline. None of these outcomes is a false sentence verdict;
-accepted false is diagnostic only. Every failed, out-of-fragment, exhausted,
-rejected or false tactic attempt restores the goal and metavariable state.
-No failed child becomes zero, an empty root list, a successful prefix or a
-negation proof.
+Source recognition may decline unsupported syntax; a failed original divisor
+guard or false certificate cannot close a goal. A bounded enclosure attempt
+may report an undetermined sign. Existing elaborator limits may interrupt a
+tactic. These are tactic diagnostics, never a false sentence verdict, default
+zero coefficient, empty root list or successful partial result. Restore goal
+and metavariable state on every failed attempt.
 
-For valid algebraic-only coefficients and their fixed embeddings, exact
-arithmetic, equality, order and root isolation give a complete mathematical
-decision procedure for the supported sentences. The implementation must
-supply effective operation/evidence progress and sufficient replay bounds:
-for a monotone cofinal schedule of **all** resources, there is `N` such that
-every budget after `N` returns the correct diagnostic verdict and replayable
-evidence. Fixed user limits may still exhaust. A total executable adapter
-requires the family's proved accessibility/search laws, not classical choice
-of fuel. The tactic closes true sentences only, also in this complete case.
+For valid algebraic-only coefficients, exact field operations, comparisons
+and root isolation give a complete mathematical decision procedure for this
+sentence fragment. Prove construction correctness and certificate acceptance;
+the tactic closes only true sentences. Its execution limits do not weaken
+the completeness theorem for the underlying mathematical procedure.
 
-Named π/e mode is bounded certified search. Success requires every needed
-nonzero sign to separate by enclosures and every zero to have exact evidence.
-Effective convergent enclosures imply eventual separation for fixed nonzero
-real expressions, not a zero decision for all expressions. A conditional
-total transcendental tower additionally requires transcendence of each newly
-adjoined constant over its **embedded predecessor field**, complete
-predecessor operations, effective joint convergence and producer/replay
-progress. Separate transcendence of π and e over ℚ does not establish the
-condition for ℚ(π,e). These assumptions are not required for any accepted
-finite certificate, and are not automatically installed for named constants.
-Unresolved constant relations are honestly refused; no unconditional decision
-procedure or algebraic-independence claim is made.
+A total transcendental tower requires correct convergent user-supplied
+approximations and transcendence of each constant over its **embedded
+predecessor field**, together with the proved terminating sign construction.
+Separate transcendence of π and e over ℚ does not give this hypothesis for
+ℚ(π,e). No such instances or approximation providers are silently installed.
+
+Without those hypotheses, finite containment and exact-identity evidence
+still proves specific real claims. The enclosure-only fragment includes
+nonzero coefficient signs separated from zero, explicit divisor guards,
+formal identities with those guards, and direct consequences such as a
+positive closed constant plus a square. It also checks supplied complete
+cell certificates whose coefficient/realization obligations are proved.
+There is no promise to discover every such certificate, decide unresolved
+relations between constants, or run full tower root isolation with only a
+bounded comparison attempt. Successful finite checking requires soundness,
+not transcendence or convergence.
 
 ### Manual, conformance and proof evidence
 
 The future manual must distinguish the optional import, algebraic completeness,
-fixed-budget failures and certified-constant mode. These are required examples,
-not declarations checked by this SPEC change:
+execution-limit failures and finite-certificate mode. Algebraic and generic
+supplied-bound examples are required. The following π/e demonstrations are
+optional when caller registrations are available; their absence does not
+create a provider implementation obligation:
 
 ```lean
--- after the planned optional import HexRCF.RealCoefficients
+-- after HexRCF.RealCoefficients and caller-supplied authenticated π/e registrations
 example : ∀ x : ℝ, x^2 > Real.pi - 4 := by rcf
+example : ∀ x : ℝ, x^2 + 1 / (4 - Real.pi) > 0 := by rcf
 example : ∀ x : ℝ, x^2 + Real.exp 1 > 2 := by rcf
 example : ∃ x : ℝ, x = Real.exp 1 ∧ 2 < x ∧ x < 3 := by rcf
 ```
+
+The division example must replay the original guard `4 - Real.pi ≠ 0`,
+justified by the supplied upper bound on `Real.pi`, before coefficient
+normalization. Include a generic supplied-bound variant independently of
+whether a π registration is available.
 
 For the API examples, construct `a` as the selected positive root of `X²-2`
 and `b` as its other real root `-a`, with reconstruction/equality proofs.
@@ -1359,16 +1450,16 @@ This is the negative algebraic conjugate, not `RealAlgebraicNumber.conj`,
 which is complex conjugation and fixes real values.
 Demonstrate `∃ x, x²=a.toReal`, `∀ x, x²+ a.toReal>0`, and an inequality
 whose verdict changes when `a` is replaced by `b`. Show a registered
-`Real.sqrt 2` alias closing the same goals. Demonstrate
-`∀ x, x²+1/(4-Real.pi)>0` with a replayed `4-π≠0` guard, and the low-level
-`prepareWith → buildWith → check → check_sound` path with explicit coefficient
+`Real.sqrt 2` alias closing the same goals. Demonstrate the low-level
+`prepare → build → check → check_sound` path with explicit coefficient
 identities and original-goal equivalence. Print failures separately from
 accepted false results; examples of `#eval` alone are not proof examples.
 
 Required tests extend the existing
 [conformance discipline](../../SPEC/testing.md):
 
-- Kernel theorems for these π/e and algebraic examples, constant-only and
+- Kernel theorems for algebraic examples and generic supplied-bound coefficient
+  transport; optional π/e examples use supplied registrations. Include constant-only and
   zero-polynomial bodies, semantic leading cancellation, all comparisons and
   Boolean forms, and integer/rational fast-path compatibility.
 - Repeated/common roots, including atoms `(x-a.toReal)^2` and
@@ -1382,15 +1473,14 @@ Required tests extend the existing
 - Negative divisors, nested guarded division, cancelled and zero numerators,
   exact-zero divisors and unresolved divisors. Reject certificates omitting
   even a cancelled source guard. Exact `π-π=0` is accepted with its guards;
-  relations unresolved at the supplied precision must exhaust. Test
-  `π^2-e^3=0` at a deliberately insufficient budget and, at the coefficient
-  record boundary, a synthetic nonseparating provider with no exact-zero
-  evidence. These test refusal, not mathematical independence: greater
-  precision can resolve the former. Exhaustion is never reclassified as zero.
+  unresolved signs at the supplied precision must be refused. A synthetic
+  user procedure returning valid nonseparating bounds without an exact-zero
+  identity exercises this path without implementing any analytic provider.
+  π/e variants are optional caller-supplied tests, not independence claims.
 - Swapped coefficient coordinates, wrong subjects/precision/source rules,
   stale provider versions, changed root/context identity, missing transports,
   cycles/forward references, omitted BKR support, wrong degree/scale/endpoint
-  evidence and nested exhaustion. Fabricated real-witness evidence using ε
+  evidence and interrupted tactic attempts. Fabricated real-witness evidence using ε
   is rejected. Test provider uncertainty without assuming any open numerical
   relation is true or false.
 
@@ -1429,17 +1519,17 @@ missing algorithm or theorem obligations.
 | --- | --- |
 | Existing HexRCF integer path | Preserve `check_sound`, real reification equivalences, half-open semantics and ordinary-kernel quotation. Add the base-owned fallback registry and structured rational recognition declines; generic coefficient/cell bridges remain new. |
 | Shared frontend, PR #10338 and consumer #10329 | Merged `QF`/`Prenex`, scope/normalization/valuation proofs and optional integer RCF adapter. Add guarded division preprocessing, maximal closed-coefficient abstraction and `Specialize.eval` here; virtual substitution itself is not a prerequisite and its symbolic parameters are not silently accepted. |
-| HexPoly / HexPolyMathlib | Implemented fallible `CoeffOps`/`FieldOps`, budgets, semantic-degree validation, guarded pseudo-division/gcd/exact-division records and arithmetic/evidence correspondence. Existing total `DensePoly` routines alone do not suffice. |
-| HexRationalFn / HexRationalFnMathlib | Guard-preserving normalization, bounded semantic coefficients, identity/evaluation and replay bridges consumed by ordered-fn; retain every original divisor. |
-| HexInterval #10334 / HexIntervalMathlib #10342 | Actual bounded π/e producers/checkers plus source authentication, real containment, outward rounding and effective precision/resource schedules. Existing interval arithmetic and fixed experimental bounds are not generic providers; local prototypes and unmerged PRs are not available APIs. |
-| [Ordered-fn](../../SPEC/Libraries/hex-ordered-fn.md) and [companion](../../SPEC/Libraries/hex-ordered-fn-mathlib.md) | Registered real constants, guarded evaluation, Horner enclosure composition, nested sign/zero evidence, replay soundness and conditional progress. Successful finite interpretation must not assume faithful specialization. |
+| HexPoly / HexPolyMathlib | Existing total `DensePoly` arithmetic, division/gcd/xgcd and correspondence; ordinary ordered-domain pseudo-division for shared signed remainder chains. |
+| HexRationalFn / HexRationalFnMathlib | Existing exact rational-function arithmetic and correspondence over lawful coefficient fields. The tactic separately retains every original source divisor guard. |
+| Caller-supplied approximation procedures | Exact finite bounds bound to the registered real subject, kernel containment evidence and terminating approximation calls. Convergence and relative transcendence are extra hypotheses for total sign search. Generic composition belongs to ordered-fn; no HexInterval/HexIntervalMathlib or bundled π/e provider implementation is required. |
+| [Ordered-fn](../../SPEC/Libraries/hex-ordered-fn.md) and [companion](../../SPEC/Libraries/hex-ordered-fn-mathlib.md) | Caller-registered real constants, minimal exact finite-bound arithmetic, guarded evaluation, Horner enclosure composition, nested sign/zero evidence, replay soundness and conditional progress. Successful finite interpretation must not assume faithful specialization. |
 | HexRealRoots / HexRealRootsMathlib | Shared signed-remainder kernel and its positive-scaling/representation bridges, general Cauchy-index/Tarski replay correspondence, and shared `IsRealClosed ℝ`; the existing derivative-seeded integer theorem is insufficient. |
 | [Sturm](../../SPEC/Libraries/hex-sturm.md) and [companion](../../SPEC/Libraries/hex-sturm-mathlib.md) | Domain-checked ordered-field Tarski queries, endpoint adapters, complete root counts and nested coefficient replay/transport soundness. |
 | [Sign-det](../../SPEC/Libraries/hex-sign-det.md) and [companion](../../SPEC/Libraries/hex-sign-det-mathlib.md) | Complete BKR support/counts, Thom existence/uniqueness/order, sign-at-root, common-root re-encoding and their literal correspondence, using the existing matrix/rank companions. |
 | HexRealAlgebraic / HexRealAlgebraicMathlib | Existing `toReal`, exact comparison, `RealAlgebraicPoly.roots` with multiplicities/`all`, and Repr correspondence; new tower conversions and trivial-base agreement must be proved. |
-| [Real-closure](../../SPEC/Libraries/hex-real-closure.md) and [companion](../../SPEC/Libraries/hex-real-closure-mathlib.md) | Implemented contexts/records, selected-root interpretation, splitting/all-live transport, Yun and complete ordered roots, shared samples and real `Sample.realizeReplay` including joint nested constraints. SPEC #10318 is merged; these APIs/proofs are planned. Total quotient/search laws are additional prerequisites for total algebraic APIs. |
+| [Real-closure](../../SPEC/Libraries/hex-real-closure.md) and [companion](../../SPEC/Libraries/hex-real-closure-mathlib.md) | Implemented contexts and total coefficient representations, selected-root interpretation, splitting/all-live transport, Yun and complete ordered roots, shared samples and real `Sample.realizeReplay` including joint nested constraints. SPEC #10318 is merged; these APIs/proofs are planned. Quotient and interpretation laws are proof prerequisites; core algebraic execution is independent of them. Transcendental search retains its caller progress premise. |
 | Tau Ceti through the owning companions | Univariate IVT/Rolle, signed-remainder/Cauchy-index, Thom and BKR foundations from the existing #10300 roadmap work. Ordered algebraic real-closure existence is additionally needed for symbolic infinitesimal ambient models; direct finite replay into ℝ does not need that existence theorem. Continue the existing roadmap PR, never a duplicate. |
-| This optional HexRCF adapter | Coefficient/source authentication, shared-schema abstraction/specialization, generic carrier/cell and half-open correspondence, finite real witness export, quotation, `check_domains`, `check_sound`, producer/replay bounds, manual examples and both evidence tracks. |
+| This optional HexRCF adapter | Coefficient/source authentication, shared-schema abstraction/specialization, generic carrier/cell and half-open correspondence, finite real witness export, quotation, `check_domains`, `check_sound`, construction termination and certificate acceptance, manual examples and both evidence tracks. |
 
 Transcendence over predecessor fields and effective convergence are explicit
 hypotheses of any future total named-constant mode, not missing axioms to add

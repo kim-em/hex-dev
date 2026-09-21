@@ -1,0 +1,6 @@
+{
+  "path": "HexPoly/Instances.lean",
+  "baseline_blob": "e95b8e1845ad7baeaec261923df0fd8a776efe02",
+  "current_blob": "ae67ab7e1b7f9cf647b9e463232dd5923718a824",
+  "reason": "Generalizes natPow from CommRing to its existing Zero, One, Add and Mul operations, retaining the existing ring assumption on the global power-notation instance; the binary-exponentiation body, DensePoly multiplication and all concrete Int/Rat operations are unchanged. Under the pinned toolchain, standalone callers intPow (p : DensePoly Int) (n : Nat) := p ^ n and ratPow (p : DensePoly Rat) (n : Nat) := p ^ n were built against each exact source version with lake build +Probe:o. The complete objdump -dr output of Probe.c.o.export, including their specialized polynomial kernels, is identical after removing only the object pathname header. This covers the retained native factorization measurements; it does not assert unchanged compilation cost or new representation performance."
+}

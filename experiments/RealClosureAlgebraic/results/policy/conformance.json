@@ -1,0 +1,9 @@
+{
+  "passed": {
+    "base": 12,
+    "nested": 8,
+    "growth": 28
+  },
+  "transport_values": 5,
+  "oracle": "FLINT Q[X]/(X^4-2), exact polynomial long division"
+}

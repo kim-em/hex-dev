@@ -191,12 +191,13 @@ executable structures it is meant to abstract over.
 ### Consequences for the executable counts
 
 ```lean
-theorem sturmCount_eq_card_roots (p : ZPoly) (hp : SquareFreeRat p)
-    (I : DyadicInterval) :
+theorem sturmCount_eq_card_roots (p : ZPoly) (hp : 1 ≤ p.natDegree)
+    (hsq : SquareFreeRat p) (I : DyadicInterval) :
     Hex.ZPoly.sturmCount p I =
       ((toPolyℝ p).roots.filter (fun r => I.lower < r ∧ r ≤ I.upper)).card
 
-theorem rootCount_eq_card_roots (p : ZPoly) (hp : SquareFreeRat p) :
+theorem rootCount_eq_card_roots (p : ZPoly) (hp : 1 ≤ p.natDegree)
+    (hsq : SquareFreeRat p) :
     Hex.ZPoly.rootCount p = (toPolyℝ p).roots.card
 ```
 
@@ -722,59 +723,64 @@ assert ordinary topological connectedness of its intervals.
 
 ### Representation and replay bridge
 
-Interpret the operation record from hex-poly in a nontrivial ordered
-commutative domain `D`, with an injective order-preserving ring map
-`j : D →+* R`. On the Mathlib side the domain assumptions can be expressed
-as `[CommRing D] [IsDomain D] [LinearOrder D] [IsStrictOrderedRing D]`, with
-`StrictMono j`. A `Field D` hypothesis is forbidden. Valid raw
-representatives denote elements of `D`; this denotation need not be
-injective. Interpret arrays coefficientwise and then map them to `R`.
-Endpoint representations have their own interpretation in `R` and sound
-comparison/evaluation adapters; dyadics are not required to belong to `D`.
+Use a nontrivial ordered commutative domain `D`, with an injective
+order-preserving ring map `j : D →+* R`. On the Mathlib side use
+`[CommRing D] [IsDomain D] [LinearOrder D] [IsStrictOrderedRing D]` and
+`StrictMono j`. No `Field D` hypothesis is needed. The computational
+Lean-core structures on `D` and these Mathlib structures must have the same
+operations, equality and order. Runtime equality/order decisions are total
+and executable; classical decisions may occur only in semantic proofs.
 
-Prove operation and pseudo-division interpretation, derivative compatibility,
-semantic polynomial equality and degree correspondence here. This companion
-owns the complete fallible operation-record interpretation needed by the query
-bridge, including the pseudo-gcd guard interpretation; it may reuse existing
-hex-poly-mathlib arithmetic lemmas but does not assume an unspecified new
-correspondence there. Successful degree `none` means zero;
-`some d` means nonzero with `natDegree=d`, a nonzero coefficient at `d` and
-zero coefficients above it. A fallible test that exhausts supplies no such
-fact. Structural trailing zeros are not a substitute. Prove positive
-normalization/rescaling preserves entry signs and variations, with every
-initial/step/terminal identity translated. Negative scaling does not have
-this property. Prove finite Horner and degree-parity infinity sign agreement.
+Reuse HexPolyMathlib's `DensePoly` arithmetic correspondence. Prove mapping
+of the new pseudo-division identities, degree descent and fraction-field
+pseudo-gcd guards; the arithmetic owner proves their ordinary core laws.
+`degree? = none` corresponds to zero, and `some d` to a nonzero polynomial
+of degree `d`. There is no fallible-record interpretation or parallel raw
+polynomial representation. For canonical-zero representation coefficients,
+use the [execution contract](../../SPEC/real-closure-execution.md): first
+interpret them in `D` with operation/sign preservation and zero reflection.
+That map need not be injective. Prove degree and actual kernel correspondence
+before composing with `j`; quotient laws are not executable prerequisites.
 
-The planned shared `Hex.QueryReplay.check_sound` proves soundness of
-`Hex.QueryReplay.checkWith`, named in the computational owner
-[hex-real-roots](../../HexRealRoots/SPEC/hex-real-roots.md#shared-ordered-domain-kernel).
-It composes accepted coefficient,
-domain, recurrence and endpoint evidence to conclude those domain guards and
-`Query.variation_eq` for the claimed integer. Squarefreeness of a domain
-polynomial means squarefreeness after mapping to its fraction field (and
-hence to `R` in characteristic zero), not squarefreeness in `D[X]`:
-integer `4*X` must be accepted. Guard callbacks must prove that condition;
-raw recurrence identities alone cannot establish it.
+The scalar interpretation preserves natural casts and the explicit executable
+sign, as well as the arithmetic used by the shared kernel. Prove squarefree
+guards via a semantically nonzero constant gcd or a checked Bézout identity;
+a normalized noncanonical coefficient need not be structurally one. Replay
+polynomial equations use zero differences. Literal context/operand bindings
+remain separate exact-data checks and must be renewed after refinement, even
+when an operand literal is unchanged.
 
-Every coefficient checker proves the exact operation/sign/zero claim for
-its context and operands. Validation supplies denotations for raw inputs;
-arithmetic preserves validity, zero decisions agree with semantic zero,
-and accepted sign evidence equals `sgn`. An unknown sign is exhaustion.
-Soundness holds for any finite accepted literal certificate, independently
-of whether a producer can find it. Replay checks all identities, positive
-scales, degree descent, terminal data, finite endpoint guards and variations;
-it never reruns chain generation, gcd search, root isolation or coefficient
-refinement. Child evidence is acyclic, structurally checked and charged to
-one remaining budget; reject malformed sizes before allocating products.
-Producer correspondence is separate and uses the same abstract theorem.
+Endpoint representations have a total interpretation in `R` and correct
+comparison/evaluation operations; dyadics need not belong to `D`. Prove exact
+Horner and degree-parity infinity sign agreement. Positive rescaling
+preserves signs/variations; translate every initial, step and terminal
+identity. Negative scaling alone does not preserve these quantities.
 
-Keep bounded success soundness, invalid-result soundness, termination on all
-raw inputs, and completeness under total coefficient decisions distinct.
-The shared kernel's degree/fuel bounds and literal-size bounds are specified
-in [hex-real-roots](../../HexRealRoots/SPEC/hex-real-roots.md#shared-ordered-domain-kernel).
-Sound evidence that may exhaust cannot prove domain-exact or eventual success
-without an additional completeness and sufficient-budget theorem. A checker
-rejection does not prove that the mathematical query lacks a value.
+The shared `Hex.QueryReplay.check_sound` derives the mathematical guards and
+`Query.variation_eq` from accepted finite literal data. Squarefreeness is in
+the fraction field (hence in `R` in characteristic zero), so integer `4*X`
+is accepted. Recurrence identities alone do not prove squarefreeness: a
+separate gcd or Bézout guard witness is checked. Prove producer correctness
+and produced-certificate acceptance separately from replay soundness.
+
+The generic exact checker uses total field/domain decisions. The tactic
+proof interface may discharge expensive coefficient equality/sign obligations
+with supplied kernel proofs or finite lower-level certificates bound to the
+exact operands and extension context. Prove their composition into the same
+abstract chain theorem. This avoids rerunning coefficient refinement or BKR
+search in tactic replay; it is not an alternative arithmetic interface.
+Nested sign proofs are finite and acyclic, with child claims established
+before the parent query. Every split-related reuse needs a denotation
+transport proof. No per-addition or per-multiplication certificate is required.
+
+Replay checks initial and terminal data, polynomial identities, positive
+scales, nonzero entries, degree descent, finite endpoint guards and variation
+counts. It does not rerun chain production, gcd search or root isolation.
+Structural checks terminate by literal size; exact arithmetic terminates by
+its ordinary laws. Rejected evidence does not prove mathematical invalidity.
+For public query producers, `none` means exactly a failed domain guard;
+there is no resource-exhaustion outcome. The computational owner's degree
+bounds establish termination without a user threshold.
 
 ### Real specialization
 
@@ -824,7 +830,7 @@ fixtures are owned by the new companion's
 [conformance contract](../../SPEC/Libraries/hex-sturm-mathlib.md#conformance-and-phase-4-evidence).
 Measure shared literal replay through fresh-module kernel proof probes,
 recording axiom sets and artifact sizes; keep arithmetic producer benchmarks
-in the Mathlib-free owner. Nested evidence size and rejected/exhausted paths
+in the Mathlib-free owner. Nested evidence size and rejected-certificate paths
 are explicit proof-probe dimensions, not hidden coefficient-oracle costs.
 
 ## File organisation

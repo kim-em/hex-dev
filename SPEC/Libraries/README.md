@@ -6,7 +6,7 @@
 - **hex-int-factor**: integer factorization with complete prime-exponent certificates, the divisor-function API, multiplicative order and primitive roots
 - **hex-poly**: dense `Array`-backed polynomial representation
 - **hex-rational-fn**: canonical univariate rational functions, field arithmetic, partial evaluation, formal differentiation and normalization certificates
-- **[hex-ordered-fn](hex-ordered-fn.md)** (planned): certified bounded real-constant and infinitesimal orders on rational functions, with conditional total field adapters
+- **[hex-ordered-fn](hex-ordered-fn.md)** (planned): user-supplied real-constant and infinitesimal orders on rational functions, with conditional total field adapters
 - **hex-sparse-poly**: canonical sparse univariate polynomials as a sorted exponent/coefficient term array, with explicit conversions to and from the dense representation
 - **hex-mv-poly**: canonical distributed multivariate polynomials at fixed arity with explicit monomial orders
 - **hex-reflect**: shared `Lean.Meta.Sym.Arith` sessions, batch variable sealing, direct `Hex.MvPoly` conversion, provider results, conditions and budgets
@@ -55,7 +55,7 @@
 - **[hex-real-formula](hex-real-formula.md)** (planned): shared multivariate real-arithmetic syntax, semantics, and reification; companion specified in the same file
 - **[hex-virtual-subst](hex-virtual-subst.md)** (planned): quadratic virtual substitution, exact QE and refutation certificates; Mathlib companion and tactic specified in the same file
 - **[hex-coverings](hex-coverings.md)** (planned): real-arithmetic satisfiability by cylindrical cell explanations and checked LRAT or covering refutations; Mathlib/Tau Ceti companion specified in the same file
-- **hex-rcf**: the `rcf` tactic for Boolean combinations of univariate polynomial comparisons under one `∀`/`∃` over `ℝ`, with integer/rational coefficients; `mathlib: true`, soundness in the same library. The [planned optional coefficient extension](../../HexRCF/SPEC/hex-rcf.md#planned-real-coefficient-extension) adds fixed real algebraic embeddings and certified named π/e constants, with conditional completeness for constant towers
+- **hex-rcf**: the `rcf` tactic for Boolean combinations of univariate polynomial comparisons under one `∀`/`∃` over `ℝ`, with integer/rational coefficients; `mathlib: true`, soundness in the same library. The [planned optional coefficient extension](../../HexRCF/SPEC/hex-rcf.md#planned-real-coefficient-extension) adds fixed real algebraic embeddings and authenticated caller-supplied constants, with conditional completeness for constant towers
 - **hex-resultant**: polynomial resultant and discriminant via the subresultant pseudo-remainder sequence
 - **hex-number-field**: fixed fields `QAdjoin p x`, factorization-lazy `AlgebraicRoot`, canonical `AlgebraicNumber`, and roots of polynomials with algebraic coefficients
 - **[hex-real-algebraic](hex-real-algebraic.md)**: the real subtype of canonical algebraic numbers, exact ordered-field arithmetic, real roots, rounding, and dyadic approximation
@@ -87,7 +87,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-finite-field-mathlib**: `Fintype K` and `Fintype.card K = card K` for any `LawfulFiniteField`, and `frob = frobenius`
 - **hex-poly-mathlib**: `DensePoly R ≃+* Polynomial R`
 - **hex-rational-fn-mathlib**: equivalence with `RatFunc K`, canonical numerator/denominator agreement and partial-evaluation semantics
-- **[hex-ordered-fn-mathlib](hex-ordered-fn-mathlib.md)** (planned): real evaluation, Hahn-series infinitesimal semantics, fallible-record correspondence and total-order laws
+- **[hex-ordered-fn-mathlib](hex-ordered-fn-mathlib.md)** (planned): real evaluation, Hahn-series infinitesimal semantics, arithmetic correspondence and total-order laws
 - **hex-sparse-poly-mathlib**: `SparsePoly R ≃+* Polynomial R`, and the identification of the stored term array with `Polynomial.support`
 - **hex-mv-poly-mathlib**: `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence
 - **hex-reflect-mathlib**: Mathlib carrier translations and the `MvPolynomial` correspondence for reflected batches
@@ -147,8 +147,8 @@ Each library with its immediate dependencies:
 - **hex-int-factor**: hex-primality, hex-arith, hex-basic
 - **hex-poly**: (none)
 - **hex-rational-fn**: hex-poly, hex-poly-fast
-- **hex-ordered-fn** (planned): hex-rational-fn, hex-poly, hex-poly-fast, hex-interval
-- **hex-ordered-fn-mathlib** (planned): hex-ordered-fn, hex-rational-fn-mathlib, hex-poly-mathlib, hex-interval-mathlib, Mathlib
+- **hex-ordered-fn** (planned): hex-rational-fn, hex-poly, hex-poly-fast
+- **hex-ordered-fn-mathlib** (planned): hex-ordered-fn, hex-rational-fn-mathlib, hex-poly-mathlib, Mathlib
 - **hex-sparse-poly**: hex-poly, hex-basic
 - **hex-mv-poly**: hex-poly, hex-basic
 - **hex-reflect**: hex-mv-poly, hex-basic
@@ -196,7 +196,7 @@ Each library with its immediate dependencies:
 - **hex-interval-algebraic**: hex-interval-mathlib, hex-real-roots-mathlib, hex-roots-mathlib (mathlib: true)
 - **hex-real-formula** (planned): hex-mv-poly
 - **hex-virtual-subst** (planned): hex-real-formula, hex-mv-poly
-- **hex-rcf**: hex-real-roots, hex-real-roots-mathlib, hex-poly-z, hex-poly-z-mathlib (mathlib: true); the planned shared formula adapter additionally depends on hex-real-formula-mathlib. The optional real-coefficient adapter also consumes hex-real-closure and its companion (with ordered-fn, sturm, sign-det, interval and real-algebraic evidence transitively); these are planned implementation dependencies, not base imports
+- **hex-rcf**: hex-real-roots, hex-real-roots-mathlib, hex-poly-z, hex-poly-z-mathlib (mathlib: true); the planned shared formula adapter additionally depends on hex-real-formula-mathlib. The optional real-coefficient adapter also consumes hex-real-closure and its companion (with ordered-fn, sturm, sign-det and real-algebraic evidence transitively); these are planned implementation dependencies, not base imports
 - **hex-resultant**: hex-poly
 - **hex-number-field**: hex-poly-z, hex-roots, hex-resultant, hex-berlekamp-zassenhaus, hex-matrix, hex-row-reduce
 - **hex-real-algebraic**: hex-number-field
@@ -760,8 +760,8 @@ for developments whose source-local move has not happened yet.
 - [hex-poly-mathlib](../../HexPolyMathlib/SPEC/hex-poly-mathlib.md): `DensePoly R ≃+* Polynomial R`
 - [hex-rational-fn](../../HexRationalFn/SPEC/hex-rational-fn.md): canonical univariate fractions, cancellation algorithms, evaluation and certificate replay
 - [hex-rational-fn-mathlib](../../HexRationalFnMathlib/SPEC/hex-rational-fn-mathlib.md): equivalence with `RatFunc`, canonical components and operation correspondence
-- [hex-ordered-fn](hex-ordered-fn.md) (planned): shared bounded fraction adapter, certified real enclosures, infinitesimal signs and executable total-search contracts
-- [hex-ordered-fn-mathlib](hex-ordered-fn-mathlib.md) (planned): real and Hahn-model correspondence, enclosure soundness/progress, and erased total-adapter laws
+- [hex-ordered-fn](hex-ordered-fn.md) (planned): ordinary rational-function arithmetic, caller approximation functions with separate width/containment proofs, infinitesimal signs and total-search contracts
+- [hex-ordered-fn-mathlib](hex-ordered-fn-mathlib.md) (planned): real and Hahn-model correspondence, enclosure soundness/progress and order laws
 - [hex-sparse-poly](../../HexSparsePoly/SPEC/hex-sparse-poly.md): canonical sparse univariate polynomials, the operations that keep sparsity, and the dense conversions (the Mathlib companion is specified in the same file)
 - [hex-mv-poly](../../HexMvPoly/SPEC/hex-mv-poly.md): canonical distributed multivariate polynomials with explicit monomial orders
 - [hex-mv-poly-mathlib](../../HexMvPolyMathlib/SPEC/hex-mv-poly-mathlib.md): `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence

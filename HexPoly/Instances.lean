@@ -59,7 +59,7 @@ private theorem linearPow_square [Lean.Grind.CommRing R] [DecidableEq R]
 
 /-- Natural powers by binary exponentiation. -/
 @[expose]
-def natPow [Lean.Grind.CommRing R] [DecidableEq R]
+def natPow [Zero R] [One R] [Add R] [Mul R] [DecidableEq R]
     (p : DensePoly R) (n : Nat) : DensePoly R :=
   if n = 0 then 1
   else

@@ -1,0 +1,35 @@
+{
+  "cpu": 11,
+  "host": {
+    "system": "Linux",
+    "node": "chungus2",
+    "release": "6.12.100",
+    "version": "#1-NixOS SMP PREEMPT_DYNAMIC Thu Jul 30 11:04:52 UTC 2026",
+    "machine": "x86_64",
+    "processor": ""
+  },
+  "load_start": [
+    5.37451171875,
+    5.62646484375,
+    9.50341796875
+  ],
+  "base": "c08268dec030a81a5da124a6d8060c1420c779e7",
+  "lean_bench": "8a37daf1074c3bdbd0da479b55538bad4a0022db",
+  "toolchain": "leanprover/lean4:v4.34.0",
+  "hashes": {
+    "experiments/RealClosureAlgebraic/Algebraic.lean": "f21a9bb2683c653f5ad16a3e8f69aea21ed5c8b4afdcd21b279033dc8f00ab06",
+    "experiments/RealClosureAlgebraic/Bench.lean": "c0f3f32f3fbc107700ce1d8bd8113b04b6016d9f4c41000086fdda483f47c323",
+    "experiments/RealClosureAlgebraic/Check.lean": "2d283e23314da295b94fe08e711703919544b6a0cbde1d048eab42c1ee5d5aaa",
+    "experiments/RealClosureAlgebraic/Tests.lean": "9d87396b5653b46a2619ae8203e870e6bc88add3e8a3bd14b6526599d2ca7340",
+    "experiments/RealClosureAlgebraic/Transfer.lean": "8c9b69e3688fd9d6c43fc15f286a73434fb7f420c06776944f3e6535168e79ed",
+    "experiments/RealClosureAlgebraic/lakefile.toml": "e008571371d3a6122ac536825699724a094caa796b894685b43503e3c967f674",
+    "experiments/RealClosureAlgebraic/PROTOCOL.md": "1715ab19ba5b07eb5261675a80d23561627e66e8b45db648139197e6aa5b6eb6",
+    "experiments/RealClosureAlgebraic/measure.py": "cfd122f4d20b4846542fe930c2e8081a2c08f4060b65ea15ab17d41f928b2c4f"
+  },
+  "schedule": "case-major: 12 cases; 6 adjacent AB/BA blocks; 1 repeat, 50ms floor",
+  "load_end": [
+    5.58935546875,
+    5.67041015625,
+    9.275390625
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "path": "HexPoly/Lcm.lean",
+  "baseline_blob": "4dcaab4cf72512fbb783c58fa5f8010a1c4c8b3c",
+  "current_blob": "80618dd5e3976dd8afb8eb4dfc2fbf8f785f9aa6",
+  "reason": "Generalizes monicize from Field to the same Zero, DecidableEq, Inv and Mul operations, with no body change. monicize and DensePoly.lcm have no computational callers in HexBerlekampZassenhaus, HexBerlekamp, HexPolyZ or HexPolyFp. As an additional check, a standalone ratMonicize (p : DensePoly Rat) := Hex.DensePoly.monicize p was compiled against each exact source version using lake build +Probe:o; complete objdump -dr output is identical after removing only the object pathname header. Existing factorization normalization and all concrete arithmetic are unchanged. This exemption covers the retained native factorization sweep only."
+}

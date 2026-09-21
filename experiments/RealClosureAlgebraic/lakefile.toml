@@ -1,0 +1,41 @@
+name = "rcfAlgebraicExperiment"
+version = "0.1.0"
+packagesDir = "../../.lake/packages"
+defaultTargets = ["Tests", "Transfer"]
+[[require]]
+name = "Hex"
+path = "../.."
+[[lean_lib]]
+name = "Algebraic"
+[[lean_lib]]
+name = "Tests"
+[[lean_lib]]
+name = "Transfer"
+[[lean_exe]]
+name = "algebraicCheck"
+root = "Check"
+[[lean_exe]]
+name = "algebraicBench"
+root = "Bench"
+
+[[lean_lib]]
+name = "Nested"
+
+[[lean_lib]]
+name = "Policy"
+
+[[lean_exe]]
+name = "policyCheck"
+root = "PolicyCheck"
+
+[[lean_exe]]
+name = "refinementCheck"
+root = "Refinement"
+
+[[lean_exe]]
+name = "policyBench"
+root = "PolicyBench"
+
+[[lean_exe]]
+name = "policyTrace"
+root = "PolicyTrace"

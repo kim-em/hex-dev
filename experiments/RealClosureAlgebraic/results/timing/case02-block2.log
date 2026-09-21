@@ -1,0 +1,20 @@
+env: lean=4.34.0, os=linux, arch=x86_64, commit=c08268d-dirty, 2026-09-21T01:11:25Z, host=chungus2
+each2    [fixed] repeats=1
+  repeat 0  3.056 ms  (×2^5, total 97.800 ms)
+  median: 3.056 ms    min: 3.056 ms    max: 3.056 ms
+  hash: all repeats agree
+  observed hash: 0x7033861db9550694
+  peak RSS: 67_564 kB (across 1 ok repeat(s))
+
+batch2    [fixed] repeats=1
+  repeat 0  827.648 µs  (×2^6, total 52.969 ms)
+  median: 827.648 µs    min: 827.648 µs    max: 827.648 µs
+  hash: all repeats agree
+  observed hash: 0x7033861db9550694
+  peak RSS: 67_672 kB (across 1 ok repeat(s))
+
+relative median (baseline = each2, the first CLI argument):
+  each2: 1.000× (3.056 ms)
+  batch2: 0.271× (827.648 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10143/experiments/RealClosureAlgebraic/results/timing/case02-block2.json

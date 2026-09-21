@@ -180,86 +180,81 @@ operations, excluding the separately bounded squarefreeness check; this is
 not a unit-cost bit bound on growing coefficients. Phase 4 measures their
 bit lengths as well as degrees.
 
+The implementation and its generic extension use one owned primitive;
+these Tarski declarations remain unimplemented until that work lands.
+Squarefree guards on representation coefficients test a semantically nonzero
+constant gcd, or a Bézout identity by zero differences. Monicization does not
+make structural equality to `1` a valid semantic guard. The explicit total
+sign and natural-cast interface is the shared execution contract. Literal
+context/operand checks remain exact binding checks, separate from these
+semantic polynomial equations.
+
+
 ### Shared ordered-domain kernel
 
 Generalize the signed-remainder/query-replay primitive here, below the family,
-over the explicit [hex-poly operation record](../../HexPoly/SPEC/hex-poly.md#fallible-coefficient-operations).
-The coefficient interpretation is an ordered commutative domain, not
-necessarily a field. Use its fallible semantic degree, pseudo-division and
-coefficient-evidence interfaces. No typeclass field or decidable order is
-installed on `Int`, raw algebraic representatives or bounded sign oracles.
-The field frontend in hex-sturm supplies domain/squarefreeness checks and
-checked field arithmetic; the integer frontend retains its integer guards.
+over an ordinary executable ordered commutative domain `D`. Use existing
+`DensePoly D`, total ring operations, decidable equality/order and
+[ordered-domain pseudo-division](../../HexPoly/SPEC/hex-poly.md#ordered-domain-pseudo-division).
+The domain need not be a field: integers are an actual instance. The same
+operation-only kernel accepts canonical-zero representation coefficients under
+the [execution contract](../../SPEC/real-closure-execution.md); the companion
+proves their interpretation in the ordered domain. No field instance is
+asserted on raw representatives. Bounded sign attempts cannot supply its
+total sign. Replay identities use semantic zero differences.
 
-The planned shared literal checker is `Hex.QueryReplay.checkWith`, taking
-`CoeffOps`, endpoint and guard evidence adapters, one remaining `Budget`,
-literal inputs `p,f,a,b`, the claimed `Int` and a certificate; it returns
-`PolyOps.CheckResult` with residual budget/work accounting. Its Boolean
-`Hex.QueryReplay.check` wrapper is true exactly on acceptance. The integer
-`TarskiReplay.check` and field `Hex.Sturm.Replay.checkWith` specialize/compose
-this checker; the generic checker does not import either frontend. Its
-soundness theorem `Hex.QueryReplay.check_sound` belongs to
+This owner provides `Endpoint E := negInf | finite E | posInf`, the chain
+producer, zero-skipping variation fold and literal replay. A small endpoint
+adapter supplies total finite comparison and exact evaluation signs, with
+correctness proved once. It may interpret endpoints in an ordered extension
+of `D`: `E=Dyadic` need not be an integer when `D=Int`. This is an endpoint
+interface, not an evidence-returning coefficient-arithmetic framework.
+Infinity signs use leading coefficient and degree parity.
+
+The producer uses the positive-scaled initial reduction, three-term
+recurrence and terminal zero identity specified below, including singleton
+and constant branches. The head is the input `p`. Removing positive content
+from a head or later entry records the corresponding positive scale.
+Primitive and signed subresultant backends obey the same recurrence and
+prove equality of query values; negative subresultant factors require sign
+correction of entries and identities, not merely absolute values.
+
+Every later nonzero degree strictly decreases. Computation terminates by
+these degree bounds, with no caller threshold. Finite scans and replay
+terminate by input size. No coefficient operation accepts or returns a
+resource budget, and there is no second raw-array degree or gcd API.
+The query value is the `Int` variation drop.
+
+The frontend supplies the mathematical domain: nonzero `p`, squarefree over
+the fraction field of `D`, strictly ordered endpoints and no finite endpoint
+roots. Check guards before zero-query or constant shortcuts. Integer `4*X`
+is admissible; content does not create repeated roots. The public integer
+frontend retains `Option Int`, with `none` exactly on invalid mathematical
+input. A false certificate check means the proposed evidence is incorrect,
+not that the query lacks a value.
+
+The shared planned `Hex.QueryReplay.check` verifies the literal identities,
+degrees, signs and guard witnesses. `Hex.QueryReplay.check_sound` belongs to
 [hex-real-roots-mathlib](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#representation-and-replay-bridge).
-These are planned API names, not existing declarations.
+For ordinary exact coefficients these checks use total equality/order.
+For expensive extension comparisons, the tactic proof interface may instead
+supply kernel proofs or finite verified sign certificates for the precise
+coefficient claims; it does not regenerate the chain, isolate roots or
+restart coefficient refinement. Arithmetic correctness theorems justify
+operations without a certificate attached to every addition or product.
 
-This owner provides the shared `Endpoint E` data (`negInf`, `finite E`,
-`posInf`), chain producer, variation fold and literal replay checks. Endpoint
-adapters supply finite ordering, evaluation signs and their evidence; their
-semantic laws may interpret endpoints in an ordered extension of the
-coefficient domain. In particular, `E=Dyadic` need not be an integer for
-integer coefficients. This does not add division to the ring kernel.
-Infinity signs use the certified leading coefficient and semantic degree
-parity. The integer public `DyadicInterval` interface remains unchanged.
+`ZPoly.tarskiQuery` instantiates this kernel with exact integer arithmetic,
+positive content normalization and exact dyadic Horner signs. The generic
+field frontend invokes the same initial reduction and recurrence. Prove
+backend equality and certificate translation for the optimized integer
+operations. Positive denominator clearing of rational `p,f` separately
+preserves the entire `Option` and transports replay as specified in
+hex-sturm. No upstream module imports hex-sturm for these generic helpers.
 
-The kernel uses the positive-scaled initial reduction, three-term recurrence
-and terminal zero identity specified below, including singleton/constant
-branches. The head is the input `p`; if a backend removes positive content
-from it, record the scale to that input and transport the initial identity.
-Backends may use hex-poly's optional exact-division/normalization adapters
-for primitive or signed subresultant remainders, proving equality of query
-values through these same identities. Negative subresultant factors require
-sign correction of the affected entries and identities before recording
-positive scale factors; taking absolute values alone is not sound.
-Every later nonzero degree strictly decreases. Its query value is the
-`Int` variation drop. The frontend must supply checked nonzero input that is
-squarefree over the fraction field of the coefficient domain (not necessarily
-in the domain's polynomial ring), strictly ordered endpoints and non-root
-finite endpoints before a
-successful value, even if `f=0` or the head is constant. For example `4*x`
-is admissible over integer coefficients: integer content does not create
-repeated roots. The shared replay interface composes that guard evidence with the ring identities and signs;
-its raw arithmetic checks alone are not a root-query theorem.
-
-The kernel uses hex-poly's `PolyOps.Limits`, `Budget`, `Result` and
-`CheckResult`; caller limits seed the single budget threaded across library
-boundaries. Callbacks propagate exhausted and rejected results explicitly.
-A user-facing invalid result must prove a failed input/context guard; an
-internal helper-precondition failure on already validated inputs is instead
-rejected as an implementation error.
-Unknown zero/sign tests cannot act as structural zero tests or permit a
-shortcut. Loops decrease arithmetic fuel or literal length and every nested
-coefficient checker consumes the same parent budget; no coefficient search
-runs in replay. Bounds above refer to semantic degrees, and raw inputs also
-pay for scanning their stored lengths. Total adapters prove the chosen fuel
-suffices; bounded adapters promise only successful-result soundness unless
-coefficient completeness and sufficient budgets are supplied.
-
-`ZPoly.tarskiQuery` instantiates this kernel with exact integer operations,
-positive content normalization and exact dyadic Horner signs. Optimized
-integer arithmetic must prove backend equality at query values and transport
-its certificate through positive scale identities. The generic field adapter
-invokes the same recurrence and initial reduction. Integer guards and total
-callbacks retain `none` exactly for invalid input, not exhaustion. Positive
-clearing of rational `p,f` separately must preserve guards and query results
-and admit replay translation, as specified in hex-sturm. No upstream module
-imports hex-sturm to obtain those generic helpers.
-
-Keep the existing derivative `sturmChain`, half-open `sturmCount`, RCF replay
-and `Polynomial ℝ` proofs intact. This generalization is of the planned
-Tarski primitive; refactoring those existing proofs is not a prerequisite.
-The shared abstract soundness theorem and integer specialization live in
-hex-real-roots-mathlib; frontend/evidence composition lives in
-hex-sturm-mathlib. BKR matrices remain downstream in hex-sign-det.
+Keep existing derivative `sturmChain`, half-open `sturmCount`, RCF replay
+and `Polynomial ℝ` proofs intact. The shared abstract soundness theorem and
+integer specialization live in hex-real-roots-mathlib; field frontend
+correspondence lives in hex-sturm-mathlib. BKR matrices remain downstream.
 
 ### Literal query certificates
 
