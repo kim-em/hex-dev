@@ -1,0 +1,38 @@
+{
+  "cpu": 1,
+  "load": [
+    4.203125,
+    3.8955078125,
+    3.9609375
+  ],
+  "commands": [
+    {
+      "argv": [
+        ".lake/build/bin/hexsturm_bench",
+        "profile",
+        "Hex.SturmBench.runInteger",
+        "--param",
+        "20",
+        "--target-inner-nanos",
+        "500000000",
+        "--profiler",
+        "perf record -F 999 -g --call-graph dwarf -o /tmp/issue-10375-integer-20.perf --"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        ".lake/build/bin/hexsturm_bench",
+        "profile",
+        "Hex.SturmBench.runInitialHigh",
+        "--param",
+        "96",
+        "--target-inner-nanos",
+        "500000000",
+        "--profiler",
+        "perf record -F 999 -g --call-graph dwarf -o /tmp/issue-10375-initial-96.perf --"
+      ],
+      "exit_code": 0
+    }
+  ]
+}

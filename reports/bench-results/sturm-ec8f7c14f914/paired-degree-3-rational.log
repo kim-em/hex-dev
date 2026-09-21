@@ -1,0 +1,12 @@
+Hex.SturmBench.runRational    expected complexity: n ^ 2    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=ec8f7c1-dirty, 2026-09-21T07:43:04Z, host=chungus2
+  param  per-call    repeats  C
+      8  102.542 µs  ×2^10    C=1602.226 †
+     10  151.118 µs  ×2^9     C=1511.180
+     12  203.812 µs  ×2^8     C=1415.364
+     16  351.024 µs  ×2^8     C=1371.188
+     20  530.556 µs  ×2^7     C=1326.391
+  verdict: consistent with declared complexity (cMin=1326.391, cMax=1511.180, β=—)
+  per-spawn floor (harness self-measurement): 21.424 ms
+  peak RSS: 67_988 kB..68_748 kB (across 5 ok row(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-ec8f7c14f914/paired-degree-3-rational.json

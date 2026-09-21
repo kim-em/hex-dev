@@ -1562,6 +1562,22 @@ libraries:
     done_through: 7
     status: active
     proof_probes: [bench/HexRealRootsMathlib/ProofProbe]
+  HexSturm:
+    deps: [HexPoly, HexRealRoots]
+    mathlib: false
+    done_through: 0
+    status: active
+    phase4:
+      input_families:
+        - name: head-degree
+          description: Chebyshev heads T_n with query 1 on (-2,2), measuring the normal signed chain and endpoint passes as head degree grows.
+        - name: query-degree
+          description: Fixed head x²−2 with query x^m+1 on (-2,2), measuring initial reduction and replay as query degree grows.
+  HexSturmMathlib:
+    deps: [HexSturm, HexPolyMathlib, HexRealRootsMathlib]
+    mathlib: true
+    done_through: 0
+    status: active
   HexRCF:
     deps: [HexRealRoots, HexRealRootsMathlib, HexPolyZ, HexPolyZMathlib, HexRealFormulaMathlib]
     mathlib: true

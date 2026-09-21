@@ -1,0 +1,152 @@
+Hex.SturmBench.runReplay    expected complexity: n ^ 2    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=ff20860-dirty, 2026-09-21T09:23:09Z, host=chungus2
+  param  per-call    repeats  C
+      8   25.352 µs  ×2^12    C=394.833 [trial 1/4] †
+     10   35.024 µs  ×2^11    C=347.453 [trial 1/4]
+     12   48.032 µs  ×2^11    C=321.563 [trial 1/4]
+     16  103.810 µs  ×2^10    C=406.528 [trial 1/4]
+     20  210.855 µs  ×2^8     C=480.641 [trial 1/4]
+      8   25.348 µs  ×2^12    C=394.833 [trial 2/4] †
+     10   36.743 µs  ×2^11    C=347.453 [trial 2/4]
+     12   45.872 µs  ×2^11    C=321.563 [trial 2/4]
+     16   98.347 µs  ×2^10    C=406.528 [trial 2/4]
+     20  185.361 µs  ×2^8     C=480.641 [trial 2/4]
+      8   25.190 µs  ×2^12    C=394.833 [trial 3/4] †
+     10   34.466 µs  ×2^11    C=347.453 [trial 3/4]
+     12   46.738 µs  ×2^11    C=321.563 [trial 3/4]
+     16  106.879 µs  ×2^10    C=406.528 [trial 3/4]
+     20  195.981 µs  ×2^8     C=480.641 [trial 3/4]
+      8   23.146 µs  ×2^12    C=394.833 [trial 4/4] †
+     10   32.510 µs  ×2^11    C=347.453 [trial 4/4]
+     12   43.910 µs  ×2^11    C=321.563 [trial 4/4]
+     16  104.331 µs  ×2^9     C=406.528 [trial 4/4]
+     20  188.531 µs  ×2^8     C=480.641 [trial 4/4]
+  verdict: consistent with declared complexity (cMin=321.563, cMax=480.641, β=—)
+  per-spawn floor (harness self-measurement): 65.692 ms
+  peak RSS: 61_880 kB..64_860 kB (across 20 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+    param  trials  median      min         max         spread 
+        8  4/4      25.269 µs   23.146 µs   25.352 µs  8.730% 
+       10  4/4      34.745 µs   32.510 µs   36.743 µs  12.182%
+       12  4/4      46.305 µs   43.910 µs   48.032 µs  8.901% 
+       16  4/4     104.071 µs   98.347 µs  106.879 µs  8.199% 
+       20  4/4     192.256 µs  185.361 µs  210.855 µs  13.260%
+
+Hex.SturmBench.runIntegerHigh    expected complexity: m    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=ff20860-dirty, 2026-09-21T09:23:12Z, host=chungus2
+  param  per-call   repeats  C
+     16   7.533 µs  ×2^13    C=523.309 [trial 1/4] †
+     24   9.099 µs  ×2^13    C=405.731 [trial 1/4]
+     32   9.779 µs  ×2^7     C=350.520 [trial 1/4]
+     48  11.973 µs  ×2^13    C=286.715 [trial 1/4]
+     64  15.833 µs  ×2^12    C=266.688 [trial 1/4]
+     96  29.100 µs  ×2^12    C=319.026 [trial 1/4]
+     16  13.870 µs  ×2^13    C=523.309 [trial 2/4] †
+     24   9.435 µs  ×2^13    C=405.731 [trial 2/4]
+     32  11.190 µs  ×2^13    C=350.520 [trial 2/4]
+     48  13.727 µs  ×2^12    C=286.715 [trial 2/4]
+     64  17.633 µs  ×2^12    C=266.688 [trial 2/4]
+     96  27.749 µs  ×2^11    C=319.026 [trial 2/4]
+     16   8.278 µs  ×2^13    C=523.309 [trial 3/4] †
+     24  10.039 µs  ×2^13    C=405.731 [trial 3/4]
+     32  11.482 µs  ×2^13    C=350.520 [trial 3/4]
+     48  13.797 µs  ×2^12    C=286.715 [trial 3/4]
+     64  16.700 µs  ×2^12    C=266.688 [trial 3/4]
+     96  34.156 µs  ×2^11    C=319.026 [trial 3/4]
+     16   8.467 µs  ×2^13    C=523.309 [trial 4/4] †
+     24  10.073 µs  ×2^13    C=405.731 [trial 4/4]
+     32  11.243 µs  ×2^13    C=350.520 [trial 4/4]
+     48  13.821 µs  ×2^12    C=286.715 [trial 4/4]
+     64  17.435 µs  ×2^12    C=266.688 [trial 4/4]
+     96  32.152 µs  ×2^11    C=319.026 [trial 4/4]
+  verdict: inconclusive (cMin=266.688, cMax=405.731, β=-0.212, looks faster than declared by ~n^0.212)
+  per-spawn floor (harness self-measurement): 134.946 ms
+  peak RSS: 61_844 kB..66_844 kB (across 24 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+    param  trials  median     min        max        spread 
+       16  4/4      8.372 µs   7.533 µs  13.870 µs  75.681%
+       24  4/4      9.737 µs   9.099 µs  10.073 µs  10.002%
+       32  4/4     11.216 µs   9.779 µs  11.482 µs  15.183%
+       48  4/4     13.762 µs  11.973 µs  13.821 µs  13.426%
+       64  4/4     17.068 µs  15.833 µs  17.633 µs  10.548%
+       96  4/4     30.626 µs  27.749 µs  34.156 µs  20.920%
+
+Hex.SturmBench.runInitialHigh    expected complexity: m    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=ff20860-dirty, 2026-09-21T09:23:17Z, host=chungus2
+  param  per-call   repeats  C
+     16   2.870 µs  ×2^15    C=185.252 [trial 1/4] †
+     24   4.141 µs  ×2^14    C=175.460 [trial 1/4]
+     32   5.587 µs  ×2^14    C=168.811 [trial 1/4]
+     48   7.289 µs  ×2^13    C=156.260 [trial 1/4]
+     64  11.043 µs  ×2^13    C=175.476 [trial 1/4]
+     96  25.566 µs  ×2^11    C=270.538 [trial 1/4]
+     16   3.057 µs  ×2^15    C=185.252 [trial 2/4] †
+     24   4.297 µs  ×2^14    C=175.460 [trial 2/4]
+     32   5.147 µs  ×2^14    C=168.811 [trial 2/4]
+     48   7.711 µs  ×2^13    C=156.260 [trial 2/4]
+     64  11.417 µs  ×2^13    C=175.476 [trial 2/4]
+     96  27.401 µs  ×2^12    C=270.538 [trial 2/4]
+     16   3.226 µs  ×2^15    C=185.252 [trial 3/4] †
+     24   4.246 µs  ×2^14    C=175.460 [trial 3/4]
+     32   5.481 µs  ×2^14    C=168.811 [trial 3/4]
+     48   6.826 µs  ×2^13    C=156.260 [trial 3/4]
+     64  11.020 µs  ×2^13    C=175.476 [trial 3/4]
+     96  26.377 µs  ×2^12    C=270.538 [trial 3/4]
+     16   2.747 µs  ×2^15    C=185.252 [trial 4/4] †
+     24   4.175 µs  ×2^14    C=175.460 [trial 4/4]
+     32   5.322 µs  ×2^14    C=168.811 [trial 4/4]
+     48   7.764 µs  ×2^13    C=156.260 [trial 4/4]
+     64  11.715 µs  ×2^13    C=175.476 [trial 4/4]
+     96  24.763 µs  ×2^11    C=270.538 [trial 4/4]
+  verdict: inconclusive (cMin=156.260, cMax=270.538, β=+0.267, looks slower than declared by ~n^0.267)
+  per-spawn floor (harness self-measurement): 96.428 ms
+  peak RSS: 61_788 kB..65_108 kB (across 24 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+    param  trials  median     min        max        spread 
+       16  4/4      2.964 µs   2.747 µs   3.226 µs  16.182%
+       24  4/4      4.211 µs   4.141 µs   4.297 µs  3.699% 
+       32  4/4      5.401 µs   5.147 µs   5.587 µs  8.153% 
+       48  4/4      7.500 µs   6.826 µs   7.764 µs  12.495%
+       64  4/4     11.230 µs  11.020 µs  11.715 µs  6.186% 
+       96  4/4     25.971 µs  24.763 µs  27.401 µs  10.155%
+
+Hex.SturmBench.runReplayHigh    expected complexity: m    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=ff20860-dirty, 2026-09-21T09:23:22Z, host=chungus2
+  param  per-call   repeats  C
+     16   7.301 µs  ×2^13    C=458.913 [trial 1/4] †
+     24   9.474 µs  ×2^13    C=387.474 [trial 1/4]
+     32  10.655 µs  ×2^13    C=332.867 [trial 1/4]
+     48  11.593 µs  ×2^13    C=265.482 [trial 1/4]
+     64  16.740 µs  ×2^12    C=265.539 [trial 1/4]
+     96  28.849 µs  ×2^12    C=298.295 [trial 1/4]
+     16   7.903 µs  ×2^13    C=458.913 [trial 2/4] †
+     24   9.904 µs  ×2^13    C=387.474 [trial 2/4]
+     32  10.647 µs  ×2^13    C=332.867 [trial 2/4]
+     48  13.369 µs  ×2^13    C=265.482 [trial 2/4]
+     64  17.362 µs  ×2^12    C=265.539 [trial 2/4]
+     96  30.187 µs  ×2^11    C=298.295 [trial 2/4]
+     16   7.326 µs  ×2^13    C=458.913 [trial 3/4] †
+     24   8.899 µs  ×2^13    C=387.474 [trial 3/4]
+     32  10.234 µs  ×2^13    C=332.867 [trial 3/4]
+     48  12.592 µs  ×2^13    C=265.482 [trial 3/4]
+     64  16.286 µs  ×2^12    C=265.539 [trial 3/4]
+     96  28.276 µs  ×2^12    C=298.295 [trial 3/4]
+     16   7.359 µs  ×2^13    C=458.913 [trial 4/4] †
+     24   9.124 µs  ×2^13    C=387.474 [trial 4/4]
+     32  12.630 µs  ×2^13    C=332.867 [trial 4/4]
+     48  12.894 µs  ×2^13    C=265.482 [trial 4/4]
+     64  17.248 µs  ×2^12    C=265.539 [trial 4/4]
+     96  28.422 µs  ×2^11    C=298.295 [trial 4/4]
+  verdict: inconclusive (cMin=265.482, cMax=387.474, β=-0.212, looks faster than declared by ~n^0.212)
+  per-spawn floor (harness self-measurement): 180.767 ms
+  peak RSS: 62_012 kB..65_584 kB (across 24 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+    param  trials  median     min        max        spread 
+       16  4/4      7.342 µs   7.301 µs   7.903 µs  8.199% 
+       24  4/4      9.299 µs   8.899 µs   9.904 µs  10.809%
+       32  4/4     10.651 µs  10.234 µs  12.630 µs  22.500%
+       48  4/4     12.743 µs  11.593 µs  13.369 µs  13.937%
+       64  4/4     16.994 µs  16.286 µs  17.362 µs  6.334% 
+       96  4/4     28.636 µs  28.276 µs  30.187 µs  6.673% 
+
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-repeat-ff2086080/query.json

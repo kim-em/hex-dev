@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealRootsMathlib.QueryInteger
+public import HexRealRootsMathlib.QueryDomain
 public import HexRealRoots.QueryTests
 
 public section
@@ -70,5 +70,11 @@ theorem noncanonical_certificates (context : Nat) (p g : Poly) (a b : Endpoint R
 #guard_msgs in
 #print axioms integer_query_isSome
 
-end HexRealRootsMathlib.QueryTests
+/-- info: 'HexRealRootsMathlib.Query.integer_domain' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms integer_domain
+/-- info: 'HexRealRootsMathlib.Query.integer_replay_domain' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms integer_replay_domain
 
+end HexRealRootsMathlib.QueryTests

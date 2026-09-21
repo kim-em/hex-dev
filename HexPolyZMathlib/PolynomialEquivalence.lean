@@ -34,6 +34,10 @@ noncomputable section
 abbrev toPolynomial (p : Hex.ZPoly) : Polynomial ℤ :=
   HexPolyMathlib.toPolynomial p
 
+/-- The rational cast of an executable integer polynomial. -/
+abbrev toPolyℚ (p : Hex.ZPoly) : Polynomial ℚ :=
+  (toPolynomial p).map (Int.castRingHom ℚ)
+
 /-- Rebuild an executable integer polynomial from a Mathlib polynomial. -/
 abbrev ofPolynomial (p : Polynomial ℤ) : Hex.ZPoly :=
   HexPolyMathlib.ofPolynomial p
@@ -450,5 +454,23 @@ theorem dilate_recovery (core g h : Hex.ZPoly) (lc : ℤ) (d : ℕ)
   exact ⟨ha, hb, hc⟩
 
 end
+
+/-- Rationalizing executable integer coefficients commutes with Mathlib's
+coefficient map. -/
+theorem toPolynomial_toRatPoly (p : Hex.ZPoly) :
+    HexPolyMathlib.toPolynomial (Hex.ZPoly.toRatPoly p) =
+      toPolyℚ p := by
+  ext i
+  simp only [HexPolyMathlib.coeff_toPolynomial, Hex.ZPoly.coeff_toRatPoly,
+    toPolyℚ, Polynomial.coeff_map, Int.coe_castRingHom]
+
+/-- The actual positive denominator-clearing adapter rescales the semantic
+polynomial by its returned positive integer factor. -/
+theorem toPolynomial_clearDenominators (p : Hex.DensePoly Rat) :
+    (toPolynomial (Hex.ZPoly.clearDenominators p).2).map (Int.castRingHom Rat) =
+      Polynomial.C ((Hex.ZPoly.clearDenominators p).1 : Rat) * HexPolyMathlib.toPolynomial p := by
+  change toPolyℚ (Hex.ZPoly.clearDenominators p).2 = _
+  rw [← toPolynomial_toRatPoly, Hex.ZPoly.toRatPoly_clearDenominators,
+    HexPolyMathlib.toPolynomial_scale]
 
 end HexPolyZMathlib

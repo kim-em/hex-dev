@@ -1,0 +1,42 @@
+{
+  "commit": "98b490c09bd299d99f4e4d3da9128c7b747d76d5",
+  "cpu": 63,
+  "affinity": [
+    63
+  ],
+  "host": "chungus2",
+  "load_start": [
+    60.2177734375,
+    45.63623046875,
+    24.169921875
+  ],
+  "start_utc": "2026-09-21T09:25:47.834428+00:00",
+  "protocol": "first measurement of expanded pseudo-gcd ladder; unchanged quadratic model, every original rung retained; no samples discarded",
+  "commands": [
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexpoly_bench",
+        "run",
+        "Hex.PolyBench.runPseudoGcd",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/poly-pseudo-wide/poly.json"
+      ],
+      "exit_code": 0,
+      "binary_sha256": "dd729d3b192785cd48e3a55dd3e6f094c54bfa1a9649905a9f2fc72bfd3b8f55"
+    }
+  ],
+  "end_utc": "2026-09-21T09:25:53.913126+00:00",
+  "load_end": [
+    57.0771484375,
+    45.22705078125,
+    24.15283203125
+  ],
+  "registration_sha256": "a44e392c0489f02c0ad6492a1ae25cdc98e4421845ec9049365f13cde7904b8c",
+  "fixture_command": [
+    ".lake/build/bin/hexpoly_bench",
+    "inspect-pseudo"
+  ],
+  "fixture_binary_sha256": "8e04af02cd0fae613b830787df13d6614e2fb114c9e9c99d87996c34622629e7",
+  "fixture_note": "The inspector ladder was extended to include 768 and 1024 after the timing run; measured functions, fixtures and registrations were unchanged.",
+  "oracle": "python-flint 0.9.0; all thirteen exact fixtures passed, including degrees 768 and 1024"
+}

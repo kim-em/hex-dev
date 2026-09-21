@@ -11,6 +11,10 @@ provides content and primitive-part decomposition, rational normalization,
 coefficientwise congruence, square-free decomposition support, and executable
 Mignotte bounds used by factorization and root isolation.
 
+`ZPoly.clearDenominators` clears rational coefficients with a positive integer
+multiplier and preserves the polynomial sign. Its returned multiplier and
+integer polynomial satisfy an exact rescaling theorem.
+
 # Quickstart
 
 ```toml

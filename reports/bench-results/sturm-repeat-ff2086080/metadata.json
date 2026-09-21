@@ -1,0 +1,49 @@
+{
+  "commit": "ff2086080f84f0e001caa76811f47dc9f304f285",
+  "cpu": 28,
+  "affinity": [
+    28
+  ],
+  "host": "chungus2",
+  "load_start": [
+    54.0048828125,
+    16.349609375,
+    11.17431640625
+  ],
+  "start_utc": "2026-09-21T09:23:09.174582+00:00",
+  "protocol": "single unchanged rerun of each originally inconclusive registration; no samples discarded",
+  "commands": [
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmBench.runReplay",
+        "Hex.SturmBench.runIntegerHigh",
+        "Hex.SturmBench.runInitialHigh",
+        "Hex.SturmBench.runReplayHigh",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-repeat-ff2086080/query.json"
+      ],
+      "exit_code": 0,
+      "binary_sha256": "cacf15c457b09633b1dc4db9339c6100d5ed3223f3c3c28353fd40af757f4ec3"
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexpoly_bench",
+        "run",
+        "Hex.PolyBench.runPseudoGcd",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-repeat-ff2086080/poly.json"
+      ],
+      "exit_code": 0,
+      "binary_sha256": "2a7a2f5e3a689ea92e7c3402228f82b264bb82c04d8fca01b4c46e68083a6235"
+    }
+  ],
+  "end_utc": "2026-09-21T09:23:32.120673+00:00",
+  "load_end": [
+    107.1630859375,
+    32.02490234375,
+    16.50732421875
+  ],
+  "runtime_header_sha256": "982c731a1fbacc7688006f44f9f7af9d9e3e0247d310a728827f49e7f1466c13"
+}

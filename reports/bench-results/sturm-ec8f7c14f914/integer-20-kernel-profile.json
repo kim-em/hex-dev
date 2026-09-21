@@ -1,0 +1,625 @@
+{
+  "method": "perf CLOCK_MONOTONIC samples restricted to the child PID and union of LeanBench kernel regions; flat exclusive symbols weighted by sampled event period",
+  "command": [
+    "perf",
+    "script",
+    "--ns",
+    "-G",
+    "-F",
+    "pid,time,period,ip,sym",
+    "-i",
+    "/tmp/issue-10375-integer-20-regions.perf"
+  ],
+  "total_samples": 713,
+  "kernel_samples": 612,
+  "kernel_event_period": 1309084164,
+  "regions": 2063,
+  "symbols": [
+    {
+      "symbol": "l_Int_trailingZeros_aux___redArg",
+      "period": 123531832,
+      "samples": 58,
+      "percent": 9.436508010496413
+    },
+    {
+      "symbol": "cfree@GLIBC_2.2.5",
+      "period": 85454032,
+      "samples": 40,
+      "percent": 6.527772189901764
+    },
+    {
+      "symbol": "malloc",
+      "period": 83516851,
+      "samples": 39,
+      "percent": 6.379792323268835
+    },
+    {
+      "symbol": "__gmpz_realloc",
+      "period": 61698947,
+      "samples": 29,
+      "percent": 4.713138291389491
+    },
+    {
+      "symbol": "__gmpz_init_set_ui",
+      "period": 53559392,
+      "samples": 25,
+      "percent": 4.091363525195008
+    },
+    {
+      "symbol": "__gmpz_init_set",
+      "period": 48792186,
+      "samples": 23,
+      "percent": 3.727200079398409
+    },
+    {
+      "symbol": "__gmpz_add",
+      "period": 45452663,
+      "samples": 21,
+      "percent": 3.472096313587367
+    },
+    {
+      "symbol": "__gmpz_mul_2exp",
+      "period": 40563015,
+      "samples": 19,
+      "percent": 3.0985796112647805
+    },
+    {
+      "symbol": "l___private_Init_Data_Array_Basic_0__Array_ofFn_go___redArg",
+      "period": 34004295,
+      "samples": 16,
+      "percent": 2.597563696446946
+    },
+    {
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Hex_DensePoly_contentNatImpl_spec__0",
+      "period": 32132525,
+      "samples": 15,
+      "percent": 2.454580529170621
+    },
+    {
+      "symbol": "lean_nat_gcd",
+      "period": 29723167,
+      "samples": 14,
+      "percent": 2.270531400301929
+    },
+    {
+      "symbol": "lean::mpz::~mpz()",
+      "period": 26117794,
+      "samples": 12,
+      "percent": 1.9951195437423381
+    },
+    {
+      "symbol": "__gmpz_gcd",
+      "period": 25925180,
+      "samples": 12,
+      "percent": 1.9804058984858364
+    },
+    {
+      "symbol": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)",
+      "period": 25899376,
+      "samples": 12,
+      "percent": 1.978434749440602
+    },
+    {
+      "symbol": "realloc",
+      "period": 23712546,
+      "samples": 11,
+      "percent": 1.8113843748246579
+    },
+    {
+      "symbol": "__gmpz_clear",
+      "period": 23574116,
+      "samples": 11,
+      "percent": 1.8008098064503055
+    },
+    {
+      "symbol": "lean_dec_ref_cold",
+      "period": 22561177,
+      "samples": 11,
+      "percent": 1.7234321230395695
+    },
+    {
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00__private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Hex_DensePoly_pseudoDivMod___at___00Hex_DensePoly_pseudoDiv___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__11_spec__16_spec__23_spec__31_spec__36",
+      "period": 19566567,
+      "samples": 9,
+      "percent": 1.4946760138181612
+    },
+    {
+      "symbol": "lean_apply_1",
+      "period": 19407897,
+      "samples": 9,
+      "percent": 1.4825553263663191
+    },
+    {
+      "symbol": "mi_free",
+      "period": 19407243,
+      "samples": 9,
+      "percent": 1.4825053677755742
+    },
+    {
+      "symbol": "__gmp_default_allocate",
+      "period": 18950916,
+      "samples": 9,
+      "percent": 1.4476468756671936
+    },
+    {
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Hex_DensePoly_pseudoDivMod___at___00Hex_DensePoly_pseudoDiv___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__11_spec__16_spec__23_spec__30",
+      "period": 17340930,
+      "samples": 8,
+      "percent": 1.3246612003168345
+    },
+    {
+      "symbol": "lean::mpz::mpz(unsigned long)",
+      "period": 16788031,
+      "samples": 8,
+      "percent": 1.2824256424203448
+    },
+    {
+      "symbol": "__gmpz_cmp_si",
+      "period": 16552248,
+      "samples": 8,
+      "percent": 1.2644143482282626
+    },
+    {
+      "symbol": "lean::mpz::get_size_t() const",
+      "period": 15141462,
+      "samples": 7,
+      "percent": 1.1566454179488492
+    },
+    {
+      "symbol": "__gmpn_gcd_11_x86_64",
+      "period": 14675361,
+      "samples": 7,
+      "percent": 1.1210402969934636
+    },
+    {
+      "symbol": "lean::mpz_to_int(lean::mpz const&)",
+      "period": 13411468,
+      "samples": 6,
+      "percent": 1.0244924175860706
+    },
+    {
+      "symbol": "lean::cmp(lean::mpz const&, int)",
+      "period": 12998266,
+      "samples": 6,
+      "percent": 0.9929282132848412
+    },
+    {
+      "symbol": "lean_array_push",
+      "period": 12854731,
+      "samples": 6,
+      "percent": 0.9819636776234045
+    },
+    {
+      "symbol": "__gmpn_lshift_x86_64",
+      "period": 12650147,
+      "samples": 6,
+      "percent": 0.9663356526555614
+    },
+    {
+      "symbol": "__gmpz_mul_si",
+      "period": 12617357,
+      "samples": 6,
+      "percent": 0.9638308480828892
+    },
+    {
+      "symbol": "lean_nat_shiftl",
+      "period": 12437672,
+      "samples": 6,
+      "percent": 0.9501048398596318
+    },
+    {
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_mapMUnsafe_map___at___00Hex_DensePoly_primitivePartImpl_spec__0",
+      "period": 11013783,
+      "samples": 5,
+      "percent": 0.841334980811822
+    },
+    {
+      "symbol": "__gmpz_tdiv_qr",
+      "period": 10624106,
+      "samples": 5,
+      "percent": 0.8115678343810444
+    },
+    {
+      "symbol": "__gmpn_copyi_x86_64",
+      "period": 10498860,
+      "samples": 5,
+      "percent": 0.8020003823069698
+    },
+    {
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_mapMUnsafe_map___at___00Hex_DensePoly_negImpl___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__11_spec__19_spec__28",
+      "period": 10357531,
+      "samples": 5,
+      "percent": 0.7912043614026943
+    },
+    {
+      "symbol": "l_Dyadic_add",
+      "period": 8654385,
+      "samples": 4,
+      "percent": 0.6611022604960639
+    },
+    {
+      "symbol": "lp_Hex_Hex_DensePoly_pseudoDivMod___at___00Hex_DensePoly_pseudoDiv___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__11_spec__16_spec__23",
+      "period": 8591143,
+      "samples": 4,
+      "percent": 0.6562712494931686
+    },
+    {
+      "symbol": "mi_malloc",
+      "period": 8571984,
+      "samples": 4,
+      "percent": 0.6548077072300449
+    },
+    {
+      "symbol": "lp_Hex_Hex_QueryChain_buildAux___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__12",
+      "period": 8555919,
+      "samples": 4,
+      "percent": 0.6535805134069287
+    },
+    {
+      "symbol": "lp_Hex_Hex_ZPoly_evalDyadic",
+      "period": 8244947,
+      "samples": 4,
+      "percent": 0.6298255854541068
+    },
+    {
+      "symbol": "__gmp_default_free",
+      "period": 6665207,
+      "samples": 3,
+      "percent": 0.5091503803417792
+    },
+    {
+      "symbol": "free@plt",
+      "period": 6620255,
+      "samples": 3,
+      "percent": 0.5057165293155285
+    },
+    {
+      "symbol": "lean_int_big_add",
+      "period": 6574045,
+      "samples": 3,
+      "percent": 0.5021865805719119
+    },
+    {
+      "symbol": "__gmpn_divrem_1_x86_64",
+      "period": 6529905,
+      "samples": 3,
+      "percent": 0.49881475764303873
+    },
+    {
+      "symbol": "lp_Hex_Hex_DensePoly_trimTrailingZerosGo___at___00Hex_DensePoly_trimTrailingZerosImpl___at___00Hex_DensePoly_ofCoeffs___at___00Hex_DensePoly_primitivePartImpl_spec__1_spec__1_spec__2",
+      "period": 6488188,
+      "samples": 3,
+      "percent": 0.4956280259456259
+    },
+    {
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Hex_DensePoly_pseudoDivMod___at___00Hex_DensePoly_pseudoDiv___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__11_spec__16_spec__23_spec__31",
+      "period": 6471164,
+      "samples": 3,
+      "percent": 0.49432757480060696
+    },
+    {
+      "symbol": "__gmpn_gcd_1",
+      "period": 6457502,
+      "samples": 3,
+      "percent": 0.4932839444233014
+    },
+    {
+      "symbol": "_int_malloc",
+      "period": 5916534,
+      "samples": 3,
+      "percent": 0.45195978705613615
+    },
+    {
+      "symbol": "_int_free_chunk",
+      "period": 4418624,
+      "samples": 2,
+      "percent": 0.33753551692952877
+    },
+    {
+      "symbol": "malloc@plt",
+      "period": 4415652,
+      "samples": 2,
+      "percent": 0.3373084879819843
+    },
+    {
+      "symbol": "__gmpz_init",
+      "period": 4412552,
+      "samples": 2,
+      "percent": 0.33707168120628184
+    },
+    {
+      "symbol": "__gmp_default_reallocate",
+      "period": 4411711,
+      "samples": 2,
+      "percent": 0.33700743781971226
+    },
+    {
+      "symbol": "lean_big_int64_to_int",
+      "period": 4410171,
+      "samples": 2,
+      "percent": 0.33688979832468585
+    },
+    {
+      "symbol": "lean_inc_heartbeat",
+      "period": 4406059,
+      "samples": 2,
+      "percent": 0.3365756855951089
+    },
+    {
+      "symbol": "lean_int_big_ediv",
+      "period": 4394326,
+      "samples": 2,
+      "percent": 0.33567941014371633
+    },
+    {
+      "symbol": "lean_apply_2",
+      "period": 4388379,
+      "samples": 2,
+      "percent": 0.33522512308078
+    },
+    {
+      "symbol": "lean::mpz::mpz(long)",
+      "period": 4385109,
+      "samples": 2,
+      "percent": 0.33497533012705516
+    },
+    {
+      "symbol": "lean_int_big_neg",
+      "period": 4378060,
+      "samples": 2,
+      "percent": 0.3344368620748207
+    },
+    {
+      "symbol": "lean_alloc_object",
+      "period": 4371964,
+      "samples": 2,
+      "percent": 0.3339711930087942
+    },
+    {
+      "symbol": "lp_Hex_Hex_DensePoly_trimTrailingZerosGo___at___00Hex_DensePoly_trimTrailingZerosImpl___at___00Hex_DensePoly_ofCoeffs___at___00Hex_DensePoly_C___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__2_spec__6_spec__7_spec__13",
+      "period": 4365804,
+      "samples": 2,
+      "percent": 0.33350063502868865
+    },
+    {
+      "symbol": "l_Dyadic_ofIntWithPrec",
+      "period": 4318779,
+      "samples": 2,
+      "percent": 0.3299084290198472
+    },
+    {
+      "symbol": "l_Int_trailingZeros",
+      "period": 4186054,
+      "samples": 2,
+      "percent": 0.31976966150206976
+    },
+    {
+      "symbol": "[unknown]",
+      "period": 4164284,
+      "samples": 2,
+      "percent": 0.3181066668223786
+    },
+    {
+      "symbol": "l_Dyadic_mul",
+      "period": 4139433,
+      "samples": 2,
+      "percent": 0.31620831676335215
+    },
+    {
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Hex_DensePoly_pseudoDivMod___at___00Hex_DensePoly_pseudoDiv___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__11_spec__16_spec__23_spec__29",
+      "period": 3957599,
+      "samples": 2,
+      "percent": 0.3023181479720352
+    },
+    {
+      "symbol": "mi_malloc_small",
+      "period": 3796576,
+      "samples": 2,
+      "percent": 0.29001771653850666
+    },
+    {
+      "symbol": "lean::mpz::mpz(lean::mpz const&)",
+      "period": 2210360,
+      "samples": 1,
+      "percent": 0.1688478144328083
+    },
+    {
+      "symbol": "lp_Hex_Hex_dyadicSign",
+      "period": 2210302,
+      "samples": 1,
+      "percent": 0.1688433838544242
+    },
+    {
+      "symbol": "l_Option_instDecidableEq___redArg",
+      "period": 2209929,
+      "samples": 1,
+      "percent": 0.16881489065205743
+    },
+    {
+      "symbol": "lp_Hex_Hex_DensePoly_primitivePartImpl",
+      "period": 2209890,
+      "samples": 1,
+      "percent": 0.16881191147004052
+    },
+    {
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00__private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Hex_DensePoly_pseudoDivMod___at___00Hex_DensePoly_pseudoDiv___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__11_spec__16_spec__23_spec__33_spec__39",
+      "period": 2209860,
+      "samples": 1,
+      "percent": 0.16880961979156597
+    },
+    {
+      "symbol": "lean::gcd(lean::mpz&, lean::mpz const&, lean::mpz const&)",
+      "period": 2209810,
+      "samples": 1,
+      "percent": 0.16880580032744175
+    },
+    {
+      "symbol": "l_List_range_loop",
+      "period": 2209644,
+      "samples": 1,
+      "percent": 0.16879311970654928
+    },
+    {
+      "symbol": "lean::mpz_to_int_core(lean::mpz const&)",
+      "period": 2206310,
+      "samples": 1,
+      "percent": 0.16853843783874542
+    },
+    {
+      "symbol": "lean::mpz::operator+=(int)",
+      "period": 2205605,
+      "samples": 1,
+      "percent": 0.1684845833945937
+    },
+    {
+      "symbol": "lean::mpz::mpz()",
+      "period": 2202121,
+      "samples": 1,
+      "percent": 0.16821844313441714
+    },
+    {
+      "symbol": "l_Int_shiftLeft",
+      "period": 2201653,
+      "samples": 1,
+      "percent": 0.16818269295021432
+    },
+    {
+      "symbol": "lean_array_to_list_impl",
+      "period": 2201568,
+      "samples": 1,
+      "percent": 0.1681761998612031
+    },
+    {
+      "symbol": "lp_Hex_Hex_signVar_go",
+      "period": 2201149,
+      "samples": 1,
+      "percent": 0.16814419275184203
+    },
+    {
+      "symbol": "lean::mpz::mpz(lean::mpz&&)",
+      "period": 2200031,
+      "samples": 1,
+      "percent": 0.16805878953402417
+    },
+    {
+      "symbol": "lean_int_neg_succ_of_nat",
+      "period": 2196873,
+      "samples": 1,
+      "percent": 0.1678175521799376
+    },
+    {
+      "symbol": "l_Int_instDecidableEq___boxed",
+      "period": 2195402,
+      "samples": 1,
+      "percent": 0.16770518354540268
+    },
+    {
+      "symbol": "lean_copy_expand_array",
+      "period": 2193912,
+      "samples": 1,
+      "percent": 0.16759136351450052
+    },
+    {
+      "symbol": "__gmpn_sub_n_x86_64",
+      "period": 2190791,
+      "samples": 1,
+      "percent": 0.16735295256386587
+    },
+    {
+      "symbol": "lean_int_big_mul",
+      "period": 2188848,
+      "samples": 1,
+      "percent": 0.16720452818799816
+    },
+    {
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_mapMUnsafe_map___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__13",
+      "period": 2188784,
+      "samples": 1,
+      "percent": 0.16719963927391915
+    },
+    {
+      "symbol": "lean_big_size_t_to_int",
+      "period": 2185459,
+      "samples": 1,
+      "percent": 0.16694564490965763
+    },
+    {
+      "symbol": "__gmpz_sub",
+      "period": 2183272,
+      "samples": 1,
+      "percent": 0.16677858154886366
+    },
+    {
+      "symbol": "lp_Hex_List_foldl___at___00Hex_DensePoly_mulImpl___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__10_spec__13",
+      "period": 2181298,
+      "samples": 1,
+      "percent": 0.16662778910523893
+    },
+    {
+      "symbol": "l_Array_range",
+      "period": 2180902,
+      "samples": 1,
+      "percent": 0.16659753894937498
+    },
+    {
+      "symbol": "__gmpz_add_ui",
+      "period": 2179871,
+      "samples": 1,
+      "percent": 0.1665187815991333
+    },
+    {
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Hex_DensePoly_pseudoDivMod___at___00Hex_DensePoly_pseudoDiv___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__11_spec__16_spec__23_spec__33",
+      "period": 2162199,
+      "samples": 1,
+      "percent": 0.16516883019906425
+    },
+    {
+      "symbol": "__gmpn_tdiv_qr",
+      "period": 2155187,
+      "samples": 1,
+      "percent": 0.16463318855028178
+    },
+    {
+      "symbol": "lp_Hex___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Hex_DensePoly_pseudoDivMod___at___00Hex_DensePoly_pseudoDiv___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__11_spec__16_spec__23_spec__32",
+      "period": 2152268,
+      "samples": 1,
+      "percent": 0.16441020823470903
+    },
+    {
+      "symbol": "lp_Hex_Hex_DensePoly_positivePseudoDiv___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__11",
+      "period": 2151883,
+      "samples": 1,
+      "percent": 0.16438079836095246
+    },
+    {
+      "symbol": "lean_big_int_to_nat",
+      "period": 2134814,
+      "samples": 1,
+      "percent": 0.16307690969822167
+    },
+    {
+      "symbol": "lean::mpz::get_int() const",
+      "period": 2119308,
+      "samples": 1,
+      "percent": 0.16189241748401442
+    },
+    {
+      "symbol": "__gmpn_invert_limb",
+      "period": 2080396,
+      "samples": 1,
+      "percent": 0.15891995772397105
+    },
+    {
+      "symbol": "lp_Hex_npowRec___at___00Hex_DensePoly_pseudoDiv___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__11_spec__16_spec__24",
+      "period": 2023612,
+      "samples": 1,
+      "percent": 0.15458226870736175
+    },
+    {
+      "symbol": "lean::mul2k(lean::mpz&, lean::mpz const&, unsigned int)",
+      "period": 1974869,
+      "samples": 1,
+      "percent": 0.1508588259112116
+    }
+  ]
+}

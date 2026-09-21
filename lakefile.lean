@@ -256,6 +256,12 @@ lean_lib HexBerlekampZassenhaus where
 
 lean_lib HexRealRoots where
 
+@[default_target]
+lean_lib HexSturm where
+
+@[default_target]
+lean_lib HexSturmMathlib where
+
 lean_lib HexInterval where
 
 @[default_target]
@@ -985,6 +991,9 @@ lean_lib HexConformance where
 
     ++ #[`HexReflect.TestProviders, `HexReflect.Conformance, `HexReflect.ScopeConformance, `HexReflect.ResidueConformance].map Glob.one
 
+    ++ #[`HexSturm.Fixtures, `HexSturm.Conformance, `HexSturmMathlib.Conformance].map Glob.one
+    ++ #[.submodules `HexSturmMathlib.Replay]
+
     ++ #[`HexKronecker.Conformance].map Glob.one
 
     ++ #[`HexSmith.Conformance].map Glob.one
@@ -1570,6 +1579,10 @@ lean_exe hexminpoly_bench where
 lean_exe hexgramschmidt_bench where
   srcDir := "bench"
   root := `HexGramSchmidt.Bench
+
+lean_exe hexsturm_bench where
+  srcDir := "bench"
+  root := `HexSturm.Bench
 
 lean_exe hexrealroots_bench where
   srcDir := "bench"

@@ -100,12 +100,13 @@ and acceptance of produced chains. `QueryInteger.integer_certify_checks`
 proves acceptance and value agreement for produced integer/dyadic certificates.
 `QueryGcd` identifies the terminal gcd and proves that the constant-tail check
 is equivalent to squarefreeness. Query production succeeds exactly when that
-condition and the executable endpoint guards hold.
+condition and the executable endpoint guards hold. `QueryDomain` completes the
+integer/dyadic endpoint interpretation, proves exact mathematical domain
+equivalence, and extracts that domain from accepted replay.
 
 The signed-remainder/Cauchy-index theorem and its polynomial IVT/Rolle
 foundation remain required for root-sum semantics, singleton-sign/count bounds
-and frontend backend agreement. The complete endpoint interpretation is also
-still required. These algebraic
+and frontend backend agreement. These algebraic
 replay results do not assert those outstanding semantic theorems.
 
 # Verification

@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import HexRealRootsMathlib.ChainCorrespond
 import HexRealRootsMathlib.Isolations
+import HexRealRootsMathlib.QueryTests
 
 /-!
 Companion conformance checks for `HexRealRootsMathlib`.
@@ -25,6 +26,9 @@ Covered operations:
   Mathlib count `(toPolyℝ p).roots.card` by `rootCount_eq_card_roots`.
 
 Covered properties:
+* The shared query's algebraic domain and produced-certificate acceptance,
+  including noncanonical coefficients, through `HexRealRootsMathlib.QueryTests`.
+  These checks do not assert the still-open root-sum/replay semantic theorem.
 * `ZPoly.rootCount p = (toPolyℝ p).roots.card`, the root-count correspondence,
   instantiated per fixture (executable side `#guard`ed, Mathlib side proven as a
   theorem from an independent factorisation).

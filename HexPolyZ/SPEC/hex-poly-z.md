@@ -12,6 +12,10 @@ Specialized polynomial arithmetic over `Z`.
   def ZPoly.coprimeModP (f g : ZPoly) (p : Nat) : Prop := ...
   ```
 - Content and primitive part: `f = content(f) * primitivePart(f)`
+- `ZPoly.clearDenominators : DensePoly Rat → Nat × ZPoly` returns a positive
+  common denominator and the exactly scaled integer polynomial. Zero uses
+  denominator one. It does not normalize the leading sign or primitive part;
+  `clearDenominators_pos` and `toRatPoly_clearDenominators` prove its contract.
 - Mignotte bound computation: `|gⱼ| ≤ C(k,j) · ‖f‖₂` for any degree-k
   factor `g | f` in `Z[x]`. The computation is just binomial coefficients
   and the 2-norm of `f`'s coefficients. The proof that the bound is valid
