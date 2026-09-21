@@ -390,6 +390,15 @@ bounded cubic wall-time hypothesis (residual +0.086071), with medians
 characterization of the current normalizer. It is not a quartic wall-time pass
 or a uniform cubic bit-complexity claim.
 
+The [first degree-2048 extension](bench-results/sturm-replay-iterations-wide/)
+retains all sixteen rows. Each of its four degree-2048 children was killed at
+the 600-second cap. The harness emits “consistent” with residual +0.110222
+from the surviving degrees 256–1024; **this is not a successful validation
+through degree 2048**. The limit covers certificate preparation plus timed
+replay. A fresh fixed schedule with the same model, degrees and four trials
+uses an 1800-second operational cap, declared before collection. Every timeout
+and every completed lower-rung measurement from the first attempt is retained.
+
 The [rational query run](bench-results/sturm-rational-bit-cost/) also passes
 its independently derived quadratic model (residual −0.068144). At degrees
 131072,262144,524288,1048576 its median times are 1.729 s, 6.255 s, 23.915 s

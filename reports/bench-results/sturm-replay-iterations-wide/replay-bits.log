@@ -1,0 +1,29 @@
+Hex.SturmBench.runReplay    expected complexity: n ^ 3    [warm cache]
+  env: lean=4.34.0, os=linux, arch=x86_64, commit=b4756ae-dirty, 2026-09-21T14:42:36Z, host=chungus2
+  param  per-call    repeats  C
+    256  504.138 ms  ×2^0     C=29.800 [trial 1/4]
+    512    4.081 s   ×2^0     C=30.377 [trial 1/4]
+  1_024   37.299 s   ×2^0     C=34.719 [trial 1/4]
+  2_048    —         —        C= —     [killed at cap] [trial 1/4]
+    256  496.257 ms  ×2^0     C=29.800 [trial 2/4]
+    512    4.219 s   ×2^0     C=30.377 [trial 2/4]
+  1_024   37.669 s   ×2^0     C=34.719 [trial 2/4]
+  2_048    —         —        C= —     [killed at cap] [trial 2/4]
+    256  503.651 ms  ×2^0     C=29.800 [trial 3/4]
+    512    4.073 s   ×2^0     C=30.377 [trial 3/4]
+  1_024   37.260 s   ×2^0     C=34.719 [trial 3/4]
+  2_048    —         —        C= —     [killed at cap] [trial 3/4]
+    256  494.795 ms  ×2^0     C=29.800 [trial 4/4]
+    512    4.066 s   ×2^0     C=30.377 [trial 4/4]
+  1_024   36.432 s   ×2^0     C=34.719 [trial 4/4]
+  2_048    —         —        C= —     [killed at cap] [trial 4/4]
+  verdict: consistent with declared complexity (cMin=29.800, cMax=34.719, β=+0.110)
+  per-spawn floor (harness self-measurement): 20.582 ms
+  peak RSS: 71_488 kB..154_416 kB (across 12 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+    param  trials  median      min         max         spread
+      256  4/4     499.954 ms  494.795 ms  504.138 ms  1.869%
+      512  4/4       4.077 s     4.066 s     4.219 s   3.752%
+    1_024  4/4      37.279 s    36.432 s    37.669 s   3.318%
+  ‼ ladder stopped at param=2048 after hitting the wallclock cap (`maxSecondsPerCall = 600.000s`); subsequent rungs in the schedule were skipped. Raise the cap if you need to reach further.
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-replay-iterations-wide/replay-bits.json
