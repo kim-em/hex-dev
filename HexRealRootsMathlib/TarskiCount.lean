@@ -24,11 +24,11 @@ theorem rootsIn_card (p : Polynomial ℝ) (I : DyadicInterval)
   have he : rootsIn p (.finite (Dyadic.toReal I.lower)) (.finite (Dyadic.toReal I.upper)) =
       (Literal.rootsIn p I).toFinset := by
     ext x
-    simp only [rootsIn, Finset.mem_filter, Multiset.mem_toFinset, Literal.rootsIn,
-      Multiset.mem_filter, InInterval, Literal.InInterval]
+    simp only [mem_rootsIn, Multiset.mem_toFinset, Literal.rootsIn,
+      Multiset.mem_filter, inInterval_finite, Literal.InInterval]
     constructor
-    · rintro ⟨hx, ha, hb⟩
-      exact ⟨hx, ha, hb.le⟩
+    · rintro ⟨hx, ha, hupper⟩
+      exact ⟨hx, ha, hupper.le⟩
     · rintro ⟨hx, ha, hxle⟩
       refine ⟨hx, ha, lt_of_le_of_ne hxle ?_⟩
       intro he

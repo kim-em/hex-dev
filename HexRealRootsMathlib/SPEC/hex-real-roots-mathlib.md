@@ -685,6 +685,11 @@ from accepted literal data. `TarskiCount.lean` proves that accepted integer
 query-one certificates count real roots on finite dyadic intervals and on the
 whole line, by reusing the existing derivative Sturm theorem. It also proves
 count correctness and nonnegativity for the actual integer query producer.
+`rootsIn_card` identifies the legacy half-open multiset count with the open
+distinct-root set under squarefreeness and endpoint nonvanishing.
+`integer_check_rootSum` and `integer_query_rootSum` give the supported
+query-one identity with the mathematical root sum; the rational companion
+transports this identity through positive denominator clearing.
 The shared abstract variation/root-sum identity and its
 executable semantic consequences belong to #10389; effective implementation,
 algebraic correspondence and independent evidence belong to #10375.

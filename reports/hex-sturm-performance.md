@@ -1,11 +1,16 @@
 # Shared Sturm–Tarski computation measurements
 
-Phase 4 remains incomplete. Nine of thirteen two-sided registrations passed
-initially. The single unchanged rerun retained four unresolved registrations;
-the wider-ladder investigation below tests a larger coefficient regime and
-does not discharge those four original findings. All completed samples are retained, The original query declarations are retained alongside the corrected
-[bit-cost derivations](sturm-bit-cost-models.md) and their fresh validation. The observations cover the implemented query/checker paths, not the
-missing root-sum theorem or downstream extension infrastructure.
+The corrected quadratic query-degree models pass for initial reduction,
+integer and rational queries, and replay. Head-degree replay has cubic
+normalization-iteration work and quartic binary work; its bounded cubic
+wall-time hypothesis passes at degrees 128–1024, and a discriminating
+extension to degree 2048 is in progress. The quartic wall-time hypothesis
+failed and remains recorded. [The derivations](sturm-bit-cost-models.md)
+keep these claims separate.
+
+All earlier declarations, failures and samples are retained. These observations
+cover effective query/checker paths. They do not complete the companions'
+Phase 4, the general signed-root-sum theorem or downstream extension evidence.
 
 ## Protocol and provenance
 
@@ -51,19 +56,19 @@ when the retained log-parameter span is less than one. For the head-degree
 ladder, trimming degree 8 leaves `log(20/10) < 1`, so its verdict uses the
 normalized-time range check, not a fitted slope.
 
-| Registration | Declared model | Verdict | Final parameter | Median µs |
+| Registration | Original declared model | Original verdict and regime | Final parameter | Median µs |
 | --- | --- | --- | --- | --- |
-| `runInteger` | `n ^ 2` | consistent | 20 | 150.455 |
-| `runRational` | `n ^ 2` | consistent | 20 | 521.003 |
-| `runDomain` | `n ^ 2` | consistent | 20 | 216.526 |
-| `runInitial` | `n` | consistent | 20 | 0.470 |
-| `runChain` | `n ^ 2` | consistent | 20 | 62.006 |
-| `runEndpoints` | `n ^ 2` | consistent | 20 | 25.480 |
-| `runSigns` | `n ^ 2` | consistent | 20 | 1.479 |
+| `runInteger` | `n ^ 2` | consistent, bounded-coefficient n=8–20 | 20 | 150.455 |
+| `runRational` | `n ^ 2` | consistent, bounded-coefficient n=8–20 | 20 | 521.003 |
+| `runDomain` | `n ^ 2` | consistent, bounded-coefficient n=8–20 | 20 | 216.526 |
+| `runInitial` | `n` | consistent, bounded-coefficient n=8–20 | 20 | 0.470 |
+| `runChain` | `n ^ 2` | consistent, bounded-coefficient n=8–20 | 20 | 62.006 |
+| `runEndpoints` | `n ^ 2` | consistent, bounded-coefficient n=8–20 | 20 | 25.480 |
+| `runSigns` | `n ^ 2` | consistent, bounded-coefficient n=8–20 | 20 | 1.479 |
 | `runReplay` | `n ^ 2` | inconclusive | 20 | 105.478 |
-| `runClearing` | `n` | consistent | 20 | 5.816 |
+| `runClearing` | `n` | consistent, bounded-coefficient n=8–20 | 20 | 5.816 |
 | `runIntegerHigh` | `m` | inconclusive | 96 | 15.696 |
-| `runRationalHigh` | `m` | consistent | 96 | 187.907 |
+| `runRationalHigh` | `m` | consistent, original bounded m=16–96 | 96 | 187.907 |
 | `runInitialHigh` | `m` | inconclusive | 96 | 13.005 |
 | `runReplayHigh` | `m` | inconclusive | 96 | 14.585 |
 
@@ -108,8 +113,8 @@ wall-time characterizations on these mixed arithmetic regimes.
 The separate fixed-field pseudo-gcd gap is resolved by the wider degree
 ladder, with the same quadratic model and all original rungs retained; see
 [the polynomial report](hex-poly-performance.md#concerns). Across the fifteen
-new registrations, eleven now have consistent characterizations and four
-query registrations remain unresolved. No existing library phase is changed.
+original registrations, eleven had consistent characterizations and four
+query findings required the bit-cost investigation below. No existing library phase is changed.
 
 Stored certificate sizes rise from 959 to 3506 bytes on the head-degree ladder
 and 496 to 1152 bytes on the query-degree ladder. Maximum stored integer
@@ -303,8 +308,8 @@ rerun. Head-degree replay uses `8,16,32,64,128`; query-degree stages use
 The wider replay-of-high-query result is consistent on that measured range,
 but does not resolve its earlier in-range failures. These schedules exceed
 the original stored-coefficient bounds (the original inspector caps 60 bits);
-the larger bit lengths above are a different arithmetic regime. All four
-original findings remain open. The three wider failures show that extending
+the larger bit lengths above are a different arithmetic regime. This wider unit-cost run alone resolves none of the four
+original findings; the corrected-cost investigation follows below. The three wider failures show that extending
 the unit-cost wall-time models into this regime does not repair them.
 The [degree diagnostics](bench-results/sturm-axes/degree-diagnostics.jsonl)
 record quadratic growth of counted head-family ring work and linear growth
@@ -414,7 +419,8 @@ accepted domain. It cannot establish query root-sum semantics before the actual
 IVT/Rolle and signed-remainder/Cauchy-index foundation is delivered.
 
 The independent size sweeps and operation/normalization diagnostics above are
-available. Four original declared wall-time characterizations remain unresolved. Concrete
+available. The query-degree findings have corrected quadratic characterizations.
+The wider head-degree replay test is still pending. Concrete
 extension-depth and nested-evidence probes belong downstream under #10376/#10378;
 general root-sum/replay soundness and its executable singleton/sign/bound
 consequences belong to #10389. The integer query-one finite/whole-line counts

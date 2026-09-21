@@ -19,15 +19,36 @@ open Hex Polynomial
 variable {R : Type*} [Field R] [LinearOrder R]
 
 /-- Membership in an open interval with possibly infinite endpoints. -/
-@[expose] def InInterval (a b : Endpoint R) (x : R) : Prop :=
+def InInterval (a b : Endpoint R) (x : R) : Prop :=
   (match a with | .negInf => True | .finite a => a < x | .posInf => False) ∧
   (match b with | .posInf => True | .finite b => x < b | .negInf => False)
 
 /-- The distinct roots in the open interval. This is a semantic finite set,
 not an executable root enumeration. -/
-@[expose] noncomputable def rootsIn (p : Polynomial R) (a b : Endpoint R) : Finset R := by
+noncomputable def rootsIn (p : Polynomial R) (a b : Endpoint R) : Finset R := by
   classical
   exact p.roots.toFinset.filter (InInterval a b)
+
+omit [Field R] in
+@[simp] theorem inInterval_finite (a b x : R) :
+    InInterval (.finite a) (.finite b) x ↔ a < x ∧ x < b := Iff.rfl
+
+@[simp] theorem mem_rootsIn (p : Polynomial R) (a b : Endpoint R) (x : R) :
+    x ∈ rootsIn p a b ↔ x ∈ p.roots ∧ InInterval a b x := by
+  classical
+  simp only [rootsIn, Finset.mem_filter, Multiset.mem_toFinset]
+
+/-- Nonzero heads have exactly their evaluation-zero points as roots. -/
+theorem mem_rootsIn_iff (p : Polynomial R) (hp : p ≠ 0) (a b : Endpoint R) (x : R) :
+    x ∈ rootsIn p a b ↔ p.eval x = 0 ∧ InInterval a b x := by
+  rw [mem_rootsIn, Polynomial.mem_roots hp]
+  rfl
+
+/-- Multiplying the head by a nonzero scalar preserves the interval root set. -/
+theorem rootsIn_C_mul (p : Polynomial R) (c : R) (hc : c ≠ 0) (a b : Endpoint R) :
+    rootsIn (C c * p) a b = rootsIn p a b := by
+  classical
+  simp only [rootsIn, Polynomial.roots_C_mul p hc]
 
 /-- The mathematical Sturm–Tarski sum. Its general executable-query identity
 requires the separately owned signed-remainder theorem. -/

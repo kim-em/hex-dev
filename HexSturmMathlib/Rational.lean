@@ -191,8 +191,7 @@ theorem query_rat_rootSum (p : DensePoly Rat) (I : DyadicInterval) (value : Int)
   rw [Tarski.rootSum_one] at he ⊢
   have hn : ((ZPoly.clearDenominators p).1 : ℝ) ≠ 0 := by
     exact_mod_cast ne_of_gt (ZPoly.clearDenominators_pos p)
-  simpa only [Tarski.rootsIn, toPolyℝ_clearDenominators,
-    Polynomial.roots_C_mul _ hn] using he
+  simpa only [toPolyℝ_clearDenominators, Tarski.rootsIn_C_mul _ _ hn] using he
 
 /-- Rational query-one nonnegativity is available without the abstract
 real-closed-field signed-index foundation. -/
