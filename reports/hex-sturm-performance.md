@@ -400,7 +400,7 @@ arithmetic still invokes scalar gcd normalization, but one denominator is
 one in those recurrence operations; no growing pair of denominators is
 being charged as a constant-cost gcd.
 
-The largest integer query run reached roughly 50 GiB RSS on a host with
+The largest integer query run reached 48.3 GiB RSS on a host with
 125 GiB total RAM; doubling degree would roughly quadruple this storage
 and exceed host capacity. These were shared-host runs. Other builds and,
 during part of collection, the separately pinned replay measurement were

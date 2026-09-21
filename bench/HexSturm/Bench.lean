@@ -311,7 +311,7 @@ setup_benchmark runReplay n => n ^ 3
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 600
+    maxSecondsPerCall := 1800
   }
 -- Declared cost-model: O(n), a fixed denominator (six) bounds each scalar lcm and division.
 setup_benchmark runClearing n => n

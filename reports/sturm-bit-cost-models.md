@@ -141,9 +141,20 @@ extension tests whether the finite iteration-cost characterization still holds
 as limb work grows; a failed verdict remains a failure, not a reason to refit
 a mixed-power constant.
 
-Stored chain bit volume is also Θ(n³), as the exact counts show. That supplies
-a lower bound for any evaluator, not an automatic tight bound for the full
+Stored chain bit volume is also Θ(n³), as the exact counts show. That describes
+the volume traversed by dense scans, not an automatic tight bound for the full
 checker: recurrence verification also performs growing-integer products.
 A cubic timing pass therefore does not certify that dyadic normalization has
 optimal bit complexity. The Θ(n⁴) work of the current repeated-division
 normalizer remains explicit whichever timing verdict the extension produces.
+
+The extension's operational cap is raised to 1800 seconds before a fresh
+collection with the same model, ladder and four trials. `LeanBench.Run` applies
+the cap to the entire child, including `degreeInput` certificate preparation;
+`LeanBench.Child.autoTune` retains the first timed call when it already exceeds
+the tuning target. Thus the cap must cover preparation plus replay, even though
+only replay enters the complexity comparison. The 600-second extension is
+retained, including any timeout rows. This changes neither the scientific
+model nor the measured operation. The larger allowance accommodates the
+sixteenfold quartic scaling of both preparation and replay from degree 1024,
+with additional operational margin; it is not a timing acceptance threshold.
