@@ -87,7 +87,9 @@ def compute? (A : Expr) (lit : Recognized) (rhs? : Option Expr) : MetaM (Option 
   if HexMatrixMathlib.DetPoly.Certificate.arm (← getOptions) != .automatic then return none
   if Hex.Reflect.sourceNodeCount A 100001 +
       (rhs?.map (Hex.Reflect.sourceNodeCount · 100001)).getD 0 > 100000 then return none
-  let .some _ ← trySynthInstance (← mkAppM ``CommRing #[lit.carrier]) | return none
+  let .some ring ← trySynthInstance (← mkAppM ``CommRing #[lit.carrier]) | return none
+  let some u := (← getLevel lit.carrier).dec | return none
+  let entryHead := mkApp2 (mkConst ``RowFactor.entry [u]) lit.carrier ring
   let mut rows : Array (Array Int) := #[]
   let mut factors : Array Expr := #[]
   let mut sources : Array (Array (Expr × Expr)) := #[]
@@ -138,13 +140,18 @@ def compute? (A : Expr) (lit : Recognized) (rhs? : Option Expr) : MetaM (Option 
     for j in [:lit.n] do
       let (source, coeff) := (sources[i]!)[j]!
       let z := (rows[i]!)[j]!
+      let head := mkAppN entryHead #[toExpr z, coeff, factors[i]!]
+      let .forallE _ expected result _ ← inferType head | return none
+      let some (_, lhs, rhs) := result.eq? | return none
+      -- Concrete casts usually reduce directly. Check against the theorem's
+      -- canonical ring operations, then emit only a denotation hint.
+      if ← withTransparency .default (isDefEq source rhs) then
+        proofs := proofs.push (← mkEqRefl source)
+        continue
+      unless ← withTransparency .default (isDefEq source lhs) do return none
       let some hc ← castProof? lit.carrier coeff z | return none
-      let head ← mkAppM ``RowFactor.entry #[toExpr z, coeff, factors[i]!]
-      let .forallE _ expected _ _ ← inferType head | return none
       unless ← withTransparency .default (isDefEq (← inferType hc) expected) do return none
       let proof := mkApp head (mkExpectedPropHint hc expected)
-      let some (_, lhs, _) := (← inferType proof).eq? | return none
-      unless ← withTransparency .default (isDefEq source lhs) do return none
       proofs := proofs.push proof
     hints := hints.push proofs
   let C ← mkAppM ``ofLists #[toExpr lit.n, toExpr lit.n, toExpr (rows.toList.map Array.toList)]
@@ -157,31 +164,36 @@ def compute? (A : Expr) (lit : Recognized) (rhs? : Option Expr) : MetaM (Option 
     witness := witness
     rows := rows
     rat := none }
-  let numericProof ← Det.build {} C numeric
   let fs ← mkListLit lit.carrier factors.toList
-  let B ← mkAppOptM ``matrix #[some lit.carrier, none, some (toExpr lit.n), some C, some fs]
-  let hA ← applyEntryHints (← mkAppM ``DetPoly.Polynomial.identify #[A, B]) hints
-  let hlen ← decideProof (← mkEq (← mkAppM ``List.length #[fs]) (toExpr lit.n))
-  let hdet := mkAppN (← mkAppOptM ``det
-    #[some lit.carrier, none, some (toExpr lit.n), some C, some fs, some numericProof.value, some coeff])
-    #[hlen, numericProof.proof]
-  let .forallE _ expected _ _ ← inferType hdet | return none
-  let hc ← mkEqSymm hc
-  unless ← withTransparency .default (isDefEq (← inferType hc) expected) do return none
-  let hdet := mkApp hdet (mkExpectedPropHint hc expected)
-  let some (_, _, denoted) := (← inferType hdet).eq? | return none
-  unless ← withTransparency .default (isDefEq denoted value) do return none
-  let determinant := (← mkAppM ``Matrix.det #[A]).appFn!
-  let proof ← mkEqTrans (← mkCongrArg determinant hA) hdet
-  let target ← mkEq (← mkAppM ``Matrix.det #[A]) value
-  let outcome ← Hex.Reflect.run <| Hex.Reflect.withOutcome do
-    checkedBudgeted target (mkExpectedPropHint proof target)
-  let (proof, nodes) ← match outcome with
-    | .success result _ => pure result
-    | .failure error => throwError error.toMessageData
-    | .notApplicable | .declined .. => return none
-  trace[HexMatrix.certificate] "{(Json.mkObj [("route", toJson "row-factor"),
-    ("dimension", toJson lit.n), ("proof_node_budget", toJson nodes)]).compress}"
-  return some { value, proof }
+  -- Share payloads explicitly in the closed theorem. In particular, AllFin's
+  -- suffix predicates must not repeat the whole input literal at every entry.
+  withLetDecl `detInput (← inferType A) A fun A => do
+    withLetDecl `detCoefficients (← inferType C) C fun C => do
+      withLetDecl `detFactors (← inferType fs) fs fun fs => do
+        let numericProof ← Det.build {} C numeric
+        let B := mkAppN (mkConst ``matrix [u]) #[lit.carrier, ring, toExpr lit.n, C, fs]
+        let hA ← applyEntryHints (← mkAppM ``DetPoly.Polynomial.identify #[A, B]) hints
+        let hlen ← decideProof (← mkEq (← mkAppM ``List.length #[fs]) (toExpr lit.n))
+        let hdet := mkAppN (mkConst ``det [u])
+          #[lit.carrier, ring, toExpr lit.n, C, fs, numericProof.value, coeff,
+            hlen, numericProof.proof]
+        let .forallE _ expected _ _ ← inferType hdet | return none
+        let hc ← mkEqSymm hc
+        unless ← withTransparency .default (isDefEq (← inferType hc) expected) do return none
+        let hdet := mkApp hdet (mkExpectedPropHint hc expected)
+        let some (_, _, denoted) := (← inferType hdet).eq? | return none
+        unless ← withTransparency .default (isDefEq denoted value) do return none
+        let determinant := (← mkAppM ``Matrix.det #[A]).appFn!
+        let proof ← mkEqTrans (← mkCongrArg determinant hA) hdet
+        let target ← mkEq (← mkAppM ``Matrix.det #[A]) value
+        let outcome ← Hex.Reflect.run <| Hex.Reflect.withOutcome do
+          checkedBudgeted target (mkExpectedPropHint proof target)
+        let (proof, nodes) ← match outcome with
+          | .success result _ => pure result
+          | .failure error => throwError error.toMessageData
+          | .notApplicable | .declined .. => return none
+        trace[HexMatrix.certificate] "{(Json.mkObj [("route", toJson "row-factor"),
+          ("dimension", toJson lit.n), ("proof_node_budget", toJson nodes)]).compress}"
+        return some { value, proof }
 
 end HexPolyDetMathlib.RowFactor
