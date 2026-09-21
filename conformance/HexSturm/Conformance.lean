@@ -162,6 +162,8 @@ theorem stale_rejected : check orderSign 8 p 1 (.finite (-2)) (.finite 2) 2 lite
 /- Transport exercises singleton chains, proper common factors and constants.
 Each translated certificate is checked independently, including wrong bindings. -/
 #guard (#[0, p, x - 1, 1] : Array (DensePoly Rat)).all fun f =>
+  let p := scale (1 / 6 : Rat) p
+  let f := scale (1 / 10 : Rat) f
   match certify orderSign (7 : Nat) p f (.finite (-2)) (.finite 2) with
   | none => false
   | some c =>

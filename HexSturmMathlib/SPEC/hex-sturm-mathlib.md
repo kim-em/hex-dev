@@ -25,11 +25,14 @@ representatives and inspects their axioms.
 and `query_congr` for the whole producer `Option`, including invalid domains
 and infinities. Both allow positive scaling of the polynomial inputs and
 noninjective interpretations into a common ordered field.
-`DenominatorClearing.lean` translates supplied rational certificate data by
-positive denominator clearing and proves complete integer-checker acceptance.
-`IntCast.lean` proves the reverse integer-to-rational embedding, including
-infinite endpoints. Both retain the full literal context and value; the target
-input bindings are the cleared or embedded polynomials, respectively. Neither
+`HexSturm.Transport` owns executable denominator clearing and integer embedding.
+`DenominatorClearing.lean` proves integer-checker acceptance of a supplied
+rational certificate cleared at its bound finite dyadic interval.
+`IntCast.lean` proves acceptance of integer-to-rational embedding, including
+infinite endpoints. Both preserve the full literal context and accepted value;
+the target input bindings are the cleared or embedded polynomials. Clearing
+recomputes exact signs and variations at the supplied interval; its acceptance
+theorem requires the original certificate to bind that interval. Neither
 translation calls polynomial division, gcd, or a chain producer.
 
 The root-sum/replay semantics, root-count and singleton-sign theorems still
@@ -186,7 +189,7 @@ in the lawful semantic field described above.
 | `query_sign` | Under the domain and `Roots(P;a,b)={α}`, the query equals `sgn(Fᴿ.eval α)`. |
 | `certify_checks` | Certificates produced on the domain pass replay and have the same value as `query`. |
 | `query_congr` | Order-preserving field maps and transported endpoints preserve the entire query result and domain validity. |
-| `check_congr`, `query_rat_eq` | Accepted certificates for positive-scaled inputs have equal values; produced-certificate acceptance gives whole-`Option` rational/integer agreement despite different normalizers. |
+| `check_congr` | Accepted certificates for positive-scaled inputs have equal values; produced-certificate acceptance gives whole-`Option` rational/integer agreement despite different normalizers. |
 | `query_rat_eq` | Rational coefficients and finite dyadic endpoints agree, after positive denominator clearing, with the whole `Option` returned by `ZPoly.tarskiQuery`. |
 
 The local squarefree guard proof may use a nonzero constant gcd of `P,P'`,
@@ -306,9 +309,3 @@ completed sample, and permit at most one unchanged inconclusive rerun. A CAS
 query time is not a Lean proof-checking baseline. Full BKR, `tower8` isolation
 and normalization ablations remain the respective family owners' requirements.
 This SPEC supplies requirements, not performance measurements or phase claims.
-
-The executable certificate translations are exported by Mathlib-free
-`HexSturm.Transport`; this companion proves their acceptance. Denominator
-clearing takes finite dyadic endpoints via `DyadicInterval`, recomputes exact
-signs and variations there, and preserves the accepted value when the source
-certificate binds those endpoints. Integer embedding also retains infinities.

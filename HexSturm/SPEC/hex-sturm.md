@@ -205,6 +205,18 @@ checker rejects missing or extraneous identities and chains exceeding the
 mathematical degree bound. It terminates by finite certificate structure;
 malformed data cannot return a query value.
 
+### Certificate transport
+
+`HexSturm.Transport` exports `Hex.RemainderStep.clearDenominators`,
+`Hex.SignedRemainderChain.clearDenominators` and
+`Hex.TarskiCertificate.clearDenominators`, plus `Hex.TarskiCertificate.toRat`.
+These operate on supplied literal data without division or chain production.
+Denominator clearing uses a finite `DyadicInterval`, renewing endpoint signs
+and input bindings; its companion acceptance theorem requires the source
+certificate to bind those same endpoints. Integer embedding retains finite
+endpoints and infinities, signs, variations, value and context. The definitions
+belong to their shared types under `Hex`, while the frontend is under `Hex.Sturm`.
+
 ## Failure, termination and completeness
 
 All coefficient arithmetic and decisions are total. The public `Option`
@@ -245,7 +257,7 @@ and `[IsRealClosed R]` on the Mathlib side.
 | `certify_checks` | Certificates produced on the domain pass replay and carry the same value as `query`. |
 | `rootCount_eq`, `query_sign` | Count equals `Roots.card`; a singleton root set gives the evaluation sign; companion. |
 | `query_congr` | Order-preserving field maps and transported endpoints preserve query results, including domain validity. |
-| `check_congr`, `query_rat_eq` | Checked positive-scaled chains have equal values; producer acceptance gives whole-`Option` rational/integer agreement with different normalizers. |
+| `check_congr` | Checked positive-scaled chains have equal values; producer acceptance gives whole-`Option` rational/integer agreement with different normalizers. |
 | `query_rat_eq` | Positive denominator clearing at rational coefficients and dyadic endpoints agrees, including `none`, with `ZPoly.tarskiQuery`; companion. |
 
 For the last theorem choose positive integers `dP,dF` separately so that
@@ -276,8 +288,8 @@ Hex locally proves ordinary polynomial correspondence, pseudo-division and
 positive-scaling correspondence, literal replay soundness and integer
 specialization in real-roots and its companion. That companion also proves
 `IsRealClosed ℝ` from Mathlib's real square-root and polynomial order/IVT
-results. HexSturm proves frontend guards, generic endpoint operations and denominator
-clearing, and coefficient-evidence composition. Ambient real-closure existence
+results. HexSturm supplies frontend guards, generic endpoint operations and denominator
+clearing; its companion proves their correspondence and coefficient-evidence composition. Ambient real-closure existence
 for arbitrary `K` is a separate Tau Ceti obligation consumed by
 `hex-real-closure-mathlib`; this API's semantics are conditional on a supplied
 `R,ι` until that obligation is discharged. It does not construct that field.

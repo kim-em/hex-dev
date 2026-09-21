@@ -310,7 +310,7 @@ theorem signs_eq (p : DensePoly Rat) (d : Nat) (cert : SignedRemainderChain Rat)
     · exact_mod_cast ZPoly.clearDenominators_pos (cert.chain.getD i 0)
     · rw [chain_entry, HexRealRootsMathlib.Tarski.interpret_int_real, toPolyℝ_clearDenominators]
 
-/-- Translating an accepted rational TarskiCertificate.clearDenominators preserves its exact value,
+/-- Translating an accepted rational certificate preserves its exact value,
 literal context, and acceptance by the integer/dyadic checker. -/
 theorem certificate_checks {Ctx : Type u} [DecidableEq Ctx] (context : Ctx)
     (p g : DensePoly Rat) (I : DyadicInterval) (value : Int) (cert : TarskiCertificate Rat Rat Ctx)
