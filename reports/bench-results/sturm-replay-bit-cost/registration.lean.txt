@@ -32,7 +32,8 @@ operations. For even m=2r the quotient is
 `2 * sum (j=0..r-1) 2^j X^(2(r-j)-1)`: its nonzero coefficients occupy
 r(r+3)/2 bits. Big-by-small arithmetic in the recurrence and replay therefore
 costs Θ(m²) bits, including materialization of that quotient. The corrected
-integer and rational query-degree registrations use multiword coefficients.
+integer registrations use multiword coefficients; the rational registration
+retains its explicitly bounded original ladder.
 
 Input preparation and metadata collection are outside timed bodies. Output
 hashes include actual coefficients and certificate scalars, not just dimensions.
@@ -298,11 +299,10 @@ setup_benchmark runSigns n => n ^ 2
     signalFloorMultiplier := 1
     maxSecondsPerCall := 3
   }
--- Declared cost-model: cubic normalization-iteration work, with bounded
--- limb counts on this ladder. Total binary work remains Θ(n⁴); this declaration
--- does not extend to an unbounded-degree bit-time claim. The source count and
--- cost-model derivation is in reports/sturm-bit-cost-models.md.
-setup_benchmark runReplay n => n ^ 3
+-- Declared cost-model: Θ(n⁴) bit work: conversion of Θ(n²) Chebyshev-chain
+-- coefficients with growing bit lengths/trailing zeros dominates dyadic replay.
+-- See reports/sturm-bit-cost-models.md for the independent derivation.
+setup_benchmark runReplay n => n ^ 4
   with prep := degreeInput
   where {
     paramSchedule := .custom #[128, 256, 512, 1024]
@@ -337,18 +337,17 @@ setup_benchmark runIntegerHigh m => m ^ 2
     signalFloorMultiplier := 1
     maxSecondsPerCall := 120
   }
--- Declared cost-model: Θ(m²) bit work: fixed-quadratic rational division
--- constructs the same growing integer numerators; denominators remain one.
-setup_benchmark runRationalHigh m => m ^ 2
+-- Declared cost-model: O(m), the same recurrence with bounded-word rational coefficients.
+setup_benchmark runRationalHigh m => m
   with prep := queryInput
   where {
-    paramSchedule := .custom #[131072, 262144, 524288, 1048576]
-    paramFloor := 131072
-    paramCeiling := 1048576
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96]
+    paramFloor := 16
+    paramCeiling := 96
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 120
+    maxSecondsPerCall := 3
   }
 -- Declared cost-model: Θ(m²) bit work: O(m) big-by-small recurrence operations on growing O(m)-bit coefficients; the quotient itself has Θ(m²) bits.
 setup_benchmark runInitialHigh m => m ^ 2

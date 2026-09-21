@@ -180,6 +180,20 @@ theorem query_rat_count (p : DensePoly Rat) (I : DyadicInterval) (value : Int)
     Polynomial.roots_C_mul _ (by exact_mod_cast ne_of_gt (ZPoly.clearDenominators_pos p))] at he
   exact he
 
+/-- Rational query-one counting agrees with the open distinct-root sum. -/
+theorem query_rat_rootSum (p : DensePoly Rat) (I : DyadicInterval) (value : Int)
+    (h : Sturm.query Sturm.orderSign p 1 (.finite I.lower.toRat) (.finite I.upper.toRat) = some value) :
+    value = Tarski.rootSum
+      (interpret (fun q : Rat => (q : ℝ)) (fun _ => Rat.cast_eq_zero) p) 1
+      (.finite (HexRealRootsMathlib.Dyadic.toReal I.lower)) (.finite (HexRealRootsMathlib.Dyadic.toReal I.upper)) := by
+  rw [query_rat_eq, ZPoly.clearDenominators_one] at h
+  have he := Tarski.integer_query_rootSum (ZPoly.clearDenominators p).2 I value h
+  rw [Tarski.rootSum_one] at he ⊢
+  have hn : ((ZPoly.clearDenominators p).1 : ℝ) ≠ 0 := by
+    exact_mod_cast ne_of_gt (ZPoly.clearDenominators_pos p)
+  simpa only [Tarski.rootsIn, toPolyℝ_clearDenominators,
+    Polynomial.roots_C_mul _ hn] using he
+
 /-- Rational query-one nonnegativity is available without the abstract
 real-closed-field signed-index foundation. -/
 theorem query_rat_nonneg (p : DensePoly Rat) (I : DyadicInterval) (value : Int)

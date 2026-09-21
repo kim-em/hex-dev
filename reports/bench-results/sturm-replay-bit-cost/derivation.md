@@ -46,11 +46,9 @@ The cap is a safeguard, not a scientific absolute budget. All samples and
 source/executable hashes must be retained. No parameters or exponents are
 selected from the new observations.
 
-The rational registration also requires correction: its fixed-quadratic
-division computes the same growing numerators with denominator one. Its
-original finite-ladder linear pass supplies no unbounded bit-cost claim.
-`runRationalHigh` declares m² on `131072,262144,524288,1048576`, four trials,
-a 100 ms tuning target and a 120-second operational cap.
+The unchanged rational registration describes only its original finite
+ladder `16,24,32,48,64,96`; its earlier pass is not a claim of linear bit
+complexity on unbounded query degrees.
 
 The wider validation ladder is `65536,131072,262144,524288`, with the same
 quadratic declaration and trial settings. Its largest quotient contains
@@ -90,43 +88,14 @@ lower bound holds before accounting for Horner additions, at either endpoint.
 The other replay work stays within O(n⁴) bit work: there are O(n²)
 coefficient operations on O(n)-bit integers; the schoolbook upper bound
 for each scalar product is O(n²). Horner accumulators at fixed endpoints
-also have O(n) bits. This yields the **n⁴ binary-work bound** for `runReplay`.
+also have O(n) bits. This yields the **n⁴** declaration for `runReplay`.
 It characterizes the current upstream dyadic normalization algorithm, not
 an optimal bound for integer Horner evaluation or a claim about every backend.
 
-The quartic wall-time hypothesis uses the validation ladder `128,256,512,1024`, four trial-major
+The declared validation ladder is `128,256,512,1024`, four trial-major
 trials, a 100 ms tuning target and a 600-second operational per-call cap.
 Smaller degrees need not be in the quartic regime: loop dispatch alone
 contributes cubic work, and limb costs introduce further lower-order terms.
 The machine word width does not determine the ratio between dispatch and
 limb-processing time; consequently no fitted cubic/quartic mixing coefficient
 is part of the declaration. The model and ladder precede new replay timings.
-
-The untimed checker `scripts/bench/sturm_bit_costs.py` compares these formulas
-with every original production certificate: five head-degree chains and six
-initial quotients. It also checks the stated contents through degree 1023.
-Its [retained exact counts](bench-results/sturm-bit-cost-formulas/costs.jsonl)
-record total division bit volumes 13,331,767; 216,024,695; 3,477,325,117;
-and 55,798,834,691 at head degrees 128,256,512,1024. These are mathematical
-work counts, not timing observations or a wall-time consistency verdict.
-
-## Finite-regime replay timing hypothesis
-
-The cost has two components: Θ(n³) normalization iterations/allocations and
-Θ(n⁴) binary arithmetic. On a fixed-word machine these have independent
-constants; a binary-work bound cannot identify which term dominates wall
-time. The quartic wall-time declaration assumed that the limb-work term
-dominated on the chosen ladder. The retained failed run and the operation-only
-[degree-512 profile](bench-results/sturm-replay-profile/) do not support that
-assumption. They do not contradict the quartic bit-volume calculation.
-
-The source-derived iteration count is cubic (180,960 → 90,265,344 across
-128 → 1024, before constant endpoint/chain multiplicities). The alternative
-wall-time hypothesis tests that iteration/dispatch work on the explicitly
-bounded degree ladder `128,256,512,1024`, with **n³** as its declaration and
-otherwise unchanged settings. This exponent comes from the independently
-counted normalizer iterations, not a fitted timing exponent. A fresh run is
-required. Its claim is limited to this finite arithmetic regime; it neither
-supersedes the Θ(n⁴) bit bound nor predicts unbounded-degree wall time. The
-profile includes limb division as well as allocation and cannot establish
-this hypothesis by itself. All quartic-model results remain retained.

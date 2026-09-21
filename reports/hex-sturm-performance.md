@@ -330,6 +330,52 @@ The independently derived correction below accounts for variable-size integer
 arithmetic and dyadic normalization. No coefficient-operation bound, oracle
 agreement or fresh-module proof measurement by itself validates wall-time scaling.
 
+## Corrected bit-cost validation
+
+The [independent derivations](sturm-bit-cost-models.md) distinguish binary
+work from scalar-operation counts. For the fixed quadratic head, the initial
+quotient has exactly `r(r+3)/2` stored bits at query degree `m=2r`; initial
+reduction, full integer query and replay declare `m²`. Head-degree replay
+converts the primitive Chebyshev-chain coefficients to dyadics. The current
+upstream repeated-division normalizer gives `n⁴` bit work. These declarations
+precede their new measurements. No coefficient in a mixed-power timing model
+is inferred from the observed slopes.
+
+The [exact closed-form checks](bench-results/sturm-bit-cost-formulas/) match
+all five original head chains and six initial quotients. They are untimed
+validation of the input-family calculations, not wall-time results. The odd
+coefficient control above separately identifies the normalization sensitivity.
+
+Every new parametric run keeps four trial-major samples per rung, with the
+same 100 ms tuning target. Larger operational caps accommodate the declared
+input volume. The binary and declaration snapshots, CPU assignment, load
+observations, exact commands and every sample remain alongside each run.
+
+| Query-degree ladder | Integer query residual | Initial reduction residual | Replay residual | Verdict |
+| --- | ---: | ---: | ---: | --- |
+| [4,096–65,536](bench-results/sturm-query-bit-cost/) | −0.328922 | −0.279527 | −0.477315 | all inconclusive |
+| [65,536–524,288](bench-results/sturm-query-bit-cost-wide/) | −0.156694 | −0.160725 | −0.208469 | all inconclusive |
+| [131,072–1,048,576](bench-results/sturm-query-bit-cost-large/) | −0.091054 | −0.092722 | −0.137679 | all consistent |
+
+The first two runs are faster than the declared quadratic scaling, even
+though their binary work is quadratic. Neither is relabelled as a pass. The
+largest ladder independently passes the same quadratic declaration. The retained wider
+schedule extends the same model to degree 1,048,576; the [head-degree quartic wall-time run](bench-results/sturm-replay-bit-cost/)
+uses degrees 128,256,512,1024 and is inconclusive (residual −0.920844).
+Its median replay times are 60.527 ms, 503.829 ms, 4.084 s and 37.045 s.
+The exact bit-count derivation is valid, but the limb-work dominance needed
+to infer quartic wall time does not hold on this ladder.
+
+The [operation-only degree-512 profile](bench-results/sturm-replay-profile/)
+retains raw samples and monotonic-clock region boundaries. Its exclusive
+sampled periods include 11.63% in single-limb division, 9.57% in `cfree`,
+7.68% in `malloc`, 5.91% in GMP initialization/copy, and 3.20% directly in
+`Int.trailingZeros`' loop. The profile supports separating iteration/dispatch
+work from limb work; it does not establish a wall-time exponent. The source
+count of normalization iterations is Θ(n³), separately from Θ(n⁴) bit
+volume. The new finite-regime iteration-cost hypothesis and its fresh
+validation are specified in the derivation document.
+
 ## Remaining validation gates
 
 The separate fresh-module proof track checks literal acceptance, rejection of a

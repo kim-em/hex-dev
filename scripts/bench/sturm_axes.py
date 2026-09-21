@@ -30,8 +30,10 @@ def main() -> None:
                         help="validate the declared multiword query-degree models")
     parser.add_argument("--replay-bit-cost-only", action="store_true",
                         help="validate the declared dyadic replay bit-cost model")
+    parser.add_argument("--rational-bit-cost-only", action="store_true",
+                        help="validate the rational high-query bit-cost model")
     args = parser.parse_args()
-    if sum([args.control_only, args.bit_cost_only, args.replay_bit_cost_only]) > 1:
+    if sum([args.control_only, args.bit_cost_only, args.replay_bit_cost_only, args.rational_bit_cost_only]) > 1:
         parser.error("select at most one dedicated measurement")
     out = args.output.resolve()
     out.mkdir(parents=True, exist_ok=False)
@@ -51,7 +53,7 @@ def main() -> None:
     }
     (out / "registration.lean.txt").write_bytes(source.read_bytes())
     model = ROOT / "reports/sturm-bit-cost-models.md"
-    if args.bit_cost_only or args.replay_bit_cost_only:
+    if args.bit_cost_only or args.replay_bit_cost_only or args.rational_bit_cost_only:
         metadata["derivation_sha256"] = hashlib.sha256(model.read_bytes()).hexdigest()
         (out / "derivation.md").write_bytes(model.read_bytes())
     commands = [
@@ -68,6 +70,9 @@ def main() -> None:
     if args.replay_bit_cost_only:
         commands = [(["run", "Hex.SturmBench.runReplay", "--export-file", str(out / "replay-bits.json")],
                      "replay-bits.log")]
+    if args.rational_bit_cost_only:
+        commands = [(["run", "Hex.SturmBench.runRationalHigh", "--export-file", str(out / "rational-bits.json")],
+                     "rational-bits.log")]
     try:
         for command, filename in commands:
             argv = [str(exe), *command]
@@ -78,9 +83,10 @@ def main() -> None:
             (out / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
             if result.returncode:
                 raise RuntimeError(f"command failed ({result.returncode}); output retained in {filename}")
-        rows = [] if args.bit_cost_only or args.replay_bit_cost_only else [json.loads(line) for line in (out / "axes.jsonl").read_text().splitlines()]
-        (out / "fixtures.jsonl").write_text("".join(
-            json.dumps(row) + "\n" for row in rows if row["kind"] == "fixture"))
+        rows = [] if args.bit_cost_only or args.replay_bit_cost_only or args.rational_bit_cost_only else [json.loads(line) for line in (out / "axes.jsonl").read_text().splitlines()]
+        if rows:
+            (out / "fixtures.jsonl").write_text("".join(
+                json.dumps(row) + "\n" for row in rows if row["kind"] == "fixture"))
     finally:
         metadata.update(end=datetime.datetime.now(datetime.timezone.utc).isoformat(), load_end=os.getloadavg())
         (out / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")

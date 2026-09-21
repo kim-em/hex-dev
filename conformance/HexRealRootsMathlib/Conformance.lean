@@ -295,6 +295,21 @@ theorem tarski_literal_total : (2 : Int) = (toPolyℝ Hex.TarskiTests.p).roots.c
     ← Array.all_toList, Array.toList_range]
   decide +kernel
 
+theorem tarski_literal_rootSum : (2 : Int) =
+    Tarski.rootSum (toPolyℝ Hex.TarskiTests.p) 1
+      (.finite (Dyadic.toReal Hex.TarskiTests.interval.lower))
+      (.finite (Dyadic.toReal Hex.TarskiTests.interval.upper)) :=
+  Tarski.integer_check_rootSum () Hex.TarskiTests.p Hex.TarskiTests.interval 2
+    Hex.TarskiTests.literal Hex.TarskiTests.literal_checks
+
+/-- info: 'HexRealRootsMathlib.Tarski.integer_check_rootSum' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Tarski.integer_check_rootSum
+
+/-- info: 'HexRealRootsMathlib.Tarski.integer_query_rootSum' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Tarski.integer_query_rootSum
+
 /-- info: 'HexRealRootsMathlib.Tarski.integer_check_count' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Tarski.integer_check_count

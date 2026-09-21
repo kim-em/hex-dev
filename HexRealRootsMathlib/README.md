@@ -128,7 +128,10 @@ answers for those accepted literal certificates without an analytic foundation.
 real Sturm theorem. Accepted query-one certificates count roots on finite
 dyadic intervals and on the whole real line; the actual integer producer is
 therefore nonnegative on query `1`. The rational companion transports the
-finite-interval result. Only the arbitrary ordered-field count theorem and
+finite-interval result. `rootsIn_card` identifies the legacy half-open count
+with the open distinct-root set under the accepted domain;
+`integer_check_rootSum` and `integer_query_rootSum` give the actual query-one
+root-sum identity. Only the arbitrary ordered-field count theorem and
 its dependent general wrapper require the deferred foundation.
 
 # Verification

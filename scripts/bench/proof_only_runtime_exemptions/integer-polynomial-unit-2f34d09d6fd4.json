@@ -1,0 +1,6 @@
+{
+  "path": "HexPolyZ/IntegerPolynomial.lean",
+  "baseline_blob": "c77677c6530fb8e8bcd7e44be9c4123f3a6e86aa",
+  "current_blob": "2f34d09d6fd4da7332731f5b224b78d514b0d53e",
+  "reason": "Adds clearDenominators as a wrapper around unchanged existing common-denominator/cleared-polynomial helpers, with positivity/rescaling proofs and the new unannotated clearDenominators_one theorem proved by rfl. The measured factorization service calls the same existing helpers, not the added wrapper. No existing executable body, instance, csimp rule or import changes. This exact transition includes the earlier wrapper exemption and covers factorization runtime only; it does not exempt the new Sturm queries from their own measurements."
+}

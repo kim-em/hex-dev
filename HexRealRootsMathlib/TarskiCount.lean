@@ -8,10 +8,33 @@ module
 public import HexRealRootsMathlib.TarskiSigns
 public import HexRealRootsMathlib.TarskiDomain
 public import HexRealRootsMathlib.LiteralChain
+public import HexRealRootsMathlib.TarskiSum
 
 public section
 namespace HexRealRootsMathlib.Tarski
 open Hex Polynomial HexPolyMathlib.Interpret
+
+/-- The open distinct-root set agrees with the legacy half-open multiset
+count when roots are simple and the upper endpoint is not a root. -/
+theorem rootsIn_card (p : Polynomial ℝ) (I : DyadicInterval)
+    (hsf : Squarefree p) (hb : p.eval (Dyadic.toReal I.upper) ≠ 0) :
+    (rootsIn p (.finite (Dyadic.toReal I.lower)) (.finite (Dyadic.toReal I.upper))).card =
+      (Literal.rootsIn p I).card := by
+  classical
+  have he : rootsIn p (.finite (Dyadic.toReal I.lower)) (.finite (Dyadic.toReal I.upper)) =
+      (Literal.rootsIn p I).toFinset := by
+    ext x
+    simp only [rootsIn, Finset.mem_filter, Multiset.mem_toFinset, Literal.rootsIn,
+      Multiset.mem_filter, InInterval, Literal.InInterval]
+    constructor
+    · rintro ⟨hx, ha, hb⟩
+      exact ⟨hx, ha, hb.le⟩
+    · rintro ⟨hx, ha, hxle⟩
+      refine ⟨hx, ha, lt_of_le_of_ne hxle ?_⟩
+      intro he
+      exact hb (he ▸ (Polynomial.isRoot_of_mem_roots hx).eq_zero)
+  rw [he, Multiset.toFinset_card_of_nodup]
+  exact (Polynomial.nodup_roots (PerfectField.separable_iff_squarefree.mpr hsf)).filter _
 
 private theorem replay_list (a b : Polynomial ℝ) (rest : List (Polynomial ℝ))
     (hlast : IsUnit ((a :: b :: rest).getD ((a :: b :: rest).length - 1) 0))
@@ -163,6 +186,21 @@ theorem integer_check_count {Ctx : Type u} [DecidableEq Ctx] (context : Ctx)
     simpa only [TarskiCertificate.signs, Hex.Array.map'_eq_map, Array.toList_map,
       Endpoint.signAt, EndpointSigns.intDyadic, sturmVarAt] using hv.trans hcount
 
+/-- Accepted query-one certificates realize the open-interval root sum. -/
+theorem integer_check_rootSum {Ctx : Type u} [DecidableEq Ctx] (context : Ctx)
+    (p : ZPoly) (I : DyadicInterval) (value : Int) (cert : TarskiCertificate Int Dyadic Ctx)
+    (h : TarskiCertificate.check Int.sign EndpointSigns.intDyadic context p 1
+      (.finite I.lower) (.finite I.upper) value cert = true) :
+    value = rootSum (toPolyℝ p) 1 (.finite (Dyadic.toReal I.lower))
+      (.finite (Dyadic.toReal I.upper)) := by
+  have hh := h
+  simp only [TarskiCertificate.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at hh
+  obtain ⟨_, _, _, _, _, _, hend, hsf, hlast, _⟩ := hh
+  have hs := (integer_squarefree p cert.squarefree hsf).mp hlast
+  have hb := ((integer_checkEndpoints p I).mp hend).2.2
+  rw [rootSum_one, rootsIn_card _ I hs hb]
+  exact integer_check_count context p I value cert h
+
 /-- The effective integer/dyadic query of `1` has the existing real root-count semantics. -/
 theorem integer_query_count (p : ZPoly) (I : DyadicInterval) (value : Int)
     (h : ZPoly.tarskiQuery p 1 I = some value) :
@@ -173,6 +211,16 @@ theorem integer_query_count (p : ZPoly) (I : DyadicInterval) (value : Int)
   have hh := (integer_certify_checks p 1 I cert hc).1
   have he := integer_check_count () p I cert.value cert hh
   simpa only [hv] using he
+
+/-- The supported query-one result uses the same open finite-root sum as the
+abstract Sturm–Tarski interface. -/
+theorem integer_query_rootSum (p : ZPoly) (I : DyadicInterval) (value : Int)
+    (h : ZPoly.tarskiQuery p 1 I = some value) :
+    value = rootSum (toPolyℝ p) 1 (.finite (Dyadic.toReal I.lower))
+      (.finite (Dyadic.toReal I.upper)) := by
+  have hd := (integer_domain p 1 I).mp (by simp only [h, Option.isSome_some])
+  rw [rootSum_one, rootsIn_card _ I hd.2.1 hd.2.2.2]
+  exact integer_query_count p I value h
 
 /-- The effective integer/dyadic query of `1` is nonnegative. -/
 theorem integer_query_nonneg (p : ZPoly) (I : DyadicInterval) (value : Int)
