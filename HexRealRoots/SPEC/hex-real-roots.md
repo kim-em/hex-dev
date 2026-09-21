@@ -123,10 +123,12 @@ dyadic counts. These primitives belong here, not in the number-field layer.
 
 ## Tarski queries
 
-The query and replay declarations in this section are planned. They share the
-ordered-domain kernel below with the
-[ordered-field frontend](../../SPEC/Libraries/hex-sturm.md); they are not a
-second integer-only implementation.
+The query and replay declarations are implemented in `QueryChain.lean` and
+`Query.lean`, with array-loop replay invariants in `QueryProofs.lean`.
+The ordered-domain kernel is shared with the planned
+[ordered-field frontend](../../SPEC/Libraries/hex-sturm.md). The companion
+proves algebraic correspondence and produced-certificate acceptance; the
+root-sum and semantic domain theorems and new Phase-4 evidence remain required.
 
 Preserve the following public integer/dyadic frontend for the
 [fixed-field sign consumer](../../HexNumberField/SPEC/hex-number-field.md#fixed-field-sign):
@@ -180,8 +182,9 @@ operations, excluding the separately bounded squarefreeness check; this is
 not a unit-cost bit bound on growing coefficients. Phase 4 measures their
 bit lengths as well as degrees.
 
-The implementation and its generic extension use one owned primitive;
-these Tarski declarations remain unimplemented until that work lands.
+The integer implementation and the operation-only generic interface use the
+same owned primitive. The integer backend removes positive content; the
+identity normalizer is available for exact field and representation backends.
 Squarefree guards on representation coefficients test a semantically nonzero
 constant gcd, or a Bézout identity by zero differences. Monicization does not
 make structural equality to `1` a valid semantic guard. The explicit total
@@ -233,7 +236,7 @@ frontend retains `Option Int`, with `none` exactly on invalid mathematical
 input. A false certificate check means the proposed evidence is incorrect,
 not that the query lacks a value.
 
-The shared planned `Hex.QueryReplay.check` verifies the literal identities,
+The shared `Hex.QueryReplay.check` verifies the literal identities,
 degrees, signs and guard witnesses. `Hex.QueryReplay.check_sound` belongs to
 [hex-real-roots-mathlib](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#representation-and-replay-bridge).
 For ordinary exact coefficients these checks use total equality/order.

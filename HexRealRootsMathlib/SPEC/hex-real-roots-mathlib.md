@@ -615,6 +615,15 @@ modules can re-export the corresponding Mathlib modules.
 
 ## Sturm-Tarski correspondence
 
+`QueryInterpret.lean` supplies the actual signed identities and degree bounds
+under noninjective coefficient interpretation, the sufficient internal degree
+bound, and produced-chain acceptance. `QueryInteger.lean` instantiates positive
+content normalization over `Int` and proves produced-certificate acceptance and
+agreement with the query's returned value. `QueryGcd.lean` proves terminal-gcd
+correspondence, the squarefreeness check and success exactly on squarefreeness
+plus the executable endpoint guards. Endpoint interpretation, root-sum and replay
+soundness, singleton-sign and count/bound results below remain proof gates.
+
 First extend endpoint evaluation to the computational owner's
 `sturmVarAtRat`. Prove `sturmVarAtRat_eq` by positivity of the homogeneous
 denominator factor in each chain entry, `sturmVarAtRat_dyadic` by equality

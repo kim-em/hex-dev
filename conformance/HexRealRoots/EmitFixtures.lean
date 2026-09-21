@@ -20,6 +20,10 @@ exact rational roots), never by re-running the Lean isolator.
 
 Operations covered:
 
+* `tarski` — the guarded signed sum on an open dyadic interval, including
+  `null` on invalid inputs. Exact qqbar roots and signs supply the oracle;
+  successful emitted results also replay their produced literal certificate.
+
 * `root_count`   — `Hex.ZPoly.rootCount p`, the total number of real roots,
   value an `Int`.
 * `isolations`   — the isolating intervals from `Hex.ZPoly.isolateRealRoots? p`,
@@ -147,6 +151,68 @@ candidate stream. -/
 private def ciCases : List (List Int) :=
   ((List.range 300).map candCoeffs |>.filter ciAcceptable).take 30
 
+/-- Open intervals for the shared signed query fixtures. -/
+private def queryWhole : DyadicInterval := ⟨Dyadic.ofInt (-2), Dyadic.ofInt 2, by decide +kernel⟩
+private def queryPositive : DyadicInterval := ⟨Dyadic.ofInt 1, Dyadic.ofInt 2, by decide +kernel⟩
+private def queryNegative : DyadicInterval := ⟨Dyadic.ofInt (-2), Dyadic.ofInt (-1), by decide +kernel⟩
+private def queryRootEnd : DyadicInterval := ⟨Dyadic.ofInt (-2), Dyadic.ofInt 1, by decide +kernel⟩
+
+private def queryCases : List (String × ZPoly × ZPoly × DyadicInterval) := Id.run do
+  let x : ZPoly := DensePoly.ofCoeffs #[0, 1]
+  let p : ZPoly := DensePoly.ofCoeffs #[-1, 0, 1]
+  let q : ZPoly := DensePoly.ofCoeffs #[-2, 0, 1]
+  return [
+    ("one", p, 1, queryWhole), ("negative", p, DensePoly.C (-1), queryWhole),
+    ("mixed", p, x, queryWhole), ("commonLinear", p, x - 1, queryWhole),
+    ("zeroRemainder", p, p, queryWhole), ("zeroQuery", p, 0, queryWhole),
+    ("highQuery", p, DensePoly.natPow x 8, queryWhole),
+    ("irrationalMixed", q, x, queryWhole), ("irrationalPositive", q, x, queryPositive),
+    ("irrationalNegative", q, x, queryNegative),
+    ("commonQuadratic", q * (x - 1), q, queryWhole),
+    ("negativeHead", -p, 1, queryWhole),
+    ("content", DensePoly.scale 4 x, 1, queryWhole),
+    ("negativeContent", DensePoly.scale (-4) x, 1, queryWhole),
+    ("constant", DensePoly.C 5, x, queryWhole),
+    ("noRealRoots", DensePoly.ofCoeffs #[1, 0, 1], 1, queryWhole),
+    ("zeroHead", 0, 1, queryWhole), ("zeroHeadZeroQuery", 0, 0, queryWhole),
+    ("repeated", DensePoly.natPow (x - 1) 2, 1, queryWhole),
+    ("repeatedZeroQuery", DensePoly.natPow (x - 1) 2, 0, queryWhole),
+    ("rootEndpoint", p, 1, queryRootEnd), ("rootEndpointZeroQuery", p, 0, queryRootEnd)
+  ]
+
+private def emitQueryChain (id : String) (c : QueryChain Int) : IO Unit := do
+  emitMatrixFixture lib (id ++ "/chain") (c.chain.toList.map (·.toArray.toList))
+  emitMatrixFixture lib (id ++ "/degrees") [c.degrees.toList.map Int.ofNat]
+  emitMatrixFixture lib (id ++ "/initial/scales") [[c.initial.leftScale, c.initial.rightScale]]
+  emitPolyFixture lib (id ++ "/initial/quotient") c.initial.quotient.toArray.toList
+  emitMatrixFixture lib (id ++ "/steps/scales")
+    (c.steps.toList.map (fun s => [s.leftScale, s.rightScale]))
+  emitMatrixFixture lib (id ++ "/steps/quotients") (c.steps.toList.map (·.quotient.toArray.toList))
+  emitMatrixFixture lib (id ++ "/terminal/scale") (c.terminal.toList.map (fun t => [t.1]))
+  emitPolyFixture lib (id ++ "/terminal/quotient")
+    (c.terminal.map (·.2.toArray.toList) |>.getD [])
+
+private def emitQueryCase (c : String × ZPoly × ZPoly × DyadicInterval) : IO Unit := do
+  let (name, p, f, interval) := c
+  let id := "tarski/" ++ name
+  emitPolyFixture lib id p.toArray.toList
+  emitPolyFixture lib (id ++ "/query") f.toArray.toList
+  emitMatrixFixture lib (id ++ "/endpoints") [dyadicPair interval.lower, dyadicPair interval.upper]
+  let value := match ZPoly.tarskiQuery p f interval with
+    | none => "null"
+    | some value => toString value
+  emitResult lib id "tarski" value
+  match TarskiReplay.certify p f interval with
+  | none => pure ()
+  | some cert => do
+    unless TarskiReplay.check p f interval cert.value cert do
+      throw <| IO.userError s!"{lib}/{id}: produced certificate failed replay"
+    emitQueryChain (id ++ "/squarefree") cert.squarefree
+    emitQueryChain (id ++ "/remainders") cert.remainders
+    emitMatrixFixture lib (id ++ "/signs") [cert.lowerSigns.toList, cert.upperSigns.toList]
+    emitMatrixFixture lib (id ++ "/variations")
+      [[Int.ofNat cert.lowerVariations, Int.ofNat cert.upperVariations]]
+
 end Hex.RealRootsEmit
 
 open Hex.RealRootsEmit in
@@ -163,3 +229,4 @@ def main : IO Unit := do
     let padded := if idx < 10 then "0" ++ n else n
     emitCase s!"ci/d15/{padded}" coeffs true
     idx := idx + 1
+  for c in queryCases do emitQueryCase c

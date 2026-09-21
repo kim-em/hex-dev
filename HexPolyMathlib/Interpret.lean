@@ -91,6 +91,26 @@ theorem interpret_mul [Add E] [Mul E]
   rw [interpret, DensePoly.Interpret.map_mul f hz ha hm, toPolynomial_mul]
   rfl
 
+/-- Constant polynomials interpret their coefficient, including zero. -/
+theorem interpret_C (c : E) : interpret f hz (DensePoly.C c) = Polynomial.C (f c) := by
+  ext i
+  simp only [coeff_interpret, DensePoly.coeff_C, Polynomial.coeff_C]
+  split <;> simp_all only [(hz (Zero.zero : E)).mpr rfl]
+
+@[simp] theorem interpret_one [One E] (h1 : f (1 : E) = 1) :
+    interpret f hz (1 : DensePoly E) = 1 := by
+  change interpret f hz (DensePoly.C 1) = 1
+  rw [interpret_C, h1, Polynomial.C_1]
+
+/-- Scalar multiplication is interpreted coefficientwise. -/
+theorem interpret_scale [Mul E] (hm : ∀ a b, f (a * b) = f a * f b)
+    (c : E) (p : DensePoly E) :
+    interpret f hz (scale c p) = Polynomial.C (f c) * interpret f hz p := by
+  ext i
+  simp only [coeff_interpret, coeff_scale c p i (by
+    apply (hz _).mp
+    rw [hm, (hz (Zero.zero : E)).mpr rfl, mul_zero]), hm, Polynomial.coeff_C_mul]
+
 theorem interpret_derivative [NatCast E] [Mul E]
     (hn : ∀ n : Nat, f (n : E) = (n : K))
     (hm : ∀ a b, f (a * b) = f a * f b) (p : DensePoly E) :
