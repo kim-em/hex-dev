@@ -19,6 +19,7 @@ KNOWN_EXCEPTIONS = {"Hex", "HexManual", "HexAggregateCheck", "HexGraph"}
 # `bench/` and `conformance/`. They are not project libraries (no libraries.yml
 # entry, no repo-root file); exempt them from the Lake-config alignment check only.
 BUILD_ONLY_LIBS = {
+    "HexOrderedFnTests",
     "CadSampleCostsExperiment",  # Manual experiments; no released library or CI target.
     "HexPolyFastKernels",
     "HexGraphIsoProofProbe",

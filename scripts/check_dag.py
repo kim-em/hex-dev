@@ -56,6 +56,7 @@ SEALED_IMPORT_ALL_ALLOWLIST: dict[str, frozenset[Path]] = {
 }
 
 UMBRELLA_BUILD_TARGETS = {
+    "HexOrderedFnTests",
     "HexPolyFastKernels",
     "HexLLLBenchSupport",
     "HexGF2BenchSupport",
