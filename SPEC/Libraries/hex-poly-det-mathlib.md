@@ -51,6 +51,17 @@ changes neither the library registry nor the released manifest.
   and where the first pilot lost to `norm_det`; the probes measure the
   closed-form route on the `2 × 2` and `3 × 3` rungs against `norm_det`
   rather than assuming it wins.
+- **Common row factors.** Before polynomial reification, a literal whose
+  entries have the form `(cᵢⱼ : R) * fᵢ`, with integer literals `cᵢⱼ`
+  and one syntactically shared expression `fᵢ` per row, can use the numeric
+  determinant certificate for `(cᵢⱼ)`. The row-scaling identity and
+  `RingHom.map_det` transport this certificate over any commutative ring.
+  The result retains the row factors, multiplied in row order; their
+  internal polynomials are never expanded. Entry identifications must
+  check the actual operation and numeral instances. This route does not
+  claim a performance result for unstructured polynomial matrices. A
+  target not definitionally equal to the factored result uses the regular
+  polynomial frontend. Forced polynomial checker arms bypass this shortcut.
 - **Opt-in until measured.** The symbolic handler is not placed in the
   default `Hex.norm_det` fallback chain. It ships as the `det` handler and
   `det%` term form for symbolic input, and enters the simp-set chain only
@@ -665,6 +676,7 @@ HexPolyDetMathlib/
   Normalize.lean    -- proved coefficient normalization
   Frontend.lean     -- reification and certificate preparation
   Small.lean        -- closed forms
+  RowFactor.lean    -- common row factors and numeric determinant transport
   Tactic.lean       -- the handler on hex-bareiss-mathlib's `det` syntax kind, det% for symbolic input, Hex.normPolyDet
   Tests.lean
   PackedTests.lean  -- packed routes, singularity, transport, and axiom audits

@@ -471,14 +471,18 @@ def computeTree? (A ctx : Expr) (lit : Recognized) (k : Nat) (atoms : Array Expr
 
 /-- One batch, one elimination and one kernel check for a symbolic determinant.
 The optional target is reified before sealing, and may not allocate new atoms. -/
-def compute (A : Expr) (rhs? : Option Expr := none) : MetaM (Outcome Result) := do
+def compute (A : Expr) (rhs? : Option Expr := none) (recognized? : Option Recognized := none) :
+    MetaM (Outcome Result) := do
   if A.hasExprMVar then return .declined m!"unresolved metavariable"
   let sourceSize := sourceNodeCount A 100001 + (rhs?.map (sourceNodeCount · 100001) |>.getD 0)
   if sourceSize > 100000 then return .declined m!"source node budget exhausted (limit 100000)"
   let some (n, m, _) ← shape? (← inferType A) | return .notApplicable m!"matrix is not a supported literal"
   unless n == m do return .notApplicable m!"matrix is not square"
   if n > maxDimension then return .declined m!"dimension budget exhausted (limit {maxDimension})"
-  let some lit ← literal? A (allowOpen := true) | return .notApplicable m!"matrix is not a supported literal"
+  let recognized? ← match recognized? with
+    | some lit => pure (some lit)
+    | none => literal? A (allowOpen := true)
+  let some lit := recognized? | return .notApplicable m!"matrix is not a supported literal"
   let .some _ ← trySynthInstance (← mkAppM ``_root_.CommRing #[lit.carrier]) |
     return .declined m!"a commutative ring instance is required"
   let lit := { lit with entries := ← lit.entries.mapM (fun row => row.mapM reduceIndices) }
@@ -502,8 +506,11 @@ def compute (A : Expr) (rhs? : Option Expr := none) : MetaM (Outcome Result) := 
     let mut reified : Array (Array ReifiedRing) := #[]
     for row in entries do
       reified := reified.push (← row.mapM fun e => do profile "det.symbolic.reify" (do require (← reifyCommRing e)))
-    -- An empty matrix still needs a classified carrier to construct its context.
-    let seed ← profile "det.symbolic.reify" (do require (← reifyCommRing (← mkNumeral lit.carrier 0)))
+    -- Every entry already carries the classified ring. Reuse it instead of
+    -- starting another reflection request just to discover the same carrier.
+    let seed ← match reified[0]?.bind (·[0]?) with
+      | some entry => pure entry
+      | none => profile "det.symbolic.reify" (do require (← reifyCommRing (← mkNumeral lit.carrier 0)))
     let count := (← atoms).size
     let rhs ← (targetNorm.map (·.term) <|> rhs?).mapM fun e => do profile "det.symbolic.reify" (do require (← reifyCommRing e))
     unless (← atoms).size == count do

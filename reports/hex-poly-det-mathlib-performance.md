@@ -5,7 +5,30 @@ The symbolic simproc remains opt-in: no default `Hex.norm_det` dispatch is
 enabled. This uses the SPEC’s opt-in exception; fallback preserves scope but
 does not establish a performance win.
 
-## Preliminary tree-entry dispatch comparison
+## Common row factors
+
+Automatic dispatch recognizes entries `(cᵢⱼ : R) * fᵢ` with integer
+coefficients and a syntactically shared factor per row. It certifies the
+integer coefficient matrix and applies the row-scaling determinant identity.
+It does not reify or expand the factors. Forced polynomial checker arms
+bypass this shortcut, so the tree/list comparison still measures those
+certificates.
+
+The main 4×4 quadratic probe and the simple 4×4 linear probe both pass
+kernel checking on this route, with 1,674 and 1,440 distinct proof nodes,
+respectively. These are the compiled budget counter's counts, not unshared
+proof sizes. The required 8×8 quadratic, degree-eight and linear probes
+also pass on this route. Tests cover abstract commutative rings at arbitrary
+universes, rational factors, finite characteristic, swaps, singularity,
+expanded-target fallback and rejection of a non-ring multiplication instance.
+
+No timing comparison of this shortcut is recorded yet. The observations
+below belong to the preceding tree-entry implementation and must not be
+reported as measurements of current automatic dispatch. The shortcut
+applies to structured matrices; its smaller certificate does not establish
+a general polynomial-matrix speedup.
+
+## Preliminary tree-entry dispatch comparison before row factoring
 
 The main requested example now wins; a general win over `norm_det` is not
 established. Simple 4×4 cases still lose, and every family remains opt-in.

@@ -294,3 +294,85 @@ end HexPolyDetTests
 
 #print axioms Hex.PolyDet.check_of_ok
 #print axioms HexPolyDetTests.rationalTerm4
+
+namespace RowFactorTests
+
+-- A local multiplication unrelated to the ring operation must decline.
+example (x : Int) : True := by
+  letI : HMul Int Int Int := ⟨fun a b => a + b⟩
+  let A : Matrix (Fin 4) (Fin 4) Int :=
+    !![1 * x, 0 * x, 0 * x, 0 * x;
+      0 * x, 1 * x, 0 * x, 0 * x;
+      0 * x, 0 * x, 1 * x, 0 * x;
+      0 * x, 0 * x, 0 * x, 1 * x]
+  run_tac Lean.Elab.Tactic.withMainContext do
+    let a ← Lean.Meta.getFVarFromUserName `A
+    let some a := (← a.fvarId!.getDecl).value?
+      | throwError "row-factor instance test lost its local literal"
+    let some lit ← HexMatrixMathlib.Literal.literal? a (allowOpen := true)
+      | throwError "row-factor instance test did not recognize its literal"
+    if (← HexPolyDetMathlib.RowFactor.compute? a lit none).isSome then
+      throwError "row-factor shortcut accepted a non-ring multiplication"
+  trivial
+
+-- Arbitrary factors, arbitrary universe, and no characteristic restriction.
+theorem generic {R : Type u} [CommRing R] (a b c d : R) :
+    Matrix.det !![(-3) * a, (-2) * a, (-3) * a, 3 * a;
+      (-1) * b, 1 * b, (-3) * b, (-1) * b;
+      3 * c, 3 * c, (-2) * c, (-1) * c;
+      3 * d, 2 * d, (-1) * d, (-1) * d] = (-26) * a * b * c * d := by
+  det
+
+theorem term (x : Rat) :
+    Matrix.det !![1 * x, 0 * x, 0 * x, 0 * x;
+      0 * (x / 2), 1 * (x / 2), 0 * (x / 2), 0 * (x / 2);
+      0 * (x + 1), 0 * (x + 1), 1 * (x + 1), 0 * (x + 1);
+      0 * (x ^ 2), 0 * (x ^ 2), 0 * (x ^ 2), 1 * (x ^ 2)] =
+      (det% !![1 * x, 0 * x, 0 * x, 0 * x;
+        0 * (x / 2), 1 * (x / 2), 0 * (x / 2), 0 * (x / 2);
+        0 * (x + 1), 0 * (x + 1), 1 * (x + 1), 0 * (x + 1);
+        0 * (x ^ 2), 0 * (x ^ 2), 0 * (x ^ 2), 1 * (x ^ 2)]).value :=
+  (det% !![1 * x, 0 * x, 0 * x, 0 * x;
+    0 * (x / 2), 1 * (x / 2), 0 * (x / 2), 0 * (x / 2);
+    0 * (x + 1), 0 * (x + 1), 1 * (x + 1), 0 * (x + 1);
+    0 * (x ^ 2), 0 * (x ^ 2), 0 * (x ^ 2), 1 * (x ^ 2)]).proof
+
+-- Swaps and characteristic reduction belong to the numeric transport too.
+example (x : ZMod 3) :
+    Matrix.det !![0 * x, 1 * x, 0 * x, 0 * x;
+      1 * x, 0 * x, 0 * x, 0 * x;
+      0 * x, 0 * x, 1 * x, 0 * x;
+      0 * x, 0 * x, 0 * x, 1 * x] = (-1) * x * x * x * x := by det
+
+example {R : Type u} [CommRing R] (x : R) :
+    Matrix.det !![1 * x, 0 * x, 0 * x, 0 * x;
+      1 * x, 0 * x, 0 * x, 0 * x;
+      0 * x, 0 * x, 1 * x, 0 * x;
+      0 * x, 0 * x, 0 * x, 1 * x] = 0 * x * x * x * x := by det
+
+-- A target requiring expansion takes the ordinary polynomial route.
+example (x : Int) :
+    Matrix.det !![1 * (x + 1), 0 * (x + 1), 0 * (x + 1), 0 * (x + 1);
+      0 * x, 1 * x, 0 * x, 0 * x;
+      0 * x, 0 * x, 1 * x, 0 * x;
+      0 * x, 0 * x, 0 * x, 1 * x] = x ^ 4 + x ^ 3 := by det
+
+-- Pin the shortcut: valid proofs through a polynomial fallback do not suffice.
+run_meta do
+  for root in [``generic, ``term] do
+    let mut pending := [root]
+    let mut found := false
+    while let name :: rest := pending do
+      pending := rest
+      let some value := (← Lean.getConstInfo name).value? (allowOpaque := true)
+        | throwError "missing row-factor proof"
+      for used in value.getUsedConstants do
+        if used == ``HexPolyDetMathlib.RowFactor.det then found := true
+        if root.isPrefixOf used then pending := used :: pending
+    unless found do throwError "{root} did not use the row-factor certificate"
+
+/-- info: 'RowFactorTests.generic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms generic
+
+end RowFactorTests
