@@ -5,10 +5,10 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexSturmMathlib.ProofProbe.Support
+public import HexSturmMathlib.Replay.Support
 
 public section
-namespace HexSturmMathlib.ProofProbe
+namespace HexSturmMathlib.ReplayTests
 open Hex DensePoly
 
 /-- Reject a false polynomial identity through the ordinary kernel. -/
@@ -23,4 +23,4 @@ theorem stale : Sturm.Replay.check Sturm.orderSign 8 p 1 (.finite (-2)) (.finite
 
 #print axioms rejected
 #print axioms stale
-end HexSturmMathlib.ProofProbe
+end HexSturmMathlib.ReplayTests

@@ -992,6 +992,7 @@ lean_lib HexConformance where
     ++ #[`HexReflect.TestProviders, `HexReflect.Conformance, `HexReflect.ScopeConformance, `HexReflect.ResidueConformance].map Glob.one
 
     ++ #[`HexSturm.Conformance, `HexSturmMathlib.Conformance].map Glob.one
+    ++ #[.submodules `HexSturmMathlib.Replay]
 
     ++ #[`HexKronecker.Conformance].map Glob.one
 
@@ -1578,10 +1579,6 @@ lean_exe hexminpoly_bench where
 lean_exe hexgramschmidt_bench where
   srcDir := "bench"
   root := `HexGramSchmidt.Bench
-
-lean_lib HexSturmMathlibReplayProbe where
-  srcDir := "bench"
-  globs := #[.submodules `HexSturmMathlib.ProofProbe]
 
 lean_exe hexsturm_bench where
   srcDir := "bench"

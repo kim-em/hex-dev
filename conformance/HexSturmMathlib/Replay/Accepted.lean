@@ -5,10 +5,10 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexSturmMathlib.ProofProbe.Support
+public import HexSturmMathlib.Replay.Support
 
 public section
-namespace HexSturmMathlib.ProofProbe
+namespace HexSturmMathlib.ReplayTests
 open Hex DensePoly
 
 /-- Recheck the literal certificate in a fresh ordinary kernel build. -/
@@ -25,4 +25,4 @@ theorem domain : Domain id (fun _ => Iff.rfl) p (.finite (-2)) (.finite 2) :=
 
 #print axioms accepted
 #print axioms domain
-end HexSturmMathlib.ProofProbe
+end HexSturmMathlib.ReplayTests

@@ -5,10 +5,10 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexSturmMathlib.ProofProbe.Support
+public import HexSturmMathlib.Replay.Support
 
 public section
-namespace HexSturmMathlib.ProofProbe
+namespace HexSturmMathlib.ReplayTests
 open Hex DensePoly
 
-end HexSturmMathlib.ProofProbe
+end HexSturmMathlib.ReplayTests

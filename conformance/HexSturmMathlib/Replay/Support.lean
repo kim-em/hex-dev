@@ -9,7 +9,7 @@ public import HexSturmMathlib
 public meta import HexSturm.Basic
 
 public section
-namespace HexSturmMathlib.ProofProbe
+namespace HexSturmMathlib.ReplayTests
 open Hex DensePoly
 
 @[expose] def p : DensePoly Rat := ofCoeffs #[-1, 0, 1]
@@ -37,4 +37,4 @@ open Hex DensePoly
   upperVariations := 0
   value := 2
 
-end HexSturmMathlib.ProofProbe
+end HexSturmMathlib.ReplayTests
