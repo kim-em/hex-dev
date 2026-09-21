@@ -16,7 +16,7 @@ Samples in kernel modules can't be resolved as well.
 # Samples: 325  of event 'cpu/cycles/P'
 # Event count (approx.): 1495898814
 #
-# Overhead  Command         Shared Object         Symbol                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+# Overhead  Command         Shared Object         Symbol
 # ........  ..............  ....................  .........................................................................................................................................................................................................................................................................................................................................................................................................................................................
 #
      8.60%  hexsturm_bench  hexsturm_bench        [.] l_Int_trailingZeros_aux___redArg
@@ -26,7 +26,7 @@ Samples in kernel modules can't be resolved as well.
      3.78%  hexsturm_bench  hexsturm_bench        [.] lean_nat_gcd
      3.30%  hexsturm_bench  hexsturm_bench        [.] __gmpz_mul_2exp
      2.80%  hexsturm_bench  hexsturm_bench        [.] lean_apply_1
-            |          
+            |
              --0.82%--lean_apply_1
                        l_Lean_Parser_andthenInfo___lam__1
                        lean_apply_1
@@ -156,7 +156,7 @@ Samples in kernel modules can't be resolved as well.
                        l_Lean_Parser_andthenInfo___lam__1
 
      2.69%  hexsturm_bench  hexsturm_bench        [.] lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)
-            |          
+            |
              --0.93%--lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)
                        lean_dec_ref_cold
                        0xfffffffe
@@ -176,7 +176,7 @@ Samples in kernel modules can't be resolved as well.
      1.45%  hexsturm_bench  hexsturm_bench        [.] lean::mpz::mpz(unsigned long)
      1.41%  hexsturm_bench  hexsturm_bench        [.] lp_Hex___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00__private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Hex_DensePoly_pseudoDivMod___at___00Hex_DensePoly_pseudoDiv___at___00Hex_DensePoly_positivePseudoDiv___at___00Hex_QueryChain_build___at___00Hex_QueryReplay_certify___at___00Hex_QueryReplay_query___at___00Hex_ZPoly_tarskiQuery_spec__0_spec__0_spec__3_spec__11_spec__16_spec__23_spec__31_spec__36
      1.38%  hexsturm_bench  hexsturm_bench        [.] mi_free
-            |          
+            |
              --1.08%--mi_free
 
      1.20%  hexsturm_bench  hexsturm_bench        [.] __gmp_default_reallocate
