@@ -438,3 +438,9 @@ characterization, not a pass. Lower-order allocation/loop costs on this small
 ladder are a hypothesis requiring investigation. Every completed sample is
 retained; no rerun or timing-driven change to the registrations was made.
 [#10375 records the required phase rollback and remaining work](https://github.com/kim-em/hex-dev/issues/10375#issuecomment-5757400442).
+
+The exact benchmark fixtures can be checked again with the pinned oracle
+environment using `python scripts/bench/check_sturm_fixtures.py` followed by
+the corresponding `fixtures.jsonl` paths above. Query checks include every
+serialized chain identity and endpoint sign. Deliberately corrupted query
+identities/signs and polynomial multipliers/quotients/gcds are rejected.

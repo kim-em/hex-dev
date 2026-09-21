@@ -156,3 +156,9 @@ consequences and whole-Option backend correspondence remain proof gates.
 The [recorded finding](https://github.com/kim-em/hex-dev/issues/10375#issuecomment-5757400442)
 also covers the owning polynomial library's separate pseudo-gcd scaling gap.
 Nothing in these measurements advances the library phase or closes #10375.
+
+The exact benchmark fixtures can be checked again with the pinned oracle
+environment using `python scripts/bench/check_sturm_fixtures.py` followed by
+the corresponding `fixtures.jsonl` paths above. Query checks include every
+serialized chain identity and endpoint sign. Deliberately corrupted query
+identities/signs and polynomial multipliers/quotients/gcds are rejected.
