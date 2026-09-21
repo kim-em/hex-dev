@@ -125,10 +125,11 @@ dyadic counts. These primitives belong here, not in the number-field layer.
 
 The query and replay declarations are implemented in `QueryChain.lean` and
 `Query.lean`, with array-loop replay invariants in `QueryProofs.lean`.
-The ordered-domain kernel is shared with the planned
+The ordered-domain kernel is shared with the
 [ordered-field frontend](../../SPEC/Libraries/hex-sturm.md). The companion
-proves algebraic correspondence and produced-certificate acceptance; the
-root-sum and semantic domain theorems and new Phase-4 evidence remain required.
+proves algebraic correspondence, produced-certificate acceptance and exact
+semantic domain equivalence. The root-sum theorem and new Phase-4 evidence
+remain required.
 
 Preserve the following public integer/dyadic frontend for the
 [fixed-field sign consumer](../../HexNumberField/SPEC/hex-number-field.md#fixed-field-sign):

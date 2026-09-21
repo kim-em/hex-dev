@@ -44,6 +44,7 @@ RUNTIME_CHECK_RE = re.compile(r"^\s*#(?:eval|guard|reduce|run)\b")
 # every owning exception must be an exact reviewed path rather than a suffix or
 # directory convention. There are currently no required exceptions.
 SEALED_IMPORT_ALL_ALLOWLIST: dict[str, frozenset[Path]] = {
+    "HexSturm.Basic": frozenset(),
     "HexInterval.Executable": frozenset(),
     "HexInterval.Runtime": frozenset(),
     "HexInterval.RuntimeController": frozenset(),

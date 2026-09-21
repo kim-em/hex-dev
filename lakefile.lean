@@ -256,6 +256,12 @@ lean_lib HexBerlekampZassenhaus where
 
 lean_lib HexRealRoots where
 
+@[default_target]
+lean_lib HexSturm where
+
+@[default_target]
+lean_lib HexSturmMathlib where
+
 lean_lib HexInterval where
 
 @[default_target]
@@ -984,6 +990,8 @@ lean_lib HexConformance where
     ++ #[`HexRealAlgebraic.Conformance, `HexRealAlgebraic.Checks, `HexNumberField.ComplexChecks, `HexRealAlgebraic.ReprChecks].map Glob.one
 
     ++ #[`HexReflect.TestProviders, `HexReflect.Conformance, `HexReflect.ScopeConformance, `HexReflect.ResidueConformance].map Glob.one
+
+    ++ #[`HexSturm.Conformance, `HexSturmMathlib.Conformance].map Glob.one
 
     ++ #[`HexKronecker.Conformance].map Glob.one
 

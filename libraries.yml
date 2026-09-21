@@ -1562,6 +1562,16 @@ libraries:
     done_through: 7
     status: active
     proof_probes: [bench/HexRealRootsMathlib/ProofProbe]
+  HexSturm:
+    deps: [HexPoly, HexRealRoots]
+    mathlib: false
+    done_through: 0
+    status: active
+  HexSturmMathlib:
+    deps: [HexSturm, HexPolyMathlib, HexRealRootsMathlib]
+    mathlib: true
+    done_through: 0
+    status: active
   HexRCF:
     deps: [HexRealRoots, HexRealRootsMathlib, HexPolyZ, HexPolyZMathlib, HexRealFormulaMathlib]
     mathlib: true

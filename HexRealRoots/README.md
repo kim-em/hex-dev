@@ -44,9 +44,9 @@ def p : ZPoly := DensePoly.ofCoeffs #[-2, 0, 0, 0, 1]
 
 The query uses the shared `QueryChain` kernel, also available with generic
 endpoint adapters and noncanonical coefficient representations. Produced-chain
-and certificate acceptance are proved in the companion. The Sturm–Tarski
-root-sum theorem, exact semantic domain characterization and new query
-performance evidence remain outstanding; see the SPEC's proof gates.
+and certificate acceptance and exact semantic domain equivalence are proved in
+the companion. The Sturm–Tarski root-sum theorem and new query performance
+evidence remain outstanding; see the SPEC's proof gates.
 
 `ZPoly.isolateRealRoots?` rejects the zero polynomial and, at the core level, expects a
 squarefree positive-degree input. Nonzero constants produce an empty result.
