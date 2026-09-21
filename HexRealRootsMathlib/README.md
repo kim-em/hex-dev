@@ -112,9 +112,27 @@ Together they support the rational/integer whole-`Option` agreement theorem
 in hex-sturm-mathlib without assuming root-sum semantics.
 
 The signed-remainder/Cauchy-index theorem and its polynomial IVT/Rolle
-foundation remain required for root-sum semantics and singleton-sign/count
-bounds. These algebraic replay results do not assert those outstanding
+foundation remain required for general root-sum semantics and its
+singleton-sign and arbitrary ordered-field count consequences. These algebraic replay results do not assert those outstanding
 semantic theorems.
+
+`TarskiSum.lean` defines the mathematical sum over distinct roots in an open
+interval, allowing infinite endpoints. It proves singleton and constant cases,
+query `1` as cardinality, zero/divisible queries, removal of common-root zero
+contributions, and absolute-value/cardinality/degree bounds with existing
+algebra. These lemmas do not identify the executable query with that sum.
+`Tarski.check_singleton` and `Tarski.check_constant` separately prove zero
+answers for those accepted literal certificates without an analytic foundation.
+
+`TarskiCount.lean` connects checked integer derivative chains to the existing
+real Sturm theorem. Accepted query-one certificates count roots on finite
+dyadic intervals and on the whole real line; the actual integer producer is
+therefore nonnegative on query `1`. The rational companion transports the
+finite-interval result. `rootsIn_card` identifies the legacy half-open count
+with the open distinct-root set under the accepted domain;
+`integer_check_rootSum` and `integer_query_rootSum` give the actual query-one
+root-sum identity. Only the arbitrary ordered-field count theorem and
+its dependent general wrapper require the deferred foundation.
 
 # Verification
 

@@ -1,0 +1,18 @@
+lean-bench profile: perf record --clockid mono -F 1999 -g --call-graph dwarf -o /tmp/10375-replay-512.perf -- /tmp/hexsturm-replay-bit-cost _child --bench Hex.SturmBench.runReplay --param 512 --target-nanos 500000000 --cache-mode warm
+WARNING: Kernel address maps (/proc/{kallsyms,modules}) are restricted,
+check /proc/sys/kernel/kptr_restrict and /proc/sys/kernel/perf_event_paranoid.
+
+Samples in kernel functions may not be resolved if a suitable vmlinux
+file is not found in the buildid cache or in the vmlinux path.
+
+Samples in kernel modules won't be resolved at all.
+
+If some relocation was applied (e.g. kexec) symbols may be misresolved
+even with a suitable vmlinux or kallsyms file.
+
+Couldn't record kernel reference relocation symbol
+Symbol resolution may be skewed if relocation was used (e.g. kexec).
+Check /proc/kallsyms permission or run as root.
+{"schema_version":1,"kind":"parametric","function":"Hex.SturmBench.runReplay","param":512,"inner_repeats":1,"total_nanos":4141438703,"per_call_nanos":4141438703.000000,"cache_mode":"warm","result_hash":"0xb","status":"ok","error":null,"alloc_bytes":null,"peak_rss_kb":86796,"env":{"arch":"x86_64","cpu_cores":96,"cpu_model":"AMD EPYC 9455 48-Core Processor","exe_name":"hexsturm-replay-bit-cost","git_commit":"205086d53f598fff1576ed7e7d87b00666baeee0","git_dirty":true,"hostname":"chungus2","lean_bench_version":"0.1.0","lean_toolchain":"leanprover/lean4:4.34.0","lean_version":"4.34.0","os":"linux","platform_target":"x86_64-unknown-linux-gnu","timestamp_iso":"2026-09-21T14:21:05Z","timestamp_unix_ms":1790000465713},"profile_kernel":true}
+[ perf record: Woken up 538 times to write data ]
+[ perf record: Captured and wrote 134.397 MB /tmp/10375-replay-512.perf (16704 samples) ]

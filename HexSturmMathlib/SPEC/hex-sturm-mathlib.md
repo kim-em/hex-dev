@@ -198,6 +198,45 @@ It must include nonzero constants. An arbitrary common gcd of `P,F` is not
 this guard and must not be rejected. The bound and singleton theorems concern
 semantic root sets; they do not introduce root enumeration into the runtime.
 
+### Root-count boundary
+
+The missing general lemma is nonnegativity of the **actual** query:
+`Sturm.query sign p 1 a b = some q → 0 ≤ q`, under the companion's existing
+operation/sign-preserving, zero-reflecting interpretation into an ordered
+field and the exact domain established by producer success. Equivalently, for
+the accepted derivative chain, the upper-endpoint variation must be at most
+the lower-endpoint variation. Neither degree descent nor polynomial identities
+alone currently supply that endpoint monotonicity theorem.
+
+`HexRealRootsMathlib.Tarski.check_singleton` and `check_constant` prove zero
+values directly from checked data, including constant-head queries of `1`.
+The existing real-only results remain available:
+`Sturm.isChain_of_replay` in `HexRealRootsMathlib/LiteralChain.lean` establishes
+a derivative Sturm chain over `Polynomial ℝ`, and its count theorem uses
+`Sturm.IsSturmChain.sturm_Ioc`. `sturmCount_eq_card_roots` and
+`rootCount_eq_card_roots` in `ChainCorrespond.lean` prove the existing integer
+Sturm APIs. These results have a fixed real coefficient field and real root
+flank hypotheses. They cannot be instantiated at an arbitrary ordered field
+or a non-Archimedean coefficient interpretation. The new generic backend
+congruence theorem requires a common interpreted field; it does not manufacture
+an embedding of an arbitrary ordered field into `ℝ`.
+
+The effective specializations are proved now in `TarskiCount.lean`:
+`integer_sturmChain` connects the checked recurrence to the existing real Sturm
+theorem (strict derivative degree removes the initial quotient);
+`integer_check_count` and `integer_check_total` prove finite-interval and whole-line
+counts for arbitrary accepted integer query-one certificates;
+`integer_query_count` and `integer_query_nonneg` apply to the actual integer
+producer. `query_rat_count` and `query_rat_nonneg` in `Rational.lean` transport
+finite dyadic-interval counts to the rational frontend after positive clearing.
+These use the existing real foundation, not a new analytic proof.
+
+Thus the remaining arbitrary-field nonnegativity lemma and its dependent
+`Option Nat` wrapper belong to #10389. The implementation does not use
+`Int.toNat` to clamp negative answers, invent a new failure case, or ask callers
+for the missing semantic law. The existing integer root-count APIs are retained;
+this exception concerns the specified new general `Hex.Sturm.rootCount` API.
+
 ## Integer/dyadic specialization and positive clearing
 
 `ZPoly.tarskiQuery_eq` and `IntTarskiCertificate.check_sound` stay in

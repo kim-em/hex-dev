@@ -1,0 +1,63 @@
+{
+  "cpu": 26,
+  "host": "chungus2",
+  "start": "2026-09-21T13:05:42.902528+00:00",
+  "load_start": [
+    4.400390625,
+    6.0361328125,
+    5.83984375
+  ],
+  "git_head": "b511f3d0041043a6a3e2698b9dd7a91f7ebc57dd",
+  "git_status": " M HexRealRootsMathlib.lean\n M bench/HexSturm/Bench.lean\n M conformance/HexRealRootsMathlib/Conformance.lean\n M reports/hex-sturm-performance.md\n?? HexRealRootsMathlib/TarskiSum.lean\n?? reports/bench-results/hex-sturm-mathlib-8a578a437.json\n",
+  "binary_sha256": "ae0869a99aaa094838b26a00aa4546b622fee42b9f664b15d0332cc3b4ba6c99",
+  "source_sha256": "3ac2844cd42ee3e291a0abe4d7a6b5e476f71e4fce4cffeb8f9e48e8552af5fd",
+  "commands": [
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "axes"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmBench.runReplay",
+        "--param-floor",
+        "8",
+        "--param-ceiling",
+        "128",
+        "--param-schedule",
+        "doubling",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-axes/replay-wide.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/.lake/build/bin/hexsturm_bench",
+        "run",
+        "Hex.SturmBench.runIntegerHigh",
+        "Hex.SturmBench.runInitialHigh",
+        "Hex.SturmBench.runReplayHigh",
+        "--param-floor",
+        "16",
+        "--param-ceiling",
+        "1024",
+        "--param-schedule",
+        "doubling",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10375/reports/bench-results/sturm-axes/query-wide.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "end": "2026-09-21T13:05:56.424385+00:00",
+  "load_end": [
+    4.31103515625,
+    5.935546875,
+    5.80908203125
+  ]
+}

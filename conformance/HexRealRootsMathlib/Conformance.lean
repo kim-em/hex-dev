@@ -7,6 +7,9 @@ Authors: Kim Morrison
 import HexRealRootsMathlib.ChainCorrespond
 import HexRealRootsMathlib.Isolations
 import HexRealRootsMathlib.TarskiTests
+import HexRealRootsMathlib.TarskiSum
+import HexRealRootsMathlib.TarskiSigns
+import HexRealRootsMathlib.TarskiCount
 
 /-!
 Companion conformance checks for `HexRealRootsMathlib`.
@@ -255,6 +258,67 @@ private theorem quartic_root_pos :
   simp only [quarticIso, toReal_ofInt, quartic_isRoot_iff] at h
   convert h using 3
   all_goals norm_num
+
+
+/-- The mathematical sum at the unique root of `X` gives the sign of `X-1`. -/
+theorem rootSum_X : Tarski.rootSum (Polynomial.X : Polynomial Rat)
+    (Polynomial.X - 1) .negInf .posInf = -1 := by
+  simp only [Tarski.rootSum, Tarski.rootsIn, Polynomial.roots_X, Multiset.toFinset_singleton,
+    Finset.filter_singleton, Tarski.InInterval, and_self, ↓reduceIte, Finset.sum_singleton]
+  norm_num
+
+/-- info: 'HexRealRootsMathlib.Tarski.abs_rootSum_le_degree' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Tarski.abs_rootSum_le_degree
+/-- info: 'HexRealRootsMathlib.Tarski.rootSum_of_dvd' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Tarski.rootSum_of_dvd
+/-- info: 'HexRealRootsMathlib.Tarski.rootSum_one' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Tarski.rootSum_one
+
+/-- info: 'HexRealRootsMathlib.Tarski.check_constant' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Tarski.check_constant
+
+/-- The accepted supplied integer certificate proves a real root count. -/
+theorem tarski_literal_count : (2 : Int) =
+    (Literal.rootsIn (toPolyℝ Hex.TarskiTests.p) Hex.TarskiTests.interval).card :=
+  Tarski.integer_check_count () Hex.TarskiTests.p Hex.TarskiTests.interval 2
+    Hex.TarskiTests.literal Hex.TarskiTests.literal_checks
+
+/-- The same literal derivative certificate counts roots at infinity. -/
+theorem tarski_literal_total : (2 : Int) = (toPolyℝ Hex.TarskiTests.p).roots.card := by
+  apply Tarski.integer_check_total () Hex.TarskiTests.p 2
+    { Hex.TarskiTests.literal with lower := .negInf, upper := .posInf }
+  simp only [Hex.TarskiCertificate.check, Hex.SignedRemainderChain.check,
+    ← Array.all_toList, Array.toList_range]
+  decide +kernel
+
+theorem tarski_literal_rootSum : (2 : Int) =
+    Tarski.rootSum (toPolyℝ Hex.TarskiTests.p) 1
+      (.finite (Dyadic.toReal Hex.TarskiTests.interval.lower))
+      (.finite (Dyadic.toReal Hex.TarskiTests.interval.upper)) :=
+  Tarski.integer_check_rootSum () Hex.TarskiTests.p Hex.TarskiTests.interval 2
+    Hex.TarskiTests.literal Hex.TarskiTests.literal_checks
+
+/-- info: 'HexRealRootsMathlib.Tarski.integer_check_rootSum' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Tarski.integer_check_rootSum
+
+/-- info: 'HexRealRootsMathlib.Tarski.integer_query_rootSum' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Tarski.integer_query_rootSum
+
+/-- info: 'HexRealRootsMathlib.Tarski.integer_check_count' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Tarski.integer_check_count
+/-- info: 'HexRealRootsMathlib.Tarski.integer_check_total' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Tarski.integer_check_total
+/-- info: 'HexRealRootsMathlib.Tarski.integer_query_nonneg' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Tarski.integer_query_nonneg
 
 end Conformance
 end HexRealRootsMathlib

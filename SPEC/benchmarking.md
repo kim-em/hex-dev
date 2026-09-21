@@ -1400,7 +1400,14 @@ explicitly forbidden:
   `degree := f(n)`, or raising `verdictWarmupFraction` until the
   harness reports "consistent" is not a fix — it is laundering the
   verdict. Inconclusive means raise the schedule or file a
-  finding-issue against the implementation, never re-declare.
+  finding-issue against the implementation. A demonstrated error in the
+  declaration is different: record an independent mathematical or source-level
+  counterexample, retain the old declaration and every sample, and derive the
+  corrected cost model before collecting new measurements. State the arithmetic
+  cost model, input regime and schedule explicitly. A corrected declaration
+  requires fresh validation; it does not turn an earlier inconclusive run into
+  a pass. Selecting exponents or constants from observed slopes remains
+  verdict-fitting.
 - **Best-case / short-circuit inputs as sole Phase-4 evidence.**
   Inputs the algorithm walks past in its happy path — even when
   they don't formally fail any precondition — cannot be the sole

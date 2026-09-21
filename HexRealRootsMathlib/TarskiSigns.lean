@@ -28,6 +28,41 @@ theorem check_value {D : Type v} {A : Type w} {Ctx : Type u}
   obtain ⟨_, _, _, _, _, _, _, _, _, hr, hl, hu, _, _, hvl, hvu, hv⟩ := h
   exact ⟨hr, by simpa only [hvl, hvu, hl, hu] using hv⟩
 
+
+/-- A checked singleton chain has zero variation at both endpoints. -/
+theorem check_singleton {D : Type v} {A : Type w} {Ctx : Type u}
+    [Zero D] [DecidableEq D] [One D] [Add D] [Sub D] [Mul D] [NatCast D]
+    [DecidableEq A] [DecidableEq Ctx]
+    (sign : D → Int) (endpointSigns : EndpointSigns D A) (context : Ctx)
+    (p g : DensePoly D) (a b : Endpoint A) (value : Int) (cert : TarskiCertificate D A Ctx)
+    (h : TarskiCertificate.check sign endpointSigns context p g a b value cert = true)
+    (hs : cert.remainders.chain.size = 1) : value = 0 := by
+  have hv := (check_value sign endpointSigns context p g a b value cert h).2
+  have he : cert.remainders.chain = #[cert.remainders.chain[0]'(by omega)] := by
+    apply Array.ext
+    · simpa using hs
+    · intro i hi hj
+      have : i = 0 := by simpa using (show i = 0 by omega)
+      subst i
+      rfl
+  rw [he] at hv
+  have hz (z : Int) : signVar [z] = 0 := by
+    by_cases h : z = 0 <;> simp [signVar, h, signVar.go]
+  simpa [TarskiCertificate.signs, Hex.Array.map'_eq_map, hz] using hv
+
+/-- Constant heads force a singleton checked chain, hence a zero answer.
+This supported count specialization needs no signed-index theorem. -/
+theorem check_constant {D : Type v} {A : Type w} {Ctx : Type u}
+    [Zero D] [DecidableEq D] [One D] [Add D] [Sub D] [Mul D] [NatCast D]
+    [DecidableEq A] [DecidableEq Ctx]
+    (sign : D → Int) (endpointSigns : EndpointSigns D A) (context : Ctx)
+    (p g : DensePoly D) (a b : Endpoint A) (value : Int) (cert : TarskiCertificate D A Ctx)
+    (h : TarskiCertificate.check sign endpointSigns context p g a b value cert = true)
+    (hp : p.size = 1) : value = 0 := by
+  have hc := (check_value sign endpointSigns context p g a b value cert h).1
+  simp only [SignedRemainderChain.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at hc
+  exact check_singleton sign endpointSigns context p g a b value cert h (by omega)
+
 variable {K : Type u} [Field K] [DecidableEq K] [LinearOrder K] [IsStrictOrderedRing K]
 
 omit [DecidableEq K] in

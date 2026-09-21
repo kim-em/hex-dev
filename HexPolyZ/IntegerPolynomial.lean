@@ -626,6 +626,10 @@ Unlike primitive-part normalization, this preserves the sign of the polynomial. 
 def clearDenominators (f : DensePoly Rat) : Nat × ZPoly :=
   (ratCommonDen f.toArray.toList, ratPolyPrimitivePartCleared f)
 
+/-- Clearing the unit polynomial preserves the unit and uses multiplier one. -/
+theorem clearDenominators_one : clearDenominators (1 : DensePoly Rat) = (1, (1 : ZPoly)) := by
+  rfl
+
 /-- The clearing multiplier is positive, including for the zero polynomial. -/
 theorem clearDenominators_pos (f : DensePoly Rat) : 0 < (clearDenominators f).1 :=
   ratCommonDen_pos f.toArray.toList
