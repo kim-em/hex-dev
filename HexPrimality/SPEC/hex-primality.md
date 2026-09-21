@@ -1151,24 +1151,23 @@ HexIntFactor adapter serializes every ECM event as route `ecm`, with fields
 `subject`, `sigma`, requested/effective bound, `outcome` (`noFactor`,
 `factor`, or `whole`), `factor` when present, and `attempts = 1`. Preserve
 event order and p−1 skip reasons; do not drop ECM events. These fields
-are diagnostics only; counted results remain the accounting source. When
-implementing these budget and result extensions, advance `SearchExtension`
-ABI from 2 to 3 and update registrations together; reject incompatible registrations before execution.
-A producer unable to honor a requested policy or total attempt limit declines
-without work, retaining the input residual and state. The current downstream
-adapter's refusal of a total-limit construction allocation remains valid.
-Default construction enablement is false until its independent usefulness
-gate passes in a reviewed report. Passing the ordinary factorization gate
-does not turn it on. Only dynamically validated proper divisors enter
-assembly, and the existing certificate checker remains the final authority.
+are diagnostics only. Counted results remain the accounting source.
+`SearchExtension` uses ABI version 3. Reject incompatible registrations before
+execution. A producer unable to honor a requested policy or total attempt limit
+declines without work, retaining the input residual and state. The ordinary
+HexIntFactor adapter declines total-limit construction allocations.
+Pollard stage-2 construction enablement defaults to false and requires the
+independent per-consumer usefulness evidence specified above. Ordinary
+factorization measurements do not establish construction usefulness. Only
+dynamically validated proper divisors enter assembly, and the certificate
+checker remains the final authority.
 
 ### Taking up downstream factoring advances
 
-hex-int-factor's stronger factorization reaches, or is intended to reach, this
-library's search without inverting the proof dependency through two current
-routes and one deferred extension:
+HexIntFactor supplies stronger factorization to this library's search without
+inverting the proof dependency through these interfaces:
 
-1. **Certificate hand-off** (works today). `PrimeCert` is plain data
+1. **Certificate hand-off.** `PrimeCert` is plain data
    and `checkPrime` accepts a certificate from any producer, so a
    caller that factors `n - 1` better than `partialFactor` assembles
    the node itself and lets the checker decide. hex-int-factor needs
@@ -1187,9 +1186,7 @@ routes and one deferred extension:
 3. **The optional search hook.** `primeCertWith?` and its counted internal
    form parameterize certificate construction by `FactorSearch`; `primeCert?`
    still selects `defaultFactorSearch` and stays on the original route.
-   `Hex.PrimalityTactic.SearchExtension` currently uses ABI version 2;
-   stage-2 budget/trace integration advances it to version 3 as specified
-   above. A downstream
+   `Hex.PrimalityTactic.SearchExtension` uses ABI version 3. A downstream
    registration names an ordinary compiled `FactorSearch` declaration; the
    elaborator checks the registration type, ABI version, declaration presence,
    and factor-declaration type before evaluation. Names are tried in the fixed
@@ -2150,11 +2147,118 @@ After importing `HexIntFactor.Construction`, the explicit expression
 `Hex.Nat.ecmFactorSearch` selects its bounded 64-curve two-stage ECM provider.
 That downstream module owns the curve bounds, arithmetic, worklist, cost model,
 and proper-divisor theorem, specified in HexIntFactor §3a. This dependency never
-points back upstream. The measured route constructs secp256k1, P-384 and
-Curve448; plain `primality?` still exhausts on those inputs. P-521 remains
-supported by the core route and retains its certificate with the explicit ECM
-provider. See [the per-target evidence](../../reports/hex-primality-ecm-stage2.md).
-No expensive method is enabled merely by importing the downstream module.
+points back upstream. The provider must support complete recursive certificate
+construction for secp256k1, P-384 and Curve448. P-521 is a regression target
+whose certificate and attempt total must agree with the HexPrimality route.
+Measurements belong in [the field report](../../reports/hex-primality-ecm-stage2.md).
+
+### Automatic construction fallback and caller resources
+
+The standard import is `HexIntFactor`, with `HexPrimalityMathlib` added for
+`Nat.Prime`. With these imports, plain `primality?` must discover and recursively
+certify secp256k1, P-384 and Curve448 without a `factor :=` argument.
+User-supplied Lean resource options may still be necessary. Importing only
+HexPrimality selects its own factoring methods. No upstream library imports
+HexIntFactor or Mathlib.
+
+Run `Construction.run` with `Construction.factorSearch` first, using
+`constructionBudget` and `Rand.ofSeed n`. Apply explicit budget options before
+search. Return its first success unchanged, including its certificate and
+attempt count. Only an exhausted construction with a nonzero remaining attempt
+allowance may try registered construction providers. A composite verdict,
+invalid input, explicit `factor :=` override, or `using` certificate does not
+activate automatic fallback. Importing a provider must not add its search cost
+to already successful construction. Ordinary `primality`, ordinary integer
+factorization, and Pollard continuation use their separately specified policies.
+
+Construction registration uses a separate ABI from ordinary `SearchExtension`
+version 3. In namespace `Hex.PrimalityTactic`, define
+`ConstructionExtension` with fields `version : Nat` and `factorName : Name`,
+`constructionExtensionVersion = 1`, and the fixed discovery list
+`constructionExtensionNames` containing only
+`HexIntFactor.PrimalityTactic.constructionExtension`. Adding or reordering registrations requires a HexPrimality release.
+`HexIntFactor.Primality` must export that version-1 declaration naming an
+ordinary definition `Hex.Nat.ecmConstructionFactor : FactorSearch` equal to
+the default `Hex.Nat.ecmFactorSearch` closure. The definition's name, rather than a meta
+closure, crosses the boundary. Native execution is governed separately by
+[the producer compilation policy](../../SPEC/design-principles.md#lakefile).
+
+The ordinary `intFactorSearch` adapter declines total-limit allocations and
+must not implement this registration. Absent construction registrations are
+skipped. When fallback examines a present registration, it must validate its
+type and ABI version, the provider's presence and its `FactorSearch` type.
+Any mismatch aborts the tactic with a diagnostic naming the offending
+declaration. The registered schedule is specified in HexIntFactor §3a. It
+must not supply target-specific factors or certificates. Explicit provider
+syntax bypasses automatic selection.
+
+Retry the complete construction at most once per registered provider, passing
+the previous failure's advanced `Rand` and subtracting all previous attempts
+from the original allowance. Failed attempts, repeated factoring, recursive
+certification and witnesses all count. Keep events in execution order and
+report the combined attempt total and actual provider allocations. The default
+allowance is 1024 attempts, with the 521-bit limit, depth 32 and per-provider
+work bounds specified above. A named input does not authorize a larger
+allocation. Search exhaustion identifies the unresolved obligation rather
+than silently increasing bounds. A retry starts at the root and does not
+reuse a failed child independently of its random state and remaining budget.
+
+Semantic search bounds and Lean's heartbeat limit are independent limits.
+Production tactics and providers must not raise or disable `maxHeartbeats`,
+reset its counter or initial baseline, or exclude search allocations from
+accounting. They must not move work to a fresh process or task to evade the
+caller's allowance. Compiled execution and allocation reduction are legitimate
+optimizations, with ordinary Lean accounting left intact. A user may explicitly
+set a larger finite `maxHeartbeats`. Document that requirement whenever the
+default fails, and distinguish the failure from semantic-attempt exhaustion.
+The same limits apply to fallback as to the first route.
+
+An exponent-threshold warning reports refusal of an arithmetic evaluator's
+power-reduction shortcut. It is distinct from the tactic's final input
+normalization result. Do not silently raise `exponentiation.threshold` or suppress its warning to
+make examples appear to use defaults. The toolchain's threshold and the
+semantic search budget are independent. Test numeral and power-expression
+goals separately. Keep necessary options local in documentation and remove
+options demonstrated to be unnecessary. A tested allowance must not be
+presented as the minimum unless the evidence establishes that claim.
+
+### Experiments and acceptance for automatic construction
+
+Validate the HexPrimality route followed by ECM with the remaining allowance
+and advanced random state. Test the complete recursive paths for the three
+fields, P-521, Curve25519, the 507-bit exhausted fixture from the standard-field
+report, and the small and composite conformance inputs. Record success or
+first unresolved obligation, attempts, events, certificate and actual seed
+transitions. A root split alone is not success.
+
+Compare explicit ECM with automatic fallback on the same goals to measure
+retry cost. Compare construction without registration with registered fallback
+on supported and exhausted inputs. Use four fixed trial-major blocks with
+adjacent arms in alternating AB/BA order, following
+[the shared-host protocol](../../SPEC/benchmarking.md#shared-host-measurement-policy).
+Retain every completed sample, including failures. Keep native search,
+fresh-module tactic elaboration, literal rendering/elaboration and ordinary
+kernel replay separate. Use the same user-visible Lean options in both arms.
+Record heartbeat usage as observational counter deltas, without changing
+counters, baselines or limits. Do not infer usage by repeatedly varying limits. A default-limit failure is a
+result, not a discarded timing. Probe reduced option sets separately from
+timing comparisons, and do not claim a minimum without measuring it.
+
+Acceptance includes exact `#guard_msgs` suggestions for all three automatic
+field constructions, fixed native construction/checker benchmarks, ordinary
+checker replay, and Mathlib companion goal coverage. Inputs certified by the
+first route, especially P-521, keep their certificates and attempt totals.
+Test absent and malformed registrations, explicit override precedence, zero
+and nearly exhausted shared allowances, composite inputs, recursive failures,
+and rejection of invalid factor data. No default success may depend on
+external factorization or a change to the sound checker. The manual must show
+the standard import and plain tactic, with honest local resource settings.
+Keep expensive automatic field guards in the filtered
+`HexIntFactorFieldConformance` target. Every exhaustion guard must state its
+import configuration, so a HexPrimality-only failure does not stand in for
+failure with registered ECM. Include bounded unsuccessful fallback in cost
+evidence without adding expensive searches to the unfiltered conformance suite.
+Link complete retained measurements and state any unsupported inputs.
 
 ## Certificate language and extension policy
 
@@ -2164,9 +2268,10 @@ ordinary named definitions, local `let` bindings, and explicitly invoked
 producer functions or macros. `primality? using expression` evaluates such an
 expression at type `PrimeCert`, validates its subject and `checkPrime`, and
 renders the existing fully qualified constructor literal. It also works through
-the companion's `Nat.Prime` handler. Plain `primality?` and its `maxAttempts`
-form keep their construction policy and output. The `using` form does not run
-that search and cannot be combined with `maxAttempts`.
+the companion's `Nat.Prime` handler. The construction policy and output of
+plain `primality?` and its `maxAttempts` form are unaffected by the `using`
+form. The `using` form does not run that search and cannot be combined with
+`maxAttempts`.
 
 This chooses an explicit producer interface over a second global method
 registry. A producer can be supplied from another module without changing Hex;
@@ -2225,15 +2330,15 @@ not a replacement for them.
 
 ### Alternatives and sharing
 
-1. **Surface syntax over current data: selected through ordinary Lean.**
+1. **Surface syntax over `PrimeCert`: selected through ordinary Lean.**
    The positive-exponent macro and named Curve25519 prototype reduce source
    repetition. `using` flattens them into portable data; no custom parser or
    elaborator becomes a replay dependency.
-2. **An implicit producer registry: not selected.** It adds ordering, duplicate
-   registration, import-dependent selection, ABI, and resource-accounting
-   policy without adding accepted certificates. Explicit function selection
-   supplies the needed extension point. Existing bounded factor callbacks and
-   their versioned downstream registration keep their separate search role.
+2. **Explicit certificate producers.** Select certificate producers through
+   ordinary Lean expressions, without an implicit producer registry.
+   `SearchExtension` and `ConstructionExtension` register bounded factor
+   providers for their separate search roles. Neither is a registry of
+   certificate producers for the `using` form.
 3. **A versioned step interpreter or DAG: deferred.** None of these examples
    needs a new criterion or shows unacceptable tree expansion. A DAG could
    matter for many parents sharing a large child: naming a value saves source
@@ -2350,6 +2455,11 @@ boundary because the core consumers live below the companion.
    Land the fixed conformance cases before adapter uptake. Default enablement
    additionally requires the arithmetic and per-consumer benchmark gates;
    this milestone is not established by existing stage-1 benchmarks.
+
+7. **Automatic construction fallback.** The version-1 construction registration,
+   deterministic retries under one shared attempt allocation, honest caller
+   resources, complete recursive field-prime conformance and phase-separated
+   measurements specified under reusable certificate construction.
 
 ## File organisation
 
