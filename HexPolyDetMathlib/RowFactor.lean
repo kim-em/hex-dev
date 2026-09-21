@@ -85,8 +85,8 @@ def compute? (A : Expr) (lit : Recognized) (rhs? : Option Expr) : MetaM (Option 
   if A.hasExprMVar || rhs?.any (·.hasExprMVar) then return none
   if lit.n == 0 || lit.n > maxDimension then return none
   if HexMatrixMathlib.DetPoly.Certificate.arm (← getOptions) != .automatic then return none
-  if Hex.Reflect.sourceNodeCount A 100001 +
-      (rhs?.map (Hex.Reflect.sourceNodeCount · 100001)).getD 0 > 100000 then return none
+  if Hex.Reflect.proofNodeCount #[A] 100001 +
+      (rhs?.map (fun e => Hex.Reflect.proofNodeCount #[e] 100001)).getD 0 > 100000 then return none
   let .some ring ← trySynthInstance (← mkAppM ``CommRing #[lit.carrier]) | return none
   let some u := (← getLevel lit.carrier).dec | return none
   let entryHead := mkApp2 (mkConst ``RowFactor.entry [u]) lit.carrier ring

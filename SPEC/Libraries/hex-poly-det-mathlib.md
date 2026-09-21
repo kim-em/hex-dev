@@ -695,7 +695,9 @@ HexPolyDetMathlib/
   Normalize.lean    -- proved coefficient normalization
   Frontend.lean     -- reification and certificate preparation
   Small.lean        -- closed forms
-  RowFactor.lean    -- common row factors and numeric determinant transport
+  RowFactor.lean    -- integer row factors and numeric determinant transport
+  RatFactor.lean    -- rational scalar skeletons and numeric row-factor transport
+  Structural.lean   -- triangular identities and bounded sparse cofactors
   Tactic.lean       -- the handler on hex-bareiss-mathlib's `det` syntax kind, det% for symbolic input, Hex.normPolyDet
   Tests.lean
   PackedTests.lean  -- packed routes, singularity, transport, and axiom audits

@@ -430,3 +430,156 @@ run_meta do
 #print axioms generic
 
 end RowFactorTests
+
+namespace StructuralTests
+set_option maxHeartbeats 800000
+
+theorem diagonal {R : Type u} [CommRing R] (a b : R) :
+    Matrix.det !![a, 0; 0, b] = a*b := by det
+
+theorem upper {R : Type u} [CommRing R] (a b c d e f : R) :
+    Matrix.det !![a, b, c; 0, d, e; 0, 0, f] = a*d*f := by det
+
+theorem lower {R : Type u} [CommRing R] (a b c d e f : R) :
+    a*d*f = Matrix.det !![a, 0, 0; b, d, 0; c, e, f] := by det
+
+theorem zeroRow (a b c d e f : Int) :
+    Matrix.det !![a, b, c; 0, 0, 0; d, e, f] = 0 := by det
+
+theorem rational (a b c : Rat) :
+    Matrix.det !![(-2)*a/2, 3*a/2, (-2)*a/2;
+      (-3)*b/3, 1*b/3, 3*b/3;
+      (-1)*c/4, (-3)*c/4, 1*c/4] = (-40)*a*b*c/24 := by det
+
+theorem rationalChanged (a b c : Rat) :
+    Matrix.det !![a/2, 2*a/2, 3*a/2;
+      4*b/3, 0, 6*b/3;
+      7*c/5, 8*c/5, 10*c/5] = 52*a*b*c/30 := by det
+
+theorem rationalZero (a b : Rat) :
+    Matrix.det !![a/0, 2*a/0; b/3, 4*b/3] = 0 := by det
+
+theorem sparse {R : Type u} [CommRing R] (a b c d e : R) :
+    Matrix.det !![a, 1, 1, 1, 0; 1, b, 1, 1, 0;
+      1, 1, c, 1, 0; 1, 1, 1, d, 0; 0, 0, 0, 0, e] =
+      (a*(b*(c*d-1) - (d-1) + (1-c)) -
+       (c*d-1 - (d-1) + (1-c)) +
+       (d-1 - b*(d-1) + (1-1)) -
+       (1-c - b*(1-c) + (1-1)))*e := by det
+
+-- A column cofactor in an odd position exercises transposition and its sign.
+theorem sparseColumn (x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 a b c d e : Int) :
+    Matrix.det !![x0, 0, x1, x2, x3; x4, 0, x5, x6, x7;
+      x8, 0, x9, x10, x11; x12, 0, x13, x14, x15;
+      a, e, b, c, d] = -e * (x0*(x5*(x10*x15-x11*x14) - x6*(x9*x15-x11*x13) + x7*(x9*x14-x10*x13)) - x1*(x4*(x10*x15-x11*x14) - x6*(x8*x15-x11*x12) + x7*(x8*x14-x10*x12)) + x2*(x4*(x9*x15-x11*x13) - x5*(x8*x15-x11*x12) + x7*(x8*x13-x9*x12)) - x3*(x4*(x9*x14-x10*x13) - x5*(x8*x14-x10*x12) + x6*(x8*x13-x9*x12))) := by det
+
+-- Both the term form and simproc share structural dispatch.
+theorem term (a b : Int) :
+    (det% !![a, 0; 0, b]).value = a*b := by rfl
+
+theorem simplified (a b : Rat) :
+    Matrix.det !![a, 0; 0, b] = a*b := by simp only [Hex.normPolyDet]
+
+run_meta do
+  for (root, route) in [( ``diagonal, ``HexPolyDetMathlib.Structural.triangular),
+      (``upper, ``HexPolyDetMathlib.Structural.triangular),
+      (``lower, ``HexPolyDetMathlib.Structural.triangular),
+      (``zeroRow, ``HexPolyDetMathlib.Structural.zeroRow),
+      (``rational, ``HexPolyDetMathlib.RatFactor.det),
+      (``rationalChanged, ``HexPolyDetMathlib.RatFactor.det),
+      (``sparse, ``HexPolyDetMathlib.Structural.cofactor),
+      (``sparseColumn, ``HexPolyDetMathlib.Structural.cofactor)] do
+    let mut pending := [root]
+    let mut found := false
+    while let name :: rest := pending do
+      pending := rest
+      let some value := (← Lean.getConstInfo name).value? (allowOpaque := true)
+        | throwError "missing structural proof"
+      for used in value.getUsedConstants do
+        if used == route then found := true
+        if root.isPrefixOf used then pending := used :: pending
+    unless found do throwError "{root} did not use {route}"
+
+/-- info: 'StructuralTests.rational' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms rational
+/-- info: 'StructuralTests.sparse' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms sparse
+end StructuralTests
+
+namespace StructuralBudgetTests
+open Lean Meta HexMatrixMathlib.Literal
+
+-- Two nonzero cofactors each terminate in a 4×4 formula: exactly 48 leaves.
+run_meta do
+  let zs := (List.range 5).toArray.map fun i =>
+    (List.range 5).toArray.map fun j => i == 4 && j > 1
+  unless (HexPolyDetMathlib.Structural.plan? zs false 48).isSome do
+    throwError "sparse preflight rejected its exact leaf budget"
+  unless (HexPolyDetMathlib.Structural.plan? zs false 47).isNone do
+    throwError "sparse preflight exceeded its leaf budget"
+  let dense := Array.replicate 8 (Array.replicate 8 false)
+  unless (HexPolyDetMathlib.Structural.plan? dense false 64).isNone do
+    throwError "dense matrix entered sparse expansion"
+
+-- A rejected rational shortcut must not assign the user's target metavariable.
+example (a b : Rat) : True := by
+  let A : Matrix (Fin 2) (Fin 2) Rat := !![a/2, 3*a/2; b/3, 4*b/3]
+  run_tac Lean.Elab.Tactic.withMainContext do
+    let a ← getFVarFromUserName `A
+    let some a := (← a.fvarId!.getDecl).value? | throwError "missing matrix"
+    let some lit ← literal? a (allowOpen := true) | throwError "missing literal"
+    let rhs ← mkFreshExprMVar (mkConst ``Rat)
+    if (← HexPolyDetMathlib.RatFactor.compute? a lit (some rhs)).isSome then
+      throwError "rational shortcut accepted a target metavariable"
+    if ← rhs.mvarId!.isAssigned then throwError "rational shortcut assigned target"
+  trivial
+
+example (x : Rat) : True := by
+  letI : HMul Rat Rat Rat := ⟨fun a b => a + b⟩
+  let A : Matrix (Fin 2) (Fin 2) Rat := !![(1*x)/2, (2*x)/2; (3*x)/2, (4*x)/2]
+  run_tac Lean.Elab.Tactic.withMainContext do
+    let a ← getFVarFromUserName `A
+    let some a := (← a.fvarId!.getDecl).value? | throwError "missing matrix"
+    let some lit ← literal? a (allowOpen := true) | throwError "missing literal"
+    if (← HexPolyDetMathlib.RatFactor.compute? a lit none).isSome then
+      throwError "rational shortcut accepted non-ring multiplication"
+  trivial
+
+example (a b : Int) (h : Matrix.det !![a, 0; 0, b] = a*b+1) :
+    Matrix.det !![a, 0; 0, b] = a*b+1 := by
+  fail_if_success det
+  exact h
+
+example (a b : Rat) (h : Matrix.det !![a/2, 3*a/2; b/3, 4*b/3] = a*b/3) :
+    Matrix.det !![a/2, 3*a/2; b/3, 4*b/3] = a*b/3 := by
+  fail_if_success det
+  exact h
+
+example (a b : ZMod 3) : Matrix.det !![a, 0; 0, b] = a*b := by det
+
+example (f : Rat → Rat) (a b : Rat) :
+    Matrix.det !![f a/2, 3*f a/2; f b/3, 4*f b/3] = f a*f b/6 := by det
+
+example (a b : Rat) :
+    Matrix.det !![a/2, 3*a/2; b/3, 4*b/3] =
+      (det% !![a/2, 3*a/2; b/3, 4*b/3]).value :=
+  (det% !![a/2, 3*a/2; b/3, 4*b/3]).proof
+
+example (a b : Rat) :
+    Matrix.det !![a/2, 3*a/2; b/3, 4*b/3] = (1/6)*a*b := by
+  simp only [Hex.normPolyDet]
+-- Structural recognition must use the ring's operations, not local overrides.
+example (a b : Int) : True := by
+  letI : HMul Int Int Int := ⟨fun a b => a + b⟩
+  let A : Matrix (Fin 2) (Fin 2) Int := !![a, 0; 0, b]
+  run_tac Lean.Elab.Tactic.withMainContext do
+    let a ← getFVarFromUserName `A
+    let some a := (← a.fvarId!.getDecl).value? | throwError "missing matrix"
+    let some lit ← literal? a (allowOpen := true) | throwError "missing literal"
+    if (← HexPolyDetMathlib.Structural.direct? a lit).isSome then
+      throwError "triangular shortcut accepted non-ring multiplication"
+  trivial
+
+end StructuralBudgetTests

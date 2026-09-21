@@ -25,7 +25,7 @@ private def triple (es : Array (Array Expr)) (i j a b c d : Nat) : MetaM Expr :=
 
 /-- Closed formulas use entry expressions directly; this path never creates a
 reflection batch or a polynomial certificate. -/
-def formula (A : Expr) (lit : Recognized) : MetaM Result := do
+def build (A : Expr) (lit : Recognized) : MetaM Result := do
   let es ← lit.entries.mapM (fun row => row.mapM reduceIndices)
   let chain := (← matchChain? lit.n lit.m A).isSome
   let result : Result ← match lit.n with
@@ -49,10 +49,15 @@ def formula (A : Expr) (lit : Recognized) : MetaM Result := do
       let v ← add v (← triple es 0 2 1 0 2 1)
       return { proof := ← mkAppM ``Matrix.det_fin_three #[A], value := ← sub v (← triple es 0 2 1 1 2 0) }
     | _ => throwError "det: closed forms require dimension at most three"
+  return result
+
+/-- Check the assembled small formula once. Structural minors use `build`. -/
+def formula (A : Expr) (lit : Recognized) : MetaM Result := do
+  let result ← build A lit
   let target ← mkEq (← mkAppM ``Matrix.det #[A]) result.value
   if ← isTracingEnabledFor `HexMatrix.certificate then
     trace[HexMatrix.certificate] "{(Json.mkObj [("route", toJson "closed-form"),
-      ("dimension", toJson lit.n), ("proof_nodes", toJson (Hex.Reflect.sourceNodeCount result.proof 1000001))]).compress}"
+      ("dimension", toJson lit.n), ("proof_nodes", toJson (Hex.Reflect.proofNodeCount #[result.proof] 1000001))]).compress}"
   return { result with proof := ← checked target (← mkExpectedTypeHint result.proof target) "det.small.kernel" }
 
 end HexPolyDetMathlib.Small
