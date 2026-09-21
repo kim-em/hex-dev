@@ -16,11 +16,11 @@ CPU affinity, load observations, exact commands and start/end times are in
 automatically for placement. Host activity does not invalidate samples.
 Reported `git_dirty` includes newly written evidence and subsequently added
 proof-probe sources; neither changed the measured executable. Its hash is
-recorded independently. The benchmark commit was subsequently reworded to
-include the source's cost derivation; `1b7b331f322acccd0376156b47b00a2ba32f47f8`
-has exactly the same tree as the measured commit. The exact measured
-registration source is also retained as `registration.lean.txt`, whose SHA256
-matches the metadata, so subsequent rebases do not obscure the protocol.
+recorded independently. The exact measured registration source is retained as
+`registration.lean.txt`, whose SHA256 matches the metadata. The current benchmark
+source differs from that snapshot only in module documentation; no measured
+function, registration parameter or ladder changed. The executable SHA256 is
+identical across the initial run and the unchanged rerun.
 No absolute timing is a portable budget.
 
 Each complexity registration used its declared custom ladder, four trial-major
@@ -95,8 +95,8 @@ profiles; it does not identify every allocation's cause.
 [Certificate diagnostics](bench-results/sturm-repeat-ff2086080/diagnostics.json),
 reproducible with the adjacent `analyze.py`, show replay identity products of
 31, 42 and 57 bits at head degrees 12, 16 and 20. Stored query-degree
-coefficients reach 26, 34 and 50 bits at query degrees 48, 64 and 96, crossing
-the small-integer threshold. These inspect explicit certificate operands and
+coefficients reach 26, 34 and 50 bits at query degrees 48, 64 and 96. Only
+degrees 64 and 96 cross the small-integer threshold. These inspect explicit certificate operands and
 products, not peak producer intermediates. The near-flat initial-reduction
 normalized times before the threshold and their rise afterward support a
 representation-cost explanation. Fixed domain/replay overhead also weighs

@@ -10,7 +10,9 @@ import Lean.Data.Json
 
 /-!
 Shared query stage measurements and rational/integer comparison.
-Computational performance owners: `HexRealRoots`, `HexSturm`.
+Computational performance owners: `HexRealRoots`, `HexSturm`, `HexPolyZ`.
+The HexPolyZ denominator-clearing stage measures the rational/integer adapter
+used by the Sturm frontend; its arithmetic remains owned by HexPolyZ.
 
 The degree family is `T_n` with query `1` on `(-2,2)`. Its derivative signed
 chain is normal, with one degree lost per step. A division between consecutive

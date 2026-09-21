@@ -5,9 +5,10 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexSturm
+public import HexSturm.Fixtures
 public import HexRealRoots.QueryTests
 public meta import HexSturm.Basic
+public meta import HexSturm.Fixtures
 public meta import HexRealRoots.QueryTests
 public meta import HexPolyZ.IntegerPolynomial
 
@@ -19,11 +20,9 @@ Computational conformance owner: `HexSturm`.
 The rational/integer comparisons are runtime validation, not a backend theorem. -/
 namespace Hex.Sturm.Conformance
 
-open DensePoly
+open DensePoly Hex.Sturm.Fixtures
 open scoped Hex
 
-@[expose] def p : DensePoly Rat := ofCoeffs #[-1, 0, 1]
-@[expose] def x : DensePoly Rat := ofCoeffs #[0, 1]
 
 #guard query orderSign p 1 .negInf .posInf == some 2
 #guard query orderSign p (C (-1)) .negInf .posInf == some (-2)
@@ -89,27 +88,20 @@ results, including the `none` cases and zero query polynomials. -/
 #guard query Hex.QueryTests.Noncanonical.sign Hex.QueryTests.Noncanonical.head 1
   .negInf .posInf == some 2
 
-/-- A fully literal rational certificate, checked without invoking a producer. -/
-@[expose] def literalChain : QueryChain Rat where
-  chain := #[p, x, 1]
-  degrees := #[2, 1, 0]
-  initial := ⟨1, 0, 2⟩
-  steps := #[⟨1, x, 1⟩]
-  terminal := some (1, x)
+/- Squarefreeness evidence is checked independently of the query chain. -/
+#guard !Replay.check orderSign 7 p 1 (.finite (-2)) (.finite 2) 2
+  { literal with squarefree := { literalChain with terminal := some (1, 1) } }
 
-@[expose] def literal : QueryReplay Rat Rat Nat where
-  context := 7
-  head := p
-  queryPoly := 1
-  lower := .finite (-2)
-  upper := .finite 2
-  squarefree := literalChain
-  remainders := literalChain
-  lowerSigns := #[1, -1, 1]
-  upperSigns := #[1, 1, 1]
-  lowerVariations := 2
-  upperVariations := 0
-  value := 2
+/- A constant tail alone cannot certify a repeated-root head. -/
+#guard !Replay.check orderSign 7 (natPow (x - 1) 2) 1 (.finite (-2)) (.finite 2) 2
+  { literal with
+    head := natPow (x - 1) 2
+    squarefree := { literalChain with chain := #[natPow (x - 1) 2, x - 1, 1] }
+    remainders := { literalChain with chain := #[natPow (x - 1) 2, x - 1, 1] } }
+
+/- Positive scales do not excuse a false initial reduction identity. -/
+#guard !Replay.check orderSign 7 p 1 (.finite (-2)) (.finite 2) 2
+  { literal with remainders := { literalChain with initial := ⟨1, 1, 2⟩ } }
 
 theorem literal_checks : Replay.check orderSign 7 p 1 (.finite (-2)) (.finite 2) 2 literal = true := by
   simp only [Replay.check, QueryReplay.check, QueryChain.check, ← Array.all_toList, Array.toList_range]

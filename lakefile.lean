@@ -991,7 +991,7 @@ lean_lib HexConformance where
 
     ++ #[`HexReflect.TestProviders, `HexReflect.Conformance, `HexReflect.ScopeConformance, `HexReflect.ResidueConformance].map Glob.one
 
-    ++ #[`HexSturm.Conformance, `HexSturmMathlib.Conformance].map Glob.one
+    ++ #[`HexSturm.Fixtures, `HexSturm.Conformance, `HexSturmMathlib.Conformance].map Glob.one
     ++ #[.submodules `HexSturmMathlib.Replay]
 
     ++ #[`HexKronecker.Conformance].map Glob.one

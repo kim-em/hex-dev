@@ -129,6 +129,26 @@ theorem prepare_isSome (p : DensePoly E) (a b : Endpoint E) :
   rw [Sturm.prepare_isSome sign p 1 a b]
   exact query_isSome f hz ha hs hm sign hneg hzero h1 hn hi hnat hpos p 1 a b
 
+include hz ha hs hm h1 hn hi hnat hpos hneg hzero in
+/-- Successful preparation establishes the domain and exact input bindings. -/
+theorem prepare_sound (p : DensePoly E) (a b : Endpoint E) (domain : Sturm.Prepared E)
+    (h : Sturm.prepare sign p a b = some domain) :
+    Domain f hz p a b ∧ domain.sign = sign ∧ domain.head = p ∧
+      domain.lower = a ∧ domain.upper = b := by
+  refine ⟨(prepare_isSome f hz ha hs hm sign hneg hzero h1 hn hi hnat hpos p a b).mp ?_,
+    Sturm.prepare_eq_some sign p a b domain h⟩
+  rw [h]
+  rfl
+
+include hz ha hs hm h1 hn hi hnat hpos hneg hzero in
+/-- Every opaque prepared object carries a valid domain for its bound inputs. -/
+theorem prepared_domain (domain : Sturm.Prepared E) (hsign : domain.sign = sign) :
+    Domain f hz domain.head domain.lower domain.upper := by
+  apply (query_isSome f hz ha hs hm sign hneg hzero h1 hn hi hnat hpos
+    domain.head 1 domain.lower domain.upper).mp
+  rw [← hsign, Sturm.query_prepared]
+  rfl
+
 include hz ha hs hm h1 hn hi hpos hneg in
 /-- Every produced certificate passes the shared literal replay. The sign
 range is a law of the supplied exact coefficient sign operation. -/
@@ -142,6 +162,19 @@ theorem certify_checks (hbound : ∀ x, -1 ≤ sign x ∧ sign x ≤ 1)
   intro q e
   exact Endpoint.signAt_bounds sign (Sturm.adapter sign) hbound
     (fun q x => hbound (q.eval x)) q e
+
+include hz ha hs hm h1 hn hi hpos hneg in
+/-- Prepared certificates pass replay with their exact bound inputs and context. -/
+theorem certifyPrepared_checks (hbound : ∀ x, -1 ≤ sign x ∧ sign x ≤ 1)
+    {Ctx : Type w} [DecidableEq Ctx] (context : Ctx)
+    (domain : Sturm.Prepared E) (hsign : domain.sign = sign) (g : DensePoly E) :
+    Sturm.Replay.check sign context domain.head g domain.lower domain.upper
+      (Sturm.certifyPrepared context domain g).value
+      (Sturm.certifyPrepared context domain g) = true := by
+  apply certify_checks f hz ha hs hm sign hneg h1 hn hi hpos hbound
+    context domain.head g domain.lower domain.upper
+  rw [← hsign]
+  exact Sturm.certify_prepared context domain g
 
 include hz ha hs hm h1 hnat hpos hneg hzero in
 omit [Neg E] [Inv E] in

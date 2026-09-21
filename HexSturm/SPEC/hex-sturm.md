@@ -112,6 +112,7 @@ The required public operations use the same shared arithmetic kernel:
 | `queryPrepared domain f` | Return the query for an already validated domain. |
 | `rootCount p a b` | Query `f=1`, returning `Option Nat` with the same domain. Prove nonnegativity before conversion; never clamp an unexpected negative value. |
 | `certify p f a b` | Run the shared kernel while retaining its literal query certificate. Return `none` on the same invalid domain. |
+| `certifyPrepared context domain f` | Retain the literal query certificate while reusing the prepared squarefree chain and binding the supplied context. |
 | `Replay.check` | Check a supplied finite certificate; return `Bool`, false on malformed or incorrect data. |
 
 No operation takes a caller resource budget. Squarefreeness uses the existing

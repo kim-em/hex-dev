@@ -5,11 +5,13 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexSturmMathlib.Replay.Support
+public import HexSturmMathlib
+public import HexSturm.Fixtures
+public meta import HexSturm.Basic
 
 public section
 namespace HexSturmMathlib.ReplayTests
-open Hex DensePoly
+open Hex DensePoly Hex.Sturm.Fixtures
 
 /-- Reject a false polynomial identity through the ordinary kernel. -/
 theorem rejected : Sturm.Replay.check Sturm.orderSign 7 p 1 (.finite (-2)) (.finite 2) 2
@@ -21,6 +23,14 @@ theorem rejected : Sturm.Replay.check Sturm.orderSign 7 p 1 (.finite (-2)) (.fin
 theorem stale : Sturm.Replay.check Sturm.orderSign 8 p 1 (.finite (-2)) (.finite 2) 2 literal = false := by
   decide +kernel
 
+/-- info: 'HexSturmMathlib.ReplayTests.rejected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms rejected
+-- Keep the second print visible to sturm_mathlib_sweep.py's axiom parser.
+#print axioms rejected
+/-- info: 'HexSturmMathlib.ReplayTests.stale' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms stale
+-- Keep the second print visible to sturm_mathlib_sweep.py's axiom parser.
 #print axioms stale
 end HexSturmMathlib.ReplayTests

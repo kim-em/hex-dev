@@ -6,7 +6,8 @@ Sturm–Tarski frontend in [hex-sturm](../../HexSturm/SPEC/hex-sturm.md).
 ## Status, scope and dependencies
 
 `HexSturmMathlib/Domain.lean` proves the exact semantic domain equivalence
-for `query` and `prepare`, finite/infinite endpoint guards, and produced
+for `query` and `prepare`, exact prepared input bindings, validity of every
+prepared domain, finite/infinite endpoint guards, and ordinary/prepared
 certificate acceptance. These results apply to noninjective coefficient
 interpretations without field or order instances on representation storage.
 Conformance instantiates them on canonical rationals and noncanonical

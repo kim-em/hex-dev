@@ -57,6 +57,20 @@ def prepare [Neg E] [Inv E] (sign : E → Int) (p : DensePoly E) (a b : Endpoint
     else none
   else none
 
+/-- Successful preparation retains exactly the supplied operation and inputs. -/
+theorem prepare_eq_some [Neg E] [Inv E] (sign : E → Int) (p : DensePoly E)
+    (a b : Endpoint E) (domain : Prepared E)
+    (h : prepare sign p a b = some domain) :
+    domain.sign = sign ∧ domain.head = p ∧ domain.lower = a ∧ domain.upper = b := by
+  unfold prepare at h
+  split at h
+  · dsimp only at h
+    split at h
+    · cases Option.some.inj h
+      exact ⟨rfl, rfl, rfl, rfl⟩
+    · simp at h
+  · simp at h
+
 /-- Query a validated domain without repeating its squarefreeness computation. -/
 @[expose] def queryPrepared [Neg E] [Inv E] (domain : Prepared E) (f : DensePoly E) : Int :=
   (QueryReplay.fromChains domain.sign (adapter domain.sign) () domain.head f domain.lower domain.upper

@@ -5,10 +5,12 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexSturmMathlib.Replay.Support
+public import HexSturmMathlib
+public import HexSturm.Fixtures
+public meta import HexSturm.Basic
 
 public section
 namespace HexSturmMathlib.ReplayTests
-open Hex DensePoly
+open Hex DensePoly Hex.Sturm.Fixtures
 
 end HexSturmMathlib.ReplayTests
