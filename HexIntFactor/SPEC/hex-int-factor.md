@@ -658,11 +658,102 @@ certifies children, and accepts only through the unchanged sound checker.
 Use `primality? (factor := Hex.Nat.ecmFactorSearch)` after importing
 `HexIntFactor.Construction` and `HexPrimality.Elab`. The measured named-prime
 successes, exact emitted certificate guards, ordinary replay, and fixed native construction/checker
-benchmarks justify this explicit allocation. Tens-of-seconds search cost on
-these targets does not justify automatic enablement. P-521 keeps its existing
+benchmarks justify this explicit allocation. Automatic fallback after an
+exhausted construction is a separate pending policy owned by
+[HexPrimality's construction contract](../../HexPrimality/SPEC/hex-primality.md#automatic-construction-fallback-and-caller-resources).
+It does not enable ECM in ordinary integer factorization. P-521 keeps its existing
 certificate and attempt total because its core factor subset already suffices.
 The complete retained evidence and multiplication-budget comparison are in
 [the ECM field report](../../reports/hex-primality-ecm-stage2.md).
+
+#### Construction cost experiments and optimization contract
+
+This is pending implementation work. The existing deterministic ECM schedule
+already certifies the three field primes. The objective is to reduce its
+execution cost without changing its mathematical search coverage, attempt
+accounting or accepted certificates. No faster algorithm is assumed from the
+observed gap between native search and fresh-module tactic builds: those
+measure different work and cannot establish the cause of the gap.
+
+First isolate execution of the same provider through the current explicit
+expression and a compiled declaration available through a meta import. Keep
+the caller's construction function, parameters, inputs and result checking
+identical. Verify which definitions actually execute compiled code rather
+than assuming that `evalExpr`, a named declaration or an import guarantees it.
+Record compilation/loading cost separately and retain the complete
+fresh-module cost. Use the result to choose the downstream compiled declaration
+used by HexPrimality's automatic registration. Keep explicit provider
+expressions working. A dispatch optimization must not depend on `native_decide`,
+an external factorizer or accepting native output without checker replay.
+
+The second candidate optimization shares immutable schedules between curves
+with equal bounds. Prepare the stage-1 primes and largest prime powers, and
+the stage-2 interval primes or equivalent ordered `(i,j)` indices for
+`q = 210*i+j`, once per bounded provider invocation. Allocate lazily after the
+existing sufficiency check and only when an ECM attempt can execute. Invalid
+bounds, zero allowance and an unnecessary residual must not allocate the
+schedule. Stage 2 remains conditional on saved stage-1 state and remaining
+allowance. Do not prepare unused stage-2 data after a stage-1 factor or whole
+result. Reuse schedules across eligible curves and residuals within that
+invocation, without a process-global cache.
+
+Only bound-dependent integer data is shared. Curve points, baby and giant
+tables, products and gcd batches remain local to each curve and modulus.
+Preserve ascending interval coverage, curve order, first-factor behavior,
+gcd-equals-modulus recovery, proper-divisor validation, events and exact random
+state. The existing boundary remains responsible for range and divisibility
+checks. A prepared schedule remains untrusted: its representation must not
+permit an unchecked externally supplied list to weaken an advertised coverage
+contract. State the preparation contract, bounds and validation in the API.
+
+The intended cost change removes repeated prime enumeration and prime-power
+preparation. Across `C` curves using fixed bounds, this changes `C` schedule
+preparations into one preparation plus bounded traversals. Curve arithmetic
+still has the per-curve multiplication and gcd bounds above. Report preparation
+time and peak storage, including simultaneous stage-1 and stage-2 schedules
+and the existing per-curve tables. The index storage is
+`O(π(B₁) + π(B₂))` plus sieve workspace, independent of the number of curves
+and residuals. Big-integer costs, modular reduction, allocation and downstream
+certificate construction remain part of the measured complete operation.
+
+Production code must not increase or disable `maxHeartbeats`, reset counters
+or baselines, exclude allocations, or use a fresh process or task to evade
+the caller's heartbeat allowance. Native compilation and fewer allocations
+may reduce real cost. If the default allowance remains insufficient, retain
+an honest user-set finite limit in examples. Lower wall time alone does not
+establish lower heartbeat consumption. Keep all current semantic bounds,
+including the 64-curve schedule and `32768/524288` default bounds.
+
+Use the existing three field construction paths and P-521 as the end-to-end
+family. Include fixed residual calls that exercise stage-1 success, stage-2
+success, complete failure, and gcd recovery. Retain the existing zero-budget,
+invalid-bound and endpoint conformance cases. Compare the current path with
+compiled dispatch first, then compare the selected execution path with shared
+schedules. Each comparison uses four fixed trial-major blocks, adjacent arms
+in alternating AB/BA order, and every completed sample under the shared-host
+protocol in [benchmarking](../../SPEC/benchmarking.md#shared-host-measurement-policy).
+Use identical explicit resource options in both arms. Record outcomes, attempt
+and operation counts, random state, checker result, wall time, heartbeat usage
+where applicable, and storage. Default-heartbeat failures are retained
+outcomes. Native search, fresh-module construction, rendering/elaboration and
+ordinary replay are separate measurements. Reuse existing fixtures and runners
+rather than repeating the full residual search campaign or adding CI jobs.
+
+Adopt each optimization only with an explained cost reduction and unchanged
+coverage and accounting. A result within shared-host noise is inconclusive,
+not a speedup. At most one unchanged rerun is allowed, retaining both runs.
+If neither experiment supports a change, publish that result and leave the
+implementation intact. Neither outcome blocks the separately specified
+automatic-fallback feature. Resuming failed certificate constructions,
+cross-construction certificate caches, new modular backends, larger ECM bounds
+and new algorithms are outside this optimization task.
+
+Acceptance requires conformance of prepared and existing calls, exact emitted
+field certificates, fixed native construction/checker checks, ordinary replay
+and unchanged P-521 behavior. Update this section's preparation and storage
+model, the retained field report and manual resource advice to match the
+measured implementation. Do not promise that users can remove `maxHeartbeats`
+until the full tactic succeeds with default accounting.
 
 
 ### 4. Fuel, and what failure means
@@ -1705,8 +1796,7 @@ Explicit primality certificate construction is owned by the HexPrimality SPEC
 and uses its separate `FactorSearchBudget` smooth bounds and bases.
 
 
-The current primality adapter advertises ABI version 2 as a literal;
-stage-2 budget/trace integration advances it to 3 as specified above. Its ordinary
+The current primality adapter advertises ABI version 3. Its ordinary
 registered allocation has no total attempt limit. When a construction caller
 sets `FactorSearchBudget.attemptLimit`, the adapter declines with no attempts
 or random draws and retains the entire input as residual; it does not claim to
