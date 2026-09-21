@@ -160,62 +160,103 @@ levels and handles when the defining polynomial changes.
 
 ## Proposed plan of action
 
-1. **Settle the execution contract and storage policy.** Correct the shared
-   and owning SPECs to include `NatCast`, executable sign, semantic monicity,
-   gcd equality, replay equality and root-preserving transport. Preserve
-   ordinary total operations and honest structural `DecidableEq`. Before
-   committing to a storage policy, compare current packing, retention of a
-   monic clean remainder, and a verified-irreducible fast path on division/gcd
-   and a two-level workload; record both time and representative growth.
-   Batching is a candidate for ring operations, not an assumed division strategy.
-2. **Prove zero testing and scalar arithmetic for one selected Q-algebraic
-   root.** Quantify explicitly over `valid d = true`, identify the unique
-   selected real root, and prove zero soundness/completeness and interpretation
-   of the actual operations. Use the existing
-   `HexRealRootsMathlib.sturmCount_eq_card_roots` theorem in
-   `HexRealRootsMathlib/ChainCorrespond.lean`, including its positive-degree
-   and rational-squarefreeness hypotheses. Supply the primitive-part root
-   bridge and squarefreeness of divisors. Production constructors should enforce
-   executable descriptor validity, without requiring Mathlib in the executable.
-   Add a general rational-algebraic sign by certified interval refinement;
-   `signSqrt2` is not that interface. This slice can use semantics in ℝ today.
-3. **Prove inversion, splitting and transport on that slice.** Establish the
-   gcd/cofactor conditions, inverse identity, and preservation of the selected
-   root. Make transport accept evidence of a root-preserving refinement;
-   the experimental unrestricted function is not the production contract.
-   Fix opaque-context and live-handle behavior before extending to towers.
-4. **Instantiate and complete the polynomial correspondence.** Promote the
-   reviewed Mathlib-free division/gcd transfer lemmas, instantiate them with
-   the established semantic map, and extend transfer to xgcd coefficients,
-   derivatives, Horner evaluation and the needed pseudo-remainder operations.
-   Keep each proof about the existing executable algorithm; no fake Field
-   instance or parallel replacement polynomial kernel is needed.
-5. **Implement generic Sturm–Tarski and sign determination.** The repository
-   specifies `ZPoly.tarskiQuery` but has no implementation yet. Implement that
-   owned primitive and its generic ordered-field extension with explicit
-   trivial-tower agreement. Consume the Tau Ceti abstract-real-closed-field
-   development for the companions. Add Thom encodings and BKR with
-   support-completeness evidence for reduced matrices. The rational vertical
-   slice's ℝ semantics does not prove the non-Archimedean case.
-6. **Implement recursive contexts and infinitesimals.** Define predecessor
-   operations, root identity, validity, context refinements and total isolation
-   by tower depth, then validate the paper's Example 3, sqrt(epsilon)>epsilon,
-   1/epsilon exceeding each supplied integer, and trivial-tower conformance.
-   Measure tower8 and clean-versus-eager behavior only on that implementation.
-   Infinitesimal base arithmetic can be developed independently of BKR; general
-   algebraic root selection over it needs the generic layer from step 5.
-7. **Integrate caller-supplied transcendental oracles and the user surface.**
-   Preserve separate `approx : Rat → Bounds` computation and proof functions
-   for containment and requested width. Derive termination from these and
-   relative transcendence. A finite benchmark success covers only its own
-   search. Keep hex-interval and bundled pi/e providers out of scope. Complete
-   the exploration/sample-point interfaces and certificate-based tactic
-   integration under these contracts, enforcing the tower extension order.
+Work proceeds through three distinct stages: experiments supply evidence;
+SPEC work fixes the contracts and acceptance criteria; implementation realizes
+those contracts. Experimental code and proofs do not become production APIs
+merely because they compile. Each implementation directive must link to its
+completed, revised owning SPECs and identify its actual prerequisites.
 
-The immediate next action is step 1's focused policy comparison, followed by
-steps 2–4 as separately verifiable proof slices. The current conditional
-transfer lemmas remain useful whichever monic storage policy wins. Later
-issues and dispatch should follow these dependencies; family monitors and
-worker queues remain stopped. Computational and benchmark executables remain
-Mathlib-free, while companions supply semantic proofs. No full-family completion
-or Phase-4 claim follows from this experiment.
+### A. Experiments — resolve the remaining design questions
+
+The selected-root experiment reported above is complete. Two bounded follow-ups
+supply the evidence needed to finish the design:
+
+| Experiment | Question | Deliverable and exit criterion |
+|---|---|---|
+| E1: storage policy | How do per-operation packing, retaining a monic clean remainder, and a justified irreducible fast path behave on division/gcd and nested coefficients? Where is batching applicable? | An isolated comparison using the existing kernels, independent result checks, the fixed shared-host measurement protocol, and time/zero-test/representative-growth results. Recommend a policy, or identify the specific unresolved tradeoff; do not extrapolate multiplication results. |
+| E2: context refinement | Can a split at a lower algebraic level preserve live values and descriptors at the next level under the proposed opaque-context API? | A small two-level prototype and explicit transport invariants, exercising old handles and dependent defining polynomials. Establish a workable ownership/transport design or document the obstruction. This is a feasibility check, not the implementation of general towers. |
+
+Keep these under `experiments/` with reports. They may contain executable
+prototypes and local proof attempts, but do not change production library
+contracts, promote the current prototypes, or discharge library implementation
+phases. E1 and E2 can proceed independently. Their conclusions feed the SPEC
+revisions below; an inconclusive result remains an explicit open design question.
+
+### B. SPEC writing and revision — make the decisions before implementation
+
+The eight family SPECs already exist. This stage revises them and their shared
+boundary; it is not another request to implement their contents. Drafting can
+proceed alongside experiments, but settle experiment-dependent choices before
+finalizing the affected contracts.
+
+**S1: shared execution contract.** Revise
+[real-closure-execution.md](../SPEC/real-closure-execution.md) and the
+[family design](../SPEC/future-work.md#real-closures-of-ordered-fields), together
+with the affected [hex-poly](../HexPoly/SPEC/hex-poly.md) and
+[hex-real-roots](../HexRealRoots/SPEC/hex-real-roots.md) contracts. Specify:
+
+- Ordinary total operations, including `NatCast` and executable sign;
+  structural versus semantic equality; canonical-zero storage; the chosen
+  storage/normalization policy and permitted optimizations, informed by E1.
+- Descriptor validity, context identity, splitting, and transport of live
+  values and dependent levels, informed by E2. Separate computational checks
+  from companion semantic theorems, keeping executable construction Mathlib-free.
+- Exact hypotheses and statements for noninjective interpretation of the
+  existing polynomial algorithms. No fake Field instance, fallible arithmetic
+  record, or duplicate polynomial kernel is introduced.
+- Ownership of the single Tarski primitive and its rational/generic agreement.
+  `ZPoly.tarskiQuery` is specified but still unimplemented.
+
+**S2: owning library contracts and companion obligations.** Reconcile all four
+pairs with S1, giving concrete APIs, validity/termination hypotheses, theorem
+statements, proof dependencies, and conformance/performance acceptance criteria:
+
+| Computational SPEC / companion SPEC | Decisions to write or revise |
+|---|---|
+| [hex-sturm](../SPEC/Libraries/hex-sturm.md) / [hex-sturm-mathlib](../SPEC/Libraries/hex-sturm-mathlib.md) | Operation-only kernels, sign and endpoint interfaces, Tarski replay and trivial-tower agreement; identify the abstract Sturm–Tarski statements consumed from Tau Ceti and the Hex correspondence proofs. |
+| [hex-sign-det](../SPEC/Libraries/hex-sign-det.md) / [hex-sign-det-mathlib](../SPEC/Libraries/hex-sign-det-mathlib.md) | Thom identity/order, BKR certificates including support completeness, and the sample-point interface; state correctness and imported abstract-field obligations. |
+| [hex-ordered-fn](../SPEC/Libraries/hex-ordered-fn.md) / [hex-ordered-fn-mathlib](../SPEC/Libraries/hex-ordered-fn-mathlib.md) | Infinitesimal arithmetic and order; caller-supplied approximation with separate containment and requested-width proofs, relative-transcendence termination and its computational proof interface. Keep hex-interval and bundled pi/e providers out of scope. |
+| [hex-real-closure](../SPEC/Libraries/hex-real-closure.md) / [hex-real-closure-mathlib](../SPEC/Libraries/hex-real-closure-mathlib.md) | Storage policy, validated descriptors, recursive contexts, splitting/transport, total isolation and extension order; selected-root arithmetic/sign semantics, proof slices, and exploration/tactic integration boundaries. Preserve the existing real-algebraic fast path and its one-way dependency relationship. |
+
+Specify the first rational-algebraic slice explicitly: its owning library,
+reuse of existing real-algebraic functionality, general sign interface,
+`valid d = true` hypotheses, and interpretation in ℝ. Name the available
+`HexRealRootsMathlib.sturmCount_eq_card_roots` theorem, its positive-degree and
+rational-squarefreeness assumptions, and the required primitive-part/divisor
+bridges. This is theorem and API specification; proving those statements is
+stage C. Likewise, specifying root-preserving transport is distinct from
+proving it or implementing the runtime context machinery.
+
+The deliverable is a coherent set of revised SPECs with an acyclic dependency
+graph and separately closable implementation directives derived from their
+acceptance criteria. Audit terminology, relative links, ownership and the
+computational/companion split. Land the relevant SPEC revisions before starting
+the implementation directives they govern. S2 depends on S1's settled contracts;
+completed unaffected contracts need not wait for unrelated revisions.
+
+### C. Implementation — only after the relevant SPEC revisions land
+
+The following are production code/proof work, not further SPEC-writing tasks.
+Their detailed boundaries and acceptance tests come from stage B:
+
+| Implementation work | Prerequisites and completion evidence |
+|---|---|
+| I1: shared polynomial correspondence | Revised polynomial/shared contracts. Promote reviewed generic division/gcd transfer lemmas and prove the specified xgcd, derivative and Horner correspondence for the existing algorithms. |
+| I2: rational selected-root slice | Revised real-closure and companion contracts plus the shared interfaces it uses. Implement the chosen storage/validation/sign API, then prove zero testing and scalar arithmetic; inversion and root-preserving splitting/transport; and instantiation of polynomial correspondence. These are separate implementation/proof directives. Use the existing ℝ Sturm development; do not claim the non-Archimedean case. |
+| I3: Sturm–Tarski and BKR/Thom | Revised real-roots, sturm and sign-det contracts. Implement the owned Tarski primitive and its generic extension with agreement, then sign determination and Thom operations. Prove correspondence for the new pseudo-remainder kernels, replays and reduced-matrix support completeness. Companion completion requires the specified abstract-real-closed-field results. |
+| I4: ordered simple extensions | Revised ordered-fn pair and shared interfaces. Implement infinitesimals and caller-supplied transcendental approximation, with their separate correctness/termination proofs. This can proceed independently of BKR where its specified dependencies permit. |
+| I5: recursive real closures | Revised real-closure pair; the required coefficient arithmetic, root-selection kernels and correspondence from I1–I4. Implement recursive contexts, splitting/transport and total root isolation, and prove their semantics. Enforce transcendental-before-infinitesimal-before-algebraic extension order. |
+| I6: integration and full validation | Revised user-facing contracts and implemented dependencies. Complete exploration, sample-point and certificate-based tactic interfaces; run trivial-tower conformance, the paper's Example 3, sqrt(epsilon)>epsilon, and 1/epsilon exceeding each supplied integer. Measure tower8 and clean-versus-eager behavior on the actual implementation. |
+
+I1 and the early parts of I2 can progress together once their SPECs land;
+I2's final correspondence uses I1. I3 and I4 are separate implementation
+branches, not a mandatory serial queue. I5 joins their required results;
+I6 follows the functionality it validates. Implementation may expose a SPEC
+error: stop the affected directive and revise that SPEC, rather than silently
+changing its contract in code. Neither a successful experiment nor an executable
+without its required proofs establishes completion of a verified library phase.
+
+**Immediate next work:** E1 and E2, followed by finalizing and landing S1/S2;
+then start the unblocked I-series directives. Family monitors and worker queues
+remain stopped. The current report proposes this sequence and does not itself
+revise the owning SPECs or launch any implementation work.
