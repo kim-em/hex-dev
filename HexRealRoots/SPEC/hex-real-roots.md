@@ -574,11 +574,11 @@ same semantics, one chain construction total.
 ## Kernel-replay exposure
 
 The `isolate_roots` term elaborator (companion SPEC) replays Sturm
-certificates in the kernel. The replayed closure — thirteen
+certificates in the kernel. The replayed closure — fourteen
 definitions: `sturmChain`, `sturmChainAux`, `spem`, `spemAux`,
 `spemStep`, `signVar`, `sturmVarAt`, `sturmVarNegInf`,
 `sturmVarPosInf`, `ZPoly.sturmCount`, `ZPoly.rootCount`, `ZPoly.evalDyadic`,
-`dyadicSign` — carries `@[expose]` so downstream `module` consumers
+`ZPoly.hornerDyadic`, `dyadicSign` — carries `@[expose]` so downstream `module` consumers
 can `decide` against it without `import all`, and the three private
 helpers (`spemStep`, `spemAux`, `sturmChainAux`) become public (an
 exposed definition may not reference a `private` one). The whole closure is structural-fuel recursion; nothing in it

@@ -287,6 +287,28 @@ private def isolatesAs (p : ZPoly) (expected : Array (Dyadic × Dyadic)) (n : Na
 -- adversarial: `x − 5` hits an exact `0` at its root `5`.
 #guard ZPoly.evalDyadic linear (di 5) = 0
 
+-- Sparse monomials preserve signed exponents without materializing 2^exponent.
+example : ZPoly.evalDyadic (DensePoly.ofCoeffs #[0, 0, (1 : Int)])
+    ((Dyadic.ofInt 1) <<< (1000000000 : Int)) =
+      (Dyadic.ofInt 1) <<< (2000000000 : Int) := by decide
+example : ZPoly.evalDyadic (DensePoly.ofCoeffs #[0, 0, (1 : Int)])
+    ((Dyadic.ofInt 1) >>> (1000000000 : Int)) =
+      (Dyadic.ofInt 1) >>> (2000000000 : Int) := by decide
+example : ZPoly.evalDyadic (DensePoly.ofCoeffs #[(7 : Int)])
+    ((Dyadic.ofInt 1) <<< (1000000000 : Int)) = Dyadic.ofInt 7 := by decide
+
+-- Cancellation resets the accumulator before the remaining coefficients.
+example : ZPoly.evalDyadic (DensePoly.ofCoeffs #[(3 : Int), -2, 1])
+    (Dyadic.ofInt 2) = Dyadic.ofInt 3 := by decide
+
+-- Independent rational evaluation across signs, binary precisions and zeros.
+#guard (List.range 7).all fun i => (List.range 9).all fun j =>
+  (List.range 9).all fun k =>
+    let cs : Array Int := #[(i : Int) - 3, (j : Int) - 4, 0, (k : Int) - 4]
+    let p : ZPoly := DensePoly.ofCoeffs cs
+    let x := Dyadic.ofIntWithPrec ((j : Int) - 4) ((k : Int) - 4)
+    (p.evalDyadic x).toRat == cs.foldr (fun (c : Int) v => (c : Rat) + x.toRat * v) 0
+
 /-! # `dyadicSign`: exact sign of a dyadic. -/
 
 -- typical positive / negative, edge zero.

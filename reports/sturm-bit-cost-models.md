@@ -1,9 +1,11 @@
 # Sturm query bit-cost models
 
-These models concern the actual integer/dyadic computations, with binary
-integers and 64-bit GMP limbs. Scalar ring-operation counts alone do not
-predict wall time when coefficient sizes grow. They are two-sided,
-family-specific declarations, not uniform bounds for all query inputs.
+These models concern integer/dyadic computations, with binary integers and
+64-bit GMP limbs. Scalar ring-operation counts alone do not predict wall time
+when coefficient sizes grow. Query-degree declarations are two-sided and
+family-specific. Deferred-normalization head-degree replay uses the one-sided
+upper-bound mode below; older two-sided replay hypotheses are retained as
+historical evidence.
 The retained original declarations and samples remain in
 [the performance report](hex-sturm-performance.md).
 
@@ -64,7 +66,7 @@ possible. The operational cap is 120 seconds to accommodate that allocation
 and arithmetic volume. The model remains m², with four trials and all earlier
 samples retained. This is a schedule extension, not an unchanged rerun.
 
-## Growing head degree: dyadic replay
+## Earlier head-degree replay: normalization at every operation
 
 For `P=T_n`, query `1`, the non-head derivative-chain entries are positive
 primitive multiples of `U_k`, `k=n−1,…,0`. Explicitly,
@@ -115,7 +117,7 @@ checks contents through degree 2047 and records 1,426,150,547 stored bits,
 From 1024 to 2048 the iteration count increases by 7.97 times and the bit
 volume by 16.02 times, independently confirming the two distinct source costs.
 
-## Finite-regime replay timing hypothesis
+## Earlier finite-regime replay timing hypothesis
 
 The cost has two components: Θ(n³) normalization iterations/allocations and
 Θ(n⁴) binary arithmetic. On a fixed-word machine these have independent
@@ -172,3 +174,82 @@ fitted parameter and does not allocate the slowdown between normalization
 and recurrence products. The exact bit-work calculation remains valid; the
 current replay registration has no passing characterization on this full
 ladder. Any changed implementation needs a new derivation of its actual costs.
+
+## Deferred normalization: replay upper bound
+
+`ZPoly.hornerDyadic` carries `(a,k)` representing `a * 2^(-k)`. Multiplication
+by an endpoint `(u,e)` gives `(u*a,k+e)`; adding a nonzero integer coefficient
+aligns the two precisions by a shift. Zero coefficients retain the signed
+precision without a shift. A zero accumulator resets its precision before
+the next coefficient, including constant polynomials. `evalDyadic` normalizes
+once after the array fold. The exact equality `evalDyadic_eq_fold` proves
+that this returns the same canonical `Dyadic` as ordinary Horner evaluation.
+
+For the fixed endpoints ±2, each Horner operation is a constant-size shift
+or multiplication on O(k)-bit integers. There are O(k) coefficients in the
+degree-k entry, giving O(k²) evaluation work and O(n³) over the chain.
+The final repeated-division normalization has at most O(k²) bit work per
+entry, also O(n³) in total. In this particular family its cost is smaller:
+`U_k(2)/2^v₂(k+1)` is odd for even k and has exactly one factor of two for
+odd k. The untimed calculation checks this through degree 2047. No coefficient
+or intermediate accumulator is normalized within the fold.
+
+The recurrence products must still be counted. Put `d_k = v₂(k+1)` and
+`A = 2(k-d_k)`. For three consecutive primitive U polynomials of degrees
+`k+1,k,k-1`, the production certificate has
+
+```
+leftScale  = 2^A
+quotient   = 2^(A+1+d_k-d_(k+1)) X
+rightScale = 2^(A+d_(k-1)-d_(k+1)).
+```
+
+This follows from `U_(k+1) = 2X U_k - U_(k-1)` and the implemented
+two-cancellation pseudo-division multiplier, the square of the current
+leading coefficient. In the first step `T_n = X U_(n-1) - U_(n-2)`, so
+the quotient and right scale are instead `2^(A+d_k) X` and
+`2^(A+d_(k-1))`. The script `scripts/bench/sturm_replay_costs.py` checks
+every retained production step against these formulas. These are O(k)-bit
+scalars, not constant-cost multipliers. They multiply O(k) coefficients of
+O(k) bits per step. Initial and terminal checks, degree checks, literal
+bindings, subtraction, allocation and evaluation add at most O(n³) bit work.
+
+[GMP's published basecase bound](https://gmplib.org/manual/Basecase-Multiplication)
+is O(N*M) limb operations. Its
+[multiplication dispatch](https://gmplib.org/manual/Multiplication-Algorithms)
+uses faster algorithms above architecture-dependent thresholds, including
+unbalanced multiplication. Applying the schoolbook upper bound to O(n²)
+products on O(n)-bit operands gives **O(n⁴)** total binary work. This is an
+upper bound for the implemented kernel, not a matching lower bound. A
+power-of-two operand is still passed to general GMP multiplication by `Int.mul`.
+
+**Mode selection: mode 2, one-sided upper-bound parametric.** A tight
+monomial model for this finite ladder is unavailable: the actual cost is a
+sum of cubic traversal/evaluation work and size-dependent multiprecision
+products. GMP's published interface does not give a single tight cost for
+these sparse operands across its basecase/Toom crossovers. Assuming either
+schoolbook dominance or cubic traversal dominance would repeat the unsupported
+dominance assumption behind the earlier failures. Neither a fitted exponent
+nor a fitted mixture is used. The cited upper bound covers the actual growing
+products exercised by the family. The retained degree-1024 operation-only
+profile identifies multiply/add-multiply routines as the leading arithmetic
+hotspot (17.01% in `__gmpn_addmul_1_x86_64` alone), alongside coefficient
+copying/allocation. Stack unwinding did not recover usable kernel call chains;
+no caller attribution is inferred for allocation samples.
+
+The validation schedule is fixed before collection: degrees
+`256,512,1024,2048`, four trial-major trials, 100 ms tuning target, and the
+existing 1800-second whole-child operational cap. The registration declares
+`n^4`. Until lean-bench provides mode 2, retain its two-sided verdict and
+residual; a faster result is reported only as **within declared upper bound
+(observed faster)** under SPEC/benchmarking.md. A slower result remains a
+failure. A matching result is an upper-bound observation, never a two-sided
+consistency claim. All original failed measurements remain evidence for the
+original implementation.
+
+The before/after comparison uses the retained cap1800 executable and the
+new executable at degree 1024, four adjacent alternating AB/BA blocks,
+one ordinary warm child per arm with a 100 ms tuning target. All completed
+children are retained. Neither profiling rows nor nonadjacent historical
+times enter this comparison. It tests the local optimization independently
+of the complexity verdict.

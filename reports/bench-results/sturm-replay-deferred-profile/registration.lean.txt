@@ -298,12 +298,11 @@ setup_benchmark runSigns n => n ^ 2
     signalFloorMultiplier := 1
     maxSecondsPerCall := 3
   }
--- Mode 2: O(n⁴) binary-work upper bound. Recurrence replay makes O(n²)
--- products on O(n)-bit integers; GMP uses at most schoolbook work. Deferred
--- dyadic Horner costs O(n³). GMP's size-dependent multiplication crossovers
--- prevent a tight monomial wall-time claim on this ladder. See the published
--- bound, derivation and attribution in reports/sturm-bit-cost-models.md.
-setup_benchmark runReplay n => n ^ 4
+-- Declared cost-model: cubic normalization-iteration work, with bounded
+-- limb counts on this ladder. Total binary work remains Θ(n⁴); this declaration
+-- does not extend to an unbounded-degree bit-time claim. The source count and
+-- cost-model derivation is in reports/sturm-bit-cost-models.md.
+setup_benchmark runReplay n => n ^ 3
   with prep := degreeInput
   where {
     paramSchedule := .custom #[256, 512, 1024, 2048]
