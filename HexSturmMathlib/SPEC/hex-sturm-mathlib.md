@@ -10,7 +10,10 @@ for `query` and `prepare`, exact prepared input bindings, validity of every
 prepared domain, finite/infinite endpoint guards, and ordinary/prepared
 certificate acceptance. These results apply to noninjective coefficient
 interpretations without field or order instances on representation storage.
-Conformance instantiates them on canonical rationals and noncanonical
+`HexSturmMathlib/Rational.lean` proves universal equality of the rational and
+integer/dyadic `isSome` results after positive denominator clearing. This covers
+all invalid domains; equality of successful query values is still required.
+Conformance instantiates the generic theorems on canonical rationals and noncanonical
 representatives and inspects their axioms.
 
 The root-sum/replay semantics, root-count and singleton-sign theorems,

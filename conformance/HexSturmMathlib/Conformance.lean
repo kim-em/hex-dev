@@ -71,4 +71,8 @@ theorem noncanonical_domain (p g : Poly) (a b : Endpoint Rep) :
 #guard_msgs in
 #print axioms HexSturmMathlib.certifyPrepared_checks
 
+/-- info: 'HexSturmMathlib.query_rat_domain' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms HexSturmMathlib.query_rat_domain
+
 end HexSturmMathlib.Conformance

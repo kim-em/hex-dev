@@ -6,3 +6,4 @@ Authors: Kim Morrison
 module
 
 public import HexSturmMathlib.Domain
+public import HexSturmMathlib.Rational

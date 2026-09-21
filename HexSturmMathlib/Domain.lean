@@ -18,18 +18,18 @@ variable {E : Type u} {K : Type v} [Zero E] [DecidableEq E]
 variable [Field K] [DecidableEq K] [LinearOrder K] [IsStrictOrderedRing K]
 
 /-- Strict extended order under interpretation of finite endpoints. -/
-def EndpointLt (f : E → K) : Endpoint E → Endpoint E → Prop
+@[expose] def EndpointLt (f : E → K) : Endpoint E → Endpoint E → Prop
   | .negInf, .finite _ | .negInf, .posInf | .finite _, .posInf => True
   | .finite a, .finite b => f a < f b
   | _, _ => False
 
 /-- Infinite endpoints impose no evaluation condition. -/
-def Nonvanishing (f : E → K) (p : Polynomial K) : Endpoint E → Prop
+@[expose] def Nonvanishing (f : E → K) (p : Polynomial K) : Endpoint E → Prop
   | .finite a => p.eval (f a) ≠ 0
   | _ => True
 
 /-- The exact mathematical domain of an ordered-field query. -/
-def Domain (f : E → K) (hz : ∀ a, f a = 0 ↔ a = 0)
+@[expose] def Domain (f : E → K) (hz : ∀ a, f a = 0 ↔ a = 0)
     (p : DensePoly E) (a b : Endpoint E) : Prop :=
   interpret f hz p ≠ 0 ∧ Squarefree (interpret f hz p) ∧ EndpointLt f a b ∧
     Nonvanishing f (interpret f hz p) a ∧ Nonvanishing f (interpret f hz p) b

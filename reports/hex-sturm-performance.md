@@ -178,6 +178,19 @@ The harness labels the differences `no-comparable-control`; no statistically
 resolved incremental-cost claim follows. No mandatory null-control protocol or
 retry was added.
 
+A second [retained run](bench-results/hex-sturm-mathlib-review.json) measures
+commit `b45ddb679857d700064cea9b5407d333a93b702b`, where the literal fixture is
+shared by computational conformance and replay modules and axiom sets are also
+guarded during CI. It used the same four-pair schedule on automatically selected
+CPU 29, from a clean checkout. Acceptance medians were 1928.923 ms candidate,
+1806.857 ms baseline and 121.133 ms paired difference; rejection medians were
+1928.106 ms, 1801.859 ms and 121.284 ms. Every sample and compiler output is
+retained, with the same standard axiom set and `no-comparable-control` result.
+The source and dependency hashes identify the measured revision; subsequent
+rational-domain correspondence additions are not part of this measured import
+graph. These two runs are separate source snapshots, not a controlled performance
+comparison or a claim of improvement.
+
 ## Remaining validation gates
 
 The separate fresh-module proof track checks literal acceptance, rejection of a
