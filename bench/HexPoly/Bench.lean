@@ -312,6 +312,15 @@ def runModByMonicChecksum (input : MonicInput) : UInt64 :=
 def runGcdChecksum (input : EuclidInput) : UInt64 :=
   checksum (DensePoly.gcd input.dividend input.divisor)
 
+/-- Plain pseudo-gcd on the existing bounded-coefficient domain fixture. -/
+def runPseudoGcd (input : EuclidInput) : UInt64 :=
+  checksum (DensePoly.pseudoGcd input.dividend input.divisor)
+
+/-- Pseudo-division retains its actual multiplier, quotient and remainder. -/
+def runPseudoDiv (input : EuclidInput) : UInt64 :=
+  let r := DensePoly.pseudoDiv input.dividend input.divisor
+  mixHash (hash r.multiplier) (checksumPair r.quotient r.remainder)
+
 /-- Benchmark target: compute extended gcd and checksum gcd plus Bezout outputs. -/
 def runXGcdChecksum (input : EuclidInput) : UInt64 :=
   let result := DensePoly.xgcd input.dividend input.divisor
@@ -728,6 +737,34 @@ setup_benchmark runGcdChecksum n => n * n
     signalFloorMultiplier := 1.0
   }
 
+-- Cost-model derivation: the same normal Fibonacci chain has n linear-cost
+-- pseudo-divisions, hence O(n²) coefficient work over the fixed field F7.
+setup_benchmark runPseudoGcd n => n * n
+  with prep := prepEuclidWorstInput
+  where {
+    paramSchedule := .custom #[16, 24, 32, 48, 64, 96]
+    paramFloor := 16
+    paramCeiling := 96
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 3
+  }
+
+-- Cost-model derivation: dividend/divisor lengths are 2n/n; the dynamic
+-- recurrence sums O(n) corrections for O(n) entries, hence O(n²) in F7.
+setup_benchmark runPseudoDiv n => n * n
+  with prep := prepEuclidInput
+  where {
+    paramSchedule := .custom #[64, 96, 128, 192, 256, 384, 512]
+    paramFloor := 64
+    paramCeiling := 512
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 3
+  }
+
 /-
 This uses the same Fibonacci quotient-chain fixture as `runGcdChecksum`.
 Extended gcd carries Bezout updates in the same Euclidean loop; here every
@@ -898,7 +935,29 @@ setup_fixed_benchmark runFlintPrimitivePartChecksum98304 where flintCompareConfi
 setup_fixed_benchmark runPrimitivePartChecksum131072 where leanCompareConfig
 setup_fixed_benchmark runFlintPrimitivePartChecksum131072 where flintCompareConfig
 
+private def inspectPseudo : IO UInt32 := do
+  let coefficients (p : DensePoly F7) := p.toArray.map (fun c => c.val.val)
+  for n in #[16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512] do
+    let i := prepEuclidInput n
+    let r := DensePoly.pseudoDiv i.dividend i.divisor
+    let g := prepEuclidWorstInput n
+    let gcd := DensePoly.pseudoGcd g.dividend g.divisor
+    unless r.quotient == DensePoly.scale r.multiplier (i.dividend / i.divisor) &&
+        r.remainder == DensePoly.scale r.multiplier (i.dividend % i.divisor) && gcd == 1 do
+      throw (IO.userError s!"pseudo fixture disagreement at {n}")
+    IO.println <| (Lean.Json.mkObj [
+      ("parameter", Lean.toJson n), ("modulus", Lean.toJson (7 : Nat)),
+      ("dividend", Lean.toJson (coefficients i.dividend)),
+      ("divisor", Lean.toJson (coefficients i.divisor)),
+      ("multiplier", Lean.toJson r.multiplier.val.val),
+      ("quotient", Lean.toJson (coefficients r.quotient)),
+      ("remainder", Lean.toJson (coefficients r.remainder)),
+      ("gcdLeft", Lean.toJson (coefficients g.dividend)),
+      ("gcdRight", Lean.toJson (coefficients g.divisor)),
+      ("gcd", Lean.toJson (coefficients gcd))]).compress
+  return 0
+
 end Hex.PolyBench
 
 def main (args : List String) : IO UInt32 :=
-  LeanBench.Cli.dispatch args
+  if args == ["inspect-pseudo"] then Hex.PolyBench.inspectPseudo else LeanBench.Cli.dispatch args
