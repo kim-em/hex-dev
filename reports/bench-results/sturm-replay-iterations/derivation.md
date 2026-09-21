@@ -130,20 +130,3 @@ required. Its claim is limited to this finite arithmetic regime; it neither
 supersedes the Θ(n⁴) bit bound nor predicts unbounded-degree wall time. The
 profile includes limb division as well as allocation and cannot establish
 this hypothesis by itself. All quartic-model results remain retained.
-
-The discriminating extension keeps the cubic iteration-cost declaration and
-uses `256,512,1024,2048`, four trial-major trials and the same 600-second
-operational cap. It is declared before collection. Pure cubic growth predicts
-an eightfold time increase from 1024 to 2048; pure quartic growth predicts a
-sixteenfold increase. The implemented mixed cost can lie between them. No
-coefficient fitted to prior timings is used in the registered model. The
-extension tests whether the finite iteration-cost characterization still holds
-as limb work grows; a failed verdict remains a failure, not a reason to refit
-a mixed-power constant.
-
-Stored chain bit volume is also Θ(n³), as the exact counts show. That supplies
-a lower bound for any evaluator, not an automatic tight bound for the full
-checker: recurrence verification also performs growing-integer products.
-A cubic timing pass therefore does not certify that dyadic normalization has
-optimal bit complexity. The Θ(n⁴) work of the current repeated-division
-normalizer remains explicit whichever timing verdict the extension produces.

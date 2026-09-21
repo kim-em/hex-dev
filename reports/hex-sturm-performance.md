@@ -359,7 +359,11 @@ observations, exact commands and every sample remain alongside each run.
 
 The first two runs are faster than the declared quadratic scaling, even
 though their binary work is quadratic. Neither is relabelled as a pass. The
-largest ladder independently passes the same quadratic declaration. The retained wider
+largest ladder independently passes the same quadratic declaration. Across
+the three ladders the negative residual shrinks toward zero, as expected
+when linear allocation overhead becomes smaller relative to quadratic limb
+work. The replay result is only 0.012 inside the 0.15 slope tolerance; the
+three passes do not have equal margin. The retained wider
 schedule extends the same model to degree 1,048,576; the [head-degree quartic wall-time run](bench-results/sturm-replay-bit-cost/)
 uses degrees 128,256,512,1024 and is inconclusive (residual −0.920844).
 Its median replay times are 60.527 ms, 503.829 ms, 4.084 s and 37.045 s.
@@ -374,7 +378,33 @@ sampled periods include 11.63% in single-limb division, 9.57% in `cfree`,
 work from limb work; it does not establish a wall-time exponent. The source
 count of normalization iterations is Θ(n³), separately from Θ(n⁴) bit
 volume. The new finite-regime iteration-cost hypothesis and its fresh
-validation are specified in the derivation document.
+validation are specified in the derivation document. The
+[fresh iteration-cost run](bench-results/sturm-replay-iterations/) passes the
+bounded cubic wall-time hypothesis (residual +0.086071), with medians
+60.170 ms, 501.776 ms, 4.080 s and 37.381 s. This is a finite-regime
+characterization of the current normalizer. It is not a quartic wall-time pass
+or a uniform cubic bit-complexity claim.
+
+The [rational query run](bench-results/sturm-rational-bit-cost/) also passes
+its independently derived quadratic model (residual −0.068144). At degrees
+131072,262144,524288,1048576 its median times are 1.729 s, 6.255 s, 23.915 s
+and 95.944 s. `DensePoly.divMod` divides by the monic fixed quadratic;
+`Sturm.normalize` in `HexSturm/Basic.lean` normalizes the linear remainder
+to `X`. Quotient coefficients therefore have denominator one. Rational
+arithmetic still invokes scalar gcd normalization, but one denominator is
+one in those recurrence operations; no growing pair of denominators is
+being charged as a constant-cost gcd.
+
+The largest integer query run reached roughly 50 GiB RSS on a host with
+125 GiB total RAM; doubling degree would roughly quadruple this storage
+and exceed host capacity. These were shared-host runs. Other builds and,
+during part of collection, the separately pinned replay measurement were
+active; no sample is rejected for that activity. Binary hashes remain fixed
+within each collection, even when git commits/rebases during collection
+change the per-command `git_commit` strings. The query-large run records
+that transition from `a452384` to `205086d` in its raw output. Its exact
+binary and registration snapshot, not a single clean-tree SHA, identify
+the measured code.
 
 ## Remaining validation gates
 
