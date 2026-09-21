@@ -193,12 +193,12 @@ theorem build_size [Neg D] [NatCast D] (sign : D → Int)
 
 /-- Arithmetic identities test a zero difference. This is intentionally
 separate from the literal equality used for the head and context bindings. -/
-@[expose] def equal (p q : DensePoly D) : Bool := (p - q).isZero
+@[expose] def subIsZero (p q : DensePoly D) : Bool := (p - q).isZero
 
 /-- Check a positive three-term recurrence without performing division. -/
 @[expose] def checkStep (sign : D → Int) (a b c : DensePoly D) (s : RemainderStep D) : Bool :=
   decide (sign s.leftScale = 1) && decide (sign s.rightScale = 1) &&
-    equal (DensePoly.scale s.leftScale a) (s.quotient * b - DensePoly.scale s.rightScale c)
+    subIsZero (DensePoly.scale s.leftScale a) (s.quotient * b - DensePoly.scale s.rightScale c)
 
 /-- Literal finite replay of the initial reduction, degree evidence, all
 recurrences and the terminal zero identity. No gcd or chain producer runs. -/
@@ -211,7 +211,7 @@ recurrences and the terminal zero identity. No gcd or chain producer runs. -/
     (Array.range (n - 1)).all (fun i =>
       (cert.chain.getD (i + 1) 0).size < (cert.chain.getD i 0).size) &&
     decide (sign cert.initial.leftScale = 1) && decide (sign cert.initial.rightScale = 1) &&
-    equal (DensePoly.scale cert.initial.leftScale (f * p.derivative))
+    subIsZero (DensePoly.scale cert.initial.leftScale (f * p.derivative))
       (cert.initial.quotient * p + DensePoly.scale cert.initial.rightScale (cert.chain.getD 1 0)) &&
     if n = 1 then cert.steps.isEmpty && cert.terminal.isNone
     else
@@ -223,7 +223,7 @@ recurrences and the terminal zero identity. No gcd or chain producer runs. -/
       | none => false
       | some (factor, quotient) =>
         decide (sign factor = 1) &&
-          equal (DensePoly.scale factor (cert.chain.getD (n - 2) 0))
+          subIsZero (DensePoly.scale factor (cert.chain.getD (n - 2) 0))
             (quotient * cert.chain.getD (n - 1) 0)
 
 end SignedRemainderChain

@@ -11,7 +11,7 @@ validity for every prepared object. `certify_checks` and `certifyPrepared_checks
 prove acceptance of produced literal certificates, and `check_domain` extracts
 the mathematical domain from accepted replay. `query_rat_eq` proves whole-`Option`
 agreement between rational and integer/dyadic queries after positive denominator
-clearing, on finite ordered dyadic intervals. `replay_rat_value` proves value
+clearing, on finite ordered dyadic intervals. `check_rat_value` proves value
 agreement for arbitrary accepted certificates on those corresponding inputs.
 The theorems permit noninjective coefficient interpretations and require no
 field instance on noncanonical representatives.

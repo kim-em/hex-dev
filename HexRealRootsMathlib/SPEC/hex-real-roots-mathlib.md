@@ -615,22 +615,22 @@ modules can re-export the corresponding Mathlib modules.
 
 ## Sturm-Tarski correspondence
 
-`QueryInterpret.lean` supplies the actual signed identities and degree bounds
+`TarskiInterpret.lean` supplies the actual signed identities and degree bounds
 under noninjective coefficient interpretation, the sufficient internal degree
-bound, and produced-chain acceptance. `QueryInteger.lean` instantiates positive
+bound, and produced-chain acceptance. `TarskiInteger.lean` instantiates positive
 content normalization over `Int` and proves produced-certificate acceptance and
-agreement with the query's returned value. `QueryGcd.lean` proves terminal-gcd
+agreement with the query's returned value. `TarskiGcd.lean` proves terminal-gcd
 correspondence, the squarefreeness check and success exactly on squarefreeness
-plus the executable endpoint guards. `QueryDomain.lean` proves integer/dyadic
+plus the executable endpoint guards. `TarskiDomain.lean` proves integer/dyadic
 endpoint correspondence, exact mathematical domain equivalence and domain
 soundness of accepted replay. Root-sum and semantic replay soundness,
 singleton-sign and count/bound results below remain proof gates.
 
-`QueryCompare.lean` proves that arbitrary accepted chains for positively
+`TarskiCompare.lean` proves that arbitrary accepted chains for positively
 scaled inputs have equal lengths and entrywise positive scaling under their
 coefficient interpretations. It extracts the field remainder equations from
 the actual initial, step and terminal checks, including singleton chains and
-nonconstant terminal gcds. `QuerySigns.lean` turns that comparison into finite
+nonconstant terminal gcds. `TarskiSigns.lean` turns that comparison into finite
 endpoint sign-array equality and extracts the checked variation value.
 These algebraic proofs do not assume the signed-remainder/root-sum theorem.
 
@@ -652,7 +652,7 @@ and `tarskiQuery_sign` when the interval isolates exactly one root. Zero `f`,
 zero initial remainder, a nonconstant common gcd, negative query values and
 constant `p` are part of the contract.
 
-`TarskiReplay.check_sound` must derive the same signed sum from accepted
+`IntTarskiCertificate.check_sound` must derive the same signed sum from accepted
 literal data. Transport positive-scaled remainder identities through the
 integer-to-real cast, prove that reducing `f*p'` modulo `p` preserves the
 Cauchy index, and allow termination at a nonconstant gcd. The present
@@ -697,7 +697,7 @@ Use `sgn : R → Int` with values `-1,0,1`, and the finite set
 endpoint inequalities). Infinite endpoint inequalities impose no bound on
 that side. Require `P≠0`, `Squarefree P`, `a<b` and nonzero evaluations of
 `P` at finite endpoints. For arbitrary `F : Polynomial R`, the planned
-shared theorem `Hex.Query.variation_eq` has the following explicit certificate
+shared theorem `Hex.Tarski.variation_eq` has the following explicit certificate
 hypotheses (`Hex.Query` is the planned abstract query namespace here):
 
 ```text
@@ -775,7 +775,7 @@ Horner and degree-parity infinity sign agreement. Positive rescaling
 preserves signs/variations; translate every initial, step and terminal
 identity. Negative scaling alone does not preserve these quantities.
 
-The shared `Hex.QueryReplay.check_sound` derives the mathematical guards and
+The shared `Hex.TarskiCertificate.check_sound` derives the mathematical guards and
 `Query.variation_eq` from accepted finite literal data. Squarefreeness is in
 the fraction field (hence in `R` in characteristic zero), so integer `4*X`
 is accepted. Recurrence identities alone do not prove squarefreeness: a
@@ -827,14 +827,14 @@ import of hex-real-algebraic-mathlib, and the odd-root proof has only one copy.
 
 Instantiate the shared domain/replay bridge with `D=ℤ`, `j=Int.castRingHom ℝ`
 and exact dyadic evaluation to prove `ZPoly.tarskiQuery_eq` and
-`TarskiReplay.check_sound` here. Also retain `tarskiQuery_isSome` for exactly
+`IntTarskiCertificate.check_sound` here. Also retain `tarskiQuery_isSome` for exactly
 the nonzero/squarefree/root-free domain and `tarskiQuery_sign` for a singleton
 root set. `DyadicInterval.lt` already supplies endpoint ordering. Optimized
 integer content and dyadic Horner operations must correspond to the shared
 kernel. No generic field frontend is imported to prove these specializations.
 
 [hex-sturm-mathlib](../../SPEC/Libraries/hex-sturm-mathlib.md) consumes these
-shared results for field guards, generic endpoint adapters, coefficient-proof
+shared results for field guards, generic endpoint sign operations, coefficient-proof
 composition, positive rational denominator clearing and `rootCount_eq`.
 Real-closure existence for arbitrary ordered fields remains a separate Tau
 Ceti obligation consumed downstream by hex-real-closure-mathlib. All missing

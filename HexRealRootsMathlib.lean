@@ -7,12 +7,12 @@ Authors: Kim Morrison
 module
 
 public import HexRealRootsMathlib.RealClosed
-public import HexRealRootsMathlib.QueryInterpret
-public import HexRealRootsMathlib.QueryGcd
-public import HexRealRootsMathlib.QueryCompare
-public import HexRealRootsMathlib.QuerySigns
-public import HexRealRootsMathlib.QueryInteger
-public import HexRealRootsMathlib.QueryDomain
+public import HexRealRootsMathlib.TarskiInterpret
+public import HexRealRootsMathlib.TarskiGcd
+public import HexRealRootsMathlib.TarskiCompare
+public import HexRealRootsMathlib.TarskiSigns
+public import HexRealRootsMathlib.TarskiInteger
+public import HexRealRootsMathlib.TarskiDomain
 public import HexRealRootsMathlib.SturmChainDefs
 public import HexRealRootsMathlib.SturmTheorem
 public import HexRealRootsMathlib.SturmCertificate

@@ -5,8 +5,8 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealRoots.Query
-public import HexRealRoots.QueryProofs
+public import HexRealRoots.Tarski
+public import HexRealRoots.TarskiProofs
 public import HexPolyMathlib.Pseudo
 
 public section
@@ -14,7 +14,7 @@ public section
 /-! Algebraic interpretation of the actual shared query producer and replay.
 These results supply the signed identities and degree bounds. Root-sum
 semantics additionally require the signed-remainder/Cauchy-index theorem. -/
-namespace HexRealRootsMathlib.Query
+namespace HexRealRootsMathlib.Tarski
 
 open Hex DensePoly HexPolyMathlib.Interpret
 
@@ -38,7 +38,7 @@ theorem step_iff [LinearOrder K] [IsStrictOrderedRing K] (sign : D → Int)
       Polynomial.C (f s.leftScale) * interpret f hz a =
         interpret f hz s.quotient * interpret f hz b -
           Polynomial.C (f s.rightScale) * interpret f hz c := by
-  simp only [SignedRemainderChain.checkStep, SignedRemainderChain.equal, Bool.and_eq_true, decide_eq_true_eq,
+  simp only [SignedRemainderChain.checkStep, SignedRemainderChain.subIsZero, Bool.and_eq_true, decide_eq_true_eq,
     sub_isZero f hz hs, interpret_sub f hz hs, interpret_mul f hz ha hm,
     interpret_scale f hz hm, hsign, and_assoc]
 
@@ -230,7 +230,7 @@ replay, independently of whether the last nonzero polynomial is constant. -/
 theorem terminal_produced (a b : DensePoly D) (hb : b ≠ 0)
     (hr : (positivePseudoDiv sign a b).remainder.isZero = true) :
     sign (positivePseudoDiv sign a b).multiplier = 1 ∧
-      SignedRemainderChain.equal (scale (positivePseudoDiv sign a b).multiplier a)
+      SignedRemainderChain.subIsZero (scale (positivePseudoDiv sign a b).multiplier a)
         ((positivePseudoDiv sign a b).quotient * b) = true := by
   refine ⟨(hpos _).mpr (positive_multiplier f hz h1 ha hs hm hn sign hneg a b hb), ?_⟩
   have hrzero : (positivePseudoDiv sign a b).remainder = 0 :=
@@ -276,7 +276,7 @@ theorem build_checks [NatCast D] (p g : DensePoly D) (hp : p ≠ 0) :
     have hb := normalize_bounds f hz hs normalize hnorm' _ hrne
     obtain ⟨hc, hnorm⟩ := hnormalize _ hrne
     have hd := positivePseudoDiv_remainder_lt sign (g * p.derivative) p hp
-    have hi : SignedRemainderChain.equal
+    have hi : SignedRemainderChain.subIsZero
         (scale (positivePseudoDiv sign (g * p.derivative) p).multiplier (g * p.derivative))
         ((positivePseudoDiv sign (g * p.derivative) p).quotient * p +
           scale (normalize (positivePseudoDiv sign (g * p.derivative) p).remainder).1
@@ -300,4 +300,4 @@ theorem build_checks [NatCast D] (p g : DensePoly D) (hp : p ≠ 0) :
       omega
 
 end Production
-end HexRealRootsMathlib.Query
+end HexRealRootsMathlib.Tarski

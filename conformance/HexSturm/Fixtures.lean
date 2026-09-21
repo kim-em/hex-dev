@@ -25,7 +25,7 @@ open Hex DensePoly
   steps := #[⟨1, x, 1⟩]
   terminal := some (1, x)
 
-@[expose] def literal : QueryReplay Rat Rat Nat where
+@[expose] def literal : TarskiCertificate Rat Rat Nat where
   context := 7
   head := p
   queryPoly := 1

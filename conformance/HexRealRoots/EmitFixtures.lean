@@ -202,10 +202,10 @@ private def emitQueryCase (c : String × ZPoly × ZPoly × DyadicInterval) : IO 
     | none => "null"
     | some value => toString value
   emitResult lib id "tarski" value
-  match TarskiReplay.certify p f interval with
+  match IntTarskiCertificate.certify p f interval with
   | none => pure ()
   | some cert => do
-    unless TarskiReplay.check p f interval cert.value cert do
+    unless IntTarskiCertificate.check p f interval cert.value cert do
       throw <| IO.userError s!"{lib}/{id}: produced certificate failed replay"
     emitSignedRemainderChain (id ++ "/squarefree") cert.squarefree
     emitSignedRemainderChain (id ++ "/remainders") cert.remainders

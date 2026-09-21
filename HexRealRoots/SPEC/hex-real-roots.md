@@ -124,7 +124,7 @@ dyadic counts. These primitives belong here, not in the number-field layer.
 ## Tarski queries
 
 The query and replay declarations are implemented in `SignedRemainderChain.lean` and
-`Query.lean`, with array-loop replay invariants in `QueryProofs.lean`.
+`Query.lean`, with array-loop replay invariants in `TarskiProofs.lean`.
 The ordered-domain kernel is shared with the
 [ordered-field frontend](../../SPEC/Libraries/hex-sturm.md). The companion
 proves algebraic correspondence, produced-certificate acceptance and exact
@@ -208,8 +208,7 @@ asserted on raw representatives. Bounded sign attempts cannot supply its
 total sign. Replay identities use semantic zero differences.
 
 This owner provides `Endpoint E := negInf | finite E | posInf`, the chain
-producer, zero-skipping variation fold and literal replay. A small endpoint
-adapter supplies total finite comparison and exact evaluation signs, with
+producer, zero-skipping variation fold and literal replay. `EndpointSigns` supplies total finite comparison and exact evaluation signs, with
 correctness proved once. It may interpret endpoints in an ordered extension
 of `D`: `E=Dyadic` need not be an integer when `D=Int`. This is an endpoint
 interface, not an evidence-returning coefficient-arithmetic framework.
@@ -237,8 +236,8 @@ frontend retains `Option Int`, with `none` exactly on invalid mathematical
 input. A false certificate check means the proposed evidence is incorrect,
 not that the query lacks a value.
 
-The shared `Hex.QueryReplay.check` verifies the literal identities,
-degrees, signs and guard witnesses. `Hex.QueryReplay.check_sound` belongs to
+The shared `Hex.TarskiCertificate.check` verifies the literal identities,
+degrees, signs and guard witnesses. `Hex.TarskiCertificate.check_sound` belongs to
 [hex-real-roots-mathlib](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#representation-and-replay-bridge).
 For ordinary exact coefficients these checks use total equality/order.
 For expensive extension comparisons, the tactic proof interface may instead
@@ -262,8 +261,8 @@ correspondence lives in hex-sturm-mathlib. BKR matrices remain downstream.
 
 ### Literal query certificates
 
-Provide a Mathlib-free `TarskiReplay` and Boolean `check p f I value` alongside
-the driver, with companion theorem `TarskiReplay.check_sound`. Reuse the
+Provide a Mathlib-free `IntTarskiCertificate` and Boolean `check p f I value` alongside
+the driver, with companion theorem `IntTarskiCertificate.check_sound`. Reuse the
 positive three-term recurrence design of
 [RCF Sturm replay](../../HexRCF/SturmCheck.lean), not its derivative-specific
 acceptance predicate. The certificate contains:

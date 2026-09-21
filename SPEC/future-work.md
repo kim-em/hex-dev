@@ -1139,7 +1139,7 @@ gcd and extended gcd. Generic characteristic-zero Yun decomposition over
 `DensePoly K` is missing; `hex-real-closure` owns its specification, including
 multiplicities over lawful exact coefficient fields.
 [hex-real-roots](../HexRealRoots/SPEC/hex-real-roots.md#tarski-queries) owns
-integer Sturm chains and the implemented `ZPoly.tarskiQuery` and `TarskiReplay`.
+integer Sturm chains and the implemented `ZPoly.tarskiQuery` and `IntTarskiCertificate`.
 Their abstract root-sum and replay soundness proofs remain required. Its ordinary root counts and
 `hex-rcf`'s derivative-seeded `SturmReplay` cannot certify general Tarski
 queries. Transcendental sign refinement consumes a caller-supplied approximation
@@ -1266,7 +1266,7 @@ translation of its replay certificates.
 The shared abstract signed-remainder/replay soundness theorem lives in
 `hex-real-roots-mathlib`, importing the Tau Ceti foundation there. That
 companion retains ownership of `ZPoly.tarskiQuery_eq` and
-`TarskiReplay.check_sound`, derived by integer specialization of the shared
+`IntTarskiCertificate.check_sound`, derived by integer specialization of the shared
 theorem. `hex-sturm-mathlib` consumes it to prove the general frontend's
 guards, endpoint adapters and coefficient-evidence composition sound. Thus
 neither the primitive nor its foundational soundness proof is duplicated, and

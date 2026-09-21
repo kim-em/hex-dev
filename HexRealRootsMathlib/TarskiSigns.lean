@@ -5,11 +5,11 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealRootsMathlib.QueryCompare
+public import HexRealRootsMathlib.TarskiCompare
 
 public section
 
-namespace HexRealRootsMathlib.Query
+namespace HexRealRootsMathlib.Tarski
 
 open Hex HexPolyMathlib.Interpret Polynomial
 
@@ -18,13 +18,13 @@ supplied remainder chain. This does not invoke a producer or root semantics. -/
 theorem check_value {D : Type v} {A : Type w} {Ctx : Type u}
     [Zero D] [DecidableEq D] [One D] [Add D] [Sub D] [Mul D] [NatCast D]
     [DecidableEq A] [DecidableEq Ctx]
-    (sign : D → Int) (adapter : EndpointAdapter D A) (context : Ctx)
-    (p g : DensePoly D) (a b : Endpoint A) (value : Int) (cert : QueryReplay D A Ctx)
-    (h : QueryReplay.check sign adapter context p g a b value cert = true) :
+    (sign : D → Int) (endpointSigns : EndpointSigns D A) (context : Ctx)
+    (p g : DensePoly D) (a b : Endpoint A) (value : Int) (cert : TarskiCertificate D A Ctx)
+    (h : TarskiCertificate.check sign endpointSigns context p g a b value cert = true) :
     SignedRemainderChain.check sign p g cert.remainders = true ∧
-      value = (signVar (QueryReplay.signs sign adapter cert.remainders.chain a).toList : Int) -
-        signVar (QueryReplay.signs sign adapter cert.remainders.chain b).toList := by
-  simp only [QueryReplay.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
+      value = (signVar (TarskiCertificate.signs sign endpointSigns cert.remainders.chain a).toList : Int) -
+        signVar (TarskiCertificate.signs sign endpointSigns cert.remainders.chain b).toList := by
+  simp only [TarskiCertificate.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
   obtain ⟨_, _, _, _, _, _, _, _, _, hr, hl, hu, _, _, hvl, hvu, hv⟩ := h
   exact ⟨hr, by simpa only [hvl, hvu, hl, hu] using hv⟩
 
@@ -52,30 +52,30 @@ theorem finite_signs_eq
     (f : D → K) (hz : ∀ a, f a = 0 ↔ a = 0)
     (j : E → K) (jz : ∀ a, j a = 0 ↔ a = 0)
     (sign : D → Int) (sign' : E → Int)
-    (adapter : EndpointAdapter D A) (adapter' : EndpointAdapter E B)
+    (endpointSigns : EndpointSigns D A) (endpointSigns' : EndpointSigns E B)
     (a : A) (b : B) (x : K)
-    (hbound : ∀ p, -1 ≤ adapter.evalSign p a ∧ adapter.evalSign p a ≤ 1)
-    (hbound' : ∀ p, -1 ≤ adapter'.evalSign p b ∧ adapter'.evalSign p b ≤ 1)
-    (hneg : ∀ p, adapter.evalSign p a < 0 ↔ (interpret f hz p).eval x < 0)
-    (hneg' : ∀ p, adapter'.evalSign p b < 0 ↔ (interpret j jz p).eval x < 0)
-    (hzero : ∀ p, adapter.evalSign p a = 0 ↔ (interpret f hz p).eval x = 0)
-    (hzero' : ∀ p, adapter'.evalSign p b = 0 ↔ (interpret j jz p).eval x = 0)
+    (hbound : ∀ p, -1 ≤ endpointSigns.evalSign p a ∧ endpointSigns.evalSign p a ≤ 1)
+    (hbound' : ∀ p, -1 ≤ endpointSigns'.evalSign p b ∧ endpointSigns'.evalSign p b ≤ 1)
+    (hneg : ∀ p, endpointSigns.evalSign p a < 0 ↔ (interpret f hz p).eval x < 0)
+    (hneg' : ∀ p, endpointSigns'.evalSign p b < 0 ↔ (interpret j jz p).eval x < 0)
+    (hzero : ∀ p, endpointSigns.evalSign p a = 0 ↔ (interpret f hz p).eval x = 0)
+    (hzero' : ∀ p, endpointSigns'.evalSign p b = 0 ↔ (interpret j jz p).eval x = 0)
     (chain : Array (DensePoly D)) (chain' : Array (DensePoly E))
     (hsize : chain.size = chain'.size)
     (hscale : ∀ i, ∃ c : K, 0 < c ∧
       interpret j jz (chain'.getD i 0) = C c * interpret f hz (chain.getD i 0)) :
-    QueryReplay.signs sign adapter chain (.finite a) =
-      QueryReplay.signs sign' adapter' chain' (.finite b) := by
+    TarskiCertificate.signs sign endpointSigns chain (.finite a) =
+      TarskiCertificate.signs sign' endpointSigns' chain' (.finite b) := by
   apply Array.ext
-  · simpa only [QueryReplay.signs, Hex.Array.size_map'] using hsize
+  · simpa only [TarskiCertificate.signs, Hex.Array.size_map'] using hsize
   · intro i hi hi'
-    simp only [QueryReplay.signs, Hex.Array.getElem_map', Endpoint.signAt]
+    simp only [TarskiCertificate.signs, Hex.Array.getElem_map', Endpoint.signAt]
     obtain ⟨c, hc, he⟩ := hscale i
     have heval := congrArg (fun p : Polynomial K => p.eval x) he
     simp only [Polynomial.eval_mul, Polynomial.eval_C] at heval
-    have hi₀ : i < chain.size := by simpa only [QueryReplay.signs, Hex.Array.size_map'] using hi
-    have hi₁ : i < chain'.size := by simpa only [QueryReplay.signs, Hex.Array.size_map'] using hi'
+    have hi₀ : i < chain.size := by simpa only [TarskiCertificate.signs, Hex.Array.size_map'] using hi
+    have hi₁ : i < chain'.size := by simpa only [TarskiCertificate.signs, Hex.Array.size_map'] using hi'
     rw [← Array.getElem_eq_getD (h := hi₀) 0, ← Array.getElem_eq_getD (h := hi₁) 0] at heval
     exact signs_scale _ _ _ _ c hc heval (hbound _) (hbound' _) (hneg _) (hneg' _) (hzero _) (hzero' _)
 
-end HexRealRootsMathlib.Query
+end HexRealRootsMathlib.Tarski

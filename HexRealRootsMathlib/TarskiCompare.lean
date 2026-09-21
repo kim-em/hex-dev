@@ -5,11 +5,11 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealRootsMathlib.QueryGcd
+public import HexRealRootsMathlib.TarskiGcd
 
 public section
 
-namespace HexRealRootsMathlib.Query
+namespace HexRealRootsMathlib.Tarski
 
 open Hex HexPolyMathlib.Interpret Polynomial
 
@@ -241,4 +241,4 @@ theorem check_compare {E : Type w} [Zero E] [DecidableEq E] [Add E] [Sub E] [Mul
 
 end Replay
 
-end HexRealRootsMathlib.Query
+end HexRealRootsMathlib.Tarski

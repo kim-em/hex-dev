@@ -5,12 +5,12 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealRootsMathlib.QueryInterpret
+public import HexRealRootsMathlib.TarskiInterpret
 public import Mathlib.FieldTheory.Perfect
 
 public section
 
-namespace HexRealRootsMathlib.Query
+namespace HexRealRootsMathlib.Tarski
 
 open Hex DensePoly HexPolyMathlib.Interpret
 
@@ -132,9 +132,9 @@ theorem check_gcd (p g : DensePoly D) (cert : SignedRemainderChain D)
 omit [LinearOrder K] [IsStrictOrderedRing K] in
 /-- The replay's literal constant-tail guard means a nonzero constant after
 interpretation, without requiring a canonical representative of one. -/
-theorem constantTail_iff (p g : DensePoly D) (cert : SignedRemainderChain D)
+theorem lastIsConstant_iff (p g : DensePoly D) (cert : SignedRemainderChain D)
     (h : SignedRemainderChain.check sign p g cert = true) :
-    QueryReplay.constantTail cert = true ↔
+    TarskiCertificate.lastIsConstant cert = true ↔
       IsUnit (interpret f hz (cert.chain.getD (cert.chain.size - 1) 0)) := by
   have hb := (check_bound f hz sign p g cert h).1
   have hmem : cert.chain.getD (cert.chain.size - 1) 0 ∈ cert.chain := by
@@ -146,7 +146,7 @@ theorem constantTail_iff (p g : DensePoly D) (cert : SignedRemainderChain D)
     intro hzero
     apply hnz
     rw [(size_eq_zero_iff _).mp hzero, interpret_zero]
-  rw [QueryReplay.constantTail, beq_iff_eq, Polynomial.isUnit_iff_degree_eq_zero,
+  rw [TarskiCertificate.lastIsConstant, beq_iff_eq, Polynomial.isUnit_iff_degree_eq_zero,
     Polynomial.degree_eq_natDegree hnz]
   simp only [Nat.cast_eq_zero, natDegree_interpret, natDegree_eq_size_sub_one]
   omega
@@ -157,8 +157,8 @@ squarefreeness over the semantic ordered field. -/
 theorem check_squarefree [One D] (h1 : f (1 : D) = 1)
     (p : DensePoly D) (cert : SignedRemainderChain D)
     (h : SignedRemainderChain.check sign p 1 cert = true) :
-    QueryReplay.constantTail cert = true ↔ Squarefree (interpret f hz p) := by
-  rw [constantTail_iff f hz sign p 1 cert h,
+    TarskiCertificate.lastIsConstant cert = true ↔ Squarefree (interpret f hz p) := by
+  rw [lastIsConstant_iff f hz sign p 1 cert h,
     (check_gcd f hz ha hs hm hn sign hpos p 1 cert h).isUnit_iff,
     interpret_one f hz h1, one_mul, EuclideanDomain.gcd_isUnit_iff,
     ← Polynomial.separable_def, PerfectField.separable_iff_squarefree]
@@ -167,32 +167,32 @@ include ha hs hm hn hpos in
 /-- Query production succeeds exactly when the endpoint guards and semantic
 squarefreeness hold. There is no exhaustion case hidden in the `Option`. -/
 theorem query_isSome [One D] [Neg D] (h1 : f (1 : D) = 1)
-    {E : Type w} (adapter : EndpointAdapter D E)
+    {E : Type w} (endpointSigns : EndpointSigns D E)
     (normalize : DensePoly D → D × DensePoly D)
     (hchains : ∀ p g : DensePoly D, p ≠ 0 →
       SignedRemainderChain.check sign p g (SignedRemainderChain.build sign normalize p g) = true)
     (p g : DensePoly D) (a b : Endpoint E) :
-    (QueryReplay.query sign adapter normalize p g a b).isSome = true ↔
-      QueryReplay.endpointGuards adapter p a b = true ∧ Squarefree (interpret f hz p) := by
-  by_cases hg : QueryReplay.endpointGuards adapter p a b = true
+    (TarskiCertificate.query sign endpointSigns normalize p g a b).isSome = true ↔
+      TarskiCertificate.checkEndpoints endpointSigns p a b = true ∧ Squarefree (interpret f hz p) := by
+  by_cases hg : TarskiCertificate.checkEndpoints endpointSigns p a b = true
   · have hp : p ≠ 0 := by
       have hg' := hg
-      simp only [QueryReplay.endpointGuards, Bool.and_eq_true] at hg'
+      simp only [TarskiCertificate.checkEndpoints, Bool.and_eq_true] at hg'
       intro hp
       have hp' := hg'.1.1.1
       rw [hp] at hp'
       contradiction
     have hsf := check_squarefree f hz ha hs hm hn sign hpos h1 p
       (SignedRemainderChain.build sign normalize p 1) (hchains p 1 hp)
-    simp only [QueryReplay.query, QueryReplay.certify, hg, Bool.not_true, Bool.false_eq_true,
+    simp only [TarskiCertificate.query, TarskiCertificate.certify, hg, Bool.not_true, Bool.false_eq_true,
       ↓reduceIte, Option.isSome_map, true_and]
-    cases ht : QueryReplay.constantTail (SignedRemainderChain.build sign normalize p 1) <;>
+    cases ht : TarskiCertificate.lastIsConstant (SignedRemainderChain.build sign normalize p 1) <;>
       simp_all only [Bool.not_false, Bool.not_true, ↓reduceIte, Option.isSome_none,
         Option.isSome_some, Bool.false_eq_true, true_iff, false_iff]
-  · have hg' : QueryReplay.endpointGuards adapter p a b = false := Bool.eq_false_iff.mpr hg
-    simp only [QueryReplay.query, QueryReplay.certify, hg', Bool.not_false, ↓reduceIte,
+  · have hg' : TarskiCertificate.checkEndpoints endpointSigns p a b = false := Bool.eq_false_iff.mpr hg
+    simp only [TarskiCertificate.query, TarskiCertificate.certify, hg', Bool.not_false, ↓reduceIte,
       Option.map_none, Option.isSome_none, Bool.false_eq_true, false_and]
 
-end HexRealRootsMathlib.Query
+end HexRealRootsMathlib.Tarski
 
 

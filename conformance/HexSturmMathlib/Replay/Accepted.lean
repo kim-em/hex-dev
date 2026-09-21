@@ -14,8 +14,8 @@ namespace HexSturmMathlib.ReplayTests
 open Hex DensePoly Hex.Sturm.Fixtures
 
 /-- Recheck the literal certificate in a fresh ordinary kernel build. -/
-theorem accepted : Sturm.Replay.check Sturm.orderSign 7 p 1 (.finite (-2)) (.finite 2) 2 literal = true := by
-  simp only [Sturm.Replay.check, QueryReplay.check, SignedRemainderChain.check, ← Array.all_toList, Array.toList_range]
+theorem accepted : Sturm.check Sturm.orderSign 7 p 1 (.finite (-2)) (.finite 2) 2 literal = true := by
+  simp only [Sturm.check, TarskiCertificate.check, SignedRemainderChain.check, ← Array.all_toList, Array.toList_range]
   decide +kernel
 
 /-- Interpret the accepted literal squarefreeness and endpoint evidence. -/

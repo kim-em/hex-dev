@@ -11,7 +11,7 @@ import Lean.Data.Json
 /-!
 Shared query stage measurements and rational/integer comparison.
 Computational performance owners: `HexRealRoots`, `HexSturm`, `HexPolyZ`.
-The HexPolyZ denominator-clearing stage measures the rational/integer adapter
+The HexPolyZ denominator-clearing stage measures the rational/integer endpointSigns
 used by the Sturm frontend; its arithmetic remains owned by HexPolyZ.
 
 The degree family is `T_n` with query `1` on `(-2,2)`. Its derivative signed
@@ -58,7 +58,7 @@ def chainHash (c : SignedRemainderChain Int) : UInt64 :=
   hash (c.chain, c.degrees, c.initial.leftScale, c.initial.quotient,
     c.initial.rightScale, c.steps.map (fun s => (s.leftScale, s.quotient, s.rightScale)), c.terminal)
 
-def certHash (c : TarskiReplay) : UInt64 :=
+def certHash (c : IntTarskiCertificate) : UInt64 :=
   hash (c.head, c.queryPoly, c.lowerSigns, c.upperSigns, c.lowerVariations,
     c.upperVariations, c.value, chainHash c.squarefree, chainHash c.remainders)
 
@@ -67,13 +67,13 @@ structure Input where
   f : ZPoly
   rp : DensePoly Rat
   rf : DensePoly Rat
-  cert : Option TarskiReplay
+  cert : Option IntTarskiCertificate
 
 instance : Hashable Input where
   hash i := hash (i.p, i.f, i.rp, i.rf, i.cert.map certHash)
 
 def input (p f : ZPoly) : Input :=
-  ⟨p, f, ZPoly.toRatPoly p, ZPoly.toRatPoly f, TarskiReplay.certify p f interval⟩
+  ⟨p, f, ZPoly.toRatPoly p, ZPoly.toRatPoly f, IntTarskiCertificate.certify p f interval⟩
 
 def degreeInput (n : Nat) : Input := input (chebyshev n) 1
 
@@ -93,13 +93,13 @@ def runInitial (i : Input) : UInt64 :=
   hash (r.multiplier, r.quotient, r.remainder)
 
 def runChain (i : Input) : UInt64 :=
-  chainHash (SignedRemainderChain.build Int.sign ZPoly.queryNormalize i.p i.f)
+  chainHash (SignedRemainderChain.build Int.sign ZPoly.normalizeContent i.p i.f)
 
 def runEndpoints (i : Input) : Array Int × Array Int :=
   match i.cert with
   | none => (#[], #[])
-  | some c => (QueryReplay.signs Int.sign ZPoly.queryAdapter c.remainders.chain (.finite interval.lower),
-      QueryReplay.signs Int.sign ZPoly.queryAdapter c.remainders.chain (.finite interval.upper))
+  | some c => (TarskiCertificate.signs Int.sign EndpointSigns.intDyadic c.remainders.chain (.finite interval.lower),
+      TarskiCertificate.signs Int.sign EndpointSigns.intDyadic c.remainders.chain (.finite interval.upper))
 
 def runSigns (i : Input) : Array (Array Int) :=
   match i.cert with
@@ -109,7 +109,7 @@ def runSigns (i : Input) : Array (Array Int) :=
 def runReplay (i : Input) : Bool :=
   match i.cert with
   | none => false
-  | some c => TarskiReplay.check i.p i.f interval c.value c
+  | some c => IntTarskiCertificate.check i.p i.f interval c.value c
 
 def runClearing (i : Input) : Nat × ZPoly :=
   ZPoly.clearDenominators (scale (1 / 6 : Rat) i.rp)
@@ -307,7 +307,7 @@ private def endpointJson : Endpoint Dyadic → Lean.Json
   | .finite .zero => Lean.toJson ((0 : Int), (0 : Int))
   | .finite (.ofOdd n k _) => Lean.toJson (n, k)
 
-private def certJson (c : TarskiReplay) : Lean.Json :=
+private def certJson (c : IntTarskiCertificate) : Lean.Json :=
   Lean.Json.mkObj [
     ("context", Lean.Json.null), ("head", Lean.toJson c.head.toArray),
     ("query", Lean.toJson c.queryPoly.toArray), ("lower", endpointJson c.lower),
@@ -321,7 +321,7 @@ private def inspectCase (family : String) (n : Nat) (i : Input) (expected : Int)
   let some ratCert := Sturm.certify Sturm.orderSign () i.rp i.rf (.finite (-2)) (.finite 2)
     | throw (IO.userError s!"{family}/{n}: invalid rational domain")
   unless runInteger i == some expected && runRational i == some expected && runReplay i &&
-      Sturm.Replay.check Sturm.orderSign () i.rp i.rf (.finite (-2)) (.finite 2) expected ratCert do
+      Sturm.check Sturm.orderSign () i.rp i.rf (.finite (-2)) (.finite 2) expected ratCert do
     throw (IO.userError s!"{family}/{n}: query or replay disagreement")
   let integerBits := max (chainBits intBits cert.squarefree) (chainBits intBits cert.remainders)
   let rationalBits := max (chainBits ratBits ratCert.squarefree) (chainBits ratBits ratCert.remainders)
