@@ -2330,15 +2330,15 @@ not a replacement for them.
 
 ### Alternatives and sharing
 
-1. **Surface syntax over current data: selected through ordinary Lean.**
+1. **Surface syntax over `PrimeCert`: selected through ordinary Lean.**
    The positive-exponent macro and named Curve25519 prototype reduce source
    repetition. `using` flattens them into portable data; no custom parser or
    elaborator becomes a replay dependency.
-2. **An implicit producer registry: not selected.** It adds ordering, duplicate
-   registration, import-dependent selection, ABI, and resource-accounting
-   policy without adding accepted certificates. Explicit function selection
-   supplies the needed extension point. Existing bounded factor callbacks and
-   their versioned downstream registration keep their separate search role.
+2. **Explicit certificate producers.** Select certificate producers through
+   ordinary Lean expressions, without an implicit producer registry.
+   `SearchExtension` and `ConstructionExtension` register bounded factor
+   providers for their separate search roles. Neither is a registry of
+   certificate producers for the `using` form.
 3. **A versioned step interpreter or DAG: deferred.** None of these examples
    needs a new criterion or shows unacceptable tree expansion. A DAG could
    matter for many parents sharing a large child: naming a value saves source
