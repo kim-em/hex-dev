@@ -1579,6 +1579,10 @@ lean_exe hexgramschmidt_bench where
   srcDir := "bench"
   root := `HexGramSchmidt.Bench
 
+lean_exe hexsturm_bench where
+  srcDir := "bench"
+  root := `HexSturm.Bench
+
 lean_exe hexrealroots_bench where
   srcDir := "bench"
   root := `HexRealRoots.Bench
