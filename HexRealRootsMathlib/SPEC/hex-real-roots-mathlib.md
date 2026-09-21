@@ -697,8 +697,8 @@ Use `sgn : R → Int` with values `-1,0,1`, and the finite set
 endpoint inequalities). Infinite endpoint inequalities impose no bound on
 that side. Require `P≠0`, `Squarefree P`, `a<b` and nonzero evaluations of
 `P` at finite endpoints. For arbitrary `F : Polynomial R`, the planned
-shared theorem `Hex.Tarski.variation_eq` has the following explicit certificate
-hypotheses (`Hex.Query` is the planned abstract query namespace here):
+shared theorem `HexRealRootsMathlib.Tarski.variation_eq` has the following
+explicit certificate hypotheses:
 
 ```text
 S₀ = P
@@ -775,9 +775,9 @@ Horner and degree-parity infinity sign agreement. Positive rescaling
 preserves signs/variations; translate every initial, step and terminal
 identity. Negative scaling alone does not preserve these quantities.
 
-The shared `Hex.TarskiCertificate.check_sound` derives the mathematical guards and
-`Query.variation_eq` from accepted finite literal data. Squarefreeness is in
-the fraction field (hence in `R` in characteristic zero), so integer `4*X`
+The shared `Hex.TarskiCertificate.check_sound` derives the mathematical guards
+and `HexRealRootsMathlib.Tarski.variation_eq` from accepted finite literal data.
+Squarefreeness is in the fraction field (hence in `R` in characteristic zero), so integer `4*X`
 is accepted. Recurrence identities alone do not prove squarefreeness: a
 separate gcd or Bézout guard witness is checked. Prove producer correctness
 and produced-certificate acceptance separately from replay soundness.

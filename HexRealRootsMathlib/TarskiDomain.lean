@@ -22,7 +22,7 @@ theorem dyadicSign_neg (d : Dyadic) : dyadicSign d < 0 ↔ Dyadic.toReal d < 0 :
 
 /-- The integer frontend's executable endpoint guards are exactly head and
 endpoint nonvanishing. Its interval already certifies strict endpoint order. -/
-theorem integer_guards (p : ZPoly) (I : DyadicInterval) :
+theorem integer_checkEndpoints (p : ZPoly) (I : DyadicInterval) :
     TarskiCertificate.checkEndpoints EndpointSigns.intDyadic p (.finite I.lower) (.finite I.upper) = true ↔
       p ≠ 0 ∧ (toPolyℝ p).eval (Dyadic.toReal I.lower) ≠ 0 ∧
         (toPolyℝ p).eval (Dyadic.toReal I.upper) ≠ 0 := by
@@ -62,7 +62,7 @@ theorem integer_domain (p g : ZPoly) (I : DyadicInterval) :
     EndpointSigns.intDyadic ZPoly.normalizeContent integer_chain_checks p g (.finite I.lower) (.finite I.upper)
   change (TarskiCertificate.query Int.sign EndpointSigns.intDyadic ZPoly.normalizeContent p g
     (.finite I.lower) (.finite I.upper)).isSome = true ↔ _
-  rw [h, integer_guards, interpret_int_real]
+  rw [h, integer_checkEndpoints, interpret_int_real]
   simp only [and_left_comm, and_comm]
 
 /-- An accepted integer certificate proves the same mathematical domain using
@@ -75,7 +75,7 @@ theorem integer_check_domain (p g : ZPoly) (I : DyadicInterval) (value : Int) (c
   simp only [IntTarskiCertificate.check, TarskiCertificate.check, Bool.and_eq_true,
     decide_eq_true_eq, and_assoc] at hc
   obtain ⟨_, _, _, _, _, _, hg, hsf, hconst, _⟩ := hc
-  obtain ⟨hp, ha, hb⟩ := (integer_guards p I).mp hg
+  obtain ⟨hp, ha, hb⟩ := (integer_checkEndpoints p I).mp hg
   have h := (check_squarefree (fun z : Int => (z : ℝ)) (fun _ => Int.cast_eq_zero)
     (fun a b => Int.cast_add a b) (fun a b => Int.cast_sub a b) (fun a b => Int.cast_mul a b)
     (fun n => by simp only [Int.cast_natCast]) Int.sign

@@ -37,6 +37,12 @@ structure EndpointSigns (D : Type u) (E : Type v) [Zero D] [DecidableEq D] where
   compare : E → E → Int
   evalSign : DensePoly D → E → Int
 
+/-- Compare and evaluate finite endpoints using a supplied coefficient sign. -/
+@[expose] def EndpointSigns.ofSign {E : Type u} [Zero E] [DecidableEq E] [Sub E] [Add E] [Mul E]
+    (sign : E → Int) : EndpointSigns E E where
+  compare a b := sign (a - b)
+  evalSign p a := sign (p.eval a)
+
 namespace Endpoint
 
 @[expose] def lt [Zero D] [DecidableEq D] (endpointSigns : EndpointSigns D E) :
@@ -75,6 +81,11 @@ structure TarskiCertificate (D : Type u) (E : Type v) (Ctx : Type w) [Zero D] [D
   upperVariations : Nat
   value : Int
 
+/-- A nonzero constant terminal gcd is the squarefree criterion; its stored
+leading coefficient need not be literal one. -/
+@[expose] def SignedRemainderChain.lastIsConstant [Zero D] [DecidableEq D] (chain : SignedRemainderChain D) : Bool :=
+  (chain.chain.getD (chain.chain.size - 1) 0).size == 1
+
 namespace TarskiCertificate
 
 variable {D : Type u} {E : Type v} {Ctx : Type w}
@@ -90,11 +101,6 @@ These guards precede all constant and zero-query shortcuts. -/
 @[expose] def checkEndpoints (endpointSigns : EndpointSigns D E) (p : DensePoly D)
     (a b : Endpoint E) : Bool :=
   !p.isZero && a.lt endpointSigns b && a.nonvanishing endpointSigns p && b.nonvanishing endpointSigns p
-
-/-- A nonzero constant terminal gcd is the squarefree criterion; its stored
-leading coefficient need not be literal one. -/
-@[expose] def lastIsConstant (cert : SignedRemainderChain D) : Bool :=
-  (cert.chain.getD (cert.chain.size - 1) 0).size == 1
 
 /-- Attach exact endpoint signs and variations to supplied producer chains.
 This is shared by ordinary and prepared-domain frontends. -/
@@ -126,7 +132,7 @@ use `SignedRemainderChain.normalizeId`. No root search or isolation is performed
     (p f : DensePoly D) (a b : Endpoint E) : Option (TarskiCertificate D E Ctx) :=
   if !checkEndpoints endpointSigns p a b then none else
     let squarefree := SignedRemainderChain.build sign normalize p 1
-    if !lastIsConstant squarefree then none else
+    if !SignedRemainderChain.lastIsConstant squarefree then none else
       some (fromChains sign endpointSigns context p f a b squarefree (SignedRemainderChain.build sign normalize p f))
 
 /-- The query value of the shared producer. Negative values are retained. -/
@@ -144,7 +150,7 @@ context bindings remain literal equalities. The checker never calls a producer. 
   decide (cert.context = context) && decide (cert.head = p) && decide (cert.queryPoly = f) &&
     decide (cert.lower = a) && decide (cert.upper = b) && decide (cert.value = value) &&
     checkEndpoints endpointSigns p a b &&
-    SignedRemainderChain.check sign p 1 cert.squarefree && lastIsConstant cert.squarefree &&
+    SignedRemainderChain.check sign p 1 cert.squarefree && SignedRemainderChain.lastIsConstant cert.squarefree &&
     SignedRemainderChain.check sign p f cert.remainders &&
     decide (cert.lowerSigns = signs sign endpointSigns cert.remainders.chain a) &&
     decide (cert.upperSigns = signs sign endpointSigns cert.remainders.chain b) &&

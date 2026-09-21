@@ -74,11 +74,11 @@ theorem signs_rat_eq (chain : Array (DensePoly Rat)) (chain' : Array ZPoly)
       interpret (fun z : Int => (z : ℝ)) (fun _ => Int.cast_eq_zero) (chain'.getD i 0) =
         Polynomial.C c * interpret (fun z : Rat => (z : ℝ))
           (fun _ => Rat.cast_eq_zero) (chain.getD i 0)) (x : Dyadic) :
-    TarskiCertificate.signs Sturm.orderSign (Sturm.endpointSigns Sturm.orderSign) chain (.finite x.toRat) =
+    TarskiCertificate.signs Sturm.orderSign (EndpointSigns.ofSign Sturm.orderSign) chain (.finite x.toRat) =
       TarskiCertificate.signs Int.sign EndpointSigns.intDyadic chain' (.finite x) := by
   apply Tarski.finite_signs_eq (fun z : Rat => (z : ℝ)) (fun _ => Rat.cast_eq_zero)
     (fun z : Int => (z : ℝ)) (fun _ => Int.cast_eq_zero)
-    Sturm.orderSign Int.sign (Sturm.endpointSigns Sturm.orderSign) EndpointSigns.intDyadic
+    Sturm.orderSign Int.sign (EndpointSigns.ofSign Sturm.orderSign) EndpointSigns.intDyadic
     x.toRat x (HexRealRootsMathlib.Dyadic.toReal x) _ _ _ _ _ _ chain chain' hsize hscale
   · intro p
     exact (orderSign_spec (p.eval x.toRat)).2.2.2
@@ -109,7 +109,7 @@ theorem check_rat_value {Ctx : Type u} [DecidableEq Ctx] (context : Ctx)
       (.finite I.lower.toRat) (.finite I.upper.toRat) v cert = true)
     (h' : IntTarskiCertificate.check (ZPoly.clearDenominators p).2 (ZPoly.clearDenominators g).2 I w cert' = true) :
     v = w := by
-  obtain ⟨hc, hv⟩ := Tarski.check_value Sturm.orderSign (Sturm.endpointSigns Sturm.orderSign)
+  obtain ⟨hc, hv⟩ := Tarski.check_value Sturm.orderSign (EndpointSigns.ofSign Sturm.orderSign)
     context p g (.finite I.lower.toRat) (.finite I.upper.toRat) v cert h
   obtain ⟨hc', hw⟩ := Tarski.check_value Int.sign EndpointSigns.intDyadic ()
     (ZPoly.clearDenominators p).2 (ZPoly.clearDenominators g).2

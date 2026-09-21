@@ -224,7 +224,7 @@ end Hex.SignedRemainderChain
 
 namespace Hex.Endpoint
 
-/-- Finite endpointSigns signs and coefficient signs in `[-1,1]` also give bounded
+/-- Finite endpoint evaluation signs and coefficient signs in `[-1,1]` also give bounded
 infinity signs, including the negative-infinity degree-parity correction. -/
 theorem signAt_bounds {D : Type u} {E : Type v} [Zero D] [DecidableEq D]
     (sign : D → Int) (endpointSigns : EndpointSigns D E)
@@ -292,7 +292,7 @@ theorem certify_checks [Neg D] [DecidableEq E] [DecidableEq Ctx]
         apply hguard
         rw [hh]
         rfl
-      have hsf : lastIsConstant (SignedRemainderChain.build sign normalize p 1) = true := by
+      have hsf : SignedRemainderChain.lastIsConstant (SignedRemainderChain.build sign normalize p 1) = true := by
         apply Bool.of_not_eq_false
         intro hh
         apply hsquarefree

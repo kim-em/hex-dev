@@ -48,25 +48,25 @@ omit [DecidableEq K] [One E] [Neg E] [NatCast E] [Inv E] in
 /-- Finite comparison signs and structural infinity order give strict
 mathematical endpoint order. -/
 theorem endpoint_lt (a b : Endpoint E) :
-    a.lt (Sturm.endpointSigns sign) b = true ↔ EndpointLt f a b := by
+    a.lt (EndpointSigns.ofSign sign) b = true ↔ EndpointLt f a b := by
   cases a <;> cases b <;>
-    simp only [Endpoint.lt, Sturm.endpointSigns, EndpointLt, decide_eq_true_eq, hneg, hs,
+    simp only [Endpoint.lt, EndpointSigns.ofSign, EndpointLt, decide_eq_true_eq, hneg, hs,
       sub_lt_zero, Bool.false_eq_true]
 
 include hz ha hm hzero in
 omit [LinearOrder K] [IsStrictOrderedRing K] [One E] [Neg E] [NatCast E] [Inv E] in
 /-- Horner nonvanishing reflects semantic evaluation. -/
-theorem endpoint_nonzero (p : DensePoly E) (a : Endpoint E) :
-    a.nonvanishing (Sturm.endpointSigns sign) p = true ↔ Nonvanishing f (interpret f hz p) a := by
+theorem endpoint_nonvanishing (p : DensePoly E) (a : Endpoint E) :
+    a.nonvanishing (EndpointSigns.ofSign sign) p = true ↔ Nonvanishing f (interpret f hz p) a := by
   cases a <;>
-    simp only [Endpoint.nonvanishing, Sturm.endpointSigns, Nonvanishing, bne_iff_ne, ne_eq,
+    simp only [Endpoint.nonvanishing, EndpointSigns.ofSign, Nonvanishing, bne_iff_ne, ne_eq,
       hzero, eval_interpret f hz ha hm]
 
 include hz ha hs hm hneg hzero in
 omit [One E] [NatCast E] [Neg E] [Inv E] in
 /-- All executable endpoint guards have their exact semantic meaning. -/
 theorem checkEndpoints_iff (p : DensePoly E) (a b : Endpoint E) :
-    TarskiCertificate.checkEndpoints (Sturm.endpointSigns sign) p a b = true ↔
+    TarskiCertificate.checkEndpoints (EndpointSigns.ofSign sign) p a b = true ↔
       interpret f hz p ≠ 0 ∧ EndpointLt f a b ∧
         Nonvanishing f (interpret f hz p) a ∧ Nonvanishing f (interpret f hz p) b := by
   have hp : (!p.isZero) = true ↔ interpret f hz p ≠ 0 := by
@@ -75,7 +75,7 @@ theorem checkEndpoints_iff (p : DensePoly E) (a b : Endpoint E) :
     rw [DensePoly.isZero_eq_true_iff, DensePoly.size_eq_zero_iff]
     exact not_congr (interpret_eq_zero f hz p).symm
   simp only [TarskiCertificate.checkEndpoints, Bool.and_eq_true, hp, endpoint_lt f hs sign hneg,
-    endpoint_nonzero f hz ha hm sign hzero, and_assoc]
+    endpoint_nonvanishing f hz ha hm sign hzero, and_assoc]
 
 variable (h1 : f (1 : E) = 1) (hn : ∀ a, f (-a) = -f a)
 variable (hi : ∀ a, f a⁻¹ = (f a)⁻¹)
@@ -116,9 +116,9 @@ include hz ha hs hm h1 hn hi hnat hpos hneg hzero in
 noninjective coefficient interpretations into ordered fields. -/
 theorem query_isSome (p g : DensePoly E) (a b : Endpoint E) :
     (Sturm.query sign p g a b).isSome = true ↔ Domain f hz p a b := by
-  change (TarskiCertificate.query sign (Sturm.endpointSigns sign) (Sturm.normalize sign) p g a b).isSome = true ↔ _
+  change (TarskiCertificate.query sign (EndpointSigns.ofSign sign) (Sturm.normalize sign) p g a b).isSome = true ↔ _
   rw [HexRealRootsMathlib.Tarski.query_isSome f hz ha hs hm hnat sign hpos h1
-    (Sturm.endpointSigns sign) (Sturm.normalize sign) (chain_checks f hz ha hs hm sign hneg h1 hn hi hpos),
+    (EndpointSigns.ofSign sign) (Sturm.normalize sign) (chain_checks f hz ha hs hm sign hneg h1 hn hi hpos),
     checkEndpoints_iff f hz ha hs hm sign hneg hzero]
   simp only [Domain, and_left_comm, and_comm]
 
@@ -157,10 +157,10 @@ theorem certify_checks (hbound : ∀ x, -1 ≤ sign x ∧ sign x ≤ 1)
     (p g : DensePoly E) (a b : Endpoint E) (cert : TarskiCertificate E E Ctx)
     (hcert : Sturm.certify sign context p g a b = some cert) :
     Sturm.check sign context p g a b cert.value cert = true := by
-  apply TarskiCertificate.certify_checks sign (Sturm.endpointSigns sign) (Sturm.normalize sign)
+  apply TarskiCertificate.certify_checks sign (EndpointSigns.ofSign sign) (Sturm.normalize sign)
     (chain_checks f hz ha hs hm sign hneg h1 hn hi hpos) _ context p g a b cert hcert
   intro q e
-  exact Endpoint.signAt_bounds sign (Sturm.endpointSigns sign) hbound
+  exact Endpoint.signAt_bounds sign (EndpointSigns.ofSign sign) hbound
     (fun q x => hbound (q.eval x)) q e
 
 include hz ha hs hm h1 hn hi hpos hneg in

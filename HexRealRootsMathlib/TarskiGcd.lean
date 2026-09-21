@@ -134,7 +134,7 @@ omit [LinearOrder K] [IsStrictOrderedRing K] in
 interpretation, without requiring a canonical representative of one. -/
 theorem lastIsConstant_iff (p g : DensePoly D) (cert : SignedRemainderChain D)
     (h : SignedRemainderChain.check sign p g cert = true) :
-    TarskiCertificate.lastIsConstant cert = true ↔
+    SignedRemainderChain.lastIsConstant cert = true ↔
       IsUnit (interpret f hz (cert.chain.getD (cert.chain.size - 1) 0)) := by
   have hb := (check_bound f hz sign p g cert h).1
   have hmem : cert.chain.getD (cert.chain.size - 1) 0 ∈ cert.chain := by
@@ -146,7 +146,7 @@ theorem lastIsConstant_iff (p g : DensePoly D) (cert : SignedRemainderChain D)
     intro hzero
     apply hnz
     rw [(size_eq_zero_iff _).mp hzero, interpret_zero]
-  rw [TarskiCertificate.lastIsConstant, beq_iff_eq, Polynomial.isUnit_iff_degree_eq_zero,
+  rw [SignedRemainderChain.lastIsConstant, beq_iff_eq, Polynomial.isUnit_iff_degree_eq_zero,
     Polynomial.degree_eq_natDegree hnz]
   simp only [Nat.cast_eq_zero, natDegree_interpret, natDegree_eq_size_sub_one]
   omega
@@ -157,7 +157,7 @@ squarefreeness over the semantic ordered field. -/
 theorem check_squarefree [One D] (h1 : f (1 : D) = 1)
     (p : DensePoly D) (cert : SignedRemainderChain D)
     (h : SignedRemainderChain.check sign p 1 cert = true) :
-    TarskiCertificate.lastIsConstant cert = true ↔ Squarefree (interpret f hz p) := by
+    SignedRemainderChain.lastIsConstant cert = true ↔ Squarefree (interpret f hz p) := by
   rw [lastIsConstant_iff f hz sign p 1 cert h,
     (check_gcd f hz ha hs hm hn sign hpos p 1 cert h).isUnit_iff,
     interpret_one f hz h1, one_mul, EuclideanDomain.gcd_isUnit_iff,
@@ -186,7 +186,7 @@ theorem query_isSome [One D] [Neg D] (h1 : f (1 : D) = 1)
       (SignedRemainderChain.build sign normalize p 1) (hchains p 1 hp)
     simp only [TarskiCertificate.query, TarskiCertificate.certify, hg, Bool.not_true, Bool.false_eq_true,
       ↓reduceIte, Option.isSome_map, true_and]
-    cases ht : TarskiCertificate.lastIsConstant (SignedRemainderChain.build sign normalize p 1) <;>
+    cases ht : SignedRemainderChain.lastIsConstant (SignedRemainderChain.build sign normalize p 1) <;>
       simp_all only [Bool.not_false, Bool.not_true, ↓reduceIte, Option.isSome_none,
         Option.isSome_some, Bool.false_eq_true, true_iff, false_iff]
   · have hg' : TarskiCertificate.checkEndpoints endpointSigns p a b = false := Bool.eq_false_iff.mpr hg

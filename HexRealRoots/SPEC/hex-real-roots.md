@@ -124,7 +124,7 @@ dyadic counts. These primitives belong here, not in the number-field layer.
 ## Tarski queries
 
 The query and replay declarations are implemented in `SignedRemainderChain.lean` and
-`Query.lean`, with array-loop replay invariants in `TarskiProofs.lean`.
+`Tarski.lean`, with array-loop replay invariants in `TarskiProofs.lean`.
 The ordered-domain kernel is shared with the
 [ordered-field frontend](../../SPEC/Libraries/hex-sturm.md). The companion
 proves algebraic correspondence, produced-certificate acceptance and exact

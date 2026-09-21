@@ -20,11 +20,6 @@ variable {E : Type u} [Zero E] [DecidableEq E] [One E] [Add E] [Sub E] [Mul E] [
 @[expose] def orderSign [LT E] [DecidableLT E] (a : E) : Int :=
   if a < 0 then -1 else if a = 0 then 0 else 1
 
-/-- Exact endpoint comparison and Horner signs in the coefficient field. -/
-@[expose] def endpointSigns (sign : E → Int) : EndpointSigns E E where
-  compare a b := sign (a - b)
-  evalSign p a := sign (p.eval a)
-
 /-- Divide by the positive absolute leading coefficient. This controls
 coefficient growth without changing signs or forcing positive-leading entries. -/
 @[expose] def normalize [Neg E] [Inv E] (sign : E → Int) (p : DensePoly E) : E × DensePoly E :=
@@ -42,17 +37,17 @@ structure PreparedDomain (E : Type u) [Zero E] [DecidableEq E] [One E] [Add E] [
   lower : Endpoint E
   upper : Endpoint E
   squarefree : SignedRemainderChain E
-  guards : TarskiCertificate.checkEndpoints (endpointSigns sign) head lower upper = true
-  constant : TarskiCertificate.lastIsConstant squarefree = true
+  endpoints_valid : TarskiCertificate.checkEndpoints (EndpointSigns.ofSign sign) head lower upper = true
+  last_constant : SignedRemainderChain.lastIsConstant squarefree = true
   produced : squarefree = SignedRemainderChain.build sign (normalize sign) head 1
 
 /-- Validate nonzero head, endpoint guards and a nonzero constant derivative
 gcd using the shared chain producer. No query polynomial affects the domain. -/
 def prepare [Neg E] [Inv E] (sign : E → Int) (p : DensePoly E) (a b : Endpoint E) :
     Option (PreparedDomain E) :=
-  if hg : TarskiCertificate.checkEndpoints (endpointSigns sign) p a b = true then
+  if hg : TarskiCertificate.checkEndpoints (EndpointSigns.ofSign sign) p a b = true then
     let sf := SignedRemainderChain.build sign (normalize sign) p 1
-    if hc : TarskiCertificate.lastIsConstant sf = true then
+    if hc : SignedRemainderChain.lastIsConstant sf = true then
       some ⟨sign, p, a, b, sf, hg, hc, rfl⟩
     else none
   else none
@@ -73,13 +68,13 @@ theorem prepare_eq_some [Neg E] [Inv E] (sign : E → Int) (p : DensePoly E)
 
 /-- Query a validated domain without repeating its squarefreeness computation. -/
 @[expose] def queryPrepared [Neg E] [Inv E] (domain : PreparedDomain E) (f : DensePoly E) : Int :=
-  (TarskiCertificate.fromChains domain.sign (endpointSigns domain.sign) () domain.head f domain.lower domain.upper
+  (TarskiCertificate.fromChains domain.sign (EndpointSigns.ofSign domain.sign) () domain.head f domain.lower domain.upper
     domain.squarefree (SignedRemainderChain.build domain.sign (normalize domain.sign) domain.head f)).value
 
 /-- Produce a literal query certificate with the caller's full context binding. -/
 @[expose] def certifyPrepared [Neg E] [Inv E] {Ctx : Type v} (context : Ctx)
     (domain : PreparedDomain E) (f : DensePoly E) : TarskiCertificate E E Ctx :=
-  TarskiCertificate.fromChains domain.sign (endpointSigns domain.sign) context domain.head f domain.lower domain.upper
+  TarskiCertificate.fromChains domain.sign (EndpointSigns.ofSign domain.sign) context domain.head f domain.lower domain.upper
     domain.squarefree (SignedRemainderChain.build domain.sign (normalize domain.sign) domain.head f)
 
 /-- The literal context does not affect a prepared certificate's query value. -/
@@ -90,12 +85,12 @@ theorem certifyPrepared_value [Neg E] [Inv E] {Ctx : Type v} (context : Ctx)
 /-- An ordered-field query on finite or infinite endpoints. The `Option`
 records mathematical domain failure; signs and arithmetic are total. -/
 @[expose] def query [Neg E] [Inv E] (sign : E → Int) (p f : DensePoly E) (a b : Endpoint E) : Option Int :=
-  TarskiCertificate.query sign (endpointSigns sign) (normalize sign) p f a b
+  TarskiCertificate.query sign (EndpointSigns.ofSign sign) (normalize sign) p f a b
 
 /-- Produce a certificate with exact literal context and input bindings. -/
 @[expose] def certify [Neg E] [Inv E] {Ctx : Type v} (sign : E → Int) (context : Ctx)
     (p f : DensePoly E) (a b : Endpoint E) : Option (TarskiCertificate E E Ctx) :=
-  TarskiCertificate.certify sign (endpointSigns sign) (normalize sign) context p f a b
+  TarskiCertificate.certify sign (EndpointSigns.ofSign sign) (normalize sign) context p f a b
 
 /-- Certification with any literal context has the same whole query result. -/
 theorem certify_value [Neg E] [Inv E] {Ctx : Type v} (sign : E → Int) (context : Ctx)
@@ -110,8 +105,8 @@ theorem certify_value [Neg E] [Inv E] {Ctx : Type v} (sign : E → Int) (context
 query, while retaining its existing squarefree chain. -/
 theorem query_prepared [Neg E] [Inv E] (domain : PreparedDomain E) (f : DensePoly E) :
     query domain.sign domain.head f domain.lower domain.upper = some (queryPrepared domain f) := by
-  simp only [query, TarskiCertificate.query, TarskiCertificate.certify, domain.guards, Bool.not_true,
-    Bool.false_eq_true, ↓reduceIte, ← domain.produced, domain.constant, Option.map_some,
+  simp only [query, TarskiCertificate.query, TarskiCertificate.certify, domain.endpoints_valid, Bool.not_true,
+    Bool.false_eq_true, ↓reduceIte, ← domain.produced, domain.last_constant, Option.map_some,
     queryPrepared]
 
 /-- Prepared certification preserves the exact context and input bindings of
@@ -120,8 +115,8 @@ theorem certify_prepared [Neg E] [Inv E] {Ctx : Type v} (context : Ctx)
     (domain : PreparedDomain E) (f : DensePoly E) :
     certify domain.sign context domain.head f domain.lower domain.upper =
       some (certifyPrepared context domain f) := by
-  simp only [certify, TarskiCertificate.certify, domain.guards, Bool.not_true,
-    Bool.false_eq_true, ↓reduceIte, ← domain.produced, domain.constant, certifyPrepared]
+  simp only [certify, TarskiCertificate.certify, domain.endpoints_valid, Bool.not_true,
+    Bool.false_eq_true, ↓reduceIte, ← domain.produced, domain.last_constant, certifyPrepared]
 
 /-- Preparation and querying have the same domain, independent of the query
 polynomial. Preparation's private constructor is never needed by a consumer. -/
@@ -140,7 +135,7 @@ theorem prepare_isSome [Neg E] [Inv E] (sign : E → Int) (p f : DensePoly E) (a
 /-- Check a field query certificate through the shared finite checker. -/
 @[expose] def check {Ctx : Type v} [DecidableEq Ctx] (sign : E → Int) (context : Ctx)
     (p f : DensePoly E) (a b : Endpoint E) (value : Int) (cert : TarskiCertificate E E Ctx) : Bool :=
-  TarskiCertificate.check sign (endpointSigns sign) context p f a b value cert
+  TarskiCertificate.check sign (EndpointSigns.ofSign sign) context p f a b value cert
 
 /-- Accepted replay retains every literal binding, independently of semantic
 coefficient interpretation or producer provenance. -/

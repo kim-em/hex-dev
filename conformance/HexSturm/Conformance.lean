@@ -81,7 +81,7 @@ results, including the `none` cases and zero query polynomials. -/
       query orderSign pr fr (.finite (-2)) (.finite 2) ==
         ZPoly.tarskiQuery pz fz Hex.TarskiTests.interval
 
-/- Negative clearing of the query changes its sign and is not an endpointSigns. -/
+/- Negative clearing of the query changes its sign and is not admissible denominator clearing. -/
 #guard query orderSign (scale (1 / 6 : Rat) p) (C (-1 / 10)) .negInf .posInf == some (-2)
 
 /- The same frontend accepts noncanonical arithmetic without a field instance. -/
@@ -109,7 +109,7 @@ terminal gcd. The squarefree constant-tail guard must reject it. -/
   let chain : SignedRemainderChain Rat :=
     { chain := #[x * x, x], degrees := #[2, 1], initial := ⟨1, 0, 2⟩,
       steps := #[], terminal := some (1, x) }
-  SignedRemainderChain.check orderSign (x * x) 1 chain && !TarskiCertificate.lastIsConstant chain &&
+  SignedRemainderChain.check orderSign (x * x) 1 chain && !SignedRemainderChain.lastIsConstant chain &&
     !check orderSign 7 (x * x) 1 (.finite (-2)) (.finite 2) 1
       { literal with
         head := x * x
