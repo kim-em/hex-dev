@@ -14,24 +14,80 @@ It does not reify or expand the factors. Forced polynomial checker arms
 bypass this shortcut, so the tree/list comparison still measures those
 certificates.
 
-The main 4×4 quadratic probe and the simple 4×4 linear probe both pass
-kernel checking on this route, with 1,674 and 1,440 distinct proof nodes,
-respectively. These are the compiled budget counter's counts, not unshared
-proof sizes. The required 8×8 quadratic, degree-eight and linear probes
-also pass on this route. Tests cover abstract commutative rings at arbitrary
-universes, rational factors, finite characteristic, swaps, singularity,
-expanded-target fallback and rejection of a non-ring multiplication instance.
+Six adjacent AB/BA pairs on each of three unchanged fixtures, with import-only
+baselines and the original `norm_det` followed by `ring` comparator, give:
 
-No timing comparison of this shortcut is recorded yet. The observations
-below belong to the preceding tree-entry implementation and must not be
-reported as measurements of current automatic dispatch. The shortcut
-applies to structured matrices; its smaller certificate does not establish
-a general polynomial-matrix speedup.
+| Matrix and entries | Earlier tree dispatch ms | Current det ms | norm_det + ring ms | Mathlib / Hex |
+|---|---:|---:|---:|---:|
+| 4×4, one variable, linear monomials (`N4K1D1S1`) | 194.15 | 99.74 | 103.60 | 1.04 |
+| 4×4, two variables, quadratics, four terms (`N4K2D2S4`) | 669.59 | 518.75 | 1106.86 | 2.13 |
+| 8×8, four variables, linear monomials (`N8K4D1S1`) | — | 219.22 | 2062.71 | 9.41 |
+
+Hex is faster in all six pairs for each case. The simple 4×4 margin is small.
+The earlier column is the retained two-pair tree dispatch experiment below,
+not an adjacent old/new comparison; the old 8×8 baseline-subtracted observations
+include a negative value and supply no meaningful speedup ratio. The original
+list-entry main-probe dispatch median was 1500.38 ms. These separate experiments
+are not pooled.
+
+The [simple-case record](bench-results/hex-det-tree/row-factor/row-factor-refined-comparison.json.gz)
+and [main and 8×8 record](bench-results/hex-det-tree/row-factor/row-factor-acceptance-comparison.json.gz)
+come from clean commit `2646dd6ee`, with source hashes, host context, an automatically
+leased CPU, and all compiler output retained. They use the existing fresh-module
+runner and pairing protocol. Their wall times were 59.64 and 142.89 seconds.
+The [initial implementation comparison](bench-results/hex-det-tree/row-factor/row-factor-comparison.json.gz)
+is retained separately: simple 4×4 lost at 109.81 versus 98.62 ms, while the main
+probe won at 547.22 versus 1112.84 ms. That result prompted explicit theorem
+applications, direct denotation hints and sharing of matrix/factor payloads.
+Its 134.99 seconds brings these three bounded runs to 5 minutes 38 seconds.
+No completed observations, including negative baseline-subtracted values, were
+dropped. Every adapter stops the entire comparison on its first build failure
+or timeout; none runs the full grid.
+
+The main proof has 1,160 distinct nodes charged to its budget and 27,816 unshared
+nodes. Six component checks report entry identification at 9.05–9.58 ms and
+numeric certificate/transport at 7.31–7.85 ms, totaling less than 20 ms each time.
+There is no expanded target certificate. The representative full auxiliary
+kernel check is 40.5 ms. These component rechecks are order-sensitive diagnostics,
+not additional fresh timing samples; the
+[complete record](bench-results/hex-det-tree/row-factor/row-factor-components-final.json.gz)
+preserves the inspector and output.
+
+The required 8×8 quadratic and degree-eight probes also pass on this route.
+Tests cover arbitrary-universe commutative rings, rational factors, finite
+characteristic, swaps, singularity, expanded-target fallback, simproc output,
+and rejection of non-ring or heterogeneous multiplication and unresolved targets.
+
+Every family remains opt-in. The shortcut applies to explicit common row
+factors with a matching factored target. These correlated fixtures establish
+wins for that structure; they do not establish superiority for arbitrary
+polynomial matrices, rational matrices, residue matrices, or larger unmeasured
+cases. Forced tree/list arms continue to measure the general certificates.
+
+## General tree certificate attribution
+
+The general tree route remains available when common row factoring does not
+apply. It uses explicit proof heads, denotation hints, mixed list/tree products,
+structural bounds and kernel-only checks. Bounds dot products and common-box
+folds now use primitive recursion; proved compiler rewrites preserve the native
+implementations. The emitted proof has 47,746 unshared nodes and proof assembly
+is below 1 ms on the main probe.
+
+The [forced-tree diagnostic](bench-results/hex-det-tree/row-factor/kernel-folds.json.gz)
+checks the old budgeted list-entry and new tree-entry certificate on the same
+witness in six alternating orders. Median certificate checks are 146.50 and
+80.26 ms, respectively. Entry-plus-target checks have a 21.87 ms median
+(range 19.88–41.86 ms), and the full auxiliary check is 185 ms. These in-module
+checks are order-sensitive. They do **not** establish the original strict
+20 ms entry/target ceiling or a factor-of-two certificate improvement for the
+general tree route. The full dispatched wins above use row factoring and must
+not be substituted for those general-checker claims. Those two attribution
+bars remain open; no family is enabled by default.
 
 ## Preliminary tree-entry dispatch comparison before row factoring
 
-The main requested example now wins; a general win over `norm_det` is not
-established. Simple 4×4 cases still lose, and every family remains opt-in.
+Before the row-factor shortcut, the main requested example won but simple
+4×4 cases still lost. These retained observations describe that earlier implementation.
 Probe names `NnKkDdSs` mean an n×n matrix, k variables, degree-d entries,
 and s terms per entry. These N-prefixed fixtures have correlated row-scaled
 entries; they are not arbitrary dense polynomial matrices.
