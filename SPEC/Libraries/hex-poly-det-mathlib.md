@@ -39,29 +39,48 @@ changes neither the library registry nor the released manifest.
   exponents (`2 * 2 ^ m`), which this arm declines; those inputs are
   preserved only through the fallback, which is scope kept, not scope
   won.
-- **Closed forms first.** For `n ≤ 3` the handler does not reify: for
-  `!![…]` and `Matrix.of ![…]` literals it rewrites with Mathlib's
-  `Matrix.det_fin_two_of` / `Matrix.det_fin_three` (and `det_fin_one_of`,
-  `det_fin_zero`); for `fun i j => …` and `Matrix.ofArray` inputs and
-  unfolded definitions it uses the general `det_fin_two` / `det_fin_one`
-  and reduces the entry accesses explicitly; then it closes with `ring`.
-  The small-size `det%` returns the closed-form value with that proof,
-  since this route has no batch and no polynomial `d`. This is where the
-  certificate route pays reification and packing costs it cannot amortise
-  and where the first pilot lost to `norm_det`; the probes measure the
-  closed-form route on the `2 × 2` and `3 × 3` rungs against `norm_det`
-  rather than assuming it wins.
-- **Common row factors.** Before polynomial reification, a literal whose
-  entries have the form `(cᵢⱼ : R) * fᵢ`, with integer literals `cᵢⱼ`
-  and one syntactically shared expression `fᵢ` per row, can use the numeric
-  determinant certificate for `(cᵢⱼ)`. The row-scaling identity and
-  `RingHom.map_det` transport this certificate over any commutative ring.
-  The result retains the row factors, multiplied in row order; their
-  internal polynomials are never expanded. Entry identifications must
-  check the actual operation and numeral instances. This route does not
-  claim a performance result for unstructured polynomial matrices. A
-  target not definitionally equal to the factored result uses the regular
-  polynomial frontend. Forced polynomial checker arms bypass this shortcut.
+- **Structural dispatch.** After numeric delegation, automatic dispatch tries
+  direct triangular/zero identities, common row factors, the existing formulas
+  for `n ≤ 3`, bounded sparse cofactor expansion, then the polynomial frontend.
+  Forced polynomial checker modes bypass the structural shortcuts. Literal
+  recognition and the dimension limit remain shared. The tactic, `det%`, and
+  `Hex.normPolyDet` use the same structural computation.
+- **Triangular and zero identities.** Canonical zero entries are verified
+  against the carrier's ring operations. Diagonal, upper/lower triangular and
+  zero-row/column literals return the diagonal product or zero with a generic
+  structural proof. No symbolic zero testing or polynomial expansion is needed.
+- **Common row factors.** Integer coefficients times one syntactically shared
+  expression per row retain the existing arbitrary-`CommRing` transport. Over
+  `Rat`, recognize closed scalar multiplication/division around a row factor,
+  including signs, coefficient one and zero entries. Authenticate operation
+  instances and apply the existing scalar bit/exponent bounds before evaluation.
+  The existing numeric determinant certificate certifies the extracted arbitrary
+  coefficient matrix. Row expressions remain opaque in entry and target proofs.
+  A factored target may combine closed denominators outside the product;
+  scalar arithmetic and reassociation are proved over abstract row variables
+  before substitution. Zero denominators have Lean's rational semantics.
+  Unsupported/expanded targets use the existing frontend, without assigning
+  unresolved metavariables. The term form returns the certified scalar times
+  row factors in row order.
+- **Closed forms.** Inputs of dimension at most three not handled structurally
+  retain the existing Mathlib determinant formulas and residual `ring` step.
+  The term form returns that formula with its proof.
+- **Bounded sparse cofactors.** For a literal with dimension above three,
+  expand a row or column with at most two entries not verified as zero. Choose
+  the smallest count, breaking ties by row before column and then index. Use
+  the cofactor sign for the original position and keep minor indices in order.
+  At dimension four use a generic factored cofactor formula; below four use
+  the existing formulas. A dense input without a qualifying sparse step does
+  not enter this shortcut. Count actual scalar-product leaves in the selected
+  expansion, including the terminal formulas, with a limit of 64. Check the
+  shared proof-node budget during construction; exhaustion stops expansion and
+  selects the existing fallback. Residual `ring` may compare the structural
+  expression with an expanded target. If it cannot close the goal, restore the
+  original goal and continue through the existing fallback.
+- **Proof construction.** Share matrix/factor payloads and assemble applications
+  with explicit arguments and expected-type hints. Count distinct proof nodes
+  with the compiled shared counter, not unshared interpreted traversals for
+  tracing. Structural proofs receive the existing synchronous kernel check.
 - **Opt-in until measured.** The symbolic handler is not placed in the
   default `Hex.norm_det` fallback chain. It ships as the `det` handler and
   `det%` term form for symbolic input, and enters the simp-set chain only
@@ -69,10 +88,8 @@ changes neither the library registry nor the released manifest.
 
 ### Certificate routes
 
-The packed extension applies after the existing numeric and `n ≤ 3` guards.
-It leaves the closed-form route and its separate
-[small-determinant work](https://github.com/kim-em/hex-dev/issues/10264)
-unchanged. For larger symbolic inputs, retain the same reified matrix and
+The packed extension applies after numeric delegation and the structural
+shortcuts above. For remaining symbolic inputs, retain the same reified matrix and
 `DetWitness`; the producer uses canonical polynomials, while the packed tree
 route quotes input expression trees. After compiled witness
 production, run [the executable preflight](hex-poly-det.md#bounds-and-selection)
@@ -83,7 +100,9 @@ witness-dependent packing bound cannot be known from matrix entries alone.
 | Condition | Route |
 |---|---|
 | Numeric fragment | Delegate to the existing numeric handler |
-| Symbolic `n ≤ 3` | Existing closed form |
+| Automatic mode, verified triangular/zero or common row-factor structure | Structural identity and numeric coefficient certificate where needed |
+| Remaining symbolic `n ≤ 3` | Existing closed form |
+| Automatic mode, sparse cofactor expansion within 64 leaves and proof budget | Structural cofactor proof |
 | Malformed supplied certificate, including its quotient payload | `failure` |
 | Symbolic capability unavailable | Existing decline and Mathlib fallback |
 | Producer exhausts its intermediate or certificate budget | Structured decline naming the budget, count reached and limit; Mathlib fallback |
@@ -909,3 +928,26 @@ the whole module. Nested phases are not additive. A dash means not applicable.
 | Block4 | 1.250 | 0.099 | — | 1.720 | 5.670 | 40.100 | 133.000 |
 | Residue3 | 24.700 | — | 0.222 | 1.660 | 21.570 | 28.400 | 144.000 |
 | Residue3Missing | 24.700 | — | — | 1.560 | 21.640 | 28.200 | 142.000 |
+
+## Structural-route validation
+
+The focused acceptance set comprises the five small diagnostic examples
+(diagonal 2×2, rational 2×2, triangular 3×3, independent-block 5×5 and rational
+row-scaled 3×3), plus the rational and sparse cases at approximately one and
+ten seconds of Mathlib proof work. Require route assertions, both equality
+orientations, term/simproc forms, generic carriers, changed numeric coefficients,
+permuted sparse positions, false targets, unfamiliar operation instances,
+metavariable preservation, and budget/fallback tests. Accepted proofs depend
+only on `propext`, `Classical.choice` and `Quot.sound`.
+
+Compare the integrated tactic against unmodified `norm_det` followed by `ring`
+with six adjacent alternating AB/BA pairs and matched import baselines. Keep
+profiling, certificate tracing and axiom printing outside the timed modules;
+audit routes and axioms separately. Retain all samples, report whole-build and
+proof-attribution metrics separately, and treat tiny build differences within
+Lake's polling resolution as inconclusive. Collect one representative attribution
+per changed family. Start small, then run the one-second and ten-second cases;
+investigate confirmed losses before increasing scale. Run serially on one
+leased CPU, with a 60-second build ceiling and a 30-minute total measurement
+ceiling. A timeout suppresses larger comparable cases. This focused comparison
+does not change the default-on decision or authorize a broader family sweep.
