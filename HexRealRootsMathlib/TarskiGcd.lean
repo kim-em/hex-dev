@@ -5,12 +5,12 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealRootsMathlib.QueryInterpret
+public import HexRealRootsMathlib.TarskiInterpret
 public import Mathlib.FieldTheory.Perfect
 
 public section
 
-namespace HexRealRootsMathlib.Query
+namespace HexRealRootsMathlib.Tarski
 
 open Hex DensePoly HexPolyMathlib.Interpret
 
@@ -52,17 +52,19 @@ variable (hm : ∀ a b, f (a * b) = f a * f b)
 variable (hn : ∀ n : Nat, f (n : D) = (n : K))
 variable (sign : D → Int) (hpos : ∀ a, sign a = 1 ↔ 0 < f a)
 
-private theorem head_eq (p g : DensePoly D) (cert : QueryChain D)
-    (h : QueryChain.check sign p g cert = true) : cert.chain.getD 0 0 = p := by
-  simp only [QueryChain.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
+/-- Accepted replay retains the exact input head. -/
+theorem check_head (p g : DensePoly D) (cert : SignedRemainderChain D)
+    (h : SignedRemainderChain.check sign p g cert = true) : cert.chain.getD 0 0 = p := by
+  simp only [SignedRemainderChain.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
   obtain ⟨_, _, _, hhead, _⟩ := h
   rw [Array.getD_eq_getD_getElem?, hhead]
   rfl
 
-private theorem tail_shape (p g : DensePoly D) (cert : QueryChain D)
-    (h : QueryChain.check sign p g cert = true) (hn : cert.chain.size ≠ 1) :
+/-- A nonsingleton accepted chain has all steps and a terminal identity. -/
+theorem check_tail (p g : DensePoly D) (cert : SignedRemainderChain D)
+    (h : SignedRemainderChain.check sign p g cert = true) (hn : cert.chain.size ≠ 1) :
     cert.steps.size + 2 = cert.chain.size ∧ ∃ u q, cert.terminal = some (u, q) := by
-  simp only [QueryChain.check, hn, ↓reduceIte, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
+  simp only [SignedRemainderChain.check, hn, ↓reduceIte, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at h
   obtain ⟨_, _, _, _, _, _, _, _, _, _, hlength, _, ht⟩ := h
   refine ⟨hlength, ?_⟩
   cases heq : cert.terminal with
@@ -72,19 +74,19 @@ private theorem tail_shape (p g : DensePoly D) (cert : QueryChain D)
 include ha hs hm hn hpos in
 /-- The last entry of an accepted replay has exactly the common divisors of
 `P` and `F*P'` in the semantic field, including singleton chains. -/
-theorem check_dvd_last (p g : DensePoly D) (cert : QueryChain D)
-    (h : QueryChain.check sign p g cert = true) (d : Polynomial K) :
+theorem check_dvd_last (p g : DensePoly D) (cert : SignedRemainderChain D)
+    (h : SignedRemainderChain.check sign p g cert = true) (d : Polynomial K) :
     (d ∣ interpret f hz p ∧ d ∣ interpret f hz g * (interpret f hz p).derivative) ↔
       d ∣ interpret f hz (cert.chain.getD (cert.chain.size - 1) 0) := by
   obtain ⟨hl, hr, hi⟩ := check_initial f hz ha hs hm hn sign hpos p g cert h
   have hfirst := dvd_initial (ne_of_gt hl) (ne_of_gt hr) hi d
-  have hhead := head_eq sign p g cert h
+  have hhead := check_head sign p g cert h
   by_cases hsingle : cert.chain.size = 1
   · have hsecond : cert.chain.getD 1 0 = 0 := by
       rw [Array.getD_eq_getD_getElem?, Array.getElem?_eq_none (by omega)]
       rfl
     simpa only [hsingle, Nat.sub_self, hhead, hsecond, interpret_zero, dvd_zero, and_true] using hfirst
-  · obtain ⟨hsize, u, q, ht⟩ := tail_shape sign p g cert h hsingle
+  · obtain ⟨hsize, u, q, ht⟩ := check_tail sign p g cert h hsingle
     obtain ⟨hu, hterminal⟩ := check_terminal f hz ha hs hm sign hpos p g cert h hsingle u q ht
     have htail : ∀ (k i : Nat) (_ : i + k + 2 = cert.chain.size),
         (d ∣ interpret f hz (cert.chain.getD i 0) ∧
@@ -116,8 +118,8 @@ theorem check_dvd_last (p g : DensePoly D) (cert : QueryChain D)
 include ha hs hm hn hpos in
 /-- The terminal polynomial in an accepted query replay is associated to the
 semantic gcd, whether that gcd is constant or nonconstant. -/
-theorem check_gcd (p g : DensePoly D) (cert : QueryChain D)
-    (h : QueryChain.check sign p g cert = true) :
+theorem check_gcd (p g : DensePoly D) (cert : SignedRemainderChain D)
+    (h : SignedRemainderChain.check sign p g cert = true) :
     Associated (interpret f hz (cert.chain.getD (cert.chain.size - 1) 0))
       (EuclideanDomain.gcd (interpret f hz p)
         (interpret f hz g * (interpret f hz p).derivative)) := by
@@ -130,9 +132,9 @@ theorem check_gcd (p g : DensePoly D) (cert : QueryChain D)
 omit [LinearOrder K] [IsStrictOrderedRing K] in
 /-- The replay's literal constant-tail guard means a nonzero constant after
 interpretation, without requiring a canonical representative of one. -/
-theorem constantTail_iff (p g : DensePoly D) (cert : QueryChain D)
-    (h : QueryChain.check sign p g cert = true) :
-    QueryReplay.constantTail cert = true ↔
+theorem lastIsConstant_iff (p g : DensePoly D) (cert : SignedRemainderChain D)
+    (h : SignedRemainderChain.check sign p g cert = true) :
+    SignedRemainderChain.lastIsConstant cert = true ↔
       IsUnit (interpret f hz (cert.chain.getD (cert.chain.size - 1) 0)) := by
   have hb := (check_bound f hz sign p g cert h).1
   have hmem : cert.chain.getD (cert.chain.size - 1) 0 ∈ cert.chain := by
@@ -144,7 +146,7 @@ theorem constantTail_iff (p g : DensePoly D) (cert : QueryChain D)
     intro hzero
     apply hnz
     rw [(size_eq_zero_iff _).mp hzero, interpret_zero]
-  rw [QueryReplay.constantTail, beq_iff_eq, Polynomial.isUnit_iff_degree_eq_zero,
+  rw [SignedRemainderChain.lastIsConstant, beq_iff_eq, Polynomial.isUnit_iff_degree_eq_zero,
     Polynomial.degree_eq_natDegree hnz]
   simp only [Nat.cast_eq_zero, natDegree_interpret, natDegree_eq_size_sub_one]
   omega
@@ -153,10 +155,10 @@ include ha hs hm hn hpos in
 /-- For the derivative replay, the exact constant-tail guard is equivalent to
 squarefreeness over the semantic ordered field. -/
 theorem check_squarefree [One D] (h1 : f (1 : D) = 1)
-    (p : DensePoly D) (cert : QueryChain D)
-    (h : QueryChain.check sign p 1 cert = true) :
-    QueryReplay.constantTail cert = true ↔ Squarefree (interpret f hz p) := by
-  rw [constantTail_iff f hz sign p 1 cert h,
+    (p : DensePoly D) (cert : SignedRemainderChain D)
+    (h : SignedRemainderChain.check sign p 1 cert = true) :
+    SignedRemainderChain.lastIsConstant cert = true ↔ Squarefree (interpret f hz p) := by
+  rw [lastIsConstant_iff f hz sign p 1 cert h,
     (check_gcd f hz ha hs hm hn sign hpos p 1 cert h).isUnit_iff,
     interpret_one f hz h1, one_mul, EuclideanDomain.gcd_isUnit_iff,
     ← Polynomial.separable_def, PerfectField.separable_iff_squarefree]
@@ -165,32 +167,32 @@ include ha hs hm hn hpos in
 /-- Query production succeeds exactly when the endpoint guards and semantic
 squarefreeness hold. There is no exhaustion case hidden in the `Option`. -/
 theorem query_isSome [One D] [Neg D] (h1 : f (1 : D) = 1)
-    {E : Type w} (adapter : EndpointAdapter D E)
+    {E : Type w} (endpointSigns : EndpointSigns D E)
     (normalize : DensePoly D → D × DensePoly D)
     (hchains : ∀ p g : DensePoly D, p ≠ 0 →
-      QueryChain.check sign p g (QueryChain.build sign normalize p g) = true)
+      SignedRemainderChain.check sign p g (SignedRemainderChain.build sign normalize p g) = true)
     (p g : DensePoly D) (a b : Endpoint E) :
-    (QueryReplay.query sign adapter normalize p g a b).isSome = true ↔
-      QueryReplay.endpointGuards adapter p a b = true ∧ Squarefree (interpret f hz p) := by
-  by_cases hg : QueryReplay.endpointGuards adapter p a b = true
+    (TarskiCertificate.query sign endpointSigns normalize p g a b).isSome = true ↔
+      TarskiCertificate.checkEndpoints endpointSigns p a b = true ∧ Squarefree (interpret f hz p) := by
+  by_cases hg : TarskiCertificate.checkEndpoints endpointSigns p a b = true
   · have hp : p ≠ 0 := by
       have hg' := hg
-      simp only [QueryReplay.endpointGuards, Bool.and_eq_true] at hg'
+      simp only [TarskiCertificate.checkEndpoints, Bool.and_eq_true] at hg'
       intro hp
       have hp' := hg'.1.1.1
       rw [hp] at hp'
       contradiction
     have hsf := check_squarefree f hz ha hs hm hn sign hpos h1 p
-      (QueryChain.build sign normalize p 1) (hchains p 1 hp)
-    simp only [QueryReplay.query, QueryReplay.certify, hg, Bool.not_true, Bool.false_eq_true,
+      (SignedRemainderChain.build sign normalize p 1) (hchains p 1 hp)
+    simp only [TarskiCertificate.query, TarskiCertificate.certify, hg, Bool.not_true, Bool.false_eq_true,
       ↓reduceIte, Option.isSome_map, true_and]
-    cases ht : QueryReplay.constantTail (QueryChain.build sign normalize p 1) <;>
+    cases ht : SignedRemainderChain.lastIsConstant (SignedRemainderChain.build sign normalize p 1) <;>
       simp_all only [Bool.not_false, Bool.not_true, ↓reduceIte, Option.isSome_none,
         Option.isSome_some, Bool.false_eq_true, true_iff, false_iff]
-  · have hg' : QueryReplay.endpointGuards adapter p a b = false := Bool.eq_false_iff.mpr hg
-    simp only [QueryReplay.query, QueryReplay.certify, hg', Bool.not_false, ↓reduceIte,
+  · have hg' : TarskiCertificate.checkEndpoints endpointSigns p a b = false := Bool.eq_false_iff.mpr hg
+    simp only [TarskiCertificate.query, TarskiCertificate.certify, hg', Bool.not_false, ↓reduceIte,
       Option.map_none, Option.isSome_none, Bool.false_eq_true, false_and]
 
-end HexRealRootsMathlib.Query
+end HexRealRootsMathlib.Tarski
 
 

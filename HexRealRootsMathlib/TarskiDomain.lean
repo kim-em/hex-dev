@@ -5,12 +5,12 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealRootsMathlib.QueryInteger
+public import HexRealRootsMathlib.TarskiInteger
 public import HexRealRootsMathlib.ChainCorrespond
 
 public section
 
-namespace HexRealRootsMathlib.Query
+namespace HexRealRootsMathlib.Tarski
 
 open Hex DensePoly HexPolyMathlib.Interpret
 
@@ -22,8 +22,8 @@ theorem dyadicSign_neg (d : Dyadic) : dyadicSign d < 0 ↔ Dyadic.toReal d < 0 :
 
 /-- The integer frontend's executable endpoint guards are exactly head and
 endpoint nonvanishing. Its interval already certifies strict endpoint order. -/
-theorem integer_guards (p : ZPoly) (I : DyadicInterval) :
-    QueryReplay.endpointGuards ZPoly.queryAdapter p (.finite I.lower) (.finite I.upper) = true ↔
+theorem integer_checkEndpoints (p : ZPoly) (I : DyadicInterval) :
+    TarskiCertificate.checkEndpoints EndpointSigns.intDyadic p (.finite I.lower) (.finite I.upper) = true ↔
       p ≠ 0 ∧ (toPolyℝ p).eval (Dyadic.toReal I.lower) ≠ 0 ∧
         (toPolyℝ p).eval (Dyadic.toReal I.upper) ≠ 0 := by
   have horder : dyadicSign (I.lower - I.upper) < 0 := by
@@ -38,7 +38,7 @@ theorem integer_guards (p : ZPoly) (I : DyadicInterval) :
       (toPolyℝ p).eval (Dyadic.toReal x) ≠ 0 := by
     rw [bne_iff_ne]
     exact not_congr (evalSign_zero_iff p x)
-  simp only [QueryReplay.endpointGuards, Endpoint.lt, Endpoint.rootFree, ZPoly.queryAdapter,
+  simp only [TarskiCertificate.checkEndpoints, Endpoint.lt, Endpoint.nonvanishing, EndpointSigns.intDyadic,
     Bool.and_eq_true, decide_eq_true_eq, hp, horder, he, and_true, and_assoc]
 
 /-- The generic integer interpretation agrees with the existing real-polynomial
@@ -59,23 +59,23 @@ theorem integer_domain (p g : ZPoly) (I : DyadicInterval) :
     (fun a b => Int.cast_add a b) (fun a b => Int.cast_sub a b) (fun a b => Int.cast_mul a b)
     (fun n => by simp only [Int.cast_natCast]) Int.sign
     (fun a => by simp only [Int.sign_eq_one_iff_pos, Int.cast_pos]) Int.cast_one
-    ZPoly.queryAdapter ZPoly.queryNormalize integer_chain_checks p g (.finite I.lower) (.finite I.upper)
-  change (QueryReplay.query Int.sign ZPoly.queryAdapter ZPoly.queryNormalize p g
+    EndpointSigns.intDyadic ZPoly.normalizeContent integer_chain_checks p g (.finite I.lower) (.finite I.upper)
+  change (TarskiCertificate.query Int.sign EndpointSigns.intDyadic ZPoly.normalizeContent p g
     (.finite I.lower) (.finite I.upper)).isSome = true ↔ _
-  rw [h, integer_guards, interpret_int_real]
+  rw [h, integer_checkEndpoints, interpret_int_real]
   simp only [and_left_comm, and_comm]
 
 /-- An accepted integer certificate proves the same mathematical domain using
 only its supplied squarefree chain and exact dyadic endpoint checks. -/
-theorem integer_replay_domain (p g : ZPoly) (I : DyadicInterval) (value : Int) (cert : TarskiReplay)
-    (hc : TarskiReplay.check p g I value cert = true) :
+theorem integer_check_domain (p g : ZPoly) (I : DyadicInterval) (value : Int) (cert : IntTarskiCertificate)
+    (hc : IntTarskiCertificate.check p g I value cert = true) :
     p ≠ 0 ∧ Squarefree (toPolyℝ p) ∧
       (toPolyℝ p).eval (Dyadic.toReal I.lower) ≠ 0 ∧
       (toPolyℝ p).eval (Dyadic.toReal I.upper) ≠ 0 := by
-  simp only [TarskiReplay.check, QueryReplay.check, Bool.and_eq_true,
+  simp only [IntTarskiCertificate.check, TarskiCertificate.check, Bool.and_eq_true,
     decide_eq_true_eq, and_assoc] at hc
   obtain ⟨_, _, _, _, _, _, hg, hsf, hconst, _⟩ := hc
-  obtain ⟨hp, ha, hb⟩ := (integer_guards p I).mp hg
+  obtain ⟨hp, ha, hb⟩ := (integer_checkEndpoints p I).mp hg
   have h := (check_squarefree (fun z : Int => (z : ℝ)) (fun _ => Int.cast_eq_zero)
     (fun a b => Int.cast_add a b) (fun a b => Int.cast_sub a b) (fun a b => Int.cast_mul a b)
     (fun n => by simp only [Int.cast_natCast]) Int.sign
@@ -84,4 +84,4 @@ theorem integer_replay_domain (p g : ZPoly) (I : DyadicInterval) (value : Int) (
   rw [interpret_int_real] at h
   exact ⟨hp, h, ha, hb⟩
 
-end HexRealRootsMathlib.Query
+end HexRealRootsMathlib.Tarski

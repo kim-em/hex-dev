@@ -7,24 +7,26 @@ pseudo-remainder and literal replay kernel in `hex-real-roots`.
 
 The computational frontend is implemented in `HexSturm/Basic.lean`, using the
 shared query producer and literal checker. It provides `prepare`, `query`,
-`queryPrepared`, `certify`, `certifyPrepared` and `Replay.check`, with explicit
-coefficient signs and finite/infinite endpoints. `Prepared` has a private
+`queryPrepared`, `certify`, `certifyPrepared` and `check`, with explicit
+coefficient signs and finite/infinite endpoints. `PreparedDomain` has a private
 constructor and retains its sign operation, head, endpoints and validated
-squarefree chain. `orderSign` is the canonical ordered-coefficient sign adapter. The frontend
+squarefree chain. `orderSign` is the canonical ordered-coefficient sign function. The frontend
 uses ordinary coefficient inversion to divide each remainder by its positive
 absolute leading coefficient, preserving negative leading signs. The shared
 integer backend retains its content normalization.
 
 The [companion](../../HexSturmMathlib/SPEC/hex-sturm-mathlib.md) proves exact
-semantic domain equivalence, produced-certificate acceptance and prepared-query
-agreement. Root-sum/replay semantics, `rootCount`, singleton/sign bounds,
-whole-Option rational/backend correspondence and Phase-4 evidence remain
-required. No release or phase completion is claimed.
+semantic domain equivalence, produced-certificate acceptance, prepared-query
+agreement and whole-`Option` rational/integer agreement on finite ordered dyadic
+intervals after positive denominator clearing. Root-sum/replay semantics,
+`rootCount`, singleton/sign bounds, general backend correspondence, literal
+certificate translation and remaining Phase-4 evidence are still required.
+No release or phase completion is claimed.
 
 `HexSturm` depends on `HexPoly` and `HexRealRoots`, with no Mathlib or
 Batteries import. Its namespace is `Hex.Sturm`. Its substantive work is
 field-domain and squarefreeness validation, finite and infinite endpoint
-adapters, query proof composition, and root counts. Ordinary
+operations, query proof composition, and root counts. Ordinary
 ordered-domain pseudo-division lives in
 [hex-poly](../../HexPoly/SPEC/hex-poly.md#ordered-domain-pseudo-division);
 the ring-only query/replay algorithm lives in
@@ -84,9 +86,9 @@ requires fresh bindings even when operand literals remain unchanged.
 ## Endpoints, domain and public operations
 
 Use `Endpoint E := negInf | finite E | posInf`, with the common data type in
-hex-real-roots. The canonical field adapter takes `E = K`; a representation adapter uses
-its coefficient type `E` and the explicit sign interface;
-the integer kernel adapter keeps `E = Dyadic`. The preserved public
+hex-real-roots. Canonical field coefficients take `E = K`; noncanonical representations use
+their coefficient type `E` and the explicit sign interface;
+integer coefficients use `E = Dyadic`. The preserved public
 `ZPoly.tarskiQuery` takes only a finite `DyadicInterval`. Integer-coefficient
 queries at infinity use this field frontend after embedding coefficients in
 `Rat`; no `Field Int` instance or new public integer entry point is required.
@@ -107,20 +109,20 @@ The required public operations use the same shared arithmetic kernel:
 
 | Operation | Result and responsibility |
 | --- | --- |
-| `prepare p a b` | Validate the mathematical domain and return `Option (Prepared E)`. The prepared object binds the head and endpoints. |
+| `prepare p a b` | Validate the mathematical domain and return `Option (PreparedDomain E)`. The prepared object binds the head and endpoints. |
 | `query p f a b` | Return `Option Int`; `none` exactly when the domain fails. |
 | `queryPrepared domain f` | Return the query for an already validated domain. |
 | `rootCount p a b` | Query `f=1`, returning `Option Nat` with the same domain. Prove nonnegativity before conversion; never clamp an unexpected negative value. |
 | `certify p f a b` | Run the shared kernel while retaining its literal query certificate. Return `none` on the same invalid domain. |
 | `certifyPrepared context domain f` | Retain the literal query certificate while reusing the prepared squarefree chain and binding the supplied context. |
-| `Replay.check` | Check a supplied finite certificate; return `Bool`, false on malformed or incorrect data. |
+| `check` | Check a supplied finite certificate; return `Bool`, false on malformed or incorrect data. |
 
 No operation takes a caller resource budget. Squarefreeness uses the existing
 plain field gcd of `P,P'`, testing that it is a nonzero constant, or a plain
 pseudo-gcd with nonzero constant terminal remainder. Neither route computes
 Bézout accumulators when only a gcd is needed. A replay can carry
 `A*P+B*P'=1` instead; this is a query-level guard witness, not a requirement
-that ordinary arithmetic return evidence. Prepared objects are opaque;
+that ordinary arithmetic return evidence. Prepared domains are opaque;
 untrusted serialized data is revalidated before reuse.
 
 The query semantics are in any ordered real closed extension `R` with an
@@ -176,8 +178,8 @@ entry's sign and all associated identities, recording positive absolute scale
 factors; merely replacing a negative factor by its absolute value is invalid.
 Replay checks the resulting identities without rerunning normalization.
 
-At a finite endpoint, evaluate each entry by exact Horner arithmetic through
-the adapter. At `+∞` its sign is the sign of its leading coefficient; at
+At a finite endpoint, evaluate each entry by exact Horner arithmetic in
+the coefficient representation. At `+∞` its sign is the sign of its leading coefficient; at
 `−∞` multiply that sign by `(-1)^degree`. Delete zero signs and count adjacent
 sign changes as a `Nat`; the query is explicitly
 `(V(a) : Int) - (V(b) : Int)`.
@@ -236,7 +238,7 @@ and `[IsRealClosed R]` on the Mathlib side.
 | Statement | Required conclusion / owner |
 | --- | --- |
 | `query_sound` | `query p f a b = some q` implies `Domain p a b` and `q = TaQ(F,P;a,b)`; companion. |
-| `Replay.check_sound` | Accepted replay implies the same domain and query equality; companion via the shared replay theorem. |
+| `check_sound` | Accepted replay implies the same domain and query equality; companion via the shared replay theorem. |
 | `query_isSome` | `(query p f a b).isSome ↔ Domain p a b`; executable guard/termination proof here, interpretation in companion. |
 | `certify_checks` | Certificates produced on the domain pass replay and carry the same value as `query`. |
 | `rootCount_eq`, `query_sign` | Count equals `Roots.card`; a singleton root set gives the evaluation sign; companion. |
@@ -252,7 +254,7 @@ and quotient denominators with positive multipliers, translate every initial,
 three-term and terminal identity, and translate the guard and sign evidence.
 Require both frontends' replay soundness and accepted-certificate transport;
 identical producer certificates are not required. Zero polynomials can use
-clearing factor one. A negative clearing factor is not an admissible adapter.
+clearing factor one. Denominator clearing must use positive factors.
 The integer frontend retains its public type, integer content removal and
 exact dyadic Horner optimizations; it does not acquire a `Field Int` instance.
 
@@ -272,8 +274,8 @@ Hex locally proves ordinary polynomial correspondence, pseudo-division and
 positive-scaling correspondence, literal replay soundness and integer
 specialization in real-roots and its companion. That companion also proves
 `IsRealClosed ℝ` from Mathlib's real square-root and polynomial order/IVT
-results. HexSturm proves frontend guards, generic endpoint and denominator
-adapters, and coefficient-evidence composition. Ambient real-closure existence
+results. HexSturm proves frontend guards, generic endpoint operations and denominator
+clearing, and coefficient-evidence composition. Ambient real-closure existence
 for arbitrary `K` is a separate Tau Ceti obligation consumed by
 `hex-real-closure-mathlib`; this API's semantics are conditional on a supplied
 `R,ι` until that obligation is discharged. It does not construct that field.
@@ -285,7 +287,7 @@ adversarial cases, with serialized coefficient contexts, seeds and expected
 exact results. Integer/rational fixtures compare both frontends and
 python-flint exact selected-root signs. Pin oracle versions and provenance;
 never use printed decimals as expected signs. Lower-level pseudo-division,
-gcd/xgcd identities and total-adapter agreement also have fixtures in hex-poly;
+gcd/xgcd identities and coefficient-interpretation agreement also have fixtures in hex-poly;
 shared recurrence/replay cases live in hex-real-roots.
 
 Required cases include:
@@ -306,7 +308,7 @@ Required cases include:
   foreign-context/stale evidence, and positive versus negative denominator
   clearing. Reject cyclic certificate references at decoding.
 
-When extension adapters exist, require downstream integration fixtures for the
+When ordered-extension instances exist, require downstream integration fixtures for the
 corrected [de Moura–Passmore example](https://www.cl.cam.ac.uk/~gp351/infinitesimals.pdf)
 `P=(εx²−1)(εx³−1)`: counts on the whole line and `(0,+∞)` are `3` and `2`;
 the query of `P'''` on `(0,+∞)` is `0`, with opposite signs at the two
@@ -333,7 +335,7 @@ the sum of chain lengths. This is not a bit-complexity promise. Record peak
 coefficient sizes, gcd work, coefficient calls and certificate bytes; use the
 actual polynomial lengths and certificate sizes for replay costs.
 
-Compare the total rational adapter with the optimized integer/dyadic backend
+Compare the rational frontend with the optimized integer/dyadic backend
 on identical queries; correctness agreement is gating. Pinned python-flint
 and Z3 end-to-end comparisons are informational where they expose comparable
 queries; record any lack of a matching query surface rather than timing root

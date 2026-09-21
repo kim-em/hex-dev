@@ -351,7 +351,7 @@ at Mathlib `1cf325a0cf67aca2b04d76b5380ff6a9e410aefa`:
 | Foundation / missing infrastructure | Owner and statement shape |
 | --- | --- |
 | Exact polynomial arithmetic | Existing `DensePoly K` operations, field division/gcd/xgcd and correspondence in hex-poly/hex-poly-mathlib; positive signed pseudo-remainders belong to the shared ordered-domain query kernel. |
-| Shared query algorithm and literal replay | hex-real-roots implements `ZPoly.tarskiQuery` and `TarskiReplay`, including algebraic correspondence and produced-certificate acceptance. hex-sturm implements the ordered-field frontend and prepared-query reuse. Abstract root-sum/replay soundness remains a completion gate. |
+| Shared query algorithm and literal replay | hex-real-roots implements `ZPoly.tarskiQuery` and `IntTarskiCertificate`, including algebraic correspondence and produced-certificate acceptance. hex-sturm implements the ordered-field frontend and prepared-query reuse. Abstract root-sum/replay soundness remains a completion gate. |
 | Abstract polynomial IVT, Rolle and signed-remainder/Cauchy-index identity | Tau Ceti import through hex-real-roots-mathlib, consumed via hex-sturm-mathlib's query/replay soundness. Include infinities, common gcd and zero remainder. Do not duplicate the primitive here. |
 | Moment identity | Tau Ceti to hex-sign-det-mathlib: actual finite root counts satisfy `t=M*c`, including `0^0=1`, empty lists and zero roots. |
 | Recursive BKR support reduction | Tau Ceti to hex-sign-det-mathlib: the family contract for abstract support-preserving reductions, with explicit complete-input-support and reduction premises. Hex proves the elementary child-restriction/Cartesian-product step locally and connects reduction premises to literal evidence. |

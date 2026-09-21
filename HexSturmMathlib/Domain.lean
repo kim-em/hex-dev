@@ -6,7 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexSturm
-public import HexRealRootsMathlib.QueryGcd
+public import HexRealRootsMathlib.TarskiGcd
 
 public section
 
@@ -48,25 +48,25 @@ omit [DecidableEq K] [One E] [Neg E] [NatCast E] [Inv E] in
 /-- Finite comparison signs and structural infinity order give strict
 mathematical endpoint order. -/
 theorem endpoint_lt (a b : Endpoint E) :
-    a.lt (Sturm.adapter sign) b = true ↔ EndpointLt f a b := by
+    a.lt (EndpointSigns.ofSign sign) b = true ↔ EndpointLt f a b := by
   cases a <;> cases b <;>
-    simp only [Endpoint.lt, Sturm.adapter, EndpointLt, decide_eq_true_eq, hneg, hs,
+    simp only [Endpoint.lt, EndpointSigns.ofSign, EndpointLt, decide_eq_true_eq, hneg, hs,
       sub_lt_zero, Bool.false_eq_true]
 
 include hz ha hm hzero in
 omit [LinearOrder K] [IsStrictOrderedRing K] [One E] [Neg E] [NatCast E] [Inv E] in
-/-- The field adapter's Horner nonvanishing check reflects semantic evaluation. -/
-theorem endpoint_nonzero (p : DensePoly E) (a : Endpoint E) :
-    a.rootFree (Sturm.adapter sign) p = true ↔ Nonvanishing f (interpret f hz p) a := by
+/-- Horner nonvanishing reflects semantic evaluation. -/
+theorem endpoint_nonvanishing (p : DensePoly E) (a : Endpoint E) :
+    a.nonvanishing (EndpointSigns.ofSign sign) p = true ↔ Nonvanishing f (interpret f hz p) a := by
   cases a <;>
-    simp only [Endpoint.rootFree, Sturm.adapter, Nonvanishing, bne_iff_ne, ne_eq,
+    simp only [Endpoint.nonvanishing, EndpointSigns.ofSign, Nonvanishing, bne_iff_ne, ne_eq,
       hzero, eval_interpret f hz ha hm]
 
 include hz ha hs hm hneg hzero in
 omit [One E] [NatCast E] [Neg E] [Inv E] in
 /-- All executable endpoint guards have their exact semantic meaning. -/
-theorem guards_iff (p : DensePoly E) (a b : Endpoint E) :
-    QueryReplay.endpointGuards (Sturm.adapter sign) p a b = true ↔
+theorem checkEndpoints_iff (p : DensePoly E) (a b : Endpoint E) :
+    TarskiCertificate.checkEndpoints (EndpointSigns.ofSign sign) p a b = true ↔
       interpret f hz p ≠ 0 ∧ EndpointLt f a b ∧
         Nonvanishing f (interpret f hz p) a ∧ Nonvanishing f (interpret f hz p) b := by
   have hp : (!p.isZero) = true ↔ interpret f hz p ≠ 0 := by
@@ -74,8 +74,8 @@ theorem guards_iff (p : DensePoly E) (a b : Endpoint E) :
     change (¬ p.isZero = true) ↔ _
     rw [DensePoly.isZero_eq_true_iff, DensePoly.size_eq_zero_iff]
     exact not_congr (interpret_eq_zero f hz p).symm
-  simp only [QueryReplay.endpointGuards, Bool.and_eq_true, hp, endpoint_lt f hs sign hneg,
-    endpoint_nonzero f hz ha hm sign hzero, and_assoc]
+  simp only [TarskiCertificate.checkEndpoints, Bool.and_eq_true, hp, endpoint_lt f hs sign hneg,
+    endpoint_nonvanishing f hz ha hm sign hzero, and_assoc]
 
 variable (h1 : f (1 : E) = 1) (hn : ∀ a, f (-a) = -f a)
 variable (hi : ∀ a, f a⁻¹ = (f a)⁻¹)
@@ -107,8 +107,8 @@ theorem normalize_eq (p : DensePoly E) (hp : p ≠ 0) :
 include hz ha hs hm h1 hn hi hpos hneg in
 /-- The field frontend uses the shared producer with positive normalization. -/
 theorem chain_checks (p g : DensePoly E) (hp : p ≠ 0) :
-    QueryChain.check sign p g (QueryChain.build sign (Sturm.normalize sign) p g) = true := by
-  exact HexRealRootsMathlib.Query.build_checks f hz ha hs hm h1 hn sign hpos hneg
+    SignedRemainderChain.check sign p g (SignedRemainderChain.build sign (Sturm.normalize sign) p g) = true := by
+  exact HexRealRootsMathlib.Tarski.build_checks f hz ha hs hm h1 hn sign hpos hneg
     (Sturm.normalize sign) (normalize_eq f hz hm sign hneg hn hi) p g hp
 
 include hz ha hs hm h1 hn hi hnat hpos hneg hzero in
@@ -116,10 +116,10 @@ include hz ha hs hm h1 hn hi hnat hpos hneg hzero in
 noninjective coefficient interpretations into ordered fields. -/
 theorem query_isSome (p g : DensePoly E) (a b : Endpoint E) :
     (Sturm.query sign p g a b).isSome = true ↔ Domain f hz p a b := by
-  change (QueryReplay.query sign (Sturm.adapter sign) (Sturm.normalize sign) p g a b).isSome = true ↔ _
-  rw [HexRealRootsMathlib.Query.query_isSome f hz ha hs hm hnat sign hpos h1
-    (Sturm.adapter sign) (Sturm.normalize sign) (chain_checks f hz ha hs hm sign hneg h1 hn hi hpos),
-    guards_iff f hz ha hs hm sign hneg hzero]
+  change (TarskiCertificate.query sign (EndpointSigns.ofSign sign) (Sturm.normalize sign) p g a b).isSome = true ↔ _
+  rw [HexRealRootsMathlib.Tarski.query_isSome f hz ha hs hm hnat sign hpos h1
+    (EndpointSigns.ofSign sign) (Sturm.normalize sign) (chain_checks f hz ha hs hm sign hneg h1 hn hi hpos),
+    checkEndpoints_iff f hz ha hs hm sign hneg hzero]
   simp only [Domain, and_left_comm, and_comm]
 
 include hz ha hs hm h1 hn hi hnat hpos hneg hzero in
@@ -131,7 +131,7 @@ theorem prepare_isSome (p : DensePoly E) (a b : Endpoint E) :
 
 include hz ha hs hm h1 hn hi hnat hpos hneg hzero in
 /-- Successful preparation establishes the domain and exact input bindings. -/
-theorem prepare_sound (p : DensePoly E) (a b : Endpoint E) (domain : Sturm.Prepared E)
+theorem prepare_sound (p : DensePoly E) (a b : Endpoint E) (domain : Sturm.PreparedDomain E)
     (h : Sturm.prepare sign p a b = some domain) :
     Domain f hz p a b ∧ domain.sign = sign ∧ domain.head = p ∧
       domain.lower = a ∧ domain.upper = b := by
@@ -142,7 +142,7 @@ theorem prepare_sound (p : DensePoly E) (a b : Endpoint E) (domain : Sturm.Prepa
 
 include hz ha hs hm h1 hn hi hnat hpos hneg hzero in
 /-- Every opaque prepared object carries a valid domain for its bound inputs. -/
-theorem prepared_domain (domain : Sturm.Prepared E) (hsign : domain.sign = sign) :
+theorem prepared_domain (domain : Sturm.PreparedDomain E) (hsign : domain.sign = sign) :
     Domain f hz domain.head domain.lower domain.upper := by
   apply (query_isSome f hz ha hs hm sign hneg hzero h1 hn hi hnat hpos
     domain.head 1 domain.lower domain.upper).mp
@@ -154,21 +154,21 @@ include hz ha hs hm h1 hn hi hpos hneg in
 range is a law of the supplied exact coefficient sign operation. -/
 theorem certify_checks (hbound : ∀ x, -1 ≤ sign x ∧ sign x ≤ 1)
     {Ctx : Type w} [DecidableEq Ctx] (context : Ctx)
-    (p g : DensePoly E) (a b : Endpoint E) (cert : QueryReplay E E Ctx)
+    (p g : DensePoly E) (a b : Endpoint E) (cert : TarskiCertificate E E Ctx)
     (hcert : Sturm.certify sign context p g a b = some cert) :
-    Sturm.Replay.check sign context p g a b cert.value cert = true := by
-  apply QueryReplay.certify_checks sign (Sturm.adapter sign) (Sturm.normalize sign)
+    Sturm.check sign context p g a b cert.value cert = true := by
+  apply TarskiCertificate.certify_checks sign (EndpointSigns.ofSign sign) (Sturm.normalize sign)
     (chain_checks f hz ha hs hm sign hneg h1 hn hi hpos) _ context p g a b cert hcert
   intro q e
-  exact Endpoint.signAt_bounds sign (Sturm.adapter sign) hbound
+  exact Endpoint.signAt_bounds sign (EndpointSigns.ofSign sign) hbound
     (fun q x => hbound (q.eval x)) q e
 
 include hz ha hs hm h1 hn hi hpos hneg in
 /-- Prepared certificates pass replay with their exact bound inputs and context. -/
 theorem certifyPrepared_checks (hbound : ∀ x, -1 ≤ sign x ∧ sign x ≤ 1)
     {Ctx : Type w} [DecidableEq Ctx] (context : Ctx)
-    (domain : Sturm.Prepared E) (hsign : domain.sign = sign) (g : DensePoly E) :
-    Sturm.Replay.check sign context domain.head g domain.lower domain.upper
+    (domain : Sturm.PreparedDomain E) (hsign : domain.sign = sign) (g : DensePoly E) :
+    Sturm.check sign context domain.head g domain.lower domain.upper
       (Sturm.certifyPrepared context domain g).value
       (Sturm.certifyPrepared context domain g) = true := by
   apply certify_checks f hz ha hs hm sign hneg h1 hn hi hpos hbound
@@ -181,13 +181,13 @@ omit [Neg E] [Inv E] in
 /-- Accepted replay establishes the mathematical domain from its supplied
 squarefree witness, without running a gcd or query producer. -/
 theorem check_domain {Ctx : Type w} [DecidableEq Ctx] (context : Ctx)
-    (p g : DensePoly E) (a b : Endpoint E) (value : Int) (cert : QueryReplay E E Ctx)
-    (hc : Sturm.Replay.check sign context p g a b value cert = true) : Domain f hz p a b := by
-  simp only [Sturm.Replay.check, QueryReplay.check, Bool.and_eq_true,
+    (p g : DensePoly E) (a b : Endpoint E) (value : Int) (cert : TarskiCertificate E E Ctx)
+    (hc : Sturm.check sign context p g a b value cert = true) : Domain f hz p a b := by
+  simp only [Sturm.check, TarskiCertificate.check, Bool.and_eq_true,
     decide_eq_true_eq, and_assoc] at hc
   obtain ⟨_, _, _, _, _, _, hg, hsf, hconst, _⟩ := hc
-  obtain ⟨hp, hab, ha', hb'⟩ := (guards_iff f hz ha hs hm sign hneg hzero p a b).mp hg
-  exact ⟨hp, (HexRealRootsMathlib.Query.check_squarefree f hz ha hs hm hnat sign hpos h1
+  obtain ⟨hp, hab, ha', hb'⟩ := (checkEndpoints_iff f hz ha hs hm sign hneg hzero p a b).mp hg
+  exact ⟨hp, (HexRealRootsMathlib.Tarski.check_squarefree f hz ha hs hm hnat sign hpos h1
     p cert.squarefree hsf).mp hconst, hab, ha', hb'⟩
 
 omit [IsStrictOrderedRing K] in

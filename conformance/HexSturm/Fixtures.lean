@@ -18,14 +18,14 @@ open Hex DensePoly
 @[expose] def x : DensePoly Rat := ofCoeffs #[0, 1]
 
 /-- A fully literal rational certificate, checked without invoking a producer. -/
-@[expose] def literalChain : QueryChain Rat where
+@[expose] def literalChain : SignedRemainderChain Rat where
   chain := #[p, x, 1]
   degrees := #[2, 1, 0]
   initial := ⟨1, 0, 2⟩
   steps := #[⟨1, x, 1⟩]
   terminal := some (1, x)
 
-@[expose] def literal : QueryReplay Rat Rat Nat where
+@[expose] def literal : TarskiCertificate Rat Rat Nat where
   context := 7
   head := p
   queryPoly := 1

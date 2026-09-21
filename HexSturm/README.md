@@ -11,11 +11,11 @@ Field remainders are divided by their positive absolute leading coefficient;
 negative leading signs are retained. Integers use the separate content backend.
 
 `prepare` validates a head and its endpoints once; `queryPrepared` reuses the
-squarefree chain. Prepared values have a private constructor. `certify` and
+squarefree chain. Prepared domains have a private constructor. `certify` and
 `certifyPrepared` retain finite evidence with the caller's full literal context;
-`Replay.check` checks that evidence through the shared checker.
+`check` checks that evidence through the shared checker.
 `certify_value` and `certifyPrepared_value` relate certificates with any context
-to their query results; `Replay.check_bindings` exposes the exact bindings
+to their query results; `check_bindings` exposes the exact bindings
 established by acceptance.
 
 The companion proves exact domain equivalence and produced-certificate

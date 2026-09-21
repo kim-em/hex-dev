@@ -5,11 +5,11 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealRoots.Query
+public import HexRealRoots.Tarski
 
 public section
 
-namespace Hex.QueryChain
+namespace Hex.SignedRemainderChain
 
 private theorem getD_push_lt {A : Type u} (xs : Array A) (a d : A) (i : Nat) (hi : i < xs.size) :
     (xs.push a).getD i d = xs.getD i d := by
@@ -23,25 +23,25 @@ variable {D : Type u} [Zero D] [DecidableEq D] [Add D] [Sub D] [Mul D] [NatCast 
 
 /-- The part of a literal replay already established before its terminal
 zero identity. The array stores every actual quotient and positive scale. -/
-structure Prefix (sign : D → Int) (p f : DensePoly D) (initial : QueryStep D)
-    (chain : Array (DensePoly D)) (steps : Array (QueryStep D)) : Prop where
+structure Prefix (sign : D → Int) (p f : DensePoly D) (initial : RemainderStep D)
+    (chain : Array (DensePoly D)) (steps : Array (RemainderStep D)) : Prop where
   two_le : 2 ≤ chain.size
   head : chain[0]? = some p
   nonzero : ∀ r ∈ chain, r ≠ 0
   descent : ∀ i, i + 1 < chain.size → (chain.getD (i + 1) 0).size < (chain.getD i 0).size
   left_pos : sign initial.leftScale = 1
   right_pos : sign initial.rightScale = 1
-  initial_eq : equal (DensePoly.scale initial.leftScale (f * p.derivative))
+  initial_eq : subIsZero (DensePoly.scale initial.leftScale (f * p.derivative))
     (initial.quotient * p + DensePoly.scale initial.rightScale (chain.getD 1 0)) = true
   size_steps : steps.size + 2 = chain.size
   recurrences : ∀ i, i < steps.size → checkStep sign (chain.getD i 0) (chain.getD (i + 1) 0)
     (chain.getD (i + 2) 0) (steps.getD i ⟨0, 0, 0⟩) = true
 
 /-- A correctly reduced initial pair starts a replay prefix. -/
-theorem Prefix.pair (sign : D → Int) (p f second : DensePoly D) (initial : QueryStep D)
+theorem Prefix.pair (sign : D → Int) (p f second : DensePoly D) (initial : RemainderStep D)
     (hp : p ≠ 0) (hs : second ≠ 0) (hd : second.size < p.size)
     (hl : sign initial.leftScale = 1) (hr : sign initial.rightScale = 1)
-    (hi : equal (DensePoly.scale initial.leftScale (f * p.derivative))
+    (hi : subIsZero (DensePoly.scale initial.leftScale (f * p.derivative))
       (initial.quotient * p + DensePoly.scale initial.rightScale second) = true) :
     Prefix sign p f initial #[p, second] #[] := by
   constructor
@@ -65,9 +65,9 @@ theorem Prefix.pair (sign : D → Int) (p f second : DensePoly D) (initial : Que
 
 /-- Appending an actual signed-remainder step preserves all prior literal
 identities and adds precisely the new final recurrence. -/
-theorem Prefix.push {sign : D → Int} {p f : DensePoly D} {initial : QueryStep D}
-    {chain : Array (DensePoly D)} {steps : Array (QueryStep D)}
-    (h : Prefix sign p f initial chain steps) (next : DensePoly D) (step : QueryStep D)
+theorem Prefix.push {sign : D → Int} {p f : DensePoly D} {initial : RemainderStep D}
+    {chain : Array (DensePoly D)} {steps : Array (RemainderStep D)}
+    (h : Prefix sign p f initial chain steps) (next : DensePoly D) (step : RemainderStep D)
     (hn : next ≠ 0) (hd : next.size < (chain.getD (chain.size - 1) 0).size)
     (hs : checkStep sign (chain.getD (chain.size - 2) 0) (chain.getD (chain.size - 1) 0)
       next step = true) : Prefix sign p f initial (chain.push next) (steps.push step) := by
@@ -111,11 +111,11 @@ theorem Prefix.push {sign : D → Int} {p f : DensePoly D} {initial : QueryStep 
 
 /-- Finishing an established prefix with a positive terminal zero identity
 passes the actual finite checker, with the computed degree evidence. -/
-theorem Prefix.finish {sign : D → Int} {p f : DensePoly D} {initial : QueryStep D}
-    {chain : Array (DensePoly D)} {steps : Array (QueryStep D)}
+theorem Prefix.finish {sign : D → Int} {p f : DensePoly D} {initial : RemainderStep D}
+    {chain : Array (DensePoly D)} {steps : Array (RemainderStep D)}
     (h : Prefix sign p f initial chain steps) (hp : p ≠ 0) (bound : chain.size ≤ p.size)
     (u : D) (q : DensePoly D) (hu : sign u = 1)
-    (ht : equal (DensePoly.scale u (chain.getD (chain.size - 2) 0))
+    (ht : subIsZero (DensePoly.scale u (chain.getD (chain.size - 2) 0))
       (q * chain.getD (chain.size - 1) 0) = true) :
     check sign p f ⟨chain, Hex.Array.map' DensePoly.natDegree chain,
       initial, steps, some (u, q)⟩ = true := by
@@ -140,9 +140,9 @@ theorem Prefix.finish {sign : D → Int} {p f : DensePoly D} {initial : QuerySte
 
 /-- A zero initial remainder has a singleton replay, with no fictitious
 second entry or terminal pair. -/
-theorem singleton_checks (sign : D → Int) (p f : DensePoly D) (initial : QueryStep D)
+theorem singleton_checks (sign : D → Int) (p f : DensePoly D) (initial : RemainderStep D)
     (hp : p ≠ 0) (hl : sign initial.leftScale = 1) (hr : sign initial.rightScale = 1)
-    (hi : equal (DensePoly.scale initial.leftScale (f * p.derivative))
+    (hi : subIsZero (DensePoly.scale initial.leftScale (f * p.derivative))
       (initial.quotient * p + DensePoly.scale initial.rightScale 0) = true) :
     check sign p f ⟨#[p], #[p.natDegree], initial, #[], none⟩ = true := by
   have hp' : 0 < p.size := Nat.pos_of_ne_zero (fun hh => hp ((DensePoly.size_eq_zero_iff p).mp hh))
@@ -150,7 +150,7 @@ theorem singleton_checks (sign : D → Int) (p f : DensePoly D) (initial : Query
   change ((!p.isZero && decide (0 < 1) && decide (1 ≤ p.size) && decide (some p = some p) &&
     decide (#[p.natDegree] = #[p.natDegree]) && (!p.isZero && true) && true &&
     decide (sign initial.leftScale = 1) && decide (sign initial.rightScale = 1) &&
-    equal (DensePoly.scale initial.leftScale (f * p.derivative))
+    subIsZero (DensePoly.scale initial.leftScale (f * p.derivative))
       (initial.quotient * p + DensePoly.scale initial.rightScale 0)) && true) = true
   simp only [Bool.and_eq_true, Bool.not_eq_true', DensePoly.isZero_eq_false_iff,
     decide_eq_true_eq, hp', hl, hr, hi, true_and, and_true]
@@ -172,10 +172,10 @@ theorem buildAux_checks [One D] [Neg D] (sign : D → Int)
     (hterminal : ∀ a b : DensePoly D, b ≠ 0 →
       (DensePoly.positivePseudoDiv sign a b).remainder.isZero = true →
       sign (DensePoly.positivePseudoDiv sign a b).multiplier = 1 ∧
-      equal (DensePoly.scale (DensePoly.positivePseudoDiv sign a b).multiplier a)
+      subIsZero (DensePoly.scale (DensePoly.positivePseudoDiv sign a b).multiplier a)
         ((DensePoly.positivePseudoDiv sign a b).quotient * b) = true)
-    (p f : DensePoly D) (initial : QueryStep D) (hp : p ≠ 0)
-    (fuel : Nat) (prev cur : DensePoly D) (chain : Array (DensePoly D)) (steps : Array (QueryStep D))
+    (p f : DensePoly D) (initial : RemainderStep D) (hp : p ≠ 0)
+    (fuel : Nat) (prev cur : DensePoly D) (chain : Array (DensePoly D)) (steps : Array (RemainderStep D))
     (h : Prefix sign p f initial chain steps)
     (hprev : chain.getD (chain.size - 2) 0 = prev)
     (hcur : chain.getD (chain.size - 1) 0 = cur)
@@ -220,18 +220,18 @@ theorem buildAux_checks [One D] [Neg D] (sign : D → Int)
       · simp only [Array.size_push]
         omega
 
-end Hex.QueryChain
+end Hex.SignedRemainderChain
 
 namespace Hex.Endpoint
 
-/-- Finite adapter signs and coefficient signs in `[-1,1]` also give bounded
+/-- Finite endpoint evaluation signs and coefficient signs in `[-1,1]` also give bounded
 infinity signs, including the negative-infinity degree-parity correction. -/
 theorem signAt_bounds {D : Type u} {E : Type v} [Zero D] [DecidableEq D]
-    (sign : D → Int) (adapter : EndpointAdapter D E)
+    (sign : D → Int) (endpointSigns : EndpointSigns D E)
     (hsign : ∀ c, -1 ≤ sign c ∧ sign c ≤ 1)
-    (heval : ∀ p x, -1 ≤ adapter.evalSign p x ∧ adapter.evalSign p x ≤ 1)
+    (heval : ∀ p x, -1 ≤ endpointSigns.evalSign p x ∧ endpointSigns.evalSign p x ≤ 1)
     (p : DensePoly D) (endpoint : Endpoint E) :
-    -1 ≤ endpoint.signAt sign adapter p ∧ endpoint.signAt sign adapter p ≤ 1 := by
+    -1 ≤ endpoint.signAt sign endpointSigns p ∧ endpoint.signAt sign endpointSigns p ≤ 1 := by
   cases endpoint with
   | finite x => exact heval p x
   | posInf => exact hsign p.leadingCoeff
@@ -245,40 +245,40 @@ theorem signAt_bounds {D : Type u} {E : Type v} [Zero D] [DecidableEq D]
 
 end Hex.Endpoint
 
-namespace Hex.QueryReplay
+namespace Hex.TarskiCertificate
 
 variable {D : Type u} {E : Type v} {Ctx : Type w}
 variable [Zero D] [DecidableEq D] [One D] [Add D] [Sub D] [Mul D] [NatCast D]
 
 omit [One D] [Add D] [Sub D] [Mul D] [NatCast D] in
-/-- Endpoint adapters with three-valued signs produce bounded sign arrays. -/
-theorem signs_bounded (sign : D → Int) (adapter : EndpointAdapter D E)
+/-- Endpoint operations with three-valued signs produce bounded sign arrays. -/
+theorem signs_bounded (sign : D → Int) (endpointSigns : EndpointSigns D E)
     (hvalues : ∀ p : DensePoly D, ∀ e : Endpoint E,
-      -1 ≤ e.signAt sign adapter p ∧ e.signAt sign adapter p ≤ 1)
+      -1 ≤ e.signAt sign endpointSigns p ∧ e.signAt sign endpointSigns p ≤ 1)
     (chain : Array (DensePoly D)) (endpoint : Endpoint E) :
-    (signs sign adapter chain endpoint).all (fun s => -1 ≤ s && s ≤ 1) = true := by
+    (signs sign endpointSigns chain endpoint).all (fun s => -1 ≤ s && s ≤ 1) = true := by
   apply Array.all_eq_true_iff_forall_mem.mpr
   intro s hs
   simp only [signs, Hex.Array.map'_eq_map, Array.mem_map] at hs
   obtain ⟨p, _, rfl⟩ := hs
-  change (decide (-1 ≤ endpoint.signAt sign adapter p) &&
-    decide (endpoint.signAt sign adapter p ≤ 1)) = true
+  change (decide (-1 ≤ endpoint.signAt sign endpointSigns p) &&
+    decide (endpoint.signAt sign endpointSigns p ≤ 1)) = true
   simp only [Bool.and_eq_true, decide_eq_true_eq]
   exact hvalues p endpoint
 
 /-- The shared producer's complete certificate passes replay whenever its
-chain backend and endpoint adapter satisfy their established laws. Literal
+chain backend and endpoint sign operations satisfy their established laws. Literal
 inputs, context, endpoints, signs and variations are checked without alteration. -/
 theorem certify_checks [Neg D] [DecidableEq E] [DecidableEq Ctx]
-    (sign : D → Int) (adapter : EndpointAdapter D E)
+    (sign : D → Int) (endpointSigns : EndpointSigns D E)
     (normalize : DensePoly D → D × DensePoly D)
     (hchains : ∀ p g : DensePoly D, p ≠ 0 →
-      QueryChain.check sign p g (QueryChain.build sign normalize p g) = true)
+      SignedRemainderChain.check sign p g (SignedRemainderChain.build sign normalize p g) = true)
     (hvalues : ∀ p : DensePoly D, ∀ e : Endpoint E,
-      -1 ≤ e.signAt sign adapter p ∧ e.signAt sign adapter p ≤ 1)
-    (context : Ctx) (p g : DensePoly D) (a b : Endpoint E) (cert : QueryReplay D E Ctx)
-    (hcert : certify sign adapter normalize context p g a b = some cert) :
-    check sign adapter context p g a b cert.value cert = true := by
+      -1 ≤ e.signAt sign endpointSigns p ∧ e.signAt sign endpointSigns p ≤ 1)
+    (context : Ctx) (p g : DensePoly D) (a b : Endpoint E) (cert : TarskiCertificate D E Ctx)
+    (hcert : certify sign endpointSigns normalize context p g a b = some cert) :
+    check sign endpointSigns context p g a b cert.value cert = true := by
   simp only [certify] at hcert
   split at hcert
   · contradiction
@@ -286,13 +286,13 @@ theorem certify_checks [Neg D] [DecidableEq E] [DecidableEq Ctx]
     split at hcert
     · contradiction
     · rename_i hsquarefree
-      have hg : endpointGuards adapter p a b = true := by
+      have hg : checkEndpoints endpointSigns p a b = true := by
         apply Bool.of_not_eq_false
         intro hh
         apply hguard
         rw [hh]
         rfl
-      have hsf : constantTail (QueryChain.build sign normalize p 1) = true := by
+      have hsf : SignedRemainderChain.lastIsConstant (SignedRemainderChain.build sign normalize p 1) = true := by
         apply Bool.of_not_eq_false
         intro hh
         apply hsquarefree
@@ -300,7 +300,7 @@ theorem certify_checks [Neg D] [DecidableEq E] [DecidableEq Ctx]
         rfl
       have hp : p ≠ 0 := by
         have hg' := hg
-        simp only [endpointGuards, Bool.and_eq_true] at hg'
+        simp only [checkEndpoints, Bool.and_eq_true] at hg'
         have hpn := hg'.1.1.1
         rw [Bool.not_eq_true', DensePoly.isZero_eq_false_iff] at hpn
         intro hz
@@ -309,6 +309,6 @@ theorem certify_checks [Neg D] [DecidableEq E] [DecidableEq Ctx]
       cases Option.some.inj hcert
       simp only [check, fromChains]
       simp only [decide_true, hg, hsf, hchains p _ hp,
-        signs_bounded sign adapter hvalues, Bool.and_true]
+        signs_bounded sign endpointSigns hvalues, Bool.and_true]
 
-end Hex.QueryReplay
+end Hex.TarskiCertificate

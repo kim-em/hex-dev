@@ -7,8 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexRealRoots.Basic
-public import HexRealRoots.Query
-public import HexRealRoots.QueryProofs
+public import HexRealRoots.Tarski
+public import HexRealRoots.TarskiProofs
 public import HexRealRoots.Chain
 public import HexRealRoots.Prec
 public import HexRealRoots.Refine

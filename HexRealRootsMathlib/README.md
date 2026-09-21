@@ -93,21 +93,27 @@ proof terms.
 
 # Signed-query correspondence
 
-`QueryInterpret` transports the shared producer and literal checker through
+`TarskiInterpret` transports the shared producer and literal checker through
 zero-reflecting, possibly noninjective coefficient interpretations. It proves
 positive signed identities, degree bounds, sufficiency of the internal bound
-and acceptance of produced chains. `QueryInteger.integer_certify_checks`
+and acceptance of produced chains. `TarskiInteger.integer_certify_checks`
 proves acceptance and value agreement for produced integer/dyadic certificates.
-`QueryGcd` identifies the terminal gcd and proves that the constant-tail check
+`TarskiGcd` identifies the terminal gcd and proves that the constant-tail check
 is equivalent to squarefreeness. Query production succeeds exactly when that
-condition and the executable endpoint guards hold. `QueryDomain` completes the
+condition and the executable endpoint guards hold. `TarskiDomain` completes the
 integer/dyadic endpoint interpretation, proves exact mathematical domain
 equivalence, and extracts that domain from accepted replay.
 
+`TarskiCompare` proves that arbitrary accepted chains for positively scaled
+inputs have equal lengths and entrywise positive scaling. `TarskiSigns` proves
+finite endpoint sign-array agreement and extracts the checked variation value.
+Together they support the rational/integer whole-`Option` agreement theorem
+in hex-sturm-mathlib without assuming root-sum semantics.
+
 The signed-remainder/Cauchy-index theorem and its polynomial IVT/Rolle
-foundation remain required for root-sum semantics, singleton-sign/count bounds
-and frontend backend agreement. These algebraic
-replay results do not assert those outstanding semantic theorems.
+foundation remain required for root-sum semantics and singleton-sign/count
+bounds. These algebraic replay results do not assert those outstanding
+semantic theorems.
 
 # Verification
 

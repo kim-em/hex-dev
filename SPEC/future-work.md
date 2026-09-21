@@ -1139,7 +1139,7 @@ gcd and extended gcd. Generic characteristic-zero Yun decomposition over
 `DensePoly K` is missing; `hex-real-closure` owns its specification, including
 multiplicities over lawful exact coefficient fields.
 [hex-real-roots](../HexRealRoots/SPEC/hex-real-roots.md#tarski-queries) owns
-integer Sturm chains and the implemented `ZPoly.tarskiQuery` and `TarskiReplay`.
+integer Sturm chains and the implemented `ZPoly.tarskiQuery` and `IntTarskiCertificate`.
 Their abstract root-sum and replay soundness proofs remain required. Its ordinary root counts and
 `hex-rcf`'s derivative-seeded `SturmReplay` cannot certify general Tarski
 queries. Transcendental sign refinement consumes a caller-supplied approximation
@@ -1163,7 +1163,7 @@ and arithmetic, so they stay in `hex-ordered-fn`, in separate modules.
 
 | Mathlib-free library | Responsibility | Mathlib companion |
 | --- | --- | --- |
-| [hex-sturm](Libraries/hex-sturm.md) | Ordered-field query frontend, coefficient-operation adapters, generic endpoints and root counts | `hex-sturm-mathlib`: frontend correspondence and replay composition |
+| [hex-sturm](Libraries/hex-sturm.md) | Ordered-field query frontend, coefficient operations, generic endpoints and root counts | `hex-sturm-mathlib`: frontend correspondence and replay composition |
 | [hex-sign-det](Libraries/hex-sign-det.md) | BKR sign determination, complete sign tables, Thom root identity and comparison | [hex-sign-det-mathlib](Libraries/hex-sign-det-mathlib.md): sign-table correctness, Thom identity and order correspondence |
 | [hex-ordered-fn](Libraries/hex-ordered-fn.md) | Transcendental and infinitesimal orders on `RationalFn`, approximation protocol | [hex-ordered-fn-mathlib](Libraries/hex-ordered-fn-mathlib.md): order laws, real evaluation and infinitesimal model |
 | [hex-real-closure](Libraries/hex-real-closure.md) | Algebraic extension arithmetic, dynamic splitting, root isolation, staged towers and exploration | [hex-real-closure-mathlib](Libraries/hex-real-closure-mathlib.md): selected-root semantics, field laws, root completeness and trivial-tower agreement |
@@ -1254,7 +1254,7 @@ positive-scaled signed-remainder/query-replay kernel in `hex-real-roots`, over
 an ordinary ordered commutative domain. It does not require division or a field, so integer
 arithmetic is an actual instance. `hex-sturm` owns the general ordered-field
 frontend: domain checks, squarefreeness, finite `K` and infinite endpoint
-adapters, coefficient evidence composition and root-count APIs.
+operations, coefficient evidence composition and root-count APIs.
 `ZPoly.tarskiQuery` remains the integer/dyadic frontend of the same kernel,
 retaining optimized integer content and Horner operations. Both frontends
 share the initial reduction and remainder recurrence, not independent query
@@ -1266,9 +1266,9 @@ translation of its replay certificates.
 The shared abstract signed-remainder/replay soundness theorem lives in
 `hex-real-roots-mathlib`, importing the Tau Ceti foundation there. That
 companion retains ownership of `ZPoly.tarskiQuery_eq` and
-`TarskiReplay.check_sound`, derived by integer specialization of the shared
+`IntTarskiCertificate.check_sound`, derived by integer specialization of the shared
 theorem. `hex-sturm-mathlib` consumes it to prove the general frontend's
-guards, endpoint adapters and coefficient-evidence composition sound. Thus
+guards, endpoint operations and coefficient-evidence composition sound. Thus
 neither the primitive nor its foundational soundness proof is duplicated, and
 no upstream library imports the family. The two Sturm directives must specify
 this coordinated generalization of the existing real-roots SPECs.

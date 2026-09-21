@@ -10,18 +10,24 @@ for `query` and `prepare`, exact prepared input bindings, validity of every
 prepared domain, finite/infinite endpoint guards, and ordinary/prepared
 certificate acceptance. These results apply to noninjective coefficient
 interpretations without field or order instances on representation storage.
-`HexSturmMathlib/Rational.lean` proves universal equality of the rational and
-integer/dyadic `isSome` results after positive denominator clearing. This covers
-zero/repeated-root heads and finite endpoint roots for ordered dyadic intervals;
-equality of successful query values is still required.
+`HexSturmMathlib/Rational.lean` proves whole-`Option` equality of the rational and
+integer/dyadic queries on finite ordered dyadic intervals after positive
+denominator clearing. The domain proof
+covers zero/repeated-root heads and finite endpoint roots for ordered dyadic
+intervals. The value proof compares arbitrary accepted remainder chains by
+positive scaling, including singleton chains and nonconstant terminal gcds;
+it does not require a root-sum theorem. `check_rat_value` proves equality of
+values for arbitrary accepted certificates on the corresponding inputs.
 Conformance instantiates the generic theorems on canonical rationals and noncanonical
 representatives and inspects their axioms.
 
-The root-sum/replay semantics, root-count and singleton-sign theorems,
-whole-Option denominator-clearing/backend agreement and Phase-4 proof evidence
-below remain required. Their foundation must be delivered through
-hex-real-roots-mathlib; no axioms or conditional stand-ins supply the missing
-Sturm–Tarski theorem. No release or phase completion is claimed.
+The root-sum/replay semantics, root-count and singleton-sign theorems still
+require the foundation delivered through hex-real-roots-mathlib. General
+backend agreement, literal certificate translation in both directions, and
+the remaining Phase-4 evidence below are additional obligations; equality of
+accepted values does not construct a translated certificate. No axioms or
+conditional stand-ins supply the missing Sturm–Tarski theorem. No release or
+phase completion is claimed.
 
 `HexSturmMathlib` imports `HexSturm`, `HexPolyMathlib` and
 `HexRealRootsMathlib`. The shared signed-remainder theorem, representation and
@@ -30,7 +36,7 @@ positive-scaling bridges, and shared replay soundness live in
 That companion alone imports the Tau Ceti univariate foundation for these
 queries. It retains the integer/dyadic specialization and proves
 `IsRealClosed ℝ`. This companion proves the field frontend's domain guards,
-endpoint adapters, query-proof composition and root-count API
+endpoint sign operations, query-proof composition and root-count API
 against the shared theorem, instantiating its domain and embedding as
 `D := K` and `j := ι`. A field is an admissible domain instance; the shared
 theorem does not require every domain to be a field. Neither proof nor
@@ -163,7 +169,7 @@ in the lawful semantic field described above.
 | `prepare_sound` | A returned prepared object establishes `Domain(P;a,b)` and binds exactly its head and endpoints. |
 | `query_sound` | `query p f a b = some q` implies `Domain(P;a,b)` and `q = TaQ(F,P;a,b)` for every supplied `R,ι,hι`. |
 | `queryPrepared_sound` | The prepared query computes the same mathematical sum for its bound domain and any `f`. |
-| `Replay.check_sound` | An accepted finite certificate implies domain validity and the claimed query equality through the shared replay theorem; no producer-success hypothesis is needed. |
+| `check_sound` | An accepted finite certificate implies domain validity and the claimed query equality through the shared replay theorem; no producer-success hypothesis is needed. |
 | `query_isSome` | `(query p f a b).isSome ↔ Domain(P;a,b)`. All coefficient decisions are total; computed degree bounds suffice. |
 | `rootCount_isSome` | `(rootCount p a b).isSome ↔ Domain(P;a,b)`. Nonnegativity of the query of `1` makes conversion failure unreachable. |
 | `rootCount_eq` | `rootCount p a b = some n` implies `n = Roots(P;a,b).card`. |
@@ -182,7 +188,7 @@ semantic root sets; they do not introduce root enumeration into the runtime.
 
 ## Integer/dyadic specialization and positive clearing
 
-`ZPoly.tarskiQuery_eq` and `TarskiReplay.check_sound` stay in
+`ZPoly.tarskiQuery_eq` and `IntTarskiCertificate.check_sound` stay in
 hex-real-roots-mathlib, specialized there from the shared theorem with the
 integer embedding and exact dyadic endpoints in `ℝ`. The integer ring kernel
 requires no `Field Int`. The generic rational frontend reaches infinities;
@@ -264,7 +270,7 @@ Required adversarial coverage includes:
 
 Use pinned python-flint exact selected-root signs for rational fixtures and
 compare the integer/rational frontends, recording seeds and oracle provenance.
-When extension adapters exist, downstream integration tests instantiate the
+When ordered-extension instances exist, downstream integration tests instantiate the
 same theorem at a non-Archimedean `R` for the corrected
 [de Moura–Passmore example](https://www.cl.cam.ac.uk/~gp351/infinitesimals.pdf)
 `P=(εX²−1)(εX³−1)`, with `ε` positive infinitesimal: whole-line count `3`,

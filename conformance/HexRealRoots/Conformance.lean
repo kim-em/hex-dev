@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexRealRoots
-import HexRealRoots.QueryTests
+import HexRealRoots.TarskiTests
 
 /-!
 Core conformance checks for `HexRealRoots`.
@@ -17,8 +17,8 @@ uses `python-flint` (`fmpz_poly` real-root isolation) via
 Mode: always for core, `if_available` for the `python-flint` oracle profile.
 
 Covered operations:
-- `Hex.ZPoly.tarskiQuery`, `Hex.TarskiReplay.certify`, `Hex.TarskiReplay.check`
-  and the generic endpoint/query replay APIs, through `HexRealRoots.QueryTests`.
+- `Hex.ZPoly.tarskiQuery`, `Hex.IntTarskiCertificate.certify`, `Hex.IntTarskiCertificate.check`
+  and the generic endpoint/query replay APIs, through `HexRealRoots.TarskiTests`.
 - `Hex.ZPoly.evalDyadic`
 - `Hex.dyadicSign`
 - `Hex.signVar`
