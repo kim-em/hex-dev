@@ -36,6 +36,10 @@ Scientific registrations:
   `O(n^2)`.
 * `runGcdChecksum`: Euclidean gcd over a fixed-size field, `O(n^2)` worst
   case on the committed Fibonacci-style quotient-chain fixture.
+* `runPseudoDiv`: shared pseudo-division, `O(n^2)` on the existing fixed-field
+  dividend/divisor ladder, hashing its multiplier and both polynomial outputs.
+* `runPseudoGcd`: plain pseudo-gcd, `O(n^2)` coefficient work on the same
+  Fibonacci quotient-chain fixture; its wall-time characterization is open.
 * `runXGcdChecksum`: extended Euclidean algorithm over a fixed-size field,
   `O(n^2)` worst case on the committed Fibonacci-style quotient-chain fixture.
 * `runContent`: integer coefficient content, `O(n)`.
@@ -60,7 +64,8 @@ persistent-subprocess python-flint driver, per
 
 The non-`DensePoly Int` registrations (`runEval`, `runDivModChecksum`,
 `runDivChecksum`, `runModChecksum`, `runModByMonicChecksum`,
-`runGcdChecksum`, `runXGcdChecksum`, `runPolyCRTChecksum`) do not have
+`runGcdChecksum`, `runPseudoDiv`, `runPseudoGcd`, `runXGcdChecksum`,
+`runPolyCRTChecksum`) do not have
 FLINT `fmpz_poly` pairings: they operate over `F7` or `Rat`, and the
 SPEC names `fmpz_poly` (integer polynomial) as the comparator.
 -/
