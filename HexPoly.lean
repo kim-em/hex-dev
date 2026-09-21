@@ -15,6 +15,9 @@ public import HexPoly.Instances
 public import HexPoly.Monic
 public import HexPoly.Operations
 public import HexPoly.Interpret
+public import HexPoly.PseudoDiv
+public import HexPoly.PseudoGcd
+public import HexPoly.PseudoInterpret
 
 public section
 

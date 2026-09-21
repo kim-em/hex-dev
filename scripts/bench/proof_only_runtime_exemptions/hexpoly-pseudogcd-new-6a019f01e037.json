@@ -1,0 +1,6 @@
+{
+  "path": "HexPoly/PseudoGcd.lean",
+  "baseline_blob": null,
+  "current_blob": "6a019f01e037d9f9a6ba7b994a1c211e5571393d",
+  "reason": "Adds recorded-scale pseudo-division, positive sign correction and a plain pseudo-gcd. None is called by the existing measured integer-factorization service; existing divMod, gcd and xgcd definitions and instances are unchanged. These additions install no compiler rewrite. Performance validation of the new APIs is outside this exemption."
+}

@@ -5,6 +5,8 @@ Authors: Kim Morrison
 -/
 
 import HexPoly.Euclid
+import HexPoly.PseudoGcd
+import HexPoly.Lcm
 
 /-!
 Core conformance checks for `hex-poly`'s dense/basic and Euclidean-operation surface.
@@ -15,6 +17,7 @@ Covered operations:
 - dense representation constructors and accessors (`ofCoeffs`, `ofList`, `C`, `monomial`, `size`, `isZero`, `coeff`, `degree?`, `support`, `toArray`)
 - basic executable arithmetic (`scale`, `shift`, `add`, `neg`, `sub`, `mul`, `eval`, `compose`, `derivative`)
 - Euclidean helpers (`leadingCoeff`, `divModMonic`, `divMod`, `/`, `%`, `modByMonic`, `gcd`, `xgcd`, `xgcdLeftMonic`)
+- fraction-free division and plain gcd (`pseudoDiv`, `positivePseudoDiv`, `pseudoGcd`)
 - integer content helpers (`content`, `primitivePart`)
 - polynomial CRT witness construction (`polyCRT`)
 Covered properties:
@@ -403,6 +406,41 @@ end ProofMode
 #guard crtWitness = ofCoeffs #[6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
 #guard crtWitness % crtModA = crtResidueA % crtModA
 #guard crtWitness % crtModB = crtResidueB % crtModB
+
+-- Shared pseudo-division covers zero/constant inputs, both leading signs,
+-- exact division, defective degree drops and a nonconstant terminal gcd.
+private def pseudoInputs : Array (DensePoly Int × DensePoly Int) := #[
+  (0, 0), (ofCoeffs #[1, 0, 1], 0), (0, C 3), (C 2, ofCoeffs #[0, 1]),
+  (ofCoeffs #[1, 0, 1], ofCoeffs #[1, 2]),
+  (ofCoeffs #[1, 1], ofCoeffs #[3, -2]),
+  (ofCoeffs #[0, 0, 0, 1], ofCoeffs #[1, 0, -2]),
+  (ofCoeffs #[1, -2, 1], ofCoeffs #[-1, 1]),
+  (ofCoeffs #[0, 4], C 4),
+  (ofCoeffs #[-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], ofCoeffs #[-1, 0, 0, 0, 0, 0, 1])]
+
+private def rationalPoly (p : DensePoly Int) : DensePoly Rat :=
+  ofCoeffs (p.toArray.map fun z : Int => (z : Rat))
+
+#guard pseudoInputs.all fun (p, q) =>
+  let r := pseudoDiv p q
+  scale r.multiplier p == r.quotient * q + r.remainder &&
+    (q.isZero || (r.multiplier != 0 && r.remainder.size < q.size))
+
+#guard pseudoInputs.all fun (p, q) =>
+  let r := positivePseudoDiv Int.sign p q
+  scale r.multiplier p == r.quotient * q + r.remainder &&
+    (q.isZero || (0 < r.multiplier && r.remainder.size < q.size))
+
+#guard pseudoInputs.all fun (p, q) =>
+  let r := pseudoDiv p q
+  let qr := divMod (rationalPoly p) (rationalPoly q)
+  rationalPoly r.quotient == scale (r.multiplier : Rat) qr.1 &&
+    rationalPoly r.remainder == scale (r.multiplier : Rat) qr.2
+
+#guard pseudoInputs.all fun (p, q) =>
+  monicize (rationalPoly (pseudoGcd p q)) == monicize (gcd (rationalPoly p) (rationalPoly q))
+#guard (pseudoGcd (C (2 : Int)) (ofCoeffs #[0, 1])).toArray == #[2]
+#guard (pseudoGcd (ofCoeffs #[1, -2, 1]) (ofCoeffs #[-1, (1 : Int)])).toArray == #[-1, 1]
 
 end DensePoly
 

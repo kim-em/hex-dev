@@ -42,6 +42,13 @@ interpretation. Semantic monicization does not supply the literal
 `leadingCoeff = 1` witness required by `divModMonic` and `modByMonic`;
 use general division unless that structural witness is available.
 
+`pseudoDivMod` is the shared fraction-free division kernel. `pseudoDiv` records
+its multiplier, and `positivePseudoDiv` corrects a negative multiplier together
+with both outputs. `pseudoGcd` follows the plain remainder sequence with a
+proved decrease in stored degree. It computes a gcd over the fraction field
+up to a nonzero scalar; integer coefficients keep their ordinary domain
+operations.
+
 # Verification
 
 See the [SPEC](SPEC/hex-poly.md) for representation invariants, executable

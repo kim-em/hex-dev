@@ -1,0 +1,6 @@
+{
+  "path": "HexPoly/PseudoDiv.lean",
+  "baseline_blob": null,
+  "current_blob": "5b4f012ab2bac025245ae699cce9837c5f2f61c1",
+  "reason": "Relocates the existing HexResultant.Basic pseudoDivMod array recurrence and correctness theorems into HexPoly without changing the recurrence. The existing integer-factorization sweep uses field division/gcd and does not call pseudoDivMod. Adding the export introduces no instance or compiler rewrite of an existing operation. This exemption concerns the existing sweep only, not performance evidence for pseudo-division."
+}

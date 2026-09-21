@@ -1,0 +1,6 @@
+{
+  "path": "HexPoly/PseudoInterpret.lean",
+  "baseline_blob": null,
+  "current_blob": "ae7564a6130672c1875ca0ad09390d06b82ec986",
+  "reason": "Adds proof-only interpretation lemmas for the shared pseudo-division recurrence, recorded multipliers and plain pseudo-gcd. It defines no new runtime computation or compiler rewrite; its additions cannot change the existing measured integer-factorization service."
+}
