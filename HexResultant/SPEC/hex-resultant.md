@@ -474,7 +474,8 @@ constructor. It does not alter the resultant or discriminant contracts.
   coefficient-independent cancellation lemmas, and the `Int` and field
   instances live below this library in `HexBasic/ExactDiv.lean`, which this
   file re-exports through a public import.
-- `HexResultant/Basic.lean`: `pseudoDivMod` and its computational properties.
+- `HexResultant/Basic.lean`: compatibility export of the shared `pseudoDivMod`
+  kernel and computational properties owned by `HexPoly/PseudoDiv.lean`.
 - `HexResultant/PseudoDivMod.lean`: uniqueness, nonzero scaling, and the
   left/right pseudo-division homogeneity laws.
 - `HexResultant/Fraction.lean`: the proof-only Mathlib-free fraction field,

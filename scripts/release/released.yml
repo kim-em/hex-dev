@@ -137,7 +137,7 @@ repos:
   - repo: leanprover/hex-poly
     component: Dense univariate polynomials
     lib: HexPoly
-    test_modules: [HexPoly.InterpretTests]
+    test_modules: [HexPoly.InterpretTests, HexPoly.PseudoTests]
     umbrella: true
     spec: hex-poly
     pins: []
@@ -179,7 +179,7 @@ repos:
 
   - repo: leanprover/hex-poly-mathlib
     lib: HexPolyMathlib
-    test_modules: [HexPolyMathlib.LiteralTests, HexPolyMathlib.InterpretTests]
+    test_modules: [HexPolyMathlib.LiteralTests, HexPolyMathlib.InterpretTests, HexPolyMathlib.PseudoTests]
     umbrella: true
     spec: hex-poly-mathlib
     pins: [hex-poly, hex-matrix-mathlib, hex-matrix, hex-basic]

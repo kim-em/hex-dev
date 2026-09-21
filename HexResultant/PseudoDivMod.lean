@@ -14,7 +14,7 @@ public section
 /-!
 Algebraic transport laws for fraction-free pseudo-division.
 
-The executable coefficient recurrence in `HexResultant.Basic` already proves
+The executable coefficient recurrence in `HexPoly.PseudoDiv` already proves
 reconstruction and the quotient/remainder size bounds.  This module adds the
 uniqueness theorem that characterizes those outputs and uses it to derive the
 two scalar homogeneity laws needed by the Brown--Traub development.

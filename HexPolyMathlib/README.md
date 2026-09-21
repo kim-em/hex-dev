@@ -39,6 +39,12 @@ with semantic polynomial equality without assuming an injective coefficient
 map. `Interpret.monicize_leading` proves semantic monicity of the actual
 monicization output for every nonzero input.
 
+The pseudo-division correspondence preserves the recorded multiplier and
+relates both outputs to scaled field division. It proves reconstruction,
+strict remainder degree and positive sign correction. Plain `pseudoGcd` has
+exactly the common divisors of its inputs in the semantic field, including
+for integer and noncanonical source coefficients.
+
 # Verification
 
 Runtime-only clients should depend on `hex-poly`. This package is for theorem
