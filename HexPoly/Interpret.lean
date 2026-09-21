@@ -21,8 +21,10 @@ operations then transports arithmetic, Horner evaluation, differentiation,
 division, gcd and extended gcd in their actual execution order, including
 size-derived bounds. Neither carrier needs ring laws or an injective map.
 
-The coefficient map uses a list map for ordinary-kernel reduction. Mathlib
-polynomial correspondence is composed with these lemmas in the companion.
+The coefficient map has a reducible specification and a proved compiled
+replacement using `Array.map`, following HexPoly arithmetic and the
+`HexBasic.OfFn` shims. Mathlib polynomial correspondence is composed with
+these lemmas in the companion.
 -/
 namespace Hex.DensePoly
 namespace Interpret
@@ -53,6 +55,34 @@ theorem map_zero : f (Zero.zero : E) = (Zero.zero : F) := (hz _).mpr rfl
       | some a =>
         simp [hb] at he
         exact h (by simpa [toArray, (hz a).mp he] using hb)
+
+/-- Runtime coefficient map, preserving the array implementation. The reference
+{name}`map` supplies kernel reduction; its compiled replacement avoids lists. -/
+@[expose] def mapImpl (p : DensePoly E) : DensePoly F where
+  coeffs := p.toArray.map f
+  normalized := by
+    rcases p.normalized with h | h
+    · exact Or.inl (by simpa [toArray] using h)
+    · right
+      rw [Array.back?_map]
+      intro he
+      cases hb : p.toArray.back? with
+      | none => simp [hb] at he
+      | some a =>
+        simp [hb] at he
+        exact h (by simpa [toArray, (hz a).mp he] using hb)
+
+/-- The kernel specification and the runtime array map return the same polynomial. -/
+theorem map_eq_mapImpl (p : DensePoly E) : map f hz p = mapImpl f hz p := by
+  apply ext_coeff
+  intro i
+  simp [map, mapImpl, coeff, toArray, ← Array.toList_map]
+
+omit hz in
+/-- Compiled clients use the original array map, with no intermediate lists. -/
+@[csimp] theorem map_eq_impl : @map = @mapImpl := by
+  funext E F _ _ _ _ f hz p
+  exact map_eq_mapImpl f hz p
 
 @[simp] theorem map_size (p : DensePoly E) : (map f hz p).size = p.size := by
   simp [map, size, toArray]
