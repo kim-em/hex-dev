@@ -186,6 +186,17 @@ libraries:
     correspondence_only: true
     done_through: 4
     status: active
+  HexOrderedFn:
+    deps: [HexRationalFn, HexPoly, HexPolyFast]
+    mathlib: false
+    done_through: 0
+    status: active
+  HexOrderedFnMathlib:
+    deps: [HexOrderedFn, HexRationalFnMathlib, HexPolyMathlib]
+    mathlib: true
+    correspondence_only: true
+    done_through: 0
+    status: active
   HexRealFormula:
     deps: [HexMvPoly]
     mathlib: false

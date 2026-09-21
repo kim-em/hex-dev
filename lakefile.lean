@@ -134,6 +134,16 @@ lean_lib HexPoly where
 
 lean_lib HexPolyFast where
 
+@[default_target]
+lean_lib HexOrderedFn where
+
+@[default_target]
+lean_lib HexOrderedFnMathlib where
+
+@[default_target]
+lean_lib HexOrderedFnTests where
+  globs := #[.one `HexOrderedFn.Tests, .one `HexOrderedFnMathlib.Tests]
+
 lean_lib HexMvPoly where
 
 @[default_target]
@@ -985,7 +995,7 @@ lean_lib HexConformance where
 
     ++ #[`HexPolyFast.Conformance].map Glob.one
 
-    ++ #[`HexRationalFn.Conformance, `HexRationalFn.Domains].map Glob.one
+    ++ #[`HexRationalFn.Conformance, `HexRationalFn.Domains, `HexOrderedFn.Conformance].map Glob.one
 
     ++ #[`HexLatticeEnum.Conformance].map Glob.one
 
