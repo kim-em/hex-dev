@@ -499,12 +499,12 @@ factor from an unrecoverable whole batch. Downstream primality registration
 threads the flag and events through the version-3 search boundary specified
 upstream; an unsupported requested policy is declined without work.
 
-Ordinary factorization enables this switch by default only after the native
-route-usefulness gate in the shared contract passes, with a reviewed report
-including setup and complete checked-factorization time. Until then it is
-an explicit experimental allocation. Construction via `primality?` has its
-own upstream schedule, global attempt limit, interpreted measurements, and
-independent enablement gate; importing this library does not enable it.
+Default Pollard stage-2 enablement in ordinary factorization requires the
+shared contract's native route-usefulness evidence, including setup and
+complete checked-factorization time. Explicit selection does not authorize
+default enablement. Construction via `primality?` has its own upstream
+schedule, global attempt limit, measurements and independent enablement
+requirements. Importing this library must not enable Pollard continuation.
 Neither route presumes the four inputs in #10291 have the required orders.
 Search data remain untrusted: only a dynamically checked proper divisor
 enters certificate construction, and checked factorization still replays
@@ -574,7 +574,7 @@ final `z` coordinate is decoded for the boundary gcd. Context construction
 or representation conversion inside the scalar-multiplication loop is not
 the word backend specified here.
 
-### 3a. Bounded ECM continuation for explicit certificate construction
+### 3a. Bounded ECM continuation for certificate construction
 
 `HexIntFactor/EcmStage2.lean` owns the Mathlib-free continuation in namespace
 `Hex.Nat.Ecm`. Diagnostic state, traces and pipeline helpers live under
@@ -656,7 +656,8 @@ Use `primality? (factor := Hex.Nat.ecmFactorSearch)` after importing
 an exhausted construction is owned by
 [HexPrimality's construction contract](../../HexPrimality/SPEC/hex-primality.md#automatic-construction-fallback-and-caller-resources).
 `HexIntFactor.PrimalityTactic.constructionExtension` must use
-`ConstructionExtension` version 1 and name the default ECM provider wrapper.
+`ConstructionExtension` version 1 and name
+`Hex.Nat.ecmConstructionFactor : FactorSearch`, the default ECM provider wrapper.
 This registration is distinct from the ordinary `SearchExtension` version-3
 registration of `intFactorSearch`. It does not enable ECM in ordinary integer factorization. The provider must
 certify the three field-prime paths and preserve P-521's certificate and attempt
@@ -710,8 +711,10 @@ internal entry point. The construction provider reuses that entry point with
 a handle shared across curves. Only bound-checked preparation functions may
 construct handles: their fields must not admit arbitrary external prime lists.
 Both entry points must use the same proper-divisor validation. A test-only
-per-curve enumerator supplies independent prime tables for conformance and
-comparison. It is not a second public search implementation.
+per-curve enumerator generates independent prime tables for comparison with
+a read-only view of the production tables. These reference lists must not be
+injected into production handles or entry points. The enumerator is not a
+second public search implementation.
 
 Only bound-dependent integer data is shared. Curve points, baby and giant
 tables, products and gcd batches remain local to each curve and modulus.
@@ -1733,7 +1736,7 @@ HexIntFactor/
   PMinusOne.lean    -- adapter from the shared p-1 primitive to the dispatch
   Ecm.lean          -- Montgomery-curve ECM stage 1
   EcmStage2.lean    -- bounded saved-point continuation
-  Construction.lean -- explicit ECM factor provider
+  Construction.lean -- ECM provider and ecmConstructionFactor wrapper
   Cyclotomic.lean   -- cyclotomicSplit? and the checked candidate
   Order.lean        -- OrderCert, checkOrder, primitive roots, Carmichael
   Factor.lean       -- the dispatch, factor?, factorPartial?
